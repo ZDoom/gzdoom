@@ -68,45 +68,36 @@ public:
 	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders);
 
 private:
-	void UpdateEffectTextures();
-	void CompileEffectShaders();
-	FString LoadShaderCode(const FString &lumpname, const FString &defines, int version);
-	void RenderEffect(const FString &name);
 	void NextEye(int eyeCount);
-	void RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize);
 
-	VulkanDescriptorSet *GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers);
-	VulkanFramebuffer *GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferWidth, int &framebufferHeight);
 	VulkanSampler *GetSampler(PPFilterMode filter, PPWrapMode wrap);
 
-	struct TextureImage
-	{
-		VulkanImage *image;
-		VulkanImageView *view;
-		VkImageLayout *layout;
-		const char *debugname;
-	};
-	TextureImage GetTexture(const PPTextureType &type, const PPTextureName &name);
-
-	std::map<PPTextureName, std::unique_ptr<VkPPTexture>> mTextures;
-	std::map<PPShaderName, std::unique_ptr<VkPPShader>> mShaders;
 	std::array<std::unique_ptr<VulkanSampler>, 16> mSamplers;
 	std::map<VkPPRenderPassKey, std::unique_ptr<VkPPRenderPassSetup>> mRenderPassSetup;
 	std::unique_ptr<VulkanDescriptorPool> mDescriptorPool;
 	std::vector<std::unique_ptr<VulkanDescriptorSet>> mFrameDescriptorSets;
 	int mCurrentPipelineImage = 0;
+
+	friend class VkPPRenderState;
 };
 
-class VkPPShader
+class VkPPShader : public PPShaderBackend
 {
 public:
+	VkPPShader(PPShader *shader);
+
 	std::unique_ptr<VulkanShader> VertexShader;
 	std::unique_ptr<VulkanShader> FragmentShader;
+
+private:
+	FString LoadShaderCode(const FString &lumpname, const FString &defines, int version);
 };
 
-class VkPPTexture
+class VkPPTexture : public PPTextureBackend
 {
 public:
+	VkPPTexture(PPTexture *texture);
+
 	std::unique_ptr<VulkanImage> Image;
 	std::unique_ptr<VulkanImageView> View;
 	std::unique_ptr<VulkanBuffer> Staging;
@@ -130,4 +121,28 @@ private:
 	void CreatePipelineLayout(const VkPPRenderPassKey &key);
 	void CreatePipeline(const VkPPRenderPassKey &key);
 	void CreateRenderPass(const VkPPRenderPassKey &key);
+};
+
+class VkPPRenderState : public PPRenderState
+{
+public:
+	void Draw() override;
+
+private:
+	void RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize);
+
+	VulkanDescriptorSet *GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers);
+	VulkanFramebuffer *GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferWidth, int &framebufferHeight);
+
+	VkPPShader *GetVkShader(PPShader *shader);
+	VkPPTexture *GetVkTexture(PPTexture *texture);
+
+	struct TextureImage
+	{
+		VulkanImage *image;
+		VulkanImageView *view;
+		VkImageLayout *layout;
+		const char *debugname;
+	};
+	TextureImage GetTexture(const PPTextureType &type, PPTexture *tex);
 };

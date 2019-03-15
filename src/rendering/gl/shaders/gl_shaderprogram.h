@@ -8,7 +8,7 @@
 namespace OpenGLRenderer
 {
 
-class FShaderProgram
+class FShaderProgram : public PPShaderBackend
 {
 public:
 	FShaderProgram();

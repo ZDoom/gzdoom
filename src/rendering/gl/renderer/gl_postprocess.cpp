@@ -64,26 +64,22 @@ void FGLRenderer::RenderScreenQuad()
 
 void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
-	hw_postprocess.fixedcm = fixedcm;
-	hw_postprocess.SceneWidth = mBuffers->GetSceneWidth();
-	hw_postprocess.SceneHeight = mBuffers->GetSceneHeight();
+	int sceneWidth = mBuffers->GetSceneWidth();
+	int sceneHeight = mBuffers->GetSceneHeight();
 
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
+	GLPPRenderState renderstate(mBuffers);
 
-	mBuffers->CompileEffectShaders();
-	mBuffers->UpdateEffectTextures();
-
-	mBuffers->RenderEffect("UpdateCameraExposure");
+	hw_postprocess.exposure.Render(&renderstate, sceneWidth, sceneHeight);
 	mCustomPostProcessShaders->Run("beforebloom");
-	mBuffers->RenderEffect("BloomScene");
+	hw_postprocess.bloom.RenderBloom(&renderstate, sceneWidth, sceneHeight, fixedcm);
+
 	mBuffers->BindCurrentFB();
 	afterBloomDrawEndScene2D();
-	mBuffers->RenderEffect("TonemapScene");
-	mBuffers->RenderEffect("ColormapScene");
-	mBuffers->RenderEffect("LensDistortScene");
-	mBuffers->RenderEffect("ApplyFXAA");
+
+	hw_postprocess.tonemap.Render(&renderstate);
+	hw_postprocess.colormap.Render(&renderstate, fixedcm);
+	hw_postprocess.lens.Render(&renderstate);
+	hw_postprocess.fxaa.Render(&renderstate);
 	mCustomPostProcessShaders->Run("scene");
 }
 
@@ -95,43 +91,32 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 
 void FGLRenderer::AmbientOccludeScene(float m5)
 {
-	hw_postprocess.SceneWidth = mBuffers->GetSceneWidth();
-	hw_postprocess.SceneHeight = mBuffers->GetSceneHeight();
-	hw_postprocess.m5 = m5;
+	int sceneWidth = mBuffers->GetSceneWidth();
+	int sceneHeight = mBuffers->GetSceneHeight();
 
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	mBuffers->CompileEffectShaders();
-	mBuffers->UpdateEffectTextures();
-
-	mBuffers->RenderEffect("AmbientOccludeScene");
+	GLPPRenderState renderstate(mBuffers);
+	hw_postprocess.ssao.Render(&renderstate, m5, sceneWidth, sceneHeight);
 }
 
 void FGLRenderer::BlurScene(float gameinfobluramount)
 {
-	hw_postprocess.gameinfobluramount = gameinfobluramount;
+	int sceneWidth = mBuffers->GetSceneWidth();
+	int sceneHeight = mBuffers->GetSceneHeight();
 
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	mBuffers->CompileEffectShaders();
-	mBuffers->UpdateEffectTextures();
+	GLPPRenderState renderstate(mBuffers);
 
 	auto vrmode = VRMode::GetVRMode(true);
 	int eyeCount = vrmode->mEyeCount;
 	for (int i = 0; i < eyeCount; ++i)
 	{
-		mBuffers->RenderEffect("BlurScene");
+		hw_postprocess.bloom.RenderBlur(&renderstate, sceneWidth, sceneHeight, gameinfobluramount);
 		if (eyeCount - i > 1) mBuffers->NextEye(eyeCount);
 	}
 }
 
 void FGLRenderer::ClearTonemapPalette()
 {
-	hw_postprocess.Textures.Remove("Tonemap.Palette");
+	hw_postprocess.tonemap.ClearTonemapPalette();
 }
 
 //-----------------------------------------------------------------------------

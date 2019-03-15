@@ -40,18 +40,22 @@ void VkPostprocess::SetActiveRenderTarget()
 void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	auto fb = GetVulkanFrameBuffer();
+	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
+	int sceneHeight = fb->GetBuffers()->GetSceneHeight();
 
-	hw_postprocess.fixedcm = fixedcm;
+	VkPPRenderState renderstate;
 
-	RenderEffect("UpdateCameraExposure");
+	hw_postprocess.exposure.Render(&renderstate, sceneWidth, sceneHeight);
 	//mCustomPostProcessShaders->Run("beforebloom");
-	RenderEffect("BloomScene");
+	hw_postprocess.bloom.RenderBloom(&renderstate, sceneWidth, sceneHeight, fixedcm);
+
 	SetActiveRenderTarget();
 	afterBloomDrawEndScene2D();
-	RenderEffect("TonemapScene");
-	RenderEffect("ColormapScene");
-	RenderEffect("LensDistortScene");
-	RenderEffect("ApplyFXAA");
+
+	hw_postprocess.tonemap.Render(&renderstate);
+	hw_postprocess.colormap.Render(&renderstate, fixedcm);
+	hw_postprocess.lens.Render(&renderstate);
+	hw_postprocess.fxaa.Render(&renderstate);
 	//mCustomPostProcessShaders->Run("scene");
 }
 
@@ -183,53 +187,56 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 	uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), -screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
 	uniforms.Offset = { 0.0f, 1.0f };
 
-	PPStep step;
-	step.ShaderName = "Present";
-	step.Uniforms.Set(uniforms);
-	step.Viewport = box;
-	step.SetInputCurrent(0, ViewportLinearScale() ? PPFilterMode::Linear : PPFilterMode::Nearest);
-	step.SetInputTexture(1, "PresentDither", PPFilterMode::Nearest, PPWrapMode::Repeat);
-	step.SetOutputSwapChain();
-	step.SetNoBlend();
-	//if (clearBorders) step.SetClearBorders();
-
-	TArray<PPStep> steps;
-	steps.Push(step);
-	hw_postprocess.Effects["Present"] = steps;
-
-	RenderEffect("Present");
+	VkPPRenderState renderstate;
+	renderstate.Shader = &hw_postprocess.present.Present;
+	renderstate.Uniforms.Set(uniforms);
+	renderstate.Viewport = box;
+	renderstate.SetInputCurrent(0, ViewportLinearScale() ? PPFilterMode::Linear : PPFilterMode::Nearest);
+	renderstate.SetInputTexture(1, &hw_postprocess.present.Dither, PPFilterMode::Nearest, PPWrapMode::Repeat);
+	renderstate.SetOutputSwapChain();
+	renderstate.SetNoBlend();
+	//if (clearBorders) renderstate.SetClearBorders();
+	renderstate.Draw();
 }
 
 void VkPostprocess::AmbientOccludeScene(float m5)
 {
-	hw_postprocess.m5 = m5;
+	auto fb = GetVulkanFrameBuffer();
+	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
+	int sceneHeight = fb->GetBuffers()->GetSceneHeight();
 
-	RenderEffect("AmbientOccludeScene");
+	VkPPRenderState renderstate;
+	hw_postprocess.ssao.Render(&renderstate, m5, sceneWidth, sceneHeight);
 }
 
 void VkPostprocess::BlurScene(float gameinfobluramount)
 {
-	hw_postprocess.gameinfobluramount = gameinfobluramount;
+	auto fb = GetVulkanFrameBuffer();
+	int sceneWidth = fb->GetBuffers()->GetSceneWidth();
+	int sceneHeight = fb->GetBuffers()->GetSceneHeight();
+
+	VkPPRenderState renderstate;
 
 	auto vrmode = VRMode::GetVRMode(true);
 	int eyeCount = vrmode->mEyeCount;
 	for (int i = 0; i < eyeCount; ++i)
 	{
-		RenderEffect("BlurScene");
+		hw_postprocess.bloom.RenderBlur(&renderstate, sceneWidth, sceneHeight, gameinfobluramount);
 		if (eyeCount - i > 1) NextEye(eyeCount);
 	}
 }
 
 void VkPostprocess::ClearTonemapPalette()
 {
-	hw_postprocess.Textures.Remove("Tonemap.Palette");
+	hw_postprocess.tonemap.ClearTonemapPalette();
 }
 
 void VkPostprocess::UpdateShadowMap()
 {
 	if (screen->mShadowMap.PerformUpdate())
 	{
-		RenderEffect("UpdateShadowMap");
+		VkPPRenderState renderstate;
+		hw_postprocess.shadowmap.Update(&renderstate);
 
 		auto fb = GetVulkanFrameBuffer();
 		auto buffers = fb->GetBuffers();
@@ -255,17 +262,6 @@ void VkPostprocess::BeginFrame()
 		mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
 		mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
 	}
-
-	auto fb = GetVulkanFrameBuffer();
-	hw_postprocess.SceneWidth = fb->GetBuffers()->GetSceneWidth();
-	hw_postprocess.SceneHeight = fb->GetBuffers()->GetSceneHeight();
-
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	CompileEffectShaders();
-	UpdateEffectTextures();
 }
 
 void VkPostprocess::RenderBuffersReset()
@@ -273,128 +269,125 @@ void VkPostprocess::RenderBuffersReset()
 	mRenderPassSetup.clear();
 }
 
-void VkPostprocess::UpdateEffectTextures()
+VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)
+{
+	int index = (((int)filter) << 2) | (int)wrap;
+	auto &sampler = mSamplers[index];
+	if (sampler)
+		return sampler.get();
+
+	SamplerBuilder builder;
+	builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+	builder.setMinFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+	builder.setMagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
+	builder.setAddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT);
+	sampler = builder.create(GetVulkanFrameBuffer()->device);
+	sampler->SetDebugName("VkPostprocess.mSamplers");
+	return sampler.get();
+}
+
+void VkPostprocess::NextEye(int eyeCount)
+{
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+VkPPTexture::VkPPTexture(PPTexture *texture)
 {
 	auto fb = GetVulkanFrameBuffer();
 
-	TMap<FString, PPTextureDesc>::Iterator it(hw_postprocess.Textures);
-	TMap<FString, PPTextureDesc>::Pair *pair;
-	while (it.NextPair(pair))
+	VkFormat format;
+	int pixelsize;
+	switch (texture->Format)
 	{
-		const auto &desc = pair->Value;
-		auto &vktex = mTextures[pair->Key];
+	default:
+	case PixelFormat::Rgba8: format = VK_FORMAT_R8G8B8A8_UNORM; pixelsize = 4; break;
+	case PixelFormat::Rgba16f: format = VK_FORMAT_R16G16B16A16_SFLOAT; pixelsize = 8; break;
+	case PixelFormat::R32f: format = VK_FORMAT_R32_SFLOAT; pixelsize = 4; break;
+	case PixelFormat::Rg16f: format = VK_FORMAT_R16G16_SFLOAT; pixelsize = 4; break;
+	case PixelFormat::Rgba16_snorm: format = VK_FORMAT_R16G16B16A16_SNORM; pixelsize = 8; break;
+	}
 
-		if (vktex && (vktex->Image->width != desc.Width || vktex->Image->height != desc.Height))
-			vktex.reset();
+	ImageBuilder imgbuilder;
+	imgbuilder.setFormat(format);
+	imgbuilder.setSize(texture->Width, texture->Height);
+	if (texture->Data)
+		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+	else
+		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
+	if (!imgbuilder.isFormatSupported(fb->device))
+		I_FatalError("Vulkan device does not support the image format required by a postprocess texture\n");
+	Image = imgbuilder.create(fb->device);
+	Image->SetDebugName("VkPPTexture");
+	Format = format;
 
-		if (!vktex)
-		{
-			vktex.reset(new VkPPTexture());
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(Image.get(), format);
+	View = viewbuilder.create(fb->device);
+	View->SetDebugName("VkPPTextureView");
 
-			VkFormat format;
-			int pixelsize;
-			switch (pair->Value.Format)
-			{
-			default:
-			case PixelFormat::Rgba8: format = VK_FORMAT_R8G8B8A8_UNORM; pixelsize = 4; break;
-			case PixelFormat::Rgba16f: format = VK_FORMAT_R16G16B16A16_SFLOAT; pixelsize = 8; break;
-			case PixelFormat::R32f: format = VK_FORMAT_R32_SFLOAT; pixelsize = 4; break;
-			case PixelFormat::Rg16f: format = VK_FORMAT_R16G16_SFLOAT; pixelsize = 4; break;
-			case PixelFormat::Rgba16_snorm: format = VK_FORMAT_R16G16B16A16_SNORM; pixelsize = 8; break;
-			}
+	if (texture->Data)
+	{
+		size_t totalsize = texture->Width * texture->Height * pixelsize;
+		BufferBuilder stagingbuilder;
+		stagingbuilder.setSize(totalsize);
+		stagingbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+		Staging = stagingbuilder.create(fb->device);
+		Staging->SetDebugName("VkPPTextureStaging");
 
-			ImageBuilder imgbuilder;
-			imgbuilder.setFormat(format);
-			imgbuilder.setSize(desc.Width, desc.Height);
-			if (desc.Data)
-				imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
-			else
-				imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT);
-			if (!imgbuilder.isFormatSupported(fb->device))
-				I_FatalError("Vulkan device does not support the image format required by %s\n", pair->Key.GetChars());
-			vktex->Image = imgbuilder.create(fb->device);
-			vktex->Image->SetDebugName(pair->Key.GetChars());
-			vktex->Format = format;
+		PipelineBarrier barrier0;
+		barrier0.addImage(Image.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
+		barrier0.execute(fb->GetUploadCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-			ImageViewBuilder viewbuilder;
-			viewbuilder.setImage(vktex->Image.get(), format);
-			vktex->View = viewbuilder.create(fb->device);
-			vktex->View->SetDebugName(pair->Key.GetChars());
+		void *data = Staging->Map(0, totalsize);
+		memcpy(data, texture->Data.get(), totalsize);
+		Staging->Unmap();
 
-			if (desc.Data)
-			{
-				size_t totalsize = desc.Width * desc.Height * pixelsize;
-				BufferBuilder stagingbuilder;
-				stagingbuilder.setSize(totalsize);
-				stagingbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-				vktex->Staging = stagingbuilder.create(fb->device);
-				vktex->Staging->SetDebugName(pair->Key.GetChars());
+		VkBufferImageCopy region = {};
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		region.imageSubresource.layerCount = 1;
+		region.imageExtent.depth = 1;
+		region.imageExtent.width = texture->Width;
+		region.imageExtent.height = texture->Height;
+		fb->GetUploadCommands()->copyBufferToImage(Staging->buffer, Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-				PipelineBarrier barrier0;
-				barrier0.addImage(vktex->Image.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 0, VK_ACCESS_TRANSFER_WRITE_BIT);
-				barrier0.execute(fb->GetUploadCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
-
-				void *data = vktex->Staging->Map(0, totalsize);
-				memcpy(data, desc.Data.get(), totalsize);
-				vktex->Staging->Unmap();
-
-				VkBufferImageCopy region = {};
-				region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-				region.imageSubresource.layerCount = 1;
-				region.imageExtent.depth = 1;
-				region.imageExtent.width = desc.Width;
-				region.imageExtent.height = desc.Height;
-				fb->GetUploadCommands()->copyBufferToImage(vktex->Staging->buffer, vktex->Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-				PipelineBarrier barrier1;
-				barrier1.addImage(vktex->Image.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-				barrier1.execute(fb->GetUploadCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-				vktex->Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			}
-			else
-			{
-				PipelineBarrier barrier;
-				barrier.addImage(vktex->Image.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
-				barrier.execute(fb->GetUploadCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-				vktex->Layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			}
-		}
+		PipelineBarrier barrier1;
+		barrier1.addImage(Image.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+		barrier1.execute(fb->GetUploadCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+		Layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	}
+	else
+	{
+		PipelineBarrier barrier;
+		barrier.addImage(Image.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT);
+		barrier.execute(fb->GetUploadCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		Layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 }
 
-void VkPostprocess::CompileEffectShaders()
+/////////////////////////////////////////////////////////////////////////////
+
+VkPPShader::VkPPShader(PPShader *shader)
 {
 	auto fb = GetVulkanFrameBuffer();
 
-	TMap<FString, PPShader>::Iterator it(hw_postprocess.Shaders);
-	TMap<FString, PPShader>::Pair *pair;
-	while (it.NextPair(pair))
-	{
-		const auto &desc = pair->Value;
-		auto &vkshader = mShaders[pair->Key];
-		if (!vkshader)
-		{
-			vkshader.reset(new VkPPShader());
+	FString prolog;
+	if (!shader->Uniforms.empty())
+		prolog = UniformBlockDecl::Create("Uniforms", shader->Uniforms, -1);
+	prolog += shader->Defines;
 
-			FString prolog;
-			if (!desc.Uniforms.empty())
-				prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, -1);
-			prolog += desc.Defines;
+	ShaderBuilder vertbuilder;
+	vertbuilder.setVertexShader(LoadShaderCode(shader->VertexShader, "", shader->Version));
+	VertexShader = vertbuilder.create(fb->device);
+	VertexShader->SetDebugName(shader->VertexShader.GetChars());
 
-			ShaderBuilder vertbuilder;
-			vertbuilder.setVertexShader(LoadShaderCode(desc.VertexShader, "", desc.Version));
-			vkshader->VertexShader = vertbuilder.create(fb->device);
-			vkshader->VertexShader->SetDebugName(desc.VertexShader.GetChars());
-
-			ShaderBuilder fragbuilder;
-			fragbuilder.setFragmentShader(LoadShaderCode(desc.FragmentShader, prolog, desc.Version));
-			vkshader->FragmentShader = fragbuilder.create(fb->device);
-			vkshader->FragmentShader->SetDebugName(desc.FragmentShader.GetChars());
-		}
-	}
+	ShaderBuilder fragbuilder;
+	fragbuilder.setFragmentShader(LoadShaderCode(shader->FragmentShader, prolog, shader->Version));
+	FragmentShader = fragbuilder.create(fb->device);
+	FragmentShader->SetDebugName(shader->FragmentShader.GetChars());
 }
 
-FString VkPostprocess::LoadShaderCode(const FString &lumpName, const FString &defines, int version)
+FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defines, int version)
 {
 	int lump = Wads.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName.GetChars());
@@ -408,50 +401,49 @@ FString VkPostprocess::LoadShaderCode(const FString &lumpName, const FString &de
 	return patchedCode;
 }
 
-void VkPostprocess::RenderEffect(const FString &name)
+/////////////////////////////////////////////////////////////////////////////
+
+void VkPPRenderState::Draw()
 {
-	GetVulkanFrameBuffer()->GetRenderState()->EndRenderPass();
+	auto fb = GetVulkanFrameBuffer();
+	auto pp = fb->GetPostprocess();
 
-	if (hw_postprocess.Effects[name].Size() == 0)
-		return;
+	fb->GetRenderState()->EndRenderPass();
 
-	for (const PPStep &step : hw_postprocess.Effects[name])
+	VkPPRenderPassKey key;
+	key.BlendMode = BlendMode;
+	key.InputTextures = Textures.Size();
+	key.Uniforms = Uniforms.Data.Size();
+	key.Shader = GetVkShader(Shader);
+	key.SwapChain = (Output.Type == PPTextureType::SwapChain);
+	key.ShadowMapBuffers = ShadowMapBuffers;
+	if (Output.Type == PPTextureType::PPTexture)
+		key.OutputFormat = GetVkTexture(Output.Texture)->Format;
+	else if (Output.Type == PPTextureType::SwapChain)
+		key.OutputFormat = GetVulkanFrameBuffer()->swapChain->swapChainFormat.format;
+	else if (Output.Type == PPTextureType::ShadowMap)
+		key.OutputFormat = VK_FORMAT_R32_SFLOAT;
+	else
+		key.OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+
+	auto &passSetup = pp->mRenderPassSetup[key];
+	if (!passSetup)
+		passSetup.reset(new VkPPRenderPassSetup(key));
+
+	int framebufferWidth = 0, framebufferHeight = 0;
+	VulkanDescriptorSet *input = GetInput(passSetup.get(), Textures, ShadowMapBuffers);
+	VulkanFramebuffer *output = GetOutput(passSetup.get(), Output, framebufferWidth, framebufferHeight);
+
+	RenderScreenQuad(passSetup.get(), input, output, framebufferWidth, framebufferHeight, Viewport.left, Viewport.top, Viewport.width, Viewport.height, Uniforms.Data.Data(), Uniforms.Data.Size());
+
+	// Advance to next PP texture if our output was sent there
+	if (Output.Type == PPTextureType::NextPipelineTexture)
 	{
-		VkPPRenderPassKey key;
-		key.BlendMode = step.BlendMode;
-		key.InputTextures = step.Textures.Size();
-		key.Uniforms = step.Uniforms.Data.Size();
-		key.Shader = mShaders[step.ShaderName].get();
-		key.SwapChain = (step.Output.Type == PPTextureType::SwapChain);
-		key.ShadowMapBuffers = step.ShadowMapBuffers;
-		if (step.Output.Type == PPTextureType::PPTexture)
-			key.OutputFormat = mTextures[step.Output.Texture]->Format;
-		else if (step.Output.Type == PPTextureType::SwapChain)
-			key.OutputFormat = GetVulkanFrameBuffer()->swapChain->swapChainFormat.format;
-		else if (step.Output.Type == PPTextureType::ShadowMap)
-			key.OutputFormat = VK_FORMAT_R32_SFLOAT;
-		else
-			key.OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
-
-		auto &passSetup = mRenderPassSetup[key];
-		if (!passSetup)
-			passSetup.reset(new VkPPRenderPassSetup(key));
-
-		int framebufferWidth = 0, framebufferHeight = 0;
-		VulkanDescriptorSet *input = GetInput(passSetup.get(), step.Textures, step.ShadowMapBuffers);
-		VulkanFramebuffer *output = GetOutput(passSetup.get(), step.Output, framebufferWidth, framebufferHeight);
-
-		RenderScreenQuad(passSetup.get(), input, output, framebufferWidth, framebufferHeight, step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height, step.Uniforms.Data.Data(), step.Uniforms.Data.Size());
-
-		// Advance to next PP texture if our output was sent there
-		if (step.Output.Type == PPTextureType::NextPipelineTexture)
-		{
-			mCurrentPipelineImage = (mCurrentPipelineImage + 1) % VkRenderBuffers::NumPipelineImages;
-		}
+		pp->mCurrentPipelineImage = (pp->mCurrentPipelineImage + 1) % VkRenderBuffers::NumPipelineImages;
 	}
 }
 
-void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize)
+void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize)
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto cmdbuffer = fb->GetDrawCommands();
@@ -491,10 +483,11 @@ void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescr
 	cmdbuffer->endRenderPass();
 }
 
-VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers)
+VulkanDescriptorSet *VkPPRenderState::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers)
 {
 	auto fb = GetVulkanFrameBuffer();
-	auto descriptors = mDescriptorPool->allocate(passSetup->DescriptorLayout.get());
+	auto pp = fb->GetPostprocess();
+	auto descriptors = pp->mDescriptorPool->allocate(passSetup->DescriptorLayout.get());
 	descriptors->SetDebugName("VkPostprocess.descriptors");
 
 	WriteDescriptors write;
@@ -503,7 +496,7 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 	for (unsigned int index = 0; index < textures.Size(); index++)
 	{
 		const PPTextureInput &input = textures[index];
-		VulkanSampler *sampler = GetSampler(input.Filter, input.Wrap);
+		VulkanSampler *sampler = pp->GetSampler(input.Filter, input.Wrap);
 		TextureImage tex = GetTexture(input.Type, input.Texture);
 
 		write.addCombinedImageSampler(descriptors.get(), index, tex.view, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -520,11 +513,11 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 	write.updateSets(fb->device);
 	imageTransition.execute(fb->GetDrawCommands());
 
-	mFrameDescriptorSets.push_back(std::move(descriptors));
-	return mFrameDescriptorSets.back().get();
+	pp->mFrameDescriptorSets.push_back(std::move(descriptors));
+	return pp->mFrameDescriptorSets.back().get();
 }
 
-VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferWidth, int &framebufferHeight)
+VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferWidth, int &framebufferHeight)
 {
 	auto fb = GetVulkanFrameBuffer();
 
@@ -565,14 +558,14 @@ VulkanFramebuffer *VkPostprocess::GetOutput(VkPPRenderPassSetup *passSetup, cons
 	return framebuffer.get();
 }
 
-VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type, const PPTextureName &name)
+VkPPRenderState::TextureImage VkPPRenderState::GetTexture(const PPTextureType &type, PPTexture *pptexture)
 {
 	auto fb = GetVulkanFrameBuffer();
 	TextureImage tex = {};
 
 	if (type == PPTextureType::CurrentPipelineTexture || type == PPTextureType::NextPipelineTexture)
 	{
-		int idx = mCurrentPipelineImage;
+		int idx = fb->GetPostprocess()->mCurrentPipelineImage;
 		if (type == PPTextureType::NextPipelineTexture)
 			idx = (idx + 1) % VkRenderBuffers::NumPipelineImages;
 
@@ -583,10 +576,11 @@ VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type,
 	}
 	else if (type == PPTextureType::PPTexture)
 	{
-		tex.image = mTextures[name]->Image.get();
-		tex.view = mTextures[name]->View.get();
-		tex.layout = &mTextures[name]->Layout;
-		tex.debugname = name.GetChars();
+		auto vktex = GetVkTexture(pptexture);
+		tex.image = vktex->Image.get();
+		tex.view = vktex->View.get();
+		tex.layout = &vktex->Layout;
+		tex.debugname = "PPTexture";
 	}
 	else if (type == PPTextureType::SceneColor)
 	{
@@ -632,31 +626,24 @@ VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type,
 	}
 	else
 	{
-		I_FatalError("VkPostprocess::GetTexture not implemented yet for this texture type");
+		I_FatalError("VkPPRenderState::GetTexture not implemented yet for this texture type");
 	}
 
 	return tex;
 }
 
-VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)
+VkPPShader *VkPPRenderState::GetVkShader(PPShader *shader)
 {
-	int index = (((int)filter) << 2) | (int)wrap;
-	auto &sampler = mSamplers[index];
-	if (sampler)
-		return sampler.get();
-
-	SamplerBuilder builder;
-	builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
-	builder.setMinFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
-	builder.setMagFilter(filter == PPFilterMode::Nearest ? VK_FILTER_NEAREST : VK_FILTER_LINEAR);
-	builder.setAddressMode(wrap == PPWrapMode::Clamp ? VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE : VK_SAMPLER_ADDRESS_MODE_REPEAT);
-	sampler = builder.create(GetVulkanFrameBuffer()->device);
-	sampler->SetDebugName("VkPostprocess.mSamplers");
-	return sampler.get();
+	if (!shader->Backend)
+		shader->Backend = std::make_unique<VkPPShader>(shader);
+	return static_cast<VkPPShader*>(shader->Backend.get());
 }
 
-void VkPostprocess::NextEye(int eyeCount)
+VkPPTexture *VkPPRenderState::GetVkTexture(PPTexture *texture)
 {
+	if (!texture->Backend)
+		texture->Backend = std::make_unique<VkPPTexture>(texture);
+	return static_cast<VkPPTexture*>(texture->Backend.get());
 }
 
 /////////////////////////////////////////////////////////////////////////////

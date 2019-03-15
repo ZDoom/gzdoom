@@ -7,42 +7,13 @@
 
 Postprocess hw_postprocess;
 
-Postprocess::Postprocess()
-{
-	Managers.Push(new PPBloom());
-	Managers.Push(new PPLensDistort());
-	Managers.Push(new PPFXAA());
-	Managers.Push(new PPCameraExposure());
-	Managers.Push(new PPColormap());
-	Managers.Push(new PPTonemap());
-	Managers.Push(new PPAmbientOcclusion());
-	Managers.Push(new PPPresent());
-	Managers.Push(new PPShadowMap());
-}
-
-Postprocess::~Postprocess()
-{
-	for (unsigned int i = 0; i < Managers.Size(); i++)
-		delete Managers[i];
-}
+PPResource *PPResource::First = nullptr;
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPBloom::DeclareShaders()
+void PPBloom::UpdateTextures(int width, int height)
 {
-	hw_postprocess.Shaders["BloomCombine"] = { "shaders/glsl/bloomcombine.fp", "", {} };
-	hw_postprocess.Shaders["BloomExtract"] = { "shaders/glsl/bloomextract.fp", "", ExtractUniforms::Desc() };
-	hw_postprocess.Shaders["BlurVertical"] = { "shaders/glsl/blur.fp", "#define BLUR_VERTICAL\n", BlurUniforms::Desc() };
-	hw_postprocess.Shaders["BlurHorizontal"] = { "shaders/glsl/blur.fp", "#define BLUR_HORIZONTAL\n", BlurUniforms::Desc() };
-}
-
-void PPBloom::UpdateTextures()
-{
-	int width = hw_postprocess.SceneWidth;
-	int height = hw_postprocess.SceneHeight;
-
-	// No scene, no bloom!
-	if (width <= 0 || height <= 0)
+	if (width == lastWidth && height == lastHeight)
 		return;
 
 	int bloomWidth = (width + 1) / 2;
@@ -51,35 +22,30 @@ void PPBloom::UpdateTextures()
 	for (int i = 0; i < NumBloomLevels; i++)
 	{
 		auto &blevel = levels[i];
-		blevel.VTexture.Format("Bloom.VTexture.%d", i);
-		blevel.HTexture.Format("Bloom.HTexture.%d", i);
 		blevel.Viewport.left = 0;
 		blevel.Viewport.top = 0;
 		blevel.Viewport.width = (bloomWidth + 1) / 2;
 		blevel.Viewport.height = (bloomHeight + 1) / 2;
-
-		PPTextureDesc texture = { blevel.Viewport.width, blevel.Viewport.height, PixelFormat::Rgba16f };
-		hw_postprocess.Textures[blevel.VTexture] = texture;
-		hw_postprocess.Textures[blevel.HTexture] = texture;
+		blevel.VTexture = { blevel.Viewport.width, blevel.Viewport.height, PixelFormat::Rgba16f };
+		blevel.HTexture = { blevel.Viewport.width, blevel.Viewport.height, PixelFormat::Rgba16f };
 
 		bloomWidth = blevel.Viewport.width;
 		bloomHeight = blevel.Viewport.height;
 	}
+
+	lastWidth = width;
+	lastHeight = height;
 }
 
-void PPBloom::UpdateSteps()
+void PPBloom::RenderBloom(PPRenderState *renderstate, int sceneWidth, int sceneHeight, int fixedcm)
 {
-	UpdateBlurSteps();
-
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || hw_postprocess.fixedcm != CM_DEFAULT || gl_ssao_debug || hw_postprocess.SceneWidth <= 0 || hw_postprocess.SceneHeight <= 0)
+	if (!gl_bloom || fixedcm != CM_DEFAULT || gl_ssao_debug || sceneWidth <= 0 || sceneHeight <= 0)
 	{
-		hw_postprocess.Effects["BloomScene"] = {};
 		return;
 	}
 
-	TArray<PPStep> steps;
-	PPStep step;
+	UpdateTextures(sceneWidth, sceneHeight);
 
 	ExtractUniforms extractUniforms;
 	extractUniforms.Scale = screen->SceneScale();
@@ -88,14 +54,15 @@ void PPBloom::UpdateSteps()
 	auto &level0 = levels[0];
 
 	// Extract blooming pixels from scene texture:
-	step.ShaderName = "BloomExtract";
-	step.Uniforms.Set(extractUniforms);
-	step.Viewport = level0.Viewport;
-	step.SetInputCurrent(0, PPFilterMode::Linear);
-	step.SetInputTexture(1, "Exposure.CameraTexture");
-	step.SetOutputTexture(level0.VTexture);
-	step.SetNoBlend();
-	steps.Push(step);
+	renderstate->Clear();
+	renderstate->Shader = &BloomExtract;
+	renderstate->Uniforms.Set(extractUniforms);
+	renderstate->Viewport = level0.Viewport;
+	renderstate->SetInputCurrent(0, PPFilterMode::Linear);
+	renderstate->SetInputTexture(1, &hw_postprocess.exposure.CameraTexture);
+	renderstate->SetOutputTexture(&level0.VTexture);
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 
 	const float blurAmount = gl_bloom_amount;
 	BlurUniforms blurUniforms;
@@ -107,17 +74,18 @@ void PPBloom::UpdateSteps()
 		auto &blevel = levels[i];
 		auto &next = levels[i + 1];
 
-		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
+		BlurStep(renderstate, blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false);
+		BlurStep(renderstate, blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true);
 
 		// Linear downscale:
-		step.ShaderName = "BloomCombine";
-		step.Uniforms.Clear();
-		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
-		step.SetOutputTexture(next.VTexture);
-		step.SetNoBlend();
-		steps.Push(step);
+		renderstate->Clear();
+		renderstate->Shader = &BloomCombine;
+		renderstate->Uniforms.Clear();
+		renderstate->Viewport = next.Viewport;
+		renderstate->SetInputTexture(0, &blevel.VTexture, PPFilterMode::Linear);
+		renderstate->SetOutputTexture(&next.VTexture);
+		renderstate->SetNoBlend();
+		renderstate->Draw();
 	}
 
 	// Blur and upscale:
@@ -126,66 +94,69 @@ void PPBloom::UpdateSteps()
 		auto &blevel = levels[i];
 		auto &next = levels[i - 1];
 
-		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
+		BlurStep(renderstate, blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false);
+		BlurStep(renderstate, blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true);
 
 		// Linear upscale:
-		step.ShaderName = "BloomCombine";
-		step.Uniforms.Clear();
-		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
-		step.SetOutputTexture(next.VTexture);
-		step.SetNoBlend();
-		steps.Push(step);
+		renderstate->Clear();
+		renderstate->Shader = &BloomCombine;
+		renderstate->Uniforms.Clear();
+		renderstate->Viewport = next.Viewport;
+		renderstate->SetInputTexture(0, &blevel.VTexture, PPFilterMode::Linear);
+		renderstate->SetOutputTexture(&next.VTexture);
+		renderstate->SetNoBlend();
+		renderstate->Draw();
 	}
 
-	steps.Push(BlurStep(blurUniforms, level0.VTexture, level0.HTexture, level0.Viewport, false));
-	steps.Push(BlurStep(blurUniforms, level0.HTexture, level0.VTexture, level0.Viewport, true));
+	BlurStep(renderstate, blurUniforms, level0.VTexture, level0.HTexture, level0.Viewport, false);
+	BlurStep(renderstate, blurUniforms, level0.HTexture, level0.VTexture, level0.Viewport, true);
 
 	// Add bloom back to scene texture:
-	step.ShaderName = "BloomCombine";
-	step.Uniforms.Clear();
-	step.Viewport = screen->mSceneViewport;
-	step.SetInputTexture(0, level0.VTexture, PPFilterMode::Linear);
-	step.SetOutputCurrent();
-	step.SetAdditiveBlend();
-	steps.Push(step);
-
-	hw_postprocess.Effects["BloomScene"] = steps;
+	renderstate->Clear();
+	renderstate->Shader = &BloomCombine;
+	renderstate->Uniforms.Clear();
+	renderstate->Viewport = screen->mSceneViewport;
+	renderstate->SetInputTexture(0, &level0.VTexture, PPFilterMode::Linear);
+	renderstate->SetOutputCurrent();
+	renderstate->SetAdditiveBlend();
+	renderstate->Draw();
 }
 
-void PPBloom::UpdateBlurSteps()
+void PPBloom::RenderBlur(PPRenderState *renderstate, int sceneWidth, int sceneHeight, float gameinfobluramount)
 {
+	// No scene, no blur!
+	if (sceneWidth <= 0 || sceneHeight <= 0)
+		return;
+
+	UpdateTextures(sceneWidth, sceneHeight);
+
 	// first, respect the CVar
 	float blurAmount = gl_menu_blur;
 
 	// if CVar is negative, use the gameinfo entry
 	if (gl_menu_blur < 0)
-		blurAmount = hw_postprocess.gameinfobluramount;
+		blurAmount = gameinfobluramount;
 
 	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
 	if (blurAmount <= 0.0)
 	{
-		hw_postprocess.Effects["BlurScene"] = {};
 		return;
 	}
-
-	TArray<PPStep> steps;
-	PPStep step;
 
 	int numLevels = 3;
 	assert(numLevels <= NumBloomLevels);
 
-	const auto &level0 = levels[0];
+	auto &level0 = levels[0];
 
 	// Grab the area we want to bloom:
-	step.ShaderName = "BloomCombine";
-	step.Uniforms.Clear();
-	step.Viewport = level0.Viewport;
-	step.SetInputCurrent(0, PPFilterMode::Linear);
-	step.SetOutputTexture(level0.VTexture);
-	step.SetNoBlend();
-	steps.Push(step);
+	renderstate->Clear();
+	renderstate->Shader = &BloomCombine;
+	renderstate->Uniforms.Clear();
+	renderstate->Viewport = level0.Viewport;
+	renderstate->SetInputCurrent(0, PPFilterMode::Linear);
+	renderstate->SetOutputTexture(&level0.VTexture);
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 
 	BlurUniforms blurUniforms;
 	ComputeBlurSamples(7, blurAmount, blurUniforms.SampleWeights);
@@ -196,17 +167,18 @@ void PPBloom::UpdateBlurSteps()
 		auto &blevel = levels[i];
 		auto &next = levels[i + 1];
 
-		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
+		BlurStep(renderstate, blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false);
+		BlurStep(renderstate, blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true);
 
 		// Linear downscale:
-		step.ShaderName = "BloomCombine";
-		step.Uniforms.Clear();
-		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
-		step.SetOutputTexture(next.VTexture);
-		step.SetNoBlend();
-		steps.Push(step);
+		renderstate->Clear();
+		renderstate->Shader = &BloomCombine;
+		renderstate->Uniforms.Clear();
+		renderstate->Viewport = next.Viewport;
+		renderstate->SetInputTexture(0, &blevel.VTexture, PPFilterMode::Linear);
+		renderstate->SetOutputTexture(&next.VTexture);
+		renderstate->SetNoBlend();
+		renderstate->Draw();
 	}
 
 	// Blur and upscale:
@@ -215,44 +187,44 @@ void PPBloom::UpdateBlurSteps()
 		auto &blevel = levels[i];
 		auto &next = levels[i - 1];
 
-		steps.Push(BlurStep(blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true));
+		BlurStep(renderstate, blurUniforms, blevel.VTexture, blevel.HTexture, blevel.Viewport, false);
+		BlurStep(renderstate, blurUniforms, blevel.HTexture, blevel.VTexture, blevel.Viewport, true);
 
 		// Linear upscale:
-		step.ShaderName = "BloomCombine";
-		step.Uniforms.Clear();
-		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, blevel.VTexture, PPFilterMode::Linear);
-		step.SetOutputTexture(next.VTexture);
-		step.SetNoBlend();
-		steps.Push(step);
+		renderstate->Clear();
+		renderstate->Shader = &BloomCombine;
+		renderstate->Uniforms.Clear();
+		renderstate->Viewport = next.Viewport;
+		renderstate->SetInputTexture(0, &blevel.VTexture, PPFilterMode::Linear);
+		renderstate->SetOutputTexture(&next.VTexture);
+		renderstate->SetNoBlend();
+		renderstate->Draw();
 	}
 
-	steps.Push(BlurStep(blurUniforms, level0.VTexture, level0.HTexture, level0.Viewport, false));
-	steps.Push(BlurStep(blurUniforms, level0.HTexture, level0.VTexture, level0.Viewport, true));
+	BlurStep(renderstate, blurUniforms, level0.VTexture, level0.HTexture, level0.Viewport, false);
+	BlurStep(renderstate, blurUniforms, level0.HTexture, level0.VTexture, level0.Viewport, true);
 
 	// Copy blur back to scene texture:
-	step.ShaderName = "BloomCombine";
-	step.Uniforms.Clear();
-	step.Viewport = screen->mScreenViewport;
-	step.SetInputTexture(0, level0.VTexture, PPFilterMode::Linear);
-	step.SetOutputCurrent();
-	step.SetNoBlend();
-	steps.Push(step);
-
-	hw_postprocess.Effects["BlurScene"] = steps;
+	renderstate->Clear();
+	renderstate->Shader = &BloomCombine;
+	renderstate->Uniforms.Clear();
+	renderstate->Viewport = screen->mScreenViewport;
+	renderstate->SetInputTexture(0, &level0.VTexture, PPFilterMode::Linear);
+	renderstate->SetOutputCurrent();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 }
 
-PPStep PPBloom::BlurStep(const BlurUniforms &blurUniforms, PPTextureName input, PPTextureName output, PPViewport viewport, bool vertical)
+void PPBloom::BlurStep(PPRenderState *renderstate, const BlurUniforms &blurUniforms, PPTexture &input, PPTexture &output, PPViewport viewport, bool vertical)
 {
-	PPStep step;
-	step.ShaderName = vertical ? "BlurVertical" : "BlurHorizontal";
-	step.Uniforms.Set(blurUniforms);
-	step.Viewport = viewport;
-	step.SetInputTexture(0, input);
-	step.SetOutputTexture(output);
-	step.SetNoBlend();
-	return step;
+	renderstate->Clear();
+	renderstate->Shader = vertical ? &BlurVertical : &BlurHorizontal;
+	renderstate->Uniforms.Set(blurUniforms);
+	renderstate->Viewport = viewport;
+	renderstate->SetInputTexture(0, &input);
+	renderstate->SetOutputTexture(&output);
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 }
 
 float PPBloom::ComputeBlurGaussian(float n, float theta) // theta = Blur Amount
@@ -284,16 +256,10 @@ void PPBloom::ComputeBlurSamples(int sampleCount, float blurAmount, float *sampl
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPLensDistort::DeclareShaders()
-{
-	hw_postprocess.Shaders["Lens"] = { "shaders/glsl/lensdistortion.fp", "", LensUniforms::Desc() };
-}
-
-void PPLensDistort::UpdateSteps()
+void PPLensDistort::Render(PPRenderState *renderstate)
 {
 	if (gl_lens == 0)
 	{
-		hw_postprocess.Effects["LensDistortScene"] = {};
 		return;
 	}
 
@@ -328,64 +294,58 @@ void PPLensDistort::UpdateSteps()
 	uniforms.LensDistortionCoefficient = k;
 	uniforms.CubicDistortionValue = kcube;
 
-	TArray<PPStep> steps;
-
-	PPStep step;
-	step.ShaderName = "Lens";
-	step.Uniforms.Set(uniforms);
-	step.Viewport = screen->mScreenViewport;
-	step.SetInputCurrent(0, PPFilterMode::Linear);
-	step.SetOutputNext();
-	step.SetNoBlend();
-	steps.Push(step);
-
-	hw_postprocess.Effects["LensDistortScene"] = steps;
+	renderstate->Clear();
+	renderstate->Shader = &Lens;
+	renderstate->Uniforms.Set(uniforms);
+	renderstate->Viewport = screen->mScreenViewport;
+	renderstate->SetInputCurrent(0, PPFilterMode::Linear);
+	renderstate->SetOutputNext();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPFXAA::DeclareShaders()
-{
-	hw_postprocess.Shaders["FXAALuma"] = { "shaders/glsl/fxaa.fp", "#define FXAA_LUMA_PASS\n", {} };
-	hw_postprocess.Shaders["FXAA"] = { "shaders/glsl/fxaa.fp", GetDefines(), FXAAUniforms::Desc(), GetMaxVersion() };
-}
-
-void PPFXAA::UpdateSteps()
+void PPFXAA::Render(PPRenderState *renderstate)
 {
 	if (0 == gl_fxaa)
 	{
-		hw_postprocess.Effects["ApplyFXAA"] = {};
 		return;
 	}
+
+	CreateShaders();
 
 	FXAAUniforms uniforms;
 	uniforms.ReciprocalResolution = { 1.0f / screen->mScreenViewport.width, 1.0f / screen->mScreenViewport.height };
 
-	TArray<PPStep> steps;
+	renderstate->Clear();
+	renderstate->Shader = &FXAALuma;
+	renderstate->Uniforms.Clear();
+	renderstate->Viewport = screen->mScreenViewport;
+	renderstate->SetInputCurrent(0, PPFilterMode::Nearest);
+	renderstate->SetOutputNext();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 
-	PPStep step;
-	step.ShaderName = "FXAALuma";
-	step.Uniforms.Clear();
-	step.Viewport = screen->mScreenViewport;
-	step.SetInputCurrent(0, PPFilterMode::Nearest);
-	step.SetOutputNext();
-	step.SetNoBlend();
-	steps.Push(step);
-
-	step.ShaderName = "FXAA";
-	step.Uniforms.Set(uniforms);
-	step.Viewport = screen->mScreenViewport;
-	step.SetInputCurrent(0, PPFilterMode::Linear);
-	step.SetOutputNext();
-	step.SetNoBlend();
-	steps.Push(step);
-
-	hw_postprocess.Effects["ApplyFXAA"] = steps;
+	renderstate->Shader = &FXAA;
+	renderstate->Uniforms.Set(uniforms);
+	renderstate->SetInputCurrent(0, PPFilterMode::Linear);
+	renderstate->Draw();
 }
 
 int PPFXAA::GetMaxVersion()
 {
 	return screen->glslversion >= 4.f ? 400 : 330;
+}
+
+void PPFXAA::CreateShaders()
+{
+	if (LastQuality == gl_fxaa)
+		return;
+
+	FXAALuma = { "shaders/glsl/fxaa.fp", "#define FXAA_LUMA_PASS\n", {} };
+	FXAA = { "shaders/glsl/fxaa.fp", GetDefines(), FXAAUniforms::Desc(), GetMaxVersion() };
+	LastQuality = gl_fxaa;
 }
 
 FString PPFXAA::GetDefines()
@@ -417,61 +377,14 @@ FString PPFXAA::GetDefines()
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPCameraExposure::DeclareShaders()
-{
-	hw_postprocess.Shaders["ExposureExtract"] = { "shaders/glsl/exposureextract.fp", "", ExposureExtractUniforms::Desc() };
-	hw_postprocess.Shaders["ExposureAverage"] = { "shaders/glsl/exposureaverage.fp", "", {}, 400 };
-	hw_postprocess.Shaders["ExposureCombine"] = { "shaders/glsl/exposurecombine.fp", "", ExposureCombineUniforms::Desc() };
-}
-
-void PPCameraExposure::UpdateTextures()
-{
-	int width = hw_postprocess.SceneWidth;
-	int height = hw_postprocess.SceneHeight;
-
-	if (ExposureLevels.Size() > 0 && ExposureLevels[0].Viewport.width == width && ExposureLevels[0].Viewport.height == height)
-	{
-		return;
-	}
-
-	ExposureLevels.Clear();
-
-	int i = 0;
-	do
-	{
-		width = MAX(width / 2, 1);
-		height = MAX(height / 2, 1);
-
-		PPExposureLevel blevel;
-		blevel.Viewport.left = 0;
-		blevel.Viewport.top = 0;
-		blevel.Viewport.width = width;
-		blevel.Viewport.height = height;
-		blevel.Texture.Format("Exposure.Level.%d", i);
-		ExposureLevels.Push(blevel);
-
-		PPTextureDesc texture = { blevel.Viewport.width, blevel.Viewport.height, PixelFormat::R32f };
-		hw_postprocess.Textures[blevel.Texture] = texture;
-
-		i++;
-
-	} while (width > 1 || height > 1);
-
-	hw_postprocess.Textures["Exposure.CameraTexture"] = { 1, 1, PixelFormat::R32f };
-
-	FirstExposureFrame = true;
-}
-
-void PPCameraExposure::UpdateSteps()
+void PPCameraExposure::Render(PPRenderState *renderstate, int sceneWidth, int sceneHeight)
 {
 	if (!gl_bloom)
 	{
-		hw_postprocess.Effects["UpdateCameraExposure"] = {};
 		return;
 	}
 
-	TArray<PPStep> steps;
-	PPStep step;
+	UpdateTextures(sceneWidth, sceneHeight);
 
 	ExposureExtractUniforms extractUniforms;
 	extractUniforms.Scale = screen->SceneScale();
@@ -486,63 +399,84 @@ void PPCameraExposure::UpdateSteps()
 	auto &level0 = ExposureLevels[0];
 
 	// Extract light blevel from scene texture:
-	step.ShaderName = "ExposureExtract";
-	step.Uniforms.Set(extractUniforms);
-	step.Viewport = level0.Viewport;
-	step.SetInputCurrent(0, PPFilterMode::Linear);
-	step.SetOutputTexture(level0.Texture);
-	step.SetNoBlend();
-	steps.Push(step);
+	renderstate->Clear();
+	renderstate->Shader = &ExposureExtract;
+	renderstate->Uniforms.Set(extractUniforms);
+	renderstate->Viewport = level0.Viewport;
+	renderstate->SetInputCurrent(0, PPFilterMode::Linear);
+	renderstate->SetOutputTexture(&level0.Texture);
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 
 	// Find the average value:
-	for (unsigned int i = 0; i + 1 < ExposureLevels.Size(); i++)
+	for (size_t i = 0; i + 1 < ExposureLevels.size(); i++)
 	{
 		auto &blevel = ExposureLevels[i];
 		auto &next = ExposureLevels[i + 1];
 
-		step.ShaderName = "ExposureAverage";
-		step.Uniforms.Clear();
-		step.Viewport = next.Viewport;
-		step.SetInputTexture(0, blevel.Texture, PPFilterMode::Linear);
-		step.SetOutputTexture(next.Texture);
-		step.SetNoBlend();
-		steps.Push(step);
+		renderstate->Shader = &ExposureAverage;
+		renderstate->Uniforms.Clear();
+		renderstate->Viewport = next.Viewport;
+		renderstate->SetInputTexture(0, &blevel.Texture, PPFilterMode::Linear);
+		renderstate->SetOutputTexture(&next.Texture);
+		renderstate->SetNoBlend();
+		renderstate->Draw();
 	}
 
 	// Combine average value with current camera exposure:
-	step.ShaderName = "ExposureCombine";
-	step.Uniforms.Set(combineUniforms);
-	step.Viewport.left = 0;
-	step.Viewport.top = 0;
-	step.Viewport.width = 1;
-	step.Viewport.height = 1;
-	step.SetInputTexture(0, ExposureLevels.Last().Texture, PPFilterMode::Linear);
-	step.SetOutputTexture("Exposure.CameraTexture");
+	renderstate->Shader = &ExposureCombine;
+	renderstate->Uniforms.Set(combineUniforms);
+	renderstate->Viewport.left = 0;
+	renderstate->Viewport.top = 0;
+	renderstate->Viewport.width = 1;
+	renderstate->Viewport.height = 1;
+	renderstate->SetInputTexture(0, &ExposureLevels.back().Texture, PPFilterMode::Linear);
+	renderstate->SetOutputTexture(&CameraTexture);
 	if (!FirstExposureFrame)
-		step.SetAlphaBlend();
+		renderstate->SetAlphaBlend();
 	else
-		step.SetNoBlend();
-	steps.Push(step);
+		renderstate->SetNoBlend();
+	renderstate->Draw();
 
 	FirstExposureFrame = false;
+}
 
-	hw_postprocess.Effects["UpdateCameraExposure"] = steps;
+void PPCameraExposure::UpdateTextures(int width, int height)
+{
+	if (ExposureLevels.size() > 0 && ExposureLevels[0].Viewport.width == width && ExposureLevels[0].Viewport.height == height)
+	{
+		return;
+	}
+
+	ExposureLevels.clear();
+
+	int i = 0;
+	do
+	{
+		width = MAX(width / 2, 1);
+		height = MAX(height / 2, 1);
+
+		PPExposureLevel blevel;
+		blevel.Viewport.left = 0;
+		blevel.Viewport.top = 0;
+		blevel.Viewport.width = width;
+		blevel.Viewport.height = height;
+		blevel.Texture = { blevel.Viewport.width, blevel.Viewport.height, PixelFormat::R32f };
+		ExposureLevels.push_back(std::move(blevel));
+
+		i++;
+
+	} while (width > 1 || height > 1);
+
+	FirstExposureFrame = true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPColormap::DeclareShaders()
+void PPColormap::Render(PPRenderState *renderstate, int fixedcm)
 {
-	hw_postprocess.Shaders["Colormap"] = { "shaders/glsl/colormap.fp", "", ColormapUniforms::Desc() };
-}
-
-void PPColormap::UpdateSteps()
-{
-	int fixedcm = hw_postprocess.fixedcm;
-
 	if (fixedcm < CM_FIRSTSPECIALCOLORMAP || fixedcm >= CM_MAXCOLORMAP)
 	{
-		hw_postprocess.Effects["ColormapScene"] = {};
 		return;
 	}
 
@@ -554,99 +488,114 @@ void PPColormap::UpdateSteps()
 	uniforms.MapStart = { scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f };
 	uniforms.MapRange = m;
 
-	PPStep step;
-	step.ShaderName = "Colormap";
-	step.Uniforms.Set(uniforms);
-	step.Viewport = screen->mScreenViewport;
-	step.SetInputCurrent(0);
-	step.SetOutputNext();
-	step.SetNoBlend();
-
-	TArray<PPStep> steps;
-	steps.Push(step);
-	hw_postprocess.Effects["ColormapScene"] = steps;
+	renderstate->Clear();
+	renderstate->Shader = &Colormap;
+	renderstate->Uniforms.Set(uniforms);
+	renderstate->Viewport = screen->mScreenViewport;
+	renderstate->SetInputCurrent(0);
+	renderstate->SetOutputNext();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-void PPTonemap::DeclareShaders()
-{
-	hw_postprocess.Shaders["Tonemap.Linear"] = { "shaders/glsl/tonemap.fp", "#define LINEAR\n", {} };
-	hw_postprocess.Shaders["Tonemap.Reinhard"] = { "shaders/glsl/tonemap.fp", "#define REINHARD\n", {} };
-	hw_postprocess.Shaders["Tonemap.HejlDawson"] = { "shaders/glsl/tonemap.fp", "#define HEJLDAWSON\n", {} };
-	hw_postprocess.Shaders["Tonemap.Uncharted2"] = { "shaders/glsl/tonemap.fp", "#define UNCHARTED2\n", {} };
-	hw_postprocess.Shaders["Tonemap.Palette"] = { "shaders/glsl/tonemap.fp", "#define PALETTE\n", {} };
-}
 
 void PPTonemap::UpdateTextures()
 {
-	if (gl_tonemap == Palette)
+	if (gl_tonemap == Palette && !PaletteTexture.Data)
 	{
-		if (!hw_postprocess.Textures.CheckKey("Tonemap.Palette"))
-		{
-			std::shared_ptr<void> data(new uint32_t[512 * 512], [](void *p) { delete[](uint32_t*)p; });
+		std::shared_ptr<void> data(new uint32_t[512 * 512], [](void *p) { delete[](uint32_t*)p; });
 
-			uint8_t *lut = (uint8_t *)data.get();
-			for (int r = 0; r < 64; r++)
+		uint8_t *lut = (uint8_t *)data.get();
+		for (int r = 0; r < 64; r++)
+		{
+			for (int g = 0; g < 64; g++)
 			{
-				for (int g = 0; g < 64; g++)
+				for (int b = 0; b < 64; b++)
 				{
-					for (int b = 0; b < 64; b++)
-					{
-						PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4),
-							gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256)];
-						int index = ((r * 64 + g) * 64 + b) * 4;
-						lut[index] = color.r;
-						lut[index + 1] = color.g;
-						lut[index + 2] = color.b;
-						lut[index + 3] = 255;
-					}
+					PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4),
+						gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256)];
+					int index = ((r * 64 + g) * 64 + b) * 4;
+					lut[index] = color.r;
+					lut[index + 1] = color.g;
+					lut[index + 2] = color.b;
+					lut[index + 3] = 255;
 				}
 			}
-
-			hw_postprocess.Textures["Tonemap.Palette"] = { 512, 512, PixelFormat::Rgba8, data };
 		}
+
+		PaletteTexture = { 512, 512, PixelFormat::Rgba8, data };
 	}
 }
 
-void PPTonemap::UpdateSteps()
+void PPTonemap::Render(PPRenderState *renderstate)
 {
 	if (gl_tonemap == 0)
 	{
-		hw_postprocess.Effects["TonemapScene"] = {};
 		return;
 	}
 
-	PPShaderName shader;
+	UpdateTextures();
+
+	PPShader *shader = nullptr;
 	switch (gl_tonemap)
 	{
 	default:
-	case Linear:		shader = "Tonemap.Linear"; break;
-	case Reinhard:		shader = "Tonemap.Reinhard"; break;
-	case HejlDawson:	shader = "Tonemap.HejlDawson"; break;
-	case Uncharted2:	shader = "Tonemap.Uncharted2"; break;
-	case Palette:		shader = "Tonemap.Palette"; break;
+	case Linear:		shader = &LinearShader; break;
+	case Reinhard:		shader = &ReinhardShader; break;
+	case HejlDawson:	shader = &HejlDawsonShader; break;
+	case Uncharted2:	shader = &Uncharted2Shader; break;
+	case Palette:		shader = &PaletteShader; break;
 	}
 
-	PPStep step;
-	step.ShaderName = shader;
-	step.Viewport = screen->mScreenViewport;
-	step.SetInputCurrent(0);
+	renderstate->Clear();
+	renderstate->Shader = shader;
+	renderstate->Viewport = screen->mScreenViewport;
+	renderstate->SetInputCurrent(0);
 	if (gl_tonemap == Palette)
-		step.SetInputTexture(1, "Tonemap.Palette");
-	step.SetOutputNext();
-	step.SetNoBlend();
-
-	TArray<PPStep> steps;
-	steps.Push(step);
-	hw_postprocess.Effects["TonemapScene"] = steps;
+		renderstate->SetInputTexture(1, &PaletteTexture);
+	renderstate->SetOutputNext();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 }
-
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPAmbientOcclusion::DeclareShaders()
+PPAmbientOcclusion::PPAmbientOcclusion()
 {
+	// Must match quality enum in PPAmbientOcclusion::DeclareShaders
+	double numDirections[NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
+
+	std::mt19937 generator(1337);
+	std::uniform_real_distribution<double> distribution(0.0, 1.0);
+	for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
+	{
+		std::shared_ptr<void> data(new int16_t[16 * 4], [](void *p) { delete[](int16_t*)p; });
+		int16_t *randomValues = (int16_t *)data.get();
+
+		for (int i = 0; i < 16; i++)
+		{
+			double angle = 2.0 * M_PI * distribution(generator) / numDirections[quality];
+			double x = cos(angle);
+			double y = sin(angle);
+			double z = distribution(generator);
+			double w = distribution(generator);
+
+			randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
+			randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
+			randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
+			randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
+		}
+
+		AmbientRandomTexture[quality] = { 4, 4, PixelFormat::Rgba16_snorm, data };
+	}
+}
+
+void PPAmbientOcclusion::CreateShaders()
+{
+	if (gl_ssao == LastQuality)
+		return;
+
 	// Must match quality values in PPAmbientOcclusion::UpdateTextures
 	int numDirections, numSteps;
 	switch (gl_ssao)
@@ -665,74 +614,43 @@ void PPAmbientOcclusion::DeclareShaders()
 		#define NUM_STEPS %d.0
 	)", numDirections, numSteps);
 
-	hw_postprocess.Shaders["SSAO.LinearDepth"] = { "shaders/glsl/lineardepth.fp", "", LinearDepthUniforms::Desc() };
-	hw_postprocess.Shaders["SSAO.LinearDepthMS"] = { "shaders/glsl/lineardepth.fp", "#define MULTISAMPLE\n", LinearDepthUniforms::Desc() };
-	hw_postprocess.Shaders["SSAO.AmbientOcclude"] = { "shaders/glsl/ssao.fp", defines, SSAOUniforms::Desc() };
-	hw_postprocess.Shaders["SSAO.AmbientOccludeMS"] = { "shaders/glsl/ssao.fp", defines + "\n#define MULTISAMPLE\n", SSAOUniforms::Desc() };
-	hw_postprocess.Shaders["SSAO.BlurVertical"] = { "shaders/glsl/depthblur.fp", "#define BLUR_VERTICAL\n", DepthBlurUniforms::Desc() };
-	hw_postprocess.Shaders["SSAO.BlurHorizontal"] = { "shaders/glsl/depthblur.fp", "#define BLUR_HORIZONTAL\n", DepthBlurUniforms::Desc() };
-	hw_postprocess.Shaders["SSAO.Combine"] = { "shaders/glsl/ssaocombine.fp", "", AmbientCombineUniforms::Desc() };
-	hw_postprocess.Shaders["SSAO.CombineMS"] = { "shaders/glsl/ssaocombine.fp", "#define MULTISAMPLE\n", AmbientCombineUniforms::Desc() };
+	LinearDepth = { "shaders/glsl/lineardepth.fp", "", LinearDepthUniforms::Desc() };
+	LinearDepthMS = { "shaders/glsl/lineardepth.fp", "#define MULTISAMPLE\n", LinearDepthUniforms::Desc() };
+	AmbientOcclude = { "shaders/glsl/ssao.fp", defines, SSAOUniforms::Desc() };
+	AmbientOccludeMS = { "shaders/glsl/ssao.fp", defines + "\n#define MULTISAMPLE\n", SSAOUniforms::Desc() };
+	BlurVertical = { "shaders/glsl/depthblur.fp", "#define BLUR_VERTICAL\n", DepthBlurUniforms::Desc() };
+	BlurHorizontal = { "shaders/glsl/depthblur.fp", "#define BLUR_HORIZONTAL\n", DepthBlurUniforms::Desc() };
+	Combine = { "shaders/glsl/ssaocombine.fp", "", AmbientCombineUniforms::Desc() };
+	CombineMS = { "shaders/glsl/ssaocombine.fp", "#define MULTISAMPLE\n", AmbientCombineUniforms::Desc() };
+
+	LastQuality = gl_ssao;
 }
 
-void PPAmbientOcclusion::UpdateTextures()
+void PPAmbientOcclusion::UpdateTextures(int width, int height)
 {
-	int width = hw_postprocess.SceneWidth;
-	int height = hw_postprocess.SceneHeight;
-
-	if (width <= 0 || height <= 0)
+	if ((width <= 0 || height <= 0) || (width == LastWidth && height == LastHeight))
 		return;
 
 	AmbientWidth = (width + 1) / 2;
 	AmbientHeight = (height + 1) / 2;
 
-	hw_postprocess.Textures["SSAO.LinearDepth"] = { AmbientWidth, AmbientHeight, PixelFormat::R32f };
-	hw_postprocess.Textures["SSAO.Ambient0"] = { AmbientWidth, AmbientHeight, PixelFormat::Rg16f };
-	hw_postprocess.Textures["SSAO.Ambient1"] = { AmbientWidth, AmbientHeight, PixelFormat::Rg16f };
+	LinearDepthTexture = { AmbientWidth, AmbientHeight, PixelFormat::R32f };
+	Ambient0 = { AmbientWidth, AmbientHeight, PixelFormat::Rg16f };
+	Ambient1 = { AmbientWidth, AmbientHeight, PixelFormat::Rg16f };
 
-	// We only need to create the random texture once
-	if (!hw_postprocess.Textures.CheckKey("SSAO.Random0"))
-	{
-		// Must match quality enum in PPAmbientOcclusion::DeclareShaders
-		double numDirections[NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
-
-		std::mt19937 generator(1337);
-		std::uniform_real_distribution<double> distribution(0.0, 1.0);
-		for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
-		{
-			std::shared_ptr<void> data(new int16_t[16 * 4], [](void *p) { delete[](int16_t*)p; });
-			int16_t *randomValues = (int16_t *)data.get();
-
-			for (int i = 0; i < 16; i++)
-			{
-				double angle = 2.0 * M_PI * distribution(generator) / numDirections[quality];
-				double x = cos(angle);
-				double y = sin(angle);
-				double z = distribution(generator);
-				double w = distribution(generator);
-
-				randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
-				randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
-				randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
-				randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
-			}
-
-			FString name;
-			name.Format("SSAO.Random%d", quality);
-
-			hw_postprocess.Textures[name] = { 4, 4, PixelFormat::Rgba16_snorm, data };
-			AmbientRandomTexture[quality] = name;
-		}
-	}
+	LastWidth = width;
+	LastHeight = height;
 }
 
-void PPAmbientOcclusion::UpdateSteps()
+void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneWidth, int sceneHeight)
 {
-	if (gl_ssao == 0 || hw_postprocess.SceneWidth == 0 || hw_postprocess.SceneHeight == 0)
+	if (gl_ssao == 0 || sceneWidth == 0 || sceneHeight == 0)
 	{
-		hw_postprocess.Effects["AmbientOccludeScene"] = {};
 		return;
 	}
+
+	CreateShaders();
+	UpdateTextures(sceneWidth, sceneHeight);
 
 	float bias = gl_ssao_bias;
 	float aoRadius = gl_ssao_radius;
@@ -740,8 +658,8 @@ void PPAmbientOcclusion::UpdateSteps()
 	float aoStrength = gl_ssao_strength;
 
 	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
-	float tanHalfFovy = 1.0f / hw_postprocess.m5;
-	float invFocalLenX = tanHalfFovy * (hw_postprocess.SceneWidth / (float)hw_postprocess.SceneHeight);
+	float tanHalfFovy = 1.0f / m5;
+	float invFocalLenX = tanHalfFovy * (sceneWidth / (float)sceneHeight);
 	float invFocalLenY = tanHalfFovy;
 	float nDotVBias = clamp(bias, 0.0f, 1.0f);
 	float r2 = aoRadius * aoRadius;
@@ -791,134 +709,96 @@ void PPAmbientOcclusion::UpdateSteps()
 	ambientViewport.width = AmbientWidth;
 	ambientViewport.height = AmbientHeight;
 
-	TArray<PPStep> steps;
-
 	// Calculate linear depth values
-	{
-		PPStep step;
-		step.ShaderName = gl_multisample > 1 ? "SSAO.LinearDepthMS" : "SSAO.LinearDepth";
-		step.Uniforms.Set(linearUniforms);
-		step.Viewport = ambientViewport;
-		step.SetInputSceneDepth(0);
-		step.SetInputSceneColor(1);
-		step.SetOutputTexture("SSAO.LinearDepth");
-		step.SetNoBlend();
-		steps.Push(step);
-	}
+	renderstate->Clear();
+	renderstate->Shader = gl_multisample > 1 ? &LinearDepthMS : &LinearDepth;
+	renderstate->Uniforms.Set(linearUniforms);
+	renderstate->Viewport = ambientViewport;
+	renderstate->SetInputSceneDepth(0);
+	renderstate->SetInputSceneColor(1);
+	renderstate->SetOutputTexture(&LinearDepthTexture);
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 
 	// Apply ambient occlusion
-	{
-		PPStep step;
-		step.ShaderName = gl_multisample > 1 ? "SSAO.AmbientOccludeMS" : "SSAO.AmbientOcclude";
-		step.Uniforms.Set(ssaoUniforms);
-		step.Viewport = ambientViewport;
-		step.SetInputTexture(0, "SSAO.LinearDepth");
-		step.SetInputSceneNormal(1);
-		step.SetInputTexture(2, AmbientRandomTexture[randomTexture], PPFilterMode::Nearest, PPWrapMode::Repeat);
-		step.SetOutputTexture("SSAO.Ambient0");
-		step.SetNoBlend();
-		steps.Push(step);
-	}
+	renderstate->Clear();
+	renderstate->Shader = gl_multisample > 1 ? &AmbientOccludeMS : &AmbientOcclude;
+	renderstate->Uniforms.Set(ssaoUniforms);
+	renderstate->Viewport = ambientViewport;
+	renderstate->SetInputTexture(0, &LinearDepthTexture);
+	renderstate->SetInputSceneNormal(1);
+	renderstate->SetInputTexture(2, &AmbientRandomTexture[randomTexture], PPFilterMode::Nearest, PPWrapMode::Repeat);
+	renderstate->SetOutputTexture(&Ambient0);
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 
 	// Blur SSAO texture
 	if (gl_ssao_debug < 2)
 	{
-		PPStep step;
-		step.ShaderName = "SSAO.BlurHorizontal";
-		step.Uniforms.Set(blurUniforms);
-		step.Viewport = ambientViewport;
-		step.SetInputTexture(0, "SSAO.Ambient0");
-		step.SetOutputTexture("SSAO.Ambient1");
-		step.SetNoBlend();
-		steps.Push(step);
+		renderstate->Clear();
+		renderstate->Shader = &BlurHorizontal;
+		renderstate->Uniforms.Set(blurUniforms);
+		renderstate->Viewport = ambientViewport;
+		renderstate->SetInputTexture(0, &Ambient0);
+		renderstate->SetOutputTexture(&Ambient1);
+		renderstate->SetNoBlend();
+		renderstate->Draw();
 
-		step.ShaderName = "SSAO.BlurVertical";
-		step.SetInputTexture(0, "SSAO.Ambient1");
-		step.SetOutputTexture("SSAO.Ambient0");
-		steps.Push(step);
+		renderstate->Shader = &BlurVertical;
+		renderstate->SetInputTexture(0, &Ambient1);
+		renderstate->SetOutputTexture(&Ambient0);
+		renderstate->Draw();
 	}
 
 	// Add SSAO back to scene texture:
-	{
-		PPStep step;
-		step.ShaderName = gl_multisample > 1 ? "SSAO.CombineMS" : "SSAO.Combine";
-		step.Uniforms.Set(combineUniforms);
-		step.Viewport = screen->mSceneViewport;
-		step.SetInputTexture(0, "SSAO.Ambient0", PPFilterMode::Linear);
-		step.SetInputSceneFog(1);
-		step.SetOutputSceneColor();
-		if (gl_ssao_debug != 0)
-			step.SetNoBlend();
-		else
-			step.SetAlphaBlend();
-		steps.Push(step);
-	}
-
-	hw_postprocess.Effects["AmbientOccludeScene"] = steps;
+	renderstate->Clear();
+	renderstate->Shader = gl_multisample > 1 ? &CombineMS : &Combine;
+	renderstate->Uniforms.Set(combineUniforms);
+	renderstate->Viewport = screen->mSceneViewport;
+	renderstate->SetInputTexture(0, &Ambient0, PPFilterMode::Linear);
+	renderstate->SetInputSceneFog(1);
+	renderstate->SetOutputSceneColor();
+	if (gl_ssao_debug != 0)
+		renderstate->SetNoBlend();
+	else
+		renderstate->SetAlphaBlend();
+	renderstate->Draw();
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPPresent::DeclareShaders()
+PPPresent::PPPresent()
 {
-	hw_postprocess.Shaders["Present"] = { "shaders/glsl/present.fp", "", PresentUniforms::Desc() };
-	hw_postprocess.Shaders["Present.Checker3D"] = { "shaders/glsl/present_checker3d.fp", "", PresentUniforms::Desc() };
-	hw_postprocess.Shaders["Present.Column3D"] = { "shaders/glsl/present_column3d.fp", "", PresentUniforms::Desc() };
-	hw_postprocess.Shaders["Present.Row3D"] = { "shaders/glsl/present_row3d.fp", "", PresentUniforms::Desc() };
-}
-
-void PPPresent::UpdateTextures()
-{
-	auto &tex = hw_postprocess.Textures["PresentDither"];
-	if (!tex.Data)
+	static const float data[64] =
 	{
-		static const float data[64] =
-		{
-			 .0078125, .2578125, .1328125, .3828125, .0234375, .2734375, .1484375, .3984375,
-			 .7578125, .5078125, .8828125, .6328125, .7734375, .5234375, .8984375, .6484375,
-			 .0703125, .3203125, .1953125, .4453125, .0859375, .3359375, .2109375, .4609375,
-			 .8203125, .5703125, .9453125, .6953125, .8359375, .5859375, .9609375, .7109375,
-			 .0390625, .2890625, .1640625, .4140625, .0546875, .3046875, .1796875, .4296875,
-			 .7890625, .5390625, .9140625, .6640625, .8046875, .5546875, .9296875, .6796875,
-			 .1015625, .3515625, .2265625, .4765625, .1171875, .3671875, .2421875, .4921875,
-			 .8515625, .6015625, .9765625, .7265625, .8671875, .6171875, .9921875, .7421875,
-		};
+			.0078125, .2578125, .1328125, .3828125, .0234375, .2734375, .1484375, .3984375,
+			.7578125, .5078125, .8828125, .6328125, .7734375, .5234375, .8984375, .6484375,
+			.0703125, .3203125, .1953125, .4453125, .0859375, .3359375, .2109375, .4609375,
+			.8203125, .5703125, .9453125, .6953125, .8359375, .5859375, .9609375, .7109375,
+			.0390625, .2890625, .1640625, .4140625, .0546875, .3046875, .1796875, .4296875,
+			.7890625, .5390625, .9140625, .6640625, .8046875, .5546875, .9296875, .6796875,
+			.1015625, .3515625, .2265625, .4765625, .1171875, .3671875, .2421875, .4921875,
+			.8515625, .6015625, .9765625, .7265625, .8671875, .6171875, .9921875, .7421875,
+	};
 
-		std::shared_ptr<void> pixels(new float[64], [](void *p) { delete[](float*)p; });
-		memcpy(pixels.get(), data, 64 * sizeof(float));
-		tex = { 8, 8, PixelFormat::R32f, pixels };
-	}
-}
-
-void PPPresent::UpdateSteps()
-{
+	std::shared_ptr<void> pixels(new float[64], [](void *p) { delete[](float*)p; });
+	memcpy(pixels.get(), data, 64 * sizeof(float));
+	Dither = { 8, 8, PixelFormat::R32f, pixels };
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PPShadowMap::DeclareShaders()
-{
-	hw_postprocess.Shaders["ShadowMap"] = { "shaders/glsl/shadowmap.fp", "", ShadowMapUniforms::Desc() };
-}
-
-void PPShadowMap::UpdateTextures()
-{
-}
-
-void PPShadowMap::UpdateSteps()
+void PPShadowMap::Update(PPRenderState *renderstate)
 {
 	ShadowMapUniforms uniforms;
 	uniforms.ShadowmapQuality = (float)gl_shadowmap_quality;
 
-	PPStep step;
-	step.ShaderName = "ShadowMap";
-	step.Uniforms.Set(uniforms);
-	step.Viewport = { 0, 0, gl_shadowmap_quality, 1024 };
-	step.SetShadowMapBuffers(true);
-	step.SetOutputShadowMap();
-	step.SetNoBlend();
-
-	TArray<PPStep> steps;
-	steps.Push(step);
-	hw_postprocess.Effects["UpdateShadowMap"] = steps;
+	renderstate->Clear();
+	renderstate->Shader = &ShadowMap;
+	renderstate->Uniforms.Set(uniforms);
+	renderstate->Viewport = { 0, 0, gl_shadowmap_quality, 1024 };
+	renderstate->SetShadowMapBuffers(true);
+	renderstate->SetOutputShadowMap();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
 }

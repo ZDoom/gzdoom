@@ -91,6 +91,7 @@ OpenGLFrameBuffer::~OpenGLFrameBuffer()
 	if (mSkyData != nullptr) delete mSkyData;
 	if (mViewpoints != nullptr) delete mViewpoints;
 	if (mLights != nullptr) delete mLights;
+	mShadowMap.Reset();
 
 	if (GLRenderer)
 	{

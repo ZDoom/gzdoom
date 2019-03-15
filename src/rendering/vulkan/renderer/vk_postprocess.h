@@ -25,6 +25,7 @@ public:
 	PPBlendMode BlendMode;
 	VkFormat OutputFormat;
 	int SwapChain;
+	int ShadowMapBuffers;
 
 	bool operator<(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) < 0; }
 	bool operator==(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) == 0; }
@@ -60,6 +61,8 @@ public:
 	void BlurScene(float gameinfobluramount);
 	void ClearTonemapPalette();
 
+	void UpdateShadowMap();
+
 	void BlitSceneToTexture();
 	void BlitCurrentToImage(VulkanImage *image, VkImageLayout *layout, VkImageLayout finallayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders);
@@ -72,7 +75,7 @@ private:
 	void NextEye(int eyeCount);
 	void RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescriptorSet *descriptorSet, VulkanFramebuffer *framebuffer, int framebufferWidth, int framebufferHeight, int x, int y, int width, int height, const void *pushConstants, uint32_t pushConstantsSize);
 
-	VulkanDescriptorSet *GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures);
+	VulkanDescriptorSet *GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers);
 	VulkanFramebuffer *GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferWidth, int &framebufferHeight);
 	VulkanSampler *GetSampler(PPFilterMode filter, PPWrapMode wrap);
 

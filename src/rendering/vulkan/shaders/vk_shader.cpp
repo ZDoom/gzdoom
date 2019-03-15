@@ -139,6 +139,8 @@ static const char *shaderBindings = R"(
 		StreamData data[256];
 	};
 
+	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
+
 	// textures
 	layout(set = 1, binding = 0) uniform sampler2D tex;
 	layout(set = 1, binding = 1) uniform sampler2D texture2;
@@ -146,7 +148,6 @@ static const char *shaderBindings = R"(
 	layout(set = 1, binding = 3) uniform sampler2D texture4;
 	layout(set = 1, binding = 4) uniform sampler2D texture5;
 	layout(set = 1, binding = 5) uniform sampler2D texture6;
-	layout(set = 1, binding = 16) uniform sampler2D ShadowMap;
 
 	// This must match the PushConstants struct
 	layout(push_constant) uniform PushConstants
@@ -207,7 +208,7 @@ static const char *shaderBindings = R"(
 	#define uSplitTopPlane data[uDataIndex].uSplitTopPlane
 	#define uSplitBottomPlane data[uDataIndex].uSplitBottomPlane
 
-	// #define SUPPORTS_SHADOWMAPS
+	#define SUPPORTS_SHADOWMAPS
 	#define VULKAN_COORDINATE_SYSTEM
 	#define HAS_UNIFORM_VERTEX_DATA
 )";

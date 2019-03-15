@@ -17,6 +17,7 @@ Postprocess::Postprocess()
 	Managers.Push(new PPTonemap());
 	Managers.Push(new PPAmbientOcclusion());
 	Managers.Push(new PPPresent());
+	Managers.Push(new PPShadowMap());
 }
 
 Postprocess::~Postprocess()
@@ -891,4 +892,33 @@ void PPPresent::UpdateTextures()
 
 void PPPresent::UpdateSteps()
 {
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPShadowMap::DeclareShaders()
+{
+	hw_postprocess.Shaders["ShadowMap"] = { "shaders/glsl/shadowmap.fp", "", ShadowMapUniforms::Desc() };
+}
+
+void PPShadowMap::UpdateTextures()
+{
+}
+
+void PPShadowMap::UpdateSteps()
+{
+	ShadowMapUniforms uniforms;
+	uniforms.ShadowmapQuality = (float)gl_shadowmap_quality;
+
+	PPStep step;
+	step.ShaderName = "ShadowMap";
+	step.Uniforms.Set(uniforms);
+	step.Viewport = { 0, 0, gl_shadowmap_quality, 1024 };
+	step.SetShadowMapBuffers(true);
+	step.SetOutputShadowMap();
+	step.SetNoBlend();
+
+	TArray<PPStep> steps;
+	steps.Push(step);
+	hw_postprocess.Effects["UpdateShadowMap"] = steps;
 }

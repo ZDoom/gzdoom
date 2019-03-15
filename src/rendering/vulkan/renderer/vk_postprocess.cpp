@@ -225,6 +225,23 @@ void VkPostprocess::ClearTonemapPalette()
 	hw_postprocess.Textures.Remove("Tonemap.Palette");
 }
 
+void VkPostprocess::UpdateShadowMap()
+{
+	if (screen->mShadowMap.PerformUpdate())
+	{
+		RenderEffect("UpdateShadowMap");
+
+		auto fb = GetVulkanFrameBuffer();
+		auto buffers = fb->GetBuffers();
+
+		VkPPImageTransition imageTransition;
+		imageTransition.addImage(buffers->Shadowmap.get(), &buffers->ShadowmapLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
+		imageTransition.execute(fb->GetDrawCommands());
+
+		screen->mShadowMap.FinishUpdate();
+	}
+}
+
 void VkPostprocess::BeginFrame()
 {
 	mFrameDescriptorSets.clear();
@@ -233,6 +250,7 @@ void VkPostprocess::BeginFrame()
 	{
 		DescriptorPoolBuilder builder;
 		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100);
+		builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4);
 		builder.setMaxSets(100);
 		mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
 		mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
@@ -405,10 +423,13 @@ void VkPostprocess::RenderEffect(const FString &name)
 		key.Uniforms = step.Uniforms.Data.Size();
 		key.Shader = mShaders[step.ShaderName].get();
 		key.SwapChain = (step.Output.Type == PPTextureType::SwapChain);
+		key.ShadowMapBuffers = step.ShadowMapBuffers;
 		if (step.Output.Type == PPTextureType::PPTexture)
 			key.OutputFormat = mTextures[step.Output.Texture]->Format;
 		else if (step.Output.Type == PPTextureType::SwapChain)
 			key.OutputFormat = GetVulkanFrameBuffer()->swapChain->swapChainFormat.format;
+		else if (step.Output.Type == PPTextureType::ShadowMap)
+			key.OutputFormat = VK_FORMAT_R32_SFLOAT;
 		else
 			key.OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
 
@@ -417,7 +438,7 @@ void VkPostprocess::RenderEffect(const FString &name)
 			passSetup.reset(new VkPPRenderPassSetup(key));
 
 		int framebufferWidth = 0, framebufferHeight = 0;
-		VulkanDescriptorSet *input = GetInput(passSetup.get(), step.Textures);
+		VulkanDescriptorSet *input = GetInput(passSetup.get(), step.Textures, step.ShadowMapBuffers);
 		VulkanFramebuffer *output = GetOutput(passSetup.get(), step.Output, framebufferWidth, framebufferHeight);
 
 		RenderScreenQuad(passSetup.get(), input, output, framebufferWidth, framebufferHeight, step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height, step.Uniforms.Data.Data(), step.Uniforms.Data.Size());
@@ -470,7 +491,7 @@ void VkPostprocess::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDescr
 	cmdbuffer->endRenderPass();
 }
 
-VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures)
+VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, const TArray<PPTextureInput> &textures, bool bindShadowMapBuffers)
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto descriptors = mDescriptorPool->allocate(passSetup->DescriptorLayout.get());
@@ -487,6 +508,13 @@ VulkanDescriptorSet *VkPostprocess::GetInput(VkPPRenderPassSetup *passSetup, con
 
 		write.addCombinedImageSampler(descriptors.get(), index, tex.view, sampler, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		imageTransition.addImage(tex.image, tex.layout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+	}
+
+	if (bindShadowMapBuffers)
+	{
+		write.addBuffer(descriptors.get(), LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightNodes->mBuffer.get());
+		write.addBuffer(descriptors.get(), LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightLines->mBuffer.get());
+		write.addBuffer(descriptors.get(), LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightList->mBuffer.get());
 	}
 
 	write.updateSets(fb->device);
@@ -588,6 +616,13 @@ VkPostprocess::TextureImage VkPostprocess::GetTexture(const PPTextureType &type,
 		tex.layout = &fb->GetBuffers()->SceneDepthStencilLayout;
 		tex.debugname = "SceneDepth";
 	}
+	else if (type == PPTextureType::ShadowMap)
+	{
+		tex.image = fb->GetBuffers()->Shadowmap.get();
+		tex.view = fb->GetBuffers()->ShadowmapView.get();
+		tex.layout = &fb->GetBuffers()->ShadowmapLayout;
+		tex.debugname = "Shadowmap";
+	}
 	else if (type == PPTextureType::SwapChain)
 	{
 		tex.image = nullptr;
@@ -639,6 +674,12 @@ void VkPPRenderPassSetup::CreateDescriptorLayout(const VkPPRenderPassKey &key)
 	DescriptorSetLayoutBuilder builder;
 	for (int i = 0; i < key.InputTextures; i++)
 		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	if (key.ShadowMapBuffers)
+	{
+		builder.addBinding(LIGHTNODES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.addBinding(LIGHTLINES_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+		builder.addBinding(LIGHTLIST_BINDINGPOINT, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
 	DescriptorLayout = builder.create(GetVulkanFrameBuffer()->device);
 	DescriptorLayout->SetDebugName("VkPPRenderPassSetup.DescriptorLayout");
 }

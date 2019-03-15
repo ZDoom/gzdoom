@@ -20,17 +20,17 @@ struct GPULine
 	vec2 delta;     // Line end position - line start position
 };
 
-layout(std430, binding = 2) buffer LightNodes
+layout(std430, binding = 4) buffer LightNodes
 {
 	GPUNode nodes[];
 };
 
-layout(std430, binding = 3) buffer LightLines
+layout(std430, binding = 5) buffer LightLines
 {
 	GPULine lines[];
 };
 
-layout(std430, binding = 4) buffer LightList
+layout(std430, binding = 6) buffer LightList
 {
 	vec4 lights[];
 };

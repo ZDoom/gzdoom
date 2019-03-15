@@ -95,6 +95,7 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mSkyData;
 	delete mViewpoints;
 	delete mLights;
+	mShadowMap.Reset();
 }
 
 void VulkanFrameBuffer::InitializeState()
@@ -390,10 +391,8 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 
 	R_SetupFrame(mainvp, r_viewwindow, camera);
 
-#if 0
 	if (mainview && toscreen)
 		UpdateShadowMap();
-#endif
 
 	// Update the attenuation flag of all light defaults for each viewpoint.
 	// This function will only do something if the setting differs.
@@ -629,14 +628,19 @@ IIndexBuffer *VulkanFrameBuffer::CreateIndexBuffer()
 IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
 {
 	auto buffer = new VKDataBuffer(bindingpoint, ssbo);
-	if (bindingpoint == VIEWPOINT_BINDINGPOINT)
+
+	auto fb = GetVulkanFrameBuffer();
+	switch (bindingpoint)
 	{
-		ViewpointUBO = buffer;
+	case LIGHTBUF_BINDINGPOINT: LightBufferSSO = buffer; break;
+	case VIEWPOINT_BINDINGPOINT: ViewpointUBO = buffer; break;
+	case LIGHTNODES_BINDINGPOINT: LightNodes = buffer; break;
+	case LIGHTLINES_BINDINGPOINT: LightLines = buffer; break;
+	case LIGHTLIST_BINDINGPOINT: LightList = buffer; break;
+	case POSTPROCESS_BINDINGPOINT: break;
+	default: break;
 	}
-	else if (bindingpoint == LIGHTBUF_BINDINGPOINT)
-	{
-		LightBufferSSO = buffer;
-	}
+
 	return buffer;
 }
 
@@ -758,6 +762,7 @@ void VulkanFrameBuffer::BeginFrame()
 	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 	mPostprocess->BeginFrame();
+	mRenderPassManager->UpdateDynamicSet();
 }
 
 void VulkanFrameBuffer::Draw2D()
@@ -840,4 +845,9 @@ void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
 
 	FanToTrisIndexBuffer.reset(CreateIndexBuffer());
 	FanToTrisIndexBuffer->SetData(sizeof(uint32_t) * data.Size(), data.Data());
+}
+
+void VulkanFrameBuffer::UpdateShadowMap()
+{
+	mPostprocess->UpdateShadowMap();
 }

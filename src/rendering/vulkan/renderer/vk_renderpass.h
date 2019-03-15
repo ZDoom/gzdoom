@@ -68,6 +68,7 @@ public:
 
 	void Init();
 	void RenderBuffersReset();
+	void UpdateDynamicSet();
 
 	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
 	int GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);

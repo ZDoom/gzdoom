@@ -55,6 +55,8 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 	if (width != mWidth || height != mHeight || mSamples != samples)
 		CreateScene(width, height, samples);
 
+	CreateShadowmap();
+
 	mWidth = width;
 	mHeight = height;
 	mSamples = samples;
@@ -205,4 +207,42 @@ void VkRenderBuffers::CreateSceneNormal(int width, int height, VkSampleCountFlag
 	viewbuilder.setImage(SceneNormal.get(), VK_FORMAT_A2R10G10B10_UNORM_PACK32);
 	SceneNormalView = viewbuilder.create(fb->device);
 	SceneNormalView->SetDebugName("VkRenderBuffers.SceneNormalView");
+}
+
+void VkRenderBuffers::CreateShadowmap()
+{
+	if (Shadowmap && Shadowmap->width == gl_shadowmap_quality)
+		return;
+
+	Shadowmap.reset();
+	ShadowmapView.reset();
+
+	auto fb = GetVulkanFrameBuffer();
+
+	ImageBuilder builder;
+	builder.setSize(gl_shadowmap_quality, 1024);
+	builder.setFormat(VK_FORMAT_R32_SFLOAT);
+	builder.setUsage(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
+	Shadowmap = builder.create(fb->device);
+	Shadowmap->SetDebugName("VkRenderBuffers.Shadowmap");
+
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(Shadowmap.get(), VK_FORMAT_R32_SFLOAT);
+	ShadowmapView = viewbuilder.create(fb->device);
+	ShadowmapView->SetDebugName("VkRenderBuffers.ShadowmapView");
+
+	PipelineBarrier barrier;
+	barrier.addImage(Shadowmap.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+	barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+
+	if (!ShadowmapSampler)
+	{
+		SamplerBuilder builder;
+		builder.setMipmapMode(VK_SAMPLER_MIPMAP_MODE_NEAREST);
+		builder.setMinFilter(VK_FILTER_NEAREST);
+		builder.setMagFilter(VK_FILTER_NEAREST);
+		builder.setAddressMode(VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
+		ShadowmapSampler = builder.create(fb->device);
+		ShadowmapSampler->SetDebugName("VkRenderBuffers.ShadowmapSampler");
+	}
 }

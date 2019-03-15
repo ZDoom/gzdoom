@@ -11,7 +11,7 @@ typedef IntRect PPViewport;
 
 enum class PPFilterMode { Nearest, Linear };
 enum class PPWrapMode { Clamp, Repeat };
-enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth, SwapChain };
+enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth, SwapChain, ShadowMap };
 
 class PPTextureInput
 {
@@ -120,6 +120,11 @@ public:
 		tex.Texture = "";
 	}
 
+	void SetShadowMapBuffers(bool enable)
+	{
+		ShadowMapBuffers = enable;
+	}
+
 	void SetOutputTexture(PPTextureName texture)
 	{
 		Output.Type = PPTextureType::PPTexture;
@@ -147,6 +152,12 @@ public:
 	void SetOutputSwapChain()
 	{
 		Output.Type = PPTextureType::SwapChain;
+		Output.Texture = "";
+	}
+
+	void SetOutputShadowMap()
+	{
+		Output.Type = PPTextureType::ShadowMap;
 		Output.Texture = "";
 	}
 
@@ -180,6 +191,7 @@ public:
 	PPViewport Viewport;
 	PPBlendMode BlendMode;
 	PPOutput Output;
+	bool ShadowMapBuffers = false;
 };
 
 enum class PixelFormat
@@ -657,4 +669,12 @@ struct ShadowMapUniforms
 			{ "Padding2", UniformType::Float, offsetof(ShadowMapUniforms, Padding2) },
 		};
 	}
+};
+
+class PPShadowMap : public PPEffectManager
+{
+public:
+	void DeclareShaders() override;
+	void UpdateTextures() override;
+	void UpdateSteps() override;
 };

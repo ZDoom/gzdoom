@@ -79,6 +79,7 @@ void VkRenderPassManager::CreateDynamicSetLayout()
 	builder.addBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	builder.addBinding(3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+	builder.addBinding(4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	DynamicSetLayout = builder.create(GetVulkanFrameBuffer()->device);
 	DynamicSetLayout->SetDebugName("VkRenderPassManager.DynamicSetLayout");
 }
@@ -90,7 +91,6 @@ void VkRenderPassManager::CreateTextureSetLayout()
 	{
 		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
-	builder.addBinding(16, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	TextureSetLayout = builder.create(GetVulkanFrameBuffer()->device);
 	TextureSetLayout->SetDebugName("VkRenderPassManager.TextureSetLayout");
 }
@@ -119,13 +119,18 @@ void VkRenderPassManager::CreateDescriptorPool()
 void VkRenderPassManager::CreateDynamicSet()
 {
 	DynamicSet = DescriptorPool->allocate(DynamicSetLayout.get());
+}
 
+void VkRenderPassManager::UpdateDynamicSet()
+{
 	auto fb = GetVulkanFrameBuffer();
+
 	WriteDescriptors update;
 	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
 	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, fb->LightBufferSSO->mBuffer.get(), 0, fb->GetLightBufferBlockSize());
 	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatricesUBO->mBuffer.get(), 0, sizeof(MatricesUBO));
 	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamUBO->mBuffer.get(), 0, sizeof(StreamUBO));
+	update.addCombinedImageSampler(DynamicSet.get(), 4, fb->GetBuffers()->ShadowmapView.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.updateSets(fb->device);
 }
 

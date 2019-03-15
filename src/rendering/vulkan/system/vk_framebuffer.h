@@ -44,6 +44,10 @@ public:
 	VKDataBuffer *MatricesUBO = nullptr;
 	VKDataBuffer *StreamUBO = nullptr;
 
+	VKDataBuffer *LightNodes = nullptr;
+	VKDataBuffer *LightLines = nullptr;
+	VKDataBuffer *LightList = nullptr;
+
 	std::unique_ptr<IIndexBuffer> FanToTrisIndexBuffer;
 
 	std::vector<std::unique_ptr<VulkanBuffer>> mFrameDeleteList;
@@ -90,6 +94,7 @@ private:
 	void CreateFanToTrisIndexBuffer();
 	void SubmitCommands(bool finish);
 	void CopyScreenToBuffer(int w, int h, void *data);
+	void UpdateShadowMap();
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;

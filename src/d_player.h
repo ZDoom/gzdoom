@@ -250,8 +250,8 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	}
 	int GetGender() const
 	{
-		auto cvar = static_cast<FIntCVar *>(*CheckKey(NAME_Gender));
-		return cvar? *cvar : 0;
+		auto cvar = CheckKey(NAME_Gender);
+		return cvar ? *static_cast<FIntCVar *>(*cvar) : 0;
 	}
 	bool GetNoAutostartMap() const
 	{

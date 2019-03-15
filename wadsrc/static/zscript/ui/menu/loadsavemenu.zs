@@ -146,7 +146,6 @@ class LoadSaveMenu : ListMenu
 		commentRight = commentLeft + commentWidth;
 		commentBottom = commentTop + commentHeight;
 		commentRows = commentHeight / rowHeight;
-		
 	}
 
 	
@@ -206,7 +205,7 @@ class LoadSaveMenu : ListMenu
 		for(int i = 0; i < numlinestoprint; i++)
 		{
 			screen.DrawText(NewConsoleFont, Font.CR_ORANGE, commentLeft / FontScale, (commentTop + rowHeight * i) / FontScale, BrokenSaveComment.StringAt(i),
-				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
+				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 		}
 		
 
@@ -220,7 +219,7 @@ class LoadSaveMenu : ListMenu
 			int textlen = SmallFont.StringWidth(text) * CleanXfac;
 
 			screen.DrawText (NewConsoleFont, Font.CR_GOLD, (listboxLeft+(listboxWidth-textlen)/2) / FontScale, (listboxTop+(listboxHeight-rowHeight)/2) / FontScale, text, 
-				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
+				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 			return;
 		}
 
@@ -255,7 +254,7 @@ class LoadSaveMenu : ListMenu
 				if (!mEntering)
 				{
 					screen.DrawText (NewConsoleFont, colr, (listboxLeft+1) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, node.SaveTitle, 
-						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
+						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 				}
 				else
 				{
@@ -263,13 +262,13 @@ class LoadSaveMenu : ListMenu
 					int length = NewConsoleFont.StringWidth(s) * FontScale;
 					int displacement = min(0, listboxWidth - 2 - length);
 					screen.DrawText (NewConsoleFont, Font.CR_WHITE, (listboxLeft + 1 + displacement) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, s, 
-						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
+						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 				}
 			}
 			else
 			{
 				screen.DrawText (NewConsoleFont, colr, (listboxLeft+1) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, node.SaveTitle, 
-					DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale);
+					DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
 			}
 			screen.ClearClipRect();
 			j++;
@@ -475,6 +474,7 @@ class SaveMenu : LoadSaveMenu
 		manager.InsertNewSaveNode();
 		TopItem = 0;
 		Selected = manager.ExtractSaveData (-1);
+		UpdateSaveComment();
 	}
 
 	//=============================================================================
@@ -614,7 +614,7 @@ class LoadMenu : LoadSaveMenu
 		Super.Init(parent, desc);
 		TopItem = 0;
 		Selected = manager.ExtractSaveData (-1);
-
+		UpdateSaveComment();
 	}
 
 	//=============================================================================

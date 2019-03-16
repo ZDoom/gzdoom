@@ -33,6 +33,7 @@
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
@@ -381,6 +382,8 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 			fovratio = ratio;
 		}
 
+		mPostprocess->ImageTransitionScene(true); // This is the only line that differs compared to FGLRenderer::RenderView
+
 		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
 	All.Unclock();
@@ -411,12 +414,9 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
 		{
 			mRenderState->SetRenderTarget(GetBuffers()->SceneColorView.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), GetBuffers()->GetSceneSamples());
-#if 0
 			bool useSSAO = (gl_ssao != 0);
 			GetRenderState()->SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
-			GetRenderState()->EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
-			GetRenderState()->Apply();
-#endif
+			GetRenderState()->EnableDrawBuffers(GetRenderState()->GetPassDrawBufferCount());
 		}
 
 		auto di = HWDrawInfo::StartDrawInfo(mainvp.ViewLevel, nullptr, mainvp, nullptr);
@@ -443,15 +443,13 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 			PostProcess.Clock();
 			if (toscreen) di->EndDrawScene(mainvp.sector, *GetRenderState()); // do not call this for camera textures.
 
-#if 0
 			if (GetRenderState()->GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
 			{
 				GetRenderState()->SetPassType(NORMAL_PASS);
 				GetRenderState()->EnableDrawBuffers(1);
 			}
-#endif
 
-			mPostprocess->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
+			mPostprocess->BlitSceneToPostprocess(); // Copy the resulting scene to the current post process texture
 
 			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, *GetRenderState()); });
 
@@ -515,7 +513,6 @@ void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	static int ssao_portals_available = 0;
 	const auto &vp = di->Viewpoint;
 
-#if 0
 	bool applySSAO = false;
 	if (drawmode == DM_MAINVIEW)
 	{
@@ -531,7 +528,6 @@ void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 		applySSAO = true;
 		ssao_portals_available--;
 	}
-#endif
 
 	if (vp.camera != nullptr)
 	{
@@ -549,18 +545,11 @@ void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 
 	di->RenderScene(*GetRenderState());
 
-#if 0
 	if (applySSAO && GetRenderState()->GetPassType() == GBUFFER_PASS)
 	{
-		GetRenderState()->EnableDrawBuffers(1);
-		GLRenderer->AmbientOccludeScene(di->VPUniforms.mProjectionMatrix.get()[5]);
-		glViewport(screen->mSceneViewport.left, screen->mSceneViewport.top, screen->mSceneViewport.width, screen->mSceneViewport.height);
-		GLRenderer->mBuffers->BindSceneFB(true);
-		GetRenderState()->EnableDrawBuffers(GetRenderState()->GetPassDrawBufferCount());
-		GetRenderState()->Apply();
+		mPostprocess->AmbientOccludeScene(di->VPUniforms.mProjectionMatrix.get()[5]);
 		screen->mViewpoints->Bind(*GetRenderState(), di->vpIndex);
 	}
-#endif
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff

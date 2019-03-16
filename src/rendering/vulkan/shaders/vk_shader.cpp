@@ -12,33 +12,36 @@ VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
 
 	const char *mainvp = "shaders/glsl/main.vp";
 	const char *mainfp = "shaders/glsl/main.fp";
-	bool gbufferpass = false;
 
-	for (int i = 0; defaultshaders[i].ShaderName != NULL; i++)
+	for (int j = 0; j < MAX_PASS_TYPES; j++)
 	{
-		VkShaderProgram prog;
-		prog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
-		prog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, gbufferpass);
-		mMaterialShaders.push_back(std::move(prog));
-
-		if (i < SHADER_NoTexture)
+		bool gbufferpass = j;
+		for (int i = 0; defaultshaders[i].ShaderName != nullptr; i++)
 		{
-			VkShaderProgram natprog;
-			natprog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
-			natprog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, gbufferpass);
-			mMaterialShadersNAT.push_back(std::move(natprog));
+			VkShaderProgram prog;
+			prog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
+			prog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, gbufferpass);
+			mMaterialShaders[j].push_back(std::move(prog));
+
+			if (i < SHADER_NoTexture)
+			{
+				VkShaderProgram natprog;
+				natprog.vert = LoadVertShader(defaultshaders[i].ShaderName, mainvp, defaultshaders[i].Defines);
+				natprog.frag = LoadFragShader(defaultshaders[i].ShaderName, mainfp, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, gbufferpass);
+				mMaterialShadersNAT[j].push_back(std::move(natprog));
+			}
 		}
-	}
 
-	for (unsigned i = 0; i < usershaders.Size(); i++)
-	{
-		FString name = ExtractFileBase(usershaders[i].shader);
-		FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
+		for (unsigned i = 0; i < usershaders.Size(); i++)
+		{
+			FString name = ExtractFileBase(usershaders[i].shader);
+			FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
 
-		VkShaderProgram prog;
-		prog.vert = LoadVertShader(name, mainvp, defaultshaders[i].Defines);
-		prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, gbufferpass);
-		mMaterialShaders.push_back(std::move(prog));
+			VkShaderProgram prog;
+			prog.vert = LoadVertShader(name, mainvp, defaultshaders[i].Defines);
+			prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, gbufferpass);
+			mMaterialShaders[j].push_back(std::move(prog));
+		}
 	}
 
 	for (int i = 0; i < MAX_EFFECTS; i++)
@@ -64,16 +67,16 @@ VkShaderProgram *VkShaderManager::GetEffect(int effect)
 	return nullptr;
 }
 
-VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston)
+VkShaderProgram *VkShaderManager::Get(unsigned int eff, bool alphateston, EPassType passType)
 {
 	// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
 	if (!alphateston && eff <= 3)
 	{
-		return &mMaterialShadersNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
+		return &mMaterialShadersNAT[passType][eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
 	}
-	else if (eff < (unsigned int)mMaterialShaders.size())
+	else if (eff < (unsigned int)mMaterialShaders[passType].size())
 	{
-		return &mMaterialShaders[eff];
+		return &mMaterialShaders[passType][eff];
 	}
 	return nullptr;
 }

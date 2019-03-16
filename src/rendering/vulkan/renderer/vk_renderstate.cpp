@@ -86,10 +86,6 @@ void VkRenderState::SetColorMask(bool r, bool g, bool b, bool a)
 	mNeedApply = true;
 }
 
-void VkRenderState::EnableDrawBufferAttachments(bool on)
-{
-}
-
 void VkRenderState::SetStencil(int offs, int op, int flags)
 {
 	mStencilRef = screen->stencilValue + offs;
@@ -205,6 +201,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	passKey.ColorMask = mColorMask;
 	passKey.CullMode = mCullMode;
 	passKey.Samples = mRenderTarget.Samples;
+	passKey.DrawBuffers = mRenderTarget.DrawBuffers;
 	if (mSpecialEffect > EFF_NONE)
 	{
 		passKey.SpecialEffect = mSpecialEffect;
@@ -567,6 +564,15 @@ void VkRenderState::EndFrame()
 	mDataIndex = -1;
 }
 
+void VkRenderState::EnableDrawBuffers(int count)
+{
+	if (mRenderTarget.DrawBuffers != count)
+	{
+		EndRenderPass();
+		mRenderTarget.DrawBuffers = count;
+	}
+}
+
 void VkRenderState::SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples)
 {
 	EndRenderPass();
@@ -586,12 +592,17 @@ void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuf
 	auto &framebuffer = passSetup->Framebuffer[mRenderTarget.View->view];
 	if (!framebuffer)
 	{
+		auto buffers = fb->GetBuffers();
 		FramebufferBuilder builder;
 		builder.setRenderPass(passSetup->RenderPass.get());
 		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
-		builder.addAttachment(mRenderTarget.View->view);
+		builder.addAttachment(mRenderTarget.View);
+		if (key.DrawBuffers > 1)
+			builder.addAttachment(buffers->SceneFogView.get());
+		if (key.DrawBuffers > 2)
+			builder.addAttachment(buffers->SceneNormalView.get());
 		if (key.UsesDepthStencil())
-			builder.addAttachment(fb->GetBuffers()->SceneDepthStencilView.get());
+			builder.addAttachment(buffers->SceneDepthStencilView.get());
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
 	}
@@ -601,6 +612,10 @@ void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuf
 	beginInfo.setRenderArea(0, 0, mRenderTarget.Width, mRenderTarget.Height);
 	beginInfo.setFramebuffer(framebuffer.get());
 	beginInfo.addClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
+	if (key.DrawBuffers > 1)
+		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	if (key.DrawBuffers > 2)
+		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	beginInfo.addClearDepthStencil(1.0f, 0);
 	cmdbuffer->beginRenderPass(beginInfo);
 	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());

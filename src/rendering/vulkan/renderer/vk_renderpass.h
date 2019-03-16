@@ -30,6 +30,7 @@ public:
 	int DrawType;
 	int Samples;
 	int ClearTargets;
+	int DrawBuffers;
 
 	bool UsesDepthStencil() const { return DepthTest || DepthWrite || StencilTest || (ClearTargets & (CT_Depth | CT_Stencil)); }
 

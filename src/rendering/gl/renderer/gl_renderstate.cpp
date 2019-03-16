@@ -77,7 +77,6 @@ void FGLRenderState::Reset()
 
 	mEffectState = 0;
 	activeShader = nullptr;
-	mPassType = NORMAL_PASS;
 
 	mCurrentVertexBuffer = nullptr;
 	mCurrentVertexOffsets[0] = mVertexOffsets[0] = 0;
@@ -433,11 +432,6 @@ void FGLRenderState::SetDepthRange(float min, float max)
 void FGLRenderState::SetColorMask(bool r, bool g, bool b, bool a)
 {
 	glColorMask(r, g, b, a);
-}
-
-void FGLRenderState::EnableDrawBufferAttachments(bool on)
-{
-	EnableDrawBuffers(on ? GetPassDrawBufferCount() : 1);
 }
 
 void FGLRenderState::SetStencil(int offs, int op, int flags = -1)

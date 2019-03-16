@@ -26,6 +26,7 @@ public:
 	VkFormat OutputFormat;
 	int SwapChain;
 	int ShadowMapBuffers;
+	VkSampleCountFlagBits Samples;
 
 	bool operator<(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) < 0; }
 	bool operator==(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) == 0; }
@@ -63,7 +64,9 @@ public:
 
 	void UpdateShadowMap();
 
-	void BlitSceneToTexture();
+	void ImageTransitionScene(bool undefinedSrcLayout);
+
+	void BlitSceneToPostprocess();
 	void BlitCurrentToImage(VulkanImage *image, VkImageLayout *layout, VkImageLayout finallayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders);
 

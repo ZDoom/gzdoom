@@ -88,7 +88,7 @@ public:
 	~VkShaderManager();
 
 	VkShaderProgram *GetEffect(int effect);
-	VkShaderProgram *Get(unsigned int eff, bool alphateston);
+	VkShaderProgram *Get(unsigned int eff, bool alphateston, EPassType passType);
 
 private:
 	std::unique_ptr<VulkanShader> LoadVertShader(FString shadername, const char *vert_lump, const char *defines);
@@ -100,7 +100,7 @@ private:
 
 	VulkanDevice *device;
 
-	std::vector<VkShaderProgram> mMaterialShaders;
-	std::vector<VkShaderProgram> mMaterialShadersNAT;
+	std::vector<VkShaderProgram> mMaterialShaders[MAX_PASS_TYPES];
+	std::vector<VkShaderProgram> mMaterialShadersNAT[MAX_PASS_TYPES];
 	VkShaderProgram mEffectShaders[MAX_EFFECTS];
 };

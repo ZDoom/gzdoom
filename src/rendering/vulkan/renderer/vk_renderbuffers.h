@@ -40,7 +40,7 @@ public:
 	std::unique_ptr<VulkanImage> Shadowmap;
 	std::unique_ptr<VulkanImageView> ShadowmapView;
 	std::unique_ptr<VulkanSampler> ShadowmapSampler;
-	VkImageLayout ShadowmapLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	VkImageLayout ShadowmapLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 private:
 	void CreatePipeline(int width, int height);

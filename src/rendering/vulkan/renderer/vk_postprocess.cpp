@@ -59,7 +59,7 @@ void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &a
 	//mCustomPostProcessShaders->Run("scene");
 }
 
-void VkPostprocess::BlitSceneToTexture()
+void VkPostprocess::BlitSceneToPostprocess()
 {
 	auto fb = GetVulkanFrameBuffer();
 
@@ -116,11 +116,19 @@ void VkPostprocess::BlitSceneToTexture()
 			buffers->PipelineImage[mCurrentPipelineImage]->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1, &blit, VK_FILTER_NEAREST);
 	}
+}
 
-	// Note: this destroys the SceneColor contents
-	VkPPImageTransition imageTransition1;
-	imageTransition1.addImage(buffers->SceneColor.get(), &buffers->SceneColorLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-	imageTransition1.execute(fb->GetDrawCommands());
+void VkPostprocess::ImageTransitionScene(bool undefinedSrcLayout)
+{
+	auto fb = GetVulkanFrameBuffer();
+	auto buffers = fb->GetBuffers();
+
+	VkPPImageTransition imageTransition;
+	imageTransition.addImage(buffers->SceneColor.get(), &buffers->SceneColorLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
+	imageTransition.addImage(buffers->SceneFog.get(), &buffers->SceneFogLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
+	imageTransition.addImage(buffers->SceneNormal.get(), &buffers->SceneNormalLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
+	imageTransition.addImage(buffers->SceneDepthStencil.get(), &buffers->SceneDepthStencilLayout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, undefinedSrcLayout);
+	imageTransition.execute(fb->GetDrawCommands());
 }
 
 void VkPostprocess::BlitCurrentToImage(VulkanImage *dstimage, VkImageLayout *dstlayout, VkImageLayout finallayout)
@@ -207,6 +215,8 @@ void VkPostprocess::AmbientOccludeScene(float m5)
 
 	VkPPRenderState renderstate;
 	hw_postprocess.ssao.Render(&renderstate, m5, sceneWidth, sceneHeight);
+
+	ImageTransitionScene(false);
 }
 
 void VkPostprocess::BlurScene(float gameinfobluramount)
@@ -242,7 +252,7 @@ void VkPostprocess::UpdateShadowMap()
 		auto buffers = fb->GetBuffers();
 
 		VkPPImageTransition imageTransition;
-		imageTransition.addImage(buffers->Shadowmap.get(), &buffers->ShadowmapLayout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
+		imageTransition.addImage(buffers->Shadowmap.get(), &buffers->ShadowmapLayout, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
 		imageTransition.execute(fb->GetDrawCommands());
 
 		screen->mShadowMap.FinishUpdate();
@@ -425,6 +435,11 @@ void VkPPRenderState::Draw()
 		key.OutputFormat = VK_FORMAT_R32_SFLOAT;
 	else
 		key.OutputFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+
+	if (Output.Type == PPTextureType::SceneColor)
+		key.Samples = fb->GetBuffers()->GetSceneSamples();
+	else
+		key.Samples = VK_SAMPLE_COUNT_1_BIT;
 
 	auto &passSetup = pp->mRenderPassSetup[key];
 	if (!passSetup)
@@ -692,10 +707,12 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey &key)
 	builder.addVertexAttribute(1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(FFlatVertex, u));
 	builder.addDynamicState(VK_DYNAMIC_STATE_VIEWPORT);
 	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
-	builder.setViewport(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
-	builder.setScissor(0.0f, 0.0f, (float)SCREENWIDTH, (float)SCREENHEIGHT);
+	// Note: the actual values are ignored since we use dynamic viewport+scissor states
+	builder.setViewport(0.0f, 0.0f, 320.0f, 200.0f);
+	builder.setScissor(0.0f, 0.0f, 320.0f, 200.0f);
 	builder.setTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
 	builder.setBlendMode(key.BlendMode);
+	builder.setRasterizationSamples(key.Samples);
 	builder.setLayout(PipelineLayout.get());
 	builder.setRenderPass(RenderPass.get());
 	Pipeline = builder.create(GetVulkanFrameBuffer()->device);
@@ -706,9 +723,9 @@ void VkPPRenderPassSetup::CreateRenderPass(const VkPPRenderPassKey &key)
 {
 	RenderPassBuilder builder;
 	if (key.SwapChain)
-		builder.addAttachment(key.OutputFormat, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+		builder.addAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 	else
-		builder.addAttachment(key.OutputFormat, VK_SAMPLE_COUNT_1_BIT, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		builder.addAttachment(key.OutputFormat, key.Samples, VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	builder.addSubpass();
 	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	builder.addExternalSubpassDependency(
@@ -729,6 +746,7 @@ void VkPPImageTransition::addImage(VulkanImage *image, VkImageLayout *layout, Vk
 
 	VkAccessFlags srcAccess = 0;
 	VkAccessFlags dstAccess = 0;
+	VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 
 	switch (*layout)
 	{
@@ -747,6 +765,11 @@ void VkPPImageTransition::addImage(VulkanImage *image, VkImageLayout *layout, Vk
 	case VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL:
 		srcAccess = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		srcStageMask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		break;
+	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+		srcAccess = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		srcStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 		break;
 	default:
 		I_FatalError("Unimplemented src image layout transition\n");
@@ -770,11 +793,16 @@ void VkPPImageTransition::addImage(VulkanImage *image, VkImageLayout *layout, Vk
 		dstAccess = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		dstStageMask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		break;
+	case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
+		srcAccess = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		srcStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+		break;
 	default:
 		I_FatalError("Unimplemented dst image layout transition\n");
 	}
 
-	barrier.addImage(image, undefinedSrcLayout ? VK_IMAGE_LAYOUT_UNDEFINED : *layout, targetLayout, srcAccess, dstAccess);
+	barrier.addImage(image, undefinedSrcLayout ? VK_IMAGE_LAYOUT_UNDEFINED : *layout, targetLayout, srcAccess, dstAccess, aspectMask);
 	needbarrier = true;
 	*layout = targetLayout;
 }

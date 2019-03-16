@@ -146,11 +146,16 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 {
 	auto buffers = GetVulkanFrameBuffer()->GetBuffers();
 
+	VkFormat drawBufferFormats[] = { VK_FORMAT_R16G16B16A16_SFLOAT, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_A2R10G10B10_UNORM_PACK32 };
+
 	RenderPassBuilder builder;
-	builder.addAttachment(
-		VK_FORMAT_R16G16B16A16_SFLOAT, (VkSampleCountFlagBits)key.Samples,
-		(key.ClearTargets & CT_Color) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
-		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	for (int i = 0; i < key.DrawBuffers; i++)
+	{
+		builder.addAttachment(
+			drawBufferFormats[i], i == 0 ? (VkSampleCountFlagBits)key.Samples : buffers->GetSceneSamples(),
+			(key.ClearTargets & CT_Color) ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD, VK_ATTACHMENT_STORE_OP_STORE,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	}
 	if (key.UsesDepthStencil())
 	{
 		builder.addDepthStencilAttachment(
@@ -160,10 +165,11 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 	}
 	builder.addSubpass();
-	builder.addSubpassColorAttachmentRef(0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	for (int i = 0; i < key.DrawBuffers; i++)
+		builder.addSubpassColorAttachmentRef(i, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 	if (key.UsesDepthStencil())
 	{
-		builder.addSubpassDepthStencilAttachmentRef(1, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		builder.addSubpassDepthStencilAttachmentRef(key.DrawBuffers, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		builder.addExternalSubpassDependency(
 			VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
@@ -194,7 +200,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	}
 	else
 	{
-		program = fb->GetShaderManager()->Get(key.EffectState, key.AlphaTest);
+		program = fb->GetShaderManager()->Get(key.EffectState, key.AlphaTest, key.DrawBuffers > 1 ? GBUFFER_PASS : NORMAL_PASS);
 	}
 	builder.addVertexShader(program->vert.get());
 	builder.addFragmentShader(program->frag.get());
@@ -263,6 +269,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setColorWriteMask((VkColorComponentFlags)key.ColorMask);
 	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
 	builder.setBlendMode(key.RenderStyle);
+	builder.setSubpassColorAttachmentCount(key.DrawBuffers);
 	builder.setRasterizationSamples((VkSampleCountFlagBits)key.Samples);
 
 	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());

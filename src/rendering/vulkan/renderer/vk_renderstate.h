@@ -30,7 +30,6 @@ public:
 	void SetDepthFunc(int func) override;
 	void SetDepthRange(float min, float max) override;
 	void SetColorMask(bool r, bool g, bool b, bool a) override;
-	void EnableDrawBufferAttachments(bool on) override;
 	void SetStencil(int offs, int op, int flags = -1) override;
 	void SetCulling(int mode) override;
 	void EnableClipDistance(int num, bool state) override;
@@ -41,6 +40,7 @@ public:
 	void EnableDepthTest(bool on) override;
 	void EnableMultisampling(bool on) override;
 	void EnableLineSmooth(bool on) override;
+	void EnableDrawBuffers(int count) override;
 
 	void SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples);
 	void Bind(int bindingpoint, uint32_t offset);
@@ -117,6 +117,7 @@ protected:
 		int Width = 0;
 		int Height = 0;
 		VkSampleCountFlagBits Samples = VK_SAMPLE_COUNT_1_BIT;
+		int DrawBuffers = 1;
 	} mRenderTarget;
 };
 

@@ -120,6 +120,13 @@ struct FDepthBiasState
 	}
 };
 
+enum EPassType
+{
+	NORMAL_PASS,
+	GBUFFER_PASS,
+	MAX_PASS_TYPES
+};
+
 class FRenderState
 {
 protected:
@@ -163,6 +170,7 @@ protected:
 	int mVertexOffsets[2];	// one per binding point
 	IIndexBuffer *mIndexBuffer;
 
+	EPassType mPassType = NORMAL_PASS;
 
 public:
 	VSMatrix mModelMatrix;
@@ -193,6 +201,7 @@ public:
 		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
 		mBias.Reset();
+		mPassType = NORMAL_PASS;
 
 		mVertexBuffer = nullptr;
 		mVertexOffsets[0] = mVertexOffsets[1] = 0;
@@ -502,6 +511,26 @@ public:
 		return mInterpolationFactor;
 	}
 
+	void EnableDrawBufferAttachments(bool on) // Used by fog boundary drawer
+	{
+		EnableDrawBuffers(on ? GetPassDrawBufferCount() : 1);
+	}
+
+	int GetPassDrawBufferCount()
+	{
+		return mPassType == GBUFFER_PASS ? 3 : 1;
+	}
+
+	void SetPassType(EPassType passType)
+	{
+		mPassType = passType;
+	}
+
+	EPassType GetPassType()
+	{
+		return mPassType;
+	}
+
 	// API-dependent render interface
 
 	// Draw commands
@@ -515,7 +544,6 @@ public:
 	virtual void SetDepthFunc(int func) = 0;					// Used by models, portals and mirror surfaces.
 	virtual void SetDepthRange(float min, float max) = 0;		// Used by portal setup.
 	virtual void SetColorMask(bool r, bool g, bool b, bool a) = 0;	// Used by portals.
-	virtual void EnableDrawBufferAttachments(bool on) = 0;		// Used by fog boundary drawer.
 	virtual void SetStencil(int offs, int op, int flags=-1) = 0;	// Used by portal setup and render hacks.
 	virtual void SetCulling(int mode) = 0;						// Used by model drawer only.
 	virtual void EnableClipDistance(int num, bool state) = 0;	// Use by sprite sorter for vertical splits.
@@ -526,6 +554,7 @@ public:
 	virtual void EnableDepthTest(bool on) = 0;					// used by 2D, portals and render hacks.
 	virtual void EnableMultisampling(bool on) = 0;				// only active for 2D
 	virtual void EnableLineSmooth(bool on) = 0;					// constant setting for each 2D drawer operation
+	virtual void EnableDrawBuffers(int count) = 0;				// Used by SSAO and EnableDrawBufferAttachments
 
 	void SetColorMask(bool on)
 	{

@@ -378,6 +378,8 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
+	Submenu "$OS_TITLE", "os_Menu"
+	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
@@ -2605,4 +2607,22 @@ OptionString "LanguageOptions"
 	"ita", "Italiano (ITA)"
 	"ptb", "Português do Brasil (PTB)"
 	"rus", "Русский (RU)"
+}
+
+/*=======================================
+ *
+ * Option Search menu
+ *
+ *=======================================*/
+
+OptionMenu "os_Menu"
+{
+	Class "os_Menu"
+	Title "$OS_TITLE"
+}
+
+OptionValue "os_isanyof_values"
+{
+	0, "$OS_ALL"
+	1, "$OS_ANY"
 }

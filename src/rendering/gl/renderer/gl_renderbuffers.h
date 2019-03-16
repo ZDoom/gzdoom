@@ -7,6 +7,8 @@
 namespace OpenGLRenderer
 {
 
+class FGLRenderBuffers;
+
 class PPGLTexture
 {
 public:

@@ -8716,7 +8716,7 @@ scriptwait:
 					if (type & HUDMSG_LOG)
 					{
 						int consolecolor = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
-						Printf(PRINT_NONOTIFY, "\n" TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", consolecolor, console_bar, work, console_bar);
+						Printf(PRINT_NONOTIFY, "\n" TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", consolecolor, console_bar, work.GetChars(), console_bar);
 					}
 				}
 			}

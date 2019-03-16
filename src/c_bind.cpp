@@ -46,6 +46,7 @@
 #include "vm.h"
 #include "i_time.h"
 #include "menu/menu.h"
+#include "v_text.h"
 
 const char *KeyNames[NUM_KEYS] =
 {
@@ -297,7 +298,7 @@ void C_NameKeys (char *str, int first, int second)
 		c++;
 		strcpy (str, KeyName (first));
 		if (second)
-			strcat (str, " or ");
+			strcat (str, TEXTCOLOR_BLACK ", " TEXTCOLOR_NORMAL);
 	}
 
 	if (second)

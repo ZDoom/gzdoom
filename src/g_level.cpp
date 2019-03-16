@@ -1062,12 +1062,8 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	if (isPrimaryLevel())
 	{
 		FString mapname = nextmapname;
-	mapname.ToLower();
-		Printf(
-			"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-			"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
-			TEXTCOLOR_BOLD "%s - %s\n\n",
-			mapname.GetChars(), LevelName.GetChars());
+		mapname.ToUpper();
+		Printf("\n%s\n\n" TEXTCOLOR_BOLD "%s - %s\n\n", console_bar, mapname.GetChars(), LevelName.GetChars());
 	}
 
 	// Set the sky map.

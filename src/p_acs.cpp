@@ -536,8 +536,6 @@
 
 
 
-extern FILE *Logfile;
-
 FRandom pr_acs ("ACS");
 
 // I imagine this much stack space is probably overkill, but it could
@@ -8614,10 +8612,7 @@ scriptwait:
 				if (pcd == PCD_ENDPRINTBOLD || screen == NULL ||
 					screen->CheckLocalView())
 				{
-					if (pcd == PCD_ENDPRINTBOLD && (gameinfo.correctprintbold || (Level->flags2 & LEVEL2_HEXENHACK)))
-						C_MidPrintBold(activefont, work);
-					else
-						C_MidPrint (activefont, work);
+					C_MidPrint (activefont, work, pcd == PCD_ENDPRINTBOLD && (gameinfo.correctprintbold || (Level->flags2 & LEVEL2_HEXENHACK)));
 				}
 				STRINGBUILDER_FINISH(work);
 			}
@@ -8720,17 +8715,8 @@ scriptwait:
 						(type & HUDMSG_LAYER_MASK) >> HUDMSG_LAYER_SHIFT);
 					if (type & HUDMSG_LOG)
 					{
-						static const char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-					"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
-						char consolecolor[3];
-
-						consolecolor[0] = '\x1c';
-						consolecolor[1] = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
-						consolecolor[2] = '\0';
-						AddToConsole (-1, bar);
-						AddToConsole (-1, consolecolor);
-						AddToConsole (-1, work);
-						AddToConsole (-1, bar);
+						int consolecolor = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+						Printf(PRINT_NONOTIFY, "\n" TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", consolecolor, console_bar, work, console_bar);
 					}
 				}
 			}

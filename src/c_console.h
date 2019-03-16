@@ -78,13 +78,14 @@ void C_AdjustBottom (void);
 void C_FlushDisplay (void);
 
 class FFont;
-void C_MidPrint (FFont *font, const char *message);
-void C_MidPrintBold (FFont *font, const char *message);
+void C_MidPrint (FFont *font, const char *message, bool bold = false);
 
 bool C_Responder (event_t *ev);
 
 void C_AddTabCommand (const char *name);
 void C_RemoveTabCommand (const char *name);
 void C_ClearTabCommands();		// Removes all tab commands
+
+extern const char *console_bar;
 
 #endif

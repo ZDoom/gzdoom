@@ -44,6 +44,7 @@ struct FBrokenLines
 };
 
 #define TEXTCOLOR_ESCAPE		'\034'
+#define TEXTCOLOR_ESCAPESTR		"\034"
 
 #define TEXTCOLOR_BRICK			"\034A"
 #define TEXTCOLOR_TAN			"\034B"

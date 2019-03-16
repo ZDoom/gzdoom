@@ -51,6 +51,9 @@ CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // [RH] Feature control cvars
 CVAR(Bool, var_friction, true, CVAR_SERVERINFO);
 
+// Option Search
+CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE);
+
 
 
 
@@ -138,4 +141,3 @@ CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
 	}
 }
-

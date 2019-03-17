@@ -1491,6 +1491,7 @@ OptionValue  JumpCrouchFreeLook
 
 OptionMenu GameplayOptions protected
 {
+	Position -35
 	Title 	"$GMPLYMNU_TITLE"
 	//Indent 222
 	Submenu "$GMPLYMNU_DEATHMATCH",				"DeathmatchOptions"
@@ -1533,6 +1534,7 @@ OptionMenu GameplayOptions protected
 
 OptionMenu DeathmatchOptions protected
 {
+	Position -35
 	Title 	"$GMPLYMNU_DEATHMATCH"
 
 	Option "$GMPLYMNU_WEAPONSSTAY",				"sv_weaponstay", "YesNo"
@@ -1553,6 +1555,7 @@ OptionMenu DeathmatchOptions protected
 
 OptionMenu CoopOptions protected
 {
+	Position -35
 	Title 	"$GMPLYMNU_COOPERATIVE"
 
 	Option "$GMPLYMNU_MULTIPLAYERWEAPONS",	 	"sv_noweaponspawn", "NoYes"
@@ -1587,6 +1590,7 @@ OptionValue CompatModes
 
 OptionMenu "CompatibilityOptions" protected
 {
+	Position -35
 	Title "$CMPTMNU_TITLE"
 	Option "$CMPTMNU_MODE",							"compatmode", "CompatModes", "", 1
 	StaticText " "
@@ -1601,6 +1605,7 @@ OptionMenu "CompatibilityOptions" protected
 
 OptionMenu "CompatActorMenu" protected
 {
+	Position -35
 	Title "$CMPTMNU_ACTORBEHAVIOR"
 	Option "$CMPTMNU_CORPSEGIBS",					"compat_CORPSEGIBS", "YesNo"
 	Option "$CMPTMNU_NOBLOCKFRIENDS",				"compat_NOBLOCKFRIENDS", "YesNo"
@@ -1616,6 +1621,7 @@ OptionMenu "CompatActorMenu" protected
 
 OptionMenu "CompatDehackedMenu" protected
 {
+	Position -35
 	Title "$CMPTMNU_DEHACKEDBEHAVIOR"
 	Option "$CMPTMNU_DEHHEALTH",					"compat_DEHHEALTH", "YesNo"
 	Option "$CMPTMNU_MUSHROOM",						"compat_MUSHROOM", "YesNo"
@@ -1624,6 +1630,7 @@ OptionMenu "CompatDehackedMenu" protected
 
 OptionMenu "CompatMapMenu" protected
 {
+	Position -35
 	Title "$CMPTMNU_MAPACTIONBEHAVIOR"
 	Option "$CMPTMNU_USEBLOCKING",					"compat_USEBLOCKING", "YesNo"
 	Option "$CMPTMNU_ANYBOSSDEATH",					"compat_ANYBOSSDEATH", "YesNo"
@@ -1642,6 +1649,7 @@ OptionMenu "CompatMapMenu" protected
 
 OptionMenu "CompatPhysicsMenu" protected
 {
+	Position -35
 	Title "$CMPTMNU_PHYSICSBEHAVIOR"
 	Option "$CMPTMNU_NOPASSOVER",					"compat_nopassover", "YesNo"
 	Option "$CMPTMNU_BOOMSCROLL",					"compat_BOOMSCROLL", "YesNo"
@@ -1657,6 +1665,7 @@ OptionMenu "CompatPhysicsMenu" protected
 
 OptionMenu "CompatRenderMenu" protected
 {
+	Position -35
 	Title "$CMPTMNU_RENDERINGBEHAVIOR"
 	Option "$CMPTMNU_POLYOBJ",						"compat_POLYOBJ", "YesNo"
 	Option "$CMPTMNU_MASKEDMIDTEX",					"compat_MASKEDMIDTEX", "YesNo"
@@ -1666,6 +1675,7 @@ OptionMenu "CompatRenderMenu" protected
 
 OptionMenu "CompatSoundMenu" protected
 {
+	Position -35
 	Title "$CMPTMNU_SOUNDBEHAVIOR"
 	Option "$CMPTMNU_SOUNDSLOTS",					"compat_soundslots", "YesNo"
 	Option "$CMPTMNU_SILENTPICKUP",					"compat_SILENTPICKUP", "YesNo"

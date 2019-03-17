@@ -237,11 +237,6 @@ namespace
 	m_cursor = cursor;
 }
 
--(BOOL) wantsUpdateLayer
-{
-	return YES;
-}
-
 +(Class) layerClass
 {
 	return NSClassFromString(@"CAMetalLayer");
@@ -365,7 +360,8 @@ public:
 			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
 
 			NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
-			[vulkanView setWantsLayer:YES];
+			vulkanView.wantsLayer = YES;
+			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
 
 			[ms_window setContentView:vulkanView];
 		}

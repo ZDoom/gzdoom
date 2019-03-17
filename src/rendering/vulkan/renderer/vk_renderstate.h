@@ -42,6 +42,7 @@ public:
 	void EnableLineSmooth(bool on) override;
 	void EnableDrawBuffers(int count) override;
 
+	void BeginFrame();
 	void SetRenderTarget(VulkanImageView *view, int width, int height, VkSampleCountFlagBits samples);
 	void Bind(int bindingpoint, uint32_t offset);
 	void EndRenderPass();
@@ -85,6 +86,8 @@ protected:
 	int mDepthFunc = 0;
 	int mColorMask = 15;
 	int mCullMode = 0;
+
+	float mShaderTimer = 0.0f;
 
 	MatricesUBO mMatrices = {};
 	StreamData mStreamData = {};

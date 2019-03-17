@@ -172,6 +172,8 @@ protected:
 
 	EPassType mPassType = NORMAL_PASS;
 
+	uint64_t firstFrame = 0;
+
 public:
 	VSMatrix mModelMatrix;
 	VSMatrix mTextureMatrix;
@@ -530,6 +532,8 @@ public:
 	{
 		return mPassType;
 	}
+
+	void CheckTimer(uint64_t ShaderStartTime);
 
 	// API-dependent render interface
 

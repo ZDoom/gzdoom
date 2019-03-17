@@ -42,8 +42,6 @@ struct GLSectorPlane;
 
 class FGLRenderState : public FRenderState
 {
-	uint64_t firstFrame = 0;
-
 	uint8_t mLastDepthClamp : 1;
 
 	float mGlossiness, mSpecularLevel;
@@ -95,7 +93,6 @@ public:
 	void Apply();
 	void ApplyBuffers();
 	void ApplyBlendMode();
-	void CheckTimer(uint64_t ShaderStartTime);
 
 	void ResetVertexBuffer()
 	{

@@ -583,12 +583,4 @@ bool FGLRenderState::SetDepthClamp(bool on)
 	return res;
 }
 
-void FGLRenderState::CheckTimer(uint64_t ShaderStartTime)
-{
-	// if firstFrame is not yet initialized, initialize it to current time
-	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
-	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1 << 24) || ShaderStartTime >= firstFrame)
-		firstFrame = screen->FrameTime;
-}
-
 }

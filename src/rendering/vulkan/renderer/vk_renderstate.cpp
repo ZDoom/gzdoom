@@ -324,7 +324,7 @@ void VkRenderState::ApplyStreamData()
 	mStreamData.uVertexColor = mColor.vec;
 	mStreamData.uVertexNormal = mNormal.vec;
 
-	mStreamData.timer = 0.0f; // static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
+	mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 
 	if (mGlowEnabled)
 	{
@@ -397,7 +397,7 @@ void VkRenderState::ApplyPushConstants()
 	}
 
 	int tempTM = TM_NORMAL;
-	if (mMaterial.mMaterial && mMaterial.mMaterial->tex->isHardwareCanvas())
+	if (mMaterial.mMaterial && mMaterial.mMaterial->tex && mMaterial.mMaterial->tex->isHardwareCanvas())
 		tempTM = TM_OPAQUE;
 
 	mPushConstants.uFogEnabled = fogset;
@@ -409,8 +409,8 @@ void VkRenderState::ApplyPushConstants()
 	mPushConstants.uAlphaThreshold = mAlphaThreshold;
 	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 
-	//if (mMaterial.mMaterial)
-	//	mPushConstants.uSpecularMaterial = { mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel };
+	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
+		mPushConstants.uSpecularMaterial = { mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel };
 
 	mPushConstants.uLightIndex = screen->mLights->BindUBO(mLightIndex);
 	mPushConstants.uDataIndex = mDataIndex;
@@ -502,6 +502,9 @@ void VkRenderState::ApplyMaterial()
 			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 1, base->GetDescriptorSet(mMaterial));
 		}
 
+		if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
+			mShaderTimer = mMaterial.mMaterial->tex->shaderspeed;
+
 		mMaterial.mChanged = false;
 	}
 }
@@ -535,6 +538,11 @@ void VkRenderState::Bind(int bindingpoint, uint32_t offset)
 		mLightBufferOffset = offset;
 		mNeedApply = true;
 	}
+}
+
+void VkRenderState::BeginFrame()
+{
+	mMaterial.Reset();
 }
 
 void VkRenderState::EndRenderPass()

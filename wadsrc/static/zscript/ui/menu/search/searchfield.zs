@@ -30,10 +30,9 @@ class os_SearchField : OptionMenuItemTextField
 		}
 		if (mkey == Menu.MKEY_Input)
 		{
-			string text  = mEnter.GetText();
-			let    query = os_Query.fromString(text);
+			mtext = mEnter.GetText();
 
-			mMenu.search(query);
+			mMenu.search();
 		}
 
 		return Super.MenuEvent(mkey, fromcontroller);
@@ -45,6 +44,8 @@ class os_SearchField : OptionMenuItemTextField
 			? mEnter.GetText() .. SmallFont.GetCursor()
 			: mText;
 	}
+
+	String GetText() { return mText; }
 
 	private os_Menu mMenu;
 	private string  mText;

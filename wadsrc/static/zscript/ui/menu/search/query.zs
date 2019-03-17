@@ -19,8 +19,6 @@ class os_Query
 
 		str.Split(query.mQueryParts, " ", TOK_SKIPEMPTY);
 
-		query.mText = str;
-
 		return query;
 	}
 
@@ -30,8 +28,6 @@ class os_Query
 			? matchesAny(text)
 			: matchesAll(text);
 	}
-
-	string getText() { return mText; }
 
 	// private: //////////////////////////////////////////////////////////////////
 
@@ -73,6 +69,5 @@ class os_Query
 		return contains;
 	}
 
-	private string        mText;
 	private Array<String> mQueryParts;
 }

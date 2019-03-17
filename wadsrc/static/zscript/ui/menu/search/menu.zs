@@ -8,205 +8,211 @@
 
 class os_Menu : OptionMenu
 {
-        override void Init(Menu parent, OptionMenuDescriptor desc)
-        {
-                Super.Init(parent, desc);
+	override void Init(Menu parent, OptionMenuDescriptor desc)
+	{
+		Super.Init(parent, desc);
 
-                mDesc.mItems.clear();
+		mDesc.mItems.clear();
 
-                addSearchField();
+		addSearchField();
 
-                mDesc.mScrollPos                = 0;
-                mDesc.mSelectedItem = 0;
-                mDesc.CalcIndent();
-        }
+		mDesc.mScrollPos    = 0;
+		mDesc.mSelectedItem = 0;
+		mDesc.CalcIndent();
+	}
 
-        void search(os_Query query)
-        {
-                mDesc.mItems.clear();
+	void search()
+	{
+		string text             = mSearchField.GetText();
+		let    query            = os_Query.fromString(text);
+		bool   isAnyTermMatches = mIsAnyOfItem.mCVar.GetBool();
 
-                addSearchField(query.getText());
+		mDesc.mItems.clear();
 
-                string path             = StringTable.Localize("$OPTMNU_TITLE");
-                bool   isAnyTermMatches = mIsAnyOfItem.mCVar.GetBool();
-                bool   found            = listOptions(mDesc, "MainMenu", query, path, isAnyTermMatches);
+		addSearchField(text);
 
-                if (!found) { addNoResultsItem(mDesc); }
+		bool found = listOptions(mDesc, "MainMenu", query, "", isAnyTermMatches);
 
-                mDesc.CalcIndent();
-        }
+		if (!found) { addNoResultsItem(mDesc); }
 
-        private void addSearchField(string query = "")
-        {
-                string searchLabel = StringTable.Localize("$OS_LABEL");
-                let    searchField = new("os_SearchField").Init(searchLabel, self, query);
+		mDesc.CalcIndent();
+	}
 
-                mIsAnyOfItem = new("OptionMenuItemOption").Init("", "os_isanyof", "os_isanyof_values");
+	private void addSearchField(string query = "")
+	{
+		string searchLabel = StringTable.Localize("$OS_LABEL");
 
-                mDesc.mItems.push(searchField);
-                mDesc.mItems.push(mIsAnyOfItem);
-                addEmptyLine(mDesc);
-        }
+		mSearchField = new("os_SearchField").Init(searchLabel, self, query);
+		mIsAnyOfItem = new("os_AnyOrAllOption").Init(self);
 
-        private static bool listOptions(OptionMenuDescriptor targetDesc,
-                                        string   menuName,
-                                        os_Query query,
-                                        string   path,
-                                        bool     isAnyTermMatches)
-        {
-                let desc         = MenuDescriptor.GetDescriptor(menuName);
-                let listMenuDesc = ListMenuDescriptor(desc);
+		mDesc.mItems.push(mSearchField);
+		mDesc.mItems.push(mIsAnyOfItem);
+		addEmptyLine(mDesc);
+	}
 
-                if (listMenuDesc)
-                {
-                        return listOptionsListMenu(listMenuDesc, targetDesc, query, path, isAnyTermMatches);
-                }
+	private static bool listOptions(OptionMenuDescriptor targetDesc,
+	                                string   menuName,
+	                                os_Query query,
+	                                string   path,
+	                                bool     isAnyTermMatches)
+	{
+		let desc         = MenuDescriptor.GetDescriptor(menuName);
+		let listMenuDesc = ListMenuDescriptor(desc);
 
-                let optionMenuDesc = OptionMenuDescriptor(desc);
+		if (listMenuDesc)
+		{
+			return listOptionsListMenu(listMenuDesc, targetDesc, query, path, isAnyTermMatches);
+		}
 
-                if (optionMenuDesc)
-                {
-                        return listOptionsOptionMenu(optionMenuDesc, targetDesc, query, path, isAnyTermMatches);
-                }
+		let optionMenuDesc = OptionMenuDescriptor(desc);
 
-                return false;
-        }
+		if (optionMenuDesc)
+		{
+			return listOptionsOptionMenu(optionMenuDesc, targetDesc, query, path, isAnyTermMatches);
+		}
 
-        private static bool listOptionsListMenu(ListMenuDescriptor   sourceDesc,
-                                                OptionMenuDescriptor targetDesc,
-                                                os_Query query,
-                                                string   path,
-                                                bool     isAnyTermMatches)
-        {
-                int  nItems = sourceDesc.mItems.size();
-                bool found  = false;
+		return false;
+	}
 
-                for (int i = 0; i < nItems; ++i)
-                {
-                        let    item    = sourceDesc.mItems[i];
-                        string actionN = item.GetAction();
-                        string newPath = (actionN == "Optionsmenu")
-                                ? StringTable.Localize("$OPTMNU_TITLE")
-                                : StringTable.Localize("$OS_MAIN");
+	private static bool listOptionsListMenu(ListMenuDescriptor   sourceDesc,
+	                                        OptionMenuDescriptor targetDesc,
+	                                        os_Query query,
+	                                        string   path,
+	                                        bool     isAnyTermMatches)
+	{
+		int  nItems = sourceDesc.mItems.size();
+		bool found  = false;
 
-                        found |= listOptions(targetDesc, actionN, query, newPath, isAnyTermMatches);
-                }
+		for (int i = 0; i < nItems; ++i)
+		{
+			let    item     = sourceDesc.mItems[i];
+			string actionN  = item.GetAction();
+			let    textItem = ListMenuItemTextItem(item);
+			string newPath  = textItem
+				? makePath(path, textItem.mText)
+				: path;
 
-                return found;
-        }
+			found |= listOptions(targetDesc, actionN, query, newPath, isAnyTermMatches);
+		}
 
-        private static bool listOptionsOptionMenu(OptionMenuDescriptor sourceDesc,
-                                                  OptionMenuDescriptor targetDesc,
-                                                  os_Query query,
-                                                  string   path,
-                                                  bool     isAnyTermMatches)
-        {
-                if (sourceDesc == targetDesc) { return false; }
+		return found;
+	}
 
-                int  nItems = sourceDesc.mItems.size();
-                bool first  = true;
-                bool found  = false;
+	private static bool listOptionsOptionMenu(OptionMenuDescriptor sourceDesc,
+	                                          OptionMenuDescriptor targetDesc,
+	                                          os_Query query,
+	                                          string   path,
+	                                          bool     isAnyTermMatches)
+	{
+		if (sourceDesc == targetDesc) { return false; }
 
-                for (int i = 0; i < nItems; ++i)
-                {
-                        let item = sourceDesc.mItems[i];
+		int  nItems = sourceDesc.mItems.size();
+		bool first  = true;
+		bool found  = false;
 
-                        if (item is "OptionMenuItemStaticText") { continue; }
+		for (int i = 0; i < nItems; ++i)
+		{
+			let item = sourceDesc.mItems[i];
 
-                        string label = StringTable.Localize(item.mLabel);
+			if (item is "OptionMenuItemStaticText") { continue; }
 
-                        if (!query.matches(label, isAnyTermMatches)) { continue; }
+			string label = StringTable.Localize(item.mLabel);
 
-                        found = true;
+			if (!query.matches(label, isAnyTermMatches)) { continue; }
 
-                        if (first)
-                        {
-                                addEmptyLine(targetDesc);
-                                addPathItem(targetDesc, path);
+			found = true;
 
-                                first = false;
-                        }
+			if (first)
+			{
+				addEmptyLine(targetDesc);
+				addPathItem(targetDesc, path);
 
-                        let itemOptionBase = OptionMenuItemOptionBase(item);
+				first = false;
+			}
 
-                        if (itemOptionBase)
-                        {
-                                itemOptionBase.mCenter = false;
-                        }
+			let itemOptionBase = OptionMenuItemOptionBase(item);
 
-                        targetDesc.mItems.push(item);
-                }
+			if (itemOptionBase)
+			{
+				itemOptionBase.mCenter = false;
+			}
 
-                for (int i = 0; i < nItems; ++i)
-                {
-                        let    item              = sourceDesc.mItems[i];
-                        string label             = StringTable.Localize(item.mLabel);
-                        string optionSearchTitle = StringTable.Localize("$OS_TITLE");
+			targetDesc.mItems.push(item);
+		}
 
-                        if (label == optionSearchTitle) { continue; }
+		for (int i = 0; i < nItems; ++i)
+		{
+			let    item              = sourceDesc.mItems[i];
+			string label             = StringTable.Localize(item.mLabel);
+			string optionSearchTitle = StringTable.Localize("$OS_TITLE");
 
-                        if (item is "OptionMenuItemSubMenu")
-                        {
-                                string newPath = makePath(path, label);
+			if (label == optionSearchTitle) { continue; }
 
-                                found |= listOptions(targetDesc, item.GetAction(), query, newPath, isAnyTermMatches);
-                        }
-                }
+			if (item is "OptionMenuItemSubMenu")
+			{
+				string newPath = makePath(path, label);
 
-                return found;
-        }
+				found |= listOptions(targetDesc, item.GetAction(), query, newPath, isAnyTermMatches);
+			}
+		}
 
-        private static string makePath(string path, string label)
-        {
-                int    pathWidth   = SmallFont.StringWidth(path .. "/" .. label);
-                int    screenWidth = Screen.GetWidth();
-                bool   isTooWide   = (pathWidth > screenWidth / 3);
-                string newPath     = isTooWide
-                        ? path .. "/" .. "\n" .. label
-                        : path .. "/" ..         label;
+		return found;
+	}
 
-                return newPath;
-        }
+	private static string makePath(string path, string label)
+	{
+		if (path.length() == 0) { return label; }
 
-        private static void addPathItem(OptionMenuDescriptor desc, string path)
-        {
-                Array<String> lines;
-                path.split(lines, "\n");
+		int    pathWidth   = SmallFont.StringWidth(path .. "/" .. label);
+		int    screenWidth = Screen.GetWidth();
+		bool   isTooWide   = (pathWidth > screenWidth / 3);
+		string newPath     = isTooWide
+			? path .. "/" .. "\n" .. label
+			: path .. "/" ..         label;
 
-                int nLines = lines.size();
+		return newPath;
+	}
 
-                for (int i = 0; i < nLines; ++i)
-                {
-                        OptionMenuItemStaticText text = new("OptionMenuItemStaticText").Init(lines[i], 1);
+	private static void addPathItem(OptionMenuDescriptor desc, string path)
+	{
+		Array<String> lines;
+		path.split(lines, "\n");
 
-                        desc.mItems.push(text);
-                }
-        }
+		int nLines = lines.size();
 
-        private static void addEmptyLine(OptionMenuDescriptor desc)
-        {
-                int nItems = desc.mItems.size();
+		for (int i = 0; i < nLines; ++i)
+		{
+			OptionMenuItemStaticText text = new("OptionMenuItemStaticText").Init(lines[i], 1);
 
-                if (nItems > 0)
-                {
-                        let staticText = OptionMenuItemStaticText(desc.mItems[nItems - 1]);
+			desc.mItems.push(text);
+		}
+	}
 
-                        if (staticText != null && staticText.mLabel == "") { return; }
-                }
+	private static void addEmptyLine(OptionMenuDescriptor desc)
+	{
+		int nItems = desc.mItems.size();
 
-                let item = new("OptionMenuItemStaticText").Init("");
+		if (nItems > 0)
+		{
+			let staticText = OptionMenuItemStaticText(desc.mItems[nItems - 1]);
 
-                desc.mItems.push(item);
-        }
+			if (staticText != null && staticText.mLabel == "") { return; }
+		}
 
-        private static void addNoResultsItem(OptionMenuDescriptor desc)
-        {
-                string noResults = StringTable.Localize("$OS_NO_RESULTS");
-                let    text      = new("OptionMenuItemStaticText").Init(noResults, 0);
+		let item = new("OptionMenuItemStaticText").Init("");
 
-                addEmptyLine(desc);
-                desc.mItems.push(text);
-        }
+		desc.mItems.push(item);
+	}
 
-        private OptionMenuItemOption mIsAnyOfItem;
+	private static void addNoResultsItem(OptionMenuDescriptor desc)
+	{
+		string noResults = StringTable.Localize("$OS_NO_RESULTS");
+		let    text      = new("OptionMenuItemStaticText").Init(noResults, 0);
+
+		addEmptyLine(desc);
+		desc.mItems.push(text);
+	}
+
+	private os_AnyOrAllOption mIsAnyOfItem;
+	private os_SearchField    mSearchField;
 }

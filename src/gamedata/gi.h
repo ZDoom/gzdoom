@@ -121,6 +121,7 @@ struct gameinfo_t
 	bool dontcrunchcorpses;
 	bool correctprintbold;
 	bool forcetextinmenus;
+	bool forcenogfxsubstitution;
 	TArray<FName> creditPages;
 	TArray<FName> finalePages;
 	TArray<FName> infoPages;

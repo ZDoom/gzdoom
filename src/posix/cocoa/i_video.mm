@@ -364,21 +364,21 @@ public:
 			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
 
 			[ms_window setContentView:vulkanView];
+
+			try
+			{
+				m_vulkanDevice = new VulkanDevice();
+				fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
+			}
+			catch (std::exception const&)
+			{
+				ms_isVulkanEnabled = false;
+
+				SetupOpenGLView(ms_window);
+			}
 		}
 		else
 		{
-			SetupOpenGLView(ms_window);
-		}
-
-		try
-		{
-			m_vulkanDevice = new VulkanDevice();
-			fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
-		}
-		catch (std::exception const&)
-		{
-			ms_isVulkanEnabled = false;
-
 			SetupOpenGLView(ms_window);
 		}
 

@@ -52,10 +52,7 @@
 #include "version.h"
 #include "doomerrors.h"
 
-#include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/textures/gl_samplers.h"
-
 #include "vulkan/system/vk_framebuffer.h"
 
 
@@ -181,6 +178,12 @@ namespace
 
 
 @implementation OpenGLCocoaView
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+	[NSColor.blackColor setFill];
+	NSRectFill(dirtyRect);
+}
 
 - (void)resetCursorRects
 {
@@ -327,9 +330,6 @@ void SetupOpenGLView(CocoaWindow* window)
 	[[glView openGLContext] makeCurrentContext];
 
 	[window setContentView:glView];
-
-	// To be able to use OpenGL functions in SetMode()
-	ogl_LoadFunctions();
 }
 
 } // unnamed namespace
@@ -657,14 +657,6 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	{
 		SetWindowedMode();
 	}
-
-	const NSSize viewSize = I_GetContentViewSize(m_window);
-
-	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	[[NSOpenGLContext currentContext] flushBuffer];
 
 	[m_window updateTitle];
 

@@ -391,6 +391,16 @@ public:
 		fb->SetMode(fullscreen, vid_hidpi);
 		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
 
+		// This lame hack is a temporary workaround for strange performance issues
+		// with fullscreen window and Core Animation's Metal layer
+		// It is somehow related to initial window level and flags
+		// Toggling fullscreen -> window -> fullscreen mysteriously solves the problem
+		if (ms_isVulkanEnabled && fullscreen)
+		{
+			fb->SetMode(false, vid_hidpi);
+			fb->SetMode(true, vid_hidpi);
+		}
+
 		return fb;
 	}
 

@@ -170,14 +170,30 @@ class AltHud ui
 
 	void DrawStatLine(int x, in out int y, String prefix, String text)
 	{
-		y -= SmallFont.GetHeight()-1;
-		screen.DrawText(SmallFont, hudcolor_statnames, x, y, prefix, 
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75);
+		if (!hud_althudfont)
+		{
+			y -= SmallFont.GetHeight()-1;
+			screen.DrawText(SmallFont, hudcolor_statnames, x, y, prefix, 
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75);
 
-		screen.DrawText(SmallFont, hudcolor_stats, x+statspace, y, text,
-			DTA_KeepRatio, true,
-			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75);
+			screen.DrawText(SmallFont, hudcolor_stats, x+statspace, y, text,
+				DTA_KeepRatio, true,
+				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, 0.75);
+		}
+		else
+		{
+			double horzscale = 1.5;
+			int downscale = 2;
+			y -= NewSmallFont.GetHeight() / downscale;
+			screen.DrawText(NewSmallFont, hudcolor_statnames, x * horzscale, y * downscale, prefix, 
+				DTA_KeepRatio, true,
+				DTA_VirtualWidthF, hudwidth * horzscale, DTA_VirtualHeight, hudheight * downscale, DTA_Alpha, 0.75);
+
+			screen.DrawText(NewSmallFont, hudcolor_stats, (x+statspace) * horzscale, y * downscale, text,
+				DTA_KeepRatio, true,
+				DTA_VirtualWidthF, hudwidth * horzscale, DTA_VirtualHeight, hudheight * downscale, DTA_Alpha, 0.75);
+		}
 	}
 
 	void DrawStatus(PlayerInfo CPlayer, int x, int y)

@@ -223,9 +223,9 @@ void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int wind
 	else
 	{
 		viewwindow.WidescreenRatio = ActiveRatio(fullWidth, fullHeight);
+		DrawFSHUD = (windowSize == 11);
 	}
 
-	DrawFSHUD = (windowSize == 11);
 	
 	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
 	R_InitSkyMap ();

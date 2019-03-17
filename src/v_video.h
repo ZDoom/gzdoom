@@ -628,4 +628,35 @@ inline int active_con_scale()
 }
 
 
+class ScaleOverrider
+{
+	int savedxfac, savedyfac, savedwidth, savedheight;
+
+public:
+	// This is to allow certain elements to use an optimal fullscreen scale which for the menu would be too large.
+	// The old code contained far too much mess to compensate for the menus which negatively affected everything else.
+	// However, for compatibility reasons the currently used variables cannot be changed so they have to be overridden temporarily.
+	// This class provides a safe interface for this because it ensures that the values get restored afterward.
+	// Currently, the intermission and the level summary screen use this.
+	ScaleOverrider()
+	{
+		savedxfac = CleanXfac;
+		savedyfac = CleanYfac;
+		savedwidth = CleanWidth;
+		savedheight = CleanHeight;
+		V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
+		CleanWidth = screen->GetWidth() / CleanXfac;
+		CleanHeight = screen->GetHeight() / CleanYfac;
+	}
+
+	~ScaleOverrider()
+	{
+		CleanXfac = savedxfac;
+		CleanYfac = savedyfac;
+		CleanWidth = savedwidth;
+		CleanHeight = savedheight;
+	}
+};
+
+
 #endif // __V_VIDEO_H__

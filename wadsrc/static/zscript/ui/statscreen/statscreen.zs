@@ -355,6 +355,53 @@ class StatusScreen abstract play version("2.5")
 
 	//====================================================================
 	//
+	//
+	//====================================================================
+
+	void drawTextScaled (Font fnt, double x, double y, String text, double scale, int translation = Font.CR_UNTRANSLATED)
+	{
+		screen.DrawText(fnt, translation, x / scale, y / scale, text, DTA_VirtualWidthF, screen.GetWidth() / scale, DTA_VirtualHeightF, screen.GetHeight() / scale);
+	}
+
+	//====================================================================
+	//
+	//
+	//====================================================================
+
+	void drawNumScaled (Font fnt, int x, int y, double scale, int n, int digits, int translation = Font.CR_UNTRANSLATED)
+	{
+		String s = String.Format("%d", n);
+		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, translation);
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	void drawPercentScaled (Font fnt, int x, int y, int p, int b, double scale, bool show_total = true, int color = Font.CR_UNTRANSLATED)
+	{
+		if (p < 0) return;
+
+		String s;
+		if (wi_percents)
+		{
+			s = String.Format("%d%%", b == 0 ? 100 : p * 100 / b);
+		}
+		else if (show_total)
+		{
+			s = String.Format("%d/%3d", p, b);
+		}
+		else
+		{
+			s = String.Format("%d", p);
+		}
+		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, color);
+	}
+
+	//====================================================================
+	//
 	// Display level completion time and par, or "sucks" message if overflow.
 	//
 	//====================================================================

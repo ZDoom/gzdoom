@@ -728,7 +728,7 @@ class OptionMenuSliderBase : OptionMenuItem
 		double range;
 		int maxlen = 0;
 		int right = x + (12*8 + 4) * CleanXfac;	// length of slider. This uses the old ConFont and 
-		int cy = y;
+		int cy = y + CleanYFac;
 
 		range = max - min;
 		double ccur = clamp(cur, min, max) - min;

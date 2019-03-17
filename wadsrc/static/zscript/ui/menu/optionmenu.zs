@@ -468,7 +468,7 @@ class OptionMenu : Menu
 			{
 				if (((MenuTime() % 8) < 6) || GetCurrentMenu() != self)
 				{
-					DrawConText(OptionMenuSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y+fontheight-9*CleanYfac_1, "\xd");
+					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, Font.CR_UNTRANSLATED, "◄");
 				}
 			}
 			y += fontheight;

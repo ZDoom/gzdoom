@@ -6,7 +6,7 @@ include "mapinfo/doomcommon.txt"
 clearepisodes
 episode map01
 {
-	name = "TNT: Evilution"
+	name = "$TXT_TNT_EP"
 	key = "t"
 }
 

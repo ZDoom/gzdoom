@@ -52,10 +52,7 @@
 #include "version.h"
 #include "doomerrors.h"
 
-#include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/textures/gl_samplers.h"
-
 #include "vulkan/system/vk_framebuffer.h"
 
 
@@ -182,6 +179,12 @@ namespace
 
 @implementation OpenGLCocoaView
 
+- (void)drawRect:(NSRect)dirtyRect
+{
+	[NSColor.blackColor setFill];
+	NSRectFill(dirtyRect);
+}
+
 - (void)resetCursorRects
 {
 	[super resetCursorRects];
@@ -232,11 +235,6 @@ namespace
 - (void)setCursor:(NSCursor*)cursor
 {
 	m_cursor = cursor;
-}
-
--(BOOL) wantsUpdateLayer
-{
-	return YES;
 }
 
 +(Class) layerClass
@@ -327,9 +325,6 @@ void SetupOpenGLView(CocoaWindow* window)
 	[[glView openGLContext] makeCurrentContext];
 
 	[window setContentView:glView];
-
-	// To be able to use OpenGL functions in SetMode()
-	ogl_LoadFunctions();
 }
 
 } // unnamed namespace
@@ -365,24 +360,25 @@ public:
 			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
 
 			NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
-			[vulkanView setWantsLayer:YES];
+			vulkanView.wantsLayer = YES;
+			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
 
 			[ms_window setContentView:vulkanView];
+
+			try
+			{
+				m_vulkanDevice = new VulkanDevice();
+				fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
+			}
+			catch (std::exception const&)
+			{
+				ms_isVulkanEnabled = false;
+
+				SetupOpenGLView(ms_window);
+			}
 		}
 		else
 		{
-			SetupOpenGLView(ms_window);
-		}
-
-		try
-		{
-			m_vulkanDevice = new VulkanDevice();
-			fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
-		}
-		catch (std::exception const&)
-		{
-			ms_isVulkanEnabled = false;
-
 			SetupOpenGLView(ms_window);
 		}
 
@@ -394,6 +390,16 @@ public:
 		fb->SetWindow(ms_window);
 		fb->SetMode(fullscreen, vid_hidpi);
 		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
+
+		// This lame hack is a temporary workaround for strange performance issues
+		// with fullscreen window and Core Animation's Metal layer
+		// It is somehow related to initial window level and flags
+		// Toggling fullscreen -> window -> fullscreen mysteriously solves the problem
+		if (ms_isVulkanEnabled && fullscreen)
+		{
+			fb->SetMode(false, vid_hidpi);
+			fb->SetMode(true, vid_hidpi);
+		}
 
 		return fb;
 	}
@@ -657,14 +663,6 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	{
 		SetWindowedMode();
 	}
-
-	const NSSize viewSize = I_GetContentViewSize(m_window);
-
-	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	[[NSOpenGLContext currentContext] flushBuffer];
 
 	[m_window updateTitle];
 

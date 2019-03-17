@@ -784,7 +784,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 
 	width = DisplayWidth / active_con_scaletext(con_consolefont);
 
-	FFont *font = *con_consolefont ? NewConsoleFont : SmallFont;
+	FFont *font = *con_consolefont ? NewSmallFont : SmallFont;
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
 	{
@@ -1067,7 +1067,7 @@ void FNotifyBuffer::Draw()
 	line = Top;
 	canskip = true;
 
-	FFont *font = *con_consolefont ? NewConsoleFont : SmallFont;
+	FFont *font = *con_consolefont ? NewSmallFont : SmallFont;
 	lineadv = font->GetHeight ();
 
 	for (unsigned i = 0; i < Text.Size(); ++ i)
@@ -1760,7 +1760,7 @@ void C_MidPrint (FFont *font, const char *msg, bool bold)
 		if (font == nullptr)
 		{
 			altscale = con_midconsolefont;
-			font = altscale ? NewConsoleFont : SmallFont;
+			font = altscale ? NewSmallFont : SmallFont;
 			if (altscale && color == CR_UNTRANSLATED) color = C_GetDefaultFontColor();
 		}
 

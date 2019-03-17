@@ -121,9 +121,9 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 		VulkanSampler *sampler = fb->GetSamplerManager()->Get(clampmode);
 		int numLayers = mat->GetLayers();
 
-		int maxTextures = 6;
+		//int maxTextures = 6;
 		auto baseView = GetImageView(tex, translation, flags);
-		numLayers = clamp(numLayers, 1, maxTextures);
+		//numLayers = clamp(numLayers, 1, maxTextures);
 
 		WriteDescriptors update;
 		update.addCombinedImageSampler(descriptorSet.get(), 0, baseView, sampler, mImageLayout);
@@ -132,10 +132,6 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 			FTexture *layer;
 			auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
 			update.addCombinedImageSampler(descriptorSet.get(), i, systex->GetImageView(layer, 0, mat->isExpanded() ? CTF_Expand : 0), sampler, systex->mImageLayout);
-		}
-		for (int i = numLayers; i < maxTextures; i++)
-		{
-			update.addCombinedImageSampler(descriptorSet.get(), i, baseView, sampler, mImageLayout);
 		}
 		update.updateSets(fb->device);
 	}

@@ -98,7 +98,7 @@ CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
 CVAR(Bool, cl_doautoaim, false, CVAR_ARCHIVE)
 
 static void CheckForPushSpecial(line_t *line, int side, AActor *mobj, DVector2 * posforwindowcheck = NULL);
-static void SpawnShootDecal(AActor *t1, const FTraceResults &trace);
+static void SpawnShootDecal(AActor *t1, AActor *defaults, const FTraceResults &trace);
 static void SpawnDeepSplash(AActor *t1, const FTraceResults &trace, AActor *puff);
 
 static FRandom pr_tracebleed("TraceBleed");
@@ -4568,20 +4568,20 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 				{
 					// [ZK] If puff has FORCEDECAL set, do not use the weapon's decal
 					if (puffDefaults->flags7 & MF7_FORCEDECAL && puff != NULL && puff->DecalGenerator)
-						SpawnShootDecal(puff, trace);
+						SpawnShootDecal(puff,  puff, trace);
 					else
-						SpawnShootDecal(t1, trace);
+						SpawnShootDecal(t1, t1, trace);
 				}
 
 				// Else, look if the bulletpuff has a decal defined.
 				else if (puff != NULL && puff->DecalGenerator)
 				{
-					SpawnShootDecal(puff, trace);
+					SpawnShootDecal(puff, puff, trace);
 				}
 
 				else
 				{
-					SpawnShootDecal(t1, trace);
+					SpawnShootDecal(t1, t1, trace);
 				}
 			}
 			else if (puff != NULL &&
@@ -5268,9 +5268,9 @@ void P_RailAttack(FRailParams *p)
 				puff->Destroy();
 		}
 		if (puffDefaults != nullptr && puffDefaults->flags7 & MF7_FORCEDECAL && puffDefaults->DecalGenerator)
-			SpawnShootDecal(puffDefaults, trace);
+			SpawnShootDecal(source, puffDefaults, trace);
 		else
-			SpawnShootDecal(source, trace);
+			SpawnShootDecal(source, source, trace);
 
 	}
 	if (trace.HitType == TRACE_HitFloor || trace.HitType == TRACE_HitCeiling)
@@ -6746,19 +6746,19 @@ bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, b
 //
 //==========================================================================
 
-void SpawnShootDecal(AActor *t1, const FTraceResults &trace)
+void SpawnShootDecal(AActor *t1, AActor *defaults, const FTraceResults &trace)
 {
-	FDecalBase *decalbase = NULL;
+	FDecalBase *decalbase = nullptr;
 
-	if (t1->player != NULL && t1->player->ReadyWeapon != NULL)
+	if (defaults->player != nullptr && defaults->player->ReadyWeapon != nullptr)
 	{
-		decalbase = t1->player->ReadyWeapon->DecalGenerator;
+		decalbase = defaults->player->ReadyWeapon->DecalGenerator;
 	}
 	else
 	{
-		decalbase = t1->DecalGenerator;
+		decalbase = defaults->DecalGenerator;
 	}
-	if (decalbase != NULL)
+	if (decalbase != nullptr)
 	{
 		DImpactDecal::StaticCreate(t1->Level, decalbase->GetDecal(),
 			trace.HitPos, trace.Line->sidedef[trace.Side], trace.ffloor);

@@ -309,6 +309,14 @@ class Menu : Object native ui version("2.4")
 	{
 		return OptionFont().StringWidth(s);
 	}
+	
+	static void DrawOptionText(int x, int y, int color, String text, bool grayed = false)
+	{
+		String label = Stringtable.Localize(text);
+		int overlay = grayed? Color(96,48,0,0) : 0;
+		screen.DrawText (OptionFont(), OptionColor(color), x, y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+	}
+	
 
 }
 

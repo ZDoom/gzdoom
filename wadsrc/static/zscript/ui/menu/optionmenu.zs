@@ -480,11 +480,11 @@ class OptionMenu : Menu
 
 		if (CanScrollUp)
 		{
-			DrawConText(Font.CR_ORANGE, 3 * CleanXfac_1, ytop, "\x1a");
+			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1, ytop, Font.CR_UNTRANSLATED, "▲");
 		}
 		if (CanScrollDown)
 		{
-			DrawConText(Font.CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1, "\x1b");
+			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, Font.CR_UNTRANSLATED, "▼");
 		}
 		Super.Drawer();
 	}

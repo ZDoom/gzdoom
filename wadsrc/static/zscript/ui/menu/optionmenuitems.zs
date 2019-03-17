@@ -46,11 +46,7 @@ class OptionMenuItem : MenuItemBase
 
 	protected void drawText(int x, int y, int color, String text, bool grayed = false)
 	{
-		String label = Stringtable.Localize(mLabel);
-		
-		int overlay = grayed? Color(96,48,0,0) : 0;
-		
-		screen.DrawText (Menu.OptionFont(), Menu.OptionColor(color), x, y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+		Menu.DrawOptionText(x, y, color, text, grayed);
 	}
 	
 	protected int drawLabel(int indent, int y, int color, bool grayed = false)
@@ -61,13 +57,13 @@ class OptionMenuItem : MenuItemBase
 		int w = Menu.OptionWidth(label) * CleanXfac_1;
 		if (!mCentered) x = indent - w;
 		else x = (screen.GetWidth() - w) / 2;
-		DrawText(x, y, color, label, grayed);
+		Menu.DrawOptionText(x, y, color, label, grayed);
 		return x;
 	}
 
 	protected void drawValue(int indent, int y, int color, String text, bool grayed = false)
 	{
-		DrawText(indent + CursorSpace(), y, color, text, grayed);
+		Menu.DrawOptionText(indent + CursorSpace(), y, color, text, grayed);
 	}
 
 	
@@ -731,7 +727,7 @@ class OptionMenuSliderBase : OptionMenuItem
 		String textbuf;
 		double range;
 		int maxlen = 0;
-		int right = x + (12*8 + 4) * CleanXfac_1;
+		int right = x + (12*8 + 4) * CleanXfac;	// length of slider. This uses the old ConFont and 
 		int cy = y;
 
 		range = max - min;

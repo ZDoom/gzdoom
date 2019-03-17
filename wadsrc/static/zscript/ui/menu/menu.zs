@@ -285,7 +285,7 @@ class Menu : Object native ui version("2.4")
 	
 	static void DrawConText (int color, int x, int y, String str)
 	{
-		screen.DrawText (NewConsoleFont, color, x, y, str, DTA_CellX, 9 * CleanXfac_1/2, DTA_CellY, 8 * CleanYfac_1);
+		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
 	}
 
 }

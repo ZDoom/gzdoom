@@ -451,7 +451,7 @@ class OptionMenu : Menu
 		}
 
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
-		int lastrow = screen.GetHeight() - NewConsoleFont.GetHeight() * CleanYfac_1;
+		int lastrow = screen.GetHeight() - NewSmallFont.GetHeight() * CleanYfac_1;
 
 		int i;
 		for (i = 0; i < mDesc.mItems.Size() && y <= lastrow; i++)
@@ -519,8 +519,8 @@ class GameplayMenu : OptionMenu
 		Super.Drawer();
 
 		String s = String.Format("dmflags = %d   dmflags2 = %d", dmflags, dmflags2);
-		screen.DrawText (NewConsoleFont, OptionMenuSettings.mFontColorValue,
-			(screen.GetWidth() - NewConsoleFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
+		screen.DrawText (NewSmallFont, OptionMenuSettings.mFontColorValue,
+			(screen.GetWidth() - NewSmallFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
 			DTA_CleanNoMove_1, true);
 	}
 }
@@ -532,8 +532,8 @@ class CompatibilityMenu : OptionMenu
 		Super.Drawer();
 
 		String s = String.Format("compatflags = %d  compatflags2 = %d", compatflags, compatflags2);
-		screen.DrawText (NewConsoleFont, OptionMenuSettings.mFontColorValue,
-			(screen.GetWidth() - NewConsoleFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
+		screen.DrawText (NewSmallFont, OptionMenuSettings.mFontColorValue,
+			(screen.GetWidth() - NewSmallFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
 			DTA_CleanNoMove_1, true);
 	}
 }

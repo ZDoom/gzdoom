@@ -79,6 +79,18 @@ void VkHardwareTexture::ResetDescriptors()
 	mDescriptorSets.clear();
 }
 
+void VkHardwareTexture::Precache(FMaterial *mat, int translation, int flags)
+{
+	int numLayers = mat->GetLayers();
+	GetImageView(mat->tex, translation, flags);
+	for (int i = 1; i < numLayers; i++)
+	{
+		FTexture *layer;
+		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+		systex->GetImageView(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
+	}
+}
+
 VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &state)
 {
 	FMaterial *mat = state.mMaterial;

@@ -604,6 +604,18 @@ void VulkanFrameBuffer::CleanForRestart()
 	swdrawer.reset();
 }
 
+void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
+{
+	auto tex = mat->tex;
+	if (tex->isSWCanvas()) return;
+
+	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
+	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled()) ? CTF_CheckHires : 0;
+	auto base = static_cast<VkHardwareTexture*>(mat->GetLayer(0, translation));
+
+	base->Precache(mat, translation, flags);
+}
+
 IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()
 {
 	return new VkHardwareTexture();

@@ -69,6 +69,7 @@ public:
 	void InitializeState() override;
 
 	void CleanForRestart() override;
+	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;

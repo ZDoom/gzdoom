@@ -26,6 +26,8 @@ public:
 	void Reset();
 	void ResetDescriptors();
 
+	void Precache(FMaterial *mat, int translation, int flags);
+
 	VulkanDescriptorSet *GetDescriptorSet(const FMaterialState &state);
 
 	// Software renderer stuff

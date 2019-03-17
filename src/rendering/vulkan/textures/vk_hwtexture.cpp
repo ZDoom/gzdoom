@@ -74,6 +74,11 @@ void VkHardwareTexture::Reset()
 	mStagingBuffer.reset();
 }
 
+void VkHardwareTexture::ResetDescriptors()
+{
+	mDescriptorSets.clear();
+}
+
 VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &state)
 {
 	FMaterial *mat = state.mMaterial;
@@ -92,7 +97,6 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 
 	DescriptorKey key;
 	key.clampmode = clampmode;
-	key.translation = translation;
 	key.flags = flags;
 	auto &descriptorSet = mDescriptorSets[key];
 	if (!descriptorSet)

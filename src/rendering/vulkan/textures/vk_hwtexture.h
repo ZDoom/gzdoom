@@ -24,6 +24,7 @@ public:
 	~VkHardwareTexture();
 
 	void Reset();
+	void ResetDescriptors();
 
 	VulkanDescriptorSet *GetDescriptorSet(const FMaterialState &state);
 
@@ -52,7 +53,6 @@ private:
 	struct DescriptorKey
 	{
 		int clampmode;
-		int translation;
 		int flags;
 
 		bool operator<(const DescriptorKey &other) const { return memcmp(this, &other, sizeof(DescriptorKey)) < 0; }

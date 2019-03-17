@@ -643,13 +643,18 @@ IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
 	return buffer;
 }
 
+void VulkanFrameBuffer::SetTextureFilterMode()
+{
+	TextureFilterChanged();
+}
+
 void VulkanFrameBuffer::TextureFilterChanged()
 {
 	if (mSamplerManager)
 	{
 		// Destroy the texture descriptors as they used the old samplers
 		for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
-			cur->Reset();
+			cur->ResetDescriptors();
 
 		mSamplerManager->SetTextureFilterMode();
 	}

@@ -551,9 +551,13 @@ void V_UpdateModeSize (int width, int height)
 	else if (w >= 1600 && w < 1920) factor = 3; 
 	else  factor = w / 640;
 
-	CleanXfac = CleanYfac = CleanXfac_1 = CleanYfac_1 = factor;
-	CleanWidth = CleanWidth_1 = width / CleanXfac_1;
-	CleanHeight = CleanHeight_1 = height / CleanYfac_1;
+	CleanXfac = CleanYfac = factor;
+	CleanWidth = width / CleanXfac;
+	CleanHeight = height / CleanYfac;
+
+	CleanYfac_1 = CleanXfac_1 = MAX(1, int (CleanXfac * 0.7));
+	CleanWidth_1 = width / CleanXfac_1;
+	CleanHeight_1 = height / CleanYfac_1;
 
 	DisplayWidth = width;
 	DisplayHeight = height;

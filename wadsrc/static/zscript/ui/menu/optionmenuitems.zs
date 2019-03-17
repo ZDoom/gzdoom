@@ -44,19 +44,32 @@ class OptionMenuItem : MenuItemBase
 		mCentered = center;
 	}
 
-	protected int drawLabel(int indent, int y, int color, bool grayed = false)
+	protected void drawText(int x, int y, int color, String text, bool grayed = false)
 	{
 		String label = Stringtable.Localize(mLabel);
 		
 		int overlay = grayed? Color(96,48,0,0) : 0;
-
+		
+		screen.DrawText (Menu.OptionFont(), Menu.OptionColor(color), x, y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+	}
+	
+	protected int drawLabel(int indent, int y, int color, bool grayed = false)
+	{
+		String label = Stringtable.Localize(mLabel);
+		
 		int x;
-		int w = NewSmallFont.StringWidth(label) * CleanXfac_1;
+		int w = Menu.OptionWidth(label) * CleanXfac_1;
 		if (!mCentered) x = indent - w;
 		else x = (screen.GetWidth() - w) / 2;
-		screen.DrawText (NewSmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+		DrawText(x, y, color, label, grayed);
 		return x;
 	}
+
+	protected void drawValue(int indent, int y, int color, String text, bool grayed = false)
+	{
+		DrawText(indent + CursorSpace(), y, color, text, grayed);
+	}
+
 	
 	int CursorSpace()
 	{
@@ -71,11 +84,11 @@ class OptionMenuItem : MenuItemBase
 	override int GetIndent()
 	{
 		if (mCentered) return 0;
-		return NewSmallFont.StringWidth(Stringtable.Localize(mLabel));
+		return Menu.OptionWidth(Stringtable.Localize(mLabel));
 	}
 	
 	override bool MouseEvent(int type, int x, int y)
-	{
+{
 		if (Selectable() && type == Menu.MOUSE_Release)
 		{
 			return Menu.GetCurrentMenu().MenuEvent(Menu.MKEY_Enter, true);
@@ -140,8 +153,7 @@ class OptionMenuItemLabeledSubmenu : OptionMenuItemSubmenu
 		
 		String text = mLabelCVar.GetString();
 		if (text.Length() == 0) text = Stringtable.Localize("$notset");
-		screen.DrawText (NewSmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
-		
+		drawValue(indent, y, OptionMenuSettings.mFontColorValue, text);
 		return indent;
 	}
 }
@@ -286,19 +298,16 @@ class OptionMenuItemOptionBase : OptionMenuItem
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		bool grayed = isGrayed();
-
 		if (mCenter)
 		{
 			indent = (screen.GetWidth() / 2);
 		}
-		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, grayed);
+		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, isGrayed());
 
-		int overlay = grayed? Color(96,48,0,0) : 0;
 		int Selection = GetSelection();
 		String text = StringTable.Localize(OptionValues.GetText(mValues, Selection));
 		if (text.Length() == 0) text = "Unknown";
-		screen.DrawText (NewSmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+		drawValue(indent, y, OptionMenuSettings.mFontColorValue, text, isGrayed());
 		return indent;
 	}
 
@@ -502,11 +511,11 @@ class OptionMenuItemControlBase : OptionMenuItem
 		description = KeyBindings.NameKeys (Key1, Key2);
 		if (description.Length() > 0)
 		{
-			screen.DrawText(NewSmallFont, Font.CR_WHITE, indent + CursorSpace(), y, description, DTA_CleanNoMove_1, true);
+			drawValue(indent, y, Font.CR_WHITE, description);
 		}
 		else
 		{
-			screen.DrawText(NewSmallFont, Font.CR_BLACK, indent + CursorSpace(), y, "---", DTA_CleanNoMove_1, true);
+			drawValue(indent, y, Font.CR_BLACK, "---");
 		}
 		return indent;
 	}
@@ -644,9 +653,9 @@ class OptionMenuItemStaticTextSwitchable : OptionMenuItem
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
 		String txt = StringTable.Localize(mCurrent? mAltText : mLabel);
-		int w = NewSmallFont.StringWidth(txt) * CleanXfac_1;
+		int w = Menu.OptionWidth(txt) * CleanXfac_1;
 		int x = (screen.GetWidth() - w) / 2;
-		screen.DrawText (NewSmallFont, mColor, x, y, txt, DTA_CleanNoMove_1, true);
+		drawText(x, y, mColor, txt);
 		return -1;
 	}
 
@@ -731,7 +740,7 @@ class OptionMenuSliderBase : OptionMenuItem
 		if (fracdigits >= 0)
 		{
 			textbuf = String.format(formater, max);
-			maxlen = NewSmallFont.StringWidth(textbuf) * CleanXfac_1;
+			maxlen = Menu.OptionWidth(textbuf) * CleanXfac_1;
 		}
 
 		mSliderShort = right + maxlen > screen.GetWidth();
@@ -752,7 +761,7 @@ class OptionMenuSliderBase : OptionMenuItem
 		if (fracdigits >= 0 && right + maxlen <= screen.GetWidth())
 		{
 			textbuf = String.format(formater, cur);
-			screen.DrawText(NewSmallFont, Font.CR_DARKGRAY, right, y, textbuf, DTA_CleanNoMove_1, true);
+			drawText(right, y, Font.CR_DARKGRAY, textbuf);
 		}
 	}
 
@@ -971,9 +980,7 @@ class OptionMenuFieldBase : OptionMenuItem
 	{
 		bool grayed = mGrayCheck != null && !mGrayCheck.GetInt();
 		drawLabel(indent, y, selected ? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, grayed);
-		int overlay = grayed? Color(96, 48, 0, 0) : 0;
-
-		screen.DrawText(NewSmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, Represent(), DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+		drawValue(indent, y, OptionMenuSettings.mFontColorValue, Represent(), grayed);
 		return indent;
 	}
 
@@ -1022,7 +1029,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 
 	override String Represent()
 	{
-		if (mEnter) return mEnter.GetText() .. NewSmallFont.GetCursor();
+		if (mEnter) return mEnter.GetText() .. Menu.OptionFont().GetCursor();
 		else return GetCVarString();
 	}
 
@@ -1032,7 +1039,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 		{
 			// reposition the text so that the cursor is visible when in entering mode.
 			String text = Represent();
-			int tlen = NewSmallFont.StringWidth(text) * CleanXfac_1;
+			int tlen = Menu.OptionWidth(text) * CleanXfac_1;
 			int newindent = screen.GetWidth() - tlen - CursorSpace();
 			if (newindent < indent) indent = newindent;
 		}
@@ -1044,7 +1051,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 		if (mkey == Menu.MKEY_Enter)
 		{
 			Menu.MenuSound("menu/choose");
-			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), NewSmallFont, GetCVarString(), -1, fromcontroller);
+			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), GetCVarString(), -1, fromcontroller);
 			mEnter.ActivateMenu();
 			return true;
 		}
@@ -1156,7 +1163,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 		if ((Selection == 0 || Selection == -1) && mClickVal <= 0)
 		{
 			String text = Selection == 0? TextZero : Selection == -1? TextNegOne  : "";
-			screen.DrawText (NewSmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
+			drawValue(indent, y, OptionMenuSettings.mFontColorValue, text);
 		}
 		else
 		{

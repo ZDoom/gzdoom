@@ -287,6 +287,28 @@ class Menu : Object native ui version("2.4")
 	{
 		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
 	}
+	
+	static int OptionColor(int color)
+	{
+		if (color != Font.CR_UNTRANSLATED) return color;
+		// This needs fixing for mods with custom fonts.
+		return gameinfo.gametype == GAME_Doom ? Font.CR_RED : gameinfo.gametype == GAME_Chex ? Font.CR_GREEN : gameinfo.gametype == GAME_Strife ? Font.CR_GOLD : Font.CR_GRAY;
+	}
+	
+	static Font OptionFont()
+	{
+		return NewSmallFont;
+	}
+	
+	static int OptionHeight() 
+	{
+		return OptionFont().GetHeight();
+	}
+	
+	static int OptionWidth(String s)
+	{
+		return OptionFont().StringWidth(s);
+	}
 
 }
 

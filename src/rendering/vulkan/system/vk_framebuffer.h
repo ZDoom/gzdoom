@@ -50,7 +50,14 @@ public:
 
 	std::unique_ptr<IIndexBuffer> FanToTrisIndexBuffer;
 
-	std::vector<std::unique_ptr<VulkanBuffer>> mFrameDeleteList;
+	class DeleteList
+	{
+	public:
+		std::vector<std::unique_ptr<VulkanImage>> Images;
+		std::vector<std::unique_ptr<VulkanImageView>> ImageViews;
+		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
+		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
+	} FrameDeleteList;
 
 	std::unique_ptr<SWSceneDrawer> swdrawer;
 
@@ -95,6 +102,7 @@ private:
 	void SubmitCommands(bool finish);
 	void CopyScreenToBuffer(int w, int h, void *data);
 	void UpdateShadowMap();
+	void DeleteFrameObjects();
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;

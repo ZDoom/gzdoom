@@ -99,6 +99,8 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mViewpoints;
 	delete mLights;
 	mShadowMap.Reset();
+
+	DeleteFrameObjects();
 }
 
 void VulkanFrameBuffer::InitializeState()
@@ -205,11 +207,19 @@ void VulkanFrameBuffer::Update()
 
 	mDrawCommands.reset();
 	mUploadCommands.reset();
-	mFrameDeleteList.clear();
+	DeleteFrameObjects();
 
 	Finish.Unclock();
 
 	Super::Update();
+}
+
+void VulkanFrameBuffer::DeleteFrameObjects()
+{
+	FrameDeleteList.Images.clear();
+	FrameDeleteList.ImageViews.clear();
+	FrameDeleteList.Buffers.clear();
+	FrameDeleteList.Descriptors.clear();
 }
 
 void VulkanFrameBuffer::SubmitCommands(bool finish)
@@ -270,7 +280,7 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
 		mDrawCommands.reset();
 		mUploadCommands.reset();
-		mFrameDeleteList.clear();
+		DeleteFrameObjects();
 	}
 }
 

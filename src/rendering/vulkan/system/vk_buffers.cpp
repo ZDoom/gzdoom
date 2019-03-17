@@ -13,7 +13,7 @@ VKBuffer::~VKBuffer()
 
 	auto fb = GetVulkanFrameBuffer();
 	if (fb && mBuffer)
-		fb->mFrameDeleteList.push_back(std::move(mBuffer));
+		fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
 }
 
 void VKBuffer::SetData(size_t size, const void *data, bool staticdata)

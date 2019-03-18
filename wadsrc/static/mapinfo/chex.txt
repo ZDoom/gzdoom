@@ -189,7 +189,7 @@ clearepisodes
 episode e1m1
 {
 	picname = "M_EPI1"
-	name = "Chex Quest"
+	name = "$TXT_CHEX_EP"
 	key = "k"
 }
 

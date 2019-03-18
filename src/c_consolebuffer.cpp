@@ -57,33 +57,6 @@ FConsoleBuffer::FConsoleBuffer()
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-FConsoleBuffer::~FConsoleBuffer()
-{
-	FreeBrokenText();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FConsoleBuffer::FreeBrokenText(unsigned start, unsigned end)
-{
-	if (end > m_BrokenConsoleText.Size()) end = m_BrokenConsoleText.Size();
-	for (unsigned i = start; i < end; i++)
-	{
-		m_BrokenConsoleText[i].Clear();
-		m_BrokenConsoleText[i].ShrinkToFit();
-	}
-}
-
-//==========================================================================
-//
 // Adds a new line of text to the console
 // This is kept as simple as possible. This function does not:
 // - remove old text if the buffer gets larger than the specified size
@@ -95,7 +68,7 @@ void FConsoleBuffer::FreeBrokenText(unsigned start, unsigned end)
 //
 //==========================================================================
 
-void FConsoleBuffer::AddText(int printlevel, const char *text, FILE *logfile)
+void FConsoleBuffer::AddText(int printlevel, const char *text)
 {
 	FString build = TEXTCOLOR_TAN;
 	
@@ -135,117 +108,9 @@ void FConsoleBuffer::AddText(int printlevel, const char *text, FILE *logfile)
 		mAddType = APPENDLINE;
 	}
 
-	// don't bother about linefeeds etc. inside the text, we'll let the formatter sort this out later.
+	// don't bother with linefeeds etc. inside the text, we'll let the formatter sort this out later.
 	build.AppendCStrPart(text, textsize);
 	mConsoleText.Push(build);
-	if (logfile != NULL) WriteLineToLog(logfile, text);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FConsoleBuffer::WriteLineToLog(FILE *LogFile, const char *outline)
-{
-	// Strip out any color escape sequences before writing to the log file
-	TArray<char> copy(strlen(outline)+1);
-	const char * srcp = outline;
-	char * dstp = copy.Data();
-
-	while (*srcp != 0)
-	{
-
-		if (*srcp != TEXTCOLOR_ESCAPE)
-		{
-			switch (*srcp)
-			{
-				case '\35':
-					*dstp++ = '<';
-					break;
-				
-				case '\36':
-					*dstp++ = '-';
-					break;
-				
-				case '\37':
-					*dstp++ = '>';
-					break;
-					
-				default:
-					*dstp++=*srcp;
-					break;
-			}
-			srcp++;
-		}
-		else if (srcp[1] == '[')
-		{
-			srcp+=2;
-			while (*srcp != ']' && *srcp != 0) srcp++;
-			if (*srcp == ']') srcp++;
-		}
-		else
-		{
-			if (srcp[1]!=0) srcp+=2;
-			else break;
-		}
-	}
-	*dstp=0;
-
-	fputs (copy.Data(), LogFile);
-	fflush (LogFile);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FConsoleBuffer::WriteContentToLog(FILE *LogFile)
-{
-	if (LogFile != NULL)
-	{
-		for (unsigned i = 0; i < mConsoleText.Size(); i++)
-		{
-			WriteLineToLog(LogFile, mConsoleText[i]);
-		}
-	}
-}
-
-//==========================================================================
-//
-// ensures that the following text is not appended to the current line.
-//
-//==========================================================================
-
-void FConsoleBuffer::Linefeed(FILE *Logfile)
-{
-	if (mAddType != NEWLINE && Logfile != NULL) fputc('\n', Logfile);
-	mAddType = NEWLINE;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-static const char bar1[] = TEXTCOLOR_RED "\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_TAN "\n";
-static const char bar2[] = TEXTCOLOR_RED "\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_GREEN "\n";
-static const char bar3[] = TEXTCOLOR_RED "\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
-
-void FConsoleBuffer::AddMidText(const char *string, bool bold, FILE *Logfile)
-{
-	Linefeed(Logfile);
-	AddText (-1, bold? bar2 : bar1, Logfile);
-	AddText (-1, string, Logfile);
-	Linefeed(Logfile);
-	AddText(-1, bar3, Logfile);
 }
 
 //==========================================================================
@@ -258,7 +123,6 @@ void FConsoleBuffer::FormatText(FFont *formatfont, int displaywidth)
 {
 	if (formatfont != mLastFont || displaywidth != mLastDisplayWidth || mBufferWasCleared)
 	{
-		FreeBrokenText();
 		m_BrokenConsoleText.Clear();
 		mBrokenStart.Clear();
 		mBrokenStart.Push(0);

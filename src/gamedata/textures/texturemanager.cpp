@@ -403,9 +403,11 @@ FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype
 // 3: Only replace if the string is not the default and the graphic comes from the IWAD. Never replace a localized graphic.
 // 4: Like 1, but lets localized graphics pass.
 //
+// The default is 3, which only replaces known content with non-default texts.
+//
 //==========================================================================
 
-CUSTOM_CVAR(Int, cl_localizationmode,0, CVAR_ARCHIVE)
+CUSTOM_CVAR(Int, cl_gfxlocalization, 3, CVAR_ARCHIVE)
 {
 	if (self < 0 || self > 4) self = 0;
 }
@@ -421,8 +423,8 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (!texnum.isValid()) return false;
 	
 	// First the unconditional settings, 0='never' and 1='always'.
-	if (cl_localizationmode == 1 || gameinfo.forcetextinmenus) return false;
-	if (cl_localizationmode == 0) return true;
+	if (cl_gfxlocalization == 1 || gameinfo.forcetextinmenus) return false;
+	if (cl_gfxlocalization == 0 || gameinfo.forcenogfxsubstitution) return true;
 	
 	uint32_t langtable = 0;
 	if (*substitute == '$') substitute = GStrings.GetString(substitute+1, &langtable);
@@ -433,11 +435,11 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (localizedTex != texnum.GetIndex()) return true;	// Do not substitute a localized variant of the graphics patch.
 	
 	// For mode 4 we are done now.
-	if (cl_localizationmode == 4) return false;
+	if (cl_gfxlocalization == 4) return false;
 	
 	// Mode 2 and 3 must reject any text replacement from the default language tables.
 	if ((langtable & MAKE_ID(255,0,0,0)) == MAKE_ID('*', 0, 0, 0)) return true;	// Do not substitute if the string comes from the default table.
-	if (cl_localizationmode == 2) return false;
+	if (cl_gfxlocalization == 2) return false;
 	
 	// Mode 3 must also reject substitutions for non-IWAD content.
 	int file = Wads.GetLumpFile(Textures[texnum.GetIndex()].Texture->SourceLump);
@@ -1300,17 +1302,20 @@ int FTextureManager::PalCheck(int tex)
 // FTextureManager :: PalCheck
 //
 //==========================================================================
+EXTERN_CVAR(String, language)
 
 int FTextureManager::ResolveLocalizedTexture(int tex)
 {
-	for(int i = 0; i < 4; i++)
-	{
-		uint32_t lang = LanguageIDs[i];
-		uint64_t index = (uint64_t(lang) << 32) + tex;
-		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
-		index = (uint64_t(lang & MAKE_ID(255, 255, 0, 0)) << 32) + tex;
-		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
-	}
+	size_t langlen = strlen(language);
+	int lang = (langlen < 2 || langlen > 3) ?
+		MAKE_ID('e', 'n', 'u', '\0') :
+		MAKE_ID(language[0], language[1], language[2], '\0');
+
+	uint64_t index = (uint64_t(lang) << 32) + tex;
+	if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+	index = (uint64_t(lang & MAKE_ID(255, 255, 0, 0)) << 32) + tex;
+	if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+
 	return tex;
 }
 

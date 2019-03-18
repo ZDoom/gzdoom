@@ -84,7 +84,7 @@ class TextEnterMenu : Menu
 	deprecated("3.8") static TextEnterMenu Open(Menu parent, String textbuffer, int maxlen, int sizemode, bool showgrid = false, bool allowcolors = false)
 	{
 		let me = new("TextEnterMenu");
-		me.Init(parent, SmallFont, textbuffer, maxlen*8, showgrid, allowcolors);
+		me.Init(parent, Menu.OptionFont(), textbuffer, maxlen*8, showgrid, allowcolors);
 		return me;
 	}
 

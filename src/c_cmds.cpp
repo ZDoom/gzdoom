@@ -1243,10 +1243,12 @@ CCMD(secret)
 					FString levelname;
 					level_info_t *info = FindLevelInfo(mapname);
 					const char *ln = !(info->flags & LEVEL_LOOKUPLEVELNAME)? info->LevelName.GetChars() : GStrings[info->LevelName.GetChars()];
-					levelname.Format("%s - %s\n", mapname, ln);
-					size_t llen = levelname.Len() - 1;
+					levelname.Format("%s - %s", mapname, ln);
+					Printf(TEXTCOLOR_YELLOW "%s\n", levelname.GetChars());
+					size_t llen = levelname.Len();
+					levelname = "";
 					for(size_t ii=0; ii<llen; ii++) levelname += '-';
-					Printf(TEXTCOLOR_YELLOW"%s\n", levelname.GetChars());
+					Printf(TEXTCOLOR_YELLOW "%s\n", levelname.GetChars());
 					foundsome = true;
 				}
 			}

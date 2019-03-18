@@ -327,8 +327,7 @@ class ColorpickerMenu : OptionMenu
 		screen.Clear (x + 48*CleanXfac_1, y, x + 48*2*CleanXfac_1, y + 48*CleanYfac_1, newColor);
 
 		y += 49*CleanYfac_1;
-		screen.DrawText (SmallFont, Font.CR_GRAY, x+(24-SmallFont.StringWidth("Old")/2)*CleanXfac_1, y, "Old", DTA_CleanNoMove_1, true);
-		screen.DrawText (SmallFont, Font.CR_WHITE, x+(48+24-SmallFont.StringWidth("New")/2)*CleanXfac_1, y, "New", DTA_CleanNoMove_1, true);
+		screen.DrawText (SmallFont, Font.CR_GRAY, x+(48-SmallFont.StringWidth("---->")/2)*CleanXfac_1, y, "---->", DTA_CleanNoMove_1, true);
 	}
 	
 	override void OnDestroy()

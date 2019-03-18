@@ -878,12 +878,7 @@ void DoMain (HINSTANCE hInstance)
 			}
 			if (StdOut == NULL)
 			{
-				// AttachConsole was introduced with Windows XP. (OTOH, since we
-				// have to share the console with the shell, I'm not sure if it's
-				// a good idea to actually attach to it.)
-				typedef BOOL (WINAPI *ac)(DWORD);
-				ac attach_console = kernel != NULL ? (ac)GetProcAddress(kernel, "AttachConsole") : NULL;
-				if (attach_console != NULL && attach_console(ATTACH_PARENT_PROCESS))
+				if (AttachConsole(ATTACH_PARENT_PROCESS))
 				{
 					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 					DWORD foo; WriteFile(StdOut, "\n", 1, &foo, NULL);
@@ -892,6 +887,29 @@ void DoMain (HINSTANCE hInstance)
 				if (StdOut == NULL && AllocConsole())
 				{
 					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				}
+
+				// These two functions do not exist in Windows XP.
+				BOOL (WINAPI* p_GetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+				BOOL (WINAPI* p_SetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+
+				p_SetCurrentConsoleFontEx = (decltype(p_SetCurrentConsoleFontEx))GetProcAddress(kernel, "SetCurrentConsoleFontEx");
+				p_GetCurrentConsoleFontEx = (decltype(p_GetCurrentConsoleFontEx))GetProcAddress(kernel, "GetCurrentConsoleFontEx");
+				if (p_SetCurrentConsoleFontEx && p_GetCurrentConsoleFontEx)
+				{
+					CONSOLE_FONT_INFOEX cfi;
+					cfi.cbSize = sizeof(cfi);
+
+					if (p_GetCurrentConsoleFontEx(StdOut, false, &cfi))
+					{
+						if (*cfi.FaceName == 0)	// If the face name is empty, the default (useless) raster font is actoive.
+						{
+							//cfi.dwFontSize = { 8, 14 };
+							wcscpy(cfi.FaceName, L"Lucida Console");
+							cfi.FontFamily = FF_DONTCARE;
+							p_SetCurrentConsoleFontEx(StdOut, false, &cfi);
+						}
+					}
 				}
 				FancyStdOut = true;
 			}

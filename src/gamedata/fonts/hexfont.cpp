@@ -42,6 +42,51 @@
 
 #include "fontinternals.h"
 
+
+struct HexDataSource
+{
+	int FirstChar = INT_MAX, LastChar = INT_MIN;
+	TArray<uint8_t> glyphdata;
+	unsigned glyphmap[65536] = {};
+
+	//==========================================================================
+	//
+	// parse a HEX font
+	//
+	//==========================================================================
+
+	void ParseDefinition(int lumpnum)
+	{
+		FScanner sc;
+
+		sc.OpenLumpNum(lumpnum);
+		sc.SetCMode(true);
+		glyphdata.Push(0);	// ensure that index 0 can be used as 'not present'.
+		while (sc.GetString())
+		{
+			int codepoint = (int)strtoull(sc.String, nullptr, 16);
+			sc.MustGetStringName(":");
+			sc.MustGetString();
+			if (codepoint >= 0 && codepoint < 65536 && !sc.Compare("00000000000000000000000000000000"))	// don't set up empty glyphs.
+			{
+				unsigned size = (unsigned)strlen(sc.String);
+				unsigned offset = glyphdata.Reserve(size / 2 + 1);
+				glyphmap[codepoint] = offset;
+				glyphdata[offset++] = size / 2;
+				for (unsigned i = 0; i < size; i += 2)
+				{
+					char hex[] = { sc.String[i], sc.String[i + 1], 0 };
+					glyphdata[offset++] = (uint8_t)strtoull(hex, nullptr, 16);
+				}
+				if (codepoint < FirstChar) FirstChar = codepoint;
+				if (codepoint > LastChar) LastChar = codepoint;
+			}
+		}
+	}
+};
+
+static HexDataSource hexdata;
+
 // This is a font character that reads RLE compressed data.
 class FHexFontChar : public FImageSource
 {
@@ -113,51 +158,78 @@ TArray<uint8_t> FHexFontChar::CreatePalettedPixels(int)
 	return Pixels;
 }
 
+class FHexFontChar2 : public FHexFontChar
+{
+public:
+	FHexFontChar2(uint8_t *sourcedata, int swidth, int width, int height);
+
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+};
+
+
+//==========================================================================
+//
+// FHexFontChar :: FHexFontChar
+//
+// Used by HEX fonts.
+//
+//==========================================================================
+
+FHexFontChar2::FHexFontChar2(uint8_t *sourcedata, int swidth, int width, int height)
+	: FHexFontChar(sourcedata, swidth, width, height)
+{
+}
+
+//==========================================================================
+//
+// FHexFontChar :: Get8BitPixels
+//
+// The render style has no relevance here.
+//
+//==========================================================================
+
+TArray<uint8_t> FHexFontChar2::CreatePalettedPixels(int)
+{
+	int destSize = Width * Height;
+	TArray<uint8_t> Pixels(destSize, true);
+	uint8_t *dest_p = Pixels.Data();
+
+	auto drawLayer = [&](int ix, int iy, int color)
+	{
+		const uint8_t *src_p = SourceData;
+		for (int y = 0; y < Height-2; y++)
+		{
+			for (int x = 0; x < SourceWidth; x++)
+			{
+				int byte = *src_p++;
+				uint8_t *pixelstart = dest_p + (ix + 8 * x) * Height + (iy+y);
+				for (int bit = 0; bit < 8; bit++)
+				{
+					if (byte & (128 >> bit))
+					{
+						pixelstart[bit*Height] = color;
+					}
+				}
+			}
+		}
+	};
+	memset(dest_p, 0, destSize);
+
+	const int darkcolor = 3;
+	const int brightcolor = 14;
+	for (int xx=0;xx<3;xx++) for (int yy=0;yy<3;yy++) if (xx !=1 || yy != 1)
+		drawLayer(xx, yy, darkcolor);
+	drawLayer(1, 1, brightcolor);
+
+	return Pixels;
+}
+
 
 
 class FHexFont : public FFont
 {
-	TArray<uint8_t> glyphdata;
-	unsigned glyphmap[65536] = {};
 	
 public:
-	//==========================================================================
-	//
-	// parse a HEX font
-	//
-	//==========================================================================
-
-	void ParseDefinition(int lumpnum)
-	{
-		FScanner sc;
-		
-		FirstChar = INT_MAX;
-		LastChar = INT_MIN;
-		sc.OpenLumpNum(lumpnum);
-		sc.SetCMode(true);
-		glyphdata.Push(0);	// ensure that index 0 can be used as 'not present'.
-		while (sc.GetString())
-		{
-			int codepoint = (int)strtoull(sc.String, nullptr, 16);
-			sc.MustGetStringName(":");
-			sc.MustGetString();
-			if (codepoint >= 0 && codepoint < 65536 && !sc.Compare("00000000000000000000000000000000"))	// don't set up empty glyphs.
-			{
-				unsigned size = (unsigned)strlen(sc.String);
-				unsigned offset = glyphdata.Reserve(size/2 + 1);
-				glyphmap[codepoint] = offset;
-				glyphdata[offset++] = size / 2;
-				for(unsigned i = 0; i < size; i+=2)
-				{
-					char hex[] = { sc.String[i], sc.String[i+1], 0 };
-					glyphdata[offset++] = (uint8_t)strtoull(hex, nullptr, 16);
-				}
-				if (codepoint < FirstChar) FirstChar = codepoint;
-				if (codepoint > LastChar) LastChar = codepoint;
-			}
-		}
-	}
-	
 	//==========================================================================
 	//
 	// FHexFont :: FHexFont
@@ -173,7 +245,8 @@ public:
 
 		FontName = fontname;
 		
-		ParseDefinition(lump);
+		FirstChar = hexdata.FirstChar;
+		LastChar = hexdata.LastChar;
 
 		Next = FirstFont;
 		FirstFont = this;
@@ -208,11 +281,11 @@ public:
 		Chars.Resize(LastChar - FirstChar + 1);
 		for (int i = FirstChar; i <= LastChar; i++)
 		{
-			if (glyphmap[i] > 0)
+			if (hexdata.glyphmap[i] > 0)
 			{
-				auto offset = glyphmap[i];
-				int size = glyphdata[offset] / 16;
-				Chars[i - FirstChar].TranslatedPic = new FImageTexture(new FHexFontChar (&glyphdata[offset+1], size, size * 9, 16));
+				auto offset = hexdata.glyphmap[i];
+				int size = hexdata.glyphdata[offset] / 16;
+				Chars[i - FirstChar].TranslatedPic = new FImageTexture(new FHexFontChar (&hexdata.glyphdata[offset+1], size, size * 9, 16));
 				Chars[i - FirstChar].TranslatedPic->SetUseType(ETextureType::FontChar);
 				Chars[i - FirstChar].XMove = size * spacing;
 				TexMan.AddTexture(Chars[i - FirstChar].TranslatedPic);
@@ -226,6 +299,79 @@ public:
 };
 
 
+class FHexFont2 : public FFont
+{
+
+public:
+	//==========================================================================
+	//
+	// FHexFont :: FHexFont
+	//
+	// Loads a HEX font
+	//
+	//==========================================================================
+
+	FHexFont2(const char *fontname, int lump)
+		: FFont(lump)
+	{
+		assert(lump >= 0);
+
+		FontName = fontname;
+
+		FirstChar = hexdata.FirstChar;
+		LastChar = hexdata.LastChar;
+
+		Next = FirstFont;
+		FirstFont = this;
+		FontHeight = 18;
+		SpaceWidth = 10;
+		GlobalKerning = -1;
+		translateUntranslated = true;
+
+		LoadTranslations();
+	}
+
+	//==========================================================================
+	//
+	// FHexFont :: LoadTranslations
+	//
+	//==========================================================================
+
+	void LoadTranslations()
+	{
+		const int spacing = 9;
+		double luminosity[256];
+
+		memset(PatchRemap, 0, 256);
+		for (int i = 0; i < 18; i++)
+		{
+			// Create a gradient similar to the old console font.
+			PatchRemap[i] = i;
+			luminosity[i] = i / 17.;
+		}
+		ActiveColors = 18;
+
+		Chars.Resize(LastChar - FirstChar + 1);
+		for (int i = FirstChar; i <= LastChar; i++)
+		{
+			if (hexdata.glyphmap[i] > 0)
+			{
+				auto offset = hexdata.glyphmap[i];
+				int size = hexdata.glyphdata[offset] / 16;
+				Chars[i - FirstChar].TranslatedPic = new FImageTexture(new FHexFontChar2(&hexdata.glyphdata[offset + 1], size, 2 + size * 8, 18));
+				Chars[i - FirstChar].TranslatedPic->SetUseType(ETextureType::FontChar);
+				Chars[i - FirstChar].XMove = size * spacing;
+				TexMan.AddTexture(Chars[i - FirstChar].TranslatedPic);
+			}
+			else Chars[i - FirstChar].XMove = spacing;
+
+		}
+		BuildTranslations(luminosity, nullptr, &TranslationParms[0][0], ActiveColors, nullptr);
+	}
+
+};
+
+
 //==========================================================================
 //
 //
@@ -234,5 +380,18 @@ public:
 
 FFont *CreateHexLumpFont (const char *fontname, int lump)
 {
+	if (hexdata.FirstChar == INT_MAX) hexdata.ParseDefinition(lump);
 	return new FHexFont(fontname, lump);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FFont *CreateHexLumpFont2(const char *fontname, int lump)
+{
+	if (hexdata.FirstChar == INT_MAX) hexdata.ParseDefinition(lump);
+	return new FHexFont2(fontname, lump);
 }

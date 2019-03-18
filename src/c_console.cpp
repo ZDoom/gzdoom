@@ -131,8 +131,6 @@ static GameAtExit *ExitCmdList;
 
 EXTERN_CVAR (Bool, show_messages)
 
-static bool ConsoleDrawing;
-
 // Buffer for AddToConsole()
 static char *work = NULL;
 static int worklen = 0;
@@ -586,49 +584,6 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 	setmsgcolor (PRINTLEVELS+1, self);
 }
 
-struct TextQueue
-{
-	TextQueue (bool notify, int printlevel, const char *text)
-		: Next(NULL), bNotify(notify), PrintLevel(printlevel), Text(text)
-	{
-	}
-	TextQueue *Next;
-	bool bNotify;
-	int PrintLevel;
-	FString Text;
-};
-
-TextQueue *EnqueuedText, **EnqueuedTextTail = &EnqueuedText;
-
-void EnqueueConsoleText (bool notify, int printlevel, const char *text)
-{
-	TextQueue *queued = new TextQueue (notify, printlevel, text);
-	*EnqueuedTextTail = queued;
-	EnqueuedTextTail = &queued->Next;
-}
-
-void DequeueConsoleText ()
-{
-	TextQueue *queued = EnqueuedText;
-
-	while (queued != NULL)
-	{
-		TextQueue *next = queued->Next;
-		if (queued->bNotify)
-		{
-			NotifyStrings.AddString(queued->PrintLevel, queued->Text);
-		}
-		else
-		{
-			AddToConsole (queued->PrintLevel, queued->Text);
-		}
-		delete queued;
-		queued = next;
-	}
-	EnqueuedText = NULL;
-	EnqueuedTextTail = &EnqueuedText;
-}
-
 EColorRange C_GetDefaultFontColor()
 {
 	// Ideally this should analyze the SmallFont and pick a matching color.
@@ -827,15 +782,9 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		con_notifylines == 0)
 		return;
 
-	if (ConsoleDrawing)
-	{
-		EnqueueConsoleText (true, printlevel, source);
-		return;
-	}
-
 	width = DisplayWidth / active_con_scaletext(con_consolefont);
 
-	FFont *font = *con_consolefont ? NewConsoleFont : SmallFont;
+	FFont *font = *con_consolefont ? NewSmallFont : SmallFont;
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
 	{
@@ -888,11 +837,51 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 
 void AddToConsole (int printlevel, const char *text)
 {
-	conbuffer->AddText(printlevel, MakeUTF8(text), Logfile);
+	conbuffer->AddText(printlevel, MakeUTF8(text));
 }
 
-int PrintString (int printlevel, const char *outline)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void WriteLineToLog(FILE *LogFile, const char *outline)
 {
+	// Strip out any color escape sequences before writing to the log file
+	TArray<char> copy(strlen(outline) + 1);
+	const char * srcp = outline;
+	char * dstp = copy.Data();
+
+	while (*srcp != 0)
+	{
+
+		if (*srcp != TEXTCOLOR_ESCAPE)
+		{
+			*dstp++ = *srcp++;
+		}
+		else if (srcp[1] == '[')
+		{
+			srcp += 2;
+			while (*srcp != ']' && *srcp != 0) srcp++;
+			if (*srcp == ']') srcp++;
+		}
+		else
+		{
+			if (srcp[1] != 0) srcp += 2;
+			else break;
+		}
+	}
+	*dstp = 0;
+
+	fputs(copy.Data(), LogFile);
+	fflush(LogFile);
+}
+
+
+int PrintString (int iprintlevel, const char *outline)
+{
+	int printlevel = iprintlevel & PRINT_TYPES;
 	if (printlevel < msglevel || *outline == '\0')
 	{
 		return 0;
@@ -907,16 +896,15 @@ int PrintString (int printlevel, const char *outline)
 		{
 			I_PrintStr(outline);
 
-			conbuffer->AddText(printlevel, outline, Logfile);
-			if (vidactive && screen && SmallFont)
+			conbuffer->AddText(printlevel, outline);
+			if (vidactive && screen && SmallFont && !(iprintlevel & PRINT_NONOTIFY))
 			{
 				NotifyStrings.AddString(printlevel, outline);
 			}
 		}
-		else if (Logfile != nullptr)
+		if (Logfile != nullptr && !(iprintlevel & PRINT_NOLOG))
 		{
-			fputs(outline, Logfile);
-			fflush(Logfile);
+			WriteLineToLog(Logfile, outline);
 		}
 		return count;
 	}
@@ -1079,7 +1067,7 @@ void FNotifyBuffer::Draw()
 	line = Top;
 	canskip = true;
 
-	FFont *font = *con_consolefont ? NewConsoleFont : SmallFont;
+	FFont *font = *con_consolefont ? NewSmallFont : SmallFont;
 	lineadv = font->GetHeight ();
 
 	for (unsigned i = 0; i < Text.Size(); ++ i)
@@ -1220,8 +1208,6 @@ void C_DrawConsole ()
 
 		int bottomline = ConBottom / textScale - CurrentConsoleFont->GetHeight()*2 - 4;
 
-		ConsoleDrawing = true;
-
 		for(FBrokenLines *p = printline; p >= blines && lines > 0; p--, lines--)
 		{
 			if (textScale == 1)
@@ -1236,8 +1222,6 @@ void C_DrawConsole ()
 					DTA_KeepRatio, true, TAG_DONE);
 			}
 		}
-
-		ConsoleDrawing = false;
 
 		if (ConBottom >= 20)
 		{
@@ -1758,63 +1742,29 @@ CCMD (echo)
 
 /* Printing in the middle of the screen */
 
-CVAR (Float, con_midtime, 3.f, CVAR_ARCHIVE)
+CVAR(Float, con_midtime, 3.f, CVAR_ARCHIVE)
 
-static const char bar1[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_TAN "\n";
-static const char bar2[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_GREEN "\n";
-static const char bar3[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
-						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
+const char *console_bar = "----------------------------------------";
 
-void C_MidPrint (FFont *font, const char *msg)
+void C_MidPrint (FFont *font, const char *msg, bool bold)
 {
-	if (StatusBar == NULL || screen == NULL)
+	if (StatusBar == nullptr || screen == nullptr)
 		return;
 
-	if (msg != NULL)
+	if (msg != nullptr)
 	{
-		AddToConsole (-1, bar1);
-		AddToConsole (-1, msg);
-		AddToConsole (-1, bar3);
-
-		auto color = (EColorRange)PrintColors[PRINTLEVELS];
+		auto color = (EColorRange)PrintColors[bold? PRINTLEVELS+1 : PRINTLEVELS];
+		Printf(PRINT_NONOTIFY, TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", color, console_bar, msg, console_bar);
 
 		bool altscale = false;
 		if (font == nullptr)
 		{
 			altscale = con_midconsolefont;
-			font = altscale ? NewConsoleFont : SmallFont;
+			font = altscale ? NewSmallFont : SmallFont;
 			if (altscale && color == CR_UNTRANSLATED) color = C_GetDefaultFontColor();
 		}
 
 		StatusBar->AttachMessage (Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0,
-			color, con_midtime, altscale), MAKE_ID('C','N','T','R'));
-	}
-	else
-	{
-		StatusBar->DetachMessage (MAKE_ID('C','N','T','R'));
-	}
-}
-
-void C_MidPrintBold (FFont *font, const char *msg)
-{
-	if (msg)
-	{
-		AddToConsole (-1, bar2);
-		AddToConsole (-1, msg);
-		AddToConsole (-1, bar3);
-
-		auto color = (EColorRange)PrintColors[PRINTLEVELS+1];
-		bool altscale = false;
-		if (font == nullptr)
-		{
-			altscale = con_midconsolefont;
-			font = altscale ? NewConsoleFont : SmallFont;
-			if (altscale && color == CR_UNTRANSLATED) color = C_GetDefaultFontColor();
-		}
-
-		StatusBar->AttachMessage (Create<DHUDMessage> (font, msg, 1.5f, 0.375f, 0, 0,
 			color, con_midtime, altscale), MAKE_ID('C','N','T','R'));
 	}
 	else
@@ -1831,8 +1781,7 @@ DEFINE_ACTION_FUNCTION(_Console, MidPrint)
 	PARAM_BOOL(bold);
 
 	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
-	if (!bold) C_MidPrint(fnt, txt);
-	else C_MidPrintBold(fnt, txt);
+	C_MidPrint(fnt, txt, bold);
 	return 0;
 }
 

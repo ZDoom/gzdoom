@@ -426,9 +426,7 @@ void player_t::SetLogText (const char *text)
 	if (mo && mo->CheckLocalView())
 	{
 		// Print log text to console
-		AddToConsole(-1, TEXTCOLOR_GOLD);
-		AddToConsole(-1, LogText[0] == '$'? GStrings(text+1) : text );
-		AddToConsole(-1, "\n");
+		Printf(PRINT_NONOTIFY, TEXTCOLOR_GOLD "%s\n", LogText[0] == '$' ? GStrings(text + 1) : text);
 	}
 }
 

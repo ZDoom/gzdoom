@@ -695,8 +695,7 @@ static void TerminalResponse (const char *str)
 
 		if (StatusBar != NULL)
 		{
-			AddToConsole(-1, str);
-			AddToConsole(-1, "\n");
+			Printf(PRINT_NONOTIFY, "%s\n", str);
 			// The message is positioned a bit above the menu choices, because
 			// merchants can tell you something like this but continue to show
 			// their dialogue screen. I think most other conversations use this

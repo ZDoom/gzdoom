@@ -21,28 +21,28 @@ clearepisodes
 episode e1m1
 {
 	picname = "M_EPI1"
-	name = "Knee-Deep in the Dead"
+	name = "$TXT_D1E1"
 	key = "k"
 }
 
 episode e2m1
 {
 	picname = "M_EPI2"
-	name = "The Shores of Hell"
+	name = "$TXT_D1E2"
 	key = "t"
 }
 
 episode e3m1
 {
 	picname = "M_EPI3"
-	name = "Inferno"
+	name = "$TXT_D1E3"
 	key = "i"
 }
 
 episode e4m1
 {
 	picname = "M_EPI4"
-	name = "Thy Flesh Consumed"
+	name = "$TXT_D1E4"
 	key = "t"
 	optional
 } 

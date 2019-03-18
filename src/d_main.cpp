@@ -1292,6 +1292,7 @@ void D_DoAdvanceDemo (void)
 			}
 			else
 			{
+				singledemo = false;
 				G_DeferedPlayDemo (demoname);
 				demosequence = 2;
 				break;

@@ -573,7 +573,7 @@ void FParser::SF_Include(void)
 
 void FParser::SF_Input(void)
 {
-	Printf(PRINT_BOLD,"input() function not available in doom\n");
+	Printf(PRINT_BOLD,"input() function not available in Doom\n");
 }
 
 //==========================================================================

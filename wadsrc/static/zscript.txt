@@ -253,6 +253,11 @@ version "3.8"
 #include "zscript/ui/menu/reverbedit.zs"
 #include "zscript/ui/menu/textentermenu.zs"
 
+#include "zscript/ui/menu/search/menu.zs"
+#include "zscript/ui/menu/search/searchfield.zs"
+#include "zscript/ui/menu/search/query.zs"
+#include "zscript/ui/menu/search/anyoralloption.zs"
+
 #include "zscript/ui/statscreen/statscreen.zs"
 #include "zscript/ui/statscreen/statscreen_coop.zs"
 #include "zscript/ui/statscreen/statscreen_dm.zs"

@@ -4,13 +4,13 @@ include "mapinfo/doomcommon.txt"
 clearepisodes
 episode map01
 {
-	name = "Hell On Earth"
+	name = "$TXT_D2E1"
 	key = "h"
 }
 
 episode level01
 {
-	name = "No Rest for the Living"
+	name = "$TXT_D1E2"
 	key = "n"
 	optional
 }

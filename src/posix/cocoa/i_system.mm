@@ -68,21 +68,6 @@ ticcmd_t* I_BaseTiccmd()
 
 
 
-//
-// SetLanguageIDs
-//
-void SetLanguageIDs()
-{
-	size_t langlen = strlen(language);
-
-	uint32_t lang = (langlen < 2 || langlen > 3)
-		? MAKE_ID('e', 'n', 'u', '\0')
-		: MAKE_ID(language[0], language[1], language[2], '\0');
-
-	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
-}
-
-
 double PerfToSec, PerfToMillisec;
 
 static void CalculateCPUSpeed()

@@ -1,0 +1,12 @@
+name,language,male,female,neutral,object
+ao_esp,es,o,a,o,o
+e_fr,fr,,e,,
+ao_rus,ru,,а,о,о
+refl_rus,ru,ся,ась,ось,ось
+adj_1_rus,ru,ый,ая,ое,ое
+adj_2_rus,ru,ен,на,но,но
+adj_3_rus,ru,ён,на,но,но
+irreg_1_rus,ru,ёл,ла,ло,ло
+irreg_2_rus,ru,,ла,ло,ло
+ao_1_srb,sr,о,ла,ло,ло
+ao_2_srb,sr,ао,ла,ло,ло

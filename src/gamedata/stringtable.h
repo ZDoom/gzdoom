@@ -103,10 +103,12 @@ private:
 	LangMap allStrings;
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
 
-	void LoadLanguage (int lumpnum);
-	bool LoadLanguageFromSpreadsheet(int lumpnum);
-	bool readMacros(struct xlsxio_read_struct *reader, const char *sheet);
-	bool readSheetIntoTable(struct xlsxio_read_struct *reader, const char *sheet);
+	void LoadLanguage (const TArray<uint8_t> &buffer);
+	TArray<TArray<FString>> parseCSV(const TArray<uint8_t> &buffer);
+	bool ParseLanguageCSV(const TArray<uint8_t> &buffer);
+
+	bool LoadLanguageFromSpreadsheet(int lumpnum, const TArray<uint8_t> &buffer);
+	bool readMacros(int lumpnum);
 	void InsertString(int langid, FName label, const FString &string);
 
 	static size_t ProcessEscapes (char *str);

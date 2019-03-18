@@ -1250,6 +1250,8 @@ void FString::Split(TArray<FString>& tokens, const char *delimiter, EmptyTokenTy
 	const long delimLen = static_cast<long>(strlen(delimiter));
 	long lastPos = 0;
 
+	if (selfLen == 0) return;	// Empty strings do not contain tokens, even with TOK_KEEPEMPTY.
+
 	while (lastPos <= selfLen)
 	{
 		long pos = IndexOf(delimiter, lastPos);

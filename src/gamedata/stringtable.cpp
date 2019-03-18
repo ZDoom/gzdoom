@@ -43,7 +43,6 @@
 #include "v_text.h"
 #include "gi.h"
 #include "d_player.h"
-#include "xlsxread/xlsxio_read.h"
 
 EXTERN_CVAR(String, language)
 
@@ -58,35 +57,102 @@ void FStringTable::LoadStrings ()
 	int lastlump, lump;
 
 	lastlump = 0;
+	while ((lump = Wads.FindLump("LMACROS", &lastlump)) != -1)
+	{
+		readMacros(lump);
+	}
 
+	lastlump = 0;
 	while ((lump = Wads.FindLump ("LANGUAGE", &lastlump)) != -1)
 	{
-		if (!LoadLanguageFromSpreadsheet(lump))
-			LoadLanguage (lump);
+		auto lumpdata = Wads.ReadLumpIntoArray(lump);
+
+		if (!ParseLanguageCSV(lumpdata))
+ 			LoadLanguage (lumpdata);
 	}
 	UpdateLanguage();
 	allMacros.Clear();
 }
 
+
 //==========================================================================
 //
-//
+// This was tailored to parse CSV as exported by Google Docs.
 //
 //==========================================================================
 
-bool FStringTable::LoadLanguageFromSpreadsheet(int lumpnum)
+
+TArray<TArray<FString>> FStringTable::parseCSV(const TArray<uint8_t> &buffer)
 {
-	xlsxioreader xlsxio;
-	//open .xlsx file for reading
-	if ((xlsxio = xlsxioread_open(lumpnum)) == nullptr)
-	{
-		return false;
-	}
-	readMacros(xlsxio, "macros");
-	readSheetIntoTable(xlsxio, "strings");
+	const size_t bufLength = buffer.Size();
+	TArray<TArray<FString>> data;
+	TArray<FString> row;
+	TArray<char> cell;
+	bool quoted = false;
 
-	xlsxioread_close(xlsxio);
-	return true;
+	/*
+			auto myisspace = [](int ch) { return ch == '\t' || ch == '\r' || ch == '\n' || ch == ' '; };
+			while (*vcopy && myisspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
+			auto vend = vcopy + strlen(vcopy);
+			while (vend > vcopy && myisspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
+	*/
+
+	for (int i = 0; i < bufLength; ++i)
+	{
+		if (buffer[i] == '"')
+		{
+			// Double quotes inside a quoted string count as an escaped quotation mark.
+			if (quoted && i < bufLength - 1 && buffer[i + 1] == '"')
+			{
+				cell.Push('"');
+				i++;
+			}
+			else if (cell.Size() == 0 || quoted)
+			{
+				quoted = !quoted;
+			}
+		}
+		else if (buffer[i] == ',')
+		{
+			if (!quoted)
+			{
+				cell.Push(0);
+				ProcessEscapes(cell.Data());
+				row.Push(cell.Data());
+				cell.Clear();
+			}
+			else
+			{
+				cell.Push(buffer[i]);
+			}
+		}
+		else if (buffer[i] == '\r')
+		{
+			// Ignore all CR's.
+		}
+		else if (buffer[i] == '\n' && !quoted)
+		{
+			cell.Push(0);
+			ProcessEscapes(cell.Data());
+			row.Push(cell.Data());
+			data.Push(std::move(row));
+			cell.Clear();
+		}
+		else
+		{
+			cell.Push(buffer[i]);
+		}
+	}
+
+	// Handle last line without linebreak
+	if (cell.Size() > 0 || row.Size() > 0)
+	{
+		cell.Push(0);
+		ProcessEscapes(cell.Data());
+		row.Push(cell.Data());
+		data.Push(std::move(row));
+	}
+	return data;
 }
 
 //==========================================================================
@@ -95,38 +161,27 @@ bool FStringTable::LoadLanguageFromSpreadsheet(int lumpnum)
 //
 //==========================================================================
 
-bool FStringTable::readMacros(xlsxioreader reader, const char *sheetname)
+bool FStringTable::readMacros(int lumpnum)
 {
-	xlsxioreadersheet sheet = xlsxioread_sheet_open(reader, sheetname, XLSXIOREAD_SKIP_NONE);
-	if (sheet == nullptr) return false;
+	auto lumpdata = Wads.ReadLumpIntoArray(lumpnum);
+	auto data = parseCSV(lumpdata);
 
-	while (xlsxioread_sheet_next_row(sheet))
+	for (unsigned i = 1; i < data.Size(); i++)
 	{
-		auto macroname = xlsxioread_sheet_next_cell(sheet);
-		auto language = xlsxioread_sheet_next_cell(sheet);
-		if (!macroname || !language) continue;
-		FStringf combined_name("%s/%s", language, macroname);
-		free(language);
-		free(macroname);
+		auto macroname = data[i][0];
+		auto language = data[i][1];
+		if (macroname.IsEmpty() || language.IsEmpty()) continue;
+		FStringf combined_name("%s/%s", language.GetChars(), macroname.GetChars());
 		FName name = combined_name;
 
 		StringMacro macro;
 
-		char *value;
-		for (int i = 0; i < 4; i++)
+		for (int k = 0; k < 4; k++)
 		{
-			value = xlsxioread_sheet_next_cell(sheet);
-			macro.Replacements[i] = value;
-			free(value);
-		}
-		// This is needed because the reader code would choke on incompletely read rows.
-		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
-		{
-			free(value);
+			macro.Replacements[k] = data[i][k+2];
 		}
 		allMacros.Insert(name, macro);
 	}
-	xlsxioread_sheet_close(sheet);
 	return true;
 }
 
@@ -136,53 +191,27 @@ bool FStringTable::readMacros(xlsxioreader reader, const char *sheetname)
 //
 //==========================================================================
 
-bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname)
+bool FStringTable::ParseLanguageCSV(const TArray<uint8_t> &buffer)
 {
-
-	xlsxioreadersheet sheet = xlsxioread_sheet_open(reader, sheetname, XLSXIOREAD_SKIP_NONE);
-	if (sheet == nullptr) return false;
-
-	int row = 0;
-	TArray<TArray<FString>> table;
-
-	while (xlsxioread_sheet_next_row(sheet))
-	{
-		int column = 0;
-		char *value;
-		table.Reserve(1);
-		auto myisspace = [](int ch) { return ch == '\t' || ch == '\r' || ch == '\n' || ch == ' '; };
-
-		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
-		{
-			auto vcopy = value;
-			if (table.Size() <= (unsigned)row) table.Reserve(1);
-			while (*vcopy && myisspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
-			auto vend = vcopy + strlen(vcopy);
-			while (vend > vcopy && myisspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
-			ProcessEscapes(vcopy);
-			table[row].Push(vcopy);
-			column++;
-			free(value);
-		}
-		row++;
-	}
+	if (memcmp(buffer.Data(), "default,", 8)) return false;
+	auto data = parseCSV(buffer);
 
 	int labelcol = -1;
 	int filtercol = -1;
 	TArray<std::pair<int, unsigned>> langrows;
 
-	if (table.Size() > 0)
+	if (data.Size() > 0)
 	{
-		for (unsigned column = 0; column < table[0].Size(); column++)
+		for (unsigned column = 0; column < data[0].Size(); column++)
 		{
-			auto &entry = table[0][column];
+			auto &entry = data[0][column];
 			if (entry.CompareNoCase("filter") == 0)
 			{
 				filtercol = column;
 			}
 			else if (entry.CompareNoCase("identifier") == 0)
 			{
-				labelcol = column;;
+				labelcol = column;
 			}
 			else
 			{
@@ -202,9 +231,9 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 			}
 		}
 
-		for (unsigned i = 1; i < table.Size(); i++)
+		for (unsigned i = 1; i < data.Size(); i++)
 		{
-			auto &row = table[i];
+			auto &row = data[i];
 			if (filtercol > -1)
 			{
 				auto filterstr = row[filtercol];
@@ -224,7 +253,6 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 			}
 		}
 	}
-	xlsxioread_sheet_close(sheet);
 	return true;
 }
 
@@ -234,11 +262,12 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 //
 //==========================================================================
 
-void FStringTable::LoadLanguage (int lumpnum)
+void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
 {
 	bool errordone = false;
 	TArray<uint32_t> activeMaps;
-	FScanner sc(lumpnum);
+	FScanner sc;
+	sc.OpenMem("LANGUAGE", buffer);
 	sc.SetCMode (true);
 	while (sc.GetString ())
 	{

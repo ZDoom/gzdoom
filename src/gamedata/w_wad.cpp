@@ -1368,7 +1368,7 @@ TArray<uint8_t> FWadCollection::ReadLumpIntoArray(int lump, int pad)
 {
 	auto lumpr = OpenLumpReader(lump);
 	auto size = lumpr.GetLength();
-	TArray<uint8_t> data(size + pad);
+	TArray<uint8_t> data(size + pad, true);
 	auto numread = lumpr.Read(data.Data(), size);
 
 	if (numread != size)

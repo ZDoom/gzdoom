@@ -158,7 +158,7 @@ public:
 		Count = 0;
 		Array = NULL;
 	}
-	TArray (size_t max, bool reserve = false)
+	explicit TArray (size_t max, bool reserve = false)
 	{
 		Most = (unsigned)max;
 		Count = (unsigned)(reserve? max : 0);
@@ -288,6 +288,13 @@ public:
 	{
 		Grow (1);
 		::new((void*)&Array[Count]) T(item);
+		return Count++;
+	}
+
+	unsigned int Push(T &&item)
+	{
+		Grow(1);
+		::new((void*)&Array[Count]) T(std::move(item));
 		return Count++;
 	}
 

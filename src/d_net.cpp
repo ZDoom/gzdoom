@@ -66,6 +66,7 @@
 #include "i_time.h"
 #include "i_system.h"
 #include "vm.h"
+#include "gstrings.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -2187,6 +2188,13 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_GIVECHEAT:
 		s = ReadString (stream);
 		cht_Give (&players[player], s, ReadLong (stream));
+		if (player != consoleplayer)
+		{
+			FString message = GStrings("TXT_X_CHEATS");
+			message.Substitute("%s", players[player].userinfo.GetName());
+			Printf("%s: give %s\n", message.GetChars(), s);
+		}
+
 		break;
 
 	case DEM_TAKECHEAT:

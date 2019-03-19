@@ -381,6 +381,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			I_SetMusicVolume (dlg_musicvolume);
 			S_Sound (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 		}
+		M_StartControlPanel(false, true);
 
 		// Create the menu. This may be a user-defined class so check if it is good to use.
 		FName cls = CurNode->MenuClassName;
@@ -405,7 +406,6 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		}
 
 		// And open the menu
-		M_StartControlPanel (false);
 		M_ActivateMenu((DMenu*)cmenu);
 		menuactive = MENU_OnNoPause;
 	}

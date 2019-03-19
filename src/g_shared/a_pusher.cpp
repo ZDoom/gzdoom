@@ -193,6 +193,11 @@ void DPusher::Tick ()
 
 	if (m_Type == p_push)
 	{
+		if (m_Source == nullptr)
+		{
+			Destroy();
+			return;
+		}
 		// Seek out all pushable things within the force radius of this
 		// point pusher. Crosses sectors, so use blockmap.
 

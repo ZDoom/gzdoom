@@ -1673,16 +1673,9 @@ void G_DoPlayerPop(int playernum)
 {
 	playeringame[playernum] = false;
 
-	if (deathmatch)
-	{
-		Printf("%s left the game with %d frags\n",
-			players[playernum].userinfo.GetName(),
-			players[playernum].fragcount);
-	}
-	else
-	{
-		Printf("%s left the game\n", players[playernum].userinfo.GetName());
-	}
+	FString message = GStrings(deathmatch? "TXT_LEFTWITHFRAGS" : "TXT_LEFTTHEGAME");
+	message.Substitute("%s", players[playernum].userinfo.GetName());
+	message.Substitute("%d", FStringf("%d", players[playernum].fragcount));
 
 	// [RH] Revert each player to their own view if spying through the player who left
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
@@ -1754,7 +1747,7 @@ static bool CheckSingleWad (const char *name, bool &printRequires, bool printwar
 		{
 			if (!printRequires)
 			{
-				Printf ("This savegame needs these wads:\n%s", name);
+				Printf ("%s:\n%s", GStrings("TXT_SAVEGAMENEEDS"), name);
 			}
 			else
 			{
@@ -1790,6 +1783,12 @@ bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 	return true;
 }
 
+static void LoadGameError(const char *label, const char *append = "")
+{
+	FString message = GStrings(label);
+	message.Substitute("%s", savename);
+	Printf ("%s %s\n", message.GetChars(), append);
+}
 
 void G_DoLoadGame ()
 {
@@ -1805,13 +1804,13 @@ void G_DoLoadGame ()
 	std::unique_ptr<FResourceFile> resfile(FResourceFile::OpenResourceFile(savename.GetChars(), true, true));
 	if (resfile == nullptr)
 	{
-		Printf ("Could not read savegame '%s'\n", savename.GetChars());
+		LoadGameError("TXT_COULDNOTREAD");
 		return;
 	}
 	FResourceLump *info = resfile->FindLump("info.json");
 	if (info == nullptr)
 	{
-		Printf("'%s' is not a valid savegame: Missing 'info.json'.\n", savename.GetChars());
+		LoadGameError("TXT_NOINFOJSON");
 		return;
 	}
 
@@ -1821,7 +1820,7 @@ void G_DoLoadGame ()
 	FSerializer arc(nullptr);
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
-		Printf("Failed to access savegame info\n");
+		LoadGameError("TXT_FAILEDTOREADSG");
 		return;
 	}
 
@@ -1839,27 +1838,30 @@ void G_DoLoadGame ()
 		// have this information.
 		if (engine.IsEmpty())
 		{
-			Printf("Savegame is from an incompatible version\n");
+			LoadGameError("TXT_INCOMPATIBLESG");
 		}
 		else
 		{
-			Printf("Savegame is from another ZDoom-based engine: %s\n", engine.GetChars());
+			LoadGameError("TXT_IOTHERENGINESG", engine.GetChars());
 		}
 		return;
 	}
 
 	if (SaveVersion < MINSAVEVER || SaveVersion > SAVEVER)
 	{
-		Printf("Savegame is from an incompatible version");
+		FString message;
 		if (SaveVersion < MINSAVEVER)
 		{
-			Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+			message = GStrings("TXT_TOOOLDSG");
+			message.Substitute("%e", FStringf("%d", MINSAVEVER));
 		}
 		else
 		{
-			Printf(": %d (%d is the highest supported)", SaveVersion, SAVEVER);
+			message = GStrings("TXT_TOONEWSG");
+			message.Substitute("%e", FStringf("%d", SAVEVER));
 		}
-		Printf("\n");
+		message.Substitute("%d", FStringf("%d", SaveVersion));
+		LoadGameError(message);
 		return;
 	}
 
@@ -1870,7 +1872,7 @@ void G_DoLoadGame ()
 
 	if (map.IsEmpty())
 	{
-		Printf("Savegame is missing the current map\n");
+		LoadGameError("TXT_NOMAPSG");
 		return;
 	}
 
@@ -1886,14 +1888,14 @@ void G_DoLoadGame ()
 	info = resfile->FindLump("globals.json");
 	if (info == nullptr)
 	{
-		Printf("'%s' is not a valid savegame: Missing 'globals.json'.\n", savename.GetChars());
+		LoadGameError("TXT_NOGLOBALSJSON");
 		return;
 	}
 
 	data = info->CacheLump();
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
-		Printf("Failed to access savegame info\n");
+		LoadGameError("TXT_SGINFOERR");
 		return;
 	}
 
@@ -1959,20 +1961,19 @@ void G_SaveGame (const char *filename, const char *description)
 {
 	if (sendsave || gameaction == ga_savegame)
 	{
-		Printf ("A game save is still pending.\n");
-		return;
+		Printf ("%s\n", GStrings("TXT_SAVEPENDING"));
 	}
     else if (!usergame)
 	{
-        Printf ("not in a saveable game\n");
+		Printf ("%s\n", GStrings("TXT_NOTSAVEABLE"));
     }
     else if (gamestate != GS_LEVEL)
 	{
-        Printf ("not in a level\n");
+		Printf ("%s\n", GStrings("TXT_NOTINLEVEL"));
     }
     else if (players[consoleplayer].health <= 0 && !multiplayer)
     {
-        Printf ("player is dead in a single-player game\n");
+		Printf ("%s\n", GStrings("TXT_SPPLAYERDEAD"));
     }
 	else
 	{
@@ -2291,7 +2292,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		if (longsavemessages) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
 		else Printf ("%s\n", GStrings("GGSAVED"));
 	}
-	else Printf(PRINT_HIGH, "Save failed\n");
+	else Printf(PRINT_HIGH, "%s\n", GStrings("TXT_SAVEFAILED"));
 
 
 	BackupSaveName = filename;

@@ -56,6 +56,7 @@
 #include "scripting/types.h"
 
 int DMenu::InMenu;
+static ScaleOverrider *CurrentScaleOverrider;
 //
 // Todo: Move these elsewhere
 //
@@ -348,7 +349,7 @@ bool DMenu::TranslateKeyboardEvents()
 //
 //=============================================================================
 
-void M_StartControlPanel (bool makeSound)
+void M_StartControlPanel (bool makeSound, bool scaleoverride)
 {
 	// intro might call this repeatedly
 	if (CurrentMenu != nullptr)
@@ -372,6 +373,8 @@ void M_StartControlPanel (bool makeSound)
 	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
+	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider;
+	else if (!scaleoverride && CurrentScaleOverrider) delete CurrentScaleOverrider;
 }
 
 //=============================================================================
@@ -912,6 +915,8 @@ void M_ClearMenus()
 		CurrentMenu = parent;
 	}
 	menuactive = MENU_Off;
+	if (CurrentScaleOverrider)  delete CurrentScaleOverrider;
+	CurrentScaleOverrider = nullptr;
 }
 
 //=============================================================================

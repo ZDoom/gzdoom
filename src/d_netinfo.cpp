@@ -49,6 +49,7 @@
 #include "cmdlib.h"
 #include "serializer.h"
 #include "vm.h"
+#include "gstrings.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -314,7 +315,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TeamLibrary.IsValidTeam (info->GetTeam()))
 	{
-		Printf ("Team changing has been disabled!\n");
+		Printf ("%s\n", GStrings("TXT_NO_TEAM_CHANGE"));
 		return;
 	}
 
@@ -329,10 +330,18 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	if (update && oldteam != team)
 	{
+		FString message;
 		if (TeamLibrary.IsValidTeam (team))
-			Printf ("%s joined the %s team\n", info->GetName(), Teams[team].GetName ());
+		{
+			message = GStrings("TXT_JOINED_TEAM");
+			message.Substitute("%t", Teams[team].GetName());
+		}
 		else
-			Printf ("%s is now a loner\n", info->GetName());
+		{
+			message = GStrings("TXT_LONER");
+		}
+		message.Substitute("%s", info->GetName());
+		Printf("%s\n", message.GetChars());
 	}
 	// Let the player take on the team's color
 	R_BuildPlayerTranslation (pnum);

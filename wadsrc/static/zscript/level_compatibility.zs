@@ -1231,6 +1231,12 @@ class LevelCompatibility native play
 				AddSectorTag(7857, 82);
 				break;
 			}
+			
+			case '7B1EB6C1231CD03E90F4A1C0D51A8B6D': // ur_final.wad map17
+			{
+				SetLineSpecial(3020, Transfer_Heights, 19);
+				break;
+			}
 		}
 	}
 

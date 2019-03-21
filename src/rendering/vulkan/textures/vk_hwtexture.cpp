@@ -57,6 +57,12 @@ VkHardwareTexture::~VkHardwareTexture()
 	if (fb)
 	{
 		auto &deleteList = fb->FrameDeleteList;
+		for (auto &it : mDescriptorSets)
+		{
+			deleteList.Descriptors.push_back(std::move(it.descriptor));
+			it.descriptor = nullptr;
+		}
+		mDescriptorSets.clear();
 		if (mImage) deleteList.Images.push_back(std::move(mImage));
 		if (mImageView) deleteList.ImageViews.push_back(std::move(mImageView));
 		if (mStagingBuffer) deleteList.Buffers.push_back(std::move(mStagingBuffer));
@@ -104,36 +110,34 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 
 	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
 
-	DescriptorKey key;
-	key.clampmode = clampmode;
-	key.flags = flags;
-	auto &descriptorSet = mDescriptorSets[key];
-	if (!descriptorSet)
+	for (auto &set : mDescriptorSets)
 	{
-		auto fb = GetVulkanFrameBuffer();
-
-		descriptorSet = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
-		descriptorSet->SetDebugName("VkHardwareTexture.mDescriptorSets");
-
-		VulkanSampler *sampler = fb->GetSamplerManager()->Get(clampmode);
-		int numLayers = mat->GetLayers();
-
-		//int maxTextures = 6;
-		auto baseView = GetImageView(tex, translation, flags);
-		//numLayers = clamp(numLayers, 1, maxTextures);
-
-		WriteDescriptors update;
-		update.addCombinedImageSampler(descriptorSet.get(), 0, baseView, sampler, mImageLayout);
-		for (int i = 1; i < numLayers; i++)
-		{
-			FTexture *layer;
-			auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-			update.addCombinedImageSampler(descriptorSet.get(), i, systex->GetImageView(layer, 0, mat->isExpanded() ? CTF_Expand : 0), sampler, systex->mImageLayout);
-		}
-		update.updateSets(fb->device);
+		if (set.descriptor && set.clampmode == clampmode && set.flags == flags) return set.descriptor.get();
 	}
 
-	return descriptorSet.get();
+	auto fb = GetVulkanFrameBuffer();
+	auto descriptor = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
+
+	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");
+
+	VulkanSampler *sampler = fb->GetSamplerManager()->Get(clampmode);
+	int numLayers = mat->GetLayers();
+
+	//int maxTextures = 6;
+	auto baseView = GetImageView(tex, translation, flags);
+	//numLayers = clamp(numLayers, 1, maxTextures);
+
+	WriteDescriptors update;
+	update.addCombinedImageSampler(descriptor.get(), 0, baseView, sampler, mImageLayout);
+	for (int i = 1; i < numLayers; i++)
+	{
+		FTexture *layer;
+		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+		update.addCombinedImageSampler(descriptor.get(), i, systex->GetImageView(layer, 0, mat->isExpanded() ? CTF_Expand : 0), sampler, systex->mImageLayout);
+	}
+	update.updateSets(fb->device);
+	mDescriptorSets.emplace_back(clampmode, flags, std::move(descriptor));
+	return mDescriptorSets.back().descriptor.get();
 }
 
 VulkanImage *VkHardwareTexture::GetImage(FTexture *tex, int translation, int flags)

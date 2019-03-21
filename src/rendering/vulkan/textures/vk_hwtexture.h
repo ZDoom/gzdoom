@@ -58,15 +58,22 @@ private:
 	void GenerateMipmaps(VulkanImage *image, VulkanCommandBuffer *cmdbuffer);
 	static int GetMipLevels(int w, int h);
 
-	struct DescriptorKey
+	struct DescriptorEntry
 	{
 		int clampmode;
 		int flags;
+		std::unique_ptr<VulkanDescriptorSet> descriptor;
 
-		bool operator<(const DescriptorKey &other) const { return memcmp(this, &other, sizeof(DescriptorKey)) < 0; }
+		DescriptorEntry(int cm, int f, std::unique_ptr<VulkanDescriptorSet> &&d)
+		{
+			clampmode = cm;
+			flags = f;
+			descriptor = std::move(d);
+		}
 	};
 
-	std::map<DescriptorKey, std::unique_ptr<VulkanDescriptorSet>> mDescriptorSets;
+
+	std::vector<DescriptorEntry> mDescriptorSets;
 	std::unique_ptr<VulkanImage> mImage;
 	std::unique_ptr<VulkanImageView> mImageView;
 	std::unique_ptr<VulkanBuffer> mStagingBuffer;

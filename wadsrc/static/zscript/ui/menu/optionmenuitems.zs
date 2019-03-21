@@ -721,13 +721,18 @@ class OptionMenuSliderBase : OptionMenuItem
 	//
 	//=============================================================================
 
+	private void DrawSliderElement (int color, int x, int y, String str)
+	{
+		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 16 * CleanXfac_1, DTA_CellY, 16 * CleanYfac_1);
+	}
+
 	protected void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
 	{
 		String formater = String.format("%%.%df", fracdigits);	// The format function cannot do the '%.*f' syntax.
 		String textbuf;
 		double range;
 		int maxlen = 0;
-		int right = x + (12*8 + 4) * CleanXfac;	// length of slider. This uses the old ConFont and 
+		int right = x + (12*16 + 4) * CleanXfac_1;	// length of slider. This uses the old ConFont and 
 		int cy = y + CleanYFac;
 
 		range = max - min;
@@ -743,14 +748,14 @@ class OptionMenuSliderBase : OptionMenuItem
 
 		if (!mSliderShort)
 		{
-			Menu.DrawConText(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-			Menu.DrawConText(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 78) / range)) * 2 * CleanXfac_1), cy, "\x13");
+			DrawSliderElement(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
+			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 78) / range)) * 2 * CleanXfac_1), cy, "\x13");
 		}
 		else
 		{
 			// On 320x200 we need a shorter slider
-			Menu.DrawConText(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x12");
-			Menu.DrawConText(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 38) / range)) * 2 * CleanXfac_1), cy, "\x13");
+			DrawSliderElement(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x12");
+			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 38) / range)) * 2 * CleanXfac_1), cy, "\x13");
 			right -= 5*8*CleanXfac;
 		}
 

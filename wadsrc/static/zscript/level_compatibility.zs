@@ -1231,6 +1231,62 @@ class LevelCompatibility native play
 				AddSectorTag(7857, 82);
 				break;
 			}
+			
+			case '7B1EB6C1231CD03E90F4A1C0D51A8B6D': // ur_final.wad map17
+			{
+				SetLineSpecial(3020, Transfer_Heights, 19);
+				break;
+			}
+			
+			case '01592ACF001C534076556D9E1B5D85E7': // Darken2.wad map12
+			{
+				// fix some holes the player can fall in. This map went a bit too far with lighting hacks depending on holes in the floor.
+				OffsetSectorPlane(126, Sector.floor, 1088);
+				level.sectors[126].SetPlaneLight(Sector.floor, level.sectors[125].GetLightLevel() - level.sectors[126].GetLightLevel());
+				OffsetSectorPlane(148, Sector.floor, 1136);
+				level.sectors[148].SetPlaneLight(Sector.floor, level.sectors[122].GetLightLevel() - level.sectors[148].GetLightLevel());
+				OffsetSectorPlane(149, Sector.floor, 1136);
+				level.sectors[149].SetPlaneLight(Sector.floor, level.sectors[122].GetLightLevel() - level.sectors[149].GetLightLevel());
+				OffsetSectorPlane(265, Sector.floor, 992);
+				level.sectors[265].SetPlaneLight(Sector.floor, level.sectors[264].GetLightLevel() - level.sectors[265].GetLightLevel());
+				OffsetSectorPlane(279, Sector.floor, 1072);
+				level.sectors[279].SetPlaneLight(Sector.floor, level.sectors[267].GetLightLevel() - level.sectors[279].GetLightLevel());
+				SetSectorTexture(279, Sector.floor, "OMETL13");
+				OffsetSectorPlane(280, Sector.floor, 1072);
+				level.sectors[280].SetPlaneLight(Sector.floor, level.sectors[267].GetLightLevel() - level.sectors[280].GetLightLevel());
+				SetSectorTexture(280, Sector.floor, "OMETL13");
+				OffsetSectorPlane(281, Sector.floor, 1072);
+				level.sectors[281].SetPlaneLight(Sector.floor, level.sectors[267].GetLightLevel() - level.sectors[281].GetLightLevel());
+				SetSectorTexture(281, Sector.floor, "OMETL13");
+				OffsetSectorPlane(292, Sector.floor, 1056);
+				level.sectors[292].SetPlaneLight(Sector.floor, level.sectors[291].GetLightLevel() - level.sectors[292].GetLightLevel());
+				OffsetSectorPlane(472, Sector.floor, 1136);
+				level.sectors[472].SetPlaneLight(Sector.floor, level.sectors[216].GetLightLevel() - level.sectors[472].GetLightLevel());
+				OffsetSectorPlane(473, Sector.floor, 1136);
+				level.sectors[473].SetPlaneLight(Sector.floor, level.sectors[216].GetLightLevel() - level.sectors[473].GetLightLevel());
+				OffsetSectorPlane(526, Sector.floor, 1024);
+				level.sectors[526].SetPlaneLight(Sector.floor, level.sectors[525].GetLightLevel() - level.sectors[526].GetLightLevel());
+				OffsetSectorPlane(527, Sector.floor, 1024);
+				level.sectors[527].SetPlaneLight(Sector.floor, level.sectors[500].GetLightLevel() - level.sectors[527].GetLightLevel());
+				OffsetSectorPlane(528, Sector.floor, 1024);
+				level.sectors[528].SetPlaneLight(Sector.floor, level.sectors[525].GetLightLevel() - level.sectors[528].GetLightLevel());
+				OffsetSectorPlane(554, Sector.floor, 1024);
+				level.sectors[554].SetPlaneLight(Sector.floor, level.sectors[500].GetLightLevel() - level.sectors[554].GetLightLevel());
+				OffsetSectorPlane(588, Sector.floor, 928);
+				level.sectors[588].SetPlaneLight(Sector.floor, level.sectors[587].GetLightLevel() - level.sectors[588].GetLightLevel());
+				OffsetSectorPlane(604, Sector.floor, 1056);
+				level.sectors[604].SetPlaneLight(Sector.floor, level.sectors[298].GetLightLevel() - level.sectors[604].GetLightLevel());
+				OffsetSectorPlane(697, Sector.floor, 1136);
+				level.sectors[697].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[697].GetLightLevel());
+				OffsetSectorPlane(698, Sector.floor, 1136);
+				level.sectors[698].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[698].GetLightLevel());
+				OffsetSectorPlane(699, Sector.floor, 1136);
+				level.sectors[699].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[699].GetLightLevel());
+				OffsetSectorPlane(700, Sector.floor, 1136);
+				level.sectors[700].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[700].GetLightLevel());
+				break;
+			}
+			
 		}
 	}
 

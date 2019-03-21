@@ -672,6 +672,13 @@ void VulkanFrameBuffer::TextureFilterChanged()
 	}
 }
 
+void VulkanFrameBuffer::StartPrecaching()
+{
+	// Destroy the texture descriptors to avoid problems with potentially stale textures.
+	for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
+		cur->ResetDescriptors();
+}
+
 void VulkanFrameBuffer::BlurScene(float amount)
 {
 	if (mPostprocess)

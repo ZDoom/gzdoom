@@ -76,6 +76,7 @@ public:
 	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	void TextureFilterChanged() override;
+	void StartPrecaching() override;
 	void BeginFrame() override;
 	void BlurScene(float amount) override;
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) override;

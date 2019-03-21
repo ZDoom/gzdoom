@@ -45,6 +45,12 @@ public:
 	VulkanImage *GetImage(FTexture *tex, int translation, int flags);
 	VulkanImageView *GetImageView(FTexture *tex, int translation, int flags);
 
+	static void ResetAllDescriptors()
+	{
+		for (VkHardwareTexture *cur = First; cur; cur = cur->Next)
+			cur->ResetDescriptors();
+	}
+
 private:
 	void CreateImage(FTexture *tex, int translation, int flags);
 

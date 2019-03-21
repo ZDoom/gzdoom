@@ -351,6 +351,7 @@ public:
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	void SetUseType(ETextureType type) { UseType = type; }
+	ETextureType GetUseType() const { return UseType; }
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);

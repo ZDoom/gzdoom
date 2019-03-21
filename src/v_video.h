@@ -423,6 +423,7 @@ public:
 	virtual void TextureFilterChanged() {}
 	virtual void BeginFrame() {}
 	virtual void SetWindowSize(int w, int h) {}
+	virtual void StartPrecaching() {}
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;

@@ -119,6 +119,8 @@ public:
 	void SetKerning(int c) { GlobalKerning = c; }
 	bool NoTranslate() const { return noTranslate; }
 
+
+
 protected:
 	FFont (int lump);
 

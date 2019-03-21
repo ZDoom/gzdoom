@@ -57,9 +57,6 @@ VkHardwareTexture::~VkHardwareTexture()
 	if (fb)
 	{
 		auto &deleteList = fb->FrameDeleteList;
-		for (auto &it : mDescriptorSets)
-			deleteList.Descriptors.push_back(std::move(it.second));
-		mDescriptorSets.clear();
 		if (mImage) deleteList.Images.push_back(std::move(mImage));
 		if (mImageView) deleteList.ImageViews.push_back(std::move(mImageView));
 		if (mStagingBuffer) deleteList.Buffers.push_back(std::move(mStagingBuffer));

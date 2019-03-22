@@ -27,7 +27,7 @@ public:
 	VkBufferUsageFlags mBufferType = 0;
 	std::unique_ptr<VulkanBuffer> mBuffer;
 	std::unique_ptr<VulkanBuffer> mStaging;
-	bool mPersistent;
+	bool mPersistent = false;
 };
 
 class VKVertexBuffer : public IVertexBuffer, public VKBuffer

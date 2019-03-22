@@ -325,7 +325,7 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)
 {
-	return new FGLModelRenderer(nullptr, gl_RenderState, mli);
+	return new FHWModelRenderer(nullptr, gl_RenderState, mli);
 }
 
 IVertexBuffer *OpenGLFrameBuffer::CreateVertexBuffer()

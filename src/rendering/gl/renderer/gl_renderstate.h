@@ -38,7 +38,7 @@ namespace OpenGLRenderer
 {
 
 class FShader;
-struct GLSectorPlane;
+struct HWSectorPlane;
 
 class FGLRenderState : public FRenderState
 {

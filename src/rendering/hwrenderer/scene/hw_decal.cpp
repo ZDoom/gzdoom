@@ -44,7 +44,7 @@
 //
 //==========================================================================
 
-void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
+void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 {
 	auto tex = gltexture;
 
@@ -129,7 +129,7 @@ void GLDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 //
 //
 //==========================================================================
-void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
+void HWDrawInfo::DrawDecals(FRenderState &state, TArray<HWDecal *> &decals)
 {
 	side_t *wall = nullptr;
 	state.SetDepthMask(false);
@@ -164,7 +164,7 @@ void HWDrawInfo::DrawDecals(FRenderState &state, TArray<GLDecal *> &decals)
 //
 //==========================================================================
 
-void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals)
+void HWWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<HWDecal *> &decals)
 {
 	state.SetDepthMask(false);
 	state.SetDepthBias(-1, -128);
@@ -188,7 +188,7 @@ void GLWall::DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLD
 //
 //==========================================================================
 
-void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
+void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
 {
 	line_t * line = seg->linedef;
 	side_t * side = seg->sidedef;
@@ -384,7 +384,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 		for (i = 0; i < 4; i++) dv[i].v = vb - dv[i].v;
 	}
 
-	GLDecal *gldecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
+	HWDecal *gldecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
 	gldecal->gltexture = tex;
 	gldecal->decal = decal;
 
@@ -428,7 +428,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 //
 //==========================================================================
 
-void GLWall::ProcessDecals(HWDrawInfo *di)
+void HWWall::ProcessDecals(HWDrawInfo *di)
 {
 	if (seg->sidedef != nullptr)
 	{

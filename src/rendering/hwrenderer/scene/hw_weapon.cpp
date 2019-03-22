@@ -87,7 +87,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	{
 		state.AlphaFunc(Alpha_GEqual, 0);
 
-		FGLModelRenderer renderer(this, state, huds->lightindex);
+		FHWModelRenderer renderer(this, state, huds->lightindex);
 		renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
 		state.SetVertexBuffer(screen->mVertexData);
 	}

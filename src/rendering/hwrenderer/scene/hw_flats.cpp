@@ -56,7 +56,7 @@ CVAR(Int, gl_breaksec, -1, 0)
 //
 //==========================================================================
 
-bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &dest)
+bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FMaterial * gltexture, VSMatrix &dest)
 {
 	// only manipulate the texture matrix if needed.
 	if (!secplane->Offs.isZero() ||
@@ -99,7 +99,7 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 //
 //==========================================================================
 
-void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
+void HWFlat::CreateSkyboxVertices(FFlatVertex *vert)
 {
 	float minx = FLT_MAX, miny = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX;
@@ -136,7 +136,7 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 //
 //==========================================================================
 
-void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
+void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
 {
 	Plane p;
 
@@ -180,7 +180,7 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 //
 //==========================================================================
 
-void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
+void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
 	if (di->Level->HasDynamicLights && screen->BuffersArePersistent() && !di->isFullbrightScene())
 	{
@@ -201,7 +201,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 //
 //==========================================================================
 
-void GLFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
+void HWFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 {
     state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
     
@@ -229,7 +229,7 @@ void GLFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 //
 //==========================================================================
 
-void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
+void HWFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 {
 	// Flood gaps with the back side's ceiling/floor texture
 	// This requires a stencil because the projected plane interferes with
@@ -291,7 +291,7 @@ void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 //
 //
 //==========================================================================
-void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
+void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 #ifdef _DEBUG
 	if (sector->sectornum == gl_breaksec)
@@ -363,13 +363,13 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 //==========================================================================
 //
-// GLFlat::PutFlat
+// HWFlat::PutFlat
 //
 // submit to the renderer
 //
 //==========================================================================
 
-inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
+inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
 {
 	if (di->isFullbrightScene())
 	{
@@ -392,7 +392,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 //
 //==========================================================================
 
-void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
+void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 {
 	plane.GetFromSector(model, whichplane);
 	if (whichplane != int(ceiling))
@@ -436,7 +436,7 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 //
 //==========================================================================
 
-void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
+void HWFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 {
 	F3DFloor::planeref & plane = top? rover->top : rover->bottom;
 
@@ -471,7 +471,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 //
 //==========================================================================
 
-void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
+void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 {
 	lightlist_t * light;
 	FSectorPortal *port;

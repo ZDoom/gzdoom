@@ -51,7 +51,7 @@ void HWDrawInfo::DispatchRenderHacks()
 	TMap<int, gl_subsectorrendernode*>::Pair *pair;
 	TMap<int, gl_floodrendernode*>::Pair *fpair;
 	TMap<int, gl_subsectorrendernode*>::Iterator ofi(otherFloorPlanes);
-	GLFlat glflat;
+	HWFlat glflat;
 	glflat.section = nullptr;
 	while (ofi.NextPair(pair))
 	{
@@ -1114,7 +1114,7 @@ void HWDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
     for(unsigned int j=0;j<lowersegs.Size();j++)
     {
         seg_t * seg=lowersegs[j];
-        GLWall wall;
+        HWWall wall;
         wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
         rendered_lines++;
     }

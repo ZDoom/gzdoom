@@ -34,7 +34,7 @@ EXTERN_CVAR(Bool, gl_seamless)
 //
 //==========================================================================
 
-void GLWall::SplitUpperEdge(FFlatVertex *&ptr)
+void HWWall::SplitUpperEdge(FFlatVertex *&ptr)
 {
 	side_t *sidedef = seg->sidedef;
 	float polyw = glseg.fracright - glseg.fracleft;
@@ -68,7 +68,7 @@ void GLWall::SplitUpperEdge(FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::SplitLowerEdge(FFlatVertex *&ptr)
+void HWWall::SplitLowerEdge(FFlatVertex *&ptr)
 {
 	side_t *sidedef = seg->sidedef;
 	float polyw = glseg.fracright - glseg.fracleft;
@@ -102,7 +102,7 @@ void GLWall::SplitLowerEdge(FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::SplitLeftEdge(FFlatVertex *&ptr)
+void HWWall::SplitLeftEdge(FFlatVertex *&ptr)
 {
 	if (vertexes[0] == NULL) return;
 
@@ -136,7 +136,7 @@ void GLWall::SplitLeftEdge(FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::SplitRightEdge(FFlatVertex *&ptr)
+void HWWall::SplitRightEdge(FFlatVertex *&ptr)
 {
 	if (vertexes[1] == NULL) return;
 
@@ -170,7 +170,7 @@ void GLWall::SplitRightEdge(FFlatVertex *&ptr)
 //
 //==========================================================================
 
-int GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
+int HWWall::CreateVertices(FFlatVertex *&ptr, bool split)
 {
 	auto oo = ptr;
 	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
@@ -178,13 +178,13 @@ int GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
 	if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
 	ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
 	ptr++;
-	if (split && !(flags & GLWF_NOSPLITUPPER && seg->sidedef->numsegs > 1)) SplitUpperEdge(ptr);
+	if (split && !(flags & HWF_NOSPLITUPPER && seg->sidedef->numsegs > 1)) SplitUpperEdge(ptr);
 	ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
 	ptr++;
 	if (split && glseg.fracright == 1) SplitRightEdge(ptr);
 	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
 	ptr++;
-	if (split && !(flags & GLWF_NOSPLITLOWER) && seg->sidedef->numsegs > 1) SplitLowerEdge(ptr);
+	if (split && !(flags & HWF_NOSPLITLOWER) && seg->sidedef->numsegs > 1) SplitLowerEdge(ptr);
 	return int(ptr - oo);
 }
 
@@ -195,7 +195,7 @@ int GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
 //
 //==========================================================================
 
-void GLWall::CountLeftEdge(unsigned &ptr)
+void HWWall::CountLeftEdge(unsigned &ptr)
 {
 	if (vertexes[0] == NULL) return;
 
@@ -220,7 +220,7 @@ void GLWall::CountLeftEdge(unsigned &ptr)
 //
 //==========================================================================
 
-void GLWall::CountRightEdge(unsigned &ptr)
+void HWWall::CountRightEdge(unsigned &ptr)
 {
 	if (vertexes[1] == NULL) return;
 
@@ -245,14 +245,14 @@ void GLWall::CountRightEdge(unsigned &ptr)
 //
 //==========================================================================
 
-int GLWall::CountVertices()
+int HWWall::CountVertices()
 {
 	unsigned ptr = 4;
 	if (glseg.fracleft == 0) CountLeftEdge(ptr);
 	if (glseg.fracright == 1) CountRightEdge(ptr);
 	// This may allocate a few vertices too many in case of a split linedef but this is a rare case that isn't worth the required overhead for a precise calculation.
-	if (!(flags & GLWF_NOSPLITUPPER)) ptr += seg->sidedef->numsegs - 1;
-	if (!(flags & GLWF_NOSPLITLOWER)) ptr += seg->sidedef->numsegs - 1;
+	if (!(flags & HWF_NOSPLITUPPER)) ptr += seg->sidedef->numsegs - 1;
+	if (!(flags & HWF_NOSPLITLOWER)) ptr += seg->sidedef->numsegs - 1;
 	return (int)ptr;
 }
 
@@ -262,11 +262,11 @@ int GLWall::CountVertices()
 //
 //==========================================================================
 
-void GLWall::MakeVertices(HWDrawInfo *di, bool nosplit)
+void HWWall::MakeVertices(HWDrawInfo *di, bool nosplit)
 {
 	if (vertcount == 0)
 	{
-		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
+		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & HWF_NOSPLIT));
 		auto ret = screen->mVertexData->AllocVertices(split ? CountVertices() : 4);
 		vertindex = ret.second;
 		vertcount = CreateVertices(ret.first, split);

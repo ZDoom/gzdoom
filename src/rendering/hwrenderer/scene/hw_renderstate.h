@@ -415,7 +415,7 @@ public:
 		else mAlphaThreshold = thresh - 0.001f;
 	}
 
-	void SetPlaneTextureRotation(GLSectorPlane *plane, FMaterial *texture)
+	void SetPlaneTextureRotation(HWSectorPlane *plane, FMaterial *texture)
 	{
 		if (hw_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
 		{

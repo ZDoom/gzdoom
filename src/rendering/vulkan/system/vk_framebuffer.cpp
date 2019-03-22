@@ -623,7 +623,7 @@ IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()
 
 FModelRenderer *VulkanFrameBuffer::CreateModelRenderer(int mli) 
 {
-	return new FGLModelRenderer(nullptr, *GetRenderState(), mli);
+	return new FHWModelRenderer(nullptr, *GetRenderState(), mli);
 }
 
 IVertexBuffer *VulkanFrameBuffer::CreateVertexBuffer()

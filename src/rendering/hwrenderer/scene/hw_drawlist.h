@@ -5,9 +5,9 @@
 extern FMemArena RenderDataAllocator;
 void ResetRenderDataAllocator();
 struct HWDrawInfo;
-class GLWall;
-class GLFlat;
-class GLSprite;
+class HWWall;
+class HWFlat;
+class HWSprite;
 class FRenderState;
 
 //==========================================================================
@@ -19,19 +19,19 @@ class FRenderState;
 //
 //==========================================================================
 
-enum GLDrawItemType
+enum HWDrawItemType
 {
-	GLDIT_WALL,
-	GLDIT_FLAT,
-	GLDIT_SPRITE,
+	DrawType_WALL,
+	DrawType_FLAT,
+	DrawType_SPRITE,
 };
 
-struct GLDrawItem
+struct HWDrawItem
 {
-	GLDrawItemType rendertype;
+	HWDrawItemType rendertype;
 	int index;
 	
-	GLDrawItem(GLDrawItemType _rendertype,int _index) : rendertype(_rendertype),index(_index) {}
+	HWDrawItem(HWDrawItemType _rendertype,int _index) : rendertype(_rendertype),index(_index) {}
 };
 
 struct SortNode
@@ -60,10 +60,10 @@ struct SortNode
 struct HWDrawList
 {
 	//private:
-	TArray<GLWall*> walls;
-	TArray<GLFlat*> flats;
-	TArray<GLSprite*> sprites;
-	TArray<GLDrawItem> drawitems;
+	TArray<HWWall*> walls;
+	TArray<HWFlat*> flats;
+	TArray<HWSprite*> sprites;
+	TArray<HWDrawItem> drawitems;
 	int SortNodeStart;
     float SortZ;
 	SortNode * sorted;
@@ -87,9 +87,9 @@ public:
 		return drawitems.Size();
 	}
 	
-	GLWall *NewWall();
-	GLFlat *NewFlat();
-	GLSprite *NewSprite();
+	HWWall *NewWall();
+	HWFlat *NewFlat();
+	HWSprite *NewSprite();
 	void Reset();
 	void SortWalls();
 	void SortFlats();

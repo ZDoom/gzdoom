@@ -110,6 +110,7 @@ void VKBuffer::Unmap()
 
 void *VKBuffer::Lock(unsigned int size)
 {
+	SetData(size, nullptr, false);
 	if (!mPersistent)
 		map = mBuffer->Map(0, size);
 	return map;

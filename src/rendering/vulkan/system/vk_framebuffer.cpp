@@ -249,7 +249,7 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &mDrawCommands->buffer;
-		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.signalSemaphoreCount = finish ? 1 : 0;
 		submitInfo.pSignalSemaphores = &mRenderFinishedSemaphore->semaphore;
 		result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, mRenderFinishedFence->fence);
 		if (result < VK_SUCCESS)
@@ -267,7 +267,7 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		submitInfo.pWaitDstStageMask = waitStages;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &mDrawCommands->buffer;
-		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.signalSemaphoreCount = finish ? 1 : 0;
 		submitInfo.pSignalSemaphores = &mRenderFinishedSemaphore->semaphore;
 		VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, mRenderFinishedFence->fence);
 		if (result < VK_SUCCESS)

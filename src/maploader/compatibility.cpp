@@ -326,8 +326,8 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	}
 
 	// Reset i_compatflags
-	compatflags.Callback();
-	compatflags2.Callback();
+	Level->ApplyCompatibility();
+	Level->ApplyCompatibility2();
 	// Set floatbob compatibility for all maps with an original Hexen MAPINFO.
 	if (Level->flags2 & LEVEL2_HEXENHACK)
 	{

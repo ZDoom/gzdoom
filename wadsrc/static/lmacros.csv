@@ -1,6 +1,11 @@
 name,language,male,female,neutral,object
 ao_esp,es,o,a,o,o
+e_de,de,,e,,
+e_in,de,,in,,
 e_fr,fr,,e,,
+ao_ptb,ptb,o,a,o,o
+,,,,,
+,,,,,
 ao_rus,ru,,а,о,о
 refl_rus,ru,ся,ась,ось,ось
 adj_1_rus,ru,ый,ая,ое,ое

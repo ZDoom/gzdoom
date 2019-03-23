@@ -110,15 +110,29 @@ void VKBuffer::Unmap()
 
 void *VKBuffer::Lock(unsigned int size)
 {
-	SetData(size, nullptr, false);
-	if (!mPersistent)
+	if (!mBuffer)
+	{
+		// The model mesh loaders lock multiple non-persistent buffers at the same time. This is not allowed in vulkan.
+		// VkDeviceMemory can only be mapped once and multiple non-persistent buffers may come from the same device memory object.
+		mStaticUpload.Resize(size);
+		map = mStaticUpload.Data();
+	}
+	else if (!mPersistent)
+	{
 		map = mBuffer->Map(0, size);
+	}
 	return map;
 }
 
 void VKBuffer::Unlock()
 {
-	if (!mPersistent)
+	if (!mBuffer)
+	{
+		map = nullptr;
+		SetData(mStaticUpload.Size(), mStaticUpload.Data(), true);
+		mStaticUpload.Clear();
+	}
+	else if (!mPersistent)
 	{
 		mBuffer->Unmap();
 		map = nullptr;

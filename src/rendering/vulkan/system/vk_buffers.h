@@ -2,6 +2,7 @@
 
 #include "hwrenderer/data/buffers.h"
 #include "vk_objects.h"
+#include "utility/tarray.h"
 
 #ifdef _MSC_VER
 // silence bogus warning C4250: 'VKVertexBuffer': inherits 'VKBuffer::VKBuffer::SetData' via dominance
@@ -28,6 +29,7 @@ public:
 	std::unique_ptr<VulkanBuffer> mBuffer;
 	std::unique_ptr<VulkanBuffer> mStaging;
 	bool mPersistent = false;
+	TArray<uint8_t> mStaticUpload;
 };
 
 class VKVertexBuffer : public IVertexBuffer, public VKBuffer

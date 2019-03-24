@@ -377,7 +377,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_MISCELLANEOUS",	"MiscOptions"
 	Submenu "$OPTMNU_NETWORK",			"NetworkOptions"
 	Submenu "$OPTMNU_SOUND",			"SoundOptions"
-	Submenu "$OPTMNU_DISPLAY",			"DisplayOptions"
+	Submenu "$OPTMNU_DISPLAY",			"VideoOptions"
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	StaticText " "
 	Submenu "$OS_TITLE", "os_Menu"
@@ -855,7 +855,7 @@ OptionMenu "SWROptions" protected
 	Option "$DSPLYMNU_MODELS",					"r_models", "OnOff"
 }
 
-OptionMenu "DisplayOptions" protected
+OptionMenu "VideoOptions" protected
 {
 	Title "$DSPLYMNU_TITLE"
 
@@ -871,20 +871,20 @@ OptionMenu "DisplayOptions" protected
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
 	StaticText " "
-	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"
-	Option "$DSPLYMNU_CAPFPS",					"cl_capfps", "OffOn"
-	Slider "$DSPLYMNU_BLOODFADE",				"blood_fade_scalar", 0.0, 1.0, 0.05, 2
-	Slider "$DSPLYMNU_PICKUPFADE",				"pickup_fade_scalar", 0.0, 1.0, 0.05, 2
-	Slider "$DSPLYMNU_WATERFADE",				"underwater_fade_scalar", 0.0, 1.0, 0.05, 2
-
-	StaticText " "
-	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
-
-	IfOption(Windows)
-	{
-		StaticText " "
-		Option "$DSPLYMNU_GPUSWITCH",			vid_gpuswitch, "GPUSwitch"
-	}
+	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
+	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
+	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
+	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"
+	Option "$DSPLYMNU_ROCKETTRAILS",			"cl_rockettrails", "RocketTrailTypes"
+	Option "$DSPLYMNU_BLOODTYPE",				"cl_bloodtype", "BloodTypes"
+	Option "$DSPLYMNU_PUFFTYPE",				"cl_pufftype", "PuffTypes"
+	Slider "$DSPLYMNU_MAXPARTICLES",			"r_maxparticles", 100, 10000, 100, 0
+	Slider "$DSPLYMNU_MAXDECALS",				"cl_maxdecals", 0, 10000, 100, 0
+	Option "$DSPLYMNU_PLAYERSPRITES",			"r_drawplayersprites", "OnOff"
+	Option "$DSPLYMNU_DEATHCAM",				"r_deathcamera", "OnOff"
+	Option "$DSPLYMNU_TELEZOOM",				"telezoom", "OnOff"
+	Slider "$DSPLYMNU_QUAKEINTENSITY",			"r_quakeintensity", 0.0, 1.0, 0.05, 2
+	Option "$DSPLYMNU_NOMONSTERINTERPOLATION",	"nomonsterinterpolation", "NoYes"
 }
 
 

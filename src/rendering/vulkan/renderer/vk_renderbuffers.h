@@ -35,7 +35,7 @@ public:
 	static const int NumPipelineImages = 2;
 	std::unique_ptr<VulkanImage> PipelineImage[NumPipelineImages];
 	std::unique_ptr<VulkanImageView> PipelineView[NumPipelineImages];
-	VkImageLayout PipelineLayout[NumPipelineImages];
+	VkImageLayout PipelineLayout[NumPipelineImages] = { VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
 
 	std::unique_ptr<VulkanImage> Shadowmap;
 	std::unique_ptr<VulkanImageView> ShadowmapView;

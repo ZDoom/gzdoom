@@ -77,7 +77,6 @@ VulkanDevice::VulkanDevice()
 		CreateSurface();
 
 		UsedDeviceFeatures.samplerAnisotropy = VK_TRUE;
-		UsedDeviceFeatures.shaderClipDistance = VK_TRUE;
 		UsedDeviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
 		UsedDeviceFeatures.depthClamp = VK_TRUE;
 		UsedDeviceFeatures.shaderClipDistance = VK_TRUE;
@@ -102,7 +101,6 @@ bool VulkanDevice::CheckFeatures(const VkPhysicalDeviceFeatures &f)
 {
 	return
 		f.samplerAnisotropy == VK_TRUE &&
-		f.shaderClipDistance == VK_TRUE &&
 		f.fragmentStoresAndAtomics == VK_TRUE &&
 		f.depthClamp == VK_TRUE &&
 		f.shaderClipDistance == VK_TRUE;

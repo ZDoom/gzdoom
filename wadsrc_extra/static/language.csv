@@ -245,64 +245,64 @@ AREA 36: Castle Clash,TXT_STRIFE_MAP36,,,,ZONE 36: Burg-Konflikt,ÁREA 36: Ataqu
 AREA 37: Killing Grounds,TXT_STRIFE_MAP37,,,,ZONE 37: Kampfgelände,ÁREA 37: Campo de Matanza,,ZONE 37: Zone de Chasse,,AREA 37: Campi di Uccisione,Área 37: Campo de Matança,Местность 37: Секторы обстрела,
 AREA 38: Ordered Chaos,TXT_STRIFE_MAP38,,,,ZONE 38: Geordnetes Chaos,ÁREA 38: Caos Ordenado,,ZONE 38: Chaos Ordonné,,AREA 38: Caos Ordinato,Área 38: Caos Ordenado,Местность 38: Управляемый хаос,
 ,,,Hexen,,,,,,,,,,
-Winnowing Hall,TXT_HEXEN_MAP01,,,,Trennungshalle,Sala de los Vientos,,Chambre de la Séparation,,,,Зал отсеивания,Овејан хол
-Seven Portals,TXT_HEXEN_MAP02,,,,Sieben Portale,Siete Portales,,Les Sept Portails,,,Sete Portais,Семь порталов,Седам портала
-Guardian of Ice,TXT_HEXEN_MAP03,,,,Wächter des Eises,Guardián de Hielo,,Gardien de Glace,,,Guardião de Gelo,Страж льда,Чувар леда
-Guardian of Fire,TXT_HEXEN_MAP04,,,,Wächter des Feuers,Guardián de Fuego,,Gardien de Feu,,,Guardião de Fogo,Страж огня,Чувар ватре
-Guardian of Steel,TXT_HEXEN_MAP05,,,,Wächter des Stahls,Guardián de Acero,,Gardien d'Acier,,,Guardião de Aço,Страж стали,Чувар челика
-Bright Crucible,TXT_HEXEN_MAP06,,,,Glänzende Feuerprobe,Crisol de Luz,,Creuset Radiant,,,,Испытание света,Светлосни лонац
-Shadow Wood,TXT_HEXEN_MAP13,,,,Schattenwald,Bosque de la Sombra,,Forêt des Ombres,,,Floresta das Sombras,Лес теней,Шума сена
-Darkmere,TXT_HEXEN_MAP08,,,,Düstersee,Pantano,,Marais Noir,,,Pantâno Negro,Болотная топь,Мочваре
-Caves of Circe,TXT_HEXEN_MAP09,,,,Circes Höhle,Cuevas de Circe,,Caves de Circé,,,Carvernas de Circe,Пещеры цирцеи,Пећине цирке
-Wastelands,TXT_HEXEN_MAP10,,,,Ödland,Yermo,,Terres Ruinées,,,,Пустоши,Пустаре
-Sacred Grove,TXT_HEXEN_MAP11,,,,Heiliger Hain,Arboleda Sagrada,,Bosquet Sacré,,,Bosque Sagrado,Священная роща,Свети шумарак
-Hypostyle,TXT_HEXEN_MAP12,,,,Säulenhalle,Hipóstila,,Hypostyle,,,Hipostilo,Гипостильный зал,Хипостил
-Heresiarch's Seminary,TXT_HEXEN_MAP27,,,,Seminar des Erzketzers,Seminario del Heresiarca,,Séminaire de l'Hérésiarche,,,Seminário do Heresiarca,Семинария Ересиарха,Јересијархов семинар
-Dragon Chapel,TXT_HEXEN_MAP28,,,,Drachenkapelle,Capilla Dragón,,Chapelle du Dragon,,,Capela do Dragão,Часовня дракона,Змајева капела
-Griffin Chapel,TXT_HEXEN_MAP30,,,,Greifenkapelle,Capilla Grifo,,Chapelle du Grifon,,,Capela do Grifo,Часовня грифона,Грифинова капела
-Deathwind Chapel,TXT_HEXEN_MAP31,,,,Todeswindkapelle,Capilla Viento de Muerte,,Chapelle du Vent Tueur,,,Capela do Vento da Morte,Часовня ветра смерти,Капела ветра смрти
-Orchard of Lamentations,TXT_HEXEN_MAP32,,,,Garten der Wehklagen,Huerto de los Lamentos,,Verger des Lamentations,,,Pomar das Lamentações,Сады плача,Воћњак тужбалица
-Silent Refectory,TXT_HEXEN_MAP33,,,,Stilles Refektorium,Refectorio Silencioso,,Réfectoire Silencieux,,,Refeitório Silencioso,Безмолвная трапезная,Тиха трпезарија
-Wolf Chapel,TXT_HEXEN_MAP34,,,,Wolfskapelle,Capilla Lobo,,Chapelle du Loup,,,Capela do Lobo,Часовня волка,Вучја капела
-Forsaken Outpost,TXT_HEXEN_MAP21,,,,Verlassener Vorposten,Puesto de Avanzada Abandonado,,Base Abandonnée,,,Posto Abandonado,Покинутая застава,Напуштена постаја
-Castle of Grief,TXT_HEXEN_MAP22,,,,Leidensburg,Castillo del Pesar,,Château de la Souffrance,,,Castelo da Aflição,Замок скорби,Замак жалости
-Gibbet,TXT_HEXEN_MAP23,,,,Richtstätte,Horca,,Gibet,,,Forca,Виселица,Вешала
-Effluvium,TXT_HEXEN_MAP24,,,,Effluvium,Efluvio,,Effluvium,,,Eflúvio,Зловонный сток,Ефлувиум
-Dungeons,TXT_HEXEN_MAP25,,,,Kerker,Calabozos,,Donjons,,,Masmorras,Подземелья,Тамнице
-Desolate Garden,TXT_HEXEN_MAP26,,,,Verwildeter Garten,Jardín Desolado,,Jardin de la Désolation,,,Jardim Desolado,Заброшенный сад,Пуста башта
-Necropolis,TXT_HEXEN_MAP35,,,,Nekropole,Necrópolis,,Nécropole,,,Necrópole,Некрополь,Некрополис
-Zedek's Tomb,TXT_HEXEN_MAP36,,,,Zedeks Gruft,Tumba de Zedek,,Tombeau de Zedek,,,Tumba de Zedek,Гробница зедека,Зедеков гроб
-Menelkir's Tomb,TXT_HEXEN_MAP37,,,,Menelkirs Gruft,Tumba de Menelkir,,Tombeau de Menelkir,,,Tumba de Menelkir,Гробница менелкира,Менелкиров гроб
-Traductus' Tomb,TXT_HEXEN_MAP38,,,,Traductus' Gruft,Tumba de Traductus,,Tombeau de Traductus,,,Tumba de Traductus,Гробница традактуса,Традуктусов гроб
-Vivarium,TXT_HEXEN_MAP39,,,,Vivarium,Vivario,,Vivarium,,,Viveiro,Виварий,Зверињак
-Dark Crucible,TXT_HEXEN_MAP40,,,,Dunkle Feuerprobe,Crisol de Oscuridad,,Creuset Sombre,,,,Испытание тьмы,Мрачни лонац
+Winnowing Hall,TXT_HEXEN_MAP01,,,,Trennungshalle,Sala de los Vientos,,Chambre de la Séparation,,Camera di separazione,,Зал отсеивания,Овејан хол
+Seven Portals,TXT_HEXEN_MAP02,,,,Sieben Portale,Siete Portales,,Les Sept Portails,,I Sette Portali,Sete Portais,Семь порталов,Седам портала
+Guardian of Ice,TXT_HEXEN_MAP03,,,,Wächter des Eises,Guardián de Hielo,,Gardien de Glace,,Guardiano del Ghiaccio,Guardião de Gelo,Страж льда,Чувар леда
+Guardian of Fire,TXT_HEXEN_MAP04,,,,Wächter des Feuers,Guardián de Fuego,,Gardien de Feu,,Guardiano del Fuoco,Guardião de Fogo,Страж огня,Чувар ватре
+Guardian of Steel,TXT_HEXEN_MAP05,,,,Wächter des Stahls,Guardián de Acero,,Gardien d'Acier,,Guardiano dell'Acciaio,Guardião de Aço,Страж стали,Чувар челика
+Bright Crucible,TXT_HEXEN_MAP06,,,,Glänzende Feuerprobe,Crisol de Luz,,Creuset Radiant,,Crogiolo Luminoso,,Испытание света,Светлосни лонац
+Shadow Wood,TXT_HEXEN_MAP13,,,,Schattenwald,Bosque de la Sombra,,Forêt des Ombres,,Foresta Oscura,Floresta das Sombras,Лес теней,Шума сена
+Darkmere,TXT_HEXEN_MAP08,,,,Düstersee,Pantano,,Marais Noir,,Palude Nera,Pantâno Negro,Болотная топь,Мочваре
+Caves of Circe,TXT_HEXEN_MAP09,,,,Circes Höhle,Cuevas de Circe,,Caves de Circé,,Grotte di Circe,Carvernas de Circe,Пещеры цирцеи,Пећине цирке
+Wastelands,TXT_HEXEN_MAP10,,,,Ödland,Yermo,,Terres Ruinées,,Terre in rovina,,Пустоши,Пустаре
+Sacred Grove,TXT_HEXEN_MAP11,,,,Heiliger Hain,Arboleda Sagrada,,Bosquet Sacré,,Boschetto Sacro,Bosque Sagrado,Священная роща,Свети шумарак
+Hypostyle,TXT_HEXEN_MAP12,,,,Säulenhalle,Hipóstila,,Hypostyle,,Ipostilo,Hipostilo,Гипостильный зал,Хипостил
+Heresiarch's Seminary,TXT_HEXEN_MAP27,,,,Seminar des Erzketzers,Seminario del Heresiarca,,Séminaire de l'Hérésiarche,,Seminario dell'Heresiarch,Seminário do Heresiarca,Семинария Ересиарха,Јересијархов семинар
+Dragon Chapel,TXT_HEXEN_MAP28,,,,Drachenkapelle,Capilla Dragón,,Chapelle du Dragon,,Cappella del Drago,Capela do Dragão,Часовня дракона,Змајева капела
+Griffin Chapel,TXT_HEXEN_MAP30,,,,Greifenkapelle,Capilla Grifo,,Chapelle du Grifon,,Cappella del Grifone,Capela do Grifo,Часовня грифона,Грифинова капела
+Deathwind Chapel,TXT_HEXEN_MAP31,,,,Todeswindkapelle,Capilla Viento de Muerte,,Chapelle du Vent Tueur,,Cappella del Vento Assassino,Capela do Vento da Morte,Часовня ветра смерти,Капела ветра смрти
+Orchard of Lamentations,TXT_HEXEN_MAP32,,,,Garten der Wehklagen,Huerto de los Lamentos,,Verger des Lamentations,,Frutteto delle Lamentazioni,Pomar das Lamentações,Сады плача,Воћњак тужбалица
+Silent Refectory,TXT_HEXEN_MAP33,,,,Stilles Refektorium,Refectorio Silencioso,,Réfectoire Silencieux,,Refettorio silenzioso,Refeitório Silencioso,Безмолвная трапезная,Тиха трпезарија
+Wolf Chapel,TXT_HEXEN_MAP34,,,,Wolfskapelle,Capilla Lobo,,Chapelle du Loup,,Cappella del Lupo,Capela do Lobo,Часовня волка,Вучја капела
+Forsaken Outpost,TXT_HEXEN_MAP21,,,,Verlassener Vorposten,Puesto de Avanzada Abandonado,,Base Abandonnée,,Avamposto Abbandonato,Posto Abandonado,Покинутая застава,Напуштена постаја
+Castle of Grief,TXT_HEXEN_MAP22,,,,Leidensburg,Castillo del Pesar,,Château de la Souffrance,,Castello della Sofferenza,Castelo da Aflição,Замок скорби,Замак жалости
+Gibbet,TXT_HEXEN_MAP23,,,,Richtstätte,Horca,,Gibet,,Forca,Forca,Виселица,Вешала
+Effluvium,TXT_HEXEN_MAP24,,,,Effluvium,Efluvio,,Effluvium,,Effluvio,Eflúvio,Зловонный сток,Ефлувиум
+Dungeons,TXT_HEXEN_MAP25,,,,Kerker,Calabozos,,Donjons,,I Dungeon,Masmorras,Подземелья,Тамнице
+Desolate Garden,TXT_HEXEN_MAP26,,,,Verwildeter Garten,Jardín Desolado,,Jardin de la Désolation,,Giardino Desolato,Jardim Desolado,Заброшенный сад,Пуста башта
+Necropolis,TXT_HEXEN_MAP35,,,,Nekropole,Necrópolis,,Nécropole,,Necropoli,Necrópole,Некрополь,Некрополис
+Zedek's Tomb,TXT_HEXEN_MAP36,,,,Zedeks Gruft,Tumba de Zedek,,Tombeau de Zedek,,Tomba di Zedek,Tumba de Zedek,Гробница зедека,Зедеков гроб
+Menelkir's Tomb,TXT_HEXEN_MAP37,,,,Menelkirs Gruft,Tumba de Menelkir,,Tombeau de Menelkir,,Tomba di Menelkir,Tumba de Menelkir,Гробница менелкира,Менелкиров гроб
+Traductus' Tomb,TXT_HEXEN_MAP38,,,,Traductus' Gruft,Tumba de Traductus,,Tombeau de Traductus,,Tomba di Traductus,Tumba de Traductus,Гробница традактуса,Традуктусов гроб
+Vivarium,TXT_HEXEN_MAP39,,,,Vivarium,Vivario,,Vivarium,,Vivario,Viveiro,Виварий,Зверињак
+Dark Crucible,TXT_HEXEN_MAP40,,,,Dunkle Feuerprobe,Crisol de Oscuridad,,Creuset Sombre,,Crogiolo Buio,,Испытание тьмы,Мрачни лонац
 ,,,Hexen Deathkings,,,,,,,,,,
-Ruined Village,TXT_HEXDD_MAP41,,,,Zerstörtes Dorf,Pueblo en Ruinas,,Village en Ruines,,,Aldeia Destruída,Разрушенная деревня,
-Blight,TXT_HEXDD_MAP42,,,,Fäule,Decaimiento,,Peste,,,Peste,Упадок,
-Sump,TXT_HEXDD_MAP43,,,,Sumpf,Pozo de Barro,,Puisard,,,,Грязеотстойник,
-Catacomb,TXT_HEXDD_MAP44,,,,Katakombe,Catacumba,,Catacombe,,,Catacumba,Катакомба,
-Badlands,TXT_HEXDD_MAP45,,,,Ödland,Páramos,,Terres Sauvages,,,Ermo,Бесплодные земли,
-Brackenwood,TXT_HEXDD_MAP46,,,,Moorwald,Brackenwood,,Forêt de Bracken,,,,Брекенвуд,
-Pyre,TXT_HEXDD_MAP47,,,,Scheiterhaufen,Pira Funeraria,,Brasier,,,Pira,Погребальный костёр,
-Constable's Gate,TXT_HEXDD_MAP48,,,,Wachtor,Puerta del Alguacil,,Portail du Constable,,,Portão do Condestável,Комендантские врата,
-Treasury,TXT_HEXDD_MAP49,,,,Schatzkammer,Tesorería,,Trésorerie,,,Tesouraria,Сокровищница,
-Market Place,TXT_HEXDD_MAP50,,,,Marktplatz,Plaza del Mercado,,Place du Marché,,,Feira,Рыночная площадь,
+Ruined Village,TXT_HEXDD_MAP41,,,,Zerstörtes Dorf,Pueblo en Ruinas,,Village en Ruines,,Villagio in Rovine,Aldeia Destruída,Разрушенная деревня,
+Blight,TXT_HEXDD_MAP42,,,,Fäule,Decaimiento,,Peste,,Peste,Peste,Упадок,
+Sump,TXT_HEXDD_MAP43,,,,Sumpf,Pozo de Barro,,Puisard,,Pozzetto,,Грязеотстойник,
+Catacomb,TXT_HEXDD_MAP44,,,,Katakombe,Catacumba,,Catacombe,,Catacombe,Catacumba,Катакомба,
+Badlands,TXT_HEXDD_MAP45,,,,Ödland,Páramos,,Terres Sauvages,,Terre Selvagge,Ermo,Бесплодные земли,
+Brackenwood,TXT_HEXDD_MAP46,,,,Moorwald,Brackenwood,,Forêt de Bracken,,Foresta di Felce,,Брекенвуд,
+Pyre,TXT_HEXDD_MAP47,,,,Scheiterhaufen,Pira Funeraria,,Brasier,,Pira,Pira,Погребальный костёр,
+Constable's Gate,TXT_HEXDD_MAP48,,,,Wachtor,Puerta del Alguacil,,Portail du Constable,,Porta del Conestabile,Portão do Condestável,Комендантские врата,
+Treasury,TXT_HEXDD_MAP49,,,,Schatzkammer,Tesorería,,Trésorerie,,Tesoreria,Tesouraria,Сокровищница,
+Market Place,TXT_HEXDD_MAP50,,,,Marktplatz,Plaza del Mercado,,Place du Marché,,Piazza del Mercato,Feira,Рыночная площадь,
 Locus Requiescat,TXT_HEXDD_MAP51,,,,Locus Requiescat,Lugar de Descanso Eterno,,Locus Requiescat,,,,Место вечного упокоения,
-Ordeal,TXT_HEXDD_MAP52,,,,Heimsuchung,Prueba,,Supplice,,,Ordália,Испытание,
-Armory,TXT_HEXDD_MAP53,,,Armoury,Waffenkammer,Armería,,Amurerie,,,Arsenal,Оружейная,
-Nave,TXT_HEXDD_MAP54,,,,Kirchenschiff,La Nave,,Nef,,,,Неф,
-Chantry,TXT_HEXDD_MAP55,,,,Kantorei,Capilla,,Chapelle,,,Capela,Часовня,
-Abattoir,TXT_HEXDD_MAP56,,,,Schlachthaus,Matadero,,Abbatoire,,,Matadouro,Бойня,
-Dark Watch,TXT_HEXDD_MAP57,,,,Dunkle Wache,Guardia Oscura,,Garde Noire,,,Guarda Negra,Тёмный страж,
+Ordeal,TXT_HEXDD_MAP52,,,,Heimsuchung,Prueba,,Supplice,,Supplizio,Ordália,Испытание,
+Armory,TXT_HEXDD_MAP53,,,Armoury,Waffenkammer,Armería,,Amurerie,,Armeria,Arsenal,Оружейная,
+Nave,TXT_HEXDD_MAP54,,,,Kirchenschiff,La Nave,,Nef,,Navata,,Неф,
+Chantry,TXT_HEXDD_MAP55,,,,Kantorei,Capilla,,Chapelle,,Cappella,Capela,Часовня,
+Abattoir,TXT_HEXDD_MAP56,,,,Schlachthaus,Matadero,,Abbatoire,,Mattatoio,Matadouro,Бойня,
+Dark Watch,TXT_HEXDD_MAP57,,,,Dunkle Wache,Guardia Oscura,,Garde Noire,,Guardia Oscura,Guarda Negra,Тёмный страж,
 Cloaca,TXT_HEXDD_MAP58,,,,Kloake,Cloaca,,Cloaque,,,,Клоака,
-Ice Hold,TXT_HEXDD_MAP59,,,,Eiskammer,Tierra de Hielo,,Fort de Glace,,,Fortaleza de Gelo,Ледяная твердь,
-Dark Citadel,TXT_HEXDD_MAP60,,,,Dunkle Festung,Fortaleza Oscura,,Citadelle Sombre,,,Citadela Negra,Тёмная цитадель,
-Transit,TXT_HEXDD_MAP33,,,,,Sala de Espera,,Transit,,,Trânsito,Комната ожидания,
-Over'n Under,TXT_HEXDD_MAP34,,,,Drunter und Drüber,Arriba y Abajo,,Sens Dessus Dessous,,,Sobre e Sob,Выше и ниже,
-Deathfog,TXT_HEXDD_MAP35,,,,Todesnebel,Niebla de Muerte,,Brume Mortelle,,,Névoa da Morte,Туман смерти,
-Castle of Pain,TXT_HEXDD_MAP36,,,,Burg der Angst,Castillo del Dolor,,Château de la Douleur,,,Castelo da Dor,Замок боли,
-Sewer Pit,TXT_HEXDD_MAP37,,,,Kanalgrube,Pozo de Residuos,,Trou d'Egout,,,Fosso de Esgoto,Сточная яма,
-The Rose,TXT_HEXDD_MAP38,,,,Die Rose,La Rosa,,La Rose,,,A Rosa,Роза,
+Ice Hold,TXT_HEXDD_MAP59,,,,Eiskammer,Tierra de Hielo,,Fort de Glace,,Fortezza di Ghiaccio,Fortaleza de Gelo,Ледяная твердь,
+Dark Citadel,TXT_HEXDD_MAP60,,,,Dunkle Festung,Fortaleza Oscura,,Citadelle Sombre,,Cittadella Oscura,Citadela Negra,Тёмная цитадель,
+Transit,TXT_HEXDD_MAP33,,,,,Sala de Espera,,Transit,,Passaggio,Trânsito,Комната ожидания,
+Over'n Under,TXT_HEXDD_MAP34,,,,Drunter und Drüber,Arriba y Abajo,,Sens Dessus Dessous,,Sopra e Sotto,Sobre e Sob,Выше и ниже,
+Deathfog,TXT_HEXDD_MAP35,,,,Todesnebel,Niebla de Muerte,,Brume Mortelle,,Nebbia di Morte,Névoa da Morte,Туман смерти,
+Castle of Pain,TXT_HEXDD_MAP36,,,,Burg der Angst,Castillo del Dolor,,Château de la Douleur,,Castello del Dolore,Castelo da Dor,Замок боли,
+Sewer Pit,TXT_HEXDD_MAP37,,,,Kanalgrube,Pozo de Residuos,,Trou d'Egout,,Fossa della Fogna,Fosso de Esgoto,Сточная яма,
+The Rose,TXT_HEXDD_MAP38,,,,Die Rose,La Rosa,,La Rose,,La Rosa,A Rosa,Роза,
 ,,,Intermission texts,,,,,,,,,,
 "Once you beat the big badasses and
 clean out the moon base you're supposed
@@ -3992,7 +3992,7 @@ personne à avoir peur d'un défi..",,,,"Когда-то Вы уже владе�
 искушением и примёте вызов...",
 "\n...and other players await.
 
-",TXT_HEXDD_WIN3MSG,,,,\n...und andere Spieler warten.,\n...y otros jugadores esperan.,,\n...Et d'autres joueurs attendent.,,,,"\n...В то время как другие игроки будут
+",TXT_HEXDD_WIN3MSG,,,,\n...und andere Spieler warten.,\n...y otros jugadores esperan.,,\n...Et d'autres joueurs attendent.,,\n...e altri giocatori aspettano.,,"\n...В то время как другие игроки будут
 ждать своего часа, чтобы совершить
 свой ход.",
 ,,,Hexen script texts,,,,,,,,,,
@@ -4258,7 +4258,7 @@ More info.,TXT_RPLY0_SCRIPT02_D28804_MOREI,,,,Mehr Informationen.,Más informaci
 There's more to the Order than meets the eye.,TXT_RYES0_SCRIPT02_D28804_THERE,,,,An dem Orden ist mehr dran als man auf den ersten Blick denkt.,Hay más de la Orden de lo que parece.,Hay más de La Orden de lo que parece.,L'Ordre cache bien son jeu.,,,,"Орден — нечто большее, чем кажется.",
 We'll talk when you get gold!,TXT_RNO0_SCRIPT02_D28804_WELLT,,,,"Wir werden reden, wenn du Gold hast!",¡Hablaremos cuando traigas oro!,,On parlera quand tu auras des sous!,,,,"Поговорим, когда принесешь золото!",
 "That's it friend, the well of knowledge has run dry. I've told you more than I should have anyway. Good luck... And don't come back.",TXT_DLG_SCRIPT02_D30320_THATS,,,,"Das war's mein Freund, der Brunnen der Weisheit ist versiegt. Ich habe dir sowieso mehr erzählt als ich sollte. Viel Glück... und komm nicht zurück.",Ya está amigo. El pozo del conocimiento se ha secado. De todas formas te he dicho más de lo que debería. Buena suerte ... y no vuelvas.,,"Eh bien voilà, mon ami, le puits de la connaîssance s'est enfin asséché.. Je t'en ai dit plus que je n'aurai du, de toutes manières! Bonne chance.. Et ne reviens pas!",,,,"Это всё, дружище. Кладезь мудрости исчерпан. Я и так рассказал тебе больше, чем следовало. Удачи... и не возвращайся.",
-"Hey, I'm only here in case of an emergency. If the core breaches, then I make sure no one gets in... Or out.",TXT_DLG_SCRIPT02_D31836_HEYIM,,,,"Hey, ich bin nur für den Fall eines Notfalls hier. Im Falle eines Kernbruchs sorge ich dafür das niemand rein kommt... oder raus.","Oye, sólo estoy aquí en caso de una emergencia. Si el núcleo se rompe, entonces me aseguro de que nadie entre... o salga.",,"Hé, je ne suis là qu'en cas d'urgence. Si le coeur a une brèche, il faut que je fasse en sorte que rien ne rentre.. Ou ne sorte.",,,,"Эй, я тут только на случай аварии. Если реактор даст течь, я должен быть уверен, что никто не войдёт... и не выйдет.",
+"Hey, I'm only here in case of an emergency. If the core breaches, then I make sure no one gets in... or out.",TXT_DLG_SCRIPT02_D31836_HEYIM,,,,"Hey, ich bin nur für den Fall eines Notfalls hier. Im Falle eines Kernbruchs sorge ich dafür das niemand rein kommt... oder raus.","Oye, sólo estoy aquí en caso de una emergencia. Si el núcleo se rompe, entonces me aseguro de que nadie entre... o salga.",,"Hé, je ne suis là qu'en cas d'urgence. Si le coeur a une brèche, il faut que je fasse en sorte que rien ne rentre.. Ou ne sorte.",,,,"Эй, я тут только на случай аварии. Если реактор даст течь, я должен быть уверен, что никто не войдёт... и не выйдет.",
 "Watch your step, peasant!",TXT_DLG_SCRIPT02_D33352_WATCH,,"Not sure with the translation of ""peasant"" in this case.
 [GZ] As long as it is meant as an insult, ""Bauer"" is fine.",,"Pass auf wo du hintrittst, Bauer!","¡Cuida por donde caminas, campesino!",,"Regarde où tu va, paysan!",,,,"Смотри, куда прёшь, рабочий!",
 We're going to kill you! ,TXT_DLG_SCRIPT02_D34868_WEREG,,,,Wir werden dich umbringen!,"¡Vamos a matarte!
@@ -4337,7 +4337,7 @@ What are you doing here?,TXT_DLG_SCRIPT02_D87928_WHATA,,,,Was machst du hier?,¿
 "Blackbird told you the code, huh? Let me shut off the alarm. Macil is one flight down.",TXT_DLG_SCRIPT02_D89444_BLACK,,,,"Blackbird hat dir den Code gegeben, wie? Lass mich mal eben den Alarm abschalten. Macil ist eine Etage tiefer.","Blackbird te dijo el código, ¿eh? Déjame apagar la alarma. Macil está un vuelo hacia abajo.",,"Blackbird t'as donné le code, hein? Bon, laisse moi désactiver l'alarme. Macil est en bas des escaliers.",,,,"Чёрный дрозд сказал тебе пароль, так? Давай я отключу сигнализацию. Мэйсил этажом ниже.",
 Thanks.,TXT_RPLY0_SCRIPT02_D89444_THANK,,,,Danke.,Gracias.,,Merci.,,,,Спасибо.,
 "Walk away, boy, just walk away.",TXT_DLG_SCRIPT02_D90960_WALKA,,,,"Geh weg Jungchen, geh einfach weg.","Aléjate, muchacho, sólo aléjate.",,"Pars, gamin, pars.",,,,"Проходи, парень. Просто проходи.",
-Do you have an appointment with the Governor? ,TXT_DLG_SCRIPT02_D92476_DOYOU,,,,Hast du einen Termin bei dem Gouverneur?,¿Tienes una cita con el gobernador?,,Avez-vous un rendez-vous avec le gouverneur?,,,,У вас назначена встреча с губернатором?,
+Do you have an appointment with the Governor? ,TXT_DLG_SCRIPT02_D92476_DOYOU,,,,Hast du einen Termin bei dem Gouverneur?,¿Tienes una cita con el gobernador?,,Avez-vous un rendez-vous avec le gouverneur?,,,,У Вас назначена встреча с губернатором?,
 Of course!,TXT_RPLY0_SCRIPT02_D92476_OFCOU,,,,Natürlich!,¡Claro que si!,,Bien sûr!,,,,Конечно!,
 "No, and I don't need one!",TXT_RPLY1_SCRIPT02_D92476_NOAND,,,,"Nein, und ich brauche auch keinen!","¡No, y no la necesito!",,"Non, et j'en ai pas besoin!",,,,"Нет, и я в ней не нуждаюсь!",
 Sorry! I didn't mean... Please go right up.,TXT_DLG_SCRIPT02_D93992_SORRY,,,,Entschuldigung! Das war nicht so gemeint... Bitte geh durch.,"¡Lo siento! No quise decir ... Por favor, suba.",,"Désolé, je.. Vous pouvez monter, bien sûr.",,,,"Простите! Я не хотел... Пожалуйста, пройдите наверх.",
@@ -5190,67 +5190,67 @@ Find the chalice in the sanctuary chapel and bring it to Harris upstairs in the 
 Find the Governor's mansion and talk to the Governor to get your reward,TXT_ILOG1102,,,,Finde die Villa des Gouverneurs und rede mit ihm über deine Belohnung.,Encuentra la mansión del Gobernador y habla con el Gobernador para obtener tu recompensa,Encuentra la mansión del Gobernador y habla con él para obtener tú recompensa.,Trouve le manoir du Gouverneur et parle-lui pour réclamer ta récompense.,,,,Пройди в особняк губернатора и обсуди с Морелом своё вознаграждение.,
 Congratulations! You have earned our gratitude. Visit the medic and weapons trainer and they will get you ready for what lies ahead. Feel free to wander around within the base.,TXT_ILOG1201,,,,"Gratulation. Du hast dir unsere Dankbarkeit verdient. Suche den Sanitäter und den Waffentrainer auf, sie werden dich auf das was vor dir liegt, vorbereiten. Wenn du willst, schau dich in der Basis um.",¡Enhorabuena! Te has ganado nuestra gratitud. Visita al médico y al entrenador de armas y te prepararán para lo que viene en adelante. Sé libre de dar un paseo por la base.,¡Felicitaciones! Te haz ganado nuestra gratitud. Visita al médico y al entrenador de armas y ellos te dejarán listo para lo que sigue. Sientete libre de andar através de la base.,Félicitations! Vous méritez notre gratitude. Allez voir le médecin et le maître d'armes et ils pourront vous préparer pour ce qu'il va suivre. Vous pouvez faire le tour de la base si vous le souhaitez.,,,,"Поздравляем! Ты заслужил нашу благодарность. Зайди к медику и инструктору по стрельбе, и они подготовят тебя к тому, что ждёт тебя впереди. Теперь ты можешь свободно передвигаться по нашей базе.",
 ,,,Strife characters,,,,,,,,,,
-Order Sergeant,TXT_SPEAKER_ORDER_SERGEANT,,,,Soldat des Ordens,Sargento de La Orden,Sargento de La Orden,Sergeant de l'Ordre,,,,Сержант Ордена,
+Order Sergeant,TXT_SPEAKER_ORDER_SERGEANT,,,,Soldat des Ordens,Sargento de La Orden,Sargento de La Orden,Sergeant de l'Ordre,,Sergente dell'Ordine,,Сержант Ордена,
 Rowan,TXT_SPEAKER_ROWAN,,,,,,,,,,,Роуэн,
 Feris,TXT_SPEAKER_FERIS,,,,,,,,,,,Ферис,
-Prison Guard,TXT_SPEAKER_PRISON_GUARD,,,,Gefängniswache,Guardia de la Prisión,Guardia de la Prisión,Garde de la Prison,,,,"Страж тюрьмы
+Prison Guard,TXT_SPEAKER_PRISON_GUARD,,,,Gefängniswache,Guardia de la Prisión,Guardia de la Prisión,Garde de la Prison,,Guardia della Prigione,,"Страж тюрьмы
 ",
 Justin,TXT_SPEAKER_JUSTIN,,,,,,,,,,,Джастин,
 Macil,TXT_SPEAKER_MACIL,,,,,,,,,,,Мэйсил,
-Assistant,TXT_SPEAKER_ASSISTANT,,,,Assistent,Asistente,Asistente,,,,,Ассистент,
-Key Master,TXT_SPEAKER_KEY_MASTER,,,,Schlüsselmeister,Amo de Llaves,Maestro de Llaves,Maître des Clés,,,,Ключник,
-Bodyguard,TXT_SPEAKER_BODYGUARD,,,,Leibwächter,Guardaespaldas,Guardaespaldas,Garde du corps,,,,Телохранитель,
-Interrogator,TXT_SPEAKER_INTERROGATOR,,,,Befrager,Interrogador,Interrogador,Interrogateur,,,,Дознаватель,
-Warden Montag,TXT_SPEAKER_WARDEN_MONTAG,,,,Direktor Montag,Carcelero Montag,Director Montag,Gardien Montag,,,,Тюремщик Монтаг,
+Assistant,TXT_SPEAKER_ASSISTANT,,,,Assistent,Asistente,Asistente,,,Assistente,,Ассистент,
+Key Master,TXT_SPEAKER_KEY_MASTER,,,,Schlüsselmeister,Amo de Llaves,Maestro de Llaves,Maître des Clés,,Maestro di chiavi,,Ключник,
+Bodyguard,TXT_SPEAKER_BODYGUARD,,,,Leibwächter,Guardaespaldas,Guardaespaldas,Garde du corps,,Guardia del corpo,,Телохранитель,
+Interrogator,TXT_SPEAKER_INTERROGATOR,,,,Befrager,Interrogador,Interrogador,Interrogateur,,Interrogatore,,Дознаватель,
+Warden Montag,TXT_SPEAKER_WARDEN_MONTAG,,,,Direktor Montag,Carcelero Montag,Director Montag,Gardien Montag,,Guardiano Montag,,Тюремщик Монтаг,
 Richter,TXT_SPEAKER_RICHTER,,,,,,,,,,,Рихтер,
-Macil's Advisor,TXT_SPEAKER_MACIL_S_ADVISOR,,,,Macils Berater,Consejero de Macil,Consejero de Macil,Conseiller de Macil,,,,Советник Мэйсила,
-Judge Wolenick,TXT_SPEAKER_JUDGE_WOLENICK,,,,Richter Wolenick,Juez Wolenick,Juez Wolenick,Juge Wolenick,,,,Судья Уолник,
+Macil's Advisor,TXT_SPEAKER_MACIL_S_ADVISOR,,,,Macils Berater,Consejero de Macil,Consejero de Macil,Conseiller de Macil,,Consigliere di Macil,,Советник Мэйсила,
+Judge Wolenick,TXT_SPEAKER_JUDGE_WOLENICK,,,,Richter Wolenick,Juez Wolenick,Juez Wolenick,Juge Wolenick,,Giudice Wolenick,,Судья Уолник,
 Tevick,TXT_SPEAKER_TEVICK,,,,,,,,,,,Тевик,
 Harris,TXT_SPEAKER_HARRIS,,,,,,,,,,,Харрис,
-Foreman,TXT_SPEAKER_FOREMAN,,,,Vormann,Capataz,Capataz,Contremaître,,,,Бригадир,
-Prisoner,TXT_SPEAKER_PRISONER,,,,Gefangener,Prisionero,Prisionero,Prisonnier,,,,Пленник,
+Foreman,TXT_SPEAKER_FOREMAN,,,,Vormann,Capataz,Capataz,Contremaître,,Caposquadra,,Бригадир,
+Prisoner,TXT_SPEAKER_PRISONER,,,,Gefangener,Prisionero,Prisionero,Prisonnier,,Prigioniero,,Пленник,
 Sammis,TXT_SPEAKER_SAMMIS,,,,,,,,,,,Сэммис,
-Weapon Smith,TXT_SPEAKER_WEAPON_SMITH,,,,Waffenschmied,Forjador de Armas,Forjador de Armas,Armurier,,,,Оружейник,
-Reactor Guard,TXT_SPEAKER_REACTOR_GUARD,,,,Reaktorwache,Guardia del Reactor,Guardia del Reactor,Garde du réacteur,,,,Страж реактора,
-Apprentice,TXT_SPEAKER_APPRENTICE,,,,Lehrling,Aprendiz,Aprendiz,Apprenti,,,,Подмастерье,
-Door Guard,TXT_SPEAKER_DOOR_GUARD,,,,Türwache,Guarda de la Puerta,Guarda de la Puerta,Garde de la porte,,,,Страж входа,
-Master Smithy,TXT_SPEAKER_MASTER_SMITHY,,,,Meister Smithy,Maestro Herrero,Maestro Herrero,Maîre Forgeron,,,,Мастер-кузнец,
-Warehouse Guard,TXT_SPEAKER_WAREHOUSE_GUARD,,,,Lagerhaus-Wache,Guardia del Almacén,Guardia del Almacén,Garde de l'entrepôt,,,,Охранник склада,
-Barkeep,TXT_SPEAKER_BARKEEP,,,,Wirt,Tabernero,Barman,Barman,,,,Хозяин таверны,
+Weapon Smith,TXT_SPEAKER_WEAPON_SMITH,,,,Waffenschmied,Forjador de Armas,Forjador de Armas,Armurier,,Fabbro d'Armi,,Оружейник,
+Reactor Guard,TXT_SPEAKER_REACTOR_GUARD,,,,Reaktorwache,Guardia del Reactor,Guardia del Reactor,Garde du réacteur,,Guardia del Reattore,,Страж реактора,
+Apprentice,TXT_SPEAKER_APPRENTICE,,,,Lehrling,Aprendiz,Aprendiz,Apprenti,,Apprendista,,Подмастерье,
+Door Guard,TXT_SPEAKER_DOOR_GUARD,,,,Türwache,Guarda de la Puerta,Guarda de la Puerta,Garde de la porte,,Guardia della Porta,,Страж входа,
+Master Smithy,TXT_SPEAKER_MASTER_SMITHY,,,,Meister Smithy,Maestro Herrero,Maestro Herrero,Maîre Forgeron,,Maestro della Fucina,,Мастер-кузнец,
+Warehouse Guard,TXT_SPEAKER_WAREHOUSE_GUARD,,,,Lagerhaus-Wache,Guardia del Almacén,Guardia del Almacén,Garde de l'entrepôt,,Guardia del Magazzino,,Охранник склада,
+Barkeep,TXT_SPEAKER_BARKEEP,,,,Wirt,Tabernero,Barman,Barman,,Barman,,Хозяин таверны,
 Timothy,TXT_SPEAKER_TIMOTHY,,,,,,,,,,,Тимоти,
 James,TXT_SPEAKER_JAMES,,,,,,,,,,,Джеймс,
 Worner,TXT_SPEAKER_WORNER,,,,,,,,,,,Уорнэр,
-Bailey Guard,TXT_SPEAKER_BAILEY_GUARD,,,,Vorhof-Wache,Guardia de la Muralla,Guardia Bailey,Garde d'enceinte,,,,Страж крепости,
+Bailey Guard,TXT_SPEAKER_BAILEY_GUARD,,,,Vorhof-Wache,Guardia de la Muralla,Guardia Bailey,Garde d'enceinte,,Guardia del Bastione,,Страж крепости,
 Drone,TXT_SPEAKER_DRONE,,,,Drohne,Dron,Dron,,,,,Дрон,
-Front Guard,TXT_SPEAKER_FRONT_GUARD,,,,Frontwache,Guardia del Frente,Guardia del Frente,Garde du Front,,,,Повстанец,
+Front Guard,TXT_SPEAKER_FRONT_GUARD,,,,Frontwache,Guardia del Frente,Guardia del Frente,Garde du Front,,Guardia del Fronte,,Повстанец,
 Quincy,TXT_SPEAKER_QUINCY,,,,,,,,,,,Куинси,
-Sergeant,TXT_SPEAKER_SERGEANT,,,,Feldwebel,Sargento,Sargento,Sergeant,,,,Сержант,
-Temple Guard,TXT_SPEAKER_TEMPLE_GUARD,,,,Tempelwache,Guardia del Templo,Guardia del Templo,Garde du Temple,,,,Страж храма,
-Oracle,TXT_SPEAKER_ORACLE,,,,Orakel,Oráculo,Oráculo,,,,,Оракул,
+Sergeant,TXT_SPEAKER_SERGEANT,,,,Feldwebel,Sargento,Sargento,Sergeant,,Sergente,,Сержант,
+Temple Guard,TXT_SPEAKER_TEMPLE_GUARD,,,,Tempelwache,Guardia del Templo,Guardia del Templo,Garde du Temple,,Guardia del Tempio,,Страж храма,
+Oracle,TXT_SPEAKER_ORACLE,,,,Orakel,Oráculo,Oráculo,,,Oracolo,,Оракул,
 Ulaine,TXT_SPEAKER_ULAINE,,,,,,,,,,,Улейн,
-Front Soldier,TXT_SPEAKER_FRONT_SOLDIER,,,,Front-Soldat,Soldado del Frente,Soldado del Frente,Soldat du Front,,,,Повстанец,
-Programmer,TXT_SPEAKER_PROGRAMMER,,,,Programmierer,Programador,Programador,Programmeur,,,,Программист,
-Medic,TXT_SPEAKER_MEDIC,,,,Sanitäter,Médico,Médico,Médecin,,,,Медик,
-Watchman,TXT_SPEAKER_WATCHMAN,,,,Wächter,Celador,Celador,Vigie,,,,Караульный,
+Front Soldier,TXT_SPEAKER_FRONT_SOLDIER,,,,Front-Soldat,Soldado del Frente,Soldado del Frente,Soldat du Front,,Soldato del Fronte,,Повстанец,
+Programmer,TXT_SPEAKER_PROGRAMMER,,,,Programmierer,Programador,Programador,Programmeur,,Programmatore,,Программист,
+Medic,TXT_SPEAKER_MEDIC,,,,Sanitäter,Médico,Médico,Médecin,,Medico,,Медик,
+Watchman,TXT_SPEAKER_WATCHMAN,,,,Wächter,Celador,Celador,Vigie,,Vigilante,,Караульный,
 Ketrick,TXT_SPEAKER_KETRICK,,,,,,,,,,,Кетрик,
 Weran,TXT_SPEAKER_WERAN,,,,,,,,,,,Уэран,
-Advisor,TXT_SPEAKER_ADVISOR,,,,Berater,Consejero,Consejero,Conseiller,,,,Советник,
+Advisor,TXT_SPEAKER_ADVISOR,,,,Berater,Consejero,Consejero,Conseiller,,Consigliere,,Советник,
 Geoff,TXT_SPEAKER_GEOFF,,,,,,,,,,,Джефф,
-Overseer,TXT_SPEAKER_OVERSEER,,,,Aufseher,Superintendente,Superintendente,Superviseur,,,,Надсмотрщик,
-Security Complex Guard,TXT_SPEAKER_SECURITY_COMPLE,,,,Wache,Vigía,Vigía,Sécurité,,,,Комплекс охраны,
-Computer Tech,TXT_SPEAKER_COMPUTER_TECH,,,,Computertechniker,Ingeniero Informático,Ingeniero Informático,Technicien Informatique,,,,Компьютерный техник,
+Overseer,TXT_SPEAKER_OVERSEER,,,,Aufseher,Superintendente,Superintendente,Superviseur,,Supervisore,,Надсмотрщик,
+Security Complex Guard,TXT_SPEAKER_SECURITY_COMPLE,,,,Wache,Vigía,Vigía,Sécurité,,Guardia del Complesso di Sicurezza,,Комплекс охраны,
+Computer Tech,TXT_SPEAKER_COMPUTER_TECH,,,,Computertechniker,Ingeniero Informático,Ingeniero Informático,Technicien Informatique,,Tecnico Informatico,,Компьютерный техник,
 MacGuffin,TXT_SPEAKER_MACGUFFIN,,,,,,,,,,,МакГаффин,
 Arion,TXT_SPEAKER_ARION,,,,,,,,,,,Арион,
-Dock Worker,TXT_SPEAKER_DOCK_WORKER,,,,Dockarbeiter,Trabajador del Muelle,Trabajador del Muelle,Docker,,,,Рабочий дока,
+Dock Worker,TXT_SPEAKER_DOCK_WORKER,,,,Dockarbeiter,Trabajador del Muelle,Trabajador del Muelle,Docker,,Operaio Portuale,,Рабочий дока,
 Irale,TXT_SPEAKER_IRALE,,,,,,,,,,,Ирэйл,
-Core Guard,TXT_SPEAKER_CORE_GUARD,,,,Wache,Guardia del Núcleo,Guardia del Núcleo,Garde du cœur,,,,Страж ядра,
-Sewer Guard,TXT_SPEAKER_SEWER_GUARD,,,,Kanalisationswächter,Guardia de la Alcantarilla,Guardia de la Alcantarilla,Garde des égouts,,,,Страж канализации,
-Technician,TXT_SPEAKER_TECHNICIAN,,,,Techniker,Técnico,Técnico,Technicien,,,,Техник,
-Guard,TXT_SPEAKER_GUARD,,,,Wache,Guardia,Guardia,Garde,,,,Стражник,
-Peasant,TXT_SPEAKER_PEASANT,,,,Einwohner,Campesino,Campesino,Paysan,,,,Работник,
-Armorer,TXT_SPEAKER_ARMORER,,,Armourer,Waffenmeister,Armero,Armero,Armurier,,,,Бронник,
+Core Guard,TXT_SPEAKER_CORE_GUARD,,,,Wache,Guardia del Núcleo,Guardia del Núcleo,Garde du cœur,,Guardia del Cuore,,Страж ядра,
+Sewer Guard,TXT_SPEAKER_SEWER_GUARD,,,,Kanalisationswächter,Guardia de la Alcantarilla,Guardia de la Alcantarilla,Garde des égouts,,Guardia della Fogna,,Страж канализации,
+Technician,TXT_SPEAKER_TECHNICIAN,,,,Techniker,Técnico,Técnico,Technicien,,Tecnico,,Техник,
+Guard,TXT_SPEAKER_GUARD,,,,Wache,Guardia,Guardia,Garde,,Guardia,,Стражник,
+Peasant,TXT_SPEAKER_PEASANT,,,,Einwohner,Campesino,Campesino,Paysan,,Contadino,,Работник,
+Armorer,TXT_SPEAKER_ARMORER,,,Armourer,Waffenmeister,Armero,Armero,Armurier,,Armiere,,Бронник,
 Beldin,TXT_SPEAKER_BELDIN,,,,,,,,,,,Белдин,
 Gerard,TXT_SPEAKER_GERARD,,,,,,,,,,,Джерард,
-Governor Mourel,TXT_SPEAKER_GOVERNOR_MOUREL,,,,Gouverneur Mourel,Gobernador Mourel,Gobernador Mourel,Gouverneur Mourel,,,,Губернатор Морел,
+Governor Mourel,TXT_SPEAKER_GOVERNOR_MOUREL,,,,Gouverneur Mourel,Gobernador Mourel,Gobernador Mourel,Gouverneur Mourel,,Governatore Mourel,,Губернатор Морел,
 Bowyer,TXT_SPEAKER_BOWYER,,,,,,,,,,,Лучник,
 Derwin,TXT_SPEAKER_DERWIN,,,,,,,,,,,Дервин,

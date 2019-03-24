@@ -258,6 +258,8 @@ enum EExplodeFlags
 	XF_NOTMISSILE = 4,
 	XF_EXPLICITDAMAGETYPE = 8,
 	XF_NOSPLASH = 16,
+	XF_THRUSTZ = 32,
+
 };
 
 // Flags for A_RadiusThrust
@@ -1338,4 +1340,6 @@ enum ECompatFlags
 	COMPATF2_TELEPORT		= 1 << 5,	// Don't let indirect teleports trigger sector actions
 	COMPATF2_PUSHWINDOW		= 1 << 6,	// Disable the window check in CheckForPushSpecial()
 	COMPATF2_CHECKSWITCHRANGE = 1 << 7,	// Enable buggy CheckSwitchRange behavior
+	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
+	COMPATF2_EXPLODE2		= 1 << 9	// Use original explosion code throughout.
 };

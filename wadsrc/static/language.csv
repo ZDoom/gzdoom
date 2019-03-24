@@ -1543,7 +1543,9 @@ appuyez sur une touche.",,"Non puoi caricare una partita durante una net quest!
 
 Premi un tasto.","impossivel carregar, porque 
 esta em partida online!
-aperte uma tecla.",,
+aperte uma tecla.","Невозможно загрузить сохранение в сетевой игре!
+
+Нажмите любую клавишу.",
 "Quicksave over your quest named
 
 '%s'?
@@ -1560,7 +1562,11 @@ Appuyez sur Y ou N.",,"Sovrascrivere il salvataggio
 
 '%s'?
 
-Premi Y oppure N.",,,
+Premi Y oppure N.",,"Перезаписать быстрое сохранение
+
+«%s»?
+
+Нажмите Y или N.",
 "You can't quickload during a netquest!
 
 Press a key.",QLOADNET,chex,,,"Du kannst während eines Netzwerkspiels nicht schnellladen.
@@ -1572,7 +1578,9 @@ vous êtes en ligne!
 
 appuyez sur une touche.",,"Non puoi fare un quickload durante una netquest!
 
-Premi un tasto.",,,
+Premi un tasto.",,"Невозможно загрузить быстрое сохранение в сетевой игре!
+
+Нажмите любую клавишу.",
 "Do you want to quickload the quest named
 
 '%s'?
@@ -1589,7 +1597,11 @@ Appuyez sur Y ou N.",,"Vuoi fare un quickload della quest
 
 '%s'?
 
-Premi Y oppure N.",,,
+Premi Y oppure N.",,"""Желите брзо учитавање за игру под именом
+
+„%s“?
+
+Притисните Y или N.""",
 "You can't start a new quest
 while in a network quest.
 
@@ -1606,7 +1618,10 @@ durante una network quest.
 Premi un tasto.","impossivel iniciar um novo jogo
 enquanto se esta online.
 
-aperte uma tecla.",,
+aperte uma tecla.","You can't start a new game
+while in a network game.
+
+Press a key.",
 "Careful, this will be tough.
 Do you wish to continue?
 
@@ -1779,7 +1794,7 @@ Go to console,OPTMNU_CONSOLE,,,,Öffne Konsole,Ir a la consola,,Ouvrir la consol
 Reverb environment editor,OPTMNU_REVERB,,,,Hall-Editor,Editor de Amb. de Reverb.,,Editeur environement de révérb.,Visszhang-környezet szerkesztő,Editor ambiente reverb,,Редактор реверберации,Уредник одјека у околини
 Language,OPTMNU_LANGUAGE,,,,Sprache,Idioma,,Langage,Nyelv,Lingua,,Язык,Језик
 Customize Controls,CNTRLMNU_TITLE,,,,Steuerung einstellen,Personalizar Controles ,,Modifier contrôles,Irányítás Testreszabása,Personalizza i controlli,,Настройки управления,Подешавање контрола
-"ENTER to change, BACKSPACE to clear",CNTRLMNU_SWITCHTEXT1,,,,ENTER: Editieren BACKSPACE: Löschen,"ENTER para cambiar, BACKSPACE para limpiar",,"ENTREE pour changer, RET. ARRIERE pour effacer.","ENTER a változtatáshoz, BACKSPACE a törléshez","INVIO per cambiare, BACKSPACE per pulire",,"ENTER — изменить, BACKSPACE — очистить","ENTER за промену, BACKSPACE за чишћење"
+"ENTER to change, BACKSPACE to clear",CNTRLMNU_SWITCHTEXT1,,,,ENTER: Editieren BACKSPACE: Löschen,"ENTER para cambiar, BACKSPACE para limpiar",,"ENTREE pour changer, RET. ARRIERE pour effacer.","ENTER a változtatáshoz, BACKSPACE a törléshez","INVIO per modificare, BACKSPACE per ripulire",,"ENTER — изменить, BACKSPACE — очистить","ENTER за промену, BACKSPACE за чишћење"
 "Press new key for control, ESC to cancel",CNTRLMNU_SWITCHTEXT2,,,,Drücke eine Taste oder ESC um abzubrechen,"Presiona una tecla para el control, ESC para cancelar",,"Appuyez sur la nouvelle touche pour l'assigner,
 Appuyez sur ECHAP pour annuler.","Nyomj meg egy gombot, ESC a törléshez","Premi un nuovo tasto per il controllo, ESC per cancellare",,"Нажмите клавишу управления, ESC для отмены","Притисните ново дугме за одређивање контроле, ESC за отказивање"
 Controls,CNTRLMNU_CONTROLS,,,,Steuerung,Controles,,Contrôles,Irányítás Testreszabása,Controlli,,Управление,Контроле
@@ -1903,7 +1918,7 @@ Gender,PLYRMNU_PLAYERGENDER,,,,Geschlecht,Género,,Genre,Nem,Sesso,,Пол,По�
 Autoaim,PLYRMNU_AUTOAIM,,,,Automatisch zielen,Autoapuntar,,Auto-visée,Auto célzás,Mira automatica,,Автоприцеливание,Аутоматско циљање
 Switch on pickup,PLYRMNU_SWITCHONPICKUP,,,,Beim aufnehmen Waffe selektieren,Cambiar arma al recoger,,Dernière arme,Felvételkor váltás,Cambia arma al momento della raccolta,,Перекл. оружия при подборе,Пребаци на покупљ.
 Always Run,PLYRMNU_ALWAYSRUN,,,,Immer Laufen,Siempre correr,,Toujours courir,Mindig fusson,Corri sempre,,Постоянный бег,Увек трчи
-PRESS \cjSPACE,PLYRMNU_PRESSSPACE,,,,\cjLeertaste,Presiona \cjEspacio,,\cjEspace,,PREMI \cjSPAZIO,,Нажмите \cjSPACE,ПРИТИСНИТЕ \cjSPACE
+PRESS \cjSPACE,PLYRMNU_PRESSSPACE,,,,\cjLeertaste,Presiona \cjEspacio,,\cjEspace,,PREMI \cjSPAZIO,,Нажмите \cjПРОБЕЛ,ПРИТИСНИТЕ \cjSPACE
 TO SEE FRONT,PLYRMNU_SEEFRONT,,,,für Frontansicht,Para ver de Frente,,Pour L'Avant,,PER VEDERE AVANTI,,Повернуть,ДА ВИДИТЕ СПРЕДА
 TO SEE BACK,PLYRMNU_SEEBACK,,"Same as SEEFRONT in Russian. Intentional?
 
@@ -2009,7 +2024,7 @@ Miscellaneous Options,MISCMNU_TITLE,,,,Verschiedene Optionen,Opciones Misceláne
 Merge left+right Alt/Ctrl/Shift,MISCMNU_MERGEKEYS,,,,Linke und rechte Umschalt/Strg/Alt zusammenfassen,Combinar izq.+der. Alt/Ctrl/Mayús,,Combiner Alt/Ctrl/maj gauche & droite,,Unisci sinistra+destra Alt/Control/Maiusc,,Не разделять левый/правый ALT/CTRL/SHIFT,
 Alt-Enter toggles fullscreen,MISCMNU_WINFULLSCREENTOGGLE,,,,Alt-Enter schaltet Vollbild an/aus,Alt+Enter alterna pantalla completa,,Alt-Entrée alterne plein écran,,Alt-Invio attiva/disattiva lo schermo pieno,,Переключение полного экрана по ALT+ENTER,
 Command-F toggles fullscreen,MISCMNU_MACFULLSCREENTOGGLE,,,,Cmd-F schaltet Vollbild an/aus,Cmd-F alterna pantalla completa,,Command-F alterne plein écran,,Command-F attiva/disattiva lo schermo pieno,,Переключение полного экрана по Command+F,
-Show IWAD selection dialog,MISCMNU_QUERYIWAD,,,,Zeige IWAD-Auswahl,Mostrar diálogo de selección de IWAD,,Afficher la séléction d'IWAD,,Mostra la schermata della selezione IWAD,,Выбор IWAD при запуске,
+Show IWAD selection dialog,MISCMNU_QUERYIWAD,,,,Zeige IWAD-Auswahl,Mostrar diálogo de selección de IWAD,,Afficher la séléction d'IWAD,,Mostra la schermata della selezione IWAD,,Выбор IWAD-файла при запуске,
 Enable cheats from all games,MISCMNU_ALLCHEATS,,,,Ermögliche Cheats aus allen Spielen,Activar trucos de todos los juegos,,Activer cheats de tous les jeux,,Abilita tutti i cheat da tutti i giochi,,Читы из всех игр,
 Enable autosaves,MISCMNU_ENABLEAUTOSAVES,,,,Automatisches Speichern,Activar autoguardado,,Activer Sauvegardes auto,,Abilita i salvataggi automatici,,Автосохранения,
 Number of autosaves,MISCMNU_AUTOSAVECOUNT,,,,Anzahl von automatischen Speicherständen,Número de autoguardados,,Total de sauvegardes auto,,Numero di salvataggi automatici,,Количество автосохранений,
@@ -2056,7 +2071,7 @@ Toggle zoom,MAPCNTRLMNU_TOGGLEZOOM,,,,Zoom an/aus,Alternar zoom,,Alterner zoom,,
 Toggle follow,MAPCNTRLMNU_TOGGLEFOLLOW,,,,Folgen an/aus,Alternar seguimiento,,Alterner suivi,,Abilita/disabilita scorrimento mappa,,Переключить слежение,
 Toggle grid,MAPCNTRLMNU_TOGGLEGRID,,,,Gitter an/aus,Alternar cuadrícula,Alternar rejilla,Alterner grille,,Abilita/disabilita la griglia,,Переключить сетку,
 Toggle texture,MAPCNTRLMNU_TOGGLETEXTURE,,,,Texturen an/aus,Alternar textura,,Alterner texture,,Abilita/disabilita le texture,,Переключить текстуры,
-Set mark,MAPCNTRLMNU_SETMARK,,,,Setze Markierung,Fijar marca,,Placer repère,,Segna il posto,,Поставить отметку,
+Set mark,MAPCNTRLMNU_SETMARK,,,,Setze Markierung,Fijar marca,,Placer repère,,Aggiungi segnaposto,,Поставить отметку,
 Clear mark,MAPCNTRLMNU_CLEARMARK,,,,Lösche Markierung,Limpiar marca,,Enlever repères,,Pulisci il segnaposto,,Убрать отметку,
 Customize Map Colors,MAPCOLORMNU_TITLE,,,Customize Map Colours,Automapfarben einstellen,Personalizar colores (mapa),,Couleurs Carte Personnalisées,,Personalizza i colori della mappa,,Настройки цветов автокарты,
 Restore default custom colors,MAPCOLORMNU_DEFAULTMAPCOLORS,,,Restore default custom colours,Standardfarben wiederherstellen,Restaurar colores personalizados,,Couleurs par défaut,,Reimposta i colori personalizzati al default,,Вернуть стандартные цвета,
@@ -2065,7 +2080,7 @@ You,MAPCOLORMNU_YOURCOLOR,,,,Du,Tú,,Votre couleur,,Tu,,Игрок,
 1-sided walls,MAPCOLORMNU_WALLCOLOR,,,,Einseitige Wände,Paredes de 1 lado,,Murs à 1 côté,,Muri unilaterali,,Односторонние стены,
 2-sided walls with different floors,MAPCOLORMNU_FDWALLCOLOR,,,,Zweiseitige Wände mit unterschiedlicher Bodenhöhe,Paredes de 2 lados con pisos distintos,,Murs à 2 côtés avec différents sols,,Muri bilaterali con pavimenti diversi,,Двусторонние стены,
 2-sided walls with different ceilings,MAPCOLORMNU_CDWALLCOLOR,,,,Zweiseitige Wände mit unterschiedlicher Deckenhöhe,Paredes de 2 lados con techos distintos,,Murs à 2 côtés avec différents plafonds,,Muri bilaterali con soffitti diversi,,Двусторонние стены с разными потолками,
-2-sided walls with 3D floors,MAPCOLORMNU_EFWALLCOLOR,,,,Zweiseitige Wände mit 3D-Ebenen,Paredes de 2 lados con suelos 3D,,Murs à 2 côtés avec sols 3d,,Muri bilaterali con floor 3D,,Двусторонние стены с разными полами,
+2-sided walls with 3D floors,MAPCOLORMNU_EFWALLCOLOR,,,,Zweiseitige Wände mit 3D-Ebenen,Paredes de 2 lados con suelos 3D,,Murs à 2 côtés avec sols 3d,,Muri bilaterali con 3D floor,,Двусторонние стены с разными полами,
 Map grid,MAPCOLORMNU_GRIDCOLOR,,,,Kartengitter,Cuadrícula del mapa,Rejilla del mapa,Quadrillage,,Griglia mappa,,Цвет сетки,
 Center point,MAPCOLORMNU_XHAIRCOLOR,,,Centre point,Mittelpunkt,Punto central,,Point Central,,Punto centrale,,Курсор,
 Not-yet-seen walls,MAPCOLORMNU_NOTSEENCOLOR,,,,Ungesehene Wände,Paredes sin ver,,Murs non découvers,,Muri ancora da scoprire,,Необнаруженные стены,
@@ -2333,8 +2348,8 @@ Axis Configuration,JOYMNU_AXIS,,,,Achsenkonfiguration,Configuración del eje,,Co
 Invert,JOYMNU_INVERT,,,,Invertieren,Invertir,,Inverser,,Inverti,,Инвертировать,
 Dead zone,JOYMNU_DEADZONE,,,,Totzone,Zona muerta,,Zone neutre,,Zona cieca,,Мёртвая зона,
 No configurable axes,JOYMNU_NOAXES,,,,Keine konfigurierbaren Achsen,No hay ejes configurables,,Aucun axe à configurer,,Nessun asse configurabile,,Нет настраиваемых осей,
-Off,OPTVAL_OFF,,,,Aus,Desactivado,,,,Spento,,Откл.,
-On,OPTVAL_ON,,,,An,Activado,,,,Acceso,,Вкл.,
+Off,OPTVAL_OFF,,,,Aus,Desactivado,,,,Disattivo,,Откл.,
+On,OPTVAL_ON,,,,An,Activado,,,,Attivo,,Вкл.,
 Auto,OPTVAL_AUTO,,,,,,,,,Automatico,,Авто,
 Male,OPTVAL_MALE,,,,Männlich,Masculino,,Masculin,,Maschio,,Мужской,
 Female,OPTVAL_FEMALE,,,,Weiblich,Femenino,,Féminin,,Femmina,,Женский,
@@ -2358,8 +2373,8 @@ Optimized,OPTVAL_OPTIMIZED,,,,Optimiert,Optimizado,,Optimisé,,Ottimizzato,,Оп
 Classic (Faster),OPTVAL_CLASSIC,,,,Klassisch (schneller),Clásico (Más rápido),,Classique (+ Rapide),,Classico (più veloce),,Классический (Быстрее),
 Precise,OPTVAL_PRECISE,,,,Genau,Preciso,,Précis,,Preciso,,Точный,
 Normal,OPTVAL_NORMAL,,,,,,,,,Normale,,Обычный,
-Stretch,OPTVAL_STRETCH,,,,Strecken,Estrechado,Estrecho,Etirer,,,,Растянутый,
-Capped,OPTVAL_CAPPED,,,,Limitiert,Limitado,,Limité,,,,Ограниченный,
+Stretch,OPTVAL_STRETCH,,,,Strecken,Estrechado,Estrecho,Etirer,,Disteso,,Растянутый,
+Capped,OPTVAL_CAPPED,,,,Limitiert,Limitado,,Limité,,Limitato,,Ограниченный,
 Particles,OPTVAL_PARTICLES,,,,Partikel,Partículas,,Particules,,Particelle,,Частицы,
 Sprites,OPTVAL_SPRITES,,,,Sprites,,,,,Sprite,,Спрайты,
 Sprites & Particles,OPTVAL_SPRITESPARTICLES,,,,Sprites und Partikel,Sprites y partículas,,Sprites & Particules,,Sprite e particelle,,Спрайты и частицы,
@@ -2484,7 +2499,7 @@ Errors,OPTVAL_ERRORS,,,,Fehler,Errores,,Erreurs,,Errori,,Ошибки,
 Warnings,OPTVAL_WARNINGS,,,,Warnungen,Advertencias,,Avertissements,,Avvisi,,Предупреждения,
 Notifications,OPTVAL_NOTIFICATIONS,,,,Benachrichtigungen,Notificaciones,,,,Notifiche,,Уведомления,
 Everything,OPTVAL_EVERYTHING,,,,Alles,Todo,,Tout,,Tutti,,Все,
-OpenGL-Accelerated,OPTVAL_HWPOLY,,,,OpenGL hardwarebeschleunigt,Acelerado por OpenGL,,Accéléré par OpenGL,,Accelerazione OpenGL,,Аппаратный (OpenGL),
+Hardware accelerated,OPTVAL_HWPOLY,,,,Hardwarebeschleunigt,Acelerado por Hardware,,Accéléré par Hardware,,Accelerazione Hardware,,Аппаратный,
 Doom Software Renderer,OPTVAL_SWDOOM,,,,,Renderizado por Software de Doom,,Rendu Software Doom,,Motore grafico Doom software,,Программный,
 True Color SW Renderer,OPTVAL_SWDOOMTC,,,,,Renderizado SW Color Verdadero,Renderizado SW True Color,Rendu Software Couleurs Réeles,,Motore grafico software a pieni colori,,Полноцветный програмный,
 Softpoly Renderer,OPTVAL_SWPOLY,,,,,Renderizado Softpoly,,Rendu Softpoly,,Motore grafico Softpoly,,Полирендер,
@@ -2544,12 +2559,12 @@ Quad,OPTSTR_QUAD,,,,,,,,,,,Четырёхместный,
 No interpolation,OPTSTR_NOINTERPOLATION,,,,Keine Interpolation,Sin interpolación,,Pas d'interpolation,,No interpolazione,,Без интерполяции,
 Spline,OPTSTR_SPLINE,,,,,,,,,,,Сплайн,
 OpenAL,OPTSTR_OPENAL,,,,,,,,,,,,
-OpenGL Renderer,DSPLYMNU_GLOPT,,,,,Renderizado OpenGL,,Moteur de Rendu OpenGL,,Motore grafico OpenGL,,Рендерер OpenGL,
+Hardware Renderer,DSPLYMNU_GLOPT,,,,,Renderizado por Hardware,,Moteur de Rendu Hardware,,Motore grafico Hardware,,Рендерер OpenGL,
 Software Renderer,DSPLYMNU_SWOPT,,,,,Renderizado por Software,,Moteur de Rendu Software,,Motore grafico Software,,Программный рендерер,
 Gamma correction,DSPLYMNU_GAMMA,,,,Gammakorrektur,Corrección gamma,,Correction Gamma,,Correzione gamma,,Гамма-коррекция,
 Contrast,DSPLYMNU_CONTRAST,,,,Kontrast,Contraste,,Contraste,,Contrasto,,Контраст,
 Saturation,DSPLYMNU_SATURATION,,,,Sättigung,Saturación,,,,Saturazione,,Насыщенность,
-OpenGL Options,GLMNU_TITLE,,,,OpenGL Optionen,Opciones de OpenGL,,Options OpenGL,,Opzioni OpenGL,,Настройки OpenGL,
+Hardware Rendering Options,GLMNU_TITLE,,,,Hardware-Renderer Optionen,Opciones de OpenGL,,Options OpenGL,,Opzioni OpenGL,,Настройки OpenGL,
 Dynamic Light Options,GLMNU_DYNLIGHT,,,,Dynamisches-Licht-Optionen,Opc. de luz dinámica,,Options Lumières Dynamiques,,Opzioni Luci Dinamiche,,Динамическое освещение,
 Texture Options,GLMNU_TEXOPT,,,,Texturoptionen,Opc. de texturas,,Options Textures,,Opzioni Texture,,Настройки текстур,
 Preferences,GLMNU_PREFS,,,,Einstellungen,Preferencias,,Préférences,,Preferenze,,Предпочтения,
@@ -2569,14 +2584,14 @@ Precache GL textures,GLTEXMNU_PRECACHETEX,,,,GL Texturen zwischenspeichern,Preca
 Trim sprite edges,GLTEXMNU_TRIMSPREDGE,,,,Leerraum in Sprites wegschneiden,Recortar líneas de sprite,,Nettoyer le bord des sprites,,Taglia gli spigoli agli sprite,,Обрезание краёв спрайтов,
 Sort draw lists by texture,GLTEXMNU_SORTDRAWLIST,,,,Renderlisten nach Textur sortieren,Ordenar tablas por textura,,Ordonner liste de rendu par texture,,Ordina la lista draw per texture,,Сортировать списки текстур,
 Dynamic Lights,GLLIGHTMNU_TITLE,,,,Dynamische Lichter,Luces dinámicas,,Lumières Dynamiques,,Luci Dinamiche,,Динамическое освещение,
-Dynamic Lights (OpenGL),GLLIGHTMNU_LIGHTSENABLED,,,,Dynamische Lichter (OpenGL),Luces dinámicas (OpenGL),,Lumières Dynamiques (OpenGL),,Luci Dinamiche (OpenGL),,Динамическое освещение (OpenGL),
-Enable light definitions,GLLIGHTMNU_LIGHTDEFS,,,,Lichtdefinitionen an,Activar definiciones de luz,,Activer les définitions GLDEFS,,Abilita le definizioni GLDEFS,,Включить определения света,
+Dynamic Lights (Hardware),GLLIGHTMNU_LIGHTSENABLED,,,,Dynamische Lichter (Hardware),Luces dinámicas (Hardware),,Lumières Dynamiques (Hardware),,Luci Dinamiche (Hardware),,Динамическое освещение (OpenGL),
+Enable light definitions,GLLIGHTMNU_LIGHTDEFS,,,Activer les définitions GLDEFS,Lichtdefinitionen an,Activar definiciones de luz,,,,Abilita le definizioni GLDEFS,,Включить определения света,
 Lights affect sprites,GLLIGHTMNU_LIGHTSPRITES,,,,Sprites werden beleuchtet,Las luces afectan a los sprites,,Lumières affectent les sprites,,Le luci influiscono sugli sprite,,Освещение спрайтов,
 Lights affect particles,GLLIGHTMNU_LIGHTPARTICLES,,,,Partikel werden beleuchtet,Las luces afectan a las partículas,,Lumières affectent les particules,,Le luci influiscono sulle particelle,,Освещение частиц,
 Light shadowmaps,GLLIGHTMNU_LIGHTSHADOWMAP,,,,Shadowmaps für Lichter,Mapeo de sombra de Luz,,Shadowmaps,,Mappe shadow,,Свет на теневых картах,
 Shadowmap quality,GLLIGHTMNU_LIGHTSHADOWMAPQUALITY,,,,Shadowmap Qualität,Calidad de Mapeo de Sombrad,,Qualité Shadowmap,,Qualità mappe shadow,,Качество теневых карт,
 Shadowmap filter,GLLIGHTMNU_LIGHTSHADOWMAPFILTER,,,,Shadowmap Filter,Filtro de Mapeo de Sombras,,Filtre de Shadowmaps,,Filtro mappe shadow,,Фильтр теневых карт,
-OpenGL Preferences,GLPREFMNU_TITLE,,,,OpenGL Einstellungen,Preferencias de OpenGL,,Préférences OpenGL,,Preferenze OpenGL,,Настройки OpenGL,
+Hardware Rendering Options,GLPREFMNU_TITLE,,UNUSED!,,,,,,,,,,
 Sector light mode,GLPREFMNU_SECLIGHTMODE,,,,Sektorlichtmodus,Modo de luz de sector,,Mode de lumière Secteur,,Modalità luce di settore,,Режим освещения секторов,
 Fog mode,GLPREFMNU_FOGMODE,,,,Nebelmodus,Modo de niebla,,Mode du broullard,,Modalità nebbia,,Режим тумана,
 Fog forces fullbright,GLPREFMNU_FOGFORCEFULLBRIGHT,,,,Nebel erzwingt volle Helligkeit,Forzar brillo completo en niebla,,Brouillard force fullbright,,La nebbia forza piena luce,,Туман увеличивает яркость,
@@ -2694,7 +2709,7 @@ Linear filter when downscaling,TCMNU_MINFILTER,,,,Linearer Filter beim Herunters
 Linear filter when upscaling,TCMNU_MAGFILTER,,,,Linearer Filter beim Hochskalieren,Filtro lineal por escalado,,Filtrage linéaire en agrandissement,,Filtro lineare per l'aumento,,Линейная фильтрация при увеличении,
 Use mipmapped textures,TCMNU_MIPMAP,,,,Benutze Textur-Mipmaps,Usar texturas con mipmap,,Utiliser textures mipmappées,,Usa le texture mipmapped,,Мип-маппинг для текстур,
 Dynamic lights (Software),TCMNU_DYNLIGHTS,,,,Dynamisches Licht (Software),Luces dinámicas (Software),,Lumières Dynamiques (Software),,Luci Dinamiche (Software),,Динамическое освещение (Программное),
-Option Search,OS_TITLE,,,,Optionssuche,Buscar Opciones,,Recherche Option,,Opzioni di ricerca,,,
+Option Search,OS_TITLE,,,,Optionssuche,Buscar Opciones,,Recherche Option,,Opzioni di ricerca,,Поиск настройки:,
 Search for any term,OS_ANY,,,,Suche nach beliebigem Begriff,Buscar cualquier término,,N'importe quel mot,,Cerca per ciascun termine,,Искать любое из слов,
 Search for all terms,OS_ALL,,,,Suche nach allen Begriffen,Buscar todos los términos,,Tous les mots,,Cerca per tutti i termini,,Искать все слова,
 No results found.,OS_NO_RESULTS,,,,Keine Resultate,Ningun resultado.,,Pas de résultat trouvé,,Nessun risultato trovato.,,,
@@ -2751,4 +2766,9 @@ High Dynamic Range,VKMNU_HDR,,,,,Alto Rango Dinámico,,,,,,,
 Warning: The Vulkan renderer is highly experimental!,VK_WARNING,,,,Achtung: Der Vulkan Renderer ist noch sehr experimentell!,Advertencia: ¡El renderizado por Vulkan es altamente experimental!,,Attention: Le moteur de rendu Vulkan est très expérimental!,,Attenzione: il motore grafico Vulkan è altamente sperimentale!,,,
 These options will require a restart to take effect.,VK_RESTART,,,,Diese Option erfordert einen Neustart!,Estas opciones requieren reiniciar para tener efecto.,,Ces options nécessitent un redémarrage.,,Queste opzioni richiedono il riavvio per avere effetto.,,,
 Select Vulkan Device,VKMNU_DEVICESELECT,,This is not yet implemented - but it is planned,,Vulkan Gerät auswählen,Seleccionar Dispositivo Vulkan,,Sélectionner périphérique Vulkan,,Seleziona il Dispositivo Vulkan,,,
-Press any key or click anywhere in the window to quit.,TXT_QUITENDOOM,,,,Drücke eine Taste oder klicke mit der Maus ins Fenster zum Beenden.,Presiona una tecla o haz click en cualquier lugar de la ventana para salir.,Presiona una tecla o da click en cualquier lugar de la ventana para salir.,Appuyez sur une touche ou cliquez pour quitter.,,,,,
+Press any key or click anywhere in the window to quit.,TXT_QUITENDOOM,,,,Drücke eine Taste oder klicke mit der Maus ins Fenster zum Beenden.,Presiona una tecla o haz click en cualquier lugar de la ventana para salir.,Presiona una tecla o da click en cualquier lugar de la ventana para salir.,Appuyez sur une touche ou cliquez pour quitter.,,Premi un qualunque tasto o fai un click ovunque nella finestra per uscire.,,,
+No vertical thrust from explosions,CMPTMNU_EXPLODE1,,,,Keine vertikale Bewegung durch Explosionen,,,,,Nessuna spinta verticale dalle esplosioni,,,
+Use original Doom explosion behavior,CMPTMNU_EXPLODE2,,,Use original Doom explosion behaviour,Benutze Original Doom Explosionsverhalten,,,,,Usa l'originale comportamento dell'esplosione di Doom,,,
+Screen Blend Options,HUDMNU_FLASH,,,,Überblendoptionen,,,,,,,,
+Postprocessing,GLMNU_POSTPROCESS,,,,,,,,,,,,
+3D mode,GLMNU_3DMODE,,,,3D Modus,Modo 3D,,Mode 3D,,Modalità 3D,,,

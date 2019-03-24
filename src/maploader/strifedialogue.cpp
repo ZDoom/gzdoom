@@ -157,7 +157,6 @@ bool MapLoader::LoadScriptFile (const char *name, bool include, int type)
 	auto fn = Wads.GetLumpFile(lumpnum);
 	auto wadname = Wads.GetWadName(fn);
 	if (stricmp(wadname, "STRIFE0.WAD") && stricmp(wadname, "STRIFE1.WAD") && stricmp(wadname, "SVE.WAD")) name = nullptr;	// Only localize IWAD content.
-	if (name && !stricmp(name, "SCRIPT00")) name = nullptr;	// This only contains random string references which already use the string table.
 
 	bool res = LoadScriptFile(name, lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
 	return res;
@@ -285,7 +284,7 @@ FStrifeDialogueNode *MapLoader::ReadRetailNode (const char *name, FileReader &lu
 
 	// Convert the rest of the data to our own internal format.
 
-	if (name)
+	if (name && strncmp(speech.Dialogue, "RANDOM_", 7))
 	{
 		FStringf label("$TXT_DLG_%s_d%d_%s", name, int(pos), TokenFromString(speech.Dialogue).GetChars());
 		node->Dialogue = GStrings.exists(label.GetChars()+1)? label : FString(speech.Dialogue);
@@ -381,7 +380,7 @@ FStrifeDialogueNode *MapLoader::ReadTeaserNode (const char *name, FileReader &lu
 	}
 
 	// Convert the rest of the data to our own internal format.
-	if (name)
+	if (name && strncmp(speech.Dialogue, "RANDOM_", 7))
 	{
 		FStringf label("$TXT_DLG_%s_d%d_%s", name, pos, TokenFromString(speech.Dialogue).GetChars());
 		node->Dialogue = GStrings.exists(label.GetChars() + 1)? label : FString(speech.Dialogue);
@@ -407,7 +406,7 @@ FStrifeDialogueNode *MapLoader::ReadTeaserNode (const char *name, FileReader &lu
 
 	// The speaker's name, if any.
 	speech.Dialogue[0] = 0; 	//speech.Name[16] = 0;
-	if (name && speech.Name[0])
+	if ((name && speech.Name[0]))
 	{
 		FString label = speech.Name;
 		label.ReplaceChars(' ', '_');

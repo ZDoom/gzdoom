@@ -596,6 +596,7 @@ extend class Actor
 		int pflags = 0;
 		if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
 		if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
+		if (flags & XF_THRUSTZ)	pflags |= RADF_THRUSTZ;
 
 		int count = RadiusAttack (target, damage, distance, damagetype, pflags, fulldamagedistance);
 		if (!(flags & XF_NOSPLASH)) CheckSplash(distance);

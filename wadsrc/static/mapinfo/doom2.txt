@@ -10,7 +10,7 @@ episode map01
 
 episode level01
 {
-	name = "$TXT_D1E2"
+	name = "$TXT_D2E2"
 	key = "n"
 	optional
 }

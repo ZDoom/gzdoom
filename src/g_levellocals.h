@@ -141,6 +141,11 @@ struct FLevelLocals
 	int FindNode (const FStrifeDialogueNode *node);
     int GetInfighting();
 	void SetCompatLineOnSide(bool state);
+	int GetCompatibility(int mask);
+	int GetCompatibility2(int mask);
+	void ApplyCompatibility();
+	void ApplyCompatibility2();
+
 	void Init();
 
 private:

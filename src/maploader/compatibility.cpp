@@ -165,6 +165,8 @@ static FCompatOption Options[] =
 	{ "teleport",				COMPATF2_TELEPORT, SLOT_COMPAT2 },
 	{ "disablepushwindowcheck",	COMPATF2_PUSHWINDOW, SLOT_COMPAT2 },
 	{ "checkswitchrange",		COMPATF2_CHECKSWITCHRANGE, SLOT_COMPAT2 },
+	{ "explode1",				COMPATF2_EXPLODE1, SLOT_COMPAT2 },
+	{ "explode2",				COMPATF2_EXPLODE2, SLOT_COMPAT2 },
 	{ NULL, 0, 0 }
 };
 

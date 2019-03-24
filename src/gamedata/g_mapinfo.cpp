@@ -1642,6 +1642,8 @@ MapFlagHandlers[] =
 	{ "compat_teleport",				MITYPE_COMPATFLAG, 0, COMPATF2_TELEPORT },
 	{ "compat_pushwindow",				MITYPE_COMPATFLAG, 0, COMPATF2_PUSHWINDOW },
 	{ "compat_checkswitchrange",		MITYPE_COMPATFLAG, 0, COMPATF2_CHECKSWITCHRANGE },
+	{ "compat_explode1",				MITYPE_COMPATFLAG, 0, COMPATF2_EXPLODE1 },
+	{ "compat_explode2",				MITYPE_COMPATFLAG, 0, COMPATF2_EXPLODE2 },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },

@@ -1543,7 +1543,9 @@ appuyez sur une touche.",,"Non puoi caricare una partita durante una net quest!
 
 Premi un tasto.","impossivel carregar, porque 
 esta em partida online!
-aperte uma tecla.",,
+aperte uma tecla.","Невозможно загрузить сохранение в сетевой игре!
+
+Нажмите любую клавишу.",
 "Quicksave over your quest named
 
 '%s'?
@@ -1560,7 +1562,11 @@ Appuyez sur Y ou N.",,"Sovrascrivere il salvataggio
 
 '%s'?
 
-Premi Y oppure N.",,,
+Premi Y oppure N.",,"Перезаписать быстрое сохранение
+
+«%s»?
+
+Нажмите Y или N.",
 "You can't quickload during a netquest!
 
 Press a key.",QLOADNET,chex,,,"Du kannst während eines Netzwerkspiels nicht schnellladen.
@@ -1572,7 +1578,9 @@ vous êtes en ligne!
 
 appuyez sur une touche.",,"Non puoi fare un quickload durante una netquest!
 
-Premi un tasto.",,,
+Premi un tasto.",,"Невозможно загрузить быстрое сохранение в сетевой игре!
+
+Нажмите любую клавишу.",
 "Do you want to quickload the quest named
 
 '%s'?
@@ -1589,7 +1597,11 @@ Appuyez sur Y ou N.",,"Vuoi fare un quickload della quest
 
 '%s'?
 
-Premi Y oppure N.",,,
+Premi Y oppure N.",,"""Желите брзо учитавање за игру под именом
+
+„%s“?
+
+Притисните Y или N.""",
 "You can't start a new quest
 while in a network quest.
 
@@ -1606,7 +1618,10 @@ durante una network quest.
 Premi un tasto.","impossivel iniciar um novo jogo
 enquanto se esta online.
 
-aperte uma tecla.",,
+aperte uma tecla.","You can't start a new game
+while in a network game.
+
+Press a key.",
 "Careful, this will be tough.
 Do you wish to continue?
 
@@ -2752,3 +2767,5 @@ Warning: The Vulkan renderer is highly experimental!,VK_WARNING,,,,Achtung: Der 
 These options will require a restart to take effect.,VK_RESTART,,,,Diese Option erfordert einen Neustart!,Estas opciones requieren reiniciar para tener efecto.,,Ces options nécessitent un redémarrage.,,Queste opzioni richiedono il riavvio per avere effetto.,,,
 Select Vulkan Device,VKMNU_DEVICESELECT,,This is not yet implemented - but it is planned,,Vulkan Gerät auswählen,Seleccionar Dispositivo Vulkan,,Sélectionner périphérique Vulkan,,Seleziona il Dispositivo Vulkan,,,
 Press any key or click anywhere in the window to quit.,TXT_QUITENDOOM,,,,Drücke eine Taste oder klicke mit der Maus ins Fenster zum Beenden.,Presiona una tecla o haz click en cualquier lugar de la ventana para salir.,Presiona una tecla o da click en cualquier lugar de la ventana para salir.,Appuyez sur une touche ou cliquez pour quitter.,,,,,
+No vertical thrust from explosions,CMPTMNU_EXPLODE1,,,,Keine vertikale Bewegung durch Explosionen,,,,,,,,
+Use original Doom explosion behavior,CMPTMNU_EXPLODE2,,,Use original Doom explosion behaviour,Benutze Original Doom Explosionsverhalten,,,,,,,,

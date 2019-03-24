@@ -95,6 +95,7 @@ EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Int,  vid_backend)
+EXTERN_CVAR(Bool, vk_debug)
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -366,6 +367,12 @@ public:
 			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
 
 			[ms_window setContentView:vulkanView];
+
+			if (!vk_debug)
+			{
+				// Limit MoltenVK logging to errors only
+				setenv("MVK_CONFIG_LOG_LEVEL", "1", 0);
+			}
 
 			if (!vid_autoswitch)
 			{

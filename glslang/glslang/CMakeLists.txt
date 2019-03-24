@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 
+make_release_only()
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
+
 if(WIN32)
     add_subdirectory(OSDependent/Windows)
 elseif(UNIX)

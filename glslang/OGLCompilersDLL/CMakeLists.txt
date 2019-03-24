@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 
+make_release_only()
+set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
+
 # Request C++11
 if(${CMAKE_VERSION} VERSION_LESS 3.1)
     # CMake versions before 3.1 do not understand CMAKE_CXX_STANDARD

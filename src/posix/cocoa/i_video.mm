@@ -367,6 +367,12 @@ public:
 
 			[ms_window setContentView:vulkanView];
 
+			if (!vid_autoswitch)
+			{
+				// CVAR from pre-Vulkan era has a priority over vk_device selection
+				setenv("MVK_CONFIG_FORCE_LOW_POWER_GPU", "1", 0);
+			}
+
 			try
 			{
 				m_vulkanDevice = new VulkanDevice();

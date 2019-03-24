@@ -120,23 +120,45 @@ void VulkanDevice::SelectPhysicalDevice()
 		VulkanCompatibleDevice dev;
 		dev.device = &AvailableDevices[idx];
 
-		int i = 0;
-		for (const auto& queueFamily : info.QueueFamilies)
+		// Figure out what can present
+		for (int i = 0; i < (int)info.QueueFamilies.size(); i++)
 		{
-			// Only accept a decent GPU for now..
+			VkBool32 presentSupport = false;
+			VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(info.Device, i, surface, &presentSupport);
+			if (result == VK_SUCCESS && info.QueueFamilies[i].queueCount > 0 && presentSupport)
+			{
+				dev.presentFamily = i;
+				break;
+			}
+		}
+
+		// Look for family that can do both graphics and transfer
+		for (int i = 0; i < (int)info.QueueFamilies.size(); i++)
+		{
+			const auto &queueFamily = info.QueueFamilies[i];
 			VkQueueFlags gpuFlags = (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT);
 			if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & gpuFlags) == gpuFlags)
 			{
 				dev.graphicsFamily = i;
 				dev.transferFamily = i;
+				break;
 			}
+		}
 
-			VkBool32 presentSupport = false;
-			VkResult result = vkGetPhysicalDeviceSurfaceSupportKHR(info.Device, i, surface, &presentSupport);
-			if (result == VK_SUCCESS && queueFamily.queueCount > 0 && presentSupport)
-				dev.presentFamily = i;
-
-			i++;
+		// OK we didn't find any. Look for any match now.
+		if (dev.graphicsFamily == -1)
+		{
+			for (int i = 0; i < (int)info.QueueFamilies.size(); i++)
+			{
+				const auto &queueFamily = info.QueueFamilies[i];
+				if (queueFamily.queueCount > 0)
+				{
+					if (dev.graphicsFamily == -1 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
+						dev.graphicsFamily = i;
+					if (dev.transferFamily == -1 && (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT))
+						dev.transferFamily = i;
+				}
+			}
 		}
 
 		std::set<std::string> requiredExtensionSearch(EnabledDeviceExtensions.begin(), EnabledDeviceExtensions.end());

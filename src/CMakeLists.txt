@@ -460,7 +460,10 @@ add_custom_target( revision_check ALL
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" "glslang" "SPIRV" "OGLCompiler" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" )
+if (HAVE_VULKAN)
+	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
+endif()
 include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
 
 if( ${HAVE_VM_JIT} )
@@ -504,8 +507,12 @@ set( PLAT_WIN32_SOURCES
 	win32/gl_sysfb.cpp
 	win32/base_sysfb.cpp
 	win32/win32basevideo.cpp
-	win32/win32glvideo.cpp
-	win32/win32vulkanvideo.cpp )
+	win32/win32glvideo.cpp)
+	
+if (HAVE_VULKAN)
+	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} win32/win32vulkanvideo.cpp )
+endif()
+	
 set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
 	posix/i_steam.cpp )
@@ -892,9 +899,10 @@ set( FASTMATH_SOURCES
 	sound/opnmidi/opnmidi_midiplay.cpp
 	sound/opnmidi/opnmidi_opn2.cpp
 	sound/opnmidi/opnmidi_private.cpp
-	sound/opnmidi/wopn/wopn_file.c
-
-	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+	sound/opnmidi/wopn/wopn_file.c)
+	
+#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+set (VULKAN_SOURCES
 	rendering/vulkan/system/vk_device.cpp
 	rendering/vulkan/system/vk_swapchain.cpp
 	rendering/vulkan/system/vk_builders.cpp
@@ -910,6 +918,10 @@ set( FASTMATH_SOURCES
 	rendering/vulkan/thirdparty/volk/volk.c
 	rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp
 )
+
+if (HAVE_VULKAN)
+	set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${VULKAN_SOURCES})
+endif()
 
 set (PCH_SOURCES
 	am_map.cpp

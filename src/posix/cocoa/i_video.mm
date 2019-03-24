@@ -33,8 +33,10 @@
 
 #include "gl_load/gl_load.h"
 
+#ifdef HAVE_VULKAN
 #define VK_USE_PLATFORM_MACOS_MVK
 #include "volk/volk.h"
+#endif
 
 #include "i_common.h"
 
@@ -811,6 +813,7 @@ void I_SetWindowTitle(const char* title)
 }
 
 
+#ifdef HAVE_VULKAN
 void I_GetVulkanDrawableSize(int *width, int *height)
 {
 	NSWindow* const window = CocoaVideo::GetWindow();
@@ -872,3 +875,4 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 	const VkResult result = vkCreateMacOSSurfaceMVK(instance, &windowCreateInfo, nullptr, surface);
 	return result == VK_SUCCESS;
 }
+#endif

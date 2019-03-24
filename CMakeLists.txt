@@ -155,6 +155,7 @@ target_architecture(ZDOOM_TARGET_ARCH)
 
 if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
 	set( HAVE_VM_JIT ON )
+	set( HAVE_VULKAN ON )
 endif()
 
 # no, we're not using external asmjit for now, we made too many modifications to our's.
@@ -180,7 +181,11 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
-	set( ALL_C_FLAGS "/GF /Gy /GR-" )
+	if ( HAVE_VULKAN )
+		set( ALL_C_FLAGS "/GF /Gy /GR- /DHAVE_VULKAN" )
+	else()
+		set( ALL_C_FLAGS "/GF /Gy /GR-" )
+	endif()
 
 	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall
 	#set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2") # This is already the default
@@ -229,7 +234,12 @@ if( MSVC )
 	string(REPLACE " /GR" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 else()
 	set( REL_LINKER_FLAGS "" )
-	set( ALL_C_FLAGS "-ffp-contract=off" )
+	if ( HAVE_VULKAN )
+		set( ALL_C_FLAGS "-ffp-contract=off -DHAVE_VULKAN" )
+	else()
+		set( ALL_C_FLAGS "-ffp-contract=off" )
+	endif()
+	
 	set( REL_C_FLAGS "" )
 	set( DEB_C_FLAGS "" )
 
@@ -275,9 +285,11 @@ mark_as_advanced( FORCE_INTERNAL_GME )
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
-add_subdirectory( glslang/glslang)
-add_subdirectory( glslang/spirv )
-add_subdirectory( glslang/OGLCompilersDLL )
+if (HAVE_VULKAN)
+	add_subdirectory( glslang/glslang)
+	add_subdirectory( glslang/spirv )
+	add_subdirectory( glslang/OGLCompilersDLL )
+endif()
 
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )

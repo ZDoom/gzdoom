@@ -44,7 +44,9 @@
 #include "m_argv.h"
 #include "version.h"
 #include "win32glvideo.h"
+#ifdef HAVE_VULKAN
 #include "win32vulkanvideo.h"
+#endif
 #include "doomerrors.h"
 #include "i_system.h"
 #include "swrenderer/r_swrenderer.h"
@@ -128,6 +130,7 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
+#ifdef HAVE_VULKAN
 	if (vid_backend == 0)
 	{
 		// first try Vulkan, if that fails OpenGL
@@ -141,6 +144,7 @@ void I_InitGraphics ()
 		}
 	}
 	else
+#endif
 	{
 		Video = new Win32GLVideo();
 	}

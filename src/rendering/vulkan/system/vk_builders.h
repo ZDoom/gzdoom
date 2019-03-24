@@ -292,6 +292,8 @@ public:
 	void addBuffer(VulkanBuffer *buffer, VkDeviceSize offset, VkDeviceSize size, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask);
 	void addImage(VulkanImage *image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int baseMipLevel = 0, int levelCount = 1);
 	void addImage(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int baseMipLevel = 0, int levelCount = 1);
+	void addQueueTransfer(int srcFamily, int dstFamily, VulkanBuffer *buffer, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask);
+	void addQueueTransfer(int srcFamily, int dstFamily, VulkanImage *image, VkImageLayout layout, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int baseMipLevel = 0, int levelCount = 1);
 
 	void execute(VulkanCommandBuffer *commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags = 0);
 
@@ -299,6 +301,24 @@ private:
 	FixedSizeVector<VkMemoryBarrier, 8> memoryBarriers;
 	FixedSizeVector<VkBufferMemoryBarrier, 8> bufferMemoryBarriers;
 	FixedSizeVector<VkImageMemoryBarrier, 8> imageMemoryBarriers;
+};
+
+class QueueSubmit
+{
+public:
+	QueueSubmit();
+
+	void addCommandBuffer(VulkanCommandBuffer *buffer);
+	void addWait(VkPipelineStageFlags waitStageMask, VulkanSemaphore *semaphore);
+	void addSignal(VulkanSemaphore *semaphore);
+	void execute(VulkanDevice *device, VkQueue queue, VulkanFence *fence = nullptr);
+
+private:
+	VkSubmitInfo submitInfo = {};
+	FixedSizeVector<VkSemaphore, 8> waitSemaphores;
+	FixedSizeVector<VkPipelineStageFlags, 8> waitStages;
+	FixedSizeVector<VkSemaphore, 8> signalSemaphores;
+	FixedSizeVector<VkCommandBuffer, 8> commandBuffers;
 };
 
 class WriteDescriptors
@@ -1140,6 +1160,37 @@ inline void PipelineBarrier::addImage(VkImage image, VkImageLayout oldLayout, Vk
 	imageMemoryBarriers.push_back(barrier);
 }
 
+inline void PipelineBarrier::addQueueTransfer(int srcFamily, int dstFamily, VulkanBuffer *buffer, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask)
+{
+	VkBufferMemoryBarrier barrier = { };
+	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	barrier.srcAccessMask = srcAccessMask;
+	barrier.dstAccessMask = dstAccessMask;
+	barrier.srcQueueFamilyIndex = srcFamily;
+	barrier.dstQueueFamilyIndex = dstFamily;
+	barrier.buffer = buffer->buffer;
+	barrier.offset = 0;
+	barrier.size = buffer->size;
+	bufferMemoryBarriers.push_back(barrier);
+}
+
+inline void PipelineBarrier::addQueueTransfer(int srcFamily, int dstFamily, VulkanImage *image, VkImageLayout layout, VkImageAspectFlags aspectMask, int baseMipLevel, int levelCount)
+{
+	VkImageMemoryBarrier barrier = { };
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = layout;
+	barrier.newLayout = layout;
+	barrier.srcQueueFamilyIndex = srcFamily;
+	barrier.dstQueueFamilyIndex = dstFamily;
+	barrier.image = image->image;
+	barrier.subresourceRange.aspectMask = aspectMask;
+	barrier.subresourceRange.baseMipLevel = baseMipLevel;
+	barrier.subresourceRange.levelCount = levelCount;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+	imageMemoryBarriers.push_back(barrier);
+}
+
 inline void PipelineBarrier::execute(VulkanCommandBuffer *commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags)
 {
 	commandBuffer->pipelineBarrier(
@@ -1147,6 +1198,44 @@ inline void PipelineBarrier::execute(VulkanCommandBuffer *commandBuffer, VkPipel
 		(uint32_t)memoryBarriers.size(), memoryBarriers.data(),
 		(uint32_t)bufferMemoryBarriers.size(), bufferMemoryBarriers.data(),
 		(uint32_t)imageMemoryBarriers.size(), imageMemoryBarriers.data());
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+inline QueueSubmit::QueueSubmit()
+{
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+}
+
+inline void QueueSubmit::addCommandBuffer(VulkanCommandBuffer *buffer)
+{
+	commandBuffers.push_back(buffer->buffer);
+	submitInfo.pCommandBuffers = commandBuffers.data();
+	submitInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+}
+
+inline void QueueSubmit::addWait(VkPipelineStageFlags waitStageMask, VulkanSemaphore *semaphore)
+{
+	waitStages.push_back(waitStageMask);
+	waitSemaphores.push_back(semaphore->semaphore);
+
+	submitInfo.pWaitDstStageMask = waitStages.data();
+	submitInfo.pWaitSemaphores = waitSemaphores.data();
+	submitInfo.waitSemaphoreCount = (uint32_t)waitSemaphores.size();
+}
+
+inline void QueueSubmit::addSignal(VulkanSemaphore *semaphore)
+{
+	signalSemaphores.push_back(semaphore->semaphore);
+	submitInfo.pSignalSemaphores = signalSemaphores.data();
+	submitInfo.signalSemaphoreCount = (uint32_t)signalSemaphores.size();
+}
+
+inline void QueueSubmit::execute(VulkanDevice *device, VkQueue queue, VulkanFence *fence)
+{
+	VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, fence ? fence->fence : VK_NULL_HANDLE);
+	if (result < VK_SUCCESS)
+		throw std::runtime_error("Failed to submit command buffer");
 }
 
 /////////////////////////////////////////////////////////////////////////////

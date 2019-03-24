@@ -118,8 +118,10 @@ void VulkanFrameBuffer::InitializeState()
 	uniformblockalignment = (unsigned int)device->PhysicalDevice.Properties.limits.minUniformBufferOffsetAlignment;
 	maxuniformblock = device->PhysicalDevice.Properties.limits.maxUniformBufferRange;
 
-	mUploadSemaphore.reset(new VulkanSemaphore(device));
+	mTransferSemaphore.reset(new VulkanSemaphore(device));
+	mPreDrawSemaphore.reset(new VulkanSemaphore(device));
 	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
+	mTransferCommandPool.reset(new VulkanCommandPool(device, device->transferFamily));
 
 	mScreenBuffers.reset(new VkRenderBuffers());
 	mSaveBuffers.reset(new VkRenderBuffers());
@@ -206,7 +208,8 @@ void VulkanFrameBuffer::Update()
 	vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
 
 	mDrawCommands.reset();
-	mUploadCommands.reset();
+	mTransferCommands.reset();
+	mPreDrawCommands.reset();
 	DeleteFrameObjects();
 
 	Finish.Unclock();
@@ -224,62 +227,50 @@ void VulkanFrameBuffer::DeleteFrameObjects()
 
 void VulkanFrameBuffer::SubmitCommands(bool finish)
 {
+	if (mTransferCommands)
+	{
+		mTransferCommands->end();
+
+		QueueSubmit submit;
+		submit.addCommandBuffer(mTransferCommands.get());
+		submit.addSignal(mTransferSemaphore.get());
+		submit.execute(device, device->transferQueue);
+	}
+
+	if (mPreDrawCommands)
+	{
+		mPreDrawCommands->end();
+
+		QueueSubmit submit;
+		submit.addCommandBuffer(mPreDrawCommands.get());
+		if (mTransferCommands)
+			submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mTransferSemaphore.get());
+		submit.addSignal(mPreDrawSemaphore.get());
+		submit.execute(device, device->graphicsQueue);
+	}
+
 	mDrawCommands->end();
 
-	if (mUploadCommands)
+	QueueSubmit submit;
+	submit.addCommandBuffer(mDrawCommands.get());
+	if (mPreDrawCommands)
+		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mPreDrawSemaphore.get());
+	else if (mTransferCommands)
+		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mTransferSemaphore.get());
+	if (finish)
 	{
-		mUploadCommands->end();
-
-		// Submit upload commands immediately
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &mUploadCommands->buffer;
-		submitInfo.signalSemaphoreCount = 1;
-		submitInfo.pSignalSemaphores = &mUploadSemaphore->semaphore;
-		VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-		if (result < VK_SUCCESS)
-			I_FatalError("Failed to submit command buffer! Error %d\n", result);
-
-		// Wait for upload commands to finish, then submit render commands
-		VkSemaphore waitSemaphores[] = { mUploadSemaphore->semaphore, mSwapChainImageAvailableSemaphore->semaphore };
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-		submitInfo.waitSemaphoreCount = finish ? 2 : 1;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &mDrawCommands->buffer;
-		submitInfo.signalSemaphoreCount = finish ? 1 : 0;
-		submitInfo.pSignalSemaphores = &mRenderFinishedSemaphore->semaphore;
-		result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, mRenderFinishedFence->fence);
-		if (result < VK_SUCCESS)
-			I_FatalError("Failed to submit command buffer! Error %d\n", result);
+		submit.addWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
+		submit.addSignal(mRenderFinishedSemaphore.get());
 	}
-	else
-	{
-		VkSemaphore waitSemaphores[] = { mSwapChainImageAvailableSemaphore->semaphore };
-		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.waitSemaphoreCount = finish ? 1 : 0;
-		submitInfo.pWaitSemaphores = waitSemaphores;
-		submitInfo.pWaitDstStageMask = waitStages;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &mDrawCommands->buffer;
-		submitInfo.signalSemaphoreCount = finish ? 1 : 0;
-		submitInfo.pSignalSemaphores = &mRenderFinishedSemaphore->semaphore;
-		VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, mRenderFinishedFence->fence);
-		if (result < VK_SUCCESS)
-			I_FatalError("Failed to submit command buffer! Error %d\n", result);
-	}
+	submit.execute(device, device->graphicsQueue, mRenderFinishedFence.get());
 
 	if (!finish)
 	{
 		vkWaitForFences(device->device, 1, &mRenderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
 		vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
 		mDrawCommands.reset();
-		mUploadCommands.reset();
+		mTransferCommands.reset();
+		mPreDrawCommands.reset();
 		DeleteFrameObjects();
 	}
 }
@@ -794,15 +785,26 @@ void VulkanFrameBuffer::Draw2D()
 	::Draw2D(&m2DDrawer, *mRenderState);
 }
 
-VulkanCommandBuffer *VulkanFrameBuffer::GetUploadCommands()
+VulkanCommandBuffer *VulkanFrameBuffer::GetTransferCommands()
 {
-	if (!mUploadCommands)
+	if (!mTransferCommands)
 	{
-		mUploadCommands = mGraphicsCommandPool->createBuffer();
-		mUploadCommands->SetDebugName("VulkanFrameBuffer.mUploadCommands");
-		mUploadCommands->begin();
+		mTransferCommands = mTransferCommandPool->createBuffer();
+		mTransferCommands->SetDebugName("VulkanFrameBuffer.mTransferCommands");
+		mTransferCommands->begin();
 	}
-	return mUploadCommands.get();
+	return mTransferCommands.get();
+}
+
+VulkanCommandBuffer *VulkanFrameBuffer::GetPreDrawCommands()
+{
+	if (!mPreDrawCommands)
+	{
+		mPreDrawCommands = mGraphicsCommandPool->createBuffer();
+		mPreDrawCommands->SetDebugName("VulkanFrameBuffer.mPreDrawCommands");
+		mPreDrawCommands->begin();
+	}
+	return mPreDrawCommands.get();
 }
 
 VulkanCommandBuffer *VulkanFrameBuffer::GetDrawCommands()

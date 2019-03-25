@@ -185,8 +185,8 @@ void VulkanDevice::SelectPhysicalDevice()
 		static const int typeSort[] = { 4, 1, 0, 2, 3 };
 		int sortA = a.device->Properties.deviceType < 5 ? typeSort[a.device->Properties.deviceType] : (int)a.device->Properties.deviceType;
 		int sortB = b.device->Properties.deviceType < 5 ? typeSort[b.device->Properties.deviceType] : (int)b.device->Properties.deviceType;
-		if (sortA < sortB)
-			return true;
+		if (sortA != sortB)
+			return sortA < sortB;
 
 		// Then sort by the device's unique ID so that vk_device uses a consistent order
 		int sortUUID = memcmp(a.device->Properties.pipelineCacheUUID, b.device->Properties.pipelineCacheUUID, VK_UUID_SIZE);

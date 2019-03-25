@@ -75,13 +75,8 @@ VulkanDevice::VulkanDevice()
 		InitVolk();
 		CreateInstance();
 		CreateSurface();
-
-		UsedDeviceFeatures.samplerAnisotropy = VK_TRUE;
-		UsedDeviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
-		UsedDeviceFeatures.depthClamp = VK_TRUE;
-		UsedDeviceFeatures.shaderClipDistance = VK_TRUE;
-
 		SelectPhysicalDevice();
+		SelectFeatures();
 		CreateDevice();
 		CreateAllocator();
 	}
@@ -97,13 +92,20 @@ VulkanDevice::~VulkanDevice()
 	ReleaseResources();
 }
 
-bool VulkanDevice::CheckFeatures(const VkPhysicalDeviceFeatures &f)
+void VulkanDevice::SelectFeatures()
+{
+	UsedDeviceFeatures.samplerAnisotropy = PhysicalDevice.Features.samplerAnisotropy;
+	UsedDeviceFeatures.fragmentStoresAndAtomics = PhysicalDevice.Features.fragmentStoresAndAtomics;
+	UsedDeviceFeatures.depthClamp = PhysicalDevice.Features.depthClamp;
+	UsedDeviceFeatures.shaderClipDistance = PhysicalDevice.Features.shaderClipDistance;
+}
+
+bool VulkanDevice::CheckRequiredFeatures(const VkPhysicalDeviceFeatures &f)
 {
 	return
 		f.samplerAnisotropy == VK_TRUE &&
 		f.fragmentStoresAndAtomics == VK_TRUE &&
-		f.depthClamp == VK_TRUE &&
-		f.shaderClipDistance == VK_TRUE;
+		f.depthClamp == VK_TRUE;
 }
 
 void VulkanDevice::SelectPhysicalDevice()
@@ -114,7 +116,7 @@ void VulkanDevice::SelectPhysicalDevice()
 	{
 		const auto &info = AvailableDevices[idx];
 
-		if (!CheckFeatures(info.Features))
+		if (!CheckRequiredFeatures(info.Features))
 			continue;
 
 		VulkanCompatibleDevice dev;

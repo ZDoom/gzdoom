@@ -87,7 +87,8 @@ private:
 	void CreateAllocator();
 	void ReleaseResources();
 
-	static bool CheckFeatures(const VkPhysicalDeviceFeatures &f);
+	void SelectFeatures();
+	static bool CheckRequiredFeatures(const VkPhysicalDeviceFeatures &f);
 
 	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
 

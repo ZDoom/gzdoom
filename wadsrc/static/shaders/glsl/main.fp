@@ -10,6 +10,11 @@ layout(location = 5) in vec4 vWorldNormal;
 layout(location = 6) in vec4 vEyeNormal;
 #endif
 
+#ifdef NO_CLIPDISTANCE_SUPPORT
+layout(location = 7) in vec4 ClipDistanceA;
+layout(location = 8) in vec4 ClipDistanceB;
+#endif
+
 layout(location=0) out vec4 FragColor;
 #ifdef GBUFFER_PASS
 layout(location=1) out vec4 FragFog;
@@ -542,6 +547,10 @@ vec3 AmbientOcclusionColor()
 
 void main()
 {
+#ifdef NO_CLIPDISTANCE_SUPPORT
+	if (ClipDistanceA.x < 0 || ClipDistanceA.y < 0 || ClipDistanceA.z < 0 || ClipDistanceA.w < 0 || ClipDistanceB.x < 0) discard;
+#endif
+
 	Material material = ProcessMaterial();
 	vec4 frag = material.Base;
 	

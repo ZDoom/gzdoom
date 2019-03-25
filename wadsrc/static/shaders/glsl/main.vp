@@ -18,6 +18,22 @@ layout(location = 5) out vec4 vWorldNormal;
 layout(location = 6) out vec4 vEyeNormal;
 #endif
 
+#ifdef NO_CLIPDISTANCE_SUPPORT
+layout(location = 7) out vec4 ClipDistanceA;
+layout(location = 8) out vec4 ClipDistanceB;
+#define ClipDistance0 ClipDistanceA.x
+#define ClipDistance1 ClipDistanceA.y
+#define ClipDistance2 ClipDistanceA.z
+#define ClipDistance3 ClipDistanceA.w
+#define ClipDistance4 ClipDistanceB.x
+#else
+#define ClipDistance0 gl_ClipDistance[0]
+#define ClipDistance1 gl_ClipDistance[1]
+#define ClipDistance2 gl_ClipDistance[2]
+#define ClipDistance3 gl_ClipDistance[3]
+#define ClipDistance4 gl_ClipDistance[4]
+#endif
+
 void main()
 {
 	vec2 parmTexCoord;
@@ -67,8 +83,8 @@ void main()
 		
 		if (uSplitBottomPlane.z != 0.0)
 		{
-			gl_ClipDistance[3] = ((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
-			gl_ClipDistance[4] = worldcoord.y - ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
+			ClipDistance3 = ((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
+			ClipDistance4 = worldcoord.y - ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
 
 		#ifdef HAS_UNIFORM_VERTEX_DATA
@@ -101,25 +117,25 @@ void main()
 
 	if (uClipHeightDirection != 0.0) // clip planes used for reflective flats
 	{
-		gl_ClipDistance[0] = (worldcoord.y - uClipHeight) * uClipHeightDirection;
+		ClipDistance0 = (worldcoord.y - uClipHeight) * uClipHeightDirection;
 	}
 	else if (uClipLine.x > -1000000.0) // and for line portals - this will never be active at the same time as the reflective planes clipping so it can use the same hardware clip plane.
 	{
-		gl_ClipDistance[0] = -( (worldcoord.z - uClipLine.y) * uClipLine.z + (uClipLine.x - worldcoord.x) * uClipLine.w ) + 1.0/32768.0;	// allow a tiny bit of imprecisions for colinear linedefs.
+		ClipDistance0 = -( (worldcoord.z - uClipLine.y) * uClipLine.z + (uClipLine.x - worldcoord.x) * uClipLine.w ) + 1.0/32768.0;	// allow a tiny bit of imprecisions for colinear linedefs.
 	}
 	else
 	{
-		gl_ClipDistance[0] = 1;
+		ClipDistance0 = 1;
 	}
 
 	// clip planes used for translucency splitting
-	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;
-	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
+	ClipDistance1 = worldcoord.y - uClipSplit.x;
+	ClipDistance2 = uClipSplit.y - worldcoord.y;
 
 	if (uSplitTopPlane == vec4(0.0))
 	{
-		gl_ClipDistance[3] = 1;
-		gl_ClipDistance[4] = 1;
+		ClipDistance3 = 1.0;
+		ClipDistance4 = 1.0;
 	}
 
 	gl_PointSize = 1.0;

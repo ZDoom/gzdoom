@@ -62,7 +62,7 @@ public:
 	// Device setup
 	VkPhysicalDeviceFeatures UsedDeviceFeatures = {};
 	std::vector<const char *> EnabledDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-	std::vector<const char *> OptionalDeviceExtensions = { VK_EXT_HDR_METADATA_EXTENSION_NAME };
+	std::vector<const char *> OptionalDeviceExtensions = { VK_EXT_HDR_METADATA_EXTENSION_NAME, VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME, VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME };
 	VulkanPhysicalDevice PhysicalDevice;
 	bool DebugLayerActive = false;
 
@@ -83,11 +83,13 @@ private:
 	void CreateInstance();
 	void CreateSurface();
 	void SelectPhysicalDevice();
+	void SelectFeatures();
 	void CreateDevice();
 	void CreateAllocator();
 	void ReleaseResources();
 
-	void SelectFeatures();
+	bool SupportsDeviceExtension(const char *ext) const;
+
 	static bool CheckRequiredFeatures(const VkPhysicalDeviceFeatures &f);
 
 	VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;

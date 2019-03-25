@@ -32,6 +32,7 @@
 #include <array>
 #include <set>
 #include <string>
+#include <algorithm>
 
 #include "vk_device.h"
 #include "vk_swapchain.h"
@@ -215,10 +216,16 @@ void VulkanDevice::SelectPhysicalDevice()
 	transferFamily = SupportedDevices[selected].transferFamily;
 }
 
+bool VulkanDevice::SupportsDeviceExtension(const char *ext) const
+{
+	return std::find(EnabledDeviceExtensions.begin(), EnabledDeviceExtensions.end(), ext) != EnabledDeviceExtensions.end();
+}
+
 void VulkanDevice::CreateAllocator()
 {
 	VmaAllocatorCreateInfo allocinfo = {};
-	// allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT; // To do: enable this for better performance
+	if (SupportsDeviceExtension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME) && SupportsDeviceExtension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME))
+		allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
 	allocinfo.physicalDevice = PhysicalDevice.Device;
 	allocinfo.device = device;
 	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;

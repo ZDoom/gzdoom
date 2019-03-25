@@ -97,7 +97,7 @@ TArray<TArray<FString>> FStringTable::parseCSV(const TArray<uint8_t> &buffer)
 			while (vend > vcopy && myisspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
 	*/
 
-	for (int i = 0; i < bufLength; ++i)
+	for (size_t i = 0; i < bufLength; ++i)
 	{
 		if (buffer[i] == '"')
 		{

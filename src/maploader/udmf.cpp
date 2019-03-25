@@ -2161,7 +2161,7 @@ public:
 			case NAME_Strife:
 				namespace_bits = St;
 				Level->Translator = P_LoadTranslator("xlat/strife_base.txt");
-				Level->flags2 |= LEVEL2_DUMMYSWITCHES|LEVEL2_RAILINGHACK;
+				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			default:

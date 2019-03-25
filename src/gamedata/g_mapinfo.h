@@ -225,7 +225,7 @@ enum ELevelFlags : unsigned int
 	LEVEL2_FORCETEAMPLAYOFF		= 0x00080000,
 
 	LEVEL2_CONV_SINGLE_UNFREEZE	= 0x00100000,
-	LEVEL2_RAILINGHACK			= 0x00200000,	// but UDMF requires them to be separate to have more control
+	//			= 0x00200000,	// unused, was LEVEL2_RAILINGHACK
 	LEVEL2_DUMMYSWITCHES		= 0x00400000,
 	LEVEL2_HEXENHACK			= 0x00800000,	// Level was defined in a Hexen style MAPINFO
 

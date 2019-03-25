@@ -1341,5 +1341,6 @@ enum ECompatFlags
 	COMPATF2_PUSHWINDOW		= 1 << 6,	// Disable the window check in CheckForPushSpecial()
 	COMPATF2_CHECKSWITCHRANGE = 1 << 7,	// Enable buggy CheckSwitchRange behavior
 	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
-	COMPATF2_EXPLODE2		= 1 << 9	// Use original explosion code throughout.
+	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
+	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
 };

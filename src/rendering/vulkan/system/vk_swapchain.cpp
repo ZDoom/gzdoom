@@ -5,7 +5,7 @@
 
 EXTERN_CVAR(Bool, vid_vsync);
 
-CUSTOM_CVAR(Bool, vk_hdr, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, vk_hdr, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }

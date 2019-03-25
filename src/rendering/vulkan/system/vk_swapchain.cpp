@@ -5,7 +5,7 @@
 
 EXTERN_CVAR(Bool, vid_vsync);
 
-CUSTOM_CVAR(Bool, vk_hdr, false, /*CVAR_ARCHIVE | CVAR_GLOBALCONFIG |*/ CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, vk_hdr, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
@@ -176,20 +176,21 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device) : vsync(vid_vsync), devic
 			device->SetDebugObjectName("SwapChainImageView", (uint64_t)swapChainImageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW);
 		}
 
+#if 0 // This isn't required it seems
 		if (swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
 		{
-			// Mastering display with DCI-P3 color primaries and D65 white point,
+			// Mastering display with HDR10_ST2084 color primaries and D65 white point,
 			// maximum luminance of 1000 nits and minimum luminance of 0.001 nits;
 			// content has maximum luminance of 2000 nits and maximum frame average light level (MaxFALL) of 500 nits.
 
 			VkHdrMetadataEXT metadata = {};
 			metadata.sType = VK_STRUCTURE_TYPE_HDR_METADATA_EXT;
-			metadata.displayPrimaryRed.x = 0.680f;
-			metadata.displayPrimaryRed.y = 0.320f;
-			metadata.displayPrimaryGreen.x = 0.265f;
-			metadata.displayPrimaryGreen.y = 0.690f;
-			metadata.displayPrimaryBlue.x = 0.150f;
-			metadata.displayPrimaryBlue.y = 0.060f;
+			metadata.displayPrimaryRed.x = 0.708f;
+			metadata.displayPrimaryRed.y = 0.292f;
+			metadata.displayPrimaryGreen.x = 0.170f;
+			metadata.displayPrimaryGreen.y = 0.797f;
+			metadata.displayPrimaryBlue.x = 0.131f;
+			metadata.displayPrimaryBlue.y = 0.046f;
 			metadata.whitePoint.x = 0.3127f;
 			metadata.whitePoint.y = 0.3290f;
 			metadata.maxLuminance = 1000.0f;
@@ -199,6 +200,7 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device) : vsync(vid_vsync), devic
 
 			vkSetHdrMetadataEXT(device->device, 1, &swapChain, &metadata);
 		}
+#endif
 	}
 	catch (...)
 	{

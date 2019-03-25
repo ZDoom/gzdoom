@@ -195,6 +195,11 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 	uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), -screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
 	uniforms.Offset = { 0.0f, 1.0f };
 
+	if (applyGamma && fb->swapChain->swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
+	{
+		uniforms.InvGamma *= 2.2f;
+	}
+
 	VkPPRenderState renderstate;
 	renderstate.Shader = &hw_postprocess.present.Present;
 	renderstate.Uniforms.Set(uniforms);

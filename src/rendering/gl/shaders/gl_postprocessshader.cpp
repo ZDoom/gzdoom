@@ -221,7 +221,7 @@ void PostProcessShaderInstance::BindTextures()
 		{
 			glUniform1i(location, textureUnit);
 
-			glActiveTexture(GL_TEXTURE0 + 1);
+			glActiveTexture(GL_TEXTURE0 + textureUnit);
 			auto it = mTextureHandles.find(tex);
 			if (it == mTextureHandles.end())
 			{

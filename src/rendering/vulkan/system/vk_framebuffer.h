@@ -107,6 +107,7 @@ private:
 	void CopyScreenToBuffer(int w, int h, void *data);
 	void UpdateShadowMap();
 	void DeleteFrameObjects();
+	void FPSLimit();
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
@@ -131,6 +132,8 @@ private:
 
 	int lastSwapWidth = 0;
 	int lastSwapHeight = 0;
+
+	uint64_t fpsLimitTime = 0;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

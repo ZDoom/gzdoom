@@ -59,10 +59,14 @@
 #include "vulkan/system/vk_swapchain.h"
 #include "doomerrors.h"
 
+#include <chrono>
+#include <thread>
+
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
 void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
 
 EXTERN_CVAR(Bool, vid_vsync)
+EXTERN_CVAR(Int, vid_maxfps)
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)
@@ -189,6 +193,8 @@ void VulkanFrameBuffer::Update()
 
 	Flush3D.Unclock();
 
+	FPSLimit();
+	
 	Finish.Reset();
 	Finish.Clock();
 
@@ -215,6 +221,40 @@ void VulkanFrameBuffer::Update()
 	Finish.Unclock();
 
 	Super::Update();
+}
+
+void VulkanFrameBuffer::FPSLimit()
+{
+	using namespace std::chrono;
+	using namespace std::this_thread;
+
+	if (vid_maxfps <= 0 || vid_vsync)
+		return;
+
+	uint64_t targetWakeTime = fpsLimitTime + 1'000'000 / vid_maxfps;
+
+	while (true)
+	{
+		fpsLimitTime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+		int64_t timeToWait = targetWakeTime - fpsLimitTime;
+
+		if (timeToWait > 1'000'000 || timeToWait <= 0)
+		{
+			break;
+		}
+
+		if (timeToWait <= 2'000'000)
+		{
+			// We are too close to the deadline. OS sleep is not precise enough to wake us before it elapses.
+			// Yield execution and check time again.
+			sleep_for(nanoseconds(0));
+		}
+		else
+		{
+			// Sleep, but try to wake before deadline.
+			sleep_for(milliseconds(timeToWait - 1'000'000));
+		}
+	}
 }
 
 void VulkanFrameBuffer::DeleteFrameObjects()

@@ -37,37 +37,4 @@
 #include "i_video.h"
 #include "v_video.h"
 
-// Semaphores
-#ifdef __APPLE__
-#include <mach/mach_init.h>
-#include <mach/semaphore.h>
-#include <mach/task.h>
-typedef semaphore_t Semaphore;
-#define SEMAPHORE_WAIT(sem) \
-	while(semaphore_wait(sem) != KERN_SUCCESS){}
-#define SEMAPHORE_SIGNAL(sem) \
-	semaphore_signal(sem);
-#define SEMAPHORE_INIT(sem, shared, value) \
-	semaphore_create(mach_task_self(), &sem, shared, value);
-#else
-#include <semaphore.h>
-typedef sem_t Semaphore;
-#define SEMAPHORE_WAIT(sem) \
-	do { \
-		while(sem_wait(&sem) != 0); \
-		int semValue; \
-		sem_getvalue(&sem, &semValue); \
-		if(semValue < 1) \
-			break; \
-	} while(true);
-#define SEMAPHORE_SIGNAL(sem) \
-	sem_post(&sem);
-#define SEMAPHORE_INIT(sem, shared, value) \
-	sem_init(&sem, shared, value);
-#endif
-
-extern Semaphore FPSLimitSemaphore;
-void I_SetFPSLimit(int limit);
-
-
 #endif	// __HARDWARE_H__

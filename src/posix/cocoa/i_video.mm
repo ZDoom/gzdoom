@@ -727,16 +727,6 @@ void I_InitGraphics()
 
 // ---------------------------------------------------------------------------
 
-
-EXTERN_CVAR(Int, vid_maxfps);
-EXTERN_CVAR(Bool, cl_capfps);
-
-// So Apple doesn't support POSIX timers and I can't find a good substitute short of
-// having Objective-C Cocoa events or something like that.
-void I_SetFPSLimit(int limit)
-{
-}
-
 CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	SystemBaseFrameBuffer::UseHiDPI(self);

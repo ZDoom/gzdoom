@@ -250,6 +250,7 @@ void OpenGLFrameBuffer::Swap()
 	Finish.Reset();
 	Finish.Clock();
 	if (swapbefore) glFinish();
+	FPSLimit();
 	SwapBuffers();
 	if (!swapbefore) glFinish();
 	Finish.Unclock();

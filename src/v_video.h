@@ -540,6 +540,7 @@ public:
 	int ScreenToWindowX(int x);
 	int ScreenToWindowY(int y);
 
+	void FPSLimit();
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
@@ -556,6 +557,7 @@ protected:
 	void DrawRateStuff ();
 
 private:
+	uint64_t fpsLimitTime = 0;
 
 	uint64_t LastMS = 0, LastSec = 0, FrameCount = 0, LastCount = 0, LastTic = 0;
 

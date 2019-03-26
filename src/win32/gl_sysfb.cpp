@@ -123,8 +123,6 @@ void SystemGLFrameBuffer::SetVSync (bool vsync)
 
 void SystemGLFrameBuffer::SwapBuffers()
 {
-	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
-	I_FPSLimit();
 	::SwapBuffers(static_cast<Win32GLVideo *>(Video)->m_hDC);
 }
 

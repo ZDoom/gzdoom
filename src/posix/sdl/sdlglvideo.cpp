@@ -71,7 +71,6 @@ extern IVideo *Video;
 
 EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
-EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
 EXTERN_CVAR (Int, vid_backend)
@@ -488,13 +487,6 @@ void SystemGLFrameBuffer::SetVSync( bool vsync )
 
 void SystemGLFrameBuffer::SwapBuffers()
 {
-#if !defined(__APPLE__) && !defined(__OpenBSD__)
-	if (vid_maxfps && !cl_capfps)
-	{
-		SEMAPHORE_WAIT(FPSLimitSemaphore)
-	}
-#endif
-
 	SDL_GL_SwapWindow(Priv::window);
 }
 

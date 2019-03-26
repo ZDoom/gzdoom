@@ -52,6 +52,9 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 
+#include <chrono>
+#include <thread>
+
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 CVAR(Bool, vid_fps, false, 0)
@@ -60,6 +63,9 @@ CVAR(Int, vid_showpalette, 0, 0)
 EXTERN_CVAR(Bool, ticker)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
+EXTERN_CVAR(Bool, vid_vsync)
+EXTERN_CVAR(Int, vid_maxfps)
+EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, screenblocks)
 
 //==========================================================================
@@ -414,4 +420,38 @@ void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 
 	x = int16_t((x - letterboxX) * Width / letterboxWidth);
 	y = int16_t((y - letterboxY) * Height / letterboxHeight);
+}
+
+void DFrameBuffer::FPSLimit()
+{
+	using namespace std::chrono;
+	using namespace std::this_thread;
+
+	if (vid_maxfps <= 0 || vid_vsync || cl_capfps)
+		return;
+
+	uint64_t targetWakeTime = fpsLimitTime + 1'000'000 / vid_maxfps;
+
+	while (true)
+	{
+		fpsLimitTime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+		int64_t timeToWait = targetWakeTime - fpsLimitTime;
+
+		if (timeToWait > 1'000'000 || timeToWait <= 0)
+		{
+			break;
+		}
+
+		if (timeToWait <= 2'000)
+		{
+			// We are too close to the deadline. OS sleep is not precise enough to wake us before it elapses.
+			// Yield execution and check time again.
+			sleep_for(nanoseconds(0));
+		}
+		else
+		{
+			// Sleep, but try to wake before deadline.
+			sleep_for(microseconds(timeToWait - 2'000));
+		}
+	}
 }

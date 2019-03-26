@@ -70,7 +70,6 @@
 #include "g_levellocals.h"
 #include "am_map.h"
 
-EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
 
@@ -89,10 +88,6 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	else if (vid_maxfps > 1000)
 	{
 		vid_maxfps = 1000;
-	}
-	else if (cl_capfps == 0)
-	{
-		I_SetFPSLimit(vid_maxfps);
 	}
 }
 

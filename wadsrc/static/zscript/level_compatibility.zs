@@ -892,6 +892,12 @@ class LevelCompatibility native play
 				break;
 			}
 
+			case '8D7A24B169717907DDA8399D8C1655DF': // strife1.wad map15
+			{
+				SetWallTexture(319, Line.back, Side.top, "WALTEK21");
+				break;
+			}
+
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
 			{
 				// Lower floor a bit so secret switch becomes accessible

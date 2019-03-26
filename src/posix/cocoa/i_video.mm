@@ -392,13 +392,13 @@ void SystemGLFrameBuffer::SwapBuffers()
 int SystemGLFrameBuffer::GetClientWidth()
 {
 	const int clientWidth = I_GetContentViewSize(m_window).width;
-	return clientWidth > 0 ? clientWidth : GetWidth();
+	return clientWidth > 0 ? clientWidth : GetScreenWidth();
 }
 
 int SystemGLFrameBuffer::GetClientHeight()
 {
 	const int clientHeight = I_GetContentViewSize(m_window).height;
-	return clientHeight > 0 ? clientHeight : GetHeight();
+	return clientHeight > 0 ? clientHeight : GetScreenHeight();
 }
 
 

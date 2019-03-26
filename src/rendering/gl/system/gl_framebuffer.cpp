@@ -150,13 +150,13 @@ void OpenGLFrameBuffer::InitializeState()
 
 	SetViewportRects(nullptr);
 
-	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
+	mVertexData = new FFlatVertexBuffer(GetScreenWidth(), GetScreenHeight());
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new GLViewpointBuffer;
 	mLights = new FLightBuffer();
 
 	GLRenderer = new FGLRenderer(this);
-	GLRenderer->Initialize(GetWidth(), GetHeight());
+	GLRenderer->Initialize(GetScreenWidth(), GetScreenHeight());
 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
@@ -396,7 +396,7 @@ TArray<uint8_t> OpenGLFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 	const auto &viewport = mOutputLetterbox;
 
 	// Grab what is in the back buffer.
-	// We cannot rely on SCREENWIDTH/HEIGHT here because the output may have been scaled.
+	// We cannot rely on screen->GetWidth()/HEIGHT here because the output may have been scaled.
 	TArray<uint8_t> pixels;
 	pixels.Resize(viewport.width * viewport.height * 3);
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -404,8 +404,8 @@ TArray<uint8_t> OpenGLFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 	glPixelStorei(GL_PACK_ALIGNMENT, 4);
 
 	// Copy to screenshot buffer:
-	int w = SCREENWIDTH;
-	int h = SCREENHEIGHT;
+	int w = screen->GetScreenWidth();
+	int h = screen->GetScreenHeight();
 
 	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
 

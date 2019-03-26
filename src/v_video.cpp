@@ -544,7 +544,7 @@ void V_UpdateModeSize (int width, int height)
 	// The optimal scale will always be to fit a virtual 640 pixel wide display onto the screen.
 	// Exceptions are made for a few ranges where the available virtual width is > 480.
 
-	int w = screen->GetWidth();
+	int w = screen->GetScreenWidth();
 	int factor;
 	if (w < 640) factor = 1;
 	else if (w >= 1024 && w < 1280) factor = 2;
@@ -599,7 +599,7 @@ bool IVideo::SetResolution ()
 	screen->InitializeState();
 	screen->SetGamma();
 
-	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
+	V_UpdateModeSize(screen->GetScreenWidth(), screen->GetScreenHeight());
 
 	return true;
 }
@@ -678,11 +678,11 @@ void V_Init2()
 	I_InitGraphics();
 
 	Video->SetResolution();	// this only fails via exceptions.
-	Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
+	Printf ("Resolution: %d x %d\n", screen->GetScreenWidth(), screen->GetScreenHeight());
 
 	// init these for the scaling menu
-	menu_resolution_custom_width = SCREENWIDTH;
-	menu_resolution_custom_height = SCREENHEIGHT;
+	menu_resolution_custom_width = screen->GetScreenWidth();
+	menu_resolution_custom_height = screen->GetScreenHeight();
 
 	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
@@ -758,7 +758,7 @@ float ActiveRatio(int width, int height, float *trueratio)
 
 DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)
 {
-	ACTION_RETURN_FLOAT(ActiveRatio(screen->GetWidth(), screen->GetHeight(), nullptr));
+	ACTION_RETURN_FLOAT(ActiveRatio(screen->GetScreenWidth(), screen->GetScreenHeight(), nullptr));
 }
 
 // Tries to guess the physical dimensions of the screen based on the

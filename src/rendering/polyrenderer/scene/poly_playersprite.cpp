@@ -264,7 +264,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 		return;
 	}
 
-	double yaspectMul = 1.2 * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
+	double yaspectMul = 1.2 * ((double)screen->GetScreenHeight() / screen->GetScreenWidth()) * r_viewwindow.WidescreenRatio;
 
 	double pspritexscale = viewwindow.centerxwide / 160.0;
 	double pspriteyscale = pspritexscale * yaspectMul;

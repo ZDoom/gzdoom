@@ -244,11 +244,11 @@ void CT_Drawer (void)
 
 		scalex = 1;
 		int scale = active_con_scaletext(true);
-		int screen_width = SCREENWIDTH / scale;
-		int screen_height= SCREENHEIGHT / scale;
+		int screen_width = screen->GetUIWidth() / scale;
+		int screen_height= screen->GetUIHeight() / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;
 
-		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
+		y += ((screen->GetUIHeight() == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
 		promptwidth = displayfont->StringWidth (prompt) * scalex;
 		x = displayfont->GetCharWidth (displayfont->GetCursor()) * scalex * 2 + promptwidth;

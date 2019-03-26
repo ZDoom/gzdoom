@@ -98,8 +98,8 @@ namespace swrenderer
 
 		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
 
-		int width = SCREENWIDTH;
-		int height = SCREENHEIGHT;
+		int width = screen->GetScreenWidth();
+		int height = screen->GetScreenHeight();
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(player->camera->Level, MainThread(), width, height, trueratio);

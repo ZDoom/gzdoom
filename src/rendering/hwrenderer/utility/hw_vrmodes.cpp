@@ -109,8 +109,8 @@ void VRMode::AdjustViewport(DFrameBuffer *screen) const
 VSMatrix VRMode::GetHUDSpriteProjection() const
 {
 	VSMatrix mat;
-	int w = screen->GetWidth();
-	int h = screen->GetHeight();
+	int w = screen->GetScreenWidth();
+	int h = screen->GetScreenHeight();
 	float scaled_w = w / mWeaponProjectionScale;
 	float left_ofs = (w - scaled_w) / 2.f;
 	mat.ortho(left_ofs, left_ofs + scaled_w, (float)h, 0, -1.0f, 1.0f);

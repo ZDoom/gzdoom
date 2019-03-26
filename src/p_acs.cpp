@@ -9696,11 +9696,11 @@ scriptwait:
 			break;
 
 		case PCD_GETSCREENWIDTH:
-			PushToStack (SCREENWIDTH);
+			PushToStack (screen->GetUIWidth());
 			break;
 
 		case PCD_GETSCREENHEIGHT:
-			PushToStack (SCREENHEIGHT);
+			PushToStack (screen->GetUIHeight());
 			break;
 
 		case PCD_THING_PROJECTILE2:

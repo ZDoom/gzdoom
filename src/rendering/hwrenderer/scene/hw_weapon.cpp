@@ -444,7 +444,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	// killough 12/98: fix psprite positioning problem
 	ftexturemid = 100.f - sy - r.top - psp->GetYAdjust(screenblocks >= 11);
 
-	scale = (SCREENHEIGHT*vw) / (SCREENWIDTH * 200.0f);
+	scale = (screen->GetScreenHeight()*vw) / (screen->GetScreenWidth() * 200.0f);
 	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
 	y2 = y1 + (r.height * scale) + 1;
 

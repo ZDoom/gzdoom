@@ -110,7 +110,7 @@ namespace swrenderer
 
 		BaseVisibility = vis;
 
-		MaxVisForWall = (viewport->InvZtoScale * (SCREENWIDTH*r_Yaspect) / (viewwidth*SCREENHEIGHT * viewport->viewwindow.FocalTangent));
+		MaxVisForWall = (viewport->InvZtoScale * (screen->GetScreenWidth()*r_Yaspect) / (viewwidth*screen->GetScreenHeight() * viewport->viewwindow.FocalTangent));
 		MaxVisForWall = 32767.0 / MaxVisForWall;
 		MaxVisForFloor = 32767.0 / (viewheight >> 2) * viewport->FocalLengthY / 160;
 
@@ -122,8 +122,8 @@ namespace swrenderer
 		else
 			WallVisibility = BaseVisibility;
 
-		WallVisibility = (viewport->InvZtoScale * SCREENWIDTH*AspectBaseHeight(viewport->viewwindow.WidescreenRatio) /
-			(viewwidth*SCREENHEIGHT * 3)) * (WallVisibility * viewport->viewwindow.FocalTangent);
+		WallVisibility = (viewport->InvZtoScale * screen->GetScreenWidth()*AspectBaseHeight(viewport->viewwindow.WidescreenRatio) /
+			(viewwidth*screen->GetScreenHeight() * 3)) * (WallVisibility * viewport->viewwindow.FocalTangent);
 
 		// Prevent overflow on floors/ceilings. Note that the calculation of
 		// MaxVisForFloor means that planes less than two units from the player's

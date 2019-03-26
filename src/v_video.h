@@ -356,8 +356,10 @@ protected:
 
 	F2DDrawer m2DDrawer;
 private:
-	int Width = 0;
-	int Height = 0;
+	int ScreenWidth = 0;
+	int ScreenHeight = 0;
+	int UIWidth = 0;
+	int UIHeight = 0;
 protected:
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
@@ -391,11 +393,15 @@ public:
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)
 	{
-		Width = width;
-		Height = height;
+		ScreenWidth = width;
+		ScreenHeight = height;
+		UIWidth = width;
+		UIHeight = height;
 	}
-	inline int GetWidth() const { return Width; }
-	inline int GetHeight() const { return Height; }
+	inline int GetScreenWidth() const { return ScreenWidth; }
+	inline int GetScreenHeight() const { return ScreenHeight; }
+	inline int GetUIWidth() const { return UIWidth; }
+	inline int GetUIHeight() const { return UIHeight; }
 
 	FVector2 SceneScale() const
 	{
@@ -564,6 +570,7 @@ public:
 
 protected:
 	void DrawRateStuff ();
+	void DrawPaletteTester(int paletteno);
 
 private:
 
@@ -575,10 +582,6 @@ private:
 
 // This is the screen updated by I_FinishUpdate.
 extern DFrameBuffer *screen;
-
-#define SCREENWIDTH (screen->GetWidth ())
-#define SCREENHEIGHT (screen->GetHeight ())
-#define SCREENPITCH (screen->GetPitch ())
 
 EXTERN_CVAR (Float, Gamma)
 
@@ -652,9 +655,9 @@ public:
 		savedyfac = CleanYfac;
 		savedwidth = CleanWidth;
 		savedheight = CleanHeight;
-		V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
-		CleanWidth = screen->GetWidth() / CleanXfac;
-		CleanHeight = screen->GetHeight() / CleanYfac;
+		V_CalcCleanFacs(320, 200, screen->GetScreenWidth(), screen->GetScreenHeight(), &CleanXfac, &CleanYfac);
+		CleanWidth = screen->GetScreenWidth() / CleanXfac;
+		CleanHeight = screen->GetScreenHeight() / CleanYfac;
 	}
 
 	~ScaleOverrider()

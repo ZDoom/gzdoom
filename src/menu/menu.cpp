@@ -872,7 +872,7 @@ static void M_Dim()
 		amount = MIN<float>(1.f, amount*2.f);
 	}
 
-	screen->Dim(dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
+	screen->Dim(dimmer, amount, 0, 0, screen->GetUIWidth(), screen->GetUIHeight());
 }
 
 

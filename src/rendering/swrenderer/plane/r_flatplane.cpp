@@ -96,7 +96,7 @@ namespace swrenderer
 
 		auto viewport = Thread->Viewport.get();
 
-		// Scale will be unit scale at FocalLengthX (normally SCREENWIDTH/2) distance
+		// Scale will be unit scale at FocalLengthX (normally screen->GetWidth()/2) distance
 		xstep = cos(planeang) / viewport->FocalLengthX;
 		ystep = -sin(planeang) / viewport->FocalLengthX;
 

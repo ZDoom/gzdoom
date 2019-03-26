@@ -123,7 +123,7 @@ FRenderViewpoint::FRenderViewpoint()
 	TanSin = 0.0;
 	camera = nullptr;
 	sector = nullptr;
-	FieldOfView = 90.; // Angles in the SCREENWIDTH wide window
+	FieldOfView = 90.; // Angles in the screen->GetScreenWidth() wide window
 	TicFrac = 0.0;
 	FrameTime = 0;
 	extralight = 0;
@@ -264,13 +264,13 @@ void R_ExecuteSetViewSize (FRenderViewpoint &viewpoint, FViewWindow &viewwindow)
 {
 	setsizeneeded = false;
 
-	R_SetWindow (viewpoint, viewwindow, setblocks, SCREENWIDTH, SCREENHEIGHT, StatusBar->GetTopOfStatusbar());
+	R_SetWindow (viewpoint, viewwindow, setblocks, screen->GetScreenWidth(), screen->GetScreenHeight(), StatusBar->GetTopOfStatusbar());
 
 	// Handle resize, e.g. smaller view windows with border and/or status bar.
-	viewwindowx = (screen->GetWidth() - viewwidth) >> 1;
+	viewwindowx = (screen->GetScreenWidth() - viewwidth) >> 1;
 
 	// Same with base row offset.
-	viewwindowy = (viewwidth == screen->GetWidth()) ? 0 : (StatusBar->GetTopOfStatusbar() - viewheight) >> 1;
+	viewwindowy = (viewwidth == screen->GetScreenWidth()) ? 0 : (StatusBar->GetTopOfStatusbar() - viewheight) >> 1;
 }
 
 //==========================================================================
@@ -314,8 +314,8 @@ double R_GetGlobVis(const FViewWindow &viewwindow, double vis)
 {
 	vis = R_ClampVisibility(vis);
 
-	double virtwidth = screen->GetWidth();
-	double virtheight = screen->GetHeight();
+	double virtwidth = screen->GetScreenWidth();
+	double virtheight = screen->GetScreenHeight();
 
 	if (AspectTallerThanWide(viewwindow.WidescreenRatio))
 	{
@@ -332,14 +332,14 @@ double R_GetGlobVis(const FViewWindow &viewwindow, double vis)
 	double wallVisibility = vis;
 
 	// Prevent overflow on walls
-	double maxVisForWall = (InvZtoScale * (screen->GetWidth() * r_Yaspect) / (viewwidth * screen->GetHeight() * viewwindow.FocalTangent));
+	double maxVisForWall = (InvZtoScale * (screen->GetScreenWidth() * r_Yaspect) / (viewwidth * screen->GetScreenHeight() * viewwindow.FocalTangent));
 	maxVisForWall = 32767.0 / maxVisForWall;
 	if (vis < 0 && vis < -maxVisForWall)
 		wallVisibility = -maxVisForWall;
 	else if (vis > 0 && vis > maxVisForWall)
 		wallVisibility = maxVisForWall;
 
-	wallVisibility = InvZtoScale * screen->GetWidth() * AspectBaseHeight(viewwindow.WidescreenRatio) / (viewwidth * screen->GetHeight() * 3) * (wallVisibility * viewwindow.FocalTangent);
+	wallVisibility = InvZtoScale * screen->GetScreenWidth() * AspectBaseHeight(viewwindow.WidescreenRatio) / (viewwidth * screen->GetScreenHeight() * 3) * (wallVisibility * viewwindow.FocalTangent);
 
 	return wallVisibility / viewwindow.FocalTangent;
 }

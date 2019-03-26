@@ -554,14 +554,14 @@ void F2DDrawer::AddFlatFill(double left, double top, double right, double bottom
 	
 	if (scaleto320x200)
 	{
-		float myratio = ActiveRatio (screen->GetWidth(), screen->GetHeight());
+		float myratio = ActiveRatio (screen->GetUIWidth(), screen->GetUIHeight());
 		if (!AspectTallerThanWide(myratio))
 		{
-			factor = 240 / screen->GetHeight();
+			factor = 240 / screen->GetUIHeight();
 		}
 		else
 		{
-			factor = 320 / screen->GetWidth();
+			factor = 320 / screen->GetUIWidth();
 		}
 	}
 		

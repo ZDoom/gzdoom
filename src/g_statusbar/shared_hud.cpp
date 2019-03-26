@@ -107,8 +107,8 @@ void DBaseStatusBar::DrawAltHUD()
 
 	players[consoleplayer].inventorytics = 0;
 	int scale = GetUIScale(hud_althudscale);
-	int hudwidth = SCREENWIDTH / scale;
-	int hudheight = hud_aspectscale ? int(SCREENHEIGHT / (scale*1.2)) : SCREENHEIGHT / scale;
+	int hudwidth = screen->GetUIWidth() / scale;
+	int hudheight = hud_aspectscale ? int(screen->GetUIHeight() / (scale*1.2)) : screen->GetUIHeight() / scale;
 
 	IFVM(AltHud, Draw)
 	{

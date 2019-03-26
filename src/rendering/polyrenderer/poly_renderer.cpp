@@ -205,12 +205,12 @@ void PolyRenderer::SetSceneViewport()
 	{
 		int height;
 		if (screenblocks >= 10)
-			height = SCREENHEIGHT;
+			height = screen->GetScreenHeight();
 		else
-			height = (screenblocks*SCREENHEIGHT / 10) & ~7;
+			height = (screenblocks*screen->GetScreenHeight() / 10) & ~7;
 
-		int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
-		PolyTriangleDrawer::SetViewport(Threads.MainThread()->DrawQueue, viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget);
+		int bottom = screen->GetScreenHeight() - (height + viewwindowy - ((height - viewheight) / 2));
+		PolyTriangleDrawer::SetViewport(Threads.MainThread()->DrawQueue, viewwindowx, screen->GetScreenHeight() - bottom - height, viewwidth, height, RenderTarget);
 	}
 	else // Rendering to camera texture
 	{

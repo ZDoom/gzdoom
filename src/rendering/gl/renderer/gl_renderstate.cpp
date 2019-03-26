@@ -558,7 +558,7 @@ void FGLRenderState::ClearScreen()
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
 
-	screen->mViewpoints->Set2D(*this, SCREENWIDTH, SCREENHEIGHT);
+	screen->mViewpoints->Set2D(*this, screen->GetScreenWidth(), screen->GetScreenHeight());
 	SetColor(0, 0, 0);
 	Apply();
 

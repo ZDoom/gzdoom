@@ -168,12 +168,12 @@ void DIntermissionScreen::Drawer ()
 		}
 		else
 		{
-			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan.GetTexture(mBackground), false, true);
+			screen->FlatFill (0,0, screen->GetUIWidth(), screen->GetUIHeight(), TexMan.GetTexture(mBackground), false, true);
 		}
 	}
 	else
 	{
-		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+		screen->Clear (0, 0, screen->GetUIWidth(), screen->GetUIHeight(), 0, 0);
 	}
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
@@ -312,20 +312,20 @@ void DIntermissionScreenText::Drawer ()
 		int rowheight = SmallFont->GetHeight() * CleanYfac;
 		int rowpadding = (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1) * CleanYfac;
 
-		int cx = (mTextX - 160)*CleanXfac + screen->GetWidth() / 2;
-		int cy = (mTextY - 100)*CleanYfac + screen->GetHeight() / 2;
+		int cx = (mTextX - 160)*CleanXfac + screen->GetUIWidth() / 2;
+		int cy = (mTextY - 100)*CleanYfac + screen->GetUIHeight() / 2;
 		cx = MAX<int>(0, cx);
 		int startx = cx;
 
 		// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
-		while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetUIHeight())
 		{
 			rowpadding--;
 		}
 		// If it's still off the bottom, try to center it vertically.
-		if (cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		if (cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetUIHeight())
 		{
-			cy = (screen->GetHeight() - (numrows * (rowheight + rowpadding) - rowpadding)) / 2;
+			cy = (screen->GetUIHeight() - (numrows * (rowheight + rowpadding) - rowpadding)) / 2;
 			// If it's off the top now, you're screwed. It's too tall to fit.
 			if (cy < 0)
 			{
@@ -353,7 +353,7 @@ void DIntermissionScreenText::Drawer ()
 			pic = SmallFont->GetChar (c, mTextColor, &w);
 			w += kerning;
 			w *= CleanXfac;
-			if (cx + w > SCREENWIDTH)
+			if (cx + w > screen->GetUIWidth())
 				continue;
 
 			screen->DrawChar(SmallFont, mTextColor, cx, cy, c, DTA_CleanNoMove, true, TAG_DONE);
@@ -544,8 +544,8 @@ void DIntermissionScreenCast::Drawer ()
 	{
 		if (*name == '$') name = GStrings(name+1);
 		screen->DrawText (SmallFont, CR_UNTRANSLATED,
-			(SCREENWIDTH - SmallFont->StringWidth (name) * CleanXfac)/2,
-			(SCREENHEIGHT * 180) / 200,
+			(screen->GetUIWidth() - SmallFont->StringWidth (name) * CleanXfac)/2,
+			(screen->GetUIHeight() * 180) / 200,
 			name,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}

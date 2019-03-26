@@ -261,7 +261,7 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 
 		double pspritexscale = viewport->viewwindow.centerxwide / 160.0;
-		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
+		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul * ((double)screen->GetScreenHeight() / screen->GetScreenWidth()) * r_viewwindow.WidescreenRatio;
 		double pspritexiscale = 1 / pspritexscale;
 
 		int tleft = tex->GetDisplayLeftOffset();

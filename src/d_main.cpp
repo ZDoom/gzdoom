@@ -703,7 +703,7 @@ void D_Display ()
 	{
 		setmodeneeded = false;
 		screen->ToggleFullscreen(fullscreen);
-		V_OutputResized(screen->GetWidth(), screen->GetHeight());
+		V_OutputResized(screen->GetScreenWidth(), screen->GetScreenHeight());
 	}
 
 	// change the view size if needed
@@ -711,8 +711,8 @@ void D_Display ()
 	{
 		if (StatusBar == nullptr)
 		{
-			viewwidth = SCREENWIDTH;
-			viewheight = SCREENHEIGHT;
+			viewwidth = screen->GetScreenWidth();
+			viewheight = screen->GetScreenHeight();
 			setsizeneeded = false;
 		}
 		else
@@ -777,7 +777,7 @@ void D_Display ()
 		screen->DrawBlend(viewsec);
 		if (automapactive)
 		{
-			primaryLevel->automap->Drawer ((hud_althud && viewheight == SCREENHEIGHT) ? viewheight : StatusBar->GetTopOfStatusbar());
+			primaryLevel->automap->Drawer ((hud_althud && viewheight == screen->GetScreenHeight()) ? viewheight : StatusBar->GetTopOfStatusbar());
 		}
 		
 		// for timing the statusbar code.
@@ -788,7 +788,7 @@ void D_Display ()
 		{
 			StatusBar->RefreshViewBorder ();
 		}
-		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
+		if (hud_althud && viewheight == screen->GetScreenHeight() && screenblocks > 10)
 		{
 			StatusBar->DrawBottomStuff (HUD_AltHud);
 			if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
@@ -799,7 +799,7 @@ void D_Display ()
 			StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
 			StatusBar->DrawTopStuff (HUD_AltHud);
 		}
-		else if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
+		else if (viewheight == screen->GetScreenHeight() && viewactive && screenblocks > 10)
 		{
 			EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
 			StatusBar->DrawBottomStuff (state);
@@ -853,14 +853,14 @@ void D_Display ()
 		FString pstring = GStrings("TXT_BY");
 
 		tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
-		x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
+		x = (screen->GetUIWidth() - tex->GetDisplayWidth() * CleanXfac)/2 +
 			tex->GetDisplayLeftOffset() * CleanXfac;
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 		if (paused && multiplayer)
 		{
 			pstring << ' ' << players[paused - 1].userinfo.GetName();
 			screen->DrawText(SmallFont, CR_RED,
-				(screen->GetWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
+				(screen->GetUIWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
 				(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
@@ -1066,7 +1066,7 @@ void D_PageTicker (void)
 
 void D_PageDrawer (void)
 {
-	screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+	screen->Clear(0, 0, screen->GetUIWidth(), screen->GetUIHeight(), 0, 0);
 	if (Page.Exists())
 	{
 		screen->DrawTexture (TexMan.GetTexture(Page, true), 0, 0,
@@ -2329,7 +2329,7 @@ void D_DoomMain (void)
 
 		if (restart)
 		{
-			C_InitConsole(SCREENWIDTH, SCREENHEIGHT, false);
+			C_InitConsole(screen->GetScreenWidth(), screen->GetScreenHeight(), false);
 		}
 		nospriterename = false;
 

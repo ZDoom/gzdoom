@@ -1199,7 +1199,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		auto brok = V_BreakLines(CurrentConsoleFont, screen->GetWidth()*95/100, string);
+		auto brok = V_BreakLines(CurrentConsoleFont, screen->GetUIWidth()*95/100, string);
 
 		for (auto &line : brok)
 		{

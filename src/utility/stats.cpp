@@ -88,7 +88,7 @@ void FStat::PrintStat ()
 	int textScale = active_con_scale();
 
 	int fontheight = NewConsoleFont->GetHeight() + 1;
-	int y = SCREENHEIGHT / textScale;
+	int y = screen->GetUIHeight() / textScale;
 	int count = 0;
 
 	for (FStat *stat = FirstStat; stat != NULL; stat = stat->m_Next)
@@ -106,8 +106,8 @@ void FStat::PrintStat ()
 					if (stattext[i] == '\n') y -= fontheight;
 				}
 				screen->DrawText(NewConsoleFont, CR_GREEN, 5 / textScale, y, stattext,
-					DTA_VirtualWidth, screen->GetWidth() / textScale,
-					DTA_VirtualHeight, screen->GetHeight() / textScale,
+					DTA_VirtualWidth, screen->GetUIWidth() / textScale,
+					DTA_VirtualHeight, screen->GetUIHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);
 				count++;
 			}

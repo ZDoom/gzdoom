@@ -604,12 +604,12 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		}
 		else
 		{
-			screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background, false, true);
+			screen->FlatFill(0, 0, screen->GetUIWidth(), screen->GetUIHeight(), background, false, true);
 		}
 	}
 	else
 	{
-		screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+		screen->Clear(0, 0, screen->GetUIWidth(), screen->GetUIHeight(), 0, 0);
 	}
 
 	for (i = 0; i<anims.Size(); i++)

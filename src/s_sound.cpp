@@ -210,7 +210,7 @@ void S_NoiseDebug (void)
 	// Display the oldest channel first.
 	for (chan = Channels; chan->NextChan != NULL; chan = chan->NextChan)
 	{ }
-	while (y < SCREENHEIGHT - 16)
+	while (y < screen->GetUIHeight() - 16)
 	{
 		char temp[32];
 

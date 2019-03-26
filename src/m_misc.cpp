@@ -622,12 +622,12 @@ void M_ScreenShot (const char *filename)
 		if (writepcx)
 		{
 			WritePCXfile(file, buffer.Data(), nullptr, color_type,
-				screen->GetWidth(), screen->GetHeight(), pitch);
+				screen->GetScreenWidth(), screen->GetScreenHeight(), pitch);
 		}
 		else
 		{
 			WritePNGfile(file, buffer.Data(), nullptr, color_type,
-				screen->GetWidth(), screen->GetHeight(), pitch, gamma);
+				screen->GetScreenWidth(), screen->GetScreenHeight(), pitch, gamma);
 		}
 		delete file;
 

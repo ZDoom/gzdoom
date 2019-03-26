@@ -74,15 +74,15 @@ int GetUIScale(int altval)
 	else if (uiscale == 0)
 	{
 		// Default should try to scale to 640x400
-		int vscale = screen->GetHeight() / 400;
-		int hscale = screen->GetWidth() / 640;
+		int vscale = screen->GetUIHeight() / 400;
+		int hscale = screen->GetUIWidth() / 640;
 		scaleval = clamp(vscale, 1, hscale);
 	}
 	else scaleval = uiscale;
 
 	// block scales that result in something larger than the current screen.
-	int vmax = screen->GetHeight() / 200;
-	int hmax = screen->GetWidth() / 320;
+	int vmax = screen->GetUIHeight() / 200;
+	int hmax = screen->GetUIWidth() / 320;
 	int max = MAX(vmax, hmax);
 	return MAX(1,MIN(scaleval, max));
 }
@@ -95,15 +95,15 @@ int GetConScale(int altval)
 	else if (uiscale == 0)
 	{
 		// Default should try to scale to 640x400
-		int vscale = screen->GetHeight() / 800;
-		int hscale = screen->GetWidth() / 1280;
+		int vscale = screen->GetUIHeight() / 800;
+		int hscale = screen->GetUIWidth() / 1280;
 		scaleval = clamp(vscale, 1, hscale);
 	}
 	else scaleval = uiscale / 2;
 
 	// block scales that result in something larger than the current screen.
-	int vmax = screen->GetHeight() / 400;
-	int hmax = screen->GetWidth() / 640;
+	int vmax = screen->GetUIHeight() / 400;
+	int hmax = screen->GetUIWidth() / 640;
 	int max = MAX(vmax, hmax);
 	return MAX(1, MIN(scaleval, max));
 }
@@ -129,13 +129,13 @@ int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 DEFINE_ACTION_FUNCTION(_Screen, GetWidth)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(screen->GetWidth());
+	ACTION_RETURN_INT(screen->GetUIWidth());
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, GetHeight)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(screen->GetHeight());
+	ACTION_RETURN_INT(screen->GetUIHeight());
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, PaletteColor)
@@ -268,10 +268,10 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
 
 void DFrameBuffer::SetClipRect(int x, int y, int w, int h)
 {
-	clipleft = clamp(x, 0, GetWidth());
-	clipwidth = clamp(w, -1, GetWidth() - x);
-	cliptop = clamp(y, 0, GetHeight());
-	clipheight = clamp(h, -1, GetHeight() - y);
+	clipleft = clamp(x, 0, GetUIWidth());
+	clipwidth = clamp(w, -1, GetUIWidth() - x);
+	cliptop = clamp(y, 0, GetUIHeight());
+	clipheight = clamp(h, -1, GetUIHeight() - y);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, SetClipRect)
@@ -359,8 +359,8 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 			break;
 
 		case DTA_Clean:
-			parms->x = (parms->x - 160.0) * CleanXfac + (Width * 0.5);
-			parms->y = (parms->y - 100.0) * CleanYfac + (Height * 0.5);
+			parms->x = (parms->x - 160.0) * CleanXfac + (GetUIWidth() * 0.5);
+			parms->y = (parms->y - 100.0) * CleanYfac + (GetUIHeight() * 0.5);
 			parms->destwidth = parms->texwidth * CleanXfac;
 			parms->destheight = parms->texheight * CleanYfac;
 			break;
@@ -389,18 +389,18 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 
 			parms->x *= scale.X;
 			if (parms->cleanmode == DTA_HUDRulesC)
-				parms->x += Width * 0.5;
+				parms->x += GetUIWidth() * 0.5;
 			else if (xright)
-				parms->x = Width + parms->x;
+				parms->x = GetUIWidth() + parms->x;
 			parms->y *= scale.Y;
 			if (ybot)
-				parms->y = Height + parms->y;
+				parms->y = GetUIHeight() + parms->y;
 			parms->destwidth = parms->texwidth * scale.X;
 			parms->destheight = parms->texheight * scale.Y;
 			break;
 		}
 		}
-		if (parms->virtWidth != Width || parms->virtHeight != Height)
+		if (parms->virtWidth != GetUIWidth() || parms->virtHeight != GetUIHeight())
 		{
 			VirtualToRealCoords(parms->x, parms->y, parms->destwidth, parms->destheight,
 				parms->virtWidth, parms->virtHeight, parms->virtBottom, !parms->keepratio);
@@ -509,10 +509,10 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->fortext = fortext;
 	parms->windowleft = 0;
 	parms->windowright = INT_MAX;
-	parms->dClip = this->GetHeight();
+	parms->dClip = this->GetUIHeight();
 	parms->uClip = 0;
 	parms->lClip = 0;
-	parms->rClip = this->GetWidth();
+	parms->rClip = this->GetUIWidth();
 	parms->left = INT_MAX;
 	parms->top = INT_MAX;
 	parms->destwidth = INT_MAX;
@@ -527,8 +527,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->color = 0xffffffff;
 	//parms->shadowAlpha = 0;
 	parms->shadowColor = 0;
-	parms->virtWidth = this->GetWidth();
-	parms->virtHeight = this->GetHeight();
+	parms->virtWidth = this->GetUIWidth();
+	parms->virtHeight = this->GetUIHeight();
 	parms->keepratio = false;
 	parms->style.BlendOp = 255;		// Dummy "not set" value
 	parms->masked = true;
@@ -807,7 +807,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_ClipBottom:
-			parms->dClip = MIN(this->GetHeight(), ListGetInt(tags));
+			parms->dClip = MIN(this->GetUIHeight(), ListGetInt(tags));
 			break;
 
 		case DTA_ClipLeft:
@@ -815,7 +815,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_ClipRight:
-			parms->rClip = MIN(this->GetWidth(), ListGetInt(tags));
+			parms->rClip = MIN(this->GetUIWidth(), ListGetInt(tags));
 			break;
 
 		case DTA_ClipTopF:
@@ -823,7 +823,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 				
 		case DTA_ClipBottomF:
-			parms->dClip = MIN<double>(this->GetHeight(), ListGetDouble(tags));
+			parms->dClip = MIN<double>(this->GetUIHeight(), ListGetDouble(tags));
 			break;
 				
 		case DTA_ClipLeftF:
@@ -831,7 +831,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 				
 		case DTA_ClipRightF:
-			parms->rClip = MIN<double>(this->GetWidth(), ListGetDouble(tags));
+			parms->rClip = MIN<double>(this->GetUIWidth(), ListGetDouble(tags));
 			break;
 				
 		case DTA_ShadowAlpha:
@@ -985,6 +985,8 @@ template bool DFrameBuffer::ParseDrawTextureTags<VMVa_List>(FTexture *img, doubl
 void DFrameBuffer::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect) const
 {
+	auto Width = GetUIWidth();
+	auto Height = GetUIHeight();
 	float myratio = handleaspect ? ActiveRatio (Width, Height) : (4.0f / 3.0f);
 
     // if 21:9 AR, map to 16:9 for all callers.
@@ -1066,6 +1068,9 @@ void DFrameBuffer::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 
 void DFrameBuffer::FillBorder (FTexture *img)
 {
+	auto Width = GetUIWidth();
+	auto Height = GetUIHeight();
+
 	float myratio = ActiveRatio (Width, Height);
 
     // if 21:9 AR, fill borders akin to 16:9, since all fullscreen
@@ -1536,11 +1541,11 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 	auto blend = CalcBlend(viewsector, &modulateColor);
 	if (modulateColor != 0xffffffff)
 	{
-		Dim(modulateColor, 1, 0, 0, GetWidth(), GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+		Dim(modulateColor, 1, 0, 0, GetUIWidth(), GetUIHeight(), &LegacyRenderStyles[STYLE_Multiply]);
 	}
 
 	const PalEntry bcolor(255, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z));
-	Dim(bcolor, blend.W, 0, 0, GetWidth(), GetHeight());
+	Dim(bcolor, blend.W, 0, 0, GetUIWidth(), GetUIHeight());
 }
 
 

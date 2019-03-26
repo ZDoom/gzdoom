@@ -104,8 +104,8 @@ DFrameBuffer::~DFrameBuffer()
 
 void DFrameBuffer::SetSize(int width, int height)
 {
-	Width = ViewportScaledWidth(width, height);
-	Height = ViewportScaledHeight(width, height);
+	UIWidth = ScreenWidth = ViewportScaledWidth(width, height);
+	UIHeight = ScreenHeight = ViewportScaledHeight(width, height);
 }
 
 //==========================================================================
@@ -114,9 +114,9 @@ void DFrameBuffer::SetSize(int width, int height)
 //
 //==========================================================================
 
-void V_DrawPaletteTester(int paletteno)
+void DFrameBuffer::DrawPaletteTester(int paletteno)
 {
-	int blocksize = screen->GetHeight() / 50;
+	int blocksize = screen->GetUIHeight() / 50;
 
 	int t = paletteno;
 	int k = 0;
@@ -127,7 +127,7 @@ void V_DrawPaletteTester(int paletteno)
 			int palindex = (t > 1) ? translationtables[TRANSLATION_Standard][t - 2]->Remap[k] : k;
 			PalEntry pe = GPalette.BaseColors[palindex];
 			k++;
-			screen->Dim(pe, 1.f, j*blocksize, i*blocksize, blocksize, blocksize);
+			Dim(pe, 1.f, j*blocksize, i*blocksize, blocksize, blocksize);
 		}
 	}
 }
@@ -156,11 +156,11 @@ void DFrameBuffer::DrawRateStuff ()
 			int textScale = active_con_scale();
 
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2llu ms (%3llu fps)", (unsigned long long)howlong, (unsigned long long)LastCount);
-			rate_x = Width / textScale - NewConsoleFont->StringWidth(&fpsbuff[0]);
-			Clear (rate_x * textScale, 0, Width, NewConsoleFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
+			rate_x = UIWidth / textScale - NewConsoleFont->StringWidth(&fpsbuff[0]);
+			Clear (rate_x * textScale, 0, UIWidth, NewConsoleFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
 			DrawText (NewConsoleFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0],
-				DTA_VirtualWidth, screen->GetWidth() / textScale,
-				DTA_VirtualHeight, screen->GetHeight() / textScale,
+				DTA_VirtualWidth, UIWidth / textScale,
+				DTA_VirtualHeight, UIHeight / textScale,
 				DTA_KeepRatio, true, TAG_DONE);
 
 			uint32_t thisSec = (uint32_t)(ms/1000);
@@ -185,14 +185,14 @@ void DFrameBuffer::DrawRateStuff ()
 		if (tics > 20) tics = 20;
 
 		int i;
-		for (i = 0; i < tics*2; i += 2)		Clear(i, Height-1, i+1, Height, 255, 0);
-		for ( ; i < 20*2; i += 2)			Clear(i, Height-1, i+1, Height, 0, 0);
+		for (i = 0; i < tics*2; i += 2)		Clear(i, UIHeight-1, i+1, UIHeight, 255, 0);
+		for ( ; i < 20*2; i += 2)			Clear(i, UIHeight-1, i+1, UIHeight, 0, 0);
 	}
 
 	// draws the palette for debugging
 	if (vid_showpalette)
 	{
-		V_DrawPaletteTester(vid_showpalette);
+		DrawPaletteTester(vid_showpalette);
 	}
 }
 
@@ -212,7 +212,7 @@ void DFrameBuffer::Update()
 	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
 	if (clientWidth < 320) clientWidth = 320;
 	if (clientHeight < 200) clientHeight = 200;
-	if (clientWidth > 0 && clientHeight > 0 && (GetWidth() != clientWidth || GetHeight() != clientHeight))
+	if (clientWidth > 0 && clientHeight > 0 && (GetScreenWidth() != clientWidth || GetScreenHeight() != clientHeight))
 	{
 		SetVirtualSize(clientWidth, clientHeight);
 		V_OutputResized(clientWidth, clientHeight);
@@ -325,13 +325,13 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	int height, width;
 	if (screenblocks >= 10)
 	{
-		height = GetHeight();
-		width = GetWidth();
+		height = GetScreenHeight();
+		width = GetScreenWidth();
 	}
 	else
 	{
-		height = (screenblocks*GetHeight() / 10) & ~7;
-		width = (screenblocks*GetWidth() / 10);
+		height = (screenblocks*GetScreenHeight() / 10) & ~7;
+		width = (screenblocks*GetScreenWidth() / 10);
 	}
 
 	// Back buffer letterbox for the final output
@@ -344,8 +344,8 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 		clientWidth = 160;
 		clientHeight = 120;
 	}
-	int screenWidth = GetWidth();
-	int screenHeight = GetHeight();
+	int screenWidth = GetScreenWidth();
+	int screenHeight = GetScreenHeight();
 	float scaleX, scaleY;
 	if (ViewportIsScaled43())
 	{
@@ -397,12 +397,12 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 
 int DFrameBuffer::ScreenToWindowX(int x)
 {
-	return mScreenViewport.left + (int)round(x * mScreenViewport.width / (float)GetWidth());
+	return mScreenViewport.left + (int)round(x * mScreenViewport.width / (float)GetScreenWidth());
 }
 
 int DFrameBuffer::ScreenToWindowY(int y)
 {
-	return mScreenViewport.top + mScreenViewport.height - (int)round(y * mScreenViewport.height / (float)GetHeight());
+	return mScreenViewport.top + mScreenViewport.height - (int)round(y * mScreenViewport.height / (float)GetScreenHeight());
 }
 
 void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
@@ -412,6 +412,6 @@ void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 	int letterboxWidth = mOutputLetterbox.width;
 	int letterboxHeight = mOutputLetterbox.height;
 
-	x = int16_t((x - letterboxX) * Width / letterboxWidth);
-	y = int16_t((y - letterboxY) * Height / letterboxHeight);
+	x = int16_t((x - letterboxX) * GetScreenWidth() / letterboxWidth);
+	y = int16_t((y - letterboxY) * GetScreenHeight() / letterboxHeight);
 }

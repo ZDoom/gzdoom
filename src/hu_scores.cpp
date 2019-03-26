@@ -290,7 +290,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 			}
 		}
 
-		int scorexwidth = SCREENWIDTH / MAX(8, numTeams);
+		int scorexwidth = screen->GetUIWidth() / MAX(8, numTeams);
 		int numscores = 0;
 		int scorex;
 
@@ -302,7 +302,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 			}
 		}
 
-		scorex = (SCREENWIDTH - scorexwidth * (numscores - 1)) / 2;
+		scorex = (screen->GetUIWidth() - scorexwidth * (numscores - 1)) / 2;
 
 		for (i = 0; i < Teams.Size(); ++i)
 		{
@@ -331,7 +331,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	col3 = col2 + (SmallFont->StringWidth(text_frags) + 8) * CleanXfac;
 	col4 = col3 + maxscorewidth * CleanXfac;
 	col5 = col4 + (maxnamewidth + 8) * CleanXfac;
-	x = (SCREENWIDTH >> 1) - (((SmallFont->StringWidth(text_delay) * CleanXfac) + col5) >> 1);
+	x = (screen->GetUIWidth() >> 1) - (((SmallFont->StringWidth(text_delay) * CleanXfac) + col5) >> 1);
 
 	screen->DrawText (SmallFont, color, x, y, text_color,
 		DTA_CleanNoMove, true, TAG_DONE);
@@ -386,7 +386,7 @@ static void HU_DrawTimeRemaining (int y)
 		else
 			mysnprintf (str, countof(str), "Level ends in %d:%02d", minutes, seconds);
 		
-		screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
+		screen->DrawText (SmallFont, CR_GREY, screen->GetUIWidth()/2 - SmallFont->StringWidth (str)/2*CleanXfac,
 			y, str, DTA_CleanNoMove, true, TAG_DONE);
 	}
 }

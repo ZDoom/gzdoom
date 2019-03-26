@@ -627,6 +627,7 @@ map MAP04 LOOKUP "TXT_STRIFE_MAP04"
 	sky1 = "SKYMNT02"
 	music = "D_FAST"
 	cluster = 1
+	compat_railing
 }
 
 map MAP05 LOOKUP "TXT_STRIFE_MAP05"

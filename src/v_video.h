@@ -233,6 +233,14 @@ enum
 	DTA_SrcHeight,
 	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
 	DTA_Burn,				// activates the burn shader for this element
+	
+	DTA_ClipTopF,		// don't draw anything above this row (on dest, not source)
+	DTA_ClipBottomF,	// don't draw anything at or below this row (on dest, not source)
+	DTA_ClipLeftF,		// don't draw anything to the left of this column (on dest, not source)
+	DTA_ClipRightF,		// don't draw anything at or to the right of this column (on dest, not source)
+	DTA_CellXF,			// horizontal size of character cell
+	DTA_CellYF,			// vertical size of character cell
+
 };
 
 enum
@@ -259,10 +267,10 @@ struct DrawParms
 	double windowleft;
 	double windowright;
 	int cleanmode;
-	int dclip;
-	int uclip;
-	int lclip;
-	int rclip;
+	double dClip;
+	double uClip;
+	double lClip;
+	double rClip;
 	double top;
 	double left;
 	float Alpha;
@@ -281,8 +289,8 @@ struct DrawParms
 	FRenderStyle style;
 	struct FSpecialColormap *specialcolormap;
 	int desaturate;
-	int scalex, scaley;
-	int cellx, celly;
+	int scalex, scaley;	// may not be needed anymore, once the scaling refactor is done.
+	double cellX, cellY;
 	int maxstrlen;
 	bool fortext;
 	bool virtBottom;
@@ -483,13 +491,13 @@ public:
 	void Clear2D() { m2DDrawer.Clear(); }
 
 	// Dim part of the canvas
-	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
-	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
+	void Dim(PalEntry color, float amount, double x1, double y1, double w, double h, FRenderStyle *style = nullptr);
+	void DoDim(PalEntry color, float amount, double x1, double y1, double w, double h, FRenderStyle *style = nullptr);
 	FVector4 CalcBlend(sector_t * viewsector, PalEntry *modulateColor);
 	void DrawBlend(sector_t * viewsector);
 
 	// Fill an area with a texture
-	void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
+	void FlatFill(double left, double top, double right, double bottom, FTexture *src, bool local_origin = false, bool scaleto320x200 = false);
 
 	// Fill a simple polygon with a texture
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
@@ -497,16 +505,16 @@ public:
 		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip, uint32_t *indices, size_t indexcount);
 
 	// Set an area to a specified color
-	void Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
+	void Clear(double left, double top, double right, double bottom, int palcolor, uint32_t color);
 
 	// Draws a line
-	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor, uint8_t alpha = 255);
+	void DrawLine(double x0, double y0, double x1, double y1, int palColor, uint32_t realcolor, uint8_t alpha = 255);
 
 	// Draws a line with thickness
-	void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, uint32_t realcolor, uint8_t alpha = 255);
+	void DrawThickLine(double x0, double y0, double x1, double y1, double thickness, uint32_t realcolor, uint8_t alpha = 255);
 
 	// Draws a single pixel
-	void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
+	void DrawPixel(double x, double y, int palcolor, uint32_t rgbcolor);
 
 
 	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
@@ -532,8 +540,8 @@ public:
 	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 	void DrawText(FFont *font, int normalcolor, double x, double y, const char32_t *string, int tag_first, ...);
 
-	void DrawFrame(int left, int top, int width, int height);
-	void DrawBorder(FTextureID, int x1, int y1, int x2, int y2);
+	void DrawFrame(double left, double top, double width, double height);
+	void DrawBorder(FTextureID, double x1, double y1, double x2, double y2);
 
 	// Calculate gamma table
 	void CalcGamma(float gamma, uint8_t gammalookup[256]);

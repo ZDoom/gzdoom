@@ -168,7 +168,7 @@ void DIntermissionScreen::Drawer ()
 		}
 		else
 		{
-			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan.GetTexture(mBackground));
+			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan.GetTexture(mBackground), false, true);
 		}
 	}
 	else

@@ -255,7 +255,7 @@ EColorRange V_ParseFontColor(const char32_t *&color_value, int normalcolor, int 
 template<class chartype>
 void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double y, const chartype *string, DrawParms &parms)
 {
-	int 		w;
+	double 		w;
 	const chartype *ch;
 	int 		c;
 	double 		cx;
@@ -265,8 +265,8 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 	int			kerning;
 	FTexture *pic;
 
-	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
-	parms.celly *= parms.scaley;
+	if (parms.cellY == 0) parms.cellY = font->GetHeight() + 1;
+	parms.cellY *= parms.scaley;
 
 	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
@@ -306,20 +306,23 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 		if (c == '\n')
 		{
 			cx = x;
-			cy += parms.celly;
+			cy += parms.cellY;
 			continue;
 		}
 
 		bool redirected = false;
-		if (NULL != (pic = font->GetChar(c, currentcolor, &w, &redirected)))
+		int ww;
+		pic = font->GetChar(c, currentcolor, &ww, &redirected);
+		w = ww;
+		if (pic)
 		{
 			parms.remap = redirected? nullptr : range;
 			SetTextureParms(&parms, pic, cx, cy);
-			if (parms.cellx)
+			if (parms.cellX)
 			{
-				w = parms.cellx;
-				parms.destwidth = parms.cellx;
-				parms.destheight = parms.celly;
+				w = parms.cellX;
+				parms.destwidth = parms.cellX;
+				parms.destheight = parms.cellX;
 			}
 			DrawTextureParms(pic, parms);
 		}

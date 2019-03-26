@@ -119,11 +119,24 @@ public:
 	TArray<int> mIndices;
 	TArray<TwoDVertex> mVertices;
 	TArray<RenderCommand> mData;
+	double mVirtualScale = 1.;
 	
 	int AddCommand(const RenderCommand *data);
 	void AddIndices(int firstvert, int count, ...);
 	bool SetStyle(FTexture *tex, DrawParms &parms, PalEntry &color0, RenderCommand &quad);
 	void SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcolor, PalEntry &overlaycolor);
+	
+	void SetVirtualScale(double h)
+	{
+		mVirtualScale = h;
+	}
+	
+	double ScaleToScreen(double x)
+	{
+		return x * mVirtualScale;
+	}
+	
+	void ApplyScale(DrawParms &parms);
 
 public:
 	void AddTexture(FTexture *img, DrawParms &parms);
@@ -131,17 +144,15 @@ public:
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, uint32_t *indices, size_t indexcount);
-	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin);
+	void AddFlatFill(double left, double top, double right, double bottom, FTexture *src, bool local_origin, bool scaleto320x200 = false);
 
-	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style);
+	void AddColorOnlyQuad(double left, double top, double width, double height, PalEntry color, FRenderStyle *style);
 
-	void AddDim(PalEntry color, float damount, int x1, int y1, int w, int h);
-	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
-	
+	void AddDim(PalEntry color, float damount, double x1, double y1, double w, double h);	
 		
-	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color, uint8_t alpha = 255);
-	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha = 255);
-	void AddPixel(int x1, int y1, int palcolor, uint32_t color);
+	void AddLine(double x1, double y1, double x2, double y2, int palcolor, uint32_t color, uint8_t alpha = 255);
+	void AddThickLine(double x1, double y1, double x2, double y2, double thickness, uint32_t color, uint8_t alpha = 255);
+	void AddPixel(double x1, double y1, int palcolor, uint32_t color);
 
 	void Clear();
 

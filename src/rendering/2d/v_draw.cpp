@@ -509,10 +509,10 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->fortext = fortext;
 	parms->windowleft = 0;
 	parms->windowright = INT_MAX;
-	parms->dclip = this->GetHeight();
-	parms->uclip = 0;
-	parms->lclip = 0;
-	parms->rclip = this->GetWidth();
+	parms->dClip = this->GetHeight();
+	parms->uClip = 0;
+	parms->lClip = 0;
+	parms->rClip = this->GetWidth();
 	parms->left = INT_MAX;
 	parms->top = INT_MAX;
 	parms->destwidth = INT_MAX;
@@ -537,7 +537,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->desaturate = 0;
 	parms->cleanmode = DTA_Base;
 	parms->scalex = parms->scaley = 1;
-	parms->cellx = parms->celly = 0;
+	parms->cellX = parms->cellY = 0;
 	parms->maxstrlen = INT_MAX;
 	parms->virtBottom = false;
 	parms->srcx = 0.;
@@ -803,37 +803,37 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_ClipTop:
-			parms->uclip = ListGetInt(tags);
-			if (parms->uclip < 0)
-			{
-				parms->uclip = 0;
-			}
+			parms->uClip = MAX(0, ListGetInt(tags));
 			break;
 
 		case DTA_ClipBottom:
-			parms->dclip = ListGetInt(tags);
-			if (parms->dclip > this->GetHeight())
-			{
-				parms->dclip = this->GetHeight();
-			}
+			parms->dClip = MIN(this->GetHeight(), ListGetInt(tags));
 			break;
 
 		case DTA_ClipLeft:
-			parms->lclip = ListGetInt(tags);
-			if (parms->lclip < 0)
-			{
-				parms->lclip = 0;
-			}
+			parms->lClip = MAX(0, ListGetInt(tags));
 			break;
 
 		case DTA_ClipRight:
-			parms->rclip = ListGetInt(tags);
-			if (parms->rclip > this->GetWidth())
-			{
-				parms->rclip = this->GetWidth();
-			}
+			parms->rClip = MIN(this->GetWidth(), ListGetInt(tags));
 			break;
 
+		case DTA_ClipTopF:
+			parms->uClip = MAX(0., ListGetDouble(tags));
+			break;
+				
+		case DTA_ClipBottomF:
+			parms->dClip = MIN<double>(this->GetHeight(), ListGetDouble(tags));
+			break;
+				
+		case DTA_ClipLeftF:
+			parms->lClip = MAX(0., ListGetDouble(tags));
+			break;
+				
+		case DTA_ClipRightF:
+			parms->rClip = MIN<double>(this->GetWidth(), ListGetDouble(tags));
+			break;
+				
 		case DTA_ShadowAlpha:
 			//parms->shadowAlpha = (float)MIN(1., ListGetDouble(tags));
 			break;
@@ -890,13 +890,21 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_CellX:
-			parms->cellx = ListGetInt(tags);
+			parms->cellX = ListGetInt(tags);
 			break;
 
 		case DTA_CellY:
-			parms->celly = ListGetInt(tags);
+			parms->cellY = ListGetInt(tags);
 			break;
 		
+		case DTA_CellXF:
+			parms->cellX = ListGetDouble(tags);
+			break;
+				
+		case DTA_CellYF:
+			parms->cellY = ListGetDouble(tags);
+			break;
+				
 		case DTA_Burn:
 			parms->burn = true;
 			break;
@@ -914,13 +922,13 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	// intersect with the canvas's clipping rectangle.
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
-		if (parms->lclip < clipleft) parms->lclip = clipleft;
-		if (parms->rclip > clipleft + clipwidth) parms->rclip = clipleft + clipwidth;
-		if (parms->uclip < cliptop) parms->uclip = cliptop;
-		if (parms->dclip > cliptop + clipheight) parms->dclip = cliptop + clipheight;
+		if (parms->lClip < clipleft) parms->lClip = clipleft;
+		if (parms->rClip > clipleft + clipwidth) parms->rClip = clipleft + clipwidth;
+		if (parms->uClip < cliptop) parms->uClip = cliptop;
+		if (parms->dClip > cliptop + clipheight) parms->dClip = cliptop + clipheight;
 	}
 
-	if (parms->uclip >= parms->dclip || parms->lclip >= parms->rclip)
+	if (parms->uClip >= parms->dClip || parms->lClip >= parms->rClip)
 	{
 		return false;
 	}
@@ -1108,7 +1116,7 @@ void DFrameBuffer::FillBorder (FTexture *img)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor, uint8_t alpha)
+void DFrameBuffer::DrawLine(double x0, double y0, double x1, double y1, int palColor, uint32_t realcolor, uint8_t alpha)
 {
 	m2DDrawer.AddLine(x0, y0, x1, y1, palColor, realcolor, alpha);
 }
@@ -1116,10 +1124,10 @@ void DFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32
 DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(x0);
-	PARAM_INT(y0);
-	PARAM_INT(x1);
-	PARAM_INT(y1);
+	PARAM_FLOAT(x0);
+	PARAM_FLOAT(y0);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
@@ -1127,17 +1135,17 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
 	return 0;
 }
 
-void DFrameBuffer::DrawThickLine(int x0, int y0, int x1, int y1, double thickness, uint32_t realcolor, uint8_t alpha) {
+void DFrameBuffer::DrawThickLine(double x0, double y0, double x1, double y1, double thickness, uint32_t realcolor, uint8_t alpha) {
 	m2DDrawer.AddThickLine(x0, y0, x1, y1, thickness, realcolor, alpha);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawThickLine)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(x0);
-	PARAM_INT(y0);
-	PARAM_INT(x1);
-	PARAM_INT(y1);
+	PARAM_FLOAT(x0);
+	PARAM_FLOAT(y0);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
 	PARAM_FLOAT(thickness);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
@@ -1152,7 +1160,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawThickLine)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
+void DFrameBuffer::DrawPixel(double x, double y, int palColor, uint32_t realcolor)
 {
 	m2DDrawer.AddPixel(x, y, palColor, realcolor);
 }
@@ -1165,12 +1173,12 @@ void DFrameBuffer::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
 //
 //==========================================================================
 
-void DFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void DFrameBuffer::Clear(double left, double top, double right, double bottom, int palcolor, uint32_t color)
 {
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
-		int w = right - left;
-		int h = bottom - top;
+		double w = right - left;
+		double h = bottom - top;
 		if (left < clipleft)
 		{
 			w -= (clipleft - left);
@@ -1200,10 +1208,10 @@ void DFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor,
 DEFINE_ACTION_FUNCTION(_Screen, Clear)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(x1);
-	PARAM_INT(y1);
-	PARAM_INT(x2);
-	PARAM_INT(y2);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
+	PARAM_FLOAT(x2);
+	PARAM_FLOAT(y2);
 	PARAM_INT(color);
 	PARAM_INT(palcol);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
@@ -1219,7 +1227,7 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 //
 //==========================================================================
 
-void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style)
+void DFrameBuffer::DoDim(PalEntry color, float amount, double x1, double y1, double w, double h, FRenderStyle *style)
 {
 	if (amount <= 0)
 	{
@@ -1232,7 +1240,7 @@ void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, in
 	m2DDrawer.AddColorOnlyQuad(x1, y1, w, h, (color.d & 0xffffff) | (int(amount * 255) << 24), style);
 }
 
-void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle *style)
+void DFrameBuffer::Dim(PalEntry color, float damount, double x1, double y1, double w, double h, FRenderStyle *style)
 {
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
@@ -1260,10 +1268,10 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 	PARAM_PROLOGUE;
 	PARAM_INT(color);
 	PARAM_FLOAT(amount);
-	PARAM_INT(x1);
-	PARAM_INT(y1);
-	PARAM_INT(w);
-	PARAM_INT(h);
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	screen->Dim(color, float(amount), x1, y1, w, h);
 	return 0;
@@ -1300,9 +1308,9 @@ void DFrameBuffer::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 //
 //==========================================================================
 
-void DFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
+void DFrameBuffer::FlatFill(double left, double top, double right, double bottom, FTexture *src, bool local_origin, bool scaleto320x200)
 {
-	m2DDrawer.AddFlatFill(left, top, right, bottom, src, local_origin);
+	m2DDrawer.AddFlatFill(left, top, right, bottom, src, local_origin, scaleto320x200);
 }
 
 //==========================================================================
@@ -1314,7 +1322,7 @@ void DFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTexture *
 //
 //==========================================================================
 
-void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
+void DFrameBuffer::DrawFrame (double left, double top, double width, double height)
 {
 	FTexture *p;
 	const gameborder_t *border = &gameinfo.Border;
@@ -1322,8 +1330,8 @@ void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
 	if (border == NULL)
 		return;
 	int offset = border->offset;
-	int right = left + width;
-	int bottom = top + height;
+	double right = left + width;
+	double bottom = top + height;
 
 	// Draw top and bottom sides.
 	p = TexMan.GetTextureByName(border->t);
@@ -1347,10 +1355,10 @@ void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
 DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
 {
 	PARAM_PROLOGUE;
-	PARAM_INT(x);
-	PARAM_INT(y);
-	PARAM_INT(w);
-	PARAM_INT(h);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(w);
+	PARAM_FLOAT(h);
 	screen->DrawFrame(x, y, w, h);
 	return 0;
 }
@@ -1361,7 +1369,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawBorder (FTextureID picnum, int x1, int y1, int x2, int y2)
+void DFrameBuffer::DrawBorder (FTextureID picnum, double x1, double y1, double x2, double y2)
 {
 	if (picnum.isValid())
 	{

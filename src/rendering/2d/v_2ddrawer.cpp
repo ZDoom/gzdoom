@@ -275,6 +275,28 @@ void F2DDrawer::SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcol
 
 //==========================================================================
 //
+// Scales the content of the DrawParms structure
+//
+//==========================================================================
+
+void F2DDrawer::ApplyScale(DrawParms &parms)
+{
+	// This scales all the coordinates which are in screen space.
+	// It does nothing with any coordinate in texture space!
+	parms.x = ScaleToScreen(parms.x);
+	parms.y = ScaleToScreen(parms.y);
+	parms.destwidth = ScaleToScreen(parms.destwidth);
+	parms.destheight = ScaleToScreen(parms.destheight);
+	parms.dClip = ScaleToScreen(parms.dClip);
+	parms.uClip = ScaleToScreen(parms.uClip);
+	parms.lClip = ScaleToScreen(parms.lClip);
+	parms.rClip = ScaleToScreen(parms.rClip);
+	parms.cellX = ScaleToScreen(parms.cellX);
+	parms.cellY = ScaleToScreen(parms.cellY);
+}
+
+//==========================================================================
+//
 // Draws a texture
 //
 //==========================================================================
@@ -283,6 +305,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 {
 	if (parms.style.BlendOp == STYLEOP_None) return;	// not supposed to be drawn.
 
+ 	if (mVirtualScale != 1.) ApplyScale(parms);
 	double xscale = parms.destwidth / parms.texwidth;
 	double yscale = parms.destheight / parms.texheight;
 	double x = parms.x - parms.left * xscale;
@@ -329,12 +352,12 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 		u2 = float(u2 - (parms.texwidth - wi) / parms.texwidth);
 	}
 
-	if (x < (double)parms.lclip || y < (double)parms.uclip || x + w >(double)parms.rclip || y + h >(double)parms.dclip)
+	if (x < parms.lClip || y < parms.uClip || x + w >parms.rClip || y + h > parms.dClip)
 	{
-		dg.mScissor[0] = parms.lclip;
-		dg.mScissor[1] = parms.uclip;
-		dg.mScissor[2] = parms.rclip;
-		dg.mScissor[3] = parms.dclip;
+		dg.mScissor[0] = xs_RoundToInt(parms.lClip);
+		dg.mScissor[1] = xs_RoundToInt(parms.uClip);
+		dg.mScissor[2] = xs_RoundToInt(parms.rClip);
+		dg.mScissor[3] = xs_RoundToInt(parms.dClip);
 		dg.mFlags |= DTF_Scissor;
 	}
 	else
@@ -388,21 +411,23 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 		if ( shape->mVertices[i].X > maxx ) maxx = shape->mVertices[i].X;
 		if ( shape->mVertices[i].Y > maxy ) maxy = shape->mVertices[i].Y;
 	}
-	if (minx < (double)parms.lclip || miny < (double)parms.uclip || maxx >(double)parms.rclip || maxy >(double)parms.dclip)
+	if (minx < parms.lClip || miny < parms.uClip || maxx >parms.rClip || maxy > parms.dClip)
 	{
-		dg.mScissor[0] = parms.lclip;
-		dg.mScissor[1] = parms.uclip;
-		dg.mScissor[2] = parms.rclip;
-		dg.mScissor[3] = parms.dclip;
+		dg.mScissor[0] = xs_RoundToInt(ScaleToScreen(parms.lClip));
+		dg.mScissor[1] = xs_RoundToInt(ScaleToScreen(parms.uClip));
+		dg.mScissor[2] = xs_RoundToInt(ScaleToScreen(parms.rClip));
+		dg.mScissor[3] = xs_RoundToInt(ScaleToScreen(parms.dClip));
 		dg.mFlags |= DTF_Scissor;
 	}
 	else
+	{
 		memset(dg.mScissor, 0, sizeof(dg.mScissor));
+	}
 
 	dg.mVertIndex = (int)mVertices.Reserve(dg.mVertCount);
 	TwoDVertex *ptr = &mVertices[dg.mVertIndex];
 	for ( int i=0; i<dg.mVertCount; i++ )
-		ptr[i].Set(shape->mVertices[i].X, shape->mVertices[i].Y, 0, shape->mCoords[i].X, shape->mCoords[i].Y, vertexcolor);
+		ptr[i].Set(ScaleToScreen(shape->mVertices[i].X), ScaleToScreen(shape->mVertices[i].Y), 0, shape->mCoords[i].X, shape->mCoords[i].Y, vertexcolor);
 	dg.mIndexIndex = mIndices.Size();
 	dg.mIndexCount += shape->mIndices.Size();
 	for ( int i=0; i<int(shape->mIndices.Size()); i+=3 )
@@ -482,7 +507,7 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 			u = t * cosrot - v * sinrot;
 			v = v * cosrot + t * sinrot;
 		}
-		mVertices[poly.mVertIndex+i].Set(points[i].X, points[i].Y, 0, u*uscale, v*vscale, color0);
+		mVertices[poly.mVertIndex+i].Set(ScaleToScreen(points[i].X), ScaleToScreen(points[i].Y), 0, u*uscale, v*vscale, color0);
 	}
 	poly.mIndexIndex = mIndices.Size();
 	poly.mIndexCount += (npoints - 2) * 3;
@@ -512,7 +537,7 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 //
 //==========================================================================
 
-void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
+void F2DDrawer::AddFlatFill(double left, double top, double right, double bottom, FTexture *src, bool local_origin, bool scaleto320x200)
 {
 	float fU1, fU2, fV1, fV2;
 
@@ -524,22 +549,41 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 	dg.mVertCount = 4;
 	dg.mTexture = src;
 	dg.mFlags = DTF_Wrap;
-
+	
+	float factor = 1.f;
+	
+	if (scaleto320x200)
+	{
+		float myratio = ActiveRatio (screen->GetWidth(), screen->GetHeight());
+		if (!AspectTallerThanWide(myratio))
+		{
+			factor = 240 / screen->GetHeight();
+		}
+		else
+		{
+			factor = 320 / screen->GetWidth();
+		}
+	}
+		
+	
 	// scaling is not used here.
 	if (!local_origin)
 	{
-		fU1 = float(left) / src->GetDisplayWidth();
-		fV1 = float(top) / src->GetDisplayHeight();
-		fU2 = float(right) / src->GetDisplayWidth();
-		fV2 = float(bottom) / src->GetDisplayHeight();
+		fU1 = float(ScaleToScreen(left)) * factor / src->GetDisplayWidth();
+		fV1 = float(ScaleToScreen(top)) * factor / src->GetDisplayHeight();
+		fU2 = float(ScaleToScreen(right)) * factor / src->GetDisplayWidth();
+		fV2 = float(ScaleToScreen(bottom)) * factor / src->GetDisplayHeight();
 	}
 	else
 	{
 		fU1 = 0;
 		fV1 = 0;
-		fU2 = float(right - left) / src->GetDisplayWidth();
-		fV2 = float(bottom - top) / src->GetDisplayHeight();
+		fU2 = float(ScaleToScreen(right - left)) * factor / src->GetDisplayWidth();
+		fV2 = float(ScaleToScreen(bottom - top)) * factor / src->GetDisplayHeight();
 	}
+	
+	
+	
 	dg.mVertIndex = (int)mVertices.Reserve(4);
 	auto ptr = &mVertices[dg.mVertIndex];
 
@@ -560,7 +604,7 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 //
 //===========================================================================
 
-void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, FRenderStyle *style)
+void F2DDrawer::AddColorOnlyQuad(double x1, double y1, double w, double h, PalEntry color, FRenderStyle *style)
 {
 	RenderCommand dg;
 
@@ -569,6 +613,10 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 	dg.mVertIndex = (int)mVertices.Reserve(4);
 	dg.mRenderStyle = style? *style : LegacyRenderStyles[STYLE_Translucent];
 	auto ptr = &mVertices[dg.mVertIndex];
+	x1 = ScaleToScreen(x1);
+	y1 = ScaleToScreen(y1);
+	w = ScaleToScreen(w);
+	h = ScaleToScreen(h);
 	ptr->Set(x1, y1, 0, 0, 0, color); ptr++;
 	ptr->Set(x1, y1 + h, 0, 0, 0, color); ptr++;
 	ptr->Set(x1 + w, y1, 0, 0, 0, color); ptr++;
@@ -585,7 +633,7 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 //
 //==========================================================================
 
-void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color, uint8_t alpha)
+void F2DDrawer::AddLine(double x1, double y1, double x2, double y2, int palcolor, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
 	p.a = alpha;
@@ -596,8 +644,8 @@ void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t c
 	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
 	dg.mVertCount = 2;
 	dg.mVertIndex = (int)mVertices.Reserve(2);
-	mVertices[dg.mVertIndex].Set(x1, y1, 0, 0, 0, p);
-	mVertices[dg.mVertIndex+1].Set(x2, y2, 0, 0, 0, p);
+	mVertices[dg.mVertIndex].Set(ScaleToScreen(x1), ScaleToScreen(y1), 0, 0, 0, p);
+	mVertices[dg.mVertIndex+1].Set(ScaleToScreen(x2), ScaleToScreen(y2), 0, 0, 0, p);
 	AddCommand(&dg);
 }
 
@@ -607,13 +655,13 @@ void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t c
 //
 //==========================================================================
 
-void F2DDrawer::AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha)
+void F2DDrawer::AddThickLine(double x1, double y1, double x2, double y2, double thickness, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = (PalEntry)color;
 	p.a = alpha;
 
-	DVector2 point0(x1, y1);
-	DVector2 point1(x2, y2);
+	DVector2 point0(ScaleToScreen(x1), ScaleToScreen(y1));
+	DVector2 point1(ScaleToScreen(x2), ScaleToScreen(y2));
 
 	DVector2 delta = point1 - point0;
 	DVector2 perp(-delta.Y, delta.X);
@@ -648,7 +696,7 @@ void F2DDrawer::AddThickLine(int x1, int y1, int x2, int y2, double thickness, u
 //
 //==========================================================================
 
-void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32_t color)
+void F2DDrawer::AddPixel(double x1, double y1, int palcolor, uint32_t color)
 {
 	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
 	p.a = 255;
@@ -659,7 +707,7 @@ void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32_t color)
 	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
 	dg.mVertCount = 1;
 	dg.mVertIndex = (int)mVertices.Reserve(1);
-	mVertices[dg.mVertIndex].Set(x1, y1, 0, 0, 0, p);
+	mVertices[dg.mVertIndex].Set(ScaleToScreen(x1), ScaleToScreen(y1), 0, 0, 0, p);
 	AddCommand(&dg);
 }
 

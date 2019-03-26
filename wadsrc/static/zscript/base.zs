@@ -207,16 +207,16 @@ struct Screen native
 	native static Color PaletteColor(int index);
 	native static int GetWidth();
 	native static int GetHeight();
-	native static void Clear(int left, int top, int right, int bottom, Color color, int palcolor = -1);
-	native static void Dim(Color col, double amount, int x, int y, int w, int h);
+	native static void Clear(double left, double top, double right, double bottom, Color color, int palcolor = -1);
+	native static void Dim(Color col, double amount, double x, double y, double w, double h);
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
-	native static void DrawLine(int x0, int y0, int x1, int y1, Color color, int alpha = 255);
-	native static void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, Color color, int alpha = 255);
-	native static void DrawFrame(int x, int y, int w, int h);
+	native static void DrawLine(double x0, double y0, double x1, double y1, Color color, int alpha = 255);
+	native static void DrawThickLine(double x0, double y0, double x1, double y1, double thickness, Color color, int alpha = 255);
+	native static void DrawFrame(double x, double y, double w, double h);
 	native static Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
 	native static double GetAspectRatio();
 	native static void SetClipRect(int x, int y, int w, int h);

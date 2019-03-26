@@ -604,7 +604,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 		}
 		else
 		{
-			screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background);
+			screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background, false, true);
 		}
 	}
 	else

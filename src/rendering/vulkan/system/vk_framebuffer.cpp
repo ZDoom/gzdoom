@@ -252,7 +252,7 @@ void VulkanFrameBuffer::FPSLimit()
 		else
 		{
 			// Sleep, but try to wake before deadline.
-			sleep_for(milliseconds(timeToWait - 1'000'000));
+			sleep_for(microseconds(timeToWait - 1'000'000));
 		}
 	}
 }

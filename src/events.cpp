@@ -46,6 +46,13 @@
 EventManager staticEventManager;
 EventManager eventManager;
 
+void EventManager::CallOnRegister()
+{
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+	{
+		handler->OnRegister();
+	}
+}
 
 bool EventManager::RegisterHandler(DStaticEventHandler* handler)
 {

@@ -1299,6 +1299,14 @@ class LevelCompatibility native play
 				break;
 			}
 			
+			case '3B1F637295F5669E99BE63F1B1CA29DF': // titan426.wad map01
+			{
+				// Missing teleport destinations on easy skill
+				SetThingSkills(138, 31); // secret
+				SetThingSkills(1127, 31); // return from exit room
+				break;
+			}
+
 		}
 	}
 

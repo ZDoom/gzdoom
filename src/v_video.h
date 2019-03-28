@@ -450,9 +450,10 @@ public:
 	virtual IIndexBuffer *CreateIndexBuffer() { return nullptr; }
 	virtual IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
+	void UpdateVirtualSize();
 
 	// Begin/End 2D drawing operations.
-	void Begin2D() { isIn2D = true; }
+	void Begin2D() { isIn2D = true; UpdateVirtualSize(); }
 	void End2D() { isIn2D = false; }
 
 	void End2DAndUpdate()

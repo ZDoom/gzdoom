@@ -56,6 +56,10 @@
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 CVAR(Bool, vid_fps, false, 0)
 CVAR(Int, vid_showpalette, 0, 0)
+CUSTOM_CVAR(Int, hud_virtualheight, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self > 0 && self < 480) self = 480;
+}
 
 EXTERN_CVAR(Bool, ticker)
 EXTERN_CVAR(Float, vid_brightness)
@@ -106,6 +110,28 @@ void DFrameBuffer::SetSize(int width, int height)
 {
 	UIWidth = ScreenWidth = ViewportScaledWidth(width, height);
 	UIHeight = ScreenHeight = ViewportScaledHeight(width, height);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DFrameBuffer::UpdateVirtualSize()
+{
+	if (hud_virtualheight < 0)
+	{
+		UIWidth = ScreenWidth;
+		UIHeight = ScreenHeight;
+		m2DDrawer.SetVirtualScale(1);
+	}
+	else
+	{
+		UIHeight = hud_virtualheight;
+		UIWidth = Scale(ScreenWidth, UIHeight, ScreenHeight);
+		m2DDrawer.SetVirtualScale(double(ScreenHeight) / UIHeight);
+	}
 }
 
 //==========================================================================

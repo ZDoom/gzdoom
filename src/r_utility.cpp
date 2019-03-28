@@ -67,7 +67,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern bool DrawFSHUD;		// [RH] Defined in d_main.cpp
+bool DrawFSHUD;
 EXTERN_CVAR (Bool, cl_capfps)
 
 // TYPES -------------------------------------------------------------------

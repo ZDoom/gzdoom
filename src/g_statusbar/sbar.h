@@ -448,6 +448,8 @@ public:
 	{
 		return SBarTop;
 	}
+	
+	void DrawAll();
 
 //protected:
 	void DrawPowerups ();

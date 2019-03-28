@@ -47,7 +47,6 @@
 CVAR(String, r_viewsize, "", CVAR_NOSET)
 
 EXTERN_CVAR(Float, r_visibility);
-EXTERN_CVAR(Int, screenblocks)
 
 namespace swrenderer
 {

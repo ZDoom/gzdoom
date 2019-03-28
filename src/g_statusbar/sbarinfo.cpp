@@ -61,7 +61,6 @@ enum
 };
 
 EXTERN_CVAR(Int, fraglimit)
-EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, vid_fps)
 
 class DSBarInfo;

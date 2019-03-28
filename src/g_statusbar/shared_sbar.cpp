@@ -84,12 +84,17 @@ EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
+EXTERN_CVAR(Int, screenblocks)
+EXTERN_CVAR(Bool, hud_althud)
+
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 
 
 DBaseStatusBar *StatusBar;
 
 extern int setblocks;
+extern bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
+
 
 FTexture *CrosshairImage;
 static int CrosshairNum;
@@ -741,6 +746,52 @@ void DBaseStatusBar::DetachAllMessages ()
 			probe = next;
 		}
 	}
+}
+
+//---------------------------------------------------------------------------
+//
+// PROC DrawAll
+//
+//---------------------------------------------------------------------------
+
+void DBaseStatusBar::DrawAll()
+{
+	// for timing the statusbar code.
+	//cycle_t stb;
+	//stb.Reset();
+	//stb.Clock();
+	auto &vp = r_viewpoint;
+
+	if (!automapactive || viewactive)
+	{
+		RefreshViewBorder ();
+	}
+	if (hud_althud && viewheight == screen->GetScreenHeight() && screenblocks > 10)
+	{
+		DrawBottomStuff (HUD_AltHud);
+		if (DrawFSHUD || automapactive) DrawAltHUD();
+		if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
+		{
+			DrawCrosshair();
+		}
+		CallDraw (HUD_AltHud, vp.TicFrac);
+		DrawTopStuff (HUD_AltHud);
+	}
+	else if (viewheight == screen->GetScreenHeight() && viewactive && screenblocks > 10)
+	{
+		EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
+		DrawBottomStuff (state);
+		CallDraw (state, vp.TicFrac);
+		DrawTopStuff (state);
+	}
+	else
+	{
+		DrawBottomStuff (HUD_StatusBar);
+		CallDraw (HUD_StatusBar, vp.TicFrac);
+		DrawTopStuff (HUD_StatusBar);
+	}
+	//stb.Unclock();
+	//Printf("Stbar = %f\n", stb.TimeMS());
 }
 
 //---------------------------------------------------------------------------

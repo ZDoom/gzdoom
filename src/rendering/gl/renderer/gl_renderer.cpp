@@ -62,7 +62,6 @@
 #include "r_data/models/models.h"
 #include "gl/renderer/gl_postprocessstate.h"
 
-EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
 
 extern bool NoInterpolateView;

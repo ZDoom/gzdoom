@@ -146,7 +146,6 @@ EXTERN_CVAR (Float, m_pitch)
 EXTERN_CVAR (Float, m_yaw)
 EXTERN_CVAR (Bool, invertmouse)
 EXTERN_CVAR (Bool, lookstrafe)
-EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, sv_cheats)
 EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, I_FriendlyWindowTitle)
@@ -208,7 +207,6 @@ CVAR (Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALC
 CVAR (Bool, r_debug_disable_vis_filter, false, 0)
 
 bool wantToRestart;
-bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 TArray<FString> allwads;
 bool devparm;				// started game with -devparm
 const char *D_DrawIcon;	// [RH] Patch name of icon to draw on next refresh
@@ -379,6 +377,49 @@ void D_Render(std::function<void()> action, bool interpolate)
 	if (interpolate) for (auto Level : AllLevels())
 	{
 		Level->interpolator.RestoreInterpolations();
+	}
+}
+
+void D_DrawOverlays()
+{
+	// draw pause pic
+	if ((paused || pauseext) && menuactive == MENU_Off)
+	{
+		FTexture *tex;
+		int x;
+		FString pstring = GStrings("TXT_BY");
+		
+		tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
+		x = (screen->GetUIWidth() - tex->GetDisplayWidth() * CleanXfac)/2 +
+		tex->GetDisplayLeftOffset() * CleanXfac;
+		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+		if (paused && multiplayer)
+		{
+			pstring << ' ' << players[paused - 1].userinfo.GetName();
+			screen->DrawText(SmallFont, CR_RED,
+							 (screen->GetUIWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
+							 (tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+		}
+	}
+	
+	// [RH] Draw icon, if any
+	if (D_DrawIcon)
+	{
+		FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, ETextureType::MiscPatch);
+		
+		D_DrawIcon = NULL;
+		if (picnum.isValid())
+		{
+			FTexture *tex = TexMan.GetTexture(picnum);
+			screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
+								 DTA_320x200, true, TAG_DONE);
+		}
+		NoWipe = 10;
+	}
+	
+	if (snd_drawoutput)
+	{
+		GSnd->DrawWaveDebug(snd_drawoutput);
 	}
 }
 
@@ -779,41 +820,7 @@ void D_Display ()
 		{
 			primaryLevel->automap->Drawer ((hud_althud && viewheight == screen->GetScreenHeight()) ? viewheight : StatusBar->GetTopOfStatusbar());
 		}
-		
-		// for timing the statusbar code.
-		//cycle_t stb;
-		//stb.Reset();
-		//stb.Clock();
-		if (!automapactive || viewactive)
-		{
-			StatusBar->RefreshViewBorder ();
-		}
-		if (hud_althud && viewheight == screen->GetScreenHeight() && screenblocks > 10)
-		{
-			StatusBar->DrawBottomStuff (HUD_AltHud);
-			if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
-			if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
-			{
-				StatusBar->DrawCrosshair();
-			}
-			StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
-			StatusBar->DrawTopStuff (HUD_AltHud);
-		}
-		else if (viewheight == screen->GetScreenHeight() && viewactive && screenblocks > 10)
-		{
-			EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
-			StatusBar->DrawBottomStuff (state);
-			StatusBar->CallDraw (state, vp.TicFrac);
-			StatusBar->DrawTopStuff (state);
-		}
-		else
-		{
-			StatusBar->DrawBottomStuff (HUD_StatusBar);
-			StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
-			StatusBar->DrawTopStuff (HUD_StatusBar);
-		}
-		//stb.Unclock();
-		//Printf("Stbar = %f\n", stb.TimeMS());
+		StatusBar->DrawAll();
 	}
 	else
 	{
@@ -821,7 +828,6 @@ void D_Display ()
 		switch (gamestate)
 		{
 			case GS_FULLCONSOLE:
-				screen->Begin2D();
 				C_DrawConsole ();
 				M_Drawer ();
 				screen->End2DAndUpdate ();
@@ -844,46 +850,7 @@ void D_Display ()
 		}
 	}
 	CT_Drawer ();
-
-	// draw pause pic
-	if ((paused || pauseext) && menuactive == MENU_Off)
-	{
-		FTexture *tex;
-		int x;
-		FString pstring = GStrings("TXT_BY");
-
-		tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
-		x = (screen->GetUIWidth() - tex->GetDisplayWidth() * CleanXfac)/2 +
-			tex->GetDisplayLeftOffset() * CleanXfac;
-		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
-		if (paused && multiplayer)
-		{
-			pstring << ' ' << players[paused - 1].userinfo.GetName();
-			screen->DrawText(SmallFont, CR_RED,
-				(screen->GetUIWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
-				(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
-		}
-	}
-
-	// [RH] Draw icon, if any
-	if (D_DrawIcon)
-	{
-		FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, ETextureType::MiscPatch);
-
-		D_DrawIcon = NULL;
-		if (picnum.isValid())
-		{
-			FTexture *tex = TexMan.GetTexture(picnum);
-			screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
-				DTA_320x200, true, TAG_DONE);
-		}
-		NoWipe = 10;
-	}
-
-	if (snd_drawoutput)
-	{
-		GSnd->DrawWaveDebug(snd_drawoutput);
-	}
+	D_DrawOverlays();
 
 	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
 	{
@@ -990,7 +957,7 @@ void D_DoomLoop ()
 	{
 		try
 		{
-			// frame syncronous IO operations
+			// frame synchronous IO operations
 			if (gametic > lasttic)
 			{
 				lasttic = gametic;

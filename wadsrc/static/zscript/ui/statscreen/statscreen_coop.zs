@@ -21,7 +21,7 @@ class CoopStatusScreen : StatusScreen
 		ng_state = 1;
 		displayFont = NewSmallFont;
 		FontScale = max(screen.GetHeight() / 480, 1);
-		RowHeight = max((displayFont.GetHeight() + 1) * FontScale, 1);
+		RowHeight = int(max((displayFont.GetHeight() + 1) * FontScale, 1));
 
 		cnt_pause = Thinker.TICRATE;
 
@@ -229,7 +229,7 @@ class CoopStatusScreen : StatusScreen
 		Vector2 readyoffset = TexMan.GetScaledOffset(readyico);
 		height = int(readysize.Y - readyoffset.Y);
 		maxiconheight = MAX(height, maxiconheight);
-		height = displayFont.GetHeight() * FontScale;
+		height = int(displayFont.GetHeight() * FontScale);
 		lineheight = MAX(height, maxiconheight * CleanYfac);
 		ypadding = (lineheight - height + 1) / 2;
 		y += CleanYfac;
@@ -238,11 +238,11 @@ class CoopStatusScreen : StatusScreen
 		text_secret = Stringtable.Localize("$SCORE_SECRET");
 		text_kills = Stringtable.Localize("$SCORE_KILLS");
 
-		icon_x = 8 * FontScale;
-		name_x = icon_x + maxscorewidth * FontScale;
-		kills_x = name_x + (maxnamewidth + 1 + MAX(displayFont.StringWidth("XXXXXXXXXX"), displayFont.StringWidth(text_kills)) + 16) * FontScale;
-		bonus_x = kills_x + ((bonus_len = displayFont.StringWidth(text_bonus)) + 16) * FontScale;
-		secret_x = bonus_x + ((secret_len = displayFont.StringWidth(text_secret)) + 16) * FontScale;
+		icon_x = int(8 * FontScale);
+		name_x = int(icon_x + maxscorewidth * FontScale);
+		kills_x = int(name_x + (maxnamewidth + 1 + MAX(displayFont.StringWidth("XXXXXXXXXX"), displayFont.StringWidth(text_kills)) + 16) * FontScale);
+		bonus_x = int(kills_x + ((bonus_len = displayFont.StringWidth(text_bonus)) + 16) * FontScale);
+		secret_x = int(bonus_x + ((secret_len = displayFont.StringWidth(text_secret)) + 16) * FontScale);
 
 		x = (screen.GetWidth() - secret_x) >> 1;
 		icon_x += x;
@@ -256,7 +256,7 @@ class CoopStatusScreen : StatusScreen
 		drawTextScaled(displayFont, kills_x - displayFont.StringWidth(text_kills) * FontScale, y, text_kills, FontScale, textcolor);
 		drawTextScaled(displayFont, bonus_x - bonus_len * FontScale, y, text_bonus, FontScale, textcolor);
 		drawTextScaled(displayFont, secret_x - secret_len * FontScale, y, text_secret, FontScale, textcolor);
-		y += height + 6 * FontScale;
+		y += int(height + 6 * FontScale);
 
 		missed_kills = wbs.maxkills;
 		missed_items = wbs.maxitems;

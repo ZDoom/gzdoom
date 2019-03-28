@@ -1307,6 +1307,11 @@ class LevelCompatibility native play
 				break;
 			}
 
+			case '5E9AF879343D6E44E429F91D57777D26': // cchest.wad map16
+			{
+				// Fix misplaced vertex
+				SetVertex(202, -2, -873);
+			}
 		}
 	}
 

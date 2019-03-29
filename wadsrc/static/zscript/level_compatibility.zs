@@ -898,6 +898,12 @@ class LevelCompatibility native play
 				break;
 			}
 
+			case 'D5FD90FA7A8133E7BFED682D3D313962': // strife1.wad map21
+			{
+				SetWallTexture(603, Line.front, Side.bottom, "IRON04");
+				break;
+			}
+
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
 			{
 				// Lower floor a bit so secret switch becomes accessible
@@ -1293,6 +1299,19 @@ class LevelCompatibility native play
 				break;
 			}
 			
+			case '3B1F637295F5669E99BE63F1B1CA29DF': // titan426.wad map01
+			{
+				// Missing teleport destinations on easy skill
+				SetThingSkills(138, 31); // secret
+				SetThingSkills(1127, 31); // return from exit room
+				break;
+			}
+
+			case '5E9AF879343D6E44E429F91D57777D26': // cchest.wad map16
+			{
+				// Fix misplaced vertex
+				SetVertex(202, -2, -873);
+			}
 		}
 	}
 

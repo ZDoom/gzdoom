@@ -337,7 +337,6 @@ object CFlameFloor
 // Wraithverge
 flickerlight GHOST
 {
-    attenuate 1
 	color 1.0 1.0 1.0
     size 84
     secondarysize 78
@@ -347,13 +346,13 @@ flickerlight GHOST
 
 object HolyMissile
 {
-    frame SPIRP { light GHOST }
+    //frame SPIRP { light GHOST }
 }
 
 object HolySpirit
 {
-    frame SPIRA { light GHOST }
-    frame SPIRB { light GHOST }
+    //frame SPIRA { light GHOST }
+    //frame SPIRB { light GHOST }
 }
 
 // Mage wand

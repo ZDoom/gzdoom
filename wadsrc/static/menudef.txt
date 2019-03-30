@@ -807,7 +807,7 @@ OptionValue Contrast
 {
 	0.0, "$OPTVAL_OFF"
 	1.0, "$OPTVAL_ON"
-	2.0, "$OPTVAL_SMOOTH"
+	2.0, "$OPTVAL_SMOOTH_1"
 }
 
 OptionValue Fuzziness
@@ -2375,7 +2375,7 @@ OptionValue "Particles"
 {
 	0, "$OPTVAL_SQUARE"
 	1, "$OPTVAL_ROUND"
-	2, "$OPTVAL_SMOOTH"
+	2, "$OPTVAL_SMOOTH_2"
 }
 
 OptionValue "HqResizeModes"

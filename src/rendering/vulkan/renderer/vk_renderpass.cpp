@@ -41,7 +41,7 @@ int VkRenderPassManager::GetVertexFormat(int numBindingPoints, int numAttributes
 	for (size_t i = 0; i < VertexFormats.size(); i++)
 	{
 		const auto &f = VertexFormats[i];
-		if (f.Attrs.size() == numAttributes && f.NumBindingPoints == numBindingPoints && f.Stride == stride)
+		if (f.Attrs.size() == (size_t)numAttributes && f.NumBindingPoints == numBindingPoints && f.Stride == stride)
 		{
 			bool matches = true;
 			for (int j = 0; j < numAttributes; j++)

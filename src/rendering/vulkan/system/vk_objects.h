@@ -468,7 +468,7 @@ inline void RenderPassBegin::setFramebuffer(VulkanFramebuffer *framebuffer)
 inline void RenderPassBegin::addClearColor(float r, float g, float b, float a)
 {
 	VkClearValue clearValue = { };
-	clearValue.color = { r, g, b, a };
+	clearValue.color = { {r, g, b, a} };
 	clearValues.push_back(clearValue);
 
 	renderPassInfo.clearValueCount = (uint32_t)clearValues.size();

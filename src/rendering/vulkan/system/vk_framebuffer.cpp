@@ -857,7 +857,7 @@ void VulkanFrameBuffer::PrintStartupLog()
 	const auto &limits = props.limits;
 	Printf("Max. texture size: %d\n", limits.maxImageDimension2D);
 	Printf("Max. uniform buffer range: %d\n", limits.maxUniformBufferRange);
-	Printf("Min. uniform buffer offset alignment: %d\n", limits.minUniformBufferOffsetAlignment);
+	Printf("Min. uniform buffer offset alignment: %llu\n", limits.minUniformBufferOffsetAlignment);
 }
 
 void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()

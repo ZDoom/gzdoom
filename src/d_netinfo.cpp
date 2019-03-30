@@ -137,14 +137,23 @@ FString D_UnescapeUserInfo (const char *str, size_t len)
 
 int D_GenderToInt (const char *gender)
 {
-	if (gender[0] == 'f')
+	switch (gender[0])
+	{
+	case 'F':
+	case 'f':
 		return GENDER_FEMALE;
-	else if (gender[0] == 'n')
+
+	case 'N':
+	case 'n':
 		return GENDER_NEUTER;
-	else if (gender[0] == 'o')
+
+	case 'O':
+	case 'o':
 		return GENDER_OBJECT;
-	else
+
+	default:
 		return GENDER_MALE;
+	}
 }
 
 int D_PlayerClassToInt (const char *classname)

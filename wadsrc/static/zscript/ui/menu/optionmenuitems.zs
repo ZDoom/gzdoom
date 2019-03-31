@@ -80,6 +80,7 @@ class OptionMenuItem : MenuItemBase
 	override int GetIndent()
 	{
 		if (mCentered) return 0;
+		if (screen.GetWidth() < 640) return screen.GetWidth() / 2;
 		return Menu.OptionWidth(Stringtable.Localize(mLabel));
 	}
 	

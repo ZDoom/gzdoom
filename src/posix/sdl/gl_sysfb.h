@@ -47,8 +47,8 @@ protected:
 
 	void UpdateColors ();
 
-	static const int MIN_WIDTH = 320;
-	static const int MIN_HEIGHT = 200;
+	static const int MIN_WIDTH = 640;
+	static const int MIN_HEIGHT = 400;
 };
 
 #endif // __POSIX_SDL_GL_SYSFB_H__

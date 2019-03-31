@@ -210,8 +210,8 @@ void DFrameBuffer::Update()
 	int initialHeight = GetClientHeight();
 	int clientWidth = ViewportScaledWidth(initialWidth, initialHeight);
 	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
-	if (clientWidth < 320) clientWidth = 320;
-	if (clientHeight < 200) clientHeight = 200;
+	if (clientWidth < 640) clientWidth = 640;
+	if (clientHeight < 400) clientHeight = 400;
 	if (clientWidth > 0 && clientHeight > 0 && (GetWidth() != clientWidth || GetHeight() != clientHeight))
 	{
 		SetVirtualSize(clientWidth, clientHeight);

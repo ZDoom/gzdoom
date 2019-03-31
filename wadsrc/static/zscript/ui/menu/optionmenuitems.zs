@@ -80,6 +80,7 @@ class OptionMenuItem : MenuItemBase
 	override int GetIndent()
 	{
 		if (mCentered) return 0;
+		if (screen.GetWidth() < 640) return screen.GetWidth() / 2;
 		return Menu.OptionWidth(Stringtable.Localize(mLabel));
 	}
 	
@@ -179,7 +180,7 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 
 	override bool Activate()
 	{
-		// This needs to perform a few checks to prevent abuse  by malicious modders.
+		// This needs to perform a few checks to prevent abuse by malicious modders.
 		if (GetClass() != "OptionMenuItemSafeCommand")
 		{
 			let m = OptionMenu(Menu.GetCurrentMenu());
@@ -188,6 +189,7 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 			// don't execute if this item cannot be found in the current menu.
 			if (m.GetItem(mAction) != self) return false;
 		}
+		else mUnsafe = false;
 		Menu.MenuSound("menu/choose");
 		DoCommand(ccmd, mUnsafe);
 		if (mCloseOnSelect)

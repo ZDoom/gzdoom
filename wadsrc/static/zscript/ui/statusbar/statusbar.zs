@@ -599,7 +599,7 @@ class BaseStatusBar native ui
 		if(CPlayer.mo.waterlevel < 3)
 			return Level.airsupply;
 		else
-			return max(CPlayer.air_finished - Level.time, 0);
+			return max(CPlayer.air_finished - Level.maptime, 0);
 	}
 	
 	int GetSelectedInventoryAmount()

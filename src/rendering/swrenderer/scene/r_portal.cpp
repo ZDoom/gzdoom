@@ -458,13 +458,7 @@ namespace swrenderer
 		int prevuniq2 = CurrentPortalUniq;
 		CurrentPortalUniq = prevuniq;
 
-		if (Thread->MainThread)
-			NetUpdate();
-
 		Thread->TranslucentPass->Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
-
-		if (Thread->MainThread)
-			NetUpdate();
 
 		Thread->Clip3D->LeaveSkybox(); // pop 3D floor height map
 		CurrentPortalUniq = prevuniq2;

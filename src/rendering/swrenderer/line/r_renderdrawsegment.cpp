@@ -70,9 +70,6 @@ namespace swrenderer
 		curline = ds->curline;
 		m3DFloor = clip3DFloor;
 
-		if (Thread->MainThread)
-			NetUpdate();
-
 		frontsector = curline->frontsector;
 		backsector = curline->backsector;
 

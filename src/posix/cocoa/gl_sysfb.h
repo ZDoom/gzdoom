@@ -80,8 +80,8 @@ protected:
 
 	int GetTitleBarHeight() const;
 
-	static const int MINIMUM_WIDTH  = 320;
-	static const int MINIMUM_HEIGHT = 200;
+	static const int MINIMUM_WIDTH  = 640;
+	static const int MINIMUM_HEIGHT = 400;
 };
 
 class SystemGLFrameBuffer : public SystemBaseFrameBuffer

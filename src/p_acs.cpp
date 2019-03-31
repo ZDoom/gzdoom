@@ -5419,7 +5419,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			}
 			else
 			{
-				return Level->Players[args[0]]->air_finished - Level->time;
+				return Level->Players[args[0]]->air_finished - Level->maptime;
 			}
 		}
 
@@ -5431,7 +5431,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			}
 			else
 			{
-				Level->Players[args[0]]->air_finished = args[1] + Level->time;
+				Level->Players[args[0]]->air_finished = args[1] + Level->maptime;
 				return 1;
 			}
 		}

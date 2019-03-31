@@ -960,8 +960,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("scrolls", Scrolls)
 		("automap", automap)
 		("interpolator", interpolator)
-		("frozenstate", frozenstate)
-		("sndseqlisthead", SequenceListHead);
+		("frozenstate", frozenstate);
 
 
 	// Hub transitions must keep the current total time
@@ -1003,6 +1002,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	canvasTextureInfo.Serialize(arc);
 	SerializePlayers(arc, hubload);
 	SerializeSounds(arc);
+	arc("sndseqlisthead", SequenceListHead);
+
 
 	// Regenerate some data that wasn't saved
 	if (arc.isReading())

@@ -4330,7 +4330,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 			else if (oldlevel == 3 && waterlevel < 3)
 			{ 
 				// Our head just came up.
-				if (player->air_finished > Level->time)
+				if (player->air_finished > Level->maptime)
 				{ 
 					// We hadn't run out of air yet.
 					S_Sound(this, CHAN_VOICE, "*surface", 1, ATTN_NORM);

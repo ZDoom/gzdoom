@@ -512,7 +512,7 @@ class SaveMenu : LoadSaveMenu
 		if (mkey == MKEY_Enter)
 		{
 			String SavegameString = (Selected != 0)? manager.GetSavegame(Selected).SaveTitle : "";
-			mInput = TextEnterMenu.OpenTextEnter(self, ConFont, SavegameString, -1, fromcontroller);
+			mInput = TextEnterMenu.OpenTextEnter(self, Menu.OptionFont(), SavegameString, -1, fromcontroller);
 			mInput.ActivateMenu();
 			mEntering = true;
 		}

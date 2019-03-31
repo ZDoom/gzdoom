@@ -143,7 +143,5 @@ namespace swrenderer
 				renderer.Render(this, xscale, yscale, alpha, additive, masked, colormap, tex);
 			}
 		}
-		if (thread->MainThread)
-			NetUpdate();
 	}
 }

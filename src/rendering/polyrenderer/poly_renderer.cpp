@@ -129,8 +129,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool drawpsprites, bool dontma
 	PolyMaskedCycles.Reset();
 	PolyDrawerWaitCycles.Reset();
 
-	NetUpdate();
-	
 	DontMapLines = dontmaplines;
 
 	R_SetupFrame(Viewpoint, Viewwindow, actor);
@@ -188,8 +186,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool drawpsprites, bool dontma
 
 	if (Viewpoint.camera)
 		Viewpoint.camera->renderflags = savedflags;
-	
-	NetUpdate();
 }
 
 void PolyRenderer::RenderRemainingPlayerSprites()

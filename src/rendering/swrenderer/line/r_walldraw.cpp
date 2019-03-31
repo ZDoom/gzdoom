@@ -546,9 +546,6 @@ namespace swrenderer
 		this->additive = additive;
 		this->alpha = alpha;
 
-		if (Thread->MainThread)
-			NetUpdate();
-
 		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 
 		if (rw_pic->GetHeight() != 1 << rw_pic->GetHeightBits())

@@ -264,7 +264,7 @@ class TextEnterMenu : Menu
 			case MKEY_Clear:
 				if (mEnterString.Length() > 0)
 				{
-					mEnterString.Truncate(mEnterString.Length() - 1);
+					mEnterString.DeleteLastCharacter();
 				}
 				return true;
 
@@ -297,7 +297,7 @@ class TextEnterMenu : Menu
 				return true;
 
 			default:
-				break;	// Keep GCC quiet
+				break;
 			}
 		}
 		return false;

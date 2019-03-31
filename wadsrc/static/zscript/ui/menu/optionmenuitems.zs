@@ -1033,7 +1033,13 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 	override String Represent()
 	{
 		if (mEnter) return mEnter.GetText() .. Menu.OptionFont().GetCursor();
-		else return GetCVarString();
+		else 
+		{
+			bool b;
+			String s;
+			[b, s] = GetString(0);
+			return s;
+		}
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
@@ -1053,14 +1059,17 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 	{
 		if (mkey == Menu.MKEY_Enter)
 		{
+			bool b;
+			String s;
+			[b, s] = GetString(0);
 			Menu.MenuSound("menu/choose");
-			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), GetCVarString(), -1, fromcontroller);
+			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), s, -1, fromcontroller);
 			mEnter.ActivateMenu();
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Input)
 		{
-			if (mCVar) mCVar.SetString(mEnter.GetText());
+			SetString(0, mEnter.GetText());
 			mEnter = null;
 			return true;
 		}

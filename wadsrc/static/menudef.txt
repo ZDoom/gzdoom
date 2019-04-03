@@ -2652,12 +2652,14 @@ OptionMenu "ReverbSave" protected
 OptionString "LanguageOptions"
 {
 	"auto", "Auto"
+	"default", "English (US)"
 	"eng", "English (UK)"
-	"enu", "English (US)"
-	"fr", "Français (FR)"
-	"ita", "Italiano (ITA)"
-	"ptb", "Português do Brasil (PTB)"
-	"rus", "Русский (RU)"
+	"de", "Deutsch"
+	"es", "Español (España)"
+	"esm", "Español (Latino)"
+	"fr", "Français"
+	"it", "Italiano"
+	"ru", "Русский"
 }
 
 /*=======================================

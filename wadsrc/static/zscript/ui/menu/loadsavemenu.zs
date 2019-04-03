@@ -127,7 +127,7 @@ class LoadSaveMenu : ListMenu
 		savepicHeight = 135*screen.GetHeight() / 400;
 
 		FontScale = max(screen.GetHeight() / 480, 1);
-		rowHeight = max((NewConsoleFont.GetHeight() + 1) * FontScale, 1);
+		rowHeight = int(max((NewConsoleFont.GetHeight() + 1) * FontScale, 1));
 		
 		listboxLeft = savepicLeft + savepicWidth + 14;
 		listboxTop = savepicTop;
@@ -216,7 +216,7 @@ class LoadSaveMenu : ListMenu
 		if (manager.SavegameCount() == 0)
 		{
 			String text = Stringtable.Localize("$MNU_NOFILES");
-			int textlen = NewConsoleFont.StringWidth(text) * FontScale;
+			int textlen = int(NewConsoleFont.StringWidth(text) * FontScale);
 
 			screen.DrawText (NewConsoleFont, Font.CR_GOLD, (listboxLeft+(listboxWidth-textlen)/2) / FontScale, (listboxTop+(listboxHeight-rowHeight)/2) / FontScale, text, 
 				DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
@@ -259,7 +259,7 @@ class LoadSaveMenu : ListMenu
 				else
 				{
 					String s = mInput.GetText() .. NewConsoleFont.GetCursor();
-					int length = NewConsoleFont.StringWidth(s) * FontScale;
+					int length = int(NewConsoleFont.StringWidth(s) * FontScale);
 					int displacement = min(0, listboxWidth - 2 - length);
 					screen.DrawText (NewConsoleFont, Font.CR_WHITE, (listboxLeft + 1 + displacement) / FontScale, (listboxTop+rowHeight*i + FontScale) / FontScale, s, 
 						DTA_VirtualWidthF, screen.GetWidth() / FontScale, DTA_VirtualHeightF, screen.GetHeight() / FontScale, DTA_KeepRatio, true);
@@ -277,7 +277,7 @@ class LoadSaveMenu : ListMenu
 
 	void UpdateSaveComment()
 	{
-		BrokenSaveComment = NewConsoleFont.BreakLines(manager.SaveCommentString, commentWidth / FontScale);
+		BrokenSaveComment = NewConsoleFont.BreakLines(manager.SaveCommentString, int(commentWidth / FontScale));
 	}
 
 	//=============================================================================
@@ -512,7 +512,7 @@ class SaveMenu : LoadSaveMenu
 		if (mkey == MKEY_Enter)
 		{
 			String SavegameString = (Selected != 0)? manager.GetSavegame(Selected).SaveTitle : "";
-			mInput = TextEnterMenu.OpenTextEnter(self, ConFont, SavegameString, -1, fromcontroller);
+			mInput = TextEnterMenu.OpenTextEnter(self, Menu.OptionFont(), SavegameString, -1, fromcontroller);
 			mInput.ActivateMenu();
 			mEntering = true;
 		}

@@ -129,6 +129,16 @@ inline int BigLong(int &x)
 	return x;
 }
 
+inline unsigned int BigLong(unsigned int x)
+{
+	return x;
+}
+
+inline int BigLong(int x)
+{
+	return x;
+}
+
 #else
 
 inline short LittleShort(short x)

@@ -26,7 +26,6 @@ public:
 	uint32_t presentImageIndex = 0;
 
 	VulkanCommandBuffer *GetTransferCommands();
-	VulkanCommandBuffer *GetPreDrawCommands();
 	VulkanCommandBuffer *GetDrawCommands();
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
 	VkSamplerManager *GetSamplerManager() { return mSamplerManager.get(); }
@@ -114,13 +113,10 @@ private:
 	std::unique_ptr<VkRenderBuffers> mSaveBuffers;
 	std::unique_ptr<VkPostprocess> mPostprocess;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
-	std::unique_ptr<VulkanCommandPool> mGraphicsCommandPool;
-	std::unique_ptr<VulkanCommandPool> mTransferCommandPool;
+	std::unique_ptr<VulkanCommandPool> mCommandPool;
 	std::unique_ptr<VulkanCommandBuffer> mTransferCommands;
-	std::unique_ptr<VulkanCommandBuffer> mPreDrawCommands;
 	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
 	std::unique_ptr<VulkanSemaphore> mTransferSemaphore;
-	std::unique_ptr<VulkanSemaphore> mPreDrawSemaphore;
 	std::unique_ptr<VkRenderState> mRenderState;
 
 	std::unique_ptr<VulkanSemaphore> mSwapChainImageAvailableSemaphore;

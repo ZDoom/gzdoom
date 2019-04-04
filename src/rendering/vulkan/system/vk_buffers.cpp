@@ -43,14 +43,6 @@ void VKBuffer::SetData(size_t size, const void *data, bool staticdata)
 		mStaging->Unmap();
 
 		fb->GetTransferCommands()->copyBuffer(mStaging.get(), mBuffer.get());
-
-		if (fb->device->transferFamily != fb->device->graphicsFamily)
-		{
-			PipelineBarrier transfer;
-			transfer.addQueueTransfer(fb->device->transferFamily, fb->device->graphicsFamily, mBuffer.get(), VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_SHADER_READ_BIT);
-			transfer.execute(fb->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-			transfer.execute(fb->GetPreDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-		}
 	}
 	else
 	{
@@ -86,22 +78,7 @@ void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 		memcpy(dst, data, size);
 		mStaging->Unmap();
 
-		if (fb->device->transferFamily != fb->device->graphicsFamily)
-		{
-			PipelineBarrier transfer;
-			transfer.addQueueTransfer(fb->device->graphicsFamily, fb->device->transferFamily, mBuffer.get(), VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_SHADER_READ_BIT, 0);
-			transfer.execute(fb->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-		}
-
 		fb->GetTransferCommands()->copyBuffer(mStaging.get(), mBuffer.get(), offset, offset, size);
-
-		if (fb->device->transferFamily != fb->device->graphicsFamily)
-		{
-			PipelineBarrier transfer;
-			transfer.addQueueTransfer(fb->device->transferFamily, fb->device->graphicsFamily, mBuffer.get(), VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_SHADER_READ_BIT);
-			transfer.execute(fb->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-			transfer.execute(fb->GetPreDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-		}
 	}
 	else
 	{

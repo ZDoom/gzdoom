@@ -120,6 +120,12 @@ void VulkanDevice::SelectPhysicalDevice()
 		if (!CheckRequiredFeatures(info.Features))
 			continue;
 
+		std::set<std::string> requiredExtensionSearch(EnabledDeviceExtensions.begin(), EnabledDeviceExtensions.end());
+		for (const auto &ext : info.Extensions)
+			requiredExtensionSearch.erase(ext.extensionName);
+		if (!requiredExtensionSearch.empty())
+			continue;
+
 		VulkanCompatibleDevice dev;
 		dev.device = &AvailableDevices[idx];
 
@@ -135,42 +141,22 @@ void VulkanDevice::SelectPhysicalDevice()
 			}
 		}
 
-		// Look for family that can do both graphics and transfer
+		// The vulkan spec states that graphics and compute queues can always do transfer.
+		// Furthermore the spec states that graphics queues always can do compute.
+		// Last, the spec makes it OPTIONAL whether the VK_QUEUE_TRANSFER_BIT is set for such queues, but they MUST support transfer.
+		//
+		// In short: pick the first graphics queue family for everything.
 		for (int i = 0; i < (int)info.QueueFamilies.size(); i++)
 		{
 			const auto &queueFamily = info.QueueFamilies[i];
-			VkQueueFlags gpuFlags = (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_TRANSFER_BIT);
-			if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & gpuFlags) == gpuFlags)
+			if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
 			{
 				dev.graphicsFamily = i;
-				dev.transferFamily = i;
 				break;
 			}
 		}
 
-		// OK we didn't find any. Look for any match now.
-		if (dev.graphicsFamily == -1)
-		{
-			for (int i = 0; i < (int)info.QueueFamilies.size(); i++)
-			{
-				const auto &queueFamily = info.QueueFamilies[i];
-				if (queueFamily.queueCount > 0)
-				{
-					if (dev.graphicsFamily == -1 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
-						dev.graphicsFamily = i;
-					if (dev.transferFamily == -1 && (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT))
-						dev.transferFamily = i;
-				}
-			}
-		}
-
-		std::set<std::string> requiredExtensionSearch(EnabledDeviceExtensions.begin(), EnabledDeviceExtensions.end());
-		for (const auto &ext : info.Extensions)
-			requiredExtensionSearch.erase(ext.extensionName);
-		if (!requiredExtensionSearch.empty())
-			continue;
-
-		if (dev.graphicsFamily != -1 && dev.presentFamily != -1 && dev.transferFamily != -1)
+		if (dev.graphicsFamily != -1 && dev.presentFamily != -1)
 		{
 			SupportedDevices.push_back(dev);
 		}
@@ -213,7 +199,6 @@ void VulkanDevice::SelectPhysicalDevice()
 	PhysicalDevice = *SupportedDevices[selected].device;
 	graphicsFamily = SupportedDevices[selected].graphicsFamily;
 	presentFamily = SupportedDevices[selected].presentFamily;
-	transferFamily = SupportedDevices[selected].transferFamily;
 }
 
 bool VulkanDevice::SupportsDeviceExtension(const char *ext) const
@@ -241,7 +226,6 @@ void VulkanDevice::CreateDevice()
 	std::set<int> neededFamilies;
 	neededFamilies.insert(graphicsFamily);
 	neededFamilies.insert(presentFamily);
-	neededFamilies.insert(transferFamily);
 
 	for (int index : neededFamilies)
 	{
@@ -270,7 +254,6 @@ void VulkanDevice::CreateDevice()
 
 	vkGetDeviceQueue(device, graphicsFamily, 0, &graphicsQueue);
 	vkGetDeviceQueue(device, presentFamily, 0, &presentQueue);
-	vkGetDeviceQueue(device, transferFamily, 0, &transferQueue);
 }
 
 void VulkanDevice::CreateSurface()

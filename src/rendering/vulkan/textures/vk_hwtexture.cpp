@@ -195,7 +195,7 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 		mImageView = viewbuilder.create(fb->device);
 		mImageView->SetDebugName("VkHardwareTexture.mImageView");
 
-		auto cmdbuffer = fb->GetPreDrawCommands();
+		auto cmdbuffer = fb->GetTransferCommands();
 
 		PipelineBarrier imageTransition;
 		imageTransition.addImage(mImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT);
@@ -289,15 +289,6 @@ void VkHardwareTexture::GenerateMipmaps(VulkanImage *image, VulkanCommandBuffer 
 	PipelineBarrier barrier2;
 	barrier2.addImage(image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_TRANSFER_READ_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT, i - 1);
 	barrier2.execute(cmdbuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
-	auto fb = GetVulkanFrameBuffer();
-	if (fb->device->transferFamily != fb->device->graphicsFamily)
-	{
-		PipelineBarrier transfer;
-		transfer.addQueueTransfer(fb->device->transferFamily, fb->device->graphicsFamily, image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_COLOR_BIT, 0, GetMipLevels(image->width, image->height));
-		transfer.execute(fb->GetTransferCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-		transfer.execute(fb->GetPreDrawCommands(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT);
-	}
 }
 
 int VkHardwareTexture::GetMipLevels(int w, int h)
@@ -335,7 +326,7 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		mImageView = viewbuilder.create(fb->device);
 		mImageView->SetDebugName("VkHardwareTexture.mImageView");
 
-		auto cmdbuffer = fb->GetPreDrawCommands();
+		auto cmdbuffer = fb->GetTransferCommands();
 
 		PipelineBarrier imageTransition;
 		imageTransition.addImage(mImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, mImageLayout, 0, VK_ACCESS_SHADER_READ_BIT);

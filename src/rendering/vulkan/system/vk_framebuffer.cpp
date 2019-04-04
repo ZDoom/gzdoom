@@ -118,9 +118,7 @@ void VulkanFrameBuffer::InitializeState()
 	maxuniformblock = device->PhysicalDevice.Properties.limits.maxUniformBufferRange;
 
 	mTransferSemaphore.reset(new VulkanSemaphore(device));
-	mPreDrawSemaphore.reset(new VulkanSemaphore(device));
-	mGraphicsCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
-	mTransferCommandPool.reset(new VulkanCommandPool(device, device->transferFamily));
+	mCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
 
 	mScreenBuffers.reset(new VkRenderBuffers());
 	mSaveBuffers.reset(new VkRenderBuffers());
@@ -210,7 +208,6 @@ void VulkanFrameBuffer::Update()
 
 	mDrawCommands.reset();
 	mTransferCommands.reset();
-	mPreDrawCommands.reset();
 	DeleteFrameObjects();
 
 	Finish.Unclock();
@@ -235,18 +232,6 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		QueueSubmit submit;
 		submit.addCommandBuffer(mTransferCommands.get());
 		submit.addSignal(mTransferSemaphore.get());
-		submit.execute(device, device->transferQueue);
-	}
-
-	if (mPreDrawCommands)
-	{
-		mPreDrawCommands->end();
-
-		QueueSubmit submit;
-		submit.addCommandBuffer(mPreDrawCommands.get());
-		if (mTransferCommands)
-			submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mTransferSemaphore.get());
-		submit.addSignal(mPreDrawSemaphore.get());
 		submit.execute(device, device->graphicsQueue);
 	}
 
@@ -254,10 +239,10 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 
 	QueueSubmit submit;
 	submit.addCommandBuffer(mDrawCommands.get());
-	if (mPreDrawCommands)
-		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mPreDrawSemaphore.get());
-	else if (mTransferCommands)
+	if (mTransferCommands)
+	{
 		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mTransferSemaphore.get());
+	}
 	if (finish)
 	{
 		submit.addWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
@@ -271,7 +256,6 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
 		mDrawCommands.reset();
 		mTransferCommands.reset();
-		mPreDrawCommands.reset();
 		DeleteFrameObjects();
 	}
 }
@@ -790,29 +774,18 @@ VulkanCommandBuffer *VulkanFrameBuffer::GetTransferCommands()
 {
 	if (!mTransferCommands)
 	{
-		mTransferCommands = mTransferCommandPool->createBuffer();
+		mTransferCommands = mCommandPool->createBuffer();
 		mTransferCommands->SetDebugName("VulkanFrameBuffer.mTransferCommands");
 		mTransferCommands->begin();
 	}
 	return mTransferCommands.get();
 }
 
-VulkanCommandBuffer *VulkanFrameBuffer::GetPreDrawCommands()
-{
-	if (!mPreDrawCommands)
-	{
-		mPreDrawCommands = mGraphicsCommandPool->createBuffer();
-		mPreDrawCommands->SetDebugName("VulkanFrameBuffer.mPreDrawCommands");
-		mPreDrawCommands->begin();
-	}
-	return mPreDrawCommands.get();
-}
-
 VulkanCommandBuffer *VulkanFrameBuffer::GetDrawCommands()
 {
 	if (!mDrawCommands)
 	{
-		mDrawCommands = mGraphicsCommandPool->createBuffer();
+		mDrawCommands = mCommandPool->createBuffer();
 		mDrawCommands->SetDebugName("VulkanFrameBuffer.mDrawCommands");
 		mDrawCommands->begin();
 	}

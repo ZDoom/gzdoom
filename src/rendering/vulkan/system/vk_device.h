@@ -28,7 +28,6 @@ class VulkanCompatibleDevice
 public:
 	VulkanPhysicalDevice *device = nullptr;
 	int graphicsFamily = -1;
-	int transferFamily = -1;
 	int presentFamily = -1;
 };
 
@@ -73,10 +72,8 @@ public:
 
 	VkQueue graphicsQueue = VK_NULL_HANDLE;
 	VkQueue presentQueue = VK_NULL_HANDLE;
-	VkQueue transferQueue = VK_NULL_HANDLE;
 
 	int graphicsFamily = -1;
-	int transferFamily = -1;
 	int presentFamily = -1;
 
 private:

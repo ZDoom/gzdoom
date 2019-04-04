@@ -1111,7 +1111,7 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	int i;
 
 	buffer += mysnprintf (buffer, buffend - buffer, GAMENAME " version %s (%s)", GetVersionString(), GetGitHash());
-	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", GetCommandLine());
+	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", GetCommandLineA());
 
 	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
 	{

@@ -866,12 +866,6 @@ static void M_Dim()
 		amount = gameinfo.dimamount;
 	}
 
-	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
-	{ // On the Hexen title screen, the default dimming is not
-	  // enough to make the menus readable.
-		amount = MIN<float>(1.f, amount*2.f);
-	}
-
 	screen->Dim(dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
 }
 

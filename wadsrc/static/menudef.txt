@@ -369,7 +369,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
 	StaticText " "
-	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
+	Submenu "$OPTMNU_PLAYER",			"PlayerMenu"
 	Submenu "$OPTMNU_GAMEPLAY",			"GameplayOptions"
 	Submenu "$OPTMNU_COMPATIBILITY",	"CompatibilityOptions"
 	Submenu "$OPTMNU_AUTOMAP",			"AutomapOptions"
@@ -399,49 +399,6 @@ OptionValue "Gender"
 	1, "$OPTVAL_FEMALE"
 	2, "$OPTVAL_NEUTRAL"
 	3, "$OPTVAL_OTHER"
-}
-
-OptionValue "PlayerColor"
-{}
-
-OptionValue "PlayerClass"
-{}
-
-OptionValue "PlayerTeam"
-{}
-
-OptionValue "PlayerSkin"
-{}
-
-/*
-	IfGame(Doom, Heretic, Strife, Chex)
-	{
-		MouseWindow 0, 220
-		PlayerDisplay 220, 48, "20 00 00", "80 00 40", 1, "PlayerDisplay"
-	}
-	IfGame(Hexen)
-	{
-		MouseWindow 0, 220
-		PlayerDisplay 220, 48, "00 07 00", "40 53 40", 1, "PlayerDisplay"
-	}
-*/
-
-OptionMenu "NewPlayerMenu"
-{
-	Title "$MNU_PLAYERSETUP"
-	TextField "$PLYRMNU_NAME", menu_playername
-	Option "$PLYRMNU_TEAM", menu_playerteam, "PlayerTeam"
-	Option "$PLYRMNU_PLAYERCOLOR", menu_playercolorset, "PlayerColor"
-	Slider "$PLYRMNU_RED", menu_playercolor_red, 0, 255, 16
-	Slider "$PLYRMNU_GREEN", menu_playercolor_green, 0, 255, 16
-	Slider "$PLYRMNU_BLUE", menu_playercolor_blue, 0, 255, 16
-	Option "$PLYRMNU_PLAYERCLASS", menu_playerclass, "PlayerClass"
-	Option "$PLYRMNU_PLAYERSKIN", menu_playerskin, "PlayerSkin"
-	Option "$PLYRMNU_PLAYERGENDER", menu_playergender, "Gender"
-	Slider "$PLYRMNU_AUTOAIM", menu_playerautoaim, 0, 35, 1
-	Option "$PLYRMNU_SWITCHONPICKUP", menu_playerswitch, "OffOn"
-	Option "$PLYRMNU_ALWAYSRUN", cl_run, "OnOff"
-	Class "NewPlayerMenu"
 }
 
 ListMenu "PlayerMenu"

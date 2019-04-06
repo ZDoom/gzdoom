@@ -993,7 +993,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	// [ZZ] serialize events
 	arc("firstevent", localEventManager->FirstEventHandler)
 		("lastevent", localEventManager->LastEventHandler);
-	localEventManager->CallOnRegister();
+	if (arc.isReading()) localEventManager->CallOnRegister();
 	Thinkers.SerializeThinkers(arc, hubload);
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");

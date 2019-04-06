@@ -47,6 +47,7 @@
 #include "i_soundfont.h"
 #include "i_system.h"
 #include "v_video.h"
+#include "gstrings.h"
 
 
 void ClearSaveGames();
@@ -1105,6 +1106,7 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 			}
 
 			
+			int posx = (int)ld->mXpos;
 			int posy = (int)ld->mYpos;
 			int topy = posy;
 
@@ -1132,6 +1134,23 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 				}
 
 				if (!isOld) ld->mSelectedItem = ld->mItems.Size();
+
+				for (unsigned i = 0; i < AllEpisodes.Size(); i++)
+				{
+					DMenuItemBase *it = nullptr;
+					if (AllEpisodes[i].mPicName.IsNotEmpty())
+					{
+						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
+						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
+							continue;	// We do not measure patch based entries. They are assumed to fit
+					}
+					const char *c = AllEpisodes[i].mEpisodeName;
+					if (*c == '$') c = GStrings(c + 1);
+					int textwidth = ld->mFont->StringWidth(c);
+					int textright = posx + textwidth;
+					if (posx + textright > 320) posx = std::max(0, 320 - textright);
+				}
+
 				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
 				{
 					DMenuItemBase *it = nullptr;
@@ -1139,11 +1158,11 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
 						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
-							it = CreateListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
+							it = CreateListMenuItemPatch(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
 					}
 					if (it == nullptr)
 					{
-						it = CreateListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+						it = CreateListMenuItemText(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
 							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, ld->mFontColor2, NAME_Skillmenu, i);
 					}
 					ld->mItems.Push(it);

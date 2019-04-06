@@ -1,9 +1,9 @@
 name,language,male,female,neutral,object
 ao_esp,es,o,a,o,o
 e_de,de,,e,,
-e_in,de,,in,,
+in_de,de,,in,,
 e_fr,fr,,e,,
-ao_ptb,ptb,o,a,o,o
+ao_ptb,pt,o,a,o,o
 ,,,,,
 ,,,,,
 ao_rus,ru,,а,о,о

@@ -433,7 +433,6 @@ IWad
 	Compatibility = "Shorttex"
 	MustContain = "MAP01"
 	BannerColors = "a8 00 00", "a8 a8 a8"
-	Load = "nerve.wad"
 	IgnoreTitlePatches = 1
 }
 	

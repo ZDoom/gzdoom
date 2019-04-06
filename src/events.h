@@ -332,5 +332,4 @@ struct EventManager
 
 };
 
-extern EventManager eventManager;
-extern EventManager staticEventManager;
+ extern EventManager staticEventManager;

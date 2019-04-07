@@ -91,7 +91,7 @@ void FShaderProgram::CreateShader(ShaderType type)
 
 void FShaderProgram::Compile(ShaderType type, const char *lumpName, const char *defines, int maxGlslVersion)
 {
-	int lump = Wads.CheckNumForFullName(lumpName, 0);
+	int lump = Wads.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
 	FString code = Wads.ReadLump(lump).GetString().GetChars();
 	Compile(type, lumpName, code, defines, maxGlslVersion);

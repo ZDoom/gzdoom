@@ -46,7 +46,7 @@ void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &a
 	VkPPRenderState renderstate;
 
 	hw_postprocess.exposure.Render(&renderstate, sceneWidth, sceneHeight);
-	//mCustomPostProcessShaders->Run("beforebloom");
+	hw_postprocess.customShaders.Run(&renderstate, "beforebloom");
 	hw_postprocess.bloom.RenderBloom(&renderstate, sceneWidth, sceneHeight, fixedcm);
 
 	SetActiveRenderTarget();
@@ -56,7 +56,7 @@ void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &a
 	hw_postprocess.colormap.Render(&renderstate, fixedcm);
 	hw_postprocess.lens.Render(&renderstate);
 	hw_postprocess.fxaa.Render(&renderstate);
-	//mCustomPostProcessShaders->Run("scene");
+	hw_postprocess.customShaders.Run(&renderstate, "scene");
 }
 
 void VkPostprocess::BlitSceneToPostprocess()
@@ -175,6 +175,9 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 {
 	auto fb = GetVulkanFrameBuffer();
 
+	VkPPRenderState renderstate;
+	hw_postprocess.customShaders.Run(&renderstate, "screen");
+
 	PresentUniforms uniforms;
 	if (!applyGamma /*|| framebuffer->IsHWGammaActive()*/)
 	{
@@ -200,7 +203,7 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 		uniforms.InvGamma *= 2.2f;
 	}
 
-	VkPPRenderState renderstate;
+	renderstate.Clear();
 	renderstate.Shader = &hw_postprocess.present.Present;
 	renderstate.Uniforms.Set(uniforms);
 	renderstate.Viewport = box;
@@ -266,8 +269,6 @@ void VkPostprocess::UpdateShadowMap()
 
 void VkPostprocess::BeginFrame()
 {
-	mFrameDescriptorSets.clear();
-
 	if (!mDescriptorPool)
 	{
 		DescriptorPoolBuilder builder;
@@ -533,8 +534,9 @@ VulkanDescriptorSet *VkPPRenderState::GetInput(VkPPRenderPassSetup *passSetup, c
 	write.updateSets(fb->device);
 	imageTransition.execute(fb->GetDrawCommands());
 
-	pp->mFrameDescriptorSets.push_back(std::move(descriptors));
-	return pp->mFrameDescriptorSets.back().get();
+	VulkanDescriptorSet *set = descriptors.get();
+	fb->FrameDeleteList.Descriptors.push_back(std::move(descriptors));
+	return set;
 }
 
 VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, const PPOutput &output, int &framebufferWidth, int &framebufferHeight)

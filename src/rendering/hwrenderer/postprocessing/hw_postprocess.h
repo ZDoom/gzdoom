@@ -2,6 +2,9 @@
 
 #include "hwrenderer/data/shaderuniforms.h"
 #include <memory>
+#include <map>
+
+struct PostProcessShader;
 
 typedef FRenderStyle PPBlendMode;
 typedef IntRect PPViewport;
@@ -292,7 +295,7 @@ public:
 class PPShader : public PPResource
 {
 public:
-	PPShader() { }
+	PPShader() = default;
 	PPShader(const FString &fragment, const FString &defines, const std::vector<UniformFieldDesc> &uniforms, int version = 330) : FragmentShader(fragment), Defines(defines), Uniforms(uniforms), Version(version) { }
 
 	void ResetBackend() override { Backend.reset(); }
@@ -777,6 +780,40 @@ private:
 	PPShader ShadowMap = { "shaders/glsl/shadowmap.fp", "", ShadowMapUniforms::Desc() };
 };
 
+class PPCustomShaderInstance
+{
+public:
+	PPCustomShaderInstance(PostProcessShader *desc);
+
+	void Run(PPRenderState *renderstate);
+
+	PostProcessShader *Desc = nullptr;
+
+private:
+	void CreateShaders();
+	void AddUniformField(size_t &offset, const FString &name, UniformType type, size_t fieldsize);
+	void SetTextures(PPRenderState *renderstate);
+	void SetUniforms(PPRenderState *renderstate);
+
+	PPShader Shader;
+	int UniformStructSize = 0;
+	std::vector<UniformFieldDesc> Fields;
+	std::vector<std::unique_ptr<FString>> FieldNames;
+	std::map<FTexture*, std::unique_ptr<PPTexture>> Textures;
+	std::map<FString, size_t> FieldOffset;
+};
+
+class PPCustomShaders
+{
+public:
+	void Run(PPRenderState *renderstate, FString target);
+
+private:
+	void CreateShaders();
+
+	std::vector<std::unique_ptr<PPCustomShaderInstance>> mShaders;
+};
+
 /////////////////////////////////////////////////////////////////////////////
 
 class Postprocess
@@ -791,6 +828,7 @@ public:
 	PPAmbientOcclusion ssao;
 	PPPresent present;
 	PPShadowMap shadowmap;
+	PPCustomShaders customShaders;
 };
 
 extern Postprocess hw_postprocess;

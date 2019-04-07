@@ -3,6 +3,7 @@
 #include "hw_postprocess.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
+#include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include <random>
 
 Postprocess hw_postprocess;
@@ -804,4 +805,204 @@ void PPShadowMap::Update(PPRenderState *renderstate)
 	renderstate->SetOutputShadowMap();
 	renderstate->SetNoBlend();
 	renderstate->Draw();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+CVAR(Bool, gl_custompost, true, 0)
+
+void PPCustomShaders::Run(PPRenderState *renderstate, FString target)
+{
+	if (!gl_custompost)
+		return;
+
+	CreateShaders();
+
+	for (auto &shader : mShaders)
+	{
+		if (shader->Desc->Target == target && shader->Desc->Enabled)
+		{
+			shader->Run(renderstate);
+		}
+	}
+}
+
+void PPCustomShaders::CreateShaders()
+{
+	if (mShaders.size() == PostProcessShaders.Size())
+		return;
+
+	mShaders.clear();
+
+	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	{
+		mShaders.push_back(std::make_unique<PPCustomShaderInstance>(&PostProcessShaders[i]));
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PPCustomShaderInstance::PPCustomShaderInstance(PostProcessShader *desc) : Desc(desc)
+{
+	// Build an uniform block to be used as input
+	TMap<FString, PostProcessUniformValue>::Iterator it(Desc->Uniforms);
+	TMap<FString, PostProcessUniformValue>::Pair *pair;
+	size_t offset = 0;
+	while (it.NextPair(pair))
+	{
+		FString type;
+		FString name = pair->Key;
+
+		switch (pair->Value.Type)
+		{
+		case PostProcessUniformType::Float: AddUniformField(offset, name, UniformType::Float, sizeof(float)); break;
+		case PostProcessUniformType::Int: AddUniformField(offset, name, UniformType::Int, sizeof(int)); break;
+		case PostProcessUniformType::Vec2: AddUniformField(offset, name, UniformType::Vec2, sizeof(float) * 2); break;
+		case PostProcessUniformType::Vec3: AddUniformField(offset, name, UniformType::Vec3, sizeof(float) * 3); break;
+		default: break;
+		}
+	}
+	UniformStructSize = ((int)offset + 15) / 16 * 16;
+
+	// Build the input textures
+	FString uniformTextures;
+	uniformTextures += "layout(binding=0) uniform sampler2D InputTexture;\n";
+
+	TMap<FString, FString>::Iterator itTextures(Desc->Textures);
+	TMap<FString, FString>::Pair *pairTextures;
+	int binding = 1;
+	while (itTextures.NextPair(pairTextures))
+	{
+		uniformTextures.AppendFormat("layout(binding=%d) uniform sampler2D %s;\n", binding++, pairTextures->Key.GetChars());
+	}
+
+	// Setup pipeline
+	FString pipelineInOut;
+	pipelineInOut += "layout(location=0) in vec2 TexCoord;\n";
+	pipelineInOut += "layout(location=0) out vec4 FragColor;\n";
+
+	FString prolog;
+	prolog += uniformTextures;
+	prolog += pipelineInOut;
+
+	Shader = PPShader(Desc->ShaderLumpName, prolog, Fields);
+}
+
+void PPCustomShaderInstance::Run(PPRenderState *renderstate)
+{
+	renderstate->Clear();
+	renderstate->Shader = &Shader;
+	renderstate->Viewport = screen->mScreenViewport;
+	renderstate->SetNoBlend();
+	renderstate->SetOutputNext();
+	//renderstate->SetDebugName(Desc->ShaderLumpName.GetChars());
+
+	SetTextures(renderstate);
+	SetUniforms(renderstate);
+
+	renderstate->Draw();
+}
+
+void PPCustomShaderInstance::SetTextures(PPRenderState *renderstate)
+{
+	renderstate->SetInputCurrent(0, PPFilterMode::Linear);
+
+	int textureIndex = 1;
+	TMap<FString, FString>::Iterator it(Desc->Textures);
+	TMap<FString, FString>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		FString name = pair->Value;
+		FTexture *tex = TexMan.GetTexture(TexMan.CheckForTexture(name, ETextureType::Any), true);
+		if (tex && tex->isValid())
+		{
+			// Why does this completely circumvent the normal way of handling textures?
+			// This absolutely needs fixing because it will also circumvent any potential caching system that may get implemented.
+			//
+			// To do: fix the above problem by adding PPRenderState::SetInput(FTexture *tex)
+
+			auto &pptex = Textures[tex];
+			if (!pptex)
+			{
+				auto buffer = tex->CreateTexBuffer(0);
+
+				std::shared_ptr<void> data(new uint32_t[buffer.mWidth * buffer.mHeight], [](void *p) { delete[](uint32_t*)p; });
+
+				int count = buffer.mWidth * buffer.mHeight;
+				uint8_t *pixels = (uint8_t *)data.get();
+				for (int i = 0; i < count; i++)
+				{
+					int pos = i << 2;
+					pixels[pos] = buffer.mBuffer[pos + 2];
+					pixels[pos + 1] = buffer.mBuffer[pos + 1];
+					pixels[pos + 2] = buffer.mBuffer[pos];
+					pixels[pos + 3] = buffer.mBuffer[pos + 3];
+				}
+
+				pptex = std::make_unique<PPTexture>(buffer.mWidth, buffer.mHeight, PixelFormat::Rgba8, data);
+			}
+
+			renderstate->SetInputTexture(textureIndex, pptex.get(), PPFilterMode::Linear);
+			textureIndex++;
+		}
+	}
+}
+
+void PPCustomShaderInstance::SetUniforms(PPRenderState *renderstate)
+{
+	TArray<uint8_t> uniforms;
+	uniforms.Resize(UniformStructSize);
+
+	TMap<FString, PostProcessUniformValue>::Iterator it(Desc->Uniforms);
+	TMap<FString, PostProcessUniformValue>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto it2 = FieldOffset.find(pair->Key);
+		if (it2 != FieldOffset.end())
+		{
+			uint8_t *dst = &uniforms[it2->second];
+			float fValues[4];
+			int iValues[4];
+			switch (pair->Value.Type)
+			{
+			case PostProcessUniformType::Float:
+				fValues[0] = (float)pair->Value.Values[0];
+				memcpy(dst, fValues, sizeof(float));
+				break;
+			case PostProcessUniformType::Int:
+				iValues[0] = (int)pair->Value.Values[0];
+				memcpy(dst, iValues, sizeof(int));
+				break;
+			case PostProcessUniformType::Vec2:
+				fValues[0] = (float)pair->Value.Values[0];
+				fValues[1] = (float)pair->Value.Values[1];
+				memcpy(dst, fValues, sizeof(float) * 2);
+				break;
+			case PostProcessUniformType::Vec3:
+				fValues[0] = (float)pair->Value.Values[0];
+				fValues[1] = (float)pair->Value.Values[1];
+				fValues[2] = (float)pair->Value.Values[2];
+				memcpy(dst, fValues, sizeof(float) * 3);
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	renderstate->Uniforms.Data = uniforms;
+}
+
+void PPCustomShaderInstance::AddUniformField(size_t &offset, const FString &name, UniformType type, size_t fieldsize)
+{
+	size_t alignment = fieldsize;
+	offset = (offset + alignment - 1) / alignment * alignment;
+
+	FieldOffset[name] = offset;
+
+	auto name2 = std::make_unique<FString>(name);
+	FieldNames.push_back(std::move(name2));
+	Fields.push_back({ name2->GetChars(), type, offset });
+
+	offset += fieldsize;
 }

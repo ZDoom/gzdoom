@@ -111,9 +111,6 @@ namespace Priv
 
 	static const uint32_t VulkanWindowFlag = 0x1000'0000;
 
-	static const int MIN_WIDTH = 320;
-	static const int MIN_HEIGHT = 200;
-
 	SDL_Window *window;
 	bool vulkanEnabled;
 	bool fullscreenSwitch;
@@ -144,7 +141,7 @@ namespace Priv
 		if (Priv::window != nullptr)
 		{
 			// Enforce minimum size limit
-			SDL_SetWindowMinimumSize(Priv::window, Priv::MIN_WIDTH, Priv::MIN_HEIGHT);
+			SDL_SetWindowMinimumSize(Priv::window, VID_MIN_WIDTH, VID_MIN_HEIGHT);
 		}
 	}
 

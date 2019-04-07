@@ -40,6 +40,7 @@
 
 #include "i_common.h"
 
+#include "v_video.h"
 #include "bitmap.h"
 #include "c_dispatch.h"
 #include "doomstat.h"
@@ -482,7 +483,7 @@ void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 
 void SystemBaseFrameBuffer::SetWindowSize(int width, int height)
 {
-	if (width < MINIMUM_WIDTH || height < MINIMUM_HEIGHT)
+	if (width < VID_MIN_WIDTH || height < VID_MIN_HEIGHT)
 	{
 		return;
 	}
@@ -549,8 +550,8 @@ void SystemBaseFrameBuffer::SetWindowedMode()
 		[m_window setHidesOnDeactivate:NO];
 	}
 
-	const int minimumFrameWidth  = MINIMUM_WIDTH;
-	const int minimumFrameHeight = MINIMUM_HEIGHT + GetTitleBarHeight();
+	const int minimumFrameWidth  = VID_MIN_WIDTH;
+	const int minimumFrameHeight = VID_MIN_HEIGHT + GetTitleBarHeight();
 	const NSSize minimumFrameSize = NSMakeSize(minimumFrameWidth, minimumFrameHeight);
 	[m_window setMinSize:minimumFrameSize];
 

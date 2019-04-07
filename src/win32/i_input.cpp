@@ -525,8 +525,8 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				mmi->ptMinTrackSize.x = 640;
-				mmi->ptMinTrackSize.y = 400;
+				mmi->ptMinTrackSize.x = VID_MIN_WIDTH;
+				mmi->ptMinTrackSize.y = VID_MIN_HEIGHT;
 			}
 			return 0;
 		}

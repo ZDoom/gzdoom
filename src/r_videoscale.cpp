@@ -32,16 +32,16 @@
 extern bool setsizeneeded;
 
 EXTERN_CVAR(Int, vid_aspect)
-CUSTOM_CVAR(Int, vid_scale_customwidth, 640, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, vid_scale_customwidth, VID_MIN_WIDTH, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < 640)
-		self = 640;
+	if (self < VID_MIN_WIDTH)
+		self = VID_MIN_WIDTH;
 	setsizeneeded = true;
 }
-CUSTOM_CVAR(Int, vid_scale_customheight, 400, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, vid_scale_customheight, VID_MIN_HEIGHT, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < 400)
-		self = 400;
+	if (self < VID_MIN_HEIGHT)
+		self = VID_MIN_HEIGHT;
 	setsizeneeded = true;
 }
 CVAR(Bool, vid_scale_customlinear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -116,7 +116,7 @@ int ViewportScaledWidth(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
-	return (int)MAX((int32_t)320, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width)));
+	return (int)MAX((int32_t)VID_MIN_WIDTH, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -125,7 +125,7 @@ int ViewportScaledHeight(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
-	return (int)MAX((int32_t)200, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(height)));
+	return (int)MAX((int32_t)VID_MIN_HEIGHT, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(height)));
 }
 
 bool ViewportIsScaled43()

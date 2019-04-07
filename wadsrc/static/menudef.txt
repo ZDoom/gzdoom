@@ -2529,7 +2529,7 @@ OptionMenu "OpenGLOptions" protected
 
 OptionMenu "VR3DMenu" protected
 {
-	Title "GLPREFMNU_VRMODE"
+	Title "$GLPREFMNU_VRMODE"
 	Option "$GLMNU_3DMODE",					vr_mode, 						"VRMode"
 	IfOption(Windows)
 	{

@@ -33,7 +33,6 @@ struct FRenderViewpoint;
 namespace OpenGLRenderer
 {
 	class FSamplerManager;
-	class FCustomPostProcessShaders;
 	class OpenGLFrameBuffer;
 	class FPresentShaderBase;
 	class FPresentShader;
@@ -66,7 +65,6 @@ public:
 	FPresent3DColumnShader *mPresent3dColumnShader = nullptr;
 	FPresent3DRowShader *mPresent3dRowShader = nullptr;
 	FShadowMapShader *mShadowMapShader = nullptr;
-	FCustomPostProcessShaders *mCustomPostProcessShaders = nullptr;
 
 	//FRotator mAngles;
 

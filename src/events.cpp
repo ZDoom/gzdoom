@@ -44,7 +44,6 @@
 #include "utf8.h"
 
 EventManager staticEventManager;
-EventManager eventManager;
 
 void EventManager::CallOnRegister()
 {
@@ -262,7 +261,12 @@ void EventManager::InitStaticHandlers(FLevelLocals *l, bool map)
 void EventManager::Shutdown()
 {
 	// delete handlers.
+	TArray<DStaticEventHandler *> list;
 	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
+	{
+		list.Push(handler);
+	}
+	for (auto handler : list)
 	{
 		handler->Destroy();
 	}
@@ -630,11 +634,6 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
 	PARAM_SELF_PROLOGUE(DStaticEventHandler);
 	PARAM_INT(order);
-
-	/* not really needed - this is never checked again. To re-add, the handlers need a pointer to their manager but that's not worth it just for this check.
-	if (eventManager.CheckHandler(self))
-		return 0;
-	*/
 
 	self->Order = order;
 	return 0;
@@ -1223,7 +1222,7 @@ void DStaticEventHandler::NewGame()
 //
 void DStaticEventHandler::OnDestroy()
 {
-	eventManager.UnregisterHandler(this);
+	owner->UnregisterHandler(this);
 	Super::OnDestroy();
 }
 

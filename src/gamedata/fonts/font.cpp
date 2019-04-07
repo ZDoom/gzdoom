@@ -80,7 +80,6 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 
 	noTranslate = notranslate;
 	Lump = fdlump;
-	FontHeight = 0;
 	GlobalKerning = false;
 	FontName = name;
 	Next = FirstFont;
@@ -111,9 +110,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
 		Wads.GetLumpsInFolder(path, folderdata, nametemplate == nullptr);
 		
-		if (nametemplate == nullptr)
+		//if (nametemplate == nullptr)
 		{
-			// Only take font.inf from the actual folder we are processing but not from an older folder that may have been superseded.
 			FStringf infpath("fonts/%s/font.inf", filetemplate);
 			
 			unsigned index = folderdata.FindEx([=](const FolderEntry &entry)

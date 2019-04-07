@@ -21,21 +21,12 @@ layout(location = 6) out vec4 vEyeNormal;
 #ifdef NO_CLIPDISTANCE_SUPPORT
 layout(location = 7) out vec4 ClipDistanceA;
 layout(location = 8) out vec4 ClipDistanceB;
-#define ClipDistance0 ClipDistanceA.x
-#define ClipDistance1 ClipDistanceA.y
-#define ClipDistance2 ClipDistanceA.z
-#define ClipDistance3 ClipDistanceA.w
-#define ClipDistance4 ClipDistanceB.x
-#else
-#define ClipDistance0 gl_ClipDistance[0]
-#define ClipDistance1 gl_ClipDistance[1]
-#define ClipDistance2 gl_ClipDistance[2]
-#define ClipDistance3 gl_ClipDistance[3]
-#define ClipDistance4 gl_ClipDistance[4]
 #endif
 
 void main()
 {
+	float ClipDistance0, ClipDistance1, ClipDistance2, ClipDistance3, ClipDistance4;
+
 	vec2 parmTexCoord;
 	vec4 parmPosition;
 	
@@ -137,6 +128,17 @@ void main()
 		ClipDistance3 = 1.0;
 		ClipDistance4 = 1.0;
 	}
+
+#ifdef NO_CLIPDISTANCE_SUPPORT
+	ClipDistanceA = vec4(ClipDistance0, ClipDistance1, ClipDistance2, ClipDistance3);
+	ClipDistanceB = vec4(ClipDistance4, 0.0, 0.0, 0.0);
+#else
+	gl_ClipDistance[0] = ClipDistance0;
+	gl_ClipDistance[1] = ClipDistance1;
+	gl_ClipDistance[2] = ClipDistance2;
+	gl_ClipDistance[3] = ClipDistance3;
+	gl_ClipDistance[4] = ClipDistance4;
+#endif
 
 	gl_PointSize = 1.0;
 }

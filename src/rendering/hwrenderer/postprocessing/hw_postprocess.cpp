@@ -443,7 +443,10 @@ void PPCameraExposure::Render(PPRenderState *renderstate, int sceneWidth, int sc
 
 void PPCameraExposure::UpdateTextures(int width, int height)
 {
-	if (ExposureLevels.size() > 0 && ExposureLevels[0].Viewport.width == width && ExposureLevels[0].Viewport.height == height)
+	int firstwidth = MAX(width / 2, 1);
+	int firstheight = MAX(height / 2, 1);
+
+	if (ExposureLevels.size() > 0 && ExposureLevels[0].Viewport.width == firstwidth && ExposureLevels[0].Viewport.height == firstheight)
 	{
 		return;
 	}

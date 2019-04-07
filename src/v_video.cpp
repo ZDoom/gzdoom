@@ -550,7 +550,7 @@ void V_UpdateModeSize (int width, int height)
 
 	// This reference size is being used so that on 800x450 (small 16:9) a scale of 2 gets used.
 
-	CleanXfac = std::min(screen->GetWidth() / 400, screen->GetHeight() / 240);
+	CleanXfac = std::max(std::min(screen->GetWidth() / 400, screen->GetHeight() / 240), 1);
 	if (CleanXfac >= 4) CleanXfac--;	// Otherwise we do not have enough space for the episode/skill menus in some languages.
 	CleanYfac = CleanXfac;
 	CleanWidth = screen->GetWidth() / CleanXfac;

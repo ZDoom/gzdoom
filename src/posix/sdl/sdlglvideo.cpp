@@ -355,10 +355,10 @@ void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 
 void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 {
-	if (w < Priv::MIN_WIDTH || h < Priv::MIN_HEIGHT)
+	if (w < VID_MIN_WIDTH || h < VID_MIN_HEIGHT)
 	{
-		w = Priv::MIN_WIDTH;
-		h = Priv::MIN_HEIGHT;
+		w = VID_MIN_WIDTH;
+		h = VID_MIN_HEIGHT;
 	}
 	win_w = w;
 	win_h = h;

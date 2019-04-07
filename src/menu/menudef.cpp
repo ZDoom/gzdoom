@@ -1599,7 +1599,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-			int x = (int)ld->mXpos;
+			int posx = (int)ld->mXpos;
 			int y = (int)ld->mYpos;
 
 			// Delete previous contents
@@ -1653,6 +1653,30 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				}
 			}
 
+			for (unsigned int i = 0; i < MenuSkills.Size(); i++)
+			{
+				FSkillInfo &skill = *MenuSkills[i];
+				DMenuItemBase *li = nullptr;
+
+				FString *pItemText = nullptr;
+				if (gs->PlayerClass != nullptr)
+				{
+					pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
+				}
+
+				if (skill.PicName.Len() != 0 && pItemText == nullptr)
+				{
+					FTextureID tex = GetMenuTexture(skill.PicName);
+					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
+						continue;
+				}
+				const char *c = pItemText ? pItemText->GetChars() : skill.MenuName.GetChars();
+				if (*c == '$') c = GStrings(c + 1);
+				int textwidth = ld->mFont->StringWidth(c);
+				int textright = posx + textwidth;
+				if (posx + textright > 320) posx = std::max(0, 320 - textright);
+			}
+
 			unsigned firstitem = ld->mItems.Size();
 			for(unsigned int i = 0; i < MenuSkills.Size(); i++)
 			{
@@ -1673,11 +1697,11 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
 					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
-						li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
+						li = CreateListMenuItemPatch(posx, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
 				}
 				if (li == nullptr)
 				{
-					li = CreateListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut,
+					li = CreateListMenuItemText(posx, y, ld->mLinespacing, skill.Shortcut,
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, SkillIndices[i]);
 				}
 				ld->mItems.Push(li);

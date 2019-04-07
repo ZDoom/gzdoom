@@ -1314,6 +1314,7 @@ FString &FString::operator=(const wchar_t *copyStr)
 
 std::wstring WideString(const char *cin)
 {
+	if (!cin) return L"";
 	const uint8_t *in = (const uint8_t*)cin;
 	// This is a bit tricky because we need to support both UTF-8 and legacy content in ISO-8859-1
 	// and thanks to user-side string manipulation it can be that a text mixes both.

@@ -4372,7 +4372,7 @@ int DLevelScript::GetActorProperty (int tid, int property)
 	case APROP_Radius:		return DoubleToACS(actor->radius);
 	case APROP_ReactionTime:return actor->reactiontime;
 	case APROP_MeleeRange:	return DoubleToACS(actor->meleerange);
-	case APROP_ViewHeight:	if (actor->IsKindOf(NAME_PlayerPawn))
+	case APROP_ViewHeight:	if (actor->player)
 							{
 								return DoubleToACS(actor->player->DefaultViewHeight());
 							}

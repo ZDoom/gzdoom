@@ -32,7 +32,7 @@
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "textures/bitmap.h"
 
-CVAR(Bool, gl_custompost, true, 0)
+EXTERN_CVAR(Bool, gl_custompost)
 
 namespace OpenGLRenderer
 {

@@ -78,7 +78,6 @@ private:
 	std::array<std::unique_ptr<VulkanSampler>, 16> mSamplers;
 	std::map<VkPPRenderPassKey, std::unique_ptr<VkPPRenderPassSetup>> mRenderPassSetup;
 	std::unique_ptr<VulkanDescriptorPool> mDescriptorPool;
-	std::vector<std::unique_ptr<VulkanDescriptorSet>> mFrameDescriptorSets;
 	int mCurrentPipelineImage = 0;
 
 	friend class VkPPRenderState;

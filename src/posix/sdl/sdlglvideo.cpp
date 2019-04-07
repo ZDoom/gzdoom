@@ -245,7 +245,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 		if (Screen != NULL)
 		{
 			// enforce minimum size limit
-			SDL_SetWindowMinimumSize(Screen, MIN_WIDTH, MIN_HEIGHT);
+			SDL_SetWindowMinimumSize(Screen, VID_MIN_WIDTH, VID_MIN_HEIGHT);
 
 			GLContext = SDL_GL_CreateContext(Screen);
 			if (GLContext != NULL)
@@ -340,10 +340,10 @@ int SystemGLFrameBuffer::GetClientHeight()
 
 void SystemGLFrameBuffer::SetWindowSize(int w, int h)
 {
-	if (w < MIN_WIDTH || h < MIN_HEIGHT)
+	if (w < VID_MIN_WIDTH || h < VID_MIN_HEIGHT)
 	{
-		w = MIN_WIDTH;
-		h = MIN_HEIGHT;
+		w = VID_MIN_WIDTH;
+		h = VID_MIN_HEIGHT;
 	}
 	win_w = w;
 	win_h = h;

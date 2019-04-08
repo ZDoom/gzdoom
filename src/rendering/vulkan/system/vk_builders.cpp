@@ -157,7 +157,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
 	glslang::TIntermediate *intermediate = program.getIntermediate(stage);
 	if (!intermediate)
 	{
-		throw std::runtime_error("Internal shader compiler error");
+		I_Error("Internal shader compiler error");
 	}
 
 	glslang::SpvOptions spvOptions;
@@ -177,7 +177,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
 	VkShaderModule shaderModule;
 	VkResult result = vkCreateShaderModule(device->device, &createInfo, nullptr, &shaderModule);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("Could not create vulkan shader module");
+		I_Error("Could not create vulkan shader module");
 
 	return std::make_unique<VulkanShader>(device, shaderModule);
 }

@@ -163,7 +163,7 @@ void VulkanDevice::SelectPhysicalDevice()
 	}
 
 	if (SupportedDevices.empty())
-		throw std::runtime_error("No Vulkan device supports the minimum requirements of this application");
+		I_Error("No Vulkan device supports the minimum requirements of this application");
 
 	// The device order returned by Vulkan can be anything. Prefer discrete > integrated > virtual gpu > cpu > other
 	std::stable_sort(SupportedDevices.begin(), SupportedDevices.end(), [&](const auto &a, const auto b) {
@@ -215,7 +215,7 @@ void VulkanDevice::CreateAllocator()
 	allocinfo.device = device;
 	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;
 	if (vmaCreateAllocator(&allocinfo, &allocator) != VK_SUCCESS)
-		throw std::runtime_error("Unable to create allocator");
+		I_Error("Unable to create allocator");
 }
 
 void VulkanDevice::CreateDevice()
@@ -248,7 +248,7 @@ void VulkanDevice::CreateDevice()
 
 	VkResult result = vkCreateDevice(PhysicalDevice.Device, &deviceCreateInfo, nullptr, &device);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("Could not create vulkan device");
+		I_Error("Could not create vulkan device");
 
 	volkLoadDevice(device);
 
@@ -260,7 +260,7 @@ void VulkanDevice::CreateSurface()
 {
 	if (!I_CreateVulkanSurface(instance, &surface))
 	{
-		throw std::runtime_error("Could not create vulkan surface");
+		I_Error("Could not create vulkan surface");
 	}
 }
 
@@ -313,7 +313,7 @@ void VulkanDevice::CreateInstance()
 
 	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("Could not create vulkan instance");
+		I_Error("Could not create vulkan instance");
 
 	volkLoadInstance(instance);
 
@@ -334,7 +334,7 @@ void VulkanDevice::CreateInstance()
 		createInfo.pUserData = this;
 		result = vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("vkCreateDebugUtilsMessengerEXT failed");
+			I_Error("vkCreateDebugUtilsMessengerEXT failed");
 
 		DebugLayerActive = true;
 	}
@@ -427,14 +427,14 @@ std::vector<VulkanPhysicalDevice> VulkanDevice::GetPhysicalDevices(VkInstance in
 	uint32_t deviceCount = 0;
 	VkResult result = vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkEnumeratePhysicalDevices failed");
+		I_Error("vkEnumeratePhysicalDevices failed");
 	if (deviceCount == 0)
 		return {};
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	result = vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkEnumeratePhysicalDevices failed (2)");
+		I_Error("vkEnumeratePhysicalDevices failed (2)");
 
 	std::vector<VulkanPhysicalDevice> devinfo(deviceCount);
 	for (size_t i = 0; i < devices.size(); i++)
@@ -463,11 +463,11 @@ std::vector<const char *> VulkanDevice::GetPlatformExtensions()
 {
 	uint32_t extensionCount = 0;
 	if (!I_GetVulkanPlatformExtensions(&extensionCount, nullptr))
-		throw std::runtime_error("Cannot obtain number of Vulkan extensions");
+		I_Error("Cannot obtain number of Vulkan extensions");
 
 	std::vector<const char *> extensions(extensionCount);
 	if (!I_GetVulkanPlatformExtensions(&extensionCount, extensions.data()))
-		throw std::runtime_error("Cannot obtain list of Vulkan extensions");
+		I_Error("Cannot obtain list of Vulkan extensions");
 	return extensions;
 }
 
@@ -475,12 +475,12 @@ void VulkanDevice::InitVolk()
 {
 	if (volkInitialize() != VK_SUCCESS)
 	{
-		throw std::runtime_error("Unable to find Vulkan");
+		I_Error("Unable to find Vulkan");
 	}
 	auto iver = volkGetInstanceVersion();
 	if (iver == 0)
 	{
-		throw std::runtime_error("Vulkan not supported");
+		I_Error("Vulkan not supported");
 	}
 }
 
@@ -516,5 +516,6 @@ uint32_t VulkanDevice::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 			return i;
 	}
 
-	throw std::runtime_error("failed to find suitable memory type!");
+	I_Error("failed to find suitable memory type!");
+	return 0;
 }

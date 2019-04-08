@@ -20,7 +20,7 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device) : vsync(vid_vsync), devic
 		SelectFormat();
 		SelectPresentMode();
 		if (!CreateSwapChain())
-			throw std::runtime_error("Could not create vulkan swapchain");
+			I_Error("Could not create vulkan swapchain");
 		GetImages();
 		CreateViews();
 	}
@@ -70,7 +70,7 @@ uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *s
 		}
 		else
 		{
-			throw std::runtime_error("Failed to acquire next image!");
+			I_Error("Failed to acquire next image!");
 		}
 	}
 	return imageIndex;
@@ -97,19 +97,19 @@ void VulkanSwapChain::QueuePresent(uint32_t imageIndex, VulkanSemaphore *semapho
 		// The spec says we can recover from this.
 		// However, if we are out of memory it is better to crash now than in some other weird place further away from the source of the problem.
 
-		throw std::runtime_error("vkQueuePresentKHR failed: out of memory");
+		I_Error("vkQueuePresentKHR failed: out of memory");
 	}
 	else if (result == VK_ERROR_DEVICE_LOST)
 	{
-		throw std::runtime_error("vkQueuePresentKHR failed: device lost");
+		I_Error("vkQueuePresentKHR failed: device lost");
 	}
 	else if (result == VK_ERROR_SURFACE_LOST_KHR)
 	{
-		throw std::runtime_error("vkQueuePresentKHR failed: surface lost");
+		I_Error("vkQueuePresentKHR failed: surface lost");
 	}
 	else if (result != VK_SUCCESS)
 	{
-		throw std::runtime_error("vkQueuePresentKHR failed");
+		I_Error("vkQueuePresentKHR failed");
 	}
 }
 
@@ -213,7 +213,7 @@ void VulkanSwapChain::CreateViews()
 		VkImageView view;
 		VkResult result = vkCreateImageView(device->device, &createInfo, nullptr, &view);
 		if (result != VK_SUCCESS)
-			throw std::runtime_error("Could not create image view for swapchain image");
+			I_Error("Could not create image view for swapchain image");
 
 		device->SetDebugObjectName("SwapChainImageView", (uint64_t)view, VK_OBJECT_TYPE_IMAGE_VIEW);
 
@@ -225,7 +225,7 @@ void VulkanSwapChain::SelectFormat()
 {
 	std::vector<VkSurfaceFormatKHR> surfaceFormats = GetSurfaceFormats();
 	if (surfaceFormats.empty())
-		throw std::runtime_error("No surface formats supported");
+		I_Error("No surface formats supported");
 
 	if (surfaceFormats.size() == 1 && surfaceFormats.front().format == VK_FORMAT_UNDEFINED)
 	{
@@ -263,7 +263,7 @@ void VulkanSwapChain::SelectPresentMode()
 	std::vector<VkPresentModeKHR> presentModes = GetPresentModes();
 
 	if (presentModes.empty())
-		throw std::runtime_error("No surface present modes supported");
+		I_Error("No surface present modes supported");
 
 	swapChainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
 	if (vsync)
@@ -315,12 +315,12 @@ void VulkanSwapChain::GetImages()
 	uint32_t imageCount;
 	VkResult result = vkGetSwapchainImagesKHR(device->device, swapChain, &imageCount, nullptr);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkGetSwapchainImagesKHR failed");
+		I_Error("vkGetSwapchainImagesKHR failed");
 
 	swapChainImages.resize(imageCount);
 	result = vkGetSwapchainImagesKHR(device->device, swapChain, &imageCount, swapChainImages.data());
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkGetSwapchainImagesKHR failed (2)");
+		I_Error("vkGetSwapchainImagesKHR failed (2)");
 }
 
 void VulkanSwapChain::ReleaseViews()
@@ -344,7 +344,7 @@ VkSurfaceCapabilitiesKHR VulkanSwapChain::GetSurfaceCapabilities()
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
 	VkResult result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->PhysicalDevice.Device, device->surface, &surfaceCapabilities);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
+		I_Error("vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed");
 	return surfaceCapabilities;
 }
 
@@ -353,14 +353,14 @@ std::vector<VkSurfaceFormatKHR> VulkanSwapChain::GetSurfaceFormats()
 	uint32_t surfaceFormatCount = 0;
 	VkResult result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->PhysicalDevice.Device, device->surface, &surfaceFormatCount, nullptr);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
+		I_Error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
 	else if (surfaceFormatCount == 0)
 		return {};
 
 	std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
 	result = vkGetPhysicalDeviceSurfaceFormatsKHR(device->PhysicalDevice.Device, device->surface, &surfaceFormatCount, surfaceFormats.data());
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
+		I_Error("vkGetPhysicalDeviceSurfaceFormatsKHR failed");
 	return surfaceFormats;
 }
 
@@ -369,13 +369,13 @@ std::vector<VkPresentModeKHR> VulkanSwapChain::GetPresentModes()
 	uint32_t presentModeCount = 0;
 	VkResult result = vkGetPhysicalDeviceSurfacePresentModesKHR(device->PhysicalDevice.Device, device->surface, &presentModeCount, nullptr);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
+		I_Error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
 	else if (presentModeCount == 0)
 		return {};
 
 	std::vector<VkPresentModeKHR> presentModes(presentModeCount);
 	vkGetPhysicalDeviceSurfacePresentModesKHR(device->PhysicalDevice.Device, device->surface, &presentModeCount, presentModes.data());
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
+		I_Error("vkGetPhysicalDeviceSurfacePresentModesKHR failed");
 	return presentModes;
 }

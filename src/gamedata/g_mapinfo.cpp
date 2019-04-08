@@ -765,12 +765,30 @@ void FMapInfoParser::ParseCluster()
 			ParseAssign();
 			if (ParseLookupName(clusterinfo->EnterText))
 				clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
+			else
+			{
+				FStringf testlabel("CLUSTERENTER%d", clusterinfo->cluster);
+				if (GStrings.MatchDefaultString(testlabel, clusterinfo->EnterText))
+				{
+					clusterinfo->EnterText = testlabel;
+					clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
+				}
+			}
 		}
 		else if (sc.Compare("exittext"))
 		{
 			ParseAssign();
 			if (ParseLookupName(clusterinfo->ExitText))
 				clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
+			else
+			{
+				FStringf testlabel("CLUSTEREXIT%d", clusterinfo->cluster);
+				if (GStrings.MatchDefaultString(testlabel, clusterinfo->ExitText))
+				{
+					clusterinfo->ExitText = testlabel;
+					clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
+				}
+			}
 		}
 		else if (sc.Compare("music"))
 		{
@@ -1933,8 +1951,8 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 			// Workaround to allow localizazion of IWADs which do not have a string label here (e.g. HACX.WAD)
 			// This checks for a string labelled with the MapName and if that is identical to what got parsed here
 			// the string table entry will be used.
-			auto c = GStrings.GetLanguageString(levelinfo->MapName, FStringTable::default_table);
-			if (c && !strcmp(c, sc.String))
+
+			if (GStrings.MatchDefaultString(levelinfo->MapName, sc.String))
 			{
 				levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
 				levelinfo->LevelName = levelinfo->MapName;

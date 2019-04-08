@@ -250,6 +250,10 @@ bool FStringTable::ParseLanguageCSV(const TArray<uint8_t> &buffer)
 				{
 					InsertString(langentry.second, strName, str);
 				}
+				else
+				{
+					DeleteString(langentry.second, strName);
+				}
 			}
 		}
 	}
@@ -372,6 +376,17 @@ void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
 //
 //==========================================================================
 
+void FStringTable::DeleteString(int langid, FName label)
+{
+	allStrings[langid].Remove(label);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void FStringTable::InsertString(int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
@@ -386,7 +401,7 @@ void FStringTable::InsertString(int langid, FName label, const FString &string)
 			break;
 		}
 		FString macroname(te.strings[0].GetChars() + index + 2, endindex - index - 2);
- 		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
+		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
 		FStringf replacee("@[%s]", macroname.GetChars());
 		FName lookupname(lookupstr, true);
 		auto replace = allMacros.CheckKey(lookupname);
@@ -548,6 +563,20 @@ const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable
 		}
 	}
 	return nullptr;
+}
+
+bool FStringTable::MatchDefaultString(const char *name, const char *content) const
+{
+	// This only compares the first line to avoid problems with bad linefeeds. For the few cases where this feature is needed it is sufficient.
+	auto c = GetLanguageString(name, FStringTable::default_table);
+	if (!c) return false;
+	
+	// Check a secondary key, in case the text comparison cannot be done due to needed orthographic fixes (see Harmony's exit text)
+	FStringf checkkey("%s_CHECK", name);
+	auto cc = GetLanguageString(checkkey, FStringTable::default_table);
+	if (cc) c = cc;
+
+	return (c && !strnicmp(c, content, strcspn(content, "\n\r\t")));
 }
 
 //==========================================================================

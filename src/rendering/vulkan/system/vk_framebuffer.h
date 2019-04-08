@@ -23,7 +23,7 @@ class VulkanFrameBuffer : public SystemBaseFrameBuffer
 public:
 	VulkanDevice *device;
 	std::unique_ptr<VulkanSwapChain> swapChain;
-	uint32_t presentImageIndex = 0;
+	uint32_t presentImageIndex = 0xffffffff;
 
 	VulkanCommandBuffer *GetTransferCommands();
 	VulkanCommandBuffer *GetDrawCommands();
@@ -124,9 +124,6 @@ private:
 	std::unique_ptr<VulkanFence> mRenderFinishedFence;
 
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
-
-	int lastSwapWidth = 0;
-	int lastSwapHeight = 0;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

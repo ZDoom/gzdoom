@@ -121,33 +121,33 @@ static void LoadShaders()
 		FString path = CreateProgramCacheName(false);
 		FileReader fr;
 		if (!fr.OpenFile(path))
-			throw std::runtime_error("Could not open shader file");
+			I_Error("Could not open shader file");
 
 		char magic[4];
 		fr.Read(magic, 4);
 		if (memcmp(magic, ShaderMagic, 4) != 0)
-			throw std::runtime_error("Not a shader cache file");
+			I_Error("Not a shader cache file");
 
 		uint32_t count = fr.ReadUInt32();
 		if (count > 512)
-			throw std::runtime_error("Too many shaders cached");
+			I_Error("Too many shaders cached");
 
 		for (uint32_t i = 0; i < count; i++)
 		{
 			char hexdigest[33];
 			if (fr.Read(hexdigest, 32) != 32)
-				throw std::runtime_error("Read error");
+				I_Error("Read error");
 			hexdigest[32] = 0;
 
 			std::unique_ptr<ProgramBinary> binary(new ProgramBinary());
 			binary->format = fr.ReadUInt32();
 			uint32_t size = fr.ReadUInt32();
 			if (size > 1024 * 1024)
-				throw std::runtime_error("Shader too big, probably file corruption");
+				I_Error("Shader too big, probably file corruption");
 
 			binary->data.Resize(size);
 			if (fr.Read(binary->data.Data(), binary->data.Size()) != binary->data.Size())
-				throw std::runtime_error("Read error");
+				I_Error("Read error");
 
 			ShaderCache[hexdigest] = std::move(binary);
 		}

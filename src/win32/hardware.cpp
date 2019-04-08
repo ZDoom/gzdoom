@@ -137,8 +137,9 @@ void I_InitGraphics ()
 		{
 			Video = new Win32VulkanVideo();
 		}
-		catch (CRecoverableError &)
+		catch (CRecoverableError &error)
 		{
+			Printf(TEXTCOLOR_RED "Initialization of Vulkan failed: %s\n", error.what());
 			Video = new Win32GLVideo();
 		}
 	}

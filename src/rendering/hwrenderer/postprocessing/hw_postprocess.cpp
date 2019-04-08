@@ -1001,8 +1001,9 @@ void PPCustomShaderInstance::AddUniformField(size_t &offset, const FString &name
 	FieldOffset[name] = offset;
 
 	auto name2 = std::make_unique<FString>(name);
+	auto chars = name2->GetChars();
 	FieldNames.push_back(std::move(name2));
-	Fields.push_back({ name2->GetChars(), type, offset });
+	Fields.push_back({ chars, type, offset });
 
 	offset += fieldsize;
 }

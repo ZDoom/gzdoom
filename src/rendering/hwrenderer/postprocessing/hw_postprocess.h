@@ -791,7 +791,7 @@ public:
 
 private:
 	void CreateShaders();
-	void AddUniformField(size_t &offset, const FString &name, UniformType type, size_t fieldsize);
+	void AddUniformField(size_t &offset, const FString &name, UniformType type, size_t fieldsize, size_t alignment = 0);
 	void SetTextures(PPRenderState *renderstate);
 	void SetUniforms(PPRenderState *renderstate);
 

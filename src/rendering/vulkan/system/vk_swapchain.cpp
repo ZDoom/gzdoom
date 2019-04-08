@@ -54,8 +54,8 @@ uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *s
 			break;
 		}
 
-		VkResult result = vkAcquireNextImageKHR(device->device, swapChain, std::numeric_limits<uint64_t>::max(), semaphore ? semaphore->semaphore : VK_NULL_HANDLE, fence ? fence->fence : VK_NULL_HANDLE, &imageIndex);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		VkResult result = vkAcquireNextImageKHR(device->device, swapChain, 1'000'000'000, semaphore ? semaphore->semaphore : VK_NULL_HANDLE, fence ? fence->fence : VK_NULL_HANDLE, &imageIndex);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || result == VK_TIMEOUT)
 		{
 			Recreate();
 		}
@@ -63,7 +63,7 @@ uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *s
 		{
 			break;
 		}
-		else if (result == VK_TIMEOUT || result == VK_NOT_READY)
+		else if (result == VK_NOT_READY)
 		{
 			imageIndex = 0xffffffff;
 			break;

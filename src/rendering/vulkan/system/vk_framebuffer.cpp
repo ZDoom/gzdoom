@@ -157,20 +157,39 @@ void VulkanFrameBuffer::Update()
 
 	Flush3D.Clock();
 
+	const auto recreateSwapchain = [&]()
+	{
+		swapChain.reset();
+		swapChain = std::make_unique<VulkanSwapChain>(device);
+	};
+
 	int newWidth = GetClientWidth();
 	int newHeight = GetClientHeight();
 	if (lastSwapWidth != newWidth || lastSwapHeight != newHeight)
 	{
-		swapChain.reset();
-		swapChain = std::make_unique<VulkanSwapChain>(device);
+		recreateSwapchain();
 
 		lastSwapWidth = newWidth;
 		lastSwapHeight = newHeight;
 	}
 
-	VkResult result = vkAcquireNextImageKHR(device->device, swapChain->swapChain, std::numeric_limits<uint64_t>::max(), mSwapChainImageAvailableSemaphore->semaphore, VK_NULL_HANDLE, &presentImageIndex);
-	if (result != VK_SUCCESS)
-		throw std::runtime_error("Failed to acquire next image!");
+	while (true)
+	{
+		const VkResult result = vkAcquireNextImageKHR(device->device, swapChain->swapChain, 500000000, mSwapChainImageAvailableSemaphore->semaphore, VK_NULL_HANDLE, &presentImageIndex);
+
+		if (result == VK_SUCCESS)
+		{
+			break;
+		}
+		else if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_TIMEOUT)
+		{
+			recreateSwapchain();
+		}
+		else
+		{
+			throw std::runtime_error("Failed to acquire next image!");
+		}
+	}
 
 	GetPostprocess()->SetActiveRenderTarget();
 

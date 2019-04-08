@@ -1,5 +1,6 @@
 
 #include "vk_swapchain.h"
+#include "vk_objects.h"
 #include "c_cvars.h"
 #include "version.h"
 
@@ -18,10 +19,10 @@ VulkanSwapChain::VulkanSwapChain(VulkanDevice *device) : vsync(vid_vsync), devic
 	{
 		SelectFormat();
 		SelectPresentMode();
-		CreateSwapChain();
+		if (!CreateSwapChain())
+			throw std::runtime_error("Could not create vulkan swapchain");
 		GetImages();
 		CreateViews();
-		// SetHdrMetadata(); // This isn't required it seems
 	}
 	catch (...)
 	{
@@ -35,7 +36,101 @@ VulkanSwapChain::~VulkanSwapChain()
 	ReleaseResources();
 }
 
-void VulkanSwapChain::CreateSwapChain()
+uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *semaphore, VulkanFence *fence)
+{
+	if (lastSwapWidth != width || lastSwapHeight != height || !swapChain)
+	{
+		Recreate();
+		lastSwapWidth = width;
+		lastSwapHeight = height;
+	}
+
+	uint32_t imageIndex;
+	while (true)
+	{
+		if (!swapChain)
+		{
+			imageIndex = 0xffffffff;
+			break;
+		}
+
+		VkResult result = vkAcquireNextImageKHR(device->device, swapChain, std::numeric_limits<uint64_t>::max(), semaphore ? semaphore->semaphore : VK_NULL_HANDLE, fence ? fence->fence : VK_NULL_HANDLE, &imageIndex);
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+		{
+			Recreate();
+		}
+		else if (result == VK_SUCCESS)
+		{
+			break;
+		}
+		else if (result == VK_TIMEOUT || result == VK_NOT_READY)
+		{
+			imageIndex = 0xffffffff;
+			break;
+		}
+		else
+		{
+			throw std::runtime_error("Failed to acquire next image!");
+		}
+	}
+	return imageIndex;
+}
+
+void VulkanSwapChain::QueuePresent(uint32_t imageIndex, VulkanSemaphore *semaphore)
+{
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = semaphore ? 1 : 0;
+	presentInfo.pWaitSemaphores = semaphore ? &semaphore->semaphore : VK_NULL_HANDLE;
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = &swapChain;
+	presentInfo.pImageIndices = &imageIndex;
+	presentInfo.pResults = nullptr;
+	VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
+	if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		lastSwapWidth = 0;
+		lastSwapHeight = 0;
+	}
+	else if (result == VK_ERROR_OUT_OF_HOST_MEMORY || result == VK_ERROR_OUT_OF_DEVICE_MEMORY)
+	{
+		// The spec says we can recover from this.
+		// However, if we are out of memory it is better to crash now than in some other weird place further away from the source of the problem.
+
+		throw std::runtime_error("vkQueuePresentKHR failed: out of memory");
+	}
+	else if (result == VK_ERROR_DEVICE_LOST)
+	{
+		throw std::runtime_error("vkQueuePresentKHR failed: device lost");
+	}
+	else if (result == VK_ERROR_SURFACE_LOST_KHR)
+	{
+		throw std::runtime_error("vkQueuePresentKHR failed: surface lost");
+	}
+	else if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("vkQueuePresentKHR failed");
+	}
+}
+
+void VulkanSwapChain::Recreate()
+{
+	ReleaseViews();
+	swapChainImages.clear();
+
+	VkSwapchainKHR oldSwapChain = swapChain;
+	CreateSwapChain(oldSwapChain);
+	if (oldSwapChain)
+		vkDestroySwapchainKHR(device->device, oldSwapChain, nullptr);
+
+	if (swapChain)
+	{
+		GetImages();
+		CreateViews();
+	}
+}
+
+bool VulkanSwapChain::CreateSwapChain(VkSwapchainKHR oldSwapChain)
 {
 	int width, height;
 	I_GetVulkanDrawableSize(&width, &height);
@@ -45,6 +140,11 @@ void VulkanSwapChain::CreateSwapChain()
 	actualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
 	actualExtent.width = std::max(surfaceCapabilities.minImageExtent.width, std::min(surfaceCapabilities.maxImageExtent.width, actualExtent.width));
 	actualExtent.height = std::max(surfaceCapabilities.minImageExtent.height, std::min(surfaceCapabilities.maxImageExtent.height, actualExtent.height));
+	if (actualExtent.width == 0 || actualExtent.height == 0)
+	{
+		swapChain = VK_NULL_HANDLE;
+		return false;
+	}
 
 	uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
 	if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
@@ -80,11 +180,16 @@ void VulkanSwapChain::CreateSwapChain()
 	swapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // If alpha channel is passed on to the DWM or not
 	swapChainCreateInfo.presentMode = swapChainPresentMode;
 	swapChainCreateInfo.clipped = VK_TRUE;
-	swapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+	swapChainCreateInfo.oldSwapchain = oldSwapChain;
 
 	VkResult result = vkCreateSwapchainKHR(device->device, &swapChainCreateInfo, nullptr, &swapChain);
 	if (result != VK_SUCCESS)
-		throw std::runtime_error("Could not create vulkan swapchain");
+	{
+		swapChain = VK_NULL_HANDLE;
+		return false;
+	}
+
+	return true;
 }
 
 void VulkanSwapChain::CreateViews()
@@ -218,14 +323,18 @@ void VulkanSwapChain::GetImages()
 		throw std::runtime_error("vkGetSwapchainImagesKHR failed (2)");
 }
 
-void VulkanSwapChain::ReleaseResources()
+void VulkanSwapChain::ReleaseViews()
 {
 	for (auto &view : swapChainImageViews)
 	{
 		vkDestroyImageView(device->device, view, nullptr);
 	}
 	swapChainImageViews.clear();
+}
 
+void VulkanSwapChain::ReleaseResources()
+{
+	ReleaseViews();
 	if (swapChain)
 		vkDestroySwapchainKHR(device->device, swapChain, nullptr);
 }

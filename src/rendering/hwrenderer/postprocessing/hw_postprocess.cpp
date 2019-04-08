@@ -858,7 +858,7 @@ PPCustomShaderInstance::PPCustomShaderInstance(PostProcessShader *desc) : Desc(d
 		case PostProcessUniformType::Float: AddUniformField(offset, name, UniformType::Float, sizeof(float)); break;
 		case PostProcessUniformType::Int: AddUniformField(offset, name, UniformType::Int, sizeof(int)); break;
 		case PostProcessUniformType::Vec2: AddUniformField(offset, name, UniformType::Vec2, sizeof(float) * 2); break;
-		case PostProcessUniformType::Vec3: AddUniformField(offset, name, UniformType::Vec3, sizeof(float) * 3); break;
+		case PostProcessUniformType::Vec3: AddUniformField(offset, name, UniformType::Vec3, sizeof(float) * 3, sizeof(float) * 4); break;
 		default: break;
 		}
 	}
@@ -993,9 +993,9 @@ void PPCustomShaderInstance::SetUniforms(PPRenderState *renderstate)
 	renderstate->Uniforms.Data = uniforms;
 }
 
-void PPCustomShaderInstance::AddUniformField(size_t &offset, const FString &name, UniformType type, size_t fieldsize)
+void PPCustomShaderInstance::AddUniformField(size_t &offset, const FString &name, UniformType type, size_t fieldsize, size_t alignment)
 {
-	size_t alignment = fieldsize;
+	if (alignment == 0) alignment = fieldsize;
 	offset = (offset + alignment - 1) / alignment * alignment;
 
 	FieldOffset[name] = offset;
@@ -1004,6 +1004,14 @@ void PPCustomShaderInstance::AddUniformField(size_t &offset, const FString &name
 	auto chars = name2->GetChars();
 	FieldNames.push_back(std::move(name2));
 	Fields.push_back({ chars, type, offset });
-
 	offset += fieldsize;
+
+	if (fieldsize != alignment) // Workaround for buggy OpenGL drivers that does not do std140 layout correctly for vec3
+	{
+		name2 = std::make_unique<FString>(name + "__padding");
+		chars = name2->GetChars();
+		FieldNames.push_back(std::move(name2));
+		Fields.push_back({ chars, UniformType::Float, offset });
+		offset += alignment - fieldsize;
+	}
 }

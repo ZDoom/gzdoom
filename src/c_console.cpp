@@ -79,8 +79,20 @@ CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	if (self >= 0 && self < 128) self = 128;
 }
 
-CVAR(Bool, con_consolefont, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, con_midconsolefont, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+bool generic_hud, generic_ui;
+
+EXTERN_CVAR(Bool, ui_generic)
+
+CUSTOM_CVAR(Bool, hud_generic, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // All HUD elements only use generic assets
+{
+	generic_hud = self || ui_generic;
+}
+
+CUSTOM_CVAR(Bool, ui_generic, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // The entire UI uses generic assets (this excludes the primary menus)
+{
+	generic_ui = self;
+	generic_hud = self || hud_generic;
+}
 
 FConsoleBuffer *conbuffer;
 
@@ -782,9 +794,10 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		con_notifylines == 0)
 		return;
 
-	width = DisplayWidth / active_con_scaletext(con_consolefont);
+	width = DisplayWidth / active_con_scaletext(hud_generic);
 
-	FFont *font = *con_consolefont ? NewSmallFont : SmallFont;
+	FFont *font = hud_generic ? NewSmallFont : SmallFont;
+	if (font == nullptr) return;	// Without an initialized font we cannot handle the message (this is for those which come here before the font system is ready.)
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
 	{
@@ -897,7 +910,7 @@ int PrintString (int iprintlevel, const char *outline)
 			I_PrintStr(outline);
 
 			conbuffer->AddText(printlevel, outline);
-			if (vidactive && screen && SmallFont && !(iprintlevel & PRINT_NONOTIFY))
+			if (vidactive && screen && !(iprintlevel & PRINT_NONOTIFY))
 			{
 				NotifyStrings.AddString(printlevel, outline);
 			}
@@ -1067,7 +1080,7 @@ void FNotifyBuffer::Draw()
 	line = Top;
 	canskip = true;
 
-	FFont *font = *con_consolefont ? NewSmallFont : SmallFont;
+	FFont *font = hud_generic ? NewSmallFont : SmallFont;
 	lineadv = font->GetHeight ();
 
 	for (unsigned i = 0; i < Text.Size(); ++ i)
@@ -1090,11 +1103,11 @@ void FNotifyBuffer::Draw()
 			else
 				color = PrintColors[notify.PrintLevel];
 
-			if (color == CR_UNTRANSLATED && *con_consolefont)
+			if (color == CR_UNTRANSLATED && hud_generic)
 			{
 				color = C_GetDefaultFontColor();
 			}
-			int scale = active_con_scaletext(con_consolefont);
+			int scale = active_con_scaletext(hud_generic);
 			if (!center)
 				screen->DrawText (font, color, 0, line, notify.Text,
 					DTA_VirtualWidth, screen->GetWidth() / scale,
@@ -1103,7 +1116,7 @@ void FNotifyBuffer::Draw()
 					DTA_Alpha, alpha, TAG_DONE);
 			else
 				screen->DrawText (font, color, (screen->GetWidth() -
-					SmallFont->StringWidth (notify.Text) * scale) / 2 / scale,
+					font->StringWidth (notify.Text) * scale) / 2 / scale,
 					line, notify.Text,
 					DTA_VirtualWidth, screen->GetWidth() / scale,
 					DTA_VirtualHeight, screen->GetHeight() / scale,
@@ -1756,16 +1769,7 @@ void C_MidPrint (FFont *font, const char *msg, bool bold)
 		auto color = (EColorRange)PrintColors[bold? PRINTLEVELS+1 : PRINTLEVELS];
 		Printf(PRINT_HIGH|PRINT_NONOTIFY, TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", color, console_bar, msg, console_bar);
 
-		bool altscale = false;
-		if (font == nullptr)
-		{
-			altscale = con_midconsolefont;
-			font = altscale ? NewSmallFont : SmallFont;
-			if (altscale && color == CR_UNTRANSLATED) color = C_GetDefaultFontColor();
-		}
-
-		StatusBar->AttachMessage (Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0,
-			color, con_midtime, altscale), MAKE_ID('C','N','T','R'));
+		StatusBar->AttachMessage (Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0, color, con_midtime), MAKE_ID('C','N','T','R'));
 	}
 	else
 	{

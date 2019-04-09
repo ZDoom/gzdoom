@@ -39,7 +39,10 @@
 #include "v_video.h"
 #include "cmdlib.h"
 #include "serializer.h"
+#include "doomstat.h"
 #include "vm.h"
+
+EColorRange C_GetDefaultFontColor();
 
 EXTERN_CVAR(Int, con_scaletext)
 
@@ -128,7 +131,7 @@ void DHUDMessageBase::CallDraw(int bottom, int visibility)
 //============================================================================
 
 DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
-						  EColorRange textColor, float holdTime, bool altscale)
+						  EColorRange textColor, float holdTime)
 {
 	if (hudwidth == 0 || hudheight == 0)
 	{
@@ -139,7 +142,7 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 		// for x range [0.0, 1.0]: Positions center of box
 		// for x range [1.0, 2.0]: Positions center of box, and centers text inside it
 		HUDWidth = HUDHeight = 0;
-		AltScale = altscale;
+		AltScale = font == nullptr && generic_hud;	// generic_hud only takes effect for messages that do not scale the screen and use the default font.
 		if (fabs (x) > 2.f)
 		{
 			CenterX = true;
@@ -197,10 +200,11 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 	Top = y;
 	HoldTics = (int)(holdTime * TICRATE);
 	Tics = -1;	// -1 to compensate for one additional Tick the message will receive.
-	TextColor = textColor;
+	Font = font? font : AltScale? NewSmallFont : SmallFont;
+	if (Font == NewSmallFont && textColor == CR_UNTRANSLATED) TextColor = C_GetDefaultFontColor();
+	else TextColor = textColor;
 	State = 0;
 	SourceText = copystring (text);
-	Font = font;
 	VisibilityFlags = 0;
 	Style = STYLE_Translucent;
 	Alpha = 1.;
@@ -251,7 +255,8 @@ void DHUDMessage::Serialize(FSerializer &arc)
 		("handleaspect", HandleAspect)
 		("visibilityflags", VisibilityFlags)
 		("style", Style)
-		("alpha", Alpha);
+		("alpha", Alpha)
+		("altscale", AltScale);
 
 	if (arc.isReading())
 	{

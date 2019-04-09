@@ -754,7 +754,7 @@ void DBaseStatusBar::ShowPlayerName ()
 	EColorRange color;
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
-	AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, CPlayer->userinfo.GetName(),
+	AttachMessage (Create<DHUDMessageFadeOut> (nullptr, CPlayer->userinfo.GetName(),
 		1.5f, 0.92f, 0, 0, color, 2.f, 0.35f), MAKE_ID('P','N','A','M'));
 }
 

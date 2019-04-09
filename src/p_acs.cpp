@@ -8662,18 +8662,17 @@ scriptwait:
 						color = CLAMPCOLOR(Stack[optstart-4]);
 					}
 
-					FFont *font = activefont ? activefont : SmallFont;
 					switch (type & 0xFF)
 					{
 					default:	// normal
 						alpha = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 1.f;
-						msg = Create<DHUDMessage> (font, work, x, y, hudwidth, hudheight, color, holdTime);
+						msg = Create<DHUDMessage> (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							alpha = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 1.f;
-							msg = Create<DHUDMessageFadeOut> (font, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
+							msg = Create<DHUDMessageFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
@@ -8681,7 +8680,7 @@ scriptwait:
 							float typeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart+2]) : 1.f;
-							msg = Create<DHUDMessageTypeOnFadeOut> (font, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
+							msg = Create<DHUDMessageTypeOnFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					case 3:		// fade in, then fade out
@@ -8689,7 +8688,7 @@ scriptwait:
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart + 2]) : 1.f;
-							msg = Create<DHUDMessageFadeInOut> (font, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
+							msg = Create<DHUDMessageFadeInOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
 					}

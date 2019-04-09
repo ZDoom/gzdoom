@@ -1930,20 +1930,32 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 		}
 		else
 		{
-			levelinfo->LevelName = sc.String;
-
-			if (HexenHack)
+			// Workaround to allow localizazion of IWADs which do not have a string label here (e.g. HACX.WAD)
+			// This checks for a string labelled with the MapName and if that is identical to what got parsed here
+			// the string table entry will be used.
+			auto c = GStrings.GetLanguageString(levelinfo->MapName, FStringTable::default_table);
+			if (c && !strcmp(c, sc.String))
 			{
-				// Try to localize Hexen's map names.
-				int fileno = Wads.GetLumpFile(sc.LumpNum);
-				auto fn = Wads.GetWadName(fileno);
-				if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
+				levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+				levelinfo->LevelName = levelinfo->MapName;
+			}
+			else
+			{
+				levelinfo->LevelName = sc.String;
+
+				if (HexenHack)
 				{
-					FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
-					if (GStrings.exists(key))
+					// Try to localize Hexen's map names. This does not use the above feature to allow these names to be unique.
+					int fileno = Wads.GetLumpFile(sc.LumpNum);
+					auto fn = Wads.GetWadName(fileno);
+					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
-						levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
-						levelinfo->LevelName = key;
+						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
+						if (GStrings.exists(key))
+						{
+							levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+							levelinfo->LevelName = key;
+						}
 					}
 				}
 			}

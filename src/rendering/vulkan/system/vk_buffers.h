@@ -13,7 +13,10 @@
 class VKBuffer : virtual public IBuffer
 {
 public:
+	VKBuffer();
 	~VKBuffer();
+
+	void Reset();
 
 	void SetData(size_t size, const void *data, bool staticdata) override;
 	void SetSubData(size_t offset, size_t size, const void *data) override;
@@ -24,6 +27,10 @@ public:
 
 	void *Lock(unsigned int size) override;
 	void Unlock() override;
+
+	static VKBuffer *First;
+	VKBuffer *Prev = nullptr;
+	VKBuffer *Next = nullptr;
 
 	VkBufferUsageFlags mBufferType = 0;
 	std::unique_ptr<VulkanBuffer> mBuffer;

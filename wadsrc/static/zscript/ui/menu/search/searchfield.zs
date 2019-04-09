@@ -41,7 +41,7 @@ class os_SearchField : OptionMenuItemTextField
 	override String Represent()
 	{
 		return mEnter
-			? mEnter.GetText() .. SmallFont.GetCursor()
+			? mEnter.GetText() .. NewSmallFont.GetCursor()
 			: mText;
 	}
 

@@ -428,7 +428,7 @@ std::vector<VulkanPhysicalDevice> VulkanDevice::GetPhysicalDevices(VkInstance in
 {
 	uint32_t deviceCount = 0;
 	VkResult result = vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-	if (result != VK_ERROR_INITIALIZATION_FAILED) // Some drivers return this when a card does not support vulkan
+	if (result == VK_ERROR_INITIALIZATION_FAILED) // Some drivers return this when a card does not support vulkan
 		return {};
 	if (result != VK_SUCCESS)
 		I_Error("vkEnumeratePhysicalDevices failed");

@@ -82,6 +82,16 @@ void VkHardwareTexture::ResetDescriptors()
 	mDescriptorSets.clear();
 }
 
+void VkHardwareTexture::ResetAllDescriptors()
+{
+	for (VkHardwareTexture *cur = First; cur; cur = cur->Next)
+		cur->ResetDescriptors();
+
+	auto fb = GetVulkanFrameBuffer();
+	if (fb)
+		fb->GetRenderPassManager()->TextureSetPoolReset();
+}
+
 void VkHardwareTexture::Precache(FMaterial *mat, int translation, int flags)
 {
 	int numLayers = mat->GetLayers();
@@ -115,17 +125,16 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 		if (set.descriptor && set.clampmode == clampmode && set.flags == flags) return set.descriptor.get();
 	}
 
+	int numLayers = mat->GetLayers();
+
 	auto fb = GetVulkanFrameBuffer();
-	auto descriptor = fb->GetRenderPassManager()->DescriptorPool->allocate(fb->GetRenderPassManager()->TextureSetLayout.get());
+	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(numLayers);
 
 	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");
 
 	VulkanSampler *sampler = fb->GetSamplerManager()->Get(clampmode);
-	int numLayers = mat->GetLayers();
 
-	//int maxTextures = 6;
 	auto baseView = GetImageView(tex, translation, flags);
-	//numLayers = clamp(numLayers, 1, maxTextures);
 
 	WriteDescriptors update;
 	update.addCombinedImageSampler(descriptor.get(), 0, baseView, sampler, mImageLayout);

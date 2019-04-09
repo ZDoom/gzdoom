@@ -105,6 +105,7 @@ protected:
 
 	VSMatrix mIdentityMatrix;
 
+	int mLastVertexOffsets[2] = { 0, 0 };
 	IVertexBuffer *mLastVertexBuffer = nullptr;
 	IIndexBuffer *mLastIndexBuffer = nullptr;
 

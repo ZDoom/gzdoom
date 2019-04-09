@@ -202,6 +202,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	passKey.CullMode = mCullMode;
 	passKey.Samples = mRenderTarget.Samples;
 	passKey.DrawBuffers = mRenderTarget.DrawBuffers;
+	passKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 0;
 	if (mSpecialEffect > EFF_NONE)
 	{
 		passKey.SpecialEffect = mSpecialEffect;
@@ -417,7 +418,7 @@ void VkRenderState::ApplyPushConstants()
 
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
-	mCommandBuffer->pushConstants(passManager->PipelineLayout.get(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
+	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mRenderPassKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 }
 
 template<typename T>
@@ -499,7 +500,7 @@ void VkRenderState::ApplyMaterial()
 		{
 			auto fb = GetVulkanFrameBuffer();
 			auto passManager = fb->GetRenderPassManager();
-			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 1, base->GetDescriptorSet(mMaterial));
+			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mRenderPassKey.NumTextureLayers), 1, base->GetDescriptorSet(mMaterial));
 		}
 
 		if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
@@ -517,7 +518,7 @@ void VkRenderState::ApplyDynamicSet()
 		auto passManager = fb->GetRenderPassManager();
 
 		uint32_t offsets[4] = { mViewpointOffset, mLightBufferOffset, mMatricesOffset, mStreamDataOffset };
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->PipelineLayout.get(), 0, passManager->DynamicSet.get(), 4, offsets);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mRenderPassKey.NumTextureLayers), 0, passManager->DynamicSet.get(), 4, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastLightBufferOffset = mLightBufferOffset;

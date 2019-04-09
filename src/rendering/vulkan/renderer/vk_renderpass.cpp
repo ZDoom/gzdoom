@@ -17,8 +17,6 @@ VkRenderPassManager::VkRenderPassManager()
 void VkRenderPassManager::Init()
 {
 	CreateDynamicSetLayout();
-	CreateTextureSetLayout();
-	CreatePipelineLayout();
 	CreateDescriptorPool();
 	CreateDynamicSet();
 }
@@ -91,25 +89,42 @@ void VkRenderPassManager::CreateDynamicSetLayout()
 	DynamicSetLayout->SetDebugName("VkRenderPassManager.DynamicSetLayout");
 }
 
-void VkRenderPassManager::CreateTextureSetLayout()
+VulkanDescriptorSetLayout *VkRenderPassManager::GetTextureSetLayout(int numLayers)
 {
+	if (TextureSetLayouts.size() < (size_t)numLayers)
+		TextureSetLayouts.resize(numLayers);
+
+	auto &layout = TextureSetLayouts[numLayers - 1];
+	if (layout)
+		return layout.get();
+
 	DescriptorSetLayoutBuilder builder;
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < numLayers; i++)
 	{
 		builder.addBinding(i, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
-	TextureSetLayout = builder.create(GetVulkanFrameBuffer()->device);
-	TextureSetLayout->SetDebugName("VkRenderPassManager.TextureSetLayout");
+	layout = builder.create(GetVulkanFrameBuffer()->device);
+	layout->SetDebugName("VkRenderPassManager.TextureSetLayout");
+	return layout.get();
 }
 
-void VkRenderPassManager::CreatePipelineLayout()
+VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 {
+	if (PipelineLayouts.size() <= (size_t)numLayers)
+		PipelineLayouts.resize(numLayers + 1);
+
+	auto &layout = PipelineLayouts[numLayers];
+	if (layout)
+		return layout.get();
+
 	PipelineLayoutBuilder builder;
 	builder.addSetLayout(DynamicSetLayout.get());
-	builder.addSetLayout(TextureSetLayout.get());
+	if (numLayers != 0)
+		builder.addSetLayout(GetTextureSetLayout(numLayers));
 	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
-	PipelineLayout = builder.create(GetVulkanFrameBuffer()->device);
-	PipelineLayout->SetDebugName("VkRenderPassManager.PipelineLayout");
+	layout = builder.create(GetVulkanFrameBuffer()->device);
+	layout->SetDebugName("VkRenderPassManager.PipelineLayout");
+	return layout.get();
 }
 
 void VkRenderPassManager::CreateDescriptorPool()
@@ -145,8 +160,6 @@ void VkRenderPassManager::UpdateDynamicSet()
 
 std::unique_ptr<VulkanDescriptorSet> VkRenderPassManager::AllocateTextureDescriptorSet(int numLayers)
 {
-	numLayers = 6; // To do: remove this and create a TextureSetLayout for each amount to support custom materials
-
 	if (TextureDescriptorSetsLeft == 0 || TextureDescriptorsLeft < numLayers)
 	{
 		TextureDescriptorSetsLeft = 1000;
@@ -161,7 +174,7 @@ std::unique_ptr<VulkanDescriptorSet> VkRenderPassManager::AllocateTextureDescrip
 
 	TextureDescriptorSetsLeft--;
 	TextureDescriptorsLeft -= numLayers;
-	return TextureDescriptorPools.back()->allocate(TextureSetLayout.get());
+	return TextureDescriptorPools.back()->allocate(GetTextureSetLayout(numLayers));
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -302,7 +315,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setSubpassColorAttachmentCount(key.DrawBuffers);
 	builder.setRasterizationSamples((VkSampleCountFlagBits)key.Samples);
 
-	builder.setLayout(fb->GetRenderPassManager()->PipelineLayout.get());
+	builder.setLayout(fb->GetRenderPassManager()->GetPipelineLayout(key.NumTextureLayers));
 	builder.setRenderPass(RenderPass.get());
 	Pipeline = builder.create(fb->device);
 	Pipeline->SetDebugName("VkRenderPassSetup.Pipeline");

@@ -520,6 +520,6 @@ uint32_t VulkanDevice::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 			return i;
 	}
 
-	I_Error("failed to find suitable memory type!");
+	I_FatalError("failed to find suitable memory type!");
 	return 0;
 }

@@ -408,7 +408,7 @@ inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device)
 
 	VkResult result = vmaCreateImage(device->allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create vulkan image");
+		I_FatalError("Could not create vulkan image");
 
 	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
 }
@@ -438,7 +438,7 @@ inline std::unique_ptr<VulkanImageView> ImageViewBuilder::create(VulkanDevice *d
 	VkImageView view;
 	VkResult result = vkCreateImageView(device->device, &viewInfo, nullptr, &view);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create texture image view");
+		I_FatalError("Could not create texture image view");
 
 	return std::make_unique<VulkanImageView>(device, view);
 }
@@ -510,7 +510,7 @@ inline std::unique_ptr<VulkanSampler> SamplerBuilder::create(VulkanDevice *devic
 	VkSampler sampler;
 	VkResult result = vkCreateSampler(device->device, &samplerInfo, nullptr, &sampler);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create texture sampler");
+		I_FatalError("Could not create texture sampler");
 	return std::make_unique<VulkanSampler>(device, sampler);
 }
 
@@ -541,7 +541,7 @@ inline std::unique_ptr<VulkanBuffer> BufferBuilder::create(VulkanDevice *device)
 
 	VkResult result = vmaCreateBuffer(device->allocator, &bufferInfo, &allocInfo, &buffer, &allocation, nullptr);
 	if (result != VK_SUCCESS)
-		I_Error("could not allocate memory for vulkan buffer");
+		I_FatalError("could not allocate memory for vulkan buffer");
 
 	return std::make_unique<VulkanBuffer>(device, buffer, allocation, bufferInfo.size);
 }
@@ -601,7 +601,7 @@ inline std::unique_ptr<VulkanDescriptorSetLayout> DescriptorSetLayoutBuilder::cr
 	VkDescriptorSetLayout layout;
 	VkResult result = vkCreateDescriptorSetLayout(device->device, &layoutInfo, nullptr, &layout);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create descriptor set layout");
+		I_FatalError("Could not create descriptor set layout");
 	return std::make_unique<VulkanDescriptorSetLayout>(device, layout);
 }
 
@@ -635,7 +635,7 @@ inline std::unique_ptr<VulkanDescriptorPool> DescriptorPoolBuilder::create(Vulka
 	VkDescriptorPool descriptorPool;
 	VkResult result = vkCreateDescriptorPool(device->device, &poolInfo, nullptr, &descriptorPool);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create descriptor pool");
+		I_FatalError("Could not create descriptor pool");
 	return std::make_unique<VulkanDescriptorPool>(device, descriptorPool);
 }
 
@@ -679,7 +679,7 @@ inline std::unique_ptr<VulkanFramebuffer> FramebufferBuilder::create(VulkanDevic
 	VkFramebuffer framebuffer = 0;
 	VkResult result = vkCreateFramebuffer(device->device, &framebufferInfo, nullptr, &framebuffer);
 	if (result != VK_SUCCESS)
-		I_Error("Failed to create framebuffer");
+		I_FatalError("Failed to create framebuffer");
 	return std::make_unique<VulkanFramebuffer>(device, framebuffer);
 }
 
@@ -972,7 +972,7 @@ inline std::unique_ptr<VulkanPipeline> GraphicsPipelineBuilder::create(VulkanDev
 	VkPipeline pipeline = 0;
 	VkResult result = vkCreateGraphicsPipelines(device->device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create graphics pipeline");
+		I_FatalError("Could not create graphics pipeline");
 	return std::make_unique<VulkanPipeline>(device, pipeline);
 }
 
@@ -1006,7 +1006,7 @@ inline std::unique_ptr<VulkanPipelineLayout> PipelineLayoutBuilder::create(Vulka
 	VkPipelineLayout pipelineLayout;
 	VkResult result = vkCreatePipelineLayout(device->device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create pipeline layout");
+		I_FatalError("Could not create pipeline layout");
 	return std::make_unique<VulkanPipelineLayout>(device, pipelineLayout);
 }
 
@@ -1102,7 +1102,7 @@ inline std::unique_ptr<VulkanRenderPass> RenderPassBuilder::create(VulkanDevice 
 	VkRenderPass renderPass = 0;
 	VkResult result = vkCreateRenderPass(device->device, &renderPassInfo, nullptr, &renderPass);
 	if (result != VK_SUCCESS)
-		I_Error("Could not create render pass");
+		I_FatalError("Could not create render pass");
 	return std::make_unique<VulkanRenderPass>(device, renderPass);
 }
 
@@ -1235,7 +1235,7 @@ inline void QueueSubmit::execute(VulkanDevice *device, VkQueue queue, VulkanFenc
 {
 	VkResult result = vkQueueSubmit(device->graphicsQueue, 1, &submitInfo, fence ? fence->fence : VK_NULL_HANDLE);
 	if (result < VK_SUCCESS)
-		I_Error("Failed to submit command buffer");
+		I_FatalError("Failed to submit command buffer");
 }
 
 /////////////////////////////////////////////////////////////////////////////

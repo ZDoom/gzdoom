@@ -1043,15 +1043,16 @@ void DBaseStatusBar::DrawLog ()
 	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		auto scale = active_con_scaletext();
+		auto scale = active_con_scaletext(generic_hud);
 		hudwidth = SCREENWIDTH / scale;
 		hudheight = SCREENHEIGHT / scale;
+		FFont *font = C_GetDefaultHUDFont();
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		auto lines = V_BreakLines (SmallFont, linelen, GStrings(CPlayer->LogText));
+		auto lines = V_BreakLines (font, linelen,  CPlayer->LogText[0] == '$'? GStrings(CPlayer->LogText.GetChars()+1) : CPlayer->LogText.GetChars());
 		int height = 20;
 
-		for (unsigned i = 0; i < lines.Size(); i++) height += SmallFont->GetHeight () + 1;
+		for (unsigned i = 0; i < lines.Size(); i++) height += font->GetHeight ();
 
 		int x,y,w;
 
@@ -1074,10 +1075,10 @@ void DBaseStatusBar::DrawLog ()
 		y+=10;
 		for (const FBrokenLines &line : lines)
 		{
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, line.Text,
+			screen->DrawText (font, C_GetDefaultFontColor(), x, y, line.Text,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
-			y += SmallFont->GetHeight ()+1;
+			y += font->GetHeight ();
 		}
 	}
 }

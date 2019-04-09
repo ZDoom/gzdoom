@@ -42,8 +42,6 @@
 #include "doomstat.h"
 #include "vm.h"
 
-EColorRange C_GetDefaultFontColor();
-
 EXTERN_CVAR(Int, con_scaletext)
 
 IMPLEMENT_CLASS(DHUDMessageBase, false, true)

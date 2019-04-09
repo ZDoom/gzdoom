@@ -109,7 +109,7 @@ class StrifeStatusBar : BaseStatusBar
 	override void ShowPop (int popnum)
 	{
 		Super.ShowPop(popnum);
-		if (popnum == CurrentPop)
+		if (popnum == CurrentPop || (popnum == POP_LOG && generic_hud))
 		{
 			if (popnum == POP_Keys)
 			{
@@ -146,7 +146,7 @@ class StrifeStatusBar : BaseStatusBar
 	override bool MustDrawLog(int state)
 	{
 		// Tell the base class to draw the log if the pop screen won't be displayed.
-		return false;
+		return !generic_hud;
 	}
 
 	void Reset ()

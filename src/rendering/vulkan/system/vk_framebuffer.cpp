@@ -89,6 +89,9 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
 		cur->Reset();
 
+	for (VKBuffer *cur = VKBuffer::First; cur; cur = cur->Next)
+		cur->Reset();
+
 	PPResource::ResetAll();
 
 	delete MatricesUBO;

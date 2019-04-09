@@ -6,14 +6,35 @@
 #include "vulkan/renderer/vk_renderpass.h"
 #include "doomerrors.h"
 
+VKBuffer *VKBuffer::First = nullptr;
+
+VKBuffer::VKBuffer()
+{
+	Next = First;
+	First = this;
+	if (Next) Next->Prev = this;
+}
+
 VKBuffer::~VKBuffer()
 {
-	if (map)
+	if (Next) Next->Prev = Prev;
+	if (Prev) Prev->Next = Next;
+	else First = Next;
+
+	if (mBuffer && map)
 		mBuffer->Unmap();
 
 	auto fb = GetVulkanFrameBuffer();
 	if (fb && mBuffer)
 		fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
+}
+
+void VKBuffer::Reset()
+{
+	if (mBuffer && map)
+		mBuffer->Unmap();
+	mBuffer.reset();
+	mStaging.reset();
 }
 
 void VKBuffer::SetData(size_t size, const void *data, bool staticdata)

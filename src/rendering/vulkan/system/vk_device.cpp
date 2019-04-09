@@ -112,6 +112,8 @@ bool VulkanDevice::CheckRequiredFeatures(const VkPhysicalDeviceFeatures &f)
 void VulkanDevice::SelectPhysicalDevice()
 {
 	AvailableDevices = GetPhysicalDevices(instance);
+	if (AvailableDevices.empty())
+		I_Error("No Vulkan devices found. Either the graphics card has no vulkan support or the driver is too old.");
 
 	for (size_t idx = 0; idx < AvailableDevices.size(); idx++)
 	{
@@ -426,6 +428,8 @@ std::vector<VulkanPhysicalDevice> VulkanDevice::GetPhysicalDevices(VkInstance in
 {
 	uint32_t deviceCount = 0;
 	VkResult result = vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+	if (result != VK_ERROR_INITIALIZATION_FAILED) // Some drivers return this when a card does not support vulkan
+		return {};
 	if (result != VK_SUCCESS)
 		I_Error("vkEnumeratePhysicalDevices failed");
 	if (deviceCount == 0)

@@ -476,12 +476,16 @@ void VkRenderState::ApplyMatrices()
 
 void VkRenderState::ApplyVertexBuffers()
 {
-	if (mVertexBuffer != mLastVertexBuffer && mVertexBuffer)
+	if ((mVertexBuffer != mLastVertexBuffer || mVertexOffsets[0] != mLastVertexOffsets[0] || mVertexOffsets[1] != mLastVertexOffsets[1]) && mVertexBuffer)
 	{
-		VkBuffer vertexBuffers[] = { static_cast<VKVertexBuffer*>(mVertexBuffer)->mBuffer->buffer };
-		VkDeviceSize offsets[] = { 0 };
-		mCommandBuffer->bindVertexBuffers(0, 1, vertexBuffers, offsets);
+		auto vkbuf = static_cast<VKVertexBuffer*>(mVertexBuffer);
+		const auto &format = GetVulkanFrameBuffer()->GetRenderPassManager()->VertexFormats[vkbuf->VertexFormat];
+		VkBuffer vertexBuffers[2] = { vkbuf->mBuffer->buffer, vkbuf->mBuffer->buffer };
+		VkDeviceSize offsets[] = { mVertexOffsets[0] * format.Stride, mVertexOffsets[1] * format.Stride };
+		mCommandBuffer->bindVertexBuffers(0, 2, vertexBuffers, offsets);
 		mLastVertexBuffer = mVertexBuffer;
+		mLastVertexOffsets[0] = mVertexOffsets[0];
+		mLastVertexOffsets[1] = mVertexOffsets[1];
 	}
 
 	if (mIndexBuffer != mLastIndexBuffer && mIndexBuffer)

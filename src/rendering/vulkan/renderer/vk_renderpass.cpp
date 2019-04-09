@@ -28,6 +28,13 @@ void VkRenderPassManager::RenderBuffersReset()
 	RenderPassSetup.clear();
 }
 
+void VkRenderPassManager::TextureSetPoolReset()
+{
+	TextureDescriptorPools.clear();
+	TextureDescriptorSetsLeft = 0;
+	TextureDescriptorsLeft = 0;
+}
+
 VkRenderPassSetup *VkRenderPassManager::GetRenderPass(const VkRenderPassKey &key)
 {
 	auto &item = RenderPassSetup[key];
@@ -110,15 +117,17 @@ void VkRenderPassManager::CreateDescriptorPool()
 	DescriptorPoolBuilder builder;
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 3);
 	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1);
-	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5000 * 6);
-	builder.setMaxSets(5000);
-	DescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
-	DescriptorPool->SetDebugName("VkRenderPassManager.DescriptorPool");
+	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1);
+	builder.setMaxSets(1);
+	DynamicDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
+	DynamicDescriptorPool->SetDebugName("VkRenderPassManager.DynamicDescriptorPool");
 }
 
 void VkRenderPassManager::CreateDynamicSet()
 {
-	DynamicSet = DescriptorPool->allocate(DynamicSetLayout.get());
+	DynamicSet = DynamicDescriptorPool->allocate(DynamicSetLayout.get());
+	if (!DynamicSet)
+		I_FatalError("CreateDynamicSet failed.\n");
 }
 
 void VkRenderPassManager::UpdateDynamicSet()
@@ -132,6 +141,27 @@ void VkRenderPassManager::UpdateDynamicSet()
 	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamUBO->mBuffer.get(), 0, sizeof(StreamUBO));
 	update.addCombinedImageSampler(DynamicSet.get(), 4, fb->GetBuffers()->ShadowmapView.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.updateSets(fb->device);
+}
+
+std::unique_ptr<VulkanDescriptorSet> VkRenderPassManager::AllocateTextureDescriptorSet(int numLayers)
+{
+	numLayers = 6; // To do: remove this and create a TextureSetLayout for each amount to support custom materials
+
+	if (TextureDescriptorSetsLeft == 0 || TextureDescriptorsLeft < numLayers)
+	{
+		TextureDescriptorSetsLeft = 1000;
+		TextureDescriptorsLeft = 2000;
+
+		DescriptorPoolBuilder builder;
+		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, TextureDescriptorsLeft);
+		builder.setMaxSets(TextureDescriptorSetsLeft);
+		TextureDescriptorPools.push_back(builder.create(GetVulkanFrameBuffer()->device));
+		TextureDescriptorPools.back()->SetDebugName("VkRenderPassManager.TextureDescriptorPool");
+	}
+
+	TextureDescriptorSetsLeft--;
+	TextureDescriptorsLeft -= numLayers;
+	return TextureDescriptorPools.back()->allocate(TextureSetLayout.get());
 }
 
 /////////////////////////////////////////////////////////////////////////////

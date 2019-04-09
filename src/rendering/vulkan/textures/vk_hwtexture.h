@@ -24,7 +24,6 @@ public:
 	~VkHardwareTexture();
 
 	void Reset();
-	void ResetDescriptors();
 
 	void Precache(FMaterial *mat, int translation, int flags);
 
@@ -45,11 +44,7 @@ public:
 	VulkanImage *GetImage(FTexture *tex, int translation, int flags);
 	VulkanImageView *GetImageView(FTexture *tex, int translation, int flags);
 
-	static void ResetAllDescriptors()
-	{
-		for (VkHardwareTexture *cur = First; cur; cur = cur->Next)
-			cur->ResetDescriptors();
-	}
+	static void ResetAllDescriptors();
 
 private:
 	void CreateImage(FTexture *tex, int translation, int flags);
@@ -57,6 +52,8 @@ private:
 	void CreateTexture(int w, int h, int pixelsize, VkFormat format, const void *pixels);
 	void GenerateMipmaps(VulkanImage *image, VulkanCommandBuffer *cmdbuffer);
 	static int GetMipLevels(int w, int h);
+
+	void ResetDescriptors();
 
 	struct DescriptorEntry
 	{
@@ -71,7 +68,6 @@ private:
 			descriptor = std::move(d);
 		}
 	};
-
 
 	std::vector<DescriptorEntry> mDescriptorSets;
 	std::unique_ptr<VulkanImage> mImage;

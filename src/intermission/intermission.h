@@ -8,6 +8,7 @@
 #include "s_sound.h"
 #include "v_font.h"
 #include "g_game.h"
+#include "v_text.h"
 
 struct event_t;
 
@@ -214,6 +215,10 @@ class DIntermissionScreenText : public DIntermissionScreen
 	int mTextDelay;
 	int mTextLen;
 	EColorRange mTextColor;
+	bool usesDefault;
+	
+	void MeasureText(bool posisfixed);
+	FString RemoveLineFeeds(const char *text);
 
 public:
 

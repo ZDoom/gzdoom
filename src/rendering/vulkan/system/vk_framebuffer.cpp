@@ -225,7 +225,7 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 	{
 		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mTransferSemaphore.get());
 	}
-	if (finish)
+	if (finish && presentImageIndex != 0xffffffff)
 	{
 		submit.addWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
 		submit.addSignal(mRenderFinishedSemaphore.get());

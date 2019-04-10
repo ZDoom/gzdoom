@@ -89,6 +89,7 @@ public:
 	}
 	
 	const char *GetLanguageString(const char *name, uint32_t langtable, int gender = -1) const;
+	bool MatchDefaultString(const char *name, const char *content) const;
 	const char *GetString(const char *name, uint32_t *langtable, int gender = -1) const;
 	const char *operator() (const char *name) const;	// Never returns NULL
 	const char *operator[] (const char *name) const
@@ -110,6 +111,7 @@ private:
 	bool LoadLanguageFromSpreadsheet(int lumpnum, const TArray<uint8_t> &buffer);
 	bool readMacros(int lumpnum);
 	void InsertString(int langid, FName label, const FString &string);
+	void DeleteString(int langid, FName label);
 
 	static size_t ProcessEscapes (char *str);
 };

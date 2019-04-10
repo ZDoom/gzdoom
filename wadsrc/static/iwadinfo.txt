@@ -307,7 +307,7 @@ IWad
 IWad
 {
 	Name = "DOOM: BFG Edition"
-	Autoname = "doom.doom1.bfg"
+	Autoname = "doom.id.doom1.bfg"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom.wad", 2
@@ -324,7 +324,7 @@ IWad
 IWad
 {
 	Name = "DOOM: Complete: WadSmoosh"
-	Autoname = "doom.doom2.wadsmoosh"
+	Autoname = "doom.id.doom2.wadsmoosh"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
@@ -337,7 +337,7 @@ IWad
 IWad
 {
 	Name = "The Ultimate DOOM"
-	Autoname = "doom.doom1.ultimate"
+	Autoname = "doom.id.doom1.ultimate"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom.wad"
@@ -353,7 +353,7 @@ IWad
 IWad
 {
 	Name = "DOOM Registered"
-	Autoname = "doom.doom1.registered"
+	Autoname = "doom.id.doom1.registered"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom.wad", 1
@@ -381,7 +381,7 @@ IWad
 IWad
 {
 	Name = "Final Doom: TNT - Evilution"
-	Autoname = "doom.doom2.tnt"
+	Autoname = "doom.id.doom2.tnt"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "tnt.wad"
@@ -395,7 +395,7 @@ IWad
 IWad
 {
 	Name = "Final Doom: Plutonia Experiment"
-	Autoname = "doom.doom2.plutonia"
+	Autoname = "doom.id.doom2.plutonia"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "plutonia.wad"
@@ -409,7 +409,7 @@ IWad
 IWad
 {
 	Name = "DOOM 2: BFG Edition"
-	Autoname = "doom.doom2.bfg"
+	Autoname = "doom.id.doom2.bfg"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom2.wad"
@@ -425,7 +425,7 @@ IWad
 IWad
 {
 	Name = "DOOM 2: Hell on Earth"
-	Autoname = "doom.doom2.commercial"
+	Autoname = "doom.id.doom2.commercial"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom2.wad", 1

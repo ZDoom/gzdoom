@@ -210,13 +210,23 @@ void FGameConfigFile::DoAutoloadSetup (FIWadManager *iwad_man)
 		RenameSection("Freedoom2.Autoload", "doom.freedoom.phase2.Autoload");
 		RenameSection("Freedoom1.Autoload", "doom.freedoom.phase1.Autoload");
 		RenameSection("Freedoom.Autoload", "doom.freedoom.Autoload");
-		RenameSection("DoomBFG.Autoload", "doom.doom1.bfg.Autoload");
-		RenameSection("DoomU.Autoload", "doom.doom1.ultimate.Autoload");
-		RenameSection("Doom1.Autoload", "doom.doom1.registered.Autoload");
-		RenameSection("TNT.Autoload", "doom.doom2.tnt.Autoload");
-		RenameSection("Plutonia.Autoload", "doom.doom2.plutonia.Autoload");
-		RenameSection("Doom2BFG.Autoload", "doom.doom2.bfg.Autoload");
-		RenameSection("Doom2.Autoload", "doom.doom2.commercial.Autoload");
+		RenameSection("DoomBFG.Autoload", "doom.id.doom1.bfg.Autoload");
+		RenameSection("DoomU.Autoload", "doom.id.doom1.ultimate.Autoload");
+		RenameSection("Doom1.Autoload", "doom.id.doom1.registered.Autoload");
+		RenameSection("TNT.Autoload", "doom.id.doom2.tnt.Autoload");
+		RenameSection("Plutonia.Autoload", "doom.id.doom2.plutonia.Autoload");
+		RenameSection("Doom2BFG.Autoload", "doom.id.doom2.bfg.Autoload");
+		RenameSection("Doom2.Autoload", "doom.id.doom2.commercial.Autoload");
+	}
+	else if (last < 218)
+	{
+		RenameSection("doom.doom1.bfg.Autoload", "doom.id.doom1.bfg.Autoload");
+		RenameSection("doom.doom1.ultimate.Autoload", "doom.id.doom1.ultimate.Autoload");
+		RenameSection("doom.doom1.registered.Autoload", "doom.id.doom1.registered.Autoload");
+		RenameSection("doom.doom2.tnt.Autoload", "doom.id.doom2.tnt.Autoload");
+		RenameSection("doom.doom2.plutonia.Autoload", "doom.id.doom2.plutonia.Autoload");
+		RenameSection("doom.doom2.bfg.Autoload", "doom.id.doom2.bfg.Autoload");
+		RenameSection("doom.doom2.commercial.Autoload", "doom.id.doom2.commercial.Autoload");
 	}
 	const FString *pAuto;
 	for (int num = 0; (pAuto = iwad_man->GetAutoname(num)) != NULL; num++)

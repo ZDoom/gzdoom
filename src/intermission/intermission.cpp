@@ -542,9 +542,10 @@ void DIntermissionScreenCast::Drawer ()
 	const char *name = mName;
 	if (name != NULL)
 	{
+		auto font = generic_ui ? NewSmallFont : SmallFont;
 		if (*name == '$') name = GStrings(name+1);
-		screen->DrawText (SmallFont, CR_UNTRANSLATED,
-			(SCREENWIDTH - SmallFont->StringWidth (name) * CleanXfac)/2,
+		screen->DrawText (font, CR_UNTRANSLATED,
+			(SCREENWIDTH - font->StringWidth (name) * CleanXfac)/2,
 			(SCREENHEIGHT * 180) / 200,
 			name,
 			DTA_CleanNoMove, true, TAG_DONE);

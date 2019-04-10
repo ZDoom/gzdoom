@@ -320,7 +320,7 @@ void DIntermissionScreenText::Drawer ()
 		// line feed characters.
 		int numrows;
 		auto font = generic_ui ? NewSmallFont : SmallFont;
-		auto fontscale = generic_ui ? MIN(screen->GetWidth()/640, screen->GetHeight()/400) : CleanXfac;
+		auto fontscale = generic_ui ? MIN(screen->GetWidth()/640, screen->GetHeight()/400) : MIN(screen->GetWidth()/400, screen->GetHeight() / 250);
 		int cleanwidth = screen->GetWidth() / fontscale;
 		int cleanheight = screen->GetHeight() / fontscale;
 		int refwidth = generic_ui ? 640 : 320;
@@ -387,11 +387,7 @@ void DIntermissionScreenText::Drawer ()
 			if (cx + w > SCREENWIDTH)
 				continue;
 
-			if (generic_ui)
-				screen->DrawChar(font, mTextColor, cx/fontscale, cy/fontscale, c, DTA_KeepRatio, true, DTA_VirtualWidth, cleanwidth, DTA_VirtualHeight, cleanheight, TAG_DONE);
-			else
-				screen->DrawChar(font, mTextColor, cx, cy, c, DTA_CleanNoMove, true, TAG_DONE);
-
+			screen->DrawChar(font, mTextColor, cx/fontscale, cy/fontscale, c, DTA_KeepRatio, true, DTA_VirtualWidth, cleanwidth, DTA_VirtualHeight, cleanheight, TAG_DONE);
 			cx += w;
 		}
 	}
@@ -999,3 +995,41 @@ void F_AdvanceIntermission()
 	}
 }
 
+#include "c_dispatch.h"
+
+CCMD(measureintermissions)
+{
+	static const char *intermissions[] = {
+		"E1TEXT", "E2TEXT", "E3TEXT", "E4TEXT",
+		"C1TEXT", "C2TEXT", "C3TEXT", "C4TEXT", "C5TEXT",
+		"P1TEXT", "P2TEXT", "P3TEXT", "P4TEXT", "P5TEXT",
+		"T1TEXT", "T2TEXT", "T3TEXT", "T4TEXT", "T5TEXT", "NERVETEXT",
+		"HE1TEXT", "HE2TEXT", "HE3TEXT", "HE4TEXT", "HE5TEXT",
+		"TXT_HEXEN_CLUS1MSG", "TXT_HEXEN_CLUS2MSG","TXT_HEXEN_CLUS3MSG","TXT_HEXEN_CLUS4MSG",
+		"TXT_HEXEN_WIN1MSG", "TXT_HEXEN_WIN2MSG","TXT_HEXEN_WIN3MSG",
+		"TXT_HEXDD_CLUS1MSG", "TXT_HEXDD_CLUS2MSG",
+		"TXT_HEXDD_WIN1MSG", "TXT_HEXDD_WIN2MSG","TXT_HEXDD_WIN3MSG" };
+
+	static const char *languages[] = { "", "cz", "de", "eng", "es", "esm", "fr", "hu", "it", "pl", "pt", "ro", "ru", "sr" };
+
+	for (auto l : languages)
+	{
+		int langid = *l ? MAKE_ID(l[0], l[1], l[2], 0) : FStringTable::default_table;
+		for (auto t : intermissions)
+		{
+			auto text = GStrings.GetLanguageString(t, langid);
+			if (text)
+			{
+				auto ch = text;
+				int numrows, c;
+				for (numrows = 1, c = 0; ch[c] != '\0'; ++c)
+				{
+					numrows += (ch[c] == '\n');
+				}
+				int width = SmallFont->StringWidth(text);
+				if (width > 360 || numrows > 20)
+					Printf("%s, %s: %d x %d\n", t, l, width, numrows);
+			}
+		}
+	}
+}

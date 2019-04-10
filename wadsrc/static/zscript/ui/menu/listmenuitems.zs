@@ -89,6 +89,8 @@ class ListMenuItemStaticPatch : ListMenuItem
 			return;
 		}
 
+		let font = generic_ui? NewSmallFont : mFont;
+
 		double x = mXpos;
 		Vector2 vec = TexMan.GetScaledSize(mTexture);
 		if (mYpos >= 0)
@@ -100,8 +102,8 @@ class ListMenuItemStaticPatch : ListMenuItem
 			}
 			else
 			{
-				if (mCentered) x -= mFont.StringWidth(mSubstitute)/2;
-				screen.DrawText(mFont, mColor, x, mYpos, mSubstitute, DTA_Clean, true);
+				if (mCentered) x -= font.StringWidth(mSubstitute)/2;
+				screen.DrawText(font, mColor, x, mYpos, mSubstitute, DTA_Clean, true);
 			}
 		}
 		else
@@ -114,8 +116,8 @@ class ListMenuItemStaticPatch : ListMenuItem
 			}
 			else
 			{
-				if (mCentered) x -= (mFont.StringWidth(mSubstitute) * CleanXfac)/2;
-				screen.DrawText(mFont, mColor, x, mYpos, mSubstitute, DTA_CleanNoMove, true);
+				if (mCentered) x -= (font.StringWidth(mSubstitute) * CleanXfac)/2;
+				screen.DrawText(font, mColor, x, mYpos, mSubstitute, DTA_CleanNoMove, true);
 			}
 		}
 	}
@@ -164,18 +166,20 @@ class ListMenuItemStaticText : ListMenuItem
 	{
 		if (mText.Length() != 0)
 		{
+			let font = generic_ui? NewSmallFont : mFont;
+
 			String text = Stringtable.Localize(mText);
 			if (mYpos >= 0)
 			{
 				double x = mXpos;
-				if (mCentered) x -= mFont.StringWidth(text)/2;
-				screen.DrawText(mFont, mColor, x, mYpos, text, DTA_Clean, true);
+				if (mCentered) x -= font.StringWidth(text)/2;
+				screen.DrawText(font, mColor, x, mYpos, text, DTA_Clean, true);
 			}
 			else
 			{
 				double x = (mXpos - 160) * CleanXfac + (Screen.GetWidth() >> 1);
-				if (mCentered) x -= (mFont.StringWidth(text) * CleanXfac)/2;
-				screen.DrawText (mFont, mColor, x, -mYpos*CleanYfac, text, DTA_CleanNoMove, true);
+				if (mCentered) x -= (font.StringWidth(text) * CleanXfac)/2;
+				screen.DrawText (font, mColor, x, -mYpos*CleanYfac, text, DTA_CleanNoMove, true);
 			}
 		}
 	}
@@ -285,12 +289,14 @@ class ListMenuItemTextItem : ListMenuItemSelectable
 	
 	override void Drawer(bool selected)
 	{
-		screen.DrawText(mFont, selected ? mColorSelected : mColor, mXpos, mYpos, mText, DTA_Clean, true);
+		let font = generic_ui? NewSmallFont : mFont;
+		screen.DrawText(font, selected ? mColorSelected : mColor, mXpos, mYpos, mText, DTA_Clean, true);
 	}
 	
 	override int GetWidth()
 	{
-		return max(1, mFont.StringWidth(StringTable.Localize(mText))); 
+		let font = generic_ui? NewSmallFont : mFont;
+		return max(1, font.StringWidth(StringTable.Localize(mText))); 
 	}
 }
 

@@ -306,8 +306,6 @@ class BaseStatusBar native ui
 	native double drawClip[4];		// defines a clipping rectangle (not used yet)
 	native bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
 	
-	private HUDFont mSmallFont;
-	
 	native void AttachMessage(HUDMessageBase msg, uint msgid = 0, int layer = HUDMSGLayer_Default);
 	native HUDMessageBase DetachMessage(HUDMessageBase msg);
 	native HUDMessageBase DetachMessageID(uint msgid);
@@ -322,7 +320,6 @@ class BaseStatusBar native ui
 
 	virtual void Init() 
 	{
-		mSmallFont = HUDFont.Create("SmallFont");
 	}
 
 	native virtual void Tick ();

@@ -800,7 +800,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		con_notifylines == 0)
 		return;
 
-	width = DisplayWidth / active_con_scaletext(hud_generic);
+	width = DisplayWidth / active_con_scaletext(generic_hud);
 
 	FFont *font = hud_generic ? NewSmallFont : SmallFont;
 	if (font == nullptr) return;	// Without an initialized font we cannot handle the message (this is for those which come here before the font system is ready.)
@@ -1109,7 +1109,7 @@ void FNotifyBuffer::Draw()
 			else
 				color = PrintColors[notify.PrintLevel];
 
-			int scale = active_con_scaletext(hud_generic);
+			int scale = active_con_scaletext(generic_hud);
 			if (!center)
 				screen->DrawText (font, color, 0, line, notify.Text,
 					DTA_VirtualWidth, screen->GetWidth() / scale,

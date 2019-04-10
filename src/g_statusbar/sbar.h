@@ -140,7 +140,6 @@ protected:
 	int ClipX, ClipY, ClipWidth, ClipHeight, WrapWidth;	// in HUD coords
 	int ClipLeft, ClipTop, ClipRight, ClipBot;			// in screen coords
 	bool HandleAspect;
-	bool AltScale;
 	EColorRange TextColor;
 	FFont *Font;
 	FRenderStyle Style;

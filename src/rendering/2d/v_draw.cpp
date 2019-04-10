@@ -91,7 +91,7 @@ int GetUIScale(int altval)
 int GetConScale(int altval)
 {
 	int scaleval;
-	if (altval > 0) scaleval = altval;
+	if (altval > 0) scaleval = (altval+1) / 2;
 	else if (uiscale == 0)
 	{
 		// Default should try to scale to 640x400
@@ -99,7 +99,7 @@ int GetConScale(int altval)
 		int hscale = screen->GetWidth() / 1280;
 		scaleval = clamp(vscale, 1, hscale);
 	}
-	else scaleval = uiscale / 2;
+	else scaleval = (uiscale+1) / 2;
 
 	// block scales that result in something larger than the current screen.
 	int vmax = screen->GetHeight() / 400;

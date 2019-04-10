@@ -2589,7 +2589,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetSpotState, GetSpotState)
 
 EXTERN_CVAR(Int, am_showmaplabel)
 
-static void FormatMapName(FLevelLocals *self, int cr, FString *result)
+void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {
 	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
 

@@ -541,6 +541,131 @@ void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled
 	fullscreenOffsets = true;
 }
 
+//============================================================================
+//
+// automap HUD common drawer
+// This is not called directly to give a status bar the opportunity to
+// change the text colors. If you want to do something different,
+// override DrawAutomap directly.
+//
+//============================================================================
+
+void FormatMapName(FLevelLocals *self, int cr, FString *result);
+
+static void DrawAMText(FFont *fnt, int color, const char *text, int vwidth, int vheight, int x, int y)
+{
+	int zerowidth = fnt->GetCharWidth('0');
+
+	x += zerowidth / 2;
+	for (int i = 0; text[i]; i++)
+	{
+		int c = text[i];
+		int width = fnt->GetCharWidth(c);
+
+		screen->DrawChar(fnt, color, x, y, c, DTA_KeepRatio, true,
+			DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, DTA_LeftOffset, width / 2, TAG_DONE);
+		x += zerowidth;
+	}
+}
+
+
+void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
+{
+	auto scale = GetUIScale(hud_scale);
+	auto font = generic_hud ? NewSmallFont : SmallFont;
+	auto vwidth = screen->GetWidth() / scale;
+	auto vheight = screen->GetHeight() / scale;
+	auto fheight = font->GetHeight();
+	FString textbuffer;
+	int sec;
+	int y = 0;
+	int textdist = 4;
+
+	if (am_showtime)
+	{
+		sec = Tics2Seconds(primaryLevel->time);
+		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
+		DrawAMText(font, crdefault, textbuffer, vwidth, vheight, vwidth - font->GetCharWidth('0') * 8 - textdist, y);
+		y += fheight;
+	}
+
+	if (am_showtotaltime)
+	{
+		sec = Tics2Seconds(primaryLevel->totaltime);
+		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
+		DrawAMText(font, crdefault, textbuffer, vwidth, vheight, vwidth - font->GetCharWidth('0') * 8 - textdist, y);
+	}
+
+	if (!deathmatch)
+	{
+		y = 0;
+		if (am_showmonsters)
+		{
+			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
+			screen->DrawText(font, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			y += fheight;
+		}
+
+		if (am_showsecrets)
+		{
+			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
+			screen->DrawText(font, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			y += fheight;
+		}
+
+		// Draw item count
+		if (am_showitems)
+		{
+			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
+			screen->DrawText(font, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			y += fheight;
+		}
+
+	}
+
+	FormatMapName(primaryLevel, crdefault, &textbuffer);
+
+	auto lines = V_BreakLines(font, vwidth - 32, textbuffer, true);
+	auto numlines = lines.Size();
+	auto finalwidth = lines.Last().Width;
+
+
+	// calculate the top of the statusbar including any protrusion and transform it from status bar to screen space.
+	double x = 0, yy = 0, w = HorizontalResolution, h = 0;
+	StatusbarToRealCoords(x, yy, w, h);
+
+	IFVIRTUAL(DBaseStatusBar, GetProtrusion)
+	{
+		int prot = 0;
+		VMValue params[] = { this, double(finalwidth * scale / w) };
+		VMReturn ret(&prot);
+		VMCall(func, params, 2, &ret, 1);
+		h = prot;
+	}
+
+	StatusbarToRealCoords(x, yy, w, h);
+
+	// Get the y coordinate for the first line of the map name text.
+	y = Scale(GetTopOfStatusbar() - int(h), vheight, screen->GetHeight()) - fheight * numlines;
+
+	// Draw the texts centered above the status bar.
+	for (unsigned i = 0; i < numlines; i++)
+	{
+		int x = (vwidth - font->StringWidth(lines[i].Text)) / 2;
+		screen->DrawText(font, highlight, x, y, lines[i].Text, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		y += fheight;
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DoDrawAutomapHUD)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(crdefault);
+	PARAM_INT(highlight);
+	self->DoDrawAutomapHUD(crdefault, highlight);
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC AttachToPlayer
@@ -1075,7 +1200,7 @@ void DBaseStatusBar::DrawLog ()
 		y+=10;
 		for (const FBrokenLines &line : lines)
 		{
-			screen->DrawText (font, C_GetDefaultFontColor(), x, y, line.Text,
+			screen->DrawText (font, CR_UNTRANSLATED, x, y, line.Text,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 			y += font->GetHeight ();

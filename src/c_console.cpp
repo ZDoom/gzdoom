@@ -1109,10 +1109,6 @@ void FNotifyBuffer::Draw()
 			else
 				color = PrintColors[notify.PrintLevel];
 
-			if (color == CR_UNTRANSLATED)
-			{
-				color = C_GetDefaultFontColor();
-			}
 			int scale = active_con_scaletext(hud_generic);
 			if (!center)
 				screen->DrawText (font, color, 0, line, notify.Text,

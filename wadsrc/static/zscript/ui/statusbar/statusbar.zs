@@ -835,77 +835,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	protected void DoDrawAutomapHUD(int crdefault, int highlight)
-	{
-		let scale = GetHUDScale();
-		double textdist = 8. / scale.Y;
-		int height = SmallFont.GetHeight();
-		String printtext;
-		int SCREENWIDTH = screen.GetWidth();
-
-		BeginHUD();
-		
-		// Draw timer
-		let y = textdist;
-		let width = SmallFont.StringWidth("00:00:00");
-		if (am_showtime)
-		{
-			printtext = Level.TimeFormatted();
-			DrawString(mSmallFont, Level.TimeFormatted(), (-textdist-width, y), 0, crdefault);
-			y += height;
-		}
-		if (am_showtotaltime)
-		{
-			DrawString(mSmallFont, Level.TimeFormatted(true), (-textdist-width, y), 0, crdefault);
-		}
-
-		if (!deathmatch)
-		{
-			y = textdist;
-
-			// Draw monster count
-			if (am_showmonsters)
-			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_MONSTERS"), crdefault+65, Level.killed_monsters, Level.total_monsters), (textdist, y), 0, highlight);
-				y += height;
-			}
-
-			// Draw secret count
-			if (am_showsecrets)
-			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_SECRETS"), crdefault+65, Level.found_secrets, Level.total_secrets), (textdist, y), 0, highlight);
-				y += height;
-			}
-
-			// Draw item count
-			if (am_showitems)
-			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, Level.found_items, Level.total_items), (textdist, y), 0, highlight);
-			}
-		}
-
-		String mapname = Level.FormatMapName(crdefault);
-		BrokenLines lines = SmallFont.BreakLines(mapname, int(SCREENWIDTH / scale.X));
-		int numlines = lines.Count();
-		int finalwidth = int(SmallFont.StringWidth(lines.StringAt(numlines-1)) * scale.X);
-		
-		// calculate the top of the statusbar including any protrusion and transform it from status bar to screen space.
-		double tmp, hres;
-		[tmp, tmp, hres] = StatusbarToRealCoords(0, 0, HorizontalResolution);
-		int protrusion = GetProtrusion(finalwidth / hres);
-		[tmp, tmp, tmp, hres] = StatusbarToRealCoords(0, 0, 0, protrusion);
-	
-
-		// transform the top of the status bar position from screen to HUD space (a direct transformation from status bar to HUD space does not exist.)
-		y = (GetTopOfStatusBar() - hres) / scale.Y - height * numlines;
-
-		// Draw the texts centered above the status bar.
-		for(int i = 0; i < numlines; i++)
-		{
-			DrawString(mSmallFont, lines.StringAt(i), (0, y), DI_TEXT_ALIGN_CENTER|DI_SCREEN_HCENTER|DI_SCREEN_TOP, highlight);
-			y += height;
-		}
-	}
+	protected native void DoDrawAutomapHUD(int crdefault, int highlight);
 	
 	virtual void DrawAutomapHUD(double ticFrac)
 	{

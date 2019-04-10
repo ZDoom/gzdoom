@@ -448,6 +448,7 @@ public:
 	{
 		return SBarTop;
 	}
+	void DoDrawAutomapHUD(int crdefault, int highlight);
 
 //protected:
 	void DrawPowerups ();

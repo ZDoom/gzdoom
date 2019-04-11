@@ -254,6 +254,6 @@ EXTERN_CVAR (Int, compatflags2);
 extern FString LumpFilterIWAD;
 
 // These control whether certain items use generic text output instead of game-specific one.
-extern bool generic_hud, generic_ui;
+extern bool generic_ui;
 
 #endif

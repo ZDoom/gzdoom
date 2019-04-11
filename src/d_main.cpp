@@ -858,7 +858,7 @@ void D_Display ()
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 		if (paused && multiplayer)
 		{
-			FFont *font = generic_hud? NewSmallFont : SmallFont;
+			FFont *font = generic_ui? NewSmallFont : SmallFont;
 			pstring << ' ' << players[paused - 1].userinfo.GetName();
 			screen->DrawText(font, CR_RED,
 				(screen->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,

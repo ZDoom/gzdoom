@@ -572,7 +572,7 @@ static void DrawAMText(FFont *fnt, int color, const char *text, int vwidth, int 
 void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 {
 	auto scale = GetUIScale(hud_scale);
-	auto font = generic_hud ? NewSmallFont : SmallFont;
+	auto font = generic_ui ? NewSmallFont : SmallFont;
 	auto vwidth = screen->GetWidth() / scale;
 	auto vheight = screen->GetHeight() / scale;
 	auto fheight = font->GetHeight();
@@ -1168,7 +1168,7 @@ void DBaseStatusBar::DrawLog ()
 	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		auto scale = active_con_scaletext(generic_hud);
+		auto scale = active_con_scaletext(generic_ui);
 		hudwidth = SCREENWIDTH / scale;
 		hudheight = SCREENHEIGHT / scale;
 		FFont *font = C_GetDefaultHUDFont();

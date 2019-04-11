@@ -62,7 +62,7 @@ class MessageBoxMenu : Menu
 		mMouseLeft = 140;
 		mMouseY = 0x80000000;
 		
-		if (generic_hud)
+		if (generic_ui)
 		{
 			arrowFont = textFont = NewSmallFont;
 			int factor = (CleanXfac+1) / 2;
@@ -83,7 +83,7 @@ class MessageBoxMenu : Menu
 		int mr2 = destWidth/2 + 10 + textFont.StringWidth(Stringtable.Localize("$TXT_NO"));
 		mMouseRight = MAX(mr1, mr2);
 		mParentMenu = parent;
-		mMessage = textFont.BreakLines(Stringtable.Localize(message), generic_hud? 600 : 300);
+		mMessage = textFont.BreakLines(Stringtable.Localize(message), generic_ui? 600 : 300);
 		mMessageMode = messagemode;
 		if (playsound)
 		{

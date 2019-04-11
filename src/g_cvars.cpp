@@ -132,6 +132,20 @@ CUSTOM_CVAR(Float, teamdamage, 0.f, CVAR_SERVERINFO | CVAR_NOINITCALL)
 	}
 }
 
+bool generic_ui;
+
+void UpdateGenericUI(bool cvar)
+{
+	auto switchstr = GStrings["USE_GENERIC_FONT"];
+	generic_ui = (cvar || (switchstr && strtoll(switchstr, nullptr, 0)));
+}
+
+CUSTOM_CVAR(Bool, ui_generic, false, 0) // This is for allowing to test the generic font system with all languages
+{
+	UpdateGenericUI(self);
+}
+
+
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 {
 	GStrings.UpdateLanguage();
@@ -140,4 +154,5 @@ CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 		// does this even make sense on secondary levels...?
 		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
 	}
+	UpdateGenericUI(ui_generic);
 }

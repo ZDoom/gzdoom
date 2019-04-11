@@ -743,7 +743,7 @@ class AltHud ui
 
 		if (withmapname)
 		{
-			let font = generic_hud? NewSmallFont : SmallFont;
+			let font = generic_ui? NewSmallFont : SmallFont;
 			int hh = font.GetHeight();
 
 			screen.DrawText(font, hudcolor_titl, hudwidth - 6 - font.StringWidth(Level.MapName), ypos, Level.MapName,
@@ -942,7 +942,7 @@ class AltHud ui
 
 	virtual void DrawAutomap(PlayerInfo CPlayer)
 	{
-		let font = generic_hud? NewSmallFont : SmallFont;
+		let font = generic_ui? NewSmallFont : SmallFont;
 
 		int fonth = font.GetHeight() + 1;
 		int bottom = hudheight - 1;

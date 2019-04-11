@@ -14,6 +14,11 @@ VkRenderPassManager::VkRenderPassManager()
 {
 }
 
+VkRenderPassManager::~VkRenderPassManager()
+{
+	DynamicSet.reset(); // Needed since it must come before destruction of DynamicDescriptorPool
+}
+
 void VkRenderPassManager::Init()
 {
 	CreateDynamicSetLayout();

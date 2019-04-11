@@ -67,6 +67,7 @@ class VkRenderPassManager
 {
 public:
 	VkRenderPassManager();
+	~VkRenderPassManager();
 
 	void Init();
 	void RenderBuffersReset();

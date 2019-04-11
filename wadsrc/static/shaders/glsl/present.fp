@@ -7,6 +7,8 @@ layout(binding=1) uniform sampler2D DitherTexture;
 
 vec4 ApplyGamma(vec4 c)
 {
+	c.rgb = min(c.rgb, vec3(2.0)); // for HDR mode - prevents stacked translucent sprites (such as plasma) producing way too bright light
+
 	vec3 valgray;
 	if (GrayFormula == 0)
 		valgray = vec3(c.r + c.g + c.b) * (1 - Saturation) / 3 + c.rgb * Saturation;

@@ -1210,6 +1210,11 @@ class GLDefsParser
 		FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
 		FTexture *tex = TexMan.GetTexture(no);
 
+		if (tex == nullptr)
+		{
+			sc.ScriptMessage("Material definition refers nonexistent texture '%s'\n", sc.String);
+		}
+
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{

@@ -63,6 +63,7 @@ public:
 
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
+	bool IsVulkan() override { return true; }
 
 	void Update();
 

@@ -878,8 +878,16 @@ PPCustomShaderInstance::PPCustomShaderInstance(PostProcessShader *desc) : Desc(d
 
 	// Setup pipeline
 	FString pipelineInOut;
-	pipelineInOut += "layout(location=0) in vec2 TexCoord;\n";
-	pipelineInOut += "layout(location=0) out vec4 FragColor;\n";
+	if (screen->IsVulkan())
+	{
+		pipelineInOut += "layout(location=0) in vec2 TexCoord;\n";
+		pipelineInOut += "layout(location=0) out vec4 FragColor;\n";
+	}
+	else 
+	{
+		pipelineInOut += "in vec2 TexCoord;\n";
+		pipelineInOut += "out vec4 FragColor;\n";
+	}
 
 	FString prolog;
 	prolog += uniformTextures;

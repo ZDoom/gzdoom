@@ -381,6 +381,7 @@ public:
 	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer();
 	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
+	virtual bool IsVulkan() { return false; }
 
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)

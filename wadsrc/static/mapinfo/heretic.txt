@@ -63,9 +63,9 @@ gameinfo
 	textscreeny = 5
 	defaultendsequence = "Inter_Pic1"
 	maparrow = "maparrows/dagger.txt"
-	statscreen_mapnamefont = "BigFont"
-	statscreen_finishedfont = "SmallFont"
-	statscreen_enteringfont = "SmallFont"
+	statscreen_mapnamefont = "*BigFont"
+	statscreen_finishedfont = "*SmallFont"
+	statscreen_enteringfont = "*SmallFont"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"

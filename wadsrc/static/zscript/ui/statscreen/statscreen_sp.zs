@@ -150,7 +150,7 @@ class DoomStatusScreen : StatusScreen
 		let tcolor = useGfx? Font.CR_UNTRANSLATED : Font.CR_RED;
 
 		Font printFont;
-
+		Font textFont = generic_ui? NewSmallFont : BigFont;
 		if (useGfx)
 		{
 			printFont = IntermissionFont;
@@ -162,12 +162,12 @@ class DoomStatusScreen : StatusScreen
 		}
 		else
 		{
-			printFont = BigFont;
-			screen.DrawText (BigFont, tcolor, SP_STATSX, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
-			screen.DrawText (BigFont, tcolor, SP_STATSX, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
-			screen.DrawText (BigFont, tcolor, SP_STATSX, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
-			screen.DrawText (BigFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMTIME", DTA_Clean, true);
-			if (wbs.partime) screen.DrawText (BigFont, tcolor, 160 + SP_TIMEX, SP_TIMEY, "$TXT_IMPAR", DTA_Clean, true);
+			printFont = generic_ui? IntermissionFont : BigFont;
+			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMTIME", DTA_Clean, true);
+			if (wbs.partime) screen.DrawText (textFont, tcolor, 160 + SP_TIMEX, SP_TIMEY, "$TXT_IMPAR", DTA_Clean, true);
 		}
 			 
 		drawPercent (printFont, 320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs.maxkills, true, tcolor);
@@ -189,7 +189,7 @@ class DoomStatusScreen : StatusScreen
 			}
 			else
 			{
-				screen.DrawText (printFont, Font.CR_UNTRANSLATED, x  - printFont.StringWidth("$TXT_IMSUCKS"), y - printFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
+				screen.DrawText (textFont, Font.CR_UNTRANSLATED, x  - printFont.StringWidth("$TXT_IMSUCKS"), y - printFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
 			}
 		}
 
@@ -209,10 +209,12 @@ class RavenStatusScreen : DoomStatusScreen
 		int lh = IntermissionFont.GetHeight() * 3 / 2;
 
 		drawLF();
-	
-		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 65, "$TXT_IMKILLS", DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 90, "$TXT_IMITEMS", DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 50, 115, "$TXT_IMSECRETS", DTA_Clean, true, DTA_Shadow, true);
+
+		Font textFont = generic_ui? NewSmallFont : BigFont;
+
+		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 65, "$TXT_IMKILLS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 90, "$TXT_IMITEMS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 115, "$TXT_IMSECRETS", DTA_Clean, true, DTA_Shadow, true);
 
 		int countpos = gameinfo.gametype==GAME_Strife? 285:270;
 		if (sp_state >= 2)
@@ -229,7 +231,7 @@ class RavenStatusScreen : DoomStatusScreen
 		}
 		if (sp_state >= 8)
 		{
-			screen.DrawText (BigFont, Font.CR_UNTRANSLATED, 85, 160, "$TXT_IMTIME", DTA_Clean, true, DTA_Shadow, true);
+			screen.DrawText (textFont, Font.CR_UNTRANSLATED, 85, 160, "$TXT_IMTIME", DTA_Clean, true, DTA_Shadow, true);
 			drawTime (249, 160, cnt_time);
 			if (wi_showtotaltime)
 			{

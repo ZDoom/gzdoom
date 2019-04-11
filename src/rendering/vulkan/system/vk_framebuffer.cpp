@@ -549,11 +549,7 @@ uint32_t VulkanFrameBuffer::GetCaps()
 
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
-	if (swapChain->vsync != vsync)
-	{
-		swapChain.reset();
-		swapChain = std::make_unique<VulkanSwapChain>(device);
-	}
+	// This is handled in VulkanSwapChain::AcquireImage.
 }
 
 void VulkanFrameBuffer::CleanForRestart()

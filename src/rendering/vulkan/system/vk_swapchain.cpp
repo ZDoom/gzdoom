@@ -6,29 +6,12 @@
 
 EXTERN_CVAR(Bool, vid_vsync);
 
-CUSTOM_CVAR(Bool, vk_hdr, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
+CVAR(Bool, vk_hdr, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 void I_GetVulkanDrawableSize(int *width, int *height);
 
-VulkanSwapChain::VulkanSwapChain(VulkanDevice *device) : vsync(vid_vsync), device(device)
+VulkanSwapChain::VulkanSwapChain(VulkanDevice *device) : device(device)
 {
-	try
-	{
-		SelectFormat();
-		SelectPresentMode();
-		if (!CreateSwapChain())
-			I_Error("Could not create vulkan swapchain");
-		GetImages();
-		CreateViews();
-	}
-	catch (...)
-	{
-		ReleaseResources();
-		throw;
-	}
 }
 
 VulkanSwapChain::~VulkanSwapChain()
@@ -38,11 +21,13 @@ VulkanSwapChain::~VulkanSwapChain()
 
 uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *semaphore, VulkanFence *fence)
 {
-	if (lastSwapWidth != width || lastSwapHeight != height || !swapChain)
+	if (lastSwapWidth != width || lastSwapHeight != height || lastVsync != vid_vsync || lastHdr != vk_hdr || !swapChain)
 	{
 		Recreate();
 		lastSwapWidth = width;
 		lastSwapHeight = height;
+		lastVsync = vid_vsync;
+		lastHdr = vk_hdr;
 	}
 
 	uint32_t imageIndex;
@@ -132,6 +117,9 @@ void VulkanSwapChain::Recreate()
 
 bool VulkanSwapChain::CreateSwapChain(VkSwapchainKHR oldSwapChain)
 {
+	SelectFormat();
+	SelectPresentMode();
+
 	int width, height;
 	I_GetVulkanDrawableSize(&width, &height);
 
@@ -266,7 +254,7 @@ void VulkanSwapChain::SelectPresentMode()
 		I_Error("No surface present modes supported");
 
 	swapChainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-	if (vsync)
+	if (vid_vsync)
 	{
 		bool supportsFifoRelaxed = std::find(presentModes.begin(), presentModes.end(), VK_PRESENT_MODE_FIFO_RELAXED_KHR) != presentModes.end();
 		if (supportsFifoRelaxed)

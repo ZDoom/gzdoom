@@ -16,7 +16,6 @@ public:
 
 	void Recreate();
 
-	bool vsync;
 	VkSwapchainKHR swapChain = VK_NULL_HANDLE;
 	VkSurfaceFormatKHR swapChainFormat;
 	VkPresentModeKHR swapChainPresentMode;
@@ -44,6 +43,8 @@ private:
 
 	int lastSwapWidth = 0;
 	int lastSwapHeight = 0;
+	bool lastVsync = false;
+	bool lastHdr = false;
 
 	VulkanSwapChain(const VulkanSwapChain &) = delete;
 	VulkanSwapChain &operator=(const VulkanSwapChain &) = delete;

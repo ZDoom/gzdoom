@@ -40,15 +40,23 @@ uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *s
 		}
 
 		VkResult result = vkAcquireNextImageKHR(device->device, swapChain, 1'000'000'000, semaphore ? semaphore->semaphore : VK_NULL_HANDLE, fence ? fence->fence : VK_NULL_HANDLE, &imageIndex);
-		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || result == VK_TIMEOUT)
-		{
-			Recreate();
-		}
-		else if (result == VK_SUCCESS)
+		if (result == VK_SUCCESS)
 		{
 			break;
 		}
-		else if (result == VK_NOT_READY)
+		else if (result == VK_SUBOPTIMAL_KHR)
+		{
+			// Force the recreate to happen next frame.
+			// The spec is not very clear about what happens to the semaphore or the acquired image if the swapchain is recreated before the image is released with a call to vkQueuePresentKHR.
+			lastSwapWidth = 0;
+			lastSwapHeight = 0;
+			break;
+		}
+		else if (result == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			Recreate();
+		}
+		else if (result == VK_NOT_READY || result == VK_TIMEOUT)
 		{
 			imageIndex = 0xffffffff;
 			break;

@@ -160,8 +160,6 @@ void VulkanFrameBuffer::Update()
 
 	Flush3D.Clock();
 
-	presentImageIndex = swapChain->AcquireImage(GetClientWidth(), GetClientHeight(), mSwapChainImageAvailableSemaphore.get());
-
 	GetPostprocess()->SetActiveRenderTarget();
 
 	Draw2D();
@@ -170,29 +168,9 @@ void VulkanFrameBuffer::Update()
 	mRenderState->EndRenderPass();
 	mRenderState->EndFrame();
 
-	if (presentImageIndex != 0xffffffff)
-		mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
-
-	SubmitCommands(true);
-
 	Flush3D.Unclock();
 
-	FPSLimit();
-	
-	Finish.Reset();
-	Finish.Clock();
-
-	if (presentImageIndex != 0xffffffff)
-		swapChain->QueuePresent(presentImageIndex, mRenderFinishedSemaphore.get());
-
-	vkWaitForFences(device->device, 1, &mRenderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
-
-	mDrawCommands.reset();
-	mTransferCommands.reset();
-	DeleteFrameObjects();
-
-	Finish.Unclock();
+	SubmitCommands(true);
 
 	Super::Update();
 }
@@ -207,6 +185,16 @@ void VulkanFrameBuffer::DeleteFrameObjects()
 
 void VulkanFrameBuffer::SubmitCommands(bool finish)
 {
+	if (finish)
+	{
+		Finish.Reset();
+		Finish.Clock();
+
+		presentImageIndex = swapChain->AcquireImage(GetClientWidth(), GetClientHeight(), mSwapChainImageAvailableSemaphore.get());
+		if (presentImageIndex != 0xffffffff)
+			mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
+	}
+
 	if (mTransferCommands)
 	{
 		mTransferCommands->end();
@@ -217,10 +205,12 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 		submit.execute(device, device->graphicsQueue);
 	}
 
-	mDrawCommands->end();
-
 	QueueSubmit submit;
-	submit.addCommandBuffer(mDrawCommands.get());
+	if (mDrawCommands)
+	{
+		mDrawCommands->end();
+		submit.addCommandBuffer(mDrawCommands.get());
+	}
 	if (mTransferCommands)
 	{
 		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mTransferSemaphore.get());
@@ -232,13 +222,23 @@ void VulkanFrameBuffer::SubmitCommands(bool finish)
 	}
 	submit.execute(device, device->graphicsQueue, mRenderFinishedFence.get());
 
-	if (!finish)
+	if (finish)
 	{
-		vkWaitForFences(device->device, 1, &mRenderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
-		vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
-		mDrawCommands.reset();
-		mTransferCommands.reset();
-		DeleteFrameObjects();
+		FPSLimit();
+
+		if (presentImageIndex != 0xffffffff)
+			swapChain->QueuePresent(presentImageIndex, mRenderFinishedSemaphore.get());
+	}
+
+	vkWaitForFences(device->device, 1, &mRenderFinishedFence->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(device->device, 1, &mRenderFinishedFence->fence);
+	mDrawCommands.reset();
+	mTransferCommands.reset();
+	DeleteFrameObjects();
+
+	if (finish)
+	{
+		Finish.Unclock();
 	}
 }
 

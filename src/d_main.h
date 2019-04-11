@@ -109,6 +109,7 @@ struct FIWADInfo
 	FString MapInfo;		// Base mapinfo to load
 	TArray<FString> Load;	// Wads to be loaded with this one.
 	TArray<FString> Lumps;	// Lump names for identification
+	TArray<FString> DeleteLumps;	// Lumps which must be deleted from the directory.
 	int flags = 0;
 };
 

@@ -155,6 +155,16 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					}
 					while (sc.CheckString(","));
 				}
+				else if (sc.Compare("DeleteLumps"))
+				{
+					sc.MustGetStringName("=");
+					do
+					{
+						sc.MustGetString();
+						iwad->DeleteLumps.Push(FString(sc.String));
+					}
+					while (sc.CheckString(","));
+				}
 				else if (sc.Compare("BannerColors"))
 				{
 					sc.MustGetStringName("=");

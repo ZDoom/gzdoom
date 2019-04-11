@@ -183,6 +183,7 @@ IWad
 	Compatibility = "Poly1"
 	MustContain = "TITLE", "MAP01", "MAP40", "WINNOWR"
 	BannerColors = "f0 f0 f0", "6b 3c 18"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 	
 IWad
@@ -207,6 +208,7 @@ IWad
 	Compatibility = "Shareware"
 	MustContain = "TITLE", "MAP01", "WINNOWR"
 	BannerColors = "f0 f0 f0", "6b 3c 18"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 	
 IWad
@@ -232,6 +234,7 @@ IWad
 	Compatibility = "Extended"
 	MustContain = "E1M1", "E2M1", "TITLE", "MUS_E1M1", "EXTENDED"
 	BannerColors = "fc fc 00", "a8 00 00"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 
 IWad
@@ -244,6 +247,7 @@ IWad
 	Mapinfo = "mapinfo/heretic.txt"
 	MustContain = "E1M1", "E2M1", "TITLE", "MUS_E1M1"
 	BannerColors = "fc fc 00", "a8 00 00"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 
 IWad
@@ -255,6 +259,7 @@ IWad
 	Compatibility = "Shareware"
 	MustContain = "E1M1", "TITLE", "MUS_E1M1"
 	BannerColors = "fc fc 00", "a8 00 00"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 
 IWad

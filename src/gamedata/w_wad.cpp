@@ -905,7 +905,6 @@ void FWadCollection::RenameSprites ()
 					LumpInfo[i].lump->Name[0] = 0;
 				}
 			}
-
 		}
 	}
 }

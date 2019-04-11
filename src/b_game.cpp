@@ -394,8 +394,8 @@ bool FCajunMaster::DoAddBot (FLevelLocals *Level, uint8_t *info, botskill_t skil
 	else
 		Printf ("%s joined the game\n", players[bnum].userinfo.GetName());
 
-	Level->localEventManager->PlayerEntered(bnum, false);
 	Level->DoReborn (bnum, true);
+	Level->localEventManager->PlayerEntered(bnum, false);
 	return true;
 }
 

@@ -253,17 +253,34 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mText[0] == '$') mText = GStrings(&mText[1]);
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
-	bool usesDefault = mTextX < 0;
+	usesDefault = mTextX < 0;
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 	if (mTextY < 0) mTextY =gameinfo.TextScreenY;
 
-	// If the text is too wide, center it so that it works better on widescreen displays.
-	// On 4:3 it'd still be cut off, though.
-	int width = SmallFont->StringWidth(mText);
-	if (usesDefault && mTextX + width > 320 - mTextX)
+	if (!generic_ui)
 	{
-		mTextX = (320 - width) / 2;
+		// Todo: Split too long texts
+
+		// If the text is too wide, center it so that it works better on widescreen displays.
+		// On 4:3 it'd still be cut off, though.
+		int width = SmallFont->StringWidth(mText);
+		if (usesDefault && mTextX + width > 320 - mTextX)
+		{
+			mTextX = (320 - width) / 2;
+		}
+	}
+	else
+	{
+		// Todo: Split too long texts
+
+		mTextX *= 2;
+		mTextY *= 2;
+		int width = NewSmallFont->StringWidth(mText);
+		if (usesDefault && mTextX + width > 640 - mTextX)
+		{
+			mTextX = (640 - width) / 2;
+		}
 	}
 
 
@@ -298,45 +315,59 @@ void DIntermissionScreenText::Drawer ()
 		int c;
 		const FRemapTable *range;
 		const uint8_t *ch = (const uint8_t*)mText.GetChars();
-		const int kerning = SmallFont->GetDefaultKerning();
 
 		// Count number of rows in this text. Since it does not word-wrap, we just count
 		// line feed characters.
 		int numrows;
+		auto font = generic_ui ? NewSmallFont : SmallFont;
+		auto fontscale = generic_ui ? MIN(screen->GetWidth()/640, screen->GetHeight()/400) : MIN(screen->GetWidth()/400, screen->GetHeight() / 250);
+		int cleanwidth = screen->GetWidth() / fontscale;
+		int cleanheight = screen->GetHeight() / fontscale;
+		int refwidth = generic_ui ? 640 : 320;
+		int refheight = generic_ui ? 400 : 200;
+		const int kerning = font->GetDefaultKerning();
 
 		for (numrows = 1, c = 0; ch[c] != '\0'; ++c)
 		{
 			numrows += (ch[c] == '\n');
 		}
 
-		int rowheight = SmallFont->GetHeight() * CleanYfac;
-		int rowpadding = (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1) * CleanYfac;
+		int rowheight = font->GetHeight() * fontscale;
+		int rowpadding = (generic_ui? 2 : ((gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1))) * fontscale;
 
-		int cx = (mTextX - 160)*CleanXfac + screen->GetWidth() / 2;
-		int cy = (mTextY - 100)*CleanYfac + screen->GetHeight() / 2;
+		int cx = (mTextX - refwidth/2) * fontscale + screen->GetWidth() / 2;
+		int cy = (mTextY - refheight/2) * fontscale + screen->GetHeight() / 2;
 		cx = MAX<int>(0, cx);
 		int startx = cx;
 
-		// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
-		while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		if (usesDefault)
 		{
-			rowpadding--;
-		}
-		// If it's still off the bottom, try to center it vertically.
-		if (cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
-		{
-			cy = (screen->GetHeight() - (numrows * (rowheight + rowpadding) - rowpadding)) / 2;
-			// If it's off the top now, you're screwed. It's too tall to fit.
-			if (cy < 0)
+			int allheight;
+			while ((allheight = numrows * (rowheight + rowpadding)), allheight > screen->GetHeight() && rowpadding > 0)
 			{
-				cy = 0;
+				rowpadding--;
 			}
+			allheight = numrows * (rowheight + rowpadding);
+			if (screen->GetHeight() - cy - allheight < cy)
+			{
+				cy = (screen->GetHeight() - allheight) / 2;
+				if (cy < 0) cy = 0;
+			}
+		}
+		else
+		{
+			// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
+			while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+			{
+				rowpadding--;
+			}
+			// If it's still off the bottom, you are screwed if the origin is fixed.
 		}
 		rowheight += rowpadding;
 
 		// draw some of the text onto the screen
 		count = (mTicker - mTextDelay) / mTextSpeed;
-		range = SmallFont->GetColorTranslation (mTextColor);
+		range = font->GetColorTranslation (mTextColor);
 
 		for ( ; count > 0 ; count-- )
 		{
@@ -350,13 +381,13 @@ void DIntermissionScreenText::Drawer ()
 				continue;
 			}
 
-			pic = SmallFont->GetChar (c, mTextColor, &w);
+			pic = font->GetChar (c, mTextColor, &w);
 			w += kerning;
-			w *= CleanXfac;
+			w *= fontscale;
 			if (cx + w > SCREENWIDTH)
 				continue;
 
-			screen->DrawChar(SmallFont, mTextColor, cx, cy, c, DTA_CleanNoMove, true, TAG_DONE);
+			screen->DrawChar(font, mTextColor, cx/fontscale, cy/fontscale, c, DTA_KeepRatio, true, DTA_VirtualWidth, cleanwidth, DTA_VirtualHeight, cleanheight, TAG_DONE);
 			cx += w;
 		}
 	}
@@ -542,9 +573,10 @@ void DIntermissionScreenCast::Drawer ()
 	const char *name = mName;
 	if (name != NULL)
 	{
+		auto font = generic_ui ? NewSmallFont : SmallFont;
 		if (*name == '$') name = GStrings(name+1);
-		screen->DrawText (SmallFont, CR_UNTRANSLATED,
-			(SCREENWIDTH - SmallFont->StringWidth (name) * CleanXfac)/2,
+		screen->DrawText (font, CR_UNTRANSLATED,
+			(SCREENWIDTH - font->StringWidth (name) * CleanXfac)/2,
 			(SCREENHEIGHT * 180) / 200,
 			name,
 			DTA_CleanNoMove, true, TAG_DONE);
@@ -963,3 +995,41 @@ void F_AdvanceIntermission()
 	}
 }
 
+#include "c_dispatch.h"
+
+CCMD(measureintermissions)
+{
+	static const char *intermissions[] = {
+		"E1TEXT", "E2TEXT", "E3TEXT", "E4TEXT",
+		"C1TEXT", "C2TEXT", "C3TEXT", "C4TEXT", "C5TEXT",
+		"P1TEXT", "P2TEXT", "P3TEXT", "P4TEXT", "P5TEXT",
+		"T1TEXT", "T2TEXT", "T3TEXT", "T4TEXT", "T5TEXT", "NERVETEXT",
+		"HE1TEXT", "HE2TEXT", "HE3TEXT", "HE4TEXT", "HE5TEXT",
+		"TXT_HEXEN_CLUS1MSG", "TXT_HEXEN_CLUS2MSG","TXT_HEXEN_CLUS3MSG","TXT_HEXEN_CLUS4MSG",
+		"TXT_HEXEN_WIN1MSG", "TXT_HEXEN_WIN2MSG","TXT_HEXEN_WIN3MSG",
+		"TXT_HEXDD_CLUS1MSG", "TXT_HEXDD_CLUS2MSG",
+		"TXT_HEXDD_WIN1MSG", "TXT_HEXDD_WIN2MSG","TXT_HEXDD_WIN3MSG" };
+
+	static const char *languages[] = { "", "cz", "de", "eng", "es", "esm", "fr", "hu", "it", "pl", "pt", "ro", "ru", "sr" };
+
+	for (auto l : languages)
+	{
+		int langid = *l ? MAKE_ID(l[0], l[1], l[2], 0) : FStringTable::default_table;
+		for (auto t : intermissions)
+		{
+			auto text = GStrings.GetLanguageString(t, langid);
+			if (text)
+			{
+				auto ch = text;
+				int numrows, c;
+				for (numrows = 1, c = 0; ch[c] != '\0'; ++c)
+				{
+					numrows += (ch[c] == '\n');
+				}
+				int width = SmallFont->StringWidth(text);
+				if (width > 360 || numrows > 20)
+					Printf("%s, %s: %d x %d\n", t, l, width, numrows);
+			}
+		}
+	}
+}

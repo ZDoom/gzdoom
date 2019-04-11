@@ -700,7 +700,7 @@ static void TerminalResponse (const char *str)
 			// merchants can tell you something like this but continue to show
 			// their dialogue screen. I think most other conversations use this
 			// only as a response for terminating the dialogue.
-			StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, str,
+			StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, str,
 				float(CleanWidth/2) + 0.4f, float(ConversationMenuY - 110 + CleanHeight/2), CleanWidth, -CleanHeight,
 				CR_UNTRANSLATED, 3.f, 1.f), MAKE_ID('T','A','L','K'));
 		}

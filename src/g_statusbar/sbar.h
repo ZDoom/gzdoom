@@ -84,7 +84,7 @@ class DHUDMessage : public DHUDMessageBase
 	DECLARE_CLASS (DHUDMessage, DHUDMessageBase)
 public:
 	DHUDMessage (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
-		EColorRange textColor, float holdTime, bool altscale = false);
+		EColorRange textColor, float holdTime);
 	virtual void OnDestroy () override;
 
 	virtual void Serialize(FSerializer &arc);
@@ -140,7 +140,6 @@ protected:
 	int ClipX, ClipY, ClipWidth, ClipHeight, WrapWidth;	// in HUD coords
 	int ClipLeft, ClipTop, ClipRight, ClipBot;			// in screen coords
 	bool HandleAspect;
-	bool AltScale;
 	EColorRange TextColor;
 	FFont *Font;
 	FRenderStyle Style;
@@ -207,7 +206,7 @@ class DHUDMessageTypeOnFadeOut : public DHUDMessageFadeOut
 	DECLARE_CLASS (DHUDMessageTypeOnFadeOut, DHUDMessageFadeOut)
 public:
 	DHUDMessageTypeOnFadeOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
-		EColorRange textColor, float typeTime, float holdTime, float fadeOutTime);
+		EColorRange textColor, float typeTime, float holdTime, float fadeOutTimee);
 
 	virtual void Serialize(FSerializer &arc);
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
@@ -448,6 +447,7 @@ public:
 	{
 		return SBarTop;
 	}
+	void DoDrawAutomapHUD(int crdefault, int highlight);
 
 //protected:
 	void DrawPowerups ();

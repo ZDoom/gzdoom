@@ -55,7 +55,6 @@
 CVAR(Int,hud_althudscale, 0, CVAR_ARCHIVE)				// Scale the hud to 640x400?
 CVAR(Bool,hud_althud, false, CVAR_ARCHIVE)				// Enable/Disable the alternate HUD
 
-CVAR(Bool, hud_althudfont, false, CVAR_ARCHIVE)				// Enable/Disable the alternate HUD
 														// These are intentionally not the same as in the automap!
 CVAR (Bool,  hud_showsecrets,	true,CVAR_ARCHIVE);		// Show secrets on HUD
 CVAR (Bool,  hud_showmonsters,	true,CVAR_ARCHIVE);		// Show monster stats on HUD

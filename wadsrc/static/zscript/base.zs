@@ -898,8 +898,9 @@ struct StringStruct native
 	native String Mid(int pos = 0, int len = 2147483647) const;
 	native void Truncate(int newlen);
 	native void Remove(int index, int remlen);
-	native String CharAt(int pos) const;
-	native int CharCodeAt(int pos) const;
+	deprecated("4.1") native String CharAt(int pos) const;
+	deprecated("4.1") native int CharCodeAt(int pos) const;
+	native int ByteAt(int pos) const;
 	native String Filter();
 	native int IndexOf(String substr, int startIndex = 0) const;
 	deprecated("3.5.1") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
@@ -911,6 +912,8 @@ struct StringStruct native
 	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
 	native void AppendCharacter(int c);
 	native void DeleteLastCharacter();
+	native int CodePointCount();
+	native int, int GetNextCodePoint(int position);
 }
 
 class SectorEffect : Thinker native

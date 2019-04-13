@@ -176,6 +176,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharCodeAt, StringCharCodeAt)
 	ACTION_RETURN_INT(StringCharCodeAt(self, pos));
 }
 
+static int StringByteAt(FString *self, int pos)
+{
+	if ((unsigned)pos >= self->Len()) return 0;
+	else return (uint8_t)((*self)[pos]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ByteAt, StringByteAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(StringByteAt(self, pos));
+}
+
 static void StringFilter(FString *self, FString *result)
 {
 	*result = strbin1(*self);
@@ -287,6 +300,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Split, StringSplit)
 	StringSplit(self, tokens, delimiter, keepEmpty);
 	return 0;
 }
+
+static int StringCodePointCount(FString *self)
+{
+	return (int)self->CharacterCount();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CodePointCount, StringCodePointCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_INT(StringCodePointCount(self));
+}
+
+static int StringNextCodePoint(FString *self, int inposition, int *position)
+{
+	int codepoint = self->GetNextCharacter(inposition);
+	if (position) *position = inposition;
+	return codepoint;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, GetNextCodePoint, StringNextCodePoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	if (numret > 0) ret[0].SetInt(self->GetNextCharacter(pos));
+	if (numret > 1) ret[1].SetInt(pos);
+	return numret;
+}
+
 
 //=====================================================================================
 //

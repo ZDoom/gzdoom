@@ -124,7 +124,7 @@ class AltHud ui
 		x += zerowidth / 2;
 		for(int i=0; i < text.length(); i++)
 		{
-			int c = text.CharCodeAt(i);
+			int c = text.ByteAt(i);
 			int width = fnt.GetCharWidth(c);
 			double offset = fnt.GetBottomAlignOffset(c);
 

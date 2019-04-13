@@ -271,7 +271,7 @@ class TextEnterMenu : Menu
 			case MKEY_Enter:
 				if (mInputGridOkay)
 				{
-					int ch = InputGridChars.CharCodeAt(InputGridX + InputGridY * INPUTGRID_WIDTH);
+					int ch = InputGridChars.ByteAt(InputGridX + InputGridY * INPUTGRID_WIDTH);
 					if (ch == 0)			// end
 					{
 						if (mEnterString.Length() > 0)
@@ -338,7 +338,7 @@ class TextEnterMenu : Menu
 				for (int x = 0; x < INPUTGRID_WIDTH; ++x)
 				{
 					int xx = x * cell_width - INPUTGRID_WIDTH * cell_width / 2 + screen.GetWidth() / 2;
-					int ch = InputGridChars.CharCodeAt(y * INPUTGRID_WIDTH + x);
+					int ch = InputGridChars.ByteAt(y * INPUTGRID_WIDTH + x);
 					int width = displayFont.GetCharWidth(ch);
 
 					// The highlighted character is yellow; the rest are dark gray.

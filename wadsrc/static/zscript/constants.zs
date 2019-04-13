@@ -1344,3 +1344,11 @@ enum ECompatFlags
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
 };
+
+enum EMonospacing
+{
+	Mono_Off = 0,
+	Mono_CellLeft = 1,
+	Mono_CellCenter = 2,
+	Mono_CellRight = 3
+};

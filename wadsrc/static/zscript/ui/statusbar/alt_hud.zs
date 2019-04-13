@@ -120,20 +120,8 @@ class AltHud ui
 	void DrawHudText(Font fnt, int color, String text, int x, int y, double trans = 0.75)
 	{
 		int zerowidth = fnt.GetCharWidth("0");
-
-		x += zerowidth / 2;
-		for(int i=0; i < text.length(); i++)
-		{
-			int c = text.ByteAt(i);
-			int width = fnt.GetCharWidth(c);
-			double offset = fnt.GetBottomAlignOffset(c);
-
-			screen.DrawChar(fnt, color, x, y, c,
-				DTA_KeepRatio, true,
-				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, DTA_Alpha, trans, 
-				DTA_LeftOffset, width/2, DTA_TopOffsetF, offset);
-			x += zerowidth;
-		}
+		screen.DrawText(fnt, color, x, y-fnt.GetHeight(), text, DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight,
+			 DTA_KeepRatio, true, DTA_Alpha, trans, DTA_Monospace, MONO_CellCenter, DTA_Spacing, zerowidth);
 	}
 
 

@@ -552,23 +552,6 @@ void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled
 
 void FormatMapName(FLevelLocals *self, int cr, FString *result);
 
-static void DrawAMText(FFont *fnt, int color, const char *text, int vwidth, int vheight, int x, int y)
-{
-	int zerowidth = fnt->GetCharWidth('0');
-
-	x += zerowidth / 2;
-	for (int i = 0; text[i]; i++)
-	{
-		int c = text[i];
-		int width = fnt->GetCharWidth(c);
-
-		screen->DrawChar(fnt, color, x, y, c, DTA_KeepRatio, true,
-			DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, DTA_LeftOffset, width / 2, TAG_DONE);
-		x += zerowidth;
-	}
-}
-
-
 void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 {
 	auto scale = GetUIScale(hud_scale);
@@ -580,12 +563,14 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	int sec;
 	int y = 0;
 	int textdist = 4;
+	int zerowidth = font->GetCharWidth('0');
 
 	if (am_showtime)
 	{
 		sec = Tics2Seconds(primaryLevel->time);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
-		DrawAMText(font, crdefault, textbuffer, vwidth, vheight, vwidth - font->GetCharWidth('0') * 8 - textdist, y);
+		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
 		y += fheight;
 	}
 
@@ -593,7 +578,8 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	{
 		sec = Tics2Seconds(primaryLevel->totaltime);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
-		DrawAMText(font, crdefault, textbuffer, vwidth, vheight, vwidth - font->GetCharWidth('0') * 8 - textdist, y);
+		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
 	}
 
 	if (!deathmatch)

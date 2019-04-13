@@ -905,8 +905,10 @@ struct StringStruct native
 	native int IndexOf(String substr, int startIndex = 0) const;
 	deprecated("3.5.1") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
 	native int RightIndexOf(String substr, int endIndex = 2147483647) const;
-	native void ToUpper();
-	native void ToLower();
+	deprecated("4.1") native void ToUpper();
+	deprecated("4.1") native void ToLower();
+	native String MakeUpper();
+	native String MakeLower();
 	native int ToInt(int base = 0) const;
 	native double ToDouble() const;
 	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;

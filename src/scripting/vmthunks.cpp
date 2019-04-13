@@ -263,6 +263,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToLower, StringToLower)
 	return 0;
 }
 
+static void StringMakeUpper(FString *self, FString *out)
+{
+	*out = self->MakeUpper();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeUpper, StringMakeUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(self->MakeUpper());
+}
+
+static void StringMakeLower(FString *self, FString *out)
+{
+	*out = self->MakeLower();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeLower, StringMakeLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(self->MakeLower());
+}
+
 static int StringToInt(FString *self, int base)
 {
 	return (int)self->ToLong(base);

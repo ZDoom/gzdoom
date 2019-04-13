@@ -2632,9 +2632,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon
 //
 //=====================================================================================
 
-DHUDFont *CreateHudFont(FFont *fnt, int spac, bool mono, int sx, int sy)
+DHUDFont *CreateHudFont(FFont *fnt, int spac, int mono, int sx, int sy)
 {
-	return (Create<DHUDFont>(fnt, spac, mono, sy, sy));
+	return (Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
@@ -2642,10 +2642,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
 	PARAM_PROLOGUE;
 	PARAM_POINTER(fnt, FFont);
 	PARAM_INT(spac);
-	PARAM_BOOL(mono);
+	PARAM_INT(mono);
 	PARAM_INT(sx);
 	PARAM_INT(sy);
-	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, mono, sy, sy));
+	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
 }
 
 

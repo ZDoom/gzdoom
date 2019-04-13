@@ -16,11 +16,11 @@ class HexenStatusBar : BaseStatusBar
 
 		// Create the font used for the fullscreen HUD
 		Font fnt = "HUDFONT_RAVEN";
-		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0") + 1, true, 1, 1);
+		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0") + 1, Mono_CellLeft, 1, 1);
 		fnt = "INDEXFONT_RAVEN";
-		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true);
+		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
 		fnt = "BIGFONT";
-		mBigFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 2, 2);
+		mBigFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 2, 2);
 		diparms = InventoryBarState.Create(mIndexFont);
 		diparms_sbar = InventoryBarState.CreateNoBox(mIndexFont, boxsize:(31, 31), arrowoffs:(0,-10));
 		mHealthInterpolator = DynamicValueInterpolator.Create(0, 0.25, 1, 8);

@@ -282,6 +282,7 @@ static int PatchSize;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
 static bool  including, includenotext;
+static int LumpFileNum;
 
 static const char *unknown_str = "Unknown key %s encountered in %s %d.\n";
 
@@ -2169,7 +2170,7 @@ static int PatchMusic (int dummy)
 		
 		keystring << "MUSIC_" << Line1;
 
-		TableElement te = { newname, newname, newname, newname };
+		TableElement te = { LumpFileNum, { newname, newname, newname, newname } };
 		DehStrings.Insert(keystring, te);
 		DPrintf (DMSG_SPAMMY, "Music %s set to:\n%s\n", keystring.GetChars(), newname.GetChars());
 	}
@@ -2285,7 +2286,7 @@ static int PatchText (int oldSize)
 		if (str != NULL)
 		{
 			FString newname = newStr;
-			TableElement te = { newname, newname, newname, newname };
+			TableElement te = { LumpFileNum, { newname, newname, newname, newname } };
 			DehStrings.Insert(str, te);
 			EnglishStrings.Remove(str);	// remove entry so that it won't get found again by the next iteration or  by another replacement later
 			good = true;
@@ -2340,7 +2341,7 @@ static int PatchStrings (int dummy)
 		// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
 		const char *ll = Line1;
 		if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
-		TableElement te = { holdstring, holdstring, holdstring, holdstring };
+		TableElement te = { LumpFileNum, { holdstring, holdstring, holdstring, holdstring } };
 		DehStrings.Insert(ll, te);
 		DPrintf (DMSG_SPAMMY, "%s set to:\n%s\n", Line1, holdstring.GetChars());
 	}
@@ -2496,13 +2497,19 @@ int D_LoadDehLumps(DehLumpSource source)
 
 bool D_LoadDehLump(int lumpnum)
 {
+	auto ls = LumpFileNum;
+	LumpFileNum = Wads.GetLumpFile(lumpnum);
+
 	PatchSize = Wads.LumpLength(lumpnum);
 
 	PatchName = copystring(Wads.GetLumpFullPath(lumpnum));
 	PatchFile = new char[PatchSize + 1];
 	Wads.ReadLump(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
-	return DoDehPatch();
+	auto res = DoDehPatch();
+	LumpFileNum = ls;
+
+	return res;
 }
 
 bool D_LoadDehFile(const char *patchfile)

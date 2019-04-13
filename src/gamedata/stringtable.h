@@ -49,6 +49,7 @@
 
 struct TableElement
 {
+	int filenum;
 	FString strings[4];
 };
 
@@ -104,14 +105,15 @@ private:
 	LangMap allStrings;
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
 
-	void LoadLanguage (const TArray<uint8_t> &buffer);
+	void LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer);
 	TArray<TArray<FString>> parseCSV(const TArray<uint8_t> &buffer);
-	bool ParseLanguageCSV(const TArray<uint8_t> &buffer);
+	bool ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer);
 
 	bool LoadLanguageFromSpreadsheet(int lumpnum, const TArray<uint8_t> &buffer);
 	bool readMacros(int lumpnum);
-	void InsertString(int langid, FName label, const FString &string);
+	void InsertString(int lumpnum, int langid, FName label, const FString &string);
 	void DeleteString(int langid, FName label);
+	void DeleteForLabel(int lumpnum, FName label);
 
 	static size_t ProcessEscapes (char *str);
 };

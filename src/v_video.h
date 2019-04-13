@@ -240,7 +240,7 @@ enum
 	DTA_Monospace,			// Fonts only: Use a fixed distance between characters.
 };
 
-enum EMonospacing
+enum EMonospacing : int
 {
 	Off = 0,
 	CellLeft = 1,

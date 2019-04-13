@@ -18,7 +18,7 @@ struct MugShot
 class HUDFont native ui
 {
 	native Font mFont;
-	native static HUDFont Create(Font fnt, int spacing = 0, bool monospaced = false, int shadowx = 0, int shadowy = 0);
+	native static HUDFont Create(Font fnt, int spacing = 0, EMonospacing monospacing = Mono_Off, int shadowx = 0, int shadowy = 0);
 }
 
 class InventoryBarState ui

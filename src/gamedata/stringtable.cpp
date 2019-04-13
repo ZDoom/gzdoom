@@ -293,10 +293,12 @@ void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
 					}
 					if (len == 1 && sc.String[0] == '*')
 					{
+						activeMaps.Clear();
 						activeMaps.Push(global_table);
 					}
 					else if (len == 7 && stricmp (sc.String, "default") == 0)
 					{
+						activeMaps.Clear();
 						activeMaps.Push(default_table);
 					}
 					else
@@ -307,7 +309,8 @@ void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
 				}
 				else
 				{
-					activeMaps.Push(MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0));
+					if (activeMaps.Size() != 1 || (activeMaps[0] != default_table && activeMaps[0] != global_table))
+						activeMaps.Push(MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0));
 				}
 				sc.MustGetString ();
 			} while (!sc.Compare ("]"));

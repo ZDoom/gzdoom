@@ -50,6 +50,7 @@
 #include "am_map.h"
 #include "v_video.h"
 #include "gi.h"
+#include "fontinternals.h"
 #include "intermission/intermission.h"
 
 DVector2 AM_GetPosition();
@@ -284,6 +285,31 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeLower, StringMakeLower)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	ACTION_RETURN_STRING(self->MakeLower());
 }
+
+static int StringCharUpper(int ch)
+{
+	return ch >= 0 && ch < 65536 ? upperforlower[ch] : ch;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharUpper, StringCharUpper)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(ch);
+	ACTION_RETURN_INT(StringCharUpper(ch));
+}
+
+static int StringCharLower(int ch)
+{
+	return ch >= 0 && ch < 65536 ? lowerforupper[ch] : ch;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharLower, StringCharLower)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(ch);
+	ACTION_RETURN_INT(StringCharLower(ch));
+}
+
 
 static int StringToInt(FString *self, int base)
 {

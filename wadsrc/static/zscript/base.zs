@@ -909,6 +909,8 @@ struct StringStruct native
 	deprecated("4.1") native void ToLower();
 	native String MakeUpper();
 	native String MakeLower();
+	native static int CharUpper(int ch);
+	native static int CharLower(int ch);
 	native int ToInt(int base = 0) const;
 	native double ToDouble() const;
 	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;

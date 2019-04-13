@@ -38,7 +38,6 @@
 #include "dobject.h"
 #include "v_collection.h"
 #include "v_text.h"
-#include "v_video.h"
 #include "r_data/renderstyle.h"
 
 class player_t;
@@ -52,6 +51,8 @@ enum EHudState
 
 	HUD_AltHud // Used for passing through popups to the alt hud
 };
+
+enum EMonospacing : int;
 
 // HUD Message base object --------------------------------------------------
 

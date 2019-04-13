@@ -909,8 +909,8 @@ struct StringStruct native
 	native int RightIndexOf(String substr, int endIndex = 2147483647) const;
 	deprecated("4.1") native void ToUpper();
 	deprecated("4.1") native void ToLower();
-	native String MakeUpper();
-	native String MakeLower();
+	native String MakeUpper() const;
+	native String MakeLower() const;
 	native static int CharUpper(int ch);
 	native static int CharLower(int ch);
 	native int ToInt(int base = 0) const;
@@ -918,8 +918,8 @@ struct StringStruct native
 	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
 	native void AppendCharacter(int c);
 	native void DeleteLastCharacter();
-	native int CodePointCount();
-	native int, int GetNextCodePoint(int position);
+	native int CodePointCount() const;
+	native int, int GetNextCodePoint(int position) const;
 }
 
 class SectorEffect : Thinker native

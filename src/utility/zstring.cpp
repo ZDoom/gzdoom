@@ -681,7 +681,7 @@ void FString::ToLower ()
 	UnlockBuffer();
 }
 
-FString FString::MakeLower()
+FString FString::MakeLower() const
 {
 	TArray<uint8_t> builder(Len());
 	int pos = 0;
@@ -694,7 +694,7 @@ FString FString::MakeLower()
 	return FString(builder);
 }
 
-FString FString::MakeUpper()
+FString FString::MakeUpper() const
 {
 	TArray<uint8_t> builder(Len());
 	int pos = 0;

@@ -35,6 +35,7 @@
 #include "v_video.h"
 #include "menu/menu.h"
 
+CVAR(Bool, menu_displaycommands, false, 0)
 
 //=============================================================================
 //

@@ -48,11 +48,16 @@ class OptionMenuItem : MenuItemBase
 	{
 		Menu.DrawOptionText(x, y, color, text, grayed);
 	}
-	
+
+	protected virtual string GetLabel()
+	{
+		return Stringtable.Localize(mLabel);
+	}
+
 	protected int drawLabel(int indent, int y, int color, bool grayed = false)
 	{
-		String label = Stringtable.Localize(mLabel);
-		
+		String label = GetLabel();
+
 		int x;
 		int w = Menu.OptionWidth(label) * CleanXfac_1;
 		if (!mCentered) x = indent - w;
@@ -94,13 +99,26 @@ class OptionMenuItem : MenuItemBase
 	}
 }
 
+class DisplayCommandOptionMenuItem : OptionMenuItem
+{
+	override string GetLabel()
+	{
+		if (menu_displaycommands)
+		{
+			return mAction;
+		}
+
+		return super.GetLabel();
+	}
+}
+
 //=============================================================================
 //
 // opens a submenu, command is a submenu name
 //
 //=============================================================================
 
-class OptionMenuItemSubmenu : OptionMenuItem
+class OptionMenuItemSubmenu : DisplayCommandOptionMenuItem
 {
 	int mParam;
 	OptionMenuItemSubmenu Init(String label, Name command, int param = 0, bool centered = false)
@@ -249,7 +267,7 @@ class OptionMenuItemSafeCommand : OptionMenuItemCommand
 //
 //=============================================================================
 
-class OptionMenuItemOptionBase : OptionMenuItem
+class OptionMenuItemOptionBase : DisplayCommandOptionMenuItem
 {
 	// command is a CVAR
 	Name mValues;	// Entry in OptionValues table
@@ -483,7 +501,7 @@ class EnterKey : Menu
 //
 //=============================================================================
 
-class OptionMenuItemControlBase : OptionMenuItem
+class OptionMenuItemControlBase : DisplayCommandOptionMenuItem
 {
 	KeyBindings mBindings;
 	int mInput;
@@ -689,7 +707,7 @@ class OptionMenuItemStaticTextSwitchable : OptionMenuItem
 //
 //=============================================================================
 
-class OptionMenuSliderBase : OptionMenuItem
+class OptionMenuSliderBase : DisplayCommandOptionMenuItem
 {
 	// command is a CVAR
 	double mMin, mMax, mStep;
@@ -881,7 +899,7 @@ class OptionMenuItemSlider : OptionMenuSliderBase
 //
 //=============================================================================
 
-class OptionMenuItemColorPicker : OptionMenuItem
+class OptionMenuItemColorPicker : DisplayCommandOptionMenuItem
 {
 	CVar mCVar;
 
@@ -957,7 +975,7 @@ class OptionMenuItemColorPicker : OptionMenuItem
 //
 //=============================================================================
 
-class OptionMenuFieldBase : OptionMenuItem
+class OptionMenuFieldBase : DisplayCommandOptionMenuItem
 {
 	void Init (String label, Name command, CVar graycheck = null)
 	{
@@ -1221,7 +1239,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 //
 //=============================================================================
 
-class OptionMenuItemScreenResolution : OptionMenuItem
+class OptionMenuItemScreenResolution : DisplayCommandOptionMenuItem
 {
 	String mResTexts[3];
 	int mSelection;

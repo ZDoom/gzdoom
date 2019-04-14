@@ -187,6 +187,11 @@ class OptionMenu : Menu
 			}
 			return true;
 		}
+		else if (ev.Type == UIEvent.Type_KeyDown && ev.KeyChar == UIEvent.Key_F1)
+		{
+			CVar displayCommands = CVar.FindCVar('menu_displaycommands');
+			displayCommands.SetBool(!displayCommands.GetBool());
+		}
 		return Super.OnUIEvent(ev);
 	}
 

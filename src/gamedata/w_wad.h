@@ -117,7 +117,7 @@ public:
 	int GetIwadNum() { return IwadIndex; }
 	void SetIwadNum(int x) { IwadIndex = x; }
 
-	void InitMultipleFiles (TArray<FString> &filenames);
+	void InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps);
 	void AddFile (const char *filename, FileReader *wadinfo = NULL);
 	int CheckIfWadLoaded (const char *name);
 
@@ -213,7 +213,7 @@ protected:
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing
 
 private:
-	void RenameSprites();
+	void RenameSprites(const TArray<FString> &deletelumps);
 	void RenameNerve();
 	void FixMacHexen();
 	void DeleteAll();

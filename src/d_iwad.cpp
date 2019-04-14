@@ -132,9 +132,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					do
 					{
 						sc.MustGetString();
-						if(sc.Compare("NoTextcolor")) iwad->flags |= GI_NOTEXTCOLOR;
-						else if (sc.Compare("NoBigFont")) iwad->flags |= GI_IGNOREBIGFONTLUMP;
-						else if(sc.Compare("Poly1")) iwad->flags |= GI_COMPATPOLY1;
+						if(sc.Compare("Poly1")) iwad->flags |= GI_COMPATPOLY1;
 						else if(sc.Compare("Poly2")) iwad->flags |= GI_COMPATPOLY2;
 						else if(sc.Compare("Shareware")) iwad->flags |= GI_SHAREWARE;
 						else if(sc.Compare("Teaser2")) iwad->flags |= GI_TEASER2;

@@ -2388,7 +2388,7 @@ void D_DoomMain (void)
 		}
 
 		if (!batchrun) Printf ("W_Init: Init WADfiles.\n");
-		Wads.InitMultipleFiles (allwads);
+		Wads.InitMultipleFiles (allwads, iwad_info->DeleteLumps);
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();

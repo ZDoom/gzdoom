@@ -67,8 +67,8 @@ void FStringTable::LoadStrings ()
 	{
 		auto lumpdata = Wads.ReadLumpIntoArray(lump);
 
-		if (!ParseLanguageCSV(lumpdata))
- 			LoadLanguage (lumpdata);
+		if (!ParseLanguageCSV(lump, lumpdata))
+ 			LoadLanguage (lump, lumpdata);
 	}
 	UpdateLanguage();
 	allMacros.Clear();
@@ -191,7 +191,7 @@ bool FStringTable::readMacros(int lumpnum)
 //
 //==========================================================================
 
-bool FStringTable::ParseLanguageCSV(const TArray<uint8_t> &buffer)
+bool FStringTable::ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer)
 {
 	if (memcmp(buffer.Data(), "default,", 8)) return false;
 	auto data = parseCSV(buffer);
@@ -199,6 +199,7 @@ bool FStringTable::ParseLanguageCSV(const TArray<uint8_t> &buffer)
 	int labelcol = -1;
 	int filtercol = -1;
 	TArray<std::pair<int, unsigned>> langrows;
+	bool hasDefaultEntry = false;
 
 	if (data.Size() > 0)
 	{
@@ -221,6 +222,7 @@ bool FStringTable::ParseLanguageCSV(const TArray<uint8_t> &buffer)
 					if (lang.CompareNoCase("default") == 0)
 					{
 						langrows.Push(std::make_pair(column, default_table));
+						hasDefaultEntry = true;
 					}
 					else if (lang.Len() < 4)
 					{
@@ -243,12 +245,16 @@ bool FStringTable::ParseLanguageCSV(const TArray<uint8_t> &buffer)
 			}
 
 			FName strName = row[labelcol];
+			if (hasDefaultEntry)
+			{
+				DeleteForLabel(lumpnum, strName);
+			}
 			for (auto &langentry : langrows)
 			{
 				auto str = row[langentry.first];
 				if (str.Len() > 0)
 				{
-					InsertString(langentry.second, strName, str);
+					InsertString(lumpnum, langentry.second, strName, str);
 				}
 				else
 				{
@@ -266,7 +272,7 @@ bool FStringTable::ParseLanguageCSV(const TArray<uint8_t> &buffer)
 //
 //==========================================================================
 
-void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
+void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 {
 	bool errordone = false;
 	TArray<uint32_t> activeMaps;
@@ -293,10 +299,12 @@ void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
 					}
 					if (len == 1 && sc.String[0] == '*')
 					{
+						activeMaps.Clear();
 						activeMaps.Push(global_table);
 					}
 					else if (len == 7 && stricmp (sc.String, "default") == 0)
 					{
+						activeMaps.Clear();
 						activeMaps.Push(default_table);
 					}
 					else
@@ -307,7 +315,8 @@ void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
 				}
 				else
 				{
-					activeMaps.Push(MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0));
+					if (activeMaps.Size() != 1 || (activeMaps[0] != default_table && activeMaps[0] != global_table))
+						activeMaps.Push(MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0));
 				}
 				sc.MustGetString ();
 			} while (!sc.Compare ("]"));
@@ -360,10 +369,14 @@ void FStringTable::LoadLanguage (const TArray<uint8_t> &buffer)
 			}
 			if (!skip)
 			{
+				if (activeMaps[0] == default_table)
+				{
+					DeleteForLabel(lumpnum, strName);
+				}
 				// Insert the string into all relevant tables.
 				for (auto map : activeMaps)
 				{
-					InsertString(map, strName, strText);
+					InsertString(lumpnum, map, strName, strText);
 				}
 			}
 		}
@@ -383,14 +396,38 @@ void FStringTable::DeleteString(int langid, FName label)
 
 //==========================================================================
 //
+// This deletes all older entries for a given label. This gets called
+// when a string in the default table gets updated. 
+//
+//==========================================================================
+
+void FStringTable::DeleteForLabel(int lumpnum, FName label)
+{
+	decltype(allStrings)::Iterator it(allStrings);
+	decltype(allStrings)::Pair *pair;
+	auto filenum = Wads.GetLumpFile(lumpnum);
+
+	while (it.NextPair(pair))
+	{
+		auto entry = pair->Value.CheckKey(label);
+		if (entry && entry->filenum < filenum)
+		{
+			pair->Value.Remove(label);
+		}
+	}
+
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
 
-void FStringTable::InsertString(int langid, FName label, const FString &string)
+void FStringTable::InsertString(int lumpnum, int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
-	TableElement te = { string, string, string, string };
+	TableElement te = { lumpnum, { string, string, string, string } };
 	long index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{

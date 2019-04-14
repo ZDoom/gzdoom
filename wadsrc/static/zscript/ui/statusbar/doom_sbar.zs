@@ -13,9 +13,9 @@ class DoomStatusBar : BaseStatusBar
 
 		// Create the font used for the fullscreen HUD
 		Font fnt = "HUDFONT_DOOM";
-		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true, 1, 1);
+		mHUDFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft, 1, 1);
 		fnt = "INDEXFONT_DOOM";
-		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), true);
+		mIndexFont = HUDFont.Create(fnt, fnt.GetCharWidth("0"), Mono_CellLeft);
 		mAmountFont = HUDFont.Create("INDEXFONT");
 		diparms = InventoryBarState.Create();
 	}

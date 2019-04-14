@@ -306,7 +306,7 @@ class StatusScreen abstract play version("2.5")
 		{
 			// Digits are centered in a box the width of the '3' character.
 			// Other characters (specifically, '-') are right-aligned in their cell.
-			int c = text.CharCodeAt(text_p);
+			int c = text.ByteAt(text_p);
 			if (c >= "0" && c <= "9")
 			{
 				x -= fntwidth;

@@ -40,6 +40,7 @@
 #include "zstring.h"
 #include "v_text.h"
 #include "utf8.h"
+#include "fontinternals.h"
 
 FNullStringData FString::NullString =
 {
@@ -680,22 +681,30 @@ void FString::ToLower ()
 	UnlockBuffer();
 }
 
-void FString::SwapCase ()
+FString FString::MakeLower() const
 {
-	LockBuffer();
-	size_t max = Len();
-	for (size_t i = 0; i < max; ++i)
+	TArray<uint8_t> builder(Len());
+	int pos = 0;
+	while (int c = GetNextCharacter(pos))
 	{
-		if (isupper(Chars[i]))
-		{
-			Chars[i] = (char)tolower(Chars[i]);
-		}
-		else
-		{
-			Chars[i] = (char)toupper(Chars[i]);
-		}
+		if (c < 65536) c = lowerforupper[c];
+		auto cp = MakeUTF8(c);
+		while (auto uc = *cp++) builder.Push(uc);
 	}
-	UnlockBuffer();
+	return FString(builder);
+}
+
+FString FString::MakeUpper() const
+{
+	TArray<uint8_t> builder(Len());
+	int pos = 0;
+	while (int c = GetNextCharacter(pos))
+	{
+		if (c < 65536) c = upperforlower[c];
+		auto cp = MakeUTF8(c);
+		while (auto uc = *cp++) builder.Push(uc);
+	}
+	return FString(builder);
 }
 
 void FString::StripLeft ()

@@ -79,21 +79,6 @@ CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	if (self >= 0 && self < 128) self = 128;
 }
 
-bool generic_hud, generic_ui;
-
-EXTERN_CVAR(Bool, ui_generic)
-
-CUSTOM_CVAR(Bool, hud_generic, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // All HUD elements only use generic assets
-{
-	generic_hud = self || ui_generic;
-}
-
-CUSTOM_CVAR(Bool, ui_generic, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) // The entire UI uses generic assets (this excludes the primary menus)
-{
-	generic_ui = self;
-	generic_hud = self || hud_generic;
-}
-
 FConsoleBuffer *conbuffer;
 
 static void C_TabComplete (bool goForward);
@@ -599,13 +584,13 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 EColorRange C_GetDefaultFontColor()
 {
 	// Ideally this should analyze the SmallFont and pick a matching color.
-	if (!generic_hud) return CR_UNTRANSLATED;
+	if (!generic_ui) return CR_UNTRANSLATED;
 	return gameinfo.gametype == GAME_Doom ? CR_RED : gameinfo.gametype == GAME_Chex ? CR_GREEN : gameinfo.gametype == GAME_Strife ? CR_GOLD : CR_GRAY;
 }
 
 FFont * C_GetDefaultHUDFont()
 {
-	return generic_hud? NewSmallFont : SmallFont;
+	return generic_ui? NewSmallFont : SmallFont;
 }
 
 void C_InitConback()
@@ -800,9 +785,9 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		con_notifylines == 0)
 		return;
 
-	width = DisplayWidth / active_con_scaletext(generic_hud);
+	width = DisplayWidth / active_con_scaletext(generic_ui);
 
-	FFont *font = hud_generic ? NewSmallFont : SmallFont;
+	FFont *font = generic_ui ? NewSmallFont : SmallFont;
 	if (font == nullptr) return;	// Without an initialized font we cannot handle the message (this is for those which come here before the font system is ready.)
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
@@ -1086,7 +1071,7 @@ void FNotifyBuffer::Draw()
 	line = Top;
 	canskip = true;
 
-	FFont *font = hud_generic ? NewSmallFont : SmallFont;
+	FFont *font = generic_ui ? NewSmallFont : SmallFont;
 	lineadv = font->GetHeight ();
 
 	for (unsigned i = 0; i < Text.Size(); ++ i)
@@ -1109,7 +1094,7 @@ void FNotifyBuffer::Draw()
 			else
 				color = PrintColors[notify.PrintLevel];
 
-			int scale = active_con_scaletext(generic_hud);
+			int scale = active_con_scaletext(generic_ui);
 			if (!center)
 				screen->DrawText (font, color, 0, line, notify.Text,
 					DTA_VirtualWidth, screen->GetWidth() / scale,

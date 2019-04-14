@@ -545,6 +545,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->srcwidth = 1.;
 	parms->srcheight = 1.;
 	parms->burn = false;
+	parms->monospace = EMonospacing::Off;
+	parms->spacing = 0;
 
 	// Parse the tag list for attributes. (For floating point attributes,
 	// consider that the C ABI dictates that all floats be promoted to
@@ -896,7 +898,15 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 		case DTA_CellY:
 			parms->celly = ListGetInt(tags);
 			break;
-		
+
+		case DTA_Monospace:
+			parms->monospace = ListGetInt(tags);
+			break;
+
+		case DTA_Spacing:
+			parms->spacing = ListGetInt(tags);
+			break;
+
 		case DTA_Burn:
 			parms->burn = true;
 			break;

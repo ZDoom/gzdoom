@@ -133,8 +133,9 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ClassChanged)
 	PARAM_POINTER(cls, FPlayerClass);
 	if (DMenu::InMenu)
 	{
-		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel - 1);
-		cvar_set("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : GetPrintableDisplayName(cls->Type).GetChars());
+		const char *pclass = sel == -1 ? "Random" : GetPrintableDisplayName(cls->Type).GetChars();
+		players[consoleplayer].userinfo.PlayerClassChanged(pclass);
+		cvar_set("playerclass", pclass);
 	}
 	return 0;
 }

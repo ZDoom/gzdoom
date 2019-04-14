@@ -410,6 +410,12 @@ class OptionMenu : Menu
 	//
 	//=============================================================================
 
+	virtual int GetIndent()
+	{
+		int indent = max(0, (mDesc.mIndent + 40) - CleanWidth_1 / 2);
+		return screen.GetWidth() / 2 + indent * CleanXfac_1;
+	}
+
 	override void Drawer ()
 	{
 		int y = mDesc.mPosition;
@@ -433,8 +439,7 @@ class OptionMenu : Menu
 		int fontheight = OptionMenuSettings.mLinespacing * CleanYfac_1;
 		y *= CleanYfac_1;
 
-		int indent = max(0, (mDesc.mIndent + 40) - CleanWidth_1 / 2);
-		indent = screen.GetWidth() / 2 + indent * CleanXfac_1;
+		int indent = GetIndent();
 
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
 		int lastrow = screen.GetHeight() - OptionHeight() * CleanYfac_1;

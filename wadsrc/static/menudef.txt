@@ -369,7 +369,7 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_MOUSE",			"MouseOptions"
 	Submenu "$OPTMNU_JOYSTICK",			"JoystickOptions"
 	StaticText " "
-	Submenu "$OPTMNU_PLAYER",			"PlayerMenu"
+	Submenu "$OPTMNU_PLAYER",			"NewPlayerMenu"
 	Submenu "$OPTMNU_GAMEPLAY",			"GameplayOptions"
 	Submenu "$OPTMNU_COMPATIBILITY",	"CompatibilityOptions"
 	Submenu "$OPTMNU_AUTOMAP",			"AutomapOptions"
@@ -401,6 +401,58 @@ OptionValue "Gender"
 	3, "$OPTVAL_OTHER"
 }
 
+OptionValue "PlayerTeam"
+{
+	// Filled in programmatically
+}
+
+OptionValue "PlayerColors"
+{
+	// Filled in programmatically
+}
+
+OptionValue "PlayerClass"
+{
+	// Filled in programmatically
+}
+
+OptionValue "PlayerSkin"
+{
+	// Filled in programmatically
+}
+
+/*
+	IfGame(Doom, Heretic, Strife, Chex)
+	{
+		MouseWindow 0, 220
+		PlayerDisplay 220, 48, "20 00 00", "80 00 40", 1, "PlayerDisplay"
+	}
+	IfGame(Hexen)
+	{
+		MouseWindow 0, 220
+		PlayerDisplay 220, 48, "00 07 00", "40 53 40", 1, "PlayerDisplay"
+	}
+*/
+
+OptionMenu "NewPlayerMenu"
+{
+	Title "$MNU_PLAYERSETUP"
+	PlayerNameField "$PLYRMNU_NAME"
+	PlayerTeamItem "$PLYRMNU_TEAM", "PlayerTeam"
+	PlayerColorItem "$PLYRMNU_PLAYERCOLOR", "PlayerColors"
+	PlayerColorSlider "$PLYRMNU_RED", 0
+	PlayerColorSlider "$PLYRMNU_GREEN", 1
+	PlayerColorSlider "$PLYRMNU_BLUE", 2
+	PlayerClassItem "$PLYRMNU_PLAYERCLASS", "PlayerClass"
+	PlayerSkinItem "$PLYRMNU_PLAYERSKIN", "PlayerSkin"
+	PlayerGenderItem "$PLYRMNU_PLAYERGENDER", "Gender"
+	AutoaimSlider "$PLYRMNU_AUTOAIM"
+	PlayerSwitchOnPickupItem "$PLYRMNU_SWITCHONPICKUP", "OffOn"
+	Option "$PLYRMNU_ALWAYSRUN", cl_run, "OnOff"
+	Class "NewPlayerMenu"
+}
+
+// The old player menu is kept for mods that redefine it.
 ListMenu "PlayerMenu"
 {
 	StaticTextCentered 160, 6, "$MNU_PLAYERSETUP"

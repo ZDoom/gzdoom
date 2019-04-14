@@ -231,7 +231,7 @@ class PlayerPawn : Actor
 
 	virtual void OnRespawn()
 	{
-		if (sv_respawnprotect && (multiplayer || alwaysapplydmflags))
+		if (sv_respawnprotect && (deathmatch || alwaysapplydmflags))
 		{
 			let invul = Powerup(Spawn("PowerInvulnerable"));
 			invul.EffectTics = 3 * TICRATE;
@@ -718,7 +718,7 @@ class PlayerPawn : Actor
 		}		
 
 		if ((player.cmd.buttons & BT_USE ||
-			((multiplayer || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
+			((deathmatch || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
 		{
 			if (Level.maptime >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
 			{

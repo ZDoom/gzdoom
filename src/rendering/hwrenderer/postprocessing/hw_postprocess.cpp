@@ -950,7 +950,7 @@ void PPCustomShaderInstance::SetTextures(PPRenderState *renderstate)
 				pptex = std::make_unique<PPTexture>(buffer.mWidth, buffer.mHeight, PixelFormat::Rgba8, data);
 			}
 
-			renderstate->SetInputTexture(textureIndex, pptex.get(), PPFilterMode::Linear);
+			renderstate->SetInputTexture(textureIndex, pptex.get(), PPFilterMode::Linear, PPWrapMode::Repeat);
 			textureIndex++;
 		}
 	}

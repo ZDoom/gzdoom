@@ -331,8 +331,14 @@ struct TResolverInOutAdaptor
                                                       ent.symbol->getType(),
                                                       ent.live);
         } else {
-            TString errorMsg = "Invalid shader In/Out variable semantic: ";
-            errorMsg += ent.symbol->getType().getQualifier().semanticName;
+            TString errorMsg;
+            if (ent.symbol->getType().getQualifier().semanticName != nullptr) {
+                errorMsg = "Invalid shader In/Out variable semantic: ";
+                errorMsg += ent.symbol->getType().getQualifier().semanticName;
+            } else {
+                errorMsg = "Invalid shader In/Out variable: ";
+                errorMsg += ent.symbol->getName();
+            }
             infoSink.info.message(EPrefixInternalError, errorMsg.c_str());
             error = true;
         }
@@ -353,7 +359,7 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 {
     TDefaultIoResolverBase(const TIntermediate &intermediate) :
         intermediate(intermediate),
-        nextUniformLocation(0),
+        nextUniformLocation(intermediate.getUniformLocationBase()),
         nextInputLocation(0),
         nextOutputLocation(0)
     { }
@@ -428,7 +434,7 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
 
         return 0;
     }
-    int resolveUniformLocation(EShLanguage /*stage*/, const char* /*name*/, const glslang::TType& type, bool /*is_live*/) override
+    int resolveUniformLocation(EShLanguage /*stage*/, const char* name, const glslang::TType& type, bool /*is_live*/) override
     {
         // kick out of not doing this
         if (!doAutoLocationMapping())
@@ -449,7 +455,11 @@ struct TDefaultIoResolverBase : public glslang::TIoMapResolver
                 return -1;
         }
 
-        int location = nextUniformLocation;
+        int location = intermediate.getUniformLocationOverride(name);
+        if (location != -1)
+            return location;
+
+        location = nextUniformLocation;
 
         nextUniformLocation += TIntermediate::computeTypeUniformLocationSize(type);
 

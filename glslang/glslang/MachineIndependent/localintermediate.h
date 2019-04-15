@@ -2,6 +2,8 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2016 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2015-2018 Google, Inc.
+//
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -41,6 +43,8 @@
 #include "../Public/ShaderLang.h"
 #include "Versions.h"
 
+#include <string>
+#include <vector>
 #include <algorithm>
 #include <set>
 #include <array>
@@ -145,11 +149,20 @@ struct TOffsetRange {
 
 // Things that need to be tracked per xfb buffer.
 struct TXfbBuffer {
-    TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), containsDouble(false) { }
+#ifdef AMD_EXTENSIONS
+    TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), contains64BitType(false),
+                   contains32BitType(false), contains16BitType(false) { }
+#else
+    TXfbBuffer() : stride(TQualifier::layoutXfbStrideEnd), implicitStride(0), contains64BitType(false) { }
+#endif
     std::vector<TRange> ranges;  // byte offsets that have already been assigned
     unsigned int stride;
     unsigned int implicitStride;
-    bool containsDouble;
+    bool contains64BitType;
+#ifdef AMD_EXTENSIONS
+    bool contains32BitType;
+    bool contains16BitType;
+#endif
 };
 
 // Track a set of strings describing how the module was processed.
@@ -204,6 +217,17 @@ class TSymbolTable;
 class TSymbol;
 class TVariable;
 
+#ifdef NV_EXTENSIONS
+//
+// Texture and Sampler transformation mode.
+//
+enum ComputeDerivativeMode {
+    LayoutDerivativeNone,         // default layout as SPV_NV_compute_shader_derivatives not enabled
+    LayoutDerivativeGroupQuads,   // derivative_group_quadsNV
+    LayoutDerivativeGroupLinear,  // derivative_group_linearNV
+};
+#endif
+
 //
 // Set of helper functions to help parse and build the tree.
 //
@@ -223,6 +247,10 @@ public:
 #ifdef NV_EXTENSIONS
         layoutOverrideCoverage(false),
         geoPassthroughEXT(false),
+        numShaderRecordNVBlocks(0),
+        computeDerivativeMode(LayoutDerivativeNone),
+        primitives(TQualifier::layoutNotSet),
+        numTaskNVBlocks(0),
 #endif
         autoMapBindings(false),
         autoMapLocations(false),
@@ -231,10 +259,13 @@ public:
         useUnknownFormat(false),
         hlslOffsets(false),
         useStorageBuffer(false),
+        useVulkanMemoryModel(false),
         hlslIoMapping(false),
         textureSamplerTransformMode(EShTexSampTransKeep),
         needToLegalize(false),
-        binaryDoubleOutput(false)
+        binaryDoubleOutput(false),
+        usePhysicalStorageBuffer(false),
+        uniformLocationBase(0)
     {
         localSize[0] = 1;
         localSize[1] = 1;
@@ -349,7 +380,7 @@ public:
         if (hlslOffsets)
             processes.addProcess("hlsl-offsets");
     }
-    bool usingHlslOFfsets() const { return hlslOffsets; }
+    bool usingHlslOffsets() const { return hlslOffsets; }
     void setUseStorageBuffer()
     {
         useStorageBuffer = true;
@@ -363,6 +394,17 @@ public:
             processes.addProcess("hlsl-iomap");
     }
     bool usingHlslIoMapping() { return hlslIoMapping; }
+    void setUseVulkanMemoryModel()
+    {
+        useVulkanMemoryModel = true;
+        processes.addProcess("use-vulkan-memory-model");
+    }
+    bool usingVulkanMemoryModel() const { return useVulkanMemoryModel; }
+    void setUsePhysicalStorageBuffer()
+    {
+        usePhysicalStorageBuffer = true;
+    }
+    bool usingPhysicalStorageBuffer() const { return usePhysicalStorageBuffer; }
 
     template<class T> T addCounterBufferName(const T& name) const { return name + implicitCounterName; }
     bool hasCounterBufferName(const TString& name) const {
@@ -387,11 +429,40 @@ public:
         if (spvVersion.openGl > 0)
             processes.addProcess("client opengl100");
 
+        // target SPV
+        switch (spvVersion.spv) {
+        case 0:
+            break;
+        case EShTargetSpv_1_0:
+            break;
+        case EShTargetSpv_1_1:
+            processes.addProcess("target-env spirv1.1");
+            break;
+        case EShTargetSpv_1_2:
+            processes.addProcess("target-env spirv1.2");
+            break;
+        case EShTargetSpv_1_3:
+            processes.addProcess("target-env spirv1.3");
+            break;
+        default:
+            processes.addProcess("target-env spirvUnknown");
+            break;
+        }
+
         // target-environment processes
-        if (spvVersion.vulkan > 0)
+        switch (spvVersion.vulkan) {
+        case 0:
+            break;
+        case EShTargetVulkan_1_0:
             processes.addProcess("target-env vulkan1.0");
-        else if (spvVersion.vulkan > 0)
+            break;
+        case EShTargetVulkan_1_1:
+            processes.addProcess("target-env vulkan1.1");
+            break;
+        default:
             processes.addProcess("target-env vulkanUnknown");
+            break;
+        }
         if (spvVersion.openGl > 0)
             processes.addProcess("target-env opengl");
     }
@@ -406,6 +477,11 @@ public:
     int getNumEntryPoints() const { return numEntryPoints; }
     int getNumErrors() const { return numErrors; }
     void addPushConstantCount() { ++numPushConstants; }
+#ifdef NV_EXTENSIONS
+    void addShaderRecordNVCount() { ++numShaderRecordNVBlocks; }
+    void addTaskNVCount() { ++numTaskNVBlocks; }
+#endif
+
     bool isRecursive() const { return recursive; }
 
     TIntermSymbol* addSymbol(const TVariable&);
@@ -602,9 +678,15 @@ public:
     }
     unsigned getXfbStride(int buffer) const { return xfbBuffers[buffer].stride; }
     int addXfbBufferOffset(const TType&);
-    unsigned int computeTypeXfbSize(const TType&, bool& containsDouble) const;
+#ifdef AMD_EXTENSIONS
+    unsigned int computeTypeXfbSize(const TType&, bool& contains64BitType, bool& contains32BitType, bool& contains16BitType) const;
+#else
+    unsigned int computeTypeXfbSize(const TType&, bool& contains64BitType) const;
+#endif
     static int getBaseAlignmentScalar(const TType&, int& size);
-    static int getBaseAlignment(const TType&, int& size, int& stride, bool std140, bool rowMajor);
+    static int getBaseAlignment(const TType&, int& size, int& stride, TLayoutPacking layoutPacking, bool rowMajor);
+    static int getScalarAlignment(const TType&, int& size, int& stride, bool rowMajor);
+    static int getMemberAlignment(const TType&, int& size, int& stride, TLayoutPacking layoutPacking, bool rowMajor);
     static bool improperStraddle(const TType& type, int size, int offset);
     bool promote(TIntermOperator*);
 
@@ -613,6 +695,16 @@ public:
     bool getLayoutOverrideCoverage() const { return layoutOverrideCoverage; }
     void setGeoPassthroughEXT() { geoPassthroughEXT = true; }
     bool getGeoPassthroughEXT() const { return geoPassthroughEXT; }
+    void setLayoutDerivativeMode(ComputeDerivativeMode mode) { computeDerivativeMode = mode; }
+    ComputeDerivativeMode getLayoutDerivativeModeNone() const { return computeDerivativeMode; }
+    bool setPrimitives(int m)
+    {
+        if (primitives != TQualifier::layoutNotSet)
+            return primitives == m;
+        primitives = m;
+        return true;
+    }
+    int getPrimitives() const { return primitives; }
 #endif
 
     const char* addSemanticName(const TString& name)
@@ -622,15 +714,37 @@ public:
 
     void setSourceFile(const char* file) { if (file != nullptr) sourceFile = file; }
     const std::string& getSourceFile() const { return sourceFile; }
-    void addSourceText(const char* text) { sourceText = sourceText + text; }
+    void addSourceText(const char* text, size_t len) { sourceText.append(text, len); }
     const std::string& getSourceText() const { return sourceText; }
-    void addProcesses(const std::vector<std::string>& p) {
+    const std::map<std::string, std::string>& getIncludeText() const { return includeText; }
+    void addIncludeText(const char* name, const char* text, size_t len) { includeText[name].assign(text,len); }
+    void addProcesses(const std::vector<std::string>& p)
+    {
         for (int i = 0; i < (int)p.size(); ++i)
             processes.addProcess(p[i]);
     }
     void addProcess(const std::string& process) { processes.addProcess(process); }
     void addProcessArgument(const std::string& arg) { processes.addArgument(arg); }
     const std::vector<std::string>& getProcesses() const { return processes.getProcesses(); }
+
+    void addUniformLocationOverride(const char* nameStr, int location)
+    {
+        std::string name = nameStr;
+        uniformLocationOverrides[name] = location;
+    }
+
+    int getUniformLocationOverride(const char* nameStr) const
+    {
+        std::string name = nameStr;
+        auto pos = uniformLocationOverrides.find(name);
+        if (pos == uniformLocationOverrides.end())
+            return -1;
+        else
+            return pos->second;
+    }
+
+    void setUniformLocationBase(int base) { uniformLocationBase = base; }
+    int getUniformLocationBase() const { return uniformLocationBase; }
 
     void setNeedsLegalization() { needToLegalize = true; }
     bool needsLegalization() const { return needToLegalize; }
@@ -645,6 +759,11 @@ protected:
     TIntermSymbol* addSymbol(int Id, const TString&, const TType&, const TConstUnionArray&, TIntermTyped* subtree, const TSourceLoc&);
     void error(TInfoSink& infoSink, const char*);
     void warn(TInfoSink& infoSink, const char*);
+    void mergeCallGraphs(TInfoSink&, TIntermediate&);
+    void mergeModes(TInfoSink&, TIntermediate&);
+    void mergeTrees(TInfoSink&, TIntermediate&);
+    void seedIdMap(TMap<TString, int>& idMap, int& maxId);
+    void remapIds(const TMap<TString, int>& idMap, int idShift, TIntermediate&);
     void mergeBodies(TInfoSink&, TIntermSequence& globals, const TIntermSequence& unitGlobals);
     void mergeLinkerObjects(TInfoSink&, TIntermSequence& linkerObjects, const TIntermSequence& unitLinkerObjects);
     void mergeImplicitArraySizes(TType&, const TType&);
@@ -652,7 +771,7 @@ protected:
     void checkCallGraphCycles(TInfoSink&);
     void checkCallGraphBodies(TInfoSink&, bool keepUncalled);
     void inOutLocationCheck(TInfoSink&);
-    TIntermSequence& findLinkerObjects() const;
+    TIntermAggregate* findLinkerObjects() const;
     bool userOutputUsed() const;
     bool isSpecializationOperation(const TIntermOperator&) const;
     bool isNonuniformPropagating(TOperator) const;
@@ -665,7 +784,7 @@ protected:
     bool specConstantPropagates(const TIntermTyped&, const TIntermTyped&);
     void performTextureUpgradeAndSamplerRemovalTransformation(TIntermNode* root);
     bool isConversionAllowed(TOperator op, TIntermTyped* node) const;
-    TIntermUnary* createConversion(TBasicType convertTo, TIntermTyped* node) const;
+    TIntermTyped* createConversion(TBasicType convertTo, TIntermTyped* node) const;
     std::tuple<TBasicType, TBasicType> getConversionDestinatonType(TBasicType type0, TBasicType type1, TOperator op) const;
     bool extensionRequested(const char *extension) const {return requestedExtensions.find(extension) != requestedExtensions.end();}
     static const char* getResourceName(TResourceType);
@@ -674,6 +793,8 @@ protected:
     EShSource source;            // source language, known a bit later
     std::string entryPointName;
     std::string entryPointMangledName;
+    typedef std::list<TCall> TGraph;
+    TGraph callGraph;
 
     EProfile profile;                           // source profile
     int version;                                // source version
@@ -703,18 +824,23 @@ protected:
     bool hlslFunctionality1;
     int blendEquations;        // an 'or'ing of masks of shifts of TBlendEquationShift
     bool xfbMode;
+    std::vector<TXfbBuffer> xfbBuffers;     // all the data we need to track per xfb buffer
     bool multiStream;
 
 #ifdef NV_EXTENSIONS
     bool layoutOverrideCoverage;
     bool geoPassthroughEXT;
+    int numShaderRecordNVBlocks;
+    ComputeDerivativeMode computeDerivativeMode;
+    int primitives;
+    int numTaskNVBlocks;
 #endif
 
     // Base shift values
     std::array<unsigned int, EResCount> shiftBinding;
 
     // Per-descriptor-set shift values
-    std::array<std::map<int, int>, EResCount>  shiftBindingForSet;
+    std::array<std::map<int, int>, EResCount> shiftBindingForSet;
 
     std::vector<std::string> resourceSetBinding;
     bool autoMapBindings;
@@ -724,15 +850,12 @@ protected:
     bool useUnknownFormat;
     bool hlslOffsets;
     bool useStorageBuffer;
+    bool useVulkanMemoryModel;
     bool hlslIoMapping;
-
-    typedef std::list<TCall> TGraph;
-    TGraph callGraph;
 
     std::set<TString> ioAccessed;           // set of names of statically read/written I/O that might need extra checking
     std::vector<TIoRange> usedIo[4];        // sets of used locations, one for each of in, out, uniform, and buffers
     std::vector<TOffsetRange> usedAtomics;  // sets of bindings used by atomic counters
-    std::vector<TXfbBuffer> xfbBuffers;     // all the data we need to track per xfb buffer
     std::unordered_set<int> usedConstantId; // specialization constant ids used
     std::set<TString> semanticNameSet;
 
@@ -742,11 +865,18 @@ protected:
     std::string sourceFile;
     std::string sourceText;
 
+    // Included text. First string is a name, second is the included text
+    std::map<std::string, std::string> includeText;
+
     // for OpModuleProcessed, or equivalent
     TProcesses processes;
 
     bool needToLegalize;
     bool binaryDoubleOutput;
+    bool usePhysicalStorageBuffer;
+
+    std::unordered_map<std::string, int> uniformLocationOverrides;
+    int uniformLocationBase;
 
 private:
     void operator=(TIntermediate&); // prevent assignments

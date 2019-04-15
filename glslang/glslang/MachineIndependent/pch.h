@@ -1,6 +1,7 @@
+#ifndef _PCH_H
+#define _PCH_H
 //
-// Copyright (C) 2014-2015 LunarG, Inc.
-//
+// Copyright (C) 2018 The Khronos Group Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,23 +32,18 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-
 //
-// Disassembler for SPIR-V.
-//
-
-#pragma once
-#ifndef disassembler_H
-#define disassembler_H
-
+#include <sstream>
+#include <cstdlib>
+#include <cstring>
+#include <cctype>
+#include <climits>
 #include <iostream>
-#include <vector>
+#include <sstream>
+#include <memory>
+#include "SymbolTable.h"
+#include "ParseHelper.h"
+#include "Scan.h"
+#include "ScanContext.h"
 
-namespace spv {
-
-    // disassemble with glslang custom disassembler
-    void Disassemble(std::ostream& out, const std::vector<unsigned int>&);
-
-};  // end namespace spv
-
-#endif // disassembler_H
+#endif /* _PCH_H */

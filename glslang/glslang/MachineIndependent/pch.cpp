@@ -1,6 +1,5 @@
 //
-// Copyright (C) 2014-2015 LunarG, Inc.
-//
+// Copyright (C) 2018 The Khronos Group Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -31,23 +30,6 @@
 // LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
 // ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-
-//
-// Disassembler for SPIR-V.
 //
 
-#pragma once
-#ifndef disassembler_H
-#define disassembler_H
-
-#include <iostream>
-#include <vector>
-
-namespace spv {
-
-    // disassemble with glslang custom disassembler
-    void Disassemble(std::ostream& out, const std::vector<unsigned int>&);
-
-};  // end namespace spv
-
-#endif // disassembler_H
+#include "pch.h"

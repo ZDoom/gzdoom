@@ -1,6 +1,7 @@
 //
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013-2016 LunarG, Inc.
+// Copyright (C) 2015-2018 Google, Inc.
 //
 // All rights reserved.
 //
@@ -52,9 +53,6 @@
 #define SH_IMPORT_EXPORT
 #else
 #define SH_IMPORT_EXPORT
-#ifndef __fastcall
-#define __fastcall
-#endif
 #define C_DECL
 #endif
 
@@ -70,7 +68,7 @@
 // This should always increase, as some paths to do not consume
 // a more major number.
 // It should increment by one when new functionality is added.
-#define GLSLANG_MINOR_VERSION 8
+#define GLSLANG_MINOR_VERSION 11
 
 //
 // Call before doing any other compiler/linker operations.
@@ -82,7 +80,7 @@ SH_IMPORT_EXPORT int ShInitialize();
 //
 // Call this at process shutdown to clean up memory.
 //
-SH_IMPORT_EXPORT int __fastcall ShFinalize();
+SH_IMPORT_EXPORT int ShFinalize();
 
 //
 // Types of languages the compiler can consume.
@@ -94,6 +92,14 @@ typedef enum {
     EShLangGeometry,
     EShLangFragment,
     EShLangCompute,
+    EShLangRayGenNV,
+    EShLangIntersectNV,
+    EShLangAnyHitNV,
+    EShLangClosestHitNV,
+    EShLangMissNV,
+    EShLangCallableNV,
+    EShLangTaskNV,
+    EShLangMeshNV,
     EShLangCount,
 } EShLanguage;         // would be better as stage, but this is ancient now
 
@@ -104,6 +110,14 @@ typedef enum {
     EShLangGeometryMask       = (1 << EShLangGeometry),
     EShLangFragmentMask       = (1 << EShLangFragment),
     EShLangComputeMask        = (1 << EShLangCompute),
+    EShLangRayGenNVMask       = (1 << EShLangRayGenNV),
+    EShLangIntersectNVMask    = (1 << EShLangIntersectNV),
+    EShLangAnyHitNVMask       = (1 << EShLangAnyHitNV),
+    EShLangClosestHitNVMask   = (1 << EShLangClosestHitNV),
+    EShLangMissNVMask         = (1 << EShLangMissNV),
+    EShLangCallableNVMask     = (1 << EShLangCallableNV),
+    EShLangTaskNVMask         = (1 << EShLangTaskNV),
+    EShLangMeshNVMask         = (1 << EShLangMeshNV),
 } EShLanguageMask;
 
 namespace glslang {
@@ -138,7 +152,10 @@ typedef EShTargetClientVersion EshTargetClientVersion;
 
 typedef enum {
     EShTargetSpv_1_0 = (1 << 16),
+    EShTargetSpv_1_1 = (1 << 16) | (1 << 8),
+    EShTargetSpv_1_2 = (1 << 16) | (2 << 8),
     EShTargetSpv_1_3 = (1 << 16) | (3 << 8),
+    EShTargetSpv_1_4 = (1 << 16) | (4 << 8),
 } EShTargetLanguageVersion;
 
 struct TInputLanguage {
@@ -216,6 +233,7 @@ enum EShMessages {
     EShMsgDebugInfo        = (1 << 10), // save debug information
     EShMsgHlslEnable16BitTypes  = (1 << 11), // enable use of 16-bit types in SPIR-V for HLSL
     EShMsgHlslLegalization  = (1 << 12), // enable HLSL Legalization messages
+    EShMsgHlslDX9Compatible = (1 << 13), // enable HLSL DX9 compatible mode (right now only for samplers)
 };
 
 //
@@ -397,6 +415,8 @@ public:
     void setResourceSetBinding(const std::vector<std::string>& base);
     void setAutoMapBindings(bool map);
     void setAutoMapLocations(bool map);
+    void addUniformLocationOverride(const char* name, int loc);
+    void setUniformLocationBase(int base);
     void setInvertY(bool invert);
     void setHlslIoMapping(bool hlslIoMap);
     void setFlattenUniformArrays(bool flatten);
@@ -532,6 +552,8 @@ public:
         return parse(builtInResources, defaultVersion, ENoProfile, false, forwardCompatible, messages, includer);
     }
 
+    // NOTE: Doing just preprocessing to obtain a correct preprocessed shader string
+    // is not an officially supported or fully working path.
     bool preprocess(const TBuiltInResource* builtInResources,
                     int defaultVersion, EProfile defaultProfile, bool forceDefaultVersionAndProfile,
                     bool forwardCompatible, EShMessages message, std::string* outputString,

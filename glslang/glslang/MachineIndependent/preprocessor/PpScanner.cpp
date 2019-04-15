@@ -2,6 +2,8 @@
 // Copyright (C) 2002-2005  3Dlabs Inc. Ltd.
 // Copyright (C) 2013 LunarG, Inc.
 // Copyright (C) 2017 ARM Limited.
+// Copyright (C) 2015-2018 Google, Inc.
+//
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -316,16 +318,32 @@ int TPpContext::lFloatConst(int len, int ch, TPpToken* ppToken)
             ppToken->dval = (double)wholeNumber * exponentValue;
     } else {
         // slow path
+        ppToken->dval = 0.0;
+
+        // remove suffix
+        TString numstr(ppToken->name);
+        if (numstr.back() == 'f' || numstr.back() == 'F')
+            numstr.pop_back();
+        if (numstr.back() == 'h' || numstr.back() == 'H')
+            numstr.pop_back();
+        if (numstr.back() == 'l' || numstr.back() == 'L')
+            numstr.pop_back();
+
+        // use platform library
         strtodStream.clear();
-        strtodStream.str(ppToken->name);
+        strtodStream.str(numstr.c_str());
         strtodStream >> ppToken->dval;
-        // Assume failure combined with a large exponent was overflow, in
-        // an attempt to set INF.  Otherwise, assume underflow, and set 0.0.
         if (strtodStream.fail()) {
+            // Assume failure combined with a large exponent was overflow, in
+            // an attempt to set INF.
             if (!negativeExponent && exponent + numWholeNumberDigits > 300)
                 ppToken->i64val = 0x7ff0000000000000; // +Infinity
-            else
+            // Assume failure combined with a small exponent was overflow.
+            if (negativeExponent && exponent + numWholeNumberDigits > 300)
                 ppToken->dval = 0.0;
+            // Unknown reason for failure. Theory is that either
+            //  - the 0.0 is still there, or
+            //  - something reasonable was written that is better than 0.0
         }
     }
 
@@ -430,16 +448,16 @@ int TPpContext::tStringInput::scan(TPpToken* ppToken)
 
     static const char* const Int64_Extensions[] = {
         E_GL_ARB_gpu_shader_int64,
-        E_GL_KHX_shader_explicit_arithmetic_types,
-        E_GL_KHX_shader_explicit_arithmetic_types_int64 };
+        E_GL_EXT_shader_explicit_arithmetic_types,
+        E_GL_EXT_shader_explicit_arithmetic_types_int64 };
     static const int Num_Int64_Extensions = sizeof(Int64_Extensions) / sizeof(Int64_Extensions[0]);
 
     static const char* const Int16_Extensions[] = {
 #ifdef AMD_EXTENSIONS
         E_GL_AMD_gpu_shader_int16,
 #endif
-        E_GL_KHX_shader_explicit_arithmetic_types,
-        E_GL_KHX_shader_explicit_arithmetic_types_int16 };
+        E_GL_EXT_shader_explicit_arithmetic_types,
+        E_GL_EXT_shader_explicit_arithmetic_types_int16 };
     static const int Num_Int16_Extensions = sizeof(Int16_Extensions) / sizeof(Int16_Extensions[0]);
 
     ppToken->ival = 0;

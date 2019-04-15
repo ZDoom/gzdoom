@@ -2059,6 +2059,8 @@ void FMapInfoParser::ParseEpisodeInfo ()
 			ParseAssign();
 			sc.MustGetString ();
 			pic = sc.String;
+			// If no name has been specified, synthesize a string table reference with the same name as the patch.
+			if (name.IsEmpty()) name.Format("$%s", sc.String);
 		}
 		else if (sc.Compare ("remove"))
 		{

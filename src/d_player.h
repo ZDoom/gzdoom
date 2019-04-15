@@ -264,8 +264,7 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	int SkinNumChanged(int skinnum);
 	int GenderChanged(const char *gendername);
 	int PlayerClassChanged(const char *classname);
-	int PlayerClassNumChanged(int classnum);
-	uint32_t ColorChanged(const char *colorname);
+		uint32_t ColorChanged(const char *colorname);
 	uint32_t ColorChanged(uint32_t colorval);
 	int ColorSetChanged(int setnum);
 };

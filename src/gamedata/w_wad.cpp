@@ -134,7 +134,7 @@ void FWadCollection::DeleteAll ()
 //
 //==========================================================================
 
-void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
+void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps)
 {
 	int numfiles;
 
@@ -154,7 +154,7 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 		I_FatalError ("W_InitMultipleFiles: no files found");
 	}
 	RenameNerve();
-	RenameSprites();
+	RenameSprites(deletelumps);
 	FixMacHexen();
 
 	// [RH] Set up hash table
@@ -755,7 +755,7 @@ void FWadCollection::InitHashChains (void)
 //
 //==========================================================================
 
-void FWadCollection::RenameSprites ()
+void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 {
 	bool renameAll;
 	bool MNTRZfound = false;
@@ -894,16 +894,14 @@ void FWadCollection::RenameSprites ()
 		}
 		else if (LumpInfo[i].lump->Namespace == ns_global)
 		{
-			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
-			if (!strcmp(LumpInfo[i].lump->Name, altbigfont)) 
-				strcpy(LumpInfo[i].lump->Name, "BIGFONT");
-
-			if (LumpInfo[i].wadnum == GetIwadNum() && gameinfo.flags & GI_IGNOREBIGFONTLUMP)
+			if (LumpInfo[i].wadnum == GetIwadNum() && deletelumps.Find(LumpInfo[i].lump->Name) < deletelumps.Size())
 			{
-				if (!strcmp(LumpInfo[i].lump->Name, "BIGFONT"))
-				{
-					LumpInfo[i].lump->Name[0] = 0;
-				}
+				LumpInfo[i].lump->Name[0] = 0;	// Lump must be deleted from directory.
+			}
+			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
+			else if (!strcmp(LumpInfo[i].lump->Name, altbigfont))
+			{
+				strcpy(LumpInfo[i].lump->Name, "BIGFONT");
 			}
 		}
 	}

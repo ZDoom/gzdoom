@@ -66,7 +66,6 @@ CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 CVAR (Int, m_showinputgrid, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -518,6 +517,10 @@ void M_SetMenu(FName menu, int param)
 		void ActivateEndGameMenu();
 		ActivateEndGameMenu();
 		return;
+
+	case NAME_Playermenu:
+		menu = NAME_NewPlayerMenu;	// redirect the old player menu to the new one.
+		break;
 	}
 
 	// End of special checks

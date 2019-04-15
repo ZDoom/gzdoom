@@ -489,12 +489,6 @@ int userinfo_t::PlayerClassChanged(const char *classname)
 	return classnum;
 }
 
-int userinfo_t::PlayerClassNumChanged(int classnum)
-{
-	*static_cast<FIntCVar *>((*this)[NAME_PlayerClass]) = classnum;
-	return classnum;
-}
-
 int userinfo_t::ColorSetChanged(int setnum)
 {
 	*static_cast<FIntCVar *>((*this)[NAME_ColorSet]) = setnum;

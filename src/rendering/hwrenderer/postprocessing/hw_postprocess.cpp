@@ -669,7 +669,6 @@ void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneW
 	float r2 = aoRadius * aoRadius;
 
 	float blurSharpness = 1.0f / blurAmount;
-	blurSharpness = 0.0f;
 
 	auto sceneScale = screen->SceneScale();
 	auto sceneOffset = screen->SceneOffset();

@@ -2743,7 +2743,7 @@ OptionMenu "vkoptions"
 	StaticText "$VK_WARNING"
 	StaticText "$VK_RESTART"
 	StaticText ""
-	Option "$VKMNU_ENABLE",				"vid_backend", "OffOn"
+	Option "$VKMNU_ENABLE",				"vid_enablevulkan", "OnOff"
 	TextField "$VKMNU_DEVICE",			vk_device
 	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
 }

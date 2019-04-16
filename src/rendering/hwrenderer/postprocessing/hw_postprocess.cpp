@@ -669,6 +669,7 @@ void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneW
 	float r2 = aoRadius * aoRadius;
 
 	float blurSharpness = 1.0f / blurAmount;
+	blurSharpness = 0.0f;
 
 	auto sceneScale = screen->SceneScale();
 	auto sceneOffset = screen->SceneOffset();
@@ -760,7 +761,7 @@ void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneW
 	renderstate->Shader = gl_multisample > 1 ? &CombineMS : &Combine;
 	renderstate->Uniforms.Set(combineUniforms);
 	renderstate->Viewport = screen->mSceneViewport;
-	if (gl_ssao_debug < 3)
+	if (gl_ssao_debug < 4)
 		renderstate->SetInputTexture(0, &Ambient0, PPFilterMode::Linear);
 	else
 		renderstate->SetInputSceneNormal(0, PPFilterMode::Linear);

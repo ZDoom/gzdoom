@@ -650,7 +650,7 @@ struct DepthBlurUniforms
 struct AmbientCombineUniforms
 {
 	int SampleCount;
-	int Padding0, Padding1, Padding2;
+	int DebugMode, Padding1, Padding2;
 	FVector2 Scale;
 	FVector2 Offset;
 
@@ -659,7 +659,7 @@ struct AmbientCombineUniforms
 		return
 		{
 			{ "SampleCount", UniformType::Int, offsetof(AmbientCombineUniforms, SampleCount) },
-			{ "Padding0", UniformType::Int, offsetof(AmbientCombineUniforms, Padding0) },
+			{ "DebugMode", UniformType::Int, offsetof(AmbientCombineUniforms, DebugMode) },
 			{ "Padding1", UniformType::Int, offsetof(AmbientCombineUniforms, Padding1) },
 			{ "Padding2", UniformType::Int, offsetof(AmbientCombineUniforms, Padding2) },
 			{ "Scale", UniformType::Vec2, offsetof(AmbientCombineUniforms, Scale) },

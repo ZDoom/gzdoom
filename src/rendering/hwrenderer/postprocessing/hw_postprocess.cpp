@@ -697,6 +697,10 @@ void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneW
 	ssaoUniforms.Scale = sceneScale;
 	ssaoUniforms.Offset = sceneOffset;
 
+	DepthBlurUniforms blurUniforms;
+	blurUniforms.BlurSharpness = blurSharpness;
+	blurUniforms.PowExponent = gl_ssao_exponent;
+
 	AmbientCombineUniforms combineUniforms;
 	combineUniforms.SampleCount = gl_multisample;
 	combineUniforms.Scale = screen->SceneScale();
@@ -735,11 +739,6 @@ void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneW
 	// Blur SSAO texture
 	if (gl_ssao_debug < 2)
 	{
-		DepthBlurUniforms blurUniforms;
-		blurUniforms.BlurSharpness = blurSharpness;
-		blurUniforms.PowExponent = gl_ssao_exponent;
-		blurUniforms.InvFullResolution = { 1.0f / AmbientWidth, 0.0f };
-
 		renderstate->Clear();
 		renderstate->Shader = &BlurHorizontal;
 		renderstate->Uniforms.Set(blurUniforms);
@@ -748,8 +747,6 @@ void PPAmbientOcclusion::Render(PPRenderState *renderstate, float m5, int sceneW
 		renderstate->SetOutputTexture(&Ambient1);
 		renderstate->SetNoBlend();
 		renderstate->Draw();
-
-		blurUniforms.InvFullResolution = { 0.0f, 1.0f / AmbientHeight };
 
 		renderstate->Clear();
 		renderstate->Shader = &BlurVertical;

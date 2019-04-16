@@ -634,7 +634,7 @@ struct DepthBlurUniforms
 {
 	float BlurSharpness;
 	float PowExponent;
-	FVector2 InvFullResolution;
+	float Padding0, Padding1;
 
 	static std::vector<UniformFieldDesc> Desc()
 	{
@@ -642,7 +642,8 @@ struct DepthBlurUniforms
 		{
 			{ "BlurSharpness", UniformType::Float, offsetof(DepthBlurUniforms, BlurSharpness) },
 			{ "PowExponent", UniformType::Float, offsetof(DepthBlurUniforms, PowExponent) },
-			{ "InvFullResolution", UniformType::Vec2, offsetof(DepthBlurUniforms, InvFullResolution) }
+			{ "Padding0", UniformType::Float, offsetof(DepthBlurUniforms, Padding0) },
+			{ "Padding1", UniformType::Float, offsetof(DepthBlurUniforms, Padding1) }
 		};
 	}
 };

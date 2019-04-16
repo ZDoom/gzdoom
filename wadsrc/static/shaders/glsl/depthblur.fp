@@ -6,42 +6,43 @@ layout(binding=0) uniform sampler2D AODepthTexture;
 
 #define KERNEL_RADIUS 3.0
 
-void main()
+void AddSample(vec2 blurSample, float r, float centerDepth, inout float totalAO, inout float totalW)
 {
 	const float blurSigma = KERNEL_RADIUS * 0.5;
 	const float blurFalloff = 1.0 / (2.0 * blurSigma * blurSigma);
 
-	vec2 centerSample = texture(AODepthTexture, TexCoord).xy;
+	float ao = blurSample.x;
+	float z = blurSample.y;
 
+	float deltaZ = (z - centerDepth) * BlurSharpness;
+	float w = exp2(-r * r * blurFalloff - deltaZ * deltaZ);
+
+	totalAO += w * ao;
+	totalW += w;
+}
+
+void main()
+{
+	vec2 centerSample = textureOffset(AODepthTexture, TexCoord, ivec2( 0, 0)).xy;
 	float centerDepth = centerSample.y;
 	float totalAO = centerSample.x;
 	float totalW = 1.0;
 
-	for (float r = 1.0; r <= KERNEL_RADIUS; r += 1.0)
-	{
-		vec4 blurSample = texture(AODepthTexture, TexCoord - InvFullResolution * r);
-		float ao = blurSample.x;
-		float z = blurSample.y;
-
-		float deltaZ = (z - centerDepth) * BlurSharpness;
-		float w = exp2(-r * r * blurFalloff - deltaZ * deltaZ);
-
-		totalAO += w * ao;
-		totalW += w;
-	}
-
-	for (float r = 1.0; r <= KERNEL_RADIUS; r += 1.0)
-	{
-		vec4 blurSample = texture(AODepthTexture, InvFullResolution * r + TexCoord);
-		float ao = blurSample.x;
-		float z = blurSample.y;
-
-		float deltaZ = (z - centerDepth) * BlurSharpness;
-		float w = exp2(-r * r * blurFalloff - deltaZ * deltaZ);
-
-		totalAO += w * ao;
-		totalW += w;
-	}
+#if defined(BLUR_HORIZONTAL)
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(-3, 0)).xy, 3.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(-2, 0)).xy, 2.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(-1, 0)).xy, 1.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2( 1, 0)).xy, 1.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2( 2, 0)).xy, 2.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2( 3, 0)).xy, 3.0, centerDepth, totalAO, totalW);
+#else
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(0, -3)).xy, 3.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(0, -2)).xy, 2.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(0, -1)).xy, 1.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(0,  1)).xy, 1.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(0,  2)).xy, 2.0, centerDepth, totalAO, totalW);
+	AddSample(textureOffset(AODepthTexture, TexCoord, ivec2(0,  3)).xy, 3.0, centerDepth, totalAO, totalW);
+#endif
 
 	float fragAO = totalAO / totalW;
 

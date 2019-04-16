@@ -2709,8 +2709,10 @@ OptionString "LanguageOptions"
 	"es", "Español (España)"
 	"esm", "Español (Latino)"
 	"fr", "Français"
+	"ko", "한국의 (Korean)"
 	"it", "Italiano"
-	"ru", "Русский"
+	"pt", "Portugues do Brasil"
+	"ru", "Русский (Russian)"
 }
 
 /*=======================================

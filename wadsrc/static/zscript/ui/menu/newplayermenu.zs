@@ -408,7 +408,7 @@ class NewPlayerMenu : OptionMenu
 	int mRotation;
 	PlayerMenuPlayerDisplay mPlayerDisplay;
 	
-	const PLAYERDISPLAY_X = 220;
+	const PLAYERDISPLAY_X = 170;
 	const PLAYERDISPLAY_Y = 60;
 	const PLAYERDISPLAY_W = 144;
 	const PLAYERDISPLAY_H = 160;
@@ -435,7 +435,7 @@ class NewPlayerMenu : OptionMenu
 
 	override int GetIndent()
 	{
-		return Super.GetIndent() - 45*CleanXfac_1;
+		return Super.GetIndent() - 75*CleanXfac_1;
 	}
 	
 

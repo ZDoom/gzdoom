@@ -60,7 +60,7 @@ public:
 	int NumBindingPoints;
 	size_t Stride;
 	std::vector<FVertexBufferAttribute> Attrs;
-	bool UseVertexData;
+	int UseVertexData;
 };
 
 class VkRenderPassManager

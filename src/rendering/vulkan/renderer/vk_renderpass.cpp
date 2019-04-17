@@ -71,11 +71,13 @@ int VkRenderPassManager::GetVertexFormat(int numBindingPoints, int numAttributes
 	VkVertexFormat fmt;
 	fmt.NumBindingPoints = numBindingPoints;
 	fmt.Stride = stride;
-	fmt.UseVertexData = false;
+	fmt.UseVertexData = 0;
 	for (int j = 0; j < numAttributes; j++)
 	{
 		if (attrs[j].location == VATTR_COLOR)
-			fmt.UseVertexData = true;
+			fmt.UseVertexData |= 1;
+		else if (attrs[j].location == VATTR_NORMAL)
+			fmt.UseVertexData |= 2;
 		fmt.Attrs.push_back(attrs[j]);
 	}
 	VertexFormats.push_back(fmt);
@@ -264,7 +266,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 		VK_FORMAT_R32G32_SFLOAT,
 		VK_FORMAT_R32_SFLOAT,
 		VK_FORMAT_R8G8B8A8_UNORM,
-		VK_FORMAT_A2R10G10B10_SNORM_PACK32
+		VK_FORMAT_A2B10G10R10_SNORM_PACK32
 	};
 
 	bool inputLocations[6] = { false, false, false, false, false, false };

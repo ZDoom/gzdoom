@@ -42,7 +42,7 @@ void main()
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
 	#ifdef HAS_UNIFORM_VERTEX_DATA
-		if (useVertexData == 0)
+		if ((useVertexData & 1) == 0)
 			vColor = uVertexColor;
 		else
 			vColor = aColor;
@@ -79,7 +79,7 @@ void main()
 		}
 
 		#ifdef HAS_UNIFORM_VERTEX_DATA
-			if (useVertexData == 0)
+			if ((useVertexData & 2) == 0)
 				vWorldNormal = NormalModelMatrix * vec4(uVertexNormal.xyz, 1.0);
 			else
 				vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);

@@ -108,7 +108,7 @@ public:
 	void setVertexShader(const FString &code);
 	void setFragmentShader(const FString &code);
 
-	std::unique_ptr<VulkanShader> create(VulkanDevice *device);
+	std::unique_ptr<VulkanShader> create(const char *shadername, VulkanDevice *device);
 
 private:
 	FString code;

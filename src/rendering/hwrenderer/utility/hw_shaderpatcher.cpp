@@ -69,6 +69,10 @@ static bool isShaderType(const char *name)
 FString RemoveLegacyUserUniforms(FString code)
 {
 	// User shaders must declare their uniforms via the GLDEFS file.
+
+	code.Substitute("uniform sampler2D tex;", "                      ");
+	code.Substitute("uniform float timer;", "                    ");
+
 	// The following code searches for legacy uniform declarations in the shader itself and replaces them with whitespace.
 
 	long len = (long)code.Len();

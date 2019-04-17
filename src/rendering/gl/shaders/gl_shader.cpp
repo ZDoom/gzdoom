@@ -300,7 +300,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform sampler2D texture6;\n";
 
 	// timer data
-	i_data += "uniform float timer;\n"; // To do: we must search user shaders for this declaration and remove it
+	i_data += "uniform float timer;\n";
 
 	// material types
 	i_data += "#if defined(SPECULAR)\n";

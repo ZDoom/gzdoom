@@ -128,7 +128,7 @@ void ShaderBuilder::setFragmentShader(const FString &c)
 	stage = EShLanguage::EShLangFragment;
 }
 
-std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
+std::unique_ptr<VulkanShader> ShaderBuilder::create(const char *shadername, VulkanDevice *device)
 {
 	EShLanguage stage = (EShLanguage)this->stage;
 	const char *sources[] = { code.GetChars() };
@@ -143,7 +143,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
 	bool compileSuccess = shader.parse(&resources, 110, false, EShMsgVulkanRules);
 	if (!compileSuccess)
 	{
-		I_FatalError("Shader compile failed: %s\n", shader.getInfoLog());
+		I_FatalError("Shader '%s' could not be compiled:\n%s\n", shadername, shader.getInfoLog());
 	}
 
 	glslang::TProgram program;
@@ -151,13 +151,13 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
 	bool linkSuccess = program.link(EShMsgDefault);
 	if (!linkSuccess)
 	{
-		I_FatalError("Shader link failed: %s\n", program.getInfoLog());
+		I_FatalError("Shader '%s' could not be linked:\n%s\n", shadername, program.getInfoLog());
 	}
 
 	glslang::TIntermediate *intermediate = program.getIntermediate(stage);
 	if (!intermediate)
 	{
-		I_FatalError("Internal shader compiler error");
+		I_FatalError("Internal shader compiler error while processing '%s'\n", shadername);
 	}
 
 	glslang::SpvOptions spvOptions;
@@ -177,7 +177,7 @@ std::unique_ptr<VulkanShader> ShaderBuilder::create(VulkanDevice *device)
 	VkShaderModule shaderModule;
 	VkResult result = vkCreateShaderModule(device->device, &createInfo, nullptr, &shaderModule);
 	if (result != VK_SUCCESS)
-		I_FatalError("Could not create vulkan shader module");
+		I_FatalError("Could not create vulkan shader module for '%s'", shadername);
 
 	return std::make_unique<VulkanShader>(device, shaderModule);
 }

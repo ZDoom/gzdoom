@@ -226,7 +226,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 
 	ShaderBuilder builder;
 	builder.setVertexShader(code);
-	return builder.create(device);
+	return builder.create(shadername.GetChars(), device);
 }
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
@@ -293,7 +293,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 
 	ShaderBuilder builder;
 	builder.setFragmentShader(code);
-	return builder.create(device);
+	return builder.create(shadername.GetChars(), device);
 }
 
 FString VkShaderManager::GetTargetGlslVersion()

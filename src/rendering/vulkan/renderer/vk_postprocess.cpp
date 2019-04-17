@@ -394,12 +394,12 @@ VkPPShader::VkPPShader(PPShader *shader)
 
 	ShaderBuilder vertbuilder;
 	vertbuilder.setVertexShader(LoadShaderCode(shader->VertexShader, "", shader->Version));
-	VertexShader = vertbuilder.create(fb->device);
+	VertexShader = vertbuilder.create(shader->VertexShader.GetChars(), fb->device);
 	VertexShader->SetDebugName(shader->VertexShader.GetChars());
 
 	ShaderBuilder fragbuilder;
 	fragbuilder.setFragmentShader(LoadShaderCode(shader->FragmentShader, prolog, shader->Version));
-	FragmentShader = fragbuilder.create(fb->device);
+	FragmentShader = fragbuilder.create(shader->FragmentShader.GetChars(), fb->device);
 	FragmentShader->SetDebugName(shader->FragmentShader.GetChars());
 }
 

@@ -1791,7 +1791,46 @@ void D_QuitNetGame (void)
 		fclose (debugfile);
 }
 
+// Forces playsim processing time to be consistent across frames.
+// This improves interpolation for frames in between tics.
+//
+// With this cvar off the mods with a high playsim processing time will appear
+// less smooth as the measured time used for interpolation will vary.
 
+CVAR(Bool, r_ticstability, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+static uint64_t stabilityticduration = 0;
+static uint64_t stabilitystarttime = 0;
+
+static void TicStabilityWait()
+{
+	using namespace std::chrono;
+	using namespace std::this_thread;
+
+	if (!r_ticstability)
+		return;
+
+	uint64_t start = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+	while (true)
+	{
+		uint64_t cur = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+		if (cur - start > stabilityticduration)
+			break;
+	}
+}
+
+static void TicStabilityBegin()
+{
+	using namespace std::chrono;
+	stabilitystarttime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+static void TicStabilityEnd()
+{
+	using namespace std::chrono;
+	uint64_t stabilityendtime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+	stabilityticduration = std::min(stabilityendtime - stabilitystarttime, (uint64_t)1'000'000);
+}
 
 //
 // TryRunTics
@@ -1861,6 +1900,8 @@ void TryRunTics (void)
 	// Uncapped framerate needs seprate checks
 	if (counts == 0 && !doWait)
 	{
+		TicStabilityWait();
+
 		// Check possible stall conditions
 		Net_CheckLastReceived(counts);
 		if (realtics >= 1)
@@ -1928,6 +1969,7 @@ void TryRunTics (void)
 		P_UnPredictPlayer();
 		while (counts--)
 		{
+			TicStabilityBegin();
 			if (gametic > lowtic)
 			{
 				I_Error ("gametic>lowtic");
@@ -1943,9 +1985,14 @@ void TryRunTics (void)
 			gametic++;
 
 			NetUpdate ();	// check for new console commands
+			TicStabilityEnd();
 		}
 		P_PredictPlayer(&players[consoleplayer]);
 		S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
+	}
+	else
+	{
+		TicStabilityWait();
 	}
 }
 

@@ -315,7 +315,11 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	builder.setDepthFunc(depthfunc2vk[key.DepthFunc]);
 	builder.setDepthClampEnable(key.DepthClamp);
 	builder.setDepthBias(key.DepthBias, 0.0f, 0.0f, 0.0f);
-	builder.setCull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_FRONT_AND_BACK, key.CullMode == Cull_CW ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE);
+
+	// Note: CCW and CW is intentionally swapped here because the vulkan and opengl coordinate systems differ.
+	// main.vp addresses this by patching up gl_Position.z, which has the side effect of flipping the sign of the front face calculations.
+	builder.setCull(key.CullMode == Cull_None ? VK_CULL_MODE_NONE : VK_CULL_MODE_BACK_BIT, key.CullMode == Cull_CW ? VK_FRONT_FACE_COUNTER_CLOCKWISE : VK_FRONT_FACE_CLOCKWISE);
+
 	builder.setColorWriteMask((VkColorComponentFlags)key.ColorMask);
 	builder.setStencil(VK_STENCIL_OP_KEEP, op2vk[key.StencilPassOp], VK_STENCIL_OP_KEEP, VK_COMPARE_OP_EQUAL, 0xffffffff, 0xffffffff, 0);
 	builder.setBlendMode(key.RenderStyle);

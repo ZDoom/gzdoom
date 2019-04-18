@@ -325,7 +325,10 @@ void VkRenderState::ApplyStreamData()
 	mStreamData.uVertexColor = mColor.vec;
 	mStreamData.uVertexNormal = mNormal.vec;
 
-	mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
+	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
+		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.);
+	else
+		mStreamData.timer = 0.0f;
 
 	if (mGlowEnabled)
 	{
@@ -506,9 +509,6 @@ void VkRenderState::ApplyMaterial()
 			auto passManager = fb->GetRenderPassManager();
 			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mRenderPassKey.NumTextureLayers), 1, base->GetDescriptorSet(mMaterial));
 		}
-
-		if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
-			mShaderTimer = mMaterial.mMaterial->tex->shaderspeed;
 
 		mMaterial.mChanged = false;
 	}

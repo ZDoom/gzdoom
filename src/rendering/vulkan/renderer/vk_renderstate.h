@@ -87,8 +87,6 @@ protected:
 	int mColorMask = 15;
 	int mCullMode = 0;
 
-	float mShaderTimer = 0.0f;
-
 	MatricesUBO mMatrices = {};
 	StreamData mStreamData = {};
 	PushConstants mPushConstants = {};

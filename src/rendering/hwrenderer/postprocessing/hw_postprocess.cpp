@@ -1023,7 +1023,7 @@ void PPCustomShaderInstance::AddUniformField(size_t &offset, const FString &name
 
 	if (fieldsize != alignment) // Workaround for buggy OpenGL drivers that does not do std140 layout correctly for vec3
 	{
-		name2 = std::make_unique<FString>(name + "__padding");
+		name2 = std::make_unique<FString>(name + "_F39350FF12DE_padding");
 		chars = name2->GetChars();
 		FieldNames.push_back(std::move(name2));
 		Fields.push_back({ chars, UniformType::Float, offset });

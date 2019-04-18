@@ -123,7 +123,7 @@ public:
 	void Init()
 	{
 		if (mBuffer == nullptr)
-			mBuffer = screen->CreateDataBuffer(bindingpoint, false);
+			mBuffer = screen->CreateDataBuffer(bindingpoint, false, false);
 	}
 
 	void Set(bool bind = true)

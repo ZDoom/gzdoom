@@ -339,7 +339,7 @@ IIndexBuffer *OpenGLFrameBuffer::CreateIndexBuffer()
 	return new GLIndexBuffer; 
 }
 
-IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
+IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize)
 {
 	return new GLDataBuffer(bindingpoint, ssbo);
 }

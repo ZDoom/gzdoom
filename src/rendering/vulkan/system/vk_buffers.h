@@ -57,7 +57,14 @@ public:
 class VKDataBuffer : public IDataBuffer, public VKBuffer
 {
 public:
-	VKDataBuffer(int bindingpoint, bool ssbo) : bindingpoint(bindingpoint) { mBufferType = ssbo ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT; }
+	VKDataBuffer(int bindingpoint, bool ssbo, bool needresize) : bindingpoint(bindingpoint)
+	{
+		mBufferType = ssbo ? VK_BUFFER_USAGE_STORAGE_BUFFER_BIT : VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+		if (needresize)
+		{
+			mBufferType |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		}
+	}
 
 	void BindRange(size_t start, size_t length) override;
 	void BindBase() override;

@@ -38,7 +38,7 @@ GLViewpointBuffer::GLViewpointBuffer()
 	mBufferSize = INITIAL_BUFFER_SIZE;
 	mBlockAlign = ((sizeof(HWViewpointUniforms) / screen->uniformblockalignment) + 1) * screen->uniformblockalignment;
 	mByteSize = mBufferSize * mBlockAlign;
-	mBuffer = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false);
+	mBuffer = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false, true);
 	mBuffer->SetData(mByteSize, nullptr, false);
 	Clear();
 	mLastMappedIndex = UINT_MAX;

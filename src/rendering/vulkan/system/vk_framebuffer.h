@@ -86,7 +86,7 @@ public:
 	FModelRenderer *CreateModelRenderer(int mli) override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;
-	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) override;
+	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) override;
 
 	FTexture *WipeStartScreen() override;
 	FTexture *WipeEndScreen() override;
@@ -97,13 +97,14 @@ public:
 
 	void Draw2D() override;
 
+	void SubmitCommands(bool finish);
+
 private:
 	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	void DrawScene(HWDrawInfo *di, int drawmode);
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
-	void SubmitCommands(bool finish);
 	void CopyScreenToBuffer(int w, int h, void *data);
 	void UpdateShadowMap();
 	void DeleteFrameObjects();

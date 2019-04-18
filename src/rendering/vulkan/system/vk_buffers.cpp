@@ -111,7 +111,30 @@ void VKBuffer::SetSubData(size_t offset, size_t size, const void *data)
 
 void VKBuffer::Resize(size_t newsize)
 {
-	I_FatalError("VKBuffer::Resize not implemented\n");
+	auto fb = GetVulkanFrameBuffer();
+
+	// Grab old buffer
+	size_t oldsize = buffersize;
+	std::unique_ptr<VulkanBuffer> oldBuffer = std::move(mBuffer);
+	oldBuffer->Unmap();
+	map = nullptr;
+
+	// Create new buffer
+	BufferBuilder builder;
+	builder.setUsage(mBufferType, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	builder.setSize(newsize);
+	mBuffer = builder.create(fb->device);
+	buffersize = newsize;
+
+	// Transfer data from old to new
+	fb->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
+	fb->SubmitCommands(false);
+
+	// Fetch pointer to new buffer
+	map = mBuffer->Map(0, newsize);
+
+	// Old buffer may be part of the dynamic set
+	fb->GetRenderPassManager()->UpdateDynamicSet();
 }
 
 void VKBuffer::Map()

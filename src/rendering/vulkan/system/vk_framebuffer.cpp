@@ -138,8 +138,8 @@ void VulkanFrameBuffer::InitializeState()
 	CreateFanToTrisIndexBuffer();
 
 	// To do: move this to HW renderer interface maybe?
-	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
-	StreamUBO = (VKDataBuffer*)CreateDataBuffer(-1, false);
+	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(-1, false, false);
+	StreamUBO = (VKDataBuffer*)CreateDataBuffer(-1, false, false);
 	MatricesUBO->SetData(UniformBufferAlignedSize<::MatricesUBO>() * 50000, nullptr, false);
 	StreamUBO->SetData(UniformBufferAlignedSize<::StreamUBO>() * 200, nullptr, false);
 
@@ -590,9 +590,9 @@ IIndexBuffer *VulkanFrameBuffer::CreateIndexBuffer()
 	return new VKIndexBuffer();
 }
 
-IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
+IDataBuffer *VulkanFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize)
 {
-	auto buffer = new VKDataBuffer(bindingpoint, ssbo);
+	auto buffer = new VKDataBuffer(bindingpoint, ssbo, needsresize);
 
 	auto fb = GetVulkanFrameBuffer();
 	switch (bindingpoint)

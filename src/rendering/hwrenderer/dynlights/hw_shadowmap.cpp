@@ -189,7 +189,7 @@ void IShadowMap::UploadLights()
 	CollectLights();
 
 	if (mLightList == nullptr)
-		mLightList = screen->CreateDataBuffer(LIGHTLIST_BINDINGPOINT, true);
+		mLightList = screen->CreateDataBuffer(LIGHTLIST_BINDINGPOINT, true, false);
 
 	mLightList->SetData(sizeof(float) * mLights.Size(), &mLights[0]);
 }
@@ -200,11 +200,11 @@ void IShadowMap::UploadAABBTree()
 	if (!ValidateAABBTree(&level))
 	{
 		if (!mNodesBuffer)
-			mNodesBuffer = screen->CreateDataBuffer(LIGHTNODES_BINDINGPOINT, true);
+			mNodesBuffer = screen->CreateDataBuffer(LIGHTNODES_BINDINGPOINT, true, false);
 		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes());
 
 		if (!mLinesBuffer)
-			mLinesBuffer = screen->CreateDataBuffer(LIGHTLINES_BINDINGPOINT, true);
+			mLinesBuffer = screen->CreateDataBuffer(LIGHTLINES_BINDINGPOINT, true, false);
 		mLinesBuffer->SetData(mAABBTree->LinesSize(), mAABBTree->Lines());
 	}
 	else if (mAABBTree->Update())

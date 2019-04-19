@@ -132,7 +132,6 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 	{
 		if (classnum < 0 || classnum >= PlayerClasses.Size ())
 		{
-			Console.Printf("Setting random class for %d, size = %d", classnum, PlayerClasses.Size ());
 			if (mClassNum != -1)
 			{
 				mClassNum = -1;
@@ -142,7 +141,6 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 		}
 		else if (mPlayerClass != PlayerClasses[classnum] || force)
 		{
-			Console.Printf("Setting class for %d", classnum);
 			UpdatePlayer(classnum);
 			mClassNum = classnum;
 		}

@@ -160,6 +160,14 @@ void VkRenderState::EnableLineSmooth(bool on)
 
 void VkRenderState::Apply(int dt)
 {
+	mApplyCount++;
+	if (mApplyCount == 1000)
+	{
+		EndRenderPass();
+		GetVulkanFrameBuffer()->FlushCommands();
+		mApplyCount = 0;
+	}
+
 	ApplyRenderPass(dt);
 	ApplyScissor();
 	ApplyViewport();
@@ -548,6 +556,7 @@ void VkRenderState::Bind(int bindingpoint, uint32_t offset)
 void VkRenderState::BeginFrame()
 {
 	mMaterial.Reset();
+	mApplyCount = 0;
 }
 
 void VkRenderState::EndRenderPass()

@@ -113,6 +113,8 @@ protected:
 	bool mLastModelMatrixEnabled = true;
 	bool mLastTextureMatrixEnabled = true;
 
+	int mApplyCount = 0;
+
 	struct RenderTarget
 	{
 		VulkanImageView *View = nullptr;

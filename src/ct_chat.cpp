@@ -73,7 +73,6 @@ static void CT_BackSpace ();
 static void ShoveChatStr (const char *str, uint8_t who);
 static bool DoSubstitution (FString &out, const char *in);
 
-static int CharLen;
 static TArray<uint8_t> ChatQueue;
 
 CVAR (String, chatmacro1, "I'm ready to kick butt!", CVAR_ARCHIVE)
@@ -113,7 +112,6 @@ CVAR (Bool, chat_substitution, false, CVAR_ARCHIVE)
 void CT_Init ()
 {
 	ChatQueue.Clear();
-	CharLen = 0;
 	chatmodeon = 0;
 }
 
@@ -290,7 +288,7 @@ void CT_Drawer (void)
 
 static void CT_AddChar (int c)
 {
-	if (CharLen < QUEUESIZE-2)
+	if (ChatQueue.Size() < QUEUESIZE-2)
 	{
 		int size;
 		auto encode = MakeUTF8(c, &size);
@@ -300,7 +298,6 @@ static void CT_AddChar (int c)
 			{
 				ChatQueue.Push(encode[i]);
 			}
-			CharLen++;
 		}
 	}
 }
@@ -314,12 +311,11 @@ static void CT_AddChar (int c)
 
 static void CT_BackSpace ()
 {
-	if (CharLen)
+	if (ChatQueue.Size())
 	{
 		int endpos = ChatQueue.Size() - 1;
 		while (endpos > 0 && ChatQueue[endpos] >= 0x80 && ChatQueue[endpos] < 0xc0) endpos--;
 		ChatQueue.Clamp(endpos);
-		CharLen--;
 	}
 }
 

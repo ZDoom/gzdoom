@@ -34,6 +34,8 @@ public:
 	VkPostprocess *GetPostprocess() { return mPostprocess.get(); }
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
 
+	void FlushCommands();
+
 	unsigned int GetLightBufferBlockSize() const;
 
 	template<typename T>
@@ -57,6 +59,7 @@ public:
 		std::vector<std::unique_ptr<VulkanImageView>> ImageViews;
 		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
 		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
+		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
 	} FrameDeleteList;
 
 	std::unique_ptr<SWSceneDrawer> swdrawer;
@@ -97,7 +100,7 @@ public:
 
 	void Draw2D() override;
 
-	void SubmitCommands(bool finish);
+	void WaitForCommands(bool finish);
 
 private:
 	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
@@ -117,9 +120,14 @@ private:
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 	std::unique_ptr<VulkanCommandPool> mCommandPool;
 	std::unique_ptr<VulkanCommandBuffer> mTransferCommands;
-	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
-	std::unique_ptr<VulkanSemaphore> mTransferSemaphore;
 	std::unique_ptr<VkRenderState> mRenderState;
+
+	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
+
+	enum { submitQueueSize = 8};
+	std::unique_ptr<VulkanSemaphore> mSubmitSemaphore[submitQueueSize];
+	std::unique_ptr<VulkanFence> mSubmitFence[submitQueueSize];
+	int nextSubmitQueue = 0;
 
 	std::unique_ptr<VulkanSemaphore> mSwapChainImageAvailableSemaphore;
 	std::unique_ptr<VulkanSemaphore> mRenderFinishedSemaphore;

@@ -128,7 +128,7 @@ void VKBuffer::Resize(size_t newsize)
 
 	// Transfer data from old to new
 	fb->GetTransferCommands()->copyBuffer(oldBuffer.get(), mBuffer.get(), 0, 0, oldsize);
-	fb->SubmitCommands(false);
+	fb->WaitForCommands(false);
 
 	// Fetch pointer to new buffer
 	map = mBuffer->Map(0, newsize);

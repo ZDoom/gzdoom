@@ -125,10 +125,11 @@ private:
 
 	std::unique_ptr<VulkanCommandBuffer> mDrawCommands;
 
-	enum { submitQueueSize = 8};
-	std::unique_ptr<VulkanSemaphore> mSubmitSemaphore[submitQueueSize];
-	std::unique_ptr<VulkanFence> mSubmitFence[submitQueueSize];
-	int nextSubmitQueue = 0;
+	enum { maxConcurrentSubmitCount = 8};
+	std::unique_ptr<VulkanSemaphore> mSubmitSemaphore[maxConcurrentSubmitCount];
+	std::unique_ptr<VulkanFence> mSubmitFence[maxConcurrentSubmitCount];
+	VkFence mSubmitWaitFences[maxConcurrentSubmitCount];
+	int mNextSubmit = 0;
 
 	std::unique_ptr<VulkanSemaphore> mSwapChainImageAvailableSemaphore;
 	std::unique_ptr<VulkanSemaphore> mRenderFinishedSemaphore;

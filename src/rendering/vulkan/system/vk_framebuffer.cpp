@@ -87,6 +87,9 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 	for (auto &fence : mSubmitFence)
 		fence.reset(new VulkanFence(device));
 
+	for (int i = 0; i < maxConcurrentSubmitCount; i++)
+		mSubmitWaitFences[i] = mSubmitFence[i]->fence;
+
 	InitPalette();
 }
 
@@ -192,9 +195,9 @@ void VulkanFrameBuffer::DeleteFrameObjects()
 
 void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish)
 {
-	int currentIndex = nextSubmitQueue % submitQueueSize;
+	int currentIndex = mNextSubmit % maxConcurrentSubmitCount;
 
-	if (nextSubmitQueue >= submitQueueSize)
+	if (mNextSubmit >= maxConcurrentSubmitCount)
 	{
 		vkWaitForFences(device->device, 1, &mSubmitFence[currentIndex]->fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
 		vkResetFences(device->device, 1, &mSubmitFence[currentIndex]->fence);
@@ -205,8 +208,8 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 	for (size_t i = 0; i < count; i++)
 		submit.addCommandBuffer(commands[i]);
 
-	if (nextSubmitQueue > 0)
-		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mSubmitSemaphore[(nextSubmitQueue - 1) % submitQueueSize].get());
+	if (mNextSubmit > 0)
+		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mSubmitSemaphore[(mNextSubmit - 1) % maxConcurrentSubmitCount].get());
 
 	if (finish && presentImageIndex != 0xffffffff)
 	{
@@ -216,7 +219,7 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 
 	submit.addSignal(mSubmitSemaphore[currentIndex].get());
 	submit.execute(device, device->graphicsQueue, mSubmitFence[currentIndex].get());
-	nextSubmitQueue++;
+	mNextSubmit++;
 }
 
 void VulkanFrameBuffer::FlushCommands(bool finish)
@@ -268,16 +271,12 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 			swapChain->QueuePresent(presentImageIndex, mRenderFinishedSemaphore.get());
 	}
 
-	VkFence waitFences[submitQueueSize];
-	for (int i = 0; i < submitQueueSize; i++)
-		waitFences[i] = mSubmitFence[i]->fence;
-
-	int numWaitFences = MIN(nextSubmitQueue, (int)submitQueueSize);
-	vkWaitForFences(device->device, numWaitFences, waitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device->device, numWaitFences, waitFences);
+	int numWaitFences = MIN(mNextSubmit, (int)maxConcurrentSubmitCount);
+	vkWaitForFences(device->device, numWaitFences, mSubmitWaitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(device->device, numWaitFences, mSubmitWaitFences);
 
 	DeleteFrameObjects();
-	nextSubmitQueue = 0;
+	mNextSubmit = 0;
 
 	if (finish)
 	{

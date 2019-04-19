@@ -201,6 +201,7 @@ void HU_DrawScores (player_t *player)
 
 void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight)
 {
+	displayFont = NewSmallFont;
 	maxnamewidth = displayFont->StringWidth("Name");
 	maxscorewidth = 0;
 	maxiconheight = 0;

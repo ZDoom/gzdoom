@@ -211,7 +211,11 @@ class OptionMenuItemPlayerColorSlider : OptionMenuSliderBase
 		return indent;
 	}
 	
-	
+	override bool Selectable()
+	{
+		int mycolorset = players[consoleplayer].GetColorSet();
+		return (mycolorset == -1);
+	}
 }
 
 //=============================================================================
@@ -521,6 +525,7 @@ class NewPlayerMenu : OptionMenu
 		}
 		return Super.OnUIEvent(ev);
 	}
+
 
 	//=============================================================================
 	//

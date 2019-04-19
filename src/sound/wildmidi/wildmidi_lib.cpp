@@ -2105,7 +2105,7 @@ static void freeMDI(struct _mdi *mdi) {
 	free(mdi->tmp_info);
 	_WM_free_reverb(mdi->reverb);
 	free(mdi->mix_buffer);
-	free(mdi);
+	delete mdi;
 }
 
 static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)

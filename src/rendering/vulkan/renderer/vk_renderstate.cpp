@@ -17,6 +17,8 @@
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/data/shaderuniforms.h"
 
+CVAR(Int, vk_submit_size, 1000, 0);
+
 VkRenderState::VkRenderState()
 {
 	mIdentityMatrix.loadIdentity();
@@ -161,7 +163,7 @@ void VkRenderState::EnableLineSmooth(bool on)
 void VkRenderState::Apply(int dt)
 {
 	mApplyCount++;
-	if (mApplyCount == 1000)
+	if (mApplyCount >= vk_submit_size)
 	{
 		EndRenderPass();
 		GetVulkanFrameBuffer()->FlushCommands();

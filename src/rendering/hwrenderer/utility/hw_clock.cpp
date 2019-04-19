@@ -54,7 +54,7 @@ glcycle_t twoD, Flush3D;
 glcycle_t MTWait, WTTotal;
 int vertexcount, flatvertices, flatprimitives;
 
-int rendered_lines,rendered_flats,rendered_sprites,render_vertexsplit,render_texsplit,rendered_decals, rendered_portals;
+int rendered_lines,rendered_flats,rendered_sprites,render_vertexsplit,render_texsplit,rendered_decals, rendered_portals, rendered_commandbuffers;
 int iter_dlightf, iter_dlight, draw_dlight, draw_dlightf;
 
 void ResetProfilingData()
@@ -113,8 +113,8 @@ static void AppendRenderStats(FString &out)
 {
 	out.AppendFormat("Walls: %d (%d splits, %d t-splits, %d vertices)\n"
 		"Flats: %d (%d primitives, %d vertices)\n"
-		"Sprites: %d, Decals=%d, Portals: %d\n",
-		rendered_lines, render_vertexsplit, render_texsplit, vertexcount, rendered_flats, flatprimitives, flatvertices, rendered_sprites,rendered_decals, rendered_portals );
+		"Sprites: %d, Decals=%d, Portals: %d, Command buffers: %d\n",
+		rendered_lines, render_vertexsplit, render_texsplit, vertexcount, rendered_flats, flatprimitives, flatvertices, rendered_sprites,rendered_decals, rendered_portals, rendered_commandbuffers );
 }
 
 static void AppendLightStats(FString &out)

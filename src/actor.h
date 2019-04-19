@@ -1269,6 +1269,11 @@ public:
 		return fabs(Z() - checkz) < EQUAL_EPSILON;
 	}
 
+	double RenderRadius() const
+	{
+		return MAX(radius, renderradius);
+	}
+
 	DVector3 PosRelative(int grp) const;
 	DVector3 PosRelative(const AActor *other) const;
 	DVector3 PosRelative(sector_t *sec) const;

@@ -495,7 +495,7 @@ void AActor::LinkToWorld(FLinkContext *ctx, bool spawningmapthing, sector_t *sec
 		// at sector_t->touching_thinglist) are broken. When a node is
 		// added, new sector links are created.
 		touching_sectorlist = P_CreateSecNodeList(this, radius, ctx != nullptr? ctx->sector_list : nullptr, &sector_t::touching_thinglist);	// Attach to thing
-		if (renderradius >= 0) touching_rendersectors = P_CreateSecNodeList(this, MAX(radius, renderradius), ctx != nullptr ? ctx->render_list : nullptr, &sector_t::touching_renderthings);
+		if (renderradius >= 0) touching_rendersectors = P_CreateSecNodeList(this, RenderRadius(), ctx != nullptr ? ctx->render_list : nullptr, &sector_t::touching_renderthings);
 		else
 		{
 			touching_rendersectors = nullptr;

@@ -166,7 +166,7 @@ void VkRenderState::Apply(int dt)
 	if (mApplyCount >= vk_submit_size)
 	{
 		EndRenderPass();
-		GetVulkanFrameBuffer()->FlushCommands();
+		GetVulkanFrameBuffer()->FlushCommands(false);
 		mApplyCount = 0;
 	}
 

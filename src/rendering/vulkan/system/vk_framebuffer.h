@@ -3,9 +3,6 @@
 #include "gl_sysfb.h"
 #include "vk_device.h"
 #include "vk_objects.h"
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 
 struct FRenderViewpoint;
 class VkSamplerManager;
@@ -37,7 +34,7 @@ public:
 	VkPostprocess *GetPostprocess() { return mPostprocess.get(); }
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
 
-	void FlushCommands();
+	void FlushCommands(bool finish);
 
 	unsigned int GetLightBufferBlockSize() const;
 
@@ -114,10 +111,7 @@ private:
 	void CopyScreenToBuffer(int w, int h, void *data);
 	void UpdateShadowMap();
 	void DeleteFrameObjects();
-	void StartSubmitThread();
-	void StopSubmitThread();
-	void SubmitThreadMain();
-	void FlushCommands(VulkanCommandBuffer **commands, size_t count);
+	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish);
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
@@ -138,17 +132,8 @@ private:
 
 	std::unique_ptr<VulkanSemaphore> mSwapChainImageAvailableSemaphore;
 	std::unique_ptr<VulkanSemaphore> mRenderFinishedSemaphore;
-	std::unique_ptr<VulkanFence> mRenderFinishedFence;
 
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
-
-	std::thread mSubmitThread;
-	std::condition_variable mSubmitCondVar;
-	std::condition_variable mSubmitDone;
-	std::mutex mSubmitMutex;
-	std::vector<VulkanCommandBuffer*> mSubmitQueue;
-	size_t mSubmitItemsActive = 0;
-	bool mSubmitExitFlag = false;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

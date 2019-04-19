@@ -68,8 +68,6 @@ EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Bool, gl_no_skyclear)
 
-CVAR(Bool, vk_submit_multithread, false, 0)
-
 extern bool NoInterpolateView;
 extern int rendered_commandbuffers;
 int current_rendered_commandbuffers;
@@ -82,7 +80,6 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 	swapChain = std::make_unique<VulkanSwapChain>(device);
 	mSwapChainImageAvailableSemaphore.reset(new VulkanSemaphore(device));
 	mRenderFinishedSemaphore.reset(new VulkanSemaphore(device));
-	mRenderFinishedFence.reset(new VulkanFence(device));
 
 	for (auto &semaphore : mSubmitSemaphore)
 		semaphore.reset(new VulkanSemaphore(device));
@@ -95,8 +92,6 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
-	StopSubmitThread();
-
 	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
 	for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
 		cur->Reset();
@@ -195,53 +190,7 @@ void VulkanFrameBuffer::DeleteFrameObjects()
 	FrameDeleteList.CommandBuffers.clear();
 }
 
-void VulkanFrameBuffer::StartSubmitThread()
-{
-	if (!mSubmitThread.joinable())
-	{
-		mSubmitThread = std::thread([this] { SubmitThreadMain(); });
-	}
-}
-
-void VulkanFrameBuffer::StopSubmitThread()
-{
-	if (mSubmitThread.joinable())
-	{
-		std::unique_lock<std::mutex> lock(mSubmitMutex);
-		mSubmitExitFlag = true;
-		lock.unlock();
-		mSubmitCondVar.notify_all();
-		mSubmitThread.join();
-		mSubmitThread = {};
-		lock.lock();
-		mSubmitExitFlag = false;
-	}
-}
-
-void VulkanFrameBuffer::SubmitThreadMain()
-{
-	while (true)
-	{
-		std::unique_lock<std::mutex> lock(mSubmitMutex);
-		mSubmitCondVar.wait(lock, [&]() { return mSubmitExitFlag || !mSubmitQueue.empty(); });
-
-		std::vector<VulkanCommandBuffer*> commands;
-		commands.swap(mSubmitQueue);
-		mSubmitItemsActive = commands.size();
-		lock.unlock();
-
-		FlushCommands(commands.data(), commands.size());
-
-		lock.lock();
-		mSubmitItemsActive = 0;
-		if (mSubmitQueue.empty())
-			mSubmitDone.notify_all();
-		if (mSubmitExitFlag)
-			break;
-	}
-}
-
-void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t count)
+void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish)
 {
 	int currentIndex = nextSubmitQueue % submitQueueSize;
 
@@ -259,12 +208,18 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 	if (nextSubmitQueue > 0)
 		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mSubmitSemaphore[(nextSubmitQueue - 1) % submitQueueSize].get());
 
+	if (finish && presentImageIndex != 0xffffffff)
+	{
+		submit.addWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
+		submit.addSignal(mRenderFinishedSemaphore.get());
+	}
+
 	submit.addSignal(mSubmitSemaphore[currentIndex].get());
 	submit.execute(device, device->graphicsQueue, mSubmitFence[currentIndex].get());
 	nextSubmitQueue++;
 }
 
-void VulkanFrameBuffer::FlushCommands()
+void VulkanFrameBuffer::FlushCommands(bool finish)
 {
 	if (mDrawCommands || mTransferCommands)
 	{
@@ -285,22 +240,9 @@ void VulkanFrameBuffer::FlushCommands()
 			FrameDeleteList.CommandBuffers.push_back(std::move(mDrawCommands));
 		}
 
-		current_rendered_commandbuffers += (int)count;
+		FlushCommands(commands, count, finish);
 
-		if (vk_submit_multithread)
-		{
-			StartSubmitThread();
-			std::unique_lock<std::mutex> lock(mSubmitMutex);
-			for (size_t i = 0; i < count; i++)
-				mSubmitQueue.push_back(commands[i]);
-			lock.unlock();
-			mSubmitCondVar.notify_all();
-		}
-		else
-		{
-			StopSubmitThread();
-			FlushCommands(commands, count);
-		}
+		current_rendered_commandbuffers += (int)count;
 	}
 }
 
@@ -316,26 +258,7 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 			mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
 	}
 
-	FlushCommands();
-
-	std::unique_lock<std::mutex> lock(mSubmitMutex);
-	mSubmitDone.wait(lock, [&]() { return mSubmitQueue.empty() && mSubmitItemsActive == 0; });
-	lock.unlock();
-
-	QueueSubmit submit;
-
-	if (nextSubmitQueue > 0)
-	{
-		submit.addWait(VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, mSubmitSemaphore[(nextSubmitQueue - 1) % submitQueueSize].get());
-	}
-
-	if (finish && presentImageIndex != 0xffffffff)
-	{
-		submit.addWait(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mSwapChainImageAvailableSemaphore.get());
-		submit.addSignal(mRenderFinishedSemaphore.get());
-	}
-
-	submit.execute(device, device->graphicsQueue, mRenderFinishedFence.get());
+	FlushCommands(finish);
 
 	if (finish)
 	{
@@ -345,12 +268,11 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 			swapChain->QueuePresent(presentImageIndex, mRenderFinishedSemaphore.get());
 	}
 
-	VkFence waitFences[submitQueueSize + 1];
-	waitFences[0] = mRenderFinishedFence->fence;
+	VkFence waitFences[submitQueueSize];
 	for (int i = 0; i < submitQueueSize; i++)
-		waitFences[i + 1] = mSubmitFence[i]->fence;
+		waitFences[i] = mSubmitFence[i]->fence;
 
-	int numWaitFences = 1 + MIN(nextSubmitQueue, (int)submitQueueSize);
+	int numWaitFences = MIN(nextSubmitQueue, (int)submitQueueSize);
 	vkWaitForFences(device->device, numWaitFences, waitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
 	vkResetFences(device->device, numWaitFences, waitFences);
 

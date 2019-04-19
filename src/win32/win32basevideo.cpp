@@ -90,7 +90,7 @@ static BOOL CALLBACK GetDisplayDeviceNameMonitorEnumProc(HMONITOR hMonitor, HDC,
 
 	// This assumes the monitors are returned by EnumDisplayMonitors in the
 	// order they're found in the Direct3D9 adapters list. Fingers crossed...
-	if (state->curIdx == vid_adapter)
+	if (state->curIdx == vid_adapter || state->hFoundMonitor == nullptr)
 	{
 		state->hFoundMonitor = hMonitor;
 
@@ -119,7 +119,7 @@ void Win32BaseVideo::GetDisplayDeviceName()
 	MonitorEnumState mes;
 
 	mes.curIdx = 1;
-	mes.hFoundMonitor = 0;
+	mes.hFoundMonitor = nullptr;
 
 	// Could also use EnumDisplayDevices, I guess. That might work.
 	if (EnumDisplayMonitors(0, 0, &GetDisplayDeviceNameMonitorEnumProc, LPARAM(&mes)))

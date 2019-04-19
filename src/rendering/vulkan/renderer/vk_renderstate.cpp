@@ -38,9 +38,7 @@ void VkRenderState::Draw(int dt, int index, int count, bool apply)
 	if (apply || mNeedApply)
 		Apply(dt);
 
-	drawcalls.Clock();
 	mCommandBuffer->draw(count, 1, index, 0);
-	drawcalls.Unclock();
 }
 
 void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
@@ -48,9 +46,7 @@ void VkRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 	if (apply || mNeedApply)
 		Apply(dt);
 
-	drawcalls.Clock();
 	mCommandBuffer->drawIndexed(count, 1, index, 0, 0);
-	drawcalls.Unclock();
 }
 
 bool VkRenderState::SetDepthClamp(bool on)
@@ -162,6 +158,8 @@ void VkRenderState::EnableLineSmooth(bool on)
 
 void VkRenderState::Apply(int dt)
 {
+	drawcalls.Clock();
+
 	mApplyCount++;
 	if (mApplyCount >= vk_submit_size)
 	{
@@ -182,6 +180,8 @@ void VkRenderState::Apply(int dt)
 	ApplyDynamicSet();
 	ApplyMaterial();
 	mNeedApply = false;
+
+	drawcalls.Unclock();
 }
 
 void VkRenderState::ApplyDepthBias()
@@ -661,9 +661,7 @@ void VkRenderStateMolten::Draw(int dt, int index, int count, bool apply)
 		else
 			ApplyVertexBuffers();
 
-		drawcalls.Clock();
 		mCommandBuffer->drawIndexed((count - 2) * 3, 1, 0, index, 0);
-		drawcalls.Unclock();
 
 		mIndexBuffer = oldIndexBuffer;
 	}
@@ -672,8 +670,6 @@ void VkRenderStateMolten::Draw(int dt, int index, int count, bool apply)
 		if (apply || mNeedApply)
 			Apply(dt);
 
-		drawcalls.Clock();
 		mCommandBuffer->draw(count, 1, index, 0);
-		drawcalls.Unclock();
 	}
 }

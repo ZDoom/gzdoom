@@ -255,7 +255,9 @@ SDLVideo::SDLVideo ()
 
 SDLVideo::~SDLVideo ()
 {
+#ifdef HAVE_VULKAN
 	delete device;
+#endif
 }
 
 DFrameBuffer *SDLVideo::CreateFrameBuffer ()

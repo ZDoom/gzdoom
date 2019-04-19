@@ -82,7 +82,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 	gl_RenderState.Reset();
 
 	GLRenderer = nullptr;
-	InitPalette();
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()

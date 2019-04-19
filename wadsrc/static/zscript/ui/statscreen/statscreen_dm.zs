@@ -22,7 +22,7 @@ class DeathmatchStatusScreen : StatusScreen
 		acceleratestage = 0;
 		displayFont = NewSmallFont;
 		FontScale = max(screen.GetHeight() / 400, 1);
-		RowHeight = max((displayFont.GetHeight() + 1) * FontScale, 1);
+		RowHeight = int(max((displayFont.GetHeight() + 1) * FontScale, 1));
 
 		for(i = 0; i < MAXPLAYERS; i++)
 		{
@@ -167,7 +167,7 @@ class DeathmatchStatusScreen : StatusScreen
 		Vector2 readyoffset = TexMan.GetScaledOffset(readyico);
 		height = int(readysize.Y - readyoffset.Y);
 		maxiconheight = MAX(height, maxiconheight);
-		height = displayFont.GetHeight() * FontScale;
+		height = int(displayFont.GetHeight() * FontScale);
 		lineheight = MAX(height, maxiconheight * CleanYfac);
 		ypadding = (lineheight - height + 1) / 2;
 		y += CleanYfac;
@@ -176,10 +176,10 @@ class DeathmatchStatusScreen : StatusScreen
 		//text_color = Stringtable.Localize("$SCORE_COLOR");
 		text_frags = Stringtable.Localize("$SCORE_FRAGS");
 
-		icon_x = 8 * FontScale;
-		name_x = icon_x + maxscorewidth * FontScale;
-		frags_x = name_x + (maxnamewidth + 1 + MAX(displayFont.StringWidth("XXXXXXXXXX"), displayFont.StringWidth(text_frags)) + 16) * FontScale;
-		deaths_x = frags_x + ((deaths_len = displayFont.StringWidth(text_deaths)) + 16) * FontScale;
+		icon_x = int(8 * FontScale);
+		name_x = int(icon_x + maxscorewidth * FontScale);
+		frags_x = name_x + int((maxnamewidth + 1 + MAX(displayFont.StringWidth("XXXXXXXXXX"), displayFont.StringWidth(text_frags)) + 16) * FontScale);
+		deaths_x = frags_x + int(((deaths_len = displayFont.StringWidth(text_deaths)) + 16) * FontScale);
 		
 		x = (Screen.GetWidth() - deaths_x) >> 1;
 		icon_x += x;
@@ -190,7 +190,7 @@ class DeathmatchStatusScreen : StatusScreen
 		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_NAME"), FontScale, textcolor);
 		drawTextScaled(displayFont, frags_x - displayFont.StringWidth(text_frags) * FontScale, y, text_frags, FontScale, textcolor);
 		drawTextScaled(displayFont, deaths_x - deaths_len * FontScale, y, text_deaths, FontScale, textcolor);
-		y += height + 6 * FontScale;
+		y += height + int(6 * FontScale);
 		
 		// Sort all players
 		Array<int> sortedplayers;

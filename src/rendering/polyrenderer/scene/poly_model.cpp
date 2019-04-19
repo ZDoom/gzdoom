@@ -120,7 +120,8 @@ void PolyModelRenderer::AddLights(AActor *actor)
 		float x = (float)actor->X();
 		float y = (float)actor->Y();
 		float z = (float)actor->Center();
-		float radiusSquared = (float)(actor->renderradius * actor->renderradius);
+		float actorradius = (float)actor->RenderRadius();
+		float radiusSquared = actorradius * actorradius;
 
 		BSPWalkCircle(actor->Level, x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 		{
@@ -132,7 +133,7 @@ void PolyModelRenderer::AddLights(AActor *actor)
 				{
 					int group = subsector->sector->PortalGroup;
 					DVector3 pos = light->PosRelative(group);
-					float radius = (float)(light->GetRadius() + actor->renderradius);
+					float radius = (float)(light->GetRadius() + actorradius);
 					double dx = pos.X - x;
 					double dy = pos.Y - y;
 					double dz = pos.Z - z;

@@ -34,7 +34,7 @@ public:
 	VkPostprocess *GetPostprocess() { return mPostprocess.get(); }
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
 
-	void FlushCommands(bool finish);
+	void FlushCommands(bool finish, bool lastsubmit = false);
 
 	unsigned int GetLightBufferBlockSize() const;
 
@@ -111,7 +111,7 @@ private:
 	void CopyScreenToBuffer(int w, int h, void *data);
 	void UpdateShadowMap();
 	void DeleteFrameObjects();
-	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish);
+	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit);
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;

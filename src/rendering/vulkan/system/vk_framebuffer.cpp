@@ -193,7 +193,7 @@ void VulkanFrameBuffer::DeleteFrameObjects()
 	FrameDeleteList.CommandBuffers.clear();
 }
 
-void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish)
+void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit)
 {
 	int currentIndex = mNextSubmit % maxConcurrentSubmitCount;
 
@@ -217,14 +217,14 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 		submit.addSignal(mRenderFinishedSemaphore.get());
 	}
 
-	if (!finish)
+	if (!lastsubmit)
 		submit.addSignal(mSubmitSemaphore[currentIndex].get());
 
 	submit.execute(device, device->graphicsQueue, mSubmitFence[currentIndex].get());
 	mNextSubmit++;
 }
 
-void VulkanFrameBuffer::FlushCommands(bool finish)
+void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 {
 	if (mDrawCommands || mTransferCommands)
 	{
@@ -245,7 +245,7 @@ void VulkanFrameBuffer::FlushCommands(bool finish)
 			FrameDeleteList.CommandBuffers.push_back(std::move(mDrawCommands));
 		}
 
-		FlushCommands(commands, count, finish);
+		FlushCommands(commands, count, finish, lastsubmit);
 
 		current_rendered_commandbuffers += (int)count;
 	}
@@ -263,7 +263,7 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 			mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
 	}
 
-	FlushCommands(finish);
+	FlushCommands(finish, true);
 
 	if (finish)
 	{

@@ -88,7 +88,6 @@ protected:
 	int mCullMode = 0;
 
 	MatricesUBO mMatrices = {};
-	StreamData mStreamData = {};
 	PushConstants mPushConstants = {};
 
 	uint32_t mLastViewpointOffset = 0xffffffff;
@@ -107,9 +106,6 @@ protected:
 	IVertexBuffer *mLastVertexBuffer = nullptr;
 	IIndexBuffer *mLastIndexBuffer = nullptr;
 
-	bool mLastGlowEnabled = true;
-	bool mLastGradientEnabled = true;
-	bool mLastSplitEnabled = true;
 	bool mLastModelMatrixEnabled = true;
 	bool mLastTextureMatrixEnabled = true;
 

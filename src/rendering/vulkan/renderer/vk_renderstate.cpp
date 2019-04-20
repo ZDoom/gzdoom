@@ -322,64 +322,12 @@ void VkRenderState::ApplyStreamData()
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
 
-	const float normScale = 1.0f / 255.0f;
-
-	mStreamData.uDesaturationFactor = mDesaturation * normScale;
-	mStreamData.uFogColor = { mFogColor.r * normScale, mFogColor.g * normScale, mFogColor.b * normScale, mFogColor.a * normScale };
-	mStreamData.uAddColor = { mAddColor.r * normScale, mAddColor.g * normScale, mAddColor.b * normScale, mAddColor.a * normScale };
-	mStreamData.uObjectColor = { mObjectColor.r * normScale, mObjectColor.g * normScale, mObjectColor.b * normScale, mObjectColor.a * normScale };
-	mStreamData.uDynLightColor = mDynColor.vec;
-	mStreamData.uInterpolationFactor = mInterpolationFactor;
-
 	mStreamData.useVertexData = passManager->VertexFormats[static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat].UseVertexData;
-	mStreamData.uVertexColor = mColor.vec;
-	mStreamData.uVertexNormal = mNormal.vec;
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
 		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.);
 	else
 		mStreamData.timer = 0.0f;
-
-	if (mGlowEnabled)
-	{
-		mStreamData.uGlowTopPlane = mGlowTopPlane.vec;
-		mStreamData.uGlowTopColor = mGlowTop.vec;
-		mStreamData.uGlowBottomPlane = mGlowBottomPlane.vec;
-		mStreamData.uGlowBottomColor = mGlowBottom.vec;
-		mLastGlowEnabled = true;
-	}
-	else if (mLastGlowEnabled)
-	{
-		mStreamData.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mLastGlowEnabled = false;
-	}
-
-	if (mGradientEnabled)
-	{
-		mStreamData.uObjectColor2 = { mObjectColor2.r * normScale, mObjectColor2.g * normScale, mObjectColor2.b * normScale, mObjectColor2.a * normScale };
-		mStreamData.uGradientTopPlane = mGradientTopPlane.vec;
-		mStreamData.uGradientBottomPlane = mGradientBottomPlane.vec;
-		mLastGradientEnabled = true;
-	}
-	else if (mLastGradientEnabled)
-	{
-		mStreamData.uObjectColor2 = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mLastGradientEnabled = false;
-	}
-
-	if (mSplitEnabled)
-	{
-		mStreamData.uSplitTopPlane = mSplitTopPlane.vec;
-		mStreamData.uSplitBottomPlane = mSplitBottomPlane.vec;
-		mLastSplitEnabled = true;
-	}
-	else if (mLastSplitEnabled)
-	{
-		mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mLastSplitEnabled = false;
-	}
 
 	mDataIndex++;
 	if (mDataIndex == MAX_STREAM_DATA)
@@ -400,7 +348,7 @@ void VkRenderState::ApplyPushConstants()
 		{
 			fogset = -3;	// 2D rendering with 'foggy' overlay.
 		}
-		else if ((mFogColor & 0xffffff) == 0)
+		else if ((GetFogColor() & 0xffffff) == 0)
 		{
 			fogset = gl_fogmode;
 		}
@@ -573,9 +521,6 @@ void VkRenderState::EndRenderPass()
 		mLastLightBufferOffset = 0xffffffff;
 		mLastVertexBuffer = nullptr;
 		mLastIndexBuffer = nullptr;
-		mLastGlowEnabled = true;
-		mLastGradientEnabled = true;
-		mLastSplitEnabled = true;
 		mLastModelMatrixEnabled = true;
 		mLastTextureMatrixEnabled = true;
 	}

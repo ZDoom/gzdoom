@@ -173,7 +173,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		PalEntry color1 = side->GetSpecialColor(tierndx, side_t::walltop, frontsector);
 		PalEntry color2 = side->GetSpecialColor(tierndx, side_t::wallbottom, frontsector);
 		state.SetObjectColor(color1);
-		state.SetObjectColor2(color2);
+		state.SetObjectColor2((color1 != color2) ? color2 : 0);
 		state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
 		if (color1 != color2)
 		{

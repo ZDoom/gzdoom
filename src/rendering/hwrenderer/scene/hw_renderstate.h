@@ -127,6 +127,57 @@ enum EPassType
 	MAX_PASS_TYPES
 };
 
+struct FVector4PalEntry
+{
+	float r, g, b, a;
+
+	bool operator==(const FVector4PalEntry &other) const
+	{
+		return r == other.r && g == other.g && b == other.b && a == other.a;
+	}
+
+	bool operator!=(const FVector4PalEntry &other) const
+	{
+		return r != other.r || g != other.g || b != other.b || a != other.a;
+	}
+
+	FVector4PalEntry &operator=(PalEntry newvalue)
+	{
+		const float normScale = 1.0f / 255.0f;
+		r = newvalue.r * normScale;
+		g = newvalue.g * normScale;
+		b = newvalue.b * normScale;
+		a = newvalue.a * normScale;
+		return *this;
+	}
+};
+
+struct StreamData
+{
+	FVector4PalEntry uObjectColor;
+	FVector4PalEntry uObjectColor2;
+	FVector4 uDynLightColor;
+	FVector4PalEntry uAddColor;
+	FVector4PalEntry uFogColor;
+	float uDesaturationFactor;
+	float uInterpolationFactor;
+	float timer;
+	int useVertexData;
+	FVector4 uVertexColor;
+	FVector4 uVertexNormal;
+
+	FVector4 uGlowTopPlane;
+	FVector4 uGlowTopColor;
+	FVector4 uGlowBottomPlane;
+	FVector4 uGlowBottomColor;
+
+	FVector4 uGradientTopPlane;
+	FVector4 uGradientBottomPlane;
+
+	FVector4 uSplitTopPlane;
+	FVector4 uSplitBottomPlane;
+};
+
 class FRenderState
 {
 protected:
@@ -142,25 +193,15 @@ protected:
 	int mLightIndex;
 	int mSpecialEffect;
 	int mTextureMode;
-	int mDesaturation;
 	int mSoftLight;
 	float mLightParms[4];
 
 	float mAlphaThreshold;
 	float mClipSplit[2];
-	float mInterpolationFactor;
 
-	FStateVec4 mNormal;
-	FStateVec4 mColor;
-	FStateVec4 mGlowTop, mGlowBottom;
-	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
-	FStateVec4 mGradientTopPlane, mGradientBottomPlane;
-	FStateVec4 mSplitTopPlane, mSplitBottomPlane;
-	PalEntry mAddColor;
+	StreamData mStreamData = {};
 	PalEntry mFogColor;
-	PalEntry mObjectColor;
-	PalEntry mObjectColor2;
-	FStateVec4 mDynColor;
+
 	FRenderStyle mRenderStyle;
 
 	FMaterialState mMaterial;
@@ -184,22 +225,23 @@ public:
 	{
 		mTextureEnabled = true;
 		mGradientEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
-		mFogColor.d = -1;
+		mFogColor = 0xffffffff;
+		mStreamData.uFogColor = mFogColor;
 		mTextureMode = -1;
-		mDesaturation = 0;
+		mStreamData.uDesaturationFactor = 0.0f;
 		mAlphaThreshold = 0.5f;
 		mModelMatrixEnabled = false;
 		mTextureMatrixEnabled = false;
 		mSplitEnabled = false;
-		mAddColor = 0;
-		mObjectColor = 0xffffffff;
-		mObjectColor2 = 0;
+		mStreamData.uAddColor = 0;
+		mStreamData.uObjectColor = 0xffffffff;
+		mStreamData.uObjectColor2 = 0;
 		mSoftLight = 0;
 		mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 		mLightParms[3] = -1.f;
 		mSpecialEffect = EFF_NONE;
 		mLightIndex = -1;
-		mInterpolationFactor = 0;
+		mStreamData.uInterpolationFactor = 0;
 		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
 		mBias.Reset();
@@ -209,16 +251,16 @@ public:
 		mVertexOffsets[0] = mVertexOffsets[1] = 0;
 		mIndexBuffer = nullptr;
 
-		mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
-		mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGradientTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mGradientBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-		mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
+		mStreamData.uVertexColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+		mStreamData.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uGlowTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uGlowBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uGradientTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uGradientBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uDynLightColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
@@ -227,36 +269,38 @@ public:
 
 	void SetNormal(FVector3 norm)
 	{
-		mNormal.Set(norm.X, norm.Y, norm.Z, 0.f);
+		mStreamData.uVertexNormal = { norm.X, norm.Y, norm.Z, 0.f };
 	}
 
 	void SetNormal(float x, float y, float z)
 	{
-		mNormal.Set(x, y, z, 0.f);
+		mStreamData.uVertexNormal = { x, y, z, 0.f };
 	}
 
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
-		mColor.Set(r, g, b, a);
-		mDesaturation = desat;
+		mStreamData.uVertexColor = { r, g, b, a };
+		mStreamData.uDesaturationFactor = desat * (1.0f / 255.0f);
 	}
 
 	void SetColor(PalEntry pe, int desat = 0)
 	{
-		mColor.Set(pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, pe.a / 255.f);
-		mDesaturation = desat;
+		const float scale = 1.0f / 255.0f;
+		mStreamData.uVertexColor = { pe.r * scale, pe.g * scale, pe.b * scale, pe.a * scale };
+		mStreamData.uDesaturationFactor = desat * (1.0f / 255.0f);
 	}
 
 	void SetColorAlpha(PalEntry pe, float alpha = 1.f, int desat = 0)
 	{
-		mColor.Set(pe.r / 255.f, pe.g / 255.f, pe.b / 255.f, alpha);
-		mDesaturation = desat;
+		const float scale = 1.0f / 255.0f;
+		mStreamData.uVertexColor = { pe.r * scale, pe.g * scale, pe.b * scale, alpha };
+		mStreamData.uDesaturationFactor = desat * (1.0f / 255.0f);
 	}
 
 	void ResetColor()
 	{
-		mColor.Set(1, 1, 1, 1);
-		mDesaturation = 0;
+		mStreamData.uVertexColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+		mStreamData.uDesaturationFactor = 0.0f;
 	}
 
 	void SetTextureMode(int mode)
@@ -302,6 +346,11 @@ public:
 
 	void EnableGlow(bool on)
 	{
+		if (mGlowEnabled && !on)
+		{
+			mStreamData.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+			mStreamData.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		}
 		mGlowEnabled = on;
 	}
 
@@ -317,6 +366,11 @@ public:
 
 	void EnableSplit(bool on)
 	{
+		if (mSplitEnabled && !on)
+		{
+			mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+			mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+		}
 		mSplitEnabled = on;
 	}
 
@@ -332,8 +386,8 @@ public:
 
 	void SetGlowParams(float *t, float *b)
 	{
-		mGlowTop.Set(t[0], t[1], t[2], t[3]);
-		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
+		mStreamData.uGlowTopColor = { t[0], t[1], t[2], t[3] };
+		mStreamData.uGlowBottomColor = { b[0], b[1], b[2], b[3] };
 	}
 
 	void SetSoftLightLevel(int llevel, int blendfactor = 0)
@@ -351,50 +405,51 @@ public:
 	{
 		auto &tn = top.Normal();
 		auto &bn = bottom.Normal();
-		mGlowTopPlane.Set((float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD());
-		mGlowBottomPlane.Set((float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD());
+		mStreamData.uGlowTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+		mStreamData.uGlowBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
 	}
 
 	void SetGradientPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		auto &tn = top.Normal();
 		auto &bn = bottom.Normal();
-		mGradientTopPlane.Set((float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD());
-		mGradientBottomPlane.Set((float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD());
+		mStreamData.uGradientTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+		mStreamData.uGradientBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
 	}
 
 	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		auto &tn = top.Normal();
 		auto &bn = bottom.Normal();
-		mSplitTopPlane.Set((float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD());
-		mSplitBottomPlane.Set((float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD());
+		mStreamData.uSplitTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+		mStreamData.uSplitBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
 	}
 
 	void SetDynLight(float r, float g, float b)
 	{
-		mDynColor.Set(r, g, b, 0);
+		mStreamData.uDynLightColor = { r, g, b, 0.0f };
 	}
 
 	void SetObjectColor(PalEntry pe)
 	{
-		mObjectColor = pe;
+		mStreamData.uObjectColor = pe;
 	}
 
 	void SetObjectColor2(PalEntry pe)
 	{
-		mObjectColor2 = pe;
+		mStreamData.uObjectColor2 = pe;
 	}
 
 	void SetAddColor(PalEntry pe)
 	{
-		mAddColor = pe;
+		mStreamData.uAddColor = pe;
 	}
 
 	void SetFog(PalEntry c, float d)
 	{
 		const float LOG2E = 1.442692f;	// = 1/log(2)
 		mFogColor = c;
+		mStreamData.uFogColor = mFogColor;
 		if (d >= 0.0f) mLightParms[2] = d * (-LOG2E / 64000.f);
 	}
 
@@ -505,12 +560,12 @@ public:
 
 	void SetInterpolationFactor(float fac)
 	{
-		mInterpolationFactor = fac;
+		mStreamData.uInterpolationFactor = fac;
 	}
 
 	float GetInterpolationFactor()
 	{
-		return mInterpolationFactor;
+		return mStreamData.uInterpolationFactor;
 	}
 
 	void EnableDrawBufferAttachments(bool on) // Used by fog boundary drawer

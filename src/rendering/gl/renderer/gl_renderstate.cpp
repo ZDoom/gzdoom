@@ -111,7 +111,7 @@ bool FGLRenderState::ApplyShader()
 		{
 			fogset = -3;	// 2D rendering with 'foggy' overlay.
 		}
-		else if ((mFogColor & 0xffffff) == 0)
+		else if ((GetFogColor() & 0xffffff) == 0)
 		{
 			fogset = gl_fogmode;
 		}
@@ -121,64 +121,46 @@ bool FGLRenderState::ApplyShader()
 		}
 	}
 
-	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
-	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
+	glVertexAttrib4fv(VATTR_COLOR, &mStreamData.uVertexColor.X);
+	glVertexAttrib4fv(VATTR_NORMAL, &mStreamData.uVertexNormal.X);
 
-	activeShader->muDesaturation.Set(mDesaturation / 255.f);
+	activeShader->muDesaturation.Set(mStreamData.uDesaturationFactor);
 	activeShader->muFogEnabled.Set(fogset);
 	activeShader->muTextureMode.Set(mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
 	activeShader->muLightParms.Set(mLightParms);
-	activeShader->muFogColor.Set(mFogColor);
-	activeShader->muObjectColor.Set(mObjectColor);
-	activeShader->muDynLightColor.Set(mDynColor.vec);
-	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
+	activeShader->muFogColor.Set(mStreamData.uFogColor);
+	activeShader->muObjectColor.Set(mStreamData.uObjectColor);
+	activeShader->muDynLightColor.Set(&mStreamData.uDynLightColor.X);
+	activeShader->muInterpolationFactor.Set(mStreamData.uInterpolationFactor);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
-	activeShader->muAddColor.Set(mAddColor);
+	activeShader->muAddColor.Set(mStreamData.uAddColor);
 
-	if (mGlowEnabled)
+	if (mGlowEnabled || activeShader->currentglowstate)
 	{
-		activeShader->muGlowTopColor.Set(mGlowTop.vec);
-		activeShader->muGlowBottomColor.Set(mGlowBottom.vec);
-		activeShader->muGlowTopPlane.Set(mGlowTopPlane.vec);
-		activeShader->muGlowBottomPlane.Set(mGlowBottomPlane.vec);
-		activeShader->currentglowstate = 1;
-	}
-	else if (activeShader->currentglowstate)
-	{
-		// if glowing is on, disable it.
-		activeShader->muGlowTopColor.Set(nulvec);
-		activeShader->muGlowBottomColor.Set(nulvec);
-		activeShader->currentglowstate = 0;
+		activeShader->muGlowTopColor.Set(&mStreamData.uGlowTopColor.X);
+		activeShader->muGlowBottomColor.Set(&mStreamData.uGlowBottomColor.X);
+		activeShader->muGlowTopPlane.Set(&mStreamData.uGlowTopPlane.X);
+		activeShader->muGlowBottomPlane.Set(&mStreamData.uGlowBottomPlane.X);
+		activeShader->currentglowstate = mGlowEnabled;
 	}
 
-	if (mGradientEnabled)
+	if (mGradientEnabled || activeShader->currentgradientstate)
 	{
-		activeShader->muObjectColor2.Set(mObjectColor2);
-		activeShader->muGradientTopPlane.Set(mGradientTopPlane.vec);
-		activeShader->muGradientBottomPlane.Set(mGradientBottomPlane.vec);
-		activeShader->currentgradientstate = 1;
-	}
-	else if (activeShader->currentgradientstate)
-	{
-		activeShader->muObjectColor2.Set(0);
-		activeShader->currentgradientstate = 0;
+		activeShader->muObjectColor2.Set(mStreamData.uObjectColor2);
+		activeShader->muGradientTopPlane.Set(&mStreamData.uGradientTopPlane.X);
+		activeShader->muGradientBottomPlane.Set(&mStreamData.uGradientBottomPlane.X);
+		activeShader->currentgradientstate = mGradientEnabled;
 	}
 
-	if (mSplitEnabled)
+	if (mSplitEnabled || activeShader->currentsplitstate)
 	{
-		activeShader->muSplitTopPlane.Set(mSplitTopPlane.vec);
-		activeShader->muSplitBottomPlane.Set(mSplitBottomPlane.vec);
-		activeShader->currentsplitstate = 1;
-	}
-	else if (activeShader->currentsplitstate)
-	{
-		activeShader->muSplitTopPlane.Set(nulvec);
-		activeShader->muSplitBottomPlane.Set(nulvec);
-		activeShader->currentsplitstate = 0;
+		activeShader->muSplitTopPlane.Set(&mStreamData.uSplitTopPlane.X);
+		activeShader->muSplitBottomPlane.Set(&mStreamData.uSplitBottomPlane.X);
+		activeShader->currentsplitstate = mSplitEnabled;
 	}
 
 	if (mTextureMatrixEnabled)

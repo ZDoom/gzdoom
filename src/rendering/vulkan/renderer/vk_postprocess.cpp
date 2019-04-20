@@ -287,7 +287,7 @@ void VkPostprocess::RenderBuffersReset()
 
 VulkanSampler *VkPostprocess::GetSampler(PPFilterMode filter, PPWrapMode wrap)
 {
-	int index = (((int)filter) << 2) | (int)wrap;
+	int index = (((int)filter) << 1) | (int)wrap;
 	auto &sampler = mSamplers[index];
 	if (sampler)
 		return sampler.get();

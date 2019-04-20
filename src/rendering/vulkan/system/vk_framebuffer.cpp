@@ -217,7 +217,9 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 		submit.addSignal(mRenderFinishedSemaphore.get());
 	}
 
-	submit.addSignal(mSubmitSemaphore[currentIndex].get());
+	if (!finish)
+		submit.addSignal(mSubmitSemaphore[currentIndex].get());
+
 	submit.execute(device, device->graphicsQueue, mSubmitFence[currentIndex].get());
 	mNextSubmit++;
 }

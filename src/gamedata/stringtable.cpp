@@ -277,6 +277,8 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 	bool errordone = false;
 	TArray<uint32_t> activeMaps;
 	FScanner sc;
+	bool hasDefaultEntry = false;
+
 	sc.OpenMem("LANGUAGE", buffer);
 	sc.SetCMode (true);
 	while (sc.GetString ())
@@ -306,6 +308,7 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 					{
 						activeMaps.Clear();
 						activeMaps.Push(default_table);
+						hasDefaultEntry = true;
 					}
 					else
 					{
@@ -369,7 +372,7 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 			}
 			if (!skip)
 			{
-				if (activeMaps[0] == default_table)
+				if (hasDefaultEntry)
 				{
 					DeleteForLabel(lumpnum, strName);
 				}
@@ -427,7 +430,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 void FStringTable::InsertString(int lumpnum, int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
-	TableElement te = { lumpnum, { string, string, string, string } };
+	TableElement te = { Wads.GetLumpFile(lumpnum), { string, string, string, string } };
 	long index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{

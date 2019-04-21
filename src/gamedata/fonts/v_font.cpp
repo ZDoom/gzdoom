@@ -1532,6 +1532,13 @@ void V_InitFonts()
 			}
 		}
 	}
+	if (OriginalSmallFont != nullptr)
+	{
+		uint32_t colors[256] = {};
+		SmallFont->RecordAllTextureColors(colors);
+		OriginalSmallFont->SetDefaultTranslation(colors);
+	}
+
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
 		if (Wads.CheckNumForName("STBFN033", ns_graphics) >= 0)
@@ -1595,7 +1602,7 @@ void V_InitFonts()
 	{
 		BigFont = NewSmallFont;
 	}
-	AlternativeSmallFont = SmallFont;
+	AlternativeSmallFont = OriginalSmallFont;
 }
 
 void V_ClearFonts()

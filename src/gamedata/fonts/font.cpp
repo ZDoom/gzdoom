@@ -531,6 +531,84 @@ void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors)
 
 //==========================================================================
 //
+// RecordAllTextureColors
+//
+// Given a 256 entry buffer, sets every entry that corresponds to a color
+// used by the font.
+//
+//==========================================================================
+
+void FFont::RecordAllTextureColors(uint32_t *usedcolors)
+{
+	for (unsigned int i = 0; i < Chars.Size(); i++)
+	{
+		if (Chars[i].TranslatedPic)
+		{
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
+			if (pic)
+			{
+				RecordTextureColors(pic->GetBase(), usedcolors);
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// SetDefaultTranslation
+//
+// Builds a translation to map the stock font to a mod provided replacement.
+//
+//==========================================================================
+
+void FFont::SetDefaultTranslation(uint32_t *othercolors)
+{
+	uint32_t mycolors[256] = {};
+	RecordAllTextureColors(mycolors);
+
+	uint8_t mytranslation[256], othertranslation[256], myreverse[256], otherreverse[256];
+	TArray<double> myluminosity, otherluminosity;
+
+	SimpleTranslation(mycolors, mytranslation, myreverse, myluminosity);
+	SimpleTranslation(othercolors, othertranslation, otherreverse, otherluminosity);
+
+	FRemapTable remap(ActiveColors);
+	remap.Remap[0] = 0;
+	remap.Palette[0] = 0;
+
+	for (unsigned l = 1; l < myluminosity.Size(); l++)
+	{
+		for (unsigned o = 1; o < otherluminosity.Size()-1; o++)	// luminosity[0] is for the transparent color
+		{
+			if (myluminosity[l] >= otherluminosity[o] && myluminosity[l] <= otherluminosity[o+1])
+			{
+				PalEntry color1 = GPalette.BaseColors[otherreverse[o]];
+				PalEntry color2 = GPalette.BaseColors[otherreverse[o+1]];
+				double weight = 0;
+				if (otherluminosity[o] != otherluminosity[o + 1])
+				{
+					weight = (myluminosity[l] - otherluminosity[o]) / (otherluminosity[o + 1] - otherluminosity[o]);
+				}
+				int r = int(color1.r + weight * (color2.r - color1.r));
+				int g = int(color1.g + weight * (color2.g - color1.g));
+				int b = int(color1.b + weight * (color2.b - color1.b));
+
+				r = clamp(r, 0, 255);
+				g = clamp(g, 0, 255);
+				b = clamp(b, 0, 255);
+				remap.Remap[l] = ColorMatcher.Pick(r, g, b);
+				remap.Palette[l] = PalEntry(255, r, g, b);
+				break;
+			}
+		}
+	}
+	Ranges[CR_UNTRANSLATED] = remap;
+	forceremap = true;
+}
+
+
+//==========================================================================
+//
 // compare
 //
 // Used for sorting colors by brightness.
@@ -849,7 +927,7 @@ FTexture *FFont::GetChar (int code, int translation, int *const width, bool *red
 	if (code < 0) return nullptr;
 
 
-	if (translation == CR_UNTRANSLATED)
+	if (translation == CR_UNTRANSLATED && !forceremap)
 	{
 		bool redirect = Chars[code].OriginalPic && Chars[code].OriginalPic != Chars[code].TranslatedPic;
 		if (redirected) *redirected = redirect;
@@ -964,8 +1042,6 @@ void FFont::LoadTranslations()
 			}
 		}
 	}
-
-	// Fixme: This needs to build a translation based on the source palette, not some intermediate 'ordered' table.
 
 	ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, Luminosity);
 

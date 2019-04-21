@@ -118,6 +118,8 @@ public:
 	void SetCursor(char c) { Cursor = c; }
 	void SetKerning(int c) { GlobalKerning = c; }
 	bool NoTranslate() const { return noTranslate; }
+	void RecordAllTextureColors(uint32_t *usedcolors);
+	void SetDefaultTranslation(uint32_t *colors);
 
 protected:
 	FFont (int lump);
@@ -141,6 +143,7 @@ protected:
 	bool noTranslate;
 	bool translateUntranslated;
 	bool MixedCase = false;
+	bool forceremap = false;
 	struct CharData
 	{
 		FTexture *TranslatedPic = nullptr;	// Texture for use with font translations.

@@ -7,6 +7,7 @@ public:
    FFontChar1 (FImageSource *sourcelump);
    TArray<uint8_t> CreatePalettedPixels(int conversion) override;
    void SetSourceRemap(const uint8_t *sourceremap);
+   FImageSource *GetBase() const { return BaseTexture; }
 
 protected:
 

@@ -69,7 +69,7 @@
 //
 //==========================================================================
 
-FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate)
+FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate, bool iwadonly)
 {
 	int i;
 	FTextureID lump;
@@ -189,31 +189,74 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	{
 		if (nametemplate != nullptr)
 		{
-			for (i = 0; i < lcount; i++)
+			if (!iwadonly)
 			{
-				int position = '!' + i;
-				mysnprintf(buffer, countof(buffer), nametemplate, i + start);
+				for (i = 0; i < lcount; i++)
+				{
+					int position = '!' + i;
+					mysnprintf(buffer, countof(buffer), nametemplate, i + start);
 
-				lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
-				if (doomtemplate && lump.isValid() && i + start == 121)
-				{ // HACKHACK: Don't load STCFN121 in doom(2), because
-				  // it's not really a lower-case 'y' but a '|'.
-				  // Because a lot of wads with their own font seem to foolishly
-				  // copy STCFN121 and make it a '|' themselves, wads must
-				  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-					if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
-						!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
+					lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
+					if (doomtemplate && lump.isValid() && i + start == 121)
+					{ // HACKHACK: Don't load STCFN121 in doom(2), because
+					  // it's not really a lower-case 'y' but a '|'.
+					  // Because a lot of wads with their own font seem to foolishly
+					  // copy STCFN121 and make it a '|' themselves, wads must
+					  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
+						if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
+							!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
+						{
+							// insert the incorrectly named '|' graphic in its correct position.
+							position = 124;
+						}
+					}
+					if (lump.isValid())
 					{
-						// insert the incorrectly named '|' graphic in its correct position.
-						position = 124;
+						Type = Multilump;
+						if (position < minchar) minchar = position;
+						if (position > maxchar) maxchar = position;
+						charMap.Insert(position, TexMan.GetTexture(lump));
 					}
 				}
-				if (lump.isValid())
+			}
+			else
+			{
+				FTexture *texs[256 - '!'] = {};
+				for (i = 0; i < lcount; i++)
 				{
-					Type = Multilump;
-					if (position < minchar) minchar = position;
-					if (position > maxchar) maxchar = position;
-					charMap.Insert(position, TexMan.GetTexture(lump));
+					TArray<FTextureID> array;
+					mysnprintf(buffer, countof(buffer), nametemplate, i + start);
+
+					TexMan.ListTextures(buffer, array, true);
+					for (auto entry : array)
+					{
+						FTexture *tex = TexMan.GetTexture(entry, false);
+						if (tex && tex->SourceLump >= 0 && Wads.GetLumpFile(tex->SourceLump) <= Wads.GetIwadNum() && tex->UseType == ETextureType::MiscPatch)
+						{
+							texs[i] = tex;
+						}
+					}
+				}
+				if (doomtemplate)
+				{
+					// Handle the misplaced '|'.
+					if (texs[121 - start] && !texs[120 - start] && !texs[122 - start] && !texs[124 - start])
+					{
+						texs[124 - start] = texs[121 - start];
+						texs[121 - start] = nullptr;
+					}
+				}
+
+				for (i = 0; i < lcount; i++)
+				{
+					if (texs[i])
+					{
+						int position = '!' + i;
+						Type = Multilump;
+						if (position < minchar) minchar = position;
+						if (position > maxchar) maxchar = position;
+						charMap.Insert(position, TexMan.GetTexture(lump));
+					}
 				}
 			}
 		}

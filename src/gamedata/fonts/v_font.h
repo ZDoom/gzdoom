@@ -93,7 +93,7 @@ public:
 		Custom
 	};
 
-	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false);
+	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false);
 	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
@@ -164,7 +164,7 @@ protected:
 };
 
 
-extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont;
+extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont;
 
 void V_InitFonts();
 void V_ClearFonts();

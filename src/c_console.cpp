@@ -787,7 +787,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 
 	width = DisplayWidth / active_con_scaletext(generic_ui);
 
-	FFont *font = generic_ui ? NewSmallFont : SmallFont;
+	FFont *font = generic_ui ? NewSmallFont : AlternativeSmallFont;
 	if (font == nullptr) return;	// Without an initialized font we cannot handle the message (this is for those which come here before the font system is ready.)
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
@@ -1071,7 +1071,7 @@ void FNotifyBuffer::Draw()
 	line = Top;
 	canskip = true;
 
-	FFont *font = generic_ui ? NewSmallFont : SmallFont;
+	FFont *font = generic_ui ? NewSmallFont : AlternativeSmallFont;
 	lineadv = font->GetHeight ();
 
 	for (unsigned i = 0; i < Text.Size(); ++ i)

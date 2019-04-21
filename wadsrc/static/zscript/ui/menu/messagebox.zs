@@ -72,7 +72,7 @@ class MessageBoxMenu : Menu
 		}
 		else
 		{
-			textFont = SmallFont;
+			textFont = AlternativeSmallFont;
 			arrowFont = ConFont;
 			destWidth = CleanWidth;
 			destHeight = CleanHeight;

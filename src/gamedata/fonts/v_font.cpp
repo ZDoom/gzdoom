@@ -1497,12 +1497,39 @@ void V_InitFonts()
 	{
 		if (Wads.CheckNumForName("FONTA_S") >= 0)
 		{
-			SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-			SmallFont->SetCursor('[');
+			int wadfile = -1;
+			auto a = Wads.CheckNumForName("FONTA33", ns_graphics);
+			if (a != -1) wadfile = Wads.GetLumpFile(a);
+			if (wadfile > Wads.GetIwadNum())
+			{
+				// The font has been replaced, so we need to create a copy of the original as well.
+				SmallFont = new FFont("SmallFont", "FONTA%02u", nullptr, HU_FONTSTART, HU_FONTSIZE, 1, -1);
+				SmallFont->SetCursor('[');
+
+				OriginalSmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+				OriginalSmallFont->SetCursor('[');
+			}
+			else
+			{
+				SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+				SmallFont->SetCursor('[');
+			}
 		}
 		else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
 		{
-			SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+			int wadfile = -1;
+			auto a = Wads.CheckNumForName("STCFN065", ns_graphics);
+			if (a != -1) wadfile = Wads.GetLumpFile(a);
+			if (wadfile > Wads.GetIwadNum())
+			{
+				// The font has been replaced, so we need to create a copy of the original as well.
+				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+				OriginalSmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+			}
+			else
+			{
+				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+			}
 		}
 	}
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
@@ -1566,8 +1593,9 @@ void V_InitFonts()
 	}
 	if (BigFont == nullptr)
 	{
-		BigFont = SmallFont;
+		BigFont = NewSmallFont;
 	}
+	AlternativeSmallFont = SmallFont;
 }
 
 void V_ClearFonts()
@@ -1577,6 +1605,6 @@ void V_ClearFonts()
 		delete FFont::FirstFont;
 	}
 	FFont::FirstFont = nullptr;
-	CurrentConsoleFont = NewSmallFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
+	AlternativeSmallFont = OriginalSmallFont = CurrentConsoleFont = NewSmallFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
 }
 

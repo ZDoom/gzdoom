@@ -197,7 +197,7 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 	Top = y;
 	HoldTics = (int)(holdTime * TICRATE);
 	Tics = -1;	// -1 to compensate for one additional Tick the message will receive.
-	Font = font? font : generic_ui? NewSmallFont : SmallFont;
+	Font = font? font : generic_ui? SmallFont : AlternativeSmallFont;
 	TextColor = textColor;
 	State = 0;
 	SourceText = copystring (text);

@@ -145,7 +145,7 @@ public:
 
 int DisplayWidth, DisplayHeight;
 
-FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont;
+FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont;
 
 uint32_t Col2RGB8[65][256];
 uint32_t *Col2RGB8_LessPrecision[65];
@@ -913,6 +913,7 @@ DEFINE_GLOBAL(BigFont)
 DEFINE_GLOBAL(ConFont)
 DEFINE_GLOBAL(NewConsoleFont)
 DEFINE_GLOBAL(NewSmallFont)
+DEFINE_GLOBAL(AlternativeSmallFont)
 DEFINE_GLOBAL(IntermissionFont)
 DEFINE_GLOBAL(CleanXfac)
 DEFINE_GLOBAL(CleanYfac)

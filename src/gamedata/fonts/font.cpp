@@ -221,7 +221,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			}
 			else
 			{
-				FTexture *texs[256 - '!'] = {};
+				FTexture *texs[256] = {};
+				if (lcount > 256 - start) lcount = 256 - start;
 				for (i = 0; i < lcount; i++)
 				{
 					TArray<FTextureID> array;
@@ -240,10 +241,10 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				if (doomtemplate)
 				{
 					// Handle the misplaced '|'.
-					if (texs[121 - start] && !texs[120 - start] && !texs[122 - start] && !texs[124 - start])
+					if (texs[121 - '!'] && !texs[120 - '!'] && !texs[122 - '!'] && !texs[124 - '!'])
 					{
-						texs[124 - start] = texs[121 - start];
-						texs[121 - start] = nullptr;
+						texs[124 - '!'] = texs[121 - '!'];
+						texs[121 - '!'] = nullptr;
 					}
 				}
 
@@ -255,7 +256,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						Type = Multilump;
 						if (position < minchar) minchar = position;
 						if (position > maxchar) maxchar = position;
-						charMap.Insert(position, TexMan.GetTexture(lump));
+						charMap.Insert(position, texs[i]);
 					}
 				}
 			}

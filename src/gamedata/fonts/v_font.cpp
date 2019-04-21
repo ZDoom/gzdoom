@@ -71,6 +71,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int TranslationMapCompare (const void *a, const void *b);
+void UpdateGenericUI(bool cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1601,6 +1602,7 @@ void V_InitFonts()
 		BigFont = NewSmallFont;
 	}
 	AlternativeSmallFont = OriginalSmallFont;
+	UpdateGenericUI(false);
 }
 
 void V_ClearFonts()

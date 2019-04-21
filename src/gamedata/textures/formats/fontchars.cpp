@@ -88,17 +88,6 @@ TArray<uint8_t> FFontChar1::CreatePalettedPixels (int)
 
 //==========================================================================
 //
-// FFontChar1 :: SetSourceRemap
-//
-//==========================================================================
-
-void FFontChar1::SetSourceRemap(const uint8_t *sourceremap)
-{
-	SourceRemap = sourceremap;
-}
-
-//==========================================================================
-//
 // FFontChar2 :: FFontChar2
 //
 // Used by FON1 and FON2 fonts.

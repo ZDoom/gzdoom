@@ -194,33 +194,36 @@ TArray<uint8_t> FHexFontChar2::CreatePalettedPixels(int)
 	TArray<uint8_t> Pixels(destSize, true);
 	uint8_t *dest_p = Pixels.Data();
 
-	auto drawLayer = [&](int ix, int iy, int color)
+	assert(SourceData);
+	if (SourceData)
 	{
-		const uint8_t *src_p = SourceData;
-		for (int y = 0; y < Height-2; y++)
+		auto drawLayer = [&](int ix, int iy, int color)
 		{
-			for (int x = 0; x < SourceWidth; x++)
+			const uint8_t *src_p = SourceData;
+			for (int y = 0; y < Height - 2; y++)
 			{
-				int byte = *src_p++;
-				uint8_t *pixelstart = dest_p + (ix + 8 * x) * Height + (iy+y);
-				for (int bit = 0; bit < 8; bit++)
+				for (int x = 0; x < SourceWidth; x++)
 				{
-					if (byte & (128 >> bit))
+					int byte = *src_p++;
+					uint8_t *pixelstart = dest_p + (ix + 8 * x) * Height + (iy + y);
+					for (int bit = 0; bit < 8; bit++)
 					{
-						pixelstart[bit*Height] = color;
+						if (byte & (128 >> bit))
+						{
+							pixelstart[bit*Height] = color;
+						}
 					}
 				}
 			}
-		}
-	};
-	memset(dest_p, 0, destSize);
+		};
+		memset(dest_p, 0, destSize);
 
-	const int darkcolor = 3;
-	const int brightcolor = 14;
-	for (int xx=0;xx<3;xx++) for (int yy=0;yy<3;yy++) if (xx !=1 || yy != 1)
-		drawLayer(xx, yy, darkcolor);
-	drawLayer(1, 1, brightcolor);
-
+		const int darkcolor = 1;
+		const int brightcolor = 14;
+		for (int xx = 0; xx < 3; xx++) for (int yy = 0; yy < 3; yy++) if (xx != 1 || yy != 1)
+			drawLayer(xx, yy, darkcolor);
+		drawLayer(1, 1, brightcolor);
+	}
 	return Pixels;
 }
 
@@ -367,6 +370,56 @@ public:
 
 		}
 		BuildTranslations(luminosity, nullptr, &TranslationParms[0][0], ActiveColors, nullptr);
+	}
+
+	void SetDefaultTranslation(uint32_t *colors) override
+	{
+		double myluminosity[18];
+
+		myluminosity[0] = 0;
+		for (int i = 1; i < 18; i++)
+		{
+			myluminosity[i] = (i - 1) / 16.;
+		}
+
+		uint8_t othertranslation[256], otherreverse[256];
+		TArray<double> otherluminosity;
+
+		SimpleTranslation(colors, othertranslation, otherreverse, otherluminosity);
+
+		FRemapTable remap(ActiveColors);
+		remap.Remap[0] = 0;
+		remap.Palette[0] = 0;
+
+		for (unsigned l = 1; l < 18; l++)
+		{
+			for (unsigned o = 1; o < otherluminosity.Size() - 1; o++)	// luminosity[0] is for the transparent color
+			{
+				if (myluminosity[l] >= otherluminosity[o] && myluminosity[l] <= otherluminosity[o + 1])
+				{
+					PalEntry color1 = GPalette.BaseColors[otherreverse[o]];
+					PalEntry color2 = GPalette.BaseColors[otherreverse[o + 1]];
+					double weight = 0;
+					if (otherluminosity[o] != otherluminosity[o + 1])
+					{
+						weight = (myluminosity[l] - otherluminosity[o]) / (otherluminosity[o + 1] - otherluminosity[o]);
+					}
+					int r = int(color1.r + weight * (color2.r - color1.r));
+					int g = int(color1.g + weight * (color2.g - color1.g));
+					int b = int(color1.b + weight * (color2.b - color1.b));
+
+					r = clamp(r, 0, 255);
+					g = clamp(g, 0, 255);
+					b = clamp(b, 0, 255);
+					remap.Remap[l] = ColorMatcher.Pick(r, g, b);
+					remap.Palette[l] = PalEntry(255, r, g, b);
+					break;
+				}
+			}
+		}
+		Ranges[CR_UNTRANSLATED] = remap;
+		forceremap = true;
+
 	}
 
 };

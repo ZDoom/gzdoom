@@ -119,7 +119,7 @@ public:
 	void SetKerning(int c) { GlobalKerning = c; }
 	bool NoTranslate() const { return noTranslate; }
 	void RecordAllTextureColors(uint32_t *usedcolors);
-	void SetDefaultTranslation(uint32_t *colors);
+	virtual void SetDefaultTranslation(uint32_t *colors);
 
 protected:
 	FFont (int lump);

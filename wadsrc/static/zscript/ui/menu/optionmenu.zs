@@ -461,7 +461,7 @@ class OptionMenu : Menu
 			{
 				if (((MenuTime() % 8) < 6) || GetCurrentMenu() != self)
 				{
-					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, Font.CR_UNTRANSLATED, "◄");
+					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, OptionMenuSettings.mFontColorSelection, "◄");
 				}
 			}
 			y += fontheight;
@@ -473,11 +473,11 @@ class OptionMenu : Menu
 
 		if (CanScrollUp)
 		{
-			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1, ytop, Font.CR_UNTRANSLATED, "▲");
+			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1, ytop, OptionMenuSettings.mFontColorSelection, "▲");
 		}
 		if (CanScrollDown)
 		{
-			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, Font.CR_UNTRANSLATED, "▼");
+			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, OptionMenuSettings.mFontColorSelection, "▼");
 		}
 		Super.Drawer();
 	}

@@ -547,7 +547,10 @@ void FFont::RecordAllTextureColors(uint32_t *usedcolors)
 			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
 			if (pic)
 			{
-				RecordTextureColors(pic->GetBase(), usedcolors);
+				// The remap must be temporarily reset here because this can be called on an initialized font.
+				auto sr = pic->ResetSourceRemap();
+				RecordTextureColors(pic, usedcolors);
+				pic->SetSourceRemap(sr);
 			}
 		}
 	}

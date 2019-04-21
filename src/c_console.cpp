@@ -583,9 +583,7 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 
 EColorRange C_GetDefaultFontColor()
 {
-	// Ideally this should analyze the SmallFont and pick a matching color.
-	if (!generic_ui) return CR_UNTRANSLATED;
-	return gameinfo.gametype == GAME_Doom ? CR_RED : gameinfo.gametype == GAME_Chex ? CR_GREEN : gameinfo.gametype == GAME_Strife ? CR_GOLD : CR_GRAY;
+	 return CR_UNTRANSLATED;
 }
 
 FFont * C_GetDefaultHUDFont()

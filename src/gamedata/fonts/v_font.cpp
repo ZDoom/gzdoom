@@ -1532,12 +1532,10 @@ void V_InitFonts()
 			}
 		}
 	}
-	if (OriginalSmallFont != nullptr)
-	{
-		uint32_t colors[256] = {};
-		SmallFont->RecordAllTextureColors(colors);
-		OriginalSmallFont->SetDefaultTranslation(colors);
-	}
+	uint32_t colors[256] = {};
+	SmallFont->RecordAllTextureColors(colors);
+	if (OriginalSmallFont != nullptr) OriginalSmallFont->SetDefaultTranslation(colors);
+	NewSmallFont->SetDefaultTranslation(colors);
 
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{

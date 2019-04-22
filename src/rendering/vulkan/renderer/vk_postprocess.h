@@ -75,7 +75,7 @@ private:
 
 	VulkanSampler *GetSampler(PPFilterMode filter, PPWrapMode wrap);
 
-	std::array<std::unique_ptr<VulkanSampler>, 16> mSamplers;
+	std::array<std::unique_ptr<VulkanSampler>, 4> mSamplers;
 	std::map<VkPPRenderPassKey, std::unique_ptr<VkPPRenderPassSetup>> mRenderPassSetup;
 	std::unique_ptr<VulkanDescriptorPool> mDescriptorPool;
 	int mCurrentPipelineImage = 0;

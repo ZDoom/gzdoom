@@ -597,6 +597,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 {
 	auto scale = GetUIScale(hud_scale);
 	auto font = generic_ui ? NewSmallFont : SmallFont;
+	auto font2 = font;
 	auto vwidth = screen->GetWidth() / scale;
 	auto vheight = screen->GetHeight() / scale;
 	auto fheight = font->GetHeight();
@@ -605,6 +606,11 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	int y = 0;
 	int textdist = 4;
 	int zerowidth = font->GetCharWidth('0');
+
+	if (!generic_ui)
+	{
+		if (!font->CanPrint(GStrings("AM_MONSTERS")) || !font->CanPrint(GStrings("AM_SECRETS")) || !font->CanPrint(GStrings("AM_ITEMS"))) font2 = OriginalSmallFont;
+	}
 
 	if (am_showtime)
 	{
@@ -629,14 +635,14 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		if (am_showmonsters)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
-			screen->DrawText(font, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
 		if (am_showsecrets)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
-			screen->DrawText(font, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
@@ -644,7 +650,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		if (am_showitems)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
-			screen->DrawText(font, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 

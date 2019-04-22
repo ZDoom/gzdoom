@@ -484,6 +484,51 @@ FFont::~FFont ()
 
 //==========================================================================
 //
+// FFont :: CheckCase
+//
+//==========================================================================
+
+void FFont::CheckCase()
+{
+	int lowercount = 0, uppercount = 0;
+	for (unsigned i = 0; i < Chars.Size(); i++)
+	{
+		unsigned chr = i + FirstChar;
+		if (lowerforupper[chr] == chr && upperforlower[chr] == chr)
+		{
+			continue;	// not a letter;
+		}
+		if (myislower(chr))
+		{
+			if (Chars[i].TranslatedPic != nullptr) lowercount++;
+		}
+		else
+		{
+			if (Chars[i].TranslatedPic != nullptr) uppercount++;
+		}
+	}
+	if (lowercount == 0) return;	// This is an uppercase-only font and we are done.
+
+	// The ß needs special treatment because it is far more likely to be supplied lowercase only, even in an uppercase font.
+	if (Chars[0xdf - FirstChar].TranslatedPic != nullptr)
+	{
+		if (LastChar < 0x1e9e)
+		{
+			Chars.Resize(0x1e9f - FirstChar);
+			LastChar = 0x1e9e;
+		}
+		if (Chars[0x1e9e - FirstChar].TranslatedPic == nullptr)
+		{
+			std::swap(Chars[0xdf - FirstChar], Chars[0x1e9e - FirstChar]);
+			lowercount--;
+			uppercount++;
+			if (lowercount == 0) return;
+		}
+	}
+}
+
+//==========================================================================
+//
 // FFont :: FindFont
 //
 // Searches for the named font in the list of loaded fonts, returning the
@@ -834,15 +879,6 @@ int FFont::GetCharCode(int code, bool needpic) const
 		return code;
 	}
 	
-	// Special handling for the ß which may only exist as lowercase, so for this we need an additional upper -> lower check for all fonts aside from the generic substitution logic.
-	if (code == 0x1e9e)
-	{
-		if (LastChar <= 0xdf && (!needpic || Chars[0xdf - FirstChar].TranslatedPic != nullptr))
-		{
-			return 0xdf;
-		}
-	}
-
 	// Use different substitution logic based on the fonts content:
 	// In a font which has both upper and lower case, prefer unaccented small characters over capital ones.
 	// In a pure upper-case font, do not check for lower case replacements.
@@ -973,6 +1009,47 @@ double GetBottomAlignOffset(FFont *font, int c)
 	if (texc) offset += texc->GetDisplayTopOffsetDouble();
 	if (tex_zero) offset += -tex_zero->GetDisplayTopOffsetDouble() + tex_zero->GetDisplayHeightDouble();
 	return offset;
+}
+
+//==========================================================================
+//
+// Checks if the font contains proper glyphs for all characters in the string
+//
+//==========================================================================
+
+bool FFont::CanPrint(const uint8_t *string) const
+{
+	while (*string)
+	{
+		auto chr = GetCharFromString(string);
+		if (!MixedCase) chr = upperforlower[chr];	// For uppercase-only fonts we shouldn't check lowercase characters.
+		if (chr == TEXTCOLOR_ESCAPE)
+		{
+			// We do not need to check for UTF-8 in here.
+			if (*string == '[')
+			{
+				while (*string != '\0' && *string != ']')
+				{
+					++string;
+				}
+			}
+			if (*string != '\0')
+			{
+				++string;
+			}
+			continue;
+		}
+		else if (chr != '\n')
+		{
+			int cc = GetCharCode(chr, true);
+			if (chr != cc)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 //==========================================================================

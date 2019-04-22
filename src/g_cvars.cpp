@@ -140,20 +140,7 @@ bool CheckFontComplete(FFont *font)
 {
 	// Also check if the SmallFont contains all characters this language needs.
 	// If not, switch back to the original one.
-	const uint8_t* checkstr = (const uint8_t*)GStrings["REQUIRED_CHARACTERS"];
-	bool incomplete = false;
-
-	if (!checkstr) return true;
-	while (int c = GetCharFromString(checkstr))
-	{
-		bool redirected;
-		int cc = font->GetCharCode(c, true);
-		if (c != cc && (c != 0x1e9e || cc != 0xdf))
-		{
-			return false;
-		}
-	}
-	return true;
+	return font->CanPrint(GStrings["REQUIRED_CHARACTERS"]);
 }
 
 void UpdateGenericUI(bool cvar)

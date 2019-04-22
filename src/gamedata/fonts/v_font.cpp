@@ -849,7 +849,7 @@ int stripaccent(int code)
 		else if (code == 0x171) code = 0xfc;
 		else
 		{
-			static const char accentless[] = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiIiJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZz ";
+			static const char accentless[] = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiIiJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZzs";
 			return accentless[code - 0x100];
 		}
 	}
@@ -908,7 +908,7 @@ int stripaccent(int code)
 
 	}
 	
-	// skip the rest of Latin characters because none of them are relevant for modern languages.
+	// skip the rest of Latin characters because none of them are relevant for modern languages, except Vietnamese which cannot be represented with the tiny bitmap fonts anyway.
 	
 	return code;
 }

@@ -113,6 +113,11 @@ public:
 	inline int StringWidth (const char *str) const { return StringWidth ((const uint8_t *)str); }
 	inline int StringWidth (const FString &str) const { return StringWidth ((const uint8_t *)str.GetChars()); }
 
+	// Checks if the font contains all characters to print this text.
+	bool CanPrint(const uint8_t *str) const;
+	inline bool CanPrint(const char *str) const { return CanPrint((const uint8_t *)str); }
+	inline bool CanPrint(const FString &str) const { return CanPrint((const uint8_t *)str.GetChars()); }
+
 	int GetCharCode(int code, bool needpic) const;
 	char GetCursor() const { return Cursor; }
 	void SetCursor(char c) { Cursor = c; }
@@ -120,6 +125,7 @@ public:
 	bool NoTranslate() const { return noTranslate; }
 	void RecordAllTextureColors(uint32_t *usedcolors);
 	virtual void SetDefaultTranslation(uint32_t *colors);
+	void CheckCase();
 
 protected:
 	FFont (int lump);

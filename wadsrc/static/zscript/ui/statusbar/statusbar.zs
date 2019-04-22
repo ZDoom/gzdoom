@@ -828,7 +828,7 @@ class BaseStatusBar native ui
 	// automap HUD common drawer
 	// This is not called directly to give a status bar the opportunity to
 	// change the text colors. If you want to do something different,
-	// override DrawAutomap directly.
+	// override DrawAutomapHUD directly.
 	//
 	//============================================================================
 

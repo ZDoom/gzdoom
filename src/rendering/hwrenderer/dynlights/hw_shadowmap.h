@@ -16,6 +16,8 @@ public:
 	IShadowMap() { }
 	virtual ~IShadowMap();
 
+	void Reset();
+
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
 	bool ShadowTest(FDynamicLight *light, const DVector3 &pos);
 

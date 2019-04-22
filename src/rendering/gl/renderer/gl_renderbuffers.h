@@ -7,6 +7,8 @@
 namespace OpenGLRenderer
 {
 
+class FGLRenderBuffers;
+
 class PPGLTexture
 {
 public:
@@ -29,6 +31,7 @@ private:
 	GLuint handle = 0;
 
 	friend class FGLRenderBuffers;
+	friend class PPGLTextureBackend;
 };
 
 class PPGLFrameBuffer
@@ -45,6 +48,7 @@ private:
 	GLuint handle = 0;
 
 	friend class FGLRenderBuffers;
+	friend class PPGLTextureBackend;
 };
 
 class PPGLRenderBuffer
@@ -57,7 +61,41 @@ private:
 	friend class FGLRenderBuffers;
 };
 
+class PPGLTextureBackend : public PPTextureBackend
+{
+public:
+	~PPGLTextureBackend()
+	{
+		if (Tex.handle != 0)
+		{
+			glDeleteTextures(1, &Tex.handle);
+			Tex.handle = 0;
+		}
+		if (FB.handle != 0)
+		{
+			glDeleteFramebuffers(1, &FB.handle);
+			FB.handle = 0;
+		}
+	}
+
+	PPGLTexture Tex;
+	PPGLFrameBuffer FB;
+};
+
 class FShaderProgram;
+
+class GLPPRenderState : public PPRenderState
+{
+public:
+	GLPPRenderState(FGLRenderBuffers *buffers) : buffers(buffers) { }
+	void Draw() override;
+
+private:
+	PPGLTextureBackend *GetGLTexture(PPTexture *texture);
+	FShaderProgram *GetGLShader(PPShader *shader);
+
+	FGLRenderBuffers *buffers;
+};
 
 class FGLRenderBuffers
 {
@@ -66,10 +104,6 @@ public:
 	~FGLRenderBuffers();
 
 	void Setup(int width, int height, int sceneWidth, int sceneHeight);
-
-	void UpdateEffectTextures();
-	void CompileEffectShaders();
-	void RenderEffect(const FString &name);
 
 	void BindSceneFB(bool sceneData);
 	void BindSceneColorTexture(int index);
@@ -167,12 +201,9 @@ private:
 
 	PPGLTexture mDitherTexture;
 
-	// Postprocess OpenGL objects
-	TMap<PPTextureName, PPGLTexture> GLTextures;
-	TMap<PPTextureName, PPGLFrameBuffer> GLTextureFBs;
-	TMap<PPShaderName, std::shared_ptr<FShaderProgram>> GLShaders;
-
 	static bool FailedCreate;
+
+	friend class GLPPRenderState;
 };
 
 }

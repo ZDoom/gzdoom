@@ -145,18 +145,7 @@ static int	oldentertics;
 
 extern	bool	 advancedemo;
 
-CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	// Do not use the separate FPS limit timer if we are limiting FPS with this.
-	if (self)
-	{
-		I_SetFPSLimit(0);
-	}
-	else
-	{
-		I_SetFPSLimit(-1);
-	}
-}
+CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO | CVAR_NOSAVE)
 CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO | CVAR_NOSAVE)

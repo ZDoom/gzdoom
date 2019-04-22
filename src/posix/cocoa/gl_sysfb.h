@@ -44,37 +44,32 @@ typedef struct objc_object NSCursor;
 typedef struct objc_object CocoaWindow;
 #endif
 
-class SystemGLFrameBuffer : public DFrameBuffer
+class SystemBaseFrameBuffer : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
-	~SystemGLFrameBuffer();
+	SystemBaseFrameBuffer(void *hMonitor, bool fullscreen);
+	~SystemBaseFrameBuffer();
 
-	virtual bool IsFullscreen();
-	virtual void SetVSync(bool vsync);
+	bool IsFullscreen() override;
 
 	int GetClientWidth() override;
 	int GetClientHeight() override;
 	void ToggleFullscreen(bool yes) override;
 	void SetWindowSize(int width, int height) override;
 
-	void SetMode(bool fullscreen, bool hiDPI);
+	virtual void SetMode(bool fullscreen, bool hiDPI);
 
 	static void UseHiDPI(bool hiDPI);
 	static void SetCursor(NSCursor* cursor);
 	static void SetWindowVisible(bool visible);
 	static void SetWindowTitle(const char* title);
 
+	void SetWindow(CocoaWindow* window) { m_window = window; }
+
 protected:
-	SystemGLFrameBuffer() {}
+	SystemBaseFrameBuffer() {}
 
-	void SwapBuffers();
-
-	void SetGammaTable(uint16_t* table);
-	void ResetGammaTable();
-
-private:
 	void SetFullscreenMode();
 	void SetWindowedMode();
 
@@ -83,14 +78,25 @@ private:
 
 	CocoaWindow* m_window;
 
-	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
-	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
-	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
-
-	uint16_t m_originalGamma[GAMMA_TABLE_SIZE];
-
 	int GetTitleBarHeight() const;
 
+};
+
+class SystemGLFrameBuffer : public SystemBaseFrameBuffer
+{
+	typedef SystemBaseFrameBuffer Super;
+
+public:
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
+
+	void SetVSync(bool vsync) override;
+
+	void SetMode(bool fullscreen, bool hiDPI) override;
+
+protected:
+	void SwapBuffers();
+
+	SystemGLFrameBuffer() {}
 };
 
 #endif // COCOA_GL_SYSFB_H_INCLUDED

@@ -406,9 +406,9 @@ void HWViewpointUniforms::SetDefaults()
 //
 //-----------------------------------------------------------------------------
 
-GLDecal *HWDrawInfo::AddDecal(bool onmirror)
+HWDecal *HWDrawInfo::AddDecal(bool onmirror)
 {
-	auto decal = (GLDecal*)RenderDataAllocator.Alloc(sizeof(GLDecal));
+	auto decal = (HWDecal*)RenderDataAllocator.Alloc(sizeof(HWDecal));
 	Decals[onmirror ? 1 : 0].Push(decal);
 	return decal;
 }

@@ -88,7 +88,7 @@ public:
 		tt->Delete();
 		tt->hwTexture =tex;
 	}
-	
+
 	//===========================================================================
 	// 
 	// Deletes all allocated resources and considers translations
@@ -123,6 +123,13 @@ public:
 			auto remap = TranslationToTable(translation);
 			return remap == nullptr ? 0 : remap->GetUniqueIndex();
 		}
+	}
+
+	template<class T>
+	void Iterate(T callback)
+	{
+		for (auto & t : hwDefTex) if (t.hwTexture) callback(t.hwTexture);
+		for (auto & t : hwTex_Translated) if (t.hwTexture) callback(t.hwTexture);
 	}
 
 	

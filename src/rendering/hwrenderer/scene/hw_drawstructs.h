@@ -13,8 +13,8 @@
 #pragma warning(disable:4244)
 #endif
 
-struct GLHorizonInfo;
-struct GLSkyInfo;
+struct HWHorizonInfo;
+struct HWSkyInfo;
 struct F3DFloor;
 class FMaterial;
 struct FTexCoordInfo;
@@ -26,7 +26,7 @@ class VSMatrix;
 struct FSpriteModelFrame;
 struct particle_t;
 class FRenderState;
-struct GLDecal;
+struct HWDecal;
 struct FSection;
 enum area_t : int;
 
@@ -69,7 +69,7 @@ enum PortalTypes
 //
 //==========================================================================
 
-struct GLSectorPlane
+struct HWSectorPlane
 {
 	FTextureID texture;
 	secplane_t plane;
@@ -91,7 +91,7 @@ struct GLSectorPlane
 	}
 };
 
-struct GLSeg
+struct HWSeg
 {
 	float x1,x2;
 	float y1,y2;
@@ -114,21 +114,21 @@ struct texcoord
 
 struct HWDrawInfo;
 
-class GLWall
+class HWWall
 {
 public:
 	static const char passflag[];
 
 	enum
 	{
-		GLWF_CLAMPX=1,
-		GLWF_CLAMPY=2,
-		GLWF_SKYHACK=4,
-		GLWF_GLOW=8,		// illuminated by glowing flats
-		GLWF_NOSPLITUPPER=16,
-		GLWF_NOSPLITLOWER=32,
-		GLWF_NOSPLIT=64,
-		GLWF_TRANSLUCENT = 128
+		HWF_CLAMPX=1,
+		HWF_CLAMPY=2,
+		HWF_SKYHACK=4,
+		HWF_GLOW=8,		// illuminated by glowing flats
+		HWF_NOSPLITUPPER=16,
+		HWF_NOSPLITLOWER=32,
+		HWF_NOSPLIT=64,
+		HWF_TRANSLUCENT = 128
 	};
 
 	enum
@@ -154,7 +154,7 @@ public:
 	FMaterial *gltexture;
 	TArray<lightlist_t> *lightlist;
 
-	GLSeg glseg;
+	HWSeg glseg;
 	float ztop[2],zbottom[2];
 	texcoord tcs[4];
 	float alpha;
@@ -178,8 +178,8 @@ public:
 	{
 		// it's either one of them but never more!
 		FSectorPortal *secportal;	// sector portal (formerly skybox)
-		GLSkyInfo * sky;			// for normal sky
-		GLHorizonInfo * horizon;	// for horizon information
+		HWSkyInfo * sky;			// for normal sky
+		HWHorizonInfo * horizon;	// for horizon information
 		FSectorPortalGroup * portal;			// stacked sector portals
 		secplane_t * planemirror;	// for plane mirrors
 		FLinePortalSpan *lineportal;	// line-to-line portals
@@ -269,7 +269,7 @@ public:
 	void RenderMirrorSurface(HWDrawInfo *di, FRenderState &state);
 	void RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags);
 	void RenderTranslucentWall(HWDrawInfo *di, FRenderState &state);
-	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<GLDecal *> &decals);
+	void DrawDecalsForMirror(HWDrawInfo *di, FRenderState &state, TArray<HWDecal *> &decals);
 
 public:
 	void Process(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
@@ -290,7 +290,7 @@ public:
 //
 //==========================================================================
 
-class GLFlat
+class HWFlat
 {
 public:
 	sector_t * sector;
@@ -304,7 +304,7 @@ public:
 	ERenderStyle renderstyle;
 
 	float alpha;
-	GLSectorPlane plane;
+	HWSectorPlane plane;
 	int lightlevel;
 	bool stack;
 	bool ceiling;
@@ -337,7 +337,7 @@ public:
 //==========================================================================
 
 
-class GLSprite
+class HWSprite
 {
 public:
 	int lightlevel;
@@ -398,7 +398,7 @@ struct DecalVertex
 	float u, v;
 };
 
-struct GLDecal
+struct HWDecal
 {
 	FMaterial *gltexture;
 	TArray<lightlist_t> *lightlist;
@@ -425,7 +425,7 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 	return sqrtf((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
 }
 
-bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
+bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
 void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata);
 
 extern const float LARGE_VALUE;

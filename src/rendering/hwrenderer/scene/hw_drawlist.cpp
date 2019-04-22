@@ -193,9 +193,9 @@ void HWDrawList::MakeSortList()
 //==========================================================================
 SortNode * HWDrawList::FindSortPlane(SortNode * head)
 {
-	while (head->next && drawitems[head->itemindex].rendertype!=GLDIT_FLAT) 
+	while (head->next && drawitems[head->itemindex].rendertype!=DrawType_FLAT) 
 		head=head->next;
-	if (drawitems[head->itemindex].rendertype==GLDIT_FLAT) return head;
+	if (drawitems[head->itemindex].rendertype==DrawType_FLAT) return head;
 	return NULL;
 }
 
@@ -215,8 +215,8 @@ SortNode * HWDrawList::FindSortWall(SortNode * head)
 
 	while (node)
 	{
-		GLDrawItem * it = &drawitems[node->itemindex];
-		if (it->rendertype == GLDIT_WALL)
+		HWDrawItem * it = &drawitems[node->itemindex];
+		if (it->rendertype == DrawType_WALL)
 		{
 			float d = walls[it->index]->ViewDistance;
 			if (d > farthest) farthest = d;
@@ -229,8 +229,8 @@ SortNode * HWDrawList::FindSortWall(SortNode * head)
 	farthest = (farthest + nearest) / 2;
 	while (node)
 	{
-		GLDrawItem * it = &drawitems[node->itemindex];
-		if (it->rendertype == GLDIT_WALL)
+		HWDrawItem * it = &drawitems[node->itemindex];
+		if (it->rendertype == DrawType_WALL)
 		{
 			float di = fabsf(walls[it->index]->ViewDistance - farthest);
 			if (!best || di < bestdist)
@@ -251,8 +251,8 @@ SortNode * HWDrawList::FindSortWall(SortNode * head)
 //==========================================================================
 void HWDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 {
-	GLFlat * fh= flats[drawitems[head->itemindex].index];
-	GLFlat * fs= flats[drawitems[sort->itemindex].index];
+	HWFlat * fh= flats[drawitems[head->itemindex].index];
+	HWFlat * fs= flats[drawitems[sort->itemindex].index];
 
 	if (fh->z==fs->z) 
 		head->AddToEqual(sort);
@@ -270,8 +270,8 @@ void HWDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 //==========================================================================
 void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 {
-	GLFlat * fh = flats[drawitems[head->itemindex].index];
-	GLWall * ws = walls[drawitems[sort->itemindex].index];
+	HWFlat * fh = flats[drawitems[head->itemindex].index];
+	HWWall * ws = walls[drawitems[sort->itemindex].index];
 
 	bool ceiling = fh->z > SortZ;
 
@@ -279,14 +279,14 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 	{
 		// We have to split this wall!
 
-		GLWall *w = NewWall();
+		HWWall *w = NewWall();
 		*w = *ws;
 
 		// Splitting is done in the shader with clip planes, if available
 		if (screen->hwcaps & RFL_NO_CLIP_PLANES)
 		{
 			ws->vertcount = 0;	// invalidate current vertices.
-			float newtexv = ws->tcs[GLWall::UPLFT].v + ((ws->tcs[GLWall::LOLFT].v - ws->tcs[GLWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
+			float newtexv = ws->tcs[HWWall::UPLFT].v + ((ws->tcs[HWWall::LOLFT].v - ws->tcs[HWWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
 
 			// I make the very big assumption here that translucent walls in sloped sectors
 			// and 3D-floors never coexist in the same level - If that were the case this
@@ -294,12 +294,12 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 			if (!ceiling)
 			{
 				ws->ztop[1] = w->zbottom[1] = ws->ztop[0] = w->zbottom[0] = fh->z;
-				ws->tcs[GLWall::UPRGT].v = w->tcs[GLWall::LORGT].v = ws->tcs[GLWall::UPLFT].v = w->tcs[GLWall::LOLFT].v = newtexv;
+				ws->tcs[HWWall::UPRGT].v = w->tcs[HWWall::LORGT].v = ws->tcs[HWWall::UPLFT].v = w->tcs[HWWall::LOLFT].v = newtexv;
 			}
 			else
 			{
 				w->ztop[1] = ws->zbottom[1] = w->ztop[0] = ws->zbottom[0] = fh->z;
-				w->tcs[GLWall::UPLFT].v = ws->tcs[GLWall::LOLFT].v = w->tcs[GLWall::UPRGT].v = ws->tcs[GLWall::LORGT].v = newtexv;
+				w->tcs[HWWall::UPLFT].v = ws->tcs[HWWall::LOLFT].v = w->tcs[HWWall::UPRGT].v = ws->tcs[HWWall::LORGT].v = newtexv;
 			}
 		}
 
@@ -328,8 +328,8 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 //==========================================================================
 void HWDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 {
-	GLFlat * fh = flats[drawitems[head->itemindex].index];
-	GLSprite * ss = sprites[drawitems[sort->itemindex].index];
+	HWFlat * fh = flats[drawitems[head->itemindex].index];
+	HWSprite * ss = sprites[drawitems[sort->itemindex].index];
 
 	bool ceiling = fh->z > SortZ;
 
@@ -339,7 +339,7 @@ void HWDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 	if ((hiz > fh->z && loz < fh->z) || ss->modelframe)
 	{
 		// We have to split this sprite
-		GLSprite *s = NewSprite();
+		HWSprite *s = NewSprite();
 		*s = *ss;
 
 		// Splitting is done in the shader with clip planes, if available.
@@ -385,7 +385,7 @@ void HWDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 #define MIN_EQ (0.0005f)
 
 // Lines start-end and fdiv must intersect.
-inline double CalcIntersectionVertex(GLWall *w1, GLWall * w2)
+inline double CalcIntersectionVertex(HWWall *w1, HWWall * w2)
 {
 	float ax = w1->glseg.x1, ay = w1->glseg.y1;
 	float bx = w1->glseg.x2, by = w1->glseg.y2;
@@ -396,8 +396,8 @@ inline double CalcIntersectionVertex(GLWall *w1, GLWall * w2)
 
 void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort)
 {
-	GLWall * wh= walls[drawitems[head->itemindex].index];
-	GLWall * ws= walls[drawitems[sort->itemindex].index];
+	HWWall * wh= walls[drawitems[head->itemindex].index];
+	HWWall * ws= walls[drawitems[sort->itemindex].index];
 	float v1=wh->PointOnSide(ws->glseg.x1,ws->glseg.y1);
 	float v2=wh->PointOnSide(ws->glseg.x2,ws->glseg.y2);
 
@@ -430,12 +430,12 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sor
 
 		float ix=(float)(ws->glseg.x1+r*(ws->glseg.x2-ws->glseg.x1));
 		float iy=(float)(ws->glseg.y1+r*(ws->glseg.y2-ws->glseg.y1));
-		float iu=(float)(ws->tcs[GLWall::UPLFT].u + r * (ws->tcs[GLWall::UPRGT].u - ws->tcs[GLWall::UPLFT].u));
+		float iu=(float)(ws->tcs[HWWall::UPLFT].u + r * (ws->tcs[HWWall::UPRGT].u - ws->tcs[HWWall::UPLFT].u));
 		float izt=(float)(ws->ztop[0]+r*(ws->ztop[1]-ws->ztop[0]));
 		float izb=(float)(ws->zbottom[0]+r*(ws->zbottom[1]-ws->zbottom[0]));
 
 		ws->vertcount = 0;	// invalidate current vertices.
-		GLWall *w= NewWall();
+		HWWall *w= NewWall();
 		*w = *ws;
 
 		w->glseg.x1=ws->glseg.x2=ix;
@@ -443,7 +443,7 @@ void HWDrawList::SortWallIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sor
 		w->glseg.fracleft = ws->glseg.fracright = ws->glseg.fracleft + r*(ws->glseg.fracright - ws->glseg.fracleft);
 		w->ztop[0]=ws->ztop[1]=izt;
 		w->zbottom[0]=ws->zbottom[1]=izb;
-		w->tcs[GLWall::LOLFT].u = w->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
+		w->tcs[HWWall::LOLFT].u = w->tcs[HWWall::UPLFT].u = ws->tcs[HWWall::LORGT].u = ws->tcs[HWWall::UPRGT].u = iu;
 		ws->MakeVertices(di, false);
 		w->MakeVertices(di, false);
 
@@ -474,7 +474,7 @@ EXTERN_CVAR(Int, gl_billboard_mode)
 EXTERN_CVAR(Bool, gl_billboard_faces_camera)
 EXTERN_CVAR(Bool, gl_billboard_particles)
 
-inline double CalcIntersectionVertex(GLSprite *s, GLWall * w2)
+inline double CalcIntersectionVertex(HWSprite *s, HWWall * w2)
 {
 	float ax = s->x1, ay = s->y1;
 	float bx = s->x2, by = s->y2;
@@ -485,8 +485,8 @@ inline double CalcIntersectionVertex(GLSprite *s, GLWall * w2)
 
 void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * sort)
 {
-	GLWall *wh= walls[drawitems[head->itemindex].index];
-	GLSprite * ss= sprites[drawitems[sort->itemindex].index];
+	HWWall *wh= walls[drawitems[head->itemindex].index];
+	HWSprite * ss= sprites[drawitems[sort->itemindex].index];
 
 	float v1 = wh->PointOnSide(ss->x1, ss->y1);
 	float v2 = wh->PointOnSide(ss->x2, ss->y2);
@@ -539,7 +539,7 @@ void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * s
 		float iy=(float)(ss->y1 + r * (ss->y2-ss->y1));
 		float iu=(float)(ss->ul + r * (ss->ur-ss->ul));
 
-		GLSprite *s = NewSprite();
+		HWSprite *s = NewSprite();
 		*s = *ss;
 
 		s->x1=ss->x2=ix;
@@ -582,8 +582,8 @@ void HWDrawList::SortSpriteIntoWall(HWDrawInfo *di, SortNode * head,SortNode * s
 
 inline int HWDrawList::CompareSprites(SortNode * a,SortNode * b)
 {
-	GLSprite * s1= sprites[drawitems[a->itemindex].index];
-	GLSprite * s2= sprites[drawitems[b->itemindex].index];
+	HWSprite * s1= sprites[drawitems[a->itemindex].index];
+	HWSprite * s2= sprites[drawitems[b->itemindex].index];
 
 	int res = s1->depth - s2->depth;
 
@@ -643,15 +643,15 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 			next=node->next;
 			switch(drawitems[node->itemindex].rendertype)
 			{
-			case GLDIT_FLAT:
+			case DrawType_FLAT:
 				SortPlaneIntoPlane(head,node);
 				break;
 
-			case GLDIT_WALL:
+			case DrawType_WALL:
 				SortWallIntoPlane(head,node);
 				break;
 
-			case GLDIT_SPRITE:
+			case DrawType_SPRITE:
 				SortSpriteIntoPlane(head,node);
 				break;
 			}
@@ -672,15 +672,15 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 				next=node->next;
 				switch(drawitems[node->itemindex].rendertype)
 				{
-				case GLDIT_WALL:
+				case DrawType_WALL:
 					SortWallIntoWall(di, head,node);
 					break;
 
-				case GLDIT_SPRITE:
+				case DrawType_SPRITE:
 					SortSpriteIntoWall(di, head, node);
 					break;
 
-				case GLDIT_FLAT: break;
+				case DrawType_FLAT: break;
 				}
 				node=next;
 			}
@@ -718,10 +718,10 @@ void HWDrawList::SortWalls()
 {
 	if (drawitems.Size() > 1)
 	{
-		std::sort(drawitems.begin(), drawitems.end(), [=](const GLDrawItem &a, const GLDrawItem &b) -> bool
+		std::sort(drawitems.begin(), drawitems.end(), [=](const HWDrawItem &a, const HWDrawItem &b) -> bool
 		{
-			GLWall * w1 = walls[a.index];
-			GLWall * w2 = walls[b.index];
+			HWWall * w1 = walls[a.index];
+			HWWall * w2 = walls[b.index];
 
 			if (w1->gltexture != w2->gltexture) return w1->gltexture < w2->gltexture;
 			return (w1->flags & 3) < (w2->flags & 3);
@@ -734,10 +734,10 @@ void HWDrawList::SortFlats()
 {
 	if (drawitems.Size() > 1)
 	{
-		std::sort(drawitems.begin(), drawitems.end(), [=](const GLDrawItem &a, const GLDrawItem &b)
+		std::sort(drawitems.begin(), drawitems.end(), [=](const HWDrawItem &a, const HWDrawItem &b)
 		{
-			GLFlat * w1 = flats[a.index];
-			GLFlat* w2 = flats[b.index];
+			HWFlat * w1 = flats[a.index];
+			HWFlat* w2 = flats[b.index];
 			return w1->gltexture < w2->gltexture;
 		});
 	}
@@ -750,10 +750,10 @@ void HWDrawList::SortFlats()
 //
 //==========================================================================
 
-GLWall *HWDrawList::NewWall()
+HWWall *HWDrawList::NewWall()
 {
-	auto wall = (GLWall*)RenderDataAllocator.Alloc(sizeof(GLWall));
-	drawitems.Push(GLDrawItem(GLDIT_WALL, walls.Push(wall)));
+	auto wall = (HWWall*)RenderDataAllocator.Alloc(sizeof(HWWall));
+	drawitems.Push(HWDrawItem(DrawType_WALL, walls.Push(wall)));
 	return wall;
 }
 
@@ -762,10 +762,10 @@ GLWall *HWDrawList::NewWall()
 //
 //
 //==========================================================================
-GLFlat *HWDrawList::NewFlat()
+HWFlat *HWDrawList::NewFlat()
 {
-	auto flat = (GLFlat*)RenderDataAllocator.Alloc(sizeof(GLFlat));
-	drawitems.Push(GLDrawItem(GLDIT_FLAT,flats.Push(flat)));
+	auto flat = (HWFlat*)RenderDataAllocator.Alloc(sizeof(HWFlat));
+	drawitems.Push(HWDrawItem(DrawType_FLAT,flats.Push(flat)));
 	return flat;
 }
 
@@ -774,10 +774,10 @@ GLFlat *HWDrawList::NewFlat()
 //
 //
 //==========================================================================
-GLSprite *HWDrawList::NewSprite()
+HWSprite *HWDrawList::NewSprite()
 {	
-	auto sprite = (GLSprite*)RenderDataAllocator.Alloc(sizeof(GLSprite));
-	drawitems.Push(GLDrawItem(GLDIT_SPRITE, sprites.Push(sprite)));
+	auto sprite = (HWSprite*)RenderDataAllocator.Alloc(sizeof(HWSprite));
+	drawitems.Push(HWDrawItem(DrawType_SPRITE, sprites.Push(sprite)));
 	return sprite;
 }
 
@@ -790,27 +790,27 @@ void HWDrawList::DoDraw(HWDrawInfo *di, FRenderState &state, bool translucent, i
 {
 	switch(drawitems[i].rendertype)
 	{
-	case GLDIT_FLAT:
+	case DrawType_FLAT:
 		{
-			GLFlat * f= flats[drawitems[i].index];
+			HWFlat * f= flats[drawitems[i].index];
 			RenderFlat.Clock();
 			f->DrawFlat(di, state, translucent);
 			RenderFlat.Unclock();
 		}
 		break;
 
-	case GLDIT_WALL:
+	case DrawType_WALL:
 		{
-			GLWall * w= walls[drawitems[i].index];
+			HWWall * w= walls[drawitems[i].index];
 			RenderWall.Clock();
 			w->DrawWall(di, state, translucent);
 			RenderWall.Unclock();
 		}
 		break;
 
-	case GLDIT_SPRITE:
+	case DrawType_SPRITE:
 		{
-			GLSprite * s= sprites[drawitems[i].index];
+			HWSprite * s= sprites[drawitems[i].index];
 			RenderSprite.Clock();
 			s->DrawSprite(di, state, translucent);
 			RenderSprite.Unclock();
@@ -875,7 +875,7 @@ void HWDrawList::DrawSorted(HWDrawInfo *di, FRenderState &state, SortNode * head
 
 	state.GetClipSplit(clipsplit);
 
-	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
+	if (drawitems[head->itemindex].rendertype == DrawType_FLAT)
 	{
 		z = flats[drawitems[head->itemindex].index]->z;
 		relation = z > di->Viewpoint.Pos.Z ? 1 : -1;

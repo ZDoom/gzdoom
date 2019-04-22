@@ -913,6 +913,7 @@ OptionMenu "VideoOptions" protected
 
 	Submenu "$DSPLYMNU_GLOPT", 			"OpenGLOptions"
 	Submenu "$DSPLYMNU_SWOPT", 			"SWROptions"
+	Submenu "$DSPLYMNU_VKOPT",			"VKOptions"
 	Submenu "$GLMNU_TEXOPT", 			"GLTextureGLOptions"
 	Submenu "$GLMNU_DYNLIGHT",			"GLLightOptions"
 	StaticText " "
@@ -2731,4 +2732,21 @@ OptionValue "os_isanyof_values"
 {
 	0, "$OS_ALL"
 	1, "$OS_ANY"
+}
+
+/*=======================================
+ *
+ * Vulkan Menu
+ *
+ *=======================================*/
+
+OptionMenu "vkoptions"
+{
+	Title "$VK_TITLE"
+	StaticText "$VK_WARNING"
+	StaticText "$VK_RESTART"
+	StaticText ""
+	Option "$VKMNU_ENABLE",				"vid_enablevulkan", "OnOff"
+	TextField "$VKMNU_DEVICE",			vk_device
+	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
 }

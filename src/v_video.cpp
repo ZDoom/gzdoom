@@ -70,7 +70,6 @@
 #include "g_levellocals.h"
 #include "am_map.h"
 
-EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
 
@@ -90,10 +89,6 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	{
 		vid_maxfps = 1000;
 	}
-	else if (cl_capfps == 0)
-	{
-		I_SetFPSLimit(vid_maxfps);
-	}
 }
 
 CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -111,6 +106,15 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	screen->SetTextureFilterMode();
 
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
+}
+
+CUSTOM_CVAR(Int, vid_enablevulkan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// [SP] This may seem pointless - but I don't want to implement live switching just
+	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
+	// do it right without memory leaks
+
+	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
 }
 
 CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...

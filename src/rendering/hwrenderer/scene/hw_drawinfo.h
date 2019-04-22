@@ -21,10 +21,10 @@ enum EDrawMode
 struct FSectorPortalGroup;
 struct FLinePortalSpan;
 struct FFlatVertex;
-class GLWall;
-class GLFlat;
-class GLSprite;
-struct GLDecal;
+class HWWall;
+class HWFlat;
+class HWSprite;
+struct HWDecal;
 class IShadowMap;
 struct particle_t;
 struct FDynLightData;
@@ -148,7 +148,7 @@ struct HWDrawInfo
 	FRenderViewpoint Viewpoint;
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
 	TArray<HWPortal *> Portals;
-	TArray<GLDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
+	TArray<HWDecal *> Decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
@@ -299,19 +299,19 @@ public:
 	void SetupView(FRenderState &state, float vx, float vy, float vz, bool mirror, bool planemirror);
 	angle_t FrustumAngle();
 
-	void DrawDecals(FRenderState &state, TArray<GLDecal *> &decals);
+	void DrawDecals(FRenderState &state, TArray<HWDecal *> &decals);
 	void DrawPlayerSprites(bool hudModelStep, FRenderState &state);
 
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub);
     
-    void AddWall(GLWall *w);
-    void AddMirrorSurface(GLWall *w);
-	void AddFlat(GLFlat *flat, bool fog);
-	void AddSprite(GLSprite *sprite, bool translucent);
+    void AddWall(HWWall *w);
+    void AddMirrorSurface(HWWall *w);
+	void AddFlat(HWFlat *flat, bool fog);
+	void AddSprite(HWSprite *sprite, bool translucent);
 
 
-    GLDecal *AddDecal(bool onmirror);
+    HWDecal *AddDecal(bool onmirror);
 
 	bool isSoftwareLighting() const
 	{

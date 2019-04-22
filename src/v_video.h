@@ -50,7 +50,6 @@ static const int VID_MIN_WIDTH = 640;
 static const int VID_MIN_HEIGHT = 400;
 
 struct sector_t;
-class IShaderProgram;
 class FTexture;
 struct FPortalSceneState;
 class FSkyVertexBuffer;
@@ -394,6 +393,7 @@ public:
 	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer();
 	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
+	virtual bool IsVulkan() { return false; }
 
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)
@@ -436,20 +436,19 @@ public:
 	virtual IHardwareTexture *CreateHardwareTexture() { return nullptr; }
 	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
-	virtual void UnbindTexUnit(int no) {}
 	virtual void TextureFilterChanged() {}
 	virtual void BeginFrame() {}
 	virtual void SetWindowSize(int w, int h) {}
+	virtual void StartPrecaching() {}
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
 	virtual void BlurScene(float amount) {}
     
     // Interface to hardware rendering resources
-	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
 	virtual IVertexBuffer *CreateVertexBuffer() { return nullptr; }
 	virtual IIndexBuffer *CreateIndexBuffer() { return nullptr; }
-	virtual IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo) { return nullptr; }
+	virtual IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
 
 	// Begin/End 2D drawing operations.
@@ -557,6 +556,7 @@ public:
 	int ScreenToWindowX(int x);
 	int ScreenToWindowY(int y);
 
+	void FPSLimit();
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
@@ -573,6 +573,7 @@ protected:
 	void DrawRateStuff ();
 
 private:
+	uint64_t fpsLimitTime = 0;
 
 	uint64_t LastMS = 0, LastSec = 0, FrameCount = 0, LastCount = 0, LastTic = 0;
 

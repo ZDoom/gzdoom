@@ -9,7 +9,7 @@
 #include "hwrenderer/textures/hw_material.h"
 
 
-struct GLSkyInfo
+struct HWSkyInfo
 {
 	float x_offset[2];
 	float y_offset;		// doubleskies don't have a y-offset
@@ -20,20 +20,20 @@ struct GLSkyInfo
 	bool sky2;
 	PalEntry fadecolor;
 
-	bool operator==(const GLSkyInfo & inf)
+	bool operator==(const HWSkyInfo & inf)
 	{
 		return !memcmp(this, &inf, sizeof(*this));
 	}
-	bool operator!=(const GLSkyInfo & inf)
+	bool operator!=(const HWSkyInfo & inf)
 	{
 		return !!memcmp(this, &inf, sizeof(*this));
 	}
 	void init(HWDrawInfo *di, int sky1, PalEntry fadecolor);
 };
 
-struct GLHorizonInfo
+struct HWHorizonInfo
 {
-	GLSectorPlane plane;
+	HWSectorPlane plane;
 	int lightlevel;
 	FColormap colormap;
 	PalEntry specialcolor;
@@ -61,7 +61,7 @@ class HWPortal
 
 public:
 	FPortalSceneState * mState;
-	TArray<GLWall> lines;
+	TArray<HWWall> lines;
 	BoundingRect boundingBox;
 	int planesused = 0;
 
@@ -83,7 +83,7 @@ public:
 	void SetupStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 	void RemoveStencil(HWDrawInfo *di, FRenderState &state, bool usestencil);
 
-	void AddLine(GLWall * l)
+	void AddLine(HWWall * l)
 	{
 		lines.Push(*l);
 		boundingBox.addVertex(l->glseg.x1, l->glseg.y1);
@@ -103,8 +103,8 @@ struct FPortalSceneState
 	int PlaneMirrorMode = 0;
 	bool inskybox = 0;
 
-	UniqueList<GLSkyInfo> UniqueSkies;
-	UniqueList<GLHorizonInfo> UniqueHorizons;
+	UniqueList<HWSkyInfo> UniqueSkies;
+	UniqueList<HWHorizonInfo> UniqueHorizons;
 	UniqueList<secplane_t> UniquePlaneMirrors;
 
 	int skyboxrecursion = 0;
@@ -313,7 +313,7 @@ public:
 
 struct HWHorizonPortal : public HWPortal
 {
-	GLHorizonInfo * origin;
+	HWHorizonInfo * origin;
 	unsigned int voffset;
 	unsigned int vcount;
 	friend struct HWEEHorizonPortal;
@@ -327,7 +327,7 @@ protected:
 
 public:
 	
-	HWHorizonPortal(FPortalSceneState *state, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
+	HWHorizonPortal(FPortalSceneState *state, HWHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
 };
 
 struct HWEEHorizonPortal : public HWPortal
@@ -353,7 +353,7 @@ public:
 
 struct HWSkyPortal : public HWPortal
 {
-	GLSkyInfo * origin;
+	HWSkyInfo * origin;
 	FSkyVertexBuffer *vertexBuffer;
 	friend struct HWEEHorizonPortal;
 
@@ -371,7 +371,7 @@ protected:
 public:
 
 
-	HWSkyPortal(FSkyVertexBuffer *vertexbuffer, FPortalSceneState *state, GLSkyInfo *  pt, bool local = false)
+	HWSkyPortal(FSkyVertexBuffer *vertexbuffer, FPortalSceneState *state, HWSkyInfo *  pt, bool local = false)
 		: HWPortal(state, local)
 	{
 		origin = pt;

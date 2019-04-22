@@ -35,6 +35,7 @@
 #include "hwrenderer/textures/hw_material.h"
 #include "image.h"
 #include "v_video.h"
+#include "v_font.h"
 
 
 //==========================================================================
@@ -169,18 +170,50 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		if (!modellist[i]) Models[i]->DestroyVertexBuffer();
 	}
 
-	// delete unused textures
+	TMap<FTexture *, bool> usedTextures, usedSprites;
+
+	screen->StartPrecaching();
 	int cnt = TexMan.NumTextures();
+
+	// prepare the textures for precaching. First collect all used layer textures so that we know which ones should not be deleted.
 	for (int i = cnt - 1; i >= 0; i--)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
 		if (tex != nullptr)
 		{
-			if (!texhitlist[i])
+			FMaterial *mat = FMaterial::ValidateTexture(tex, false, false);
+			if (mat != nullptr)
+			{
+				for (auto ftex : mat->GetLayerArray())
+				{
+					usedTextures.Insert(ftex, true);
+				}
+			}
+			if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
+			{
+				FMaterial *mat = FMaterial::ValidateTexture(tex, true, false);
+				if (mat != nullptr)
+				{
+					for (auto ftex : mat->GetLayerArray())
+					{
+						usedSprites.Insert(ftex, true);
+					}
+				}
+			}
+		}
+	}
+
+	// delete unused textures (i.e. those which didn't get referenced by any material in the cache list.
+	for (int i = cnt - 1; i >= 0; i--)
+	{
+		FTexture *tex = TexMan.ByIndex(i);
+		if (tex != nullptr && tex->GetUseType() != ETextureType::FontChar)
+		{
+			if (usedTextures.CheckKey(tex) == nullptr)
 			{
 				tex->SystemTextures.Clean(true, false);
 			}
-			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
+			if (usedSprites.CheckKey(tex) == nullptr)
 			{
 				tex->SystemTextures.Clean(false, true);
 			}

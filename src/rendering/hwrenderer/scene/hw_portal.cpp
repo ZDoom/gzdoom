@@ -875,13 +875,13 @@ const char *HWPlaneMirrorPortal::GetName() { return origin->fC() < 0? "Planemirr
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local)
+HWHorizonPortal::HWHorizonPortal(FPortalSceneState *s, HWHorizonInfo * pt, FRenderViewpoint &vp, bool local)
 : HWPortal(s, local)
 {
 	origin = pt;
 
 	// create the vertex data for this horizon portal.
-	GLSectorPlane * sp = &origin->plane;
+	HWSectorPlane * sp = &origin->plane;
 	const float vx = vp.Pos.X;
 	const float vy = vp.Pos.Y;
 	const float vz = vp.Pos.Z;
@@ -948,7 +948,7 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	Clocker c(PortalAll);
 
 	FMaterial * gltexture;
-	GLSectorPlane * sp = &origin->plane;
+	HWSectorPlane * sp = &origin->plane;
 	auto &vp = di->Viewpoint;
 
 	gltexture = FMaterial::ValidateTexture(sp->texture, false, true);
@@ -1018,14 +1018,14 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	if (sector->GetTexture(sector_t::floor) == skyflatnum ||
 		sector->GetTexture(sector_t::ceiling) == skyflatnum)
 	{
-		GLSkyInfo skyinfo;
+		HWSkyInfo skyinfo;
 		skyinfo.init(di, sector->sky, 0);
 		HWSkyPortal sky(screen->mSkyData, mState, &skyinfo, true);
 		sky.DrawContents(di, state);
 	}
 	if (sector->GetTexture(sector_t::ceiling) != skyflatnum)
 	{
-		GLHorizonInfo horz;
+		HWHorizonInfo horz;
 		horz.plane.GetFromSector(sector, sector_t::ceiling);
 		horz.lightlevel = hw_ClampLight(sector->GetCeilingLight());
 		horz.colormap = sector->Colormap;
@@ -1039,7 +1039,7 @@ void HWEEHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	}
 	if (sector->GetTexture(sector_t::floor) != skyflatnum)
 	{
-		GLHorizonInfo horz;
+		HWHorizonInfo horz;
 		horz.plane.GetFromSector(sector, sector_t::floor);
 		horz.lightlevel = hw_ClampLight(sector->GetFloorLight());
 		horz.colormap = sector->Colormap;

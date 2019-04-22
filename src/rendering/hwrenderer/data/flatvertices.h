@@ -30,6 +30,8 @@
 #include <mutex>
 
 class FRenderState;
+struct secplane_t;
+struct subsector_t;
 
 struct FFlatVertex
 {

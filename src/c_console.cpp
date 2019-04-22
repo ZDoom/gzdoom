@@ -581,11 +581,6 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 	setmsgcolor (PRINTLEVELS+1, self);
 }
 
-EColorRange C_GetDefaultFontColor()
-{
-	 return CR_UNTRANSLATED;
-}
-
 FFont * C_GetDefaultHUDFont()
 {
 	return generic_ui? NewSmallFont : SmallFont;

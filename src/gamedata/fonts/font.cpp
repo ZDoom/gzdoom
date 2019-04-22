@@ -1019,6 +1019,7 @@ double GetBottomAlignOffset(FFont *font, int c)
 
 bool FFont::CanPrint(const uint8_t *string) const
 {
+	if (!string) return true;
 	while (*string)
 	{
 		auto chr = GetCharFromString(string);
@@ -1042,7 +1043,7 @@ bool FFont::CanPrint(const uint8_t *string) const
 		else if (chr != '\n')
 		{
 			int cc = GetCharCode(chr, true);
-			if (chr != cc)
+			if (chr != cc && iswalpha(chr))
 			{
 				return false;
 			}

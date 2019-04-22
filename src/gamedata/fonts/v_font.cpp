@@ -1601,6 +1601,10 @@ void V_InitFonts()
 	{
 		BigFont = NewSmallFont;
 	}
+	if (OriginalSmallFont == nullptr)
+	{
+		OriginalSmallFont = SmallFont;
+	}
 	AlternativeSmallFont = OriginalSmallFont;
 	UpdateGenericUI(false);
 }

@@ -609,6 +609,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 
 	if (!generic_ui)
 	{
+		// If the original font does not have accents this will strip them - but a fallback to the VGA font is not desirable here for such cases.
 		if (!font->CanPrint(GStrings("AM_MONSTERS")) || !font->CanPrint(GStrings("AM_SECRETS")) || !font->CanPrint(GStrings("AM_ITEMS"))) font2 = OriginalSmallFont;
 	}
 

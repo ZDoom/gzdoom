@@ -62,7 +62,7 @@ class MessageBoxMenu : Menu
 		mMouseLeft = 140;
 		mMouseY = 0x80000000;
 		
-		if (generic_ui)
+		//if (generic_ui)
 		{
 			arrowFont = textFont = NewSmallFont;
 			int factor = (CleanXfac+1) / 2;
@@ -70,6 +70,7 @@ class MessageBoxMenu : Menu
 			destHeight = screen.GetHeight() / factor;
 			selector = "▶";
 		}
+		/*
 		else
 		{
 			textFont = AlternativeSmallFont;
@@ -78,6 +79,7 @@ class MessageBoxMenu : Menu
 			destHeight = CleanHeight;
 			selector = "\xd";
 		}
+		*/
 
 		int mr1 = destWidth/2 + 10 + textFont.StringWidth(Stringtable.Localize("$TXT_YES"));
 		int mr2 = destWidth/2 + 10 + textFont.StringWidth(Stringtable.Localize("$TXT_NO"));

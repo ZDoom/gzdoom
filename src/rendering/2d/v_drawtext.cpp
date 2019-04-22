@@ -181,10 +181,6 @@ void DFrameBuffer::DrawChar (FFont *font, int normalcolor, double x, double y, i
 	int dummy;
 	bool redirected;
 
-	// Workaround until this can be automated.
-	if (font == NewSmallFont && normalcolor == CR_UNTRANSLATED)
-		normalcolor = C_GetDefaultFontColor();
-
 	if (NULL != (pic = font->GetChar (character, normalcolor, &dummy, &redirected)))
 	{
 		DrawParms parms;
@@ -214,11 +210,6 @@ void DFrameBuffer::DrawChar(FFont *font, int normalcolor, double x, double y, in
 	FTexture *pic;
 	int dummy;
 	bool redirected;
-
-	// Workaround until this can be automated.
-	if (font == NewSmallFont && normalcolor == CR_UNTRANSLATED)
-		normalcolor = C_GetDefaultFontColor();
-
 
 	if (NULL != (pic = font->GetChar(character, normalcolor, &dummy, &redirected)))
 	{
@@ -273,10 +264,6 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 	FRemapTable *range;
 	int			kerning;
 	FTexture *pic;
-
-	// Workaround until this can be automated.
-	if (font == NewSmallFont && normalcolor == CR_UNTRANSLATED)
-		normalcolor = C_GetDefaultFontColor();
 
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
 	parms.celly *= parms.scaley;

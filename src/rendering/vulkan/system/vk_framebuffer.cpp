@@ -89,8 +89,6 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 	for (int i = 0; i < maxConcurrentSubmitCount; i++)
 		mSubmitWaitFences[i] = mSubmitFence[i]->fence;
-
-	InitPalette();
 }
 
 VulkanFrameBuffer::~VulkanFrameBuffer()

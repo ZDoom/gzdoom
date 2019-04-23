@@ -26,6 +26,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly Font NewSmallFont;
 	native readonly Font AlternativeSmallFont;
 	native readonly Font OriginalSmallFont;
+	native readonly Font OriginalBigFont;
 	native readonly Font intermissionfont;
 	native readonly int CleanXFac;
 	native readonly int CleanYFac;

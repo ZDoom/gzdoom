@@ -108,7 +108,7 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
 
-CUSTOM_CVAR(Int, vid_enablevulkan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_enablevulkan, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// [SP] This may seem pointless - but I don't want to implement live switching just
 	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
@@ -149,7 +149,7 @@ public:
 
 int DisplayWidth, DisplayHeight;
 
-FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont;
+FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
 
 uint32_t Col2RGB8[65][256];
 uint32_t *Col2RGB8_LessPrecision[65];
@@ -919,6 +919,7 @@ DEFINE_GLOBAL(NewConsoleFont)
 DEFINE_GLOBAL(NewSmallFont)
 DEFINE_GLOBAL(AlternativeSmallFont)
 DEFINE_GLOBAL(OriginalSmallFont)
+DEFINE_GLOBAL(OriginalBigFont)
 DEFINE_GLOBAL(IntermissionFont)
 DEFINE_GLOBAL(CleanXfac)
 DEFINE_GLOBAL(CleanYfac)

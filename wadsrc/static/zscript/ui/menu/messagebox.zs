@@ -61,8 +61,15 @@ class MessageBoxMenu : Menu
 		messageSelection = 0;
 		mMouseLeft = 140;
 		mMouseY = 0x80000000;
+		textFont = null;
+
+		if (!generic_ui)
+		{
+			if (SmallFont.CanPrint(message) && SmallFont.CanPrint("$TXT_YES") && SmallFont.CanPrint("$TXT_NO")) textFont = SmallFont;
+			else if (OriginalSmallFont.CanPrint(message) && OriginalSmallFont.CanPrint("$TXT_YES") && OriginalSmallFont.CanPrint("$TXT_NO")) textFont = OriginalSmallFont;
+		}
 		
-		if (generic_ui)
+		if (!textFont)
 		{
 			arrowFont = textFont = NewSmallFont;
 			int factor = (CleanXfac+1) / 2;
@@ -72,7 +79,6 @@ class MessageBoxMenu : Menu
 		}
 		else
 		{
-			textFont = AlternativeSmallFont;
 			arrowFont = ConFont;
 			destWidth = CleanWidth;
 			destHeight = CleanHeight;

@@ -105,13 +105,14 @@ public:
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
 				mTranslation == other.mTranslation &&
-				mSpecialColormap == other.mSpecialColormap &&
+				mSpecialColormap[0].d == other.mSpecialColormap[0].d &&
+				mSpecialColormap[1].d == other.mSpecialColormap[1].d &&
 				!memcmp(mScissor, other.mScissor, sizeof(mScissor)) &&
 				mDesaturate == other.mDesaturate &&
 				mRenderStyle == other.mRenderStyle &&
 				mDrawMode == other.mDrawMode &&
 				mFlags == other.mFlags &&
-				mColor1 == other.mColor1;
+				mColor1.d == other.mColor1.d;
 
 		}
 	};

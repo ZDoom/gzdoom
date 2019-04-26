@@ -99,9 +99,7 @@ class MaxHealth : Health
 	override bool TryPickup (in out Actor other)
 	{
 		bool success = false;
-		int savedAmount = MaxAmount;
 		let player = PlayerPawn(other);
-		MaxAmount = Health;
 		if (player)
 		{
 			if (player.BonusHealth < savedAmount)
@@ -109,10 +107,8 @@ class MaxHealth : Health
 				player.BonusHealth = min(player.BonusHealth + Amount, savedAmount);
 				success = true;
 			}
-			MaxAmount += player.BonusHealth;
 		}
 		success |= Super.TryPickup(other);
-		MaxAmount = savedAmount;
 		if (success) GoAwayAndDie();
 		return success;
 	}

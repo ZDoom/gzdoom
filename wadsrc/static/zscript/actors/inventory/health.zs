@@ -102,9 +102,9 @@ class MaxHealth : Health
 		let player = PlayerPawn(other);
 		if (player)
 		{
-			if (player.BonusHealth < savedAmount)
+			if (player.BonusHealth < MaxAmount)
 			{
-				player.BonusHealth = min(player.BonusHealth + Amount, savedAmount);
+				player.BonusHealth = min(player.BonusHealth + Amount, MaxAmount);
 				success = true;
 			}
 		}

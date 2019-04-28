@@ -199,7 +199,7 @@ class ConversationMenu : Menu
 			goodbyestr = String.Format("$TXT_%s_%02d", goodbyestr, Random[RandomSpeech](1, NUM_RANDOM_LINES));
 		}
 		goodbyestr = Stringtable.Localize(goodbyestr);
-		if (goodbyestr.Length() == 0 || goodbyestr.CharAt(0) == "$") goodbyestr = "Bye.";
+		if (goodbyestr.Length() == 0 || goodbyestr.Left(1) == "$") goodbyestr = "Bye.";
 		mResponses.Push(mResponseLines.Size());
 		mResponseLines.Push(goodbyestr);
 
@@ -232,7 +232,7 @@ class ConversationMenu : Menu
 		{
 			let dlgtext = String.Format("$TXT_%s_%02d", toSay, random[RandomSpeech](1, NUM_RANDOM_LINES));
 			toSay = Stringtable.Localize(dlgtext);
-			if (toSay.CharAt(0) == "$") toSay = Stringtable.Localize("$TXT_GOAWAY");
+			if (toSay.Left(1) == "$") toSay = Stringtable.Localize("$TXT_GOAWAY");
 		}
 		else
 		{

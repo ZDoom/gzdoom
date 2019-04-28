@@ -21,7 +21,7 @@ struct PatchInfo play version("2.5")
 		// The default settings for this are marked with a *.
 		// If some mod changes this it is assumed that it doesn't provide any localization for the map name in a language not supported by the font.
 		String s = gifont.fontname;
-		if (s.CharAt(0) != "*")
+		if (s.Left(1) != "*")
 			mFont = Font.GetFont(gifont.fontname);
 		else if (generic_ui)
 			mFont = NewSmallFont;

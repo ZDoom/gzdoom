@@ -61,10 +61,10 @@ class os_Query
 
 	private static bool contains(string str, string substr)
 	{
-		str   .toLower();
-		substr.toLower();
+		let lowerstr    = str   .MakeLower();
+		let lowersubstr = substr.MakeLower();
 
-		bool contains = (str.IndexOf(substr) != -1);
+		bool contains = (lowerstr.IndexOf(lowersubstr) != -1);
 
 		return contains;
 	}

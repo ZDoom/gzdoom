@@ -252,7 +252,7 @@ class PlayerPawn : Actor
 		if (victim.player != player && victim.IsTeammate(self))
 		{
 			victim = self;
-			return String.Format("$OB_FRIENDLY%c", random[Obituary](49, 53));
+			return String.Format("$OB_FRIENDLY%d", random[Obituary](1, 4));
 		}
 		else
 		{

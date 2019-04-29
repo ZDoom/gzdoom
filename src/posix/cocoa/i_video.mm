@@ -251,6 +251,11 @@ namespace
 	return [self.class.layerClass layer];
 }
 
+-(BOOL) isOpaque
+{
+	return YES;
+}
+
 @end
 
 

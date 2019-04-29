@@ -1,4 +1,4 @@
-version "4.1"
+version "4.2"
 #include "zscript/base.zs"
 #include "zscript/sounddata.zs"
 #include "zscript/mapdata.zs"

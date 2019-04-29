@@ -54,7 +54,7 @@ const char *GetVersionString();
 
 // This should always refer to the GZDoom version a derived port is based on and not reflect the derived port's version number!
 #define ENG_MAJOR 4
-#define ENG_MINOR 1
+#define ENG_MINOR 2
 #define ENG_REVISION 0
 
 // Version identifier for network games.

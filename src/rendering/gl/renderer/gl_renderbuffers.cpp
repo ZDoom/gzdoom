@@ -857,8 +857,6 @@ FShaderProgram *GLPPRenderState::GetGLShader(PPShader *shader)
 
 void GLPPRenderState::Draw()
 {
-	//FGLDebug::PushGroup(name.GetChars());
-
 	FGLPostProcessState savedState;
 
 	// Bind input textures
@@ -971,8 +969,16 @@ void GLPPRenderState::Draw()
 		buffers->NextTexture();
 
 	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
+}
 
-	//FGLDebug::PopGroup();
+void GLPPRenderState::PushGroup(const FString &name)
+{
+	FGLDebug::PushGroup(name.GetChars());
+}
+
+void GLPPRenderState::PopGroup()
+{
+	FGLDebug::PopGroup();
 }
 
 

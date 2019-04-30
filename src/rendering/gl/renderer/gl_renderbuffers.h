@@ -88,6 +88,9 @@ class GLPPRenderState : public PPRenderState
 {
 public:
 	GLPPRenderState(FGLRenderBuffers *buffers) : buffers(buffers) { }
+
+	void PushGroup(const FString &name) override;
+	void PopGroup() override;
 	void Draw() override;
 
 private:

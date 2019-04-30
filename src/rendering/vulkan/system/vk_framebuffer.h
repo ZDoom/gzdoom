@@ -103,6 +103,10 @@ public:
 
 	void WaitForCommands(bool finish);
 
+	void PushGroup(const FString &name);
+	void PopGroup();
+	void UpdateGpuStats();
+
 private:
 	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
@@ -136,6 +140,19 @@ private:
 	std::unique_ptr<VulkanSemaphore> mRenderFinishedSemaphore;
 
 	VkRenderBuffers *mActiveRenderBuffers = nullptr;
+
+	struct TimestampQuery
+	{
+		FString name;
+		uint32_t startIndex;
+		uint32_t endIndex;
+	};
+
+	enum { MaxTimestampQueries = 100 };
+	std::unique_ptr<VulkanQueryPool> mTimestampQueryPool;
+	int mNextTimestampQuery = 0;
+	std::vector<size_t> mGroupStack;
+	std::vector<TimestampQuery> timeElapsedQueries;
 };
 
 inline VulkanFrameBuffer *GetVulkanFrameBuffer() { return static_cast<VulkanFrameBuffer*>(screen); }

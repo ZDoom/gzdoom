@@ -445,10 +445,8 @@ void OpenGLFrameBuffer::Draw2D()
 {
 	if (GLRenderer != nullptr)
 	{
-		FGLDebug::PushGroup("Draw2D");
 		GLRenderer->mBuffers->BindCurrentFB();
 		::Draw2D(&m2DDrawer, gl_RenderState);
-		FGLDebug::PopGroup();
 	}
 }
 

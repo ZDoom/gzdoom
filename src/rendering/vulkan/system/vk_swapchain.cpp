@@ -158,7 +158,12 @@ bool VulkanSwapChain::CreateSwapChain(VkSwapchainKHR oldSwapChain)
 	if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount)
 		imageCount = surfaceCapabilities.maxImageCount;
 
-	imageCount = std::min(imageCount, (uint32_t)2); // Only use two buffers (triple buffering sucks! good for benchmarks, bad for mouse input)
+	// When vsync is on we only want two images. This creates a slight performance penalty in exchange for reduced input latency (less mouse lag).
+	// When vsync is off we want three images as it allows us to generate new images even during the vertical blanking period where one entry is being used by the presentation engine.
+	if (swapChainPresentMode == VK_PRESENT_MODE_MAILBOX_KHR || swapChainPresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+		imageCount = std::min(imageCount, (uint32_t)3);
+	else
+		imageCount = std::min(imageCount, (uint32_t)2);
 
 	VkSwapchainCreateInfoKHR swapChainCreateInfo = {};
 	swapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;

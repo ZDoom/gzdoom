@@ -53,32 +53,34 @@ VkHardwareTexture::~VkHardwareTexture()
 	if (Prev) Prev->Next = Next;
 	else First = Next;
 
-	auto fb = GetVulkanFrameBuffer();
-	if (fb)
+	Reset();
+}
+
+void VkHardwareTexture::Reset()
+{
+	if (auto fb = GetVulkanFrameBuffer())
 	{
+		ResetDescriptors();
+
 		auto &deleteList = fb->FrameDeleteList;
-		for (auto &it : mDescriptorSets)
-		{
-			deleteList.Descriptors.push_back(std::move(it.descriptor));
-			it.descriptor = nullptr;
-		}
-		mDescriptorSets.clear();
 		if (mImage) deleteList.Images.push_back(std::move(mImage));
 		if (mImageView) deleteList.ImageViews.push_back(std::move(mImageView));
 		if (mStagingBuffer) deleteList.Buffers.push_back(std::move(mStagingBuffer));
 	}
 }
 
-void VkHardwareTexture::Reset()
-{
-	mDescriptorSets.clear();
-	mImage.reset();
-	mImageView.reset();
-	mStagingBuffer.reset();
-}
-
 void VkHardwareTexture::ResetDescriptors()
 {
+	if (auto fb = GetVulkanFrameBuffer())
+	{
+		auto &deleteList = fb->FrameDeleteList;
+
+		for (auto &it : mDescriptorSets)
+		{
+			deleteList.Descriptors.push_back(std::move(it.descriptor));
+		}
+	}
+
 	mDescriptorSets.clear();
 }
 

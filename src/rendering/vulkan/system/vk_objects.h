@@ -210,6 +210,8 @@ public:
 
 	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)pool, VK_OBJECT_TYPE_QUERY_POOL); }
 
+	bool getResults(uint32_t firstQuery, uint32_t queryCount, size_t dataSize, void *data, VkDeviceSize stride, VkQueryResultFlags flags);
+
 	VulkanDevice *device = nullptr;
 	VkQueryPool pool = VK_NULL_HANDLE;
 
@@ -955,6 +957,14 @@ inline VulkanQueryPool::VulkanQueryPool(VulkanDevice *device, VkQueryPool pool) 
 inline VulkanQueryPool::~VulkanQueryPool()
 {
 	vkDestroyQueryPool(device->device, pool, nullptr);
+}
+
+inline bool VulkanQueryPool::getResults(uint32_t firstQuery, uint32_t queryCount, size_t dataSize, void *data, VkDeviceSize stride, VkQueryResultFlags flags)
+{
+	VkResult result = vkGetQueryPoolResults(device->device, pool, firstQuery, queryCount, dataSize, data, stride, flags);
+	if (result != VK_SUCCESS && result != VK_NOT_READY)
+		I_Error("vkGetQueryPoolResults failed");
+	return result == VK_SUCCESS;
 }
 
 /////////////////////////////////////////////////////////////////////////////

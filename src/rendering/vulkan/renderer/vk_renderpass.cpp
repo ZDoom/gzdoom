@@ -33,6 +33,15 @@ void VkRenderPassManager::RenderBuffersReset()
 
 void VkRenderPassManager::TextureSetPoolReset()
 {
+	if (auto fb = GetVulkanFrameBuffer())
+	{
+		auto &deleteList = fb->FrameDeleteList;
+
+		for (auto &desc : TextureDescriptorPools)
+		{
+			deleteList.DescriptorPools.push_back(std::move(desc));
+		}
+	}
 	TextureDescriptorPools.clear();
 	TextureDescriptorSetsLeft = 0;
 	TextureDescriptorsLeft = 0;

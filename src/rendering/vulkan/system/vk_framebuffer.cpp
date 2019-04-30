@@ -188,6 +188,7 @@ void VulkanFrameBuffer::DeleteFrameObjects()
 	FrameDeleteList.ImageViews.clear();
 	FrameDeleteList.Buffers.clear();
 	FrameDeleteList.Descriptors.clear();
+	FrameDeleteList.DescriptorPools.clear();
 	FrameDeleteList.CommandBuffers.clear();
 }
 

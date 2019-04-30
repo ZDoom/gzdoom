@@ -59,6 +59,7 @@ public:
 		std::vector<std::unique_ptr<VulkanImageView>> ImageViews;
 		std::vector<std::unique_ptr<VulkanBuffer>> Buffers;
 		std::vector<std::unique_ptr<VulkanDescriptorSet>> Descriptors;
+		std::vector<std::unique_ptr<VulkanDescriptorPool>> DescriptorPools;
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
 	} FrameDeleteList;
 

@@ -29,6 +29,12 @@ VKBuffer::~VKBuffer()
 		fb->FrameDeleteList.Buffers.push_back(std::move(mBuffer));
 }
 
+void VKBuffer::ResetAll()
+{
+	for (VKBuffer *cur = VKBuffer::First; cur; cur = cur->Next)
+		cur->Reset();
+}
+
 void VKBuffer::Reset()
 {
 	if (mBuffer && map)

@@ -23,6 +23,7 @@ public:
 	VkHardwareTexture();
 	~VkHardwareTexture();
 
+	static void ResetAll();
 	void Reset();
 
 	void Precache(FMaterial *mat, int translation, int flags);
@@ -37,10 +38,6 @@ public:
 	// Wipe screen
 	void CreateWipeTexture(int w, int h, const char *name);
 
-	static VkHardwareTexture *First;
-	VkHardwareTexture *Prev = nullptr;
-	VkHardwareTexture *Next = nullptr;
-
 	VulkanImage *GetImage(FTexture *tex, int translation, int flags);
 	VulkanImageView *GetImageView(FTexture *tex, int translation, int flags);
 
@@ -54,6 +51,10 @@ private:
 	static int GetMipLevels(int w, int h);
 
 	void ResetDescriptors();
+
+	static VkHardwareTexture *First;
+	VkHardwareTexture *Prev = nullptr;
+	VkHardwareTexture *Next = nullptr;
 
 	struct DescriptorEntry
 	{

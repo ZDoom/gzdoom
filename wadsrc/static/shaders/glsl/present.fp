@@ -29,7 +29,20 @@ vec4 Dither(vec4 c)
 	return vec4(floor(c.rgb * ColorScale + threshold) / ColorScale, c.a);
 }
 
+vec4 sRGBtoLinear(vec4 c)
+{
+	return vec4(mix(pow((c.rgb + 0.055) / 1.055, vec3(2.4)), c.rgb / 12.92, step(c.rgb, vec3(0.04045))), c.a);
+}
+
+vec4 ApplyHdrMode(vec4 c)
+{
+	if (HdrMode == 0)
+		return c;
+	else
+		return sRGBtoLinear(c);
+}
+
 void main()
 {
-	FragColor = Dither(ApplyGamma(texture(InputTexture, UVOffset + TexCoord * UVScale)));
+	FragColor = Dither(ApplyHdrMode(ApplyGamma(texture(InputTexture, UVOffset + TexCoord * UVScale))));
 }

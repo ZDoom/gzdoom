@@ -93,9 +93,12 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
+	// screen is already null at this point, but VkHardwareTexture::ResetAll needs it during clean up. Is there a better way we can do this?
+	auto tmp = screen;
+	screen = this;
+
 	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
 	VkHardwareTexture::ResetAll();
-
 	VKBuffer::ResetAll();
 	PPResource::ResetAll();
 
@@ -106,6 +109,8 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	delete mViewpoints;
 	delete mLights;
 	mShadowMap.Reset();
+
+	screen = tmp;
 
 	DeleteFrameObjects();
 }

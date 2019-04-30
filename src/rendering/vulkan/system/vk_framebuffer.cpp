@@ -94,12 +94,9 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
 	// All descriptors must be destroyed before the descriptor pool in renderpass manager is destroyed
-	for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
-		cur->Reset();
+	VkHardwareTexture::ResetAll();
 
-	for (VKBuffer *cur = VKBuffer::First; cur; cur = cur->Next)
-		cur->Reset();
-
+	VKBuffer::ResetAll();
 	PPResource::ResetAll();
 
 	delete MatricesUBO;

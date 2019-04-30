@@ -16,6 +16,7 @@ public:
 	VKBuffer();
 	~VKBuffer();
 
+	static void ResetAll();
 	void Reset();
 
 	void SetData(size_t size, const void *data, bool staticdata) override;
@@ -28,15 +29,16 @@ public:
 	void *Lock(unsigned int size) override;
 	void Unlock() override;
 
-	static VKBuffer *First;
-	VKBuffer *Prev = nullptr;
-	VKBuffer *Next = nullptr;
-
 	VkBufferUsageFlags mBufferType = 0;
 	std::unique_ptr<VulkanBuffer> mBuffer;
 	std::unique_ptr<VulkanBuffer> mStaging;
 	bool mPersistent = false;
 	TArray<uint8_t> mStaticUpload;
+
+private:
+	static VKBuffer *First;
+	VKBuffer *Prev = nullptr;
+	VKBuffer *Next = nullptr;
 };
 
 class VKVertexBuffer : public IVertexBuffer, public VKBuffer

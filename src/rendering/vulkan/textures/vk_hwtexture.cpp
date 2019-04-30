@@ -56,6 +56,12 @@ VkHardwareTexture::~VkHardwareTexture()
 	Reset();
 }
 
+void VkHardwareTexture::ResetAll()
+{
+	for (VkHardwareTexture *cur = VkHardwareTexture::First; cur; cur = cur->Next)
+		cur->Reset();
+}
+
 void VkHardwareTexture::Reset()
 {
 	if (auto fb = GetVulkanFrameBuffer())

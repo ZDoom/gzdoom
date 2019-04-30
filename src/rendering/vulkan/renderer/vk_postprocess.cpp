@@ -200,7 +200,11 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 
 	if (applyGamma && fb->swapChain->swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
 	{
-		uniforms.InvGamma *= 2.2f;
+		uniforms.HdrMode = 1;
+	}
+	else
+	{
+		uniforms.HdrMode = 0;
 	}
 
 	renderstate.Clear();

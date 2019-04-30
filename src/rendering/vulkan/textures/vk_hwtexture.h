@@ -72,7 +72,6 @@ private:
 	std::vector<DescriptorEntry> mDescriptorSets;
 	std::unique_ptr<VulkanImage> mImage;
 	std::unique_ptr<VulkanImageView> mImageView;
-	std::unique_ptr<VulkanBuffer> mStagingBuffer;
 	VkImageLayout mImageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	int mTexelsize = 4;
 };

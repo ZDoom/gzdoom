@@ -830,7 +830,7 @@ inline void VulkanCommandBuffer::resetQueryPool(VkQueryPool queryPool, uint32_t 
 
 inline void VulkanCommandBuffer::writeTimestamp(VkPipelineStageFlagBits pipelineStage, VulkanQueryPool *queryPool, uint32_t query)
 {
-	writeTimestamp(pipelineStage, queryPool, query);
+	writeTimestamp(pipelineStage, queryPool->pool, query);
 }
 
 inline void VulkanCommandBuffer::writeTimestamp(VkPipelineStageFlagBits pipelineStage, VkQueryPool queryPool, uint32_t query)

@@ -43,21 +43,16 @@ CUSTOM_CVAR(Int, gl_debug_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 
 CVAR(Bool, gl_debug_breakpoint, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
+extern bool gpuStatActive;
+extern bool keepGpuStatActive;
+extern FString gpuStatOutput;
+
 namespace OpenGLRenderer
 {
 
 namespace
 {
-	bool gpuStatActive = false;
-	bool keepGpuStatActive = false;
 	std::vector<std::pair<FString, GLuint>> timeElapsedQueries;
-	FString gpuStatOutput;
-}
-
-ADD_STAT(gpu)
-{
-	keepGpuStatActive = true;
-	return gpuStatOutput;
 }
 
 //-----------------------------------------------------------------------------

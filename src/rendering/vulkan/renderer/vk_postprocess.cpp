@@ -419,6 +419,16 @@ FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defin
 
 /////////////////////////////////////////////////////////////////////////////
 
+void VkPPRenderState::PushGroup(const FString &name)
+{
+	GetVulkanFrameBuffer()->PushGroup(name);
+}
+
+void VkPPRenderState::PopGroup()
+{
+	GetVulkanFrameBuffer()->PopGroup();
+}
+
 void VkPPRenderState::Draw()
 {
 	auto fb = GetVulkanFrameBuffer();

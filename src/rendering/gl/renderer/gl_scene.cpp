@@ -172,8 +172,6 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
 		{
-			FGLDebug::PushGroup("MainView");
-
 			bool useSSAO = (gl_ssao != 0);
 			mBuffers->BindSceneFB(useSSAO);
 			gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
@@ -213,8 +211,6 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 			}
 
 			mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
-
-			FGLDebug::PopGroup(); // MainView
 
 			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, gl_RenderState); });
 			PostProcess.Unclock();

@@ -78,6 +78,9 @@ class PPRenderState
 public:
 	virtual ~PPRenderState() = default;
 
+	virtual void PushGroup(const FString &name) = 0;
+	virtual void PopGroup() = 0;
+
 	virtual void Draw() = 0;
 
 	void Clear()

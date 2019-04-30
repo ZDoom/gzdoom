@@ -128,6 +128,9 @@ private:
 class VkPPRenderState : public PPRenderState
 {
 public:
+	void PushGroup(const FString &name) override;
+	void PopGroup() override;
+
 	void Draw() override;
 
 private:

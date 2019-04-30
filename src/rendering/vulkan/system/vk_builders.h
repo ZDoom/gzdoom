@@ -159,6 +159,19 @@ private:
 	VkDescriptorPoolCreateInfo poolInfo = {};
 };
 
+class QueryPoolBuilder
+{
+public:
+	QueryPoolBuilder();
+
+	void setQueryType(VkQueryType type, int count, VkQueryPipelineStatisticFlags pipelineStatistics = 0);
+
+	std::unique_ptr<VulkanQueryPool> create(VulkanDevice *device);
+
+private:
+	VkQueryPoolCreateInfo poolInfo = {};
+};
+
 class FramebufferBuilder
 {
 public:
@@ -637,6 +650,29 @@ inline std::unique_ptr<VulkanDescriptorPool> DescriptorPoolBuilder::create(Vulka
 	if (result != VK_SUCCESS)
 		I_FatalError("Could not create descriptor pool");
 	return std::make_unique<VulkanDescriptorPool>(device, descriptorPool);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+inline QueryPoolBuilder::QueryPoolBuilder()
+{
+	poolInfo.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+}
+
+inline void QueryPoolBuilder::setQueryType(VkQueryType type, int count, VkQueryPipelineStatisticFlags pipelineStatistics)
+{
+	poolInfo.queryType = type;
+	poolInfo.queryCount = count;
+	poolInfo.pipelineStatistics = pipelineStatistics;
+}
+
+inline std::unique_ptr<VulkanQueryPool> QueryPoolBuilder::create(VulkanDevice *device)
+{
+	VkQueryPool queryPool;
+	VkResult result = vkCreateQueryPool(device->device, &poolInfo, nullptr, &queryPool);
+	if (result != VK_SUCCESS)
+		I_FatalError("Could not create query pool");
+	return std::make_unique<VulkanQueryPool>(device, queryPool);
 }
 
 /////////////////////////////////////////////////////////////////////////////

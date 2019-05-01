@@ -323,6 +323,11 @@ int VkHardwareTexture::GetMipLevels(int w, int h)
 
 void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 {
+	if (mImage && (mImage->width != w || mImage->height != h || mTexelsize != texelsize))
+	{
+		Reset();
+	}
+
 	if (!mImage)
 	{
 		auto fb = GetVulkanFrameBuffer();

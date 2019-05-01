@@ -337,8 +337,11 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		ImageBuilder imgbuilder;
 		imgbuilder.setFormat(format);
 		imgbuilder.setSize(w, h);
-		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
 		imgbuilder.setLinearTiling();
+		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+		imgbuilder.setMemoryType(
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		mImage = imgbuilder.create(fb->device);
 		mImage->SetDebugName("VkHardwareTexture.mImage");
 		mImageLayout = VK_IMAGE_LAYOUT_GENERAL;

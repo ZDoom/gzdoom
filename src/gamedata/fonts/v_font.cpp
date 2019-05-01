@@ -778,7 +778,7 @@ void InitLowerUpper()
 	{
 		auto lower = loweruppercase[i];
 		auto upper = loweruppercase[i + 1];
-		if (upperforlower[upper] == upper) lowerforupper[upper] = lower;	// This mapping is ambiguous (see 0x0131 -> 0x0049, (small Turkish 'i' without dot.) so only pick the first match.
+		if (lowerforupper[upper] == upper) lowerforupper[upper] = lower;	// This mapping is ambiguous (see 0x0131 -> 0x0049, (small Turkish 'i' without dot.) so only pick the first match.
 		if (upperforlower[lower] == lower) upperforlower[lower] = upper;
 		isuppermap[upper] = islowermap[lower] = true;
 	}

@@ -42,11 +42,13 @@ public:
 	void setSamples(VkSampleCountFlagBits samples);
 	void setFormat(VkFormat format);
 	void setUsage(VkImageUsageFlags imageUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
+	void setMemoryType(VkMemoryPropertyFlags requiredFlags, VkMemoryPropertyFlags preferredFlags, uint32_t memoryTypeBits = 0);
 	void setLinearTiling();
 
 	bool isFormatSupported(VulkanDevice *device);
 
 	std::unique_ptr<VulkanImage> create(VulkanDevice *device);
+	std::unique_ptr<VulkanImage> tryCreate(VulkanDevice *device);
 
 private:
 	VkImageCreateInfo imageInfo = {};
@@ -92,6 +94,7 @@ public:
 
 	void setSize(size_t size);
 	void setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsage memoryUsage = VMA_MEMORY_USAGE_GPU_ONLY, VmaAllocationCreateFlags allocFlags = 0);
+	void setMemoryType(VkMemoryPropertyFlags requiredFlags, VkMemoryPropertyFlags preferredFlags, uint32_t memoryTypeBits = 0);
 
 	std::unique_ptr<VulkanBuffer> create(VulkanDevice *device);
 
@@ -400,6 +403,13 @@ inline void ImageBuilder::setUsage(VkImageUsageFlags usage, VmaMemoryUsage memor
 	allocInfo.flags = allocFlags;
 }
 
+inline void ImageBuilder::setMemoryType(VkMemoryPropertyFlags requiredFlags, VkMemoryPropertyFlags preferredFlags, uint32_t memoryTypeBits)
+{
+	allocInfo.requiredFlags = requiredFlags;
+	allocInfo.preferredFlags = preferredFlags;
+	allocInfo.memoryTypeBits = memoryTypeBits;
+}
+
 inline bool ImageBuilder::isFormatSupported(VulkanDevice *device)
 {
 	VkImageFormatProperties properties = { };
@@ -422,6 +432,18 @@ inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device)
 	VkResult result = vmaCreateImage(device->allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr);
 	if (result != VK_SUCCESS)
 		I_FatalError("Could not create vulkan image");
+
+	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
+}
+
+inline std::unique_ptr<VulkanImage> ImageBuilder::tryCreate(VulkanDevice *device)
+{
+	VkImage image;
+	VmaAllocation allocation;
+
+	VkResult result = vmaCreateImage(device->allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr);
+	if (result != VK_SUCCESS)
+		return nullptr;
 
 	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
 }
@@ -545,6 +567,13 @@ inline void BufferBuilder::setUsage(VkBufferUsageFlags bufferUsage, VmaMemoryUsa
 	bufferInfo.usage = bufferUsage;
 	allocInfo.usage = memoryUsage;
 	allocInfo.flags = allocFlags;
+}
+
+inline void BufferBuilder::setMemoryType(VkMemoryPropertyFlags requiredFlags, VkMemoryPropertyFlags preferredFlags, uint32_t memoryTypeBits)
+{
+	allocInfo.requiredFlags = requiredFlags;
+	allocInfo.preferredFlags = preferredFlags;
+	allocInfo.memoryTypeBits = memoryTypeBits;
 }
 
 inline std::unique_ptr<VulkanBuffer> BufferBuilder::create(VulkanDevice *device)

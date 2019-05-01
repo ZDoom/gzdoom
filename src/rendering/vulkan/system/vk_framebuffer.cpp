@@ -286,8 +286,12 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 	}
 
 	int numWaitFences = MIN(mNextSubmit, (int)maxConcurrentSubmitCount);
-	vkWaitForFences(device->device, numWaitFences, mSubmitWaitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
-	vkResetFences(device->device, numWaitFences, mSubmitWaitFences);
+
+	if (numWaitFences > 0)
+	{
+		vkWaitForFences(device->device, numWaitFences, mSubmitWaitFences, VK_TRUE, std::numeric_limits<uint64_t>::max());
+		vkResetFences(device->device, numWaitFences, mSubmitWaitFences);
+	}
 
 	DeleteFrameObjects();
 	mNextSubmit = 0;

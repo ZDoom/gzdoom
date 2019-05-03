@@ -845,7 +845,8 @@ void VulkanFrameBuffer::PopGroup()
 void VulkanFrameBuffer::UpdateGpuStats()
 {
 	uint64_t timestamps[MaxTimestampQueries];
-	mTimestampQueryPool->getResults(0, mNextTimestampQuery, sizeof(uint64_t) * mNextTimestampQuery, timestamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+	if (mNextTimestampQuery > 0)
+		mTimestampQueryPool->getResults(0, mNextTimestampQuery, sizeof(uint64_t) * mNextTimestampQuery, timestamps, sizeof(uint64_t), VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
 
 	double timestampPeriod = device->PhysicalDevice.Properties.limits.timestampPeriod;
 

@@ -359,6 +359,8 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 	sector_t *retsec;
 	if (!V_IsHardwareRenderer())
 	{
+		mPostprocess->SetActiveRenderTarget();
+
 		if (!swdrawer) swdrawer.reset(new SWSceneDrawer);
 		retsec = swdrawer->RenderView(player);
 	}

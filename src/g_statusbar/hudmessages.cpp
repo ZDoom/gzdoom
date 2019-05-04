@@ -749,7 +749,7 @@ void DHUDMessageTypeOnFadeOut::Serialize(FSerializer &arc)
 
 bool DHUDMessageTypeOnFadeOut::Tick ()
 {
-	if (!Super::Tick ())
+	if (LineLen > 0 && !Super::Tick ())
 	{
 		if (State == 3)
 		{
@@ -820,7 +820,7 @@ void DHUDMessageTypeOnFadeOut::ScreenSizeChanged ()
 	if (State == 3)
 	{
 		CurrLine = 0;
-		LineLen = (int)Lines[0].Text.Len();
+		LineLen = Lines.Size() > 0 ? (int)Lines[0].Text.Len() : 0;
 		Tics = (int)(charCount * TypeOnTime) - 1;
 		Tick ();
 	}

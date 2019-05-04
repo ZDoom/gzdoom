@@ -32,6 +32,9 @@ public:
 	VkImageLayout SceneNormalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	VkImageLayout SceneFogLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	std::unique_ptr<VulkanImage> CamtexDepthStencil;
+	std::unique_ptr<VulkanImageView> CamtexDepthStencilView;
+
 	static const int NumPipelineImages = 2;
 	std::unique_ptr<VulkanImage> PipelineImage[NumPipelineImages];
 	std::unique_ptr<VulkanImageView> PipelineView[NumPipelineImages];
@@ -50,6 +53,7 @@ private:
 	void CreateSceneFog(int width, int height, VkSampleCountFlagBits samples);
 	void CreateSceneNormal(int width, int height, VkSampleCountFlagBits samples);
 	void CreateShadowmap();
+	void CreateCamTexDepthStencil();
 	VkSampleCountFlagBits GetBestSampleCount();
 
 	int mWidth = 0;

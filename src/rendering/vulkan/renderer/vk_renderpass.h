@@ -32,6 +32,7 @@ public:
 	int ClearTargets;
 	int DrawBuffers;
 	int NumTextureLayers;
+	VkFormat DrawBufferFormat;
 
 	bool UsesDepthStencil() const { return DepthTest || DepthWrite || StencilTest || (ClearTargets & (CT_Depth | CT_Stencil)); }
 

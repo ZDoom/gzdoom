@@ -737,8 +737,21 @@ void DHUDMessageTypeOnFadeOut::Serialize(FSerializer &arc)
 	Super::Serialize (arc);
 	arc("typeontime", TypeOnTime)
 		("currline", CurrLine)
-		("linevisible", LineVisible)
-		("linelen", LineLen);
+		("linevisible", LineVisible);
+
+	if (arc.isReading())
+	{
+		if (CurrLine < NumLines)
+		{
+			LineLen = (int)Lines[CurrLine].Text.Len();
+		}
+		else
+		{
+			LineLen = CurrLine = 0;
+		}
+
+		clamp(LineVisible, 0, LineLen);
+	}
 }
 
 //============================================================================
@@ -749,7 +762,7 @@ void DHUDMessageTypeOnFadeOut::Serialize(FSerializer &arc)
 
 bool DHUDMessageTypeOnFadeOut::Tick ()
 {
-	if (LineLen > 0 && !Super::Tick ())
+	if (NumLines > 0 && !Super::Tick ())
 	{
 		if (State == 3)
 		{
@@ -820,7 +833,7 @@ void DHUDMessageTypeOnFadeOut::ScreenSizeChanged ()
 	if (State == 3)
 	{
 		CurrLine = 0;
-		LineLen = Lines.Size() > 0 ? (int)Lines[0].Text.Len() : 0;
+		LineLen = NumLines > 0 ? (int)Lines[0].Text.Len() : 0;
 		Tics = (int)(charCount * TypeOnTime) - 1;
 		Tick ();
 	}

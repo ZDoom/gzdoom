@@ -536,11 +536,12 @@ void VkRenderState::EnableDrawBuffers(int count)
 	}
 }
 
-void VkRenderState::SetRenderTarget(VulkanImageView *view, int width, int height, VkFormat format, VkSampleCountFlagBits samples)
+void VkRenderState::SetRenderTarget(VulkanImageView *view, VulkanImageView *depthStencilView, int width, int height, VkFormat format, VkSampleCountFlagBits samples)
 {
 	EndRenderPass();
 
 	mRenderTarget.View = view;
+	mRenderTarget.DepthStencil = depthStencilView;
 	mRenderTarget.Width = width;
 	mRenderTarget.Height = height;
 	mRenderTarget.Format = format;
@@ -566,7 +567,7 @@ void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuf
 		if (key.DrawBuffers > 2)
 			builder.addAttachment(buffers->SceneNormalView.get());
 		if (key.UsesDepthStencil())
-			builder.addAttachment(mRenderTarget.Format == VK_FORMAT_R8G8B8A8_UNORM ? buffers->CamtexDepthStencilView.get() : buffers->SceneDepthStencilView.get());
+			builder.addAttachment(mRenderTarget.DepthStencil);
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
 	}

@@ -42,14 +42,14 @@ VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
 			prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, gbufferpass);
 			mMaterialShaders[j].push_back(std::move(prog));
 		}
-	}
 
-	for (int i = 0; i < MAX_EFFECTS; i++)
-	{
-		VkShaderProgram prog;
-		prog.vert = LoadVertShader(effectshaders[i].ShaderName, effectshaders[i].vp, defaultshaders[i].Defines);
-		prog.frag = LoadFragShader(effectshaders[i].ShaderName, effectshaders[i].fp1, effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines, true, false);
-		mEffectShaders[i] = std::move(prog);
+		for (int i = 0; i < MAX_EFFECTS; i++)
+		{
+			VkShaderProgram prog;
+			prog.vert = LoadVertShader(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].defines);
+			prog.frag = LoadFragShader(effectshaders[i].ShaderName, effectshaders[i].fp1, effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines, true, gbufferpass);
+			mEffectShaders[j].push_back(std::move(prog));
+		}
 	}
 }
 
@@ -58,11 +58,11 @@ VkShaderManager::~VkShaderManager()
 	ShFinalize();
 }
 
-VkShaderProgram *VkShaderManager::GetEffect(int effect)
+VkShaderProgram *VkShaderManager::GetEffect(int effect, EPassType passType)
 {
-	if (effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[effect].frag)
+	if (effect >= 0 && effect < MAX_EFFECTS && mEffectShaders[passType][effect].frag)
 	{
-		return &mEffectShaders[effect];
+		return &mEffectShaders[passType][effect];
 	}
 	return nullptr;
 }

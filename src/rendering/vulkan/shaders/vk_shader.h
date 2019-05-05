@@ -61,7 +61,7 @@ public:
 	VkShaderManager(VulkanDevice *device);
 	~VkShaderManager();
 
-	VkShaderProgram *GetEffect(int effect);
+	VkShaderProgram *GetEffect(int effect, EPassType passType);
 	VkShaderProgram *Get(unsigned int eff, bool alphateston, EPassType passType);
 
 private:
@@ -76,5 +76,5 @@ private:
 
 	std::vector<VkShaderProgram> mMaterialShaders[MAX_PASS_TYPES];
 	std::vector<VkShaderProgram> mMaterialShadersNAT[MAX_PASS_TYPES];
-	VkShaderProgram mEffectShaders[MAX_EFFECTS];
+	std::vector<VkShaderProgram> mEffectShaders[MAX_PASS_TYPES];
 };

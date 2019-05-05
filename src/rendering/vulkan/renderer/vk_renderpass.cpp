@@ -261,7 +261,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 	VkShaderProgram *program;
 	if (key.SpecialEffect != EFF_NONE)
 	{
-		program = fb->GetShaderManager()->GetEffect(key.SpecialEffect);
+		program = fb->GetShaderManager()->GetEffect(key.SpecialEffect, key.DrawBuffers > 1 ? GBUFFER_PASS : NORMAL_PASS);
 	}
 	else
 	{

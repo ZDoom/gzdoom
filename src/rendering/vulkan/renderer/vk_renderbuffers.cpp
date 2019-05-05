@@ -55,7 +55,6 @@ void VkRenderBuffers::BeginFrame(int width, int height, int sceneWidth, int scen
 	if (width != mWidth || height != mHeight || mSamples != samples)
 		CreateScene(width, height, samples);
 
-	CreateCamTexDepthStencil();
 	CreateShadowmap();
 
 	mWidth = width;
@@ -141,31 +140,6 @@ void VkRenderBuffers::CreateSceneColor(int width, int height, VkSampleCountFlagB
 	viewbuilder.setImage(SceneColor.get(), VK_FORMAT_R16G16B16A16_SFLOAT);
 	SceneColorView = viewbuilder.create(fb->device);
 	SceneColorView->SetDebugName("VkRenderBuffers.SceneColorView");
-}
-
-void VkRenderBuffers::CreateCamTexDepthStencil()
-{
-	if (CamtexDepthStencil)
-		return;
-
-	auto fb = GetVulkanFrameBuffer();
-
-	ImageBuilder builder;
-	builder.setSize(1024, 1024);
-	builder.setSamples(VK_SAMPLE_COUNT_1_BIT);
-	builder.setFormat(SceneDepthStencilFormat);
-	builder.setUsage(VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-	CamtexDepthStencil = builder.create(fb->device);
-	CamtexDepthStencil->SetDebugName("VkRenderBuffers.CamtexDepthStencil");
-
-	ImageViewBuilder viewbuilder;
-	viewbuilder.setImage(CamtexDepthStencil.get(), SceneDepthStencilFormat, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-	CamtexDepthStencilView = viewbuilder.create(fb->device);
-	CamtexDepthStencilView->SetDebugName("VkRenderBuffers.CamtexDepthStencilView");
-
-	PipelineBarrier barrier;
-	barrier.addImage(CamtexDepthStencil.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 0, VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT, VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT);
-	barrier.execute(fb->GetDrawCommands(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT);
 }
 
 void VkRenderBuffers::CreateSceneDepthStencil(int width, int height, VkSampleCountFlagBits samples)

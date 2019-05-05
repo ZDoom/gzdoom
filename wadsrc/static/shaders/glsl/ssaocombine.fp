@@ -22,10 +22,7 @@ void main()
 	ivec2 ipos = ivec2(uv * vec2(texSize));
 
 #if defined(MULTISAMPLE)
-	vec3 fogColor = vec3(0.0);
-	for (int i = 0; i < SampleCount; i++)
-		fogColor += texelFetch(SceneFogTexture, ipos, i).rgb;
-	fogColor /= float(SampleCount);
+	vec3 fogColor = texelFetch(SceneFogTexture, ipos, 0).rgb;
 #else
 	vec3 fogColor = texelFetch(SceneFogTexture, ipos, 0).rgb;
 #endif

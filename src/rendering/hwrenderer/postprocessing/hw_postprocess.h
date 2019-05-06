@@ -241,7 +241,7 @@ public:
 		if (Next) Next->Prev = this;
 	}
 
-	~PPResource()
+	virtual ~PPResource()
 	{
 		if (Next) Next->Prev = Prev;
 		if (Prev) Prev->Next = Next;

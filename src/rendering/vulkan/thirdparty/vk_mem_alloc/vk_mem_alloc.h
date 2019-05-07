@@ -2229,7 +2229,7 @@ remove them if not needed.
 #include <mutex> // for std::mutex
 #include <atomic> // for std::atomic
 
-#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__FreeBSD__)
+#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
     #include <malloc.h> // for aligned_alloc()
 #endif
 
@@ -2238,7 +2238,7 @@ remove them if not needed.
    #define VMA_NULL   nullptr
 #endif
 
-#if defined(__APPLE__) || defined(__ANDROID__)
+#if defined(__APPLE__) || defined(__ANDROID__) || defined(__OpenBSD__)
 #include <cstdlib>
 void *aligned_alloc(size_t alignment, size_t size)
 {

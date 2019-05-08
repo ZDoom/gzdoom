@@ -49,7 +49,7 @@ class PolyRenderer
 public:
 	PolyRenderer();
 	
-	void RenderView(player_t *player, DCanvas *target, void *videobuffer);
+	void RenderView(player_t *player, DCanvas *target, void *videobuffer, int bufferpitch);
 	void RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines);
 	void RenderRemainingPlayerSprites();
 

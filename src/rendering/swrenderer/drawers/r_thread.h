@@ -125,12 +125,13 @@ private:
 class MemcpyCommand : public DrawerCommand
 {
 public:
-	MemcpyCommand(void *dest, const void *src, int width, int height, int srcpitch, int pixelsize);
+	MemcpyCommand(void *dest, int destpitch, const void *src, int width, int height, int srcpitch, int pixelsize);
 	void Execute(DrawerThread *thread);
 
 private:
 	void *dest;
 	const void *src;
+	int destpitch;
 	int width;
 	int height;
 	int srcpitch;

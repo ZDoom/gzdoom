@@ -368,6 +368,7 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		VkFormat format = texelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM;
 
 		ImageBuilder imgbuilder;
+		VkDeviceSize allocatedBytes = 0;
 		imgbuilder.setFormat(format);
 		imgbuilder.setSize(w, h);
 		imgbuilder.setLinearTiling();
@@ -375,7 +376,7 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		imgbuilder.setMemoryType(
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		mImage = imgbuilder.create(fb->device);
+		mImage = imgbuilder.create(fb->device, &allocatedBytes);
 		mImage->SetDebugName("VkHardwareTexture.mImage");
 		mImageLayout = VK_IMAGE_LAYOUT_GENERAL;
 		mTexelsize = texelsize;
@@ -390,6 +391,8 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		PipelineBarrier imageTransition;
 		imageTransition.addImage(mImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, mImageLayout, 0, VK_ACCESS_SHADER_READ_BIT);
 		imageTransition.execute(cmdbuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+		bufferpitch = int(allocatedBytes / h / texelsize);
 	}
 }
 

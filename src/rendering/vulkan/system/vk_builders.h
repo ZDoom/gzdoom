@@ -47,7 +47,7 @@ public:
 
 	bool isFormatSupported(VulkanDevice *device);
 
-	std::unique_ptr<VulkanImage> create(VulkanDevice *device);
+	std::unique_ptr<VulkanImage> create(VulkanDevice *device, VkDeviceSize* allocatedBytes = nullptr);
 	std::unique_ptr<VulkanImage> tryCreate(VulkanDevice *device);
 
 private:
@@ -424,7 +424,7 @@ inline bool ImageBuilder::isFormatSupported(VulkanDevice *device)
 	return true;
 }
 
-inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device)
+inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device, VkDeviceSize* allocatedBytes)
 {
 	VkImage image;
 	VmaAllocation allocation;
@@ -432,6 +432,14 @@ inline std::unique_ptr<VulkanImage> ImageBuilder::create(VulkanDevice *device)
 	VkResult result = vmaCreateImage(device->allocator, &imageInfo, &allocInfo, &image, &allocation, nullptr);
 	if (result != VK_SUCCESS)
 		I_FatalError("Could not create vulkan image");
+
+	if (allocatedBytes != nullptr)
+	{
+		VmaAllocationInfo allocatedInfo;
+		vmaGetAllocationInfo(device->allocator, allocation, &allocatedInfo);
+
+		*allocatedBytes = allocatedInfo.size;
+	}
 
 	return std::make_unique<VulkanImage>(device, image, allocation, imageInfo.extent.width, imageInfo.extent.height, imageInfo.mipLevels);
 }

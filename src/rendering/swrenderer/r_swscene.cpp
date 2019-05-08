@@ -106,10 +106,11 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		Canvas.reset(new DCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
 	}
 
-	auto buf = fbtex->GetSystemTexture()->MapBuffer();
+	IHardwareTexture *systemTexture = fbtex->GetSystemTexture();
+	auto buf = systemTexture->MapBuffer();
 	if (!buf) I_FatalError("Unable to map buffer for software rendering");
-	SWRenderer->RenderView(player, Canvas.get(), buf);
-	fbtex->GetSystemTexture()->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
+	SWRenderer->RenderView(player, Canvas.get(), buf, systemTexture->GetBufferPitch());
+	systemTexture->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 	screen->DrawTexture(fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);

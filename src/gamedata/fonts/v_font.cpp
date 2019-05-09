@@ -869,6 +869,9 @@ int stripaccent(int code)
 		case 0x201e:
 			return '"';	// typographic quotation marks
 			
+		case 0x3c2:
+			return 0x3c3;	// Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
+			
 			// Cyrillic characters with equivalents in the Latin alphabet.
 		case 0x400:
 			return 0xc8;

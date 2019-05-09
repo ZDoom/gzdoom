@@ -163,7 +163,6 @@ CUSTOM_CVAR (Int, snd_channels, 128, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// number o
 {
 	if (self < 64) self = 64;
 }
-CVAR (Bool, snd_flipstereo, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, snd_waterreverb, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------

@@ -187,7 +187,17 @@ void DrawerThreads::StartThreads()
 
 	int num_threads = num_numathreads;
 	if (num_threads == 0)
-		num_threads = 4;
+	{
+		static bool firstCall = true;
+		if (firstCall)
+		{
+			firstCall = false;
+			if (r_multithreaded == 1)
+				Printf("Warning: Unable to determine number of CPU cores/threads for this computer. To improve performance, please type 'r_multithreaded x' in the console, where x is the number of threads to use.\n");
+		}
+
+		num_threads = 1;
+	}
 
 	if (r_multithreaded == 0)
 		num_threads = 1;

@@ -38,6 +38,8 @@ public:
 	// Wipe screen
 	void CreateWipeTexture(int w, int h, const char *name);
 
+	void DeleteDescriptors() override { ResetDescriptors(); }
+
 	VulkanImage *GetImage(FTexture *tex, int translation, int flags);
 	VulkanImageView *GetImageView(FTexture *tex, int translation, int flags);
 	VulkanImageView *GetDepthStencilView(FTexture *tex);

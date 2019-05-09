@@ -200,17 +200,7 @@ namespace swrenderer
 	{
 		int numThreads = std::thread::hardware_concurrency();
 		if (numThreads == 0)
-		{
-			static bool firstCall = true;
-			if (firstCall)
-			{
-				firstCall = false;
-				if (r_multithreaded == 1)
-					Printf("Warning: Unable to determine number of CPU cores/threads for this computer. To improve performance, please type 'r_multithreaded x' in the console, where x is the number of threads to use.\n");
-			}
-
 			numThreads = 1;
-		}
 
 		if (r_scene_multithreaded == 0 || r_multithreaded == 0)
 			numThreads = 1;

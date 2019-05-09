@@ -47,6 +47,8 @@
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);
 
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames);
+
 // Physical device info
 static std::vector<VulkanPhysicalDevice> AvailableDevices;
 static std::vector<VulkanCompatibleDevice> SupportedDevices;
@@ -55,6 +57,8 @@ CUSTOM_CVAR(Bool, vk_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
+
+CVAR(Bool, vk_debug_callstack, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Int, vk_device, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -398,6 +402,13 @@ VkBool32 VulkanDevice::DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT mess
 			Printf("\n");
 			Printf(TEXTCOLOR_RED "[%s] ", typestr);
 			Printf(TEXTCOLOR_WHITE "%s\n", msg.GetChars());
+
+			if (vk_debug_callstack)
+			{
+				FString callstack = JitCaptureStackTrace(0, true);
+				if (!callstack.IsEmpty())
+					Printf("%s\n", callstack.GetChars());
+			}
 		}
 	}
 

@@ -165,6 +165,11 @@ void VkRenderPassManager::UpdateDynamicSet()
 {
 	auto fb = GetVulkanFrameBuffer();
 
+	// In some rare cases drawing commands may already have been created before VulkanFrameBuffer::BeginFrame is called.
+	// Make sure there there are no active command buffers using DynamicSet when we update it:
+	fb->GetRenderState()->EndRenderPass();
+	fb->WaitForCommands(false);
+
 	WriteDescriptors update;
 	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
 	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightBufferSSO->mBuffer.get());

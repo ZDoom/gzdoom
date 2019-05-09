@@ -205,7 +205,8 @@ namespace swrenderer
 			if (firstCall)
 			{
 				firstCall = false;
-				Printf("Warning: Unable to determine number of CPU cores/threads for this computer. To improve performance, please type 'r_multithreaded x' in the console, where x is the number of threads to use.\n");
+				if (r_multithreaded == 1)
+					Printf("Warning: Unable to determine number of CPU cores/threads for this computer. To improve performance, please type 'r_multithreaded x' in the console, where x is the number of threads to use.\n");
 			}
 
 			numThreads = 1;

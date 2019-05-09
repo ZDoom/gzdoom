@@ -214,6 +214,17 @@ static const char *shaderBindings = R"(
 	#define SUPPORTS_SHADOWMAPS
 	#define VULKAN_COORDINATE_SYSTEM
 	#define HAS_UNIFORM_VERTEX_DATA
+
+	// GLSL spec 4.60, 8.15. Noise Functions
+	// https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.pdf
+	//  "The noise functions noise1, noise2, noise3, and noise4 have been deprecated starting with version 4.4 of GLSL.
+	//   When not generating SPIR-V they are defined to return the value 0.0 or a vector whose components are all 0.0.
+	//   When generating SPIR-V the noise functions are not declared and may not be used."
+	// However, we need to support mods with custom shaders created for OpenGL renderer
+	float noise1(float) { return 0; }
+	vec2 noise2(vec2) { return vec2(0); }
+	vec3 noise3(vec3) { return vec3(0); }
+	vec4 noise4(vec4) { return vec4(0); }
 )";
 
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)

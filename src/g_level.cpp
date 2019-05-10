@@ -1369,7 +1369,7 @@ void FLevelLocals::StartTravel ()
 			{
 				pawn->UnlinkFromWorld (nullptr);
 				int tid = pawn->tid;	// Save TID
-				pawn->RemoveFromHash ();
+				pawn->SetTID(0);
 				pawn->tid = tid;		// Restore TID (but no longer linked into the hash chain)
 				pawn->ChangeStatNum (STAT_TRAVELLING);
 				pawn->DeleteAttachedLights();
@@ -1481,7 +1481,9 @@ int FLevelLocals::FinishTravel ()
 		}
 		pawn->LinkToWorld (nullptr);
 		pawn->ClearInterpolation();
-		pawn->AddToHash ();
+		const int tid = pawn->tid;	// Save TID (actor isn't linked into the hash chain yet)
+		pawn->tid = 0;				// Reset TID
+		pawn->SetTID(tid);			// Set TID (and link actor into the hash chain)
 		pawn->SetState(pawn->SpawnState);
 		pawn->player->SendPitchLimits();
 

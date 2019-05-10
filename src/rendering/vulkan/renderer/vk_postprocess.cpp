@@ -271,17 +271,25 @@ void VkPostprocess::UpdateShadowMap()
 	}
 }
 
-void VkPostprocess::BeginFrame()
+std::unique_ptr<VulkanDescriptorSet> VkPostprocess::AllocateDescriptorSet(VulkanDescriptorSetLayout *layout)
 {
-	if (!mDescriptorPool)
+	if (mDescriptorPool)
 	{
-		DescriptorPoolBuilder builder;
-		builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200);
-		builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4);
-		builder.setMaxSets(100);
-		mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
-		mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
+		auto descriptors = mDescriptorPool->tryAllocate(layout);
+		if (descriptors)
+			return descriptors;
+
+		GetVulkanFrameBuffer()->FrameDeleteList.DescriptorPools.push_back(std::move(mDescriptorPool));
 	}
+
+	DescriptorPoolBuilder builder;
+	builder.addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 200);
+	builder.addPoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4);
+	builder.setMaxSets(100);
+	mDescriptorPool = builder.create(GetVulkanFrameBuffer()->device);
+	mDescriptorPool->SetDebugName("VkPostprocess.mDescriptorPool");
+
+	return mDescriptorPool->allocate(layout);
 }
 
 void VkPostprocess::RenderBuffersReset()
@@ -522,7 +530,7 @@ VulkanDescriptorSet *VkPPRenderState::GetInput(VkPPRenderPassSetup *passSetup, c
 {
 	auto fb = GetVulkanFrameBuffer();
 	auto pp = fb->GetPostprocess();
-	auto descriptors = pp->mDescriptorPool->allocate(passSetup->DescriptorLayout.get());
+	auto descriptors = pp->AllocateDescriptorSet(passSetup->DescriptorLayout.get());
 	descriptors->SetDebugName("VkPostprocess.descriptors");
 
 	WriteDescriptors write;

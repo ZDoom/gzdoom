@@ -52,7 +52,6 @@ public:
 	VkPostprocess();
 	~VkPostprocess();
 
-	void BeginFrame();
 	void RenderBuffersReset();
 
 	void SetActiveRenderTarget();
@@ -73,6 +72,7 @@ public:
 private:
 	void NextEye(int eyeCount);
 
+	std::unique_ptr<VulkanDescriptorSet> AllocateDescriptorSet(VulkanDescriptorSetLayout *layout);
 	VulkanSampler *GetSampler(PPFilterMode filter, PPWrapMode wrap);
 
 	std::array<std::unique_ptr<VulkanSampler>, 4> mSamplers;

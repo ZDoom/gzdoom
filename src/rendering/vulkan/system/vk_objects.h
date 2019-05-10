@@ -192,6 +192,7 @@ public:
 
 	void SetDebugName(const char *name) { device->SetDebugObjectName(name, (uint64_t)pool, VK_OBJECT_TYPE_DESCRIPTOR_POOL); }
 
+	std::unique_ptr<VulkanDescriptorSet> tryAllocate(VulkanDescriptorSetLayout *layout);
 	std::unique_ptr<VulkanDescriptorSet> allocate(VulkanDescriptorSetLayout *layout);
 
 	VulkanDevice *device;
@@ -932,6 +933,22 @@ inline VulkanDescriptorPool::~VulkanDescriptorPool()
 	vkDestroyDescriptorPool(device->device, pool, nullptr);
 }
 
+inline std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorPool::tryAllocate(VulkanDescriptorSetLayout *layout)
+{
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = pool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &layout->layout;
+
+	VkDescriptorSet descriptorSet;
+	VkResult result = vkAllocateDescriptorSets(device->device, &allocInfo, &descriptorSet);
+	if (result != VK_SUCCESS)
+		return nullptr;
+
+	return std::make_unique<VulkanDescriptorSet>(device, this, descriptorSet);
+}
+
 inline std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorPool::allocate(VulkanDescriptorSetLayout *layout)
 {
 	VkDescriptorSetAllocateInfo allocInfo = {};
@@ -943,7 +960,7 @@ inline std::unique_ptr<VulkanDescriptorSet> VulkanDescriptorPool::allocate(Vulka
 	VkDescriptorSet descriptorSet;
 	VkResult result = vkAllocateDescriptorSets(device->device, &allocInfo, &descriptorSet);
 	if (result != VK_SUCCESS)
-		I_Error("Could not allocate descriptor sets");
+		I_FatalError("Could not allocate descriptor sets");
 
 	return std::make_unique<VulkanDescriptorSet>(device, this, descriptorSet);
 }

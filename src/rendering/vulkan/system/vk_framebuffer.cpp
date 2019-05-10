@@ -790,7 +790,7 @@ TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 
 	pitch = w * 3;
 	color_type = SS_RGB;
-	gamma = 2.2f;
+	gamma = 1.0f;
 	return ScreenshotBuffer;
 }
 

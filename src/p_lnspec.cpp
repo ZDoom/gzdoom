@@ -1299,11 +1299,9 @@ FUNC(LS_Thing_ChangeTID)
 {
 	if (arg0 == 0)
 	{
-		if (it != NULL && !(it->ObjectFlags & OF_EuthanizeMe))
+		if (it != nullptr)
 		{
-			it->RemoveFromHash ();
-			it->tid = arg1;
-			it->AddToHash ();
+			it->SetTID(arg1);
 		}
 	}
 	else
@@ -1317,12 +1315,7 @@ FUNC(LS_Thing_ChangeTID)
 			actor = next;
 			next = iterator.Next ();
 
-			if (!(actor->ObjectFlags & OF_EuthanizeMe))
-			{
-				actor->RemoveFromHash ();
-				actor->tid = arg1;
-				actor->AddToHash ();
-			}
+			actor->SetTID(arg1);
 		}
 	}
 	return true;

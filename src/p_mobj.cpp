@@ -2906,6 +2906,8 @@ void P_NightmareRespawn (AActor *mobj)
 //
 void AActor::AddToHash ()
 {
+	assert(!(ObjectFlags & OF_EuthanizeMe));
+
 	if (tid == 0)
 	{
 		iprev = NULL;
@@ -2946,6 +2948,23 @@ void AActor::RemoveFromHash ()
 	}
 	tid = 0;
 }
+
+void AActor::SetTID (int newTID)
+{
+	RemoveFromHash();
+
+	if (ObjectFlags & OF_EuthanizeMe)
+	{
+		// Do not assign TID and do not link actor into the hash
+		// if it was already destroyed and will be freed by GC
+		return;
+	}
+
+	tid = newTID;
+
+	AddToHash();
+}
+
 
 //==========================================================================
 //
@@ -5465,8 +5484,7 @@ AActor *FLevelLocals::SpawnMapThing (FMapThing *mthing, int position)
 	}
 
 	// [RH] Add ThingID to mobj and link it in with the others
-	mobj->tid = mthing->thingid;
-	mobj->AddToHash ();
+	mobj->SetTID(mthing->thingid);
 
 	mobj->PrevAngles.Yaw = mobj->Angles.Yaw = (double)mthing->angle;
 

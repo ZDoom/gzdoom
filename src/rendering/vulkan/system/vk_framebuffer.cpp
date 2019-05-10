@@ -796,18 +796,17 @@ TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 
 void VulkanFrameBuffer::BeginFrame()
 {
+	SetViewportRects(nullptr);
+	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
+	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
+	mRenderState->BeginFrame();
+	mRenderPassManager->UpdateDynamicSet();
+
 	if (mNextTimestampQuery > 0)
 	{
 		GetDrawCommands()->resetQueryPool(mTimestampQueryPool.get(), 0, mNextTimestampQuery);
 		mNextTimestampQuery = 0;
 	}
-
-	SetViewportRects(nullptr);
-	mScreenBuffers->BeginFrame(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
-	mSaveBuffers->BeginFrame(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
-	mPostprocess->BeginFrame();
-	mRenderState->BeginFrame();
-	mRenderPassManager->UpdateDynamicSet();
 }
 
 void VulkanFrameBuffer::PushGroup(const FString &name)

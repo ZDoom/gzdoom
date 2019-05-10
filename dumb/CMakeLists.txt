@@ -24,7 +24,7 @@ endif()
 
 include_directories( include )
 
-add_library( dumb
+add_library( dumb STATIC
     src/core/unload.c
     src/core/rendsig.c
     src/core/rendduh.c

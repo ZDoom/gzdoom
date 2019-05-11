@@ -994,7 +994,7 @@ bool G_Responder (event_t *ev)
 	// [RH] If the view is active, give the automap a chance at
 	// the events *last* so that any bound keys get precedence.
 
-	if (gamestate == GS_LEVEL && viewactive)
+	if (gamestate == GS_LEVEL && viewactive && primaryLevel->automap)
 		return primaryLevel->automap->Responder (ev, true);
 
 	return (ev->type == EV_KeyDown ||

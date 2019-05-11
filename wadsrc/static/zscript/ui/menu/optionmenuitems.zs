@@ -1253,3 +1253,56 @@ class VideoModeMenu : OptionMenu
 		return false;
 	}
 }
+
+//=============================================================================
+//
+// This class provides the Hint Option Menu item.
+// Hint is a static text that is visible only if the items above are selected.
+// The number of items above is configurable, and by default is 1.
+//
+//=============================================================================
+
+class OptionMenuItemHint : OptionMenuItemStaticText
+{
+	// adoveNumber means for how many selectable items above this hint should appear.
+	OptionMenuItemHint Init(String label, int color = 0, int aboveNumber = 1)
+	{
+		Super.Init(label, color);
+		if (aboveNumber < 1) { aboveNumber = 1; }
+		mAboveNumber = aboveNumber;
+		return self;
+	}
+
+	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
+	{
+		return isAboveSelected(desc)
+			? Super.Draw(desc, y, indent, selected)
+			: -1;
+	}
+
+	private bool isAboveSelected(OptionMenuDescriptor desc)
+	{
+		int selfIndex = desc.mItems.find(self);
+		int aboveEnd  = selfIndex - 1;
+
+		while (aboveEnd >= 0 && !desc.mItems[aboveEnd].Selectable()) { --aboveEnd; }
+
+		int aboveBegin      = aboveEnd;
+		int foundSelectable = 0;
+		for (; aboveBegin >= 0 && foundSelectable < mAboveNumber; --aboveBegin)
+		{
+			if (desc.mItems[aboveBegin].Selectable())
+			{
+				++foundSelectable;
+			}
+		}
+		++aboveBegin;
+
+		int  selected        = desc.mSelectedItem;
+		bool isAboveSelected = (aboveBegin <= selected && selected <= aboveEnd);
+
+		return isAboveSelected;
+	}
+
+	private int mAboveNumber;
+}

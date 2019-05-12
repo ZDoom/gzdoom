@@ -766,7 +766,7 @@ inline GraphicsPipelineBuilder::GraphicsPipelineBuilder()
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr;
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.subpass = 0;
@@ -896,8 +896,6 @@ inline void GraphicsPipelineBuilder::setDepthStencilEnable(bool test, bool write
 	depthStencil.depthTestEnable = test ? VK_TRUE : VK_FALSE;
 	depthStencil.depthWriteEnable = write ? VK_TRUE : VK_FALSE;
 	depthStencil.stencilTestEnable = stencil ? VK_TRUE : VK_FALSE;
-
-	pipelineInfo.pDepthStencilState = (test || write || stencil) ? &depthStencil : nullptr;
 }
 
 inline void GraphicsPipelineBuilder::setStencil(VkStencilOp failOp, VkStencilOp passOp, VkStencilOp depthFailOp, VkCompareOp compareOp, uint32_t compareMask, uint32_t writeMask, uint32_t reference)

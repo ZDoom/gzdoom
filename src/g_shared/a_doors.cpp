@@ -799,7 +799,6 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 			if (sec->ceilingdata->IsA (RUNTIME_CLASS(DAnimatedDoor)))
 			{
 				DAnimatedDoor *door = barrier_cast<DAnimatedDoor *>(sec->ceilingdata);
-				door->StartClosing();
 				if (door->m_Status == DAnimatedDoor::Waiting)
 				{
 					door->StartClosing();

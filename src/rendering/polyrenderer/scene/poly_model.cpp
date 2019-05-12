@@ -53,7 +53,7 @@ void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_
 	renderer.Translation = actor->Translation;
 
 	renderer.AddLights(actor);
-	renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
+	renderer.RenderModel(x, y, z, smf, actor, PolyRenderer::Instance()->Viewpoint.TicFrac);
 	PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip), nullptr);
 }

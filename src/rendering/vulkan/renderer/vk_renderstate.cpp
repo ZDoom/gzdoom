@@ -248,6 +248,11 @@ void VkRenderState::ApplyRenderPass(int dt)
 	if (changingRenderPass)
 	{
 		passKey.ClearTargets = mClearTargets;
+
+		// Only clear depth+stencil if the render target actually has that
+		if (!mRenderTarget.DepthStencil)
+			passKey.ClearTargets &= ~(CT_Depth | CT_Stencil);
+
 		BeginRenderPass(passKey, mCommandBuffer);
 		mRenderPassKey = passKey;
 		mClearTargets = 0;

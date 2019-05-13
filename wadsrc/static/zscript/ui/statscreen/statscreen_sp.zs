@@ -197,7 +197,11 @@ class DoomStatusScreen : StatusScreen
 		{
 			 drawTimeFont (printFont, 160 - SP_TIMEX, SP_TIMEY + lh, cnt_total_time, tcolor);
 		}
-		drawTimeFont (printFont, 320 - SP_TIMEX, SP_TIMEY, cnt_par, tcolor);
+
+		if (wbs.partime)
+		{
+			drawTimeFont (printFont, 320 - SP_TIMEX, SP_TIMEY, cnt_par, tcolor);
+		}
 	}
 }
 

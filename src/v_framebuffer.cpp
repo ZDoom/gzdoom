@@ -427,7 +427,7 @@ void DFrameBuffer::FPSLimit()
 	using namespace std::chrono;
 	using namespace std::this_thread;
 
-	if (vid_maxfps <= 0 || vid_vsync || cl_capfps)
+	if (vid_maxfps <= 0 || cl_capfps)
 		return;
 
 	uint64_t targetWakeTime = fpsLimitTime + 1'000'000 / vid_maxfps;

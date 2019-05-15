@@ -7,7 +7,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 endif()
 
 add_definitions( -DBZ_NO_STDIO )
-add_library( bz2
+add_library( bz2 STATIC
     blocksort.c
     bzlib.c
     compress.c

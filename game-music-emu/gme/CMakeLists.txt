@@ -163,7 +163,7 @@ set (EXPORTED_HEADERS gme.h)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # Add library to be compiled.
-add_library(gme ${libgme_SRCS})
+add_library(gme STATIC ${libgme_SRCS})
 
 if(ZLIB_FOUND)
     message(" ** ZLib library located, compressed file formats will be supported")

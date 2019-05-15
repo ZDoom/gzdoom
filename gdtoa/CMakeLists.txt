@@ -35,7 +35,7 @@ if( NOT MSVC AND NOT APPLE )
 	set( GEN_FP_DEPS ${CMAKE_CURRENT_BINARY_DIR}/arith.h ${CMAKE_CURRENT_BINARY_DIR}/gd_qnan.h )
 endif()
 
-add_library( gdtoa
+add_library( gdtoa STATIC
 	${GEN_FP_FILES}
 	dmisc.c
 	dtoa.c

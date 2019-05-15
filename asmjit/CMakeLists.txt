@@ -97,7 +97,7 @@ set(ASMJIT_SRCS
     asmjit/x86/x86regalloc.cpp
 )
 
-add_library(${ASMJITNAME} ${ASMJIT_SRCS} ${ASMJIT_PUBLIC_HDRS})
+add_library(${ASMJITNAME} STATIC ${ASMJIT_SRCS} ${ASMJIT_PUBLIC_HDRS})
 
 set_target_properties(${ASMJITNAME} PROPERTIES OUTPUT_NAME asmjit)
 

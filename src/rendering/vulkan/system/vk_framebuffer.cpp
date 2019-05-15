@@ -324,6 +324,8 @@ void VulkanFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int wid
 		// Switch to render buffers dimensioned for the savepic
 		mActiveRenderBuffers = mSaveBuffers.get();
 
+		mPostprocess->ImageTransitionScene(true);
+
 		hw_ClearFakeFlat();
 		GetRenderState()->SetVertexBuffer(screen->mVertexData);
 		screen->mVertexData->Reset();

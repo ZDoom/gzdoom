@@ -8,6 +8,7 @@
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "vulkan/system/vk_objects.h"
 #include "vulkan/system/vk_builders.h"
+#include "vulkan/textures/vk_imagetransition.h"
 
 class FString;
 
@@ -34,19 +35,6 @@ public:
 	bool operator!=(const VkPPRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkPPRenderPassKey)) != 0; }
 };
 
-class VkPPImageTransition
-{
-public:
-	void addImage(VulkanImage *image, VkImageLayout *layout, VkImageLayout targetLayout, bool undefinedSrcLayout);
-	void execute(VulkanCommandBuffer *cmdbuffer);
-
-private:
-	PipelineBarrier barrier;
-	VkPipelineStageFlags srcStageMask = 0;
-	VkPipelineStageFlags dstStageMask = 0;
-	bool needbarrier = false;
-};
-
 class VkPostprocess
 {
 public:
@@ -67,7 +55,7 @@ public:
 	void ImageTransitionScene(bool undefinedSrcLayout);
 
 	void BlitSceneToPostprocess();
-	void BlitCurrentToImage(VulkanImage *image, VkImageLayout *layout, VkImageLayout finallayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	void BlitCurrentToImage(VkTextureImage *image, VkImageLayout finallayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders);
 
 private:
@@ -101,10 +89,8 @@ class VkPPTexture : public PPTextureBackend
 public:
 	VkPPTexture(PPTexture *texture);
 
-	std::unique_ptr<VulkanImage> Image;
-	std::unique_ptr<VulkanImageView> View;
+	VkTextureImage TexImage;
 	std::unique_ptr<VulkanBuffer> Staging;
-	VkImageLayout Layout = VK_IMAGE_LAYOUT_UNDEFINED;
 	VkFormat Format;
 };
 
@@ -143,12 +129,5 @@ private:
 	VkPPShader *GetVkShader(PPShader *shader);
 	VkPPTexture *GetVkTexture(PPTexture *texture);
 
-	struct TextureImage
-	{
-		VulkanImage *image;
-		VulkanImageView *view;
-		VkImageLayout *layout;
-		const char *debugname;
-	};
-	TextureImage GetTexture(const PPTextureType &type, PPTexture *tex);
+	VkTextureImage *GetTexture(const PPTextureType &type, PPTexture *tex);
 };

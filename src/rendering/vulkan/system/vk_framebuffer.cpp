@@ -444,7 +444,7 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
 		{
-			mRenderState->SetRenderTarget(GetBuffers()->SceneColorView.get(), GetBuffers()->SceneDepthStencilView.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
+			mRenderState->SetRenderTarget(GetBuffers()->SceneColor.View.get(), GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
 			bool useSSAO = (gl_ssao != 0);
 			GetRenderState()->SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
 			GetRenderState()->EnableDrawBuffers(GetRenderState()->GetPassDrawBufferCount());
@@ -505,33 +505,32 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 
 	int width = mat->TextureWidth();
 	int height = mat->TextureHeight();
-	VulkanImage *image = BaseLayer->GetImage(tex, 0, 0);
-	VulkanImageView *view = BaseLayer->GetImageView(tex, 0, 0);
-	VulkanImageView *depthStencilView = BaseLayer->GetDepthStencilView(tex);
+	VkTextureImage *image = BaseLayer->GetImage(tex, 0, 0);
+	VkTextureImage *depthStencil = BaseLayer->GetDepthStencil(tex);
 
 	mRenderState->EndRenderPass();
 
-	PipelineBarrier barrier0;
-	barrier0.addImage(image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-	barrier0.execute(GetDrawCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+	VkImageTransition barrier0;
+	barrier0.addImage(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
+	barrier0.execute(GetDrawCommands());
 
-	mRenderState->SetRenderTarget(view, depthStencilView, image->width, image->height, VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT);
+	mRenderState->SetRenderTarget(image->View.get(), depthStencil->View.get(), image->Image->width, image->Image->height, VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT);
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
-	bounds.width = MIN(mat->GetWidth(), image->width);
-	bounds.height = MIN(mat->GetHeight(), image->height);
+	bounds.width = MIN(mat->GetWidth(), image->Image->width);
+	bounds.height = MIN(mat->GetHeight(), image->Image->height);
 
 	FRenderViewpoint texvp;
 	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
 
 	mRenderState->EndRenderPass();
 
-	PipelineBarrier barrier1;
-	barrier1.addImage(image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
-	barrier1.execute(GetDrawCommands(), VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	VkImageTransition barrier1;
+	barrier1.addImage(image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+	barrier1.execute(GetDrawCommands());
 
-	mRenderState->SetRenderTarget(GetBuffers()->SceneColorView.get(), GetBuffers()->SceneDepthStencilView.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
+	mRenderState->SetRenderTarget(GetBuffers()->SceneColor.View.get(), GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
 
 	tex->SetUpdated(true);
 }
@@ -736,14 +735,15 @@ FTexture *VulkanFrameBuffer::WipeEndScreen()
 
 void VulkanFrameBuffer::CopyScreenToBuffer(int w, int h, void *data)
 {
+	VkTextureImage image;
+
 	// Convert from rgba16f to rgba8 using the GPU:
 	ImageBuilder imgbuilder;
 	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
 	imgbuilder.setUsage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
 	imgbuilder.setSize(w, h);
-	auto image = imgbuilder.create(device);
-	VkImageLayout layout = VK_IMAGE_LAYOUT_UNDEFINED;
-	GetPostprocess()->BlitCurrentToImage(image.get(), &layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+	image.Image = imgbuilder.create(device);
+	GetPostprocess()->BlitCurrentToImage(&image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
 
 	// Staging buffer for download
 	BufferBuilder bufbuilder;
@@ -758,7 +758,7 @@ void VulkanFrameBuffer::CopyScreenToBuffer(int w, int h, void *data)
 	region.imageExtent.depth = 1;
 	region.imageSubresource.layerCount = 1;
 	region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	GetDrawCommands()->copyImageToBuffer(image->image, layout, staging->buffer, 1, &region);
+	GetDrawCommands()->copyImageToBuffer(image.Image->image, image.Layout, staging->buffer, 1, &region);
 
 	// Submit command buffers and wait for device to finish the work
 	WaitForCommands(false);

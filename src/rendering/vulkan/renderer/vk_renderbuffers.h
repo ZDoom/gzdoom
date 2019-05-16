@@ -2,6 +2,7 @@
 #pragma once
 
 #include "vulkan/system/vk_objects.h"
+#include "vulkan/textures/vk_imagetransition.h"
 
 class VkRenderBuffers
 {
@@ -17,30 +18,18 @@ public:
 	int GetSceneHeight() const { return mSceneHeight; }
 	VkSampleCountFlagBits GetSceneSamples() const { return mSamples; }
 
-	std::unique_ptr<VulkanImage> SceneColor;
-	std::unique_ptr<VulkanImage> SceneDepthStencil;
-	std::unique_ptr<VulkanImage> SceneNormal;
-	std::unique_ptr<VulkanImage> SceneFog;
-	std::unique_ptr<VulkanImageView> SceneColorView;
-	std::unique_ptr<VulkanImageView> SceneDepthStencilView;
-	std::unique_ptr<VulkanImageView> SceneDepthView;
-	std::unique_ptr<VulkanImageView> SceneNormalView;
-	std::unique_ptr<VulkanImageView> SceneFogView;
+	VkTextureImage SceneColor;
+	VkTextureImage SceneDepthStencil;
+	VkTextureImage SceneNormal;
+	VkTextureImage SceneFog;
+
 	VkFormat SceneDepthStencilFormat = VK_FORMAT_D24_UNORM_S8_UINT;
-	VkImageLayout SceneColorLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	VkImageLayout SceneDepthStencilLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	VkImageLayout SceneNormalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	VkImageLayout SceneFogLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	static const int NumPipelineImages = 2;
-	std::unique_ptr<VulkanImage> PipelineImage[NumPipelineImages];
-	std::unique_ptr<VulkanImageView> PipelineView[NumPipelineImages];
-	VkImageLayout PipelineLayout[NumPipelineImages] = { VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL };
+	VkTextureImage PipelineImage[NumPipelineImages];
 
-	std::unique_ptr<VulkanImage> Shadowmap;
-	std::unique_ptr<VulkanImageView> ShadowmapView;
+	VkTextureImage Shadowmap;
 	std::unique_ptr<VulkanSampler> ShadowmapSampler;
-	VkImageLayout ShadowmapLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 private:
 	void CreatePipeline(int width, int height);

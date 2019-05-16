@@ -568,9 +568,9 @@ void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuf
 		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
 		builder.addAttachment(mRenderTarget.View);
 		if (key.DrawBuffers > 1)
-			builder.addAttachment(buffers->SceneFogView.get());
+			builder.addAttachment(buffers->SceneFog.View.get());
 		if (key.DrawBuffers > 2)
-			builder.addAttachment(buffers->SceneNormalView.get());
+			builder.addAttachment(buffers->SceneNormal.View.get());
 		if (key.UsesDepthStencil())
 			builder.addAttachment(mRenderTarget.DepthStencil);
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);

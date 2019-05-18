@@ -1251,7 +1251,7 @@ CCMD(netevent)
 {
 	if (gamestate != GS_LEVEL/* && gamestate != GS_TITLELEVEL*/) // not sure if this should work in title level, but probably not, because this is for actual playing
 	{
-		Printf("netevent cannot be used outside of a map.\n");
+		DPrintf(DMSG_SPAMMY, "netevent cannot be used outside of a map.\n");
 		return;
 	}
 

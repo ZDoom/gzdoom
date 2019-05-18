@@ -2713,6 +2713,7 @@ OptionString "LanguageOptions"
 	"fr", "Français (French)"
 	"it", "Italiano (Italian)"
 	"ko", "한국의 (Korean)"
+	"ptg", "Português (European Portuguese)"
 	"pt", "Português do Brasil (Brazilian Portuguese)"
 	"ru", "Русский (Russian)"
 }

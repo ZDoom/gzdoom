@@ -92,7 +92,7 @@ void VkSamplerManager::Create()
 		builder.setMinFilter(TexFilter[filter].minFilter);
 		builder.setAddressMode(TexClamp[i].clamp_u, TexClamp[i].clamp_v, VK_SAMPLER_ADDRESS_MODE_REPEAT);
 		builder.setMipmapMode(TexFilter[filter].mipfilter);
-		if (TexFilter[filter].mipmapping)
+		if (i <= CLAMP_XY && TexFilter[filter].mipmapping)
 		{
 			builder.setAnisotropy(gl_texture_filter_anisotropic);
 			builder.setMaxLod(100.0f); // According to the spec this value is clamped so something high makes it usable for all textures.

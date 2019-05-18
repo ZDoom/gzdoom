@@ -28,13 +28,7 @@ public:
 	int CullMode;
 	int VertexFormat;
 	int DrawType;
-	int Samples;
-	int ClearTargets;
-	int DrawBuffers;
 	int NumTextureLayers;
-	VkFormat DrawBufferFormat;
-
-	bool UsesDepthStencil() const { return DepthTest || DepthWrite || StencilTest || (ClearTargets & (CT_Depth | CT_Stencil)); }
 
 	bool operator<(const VkPipelineKey &other) const { return memcmp(this, &other, sizeof(VkPipelineKey)) < 0; }
 	bool operator==(const VkPipelineKey &other) const { return memcmp(this, &other, sizeof(VkPipelineKey)) == 0; }
@@ -44,27 +38,10 @@ public:
 class VkRenderPassKey
 {
 public:
-	VkRenderPassKey() = default;
-	VkRenderPassKey(const VkPipelineKey &key)
-	{
-		DepthWrite = key.DepthWrite;
-		DepthTest = key.DepthTest;
-		StencilTest = key.StencilTest;
-		Samples = key.Samples;
-		ClearTargets = key.ClearTargets;
-		DrawBuffers = key.DrawBuffers;
-		DrawBufferFormat = key.DrawBufferFormat;
-	}
-
-	int DepthWrite;
-	int DepthTest;
-	int StencilTest;
+	int DepthStencil;
 	int Samples;
-	int ClearTargets;
 	int DrawBuffers;
 	VkFormat DrawBufferFormat;
-
-	bool UsesDepthStencil() const { return DepthTest || DepthWrite || StencilTest || (ClearTargets & (CT_Depth | CT_Stencil)); }
 
 	bool operator<(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) < 0; }
 	bool operator==(const VkRenderPassKey &other) const { return memcmp(this, &other, sizeof(VkRenderPassKey)) == 0; }
@@ -76,14 +53,16 @@ class VkRenderPassSetup
 public:
 	VkRenderPassSetup(const VkRenderPassKey &key);
 
+	VulkanRenderPass *GetRenderPass(int clearTargets);
 	VulkanPipeline *GetPipeline(const VkPipelineKey &key);
 
-	std::unique_ptr<VulkanRenderPass> RenderPass;
+	VkRenderPassKey PassKey;
+	std::unique_ptr<VulkanRenderPass> RenderPasses[8];
 	std::map<VkPipelineKey, std::unique_ptr<VulkanPipeline>> Pipelines;
 	std::map<VkImageView, std::unique_ptr<VulkanFramebuffer>> Framebuffer;
 
 private:
-	void CreateRenderPass(const VkRenderPassKey &key);
+	std::unique_ptr<VulkanRenderPass> CreateRenderPass(int clearTargets);
 	std::unique_ptr<VulkanPipeline> CreatePipeline(const VkPipelineKey &key);
 };
 

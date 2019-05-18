@@ -1012,6 +1012,7 @@ OptionMenu "HUDOptions" protected
 	Submenu "$HUDMNU_FLASH", 				"FlashOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 		"ScoreboardOptions"
 	StaticText " "
+	Option "$HUDMNU_CROSSHAIRON",			"crosshairon", "OnOff"
 	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
 	Option "$HUDMNU_FORCECROSSHAIR",		"crosshairforce", "OnOff"
 	Option "$HUDMNU_GROWCROSSHAIR",			"crosshairgrow", "OnOff"

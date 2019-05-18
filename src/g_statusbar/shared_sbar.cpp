@@ -123,6 +123,7 @@ CUSTOM_CVAR(Bool, hud_aspectscale, false, CVAR_ARCHIVE)
 	}
 }
 
+CVAR (Bool, crosshairon, true, CVAR_ARCHIVE);
 CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
 CVAR (Bool, crosshairforce, false, CVAR_ARCHIVE)
 CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
@@ -1029,9 +1030,16 @@ void DBaseStatusBar::DrawCrosshair ()
 	double size;
 	int w, h;
 
+	if (!crosshairon)
+	{
+		return;
+	}
+
 	// Don't draw the crosshair in chasecam mode
 	if (players[consoleplayer].cheats & CF_CHASECAM)
+	{
 		return;
+	}
 
 	ST_LoadCrosshair();
 

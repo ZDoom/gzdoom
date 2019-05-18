@@ -195,9 +195,8 @@ void VkRenderState::ApplyDepthBias()
 
 void VkRenderState::ApplyRenderPass(int dt)
 {
-	// Find a render pass that matches our state
+	// Find a pipeline that matches our state
 	VkPipelineKey pipelineKey;
-	pipelineKey.ClearTargets = mPipelineKey.ClearTargets | mClearTargets;
 	pipelineKey.DrawType = dt;
 	pipelineKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
 	pipelineKey.RenderStyle = mRenderStyle;
@@ -210,9 +209,6 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.StencilPassOp = mStencilOp;
 	pipelineKey.ColorMask = mColorMask;
 	pipelineKey.CullMode = mCullMode;
-	pipelineKey.DrawBufferFormat = mRenderTarget.Format;
-	pipelineKey.Samples = mRenderTarget.Samples;
-	pipelineKey.DrawBuffers = mRenderTarget.DrawBuffers;
 	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 0;
 	if (mSpecialEffect > EFF_NONE)
 	{
@@ -228,44 +224,25 @@ void VkRenderState::ApplyRenderPass(int dt)
 		pipelineKey.AlphaTest = mAlphaThreshold >= 0.f;
 	}
 
-	// Is this the one we already have or do we need to change pipeline?
-	bool changingPipeline = (pipelineKey != mPipelineKey);
+	// Is this the one we already have?
 	bool inRenderPass = mCommandBuffer;
+	bool changingPipeline = (!inRenderPass) || (pipelineKey != mPipelineKey);
 
 	if (!inRenderPass)
 	{
 		mCommandBuffer = GetVulkanFrameBuffer()->GetDrawCommands();
-		changingPipeline = true;
 		mScissorChanged = true;
 		mViewportChanged = true;
 		mStencilRefChanged = true;
 		mBias.mChanged = true;
+
+		BeginRenderPass(mCommandBuffer);
 	}
 
 	if (changingPipeline)
 	{
-		pipelineKey.ClearTargets = mClearTargets;
-
-		// Only clear depth+stencil if the render target actually has that
-		if (!mRenderTarget.DepthStencil)
-			pipelineKey.ClearTargets &= ~(CT_Depth | CT_Stencil);
-
-		// Begin new render pass if needed
-		VkRenderPassKey passKey = pipelineKey;
-		if (!inRenderPass || passKey != VkRenderPassKey(mPipelineKey))
-		{
-			if (inRenderPass)
-				mCommandBuffer->endRenderPass();
-
-			BeginRenderPass(passKey, mCommandBuffer);
-		}
-
-		// Bind the pipeline
-		VkRenderPassSetup *passSetup = GetVulkanFrameBuffer()->GetRenderPassManager()->GetRenderPass(passKey);
-		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->GetPipeline(pipelineKey));
-
+		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, mPassSetup->GetPipeline(pipelineKey));
 		mPipelineKey = pipelineKey;
-		mClearTargets = 0;
 	}
 }
 
@@ -563,32 +540,42 @@ void VkRenderState::SetRenderTarget(VulkanImageView *view, VulkanImageView *dept
 	mRenderTarget.Samples = samples;
 }
 
-void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer)
+void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 {
 	auto fb = GetVulkanFrameBuffer();
 
-	VkRenderPassSetup *passSetup = fb->GetRenderPassManager()->GetRenderPass(key);
+	VkRenderPassKey key = {};
+	key.DrawBufferFormat = mRenderTarget.Format;
+	key.Samples = mRenderTarget.Samples;
+	key.DrawBuffers = mRenderTarget.DrawBuffers;
+	key.DepthStencil = !!mRenderTarget.DepthStencil;
 
-	auto &framebuffer = passSetup->Framebuffer[mRenderTarget.View->view];
+	mPassSetup = fb->GetRenderPassManager()->GetRenderPass(key);
+
+	auto &framebuffer = mPassSetup->Framebuffer[mRenderTarget.View->view];
 	if (!framebuffer)
 	{
 		auto buffers = fb->GetBuffers();
 		FramebufferBuilder builder;
-		builder.setRenderPass(passSetup->RenderPass.get());
+		builder.setRenderPass(mPassSetup->GetRenderPass(0));
 		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
 		builder.addAttachment(mRenderTarget.View);
 		if (key.DrawBuffers > 1)
 			builder.addAttachment(buffers->SceneFog.View.get());
 		if (key.DrawBuffers > 2)
 			builder.addAttachment(buffers->SceneNormal.View.get());
-		if (key.UsesDepthStencil())
+		if (key.DepthStencil)
 			builder.addAttachment(mRenderTarget.DepthStencil);
 		framebuffer = builder.create(GetVulkanFrameBuffer()->device);
 		framebuffer->SetDebugName("VkRenderPassSetup.Framebuffer");
 	}
 
+	// Only clear depth+stencil if the render target actually has that
+	if (!mRenderTarget.DepthStencil)
+		mClearTargets &= ~(CT_Depth | CT_Stencil);
+
 	RenderPassBegin beginInfo;
-	beginInfo.setRenderPass(passSetup->RenderPass.get());
+	beginInfo.setRenderPass(mPassSetup->GetRenderPass(mClearTargets));
 	beginInfo.setRenderArea(0, 0, mRenderTarget.Width, mRenderTarget.Height);
 	beginInfo.setFramebuffer(framebuffer.get());
 	beginInfo.addClearColor(screen->mSceneClearColor[0], screen->mSceneClearColor[1], screen->mSceneClearColor[2], screen->mSceneClearColor[3]);
@@ -600,6 +587,7 @@ void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuf
 	cmdbuffer->beginRenderPass(beginInfo);
 
 	mMaterial.mChanged = true;
+	mClearTargets = 0;
 }
 
 /////////////////////////////////////////////////////////////////////////////

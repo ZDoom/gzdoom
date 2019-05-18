@@ -62,11 +62,12 @@ protected:
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
 
-	void BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuffer *cmdbuffer);
+	void BeginRenderPass(VulkanCommandBuffer *cmdbuffer);
 
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
 	VkPipelineKey mPipelineKey = {};
+	VkRenderPassSetup *mPassSetup = nullptr;
 	int mClearTargets = 0;
 	bool mNeedApply = true;
 

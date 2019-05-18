@@ -98,6 +98,8 @@ EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Int,  vid_enablevulkan)
 EXTERN_CVAR(Bool, vk_debug)
 
+CVAR(Bool, mvk_debug, false, 0)
+
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
@@ -374,7 +376,21 @@ public:
 
 			[ms_window setContentView:vulkanView];
 
-			if (!vk_debug)
+			// See vk_mvk_moltenvk.h for comprehensive explanation of configuration options set below
+			// https://github.com/KhronosGroup/MoltenVK/blob/master/MoltenVK/MoltenVK/API/vk_mvk_moltenvk.h
+
+			if (vk_debug)
+			{
+				// Output errors and informational messages
+				setenv("MVK_CONFIG_LOG_LEVEL", "2", 0);
+
+				if (mvk_debug)
+				{
+					// Extensive MoltenVK logging, too spammy even for vk_debug CVAR
+					setenv("MVK_DEBUG", "1", 0);
+				}
+			}
+			else
 			{
 				// Limit MoltenVK logging to errors only
 				setenv("MVK_CONFIG_LOG_LEVEL", "1", 0);

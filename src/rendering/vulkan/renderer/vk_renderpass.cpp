@@ -203,7 +203,6 @@ std::unique_ptr<VulkanDescriptorSet> VkRenderPassManager::AllocateTextureDescrip
 VkRenderPassSetup::VkRenderPassSetup(const VkRenderPassKey &key)
 {
 	CreateRenderPass(key);
-	CreatePipeline(key);
 }
 
 void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
@@ -258,7 +257,15 @@ void VkRenderPassSetup::CreateRenderPass(const VkRenderPassKey &key)
 	RenderPass->SetDebugName("VkRenderPassSetup.RenderPass");
 }
 
-void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
+VulkanPipeline *VkRenderPassSetup::GetPipeline(const VkPipelineKey &key)
+{
+	auto &item = Pipelines[key];
+	if (!item)
+		item = CreatePipeline(key);
+	return item.get();
+}
+
+std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipelineKey &key)
 {
 	auto fb = GetVulkanFrameBuffer();
 	GraphicsPipelineBuilder builder;
@@ -348,6 +355,7 @@ void VkRenderPassSetup::CreatePipeline(const VkRenderPassKey &key)
 
 	builder.setLayout(fb->GetRenderPassManager()->GetPipelineLayout(key.NumTextureLayers));
 	builder.setRenderPass(RenderPass.get());
-	Pipeline = builder.create(fb->device);
-	Pipeline->SetDebugName("VkRenderPassSetup.Pipeline");
+	auto pipeline = builder.create(fb->device);
+	pipeline->SetDebugName("VkRenderPassSetup.Pipeline");
+	return pipeline;
 }

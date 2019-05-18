@@ -196,65 +196,75 @@ void VkRenderState::ApplyDepthBias()
 void VkRenderState::ApplyRenderPass(int dt)
 {
 	// Find a render pass that matches our state
-	VkRenderPassKey passKey;
-	passKey.ClearTargets = mRenderPassKey.ClearTargets | mClearTargets;
-	passKey.DrawType = dt;
-	passKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
-	passKey.RenderStyle = mRenderStyle;
-	passKey.DepthTest = mDepthTest;
-	passKey.DepthWrite = mDepthTest && mDepthWrite;
-	passKey.DepthFunc = mDepthFunc;
-	passKey.DepthClamp = mDepthClamp;
-	passKey.DepthBias = !(mBias.mFactor == 0 && mBias.mUnits == 0);
-	passKey.StencilTest = mStencilTest;
-	passKey.StencilPassOp = mStencilOp;
-	passKey.ColorMask = mColorMask;
-	passKey.CullMode = mCullMode;
-	passKey.DrawBufferFormat = mRenderTarget.Format;
-	passKey.Samples = mRenderTarget.Samples;
-	passKey.DrawBuffers = mRenderTarget.DrawBuffers;
-	passKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 0;
+	VkPipelineKey pipelineKey;
+	pipelineKey.ClearTargets = mPipelineKey.ClearTargets | mClearTargets;
+	pipelineKey.DrawType = dt;
+	pipelineKey.VertexFormat = static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat;
+	pipelineKey.RenderStyle = mRenderStyle;
+	pipelineKey.DepthTest = mDepthTest;
+	pipelineKey.DepthWrite = mDepthTest && mDepthWrite;
+	pipelineKey.DepthFunc = mDepthFunc;
+	pipelineKey.DepthClamp = mDepthClamp;
+	pipelineKey.DepthBias = !(mBias.mFactor == 0 && mBias.mUnits == 0);
+	pipelineKey.StencilTest = mStencilTest;
+	pipelineKey.StencilPassOp = mStencilOp;
+	pipelineKey.ColorMask = mColorMask;
+	pipelineKey.CullMode = mCullMode;
+	pipelineKey.DrawBufferFormat = mRenderTarget.Format;
+	pipelineKey.Samples = mRenderTarget.Samples;
+	pipelineKey.DrawBuffers = mRenderTarget.DrawBuffers;
+	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 0;
 	if (mSpecialEffect > EFF_NONE)
 	{
-		passKey.SpecialEffect = mSpecialEffect;
-		passKey.EffectState = 0;
-		passKey.AlphaTest = false;
+		pipelineKey.SpecialEffect = mSpecialEffect;
+		pipelineKey.EffectState = 0;
+		pipelineKey.AlphaTest = false;
 	}
 	else
 	{
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
-		passKey.SpecialEffect = EFF_NONE;
-		passKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
-		passKey.AlphaTest = mAlphaThreshold >= 0.f;
+		pipelineKey.SpecialEffect = EFF_NONE;
+		pipelineKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
+		pipelineKey.AlphaTest = mAlphaThreshold >= 0.f;
 	}
 
-	// Is this the one we already have or do we need to change render pass?
-	bool changingRenderPass = (passKey != mRenderPassKey);
+	// Is this the one we already have or do we need to change pipeline?
+	bool changingPipeline = (pipelineKey != mPipelineKey);
+	bool inRenderPass = mCommandBuffer;
 
-	if (!mCommandBuffer)
+	if (!inRenderPass)
 	{
 		mCommandBuffer = GetVulkanFrameBuffer()->GetDrawCommands();
-		changingRenderPass = true;
+		changingPipeline = true;
 		mScissorChanged = true;
 		mViewportChanged = true;
 		mStencilRefChanged = true;
 		mBias.mChanged = true;
 	}
-	else if (changingRenderPass)
-	{
-		mCommandBuffer->endRenderPass();
-	}
 
-	if (changingRenderPass)
+	if (changingPipeline)
 	{
-		passKey.ClearTargets = mClearTargets;
+		pipelineKey.ClearTargets = mClearTargets;
 
 		// Only clear depth+stencil if the render target actually has that
 		if (!mRenderTarget.DepthStencil)
-			passKey.ClearTargets &= ~(CT_Depth | CT_Stencil);
+			pipelineKey.ClearTargets &= ~(CT_Depth | CT_Stencil);
 
-		BeginRenderPass(passKey, mCommandBuffer);
-		mRenderPassKey = passKey;
+		// Begin new render pass if needed
+		VkRenderPassKey passKey = pipelineKey;
+		if (!inRenderPass || passKey != VkRenderPassKey(mPipelineKey))
+		{
+			if (inRenderPass)
+				mCommandBuffer->endRenderPass();
+
+			BeginRenderPass(passKey, mCommandBuffer);
+		}
+
+		// Bind the pipeline
+		VkRenderPassSetup *passSetup = GetVulkanFrameBuffer()->GetRenderPassManager()->GetRenderPass(passKey);
+		mCommandBuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->GetPipeline(pipelineKey));
+
+		mPipelineKey = pipelineKey;
 		mClearTargets = 0;
 	}
 }
@@ -385,7 +395,7 @@ void VkRenderState::ApplyPushConstants()
 
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
-	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mRenderPassKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
+	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
 }
 
 template<typename T>
@@ -471,7 +481,7 @@ void VkRenderState::ApplyMaterial()
 		{
 			auto fb = GetVulkanFrameBuffer();
 			auto passManager = fb->GetRenderPassManager();
-			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mRenderPassKey.NumTextureLayers), 1, base->GetDescriptorSet(mMaterial));
+			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, base->GetDescriptorSet(mMaterial));
 		}
 
 		mMaterial.mChanged = false;
@@ -486,7 +496,7 @@ void VkRenderState::ApplyDynamicSet()
 		auto passManager = fb->GetRenderPassManager();
 
 		uint32_t offsets[3] = { mViewpointOffset, mMatricesOffset, mStreamDataOffset };
-		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mRenderPassKey.NumTextureLayers), 0, passManager->DynamicSet.get(), 3, offsets);
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 0, passManager->DynamicSet.get(), 3, offsets);
 
 		mLastViewpointOffset = mViewpointOffset;
 		mLastMatricesOffset = mMatricesOffset;
@@ -515,7 +525,7 @@ void VkRenderState::EndRenderPass()
 	{
 		mCommandBuffer->endRenderPass();
 		mCommandBuffer = nullptr;
-		mRenderPassKey = {};
+		mPipelineKey = {};
 
 		mLastViewpointOffset = 0xffffffff;
 		mLastVertexBuffer = nullptr;
@@ -588,7 +598,6 @@ void VkRenderState::BeginRenderPass(const VkRenderPassKey &key, VulkanCommandBuf
 		beginInfo.addClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	beginInfo.addClearDepthStencil(1.0f, 0);
 	cmdbuffer->beginRenderPass(beginInfo);
-	cmdbuffer->bindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, passSetup->Pipeline.get());
 
 	mMaterial.mChanged = true;
 }

@@ -66,7 +66,7 @@ protected:
 
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
-	VkRenderPassKey mRenderPassKey = {};
+	VkPipelineKey mPipelineKey = {};
 	int mClearTargets = 0;
 	bool mNeedApply = true;
 

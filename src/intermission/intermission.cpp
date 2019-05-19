@@ -68,6 +68,58 @@ IMPLEMENT_POINTERS_END
 extern int		NoWipe;
 
 CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+//==========================================================================
+//
+// This also gets used by the title loop.
+//
+//==========================================================================
+
+void DrawFullscreenSubtitle(const char *text)
+{
+	if (!text || !*text || !inter_subtitles) return;
+
+	// This uses the same scaling as regular HUD messages
+	auto scale = active_con_scaletext(generic_ui);
+	int hudwidth = SCREENWIDTH / scale;
+	int hudheight = SCREENHEIGHT / scale;
+	FFont *font = C_GetDefaultHUDFont();
+
+	int linelen = hudwidth < 640 ? Scale(hudwidth, 9, 10) - 40 : 560;
+	auto lines = V_BreakLines(font, linelen, text);
+	int height = 20;
+
+	for (unsigned i = 0; i < lines.Size(); i++) height += font->GetHeight();
+
+	int x, y, w;
+
+	if (linelen < 560)
+	{
+		x = hudwidth / 20;
+		y = hudheight * 9 / 10 - height;
+		w = hudwidth - 2 * x;
+	}
+	else
+	{
+		x = (hudwidth >> 1) - 300;
+		y = hudheight * 9 / 10 - height;
+		if (y < 0) y = 0;
+		w = 600;
+	}
+	screen->Dim(0, 0.5f, Scale(x, SCREENWIDTH, hudwidth), Scale(y, SCREENHEIGHT, hudheight),
+		Scale(w, SCREENWIDTH, hudwidth), Scale(height, SCREENHEIGHT, hudheight));
+	x += 20;
+	y += 10;
+	for (const FBrokenLines &line : lines)
+	{
+		screen->DrawText(font, CR_UNTRANSLATED, x, y, line.Text,
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
+		y += font->GetHeight();
+	}
+}
+
 //==========================================================================
 //
 //
@@ -127,6 +179,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, ETextureType::MiscPatch);
 	}
 	mTicker = 0;
+	mSubtitle = desc->mSubtitle;
 }
 
 
@@ -181,6 +234,12 @@ void DIntermissionScreen::Drawer ()
 			screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	if (!mFlatfill) screen->FillBorder (NULL);
+	if (mSubtitle)
+	{
+		const char *sub = mSubtitle.GetChars();
+		if (sub && *sub == '$') sub = GStrings[sub + 1];
+		if (sub) DrawFullscreenSubtitle(sub);
+	}
 }
 
 void DIntermissionScreen::OnDestroy()

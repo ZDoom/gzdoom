@@ -376,18 +376,21 @@ Intermission Inter_Strife_Good
 		Music = "D_HAPPY"
 		Background = "SS4F1"
 		Sound = "svox/rie01"
+		Subtitle = "$TXT_SUB_GOOD1"
 		Time = 13
 	}
 	Image
 	{
 		Background = "SS4F2"
 		Sound = "svox/bbx01"
+		Subtitle = "$TXT_SUB_GOOD2"
 		Time = 11
 	}
 	Image
 	{
 		Background = "SS4F3"
 		Sound = "svox/bbx02"
+		Subtitle = "$TXT_SUB_GOOD3"
 		Time = 14
 	}
 	Image
@@ -414,18 +417,21 @@ Intermission Inter_Strife_Sad
 		Music = "D_SAD"
 		Background = "SS6F1"
 		Sound = "svox/ss601a"
+		Subtitle = "$TXT_SUB_SAD1"
 		Time = 8
 	}
 	Image
 	{
 		Background = "SS6F2"
 		Sound = "svox/ss602a"
+		Subtitle = "$TXT_SUB_SAD2"
 		Time = 8
 	}
 	Image
 	{
 		Background = "SS6F3"
 		Sound = "svox/ss603a"
+		Subtitle = "$TXT_SUB_SAD3"
 		Time = 9
 	}
 	Wiper
@@ -446,18 +452,21 @@ Intermission Inter_Strife_Lose
 		Music = "D_SAD"
 		Background = "SS5F1"
 		Sound = "svox/ss501b"
+		Subtitle = "$TXT_SUB_BAD1"
 		Time = 11
 	}
 	Image
 	{
 		Background = "SS5F2"
 		Sound = "svox/ss502b"
+		Subtitle = "$TXT_SUB_BAD2"
 		Time = 10
 	}
 	Image
 	{
 		Background = "SS5F3"
 		Sound = "svox/ss503b"
+		Subtitle = "$TXT_SUB_BAD3"
 		Time = 11
 	}
 	Wiper
@@ -484,24 +493,28 @@ Intermission Inter_Strife_MAP03
 		Music = "D_DARK"
 		Background = "SS2F1"
 		Sound = "svox/mac10"
+		Subtitle = "$TXT_SUB_MAP03_1"
 		Time = 9
 	}
 	Image
 	{
 		Background = "SS2F2"
 		Sound = "svox/mac11"
+		Subtitle = "$TXT_SUB_MAP03_2"
 		Time = 10
 	}
 	Image
 	{
 		Background = "SS2F3"
 		Sound = "svox/mac12"
+		Subtitle = "$TXT_SUB_MAP03_3"
 		Time = 12
 	}
 	Image
 	{
 		Background = "SS2F4"
 		Sound = "svox/mac13"
+		Subtitle = "$TXT_SUB_MAP03_4"
 		Time = 17
 	}
 }
@@ -513,24 +526,28 @@ Intermission Inter_Strife_MAP10
 		Music = "D_DARK"
 		Background = "SS3F1"
 		Sound = "svox/mac16"
+		Subtitle = "$TXT_SUB_MAP10_1"
 		Time = 10
 	}
 	Image
 	{
 		Background = "SS3F2"
 		Sound = "svox/mac17"
+		Subtitle = "$TXT_SUB_MAP10_2"
 		Time = 12
 	}
 	Image
 	{
 		Background = "SS3F3"
 		Sound = "svox/mac18"
+		Subtitle = "$TXT_SUB_MAP10_3"
 		Time = 12
 	}
 	Image
 	{
 		Background = "SS3F4"
 		Sound = "svox/mac19"
+		Subtitle = "$TXT_SUB_MAP10_4"
 		Time = 11
 	}
 }

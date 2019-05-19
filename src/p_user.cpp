@@ -421,7 +421,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogNumber)
 
 void player_t::SetLogText (const char *text)
 {
-	LogText = text;
+	 LogText = text;
 
 	if (mo && mo->CheckLocalView())
 	{
@@ -437,6 +437,30 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)
 	self->SetLogText(log);
 	return 0;
 }
+
+void player_t::SetSubtitle(int num)
+{
+	char lumpname[36];
+
+	// Do we have a subtitle for this log entry's voice file?
+	mysnprintf(lumpname, countof(lumpname), "$TXT_SUB_LOG%d", num);
+	auto text = GStrings.GetLanguageString(lumpname+1, FStringTable::default_table);
+	if (text != nullptr)
+	{
+		SubtitleText = lumpname;
+		SubtitleCounter = 7 * TICRATE;
+	}
+}
+
+DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSubtitleNumber)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	PARAM_INT(log);
+	self->SetSubtitle(log);
+	return 0;
+}
+
+
 
 int player_t::GetSpawnClass()
 {
@@ -1633,6 +1657,8 @@ void player_t::Serialize(FSerializer &arc)
 		("blenda", BlendA)
 		("weaponstate", WeaponState)
 		("logtext", LogText)
+		("subtitletext", SubtitleText)
+		("subtitlecounter", SubtitleCounter)
 		("conversionnpc", ConversationNPC)
 		("conversionpc", ConversationPC)
 		("conversionnpcangle", ConversationNPCAngle)

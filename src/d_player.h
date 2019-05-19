@@ -289,6 +289,7 @@ public:
 	void SetLogNumber (int num);
 	void SetLogText (const char *text);
 	void SendPitchLimits() const;
+	void SetSubtitle(int num);
 
 	AActor *mo = nullptr;
 	uint8_t		playerstate = 0;
@@ -387,6 +388,8 @@ public:
 	float		BlendA = 0;
 
 	FString		LogText;	// [RH] Log for Strife
+	FString		SubtitleText;
+	int			SubtitleCounter;
 
 	DAngle			MinPitch = 0.;	// Viewpitch limits (negative is up, positive is down)
 	DAngle			MaxPitch = 0.;

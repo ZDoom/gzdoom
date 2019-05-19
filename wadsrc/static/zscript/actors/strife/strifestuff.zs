@@ -1865,6 +1865,7 @@ class PowerCoupling : Actor
 		players[i].mo.GiveInventoryType ("QuestItem6");
 		S_Sound ("svox/voc13", CHAN_VOICE);
 		players[i].SetLogNumber (13);
+		players[i].SetSubtitleNumber (13);
 		A_DropItem ("BrokenPowerCoupling", -1, 256);
 		Destroy ();
 	}

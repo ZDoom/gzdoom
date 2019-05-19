@@ -3196,6 +3196,7 @@ FUNC(LS_SendToCommunicator)
 		if (it->CheckLocalView())
 		{
 			S_StopSound (CHAN_VOICE);
+			it->player->SetSubtitle(arg0);
 			S_Sound (CHAN_VOICE, name, 1, ATTN_NORM);
 
 			// Get the message from the LANGUAGE lump.

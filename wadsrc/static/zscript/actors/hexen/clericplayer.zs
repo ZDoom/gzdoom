@@ -33,14 +33,14 @@ class ClericPlayer : PlayerPawn
 		Player.FlechetteType "ArtiPoisonBag1";
 		
 		Player.ColorRange 146, 163;
-		Player.Colorset		0, "Blue",			146, 163,    161;
-		Player.ColorsetFile 1, "Red",			"TRANTBL7",  0xB3;
-		Player.ColorsetFile 2, "Gold",			"TRANTBL8",  0x8C;
-		Player.ColorsetFile 3, "Dull Green",	"TRANTBL9",  0x41;
-		Player.ColorsetFile 4, "Green",			"TRANTBLA",  0xC9;
-		Player.ColorsetFile 5, "Gray",			"TRANTBLB",  0x30;
-		Player.ColorsetFile 6, "Brown",			"TRANTBLC",  0x72;
-		Player.ColorsetFile 7, "Purple",		"TRANTBLD",  0xEE;
+		Player.Colorset		0, "$TXT_COLOR_BLUE",		146, 163,    161;
+		Player.ColorsetFile 1, "$TXT_COLOR_RED",		"TRANTBL7",  0xB3;
+		Player.ColorsetFile 2, "$TXT_COLOR_GOLD",		"TRANTBL8",  0x8C;
+		Player.ColorsetFile 3, "$TXT_COLOR_DULLGREEN",	"TRANTBL9",  0x41;
+		Player.ColorsetFile 4, "$TXT_COLOR_GREEN",		"TRANTBLA",  0xC9;
+		Player.ColorsetFile 5, "$TXT_COLOR_GRAY",		"TRANTBLB",  0x30;
+		Player.ColorsetFile 6, "$TXT_COLOR_BROWN",		"TRANTBLC",  0x72;
+		Player.ColorsetFile 7, "$TXT_COLOR_PURPLE",		"TRANTBLD",  0xEE;
 	}
 	
 	States

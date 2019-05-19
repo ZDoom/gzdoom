@@ -1469,7 +1469,7 @@ OptionMenu MessageOptions protected
 	Option "$MSGMNU_MESSAGELEVEL", 				"msg", "MessageLevels"
 	Option "$MSGMNU_DEVELOPER", 				"developer", "DevMessageLevels"
 	Option "$MSGMNU_CENTERMESSAGES",			"con_centernotify", "OnOff"
-	Option "$MSGMNU_SUBTITLES,					"inter_subtitles", "OnOff"
+	Option "$MSGMNU_SUBTITLES",					"inter_subtitles", "OnOff"
 	StaticText " "
 	StaticText "$MSGMNU_MESSAGECOLORS", 1
 	StaticText " "

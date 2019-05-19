@@ -150,6 +150,13 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 		mSound = sc.String;
 		return true;
 	}
+	else if (sc.Compare("Subtitle"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mSubtitle = sc.String;
+		return true;
+	}
 	else if (sc.Compare("Draw"))
 	{
 		FIntermissionPatch *pat = &mOverlays[mOverlays.Reserve(1)];

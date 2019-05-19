@@ -76,6 +76,7 @@ struct FIntermissionAction
 	int mDuration;
 	FString mBackground;
 	FString mSound;
+	FString mSubtitle;
 	bool mFlatfill;
 	bool mMusicLooping;
 	TArray<FIntermissionPatch> mOverlays;
@@ -163,6 +164,7 @@ class DIntermissionScreen : public DObject
 protected:
 	int mDuration;
 	FTextureID mBackground;
+	FString mSubtitle;
 	bool mFlatfill;
 	TArray<FIIntermissionPatch> mOverlays;
 

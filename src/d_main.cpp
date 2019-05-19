@@ -132,6 +132,7 @@ void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
 void ParseGLDefs();
+void DrawFullscreenSubtitle(const char *text);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -227,6 +228,7 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FTexture *Advisory;
 FTextureID Page;
+const char *Subtitle;
 bool nospriterename;
 FStartupInfo DoomStartupInfo;
 FString lastIWAD;
@@ -984,6 +986,7 @@ void D_DoomLoop ()
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
 	Page.SetInvalid();
+	Subtitle = nullptr;
 	Advisory = nullptr;
 
 	vid_cursor.Callback();
@@ -1077,7 +1080,11 @@ void D_PageDrawer (void)
 			DTA_BilinearFilter, true,
 			TAG_DONE);
 	}
-	if (Advisory != NULL)
+	if (Subtitle != nullptr)
+	{
+		DrawFullscreenSubtitle(GStrings[Subtitle]);
+	}
+	if (Advisory != nullptr)
 	{
 		screen->DrawTexture (Advisory, 4, 160, DTA_320x200, true, TAG_DONE);
 	}
@@ -1113,7 +1120,8 @@ void D_DoStrifeAdvanceDemo ()
 		"svox/voc91", "svox/voc92", "svox/voc93", "svox/voc94", "svox/voc95", "svox/voc96"
 	};
 	const char *const *voices = gameinfo.flags & GI_SHAREWARE ? teaserVoices : fullVoices;
-	const char *pagename = NULL;
+	const char *pagename = nullptr;
+	const char *subtitle = nullptr;
 
 	gamestate = GS_DEMOSCREEN;
 	PageBlank = false;
@@ -1152,6 +1160,7 @@ void D_DoStrifeAdvanceDemo ()
 	case 3:
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
+		subtitle = "TXT_SUB_INTRO1";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[0], 1, ATTN_NORM);
 		// The new Strife teaser has D_FMINTR.
 		// The full retail Strife has D_INTRO.
@@ -1162,30 +1171,35 @@ void D_DoStrifeAdvanceDemo ()
 	case 4:
 		pagetic = 9 * TICRATE;
 		pagename = "PANEL2";
+		subtitle = "TXT_SUB_INTRO2";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[1], 1, ATTN_NORM);
 		break;
 
 	case 5:
 		pagetic = 12 * TICRATE;
 		pagename = "PANEL3";
+		subtitle = "TXT_SUB_INTRO3";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[2], 1, ATTN_NORM);
 		break;
 
 	case 6:
 		pagetic = 11 * TICRATE;
 		pagename = "PANEL4";
+		subtitle = "TXT_SUB_INTRO4";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[3], 1, ATTN_NORM);
 		break;
 
 	case 7:
 		pagetic = 10 * TICRATE;
 		pagename = "PANEL5";
+		subtitle = "TXT_SUB_INTRO5";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[4], 1, ATTN_NORM);
 		break;
 
 	case 8:
 		pagetic = 16 * TICRATE;
 		pagename = "PANEL6";
+		subtitle = "TXT_SUB_INTRO6";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[5], 1, ATTN_NORM);
 		break;
 
@@ -1206,7 +1220,15 @@ void D_DoStrifeAdvanceDemo ()
 	if (demosequence == 9 && !(gameinfo.flags & GI_SHAREWARE))
 		demosequence = 10;
 
-	if (pagename != nullptr) Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
+	if (pagename != nullptr)
+	{
+		Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
+		Subtitle = subtitle;
+	}
+	else
+	{
+		Subtitle = nullptr;
+	}
 }
 
 //==========================================================================

@@ -109,11 +109,11 @@ class ColorpickerMenu : OptionMenu
 		mDesc.mItems.Resize(mStartItem+8);
 		mDesc.mItems[mStartItem+0] = new ("OptionMenuItemStaticText").Init(name, false);
 		mDesc.mItems[mStartItem+1] = new ("OptionMenuItemStaticText").Init(" ", false);
-		mDesc.mItems[mStartItem+2] = new ("OptionMenuSliderVar").Init("Red", 0, 0, 255, 15, 0);
-		mDesc.mItems[mStartItem+3] = new ("OptionMenuSliderVar").Init("Green", 1, 0, 255, 15, 0);
-		mDesc.mItems[mStartItem+4] = new ("OptionMenuSliderVar").Init("Blue", 2, 0, 255, 15, 0);
+		mDesc.mItems[mStartItem+2] = new ("OptionMenuSliderVar").Init("$TXT_COLOR_RED", 0, 0, 255, 15, 0);
+		mDesc.mItems[mStartItem+3] = new ("OptionMenuSliderVar").Init("$TXT_COLOR_GREEN", 1, 0, 255, 15, 0);
+		mDesc.mItems[mStartItem+4] = new ("OptionMenuSliderVar").Init("$TXT_COLOR_BLUE", 2, 0, 255, 15, 0);
 		mDesc.mItems[mStartItem+5] = new ("OptionMenuItemStaticText").Init(" ", false);
-		mDesc.mItems[mStartItem+6] = new ("OptionMenuItemCommand").Init("Undo changes", "undocolorpic");
+		mDesc.mItems[mStartItem+6] = new ("OptionMenuItemCommand").Init("$TXT_UNDOCHANGES", "undocolorpic");
 		mDesc.mItems[mStartItem+7] = new ("OptionMenuItemStaticText").Init(" ", false);
 		mDesc.mSelectedItem = mStartItem + 2;
 		mDesc.mIndent = 0;

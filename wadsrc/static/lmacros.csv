@@ -2,10 +2,16 @@ name,language,male,female,neutral,object
 ao_esp,es,o,a,o,o
 e_de,de,,e,,
 in_de,de,,in,,
+pp_de,de,seine,ihre,seine,seine
 e_fr,fr,,e,,
+ao_pl,pl,,a,o,o
+adj_pl,pl,y,a,e,e
+irreg_1_pl,pl,szedł 	,eszła,eszło,eszło
+irreg_2_pl,pl,ął,ęła,ęło,ęło
+irreg_3_pl,pl,eś,aś,eś,eś
+irreg_4_pl,pl,ógł,ogła,ogło,ogło
+irreg_5_pl,pl,nien,nna,nno,nno
 ao_ptb,pt,o,a,o,o
-,,,,,
-,,,,,
 ao_rus,ru,,а,о,о
 refl_rus,ru,ся,ась,ось,ось
 adj_1_rus,ru,ый,ая,ое,ое

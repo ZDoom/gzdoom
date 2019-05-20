@@ -174,7 +174,9 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 	auto fb = GetVulkanFrameBuffer();
 
 	VkPPRenderState renderstate;
-	hw_postprocess.customShaders.Run(&renderstate, "screen");
+
+	if (!screenshot) // Already applied as we are actually copying the last frame here (GetScreenshotBuffer is called after swap)
+		hw_postprocess.customShaders.Run(&renderstate, "screen");
 
 	PresentUniforms uniforms;
 	if (!applyGamma)

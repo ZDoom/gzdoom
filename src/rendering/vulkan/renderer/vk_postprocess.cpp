@@ -169,7 +169,7 @@ void VkPostprocess::BlitCurrentToImage(VkTextureImage *dstimage, VkImageLayout f
 	imageTransition1.execute(cmdbuffer);
 }
 
-void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool clearBorders)
+void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool screenshot)
 {
 	auto fb = GetVulkanFrameBuffer();
 
@@ -193,10 +193,19 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 		uniforms.GrayFormula = static_cast<int>(gl_satformula);
 	}
 	uniforms.ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)((1 << gl_dither_bpc) - 1);
-	uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), -screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
-	uniforms.Offset = { 0.0f, 1.0f };
 
-	if (applyGamma && fb->swapChain->swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
+	if (screenshot)
+	{
+		uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
+		uniforms.Offset = { 0.0f, 0.0f };
+	}
+	else
+	{
+		uniforms.Scale = { screen->mScreenViewport.width / (float)fb->GetBuffers()->GetWidth(), -screen->mScreenViewport.height / (float)fb->GetBuffers()->GetHeight() };
+		uniforms.Offset = { 0.0f, 1.0f };
+	}
+
+	if (applyGamma && fb->swapChain->swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT && !screenshot)
 	{
 		uniforms.HdrMode = 1;
 	}
@@ -211,9 +220,11 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 	renderstate.Viewport = box;
 	renderstate.SetInputCurrent(0, ViewportLinearScale() ? PPFilterMode::Linear : PPFilterMode::Nearest);
 	renderstate.SetInputTexture(1, &hw_postprocess.present.Dither, PPFilterMode::Nearest, PPWrapMode::Repeat);
-	renderstate.SetOutputSwapChain();
+	if (screenshot)
+		renderstate.SetOutputNext();
+	else
+		renderstate.SetOutputSwapChain();
 	renderstate.SetNoBlend();
-	//if (clearBorders) renderstate.SetClearBorders();
 	renderstate.Draw();
 }
 

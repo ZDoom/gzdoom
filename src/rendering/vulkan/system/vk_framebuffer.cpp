@@ -272,7 +272,7 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 
 		presentImageIndex = swapChain->AcquireImage(GetClientWidth(), GetClientHeight(), mSwapChainImageAvailableSemaphore.get());
 		if (presentImageIndex != 0xffffffff)
-			mPostprocess->DrawPresentTexture(mOutputLetterbox, true, true);
+			mPostprocess->DrawPresentTexture(mOutputLetterbox, true, false);
 	}
 
 	FlushCommands(finish, true);
@@ -786,6 +786,13 @@ TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 {
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
+
+	IntRect box;
+	box.left = 0;
+	box.top = 0;
+	box.width = w;
+	box.height = h;
+	mPostprocess->DrawPresentTexture(box, true, true);
 
 	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
 	CopyScreenToBuffer(w, h, ScreenshotBuffer.Data());

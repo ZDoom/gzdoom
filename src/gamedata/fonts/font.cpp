@@ -1044,7 +1044,7 @@ bool FFont::CanPrint(const uint8_t *string) const
 		else if (chr != '\n')
 		{
 			int cc = GetCharCode(chr, true);
-			if (chr != cc && iswalpha(chr))
+			if (chr != cc && iswalpha(chr) && cc != getAlternative(chr))
 			{
 				return false;
 			}

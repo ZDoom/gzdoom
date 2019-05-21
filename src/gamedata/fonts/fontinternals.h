@@ -41,4 +41,6 @@ class FImageSource;
 
 void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors);
 bool myislower(int code);
+bool myisupper(int code);
 int stripaccent(int code);
+int getAlternative(int code);

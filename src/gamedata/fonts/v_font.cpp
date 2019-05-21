@@ -782,6 +782,9 @@ void InitLowerUpper()
 		if (upperforlower[lower] == lower) upperforlower[lower] = upper;
 		isuppermap[upper] = islowermap[lower] = true;
 	}
+	// Special treatment for the two variants of the small sigma in Greek.
+	islowermap[0x3c2] = true;
+	upperforlower[0x3c2] = 0x3a3;
 }
 
 
@@ -791,7 +794,14 @@ bool myislower(int code)
 	return false;
 }
 
-// Returns a character without an accent mark (or one with a similar looking accent in some cases where direct support is unlikely.
+bool myisupper(int code)
+{
+	if (code >= 0 && code < 65536) return isuppermap[code];
+	return false;
+}
+
+
+// Returns a character without an accent mark (or one with a similar looking accent in some cases where direct support is unlikely.)
 
 int stripaccent(int code)
 {
@@ -842,7 +852,7 @@ int stripaccent(int code)
 	else if (code >= 0x100 && code < 0x180)
 	{
 		// For the double-accented Hungarian letters it makes more sense to first map them to the very similar looking Umlauts.
-		// (And screw the crappy specs here that do not allow UTF-8 multibyte characters here.)
+		// (And screw the crappy specs that do not allow UTF-8 multibyte character literals here.)
 		if (code == 0x150) code = 0xd6;
 		else if (code == 0x151) code = 0xf6;
 		else if (code == 0x170) code = 0xdc;
@@ -853,22 +863,38 @@ int stripaccent(int code)
 			return accentless[code - 0x100];
 		}
 	}
-	else if (code >= 0x200 && code < 0x21c)
+	else if (code >= 0x200 && code < 0x218)
 	{
-		// 0x200-0x217 are probably irrelevant but easy to map to other characters more likely to exist. 0x218-0x21b are relevant for Romanian but also have a fallback within ranges that are more likely to be supported.
-		static const uint16_t u200map[] = {0xc4, 0xe4, 0xc2, 0xe2, 0xcb, 0xeb, 0xca, 0xea, 0xcf, 0xef, 0xce, 0xee, 0xd6, 0xf6, 0xd4, 0xe4, 'R', 'r', 'R', 'r', 0xdc, 0xfc, 0xdb, 0xfb, 0x15e, 0x15f, 0x162, 0x163};
+		// 0x200-0x217 are irrelevant but easy to map to other characters more likely to exist.
+		static const uint16_t u200map[] = {0xc4, 0xe4, 0xc2, 0xe2, 0xcb, 0xeb, 0xca, 0xea, 0xcf, 0xef, 0xce, 0xee, 0xd6, 0xf6, 0xd4, 0xe4, 'R', 'r', 'R', 'r', 0xdc, 0xfc, 0xdb, 0xfb};
 		return u200map[code - 0x200];
 	}
-	else switch (code)
+	return getAlternative(code);
+}
+
+int getAlternative(int code)
+{
+	// This is for determining replacements that do not make CanPrint fail.
+	switch (code)
 	{
-		case 0x2014:
-			return '-';	// long hyphen
+		default:
+			return code;
 			
-		case 0x201c:
-		case 0x201d:
-		case 0x201e:
-			return '"';	// typographic quotation marks
+		case 0x17f:		// The 'long s' can be safely remapped to the regular variant, not that this gets used in any real text...
+			return 's';
 			
+		case 0x218:		// Romanian S with comma below may get remapped to S with cedilla.
+			return 0x15e;
+			
+		case 0x219:
+			return 0x15f;
+			
+		case 0x21a:		// Romanian T with comma below may get remapped to T with cedilla.
+			return 0x162;
+			
+		case 0x21b:
+			return 0x163;
+
 		case 0x3c2:
 			return 0x3c3;	// Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
 			
@@ -890,7 +916,7 @@ int stripaccent(int code)
 			
 		case 0x408:
 			return 'J';
-
+			
 		case 0x450:
 			return 0xe8;
 			
@@ -908,13 +934,14 @@ int stripaccent(int code)
 			
 		case 0x458:
 			return 'j';
-
+			
 	}
 	
 	// skip the rest of Latin characters because none of them are relevant for modern languages, except Vietnamese which cannot be represented with the tiny bitmap fonts anyway.
 	
 	return code;
 }
+
 
 FFont *V_GetFont(const char *name, const char *fontlumpname)
 {

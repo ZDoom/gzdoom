@@ -19,6 +19,7 @@ public:
 		Float,
 		String,
 		Class,
+		Object,
 	};
 
 	static int Exec(FName functionname, ...);

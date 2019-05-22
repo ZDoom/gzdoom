@@ -60,6 +60,14 @@ void ScriptUtil::BuildParameters(va_list ap)
 			case Float:
 				parameters.Push(VMValue(va_arg(ap, double)));
 				break;
+
+			case Object:
+			{
+				DObject* object = va_arg(ap, DObject*);
+				GC::ReadBarrier(object);
+				parameters.Push(VMValue(object));
+				break;
+			}
 		}
 	}
 }

@@ -2426,7 +2426,7 @@ void FParser::SF_PlayerKeys(void)
 		else
 		{
 			givetake = intvalue(t_argv[2]);
-			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, ScriptUtil::Pointer, Level->Players[playernum]->mo, ScriptUtil::Int, keyname.GetIndex(), ScriptUtil::Int, 1, ScriptUtil::End);
+			ScriptUtil::Exec(givetake?NAME_GiveInventory : NAME_TakeInventory, ScriptUtil::Object, Level->Players[playernum]->mo, ScriptUtil::Int, keyname.GetIndex(), ScriptUtil::Int, 1, ScriptUtil::End);
 			t_return.type = svt_int;
 			t_return.value.i = 0;
 		}
@@ -2445,7 +2445,7 @@ void FParser::SF_PlayerAmmo(void)
 	if (CheckArgs(2))
 	{
 		t_return.type = svt_int;
-		t_return.value.i = ScriptUtil::Exec("PlayerAmmo", ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
+		t_return.value.i = ScriptUtil::Exec("PlayerAmmo", ScriptUtil::Object, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
 			ScriptUtil::Int, t_argc >= 3 ? intvalue(t_argv[2]) : INT_MIN, ScriptUtil::End);
 	}
 }
@@ -2462,7 +2462,7 @@ void FParser::SF_MaxPlayerAmmo()
 	if (CheckArgs(2))
 	{
 		t_return.type = svt_int;
-		t_return.value.i = ScriptUtil::Exec("MaxPlayerAmmo", ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
+		t_return.value.i = ScriptUtil::Exec("MaxPlayerAmmo", ScriptUtil::Object, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_GetAmmo(t_argv[1]),
 			ScriptUtil::Int, t_argc >= 3? intvalue(t_argv[2]) : INT_MIN, ScriptUtil::Int, t_argc >= 4 ? intvalue(t_argv[3]) : INT_MIN, ScriptUtil::End);
 	}
 }
@@ -2621,7 +2621,7 @@ void FParser::SF_GiveInventory(void)
 
 		if(t_argc == 2) count=1;
 		else count=intvalue(t_argv[2]);
-		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Pointer, Level->Players[playernum]->mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
+		ScriptUtil::Exec(NAME_GiveInventory, ScriptUtil::Object, Level->Players[playernum]->mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}
@@ -2644,7 +2644,7 @@ void FParser::SF_TakeInventory(void)
 
 		if(t_argc == 2) count=32767;
 		else count=intvalue(t_argv[2]);
-		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Pointer, Level->Players[playernum]->mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
+		ScriptUtil::Exec(NAME_TakeInventory, ScriptUtil::Object, Level->Players[playernum]->mo, ScriptUtil::Int, FName(stringvalue(t_argv[1])).GetIndex(), ScriptUtil::Int, count, ScriptUtil::End);
 		t_return.type = svt_int;
 		t_return.value.i = 0;
 	}
@@ -2684,7 +2684,7 @@ void FParser::SF_SetWeapon()
 	if (CheckArgs(2))
 	{
 		t_return.type = svt_int;
-		t_return.value.i = ScriptUtil::Exec(NAME_SetWeapon, ScriptUtil::Pointer, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_ClassType(t_argv[1]), ScriptUtil::End);
+		t_return.value.i = ScriptUtil::Exec(NAME_SetWeapon, ScriptUtil::Object, T_GetPlayerActor(t_argv[0]), ScriptUtil::Class, T_ClassType(t_argv[1]), ScriptUtil::End);
 	}
 }
 

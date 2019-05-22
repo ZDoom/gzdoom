@@ -29,6 +29,7 @@
 #include "polyrenderer/drawers/poly_buffer.h"
 #include "polyrenderer/drawers/poly_draw_args.h"
 
+class DCanvas;
 class PolyDrawerCommand;
 
 class PolyTriangleDrawer

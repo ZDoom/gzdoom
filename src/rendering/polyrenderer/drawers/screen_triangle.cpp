@@ -143,7 +143,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 
 	int opt = 0;
 	if (args->uniforms->DepthTest()) opt |= SWTRI_DepthTest;
-	/*if (args->uniforms->StencilTest())*/ opt |= SWTRI_StencilTest;
+	if (args->uniforms->StencilTest()) opt |= SWTRI_StencilTest;
 	if (args->uniforms->WriteColor()) opt |= SWTRI_WriteColor;
 	if (args->uniforms->WriteDepth()) opt |= SWTRI_WriteDepth;
 	if (args->uniforms->WriteStencil()) opt |= SWTRI_WriteStencil;

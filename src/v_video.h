@@ -326,7 +326,7 @@ class DCanvas
 public:
 	DCanvas (int width, int height, bool bgra);
 	~DCanvas ();
-	void Resize(int width, int height);
+	void Resize(int width, int height, bool optimizepitch = true);
 
 	// Member variable access
 	inline uint8_t *GetPixels () const { return Pixels.Data(); }

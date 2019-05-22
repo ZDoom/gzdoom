@@ -1,0 +1,131 @@
+
+#include "templates.h"
+#include "c_cvars.h"
+#include "r_data/colormaps.h"
+#include "hwrenderer/textures/hw_material.h"
+#include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/scene/hw_renderstate.h"
+#include "poly_framebuffer.h"
+#include "poly_hwtexture.h"
+
+PolyHardwareTexture *PolyHardwareTexture::First = nullptr;
+
+PolyHardwareTexture::PolyHardwareTexture()
+{
+	Next = First;
+	First = this;
+	if (Next) Next->Prev = this;
+}
+
+PolyHardwareTexture::~PolyHardwareTexture()
+{
+	if (Next) Next->Prev = Prev;
+	if (Prev) Prev->Next = Next;
+	else First = Next;
+
+	Reset();
+}
+
+void PolyHardwareTexture::ResetAll()
+{
+	for (PolyHardwareTexture *cur = PolyHardwareTexture::First; cur; cur = cur->Next)
+		cur->Reset();
+}
+
+void PolyHardwareTexture::Reset()
+{
+}
+
+void PolyHardwareTexture::Precache(FMaterial *mat, int translation, int flags)
+{
+#if 0
+	int numLayers = mat->GetLayers();
+	GetImage(mat->tex, translation, flags);
+	for (int i = 1; i < numLayers; i++)
+	{
+		FTexture *layer;
+		auto systex = static_cast<PolyHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
+	}
+#endif
+}
+
+DCanvas *PolyHardwareTexture::GetImage(const FMaterialState &state)
+{
+	if (!mCanvas)
+	{
+		FMaterial *mat = state.mMaterial;
+		FTexture *tex = state.mMaterial->tex;
+		int clampmode = state.mClampMode;
+		int translation = state.mTranslation;
+
+		if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
+		if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
+		else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+
+		// Textures that are already scaled in the texture lump will not get replaced by hires textures.
+		int flags = state.mMaterial->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
+
+		if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+
+		CreateImage(tex, translation, flags);
+	}
+
+	return mCanvas.get();
+}
+
+void PolyHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
+{
+	if (!mCanvas || mCanvas->GetWidth() != w || mCanvas->GetHeight() != h)
+	{
+		mCanvas.reset(new DCanvas(0, 0, texelsize == 4));
+		mCanvas->Resize(w, h, false);
+	}
+}
+
+uint8_t *PolyHardwareTexture::MapBuffer()
+{
+	return mCanvas->GetPixels();
+}
+
+unsigned int PolyHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+{
+	return 0;
+}
+
+void PolyHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
+{
+	if (!mCanvas || mCanvas->GetWidth() != w || mCanvas->GetHeight() != h)
+	{
+		mCanvas.reset(new DCanvas(0, 0, true));
+		mCanvas->Resize(w, h, false);
+	}
+}
+
+void PolyHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
+{
+	mCanvas.reset(new DCanvas(0, 0, true));
+
+	if (!tex->isHardwareCanvas())
+	{
+		if (translation <= 0)
+		{
+			translation = -translation;
+		}
+		else
+		{
+			auto remap = TranslationToTable(translation);
+			translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
+		}
+
+		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
+		mCanvas->Resize(texbuffer.mWidth, texbuffer.mHeight, false);
+		memcpy(mCanvas->GetPixels(), texbuffer.mBuffer, texbuffer.mWidth * texbuffer.mHeight * 4);
+	}
+	else
+	{
+		int w = tex->GetWidth();
+		int h = tex->GetHeight();
+		mCanvas->Resize(w, h, false);
+	}
+}

@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <vector>
+#include "r_data/renderstyle.h"
 
 class FString;
 class PolyDrawArgs;

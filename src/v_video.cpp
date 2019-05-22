@@ -210,7 +210,7 @@ DCanvas::~DCanvas ()
 //
 //==========================================================================
 
-void DCanvas::Resize(int width, int height)
+void DCanvas::Resize(int width, int height, bool optimizepitch)
 {
 	Width = width;
 	Height = height;
@@ -221,7 +221,7 @@ void DCanvas::Resize(int width, int height)
 	// longer than the width. The values used here are all based on
 	// empirical evidence.
 	
-	if (width <= 640)
+	if (width <= 640 || !optimizepitch)
 	{
 		// For low resolutions, just keep the pitch the same as the width.
 		// Some speedup can be seen using the technique below, but the speedup

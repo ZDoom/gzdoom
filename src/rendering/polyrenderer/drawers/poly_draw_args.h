@@ -70,7 +70,9 @@ public:
 	void SetTexture(FSoftwareTexture *texture, FRenderStyle style);
 	void SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);
+	void SetNoColormap() { mLight = 255; mFixedLight = true; mLightRed = 256; mLightGreen = 256; mLightBlue = 256; mLightAlpha = 256; mFadeRed = 0; mFadeGreen = 0; mFadeBlue = 0; mFadeAlpha = 0; mDesaturate = 0; mSimpleShade = true; mColormaps = nullptr; }
 	void SetDepthTest(bool enable) { mDepthTest = enable; }
+	void SetStencilTest(bool enable) { mStencilTest = enable; }
 	void SetStencilTestValue(uint8_t stencilTestValue) { mStencilTestValue = stencilTestValue; }
 	void SetWriteColor(bool enable) { mWriteColor = enable; }
 	void SetWriteStencil(bool enable, uint8_t stencilWriteValue = 0) { mWriteStencil = enable; mStencilWriteValue = stencilWriteValue; }
@@ -92,6 +94,7 @@ public:
 	const uint8_t *Translation() const { return mTranslation; }
 
 	bool WriteStencil() const { return mWriteStencil; }
+	bool StencilTest() const { return mStencilTest; }
 	uint8_t StencilTestValue() const { return mStencilTestValue; }
 	uint8_t StencilWriteValue() const { return mStencilWriteValue; }
 
@@ -128,6 +131,7 @@ public:
 
 private:
 	bool mDepthTest = false;
+	bool mStencilTest = true;
 	bool mWriteStencil = true;
 	bool mWriteColor = true;
 	bool mWriteDepth = true;

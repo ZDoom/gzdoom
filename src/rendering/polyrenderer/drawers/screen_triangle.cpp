@@ -2250,10 +2250,10 @@ void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDr
 
 void(*ScreenTriangle::TriangleDrawers[])(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread, int16_t *edges, int topY, int bottomY) =
 {
-	nullptr,
-	nullptr,
-	nullptr,
-	nullptr,
+	&DrawTriangle<TriScreenDrawerModes::TriangleOpt0>,
+	&DrawTriangle<TriScreenDrawerModes::TriangleOpt1>,
+	&DrawTriangle<TriScreenDrawerModes::TriangleOpt2>,
+	&DrawTriangle<TriScreenDrawerModes::TriangleOpt3>,
 	&DrawTriangle<TriScreenDrawerModes::TriangleOpt4>,
 	&DrawTriangle<TriScreenDrawerModes::TriangleOpt5>,
 	&DrawTriangle<TriScreenDrawerModes::TriangleOpt6>,

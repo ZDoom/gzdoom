@@ -13,6 +13,7 @@
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/data/shaderuniforms.h"
+#include "swrenderer/r_swcolormaps.h"
 
 static PolyDrawMode dtToDrawMode[] =
 {
@@ -79,6 +80,7 @@ void PolyRenderState::SetDepthRange(float min, float max)
 
 void PolyRenderState::SetColorMask(bool r, bool g, bool b, bool a)
 {
+	args.SetWriteColor(r || g || b || a);
 }
 
 void PolyRenderState::SetStencil(int offs, int op, int flags)
@@ -113,6 +115,8 @@ void PolyRenderState::SetScissor(int x, int y, int w, int h)
 
 void PolyRenderState::SetViewport(int x, int y, int w, int h)
 {
+	auto fb = GetPolyFrameBuffer();
+	PolyTriangleDrawer::SetViewport(fb->GetDrawCommands(), x, y, w, h, fb->GetCanvas());
 }
 
 void PolyRenderState::EnableDepthTest(bool on)
@@ -138,7 +142,10 @@ void PolyRenderState::Apply()
 
 	args.SetStencilTest(false);
 	args.SetWriteStencil(false);
-	args.SetNoColormap();
+
+	FColormap cm;
+	cm.Clear();
+	args.SetLight(GetColorTable(cm), (int)(mLightParms[3] * 255.0f), mViewpointUniforms->mGlobVis, true);
 
 	args.SetColor(MAKEARGB(
 		static_cast<uint32_t>(mStreamData.uVertexColor.W * 255.0f + 0.5f),
@@ -153,7 +160,15 @@ void PolyRenderState::Apply()
 		{
 			DCanvas *texcanvas = base->GetImage(mMaterial);
 			args.SetTexture(texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth());
-			args.SetStyle(TriBlendMode::Opaque);
+
+			if (mRenderStyle == LegacyRenderStyles[STYLE_Normal])
+				args.SetStyle(TriBlendMode::Normal);
+			else if (mRenderStyle == LegacyRenderStyles[STYLE_Add])
+				args.SetStyle(TriBlendMode::Add);
+			else if (mRenderStyle == LegacyRenderStyles[STYLE_Translucent])
+				args.SetStyle(TriBlendMode::Translucent);
+			else
+				args.SetStyle(TriBlendMode::Opaque);
 		}
 		else
 		{
@@ -173,10 +188,10 @@ void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t len
 {
 	if (buffer->bindingpoint == VIEWPOINT_BINDINGPOINT)
 	{
-		HWViewpointUniforms *uniforms = reinterpret_cast<HWViewpointUniforms*>(static_cast<uint8_t*>(buffer->Memory()) + offset);
+		mViewpointUniforms = reinterpret_cast<HWViewpointUniforms*>(static_cast<uint8_t*>(buffer->Memory()) + offset);
 
-		Mat4f viewToProj = Mat4f::FromValues(uniforms->mProjectionMatrix.get());
-		Mat4f worldToView = Mat4f::FromValues(uniforms->mViewMatrix.get());
+		Mat4f viewToProj = Mat4f::FromValues(mViewpointUniforms->mProjectionMatrix.get());
+		Mat4f worldToView = Mat4f::FromValues(mViewpointUniforms->mViewMatrix.get());
 
 		auto fb = GetPolyFrameBuffer();
 		PolyTriangleDrawer::SetTransform(fb->GetDrawCommands(), fb->GetFrameMemory()->NewObject<Mat4f>(viewToProj * worldToView), nullptr);

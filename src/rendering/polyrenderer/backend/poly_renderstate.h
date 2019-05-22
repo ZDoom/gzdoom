@@ -10,7 +10,7 @@
 #include "hwrenderer/scene/hw_renderstate.h"
 #include "hwrenderer/textures/hw_material.h"
 
-class PolyRenderPassSetup;
+struct HWViewpointUniforms;
 
 class PolyRenderState : public FRenderState
 {
@@ -44,6 +44,8 @@ public:
 
 private:
 	void Apply();
+
+	HWViewpointUniforms *mViewpointUniforms = nullptr;
 
 	bool mDepthClamp = true;
 	PolyDrawArgs args;

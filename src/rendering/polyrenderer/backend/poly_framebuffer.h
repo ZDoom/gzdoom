@@ -17,6 +17,7 @@ class PolyFrameBuffer : public SystemBaseFrameBuffer
 public:
 	RenderMemory *GetFrameMemory() { return &mFrameMemory; }
 	PolyRenderState *GetRenderState() { return mRenderState.get(); }
+	DCanvas *GetCanvas() { return mCanvas.get(); }
 	const DrawerCommandQueuePtr &GetDrawCommands();
 	void FlushDrawCommands();
 

@@ -223,6 +223,10 @@ namespace TriScreenDrawerModes
 		SWTRI_WriteStencil = 16
 	};
 
+	struct TriangleOpt0 { static const int Flags = 0; };
+	struct TriangleOpt1 { static const int Flags = 1; };
+	struct TriangleOpt2 { static const int Flags = 2; };
+	struct TriangleOpt3 { static const int Flags = 3; };
 	struct TriangleOpt4 { static const int Flags = 4; };
 	struct TriangleOpt5 { static const int Flags = 5; };
 	struct TriangleOpt6 { static const int Flags = 6; };

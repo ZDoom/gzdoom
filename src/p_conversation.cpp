@@ -610,7 +610,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 			if (nextname.IsEmpty())
 				Printf ("Next node %u is invalid, no such dialog page\n", next);
 			else
-				Printf ("Next node %u ('%s') is invalid, no such dialog page\n", next, nextname);
+				Printf ("Next node %u ('%s') is invalid, no such dialog page\n", next, nextname.GetChars());
 		}
 	}
 

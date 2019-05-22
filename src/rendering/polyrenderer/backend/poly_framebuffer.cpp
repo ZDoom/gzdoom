@@ -105,6 +105,7 @@ void PolyFrameBuffer::CheckCanvas()
 		mCanvas.reset(new DCanvas(0, 0, true));
 		mCanvas->Resize(GetWidth(), GetHeight(), false);
 
+		PolyTriangleDrawer::ResizeBuffers(mCanvas.get());
 		PolyTriangleDrawer::SetViewport(GetDrawCommands(), 0, 0, mCanvas->GetWidth(), mCanvas->GetHeight(), mCanvas.get());
 	}
 }
@@ -141,7 +142,7 @@ void PolyFrameBuffer::Update()
 	DrawerThreads::WaitForWorkers();
 	mFrameMemory.Clear();
 
-	if (mCanvas && GetClientWidth() == mCanvas->GetWidth() && GetClientHeight() == mCanvas->GetHeight())
+	if (mCanvas)
 	{
 		I_PresentPolyImage(mCanvas->GetWidth(), mCanvas->GetHeight(), mCanvas->GetPixels());
 	}

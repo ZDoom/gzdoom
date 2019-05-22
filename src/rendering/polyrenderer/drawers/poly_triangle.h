@@ -36,6 +36,7 @@ class PolyTriangleDrawer
 {
 public:
 	static void ResizeBuffers(DCanvas *canvas);
+	static void ClearDepth(const DrawerCommandQueuePtr &queue, float value);
 	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
 	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas);
 	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
@@ -53,6 +54,7 @@ class PolyTriangleThreadData
 public:
 	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes, int numa_start_y, int numa_end_y) : core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes), numa_start_y(numa_start_y), numa_end_y(numa_end_y) { }
 
+	void ClearDepth(float value);
 	void ClearStencil(uint8_t value);
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
 	void SetTransform(const Mat4f *objectToClip, const Mat4f *objectToWorld);
@@ -193,6 +195,17 @@ private:
 	int frame1;
 	int frame2;
 	float interpolationFactor;
+};
+
+class PolyClearDepthCommand : public PolyDrawerCommand
+{
+public:
+	PolyClearDepthCommand(float value);
+
+	void Execute(DrawerThread *thread) override;
+
+private:
+	float value;
 };
 
 class PolyClearStencilCommand : public PolyDrawerCommand

@@ -52,6 +52,11 @@ bool PolyTriangleDrawer::IsBgra()
 	return isBgraRenderTarget;
 }
 
+void PolyTriangleDrawer::ClearDepth(const DrawerCommandQueuePtr &queue, float value)
+{
+	queue->Push<PolyClearDepthCommand>(value);
+}
+
 void PolyTriangleDrawer::ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value)
 {
 	queue->Push<PolyClearStencilCommand>(value);
@@ -117,6 +122,25 @@ void PolyTriangleDrawer::DrawElements(const DrawerCommandQueuePtr &queue, const 
 }
 
 /////////////////////////////////////////////////////////////////////////////
+
+void PolyTriangleThreadData::ClearDepth(float value)
+{
+	auto buffer = PolyZBuffer::Instance();
+	int width = buffer->Width();
+	int height = buffer->Height();
+	float *data = buffer->Values();
+
+	int skip = skipped_by_thread(0);
+	int count = count_for_thread(0, height);
+
+	data += skip * width;
+	for (int i = 0; i < count; i++)
+	{
+		for (int x = 0; x < width; x++)
+			data[x] = value;
+		data += num_cores * width;
+	}
+}
 
 void PolyTriangleThreadData::ClearStencil(uint8_t value)
 {
@@ -682,6 +706,17 @@ PolySetModelVertexShaderCommand::PolySetModelVertexShaderCommand(int frame1, int
 void PolySetModelVertexShaderCommand::Execute(DrawerThread *thread)
 {
 	PolyTriangleThreadData::Get(thread)->SetModelVertexShader(frame1, frame2, interpolationFactor);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyClearDepthCommand::PolyClearDepthCommand(float value) : value(value)
+{
+}
+
+void PolyClearDepthCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->ClearDepth(value);
 }
 
 /////////////////////////////////////////////////////////////////////////////

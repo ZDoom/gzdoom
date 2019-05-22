@@ -66,6 +66,7 @@ bool PolyRenderState::SetDepthClamp(bool on)
 
 void PolyRenderState::SetDepthMask(bool on)
 {
+	args.SetWriteDepth(on);
 }
 
 void PolyRenderState::SetDepthFunc(int func)
@@ -94,6 +95,12 @@ void PolyRenderState::EnableClipDistance(int num, bool state)
 
 void PolyRenderState::Clear(int targets)
 {
+	//if (targets & CT_Color)
+	//	PolyTriangleDrawer::ClearColor(GetPolyFrameBuffer()->GetDrawCommands());
+	if (targets & CT_Depth)
+		PolyTriangleDrawer::ClearDepth(GetPolyFrameBuffer()->GetDrawCommands(), 0.0f);
+	if (targets & CT_Stencil)
+		PolyTriangleDrawer::ClearStencil(GetPolyFrameBuffer()->GetDrawCommands(), 0);
 }
 
 void PolyRenderState::EnableStencil(bool on)
@@ -110,6 +117,7 @@ void PolyRenderState::SetViewport(int x, int y, int w, int h)
 
 void PolyRenderState::EnableDepthTest(bool on)
 {
+	args.SetDepthTest(on);
 }
 
 void PolyRenderState::EnableMultisampling(bool on)
@@ -129,9 +137,7 @@ void PolyRenderState::Apply()
 	drawcalls.Clock();
 
 	args.SetStencilTest(false);
-	args.SetDepthTest(false);
 	args.SetWriteStencil(false);
-	args.SetWriteDepth(false);
 	args.SetNoColormap();
 
 	args.SetColor(MAKEARGB(

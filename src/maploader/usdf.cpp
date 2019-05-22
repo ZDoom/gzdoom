@@ -566,7 +566,10 @@ public:
 					if (nameToIndex.CheckKey(key))
 						Printf("Warning! Duplicate page name '%s'!\n", Level->StrifeDialogues[i]->ThisNodeName.GetChars());
 					else
+					{
 						nameToIndex[key] = i;
+						DPrintf(DMSG_NOTIFY, "GZSDF linker: Assigning pagename '%s' to node %i\n", key, i);
+					}
 					usedstrings = true;
 				}
 			}
@@ -579,7 +582,10 @@ public:
 					{
 						itemLinkKey.ToLower();
 						if (nameToIndex.CheckKey(itemLinkKey))
+						{
 							Level->StrifeDialogues[i]->ItemCheckNode = nameToIndex[itemLinkKey] + 1;
+							DPrintf(DMSG_NOTIFY, "GZSDF linker: Item Link '%s' in node %i was index %i\n", itemLinkKey, i, nameToIndex[itemLinkKey]);
+						}
 						else
 							Printf("Warning! Reference to non-existent item-linked dialogue page name '%s' in page %i!\n", Level->StrifeDialogues[i]->ItemCheckNodeName.GetChars(), i);
 					}
@@ -592,7 +598,10 @@ public:
 							FString key = NodeCheck->NextNodeName;
 							key.ToLower();
 							if (nameToIndex.CheckKey(key))
+							{
 								NodeCheck->NextNode = nameToIndex[key] + 1;
+								DPrintf(DMSG_NOTIFY, "GZSDF linker: Nextpage Link '%s' in node %i was index %i\n", key, i, nameToIndex[key]);
+							}
 							else
 								Printf("Warning! Reference to non-existent reply-linked dialogue page name '%s' in page %i!\n", NodeCheck->NextNodeName.GetChars(), i);
 						}

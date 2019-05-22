@@ -713,7 +713,6 @@ file( GLOB HEADER_FILES
 	rendering/polyrenderer/*.h
 	rendering/polyrenderer/math/*.h
 	rendering/polyrenderer/drawers/*.h
-	rendering/polyrenderer/scene/*.h
 	rendering/polyrenderer/backend/*.h
 	rendering/hwrenderer/data/*.h
 	rendering/hwrenderer/dynlights/*.h
@@ -786,21 +785,6 @@ set ( SWRENDER_SOURCES
 )
 
 set( POLYRENDER_SOURCES
-	rendering/polyrenderer/poly_renderer.cpp
-	rendering/polyrenderer/poly_renderthread.cpp
-	rendering/polyrenderer/scene/poly_scene.cpp
-	rendering/polyrenderer/scene/poly_portal.cpp
-	rendering/polyrenderer/scene/poly_cull.cpp
-	rendering/polyrenderer/scene/poly_decal.cpp
-	rendering/polyrenderer/scene/poly_particle.cpp
-	rendering/polyrenderer/scene/poly_plane.cpp
-	rendering/polyrenderer/scene/poly_playersprite.cpp
-	rendering/polyrenderer/scene/poly_wall.cpp
-	rendering/polyrenderer/scene/poly_wallsprite.cpp
-	rendering/polyrenderer/scene/poly_sprite.cpp
-	rendering/polyrenderer/scene/poly_model.cpp
-	rendering/polyrenderer/scene/poly_sky.cpp
-	rendering/polyrenderer/scene/poly_light.cpp
 	rendering/polyrenderer/drawers/poly_buffer.cpp
 	rendering/polyrenderer/drawers/poly_triangle.cpp
 	rendering/polyrenderer/drawers/poly_draw_args.cpp
@@ -1564,7 +1548,6 @@ source_group("Rendering\\Software Renderer\\Viewport" REGULAR_EXPRESSION "^${CMA
 source_group("Rendering\\Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/.+")
 source_group("Rendering\\Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/math/.+")
 source_group("Rendering\\Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/drawers/.+")
-source_group("Rendering\\Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/scene/.+")
 source_group("Rendering\\Poly Renderer\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/backend/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
 source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")

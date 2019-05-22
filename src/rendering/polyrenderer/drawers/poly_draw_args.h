@@ -167,6 +167,7 @@ private:
 	uint32_t mDynLightColor = 0;
 };
 
+#if 0
 class RectDrawArgs
 {
 public:
@@ -233,3 +234,4 @@ private:
 	bool mSimpleShade = true;
 	float mX0, mX1, mY0, mY1, mU0, mU1, mV0, mV1;
 };
+#endif

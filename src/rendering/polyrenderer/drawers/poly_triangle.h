@@ -240,6 +240,7 @@ private:
 	PolyDrawMode mode;
 };
 
+#if 0
 class DrawRectCommand : public PolyDrawerCommand
 {
 public:
@@ -250,3 +251,4 @@ public:
 private:
 	RectDrawArgs args;
 };
+#endif

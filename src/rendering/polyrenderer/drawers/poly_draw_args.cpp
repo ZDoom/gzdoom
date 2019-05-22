@@ -36,7 +36,7 @@
 #include "swrenderer/r_swcolormaps.h"
 #include "poly_draw_args.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "polyrenderer/poly_renderthread.h"
+#include "polyrenderer/drawers/poly_triangle.h"
 
 void PolyDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
 {
@@ -96,13 +96,6 @@ void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, uint32_t translationID,
 void PolyDrawArgs::SetLight(FSWColormap *base_colormap, uint32_t lightlevel, double globVis, bool fixed)
 {
 	mGlobVis = (float)globVis;
-
-	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
-	if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
-	{
-		lightlevel = cameraLight->FixedLightLevel() >= 0 ? cameraLight->FixedLightLevel() : 255;
-		fixed = true;
-	}
 
 	mLight = clamp<uint32_t>(lightlevel, 0, 255);
 	mFixedLight = fixed;
@@ -203,6 +196,7 @@ void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint3
 
 /////////////////////////////////////////////////////////////////////////////
 
+#if 0
 void RectDrawArgs::SetTexture(FSoftwareTexture *texture, FRenderStyle style)
 {
 	mTexture = texture;
@@ -351,3 +345,4 @@ void RectDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint3
 		SetStyle(Translation() ? TriBlendMode::AddShadedTranslated : TriBlendMode::AddShaded, alpha);
 	}
 }
+#endif

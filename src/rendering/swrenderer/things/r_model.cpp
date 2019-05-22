@@ -83,10 +83,10 @@ namespace swrenderer
 			return;
 
 		bool foggy = false;
-		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+		int actualextralight = foggy ? 0 : thread->Viewport->viewpoint.extralight << 4;
 		bool fullbrightSprite = ((actor->renderflags & RF_FULLBRIGHT) || (actor->flags5 & MF5_BRIGHT));
 		renderer.lightlevel = fullbrightSprite ? 255 : actor->Sector->lightlevel + actualextralight;
-		renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
+		renderer.visibility = thread->Light->SpriteGlobVis(foggy);
 
 		renderer.fillcolor = actor->fillcolor;
 		renderer.Translation = actor->Translation;
@@ -128,10 +128,10 @@ namespace swrenderer
 			return;
 
 		bool foggy = false;
-		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+		int actualextralight = foggy ? 0 : thread->Viewport->viewpoint.extralight << 4;
 		bool fullbrightSprite = isBright(psp);
 		renderer.lightlevel = fullbrightSprite ? 255 : playermo->Sector->lightlevel + actualextralight;
-		renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
+		renderer.visibility = thread->Light->SpriteGlobVis(foggy);
 
 		PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
 		ThingColor.a = 255;
@@ -354,7 +354,8 @@ namespace swrenderer
 	{
 		PolyDrawArgs args;
 		auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
-		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);		args.SetLights(Lights, NumLights);
+		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);
+		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);
@@ -371,7 +372,8 @@ namespace swrenderer
 	{
 		PolyDrawArgs args;
 		auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
-		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);		args.SetLights(Lights, NumLights);
+		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);
+		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);

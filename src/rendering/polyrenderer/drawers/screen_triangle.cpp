@@ -1588,6 +1588,7 @@ void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTrian
 	}
 }
 
+#if 0
 template<typename ModeT>
 void DrawRect8(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
 {
@@ -2115,6 +2116,7 @@ void DrawRect32(const void *destOrg, int destWidth, int destHeight, int destPitc
 	else
 		DrawRectOpt32<ModeT, DrawerOptCF>(destOrg, destWidth, destHeight, destPitch, args, thread);
 }
+#endif
 
 void(*ScreenTriangle::SpanDrawers8[])(int, int, int, const TriDrawTriangleArgs *, PolyTriangleThreadData *) =
 {
@@ -2180,6 +2182,7 @@ void(*ScreenTriangle::SpanDrawers32[])(int, int, int, const TriDrawTriangleArgs 
 	&DrawSpan32<TriScreenDrawerModes::StyleAddShadedTranslated>
 };
 
+#if 0
 void(*ScreenTriangle::RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *) =
 {
 	&DrawRect8<TriScreenDrawerModes::StyleOpaque>,
@@ -2243,6 +2246,7 @@ void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDr
 	&DrawRect32<TriScreenDrawerModes::StyleAddStencilTranslated>,
 	&DrawRect32<TriScreenDrawerModes::StyleAddShadedTranslated>
 };
+#endif
 
 void(*ScreenTriangle::TriangleDrawers[])(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread, int16_t *edges, int topY, int bottomY) =
 {

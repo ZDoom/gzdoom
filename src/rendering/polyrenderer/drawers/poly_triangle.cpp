@@ -35,7 +35,6 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "poly_triangle.h"
-#include "polyrenderer/poly_renderer.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
 #include "x86.h"
@@ -724,6 +723,7 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
+#if 0
 void DrawRectCommand::Execute(DrawerThread *thread)
 {
 	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
@@ -737,3 +737,4 @@ void DrawRectCommand::Execute(DrawerThread *thread)
 	else
 		ScreenTriangle::RectDrawers8[blendmode](destOrg, destWidth, destHeight, destPitch, &args, PolyTriangleThreadData::Get(thread));
 }
+#endif

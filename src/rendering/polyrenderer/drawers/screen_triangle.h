@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <vector>
 #include "r_data/renderstyle.h"
+#include "rendering/swrenderer/drawers/r_draw.h"
 
 class FString;
 class PolyDrawArgs;
@@ -138,8 +139,10 @@ public:
 
 	static void(*SpanDrawers8[])(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
 	static void(*SpanDrawers32[])(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
+#if 0
 	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
 	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
+#endif
 
 	static int FuzzStart;
 };

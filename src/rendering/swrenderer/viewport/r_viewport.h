@@ -5,6 +5,7 @@
 #include <memory>
 #include "v_video.h"
 #include "r_defs.h"
+#include "r_utility.h"
 #include "actorinlines.h"
 #include "polyrenderer/math/gpu_types.h"
 

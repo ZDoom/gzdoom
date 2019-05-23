@@ -2,6 +2,7 @@
 
 #include "volk/volk.h"
 #include "vk_mem_alloc/vk_mem_alloc.h"
+#include "utility/doomerrors.h"
 #include <mutex>
 #include <vector>
 #include <algorithm>
@@ -99,3 +100,20 @@ private:
 	static std::vector<const char *> GetPlatformExtensions();
 	static std::vector<VulkanPhysicalDevice> GetPhysicalDevices(VkInstance instance);
 };
+
+FString VkResultToString(VkResult result);
+
+inline void VulkanError(const char *text)
+{
+	throw CVulkanError(text);
+}
+
+inline void CheckVulkanError(VkResult result, const char *text)
+{
+	if (result >= VK_SUCCESS)
+		return;
+
+	FString msg;
+	msg.Format("%s: %s", text, VkResultToString(result).GetChars());
+	throw CVulkanError(msg.GetChars());
+}

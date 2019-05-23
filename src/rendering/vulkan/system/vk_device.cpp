@@ -117,7 +117,7 @@ void VulkanDevice::SelectPhysicalDevice()
 {
 	AvailableDevices = GetPhysicalDevices(instance);
 	if (AvailableDevices.empty())
-		I_Error("No Vulkan devices found. Either the graphics card has no vulkan support or the driver is too old.");
+		VulkanError("No Vulkan devices found. Either the graphics card has no vulkan support or the driver is too old.");
 
 	for (size_t idx = 0; idx < AvailableDevices.size(); idx++)
 	{
@@ -169,7 +169,7 @@ void VulkanDevice::SelectPhysicalDevice()
 	}
 
 	if (SupportedDevices.empty())
-		I_Error("No Vulkan device supports the minimum requirements of this application");
+		VulkanError("No Vulkan device supports the minimum requirements of this application");
 
 	// The device order returned by Vulkan can be anything. Prefer discrete > integrated > virtual gpu > cpu > other
 	std::stable_sort(SupportedDevices.begin(), SupportedDevices.end(), [&](const auto &a, const auto b) {
@@ -221,7 +221,7 @@ void VulkanDevice::CreateAllocator()
 	allocinfo.device = device;
 	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;
 	if (vmaCreateAllocator(&allocinfo, &allocator) != VK_SUCCESS)
-		I_Error("Unable to create allocator");
+		VulkanError("Unable to create allocator");
 }
 
 void VulkanDevice::CreateDevice()
@@ -253,8 +253,7 @@ void VulkanDevice::CreateDevice()
 	deviceCreateInfo.enabledLayerCount = 0;
 
 	VkResult result = vkCreateDevice(PhysicalDevice.Device, &deviceCreateInfo, nullptr, &device);
-	if (result != VK_SUCCESS)
-		I_Error("Could not create vulkan device");
+	CheckVulkanError(result, "Could not create vulkan device");
 
 	volkLoadDevice(device);
 
@@ -266,7 +265,7 @@ void VulkanDevice::CreateSurface()
 {
 	if (!I_CreateVulkanSurface(instance, &surface))
 	{
-		I_Error("Could not create vulkan surface");
+		VulkanError("Could not create vulkan surface");
 	}
 }
 
@@ -318,8 +317,7 @@ void VulkanDevice::CreateInstance()
 	createInfo.ppEnabledExtensionNames = EnabledExtensions.data();
 
 	VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
-	if (result != VK_SUCCESS)
-		I_Error("Could not create vulkan instance");
+	CheckVulkanError(result, "Could not create vulkan instance");
 
 	volkLoadInstance(instance);
 
@@ -339,8 +337,7 @@ void VulkanDevice::CreateInstance()
 		createInfo.pfnUserCallback = DebugCallback;
 		createInfo.pUserData = this;
 		result = vkCreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger);
-		if (result != VK_SUCCESS)
-			I_Error("vkCreateDebugUtilsMessengerEXT failed");
+		CheckVulkanError(result, "vkCreateDebugUtilsMessengerEXT failed");
 
 		DebugLayerActive = true;
 	}
@@ -441,15 +438,13 @@ std::vector<VulkanPhysicalDevice> VulkanDevice::GetPhysicalDevices(VkInstance in
 	VkResult result = vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
 	if (result == VK_ERROR_INITIALIZATION_FAILED) // Some drivers return this when a card does not support vulkan
 		return {};
-	if (result != VK_SUCCESS)
-		I_Error("vkEnumeratePhysicalDevices failed");
+	CheckVulkanError(result, "vkEnumeratePhysicalDevices failed");
 	if (deviceCount == 0)
 		return {};
 
 	std::vector<VkPhysicalDevice> devices(deviceCount);
 	result = vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
-	if (result != VK_SUCCESS)
-		I_Error("vkEnumeratePhysicalDevices failed (2)");
+	CheckVulkanError(result, "vkEnumeratePhysicalDevices failed (2)");
 
 	std::vector<VulkanPhysicalDevice> devinfo(deviceCount);
 	for (size_t i = 0; i < devices.size(); i++)
@@ -478,11 +473,11 @@ std::vector<const char *> VulkanDevice::GetPlatformExtensions()
 {
 	uint32_t extensionCount = 0;
 	if (!I_GetVulkanPlatformExtensions(&extensionCount, nullptr))
-		I_Error("Cannot obtain number of Vulkan extensions");
+		VulkanError("Cannot obtain number of Vulkan extensions");
 
 	std::vector<const char *> extensions(extensionCount);
 	if (!I_GetVulkanPlatformExtensions(&extensionCount, extensions.data()))
-		I_Error("Cannot obtain list of Vulkan extensions");
+		VulkanError("Cannot obtain list of Vulkan extensions");
 	return extensions;
 }
 
@@ -490,12 +485,12 @@ void VulkanDevice::InitVolk()
 {
 	if (volkInitialize() != VK_SUCCESS)
 	{
-		I_Error("Unable to find Vulkan");
+		VulkanError("Unable to find Vulkan");
 	}
 	auto iver = volkGetInstanceVersion();
 	if (iver == 0)
 	{
-		I_Error("Vulkan not supported");
+		VulkanError("Vulkan not supported");
 	}
 }
 
@@ -531,6 +526,46 @@ uint32_t VulkanDevice::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 			return i;
 	}
 
-	I_FatalError("failed to find suitable memory type!");
+	VulkanError("failed to find suitable memory type!");
 	return 0;
+}
+
+FString VkResultToString(VkResult result)
+{
+	switch (result)
+	{
+	case VK_SUCCESS: return "success";
+	case VK_NOT_READY: return "not ready";
+	case VK_TIMEOUT: return "timeout";
+	case VK_EVENT_SET: return "event set";
+	case VK_EVENT_RESET: return "event reset";
+	case VK_INCOMPLETE: return "incomplete";
+	case VK_ERROR_OUT_OF_HOST_MEMORY: return "out of host memory";
+	case VK_ERROR_OUT_OF_DEVICE_MEMORY: return "out of device memory";
+	case VK_ERROR_INITIALIZATION_FAILED: return "initialization failed";
+	case VK_ERROR_DEVICE_LOST: return "device lost";
+	case VK_ERROR_MEMORY_MAP_FAILED: return "memory map failed";
+	case VK_ERROR_LAYER_NOT_PRESENT: return "layer not present";
+	case VK_ERROR_EXTENSION_NOT_PRESENT: return "extension not present";
+	case VK_ERROR_FEATURE_NOT_PRESENT: return "feature not present";
+	case VK_ERROR_INCOMPATIBLE_DRIVER: return "incompatible driver";
+	case VK_ERROR_TOO_MANY_OBJECTS: return "too many objects";
+	case VK_ERROR_FORMAT_NOT_SUPPORTED: return "format not supported";
+	case VK_ERROR_FRAGMENTED_POOL: return "fragmented pool";
+	case VK_ERROR_OUT_OF_POOL_MEMORY: return "out of pool memory";
+	case VK_ERROR_INVALID_EXTERNAL_HANDLE: return "invalid external handle";
+	case VK_ERROR_SURFACE_LOST_KHR: return "surface lost";
+	case VK_ERROR_NATIVE_WINDOW_IN_USE_KHR: return "native window in use";
+	case VK_SUBOPTIMAL_KHR: return "suboptimal";
+	case VK_ERROR_OUT_OF_DATE_KHR: return "out of date";
+	case VK_ERROR_INCOMPATIBLE_DISPLAY_KHR: return "incompatible display";
+	case VK_ERROR_VALIDATION_FAILED_EXT: return "validation failed";
+	case VK_ERROR_INVALID_SHADER_NV: return "invalid shader";
+	case VK_ERROR_FRAGMENTATION_EXT: return "fragmentation";
+	case VK_ERROR_NOT_PERMITTED_EXT: return "not permitted";
+	default: break;
+	}
+	FString res;
+	res.Format("vkResult %d", (int)result);
+	return result;
 }

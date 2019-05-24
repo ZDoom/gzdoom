@@ -282,7 +282,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 			device = new VulkanDevice();
 			fb = new VulkanFrameBuffer(nullptr, fullscreen, device);
 		}
-		catch (CRecoverableError const&)
+		catch (CVulkanError const&)
 		{
 			if (Priv::window != nullptr)
 			{

@@ -586,6 +586,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	{
 		int rootnode = npc->ConversationRoot;
 		const unsigned next = (unsigned)(rootnode + reply->NextNode - 1);
+		FString nextname = reply->NextNodeName;
 
 		if (next < Level->StrifeDialogues.Size())
 		{
@@ -606,7 +607,10 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		}
 		else
 		{
-			Printf ("Next node %u is invalid, no such dialog page\n", next);
+			if (nextname.IsEmpty())
+				Printf ("Next node %u is invalid, no such dialog page\n", next);
+			else
+				Printf ("Next node %u ('%s') is invalid, no such dialog page\n", next, nextname.GetChars());
 		}
 	}
 

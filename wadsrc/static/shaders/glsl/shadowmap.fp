@@ -111,7 +111,7 @@ float rayTest(vec2 ray_start, vec2 ray_end)
 
 	int stack[32];
 	int stack_pos = 1;
-	stack[0] = nodes.length() - 1;
+	stack[0] = NodesCount - 1;
 	while (stack_pos > 0)
 	{
 		int node_index = stack[stack_pos - 1];

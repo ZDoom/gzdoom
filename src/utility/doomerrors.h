@@ -104,6 +104,13 @@ public:
 	CFatalError(const char *message) : CDoomError(message) {}
 };
 
+class CVulkanError : public CDoomError
+{
+public:
+	CVulkanError() : CDoomError() {}
+	CVulkanError(const char *message) : CDoomError(message) {}
+};
+
 void I_Error (const char *error, ...) GCCPRINTF(1,2);
 void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 

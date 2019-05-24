@@ -34,6 +34,12 @@ public:
 		UpdateCycles.Clock();
 	}
 
+	unsigned int NodesCount() const
+	{
+		assert(mAABBTree);
+		return mAABBTree->NodesCount();
+	}
+
 protected:
 	void CollectLights();
 	bool ValidateAABBTree(FLevelLocals *lev);

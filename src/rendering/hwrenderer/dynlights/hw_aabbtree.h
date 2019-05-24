@@ -53,6 +53,7 @@ public:
 	const void *Lines() const { return treelines.Data(); }
 	size_t NodesSize() const { return nodes.Size() * sizeof(AABBTreeNode); }
 	size_t LinesSize() const { return treelines.Size() * sizeof(AABBTreeLine); }
+	unsigned int NodesCount() const { return nodes.Size(); }
 
 	const void *DynamicNodes() const { return nodes.Data() + dynamicStartNode; }
 	const void *DynamicLines() const { return treelines.Data() + dynamicStartLine; }

@@ -195,6 +195,7 @@ void FGLRenderer::UpdateShadowMap()
 
 		mShadowMapShader->Bind();
 		mShadowMapShader->Uniforms->ShadowmapQuality = gl_shadowmap_quality;
+		mShadowMapShader->Uniforms->NodesCount = screen->mShadowMap.NodesCount();
 		mShadowMapShader->Uniforms.Set();
 
 		glViewport(0, 0, gl_shadowmap_quality, 1024);

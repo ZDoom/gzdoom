@@ -148,6 +148,8 @@ namespace swrenderer
 	SWModelRenderer::SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor, Mat4f *worldToClip, bool mirrorWorldToClip)
 		: Thread(thread), Clip3DFloor(clip3DFloor), WorldToClip(worldToClip), MirrorWorldToClip(mirrorWorldToClip)
 	{
+		static PolyTriVertexShader shader;
+		PolyTriangleDrawer::SetVertexShader(thread->DrawQueue, &shader);
 	}
 
 	void SWModelRenderer::AddLights(AActor *actor)
@@ -365,7 +367,8 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		PolyTriangleDrawer::DrawArray(Thread->DrawQueue, args, VertexBuffer + start, count);
+		PolyTriangleDrawer::PushConstants(Thread->DrawQueue, args);
+		PolyTriangleDrawer::Draw(Thread->DrawQueue, start, count);
 	}
 
 	void SWModelRenderer::DrawElements(int numIndices, size_t offset)
@@ -383,7 +386,8 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		PolyTriangleDrawer::DrawElements(Thread->DrawQueue, args, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
+		PolyTriangleDrawer::PushConstants(Thread->DrawQueue, args);
+		PolyTriangleDrawer::DrawIndexed(Thread->DrawQueue, static_cast<int>(offset / sizeof(unsigned int)), numIndices);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -419,8 +423,12 @@ namespace swrenderer
 	void SWModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 	{
 		SWModelRenderer *swrenderer = (SWModelRenderer *)renderer;
-		swrenderer->VertexBuffer = mVertexBuffer.Size() ? &mVertexBuffer[0] : nullptr;
-		swrenderer->IndexBuffer = mIndexBuffer.Size() ? &mIndexBuffer[0] : nullptr;
+
+		if (mVertexBuffer.Size() > 0)
+			PolyTriangleDrawer::SetVertexBuffer(swrenderer->Thread->DrawQueue, &mVertexBuffer[0]);
+		if (mIndexBuffer.Size() > 0)
+			PolyTriangleDrawer::SetIndexBuffer(swrenderer->Thread->DrawQueue, &mIndexBuffer[0]);
+
 		PolyTriangleDrawer::SetModelVertexShader(swrenderer->Thread->DrawQueue, frame1, frame2, swrenderer->InterpolationFactor);
 	}
 }

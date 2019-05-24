@@ -24,8 +24,6 @@
 
 #include <vector>
 
-struct TriVertex;
-
 class PolyZBuffer
 {
 public:

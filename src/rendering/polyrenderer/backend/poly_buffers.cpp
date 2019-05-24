@@ -18,6 +18,10 @@ PolyBuffer::~PolyBuffer()
 	if (Next) Next->Prev = Prev;
 	if (Prev) Prev->Next = Next;
 	else First = Next;
+
+	auto fb = GetPolyFrameBuffer();
+	if (fb && !mData.empty())
+		fb->FrameDeleteList.Buffers.push_back(std::move(mData));
 }
 
 void PolyBuffer::ResetAll()
@@ -79,43 +83,29 @@ void PolyVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t
 	mStride = stride;
 }
 
-void PolyVertexBuffer::CopyVertices(TriVertex *dst, int count, int index)
+ShadedTriVertex PolyVertexBuffer::Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index)
 {
-	size_t stride = mStride;
-	size_t offsetVertex = mOffsets[VATTR_VERTEX];
-	size_t offsetTexcoord = mOffsets[VATTR_TEXCOORD];
-	uint8_t *vertex = static_cast<uint8_t*>(map) + stride * index;
+	const uint8_t *vertex = static_cast<const uint8_t*>(vertices) + mStride * index;
+	const float *attrVertex = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_VERTEX]);
+	const float *attrTexcoord = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_TEXCOORD]);
 
-	for (int i = 0; i < count; i++)
-	{
-		dst[i].x = *reinterpret_cast<float*>(vertex + offsetVertex);
-		dst[i].y = *reinterpret_cast<float*>(vertex + offsetVertex + 4);
-		dst[i].z = *reinterpret_cast<float*>(vertex + offsetVertex + 8);
-		dst[i].w = 1.0f;
-		dst[i].v = *reinterpret_cast<float*>(vertex + offsetTexcoord);
-		dst[i].u = *reinterpret_cast<float*>(vertex + offsetTexcoord + 4);
-		vertex += stride;
-	}
-}
+	Vec4f objpos = Vec4f(attrVertex[0], attrVertex[1], attrVertex[2], 1.0f);
+	Vec4f clippos = (*thread->objectToClip) * objpos;
 
-void PolyVertexBuffer::CopyIndexed(TriVertex *dst, uint32_t *elements, int count, int index)
-{
-	size_t stride = mStride;
-	size_t offsetVertex = mOffsets[VATTR_VERTEX];
-	size_t offsetTexcoord = mOffsets[VATTR_TEXCOORD];
-	uint8_t *vertices = static_cast<uint8_t*>(map);
-
-	elements += index;
-	for (int i = 0; i < count; i++)
-	{
-		uint8_t *vertex = vertices + stride * elements[i];
-		dst[i].x = *reinterpret_cast<float*>(vertex + offsetVertex);
-		dst[i].y = *reinterpret_cast<float*>(vertex + offsetVertex + 4);
-		dst[i].z = *reinterpret_cast<float*>(vertex + offsetVertex + 8);
-		dst[i].w = 1.0f;
-		dst[i].v = *reinterpret_cast<float*>(vertex + offsetTexcoord);
-		dst[i].u = *reinterpret_cast<float*>(vertex + offsetTexcoord + 4);
-	}
+	ShadedTriVertex sv;
+	sv.u = attrTexcoord[1];
+	sv.v = attrTexcoord[0];
+	sv.x = clippos.X;
+	sv.y = clippos.Y;
+	sv.z = clippos.Z;
+	sv.w = clippos.W;
+	sv.worldX = objpos.X;
+	sv.worldY = objpos.Y;
+	sv.worldZ = objpos.Z;
+	sv.clipDistance[0] = 1.0f;
+	sv.clipDistance[1] = 1.0f;
+	sv.clipDistance[2] = 1.0f;
+	return sv;
 }
 
 /////////////////////////////////////////////////////////////////////////////

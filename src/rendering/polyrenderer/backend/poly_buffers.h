@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hwrenderer/data/buffers.h"
+#include "polyrenderer/drawers/poly_triangle.h"
 #include "utility/tarray.h"
 #include <vector>
 
@@ -38,14 +39,13 @@ private:
 	std::vector<uint32_t> mData;
 };
 
-class PolyVertexBuffer : public IVertexBuffer, public PolyBuffer
+class PolyVertexBuffer : public IVertexBuffer, public PolyBuffer, public PolyVertexShader
 {
 public:
 	PolyVertexBuffer() { }
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
 
-	void CopyVertices(TriVertex *dst, int count, int index);
-	void CopyIndexed(TriVertex *dst, uint32_t *elements, int count, int index);
+	ShadedTriVertex Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index) override;
 
 private:
 	size_t mOffsets[VATTR_MAX] = {};

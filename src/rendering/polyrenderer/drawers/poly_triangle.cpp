@@ -86,6 +86,11 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	queue->Push<PolySetViewportCommand>(viewport_x, viewport_y, viewport_width, viewport_height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
 }
 
+void PolyTriangleDrawer::SetVertexShader(const DrawerCommandQueuePtr &queue, PolyVertexShader *shader)
+{
+	queue->Push<PolySetVertexShaderCommand>(shader);
+}
+
 void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld)
 {
 	queue->Push<PolySetTransformCommand>(objectToClip, objectToWorld);
@@ -111,14 +116,29 @@ void PolyTriangleDrawer::SetModelVertexShader(const DrawerCommandQueuePtr &queue
 	queue->Push<PolySetModelVertexShaderCommand>(frame1, frame2, interpolationFactor);
 }
 
-void PolyTriangleDrawer::DrawArray(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode)
+void PolyTriangleDrawer::SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices)
 {
-	queue->Push<DrawPolyTrianglesCommand>(args, vertices, nullptr, vcount, mode);
+	queue->Push<PolySetVertexBufferCommand>(vertices);
 }
 
-void PolyTriangleDrawer::DrawElements(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode)
+void PolyTriangleDrawer::SetIndexBuffer(const DrawerCommandQueuePtr &queue, const void *elements)
 {
-	queue->Push<DrawPolyTrianglesCommand>(args, vertices, elements, count, mode);
+	queue->Push<PolySetIndexBufferCommand>(elements);
+}
+
+void PolyTriangleDrawer::PushConstants(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args)
+{
+	queue->Push<PolyPushConstantsCommand>(args);
+}
+
+void PolyTriangleDrawer::Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode)
+{
+	queue->Push<PolyDrawCommand>(index, vcount, mode);
+}
+
+void PolyTriangleDrawer::DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode)
+{
+	queue->Push<PolyDrawIndexedCommand>(index, count, mode);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -181,10 +201,17 @@ void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Ma
 	objectToWorld = newObjectToWorld;
 }
 
-void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs, const void *vertices, const unsigned int *elements, int vcount, PolyDrawMode drawmode)
+void PolyTriangleThreadData::PushConstants(const PolyDrawArgs &args)
+{
+	drawargs = args;
+}
+
+void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode drawmode)
 {
 	if (vcount < 3)
 		return;
+
+	elements += index;
 
 	TriDrawTriangleArgs args;
 	args.uniforms = &drawargs;
@@ -195,17 +222,17 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs, const vo
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = ShadeVertex(drawargs, vertices, *(elements++));
+				vert[j] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
 			DrawShadedTriangle(vert, ccw, &args);
 		}
 	}
 	else if (drawmode == PolyDrawMode::TriangleFan)
 	{
-		vert[0] = ShadeVertex(drawargs, vertices, *(elements++));
-		vert[1] = ShadeVertex(drawargs, vertices, *(elements++));
+		vert[0] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
+		vert[1] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, vertices, *(elements++));
+			vert[2] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
 			DrawShadedTriangle(vert, ccw, &args);
 			vert[1] = vert[2];
 		}
@@ -213,11 +240,11 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs, const vo
 	else // TriangleDrawMode::TriangleStrip
 	{
 		bool toggleccw = ccw;
-		vert[0] = ShadeVertex(drawargs, vertices, *(elements++));
-		vert[1] = ShadeVertex(drawargs, vertices, *(elements++));
+		vert[0] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
+		vert[1] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, vertices, *(elements++));
+			vert[2] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
 			DrawShadedTriangle(vert, toggleccw, &args);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -226,7 +253,7 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs, const vo
 	}
 }
 
-void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void *vertices, int vcount, PolyDrawMode drawmode)
+void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 {
 	if (vcount < 3)
 		return;
@@ -234,7 +261,7 @@ void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void 
 	TriDrawTriangleArgs args;
 	args.uniforms = &drawargs;
 
-	int vinput = 0;
+	int vinput = index;
 
 	ShadedTriVertex vert[3];
 	if (drawmode == PolyDrawMode::Triangles)
@@ -242,17 +269,17 @@ void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void 
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = ShadeVertex(drawargs, vertices, vinput++);
+				vert[j] = vertexShader->Shade(this, drawargs, vertices, vinput++);
 			DrawShadedTriangle(vert, ccw, &args);
 		}
 	}
 	else if (drawmode == PolyDrawMode::TriangleFan)
 	{
-		vert[0] = ShadeVertex(drawargs, vertices, vinput++);
-		vert[1] = ShadeVertex(drawargs, vertices, vinput++);
+		vert[0] = vertexShader->Shade(this, drawargs, vertices, vinput++);
+		vert[1] = vertexShader->Shade(this, drawargs, vertices, vinput++);
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, vertices, vinput++);
+			vert[2] = vertexShader->Shade(this, drawargs, vertices, vinput++);
 			DrawShadedTriangle(vert, ccw, &args);
 			vert[1] = vert[2];
 		}
@@ -260,11 +287,11 @@ void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void 
 	else // TriangleDrawMode::TriangleStrip
 	{
 		bool toggleccw = ccw;
-		vert[0] = ShadeVertex(drawargs, vertices, vinput++);
-		vert[1] = ShadeVertex(drawargs, vertices, vinput++);
+		vert[0] = vertexShader->Shade(this, drawargs, vertices, vinput++);
+		vert[1] = vertexShader->Shade(this, drawargs, vertices, vinput++);
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, vertices, vinput++);
+			vert[2] = vertexShader->Shade(this, drawargs, vertices, vinput++);
 			DrawShadedTriangle(vert, toggleccw, &args);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -273,31 +300,31 @@ void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void 
 	}
 }
 
-ShadedTriVertex PolyTriangleThreadData::ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index)
+ShadedTriVertex PolyTriVertexShader::Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index)
 {
 	ShadedTriVertex sv;
 	Vec4f objpos;
 
-	if (modelFrame1 == -1)
+	if (thread->modelFrame1 == -1)
 	{
 		const TriVertex &v = static_cast<const TriVertex*>(vertices)[index];
 		objpos = Vec4f(v.x, v.y, v.z, v.w);
 		sv.u = v.u;
 		sv.v = v.v;
 	}
-	else if (modelFrame1 == modelFrame2 || modelInterpolationFactor == 0.f)
+	else if (thread->modelFrame1 == thread->modelFrame2 || thread->modelInterpolationFactor == 0.f)
 	{
-		const FModelVertex &v = static_cast<const FModelVertex*>(vertices)[modelFrame1 + index];
+		const FModelVertex &v = static_cast<const FModelVertex*>(vertices)[thread->modelFrame1 + index];
 		objpos = Vec4f(v.x, v.y, v.z, 1.0f);
 		sv.u = v.u;
 		sv.v = v.v;
 	}
 	else
 	{
-		const FModelVertex &v1 = static_cast<const FModelVertex*>(vertices)[modelFrame1 + index];
-		const FModelVertex &v2 = static_cast<const FModelVertex*>(vertices)[modelFrame2 + index];
+		const FModelVertex &v1 = static_cast<const FModelVertex*>(vertices)[thread->modelFrame1 + index];
+		const FModelVertex &v2 = static_cast<const FModelVertex*>(vertices)[thread->modelFrame2 + index];
 
-		float frac = modelInterpolationFactor;
+		float frac = thread->modelInterpolationFactor;
 		float inv_frac = 1.0f - frac;
 
 		objpos = Vec4f(v1.x * inv_frac + v2.x * frac, v1.y * inv_frac + v2.y * frac, v1.z * inv_frac + v2.z * frac, 1.0f);
@@ -306,14 +333,14 @@ ShadedTriVertex PolyTriangleThreadData::ShadeVertex(const PolyDrawArgs &drawargs
 	}
 
 	// Apply transform to get clip coordinates:
-	Vec4f clippos = (*objectToClip) * objpos;
+	Vec4f clippos = (*thread->objectToClip) * objpos;
 
 	sv.x = clippos.X;
 	sv.y = clippos.Y;
 	sv.z = clippos.Z;
 	sv.w = clippos.W;
 
-	if (!objectToWorld) // Identity matrix
+	if (!thread->objectToWorld) // Identity matrix
 	{
 		sv.worldX = objpos.X;
 		sv.worldY = objpos.Y;
@@ -321,7 +348,7 @@ ShadedTriVertex PolyTriangleThreadData::ShadeVertex(const PolyDrawArgs &drawargs
 	}
 	else
 	{
-		Vec4f worldpos = (*objectToWorld) * objpos;
+		Vec4f worldpos = (*thread->objectToWorld) * objpos;
 		sv.worldX = worldpos.X;
 		sv.worldY = worldpos.Y;
 		sv.worldZ = worldpos.Z;
@@ -655,6 +682,39 @@ PolyTriangleThreadData *PolyTriangleThreadData::Get(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
+PolySetVertexBufferCommand::PolySetVertexBufferCommand(const void *vertices) : vertices(vertices)
+{
+}
+
+void PolySetVertexBufferCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetVertexBuffer(vertices);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolySetIndexBufferCommand::PolySetIndexBufferCommand(const void *indices) : indices(indices)
+{
+}
+
+void PolySetIndexBufferCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetIndexBuffer(indices);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolySetVertexShaderCommand::PolySetVertexShaderCommand(PolyVertexShader *shader) : shader(shader)
+{
+}
+
+void PolySetVertexShaderCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetVertexShader(shader);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 PolySetTransformCommand::PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld) : objectToClip(objectToClip), objectToWorld(objectToWorld)
 {
 }
@@ -744,32 +804,33 @@ void PolySetViewportCommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode) : args(args), vertices(vertices), elements(elements), count(count), mode(mode)
+PolyPushConstantsCommand::PolyPushConstantsCommand(const PolyDrawArgs &args) : args(args)
 {
 }
 
-void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
+void PolyPushConstantsCommand::Execute(DrawerThread *thread)
 {
-	if (!elements)
-		PolyTriangleThreadData::Get(thread)->DrawArray(args, vertices, count, mode);
-	else
-		PolyTriangleThreadData::Get(thread)->DrawElements(args, vertices, elements, count, mode);
+	PolyTriangleThreadData::Get(thread)->PushConstants(args);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-#if 0
-void DrawRectCommand::Execute(DrawerThread *thread)
+PolyDrawCommand::PolyDrawCommand(int index, int count, PolyDrawMode mode) : index(index), count(count), mode(mode)
 {
-	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
-	const void *destOrg = renderTarget->GetPixels();
-	int destWidth = renderTarget->GetWidth();
-	int destHeight = renderTarget->GetHeight();
-	int destPitch = renderTarget->GetPitch();
-	int blendmode = (int)args.BlendMode();
-	if (renderTarget->IsBgra())
-		ScreenTriangle::RectDrawers32[blendmode](destOrg, destWidth, destHeight, destPitch, &args, PolyTriangleThreadData::Get(thread));
-	else
-		ScreenTriangle::RectDrawers8[blendmode](destOrg, destWidth, destHeight, destPitch, &args, PolyTriangleThreadData::Get(thread));
 }
-#endif
+
+void PolyDrawCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->Draw(index, count, mode);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyDrawIndexedCommand::PolyDrawIndexedCommand(int index, int count, PolyDrawMode mode) : index(index), count(count), mode(mode)
+{
+}
+
+void PolyDrawIndexedCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->DrawIndexed(index, count, mode);
+}

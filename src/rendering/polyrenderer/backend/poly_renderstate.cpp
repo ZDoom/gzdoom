@@ -41,10 +41,7 @@ void PolyRenderState::Draw(int dt, int index, int count, bool apply)
 	if (apply)
 		Apply();
 
-	auto fb = GetPolyFrameBuffer();
-	TriVertex *vertices = fb->GetFrameMemory()->AllocMemory<TriVertex>(count);
-	static_cast<PolyVertexBuffer*>(mVertexBuffer)->CopyVertices(vertices, count, index);
-	PolyTriangleDrawer::DrawArray(fb->GetDrawCommands(), args, vertices, count, dtToDrawMode[dt]);
+	PolyTriangleDrawer::Draw(GetPolyFrameBuffer()->GetDrawCommands(), index, count, dtToDrawMode[dt]);
 }
 
 void PolyRenderState::DrawIndexed(int dt, int index, int count, bool apply)
@@ -52,10 +49,7 @@ void PolyRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 	if (apply)
 		Apply();
 
-	auto fb = GetPolyFrameBuffer();
-	TriVertex *vertices = fb->GetFrameMemory()->AllocMemory<TriVertex>(count);
-	static_cast<PolyVertexBuffer*>(mVertexBuffer)->CopyIndexed(vertices, (uint32_t *)mIndexBuffer->Memory(), count, index);
-	PolyTriangleDrawer::DrawArray(fb->GetDrawCommands(), args, vertices, count, dtToDrawMode[dt]);
+	PolyTriangleDrawer::DrawIndexed(GetPolyFrameBuffer()->GetDrawCommands(), index, count, dtToDrawMode[dt]);
 }
 
 bool PolyRenderState::SetDepthClamp(bool on)
@@ -179,7 +173,11 @@ void PolyRenderState::Apply()
 	}
 
 	auto fb = GetPolyFrameBuffer();
+	if (mVertexBuffer) PolyTriangleDrawer::SetVertexBuffer(fb->GetDrawCommands(), mVertexBuffer->Memory());
+	if (mIndexBuffer) PolyTriangleDrawer::SetIndexBuffer(fb->GetDrawCommands(), mIndexBuffer->Memory());
+	PolyTriangleDrawer::SetVertexShader(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer));
 	PolyTriangleDrawer::SetTwoSided(fb->GetDrawCommands(), true);
+	PolyTriangleDrawer::PushConstants(fb->GetDrawCommands(), args);
 
 	drawcalls.Unclock();
 }

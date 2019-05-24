@@ -31,6 +31,7 @@
 
 class DCanvas;
 class PolyDrawerCommand;
+class PolyVertexShader;
 
 class PolyTriangleDrawer
 {
@@ -39,14 +40,30 @@ public:
 	static void ClearDepth(const DrawerCommandQueuePtr &queue, float value);
 	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
 	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas);
+	static void SetVertexShader(const DrawerCommandQueuePtr &queue, PolyVertexShader *shader);
 	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
 	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
 	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
 	static void SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
-	static void DrawArray(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
-	static void DrawElements(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
+	static void SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices);
+	static void SetIndexBuffer(const DrawerCommandQueuePtr &queue, const void *elements);
+	static void PushConstants(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args);
+	static void Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	static void DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static bool IsBgra();
+};
+
+class PolyVertexShader
+{
+public:
+	virtual ShadedTriVertex Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index) = 0;
+};
+
+class PolyTriVertexShader : public PolyVertexShader
+{
+public:
+	ShadedTriVertex Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index) override;
 };
 
 class PolyTriangleThreadData
@@ -62,9 +79,13 @@ public:
 	void SetTwoSided(bool value) { twosided = value; }
 	void SetWeaponScene(bool value) { weaponScene = value; }
 	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; modelInterpolationFactor = interpolationFactor; }
+	void SetVertexShader(PolyVertexShader *shader) { vertexShader = shader; }
+	void SetVertexBuffer(const void *data) { vertices = data; }
+	void SetIndexBuffer(const void *data) { elements = (const unsigned int *)data; }
 
-	void DrawElements(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode);
-	void DrawArray(const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode);
+	void PushConstants(const PolyDrawArgs &args);
+	void DrawIndexed(int index, int count, PolyDrawMode mode);
+	void Draw(int index, int vcount, PolyDrawMode mode);
 
 	int32_t core;
 	int32_t num_cores;
@@ -113,8 +134,12 @@ public:
 
 	int viewport_y = 0;
 
+	PolyDrawArgs drawargs;
+
+	const void *vertices = nullptr;
+	const unsigned int *elements = nullptr;
+
 private:
-	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index);
 	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
 	static bool IsDegenerate(const ShadedTriVertex *vertices);
 	static bool IsFrontfacing(TriDrawTriangleArgs *args);
@@ -125,18 +150,53 @@ private:
 	int viewport_height = 0;
 	bool ccw = true;
 	bool twosided = false;
+public:
 	const Mat4f *objectToClip = nullptr;
 	const Mat4f *objectToWorld = nullptr;
+private:
 	int modelFrame1 = -1;
 	int modelFrame2 = -1;
 	float modelInterpolationFactor = 0.0f;
+	PolyVertexShader *vertexShader = nullptr;
 
 	enum { max_additional_vertices = 16 };
+
+	friend class PolyTriVertexShader;
 };
 
 class PolyDrawerCommand : public DrawerCommand
 {
 public:
+};
+
+class PolySetVertexBufferCommand : public PolyDrawerCommand
+{
+public:
+	PolySetVertexBufferCommand(const void *vertices);
+	void Execute(DrawerThread *thread) override;
+
+private:
+	const void *vertices;
+};
+
+class PolySetIndexBufferCommand : public PolyDrawerCommand
+{
+public:
+	PolySetIndexBufferCommand(const void *indices);
+	void Execute(DrawerThread *thread) override;
+
+private:
+	const void *indices;
+};
+
+class PolySetVertexShaderCommand : public PolyDrawerCommand
+{
+public:
+	PolySetVertexShaderCommand(PolyVertexShader *shader);
+	void Execute(DrawerThread *thread) override;
+
+private:
+	PolyVertexShader *shader;
 };
 
 class PolySetTransformCommand : public PolyDrawerCommand
@@ -238,30 +298,39 @@ private:
 	bool dest_bgra;
 };
 
-class DrawPolyTrianglesCommand : public PolyDrawerCommand
+class PolyPushConstantsCommand : public PolyDrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode);
+	PolyPushConstantsCommand(const PolyDrawArgs &args);
 
 	void Execute(DrawerThread *thread) override;
 
 private:
 	PolyDrawArgs args;
-	const void *vertices;
-	const unsigned int *elements;
-	int count;
-	PolyDrawMode mode;
 };
 
-#if 0
-class DrawRectCommand : public PolyDrawerCommand
+class PolyDrawCommand : public PolyDrawerCommand
 {
 public:
-	DrawRectCommand(const RectDrawArgs &args) : args(args) { }
+	PolyDrawCommand(int index, int count, PolyDrawMode mode);
 
 	void Execute(DrawerThread *thread) override;
 
 private:
-	RectDrawArgs args;
+	int index;
+	int count;
+	PolyDrawMode mode;
 };
-#endif
+
+class PolyDrawIndexedCommand : public PolyDrawerCommand
+{
+public:
+	PolyDrawIndexedCommand(int index, int count, PolyDrawMode mode);
+
+	void Execute(DrawerThread *thread) override;
+
+private:
+	int index;
+	int count;
+	PolyDrawMode mode;
+};

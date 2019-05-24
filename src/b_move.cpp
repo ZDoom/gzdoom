@@ -380,7 +380,7 @@ void DBot::Pitch (AActor *target)
 
 	diff = target->Z() - player->mo->Z();
 	aim = g_atan(diff / player->mo->Distance2D(target));
-	player->mo->Angles.Pitch = DAngle::ToDegrees(aim);
+	player->mo->Angles.Pitch = -DAngle::ToDegrees(aim);
 }
 
 //Checks if a sector is dangerous.

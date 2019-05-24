@@ -28,6 +28,7 @@
 #include "polyrenderer/math/gpu_types.h"
 #include "polyrenderer/drawers/poly_buffer.h"
 #include "polyrenderer/drawers/poly_draw_args.h"
+#include "polyrenderer/drawers/poly_vertex_shader.h"
 
 class DCanvas;
 class PolyDrawerCommand;
@@ -158,6 +159,7 @@ private:
 	int modelFrame2 = -1;
 	float modelInterpolationFactor = 0.0f;
 	PolyVertexShader *vertexShader = nullptr;
+	PolyMainVertexShader mainVertexShader;
 
 	enum { max_additional_vertices = 16 };
 

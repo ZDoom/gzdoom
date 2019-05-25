@@ -512,7 +512,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2OffsetZ, Vec2OffsetZ)
 
 static void Vec2Offset(AActor *self, double x, double y, bool absolute, DVector2 *result)
 {
-	*result = self->Vec2OffsetZ(x, y, absolute);
+	*result = self->Vec2Offset(x, y, absolute);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2Offset, Vec2Offset)

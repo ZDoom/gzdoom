@@ -39,13 +39,13 @@ private:
 	std::vector<uint32_t> mData;
 };
 
-class PolyVertexBuffer : public IVertexBuffer, public PolyBuffer, public PolyVertexShader
+class PolyVertexBuffer : public IVertexBuffer, public PolyBuffer, public PolyInputAssembly
 {
 public:
 	PolyVertexBuffer() { }
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
 
-	ShadedTriVertex Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index) override;
+	void Load(PolyTriangleThreadData *thread, const void *vertices, int index) override;
 
 private:
 	size_t mOffsets[VATTR_MAX] = {};

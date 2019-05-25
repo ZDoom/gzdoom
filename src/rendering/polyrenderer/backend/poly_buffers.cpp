@@ -83,29 +83,14 @@ void PolyVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t
 	mStride = stride;
 }
 
-ShadedTriVertex PolyVertexBuffer::Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index)
+void PolyVertexBuffer::Load(PolyTriangleThreadData *thread, const void *vertices, int index)
 {
 	const uint8_t *vertex = static_cast<const uint8_t*>(vertices) + mStride * index;
 	const float *attrVertex = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_VERTEX]);
 	const float *attrTexcoord = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_TEXCOORD]);
 
-	Vec4f objpos = Vec4f(attrVertex[0], attrVertex[1], attrVertex[2], 1.0f);
-	Vec4f clippos = (*thread->objectToClip) * objpos;
-
-	ShadedTriVertex sv;
-	sv.u = attrTexcoord[1];
-	sv.v = attrTexcoord[0];
-	sv.x = clippos.X;
-	sv.y = clippos.Y;
-	sv.z = clippos.Z;
-	sv.w = clippos.W;
-	sv.worldX = objpos.X;
-	sv.worldY = objpos.Y;
-	sv.worldZ = objpos.Z;
-	sv.clipDistance[0] = 1.0f;
-	sv.clipDistance[1] = 1.0f;
-	sv.clipDistance[2] = 1.0f;
-	return sv;
+	thread->mainVertexShader.aPosition = { attrVertex[0], attrVertex[1], attrVertex[2], 1.0f };
+	thread->mainVertexShader.aTexCoord = { attrTexcoord[0], attrTexcoord[1] };
 }
 
 /////////////////////////////////////////////////////////////////////////////

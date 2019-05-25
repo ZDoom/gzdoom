@@ -148,8 +148,8 @@ namespace swrenderer
 	SWModelRenderer::SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor, Mat4f *worldToClip, bool mirrorWorldToClip)
 		: Thread(thread), Clip3DFloor(clip3DFloor), WorldToClip(worldToClip), MirrorWorldToClip(mirrorWorldToClip)
 	{
-		static PolyTriVertexShader shader;
-		PolyTriangleDrawer::SetVertexShader(thread->DrawQueue, &shader);
+		static PolySWInputAssembly input;
+		PolyTriangleDrawer::SetInputAssembly(thread->DrawQueue, &input);
 	}
 
 	void SWModelRenderer::AddLights(AActor *actor)

@@ -26,6 +26,7 @@ static PolyDrawMode dtToDrawMode[] =
 
 PolyRenderState::PolyRenderState()
 {
+	mIdentityMatrix.loadIdentity();
 	Reset();
 }
 
@@ -175,11 +176,64 @@ void PolyRenderState::Apply()
 	auto fb = GetPolyFrameBuffer();
 	if (mVertexBuffer) PolyTriangleDrawer::SetVertexBuffer(fb->GetDrawCommands(), mVertexBuffer->Memory());
 	if (mIndexBuffer) PolyTriangleDrawer::SetIndexBuffer(fb->GetDrawCommands(), mIndexBuffer->Memory());
-	PolyTriangleDrawer::SetVertexShader(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer));
+	PolyTriangleDrawer::SetInputAssembly(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer));
+
+	ApplyMatrices();
+
+	PolyTriangleDrawer::PushStreamData(fb->GetDrawCommands(), mStreamData, { mClipSplit[0], mClipSplit[1] });
+
 	PolyTriangleDrawer::SetTwoSided(fb->GetDrawCommands(), true);
 	PolyTriangleDrawer::PushConstants(fb->GetDrawCommands(), args);
 
 	drawcalls.Unclock();
+}
+
+template<typename T>
+static void BufferedSet(bool &modified, T &dst, const T &src)
+{
+	if (dst == src)
+		return;
+	dst = src;
+	modified = true;
+}
+
+static void BufferedSet(bool &modified, VSMatrix &dst, const VSMatrix &src)
+{
+	if (memcmp(dst.get(), src.get(), sizeof(FLOATTYPE) * 16) == 0)
+		return;
+	dst = src;
+	modified = true;
+}
+
+void PolyRenderState::ApplyMatrices()
+{
+	bool modified = mFirstMatrixApply;
+	if (mTextureMatrixEnabled)
+	{
+		BufferedSet(modified, mMatrices.TextureMatrix, mTextureMatrix);
+	}
+	else
+	{
+		BufferedSet(modified, mMatrices.TextureMatrix, mIdentityMatrix);
+	}
+
+	if (mModelMatrixEnabled)
+	{
+		BufferedSet(modified, mMatrices.ModelMatrix, mModelMatrix);
+		if (modified)
+			mMatrices.NormalModelMatrix.computeNormalMatrix(mModelMatrix);
+	}
+	else
+	{
+		BufferedSet(modified, mMatrices.ModelMatrix, mIdentityMatrix);
+		BufferedSet(modified, mMatrices.NormalModelMatrix, mIdentityMatrix);
+	}
+
+	if (modified)
+	{
+		mFirstMatrixApply = false;
+		PolyTriangleDrawer::PushMatrices(GetPolyFrameBuffer()->GetDrawCommands(), mMatrices.ModelMatrix, mMatrices.NormalModelMatrix, mMatrices.TextureMatrix);
+	}
 }
 
 void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t length)
@@ -187,11 +241,6 @@ void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t len
 	if (buffer->bindingpoint == VIEWPOINT_BINDINGPOINT)
 	{
 		mViewpointUniforms = reinterpret_cast<HWViewpointUniforms*>(static_cast<uint8_t*>(buffer->Memory()) + offset);
-
-		Mat4f viewToProj = Mat4f::FromValues(mViewpointUniforms->mProjectionMatrix.get());
-		Mat4f worldToView = Mat4f::FromValues(mViewpointUniforms->mViewMatrix.get());
-
-		auto fb = GetPolyFrameBuffer();
-		PolyTriangleDrawer::SetTransform(fb->GetDrawCommands(), fb->GetFrameMemory()->NewObject<Mat4f>(viewToProj * worldToView), nullptr);
+		PolyTriangleDrawer::SetViewpointUniforms(GetPolyFrameBuffer()->GetDrawCommands(), mViewpointUniforms);
 	}
 }

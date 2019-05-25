@@ -44,6 +44,16 @@ public:
 
 private:
 	void Apply();
+	void ApplyMatrices();
+
+	struct Matrices
+	{
+		VSMatrix ModelMatrix;
+		VSMatrix NormalModelMatrix;
+		VSMatrix TextureMatrix;
+	} mMatrices;
+	VSMatrix mIdentityMatrix;
+	bool mFirstMatrixApply = true;
 
 	HWViewpointUniforms *mViewpointUniforms = nullptr;
 

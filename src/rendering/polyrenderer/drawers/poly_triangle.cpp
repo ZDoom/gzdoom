@@ -86,9 +86,9 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	queue->Push<PolySetViewportCommand>(viewport_x, viewport_y, viewport_width, viewport_height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
 }
 
-void PolyTriangleDrawer::SetVertexShader(const DrawerCommandQueuePtr &queue, PolyVertexShader *shader)
+void PolyTriangleDrawer::SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input)
 {
-	queue->Push<PolySetVertexShaderCommand>(shader);
+	queue->Push<PolySetInputAssemblyCommand>(input);
 }
 
 void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld)
@@ -129,6 +129,21 @@ void PolyTriangleDrawer::SetIndexBuffer(const DrawerCommandQueuePtr &queue, cons
 void PolyTriangleDrawer::PushConstants(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args)
 {
 	queue->Push<PolyPushConstantsCommand>(args);
+}
+
+void PolyTriangleDrawer::PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const Vec2f &uClipSplit)
+{
+	queue->Push<PolyPushStreamDataCommand>(data, uClipSplit);
+}
+
+void PolyTriangleDrawer::PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
+{
+	queue->Push<PolyPushMatricesCommand>(modelMatrix, normalModelMatrix, textureMatrix);
+}
+
+void PolyTriangleDrawer::SetViewpointUniforms(const DrawerCommandQueuePtr &queue, const HWViewpointUniforms *uniforms)
+{
+	queue->Push<PolySetViewpointUniformsCommand>(uniforms);
 }
 
 void PolyTriangleDrawer::Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode)
@@ -197,13 +212,31 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 
 void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Mat4f *newObjectToWorld)
 {
-	objectToClip = newObjectToClip;
-	objectToWorld = newObjectToWorld;
+	swVertexShader.objectToClip = newObjectToClip;
+	swVertexShader.objectToWorld = newObjectToWorld;
 }
 
 void PolyTriangleThreadData::PushConstants(const PolyDrawArgs &args)
 {
 	drawargs = args;
+}
+
+void PolyTriangleThreadData::PushStreamData(const StreamData &data, const Vec2f &uClipSplit)
+{
+	mainVertexShader.Data = data;
+	mainVertexShader.uClipSplit = uClipSplit;
+}
+
+void PolyTriangleThreadData::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
+{
+	mainVertexShader.ModelMatrix = modelMatrix;
+	mainVertexShader.NormalModelMatrix = normalModelMatrix;
+	mainVertexShader.TextureMatrix = textureMatrix;
+}
+
+void PolyTriangleThreadData::SetViewpointUniforms(const HWViewpointUniforms *uniforms)
+{
+	mainVertexShader.Viewpoint = uniforms;
 }
 
 void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode drawmode)
@@ -216,38 +249,41 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 	TriDrawTriangleArgs args;
 	args.uniforms = &drawargs;
 
-	ShadedTriVertex vert[3];
+	ShadedTriVertex vertbuffer[3];
+	ShadedTriVertex *vert[3] = { &vertbuffer[0], &vertbuffer[1], &vertbuffer[2] };
 	if (drawmode == PolyDrawMode::Triangles)
 	{
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
+				*vert[j] = ShadeVertex(*(elements++));
 			DrawShadedTriangle(vert, ccw, &args);
 		}
 	}
 	else if (drawmode == PolyDrawMode::TriangleFan)
 	{
-		vert[0] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
-		vert[1] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
+		*vert[0] = ShadeVertex(*(elements++));
+		*vert[1] = ShadeVertex(*(elements++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
+			*vert[2] = ShadeVertex(*(elements++));
 			DrawShadedTriangle(vert, ccw, &args);
-			vert[1] = vert[2];
+			std::swap(vert[1], vert[2]);
 		}
 	}
 	else // TriangleDrawMode::TriangleStrip
 	{
 		bool toggleccw = ccw;
-		vert[0] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
-		vert[1] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
+		*vert[0] = ShadeVertex(*(elements++));
+		*vert[1] = ShadeVertex(*(elements++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = vertexShader->Shade(this, drawargs, vertices, *(elements++));
+			*vert[2] = ShadeVertex(*(elements++));
 			DrawShadedTriangle(vert, toggleccw, &args);
+			ShadedTriVertex *vtmp = vert[0];
 			vert[0] = vert[1];
 			vert[1] = vert[2];
+			vert[2] = vtmp;
 			toggleccw = !toggleccw;
 		}
 	}
@@ -263,116 +299,89 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 
 	int vinput = index;
 
-	ShadedTriVertex vert[3];
+	ShadedTriVertex vertbuffer[3];
+	ShadedTriVertex *vert[3] = { &vertbuffer[0], &vertbuffer[1], &vertbuffer[2] };
 	if (drawmode == PolyDrawMode::Triangles)
 	{
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = vertexShader->Shade(this, drawargs, vertices, vinput++);
+				*vert[j] = ShadeVertex(vinput++);
 			DrawShadedTriangle(vert, ccw, &args);
 		}
 	}
 	else if (drawmode == PolyDrawMode::TriangleFan)
 	{
-		vert[0] = vertexShader->Shade(this, drawargs, vertices, vinput++);
-		vert[1] = vertexShader->Shade(this, drawargs, vertices, vinput++);
+		*vert[0] = ShadeVertex(vinput++);
+		*vert[1] = ShadeVertex(vinput++);
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = vertexShader->Shade(this, drawargs, vertices, vinput++);
+			*vert[2] = ShadeVertex(vinput++);
 			DrawShadedTriangle(vert, ccw, &args);
-			vert[1] = vert[2];
+			std::swap(vert[1], vert[2]);
 		}
 	}
 	else // TriangleDrawMode::TriangleStrip
 	{
 		bool toggleccw = ccw;
-		vert[0] = vertexShader->Shade(this, drawargs, vertices, vinput++);
-		vert[1] = vertexShader->Shade(this, drawargs, vertices, vinput++);
+		*vert[0] = ShadeVertex(vinput++);
+		*vert[1] = ShadeVertex(vinput++);
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = vertexShader->Shade(this, drawargs, vertices, vinput++);
+			*vert[2] = ShadeVertex(vinput++);
 			DrawShadedTriangle(vert, toggleccw, &args);
+			ShadedTriVertex *vtmp = vert[0];
 			vert[0] = vert[1];
 			vert[1] = vert[2];
+			vert[2] = vtmp;
 			toggleccw = !toggleccw;
 		}
 	}
 }
 
-ShadedTriVertex PolyTriVertexShader::Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index)
+ShadedTriVertex PolyTriangleThreadData::ShadeVertex(int index)
 {
-	ShadedTriVertex sv;
-	Vec4f objpos;
+	inputAssembly->Load(this, vertices, index);
+	mainVertexShader.main();
+	return mainVertexShader;
+}
 
+void PolySWInputAssembly::Load(PolyTriangleThreadData *thread, const void *vertices, int index)
+{
 	if (thread->modelFrame1 == -1)
 	{
-		const TriVertex &v = static_cast<const TriVertex*>(vertices)[index];
-		objpos = Vec4f(v.x, v.y, v.z, v.w);
-		sv.u = v.u;
-		sv.v = v.v;
-	}
-	else if (thread->modelFrame1 == thread->modelFrame2 || thread->modelInterpolationFactor == 0.f)
-	{
-		const FModelVertex &v = static_cast<const FModelVertex*>(vertices)[thread->modelFrame1 + index];
-		objpos = Vec4f(v.x, v.y, v.z, 1.0f);
-		sv.u = v.u;
-		sv.v = v.v;
+		thread->swVertexShader.v1 = static_cast<const TriVertex*>(vertices)[index];
 	}
 	else
 	{
 		const FModelVertex &v1 = static_cast<const FModelVertex*>(vertices)[thread->modelFrame1 + index];
 		const FModelVertex &v2 = static_cast<const FModelVertex*>(vertices)[thread->modelFrame2 + index];
 
-		float frac = thread->modelInterpolationFactor;
-		float inv_frac = 1.0f - frac;
+		thread->swVertexShader.v1.x = v1.x;
+		thread->swVertexShader.v1.y = v1.y;
+		thread->swVertexShader.v1.z = v1.z;
+		thread->swVertexShader.v1.w = 1.0f;
+		thread->swVertexShader.v1.u = v1.u;
+		thread->swVertexShader.v1.v = v1.v;
 
-		objpos = Vec4f(v1.x * inv_frac + v2.x * frac, v1.y * inv_frac + v2.y * frac, v1.z * inv_frac + v2.z * frac, 1.0f);
-		sv.u = v1.u;
-		sv.v = v1.v;
+		thread->swVertexShader.v2.x = v2.x;
+		thread->swVertexShader.v2.y = v2.y;
+		thread->swVertexShader.v2.z = v2.z;
+		thread->swVertexShader.v2.w = 1.0f;
+		thread->swVertexShader.v2.u = v2.u;
+		thread->swVertexShader.v2.v = v2.v;
 	}
-
-	// Apply transform to get clip coordinates:
-	Vec4f clippos = (*thread->objectToClip) * objpos;
-
-	sv.x = clippos.X;
-	sv.y = clippos.Y;
-	sv.z = clippos.Z;
-	sv.w = clippos.W;
-
-	if (!thread->objectToWorld) // Identity matrix
-	{
-		sv.worldX = objpos.X;
-		sv.worldY = objpos.Y;
-		sv.worldZ = objpos.Z;
-	}
-	else
-	{
-		Vec4f worldpos = (*thread->objectToWorld) * objpos;
-		sv.worldX = worldpos.X;
-		sv.worldY = worldpos.Y;
-		sv.worldZ = worldpos.Z;
-	}
-
-	// Calculate gl_ClipDistance[i]
-	for (int i = 0; i < 3; i++)
-	{
-		const auto &clipPlane = drawargs.ClipPlane(i);
-		sv.clipDistance[i] = objpos.X * clipPlane.A + objpos.Y * clipPlane.B + objpos.Z * clipPlane.C + objpos.W * clipPlane.D;
-	}
-
-	return sv;
 }
 
-bool PolyTriangleThreadData::IsDegenerate(const ShadedTriVertex *vert)
+bool PolyTriangleThreadData::IsDegenerate(const ShadedTriVertex *const* vert)
 {
 	// A degenerate triangle has a zero cross product for two of its sides.
-	float ax = vert[1].x - vert[0].x;
-	float ay = vert[1].y - vert[0].y;
-	float az = vert[1].w - vert[0].w;
-	float bx = vert[2].x - vert[0].x;
-	float by = vert[2].y - vert[0].y;
-	float bz = vert[2].w - vert[0].w;
+	float ax = vert[1]->gl_Position.X - vert[0]->gl_Position.X;
+	float ay = vert[1]->gl_Position.Y - vert[0]->gl_Position.Y;
+	float az = vert[1]->gl_Position.W - vert[0]->gl_Position.W;
+	float bx = vert[2]->gl_Position.X - vert[0]->gl_Position.X;
+	float by = vert[2]->gl_Position.Y - vert[0]->gl_Position.Y;
+	float bz = vert[2]->gl_Position.W - vert[0]->gl_Position.W;
 	float crossx = ay * bz - az * by;
 	float crossy = az * bx - ax * bz;
 	float crossz = ax * by - ay * bx;
@@ -389,15 +398,35 @@ bool PolyTriangleThreadData::IsFrontfacing(TriDrawTriangleArgs *args)
 	return a <= 0.0f;
 }
 
-void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args)
+void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* vert, bool ccw, TriDrawTriangleArgs *args)
 {
 	// Reject triangle if degenerate
 	if (IsDegenerate(vert))
 		return;
 
 	// Cull, clip and generate additional vertices as needed
-	ShadedTriVertex clippedvert[max_additional_vertices];
-	int numclipvert = ClipEdge(vert, clippedvert);
+	ScreenTriVertex clippedvert[max_additional_vertices];
+	int numclipvert = ClipEdge(vert);
+
+	// Convert barycentric weights to actual vertices
+	for (int i = 0; i < numclipvert; i++)
+	{
+		auto &v = clippedvert[i];
+		memset(&v, 0, sizeof(ScreenTriVertex));
+		for (int w = 0; w < 3; w++)
+		{
+			float weight = weights[i * 3 + w];
+			v.x += vert[w]->gl_Position.X * weight;
+			v.y += vert[w]->gl_Position.Y * weight;
+			v.z += vert[w]->gl_Position.Z * weight;
+			v.w += vert[w]->gl_Position.W * weight;
+			v.u += vert[w]->vTexCoord.X * weight;
+			v.v += vert[w]->vTexCoord.Y * weight;
+			v.worldX += vert[w]->pixelpos.X * weight;
+			v.worldY += vert[w]->pixelpos.Y * weight;
+			v.worldZ += vert[w]->pixelpos.Z * weight;
+		}
+	}
 
 #ifdef NO_SSE
 	// Map to 2D viewport:
@@ -499,8 +528,18 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *vert, boo
 	}
 }
 
-int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert)
+int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *const* verts)
 {
+	// use barycentric weights for clipped vertices
+	weights = weightsbuffer;
+	for (int i = 0; i < 3; i++)
+	{
+		weights[i * 3 + 0] = 0.0f;
+		weights[i * 3 + 1] = 0.0f;
+		weights[i * 3 + 2] = 0.0f;
+		weights[i * 3 + i] = 1.0f;
+	}
+
 	// Clip and cull so that the following is true for all vertices:
 	// -v.w <= v.x <= v.w
 	// -v.w <= v.y <= v.w
@@ -514,16 +553,16 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVert
 	float *clipd = clipdistance;
 	for (int i = 0; i < 3; i++)
 	{
-		const auto &v = verts[i];
-		clipd[0] = v.x + v.w;
-		clipd[1] = v.w - v.x;
-		clipd[2] = v.y + v.w;
-		clipd[3] = v.w - v.y;
-		clipd[4] = v.z + v.w;
-		clipd[5] = v.w - v.z;
-		clipd[6] = v.clipDistance[0];
-		clipd[7] = v.clipDistance[1];
-		clipd[8] = v.clipDistance[2];
+		const auto &v = *verts[i];
+		clipd[0] = v.gl_Position.X + v.gl_Position.W;
+		clipd[1] = v.gl_Position.W - v.gl_Position.X;
+		clipd[2] = v.gl_Position.Y + v.gl_Position.W;
+		clipd[3] = v.gl_Position.W - v.gl_Position.Y;
+		clipd[4] = v.gl_Position.Z + v.gl_Position.W;
+		clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		clipd[6] = v.gl_ClipDistance[0];
+		clipd[7] = v.gl_ClipDistance[1];
+		clipd[8] = v.gl_ClipDistance[2];
 		for (int j = 0; j < 9; j++)
 			needsclipping = needsclipping || clipd[i];
 		clipd += numclipdistances;
@@ -532,16 +571,12 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVert
 	// If all halfspace clip distances are positive then the entire triangle is visible. Skip the expensive clipping step.
 	if (!needsclipping)
 	{
-		for (int i = 0; i < 3; i++)
-		{
-			memcpy(clippedvert + i, &verts[i], sizeof(ShadedTriVertex));
-		}
 		return 3;
 	}
 #else
-	__m128 mx = _mm_loadu_ps(&verts[0].x);
-	__m128 my = _mm_loadu_ps(&verts[1].x);
-	__m128 mz = _mm_loadu_ps(&verts[2].x);
+	__m128 mx = _mm_loadu_ps(&verts[0]->gl_Position.X);
+	__m128 my = _mm_loadu_ps(&verts[1]->gl_Position.X);
+	__m128 mz = _mm_loadu_ps(&verts[2]->gl_Position.X);
 	__m128 mw = _mm_setzero_ps();
 	_MM_TRANSPOSE4_PS(mx, my, mz, mw);
 	__m128 clipd0 = _mm_add_ps(mx, mw);
@@ -550,9 +585,9 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVert
 	__m128 clipd3 = _mm_sub_ps(mw, my);
 	__m128 clipd4 = _mm_add_ps(mz, mw);
 	__m128 clipd5 = _mm_sub_ps(mw, mz);
-	__m128 clipd6 = _mm_setr_ps(verts[0].clipDistance[0], verts[1].clipDistance[0], verts[2].clipDistance[0], 0.0f);
-	__m128 clipd7 = _mm_setr_ps(verts[0].clipDistance[1], verts[1].clipDistance[1], verts[2].clipDistance[1], 0.0f);
-	__m128 clipd8 = _mm_setr_ps(verts[0].clipDistance[2], verts[1].clipDistance[2], verts[2].clipDistance[2], 0.0f);
+	__m128 clipd6 = _mm_setr_ps(verts[0]->gl_ClipDistance[0], verts[1]->gl_ClipDistance[0], verts[2]->gl_ClipDistance[0], 0.0f);
+	__m128 clipd7 = _mm_setr_ps(verts[0]->gl_ClipDistance[1], verts[1]->gl_ClipDistance[1], verts[2]->gl_ClipDistance[1], 0.0f);
+	__m128 clipd8 = _mm_setr_ps(verts[0]->gl_ClipDistance[2], verts[1]->gl_ClipDistance[2], verts[2]->gl_ClipDistance[2], 0.0f);
 	__m128 mneedsclipping = _mm_cmplt_ps(clipd0, _mm_setzero_ps());
 	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd1, _mm_setzero_ps()));
 	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd2, _mm_setzero_ps()));
@@ -564,10 +599,6 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVert
 	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd8, _mm_setzero_ps()));
 	if (_mm_movemask_ps(mneedsclipping) == 0)
 	{
-		for (int i = 0; i < 3; i++)
-		{
-			memcpy(clippedvert + i, &verts[i], sizeof(ShadedTriVertex));
-		}
 		return 3;
 	}
 	float clipdistance[numclipdistances * 4];
@@ -581,16 +612,6 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVert
 	_mm_storeu_ps(clipdistance + 28, clipd7);
 	_mm_storeu_ps(clipdistance + 32, clipd8);
 #endif
-
-	// use barycentric weights while clipping vertices
-	float weights[max_additional_vertices * 3 * 2];
-	for (int i = 0; i < 3; i++)
-	{
-		weights[i * 3 + 0] = 0.0f;
-		weights[i * 3 + 1] = 0.0f;
-		weights[i * 3 + 2] = 0.0f;
-		weights[i * 3 + i] = 1.0f;
-	}
 
 	// Clip against each halfspace
 	float *input = weights;
@@ -650,26 +671,8 @@ int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVert
 		if (inputverts == 0)
 			break;
 	}
-	
-	// Convert barycentric weights to actual vertices
-	for (int i = 0; i < inputverts; i++)
-	{
-		auto &v = clippedvert[i];
-		memset(&v, 0, sizeof(ShadedTriVertex));
-		for (int w = 0; w < 3; w++)
-		{
-			float weight = input[i * 3 + w];
-			v.x += verts[w].x * weight;
-			v.y += verts[w].y * weight;
-			v.z += verts[w].z * weight;
-			v.w += verts[w].w * weight;
-			v.u += verts[w].u * weight;
-			v.v += verts[w].v * weight;
-			v.worldX += verts[w].worldX * weight;
-			v.worldY += verts[w].worldY * weight;
-			v.worldZ += verts[w].worldZ * weight;
-		}
-	}
+
+	weights = input;
 	return inputverts;
 }
 
@@ -704,13 +707,13 @@ void PolySetIndexBufferCommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolySetVertexShaderCommand::PolySetVertexShaderCommand(PolyVertexShader *shader) : shader(shader)
+PolySetInputAssemblyCommand::PolySetInputAssemblyCommand(PolyInputAssembly *input) : input(input)
 {
 }
 
-void PolySetVertexShaderCommand::Execute(DrawerThread *thread)
+void PolySetInputAssemblyCommand::Execute(DrawerThread *thread)
 {
-	PolyTriangleThreadData::Get(thread)->SetVertexShader(shader);
+	PolyTriangleThreadData::Get(thread)->SetInputAssembly(input);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -800,6 +803,40 @@ PolySetViewportCommand::PolySetViewportCommand(int x, int y, int width, int heig
 void PolySetViewportCommand::Execute(DrawerThread *thread)
 {
 	PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolySetViewpointUniformsCommand::PolySetViewpointUniformsCommand(const HWViewpointUniforms *uniforms) : uniforms(uniforms)
+{
+}
+
+void PolySetViewpointUniformsCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetViewpointUniforms(uniforms);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyPushMatricesCommand::PolyPushMatricesCommand(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
+	: modelMatrix(modelMatrix), normalModelMatrix(normalModelMatrix), textureMatrix(textureMatrix)
+{
+}
+
+void PolyPushMatricesCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->PushMatrices(modelMatrix, normalModelMatrix, textureMatrix);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyPushStreamDataCommand::PolyPushStreamDataCommand(const StreamData &data, const Vec2f &uClipSplit) : data(data), uClipSplit(uClipSplit)
+{
+}
+
+void PolyPushStreamDataCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->PushStreamData(data, uClipSplit);
 }
 
 /////////////////////////////////////////////////////////////////////////////

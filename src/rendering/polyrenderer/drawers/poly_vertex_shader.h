@@ -9,7 +9,16 @@
 #include <xmmintrin.h>
 #endif
 
-class PolyMainVertexShader
+class ShadedTriVertex
+{
+public:
+	Vec4f gl_Position;
+	float gl_ClipDistance[5];
+	Vec4f vTexCoord;
+	Vec4f pixelpos;
+};
+
+class PolyMainVertexShader : public ShadedTriVertex
 {
 public:
 	// Input
@@ -21,11 +30,7 @@ public:
 	Vec4f aNormal2;
 
 	// Output
-	Vec4f gl_Position;
-	float gl_ClipDistance[5];
-	Vec4f vTexCoord;
 	Vec4f vColor;
-	Vec4f pixelpos;
 	Vec3f glowdist;
 	Vec3f gradientdist;
 	Vec4f vWorldNormal;
@@ -41,12 +46,10 @@ public:
 	VSMatrix TextureMatrix;
 	StreamData Data;
 	Vec2f uClipSplit;
-	HWViewpointUniforms Viewpoint;
+	const HWViewpointUniforms *Viewpoint = nullptr;
 
 	void main()
 	{
-		float ClipDistance0, ClipDistance1, ClipDistance2, ClipDistance3, ClipDistance4;
-
 		Vec2f parmTexCoord = aTexCoord;
 		Vec4f parmPosition = aPosition;
 
@@ -56,7 +59,7 @@ public:
 		else
 			worldcoord = mul(ModelMatrix, parmPosition);
 
-		Vec4f eyeCoordPos = mul(Viewpoint.mViewMatrix, worldcoord);
+		Vec4f eyeCoordPos = mul(Viewpoint->mViewMatrix, worldcoord);
 
 		vColor = aColor;
 
@@ -87,12 +90,12 @@ public:
 
 			if (Data.uSplitBottomPlane.Z != 0.0f)
 			{
-				ClipDistance3 = ((Data.uSplitTopPlane.W + Data.uSplitTopPlane.X * worldcoord.X + Data.uSplitTopPlane.Y * worldcoord.Z) * Data.uSplitTopPlane.Z) - worldcoord.Y;
-				ClipDistance4 = worldcoord.Y - ((Data.uSplitBottomPlane.W + Data.uSplitBottomPlane.X * worldcoord.X + Data.uSplitBottomPlane.Y * worldcoord.Z) * Data.uSplitBottomPlane.Z);
+				gl_ClipDistance[3] = ((Data.uSplitTopPlane.W + Data.uSplitTopPlane.X * worldcoord.X + Data.uSplitTopPlane.Y * worldcoord.Z) * Data.uSplitTopPlane.Z) - worldcoord.Y;
+				gl_ClipDistance[4] = worldcoord.Y - ((Data.uSplitBottomPlane.W + Data.uSplitBottomPlane.X * worldcoord.X + Data.uSplitBottomPlane.Y * worldcoord.Z) * Data.uSplitBottomPlane.Z);
 			}
 
 			vWorldNormal = mul(NormalModelMatrix, Vec4f(normalize(mix3(aNormal, aNormal2, Data.uInterpolationFactor)), 1.0f));
-			vEyeNormal = mul(Viewpoint.mNormalViewMatrix, vWorldNormal);
+			vEyeNormal = mul(Viewpoint->mNormalViewMatrix, vWorldNormal);
 		}
 
 		if (!SPHEREMAP)
@@ -102,43 +105,39 @@ public:
 		else
 		{
 			Vec3f u = normalize3(eyeCoordPos);
-			Vec3f n = normalize3(mul(Viewpoint.mNormalViewMatrix, Vec4f(parmTexCoord.X, 0.0f, parmTexCoord.Y, 0.0f)));
+			Vec3f n = normalize3(mul(Viewpoint->mNormalViewMatrix, Vec4f(parmTexCoord.X, 0.0f, parmTexCoord.Y, 0.0f)));
 			Vec3f r = reflect(u, n);
 			float m = 2.0f * sqrt(r.X*r.X + r.Y*r.Y + (r.Z + 1.0f)*(r.Z + 1.0f));
 			vTexCoord.X = r.X / m + 0.5f;
 			vTexCoord.Y = r.Y / m + 0.5f;
 		}
 
-		gl_Position = mul(Viewpoint.mProjectionMatrix, eyeCoordPos);
+		gl_Position = mul(Viewpoint->mProjectionMatrix, eyeCoordPos);
 
-		if (Viewpoint.mClipHeightDirection != 0.0f) // clip planes used for reflective flats
+		if (Viewpoint->mClipHeightDirection != 0.0f) // clip planes used for reflective flats
 		{
-			ClipDistance0 = (worldcoord.Y - Viewpoint.mClipHeight) * Viewpoint.mClipHeightDirection;
+			gl_ClipDistance[0] = (worldcoord.Y - Viewpoint->mClipHeight) * Viewpoint->mClipHeightDirection;
 		}
-		else if (Viewpoint.mClipLine.X > -1000000.0f) // and for line portals - this will never be active at the same time as the reflective planes clipping so it can use the same hardware clip plane.
+		else if (Viewpoint->mClipLine.X > -1000000.0f) // and for line portals - this will never be active at the same time as the reflective planes clipping so it can use the same hardware clip plane.
 		{
-			ClipDistance0 = -((worldcoord.Z - Viewpoint.mClipLine.Y) * Viewpoint.mClipLine.Z + (Viewpoint.mClipLine.X - worldcoord.X) * Viewpoint.mClipLine.W) + 1.0f / 32768.0f;	// allow a tiny bit of imprecisions for colinear linedefs.
+			gl_ClipDistance[0] = -((worldcoord.Z - Viewpoint->mClipLine.Y) * Viewpoint->mClipLine.Z + (Viewpoint->mClipLine.X - worldcoord.X) * Viewpoint->mClipLine.W) + 1.0f / 32768.0f;	// allow a tiny bit of imprecisions for colinear linedefs.
 		}
 		else
 		{
-			ClipDistance0 = 1.0f;
+			gl_ClipDistance[0] = 1.0f;
 		}
 
 		// clip planes used for translucency splitting
-		ClipDistance1 = worldcoord.Y - uClipSplit.X;
-		ClipDistance2 = uClipSplit.Y - worldcoord.Y;
+		gl_ClipDistance[1] = worldcoord.Y - uClipSplit.X;
+		gl_ClipDistance[2] = uClipSplit.Y - worldcoord.Y;
 
 		if (Data.uSplitTopPlane == FVector4(0.0f, 0.0f, 0.0f, 0.0f))
 		{
-			ClipDistance3 = 1.0f;
-			ClipDistance4 = 1.0f;
+			gl_ClipDistance[3] = 1.0f;
+			gl_ClipDistance[4] = 1.0f;
 		}
 
-		gl_ClipDistance[0] = ClipDistance0;
-		gl_ClipDistance[1] = ClipDistance1;
-		gl_ClipDistance[2] = ClipDistance2;
-		gl_ClipDistance[3] = ClipDistance3;
-		gl_ClipDistance[4] = ClipDistance4;
+		std::swap(vTexCoord.X, vTexCoord.Y); // textures are transposed because the software renderer did them this way
 	}
 
 private:
@@ -196,5 +195,61 @@ private:
 		_mm_storeu_ps(&result.X, mv);
 #endif
 		return result;
+	}
+};
+
+class PolySWVertexShader : public ShadedTriVertex
+{
+public:
+	// Input
+	TriVertex v1;
+	TriVertex v2;
+
+	// Uniforms
+	float modelInterpolationFactor = 0.0f;
+	const Mat4f *objectToClip = nullptr;
+	const Mat4f *objectToWorld = nullptr;
+	PolyDrawArgs *drawargs = nullptr;
+
+	void main()
+	{
+		Vec4f objpos;
+
+		if (modelInterpolationFactor == 0.f)
+		{
+			objpos = Vec4f(v1.x, v1.y, v1.z, v1.w);
+			vTexCoord.X = v1.u;
+			vTexCoord.Y = v1.v;
+		}
+		else
+		{
+			float frac = modelInterpolationFactor;
+			float inv_frac = 1.0f - frac;
+
+			objpos = Vec4f(v1.x * inv_frac + v2.x * frac, v1.y * inv_frac + v2.y * frac, v1.z * inv_frac + v2.z * frac, 1.0f);
+			vTexCoord.X = v1.u;
+			vTexCoord.Y = v1.v;
+		}
+
+		// Apply transform to get clip coordinates:
+		gl_Position = (*objectToClip) * objpos;
+
+		if (!objectToWorld) // Identity matrix
+		{
+			pixelpos = objpos;
+		}
+		else
+		{
+			pixelpos = (*objectToWorld) * objpos;
+		}
+
+		// Calculate gl_ClipDistance[i]
+		for (int i = 0; i < 3; i++)
+		{
+			const auto &clipPlane = drawargs->ClipPlane(i);
+			gl_ClipDistance[i] = objpos.X * clipPlane.A + objpos.Y * clipPlane.B + objpos.Z * clipPlane.C + objpos.W * clipPlane.D;
+		}
+		gl_ClipDistance[3] = 1.0f;
+		gl_ClipDistance[4] = 1.0f;
 	}
 };

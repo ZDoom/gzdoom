@@ -31,11 +31,10 @@ class FString;
 class PolyDrawArgs;
 class PolyTriangleThreadData;
 
-struct ShadedTriVertex
+struct ScreenTriVertex
 {
 	float x, y, z, w;
 	float u, v;
-	float clipDistance[3];
 	float worldX, worldY, worldZ;
 };
 
@@ -47,9 +46,9 @@ struct ScreenTriangleStepVariables
 
 struct TriDrawTriangleArgs
 {
-	ShadedTriVertex *v1;
-	ShadedTriVertex *v2;
-	ShadedTriVertex *v3;
+	ScreenTriVertex *v1;
+	ScreenTriVertex *v2;
+	ScreenTriVertex *v3;
 	const PolyDrawArgs *uniforms;
 	ScreenTriangleStepVariables gradientX;
 	ScreenTriangleStepVariables gradientY;

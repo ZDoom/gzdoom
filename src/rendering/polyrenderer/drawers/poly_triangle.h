@@ -32,7 +32,7 @@
 
 class DCanvas;
 class PolyDrawerCommand;
-class PolyVertexShader;
+class PolyInputAssembly;
 
 class PolyTriangleDrawer
 {
@@ -41,7 +41,7 @@ public:
 	static void ClearDepth(const DrawerCommandQueuePtr &queue, float value);
 	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
 	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas);
-	static void SetVertexShader(const DrawerCommandQueuePtr &queue, PolyVertexShader *shader);
+	static void SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input);
 	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
 	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
 	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
@@ -49,42 +49,55 @@ public:
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
 	static void SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices);
 	static void SetIndexBuffer(const DrawerCommandQueuePtr &queue, const void *elements);
+	static void SetViewpointUniforms(const DrawerCommandQueuePtr &queue, const HWViewpointUniforms *uniforms);
 	static void PushConstants(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args);
+	static void PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const Vec2f &uClipSplit);
+	static void PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
 	static void Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static void DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static bool IsBgra();
 };
 
-class PolyVertexShader
+class PolyInputAssembly
 {
 public:
-	virtual ShadedTriVertex Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index) = 0;
+	virtual void Load(PolyTriangleThreadData *thread, const void *vertices, int index) = 0;
 };
 
-class PolyTriVertexShader : public PolyVertexShader
+class PolySWInputAssembly : public PolyInputAssembly
 {
 public:
-	ShadedTriVertex Shade(PolyTriangleThreadData *thread, const PolyDrawArgs &drawargs, const void *vertices, int index) override;
+	void Load(PolyTriangleThreadData *thread, const void *vertices, int index) override;
 };
 
 class PolyTriangleThreadData
 {
 public:
-	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes, int numa_start_y, int numa_end_y) : core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes), numa_start_y(numa_start_y), numa_end_y(numa_end_y) { }
+	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes, int numa_start_y, int numa_end_y)
+		: core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes), numa_start_y(numa_start_y), numa_end_y(numa_end_y)
+	{
+		swVertexShader.drawargs = &drawargs;
+	}
 
 	void ClearDepth(float value);
 	void ClearStencil(uint8_t value);
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
+
 	void SetTransform(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 	void SetCullCCW(bool value) { ccw = value; }
 	void SetTwoSided(bool value) { twosided = value; }
 	void SetWeaponScene(bool value) { weaponScene = value; }
-	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; modelInterpolationFactor = interpolationFactor; }
-	void SetVertexShader(PolyVertexShader *shader) { vertexShader = shader; }
+	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; swVertexShader.modelInterpolationFactor = interpolationFactor; }
+
+	void SetInputAssembly(PolyInputAssembly *input) { inputAssembly = input; }
 	void SetVertexBuffer(const void *data) { vertices = data; }
 	void SetIndexBuffer(const void *data) { elements = (const unsigned int *)data; }
+	void SetViewpointUniforms(const HWViewpointUniforms *uniforms);
 
 	void PushConstants(const PolyDrawArgs &args);
+	void PushStreamData(const StreamData &data, const Vec2f &uClipSplit);
+	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
+
 	void DrawIndexed(int index, int count, PolyDrawMode mode);
 	void Draw(int index, int vcount, PolyDrawMode mode);
 
@@ -140,30 +153,30 @@ public:
 	const void *vertices = nullptr;
 	const unsigned int *elements = nullptr;
 
+	PolyMainVertexShader mainVertexShader;
+
+	int modelFrame1 = -1;
+	int modelFrame2 = -1;
+	PolySWVertexShader swVertexShader;
+
 private:
-	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
-	static bool IsDegenerate(const ShadedTriVertex *vertices);
+	ShadedTriVertex ShadeVertex(int index);
+	void DrawShadedTriangle(const ShadedTriVertex *const* vertices, bool ccw, TriDrawTriangleArgs *args);
+	static bool IsDegenerate(const ShadedTriVertex *const* vertices);
 	static bool IsFrontfacing(TriDrawTriangleArgs *args);
-	static int ClipEdge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert);
+
+	int ClipEdge(const ShadedTriVertex *const* verts);
 
 	int viewport_x = 0;
 	int viewport_width = 0;
 	int viewport_height = 0;
 	bool ccw = true;
 	bool twosided = false;
-public:
-	const Mat4f *objectToClip = nullptr;
-	const Mat4f *objectToWorld = nullptr;
-private:
-	int modelFrame1 = -1;
-	int modelFrame2 = -1;
-	float modelInterpolationFactor = 0.0f;
-	PolyVertexShader *vertexShader = nullptr;
-	PolyMainVertexShader mainVertexShader;
+	PolyInputAssembly *inputAssembly = nullptr;
 
 	enum { max_additional_vertices = 16 };
-
-	friend class PolyTriVertexShader;
+	float weightsbuffer[max_additional_vertices * 3 * 2];
+	float *weights = nullptr;
 };
 
 class PolyDrawerCommand : public DrawerCommand
@@ -191,14 +204,14 @@ private:
 	const void *indices;
 };
 
-class PolySetVertexShaderCommand : public PolyDrawerCommand
+class PolySetInputAssemblyCommand : public PolyDrawerCommand
 {
 public:
-	PolySetVertexShaderCommand(PolyVertexShader *shader);
+	PolySetInputAssemblyCommand(PolyInputAssembly *input);
 	void Execute(DrawerThread *thread) override;
 
 private:
-	PolyVertexShader *shader;
+	PolyInputAssembly *input;
 };
 
 class PolySetTransformCommand : public PolyDrawerCommand
@@ -298,6 +311,39 @@ private:
 	int dest_height;
 	int dest_pitch;
 	bool dest_bgra;
+};
+
+class PolySetViewpointUniformsCommand : public PolyDrawerCommand
+{
+public:
+	PolySetViewpointUniformsCommand(const HWViewpointUniforms *uniforms);
+	void Execute(DrawerThread *thread) override;
+
+private:
+	const HWViewpointUniforms *uniforms;
+};
+
+class PolyPushMatricesCommand : public PolyDrawerCommand
+{
+public:
+	PolyPushMatricesCommand(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
+	void Execute(DrawerThread *thread) override;
+
+private:
+	VSMatrix modelMatrix;
+	VSMatrix normalModelMatrix;
+	VSMatrix textureMatrix;
+};
+
+class PolyPushStreamDataCommand : public PolyDrawerCommand
+{
+public:
+	PolyPushStreamDataCommand(const StreamData &data, const Vec2f &uClipSplit);
+	void Execute(DrawerThread *thread) override;
+
+private:
+	StreamData data;
+	Vec2f uClipSplit;
 };
 
 class PolyPushConstantsCommand : public PolyDrawerCommand

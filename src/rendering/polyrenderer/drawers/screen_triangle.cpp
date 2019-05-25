@@ -38,7 +38,7 @@
 #include "screen_triangle.h"
 #include "x86.h"
 
-static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sortedVertices)
+static void SortVertices(const TriDrawTriangleArgs *args, ScreenTriVertex **sortedVertices)
 {
 	sortedVertices[0] = args->v1;
 	sortedVertices[1] = args->v2;
@@ -57,7 +57,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 	using namespace TriScreenDrawerModes;
 
 	// Sort vertices by Y position
-	ShadedTriVertex *sortedVertices[3];
+	ScreenTriVertex *sortedVertices[3];
 	SortVertices(args, sortedVertices);
 
 	int clipleft = 0;

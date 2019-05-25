@@ -497,7 +497,7 @@ int FTGATexture::CopyPixels(FBitmap *bmp, int conversion)
 			}
 			else
 			{
-				bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 9, CF_BGRA);
+				bmp->CopyPixelDataRGB(0, 0, ptr, Width, Height, step_x, Pitch, 0, CF_BGRA);
 				transval = -1;
 			}
 			break;

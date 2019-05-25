@@ -73,7 +73,7 @@ FAnimDef *FTextureManager::AddAnim (FAnimDef *anim)
 		if (mAnimations[i]->BasePic == anim->BasePic)
 		{
 			// Found one!
-			free (mAnimations[i]);
+			M_Free (mAnimations[i]);
 			mAnimations[i] = anim;
 			return anim;
 		}

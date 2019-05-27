@@ -42,6 +42,8 @@ public:
 
 	void Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t length);
 
+	PolyVertexInputAssembly *GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
+
 private:
 	void Apply();
 	void ApplyMaterial();
@@ -57,6 +59,7 @@ private:
 	bool mFirstMatrixApply = true;
 
 	HWViewpointUniforms *mViewpointUniforms = nullptr;
+	std::vector<std::unique_ptr<PolyVertexInputAssembly>> mVertexFormats;
 
 	bool mDepthClamp = true;
 };

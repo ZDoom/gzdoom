@@ -39,17 +39,27 @@ private:
 	std::vector<uint32_t> mData;
 };
 
-class PolyVertexBuffer : public IVertexBuffer, public PolyBuffer, public PolyInputAssembly
+class PolyVertexInputAssembly : public PolyInputAssembly
+{
+public:
+	size_t mOffsets[VATTR_MAX] = {};
+	size_t mStride = 0;
+
+	int NumBindingPoints;
+	size_t Stride;
+	std::vector<FVertexBufferAttribute> Attrs;
+	int UseVertexData;
+
+	void Load(PolyTriangleThreadData *thread, const void *vertices, int index) override;
+};
+
+class PolyVertexBuffer : public IVertexBuffer, public PolyBuffer
 {
 public:
 	PolyVertexBuffer() { }
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
 
-	void Load(PolyTriangleThreadData *thread, const void *vertices, int index) override;
-
-private:
-	size_t mOffsets[VATTR_MAX] = {};
-	size_t mStride = 0;
+	PolyVertexInputAssembly *VertexFormat = nullptr;
 };
 
 class PolyIndexBuffer : public IIndexBuffer, public PolyBuffer

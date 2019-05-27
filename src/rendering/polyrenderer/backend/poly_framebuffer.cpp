@@ -84,12 +84,12 @@ void PolyFrameBuffer::InitializeState()
 	uniformblockalignment = 1;
 	maxuniformblock = 0x7fffffff;
 
+	mRenderState.reset(new PolyRenderState());
+
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new GLViewpointBuffer;
 	mLights = new FLightBuffer();
-
-	mRenderState.reset(new PolyRenderState());
 
 	CheckCanvas();
 }

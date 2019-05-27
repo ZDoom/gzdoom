@@ -201,7 +201,7 @@ void PolyRenderState::Apply()
 
 	if (mVertexBuffer) PolyTriangleDrawer::SetVertexBuffer(fb->GetDrawCommands(), mVertexBuffer->Memory());
 	if (mIndexBuffer) PolyTriangleDrawer::SetIndexBuffer(fb->GetDrawCommands(), mIndexBuffer->Memory());
-	PolyTriangleDrawer::SetInputAssembly(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer));
+	PolyTriangleDrawer::SetInputAssembly(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
 	PolyTriangleDrawer::SetRenderStyle(fb->GetDrawCommands(), mRenderStyle);
 	PolyTriangleDrawer::PushStreamData(fb->GetDrawCommands(), mStreamData, constants);
 	ApplyMatrices();
@@ -286,4 +286,49 @@ void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t len
 		mViewpointUniforms = reinterpret_cast<HWViewpointUniforms*>(static_cast<uint8_t*>(buffer->Memory()) + offset);
 		PolyTriangleDrawer::SetViewpointUniforms(GetPolyFrameBuffer()->GetDrawCommands(), mViewpointUniforms);
 	}
+}
+
+PolyVertexInputAssembly *PolyRenderState::GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
+{
+	for (size_t i = 0; i < mVertexFormats.size(); i++)
+	{
+		auto f = mVertexFormats[i].get();
+		if (f->Attrs.size() == (size_t)numAttributes && f->NumBindingPoints == numBindingPoints && f->Stride == stride)
+		{
+			bool matches = true;
+			for (int j = 0; j < numAttributes; j++)
+			{
+				if (memcmp(&f->Attrs[j], &attrs[j], sizeof(FVertexBufferAttribute)) != 0)
+				{
+					matches = false;
+					break;
+				}
+			}
+
+			if (matches)
+				return f;
+		}
+	}
+
+	auto fmt = std::make_unique<PolyVertexInputAssembly>();
+	fmt->NumBindingPoints = numBindingPoints;
+	fmt->Stride = stride;
+	fmt->UseVertexData = 0;
+	for (int j = 0; j < numAttributes; j++)
+	{
+		if (attrs[j].location == VATTR_COLOR)
+			fmt->UseVertexData |= 1;
+		else if (attrs[j].location == VATTR_NORMAL)
+			fmt->UseVertexData |= 2;
+		fmt->Attrs.push_back(attrs[j]);
+	}
+
+	for (int j = 0; j < numAttributes; j++)
+	{
+		fmt->mOffsets[attrs[j].location] = attrs[j].offset;
+	}
+	fmt->mStride = stride;
+
+	mVertexFormats.push_back(std::move(fmt));
+	return mVertexFormats.back().get();
 }

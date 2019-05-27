@@ -76,14 +76,12 @@ void PolyBuffer::Unlock()
 
 void PolyVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs)
 {
-	for (int j = 0; j < numAttributes; j++)
-	{
-		mOffsets[attrs[j].location] = attrs[j].offset;
-	}
-	mStride = stride;
+	VertexFormat = GetPolyFrameBuffer()->GetRenderState()->GetVertexFormat(numBindingPoints, numAttributes, stride, attrs);
 }
 
-void PolyVertexBuffer::Load(PolyTriangleThreadData *thread, const void *vertices, int index)
+/////////////////////////////////////////////////////////////////////////////
+
+void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *vertices, int index)
 {
 	const uint8_t *vertex = static_cast<const uint8_t*>(vertices) + mStride * index;
 	const float *attrVertex = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_VERTEX]);

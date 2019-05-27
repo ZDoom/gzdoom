@@ -140,6 +140,7 @@ void PolyFrameBuffer::Update()
 	DrawerThreads::WaitForWorkers();
 	mFrameMemory.Clear();
 	FrameDeleteList.Buffers.clear();
+	FrameDeleteList.Images.clear();
 
 	if (mCanvas)
 	{

@@ -166,8 +166,6 @@ void PolyRenderState::Apply()
 	drawcalls.Clock();
 	auto fb = GetPolyFrameBuffer();
 
-	PolyPushConstants constants;
-
 	int fogset = 0;
 	if (mFogEnabled)
 	{
@@ -185,12 +183,16 @@ void PolyRenderState::Apply()
 		}
 	}
 
-	int tempTM = TM_NORMAL;
-	if (mMaterial.mMaterial && mMaterial.mMaterial->tex && mMaterial.mMaterial->tex->isHardwareCanvas())
-		tempTM = TM_OPAQUE;
+	ApplyMaterial();
 
+	if (mVertexBuffer) PolyTriangleDrawer::SetVertexBuffer(fb->GetDrawCommands(), mVertexBuffer->Memory());
+	if (mIndexBuffer) PolyTriangleDrawer::SetIndexBuffer(fb->GetDrawCommands(), mIndexBuffer->Memory());
+	PolyTriangleDrawer::SetInputAssembly(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
+	PolyTriangleDrawer::SetRenderStyle(fb->GetDrawCommands(), mRenderStyle);
+
+	PolyPushConstants constants;
 	constants.uFogEnabled = fogset;
-	constants.uTextureMode = mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
+	constants.uTextureMode = mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
 	constants.uLightDist = mLightParms[0];
 	constants.uLightFactor = mLightParms[1];
 	constants.uFogDensity = mLightParms[2];
@@ -199,13 +201,8 @@ void PolyRenderState::Apply()
 	constants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 	constants.uLightIndex = mLightIndex;
 
-	if (mVertexBuffer) PolyTriangleDrawer::SetVertexBuffer(fb->GetDrawCommands(), mVertexBuffer->Memory());
-	if (mIndexBuffer) PolyTriangleDrawer::SetIndexBuffer(fb->GetDrawCommands(), mIndexBuffer->Memory());
-	PolyTriangleDrawer::SetInputAssembly(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
-	PolyTriangleDrawer::SetRenderStyle(fb->GetDrawCommands(), mRenderStyle);
 	PolyTriangleDrawer::PushStreamData(fb->GetDrawCommands(), mStreamData, constants);
 	ApplyMatrices();
-	ApplyMaterial();
 
 	if (mBias.mChanged)
 	{
@@ -220,6 +217,8 @@ void PolyRenderState::ApplyMaterial()
 {
 	if (mMaterial.mChanged && mMaterial.mMaterial)
 	{
+		mTempTM = mMaterial.mMaterial->tex->isHardwareCanvas() ? TM_OPAQUE : TM_NORMAL;
+
 		auto base = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation));
 		if (base)
 		{

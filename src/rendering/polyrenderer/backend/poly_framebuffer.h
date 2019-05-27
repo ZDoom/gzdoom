@@ -62,6 +62,7 @@ public:
 	struct DeleteList
 	{
 		std::vector<std::vector<uint32_t>> Buffers;
+		std::vector<std::unique_ptr<DCanvas>> Images;
 	} FrameDeleteList;
 
 private:

@@ -62,4 +62,5 @@ private:
 	std::vector<std::unique_ptr<PolyVertexInputAssembly>> mVertexFormats;
 
 	bool mDepthClamp = true;
+	int mTempTM = TM_NORMAL;
 };

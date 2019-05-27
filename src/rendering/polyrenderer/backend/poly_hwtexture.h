@@ -26,6 +26,7 @@ public:
 	void Precache(FMaterial *mat, int translation, int flags);
 
 	DCanvas *GetImage(const FMaterialState &state);
+	DCanvas *GetImage(FTexture *tex, int translation, int flags);
 
 	// Software renderer stuff
 	void AllocateBuffer(int w, int h, int texelsize) override;

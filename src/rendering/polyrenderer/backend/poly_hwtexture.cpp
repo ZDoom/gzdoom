@@ -34,11 +34,15 @@ void PolyHardwareTexture::ResetAll()
 
 void PolyHardwareTexture::Reset()
 {
+	if (auto fb = GetPolyFrameBuffer())
+	{
+		auto &deleteList = fb->FrameDeleteList;
+		if (mCanvas) deleteList.Images.push_back(std::move(mCanvas));
+	}
 }
 
 void PolyHardwareTexture::Precache(FMaterial *mat, int translation, int flags)
 {
-#if 0
 	int numLayers = mat->GetLayers();
 	GetImage(mat->tex, translation, flags);
 	for (int i = 1; i < numLayers; i++)
@@ -47,15 +51,16 @@ void PolyHardwareTexture::Precache(FMaterial *mat, int translation, int flags)
 		auto systex = static_cast<PolyHardwareTexture*>(mat->GetLayer(i, 0, &layer));
 		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
 	}
-#endif
 }
 
 DCanvas *PolyHardwareTexture::GetImage(const FMaterialState &state)
 {
+	FTexture *tex = state.mMaterial->tex;
+	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+
 	if (!mCanvas)
 	{
 		FMaterial *mat = state.mMaterial;
-		FTexture *tex = state.mMaterial->tex;
 		int clampmode = state.mClampMode;
 		int translation = state.mTranslation;
 
@@ -66,11 +71,16 @@ DCanvas *PolyHardwareTexture::GetImage(const FMaterialState &state)
 		// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 		int flags = state.mMaterial->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
 
-		if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
-
-		CreateImage(tex, translation, flags);
+		return GetImage(tex, translation, flags);
 	}
 
+	return mCanvas.get();
+}
+
+DCanvas *PolyHardwareTexture::GetImage(FTexture *tex, int translation, int flags)
+{
+	if (!mCanvas)
+		CreateImage(tex, translation, flags);
 	return mCanvas.get();
 }
 

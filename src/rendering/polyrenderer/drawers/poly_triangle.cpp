@@ -71,19 +71,7 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	bool dest_bgra = canvas->IsBgra();
 	isBgraRenderTarget = dest_bgra;
 
-	int offsetx = clamp(x, 0, dest_width);
-	int pixelsize = dest_bgra ? 4 : 1;
-
-	int viewport_x = x - offsetx;
-	int viewport_y = y;
-	int viewport_width = width;
-	int viewport_height = height;
-
-	dest += offsetx * pixelsize;
-	dest_width = clamp(viewport_x + viewport_width, 0, dest_width - offsetx);
-	dest_height = clamp(viewport_y + viewport_height, 0, dest_height);
-
-	queue->Push<PolySetViewportCommand>(viewport_x, viewport_y, viewport_width, viewport_height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
+	queue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
 }
 
 void PolyTriangleDrawer::SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input)
@@ -276,8 +264,24 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	dest_height = new_dest_height;
 	dest_pitch = new_dest_pitch;
 	dest_bgra = new_dest_bgra;
-	ccw = true;
-	weaponScene = false;
+	UpdateClip();
+}
+
+void PolyTriangleThreadData::SetScissor(int x, int y, int w, int h)
+{
+	scissor.left = x;
+	scissor.right = x + w;
+	scissor.top = y;
+	scissor.bottom = y + h;
+	UpdateClip();
+}
+
+void PolyTriangleThreadData::UpdateClip()
+{
+	clip.left = MAX(MAX(viewport_x, scissor.left), 0);
+	clip.top = MAX(MAX(viewport_y, scissor.top), 0);
+	clip.right = MIN(MIN(viewport_x + viewport_width, scissor.right), dest_width);
+	clip.bottom = MIN(MIN(viewport_y + viewport_height, scissor.bottom), dest_height);
 }
 
 void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Mat4f *newObjectToWorld)
@@ -376,10 +380,6 @@ void PolyTriangleThreadData::EnableStencil(bool on)
 {
 	drawargs.SetStencilTest(on);
 	drawargs.SetWriteStencil(on && drawargs.StencilTestValue() != drawargs.StencilWriteValue(), drawargs.StencilWriteValue());
-}
-
-void PolyTriangleThreadData::SetScissor(int x, int y, int w, int h)
-{
 }
 
 void PolyTriangleThreadData::EnableDepthTest(bool on)

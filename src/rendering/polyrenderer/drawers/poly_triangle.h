@@ -143,6 +143,8 @@ public:
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(void *pixels, int width, int height);
 
+	void UpdateClip();
+
 	void PushDrawArgs(const PolyDrawArgs &args);
 	void PushStreamData(const StreamData &data, const PolyPushConstants &constants);
 	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
@@ -196,6 +198,14 @@ public:
 	bool weaponScene = false;
 
 	int viewport_y = 0;
+
+	struct ClipRect
+	{
+		int left = 0;
+		int top = 0;
+		int right = 0;
+		int bottom = 0;
+	} clip, scissor;
 
 	PolyDrawArgs drawargs;
 

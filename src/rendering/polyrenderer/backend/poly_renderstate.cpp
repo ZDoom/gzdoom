@@ -128,7 +128,7 @@ void PolyRenderState::SetScissor(int x, int y, int w, int h)
 		w = fb->GetCanvas()->GetWidth();
 		h = fb->GetCanvas()->GetHeight();
 	}
-	PolyTriangleDrawer::SetScissor(fb->GetDrawCommands(), x, y, w, h);
+	PolyTriangleDrawer::SetScissor(fb->GetDrawCommands(), x, fb->GetCanvas()->GetHeight() - y - h, w, h);
 }
 
 void PolyRenderState::SetViewport(int x, int y, int w, int h)
@@ -141,7 +141,7 @@ void PolyRenderState::SetViewport(int x, int y, int w, int h)
 		w = fb->GetCanvas()->GetWidth();
 		h = fb->GetCanvas()->GetHeight();
 	}
-	PolyTriangleDrawer::SetViewport(fb->GetDrawCommands(), x, y, w, h, fb->GetCanvas());
+	PolyTriangleDrawer::SetViewport(fb->GetDrawCommands(), x, fb->GetCanvas()->GetHeight() - y - h, w, h, fb->GetCanvas());
 }
 
 void PolyRenderState::EnableDepthTest(bool on)

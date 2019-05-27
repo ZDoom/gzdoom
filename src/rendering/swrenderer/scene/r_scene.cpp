@@ -276,6 +276,7 @@ namespace swrenderer
 			PolyTriangleDrawer::ClearStencil(MainThread()->DrawQueue, 0);
 
 		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget);
+		PolyTriangleDrawer::SetScissor(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight);
 
 		// Cull things outside the range seen by this thread
 		VisibleSegmentRenderer visitor;

@@ -401,6 +401,10 @@ void PolyTriangleThreadData::SetRenderStyle(FRenderStyle style)
 	{
 		drawargs.SetStyle(TriBlendMode::Normal);
 	}
+	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_One)
+	{
+		drawargs.SetStyle(TriBlendMode::SrcColor);
+	}
 	else
 	{
 		if (style == LegacyRenderStyles[STYLE_Normal]) drawargs.SetStyle(TriBlendMode::Normal);

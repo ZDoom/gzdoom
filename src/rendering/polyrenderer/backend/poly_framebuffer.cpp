@@ -92,8 +92,6 @@ void PolyFrameBuffer::InitializeState()
 	mRenderState.reset(new PolyRenderState());
 
 	CheckCanvas();
-
-	PolyTriangleDrawer::SetTransform(GetDrawCommands(), GetFrameMemory()->NewObject<Mat4f>(Mat4f::Identity()), nullptr);
 }
 
 void PolyFrameBuffer::CheckCanvas()
@@ -149,7 +147,6 @@ void PolyFrameBuffer::Update()
 	}
 
 	CheckCanvas();
-	PolyTriangleDrawer::SetTransform(GetDrawCommands(), GetFrameMemory()->NewObject<Mat4f>(Mat4f::Identity()), nullptr);
 
 	Super::Update();
 }

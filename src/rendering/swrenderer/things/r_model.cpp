@@ -367,7 +367,7 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		PolyTriangleDrawer::PushConstants(Thread->DrawQueue, args);
+		PolyTriangleDrawer::PushDrawArgs(Thread->DrawQueue, args);
 		PolyTriangleDrawer::Draw(Thread->DrawQueue, start, count);
 	}
 
@@ -386,7 +386,7 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		PolyTriangleDrawer::PushConstants(Thread->DrawQueue, args);
+		PolyTriangleDrawer::PushDrawArgs(Thread->DrawQueue, args);
 		PolyTriangleDrawer::DrawIndexed(Thread->DrawQueue, static_cast<int>(offset / sizeof(unsigned int)), numIndices);
 	}
 

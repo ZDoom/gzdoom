@@ -44,6 +44,7 @@ public:
 
 private:
 	void Apply();
+	void ApplyMaterial();
 	void ApplyMatrices();
 
 	struct Matrices
@@ -58,5 +59,4 @@ private:
 	HWViewpointUniforms *mViewpointUniforms = nullptr;
 
 	bool mDepthClamp = true;
-	PolyDrawArgs args;
 };

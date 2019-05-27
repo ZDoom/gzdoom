@@ -126,14 +126,84 @@ void PolyTriangleDrawer::SetIndexBuffer(const DrawerCommandQueuePtr &queue, cons
 	queue->Push<PolySetIndexBufferCommand>(elements);
 }
 
-void PolyTriangleDrawer::PushConstants(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args)
+void PolyTriangleDrawer::PushDrawArgs(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args)
 {
-	queue->Push<PolyPushConstantsCommand>(args);
+	queue->Push<PolyPushDrawArgsCommand>(args);
 }
 
-void PolyTriangleDrawer::PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const Vec2f &uClipSplit)
+void PolyTriangleDrawer::SetDepthClamp(const DrawerCommandQueuePtr &queue, bool on)
 {
-	queue->Push<PolyPushStreamDataCommand>(data, uClipSplit);
+	queue->Push<PolySetDepthClampCommand>(on);
+}
+
+void PolyTriangleDrawer::SetDepthMask(const DrawerCommandQueuePtr &queue, bool on)
+{
+	queue->Push<PolySetDepthMaskCommand>(on);
+}
+
+void PolyTriangleDrawer::SetDepthFunc(const DrawerCommandQueuePtr &queue, int func)
+{
+	queue->Push<PolySetDepthFuncCommand>(func);
+}
+
+void PolyTriangleDrawer::SetDepthRange(const DrawerCommandQueuePtr &queue, float min, float max)
+{
+	queue->Push<PolySetDepthRangeCommand>(min, max);
+}
+
+void PolyTriangleDrawer::SetDepthBias(const DrawerCommandQueuePtr &queue, float depthBiasConstantFactor, float depthBiasSlopeFactor)
+{
+	queue->Push<PolySetDepthBiasCommand>(depthBiasConstantFactor, depthBiasSlopeFactor);
+}
+
+void PolyTriangleDrawer::SetColorMask(const DrawerCommandQueuePtr &queue, bool r, bool g, bool b, bool a)
+{
+	queue->Push<PolySetColorMaskCommand>(r, g, b, a);
+}
+
+void PolyTriangleDrawer::SetStencil(const DrawerCommandQueuePtr &queue, int stencilRef, int op)
+{
+	queue->Push<PolySetStencilCommand>(stencilRef, op);
+}
+
+void PolyTriangleDrawer::SetCulling(const DrawerCommandQueuePtr &queue, int mode)
+{
+	queue->Push<PolySetCullingCommand>(mode);
+}
+
+void PolyTriangleDrawer::EnableClipDistance(const DrawerCommandQueuePtr &queue, int num, bool state)
+{
+	queue->Push<PolyEnableClipDistanceCommand>(num, state);
+}
+
+void PolyTriangleDrawer::EnableStencil(const DrawerCommandQueuePtr &queue, bool on)
+{
+	queue->Push<PolyEnableStencilCommand>(on);
+}
+
+void PolyTriangleDrawer::SetScissor(const DrawerCommandQueuePtr &queue, int x, int y, int w, int h)
+{
+	queue->Push<PolySetScissorCommand>(x, y, w, h);
+}
+
+void PolyTriangleDrawer::EnableDepthTest(const DrawerCommandQueuePtr &queue, bool on)
+{
+	queue->Push<PolyEnableDepthTestCommand>(on);
+}
+
+void PolyTriangleDrawer::SetRenderStyle(const DrawerCommandQueuePtr &queue, FRenderStyle style)
+{
+	queue->Push<PolySetRenderStyleCommand>(style);
+}
+
+void PolyTriangleDrawer::SetTexture(const DrawerCommandQueuePtr &queue, void *pixels, int width, int height)
+{
+	queue->Push<PolySetTextureCommand>(pixels, width, height);
+}
+
+void PolyTriangleDrawer::PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants)
+{
+	queue->Push<PolyPushStreamDataCommand>(data, constants);
 }
 
 void PolyTriangleDrawer::PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
@@ -216,15 +286,25 @@ void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Ma
 	swVertexShader.objectToWorld = newObjectToWorld;
 }
 
-void PolyTriangleThreadData::PushConstants(const PolyDrawArgs &args)
+void PolyTriangleThreadData::PushDrawArgs(const PolyDrawArgs &args)
 {
 	drawargs = args;
 }
 
-void PolyTriangleThreadData::PushStreamData(const StreamData &data, const Vec2f &uClipSplit)
+void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPushConstants &constants)
 {
 	mainVertexShader.Data = data;
-	mainVertexShader.uClipSplit = uClipSplit;
+	mainVertexShader.uClipSplit = constants.uClipSplit;
+
+	FColormap cm;
+	cm.Clear();
+	drawargs.SetLight(GetColorTable(cm), (int)(constants.uLightLevel * 255.0f), mainVertexShader.Viewpoint->mGlobVis, true);
+
+	drawargs.SetColor(MAKEARGB(
+		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.W * 255.0f + 0.5f),
+		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.X * 255.0f + 0.5f),
+		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Y * 255.0f + 0.5f),
+		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Z * 255.0f + 0.5f)), 0);
 }
 
 void PolyTriangleThreadData::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
@@ -237,6 +317,102 @@ void PolyTriangleThreadData::PushMatrices(const VSMatrix &modelMatrix, const VSM
 void PolyTriangleThreadData::SetViewpointUniforms(const HWViewpointUniforms *uniforms)
 {
 	mainVertexShader.Viewpoint = uniforms;
+}
+
+void PolyTriangleThreadData::SetDepthClamp(bool on)
+{
+}
+
+void PolyTriangleThreadData::SetDepthMask(bool on)
+{
+	drawargs.SetWriteDepth(on);
+}
+
+void PolyTriangleThreadData::SetDepthFunc(int func)
+{
+}
+
+void PolyTriangleThreadData::SetDepthRange(float min, float max)
+{
+}
+
+void PolyTriangleThreadData::SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor)
+{
+}
+
+void PolyTriangleThreadData::SetColorMask(bool r, bool g, bool b, bool a)
+{
+	drawargs.SetWriteColor(r || g || b || a);
+}
+
+void PolyTriangleThreadData::SetStencil(int stencilRef, int op)
+{
+	drawargs.SetStencilTestValue(stencilRef);
+	if (op == SOP_Increment)
+	{
+		drawargs.SetWriteStencil(drawargs.StencilTest(), MIN(stencilRef + 1, (int)255));
+	}
+	else if (op == SOP_Decrement)
+	{
+		drawargs.SetWriteStencil(drawargs.StencilTest(), MAX(stencilRef - 1, (int)0));
+	}
+	else // SOP_Keep
+	{
+		drawargs.SetWriteStencil(false, stencilRef);
+	}
+}
+
+void PolyTriangleThreadData::SetCulling(int mode)
+{
+	SetTwoSided(mode == Cull_None);
+	SetCullCCW(mode == Cull_CCW);
+}
+
+void PolyTriangleThreadData::EnableClipDistance(int num, bool state)
+{
+}
+
+void PolyTriangleThreadData::EnableStencil(bool on)
+{
+	drawargs.SetStencilTest(on);
+	drawargs.SetWriteStencil(on && drawargs.StencilTestValue() != drawargs.StencilWriteValue(), drawargs.StencilWriteValue());
+}
+
+void PolyTriangleThreadData::SetScissor(int x, int y, int w, int h)
+{
+}
+
+void PolyTriangleThreadData::EnableDepthTest(bool on)
+{
+	drawargs.SetDepthTest(on);
+}
+
+void PolyTriangleThreadData::SetRenderStyle(FRenderStyle style)
+{
+	if (style == LegacyRenderStyles[STYLE_Normal]) drawargs.SetStyle(TriBlendMode::Normal);
+	else if (style == LegacyRenderStyles[STYLE_Fuzzy]) drawargs.SetStyle(TriBlendMode::Fuzzy);
+	//else if (style == LegacyRenderStyles[STYLE_SoulTrans]) drawargs.SetStyle(TriBlendMode::SoulTrans);
+	//else if (style == LegacyRenderStyles[STYLE_OptFuzzy]) drawargs.SetStyle(TriBlendMode::OptFuzzy);
+	else if (style == LegacyRenderStyles[STYLE_Stencil]) drawargs.SetStyle(TriBlendMode::Stencil);
+	else if (style == LegacyRenderStyles[STYLE_Translucent]) drawargs.SetStyle(TriBlendMode::Translucent);
+	else if (style == LegacyRenderStyles[STYLE_Add]) drawargs.SetStyle(TriBlendMode::Add);
+	//else if (style == LegacyRenderStyles[STYLE_Shaded]) drawargs.SetStyle(TriBlendMode::Shaded);
+	else if (style == LegacyRenderStyles[STYLE_TranslucentStencil]) drawargs.SetStyle(TriBlendMode::TranslucentStencil);
+	else if (style == LegacyRenderStyles[STYLE_Shadow]) drawargs.SetStyle(TriBlendMode::Shadow);
+	else if (style == LegacyRenderStyles[STYLE_Subtract]) drawargs.SetStyle(TriBlendMode::Subtract);
+	else if (style == LegacyRenderStyles[STYLE_AddStencil]) drawargs.SetStyle(TriBlendMode::AddStencil);
+	else if (style == LegacyRenderStyles[STYLE_AddShaded]) drawargs.SetStyle(TriBlendMode::AddShaded);
+	//else if (style == LegacyRenderStyles[STYLE_Multiply]) drawargs.SetStyle(TriBlendMode::Multiply);
+	//else if (style == LegacyRenderStyles[STYLE_InverseMultiply]) drawargs.SetStyle(TriBlendMode::InverseMultiply);
+	//else if (style == LegacyRenderStyles[STYLE_ColorBlend]) drawargs.SetStyle(TriBlendMode::ColorBlend);
+	//else if (style == LegacyRenderStyles[STYLE_Source]) drawargs.SetStyle(TriBlendMode::Source);
+	//else if (style == LegacyRenderStyles[STYLE_ColorAdd]) drawargs.SetStyle(TriBlendMode::ColorAdd);
+	else drawargs.SetStyle(TriBlendMode::Opaque);
+}
+
+void PolyTriangleThreadData::SetTexture(void *pixels, int width, int height)
+{
+	drawargs.SetTexture((uint8_t*)pixels, width, height);
 }
 
 void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode drawmode)
@@ -681,193 +857,4 @@ PolyTriangleThreadData *PolyTriangleThreadData::Get(DrawerThread *thread)
 	if (!thread->poly)
 		thread->poly = std::make_shared<PolyTriangleThreadData>(thread->core, thread->num_cores, thread->numa_node, thread->num_numa_nodes, thread->numa_start_y, thread->numa_end_y);
 	return thread->poly.get();
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetVertexBufferCommand::PolySetVertexBufferCommand(const void *vertices) : vertices(vertices)
-{
-}
-
-void PolySetVertexBufferCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetVertexBuffer(vertices);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetIndexBufferCommand::PolySetIndexBufferCommand(const void *indices) : indices(indices)
-{
-}
-
-void PolySetIndexBufferCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetIndexBuffer(indices);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetInputAssemblyCommand::PolySetInputAssemblyCommand(PolyInputAssembly *input) : input(input)
-{
-}
-
-void PolySetInputAssemblyCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetInputAssembly(input);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetTransformCommand::PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld) : objectToClip(objectToClip), objectToWorld(objectToWorld)
-{
-}
-
-void PolySetTransformCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetTransform(objectToClip, objectToWorld);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetCullCCWCommand::PolySetCullCCWCommand(bool ccw) : ccw(ccw)
-{
-}
-
-void PolySetCullCCWCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetCullCCW(ccw);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetTwoSidedCommand::PolySetTwoSidedCommand(bool twosided) : twosided(twosided)
-{
-}
-
-void PolySetTwoSidedCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetTwoSided(twosided);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetWeaponSceneCommand::PolySetWeaponSceneCommand(bool value) : value(value)
-{
-}
-
-void PolySetWeaponSceneCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetWeaponScene(value);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetModelVertexShaderCommand::PolySetModelVertexShaderCommand(int frame1, int frame2, float interpolationFactor) : frame1(frame1), frame2(frame2), interpolationFactor(interpolationFactor)
-{
-}
-
-void PolySetModelVertexShaderCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetModelVertexShader(frame1, frame2, interpolationFactor);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyClearDepthCommand::PolyClearDepthCommand(float value) : value(value)
-{
-}
-
-void PolyClearDepthCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->ClearDepth(value);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyClearStencilCommand::PolyClearStencilCommand(uint8_t value) : value(value)
-{
-}
-
-void PolyClearStencilCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->ClearStencil(value);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetViewportCommand::PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra)
-	: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra)
-{
-}
-
-void PolySetViewportCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetViewpointUniformsCommand::PolySetViewpointUniformsCommand(const HWViewpointUniforms *uniforms) : uniforms(uniforms)
-{
-}
-
-void PolySetViewpointUniformsCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetViewpointUniforms(uniforms);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyPushMatricesCommand::PolyPushMatricesCommand(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
-	: modelMatrix(modelMatrix), normalModelMatrix(normalModelMatrix), textureMatrix(textureMatrix)
-{
-}
-
-void PolyPushMatricesCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->PushMatrices(modelMatrix, normalModelMatrix, textureMatrix);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyPushStreamDataCommand::PolyPushStreamDataCommand(const StreamData &data, const Vec2f &uClipSplit) : data(data), uClipSplit(uClipSplit)
-{
-}
-
-void PolyPushStreamDataCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->PushStreamData(data, uClipSplit);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyPushConstantsCommand::PolyPushConstantsCommand(const PolyDrawArgs &args) : args(args)
-{
-}
-
-void PolyPushConstantsCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->PushConstants(args);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyDrawCommand::PolyDrawCommand(int index, int count, PolyDrawMode mode) : index(index), count(count), mode(mode)
-{
-}
-
-void PolyDrawCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->Draw(index, count, mode);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyDrawIndexedCommand::PolyDrawIndexedCommand(int index, int count, PolyDrawMode mode) : index(index), count(count), mode(mode)
-{
-}
-
-void PolyDrawIndexedCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->DrawIndexed(index, count, mode);
 }

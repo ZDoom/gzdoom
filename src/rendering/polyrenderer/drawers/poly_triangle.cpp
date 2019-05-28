@@ -189,6 +189,11 @@ void PolyTriangleDrawer::SetTexture(const DrawerCommandQueuePtr &queue, void *pi
 	queue->Push<PolySetTextureCommand>(pixels, width, height);
 }
 
+void PolyTriangleDrawer::SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest)
+{
+	queue->Push<PolySetShaderCommand>(specialEffect, effectState, alphaTest);
+}
+
 void PolyTriangleDrawer::PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants)
 {
 	queue->Push<PolyPushStreamDataCommand>(data, constants);
@@ -304,11 +309,80 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 	cm.Clear();
 	drawargs.SetLight(GetColorTable(cm), (int)(constants.uLightLevel * 255.0f), mainVertexShader.Viewpoint->mGlobVis * 32.0f, false);
 
-	drawargs.SetColor(MAKEARGB(
-		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.W * 255.0f + 0.5f),
-		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.X * 255.0f + 0.5f),
-		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Y * 255.0f + 0.5f),
-		static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Z * 255.0f + 0.5f)), 0);
+	if (SpecialEffect != EFF_NONE)
+	{
+		// To do: need new drawers for these
+		switch (SpecialEffect)
+		{
+		default: break;
+		case EFF_FOGBOUNDARY: drawargs.SetStyle(TriBlendMode::FogBoundary); break;
+		case EFF_SPHEREMAP: drawargs.SetStyle(TriBlendMode::Fill); break;
+		case EFF_BURN: drawargs.SetStyle(TriBlendMode::Fill); break;
+		case EFF_STENCIL: drawargs.SetStyle(TriBlendMode::Fill); break;
+		}
+	}
+	else
+	{
+		switch (EffectState)
+		{
+		default:
+			break;
+		case SHADER_Paletted:
+			break;
+		case SHADER_NoTexture:
+			drawargs.SetStyle(TriBlendMode::Fill);
+			drawargs.SetColor(MAKEARGB(
+				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.W * 255.0f + 0.5f),
+				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.X * 255.0f + 0.5f),
+				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Y * 255.0f + 0.5f),
+				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Z * 255.0f + 0.5f)), 0);
+			return;
+		case SHADER_BasicFuzz:
+		case SHADER_SmoothFuzz:
+		case SHADER_SwirlyFuzz:
+		case SHADER_TranslucentFuzz:
+		case SHADER_JaggedFuzz:
+		case SHADER_NoiseFuzz:
+		case SHADER_SmoothNoiseFuzz:
+		case SHADER_SoftwareFuzz:
+			drawargs.SetStyle(TriBlendMode::Fuzzy);
+			drawargs.SetColor(0xff000000, 0);
+			return;
+		}
+
+		auto style = RenderStyle;
+		if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
+		{
+			drawargs.SetStyle(AlphaTest ? TriBlendMode::Normal : TriBlendMode::Opaque);
+		}
+		else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_InvSrc)
+		{
+			drawargs.SetStyle(TriBlendMode::Normal);
+		}
+		else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_One)
+		{
+			drawargs.SetStyle(TriBlendMode::SrcColor);
+		}
+		else
+		{
+			if (style == LegacyRenderStyles[STYLE_Normal]) drawargs.SetStyle(TriBlendMode::Normal);
+			else if (style == LegacyRenderStyles[STYLE_Stencil]) drawargs.SetStyle(TriBlendMode::Stencil);
+			else if (style == LegacyRenderStyles[STYLE_Translucent]) drawargs.SetStyle(TriBlendMode::Translucent);
+			else if (style == LegacyRenderStyles[STYLE_Add]) drawargs.SetStyle(TriBlendMode::Add);
+			//else if (style == LegacyRenderStyles[STYLE_Shaded]) drawargs.SetStyle(TriBlendMode::Shaded);
+			else if (style == LegacyRenderStyles[STYLE_TranslucentStencil]) drawargs.SetStyle(TriBlendMode::TranslucentStencil);
+			else if (style == LegacyRenderStyles[STYLE_Shadow]) drawargs.SetStyle(TriBlendMode::Shadow);
+			else if (style == LegacyRenderStyles[STYLE_Subtract]) drawargs.SetStyle(TriBlendMode::Subtract);
+			else if (style == LegacyRenderStyles[STYLE_AddStencil]) drawargs.SetStyle(TriBlendMode::AddStencil);
+			else if (style == LegacyRenderStyles[STYLE_AddShaded]) drawargs.SetStyle(TriBlendMode::AddShaded);
+			//else if (style == LegacyRenderStyles[STYLE_Multiply]) drawargs.SetStyle(TriBlendMode::Multiply);
+			//else if (style == LegacyRenderStyles[STYLE_InverseMultiply]) drawargs.SetStyle(TriBlendMode::InverseMultiply);
+			//else if (style == LegacyRenderStyles[STYLE_ColorBlend]) drawargs.SetStyle(TriBlendMode::ColorBlend);
+			else if (style == LegacyRenderStyles[STYLE_Source]) drawargs.SetStyle(TriBlendMode::Opaque);
+			//else if (style == LegacyRenderStyles[STYLE_ColorAdd]) drawargs.SetStyle(TriBlendMode::ColorAdd);
+			else drawargs.SetStyle(TriBlendMode::Opaque);
+		}
+	}
 }
 
 void PolyTriangleThreadData::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
@@ -334,6 +408,14 @@ void PolyTriangleThreadData::SetDepthMask(bool on)
 
 void PolyTriangleThreadData::SetDepthFunc(int func)
 {
+	if (func == DF_LEqual || func == DF_Less)
+	{
+		drawargs.SetDepthTest(true);
+	}
+	else if (func == DF_Always)
+	{
+		drawargs.SetDepthTest(false);
+	}
 }
 
 void PolyTriangleThreadData::SetDepthRange(float min, float max)
@@ -397,44 +479,14 @@ void PolyTriangleThreadData::EnableDepthTest(bool on)
 
 void PolyTriangleThreadData::SetRenderStyle(FRenderStyle style)
 {
-	if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero && style.Flags == 0)
-	{
-		drawargs.SetStyle(TriBlendMode::Opaque);
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_InvSrc)
-	{
-		drawargs.SetStyle(TriBlendMode::Normal);
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
-	{
-		drawargs.SetStyle(TriBlendMode::Normal);
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_One)
-	{
-		drawargs.SetStyle(TriBlendMode::SrcColor);
-	}
-	else
-	{
-		if (style == LegacyRenderStyles[STYLE_Normal]) drawargs.SetStyle(TriBlendMode::Normal);
-		else if (style == LegacyRenderStyles[STYLE_Fuzzy]) drawargs.SetStyle(TriBlendMode::Fuzzy);
-		//else if (style == LegacyRenderStyles[STYLE_SoulTrans]) drawargs.SetStyle(TriBlendMode::SoulTrans);
-		//else if (style == LegacyRenderStyles[STYLE_OptFuzzy]) drawargs.SetStyle(TriBlendMode::OptFuzzy);
-		else if (style == LegacyRenderStyles[STYLE_Stencil]) drawargs.SetStyle(TriBlendMode::Stencil);
-		else if (style == LegacyRenderStyles[STYLE_Translucent]) drawargs.SetStyle(TriBlendMode::Translucent);
-		else if (style == LegacyRenderStyles[STYLE_Add]) drawargs.SetStyle(TriBlendMode::Add);
-		//else if (style == LegacyRenderStyles[STYLE_Shaded]) drawargs.SetStyle(TriBlendMode::Shaded);
-		else if (style == LegacyRenderStyles[STYLE_TranslucentStencil]) drawargs.SetStyle(TriBlendMode::TranslucentStencil);
-		else if (style == LegacyRenderStyles[STYLE_Shadow]) drawargs.SetStyle(TriBlendMode::Shadow);
-		else if (style == LegacyRenderStyles[STYLE_Subtract]) drawargs.SetStyle(TriBlendMode::Subtract);
-		else if (style == LegacyRenderStyles[STYLE_AddStencil]) drawargs.SetStyle(TriBlendMode::AddStencil);
-		else if (style == LegacyRenderStyles[STYLE_AddShaded]) drawargs.SetStyle(TriBlendMode::AddShaded);
-		//else if (style == LegacyRenderStyles[STYLE_Multiply]) drawargs.SetStyle(TriBlendMode::Multiply);
-		//else if (style == LegacyRenderStyles[STYLE_InverseMultiply]) drawargs.SetStyle(TriBlendMode::InverseMultiply);
-		//else if (style == LegacyRenderStyles[STYLE_ColorBlend]) drawargs.SetStyle(TriBlendMode::ColorBlend);
-		//else if (style == LegacyRenderStyles[STYLE_Source]) drawargs.SetStyle(TriBlendMode::Source);
-		//else if (style == LegacyRenderStyles[STYLE_ColorAdd]) drawargs.SetStyle(TriBlendMode::ColorAdd);
-		else drawargs.SetStyle(TriBlendMode::Opaque);
-	}
+	RenderStyle = style;
+}
+
+void PolyTriangleThreadData::SetShader(int specialEffect, int effectState, bool alphaTest)
+{
+	SpecialEffect = specialEffect;
+	EffectState = effectState;
+	AlphaTest = alphaTest;
 }
 
 void PolyTriangleThreadData::SetTexture(void *pixels, int width, int height)

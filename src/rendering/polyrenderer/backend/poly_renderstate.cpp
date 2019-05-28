@@ -190,6 +190,16 @@ void PolyRenderState::Apply()
 	PolyTriangleDrawer::SetInputAssembly(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
 	PolyTriangleDrawer::SetRenderStyle(fb->GetDrawCommands(), mRenderStyle);
 
+	if (mSpecialEffect > EFF_NONE)
+	{
+		PolyTriangleDrawer::SetShader(fb->GetDrawCommands(), mSpecialEffect, 0, false);
+	}
+	else
+	{
+		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
+		PolyTriangleDrawer::SetShader(fb->GetDrawCommands(), EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f);
+	}
+
 	PolyPushConstants constants;
 	constants.uFogEnabled = fogset;
 	constants.uTextureMode = mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;

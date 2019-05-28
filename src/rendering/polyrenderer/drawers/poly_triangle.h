@@ -61,6 +61,7 @@ public:
 	static void EnableDepthTest(const DrawerCommandQueuePtr &queue, bool on);
 	static void SetRenderStyle(const DrawerCommandQueuePtr &queue, FRenderStyle style);
 	static void SetTexture(const DrawerCommandQueuePtr &queue, void *pixels, int width, int height);
+	static void SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest);
 	static void PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants);
 	static void PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
 	static void Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
@@ -142,6 +143,7 @@ public:
 	void EnableDepthTest(bool on);
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(void *pixels, int width, int height);
+	void SetShader(int specialEffect, int effectState, bool alphaTest);
 
 	void UpdateClip();
 
@@ -207,6 +209,11 @@ public:
 		int right = 0;
 		int bottom = 0;
 	} clip, scissor;
+
+	FRenderStyle RenderStyle;
+	int SpecialEffect = EFF_NONE;
+	int EffectState = 0;
+	bool AlphaTest = false;
 
 	PolyDrawArgs drawargs;
 
@@ -394,6 +401,18 @@ private:
 	void *pixels;
 	int width;
 	int height;
+};
+
+class PolySetShaderCommand : public PolyDrawerCommand
+{
+public:
+	PolySetShaderCommand(int specialEffect, int effectState, bool alphaTest) : specialEffect(specialEffect), effectState(effectState), alphaTest(alphaTest) { }
+	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetShader(specialEffect, effectState, alphaTest); }
+
+private:
+	int specialEffect;
+	int effectState;
+	bool alphaTest;
 };
 
 class PolySetVertexBufferCommand : public PolyDrawerCommand

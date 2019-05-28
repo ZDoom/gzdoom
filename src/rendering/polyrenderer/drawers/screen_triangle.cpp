@@ -887,7 +887,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 
 	if (ModeT::BlendOp == STYLEOP_Fuzz)
 	{
-		fuzzscale = (200 << FRACBITS) / viewheight;
+		fuzzscale = (200 << FRACBITS) / thread->dest_height;
 		_fuzzpos = swrenderer::fuzzpos;
 	}
 
@@ -1314,7 +1314,7 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 
 	if (ModeT::BlendOp == STYLEOP_Fuzz)
 	{
-		fuzzscale = (200 << FRACBITS) / viewheight;
+		fuzzscale = (200 << FRACBITS) / thread->dest_height;
 		_fuzzpos = swrenderer::fuzzpos;
 	}
 
@@ -1626,7 +1626,7 @@ void DrawRect8(const void *destOrg, int destWidth, int destHeight, int destPitch
 	int _fuzzpos;
 	if (ModeT::BlendOp == STYLEOP_Fuzz)
 	{
-		fuzzscale = (200 << FRACBITS) / viewheight;
+		fuzzscale = (200 << FRACBITS) / thread->dest_height;
 		_fuzzpos = swrenderer::fuzzpos;
 	}
 
@@ -1877,7 +1877,7 @@ void DrawRectOpt32(const void *destOrg, int destWidth, int destHeight, int destP
 	int _fuzzpos;
 	if (ModeT::BlendOp == STYLEOP_Fuzz)
 	{
-		fuzzscale = (200 << FRACBITS) / viewheight;
+		fuzzscale = (200 << FRACBITS) / thread->dest_height;
 		_fuzzpos = swrenderer::fuzzpos;
 	}
 

@@ -541,6 +541,13 @@ void PolyFrameBuffer::BeginFrame()
 {
 	SetViewportRects(nullptr);
 	CheckCanvas();
+
+	swrenderer::R_InitFuzzTable(GetCanvas()->GetPitch());
+	static int next_random = 0;
+	swrenderer::fuzzpos = (swrenderer::fuzzpos + swrenderer::fuzz_random_x_offset[next_random] * FUZZTABLE / 100) % FUZZTABLE;
+	next_random++;
+	if (next_random == FUZZ_RANDOM_X_SIZE)
+		next_random = 0;
 }
 
 void PolyFrameBuffer::Draw2D()

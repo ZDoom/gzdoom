@@ -108,7 +108,7 @@ void PolyRenderState::Clear(int targets)
 	//if (targets & CT_Color)
 	//	PolyTriangleDrawer::ClearColor(GetPolyFrameBuffer()->GetDrawCommands());
 	if (targets & CT_Depth)
-		PolyTriangleDrawer::ClearDepth(GetPolyFrameBuffer()->GetDrawCommands(), 0.0f);
+		PolyTriangleDrawer::ClearDepth(GetPolyFrameBuffer()->GetDrawCommands(), 65535.0f);
 	if (targets & CT_Stencil)
 		PolyTriangleDrawer::ClearStencil(GetPolyFrameBuffer()->GetDrawCommands(), 0);
 }

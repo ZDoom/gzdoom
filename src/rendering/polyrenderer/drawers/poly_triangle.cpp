@@ -338,10 +338,18 @@ void PolyTriangleThreadData::SetDepthFunc(int func)
 
 void PolyTriangleThreadData::SetDepthRange(float min, float max)
 {
+	// The only two variants used by hwrenderer layer
+	if (min == 0.0f && max == 1.0f)
+	{
+	}
+	else if (min == 1.0f && max == 1.0f)
+	{
+	}
 }
 
 void PolyTriangleThreadData::SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor)
 {
+	depthbias = (float)(depthBiasConstantFactor / 65536.0);
 }
 
 void PolyTriangleThreadData::SetColorMask(bool r, bool g, bool b, bool a)

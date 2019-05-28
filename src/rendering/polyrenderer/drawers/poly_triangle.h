@@ -121,7 +121,7 @@ public:
 	void SetTransform(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 	void SetCullCCW(bool value) { ccw = value; }
 	void SetTwoSided(bool value) { twosided = value; }
-	void SetWeaponScene(bool value) { weaponScene = value; }
+	void SetWeaponScene(bool value) { depthbias = value ? -1.0f : 0.0f; }
 	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; swVertexShader.modelInterpolationFactor = interpolationFactor; }
 
 	void SetInputAssembly(PolyInputAssembly *input) { inputAssembly = input; }
@@ -187,6 +187,7 @@ public:
 	int32_t texelV[MAXWIDTH];
 	uint16_t lightarray[MAXWIDTH];
 	uint32_t dynlights[MAXWIDTH];
+	float depthvalues[MAXWIDTH];
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 
@@ -195,7 +196,7 @@ public:
 	int dest_height = 0;
 	bool dest_bgra = false;
 	uint8_t *dest = nullptr;
-	bool weaponScene = false;
+	float depthbias = 0.0f;
 
 	int viewport_y = 0;
 

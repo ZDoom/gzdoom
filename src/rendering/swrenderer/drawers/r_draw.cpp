@@ -220,7 +220,7 @@ namespace swrenderer
 	class DepthColumnCommand : public DrawerCommand
 	{
 	public:
-		DepthColumnCommand(const WallDrawerArgs &args, float idepth) : idepth(idepth)
+		DepthColumnCommand(const WallDrawerArgs &args, float idepth) : idepth(1.0f / idepth)
 		{
 			auto rendertarget = args.Viewport()->RenderTarget;
 			if (rendertarget->IsBgra())
@@ -244,7 +244,7 @@ namespace swrenderer
 			count = args.Count();
 		}
 
-		DepthColumnCommand(const SkyDrawerArgs &args, float idepth) : idepth(idepth)
+		DepthColumnCommand(const SkyDrawerArgs &args, float idepth) : idepth(1.0f / idepth)
 		{
 			auto rendertarget = args.Viewport()->RenderTarget;
 			if (rendertarget->IsBgra())
@@ -319,7 +319,7 @@ namespace swrenderer
 
 			if (idepth1 == idepth2)
 			{
-				float depth = idepth1;
+				float depth = 1.0f / idepth1;
 				#ifdef DEPTH_DEBUG
 				uint32_t gray = clamp<int32_t>((int32_t)(1.0f / depth / 4.0f), 0, 255);
 				uint32_t color = MAKEARGB(255, gray, gray, gray);
@@ -344,7 +344,7 @@ namespace swrenderer
 					dest[x] = color;
 					#endif
 
-					values[x] = depth;
+					values[x] = 1.0f / depth;
 					depth += step;
 				}
 			}

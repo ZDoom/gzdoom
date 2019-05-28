@@ -436,7 +436,7 @@ void PolyTriangleThreadData::SetDepthBias(float depthBiasConstantFactor, float d
 
 void PolyTriangleThreadData::SetColorMask(bool r, bool g, bool b, bool a)
 {
-	drawargs.SetWriteColor(r || g || b || a);
+	drawargs.SetWriteColor(r);
 }
 
 void PolyTriangleThreadData::SetStencil(int stencilRef, int op)

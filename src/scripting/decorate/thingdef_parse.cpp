@@ -1148,6 +1148,7 @@ static void ParseActor(FScanner &sc, PNamespace *ns)
 	bag.Namespace = ns;
 	bag.Version = { 2, 0, 0 };	
 	bag.fromDecorate = true;
+	bag.ScriptPosition = sc;
 	info = ParseActorHeader(sc, &bag);
 	sc.MustGetToken('{');
 	while (sc.MustGetAnyToken(), sc.TokenType != '}')

@@ -330,12 +330,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 		case SHADER_Paletted:
 			break;
 		case SHADER_NoTexture:
-			drawargs.SetStyle(TriBlendMode::Fill);
-			drawargs.SetColor(MAKEARGB(
-				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.W * 255.0f + 0.5f),
-				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.X * 255.0f + 0.5f),
-				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Y * 255.0f + 0.5f),
-				static_cast<uint32_t>(mainVertexShader.Data.uVertexColor.Z * 255.0f + 0.5f)), 0);
+			drawargs.SetStyle(TriBlendMode::FillTranslucent);
 			return;
 		case SHADER_BasicFuzz:
 		case SHADER_SmoothFuzz:
@@ -346,7 +341,6 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 		case SHADER_SmoothNoiseFuzz:
 		case SHADER_SoftwareFuzz:
 			drawargs.SetStyle(TriBlendMode::Fuzzy);
-			drawargs.SetColor(0xff000000, 0);
 			return;
 		}
 
@@ -431,7 +425,7 @@ void PolyTriangleThreadData::SetDepthRange(float min, float max)
 
 void PolyTriangleThreadData::SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor)
 {
-	depthbias = (float)(depthBiasConstantFactor / 65536.0);
+	depthbias = (float)(depthBiasConstantFactor / 2500.0);
 }
 
 void PolyTriangleThreadData::SetColorMask(bool r, bool g, bool b, bool a)
@@ -658,6 +652,8 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 	// Reject triangle if degenerate
 	if (IsDegenerate(vert))
 		return;
+
+	drawargs.SetColor(vert[0]->vColor, 0);
 
 	// Cull, clip and generate additional vertices as needed
 	ScreenTriVertex clippedvert[max_additional_vertices];

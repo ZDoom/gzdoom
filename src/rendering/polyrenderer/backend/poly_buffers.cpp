@@ -86,9 +86,29 @@ void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *v
 	const uint8_t *vertex = static_cast<const uint8_t*>(vertices) + mStride * index;
 	const float *attrVertex = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_VERTEX]);
 	const float *attrTexcoord = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_TEXCOORD]);
+	const uint8_t *attrColor = reinterpret_cast<const uint8_t*>(vertex + mOffsets[VATTR_COLOR]);
 
 	thread->mainVertexShader.aPosition = { attrVertex[0], attrVertex[1], attrVertex[2], 1.0f };
 	thread->mainVertexShader.aTexCoord = { attrTexcoord[0], attrTexcoord[1] };
+
+	if (UseVertexData)
+	{
+		uint32_t r = attrColor[0];
+		uint32_t g = attrColor[1];
+		uint32_t b = attrColor[2];
+		uint32_t a = attrColor[3];
+		thread->mainVertexShader.aColor = MAKEARGB(a, r, g, b);
+	}
+	else
+	{
+		const auto &c = thread->mainVertexShader.Data.uVertexColor;
+		thread->mainVertexShader.aColor = MAKEARGB(
+			static_cast<uint32_t>(c.W * 255.0f + 0.5f),
+			static_cast<uint32_t>(c.X * 255.0f + 0.5f),
+			static_cast<uint32_t>(c.Y * 255.0f + 0.5f),
+			static_cast<uint32_t>(c.Z * 255.0f + 0.5f)
+		);
+	}
 }
 
 /////////////////////////////////////////////////////////////////////////////

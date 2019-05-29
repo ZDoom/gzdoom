@@ -15,6 +15,7 @@ public:
 	Vec4f gl_Position;
 	float gl_ClipDistance[5];
 	Vec4f vTexCoord;
+	uint32_t vColor;
 	Vec4f pixelpos;
 };
 
@@ -24,13 +25,12 @@ public:
 	// Input
 	Vec4f aPosition;
 	Vec2f aTexCoord;
-	Vec4f aColor;
+	uint32_t aColor;
 	Vec4f aVertex2;
 	Vec4f aNormal;
 	Vec4f aNormal2;
 
 	// Output
-	Vec4f vColor;
 	Vec3f glowdist;
 	Vec3f gradientdist;
 	Vec4f vWorldNormal;
@@ -242,6 +242,8 @@ public:
 		{
 			pixelpos = (*objectToWorld) * objpos;
 		}
+
+		vColor = drawargs->Color();
 
 		// Calculate gl_ClipDistance[i]
 		for (int i = 0; i < 3; i++)

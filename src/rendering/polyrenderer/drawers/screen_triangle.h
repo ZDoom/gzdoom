@@ -104,6 +104,7 @@ enum class TriBlendMode
 	FogBoundary,
 	SrcColor,
 	Fill,
+	FillTranslucent,
 	Normal,
 	Fuzzy,
 	Stencil,
@@ -162,6 +163,7 @@ namespace TriScreenDrawerModes
 	struct StyleFogBoundary        { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_FogBoundary; };
 	struct StyleSrcColor           { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_SrcColorOneMinusSrcColor; };
 	struct StyleFill               { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Fill; };
+	struct StyleFillTranslucent    { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Fill; };
 
 	struct StyleNormal             { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = 0; };
 	struct StyleFuzzy              { static const int BlendOp = STYLEOP_Fuzz,   BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = 0; };

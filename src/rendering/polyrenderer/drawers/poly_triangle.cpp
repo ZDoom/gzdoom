@@ -300,7 +300,14 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 
 	FColormap cm;
 	cm.Clear();
-	drawargs.SetLight(GetColorTable(cm), (int)(constants.uLightLevel * 255.0f), mainVertexShader.Viewpoint->mGlobVis * 32.0f, false);
+	if (constants.uLightLevel >= 0.0f)
+	{
+		drawargs.SetLight(GetColorTable(cm), (int)(constants.uLightLevel * 255.0f), mainVertexShader.Viewpoint->mGlobVis * 32.0f, false);
+	}
+	else
+	{
+		drawargs.SetLight(GetColorTable(cm), 255, mainVertexShader.Viewpoint->mGlobVis * 32.0f, true);
+	}
 
 	if (SpecialEffect != EFF_NONE)
 	{

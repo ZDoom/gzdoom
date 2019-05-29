@@ -4835,7 +4835,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			// If this is a local variable we need another register for the result.
 			if (trueop.Fixed)
 			{
-				out = ExpEmit(build, trueop.RegType);
+				out = ExpEmit(build, trueop.RegType, trueop.RegCount);
 				build->Emit(truex->ValueType->GetMoveOp(), out.RegNum, trueop.RegNum, 0);
 			}
 			else out = trueop;

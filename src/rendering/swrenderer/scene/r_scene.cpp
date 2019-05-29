@@ -107,7 +107,12 @@ namespace swrenderer
 		r_modelscene = r_models && Models.Size() > 0;
 		if (r_modelscene)
 		{
-			PolyTriangleDrawer::ResizeBuffers(viewport->RenderTarget);
+			if (!DepthStencil || DepthStencil->Width() != viewport->RenderTarget->GetWidth() || DepthStencil->Height() != viewport->RenderTarget->GetHeight())
+			{
+				DepthStencil.reset();
+				DepthStencil.reset(new PolyDepthStencil(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight()));
+			}
+			PolyTriangleDrawer::SetViewport(MainThread()->DrawQueue, 0, 0, viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), viewport->RenderTarget, DepthStencil.get());
 			PolyTriangleDrawer::ClearStencil(MainThread()->DrawQueue, 0);
 		}
 
@@ -275,7 +280,7 @@ namespace swrenderer
 		if (r_modelscene && thread->MainThread)
 			PolyTriangleDrawer::ClearStencil(MainThread()->DrawQueue, 0);
 
-		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget);
+		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget, DepthStencil.get());
 		PolyTriangleDrawer::SetScissor(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight);
 
 		// Cull things outside the range seen by this thread
@@ -372,7 +377,13 @@ namespace swrenderer
 		viewactive = true;
 		viewport->SetViewport(actor->Level, MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
 		if (r_modelscene)
-			PolyTriangleDrawer::ResizeBuffers(viewport->RenderTarget);
+		{
+			if (!DepthStencil || DepthStencil->Width() != viewport->RenderTarget->GetWidth() || DepthStencil->Height() != viewport->RenderTarget->GetHeight())
+			{
+				DepthStencil.reset();
+				DepthStencil.reset(new PolyDepthStencil(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight()));
+			}
+		}
 
 		// Render:
 		RenderActorView(actor, false, dontmaplines);

@@ -41,12 +41,6 @@
 
 static bool isBgraRenderTarget = false;
 
-void PolyTriangleDrawer::ResizeBuffers(DCanvas *canvas)
-{
-	PolyStencilBuffer::Instance()->Resize(canvas->GetWidth(), canvas->GetHeight());
-	PolyZBuffer::Instance()->Resize(canvas->GetPitch(), canvas->GetHeight());
-}
-
 bool PolyTriangleDrawer::IsBgra()
 {
 	return isBgraRenderTarget;
@@ -62,7 +56,7 @@ void PolyTriangleDrawer::ClearStencil(const DrawerCommandQueuePtr &queue, uint8_
 	queue->Push<PolyClearStencilCommand>(value);
 }
 
-void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas)
+void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthstencil)
 {
 	uint8_t *dest = (uint8_t*)canvas->GetPixels();
 	int dest_width = canvas->GetWidth();
@@ -71,7 +65,7 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	bool dest_bgra = canvas->IsBgra();
 	isBgraRenderTarget = dest_bgra;
 
-	queue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
+	queue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil);
 }
 
 void PolyTriangleDrawer::SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input)
@@ -223,10 +217,9 @@ void PolyTriangleDrawer::DrawIndexed(const DrawerCommandQueuePtr &queue, int ind
 
 void PolyTriangleThreadData::ClearDepth(float value)
 {
-	auto buffer = PolyZBuffer::Instance();
-	int width = buffer->Width();
-	int height = buffer->Height();
-	float *data = buffer->Values();
+	int width = depthstencil->Width();
+	int height = depthstencil->Height();
+	float *data = depthstencil->DepthValues();
 
 	int skip = skipped_by_thread(0);
 	int count = count_for_thread(0, height);
@@ -242,10 +235,9 @@ void PolyTriangleThreadData::ClearDepth(float value)
 
 void PolyTriangleThreadData::ClearStencil(uint8_t value)
 {
-	auto buffer = PolyStencilBuffer::Instance();
-	int width = buffer->Width();
-	int height = buffer->Height();
-	uint8_t *data = buffer->Values();
+	int width = depthstencil->Width();
+	int height = depthstencil->Height();
+	uint8_t *data = depthstencil->StencilValues();
 
 	int skip = skipped_by_thread(0);
 	int count = count_for_thread(0, height);
@@ -258,7 +250,7 @@ void PolyTriangleThreadData::ClearStencil(uint8_t value)
 	}
 }
 
-void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra)
+void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra, PolyDepthStencil *new_depthstencil)
 {
 	viewport_x = x;
 	viewport_y = y;
@@ -269,6 +261,7 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	dest_height = new_dest_height;
 	dest_pitch = new_dest_pitch;
 	dest_bgra = new_dest_bgra;
+	depthstencil = new_depthstencil;
 	UpdateClip();
 }
 

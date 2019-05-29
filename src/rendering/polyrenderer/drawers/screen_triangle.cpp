@@ -201,16 +201,16 @@ void DrawTriangle(const TriDrawTriangleArgs *args, PolyTriangleThreadData *threa
 		v1X = args->v1->x;
 		v1Y = args->v1->y;
 		v1W = args->v1->w;
-		zbuffer = PolyZBuffer::Instance()->Values();
+		zbuffer = thread->depthstencil->DepthValues();
 	}
 
 	if ((OptT::Flags & SWTRI_StencilTest) || (OptT::Flags & SWTRI_WriteStencil))
 	{
-		stencilbuffer = PolyStencilBuffer::Instance()->Values();
+		stencilbuffer = thread->depthstencil->StencilValues();
 	}
 
 	if ((OptT::Flags & SWTRI_StencilTest) || (OptT::Flags & SWTRI_WriteStencil) || (OptT::Flags & SWTRI_DepthTest) || (OptT::Flags & SWTRI_WriteDepth))
-		pitch = PolyStencilBuffer::Instance()->Width();
+		pitch = thread->depthstencil->Width();
 
 	if (OptT::Flags & SWTRI_StencilTest)
 		stencilTestValue = args->uniforms->StencilTestValue();

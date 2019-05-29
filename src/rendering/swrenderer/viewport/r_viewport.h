@@ -11,6 +11,8 @@
 
 #define MINZ double((2048*4) / double(1 << 20))
 
+class PolyDepthStencil;
+
 namespace swrenderer
 {
 	class RenderThread;

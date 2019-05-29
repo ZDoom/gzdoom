@@ -26,23 +26,19 @@
 #include "swrenderer/drawers/r_thread.h"
 #include "polyrenderer/drawers/screen_triangle.h"
 #include "polyrenderer/math/gpu_types.h"
-#include "polyrenderer/drawers/poly_buffer.h"
 #include "polyrenderer/drawers/poly_draw_args.h"
 #include "polyrenderer/drawers/poly_vertex_shader.h"
 
 class DCanvas;
 class PolyDrawerCommand;
 class PolyInputAssembly;
-class PolyPipeline;
+class PolyDepthStencil;
 struct PolyPushConstants;
 
 class PolyTriangleDrawer
 {
 public:
-	static void ResizeBuffers(DCanvas *canvas);
-	static void ClearDepth(const DrawerCommandQueuePtr &queue, float value);
-	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
-	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas);
+	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthStencil);
 	static void SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input);
 	static void SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices);
 	static void SetIndexBuffer(const DrawerCommandQueuePtr &queue, const void *elements);
@@ -64,6 +60,8 @@ public:
 	static void SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest);
 	static void PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants);
 	static void PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
+	static void ClearDepth(const DrawerCommandQueuePtr &queue, float value);
+	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
 	static void Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static void DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static bool IsBgra();
@@ -75,6 +73,23 @@ public:
 	static void SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
 	static void PushDrawArgs(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args);
+};
+
+class PolyDepthStencil
+{
+public:
+	PolyDepthStencil(int width, int height) : width(width), height(height), depthbuffer(width * height), stencilbuffer(width * height) { }
+
+	int Width() const { return width; }
+	int Height() const { return height; }
+	float *DepthValues() { return depthbuffer.data(); }
+	uint8_t *StencilValues() { return stencilbuffer.data(); }
+
+private:
+	int width;
+	int height;
+	std::vector<float> depthbuffer;
+	std::vector<uint8_t> stencilbuffer;
 };
 
 struct PolyPushConstants
@@ -117,7 +132,7 @@ public:
 
 	void ClearDepth(float value);
 	void ClearStencil(uint8_t value);
-	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
+	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil *depthstencil);
 
 	void SetTransform(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 	void SetCullCCW(bool value) { ccw = value; }
@@ -198,6 +213,8 @@ public:
 	int dest_height = 0;
 	bool dest_bgra = false;
 	uint8_t *dest = nullptr;
+	PolyDepthStencil *depthstencil = nullptr;
+
 	float depthbias = 0.0f;
 
 	int viewport_y = 0;
@@ -521,9 +538,9 @@ private:
 class PolySetViewportCommand : public PolyDrawerCommand
 {
 public:
-	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra)
-		: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra); }
+	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil *depthstencil)
+		: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra), depthstencil(depthstencil) { }
+	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil); }
 
 private:
 	int x;
@@ -535,6 +552,7 @@ private:
 	int dest_height;
 	int dest_pitch;
 	bool dest_bgra;
+	PolyDepthStencil *depthstencil;
 };
 
 class PolySetViewpointUniformsCommand : public PolyDrawerCommand

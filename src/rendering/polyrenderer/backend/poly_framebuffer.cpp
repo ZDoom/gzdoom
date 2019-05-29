@@ -102,9 +102,10 @@ void PolyFrameBuffer::CheckCanvas()
 
 		mCanvas.reset(new DCanvas(0, 0, true));
 		mCanvas->Resize(GetWidth(), GetHeight(), false);
+		mDepthStencil.reset();
+		mDepthStencil.reset(new PolyDepthStencil(GetWidth(), GetHeight()));
 
-		PolyTriangleDrawer::ResizeBuffers(mCanvas.get());
-		PolyTriangleDrawer::SetViewport(GetDrawCommands(), 0, 0, mCanvas->GetWidth(), mCanvas->GetHeight(), mCanvas.get());
+		mRenderState->SetRenderTarget(GetCanvas(), GetDepthStencil());
 	}
 }
 
@@ -308,42 +309,28 @@ sector_t *PolyFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * ca
 
 void PolyFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
-#if 0
 	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
 	FMaterial *mat = FMaterial::ValidateTexture(tex, false);
 	auto BaseLayer = static_cast<PolyHardwareTexture*>(mat->GetLayer(0, 0));
 
 	int width = mat->TextureWidth();
 	int height = mat->TextureHeight();
-	PolyTextureImage *image = BaseLayer->GetImage(tex, 0, 0);
-	PolyTextureImage *depthStencil = BaseLayer->GetDepthStencil(tex);
-
-	mRenderState->EndRenderPass();
-
-	PolyImageTransition barrier0;
-	barrier0.addImage(image, Poly_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, true);
-	barrier0.execute(GetDrawCommands());
-
-	mRenderState->SetRenderTarget(image->View.get(), depthStencil->View.get(), image->Image->width, image->Image->height, Poly_FORMAT_R8G8B8A8_UNORM, Poly_SAMPLE_COUNT_1_BIT);
+	DCanvas *image = BaseLayer->GetImage(tex, 0, 0);
+	PolyDepthStencil *depthStencil = BaseLayer->GetDepthStencil(tex);
+	mRenderState->SetRenderTarget(image, depthStencil);
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
-	bounds.width = MIN(mat->GetWidth(), image->Image->width);
-	bounds.height = MIN(mat->GetHeight(), image->Image->height);
+	bounds.width = MIN(mat->GetWidth(), image->GetWidth());
+	bounds.height = MIN(mat->GetHeight(), image->GetHeight());
 
 	FRenderViewpoint texvp;
 	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
 
-	mRenderState->EndRenderPass();
-
-	PolyImageTransition barrier1;
-	barrier1.addImage(image, Poly_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
-	barrier1.execute(GetDrawCommands());
-
-	mRenderState->SetRenderTarget(GetBuffers()->SceneColor.View.get(), GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), Poly_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
+	DrawerThreads::WaitForWorkers();
+	mRenderState->SetRenderTarget(GetCanvas(), GetDepthStencil());
 
 	tex->SetUpdated(true);
-#endif
 }
 
 void PolyFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)

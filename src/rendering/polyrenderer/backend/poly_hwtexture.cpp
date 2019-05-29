@@ -84,6 +84,17 @@ DCanvas *PolyHardwareTexture::GetImage(FTexture *tex, int translation, int flags
 	return mCanvas.get();
 }
 
+PolyDepthStencil *PolyHardwareTexture::GetDepthStencil(FTexture *tex)
+{
+	if (!mDepthStencil)
+	{
+		int w = tex->GetWidth();
+		int h = tex->GetHeight();
+		mDepthStencil.reset(new PolyDepthStencil(w, h));
+	}
+	return mDepthStencil.get();
+}
+
 void PolyHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 {
 	if (!mCanvas || mCanvas->GetWidth() != w || mCanvas->GetHeight() != h)

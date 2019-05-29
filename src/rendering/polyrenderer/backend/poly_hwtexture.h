@@ -27,6 +27,7 @@ public:
 
 	DCanvas *GetImage(const FMaterialState &state);
 	DCanvas *GetImage(FTexture *tex, int translation, int flags);
+	PolyDepthStencil *GetDepthStencil(FTexture *tex);
 
 	// Software renderer stuff
 	void AllocateBuffer(int w, int h, int texelsize) override;
@@ -43,4 +44,5 @@ private:
 	PolyHardwareTexture *Prev = nullptr;
 	PolyHardwareTexture *Next = nullptr;
 	std::unique_ptr<DCanvas> mCanvas;
+	std::unique_ptr<PolyDepthStencil> mDepthStencil;
 };

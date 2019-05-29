@@ -18,6 +18,7 @@ public:
 	RenderMemory *GetFrameMemory() { return &mFrameMemory; }
 	PolyRenderState *GetRenderState() { return mRenderState.get(); }
 	DCanvas *GetCanvas() { return mCanvas.get(); }
+	PolyDepthStencil *GetDepthStencil() { return mDepthStencil.get(); }
 	const DrawerCommandQueuePtr &GetDrawCommands();
 	void FlushDrawCommands();
 
@@ -75,6 +76,7 @@ private:
 
 	std::unique_ptr<PolyRenderState> mRenderState;
 	std::unique_ptr<DCanvas> mCanvas;
+	std::unique_ptr<PolyDepthStencil> mDepthStencil;
 	std::shared_ptr<DrawerCommandQueue> mDrawCommands;
 	RenderMemory mFrameMemory;
 };

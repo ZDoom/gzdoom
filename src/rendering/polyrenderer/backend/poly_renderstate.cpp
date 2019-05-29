@@ -125,10 +125,10 @@ void PolyRenderState::SetScissor(int x, int y, int w, int h)
 	{
 		x = 0;
 		y = 0;
-		w = fb->GetCanvas()->GetWidth();
-		h = fb->GetCanvas()->GetHeight();
+		w = mRenderTarget.Canvas->GetWidth();
+		h = mRenderTarget.Canvas->GetHeight();
 	}
-	PolyTriangleDrawer::SetScissor(fb->GetDrawCommands(), x, fb->GetCanvas()->GetHeight() - y - h, w, h);
+	PolyTriangleDrawer::SetScissor(fb->GetDrawCommands(), x, mRenderTarget.Canvas->GetHeight() - y - h, w, h);
 }
 
 void PolyRenderState::SetViewport(int x, int y, int w, int h)
@@ -138,10 +138,10 @@ void PolyRenderState::SetViewport(int x, int y, int w, int h)
 	{
 		x = 0;
 		y = 0;
-		w = fb->GetCanvas()->GetWidth();
-		h = fb->GetCanvas()->GetHeight();
+		w = mRenderTarget.Canvas->GetWidth();
+		h = mRenderTarget.Canvas->GetHeight();
 	}
-	PolyTriangleDrawer::SetViewport(fb->GetDrawCommands(), x, fb->GetCanvas()->GetHeight() - y - h, w, h, fb->GetCanvas());
+	PolyTriangleDrawer::SetViewport(fb->GetDrawCommands(), x, mRenderTarget.Canvas->GetHeight() - y - h, w, h, mRenderTarget.Canvas, mRenderTarget.DepthStencil);
 }
 
 void PolyRenderState::EnableDepthTest(bool on)
@@ -286,6 +286,13 @@ void PolyRenderState::ApplyMatrices()
 		mFirstMatrixApply = false;
 		PolyTriangleDrawer::PushMatrices(GetPolyFrameBuffer()->GetDrawCommands(), mMatrices.ModelMatrix, mMatrices.NormalModelMatrix, mMatrices.TextureMatrix);
 	}
+}
+
+void PolyRenderState::SetRenderTarget(DCanvas *canvas, PolyDepthStencil *depthStencil)
+{
+	mRenderTarget.Canvas = canvas;
+	mRenderTarget.DepthStencil = depthStencil;
+	PolyTriangleDrawer::SetViewport(GetPolyFrameBuffer()->GetDrawCommands(), 0, 0, canvas->GetWidth(), canvas->GetHeight(), canvas, depthStencil);
 }
 
 void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t length)

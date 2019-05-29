@@ -6127,7 +6127,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			{
 				if (sym->mVersion <= ctx.Version)
 				{
-					if (!(ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) == 0)
+					if (!(ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) != 0)
 					{
 						ScriptPosition.Message(MSG_WARNING, "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
 					}

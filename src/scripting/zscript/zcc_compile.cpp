@@ -1353,7 +1353,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 							// This is a global variable.
 							if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
 							PField *f = Create<PField>(name->Name, thisfieldtype, varflags | VARF_Native | VARF_Static, fd->FieldOffset, fd->BitValue);
-							if (f->Flags & (ZCC_Version | ZCC_Deprecated))
+							if (field->Flags & (ZCC_Version | ZCC_Deprecated))
 							{
 								f->mVersion = field->Version;
 							}

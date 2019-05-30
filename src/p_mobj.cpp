@@ -4819,7 +4819,10 @@ void AActor::OnDestroy ()
 	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.
 	//      but you can't really do that without utterly breaking the game, so it's ok.
 	//      note: if OnDestroy is ever made optional, E_WorldThingDestroyed should still be called for ANY thing.
-	Level->localEventManager->WorldThingDestroyed(this);
+	if (Level != nullptr)
+	{
+		Level->localEventManager->WorldThingDestroyed(this);
+	}
 
 	DeleteAttachedLights();
 	ClearRenderSectorList();

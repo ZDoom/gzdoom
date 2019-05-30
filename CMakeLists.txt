@@ -239,7 +239,20 @@ else()
 	else()
 		set( ALL_C_FLAGS "-ffp-contract=off" )
 	endif()
-	
+
+	if ( UNIX )
+		check_symbol_exists( "fts_set" "fts.h" HAVE_FTS )
+		if ( NOT HAVE_FTS )
+			include ( FindPkgConfig )
+			pkg_check_modules( MUSL_FTS musl-fts )
+			if ( MUSL_FTS_FOUND )
+				set ( ALL_C_FLAGS "${ALL_C_FLAGS} ${MUSL_FTS_LDFLAGS}" )
+			else ( MUSL_FTS_FOUND )
+				message (ERROR "fts_* functions not found in the system" )
+			endif ( MUSL_FTS_FOUND )
+		endif ( NOT HAVE_FTS )
+	endif ( UNIX )
+
 	set( REL_C_FLAGS "" )
 	set( DEB_C_FLAGS "" )
 

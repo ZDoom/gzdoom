@@ -485,10 +485,10 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		mVertices[poly.mVertIndex+i].Set(points[i].X, points[i].Y, 0, u*uscale, v*vscale, color0);
 	}
 	poly.mIndexIndex = mIndices.Size();
-	poly.mIndexCount += (npoints - 2) * 3;
 
 	if (indices == nullptr || indexcount == 0)
 	{
+		poly.mIndexCount += (npoints - 2) * 3;
 		for (int i = 2; i < npoints; ++i)
 		{
 			AddIndices(poly.mVertIndex, 3, 0, i - 1, i);
@@ -496,10 +496,11 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	}
 	else
 	{
+		poly.mIndexCount += (int)indexcount;
 		int addr = mIndices.Reserve(indexcount);
 		for (size_t i = 0; i < indexcount; i++)
 		{
-			mIndices[addr + i] = addr + indices[i];
+			mIndices[addr + i] = poly.mVertIndex + indices[i];
 		}
 	}
 

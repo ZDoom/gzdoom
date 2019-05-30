@@ -1458,10 +1458,9 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
 	if( SSE_MATTERS )
 		set_source_files_properties(
-			gl/system/gl_swframebuffer.cpp
-			polyrenderer/poly_all.cpp
-			swrenderer/r_all.cpp
-			x86.cpp
+			rendering/polyrenderer/poly_all.cpp
+			rendering/swrenderer/r_all.cpp
+			utility/x86.cpp
 			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
 	endif()
 endif()

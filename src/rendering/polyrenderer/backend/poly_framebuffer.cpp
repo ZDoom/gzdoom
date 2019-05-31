@@ -147,10 +147,6 @@ void PolyFrameBuffer::Update()
 	Flush3D.Unclock();
 
 	FlushDrawCommands();
-	DrawerThreads::WaitForWorkers();
-	mFrameMemory.Clear();
-	FrameDeleteList.Buffers.clear();
-	FrameDeleteList.Images.clear();
 
 	if (mCanvas)
 	{
@@ -162,13 +158,26 @@ void PolyFrameBuffer::Update()
 		uint8_t *dst = I_PolyPresentLock(w, h, pitch);
 		if (dst)
 		{
+#if 1
+			auto copyqueue = std::make_shared<DrawerCommandQueue>(&mFrameMemory);
+			copyqueue->Push<MemcpyCommand>(dst, pitch / pixelsize, src, w, h, w, pixelsize);
+			DrawerThreads::Execute(copyqueue);
+#else
 			for (int y = 0; y < h; y++)
 			{
 				memcpy(dst + y * pitch, src + y * w * pixelsize, w * pixelsize);
 			}
+#endif
+
+			DrawerThreads::WaitForWorkers();
 			I_PolyPresentUnlock(mOutputLetterbox.left, mOutputLetterbox.top, mOutputLetterbox.width, mOutputLetterbox.height);
 		}
 	}
+
+	DrawerThreads::WaitForWorkers();
+	mFrameMemory.Clear();
+	FrameDeleteList.Buffers.clear();
+	FrameDeleteList.Images.clear();
 
 	CheckCanvas();
 

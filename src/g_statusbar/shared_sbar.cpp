@@ -1899,6 +1899,33 @@ void DBaseStatusBar::SetClipRect(double x, double y, double w, double h, int fla
 	screen->SetClipRect(x1, y1, ww, hh);
 }
 
+//============================================================================
+//
+// Garbage collection stuff
+//
+//============================================================================
+
+size_t DBaseStatusBar::PropagateMark()
+{
+	size_t marked = sizeof *this;
+
+	for (size_t i = 0; i < countof(Messages); ++i)
+	{
+		DHUDMessageBase *message = Messages[i];
+
+		while (message != nullptr)
+		{
+			GC::Mark(message);
+			marked += sizeof *message;
+
+			message = message->Next;
+		}
+	}
+
+	marked += Super::PropagateMark();
+
+	return marked;
+}
 
 //============================================================================
 //

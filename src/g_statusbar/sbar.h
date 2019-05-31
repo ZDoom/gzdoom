@@ -458,6 +458,8 @@ public:
 	void RefreshBackground () const;
 	void RefreshViewBorder ();
 
+	virtual size_t PropagateMark() override;
+
 private:
 	DObject *AltHud = nullptr;
 

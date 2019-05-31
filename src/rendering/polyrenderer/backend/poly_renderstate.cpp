@@ -17,11 +17,11 @@
 
 static PolyDrawMode dtToDrawMode[] =
 {
-	PolyDrawMode::Triangles, // DT_Points
-	PolyDrawMode::Triangles, // DT_Lines
-	PolyDrawMode::Triangles, // DT_Triangles
-	PolyDrawMode::TriangleFan, // DT_TriangleFan
-	PolyDrawMode::TriangleStrip, // DT_TriangleStrip
+	PolyDrawMode::Points,
+	PolyDrawMode::Lines,
+	PolyDrawMode::Triangles,
+	PolyDrawMode::TriangleFan,
+	PolyDrawMode::TriangleStrip,
 };
 
 PolyRenderState::PolyRenderState()

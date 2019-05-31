@@ -520,7 +520,7 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 			std::swap(vert[1], vert[2]);
 		}
 	}
-	else // TriangleDrawMode::TriangleStrip
+	else if (drawmode == PolyDrawMode::TriangleStrip)
 	{
 		bool toggleccw = ccw;
 		*vert[0] = ShadeVertex(*(elements++));
@@ -534,6 +534,23 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 			vert[1] = vert[2];
 			vert[2] = vtmp;
 			toggleccw = !toggleccw;
+		}
+	}
+	else if (drawmode == PolyDrawMode::Lines)
+	{
+		for (int i = 0; i < vcount / 2; i++)
+		{
+			*vert[0] = ShadeVertex(*(elements++));
+			*vert[1] = ShadeVertex(*(elements++));
+			DrawShadedLine(vert);
+		}
+	}
+	else if (drawmode == PolyDrawMode::Points)
+	{
+		for (int i = 0; i < vcount; i++)
+		{
+			*vert[0] = ShadeVertex(*(elements++));
+			DrawShadedPoint(vert);
 		}
 	}
 }
@@ -570,7 +587,7 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 			std::swap(vert[1], vert[2]);
 		}
 	}
-	else // TriangleDrawMode::TriangleStrip
+	else if (drawmode == PolyDrawMode::TriangleStrip)
 	{
 		bool toggleccw = ccw;
 		*vert[0] = ShadeVertex(vinput++);
@@ -584,6 +601,23 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 			vert[1] = vert[2];
 			vert[2] = vtmp;
 			toggleccw = !toggleccw;
+		}
+	}
+	else if (drawmode == PolyDrawMode::Lines)
+	{
+		for (int i = 0; i < vcount / 2; i++)
+		{
+			*vert[0] = ShadeVertex(vinput++);
+			*vert[1] = ShadeVertex(vinput++);
+			DrawShadedLine(vert);
+		}
+	}
+	else if (drawmode == PolyDrawMode::Points)
+	{
+		for (int i = 0; i < vcount; i++)
+		{
+			*vert[0] = ShadeVertex(vinput++);
+			DrawShadedPoint(vert);
 		}
 	}
 }
@@ -645,6 +679,112 @@ bool PolyTriangleThreadData::IsFrontfacing(TriDrawTriangleArgs *args)
 		args->v2->x * args->v3->y - args->v3->x * args->v2->y +
 		args->v3->x * args->v1->y - args->v1->x * args->v3->y;
 	return a <= 0.0f;
+}
+
+void PolyTriangleThreadData::DrawShadedPoint(const ShadedTriVertex *const* vertex)
+{
+}
+
+void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
+{
+	static const int numclipdistances = 9;
+	float clipdistance[numclipdistances * 2];
+	float *clipd = clipdistance;
+	for (int i = 0; i < 2; i++)
+	{
+		const auto &v = *vert[i];
+		clipd[0] = v.gl_Position.X + v.gl_Position.W;
+		clipd[1] = v.gl_Position.W - v.gl_Position.X;
+		clipd[2] = v.gl_Position.Y + v.gl_Position.W;
+		clipd[3] = v.gl_Position.W - v.gl_Position.Y;
+		clipd[4] = v.gl_Position.Z + v.gl_Position.W;
+		clipd[5] = v.gl_Position.W - v.gl_Position.Z;
+		clipd[6] = v.gl_ClipDistance[0];
+		clipd[7] = v.gl_ClipDistance[1];
+		clipd[8] = v.gl_ClipDistance[2];
+		clipd += numclipdistances;
+	}
+
+	float t1 = 0.0f;
+	float t2 = 1.0f;
+	for (int p = 0; p < numclipdistances; p++)
+	{
+		float clipdistance1 = clipdistance[0 * numclipdistances + p];
+		float clipdistance2 = clipdistance[1 * numclipdistances + p];
+		if (clipdistance1 < 0.0f) t1 = MAX(-clipdistance1 / (clipdistance2 - clipdistance1), t1);
+		if (clipdistance2 < 0.0f) t2 = MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), t2);
+		if (t1 >= t2)
+			return;
+	}
+
+	float weights[] = { 1.0f - t1, t1, 1.0f - t2, t2 };
+
+	ScreenTriVertex clippedvert[2];
+	for (int i = 0; i < 2; i++)
+	{
+		auto &v = clippedvert[i];
+		memset(&v, 0, sizeof(ScreenTriVertex));
+		for (int w = 0; w < 2; w++)
+		{
+			float weight = weights[i * 2 + w];
+			v.x += vert[w]->gl_Position.X * weight;
+			v.y += vert[w]->gl_Position.Y * weight;
+			v.z += vert[w]->gl_Position.Z * weight;
+			v.w += vert[w]->gl_Position.W * weight;
+			v.u += vert[w]->vTexCoord.X * weight;
+			v.v += vert[w]->vTexCoord.Y * weight;
+			v.worldX += vert[w]->pixelpos.X * weight;
+			v.worldY += vert[w]->pixelpos.Y * weight;
+			v.worldZ += vert[w]->pixelpos.Z * weight;
+		}
+
+		// Calculate normalized device coordinates:
+		v.w = 1.0f / v.w;
+		v.x *= v.w;
+		v.y *= v.w;
+		v.z *= v.w;
+
+		// Apply viewport scale to get screen coordinates:
+		v.x = viewport_x + viewport_width * (1.0f + v.x) * 0.5f;
+		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
+	}
+
+	uint32_t color = vert[0]->vColor;
+
+	// Slow and naive implementation. Hopefully fast enough..
+
+	float x1 = clippedvert[0].x;
+	float y1 = clippedvert[0].y;
+	float x2 = clippedvert[1].x;
+	float y2 = clippedvert[1].y;
+	float dx = x2 - x1;
+	float dy = y2 - y1;
+	float step = (abs(dx) >= abs(dy)) ? abs(dx) : abs(dy);
+	dx /= step;
+	dy /= step;
+	float x = x1;
+	float y = y1;
+	int istep = (int)step;
+	int pixelsize = dest_bgra ? 4 : 1;
+	for (int i = 0; i <= istep; i++)
+	{
+		int scrx = (int)x;
+		int scry = (int)y;
+		if (scrx >= clip.left && scrx < clip.right && scry >= clip.top && scry < clip.bottom && !line_skipped_by_thread(scry))
+		{
+			uint8_t *destpixel = dest + (scrx + scry * dest_width) * pixelsize;
+			if (pixelsize == 4)
+			{
+				*reinterpret_cast<uint32_t*>(destpixel) = color;
+			}
+			else
+			{
+				*destpixel = color;
+			}
+		}
+		x += dx;
+		y += dy;
+	}
 }
 
 void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* vert, bool ccw, TriDrawTriangleArgs *args)

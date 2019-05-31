@@ -32,6 +32,8 @@ class Mat4f;
 
 enum class PolyDrawMode
 {
+	Points,
+	Lines,
 	Triangles,
 	TriangleFan,
 	TriangleStrip

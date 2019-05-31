@@ -246,6 +246,8 @@ public:
 
 private:
 	ShadedTriVertex ShadeVertex(int index);
+	void DrawShadedPoint(const ShadedTriVertex *const* vertex);
+	void DrawShadedLine(const ShadedTriVertex *const* vertices);
 	void DrawShadedTriangle(const ShadedTriVertex *const* vertices, bool ccw, TriDrawTriangleArgs *args);
 	static bool IsDegenerate(const ShadedTriVertex *const* vertices);
 	static bool IsFrontfacing(TriDrawTriangleArgs *args);

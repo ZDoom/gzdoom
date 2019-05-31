@@ -205,6 +205,7 @@ public:
 	uint16_t lightarray[MAXWIDTH];
 	uint32_t dynlights[MAXWIDTH];
 	float depthvalues[MAXWIDTH];
+	uint8_t alphatestbuffer[MAXWIDTH];
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 

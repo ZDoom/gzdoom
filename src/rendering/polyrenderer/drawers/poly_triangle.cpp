@@ -347,7 +347,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 		auto style = RenderStyle;
 		if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
 		{
-			drawargs.SetStyle(AlphaTest ? TriBlendMode::Normal : TriBlendMode::Opaque);
+			drawargs.SetStyle(AlphaTest ? TriBlendMode::AlphaTest : TriBlendMode::Opaque);
 		}
 		else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_InvSrc)
 		{

@@ -106,6 +106,7 @@ enum class TriBlendMode
 	Fill,
 	FillTranslucent,
 	Normal,
+	AlphaTest,
 	Fuzzy,
 	Stencil,
 	Translucent,
@@ -139,10 +140,6 @@ public:
 
 	static void(*SpanDrawers8[])(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
 	static void(*SpanDrawers32[])(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
-#if 0
-	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
-	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
-#endif
 
 	static int FuzzStart;
 };
@@ -155,7 +152,8 @@ namespace TriScreenDrawerModes
 		SWSTYLEF_Skycap = 2,
 		SWSTYLEF_FogBoundary = 4,
 		SWSTYLEF_Fill = 8,
-		SWSTYLEF_SrcColorOneMinusSrcColor = 16
+		SWSTYLEF_SrcColorOneMinusSrcColor = 16,
+		SWSTYLEF_AlphaTest = 32
 	};
 
 	struct StyleOpaque             { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = 0; };
@@ -166,6 +164,7 @@ namespace TriScreenDrawerModes
 	struct StyleFillTranslucent    { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Fill; };
 
 	struct StyleNormal             { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = 0; };
+	struct StyleAlphaTest          { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_AlphaTest; };
 	struct StyleFuzzy              { static const int BlendOp = STYLEOP_Fuzz,   BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = 0; };
 	struct StyleStencil            { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1 | STYLEF_ColorIsFixed, SWFlags = 0; };
 	struct StyleTranslucent        { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = 0; };

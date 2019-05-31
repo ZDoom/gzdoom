@@ -48,13 +48,20 @@ extern bool keepGpuStatActive;
 extern FString gpuStatOutput;
 
 #ifdef WIN32
-void I_PresentPolyImage(int w, int h, const void *pixels);
+void I_PolyPresentInit();
+uint8_t *I_PolyPresentLock(int w, int h, int &pitch);
+void I_PolyPresentUnlock(int x, int y, int w, int h);
+void I_PolyPresentDeinit();
 #else
-void I_PresentPolyImage(int w, int h, const void *pixels) { }
+void I_PolyPresentInit() { }
+uint8_t *I_PolyPresentLock(int w, int h, int &pitch) { pitch = 0; return nullptr; }
+void I_PolyPresentUnlock() { }
+void I_PolyPresentDeinit() { }
 #endif
 
 PolyFrameBuffer::PolyFrameBuffer(void *hMonitor, bool fullscreen) : Super(hMonitor, fullscreen) 
 {
+	I_PolyPresentInit();
 }
 
 PolyFrameBuffer::~PolyFrameBuffer()
@@ -74,6 +81,8 @@ PolyFrameBuffer::~PolyFrameBuffer()
 	mShadowMap.Reset();
 
 	screen = tmp;
+
+	I_PolyPresentDeinit();
 }
 
 void PolyFrameBuffer::InitializeState()
@@ -145,7 +154,20 @@ void PolyFrameBuffer::Update()
 
 	if (mCanvas)
 	{
-		I_PresentPolyImage(mCanvas->GetWidth(), mCanvas->GetHeight(), mCanvas->GetPixels());
+		int w = mCanvas->GetWidth();
+		int h = mCanvas->GetHeight();
+		int pixelsize = 4;
+		const uint8_t *src = (const uint8_t*)mCanvas->GetPixels();
+		int pitch = 0;
+		uint8_t *dst = I_PolyPresentLock(w, h, pitch);
+		if (dst)
+		{
+			for (int y = 0; y < h; y++)
+			{
+				memcpy(dst + y * pitch, src + y * w * pixelsize, w * pixelsize);
+			}
+			I_PolyPresentUnlock(mOutputLetterbox.left, mOutputLetterbox.top, mOutputLetterbox.width, mOutputLetterbox.height);
+		}
 	}
 
 	CheckCanvas();

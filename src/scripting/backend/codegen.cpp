@@ -11349,8 +11349,51 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 		{
 			if (RegNum == -1)
 			{
-				if (!(VarFlags & VARF_Out)) RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
-				else RegNum = build->Registers[REGT_POINTER].Get(1);
+				if (!(VarFlags & VARF_Out))
+				{
+					const int regType = ValueType->GetRegType();
+					assert(regType <= REGT_TYPE);
+
+					auto& registers = build->Registers[regType];
+					RegNum = registers.Get(RegCount);
+
+					for (int reg = RegNum, end = RegNum + RegCount; reg < end; ++reg)
+					{
+						if (!registers.IsDirty(reg))
+						{
+							continue;
+						}
+
+						ScriptPosition.Message(MSG_DEBUGMSG, "Implicit initialization of variable %s\n", Name.GetChars());
+
+						switch (regType)
+						{
+						case REGT_INT:
+							build->Emit(OP_LI, reg, 0, 0);
+							break;
+
+						case REGT_FLOAT:
+							build->Emit(OP_LKF, reg, build->GetConstantFloat(0.0));
+							break;
+
+						case REGT_STRING:
+							build->Emit(OP_LKS, reg, build->GetConstantString(nullptr));
+							break;
+
+						case REGT_POINTER:
+							build->Emit(OP_LKP, reg, build->GetConstantAddress(nullptr));
+							break;
+
+						default:
+							assert(false);
+							break;
+						}
+					}
+				}
+				else
+				{
+					RegNum = build->Registers[REGT_POINTER].Get(1);
+				}
 			}
 		}
 		else

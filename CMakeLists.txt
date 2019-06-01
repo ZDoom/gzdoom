@@ -241,6 +241,7 @@ else()
 	endif()
 
 	if ( UNIX )
+		include(CheckSymbolExists)
 		check_symbol_exists( "fts_set" "fts.h" HAVE_FTS )
 		if ( NOT HAVE_FTS )
 			include ( FindPkgConfig )

@@ -416,6 +416,22 @@ IWad
 
 IWad
 {
+	Name = "Sigil Of Baphomet"
+	BannerColors = "FF 00 00", "40 40 40"
+	MustContain = "M_EPI5", "SKY5", "D_E5M1", "D_E5M9", "E5M1", "E5M9", "ZMAPINFO", "E5TEXT"
+	Load = "sigil_shreds.wad"
+	Required = "The Ultimate DOOM"
+	Autoname = "doom.id.doom1.sigil"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "sigil.wad"
+	Mapinfo = "mapinfo/ultdoom.txt"
+	Compatibility = "Shorttex"
+	IgnoreTitlePatches = 1
+}
+
+IWad
+{
 	Name = "DOOM 2: BFG Edition"
 	Autoname = "doom.id.doom2.bfg"
 	Game = "Doom"
@@ -486,6 +502,7 @@ Names
 	"square1.pk3"
 	"delaweare.wad"
 	"rotwb.wad"
+	"sigil.wad"
 }
 
 Order	// Order in the IWAD selection box

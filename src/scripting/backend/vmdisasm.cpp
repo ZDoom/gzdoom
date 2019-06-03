@@ -181,6 +181,8 @@ static const char *const FlopNames[] =
 	"cosh",
 	"sinh",
 	"tanh",
+
+	"round",
 };
 
 static int print_reg(FILE *out, int col, int arg, int mode, int immshift, const VMScriptFunction *func);

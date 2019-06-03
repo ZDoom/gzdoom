@@ -1741,6 +1741,8 @@ static double DoFLOP(int flop, double v)
 	case FLOP_COSH:		return g_cosh(v);
 	case FLOP_SINH:		return g_sinh(v);
 	case FLOP_TANH:		return g_tanh(v);
+
+	case FLOP_ROUND:	return round(v);
 	}
 	assert(0);
 	return 0;

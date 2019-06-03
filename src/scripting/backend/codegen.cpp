@@ -82,6 +82,8 @@ static const FLOP FxFlops[] =
 	{ NAME_CosH,	FLOP_COSH,		[](double v) { return g_cosh(v); } },
 	{ NAME_SinH,	FLOP_SINH,		[](double v) { return g_sinh(v); } },
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
+
+	{ NAME_Round,	FLOP_ROUND,		[](double v) { return round(v);  } },
 };
 
 

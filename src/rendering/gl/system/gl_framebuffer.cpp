@@ -126,7 +126,7 @@ void OpenGLFrameBuffer::InitializeState()
 	glslversion = gl.glslversion;
 	uniformblockalignment = gl.uniformblockalignment;
 	maxuniformblock = gl.maxuniformblock;
-	gl_vendorstring = gl.vendorstring;
+	vendorstring = gl.vendorstring;
 
 	if (first)
 	{

@@ -389,6 +389,7 @@ FString PPFXAA::GetDefines()
 	}
 
 	const int gatherAlpha = GetMaxVersion() >= 400 ? 1 : 0;
+	const int discard = screen->IsVulkan() ? 0 : 1;
 
 	// TODO: enable FXAA_GATHER4_ALPHA on OpenGL earlier than 4.0
 	// when GL_ARB_gpu_shader5/GL_NV_gpu_shader5 extensions are supported
@@ -396,8 +397,9 @@ FString PPFXAA::GetDefines()
 	FString result;
 	result.Format(
 		"#define FXAA_QUALITY__PRESET %i\n"
-		"#define FXAA_GATHER4_ALPHA %i\n",
-		quality, gatherAlpha);
+		"#define FXAA_GATHER4_ALPHA %i\n"
+		"#define FXAA_DISCARD %i\n",
+		quality, gatherAlpha, discard);
 
 	return result;
 }

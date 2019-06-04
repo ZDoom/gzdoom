@@ -7424,7 +7424,6 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	{
 		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
 
-		arrayvar.Free(build);
 		start = ExpEmit(build, REGT_POINTER);
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
@@ -7444,17 +7443,17 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		arraymemberbase->membervar = origmembervar;
 		arraymemberbase->AddressRequested = origaddrreq;
 		Array->ValueType = origvaluetype;
+
+		arrayvar.Free(build);
 	}
 	else if (Array->ExprType == EFX_ArrayElement && Array->isStaticArray())
 	{
-		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
+		bound = ExpEmit(build, REGT_INT);
+		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(myoffsetof(FArray, Count)));
 
 		arrayvar.Free(build);
 		start = ExpEmit(build, REGT_POINTER);
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
-
-		bound = ExpEmit(build, REGT_INT);
-		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(sizeof(void*)));
 
 		nestedarray = true;
 	}
@@ -7513,7 +7512,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
-		if (SizeAddr != ~0u)
+		if (SizeAddr != ~0u || nestedarray)
 		{
 			build->Emit(OP_BOUND_R, indexv.RegNum, bound.RegNum);
 			bound.Free(build);

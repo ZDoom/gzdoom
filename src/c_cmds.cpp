@@ -74,7 +74,7 @@ extern bool insave;
 
 CVAR (Bool, sv_cheats, false, CVAR_SERVERINFO | CVAR_LATCH)
 CVAR (Bool, sv_unlimited_pickup, false, CVAR_SERVERINFO)
-CVAR (Bool, cl_blockcheats, false, 0)
+CVAR (Int, cl_blockcheats, 0, 0)
 
 CCMD (toggleconsole)
 {
@@ -88,9 +88,9 @@ bool CheckCheatmode (bool printmsg)
 		if (printmsg) Printf ("sv_cheats must be true to enable this command.\n");
 		return true;
 	}
-	else if (cl_blockcheats)
+	else if (cl_blockcheats != 0)
 	{
-		if (printmsg) Printf ("cl_blockcheats is turned on and disabled this command.\n");
+		if (printmsg && cl_blockcheats == 1) Printf ("cl_blockcheats is turned on and disabled this command.\n");
 		return true;
 	}
 	else

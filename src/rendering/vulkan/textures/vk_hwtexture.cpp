@@ -374,5 +374,16 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 	mImage.View = viewbuilder.create(fb->device);
 	mImage.View->SetDebugName(name);
 
-	fb->GetPostprocess()->BlitCurrentToImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	if (fb->GetBuffers()->GetWidth() > 0 && fb->GetBuffers()->GetHeight() > 0)
+	{
+		fb->GetPostprocess()->BlitCurrentToImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
+	else
+	{
+		// hwrenderer asked image data from a frame buffer that was never written into. Let's give it that..
+		// (ideally the hwrenderer wouldn't do this, but the calling code is too complex for me to fix)
+		VkImageTransition transition;
+		transition.addImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
+		transition.execute(fb->GetTransferCommands());
+	}
 }

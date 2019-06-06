@@ -49,7 +49,7 @@ static void SetDoom2Wad()
 {
 	if (Doom2Wad == -1)
 	{
-		FString iwad = Wads.GetWadFullName(1);
+		FString iwad = Wads.GetWadFullName(Wads.GetIwadNum());
 		iwad.ToLower();
 		if (iwad.IndexOf("plutonia") >= 0) Doom2Wad = 1;
 		else if (iwad.IndexOf("tnt") >= 0) Doom2Wad = 2;

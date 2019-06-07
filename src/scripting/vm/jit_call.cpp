@@ -323,6 +323,28 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 		I_Error("Native direct member function calls not implemented\n");
 	}
 
+	if (target->ImplicitArgs > 0)
+	{
+		auto label = EmitThrowExceptionLabel(X_READ_NIL);
+
+		assert(ParamOpcodes.Size() > 0);
+		const VMOP *param = ParamOpcodes[0];
+		const int bc = param->i16u;
+		asmjit::X86Gp *reg = nullptr;
+
+		switch (param->a & REGT_TYPE)
+		{
+		case REGT_STRING:  reg = &regS[bc]; break;
+		case REGT_POINTER: reg = &regA[bc]; break;
+		default:
+			I_Error("Unexpected register type for self pointer\n");
+			break;
+		}
+		
+		cc.test(*reg, *reg);
+		cc.jz(label);
+	}
+
 	asmjit::CBNode *cursorBefore = cc.getCursor();
 	auto call = cc.call(imm_ptr(target->DirectNativeCall), CreateFuncSignature());
 	call->setInlineComment(target->PrintableName.GetChars());

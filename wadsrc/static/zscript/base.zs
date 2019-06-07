@@ -193,6 +193,14 @@ enum DrawTextureTags
 	DTA_Monospace,			// Strings only: Use a fixed distance between characters.
 };
 
+class Shape2DTransform : Object native
+{
+	native void Clear();
+	native void Rotate(double angle);
+	native void Scale(Vector2 scaleVec);
+	native void Translate(Vector2 translateVec);
+}
+
 class Shape2D : Object native
 {
 	enum EClearWhich
@@ -201,6 +209,8 @@ class Shape2D : Object native
 		C_Coords = 2,
 		C_Indices = 4,
 	};
+
+	native void SetTransform(Shape2DTransform transform);
 
 	native void Clear( int which = C_Verts|C_Coords|C_Indices );
 	native void PushVertex( Vector2 v );

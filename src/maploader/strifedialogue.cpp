@@ -510,8 +510,6 @@ void MapLoader::ParseReplies (const char *name, int pos, FStrifeDialogueReply **
 		{
 			FStringf label("$TXT_RPLY%d_%s_d%d_%s", j, name, pos, TokenFromString(rsp->Reply).GetChars());
 			reply->Reply = GStrings.exists(label.GetChars() + 1)? label : FString(rsp->Reply);
-
-			reply->Reply = label;
 		}
 		else
 		{

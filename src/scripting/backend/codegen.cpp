@@ -11358,6 +11358,9 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 					auto& registers = build->Registers[regType];
 					RegNum = registers.Get(RegCount);
 
+					// Check for reused registers and clean them if needed
+					bool useDirtyRegisters = false;
+
 					for (int reg = RegNum, end = RegNum + RegCount; reg < end; ++reg)
 					{
 						if (!registers.IsDirty(reg))
@@ -11365,7 +11368,7 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 							continue;
 						}
 
-						ScriptPosition.Message(MSG_DEBUGMSG, "Implicit initialization of variable %s\n", Name.GetChars());
+						useDirtyRegisters = true;
 
 						switch (regType)
 						{
@@ -11389,6 +11392,11 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 							assert(false);
 							break;
 						}
+					}
+
+					if (useDirtyRegisters)
+					{
+						ScriptPosition.Message(MSG_DEBUGMSG, "Implicit initialization of variable %s", Name.GetChars());
 					}
 				}
 				else

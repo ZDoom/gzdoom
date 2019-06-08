@@ -339,6 +339,8 @@ void MessagePump (const SDL_Event &sev)
 			event.data1 = x;
 			event.data2 = y;
 
+			screen->ScaleCoordsFromWindow(event.data1, event.data2);
+
 			event.type = EV_GUI_Event;
 			event.subtype = sev.type == SDL_MOUSEBUTTONDOWN ? EV_GUI_LButtonDown : EV_GUI_LButtonUp;
 			if (sev.button.button == SDL_BUTTON_X1)
@@ -357,23 +359,23 @@ void MessagePump (const SDL_Event &sev)
 		break;
 
 	case SDL_MOUSEMOTION:
-	{
-		event.data1 = sev.motion.x;
-		event.data2 = sev.motion.y;
+		if (GUICapture) {
+			event.data1 = sev.motion.x;
+			event.data2 = sev.motion.y;
 
-		screen->ScaleCoordsFromWindow(event.data1, event.data2);
+			screen->ScaleCoordsFromWindow(event.data1, event.data2);
 
-		event.type = EV_GUI_Event;
-		event.subtype = EV_GUI_MouseMove;
+			event.type = EV_GUI_Event;
+			event.subtype = EV_GUI_MouseMove;
 
-		SDL_Keymod kmod = SDL_GetModState();
-		event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
-		              ((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
-		              ((kmod & KMOD_ALT) ? GKM_ALT : 0);
+			SDL_Keymod kmod = SDL_GetModState();
+			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+			              ((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
+			              ((kmod & KMOD_ALT) ? GKM_ALT : 0);
 
-		D_PostEvent(&event);
-	}
-	break;
+			D_PostEvent(&event);
+		}
+		break;
 
 	case SDL_MOUSEWHEEL:
 		if (GUICapture)

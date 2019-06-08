@@ -342,12 +342,26 @@ void MessagePump (const SDL_Event &sev)
 			screen->ScaleCoordsFromWindow(event.data1, event.data2);
 
 			event.type = EV_GUI_Event;
-			event.subtype = sev.type == SDL_MOUSEBUTTONDOWN ? EV_GUI_LButtonDown : EV_GUI_LButtonUp;
-			if (sev.button.button == SDL_BUTTON_X1)
-				event.subtype += EV_GUI_BackButtonDown - EV_GUI_LButtonDown;
-			else if (sev.button.button == SDL_BUTTON_X2)
-				event.subtype += EV_GUI_FwdButtonDown - EV_GUI_LButtonDown;
-			else event.subtype += (sev.button.button - 1) * 3;
+			if (sev.type == SDL_MOUSEBUTTONDOWN)
+			{
+				switch(sev.button.button) {
+				case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonDown;    break;
+				case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonDown;    break;
+				case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonDown;    break;
+				case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonDown; break;
+				case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonDown;  break;
+				}
+			}
+			else
+			{
+				switch(sev.button.button) {
+				case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonUp;    break;
+				case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonUp;    break;
+				case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonUp;    break;
+				case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonUp; break;
+				case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonUp;  break;
+				}
+			}
 
 			SDL_Keymod kmod = SDL_GetModState();
 			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |

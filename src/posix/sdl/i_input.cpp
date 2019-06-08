@@ -306,7 +306,49 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
-		if (!GUICapture)
+		if (GUICapture)
+		{
+			if ((sev.button.button >= SDL_BUTTON_LEFT && sev.button.button <= SDL_BUTTON_X2))
+			{
+				int x, y;
+				SDL_GetMouseState (&x, &y);
+
+				event.data1 = x;
+				event.data2 = y;
+
+				screen->ScaleCoordsFromWindow(event.data1, event.data2);
+
+				event.type = EV_GUI_Event;
+				if (sev.type == SDL_MOUSEBUTTONDOWN)
+				{
+					switch(sev.button.button) {
+					case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonDown;    break;
+					case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonDown;    break;
+					case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonDown;    break;
+					case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonDown; break;
+					case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonDown;  break;
+					}
+				}
+				else
+				{
+					switch(sev.button.button) {
+					case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonUp;    break;
+					case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonUp;    break;
+					case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonUp;    break;
+					case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonUp; break;
+					case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonUp;  break;
+					}
+				}
+
+				SDL_Keymod kmod = SDL_GetModState();
+				event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+				              ((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
+				              ((kmod & KMOD_ALT) ? GKM_ALT : 0);
+
+				D_PostEvent(&event);
+			}
+		}
+		else
 		{
 			/* [GUT] The code that was here before was only tested on Gentoo with a singular mouse
 			 * and made some assumptions about SDL that you aren't supposed to make, leading to undefined behaviour
@@ -330,45 +372,6 @@ void MessagePump (const SDL_Event &sev)
 			{
 				D_PostEvent(&event);
 			}
-		}
-		else if ((sev.button.button >= SDL_BUTTON_LEFT && sev.button.button <= SDL_BUTTON_X2))
-		{
-			int x, y;
-			SDL_GetMouseState (&x, &y);
-
-			event.data1 = x;
-			event.data2 = y;
-
-			screen->ScaleCoordsFromWindow(event.data1, event.data2);
-
-			event.type = EV_GUI_Event;
-			if (sev.type == SDL_MOUSEBUTTONDOWN)
-			{
-				switch(sev.button.button) {
-				case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonDown;    break;
-				case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonDown;    break;
-				case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonDown;    break;
-				case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonDown; break;
-				case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonDown;  break;
-				}
-			}
-			else
-			{
-				switch(sev.button.button) {
-				case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonUp;    break;
-				case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonUp;    break;
-				case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonUp;    break;
-				case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonUp; break;
-				case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonUp;  break;
-				}
-			}
-
-			SDL_Keymod kmod = SDL_GetModState();
-			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
-				((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
-				((kmod & KMOD_ALT) ? GKM_ALT : 0);
-
-			D_PostEvent(&event);
 		}
 		break;
 
@@ -422,34 +425,7 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_KEYDOWN:
 	case SDL_KEYUP:
-		if (!GUICapture)
-		{
-			if (sev.key.repeat)
-			{
-				break;
-			}
-			
-			event.type = sev.type == SDL_KEYDOWN ? EV_KeyDown : EV_KeyUp;
-
-			// Try to look up our key mapped key for conversion to DirectInput.
-			// If that fails, then we'll do a lookup against the scan code,
-			// which may not return the right key, but at least the key should
-			// work in the game.
-			if (const uint8_t *dik = KeySymToDIK.CheckKey (sev.key.keysym.sym))
-				event.data1 = *dik;
-			else if (const uint8_t *dik = KeyScanToDIK.CheckKey (sev.key.keysym.scancode))
-				event.data1 = *dik;
-
-			if (event.data1)
-			{
-				if (sev.key.keysym.sym < 256)
-				{
-					event.data2 = sev.key.keysym.sym;
-				}
-				D_PostEvent (&event);
-			}
-		}
-		else
+		if (GUICapture)
 		{
 			event.type = EV_GUI_Event;
 			event.subtype = sev.type == SDL_KEYDOWN ? EV_GUI_KeyDown : EV_GUI_KeyUp;
@@ -498,6 +474,33 @@ void MessagePump (const SDL_Event &sev)
 			if (event.data1 < 128)
 			{
 				event.data1 = toupper(event.data1);
+				D_PostEvent (&event);
+			}
+		}
+		else
+		{
+			if (sev.key.repeat)
+			{
+				break;
+			}
+
+			event.type = sev.type == SDL_KEYDOWN ? EV_KeyDown : EV_KeyUp;
+
+			// Try to look up our key mapped key for conversion to DirectInput.
+			// If that fails, then we'll do a lookup against the scan code,
+			// which may not return the right key, but at least the key should
+			// work in the game.
+			if (const uint8_t *dik = KeySymToDIK.CheckKey (sev.key.keysym.sym))
+				event.data1 = *dik;
+			else if (const uint8_t *dik = KeyScanToDIK.CheckKey (sev.key.keysym.scancode))
+				event.data1 = *dik;
+
+			if (event.data1)
+			{
+				if (sev.key.keysym.sym < 256)
+				{
+					event.data2 = sev.key.keysym.sym;
+				}
 				D_PostEvent (&event);
 			}
 		}

@@ -307,7 +307,7 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
 	case SDL_MOUSEMOTION:
-		if (!GUICapture || sev.button.button == 4 || sev.button.button == 5)
+		if (!GUICapture || (sev.type != SDL_MOUSEMOTION && (sev.button.button == 4 || sev.button.button == 5)))
 		{
 			if(sev.type != SDL_MOUSEMOTION)
 			{

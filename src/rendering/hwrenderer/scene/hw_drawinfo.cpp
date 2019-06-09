@@ -468,7 +468,6 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 
 	state.SetDepthMask(true);
 
-	screen->mLights->BindBase();
 	state.EnableFog(true);
 	state.SetRenderStyle(STYLE_Source);
 

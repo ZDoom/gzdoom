@@ -204,12 +204,9 @@ void VKVertexBuffer::SetFormat(int numBindingPoints, int numAttributes, size_t s
 
 /////////////////////////////////////////////////////////////////////////////
 
-void VKDataBuffer::BindRange(size_t start, size_t length)
+
+void VKDataBuffer::BindRange(FRenderState* state, size_t start, size_t length)
 {
-	GetVulkanFrameBuffer()->GetRenderState()->Bind(bindingpoint, (uint32_t)start);
+	static_cast<VkRenderState*>(state)->Bind(bindingpoint, (uint32_t)start);
 }
 
-void VKDataBuffer::BindBase()
-{
-	GetVulkanFrameBuffer()->GetRenderState()->Bind(bindingpoint, 0);
-}

@@ -67,7 +67,7 @@ int GLViewpointBuffer::Bind(FRenderState &di, unsigned int index)
 	if (index != mLastMappedIndex)
 	{
 		mLastMappedIndex = index;
-		mBuffer->BindRange(index * mBlockAlign, mBlockAlign);
+		mBuffer->BindRange(&di, index * mBlockAlign, mBlockAlign);
 		di.EnableClipDistance(0, mClipPlaneInfo[index]);
 	}
 	return index;

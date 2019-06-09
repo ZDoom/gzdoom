@@ -767,6 +767,11 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 
 static bool P_CheckV4Nodes(MapData *map)
 {
+	if (map->Size(ML_NODES) == 0)
+	{
+		return false;
+	}
+
 	char header[8];
 
 	map->Read(ML_NODES, header, 8);

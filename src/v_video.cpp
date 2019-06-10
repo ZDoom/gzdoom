@@ -69,6 +69,7 @@
 #include "version.h"
 #include "g_levellocals.h"
 #include "am_map.h"
+#include "atterm.h"
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)

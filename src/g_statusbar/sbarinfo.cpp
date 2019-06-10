@@ -49,6 +49,7 @@
 #include "vm.h"
 #include "i_system.h"
 #include "utf8.h"
+#include "atterm.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum

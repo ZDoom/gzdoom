@@ -75,6 +75,7 @@
 #include "i_system.h"
 #include "v_video.h"
 #include "fragglescript/t_script.h"
+#include "atterm.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 

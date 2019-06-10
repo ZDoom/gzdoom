@@ -74,6 +74,7 @@
 #include "vm.h"
 #include "i_system.h"
 #include "gstrings.h"
+#include "atterm.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -153,65 +154,9 @@ DYN_WIN32_SYM(SHGetKnownFolderPath);
 
 static const WCHAR WinClassName[] = WGAMENAME "MainWindow";
 static HMODULE hwtsapi32;		// handle to wtsapi32.dll
-static void (*TermFuncs[MAX_TERMS])(void);
-static int NumTerms;
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// atterm
-//
-// Our own atexit because atexit can be problematic under Linux, though I
-// forget the circumstances that cause trouble.
-//
-//==========================================================================
-
-void atterm (void (*func)(void))
-{
-	// Make sure this function wasn't already registered.
-	for (int i = 0; i < NumTerms; ++i)
-	{
-		if (TermFuncs[i] == func)
-		{
-			return;
-		}
-	}
-	if (NumTerms == MAX_TERMS)
-	{
-		func ();
-		I_FatalError ("Too many exit functions registered.\nIncrease MAX_TERMS in i_main.cpp");
-	}
-	TermFuncs[NumTerms++] = func;
-}
-
-//==========================================================================
-//
-// popterm
-//
-// Removes the most recently register atterm function.
-//
-//==========================================================================
-
-void popterm ()
-{
-	if (NumTerms)
-		NumTerms--;
-}
-
-//==========================================================================
-//
-// call_terms
-//
-//==========================================================================
-
-static void call_terms (void)
-{
-	while (NumTerms > 0)
-	{
-		TermFuncs[--NumTerms]();
-	}
-}
 
 #ifdef _MSC_VER
 static int NewFailure (size_t size)

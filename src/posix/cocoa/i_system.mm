@@ -48,6 +48,7 @@
 #include "v_text.h"
 #include "x86.h"
 #include "cmdlib.h"
+#include "atterm.h"
 
 
 EXTERN_CVAR(String, language)

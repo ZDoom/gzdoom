@@ -1,9 +1,10 @@
 /*
-** hardware.cpp
-** Somewhat OS-independant interface to the screen, mouse, keyboard, and stick
+** attern.cpp
+** Termination handling
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2006 Randy Heit
+** Copyright 1998-2007 Randy Heit
+** Copyright 2019 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,57 +33,65 @@
 **
 */
 
-#include <SDL.h>
-#include <signal.h>
 
-#include "i_system.h"
-#include "hardware.h"
-#include "c_dispatch.h"
-#include "v_text.h"
-#include "doomstat.h"
-#include "m_argv.h"
-#include "doomerrors.h"
-#include "swrenderer/r_swrenderer.h"
+#include <algorithm>
+#include "tarray.h"
 #include "atterm.h"
 
-IVideo *Video;
-
-void I_RestartRenderer();
+static TArray<std::pair<void (*)(void), const char *>> TermFuncs;
 
 
-void I_ShutdownGraphics ()
+//==========================================================================
+//
+// atterm
+//
+// Our own atexit because atexit can be problematic under Linux, though I
+// forget the circumstances that cause trouble.
+//
+//==========================================================================
+
+void addterm(void (*func)(), const char *name)
 {
-	if (screen)
-	{
-		DFrameBuffer *s = screen;
-		screen = NULL;
-		delete s;
-	}
-	if (Video)
-		delete Video, Video = NULL;
+	// Make sure this function wasn't already registered.
 
-	SDL_QuitSubSystem (SDL_INIT_VIDEO);
+	for (auto &term : TermFuncs)
+	{
+		if (term.first == func)
+		{
+			return;
+		}
+	}
+	TermFuncs.Push(std::make_pair(func, name));
 }
 
-void I_InitGraphics ()
+//==========================================================================
+//
+// call_terms
+//
+//==========================================================================
+
+void call_terms()
 {
-#ifdef __APPLE__
-	SDL_SetHint(SDL_HINT_VIDEO_MAC_FULLSCREEN_SPACES, "0");
-#endif // __APPLE__
-
-	if (SDL_InitSubSystem (SDL_INIT_VIDEO) < 0)
+	for(int i = TermFuncs.Size()-1; i >= 0; i--)
 	{
-		I_FatalError ("Could not initialize SDL video:\n%s\n", SDL_GetError());
-		return;
+		TermFuncs[i].first();
 	}
-
-	Printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
-
-	extern IVideo *gl_CreateVideo();
-	Video = gl_CreateVideo();
-	
-	if (Video == NULL)
-		I_FatalError ("Failed to initialize display");
-
-	atterm (I_ShutdownGraphics);
+	TermFuncs.Clear();
 }
+
+//==========================================================================
+//
+// popterm
+//
+// Removes the most recently register atterm function.
+//
+//==========================================================================
+
+void popterm()
+{
+	if (TermFuncs.Size() > 0)
+	{
+		TermFuncs.Pop();
+	}
+}
+

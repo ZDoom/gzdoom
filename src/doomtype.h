@@ -302,6 +302,11 @@ inline float DEG2RAD(float deg)
 	return deg * float(M_PI / 180.0);
 }
 
+inline double DEG2RAD(double deg)
+{
+	return deg * (M_PI / 180.0);
+}
+
 inline float RAD2DEG(float deg)
 {
 	return deg * float(180. / M_PI);

@@ -54,6 +54,7 @@
 #include "v_text.h"
 #include "version.h"
 #include "doomerrors.h"
+#include "atterm.h"
 
 #include "gl/system/gl_framebuffer.h"
 #include "vulkan/system/vk_framebuffer.h"

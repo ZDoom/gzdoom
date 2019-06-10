@@ -92,6 +92,7 @@
 #include "doomerrors.h"
 #include "i_system.h"
 #include "g_levellocals.h"
+#include "atterm.h"
 
 // Prototypes and declarations.
 #include "rawinput.h"

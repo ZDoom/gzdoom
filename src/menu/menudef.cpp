@@ -50,6 +50,7 @@
 #include "gstrings.h"
 #include "teaminfo.h"
 #include "r_data/sprites.h"
+#include "atterm.h"
 
 
 void ClearSaveGames();

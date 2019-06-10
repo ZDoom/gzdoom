@@ -36,9 +36,9 @@
 
 #include "doomerrors.h"
 #include "vm.h"
+#include "atterm.h"
 
 // Import some functions from i_main.mm
-void call_terms();
 void Mac_I_FatalError(const char* const message);
 void OriginalMainTry(int argc, char** argv);
 

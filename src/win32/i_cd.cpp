@@ -46,6 +46,7 @@
 
 #include "i_cd.h"
 #include "helperthread.h"
+#include "atterm.h"
 
 extern HWND Window;
 extern HINSTANCE g_hInst;

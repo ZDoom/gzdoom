@@ -55,7 +55,7 @@ void I_PolyPresentDeinit();
 #else
 void I_PolyPresentInit() { }
 uint8_t *I_PolyPresentLock(int w, int h, int &pitch) { pitch = 0; return nullptr; }
-void I_PolyPresentUnlock() { }
+void I_PolyPresentUnlock(int x, int y, int w, int h) { }
 void I_PolyPresentDeinit() { }
 #endif
 

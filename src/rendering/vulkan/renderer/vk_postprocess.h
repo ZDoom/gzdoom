@@ -88,6 +88,7 @@ class VkPPTexture : public PPTextureBackend
 {
 public:
 	VkPPTexture(PPTexture *texture);
+	~VkPPTexture();
 
 	VkTextureImage TexImage;
 	std::unique_ptr<VulkanBuffer> Staging;

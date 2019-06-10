@@ -382,8 +382,25 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 	{
 		// hwrenderer asked image data from a frame buffer that was never written into. Let's give it that..
 		// (ideally the hwrenderer wouldn't do this, but the calling code is too complex for me to fix)
-		VkImageTransition transition;
-		transition.addImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, true);
-		transition.execute(fb->GetTransferCommands());
+
+		VkImageTransition transition0;
+		transition0.addImage(&mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+		transition0.execute(fb->GetTransferCommands());
+
+		VkImageSubresourceRange range = {};
+		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.layerCount = 1;
+		range.levelCount = 1;
+
+		VkClearColorValue value = {};
+		value.float32[0] = 0.0f;
+		value.float32[1] = 0.0f;
+		value.float32[2] = 0.0f;
+		value.float32[3] = 1.0f;
+		fb->GetTransferCommands()->clearColorImage(mImage.Image->image, mImage.Layout, &value, 1, &range);
+
+		VkImageTransition transition1;
+		transition1.addImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+		transition1.execute(fb->GetTransferCommands());
 	}
 }

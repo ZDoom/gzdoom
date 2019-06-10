@@ -716,11 +716,12 @@ void VulkanFrameBuffer::UpdatePalette()
 
 FTexture *VulkanFrameBuffer::WipeStartScreen()
 {
-	const auto &viewport = screen->mScreenViewport;
-	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
+	SetViewportRects(nullptr);
+
+	auto tex = new FWrapperTexture(mScreenViewport.width, mScreenViewport.height, 1);
 	auto systex = static_cast<VkHardwareTexture*>(tex->GetSystemTexture());
 
-	systex->CreateWipeTexture(viewport.width, viewport.height, "WipeStartScreen");
+	systex->CreateWipeTexture(mScreenViewport.width, mScreenViewport.height, "WipeStartScreen");
 
 	return tex;
 }
@@ -731,11 +732,10 @@ FTexture *VulkanFrameBuffer::WipeEndScreen()
 	Draw2D();
 	Clear2D();
 
-	const auto &viewport = screen->mScreenViewport;
-	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
+	auto tex = new FWrapperTexture(mScreenViewport.width, mScreenViewport.height, 1);
 	auto systex = static_cast<VkHardwareTexture*>(tex->GetSystemTexture());
 
-	systex->CreateWipeTexture(viewport.width, viewport.height, "WipeEndScreen");
+	systex->CreateWipeTexture(mScreenViewport.width, mScreenViewport.height, "WipeEndScreen");
 
 	return tex;
 }

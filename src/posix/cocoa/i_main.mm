@@ -33,6 +33,7 @@
 
 #include "i_common.h"
 #include "s_sound.h"
+#include "atterm.h"
 
 #include <sys/sysctl.h>
 
@@ -60,60 +61,6 @@ EXTERN_CVAR(Bool, vid_vsync    )
 
 
 // ---------------------------------------------------------------------------
-
-namespace
-{
-
-// The maximum number of functions that can be registered with atterm.
-const size_t MAX_TERMS = 64;
-
-void      (*TermFuncs[MAX_TERMS])();
-const char *TermNames[MAX_TERMS];
-size_t      NumTerms;
-
-} // unnamed namespace
-
-// Expose this for i_main_except.cpp
-void call_terms()
-{
-	while (NumTerms > 0)
-	{
-		TermFuncs[--NumTerms]();
-	}
-}
-
-
-void addterm(void (*func)(), const char *name)
-{
-	// Make sure this function wasn't already registered.
-
-	for (size_t i = 0; i < NumTerms; ++i)
-	{
-		if (TermFuncs[i] == func)
-		{
-			return;
-		}
-	}
-
-	if (NumTerms == MAX_TERMS)
-	{
-		func();
-		I_FatalError("Too many exit functions registered.");
-	}
-
-	TermNames[NumTerms] = name;
-	TermFuncs[NumTerms] = func;
-
-	++NumTerms;
-}
-
-void popterm()
-{
-	if (NumTerms)
-	{
-		--NumTerms;
-	}
-}
 
 
 void Mac_I_FatalError(const char* const message)

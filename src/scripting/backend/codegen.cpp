@@ -82,6 +82,8 @@ static const FLOP FxFlops[] =
 	{ NAME_CosH,	FLOP_COSH,		[](double v) { return g_cosh(v); } },
 	{ NAME_SinH,	FLOP_SINH,		[](double v) { return g_sinh(v); } },
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
+
+	{ NAME_Round,	FLOP_ROUND,		[](double v) { return round(v);  } },
 };
 
 
@@ -4835,7 +4837,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			// If this is a local variable we need another register for the result.
 			if (trueop.Fixed)
 			{
-				out = ExpEmit(build, trueop.RegType);
+				out = ExpEmit(build, trueop.RegType, trueop.RegCount);
 				build->Emit(truex->ValueType->GetMoveOp(), out.RegNum, trueop.RegNum, 0);
 			}
 			else out = trueop;
@@ -6127,18 +6129,15 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			{
 				if (sym->mVersion <= ctx.Version)
 				{
-					if (!(ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) == 0)
-					{
-						ScriptPosition.Message(MSG_WARNING, "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
-					}
-					else
-					{
-						// Allow use of deprecated symbols in deprecated functions of the internal code. This is meant to allow deprecated code to remain as it was, 
-						// even if it depends on some deprecated symbol. 
-						// The main motivation here is to keep the deprecated static functions accessing the global level variable as they were.
-						// Print these only if debug output is active and at the highest verbosity level.
-						ScriptPosition.Message(MSG_DEBUGMSG, TEXTCOLOR_BLUE "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
-					}
+					// Allow use of deprecated symbols in deprecated functions of the internal code. This is meant to allow deprecated code to remain as it was, 
+					// even if it depends on some deprecated symbol. 
+					// The main motivation here is to keep the deprecated static functions accessing the global level variable as they were.
+					// Print these only if debug output is active and at the highest verbosity level.
+					const bool internal = (ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) == 0;
+
+					ScriptPosition.Message(internal ? MSG_DEBUGMSG : MSG_WARNING, 
+						"%sAccessing deprecated global variable %s - deprecated since %d.%d.%d", internal ? TEXTCOLOR_BLUE : "",
+						sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
 				}
 			}
 			
@@ -7425,7 +7424,6 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	{
 		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
 
-		arrayvar.Free(build);
 		start = ExpEmit(build, REGT_POINTER);
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
@@ -7445,17 +7443,17 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 		arraymemberbase->membervar = origmembervar;
 		arraymemberbase->AddressRequested = origaddrreq;
 		Array->ValueType = origvaluetype;
+
+		arrayvar.Free(build);
 	}
 	else if (Array->ExprType == EFX_ArrayElement && Array->isStaticArray())
 	{
-		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
+		bound = ExpEmit(build, REGT_INT);
+		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(myoffsetof(FArray, Count)));
 
 		arrayvar.Free(build);
 		start = ExpEmit(build, REGT_POINTER);
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
-
-		bound = ExpEmit(build, REGT_INT);
-		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(sizeof(void*)));
 
 		nestedarray = true;
 	}
@@ -7514,7 +7512,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
-		if (SizeAddr != ~0u)
+		if (SizeAddr != ~0u || nestedarray)
 		{
 			build->Emit(OP_BOUND_R, indexv.RegNum, bound.RegNum);
 			bound.Free(build);
@@ -11352,8 +11350,59 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 		{
 			if (RegNum == -1)
 			{
-				if (!(VarFlags & VARF_Out)) RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
-				else RegNum = build->Registers[REGT_POINTER].Get(1);
+				if (!(VarFlags & VARF_Out))
+				{
+					const int regType = ValueType->GetRegType();
+					assert(regType <= REGT_TYPE);
+
+					auto& registers = build->Registers[regType];
+					RegNum = registers.Get(RegCount);
+
+					// Check for reused registers and clean them if needed
+					bool useDirtyRegisters = false;
+
+					for (int reg = RegNum, end = RegNum + RegCount; reg < end; ++reg)
+					{
+						if (!registers.IsDirty(reg))
+						{
+							continue;
+						}
+
+						useDirtyRegisters = true;
+
+						switch (regType)
+						{
+						case REGT_INT:
+							build->Emit(OP_LI, reg, 0, 0);
+							break;
+
+						case REGT_FLOAT:
+							build->Emit(OP_LKF, reg, build->GetConstantFloat(0.0));
+							break;
+
+						case REGT_STRING:
+							build->Emit(OP_LKS, reg, build->GetConstantString(nullptr));
+							break;
+
+						case REGT_POINTER:
+							build->Emit(OP_LKP, reg, build->GetConstantAddress(nullptr));
+							break;
+
+						default:
+							assert(false);
+							break;
+						}
+					}
+
+					if (useDirtyRegisters)
+					{
+						ScriptPosition.Message(MSG_DEBUGMSG, "Implicit initialization of variable %s", Name.GetChars());
+					}
+				}
+				else
+				{
+					RegNum = build->Registers[REGT_POINTER].Get(1);
+				}
 			}
 		}
 		else

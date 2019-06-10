@@ -306,54 +306,63 @@ void MessagePump (const SDL_Event &sev)
 
 	case SDL_MOUSEBUTTONDOWN:
 	case SDL_MOUSEBUTTONUP:
-	case SDL_MOUSEMOTION:
-		if (!GUICapture || sev.button.button == 4 || sev.button.button == 5)
+		if (!GUICapture)
 		{
-			if(sev.type != SDL_MOUSEMOTION)
+			event.type = sev.type == SDL_MOUSEBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
+
+			switch (sev.button.button)
 			{
-				event.type = sev.type == SDL_MOUSEBUTTONDOWN ? EV_KeyDown : EV_KeyUp;
-				/* These button mappings work with my Gentoo system using the
-				* evdev driver and a Logitech MX510 mouse. Whether or not they
-				* carry over to other Linux systems, I have no idea, but I sure
-				* hope so. (Though buttons 11 and 12 are kind of useless, since
-				* they also trigger buttons 4 and 5.)
-				*/
-				switch (sev.button.button)
-				{
-				case SDL_BUTTON_LEFT:	event.data1 = KEY_MOUSE1;		break;
-				case SDL_BUTTON_MIDDLE:	event.data1 = KEY_MOUSE3;		break;
-				case SDL_BUTTON_RIGHT:	event.data1 = KEY_MOUSE2;		break;
-				case 8:		event.data1 = KEY_MOUSE4;		break; // For whatever reason my side mouse buttons are here.
-				case 9:		event.data1 = KEY_MOUSE5;		break;
-				case SDL_BUTTON_X1:		event.data1 = KEY_MOUSE6;		break; // And these don't exist
-				case SDL_BUTTON_X2:		event.data1 = KEY_MOUSE7;		break;
-				case 6:		event.data1 = KEY_MOUSE8;		break;
-				default:	printf("SDL mouse button %s %d\n",
-					sev.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", sev.button.button);	break;
-				}
-				if (event.data1 != 0)
-				{
-					D_PostEvent(&event);
-				}
+			case SDL_BUTTON_LEFT:	event.data1 = KEY_MOUSE1;		break;
+			case SDL_BUTTON_MIDDLE:	event.data1 = KEY_MOUSE3;		break;
+			case SDL_BUTTON_RIGHT:	event.data1 = KEY_MOUSE2;		break;
+			case SDL_BUTTON_X1:		event.data1 = KEY_MOUSE4;		break;
+			case SDL_BUTTON_X2:		event.data1 = KEY_MOUSE5;		break;
+			case 6:		event.data1 = KEY_MOUSE6;		break;
+			case 7:		event.data1 = KEY_MOUSE7;		break;
+			case 8:		event.data1 = KEY_MOUSE8;		break;
+			default:	printf("SDL mouse button %s %d\n",
+				sev.type == SDL_MOUSEBUTTONDOWN ? "down" : "up", sev.button.button);	break;
+			}
+
+			if (event.data1 != 0)
+			{
+				D_PostEvent(&event);
 			}
 		}
-		else if (sev.type == SDL_MOUSEMOTION || (sev.button.button >= 1 && sev.button.button <= 3))
+		else if ((sev.button.button >= SDL_BUTTON_LEFT && sev.button.button <= SDL_BUTTON_X2))
 		{
 			int x, y;
-			SDL_GetMouseState (&x, &y);
+			SDL_GetMouseState(&x, &y);
 
+			event.type = EV_GUI_Event;
 			event.data1 = x;
 			event.data2 = y;
 
 			screen->ScaleCoordsFromWindow(event.data1, event.data2);
 
-			event.type = EV_GUI_Event;
-			if(sev.type == SDL_MOUSEMOTION)
-				event.subtype = EV_GUI_MouseMove;
+			if (sev.type == SDL_MOUSEBUTTONDOWN)
+			{
+				switch(sev.button.button)
+				{
+				case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonDown;    break;
+				case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonDown;    break;
+				case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonDown;    break;
+				case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonDown; break;
+				case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonDown;  break;
+				default: assert(false); event.subtype = EV_GUI_None;           break;
+				}
+			}
 			else
 			{
-				event.subtype = sev.type == SDL_MOUSEBUTTONDOWN ? EV_GUI_LButtonDown : EV_GUI_LButtonUp;
-				event.subtype += (sev.button.button - 1) * 3;
+				switch(sev.button.button)
+				{
+				case SDL_BUTTON_LEFT:   event.subtype = EV_GUI_LButtonUp;    break;
+				case SDL_BUTTON_MIDDLE: event.subtype = EV_GUI_MButtonUp;    break;
+				case SDL_BUTTON_RIGHT:  event.subtype = EV_GUI_RButtonUp;    break;
+				case SDL_BUTTON_X1:     event.subtype = EV_GUI_BackButtonUp; break;
+				case SDL_BUTTON_X2:     event.subtype = EV_GUI_FwdButtonUp;  break;
+				default: assert(false); event.subtype = EV_GUI_None;         break;
+				}
 			}
 
 			SDL_Keymod kmod = SDL_GetModState();
@@ -365,15 +374,41 @@ void MessagePump (const SDL_Event &sev)
 		}
 		break;
 
+	case SDL_MOUSEMOTION:
+		if (GUICapture)
+		{
+			event.data1 = sev.motion.x;
+			event.data2 = sev.motion.y;
+
+			screen->ScaleCoordsFromWindow(event.data1, event.data2);
+
+			event.type = EV_GUI_Event;
+			event.subtype = EV_GUI_MouseMove;
+
+			SDL_Keymod kmod = SDL_GetModState();
+			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
+			              ((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
+			              ((kmod & KMOD_ALT) ? GKM_ALT : 0);
+
+			D_PostEvent(&event);
+		}
+		break;
+
 	case SDL_MOUSEWHEEL:
 		if (GUICapture)
 		{
 			event.type = EV_GUI_Event;
-			event.subtype = sev.wheel.y > 0 ? EV_GUI_WheelUp : EV_GUI_WheelDown;
+
+			if (sev.wheel.y == 0)
+				event.subtype = sev.wheel.x > 0 ? EV_GUI_WheelRight : EV_GUI_WheelLeft;
+			else
+				event.subtype = sev.wheel.y > 0 ? EV_GUI_WheelUp : EV_GUI_WheelDown;
+
 			SDL_Keymod kmod = SDL_GetModState();
 			event.data3 = ((kmod & KMOD_SHIFT) ? GKM_SHIFT : 0) |
 				((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
 				((kmod & KMOD_ALT) ? GKM_ALT : 0);
+
 			D_PostEvent (&event);
 		}
 		else

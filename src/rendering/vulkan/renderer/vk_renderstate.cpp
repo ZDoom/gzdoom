@@ -528,11 +528,11 @@ void VkRenderState::EnableDrawBuffers(int count)
 	}
 }
 
-void VkRenderState::SetRenderTarget(VulkanImageView *view, VulkanImageView *depthStencilView, int width, int height, VkFormat format, VkSampleCountFlagBits samples)
+void VkRenderState::SetRenderTarget(VkTextureImage *image, VulkanImageView *depthStencilView, int width, int height, VkFormat format, VkSampleCountFlagBits samples)
 {
 	EndRenderPass();
 
-	mRenderTarget.View = view;
+	mRenderTarget.Image = image;
 	mRenderTarget.DepthStencil = depthStencilView;
 	mRenderTarget.Width = width;
 	mRenderTarget.Height = height;
@@ -552,14 +552,14 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 
 	mPassSetup = fb->GetRenderPassManager()->GetRenderPass(key);
 
-	auto &framebuffer = mPassSetup->Framebuffer[mRenderTarget.View->view];
+	auto &framebuffer = mRenderTarget.Image->RSFramebuffers[key];
 	if (!framebuffer)
 	{
 		auto buffers = fb->GetBuffers();
 		FramebufferBuilder builder;
 		builder.setRenderPass(mPassSetup->GetRenderPass(0));
 		builder.setSize(mRenderTarget.Width, mRenderTarget.Height);
-		builder.addAttachment(mRenderTarget.View);
+		builder.addAttachment(mRenderTarget.Image->View.get());
 		if (key.DrawBuffers > 1)
 			builder.addAttachment(buffers->SceneFog.View.get());
 		if (key.DrawBuffers > 2)

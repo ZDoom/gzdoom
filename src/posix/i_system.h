@@ -89,10 +89,6 @@ void I_Quit (void);
 
 void I_Tactile (int on, int off, int total);
 
-void addterm (void (*func)(void), const char *name);
-#define atterm(t) addterm (t, #t)
-void popterm ();
-
 void I_DebugPrint (const char *cp);
 
 // Print a console string

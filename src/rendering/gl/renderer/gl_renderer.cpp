@@ -58,6 +58,7 @@
 #include "r_videoscale.h"
 #include "r_data/models/models.h"
 #include "gl/renderer/gl_postprocessstate.h"
+#include "gl/system/gl_buffers.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
@@ -191,12 +192,17 @@ void FGLRenderer::UpdateShadowMap()
 
 		FGLPostProcessState savedState;
 
+		static_cast<GLDataBuffer*>(screen->mShadowMap.mLightList)->BindBase();
+		static_cast<GLDataBuffer*>(screen->mShadowMap.mNodesBuffer)->BindBase();
+		static_cast<GLDataBuffer*>(screen->mShadowMap.mLinesBuffer)->BindBase();
+
 		mBuffers->BindShadowMapFB();
 
 		mShadowMapShader->Bind();
 		mShadowMapShader->Uniforms->ShadowmapQuality = gl_shadowmap_quality;
 		mShadowMapShader->Uniforms->NodesCount = screen->mShadowMap.NodesCount();
-		mShadowMapShader->Uniforms.Set();
+		mShadowMapShader->Uniforms.SetData();
+		static_cast<GLDataBuffer*>(mShadowMapShader->Uniforms.GetBuffer())->BindBase();
 
 		glViewport(0, 0, gl_shadowmap_quality, 1024);
 		RenderScreenQuad();

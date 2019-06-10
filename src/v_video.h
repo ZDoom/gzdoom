@@ -57,7 +57,7 @@ class IIndexBuffer;
 class IVertexBuffer;
 class IDataBuffer;
 class FFlatVertexBuffer;
-class GLViewpointBuffer;
+class HWViewpointBuffer;
 class FLightBuffer;
 struct HWDrawInfo;
 
@@ -375,11 +375,11 @@ public:
 	int stencilValue = 0;						// Global stencil test value
 	unsigned int uniformblockalignment = 256;	// Hardware dependent uniform buffer alignment.
 	unsigned int maxuniformblock = 65536;
-	const char *gl_vendorstring;				// On OpenGL (not Vulkan) we have to account for some issues with Intel.
+	const char *vendorstring;					// We have to account for some issues with particular vendors.
 	FPortalSceneState *mPortalState;			// global portal state.
 	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
-	GLViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
+	HWViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
 	IShadowMap mShadowMap;
 

@@ -50,6 +50,7 @@
 #include "gstrings.h"
 #include "teaminfo.h"
 #include "r_data/sprites.h"
+#include "atterm.h"
 
 
 void ClearSaveGames();
@@ -135,6 +136,7 @@ DEFINE_ACTION_FUNCTION(FOptionValues, GetText)
 
 void DeinitMenus()
 {
+	M_ClearMenus();
 	{
 		FOptionMap::Iterator it(OptionValues);
 
@@ -148,7 +150,6 @@ void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
-	CurrentMenu = nullptr;
 	savegameManager.ClearSaveGames();
 }
 

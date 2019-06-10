@@ -51,6 +51,7 @@
 #include "doomerrors.h"
 #include "i_system.h"
 #include "swrenderer/r_swrenderer.h"
+#include "atterm.h"
 
 EXTERN_CVAR(Int, vid_enablevulkan)
 

@@ -72,8 +72,10 @@ void VkHardwareTexture::Reset()
 		auto &deleteList = fb->FrameDeleteList;
 		if (mImage.Image) deleteList.Images.push_back(std::move(mImage.Image));
 		if (mImage.View) deleteList.ImageViews.push_back(std::move(mImage.View));
+		for (auto &it : mImage.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
 		if (mDepthStencil.Image) deleteList.Images.push_back(std::move(mDepthStencil.Image));
 		if (mDepthStencil.View) deleteList.ImageViews.push_back(std::move(mDepthStencil.View));
+		for (auto &it : mDepthStencil.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
 		mImage.reset();
 		mDepthStencil.reset();
 	}
@@ -374,5 +376,33 @@ void VkHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 	mImage.View = viewbuilder.create(fb->device);
 	mImage.View->SetDebugName(name);
 
-	fb->GetPostprocess()->BlitCurrentToImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	if (fb->GetBuffers()->GetWidth() > 0 && fb->GetBuffers()->GetHeight() > 0)
+	{
+		fb->GetPostprocess()->BlitCurrentToImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
+	else
+	{
+		// hwrenderer asked image data from a frame buffer that was never written into. Let's give it that..
+		// (ideally the hwrenderer wouldn't do this, but the calling code is too complex for me to fix)
+
+		VkImageTransition transition0;
+		transition0.addImage(&mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true);
+		transition0.execute(fb->GetTransferCommands());
+
+		VkImageSubresourceRange range = {};
+		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.layerCount = 1;
+		range.levelCount = 1;
+
+		VkClearColorValue value = {};
+		value.float32[0] = 0.0f;
+		value.float32[1] = 0.0f;
+		value.float32[2] = 0.0f;
+		value.float32[3] = 1.0f;
+		fb->GetTransferCommands()->clearColorImage(mImage.Image->image, mImage.Layout, &value, 1, &range);
+
+		VkImageTransition transition1;
+		transition1.addImage(&mImage, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, false);
+		transition1.execute(fb->GetTransferCommands());
+	}
 }

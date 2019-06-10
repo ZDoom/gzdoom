@@ -802,7 +802,9 @@ void DBaseStatusBar::CallTick()
 void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer)
 {
 	DHUDMessageBase *old = NULL;
-	TObjPtr<DHUDMessageBase *>*prev;
+	DObject* pointing;
+	TObjPtr<DHUDMessageBase *>*prevp;
+	DHUDMessageBase* prev;
 
 	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
@@ -816,20 +818,25 @@ void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer
 		layer = HUDMSGLayer_Default;
 	}
 
-	prev = &Messages[layer];
+	pointing = this;
+	prevp = &Messages[layer];
+	prev = *prevp;
 
 	// The ID serves as a priority, where lower numbers appear in front of
 	// higher numbers. (i.e. The list is sorted in descending order, since
 	// it gets drawn back to front.)
-	while (*prev != NULL && (*prev)->SBarID > id)
+	while (prev != NULL && prev->SBarID > id)
 	{
-		prev = &(*prev)->Next;
+		pointing = prev;
+		prevp = &prev->Next;
+		prev = *prevp;
 	}
 
-	msg->Next = *prev;
+	msg->Next = prev;
 	msg->SBarID = id;
-	*prev = msg;
-	GC::WriteBarrier(msg);
+	*prevp = msg;
+	GC::WriteBarrier(msg, prev);
+	GC::WriteBarrier(pointing, msg);
 }
 
 //---------------------------------------------------------------------------
@@ -843,15 +850,18 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *probe = Messages[i];
+		DObject* pointing = this;
 		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe != msg)
 		{
+			pointing = probe;
 			prev = &probe->Next;
 			probe = probe->Next;
 		}
 		if (probe != NULL)
 		{
+			GC::WriteBarrier(pointing, probe->Next);
 			*prev = probe->Next;
 			probe->Next = nullptr;
 			return probe;
@@ -864,16 +874,19 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 {
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
+		DObject* pointing = this;
 		DHUDMessageBase *probe = Messages[i];
 		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe->SBarID != id)
 		{
+			pointing = probe;
 			prev = &probe->Next;
 			probe = probe->Next;
 		}
 		if (probe != NULL)
 		{
+			GC::WriteBarrier(pointing, probe->Next);
 			*prev = probe->Next;
 			probe->Next = nullptr;
 			return probe;

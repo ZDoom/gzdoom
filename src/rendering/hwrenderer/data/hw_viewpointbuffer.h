@@ -5,7 +5,7 @@
 struct HWViewpointUniforms;
 class FRenderState;
 
-class GLViewpointBuffer
+class HWViewpointBuffer
 {
 	IDataBuffer *mBuffer;
 
@@ -24,8 +24,8 @@ class GLViewpointBuffer
 
 public:
 
-	GLViewpointBuffer();
-	~GLViewpointBuffer();
+	HWViewpointBuffer();
+	~HWViewpointBuffer();
 	void Clear();
 	int Bind(FRenderState &di, unsigned int index);
 	void Set2D(FRenderState &di, int width, int height);

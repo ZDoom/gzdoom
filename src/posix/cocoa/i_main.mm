@@ -62,9 +62,6 @@ EXTERN_CVAR(Bool, vid_vsync    )
 
 // ---------------------------------------------------------------------------
 
-namespace
-{
-
 
 void Mac_I_FatalError(const char* const message)
 {

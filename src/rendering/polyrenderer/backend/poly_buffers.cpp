@@ -113,12 +113,7 @@ void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *v
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PolyDataBuffer::BindRange(size_t start, size_t length)
+void PolyDataBuffer::BindRange(FRenderState *state, size_t start, size_t length)
 {
-	GetPolyFrameBuffer()->GetRenderState()->Bind(this, (uint32_t)start, (uint32_t)length);
-}
-
-void PolyDataBuffer::BindBase()
-{
-	GetPolyFrameBuffer()->GetRenderState()->Bind(this, 0, (uint32_t)buffersize);
+	static_cast<PolyRenderState*>(state)->Bind(this, (uint32_t)start, (uint32_t)length);
 }

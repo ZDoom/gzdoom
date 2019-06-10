@@ -87,7 +87,7 @@ PolyFrameBuffer::~PolyFrameBuffer()
 
 void PolyFrameBuffer::InitializeState()
 {
-	gl_vendorstring = "Poly";
+	vendorstring = "Poly";
 	hwcaps = RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
 	glslversion = 4.50f;
 	uniformblockalignment = 1;
@@ -97,7 +97,7 @@ void PolyFrameBuffer::InitializeState()
 
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
-	mViewpoints = new GLViewpointBuffer;
+	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
 
 	CheckCanvas();
@@ -200,8 +200,8 @@ sector_t *PolyFrameBuffer::RenderView(player_t *player)
 {
 	// To do: this is virtually identical to FGLRenderer::RenderView and should be merged.
 
-	mRenderState->SetVertexBuffer(screen->mVertexData);
-	screen->mVertexData->Reset();
+	mRenderState->SetVertexBuffer(mVertexData);
+	mVertexData->Reset();
 
 	sector_t *retsec;
 	if (!V_IsHardwareRenderer())
@@ -224,8 +224,8 @@ sector_t *PolyFrameBuffer::RenderView(player_t *player)
 		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
 		else r_viewpoint.TicFrac = I_GetTimeFrac();
 
-		screen->mLights->Clear();
-		screen->mViewpoints->Clear();
+		mLights->Clear();
+		mViewpoints->Clear();
 
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;
@@ -281,7 +281,7 @@ sector_t *PolyFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * ca
 	for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
 	{
 		const auto &eye = vrmode->mEyes[eye_ix];
-		screen->SetViewportRects(bounds);
+		SetViewportRects(bounds);
 
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
 		{
@@ -400,20 +400,20 @@ void PolyFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	}
 
 	GetRenderState()->SetDepthMask(true);
-	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, di, *GetRenderState());
+	if (!gl_no_skyclear) mPortalState->RenderFirstSkyPortal(recursion, di, *GetRenderState());
 
 	di->RenderScene(*GetRenderState());
 
 	if (applySSAO && GetRenderState()->GetPassType() == GBUFFER_PASS)
 	{
 		//mPostprocess->AmbientOccludeScene(di->VPUniforms.mProjectionMatrix.get()[5]);
-		//screen->mViewpoints->Bind(*GetRenderState(), di->vpIndex);
+		//mViewpoints->Bind(*GetRenderState(), di->vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	screen->mPortalState->EndFrame(di, *GetRenderState());
+	mPortalState->EndFrame(di, *GetRenderState());
 	recursion--;
 	di->RenderTranslucent(*GetRenderState());
 }
@@ -511,11 +511,12 @@ void PolyFrameBuffer::UpdatePalette()
 
 FTexture *PolyFrameBuffer::WipeStartScreen()
 {
-	const auto &viewport = screen->mScreenViewport;
-	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
+	SetViewportRects(nullptr);
+
+	auto tex = new FWrapperTexture(mScreenViewport.width, mScreenViewport.height, 1);
 	auto systex = static_cast<PolyHardwareTexture*>(tex->GetSystemTexture());
 
-	systex->CreateWipeTexture(viewport.width, viewport.height, "WipeStartScreen");
+	systex->CreateWipeTexture(mScreenViewport.width, mScreenViewport.height, "WipeStartScreen");
 
 	return tex;
 }
@@ -525,11 +526,10 @@ FTexture *PolyFrameBuffer::WipeEndScreen()
 	Draw2D();
 	Clear2D();
 
-	const auto &viewport = screen->mScreenViewport;
-	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
+	auto tex = new FWrapperTexture(mScreenViewport.width, mScreenViewport.height, 1);
 	auto systex = static_cast<PolyHardwareTexture*>(tex->GetSystemTexture());
 
-	systex->CreateWipeTexture(viewport.width, viewport.height, "WipeEndScreen");
+	systex->CreateWipeTexture(mScreenViewport.width, mScreenViewport.height, "WipeEndScreen");
 
 	return tex;
 }

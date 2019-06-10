@@ -207,6 +207,7 @@ bool VulkanSwapChain::CreateSwapChain(VkSwapchainKHR oldSwapChain)
 
 void VulkanSwapChain::CreateViews()
 {
+	framebuffers.resize(swapChainImages.size());
 	swapChainImageViews.reserve(swapChainImages.size());
 	for (size_t i = 0; i < swapChainImages.size(); i++)
 	{
@@ -335,6 +336,7 @@ void VulkanSwapChain::GetImages()
 
 void VulkanSwapChain::ReleaseViews()
 {
+	framebuffers.clear();
 	for (auto &view : swapChainImageViews)
 	{
 		vkDestroyImageView(device->device, view, nullptr);

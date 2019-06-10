@@ -104,7 +104,6 @@ public:
 	std::unique_ptr<VulkanPipelineLayout> PipelineLayout;
 	std::unique_ptr<VulkanRenderPass> RenderPass;
 	std::unique_ptr<VulkanPipeline> Pipeline;
-	std::map<VkImageView, std::unique_ptr<VulkanFramebuffer>> Framebuffers;
 
 private:
 	void CreateDescriptorLayout(const VkPPRenderPassKey &key);

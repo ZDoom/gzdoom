@@ -35,7 +35,7 @@ void VkPostprocess::SetActiveRenderTarget()
 	imageTransition.addImage(&buffers->PipelineImage[mCurrentPipelineImage], VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, false);
 	imageTransition.execute(fb->GetDrawCommands());
 
-	fb->GetRenderState()->SetRenderTarget(buffers->PipelineImage[mCurrentPipelineImage].View.get(), nullptr, buffers->GetWidth(), buffers->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT);
+	fb->GetRenderState()->SetRenderTarget(&buffers->PipelineImage[mCurrentPipelineImage], nullptr, buffers->GetWidth(), buffers->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, VK_SAMPLE_COUNT_1_BIT);
 }
 
 void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
@@ -409,6 +409,7 @@ VkPPTexture::~VkPPTexture()
 		if (TexImage.Image) fb->FrameDeleteList.Images.push_back(std::move(TexImage.Image));
 		if (TexImage.View) fb->FrameDeleteList.ImageViews.push_back(std::move(TexImage.View));
 		if (TexImage.DepthOnlyView) fb->FrameDeleteList.ImageViews.push_back(std::move(TexImage.DepthOnlyView));
+		if (TexImage.PPFramebuffer) fb->FrameDeleteList.Framebuffers.push_back(std::move(TexImage.PPFramebuffer));
 		if (Staging) fb->FrameDeleteList.Buffers.push_back(std::move(Staging));
 	}
 }
@@ -596,6 +597,7 @@ VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, co
 	VkTextureImage *tex = GetTexture(output.Type, output.Texture);
 
 	VkImageView view;
+	std::unique_ptr<VulkanFramebuffer> *framebufferptr = nullptr;
 	int w, h;
 	if (tex)
 	{
@@ -608,15 +610,17 @@ VulkanFramebuffer *VkPPRenderState::GetOutput(VkPPRenderPassSetup *passSetup, co
 		view = tex->View->view;
 		w = tex->Image->width;
 		h = tex->Image->height;
+		framebufferptr = &tex->PPFramebuffer;
 	}
 	else
 	{
 		view = fb->swapChain->swapChainImageViews[fb->presentImageIndex];
+		framebufferptr = &fb->swapChain->framebuffers[fb->presentImageIndex];
 		w = fb->swapChain->actualExtent.width;
 		h = fb->swapChain->actualExtent.height;
 	}
 
-	auto &framebuffer = passSetup->Framebuffers[view];
+	auto &framebuffer = *framebufferptr;
 	if (!framebuffer)
 	{
 		FramebufferBuilder builder;

@@ -72,8 +72,10 @@ void VkHardwareTexture::Reset()
 		auto &deleteList = fb->FrameDeleteList;
 		if (mImage.Image) deleteList.Images.push_back(std::move(mImage.Image));
 		if (mImage.View) deleteList.ImageViews.push_back(std::move(mImage.View));
+		for (auto &it : mImage.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
 		if (mDepthStencil.Image) deleteList.Images.push_back(std::move(mDepthStencil.Image));
 		if (mDepthStencil.View) deleteList.ImageViews.push_back(std::move(mDepthStencil.View));
+		for (auto &it : mDepthStencil.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
 		mImage.reset();
 		mDepthStencil.reset();
 	}

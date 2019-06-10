@@ -402,6 +402,17 @@ VkPPTexture::VkPPTexture(PPTexture *texture)
 	}
 }
 
+VkPPTexture::~VkPPTexture()
+{
+	if (auto fb = GetVulkanFrameBuffer())
+	{
+		if (TexImage.Image) fb->FrameDeleteList.Images.push_back(std::move(TexImage.Image));
+		if (TexImage.View) fb->FrameDeleteList.ImageViews.push_back(std::move(TexImage.View));
+		if (TexImage.DepthOnlyView) fb->FrameDeleteList.ImageViews.push_back(std::move(TexImage.DepthOnlyView));
+		if (Staging) fb->FrameDeleteList.Buffers.push_back(std::move(Staging));
+	}
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 VkPPShader::VkPPShader(PPShader *shader)

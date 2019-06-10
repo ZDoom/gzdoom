@@ -154,7 +154,7 @@ void OpenGLFrameBuffer::InitializeState()
 
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
-	mViewpoints = new GLViewpointBuffer;
+	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
 
 	GLRenderer = new FGLRenderer(this);

@@ -27,7 +27,7 @@ class FGLRenderBuffers;
 class FGL2DDrawer;
 class FHardwareTexture;
 class SWSceneDrawer;
-class GLViewpointBuffer;
+class HWViewpointBuffer;
 struct FRenderViewpoint;
 
 namespace OpenGLRenderer

@@ -57,7 +57,7 @@ class IIndexBuffer;
 class IVertexBuffer;
 class IDataBuffer;
 class FFlatVertexBuffer;
-class GLViewpointBuffer;
+class HWViewpointBuffer;
 class FLightBuffer;
 struct HWDrawInfo;
 
@@ -379,7 +379,7 @@ public:
 	FPortalSceneState *mPortalState;			// global portal state.
 	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
-	GLViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
+	HWViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
 	FLightBuffer *mLights = nullptr;			// Dynamic lights
 	IShadowMap mShadowMap;
 

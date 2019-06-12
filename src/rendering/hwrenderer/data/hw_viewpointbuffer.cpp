@@ -78,7 +78,7 @@ void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height)
 	if (width != m2DWidth || height != m2DHeight)
 	{
 		HWViewpointUniforms matrices;
-		matrices.SetDefaults();
+		matrices.SetDefaults(nullptr);
 		matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 		matrices.CalcDependencies();
 		mBuffer->Map();

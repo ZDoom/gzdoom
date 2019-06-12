@@ -89,7 +89,7 @@ class os_Menu : OptionMenu
 			string actionN  = item.GetAction();
 			let    textItem = ListMenuItemTextItem(item);
 			string newPath  = textItem
-				? makePath(path, textItem.mText)
+				? makePath(path, StringTable.Localize(textItem.mText))
 				: path;
 
 			found |= listOptions(targetDesc, actionN, query, newPath, isAnyTermMatches);

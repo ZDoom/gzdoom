@@ -1451,6 +1451,15 @@ add_custom_command(TARGET zdoom POST_BUILD
 	${CMAKE_SOURCE_DIR}/fm_banks/gs-by-papiezak-and-sneakernets.wopn $<TARGET_FILE_DIR:zdoom>/fm_banks/gs-by-papiezak-and-sneakernets.wopn
 )
 
+if( WIN32 )
+	set( INSTALL_SOUNDFONT_PATH . CACHE STRING "Directory where soundfonts and WOPL/WOPN banks will be placed during install." )
+else()
+	set( INSTALL_SOUNDFONT_PATH share/games/doom CACHE STRING "Directory where soundfonts and WOPL/WOPN banks will be placed during install." )
+endif()
+install(FILES "${PROJECT_BINARY_DIR}/soundfonts" "${PROJECT_BINARY_DIR}/fm_banks"
+		DESTINATION ${INSTALL_SOUNDFONT_PATH}
+		COMPONENT "Soundfont resources")
+
 if( CMAKE_COMPILER_IS_GNUCXX )
 	# GCC misoptimizes this file
 	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )

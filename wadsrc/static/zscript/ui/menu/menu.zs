@@ -100,6 +100,8 @@ class Menu : Object native ui version("2.4")
 	native void ActivateMenu();
 	native static void UpdateColorsets(PlayerClass cls);
 	native static void UpdateSkinOptions(PlayerClass cls);
+
+	private native static void MakeScreenShot();
 	
 	//=============================================================================
 	//
@@ -206,6 +208,11 @@ class Menu : Object native ui version("2.4")
 				res |= MouseEvent(MOUSE_Release, ev.MouseX, y);
 			}
 		}
+		else if (ev.type == UIEvent.Type_KeyDown)
+		{
+			checkPrintScreen(ev);
+		}
+
 		return false; 
 	}
 
@@ -312,7 +319,88 @@ class Menu : Object native ui version("2.4")
 		screen.DrawText (OptionFont(), color, x, y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
 	}
 	
+	private static int uiKeyToInputKey(UiEvent ev)
+	{
+		int uiKey = ev.KeyChar;
 
+		switch (uiKey)
+		{
+		case UiEvent.Key_PgDn      : return 0; // used by menu
+		case UiEvent.Key_PgUp      : return 0; // used by menu
+		case UiEvent.Key_Home      : return InputEvent.Key_Home;
+		case UiEvent.Key_End       : return InputEvent.Key_End;
+
+		case UiEvent.Key_Left      : return 0; // used by menu
+		case UiEvent.Key_Right     : return 0; // used by menu
+		case UiEvent.Key_Alert     : return 0; // ASCII bell, not present in EDoomInputKeys
+		case UiEvent.Key_Backspace : return 0; // used by menu
+		case UiEvent.Key_Tab       : return InputEvent.Key_Tab;
+		case UiEvent.Key_LineFeed  : return 0; // ASCII, not present in EDoomInputKeys
+		case UiEvent.Key_Down      : return 0; // used by menu
+		case UiEvent.Key_VTab      : return 0; // not present in EDoomInputKeys
+		case UiEvent.Key_Up        : return 0; // used by menu
+		case UiEvent.Key_FormFeed  : return 0; // ASCII, not present in EDoomInputKeys
+		case UiEvent.Key_Return    : return 0; // used by menu
+
+		case UiEvent.Key_F1        : return InputEvent.Key_F1;
+		case UiEvent.Key_F2        : return InputEvent.Key_F2;
+		case UiEvent.Key_F3        : return InputEvent.Key_F3;
+		case UiEvent.Key_F4        : return InputEvent.Key_F4;
+		case UiEvent.Key_F5        : return InputEvent.Key_F5;
+		case UiEvent.Key_F6        : return InputEvent.Key_F6;
+		case UiEvent.Key_F7        : return InputEvent.Key_F7;
+		case UiEvent.Key_F8        : return InputEvent.Key_F8;
+		case UiEvent.Key_F9        : return InputEvent.Key_F9;
+		case UiEvent.Key_F10       : return InputEvent.Key_F10;
+		case UiEvent.Key_F11       : return InputEvent.Key_F11;
+		case UiEvent.Key_F12       : return InputEvent.Key_F12;
+
+		case UiEvent.Key_Del       : return InputEvent.Key_Del;
+		case UiEvent.Key_Escape    : return 0; // used by menu
+		case UiEvent.Key_Free1     : return 0; // ?
+		case UiEvent.Key_Free2     : return 0; // ?
+		case UiEvent.Key_Back      : return 0; // browser back key, ?
+		case UiEvent.Key_CEscape   : return 0; // color escape, not present in EDoomInputKeys
+		}
+
+		if (ev.IsShift) { return InputEvent.Key_LShift; }
+		if (ev.IsCtrl)  { return InputEvent.Key_LCtrl; }
+		if (ev.IsAlt)   { return InputEvent.Key_LAlt; }
+
+		return 0;
+	}
+
+	private static bool uiKeyIsInputKey(UiEvent ev, int inputKey)
+	{
+		int convertedKey = uiKeyToInputKey(ev);
+		if (convertedKey)
+		{
+			return (convertedKey == inputKey);
+		}
+
+		String inputKeyName = KeyBindings.NameKeys(inputKey, 0);
+		if (inputKeyName.length() == 1)
+		{
+			int byte  = inputKeyName.ByteAt(0);
+			int uiKey = ev.KeyChar;
+			return (byte == uiKey);
+		}
+
+		return false;
+	}
+
+	private void checkPrintScreen(UiEvent ev)
+	{
+		if (self is "TextEnterMenu") { return; }
+
+		int screenshotKey1, screenshotKey2;
+		[screenshotKey1, screenshotKey2] = Bindings.GetKeysForCommand("screenshot");
+
+		if (uiKeyIsInputKey(ev, screenshotKey1) || uiKeyIsInputKey(ev, screenshotKey2))
+		{
+			MakeScreenshot();
+		}
+	}
 }
 
 class MenuDescriptor : Object native ui version("2.4")

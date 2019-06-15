@@ -54,6 +54,7 @@
 #include "v_video.h"
 #include "i_system.h"
 #include "scripting/types.h"
+#include "m_misc.h"
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
@@ -398,6 +399,12 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 {
 	PARAM_SELF_PROLOGUE(DMenu);
 	M_ActivateMenu(self);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, MakeScreenShot)
+{
+	M_ScreenShot(nullptr);
 	return 0;
 }
 

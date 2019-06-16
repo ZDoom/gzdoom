@@ -211,7 +211,7 @@ class ProgLevelEnder : Inventory
 			{
 				special1 = 255;
 				special2 = 1;
-				Exit_Normal(0);
+				Level.ExitLevel(0, false);
 			}
 		}
 		else

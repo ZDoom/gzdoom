@@ -168,13 +168,13 @@ void VkRenderState::Apply(int dt)
 		mApplyCount = 0;
 	}
 
+	ApplyStreamData();
+	ApplyMatrices();
 	ApplyRenderPass(dt);
 	ApplyScissor();
 	ApplyViewport();
 	ApplyStencilRef();
 	ApplyDepthBias();
-	ApplyStreamData();
-	ApplyMatrices();
 	ApplyPushConstants();
 	ApplyVertexBuffers();
 	ApplyDynamicSet();

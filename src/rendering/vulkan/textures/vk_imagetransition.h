@@ -12,6 +12,8 @@ public:
 	{
 		AspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		Layout = VK_IMAGE_LAYOUT_UNDEFINED;
+		PPFramebuffer.reset();
+		RSFramebuffers.clear();
 		DepthOnlyView.reset();
 		View.reset();
 		Image.reset();

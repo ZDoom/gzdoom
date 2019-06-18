@@ -152,6 +152,7 @@ map E1M8 lookup "HUSTR_E1M8"
 	baronspecial
 	specialaction_lowerfloor
 	music = "$MUSIC_E1M8"
+	needclustertext
 }
 
 map E1M9 lookup "HUSTR_E1M9"
@@ -266,6 +267,7 @@ map E2M8 lookup "HUSTR_E2M8"
 	cyberdemonspecial
 	specialaction_exitlevel
 	music = "$MUSIC_E2M8"
+	needclustertext
 }
 
 map E2M9 lookup "HUSTR_E2M9"
@@ -380,6 +382,7 @@ map E3M8 lookup "HUSTR_E3M8"
 	spidermastermindspecial
 	specialaction_exitlevel
 	music = "$MUSIC_E3M8"
+	needclustertext
 }
 
 map E3M9 lookup "HUSTR_E3M9"
@@ -496,6 +499,7 @@ map E4M8 lookup "HUSTR_E4M8"
 	spidermastermindspecial
 	specialaction_lowerfloor
 	music = "$MUSIC_E2M5"
+	needclustertext
 }
 
 map E4M9 lookup "HUSTR_E4M9"

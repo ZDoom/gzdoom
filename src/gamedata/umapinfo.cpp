@@ -462,6 +462,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 				levelinfo->ExitMapTexts[NAME_Secret] = { 0, 0 };
 		}
 		if (map.nointermission) levelinfo->flags |= LEVEL_NOINTERMISSION;
+		if (!(levelinfo->flags2 & LEVEL2_NEEDCLUSTERTEXT)) levelinfo->flags2 |= LEVEL2_NOCLUSTERTEXT;	// UMAPINFO should ignore cluster intermission texts.
 	}
 
 

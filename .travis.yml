@@ -20,6 +20,14 @@ matrix:
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
+    - os: windows
+      env:
+        - CMAKE_OPTIONS="-A Win32"
+
+    - os: windows
+      env:
+        - CMAKE_OPTIONS="-A x64"
+
     - os: linux
       compiler: gcc
       env:
@@ -87,17 +95,30 @@ matrix:
             - libgtk-3-dev
 
     - os: linux
+      compiler: gcc
+      env:
+        - GCC_VERSION=9
+        - CMAKE_OPTIONS="-DCMAKE_CXX_FLAGS=-Wno-implicit-fallthrough"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-9
+            - libsdl2-dev
+
+    - os: linux
       compiler: clang
       env:
-        - CLANG_VERSION=7
+        - CLANG_VERSION=8
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-7
+            - llvm-toolchain-xenial-8
           packages:
-            - clang-7
+            - clang-8
             - libsdl2-dev
             - libgme-dev
             - libopenal-dev
@@ -105,14 +126,6 @@ matrix:
             - libsndfile-dev
             - libfluidsynth-dev
             - libgtk-3-dev
-
-    - os: windows
-      env:
-        - CMAKE_OPTIONS="-A Win32"
-
-    - os: windows
-      env:
-        - CMAKE_OPTIONS="-A x64"
 
 before_install:
   - if [ -n "$GCC_VERSION" ]; then export CC="gcc-${GCC_VERSION}" CXX="g++-${GCC_VERSION}"; fi

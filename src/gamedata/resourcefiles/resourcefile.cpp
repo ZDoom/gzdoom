@@ -103,19 +103,23 @@ void FResourceLump::LumpNameSetup(FString iname)
 	// Map some directories to WAD namespaces.
 	// Note that some of these namespaces don't exist in WADS.
 	// CheckNumForName will handle any request for these namespaces accordingly.
-	Namespace =	!strncmp(iname, "flats/", 6)		? ns_flats :
-				!strncmp(iname, "textures/", 9)		? ns_newtextures :
-				!strncmp(iname, "hires/", 6)		? ns_hires :
-				!strncmp(iname, "sprites/", 8)		? ns_sprites :
-				!strncmp(iname, "voxels/", 7)		? ns_voxels :
-				!strncmp(iname, "colormaps/", 10)	? ns_colormaps :
-				!strncmp(iname, "acs/", 4)			? ns_acslibrary :
-				!strncmp(iname, "voices/", 7)		? ns_strifevoices :
-				!strncmp(iname, "patches/", 8)		? ns_patches :
-				!strncmp(iname, "graphics/", 9)		? ns_graphics :
-				!strncmp(iname, "sounds/", 7)		? ns_sounds :
-				!strncmp(iname, "music/", 6)		? ns_music : 
-				!strchr(iname, '/')					? ns_global :
+	Namespace =	!strncmp(iname, "flats/", 6)              ? ns_flats :
+				!strncmp(iname, "textures/", 9)           ? ns_newtextures :
+				!strncmp(iname, "hires/flats", 11)        ? ns_hires_flats :
+				!strncmp(iname, "hires/sprites", 13)      ? ns_hires_sprites :
+				!strncmp(iname, "hires/graphics", 14)     ? ns_hires_graphics :
+				!strncmp(iname, "hires/walltextures", 18) ? ns_hires_walltextures :
+				!strncmp(iname, "hires/", 6)              ? ns_hires :
+				!strncmp(iname, "sprites/", 8)            ? ns_sprites :
+				!strncmp(iname, "voxels/", 7)             ? ns_voxels :
+				!strncmp(iname, "colormaps/", 10)         ? ns_colormaps :
+				!strncmp(iname, "acs/", 4)                ? ns_acslibrary :
+				!strncmp(iname, "voices/", 7)             ? ns_strifevoices :
+				!strncmp(iname, "patches/", 8)            ? ns_patches :
+				!strncmp(iname, "graphics/", 9)           ? ns_graphics :
+				!strncmp(iname, "sounds/", 7)             ? ns_sounds :
+				!strncmp(iname, "music/", 6)              ? ns_music :
+				!strchr(iname, '/')                       ? ns_global :
 				ns_hidden;
 	
 	// Anything that is not in one of these subdirectories or the main directory 

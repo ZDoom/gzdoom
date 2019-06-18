@@ -52,6 +52,10 @@ typedef enum {
 	ns_bloodmisc,
 	ns_strifevoices,
 	ns_hires,
+	ns_hires_flats,
+	ns_hires_sprites,
+	ns_hires_graphics,
+	ns_hires_walltextures,
 	ns_voxels,
 
 	// These namespaces are only used to mark lumps in special subdirectories

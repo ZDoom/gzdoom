@@ -628,6 +628,8 @@ void FTextureManager::AddHiresTextures (int wadnum)
 {
 	int firsttx = Wads.GetFirstLump(wadnum);
 	int lasttx = Wads.GetLastLump(wadnum);
+	int ns;
+	ETextureType type;
 
 	FString Name;
 	TArray<FTextureID> tlist;
@@ -639,11 +641,31 @@ void FTextureManager::AddHiresTextures (int wadnum)
 
 	for (;firsttx <= lasttx; ++firsttx)
 	{
-		if (Wads.GetLumpNamespace(firsttx) == ns_hires)
+		ns = Wads.GetLumpNamespace(firsttx);
+		switch(ns)
+		{
+		case ns_hires_flats:
+			type = ETextureType::Flat;
+			break;
+		case ns_hires_sprites:
+			type = ETextureType::Sprite;
+			break;
+		case ns_hires_graphics:
+			type = ETextureType::MiscPatch;
+			break;
+		case ns_hires_walltextures:
+			type = ETextureType::Wall;
+			break;
+		default:
+			type = ETextureType::Override;
+			break;
+		}
+		
+		if (ns >= ns_hires && ns <= ns_hires_walltextures)
 		{
 			Wads.GetLumpName (Name, firsttx);
 
-			if (Wads.CheckNumForName (Name, ns_hires) == firsttx)
+			if (Wads.CheckNumForName (Name, ns) == firsttx)
 			{
 				tlist.Clear();
 				int amount = ListTextures(Name, tlist);
@@ -653,7 +675,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 					FTexture * newtex = FTexture::CreateTexture (Name, firsttx, ETextureType::Any);
 					if (newtex != NULL)
 					{
-						newtex->UseType=ETextureType::Override;
+						newtex->UseType = type;
 						AddTexture(newtex);
 					}
 				}
@@ -661,10 +683,14 @@ void FTextureManager::AddHiresTextures (int wadnum)
 				{
 					for(unsigned int i = 0; i < tlist.Size(); i++)
 					{
+						FTexture * oldtex = Textures[tlist[i].GetIndex()].Texture;
+						if (type != ETextureType::Override && oldtex->UseType != type)
+							continue;
+						
 						FTexture * newtex = FTexture::CreateTexture ("", firsttx, ETextureType::Any);
 						if (newtex != NULL)
 						{
-							FTexture * oldtex = Textures[tlist[i].GetIndex()].Texture;
+							newtex->UseType = type;
 
 							// Replace the entire texture and adjust the scaling and offset factors.
 							newtex->bWorldPanning = true;
@@ -1360,6 +1386,10 @@ int FTextureManager::GuesstimateNumTextures ()
 		case ns_sprites:
 		case ns_newtextures:
 		case ns_hires:
+		case ns_hires_flats:
+		case ns_hires_sprites:
+		case ns_hires_graphics:
+		case ns_hires_walltextures:
 		case ns_patches:
 		case ns_graphics:
 			numtex++;

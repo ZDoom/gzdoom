@@ -217,6 +217,10 @@ bool FWadFile::Open(bool quiet)
 		SetNamespace("TX_START", "TX_END", ns_newtextures);
 		SetNamespace("V_START", "V_END", ns_strifevoices);
 		SetNamespace("HI_START", "HI_END", ns_hires);
+		SetNamespace("HF_START", "HF_END", ns_hires_flats);
+		SetNamespace("HS_START", "HS_END", ns_hires_sprites);
+		SetNamespace("HG_START", "HG_END", ns_hires_graphics);
+		SetNamespace("HW_START", "HW_END", ns_hires_walltextures);
 		SetNamespace("VX_START", "VX_END", ns_voxels);
 		SkinHack();
 	}

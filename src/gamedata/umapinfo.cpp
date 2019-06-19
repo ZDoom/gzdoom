@@ -216,15 +216,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 		if (Episode.IsEmpty()) return 0;
 		if (Episode.Compare("-") == 0)
 		{
-			// clear the given episode
-			for (unsigned i = 0; i < AllEpisodes.Size(); i++)
-			{
-				if (AllEpisodes[i].mEpisodeMap.CompareNoCase(mape->MapName) == 0)
-				{
-					AllEpisodes.Delete(i);
-					break;
-				}
-			}
+			AllEpisodes.Clear();
 		}
 		else
 		{

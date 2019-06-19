@@ -380,7 +380,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 {
 	for (auto &map : Maps)
 	{
-		auto levelinfo = FindLevelInfo(map.MapName);
+		auto levelinfo = FindLevelInfo(map.MapName, false);
 		if (levelinfo == nullptr)
 		{
 			// Map did not exist yet.

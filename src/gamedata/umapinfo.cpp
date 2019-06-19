@@ -365,7 +365,7 @@ int ParseUMapInfo(int lumpnum)
 			if (!parsed.MapName.Compare(Maps[i].MapName))
 			{
 				Maps[i] = parsed;
-				return 1;
+				continue;
 			}
 		}
 		// Not found so create a new one.

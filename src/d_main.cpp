@@ -890,7 +890,8 @@ void D_Display ()
 		GSnd->DrawWaveDebug(snd_drawoutput);
 	}
 
-	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
+	
+	if (!wipe || NoWipe < 0 || wipe_type == wipe_None || ((primaryLevel->flags3 & LEVEL3_NOSCREENWIPE) && gamestate == GS_LEVEL))
 	{
 		if (wipe != nullptr) delete wipe;
 		wipe = nullptr;

@@ -236,6 +236,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			epi.mEpisodeMap = mape->MapName;
 			epi.mPicName = split[0];
 			epi.mShortcut = split[2][0];
+			epi.mNoSkill = false;
 
 			unsigned i;
 			for (i = 0; i < AllEpisodes.Size(); i++)

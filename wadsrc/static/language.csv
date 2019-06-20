@@ -3047,6 +3047,7 @@ Portals with AO,GLPREFMNU_SSAO_PORTALS,,,,,Portale mit AO,,,Portales con OA,,Yle
 ",
 FXAA Quality,GLPREFMNU_FXAA,,,,,FXAA Qualität,,,Calidad FXAA,,FXAA-laatu,Qualité FXAA,,Qualità FXAA,FXAA 품질,Jakość FXAA,Qualidade de FXAA,,Качество FXAA,
 Dither output,GLPREFMNU_DITHER,,,,,Dithering,,,Dither de salida,,Sekoitussävytyksen (dithering) ulostulo,Dithering,,Dithering,떨림 효과 출력,Dygotanie,Dithering,,Дизеринг,
+Pixelate output,GLPREFMNU_PIXELATE,,,,,,,,,,,,,,,,,,,
 Tonemap Palette Order,GLPREFMNU_PALTONEMAPORDER,,,,,Palettensortierung für Tonemap,,,Orden de la paleta en mapa de tonos,,Sävykartan paletin järjestys,Ordre des palettes tonemap,,Ordine della Palette Tonemap,톤맵 팔레트 순서,Kolejność Palet Mapowania Tonów,Ordem da paleta do tonemap,,Порядок палитры тоун-мэпа,
 Tonemap Palette Exponent,GLPREFMNU_PALTONEMAPPOWER,,,,,Palettenexponent für Tonemap,,,Exponente paleta en mapa de tonos,,Sävykartan paletin eksponentti,Exponent des palettes tonemap,,Esponente della Palette Tonemap,톤맵 팔레트 지수,Wykładnik Palet Mapowania Tonów,Expoente da paleta do tonemap,,Экспонента палитры тоун-мэпа,
 Banded SW Lightmode,GLPREFMNU_SWLMBANDED,,,,,Gebänderter SW-Lichtmodus,,,Modo de luz por bandas de SW,,Kaistoitettu ohjelmistoväritila,Lumière bandées en Software,,Softare Lightmode bandata,단결된 SW 라이트 모드,Naznaczony Tryb Oświetlenia Oprogramowania,Modo de luz por bandas em software,,Ограниченный программный режим освещения,

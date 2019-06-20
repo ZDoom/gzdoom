@@ -2604,6 +2604,7 @@ OptionMenu "PostProcessMenu" protected
 	Slider "$GLPREFMNU_SSAO_PORTALS",			gl_ssao_portals,				0.0, 4.0, 1.0, 0
 	Option "$GLPREFMNU_FXAA",		 			gl_fxaa,						"FXAAQuality"
 	Option "$GLPREFMNU_DITHER",		 			gl_dither_bpc,					"DitherModes"
+	Option "$GLPREFMNU_PIXELATE",		 		gl_pixelate,					"OnOff"
 	Option "$GLPREFMNU_TONEMAP", 				gl_tonemap,						"TonemapModes"
 	StaticText " "
 	Slider "$GLPREFMNU_PALTONEMAPPOWER",		gl_paltonemap_powtable,			0.2, 3.0, 0.1, 1

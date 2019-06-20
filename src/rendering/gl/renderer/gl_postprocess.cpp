@@ -67,6 +67,7 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 	int sceneHeight = mBuffers->GetSceneHeight();
 
 	GLPPRenderState renderstate(mBuffers);
+	hw_postprocess.pixelate.Render(&renderstate);
 
 	hw_postprocess.exposure.Render(&renderstate, sceneWidth, sceneHeight);
 	hw_postprocess.customShaders.Run(&renderstate, "beforebloom");

@@ -329,6 +329,32 @@ void PPLensDistort::Render(PPRenderState *renderstate)
 
 /////////////////////////////////////////////////////////////////////////////
 
+void PPPixelate::Render(PPRenderState *renderstate)
+{
+	if (gl_pixelate == 0)
+	{
+		return;
+	}
+
+	PixelateUniforms uniforms;
+
+	renderstate->PushGroup("pixelate");
+
+	renderstate->Clear();
+	renderstate->Shader = &Pixelate;
+	renderstate->Uniforms.Set(uniforms);
+	renderstate->Viewport = screen->mScreenViewport;
+	renderstate->SetInputCurrent(0, PPFilterMode::Nearest);
+	renderstate->SetInputSceneDepth(1);
+	renderstate->SetOutputNext();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
+
+	renderstate->PopGroup();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 void PPFXAA::Render(PPRenderState *renderstate)
 {
 	if (0 == gl_fxaa)

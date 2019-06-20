@@ -143,7 +143,7 @@ void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		I_FatalError("Requested invalid render buffer sizes: screen = %dx%d", width, height);
 
 	int samples = clamp((int)gl_multisample, 0, mMaxSamples);
-	bool needsSceneTextures = (gl_ssao != 0);
+	bool needsSceneTextures = (gl_ssao != 0 || gl_pixelate != 0);
 
 	GLint activeTex;
 	GLint textureBinding;

@@ -1081,3 +1081,20 @@ void PPCustomShaderInstance::AddUniformField(size_t &offset, const FString &name
 		offset += alignment - fieldsize;
 	}
 }
+
+
+void Postprocess::Pass1(PPRenderState* state, int fixedcm, int sceneWidth, int sceneHeight)
+{
+	exposure.Render(state, sceneWidth, sceneHeight);
+	customShaders.Run(state, "beforebloom");
+	bloom.RenderBloom(state, sceneWidth, sceneHeight, fixedcm);
+}
+
+void Postprocess::Pass2(PPRenderState* state, int fixedcm, int sceneWidth, int sceneHeight)
+{
+	tonemap.Render(state);
+	colormap.Render(state, fixedcm);
+	lens.Render(state);
+	fxaa.Render(state);
+	customShaders.Run(state, "scene");
+}

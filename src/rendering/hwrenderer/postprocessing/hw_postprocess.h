@@ -834,6 +834,10 @@ public:
 	PPPresent present;
 	PPShadowMap shadowmap;
 	PPCustomShaders customShaders;
+
+
+	void Pass1(PPRenderState *state, int fixedcm, int sceneWidth, int sceneHeight);
+	void Pass2(PPRenderState* state, int fixedcm, int sceneWidth, int sceneHeight);
 };
 
 extern Postprocess hw_postprocess;

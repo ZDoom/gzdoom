@@ -267,7 +267,7 @@ struct FActorInfo
 
 	uint8_t DefaultStateUsage = 0; // state flag defaults for blocks without a qualifier.
 
-	FActorInfo() {}
+	FActorInfo() = default;
 	FActorInfo(const FActorInfo & other)
 	{
 		// only copy the fields that get inherited

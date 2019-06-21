@@ -90,7 +90,6 @@ enum ECVarType
 };
 
 class FConfigFile;
-class AActor;
 
 class FxCVar;
 
@@ -194,7 +193,7 @@ FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 
 // Used for ACS and DECORATE.
-FBaseCVar *GetCVar(AActor *activator, const char *cvarname);
+FBaseCVar *GetCVar(int playernum, const char *cvarname);
 FBaseCVar *GetUserCVar(int playernum, const char *cvarname);
 
 // Create a new cvar with the specified name and type

@@ -383,7 +383,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCVar)
 		PARAM_SELF_PROLOGUE(AActor);
 		PARAM_STRING(cvarname);
 
-		FBaseCVar *cvar = GetCVar(self, cvarname);
+		FBaseCVar *cvar = GetCVar(self->player ? int(self->player - players) : -1, cvarname);
 		if (cvar == nullptr)
 		{
 			ret->SetFloat(0);
@@ -413,7 +413,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCVarString)
 		PARAM_SELF_PROLOGUE(AActor);
 		PARAM_STRING(cvarname);
 
-		FBaseCVar *cvar = GetCVar(self, cvarname);
+		FBaseCVar *cvar = GetCVar(self->player? int(self->player - players) : -1, cvarname);
 		if (cvar == nullptr)
 		{
 			ret->SetString("");

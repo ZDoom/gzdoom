@@ -1484,7 +1484,7 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case INTCVAR:
 				{
-					FBaseCVar *CVar = GetCVar(statusBar->CPlayer->mo, cvarName);
+					FBaseCVar *CVar = GetCVar(int(statusBar->CPlayer - players), cvarName);
 					if (CVar != nullptr)
 					{
 						ECVarType cvartype = CVar->GetRealType();
@@ -3534,7 +3534,7 @@ class CommandIfCVarInt : public SBarInfoNegatableFlowControl
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
 			bool result = false;
-			cvar = GetCVar(statusBar->CPlayer->mo, cvarname);
+			cvar = GetCVar(int(statusBar->CPlayer - players), cvarname);
 
 			if (cvar != nullptr)
 			{

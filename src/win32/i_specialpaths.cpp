@@ -101,10 +101,6 @@ bool UseKnownFolders()
 
 bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create, FString &path)
 {
-	using OptWin32::SHGetKnownFolderPath;
-
-	WCHAR pathstr[MAX_PATH];
-
 	// SHGetKnownFolderPath knows about more folders than SHGetFolderPath, but is
 	// new to Vista, hence the reason we support both.
 	if (!SHGetKnownFolderPath)

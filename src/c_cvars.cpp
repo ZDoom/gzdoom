@@ -1599,7 +1599,7 @@ DEFINE_ACTION_FUNCTION(_CVar, GetCVar)
 	PARAM_PROLOGUE;
 	PARAM_NAME(name);
 	PARAM_POINTER(plyr, player_t);
-	ACTION_RETURN_POINTER(GetCVar(plyr ? plyr->mo : nullptr, name));
+	ACTION_RETURN_POINTER(GetCVar(plyr ? int(plyr - players) : -1, name));
 }
 
 FBaseCVar *FindCVarSub (const char *var_name, int namelen)
@@ -1624,7 +1624,7 @@ FBaseCVar *FindCVarSub (const char *var_name, int namelen)
 	return var;
 }
 
-FBaseCVar *GetCVar(AActor *activator, const char *cvarname)
+FBaseCVar *GetCVar(int playernum, const char *cvarname)
 {
 	FBaseCVar *cvar = FindCVar(cvarname, nullptr);
 	// Either the cvar doesn't exist, or it's for a mod that isn't loaded, so return nullptr.
@@ -1637,11 +1637,7 @@ FBaseCVar *GetCVar(AActor *activator, const char *cvarname)
 		// For userinfo cvars, redirect to GetUserCVar
 		if (cvar->GetFlags() & CVAR_USERINFO)
 		{
-			if (activator == nullptr || activator->player == nullptr)
-			{
-				return nullptr;
-			}
-			return GetUserCVar(int(activator->player - players), cvarname);
+			return GetUserCVar(playernum, cvarname);
 		}
 		return cvar;
 	}

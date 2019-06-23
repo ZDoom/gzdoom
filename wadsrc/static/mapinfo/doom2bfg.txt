@@ -53,6 +53,7 @@ map MAP31 lookup "HUSTR_31B"
 	cluster = 9
 	par = 120
 	music = "$MUSIC_EVIL"
+	needclustertext
 }
 
 map MAP32 lookup "HUSTR_32B"

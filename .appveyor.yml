@@ -8,21 +8,24 @@ clone_depth: 10
 
 image:
   - Visual Studio 2019
-  - Visual Studio 2015
 
 environment:
   matrix:
     - ARCH: x64
+      CONFIG: Release
     - ARCH: Win32
+      CONFIG: Release
+    - ARCH: x64
+      CONFIG: Debug
 
 build_script:
   - md build
   - cd build
   - cmake -A %ARCH% -DPK3_QUIET_ZIPDIR=YES ..
-  - cmake --build . --config Release -- -maxcpucount -verbosity:minimal
+  - cmake --build . --config %CONFIG% -- -maxcpucount -verbosity:minimal
 
 after_build:
-  - set OUTPUT_DIR=%APPVEYOR_BUILD_FOLDER%\build\Release\
+  - set OUTPUT_DIR=%APPVEYOR_BUILD_FOLDER%\build\%CONFIG%\
   - 7z a ..\gzdoom.zip "%OUTPUT_DIR%gzdoom.exe" "%OUTPUT_DIR%*.pk3"
 
 artifacts:

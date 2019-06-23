@@ -142,9 +142,6 @@ public:
 	FThinkerIterator (FLevelLocals *Level, const PClass *type, int statnum, DThinker *prev);
 	DThinker *Next (bool exact = false);
 	void Reinit ();
-
-protected:
-	FThinkerIterator() {}
 };
 
 template <class T> class TThinkerIterator : public FThinkerIterator

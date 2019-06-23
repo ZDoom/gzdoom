@@ -224,16 +224,16 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       ceilingplane_a = <float>;       // Define the plane equation for the sector's ceiling. Default is a horizontal plane at 'heightceiling'.
       ceilingplane_b = <float>;       // 'heightceiling' will still be used to calculate texture alignment.
       ceilingplane_c = <float>;       // The plane equation will only be used if all 4 values are given.
-      ceilingplane_d = <float>;
+      ceilingplane_d = <float>;       // The plane is defined as a*x + b*y + c*z + d = 0 with the normal vector pointing downward.
       floorplane_a = <float>;         // Define the plane equation for the sector's floor. Default is a horizontal plane at 'heightfloor'.
       floorplane_b = <float>;         // 'heightfloor' will still be used to calculate texture alignment.
       floorplane_c = <float>;         // The plane equation will only be used if all 4 values are given.
-      floorplane_d = <float>;
+      floorplane_d = <float>;         // The plane is defined as a*x + b*y + c*z + d = 0 with the normal vector pointing upward.
       lightfloor = <integer>;         // The floor's light level. Default is 0.
       lightceiling = <integer>;       // The ceiling's light level. Default is 0.
-      lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is 
+      lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is
                                       // relative to the owning sector's light level.
-      lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is 
+      lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is
                                       // relative to the owning sector's light level.
       alphafloor = <float>;           // translucency of floor plane (only has meaning with Sector_SetPortal) Default is 1.0.
       alphaceiling = <float>;         // translucency of ceiling plane (only has meaning with Sector_SetPortal) Default is 1.0.

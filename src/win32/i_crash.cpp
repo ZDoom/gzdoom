@@ -511,7 +511,7 @@ HANDLE WriteLogFile(HWND edit)
 //
 //==========================================================================
 
-void CreateCrashLog (char *custominfo, DWORD customsize, HWND richlog)
+void CreateCrashLog (const char *custominfo, DWORD customsize, HWND richlog)
 {
 	// Do not collect information more than once.
 	if (NumFiles != 0)

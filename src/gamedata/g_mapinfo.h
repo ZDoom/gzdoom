@@ -201,7 +201,7 @@ enum ELevelFlags : unsigned int
 	LEVEL2_LAXACTIVATIONMAPINFO	= 0x00000008,	// LEVEL_LAXMONSTERACTIVATION is not a default.
 
 	LEVEL2_MISSILESACTIVATEIMPACT=0x00000010,	// Missiles are the activators of SPAC_IMPACT events, not their shooters
-	//							= 0x00000020,	// unused
+	LEVEL2_NEEDCLUSTERTEXT		= 0x00000020,	// A map with this flag needs to retain its cluster intermission texts when being redefined in UMAPINFO
 
 	LEVEL2_KEEPFULLINVENTORY	= 0x00000040,	// doesn't reduce the amount of inventory items to 1
 
@@ -225,7 +225,7 @@ enum ELevelFlags : unsigned int
 	LEVEL2_FORCETEAMPLAYOFF		= 0x00080000,
 
 	LEVEL2_CONV_SINGLE_UNFREEZE	= 0x00100000,
-	//			= 0x00200000,	// unused, was LEVEL2_RAILINGHACK
+	LEVEL2_NOCLUSTERTEXT		= 0x00200000,	// ignore intermission texts fro clusters. This gets set when UMAPINFO is used to redefine its properties.
 	LEVEL2_DUMMYSWITCHES		= 0x00400000,
 	LEVEL2_HEXENHACK			= 0x00800000,	// Level was defined in a Hexen style MAPINFO
 
@@ -528,7 +528,7 @@ struct FSkillInfo
 	int Infighting;
 	bool PlayerRespawn;
 
-	FSkillInfo() {}
+	FSkillInfo() = default;
 	FSkillInfo(const FSkillInfo &other)
 	{
 		operator=(other);

@@ -168,13 +168,13 @@ void VkRenderState::Apply(int dt)
 		mApplyCount = 0;
 	}
 
+	ApplyStreamData();
+	ApplyMatrices();
 	ApplyRenderPass(dt);
 	ApplyScissor();
 	ApplyViewport();
 	ApplyStencilRef();
 	ApplyDepthBias();
-	ApplyStreamData();
-	ApplyMatrices();
 	ApplyPushConstants();
 	ApplyVertexBuffers();
 	ApplyDynamicSet();
@@ -327,6 +327,9 @@ void VkRenderState::ApplyStreamData()
 	{
 		mDataIndex = 0;
 		mStreamDataOffset += sizeof(StreamUBO);
+
+		if (mStreamDataOffset + sizeof(StreamUBO) >= fb->StreamUBO->Size())
+			WaitForStreamBuffers();
 	}
 	uint8_t *ptr = (uint8_t*)fb->StreamUBO->Memory();
 	memcpy(ptr + mStreamDataOffset + sizeof(StreamData) * mDataIndex, &mStreamData, sizeof(StreamData));
@@ -420,11 +423,11 @@ void VkRenderState::ApplyMatrices()
 	{
 		auto fb = GetVulkanFrameBuffer();
 
-		if (mMatricesOffset + (fb->UniformBufferAlignedSize<MatricesUBO>() << 1) < fb->MatricesUBO->Size())
-		{
-			mMatricesOffset += fb->UniformBufferAlignedSize<MatricesUBO>();
-			memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
-		}
+		if (mMatricesOffset + (fb->UniformBufferAlignedSize<MatricesUBO>() << 1) >= fb->MatricesUBO->Size())
+			WaitForStreamBuffers();
+
+		mMatricesOffset += fb->UniformBufferAlignedSize<MatricesUBO>();
+		memcpy(static_cast<uint8_t*>(fb->MatricesUBO->Memory()) + mMatricesOffset, &mMatrices, sizeof(MatricesUBO));
 	}
 }
 
@@ -479,6 +482,16 @@ void VkRenderState::ApplyDynamicSet()
 		mLastMatricesOffset = mMatricesOffset;
 		mLastStreamDataOffset = mStreamDataOffset;
 	}
+}
+
+void VkRenderState::WaitForStreamBuffers()
+{
+	EndRenderPass();
+	GetVulkanFrameBuffer()->WaitForCommands(false);
+	mApplyCount = 0;
+	mStreamDataOffset = 0;
+	mDataIndex = 0;
+	mMatricesOffset = 0;
 }
 
 void VkRenderState::Bind(int bindingpoint, uint32_t offset)

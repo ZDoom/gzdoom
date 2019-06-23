@@ -52,6 +52,8 @@ void main()
 //                    NVIDIA FXAA 3.11 by TIMOTHY LOTTES
 //============================================================================
 
+#define FXAA_DISCARD 0
+
 #define FXAA_GREEN_AS_LUMA 0
 
 #define FxaaBool bool

@@ -1620,6 +1620,8 @@ MapFlagHandlers[] =
 	{ "rememberstate",					MITYPE_CLRFLAG2,	LEVEL2_FORGETSTATE, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "spawnwithweaponraised",			MITYPE_SETFLAG2,	LEVEL2_PRERAISEWEAPON, 0 },
+	{ "needclustertext",				MITYPE_SETFLAG2,	LEVEL2_NEEDCLUSTERTEXT, 0 },
+	{ "noclustertext",					MITYPE_SETFLAG2,	LEVEL2_NOCLUSTERTEXT, 0 },	// Normally there shouldn't be a need to explicitly set this 
 	{ "forcefakecontrast",				MITYPE_SETFLAG3,	LEVEL3_FORCEFAKECONTRAST, 0 },
 	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
 	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },

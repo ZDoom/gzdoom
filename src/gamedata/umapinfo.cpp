@@ -216,15 +216,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 		if (Episode.IsEmpty()) return 0;
 		if (Episode.Compare("-") == 0)
 		{
-			// clear the given episode
-			for (unsigned i = 0; i < AllEpisodes.Size(); i++)
-			{
-				if (AllEpisodes[i].mEpisodeMap.CompareNoCase(mape->MapName) == 0)
-				{
-					AllEpisodes.Delete(i);
-					break;
-				}
-			}
+			AllEpisodes.Clear();
 		}
 		else
 		{
@@ -236,6 +228,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			epi.mEpisodeMap = mape->MapName;
 			epi.mPicName = split[0];
 			epi.mShortcut = split[2][0];
+			epi.mNoSkill = false;
 
 			unsigned i;
 			for (i = 0; i < AllEpisodes.Size(); i++)
@@ -364,7 +357,7 @@ int ParseUMapInfo(int lumpnum)
 			if (!parsed.MapName.Compare(Maps[i].MapName))
 			{
 				Maps[i] = parsed;
-				return 1;
+				continue;
 			}
 		}
 		// Not found so create a new one.
@@ -380,7 +373,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 {
 	for (auto &map : Maps)
 	{
-		auto levelinfo = FindLevelInfo(map.MapName);
+		auto levelinfo = FindLevelInfo(map.MapName, false);
 		if (levelinfo == nullptr)
 		{
 			// Map did not exist yet.
@@ -462,6 +455,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 				levelinfo->ExitMapTexts[NAME_Secret] = { 0, 0 };
 		}
 		if (map.nointermission) levelinfo->flags |= LEVEL_NOINTERMISSION;
+		if (!(levelinfo->flags2 & LEVEL2_NEEDCLUSTERTEXT)) levelinfo->flags2 |= LEVEL2_NOCLUSTERTEXT;	// UMAPINFO should ignore cluster intermission texts.
 	}
 
 

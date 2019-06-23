@@ -46,18 +46,10 @@ void VkPostprocess::PostProcessScene(int fixedcm, const std::function<void()> &a
 
 	VkPPRenderState renderstate;
 
-	hw_postprocess.exposure.Render(&renderstate, sceneWidth, sceneHeight);
-	hw_postprocess.customShaders.Run(&renderstate, "beforebloom");
-	hw_postprocess.bloom.RenderBloom(&renderstate, sceneWidth, sceneHeight, fixedcm);
-
+	hw_postprocess.Pass1(&renderstate, fixedcm, sceneWidth, sceneHeight);
 	SetActiveRenderTarget();
 	afterBloomDrawEndScene2D();
-
-	hw_postprocess.tonemap.Render(&renderstate);
-	hw_postprocess.colormap.Render(&renderstate, fixedcm);
-	hw_postprocess.lens.Render(&renderstate);
-	hw_postprocess.fxaa.Render(&renderstate);
-	hw_postprocess.customShaders.Run(&renderstate, "scene");
+	hw_postprocess.Pass2(&renderstate, fixedcm, sceneWidth, sceneHeight);
 }
 
 void VkPostprocess::BlitSceneToPostprocess()

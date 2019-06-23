@@ -63,6 +63,7 @@ protected:
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
 
+	void WaitForStreamBuffers();
 	void BeginRenderPass(VulkanCommandBuffer *cmdbuffer);
 
 	bool mDepthClamp = true;

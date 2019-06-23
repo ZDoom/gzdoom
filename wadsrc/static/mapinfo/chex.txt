@@ -256,6 +256,7 @@ map E1M5 lookup "CHUSTR_E1M5"
 	cluster = 1
 	par = 165
 	music = "$MUSIC_E1M5"
+	needclustertext
 }
 
 // Clusters (correspond with same-numbered episode)

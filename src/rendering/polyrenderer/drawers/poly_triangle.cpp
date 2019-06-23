@@ -658,7 +658,6 @@ void PolySWInputAssembly::Load(PolyTriangleThreadData *thread, const void *verti
 
 bool PolyTriangleThreadData::IsDegenerate(const ShadedTriVertex *const* vert)
 {
-	return false;
 	// A degenerate triangle has a zero cross product for two of its sides.
 	float ax = vert[1]->gl_Position.X - vert[0]->gl_Position.X;
 	float ay = vert[1]->gl_Position.Y - vert[0]->gl_Position.Y;

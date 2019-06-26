@@ -1602,17 +1602,17 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 	else
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 
-	if(!reuse_chan || reuse_chan->StartTime.AsOne == 0)
+	if(!reuse_chan || reuse_chan->StartTime == 0)
 		alSourcef(source, AL_SEC_OFFSET, 0.f);
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
-			alSourcei(source, AL_SAMPLE_OFFSET, reuse_chan->StartTime.Lo);
+			alSourcei(source, AL_SAMPLE_OFFSET, ALint(reuse_chan->StartTime));
 		else
 		{
 			float offset = std::chrono::duration_cast<std::chrono::duration<float>>(
 				std::chrono::steady_clock::now().time_since_epoch() -
-				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime.AsOne)
+				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime)
 			).count();
 			if(offset > 0.f) alSourcef(source, AL_SEC_OFFSET, offset);
 		}
@@ -1813,17 +1813,17 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 	else
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 
-	if(!reuse_chan || reuse_chan->StartTime.AsOne == 0)
+	if(!reuse_chan || reuse_chan->StartTime == 0)
 		alSourcef(source, AL_SEC_OFFSET, 0.f);
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
-			alSourcei(source, AL_SAMPLE_OFFSET, reuse_chan->StartTime.Lo);
+			alSourcei(source, AL_SAMPLE_OFFSET, ALint(reuse_chan->StartTime));
 		else
 		{
 			float offset = std::chrono::duration_cast<std::chrono::duration<float>>(
 				std::chrono::steady_clock::now().time_since_epoch() -
-				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime.AsOne)
+				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime)
 			).count();
 			if(offset > 0.f) alSourcef(source, AL_SEC_OFFSET, offset);
 		}
@@ -2220,7 +2220,7 @@ void OpenALSoundRenderer::MarkStartTime(FISoundChannel *chan)
 {
 	// FIXME: Get current time (preferably from the audio clock, but the system
 	// time will have to do)
-	chan->StartTime.AsOne = std::chrono::steady_clock::now().time_since_epoch().count();
+	chan->StartTime = std::chrono::steady_clock::now().time_since_epoch().count();
 }
 
 float OpenALSoundRenderer::GetAudibility(FISoundChannel *chan)

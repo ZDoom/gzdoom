@@ -2084,7 +2084,7 @@ void S_EvictAllChannels()
 			{
 				if (!(chan->ChanFlags & CHAN_ABSTIME))
 				{
-					chan->StartTime.AsOne = GSnd ? GSnd->GetPosition(chan) : 0;
+					chan->StartTime = GSnd ? GSnd->GetPosition(chan) : 0;
 					chan->ChanFlags |= CHAN_ABSTIME;
 				}
 				S_StopChannel(chan);
@@ -2414,7 +2414,7 @@ static FSerializer &Serialize(FSerializer &arc, const char *key, FSoundChan &cha
 			("entchannel", chan.EntChannel)
 			("priority", chan.Priority)
 			("nearlimit", chan.NearLimit)
-			("starttime", chan.StartTime.AsOne)
+			("starttime", chan.StartTime)
 			("rolloftype", chan.Rolloff.RolloffType)
 			("rolloffmin", chan.Rolloff.MinDistance)
 			("rolloffmax", chan.Rolloff.MaxDistance)
@@ -2468,10 +2468,10 @@ void S_SerializeSounds(FSerializer &arc)
 			for (unsigned int i = chans.Size(); i-- != 0; )
 			{
 				// Replace start time with sample position.
-				uint64_t start = chans[i]->StartTime.AsOne;
-				chans[i]->StartTime.AsOne = GSnd ? GSnd->GetPosition(chans[i]) : 0;
+				uint64_t start = chans[i]->StartTime;
+				chans[i]->StartTime = GSnd ? GSnd->GetPosition(chans[i]) : 0;
 				arc(nullptr, *chans[i]);
-				chans[i]->StartTime.AsOne = start;
+				chans[i]->StartTime = start;
 			}
 			arc.EndArray();
 		}

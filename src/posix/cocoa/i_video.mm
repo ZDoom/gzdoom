@@ -355,8 +355,9 @@ public:
 
 	~CocoaVideo()
 	{
+#ifdef HAVE_VULKAN
 		delete m_vulkanDevice;
-
+#endif
 		ms_window = nil;
 	}
 
@@ -367,6 +368,7 @@ public:
 
 		SystemBaseFrameBuffer *fb = nullptr;
 
+#ifdef HAVE_VULKAN
 		if (ms_isVulkanEnabled)
 		{
 			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
@@ -421,6 +423,7 @@ public:
 			}
 		}
 		else
+#endif
 		{
 			SetupOpenGLView(ms_window);
 		}

@@ -87,10 +87,7 @@ public:
 };
 
 
-#ifdef _WIN32
-MIDIDevice *CreateWinMIDIDevice(int mididevice);
-#endif
-MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
+
 void TimidityPP_Shutdown();
 
 // Base class for software synthesizer MIDI output devices ------------------
@@ -172,29 +169,6 @@ public:
 	void Stop();
 };
 
-// Internal TiMidity MIDI device --------------------------------------------
-
-namespace Timidity { struct Renderer; }
-
-class TimidityMIDIDevice : public SoftSynthMIDIDevice
-{
-public:
-	TimidityMIDIDevice(const char *args, int samplerate);
-	~TimidityMIDIDevice();
-
-	int Open(MidiCallback, void *userdata);
-	void PrecacheInstruments(const uint16_t *instruments, int count);
-	FString GetStats();
-	int GetDeviceType() const override { return MDEV_GUS; }
-
-protected:
-	Timidity::Renderer *Renderer;
-
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-};
-
 // Internal disk writing version of a MIDI device ------------------
 
 class MIDIWaveWriter : public SoftSynthMIDIDevice
@@ -225,140 +199,6 @@ protected:
 	FileWriter *File;
 	SoftSynthMIDIDevice *playDevice;
 };
-
-// WildMidi implementation of a MIDI device ---------------------------------
-
-class WildMIDIDevice : public SoftSynthMIDIDevice
-{
-public:
-	WildMIDIDevice(const char *args, int samplerate);
-	~WildMIDIDevice();
-
-	int Open(MidiCallback, void *userdata);
-	void PrecacheInstruments(const uint16_t *instruments, int count);
-	FString GetStats();
-	int GetDeviceType() const override { return MDEV_WILDMIDI; }
-
-protected:
-	WildMidi_Renderer *Renderer;
-
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	void WildMidiSetOption(int opt, int set);
-};
-
-// FluidSynth implementation of a MIDI device -------------------------------
-
-#ifndef DYN_FLUIDSYNTH
-#include <fluidsynth.h>
-#else
-#include "i_module.h"
-extern FModule FluidSynthModule;
-
-struct fluid_settings_t;
-struct fluid_synth_t;
-#endif
-
-class FluidSynthMIDIDevice : public SoftSynthMIDIDevice
-{
-public:
-	FluidSynthMIDIDevice(const char *args, int samplerate);
-	~FluidSynthMIDIDevice();
-
-	int Open(MidiCallback, void *userdata);
-	FString GetStats();
-	void FluidSettingInt(const char *setting, int value);
-	void FluidSettingNum(const char *setting, double value);
-	void FluidSettingStr(const char *setting, const char *value);
-	int GetDeviceType() const override { return MDEV_FLUIDSYNTH; }
-
-protected:
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	int LoadPatchSets(const char *patches);
-
-	fluid_settings_t *FluidSettings;
-	fluid_synth_t *FluidSynth;
-
-#ifdef DYN_FLUIDSYNTH
-	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
-	static TReqProc<FluidSynthModule, fluid_settings_t *(*)()> new_fluid_settings;
-	static TReqProc<FluidSynthModule, fluid_synth_t *(*)(fluid_settings_t *)> new_fluid_synth;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> delete_fluid_synth;
-	static TReqProc<FluidSynthModule, void (*)(fluid_settings_t *)> delete_fluid_settings;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, double)> fluid_settings_setnum;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, const char *)> fluid_settings_setstr;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, int)> fluid_settings_setint;
-	static TReqProc<FluidSynthModule, int (*)(fluid_settings_t *, const char *, int *)> fluid_settings_getint;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int)> fluid_synth_set_reverb_on;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int)> fluid_synth_set_chorus_on;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_set_interp_method;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int)> fluid_synth_set_polyphony;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_get_polyphony;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_get_active_voice_count;
-	static TReqProc<FluidSynthModule, double (*)(fluid_synth_t *)> fluid_synth_get_cpu_load;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> fluid_synth_system_reset;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int, int)> fluid_synth_noteon;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_noteoff;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int, int)> fluid_synth_cc;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_program_change;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_channel_pressure;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, int)> fluid_synth_pitch_bend;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, int, void *, int, int, void *, int, int)> fluid_synth_write_float;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, const char *, int)> fluid_synth_sfload;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, double, double, double, double)> fluid_synth_set_reverb;
-	static TReqProc<FluidSynthModule, void (*)(fluid_synth_t *, int, double, double, double, int)> fluid_synth_set_chorus;
-	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *, const char *, int, char *, int *, int *, int)> fluid_synth_sysex;
-
-	bool LoadFluidSynth();
-	void UnloadFluidSynth();
-#endif
-};
-
-
-class ADLMIDIDevice : public SoftSynthMIDIDevice
-{
-	struct ADL_MIDIPlayer *Renderer;
-public:
-	ADLMIDIDevice(const char *args);
-	~ADLMIDIDevice();
-
-	int Open(MidiCallback, void *userdata);
-	int GetDeviceType() const override { return MDEV_ADL; }
-
-protected:
-
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-
-private:
-	int LoadCustomBank(const char *bankfile);
-};
-
-
-class OPNMIDIDevice : public SoftSynthMIDIDevice
-{
-	struct OPN2_MIDIPlayer *Renderer;
-public:
-	OPNMIDIDevice(const char *args);
-	~OPNMIDIDevice();
-
-
-	int Open(MidiCallback, void *userdata);
-	int GetDeviceType() const override { return MDEV_OPN; }
-
-protected:
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-
-private:
-	int LoadCustomBank(const char *bankfile);
-};
-
 
 // Base class for streaming MUS and MIDI files ------------------------------
 

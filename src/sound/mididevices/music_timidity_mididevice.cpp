@@ -52,6 +52,30 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// Internal TiMidity MIDI device --------------------------------------------
+
+namespace Timidity { struct Renderer; }
+
+class TimidityMIDIDevice : public SoftSynthMIDIDevice
+{
+public:
+	TimidityMIDIDevice(const char *args, int samplerate);
+	~TimidityMIDIDevice();
+	
+	int Open(MidiCallback, void *userdata);
+	void PrecacheInstruments(const uint16_t *instruments, int count);
+	FString GetStats();
+	int GetDeviceType() const override { return MDEV_GUS; }
+	
+protected:
+	Timidity::Renderer *Renderer;
+	
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const uint8_t *data, int len);
+	void ComputeOutput(float *buffer, int len);
+};
+
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -214,3 +238,15 @@ FString TimidityMIDIDevice::GetStats()
 	}
 	return out;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+MIDIDevice *CreateTimidityMIDIDevice(const char *args, int samplerate)
+{
+	return new TimidityMIDIDevice(args, samplerate);
+}
+

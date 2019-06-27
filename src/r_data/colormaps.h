@@ -1,6 +1,8 @@
 #ifndef __RES_CMAP_H
 #define __RES_CMAP_H
 
+#include "doomtype.h"
+
 struct lightlist_t;
 
 void R_InitColormaps ();

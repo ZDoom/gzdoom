@@ -54,7 +54,11 @@ DEFINE_TFLAGS_OPERATORS(LightFlags)
 class FLightDefaults
 {
 public:
-	FLightDefaults(FName name, ELightType type);
+	FLightDefaults(FName name, ELightType type = PointLight)
+	{
+		m_Name = name;
+		m_type = type;
+	}
 
 	void ApplyProperties(FDynamicLight * light) const;
 	FName GetName() const { return m_Name; }
@@ -72,6 +76,28 @@ public:
 	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
 	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
+	void SetSpotPitch(double pitch)
+	{
+		m_pitch = pitch;
+		m_explicitPitch = true;
+	}
+	void UnsetSpotPitch()
+	{
+		m_pitch = 0.;
+		m_explicitPitch = false;
+	}
+	void SetType(ELightType type) { m_type = type; }
+	void CopyFrom(const FLightDefaults &other)
+	{
+		auto n = m_Name;
+		*this = other;
+		m_Name = n;
+	}
+	void SetFlags(LightFlags lf)
+	{
+		m_lightFlags = lf;
+		m_attenuate = !!(m_lightFlags & LF_ATTENUATE);
+	}
 	static void SetAttenuationForLevel(bool);
 
 	void OrderIntensities()
@@ -88,7 +114,7 @@ protected:
 	int m_Args[5] = { 0,0,0,0,0 };
 	double m_Param = 0;
 	DVector3 m_Pos = { 0,0,0 };
-	ELightType m_type;
+	int m_type;
 	int8_t m_attenuate = -1;
 	LightFlags m_lightFlags = 0;
 	bool m_swapped = false;
@@ -97,7 +123,11 @@ protected:
 	DAngle m_spotInnerAngle = 10.0;
 	DAngle m_spotOuterAngle = 25.0;
 	DAngle m_pitch = 0.0;
+	
+	friend FSerializer &Serialize(FSerializer &arc, const char *key, FLightDefaults &value, FLightDefaults *def);
 };
+
+FSerializer &Serialize(FSerializer &arc, const char *key, TDeletingArray<FLightDefaults *> &value, TDeletingArray<FLightDefaults *> *def);
 
 //==========================================================================
 //
@@ -247,3 +277,5 @@ public:
 	bool explicitpitch;
 
 };
+
+

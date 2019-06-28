@@ -186,6 +186,8 @@ AActor::~AActor ()
 //
 //==========================================================================
 
+
+
 #define A(a,b) ((a), (b), def->b)
 
 void AActor::Serialize(FSerializer &arc)
@@ -364,7 +366,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("friendlyseeblocks", friendlyseeblocks)
 		A("spawntime", SpawnTime)
 		A("spawnorder", SpawnOrder)
-		A("friction", Friction);
+		A("friction", Friction)
+		A("userlights", UserLights);
 }
 
 #undef A

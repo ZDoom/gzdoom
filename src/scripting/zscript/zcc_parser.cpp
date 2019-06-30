@@ -401,7 +401,7 @@ static void DoParse(int lumpnum)
 			}
 			if (state.ParseVersion > MakeVersion(VER_MAJOR, VER_MINOR, VER_REVISION))
 			{
-				sc.ScriptError("Version mismatch. GZDoom %d.%d.%d is incompatible with at least one file. Version %d.%d.%d or later is required.", state.ParseVersion.major, state.ParseVersion.minor, state.ParseVersion.revision, VER_MAJOR, VER_MINOR, VER_REVISION);
+				sc.ScriptError("Version mismatch. GZDoom %d.%d.%d is required with at least one file. This version is %d.%d.%d.", state.ParseVersion.major, state.ParseVersion.minor, state.ParseVersion.revision, VER_MAJOR, VER_MINOR, VER_REVISION);
 			}
 		}
 		else

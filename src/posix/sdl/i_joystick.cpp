@@ -298,6 +298,7 @@ static SDLInputJoystickManager *JoystickManager;
 
 void I_StartupJoysticks()
 {
+	SDL_SetHint("SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS", "1");
 	if(SDL_InitSubSystem(SDL_INIT_JOYSTICK) >= 0)
 		JoystickManager = new SDLInputJoystickManager();
 }

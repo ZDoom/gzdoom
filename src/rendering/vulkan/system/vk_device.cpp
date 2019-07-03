@@ -158,6 +158,7 @@ void VulkanDevice::SelectPhysicalDevice()
 			if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
 			{
 				dev.graphicsFamily = i;
+				dev.graphicsTimeQueries = queueFamily.timestampValidBits != 0;
 				break;
 			}
 		}
@@ -205,6 +206,7 @@ void VulkanDevice::SelectPhysicalDevice()
 	PhysicalDevice = *SupportedDevices[selected].device;
 	graphicsFamily = SupportedDevices[selected].graphicsFamily;
 	presentFamily = SupportedDevices[selected].presentFamily;
+	graphicsTimeQueries = SupportedDevices[selected].graphicsTimeQueries;
 }
 
 bool VulkanDevice::SupportsDeviceExtension(const char *ext) const

@@ -30,6 +30,7 @@ public:
 	VulkanPhysicalDevice *device = nullptr;
 	int graphicsFamily = -1;
 	int presentFamily = -1;
+	bool graphicsTimeQueries = false;
 };
 
 class VulkanDevice
@@ -76,6 +77,7 @@ public:
 
 	int graphicsFamily = -1;
 	int presentFamily = -1;
+	bool graphicsTimeQueries = false;
 
 private:
 	void CreateInstance();

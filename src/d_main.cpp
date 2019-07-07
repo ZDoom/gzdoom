@@ -733,27 +733,33 @@ void D_Display ()
 		wipegamestate = gamestate;
 	}
 	// No wipes when in a stereo3D VR mode
-	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL && (vr_mode == 0 || vid_rendermode != 4))
-	{ // save the current screen if about to wipe
-		wipe = screen->WipeStartScreen ();
-		switch (wipegamestate)
+	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
+	{
+		if (vr_mode == 0 || vid_rendermode != 4)
 		{
-		default:
-			wipe_type = wipetype;
-			break;
+			// save the current screen if about to wipe
+			wipe = screen->WipeStartScreen ();
 
-		case GS_FORCEWIPEFADE:
-			wipe_type = wipe_Fade;
-			break;
+			switch (wipegamestate)
+			{
+			default:
+				wipe_type = wipetype;
+				break;
 
-		case GS_FORCEWIPEBURN:
-			wipe_type =wipe_Burn;
-			break;
+			case GS_FORCEWIPEFADE:
+				wipe_type = wipe_Fade;
+				break;
 
-		case GS_FORCEWIPEMELT:
-			wipe_type = wipe_Melt;
-			break;
+			case GS_FORCEWIPEBURN:
+				wipe_type = wipe_Burn;
+				break;
+
+			case GS_FORCEWIPEMELT:
+				wipe_type = wipe_Melt;
+				break;
+			}
 		}
+
 		wipegamestate = gamestate;
 	}
 	else

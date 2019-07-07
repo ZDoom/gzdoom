@@ -111,6 +111,7 @@ static void I_DetectOS()
 		case 12: name = "macOS Sierra";          break;
 		case 13: name = "macOS High Sierra";     break;
 		case 14: name = "macOS Mojave";          break;
+		case 15: name = "macOS Catalina";        break;
 	}
 
 	char release[16] = "unknown";

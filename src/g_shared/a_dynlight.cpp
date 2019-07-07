@@ -758,6 +758,12 @@ void AActor::SetDynamicLights()
 	unsigned int count = 0;
 
 	if (state == nullptr) return;
+
+	for (const auto def : UserLights)
+	{
+		AttachLight(count++, def);
+	}
+
 	if (LightAssociations.Size() > 0)
 	{
 		unsigned int i;
@@ -838,7 +844,7 @@ int AttachLightDef(AActor *self, int _lightid, int _lightname)
 	
 	// Todo: Optimize. This may be too slow.
 	auto lightdef = LightDefaults.FindEx([=](const auto &a) {
-		return a->GetName() == lightid;
+		return a->GetName() == lightname;
 	});
 	if (lightdef < LightDefaults.Size())
 	{
@@ -874,7 +880,7 @@ int AttachLightDirect(AActor *self, int _lightid, int type, int color, int radiu
 	userlight->SetArg(LIGHT_INTENSITY, radius1);
 	userlight->SetArg(LIGHT_SECONDARY_INTENSITY, radius2);
 	userlight->SetFlags(LightFlags::FromInt(flags));
-	float of[] = { float(ofs_x), float(ofs_y), float(ofs_z)};
+	float of[] = { float(ofs_x), float(ofs_z), float(ofs_y)};
 	userlight->SetOffset(of);
 	userlight->SetParameter(type == PulseLight? param*TICRATE : param*360.);
 	userlight->SetSpotInnerAngle(spoti);

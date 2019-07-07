@@ -1163,9 +1163,9 @@ class Actor : Thinker native
 	action native void A_OverlayAlpha(int layer, double alph);
 	action native void A_OverlayRenderStyle(int layer, int style);
 	
-	action native bool A_AttachLightDef(Name lightid, Name lightdef);
-	action native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags, Vector3 ofs, double param, double spoti, double spoto, double spotp);
-	action mative bool A_RemoveLight(Name lightid);
+	native bool A_AttachLightDef(Name lightid, Name lightdef);
+	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
+	native bool A_RemoveLight(Name lightid);
 
 	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
 	{

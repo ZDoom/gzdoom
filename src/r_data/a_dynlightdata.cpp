@@ -69,7 +69,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FLightDefaults &value,
 	if (arc.BeginObject(key))
 	{
 		arc("name", value.m_Name)
-			.Array("args", value.m_Args, 5,  nullptr)
+			.Array("args", value.m_Args, 5)
 			("param", value.m_Param)
 			("pos", value.m_Pos)
 			("type", value.m_type)

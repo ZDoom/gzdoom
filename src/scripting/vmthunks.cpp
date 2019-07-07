@@ -2965,7 +2965,7 @@ static int isFrozen(FLevelLocals *self)
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, isFrozen, isFrozen)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	return isFrozen(self);
+	ACTION_RETURN_INT(isFrozen(self));
 }
 
 void setFrozen(FLevelLocals *self, int on)

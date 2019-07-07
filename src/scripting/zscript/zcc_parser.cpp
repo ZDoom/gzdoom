@@ -401,7 +401,7 @@ static void DoParse(int lumpnum)
 			}
 			if (state.ParseVersion > MakeVersion(VER_MAJOR, VER_MINOR, VER_REVISION))
 			{
-				sc.ScriptError("Version mismatch. %d.%d.%d expected but only %d.%d.%d supported", state.ParseVersion.major, state.ParseVersion.minor, state.ParseVersion.revision, VER_MAJOR, VER_MINOR, VER_REVISION);
+				sc.ScriptError("The file you are attempting to run requires a newer version of " GAMENAME ".\n\nA version with ZScript version %d.%d.%d is required, but your copy of " GAMENAME " only supports %d.%d.%d. Please upgrade!", state.ParseVersion.major, state.ParseVersion.minor, state.ParseVersion.revision, VER_MAJOR, VER_MINOR, VER_REVISION);
 			}
 		}
 		else

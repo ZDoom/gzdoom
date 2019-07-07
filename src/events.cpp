@@ -491,6 +491,14 @@ void EventManager::RenderOverlay(EHudState state)
 		handler->RenderOverlay(state);
 }
 
+void EventManager::RenderUnderlay(EHudState state)
+{
+	if (ShouldCallStatic(false)) staticEventManager.RenderUnderlay(state);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->RenderUnderlay(state);
+}
+
 bool EventManager::CheckUiProcessors()
 {
 	if (ShouldCallStatic(false))
@@ -950,6 +958,19 @@ void DStaticEventHandler::RenderFrame()
 void DStaticEventHandler::RenderOverlay(EHudState state)
 {
 	IFVIRTUAL(DStaticEventHandler, RenderOverlay)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FRenderEvent e = owner->SetupRenderEvent();
+		e.HudState = int(state);
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::RenderUnderlay(EHudState state)
+{
+	IFVIRTUAL(DStaticEventHandler, RenderUnderlay)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;

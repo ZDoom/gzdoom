@@ -5788,7 +5788,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_GetCVarString:
 			if (argCount == 1)
 			{
-				return DoGetCVar(GetCVar(activator, Level->Behaviors.LookupString(args[0])), true);
+				return DoGetCVar(GetCVar(activator && activator->player ? int(activator->player - players) : -1, Level->Behaviors.LookupString(args[0])), true);
 			}
 			break;
 
@@ -9733,7 +9733,8 @@ scriptwait:
 			break;
 
 		case PCD_GETCVAR:
-			STACK(1) = DoGetCVar(GetCVar(activator, Level->Behaviors.LookupString(STACK(1))), false);
+			// This should not use Level->PlayerNum!
+			STACK(1) = DoGetCVar(GetCVar(activator && activator->player? int(activator->player - players) : -1, Level->Behaviors.LookupString(STACK(1))), false);
 			break;
 
 		case PCD_SETHUDSIZE:

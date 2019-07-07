@@ -650,7 +650,7 @@ bool I_InitInput (void *hwnd)
 		blah di8c = (blah)GetProcAddress(DInputDLL, "DirectInput8Create");
 		if (di8c != NULL)
 		{
-			hr = di8c(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8A, (void **)&g_pdi, NULL);
+			hr = di8c(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void **)&g_pdi, NULL);
 			if (FAILED(hr))
 			{
 				Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx\n", hr);
@@ -676,7 +676,11 @@ bool I_InitInput (void *hwnd)
 		}
 
 		typedef HRESULT (WINAPI *blah)(HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
-		blah dic = (blah)GetProcAddress (DInputDLL, "DirectInputCreateA");
+#ifdef UNICODE
+		blah dic = (blah)GetProcAddress (DInputDLL, "DirectInputCreateW");
+#else
+		blah dic = (blah)GetProcAddress(DInputDLL, "DirectInputCreateA");
+#endif
 
 		if (dic == NULL)
 		{

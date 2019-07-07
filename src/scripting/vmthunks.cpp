@@ -2952,7 +2952,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SphericalCoords, SphericalCoords)
 	PARAM_FLOAT(viewPitch);
 	PARAM_BOOL(absolute);
 	DVector3 result;
-	SphericalCoords(self, viewpointX, viewpointY, viewpointZ, targetX, targetY, targetZ, viewYaw, viewpointZ, absolute, &result);
+	SphericalCoords(self, viewpointX, viewpointY, viewpointZ, targetX, targetY, targetZ, viewYaw, viewPitch, absolute, &result);
 	ACTION_RETURN_VEC3(result);
 }
 

@@ -2730,6 +2730,12 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 // Used by DEM_RUNSCRIPT, DEM_RUNSCRIPT2, and DEM_RUNNAMEDSCRIPT
 static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always)
 {
+	if (pawn == nullptr)
+	{
+		// Scripts can be invoked without a level loaded, e.g. via puke(name) CCMD in fullscreen console
+		return;
+	}
+
 	int arg[4] = { 0, 0, 0, 0 };
 	int i;
 	

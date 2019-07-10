@@ -21,3 +21,10 @@ irreg_1_rus,ru,ёл,ла,ло,ло
 irreg_2_rus,ru,,ла,ло,ло
 ao_1_srb,sr,о,ла,ло,ло
 ao_2_srb,sr,ао,ла,ло,ло
+adj_cs,cs,ý,á,é,é
+ao_cs,cs,,a,o,o
+psf1_cs,cs,ova,ina,ova,ova
+psn1_cs,cs,ovo,ino,ovo,ovo
+self_cs,cs,sám,sama,samo,samo
+tgs_past_cs,cs,,ši,ši,ši
+tgs_pr1_cs,cs,e,íc,íc,íc

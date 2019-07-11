@@ -419,6 +419,27 @@ static void CheckStates(PClassActor *obj)
 	}
 }
 
+void CheckDropItems(const PClassActor *const obj)
+{
+	const FDropItem *dropItem = obj->ActorInfo()->DropItems;
+
+	while (dropItem != nullptr)
+	{
+		if (dropItem->Name != NAME_None)
+		{
+			const char *const dropItemName = dropItem->Name.GetChars();
+
+			if (dropItemName[0] != '\0' && PClass::FindClass(dropItem->Name) == nullptr)
+			{
+				Printf(TEXTCOLOR_ORANGE "Undefined drop item class %s referenced from actor %s\n", dropItemName, obj->TypeName.GetChars());
+				FScriptPosition::WarnCounter++;
+			}
+		}
+
+		dropItem = dropItem->Next;
+	}
+}
+
 //==========================================================================
 //
 // LoadActors
@@ -500,6 +521,8 @@ void LoadActors()
 			// PASSMOBJ is irrelevant for normal missiles, but not for bouncers.
 			defaults->flags2 |= MF2_PASSMOBJ;
 		}
+
+		CheckDropItems(ti);
 	}
 	if (FScriptPosition::ErrorCounter > 0)
 	{

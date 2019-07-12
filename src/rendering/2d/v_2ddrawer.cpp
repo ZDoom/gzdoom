@@ -412,6 +412,10 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 
 void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 {
+	// [MK] bail out if vertex/coord array sizes are mismatched
+	if ( shape->mVertices.Size() != shape->mCoords.Size() )
+		ThrowAbortException(X_OTHER, "Mismatch in vertex/coord count: %u != %u", shape->mVertices.Size(), shape->mCoords.Size());
+
 	if (parms.style.BlendOp == STYLEOP_None) return;	// not supposed to be drawn.
 
 	PalEntry vertexcolor;
@@ -464,7 +468,17 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 	dg.mIndexIndex = mIndices.Size();
 	dg.mIndexCount += shape->mIndices.Size();
 	for ( int i=0; i<int(shape->mIndices.Size()); i+=3 )
+	{
+		// [MK] bail out if any indices are out of bounds
+		for ( int j=0; j<3; j++ )
+		{
+			if ( shape->mIndices[i+j] < 0 )
+				ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u is negative: %i\n", i/3, j, shape->mIndices[i+j]);
+			if ( shape->mIndices[i+j] >= dg.mVertCount )
+				ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u: %u, max: %u\n", i/3, j, shape->mIndices[i+j], dg.mVertCount-1);
+		}
 		AddIndices(dg.mVertIndex, 3, shape->mIndices[i], shape->mIndices[i+1], shape->mIndices[i+2]);
+	}
 	AddCommand(&dg);
 }
 

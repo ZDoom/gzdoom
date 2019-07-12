@@ -1227,6 +1227,11 @@ void P_PlayerThink (player_t *player)
 		I_Error ("No player %td start\n", player - players + 1);
 	}
 
+	if (player->SubtitleCounter > 0)
+	{
+		player->SubtitleCounter--;
+	}
+
 	// Bots do not think in freeze mode.
 	if (player->mo->Level->isFrozen() && player->Bot != nullptr)
 	{

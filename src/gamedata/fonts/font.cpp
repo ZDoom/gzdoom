@@ -357,6 +357,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	}
 
 	if (!noTranslate) LoadTranslations();
+
+
 }
 
 void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
@@ -1190,6 +1192,11 @@ void FFont::FixXMoves()
 				}
 			}
 			Chars[i].XMove = SpaceWidth;
+		}
+		if (Chars[i].OriginalPic)
+		{
+			int ofs = Chars[i].OriginalPic->GetScaledTopOffset(0);
+			if (ofs > Displacement) Displacement = ofs;
 		}
 	}
 }

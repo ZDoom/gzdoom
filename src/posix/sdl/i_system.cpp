@@ -55,8 +55,6 @@
 
 #include "gameconfigfile.h"
 
-EXTERN_CVAR (String, language)
-
 extern "C"
 {
 	double		SecondsPerCycle = 1e-8;
@@ -72,7 +70,6 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 #endif
 
 double PerfToSec, PerfToMillisec;
-uint32_t LanguageIDs[4];
 	
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {

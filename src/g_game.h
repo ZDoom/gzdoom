@@ -82,6 +82,8 @@ void G_DoLoadGame (void);
 
 // Called by M_Responder.
 void G_SaveGame (const char *filename, const char *description);
+// Called by messagebox
+void G_DoQuickSave ();
 
 // Only called by startup code.
 void G_RecordDemo (const char* name);

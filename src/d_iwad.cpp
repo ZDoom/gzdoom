@@ -51,6 +51,8 @@
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
+const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinprogdir);
+
 //==========================================================================
 //
 // Parses IWAD definitions
@@ -751,19 +753,27 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	// Load additional resources from the same directory as the IWAD itself.
 	for (unsigned i=0; i < info.Load.Size(); i++)
 	{
-		long lastslash = picks[pick].mFullPath.LastIndexOf ('/');
 		FString path;
-
-		if (lastslash == -1)
+		if (info.Load[i][0] != ':')
 		{
-			path = "";//  wads[pickwad].Path;
+			long lastslash = picks[pick].mFullPath.LastIndexOf('/');
+
+			if (lastslash == -1)
+			{
+				path = "";//  wads[pickwad].Path;
+			}
+			else
+			{
+				path = FString(picks[pick].mFullPath.GetChars(), lastslash + 1);
+			}
+			path += info.Load[i];
+			D_AddFile(wadfiles, path);
 		}
 		else
 		{
-			path = FString (picks[pick].mFullPath.GetChars(), lastslash + 1);
+			auto wad = BaseFileSearch(info.Load[i].GetChars() + 1, NULL, true);
+			if (wad) D_AddFile(wadfiles, wad);
 		}
-		path += info.Load[i];
-		D_AddFile (wadfiles, path);
 
 	}
 	return picks[pick].mInfoIndex;

@@ -82,7 +82,7 @@ IWad
 	Mapinfo = "mapinfo/hacx.txt"
 	MustContain = "MAP01", "HACX-R"
 	BannerColors = "00 00 a8", "a8 a8 a8"
-	Load = "hacx_gzdoom_stuff.pk3"
+	Load = ":hacx_gzdoom_stuff.pk3"
 	DeleteLumps = "FONTDEFS"
 }
 

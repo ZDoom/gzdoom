@@ -35,6 +35,8 @@
 ** Actual implementation is system-specific.
 */
 
+#include <functional>
+
 class FStartupScreen
 {
 public:
@@ -51,7 +53,7 @@ public:
 	virtual void NetProgress(int count);
 	virtual void NetMessage(const char *format, ...);	// cover for printf
 	virtual void NetDone();
-	virtual bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+	virtual bool NetLoop(std::function<bool()> callback);
 protected:
 	int MaxPos, CurPos, NotchPos;
 };

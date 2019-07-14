@@ -85,7 +85,7 @@
 #include "teaminfo.h"
 #include "hardware.h"
 #include "sbarinfo.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "d_netinf.h"
 #include "m_cheat.h"
@@ -102,6 +102,7 @@
 #include "i_system.h"
 #include "g_cvars.h"
 #include "r_data/r_vanillatrans.h"
+#include "network/netsingle.h"
 #include "atterm.h"
 
 EXTERN_CVAR(Bool, hud_althud)
@@ -126,9 +127,7 @@ const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const c
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void D_CheckNetGame ();
 void D_ProcessEvents ();
-void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
@@ -222,9 +221,10 @@ FString StoredWarp;
 bool advancedemo;
 FILE *debugfile;
 FILE *hashfile;
-event_t events[MAXEVENTS];
-int eventhead;
-int eventtail;
+static TArray<event_t> FrameStartInputEvents;
+static event_t events[MAXEVENTS];
+static int eventhead;
+static int eventtail;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FTexture *Advisory;
@@ -292,33 +292,46 @@ void D_ProcessEvents (void)
 
 void D_PostEvent (const event_t *ev)
 {
-	// Do not post duplicate consecutive EV_DeviceChange events.
-	if (ev->type == EV_DeviceChange && events[eventhead].type == EV_DeviceChange)
+	FrameStartInputEvents.Push(*ev);
+}
+
+void D_AddPostedEvents()
+{
+	unsigned int c = FrameStartInputEvents.Size();
+	for (unsigned int i = 0; i < c; i++)
 	{
-		return;
+		const event_t *ev = &FrameStartInputEvents[i];
+
+		// Do not post duplicate consecutive EV_DeviceChange events.
+		if (ev->type == EV_DeviceChange && events[eventhead].type == EV_DeviceChange)
+		{
+			continue;
+		}
+		events[eventhead] = *ev;
+		if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !primaryLevel->localEventManager->Responder(ev) && !paused)
+		{
+			if (Button_Mlook.bDown || freelook)
+			{
+				int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
+				if (invertmouse)
+					look = -look;
+				G_AddViewPitch(look, true);
+				events[eventhead].y = 0;
+			}
+			if (!Button_Strafe.bDown && !lookstrafe)
+			{
+				G_AddViewAngle(int(ev->x * m_yaw * mouse_sensitivity * 8.0), true);
+				events[eventhead].x = 0;
+			}
+			if ((events[eventhead].x | events[eventhead].y) == 0)
+			{
+				continue;
+			}
+		}
+		eventhead = (eventhead + 1)&(MAXEVENTS - 1);
 	}
-	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !primaryLevel->localEventManager->Responder(ev) && !paused)
-	{
-		if (Button_Mlook.bDown || freelook)
-		{
-			int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
-			if (invertmouse)
-				look = -look;
-			G_AddViewPitch (look, true);
-			events[eventhead].y = 0;
-		}
-		if (!Button_Strafe.bDown && !lookstrafe)
-		{
-			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0), true);
-			events[eventhead].x = 0;
-		}
-		if ((events[eventhead].x | events[eventhead].y) == 0)
-		{
-			return;
-		}
-	}
-	eventhead = (eventhead+1)&(MAXEVENTS-1);
+
+	FrameStartInputEvents.Clear();
 }
 
 //==========================================================================
@@ -399,14 +412,14 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 
 	if (self & DF_NO_FREELOOK)
 	{
-		Net_WriteByte (DEM_CENTERVIEW);
+		network->WriteByte (DEM_CENTERVIEW);
 	}
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
 	{
 		float fov;
 
-		Net_WriteByte (DEM_FOV);
+		network->WriteByte (DEM_FOV);
 
 		// If the game is started with DF_NO_FOV set, the arbitrator's
 		// DesiredFOV will not be set when this callback is run, so
@@ -416,7 +429,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 		{
 			fov = 90;
 		}
-		Net_WriteFloat (fov);
+		network->WriteFloat (fov);
 	}
 }
 
@@ -898,9 +911,6 @@ void D_Display ()
 
 	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
 	{
-		if (wipe != nullptr) delete wipe;
-		wipe = nullptr;
-		NetUpdate ();			// send out any new accumulation
 		// normal update
 		// draw ZScript UI stuff
 		C_DrawConsole ();	// draw console
@@ -922,7 +932,6 @@ void D_Display ()
 		wiper->SetTextures(wipe, wipend);
 
 		wipestart = I_msTime();
-		NetUpdate();		// send out any new accumulation
 
 		do
 		{
@@ -938,7 +947,6 @@ void D_Display ()
 			C_DrawConsole ();	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
 			screen->End2DAndUpdate ();
-			NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
 		delete wiper;
 		I_FreezeTime(false);
@@ -959,10 +967,10 @@ void D_ErrorCleanup ()
 {
 	savegamerestore = false;
 	primaryLevel->BotInfo.RemoveAllBots (primaryLevel, true);
-	D_QuitNetGame ();
+	network->D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
-	Net_ClearBuffers ();
+	network->Net_ClearBuffers ();
 	G_NewInit ();
 	M_ClearMenus ();
 	singletics = false;
@@ -986,10 +994,106 @@ void D_ErrorCleanup ()
 //
 //==========================================================================
 
-void D_DoomLoop ()
+class GameTime
 {
-	int lasttic = 0;
+public:
+	void Update()
+	{
+		LastTic = CurrentTic;
+		I_SetFrameTime();
+		CurrentTic = I_GetTime();
+	}
 
+	int TicsElapsed() const
+	{
+		return CurrentTic - LastTic;
+	}
+
+	int BaseGameTic() const
+	{
+		return LastTic;
+	}
+
+private:
+	int LastTic = 0;
+	int CurrentTic = 0;
+} gametime;
+
+class GameInput
+{
+public:
+	void Update()
+	{
+		// Not sure why the joystick can't be updated every frame..
+		bool updateJoystick = gametime.TicsElapsed() > 0;
+		if (updateJoystick)
+		{
+			I_StartFrame(); // To do: rename this silly function to I_UpdateJoystick
+		}
+
+		// Grab input events at the beginning of the frame.
+		// This ensures the mouse movement matches I_GetTimeFrac precisely.
+		I_StartTic(); // To do: rename this to I_ProcessWindowMessages
+	}
+
+	void BeforeDisplayUpdate()
+	{
+		// Apply the events we recorded in I_StartTic as the events for the next frame.
+		D_AddPostedEvents();
+	}
+
+} input;
+
+ticcmd_t G_BuildTiccmd();
+
+class PlaySim
+{
+public:
+	void Update()
+	{
+		int tics = gametime.TicsElapsed();
+		if (tics == 0)
+			return;
+
+		P_UnPredictPlayer();
+
+		D_ProcessEvents();
+
+		for (int i = 0; i < tics; i++)
+		{
+			network->SetCurrentTic(gametime.BaseGameTic() + i);
+			network->WriteLocalInput(G_BuildTiccmd());
+
+			if (advancedemo)
+				D_DoAdvanceDemo();
+
+			C_Ticker();
+			M_Ticker();
+			G_Ticker();
+
+			network->EndCurrentTic();
+		}
+
+		P_PredictPlayer(&players[consoleplayer]);
+
+		S_UpdateSounds(players[consoleplayer].camera);	// move positional sounds
+	}
+
+} playsim;
+
+class GameDisplay
+{
+public:
+	void Update()
+	{
+		// Render frame and present
+		D_Display();
+	}
+
+} display;
+
+void D_DoomLoop()
+{
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
 	Page.SetInvalid();
@@ -998,56 +1102,36 @@ void D_DoomLoop ()
 
 	vid_cursor.Callback();
 
-	for (;;)
+	while (true)
 	{
 		try
 		{
-			// frame syncronous IO operations
-			if (gametic > lasttic)
-			{
-				lasttic = gametic;
-				I_StartFrame ();
-			}
-			I_SetFrameTime();
+			gametime.Update();
+			if (netconnect)
+				netconnect->Update();
+			network->Update();
+			input.Update();
+			playsim.Update();
+			input.BeforeDisplayUpdate();
+			display.Update();
 
-			// process one or more tics
-			if (singletics)
-			{
-				I_StartTic ();
-				D_ProcessEvents ();
-				G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
-				if (advancedemo)
-					D_DoAdvanceDemo ();
-				C_Ticker ();
-				M_Ticker ();
-				G_Ticker ();
-				// [RH] Use the consoleplayer's camera to update sounds
-				S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
-				gametic++;
-				maketic++;
-				GC::CheckGC ();
-				Net_NewMakeTic ();
-			}
-			else
-			{
-				TryRunTics (); // will run at least one tic
-			}
-			// Update display, next frame, with current state.
-			I_StartTic ();
-			D_Display ();
+			GC::CheckGC();
+
 			if (wantToRestart)
 			{
+				P_UnPredictPlayer();
+
 				wantToRestart = false;
 				return;
 			}
 		}
 		catch (CRecoverableError &error)
 		{
-			if (error.GetMessage ())
+			if (error.GetMessage())
 			{
-				Printf (PRINT_BOLD, "\n%s\n", error.GetMessage());
+				Printf(PRINT_BOLD, "\n%s\n", error.GetMessage());
 			}
-			D_ErrorCleanup ();
+			D_ErrorCleanup();
 		}
 		catch (CVMAbortException &error)
 		{
@@ -2325,6 +2409,8 @@ void D_DoomMain (void)
 
 	D_DoomInit();
 
+	network.reset(new NetSinglePlayer());
+
 	extern void D_ConfirmSendStats();
 	D_ConfirmSendStats();
 
@@ -2603,9 +2689,7 @@ void D_DoomMain (void)
 
 		if (!restart)
 		{
-			if (!batchrun) Printf ("D_CheckNetGame: Checking network game status.\n");
-			StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
-			D_CheckNetGame ();
+			D_SetupUserInfo();
 		}
 
 		// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now
@@ -2620,7 +2704,7 @@ void D_DoomMain (void)
 
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;
-		Net_NewMakeTic ();
+		network->Startup();
 		C_RunDelayedCommands();
 		gamestate = GS_STARTUP;
 
@@ -2703,7 +2787,7 @@ void D_DoomMain (void)
 						G_BeginRecording(NULL);
 					}
 
-					atterm(D_QuitNetGame);		// killough
+					atterm([] { network->D_QuitNetGame(); });		// killough
 				}
 			}
 		}
@@ -2876,7 +2960,7 @@ void FStartupScreen::NetInit(char const *,int) {}
 void FStartupScreen::NetProgress(int) {}
 void FStartupScreen::NetMessage(char const *,...) {}
 void FStartupScreen::NetDone(void) {}
-bool FStartupScreen::NetLoop(bool (*)(void *),void *) { return false; }
+bool FStartupScreen::NetLoop(std::function<bool()> callback) { return false; }
 
 DEFINE_FIELD_X(InputEventData, event_t, type)
 DEFINE_FIELD_X(InputEventData, event_t, subtype)

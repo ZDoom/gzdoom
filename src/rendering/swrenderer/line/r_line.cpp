@@ -35,7 +35,6 @@
 #include "w_wad.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
-#include "d_net.h"
 #include "g_level.h"
 #include "g_levellocals.h"
 #include "r_wallsetup.h"

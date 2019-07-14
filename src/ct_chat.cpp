@@ -35,7 +35,7 @@
 #include "v_text.h"
 #include "d_gui.h"
 #include "g_input.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "sbar.h"
 #include "v_video.h"
@@ -355,16 +355,16 @@ static void ShoveChatStr (const char *str, uint8_t who)
 		who |= 2;
 	}
 
-	Net_WriteByte (DEM_SAY);
-	Net_WriteByte (who);
+	network->WriteByte (DEM_SAY);
+	network->WriteByte (who);
 
 	if (!chat_substitution || !DoSubstitution (substBuff, str))
 	{
-		Net_WriteString(MakeUTF8(str));
+		network->WriteString(MakeUTF8(str));
 	}
 	else
 	{
-		Net_WriteString(MakeUTF8(substBuff));
+		network->WriteString(MakeUTF8(substBuff));
 	}
 }
 

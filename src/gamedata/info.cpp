@@ -38,7 +38,7 @@
 #include "doomstat.h"
 #include "info.h"
 #include "c_dispatch.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "v_text.h"
 
 #include "gi.h"
@@ -707,17 +707,17 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 			Printf ("Unknown actor '%s'\n", argv[1]);
 			return;
 		}
-		Net_WriteByte (argv.argc() > 2 ? command2 : command);
-		Net_WriteString (type->TypeName.GetChars());
+		network->WriteByte (argv.argc() > 2 ? command2 : command);
+		network->WriteString (type->TypeName.GetChars());
 
 		if (argv.argc () > 2)
 		{
-			Net_WriteWord (atoi (argv[2])); // angle
-			Net_WriteWord ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
-			Net_WriteByte ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
+			network->WriteWord (atoi (argv[2])); // angle
+			network->WriteWord ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
+			network->WriteByte ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
 			for (int i = 5; i < 10; i++)
 			{ // args[5]
-				Net_WriteLong((i < argv.argc()) ? atoi(argv[i]) : 0);
+				network->WriteLong((i < argv.argc()) ? atoi(argv[i]) : 0);
 			}
 		}
 	}

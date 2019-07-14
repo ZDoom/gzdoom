@@ -7,6 +7,7 @@ version "4.2"
 #include "zscript/events.zs"
 #include "zscript/destructible.zs"
 #include "zscript/level_compatibility.zs"
+#include "zscript/network.txt"
 
 #include "zscript/actors/actor.zs"
 #include "zscript/actors/checks.zs"

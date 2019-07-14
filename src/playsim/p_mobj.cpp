@@ -98,6 +98,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "a_dynlight.h"
+#include "network/net.h"
 #include "fragglescript/t_fs.h"
 
 // MACROS ------------------------------------------------------------------
@@ -4550,6 +4551,9 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	}
 	// force scroller check in the first tic.
 	actor->flags8 |= MF8_INSCROLLSEC;
+
+	// notify network that we got a new actor
+	network->ActorSpawned(actor);
 }
 
 
@@ -4819,6 +4823,9 @@ void AActor::CallDeactivate(AActor *activator)
 
 void AActor::OnDestroy ()
 {
+	// Notify network
+	network->ActorDestroyed(this);
+
 	// [ZZ] call destroy event hook.
 	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.
 	//      but you can't really do that without utterly breaking the game, so it's ok.

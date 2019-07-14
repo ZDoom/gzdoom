@@ -87,7 +87,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "sbar.h"
 #include "p_acs.h"
 #include "teaminfo.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_netinf.h"
 #include "d_player.h"
 #include "events.h"
@@ -292,8 +292,8 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 
 	thebot->inuse = BOTINUSE_Waiting;
 
-	Net_WriteByte (DEM_ADDBOT);
-	Net_WriteByte (botshift);
+	network->WriteByte (DEM_ADDBOT);
+	network->WriteByte (botshift);
 	{
 		//Set color.
 		char concat[512];
@@ -307,12 +307,12 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 			mysnprintf (concat + strlen(concat), countof(concat) - strlen(concat),
 				"\\team\\%d\n", thebot->lastteam);
 		}
-		Net_WriteString (concat);
+		network->WriteString (concat);
 	}
-	Net_WriteByte(thebot->skill.aiming);
-	Net_WriteByte(thebot->skill.perfection);
-	Net_WriteByte(thebot->skill.reaction);
-	Net_WriteByte(thebot->skill.isp);
+	network->WriteByte(thebot->skill.aiming);
+	network->WriteByte(thebot->skill.perfection);
+	network->WriteByte(thebot->skill.reaction);
+	network->WriteByte(thebot->skill.isp);
 
 	return true;
 }

@@ -34,7 +34,6 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "cmdlib.h"
-#include "d_net.h"
 #include "g_level.h"
 #include "p_effect.h"
 #include "po_man.h"

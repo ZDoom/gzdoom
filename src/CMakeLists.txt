@@ -697,6 +697,7 @@ file( GLOB HEADER_FILES
 	scripting/decorate/*.h
 	scripting/zscript/*.h
 	scripting/vm/*.h
+	network/*.h
 	sound/midisources/*.h
 	sound/oplsynth/*.h
 	sound/oplsynth/dosbox/*.h
@@ -952,7 +953,13 @@ set (PCH_SOURCES
 	d_iwad.cpp
 	d_main.cpp
 	d_anonstats.cpp
-	d_net.cpp
+	network/net.cpp
+	network/netsingle.cpp
+	network/netserver.cpp
+	network/netsync.cpp
+	network/netclient.cpp
+	network/netcommand.cpp
+	network/i_net.cpp
 	d_netinfo.cpp
 	d_protocol.cpp
 	dobject.cpp
@@ -967,7 +974,6 @@ set (PCH_SOURCES
 	gameconfigfile.cpp
 	gitinfo.cpp
 	hu_scores.cpp
-	i_net.cpp
 	m_cheat.cpp
 	m_joy.cpp
 	m_misc.cpp
@@ -1580,6 +1586,7 @@ source_group("Scripting\\ZScript frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_
 source_group("Scripting\\Compiler backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/backend/.+")
 source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/vm/.+")
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
+source_group("Network" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/network/.+")
 source_group("Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
 source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/nodebuilder/.+")
 source_group("Utility\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/math/.+")

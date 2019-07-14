@@ -40,7 +40,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_netinf.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_player.h"
 #include "c_dispatch.h"
 #include "r_state.h"
@@ -544,8 +544,8 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 
 	mysnprintf (foo, countof(foo), "\\%s\\%s", cvar->GetName(), escaped_val.GetChars());
 
-	Net_WriteByte (DEM_UINFCHANGED);
-	Net_WriteString (foo);
+	network->WriteByte (DEM_UINFCHANGED);
+	network->WriteString (foo);
 }
 
 static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, bool singlebit)
@@ -628,15 +628,15 @@ void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType 
 
 	namelen = strlen (cvar->GetName ());
 
-	Net_WriteByte (DEM_SINFCHANGED);
-	Net_WriteByte ((uint8_t)(namelen | (type << 6)));
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), (int)namelen);
+	network->WriteByte (DEM_SINFCHANGED);
+	network->WriteByte ((uint8_t)(namelen | (type << 6)));
+	network->WriteBytes ((uint8_t *)cvar->GetName (), (int)namelen);
 	switch (type)
 	{
-	case CVAR_Bool:		Net_WriteByte (value.Bool);		break;
-	case CVAR_Int:		Net_WriteLong (value.Int);		break;
-	case CVAR_Float:	Net_WriteFloat (value.Float);	break;
-	case CVAR_String:	Net_WriteString (value.String);	break;
+	case CVAR_Bool:		network->WriteByte (value.Bool);		break;
+	case CVAR_Int:		network->WriteLong (value.Int);		break;
+	case CVAR_Float:	network->WriteFloat (value.Float);	break;
+	case CVAR_String:	network->WriteString (value.String);	break;
 	default: break; // Silence GCC
 	}
 }
@@ -647,10 +647,10 @@ void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
 
 	namelen = (int)strlen (cvar->GetName ());
 
-	Net_WriteByte (DEM_SINFCHANGEDXOR);
-	Net_WriteByte ((uint8_t)namelen);
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), namelen);
-	Net_WriteByte (uint8_t(bitnum | (set << 5)));
+	network->WriteByte (DEM_SINFCHANGEDXOR);
+	network->WriteByte ((uint8_t)namelen);
+	network->WriteBytes ((uint8_t *)cvar->GetName (), namelen);
+	network->WriteByte (uint8_t(bitnum | (set << 5)));
 }
 
 void D_DoServerInfoChange (uint8_t **stream, bool singlebit)

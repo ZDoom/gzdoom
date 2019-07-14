@@ -54,7 +54,7 @@
 #include "d_player.h"
 #include "gi.h"
 #include "sbar.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_netinf.h"
 #include "a_morph.h"
 #include "vm.h"
@@ -1836,8 +1836,8 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			Net_WriteByte (DEM_GENERICCHEAT);
-			Net_WriteByte (CHT_MASSACRE);
+			network->WriteByte (DEM_GENERICCHEAT);
+			network->WriteByte (CHT_MASSACRE);
 		}
 		else if (!stricmp (argv[1], "baddies"))
 		{
@@ -1845,13 +1845,13 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			Net_WriteByte (DEM_GENERICCHEAT);
-			Net_WriteByte (CHT_MASSACRE2);
+			network->WriteByte (DEM_GENERICCHEAT);
+			network->WriteByte (CHT_MASSACRE2);
 		}
 		else
 		{
-			Net_WriteByte (DEM_KILLCLASSCHEAT);
-			Net_WriteString (argv[1]);
+			network->WriteByte (DEM_KILLCLASSCHEAT);
+			network->WriteString (argv[1]);
 		}
 	}
 	else
@@ -1861,7 +1861,7 @@ CCMD (kill)
 			return;
 
 		// Kill the player
-		Net_WriteByte (DEM_SUICIDE);
+		network->WriteByte (DEM_SUICIDE);
 	}
 	C_HideConsole ();
 }
@@ -1873,8 +1873,8 @@ CCMD(remove)
 		if (CheckCheatmode())
 			return;
 
-		Net_WriteByte(DEM_REMOVE);
-		Net_WriteString(argv[1]);
+		network->WriteByte(DEM_REMOVE);
+		network->WriteString(argv[1]);
 		C_HideConsole();
 	}
 	else
@@ -1882,5 +1882,4 @@ CCMD(remove)
 		Printf("Usage: remove <actor class name>\n");
 		return;
 	}
-	
 }

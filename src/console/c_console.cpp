@@ -56,7 +56,7 @@
 #include "doomstat.h"
 #include "d_gui.h"
 #include "cmdlib.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "d_player.h"
 #include "gstrings.h"
@@ -1243,7 +1243,7 @@ void C_FullConsole ()
 {
 	if (demoplayback)
 		G_CheckDemoStatus ();
-	D_QuitNetGame ();
+	network->D_QuitNetGame ();
 	advancedemo = false;
 	ConsoleState = c_down;
 	HistPos = NULL;

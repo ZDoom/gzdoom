@@ -48,7 +48,7 @@
 #include "x86.h"
 
 #include "d_main.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "g_game.h"
 #include "c_dispatch.h"
 #include "atterm.h"
@@ -73,12 +73,6 @@ double PerfToSec, PerfToMillisec;
 	
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
-}
-
-ticcmd_t emptycmd;
-ticcmd_t *I_BaseTiccmd(void)
-{
-	return &emptycmd;
 }
 
 void I_BeginRead(void)

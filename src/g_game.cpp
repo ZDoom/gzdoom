@@ -59,7 +59,7 @@
 #include "m_png.h"
 #include "a_keys.h"
 #include "cmdlib.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_event.h"
 #include "p_acs.h"
 #include "p_effect.h"
@@ -79,6 +79,7 @@
 #include "g_hub.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "gameconfigfile.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -86,7 +87,7 @@ static FRandom pr_pspawn ("PlayerSpawn");
 
 bool	G_CheckDemoStatus (void);
 void	G_ReadDemoTiccmd (ticcmd_t *cmd, int player);
-void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf);
+void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player);
 void	G_PlayerReborn (int player);
 
 void	G_DoNewGame (void);
@@ -152,6 +153,8 @@ bool	 		viewactive;
 bool 			netgame;				// only true if packets are broadcast 
 bool			multiplayer;
 bool			multiplayernext = false;		// [SP] Map coop/dm implementation
+bool			netclient;				// clientside playsim
+bool			netserver = false;		// used to enforce 'netplay = true'
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
@@ -176,9 +179,6 @@ uint8_t*			zdembodyend;			// end of ZDEM BODY chunk
 bool 			singledemo; 			// quit after playing a demo from cmdline 
  
 bool 			precache = true;		// if true, load all graphics at start 
-  
-short			consistancy[MAXPLAYERS][BACKUPTICS];
- 
  
 #define MAXPLMOVE				(forwardmove[1]) 
  
@@ -310,12 +310,12 @@ CCMD (slot)
 
 CCMD (centerview)
 {
-	Net_WriteByte (DEM_CENTERVIEW);
+	network->WriteByte (DEM_CENTERVIEW);
 }
 
 CCMD(crouch)
 {
-	Net_WriteByte(DEM_CROUCH);
+	network->WriteByte(DEM_CROUCH);
 }
 
 CCMD (land)
@@ -525,7 +525,7 @@ static inline int joyint(double val)
 // or reads it from the demo buffer.
 // If recording a demo, write it out
 //
-void G_BuildTiccmd (ticcmd_t *cmd)
+ticcmd_t G_BuildTiccmd ()
 {
 	int 		strafe;
 	int 		speed;
@@ -533,12 +533,9 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	int 		side;
 	int			fly;
 
-	ticcmd_t	*base;
+	ticcmd_t cmd;
 
-	base = I_BaseTiccmd (); 			// empty, or external driver
-	*cmd = *base;
-
-	cmd->consistancy = consistancy[consoleplayer][(maketic/ticdup)%BACKUPTICS];
+	cmd.consistency = network->GetConsoleConsistency();
 
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
@@ -549,7 +546,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	//		and not the joystick, since we treat the joystick as
 	//		the analog device it is.
 	if (Button_Left.bDown || Button_Right.bDown)
-		turnheld += ticdup;
+		turnheld += network->ticdup;
 	else
 		turnheld = 0;
 
@@ -613,32 +610,32 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		side -= sidemove[speed];
 
 	// buttons
-	if (Button_Attack.bDown)		cmd->ucmd.buttons |= BT_ATTACK;
-	if (Button_AltAttack.bDown)		cmd->ucmd.buttons |= BT_ALTATTACK;
-	if (Button_Use.bDown)			cmd->ucmd.buttons |= BT_USE;
-	if (Button_Jump.bDown)			cmd->ucmd.buttons |= BT_JUMP;
-	if (Button_Crouch.bDown)		cmd->ucmd.buttons |= BT_CROUCH;
-	if (Button_Zoom.bDown)			cmd->ucmd.buttons |= BT_ZOOM;
-	if (Button_Reload.bDown)		cmd->ucmd.buttons |= BT_RELOAD;
+	if (Button_Attack.bDown)		cmd.ucmd.buttons |= BT_ATTACK;
+	if (Button_AltAttack.bDown)		cmd.ucmd.buttons |= BT_ALTATTACK;
+	if (Button_Use.bDown)			cmd.ucmd.buttons |= BT_USE;
+	if (Button_Jump.bDown)			cmd.ucmd.buttons |= BT_JUMP;
+	if (Button_Crouch.bDown)		cmd.ucmd.buttons |= BT_CROUCH;
+	if (Button_Zoom.bDown)			cmd.ucmd.buttons |= BT_ZOOM;
+	if (Button_Reload.bDown)		cmd.ucmd.buttons |= BT_RELOAD;
 
-	if (Button_User1.bDown)			cmd->ucmd.buttons |= BT_USER1;
-	if (Button_User2.bDown)			cmd->ucmd.buttons |= BT_USER2;
-	if (Button_User3.bDown)			cmd->ucmd.buttons |= BT_USER3;
-	if (Button_User4.bDown)			cmd->ucmd.buttons |= BT_USER4;
+	if (Button_User1.bDown)			cmd.ucmd.buttons |= BT_USER1;
+	if (Button_User2.bDown)			cmd.ucmd.buttons |= BT_USER2;
+	if (Button_User3.bDown)			cmd.ucmd.buttons |= BT_USER3;
+	if (Button_User4.bDown)			cmd.ucmd.buttons |= BT_USER4;
 
-	if (Button_Speed.bDown)			cmd->ucmd.buttons |= BT_SPEED;
-	if (Button_Strafe.bDown)		cmd->ucmd.buttons |= BT_STRAFE;
-	if (Button_MoveRight.bDown)		cmd->ucmd.buttons |= BT_MOVERIGHT;
-	if (Button_MoveLeft.bDown)		cmd->ucmd.buttons |= BT_MOVELEFT;
-	if (Button_LookDown.bDown)		cmd->ucmd.buttons |= BT_LOOKDOWN;
-	if (Button_LookUp.bDown)		cmd->ucmd.buttons |= BT_LOOKUP;
-	if (Button_Back.bDown)			cmd->ucmd.buttons |= BT_BACK;
-	if (Button_Forward.bDown)		cmd->ucmd.buttons |= BT_FORWARD;
-	if (Button_Right.bDown)			cmd->ucmd.buttons |= BT_RIGHT;
-	if (Button_Left.bDown)			cmd->ucmd.buttons |= BT_LEFT;
-	if (Button_MoveDown.bDown)		cmd->ucmd.buttons |= BT_MOVEDOWN;
-	if (Button_MoveUp.bDown)		cmd->ucmd.buttons |= BT_MOVEUP;
-	if (Button_ShowScores.bDown)	cmd->ucmd.buttons |= BT_SHOWSCORES;
+	if (Button_Speed.bDown)			cmd.ucmd.buttons |= BT_SPEED;
+	if (Button_Strafe.bDown)		cmd.ucmd.buttons |= BT_STRAFE;
+	if (Button_MoveRight.bDown)		cmd.ucmd.buttons |= BT_MOVERIGHT;
+	if (Button_MoveLeft.bDown)		cmd.ucmd.buttons |= BT_MOVELEFT;
+	if (Button_LookDown.bDown)		cmd.ucmd.buttons |= BT_LOOKDOWN;
+	if (Button_LookUp.bDown)		cmd.ucmd.buttons |= BT_LOOKUP;
+	if (Button_Back.bDown)			cmd.ucmd.buttons |= BT_BACK;
+	if (Button_Forward.bDown)		cmd.ucmd.buttons |= BT_FORWARD;
+	if (Button_Right.bDown)			cmd.ucmd.buttons |= BT_RIGHT;
+	if (Button_Left.bDown)			cmd.ucmd.buttons |= BT_LEFT;
+	if (Button_MoveDown.bDown)		cmd.ucmd.buttons |= BT_MOVEDOWN;
+	if (Button_MoveUp.bDown)		cmd.ucmd.buttons |= BT_MOVEUP;
+	if (Button_ShowScores.bDown)	cmd.ucmd.buttons |= BT_SHOWSCORES;
 
 	// Handle joysticks/game controllers.
 	float joyaxes[NUM_JOYAXIS];
@@ -676,7 +673,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		forward += (int)((float)mousey * m_forward);
 	}
 
-	cmd->ucmd.pitch = LocalViewPitch >> 16;
+	cmd.ucmd.pitch = LocalViewPitch >> 16;
 
 	if (SendLand)
 	{
@@ -699,10 +696,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	else if (side < -MAXPLMOVE)
 		side = -MAXPLMOVE;
 
-	cmd->ucmd.forwardmove += forward;
-	cmd->ucmd.sidemove += side;
-	cmd->ucmd.yaw = LocalViewAngle >> 16;
-	cmd->ucmd.upmove = fly;
+	cmd.ucmd.forwardmove += forward;
+	cmd.ucmd.sidemove += side;
+	cmd.ucmd.yaw = LocalViewAngle >> 16;
+	cmd.ucmd.upmove = fly;
 	LocalViewAngle = 0;
 	LocalViewPitch = 0;
 
@@ -710,42 +707,44 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (sendturn180)
 	{
 		sendturn180 = false;
-		cmd->ucmd.buttons |= BT_TURN180;
+		cmd.ucmd.buttons |= BT_TURN180;
 	}
 	if (sendpause)
 	{
 		sendpause = false;
-		Net_WriteByte (DEM_PAUSE);
+		network->WriteByte (DEM_PAUSE);
 	}
 	if (sendsave)
 	{
 		sendsave = false;
-		Net_WriteByte (DEM_SAVEGAME);
-		Net_WriteString (savegamefile);
-		Net_WriteString (savedescription);
+		network->WriteByte (DEM_SAVEGAME);
+		network->WriteString (savegamefile);
+		network->WriteString (savedescription);
 		savegamefile = "";
 	}
 	if (SendItemUse == (const AActor *)1)
 	{
-		Net_WriteByte (DEM_INVUSEALL);
+		network->WriteByte (DEM_INVUSEALL);
 		SendItemUse = NULL;
 	}
 	else if (SendItemUse != NULL)
 	{
-		Net_WriteByte (DEM_INVUSE);
-		Net_WriteLong (SendItemUse->InventoryID);
+		network->WriteByte (DEM_INVUSE);
+		network->WriteLong (SendItemUse->InventoryID);
 		SendItemUse = NULL;
 	}
 	if (SendItemDrop != NULL)
 	{
-		Net_WriteByte (DEM_INVDROP);
-		Net_WriteLong (SendItemDrop->InventoryID);
-		Net_WriteLong(SendItemDropAmount);
+		network->WriteByte (DEM_INVDROP);
+		network->WriteLong (SendItemDrop->InventoryID);
+		network->WriteLong(SendItemDropAmount);
 		SendItemDrop = NULL;
 	}
 
-	cmd->ucmd.forwardmove <<= 8;
-	cmd->ucmd.sidemove <<= 8;
+	cmd.ucmd.forwardmove <<= 8;
+	cmd.ucmd.sidemove <<= 8;
+
+	return cmd;
 }
 
 //[Graf Zahl] This really helps if the mouse update rate can't be increased!
@@ -853,7 +852,7 @@ static void ChangeSpy (int changespy)
 		// has done this for you, since it could desync otherwise.
 		if (!demoplayback)
 		{
-			Net_WriteByte(DEM_REVERTCAMERA);
+			network->WriteByte(DEM_REVERTCAMERA);
 		}
 		return;
 	}
@@ -1115,10 +1114,7 @@ void G_Ticker ()
 		}
 	}
 
-	// get commands, check consistancy, and build new consistancy check
-	int buf = (gametic/ticdup)%BACKUPTICS;
-
-	// [RH] Include some random seeds and player stuff in the consistancy
+	// [RH] Include some random seeds and player stuff in the consistency
 	// check, not just the player's x position like BOOM.
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
@@ -1130,15 +1126,13 @@ void G_Ticker ()
 		if (playeringame[i])
 		{
 			ticcmd_t *cmd = &players[i].cmd;
-			ticcmd_t *newcmd = &netcmds[i][buf];
+			ticcmd_t newcmd = network->GetPlayerInput(i);
 
-			if ((gametic % ticdup) == 0)
-			{
-				RunNetSpecs (i, buf);
-			}
+			network->RunCommands(i);
+
 			if (demorecording)
 			{
-				G_WriteDemoTiccmd (newcmd, i, buf);
+				G_WriteDemoTiccmd (&newcmd, i);
 			}
 			players[i].oldbuttons = cmd->ucmd.buttons;
 			// If the user alt-tabbed away, paused gets set to -1. In this case,
@@ -1150,7 +1144,7 @@ void G_Ticker ()
 			}
 			else
 			{
-				memcpy(cmd, newcmd, sizeof(ticcmd_t));
+				*cmd = newcmd;
 			}
 
 			// check for turbo cheats
@@ -1160,22 +1154,21 @@ void G_Ticker ()
 				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
 			}
 
-			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%ticdup) == 0)
+			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%network->ticdup) == 0)
 			{
-				//players[i].inconsistant = 0;
-				if (gametic > BACKUPTICS*ticdup && consistancy[i][buf] != cmd->consistancy)
+				if (network->IsInconsistent(i, cmd->consistency))
 				{
-					players[i].inconsistant = gametic - BACKUPTICS*ticdup;
+					players[i].inconsistant = gametic - BACKUPTICS*network->ticdup;
 				}
 				if (players[i].mo)
 				{
 					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
-					consistancy[i][buf] = sum;
+					network->SetConsistency(i, sum);
 				}
 				else
 				{
-					consistancy[i][buf] = rngsum;
+					network->SetConsistency(i, rngsum);
 				}
 			}
 		}
@@ -2374,11 +2367,8 @@ CCMD (stop)
 
 extern uint8_t *lenspot;
 
-void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
+void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 {
-	uint8_t *specdata;
-	int speclen;
-
 	if (stoprecording)
 	{ // use "stop" console command to end demo recording
 		G_CheckDemoStatus ();
@@ -2390,12 +2380,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	if ((specdata = NetSpecs[player][buf].GetData (&speclen)) && gametic % ticdup == 0)
-	{
-		memcpy (demo_p, specdata, speclen);
-		demo_p += speclen;
-		NetSpecs[player][buf].SetData (NULL, 0);
-	}
+	demo_p += network->CopySpecData(player, demo_p, maxdemosize - (demo_p - demobuffer));
 
 	// [RH] Now write out a "normal" ticcmd.
 	WriteUserCmdMessage (&cmd->ucmd, &players[player].cmd.ucmd, &demo_p);
@@ -2796,6 +2781,68 @@ void G_TimeDemo (const char* name)
 	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
 }
 
+void G_InitServerNetGame(const char *mapname)
+{
+	netgame = true;
+	netserver = true;
+	netclient = false;
+	multiplayer = true;
+	multiplayernext = true;
+	consoleplayer = 0;
+	players[consoleplayer].settings_controller = true;
+	playeringame[consoleplayer] = true;
+
+	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
+	D_SetupUserInfo();
+
+	G_NetGameInitNew(mapname);
+}
+
+void G_InitClientNetGame(int player, const char* mapname)
+{
+	netgame = true;
+	netserver = false;
+	netclient = true;
+	multiplayer = true;
+	multiplayernext = true;
+	consoleplayer = player;
+
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		playeringame[i] = false;
+		players[i].settings_controller = false;
+	}
+
+	playeringame[consoleplayer] = true;
+
+	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
+	D_SetupUserInfo();
+
+	G_NetGameInitNew(mapname);
+}
+
+void G_EndNetGame()
+{
+	gameaction = ga_fullconsole;
+
+	// Should we do this?
+	//C_RestoreCVars(); // Is this a good idea?
+
+	P_SetupWeapons_ntohton();
+	demoplayback = false;
+	netgame = false;
+	netclient = false;
+	multiplayer = false;
+	multiplayernext = false;
+	for (int i = 1; i < MAXPLAYERS; i++)
+		playeringame[i] = 0;
+	consoleplayer = 0;
+	players[0].camera = NULL;
+	if (StatusBar != NULL)
+	{
+		StatusBar->AttachToPlayer(&players[0]);
+	}
+}
 
 /*
 ===================

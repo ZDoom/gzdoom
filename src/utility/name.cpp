@@ -286,3 +286,14 @@ FName::NameManager::~NameManager()
 	NumNames = MaxNames = 0;
 	memset (Buckets, -1, sizeof(Buckets));
 }
+
+//==========================================================================
+//
+// [TP] FName :: IsPredefined
+//
+//==========================================================================
+
+bool FName::IsPredefined() const
+{
+	return static_cast<unsigned>( Index ) < countof( PredefinedNames );
+}

@@ -67,7 +67,7 @@
 #include "sbarinfo.h"
 #include "p_lnspec.h"
 #include "cmdlib.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_netinf.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
@@ -108,6 +108,7 @@ EXTERN_CVAR (String, playerclass)
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
 void G_VerifySkill();
+void G_DoNewGame();
 
 CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
@@ -167,6 +168,9 @@ extern bool sendpause, sendsave, sendturn180, SendLand;
 
 void *statcopy;					// for statistics driver
 
+extern bool			netserver;				// serverside playsim
+extern bool			netclient;				// clientside playsim
+
 FLevelLocals level;			// info about current level
 FLevelLocals *primaryLevel = &level;	// level for which to display the user interface.
 FLevelLocals *currentVMLevel = &level;	// level which currently ticks. Used as global input to the VM and some functions called by it.
@@ -199,6 +203,15 @@ void G_DeferedInitNew (FGameStartup *gs)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 	finishstate = FINISH_NoHub;
+}
+
+void G_NetGameInitNew(const char *mapname, int newskill)
+{
+	d_mapname = mapname;
+	d_skill = newskill;
+	CheckWarpTransMap(d_mapname, true);
+	gameaction = ga_nothing;
+	G_DoNewGame();
 }
 
 //==========================================================================
@@ -370,7 +383,7 @@ void G_NewInit ()
 	}
 
 	G_ClearSnapshots ();
-	netgame = false;
+	netgame = (netclient || netserver);
 	multiplayer = multiplayernext;
 	multiplayernext = false;
 	if (demoplayback)
@@ -1007,7 +1020,7 @@ IMPLEMENT_CLASS(DAutosaver, false, false)
 
 void DAutosaver::Tick ()
 {
-	Net_WriteByte (DEM_CHECKAUTOSAVE);
+	network->WriteByte (DEM_CHECKAUTOSAVE);
 	Destroy ();
 }
 

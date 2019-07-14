@@ -62,16 +62,6 @@ void I_StartFrame (void);
 // Can call D_PostEvent.
 void I_StartTic (void);
 
-// Asynchronous interrupt functions should maintain private queues
-// that are read by the synchronous functions
-// to be converted into events.
-
-// Either returns a null ticcmd,
-// or calls a loadable driver to build it.
-// This ticcmd will then be modified by the gameloop
-// for normal input.
-ticcmd_t *I_BaseTiccmd (void);
-
 
 // Called by M_Responder when quit is selected.
 // Clean exit, displays sell blurb.

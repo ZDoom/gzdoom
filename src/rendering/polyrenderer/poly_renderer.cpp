@@ -29,7 +29,6 @@
 #include "r_data/r_interpolate.h"
 #include "r_data/models/models.h"
 #include "poly_renderer.h"
-#include "d_net.h"
 #include "po_man.h"
 #include "st_stuff.h"
 #include "g_levellocals.h"

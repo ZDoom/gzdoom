@@ -988,7 +988,7 @@ void FBaseCVar::MarkUnsafe()
 // This type of cvar is not a "real" cvar. Instead, it gets and sets
 // the value of a FIntCVar, modifying it bit-by-bit. As such, it has
 // no default, and is not written to the .cfg or transferred around
-// the network. The "host" cvar is responsible for that.
+// the network-> The "host" cvar is responsible for that.
 //
 
 FFlagCVar::FFlagCVar (const char *name, FIntCVar &realvar, uint32_t bitval)

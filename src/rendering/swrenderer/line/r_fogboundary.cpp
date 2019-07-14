@@ -33,7 +33,6 @@
 #include "a_sharedglobal.h"
 #include "c_console.h"
 #include "cmdlib.h"
-#include "d_net.h"
 #include "g_level.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"

@@ -18,6 +18,8 @@ void G_DeferedInitNew (const char *mapname, int skill = -1);
 struct FGameStartup;
 void G_DeferedInitNew (FGameStartup *gs);
 
+void G_NetGameInitNew(const char *mapname, int skill = -1);
+
 enum 
 {
 	CHANGELEVEL_KEEPFACING = 1,

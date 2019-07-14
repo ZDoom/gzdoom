@@ -63,13 +63,13 @@ struct zdemoheader_s {
 
 struct usercmd_t
 {
-	uint32_t	buttons;
-	short	pitch;			// up/down
-	short	yaw;			// left/right
-	short	roll;			// "tilt"
-	short	forwardmove;
-	short	sidemove;
-	short	upmove;
+	uint32_t	buttons = 0;
+	short	pitch = 0;		// up/down
+	short	yaw = 0;		// left/right
+	short	roll = 0;		// "tilt"
+	short	forwardmove = 0;
+	short	sidemove = 0;
+	short	upmove = 0;
 };
 
 // When transmitted, the above message is preceded by a byte
@@ -238,12 +238,10 @@ int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stre
 struct ticcmd_t
 {
 	usercmd_t	ucmd;
-	int16_t		consistancy;	// checks for net game
+	int16_t		consistency = 0;	// checks for net game
 };
 
 int SkipTicCmd (uint8_t **stream, int count);
-void ReadTicCmd (uint8_t **stream, int player, int tic);
-void RunNetSpecs (int player, int buf);
 
 int ReadByte (uint8_t **stream);
 int ReadWord (uint8_t **stream);

@@ -86,6 +86,9 @@ public:
 	bool operator >  (ENamedName index) const { return Index >  index; }
 	bool operator >= (ENamedName index) const { return Index >= index; }
 
+	// [TP]
+	bool IsPredefined() const;
+
 protected:
 	int Index;
 

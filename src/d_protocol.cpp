@@ -34,7 +34,7 @@
 
 
 #include "d_protocol.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "doomstat.h"
 #include "cmdlib.h"
 #include "serializer.h"
@@ -290,7 +290,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &cmd, ticcmd_
 {
 	if (arc.BeginObject(key))
 	{
-		arc("consistency", cmd.consistancy)
+		arc("consistency", cmd.consistency)
 			("ucmd", cmd.ucmd)
 			.EndObject();
 	}
@@ -360,7 +360,7 @@ int SkipTicCmd (uint8_t **stream, int count)
 	{
 		bool moreticdata = true;
 
-		flow += 2;		// Skip consistancy marker
+		flow += 2;		// Skip consistency marker
 		while (moreticdata)
 		{
 			uint8_t type = *flow++;
@@ -405,68 +405,6 @@ int SkipTicCmd (uint8_t **stream, int count)
 	*stream = flow;
 
 	return skip;
-}
-
-extern short consistancy[MAXPLAYERS][BACKUPTICS];
-void ReadTicCmd (uint8_t **stream, int player, int tic)
-{
-	int type;
-	uint8_t *start;
-	ticcmd_t *tcmd;
-
-	int ticmod = tic % BACKUPTICS;
-
-	tcmd = &netcmds[player][ticmod];
-	tcmd->consistancy = ReadWord (stream);
-
-	start = *stream;
-
-	while ((type = ReadByte (stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
-		Net_SkipCommand (type, stream);
-
-	NetSpecs[player][ticmod].SetData (start, int(*stream - start - 1));
-
-	if (type == DEM_USERCMD)
-	{
-		UnpackUserCmd (&tcmd->ucmd,
-			tic ? &netcmds[player][(tic-1)%BACKUPTICS].ucmd : NULL, stream);
-	}
-	else
-	{
-		if (tic)
-		{
-			memcpy (&tcmd->ucmd, &netcmds[player][(tic-1)%BACKUPTICS].ucmd, sizeof(tcmd->ucmd));
-		}
-		else
-		{
-			memset (&tcmd->ucmd, 0, sizeof(tcmd->ucmd));
-		}
-	}
-
-	if (player==consoleplayer&&tic>BACKUPTICS)
-		assert(consistancy[player][ticmod] == tcmd->consistancy);
-}
-
-void RunNetSpecs (int player, int buf)
-{
-	uint8_t *stream;
-	int len;
-
-	if (gametic % ticdup == 0)
-	{
-		stream = NetSpecs[player][buf].GetData (&len);
-		if (stream)
-		{
-			uint8_t *end = stream + len;
-			while (stream < end)
-			{
-				int type = ReadByte (&stream);
-				Net_DoCommand (type, &stream, player);
-			}
-			if (!demorecording)
-				NetSpecs[player][buf].SetData (NULL, 0);
-		}
-	}
 }
 
 uint8_t *lenspot;

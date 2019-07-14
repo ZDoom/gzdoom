@@ -44,7 +44,7 @@
 #include "p_local.h"
 #include "cmdlib.h"
 #include "teaminfo.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "serializer.h"
 #include "d_player.h"
 #include "w_wad.h"
@@ -212,7 +212,7 @@ CCMD (removebots)
 		return;
 	}
 
-	Net_WriteByte (DEM_KILLBOTS);
+	network->WriteByte (DEM_KILLBOTS);
 }
 
 CCMD (freeze)
@@ -226,8 +226,8 @@ CCMD (freeze)
 		return;
 	}
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_FREEZE);
+	network->WriteByte (DEM_GENERICCHEAT);
+	network->WriteByte (CHT_FREEZE);
 }
 
 CCMD (listbots)

@@ -122,14 +122,12 @@ typedef enum
 void D_PostEvent (const event_t* ev);
 void D_RemoveNextCharEvent();
 void D_Render(std::function<void()> action, bool interpolate);
-
+void D_AddPostedEvents();
 
 //
 // GLOBAL VARIABLES
 //
 #define MAXEVENTS		128
-
-extern	event_t 		events[MAXEVENTS];
 
 extern	gameaction_t	gameaction;
 

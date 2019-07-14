@@ -46,7 +46,7 @@
 #include "d_player.h"
 #include "hu_stuff.h"
 #include "gstrings.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "c_dispatch.h"
 #include "g_levellocals.h"
 #include "g_game.h"
@@ -436,14 +436,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 
 	HU_DrawFontScaled(col4, y + ypadding, color, player->userinfo.GetName());
 
-	int avgdelay = 0;
-	for (int i = 0; i < BACKUPTICS; i++)
-	{
-		avgdelay += netdelay[nodeforplayer[(int)(player - players)]][i];
-	}
-	avgdelay /= BACKUPTICS;
-
-	mysnprintf(str, countof(str), "%d", (avgdelay * ticdup) * (1000 / TICRATE));
+	mysnprintf(str, countof(str), "%d", network->GetPing((int)(player - players)));
 
 	HU_DrawFontScaled(col5, y + ypadding, color, str);
 

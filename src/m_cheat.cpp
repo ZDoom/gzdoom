@@ -47,7 +47,7 @@
 #include "sbar.h"
 #include "c_dispatch.h"
 #include "a_keys.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
@@ -673,6 +673,6 @@ CCMD (mdk)
 		return;
 
 	const char *name = argv.argc() > 1 ? argv[1] : "";
-	Net_WriteByte (DEM_MDK);
-	Net_WriteString(name);
+	network->WriteByte (DEM_MDK);
+	network->WriteString(name);
 }

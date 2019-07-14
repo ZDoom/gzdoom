@@ -46,7 +46,7 @@
 #include "gi.h"
 #include "doomstat.h"
 #include "g_level.h"
-#include "d_net.h"
+#include "network/net.h"
 #include "d_player.h"
 #include "serializer.h"
 #include "r_utility.h"
@@ -1380,7 +1380,7 @@ void DBaseStatusBar::DrawConsistancy () const
 			{
 				fprintf (debugfile, "%s as of tic %d (%d)\n", conbuff,
 					players[1-consoleplayer].inconsistant,
-					players[1-consoleplayer].inconsistant/ticdup);
+					players[1-consoleplayer].inconsistant/network->ticdup);
 			}
 		}
 		screen->DrawText (SmallFont, CR_GREEN, 

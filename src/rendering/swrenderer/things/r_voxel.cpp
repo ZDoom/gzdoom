@@ -39,7 +39,6 @@
 #include "r_data/colormaps.h"
 #include "r_data/voxels.h"
 #include "r_data/sprites.h"
-#include "d_net.h"
 #include "po_man.h"
 #include "r_utility.h"
 #include "i_time.h"

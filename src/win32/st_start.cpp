@@ -121,7 +121,7 @@ public:
 	void NetProgress(int count);
 	void NetMessage(const char *format, ...);	// cover for printf
 	void NetDone();
-	bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+	bool NetLoop(std::function<bool()> callback);
 protected:
 	LRESULT NetMarqueeMode;
 	int NetMaxPos, NetCurPos;
@@ -529,7 +529,7 @@ void FBasicStartupScreen :: NetProgress(int count)
 //
 //==========================================================================
 
-bool FBasicStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
+bool FBasicStartupScreen::NetLoop(std::function<bool()> callback)
 {
 	BOOL bRet;
 	MSG msg;
@@ -550,7 +550,7 @@ bool FBasicStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata
 		{
 			if (msg.message == WM_TIMER && msg.hwnd == Window && msg.wParam == 1337)
 			{
-				if (timer_callback (userdata))
+				if (callback())
 				{
 					KillTimer (NetStartPane, 1);
 					return true;

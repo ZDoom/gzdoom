@@ -542,9 +542,6 @@ FRandom pr_acs ("ACS");
 // potentially get used with recursive functions.
 #define STACK_SIZE 4096
 
-#define CLAMPCOLOR(c)		(EColorRange)((unsigned)(c) >= NUM_TEXT_COLORS ? CR_UNTRANSLATED : (c))
-#define LANGREGIONMASK		MAKE_ID(0,0,0xff,0xff)
-
 // HUD message flags
 #define HUDMSG_LOG					(0x80000000)
 #define HUDMSG_COLORSTRING			(0x40000000)
@@ -8654,7 +8651,8 @@ scriptwait:
 					}
 					else
 					{
-						color = CLAMPCOLOR(Stack[optstart-4]);
+						auto c = Stack[optstart - 4];
+						color = (EColorRange)((unsigned)(c) >= NUM_TEXT_COLORS ? CR_UNTRANSLATED : (c));
 					}
 
 					switch (type & 0xFF)

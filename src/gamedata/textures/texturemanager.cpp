@@ -51,7 +51,6 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "v_video.h"
-#include "r_renderer.h"
 #include "r_sky.h"
 #include "vm.h"
 #include "image.h"

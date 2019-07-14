@@ -91,7 +91,6 @@
 #include "m_cheat.h"
 #include "m_joy.h"
 #include "po_man.h"
-#include "r_renderer.h"
 #include "p_local.h"
 #include "autosegs.h"
 #include "fragglescript/t_fs.h"

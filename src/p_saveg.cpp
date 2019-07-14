@@ -52,7 +52,6 @@
 #include "sbar.h"
 #include "r_utility.h"
 #include "r_sky.h"
-#include "r_renderer.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"

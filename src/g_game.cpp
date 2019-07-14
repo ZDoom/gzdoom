@@ -64,7 +64,6 @@
 #include "p_acs.h"
 #include "p_effect.h"
 #include "m_joy.h"
-#include "r_renderer.h"
 #include "r_utility.h"
 #include "a_morph.h"
 #include "p_spec.h"

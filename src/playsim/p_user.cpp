@@ -78,7 +78,6 @@
 #include "c_dispatch.h"
 #include "network/net.h"
 #include "serializer.h"
-#include "r_renderer.h"
 #include "d_player.h"
 #include "r_utility.h"
 #include "p_blockmap.h"

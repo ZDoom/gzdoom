@@ -44,7 +44,7 @@
 #include "sbar.h"
 #include "hardware.h"
 #include "r_utility.h"
-#include "r_renderer.h"
+#include "swrenderer/r_renderer.h"
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"

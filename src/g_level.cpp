@@ -71,7 +71,6 @@
 #include "d_netinf.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
-#include "r_renderer.h"
 #include "r_utility.h"
 #include "p_spec.h"
 #include "serializer.h"

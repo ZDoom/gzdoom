@@ -4,8 +4,18 @@ defaultmap
 	nojump 
 	nocrouch 
 }
-gameinfo{	forcenogfxsubstitution = false	statscreen_finishedfont = "*BigFont"	statscreen_enteringfont = "*BigFont"	statscreen_contentfont = "*BigFont"
-}// Edited MAPINFO for localization:// Literal map names have been replaced with labels.// Titlepatches have been disabled to allow using the font.
+
+gameinfo
+{
+	forcenogfxsubstitution = false
+	statscreen_finishedfont = "*BigFont"
+	statscreen_enteringfont = "*BigFont"
+	statscreen_contentfont = "*BigFont"
+}
+
+// Edited MAPINFO for localization:
+// Literal map names have been replaced with labels.
+// Titlepatches have been disabled to allow using the font.
 map MAP01 lookup "TXT_HACXMAP01"
 {
 	//titlepatch = CWILV00
@@ -236,5 +246,86 @@ map MAP31 lookup "TXT_HACXMAP31"
 	cluster = 5
 	par = 120
 	music = D_HACX31
-}// Edited cast call to only show the monsters actually present
-Intermission Doom2Cast{	Cast	{		CastClass = "HacxThug"		CastName = "$CC_THUG"		AttackSound = "Missile", 1, "grunt/attack"	}	Cast	{		CastClass = "HacxAndroid"		CastName = "$CC_ANDROID"		AttackSound = "Missile", 1, "shotguy/attack"	}	Cast	{		CastClass = "HacxICE"		CastName = "$CC_ICE"		AttackSound = "Missile", 2, "imp/attack"	}	Cast	{		CastClass = "HacxBuzzer"		CastName = "$CC_BUZZER"		AttackSound = "Melee", 1, "demon/melee"	}	Cast	{		CastClass = "HacxDMan"		CastName = "$CC_DMAN"		AttackSound = "Missile", 1, "skull/melee"	}	Cast	{		CastClass = "HacxPhage"		CastName = "$CC_PHAGE"		AttackSound = "Missile", 1, "fatso/attack"		AttackSound = "Missile", 4, "fatso/attack"		AttackSound = "Missile", 7, "fatso/attack"	}	Cast	{		CastClass = "HacxMonstruct"		CastName = "$CC_MONSTRUCT"		AttackSound = "Missile", 1, "chainguy/attack"		AttackSound = "Missile", 2, "chainguy/attack"		AttackSound = "Missile", 3, "chainguy/attack"	}	Cast	{		CastClass = "HacxMechaManiac"		CastName = "$CC_MECH"		AttackSound = "Missile", 1, "baron/attack"	}	Cast	{		CastClass = "HacxTerminatrix"		CastName = "$CC_TERMI"		AttackSound = "Missile", 1, "baron/attack"	}	Cast	{		CastClass = "HacxThornThing"		CastName = "$CC_THORN"		AttackSound = "Missile", 1, "baby/attack"	}	Cast	{		CastClass = "HacxMajong7"		CastName = "$CC_MAJONG"		AttackSound = "Missile", 2, "skull/melee"	}	Cast	{		CastClass = "HacxPlayer"		CastName = "$CC_HERO"		AttackSound = "Missile", 0, "weapons/sshotf"	}	Link = Doom2Cast}
+}
+
+// Edited cast call to only show the monsters actually present
+Intermission Doom2Cast
+{
+	Cast
+	{
+		CastClass = "HacxThug"
+		CastName = "$CC_THUG"
+		AttackSound = "Missile", 1, "grunt/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxAndroid"
+		CastName = "$CC_ANDROID"
+		AttackSound = "Missile", 1, "shotguy/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxICE"
+		CastName = "$CC_ICE"
+		AttackSound = "Missile", 2, "imp/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxBuzzer"
+		CastName = "$CC_BUZZER"
+		AttackSound = "Melee", 1, "demon/melee"
+	}
+	Cast
+	{
+		CastClass = "HacxDMan"
+		CastName = "$CC_DMAN"
+		AttackSound = "Missile", 1, "skull/melee"
+	}
+	Cast
+	{
+		CastClass = "HacxPhage"
+		CastName = "$CC_PHAGE"
+		AttackSound = "Missile", 1, "fatso/attack"
+		AttackSound = "Missile", 4, "fatso/attack"
+		AttackSound = "Missile", 7, "fatso/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxMonstruct"
+		CastName = "$CC_MONSTRUCT"
+		AttackSound = "Missile", 1, "chainguy/attack"
+		AttackSound = "Missile", 2, "chainguy/attack"
+		AttackSound = "Missile", 3, "chainguy/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxMechaManiac"
+		CastName = "$CC_MECH"
+		AttackSound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxTerminatrix"
+		CastName = "$CC_TERMI"
+		AttackSound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxThornThing"
+		CastName = "$CC_THORN"
+		AttackSound = "Missile", 1, "baby/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxMajong7"
+		CastName = "$CC_MAJONG"
+		AttackSound = "Missile", 2, "skull/melee"
+	}
+	Cast
+	{
+		CastClass = "HacxPlayer"
+		CastName = "$CC_HERO"
+		AttackSound = "Missile", 0, "weapons/sshotf"
+	}
+	Link = Doom2Cast
+}

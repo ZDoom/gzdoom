@@ -39,6 +39,7 @@ public:
 	void ReadBuffer(void* buffer, size_t length);
 
 	bool IsAtEnd() const;
+	int BytesLeft() const;
 
 private:
 	void EnsureBitSpace(int bits, bool writing);

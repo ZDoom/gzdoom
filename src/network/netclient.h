@@ -61,6 +61,7 @@ private:
 	void OnSpawnActor(ByteInputStream &stream);
 	void OnDestroyActor(ByteInputStream &stream);
 
+	void ProcessCommands(ByteInputStream &stream);
 	void UpdateLastReceivedTic(int tic);
 
 	std::unique_ptr<doomcom_t> mComm;
@@ -73,28 +74,9 @@ private:
 	int mServerTicDelta = -1;
 	int mLastReceivedTic = -1;
 
-	struct TicSyncData
-	{
-		int16_t netID;
-		float x;
-		float y;
-		float z;
-		float yaw;
-		float pitch;
-		int16_t sprite;
-		uint8_t frame;
-	};
+	int jitter = 2;
 
-	struct TicUpdate
-	{
-		bool received = false;
-		DVector3 Pos;
-		DVector3 Vel;
-		float yaw;
-		float pitch;
-		TArray<TicSyncData> syncUpdates;
-	};
-	TicUpdate mTicUpdates[BACKUPTICS];
+	TArray<uint8_t> mTicUpdates[BACKUPTICS];
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	ticcmd_t mSentInput[BACKUPTICS];

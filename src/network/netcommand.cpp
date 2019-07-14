@@ -378,6 +378,11 @@ bool ByteInputStream::IsAtEnd() const
 	return (pbStream >= pbStreamEnd);
 }
 
+int ByteInputStream::BytesLeft() const
+{
+	return (int)(ptrdiff_t)(pbStreamEnd - pbStream);
+}
+
 void ByteInputStream::EnsureBitSpace(int bits, bool writing)
 {
 	if ((bitBuffer == nullptr) || (bitShift < 0) || (bitShift + bits > 8))

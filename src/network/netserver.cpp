@@ -137,14 +137,29 @@ void NetServer::EndCurrentTic()
 	{
 		if (mNodes[i].Status == NodeStatus::InGame)
 		{
+			int player = mNodes[i].Player;
+
 			NetOutputPacket packet(i);
+			packet.stream.WriteByte(gametic + 1);
+
+			if (mNodes[i].FirstTic)
+			{
+				TThinkerIterator<AActor> it;
+				AActor *mo;
+				while (mo = it.Next())
+				{
+					if (mo != players[player].mo)
+					{
+						CmdSpawnActor(packet.stream, mo);
+					}
+				}
+				mNodes[i].FirstTic = false;
+			}
 
 			packet.stream.WriteBuffer(mBroadcastCommands.GetData(), mBroadcastCommands.GetSize());
 
 			NetCommand cmd ( NetPacketType::Tic);
-			cmd.addByte ( gametic );
 
-			int player = mNodes[i].Player;
 			if (playeringame[player] && players[player].mo)
 			{
 				cmd.addFloat(static_cast<float> (players[player].mo->X()));
@@ -310,6 +325,7 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 		for (int i = 0; i < BACKUPTICS; i++)
 			node.TicUpdates[i].received = false;
 
+		node.FirstTic = true;
 		node.Status = NodeStatus::InGame;
 		mNodeForPlayer[node.Player] = node.NodeIndex;
 
@@ -317,6 +333,7 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 		players[node.Player].settings_controller = false;
 
 		NetOutputPacket response(node.NodeIndex);
+		response.stream.WriteByte(gametic);
 
 		NetCommand cmd ( NetPacketType::ConnectResponse );
 		cmd.addByte ( 1 ); // Protocol version
@@ -324,14 +341,13 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 		cmd.writeCommandToStream ( response.stream );
 
 		mComm->PacketSend(response);
-
-		FullUpdate ( node );
 	}
 	else // Server is full.
 	{
 		node.Status = NodeStatus::Closed;
 
 		NetOutputPacket response(node.NodeIndex);
+		response.stream.WriteByte(gametic);
 
 		NetCommand cmd ( NetPacketType::ConnectResponse );
 		cmd.addByte ( 1 ); // Protocol version
@@ -402,23 +418,6 @@ void NetServer::CmdDestroyActor(ByteOutputStream &stream, AActor *actor)
 	NetCommand cmd(NetPacketType::DestroyActor);
 	cmd.addShort(actor->syncdata.NetID);
 	cmd.writeCommandToStream(stream);
-}
-
-void NetServer::FullUpdate(NetNode &node)
-{
-	NetOutputPacket packet(node.NodeIndex);
-
-	TThinkerIterator<AActor> it;
-	AActor *mo;
-	while (mo = it.Next())
-	{
-		if (mo != players[node.Player].mo)
-		{
-			CmdSpawnActor(packet.stream, mo);
-		}
-	}
-
-	mComm->PacketSend(packet);
 }
 
 void NetServer::ActorSpawned(AActor *actor)

@@ -39,6 +39,7 @@ struct NetNode
 	int Gametic = 0;
 	int Player = -1;
 	int NodeIndex = -1;
+	bool FirstTic = true;
 
 	struct TicUpdate
 	{
@@ -87,7 +88,6 @@ private:
 
 	void CmdSpawnActor(ByteOutputStream &stream, AActor *actor);
 	void CmdDestroyActor(ByteOutputStream &stream, AActor *actor);
-	void FullUpdate(NetNode &node);
 
 	std::unique_ptr<doomcom_t> mComm;
 	NetNode mNodes[MAXNETNODES];

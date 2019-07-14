@@ -2744,7 +2744,7 @@ void G_InitServerNetGame(const char *mapname)
 	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
 	D_SetupUserInfo();
 
-	G_DeferedInitNew(mapname);
+	G_NetGameInitNew(mapname);
 }
 
 void G_InitClientNetGame(int player, const char* mapname)
@@ -2767,7 +2767,7 @@ void G_InitClientNetGame(int player, const char* mapname)
 	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
 	D_SetupUserInfo();
 
-	G_DeferedInitNew(mapname);
+	G_NetGameInitNew(mapname);
 }
 
 void G_EndNetGame()

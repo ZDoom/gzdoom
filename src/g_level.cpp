@@ -104,6 +104,7 @@ EXTERN_CVAR (String, playerclass)
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
 void G_VerifySkill();
+void G_DoNewGame();
 
 CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
@@ -182,6 +183,15 @@ void G_DeferedInitNew (FGameStartup *gs)
 	CheckWarpTransMap (d_mapname, true);
 	gameaction = ga_newgame2;
 	finishstate = FINISH_NoHub;
+}
+
+void G_NetGameInitNew(const char *mapname, int newskill)
+{
+	d_mapname = mapname;
+	d_skill = newskill;
+	CheckWarpTransMap(d_mapname, true);
+	gameaction = ga_nothing;
+	G_DoNewGame();
 }
 
 //==========================================================================

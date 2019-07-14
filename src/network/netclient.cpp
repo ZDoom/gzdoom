@@ -90,11 +90,6 @@ void NetClient::Update()
 {
 	while (true)
 	{
-		// [BB] Don't check net packets while we are supposed to load a map.
-		// This way the commands from the full update will not be parsed before we loaded the map.
-		if ( ( gameaction == ga_newgame ) || ( gameaction == ga_newgame2 ) )
-			return;
-
 		NetInputPacket packet;
 		mComm->PacketGet(packet);
 		if (packet.node == -1)
@@ -111,20 +106,18 @@ void NetClient::Update()
 		}
 		else
 		{
-			while ( packet.stream.IsAtEnd() == false )
+			UpdateLastReceivedTic(packet.stream.ReadByte());
+
+			if (mStatus == NodeStatus::InPreGame)
 			{
-				NetPacketType type = (NetPacketType)packet.stream.ReadByte();
-				switch (type)
-				{
-				default: OnClose(); break;
-				case NetPacketType::ConnectResponse: OnConnectResponse(packet.stream); break;
-				case NetPacketType::Disconnect: OnDisconnect(); break;
-				case NetPacketType::Tic: OnTic(packet.stream); break;
-				case NetPacketType::SpawnActor: OnSpawnActor(packet.stream); break;
-				case NetPacketType::DestroyActor: OnDestroyActor(packet.stream); break;
-				}
+				ProcessCommands(packet.stream);
 			}
-			break;
+			else
+			{
+				auto &ticUpdate = mTicUpdates[mLastReceivedTic % BACKUPTICS];
+				ticUpdate.Resize(packet.stream.BytesLeft());
+				packet.stream.ReadBuffer(ticUpdate.Data(), ticUpdate.Size());
+			}
 		}
 
 		if (mStatus == NodeStatus::Closed)
@@ -148,75 +141,33 @@ void NetClient::SetCurrentTic(int tictime)
 	gametic = tictime;
 	mSendTic = gametic + 10;
 
-	int jitter = 2;
-	if (mLastReceivedTic == -1)
+	if (abs(gametic + mServerTicDelta - mLastReceivedTic) > jitter)
 	{
-		mServerTic = 0;
+		mServerTicDelta = mLastReceivedTic - gametic - jitter;
 	}
-	else
-	{
-		if (mServerTicDelta == -1 || abs(gametic + mServerTicDelta - mLastReceivedTic) > jitter)
-		{
-			//Printf("netcable icon! ;)\n");
-			mServerTicDelta = mLastReceivedTic - gametic - jitter;
-		}
 
-		mServerTic = MAX(gametic + mServerTicDelta, 0);
-	}
+	mServerTic = MAX(gametic + mServerTicDelta, 0);
 
 	mCurrentInput[consoleplayer] = mSentInput[gametic % BACKUPTICS];
+
+	// [BB] Don't check net packets while we are supposed to load a map.
+	// This way the commands from the full update will not be parsed before we loaded the map.
+	//if ((gameaction == ga_newgame) || (gameaction == ga_newgame2))
+	//	return;
+
+	TArray<uint8_t> &update = mTicUpdates[mServerTic % BACKUPTICS];
+	if (update.Size() > 0)
+	{
+		ByteInputStream stream(update.Data(), update.Size());
+		ProcessCommands(stream);
+		update.Clear();
+	}
 }
 
 void NetClient::EndCurrentTic()
 {
 	mCurrentCommands = mSendCommands;
 	mSendCommands.Clear();
-
-	if (mStatus != NodeStatus::InGame)
-		return;
-
-	int targettic = (mSendTic + mServerTicDelta);
-
-	NetOutputPacket packet(mServerNode);
-
-	NetCommand cmd ( NetPacketType::Tic );
-	cmd.addByte (targettic); // target gametic
-	cmd.addBuffer ( &mSentInput[(mSendTic - 1) % BACKUPTICS].ucmd, sizeof(usercmd_t) );
-	cmd.writeCommandToStream ( packet.stream );
-
-	mComm->PacketSend(packet);
-
-	TicUpdate &update = mTicUpdates[mServerTic % BACKUPTICS];
-	if (update.received)
-	{
-		if (playeringame[consoleplayer] && players[consoleplayer].mo)
-		{
-			APlayerPawn *pawn = players[consoleplayer].mo;
-			if ((update.Pos - pawn->Pos()).LengthSquared() > 10.0)
-				pawn->SetOrigin(update.Pos, false);
-			else
-				P_TryMove(pawn, update.Pos.XY(), true);
-			pawn->Vel = update.Vel;
-			pawn->Angles.Yaw = update.yaw;
-			pawn->Angles.Pitch = update.pitch;
-		}
-
-		for (unsigned int i = 0; i < update.syncUpdates.Size(); i++)
-		{
-			const TicSyncData &syncdata = update.syncUpdates[i];
-			AActor *netactor = mNetIDList.findPointerByID(syncdata.netID);
-			if (netactor)
-			{
-				netactor->SetOrigin(syncdata.x, syncdata.y, syncdata.z, true);
-				netactor->Angles.Yaw = syncdata.yaw;
-				netactor->Angles.Pitch = syncdata.pitch;
-				netactor->sprite = syncdata.sprite;
-				netactor->frame = syncdata.frame;
-			}
-		}
-
-		update = TicUpdate();
-	}
 }
 
 int NetClient::GetSendTick() const
@@ -242,9 +193,23 @@ void NetClient::RunCommands(int player)
 	}
 }
 
-void NetClient::WriteLocalInput(ticcmd_t cmd)
+void NetClient::WriteLocalInput(ticcmd_t ticcmd)
 {
-	mSentInput[(mSendTic - 1) % BACKUPTICS] = cmd;
+	mSentInput[(mSendTic - 1) % BACKUPTICS] = ticcmd;
+
+	if (mStatus == NodeStatus::InGame)
+	{
+		int targettic = (mSendTic + mServerTicDelta);
+
+		NetOutputPacket packet(mServerNode);
+
+		NetCommand cmd(NetPacketType::Tic);
+		cmd.addByte(targettic); // target gametic
+		cmd.addBuffer(&ticcmd.ucmd, sizeof(usercmd_t));
+		cmd.writeCommandToStream(packet.stream);
+
+		mComm->PacketSend(packet);
+	}
 }
 
 void NetClient::WriteBotInput(int player, const ticcmd_t &cmd)
@@ -284,6 +249,39 @@ void NetClient::ActorDestroyed(AActor *actor)
 {
 }
 
+void NetClient::UpdateLastReceivedTic(int tic)
+{
+	if (mLastReceivedTic != -1)
+	{
+		int delta = tic - (mLastReceivedTic & 0xff);
+		if (delta > 128) delta -= 256;
+		else if (delta < -128) delta += 256;
+		mLastReceivedTic += delta;
+	}
+	else
+	{
+		mLastReceivedTic = tic;
+	}
+	mLastReceivedTic = MAX(mLastReceivedTic, 0);
+}
+
+void NetClient::ProcessCommands(ByteInputStream &stream)
+{
+	while (stream.IsAtEnd() == false)
+	{
+		NetPacketType type = (NetPacketType)stream.ReadByte();
+		switch (type)
+		{
+		default: OnClose(); break;
+		case NetPacketType::ConnectResponse: OnConnectResponse(stream); break;
+		case NetPacketType::Disconnect: OnDisconnect(); break;
+		case NetPacketType::Tic: OnTic(stream); break;
+		case NetPacketType::SpawnActor: OnSpawnActor(stream); break;
+		case NetPacketType::DestroyActor: OnDestroyActor(stream); break;
+		}
+	}
+}
+
 void NetClient::OnClose()
 {
 	mComm->Close(mServerNode);
@@ -310,6 +308,7 @@ void NetClient::OnConnectResponse(ByteInputStream &stream)
 		{
 			mPlayer = playernum;
 			mStatus = NodeStatus::InGame;
+			mServerTicDelta = mLastReceivedTic - gametic - jitter;
 
 			G_InitClientNetGame(mPlayer, "e1m1");
 
@@ -340,55 +339,55 @@ void NetClient::OnDisconnect()
 	mStatus = NodeStatus::Closed;
 }
 
-void NetClient::UpdateLastReceivedTic(int tic)
-{
-	if (mLastReceivedTic != -1)
-	{
-		int delta = tic - (mLastReceivedTic & 0xff);
-		if (delta > 128) delta -= 256;
-		else if (delta < -128) delta += 256;
-		mLastReceivedTic += delta;
-	}
-	else
-	{
-		mLastReceivedTic = tic;
-	}
-	mLastReceivedTic = MAX(mLastReceivedTic, 0);
-}
-
 void NetClient::OnTic(ByteInputStream &stream)
 {
-	UpdateLastReceivedTic(stream.ReadByte());
+	DVector3 Pos, Vel;
+	float yaw, pitch;
+	Pos.X = stream.ReadFloat();
+	Pos.Y = stream.ReadFloat();
+	Pos.Z = stream.ReadFloat();
+	Vel.X = stream.ReadFloat();
+	Vel.Y = stream.ReadFloat();
+	Vel.Z = stream.ReadFloat();
+	yaw = stream.ReadFloat();
+	pitch = stream.ReadFloat();
 
-	TicUpdate update;
-	update.received = true;
-	update.Pos.X = stream.ReadFloat();
-	update.Pos.Y = stream.ReadFloat();
-	update.Pos.Z = stream.ReadFloat();
-	update.Vel.X = stream.ReadFloat();
-	update.Vel.Y = stream.ReadFloat();
-	update.Vel.Z = stream.ReadFloat();
-	update.yaw = stream.ReadFloat();
-	update.pitch = stream.ReadFloat();
+	if (playeringame[consoleplayer] && players[consoleplayer].mo)
+	{
+		APlayerPawn *pawn = players[consoleplayer].mo;
+		if ((Pos - pawn->Pos()).LengthSquared() > 10.0)
+			pawn->SetOrigin(Pos, false);
+		else
+			P_TryMove(pawn, Pos.XY(), true);
+		pawn->Vel = Vel;
+		pawn->Angles.Yaw = yaw;
+		pawn->Angles.Pitch = pitch;
+	}
 
 	while (true)
 	{
-		TicSyncData syncdata;
-		syncdata.netID = stream.ReadShort();
-		if (syncdata.netID == -1)
+		int netID = stream.ReadShort();
+		if (netID == -1)
 			break;
 
-		syncdata.x = stream.ReadFloat();
-		syncdata.y = stream.ReadFloat();
-		syncdata.z = stream.ReadFloat();
-		syncdata.yaw = stream.ReadFloat();
-		syncdata.pitch = stream.ReadFloat();
-		syncdata.sprite = stream.ReadShort();
-		syncdata.frame = stream.ReadByte();
-		update.syncUpdates.Push(syncdata);
-	}
+		float x = stream.ReadFloat();
+		float y = stream.ReadFloat();
+		float z = stream.ReadFloat();
+		float yaw = stream.ReadFloat();
+		float pitch = stream.ReadFloat();
+		int sprite = stream.ReadShort();
+		uint8_t frame = stream.ReadByte();
 
-	mTicUpdates[mLastReceivedTic % BACKUPTICS] = update;
+		AActor *netactor = mNetIDList.findPointerByID(netID);
+		if (netactor)
+		{
+			netactor->SetOrigin(x, y, z, true);
+			netactor->Angles.Yaw = yaw;
+			netactor->Angles.Pitch = pitch;
+			netactor->sprite = sprite;
+			netactor->frame = frame;
+		}
+	}
 }
 
 void NetClient::OnSpawnActor(ByteInputStream &stream)
@@ -418,26 +417,6 @@ void NetClient::OnDestroyActor(ByteInputStream &stream)
 	actor->Destroy();
 	mNetIDList.freeID(netID);
 }
-
-#if 0 // Use playerpawn, problematic as client pawn behavior may have to deviate from server side
-	// This player is now in the game.
-	playeringame[player] = true;
-	player_t &p = players[player];
-
-	if ( cl_showspawnnames )
-		Printf ( "Spawning player %d at %f,%f,%f (id %d)\n", player, x, y, z, netID );
-
-	DVector3 spawn ( x, y, z );
-
-	p.mo = static_cast<APlayerPawn *>(Spawn (p.cls, spawn, NO_REPLACE));
-
-	if ( p.mo )
-	{
-		// Set the network ID.
-		p.mo->syncdata.NetID = netID;
-		mNetIDList.useID ( netID, p.mo );
-	}
-#endif
 
 IMPLEMENT_CLASS(ANetSyncActor, false, false)
 

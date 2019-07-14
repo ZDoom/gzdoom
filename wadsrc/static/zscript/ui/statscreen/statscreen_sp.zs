@@ -152,28 +152,43 @@ class DoomStatusScreen : StatusScreen
 
 		Font printFont;
 		Font textFont = generic_ui? NewSmallFont : content.mFont;
+		int statsx = SP_STATSX;
+
+
 		if (useGfx)
 		{
 			printFont = IntermissionFont;
-			screen.DrawTexture (Kills, true, SP_STATSX, SP_STATSY, DTA_Clean, true);
-			screen.DrawTexture (Items, true, SP_STATSX, SP_STATSY+lh, DTA_Clean, true);
-			screen.DrawTexture (P_secret, true, SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true);
+			screen.DrawTexture (Kills, true, statsx, SP_STATSY, DTA_Clean, true);
+			screen.DrawTexture (Items, true, statsx, SP_STATSY+lh, DTA_Clean, true);
+			screen.DrawTexture (P_secret, true, statsx, SP_STATSY+2*lh, DTA_Clean, true);
 			screen.DrawTexture (Timepic, true, SP_TIMEX, SP_TIMEY, DTA_Clean, true);
 			if (wbs.partime) screen.DrawTexture (Par, true, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true);
 		}
 		else
 		{
+			// Check if everything fits on the screen.
+			String percentage = wi_percents? " 0000%" : " 0000/0000";
+			int perc_width = textFont.StringWidth(percentage);
+			int k_width = textFont.StringWidth("$TXT_IMKILLS");
+			int i_width = textFont.StringWidth("$TXT_IMITEMS");
+			int s_width = textFont.StringWidth("$TXT_IMSECRETS");
+			int allwidth = max(k_width, i_width, s_width) + perc_width;
+			if ((SP_STATSX*2 + allwidth) > 320)	// The content does not fit so adjust the position a bit.
+			{
+				statsx = max(0, (320 - allwidth) / 2);
+			}
+
 			printFont = generic_ui? IntermissionFont : BigFont;
-			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
-			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
-			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, statsx, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, statsx, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, statsx, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
 			screen.DrawText (textFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMTIME", DTA_Clean, true);
 			if (wbs.partime) screen.DrawText (textFont, tcolor, 160 + SP_TIMEX, SP_TIMEY, "$TXT_IMPAR", DTA_Clean, true);
 		}
 			 
-		drawPercent (printFont, 320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs.maxkills, true, tcolor);
-		drawPercent (printFont, 320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs.maxitems, true, tcolor);
-		drawPercent (printFont, 320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs.maxsecret, true, tcolor);
+		drawPercent (printFont, 320 - statsx, SP_STATSY, cnt_kills[0], wbs.maxkills, true, tcolor);
+		drawPercent (printFont, 320 - statsx, SP_STATSY+lh, cnt_items[0], wbs.maxitems, true, tcolor);
+		drawPercent (printFont, 320 - statsx, SP_STATSY+2*lh, cnt_secret[0], wbs.maxsecret, true, tcolor);
 		drawTimeFont (printFont, 160 - SP_TIMEX, SP_TIMEY, cnt_time, tcolor);
 			 
 		// This really sucks - not just by its message - and should have been removed long ago!

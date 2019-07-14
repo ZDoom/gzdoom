@@ -322,6 +322,7 @@ struct Font native
 	native int StringWidth(String code);
 	native bool CanPrint(String code);
 	native int GetHeight();
+	native int GetDisplacement();
 	native String GetCursor();
 
 	native static int FindFontColor(Name color);

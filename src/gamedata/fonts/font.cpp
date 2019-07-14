@@ -290,6 +290,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		auto count = maxchar - minchar + 1;
 		Chars.Resize(count);
 		int fontheight = 0;
+		int asciiheight = 0;
 
 		for (i = 0; i < count; i++)
 		{
@@ -310,6 +311,10 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					if (height > fontheight)
 					{
 						fontheight = height;
+					}
+					if (height > asciiheight && FirstChar + 1 < 128)
+					{
+						asciiheight = height;
 					}
 				}
 
@@ -352,6 +357,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			}
 		}
 		if (FontHeight == 0) FontHeight = fontheight;
+		if (AsciiHeight == 0) AsciiHeight = asciiheight;
 
 		FixXMoves();
 	}

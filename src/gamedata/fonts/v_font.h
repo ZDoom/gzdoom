@@ -146,6 +146,7 @@ protected:
 	int FirstChar, LastChar;
 	int SpaceWidth;
 	int FontHeight;
+	int AsciiHeight = 0;
 	int GlobalKerning;
 	int TranslationType = 0;
 	int Displacement = 0;

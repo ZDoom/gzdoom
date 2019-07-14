@@ -2000,6 +2000,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetHeight, GetHeight)
 	ACTION_RETURN_INT(self->GetHeight());
 }
 
+static int GetDisplacement(FFont* font)
+{
+	return font->GetDisplacement();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDisplacement, GetDisplacement)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_INT(self->GetDisplacement());
+}
+
 double GetBottomAlignOffset(FFont *font, int c);
 DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
 {

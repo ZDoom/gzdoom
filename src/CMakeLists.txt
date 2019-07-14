@@ -658,8 +658,10 @@ add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
 file( GLOB HEADER_FILES
-	fragglescript/*.h
 	playsim/*.h
+	playsim/bots/*.h
+	playsim/fragglescript/*.h
+	playsim/mapthinkers/*.h
 	g_statusbar/*.h
 	gamedata/*.h
 	gamedata/resourcefiles/*.h
@@ -929,11 +931,11 @@ endif()
 
 set (PCH_SOURCES
 	am_map.cpp
-	b_bot.cpp
-	b_func.cpp
-	b_game.cpp
-	b_move.cpp
-	b_think.cpp
+	playsim/bots/b_bot.cpp
+	playsim/bots/b_func.cpp
+	playsim/bots/b_game.cpp
+	playsim/bots/b_move.cpp
+	playsim/bots/b_think.cpp
 	bbannouncer.cpp
 	c_bind.cpp
 	c_cmds.cpp
@@ -967,25 +969,25 @@ set (PCH_SOURCES
 	m_joy.cpp
 	m_misc.cpp
 	p_acs.cpp
-	p_actionfunctions.cpp
+	playsim/p_actionfunctions.cpp
 	p_conversation.cpp
-	p_destructible.cpp
-	p_effect.cpp
-	p_enemy.cpp
-	p_interaction.cpp
-	p_lnspec.cpp
-	p_map.cpp
-	p_maputl.cpp
-	p_mobj.cpp
+	playsim/p_destructible.cpp
+	playsim/p_effect.cpp
+	playsim/p_enemy.cpp
+	playsim/p_interaction.cpp
+	playsim/p_lnspec.cpp
+	playsim/p_map.cpp
+	playsim/p_maputl.cpp
+	playsim/p_mobj.cpp
 	p_openmap.cpp
-	p_pspr.cpp
+	playsim/p_pspr.cpp
 	p_saveg.cpp
 	p_setup.cpp
-	p_spec.cpp
+	playsim/p_spec.cpp
 	p_states.cpp
-	p_things.cpp
+	playsim/p_things.cpp
 	p_tick.cpp
-	p_user.cpp
+	playsim/p_user.cpp
 	r_utility.cpp
 	r_sky.cpp
 	r_videoscale.cpp
@@ -1016,26 +1018,26 @@ set (PCH_SOURCES
 	gamedata/p_terrain.cpp
 	gamedata/statistics.cpp
 	gamedata/teaminfo.cpp
+	playsim/mapthinkers/a_decalfx.cpp
+	playsim/mapthinkers/a_doors.cpp
+	playsim/mapthinkers/a_lightning.cpp
+	playsim/mapthinkers/a_quake.cpp
+	playsim/mapthinkers/a_ceiling.cpp
+	playsim/mapthinkers/a_floor.cpp
+	playsim/mapthinkers/a_lights.cpp
+	playsim/mapthinkers/a_lighttransfer.cpp
+	playsim/mapthinkers/a_pillar.cpp
+	playsim/mapthinkers/a_plats.cpp
+	playsim/mapthinkers/a_pusher.cpp
+	playsim/mapthinkers/a_scroll.cpp
+	playsim/mapthinkers/dsectoreffect.cpp
 	playsim/a_pickups.cpp
 	playsim/a_action.cpp
 	playsim/a_decals.cpp
-	playsim/a_decalfx.cpp
-	playsim/a_doors.cpp
 	playsim/a_dynlight.cpp
 	playsim/a_flashfader.cpp
-	playsim/a_lightning.cpp
 	playsim/a_morph.cpp
-	playsim/a_quake.cpp
 	playsim/a_specialspot.cpp
-	playsim/a_ceiling.cpp
-	playsim/a_floor.cpp
-	playsim/a_lights.cpp
-	playsim/a_lighttransfer.cpp
-	playsim/a_pillar.cpp
-	playsim/a_plats.cpp
-	playsim/a_pusher.cpp
-	playsim/a_scroll.cpp
-	playsim/dsectoreffect.cpp
 	playsim/p_secnodes.cpp
 	playsim/p_sectors.cpp
 	playsim/p_sight.cpp
@@ -1164,15 +1166,15 @@ set (PCH_SOURCES
 	gamedata/p_xlat.cpp
 	gamedata/xlat/parse_xlat.cpp
 	gamedata/xlat/parsecontext.cpp
-	fragglescript/t_func.cpp
-	fragglescript/t_load.cpp
-	fragglescript/t_oper.cpp
-	fragglescript/t_parse.cpp
-	fragglescript/t_prepro.cpp
-	fragglescript/t_script.cpp
-	fragglescript/t_spec.cpp
-	fragglescript/t_variable.cpp
-	fragglescript/t_cmd.cpp
+	playsim/fragglescript/t_func.cpp
+	playsim/fragglescript/t_load.cpp
+	playsim/fragglescript/t_oper.cpp
+	playsim/fragglescript/t_parse.cpp
+	playsim/fragglescript/t_prepro.cpp
+	playsim/fragglescript/t_script.cpp
+	playsim/fragglescript/t_spec.cpp
+	playsim/fragglescript/t_variable.cpp
+	playsim/fragglescript/t_cmd.cpp
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	r_data/colormaps.cpp
@@ -1376,6 +1378,8 @@ target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 include_directories( .
 	g_statusbar
 	playsim
+	playsim/bots
+	playsim/mapthinkers
 	gamedata
 	gamedata/textures
 	gamedata/fonts
@@ -1500,7 +1504,6 @@ source_group("Audio Files\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOU
 source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
 source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
-source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fragglescript/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
 source_group("Game Data\\Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/resourcefiles/.+")
 source_group("Game Data\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/fonts/.+")
@@ -1513,6 +1516,10 @@ source_group("Game Data\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Map Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/maploader/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("Playsim" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/.+")
+source_group("Playsim\\Bots" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/bots/.+")
+source_group("Playsim\\FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/fragglescript/.+")
+source_group("Playsim\\Map Thinkers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/mapthinkers/.+")
 source_group("Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/.+")
 source_group("Rendering\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/2d/.+")
 source_group("Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
@@ -1574,7 +1581,6 @@ source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE
 source_group("Utility\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/math/.+")
 source_group("Utility\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/rapidjson/.+")
 source_group("Utility\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/sfmt/.+")
-source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/.+")
 source_group("Statusbar" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_statusbar/.+")
 source_group("Versioning" FILES version.h win32/zdoom.rc)
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)

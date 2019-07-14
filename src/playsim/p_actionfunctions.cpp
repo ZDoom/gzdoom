@@ -54,7 +54,7 @@
 #include "a_sharedglobal.h"
 #include "v_font.h"
 #include "doomstat.h"
-#include "g_shared/a_specialspot.h"
+#include "a_specialspot.h"
 #include "actorptrselect.h"
 #include "p_trace.h"
 #include "p_setup.h"

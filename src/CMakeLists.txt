@@ -659,7 +659,7 @@ add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 # there's generally a new cpp for every header so this file will get changed
 file( GLOB HEADER_FILES
 	fragglescript/*.h
-	g_shared/*.h
+	playsim/*.h
 	g_statusbar/*.h
 	gamedata/*.h
 	gamedata/resourcefiles/*.h
@@ -1016,40 +1016,40 @@ set (PCH_SOURCES
 	gamedata/p_terrain.cpp
 	gamedata/statistics.cpp
 	gamedata/teaminfo.cpp
-	g_shared/a_pickups.cpp
-	g_shared/a_action.cpp
-	g_shared/a_decals.cpp
-	g_shared/a_decalfx.cpp
-	g_shared/a_doors.cpp
-	g_shared/a_dynlight.cpp
-	g_shared/a_flashfader.cpp
-	g_shared/a_lightning.cpp
-	g_shared/a_morph.cpp
-	g_shared/a_quake.cpp
-	g_shared/a_specialspot.cpp
-	g_shared/a_ceiling.cpp
-	g_shared/a_floor.cpp
-	g_shared/a_lights.cpp
-	g_shared/a_lighttransfer.cpp
-	g_shared/a_pillar.cpp
-	g_shared/a_plats.cpp
-	g_shared/a_pusher.cpp
-	g_shared/a_scroll.cpp
-	g_shared/dsectoreffect.cpp
-	g_shared/p_secnodes.cpp
-	g_shared/p_sectors.cpp
-	g_shared/p_sight.cpp
-	g_shared/p_switch.cpp
-	g_shared/p_tags.cpp
-	g_shared/p_teleport.cpp
-	g_shared/actorptrselect.cpp
-	g_shared/dthinker.cpp
-	g_shared/p_3dfloors.cpp
-	g_shared/p_3dmidtex.cpp
-	g_shared/p_linkedsectors.cpp
-	g_shared/p_trace.cpp
-	g_shared/po_man.cpp
-	g_shared/portal.cpp
+	playsim/a_pickups.cpp
+	playsim/a_action.cpp
+	playsim/a_decals.cpp
+	playsim/a_decalfx.cpp
+	playsim/a_doors.cpp
+	playsim/a_dynlight.cpp
+	playsim/a_flashfader.cpp
+	playsim/a_lightning.cpp
+	playsim/a_morph.cpp
+	playsim/a_quake.cpp
+	playsim/a_specialspot.cpp
+	playsim/a_ceiling.cpp
+	playsim/a_floor.cpp
+	playsim/a_lights.cpp
+	playsim/a_lighttransfer.cpp
+	playsim/a_pillar.cpp
+	playsim/a_plats.cpp
+	playsim/a_pusher.cpp
+	playsim/a_scroll.cpp
+	playsim/dsectoreffect.cpp
+	playsim/p_secnodes.cpp
+	playsim/p_sectors.cpp
+	playsim/p_sight.cpp
+	playsim/p_switch.cpp
+	playsim/p_tags.cpp
+	playsim/p_teleport.cpp
+	playsim/actorptrselect.cpp
+	playsim/dthinker.cpp
+	playsim/p_3dfloors.cpp
+	playsim/p_3dmidtex.cpp
+	playsim/p_linkedsectors.cpp
+	playsim/p_trace.cpp
+	playsim/po_man.cpp
+	playsim/portal.cpp
 	g_statusbar/hudmessages.cpp
 	g_statusbar/shared_hud.cpp
 	g_statusbar/sbarinfo.cpp
@@ -1375,7 +1375,7 @@ target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 
 include_directories( .
 	g_statusbar
-	g_shared
+	playsim
 	gamedata
 	gamedata/textures
 	gamedata/fonts
@@ -1574,7 +1574,7 @@ source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE
 source_group("Utility\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/math/.+")
 source_group("Utility\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/rapidjson/.+")
 source_group("Utility\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/sfmt/.+")
-source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_shared/.+")
+source_group("Shared Game" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/.+")
 source_group("Statusbar" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_statusbar/.+")
 source_group("Versioning" FILES version.h win32/zdoom.rc)
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)

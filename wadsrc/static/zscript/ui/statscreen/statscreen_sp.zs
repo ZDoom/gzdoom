@@ -145,12 +145,13 @@ class DoomStatusScreen : StatusScreen
 			&& TexMan.OkForLocalization(P_secret, "$TXT_IMSECRETS")
 			&& TexMan.OkForLocalization(Timepic, "$TXT_IMTIME")
 			&& (!wbs.partime || TexMan.OkForLocalization(Par, "$TXT_IMPAR"));
-			 
-		// Fixme: This should try to retrieve the color from the intermission font and use the best approximation here
-		let tcolor = useGfx? Font.CR_UNTRANSLATED : Font.CR_RED;
+
+		// The font color may only be used when the entire screen is printed as text.
+		// Otherwise the text based parts should not be translated to match the other graphics patches.
+		let tcolor = useGfx? Font.CR_UNTRANSLATED : content.mColor;
 
 		Font printFont;
-		Font textFont = generic_ui? NewSmallFont : BigFont;
+		Font textFont = generic_ui? NewSmallFont : content.mFont;
 		if (useGfx)
 		{
 			printFont = IntermissionFont;
@@ -189,7 +190,7 @@ class DoomStatusScreen : StatusScreen
 			}
 			else
 			{
-				screen.DrawText (textFont, Font.CR_UNTRANSLATED, x  - printFont.StringWidth("$TXT_IMSUCKS"), y - printFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
+				screen.DrawText (textFont, tColor, x  - printFont.StringWidth("$TXT_IMSUCKS"), y - printFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
 			}
 		}
 
@@ -214,32 +215,33 @@ class RavenStatusScreen : DoomStatusScreen
 
 		drawLF();
 
-		Font textFont = generic_ui? NewSmallFont : BigFont;
+		Font textFont = generic_ui? NewSmallFont : content.mFont;
+		let tcolor = content.mColor;
 
-		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 65, "$TXT_IMKILLS", DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 90, "$TXT_IMITEMS", DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 115, "$TXT_IMSECRETS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, tcolor, 50, 65, "$TXT_IMKILLS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, tcolor, 50, 90, "$TXT_IMITEMS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, tcolor, 50, 115, "$TXT_IMSECRETS", DTA_Clean, true, DTA_Shadow, true);
 
 		int countpos = gameinfo.gametype==GAME_Strife? 285:270;
 		if (sp_state >= 2)
 		{
-			drawPercent (IntermissionFont, countpos, 65, cnt_kills[0], wbs.maxkills);
+			drawPercent (IntermissionFont, countpos, 65, cnt_kills[0], wbs.maxkills, true, tcolor);
 		}
 		if (sp_state >= 4)
 		{
-			drawPercent (IntermissionFont, countpos, 90, cnt_items[0], wbs.maxitems);
+			drawPercent (IntermissionFont, countpos, 90, cnt_items[0], wbs.maxitems, true, tcolor);
 		}
 		if (sp_state >= 6)
 		{
-			drawPercent (IntermissionFont, countpos, 115, cnt_secret[0], wbs.maxsecret);
+			drawPercent (IntermissionFont, countpos, 115, cnt_secret[0], wbs.maxsecret, true, tcolor);
 		}
 		if (sp_state >= 8)
 		{
-			screen.DrawText (textFont, Font.CR_UNTRANSLATED, 85, 160, "$TXT_IMTIME", DTA_Clean, true, DTA_Shadow, true);
-			drawTime (249, 160, cnt_time);
+			screen.DrawText (textFont, tcolor, 85, 160, "$TXT_IMTIME", DTA_Clean, true, DTA_Shadow, true);
+			drawTimeFont (textFont, 249, 160, cnt_time, tcolor);
 			if (wi_showtotaltime)
 			{
-				drawTime (249, 180, cnt_total_time);
+				drawTimeFont (textFont, 249, 180, cnt_total_time, tcolor);
 			}
 		}
 	}

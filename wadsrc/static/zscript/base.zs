@@ -401,6 +401,7 @@ struct GameInfoStruct native
 	native GIFont mStatscreenMapNameFont;
 	native GIFont mStatscreenEnteringFont;
 	native GIFont mStatscreenFinishedFont;
+	native GIFont mStatscreenContentFont;
 	native double gibfactor;
 	native bool intermissioncounter;
 	native Name mSliderColor;

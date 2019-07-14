@@ -4,7 +4,8 @@ defaultmap
 	nojump 
 	nocrouch 
 }
-gameinfo{	forcenogfxsubstitution = false	statscreen_finishedfont = "*BigFont", "untranslated"	statscreen_enteringfont = "*BigFont", "untranslated"}// Edited MAPINFO for localization:// Literal map names have been replaced with labels.// Titlepatches have been disabled to allow using the font.
+gameinfo{	forcenogfxsubstitution = false	statscreen_finishedfont = "*BigFont"	statscreen_enteringfont = "*BigFont"	statscreen_contentfont = "*BigFont"
+}// Edited MAPINFO for localization:// Literal map names have been replaced with labels.// Titlepatches have been disabled to allow using the font.
 map MAP01 lookup "TXT_HACXMAP01"
 {
 	//titlepatch = CWILV00

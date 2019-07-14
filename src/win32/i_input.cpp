@@ -35,11 +35,6 @@
 // DI3 only supports up to 4 mouse buttons, and I want the joystick to
 // be read using DirectInput instead of winmm.
 
-#define DIRECTINPUT_VERSION 0x800
-#if !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0501)
-#define _WIN32_WINNT 0x0501			// Support the mouse wheel and session notification.
-#endif
-
 #define WIN32_LEAN_AND_MEAN
 #define __BYTEBOOL__
 #ifndef __GNUC__

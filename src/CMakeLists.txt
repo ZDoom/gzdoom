@@ -1408,7 +1408,7 @@ include_directories( .
 	../libraries/dumb/include
 	../libraries/glslang/glslang/Public
 	../libraries/glslang/spirv
-	${CMAKE_BINARY_DIR}/gdtoa
+	${CMAKE_BINARY_DIR}/libraries/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 
 add_dependencies( zdoom revision_check )

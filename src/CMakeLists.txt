@@ -1397,10 +1397,10 @@ include_directories( .
 	scripting
 	scripting/vm
 	rendering/vulkan/thirdparty
-	../gdtoa
-	../dumb/include
-	../glslang/glslang/Public
-	../glslang/spirv
+	../libraries/gdtoa
+	../libraries/dumb/include
+	../libraries/glslang/glslang/Public
+	../libraries/glslang/spirv
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 

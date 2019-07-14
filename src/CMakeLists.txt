@@ -675,7 +675,10 @@ file( GLOB HEADER_FILES
 	intermission/*.h
 	maploader/*.h
 	menu/*.h
+	sound/*.h
 	sound/adlmidi/*.h*
+	sound/backend/*.h*
+	sound/music/*.h*
 	sound/opnmidi/*.h*
 	sound/oplsynth/*.h
 	sound/oplsynth/dosbox/*.h
@@ -689,7 +692,6 @@ file( GLOB HEADER_FILES
 	utility/sfmt/*.h
 	utility/math./*h
 	utility/*.h
-	sound/*.h
 	scripting/*.h
 	scripting/backend/*.h
 	scripting/decorate/*.h
@@ -847,10 +849,10 @@ set( FASTMATH_SOURCES
 	rendering/swrenderer/r_swscene.cpp
 	rendering/polyrenderer/poly_all.cpp
 	sound/oplsynth/opl_mus_player.cpp
-	sound/mpg123_decoder.cpp
-	sound/music_midi_base.cpp
-	sound/oalsound.cpp
-	sound/sndfile_decoder.cpp
+	sound/backend/mpg123_decoder.cpp
+	sound/music/music_midi_base.cpp
+	sound/backend/oalsound.cpp
+	sound/backend/sndfile_decoder.cpp
 	sound/timiditypp/fft4g.cpp
 	sound/timiditypp/reverb.cpp
 	gamedata/textures/hires/hqnx/init.cpp
@@ -1219,9 +1221,9 @@ set (PCH_SOURCES
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
 	utility/sfmt/SFMT.cpp
-	sound/i_music.cpp
-	sound/i_sound.cpp
-	sound/i_soundfont.cpp
+	sound/music/i_music.cpp
+	sound/music/i_soundfont.cpp
+	sound/backend/i_sound.cpp
 	sound/mididevices/music_adlmidi_mididevice.cpp
 	sound/mididevices/music_opldumper_mididevice.cpp
 	sound/mididevices/music_opl_mididevice.cpp
@@ -1388,6 +1390,8 @@ include_directories( .
 	rendering
 	rendering/2d
 	sound
+	sound/music
+	sound/backend
 	sound/oplsynth
 	sound/timidity
 	sound/wildmidi
@@ -1492,6 +1496,7 @@ install(TARGETS zdoom
 		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
+source_group("Audio Files\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/backend/.+")
 source_group("Audio Files\\ADL MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/adlmidi/.+")
 source_group("Audio Files\\OPN MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/opnmidi/.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")

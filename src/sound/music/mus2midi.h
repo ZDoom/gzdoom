@@ -39,7 +39,7 @@
 #endif
 
 #include <stdio.h>
-#include "doomtype.h"
+#include <stdint.h>
 
 #define MIDI_SYSEX		((uint8_t)0xF0)		 // SysEx begin
 #define MIDI_SYSEXEND	((uint8_t)0xF7)		 // SysEx end

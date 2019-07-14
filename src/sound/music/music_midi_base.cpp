@@ -31,9 +31,6 @@
 **
 */
 
-#include "i_midi_win32.h"
-
-
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
 
@@ -105,6 +102,11 @@ void MIDIDeviceChanged(int newdev, bool force)
 #define DEF_MIDIDEV -5
 
 #ifdef _WIN32
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <mmsystem.h>
+
 unsigned mididevice;
 
 CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

@@ -85,7 +85,6 @@
 #include "d_event.h"
 #include "p_enemy.h"
 #include "gstrings.h"
-#include "r_renderer.h"
 #include "po_man.h"
 #include "p_spec.h"
 #include "p_checkposition.h"

@@ -704,6 +704,7 @@ file( GLOB HEADER_FILES
 	sound/timidity/*.h
 	sound/timiditypp/*.h
 	sound/wildmidi/*.h
+	rendering/*.h
 	rendering/2d/*.h
 	rendering/swrenderer/*.h
 	rendering/swrenderer/textures/*.h
@@ -971,7 +972,7 @@ set (PCH_SOURCES
 	m_cheat.cpp
 	m_joy.cpp
 	m_misc.cpp
-	p_acs.cpp
+	playsim/p_acs.cpp
 	playsim/p_actionfunctions.cpp
 	p_conversation.cpp
 	playsim/p_destructible.cpp
@@ -991,9 +992,9 @@ set (PCH_SOURCES
 	playsim/p_things.cpp
 	p_tick.cpp
 	playsim/p_user.cpp
-	r_utility.cpp
-	r_sky.cpp
-	r_videoscale.cpp
+	rendering/r_utility.cpp
+	rendering/r_sky.cpp
+	rendering/r_videoscale.cpp
 	sound/s_advsound.cpp
 	sound/s_environment.cpp
 	sound/s_sndseq.cpp
@@ -1001,9 +1002,9 @@ set (PCH_SOURCES
 	serializer.cpp
 	scriptutil.cpp
 	st_stuff.cpp
-	v_framebuffer.cpp
-	v_palette.cpp
-	v_video.cpp
+	rendering/v_framebuffer.cpp
+	r_data/v_palette.cpp
+	rendering/v_video.cpp
 	wi_stuff.cpp
 	gamedata/a_keys.cpp
 	gamedata/a_weapons.cpp
@@ -1389,6 +1390,7 @@ include_directories( .
 	gamedata/fonts
 	rendering
 	rendering/2d
+	r_data
 	sound
 	sound/music
 	sound/backend
@@ -1400,6 +1402,7 @@ include_directories( .
 	utility/nodebuilder
 	scripting
 	scripting/vm
+	rendering
 	rendering/vulkan/thirdparty
 	../libraries/gdtoa
 	../libraries/dumb/include

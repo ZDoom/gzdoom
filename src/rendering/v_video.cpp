@@ -61,7 +61,7 @@
 #include "hardware.h"
 #include "m_png.h"
 #include "r_utility.h"
-#include "r_renderer.h"
+#include "swrenderer/r_renderer.h"
 #include "menu/menu.h"
 #include "vm.h"
 #include "r_videoscale.h"

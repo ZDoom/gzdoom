@@ -4,7 +4,7 @@
 #include "r_defs.h"
 #include "v_video.h"
 #include "vectors.h"
-#include "r_renderer.h"
+#include "swrenderer/r_renderer.h"
 #include "r_data/matrix.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "hwrenderer/scene/hw_portal.h"

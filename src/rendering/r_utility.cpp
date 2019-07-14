@@ -51,7 +51,7 @@
 #include "p_effect.h"
 #include "st_start.h"
 #include "v_font.h"
-#include "r_renderer.h"
+#include "swrenderer/r_renderer.h"
 #include "serializer.h"
 #include "r_utility.h"
 #include "d_player.h"

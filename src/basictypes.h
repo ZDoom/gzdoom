@@ -45,6 +45,9 @@ typedef uint32_t			angle_t;
 #define GCCPRINTF(a,b)
 #define GCCFORMAT(a)
 #define GCCNOWARN
+#ifndef PRId64
+#define PRId64					"I64d"
+#endif
 #endif
 
 

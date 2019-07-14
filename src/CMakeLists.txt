@@ -658,6 +658,7 @@ add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
 file( GLOB HEADER_FILES
+	console/*.h
 	playsim/*.h
 	playsim/bots/*.h
 	playsim/fragglescript/*.h
@@ -937,14 +938,14 @@ set (PCH_SOURCES
 	playsim/bots/b_move.cpp
 	playsim/bots/b_think.cpp
 	bbannouncer.cpp
-	c_bind.cpp
-	c_cmds.cpp
-	c_console.cpp
-	c_consolebuffer.cpp
-	c_cvars.cpp
-	c_dispatch.cpp
-	c_expr.cpp
-	c_functions.cpp
+	console/c_bind.cpp
+	console/c_cmds.cpp
+	console/c_console.cpp
+	console/c_consolebuffer.cpp
+	console/c_cvars.cpp
+	console/c_dispatch.cpp
+	console/c_expr.cpp
+	console/c_functions.cpp
 	ct_chat.cpp
 	d_iwad.cpp
 	d_main.cpp
@@ -1377,6 +1378,7 @@ target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
 
 include_directories( .
 	g_statusbar
+	console
 	playsim
 	playsim/bots
 	playsim/mapthinkers
@@ -1501,9 +1503,6 @@ source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SO
 source_group("Audio Files\\MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/midisources/.+")
 source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")
 source_group("Audio Files\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/thirdparty/.+")
-source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
-source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")
-source_group("External\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sfmt/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
 source_group("Game Data\\Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/resourcefiles/.+")
 source_group("Game Data\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/fonts/.+")

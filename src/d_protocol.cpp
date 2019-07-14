@@ -32,7 +32,7 @@
 **
 */
 
-#include "i_system.h"
+
 #include "d_protocol.h"
 #include "network/net.h"
 #include "doomstat.h"

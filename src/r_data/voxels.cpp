@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <ctype.h>
 
 #include "m_swap.h"
 #include "m_argv.h"
@@ -303,8 +304,8 @@ FVoxel *R_LoadKVX(int lumpnum)
 	}
 
 	voxel->LumpNum = lumpnum;
-	voxel->Palette = new uint8_t[768];
-	memcpy(voxel->Palette, rawvoxel + voxelsize - 768, 768);
+	voxel->Palette.Resize(768);
+	memcpy(voxel->Palette.Data(), rawvoxel + voxelsize - 768, 768);
 
 	return voxel;
 }
@@ -384,22 +385,6 @@ uint8_t *FVoxelMipLevel::GetSlabData(bool wantremapped) const
 
 //==========================================================================
 //
-// FVoxel Constructor
-//
-//==========================================================================
-
-FVoxel::FVoxel()
-{
-	Palette = NULL;
-}
-
-FVoxel::~FVoxel()
-{
-	if (Palette != NULL) delete [] Palette;
-}
-
-//==========================================================================
-//
 // Create true color version of the slab data
 //
 //==========================================================================
@@ -430,7 +415,7 @@ void FVoxel::CreateBgraSlabData()
 				int colorIndex = src->col[j];
 
 				uint32_t red, green, blue;
-				if (Palette)
+				if (Palette.Size())
 				{
 					red = (Palette[colorIndex * 3 + 0] << 2) | (Palette[colorIndex * 3 + 0] >> 4);
 					green = (Palette[colorIndex * 3 + 1] << 2) | (Palette[colorIndex * 3 + 1] >> 4);
@@ -464,9 +449,9 @@ void FVoxel::Remap()
 {
 	if (Remapped) return;
 	Remapped = true;
-	if (Palette != NULL)
+	if (Palette.Size())
 	{
-		uint8_t *remap = GetVoxelRemap(Palette);
+		uint8_t *remap = GetVoxelRemap(Palette.Data());
 		for (int i = 0; i < NumMips; ++i)
 		{
 			int size = Mips[i].OffsetX[Mips[i].SizeX];
@@ -487,11 +472,7 @@ void FVoxel::Remap()
 
 void FVoxel::RemovePalette()
 {
-	if (Palette != NULL)
-	{
-		delete [] Palette;
-		Palette = NULL;
-	}
+	Palette.Reset();
 }
 
 

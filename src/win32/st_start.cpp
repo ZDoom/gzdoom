@@ -50,6 +50,7 @@
 #include "s_sound.h"
 #include "m_argv.h"
 #include "d_main.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -399,7 +400,8 @@ void FBasicStartupScreen::NetInit(const char *message, int numplayers)
 	{
 		HWND ctl;
 
-		SetDlgItemText (NetStartPane, IDC_NETSTARTMESSAGE, message);
+		std::wstring wmessage = WideString(message);
+		SetDlgItemTextW (NetStartPane, IDC_NETSTARTMESSAGE, wmessage.c_str());
 		ctl = GetDlgItem (NetStartPane, IDC_NETSTARTPROGRESS);
 
 		if (numplayers == 0)
@@ -415,7 +417,7 @@ void FBasicStartupScreen::NetInit(const char *message, int numplayers)
 				// If we don't set the PBS_MARQUEE style, then the marquee will never show up.
 				SetWindowLong (ctl, GWL_STYLE, GetWindowLong (ctl, GWL_STYLE) | PBS_MARQUEE);
 			}
-			SetDlgItemText (NetStartPane, IDC_NETSTARTCOUNT, "");
+			SetDlgItemTextW (NetStartPane, IDC_NETSTARTCOUNT, L"");
 		}
 		else
 		{
@@ -428,7 +430,7 @@ void FBasicStartupScreen::NetInit(const char *message, int numplayers)
 			if (numplayers == 1)
 			{
 				SendMessage (ctl, PBM_SETPOS, 1, 0);
-				SetDlgItemText (NetStartPane, IDC_NETSTARTCOUNT, "");
+				SetDlgItemTextW (NetStartPane, IDC_NETSTARTCOUNT, L"");
 			}
 		}
 	}
@@ -509,7 +511,7 @@ void FBasicStartupScreen :: NetProgress(int count)
 		char buf[16];
 
 		mysnprintf (buf, countof(buf), "%d/%d", NetCurPos, NetMaxPos);
-		SetDlgItemText (NetStartPane, IDC_NETSTARTCOUNT, buf);
+		SetDlgItemTextA (NetStartPane, IDC_NETSTARTCOUNT, buf);
 		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, MIN(NetCurPos, NetMaxPos), 0);
 	}
 }
@@ -1193,7 +1195,7 @@ void ST_Endoom()
 
 bool ST_Util_CreateStartupWindow ()
 {
-	StartupScreen = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL,
+	StartupScreen = CreateWindowEx (WS_EX_NOPARENTNOTIFY, L"STATIC", NULL,
 		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW,
 		0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 	if (StartupScreen == NULL)

@@ -221,7 +221,6 @@ protected:
 	void OrderAxes();
 	bool ReorderAxisPair(const GUID &x, const GUID &y, int pos);
 	HRESULT SetDataFormat();
-	bool SetConfigSection(bool create);
 
 	friend class FDInputJoystickManager;
 };
@@ -265,8 +264,6 @@ protected:
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void MapAxis(FIntCVar &var, int num);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 

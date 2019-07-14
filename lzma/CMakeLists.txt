@@ -34,5 +34,5 @@ else()
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_ST" )
 endif()
 
-add_library( lzma ${LZMA_FILES} )
+add_library( lzma STATIC ${LZMA_FILES} )
 target_link_libraries( lzma )

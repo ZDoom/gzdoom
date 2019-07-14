@@ -17,19 +17,6 @@ typedef struct _GUID
 } GUID;
 #endif
 
-union QWORD_UNION
-{
-	uint64_t AsOne;
-	struct
-	{
-#ifdef __BIG_ENDIAN__
-		unsigned int Hi, Lo;
-#else
-		unsigned int Lo, Hi;
-#endif
-	};
-};
-
 //
 // fixed point, 32bit as 16.16.
 //
@@ -40,9 +27,6 @@ typedef int32_t							fixed_t;
 
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)
-
-#define DWORD_MIN						((uint32_t)0)
-#define DWORD_MAX						((uint32_t)0xffffffff)
 
 // the last remnants of tables.h
 #define ANGLE_90		(0x40000000)

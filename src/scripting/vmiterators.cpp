@@ -41,8 +41,8 @@ class DThinkerIterator : public DObject, public FThinkerIterator
 	DECLARE_ABSTRACT_CLASS(DThinkerIterator, DObject)
 
 public:
-	DThinkerIterator(PClass *cls, int statnum = MAX_STATNUM + 1)
-		: FThinkerIterator(cls, statnum)
+	DThinkerIterator(FLevelLocals *Level, PClass *cls, int statnum = MAX_STATNUM + 1)
+		: FThinkerIterator(Level, cls, statnum)
 	{
 	}
 };
@@ -51,7 +51,7 @@ IMPLEMENT_CLASS(DThinkerIterator, true, false);
 
 static DThinkerIterator *CreateThinkerIterator(PClass *type, int statnum)
 {
-	return Create<DThinkerIterator>(type, statnum);
+	return Create<DThinkerIterator>(currentVMLevel, type, statnum);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, Create, CreateThinkerIterator)
@@ -59,7 +59,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, Create, CreateThinkerIterator)
 	PARAM_PROLOGUE;
 	PARAM_CLASS(type, DThinker);
 	PARAM_INT(statnum);
-	ACTION_RETURN_OBJECT(Create<DThinkerIterator>(type, statnum));
+	ACTION_RETURN_OBJECT(CreateThinkerIterator(type, statnum));
 }
 
 static DThinker *NextThinker(DThinkerIterator *self, bool exact)
@@ -109,7 +109,7 @@ public:
 	}
 
 	DBlockLinesIterator(double x, double y, double z, double height, double radius, sector_t *sec)
-		:FMultiBlockLinesIterator(check, x, y, z, height, radius, sec)
+		:FMultiBlockLinesIterator(check, currentVMLevel, x, y, z, height, radius, sec)
 	{
 		cres.line = nullptr;
 		cres.Position.Zero();
@@ -183,7 +183,7 @@ public:
 	}
 
 	DBlockThingsIterator(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
-		: iterator(check, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
+		: iterator(check, currentVMLevel, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
 	{
 		cres.thing = nullptr;
 		cres.Position.Zero();
@@ -243,7 +243,7 @@ class DSectorTagIterator : public DObject, public FSectorTagIterator
 {
 	DECLARE_ABSTRACT_CLASS(DSectorTagIterator, DObject);
 public:
-	DSectorTagIterator(int tag, line_t *line)
+	DSectorTagIterator(FTagManager &tm, int tag, line_t *line) : FSectorTagIterator(tm)
 	{
 		if (line == nullptr) Init(tag);
 		else Init(tag, line);
@@ -252,17 +252,17 @@ public:
 
 IMPLEMENT_CLASS(DSectorTagIterator, true, false);
 
-static DSectorTagIterator *CreateSTI(int tag, line_t *line)
+static DSectorTagIterator *CreateSTI(FLevelLocals *Level, int tag, line_t *line)
 {
-	return Create<DSectorTagIterator>(tag, line);
+	return Create<DSectorTagIterator>(Level->tagManager, tag, line);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DSectorTagIterator, Create, CreateSTI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateSectorTagIterator, CreateSTI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tag);
 	PARAM_POINTER(line, line_t);
-	ACTION_RETURN_POINTER(Create<DSectorTagIterator>(tag, line));
+	ACTION_RETURN_POINTER(CreateSTI(self, tag, line));
 }
 
 int NextSTI(DSectorTagIterator *self)
@@ -299,8 +299,8 @@ class DLineIdIterator : public DObject, public FLineIdIterator
 {
 	DECLARE_ABSTRACT_CLASS(DLineIdIterator, DObject);
 public:
-	DLineIdIterator(int tag)
-		: FLineIdIterator(tag)
+	DLineIdIterator(FTagManager &tm, int tag)
+		: FLineIdIterator(tm, tag)
 	{
 	}
 };
@@ -308,16 +308,16 @@ public:
 IMPLEMENT_CLASS(DLineIdIterator, true, false);
 
 
-static DLineIdIterator *CreateLTI(int tag)
+static DLineIdIterator *CreateLTI(FLevelLocals *Level, int tag)
 {
-	return Create<DLineIdIterator>(tag);
+	return Create<DLineIdIterator>(Level->tagManager, tag);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DLineIdIterator, Create, CreateLTI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateLineIDIterator, CreateLTI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tag);
-	ACTION_RETURN_POINTER(Create<DLineIdIterator>(tag));
+	ACTION_RETURN_POINTER(CreateLTI(self, tag));
 }
 
 int NextLTI(DLineIdIterator *self)
@@ -342,25 +342,25 @@ class DActorIterator : public DObject, public NActorIterator
 	DECLARE_ABSTRACT_CLASS(DActorIterator, DObject)
 
 public:
-	DActorIterator(PClassActor *cls = nullptr, int tid = 0)
-		: NActorIterator(cls, tid)
+	DActorIterator(AActor **hash, PClassActor *cls = nullptr, int tid = 0)
+		: NActorIterator(hash, cls, tid)
 	{
 	}
 };
 
 IMPLEMENT_CLASS(DActorIterator, true, false);
 
-static DActorIterator *CreateActI(int tid, PClassActor *type)
+static DActorIterator *CreateActI(FLevelLocals *Level, int tid, PClassActor *type)
 {
-	return Create<DActorIterator>(type, tid);
+	return Create<DActorIterator>(Level->TIDHash, type, tid);
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(DActorIterator, Create, CreateActI)
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, CreateActorIterator, CreateActI)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(tid);
 	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_OBJECT(Create<DActorIterator>(type, tid));
+	ACTION_RETURN_OBJECT(CreateActI(self, tid, type));
 }
 
 static AActor *NextActI(DActorIterator *self)

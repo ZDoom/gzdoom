@@ -23,6 +23,7 @@
 
 #include "netserver.h"
 #include "netcommand.h"
+#include "g_shared/a_dynlight.h"
 
 class NetClient : public Network
 {

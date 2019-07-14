@@ -38,7 +38,7 @@
 #include <math.h>
 #include <float.h>
 
-#include "i_system.h"
+
 #include "w_wad.h"
 #include "r_sky.h"
 #include "colormaps.h"

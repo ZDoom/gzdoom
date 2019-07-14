@@ -96,7 +96,7 @@ FTexture *FMugShotFrame::GetTexture(const char *default_face, const char *skin_f
 		}
 		sprite.UnlockBuffer();
 	}
-	return TexMan[TexMan.CheckForTexture(sprite, ETextureType::Any, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_AllowSkins)];
+	return TexMan.GetTexture(TexMan.CheckForTexture(sprite, ETextureType::Any, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_AllowSkins));
 }
 
 //===========================================================================
@@ -124,16 +124,6 @@ FMugShotState::FMugShotState(FName name)
 	bDirectional = false;
 	bFinished = true;
 	Random = M_Random();
-}
-
-//===========================================================================
-//
-// MugShotState destructor
-//
-//===========================================================================
-
-FMugShotState::~FMugShotState()
-{
 }
 
 //===========================================================================
@@ -471,7 +461,7 @@ FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accu
 {
 	int angle = UpdateState(player, stateflags);
 	int level = 0;
-	int max = player->mo->MugShotMaxHealth;
+	int max = player->mo->IntVar(NAME_MugShotMaxHealth);
 	if (max < 0)
 	{
 		max = player->mo->GetMaxHealth();
@@ -487,7 +477,7 @@ FTexture *FMugShot::GetFace(player_t *player, const char *default_face, int accu
 	if (CurrentState != NULL)
 	{
 		int skin = player->userinfo.GetSkin();
-		const char *skin_face = (stateflags & FMugShot::CUSTOM) ? nullptr : (player->morphTics ? ((APlayerPawn*)GetDefaultByType(player->MorphedPlayerClass))->Face.GetChars() : Skins[skin].Face.GetChars());
+		const char *skin_face = (stateflags & FMugShot::CUSTOM) ? nullptr : (player->morphTics ? (GetDefaultByType(player->MorphedPlayerClass))->NameVar(NAME_Face).GetChars() : Skins[skin].Face.GetChars());
 		return CurrentState->GetCurrentFrameTexture(default_face, skin_face, level, angle);
 	}
 	return NULL;

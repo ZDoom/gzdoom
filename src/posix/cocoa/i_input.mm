@@ -45,6 +45,8 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "events.h"
+#include "g_game.h"
+#include "g_levellocals.h"
 
 
 EXTERN_CVAR(Int, m_use_mouse)
@@ -91,7 +93,7 @@ void CheckGUICapture()
 		: (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 
 	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapture && E_CheckUiProcessors())
+	if (!wantCapture && primaryLevel->localEventManager->CheckUiProcessors())
 	{
 		wantCapture = true;
 	}
@@ -196,7 +198,7 @@ void CheckNativeMouse()
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
 
-	if (!wantNative && E_CheckRequireMouse())
+	if (!wantNative && primaryLevel->localEventManager->CheckRequireMouse())
 		wantNative = true;
 
 	I_SetNativeMouse(wantNative);
@@ -369,7 +371,7 @@ NSStringEncoding GetEncodingForUnicodeCharacter(const unichar character)
 	return NSWindowsCP1252StringEncoding;
 }
 
-unsigned char GetCharacterFromNSEvent(NSEvent* theEvent)
+unsigned char GetCharacterFromNSEvent(NSEvent* theEvent, unichar *realchar)
 {
 	const NSString* unicodeCharacters = [theEvent characters];
 
@@ -398,6 +400,7 @@ unsigned char GetCharacterFromNSEvent(NSEvent* theEvent)
 			: '\0';
 	}
 
+	*realchar = unicodeCharacter;
 	return character;
 }
 
@@ -405,9 +408,10 @@ void ProcessKeyboardEventInMenu(NSEvent* theEvent)
 {
 	event_t event = {};
 
+	unichar realchar;
 	event.type    = EV_GUI_Event;
 	event.subtype = NSKeyDown == [theEvent type] ? EV_GUI_KeyDown : EV_GUI_KeyUp;
-	event.data2   = GetCharacterFromNSEvent(theEvent);
+	event.data2   = GetCharacterFromNSEvent(theEvent, &realchar);
 	event.data3   = ModifierFlagsToGUIKeyModifiers(theEvent);
 
 	if (EV_GUI_KeyDown == event.subtype && [theEvent isARepeat])
@@ -460,7 +464,7 @@ void ProcessKeyboardEventInMenu(NSEvent* theEvent)
 		&& ShouldGenerateGUICharEvent(theEvent))
 	{
 		event.subtype = EV_GUI_Char;
-		event.data1   = event.data2;
+		event.data1   = realchar;
 		event.data2   = event.data3 & GKM_ALT;
 		
 		D_PostEvent(&event);
@@ -476,11 +480,29 @@ void NSEventToGameMousePosition(NSEvent* inEvent, event_t* outEvent)
 	const NSPoint screenPos = [NSEvent mouseLocation];
 	const NSRect screenRect = NSMakeRect(screenPos.x, screenPos.y, 0, 0);
 	const NSRect windowRect = [window convertRectFromScreen:screenRect];
-	const NSPoint   viewPos = [view convertPointToBacking:windowRect.origin];
-	const CGFloat frameHeight = I_GetContentViewSize(window).height;
 
-	outEvent->data1 = static_cast<int16_t>(              viewPos.x);
-	outEvent->data2 = static_cast<int16_t>(frameHeight - viewPos.y);
+	NSPoint viewPos;
+	NSSize  viewSize;
+	CGFloat scale;
+
+	if (view.layer == nil)
+	{
+		viewPos  = [view convertPointToBacking:windowRect.origin];
+		viewSize = [view convertSizeToBacking:view.frame.size];
+		scale    = 1.0;
+	}
+	else
+	{
+		viewPos  = windowRect.origin;
+		viewSize = view.frame.size;
+		scale    = view.layer.contentsScale;
+	}
+
+	const CGFloat posX =                    viewPos.x  * scale;
+	const CGFloat posY = (viewSize.height - viewPos.y) * scale;
+
+	outEvent->data1 = static_cast<int16_t>(posX);
+	outEvent->data2 = static_cast<int16_t>(posY);
 
 	screen->ScaleCoordsFromWindow(outEvent->data1, outEvent->data2);
 }

@@ -512,7 +512,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2OffsetZ, Vec2OffsetZ)
 
 static void Vec2Offset(AActor *self, double x, double y, bool absolute, DVector2 *result)
 {
-	*result = self->Vec2OffsetZ(x, y, absolute);
+	*result = self->Vec2Offset(x, y, absolute);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2Offset, Vec2Offset)
@@ -566,7 +566,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RestoreDamage, RestoreDamage)
 
 static int PlayerNumber(AActor *self)
 {
-	return self->player ? int(self->player - players) : 0;
+	return self->player ? self->Level->PlayerNum(self->player) : 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, PlayerNumber, PlayerNumber)
@@ -799,9 +799,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearCounters, ClearCounters)
 	return 0;
 }
 
-static int GetModifiedDamage(AActor *self, int type, int damage, bool passive)
+static int GetModifiedDamage(AActor *self, int type, int damage, bool passive, AActor *inflictor, AActor *source, int flags)
 {
-	return self->GetModifiedDamage(ENamedName(type), damage, passive);
+	return self->GetModifiedDamage(ENamedName(type), damage, passive, inflictor, source, flags);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetModifiedDamage, GetModifiedDamage)
@@ -810,7 +810,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetModifiedDamage, GetModifiedDamage)
 	PARAM_NAME(type);
 	PARAM_INT(damage);
 	PARAM_BOOL(passive);
-	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive));
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(flags);
+	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive, inflictor, source, flags));
 }
 
 static int ApplyDamageFactor(AActor *self, int type, int damage)
@@ -893,31 +896,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetFloorTerrain, GetFloorTerrain)
 	ACTION_RETURN_POINTER(GetFloorTerrain(self));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindUniqueTid, P_FindUniqueTID)
+static int P_FindUniqueTID(FLevelLocals *Level, int start, int limit)
 {
-	PARAM_PROLOGUE;
+	return Level->FindUniqueTID(start, limit);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FindUniqueTid, P_FindUniqueTID)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(start);
 	PARAM_INT(limit);
-	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
+	ACTION_RETURN_INT(P_FindUniqueTID(self, start, limit));
 }
 
 static void RemoveFromHash(AActor *self)
 {
-	self->RemoveFromHash();
+	self->SetTID(0);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveFromHash, RemoveFromHash)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->RemoveFromHash();
+	RemoveFromHash(self);
 	return 0;
 }
 
 static void ChangeTid(AActor *self, int tid)
 {
-	self->RemoveFromHash();
-	self->tid = tid;
-	self->AddToHash();
+	self->SetTID(tid);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, ChangeTid, ChangeTid)
@@ -1227,31 +1233,31 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpriteIndex, ZS_GetSpriteIndex)
 
 static PClassActor *ZS_GetReplacement(PClassActor *c)
 {
-	return c->GetReplacement();
+	return c->GetReplacement(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacement, ZS_GetReplacement)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacement());
+	ACTION_RETURN_POINTER(ZS_GetReplacement(c));
 }
 
 static PClassActor *ZS_GetReplacee(PClassActor *c)
 {
-	return c->GetReplacee();
+	return c->GetReplacee(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacee, ZS_GetReplacee)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacee());
+	ACTION_RETURN_POINTER(ZS_GetReplacee(c));
 }
 
 static void DrawSplash(AActor *self, int count, double angle, int kind)
 {
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
@@ -1260,7 +1266,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
 	PARAM_INT(count);
 	PARAM_FLOAT(angle);
 	PARAM_INT(kind);
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 	return 0;
 }
 
@@ -1325,7 +1331,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckSight, P_CheckSight)
 
 static void GiveSecret(AActor *self, bool printmessage, bool playsound)
 {
-	P_GiveSecret(self, printmessage, playsound, -1);
+	P_GiveSecret(self->Level, self, printmessage, playsound, -1);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
@@ -1333,7 +1339,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(printmessage);
 	PARAM_BOOL(playsound);
-	P_GiveSecret(self, printmessage, playsound, -1);
+	GiveSecret(self, printmessage, playsound);
 	return 0;
 }
 
@@ -1425,6 +1431,35 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, LookForPlayers, P_LookForPlayers)
 	PARAM_BOOL(allaround);
 	PARAM_POINTER(params, FLookExParams);
 	ACTION_RETURN_BOOL(P_LookForPlayers(self, allaround, params));
+}
+
+static int CheckMonsterUseSpecials(AActor *self)
+{
+	spechit_t spec;
+	int good = 0;
+
+	if (!(self->flags6 & MF6_NOTRIGGER))
+	{
+		while (spechit.Pop (spec))
+		{
+			// [RH] let monsters push lines, as well as use them
+			if (((self->flags4 & MF4_CANUSEWALLS) && P_ActivateLine (spec.line, self, 0, SPAC_Use)) ||
+				((self->flags2 & MF2_PUSHWALL) && P_ActivateLine (spec.line, self, 0, SPAC_Push)))
+			{
+				good |= spec.line == self->BlockingLine ? 1 : 2;
+			}
+		}
+	}
+	else spechit.Clear();
+
+	return good;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckMonsterUseSpecials, CheckMonsterUseSpecials)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	ACTION_RETURN_INT(CheckMonsterUseSpecials(self));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_Wander, A_Wander)
@@ -1587,8 +1622,79 @@ DEFINE_ACTION_FUNCTION_NATIVE(AKey, GetKeyType, P_GetKeyType)
 	ACTION_RETURN_POINTER(P_GetKeyType(num));
 }
 
+//=====================================================================================
+//
+// 3D Floor exports
+//
+//=====================================================================================
+int CheckFor3DFloorHit(AActor *self, double z, bool trigger)
+{
+	return P_CheckFor3DFloorHit(self, z, trigger);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DFloorHit, CheckFor3DFloorHit)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(trigger);
+
+	ACTION_RETURN_BOOL(P_CheckFor3DFloorHit(self, z, trigger));
+}
+
+int CheckFor3DCeilingHit(AActor *self, double z, bool trigger)
+{
+	return P_CheckFor3DCeilingHit(self, z, trigger);
+}
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(trigger);
+
+	ACTION_RETURN_BOOL(P_CheckFor3DCeilingHit(self, z, trigger));
+}
 
 
+
+static int isFrozen(AActor *self)
+{
+	return self->isFrozen();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(isFrozen(self));
+}
+
+
+//===========================================================================
+//
+// PlayerPawn functions
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, MarkPlayerSounds, S_MarkPlayerSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	S_MarkPlayerSounds(self);
+	return 0;
+}
+
+static void GetPrintableDisplayNameJit(PClassActor *cls, FString *result)
+{
+	*result = cls->GetDisplayName();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, GetPrintableDisplayName, GetPrintableDisplayNameJit)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_STRING(type->GetDisplayName());
+}
+
+
+
+DEFINE_FIELD(DThinker, Level)
 DEFINE_FIELD(AActor, snext)
 DEFINE_FIELD(AActor, player)
 DEFINE_FIELD_NAMED(AActor, __Pos, pos)

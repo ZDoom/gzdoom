@@ -4,5 +4,6 @@ gameinfo
 {
 	cursorpic = "cursor"
 	statusbarclass = "HarmonyStatusBar"
+	forcenogfxsubstitution = true
 }
 

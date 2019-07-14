@@ -236,7 +236,7 @@ PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *retur
 //
 //==========================================================================
 
-PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error, const VersionInfo &version)
+PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error, const VersionInfo &version, bool nodeprecated)
 {
 	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
 	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;
@@ -263,7 +263,8 @@ PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *func
 		{
 			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
 		}
-		else if ((funcsym->Variants[0].Flags & VARF_Deprecated) && funcsym->mVersion <= version)
+		// ZScript will skip this because it prints its own message.
+		else if ((funcsym->Variants[0].Flags & VARF_Deprecated) && funcsym->mVersion <= version && !nodeprecated)
 		{
 			sc.Message(MSG_WARNING, "Call to deprecated function %s", symbol->SymbolName.GetChars());
 		}
@@ -418,6 +419,27 @@ static void CheckStates(PClassActor *obj)
 	}
 }
 
+void CheckDropItems(const PClassActor *const obj)
+{
+	const FDropItem *dropItem = obj->ActorInfo()->DropItems;
+
+	while (dropItem != nullptr)
+	{
+		if (dropItem->Name != NAME_None)
+		{
+			const char *const dropItemName = dropItem->Name.GetChars();
+
+			if (dropItemName[0] != '\0' && PClass::FindClass(dropItem->Name) == nullptr)
+			{
+				Printf(TEXTCOLOR_ORANGE "Undefined drop item class %s referenced from actor %s\n", dropItemName, obj->TypeName.GetChars());
+				FScriptPosition::WarnCounter++;
+			}
+		}
+
+		dropItem = dropItem->Next;
+	}
+}
+
 //==========================================================================
 //
 // LoadActors
@@ -499,6 +521,8 @@ void LoadActors()
 			// PASSMOBJ is irrelevant for normal missiles, but not for bouncers.
 			defaults->flags2 |= MF2_PASSMOBJ;
 		}
+
+		CheckDropItems(ti);
 	}
 	if (FScriptPosition::ErrorCounter > 0)
 	{

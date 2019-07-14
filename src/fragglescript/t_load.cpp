@@ -33,8 +33,7 @@
 #include "gi.h"
 #include "g_levellocals.h"
 #include "xlat/xlat.h"
-
-void T_Init();
+#include "maploader/maploader.h"
 
 class FScriptLoader
 {
@@ -49,61 +48,16 @@ class FScriptLoader
 	int drownflag;
 	bool HasScripts;
 	bool IgnoreInfo;
+	FLevelLocals *Level;
 
 	void ParseInfoCmd(char *line, FString &scriptsrc);
 public:
+	FScriptLoader(FLevelLocals *l)
+	{
+		Level = l;
+	}
 	bool ParseInfo(MapData * map);
 };
-
-struct FFsOptions : public FOptionalMapinfoData
-{
-	FFsOptions()
-	{
-		identifier = "fragglescript";
-		nocheckposition = false;
-		setcolormaterial = false;
-	}
-	virtual FOptionalMapinfoData *Clone() const
-	{
-		FFsOptions *newopt = new FFsOptions;
-		newopt->identifier = identifier;
-		newopt->nocheckposition = nocheckposition;
-		newopt->setcolormaterial = setcolormaterial;
-		return newopt;
-	}
-	bool nocheckposition;
-	bool setcolormaterial;
-};
-
-DEFINE_MAP_OPTION(fs_nocheckposition, false)
-{
-	FFsOptions *opt = info->GetOptData<FFsOptions>("fragglescript");
-
-	if (parse.CheckAssign())
-	{
-		parse.sc.MustGetNumber();
-		opt->nocheckposition = !!parse.sc.Number;
-	}
-	else
-	{
-		opt->nocheckposition = true;
-	}
-}
-
-DEFINE_MAP_OPTION(fs_setcolormaterial, false)
-{
-	FFsOptions *opt = info->GetOptData<FFsOptions>("fragglescript");
-
-	if (parse.CheckAssign())
-	{
-		parse.sc.MustGetNumber();
-		opt->setcolormaterial = !!parse.sc.Number;
-	}
-	else
-	{
-		opt->setcolormaterial = true;
-	}
-}
 
 //-----------------------------------------------------------------------------
 //
@@ -165,13 +119,13 @@ void FScriptLoader::ParseInfoCmd(char *line, FString &scriptsrc)
 			while (*beg<=' ') beg++;
 			char * comm = strstr(beg, "//");
 			if (comm) *comm=0;
-			level.LevelName = beg;
+			Level->LevelName = beg;
 		}
 		else if (sc.Compare("partime"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetNumber();
-			level.partime=sc.Number;
+			Level->partime=sc.Number;
 		}
 		else if (sc.Compare("music"))
 		{
@@ -181,7 +135,7 @@ void FScriptLoader::ParseInfoCmd(char *line, FString &scriptsrc)
 			sc.MustGetString();
 			if (!FS_ChangeMusic(sc.String))
 			{
-				S_ChangeMusic(level.Music, level.musicorder);
+				S_ChangeMusic(Level->Music, Level->musicorder);
 			}
 		}
 		else if (sc.Compare("skyname"))
@@ -189,32 +143,32 @@ void FScriptLoader::ParseInfoCmd(char *line, FString &scriptsrc)
 			sc.MustGetStringName("=");
 			sc.MustGetString();
 		
-			sky2texture = sky1texture = level.skytexture1 = level.skytexture2 = TexMan.GetTexture (sc.String, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
-			R_InitSkyMap ();
+			Level->skytexture1 = Level->skytexture2 = TexMan.GetTextureID (sc.String, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+			InitSkyMap (Level);
 		}
 		else if (sc.Compare("interpic"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();
-			level.info->ExitPic = sc.String;
+			Level->info->ExitPic = sc.String;
 		}
 		else if (sc.Compare("gravity"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetNumber();
-			level.gravity=sc.Number*8.f;
+			Level->gravity=sc.Number*8.f;
 		}
 		else if (sc.Compare("nextlevel"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();
-			level.NextMap = sc.String;
+			Level->NextMap = sc.String;
 		}
 		else if (sc.Compare("nextsecret"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();
-			level.NextSecretMap = sc.String;
+			Level->NextSecretMap = sc.String;
 		}
 		else if (sc.Compare("drown"))
 		{
@@ -228,7 +182,7 @@ void FScriptLoader::ParseInfoCmd(char *line, FString &scriptsrc)
 			while (*beg<' ') beg++;
 			char * comm = strstr(beg, "//");
 			if (comm) *comm=0;
-			FS_EmulateCmd(beg);
+			FS_EmulateCmd(Level, beg);
 		}
 		else if (sc.Compare("ignore"))
 		{
@@ -303,23 +257,17 @@ bool FScriptLoader::ParseInfo(MapData * map)
     }
 	if (HasScripts) 
 	{
-		Create<DFraggleThinker>();
-		DFraggleThinker::ActiveThinker->LevelScript->data = copystring(scriptsrc.GetChars());
-
-		if (drownflag==-1) drownflag = (level.maptype != MAPTYPE_DOOM || fsglobal);
-		if (!drownflag) level.airsupply=0;	// Legacy doesn't to water damage so we need to check if it has to be disabled here.
-
-		FFsOptions *opt = level.info->GetOptData<FFsOptions>("fragglescript", false);
-		if (opt != NULL)
+		if (Level->FraggleScriptThinker)
 		{
-			DFraggleThinker::ActiveThinker->nocheckposition = opt->nocheckposition;
-			DFraggleThinker::ActiveThinker->setcolormaterial = opt->setcolormaterial;
+			I_Error("Only one FraggleThinker is allowed to exist at a time.\nCheck your code.");
 		}
-		else
-		{
-			DFraggleThinker::ActiveThinker->nocheckposition = false;
-			DFraggleThinker::ActiveThinker->setcolormaterial = false;
-		}
+
+		auto th = Level->CreateThinker<DFraggleThinker>();
+		th->LevelScript->data = copystring(scriptsrc.GetChars());
+		Level->FraggleScriptThinker = th;
+
+		if (drownflag==-1) drownflag = (Level->maptype != MAPTYPE_DOOM || fsglobal);
+		if (!drownflag) Level->airsupply=0;	// Legacy doesn't to water damage so we need to check if it has to be disabled here.
 	}
 
 
@@ -334,12 +282,9 @@ bool FScriptLoader::ParseInfo(MapData * map)
 //
 //-----------------------------------------------------------------------------
 
-void T_LoadScripts(MapData *map)
+void T_LoadScripts(FLevelLocals *Level, MapData *map)
 {
-	FScriptLoader parser;
-	
-	T_Init();
-
+	FScriptLoader parser(Level);
 	bool HasScripts = parser.ParseInfo(map);
 
 	// Hack for Legacy compatibility: Since 272 is normally an MBF sky transfer we have to patch it.
@@ -348,12 +293,10 @@ void T_LoadScripts(MapData *map)
 	// This code then then swaps 270 and 272 - but only if this is either Doom or Heretic and 
 	// the default translator is being used.
 	// Custom translators will not be patched.
-	if ((gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Heretic) && level.info->Translator.IsEmpty() &&
-		level.maptype == MAPTYPE_DOOM && SimpleLineTranslations.Size() > 272 && SimpleLineTranslations[272 - 2*HasScripts].special == FS_Execute)
+	if ((gameinfo.gametype == GAME_Doom || gameinfo.gametype == GAME_Heretic) && Level->info->Translator.IsEmpty() &&
+		Level->maptype == MAPTYPE_DOOM && Level->Translator->SimpleLineTranslations.Size() > 272 && Level->Translator->SimpleLineTranslations[272 - 2*HasScripts].special == FS_Execute)
 	{
-		FLineTrans t = SimpleLineTranslations[270];
-		SimpleLineTranslations[270] = SimpleLineTranslations[272];
-		SimpleLineTranslations[272] = t;
+		std::swap(Level->Translator->SimpleLineTranslations[270], Level->Translator->SimpleLineTranslations[272]);
 	}
 }
 
@@ -364,11 +307,11 @@ void T_LoadScripts(MapData *map)
 //
 //-----------------------------------------------------------------------------
 
-void T_AddSpawnedThing(AActor * ac)
+void T_AddSpawnedThing(FLevelLocals *Level, AActor * ac)
 {
-	if (DFraggleThinker::ActiveThinker)
+	if (Level->FraggleScriptThinker)
 	{
-		auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+		auto &SpawnedThings = Level->FraggleScriptThinker->SpawnedThings;
 		SpawnedThings.Push(GC::ReadBarrier(ac));
 	}
 }

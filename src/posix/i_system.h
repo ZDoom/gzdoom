@@ -45,16 +45,6 @@ struct WadStuff;
 #define SHARE_DIR "/usr/local/share/"
 #endif
 
-// Index values into the LanguageIDs array
-enum
-{
-	LANGIDX_UserPreferred,
-	LANGIDX_UserDefault,
-	LANGIDX_SysPreferred,
-	LANGIDX_SysDefault
-};
-extern uint32_t LanguageIDs[4];
-extern void SetLanguageIDs ();
 
 // Called by DoomMain.
 void I_Init (void);
@@ -87,13 +77,6 @@ void I_Quit (void);
 
 
 void I_Tactile (int on, int off, int total);
-
-void I_Error (const char *error, ...) GCCPRINTF(1,2);
-void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
-
-void addterm (void (*func)(void), const char *name);
-#define atterm(t) addterm (t, #t)
-void popterm ();
 
 void I_DebugPrint (const char *cp);
 

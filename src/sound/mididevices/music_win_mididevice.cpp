@@ -42,7 +42,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
-#include "i_system.h"
+#include "doomerrors.h"
 
 #ifndef __GNUC__
 #include <mmdeviceapi.h>
@@ -197,6 +197,10 @@ int WinMIDIDevice::Open(MidiCallback callback, void *userdata)
 					VolumeWorks &= (MMSYSERR_NOERROR == midiOutSetVolume((HMIDIOUT)MidiOut, 0xffffffff));
 				}
 			}
+		}
+		else
+		{
+			return 1;
 		}
 	}
 	return 0;
@@ -660,9 +664,9 @@ void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dw
 
 static bool IgnoreMIDIVolume(UINT id)
 {
-	MIDIOUTCAPS caps;
+	MIDIOUTCAPSA caps;
 
-	if (MMSYSERR_NOERROR == midiOutGetDevCaps(id, &caps, sizeof(caps)))
+	if (MMSYSERR_NOERROR == midiOutGetDevCapsA(id, &caps, sizeof(caps)))
 	{
 		if (caps.wTechnology == MIDIDEV_MAPPER)
 		{

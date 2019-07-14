@@ -61,9 +61,12 @@
 #include "a_keys.h"
 #include "intermission/intermission.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "events.h"
 #include "i_time.h"
+#include "i_system.h"
 #include "vm.h"
+#include "gstrings.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -127,7 +130,7 @@ void G_BuildTiccmd (ticcmd_t *cmd);
 void D_DoAdvanceDemo (void);
 
 static void SendSetup (uint32_t playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len);
-static void RunScript(uint8_t **stream, APlayerPawn *pawn, int snum, int argn, int always);
+static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always);
 
 int		reboundpacket;
 uint8_t	reboundstore[MAX_MSGLEN];
@@ -142,18 +145,7 @@ static int	oldentertics;
 
 extern	bool	 advancedemo;
 
-CUSTOM_CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	// Do not use the separate FPS limit timer if we are limiting FPS with this.
-	if (self)
-	{
-		I_SetFPSLimit(0);
-	}
-	else
-	{
-		I_SetFPSLimit(-1);
-	}
-}
+CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO | CVAR_NOSAVE)
 CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO | CVAR_NOSAVE)
@@ -1799,7 +1791,46 @@ void D_QuitNetGame (void)
 		fclose (debugfile);
 }
 
+// Forces playsim processing time to be consistent across frames.
+// This improves interpolation for frames in between tics.
+//
+// With this cvar off the mods with a high playsim processing time will appear
+// less smooth as the measured time used for interpolation will vary.
 
+CVAR(Bool, r_ticstability, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+static uint64_t stabilityticduration = 0;
+static uint64_t stabilitystarttime = 0;
+
+static void TicStabilityWait()
+{
+	using namespace std::chrono;
+	using namespace std::this_thread;
+
+	if (!r_ticstability)
+		return;
+
+	uint64_t start = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+	while (true)
+	{
+		uint64_t cur = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+		if (cur - start > stabilityticduration)
+			break;
+	}
+}
+
+static void TicStabilityBegin()
+{
+	using namespace std::chrono;
+	stabilitystarttime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+static void TicStabilityEnd()
+{
+	using namespace std::chrono;
+	uint64_t stabilityendtime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+	stabilityticduration = std::min(stabilityendtime - stabilitystarttime, (uint64_t)1'000'000);
+}
 
 //
 // TryRunTics
@@ -1869,6 +1900,8 @@ void TryRunTics (void)
 	// Uncapped framerate needs seprate checks
 	if (counts == 0 && !doWait)
 	{
+		TicStabilityWait();
+
 		// Check possible stall conditions
 		Net_CheckLastReceived(counts);
 		if (realtics >= 1)
@@ -1936,6 +1969,7 @@ void TryRunTics (void)
 		P_UnPredictPlayer();
 		while (counts--)
 		{
+			TicStabilityBegin();
 			if (gametic > lowtic)
 			{
 				I_Error ("gametic>lowtic");
@@ -1951,9 +1985,14 @@ void TryRunTics (void)
 			gametic++;
 
 			NetUpdate ();	// check for new console commands
+			TicStabilityEnd();
 		}
 		P_PredictPlayer(&players[consoleplayer]);
 		S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
+	}
+	else
+	{
+		TicStabilityWait();
 	}
 }
 
@@ -2079,17 +2118,12 @@ uint8_t *FDynamicBuffer::GetData (int *len)
 }
 
 
-static int KillAll(PClassActor *cls)
-{
-	return P_Massacre(false, cls);
-}
-
-static int RemoveClass(const PClass *cls)
+static int RemoveClass(FLevelLocals *Level, const PClass *cls)
 {
 	AActor *actor;
 	int removecount = 0;
 	bool player = false;
-	TThinkerIterator<AActor> iterator(cls);
+	auto iterator = Level->GetThinkerIterator<AActor>(cls->TypeName);
 	while ((actor = iterator.Next()))
 	{
 		if (actor->IsA(cls))
@@ -2172,7 +2206,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 	case DEM_CENTERPRINT:
 		s = ReadString (stream);
-		C_MidPrint (SmallFont, s);
+		C_MidPrint (nullptr, s);
 		break;
 
 	case DEM_UINFCHANGED:
@@ -2190,6 +2224,13 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 	case DEM_GIVECHEAT:
 		s = ReadString (stream);
 		cht_Give (&players[player], s, ReadLong (stream));
+		if (player != consoleplayer)
+		{
+			FString message = GStrings("TXT_X_CHEATS");
+			message.Substitute("%s", players[player].userinfo.GetName());
+			Printf("%s: give %s\n", message.GetChars(), s);
+		}
+
 		break;
 
 	case DEM_TAKECHEAT:
@@ -2225,8 +2266,8 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		s = ReadString (stream);
 		// Using LEVEL_NOINTERMISSION tends to throw the game out of sync.
 		// That was a long time ago. Maybe it works now?
-		level.flags |= LEVEL_CHANGEMAPCHEAT;
-		G_ChangeLevel(s, pos, 0);
+		primaryLevel->flags |= LEVEL_CHANGEMAPCHEAT;
+		primaryLevel->ChangeLevel(s, pos, 0);
 		break;
 
 	case DEM_SUICIDE:
@@ -2234,11 +2275,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		break;
 
 	case DEM_ADDBOT:
-		bglobal.TryAddBot (stream, player);
+		primaryLevel->BotInfo.TryAddBot (primaryLevel, stream, player);
 		break;
 
 	case DEM_KILLBOTS:
-		bglobal.RemoveAllBots (true);
+		primaryLevel->BotInfo.RemoveAllBots (primaryLevel, true);
 		Printf ("Removed all bots\n");
 		break;
 
@@ -2333,14 +2374,14 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 						const AActor *def = GetDefaultByType (typeinfo);
 						DVector3 spawnpos = source->Vec3Angle(def->radius * 2 + source->radius, source->Angles.Yaw, 8.);
 
-						AActor *spawned = Spawn (typeinfo, spawnpos, ALLOW_REPLACE);
+						AActor *spawned = Spawn (primaryLevel, typeinfo, spawnpos, ALLOW_REPLACE);
 						if (spawned != NULL)
 						{
 							if (type == DEM_SUMMONFRIEND || type == DEM_SUMMONFRIEND2 || type == DEM_SUMMONMBF)
 							{
 								if (spawned->CountsAsKill()) 
 								{
-									level.total_monsters--;
+									primaryLevel->total_monsters--;
 								}
 								spawned->FriendPlayer = player + 1;
 								spawned->flags |= MF_FRIENDLY;
@@ -2359,12 +2400,11 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 							if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
 							{
 								spawned->Angles.Yaw = source->Angles.Yaw - angle;
-								spawned->tid = tid;
 								spawned->special = special;
 								for(i = 0; i < 5; i++) {
 									spawned->args[i] = args[i];
 								}
-								if(tid) spawned->AddToHash();
+								if(tid) spawned->SetTID(tid);
 							}
 						}
 					}
@@ -2487,10 +2527,10 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 	case DEM_RUNNAMEDSCRIPT:
 		{
-			char *sname = ReadString(stream);
+			s = ReadString(stream);
 			int argn = ReadByte(stream);
 
-			RunScript(stream, players[player].mo, -FName(sname), argn & 127, (argn & 128) ? ACS_ALWAYS : 0);
+			RunScript(stream, players[player].mo, -FName(s), argn & 127, (argn & 128) ? ACS_ALWAYS : 0);
 		}
 		break;
 
@@ -2510,7 +2550,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			}
 			if (!CheckCheatmode(player == consoleplayer))
 			{
-				P_ExecuteSpecial(snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
+				P_ExecuteSpecial(primaryLevel, snum, NULL, players[player].mo, false, arg[0], arg[1], arg[2], arg[3], arg[4]);
 			}
 		}
 		break;
@@ -2557,45 +2597,45 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 	case DEM_KILLCLASSCHEAT:
 		{
-			char *classname = ReadString (stream);
+			s = ReadString (stream);
 			int killcount = 0;
-			PClassActor *cls = PClass::FindActor(classname);
+			PClassActor *cls = PClass::FindActor(s);
 
 			if (cls != NULL)
 			{
-				killcount = KillAll(cls);
-				PClassActor *cls_rep = cls->GetReplacement();
+				killcount = primaryLevel->Massacre(false, cls->TypeName);
+				PClassActor *cls_rep = cls->GetReplacement(primaryLevel);
 				if (cls != cls_rep)
 				{
-					killcount += KillAll(cls_rep);
+					killcount += primaryLevel->Massacre(false, cls_rep->TypeName);
 				}
-				Printf ("Killed %d monsters of type %s.\n",killcount, classname);
+				Printf ("Killed %d monsters of type %s.\n",killcount, s);
 			}
 			else
 			{
-				Printf ("%s is not an actor class.\n", classname);
+				Printf ("%s is not an actor class.\n", s);
 			}
 
 		}
 		break;
 	case DEM_REMOVE:
 	{
-		char *classname = ReadString(stream);
+		s = ReadString(stream);
 		int removecount = 0;
-		PClassActor *cls = PClass::FindActor(classname);
+		PClassActor *cls = PClass::FindActor(s);
 		if (cls != NULL && cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 		{
-			removecount = RemoveClass(cls);
-			const PClass *cls_rep = cls->GetReplacement();
+			removecount = RemoveClass(primaryLevel, cls);
+			const PClass *cls_rep = cls->GetReplacement(primaryLevel);
 			if (cls != cls_rep)
 			{
-				removecount += RemoveClass(cls_rep);
+				removecount += RemoveClass(primaryLevel, cls_rep);
 			}
-			Printf("Removed %d actors of type %s.\n", removecount, classname);
+			Printf("Removed %d actors of type %s.\n", removecount, s);
 		}
 		else
 		{
-			Printf("%s is not an actor class.\n", classname);
+			Printf("%s is not an actor class.\n", s);
 		}
 	}
 		break;
@@ -2663,7 +2703,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 
 	case DEM_FINISHGAME:
 		// Simulate an end-of-game action
-		G_ChangeLevel(NULL, 0, 0);
+		primaryLevel->ChangeLevel(NULL, 0, 0);
 		break;
 
 	case DEM_NETEVENT:
@@ -2674,7 +2714,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			for (int i = 0; i < 3; i++)
 				arg[i] = ReadLong(stream);
 			bool manual = !!ReadByte(stream);
-			E_Console(player, s, arg[0], arg[1], arg[2], manual);
+			primaryLevel->localEventManager->Console(player, s, arg[0], arg[1], arg[2], manual);
 		}
 		break;
 
@@ -2688,8 +2728,14 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 }
 
 // Used by DEM_RUNSCRIPT, DEM_RUNSCRIPT2, and DEM_RUNNAMEDSCRIPT
-static void RunScript(uint8_t **stream, APlayerPawn *pawn, int snum, int argn, int always)
+static void RunScript(uint8_t **stream, AActor *pawn, int snum, int argn, int always)
 {
+	if (pawn == nullptr)
+	{
+		// Scripts can be invoked without a level loaded, e.g. via puke(name) CCMD in fullscreen console
+		return;
+	}
+
 	int arg[4] = { 0, 0, 0, 0 };
 	int i;
 	
@@ -2701,7 +2747,7 @@ static void RunScript(uint8_t **stream, APlayerPawn *pawn, int snum, int argn, i
 			arg[i] = argval;
 		}
 	}
-	P_StartScript(pawn, NULL, snum, level.MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
+	P_StartScript(pawn->Level, pawn, NULL, snum, primaryLevel->MapName, arg, MIN<int>(countof(arg), argn), ACS_NET | always);
 }
 
 void Net_SkipCommand (int type, uint8_t **stream)

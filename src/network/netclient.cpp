@@ -354,7 +354,7 @@ void NetClient::OnTic(ByteInputStream &stream)
 
 	if (playeringame[consoleplayer] && players[consoleplayer].mo)
 	{
-		APlayerPawn *pawn = players[consoleplayer].mo;
+		AActor *pawn = players[consoleplayer].mo;
 		if ((Pos - pawn->Pos()).LengthSquared() > 10.0)
 			pawn->SetOrigin(Pos, false);
 		else
@@ -406,7 +406,7 @@ void NetClient::OnSpawnActor(ByteInputStream &stream)
 		mNetIDList.freeID(netID);
 	}
 
-	ANetSyncActor *actor = Spawn<ANetSyncActor>(DVector3(x, y, z), NO_REPLACE);
+	ANetSyncActor *actor = Spawn<ANetSyncActor>(primaryLevel, DVector3(x, y, z), NO_REPLACE);
 	mNetIDList.useID(netID, actor);
 }
 

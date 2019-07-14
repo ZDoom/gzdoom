@@ -104,7 +104,7 @@ bool DBot::Move (ticcmd_t *cmd)
 	tryx = player->mo->X() + 8*xspeed[player->mo->movedir];
 	tryy = player->mo->Y() + 8*yspeed[player->mo->movedir];
 
-	try_ok = bglobal.CleanAhead (player->mo, tryx, tryy, cmd);
+	try_ok = Level->BotInfo.CleanAhead (player->mo, tryx, tryy, cmd);
 
 	if (!try_ok) //Anything blocking that could be opened etc..
 	{

@@ -50,16 +50,14 @@ public:
 
 struct FVoxel
 {
+	TArray<uint8_t> Palette;
 	int LumpNum;
 	int NumMips;
 	int VoxelIndex;
-	uint8_t *Palette;
 	FVoxelMipLevel Mips[MAXVOXMIPS];
 	bool Remapped = false;
 	bool Bgramade = false;
 
-	FVoxel();
-	~FVoxel();
 	void CreateBgraSlabData();
 	void Remap();
 	void RemovePalette();

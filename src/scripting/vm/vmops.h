@@ -108,8 +108,6 @@ xx(SCOPE,	scope,	RPI8,		NOP,	0, 0)		// Scope check at runtime.
 xx(RESULT,	result,	__BCP,		NOP,	0, 0)		// Result should go in register encoded in BC (in caller, after CALL)
 xx(RET,		ret,	I8BCP,		NOP,	0, 0)		// Copy value from register encoded in BC to return value A, possibly returning
 xx(RETI,	reti,	I8I16,		NOP,	0, 0)		// Copy immediate from BC to return value A, possibly returning
-xx(NEW,		new,	RPRPI8,		NOP,	0, 0)
-xx(NEW_K,	new,	RPKP,		NOP,	0, 0)
 //xx(TRY,		try,	I24,		NOP,	0, 0)		// When an exception is thrown, start searching for a handler at pc + ABC
 //xx(UNTRY,	untry,	I8,			NOP,	0, 0)		// Pop A entries off the exception stack
 xx(THROW,	throw,	THROW,		NOP,	0, 0)		// A == 0: Throw exception object pB

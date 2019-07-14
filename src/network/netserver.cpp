@@ -144,7 +144,7 @@ void NetServer::EndCurrentTic()
 
 			if (mNodes[i].FirstTic)
 			{
-				TThinkerIterator<AActor> it;
+				TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
 				AActor *mo;
 				while (mo = it.Next())
 				{
@@ -183,7 +183,7 @@ void NetServer::EndCurrentTic()
 				cmd.addFloat(0.0f);
 			}
 
-			TThinkerIterator<AActor> it;
+			TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
 			AActor *mo;
 			while (mo = it.Next())
 			{

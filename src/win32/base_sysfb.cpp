@@ -287,10 +287,10 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen, bool initialcall)
 	if (!m_Fullscreen && fullscreen && !initialcall) SaveWindowedPos();
 	if (m_Monitor)
 	{
-		MONITORINFOEX mi;
+		MONITORINFOEXA mi;
 		mi.cbSize = sizeof mi;
 
-		if (GetMonitorInfo(HMONITOR(m_Monitor), &mi))
+		if (GetMonitorInfoA(HMONITOR(m_Monitor), &mi))
 		{
 			strcpy(m_displayDeviceNameBuffer, mi.szDevice);
 			m_displayDeviceName = m_displayDeviceNameBuffer;
@@ -357,7 +357,6 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void *hMonitor, bool fullscreen) : 
 
 	HDC hDC = GetDC(Window);
 
-	m_supportsGamma = !!GetDeviceGammaRamp(hDC, (void *)m_origGamma);
 	ReleaseDC(Window, hDC);
 }
 
@@ -369,7 +368,6 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void *hMonitor, bool fullscreen) : 
 
 SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 {
-	ResetGammaTable();
 	if (!m_Fullscreen) SaveWindowedPos();
 
 	ShowWindow (Window, SW_SHOW);
@@ -381,32 +379,6 @@ SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 	static_cast<Win32BaseVideo *>(Video)->Shutdown();
 }
 
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void SystemBaseFrameBuffer::ResetGammaTable()
-{
-	if (m_supportsGamma)
-	{
-		HDC hDC = GetDC(Window);
-		SetDeviceGammaRamp(hDC, (void *)m_origGamma);
-		ReleaseDC(Window, hDC);
-	}
-}
-
-void SystemBaseFrameBuffer::SetGammaTable(uint16_t *tbl)
-{
-	if (m_supportsGamma)
-	{
-		HDC hDC = GetDC(Window);
-		SetDeviceGammaRamp(hDC, (void *)tbl);
-		ReleaseDC(Window, hDC);
-	}
-}
 
 //==========================================================================
 //

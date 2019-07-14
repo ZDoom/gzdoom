@@ -42,7 +42,7 @@
 #include "i_input.h"
 #include "d_event.h"
 #include "d_gui.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "hardware.h"
 #include "rawinput.h"
 #include "menu/menu.h"
@@ -284,7 +284,7 @@ static bool CaptureMode_InGame()
 //
 //==========================================================================
 
-void I_CheckNativeMouse(bool preferNative)
+void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 {
 	bool windowed = (screen == NULL) || !screen->IsFullscreen();
 	bool want_native;
@@ -311,7 +311,7 @@ void I_CheckNativeMouse(bool preferNative)
 		}
 	}
 
-	if (!want_native && E_CheckRequireMouse())
+	if (!want_native && eventhandlerresult)
 		want_native = true;
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);
@@ -781,7 +781,7 @@ ufailit:
 		Device = NULL;
 		return false;
 	}
-	// Set cooperative level.
+
 	hr = Device->SetCooperativeLevel(Window, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 	if (FAILED(hr))
 	{

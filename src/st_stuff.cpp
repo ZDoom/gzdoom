@@ -489,7 +489,7 @@ static bool Cht_ChangeStartSpot (cheatseq_t *cheat)
 {
 	char cmd[64];
 
-	mysnprintf (cmd, countof(cmd), "changemap %s %c", level.MapName.GetChars(), cheat->Args[0]);
+	mysnprintf (cmd, countof(cmd), "changemap %s %c", primaryLevel->MapName.GetChars(), cheat->Args[0]);
 	C_DoCommand (cmd);
 	return true;
 }

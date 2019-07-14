@@ -36,8 +36,8 @@ gameinfo
 	weaponslot = 5, "RocketLauncher"
 	weaponslot = 6, "PlasmaRifle"
 	weaponslot = 7, "BFG9000"
-	dimcolor = "ff d7 00"
-	dimamount = 0.2
+	dimcolor = "30 26 00"
+	dimamount = 0.5
 	bluramount = 0.0
 	menuslidercolor = "Orange"
 	definventorymaxamount = 25
@@ -64,13 +64,15 @@ gameinfo
 	textscreeny = 10
 	defaultendsequence = "Inter_Cast"
 	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
-	statscreen_mapnamefont = "BigFont"
-	statscreen_finishedpatch = "WIF"
-	statscreen_enteringpatch = "WIENTER"
+	statscreen_mapnamefont = "*BigFont"
+	statscreen_finishedfont = "*BigFont", "red"
+	statscreen_enteringfont = "*BigFont", "red"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "DoomStatusScreen"
 	messageboxclass = "MessageBoxMenu"
+	normforwardmove = 0x19, 0x32
+	normsidemove = 0x18, 0x28
 }
 
 spawnnums

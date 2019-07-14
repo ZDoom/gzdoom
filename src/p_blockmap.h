@@ -73,20 +73,25 @@ struct FBlockmap
 		return blockmaplump + *(blockmap + offset) + 1;
 	}
 
-	bool VerifyBlockMap(int count);
+	bool VerifyBlockMap(int count, unsigned numlines);
 
 	void Clear()
 	{
-		if (blockmaplump != NULL)
+		if (blockmaplump != nullptr)
 		{
 			delete[] blockmaplump;
-			blockmaplump = NULL;
+			blockmaplump = nullptr;
 		}
-		if (blocklinks != NULL)
+		if (blocklinks != nullptr)
 		{
 			delete[] blocklinks;
-			blocklinks = NULL;
+			blocklinks = nullptr;
 		}
+	}
+
+	~FBlockmap()
+	{
+		Clear();
 	}
 
 };

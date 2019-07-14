@@ -29,6 +29,7 @@
 //
 
 #include "t_script.h"
+#include "g_levellocals.h"
 
 //==========================================================================
 //
@@ -428,7 +429,7 @@ void FParser::spec_script()
 	newscript->parent = Script; // remember parent
 	
 	// preprocess the newscript now
-	newscript->Preprocess();
+	newscript->Preprocess(Level);
     
 	// we dont want to run the newscript, only add it
 	// jump past the newscript in parsing
@@ -467,7 +468,7 @@ void FParser::EvaluateFunction(svalue_t &result, int start, int stop)
 	}
 	
 	// all the functions are stored in the global script
-	else if( !(func = global_script->VariableForName (Tokens[start]))  )
+	else if( !(func = Level->FraggleScriptThinker->GlobalScript->VariableForName (Tokens[start]))  )
 	{
 		script_error("no such function: '%s'\n",Tokens[start]);
 	}
@@ -551,7 +552,7 @@ void FParser::OPstructure(svalue_t &result, int start, int n, int stop)
 	svalue_t argv[MAXARGS];
 	
 	// all the functions are stored in the global script
-	if( !(func = global_script->VariableForName (Tokens[n+1]))  )
+	if( !(func = Level->FraggleScriptThinker->GlobalScript->VariableForName (Tokens[n+1]))  )
 	{
 		script_error("no such function: '%s'\n",Tokens[n+1]);
 	}

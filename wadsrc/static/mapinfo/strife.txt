@@ -36,8 +36,8 @@ gameinfo
 	weaponslot = 6, "FlameThrower"
 	weaponslot = 7, "Mauler2", "Mauler"
 	weaponslot = 8, "Sigil"
-	dimcolor = "ff d7 00"
-	dimamount = 0.2
+	dimcolor = "30 26 00"
+	dimamount = 0.5
 	bluramount = 0
 	menuslidercolor = "Orange"
 	definventorymaxamount = 25
@@ -62,14 +62,16 @@ gameinfo
 	textscreeny = 10
 	defaultendsequence = "Inter_Strife"
 	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
-	statscreen_mapnamefont = "BigFont"
-	statscreen_finishedfont = "BigFont", "white"
-	statscreen_enteringfont = "BigFont", "white"
+	statscreen_mapnamefont = "*BigFont"
+	statscreen_finishedfont = "*BigFont", "white"
+	statscreen_enteringfont = "*BigFont", "white"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"
 	statusbarclass = "StrifeStatusBar"
 	messageboxclass = "MessageBoxMenu"
+	normforwardmove = 0x19, 0x32
+	normsidemove = 0x18, 0x28
 }
 
 DoomEdNums
@@ -374,18 +376,21 @@ Intermission Inter_Strife_Good
 		Music = "D_HAPPY"
 		Background = "SS4F1"
 		Sound = "svox/rie01"
+		Subtitle = "$TXT_SUB_GOOD1"
 		Time = 13
 	}
 	Image
 	{
 		Background = "SS4F2"
 		Sound = "svox/bbx01"
+		Subtitle = "$TXT_SUB_GOOD2"
 		Time = 11
 	}
 	Image
 	{
 		Background = "SS4F3"
 		Sound = "svox/bbx02"
+		Subtitle = "$TXT_SUB_GOOD3"
 		Time = 14
 	}
 	Image
@@ -412,18 +417,21 @@ Intermission Inter_Strife_Sad
 		Music = "D_SAD"
 		Background = "SS6F1"
 		Sound = "svox/ss601a"
+		Subtitle = "$TXT_SUB_SAD1"
 		Time = 8
 	}
 	Image
 	{
 		Background = "SS6F2"
 		Sound = "svox/ss602a"
+		Subtitle = "$TXT_SUB_SAD2"
 		Time = 8
 	}
 	Image
 	{
 		Background = "SS6F3"
 		Sound = "svox/ss603a"
+		Subtitle = "$TXT_SUB_SAD3"
 		Time = 9
 	}
 	Wiper
@@ -444,18 +452,21 @@ Intermission Inter_Strife_Lose
 		Music = "D_SAD"
 		Background = "SS5F1"
 		Sound = "svox/ss501b"
+		Subtitle = "$TXT_SUB_BAD1"
 		Time = 11
 	}
 	Image
 	{
 		Background = "SS5F2"
 		Sound = "svox/ss502b"
+		Subtitle = "$TXT_SUB_BAD2"
 		Time = 10
 	}
 	Image
 	{
 		Background = "SS5F3"
 		Sound = "svox/ss503b"
+		Subtitle = "$TXT_SUB_BAD3"
 		Time = 11
 	}
 	Wiper
@@ -482,24 +493,28 @@ Intermission Inter_Strife_MAP03
 		Music = "D_DARK"
 		Background = "SS2F1"
 		Sound = "svox/mac10"
+		Subtitle = "$TXT_SUB_MAP03_1"
 		Time = 9
 	}
 	Image
 	{
 		Background = "SS2F2"
 		Sound = "svox/mac11"
+		Subtitle = "$TXT_SUB_MAP03_2"
 		Time = 10
 	}
 	Image
 	{
 		Background = "SS2F3"
 		Sound = "svox/mac12"
+		Subtitle = "$TXT_SUB_MAP03_3"
 		Time = 12
 	}
 	Image
 	{
 		Background = "SS2F4"
 		Sound = "svox/mac13"
+		Subtitle = "$TXT_SUB_MAP03_4"
 		Time = 17
 	}
 }
@@ -511,24 +526,28 @@ Intermission Inter_Strife_MAP10
 		Music = "D_DARK"
 		Background = "SS3F1"
 		Sound = "svox/mac16"
+		Subtitle = "$TXT_SUB_MAP10_1"
 		Time = 10
 	}
 	Image
 	{
 		Background = "SS3F2"
 		Sound = "svox/mac17"
+		Subtitle = "$TXT_SUB_MAP10_2"
 		Time = 12
 	}
 	Image
 	{
 		Background = "SS3F3"
 		Sound = "svox/mac18"
+		Subtitle = "$TXT_SUB_MAP10_3"
 		Time = 12
 	}
 	Image
 	{
 		Background = "SS3F4"
 		Sound = "svox/mac19"
+		Subtitle = "$TXT_SUB_MAP10_4"
 		Time = 11
 	}
 }
@@ -592,7 +611,7 @@ gamedefaults
 	noinfighting
 }
 
-map MAP01 "AREA 1: sanctuary"
+map MAP01 LOOKUP "TXT_STRIFE_MAP01"
 {
 	next = "MAP02"
 	sky1 = "SKYMNT02"
@@ -600,7 +619,7 @@ map MAP01 "AREA 1: sanctuary"
 	cluster = 1
 }
 
-map MAP02 "AREA 2: town"
+map MAP02 LOOKUP "TXT_STRIFE_MAP02"
 {
 	next = "MAP03"
 	sky1 = "SKYMNT02"
@@ -608,7 +627,7 @@ map MAP02 "AREA 2: town"
 	cluster = 1
 }
 
-map MAP03 "AREA 3: front base"
+map MAP03 LOOKUP "TXT_STRIFE_MAP03"
 {
 	next = "MAP04"
 	sky1 = "SKYMNT02"
@@ -619,15 +638,16 @@ map MAP03 "AREA 3: front base"
 	slideshow = "Inter_Strife_MAP03"
 }
 
-map MAP04 "AREA 4: power station"
+map MAP04 LOOKUP "TXT_STRIFE_MAP04"
 {
 	next = "MAP05"
 	sky1 = "SKYMNT02"
 	music = "D_FAST"
 	cluster = 1
+	compat_railing
 }
 
-map MAP05 "AREA 5: prison"
+map MAP05 LOOKUP "TXT_STRIFE_MAP05"
 {
 	next = "MAP06"
 	sky1 = "SKYMNT02"
@@ -635,7 +655,7 @@ map MAP05 "AREA 5: prison"
 	cluster = 1
 }
 
-map MAP06 "AREA 6: sewers"
+map MAP06 LOOKUP "TXT_STRIFE_MAP06"
 {
 	next = "MAP07"
 	sky1 = "SKYMNT02"
@@ -643,7 +663,7 @@ map MAP06 "AREA 6: sewers"
 	cluster = 1
 }
 
-map MAP07 "AREA 7: castle"
+map MAP07 LOOKUP "TXT_STRIFE_MAP07"
 {
 	next = "MAP08"
 	sky1 = "SKYMNT02"
@@ -652,7 +672,7 @@ map MAP07 "AREA 7: castle"
 	redirect = "Sigil", "map10"
 }
 
-map MAP08 "AREA 8: Audience Chamber"
+map MAP08 LOOKUP "TXT_STRIFE_MAP08"
 {
 	next = "MAP09"
 	sky1 = "SKYMNT02"
@@ -660,7 +680,7 @@ map MAP08 "AREA 8: Audience Chamber"
 	cluster = 1
 }
 
-map MAP09 "AREA 9: Castle: Programmer's Keep"
+map MAP09 LOOKUP "TXT_STRIFE_MAP09"
 {
 	next = "MAP10"
 	sky1 = "SKYMNT02"
@@ -683,7 +703,7 @@ map MAP09 "AREA 9: Castle: Programmer's Keep"
 	// that idea apparently got scrapped as the game developed. 
 }
 
-map MAP10 "AREA 10: New Front Base"
+map MAP10 LOOKUP "TXT_STRIFE_MAP10"
 {
 	next = "MAP11"
 	sky1 = "SKYMNT01"
@@ -692,7 +712,7 @@ map MAP10 "AREA 10: New Front Base"
 	slideshow = "Inter_Strife_MAP10"
 }
 
-map MAP11 "AREA 11: Borderlands"
+map MAP11 LOOKUP "TXT_STRIFE_MAP11"
 {
 	next = "MAP12"
 	sky1 = "SKYMNT01"
@@ -700,7 +720,7 @@ map MAP11 "AREA 11: Borderlands"
 	cluster = 1
 }
 
-map MAP12 "AREA 12: the temple of the oracle"
+map MAP12 LOOKUP "TXT_STRIFE_MAP12"
 {
 	next = "MAP13"
 	sky1 = "SKYMNT01"
@@ -708,7 +728,7 @@ map MAP12 "AREA 12: the temple of the oracle"
 	cluster = 1
 }
 
-map MAP13 "AREA 13: Catacombs"
+map MAP13 LOOKUP "TXT_STRIFE_MAP13"
 {
 	next = "MAP14"
 	sky1 = "SKYMNT01"
@@ -716,7 +736,7 @@ map MAP13 "AREA 13: Catacombs"
 	cluster = 1
 }
 
-map MAP14 "AREA 14: mines"
+map MAP14 LOOKUP "TXT_STRIFE_MAP14"
 {
 	next = "MAP15"
 	sky1 = "SKYMNT01"
@@ -724,7 +744,7 @@ map MAP14 "AREA 14: mines"
 	cluster = 1
 }
 
-map MAP15 "AREA 15: Fortress: Administration"
+map MAP15 LOOKUP "TXT_STRIFE_MAP15"
 {
 	next = "MAP16"
 	sky1 = "SKYMNT01"
@@ -732,7 +752,7 @@ map MAP15 "AREA 15: Fortress: Administration"
 	cluster = 1
 }
 
-map MAP16 "AREA 16: Fortress: Bishop's Tower"
+map MAP16 LOOKUP "TXT_STRIFE_MAP16"
 {
 	next = "MAP17"
 	sky1 = "SKYMNT01"
@@ -740,7 +760,7 @@ map MAP16 "AREA 16: Fortress: Bishop's Tower"
 	cluster = 1
 }
 
-map MAP17 "AREA 17: Fortress: The Bailey"
+map MAP17 LOOKUP "TXT_STRIFE_MAP17"
 {
 	next = "MAP18"
 	sky1 = "SKYMNT01"
@@ -748,7 +768,7 @@ map MAP17 "AREA 17: Fortress: The Bailey"
 	cluster = 1
 }
 
-map MAP18 "AREA 18: Fortress: Stores"
+map MAP18 LOOKUP "TXT_STRIFE_MAP18"
 {
 	next = "MAP19"
 	sky1 = "SKYMNT01"
@@ -756,7 +776,7 @@ map MAP18 "AREA 18: Fortress: Stores"
 	cluster = 1
 }
 
-map MAP19 "AREA 19: Fortress: Security Complex"
+map MAP19 LOOKUP "TXT_STRIFE_MAP19"
 {
 	next = "MAP20"
 	sky1 = "SKYMNT01"
@@ -764,7 +784,7 @@ map MAP19 "AREA 19: Fortress: Security Complex"
 	cluster = 1
 }
 
-map MAP20 "AREA 20: Factory: Receiving"
+map MAP20 LOOKUP "TXT_STRIFE_MAP20"
 {
 	next = "MAP21"
 	sky1 = "SKYMNT01"
@@ -772,7 +792,7 @@ map MAP20 "AREA 20: Factory: Receiving"
 	cluster = 1
 }
 
-map MAP21 "AREA 21: Factory: Manufacturing"
+map MAP21 LOOKUP "TXT_STRIFE_MAP21"
 {
 	next = "MAP22"
 	sky1 = "SKYMNT01"
@@ -780,7 +800,7 @@ map MAP21 "AREA 21: Factory: Manufacturing"
 	cluster = 1
 }
 
-map MAP22 "AREA 22: Factory: Forge"
+map MAP22 LOOKUP "TXT_STRIFE_MAP22"
 {
 	next = "MAP23"
 	sky1 = "SKYMNT01"
@@ -788,7 +808,7 @@ map MAP22 "AREA 22: Factory: Forge"
 	cluster = 1
 }
 
-map MAP23 "AREA 23: Order Commons"
+map MAP23 LOOKUP "TXT_STRIFE_MAP23"
 {
 	next = "MAP24"
 	sky1 = "SKYMNT01"
@@ -796,7 +816,7 @@ map MAP23 "AREA 23: Order Commons"
 	cluster = 1
 }
 
-map MAP24 "AREA 24: Factory: Conversion Chapel"
+map MAP24 LOOKUP "TXT_STRIFE_MAP24"
 {
 	next = "MAP25"
 	sky1 = "SKYMNT01"
@@ -804,7 +824,7 @@ map MAP24 "AREA 24: Factory: Conversion Chapel"
 	cluster = 1
 }
 
-map MAP25 "AREA 25: Catacombs: Ruined Temple"
+map MAP25 LOOKUP "TXT_STRIFE_MAP25"
 {
 	next = "MAP26"
 	sky1 = "SKYMNT01"
@@ -812,7 +832,7 @@ map MAP25 "AREA 25: Catacombs: Ruined Temple"
 	cluster = 1
 }
 
-map MAP26 "AREA 26: proving grounds"
+map MAP26 LOOKUP "TXT_STRIFE_MAP26"
 {
 	next = "MAP27"
 	sky1 = "SKYMNT01"
@@ -820,7 +840,7 @@ map MAP26 "AREA 26: proving grounds"
 	cluster = 1
 }
 
-map MAP27 "AREA 27: The Lab"
+map MAP27 LOOKUP "TXT_STRIFE_MAP27"
 {
 	next = "MAP28"
 	sky1 = "SKYMNT01"
@@ -828,7 +848,7 @@ map MAP27 "AREA 27: The Lab"
 	cluster = 1
 }
 
-map MAP28 "AREA 28: Alien Ship"
+map MAP28 LOOKUP "TXT_STRIFE_MAP28"
 {
 	next = "MAP29"
 	sky1 = "SKYMNT01"
@@ -836,7 +856,7 @@ map MAP28 "AREA 28: Alien Ship"
 	cluster = 1
 }
 
-map MAP29 "AREA 29: Entity's Lair"
+map MAP29 LOOKUP "TXT_STRIFE_MAP29"
 {
 	next = "EndGameS"
 	sky1 = "SKYMNT01"
@@ -845,7 +865,7 @@ map MAP29 "AREA 29: Entity's Lair"
 	deathsequence = "Inter_Strife_Lose"
 }
 
-map MAP30 "AREA 30: Abandoned Front Base"
+map MAP30 LOOKUP "TXT_STRIFE_MAP30"
 {
 	next = "MAP31"
 	sky1 = "SKYMNT01"
@@ -853,7 +873,7 @@ map MAP30 "AREA 30: Abandoned Front Base"
 	cluster = 1
 }
 
-map MAP31 "AREA 31: Training Facility"
+map MAP31 LOOKUP "TXT_STRIFE_MAP31"
 {
 	next = "MAP01"
 	sky1 = "SKYMNT01"
@@ -861,7 +881,7 @@ map MAP31 "AREA 31: Training Facility"
 	cluster = 1
 }
 
-map MAP32 "AREA 1: Sanctuary"
+map MAP32 LOOKUP "TXT_STRIFE_MAP32"
 {
 	next = "MAP33"
 	sky1 = "SKYMNT02"
@@ -869,7 +889,7 @@ map MAP32 "AREA 1: Sanctuary"
 	cluster = 2
 }
 
-map MAP33 "AREA 2: Town"
+map MAP33 LOOKUP "TXT_STRIFE_MAP33"
 {
 	next = "MAP34"
 	sky1 = "SKYMNT02"
@@ -877,7 +897,7 @@ map MAP33 "AREA 2: Town"
 	cluster = 2
 }
 
-map MAP34 "AREA 3: Movement Base"
+map MAP34 LOOKUP "TXT_STRIFE_MAP34"
 {
 	next = "EndBuyStrife"
 	sky1 = "SKYMNT02"
@@ -886,7 +906,7 @@ map MAP34 "AREA 3: Movement Base"
 	noallies
 }
 
-map MAP35 "AREA 35: Factory: Production"
+map MAP35 LOOKUP "TXT_STRIFE_MAP35"
 {
 	next = "MAP01"
 	sky1 = "SKYMNT01"
@@ -894,7 +914,7 @@ map MAP35 "AREA 35: Factory: Production"
 	cluster = 1
 }
 
-map MAP36 "AREA 36: Castle Clash"
+map MAP36 LOOKUP "TXT_STRIFE_MAP36"
 {
 	next = "MAP37"
 	sky1 = "SKYMNT01"
@@ -902,7 +922,7 @@ map MAP36 "AREA 36: Castle Clash"
 	cluster = 3
 }
 
-map MAP37 "AREA 37: Killing Grounds"
+map MAP37 LOOKUP "TXT_STRIFE_MAP37"
 {
 	next = "MAP38"
 	sky1 = "SKYMNT01"
@@ -910,7 +930,7 @@ map MAP37 "AREA 37: Killing Grounds"
 	cluster = 3
 }
 
-map MAP38 "AREA 38: Ordered Chaos"
+map MAP38 LOOKUP "TXT_STRIFE_MAP38"
 {
 	next = "MAP36"
 	sky1 = "SKYMNT01"
@@ -935,5 +955,5 @@ cluster 2
 clearepisodes
 episode MAP02 teaser MAP33
 {
-	name = "Quest for the Sigil"
+	name = "$TXT_STRIFE_EPI"
 }

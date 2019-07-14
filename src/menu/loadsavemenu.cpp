@@ -42,6 +42,7 @@
 #include "gstrings.h"
 #include "serializer.h"
 #include "vm.h"
+#include "i_system.h"
 
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24
@@ -180,18 +181,15 @@ void FSavegameManager::ReadSaveStrings()
 						continue;
 					}
 					void *data = info->CacheLump();
-					FSerializer arc;
+					FSerializer arc(nullptr);
 					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
 						int savever = 0;
-						FString engine;
-						FString iwad;
-						FString title;
-
 						arc("Save Version", savever);
-						arc("Engine", engine);
-						arc("Game WAD", iwad);
-						arc("Title", title);
+						FString engine = arc.GetString("Engine");
+						FString iwad = arc.GetString("Game WAD");
+						FString title = arc.GetString("Title");
+
 
 						if (engine.Compare(GAMESIG) != 0 || savever > SAVEVER)
 						{
@@ -469,19 +467,18 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			return index;
 		}
 		void *data = info->CacheLump();
-		FSerializer arc;
+		FSerializer arc(nullptr);
 		if (arc.OpenReader((const char *)data, info->LumpSize))
 		{
-			FString time, pcomment, comment;
+			FString comment;
 
-			arc("Creation Time", time);
-			arc("Comment", pcomment);
+			FString time = arc.GetString("Creation Time");
+			FString pcomment = arc.GetString("Comment");
 
 			comment = time;
 			if (time.Len() > 0) comment += "\n";
 			comment += pcomment;
-
-			SaveComment = V_BreakLines(SmallFont, WindowSize, comment.GetChars());
+			SaveCommentString = comment;
 
 			// Extract pic
 			FResourceLump *pic = resf->FindLump("savepic.png");
@@ -502,7 +499,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 				{
 					SavePic = PNGTexture_CreateFromFile(png, node->Filename);
 					delete png;
-					if (SavePic->GetWidth() == 1 && SavePic->GetHeight() == 1)
+					if (SavePic && SavePic->GetDisplayWidth() == 1 && SavePic->GetDisplayHeight() == 1)
 					{
 						delete SavePic;
 						SavePic = nullptr;
@@ -535,9 +532,8 @@ void FSavegameManager::UnloadSaveData()
 	{
 		delete SavePic;
 	}
-	SaveComment.Clear();
-	SaveComment.ShrinkToFit();
 
+	SaveCommentString = "";
 	SavePic = nullptr;
 	SavePicData.Clear();
 }
@@ -600,53 +596,11 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, DrawSavePic)
 //
 //=============================================================================
 
-void FSavegameManager::DrawSaveComment(FFont *font, int cr, int x, int y, int scalefactor)
-{
-	int sx = CleanXfac;
-	int sy = CleanYfac;
-
-	CleanXfac = CleanYfac = scalefactor;
-
-	int maxlines = screen->GetHeight()>400?10:screen->GetHeight()>240?7:screen->GetHeight()>200?8:5;
-	if (SmallFont->GetHeight() > 9) maxlines--; // not Doom
-	// I'm not sure why SaveComment would go nullptr in this loop, but I got
-	// a crash report where it was nullptr when i reached 1, so now I check
-	// for that.
-	for  (int i = 0; i < maxlines && (unsigned)i < SaveComment.Size(); ++i)
-	{
-		screen->DrawText(font, cr, x, y + font->GetHeight() * i * scalefactor, SaveComment[i].Text,	DTA_CleanNoMove, true, TAG_DONE);
-	}
-
-	CleanXfac = sx;
-	CleanYfac = sy;
-}
-
-DEFINE_ACTION_FUNCTION(FSavegameManager, DrawSaveComment)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FSavegameManager);
-	PARAM_POINTER(fnt, FFont);
-	PARAM_INT(cr);
-	PARAM_INT(x);
-	PARAM_INT(y);
-	PARAM_INT(fac);
-	self->DrawSaveComment(fnt, cr, x, y, fac);
-	return 0;
-}
-
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
 void FSavegameManager::SetFileInfo(int Selected)
 {
 	if (!SaveGames[Selected]->Filename.IsEmpty())
 	{
-		FString work;
-		work.Format("File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
-		SaveComment = V_BreakLines(SmallFont, WindowSize, work);
+		SaveCommentString.Format("File on disk:\n%s", SaveGames[Selected]->Filename.GetChars());
 	}
 }
 
@@ -755,4 +709,5 @@ DEFINE_FIELD(FSaveGameNode, bNoDelete);
 
 DEFINE_FIELD(FSavegameManager, WindowSize);
 DEFINE_FIELD(FSavegameManager, quickSaveSlot);
+DEFINE_FIELD(FSavegameManager, SaveCommentString);
 

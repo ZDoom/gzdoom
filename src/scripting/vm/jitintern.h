@@ -1,6 +1,6 @@
 
 #include "jit.h"
-#include "i_system.h"
+
 #include "types.h"
 #include "stats.h"
 
@@ -25,12 +25,22 @@ extern int VMCalls[10];
 #define ABCs			(pc[0].i24)
 #define JMPOFS(x)		((x)->i24)
 
+struct JitLineInfo
+{
+	ptrdiff_t InstructionIndex = 0;
+	int32_t LineNumber = -1;
+	asmjit::Label Label;
+};
+
 class JitCompiler
 {
 public:
 	JitCompiler(asmjit::CodeHolder *code, VMScriptFunction *sfunc) : cc(code), sfunc(sfunc) { }
 
 	asmjit::CCFunc *Codegen();
+	VMScriptFunction *GetScriptFunction() { return sfunc; }
+
+	TArray<JitLineInfo> LineInfo;
 
 private:
 	// Declare EmitXX functions for the opcodes:
@@ -125,8 +135,23 @@ private:
 				cc.movsd(epsilonXmm, epsilon);
 				cc.ucomisd(epsilonXmm, tmp);
 
-				if (check) cc.ja(fail);
-				else       cc.jna(fail);
+				if (check)
+				{
+					cc.jp(success);
+					if (i == (N - 1))
+					{
+						cc.ja(fail);
+					}
+					else
+					{
+						cc.jna(success);
+					}
+				}
+				else
+				{
+					cc.jp(fail);
+					cc.jna(fail);
+				}
 			}
 		}
 	}
@@ -209,8 +234,8 @@ private:
 	void EmitThrowException(EVMAbortException reason);
 	asmjit::Label EmitThrowExceptionLabel(EVMAbortException reason);
 
-	static void ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size);
-	static void ThrowException(VMScriptFunction *func, VMOP *line, int reason);
+	static void ThrowArrayOutOfBounds(int index, int size);
+	static void ThrowException(int reason);
 
 	asmjit::X86Gp CheckRegD(int r0, int r1);
 	asmjit::X86Xmm CheckRegF(int r0, int r1);
@@ -308,5 +333,5 @@ public:
 	}
 };
 
-void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func);
+void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler);
 asmjit::CodeInfo GetHostCodeInfo();

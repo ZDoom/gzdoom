@@ -210,7 +210,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Grow, ArrayGrow<FDynArray_I8>)
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Resize, ArrayResize<FDynArray_I8>)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
 	PARAM_INT(count);
 	ArrayResize(self, count);
 	return 0;
@@ -313,7 +313,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Grow, ArrayGrow<FDynArray_I16>)
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Resize, ArrayResize<FDynArray_I16>)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
 	PARAM_INT(count);
 	ArrayResize(self, count);
 	return 0;
@@ -416,7 +416,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Grow, ArrayGrow<FDynArray_I32>)
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Resize, ArrayResize<FDynArray_I32>)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
 	PARAM_INT(count);
 	ArrayResize(self, count);
 	return 0;
@@ -519,7 +519,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Grow, ArrayGrow<FDynArray_F32>)
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Resize, ArrayResize<FDynArray_F32>)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
 	PARAM_INT(count);
 	ArrayResize(self, count);
 	return 0;
@@ -622,7 +622,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Grow, ArrayGrow<FDynArray_F64>)
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Resize, ArrayResize<FDynArray_F64>)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
 	PARAM_INT(count);
 	ArrayResize(self, count);
 	return 0;
@@ -725,7 +725,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Grow, ArrayGrow<FDynArray_Ptr>)
 
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Resize, ArrayResize<FDynArray_Ptr>)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
 	PARAM_INT(count);
 	ArrayResize(self, count);
 	return 0;

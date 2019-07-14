@@ -26,6 +26,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stdio.h>
+#include <array>
 
 #include "doomdef.h"
 #include "templates.h"
@@ -45,6 +46,8 @@
 #include "sbar.h"
 #include "d_player.h"
 #include "p_blockmap.h"
+#include "g_game.h"
+#include "v_video.h"
 
 #include "m_cheat.h"
 #include "c_dispatch.h"
@@ -67,26 +70,98 @@
 
 //=============================================================================
 //
+// Global state
+//
+//=============================================================================
+
+enum
+{
+	AM_NUMMARKPOINTS = 10,
+};
+
+// C++ cannot do static const floats in a class, so these need to be global...
+static const double PLAYERRADIUS = 16.;	// player radius for automap checking
+static const double M_ZOOMIN = (1.02);	// how much zoom-in per tic - goes to 2x in 1 second
+static const double M_ZOOMOUT = (1 / 1.02);	// how much zoom-out per tic - pulls out to 0.5x in 1 second
+
+static FTextureID marknums[AM_NUMMARKPOINTS]; // numbers used for marking by the automap
+bool automapactive = false;
+
+//=============================================================================
+//
+// Types
+//
+//=============================================================================
+
+struct  fpoint_t
+{
+	int x, y;
+};
+
+struct fline_t
+{
+	fpoint_t a, b;
+};
+
+struct mpoint_t
+{
+	double x, y;
+};
+
+struct mline_t
+{
+	mpoint_t a, b;
+};
+
+struct islope_t
+{
+	double slp, islp;
+};
+
+//=============================================================================
+//
 // CVARs
 //
 //=============================================================================
 
-CVAR (Int,   am_rotate,				0,			CVAR_ARCHIVE);
-CVAR (Int,   am_overlay,			0,			CVAR_ARCHIVE);
-CVAR (Bool,  am_showsecrets,		true,		CVAR_ARCHIVE);
-CVAR (Bool,  am_showmonsters,		true,		CVAR_ARCHIVE);
-CVAR (Bool,  am_showitems,			false,		CVAR_ARCHIVE);
-CVAR (Bool,  am_showtime,			true,		CVAR_ARCHIVE);
-CVAR (Bool,  am_showtotaltime,		false,		CVAR_ARCHIVE);
-CVAR (Int,   am_colorset,			0,			CVAR_ARCHIVE);
-CVAR (Bool,  am_customcolors,		true,		CVAR_ARCHIVE);
-CVAR (Int,   am_map_secrets,		1,			CVAR_ARCHIVE);
-CVAR (Int,	 am_drawmapback,		1,			CVAR_ARCHIVE);
-CVAR (Bool,  am_showkeys,			true,		CVAR_ARCHIVE);
-CVAR (Int,   am_showtriggerlines,	0,			CVAR_ARCHIVE);
-CVAR (Int,   am_showthingsprites,		0,		CVAR_ARCHIVE);
+CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
+CVAR(Int, am_showsubsector, -1, 0);
 
-CUSTOM_CVAR (Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
+
+CUSTOM_CVAR(Int, am_showalllines, -1, CVAR_NOINITCALL)	// This is a cheat so don't save it.
+{
+	if (primaryLevel && primaryLevel->automap)
+		primaryLevel->automap->UpdateShowAllLines();
+}
+
+EXTERN_CVAR(Bool, sv_cheats)
+CUSTOM_CVAR(Int, am_cheat, 0, 0)
+{
+	// No automap cheat in net games when cheats are disabled!
+	if (netgame && !sv_cheats && self != 0)
+	{
+		self = 0;
+	}
+}
+
+
+CVAR(Int, am_rotate, 0, CVAR_ARCHIVE);
+CVAR(Int, am_overlay, 0, CVAR_ARCHIVE);
+CVAR(Bool, am_showsecrets, true, CVAR_ARCHIVE);
+CVAR(Bool, am_showmonsters, true, CVAR_ARCHIVE);
+CVAR(Bool, am_showitems, false, CVAR_ARCHIVE);
+CVAR(Bool, am_showtime, true, CVAR_ARCHIVE);
+CVAR(Bool, am_showtotaltime, false, CVAR_ARCHIVE);
+CVAR(Int, am_colorset, 0, CVAR_ARCHIVE);
+CVAR(Bool, am_customcolors, true, CVAR_ARCHIVE);
+CVAR(Int, am_map_secrets, 1, CVAR_ARCHIVE);
+CVAR(Int, am_drawmapback, 1, CVAR_ARCHIVE);
+CVAR(Bool, am_showkeys, true, CVAR_ARCHIVE);
+CVAR(Int, am_showtriggerlines, 0, CVAR_ARCHIVE);
+CVAR(Int, am_showthingsprites, 0, CVAR_ARCHIVE);
+CVAR (Bool, am_showkeys_always, false, CVAR_ARCHIVE);
+
+CUSTOM_CVAR(Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 {
 	if (self < 0)
 	{
@@ -97,11 +172,89 @@ CUSTOM_CVAR (Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 		self = 90;
 	}
 
-	if (nullptr != StatusBar)
+	if (nullptr != StatusBar && primaryLevel && primaryLevel->automap)
 	{
-		AM_NewResolution();
+		primaryLevel->automap->NewResolution();
 	}
 }
+
+//=============================================================================
+//
+// map functions
+//
+//=============================================================================
+
+CVAR(Bool, am_followplayer, true, CVAR_ARCHIVE)
+CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
+CVAR(Bool, am_showgrid, false, CVAR_ARCHIVE)
+CVAR(Float, am_zoomdir, 0, CVAR_ARCHIVE)
+
+static const char *const DEFAULT_FONT_NAME = "AMMNUMx";
+CVAR(String, am_markfont, DEFAULT_FONT_NAME, CVAR_ARCHIVE)
+CVAR(Int, am_markcolor, CR_GREY, CVAR_ARCHIVE)
+
+CCMD(am_togglefollow)
+{
+	am_followplayer = !am_followplayer;
+	if (primaryLevel && primaryLevel->automap)
+		primaryLevel->automap->ResetFollowLocation();
+	Printf("%s\n", GStrings(am_followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
+}
+
+CCMD(am_togglegrid)
+{
+	am_showgrid = !am_showgrid;
+	Printf("%s\n", GStrings(am_showgrid ? "AMSTR_GRIDON" : "AMSTR_GRIDOFF"));
+}
+
+CCMD(am_toggletexture)
+{
+	am_textured = !am_textured;
+	Printf("%s\n", GStrings(am_textured ? "AMSTR_TEXON" : "AMSTR_TEXOFF"));
+}
+
+CCMD(am_setmark)
+{
+	if (primaryLevel && primaryLevel->automap)
+	{
+		int m = primaryLevel->automap->addMark();
+		if (m >= 0)
+		{
+			Printf("%s %d\n", GStrings("AMSTR_MARKEDSPOT"), m);
+		}
+	}
+}
+
+CCMD(am_clearmarks)
+{
+	if (primaryLevel && primaryLevel->automap && primaryLevel->automap->clearMarks())
+	{
+		Printf("%s\n", GStrings("AMSTR_MARKSCLEARED"));
+	}
+}
+
+CCMD(am_gobig)
+{
+	if (primaryLevel && primaryLevel->automap)
+		primaryLevel->automap->GoBig();
+}
+
+CCMD(togglemap)
+{
+	if (gameaction == ga_nothing)
+	{
+		gameaction = ga_togglemap;
+	}
+}
+
+CCMD(am_zoom)
+{
+	if (argv.argc() >= 2)
+	{
+		am_zoomdir = (float)atof(argv[1]);
+	}
+}
+
 
 //=============================================================================
 //
@@ -223,7 +376,7 @@ static const char *ColorNames[] = {
 		"UnexploredSecretColor",
 		"PortalColor",
 		"AlmostBackgroundColor",
-		NULL
+		nullptr
 };
 
 struct AMColorset
@@ -521,9 +674,58 @@ void AM_ClearColorsets()
 	AMModOverlay.defined = false;
 	AMMod.defined = false;
 }
+
 //=============================================================================
 //
 //
+//
+//=============================================================================
+
+static void AM_initColors(bool overlayed)
+{
+	if (overlayed)
+	{
+		if (am_customcolors && AMModOverlay.defined)
+		{
+			AMColors = AMModOverlay;
+		}
+		else
+		{
+			AMColors.initFromCVars(cv_overlay);
+		}
+	}
+	else if (am_customcolors && AMMod.defined)
+	{
+		AMColors = AMMod;
+	}
+	else switch (am_colorset)
+	{
+	default:
+		/* Use the custom colors in the am_* cvars */
+		AMColors.initFromCVars(cv_standard);
+		break;
+
+	case 1:	// Doom
+		// Use colors corresponding to the original Doom's
+		AMColors.initFromColors(DoomColors, false);
+		break;
+
+	case 2:	// Strife
+		// Use colors corresponding to the original Strife's
+		AMColors.initFromColors(StrifeColors, false);
+		break;
+
+	case 3:	// Raven
+		// Use colors corresponding to the original Raven's
+		AMColors.initFromColors(RavenColors, true);
+		break;
+
+	}
+}
+
+//=============================================================================
+//
+// custom color parser
 //
 //=============================================================================
 
@@ -578,7 +780,7 @@ void FMapInfoParser::ParseAMColors(bool overlay)
 		else
 		{
 			int i;
-			for (i = 0; ColorNames[i] != NULL; i++)
+			for (i = 0; ColorNames[i] != nullptr; i++)
 			{
 				if (nextKey.CompareNoCase(ColorNames[i]) == 0)
 				{
@@ -586,149 +788,19 @@ void FMapInfoParser::ParseAMColors(bool overlay)
 					FString color = sc.String;
 					FString colorName = V_GetColorStringByName(color);
 					if(!colorName.IsEmpty()) color = colorName;
-					int colorval = V_GetColorFromString(NULL, color);
+					int colorval = V_GetColorFromString(nullptr, color);
 					cset.c[i].FromRGB(RPART(colorval), GPART(colorval), BPART(colorval)); 
 					colorset = true;
 					break;
 				}
 			}
-			if (ColorNames[i]== NULL)
+			if (ColorNames[i]== nullptr)
 			{
 				sc.ScriptError("Unknown key '%s'", nextKey.GetChars());
 			}
 		}
 	}
 }
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-// scale on entry
-#define INITSCALEMTOF .2
-// used by MTOF to scale from map-to-frame-buffer coords
-static double scale_mtof = INITSCALEMTOF;
-// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
-static double scale_ftom;
-
-// translates between frame-buffer and map distances
-inline double FTOM(double x)
-{
-	return x * scale_ftom;
-}
-
-inline double MTOF(double x)
-{
-	return x * scale_mtof;
-}
-
-static int bigstate = 0;
-static bool textured = 1;	// internal toggle for texture mode
-static int MapPortalGroup;
-
-CUSTOM_CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
-{
-	textured |= self;
-}
-
-CVAR(Int, am_showsubsector, -1, 0);
-
-
-// Disable the ML_DONTDRAW line flag if x% of all lines in a map are flagged with it
-// (To counter annoying mappers who think they are smart by making the automap unusable)
-bool am_showallenabled;
-
-CUSTOM_CVAR (Int, am_showalllines, -1, 0)	// This is a cheat so don't save it.
-{
-	int flagged = 0;
-	int total = 0;
-	if (self > 0 && level.lines.Size() > 0)
-	{
-		for(auto &line : level.lines)
-		{
-			// disregard intra-sector lines
-			if (line.frontsector == line.backsector) continue;	
-
-			// disregard control sectors for deep water
-			if (line.frontsector->e->FakeFloor.Sectors.Size() > 0) continue;	
-
-			// disregard control sectors for 3D-floors
-			if (line.frontsector->e->XFloor.attached.Size() > 0) continue;	
-
-			total++;
-			if (line.flags & ML_DONTDRAW) flagged++;
-		}
-		am_showallenabled =  (flagged * 100 / total >= self);
-	}
-	else if (self == 0)
-	{
-		am_showallenabled = true;
-	}
-	else
-	{
-		am_showallenabled = false;
-	}
-}
-
-EXTERN_CVAR (Bool, sv_cheats)
-CUSTOM_CVAR (Int, am_cheat, 0, 0)
-{
-	// No automap cheat in net games when cheats are disabled!
-	if (netgame && !sv_cheats && self != 0)
-	{
-		self = 0;
-	}
-}
-
-
-
-#define AM_NUMMARKPOINTS 10
-
-// player radius for automap checking
-#define PLAYERRADIUS	16.
-
-// how much the automap moves window per tic in frame-buffer coordinates
-// moves 140 pixels at 320x200 in 1 second
-#define F_PANINC		(140/TICRATE)
-// how much zoom-in per tic
-// goes to 2x in 1 second
-#define M_ZOOMIN        (1.02)
-// how much zoom-out per tic
-// pulls out to 0.5x in 1 second
-#define M_ZOOMOUT       (1/1.02)
-
-// translates between frame-buffer and map coordinates
-#define CXMTOF(x)  int(MTOF((x)-m_x)/* - f_x*/)
-#define CYMTOF(y)  int(f_h - MTOF((y)-m_y)/* + f_y*/)
-
-struct  fpoint_t
-{
-	int x, y;
-};
-
-struct fline_t
-{
-	fpoint_t a, b;
-};
-
-struct mpoint_t
-{
-	double x, y;
-};
-
-struct mline_t
-{
-	mpoint_t a, b;
-};
-
-struct islope_t
-{
-	double slp, islp;
-};
-
-
 
 //=============================================================================
 //
@@ -743,169 +815,11 @@ static TArray<mline_t> CheatMapArrow;
 static TArray<mline_t> CheatKey;
 static TArray<mline_t> EasyKey;
 
-#define L(a,b,c,d) { {(a), (b)}, {(c), (d)} }
-static mline_t triangle_guy[] = {
-	L (-.867,-.5, .867,-.5),
-	L (.867,-.5, 0,1),
-	L (0,1, -.867,-.5)
-};
-#define NUMTRIANGLEGUYLINES (sizeof(triangle_guy)/sizeof(mline_t))
-
-static mline_t thintriangle_guy[] = {
-	L (-.5,-.7, 1,0),
-	L (1,0, -.5,.7),
-	L (-.5,.7, -.5,-.7)
-};
-#define NUMTHINTRIANGLEGUYLINES (sizeof(thintriangle_guy)/sizeof(mline_t))
-
-static mline_t square_guy[] = {
-	L (0,1,1,0),
-	L (1,0,0,-1),
-	L (0,-1,-1,0),
-	L (-1,0,0,1)
-};
-#define NUMSQUAREGUYLINES (sizeof(square_guy)/sizeof(mline_t))
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-static int 	grid = 0;
-
-bool		automapactive = false;
-
-// location of window on screen
-static int	f_x;
-static int	f_y;
-
-// size of window on screen
-static int	f_w;
-static int	f_h;
-
-static int	amclock;
-
-static mpoint_t	m_paninc;		// how far the window pans each tic (map coords)
-static double	mtof_zoommul;	// how far the window zooms in each tic (map coords)
-static double	am_zoomdir;
-
-static double	m_x, m_y;		// LL x,y where the window is on the map (map coords)
-static double	m_x2, m_y2;		// UR x,y where the window is on the map (map coords)
-
-//
-// width/height of window on map (map coords)
-//
-static double	m_w;
-static double	m_h;
-
-// based on level size
-static double	min_x, min_y, max_x, max_y;
-
-static double	max_w; // max_x-min_x,
-static double	max_h; // max_y-min_y
-
-// based on player size
-static double	min_w;
-static double	min_h;
-
-
-static double	min_scale_mtof; // used to tell when to stop zooming out
-static double	max_scale_mtof; // used to tell when to stop zooming in
-
-// old stuff for recovery later
-static double old_m_w, old_m_h;
-static double old_m_x, old_m_y;
-
-// old location used by the Follower routine
-static mpoint_t f_oldloc;
-
-static FTextureID marknums[10]; // numbers used for marking by the automap
-static mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
-static int markpointnum = 0; // next point to be assigned
-
-static FTextureID mapback;	// the automap background
-static double mapystart=0; // y-value for the start of the map bitmap...used in the parallax stuff.
-static double mapxstart=0; //x-value for the bitmap.
-
-static bool stopped = true;
-
-static void AM_calcMinMaxMtoF();
-
-static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
-	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle);
-
-void AM_rotatePoint (double *x, double *y);
-void AM_rotate (double *x, double *y, DAngle an);
-void AM_doFollowPlayer ();
-
-
-//=============================================================================
-//
-// map functions
-//
-//=============================================================================
-
-bool AM_addMark ();
-bool AM_clearMarks ();
-void AM_saveScaleAndLoc ();
-void AM_restoreScaleAndLoc ();
-void AM_minOutWindowScale ();
-
-
-CVAR(Bool, am_followplayer, true, CVAR_ARCHIVE)
-CVAR(Bool, am_portaloverlay, true, CVAR_ARCHIVE)
-
-
-CCMD(am_togglefollow)
-{
-	am_followplayer = !am_followplayer;
-	f_oldloc.x = FLT_MAX;
-	Printf ("%s\n", GStrings(am_followplayer ? "AMSTR_FOLLOWON" : "AMSTR_FOLLOWOFF"));
-}
-
-CCMD(am_togglegrid)
-{
-	grid = !grid;
-	Printf ("%s\n", GStrings(grid ? "AMSTR_GRIDON" : "AMSTR_GRIDOFF"));
-}
-
-CCMD(am_toggletexture)
-{
-	if (am_textured && hasglnodes)
-	{
-		textured = !textured;
-		Printf ("%s\n", GStrings(textured ? "AMSTR_TEXON" : "AMSTR_TEXOFF"));
-	}
-}
-
-CCMD(am_setmark)
-{
-	if (AM_addMark())
-	{
-		Printf ("%s %d\n", GStrings("AMSTR_MARKEDSPOT"), markpointnum);
-	}
-}
-
-CCMD(am_clearmarks)
-{
-	if (AM_clearMarks())
-	{
-		Printf ("%s\n", GStrings("AMSTR_MARKSCLEARED"));
-	}
-}
-
-CCMD(am_gobig)
-{
-	bigstate = !bigstate;
-	if (bigstate)
-	{
-		AM_saveScaleAndLoc();
-		AM_minOutWindowScale();
-	}
-	else
-		AM_restoreScaleAndLoc();
-}
+static std::array<mline_t, 3> thintriangle_guy = { {
+	{{-.5,-.7}, {1,0}},
+	{{1,0}, {-.5,.7}},
+	{{-.5,.7}, {-.5,-.7}}
+} };
 
 //=============================================================================
 //
@@ -913,9 +827,9 @@ CCMD(am_gobig)
 //
 //=============================================================================
 
-void AM_ParseArrow(TArray<mline_t> &Arrow, const char *lumpname)
+static void AM_ParseArrow(TArray<mline_t> &Arrow, const char *lumpname)
 {
-	const int R = int((8*PLAYERRADIUS)/7);
+	const int R = int((8 * PLAYERRADIUS) / 7);
 	FScanner sc;
 	int lump = Wads.CheckNumForFullName(lumpname, true);
 	if (lump >= 0)
@@ -960,14 +874,184 @@ void AM_StaticInit()
 
 	char namebuf[9];
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < AM_NUMMARKPOINTS; i++)
 	{
-		mysnprintf (namebuf, countof(namebuf), "AMMNUM%d", i);
-		marknums[i] = TexMan.CheckForTexture (namebuf, ETextureType::MiscPatch);
+		mysnprintf(namebuf, countof(namebuf), "AMMNUM%d", i);
+		marknums[i] = TexMan.CheckForTexture(namebuf, ETextureType::MiscPatch);
 	}
-	markpointnum = 0;
-	mapback.SetInvalid();
 }
+
+
+//=============================================================================
+//
+// the actual automap class definition
+//
+//=============================================================================
+
+IMPLEMENT_CLASS(DAutomapBase, true, false);
+
+class DAutomap :public DAutomapBase
+{
+	DECLARE_CLASS(DAutomap, DAutomapBase)
+
+	enum
+	{
+		F_PANINC = 140 / TICRATE,	// how much the automap moves window per tic in frame-buffer coordinates moves 140 pixels at 320x200 in 1 second
+	};
+
+	//FLevelLocals *Level;
+	// scale on entry
+	// used by MTOF to scale from map-to-frame-buffer coords
+	double scale_mtof = .2;
+	// used by FTOM to scale from frame-buffer-to-map coords (=1/scale_mtof)
+	double scale_ftom;
+
+	int bigstate;
+	int MapPortalGroup;
+
+	// Disable the ML_DONTDRAW line flag if x% of all lines in a map are flagged with it
+	// (To counter annoying mappers who think they are smart by making the automap unusable)
+	bool am_showallenabled;
+
+	// location of window on screen
+	int	f_x;
+	int	f_y;
+
+	// size of window on screen
+	int	f_w;
+	int	f_h;
+
+	int	amclock;
+
+	mpoint_t	m_paninc;		// how far the window pans each tic (map coords)
+	double	mtof_zoommul;	// how far the window zooms in each tic (map coords)
+
+	double	m_x, m_y;		// LL x,y where the window is on the map (map coords)
+	double	m_x2, m_y2;		// UR x,y where the window is on the map (map coords)
+
+	//
+	// width/height of window on map (map coords)
+	//
+	double	m_w;
+	double	m_h;
+
+	// based on level size
+	double	min_x, min_y, max_x, max_y;
+
+	double	max_w; // max_x-min_x,
+	double	max_h; // max_y-min_y
+
+	// based on player size
+	double	min_w;
+	double	min_h;
+
+
+	double	min_scale_mtof; // used to tell when to stop zooming out
+	double	max_scale_mtof; // used to tell when to stop zooming in
+
+	// old stuff for recovery later
+	double old_m_w, old_m_h;
+	double old_m_x, old_m_y;
+
+	// old location used by the Follower routine
+	mpoint_t f_oldloc;
+
+	mpoint_t markpoints[AM_NUMMARKPOINTS]; // where the points are
+	int markpointnum = 0; // next point to be assigned
+
+	FTextureID mapback;	// the automap background
+	double mapystart = 0; // y-value for the start of the map bitmap...used in the parallax stuff.
+	double mapxstart = 0; //x-value for the bitmap.
+
+	TArray<FVector2> points;
+
+	// translates between frame-buffer and map distances
+	double FTOM(double x)
+	{
+		return x * scale_ftom;
+	}
+
+	double MTOF(double x)
+	{
+		return x * scale_mtof;
+	}
+
+	// translates between frame-buffer and map coordinates
+	int CXMTOF(double x)
+	{
+		return int(MTOF((x)-m_x)/* - f_x*/);
+	}
+
+	int CYMTOF(double y) 
+	{
+		return int(f_h - MTOF((y)-m_y)/* + f_y*/);
+	}
+
+	void calcMinMaxMtoF();
+
+	void DrawMarker(FTexture *tex, double x, double y, int yadjust,
+		INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle);
+
+	void rotatePoint(double *x, double *y);
+	void rotate(double *x, double *y, DAngle an);
+	void doFollowPlayer();
+	void saveScaleAndLoc();
+	void restoreScaleAndLoc();
+	void minOutWindowScale();
+	void activateNewScale();
+	void findMinMaxBoundaries();
+	void ClipRotatedExtents(double pivotx, double pivoty);
+	void ScrollParchment(double dmapx, double dmapy);
+	void changeWindowLoc();
+	void maxOutWindowScale();
+	void changeWindowScale();
+	void clearFB(const AMColor &color);
+	bool clipMline(mline_t *ml, fline_t *fl);
+	void drawMline(mline_t *ml, const AMColor &color);
+	void drawMline(mline_t *ml, int colorindex);
+	void drawGrid(int color);
+	void drawSubsectors();
+	void drawSeg(seg_t *seg, const AMColor &color);
+	void drawPolySeg(FPolySeg *seg, const AMColor &color);
+	void showSS();
+	void drawWalls(bool allmap);
+	void drawLineCharacter(const mline_t *lineguy, size_t lineguylines, double scale, DAngle angle, const AMColor &color, double x, double y);
+	void drawPlayers();
+	void drawKeys();
+	void drawThings();
+	void drawMarks();
+	void drawAuthorMarkers();
+	void drawCrosshair(const AMColor &color);
+
+
+public:
+	bool Responder(event_t* ev, bool last) override;
+	void Ticker(void) override;
+	void Drawer(int bottom) override;
+	void NewResolution() override;
+	void LevelInit() override;
+	void UpdateShowAllLines() override;
+	void Serialize(FSerializer &arc) override;
+	void GoBig() override;
+	void ResetFollowLocation() override;
+	int addMark() override;
+	bool clearMarks() override;
+	DVector2 GetPosition() override;
+	void startDisplay() override;
+
+};
+
+IMPLEMENT_CLASS(DAutomap, false, false)
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+
+
 
 //=============================================================================
 //
@@ -975,7 +1059,7 @@ void AM_StaticInit()
 //
 //=============================================================================
 
-DVector2 AM_GetPosition()
+DVector2 DAutomap::GetPosition()
 {
 	return DVector2((m_x + m_w / 2), (m_y + m_h / 2));
 }
@@ -986,7 +1070,7 @@ DVector2 AM_GetPosition()
 //
 //=============================================================================
 
-void AM_activateNewScale ()
+void DAutomap::activateNewScale ()
 {
 	m_x += m_w/2;
 	m_y += m_h/2;
@@ -1004,7 +1088,7 @@ void AM_activateNewScale ()
 //
 //=============================================================================
 
-void AM_saveScaleAndLoc ()
+void DAutomap::saveScaleAndLoc ()
 {
 	old_m_x = m_x;
 	old_m_y = m_y;
@@ -1018,7 +1102,7 @@ void AM_saveScaleAndLoc ()
 //
 //=============================================================================
 
-void AM_restoreScaleAndLoc ()
+void DAutomap::restoreScaleAndLoc ()
 {
 	m_w = old_m_w;
 	m_h = old_m_h;
@@ -1046,16 +1130,19 @@ void AM_restoreScaleAndLoc ()
 //
 //=============================================================================
 
-bool AM_addMark ()
+int DAutomap::addMark ()
 {
-	if (marknums[0].isValid())
+	// Add a mark when default font is selected and its textures (AMMNUM?)
+	// are loaded. Mark is always added when custom font is selected
+	if (stricmp(*am_markfont, DEFAULT_FONT_NAME) != 0 || marknums[0].isValid())
 	{
+		auto m = markpointnum;
 		markpoints[markpointnum].x = m_x + m_w/2;
 		markpoints[markpointnum].y = m_y + m_h/2;
 		markpointnum = (markpointnum + 1) % AM_NUMMARKPOINTS;
-		return true;
+		return m;
 	}
-	return false;
+	return -1;
 }
 
 //=============================================================================
@@ -1065,12 +1152,12 @@ bool AM_addMark ()
 //
 //=============================================================================
 
-static void AM_findMinMaxBoundaries ()
+void DAutomap::findMinMaxBoundaries ()
 {
 	min_x = min_y = FLT_MAX;
 	max_x = max_y = FIXED_MIN;
   
-	for (auto &vert : level.vertexes)
+	for (auto &vert : Level->vertexes)
 	{
 		if (vert.fX() < min_x)
 			min_x = vert.fX();
@@ -1089,7 +1176,7 @@ static void AM_findMinMaxBoundaries ()
 	min_w = 2*PLAYERRADIUS; // const? never changed?
 	min_h = 2*PLAYERRADIUS;
 
-	AM_calcMinMaxMtoF();
+	calcMinMaxMtoF();
 }
 
 //=============================================================================
@@ -1098,7 +1185,7 @@ static void AM_findMinMaxBoundaries ()
 //
 //=============================================================================
 
-static void AM_calcMinMaxMtoF()
+void DAutomap::calcMinMaxMtoF()
 {
 	const double safe_frame = 1.0 - am_emptyspacemargin / 100.0;
 	double a = safe_frame * (SCREENWIDTH / max_w);
@@ -1114,7 +1201,7 @@ static void AM_calcMinMaxMtoF()
 //
 //=============================================================================
 
-static void AM_ClipRotatedExtents (double pivotx, double pivoty)
+void DAutomap::ClipRotatedExtents (double pivotx, double pivoty)
 {
 	if (am_rotate == 0 || (am_rotate == 2 && !viewactive))
 	{
@@ -1128,51 +1215,6 @@ static void AM_ClipRotatedExtents (double pivotx, double pivoty)
 		else if (m_y + m_h/2 < min_y)
 			m_y = min_y - m_h/2;
 	}
-	else
-	{
-#if 0
-		double rmin_x, rmin_y, rmax_x, rmax_y;
-		double xs[5], ys[5];
-		int i;
-
-		xs[0] = min_x;	ys[0] = min_y;
-		xs[1] = max_x;	ys[1] = min_y;
-		xs[2] = max_x;	ys[2] = max_y;
-		xs[3] = min_x;	ys[3] = max_y;
-		xs[4] = m_x + m_w/2; ys[4] = m_y + m_h/2;
-		rmin_x = rmin_y = FLT_MAX;
-		rmax_x = rmax_y = FIXED_MIN;
-
-		for (i = 0; i < 5; ++i)
-		{
-			xs[i] -= pivotx;
-			ys[i] -= pivoty;
-			AM_rotate (&xs[i], &ys[i], 90. - players[consoleplayer].camera->Angles.Yaw);
-
-			if (i == 5)
-				break;
-//			xs[i] += pivotx;
-//			ys[i] += pivoty;
-
-			if (xs[i] < rmin_x)	rmin_x = xs[i];
-			if (xs[i] > rmax_x) rmax_x = xs[i];
-			if (ys[i] < rmin_y) rmin_y = ys[i];
-			if (ys[i] > rmax_y) rmax_y = ys[i];
-		}
-		if (rmax_x < 0)
-			xs[4] = -rmax_x;
-		else if (rmin_x > 0)
-			xs[4] = -rmin_x;
-	  
-//		if (ys[4] > rmax_y)
-//			ys[4] = rmax_y;
-//		else if (ys[4] < rmin_y)
-//			ys[4] = rmin_y;
-		AM_rotate (&xs[4], &ys[4], 270. - players[consoleplayer].camera->Angles.Yaw);
-		m_x = xs[4] + pivotx - m_w/2;
-		m_y = ys[4] + pivoty - m_h/2;
-#endif
-	}
 
 	m_x2 = m_x + m_w;
 	m_y2 = m_y + m_h;
@@ -1184,7 +1226,7 @@ static void AM_ClipRotatedExtents (double pivotx, double pivoty)
 //
 //=============================================================================
 
-static void AM_ScrollParchment (double dmapx, double dmapy)
+void DAutomap::ScrollParchment (double dmapx, double dmapy)
 {
 	mapxstart = mapxstart - dmapx * scale_mtof;
 	mapystart = mapystart - dmapy * scale_mtof;
@@ -1194,12 +1236,12 @@ static void AM_ScrollParchment (double dmapx, double dmapy)
 
 	if (mapback.isValid())
 	{
-		FTexture *backtex = TexMan[mapback];
+		FTexture *backtex = TexMan.GetTexture(mapback);
 
-		if (backtex != NULL)
+		if (backtex != nullptr)
 		{
-			int pwidth = backtex->GetWidth();
-			int pheight = backtex->GetHeight();
+			int pwidth = backtex->GetDisplayWidth();
+			int pheight = backtex->GetDisplayHeight();
 
 			while(mapxstart > 0)
 				mapxstart -= pwidth;
@@ -1219,7 +1261,7 @@ static void AM_ScrollParchment (double dmapx, double dmapy)
 //
 //=============================================================================
 
-void AM_changeWindowLoc ()
+void DAutomap::changeWindowLoc ()
 {
 	if (m_paninc.x || m_paninc.y)
 	{
@@ -1237,14 +1279,14 @@ void AM_changeWindowLoc ()
 	oincy = incy = m_paninc.y * SCREENHEIGHT / 200;
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		AM_rotate(&incx, &incy, players[consoleplayer].camera->Angles.Yaw - 90.);
+		rotate(&incx, &incy, players[consoleplayer].camera->Angles.Yaw - 90.);
 	}
 
 	m_x += incx;
 	m_y += incy;
 
-	AM_ClipRotatedExtents (oldmx + m_w/2, oldmy + m_h/2);
-	AM_ScrollParchment (m_x != oldmx ? oincx : 0, m_y != oldmy ? -oincy : 0);
+	ClipRotatedExtents (oldmx + m_w/2, oldmy + m_h/2);
+	ScrollParchment (m_x != oldmx ? oincx : 0, m_y != oldmy ? -oincy : 0);
 }
 
 
@@ -1254,20 +1296,9 @@ void AM_changeWindowLoc ()
 //
 //=============================================================================
 
-void AM_initVariables ()
+void DAutomap::startDisplay()
 {
 	int pnum;
-
-	automapactive = true;
-
-	// Reset AM buttons
-	Button_AM_PanLeft.Reset();
-	Button_AM_PanRight.Reset();
-	Button_AM_PanUp.Reset();
-	Button_AM_PanDown.Reset();
-	Button_AM_ZoomIn.Reset();
-	Button_AM_ZoomOut.Reset();
-
 
 	f_oldloc.x = FLT_MAX;
 	amclock = 0;
@@ -1286,7 +1317,7 @@ void AM_initVariables ()
 	assert(pnum >= 0 && pnum < MAXPLAYERS);
 	m_x = players[pnum].camera->X() - m_w/2;
 	m_y = players[pnum].camera->Y() - m_h/2;
-	AM_changeWindowLoc();
+	changeWindowLoc();
 
 	// for saving & restoring
 	old_m_x = m_x;
@@ -1301,55 +1332,7 @@ void AM_initVariables ()
 //
 //=============================================================================
 
-static void AM_initColors (bool overlayed)
-{
-	if (overlayed)
-	{
-		if (am_customcolors && AMModOverlay.defined)
-		{
-			AMColors = AMModOverlay;
-		}
-		else
-		{
-			AMColors.initFromCVars(cv_overlay);
-		}
-	}
-	else if (am_customcolors && AMMod.defined)
-	{
-		AMColors = AMMod;
-	}
-	else switch(am_colorset)
-	{
-		default:
-			/* Use the custom colors in the am_* cvars */
-			AMColors.initFromCVars(cv_standard);
-			break;
-
-		case 1:	// Doom
-			// Use colors corresponding to the original Doom's
-			AMColors.initFromColors(DoomColors, false);
-			break;
-
-		case 2:	// Strife
-			// Use colors corresponding to the original Strife's
-			AMColors.initFromColors(StrifeColors, false);
-			break;
-
-		case 3:	// Raven
-			// Use colors corresponding to the original Raven's
-			AMColors.initFromColors(RavenColors, true);
-			break;
-
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-bool AM_clearMarks ()
+bool DAutomap::clearMarks ()
 {
 	for (int i = AM_NUMMARKPOINTS-1; i >= 0; i--)
 		markpoints[i].x = -1; // means empty
@@ -1363,55 +1346,27 @@ bool AM_clearMarks ()
 //
 //=============================================================================
 
-void AM_LevelInit ()
+void DAutomap::LevelInit ()
 {
-	if (level.info->MapBackground.Len() == 0)
+	if (Level->info->MapBackground.Len() == 0)
 	{
 		mapback = TexMan.CheckForTexture("AUTOPAGE", ETextureType::MiscPatch);
 	}
 	else
 	{
-		mapback = TexMan.CheckForTexture(level.info->MapBackground, ETextureType::MiscPatch);
+		mapback = TexMan.CheckForTexture(Level->info->MapBackground, ETextureType::MiscPatch);
 	}
 
-	AM_clearMarks();
+	clearMarks();
 
-	AM_findMinMaxBoundaries();
+	findMinMaxBoundaries();
 	scale_mtof = min_scale_mtof / 0.7;
 	if (scale_mtof > max_scale_mtof)
 		scale_mtof = min_scale_mtof;
 	scale_ftom = 1 / scale_mtof;
 
-	am_showalllines.Callback();
+	UpdateShowAllLines();
 }
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void AM_Stop ()
-{
-	automapactive = false;
-	stopped = true;
-	viewactive = true;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void AM_Start ()
-{
-	if (!stopped) AM_Stop();
-	stopped = false;
-	AM_initVariables();
-}
-
-
 
 //=============================================================================
 //
@@ -1419,7 +1374,7 @@ void AM_Start ()
 //
 //=============================================================================
 
-void AM_minOutWindowScale ()
+void DAutomap::minOutWindowScale ()
 {
 	scale_mtof = min_scale_mtof;
 	scale_ftom = 1/ scale_mtof;
@@ -1431,7 +1386,7 @@ void AM_minOutWindowScale ()
 //
 //=============================================================================
 
-void AM_maxOutWindowScale ()
+void DAutomap::maxOutWindowScale ()
 {
 	scale_mtof = max_scale_mtof;
 	scale_ftom = 1 / scale_mtof;
@@ -1443,7 +1398,7 @@ void AM_maxOutWindowScale ()
 //
 //=============================================================================
 
-void AM_NewResolution()
+void DAutomap::NewResolution()
 {
 	double oldmin = min_scale_mtof;
 	
@@ -1451,65 +1406,18 @@ void AM_NewResolution()
 	{
 		return; // [SP] Not in a game, exit!
 	}	
-	AM_calcMinMaxMtoF();
+	calcMinMaxMtoF();
 	scale_mtof = scale_mtof * min_scale_mtof / oldmin;
 	scale_ftom = 1 / scale_mtof;
 	if (scale_mtof < min_scale_mtof)
-		AM_minOutWindowScale();
+		minOutWindowScale();
 	else if (scale_mtof > max_scale_mtof)
-		AM_maxOutWindowScale();
+		maxOutWindowScale();
 	f_w = screen->GetWidth();
 	f_h = StatusBar->GetTopOfStatusbar();
-	AM_activateNewScale();
+	activateNewScale();
 }
 
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-CCMD (togglemap)
-{
-	if (gameaction == ga_nothing)
-	{
-		gameaction = ga_togglemap;
-	}
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-void AM_ToggleMap ()
-{
-	if (gamestate != GS_LEVEL)
-		return;
-
-	// Don't activate the automap if we're not allowed to use it.
-	if (dmflags2 & DF2_NO_AUTOMAP)
-		return;
-
-	if (!automapactive)
-	{
-		AM_Start ();
-		viewactive = (am_overlay != 0.f);
-	}
-	else
-	{
-		if (am_overlay==1 && viewactive)
-		{
-			viewactive = false;
-		}
-		else
-		{
-			AM_Stop ();
-		}
-	}
-}
 
 //=============================================================================
 //
@@ -1517,7 +1425,7 @@ void AM_ToggleMap ()
 //
 //=============================================================================
 
-bool AM_Responder (event_t *ev, bool last)
+bool DAutomap::Responder (event_t *ev, bool last)
 {
 	if (automapactive && (ev->type == EV_KeyDown || ev->type == EV_KeyUp))
 	{
@@ -1528,7 +1436,7 @@ bool AM_Responder (event_t *ev, bool last)
 			if (!strnicmp(defbind, "+am_pan", 7)) return false;
 		}
 
-		bool res = C_DoKey(ev, &AutomapBindings, NULL);
+		bool res = C_DoKey(ev, &AutomapBindings, nullptr);
 		if (res && ev->type == EV_KeyUp && !last)
 		{
 			// If this is a release event we also need to check if it released a button in the main Bindings
@@ -1548,7 +1456,7 @@ bool AM_Responder (event_t *ev, bool last)
 //
 //=============================================================================
 
-void AM_changeWindowScale ()
+void DAutomap::changeWindowScale ()
 {
 	double mtof_zoommul;
 
@@ -1579,17 +1487,9 @@ void AM_changeWindowScale ()
 	scale_ftom = 1 / scale_mtof;
 
 	if (scale_mtof < min_scale_mtof)
-		AM_minOutWindowScale();
+		minOutWindowScale();
 	else if (scale_mtof > max_scale_mtof)
-		AM_maxOutWindowScale();
-}
-
-CCMD(am_zoom)
-{
-	if (argv.argc() >= 2)
-	{
-		am_zoomdir = atof(argv[1]);
-	}
+		maxOutWindowScale();
 }
 
 //=============================================================================
@@ -1598,7 +1498,7 @@ CCMD(am_zoom)
 //
 //=============================================================================
 
-void AM_doFollowPlayer ()
+void DAutomap::doFollowPlayer ()
 {
 	double sx, sy;
 	auto cam = players[consoleplayer].camera;
@@ -1619,9 +1519,9 @@ void AM_doFollowPlayer ()
 			sy = (f_oldloc.y - ampos.Y);
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
-				AM_rotate(&sx, &sy, cam->Angles.Yaw - 90);
+				rotate(&sx, &sy, cam->Angles.Yaw - 90);
 			}
-			AM_ScrollParchment(sx, sy);
+			ScrollParchment(sx, sy);
 
 			f_oldloc.x = ampos.X;
 			f_oldloc.y = ampos.Y;
@@ -1635,7 +1535,7 @@ void AM_doFollowPlayer ()
 //
 //=============================================================================
 
-void AM_Ticker ()
+void DAutomap::Ticker ()
 {
 	if (!automapactive)
 		return;
@@ -1644,7 +1544,7 @@ void AM_Ticker ()
 
 	if (am_followplayer)
 	{
-		AM_doFollowPlayer();
+		doFollowPlayer();
 	}
 	else
 	{
@@ -1657,11 +1557,11 @@ void AM_Ticker ()
 
 	// Change the zoom if necessary
 	if (Button_AM_ZoomIn.bDown || Button_AM_ZoomOut.bDown || am_zoomdir != 0)
-		AM_changeWindowScale();
+		changeWindowScale();
 
 	// Change x,y location
 	//if (m_paninc.x || m_paninc.y)
-		AM_changeWindowLoc();
+	changeWindowLoc();
 }
 
 
@@ -1671,7 +1571,7 @@ void AM_Ticker ()
 //
 //=============================================================================
 
-void AM_clearFB (const AMColor &color)
+void DAutomap::clearFB (const AMColor &color)
 {
 	bool drawback = mapback.isValid() && am_drawmapback != 0;
 	if (am_drawmapback == 2)
@@ -1689,11 +1589,11 @@ void AM_clearFB (const AMColor &color)
 	}
 	else
 	{
-		FTexture *backtex = TexMan[mapback];
-		if (backtex != NULL)
+		FTexture *backtex = TexMan.GetTexture(mapback);
+		if (backtex != nullptr)
 		{
-			int pwidth = backtex->GetWidth();
-			int pheight = backtex->GetHeight();
+			int pwidth = backtex->GetDisplayWidth();
+			int pheight = backtex->GetDisplayHeight();
 			int x, y;
 
 			//blit the automap background to the screen.
@@ -1719,7 +1619,7 @@ void AM_clearFB (const AMColor &color)
 //
 //=============================================================================
 
-bool AM_clipMline (mline_t *ml, fline_t *fl)
+bool DAutomap::clipMline (mline_t *ml, fline_t *fl)
 {
 	enum {
 		LEFT	=1,
@@ -1736,12 +1636,14 @@ bool AM_clipMline (mline_t *ml, fline_t *fl)
 	int dx;
 	int dy;
 
-#define DOOUTCODE(oc, mx, my) \
-	(oc) = 0; \
-	if ((my) < 0) (oc) |= TOP; \
-	else if ((my) >= f_h) (oc) |= BOTTOM; \
-	if ((mx) < 0) (oc) |= LEFT; \
-	else if ((mx) >= f_w) (oc) |= RIGHT;
+	auto DOOUTCODE = [this](int &oc, double mx, double my)
+	{
+		oc = 0;
+		if (my < 0) oc |= TOP;
+		else if (my >= f_h) oc |= BOTTOM;
+		if (mx < 0) oc |= LEFT;
+		else if (mx >= f_w) oc |= RIGHT;
+	};
 
 	// do trivial rejects and outcodes
 	if (ml->a.y > m_y2)
@@ -1837,8 +1739,6 @@ bool AM_clipMline (mline_t *ml, fline_t *fl)
 
 	return true;
 }
-#undef DOOUTCODE
-
 
 //=============================================================================
 //
@@ -1846,19 +1746,19 @@ bool AM_clipMline (mline_t *ml, fline_t *fl)
 //
 //=============================================================================
 
-void AM_drawMline (mline_t *ml, const AMColor &color)
+void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 {
 	fline_t fl;
 
-	if (AM_clipMline (ml, &fl))
+	if (clipMline (ml, &fl))
 	{
 		screen->DrawLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, color.Index, color.RGB);
 	}
 }
 
-inline void AM_drawMline (mline_t *ml, int colorindex)
+void DAutomap::drawMline (mline_t *ml, int colorindex)
 {
-	AM_drawMline(ml, AMColors[colorindex]);
+	drawMline(ml, AMColors[colorindex]);
 }
 
 //=============================================================================
@@ -1867,15 +1767,15 @@ inline void AM_drawMline (mline_t *ml, int colorindex)
 //
 //=============================================================================
 
-void AM_drawGrid (int color)
+void DAutomap::drawGrid (int color)
 {
 	double x, y;
 	double start, end;
 	mline_t ml;
 	double minlen, extx, exty;
 	double minx, miny;
-	auto bmaporgx = level.blockmap.bmaporgx;
-	auto bmaporgy = level.blockmap.bmaporgy;
+	auto bmaporgx = Level->blockmap.bmaporgx;
+	auto bmaporgy = Level->blockmap.bmaporgy;
 
 	// [RH] Calculate a minimum for how long the grid lines should be so that
 	// they cover the screen at any rotation.
@@ -1901,10 +1801,10 @@ void AM_drawGrid (int color)
 		ml.b.y = ml.a.y + minlen;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			AM_rotatePoint (&ml.a.x, &ml.a.y);
-			AM_rotatePoint (&ml.b.x, &ml.b.y);
+			rotatePoint (&ml.a.x, &ml.a.y);
+			rotatePoint (&ml.b.x, &ml.b.y);
 		}
-		AM_drawMline(&ml, color);
+		drawMline(&ml, color);
 	}
 
 	// Figure out start of horizontal gridlines
@@ -1921,10 +1821,10 @@ void AM_drawGrid (int color)
 		ml.b.y = y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			AM_rotatePoint (&ml.a.x, &ml.a.y);
-			AM_rotatePoint (&ml.b.x, &ml.b.y);
+			rotatePoint (&ml.a.x, &ml.a.y);
+			rotatePoint (&ml.b.x, &ml.b.y);
 		}
-		AM_drawMline (&ml, color);
+		drawMline (&ml, color);
 	}
 }
 
@@ -2052,9 +1952,8 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 //
 //=============================================================================
 
-void AM_drawSubsectors()
+void DAutomap::drawSubsectors()
 {
-	static TArray<FVector2> points;
 	std::vector<uint32_t> indices;
 	double scale = scale_mtof;
 	DAngle rotation;
@@ -2066,7 +1965,7 @@ void AM_drawSubsectors()
 	PalEntry flatcolor;
 	mpoint_t originpt;
 
-	auto &subsectors = level.subsectors;
+	auto &subsectors = Level->subsectors;
 	for (unsigned i = 0; i < subsectors.Size(); ++i)
 	{
 		auto sub = &subsectors[i];
@@ -2093,7 +1992,7 @@ void AM_drawSubsectors()
 							sub->firstline[j].v1->fY() };
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
-				AM_rotatePoint(&pt.x, &pt.y);
+				rotatePoint(&pt.x, &pt.y);
 			}
 			points[j].X = float(f_x + ((pt.x - m_x) * scale));
 			points[j].Y = float(f_y + (f_h - (pt.y - m_y) * scale));
@@ -2184,13 +2083,13 @@ void AM_drawSubsectors()
 		// Apply the floor's rotation to the texture origin.
 		if (rotation != 0)
 		{
-			AM_rotate(&originpt.x, &originpt.y, rotation);
+			rotate(&originpt.x, &originpt.y, rotation);
 		}
 		// Apply the automap's rotation to the texture origin.
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			rotation = rotation + 90. - players[consoleplayer].camera->Angles.Yaw;
-			AM_rotatePoint(&originpt.x, &originpt.y);
+			rotatePoint(&originpt.x, &originpt.y);
 		}
 		originx = f_x + ((originpt.x - m_x) * scale);
 		originy = f_y + (f_h - (originpt.y - m_y) * scale);
@@ -2206,14 +2105,13 @@ void AM_drawSubsectors()
 			colormap.Desaturation = 255 - (255 - colormap.Desaturation) / 4;
 		}
 		// make table based fog visible on the automap as well.
-		if (level.flags & LEVEL_HASFADETABLE)
+		if (Level->flags & LEVEL_HASFADETABLE)
 		{
 			colormap.FadeColor = PalEntry(0, 128, 128, 128);
 		}
 
 		// Draw the polygon.
-		FTexture *pic = TexMan(maptex);
-		if (pic != nullptr && pic->UseType != ETextureType::Null)
+		if (maptex.isValid())
 		{
 			// Hole filling "subsectors" are not necessarily convex so they require real triangulation.
 			// These things are extremely rare so performance is secondary here.
@@ -2235,7 +2133,7 @@ void AM_drawSubsectors()
 			}
 			else indices.clear();
 
-			screen->FillSimplePoly(TexMan(maptex),
+			screen->FillSimplePoly(TexMan.GetTexture(maptex, true),
 				&points[0], points.Size(),
 				originx, originy,
 				scale / scalex,
@@ -2260,7 +2158,7 @@ static int AM_CheckSecret(line_t *line)
 {
 	if (AMColors.isValid(AMColors.SecretSectorColor))
 	{
-		if (line->frontsector != NULL)
+		if (line->frontsector != nullptr)
 		{
 			if (line->frontsector->wasSecret())
 			{
@@ -2268,7 +2166,7 @@ static int AM_CheckSecret(line_t *line)
 				if (am_map_secrets==2 && !(line->flags & ML_SECRET)) return 2;
 			}
 		}
-		if (line->backsector != NULL)
+		if (line->backsector != nullptr)
 		{
 			if (line->backsector->wasSecret())
 			{
@@ -2287,7 +2185,7 @@ static int AM_CheckSecret(line_t *line)
 //
 //=============================================================================
 
-void AM_drawSeg(seg_t *seg, const AMColor &color)
+void DAutomap::drawSeg(seg_t *seg, const AMColor &color)
 {
 	mline_t l;
 	l.a.x = seg->v1->fX();
@@ -2297,13 +2195,13 @@ void AM_drawSeg(seg_t *seg, const AMColor &color)
 
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		AM_rotatePoint (&l.a.x, &l.a.y);
-		AM_rotatePoint (&l.b.x, &l.b.y);
+		rotatePoint (&l.a.x, &l.a.y);
+		rotatePoint (&l.b.x, &l.b.y);
 	}
-	AM_drawMline(&l, color);
+	drawMline(&l, color);
 }
 
-void AM_drawPolySeg(FPolySeg *seg, const AMColor &color)
+void DAutomap::drawPolySeg(FPolySeg *seg, const AMColor &color)
 {
 	mline_t l;
 	l.a.x = seg->v1.pos.X;
@@ -2313,39 +2211,38 @@ void AM_drawPolySeg(FPolySeg *seg, const AMColor &color)
 
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		AM_rotatePoint (&l.a.x, &l.a.y);
-		AM_rotatePoint (&l.b.x, &l.b.y);
+		rotatePoint (&l.a.x, &l.a.y);
+		rotatePoint (&l.b.x, &l.b.y);
 	}
-	AM_drawMline(&l, color);
+	drawMline(&l, color);
 }
 
-void AM_showSS()
+void DAutomap::showSS()
 {
-	if (am_showsubsector >= 0 && (unsigned)am_showsubsector < level.subsectors.Size())
+	if (am_showsubsector >= 0 && (unsigned)am_showsubsector < Level->subsectors.Size())
 	{
 		AMColor yellow;
 		yellow.FromRGB(255,255,0);
 		AMColor red;
 		red.FromRGB(255,0,0);
 
-		subsector_t *sub = &level.subsectors[am_showsubsector];
+		subsector_t *sub = &Level->subsectors[am_showsubsector];
 		for (unsigned int i = 0; i < sub->numlines; i++)
 		{
-			AM_drawSeg(sub->firstline + i, yellow);
+			drawSeg(sub->firstline + i, yellow);
 		}
 
-		for (int i = 0; i <po_NumPolyobjs; i++)
+		for (auto &poly : Level->Polyobjects)
 		{
-			FPolyObj *po = &polyobjs[i];
-			FPolyNode *pnode = po->subsectorlinks;
+			FPolyNode *pnode = poly.subsectorlinks;
 
-			while (pnode != NULL)
+			while (pnode != nullptr)
 			{
 				if (pnode->subsector == sub)
 				{
 					for (unsigned j = 0; j < pnode->segs.Size(); j++)
 					{
-						AM_drawPolySeg(&pnode->segs[j], red);
+						drawPolySeg(&pnode->segs[j], red);
 					}
 				}
 				pnode = pnode->snext;
@@ -2443,15 +2340,15 @@ bool AM_checkSectorActions (sector_t *sector, bool (*function)(int, int *), int 
 // [TP] Check whether there's a boundary on the provided line for a special that satisfies the provided function.
 // It's a boundary if the line can activate the special or the line's bordering sectors can activate it.
 // If found, specialptr and argsptr will be filled with special and args if given.
-bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int *), int *specialptr = NULL, int **argsptr = NULL)
+bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int *), int *specialptr = nullptr, int **argsptr = nullptr)
 {
-	if (specialptr == NULL)
+	if (specialptr == nullptr)
 	{
 		static int sink;
 		specialptr = &sink;
 	}
 
-	if (argsptr == NULL)
+	if (argsptr == nullptr)
 	{
 		static int *sink;
 		argsptr = &sink;
@@ -2468,7 +2365,7 @@ bool AM_checkSpecialBoundary (line_t &line, bool (*function)(int, int *), int *s
 	// Check sector actions in the line's front sector -- the action has to be use-activated in order to
 	// show up if this is a one-sided line, because the player cannot trigger sector actions by crossing
 	// a one-sided line (since that's impossible, duh).
-	if (AM_checkSectorActions(line.frontsector, function, specialptr, argsptr, line.backsector == NULL))
+	if (AM_checkSectorActions(line.frontsector, function, specialptr, argsptr, line.backsector == nullptr))
 		return true;
 
 	// If it has a back sector, check sector actions in that.
@@ -2502,7 +2399,7 @@ bool AM_isTriggerBoundary (line_t &line)
 	return am_showtriggerlines == 1? AM_checkSpecialBoundary(line, [](int special, int *)
 	{
 		FLineSpecial *spec = P_GetLineSpecialInfo(special);
-		return spec != NULL
+		return spec != nullptr
 			&& spec->max_args >= 0
 			&& special != Door_Open
 			&& special != Door_Close
@@ -2513,14 +2410,14 @@ bool AM_isTriggerBoundary (line_t &line)
 	}) : AM_checkSpecialBoundary(line, [](int special, int *)
 	{
 		FLineSpecial *spec = P_GetLineSpecialInfo(special);
-		return spec != NULL
+		return spec != nullptr
 			&& spec->max_args >= 0;
 	});
 }
 
-bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
+bool AM_isLockBoundary (line_t &line, int *lockptr = nullptr)
 {
-	if (lockptr == NULL)
+	if (lockptr == nullptr)
 	{
 		static int sink;
 		lockptr = &sink;
@@ -2573,26 +2470,26 @@ bool AM_isLockBoundary (line_t &line, int *lockptr = NULL)
 //
 //=============================================================================
 
-void AM_drawWalls (bool allmap)
+void DAutomap::drawWalls (bool allmap)
 {
 	static mline_t l;
 	int lock, color;
 
-	int numportalgroups = am_portaloverlay ? level.Displacements.size : 0;
+	int numportalgroups = am_portaloverlay ? Level->Displacements.size : 0;
 
 	for (int p = numportalgroups - 1; p >= -1; p--)
 	{
 		if (p == MapPortalGroup) continue;
 
 
-		for (auto &line : level.lines)
+		for (auto &line : Level->lines)
 		{
 			int pg;
 			
 			if (line.sidedef[0]->Flags & WALLF_POLYOBJ)
 			{
 				// For polyobjects we must test the surrounding sector to get the proper group.
-				pg = P_PointInSector(line.v1->fX() + line.Delta().X / 2, line.v1->fY() + line.Delta().Y / 2)->PortalGroup;
+				pg = Level->PointInSector(line.v1->fX() + line.Delta().X / 2, line.v1->fY() + line.Delta().Y / 2)->PortalGroup;
 			}
 			else
 			{
@@ -2602,7 +2499,7 @@ void AM_drawWalls (bool allmap)
 			bool portalmode = numportalgroups > 0 &&  pg != MapPortalGroup;
 			if (pg == p)
 			{
-				offset = level.Displacements.getOffset(pg, MapPortalGroup);
+				offset = Level->Displacements.getOffset(pg, MapPortalGroup);
 			}
 			else if (p == -1 && (pg == MapPortalGroup || !am_portaloverlay))
 			{
@@ -2617,8 +2514,8 @@ void AM_drawWalls (bool allmap)
 
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
-				AM_rotatePoint(&l.a.x, &l.a.y);
-				AM_rotatePoint(&l.b.x, &l.b.y);
+				rotatePoint(&l.a.x, &l.a.y);
+				rotatePoint(&l.b.x, &l.b.y);
 			}
 
 			if (am_cheat != 0 || (line.flags & ML_MAPPED))
@@ -2634,37 +2531,37 @@ void AM_drawWalls (bool allmap)
 				if (line.automapstyle > AMLS_Default && line.automapstyle < AMLS_COUNT
 					&& (am_cheat == 0 || am_cheat >= 4))
 				{
-					AM_drawMline(&l, AUTOMAP_LINE_COLORS[line.automapstyle]);
+					drawMline(&l, AUTOMAP_LINE_COLORS[line.automapstyle]);
 					continue;
 				}
 
 				if (portalmode)
 				{
-					AM_drawMline(&l, AMColors.PortalColor);
+					drawMline(&l, AMColors.PortalColor);
 				}
 				else if (AM_CheckSecret(&line) == 1)
 				{
 					// map secret sectors like Boom
-					AM_drawMline(&l, AMColors.SecretSectorColor);
+					drawMline(&l, AMColors.SecretSectorColor);
 				}
 				else if (AM_CheckSecret(&line) == 2)
 				{
-					AM_drawMline(&l, AMColors.UnexploredSecretColor);
+					drawMline(&l, AMColors.UnexploredSecretColor);
 				}
 				else if (line.flags & ML_SECRET)
 				{ // secret door
-					if (am_cheat != 0 && line.backsector != NULL)
-						AM_drawMline(&l, AMColors.SecretWallColor);
+					if (am_cheat != 0 && line.backsector != nullptr)
+						drawMline(&l, AMColors.SecretWallColor);
 					else
-						AM_drawMline(&l, AMColors.WallColor);
+						drawMline(&l, AMColors.WallColor);
 				}
 				else if (AM_isTeleportBoundary(line) && AMColors.isValid(AMColors.IntraTeleportColor))
 				{ // intra-level teleporters
-					AM_drawMline(&l, AMColors.IntraTeleportColor);
+					drawMline(&l, AMColors.IntraTeleportColor);
 				}
 				else if (AM_isExitBoundary(line) && AMColors.isValid(AMColors.InterTeleportColor))
 				{ // inter-level/game-ending teleporters
-					AM_drawMline(&l, AMColors.InterTeleportColor);
+					drawMline(&l, AMColors.InterTeleportColor);
 				}
 				else if (AM_isLockBoundary(line, &lock))
 				{
@@ -2677,40 +2574,40 @@ void AM_drawWalls (bool allmap)
 						if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
 						else c = AMColors[AMColors.LockedColor];
 
-						AM_drawMline(&l, c);
+						drawMline(&l, c);
 					}
 					else
 					{
-						AM_drawMline(&l, AMColors.LockedColor);  // locked special
+						drawMline(&l, AMColors.LockedColor);  // locked special
 					}
 				}
 				else if (am_showtriggerlines
 					&& AMColors.isValid(AMColors.SpecialWallColor)
 					&& AM_isTriggerBoundary(line))
 				{
-					AM_drawMline(&l, AMColors.SpecialWallColor);	// wall with special non-door action the player can do
+					drawMline(&l, AMColors.SpecialWallColor);	// wall with special non-door action the player can do
 				}
-				else if (line.backsector == NULL)
+				else if (line.backsector == nullptr)
 				{
-					AM_drawMline(&l, AMColors.WallColor);	// one-sided wall
+					drawMline(&l, AMColors.WallColor);	// one-sided wall
 				}
 				else if (line.backsector->floorplane
 					!= line.frontsector->floorplane)
 				{
-					AM_drawMline(&l, AMColors.FDWallColor); // floor level change
+					drawMline(&l, AMColors.FDWallColor); // floor level change
 				}
 				else if (line.backsector->ceilingplane
 					!= line.frontsector->ceilingplane)
 				{
-					AM_drawMline(&l, AMColors.CDWallColor); // ceiling level change
+					drawMline(&l, AMColors.CDWallColor); // ceiling level change
 				}
 				else if (AM_Check3DFloors(&line))
 				{
-					AM_drawMline(&l, AMColors.EFWallColor); // Extra floor border
+					drawMline(&l, AMColors.EFWallColor); // Extra floor border
 				}
 				else if (am_cheat > 0 && am_cheat < 4)
 				{
-					AM_drawMline(&l, AMColors.TSWallColor);
+					drawMline(&l, AMColors.TSWallColor);
 				}
 			}
 			else if (allmap || (line.flags & ML_REVEALED))
@@ -2722,7 +2619,7 @@ void AM_drawWalls (bool allmap)
 						continue;
 					}
 				}
-				AM_drawMline(&l, AMColors.NotSeenColor);
+				drawMline(&l, AMColors.NotSeenColor);
 			}
 		}
 	}
@@ -2736,7 +2633,7 @@ void AM_drawWalls (bool allmap)
 //
 //=============================================================================
 
-void AM_rotate(double *xp, double *yp, DAngle a)
+void DAutomap::rotate(double *xp, double *yp, DAngle a)
 {
 	static DAngle angle_saved = 0.;
 	static double sinrot = 0;
@@ -2764,13 +2661,13 @@ void AM_rotate(double *xp, double *yp, DAngle a)
 //
 //=============================================================================
 
-void AM_rotatePoint (double *x, double *y)
+void DAutomap::rotatePoint (double *x, double *y)
 {
 	double pivotx = m_x + m_w/2;
 	double pivoty = m_y + m_h/2;
 	*x -= pivotx;
 	*y -= pivoty;
-	AM_rotate (x, y, -players[consoleplayer].camera->Angles.Yaw + 90.);
+	rotate (x, y, -players[consoleplayer].camera->Angles.Yaw + 90.);
 	*x += pivotx;
 	*y += pivoty;
 }
@@ -2781,30 +2678,23 @@ void AM_rotatePoint (double *x, double *y)
 //
 //=============================================================================
 
-void
-AM_drawLineCharacter
-( const mline_t *lineguy,
-  int		lineguylines,
-  double	scale,
-  DAngle	angle,
-  const AMColor &color,
-  double	x,
-  double	y )
+void DAutomap::drawLineCharacter(const mline_t *lineguy, size_t lineguylines, double scale, DAngle angle, const AMColor &color, double x, double y)
 {
-	int		i;
 	mline_t	l;
 
-	for (i=0;i<lineguylines;i++) {
+	for (size_t i=0;i<lineguylines;i++)
+	{
 		l.a.x = lineguy[i].a.x;
 		l.a.y = lineguy[i].a.y;
 
-		if (scale) {
+		if (scale)
+		{
 			l.a.x *= scale;
 			l.a.y *= scale;
 		}
 
 		if (angle != 0)
-			AM_rotate(&l.a.x, &l.a.y, angle);
+			rotate(&l.a.x, &l.a.y, angle);
 
 		l.a.x += x;
 		l.a.y += y;
@@ -2812,18 +2702,19 @@ AM_drawLineCharacter
 		l.b.x = lineguy[i].b.x;
 		l.b.y = lineguy[i].b.y;
 
-		if (scale) {
+		if (scale)
+		{
 			l.b.x *= scale;
 			l.b.y *= scale;
 		}
 
 		if (angle != 0)
-			AM_rotate(&l.b.x, &l.b.y, angle);
+			rotate(&l.b.x, &l.b.y, angle);
 
 		l.b.x += x;
 		l.b.y += y;
 
-		AM_drawMline(&l, color);
+		drawMline(&l, color);
 	}
 }
 
@@ -2833,7 +2724,7 @@ AM_drawLineCharacter
 //
 //=============================================================================
 
-void AM_drawPlayers ()
+void DAutomap::drawPlayers ()
 {
 	if (am_cheat >= 2 && am_cheat != 4 && am_showthingsprites > 0)
 	{
@@ -2857,7 +2748,7 @@ void AM_drawPlayers ()
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
 			angle = 90.;
-			AM_rotatePoint (&pt.x, &pt.y);
+			rotatePoint (&pt.x, &pt.y);
 		}
 		else
 		{
@@ -2874,7 +2765,7 @@ void AM_drawPlayers ()
 			arrow = &MapArrow[0];
 			numarrowlines = MapArrow.Size();
 		}
-		AM_drawLineCharacter(arrow, numarrowlines, 0, angle, AMColors[AMColors.YourColor], pt.x, pt.y);
+		drawLineCharacter(arrow, numarrowlines, 0, angle, AMColors[AMColors.YourColor], pt.x, pt.y);
 		return;
 	}
 
@@ -2883,7 +2774,7 @@ void AM_drawPlayers ()
 		player_t *p = &players[i];
 		AMColor color;
 
-		if (!playeringame[i] || p->mo == NULL)
+		if (!playeringame[i] || p->mo == nullptr)
 		{
 			continue;
 		}
@@ -2907,13 +2798,13 @@ void AM_drawPlayers ()
 		{
 			float h, s, v, r, g, b;
 
-			D_GetPlayerColor (i, &h, &s, &v, NULL);
+			D_GetPlayerColor (i, &h, &s, &v, nullptr);
 			HSVtoRGB (&r, &g, &b, h, s, v);
 
 			color.FromRGB(clamp (int(r*255.f),0,255), clamp (int(g*255.f),0,255), clamp (int(b*255.f),0,255));
 		}
 
-		if (p->mo != NULL)
+		if (p->mo != nullptr)
 		{
 			DVector3 pos = p->mo->PosRelative(MapPortalGroup);
 			pt.x = pos.X;
@@ -2923,11 +2814,11 @@ void AM_drawPlayers ()
 
 			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 			{
-				AM_rotatePoint (&pt.x, &pt.y);
+				rotatePoint (&pt.x, &pt.y);
 				angle -= players[consoleplayer].camera->Angles.Yaw - 90.;
 			}
 
-			AM_drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
+			drawLineCharacter(&MapArrow[0], MapArrow.Size(), 0, angle, color, pt.x, pt.y);
 		}
     }
 }
@@ -2938,16 +2829,16 @@ void AM_drawPlayers ()
 //
 //=============================================================================
 
-void AM_drawKeys ()
+void DAutomap::drawKeys ()
 {
 	AMColor color;
 	mpoint_t p;
 	DAngle	 angle;
 
-	TThinkerIterator<AActor> it(NAME_Key);
+	auto it = Level->GetThinkerIterator<AActor>(NAME_Key);
 	AActor *key;
 
-	while ((key = it.Next()) != NULL)
+	while ((key = it.Next()) != nullptr)
 	{
 		DVector3 pos = key->PosRelative(MapPortalGroup);
 		p.x = pos.X;
@@ -2957,7 +2848,7 @@ void AM_drawKeys ()
 
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 		{
-			AM_rotatePoint (&p.x, &p.y);
+			rotatePoint (&p.x, &p.y);
 			angle += -players[consoleplayer].camera->Angles.Yaw + 90.;
 		}
 
@@ -2970,7 +2861,7 @@ void AM_drawKeys ()
 
 			if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 			else color = AMColors[AMColors.ThingColor_CountItem];
-			AM_drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, 0., color, p.x, p.y);
+			drawLineCharacter(&EasyKey[0], EasyKey.Size(), 0, 0., color, p.x, p.y);
 		}
 	}
 }
@@ -2980,14 +2871,14 @@ void AM_drawKeys ()
 //
 //
 //=============================================================================
-void AM_drawThings ()
+void DAutomap::drawThings ()
 {
 	AMColor color;
 	AActor*	 t;
 	mpoint_t p;
 	DAngle	 angle;
 
-	for (auto &sec : level.sectors)
+	for (auto &sec : Level->sectors)
 	{
 		t = sec.thinglist;
 		while (t)
@@ -3000,12 +2891,12 @@ void AM_drawThings ()
 
 				if (am_showthingsprites > 0 && t->sprite > 0)
 				{
-					FTexture *texture = NULL;
+					FTexture *texture = nullptr;
 					spriteframe_t *frame;
 					int rotation = 0;
 
 					// try all modes backwards until a valid texture has been found.	
-					for(int show = am_showthingsprites; show > 0 && texture == NULL; show--)
+					for(int show = am_showthingsprites; show > 0 && texture == nullptr; show--)
 					{
 						const spritedef_t& sprite = sprites[t->sprite];
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
@@ -3020,10 +2911,10 @@ void AM_drawThings ()
 						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
 
 						const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
-						texture = TexMan(textureID);
+						texture = TexMan.GetTexture(textureID, true);
 					}
 
-					if (texture == NULL) goto drawTriangle;	// fall back to standard display if no sprite can be found.
+					if (texture == nullptr) goto drawTriangle;	// fall back to standard display if no sprite can be found.
 
 					const double spriteXScale = (t->Scale.X * (10. / 16.) * scale_mtof);
 					const double spriteYScale = (t->Scale.Y * (10. / 16.) * scale_mtof);
@@ -3038,7 +2929,7 @@ void AM_drawThings ()
 
 					if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 					{
-						AM_rotatePoint (&p.x, &p.y);
+						rotatePoint (&p.x, &p.y);
 						angle += -players[consoleplayer].camera->Angles.Yaw + 90.;
 					}
 
@@ -3058,7 +2949,7 @@ void AM_drawThings ()
 						// That is the case for all default keys, however.
 						if (t->IsKindOf(NAME_Key))
 						{
-							if (G_SkillProperty(SKILLP_EasyKey))
+							if (G_SkillProperty(SKILLP_EasyKey) || am_showkeys_always)
 							{
 								// Already drawn by AM_drawKeys(), so don't draw again
 								color.Index = -1;
@@ -3069,7 +2960,7 @@ void AM_drawThings ()
 
 								if (c >= 0)	color.FromRGB(RPART(c), GPART(c), BPART(c));
 								else color = AMColors[AMColors.ThingColor_CountItem];
-								AM_drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0., color, p.x, p.y);
+								drawLineCharacter(&CheatKey[0], CheatKey.Size(), 0, 0., color, p.x, p.y);
 								color.Index = -1;
 							}
 							else
@@ -3085,7 +2976,7 @@ void AM_drawThings ()
 
 					if (color.Index != -1)
 					{
-						AM_drawLineCharacter(thintriangle_guy, NUMTHINTRIANGLEGUYLINES,	16, angle, color, p.x, p.y);
+						drawLineCharacter(thintriangle_guy.data(), thintriangle_guy.size(), 16, angle, color, p.x, p.y);
 					}
 
 					if (am_cheat == 3 || am_cheat == 6)
@@ -3098,7 +2989,7 @@ void AM_drawThings ()
 							{ { -1,  1 }, { -1, -1 } },
 						};
 
-						AM_drawLineCharacter (box, 4, t->radius, angle - t->Angles.Yaw, color, p.x, p.y);
+						drawLineCharacter (box, 4, t->radius, angle - t->Angles.Yaw, color, p.x, p.y);
 					}
 				}
 			}
@@ -3113,20 +3004,20 @@ void AM_drawThings ()
 //
 //=============================================================================
 
-static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
+void DAutomap::DrawMarker (FTexture *tex, double x, double y, int yadjust,
 	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
 {
-	if (tex == NULL || tex->UseType == ETextureType::Null)
+	if (tex == nullptr || !tex->isValid())
 	{
 		return;
 	}
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
-		AM_rotatePoint (&x, &y);
+		rotatePoint (&x, &y);
 	}
 	screen->DrawTexture (tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
-		DTA_DestWidthF, tex->GetScaledWidthDouble() * CleanXfac * xscale,
-		DTA_DestHeightF, tex->GetScaledHeightDouble() * CleanYfac * yscale,
+		DTA_DestWidthF, tex->GetDisplayWidthDouble() * CleanXfac * xscale,
+		DTA_DestHeightF, tex->GetDisplayHeightDouble() * CleanYfac * yscale,
 		DTA_ClipTop, f_y,
 		DTA_ClipBottom, f_y + f_h,
 		DTA_ClipLeft, f_x,
@@ -3145,14 +3036,39 @@ static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 //
 //=============================================================================
 
-void AM_drawMarks ()
+void DAutomap::drawMarks ()
 {
+	FFont* font;
+	bool fontloaded = false;
+
 	for (int i = 0; i < AM_NUMMARKPOINTS; i++)
 	{
 		if (markpoints[i].x != -1)
 		{
-			DrawMarker (TexMan(marknums[i]), markpoints[i].x, markpoints[i].y, -3, 0,
-				1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
+			if (!fontloaded)
+			{
+				font = stricmp(*am_markfont, DEFAULT_FONT_NAME) == 0 ? nullptr : V_GetFont(am_markfont);
+				fontloaded = true;
+			}
+
+			if (font == nullptr)
+			{
+				DrawMarker(TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
+					1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
+			}
+			else
+			{
+				char numstr[2] = { char('0' + i), 0 };
+				double x = markpoints[i].x;
+				double y = markpoints[i].y;
+
+				if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+				{
+					rotatePoint (&x, &y);
+				}
+
+				screen->DrawText(font, am_markcolor, CXMTOF(x), CYMTOF(y), numstr, TAG_DONE);
+			}
 		}
 	}
 }
@@ -3163,15 +3079,15 @@ void AM_drawMarks ()
 //
 //=============================================================================
 
-void AM_drawAuthorMarkers ()
+void DAutomap::drawAuthorMarkers ()
 {
 	// [RH] Draw any actors derived from AMapMarker on the automap.
 	// If args[0] is 0, then the actor's sprite is drawn at its own location.
 	// Otherwise, its sprite is drawn at the location of any actors whose TIDs match args[0].
-	TThinkerIterator<AActor> it ("MapMarker", STAT_MAPMARKER);
+	auto it = Level->GetThinkerIterator<AActor>(NAME_MapMarker, STAT_MAPMARKER);
 	AActor *mark;
 
-	while ((mark = it.Next()) != NULL)
+	while ((mark = it.Next()) != nullptr)
 	{
 		if (mark->flags2 & MF2_DORMANT)
 		{
@@ -3184,13 +3100,13 @@ void AM_drawAuthorMarkers ()
 
 		if (mark->picnum.isValid())
 		{
-			tex = TexMan(mark->picnum);
-			if (tex->Rotations != 0xFFFF)
+			tex = TexMan.GetTexture(mark->picnum, true);
+			if (tex->GetRotations() != 0xFFFF)
 			{
-				spriteframe_t *sprframe = &SpriteFrames[tex->Rotations];
+				spriteframe_t *sprframe = &SpriteFrames[tex->GetRotations()];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan[picnum];
+				tex = TexMan.GetTexture(picnum);
 			}
 		}
 		else
@@ -3205,24 +3121,20 @@ void AM_drawAuthorMarkers ()
 				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + mark->frame];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan[picnum];
+				tex = TexMan.GetTexture(picnum);
 			}
 		}
-		FActorIterator it (mark->args[0]);
+		auto it = Level->GetActorIterator(mark->args[0]);
 		AActor *marked = mark->args[0] == 0 ? mark : it.Next();
 
-		while (marked != NULL)
+		while (marked != nullptr)
 		{
-			// Use more correct info if we have GL nodes available
-			if (mark->args[1] == 0 ||
-				(mark->args[1] == 1 && (hasglnodes ?
-				 marked->subsector->flags & SSECMF_DRAWN :
-				 marked->Sector->MoreFlags & SECMF_DRAWN)))
+			if (mark->args[1] == 0 || (mark->args[1] == 1 && (marked->subsector->flags & SSECMF_DRAWN)))
 			{
 				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);
 			}
-			marked = mark->args[0] != 0 ? it.Next() : NULL;
+			marked = mark->args[0] != 0 ? it.Next() : nullptr;
 		}
 	}
 }
@@ -3233,7 +3145,7 @@ void AM_drawAuthorMarkers ()
 //
 //=============================================================================
 
-void AM_drawCrosshair (const AMColor &color)
+void DAutomap::drawCrosshair (const AMColor &color)
 {
 	screen->DrawPixel(f_w/2, (f_h+1)/2, color.Index, color.RGB);
 }
@@ -3244,12 +3156,12 @@ void AM_drawCrosshair (const AMColor &color)
 //
 //=============================================================================
 
-void AM_Drawer (int bottom)
+void DAutomap::Drawer (int bottom)
 {
 	if (!automapactive)
 		return;
 
-	bool allmap = (level.flags2 & LEVEL2_ALLMAP) != 0;
+	bool allmap = (Level->flags2 & LEVEL2_ALLMAP) != 0;
 	bool allthings = allmap && players[consoleplayer].mo->FindInventory(NAME_PowerScanner, true) != nullptr;
 
 	if (am_portaloverlay)
@@ -3270,7 +3182,7 @@ void AM_Drawer (int bottom)
 		f_w = screen->GetWidth ();
 		f_h = bottom;
 
-		AM_clearFB(AMColors[AMColors.Background]);
+		clearFB(AMColors[AMColors.Background]);
 	}
 	else 
 	{
@@ -3279,29 +3191,28 @@ void AM_Drawer (int bottom)
 		f_w = viewwidth;
 		f_h = viewheight;
 	}
-	AM_activateNewScale();
+	activateNewScale();
 
-	if (am_textured && hasglnodes && textured && !viewactive)
-		AM_drawSubsectors();
+	if (am_textured && !viewactive)
+		drawSubsectors();
 
-	if (grid)	
-		AM_drawGrid(AMColors.GridColor);
+	if (am_showgrid)	
+		drawGrid(AMColors.GridColor);
 
-	AM_drawWalls(allmap);
-	AM_drawPlayers();
-	if (G_SkillProperty(SKILLP_EasyKey))
-		AM_drawKeys();
+	drawWalls(allmap);
+	drawPlayers();
+	if (G_SkillProperty(SKILLP_EasyKey) || am_showkeys_always)
+		drawKeys();
 	if ((am_cheat >= 2 && am_cheat != 4) || allthings)
-		AM_drawThings();
+		drawThings();
 
-	AM_drawAuthorMarkers();
+	drawAuthorMarkers();
 
 	if (!viewactive)
-		AM_drawCrosshair(AMColors[AMColors.XHairColor]);
+		drawCrosshair(AMColors[AMColors.XHairColor]);
 
-	AM_drawMarks();
-
-	AM_showSS();
+	drawMarks();
+	showSS();
 }
 
 //=============================================================================
@@ -3310,14 +3221,156 @@ void AM_Drawer (int bottom)
 //
 //=============================================================================
 
-void AM_SerializeMarkers(FSerializer &arc)
+void DAutomap::Serialize(FSerializer &arc)
 {
-	if (arc.BeginObject("automarkers"))
+	Super::Serialize(arc);
+	// This only stores those variables which do not get set each time the automap is either activated or drawn.
+	// Especially the screen coordinates can not be brought over because the display settings may have changed.
+	arc("markpointnum", markpointnum)
+		.Array("markpoints", &markpoints[0].x, AM_NUMMARKPOINTS * 2)	// write as a double array.
+		("scale_mtof", scale_mtof)
+		("scale_ftom", scale_ftom)
+		("bigstate", bigstate)
+		("min_x", min_x)
+		("min_y", min_y)
+		("max_x", max_x)
+		("max_y", max_y)
+		("min_w", min_w)
+		("min_h", min_h)
+		("max_w", max_w)
+		("max_h", max_h)
+		("min_scale_mtof", min_scale_mtof)
+		("max_scale_mtof", max_scale_mtof)
+		("mapback", mapback)
+		("level", Level);
+
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void DAutomap::UpdateShowAllLines()
+{
+	int val = am_showalllines;
+	int flagged = 0;
+	int total = 0;
+	if (val > 0 && Level->lines.Size() > 0)
 	{
-		arc("markpointnum", markpointnum)
-			.Array("markpoints", &markpoints[0].x, AM_NUMMARKPOINTS*2)	// write as a double array.
-			("scale_mtof", scale_mtof)
-			("scale_ftom", scale_ftom)
-			.EndObject();
+		for (auto &line : Level->lines)
+		{
+			// disregard intra-sector lines
+			if (line.frontsector == line.backsector) continue;
+
+			// disregard control sectors for deep water
+			if (line.frontsector->e->FakeFloor.Sectors.Size() > 0) continue;
+
+			// disregard control sectors for 3D-floors
+			if (line.frontsector->e->XFloor.attached.Size() > 0) continue;
+
+			total++;
+			if (line.flags & ML_DONTDRAW) flagged++;
+		}
+		am_showallenabled = (flagged * 100 / total >= val);
 	}
+	else if (val == 0)
+	{
+		am_showallenabled = true;
+	}
+	else
+	{
+		am_showallenabled = false;
+	}
+}
+
+void DAutomap::GoBig()
+{
+	bigstate = !bigstate;
+	if (bigstate)
+	{
+		saveScaleAndLoc();
+		minOutWindowScale();
+	}
+	else
+		restoreScaleAndLoc();
+}
+
+void DAutomap::ResetFollowLocation()
+{
+	f_oldloc.x = FLT_MAX;
+}
+
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void AM_Stop()
+{
+	automapactive = false;
+	viewactive = true;
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+void AM_ToggleMap()
+{
+	if (gamestate != GS_LEVEL)
+		return;
+
+	// Don't activate the automap if we're not allowed to use it.
+	if (dmflags2 & DF2_NO_AUTOMAP)
+		return;
+
+	// ... or if there is no automap.
+	if (!primaryLevel || !primaryLevel->automap)
+		return;
+
+	if (!automapactive)
+	{
+		// Reset AM buttons
+		Button_AM_PanLeft.Reset();
+		Button_AM_PanRight.Reset();
+		Button_AM_PanUp.Reset();
+		Button_AM_PanDown.Reset();
+		Button_AM_ZoomIn.Reset();
+		Button_AM_ZoomOut.Reset();
+
+		primaryLevel->automap->startDisplay();
+		automapactive = true;
+		viewactive = (am_overlay != 0.f);
+	}
+	else
+	{
+		if (am_overlay == 1 && viewactive)
+		{
+			viewactive = false;
+		}
+		else
+		{
+			AM_Stop();
+		}
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+DAutomapBase *AM_Create(FLevelLocals *Level)
+{
+	auto am = Create<DAutomap>();
+	am->Level = Level;
+	return am;
 }

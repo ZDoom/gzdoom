@@ -19,22 +19,8 @@
 //
 
 #include "info.h"
-#include "a_pickups.h"
-#include "p_local.h"
-#include "gi.h"
-#include "a_sharedglobal.h"
-#include "sbar.h"
-#include "a_morph.h"
-#include "doomstat.h"
-#include "serializer.h"
-#include "p_enemy.h"
-#include "d_player.h"
-#include "r_data/sprites.h"
-#include "g_levellocals.h"
+#include "actor.h"
 #include "vm.h"
-
-static FRandom pr_morphmonst ("MorphMonster");
-
 
 bool P_MorphActor(AActor *activator, AActor *victim, PClassActor *ptype, PClassActor *mtype, int duration, int style, PClassActor *enter_flash, PClassActor *exit_flash)
 {

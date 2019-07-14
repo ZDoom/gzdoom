@@ -114,7 +114,7 @@ private:
 	bool CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &FlagDefs, FName prefix);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
-	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls);
+	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls, bool *nosize);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym, bool nativetype);
 
 	void InitDefaults();
@@ -146,7 +146,7 @@ private:
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
 	FxExpression *ConvertAST(PContainerType *cclass, ZCC_TreeNode *ast);
-	FxExpression *ConvertNode(ZCC_TreeNode *node);
+	FxExpression *ConvertNode(ZCC_TreeNode *node, bool substitute= false);
 	FxExpression *ConvertImplicitScopeNode(ZCC_TreeNode *node, ZCC_Statement *nested);
 	FArgumentList &ConvertNodeList(FArgumentList &, ZCC_TreeNode *head);
 

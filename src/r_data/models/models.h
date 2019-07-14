@@ -46,6 +46,7 @@ FTextureID LoadSkin(const char * path, const char * fn);
 
 struct FSpriteModelFrame;
 class IModelVertexBuffer;
+struct FLevelLocals;
 
 enum ModelRendererType
 {
@@ -81,7 +82,7 @@ public:
 	virtual void DrawElements(int numIndices, size_t offset) = 0;
 
 private:
-	void RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation);
+	void RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation);
 };
 
 struct FModelVertex
@@ -138,7 +139,7 @@ public:
 	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist) = 0;
-	virtual float getAspectFactor() { return 1.f; }
+	virtual float getAspectFactor(FLevelLocals *) { return 1.f; }
 
 	void SetVertexBuffer(FModelRenderer *renderer, IModelVertexBuffer *buffer) { mVBuf[renderer->GetType()] = buffer; }
 	IModelVertexBuffer *GetVertexBuffer(FModelRenderer *renderer) const { return mVBuf[renderer->GetType()]; }
@@ -309,40 +310,23 @@ class FMD3Model : public FModel
 
 	struct MD3Surface
 	{
-		int numVertices;
-		int numTriangles;
-		int numSkins;
+		unsigned numVertices;
+		unsigned numTriangles;
+		unsigned numSkins;
 
-		FTextureID * skins;
-		MD3Triangle * tris;
-		MD3TexCoord * texcoords;
-		MD3Vertex * vertices;
+		TArray<FTextureID> Skins;
+		TArray<MD3Triangle> Tris;
+		TArray<MD3TexCoord> Texcoords;
+		TArray<MD3Vertex> Vertices;
 
-		unsigned int vindex;	// contains numframes arrays of vertices
-		unsigned int iindex;
-
-		MD3Surface()
-		{
-			tris=NULL;
-			vertices=NULL;
-			texcoords=NULL;
-			vindex = iindex = UINT_MAX;
-		}
-
-		~MD3Surface()
-		{
-			if (skins) delete [] skins;
-			UnloadGeometry();
-		}
+		unsigned int vindex = UINT_MAX;	// contains numframes arrays of vertices
+		unsigned int iindex = UINT_MAX;
 
 		void UnloadGeometry()
 		{
-			if (tris) delete [] tris;
-			if (vertices) delete [] vertices;
-			if (texcoords) delete [] texcoords;
-			tris = NULL;
-			vertices = NULL;
-			texcoords = NULL;
+			Tris.Reset();
+			Vertices.Reset();
+			Texcoords.Reset();
 		}
 	};
 
@@ -354,17 +338,14 @@ class FMD3Model : public FModel
 		float origin[3];
 	};
 
-	int numFrames;
 	int numTags;
-	int numSurfaces;
 	int mLumpNum;
 
-	MD3Frame * frames;
-	MD3Surface * surfaces;
+	TArray<MD3Frame> Frames;
+	TArray<MD3Surface> Surfaces;
 
 public:
-	FMD3Model() { }
-	virtual ~FMD3Model();
+	FMD3Model() = default;
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
@@ -427,7 +408,7 @@ public:
 	virtual void AddSkins(uint8_t *hitlist);
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer(FModelRenderer *renderer);
-	float getAspectFactor();
+	float getAspectFactor(FLevelLocals *) override;
 };
 
 
@@ -482,21 +463,8 @@ FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, boo
 bool IsHUDModelForPlayerAvailable(player_t * player);
 void FlushModels();
 
-class DeletingModelArray : public TArray<FModel *>
-{
-public:
 
-	~DeletingModelArray()
-	{
-		for (unsigned i = 0; i<Size(); i++)
-		{
-			delete (*this)[i];
-		}
-
-	}
-};
-
-extern DeletingModelArray Models;
+extern TDeletingArray<FModel*> Models;
 
 // Check if circle potentially intersects with node AABB
 inline bool CheckBBoxCircle(float *bbox, float x, float y, float radiusSquared)
@@ -535,12 +503,12 @@ void BSPNodeWalkCircle(void *node, float x, float y, float radiusSquared, const 
 
 // Search BSP for subsectors within the given radius and call callback(subsector) for each found
 template<typename Callback>
-void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callback)
+void BSPWalkCircle(FLevelLocals *Level, float x, float y, float radiusSquared, const Callback &callback)
 {
-	if (level.nodes.Size() == 0)
-		callback(&level.subsectors[0]);
+	if (Level->nodes.Size() == 0)
+		callback(&Level->subsectors[0]);
 	else
-		BSPNodeWalkCircle(level.HeadNode(), x, y, radiusSquared, callback);
+		BSPNodeWalkCircle(Level->HeadNode(), x, y, radiusSquared, callback);
 }
 
 #endif

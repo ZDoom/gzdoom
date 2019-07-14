@@ -32,6 +32,8 @@
 #include "vm.h"
 #include "actorinlines.h"
 
+EXTERN_CVAR(Int, sv_corpsequeuesize)
+
 //----------------------------------------------------------------------------
 //
 // PROC A_NoBlocking
@@ -60,7 +62,7 @@ void A_Unblock(AActor *self, bool drop)
 	self->Conversation = NULL;
 
 	// If the actor has attached metadata for items to drop, drop those.
-	if (drop && !self->IsKindOf (RUNTIME_CLASS (APlayerPawn)))	// [GRB]
+	if (drop && !self->IsKindOf(NAME_PlayerPawn))	// [GRB]
 	{
 		auto di = self->GetDropItems();
 
@@ -88,110 +90,6 @@ void A_Unblock(AActor *self, bool drop)
 //
 //----------------------------------------------------------------------------
 
-// Corpse queue for monsters - this should be saved out
-
-class DCorpsePointer : public DThinker
-{
-	DECLARE_CLASS (DCorpsePointer, DThinker)
-	HAS_OBJECT_POINTERS
-public:
-	DCorpsePointer (AActor *ptr);
-	void Queue();
-	void OnDestroy() override;
-	void Serialize(FSerializer &arc);
-	TObjPtr<AActor*> Corpse;
-	uint32_t Count;	// Only the first corpse pointer's count is valid.
-private:
-	DCorpsePointer () {}
-};
-
-IMPLEMENT_CLASS(DCorpsePointer, false, true)
-
-IMPLEMENT_POINTERS_START(DCorpsePointer)
-	IMPLEMENT_POINTER(Corpse)
-IMPLEMENT_POINTERS_END
-
-CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
-{
-	if (self > 0)
-	{
-		TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
-		DCorpsePointer *first = iterator.Next ();
-		while (first != NULL && first->Count > (uint32_t)self)
-		{
-			DCorpsePointer *next = iterator.Next ();
-			first->Destroy ();
-			first = next;
-		}
-	}
-}
-
-
-DCorpsePointer::DCorpsePointer(AActor *ptr)
-	: DThinker(STAT_CORPSEPOINTER), Corpse(ptr)
-{
-	Count = 0;
-}
-
-void DCorpsePointer::Queue()
-{
-	// Thinkers are added to the end of their respective lists, so
-	// the first thinker in the list is the oldest one.
-	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
-	DCorpsePointer *first = iterator.Next ();
-
-	if (first != nullptr)
-	{
-		if (first != this)
-		{
-			if (first->Count >= (uint32_t)sv_corpsequeuesize)
-			{
-				DCorpsePointer *next = iterator.Next();
-				first->Destroy();
-				first = next;
-			}
-		}
-		++first->Count;
-	}
-}
-
-void DCorpsePointer::OnDestroy ()
-{
-	// Store the count of corpses in the first thinker in the list
-	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
-	DCorpsePointer *first = iterator.Next ();
-
-	// During a serialization unwind the thinker list won't be available.
-	if (first != nullptr)
-	{
-		int prevCount = first->Count;
-
-		if (first == this)
-		{
-			first = iterator.Next();
-		}
-
-		if (first != NULL)
-		{
-			first->Count = prevCount - 1;
-		}
-
-	}
-	if (Corpse != NULL)
-	{
-		Corpse->Destroy();
-	}
-	Super::OnDestroy();
-}
-
-void DCorpsePointer::Serialize(FSerializer &arc)
-{
-	Super::Serialize(arc);
-	arc("corpse", Corpse)
-		("count", Count);
-}
-
-
 // throw another corpse on the queue
 DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 {
@@ -199,28 +97,28 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 
 	if (sv_corpsequeuesize > 0)
 	{
-		auto p = Create<DCorpsePointer> (self);
-		p->Queue();
+		auto &corpsequeue = self->Level->CorpseQueue;
+		while (corpsequeue.Size() >= (unsigned)sv_corpsequeuesize)
+		{
+			AActor *corpse = corpsequeue[0];
+			if (corpse) corpse->Destroy();
+			corpsequeue.Delete(0);
+		}
+		corpsequeue.Push(self);
 	}
 	return 0;
 }
 
-// Remove an self from the queue (for resurrection)
+// Remove an actor from the queue (for resurrection)
 DEFINE_ACTION_FUNCTION(AActor, A_DeQueueCorpse)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 
-	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
-	DCorpsePointer *corpsePtr;
-
-	while ((corpsePtr = iterator.Next()) != NULL)
+	auto &corpsequeue = self->Level->CorpseQueue;
+	auto index = corpsequeue.FindEx([=](auto &element) { return element == self; });
+	if (index < corpsequeue.Size())
 	{
-		if (corpsePtr->Corpse == self)
-		{
-			corpsePtr->Corpse = NULL;
-			corpsePtr->Destroy ();
-			return 0;
-		}
+		corpsequeue.Delete(index);
 	}
 	return 0;
 }

@@ -36,6 +36,7 @@
 #include <stdio.h>
 
 #include "i_system.h"
+#include "c_cvars.h"
 #include "x86.h"
 #include "i_video.h"
 #include "r_state.h"
@@ -66,8 +67,12 @@
 #include "r_videoscale.h"
 #include "i_time.h"
 #include "version.h"
+#include "g_levellocals.h"
+#include "am_map.h"
+#include "atterm.h"
 
-EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Int, menu_resolution_custom_width)
+EXTERN_CVAR(Int, menu_resolution_custom_height)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -84,10 +89,6 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	else if (vid_maxfps > 1000)
 	{
 		vid_maxfps = 1000;
-	}
-	else if (cl_capfps == 0)
-	{
-		I_SetFPSLimit(vid_maxfps);
 	}
 }
 
@@ -106,6 +107,15 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	screen->SetTextureFilterMode();
 
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
+}
+
+CUSTOM_CVAR(Int, vid_enablevulkan, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// [SP] This may seem pointless - but I don't want to implement live switching just
+	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
+	// do it right without memory leaks
+
+	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
 }
 
 CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
@@ -140,7 +150,7 @@ public:
 
 int DisplayWidth, DisplayHeight;
 
-FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
+FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
 
 uint32_t Col2RGB8[65][256];
 uint32_t *Col2RGB8_LessPrecision[65];
@@ -534,44 +544,33 @@ CCMD(clean)
 
 
 void V_UpdateModeSize (int width, int height)
-{
-	int cx1, cx2;
-	V_CalcCleanFacs(320, 200, width, height, &CleanXfac, &CleanYfac, &cx1, &cx2);
+{	
+	// This calculates the menu scale.
+	// The optimal scale will always be to fit a virtual 640 pixel wide display onto the screen.
+	// Exceptions are made for a few ranges where the available virtual width is > 480.
 
-	CleanWidth = width / CleanXfac;
-	CleanHeight = height / CleanYfac;
-	assert(CleanWidth >= 320 && CleanHeight >= 200);
+	// This reference size is being used so that on 800x450 (small 16:9) a scale of 2 gets used.
 
-	if (width < 800 || width >= 960)
-	{
-		if (cx1 < cx2)
-		{
-			// Special case in which we don't need to scale down.
-			CleanXfac_1 = 
-			CleanYfac_1 = cx1;
-		}
-		else
-		{
-			CleanXfac_1 = MAX(CleanXfac - 1, 1);
-			CleanYfac_1 = MAX(CleanYfac - 1, 1);
-			// On larger screens this is not enough so make sure it's at most 3/4 of the screen's width
-			while (CleanXfac_1 * 320 > screen->GetWidth()*3/4 && CleanXfac_1 > 2)
-			{
-				CleanXfac_1--;
-				CleanYfac_1--;
-			}
-		}
-		CleanWidth_1 = width / CleanXfac_1;
-		CleanHeight_1 = height / CleanYfac_1;
-	}
-	else // if the width is between 800 and 960 the ratio between the screensize and CleanXFac-1 becomes too large.
-	{
-		CleanXfac_1 = CleanXfac;
-		CleanYfac_1 = CleanYfac;
-		CleanWidth_1 = CleanWidth;
-		CleanHeight_1 = CleanHeight;
-	}
+	CleanXfac = std::max(std::min(screen->GetWidth() / 400, screen->GetHeight() / 240), 1);
+	if (CleanXfac >= 4) CleanXfac--;	// Otherwise we do not have enough space for the episode/skill menus in some languages.
+	CleanYfac = CleanXfac;
+	CleanWidth = screen->GetWidth() / CleanXfac;
+	CleanHeight = screen->GetHeight() / CleanYfac;
 
+	int w = screen->GetWidth();
+	int factor;
+	if (w < 640) factor = 1;
+	else if (w >= 1024 && w < 1280) factor = 2;
+	else if (w >= 1600 && w < 1920) factor = 3; 
+	else  factor = w / 640;
+
+	if (w < 1360) factor = 1;
+	else if (w < 1920) factor = 2;
+	else factor = int(factor * 0.7);
+
+	CleanYfac_1 = CleanXfac_1 = factor;// MAX(1, int(factor * 0.7));
+	CleanWidth_1 = width / CleanXfac_1;
+	CleanHeight_1 = height / CleanYfac_1;
 
 	DisplayWidth = width;
 	DisplayHeight = height;
@@ -590,57 +589,14 @@ void V_OutputResized (int width, int height)
 	C_NewModeAdjust();
 	// Reload crosshair if transitioned to a different size
 	ST_LoadCrosshair(true);
-	AM_NewResolution();
+	if (primaryLevel && primaryLevel->automap)
+		primaryLevel->automap->NewResolution();
 }
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)
 {
-	float ratio;
-	int cwidth;
-	int cheight;
-	int cx1, cy1, cx2, cy2;
-
-	// For larger screems always use at least a 16:9 ratio for clean factor calculation, even if the actual ratio is narrower.
-	if (realwidth > 1280 && (double)realwidth / realheight < 16./9)
-	{
-		realheight = realwidth * 9 / 16;
-	}
-
-	ratio = ActiveRatio(realwidth, realheight);
-	if (AspectTallerThanWide(ratio))
-	{
-		cwidth = realwidth;
-		cheight = realheight * AspectMultiplier(ratio) / 48;
-	}
-	else
-	{
-		cwidth = realwidth * AspectMultiplier(ratio) / 48;
-		cheight = realheight;
-	}
-	// Use whichever pair of cwidth/cheight or width/height that produces less difference
-	// between CleanXfac and CleanYfac.
-	cx1 = MAX(cwidth / designwidth, 1);
-	cy1 = MAX(cheight / designheight, 1);
-	cx2 = MAX(realwidth / designwidth, 1);
-	cy2 = MAX(realheight / designheight, 1);
-	if (abs(cx1 - cy1) <= abs(cx2 - cy2) || MAX(cx1, cx2) >= 4)
-	{ // e.g. 640x360 looks better with this.
-		*cleanx = cx1;
-		*cleany = cy1;
-	}
-	else
-	{ // e.g. 720x480 looks better with this.
-		*cleanx = cx2;
-		*cleany = cy2;
-	}
-
-	if (*cleanx < *cleany)
-		*cleany = *cleanx;
-	else
-		*cleanx = *cleany;
-
-	if (_cx1 != NULL)	*_cx1 = cx1;
-	if (_cx2 != NULL)	*_cx2 = cx2;
+	if (designheight < 240 && realheight >= 480) designheight = 240;
+	*cleanx = *cleany = std::min(realwidth / designwidth, realheight / designheight);
 }
 
 bool IVideo::SetResolution ()
@@ -710,9 +666,6 @@ void V_Init (bool restart)
 	// Update screen palette when restarting
 	else
 	{
-		PalEntry *palette = screen->GetPalette ();
-		for (int i = 0; i < 256; ++i)
-			*palette++ = GPalette.BaseColors[i];
 		screen->UpdatePalette();
 	}
 
@@ -739,6 +692,10 @@ void V_Init2()
 
 	Video->SetResolution();	// this only fails via exceptions.
 	Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
+
+	// init these for the scaling menu
+	menu_resolution_custom_width = SCREENWIDTH;
+	menu_resolution_custom_height = SCREENHEIGHT;
 
 	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
@@ -924,7 +881,7 @@ void ScaleWithAspect (int &w, int &h, int Width, int Height)
 
 CCMD(vid_setsize)
 {
-	if (argv.argc() < 2)
+	if (argv.argc() < 3)
 	{
 		Printf("Usage: vid_setsize width height\n");
 	}
@@ -963,6 +920,11 @@ DEFINE_GLOBAL(SmallFont)
 DEFINE_GLOBAL(SmallFont2)
 DEFINE_GLOBAL(BigFont)
 DEFINE_GLOBAL(ConFont)
+DEFINE_GLOBAL(NewConsoleFont)
+DEFINE_GLOBAL(NewSmallFont)
+DEFINE_GLOBAL(AlternativeSmallFont)
+DEFINE_GLOBAL(OriginalSmallFont)
+DEFINE_GLOBAL(OriginalBigFont)
 DEFINE_GLOBAL(IntermissionFont)
 DEFINE_GLOBAL(CleanXfac)
 DEFINE_GLOBAL(CleanYfac)
@@ -972,3 +934,4 @@ DEFINE_GLOBAL(CleanXfac_1)
 DEFINE_GLOBAL(CleanYfac_1)
 DEFINE_GLOBAL(CleanWidth_1)
 DEFINE_GLOBAL(CleanHeight_1)
+DEFINE_GLOBAL(generic_ui)

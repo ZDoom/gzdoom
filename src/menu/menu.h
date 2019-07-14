@@ -9,6 +9,7 @@
 #include "r_data/r_translate.h"
 #include "c_cvars.h"
 #include "v_font.h"
+#include "gi.h"
 #include "textures/textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
@@ -73,10 +74,10 @@ private:
 	int LastAccessed = -1;
 	TArray<char> SavePicData;
 	FTexture *SavePic = nullptr;
-	TArray<FBrokenLines> SaveComment;
 
 public:
 	int WindowSize = 0;
+	FString SaveCommentString;
 	FSaveGameNode *quickSaveSlot = nullptr;
 	~FSavegameManager();
 
@@ -149,6 +150,7 @@ public:
 	EColorRange mFontColor;
 	EColorRange mFontColor2;
 	bool mCenter;
+	bool mFromEngine;
 
 	void Reset()
 	{
@@ -164,6 +166,7 @@ public:
 		mFont = NULL;
 		mFontColor = CR_UNTRANSLATED;
 		mFontColor2 = CR_UNTRANSLATED;
+		mFromEngine = false;
 	}
 	
 	size_t PropagateMark() override;
@@ -194,6 +197,7 @@ public:
 	int mIndent;
 	int mPosition;
 	bool mDontDim;
+	FFont *mFont;
 
 	void CalcIndent();
 	DMenuItemBase *GetItem(FName name);
@@ -204,6 +208,8 @@ public:
 		mScrollTop = 0;
 		mIndent = 0;
 		mDontDim = 0;
+		mFont = gameinfo.gametype == GAME_Doom ? BigUpper : BigFont;
+
 	}
 	size_t PropagateMark() override;
 	~DOptionMenuDescriptor()
@@ -339,8 +345,9 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_PreviousMenu ();
 void M_ParseMenuDefs();
+void M_StartupEpisodeMenu(FGameStartup *gs);
 void M_StartupSkillMenu(FGameStartup *gs);
-void M_StartControlPanel (bool makeSound);
+void M_StartControlPanel (bool makeSound, bool scaleoverride = false);
 void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);
@@ -355,5 +362,7 @@ DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickCo
 DMenuItemBase * CreateListMenuItemPatch(double x, double y, int height, int hotkey, FTextureID tex, FName command, int param);
 DMenuItemBase * CreateListMenuItemText(double x, double y, int height, int hotkey, const char *text, FFont *font, PalEntry color1, PalEntry color2, FName command, int param);
 DMenuItemBase * CreateOptionMenuItemCommand(const char *label, FName cmd, bool centered = false);
+
+void UpdateVRModes(bool considerQuadBuffered=true);
 
 #endif

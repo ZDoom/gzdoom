@@ -167,6 +167,26 @@ AF40D0E49BD1B76D4B1AADD8212ADC46 // MAP01 (the wad that shall not be named =P)
 	pointonline
 }
 
+920F8D876ECD96D8C2A978FF1AB2B401 // Darken2.wad map01 - Nodes go out of bounds/beyond normal sector boundaries
+CFEDB7FA89885E24856CAC9A2FB3CE58 // Darken2.wad map03 - GZDoomBuilder crashes when displaying Nodes
+8E961FA7029761D5FAB3932C40F10CD2 // Darken2.wad map04 - Nodes go out of bounds/beyond normal sector boundaries
+DEA5E9C6253FFF8FDB2D5E5BADE13A9D // Darken2.wad map06 - Nodes go out of bounds/beyond normal sector boundaries
+0E72254C0C26F721333A1C56E3648D68 // Darken2.wad map07 - Nodes go out of bounds/beyond normal sector boundaries
+1437B40F2D56DF82346366814E9729D9 // Darken2.wad map08 - Nodes go out of bounds/beyond normal sector boundaries
+8B15F89E47E422780FBF2D6CDE3AA050 // Darken2.wad map09 - GZDoomBuilder crashes when displaying Nodes
+5A2FD43D23B45191229E5C74E9398D36 // Darken2.wad map10 - Nodes go out of bounds/beyond normal sector boundaries
+FA25A78B3DFD7CC44E9B10C7B78EADAE // Darken2.wad map11 - Nodes go out beyond normal sector boundaries
+01592ACF001C534076556D9E1B5D85E7 // Darken2.wad map12 - Nodes go out of bounds/beyond normal sector boundaries
+16A2ED2917A68B2FD8D264BE4D64EA09 // Darken2.wad map13 - Nodes go out of bounds/beyond normal sector boundaries
+F5DA2AA0C7112E090167A6B2F6D4A079 // Darken2.wad map15 - Nodes go out beyond normal sector boundaries
+A40A4472AB0FDBE2D55ADADA7D9005C8 // Darken2.wad map16 - Nodes go out of bounds/beyond normal sector boundaries
+244701904E6B754A02842415AB183EBE // Darken2.wad map17 - Nodes go out beyond normal sector boundaries
+661D3C9221114A1CD16674CBFF239DDF // Darken2.wad map19 - Nodes go out of bounds/beyond normal sector boundaries
+1FB559C4C37CCE8C3883057C963952A8 // Darken2.wad map20 - Nodes go out beyond normal sector boundaries
+D36E7D121F28F77A3780A5BD88425FB4 // Darken2.wad map21 - Nodes go out beyond normal sector boundaries
+3253B280FB7A4A04284FE08A6D9F222D // Darken2.wad map22 - Nodes go out beyond normal sector boundaries
+E0E5517B7928E88B88F6A5B77AC449DF // Darken2.wad map23 - Nodes go out of bounds/beyond normal sector boundaries
+6DD76422593381E3234FA703C155C493 // Darken2.wad map24 - Nodes go out of bounds/beyond normal sector boundaries
 8B2AC8D4DB4A49A5DCCBB067E04434D6 // The Hell Factory Hub One, map04
 65A1EB4C87386F290816660A52932FF1 // Master Levels, garrison.wad
 3DEE4EFEFAF3260C800A30734F54CE75 // Hellbound, map14
@@ -176,6 +196,8 @@ D5F64E02679A81B82006AF34A6A8EAC3 // plutonia.wad map32
 BA4860C7A2F5D705DB32A1A38DB77EC4 // pl2.wad map10
 EDA5CE7C462BD171BF8110AC56B67857 // pl2.wad map11
 A9A9A728E689266939C1B71655F320CA // pl2.wad map25
+62CA74092FC88C1E7FE2D0B1A8034E29 // pl2.wad map29
+19E1CFD717FC6BBA9371F0F529B4CDFF // ur_final.wad map27
 {
 	rebuildnodes
 }
@@ -231,6 +253,7 @@ C98F79709BD7E0E4C19026AB9575EC6F // cc-cod.zip:codlev.wad map07
 
 D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 19D03FFC875589E21EDBB7AB74EF4AEF // Return to Hadron, e1m9, 2016.01.03 update
+5BDA34DA60C0530794CC1EA2DA017976 // doom2.wad map14
 {
 	pointonline
 }
@@ -240,8 +263,6 @@ FA23E72FA955E66EC68609F72C0BA71E // unloved.pk3:unlovedmaps.wad map02
 41BEC1F643CFEEC997AF98276A05EC88 // unloved.pk3:unlovedmaps.wad map03
 AF9A6370BE562584BC11165ECF364713 // unloved.pk3:unlovedmaps.wad map04
 DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
-261E64897A572C8DB8DC041E64BE27AD // unloved2beta1.pk3:u2_new2maps2.wad map06
-04800B1F35E8C036EBABC8C616402927 // unloved2beta1.pk3:u2_new2maps2.wad map07
 9E54F70648A77BBD090FF78A3AA05367 // unloved2beta1.pk3:u2_new2maps2.wad map08
 72E9E0F41F691B7F956E62F35B4A617F // unloved2beta1.pk3:u2_new2maps2.wad map09
 3D3FE412E87AD8B2316DAEC9E25F2E5D // unloved2beta1.pk3:u2_new2maps2.wad map10
@@ -253,4 +274,16 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 {
 	setslopeoverflow
 	polyobj
+}
+
+1624AD80349566AA7F29D2CA0D51754B // The Gateway Experiments Episode 5: Prime Directive, ge5map02
+{
+	checkswitchrange
+}
+
+261E64897A572C8DB8DC041E64BE27AD // unloved2beta1.pk3:u2_new2maps2.wad map06
+04800B1F35E8C036EBABC8C616402927 // unloved2beta1.pk3:u2_new2maps2.wad map07
+{
+	clipmidtex
+	checkswitchrange
 }

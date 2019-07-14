@@ -321,10 +321,6 @@ struct VMValue
 	{
 		sp = s;
 	}
-	VMValue(DObject *v)
-	{
-		a = v;
-	}
 	VMValue(void *v)
 	{
 		a = v;
@@ -373,7 +369,7 @@ struct VMValue
 		}
 		if (Type == REGT_STRING)
 		{
-			return s().ToLong();
+			return (int)s().ToLong();
 		}
 		// FIXME
 		return 0;
@@ -513,6 +509,7 @@ bool AssertObject(void * ob);
 #define PARAM_ANGLE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_FLOAT); DAngle x = param[p].f;
 #define PARAM_STRING_VAL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_STRING); FString x = param[p].s();
 #define PARAM_STRING_AT(p,x)		assert((p) < numparam); assert(reginfo[p] == REGT_STRING); const FString &x = param[p].s();
+#define PARAM_STATELABEL_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_INT); int x = param[p].i;
 #define PARAM_STATE_AT(p,x)			assert((p) < numparam); assert(reginfo[p] == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, self->GetClass());
 #define PARAM_STATE_ACTION_AT(p,x)	assert((p) < numparam); assert(reginfo[p] == REGT_INT); FState *x = (FState *)StateLabels.GetState(param[p].i, stateowner->GetClass());
 #define PARAM_POINTER_AT(p,x,type)	assert((p) < numparam); assert(reginfo[p] == REGT_POINTER); type *x = (type *)param[p].a;
@@ -538,6 +535,7 @@ bool AssertObject(void * ob);
 #define PARAM_ANGLE(x)				++paramnum; PARAM_ANGLE_AT(paramnum,x)
 #define PARAM_STRING(x)				++paramnum; PARAM_STRING_AT(paramnum,x)
 #define PARAM_STRING_VAL(x)				++paramnum; PARAM_STRING_VAL_AT(paramnum,x)
+#define PARAM_STATELABEL(x)				++paramnum; PARAM_STATELABEL_AT(paramnum,x)
 #define PARAM_STATE(x)				++paramnum; PARAM_STATE_AT(paramnum,x)
 #define PARAM_STATE_ACTION(x)		++paramnum; PARAM_STATE_ACTION_AT(paramnum,x)
 #define PARAM_POINTER(x,type)		++paramnum; PARAM_POINTER_AT(paramnum,x,type)
@@ -595,6 +593,7 @@ struct DirectNativeDesc
 	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); }
 	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11), TP(12)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); VP(12); }
 	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11), TP(12), TP(13)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); VP(12); VP(13); }
+	template<typename Ret, TP(1), TP(2), TP(3), TP(4), TP(5), TP(6), TP(7), TP(8), TP(9), TP(10), TP(11), TP(12), TP(13), TP(14)> DirectNativeDesc(Ret(*func)(P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14)) : Ptr(reinterpret_cast<void*>(func)) { ValidateRet<Ret>(); VP(1); VP(2); VP(3); VP(4); VP(5); VP(6); VP(7); VP(8); VP(9); VP(10); VP(11); VP(12); VP(13), VP(14); }
 	#undef TP
 	#undef VP
 
@@ -603,7 +602,7 @@ struct DirectNativeDesc
 
 	operator void *() const { return Ptr; }
 
-	void *Ptr = nullptr;
+	void *Ptr;
 };
 
 struct AFuncDesc
@@ -644,7 +643,7 @@ struct AFuncDesc
 #define DEFINE_ACTION_FUNCTION_NATIVE0(cls, name, native) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, {} }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)
@@ -652,7 +651,7 @@ struct AFuncDesc
 #define DEFINE_ACTION_FUNCTION(cls, name) \
 	static int AF_##cls##_##name(VM_ARGS); \
 	VMNativeFunction *cls##_##name##_VMPtr; \
-	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr, {} }; \
+	static const AFuncDesc cls##_##name##_Hook = { #cls, #name, AF_##cls##_##name, &cls##_##name##_VMPtr }; \
 	extern AFuncDesc const *const cls##_##name##_HookPtr; \
 	MSVC_ASEG AFuncDesc const *const cls##_##name##_HookPtr GCC_ASEG = &cls##_##name##_Hook; \
 	static int AF_##cls##_##name(VM_ARGS)

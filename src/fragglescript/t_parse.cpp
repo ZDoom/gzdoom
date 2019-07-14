@@ -34,7 +34,7 @@
 #include <stdarg.h>
 #include "t_script.h"
 #include "v_text.h"
-
+#include "g_levellocals.h"
 
 CVAR(Bool, script_debug, false, 0)
 
@@ -561,7 +561,7 @@ void FParser::SimpleEvaluate(svalue_t &returnvar, int n)
 		break;
 		
     case name_:   
-		var = Script->FindVariable(Tokens[n]);
+		var = Script->FindVariable(Tokens[n], Level->FraggleScriptThinker->GlobalScript);
 		if(!var)
 		{
 			script_error("unknown variable '%s'\n", Tokens[n]);

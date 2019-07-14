@@ -44,10 +44,11 @@ bool I_SetCursor(FTexture *cursorpic)
 	static SDL_Cursor *cursor;
 	static SDL_Surface *cursorSurface;
 
-	if (cursorpic != NULL && cursorpic->UseType != ETextureType::Null)
+	if (cursorpic != NULL && cursorpic->isValid())
 	{
+		auto src = cursorpic->GetBgraBitmap(nullptr);
 		// Must be no larger than 32x32.
-		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)
+		if (src.GetWidth() > 32 || src.GetHeight() > 32)
 		{
 			return false;
 		}
@@ -59,7 +60,7 @@ bool I_SetCursor(FTexture *cursorpic)
 		uint8_t buffer[32*32*4];
 		memset(buffer, 0, 32*32*4);
 		FBitmap bmp(buffer, 32*4, 32, 32);
-		cursorpic->CopyTrueColorPixels(&bmp, 0, 0);
+		bmp.Blit(0, 0, src);	// expand to 32*32
 		memcpy(cursorSurface->pixels, bmp.GetPixels(), 32*32*4);
 		SDL_UnlockSurface(cursorSurface);
 

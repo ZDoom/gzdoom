@@ -27,8 +27,8 @@ II. Implementation Semantics
 II.A : Storage and Retrieval of Data
 ------------------------------------
 
-Any TEXTMAP lump in the described namespaces must be encoded in ISO 8859-1 which
-as of this writing is the only character encoding supported by ZDoom.
+Any TEXTMAP lump in the described namespaces must be encoded in either ISO 8859-1, Windows-1252 or UTF-8
+with UTF-8 being the recommended encoding.
 
 -----------------------------------
 II.B : Storage Within Archive Files
@@ -200,6 +200,13 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  useowncolors_bottom = <bool>; // Set to 1 to use the colors set in the sidedef. Default is using the colors from the owning sector.
 	  uppercolor_bottom = <int>;    // Material color of the top of the lower tier.
 	  lowercolor_bottom = <int>;    // Material color of the bottom of the lower tier. (Hardware rendering only.)
+
+      useowncoloradd_top = <bool>;  // Whether or not to use the given additive color for the top section of the sidedef.
+      coloradd_top = <int>;         // Additive material color to apply to top section of sidedef. Default is black (0x000000)
+      useowncoloradd_mid = <bool>;  // Whether or not to use the given additive color for the middle section of the sidedef.
+      coloradd_mid = <int>;         // Additive material color to apply to middle section of sidedef. Default is black (0x000000)
+      useowncoloradd_bottom = <bool>;  // Whether or not to use the given additive color for the bottom section of the sidedef.
+      coloradd_bottom = <int>;      // Additive material color to apply to bottom section of sidedef. Default is black (0x000000)
    }
 
    sector
@@ -217,16 +224,16 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       ceilingplane_a = <float>;       // Define the plane equation for the sector's ceiling. Default is a horizontal plane at 'heightceiling'.
       ceilingplane_b = <float>;       // 'heightceiling' will still be used to calculate texture alignment.
       ceilingplane_c = <float>;       // The plane equation will only be used if all 4 values are given.
-      ceilingplane_d = <float>;
+      ceilingplane_d = <float>;       // The plane is defined as a*x + b*y + c*z + d = 0 with the normal vector pointing downward.
       floorplane_a = <float>;         // Define the plane equation for the sector's floor. Default is a horizontal plane at 'heightfloor'.
       floorplane_b = <float>;         // 'heightfloor' will still be used to calculate texture alignment.
       floorplane_c = <float>;         // The plane equation will only be used if all 4 values are given.
-      floorplane_d = <float>;
+      floorplane_d = <float>;         // The plane is defined as a*x + b*y + c*z + d = 0 with the normal vector pointing upward.
       lightfloor = <integer>;         // The floor's light level. Default is 0.
       lightceiling = <integer>;       // The ceiling's light level. Default is 0.
-      lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is 
+      lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is
                                       // relative to the owning sector's light level.
-      lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is 
+      lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is
                                       // relative to the owning sector's light level.
       alphafloor = <float>;           // translucency of floor plane (only has meaning with Sector_SetPortal) Default is 1.0.
       alphaceiling = <float>;         // translucency of ceiling plane (only has meaning with Sector_SetPortal) Default is 1.0.
@@ -273,6 +280,10 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
       color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
 
+      coloradd_floor = <int>;         // Additive material color applied to the sector floor. Default is black (0x000000)
+      coloradd_ceiling = <int>;       // Additive material color applied to the sector ceiling. Default is black (0x000000)
+      coloradd_sprites = <int>;       // Additive material color applied to sprites within the sector. Default is black (0x000000)
+      coloradd_walls = <int>;          // Additive material color applied to walls within the sector. Default is black (0x000000)
 
       portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>;       // ceiling portal disabled.

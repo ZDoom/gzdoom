@@ -56,6 +56,9 @@ struct FPortalGroupArray;
 struct visstyle_t;
 class FLightDefaults;
 struct FSection;
+struct FLevelLocals;
+struct FDynamicLight;
+
 //
 // NOTES: AActor
 //
@@ -91,8 +94,7 @@ struct FSection;
 //
 // Every actor is linked into a single sector
 // based on its origin coordinates.
-// The subsector_t is found with R_PointInSubsector(x,y),
-// and the sector_t can be found with subsector->sector.
+// The subsector_t is found with PointInSector(x,y).
 // The sector links are only used by the rendering code,
 // the play simulation does not care about them at all.
 //
@@ -407,6 +409,8 @@ enum ActorFlag8
 	MF8_BLOCKASPLAYER	= 0x00000004,	// actor is blocked by player-blocking lines even if not a player
 	MF8_DONTFACETALKER	= 0x00000008,	// don't alter the angle to face the player in conversations
 	MF8_HITOWNER		= 0x00000010,	// projectile can hit the actor that fired it
+	MF8_NOFRICTION		= 0x00000020,	// friction doesn't apply to the actor at all
+	MF8_NOFRICTIONBOUNCE	= 0x00000040,	// don't bounce off walls when on icy floors
 };
 
 // --- mobj.renderflags ---
@@ -451,6 +455,7 @@ enum ActorRenderFlag
 
 	RF_SPRITEFLIP		= 0x08000000,	// sprite flipped on x-axis
 	RF_ZDOOMTRANS		= 0x10000000,	// is not normally transparent in Vanilla Doom
+	RF_NOINTERPOLATEVIEW = 0x40000000,	// don't interpolate the view next frame if this actor is a camera.
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.
@@ -637,8 +642,8 @@ class AActor : public DThinker
 	DECLARE_CLASS_WITH_META (AActor, DThinker, PClassActor)
 	HAS_OBJECT_POINTERS
 public:
-	AActor () throw();
-	AActor (const AActor &other) throw();
+	AActor() = default;
+	AActor(const AActor &other) = delete;	// Calling this would be disastrous.
 	AActor &operator= (const AActor &other);
 	~AActor ();
 
@@ -650,7 +655,7 @@ public:
 	virtual void PostBeginPlay() override;		// Called immediately before the actor's first tick
 	virtual void Tick() override;
 
-	static AActor *StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
+	static AActor *StaticSpawn (FLevelLocals *Level, PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing = false);
 
 	inline AActor *GetDefault () const
 	{
@@ -744,11 +749,6 @@ public:
 	bool CallOkayToSwitchTarget(AActor *other);
 	bool OkayToSwitchTarget (AActor *other);
 
-	// Note: Although some of the inventory functions are virtual, this
-	// is not exposed to scripts, as the only class overriding them is 
-	// APlayerPawn for some specific handling for players. None of this
-	// should ever be overridden by custom classes.
-
 	// Uses an item and removes it from the inventory.
 	bool UseInventory (AActor *item);
 
@@ -759,7 +759,7 @@ public:
 	void ClearInventory();
 
 	// Returns true if this view is considered "local" for the player.
-	bool CheckLocalView (int playernum) const;
+	bool CheckLocalView() const;
 
 	// Finds the first item of a particular type.
 	AActor *FindInventory (PClassActor *type, bool subclass=false);
@@ -823,7 +823,9 @@ public:
 	void Crash();
 
 	// Return starting health adjusted by skill level
+	double AttackOffset(double offset = 0);
 	int SpawnHealth() const;
+	virtual int GetMaxHealth(bool withupgrades = false) const;
 	int GetGibHealth() const;
 	double GetCameraHeight() const;
 
@@ -904,74 +906,12 @@ public:
 		return other->PosRelative(this) - Pos();
 	}
 
-	DVector2 Vec2Offset(double dx, double dy, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return { X() + dx, Y() + dy };
-		}
-		else
-		{
-			return P_GetOffsetPosition(X(), Y(), dx, dy);
-		}
-	}
-
-
-	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return{ X() + dx, Y() + dy, atz };
-		}
-		else
-		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
-			return DVector3(v, atz);
-		}
-	}
-
-	DVector2 Vec2Angle(double length, DAngle angle, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return{ X() + length * angle.Cos(), Y() + length * angle.Sin() };
-		}
-		else
-		{
-			return P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
-		}
-	}
-
-	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return { X() + dx, Y() + dy, Z() + dz };
-		}
-		else
-		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), dx, dy);
-			return DVector3(v, Z() + dz);
-		}
-	}
-
-	DVector3 Vec3Offset(const DVector3 &ofs, bool absolute = false)
-	{
-		return Vec3Offset(ofs.X, ofs.Y, ofs.Z, absolute);
-	}
-
-	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false)
-	{
-		if (absolute)
-		{
-			return{ X() + length * angle.Cos(), Y() + length * angle.Sin(), Z() + dz };
-		}
-		else
-		{
-			DVector2 v = P_GetOffsetPosition(X(), Y(), length*angle.Cos(), length*angle.Sin());
-			return DVector3(v, Z() + dz);
-		}
-	}
+	DVector2 Vec2Offset(double dx, double dy, bool absolute = false);
+	DVector3 Vec2OffsetZ(double dx, double dy, double atz, bool absolute = false);
+	DVector2 Vec2Angle(double length, DAngle angle, bool absolute = false);
+	DVector3 Vec3Offset(double dx, double dy, double dz, bool absolute = false);
+	DVector3 Vec3Offset(const DVector3 &ofs, bool absolute = false);
+	DVector3 Vec3Angle(double length, DAngle angle, double dz, bool absolute = false);
 
 	void ClearInterpolation();
 
@@ -1108,7 +1048,7 @@ public:
 	int32_t			threshold;		// if > 0, the target will be chased
 	int32_t			DefThreshold;	// [MC] Default threshold which the actor will reset its threshold to after switching targets
 									// no matter what (even if shot)
-	player_t		*player;		// only valid if type of APlayerPawn
+	player_t		*player;		// only valid if type of PlayerPawn
 	TObjPtr<AActor*>	LastLookActor;	// Actor last looked for (if TIDtoHate != 0)
 	DVector3		SpawnPoint; 	// For nightmare respawn
 	uint16_t			SpawnAngle;
@@ -1237,25 +1177,27 @@ public:
 	DVector3 Prev;
 	DRotator PrevAngles;
 	int PrevPortalGroup;
-	TArray<TObjPtr<AActor*> > AttachedLights;
+	TArray<FDynamicLight *> AttachedLights;
+	TDeletingArray<FLightDefaults *> UserLights;
 
 	// When was this actor spawned?
 	int SpawnTime;
+	uint32_t SpawnOrder;
+
 
 	// ThingIDs
-	static void ClearTIDHashes ();
+	void SetTID (int newTID);
+
+private:
 	void AddToHash ();
 	void RemoveFromHash ();
 
-
-private:
-	static AActor *TIDHash[128];
 	static inline int TIDHASH (int key) { return key & 127; }
+
 public:
 	static FSharedStringArena mStringPropertyData;
 private:
 	friend class FActorIterator;
-	friend bool P_IsTIDUsed(int tid);
 
 	bool FixMapthingPos();
 
@@ -1263,7 +1205,6 @@ public:
 	void LinkToWorld (FLinkContext *ctx, bool spawningmapthing=false, sector_t *sector = NULL);
 	void UnlinkFromWorld(FLinkContext *ctx);
 	void AdjustFloorClip ();
-	bool InStateSequence(FState * newstate, FState * basestate);
 	bool IsMapActor();
 	int GetTics(FState * newstate);
 	bool SetState (FState *newstate, bool nofunction=false);
@@ -1334,6 +1275,11 @@ public:
 	bool isAtZ(double checkz) const
 	{
 		return fabs(Z() - checkz) < EQUAL_EPSILON;
+	}
+
+	double RenderRadius() const
+	{
+		return MAX(radius, renderradius);
 	}
 
 	DVector3 PosRelative(int grp) const;
@@ -1489,31 +1435,30 @@ public:
 	}
 
 	int ApplyDamageFactor(FName damagetype, int damage) const;
-	int GetModifiedDamage(FName damagetype, int damage, bool passive);
-
-	static void DeleteAllAttachedLights();
-	static void RecreateAllAttachedLights();
+	int GetModifiedDamage(FName damagetype, int damage, bool passive, AActor *inflictor, AActor *source, int flags = 0);
+	void DeleteAttachedLights();
+	bool isFrozen();
 
 	bool				hasmodel;
-
-	size_t PropagateMark();
 };
 
 class FActorIterator
 {
+	friend struct FLevelLocals;
+protected:
+	FActorIterator (AActor **hash, int i) : TIDHash(hash), base (nullptr), id (i)
+	{
+	}
+	FActorIterator (AActor **hash, int i, AActor *start) : TIDHash(hash), base (start), id (i)
+	{
+	}
 public:
-	FActorIterator (int i) : base (NULL), id (i)
-	{
-	}
-	FActorIterator (int i, AActor *start) : base (start), id (i)
-	{
-	}
 	AActor *Next ()
 	{
 		if (id == 0)
-			return NULL;
+			return nullptr;
 		if (!base)
-			base = AActor::TIDHash[id & 127];
+			base = TIDHash[id & 127];
 		else
 			base = base->inext;
 
@@ -1528,37 +1473,23 @@ public:
 	}
 
 private:
+	AActor **TIDHash;
 	AActor *base;
 	int id;
 };
 
-template<class T>
-class TActorIterator : public FActorIterator
-{
-public:
-	TActorIterator (int id) : FActorIterator (id) {}
-	T *Next ()
-	{
-		AActor *actor;
-		do
-		{
-			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
-		return static_cast<T *>(actor);
-	}
-};
-
 class NActorIterator : public FActorIterator
 {
+	friend struct FLevelLocals;
 	const PClass *type;
+protected:
+	NActorIterator (AActor **hash, const PClass *cls, int id) : FActorIterator (hash, id) { type = cls; }
+	NActorIterator (AActor **hash, FName cls, int id) : FActorIterator (hash, id) { type = PClass::FindClass(cls); }
 public:
-	NActorIterator (const PClass *cls, int id) : FActorIterator (id) { type = cls; }
-	NActorIterator (FName cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
-	NActorIterator (const char *cls, int id) : FActorIterator (id) { type = PClass::FindClass(cls); }
 	AActor *Next ()
 	{
 		AActor *actor;
-		if (type == NULL) return NULL;
+		if (type == nullptr) return nullptr;
 		do
 		{
 			actor = FActorIterator::Next ();
@@ -1567,39 +1498,36 @@ public:
 	}
 };
 
-bool P_IsTIDUsed(int tid);
-int P_FindUniqueTID(int start_tid, int limit);
-
 PClassActor *ClassForSpawn(FName classname);
 
-inline AActor *Spawn(PClassActor *type)
+inline AActor *Spawn(FLevelLocals *Level, PClassActor *type)
 {
-	return AActor::StaticSpawn(type, DVector3(0, 0, 0), NO_REPLACE);
+	return AActor::StaticSpawn(Level, type, DVector3(0, 0, 0), NO_REPLACE);
 }
 
-inline AActor *Spawn(PClassActor *type, const DVector3 &pos, replace_t allowreplacement)
+inline AActor *Spawn(FLevelLocals *Level, PClassActor *type, const DVector3 &pos, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn(type, pos, allowreplacement);
+	return AActor::StaticSpawn(Level, type, pos, allowreplacement);
 }
 
-inline AActor *Spawn(FName type)
+inline AActor *Spawn(FLevelLocals *Level, FName type)
 {
-	return AActor::StaticSpawn(ClassForSpawn(type), DVector3(0, 0, 0), NO_REPLACE);
+	return AActor::StaticSpawn(Level, ClassForSpawn(type), DVector3(0, 0, 0), NO_REPLACE);
 }
 
-inline AActor *Spawn(FName type, const DVector3 &pos, replace_t allowreplacement)
+inline AActor *Spawn(FLevelLocals *Level, FName type, const DVector3 &pos, replace_t allowreplacement)
 {
-	return AActor::StaticSpawn(ClassForSpawn(type), pos, allowreplacement);
+	return AActor::StaticSpawn(Level, ClassForSpawn(type), pos, allowreplacement);
 }
 
-template<class T> inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
+template<class T> inline T *Spawn(FLevelLocals *Level, const DVector3 &pos, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_CLASS(T), pos, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn(Level, RUNTIME_CLASS(T), pos, allowreplacement));
 }
 
-template<class T> inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
+template<class T> inline T *Spawn(FLevelLocals *Level)	// for inventory items we do not need coordinates and replacement info.
 {
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
+	return static_cast<T *>(AActor::StaticSpawn(Level, RUNTIME_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
 }
 
 inline PClassActor *PClass::FindActor(FName name)

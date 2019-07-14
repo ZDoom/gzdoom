@@ -77,23 +77,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 void ReadPalette(int lumpnum, uint8_t *buffer);
 void InitPalette ();
 
-// V_SetBlend()
-//	input: blendr: red component of blend
-//		   blendg: green component of blend
-//		   blendb: blue component of blend
-//		   blenda: alpha component of blend
-//
-// Applies the blend to all palettes with PALETTEF_BLEND flag
-void V_SetBlend (int blendr, int blendg, int blendb, int blenda);
-
-// V_ForceBlend()
-//
-// Normally, V_SetBlend() does nothing if the new blend is the
-// same as the old. This function will perform the blending
-// even if the blend hasn't changed.
-void V_ForceBlend (int blendr, int blendg, int blendb, int blenda);
-
-
 EXTERN_CVAR (Int, paletteflash)
 enum PaletteFlashFlags
 {

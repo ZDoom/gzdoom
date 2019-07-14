@@ -24,6 +24,7 @@ struct FDoorAnimation;
 class FSoundID;
 struct FPolyObj;
 union FRenderStyle;
+struct FInterpolator;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -65,12 +66,16 @@ class FSerializer
 public:
 	FWriter *w = nullptr;
 	FReader *r = nullptr;
+	FLevelLocals *Level;
 
 	unsigned ArraySize();
 	void WriteKey(const char *key);
 	void WriteObjects();
 
 public:
+
+	FSerializer(FLevelLocals *l) : Level(l)
+	{}
 
 	~FSerializer()
 	{
@@ -95,6 +100,7 @@ public:
 	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
 	FSerializer &StringPtr(const char *key, const char *&charptr);	// This only retrieves the address but creates no permanent copy of the string unlike the regular char* serializer.
 	FSerializer &AddString(const char *key, const char *charptr);
+	const char *GetString(const char *key);
 	FSerializer &ScriptNum(const char *key, int &num);
 	bool isReading() const
 	{
@@ -198,6 +204,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString 
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &sid, ticcmd_t *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercmd_t *def);
+FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FInterpolator *def);
 
 template<class T>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
@@ -262,6 +269,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&p
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocals *&font, FLevelLocals **def);
 
 FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
 template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)

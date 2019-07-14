@@ -1,0 +1,63 @@
+===============================================================================
+GZDoom Strife Dialog Format v1.0
+based on ZDoom Strife Dialog Format ZDoom v1.1 - 23.08.2010
+
+    Copyright (c) 2019 Rachael Alexanderson
+       uses ZDoom Strife Dialog Format ZDoom v1.1 as a template,
+       original document Copyright (c) 2010 Christoph Oelckers.
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.2
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover Texts. 
+
+===============================================================================
+
+=======================================
+I. Grammar / Syntax
+=======================================
+
+    No changes. 
+	
+=======================================
+II. Implementation Semantics
+=======================================
+
+    No changes. 
+
+=======================================
+III. Changes to ZSDF spec
+=======================================
+
+    GZDoom Strife Dialogue format implements the ZSDF base specification as described with
+    the improvement of being able to name pages using strings.
+
+    GZDoom-format dialogues need to start with this line:
+
+    namespace = "GZDoom";
+
+
+---------------------
+III.A : Conversations
+---------------------
+
+    This block only lists the newly added fields. Currently GZDoom only modifies the following
+    fields and adds the "pagename" field to the specification:
+
+    conversation // Starts a dialog.
+    {
+        page
+        {
+            pagename = <string>; // names the current page, for linking using links or responses
+            link = <string|int>; // if int, uses the old system of linking page by number
+                                 // if string, will parse item links to a named page
+
+            choice
+            {
+                 next = <string|int>; // same as link above, can either go to a name or id
+            }
+        }
+    }
+
+===============================================================================
+EOF
+===============================================================================

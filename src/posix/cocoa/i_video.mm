@@ -33,12 +33,19 @@
 
 #include "gl_load/gl_load.h"
 
+#ifdef HAVE_VULKAN
+#define VK_USE_PLATFORM_MACOS_MVK
+#include "volk/volk.h"
+#endif
+
 #include "i_common.h"
 
+#include "v_video.h"
 #include "bitmap.h"
 #include "c_dispatch.h"
 #include "doomstat.h"
 #include "hardware.h"
+#include "i_system.h"
 #include "m_argv.h"
 #include "m_png.h"
 #include "r_renderer.h"
@@ -46,10 +53,11 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
+#include "doomerrors.h"
+#include "atterm.h"
 
-#include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/textures/gl_samplers.h"
+#include "vulkan/system/vk_framebuffer.h"
 
 
 @implementation NSWindow(ExitAppOnClose)
@@ -88,6 +96,10 @@ EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
+EXTERN_CVAR(Int,  vid_enablevulkan)
+EXTERN_CVAR(Bool, vk_debug)
+
+CVAR(Bool, mvk_debug, false, 0)
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -162,19 +174,23 @@ namespace
 // ---------------------------------------------------------------------------
 
 
-@interface CocoaView : NSOpenGLView
+@interface OpenGLCocoaView : NSOpenGLView
 {
 	NSCursor* m_cursor;
 }
-
-- (void)resetCursorRects;
 
 - (void)setCursor:(NSCursor*)cursor;
 
 @end
 
 
-@implementation CocoaView
+@implementation OpenGLCocoaView
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+	[NSColor.blackColor setFill];
+	NSRectFill(dirtyRect);
+}
 
 - (void)resetCursorRects
 {
@@ -199,49 +215,51 @@ namespace
 // ---------------------------------------------------------------------------
 
 
-class CocoaVideo : public IVideo
+@interface VulkanCocoaView : NSView
 {
-public:
-	virtual DFrameBuffer* CreateFrameBuffer() override
-	{
-		auto fb = new OpenGLRenderer::OpenGLFrameBuffer(nullptr, fullscreen);
-
-		fb->SetMode(fullscreen, vid_hidpi);
-		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
-
-		return fb;
-	}
-};
-
-
-// ---------------------------------------------------------------------------
-
-
-EXTERN_CVAR(Float, Gamma)
-
-CUSTOM_CVAR(Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (NULL != screen)
-	{
-		screen->SetGamma();
-	}
+	NSCursor* m_cursor;
 }
 
-CUSTOM_CVAR(Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+- (void)setCursor:(NSCursor*)cursor;
+
+@end
+
+
+@implementation VulkanCocoaView
+
+- (void)resetCursorRects
 {
-	if (NULL != screen)
-	{
-		screen->SetGamma();
-	}
+	[super resetCursorRects];
+
+	NSCursor* const cursor = nil == m_cursor
+		? [NSCursor arrowCursor]
+		: m_cursor;
+
+	[self addCursorRect:[self bounds]
+				 cursor:cursor];
 }
 
-CUSTOM_CVAR(Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+- (void)setCursor:(NSCursor*)cursor
 {
-	if (NULL != screen)
-	{
-		screen->SetGamma();
-	}
+	m_cursor = cursor;
 }
+
++(Class) layerClass
+{
+	return NSClassFromString(@"CAMetalLayer");
+}
+
+-(CALayer*) makeBackingLayer
+{
+	return [self.class.layerClass layer];
+}
+
+-(BOOL) isOpaque
+{
+	return YES;
+}
+
+@end
 
 
 // ---------------------------------------------------------------------------
@@ -302,23 +320,8 @@ NSOpenGLPixelFormat* CreatePixelFormat()
 	return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
-} // unnamed namespace
-
-
-// ---------------------------------------------------------------------------
-
-
-static SystemGLFrameBuffer* frameBuffer;
-
-
-SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
-: DFrameBuffer(vid_defwidth, vid_defheight)
-, m_fullscreen(false)
-, m_hiDPI(false)
-, m_window(CreateWindow(STYLE_MASK_WINDOWED))
+void SetupOpenGLView(CocoaWindow* window)
 {
-	SetFlash(0, 0);
-
 	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
 
 	if (nil == pixelFormat)
@@ -328,40 +331,163 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 
 	// Create OpenGL context and view
 
-	const NSRect contentRect = [m_window contentRectForFrameRect:[m_window frame]];
-	NSOpenGLView* glView = [[CocoaView alloc] initWithFrame:contentRect
-												pixelFormat:pixelFormat];
+	const NSRect contentRect = [window contentRectForFrameRect:[window frame]];
+	OpenGLCocoaView* glView = [[OpenGLCocoaView alloc] initWithFrame:contentRect
+														 pixelFormat:pixelFormat];
 	[[glView openGLContext] makeCurrentContext];
 
-	[m_window setContentView:glView];
+	[window setContentView:glView];
+}
 
-	// Create table for system-wide gamma correction
+} // unnamed namespace
 
-	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
-	uint32_t actualChannelSize;
 
-	const CGError result = CGGetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
-		gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2], &actualChannelSize);
-	m_supportsGamma = kCGErrorSuccess == result && GAMMA_CHANNEL_SIZE == actualChannelSize;
+// ---------------------------------------------------------------------------
 
-	if (m_supportsGamma)
+
+class CocoaVideo : public IVideo
+{
+public:
+	CocoaVideo()
 	{
-		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
-		{
-			m_originalGamma[i] = static_cast<uint16_t>(gammaTable[i] * 65535.0f);
-		}
+		ms_isVulkanEnabled = vid_enablevulkan == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
 	}
 
+	~CocoaVideo()
+	{
+#ifdef HAVE_VULKAN
+		delete m_vulkanDevice;
+#endif
+		ms_window = nil;
+	}
+
+	virtual DFrameBuffer* CreateFrameBuffer() override
+	{
+		assert(ms_window == nil);
+		ms_window = CreateWindow(STYLE_MASK_WINDOWED);
+
+		SystemBaseFrameBuffer *fb = nullptr;
+
+#ifdef HAVE_VULKAN
+		if (ms_isVulkanEnabled)
+		{
+			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
+
+			NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
+			vulkanView.wantsLayer = YES;
+			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
+
+			[ms_window setContentView:vulkanView];
+
+			// See vk_mvk_moltenvk.h for comprehensive explanation of configuration options set below
+			// https://github.com/KhronosGroup/MoltenVK/blob/master/MoltenVK/MoltenVK/API/vk_mvk_moltenvk.h
+
+			if (vk_debug)
+			{
+				// Output errors and informational messages
+				setenv("MVK_CONFIG_LOG_LEVEL", "2", 0);
+
+				if (mvk_debug)
+				{
+					// Extensive MoltenVK logging, too spammy even for vk_debug CVAR
+					setenv("MVK_DEBUG", "1", 0);
+				}
+			}
+			else
+			{
+				// Limit MoltenVK logging to errors only
+				setenv("MVK_CONFIG_LOG_LEVEL", "1", 0);
+			}
+
+			if (!vid_autoswitch)
+			{
+				// CVAR from pre-Vulkan era has a priority over vk_device selection
+				setenv("MVK_CONFIG_FORCE_LOW_POWER_GPU", "1", 0);
+			}
+
+			// The following settings improve performance like suggested at
+			// https://github.com/KhronosGroup/MoltenVK/issues/581#issuecomment-487293665
+			setenv("MVK_CONFIG_SYNCHRONOUS_QUEUE_SUBMITS", "0", 0);
+			setenv("MVK_CONFIG_PRESENT_WITH_COMMAND_BUFFER", "0", 0);
+
+			try
+			{
+				m_vulkanDevice = new VulkanDevice();
+				fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
+			}
+			catch (std::exception const&)
+			{
+				ms_isVulkanEnabled = false;
+
+				SetupOpenGLView(ms_window);
+			}
+		}
+		else
+#endif
+		{
+			SetupOpenGLView(ms_window);
+		}
+
+		if (fb == nullptr)
+		{
+			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+		}
+
+		fb->SetWindow(ms_window);
+		fb->SetMode(fullscreen, vid_hidpi);
+		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
+
+		// This lame hack is a temporary workaround for strange performance issues
+		// with fullscreen window and Core Animation's Metal layer
+		// It is somehow related to initial window level and flags
+		// Toggling fullscreen -> window -> fullscreen mysteriously solves the problem
+		if (ms_isVulkanEnabled && fullscreen)
+		{
+			fb->SetMode(false, vid_hidpi);
+			fb->SetMode(true, vid_hidpi);
+		}
+
+		return fb;
+	}
+
+	static CocoaWindow* GetWindow()
+	{
+		return ms_window;
+	}
+
+private:
+	VulkanDevice *m_vulkanDevice = nullptr;
+
+	static CocoaWindow* ms_window;
+
+	static bool ms_isVulkanEnabled;
+};
+
+
+CocoaWindow* CocoaVideo::ms_window;
+
+bool CocoaVideo::ms_isVulkanEnabled;
+
+
+// ---------------------------------------------------------------------------
+
+
+static SystemBaseFrameBuffer* frameBuffer;
+
+
+SystemBaseFrameBuffer::SystemBaseFrameBuffer(void*, const bool fullscreen)
+: DFrameBuffer(vid_defwidth, vid_defheight)
+, m_fullscreen(false)
+, m_hiDPI(false)
+, m_window(nullptr)
+{
 	assert(frameBuffer == nullptr);
 	frameBuffer = this;
-
-	// To be able to use OpenGL functions in SetMode()
-	ogl_LoadFunctions();
 
 	FConsoleWindow::GetInstance().Show(false);
 }
 
-SystemGLFrameBuffer::~SystemGLFrameBuffer()
+SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 {
 	assert(frameBuffer == this);
 	frameBuffer = nullptr;
@@ -375,19 +501,19 @@ SystemGLFrameBuffer::~SystemGLFrameBuffer()
 				object:nil];
 }
 
-bool SystemGLFrameBuffer::IsFullscreen()
+bool SystemBaseFrameBuffer::IsFullscreen()
 {
 	return m_fullscreen;
 }
 
-void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
+void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 {
 	SetMode(yes, m_hiDPI);
 }
 
-void SystemGLFrameBuffer::SetWindowSize(int width, int height)
+void SystemBaseFrameBuffer::SetWindowSize(int width, int height)
 {
-	if (width < MINIMUM_WIDTH || height < MINIMUM_HEIGHT)
+	if (width < VID_MIN_WIDTH || height < VID_MIN_HEIGHT)
 	{
 		return;
 	}
@@ -407,7 +533,7 @@ void SystemGLFrameBuffer::SetWindowSize(int width, int height)
 	[m_window center];
 }
 
-int SystemGLFrameBuffer::GetTitleBarHeight() const
+int SystemBaseFrameBuffer::GetTitleBarHeight() const
 {
 	const NSRect windowFrame = [m_window frame];
 	const NSRect contentFrame = [m_window contentRectForFrameRect:windowFrame];
@@ -417,59 +543,20 @@ int SystemGLFrameBuffer::GetTitleBarHeight() const
 }
 
 
-void SystemGLFrameBuffer::SetVSync(bool vsync)
-{
-	const GLint value = vsync ? 1 : 0;
-
-	[[NSOpenGLContext currentContext] setValues:&value
-								   forParameter:NSOpenGLCPSwapInterval];
-}
-
-
-void SystemGLFrameBuffer::SwapBuffers()
-{
-	[[NSOpenGLContext currentContext] flushBuffer];
-}
-
-void SystemGLFrameBuffer::SetGammaTable(uint16_t* table)
-{
-	if (m_supportsGamma)
-	{
-		CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
-
-		for (uint32_t i = 0; i < GAMMA_TABLE_SIZE; ++i)
-		{
-			gammaTable[i] = static_cast<CGGammaValue>(table[i] / 65535.0f);
-		}
-
-		CGSetDisplayTransferByTable(kCGDirectMainDisplay, GAMMA_CHANNEL_SIZE,
-			gammaTable, &gammaTable[GAMMA_CHANNEL_SIZE], &gammaTable[GAMMA_CHANNEL_SIZE * 2]);
-	}
-}
-
-void SystemGLFrameBuffer::ResetGammaTable()
-{
-	if (m_supportsGamma)
-	{
-		SetGammaTable(m_originalGamma);
-	}
-}
-
-
-int SystemGLFrameBuffer::GetClientWidth()
+int SystemBaseFrameBuffer::GetClientWidth()
 {
 	const int clientWidth = I_GetContentViewSize(m_window).width;
 	return clientWidth > 0 ? clientWidth : GetWidth();
 }
 
-int SystemGLFrameBuffer::GetClientHeight()
+int SystemBaseFrameBuffer::GetClientHeight()
 {
 	const int clientHeight = I_GetContentViewSize(m_window).height;
 	return clientHeight > 0 ? clientHeight : GetHeight();
 }
 
 
-void SystemGLFrameBuffer::SetFullscreenMode()
+void SystemBaseFrameBuffer::SetFullscreenMode()
 {
 	if (!m_fullscreen)
 	{
@@ -483,7 +570,7 @@ void SystemGLFrameBuffer::SetFullscreenMode()
 	[m_window setFrame:screenFrame display:YES];
 }
 
-void SystemGLFrameBuffer::SetWindowedMode()
+void SystemBaseFrameBuffer::SetWindowedMode()
 {
 	if (m_fullscreen)
 	{
@@ -493,8 +580,8 @@ void SystemGLFrameBuffer::SetWindowedMode()
 		[m_window setHidesOnDeactivate:NO];
 	}
 
-	const int minimumFrameWidth  = MINIMUM_WIDTH;
-	const int minimumFrameHeight = MINIMUM_HEIGHT + GetTitleBarHeight();
+	const int minimumFrameWidth  = VID_MIN_WIDTH;
+	const int minimumFrameHeight = VID_MIN_HEIGHT + GetTitleBarHeight();
 	const NSSize minimumFrameSize = NSMakeSize(minimumFrameWidth, minimumFrameHeight);
 	[m_window setMinSize:minimumFrameSize];
 
@@ -516,10 +603,11 @@ void SystemGLFrameBuffer::SetWindowedMode()
 	[m_window exitAppOnClose];
 }
 
-void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
+void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 {
-	NSOpenGLView* const glView = [m_window contentView];
-	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
+	assert(m_window.screen != nil);
+	assert(m_window.contentView.layer != nil);
+	[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
 
 	if (fullscreen)
 	{
@@ -529,14 +617,6 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	{
 		SetWindowedMode();
 	}
-
-	const NSSize viewSize = I_GetContentViewSize(m_window);
-
-	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	[[NSOpenGLContext currentContext] flushBuffer];
 
 	[m_window updateTitle];
 
@@ -550,7 +630,7 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 }
 
 
-void SystemGLFrameBuffer::UseHiDPI(const bool hiDPI)
+void SystemBaseFrameBuffer::UseHiDPI(const bool hiDPI)
 {
 	if (frameBuffer != nullptr)
 	{
@@ -558,19 +638,19 @@ void SystemGLFrameBuffer::UseHiDPI(const bool hiDPI)
 	}
 }
 
-void SystemGLFrameBuffer::SetCursor(NSCursor* cursor)
+void SystemBaseFrameBuffer::SetCursor(NSCursor* cursor)
 {
 	if (frameBuffer != nullptr)
 	{
-		NSWindow*  const window = frameBuffer->m_window;
-		CocoaView* const view   = [window contentView];
+		NSWindow* const window = frameBuffer->m_window;
+		id view = [window contentView];
 
 		[view setCursor:cursor];
 		[window invalidateCursorRectsForView:view];
 	}
 }
 
-void SystemGLFrameBuffer::SetWindowVisible(bool visible)
+void SystemBaseFrameBuffer::SetWindowVisible(bool visible)
 {
 	if (frameBuffer != nullptr)
 	{
@@ -587,7 +667,7 @@ void SystemGLFrameBuffer::SetWindowVisible(bool visible)
 	}
 }
 
-void SystemGLFrameBuffer::SetWindowTitle(const char* title)
+void SystemBaseFrameBuffer::SetWindowTitle(const char* title)
 {
 	if (frameBuffer != nullptr)
 	{
@@ -595,6 +675,56 @@ void SystemGLFrameBuffer::SetWindowTitle(const char* title)
 			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
 		[frameBuffer->m_window setTitle:nsTitle];
 	}
+}
+
+
+// ---------------------------------------------------------------------------
+
+
+SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
+: SystemBaseFrameBuffer(hMonitor, fullscreen)
+{
+}
+
+
+void SystemGLFrameBuffer::SetVSync(bool vsync)
+{
+	const GLint value = vsync ? 1 : 0;
+
+	[[NSOpenGLContext currentContext] setValues:&value
+								   forParameter:NSOpenGLCPSwapInterval];
+}
+
+
+void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
+{
+	NSOpenGLView* const glView = [m_window contentView];
+	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
+
+	if (fullscreen)
+	{
+		SetFullscreenMode();
+	}
+	else
+	{
+		SetWindowedMode();
+	}
+
+	[m_window updateTitle];
+
+	if (![m_window isKeyWindow])
+	{
+		[m_window makeKeyAndOrderFront:nil];
+	}
+
+	m_fullscreen = fullscreen;
+	m_hiDPI      = hiDPI;
+}
+
+
+void SystemGLFrameBuffer::SwapBuffers()
+{
+	[[NSOpenGLContext currentContext] flushBuffer];
 }
 
 
@@ -628,37 +758,29 @@ void I_InitGraphics()
 
 // ---------------------------------------------------------------------------
 
-
-EXTERN_CVAR(Int, vid_maxfps);
-EXTERN_CVAR(Bool, cl_capfps);
-
-// So Apple doesn't support POSIX timers and I can't find a good substitute short of
-// having Objective-C Cocoa events or something like that.
-void I_SetFPSLimit(int limit)
-{
-}
-
 CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	SystemGLFrameBuffer::UseHiDPI(self);
+	SystemBaseFrameBuffer::UseHiDPI(self);
 }
 
 
 // ---------------------------------------------------------------------------
 
 
-bool I_SetCursor(FTexture* cursorpic)
+bool I_SetCursor(FTexture *cursorpic)
 {
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	NSCursor* cursor = nil;
 
-	if (NULL != cursorpic && ETextureType::Null != cursorpic->UseType)
+	if (NULL != cursorpic && cursorpic->isValid())
 	{
 		// Create bitmap image representation
+		
+		auto sbuffer = cursorpic->CreateTexBuffer(0);
 
-		const NSInteger imageWidth  = cursorpic->GetWidth();
-		const NSInteger imageHeight = cursorpic->GetHeight();
-		const NSInteger imagePitch  = imageWidth * 4;
+		const NSInteger imageWidth  = sbuffer.mWidth;
+		const NSInteger imageHeight = sbuffer.mHeight;
+		const NSInteger imagePitch  = sbuffer.mWidth * 4;
 
 		NSBitmapImageRep* bitmapImageRep = [NSBitmapImageRep alloc];
 		[bitmapImageRep initWithBitmapDataPlanes:NULL
@@ -675,20 +797,14 @@ bool I_SetCursor(FTexture* cursorpic)
 		// Load bitmap data to representation
 
 		uint8_t* buffer = [bitmapImageRep bitmapData];
-		memset(buffer, 0, imagePitch * imageHeight);
-
-		FBitmap bitmap(buffer, imagePitch, imageWidth, imageHeight);
-		cursorpic->CopyTrueColorPixels(&bitmap, 0, 0);
+		memcpy(buffer, sbuffer.mBuffer, imagePitch * imageHeight);
 
 		// Swap red and blue components in each pixel
 
 		for (size_t i = 0; i < size_t(imageWidth * imageHeight); ++i)
 		{
 			const size_t offset = i * 4;
-
-			const uint8_t temp    = buffer[offset    ];
-			buffer[offset    ] = buffer[offset + 2];
-			buffer[offset + 2] = temp;
+			std::swap(buffer[offset    ], buffer[offset + 2]);
 		}
 
 		// Create image from representation and set it as cursor
@@ -701,7 +817,7 @@ bool I_SetCursor(FTexture* cursorpic)
 										 hotSpot:NSMakePoint(0.0f, 0.0f)];
 	}
 	
-	SystemGLFrameBuffer::SetCursor(cursor);
+	SystemBaseFrameBuffer::SetCursor(cursor);
 	
 	[pool release];
 	
@@ -721,11 +837,76 @@ NSSize I_GetContentViewSize(const NSWindow* const window)
 
 void I_SetMainWindowVisible(bool visible)
 {
-	SystemGLFrameBuffer::SetWindowVisible(visible);
+	SystemBaseFrameBuffer::SetWindowVisible(visible);
 }
 
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* title)
 {
-	SystemGLFrameBuffer::SetWindowTitle(title);
+	SystemBaseFrameBuffer::SetWindowTitle(title);
 }
+
+
+#ifdef HAVE_VULKAN
+void I_GetVulkanDrawableSize(int *width, int *height)
+{
+	NSWindow* const window = CocoaVideo::GetWindow();
+	assert(window != nil);
+
+	const NSSize size = I_GetContentViewSize(window);
+
+	if (width != nullptr)
+	{
+		*width = int(size.width);
+	}
+
+	if (height != nullptr)
+	{
+		*height = int(size.height);
+	}
+}
+
+bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
+{
+	static const char* extensions[] =
+	{
+		VK_KHR_SURFACE_EXTENSION_NAME,
+		VK_MVK_MACOS_SURFACE_EXTENSION_NAME
+	};
+	static const unsigned int extensionCount = static_cast<unsigned int>(sizeof extensions / sizeof extensions[0]);
+
+	if (count == nullptr && names == nullptr)
+	{
+		return false;
+	}
+	else if (names == nullptr)
+	{
+		*count = extensionCount;
+		return true;
+	}
+	else
+	{
+		const bool result = *count >= extensionCount;
+		*count = std::min(*count, extensionCount);
+
+		for (unsigned int i = 0; i < *count; ++i)
+		{
+			names[i] = extensions[i];
+		}
+
+		return result;
+	}
+}
+
+bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
+{
+	VkMacOSSurfaceCreateInfoMVK windowCreateInfo;
+	windowCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+	windowCreateInfo.pNext = nullptr;
+	windowCreateInfo.flags = 0;
+	windowCreateInfo.pView = [[CocoaVideo::GetWindow() contentView] layer];
+
+	const VkResult result = vkCreateMacOSSurfaceMVK(instance, &windowCreateInfo, nullptr, surface);
+	return result == VK_SUCCESS;
+}
+#endif

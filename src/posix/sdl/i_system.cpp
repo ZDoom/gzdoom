@@ -19,7 +19,9 @@
 //-----------------------------------------------------------------------------
 //
 
+#include "i_system.h"
 
+#include <dirent.h>
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,10 +51,9 @@
 #include "network/net.h"
 #include "g_game.h"
 #include "c_dispatch.h"
+#include "atterm.h"
 
 #include "gameconfigfile.h"
-
-EXTERN_CVAR (String, language)
 
 extern "C"
 {
@@ -69,7 +70,6 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 #endif
 
 double PerfToSec, PerfToMillisec;
-uint32_t LanguageIDs[4];
 	
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
@@ -83,20 +83,6 @@ void I_EndRead(void)
 {
 }
 
-
-//
-// SetLanguageIDs
-//
-void SetLanguageIDs ()
-{
-	size_t langlen = strlen(language);
-
-	uint32_t lang = (langlen < 2 || langlen > 3) ?
-		MAKE_ID('e','n','u','\0') :
-		MAKE_ID(language[0],language[1],language[2],'\0');
-
-	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
-}
 
 //
 // I_Init
@@ -221,7 +207,7 @@ void I_Error (const char *error, ...)
 
 	va_start(argptr, error);
 
-	vsprintf (errortext, error, argptr);
+	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
 	va_end (argptr);
 	throw CRecoverableError(errortext);
 }
@@ -234,30 +220,29 @@ void I_DebugPrint(const char *cp)
 {
 }
 
-void I_PrintStr (const char *cp)
+void I_PrintStr(const char *cp)
 {
-	// Strip out any color escape sequences before writing to the log file
-	char * copy = new char[strlen(cp)+1];
+	// Strip out any color escape sequences before writing to debug output
+	TArray<char> copy(strlen(cp) + 1, true);
 	const char * srcp = cp;
-	char * dstp = copy;
+	char * dstp = copy.Data();
 
 	while (*srcp != 0)
 	{
-		if (*srcp!=0x1c && *srcp!=0x1d && *srcp!=0x1e && *srcp!=0x1f)
+		if (*srcp != 0x1c && *srcp != 0x1d && *srcp != 0x1e && *srcp != 0x1f)
 		{
-			*dstp++=*srcp++;
+			*dstp++ = *srcp++;
 		}
 		else
 		{
-			if (srcp[1]!=0) srcp+=2;
+			if (srcp[1] != 0) srcp += 2;
 			else break;
 		}
 	}
-	*dstp=0;
+	*dstp = 0;
 
-	fputs (copy, stdout);
-	delete [] copy;
-	fflush (stdout);
+	fputs(copy.Data(), stdout);
+	fflush(stdout);
 }
 
 int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)

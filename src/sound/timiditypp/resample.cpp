@@ -247,7 +247,6 @@ void initialize_resampler_coeffs(void)
 	static bool done = false;
 	if (done) return;
 	done = true;
-	// atterm(free_gauss_table);
 
 	initialize_newton_coeffs();
 	initialize_gauss_table(gauss_n);
@@ -934,7 +933,8 @@ void pre_resample(Sample * sp)
 		return;
 	}
 
-	dest = newdata = (sample_t *)safe_malloc((int32_t)(newlen >> (FRACTION_BITS - 1)) + 2);
+	// [EP] Fix the bad allocation count.
+	dest = newdata = (sample_t *)safe_malloc(((int32_t)(newlen >> (FRACTION_BITS - 1)) + 2)*sizeof(sample_t));
 	dest[newlen >> FRACTION_BITS] = 0;
 
 	*dest++ = src[0];

@@ -2,6 +2,8 @@
 #define R_INTERPOLATE_H
 
 #include "dobject.h"
+
+struct FLevelLocals;
 //==========================================================================
 //
 //
@@ -15,19 +17,20 @@ class DInterpolation : public DObject
 	DECLARE_ABSTRACT_CLASS(DInterpolation, DObject)
 	HAS_OBJECT_POINTERS
 
-	TObjPtr<DInterpolation*> Next;
-	TObjPtr<DInterpolation*> Prev;
+	TObjPtr<DInterpolation*> Next = nullptr;
+	TObjPtr<DInterpolation*> Prev = nullptr;
 
 protected:
-	int refcount;
+	FLevelLocals *Level;
+	int refcount = 0;
 
-	DInterpolation();
+	DInterpolation(FLevelLocals *l = nullptr) : Level(l) {}
 
 public:
 	int AddRef();
 	int DelRef(bool force = false);
 
-	void OnDestroy() override;
+	virtual void UnlinkFromMap();
 	virtual void UpdateInterpolation() = 0;
 	virtual void Restore() = 0;
 	virtual void Interpolate(double smoothratio) = 0;
@@ -43,19 +46,13 @@ public:
 
 struct FInterpolator
 {
-	TObjPtr<DInterpolation*> Head;
-	bool didInterp;
-	int count;
+	TObjPtr<DInterpolation*> Head = nullptr;
+	bool didInterp = false;
+	int count = 0;
 
 	int CountInterpolations ();
 
 public:
-	FInterpolator()
-	{
-		Head = NULL;
-		didInterp = false;
-		count = 0;
-	}
 	void UpdateInterpolations();
 	void AddInterpolation(DInterpolation *);
 	void RemoveInterpolation(DInterpolation *);
@@ -63,9 +60,6 @@ public:
 	void RestoreInterpolations();
 	void ClearInterpolations();
 };
-
-extern FInterpolator interpolator;
-
 
 
 #endif

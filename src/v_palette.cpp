@@ -79,8 +79,7 @@ CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CCMD (bumpgamma)
 {
-	// [RH] Gamma correction tables are now generated
-	// on the fly for *any* gamma level.
+	// [RH] Gamma correction tables are now generated on the fly for *any* gamma level
 	// Q: What are reasonable limits to use here?
 
 	float newgamma = Gamma + 0.1f;
@@ -442,29 +441,6 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		to->g = (g + from->g * ia) >> 8;
 		to->b = (b + from->b * ia) >> 8;
 	}
-}
-
-void V_SetBlend (int blendr, int blendg, int blendb, int blenda)
-{
-	// Don't do anything if the new blend is the same as the old
-	if (((blenda|BlendA) == 0) ||
-		(blendr == BlendR &&
-		 blendg == BlendG &&
-		 blendb == BlendB &&
-		 blenda == BlendA))
-		return;
-
-	V_ForceBlend (blendr, blendg, blendb, blenda);
-}
-
-void V_ForceBlend (int blendr, int blendg, int blendb, int blenda)
-{
-	BlendR = blendr;
-	BlendG = blendg;
-	BlendB = blendb;
-	BlendA = blenda;
-
-	screen->SetFlash (PalEntry (BlendR, BlendG, BlendB), BlendA);
 }
 
 CCMD (testblend)

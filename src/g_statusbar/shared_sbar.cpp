@@ -55,7 +55,10 @@
 #include "vm.h"
 #include "p_acs.h"
 #include "sbarinfo.h"
+#include "gstrings.h"
 #include "events.h"
+#include "g_game.h"
+#include "utf8.h"
 
 #include "../version.h"
 
@@ -81,6 +84,7 @@ EXTERN_CVAR (Bool, am_showtotaltime)
 EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
+EXTERN_CVAR(Bool, inter_subtitles)
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 
 
@@ -120,6 +124,7 @@ CUSTOM_CVAR(Bool, hud_aspectscale, false, CVAR_ARCHIVE)
 	}
 }
 
+CVAR (Bool, crosshairon, true, CVAR_ARCHIVE);
 CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
 CVAR (Bool, crosshairforce, false, CVAR_ARCHIVE)
 CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
@@ -132,25 +137,6 @@ CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
 }
 
 CVAR (Bool, idmypos, false, 0);
-
-//---------------------------------------------------------------------------
-//
-// Format the map name, include the map label if wanted
-//
-//---------------------------------------------------------------------------
-
-void ST_FormatMapName(FString &mapname, const char *mapnamecolor)
-{
-	cluster_info_t *cluster = FindClusterInfo (level.cluster);
-	bool ishub = (cluster != NULL && (cluster->flags & CLUSTER_HUB));
-
-	mapname = "";
-	if (am_showmaplabel == 1 || (am_showmaplabel == 2 && !ishub))
-	{
-		mapname << level.MapName << ": ";
-	}
-	mapname << mapnamecolor << level.LevelName;
-}
 
 //---------------------------------------------------------------------------
 //
@@ -203,7 +189,7 @@ void ST_LoadCrosshair(bool alwaysload)
 		}
 	}
 	CrosshairNum = num;
-	CrosshairImage = TexMan[texid];
+	CrosshairImage = TexMan.GetTexture(texid);
 }
 
 //---------------------------------------------------------------------------
@@ -404,6 +390,47 @@ void DBaseStatusBar::SetSize(int reltop, int hres, int vres, int hhres, int hvre
 	SetDrawSize(reltop, hres, vres);
 }
 
+static void ST_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany)
+{
+	float ratio;
+	int cwidth;
+	int cheight;
+	int cx1, cy1, cx2, cy2;
+
+	ratio = ActiveRatio(realwidth, realheight);
+	if (AspectTallerThanWide(ratio))
+	{
+		cwidth = realwidth;
+		cheight = realheight * AspectMultiplier(ratio) / 48;
+	}
+	else
+	{
+		cwidth = realwidth * AspectMultiplier(ratio) / 48;
+		cheight = realheight;
+	}
+	// Use whichever pair of cwidth/cheight or width/height that produces less difference
+	// between CleanXfac and CleanYfac.
+	cx1 = MAX(cwidth / designwidth, 1);
+	cy1 = MAX(cheight / designheight, 1);
+	cx2 = MAX(realwidth / designwidth, 1);
+	cy2 = MAX(realheight / designheight, 1);
+	if (abs(cx1 - cy1) <= abs(cx2 - cy2) || MAX(cx1, cx2) >= 4)
+	{ // e.g. 640x360 looks better with this.
+		*cleanx = cx1;
+		*cleany = cy1;
+	}
+	else
+	{ // e.g. 720x480 looks better with this.
+		*cleanx = cx2;
+		*cleany = cy2;
+	}
+
+	if (*cleanx < *cleany)
+		*cleany = *cleanx;
+	else
+		*cleanx = *cleany;
+}
+
 void DBaseStatusBar::SetDrawSize(int reltop, int hres, int vres)
 {
 	ValidateResolution(hres, vres);
@@ -412,7 +439,7 @@ void DBaseStatusBar::SetDrawSize(int reltop, int hres, int vres)
 	HorizontalResolution = hres;
 	VerticalResolution = vres;
 	int x, y;
-	V_CalcCleanFacs(hres, vres, SCREENWIDTH, SCREENHEIGHT, &x, &y);
+	ST_CalcCleanFacs(hres, vres, SCREENWIDTH, SCREENHEIGHT, &x, &y);
 	defaultScale = { (double)x, (double)y };
 
 	SetScale();	// recalculate positioning info.
@@ -436,7 +463,7 @@ void DBaseStatusBar::OnDestroy ()
 			msg->Destroy();
 			msg = next;
 		}
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 	}
 	if (AltHud) AltHud->Destroy();
 	Super::OnDestroy();
@@ -557,6 +584,124 @@ void DBaseStatusBar::BeginHUD(int resW, int resH, double Alpha, bool forcescaled
 	fullscreenOffsets = true;
 }
 
+//============================================================================
+//
+// automap HUD common drawer
+// This is not called directly to give a status bar the opportunity to
+// change the text colors. If you want to do something different,
+// override DrawAutomap directly.
+//
+//============================================================================
+
+void FormatMapName(FLevelLocals *self, int cr, FString *result);
+
+void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
+{
+	auto scale = GetUIScale(hud_scale);
+	auto font = generic_ui ? NewSmallFont : SmallFont;
+	auto font2 = font;
+	auto vwidth = screen->GetWidth() / scale;
+	auto vheight = screen->GetHeight() / scale;
+	auto fheight = font->GetHeight();
+	FString textbuffer;
+	int sec;
+	int y = 0;
+	int textdist = 4;
+	int zerowidth = font->GetCharWidth('0');
+
+	if (!generic_ui)
+	{
+		// If the original font does not have accents this will strip them - but a fallback to the VGA font is not desirable here for such cases.
+		if (!font->CanPrint(GStrings("AM_MONSTERS")) || !font->CanPrint(GStrings("AM_SECRETS")) || !font->CanPrint(GStrings("AM_ITEMS"))) font2 = OriginalSmallFont;
+	}
+
+	if (am_showtime)
+	{
+		sec = Tics2Seconds(primaryLevel->time);
+		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
+		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
+		y += fheight;
+	}
+
+	if (am_showtotaltime)
+	{
+		sec = Tics2Seconds(primaryLevel->totaltime);
+		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
+		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
+	}
+
+	if (!deathmatch)
+	{
+		y = 0;
+		if (am_showmonsters)
+		{
+			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
+			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			y += fheight;
+		}
+
+		if (am_showsecrets)
+		{
+			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
+			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			y += fheight;
+		}
+
+		// Draw item count
+		if (am_showitems)
+		{
+			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
+			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			y += fheight;
+		}
+
+	}
+
+	FormatMapName(primaryLevel, crdefault, &textbuffer);
+
+	auto lines = V_BreakLines(font, vwidth - 32, textbuffer, true);
+	auto numlines = lines.Size();
+	auto finalwidth = lines.Last().Width;
+
+
+	// calculate the top of the statusbar including any protrusion and transform it from status bar to screen space.
+	double x = 0, yy = 0, w = HorizontalResolution, h = 0;
+	StatusbarToRealCoords(x, yy, w, h);
+
+	IFVIRTUAL(DBaseStatusBar, GetProtrusion)
+	{
+		int prot = 0;
+		VMValue params[] = { this, double(finalwidth * scale / w) };
+		VMReturn ret(&prot);
+		VMCall(func, params, 2, &ret, 1);
+		h = prot;
+	}
+
+	StatusbarToRealCoords(x, yy, w, h);
+
+	// Get the y coordinate for the first line of the map name text.
+	y = Scale(GetTopOfStatusbar() - int(h), vheight, screen->GetHeight()) - fheight * numlines;
+
+	// Draw the texts centered above the status bar.
+	for (unsigned i = 0; i < numlines; i++)
+	{
+		int x = (vwidth - font->StringWidth(lines[i].Text)) / 2;
+		screen->DrawText(font, highlight, x, y, lines[i].Text, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		y += fheight;
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DoDrawAutomapHUD)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(crdefault);
+	PARAM_INT(highlight);
+	self->DoDrawAutomapHUD(crdefault, highlight);
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC AttachToPlayer
@@ -594,7 +739,7 @@ void DBaseStatusBar::Tick ()
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *msg = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (msg)
 		{
@@ -657,7 +802,9 @@ void DBaseStatusBar::CallTick()
 void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer)
 {
 	DHUDMessageBase *old = NULL;
-	DHUDMessageBase **prev;
+	DObject* pointing;
+	TObjPtr<DHUDMessageBase *>*prevp;
+	DHUDMessageBase* prev;
 
 	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
@@ -671,20 +818,25 @@ void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer
 		layer = HUDMSGLayer_Default;
 	}
 
-	prev = &Messages[layer];
+	pointing = this;
+	prevp = &Messages[layer];
+	prev = *prevp;
 
 	// The ID serves as a priority, where lower numbers appear in front of
 	// higher numbers. (i.e. The list is sorted in descending order, since
 	// it gets drawn back to front.)
-	while (*prev != NULL && (*prev)->SBarID > id)
+	while (prev != NULL && prev->SBarID > id)
 	{
-		prev = &(*prev)->Next;
+		pointing = prev;
+		prevp = &prev->Next;
+		prev = *prevp;
 	}
 
-	msg->Next = *prev;
+	msg->Next = prev;
 	msg->SBarID = id;
-	*prev = msg;
-	GC::WriteBarrier(msg);
+	*prevp = msg;
+	GC::WriteBarrier(msg, prev);
+	GC::WriteBarrier(pointing, msg);
 }
 
 //---------------------------------------------------------------------------
@@ -698,17 +850,20 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *probe = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		DObject* pointing = this;
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe != msg)
 		{
+			pointing = probe;
 			prev = &probe->Next;
 			probe = probe->Next;
 		}
 		if (probe != NULL)
 		{
+			GC::WriteBarrier(pointing, probe->Next);
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -719,18 +874,21 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 {
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
+		DObject* pointing = this;
 		DHUDMessageBase *probe = Messages[i];
-		DHUDMessageBase **prev = &Messages[i];
+		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (probe && probe->SBarID != id)
 		{
+			pointing = probe;
 			prev = &probe->Next;
 			probe = probe->Next;
 		}
 		if (probe != NULL)
 		{
+			GC::WriteBarrier(pointing, probe->Next);
 			*prev = probe->Next;
-			probe->Next = NULL;
+			probe->Next = nullptr;
 			return probe;
 		}
 	}
@@ -749,7 +907,7 @@ void DBaseStatusBar::DetachAllMessages ()
 	{
 		DHUDMessageBase *probe = Messages[i];
 
-		Messages[i] = NULL;
+		Messages[i] = nullptr;
 		while (probe != NULL)
 		{
 			DHUDMessageBase *next = probe->Next;
@@ -770,8 +928,51 @@ void DBaseStatusBar::ShowPlayerName ()
 	EColorRange color;
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
-	AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, CPlayer->userinfo.GetName(),
+	AttachMessage (Create<DHUDMessageFadeOut> (nullptr, CPlayer->userinfo.GetName(),
 		1.5f, 0.92f, 0, 0, color, 2.f, 0.35f), MAKE_ID('P','N','A','M'));
+}
+
+//---------------------------------------------------------------------------
+//
+//
+//
+//---------------------------------------------------------------------------
+
+static FTextureID GetBorderTexture(FLevelLocals *Level)
+{
+	if (Level != nullptr && Level->info != nullptr && Level->info->BorderTexture.Len() != 0)
+	{
+		auto picnum = TexMan.CheckForTexture (Level->info->BorderTexture, ETextureType::Flat);
+		if (picnum.isValid()) return picnum;
+	}
+	return TexMan.CheckForTexture (gameinfo.BorderFlat, ETextureType::Flat);
+}
+
+//==========================================================================
+//
+// R_RefreshViewBorder
+//
+// Draws the border around the player view, if needed.
+//
+//==========================================================================
+
+void DBaseStatusBar::RefreshViewBorder ()
+{
+	if (setblocks < 10)
+	{
+		int Width = screen->GetWidth();
+		if (viewwidth == Width)
+		{
+			return;
+		}
+		auto tex = GetBorderTexture(primaryLevel);
+		screen->DrawBorder (tex, 0, 0, Width, viewwindowy);
+		screen->DrawBorder (tex, 0, viewwindowy, viewwindowx, viewheight + viewwindowy);
+		screen->DrawBorder (tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
+		screen->DrawBorder (tex, 0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
+		
+		screen->DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+	}
 }
 
 //---------------------------------------------------------------------------
@@ -787,13 +988,17 @@ void DBaseStatusBar::RefreshBackground () const
 	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
 	x = ST_X;
 	y = SBarTop;
+	
+	if (x == 0 && y == SCREENHEIGHT) return;
+
+	auto tex = GetBorderTexture(primaryLevel);
 
 	if(!CompleteBorder)
 	{
 		if(y < SCREENHEIGHT)
 		{
-			screen->DrawBorder (x+1, y, SCREENWIDTH, y+1);
-			screen->DrawBorder (x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
+			screen->DrawBorder (tex, x+1, y, SCREENWIDTH, y+1);
+			screen->DrawBorder (tex, x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
 		}
 	}
 	else
@@ -812,16 +1017,16 @@ void DBaseStatusBar::RefreshBackground () const
 			x2 = SCREENWIDTH;
 		}
 
-		screen->DrawBorder (0, y, x+1, SCREENHEIGHT);
-		screen->DrawBorder (x2-1, y, SCREENWIDTH, SCREENHEIGHT);
+		screen->DrawBorder (tex, 0, y, x+1, SCREENHEIGHT);
+		screen->DrawBorder (tex, x2-1, y, SCREENWIDTH, SCREENHEIGHT);
 
 		if (setblocks >= 10)
 		{
-			FTexture *p = TexMan[gameinfo.Border.b];
+			FTexture *p = TexMan.GetTextureByName(gameinfo.Border.b);
 			if (p != NULL)
 			{
-				screen->FlatFill(0, y, x, y + p->GetHeight(), p, true);
-				screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetHeight(), p, true);
+				screen->FlatFill(0, y, x, y + p->GetDisplayHeight(), p, true);
+				screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetDisplayHeight(), p, true);
 			}
 		}
 	}
@@ -839,9 +1044,16 @@ void DBaseStatusBar::DrawCrosshair ()
 	double size;
 	int w, h;
 
+	if (!crosshairon)
+	{
+		return;
+	}
+
 	// Don't draw the crosshair in chasecam mode
 	if (players[consoleplayer].cheats & CF_CHASECAM)
+	{
 		return;
+	}
 
 	ST_LoadCrosshair();
 
@@ -864,8 +1076,8 @@ void DBaseStatusBar::DrawCrosshair ()
 	{
 		size *= CrosshairSize;
 	}
-	w = int(CrosshairImage->GetWidth() * size);
-	h = int(CrosshairImage->GetHeight() * size);
+	w = int(CrosshairImage->GetDisplayWidth() * size);
+	h = int(CrosshairImage->GetDisplayHeight() * size);
 
 	if (crosshairhealth)
 	{
@@ -1012,15 +1224,17 @@ void DBaseStatusBar::DrawLog ()
 	if (CPlayer->LogText.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		auto scale = active_con_scaletext();
+		auto scale = active_con_scaletext(generic_ui);
 		hudwidth = SCREENWIDTH / scale;
 		hudheight = SCREENHEIGHT / scale;
+		FFont *font = C_GetDefaultHUDFont();
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		auto lines = V_BreakLines (SmallFont, linelen, CPlayer->LogText);
+		const FString & text = (inter_subtitles && CPlayer->SubtitleCounter) ? CPlayer->SubtitleText : CPlayer->LogText;
+		auto lines = V_BreakLines (font, linelen, text[0] == '$'? GStrings(text.GetChars()+1) : text.GetChars());
 		int height = 20;
 
-		for (unsigned i = 0; i < lines.Size(); i++) height += SmallFont->GetHeight () + 1;
+		for (unsigned i = 0; i < lines.Size(); i++) height += font->GetHeight ();
 
 		int x,y,w;
 
@@ -1033,7 +1247,7 @@ void DBaseStatusBar::DrawLog ()
 		else
 		{
 			x=(hudwidth>>1)-300;
-			y=hudheight*3/10-(height>>1);
+			y=hudheight/8-(height>>1);
 			if (y<0) y=0;
 			w=600;
 		}
@@ -1043,10 +1257,10 @@ void DBaseStatusBar::DrawLog ()
 		y+=10;
 		for (const FBrokenLines &line : lines)
 		{
-			screen->DrawText (SmallFont, CR_UNTRANSLATED, x, y, line.Text,
+			screen->DrawText (font, CPlayer->SubtitleCounter? CR_CYAN : CR_UNTRANSLATED, x, y, line.Text,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
-			y += SmallFont->GetHeight ()+1;
+			y += font->GetHeight ();
 		}
 	}
 }
@@ -1082,6 +1296,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 
 void DBaseStatusBar::DrawBottomStuff (EHudState state)
 {
+	primaryLevel->localEventManager->RenderUnderlay(state);
 	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 }
 
@@ -1118,11 +1333,11 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 	}
 	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
-	E_RenderOverlay(state);
+	primaryLevel->localEventManager->RenderOverlay(state);
 
 	DrawConsistancy ();
 	DrawWaiting ();
-	if (ShowLog && MustDrawLog(state)) DrawLog ();
+	if ((ShowLog && MustDrawLog(state)) || (inter_subtitles && CPlayer->SubtitleCounter > 0)) DrawLog ();
 
 	if (noisedebug)
 	{
@@ -1323,10 +1538,10 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 	if (!texture.isValid())
 		return;
 
-	FTexture *tex = (flags & DI_DONTANIMATE)?  TexMan[texture] : TexMan(texture);
+	FTexture *tex = TexMan.GetTexture(texture, !(flags & DI_DONTANIMATE));
 
-	double texwidth = tex->GetScaledWidthDouble() * scaleX;
-	double texheight = tex->GetScaledHeightDouble() * scaleY;
+	double texwidth = tex->GetDisplayWidthDouble() * scaleX;
+	double texheight = tex->GetDisplayHeightDouble() * scaleY;
 
 	if (boxwidth > 0 || boxheight > 0)
 	{
@@ -1378,14 +1593,14 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 	{
 	case DI_ITEM_HCENTER:	x -= boxwidth / 2; break;
 	case DI_ITEM_RIGHT:		x -= boxwidth; break;
-	case DI_ITEM_HOFFSET:	x -= tex->GetScaledLeftOffsetDouble(0) * boxwidth / texwidth; break;
+	case DI_ITEM_HOFFSET:	x -= tex->GetDisplayLeftOffsetDouble() * boxwidth / texwidth; break;
 	}
 
 	switch (flags & DI_ITEM_VMASK)
 	{
 	case DI_ITEM_VCENTER: y -= boxheight / 2; break;
 	case DI_ITEM_BOTTOM:  y -= boxheight; break;
-	case DI_ITEM_VOFFSET: y -= tex->GetScaledTopOffsetDouble(0) * boxheight / texheight; break;
+	case DI_ITEM_VOFFSET: y -= tex->GetDisplayTopOffsetDouble() * boxheight / texheight; break;
 	}
 
 	if (!fullscreenOffsets)
@@ -1443,23 +1658,25 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 //
 //============================================================================
 
-void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY)
+void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY)
 {
+	bool monospaced = monospacing != EMonospacing::Off;
+
 	switch (flags & DI_TEXT_ALIGN)
 	{
 	default:
 		break;
 	case DI_TEXT_ALIGN_RIGHT:
 		if (!monospaced)
-			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.Len()));
+			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount()));
 		else //monospaced, so just multiply the character size
-			x -= static_cast<int> ((spacing) * cstring.Len());
+			x -= static_cast<int> ((spacing) * cstring.CharacterCount());
 		break;
 	case DI_TEXT_ALIGN_CENTER:
 		if (!monospaced)
-			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.Len())) / 2;
+			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount())) / 2;
 		else //monospaced, so just multiply the character size
-			x -= static_cast<int> ((spacing)* cstring.Len()) / 2;
+			x -= static_cast<int> ((spacing)* cstring.CharacterCount()) / 2;
 		break;
 	}
 
@@ -1497,7 +1714,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		Scale = { 1.,1. };
 	}
 	int ch;
-	while (ch = *str++, ch != '\0')
+	while (ch = GetCharFromString(str), ch != '\0')
 	{
 		if (ch == ' ')
 		{
@@ -1513,20 +1730,25 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		}
 
 		int width;
-		FTexture* c = font->GetChar((unsigned char)ch, &width);
+		FTexture* c = font->GetChar(ch, fontcolor, &width);
 		if (c == NULL) //missing character.
 		{
 			continue;
 		}
 
 		if (!monospaced) //If we are monospaced lets use the offset
-			x += (c->GetLeftOffset(0) + 1); //ignore x offsets since we adapt to character size
+			x += (c->GetDisplayLeftOffsetDouble() + 1); //ignore x offsets since we adapt to character size
 
 		double rx, ry, rw, rh;
 		rx = x + drawOffset.X;
 		ry = y + drawOffset.Y;
-		rw = c->GetScaledWidthDouble();
-		rh = c->GetScaledHeightDouble();
+		rw = c->GetDisplayWidthDouble();
+		rh = c->GetDisplayHeightDouble();
+
+		if (monospacing == EMonospacing::CellCenter)
+			rx += (spacing - rw) / 2;
+		else if (monospacing == EMonospacing::CellRight)
+			rx += (spacing - rw);
 
 		if (!fullscreenOffsets)
 		{
@@ -1560,11 +1782,10 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 			TAG_DONE);
 
 		if (!monospaced)
-			x += width + spacing - (c->GetLeftOffset(0) + 1);
+			x += width + spacing - (c->GetDisplayLeftOffsetDouble() + 1);
 		else
 			x += spacing;
 	}
-
 }
 
 void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing)
@@ -1586,13 +1807,13 @@ void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string
 		auto brk = V_BreakLines(font->mFont, wrapwidth, string, true);
 		for (auto &line : brk)
 		{
-			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospaced, font->mShadowX, font->mShadowY);
+			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY);
 			y += font->mFont->GetHeight() + linespacing;
 		}
 	}
 	else
 	{
-		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospaced, font->mShadowX, font->mShadowY);
+		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY);
 	}
 }
 

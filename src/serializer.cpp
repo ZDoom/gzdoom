@@ -59,114 +59,31 @@
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "utf8.h"
 
 char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.
 
-int utf8_encode(int32_t codepoint, char *buffer, int *size)
-{
-	if (codepoint < 0)
-		return -1;
-	else if (codepoint < 0x80)
-	{
-		buffer[0] = (char)codepoint;
-		*size = 1;
-	}
-	else if (codepoint < 0x800)
-	{
-		buffer[0] = 0xC0 + ((codepoint & 0x7C0) >> 6);
-		buffer[1] = 0x80 + ((codepoint & 0x03F));
-		*size = 2;
-	}
-	else if (codepoint < 0x10000)
-	{
-		buffer[0] = 0xE0 + ((codepoint & 0xF000) >> 12);
-		buffer[1] = 0x80 + ((codepoint & 0x0FC0) >> 6);
-		buffer[2] = 0x80 + ((codepoint & 0x003F));
-		*size = 3;
-	}
-	else if (codepoint <= 0x10FFFF)
-	{
-		buffer[0] = 0xF0 + ((codepoint & 0x1C0000) >> 18);
-		buffer[1] = 0x80 + ((codepoint & 0x03F000) >> 12);
-		buffer[2] = 0x80 + ((codepoint & 0x000FC0) >> 6);
-		buffer[3] = 0x80 + ((codepoint & 0x00003F));
-		*size = 4;
-	}
-	else
-		return -1;
-
-	return 0;
-}
-
-int utf8_decode(const char *src, int *size) 
-{
-	int c = src[0] & 255;
-	int r;
-
-	*size = 1;
-	if ((c & 0x80) == 0)
-	{
-		return c;
-	}
-
-	int c1 = src[1] & 255;
-
-	if ((c & 0xE0) == 0xC0) 
-	{
-		r = ((c & 0x1F) << 6) | c1;
-		if (r >= 128) 
-		{
-			*size = 2;
-			return r;
-		}
-		return -1;
-	}
-
-	int c2 = src[2] & 255;
-
-	if ((c & 0xF0) == 0xE0) 
-	{
-		r = ((c & 0x0F) << 12) | (c1 << 6) | c2;
-		if (r >= 2048 && (r < 55296 || r > 57343)) 
-		{
-			*size = 3;
-			return r;
-		}
-		return -1;
-	}
-	
-	int c3 = src[3] & 255;
-
-	if ((c & 0xF8) == 0xF0) 
-	{
-		r = ((c & 0x07) << 18) | (c1 << 12) | (c2 << 6) | c3;
-		if (r >= 65536 && r <= 1114111) 
-		{
-			*size = 4;
-			return r;
-		}
-	}
-	return -1;
-}
+//==========================================================================
+//
+// This will double-encode already existing UTF-8 content.
+// The reason for this behavior is to preserve any original data coming through here, no matter what it is.
+// If these are script-based strings, exact preservation in the serializer is very important.
+//
+//==========================================================================
 
 static TArray<char> out;
 static const char *StringToUnicode(const char *cc, int size = -1)
 {
 	int ch;
-	const char *c = cc;
+	const uint8_t *c = (const uint8_t*)cc;
 	int count = 0;
 	int count1 = 0;
 	out.Clear();
 	while ((ch = (*c++) & 255))
 	{
 		count1++;
-		if (ch >= 128)
-		{
-			if (ch < 0x800) count += 2;
-			else count += 3;
-			// The source cannot contain 4-byte chars.
-		}
+		if (ch >= 128) count += 2;
 		else count++;
 		if (count1 == size && size > 0) break;
 	}
@@ -174,11 +91,11 @@ static const char *StringToUnicode(const char *cc, int size = -1)
 	// we need to convert
 	out.Resize(count + 1);
 	out.Last() = 0;
-	c = cc;
+	c = (const uint8_t*)cc;
 	int i = 0;
-	while ((ch = (*c++) & 255))
+	while ((ch = (*c++)))
 	{
-		utf8_encode(ch, &out[i], &count1);
+		utf8_encode(ch, (uint8_t*)&out[i], &count1);
 		i += count1;
 	}
 	return &out[0];
@@ -191,8 +108,8 @@ static const char *UnicodeToString(const char *cc)
 	while (*cc != 0)
 	{
 		int size;
-		int c = utf8_decode(cc, &size);
-		if (c < 0 || c > 255) c = '?';
+		int c = utf8_decode((const uint8_t*)cc, &size);
+		if (c < 0 || c > 255) c = '?';	// This should never happen because all content was encoded with StringToUnicode which only produces code points 0-255.
 		out[ndx++] = c;
 		cc += size;
 	}
@@ -302,6 +219,13 @@ struct FWriter
 	{
 		if (mWriter1) mWriter1->Null();
 		else if (mWriter2) mWriter2->Null();
+	}
+
+	void StringU(const char *k, bool encode)
+	{
+		if (encode) k = StringToUnicode(k);
+		if (mWriter1) mWriter1->String(k);
+		else if (mWriter2) mWriter2->String(k);
 	}
 
 	void String(const char *k)
@@ -464,10 +388,9 @@ bool FSerializer::OpenReader(FCompressedBuffer *input)
 	}
 	else
 	{
-		char *unpacked = new char[input->mSize];
-		input->Decompress(unpacked);
-		r = new FReader(unpacked, input->mSize);
-		delete[] unpacked;
+		TArray<char> unpacked(input->mSize);
+		input->Decompress(unpacked.Data());
+		r = new FReader(unpacked.Data(), input->mSize);
 	}
 	return true;
 }
@@ -897,7 +820,7 @@ FSerializer &FSerializer::StringPtr(const char *key, const char *&charptr)
 
 //==========================================================================
 //
-//
+// Adds a string literal. This won't get double encoded, like a serialized string.
 //
 //==========================================================================
 
@@ -906,9 +829,31 @@ FSerializer &FSerializer::AddString(const char *key, const char *charptr)
 	if (isWriting())
 	{
 		WriteKey(key);
-		w->String(charptr);
+		w->StringU(MakeUTF8(charptr), false);
 	}
 	return *this;
+}
+
+//==========================================================================
+//
+// Reads back a string without any processing.
+//
+//==========================================================================
+
+const char *FSerializer::GetString(const char *key)
+{
+	auto val = r->FindKey(key);
+	if (val != nullptr)
+	{
+		if (val->IsString())
+		{
+			return val->GetString();
+		}
+		else
+		{
+		}
+	}
+	return nullptr;
 }
 
 //==========================================================================
@@ -921,9 +866,10 @@ unsigned FSerializer::GetSize(const char *group)
 {
 	if (isWriting()) return -1;	// we do not know this when writing.
 
-	const rapidjson::Value &val = r->mDoc[group];
-	if (!val.IsArray()) return -1;
-	return val.Size();
+	const rapidjson::Value *val = r->FindKey(group);
+	if (!val) return 0;
+	if (!val->IsArray()) return -1;
+	return val->Size();
 }
 
 //==========================================================================
@@ -987,7 +933,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 		// Do not link any thinker that's being created here. This will be done by deserializing the thinker list later.
 		try
 		{
-			DThinker::bSerialOverride = true;
 			r->mDObjects.Resize(ArraySize());
 			for (auto &p : r->mDObjects)
 			{
@@ -1052,7 +997,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 			}
 			EndArray();
 
-			DThinker::bSerialOverride = false;
 			assert(!founderrors);
 			if (founderrors)
 			{
@@ -1070,7 +1014,6 @@ void FSerializer::ReadObjects(bool hubtravel)
 			r->mDObjects.Clear();
 
 			// make sure this flag gets unset, even if something in here throws an error.
-			DThinker::bSerialOverride = false;
 			throw;
 		}
 	}
@@ -1450,27 +1393,32 @@ FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
 {
-	return SerializePointer(arc, key, value, defval, polyobjs);
+	if (arc.Level == nullptr) I_Error("Trying to serialize polyobject without a valid level");
+	return SerializePointer(arc, key, value, defval, arc.Level->Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval)
 {
-	return SerializePointer<const FPolyObj>(arc, key, value, defval, polyobjs);
+	if (arc.Level == nullptr) I_Error("Trying to serialize polyobject without a valid level");
+	return SerializePointer<const FPolyObj>(arc, key, value, defval, arc.Level->Polyobjects.Data());
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.sides[0]);
+	if (arc.Level == nullptr) I_Error("Trying to serialize SIDEDEF without a valid level");
+	return SerializePointer(arc, key, value, defval, &arc.Level->sides[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.sectors[0]);
+	if (arc.Level == nullptr) I_Error("Trying to serialize sector without a valid level");
+	return SerializePointer(arc, key, value, defval, &arc.Level->sectors[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, const sector_t *&value, const sector_t **defval)
 {
-	return SerializePointer<const sector_t>(arc, key, value, defval, &level.sectors[0]);
+	if (arc.Level == nullptr) I_Error("Trying to serialize sector without a valid level");
+	return SerializePointer<const sector_t>(arc, key, value, defval, &arc.Level->sectors[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)
@@ -1480,12 +1428,14 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.lines[0]);
+	if (arc.Level == nullptr) I_Error("Trying to serialize linedef without a valid level");
+	return SerializePointer(arc, key, value, defval, &arc.Level->lines[0]);
 }
 
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval)
 {
-	return SerializePointer(arc, key, value, defval, &level.vertexes[0]);
+	if (arc.Level == nullptr) I_Error("Trying to serialize verte without a valid level");
+	return SerializePointer(arc, key, value, defval, &arc.Level->vertexes[0]);
 }
 
 //==========================================================================
@@ -1515,7 +1465,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			}
 			FTextureID chk = value;
 			if (chk.GetIndex() >= TexMan.NumTextures()) chk.SetNull();
-			FTexture *pic = TexMan[chk];
+			FTexture *pic = TexMan.GetTexture(chk);
 			const char *name;
 
 			if (Wads.GetLinkedTexture(pic->SourceLump) == pic)
@@ -1545,7 +1495,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 				assert(nameval.IsString() && typeval.IsInt());
 				if (nameval.IsString() && typeval.IsInt())
 				{
-					value = TexMan.GetTexture(UnicodeToString(nameval.GetString()), static_cast<ETextureType>(typeval.GetInt()));
+					value = TexMan.GetTextureID(UnicodeToString(nameval.GetString()), static_cast<ETextureType>(typeval.GetInt()));
 				}
 				else
 				{
@@ -1968,13 +1918,13 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDial
 			}
 			else if (val->IsUint())
 			{
-				if (val->GetUint() >= StrifeDialogues.Size())
+				if (val->GetUint() >= arc.Level->StrifeDialogues.Size())
 				{
 					node = nullptr;
 				}
 				else
 				{
-					node = StrifeDialogues[val->GetUint()];
+					node = arc.Level->StrifeDialogues[val->GetUint()];
 				}
 			}
 			else
@@ -2130,6 +2080,65 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 
 //==========================================================================
 //
+// This is a bit of a cheat because it never actually writes out the pointer.
+// The rules for levels are that they must be self-contained.
+// No level and no pbject that is part of a level may reference a different one.
+//
+// When writing, this merely checks if the rules are obeyed and if not errors out.
+// When reading, it assumes that the object was properly written and restores
+// the reference from the owning level
+//
+// The only exception are null pointers which are allowed
+//
+//==========================================================================
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocals *&lev, FLevelLocals **def)
+{
+	if (arc.isWriting())
+	{
+		if (!arc.w->inObject() || lev == nullptr)
+		{
+			arc.WriteKey(key);
+			if (lev == nullptr)
+			{
+				arc.w->Null();
+			}
+			else
+			{
+				// This MUST be the currently serialized level, anything else will error out here as a sanity check.
+				if (arc.Level == nullptr || lev != arc.Level)
+				{
+					I_Error("Attempt to serialize invalid level reference");
+				}
+				if (!arc.w->inObject())
+				{
+					arc.w->Bool(true);	// In the unlikely case this is used in an array, write a filler.
+				}
+			}
+		}
+	}
+	else
+	{
+		auto val = arc.r->FindKey(key);
+		if (val != nullptr)
+		{
+			assert(val->IsNull() || val->IsBool());
+			if (val->IsNull())
+			{
+				lev = nullptr;
+			}
+			else 
+			{
+				lev = arc.Level;
+			}
+		}
+		else lev = arc.Level;
+	}
+	return arc;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -2138,19 +2147,14 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 {
 	if (arc.isWriting())
 	{
-		FName n = font->GetName();
+		FName n = font? font->GetName() : NAME_None;
 		return arc(key, n);
 	}
 	else
 	{
 		FName n = NAME_None;
 		arc(key, n);
-		font = V_GetFont(n);
-		if (font == nullptr)
-		{
-			Printf(TEXTCOLOR_ORANGE "Could not load font %s\n", n.GetChars());
-			font = SmallFont;
-		}
+		font = n == NAME_None? nullptr : V_GetFont(n);
 		return arc;
 	}
 

@@ -30,12 +30,8 @@ protected:
 
 	void PositionWindow(bool fullscreen, bool initialcall = false);
 
-	void ResetGammaTable();
-	void SetGammaTable(uint16_t * tbl);
-
 	float m_Gamma, m_Brightness, m_Contrast;
 	uint16_t m_origGamma[768];
-	bool m_supportsGamma;
 	bool m_Fullscreen = false;
 	char m_displayDeviceNameBuffer[32/*CCHDEVICENAME*/];	// do not use windows.h constants here!
 	char *m_displayDeviceName;

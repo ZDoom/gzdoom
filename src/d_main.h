@@ -81,6 +81,8 @@ struct FStartupInfo
 	uint32_t BkColor;			// Background color for title banner
 	FString Song;
 	int Type;
+	int LoadLights = -1;
+	int LoadBrightmaps = -1;
 	enum
 	{
 		DefaultStartup,
@@ -107,6 +109,7 @@ struct FIWADInfo
 	FString MapInfo;		// Base mapinfo to load
 	TArray<FString> Load;	// Wads to be loaded with this one.
 	TArray<FString> Lumps;	// Lump names for identification
+	TArray<FString> DeleteLumps;	// Lumps which must be deleted from the directory.
 	int flags = 0;
 };
 
@@ -158,7 +161,7 @@ public:
 	int GetIWadFlags(unsigned int num) const
 	{
 		if (num < mIWadInfos.Size()) return mIWadInfos[num].flags;
-		else return false;
+		else return 0;
 	}
 
 };

@@ -89,6 +89,10 @@
 #include "v_text.h"
 #include "version.h"
 #include "events.h"
+#include "doomerrors.h"
+#include "i_system.h"
+#include "g_levellocals.h"
+#include "atterm.h"
 
 // Prototypes and declarations.
 #include "rawinput.h"
@@ -148,6 +152,9 @@ extern bool AppActive;
 int SessionState = 0;
 int BlockMouseMove; 
 
+static bool EventHandlerResultForNativeMouse;
+
+
 CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -172,7 +179,7 @@ static void I_CheckGUICapture ()
 	}
 
 	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && E_CheckUiProcessors())
+	if (!wantCapt && primaryLevel->localEventManager->CheckUiProcessors())
 		wantCapt = true;
 
 	if (wantCapt != GUICapture)
@@ -455,11 +462,11 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 	case WM_KILLFOCUS:
-		I_CheckNativeMouse (true);	// Make sure mouse gets released right away
+		I_CheckNativeMouse (true, false);	// Make sure mouse gets released right away
 		break;
 
 	case WM_SETFOCUS:
-		I_CheckNativeMouse (false);
+		I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);	// This cannot call the event handler. Doing it from here is unsafe.
 		break;
 
 	case WM_SETCURSOR:
@@ -519,8 +526,10 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			else
 			{
-				mmi->ptMinTrackSize.x = 320;
-				mmi->ptMinTrackSize.y = 200;
+				RECT rect = { 0, 0, VID_MIN_WIDTH, VID_MIN_HEIGHT };
+				AdjustWindowRectEx(&rect, GetWindowLongW(hWnd, GWL_STYLE), FALSE, GetWindowLongW(hWnd, GWL_EXSTYLE));
+				mmi->ptMinTrackSize.x = rect.right - rect.left;
+				mmi->ptMinTrackSize.y = rect.bottom - rect.top;
 			}
 			return 0;
 		}
@@ -547,7 +556,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (message == WM_WTSSESSION_CHANGE && lParam == (LPARAM)SessionID)
 			{
 #ifdef _DEBUG
-				OutputDebugString ("SessionID matched\n");
+				OutputDebugStringA ("SessionID matched\n");
 #endif
 				// When using fast user switching, XP will lock a session before
 				// disconnecting it, and the session will be unlocked before reconnecting it.
@@ -595,7 +604,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #ifdef _DEBUG
 			char foo[256];
 			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", lParam, wParam);
-			OutputDebugString (foo);
+			OutputDebugStringA (foo);
 #endif
 		}
 		break;
@@ -634,14 +643,14 @@ bool I_InitInput (void *hwnd)
 	FindRawInputFunctions();
 
 	// Try for DirectInput 8 first, then DirectInput 3 for NT 4's benefit.
-	DInputDLL = LoadLibrary("dinput8.dll");
+	DInputDLL = LoadLibraryA("dinput8.dll");
 	if (DInputDLL != NULL)
 	{
 		typedef HRESULT (WINAPI *blah)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
 		blah di8c = (blah)GetProcAddress(DInputDLL, "DirectInput8Create");
 		if (di8c != NULL)
 		{
-			hr = di8c(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8A, (void **)&g_pdi, NULL);
+			hr = di8c(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void **)&g_pdi, NULL);
 			if (FAILED(hr))
 			{
 				Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx\n", hr);
@@ -660,14 +669,18 @@ bool I_InitInput (void *hwnd)
 		{
 			FreeLibrary(DInputDLL);
 		}
-		DInputDLL = LoadLibrary ("dinput.dll");
+		DInputDLL = LoadLibraryA ("dinput.dll");
 		if (DInputDLL == NULL)
 		{
 			I_FatalError ("Could not load dinput.dll: %08lx", GetLastError());
 		}
 
 		typedef HRESULT (WINAPI *blah)(HINSTANCE, DWORD, LPDIRECTINPUT*, LPUNKNOWN);
-		blah dic = (blah)GetProcAddress (DInputDLL, "DirectInputCreateA");
+#ifdef UNICODE
+		blah dic = (blah)GetProcAddress (DInputDLL, "DirectInputCreateW");
+#else
+		blah dic = (blah)GetProcAddress(DInputDLL, "DirectInputCreateA");
+#endif
 
 		if (dic == NULL)
 		{
@@ -776,7 +789,8 @@ void I_StartTic ()
 	BlockMouseMove--;
 	ResetButtonTriggers ();
 	I_CheckGUICapture ();
-	I_CheckNativeMouse (false);
+	EventHandlerResultForNativeMouse = primaryLevel->localEventManager->CheckRequireMouse();
+	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
 }
 
@@ -853,13 +867,14 @@ void I_PutInClipboard (const char *str)
 		return;
 	EmptyClipboard ();
 
-	HGLOBAL cliphandle = GlobalAlloc (GMEM_DDESHARE, strlen (str) + 1);
+	auto wstr = WideString(str);
+	HGLOBAL cliphandle = GlobalAlloc (GMEM_DDESHARE, wstr.length() * 2 + 2);
 	if (cliphandle != NULL)
 	{
-		char *ptr = (char *)GlobalLock (cliphandle);
-		strcpy (ptr, str);
+		wchar_t *ptr = (wchar_t *)GlobalLock (cliphandle);
+		wcscpy (ptr, wstr.c_str());
 		GlobalUnlock (cliphandle);
-		SetClipboardData (CF_TEXT, cliphandle);
+		SetClipboardData (CF_UNICODETEXT, cliphandle);
 	}
 	CloseClipboard ();
 }
@@ -868,28 +883,21 @@ FString I_GetFromClipboard (bool return_nothing)
 {
 	FString retstr;
 	HGLOBAL cliphandle;
-	char *clipstr;
-	char *nlstr;
+	wchar_t *clipstr;
 
-	if (return_nothing || !IsClipboardFormatAvailable (CF_TEXT) || !OpenClipboard (Window))
+	if (return_nothing || !IsClipboardFormatAvailable (CF_UNICODETEXT) || !OpenClipboard (Window))
 		return retstr;
 
-	cliphandle = GetClipboardData (CF_TEXT);
-	if (cliphandle != NULL)
+	cliphandle = GetClipboardData (CF_UNICODETEXT);
+	if (cliphandle != nullptr)
 	{
-		clipstr = (char *)GlobalLock (cliphandle);
-		if (clipstr != NULL)
+		clipstr = (wchar_t *)GlobalLock (cliphandle);
+		if (clipstr != nullptr)
 		{
-			// Convert CR-LF pairs to just LF while copying to the FString
-			for (nlstr = clipstr; *nlstr != '\0'; ++nlstr)
-			{
-				if (nlstr[0] == '\r' && nlstr[1] == '\n')
-				{
-					nlstr++;
-				}
-				retstr += *nlstr;
-			}
-			GlobalUnlock (clipstr);
+			// Convert CR-LF pairs to just LF.
+			retstr = clipstr;
+			GlobalUnlock(clipstr);
+			retstr.Substitute("\r\n", "\n");
 		}
 	}
 
@@ -960,7 +968,7 @@ static void FindRawInputFunctions()
 {
 	if (!norawinput)
 	{
-		HMODULE user32 = GetModuleHandle("user32.dll");
+		HMODULE user32 = GetModuleHandleA("user32.dll");
 
 		if (user32 == NULL)
 		{

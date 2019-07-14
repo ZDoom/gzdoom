@@ -89,7 +89,10 @@ enum
 	PRINT_CHAT,		// chat messages
 	PRINT_TEAMCHAT,	// chat messages from a teammate
 	PRINT_LOG,		// only to logfile
-	PRINT_BOLD = 200				// What Printf_Bold used
+	PRINT_BOLD = 200,				// What Printf_Bold used
+	PRINT_TYPES = 1023,		// Bitmask.
+	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
+	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };
 
 enum
@@ -267,7 +270,17 @@ inline VersionInfo MakeVersion(unsigned int ma, unsigned int mi, unsigned int re
 	return{ (uint16_t)ma, (uint16_t)mi, (uint32_t)re };
 }
 
-
+enum class ELightMode : int8_t
+{
+	NotSet = -1,
+	LinearStandard = 0,
+	DoomBright = 1,
+	Doom = 2,
+	DoomDark = 3,
+	DoomLegacy = 4,
+	ZDoomSoftware = 8,
+	DoomSoftware = 16
+};
 
 // Screenshot buffer image data types
 enum ESSType
@@ -287,6 +300,11 @@ const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
 inline float DEG2RAD(float deg)
 {
 	return deg * float(M_PI / 180.0);
+}
+
+inline double DEG2RAD(double deg)
+{
+	return deg * (M_PI / 180.0);
 }
 
 inline float RAD2DEG(float deg)

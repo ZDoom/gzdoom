@@ -47,11 +47,13 @@ typedef enum cstate_t
 } 
 constate_e;
 
-#define PRINTLEVELS 5
+enum
+{
+	PRINTLEVELS = 5
+};
 extern int PrintColors[PRINTLEVELS + 2];
 
 extern constate_e ConsoleState;
-extern int ConBottom;
 
 // Initialize the console
 void C_InitConsole (int width, int height, bool ingame);
@@ -65,6 +67,7 @@ void C_Ticker (void);
 
 void AddToConsole (int printlevel, const char *string);
 int PrintString (int printlevel, const char *string);
+int PrintStringHigh (const char *string);
 int VPrintf (int printlevel, const char *format, va_list parms) GCCFORMAT(2);
 
 void C_DrawConsole ();
@@ -74,17 +77,15 @@ void C_HideConsole (void);
 void C_AdjustBottom (void);
 void C_FlushDisplay (void);
 
-void C_InitTicker (const char *label, unsigned int max, bool showpercent=true);
-void C_SetTicker (unsigned int at, bool forceUpdate=false);
-
 class FFont;
-void C_MidPrint (FFont *font, const char *message);
-void C_MidPrintBold (FFont *font, const char *message);
+void C_MidPrint (FFont *font, const char *message, bool bold = false);
 
 bool C_Responder (event_t *ev);
 
 void C_AddTabCommand (const char *name);
 void C_RemoveTabCommand (const char *name);
 void C_ClearTabCommands();		// Removes all tab commands
+
+extern const char *console_bar;
 
 #endif

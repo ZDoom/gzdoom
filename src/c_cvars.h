@@ -34,7 +34,7 @@
 #ifndef __C_CVARS_H__
 #define __C_CVARS_H__
 
-#include "doomtype.h"
+#include "zstring.h"
 #include "tarray.h"
 
 /*
@@ -73,7 +73,6 @@ union UCVarValue
 	int Int;
 	float Float;
 	const char *String;
-	const GUID *pGUID;
 };
 
 enum ECVarType
@@ -85,12 +84,10 @@ enum ECVarType
 	CVAR_Color,		// stored as CVAR_Int
 	CVAR_DummyBool,		// just redirects to another cvar
 	CVAR_DummyInt,		// just redirects to another cvar
-	CVAR_Dummy,			// Unknown
-	CVAR_GUID
+	CVAR_Dummy			// Unknown
 };
 
 class FConfigFile;
-class AActor;
 
 class FxCVar;
 
@@ -140,12 +137,10 @@ protected:
 	static int ToInt (UCVarValue value, ECVarType type);
 	static float ToFloat (UCVarValue value, ECVarType type);
 	static const char *ToString (UCVarValue value, ECVarType type);
-	static const GUID *ToGUID (UCVarValue value, ECVarType type);
 	static UCVarValue FromBool (bool value, ECVarType type);
 	static UCVarValue FromInt (int value, ECVarType type);
 	static UCVarValue FromFloat (float value, ECVarType type);
 	static UCVarValue FromString (const char *value, ECVarType type);
-	static UCVarValue FromGUID (const GUID &value, ECVarType type);
 
 	char *Name;
 	FString SafeValue;
@@ -194,7 +189,7 @@ FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
 FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 
 // Used for ACS and DECORATE.
-FBaseCVar *GetCVar(AActor *activator, const char *cvarname);
+FBaseCVar *GetCVar(int playernum, const char *cvarname);
 FBaseCVar *GetUserCVar(int playernum, const char *cvarname);
 
 // Create a new cvar with the specified name and type
@@ -401,31 +396,6 @@ protected:
 	FIntCVar &ValueVar;
 	uint32_t BitVal;
 	int BitNum;
-};
-
-class FGUIDCVar : public FBaseCVar
-{
-public:
-	FGUIDCVar (const char *name, const GUID *defguid, uint32_t flags, void (*callback)(FGUIDCVar &)=NULL);
-
-	virtual ECVarType GetRealType () const;
-
-	virtual UCVarValue GetGenericRep (ECVarType type) const;
-	virtual UCVarValue GetFavoriteRep (ECVarType *type) const;
-	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
-	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
-	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
-
-	const GUID &operator= (const GUID &guidval)
-		{ UCVarValue val; val.pGUID = &guidval; SetGenericRep (val, CVAR_GUID); return guidval; }
-	inline operator const GUID & () const { return Value; }
-	inline const GUID &operator *() const { return Value; }
-
-protected:
-	virtual void DoSet (UCVarValue value, ECVarType type);
-
-	GUID Value;
-	GUID DefaultValue;
 };
 
 extern int cvar_defflags;

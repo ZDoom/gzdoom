@@ -51,6 +51,8 @@
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
+const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinprogdir);
+
 //==========================================================================
 //
 // Parses IWAD definitions
@@ -132,8 +134,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					do
 					{
 						sc.MustGetString();
-						if(sc.Compare("NoTextcolor")) iwad->flags |= GI_NOTEXTCOLOR;
-						else if(sc.Compare("Poly1")) iwad->flags |= GI_COMPATPOLY1;
+						if(sc.Compare("Poly1")) iwad->flags |= GI_COMPATPOLY1;
 						else if(sc.Compare("Poly2")) iwad->flags |= GI_COMPATPOLY2;
 						else if(sc.Compare("Shareware")) iwad->flags |= GI_SHAREWARE;
 						else if(sc.Compare("Teaser2")) iwad->flags |= GI_TEASER2;
@@ -154,6 +155,16 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					}
 					while (sc.CheckString(","));
 				}
+				else if (sc.Compare("DeleteLumps"))
+				{
+					sc.MustGetStringName("=");
+					do
+					{
+						sc.MustGetString();
+						iwad->DeleteLumps.Push(FString(sc.String));
+					}
+					while (sc.CheckString(","));
+				}
 				else if (sc.Compare("BannerColors"))
 				{
 					sc.MustGetStringName("=");
@@ -162,6 +173,13 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetStringName(",");
 					sc.MustGetString();
 					iwad->BkColor = V_GetColor(NULL, sc);
+				}
+				else if (sc.Compare("IgnoreTitlePatches"))
+				{
+					sc.MustGetStringName("=");
+					sc.MustGetNumber();
+					if (sc.Number) iwad->flags |= GI_IGNORETITLEPATCHES;
+					else iwad->flags &= ~GI_IGNORETITLEPATCHES;
 				}
 				else if (sc.Compare("Load"))
 				{
@@ -735,19 +753,27 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	// Load additional resources from the same directory as the IWAD itself.
 	for (unsigned i=0; i < info.Load.Size(); i++)
 	{
-		long lastslash = picks[pick].mFullPath.LastIndexOf ('/');
 		FString path;
-
-		if (lastslash == -1)
+		if (info.Load[i][0] != ':')
 		{
-			path = "";//  wads[pickwad].Path;
+			long lastslash = picks[pick].mFullPath.LastIndexOf('/');
+
+			if (lastslash == -1)
+			{
+				path = "";//  wads[pickwad].Path;
+			}
+			else
+			{
+				path = FString(picks[pick].mFullPath.GetChars(), lastslash + 1);
+			}
+			path += info.Load[i];
+			D_AddFile(wadfiles, path);
 		}
 		else
 		{
-			path = FString (picks[pick].mFullPath.GetChars(), lastslash + 1);
+			auto wad = BaseFileSearch(info.Load[i].GetChars() + 1, NULL, true);
+			if (wad) D_AddFile(wadfiles, wad);
 		}
-		path += info.Load[i];
-		D_AddFile (wadfiles, path);
 
 	}
 	return picks[pick].mInfoIndex;

@@ -42,9 +42,11 @@
 #include "c_cvars.h"
 #include "m_argv.h"
 #include "version.h"
+#include "i_system.h"
 
 #include "i_cd.h"
 #include "helperthread.h"
+#include "atterm.h"
 
 extern HWND Window;
 extern HINSTANCE g_hInst;
@@ -172,7 +174,7 @@ bool FCDThread::Init ()
 	CD_WindowClass.style = CS_NOCLOSE;
 	CD_WindowClass.lpfnWndProc = CD_WndProc;
 	CD_WindowClass.hInstance = g_hInst;
-	CD_WindowClass.lpszClassName = GAMENAME " CD Player";
+	CD_WindowClass.lpszClassName = WGAMENAME " CD Player";
 	CD_WindowAtom = RegisterClass (&CD_WindowClass);
 
 	if (CD_WindowAtom == 0)
@@ -180,7 +182,7 @@ bool FCDThread::Init ()
 
 	CD_Window = CreateWindow (
 		(LPCTSTR)(INT_PTR)(int)CD_WindowAtom,
-		GAMENAME " CD Player",
+		WGAMENAME " CD Player",
 		0,
 		0, 0, 10, 10,
 		NULL,
@@ -262,12 +264,12 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 	DWORD firstTrack, lastTrack, numTracks;
 	DWORD length;
 	DWORD openFlags;
-	char ident[32];
+	wchar_t ident[32];
 
 	switch (method)
 	{
 	case CDM_Init:
-		mciOpen.lpstrDeviceType = (LPCSTR)MCI_DEVTYPE_CD_AUDIO;
+		mciOpen.lpstrDeviceType = (LPCWSTR)MCI_DEVTYPE_CD_AUDIO;
 		openFlags = MCI_OPEN_SHAREABLE|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID|MCI_WAIT;
 		if ((signed)parm1 >= 0)
 		{
@@ -410,7 +412,7 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 
 	case CDM_GetMediaIdentity:
 	case CDM_GetMediaUPC:
-		char ident[32];
+		wchar_t ident[32];
 
 		infoParms.lpstrReturn = ident;
 		infoParms.dwRetSize = sizeof(ident);
@@ -422,7 +424,7 @@ DWORD FCDThread::Dispatch (DWORD method, DWORD parm1, DWORD parm2, DWORD parm3)
 		}
 		else
 		{
-			return strtoul (ident, NULL, 0);
+			return wcstoul (ident, NULL, 0);
 		}
 
 	default:

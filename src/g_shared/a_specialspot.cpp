@@ -42,7 +42,6 @@
 static FRandom pr_spot ("SpecialSpot");
 
 IMPLEMENT_CLASS(DSpotState, false, false)
-TObjPtr<DSpotState*> DSpotState::SpotState;
 
 //----------------------------------------------------------------------------
 //
@@ -198,16 +197,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSpotList &list, FSpot
 //----------------------------------------------------------------------------
 
 DSpotState::DSpotState ()
-: DThinker (STAT_INFO)
 {
-	if (SpotState)
-	{
-		I_Error ("Only one SpotState is allowed to exist at a time.\nCheck your code.");
-	}
-	else
-	{
-		SpotState = this;
-	}
 }
 
 //----------------------------------------------------------------------------
@@ -219,8 +209,6 @@ DSpotState::DSpotState ()
 void DSpotState::OnDestroy ()
 {
 	SpotLists.Reset();
-
-	SpotState = NULL;
 	Super::OnDestroy();
 }
 
@@ -232,18 +220,6 @@ void DSpotState::OnDestroy ()
 
 void DSpotState::Tick ()
 {
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-DSpotState *DSpotState::GetSpotState(bool create)
-{
-	if (SpotState == NULL && create) SpotState = Create<DSpotState>();
-	return SpotState;
 }
 
 //----------------------------------------------------------------------------

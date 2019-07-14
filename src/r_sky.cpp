@@ -43,33 +43,15 @@
 // sky mapping
 //
 FTextureID	skyflatnum;
-FTextureID	sky1texture,	sky2texture;
-double		skytexturemid;
-double		skyscale;
-float		skyiscale;
-bool		skystretch;
-
-fixed_t		sky1cyl,		sky2cyl;
-double		sky1pos,		sky2pos;
-float		hw_sky1pos, hw_sky2pos;
-
-CUSTOM_CVAR(Int, testskyoffset, 0, 0)
-{
-	R_InitSkyMap();
-}
 
 // [RH] Stretch sky texture if not taller than 128 pixels?
 // Also now controls capped skies. 0 = normal, 1 = stretched, 2 = capped
-CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE)
+CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	R_InitSkyMap ();
 }
 
 CVAR(Float, skyoffset, 0, 0)	// for testing
-
-
-
-int			freelookviewheight;
 
 //==========================================================================
 //
@@ -79,31 +61,32 @@ int			freelookviewheight;
 //
 //==========================================================================
 
-void R_InitSkyMap ()
+void InitSkyMap(FLevelLocals *Level)
 {
 	int skyheight;
 	FTexture *skytex1, *skytex2;
 
 	// Do not allow the null texture which has no bitmap and will crash.
-	if (sky1texture.isNull())
+	if (Level->skytexture1.isNull())
 	{
-		sky1texture = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
+		Level->skytexture1 = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
-	if (sky2texture.isNull())
+	if (Level->skytexture2.isNull())
 	{
-		sky2texture = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
+		Level->skytexture2 = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
 
-	skytex1 = TexMan(sky1texture, true);
-	skytex2 = TexMan(sky2texture, true);
+	skytex1 = TexMan.GetTexture(Level->skytexture1, false);
+	skytex2 = TexMan.GetTexture(Level->skytexture2, false);
 
 	if (skytex1 == nullptr)
 		return;
 
-	if ((level.flags & LEVEL_DOUBLESKY) && skytex1->GetHeight() != skytex2->GetHeight())
+	if ((Level->flags & LEVEL_DOUBLESKY) && skytex1->GetDisplayHeight() != skytex2->GetDisplayHeight())
 	{
-		Printf (TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
-		sky2texture = sky1texture;
+		Printf(TEXTCOLOR_BOLD "Both sky textures must be the same height." TEXTCOLOR_NORMAL "\n");
+		Level->flags &= ~LEVEL_DOUBLESKY;
+		Level->skytexture1 = Level->skytexture2;
 	}
 
 	// There are various combinations for sky rendering depending on how tall the sky is:
@@ -119,44 +102,24 @@ void R_InitSkyMap ()
 	//                  the screen when looking fully up.
 	//        h >  200: Unstretched, but the baseline is shifted down so that the top
 	//                  of the texture is at the top of the screen when looking fully up.
-	skyheight = skytex1->GetScaledHeight();
-	skystretch = false;
-	skytexturemid = 0;
+	skyheight = skytex1->GetDisplayHeight();
+
 	if (skyheight >= 128 && skyheight < 200)
 	{
-		skystretch = (r_skymode == 1
-					  && skyheight >= 128
-					  && level.IsFreelookAllowed()
-					  && !(level.flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
-		skytexturemid = -28;
+		Level->skystretch = (r_skymode == 1
+			&& skyheight >= 128
+			&& Level->IsFreelookAllowed()
+			&& !(Level->flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
 	}
-	else if (skyheight > 200)
+	else Level->skystretch = false;
+}
+
+void R_InitSkyMap()
+{
+	for(auto Level : AllLevels())
 	{
-		skytexturemid = (200 - skyheight) * skytex1->Scale.Y +((r_skymode == 2 && !(level.flags & LEVEL_FORCETILEDSKY)) ? skytex1->SkyOffset + testskyoffset : 0);
+		InitSkyMap(Level);
 	}
-
-	if (viewwidth != 0 && viewheight != 0)
-	{
-		skyiscale = float(r_Yaspect / freelookviewheight);
-		skyscale = freelookviewheight / r_Yaspect;
-
-		skyiscale *= float(r_viewpoint.FieldOfView.Degrees / 90.);
-		skyscale *= float(90. / r_viewpoint.FieldOfView.Degrees);
-	}
-
-	if (skystretch)
-	{
-		skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
-		skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
-		skytexturemid *= skyheight / (double)SKYSTRETCH_HEIGHT;
-	}
-
-	// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,
-	// giving a total sky width of 1024 pixels. So if the sky texture is no wider than 1024,
-	// we map it to a cylinder with circumfrence 1024. For larger ones, we use the width of
-	// the texture as the cylinder's circumfrence.
-	sky1cyl = MAX(skytex1->GetWidth(), fixed_t(skytex1->Scale.X * 1024));
-	sky2cyl = MAX(skytex2->GetWidth(), fixed_t(skytex2->Scale.Y * 1024));
 }
 
 
@@ -170,14 +133,16 @@ void R_InitSkyMap ()
 
 void R_UpdateSky (uint64_t mstime)
 {
-	// Scroll the sky
 	double ms = (double)mstime * FRACUNIT;
-	sky1pos = ms * level.skyspeed1;
-	sky2pos = ms * level.skyspeed2;
+	for(auto Level : AllLevels())
+	{
+		// Scroll the sky
+		Level->sky1pos = ms * Level->skyspeed1;
+		Level->sky2pos = ms * Level->skyspeed2;
 
-	// The hardware renderer uses a different value range and clamps it to a single rotation
-	hw_sky1pos = (float)(fmod((double(mstime) * level.skyspeed1), 1024.) * (90. / 256.));
-	hw_sky2pos = (float)(fmod((double(mstime) * level.skyspeed2), 1024.) * (90. / 256.));
-
+		// The hardware renderer uses a different value range and clamps it to a single rotation
+		Level->hw_sky1pos = (float)(fmod((double(mstime) * Level->skyspeed1), 1024.) * (90. / 256.));
+		Level->hw_sky2pos = (float)(fmod((double(mstime) * Level->skyspeed2), 1024.) * (90. / 256.));
+	}
 }
 

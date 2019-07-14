@@ -35,6 +35,8 @@
 #pragma pointers_to_members( full_generality, single_inheritance )
 #endif
 
+class DFraggleThinker;
+
 
 class CFraggleScriptError : public CDoomError
 {
@@ -129,7 +131,7 @@ int intvalue(const svalue_t & v);
 fsfix fixedvalue(const svalue_t & v);
 double floatvalue(const svalue_t & v);
 const char *stringvalue(const svalue_t & v);
-AActor *actorvalue(const svalue_t &svalue);
+AActor *actorvalue(FLevelLocals *Level, const svalue_t &svalue);
 
 //==========================================================================
 //
@@ -185,7 +187,7 @@ public:
 	DFsVariable(const char *_name = "");
 
 	void GetValue(svalue_t &result);
-	void SetValue(const svalue_t &newvalue);
+	void SetValue(FLevelLocals *Level, const svalue_t &newvalue);
 	void Serialize(FSerializer &ar);
 };
 
@@ -232,7 +234,7 @@ public:
 
 	DFsSection()
 	{
-		next = NULL;
+		next = nullptr;
 	}
 
 	void Serialize(FSerializer &ar);
@@ -341,7 +343,7 @@ public:
 	void NewFunction(const char *name, void (FParser::*handler)());
 
 	DFsVariable *VariableForName(const char *name);
-	DFsVariable *FindVariable(const char *name);
+	DFsVariable *FindVariable(const char *name, DFsScript *global);
 	void ClearVariables(bool complete= false);
 	DFsVariable *NewLabel(char *labelptr);
 	char *LabelValue(const svalue_t &v);
@@ -360,10 +362,10 @@ public:
 	DFsSection *FindSectionStart(const char *brace);
 	DFsSection *FindSectionEnd(const char *brace);
 	char *ProcessFindChar(char *data, char find);
-	void DryRunScript();
-	void Preprocess();
-	void ParseInclude(char *lumpname);
-	void ParseScript(char *rover = NULL);
+	void DryRunScript(FLevelLocals *Level);
+	void Preprocess(FLevelLocals *Level);
+	void ParseInclude(FLevelLocals *Level, char *lumpname);
+	void ParseScript(char *rover, DFraggleThinker *th);
 	void ParseData(char *rover, char *data, char *end);
 };
 
@@ -398,6 +400,7 @@ struct FParser
 	char *Tokens[T_MAXTOKENS];
 	tokentype_t TokenType[T_MAXTOKENS];
 	int NumTokens;
+	FLevelLocals *Level;
 	DFsScript *Script;       // the current script
 	DFsSection *Section;
 	DFsSection *PrevSection;
@@ -408,8 +411,9 @@ struct FParser
 	svalue_t t_return;              // returned value
 	FString t_func;					// name of current function
 
-	FParser(DFsScript *scr)
+	FParser(FLevelLocals *l, DFsScript *scr)
 	{
+		Level = l;
 		LineStart = NULL;
 		Rover = NULL;
 		Tokens[0] = new char[scr->len+32];	// 32 for safety. FS seems to need a few bytes more than the script's actual length.
@@ -481,6 +485,15 @@ struct FParser
 	DFsSection *looping_section();
 	FString GetFormatString(int startarg);
 	bool CheckArgs(int cnt);
+
+	PClassActor * T_GetMobjType(svalue_t arg);
+	int T_GetPlayerNum(const svalue_t &arg);
+	AActor *T_GetPlayerActor(const svalue_t &arg);
+
+	AActor* actorvalue(const svalue_t &svalue)
+	{
+		return ::actorvalue(Level, svalue);
+	}
 
 	void SF_Print();
 	void SF_Rnd();
@@ -677,19 +690,22 @@ class DFraggleThinker : public DThinker
 	DECLARE_CLASS(DFraggleThinker, DThinker)
 	HAS_OBJECT_POINTERS
 public:
-
+	static const int DEFAULT_STAT = STAT_SCRIPTS;
+	int zoom = 1;
+	AActor *trigger_obj;	// this is a transient pointer not being subjected to GC.
+	TObjPtr<DFsScript*> GlobalScript;
 	TObjPtr<DFsScript*> LevelScript;
 	TObjPtr<DRunningScript*> RunningScripts;
 	TArray<TObjPtr<AActor*> > SpawnedThings;
-	bool nocheckposition = false;
-	bool setcolormaterial = false;
 
-	DFraggleThinker();
+	DFraggleThinker();	// This class needs a real constructor because it has non-serializable content.
+	void Construct();
 	void OnDestroy() override;
 
 
 	void Serialize(FSerializer & arc);
 	void Tick();
+	void InitFunctions();
 	size_t PropagateMark();
 	size_t PointerSubstitution (DObject *old, DObject *notOld);
 	bool wait_finished(DRunningScript *script);
@@ -707,11 +723,7 @@ public:
 #include "t_fs.h"
 
 void script_error(const char *s, ...) GCCPRINTF(1,2);
-void FS_EmulateCmd(char * string);
-
-extern AActor *trigger_obj;
-extern DFsScript *global_script; 
-
+void FS_EmulateCmd(FLevelLocals *l, char * string);
 
 #endif
 

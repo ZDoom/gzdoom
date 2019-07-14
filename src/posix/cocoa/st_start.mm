@@ -36,6 +36,7 @@
 #import <Foundation/NSRunLoop.h>
 
 #include "c_cvars.h"
+#include "doomtype.h"
 #include "st_console.h"
 #include "st_start.h"
 

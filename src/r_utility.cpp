@@ -62,7 +62,9 @@
 #include "vm.h"
 #include "i_time.h"
 #include "actorinlines.h"
-
+#include "g_game.h"
+#include "i_system.h"
+#include "atterm.h"
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -144,7 +146,7 @@ bool			setsizeneeded;
 unsigned int	R_OldBlend = ~0;
 int 			validcount = 1; 	// increment every time a check is made
 int 			dl_validcount = 1; 	// increment every time a check is made
-FCanvasTextureInfo *FCanvasTextureInfo::List;
+int			freelookviewheight;
 
 DVector3a view;
 DAngle viewpitch;
@@ -222,9 +224,9 @@ void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int wind
 	else
 	{
 		viewwindow.WidescreenRatio = ActiveRatio(fullWidth, fullHeight);
+		DrawFSHUD = (windowSize == 11);
 	}
 
-	DrawFSHUD = (windowSize == 11);
 	
 	// [RH] Sky height fix for screens not 200 (or 240) pixels tall
 	R_InitSkyMap ();
@@ -363,33 +365,6 @@ CUSTOM_CVAR (Int, screenblocks, 10, CVAR_ARCHIVE)
 
 //==========================================================================
 //
-// R_PointInSubsector
-//
-//==========================================================================
-
-subsector_t *R_PointInSubsector (fixed_t x, fixed_t y)
-{
-	node_t *node;
-	int side;
-
-	// single subsector is a special case
-	if (level.nodes.Size() == 0)
-		return &level.subsectors[0];
-				
-	node = level.HeadNode();
-
-	do
-	{
-		side = R_PointOnSide (x, y, node);
-		node = (node_t *)node->children[side];
-	}
-	while (!((size_t)node & 1));
-		
-	return (subsector_t *)((uint8_t *)node - 1);
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -431,7 +406,6 @@ static void R_Shutdown ()
 	SWRenderer = nullptr;
 	R_DeinitTranslationTables();
 	R_DeinitColormaps ();
-	FCanvasTextureInfo::EmptyList();
 }
 
 //==========================================================================
@@ -451,8 +425,9 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		NoInterpolateView = false;
 		iview->Old = iview->New;
 	}
-	int oldgroup = R_PointInSubsector(iview->Old.Pos)->sector->PortalGroup;
-	int newgroup = R_PointInSubsector(iview->New.Pos)->sector->PortalGroup;
+	auto Level = viewpoint.ViewLevel;
+	int oldgroup = Level->PointInRenderSubsector(iview->Old.Pos)->sector->PortalGroup;
+	int newgroup = Level->PointInRenderSubsector(iview->New.Pos)->sector->PortalGroup;
 
 	DAngle oviewangle = iview->Old.Angles.Yaw;
 	DAngle nviewangle = iview->New.Angles.Yaw;
@@ -519,7 +494,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		}
 		else
 		{
-			DVector2 disp = level.Displacements.getOffset(oldgroup, newgroup);
+			DVector2 disp = viewpoint.ViewLevel->Displacements.getOffset(oldgroup, newgroup);
 			viewpoint.Pos = iview->Old.Pos + (iview->New.Pos - iview->Old.Pos - disp) * Frac;
 			viewpoint.Path[0] = viewpoint.Path[1] = iview->New.Pos;
 		}
@@ -557,7 +532,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
-	viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+	viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 	bool moved = false;
 	while (!viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
 	{
@@ -565,7 +540,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		{
 			viewpoint.Pos += viewpoint.sector->GetPortalDisplacement(sector_t::ceiling);
 			viewpoint.ActorPos += viewpoint.sector->GetPortalDisplacement(sector_t::ceiling);
-			viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+			viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 			moved = true;
 		}
 		else break;
@@ -578,7 +553,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 			{
 				viewpoint.Pos += viewpoint.sector->GetPortalDisplacement(sector_t::floor);
 				viewpoint.ActorPos += viewpoint.sector->GetPortalDisplacement(sector_t::floor);
-				viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+				viewpoint.sector = Level->PointInRenderSubsector(viewpoint.Pos)->sector;
 				moved = true;
 			}
 			else break;
@@ -772,6 +747,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	{
 		I_Error ("Tried to render from a NULL actor.");
 	}
+	viewpoint.ViewLevel = actor->Level;
 
 	player_t *player = actor->player;
 	unsigned int newblend;
@@ -808,7 +784,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0)))
 	{
-		sector_t *oldsector = R_PointInSubsector(iview->Old.Pos)->sector;
+		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
 		// [RH] Use chasecam view
 		DVector3 campos;
 		DAngle camangle;
@@ -840,8 +816,9 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		player = viewpoint.camera->player;
 	}
 
-	if (iview->otic == -1 || r_NoInterpolate)
+	if (iview->otic == -1 || r_NoInterpolate || (viewpoint.camera->renderflags & RF_NOINTERPOLATEVIEW))
 	{
+		viewpoint.camera->renderflags &= ~RF_NOINTERPOLATEVIEW;
 		R_ResetViewInterpolation ();
 		iview->otic = nowtic;
 	}
@@ -854,8 +831,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	R_InterpolateView (viewpoint, player, viewpoint.TicFrac, iview);
 
 	viewpoint.SetViewAngle (viewwindow);
-
-	interpolator.DoInterpolations (viewpoint.TicFrac);
 
 	// Keep the view within the sector's floor and ceiling
 	if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
@@ -884,29 +859,41 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		if (DEarthquake::StaticGetQuakeIntensities(viewpoint.TicFrac, viewpoint.camera, jiggers) > 0)
 		{
 			double quakefactor = r_quakeintensity;
-			DAngle an;
-
+			DVector3 pos; pos.Zero();
 			if (jiggers.RollIntensity != 0 || jiggers.RollWave != 0)
 			{
 				viewpoint.Angles.Roll += QuakePower(quakefactor, jiggers.RollIntensity, jiggers.RollWave);
 			}
 			if (jiggers.RelIntensity.X != 0 || jiggers.RelOffset.X != 0)
 			{
-				an = viewpoint.camera->Angles.Yaw;
-				double power = QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X);
-				viewpoint.Pos += an.ToVector(power);
+				pos.X += QuakePower(quakefactor, jiggers.RelIntensity.X, jiggers.RelOffset.X);
 			}
 			if (jiggers.RelIntensity.Y != 0 || jiggers.RelOffset.Y != 0)
 			{
-				an = viewpoint.camera->Angles.Yaw + 90;
-				double power = QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y);
-				viewpoint.Pos += an.ToVector(power);
+				pos.Y += QuakePower(quakefactor, jiggers.RelIntensity.Y, jiggers.RelOffset.Y);
 			}
-			// FIXME: Relative Z is not relative
 			if (jiggers.RelIntensity.Z != 0 || jiggers.RelOffset.Z != 0)
 			{
-				viewpoint.Pos.Z += QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z);
+				pos.Z += QuakePower(quakefactor, jiggers.RelIntensity.Z, jiggers.RelOffset.Z);
 			}
+			// [MC] Tremendous thanks to Marisa Kirisame for helping me with this.
+			// Use a rotation matrix to make the view relative.
+			if (!pos.isZero())
+			{
+				DAngle yaw = viewpoint.camera->Angles.Yaw;
+				DAngle pitch = viewpoint.camera->Angles.Pitch;
+				DAngle roll = viewpoint.camera->Angles.Roll;
+				DVector3 relx, rely, relz;
+				DMatrix3x3 rot =
+					DMatrix3x3(DVector3(0., 0., 1.), yaw.Cos(), yaw.Sin()) *
+					DMatrix3x3(DVector3(0., 1., 0.), pitch.Cos(), pitch.Sin()) *
+					DMatrix3x3(DVector3(1., 0., 0.), roll.Cos(), roll.Sin());
+				relx = DVector3(1., 0., 0.)*rot;
+				rely = DVector3(0., 1., 0.)*rot;
+				relz = DVector3(0., 0., 1.)*rot;
+				viewpoint.Pos += relx * pos.X + rely * pos.Y + relz * pos.Z;
+			}
+
 			if (jiggers.Intensity.X != 0 || jiggers.Offset.X != 0)
 			{
 				viewpoint.Pos.X += QuakePower(quakefactor, jiggers.Intensity.X, jiggers.Offset.X);
@@ -1030,7 +1017,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	// However, to set up a projection matrix this needs to be adjusted.
 	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
-	double angy = sin(radPitch) * level.info->pixelstretch;
+	double angy = sin(radPitch) * actor->Level->info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 	viewpoint.HWAngles.Pitch = RAD2DEG((float)asin(angy / alen));
 	
@@ -1047,195 +1034,6 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		viewpoint.ViewActor = actor;
 	}
 	
-}
-
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: Add
-//
-// Assigns a camera to a canvas texture.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, double fov)
-{
-	FCanvasTextureInfo *probe;
-	FCanvasTexture *texture;
-
-	if (!picnum.isValid())
-	{
-		return;
-	}
-	texture = static_cast<FCanvasTexture *>(TexMan[picnum]);
-	if (!texture->bHasCanvas)
-	{
-		Printf ("%s is not a valid target for a camera\n", texture->Name.GetChars());
-		return;
-	}
-
-	// Is this texture already assigned to a camera?
-	for (probe = List; probe != NULL; probe = probe->Next)
-	{
-		if (probe->Texture == texture)
-		{
-			// Yes, change its assignment to this new camera
-			if (probe->Viewpoint != viewpoint || probe->FOV != fov)
-			{
-				texture->bFirstUpdate = true;
-			}
-			probe->Viewpoint = viewpoint;
-			probe->FOV = fov;
-			return;
-		}
-	}
-	// No, create a new assignment
-	probe = new FCanvasTextureInfo;
-	probe->Viewpoint = viewpoint;
-	probe->Texture = texture;
-	probe->PicNum = picnum;
-	probe->FOV = fov;
-	probe->Next = List;
-	texture->bFirstUpdate = true;
-	List = probe;
-}
-
-// [ZZ] expose this to ZScript
-void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov)
-{
-	FTextureID textureid = TexMan.CheckForTexture(texturename, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
-	if (textureid.isValid())
-	{
-		// Only proceed if the texture actually has a canvas.
-		FTexture *tex = TexMan[textureid];
-		if (tex && tex->bHasCanvas)
-		{
-			FCanvasTextureInfo::Add(viewpoint, textureid, fov);
-		}
-	}
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(viewpoint, AActor);
-	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
-	PARAM_FLOAT(fov);
-	SetCameraToTexture(viewpoint, texturename, fov);
-	return 0;
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: UpdateAll
-//
-// Updates all canvas textures that were visible in the last frame.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::UpdateAll ()
-{
-	FCanvasTextureInfo *probe;
-
-	for (probe = List; probe != NULL; probe = probe->Next)
-	{
-		if (probe->Viewpoint != NULL && probe->Texture->bNeedsUpdate)
-		{
-			screen->RenderTextureView(probe->Texture, probe->Viewpoint, probe->FOV);
-		}
-	}
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: EmptyList
-//
-// Removes all camera->texture assignments.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::EmptyList ()
-{
-	FCanvasTextureInfo *probe, *next;
-
-	for (probe = List; probe != NULL; probe = next)
-	{
-		next = probe->Next;
-		probe->Texture->Unload();
-		delete probe;
-	}
-	List = NULL;
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: Serialize
-//
-// Reads or writes the current set of mappings in an archive.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::Serialize(FSerializer &arc)
-{
-	if (arc.isWriting())
-	{
-		if (List != nullptr)
-		{
-			if (arc.BeginArray("canvastextures"))
-			{
-				FCanvasTextureInfo *probe;
-
-				for (probe = List; probe != nullptr; probe = probe->Next)
-				{
-					if (probe->Texture != nullptr && probe->Viewpoint != nullptr)
-					{
-						if (arc.BeginObject(nullptr))
-						{
-							arc("viewpoint", probe->Viewpoint)
-								("fov", probe->FOV)
-								("texture", probe->PicNum)
-								.EndObject();
-						}
-					}
-				}
-				arc.EndArray();
-			}
-		}
-	}
-	else
-	{
-		if (arc.BeginArray("canvastextures"))
-		{
-			AActor *viewpoint = nullptr;
-			double fov;
-			FTextureID picnum;
-			while (arc.BeginObject(nullptr))
-			{
-				arc("viewpoint", viewpoint)
-					("fov", fov)
-					("texture", picnum)
-					.EndObject();
-				Add(viewpoint, picnum, fov);
-			}
-			arc.EndArray();
-		}
-	}
-}
-
-//==========================================================================
-//
-// FCanvasTextureInfo :: Mark
-//
-// Marks all viewpoints in the list for the collector.
-//
-//==========================================================================
-
-void FCanvasTextureInfo::Mark()
-{
-	for (FCanvasTextureInfo *probe = List; probe != NULL; probe = probe->Next)
-	{
-		GC::Mark(probe->Viewpoint);
-	}
 }
 
 

@@ -49,8 +49,6 @@ extern int				viewheight;
 extern TArray<spritedef_t> sprites;
 extern uint32_t NumStdSprites;
 
-extern TArray<vertexdata_t> vertexdatas;
-
 //
 // POV data.
 //

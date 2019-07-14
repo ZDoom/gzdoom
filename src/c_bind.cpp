@@ -46,6 +46,7 @@
 #include "vm.h"
 #include "i_time.h"
 #include "menu/menu.h"
+#include "v_text.h"
 
 const char *KeyNames[NUM_KEYS] =
 {
@@ -55,100 +56,100 @@ const char *KeyNames[NUM_KEYS] =
 	// DirectInput codes and assume a qwerty keyboard layout.
 	// See <dinput.h> for the DIK_* codes
 
-	NULL,		"escape",	"1",		"2",		"3",		"4",		"5",		"6",		//00
-	"7",		"8",		"9",		"0",		"-",		"=",		"backspace","tab",		//08
-	"q",		"w",		"e",		"r",		"t",		"y",		"u",		"i",		//10
-	"o",		"p",		"[",		"]",		"enter",	"ctrl",		"a",		"s",		//18
-	"d",		"f",		"g",		"h",		"j",		"k",		"l",		";",		//20
-	"'",		"`",		"shift",	"\\",		"z",		"x",		"c",		"v",		//28
-	"b",		"n",		"m",		",",		".",		"/",		"rshift",	"kp*",		//30
-	"alt",		"space",	"capslock",	"f1",		"f2",		"f3",		"f4",		"f5",		//38
-	"f6",		"f7",		"f8",		"f9",		"f10",		"numlock",	"scroll",	"kp7",		//40
-	"kp8",		"kp9",		"kp-",		"kp4",		"kp5",		"kp6",		"kp+",		"kp1",		//48
-	"kp2",		"kp3",		"kp0",		"kp.",		NULL,		NULL,		"oem102",	"f11",		//50
-	"f12",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//58
-	NULL,		NULL,		NULL,		NULL,		"f13",		"f14",		"f15",		"f16",		//60
+	NULL,		"Escape",	"1",		"2",		"3",		"4",		"5",		"6",		//00
+	"7",		"8",		"9",		"0",		"-",		"=",		"Backspace","Tab",		//08
+	"Q",		"W",		"E",		"R",		"T",		"Y",		"U",		"I",		//10
+	"O",		"P",		"[",		"]",		"Enter",	"Ctrl",		"A",		"S",		//18
+	"D",		"F",		"G",		"H",		"J",		"K",		"L",		";",		//20
+	"'",		"`",		"Shift",	"\\",		"Z",		"X",		"C",		"V",		//28
+	"B",		"N",		"M",		",",		".",		"/",		"RShift",	"KP*",		//30
+	"Alt",		"Space",	"CapsLock",	"F1",		"F2",		"F3",		"F4",		"F5",		//38
+	"F6",		"F7",		"F8",		"F9",		"F10",		"NumLock",	"Scroll",	"KP7",		//40
+	"KP8",		"KP9",		"KP-",		"KP4",		"KP5",		"KP6",		"KP+",		"KP1",		//48
+	"KP2",		"KP3",		"KP0",		"KP.",		NULL,		NULL,		"OEM102",	"F11",		//50
+	"F12",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//58
+	NULL,		NULL,		NULL,		NULL,		"F13",		"F14",		"F15",		"F16",		//60
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//68
-	"kana",		NULL,		NULL,		"abnt_c1",	NULL,		NULL,		NULL,		NULL,		//70
-	NULL,		"convert",	NULL,		"noconvert",NULL,		"yen",		"abnt_c2",	NULL,		//78
+	"Kana",		NULL,		NULL,		"Abnt_C1",	NULL,		NULL,		NULL,		NULL,		//70
+	NULL,		"Convert",	NULL,		"NoConvert",NULL,		"Yen",		"Abnt_C2",	NULL,		//78
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//80
-	NULL,		NULL,		NULL,		NULL,		NULL,		"kp=",		NULL,		NULL,		//88
-	"circumflex","@",		":",		"_",		"kanji",	"stop",		"ax",		"unlabeled",//90
-	NULL,		"prevtrack",NULL,		NULL,		"kp-enter",	"rctrl",	NULL,		NULL,		//98
-	"mute",		"calculator","play",	NULL,		"stop",		NULL,		NULL,		NULL,		//A0
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		"voldown",	NULL,		//A8
-	"volup",	NULL,		"webhome",	"kp,",		NULL,		"kp/",		NULL,		"sysrq",	//B0
-	"ralt",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//B8
-	NULL,		NULL,		NULL,		NULL,		NULL,		"pause",	NULL,		"home",		//C0
-	"uparrow",	"pgup",		NULL,		"leftarrow",NULL,		"rightarrow",NULL,		"end",		//C8
-	"downarrow","pgdn",		"ins",		"del",		NULL,		NULL,		NULL,		NULL,		//D0
+	NULL,		NULL,		NULL,		NULL,		NULL,		"KP=",		NULL,		NULL,		//88
+	"Circumflex","@",		":",		"_",		"Kanji",	"Stop",		"Ax",		"Unlabeled",//90
+	NULL,		"PrevTrack",NULL,		NULL,		"KP-Enter",	"RCtrl",	NULL,		NULL,		//98
+	"Mute",		"Calculator","Play",	NULL,		"Stop",		NULL,		NULL,		NULL,		//A0
+	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		"VolDown",	NULL,		//A8
+	"VolUp",	NULL,		"WebHome",	"KP,",		NULL,		"KP/",		NULL,		"SysRq",	//B0
+	"RAlt",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//B8
+	NULL,		NULL,		NULL,		NULL,		NULL,		"Pause",	NULL,		"Home",		//C0
+	"UpArrow",	"PgUp",		NULL,		"LeftArrow",NULL,		"RightArrow",NULL,		"End",		//C8
+	"DownArrow","PgDn",		"Ins",		"Del",		NULL,		NULL,		NULL,		NULL,		//D0
 #ifdef __APPLE__
-	NULL,		NULL,		NULL,		"command",	NULL,		"apps",		"power",	"sleep",	//D8
+	NULL,		NULL,		NULL,		"Command",	NULL,		"Apps",		"Power",	"Sleep",	//D8
 #else // !__APPLE__
-	NULL,		NULL,		NULL,		"lwin",		"rwin",		"apps",		"power",	"sleep",	//D8
+	NULL,		NULL,		NULL,		"LWin",		"RWin",		"Apps",		"Power",	"Sleep",	//D8
 #endif // __APPLE__
-	NULL,		NULL,		NULL,		"wake",		NULL,		"search",	"favorites","refresh",	//E0
-	"webstop",	"webforward","webback",	"mycomputer","mail",	"mediaselect",NULL,		NULL,		//E8
+	NULL,		NULL,		NULL,		"Wake",		NULL,		"Search",	"Favorites","Refresh",	//E0
+	"WebStop",	"WebForward","WebBack",	"MyComputer","Mail",	"MediaSelect",NULL,		NULL,		//E8
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//F0
 	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//F8
 
 	// non-keyboard buttons that can be bound
-	"mouse1",	"mouse2",	"mouse3",	"mouse4",		// 8 mouse buttons
-	"mouse5",	"mouse6",	"mouse7",	"mouse8",
+	"Mouse1",	"Mouse2",	"Mouse3",	"Mouse4",		// 8 mouse buttons
+	"Mouse5",	"Mouse6",	"Mouse7",	"Mouse8",
 
-	"joy1",		"joy2",		"joy3",		"joy4",			// 128 joystick buttons!
-	"joy5",		"joy6",		"joy7",		"joy8",
-	"joy9",		"joy10",	"joy11",	"joy12",
-	"joy13",	"joy14",	"joy15",	"joy16",
-	"joy17",	"joy18",	"joy19",	"joy20",
-	"joy21",	"joy22",	"joy23",	"joy24",
-	"joy25",	"joy26",	"joy27",	"joy28",
-	"joy29",	"joy30",	"joy31",	"joy32",
-	"joy33",	"joy34",	"joy35",	"joy36",
-	"joy37",	"joy38",	"joy39",	"joy40",
-	"joy41",	"joy42",	"joy43",	"joy44",
-	"joy45",	"joy46",	"joy47",	"joy48",
-	"joy49",	"joy50",	"joy51",	"joy52",
-	"joy53",	"joy54",	"joy55",	"joy56",
-	"joy57",	"joy58",	"joy59",	"joy60",
-	"joy61",	"joy62",	"joy63",	"joy64",
-	"joy65",	"joy66",	"joy67",	"joy68",
-	"joy69",	"joy70",	"joy71",	"joy72",
-	"joy73",	"joy74",	"joy75",	"joy76",
-	"joy77",	"joy78",	"joy79",	"joy80",
-	"joy81",	"joy82",	"joy83",	"joy84",
-	"joy85",	"joy86",	"joy87",	"joy88",
-	"joy89",	"joy90",	"joy91",	"joy92",
-	"joy93",	"joy94",	"joy95",	"joy96",
-	"joy97",	"joy98",	"joy99",	"joy100",
-	"joy101",	"joy102",	"joy103",	"joy104",
-	"joy105",	"joy106",	"joy107",	"joy108",
-	"joy109",	"joy110",	"joy111",	"joy112",
-	"joy113",	"joy114",	"joy115",	"joy116",
-	"joy117",	"joy118",	"joy119",	"joy120",
-	"joy121",	"joy122",	"joy123",	"joy124",
-	"joy125",	"joy126",	"joy127",	"joy128",
+	"Joy1",		"Joy2",		"Joy3",		"Joy4",			// 128 joystick buttons!
+	"Joy5",		"Joy6",		"Joy7",		"Joy8",
+	"Joy9",		"Joy10",	"Joy11",	"Joy12",
+	"Joy13",	"Joy14",	"Joy15",	"Joy16",
+	"Joy17",	"Joy18",	"Joy19",	"Joy20",
+	"Joy21",	"Joy22",	"Joy23",	"Joy24",
+	"Joy25",	"Joy26",	"Joy27",	"Joy28",
+	"Joy29",	"Joy30",	"Joy31",	"Joy32",
+	"Joy33",	"Joy34",	"Joy35",	"Joy36",
+	"Joy37",	"Joy38",	"Joy39",	"Joy40",
+	"Joy41",	"Joy42",	"Joy43",	"Joy44",
+	"Joy45",	"Joy46",	"Joy47",	"Joy48",
+	"Joy49",	"Joy50",	"Joy51",	"Joy52",
+	"Joy53",	"Joy54",	"Joy55",	"Joy56",
+	"Joy57",	"Joy58",	"Joy59",	"Joy60",
+	"Joy61",	"Joy62",	"Joy63",	"Joy64",
+	"Joy65",	"Joy66",	"Joy67",	"Joy68",
+	"Joy69",	"Joy70",	"Joy71",	"Joy72",
+	"Joy73",	"Joy74",	"Joy75",	"Joy76",
+	"Joy77",	"Joy78",	"Joy79",	"Joy80",
+	"Joy81",	"Joy82",	"Joy83",	"Joy84",
+	"Joy85",	"Joy86",	"Joy87",	"Joy88",
+	"Joy89",	"Joy90",	"Joy91",	"Joy92",
+	"Joy93",	"Joy94",	"Joy95",	"Joy96",
+	"Joy97",	"Joy98",	"Joy99",	"Joy100",
+	"Joy101",	"Joy102",	"Joy103",	"Joy104",
+	"Joy105",	"Joy106",	"Joy107",	"Joy108",
+	"Joy109",	"Joy110",	"Joy111",	"Joy112",
+	"Joy113",	"Joy114",	"Joy115",	"Joy116",
+	"Joy117",	"Joy118",	"Joy119",	"Joy120",
+	"Joy121",	"Joy122",	"Joy123",	"Joy124",
+	"Joy125",	"Joy126",	"Joy127",	"Joy128",
 
-	"pov1up",	"pov1right","pov1down",	"pov1left",		// First POV hat
-	"pov2up",	"pov2right","pov2down",	"pov2left",		// Second POV hat
-	"pov3up",	"pov3right","pov3down",	"pov3left",		// Third POV hat
-	"pov4up",	"pov4right","pov4down",	"pov4left",		// Fourth POV hat
+	"POV1Up",	"POV1Right","POV1Down",	"POV1Left",		// First POV hat
+	"POV2Up",	"POV2Right","POV2Down",	"POV2Left",		// Second POV hat
+	"POV3Up",	"POV3Right","POV3Down",	"POV3Left",		// Third POV hat
+	"POV4Up",	"POV4Right","POV4Down",	"POV4Left",		// Fourth POV hat
 
-	"mwheelup",	"mwheeldown",							// the mouse wheel
-	"mwheelright", "mwheelleft",
+	"MWheelUp",	"MWheelDown",							// the mouse wheel
+	"MWheelRight", "MWheelLeft",
 
-	"axis1plus","axis1minus","axis2plus","axis2minus",	// joystick axes as buttons
-	"axis3plus","axis3minus","axis4plus","axis4minus",
-	"axis5plus","axis5minus","axis6plus","axis6minus",
-	"axis7plus","axis7minus","axis8plus","axis8minus",
+	"Axis1Plus","Axis1Minus","Axis2Plus","Axis2Minus",	// joystick axes as buttons
+	"Axis3Plus","Axis3Minus","Axis4Plus","Axis4Minus",
+	"Axis5Plus","Axis5Minus","Axis6Plus","Axis6Minus",
+	"Axis7Plus","Axis7Minus","Axis8Plus","Axis8Minus",
 
-	"lstickright","lstickleft","lstickdown","lstickup",			// Gamepad axis-based buttons
-	"rstickright","rstickleft","rstickdown","rstickup",
+	"LStickRight","LStickLeft","LStickDown","LStickUp",			// Gamepad axis-based buttons
+	"RStickRight","RStickLeft","RStickDown","RStickUp",
 
-	"dpadup","dpaddown","dpadleft","dpadright",	// Gamepad buttons
-	"pad_start","pad_back","lthumb","rthumb",
-	"lshoulder","rshoulder","ltrigger","rtrigger",
-	"pad_a", "pad_b", "pad_x", "pad_y"
+	"DPadUp","DPadDown","DPadLeft","DPadRight",	// Gamepad buttons
+	"Pad_Start","Pad_Back","LThumb","RThumb",
+	"LShoulder","RShoulder","LTrigger","RTrigger",
+	"Pad_A", "Pad_B", "Pad_X", "Pad_Y"
 };
 
 FKeyBindings Bindings;
@@ -297,7 +298,7 @@ void C_NameKeys (char *str, int first, int second)
 		c++;
 		strcpy (str, KeyName (first));
 		if (second)
-			strcat (str, " or ");
+			strcat (str, TEXTCOLOR_BLACK ", " TEXTCOLOR_NORMAL);
 	}
 
 	if (second)
@@ -753,7 +754,6 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	dclickmask = 1 << (ev->data1 & 7);
 	dclick = false;
 
-	// This used level.time which didn't work outside a level.
 	nowtime = (unsigned)I_msTime();
 	if (doublebinds != NULL && int(DClickTime[ev->data1] - nowtime) > 0 && ev->type == EV_KeyDown)
 	{

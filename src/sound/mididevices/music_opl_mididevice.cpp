@@ -38,12 +38,13 @@
 #include "i_musicinterns.h"
 #include "w_wad.h"
 #include "v_text.h"
-#include "i_system.h"
+#include "doomerrors.h"
 #include "opl.h"
 
 // MACROS ------------------------------------------------------------------
 
 #if defined(_DEBUG) && defined(_WIN32) && defined(_MSC_VER)
+void I_DebugPrint(const char *cp);
 #define DEBUGOUT(m,c,s,t) \
 	{ char foo[128]; mysnprintf(foo, countof(foo), m, c, s, t); I_DebugPrint(foo); }
 #else

@@ -45,7 +45,12 @@
 #include "gameconfigfile.h"
 #include "m_argv.h"
 #include "i_soundfont.h"
-
+#include "i_system.h"
+#include "v_video.h"
+#include "gstrings.h"
+#include "teaminfo.h"
+#include "r_data/sprites.h"
+#include "atterm.h"
 
 
 void ClearSaveGames();
@@ -131,6 +136,7 @@ DEFINE_ACTION_FUNCTION(FOptionValues, GetText)
 
 void DeinitMenus()
 {
+	M_ClearMenus();
 	{
 		FOptionMap::Iterator it(OptionValues);
 
@@ -144,7 +150,6 @@ void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
-	CurrentMenu = nullptr;
 	savegameManager.ClearSaveGames();
 }
 
@@ -369,7 +374,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			if (cls != nullptr && cls->IsDescendantOf("ListMenuItem"))
 			{
 				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
-				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
+				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protected init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
 					TArray<VMValue> params;
@@ -403,7 +408,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						}
 						else if (args[i] == TypeFont)
 						{
-							auto f = FFont::FindFont(sc.String);
+							auto f = V_GetFont(sc.String);
 							if (f == nullptr)
 							{
 								sc.ScriptError("Unknown font %s", sc.String);
@@ -644,6 +649,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mWLeft = 0;
 	desc->mWRight = 0;
 	desc->mCenter = false;
+	desc->mFromEngine = Wads.GetLumpFile(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 
 	ParseListMenuBody(sc, desc);
 	ReplaceMenu(sc, desc);
@@ -946,6 +952,7 @@ static void ParseOptionMenu(FScanner &sc)
 	sc.MustGetString();
 
 	DOptionMenuDescriptor *desc = Create<DOptionMenuDescriptor>();
+	desc->mFont = gameinfo.gametype == GAME_Doom ? BigUpper : BigFont;
 	desc->mMenuName = sc.String;
 	desc->mSelectedItem = -1;
 	desc->mScrollPos = 0;
@@ -1077,16 +1084,32 @@ void M_ParseMenuDefs()
 //
 //=============================================================================
 
-static void BuildEpisodeMenu()
+void M_StartupEpisodeMenu(FGameStartup *gs)
 {
 	// Build episode menu
 	bool success = false;
+	bool isOld = false;
 	DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Episodemenu);
 	if (desc != nullptr)
 	{
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
+			
+			// Delete previous contents
+			for(unsigned i=0; i<ld->mItems.Size(); i++)
+			{
+				FName n = ld->mItems[i]->mAction;
+				if (n == NAME_Skillmenu)
+				{
+					isOld = true;
+					ld->mItems.Resize(i);
+					break;
+				}
+			}
+
+			
+			int posx = (int)ld->mXpos;
 			int posy = (int)ld->mYpos;
 			int topy = posy;
 
@@ -1100,9 +1123,9 @@ static void BuildEpisodeMenu()
 			// center the menu on the screen if the top space is larger than the bottom space
 			int totalheight = posy + AllEpisodes.Size() * ld->mLinespacing - topy;
 
-			if (totalheight < 190 || AllEpisodes.Size() == 1)
+			if (totalheight < CleanHeight-10 || AllEpisodes.Size() == 1)
 			{
-				int newtop = (200 - totalheight + topy) / 2;
+				int newtop = (CleanHeight - totalheight + topy) / 2;
 				int topdelta = newtop - topy;
 				if (topdelta < 0)
 				{
@@ -1113,18 +1136,36 @@ static void BuildEpisodeMenu()
 					posy -= topdelta;
 				}
 
-				ld->mSelectedItem = ld->mItems.Size();
-				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
+				if (!isOld) ld->mSelectedItem = ld->mItems.Size();
+
+				for (unsigned i = 0; i < AllEpisodes.Size(); i++)
 				{
-					DMenuItemBase *it;
+					DMenuItemBase *it = nullptr;
 					if (AllEpisodes[i].mPicName.IsNotEmpty())
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
-						it = CreateListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
+						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
+							continue;	// We do not measure patch based entries. They are assumed to fit
 					}
-					else
+					const char *c = AllEpisodes[i].mEpisodeName;
+					if (*c == '$') c = GStrings(c + 1);
+					int textwidth = ld->mFont->StringWidth(c);
+					int textright = posx + textwidth;
+					if (posx + textright > 320) posx = std::max(0, 320 - textright);
+				}
+
+				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
+				{
+					DMenuItemBase *it = nullptr;
+					if (AllEpisodes[i].mPicName.IsNotEmpty())
 					{
-						it = CreateListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
+						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
+							it = CreateListMenuItemPatch(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
+					}
+					if (it == nullptr)
+					{
+						it = CreateListMenuItemText(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
 							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, ld->mFontColor2, NAME_Skillmenu, i);
 					}
 					ld->mItems.Push(it);
@@ -1141,6 +1182,7 @@ static void BuildEpisodeMenu()
 				}
 			}
 		}
+		else return;	// do not recreate the option menu variant, because it is always text based.
 	}
 	if (!success)
 	{
@@ -1149,6 +1191,7 @@ static void BuildEpisodeMenu()
 		DOptionMenuDescriptor *od = Create<DOptionMenuDescriptor>();
 		MenuDescriptors[NAME_Episodemenu] = od;
 		od->mMenuName = NAME_Episodemenu;
+		od->mFont = gameinfo.gametype == GAME_Doom ? BigUpper : BigFont;
 		od->mTitle = "$MNU_EPISODE";
 		od->mSelectedItem = 0;
 		od->mScrollPos = 0;
@@ -1185,6 +1228,7 @@ static void BuildPlayerclassMenu()
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
 			// add player display
+
 			ld->mSelectedItem = ld->mItems.Size();
 			
 			int posy = (int)ld->mYpos;
@@ -1282,6 +1326,7 @@ static void BuildPlayerclassMenu()
 		DOptionMenuDescriptor *od = Create<DOptionMenuDescriptor>();
 		MenuDescriptors[NAME_Playerclassmenu] = od;
 		od->mMenuName = NAME_Playerclassmenu;
+		od->mFont = gameinfo.gametype == GAME_Doom ? BigUpper : BigFont;
 		od->mTitle = "$MNU_CHOOSECLASS";
 		od->mSelectedItem = 0;
 		od->mScrollPos = 0;
@@ -1481,7 +1526,6 @@ static void InitKeySections()
 
 void M_CreateMenus()
 {
-	BuildEpisodeMenu();
 	BuildPlayerclassMenu();
 	InitCrosshairsList();
 	InitMusicMenus();
@@ -1502,6 +1546,95 @@ void M_CreateMenus()
 	{
 		I_BuildALResamplersList(*opt);
 	}
+	opt = OptionValues.CheckKey(NAME_PlayerTeam);
+	if (opt != nullptr)
+	{
+		auto op = *opt; 
+		op->mValues.Resize(Teams.Size() + 1);
+		op->mValues[0].Value = 0;
+		op->mValues[0].Text = "$OPTVAL_NONE";
+		for (unsigned i = 0; i < Teams.Size(); i++)
+		{
+			op->mValues[i+1].Value = i+1;
+			op->mValues[i+1].Text = Teams[i].GetName();
+		}
+	}
+	opt = OptionValues.CheckKey(NAME_PlayerClass);
+	if (opt != nullptr)
+	{
+		auto op = *opt;
+		int o = 0;
+		if (!gameinfo.norandomplayerclass && PlayerClasses.Size() > 1)
+		{
+			op->mValues.Resize(PlayerClasses.Size()+1);
+			op->mValues[0].Value = -1;
+			op->mValues[0].Text = "$MNU_RANDOM";
+			o = 1;
+		}
+		else op->mValues.Resize(PlayerClasses.Size());
+		for (unsigned i = 0; i < PlayerClasses.Size(); i++)
+		{
+			op->mValues[i+o].Value = i;
+			op->mValues[i+o].Text = GetPrintableDisplayName(PlayerClasses[i].Type);
+		}
+	}
+}
+
+
+DEFINE_ACTION_FUNCTION(DMenu, UpdateColorsets)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(playerClass, FPlayerClass);
+
+	TArray<int> PlayerColorSets;
+
+	EnumColorSets(playerClass->Type, &PlayerColorSets);
+
+	auto opt = OptionValues.CheckKey(NAME_PlayerColors);
+	if (opt != nullptr)
+	{
+		auto op = *opt;
+		op->mValues.Resize(PlayerColorSets.Size() + 1);
+		op->mValues[0].Value = -1;
+		op->mValues[0].Text = "$OPTVAL_CUSTOM";
+		for (unsigned i = 0; i < PlayerColorSets.Size(); i++)
+		{
+			auto cset = GetColorSet(playerClass->Type, PlayerColorSets[i]);
+			op->mValues[i + 1].Value = PlayerColorSets[i];
+			op->mValues[i + 1].Text = cset? cset->Name.GetChars() : "?";	// The null case should never happen here.
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, UpdateSkinOptions)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(playerClass, FPlayerClass);
+
+	auto opt = OptionValues.CheckKey(NAME_PlayerSkin);
+	if (opt != nullptr)
+	{
+		auto op = *opt;
+
+		if ((GetDefaultByType(playerClass->Type)->flags4 & MF4_NOSKIN) || players[consoleplayer].userinfo.GetPlayerClassNum() == -1)
+		{
+			op->mValues.Resize(1);
+			op->mValues[0].Value = -1;
+			op->mValues[0].Text = "$OPTVAL_DEFAULT";
+		}
+		else
+		{
+			op->mValues.Clear();
+			for (unsigned i = 0; i < Skins.Size(); i++)
+			{
+				op->mValues.Reserve(1);
+				op->mValues.Last().Value = i;
+				op->mValues.Last().Text = Skins[i].Name;
+			}
+		}
+	}
+	return 0;
 }
 
 //=============================================================================
@@ -1558,7 +1691,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-			int x = (int)ld->mXpos;
+			int posx = (int)ld->mXpos;
 			int y = (int)ld->mYpos;
 
 			// Delete previous contents
@@ -1590,9 +1723,9 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				// center the menu on the screen if the top space is larger than the bottom space
 				int totalheight = posy + MenuSkills.Size() * ld->mLinespacing - topy;
 
-				if (totalheight < 190 || MenuSkills.Size() == 1)
+				if (totalheight < CleanHeight-10 || MenuSkills.Size() == 1)
 				{
-					int newtop = (200 - totalheight + topy) / 2;
+					int newtop = (CleanHeight - totalheight + topy) / 2;
 					int topdelta = newtop - topy;
 					if (topdelta < 0)
 					{
@@ -1612,14 +1745,11 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				}
 			}
 
-			unsigned firstitem = ld->mItems.Size();
-			for(unsigned int i = 0; i < MenuSkills.Size(); i++)
+			for (unsigned int i = 0; i < MenuSkills.Size(); i++)
 			{
 				FSkillInfo &skill = *MenuSkills[i];
-				DMenuItemBase *li;
-				// Using a different name for skills that must be confirmed makes handling this easier.
-				FName action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
-					NAME_StartgameConfirm : NAME_Startgame;
+				DMenuItemBase *li = nullptr;
+
 				FString *pItemText = nullptr;
 				if (gs->PlayerClass != nullptr)
 				{
@@ -1629,13 +1759,41 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				if (skill.PicName.Len() != 0 && pItemText == nullptr)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
-					li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
+					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
+						continue;
 				}
-				else
+				const char *c = pItemText ? pItemText->GetChars() : skill.MenuName.GetChars();
+				if (*c == '$') c = GStrings(c + 1);
+				int textwidth = ld->mFont->StringWidth(c);
+				int textright = posx + textwidth;
+				if (posx + textright > 320) posx = std::max(0, 320 - textright);
+			}
+
+			unsigned firstitem = ld->mItems.Size();
+			for(unsigned int i = 0; i < MenuSkills.Size(); i++)
+			{
+				FSkillInfo &skill = *MenuSkills[i];
+				DMenuItemBase *li = nullptr;
+				// Using a different name for skills that must be confirmed makes handling this easier.
+				FName action = (skill.MustConfirm && !AllEpisodes[gs->Episode].mNoSkill) ?
+					NAME_StartgameConfirm : NAME_Startgame;
+				FString *pItemText = nullptr;
+				if (gs->PlayerClass != nullptr)
 				{
-					EColorRange color = (EColorRange)skill.GetTextColor();
-					if (color == CR_UNTRANSLATED) color = ld->mFontColor;
-					li = CreateListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut, 
+					pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
+				}
+
+				EColorRange color = (EColorRange)skill.GetTextColor();
+				if (color == CR_UNTRANSLATED) color = ld->mFontColor;
+				if (skill.PicName.Len() != 0 && pItemText == nullptr)
+				{
+					FTextureID tex = GetMenuTexture(skill.PicName);
+					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
+						li = CreateListMenuItemPatch(posx, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
+				}
+				if (li == nullptr)
+				{
+					li = CreateListMenuItemText(posx, y, ld->mLinespacing, skill.Shortcut,
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, SkillIndices[i]);
 				}
 				ld->mItems.Push(li);
@@ -1662,6 +1820,7 @@ fail:
 		od = Create<DOptionMenuDescriptor>();
 		MenuDescriptors[NAME_Skillmenu] = od;
 		od->mMenuName = NAME_Skillmenu;
+		od->mFont = gameinfo.gametype == GAME_Doom ? BigUpper : BigFont;
 		od->mTitle = "$MNU_CHOOSESKILL";
 		od->mSelectedItem = defindex;
 		od->mScrollPos = 0;
@@ -1699,4 +1858,32 @@ fail:
 			od->mSelectedItem = defindex;
 		}
 	}
+}
+
+
+#ifdef _WIN32
+EXTERN_CVAR(Bool, vr_enable_quadbuffered)
+#endif
+
+void UpdateVRModes(bool considerQuadBuffered)
+{
+	FOptionValues ** pVRModes = OptionValues.CheckKey("VRMode");
+	if (pVRModes == nullptr) return;
+
+	TArray<FOptionValues::Pair> & vals = (*pVRModes)->mValues;
+	TArray<FOptionValues::Pair> filteredValues;
+	int cnt = vals.Size();
+	for (int i = 0; i < cnt; ++i) {
+		auto const & mode = vals[i];
+		if (mode.Value == 7) {  // Quad-buffered stereo
+#ifdef _WIN32
+			if (!vr_enable_quadbuffered) continue;
+#else
+			continue;  // Remove quad-buffered option on Mac and Linux
+#endif
+			if (!considerQuadBuffered) continue;  // Probably no compatible screen mode was found
+		}
+		filteredValues.Push(mode);
+	}
+	vals = filteredValues;
 }

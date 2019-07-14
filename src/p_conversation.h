@@ -24,6 +24,8 @@ struct FStrifeDialogueNode
 	TArray<FStrifeDialogueItemCheck> ItemCheck;
 	int ThisNodeNum = 0;	// location of this node in StrifeDialogues
 	int ItemCheckNode = 0;	// index into StrifeDialogues
+	FString ThisNodeName = nullptr;
+	FString ItemCheckNodeName = nullptr;
 
 	PClassActor *SpeakerType = nullptr;
 	FString SpeakerName;
@@ -54,22 +56,15 @@ struct FStrifeDialogueReply
 	FString LogString;
 	int NextNode = 0;	// index into StrifeDialogues
 	int LogNumber = 0;
+	FString NextNodeName = nullptr;
 	bool NeedsGold = false;
+	bool CloseDialog = true;
 };
-
-extern TArray<FStrifeDialogueNode *> StrifeDialogues;
 
 struct MapData;
 
-void SetStrifeType(int convid, PClassActor *Class);
-void SetConversation(int convid, PClassActor *Class, int dlgindex);
 PClassActor *GetStrifeType (int typenum);
-int GetConversation(int conv_id);
-int GetConversation(FName classname);
 
-bool LoadScriptFile (const char *name, bool include, int type = 0);
-
-void P_LoadStrifeConversations (MapData *map, const char *mapname);
 void P_FreeStrifeConversations ();
 
 void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveangle);
@@ -78,7 +73,6 @@ void P_ResumeConversation ();
 void P_ConversationCommand (int netcode, int player, uint8_t **stream);
 
 class FileReader;
-bool P_ParseUSDF(int lumpnum, FileReader &lump, int lumplen);
 
 
 #endif

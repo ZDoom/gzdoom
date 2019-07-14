@@ -23,6 +23,7 @@
 #include "doomstat.h"
 #include "i_net.h"
 #include "cmdlib.h"
+#include "g_levellocals.h"
 
 extern bool netserver;
 
@@ -174,7 +175,7 @@ void IDList<T>::rebuild()
 
 	T *pActor;
 
-	TThinkerIterator<T> it;
+	TThinkerIterator<T> it = primaryLevel->GetThinkerIterator<T>();
 
 	while ((pActor = it.Next()))
 	{
@@ -238,7 +239,7 @@ void CountActors()
 	int numActors = 0;
 	int numActorsWithNetID = 0;
 
-	TThinkerIterator<AActor> it;
+	TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
 
 	while ((mo = it.Next()))
 	{

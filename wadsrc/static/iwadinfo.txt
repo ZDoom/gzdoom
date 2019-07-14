@@ -82,6 +82,8 @@ IWad
 	Mapinfo = "mapinfo/hacx.txt"
 	MustContain = "MAP01", "HACX-R"
 	BannerColors = "00 00 a8", "a8 a8 a8"
+	Load = ":hacx_gzdoom_stuff.pk3"
+	DeleteLumps = "FONTDEFS"
 }
 
 IWad
@@ -104,9 +106,10 @@ IWad
 	Config = "Chex"
 	IWADName = "chex3.wad"
 	Mapinfo = "mapinfo/chex.txt"
-	Compatibility = "NoTextcolor"
 	MustContain = "E1M1", "CYCLA1", "FLMBA1", "MAPINFO"
 	BannerColors = "ff ff 00", "00 c0 00"
+	IgnoreTitlePatches = 1
+	DeleteLumps = "LANGUAGE", "TEXTCOLO", "DBIGFONT"
 }
 
 IWad
@@ -119,6 +122,7 @@ IWad
 	Mapinfo = "mapinfo/chex.txt"
 	MustContain = "E1M1", "E4M1", "W94_1", "POSSH0M0"
 	BannerColors = "ff ff 00", "00 c0 00"
+	IgnoreTitlePatches = 1
 }
 
 IWad
@@ -183,6 +187,7 @@ IWad
 	Compatibility = "Poly1"
 	MustContain = "TITLE", "MAP01", "MAP40", "WINNOWR"
 	BannerColors = "f0 f0 f0", "6b 3c 18"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 	
 IWad
@@ -207,6 +212,7 @@ IWad
 	Compatibility = "Shareware"
 	MustContain = "TITLE", "MAP01", "WINNOWR"
 	BannerColors = "f0 f0 f0", "6b 3c 18"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 	
 IWad
@@ -232,6 +238,7 @@ IWad
 	Compatibility = "Extended"
 	MustContain = "E1M1", "E2M1", "TITLE", "MUS_E1M1", "EXTENDED"
 	BannerColors = "fc fc 00", "a8 00 00"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 
 IWad
@@ -244,6 +251,7 @@ IWad
 	Mapinfo = "mapinfo/heretic.txt"
 	MustContain = "E1M1", "E2M1", "TITLE", "MUS_E1M1"
 	BannerColors = "fc fc 00", "a8 00 00"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 
 IWad
@@ -255,6 +263,7 @@ IWad
 	Compatibility = "Shareware"
 	MustContain = "E1M1", "TITLE", "MUS_E1M1"
 	BannerColors = "fc fc 00", "a8 00 00"
+	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
 
 IWad
@@ -307,7 +316,7 @@ IWad
 IWad
 {
 	Name = "DOOM: BFG Edition"
-	Autoname = "doom.doom1.bfg"
+	Autoname = "doom.id.doom1.bfg"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom.wad", 2
@@ -318,24 +327,26 @@ IWad
 		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1", "E4M2",
 		          "DMENUPIC", "M_ACPT", "M_CAN", "M_EXITO", "M_CHG"
 	BannerColors = "54 54 54", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 
 IWad
 {
 	Name = "DOOM: Complete: WadSmoosh"
-	Autoname = "doom.doom2.wadsmoosh"
+	Autoname = "doom.id.doom2.wadsmoosh"
 	Game = "Doom"
 	Config = "Doom"
 	Mapinfo = "mapinfo/doom2.txt"
 	Compatibility = "Shorttex"
 	MustContain = "SMOOSHED", "ANIMDEFS", "LANGUAGE", "MAPINFO", "ENDOOM", "M_DOOM", "TITLEPIC", "TEXTURES"
 	BannerColors = "a8 00 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 
 IWad
 {
 	Name = "The Ultimate DOOM"
-	Autoname = "doom.doom1.ultimate"
+	Autoname = "doom.id.doom1.ultimate"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom.wad"
@@ -345,12 +356,13 @@ IWad
 		          "E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1", "E4M2"
 	BannerColors = "54 54 54", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 
 IWad
 {
 	Name = "DOOM Registered"
-	Autoname = "doom.doom1.registered"
+	Autoname = "doom.id.doom1.registered"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom.wad", 1
@@ -360,6 +372,7 @@ IWad
 		          "E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1"
 	BannerColors = "54 54 54", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 
 IWad
@@ -371,12 +384,13 @@ IWad
 	Compatibility = "Shareware", "Shorttex"
 	MustContain = "E1M1"
 	BannerColors = "54 54 54", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 
 IWad
 {
 	Name = "Final Doom: TNT - Evilution"
-	Autoname = "doom.doom2.tnt"
+	Autoname = "doom.id.doom2.tnt"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "tnt.wad"
@@ -384,12 +398,13 @@ IWad
 	Compatibility = "Shorttex", "Stairs"
 	MustContain = "MAP01", "REDTNT2"
 	BannerColors = "a8 00 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 
 IWad
 {
 	Name = "Final Doom: Plutonia Experiment"
-	Autoname = "doom.doom2.plutonia"
+	Autoname = "doom.id.doom2.plutonia"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "plutonia.wad"
@@ -397,12 +412,13 @@ IWad
 	Compatibility = "Shorttex"
 	MustContain = "MAP01", "CAMO1"
 	BannerColors = "a8 00 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 
 IWad
 {
 	Name = "DOOM 2: BFG Edition"
-	Autoname = "doom.doom2.bfg"
+	Autoname = "doom.id.doom2.bfg"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom2.wad"
@@ -411,13 +427,14 @@ IWad
 	MustContain = "MAP01", "DMENUPIC", "M_ACPT", "M_CAN", "M_EXITO", "M_CHG"
 	BannerColors = "a8 00 00", "a8 a8 a8"
 	Load = "nerve.wad"
+	IgnoreTitlePatches = 1
 }
 
-// Doom 2 must be last to be checked becaude MAP01 is its only requirement
+// Doom 2 must be last to be checked because MAP01 is its only requirement
 IWad
 {
 	Name = "DOOM 2: Hell on Earth"
-	Autoname = "doom.doom2.commercial"
+	Autoname = "doom.id.doom2.commercial"
 	Game = "Doom"
 	Config = "Doom"
 	IWADName = "doom2.wad", 1
@@ -425,6 +442,7 @@ IWad
 	Compatibility = "Shorttex"
 	MustContain = "MAP01"
 	BannerColors = "a8 00 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
 }
 	
 

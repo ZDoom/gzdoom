@@ -101,7 +101,7 @@ struct SoundHandle
 struct FISoundChannel
 {
 	void		*SysChannel;	// Channel information from the system interface.
-	QWORD_UNION	StartTime;		// Sound start time in DSP clocks.
+	uint64_t	StartTime;		// Sound start time in DSP clocks.
 
 	// The sound interface doesn't use these directly but it needs to pass them to a
 	// callback that can't be passed a sound channel pointer

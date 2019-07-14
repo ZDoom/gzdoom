@@ -237,9 +237,8 @@ void SoftSynthMIDIDevice::Stop()
 
 int SoftSynthMIDIDevice::StreamOutSync(MidiHeader *header)
 {
-	CritSec.Enter();
+	std::lock_guard<std::mutex> lock(CritSec);
 	StreamOut(header);
-	CritSec.Leave();
 	return 0;
 }
 
@@ -392,7 +391,7 @@ bool SoftSynthMIDIDevice::ServiceStream (void *buff, int numbytes)
 	samples1 = samples;
 	memset(buff, 0, numbytes);
 
-	CritSec.Enter();
+	std::lock_guard<std::mutex> lock(CritSec);
 	while (Events != NULL && numsamples > 0)
 	{
 		double ticky = NextTickIn;
@@ -434,7 +433,6 @@ bool SoftSynthMIDIDevice::ServiceStream (void *buff, int numbytes)
 	{
 		res = false;
 	}
-	CritSec.Leave();
 	return res;
 }
 

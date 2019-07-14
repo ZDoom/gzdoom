@@ -5,53 +5,44 @@
 
 #include "v_video.h"
 
-class SystemGLFrameBuffer : public DFrameBuffer
+class SystemBaseFrameBuffer : public DFrameBuffer
 {
 	typedef DFrameBuffer Super;
 
 public:
 	// this must have the same parameters as the Windows version, even if they are not used!
-	SystemGLFrameBuffer (void *hMonitor, bool fullscreen);
-	~SystemGLFrameBuffer ();
+	SystemBaseFrameBuffer (void *hMonitor, bool fullscreen);
 
-	void ForceBuffering (bool force);
-
-	bool IsFullscreen ();
-
-	virtual void SetVSync( bool vsync );
-	void SwapBuffers();
-	
-	friend class SDLGLVideo;
+	bool IsFullscreen() override;
 
 	int GetClientWidth() override;
 	int GetClientHeight() override;
+
 	void ToggleFullscreen(bool yes) override;
-	void SetWindowSize(int client_w, int client_h);
-
-	SDL_Window *GetSDLWindow() { return Screen; }
-	void GetWindowBordersSize(int &top, int &left);
-
-	bool m_fsswitch;
+	void SetWindowSize(int client_w, int client_h) override;
 
 protected:
-	void SetGammaTable(uint16_t *tbl);
-	void ResetGammaTable();
+	SystemBaseFrameBuffer () {}
+};
 
-	SystemGLFrameBuffer () {}
-	uint8_t GammaTable[3][256];
-	bool UpdatePending;
+class SystemGLFrameBuffer : public SystemBaseFrameBuffer
+{
+	typedef SystemBaseFrameBuffer Super;
 
-	SDL_Window *Screen;
+public:
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
+	~SystemGLFrameBuffer();
 
+	int GetClientWidth() override;
+	int GetClientHeight() override;
+
+	virtual void SetVSync(bool vsync) override;
+	void SwapBuffers();
+
+protected:
 	SDL_GLContext GLContext;
 
-	void UpdateColors ();
-
-	Uint16 m_origGamma[3][256];
-	bool m_supportsGamma;
-
-	static const int MIN_WIDTH = 320;
-	static const int MIN_HEIGHT = 200;
+	SystemGLFrameBuffer() {}
 };
 
 #endif // __POSIX_SDL_GL_SYSFB_H__

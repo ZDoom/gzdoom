@@ -61,19 +61,12 @@ class FConsoleBuffer
 	int mLastDisplayWidth;
 	bool mLastLineNeedsUpdate;
 
-	void WriteLineToLog(FILE *LogFile, const char *outline);
-	void FreeBrokenText(unsigned int start = 0, unsigned int end = INT_MAX);
-
-	void Linefeed(FILE *Logfile);
 	
 public:
 	FConsoleBuffer();
-	~FConsoleBuffer();
-	void AddText(int printlevel, const char *string, FILE *logfile = NULL);
-	void AddMidText(const char *string, bool bold, FILE *logfile);
+	void AddText(int printlevel, const char *string);
 	void FormatText(FFont *formatfont, int displaywidth);
 	void ResizeBuffer(unsigned newsize);
-	void WriteContentToLog(FILE *logfile);
 	void Clear()
 	{
 		mBufferWasCleared = true;

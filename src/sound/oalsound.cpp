@@ -44,6 +44,7 @@
 #include "i_music.h"
 #include "i_musicinterns.h"
 #include "cmdlib.h"
+#include "menu/menu.h"
 
 FModule OpenALModule{"OpenAL"};
 
@@ -824,12 +825,12 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 
 	// Speed of sound is in units per second. Presuming we want to simulate a
 	// typical speed of sound of 343.3 meters per second, multiply it by the
-	// units per meter scale (32?), and set the meters per unit to the scale's
+	// units per meter scale (1), and set the meters per unit to the scale's
 	// reciprocal. It's important to set these correctly for both doppler
 	// effects and reverb.
-	alSpeedOfSound(343.3f * 32.0f);
+	alSpeedOfSound(343.3f);
 	if(ALC.EXT_EFX)
-		alListenerf(AL_METERS_PER_UNIT, 1.0f/32.0f);
+		alListenerf(AL_METERS_PER_UNIT, 1.0f);
 
 	alDistanceModel(AL_INVERSE_DISTANCE);
 	if(AL.EXT_source_distance_model)
@@ -1601,17 +1602,17 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 	else
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 
-	if(!reuse_chan || reuse_chan->StartTime.AsOne == 0)
+	if(!reuse_chan || reuse_chan->StartTime == 0)
 		alSourcef(source, AL_SEC_OFFSET, 0.f);
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
-			alSourcei(source, AL_SAMPLE_OFFSET, reuse_chan->StartTime.Lo);
+			alSourcei(source, AL_SAMPLE_OFFSET, ALint(reuse_chan->StartTime));
 		else
 		{
 			float offset = std::chrono::duration_cast<std::chrono::duration<float>>(
 				std::chrono::steady_clock::now().time_since_epoch() -
-				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime.AsOne)
+				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime)
 			).count();
 			if(offset > 0.f) alSourcef(source, AL_SEC_OFFSET, offset);
 		}
@@ -1812,17 +1813,17 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 	else
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 
-	if(!reuse_chan || reuse_chan->StartTime.AsOne == 0)
+	if(!reuse_chan || reuse_chan->StartTime == 0)
 		alSourcef(source, AL_SEC_OFFSET, 0.f);
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
-			alSourcei(source, AL_SAMPLE_OFFSET, reuse_chan->StartTime.Lo);
+			alSourcei(source, AL_SAMPLE_OFFSET, ALint(reuse_chan->StartTime));
 		else
 		{
 			float offset = std::chrono::duration_cast<std::chrono::duration<float>>(
 				std::chrono::steady_clock::now().time_since_epoch() -
-				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime.AsOne)
+				std::chrono::steady_clock::time_point::duration(reuse_chan->StartTime)
 			).count();
 			if(offset > 0.f) alSourcef(source, AL_SEC_OFFSET, offset);
 		}
@@ -2202,8 +2203,7 @@ void OpenALSoundRenderer::UpdateSounds()
 		if(connected == ALC_FALSE)
 		{
 			Printf("Sound device disconnected; restarting...\n");
-			static char snd_reset[] = "snd_reset";
-			AddCommandString(snd_reset);
+			AddCommandString("snd_reset");
 			return;
 		}
 	}
@@ -2220,7 +2220,7 @@ void OpenALSoundRenderer::MarkStartTime(FISoundChannel *chan)
 {
 	// FIXME: Get current time (preferably from the audio clock, but the system
 	// time will have to do)
-	chan->StartTime.AsOne = std::chrono::steady_clock::now().time_since_epoch().count();
+	chan->StartTime = std::chrono::steady_clock::now().time_since_epoch().count();
 }
 
 float OpenALSoundRenderer::GetAudibility(FISoundChannel *chan)

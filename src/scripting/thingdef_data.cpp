@@ -110,8 +110,8 @@ static FFlagDef InternalActorFlagDefs[]=
 
 static FFlagDef ActorFlagDefs[]=
 {
-	DEFINE_FLAG(MF, PICKUP, APlayerPawn, flags),
-	DEFINE_FLAG(MF, SPECIAL, APlayerPawn, flags),
+	DEFINE_FLAG(MF, PICKUP, AActor, flags),
+	DEFINE_FLAG(MF, SPECIAL, AActor, flags),
 	DEFINE_FLAG(MF, SOLID, AActor, flags),
 	DEFINE_FLAG(MF, SHOOTABLE, AActor, flags),
 	DEFINE_PROTECTED_FLAG(MF, NOSECTOR, AActor, flags),
@@ -319,6 +319,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, BLOCKASPLAYER, AActor, flags8),
 	DEFINE_FLAG(MF8, DONTFACETALKER, AActor, flags8),
 	DEFINE_FLAG(MF8, HITOWNER, AActor, flags8),
+	DEFINE_FLAG(MF8, NOFRICTION, AActor, flags8),
+	DEFINE_FLAG(MF8, NOFRICTIONBOUNCE, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),
@@ -409,33 +411,11 @@ static FFlagDef MoreFlagDefs[] =
 	DEFINE_DUMMY_FLAG(SERVERSIDEONLY, false),
 };
 
-static FFlagDef PlayerPawnFlagDefs[] =
-{
-	// PlayerPawn flags
-	DEFINE_FLAG(PPF, NOTHRUSTWHENINVUL, APlayerPawn, PlayerFlags),
-	DEFINE_FLAG(PPF, CANSUPERMORPH, APlayerPawn, PlayerFlags),
-	DEFINE_FLAG(PPF, CROUCHABLEMORPH, APlayerPawn, PlayerFlags),
-};
-
-static FFlagDef DynLightFlagDefs[] =
-{
-	// PlayerPawn flags
-	DEFINE_FLAG(LF, SUBTRACTIVE, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, ADDITIVE, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, DONTLIGHTSELF, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, ATTENUATE, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, NOSHADOWMAP, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, DONTLIGHTACTORS, ADynamicLight, lightflags),
-	DEFINE_FLAG(LF, SPOT, ADynamicLight, lightflags),
-};
-
 static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int NumDefs; int Use; } FlagLists[] =
 {
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		ActorFlagDefs,		countof(ActorFlagDefs), 3 },	// -1 to account for the terminator
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 		MoreFlagDefs,		countof(MoreFlagDefs), 1 },
 	{ &RUNTIME_CLASS_CASTLESS(AActor), 	InternalActorFlagDefs,	countof(InternalActorFlagDefs), 2 },
-	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
-	{ &RUNTIME_CLASS_CASTLESS(ADynamicLight),DynLightFlagDefs,	countof(DynLightFlagDefs), 3 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -1007,10 +987,11 @@ FString FStringFormat(VM_ARGS, int offset)
 					ThrowAbortException(X_FORMAT_ERROR, "Cannot mix explicit and implicit arguments.");
 				FString argnumstr = fmt_current.Mid(1);
 				if (!argnumstr.IsInt()) ThrowAbortException(X_FORMAT_ERROR, "Expected a numeric value for argument number, got '%s'.", argnumstr.GetChars());
-				argnum = argnumstr.ToLong();
-				if (argnum < 1 || argnum >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format (tried to access argument %d, %d total).", argnum, numparam);
+				auto argnum64 = argnumstr.ToLong();
+				if (argnum64 < 1 || argnum64 >= numparam) ThrowAbortException(X_FORMAT_ERROR, "Not enough arguments for format (tried to access argument %d, %d total).", argnum64, numparam);
 				fmt_current = "%";
 				haveargnums = true;
+				argnum = int(argnum64);
 			}
 			else
 			{
@@ -1177,3 +1158,17 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, AppendCharacter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(c);
+	self->AppendCharacter(c);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, DeleteLastCharacter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->DeleteLastCharacter();
+	return 0;
+}

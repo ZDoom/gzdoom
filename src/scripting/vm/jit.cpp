@@ -26,9 +26,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		code.setLogger(&logger);
 
 		JitCompiler compiler(&code, sfunc);
-		CCFunc *func = compiler.Codegen();
-
-		return reinterpret_cast<JitFuncPtr>(AddJitFunction(&code, func));
+		return reinterpret_cast<JitFuncPtr>(AddJitFunction(&code, &compiler));
 	}
 	catch (const CRecoverableError &e)
 	{
@@ -100,6 +98,8 @@ asmjit::CCFunc *JitCompiler::Codegen()
 {
 	Setup();
 
+	int lastLine = -1;
+
 	pc = sfunc->Code;
 	auto end = pc + sfunc->CodeSize;
 	while (pc != end)
@@ -107,10 +107,24 @@ asmjit::CCFunc *JitCompiler::Codegen()
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		op = pc->op;
 
+		int curLine = sfunc->PCToLine(pc);
+		if (curLine != lastLine)
+		{
+			lastLine = curLine;
+
+			auto label = cc.newLabel();
+			cc.bind(label);
+
+			JitLineInfo info;
+			info.Label = label;
+			info.LineNumber = curLine;
+			LineInfo.Push(info);
+		}
+
 		if (op != OP_PARAM && op != OP_PARAMI && op != OP_VTBL)
 		{
 			FString lineinfo;
-			lineinfo.Format("; line %d: %02x%02x%02x%02x %s", sfunc->PCToLine(pc), pc->op, pc->a, pc->b, pc->c, OpNames[op]);
+			lineinfo.Format("; line %d: %02x%02x%02x%02x %s", curLine, pc->op, pc->a, pc->b, pc->c, OpNames[op]);
 			cc.comment("", 0);
 			cc.comment(lineinfo.GetChars(), lineinfo.Len());
 		}
@@ -126,6 +140,23 @@ asmjit::CCFunc *JitCompiler::Codegen()
 
 	cc.endFunc();
 	cc.finalize();
+
+	auto code = cc.getCode ();
+	for (unsigned int j = 0; j < LineInfo.Size (); j++)
+	{
+		auto info = LineInfo[j];
+
+		if (!code->isLabelValid (info.Label))
+		{
+			continue;
+		}
+
+		info.InstructionIndex = code->getLabelOffset (info.Label);
+
+		LineInfo[j] = info;
+	}
+
+	std::stable_sort(LineInfo.begin(), LineInfo.end(), [](const JitLineInfo &a, const JitLineInfo &b) { return a.InstructionIndex < b.InstructionIndex; });
 
 	return func;
 }
@@ -415,17 +446,15 @@ void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 	cc.je(label);
 }
 
-void JitCompiler::ThrowException(VMScriptFunction *func, VMOP *line, int reason)
+void JitCompiler::ThrowException(int reason)
 {
-	ThrowAbortException(func, line, (EVMAbortException)reason, nullptr);
+	ThrowAbortException((EVMAbortException)reason, nullptr);
 }
 
 void JitCompiler::EmitThrowException(EVMAbortException reason)
 {
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int>(&JitCompiler::ThrowException);
-	call->setArg(0, asmjit::imm_ptr(sfunc));
-	call->setArg(1, asmjit::imm_ptr(pc));
-	call->setArg(2, asmjit::imm(reason));
+	auto call = CreateCall<void, int>(&JitCompiler::ThrowException);
+	call->setArg(0, asmjit::imm(reason));
 }
 
 asmjit::Label JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
@@ -435,6 +464,12 @@ asmjit::Label JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
 	cc.bind(label);
 	EmitThrowException(reason);
 	cc.setCursor(cursor);
+
+	JitLineInfo info;
+	info.Label = label;
+	info.LineNumber = sfunc->PCToLine(pc);
+	LineInfo.Push(info);
+
 	return label;
 }
 

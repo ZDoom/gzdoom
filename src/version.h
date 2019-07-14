@@ -34,10 +34,6 @@
 #ifndef __VERSION_H__
 #define __VERSION_H__
 
-#ifdef _WIN32
-#include "gitinfo.h"
-#endif // _WIN32
-
 const char *GetGitDescription();
 const char *GetGitHash();
 const char *GetGitTime();
@@ -45,20 +41,21 @@ const char *GetVersionString();
 
 /** Lots of different version numbers **/
 
-#ifdef GIT_DESCRIPTION
-#define VERSIONSTR GIT_DESCRIPTION
-#else
-#define VERSIONSTR "3.7pre"
-#endif
+#define VERSIONSTR "4.2pre"
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 3,6,9999,0
-#define RC_PRODUCTVERSION 3,6,9999,0
+#define RC_FILEVERSION 4,1,9999,0
+#define RC_PRODUCTVERSION 4,1,9999,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
 // These are for content versioning.
-#define VER_MAJOR 3
-#define VER_MINOR 7
+#define VER_MAJOR 4
+#define VER_MINOR 2
 #define VER_REVISION 0
+
+// This should always refer to the GZDoom version a derived port is based on and not reflect the derived port's version number!
+#define ENG_MAJOR 4
+#define ENG_MINOR 2
+#define ENG_REVISION 0
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
@@ -68,7 +65,7 @@ const char *GetVersionString();
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to
 // be able to migrate in FGameConfigFile::DoGlobalSetup().
-#define LASTRUNVERSION "216"
+#define LASTRUNVERSION "218"
 
 // Protocol version used in demos.
 // Bump it if you change existing DEM_ commands or add new ones.
@@ -87,11 +84,11 @@ const char *GetVersionString();
 #define SAVEGAME_EXT "zds"
 
 // MINSAVEVER is the minimum level snapshot version that can be loaded.
-#define MINSAVEVER	4554
+#define MINSAVEVER	4556
 
 // Use 4500 as the base git save version, since it's higher than the
 // SVN revision ever got.
-#define SAVEVER 4554
+#define SAVEVER 4556
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
 #define GAMESIG "GZDOOM"
@@ -100,6 +97,7 @@ const char *GetVersionString();
 
 // More stuff that needs to be different for derivatives.
 #define GAMENAME "GZDoom"
+#define WGAMENAME L"GZDoom"
 #define GAMENAMELOWERCASE "gzdoom"
 #define FORUM_URL "http://forum.zdoom.org/"
 #define BUGS_FORUM_URL	"http://forum.zdoom.org/viewforum.php?f=2"

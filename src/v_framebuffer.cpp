@@ -34,7 +34,7 @@
 
 #include <stdio.h>
 
-#include "i_system.h"
+
 #include "x86.h"
 #include "actor.h"
 
@@ -52,6 +52,9 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 
+#include <chrono>
+#include <thread>
+
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 CVAR(Bool, vid_fps, false, 0)
@@ -60,6 +63,9 @@ CVAR(Int, vid_showpalette, 0, 0)
 EXTERN_CVAR(Bool, ticker)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
+EXTERN_CVAR(Bool, vid_vsync)
+EXTERN_CVAR(Int, vid_maxfps)
+EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, screenblocks)
 
 //==========================================================================
@@ -156,9 +162,9 @@ void DFrameBuffer::DrawRateStuff ()
 			int textScale = active_con_scale();
 
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2llu ms (%3llu fps)", (unsigned long long)howlong, (unsigned long long)LastCount);
-			rate_x = Width / textScale - ConFont->StringWidth(&fpsbuff[0]);
-			Clear (rate_x * textScale, 0, Width, ConFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
-			DrawText (ConFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0],
+			rate_x = Width / textScale - NewConsoleFont->StringWidth(&fpsbuff[0]);
+			Clear (rate_x * textScale, 0, Width, NewConsoleFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
+			DrawText (NewConsoleFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0],
 				DTA_VirtualWidth, screen->GetWidth() / textScale,
 				DTA_VirtualHeight, screen->GetHeight() / textScale,
 				DTA_KeepRatio, true, TAG_DONE);
@@ -202,11 +208,6 @@ void DFrameBuffer::DrawRateStuff ()
 //
 //==========================================================================
 
-void DFrameBuffer::GetFlashedPalette(PalEntry pal[256])
-{
-	DoBlending(SourcePalette, pal, 256, Flash.r, Flash.g, Flash.b, Flash.a);
-}
-
 void DFrameBuffer::Update()
 {
 	CheckBench();
@@ -215,32 +216,14 @@ void DFrameBuffer::Update()
 	int initialHeight = GetClientHeight();
 	int clientWidth = ViewportScaledWidth(initialWidth, initialHeight);
 	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
-	if (clientWidth < 320) clientWidth = 320;
-	if (clientHeight < 200) clientHeight = 200;
+	if (clientWidth < VID_MIN_WIDTH) clientWidth = VID_MIN_WIDTH;
+	if (clientHeight < VID_MIN_HEIGHT) clientHeight = VID_MIN_HEIGHT;
 	if (clientWidth > 0 && clientHeight > 0 && (GetWidth() != clientWidth || GetHeight() != clientHeight))
 	{
 		SetVirtualSize(clientWidth, clientHeight);
 		V_OutputResized(clientWidth, clientHeight);
 		mVertexData->OutputResized(clientWidth, clientHeight);
 	}
-}
-
-PalEntry *DFrameBuffer::GetPalette()
-{
-	return SourcePalette;
-}
-
-bool DFrameBuffer::SetFlash(PalEntry rgb, int amount)
-{
-	Flash = PalEntry(amount, rgb.r, rgb.g, rgb.b);
-	return true;
-}
-
-void DFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
-{
-	rgb = Flash;
-	rgb.a = 0;
-	amount = Flash.a;
 }
 
 void DFrameBuffer::SetClearColor(int color)
@@ -295,43 +278,6 @@ FTexture *DFrameBuffer::WipeEndScreen()
 
 //==========================================================================
 //
-// DFrameBuffer :: InitPalette
-//
-//==========================================================================
-
-void DFrameBuffer::InitPalette()
-{
-	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
-	UpdatePalette();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void DFrameBuffer::BuildGammaTable(uint16_t *gammaTable)
-{
-	float gamma = clamp<float>(Gamma, 0.1f, 4.f);
-	float contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
-	float bright = clamp<float>(vid_brightness, -0.8f, 0.8f);
-
-	double invgamma = 1 / gamma;
-	double norm = pow(255., invgamma - 1);
-
-	for (int i = 0; i < 256; i++)
-	{
-		double val = i * contrast - (contrast - 1) * 127;
-		val += bright * 128;
-		if (gamma != 1) val = pow(val, invgamma) / norm;
-
-		gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (uint16_t)clamp<double>(val * 256, 0, 0xffff);
-	}
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: GetCaps
 //
 //==========================================================================
@@ -357,11 +303,6 @@ uint32_t DFrameBuffer::GetCaps()
 		FlagSet |= RFF_COLORMAP;
 
 	return (uint32_t)FlagSet;
-}
-
-void DFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
-{
-	SWRenderer->RenderTextureView(tex, Viewpoint, FOV);
 }
 
 void DFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
@@ -479,4 +420,38 @@ void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 
 	x = int16_t((x - letterboxX) * Width / letterboxWidth);
 	y = int16_t((y - letterboxY) * Height / letterboxHeight);
+}
+
+void DFrameBuffer::FPSLimit()
+{
+	using namespace std::chrono;
+	using namespace std::this_thread;
+
+	if (vid_maxfps <= 0 || cl_capfps)
+		return;
+
+	uint64_t targetWakeTime = fpsLimitTime + 1'000'000 / vid_maxfps;
+
+	while (true)
+	{
+		fpsLimitTime = duration_cast<microseconds>(steady_clock::now().time_since_epoch()).count();
+		int64_t timeToWait = targetWakeTime - fpsLimitTime;
+
+		if (timeToWait > 1'000'000 || timeToWait <= 0)
+		{
+			break;
+		}
+
+		if (timeToWait <= 2'000)
+		{
+			// We are too close to the deadline. OS sleep is not precise enough to wake us before it elapses.
+			// Yield execution and check time again.
+			sleep_for(nanoseconds(0));
+		}
+		else
+		{
+			// Sleep, but try to wake before deadline.
+			sleep_for(microseconds(timeToWait - 2'000));
+		}
+	}
 }

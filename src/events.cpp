@@ -39,24 +39,34 @@
 #include "actor.h"
 #include "c_dispatch.h"
 #include "network/net.h"
+#include "g_game.h"
 #include "info.h"
+#include "utf8.h"
 
-DStaticEventHandler* E_FirstEventHandler = nullptr;
-DStaticEventHandler* E_LastEventHandler = nullptr;
+EventManager staticEventManager;
 
-bool E_RegisterHandler(DStaticEventHandler* handler)
+void EventManager::CallOnRegister()
+{
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+	{
+		handler->OnRegister();
+	}
+}
+
+bool EventManager::RegisterHandler(DStaticEventHandler* handler)
 {
 	if (handler == nullptr || handler->ObjectFlags & OF_EuthanizeMe)
 		return false;
-	if (E_CheckHandler(handler))
+	if (CheckHandler(handler))
 		return false;
 
 	handler->OnRegister();
+	handler->owner = this;
 	
 	// link into normal list
 	// update: link at specific position based on order.
 	DStaticEventHandler* before = nullptr;
-	for (DStaticEventHandler* existinghandler = E_FirstEventHandler; existinghandler; existinghandler = existinghandler->next)
+	for (DStaticEventHandler* existinghandler = FirstEventHandler; existinghandler; existinghandler = existinghandler->next)
 	{
 		if (existinghandler->Order > handler->Order)
 		{
@@ -65,25 +75,25 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 		}
 	}
 
-	// 1. MyHandler2->1:
-	//    E_FirstEventHandler = MyHandler2, E_LastEventHandler = MyHandler2
-	// 2. MyHandler3->2:
-	//    E_FirstEventHandler = MyHandler2, E_LastEventHandler = MyHandler3
-
 	// (Yes, all those write barriers here are really needed!)
 	if (before != nullptr)
 	{
 		// if before is not null, link it before the existing handler.
 		// note that before can be first handler, check for this.
+		if (before->prev != nullptr)
+		{
+			before->prev->next = handler;
+			GC::WriteBarrier(before->prev, handler);
+		}
 		handler->next = before;
 		GC::WriteBarrier(handler, before);
 		handler->prev = before->prev;
 		GC::WriteBarrier(handler, before->prev);
 		before->prev = handler;
 		GC::WriteBarrier(before, handler);
-		if (before == E_FirstEventHandler)
+		if (before == FirstEventHandler)
 		{
-			E_FirstEventHandler = handler;
+			FirstEventHandler = handler;
 			GC::WriteBarrier(handler);
 		}
 	}
@@ -91,11 +101,11 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	{
 		// so if before is null, it means add last.
 		// it can also mean that we have no handlers at all yet.
-		handler->prev = E_LastEventHandler;
-		GC::WriteBarrier(handler, E_LastEventHandler);
+		handler->prev = LastEventHandler;
+		GC::WriteBarrier(handler, LastEventHandler);
 		handler->next = nullptr;
-		if (E_FirstEventHandler == nullptr)	E_FirstEventHandler = handler;
-		E_LastEventHandler = handler;
+		if (FirstEventHandler == nullptr) FirstEventHandler = handler;
+		LastEventHandler = handler;
 		GC::WriteBarrier(handler);
 		if (handler->prev != nullptr)
 		{
@@ -112,11 +122,11 @@ bool E_RegisterHandler(DStaticEventHandler* handler)
 	return true;
 }
 
-bool E_UnregisterHandler(DStaticEventHandler* handler)
+bool EventManager::UnregisterHandler(DStaticEventHandler* handler)
 {
 	if (handler == nullptr || handler->ObjectFlags & OF_EuthanizeMe)
 		return false;
-	if (!E_CheckHandler(handler))
+	if (!CheckHandler(handler))
 		return false;
 
 	handler->OnUnregister();
@@ -132,14 +142,14 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 		handler->next->prev = handler->prev;
 		GC::WriteBarrier(handler->next, handler->prev);
 	}
-	if (handler == E_FirstEventHandler)
+	if (handler == FirstEventHandler)
 	{
-		E_FirstEventHandler = handler->next;
+		FirstEventHandler = handler->next;
 		GC::WriteBarrier(handler->next);
 	}
-	if (handler == E_LastEventHandler)
+	if (handler == LastEventHandler)
 	{
-		E_LastEventHandler = handler->prev;
+		LastEventHandler = handler->prev;
 		GC::WriteBarrier(handler->prev);
 	}
 	if (handler->IsStatic())
@@ -150,7 +160,7 @@ bool E_UnregisterHandler(DStaticEventHandler* handler)
 	return true;
 }
 
-bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
+bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
 {
 	if (gamestate != GS_LEVEL)
 		return false;
@@ -166,73 +176,21 @@ bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
 	return true;
 }
 
-bool E_CheckHandler(DStaticEventHandler* handler)
+bool EventManager::CheckHandler(DStaticEventHandler* handler)
 {
-	for (DStaticEventHandler* lhandler = E_FirstEventHandler; lhandler; lhandler = lhandler->next)
+	for (DStaticEventHandler* lhandler = FirstEventHandler; lhandler; lhandler = lhandler->next)
 		if (handler == lhandler) return true;
 	return false;
 }
 
-bool E_IsStaticType(PClass* type)
+bool EventManager::IsStaticType(PClass* type)
 {
 	assert(type != nullptr);
 	assert(type->IsDescendantOf(RUNTIME_CLASS(DStaticEventHandler)));
 	return !type->IsDescendantOf(RUNTIME_CLASS(DEventHandler));
 }
 
-void E_SerializeEvents(FSerializer& arc)
-{
-	// todo : stuff
-	if (arc.BeginArray("eventhandlers"))
-	{
-		int numlocalhandlers = 0;
-		TArray<DStaticEventHandler*> handlers;
-		if (arc.isReading())
-		{
-			numlocalhandlers = arc.ArraySize();
-			// delete all current local handlers, if any
-			for (DStaticEventHandler* lhandler = E_FirstEventHandler; lhandler; lhandler = lhandler->next)
-				if (!lhandler->IsStatic()) lhandler->Destroy();
-		}
-		else
-		{
-			for (DStaticEventHandler* lhandler = E_FirstEventHandler; lhandler; lhandler = lhandler->next)
-			{
-				if (lhandler->IsStatic()) continue;
-				numlocalhandlers++;
-				handlers.Push(lhandler);
-			}
-		}
-
-		for (int i = 0; i < numlocalhandlers; i++)
-		{
-			// serialize the object properly.
-			if (arc.isReading())
-			{
-				// get object and put it into the array
-				DStaticEventHandler* lhandler;
-				arc(nullptr, lhandler);
-				if (lhandler != nullptr)
-					handlers.Push(lhandler);
-			}
-			else
-			{
-				::Serialize<DStaticEventHandler>(arc, nullptr, handlers[i], nullptr);
-			}
-		}
-
-		if (arc.isReading())
-		{
-			// add all newly deserialized handlers into the list
-			for (int i = 0; i < numlocalhandlers; i++)
-				E_RegisterHandler(handlers[i]);
-		}
-
-		arc.EndArray();
-	}
-}
-
-static PClass* E_GetHandlerClass(const FString& typeName)
+static PClass* GetHandlerClass(const FString& typeName)
 {
 	PClass* type = PClass::FindClass(typeName);
 
@@ -248,11 +206,11 @@ static PClass* E_GetHandlerClass(const FString& typeName)
 	return type;
 }
 
-static void E_InitHandler(PClass* type)
+void EventManager::InitHandler(PClass* type)
 {
 	// check if type already exists, don't add twice.
 	bool typeExists = false;
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 	{
 		if (handler->IsA(type))
 		{
@@ -263,136 +221,141 @@ static void E_InitHandler(PClass* type)
 
 	if (typeExists) return;
 	DStaticEventHandler* handler = (DStaticEventHandler*)type->CreateNew();
-	E_RegisterHandler(handler);
+	RegisterHandler(handler);
 }
 
-void E_InitStaticHandlers(bool map)
+void EventManager::InitStaticHandlers(FLevelLocals *l, bool map)
 {
 	// don't initialize map handlers if restoring from savegame.
 	if (savegamerestore)
 		return;
 
 	// just make sure
-	E_Shutdown(map);
+	Shutdown();
+	Level = l;
 
 	// initialize event handlers from gameinfo
 	for (const FString& typeName : gameinfo.EventHandlers)
 	{
-		PClass* type = E_GetHandlerClass(typeName);
+		PClass* type = GetHandlerClass(typeName);
 		// don't init the really global stuff here on startup initialization.
 		// don't init map-local global stuff here on level setup.
-		if (map == E_IsStaticType(type))
+		if (map == IsStaticType(type))
 			continue;
-		E_InitHandler(type);
+		InitHandler(type);
 	}
 
 	if (!map) 
 		return;
 
 	// initialize event handlers from mapinfo
-	for (const FString& typeName : level.info->EventHandlers)
+	for (const FString& typeName : Level->info->EventHandlers)
 	{
-		PClass* type = E_GetHandlerClass(typeName);
-		if (E_IsStaticType(type))
+		PClass* type = GetHandlerClass(typeName);
+		if (IsStaticType(type))
 			I_Error("Fatal: invalid event handler class %s in MAPINFO!\nMap-specific event handlers cannot be static.\n", typeName.GetChars());
-		E_InitHandler(type);
+		InitHandler(type);
 	}
 }
 
-void E_Shutdown(bool map)
+void EventManager::Shutdown()
 {
 	// delete handlers.
-	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+	TArray<DStaticEventHandler *> list;
+	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 	{
-		if (handler->IsStatic() == !map)
-			handler->Destroy();
+		list.Push(handler);
 	}
+	for (auto handler : list)
+	{
+		handler->Destroy();
+	}
+	FirstEventHandler = LastEventHandler = nullptr;
 }
 
-#define DEFINE_EVENT_LOOPER(name) void E_##name() \
+#define DEFINE_EVENT_LOOPER(name, play) void EventManager::name() \
 { \
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next) \
+	if (ShouldCallStatic(play)) staticEventManager.name(); \
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next) \
 		handler->name(); \
 }
+
 
 // note for the functions below.
 // *Unsafe is executed on EVERY map load/close, including savegame loading, etc.
 // There is no point in allowing non-static handlers to receive unsafe event separately, as there is no point in having static handlers receive safe event.
 // Because the main point of safe WorldLoaded/Unloading is that it will be preserved in savegames.
-void E_WorldLoaded()
+void EventManager::WorldLoaded()
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 	{
-		if (handler->IsStatic()) continue;
-		if (savegamerestore) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
+		if (!handler->IsStatic() && savegamerestore) continue; // don't execute WorldLoaded for handlers loaded from the savegame.
 		handler->WorldLoaded();
 	}
 }
 
-void E_WorldUnloaded()
+void EventManager::WorldUnloaded()
 {
-	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 	{
-		if (handler->IsStatic()) continue;
 		handler->WorldUnloaded();
 	}
 }
 
-void E_WorldLoadedUnsafe()
+bool EventManager::ShouldCallStatic(bool forplay)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-	{
-		if (!handler->IsStatic()) continue;
-		handler->WorldLoaded();
-	}
+	return this != &staticEventManager && Level == primaryLevel;
 }
 
-void E_WorldUnloadedUnsafe()
-{
-	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
-	{
-		if (!handler->IsStatic()) continue;
-		handler->WorldUnloaded();
-	}
-}
-
-void E_WorldThingSpawned(AActor* actor)
+void EventManager::WorldThingSpawned(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
 	if (actor->ObjectFlags & OF_EuthanizeMe)
 		return;
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingSpawned(actor);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->WorldThingSpawned(actor);
 }
 
-void E_WorldThingDied(AActor* actor, AActor* inflictor)
+void EventManager::WorldThingDied(AActor* actor, AActor* inflictor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
 	if (actor->ObjectFlags & OF_EuthanizeMe)
 		return;
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingDied(actor, inflictor);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->WorldThingDied(actor, inflictor);
 }
 
-void E_WorldThingRevived(AActor* actor)
+void EventManager::WorldThingRevived(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
 	if (actor->ObjectFlags & OF_EuthanizeMe)
 		return;
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingRevived(actor);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->WorldThingRevived(actor);
 }
 
-void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle)
+void EventManager::WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
 	if (actor->ObjectFlags & OF_EuthanizeMe)
 		return;
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingDamaged(actor, inflictor, source, damage, mod, flags, angle);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->WorldThingDamaged(actor, inflictor, source, damage, mod, flags, angle);
 }
 
-void E_WorldThingDestroyed(AActor* actor)
+void EventManager::WorldThingDestroyed(AActor* actor)
 {
 	// don't call anything if actor was destroyed on PostBeginPlay/BeginPlay/whatever.
 	if (actor->ObjectFlags & OF_EuthanizeMe)
@@ -401,73 +364,92 @@ void E_WorldThingDestroyed(AActor* actor)
 	// this is because Destroyed should be reverse of Spawned. we don't want to catch random inventory give failures.
 	if (!(actor->ObjectFlags & OF_Spawned))
 		return;
-	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+
+	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 		handler->WorldThingDestroyed(actor);
+
+	if (ShouldCallStatic(true)) staticEventManager.WorldThingDestroyed(actor);
 }
 
-void E_WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate)
+void EventManager::WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(true)) staticEventManager.WorldLinePreActivated(line, actor, activationType, shouldactivate);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->WorldLinePreActivated(line, actor, activationType, shouldactivate);
 }
 
-void E_WorldLineActivated(line_t* line, AActor* actor, int activationType)
+void EventManager::WorldLineActivated(line_t* line, AActor* actor, int activationType)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(true)) staticEventManager.WorldLineActivated(line, actor, activationType);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->WorldLineActivated(line, actor, activationType);
 }
 
-int E_WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius)
+int EventManager::WorldSectorDamaged(sector_t* sector, AActor* source, int damage, FName damagetype, int part, DVector3 position, bool isradius)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(true)) staticEventManager.WorldSectorDamaged(sector, source, damage, damagetype, part, position, isradius);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		damage = handler->WorldSectorDamaged(sector, source, damage, damagetype, part, position, isradius);
 	return damage;
 }
 
-int E_WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius)
+int EventManager::WorldLineDamaged(line_t* line, AActor* source, int damage, FName damagetype, int side, DVector3 position, bool isradius)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(true)) staticEventManager.WorldLineDamaged(line, source, damage, damagetype, side, position, isradius);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		damage = handler->WorldLineDamaged(line, source, damage, damagetype, side, position, isradius);
 	return damage;
 }
 
-void E_PlayerEntered(int num, bool fromhub)
+void EventManager::PlayerEntered(int num, bool fromhub)
 {
 	// this event can happen during savegamerestore. make sure that local handlers don't receive it.
 	// actually, global handlers don't want it too.
 	if (savegamerestore && !fromhub)
 		return;
 
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(true)) staticEventManager.PlayerEntered(num, fromhub);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->PlayerEntered(num, fromhub);
 }
 
-void E_PlayerRespawned(int num)
+void EventManager::PlayerRespawned(int num)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(true)) staticEventManager.PlayerRespawned(num);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->PlayerRespawned(num);
 }
 
-void E_PlayerDied(int num)
+void EventManager::PlayerDied(int num)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(true)) staticEventManager.PlayerDied(num);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->PlayerDied(num);
 }
 
-void E_PlayerDisconnected(int num)
+void EventManager::PlayerDisconnected(int num)
 {
-	for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 		handler->PlayerDisconnected(num);
+
+	if (ShouldCallStatic(true)) staticEventManager.PlayerDisconnected(num);
 }
 
-bool E_Responder(const event_t* ev)
+bool EventManager::Responder(const event_t* ev)
 {
 	bool uiProcessorsFound = false;
 
 	if (ev->type == EV_GUI_Event)
 	{
 		// iterate handlers back to front by order, and give them this event.
-		for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+		for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 		{
 			if (handler->IsUiProcessor)
 			{
@@ -480,7 +462,7 @@ bool E_Responder(const event_t* ev)
 	else
 	{
 		// not sure if we want to handle device changes, but whatevs.
-		for (DStaticEventHandler* handler = E_LastEventHandler; handler; handler = handler->prev)
+		for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 		{
 			if (handler->IsUiProcessor)
 				uiProcessorsFound = true;
@@ -488,69 +470,100 @@ bool E_Responder(const event_t* ev)
 				return true; // event was processed
 		}
 	}
+	if (ShouldCallStatic(false)) uiProcessorsFound = staticEventManager.Responder(ev);
 
 	return (uiProcessorsFound && (ev->type == EV_Mouse)); // mouse events are eaten by the event system if there are any uiprocessors.
 }
 
-void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual)
+void EventManager::Console(int player, FString name, int arg1, int arg2, int arg3, bool manual)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(false)) staticEventManager.Console(player, name, arg1, arg2, arg3, manual);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->ConsoleProcess(player, name, arg1, arg2, arg3, manual);
 }
 
-void E_RenderOverlay(EHudState state)
+void EventManager::RenderOverlay(EHudState state)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(false)) staticEventManager.RenderOverlay(state);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		handler->RenderOverlay(state);
 }
 
-bool E_CheckUiProcessors()
+void EventManager::RenderUnderlay(EHudState state)
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(false)) staticEventManager.RenderUnderlay(state);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->RenderUnderlay(state);
+}
+
+bool EventManager::CheckUiProcessors()
+{
+	if (ShouldCallStatic(false))
+	{
+		if (staticEventManager.CheckUiProcessors()) return true;
+	}
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		if (handler->IsUiProcessor)
 			return true;
 
 	return false;
 }
 
-bool E_CheckRequireMouse()
+bool EventManager::CheckRequireMouse()
 {
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	if (ShouldCallStatic(false)) 
+	{
+		if (staticEventManager.CheckRequireMouse()) return true;
+	}
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 		if (handler->IsUiProcessor && handler->RequireMouse)
 			return true;
 
 	return false;
 }
 
-bool E_CheckReplacement( PClassActor *replacee, PClassActor **replacement )
+bool EventManager::CheckReplacement( PClassActor *replacee, PClassActor **replacement )
 {
 	bool final = false;
-	for (DStaticEventHandler *handler = E_FirstEventHandler; handler; handler = handler->next)
+
+	// This is play scope but unlike in-game events needs to be handled like UI by static handlers.
+	if (ShouldCallStatic(false)) final = staticEventManager.CheckReplacement(replacee, replacement);
+
+	for (DStaticEventHandler *handler = FirstEventHandler; handler; handler = handler->next)
 		handler->CheckReplacement(replacee,replacement,&final);
 	return final;
 }
 
-void E_NewGame(EventHandlerType handlerType)
+bool EventManager::CheckReplacee(PClassActor **replacee, PClassActor *replacement)
 {
-	bool isStatic = handlerType == EventHandlerType::Global;
+	bool final = false;
+	if (ShouldCallStatic(false)) final = staticEventManager.CheckReplacee(replacee, replacement);
 
-	// Shut down all per-map event handlers before static NewGame events.
-	if (isStatic)
-		E_Shutdown(true);
+	for (DStaticEventHandler *handler = FirstEventHandler; handler; handler = handler->next)
+		handler->CheckReplacee(replacee, replacement, &final);
+	return final;
+}
 
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+void EventManager::NewGame()
+{
+	//This is called separately for static and local handlers, so no forwarding here.
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
 	{
-		if (handler->IsStatic() == isStatic)
-			handler->NewGame();
+		handler->NewGame();
 	}
 }
 
 // normal event loopers (non-special, argument-less)
-DEFINE_EVENT_LOOPER(RenderFrame)
-DEFINE_EVENT_LOOPER(WorldLightning)
-DEFINE_EVENT_LOOPER(WorldTick)
-DEFINE_EVENT_LOOPER(UiTick)
-DEFINE_EVENT_LOOPER(PostUiTick)
+DEFINE_EVENT_LOOPER(RenderFrame, false)
+DEFINE_EVENT_LOOPER(WorldLightning, true)
+DEFINE_EVENT_LOOPER(WorldTick, true)
+DEFINE_EVENT_LOOPER(UiTick, false)
+DEFINE_EVENT_LOOPER(PostUiTick, false)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, true);
@@ -621,13 +634,14 @@ DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, Replacee)
 DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, Replacement)
 DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, IsFinal)
 
+DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacee)
+DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, Replacement)
+DEFINE_FIELD_X(ReplacedEvent, FReplacedEvent, IsFinal)
+
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
 	PARAM_SELF_PROLOGUE(DStaticEventHandler);
 	PARAM_INT(order);
-
-	if (E_CheckHandler(self))
-		return 0;
 
 	self->Order = order;
 	return 0;
@@ -642,14 +656,14 @@ DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
 	PARAM_INT(arg3);
 	//
 
-	ACTION_RETURN_BOOL(E_SendNetworkEvent(name, arg1, arg2, arg3, false));
+	ACTION_RETURN_BOOL(currentVMLevel->localEventManager->SendNetworkEvent(name, arg1, arg2, arg3, false));
 }
 
 DEFINE_ACTION_FUNCTION(DEventHandler, Find)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(t, DStaticEventHandler);
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = currentVMLevel->localEventManager->FirstEventHandler; handler; handler = handler->next)
 		if (handler->GetClass() == t) // check precise class
 			ACTION_RETURN_OBJECT(handler);
 	ACTION_RETURN_OBJECT(nullptr);
@@ -660,7 +674,7 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, Find)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(t, DStaticEventHandler);
-	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+	for (DStaticEventHandler* handler = staticEventManager.FirstEventHandler; handler; handler = handler->next)
 		if (handler->GetClass() == t) // check precise class
 			ACTION_RETURN_OBJECT(handler);
 	ACTION_RETURN_OBJECT(nullptr);
@@ -708,11 +722,11 @@ void DStaticEventHandler::OnUnregister()
 	}
 }
 
-static FWorldEvent E_SetupWorldEvent()
+FWorldEvent EventManager::SetupWorldEvent()
 {
 	FWorldEvent e;
 	e.IsSaveGame = savegamerestore;
-	e.IsReopen = level.FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
+	e.IsReopen = Level->FromSnapshot && !savegamerestore; // each one by itself isnt helpful, but with hub load we have savegamerestore==0 and level.FromSnapshot==1.
 	e.DamageAngle = 0.0;
 	return e;
 }
@@ -723,7 +737,7 @@ void DStaticEventHandler::WorldLoaded()
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
@@ -735,7 +749,7 @@ void DStaticEventHandler::WorldUnloaded()
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
@@ -747,7 +761,7 @@ void DStaticEventHandler::WorldThingSpawned(AActor* actor)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -760,7 +774,7 @@ void DStaticEventHandler::WorldThingDied(AActor* actor, AActor* inflictor)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.Thing = actor;
 		e.Inflictor = inflictor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
@@ -774,7 +788,7 @@ void DStaticEventHandler::WorldThingRevived(AActor* actor)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -787,7 +801,7 @@ void DStaticEventHandler::WorldThingDamaged(AActor* actor, AActor* inflictor, AA
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.Thing = actor;
 		e.Inflictor = inflictor;
 		e.Damage = damage;
@@ -806,7 +820,7 @@ void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -819,7 +833,7 @@ void DStaticEventHandler::WorldLinePreActivated(line_t* line, AActor* actor, int
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.Thing = actor;
 		e.ActivatedLine = line;
 		e.ActivationType = activationType;
@@ -836,7 +850,7 @@ void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor, int ac
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.Thing = actor;
 		e.ActivatedLine = line;
 		e.ActivationType = activationType;
@@ -851,7 +865,7 @@ int DStaticEventHandler::WorldSectorDamaged(sector_t* sector, AActor* source, in
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return damage;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.DamageSource = source;
 		e.DamageSector = sector;
 		e.NewDamage = e.Damage = damage;
@@ -874,7 +888,7 @@ int DStaticEventHandler::WorldLineDamaged(line_t* line, AActor* source, int dama
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return damage;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		e.DamageSource = source;
 		e.DamageLine = line;
 		e.NewDamage = e.Damage = damage;
@@ -897,7 +911,7 @@ void DStaticEventHandler::WorldLightning()
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FWorldEvent e = E_SetupWorldEvent();
+		FWorldEvent e = owner->SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
@@ -914,7 +928,7 @@ void DStaticEventHandler::WorldTick()
 	}
 }
 
-static FRenderEvent E_SetupRenderEvent()
+FRenderEvent EventManager::SetupRenderEvent()
 {
 	FRenderEvent e;
     auto &vp = r_viewpoint;
@@ -934,7 +948,7 @@ void DStaticEventHandler::RenderFrame()
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 	 	if (isEmpty(func)) return;
-		FRenderEvent e = E_SetupRenderEvent();
+		FRenderEvent e = owner->SetupRenderEvent;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
@@ -947,7 +961,20 @@ void DStaticEventHandler::RenderOverlay(EHudState state)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (isEmpty(func)) return;
-		FRenderEvent e = E_SetupRenderEvent();
+		FRenderEvent e = owner->SetupRenderEvent();
+		e.HudState = int(state);
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::RenderUnderlay(EHudState state)
+{
+	IFVIRTUAL(DStaticEventHandler, RenderUnderlay)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FRenderEvent e = owner->SetupRenderEvent();
 		e.HudState = int(state);
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -1027,7 +1054,7 @@ FUiEvent::FUiEvent(const event_t *ev)
 		break;
 	case EV_GUI_Char:
 		KeyChar = ev->data1;
-		KeyString = FString(char(ev->data1));
+		KeyString = MakeUTF8(ev->data1);
 		IsAlt = !!ev->data2; // only true for Win32, not sure about SDL
 		break;
 	default: // mouse event
@@ -1172,7 +1199,7 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 	}
 }
 
-void DStaticEventHandler::CheckReplacement( PClassActor *replacee, PClassActor **replacement, bool *final )
+void DStaticEventHandler::CheckReplacement(PClassActor *replacee, PClassActor **replacement, bool *final )
 {
 	IFVIRTUAL(DStaticEventHandler, CheckReplacement)
 	{
@@ -1183,6 +1210,21 @@ void DStaticEventHandler::CheckReplacement( PClassActor *replacee, PClassActor *
 		VMCall(func, params, 2, nullptr, 0);
 		if ( e.Replacement != replacee ) // prevent infinite recursion
 			*replacement = e.Replacement;
+		*final = e.IsFinal;
+	}
+}
+
+void DStaticEventHandler::CheckReplacee(PClassActor **replacee, PClassActor *replacement, bool *final)
+{
+	IFVIRTUAL(DStaticEventHandler, CheckReplacee)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FReplacedEvent e = { *replacee, replacement, *final };
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+		if (e.Replacee != replacement) // prevent infinite recursion
+			*replacee = e.Replacee;
 		*final = e.IsFinal;
 	}
 }
@@ -1201,7 +1243,7 @@ void DStaticEventHandler::NewGame()
 //
 void DStaticEventHandler::OnDestroy()
 {
-	E_UnregisterHandler(this);
+	owner->UnregisterHandler(this);
 	Super::OnDestroy();
 }
 
@@ -1222,7 +1264,7 @@ CCMD(event)
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call locally
-		E_Console(-1, argv[1], arg[0], arg[1], arg[2], true);
+		primaryLevel->localEventManager->Console(-1, argv[1], arg[0], arg[1], arg[2], true);
 	}
 }
 
@@ -1230,7 +1272,7 @@ CCMD(netevent)
 {
 	if (gamestate != GS_LEVEL/* && gamestate != GS_TITLELEVEL*/) // not sure if this should work in title level, but probably not, because this is for actual playing
 	{
-		Printf("netevent cannot be used outside of a map.\n");
+		DPrintf(DMSG_SPAMMY, "netevent cannot be used outside of a map.\n");
 		return;
 	}
 
@@ -1247,6 +1289,6 @@ CCMD(netevent)
 		for (int i = 0; i < argn; i++)
 			arg[i] = atoi(argv[2 + i]);
 		// call networked
-		E_SendNetworkEvent(argv[1], arg[0], arg[1], arg[2], true);
+		primaryLevel->localEventManager->SendNetworkEvent(argv[1], arg[0], arg[1], arg[2], true);
 	}
 }

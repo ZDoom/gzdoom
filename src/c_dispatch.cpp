@@ -45,7 +45,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "m_argv.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "d_player.h"
 #include "configfile.h"
 #include "v_text.h"
@@ -54,42 +54,127 @@
 #include "serializer.h"
 #include "menu/menu.h"
 #include "vm.h"
+#include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
-class DWaitingCommand : public DThinker
+class UnsafeExecutionScope
 {
-	DECLARE_CLASS (DWaitingCommand, DThinker)
+	const bool wasEnabled;
+
 public:
-	DWaitingCommand (const char *cmd, int tics, bool unsafe);
-	~DWaitingCommand ();
-	void Serialize(FSerializer &arc);
-	void Tick ();
+	explicit UnsafeExecutionScope(const bool enable = true)
+		: wasEnabled(UnsafeExecutionContext)
+	{
+		UnsafeExecutionContext = enable;
+	}
 
-private:
-	DWaitingCommand ();
+	~UnsafeExecutionScope()
+	{
+		UnsafeExecutionContext = wasEnabled;
+	}
+};
 
-	char *Command;
+class FDelayedCommand
+{
+public:
+	virtual ~FDelayedCommand() {}
+
+protected:
+	virtual bool Tick() = 0;
+
+	friend class FDelayedCommandQueue;
+};
+
+class FWaitingCommand : public FDelayedCommand
+{
+public:
+	FWaitingCommand(const char *cmd, int tics, bool unsafe)
+		: Command(cmd), TicsLeft(tics+1), IsUnsafe(unsafe)
+	{}
+
+	bool Tick() override
+	{
+		if (--TicsLeft == 0)
+		{
+			UnsafeExecutionScope scope(IsUnsafe);
+			AddCommandString(Command);
+			return true;
+		}
+		return false;
+	}
+
+	FString Command;
 	int TicsLeft;
 	bool IsUnsafe;
 };
 
-class DStoredCommand : public DThinker
+class FStoredCommand : public FDelayedCommand
 {
-	DECLARE_CLASS (DStoredCommand, DThinker)
 public:
-	DStoredCommand (FConsoleCommand *com, const char *cmd);
-	~DStoredCommand ();
-	void Tick ();
+	FStoredCommand(FConsoleCommand *com, const char *cmd)
+		: Command(com), Text(cmd)
+	{}
+
+	bool Tick() override
+	{
+		if (Text.IsNotEmpty() && Command != nullptr)
+		{
+			FCommandLine args(Text);
+			Command->Run(args, players[consoleplayer].mo, 0);
+		}
+		return true;
+	}
 
 private:
-	DStoredCommand ();
 
 	FConsoleCommand *Command;
-	char *Text;
+	FString Text;
 };
+
+class FDelayedCommandQueue
+{
+	TDeletingArray<FDelayedCommand *> delayedCommands;
+public:
+	void Run()
+	{
+		for (unsigned i = 0; i < delayedCommands.Size(); i++)
+		{
+			if (delayedCommands[i]->Tick())
+			{
+				delete delayedCommands[i];
+				delayedCommands.Delete(i);
+				i--;
+			}
+		}
+	}
+
+	void Clear()
+	{
+		delayedCommands.DeleteAndClear();
+	}
+
+	void AddCommand(FDelayedCommand * cmd)
+	{
+		delayedCommands.Push(cmd);
+	}
+};
+
+static FDelayedCommandQueue delayedCommandQueue;
+
+void C_RunDelayedCommands()
+{
+	delayedCommandQueue.Run();
+}
+
+void C_ClearDelayedCommands()
+{
+	delayedCommandQueue.Clear();
+}
+
+
 
 struct FActionMap
 {
@@ -127,22 +212,6 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 
 bool ParsingKeyConf, UnsafeExecutionContext;
 
-class UnsafeExecutionScope
-{
-	const bool wasEnabled;
-
-public:
-	explicit UnsafeExecutionScope(const bool enable = true)
-	: wasEnabled(UnsafeExecutionContext)
-	{
-		UnsafeExecutionContext = enable;
-	}
-
-	~UnsafeExecutionScope()
-	{
-		UnsafeExecutionContext = wasEnabled;
-	}
-};
 
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
@@ -205,79 +274,6 @@ static const char *KeyConfCommands[] =
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DWaitingCommand, false, false)
-
-void DWaitingCommand::Serialize(FSerializer &arc)
-{
-	Super::Serialize (arc);
-	arc("command", Command)
-		("ticsleft", TicsLeft)
-		("unsafe", IsUnsafe);
-}
-
-DWaitingCommand::DWaitingCommand ()
-{
-	Command = NULL;
-	TicsLeft = 1;
-	IsUnsafe = false;
-}
-
-DWaitingCommand::DWaitingCommand (const char *cmd, int tics, bool unsafe)
-{
-	Command = copystring (cmd);
-	TicsLeft = tics+1;
-	IsUnsafe = unsafe;
-}
-
-DWaitingCommand::~DWaitingCommand ()
-{
-	if (Command != NULL)
-	{
-		delete[] Command;
-	}
-}
-
-void DWaitingCommand::Tick ()
-{
-	if (--TicsLeft == 0)
-	{
-		UnsafeExecutionScope scope(IsUnsafe);
-		AddCommandString (Command);
-		Destroy ();
-	}
-}
-
-IMPLEMENT_CLASS(DStoredCommand, false, false)
-
-DStoredCommand::DStoredCommand ()
-{
-	Text = NULL;
-	Destroy ();
-}
-
-DStoredCommand::DStoredCommand (FConsoleCommand *command, const char *args)
-{
-	Command = command;
-	Text = copystring (args);
-}		
-
-DStoredCommand::~DStoredCommand ()
-{
-	if (Text != NULL)
-	{
-		delete[] Text;
-	}
-}
-
-void DStoredCommand::Tick ()
-{
-	if (Text != NULL && Command != NULL)
-	{
-		FCommandLine args (Text);
-		Command->Run (args, players[consoleplayer].mo, 0);
-	}
-	Destroy ();
-}
 
 static int ListActionCommands (const char *pattern)
 {
@@ -567,7 +563,7 @@ void C_DoCommand (const char *cmd, int keynum)
 	const char *beg;
 
 	// Skip any beginning whitespace
-	while (*cmd && *cmd <= ' ')
+	while (*cmd > 0 && *cmd <= ' ')
 		cmd++;
 
 	// Find end of the command name
@@ -579,7 +575,7 @@ void C_DoCommand (const char *cmd, int keynum)
 	else
 	{
 		beg = cmd;
-		for (end = cmd+1; *end > ' '; ++end)
+		for (end = cmd+1; *end > ' ' || *end < 0; ++end)
 			;
 	}
 
@@ -656,7 +652,8 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{
-				Create<DStoredCommand> (com, beg);
+				auto cmd = new FStoredCommand(com, beg);
+				delayedCommandQueue.AddCommand(cmd);
 			}
 		}
 	}
@@ -696,8 +693,12 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	return 0;
 }
 
-void AddCommandString (char *cmd, int keynum)
+void AddCommandString (const char *text, int keynum)
 {
+	// Operate on a local copy instead of messing around with the data that's being passed in here.
+	TArray<char> buffer(strlen(text) + 1, true);
+	memcpy(buffer.Data(), text, buffer.Size());
+	char *cmd = buffer.Data();
 	char *brkpt;
 	int more;
 
@@ -727,7 +728,7 @@ void AddCommandString (char *cmd, int keynum)
 				more = 0;
 			}
 			// Intercept wait commands here. Note: wait must be lowercase
-			while (*cmd && *cmd <= ' ')
+			while (*cmd > 0 && *cmd <= ' ')
 				cmd++;
 			if (*cmd)
 			{
@@ -752,7 +753,8 @@ void AddCommandString (char *cmd, int keynum)
 						  // Note that deferred commands lose track of which key
 						  // (if any) they were pressed from.
 							*brkpt = ';';
-							Create<DWaitingCommand> (brkpt, tics, UnsafeExecutionContext);
+							auto cmd = new FWaitingCommand(brkpt, tics, UnsafeExecutionContext);
+							delayedCommandQueue.AddCommand(cmd);
 						}
 						return;
 					}
@@ -1039,12 +1041,12 @@ FConsoleCommand::~FConsoleCommand ()
 	delete[] m_Name;
 }
 
-void FConsoleCommand::Run (FCommandLine &argv, APlayerPawn *who, int key)
+void FConsoleCommand::Run (FCommandLine &argv, AActor *who, int key)
 {
 	m_RunFunc (argv, who, key);
 }
 
-void FUnsafeConsoleCommand::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+void FUnsafeConsoleCommand::Run (FCommandLine &args, AActor *instigator, int key)
 {
 	if (UnsafeExecutionContext)
 	{
@@ -1455,7 +1457,7 @@ bool FConsoleAlias::IsAlias ()
 	return true;
 }
 
-void FConsoleAlias::Run (FCommandLine &args, APlayerPawn *who, int key)
+void FConsoleAlias::Run (FCommandLine &args, AActor *who, int key)
 {
 	if (bRunning)
 	{
@@ -1477,8 +1479,7 @@ void FConsoleAlias::Run (FCommandLine &args, APlayerPawn *who, int key)
 	}
 
 	bRunning = true;
-	AddCommandString (mycommand.LockBuffer(), key);
-	mycommand.UnlockBuffer();
+	AddCommandString (mycommand, key);
 	bRunning = false;
 	if (m_Command[index].IsEmpty())
 	{ // The alias is unchanged, so put the command back so it can be used again.
@@ -1519,7 +1520,7 @@ void FConsoleAlias::SafeDelete ()
 	}
 }
 
-void FUnsafeConsoleAlias::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+void FUnsafeConsoleAlias::Run (FCommandLine &args, AActor *instigator, int key)
 {
 	UnsafeExecutionScope scope;
 	FConsoleAlias::Run(args, instigator, key);
@@ -1554,8 +1555,7 @@ void FExecList::ExecCommands() const
 {
 	for (unsigned i = 0; i < Commands.Size(); ++i)
 	{
-		AddCommandString(Commands[i].LockBuffer());
-		Commands[i].UnlockBuffer();
+		AddCommandString(Commands[i]);
 	}
 }
 
@@ -1569,13 +1569,14 @@ void FExecList::AddPullins(TArray<FString> &wads) const
 
 FExecList *C_ParseExecFile(const char *file, FExecList *exec)
 {
-	FILE *f;
 	char cmd[4096];
 	int retval = 0;
 
-	if ( (f = fopen (file, "r")) )
+	FileReader fr;
+
+	if ( (fr.OpenFile(file)) )
 	{
-		while (fgets(cmd, countof(cmd)-1, f))
+		while (fr.Gets(cmd, countof(cmd)-1))
 		{
 			// Comments begin with //
 			char *stop = cmd + strlen(cmd) - 1;
@@ -1611,11 +1612,6 @@ FExecList *C_ParseExecFile(const char *file, FExecList *exec)
 			}
 			exec->AddCommand(cmd, file);
 		}
-		if (!feof(f))
-		{
-			Printf("Error parsing \"%s\"\n", file);
-		}
-		fclose(f);
 	}
 	else
 	{

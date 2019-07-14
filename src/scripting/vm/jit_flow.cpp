@@ -244,82 +244,6 @@ void JitCompiler::EmitRETI()
 	}
 }
 
-static DObject* CreateNew(PClass *cls, int c)
-{
-	if (!cls->ConstructNative)
-	{
-		ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
-	}
-	else if (cls->bAbstract)
-	{
-		ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-	}
-	else if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
-	{
-		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-	}
-
-	// [ZZ] validate readonly and between scope construction
-	if (c) FScopeBarrier::ValidateNew(cls, c - 1);
-	return cls->CreateNew();
-}
-
-void JitCompiler::EmitNEW()
-{
-	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*, PClass*, int>(CreateNew);
-	call->setRet(0, result);
-	call->setArg(0, regA[B]);
-	call->setArg(1, asmjit::Imm(C));
-
-	cc.mov(regA[A], result);
-}
-
-static void ThrowNewK(PClass *cls, int c)
-{
-	if (!cls->ConstructNative)
-	{
-		ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
-	}
-	else if (cls->bAbstract)
-	{
-		ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
-	}
-	else // if (cls->IsDescendantOf(NAME_Actor)) // Creating actors here must be outright prohibited
-	{
-		ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
-	}
-}
-
-static DObject *CreateNewK(PClass *cls, int c)
-{
-	if (c) FScopeBarrier::ValidateNew(cls, c - 1);
-	return cls->CreateNew();
-}
-
-void JitCompiler::EmitNEW_K()
-{
-	PClass *cls = (PClass*)konsta[B].v;
-	auto regcls = newTempIntPtr();
-	cc.mov(regcls, asmjit::imm_ptr(cls));
-
-	if (!cls->ConstructNative || cls->bAbstract || cls->IsDescendantOf(NAME_Actor))
-	{
-		auto call = CreateCall<void, PClass*, int>(ThrowNewK);
-		call->setArg(0, regcls);
-	}
-	else
-	{
-		auto result = newResultIntPtr();
-		auto call = CreateCall<DObject*, PClass*, int>(CreateNewK);
-		call->setRet(0, result);
-		call->setArg(0, regcls);
-		call->setArg(1, asmjit::Imm(C));
-
-		cc.mov(regA[A], result);
-	}
-}
-
 void JitCompiler::EmitTHROW()
 {
 	EmitThrowException(EVMAbortException(BC));
@@ -330,15 +254,18 @@ void JitCompiler::EmitBOUND()
 	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, asmjit::imm_ptr(sfunc));
-	call->setArg(1, asmjit::imm_ptr(pc));
-	call->setArg(2, regD[A]);
-	call->setArg(3, asmjit::imm(BC));
+	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, regD[A]);
+	call->setArg(1, asmjit::imm(BC));
 	cc.setCursor(cursor);
 
 	cc.cmp(regD[A], (int)BC);
 	cc.jae(label);
+
+	JitLineInfo info;
+	info.Label = label;
+	info.LineNumber = sfunc->PCToLine(pc);
+	LineInfo.Push(info);
 }
 
 void JitCompiler::EmitBOUND_K()
@@ -346,15 +273,18 @@ void JitCompiler::EmitBOUND_K()
 	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, asmjit::imm_ptr(sfunc));
-	call->setArg(1, asmjit::imm_ptr(pc));
-	call->setArg(2, regD[A]);
-	call->setArg(3, asmjit::imm(konstd[BC]));
+	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, regD[A]);
+	call->setArg(1, asmjit::imm(konstd[BC]));
 	cc.setCursor(cursor);
 
 	cc.cmp(regD[A], (int)konstd[BC]);
 	cc.jae(label);
+
+	JitLineInfo info;
+	info.Label = label;
+	info.LineNumber = sfunc->PCToLine(pc);
+	LineInfo.Push(info);
 }
 
 void JitCompiler::EmitBOUND_R()
@@ -362,18 +292,21 @@ void JitCompiler::EmitBOUND_R()
 	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
-	auto call = CreateCall<void, VMScriptFunction *, VMOP *, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, asmjit::imm_ptr(sfunc));
-	call->setArg(1, asmjit::imm_ptr(pc));
-	call->setArg(2, regD[A]);
-	call->setArg(3, regD[B]);
+	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
+	call->setArg(0, regD[A]);
+	call->setArg(1, regD[B]);
 	cc.setCursor(cursor);
 
 	cc.cmp(regD[A], regD[B]);
 	cc.jae(label);
+
+	JitLineInfo info;
+	info.Label = label;
+	info.LineNumber = sfunc->PCToLine(pc);
+	LineInfo.Push(info);
 }
 
-void JitCompiler::ThrowArrayOutOfBounds(VMScriptFunction *func, VMOP *line, int index, int size)
+void JitCompiler::ThrowArrayOutOfBounds(int index, int size)
 {
 	if (index >= size)
 	{

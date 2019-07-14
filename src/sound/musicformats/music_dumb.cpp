@@ -36,8 +36,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <mutex>
 #include "i_musicinterns.h"
-#include "i_system.h"
+
 
 #undef CDECL	// w32api's windef.h defines this
 #include "../dumb/include/dumb.h"
@@ -73,7 +74,7 @@ protected:
 	size_t written;
 	DUH *duh;
 	DUH_SIGRENDERER *sr;
-	FCriticalSection crit_sec;
+	std::mutex crit_sec;
 
 	bool open2(long pos);
 	long render(double volume, double delta, long samples, sample_t **buffer);
@@ -774,8 +775,6 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	bool is_it = false;
 	bool is_dos = true;
 
-	atterm(dumb_exit);
-
     int size = (int)reader.GetLength();
 	auto fpos = reader.Tell();
 
@@ -959,18 +958,16 @@ bool input_mod::read(SoundStream *stream, void *buffer, int sizebytes, void *use
 		memset(buffer, 0, sizebytes);
 		return false;
 	}
-	state->crit_sec.Enter();
+	std::lock_guard<std::mutex> lock(state->crit_sec);
 	while (sizebytes > 0)
 	{
 		int written = state->decode_run(buffer, sizebytes / 8);
 		if (written < 0)
 		{
-			state->crit_sec.Leave();
 			return false;
 		}
 		if (written == 0)
 		{
-			state->crit_sec.Leave();
 			memset(buffer, 0, sizebytes);
 			return true;
 		}
@@ -985,7 +982,6 @@ bool input_mod::read(SoundStream *stream, void *buffer, int sizebytes, void *use
 		buffer = (uint8_t *)buffer + written * 8;
 		sizebytes -= written * 8;
 	}
-	state->crit_sec.Leave();
 	return true;
 }
 
@@ -1065,18 +1061,16 @@ bool input_mod::SetSubsong(int order)
 	{
 		return false;
 	}
-	crit_sec.Enter();
+	std::lock_guard<std::mutex> lock(crit_sec);
 	DUH_SIGRENDERER *oldsr = sr;
 	sr = NULL;
 	start_order = order;
 	if (!open2(0))
 	{
 		sr = oldsr;
-		crit_sec.Leave();
 		return false;
 	}
 	duh_end_sigrenderer(oldsr);
-	crit_sec.Leave();
 	return true;
 }
 

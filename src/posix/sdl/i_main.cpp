@@ -53,6 +53,10 @@
 #include "r_utility.h"
 #include "doomstat.h"
 #include "vm.h"
+#include "doomerrors.h"
+#include "i_system.h"
+#include "g_game.h"
+#include "atterm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -86,47 +90,9 @@ FArgs *Args;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static void (*TermFuncs[MAX_TERMS]) ();
-static const char *TermNames[MAX_TERMS];
-static int NumTerms;
 
 // CODE --------------------------------------------------------------------
 
-void addterm (void (*func) (), const char *name)
-{
-	// Make sure this function wasn't already registered.
-	for (int i = 0; i < NumTerms; ++i)
-	{
-		if (TermFuncs[i] == func)
-		{
-			return;
-		}
-	}
-    if (NumTerms == MAX_TERMS)
-	{
-		func ();
-		I_FatalError (
-			"Too many exit functions registered.\n"
-			"Increase MAX_TERMS in i_main.cpp");
-	}
-	TermNames[NumTerms] = name;
-    TermFuncs[NumTerms++] = func;
-}
-
-void popterm ()
-{
-	if (NumTerms)
-		NumTerms--;
-}
-
-void call_terms ()
-{
-    while (NumTerms > 0)
-	{
-//		printf ("term %d - %s\n", NumTerms, TermNames[NumTerms-1]);
-		TermFuncs[--NumTerms] ();
-	}
-}
 
 static void NewFailure ()
 {
@@ -162,7 +128,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	}
 	else
 	{
-		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", level.MapName.GetChars());
+		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", primaryLevel->MapName.GetChars());
 
 		if (!viewactive)
 		{

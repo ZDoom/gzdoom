@@ -1,16 +1,12 @@
 #pragma once
 #include "c_cvars.h"
 #include "actor.h"
-#include "cycler.h"
-
-EXTERN_CVAR(Bool, r_dynlights)
-EXTERN_CVAR(Bool, gl_lights)
-EXTERN_CVAR(Bool, gl_attachedlights)
+#include "r_data/cycler.h"
+#include "g_levellocals.h"
 
 struct side_t;
 struct seg_t;
 
-class ADynamicLight;
 class FSerializer;
 struct FSectionLine;
 
@@ -34,7 +30,6 @@ enum
 	LIGHT_BLUE = 2,
 	LIGHT_INTENSITY = 3,
 	LIGHT_SECONDARY_INTENSITY = 4,
-	LIGHT_SCALE = 3,
 };
 
 enum LightFlag
@@ -48,6 +43,9 @@ enum LightFlag
 	LF_SPOT = 64
 };
 
+typedef TFlags<LightFlag> LightFlags;
+DEFINE_TFLAGS_OPERATORS(LightFlags)
+
 //==========================================================================
 //
 // Light definitions
@@ -56,24 +54,51 @@ enum LightFlag
 class FLightDefaults
 {
 public:
-	FLightDefaults(FName name, ELightType type);
+	FLightDefaults(FName name, ELightType type = PointLight)
+	{
+		m_Name = name;
+		m_type = type;
+	}
 
-	void ApplyProperties(ADynamicLight * light) const;
+	void ApplyProperties(FDynamicLight * light) const;
 	FName GetName() const { return m_Name; }
 	void SetParameter(double p) { m_Param = p; }
 	void SetArg(int arg, int val) { m_Args[arg] = val; }
 	int GetArg(int arg) { return m_Args[arg]; }
 	uint8_t GetAttenuate() const { return m_attenuate; }
 	void SetOffset(float* ft) { m_Pos.X = ft[0]; m_Pos.Z = ft[1]; m_Pos.Y = ft[2]; }
-	void SetSubtractive(bool subtract) { m_subtractive = subtract; }
-	void SetAdditive(bool add) { m_additive = add; }
-	void SetDontLightSelf(bool add) { m_dontlightself = add; }
-	void SetAttenuate(bool on) { m_attenuate = on; }
-	void SetHalo(bool halo) { m_halo = halo; }
-	void SetDontLightActors(bool on) { m_dontlightactors = on; }
-	void SetSpot(bool spot) { m_spot = spot; }
+	void SetSubtractive(bool subtract) { if (subtract) m_lightFlags |= LF_SUBTRACTIVE; else m_lightFlags &= ~LF_SUBTRACTIVE; }
+	void SetAdditive(bool add) { if (add) m_lightFlags |= LF_ADDITIVE; else m_lightFlags &= ~LF_ADDITIVE; }
+	void SetDontLightSelf(bool add) { if (add) m_lightFlags |= LF_DONTLIGHTSELF; else m_lightFlags &= ~LF_DONTLIGHTSELF; }
+	void SetAttenuate(bool on) { m_attenuate = on; if (on) m_lightFlags |= LF_ATTENUATE; else m_lightFlags &= ~LF_ATTENUATE; }
+	void SetDontLightActors(bool on) { if (on) m_lightFlags |= LF_DONTLIGHTACTORS; else m_lightFlags &= ~LF_DONTLIGHTACTORS; }
+	void SetNoShadowmap(bool on) { if (on) m_lightFlags |= LF_NOSHADOWMAP; else m_lightFlags &= ~LF_NOSHADOWMAP; }
+	void SetSpot(bool spot) { if (spot) m_lightFlags |= LF_SPOT; else m_lightFlags &= ~LF_SPOT; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
 	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
+	void SetSpotPitch(double pitch)
+	{
+		m_pitch = pitch;
+		m_explicitPitch = true;
+	}
+	void UnsetSpotPitch()
+	{
+		m_pitch = 0.;
+		m_explicitPitch = false;
+	}
+	void SetType(ELightType type) { m_type = type; }
+	void CopyFrom(const FLightDefaults &other)
+	{
+		auto n = m_Name;
+		*this = other;
+		m_Name = n;
+	}
+	void SetFlags(LightFlags lf)
+	{
+		m_lightFlags = lf;
+		m_attenuate = !!(m_lightFlags & LF_ATTENUATE);
+	}
+	static void SetAttenuationForLevel(bool);
 
 	void OrderIntensities()
 	{
@@ -85,22 +110,24 @@ public:
 	}
 
 protected:
-	FName m_Name;
+	FName m_Name = NAME_None;
 	int m_Args[5] = { 0,0,0,0,0 };
 	double m_Param = 0;
 	DVector3 m_Pos = { 0,0,0 };
-	ELightType m_type;
+	int m_type;
 	int8_t m_attenuate = -1;
-	bool m_subtractive = false;
-	bool m_additive = false;
-	bool m_halo = false;
-	bool m_dontlightself = false;
-	bool m_dontlightactors = false;
+	LightFlags m_lightFlags = 0;
 	bool m_swapped = false;
 	bool m_spot = false;
-	double m_spotInnerAngle = 10.0;
-	double m_spotOuterAngle = 25.0;
+	bool m_explicitPitch = false;
+	DAngle m_spotInnerAngle = 10.0;
+	DAngle m_spotOuterAngle = 25.0;
+	DAngle m_pitch = 0.0;
+	
+	friend FSerializer &Serialize(FSerializer &arc, const char *key, FLightDefaults &value, FLightDefaults *def);
 };
+
+FSerializer &Serialize(FSerializer &arc, const char *key, TDeletingArray<FLightDefaults *> &value, TDeletingArray<FLightDefaults *> *def);
 
 //==========================================================================
 //
@@ -148,18 +175,13 @@ protected:
 };
 
 
-
-typedef TFlags<LightFlag> LightFlags;
-DEFINE_TFLAGS_OPERATORS(LightFlags)
-
-
 struct FLightNode
 {
 	FLightNode ** prevTarget;
 	FLightNode * nextTarget;
 	FLightNode ** prevLight;
 	FLightNode * nextLight;
-	ADynamicLight * lightsource;
+	FDynamicLight * lightsource;
 	union
 	{
 		side_t * targLine;
@@ -168,72 +190,92 @@ struct FLightNode
 	};
 };
 
-
-//
-// Base class
-//
-// [CO] I merged everything together in this one class so that I don't have
-// to create and re-create an excessive amount of objects
-//
-
-class ADynamicLight : public AActor
+struct FDynamicLight
 {
 	friend class FLightDefaults;
-	DECLARE_CLASS(ADynamicLight, AActor)
-public:
-	virtual void Tick();
-	void Serialize(FSerializer &arc);
-	void PostSerialize();
-	uint8_t GetRed() const { return args[LIGHT_RED]; }
-	uint8_t GetGreen() const { return args[LIGHT_GREEN]; }
-	uint8_t GetBlue() const { return args[LIGHT_BLUE]; }
+
+	inline DVector3 PosRelative(int portalgroup) const
+	{
+		return Pos + Level->Displacements.getOffset(Sector->PortalGroup, portalgroup);
+	}
+
+	bool ShouldLightActor(AActor *check)
+	{
+		return visibletoplayer && IsActive() && (!((*pLightFlags) & LF_DONTLIGHTSELF) || target != check) && !((*pLightFlags) & LF_DONTLIGHTACTORS);
+	}
+
+	void SetOffset(const DVector3 &pos)
+	{
+		m_off = pos;
+	}
+
+
+	bool IsActive() const { return m_active; }
 	float GetRadius() const { return (IsActive() ? m_currentRadius * 2.f : 0.f); }
+	int GetRed() const { return pArgs[LIGHT_RED]; }
+	int GetGreen() const { return pArgs[LIGHT_GREEN]; }
+	int GetBlue() const { return pArgs[LIGHT_BLUE]; }
+	int GetIntensity() const { return pArgs[LIGHT_INTENSITY]; }
+	int GetSecondaryIntensity() const { return pArgs[LIGHT_SECONDARY_INTENSITY]; }
+
+	bool IsSubtractive() const { return !!((*pLightFlags) & LF_SUBTRACTIVE); }
+	bool IsAdditive() const { return !!((*pLightFlags) & LF_ADDITIVE); }
+	bool IsSpot() const { return !!((*pLightFlags) & LF_SPOT); }
+	bool IsAttenuated() const { return !!((*pLightFlags) & LF_ATTENUATE); }
+	bool DontShadowmap() const { return !!((*pLightFlags) & LF_NOSHADOWMAP); }
+	bool DontLightSelf() const { return !!((*pLightFlags) & (LF_DONTLIGHTSELF|LF_DONTLIGHTACTORS)); }	// dontlightactors implies dontlightself.
+	bool DontLightActors() const { return !!((*pLightFlags) & LF_DONTLIGHTACTORS); }
+	void Deactivate() { m_active = false; }
+	void Activate();
+
+	void SetActor(AActor *ac, bool isowned) { target = ac; owned = isowned; }
+	double X() const { return Pos.X; }
+	double Y() const { return Pos.Y; }
+	double Z() const { return Pos.Z; }
+
+	void Tick();
+	void UpdateLocation();
 	void LinkLight();
 	void UnlinkLight();
-	size_t PointerSubstitution(DObject *old, DObject *notOld);
-
-	void BeginPlay();
-	void SetOrigin(double x, double y, double z, bool moving = false);
-	void PostBeginPlay();
-	void OnDestroy() override;
-	void Activate(AActor *activator);
-	void Deactivate(AActor *activator);
-	void SetOffset(const DVector3 &pos);
-	void UpdateLocation();
-	bool IsOwned() const { return owned; }
-	bool IsActive() const { return !(flags2&MF2_DORMANT); }
-	bool IsSubtractive() { return !!(lightflags & LF_SUBTRACTIVE); }
-	bool IsAdditive() { return !!(lightflags & LF_ADDITIVE); }
-	bool IsSpot() { return !!(lightflags & LF_SPOT); }
-	FState *targetState;
-	FLightNode * touching_sides;
-	FLightNode * touching_sector;
+	void ReleaseLight();
 
 private:
 	double DistToSeg(const DVector3 &pos, vertex_t *start, vertex_t *end);
 	void CollectWithinRadius(const DVector3 &pos, FSection *section, float radius);
 
-protected:
-	DVector3 m_off;
-	float m_currentRadius;
-	unsigned int m_lastUpdate;
-	FCycler m_cycler;
-	subsector_t * subsector;
-
 public:
+	FCycler m_cycler;
+	DVector3 Pos;
+	DVector3 m_off;
+
+	// This date can either come from the owning actor or from a light definition
+	// To avoid having to copy these around every tic, these are pointers to the source data.
+	const DAngle *pSpotInnerAngle;
+	const DAngle *pSpotOuterAngle;
+	const DAngle *pPitch;	// This is to handle pitch overrides through GLDEFS, it can either point to the target's pitch or the light definition.
+	const int *pArgs;
+	const LightFlags *pLightFlags;
+
+	double specialf1;
+	FDynamicLight *next, *prev;
+	sector_t *Sector;
+	FLevelLocals *Level;
+	TObjPtr<AActor *> target;
+	FLightNode * touching_sides;
+	FLightNode * touching_sector;
+	float radius;			// The maximum size the light can be with its current settings.
+	float m_currentRadius;	// The current light size.
 	int m_tickCount;
+	int m_lastUpdate;
+	int mShadowmapIndex;
+	bool m_active;
+	bool visibletoplayer;
+	bool shadowmapped;
 	uint8_t lighttype;
 	bool owned;
-	bool halo;
-	uint8_t color2[3];
-	bool visibletoplayer;
 	bool swapped;
-	bool shadowmapped;
-	int bufferindex;
-	LightFlags lightflags;
-	DAngle SpotInnerAngle;
-	DAngle SpotOuterAngle;
-    
-    int mShadowmapIndex;
+	bool explicitpitch;
 
 };
+
+

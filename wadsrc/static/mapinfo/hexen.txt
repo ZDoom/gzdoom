@@ -35,8 +35,8 @@ gameinfo
 	weaponslot = 2, "FWeapAxe", "CWeapStaff", "MWeapFrost"
 	weaponslot = 3, "FWeapHammer", "CWeapFlame", "MWeapLightning"
 	weaponslot = 4, "FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
-	dimcolor = "00 00 ff"
-	dimamount = 0.2
+	dimcolor = "00 00 40"
+	dimamount = 0.5
 	bluramount = 0.0
 	menuslidercolor = "Orange"
 	definventorymaxamount = 25
@@ -61,13 +61,15 @@ gameinfo
 	textscreeny = 5
 	defaultendsequence = "Inter_Chess"
 	maparrow = "maparrows/dagger.txt"
-	statscreen_mapnamefont = "BigFont"
-	statscreen_finishedfont = "SmallFont"
-	statscreen_enteringfont = "SmallFont"
+	statscreen_mapnamefont = "*BigFont"
+	statscreen_finishedfont = "*SmallFont"
+	statscreen_enteringfont = "*SmallFont"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"
 	messageboxclass = "MessageBoxMenu"
+	normforwardmove = 0x19, 0x32
+	normsidemove = 0x18, 0x28
 }
 
 DoomEdNums

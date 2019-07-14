@@ -2,6 +2,26 @@
 #include "jit.h"
 #include "jitintern.h"
 
+#ifdef WIN32
+#include <DbgHelp.h>
+#else
+#include <execinfo.h>
+#include <cxxabi.h>
+#include <cstring>
+#include <cstdlib>
+#include <memory>
+#endif
+
+struct JitFuncInfo
+{
+	FString name;
+	FString filename;
+	TArray<JitLineInfo> LineInfo;
+	void *start;
+	void *end;
+};
+
+static TArray<JitFuncInfo> JitDebugInfo;
 static TArray<uint8_t*> JitBlocks;
 static TArray<uint8_t*> JitFrames;
 static size_t JitBlockPos = 0;
@@ -35,8 +55,9 @@ static void *AllocJitMemory(size_t size)
 	}
 	else
 	{
+		const size_t bytesToAllocate = MAX(size_t(1024 * 1024), size);
 		size_t allocatedSize = 0;
-		void *p = OSUtils::allocVirtualMemory(1024 * 1024, &allocatedSize, OSUtils::kVMWritable | OSUtils::kVMExecutable);
+		void *p = OSUtils::allocVirtualMemory(bytesToAllocate, &allocatedSize, OSUtils::kVMWritable | OSUtils::kVMExecutable);
 		if (!p)
 			return nullptr;
 		JitBlocks.Push((uint8_t*)p);
@@ -230,9 +251,11 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 	return info;
 }
 
-void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
+void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 {
 	using namespace asmjit;
+
+	CCFunc *func = compiler->Codegen();
 
 	size_t codeSize = code->getCodeSize();
 	if (codeSize == 0)
@@ -271,11 +294,17 @@ void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 	RUNTIME_FUNCTION *table = (RUNTIME_FUNCTION*)(unwindptr + unwindInfoSize);
 	table[0].BeginAddress = (DWORD)(ptrdiff_t)(startaddr - baseaddr);
 	table[0].EndAddress = (DWORD)(ptrdiff_t)(endaddr - baseaddr);
+#ifndef __MINGW64__
 	table[0].UnwindInfoAddress = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
+#else
+	table[0].UnwindData = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
+#endif
 	BOOLEAN result = RtlAddFunctionTable(table, 1, (DWORD64)baseaddr);
 	JitFrames.Push((uint8_t*)table);
 	if (result == 0)
 		I_Error("RtlAddFunctionTable failed");
+
+	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
 #endif
 
 	return p;
@@ -287,52 +316,6 @@ extern "C"
 {
 	void __register_frame(const void*);
 	void __deregister_frame(const void*);
-
-#if 0 // Someone needs to implement this if GDB/LLDB should produce correct call stacks
-	
-	// GDB JIT interface (GG guys! Thank you SO MUCH for not hooking into the above functions. Really appreciate it!)
-	
-	// To register code with GDB, the JIT should follow this protocol:
-	//
-	// * Generate an object file in memory with symbols and other desired debug information.
-	//   The file must include the virtual addresses of the sections. 
-	// * Create a code entry for the file, which gives the start and size of the symbol file. 
-	// * Add it to the linked list in the JIT descriptor.
-	// * Point the relevant_entry field of the descriptor at the entry.
-	// * Set action_flag to JIT_REGISTER and call __jit_debug_register_code.
-	
-	// Pure beauty! Now a JIT also has to create a full ELF object file. And is it a MACH-O on macOS? You guys ROCK!
-
-	typedef enum
-	{
-	  JIT_NOACTION = 0,
-	  JIT_REGISTER_FN,
-	  JIT_UNREGISTER_FN
-	} jit_actions_t;
-
-	struct jit_code_entry
-	{
-	  struct jit_code_entry *next_entry;
-	  struct jit_code_entry *prev_entry;
-	  const char *symfile_addr;
-	  uint64_t symfile_size;
-	};
-
-	struct jit_descriptor
-	{
-	  uint32_t version;
-	  // This type should be jit_actions_t, but we use uint32_t to be explicit about the bitwidth.
-	  uint32_t action_flag;
-	  struct jit_code_entry *relevant_entry;
-	  struct jit_code_entry *first_entry;
-	};
-
-	// GDB puts a breakpoint in this function.
-	void __attribute__((noinline)) __jit_debug_register_code() { };
-
-	// Make sure to specify the version statically, because the debugger may check the version before we can set it.
-	struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
-#endif
 }
 
 static void WriteLength(TArray<uint8_t> &stream, unsigned int pos, unsigned int v)
@@ -664,9 +647,11 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	return stream;
 }
 
-void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
+void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 {
 	using namespace asmjit;
+
+	CCFunc *func = compiler->Codegen();
 
 	size_t codeSize = code->getCodeSize();
 	if (codeSize == 0)
@@ -743,6 +728,8 @@ void *AddJitFunction(asmjit::CodeHolder* code, asmjit::CCFunc *func)
 #endif
 	}
 
+	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
+
 	return p;
 }
 #endif
@@ -764,8 +751,219 @@ void JitRelease()
 	{
 		asmjit::OSUtils::releaseVirtualMemory(p, 1024 * 1024);
 	}
+	JitDebugInfo.Clear();
 	JitFrames.Clear();
 	JitBlocks.Clear();
 	JitBlockPos = 0;
 	JitBlockSize = 0;
+}
+
+static int CaptureStackTrace(int max_frames, void **out_frames)
+{
+	memset(out_frames, 0, sizeof(void *) * max_frames);
+
+#ifdef _WIN64
+	// RtlCaptureStackBackTrace doesn't support RtlAddFunctionTable..
+
+	CONTEXT context;
+	RtlCaptureContext(&context);
+
+	UNWIND_HISTORY_TABLE history;
+	memset(&history, 0, sizeof(UNWIND_HISTORY_TABLE));
+
+	ULONG64 establisherframe = 0;
+	PVOID handlerdata = nullptr;
+
+	int frame;
+	for (frame = 0; frame < max_frames; frame++)
+	{
+		ULONG64 imagebase;
+		PRUNTIME_FUNCTION rtfunc = RtlLookupFunctionEntry(context.Rip, &imagebase, &history);
+
+		KNONVOLATILE_CONTEXT_POINTERS nvcontext;
+		memset(&nvcontext, 0, sizeof(KNONVOLATILE_CONTEXT_POINTERS));
+		if (!rtfunc)
+		{
+			// Leaf function
+			context.Rip = (ULONG64)(*(PULONG64)context.Rsp);
+			context.Rsp += 8;
+		}
+		else
+		{
+			RtlVirtualUnwind(UNW_FLAG_NHANDLER, imagebase, context.Rip, rtfunc, &context, &handlerdata, &establisherframe, &nvcontext);
+		}
+
+		if (!context.Rip)
+			break;
+
+		out_frames[frame] = (void*)context.Rip;
+	}
+	return frame;
+
+#elif defined(WIN32)
+	// JIT isn't supported here, so just do nothing.
+	return 0;//return RtlCaptureStackBackTrace(0, MIN(max_frames, 32), out_frames, nullptr);
+#else
+	return backtrace(out_frames, max_frames);
+#endif
+}
+
+#ifdef WIN32
+class NativeSymbolResolver
+{
+public:
+	NativeSymbolResolver() { SymInitialize(GetCurrentProcess(), nullptr, TRUE); }
+	~NativeSymbolResolver() { SymCleanup(GetCurrentProcess()); }
+
+	FString GetName(void *frame)
+	{
+		FString s;
+
+		unsigned char buffer[sizeof(IMAGEHLP_SYMBOL64) + 128];
+		IMAGEHLP_SYMBOL64 *symbol64 = reinterpret_cast<IMAGEHLP_SYMBOL64*>(buffer);
+		memset(symbol64, 0, sizeof(IMAGEHLP_SYMBOL64) + 128);
+		symbol64->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL64);
+		symbol64->MaxNameLength = 128;
+
+		DWORD64 displacement = 0;
+		BOOL result = SymGetSymFromAddr64(GetCurrentProcess(), (DWORD64)frame, &displacement, symbol64);
+		if (result)
+		{
+			IMAGEHLP_LINE64 line64;
+			DWORD displacement = 0;
+			memset(&line64, 0, sizeof(IMAGEHLP_LINE64));
+			line64.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+			result = SymGetLineFromAddr64(GetCurrentProcess(), (DWORD64)frame, &displacement, &line64);
+			if (result)
+			{
+				s.Format("Called from %s at %s, line %d\n", symbol64->Name, line64.FileName, (int)line64.LineNumber);
+			}
+			else
+			{
+				s.Format("Called from %s\n", symbol64->Name);
+			}
+		}
+
+		return s;
+	}
+};
+#else
+class NativeSymbolResolver
+{
+public:
+	FString GetName(void *frame)
+	{
+		FString s;
+		char **strings;
+		void *frames[1] = { frame };
+		strings = backtrace_symbols(frames, 1);
+
+		// Decode the strings
+		char *ptr = strings[0];
+		char *filename = ptr;
+		const char *function = "";
+
+		// Find function name
+		while (*ptr)
+		{
+			if (*ptr == '(')	// Found function name
+			{
+				*(ptr++) = 0;
+				function = ptr;
+				break;
+			}
+			ptr++;
+		}
+
+		// Find offset
+		if (function[0])	// Only if function was found
+		{
+			while (*ptr)
+			{
+				if (*ptr == '+')	// Found function offset
+				{
+					*(ptr++) = 0;
+					break;
+				}
+				if (*ptr == ')')	// Not found function offset, but found, end of function
+				{
+					*(ptr++) = 0;
+					break;
+				}
+				ptr++;
+			}
+		}
+
+		int status;
+		char *new_function = abi::__cxa_demangle(function, nullptr, nullptr, &status);
+		if (new_function)	// Was correctly decoded
+		{
+			function = new_function;
+		}
+
+		s.Format("Called from %s at %s\n", function, filename);
+
+		if (new_function)
+		{
+			free(new_function);
+		}
+
+		free(strings);
+		return s;
+	}
+};
+#endif
+
+int JITPCToLine(uint8_t *pc, const JitFuncInfo *info)
+{
+	int PCIndex = int(pc - ((uint8_t *) (info->start)));
+	if (info->LineInfo.Size () == 1) return info->LineInfo[0].LineNumber;
+	for (unsigned i = 1; i < info->LineInfo.Size (); i++)
+	{
+		if (info->LineInfo[i].InstructionIndex >= PCIndex)
+		{
+			return info->LineInfo[i - 1].LineNumber;
+		}
+	}
+	return -1;
+}
+
+FString JitGetStackFrameName(NativeSymbolResolver *nativeSymbols, void *pc)
+{
+	for (unsigned int i = 0; i < JitDebugInfo.Size(); i++)
+	{
+		const auto &info = JitDebugInfo[i];
+		if (pc >= info.start && pc < info.end)
+		{
+			int line = JITPCToLine ((uint8_t *)pc, &info);
+
+			FString s;
+
+			if (line == -1)
+				s.Format("Called from %s at %s\n", info.name.GetChars(), info.filename.GetChars());
+			else
+				s.Format("Called from %s at %s, line %d\n", info.name.GetChars(), info.filename.GetChars(), line);
+
+			return s;
+		}
+	}
+
+	return nativeSymbols ? nativeSymbols->GetName(pc) : FString();
+}
+
+FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
+{
+	void *frames[32];
+	int numframes = CaptureStackTrace(32, frames);
+
+	std::unique_ptr<NativeSymbolResolver> nativeSymbols;
+	if (includeNativeFrames)
+		nativeSymbols.reset(new NativeSymbolResolver());
+
+	FString s;
+	for (int i = framesToSkip + 1; i < numframes; i++)
+	{
+		s += JitGetStackFrameName(nativeSymbols.get(), frames[i]);
+	}
+	return s;
 }

@@ -633,148 +633,140 @@ bool FRemapTable::AddToTranslation(const char *range)
 	sc.OpenMem("translation", range, int(strlen(range)));
 	sc.SetCMode(true);
 
-	try
+	sc.MustGetToken(TK_IntConst);
+	start = sc.Number;
+	sc.MustGetToken(':');
+	sc.MustGetToken(TK_IntConst);
+	end = sc.Number;
+	sc.MustGetToken('=');
+	if (start < 0 || start > 255 || end < 0 || end > 255)
 	{
+		sc.ScriptError("Palette index out of range");
+		return false;
+	}
+
+	sc.MustGetAnyToken();
+
+	if (sc.TokenType == '[')
+	{ 
+		// translation using RGB values
+		int r1,g1,b1,r2,g2,b2;
+
 		sc.MustGetToken(TK_IntConst);
-		start = sc.Number;
+		r1 = sc.Number;
+		sc.MustGetToken(',');
+
+		sc.MustGetToken(TK_IntConst);
+		g1 = sc.Number;
+		sc.MustGetToken(',');
+
+		sc.MustGetToken(TK_IntConst);
+		b1 = sc.Number;
+		sc.MustGetToken(']');
 		sc.MustGetToken(':');
+		sc.MustGetToken('[');
+
 		sc.MustGetToken(TK_IntConst);
-		end = sc.Number;
-		sc.MustGetToken('=');
-		if (start < 0 || start > 255 || end < 0 || end > 255)
-		{
-			sc.ScriptError("Palette index out of range");
-			return false;
-		}
+		r2 = sc.Number;
+		sc.MustGetToken(',');
+
+		sc.MustGetToken(TK_IntConst);
+		g2 = sc.Number;
+		sc.MustGetToken(',');
+
+		sc.MustGetToken(TK_IntConst);
+		b2 = sc.Number;
+		sc.MustGetToken(']');
+
+		return AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
+	}
+	else if (sc.TokenType == '%')
+	{
+		// translation using RGB values
+		double r1,g1,b1,r2,g2,b2;
+
+		sc.MustGetToken('[');
+		sc.MustGetAnyToken();
+		if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+		r1 = sc.Float;
+		sc.MustGetToken(',');
 
 		sc.MustGetAnyToken();
+		if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+		g1 = sc.Float;
+		sc.MustGetToken(',');
 
-		if (sc.TokenType == '[')
-		{ 
-			// translation using RGB values
-			int r1,g1,b1,r2,g2,b2;
+		sc.MustGetAnyToken();
+		if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+		b1 = sc.Float;
+		sc.MustGetToken(']');
+		sc.MustGetToken(':');
+		sc.MustGetToken('[');
 
-			sc.MustGetToken(TK_IntConst);
-			r1 = sc.Number;
-			sc.MustGetToken(',');
+		sc.MustGetAnyToken();
+		if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+		r2 = sc.Float;
+		sc.MustGetToken(',');
 
-			sc.MustGetToken(TK_IntConst);
-			g1 = sc.Number;
-			sc.MustGetToken(',');
+		sc.MustGetAnyToken();
+		if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+		g2 = sc.Float;
+		sc.MustGetToken(',');
 
-			sc.MustGetToken(TK_IntConst);
-			b1 = sc.Number;
-			sc.MustGetToken(']');
-			sc.MustGetToken(':');
-			sc.MustGetToken('[');
+		sc.MustGetAnyToken();
+		if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
+		b2 = sc.Float;
+		sc.MustGetToken(']');
 
-			sc.MustGetToken(TK_IntConst);
-			r2 = sc.Number;
-			sc.MustGetToken(',');
-
-			sc.MustGetToken(TK_IntConst);
-			g2 = sc.Number;
-			sc.MustGetToken(',');
-
-			sc.MustGetToken(TK_IntConst);
-			b2 = sc.Number;
-			sc.MustGetToken(']');
-
-			return AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
-		}
-		else if (sc.TokenType == '%')
-		{
-			// translation using RGB values
-			double r1,g1,b1,r2,g2,b2;
-
-			sc.MustGetToken('[');
-			sc.MustGetAnyToken();
-			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			r1 = sc.Float;
-			sc.MustGetToken(',');
-
-			sc.MustGetAnyToken();
-			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			g1 = sc.Float;
-			sc.MustGetToken(',');
-
-			sc.MustGetAnyToken();
-			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			b1 = sc.Float;
-			sc.MustGetToken(']');
-			sc.MustGetToken(':');
-			sc.MustGetToken('[');
-
-			sc.MustGetAnyToken();
-			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			r2 = sc.Float;
-			sc.MustGetToken(',');
-
-			sc.MustGetAnyToken();
-			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			g2 = sc.Float;
-			sc.MustGetToken(',');
-
-			sc.MustGetAnyToken();
-			if (sc.TokenType != TK_IntConst) sc.TokenMustBe(TK_FloatConst);
-			b2 = sc.Float;
-			sc.MustGetToken(']');
-
-			return AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);
-		}
-		else if (sc.TokenType == '#')
-		{
-			// Colourise translation
-			int r, g, b;
-			sc.MustGetToken('[');
-			sc.MustGetToken(TK_IntConst);
-			r = sc.Number;
-			sc.MustGetToken(',');
-			sc.MustGetToken(TK_IntConst);
-			g = sc.Number;
-			sc.MustGetToken(',');
-			sc.MustGetToken(TK_IntConst);
-			b = sc.Number;
-			sc.MustGetToken(']');
-
-			return AddColourisation(start, end, r, g, b);
-		}
-		else if (sc.TokenType == '@')
-		{
-			// Tint translation
-			int a, r, g, b;
-
-			sc.MustGetToken(TK_IntConst);
-			a = sc.Number;
-			sc.MustGetToken('[');
-			sc.MustGetToken(TK_IntConst);
-			r = sc.Number;
-			sc.MustGetToken(',');
-			sc.MustGetToken(TK_IntConst);
-			g = sc.Number;
-			sc.MustGetToken(',');
-			sc.MustGetToken(TK_IntConst);
-			b = sc.Number;
-			sc.MustGetToken(']');
-
-			return AddTint(start, end, r, g, b, a);
-		}
-		else
-		{
-			int pal1, pal2;
-
-			sc.TokenMustBe(TK_IntConst);
-			pal1 = sc.Number;
-			sc.MustGetToken(':');
-			sc.MustGetToken(TK_IntConst);
-			pal2 = sc.Number;
-			return AddIndexRange(start, end, pal1, pal2);
-		}
+		return AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);
 	}
-	catch (CRecoverableError &err)
+	else if (sc.TokenType == '#')
 	{
-		Printf("Error in translation '%s':\n%s\n", range, err.GetMessage());
-		return false;
+		// Colourise translation
+		int r, g, b;
+		sc.MustGetToken('[');
+		sc.MustGetToken(TK_IntConst);
+		r = sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		g = sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		b = sc.Number;
+		sc.MustGetToken(']');
+
+		return AddColourisation(start, end, r, g, b);
+	}
+	else if (sc.TokenType == '@')
+	{
+		// Tint translation
+		int a, r, g, b;
+
+		sc.MustGetToken(TK_IntConst);
+		a = sc.Number;
+		sc.MustGetToken('[');
+		sc.MustGetToken(TK_IntConst);
+		r = sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		g = sc.Number;
+		sc.MustGetToken(',');
+		sc.MustGetToken(TK_IntConst);
+		b = sc.Number;
+		sc.MustGetToken(']');
+
+		return AddTint(start, end, r, g, b, a);
+	}
+	else
+	{
+		int pal1, pal2;
+
+		sc.TokenMustBe(TK_IntConst);
+		pal1 = sc.Number;
+		sc.MustGetToken(':');
+		sc.MustGetToken(TK_IntConst);
+		pal2 = sc.Number;
+		return AddIndexRange(start, end, pal1, pal2);
 	}
 }
 
@@ -927,7 +919,7 @@ void R_InitTranslationTables ()
 
 	// Each player corpse has its own translation so they won't change
 	// color if the player who created them changes theirs.
-	for (i = 0; i < level.BODYQUESIZE; ++i)
+	for (i = 0; i < FLevelLocals::BODYQUESIZE; ++i)
 	{
 		PushIdentityTable(TRANSLATION_PlayerCorpses);
 	}
@@ -1199,7 +1191,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		table->Palette[i].a = 255;
 	}
 
-	// [GRB] Don't translate skins with color range 0-0 (APlayerPawn default)
+	// [GRB] Don't translate skins with color range 0-0 (PlayerPawn default)
 	if (start == 0 && end == 0)
 	{
 		table->Inactive = true;
@@ -1529,7 +1521,16 @@ void R_ParseTrnslate()
 			do
 			{
 				sc.MustGetToken(TK_StringConst);
-				NewTranslation.AddToTranslation(sc.String);
+
+				try
+				{
+					NewTranslation.AddToTranslation(sc.String);
+				}
+				catch (CRecoverableError &err)
+				{
+					sc.ScriptMessage("Error in translation '%s':\n" TEXTCOLOR_YELLOW "%s\n", sc.String, err.GetMessage());
+				}
+
 			} while (sc.CheckToken(','));
 
 			int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);

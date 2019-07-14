@@ -76,7 +76,7 @@ struct FHubInfo
 
 static TArray<FHubInfo> hubdata;
 
-void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
+void G_LeavingHub(FLevelLocals *Level, int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 {
 	unsigned int i, j;
 
@@ -84,7 +84,7 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 	{
 		for (i = 0; i < hubdata.Size(); i++)
 		{
-			if (hubdata[i].levelnum == level.levelnum)
+			if (hubdata[i].levelnum == Level->levelnum)
 			{
 				hubdata[i] = *wbs;
 				break;
@@ -95,13 +95,13 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 			hubdata[hubdata.Reserve(1)] = *wbs;
 		}
 
-		hubdata[i].levelnum = level.levelnum;
+		hubdata[i].levelnum = Level->levelnum;
 		if (!multiplayer && !deathmatch)
 		{
 			// The player counters don't work in hubs
-			hubdata[i].plyr[0].skills = level.killed_monsters;
-			hubdata[i].plyr[0].sitems = level.found_items;
-			hubdata[i].plyr[0].ssecret = level.found_secrets;
+			hubdata[i].plyr[0].skills = Level->killed_monsters;
+			hubdata[i].plyr[0].sitems = Level->found_items;
+			hubdata[i].plyr[0].ssecret = Level->found_secrets;
 		}
 
 
@@ -129,12 +129,13 @@ void G_LeavingHub(int mode, cluster_info_t * cluster, wbstartstruct_t * wbs)
 			{
 				if (cluster->flags & CLUSTER_LOOKUPNAME)
 				{
-					level.LevelName = GStrings(cluster->ClusterName);
+					wbs->thisname = GStrings(cluster->ClusterName);
 				}
 				else
 				{
-					level.LevelName = cluster->ClusterName;
+					wbs->thisname = cluster->ClusterName;
 				}
+				wbs->LName0.SetInvalid();	// The level's own name was just invalidated, and so was its name patch.
 			}
 		}
 	}

@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <memory>
 #include "vectors.h"
 #include "r_data/renderstyle.h"
 

@@ -1106,7 +1106,7 @@ void ST_Endoom()
 		exit(0);
 	}
 
-	if (Wads.GetLumpFile(endoom_lump) == Wads.GetIwadNum() && showendoom == 2)
+	if (Wads.GetLumpFile(endoom_lump) == Wads.GetMaxIwadNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
 		exit(0);

@@ -233,7 +233,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					for (auto entry : array)
 					{
 						FTexture *tex = TexMan.GetTexture(entry, false);
-						if (tex && tex->SourceLump >= 0 && Wads.GetLumpFile(tex->SourceLump) <= Wads.GetIwadNum() && tex->UseType == ETextureType::MiscPatch)
+						if (tex && tex->SourceLump >= 0 && Wads.GetLumpFile(tex->SourceLump) <= Wads.GetMaxIwadNum() && tex->UseType == ETextureType::MiscPatch)
 						{
 							texs[i] = tex;
 						}

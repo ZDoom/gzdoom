@@ -881,7 +881,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 				if (tex != nullptr)
 				{
 					int filenum = Wads.GetLumpFile(tex->GetSourceLump());
-					if (filenum >= 0 && filenum <= Wads.GetIwadNum())
+					if (filenum >= 0 && filenum <= Wads.GetMaxIwadNum())
 					{
 						texids[i]->SetInvalid();
 					}

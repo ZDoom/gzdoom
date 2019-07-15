@@ -738,16 +738,20 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	D_AddFile (wadfiles, zdoom_wad);
 
 	// [SP] Load non-free assets if available. This must be done before the IWAD.
+	int iwadnum;
 	if (D_AddFile(wadfiles, optional_wad))
-		Wads.SetIwadNum(2);
+		iwadnum = 2;
 	else
-		Wads.SetIwadNum(1);
+		iwadnum = 1;
 
+	Wads.SetIwadNum(iwadnum);
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{
 		D_AddFile (wadfiles, picks[pick].mRequiredPath);
+		iwadnum++;
 	}
 	D_AddFile (wadfiles, picks[pick].mFullPath);
+	Wads.SetMaxIwadNum(iwadnum);
 
 	auto info = mIWadInfos[picks[pick].mInfoIndex];
 	// Load additional resources from the same directory as the IWAD itself.

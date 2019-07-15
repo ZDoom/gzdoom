@@ -2451,12 +2451,12 @@ int D_LoadDehLumps(DehLumpSource source)
 	{
 		const int filenum = Wads.GetLumpFile(lumpnum);
 		
-		if (FromIWAD == source && filenum > Wads.GetIwadNum())
+		if (FromIWAD == source && filenum > Wads.GetMaxIwadNum())
 		{
 			// No more DEHACKED lumps in IWAD
 			break;
 		}
-		else if (FromPWADs == source && filenum <= Wads.GetIwadNum())
+		else if (FromPWADs == source && filenum <= Wads.GetMaxIwadNum())
 		{
 			// Skip DEHACKED lumps from IWAD
 			continue;

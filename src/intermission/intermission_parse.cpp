@@ -323,7 +323,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		else
 		{
 			// only print an error if coming from a PWAD
-			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetIwadNum())
+			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetMaxIwadNum())
 				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
 			mText.Format("Unknown text lump '%s'", sc.String);
 		}

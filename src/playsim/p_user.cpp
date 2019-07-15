@@ -836,7 +836,7 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 		int wadnorm = Wads.GetLumpFile(spritenorm);
 		int wadcrouch = Wads.GetLumpFile(spritenorm);
 
-		if (wadnorm > Wads.GetIwadNum() && wadcrouch <= Wads.GetIwadNum())
+		if (wadnorm > Wads.GetMaxIwadNum() && wadcrouch <= Wads.GetMaxIwadNum())
 		{
 			// Question: Add an option / disable crouching or do what?
 			return false;

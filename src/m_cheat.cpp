@@ -47,7 +47,7 @@
 #include "sbar.h"
 #include "c_dispatch.h"
 #include "a_keys.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
@@ -673,6 +673,6 @@ CCMD (mdk)
 		return;
 
 	const char *name = argv.argc() > 1 ? argv[1] : "";
-	network->WriteByte (DEM_MDK);
-	network->WriteString(name);
+	CmdWriteByte (DEM_MDK);
+	CmdWriteString(name);
 }

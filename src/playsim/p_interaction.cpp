@@ -54,7 +54,7 @@
 #include "d_player.h"
 #include "gi.h"
 #include "sbar.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_netinf.h"
 #include "a_morph.h"
 #include "vm.h"
@@ -1836,8 +1836,8 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			network->WriteByte (DEM_GENERICCHEAT);
-			network->WriteByte (CHT_MASSACRE);
+			CmdWriteByte (DEM_GENERICCHEAT);
+			CmdWriteByte (CHT_MASSACRE);
 		}
 		else if (!stricmp (argv[1], "baddies"))
 		{
@@ -1845,13 +1845,13 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			network->WriteByte (DEM_GENERICCHEAT);
-			network->WriteByte (CHT_MASSACRE2);
+			CmdWriteByte (DEM_GENERICCHEAT);
+			CmdWriteByte (CHT_MASSACRE2);
 		}
 		else
 		{
-			network->WriteByte (DEM_KILLCLASSCHEAT);
-			network->WriteString (argv[1]);
+			CmdWriteByte (DEM_KILLCLASSCHEAT);
+			CmdWriteString (argv[1]);
 		}
 	}
 	else
@@ -1861,7 +1861,7 @@ CCMD (kill)
 			return;
 
 		// Kill the player
-		network->WriteByte (DEM_SUICIDE);
+		CmdWriteByte (DEM_SUICIDE);
 	}
 	C_HideConsole ();
 }
@@ -1873,8 +1873,8 @@ CCMD(remove)
 		if (CheckCheatmode())
 			return;
 
-		network->WriteByte(DEM_REMOVE);
-		network->WriteString(argv[1]);
+		CmdWriteByte(DEM_REMOVE);
+		CmdWriteString(argv[1]);
 		C_HideConsole();
 	}
 	else

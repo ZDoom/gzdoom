@@ -86,6 +86,7 @@
 #include "hardware.h"
 #include "sbarinfo.h"
 #include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_event.h"
 #include "d_netinf.h"
 #include "m_cheat.h"
@@ -411,14 +412,14 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 
 	if (self & DF_NO_FREELOOK)
 	{
-		network->WriteByte (DEM_CENTERVIEW);
+		CmdWriteByte (DEM_CENTERVIEW);
 	}
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
 	{
 		float fov;
 
-		network->WriteByte (DEM_FOV);
+		CmdWriteByte (DEM_FOV);
 
 		// If the game is started with DF_NO_FOV set, the arbitrator's
 		// DesiredFOV will not be set when this callback is run, so
@@ -428,7 +429,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 		{
 			fov = 90;
 		}
-		network->WriteFloat (fov);
+		CmdWriteFloat (fov);
 	}
 }
 
@@ -1071,6 +1072,7 @@ public:
 			G_Ticker();
 
 			network->EndCurrentTic();
+			LoopBackCommands();
 		}
 
 		P_PredictPlayer(&players[consoleplayer]);

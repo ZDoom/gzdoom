@@ -38,7 +38,7 @@
 #include "gi.h"
 #include "actor.h"
 #include "c_dispatch.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "g_game.h"
 #include "info.h"
 #include "utf8.h"
@@ -165,13 +165,13 @@ bool EventManager::SendNetworkEvent(FString name, int arg1, int arg2, int arg3, 
 	if (gamestate != GS_LEVEL)
 		return false;
 
-	network->WriteByte(DEM_NETEVENT);
-	network->WriteString(name);
-	network->WriteByte(3);
-	network->WriteLong(arg1);
-	network->WriteLong(arg2);
-	network->WriteLong(arg3);
-	network->WriteByte(manual);
+	CmdWriteByte(DEM_NETEVENT);
+	CmdWriteString(name);
+	CmdWriteByte(3);
+	CmdWriteLong(arg1);
+	CmdWriteLong(arg2);
+	CmdWriteLong(arg3);
+	CmdWriteByte(manual);
 
 	return true;
 }

@@ -43,7 +43,7 @@
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "sbar.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "serializer.h"
 #include "vm.h"
 
@@ -464,15 +464,15 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 		// The slots differ. Send mine.
 		if (playernum == consoleplayer)
 		{
-			network->WriteByte(DEM_SETSLOT);
+			CmdWriteByte(DEM_SETSLOT);
 		}
 		else
 		{
-			network->WriteByte(DEM_SETSLOTPNUM);
-			network->WriteByte(playernum);
+			CmdWriteByte(DEM_SETSLOTPNUM);
+			CmdWriteByte(playernum);
 		}
-		network->WriteByte(i);
-		network->WriteByte(Slots[i].Size());
+		CmdWriteByte(i);
+		CmdWriteByte(Slots[i].Size());
 		for (j = 0; j < Slots[i].Size(); ++j)
 		{
 			Net_WriteWeapon(Slots[i].GetWeapon(j));
@@ -602,9 +602,9 @@ CCMD (setslot)
 			Printf ("Slot %d cleared\n", slot);
 		}
 
-		network->WriteByte(DEM_SETSLOT);
-		network->WriteByte(slot);
-		network->WriteByte(argv.argc()-2);
+		CmdWriteByte(DEM_SETSLOT);
+		CmdWriteByte(slot);
+		CmdWriteByte(argv.argc()-2);
 		for (int i = 2; i < argv.argc(); i++)
 		{
 			Net_WriteWeapon(PClass::FindActor(argv[i]));
@@ -653,8 +653,8 @@ CCMD (addslot)
 	}
 	else
 	{
-		network->WriteByte(DEM_ADDSLOT);
-		network->WriteByte(slot);
+		CmdWriteByte(DEM_ADDSLOT);
+		CmdWriteByte(slot);
 		Net_WriteWeapon(type);
 	}
 }
@@ -729,8 +729,8 @@ CCMD (addslotdefault)
 	}
 	else
 	{
-		network->WriteByte(DEM_ADDSLOTDEFAULT);
-		network->WriteByte(slot);
+		CmdWriteByte(DEM_ADDSLOTDEFAULT);
+		CmdWriteByte(slot);
 		Net_WriteWeapon(type);
 	}
 }
@@ -929,12 +929,12 @@ void Net_WriteWeapon(PClassActor *type)
 	assert(index >= 0 && index <= 32767);
 	if (index < 128)
 	{
-		network->WriteByte(index);
+		CmdWriteByte(index);
 	}
 	else
 	{
-		network->WriteByte(0x80 | index);
-		network->WriteByte(index >> 7);
+		CmdWriteByte(0x80 | index);
+		CmdWriteByte(index >> 7);
 	}
 }
 

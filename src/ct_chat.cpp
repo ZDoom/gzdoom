@@ -35,7 +35,7 @@
 #include "v_text.h"
 #include "d_gui.h"
 #include "g_input.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_event.h"
 #include "sbar.h"
 #include "v_video.h"
@@ -355,16 +355,16 @@ static void ShoveChatStr (const char *str, uint8_t who)
 		who |= 2;
 	}
 
-	network->WriteByte (DEM_SAY);
-	network->WriteByte (who);
+	CmdWriteByte (DEM_SAY);
+	CmdWriteByte (who);
 
 	if (!chat_substitution || !DoSubstitution (substBuff, str))
 	{
-		network->WriteString(MakeUTF8(str));
+		CmdWriteString(MakeUTF8(str));
 	}
 	else
 	{
-		network->WriteString(MakeUTF8(substBuff));
+		CmdWriteString(MakeUTF8(substBuff));
 	}
 }
 

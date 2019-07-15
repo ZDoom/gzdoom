@@ -37,7 +37,7 @@
 #include "g_levellocals.h"
 #include "a_dynlight.h"
 #include "a_sharedglobal.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "p_setup.h"
 #include "w_wad.h"
 #include "v_text.h"
@@ -127,8 +127,8 @@ CCMD (spray)
 		return;
 	}
 	
-	network->WriteByte (DEM_SPRAY);
-	network->WriteString (argv[1]);
+	CmdWriteByte (DEM_SPRAY);
+	CmdWriteString (argv[1]);
 }
 
 //==========================================================================

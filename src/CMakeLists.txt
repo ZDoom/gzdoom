@@ -1062,6 +1062,7 @@ set (PCH_SOURCES
 	playsim/p_trace.cpp
 	playsim/po_man.cpp
 	playsim/portal.cpp
+	playsim/p_commands.cpp
 	g_statusbar/hudmessages.cpp
 	g_statusbar/shared_hud.cpp
 	g_statusbar/sbarinfo.cpp

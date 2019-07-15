@@ -38,7 +38,7 @@
 #include "doomstat.h"
 #include "info.h"
 #include "c_dispatch.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "v_text.h"
 
 #include "gi.h"
@@ -707,17 +707,17 @@ static void SummonActor (int command, int command2, FCommandLine argv)
 			Printf ("Unknown actor '%s'\n", argv[1]);
 			return;
 		}
-		network->WriteByte (argv.argc() > 2 ? command2 : command);
-		network->WriteString (type->TypeName.GetChars());
+		CmdWriteByte (argv.argc() > 2 ? command2 : command);
+		CmdWriteString (type->TypeName.GetChars());
 
 		if (argv.argc () > 2)
 		{
-			network->WriteWord (atoi (argv[2])); // angle
-			network->WriteWord ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
-			network->WriteByte ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
+			CmdWriteWord (atoi (argv[2])); // angle
+			CmdWriteWord ((argv.argc() > 3) ? atoi(argv[3]) : 0); // TID
+			CmdWriteByte ((argv.argc() > 4) ? atoi(argv[4]) : 0); // special
 			for (int i = 5; i < 10; i++)
 			{ // args[5]
-				network->WriteLong((i < argv.argc()) ? atoi(argv[i]) : 0);
+				CmdWriteLong((i < argv.argc()) ? atoi(argv[i]) : 0);
 			}
 		}
 	}

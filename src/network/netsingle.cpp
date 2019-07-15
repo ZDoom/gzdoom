@@ -89,8 +89,6 @@ void NetSinglePlayer::SetCurrentTic(int tictime)
 
 void NetSinglePlayer::EndCurrentTic()
 {
-	mCurrentCommands = mSendCommands;
-	mSendCommands.Clear();
 }
 
 int NetSinglePlayer::GetSendTick() const
@@ -108,14 +106,6 @@ ticcmd_t NetSinglePlayer::GetSentInput(int tic) const
 	return mCurrentInput[consoleplayer];
 }
 
-void NetSinglePlayer::RunCommands(int player)
-{
-	if (player == consoleplayer)
-	{
-		Net_RunCommands(mCurrentCommands, consoleplayer);
-	}
-}
-
 void NetSinglePlayer::WriteLocalInput(ticcmd_t cmd)
 {
 	mCurrentInput[consoleplayer] = cmd;
@@ -124,11 +114,6 @@ void NetSinglePlayer::WriteLocalInput(ticcmd_t cmd)
 void NetSinglePlayer::WriteBotInput(int player, const ticcmd_t &cmd)
 {
 	mCurrentInput[player] = cmd;
-}
-
-void NetSinglePlayer::WriteBytes(const uint8_t *block, int len)
-{
-	mSendCommands.AppendData(block, len);
 }
 
 int NetSinglePlayer::GetPing(int player) const

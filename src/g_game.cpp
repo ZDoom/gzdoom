@@ -60,6 +60,7 @@
 #include "a_keys.h"
 #include "cmdlib.h"
 #include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_event.h"
 #include "p_acs.h"
 #include "p_effect.h"
@@ -309,12 +310,12 @@ CCMD (slot)
 
 CCMD (centerview)
 {
-	network->WriteByte (DEM_CENTERVIEW);
+	CmdWriteByte (DEM_CENTERVIEW);
 }
 
 CCMD(crouch)
 {
-	network->WriteByte(DEM_CROUCH);
+	CmdWriteByte(DEM_CROUCH);
 }
 
 CCMD (land)
@@ -711,32 +712,32 @@ ticcmd_t G_BuildTiccmd ()
 	if (sendpause)
 	{
 		sendpause = false;
-		network->WriteByte (DEM_PAUSE);
+		CmdWriteByte (DEM_PAUSE);
 	}
 	if (sendsave)
 	{
 		sendsave = false;
-		network->WriteByte (DEM_SAVEGAME);
-		network->WriteString (savegamefile);
-		network->WriteString (savedescription);
+		CmdWriteByte (DEM_SAVEGAME);
+		CmdWriteString (savegamefile);
+		CmdWriteString (savedescription);
 		savegamefile = "";
 	}
 	if (SendItemUse == (const AActor *)1)
 	{
-		network->WriteByte (DEM_INVUSEALL);
+		CmdWriteByte (DEM_INVUSEALL);
 		SendItemUse = NULL;
 	}
 	else if (SendItemUse != NULL)
 	{
-		network->WriteByte (DEM_INVUSE);
-		network->WriteLong (SendItemUse->InventoryID);
+		CmdWriteByte (DEM_INVUSE);
+		CmdWriteLong (SendItemUse->InventoryID);
 		SendItemUse = NULL;
 	}
 	if (SendItemDrop != NULL)
 	{
-		network->WriteByte (DEM_INVDROP);
-		network->WriteLong (SendItemDrop->InventoryID);
-		network->WriteLong(SendItemDropAmount);
+		CmdWriteByte (DEM_INVDROP);
+		CmdWriteLong (SendItemDrop->InventoryID);
+		CmdWriteLong(SendItemDropAmount);
 		SendItemDrop = NULL;
 	}
 
@@ -851,7 +852,7 @@ static void ChangeSpy (int changespy)
 		// has done this for you, since it could desync otherwise.
 		if (!demoplayback)
 		{
-			network->WriteByte(DEM_REVERTCAMERA);
+			CmdWriteByte(DEM_REVERTCAMERA);
 		}
 		return;
 	}
@@ -1127,7 +1128,7 @@ void G_Ticker ()
 			ticcmd_t *cmd = &players[i].cmd;
 			ticcmd_t newcmd = network->GetPlayerInput(i);
 
-			network->RunCommands(i);
+			RunCommands(i);
 
 			if (demorecording)
 			{
@@ -2351,7 +2352,7 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 			break;
 
 		default:
-			Net_DoCommand (id, &demo_p, player);
+			DoCommand (id, &demo_p, player);
 			break;
 		}
 	}

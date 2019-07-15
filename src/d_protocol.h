@@ -241,8 +241,6 @@ struct ticcmd_t
 	int16_t		consistency = 0;	// checks for net game
 };
 
-int SkipTicCmd (uint8_t **stream, int count);
-
 int ReadByte (uint8_t **stream);
 int ReadWord (uint8_t **stream);
 int ReadLong (uint8_t **stream);

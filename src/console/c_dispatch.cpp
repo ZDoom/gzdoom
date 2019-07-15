@@ -49,7 +49,7 @@
 #include "d_player.h"
 #include "configfile.h"
 #include "v_text.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_main.h"
 #include "serializer.h"
 #include "menu/menu.h"
@@ -617,7 +617,7 @@ void C_DoCommand (const char *cmd, int keynum)
 				button->ReleaseKey (keynum);
 				if (button == &Button_Mlook && lookspring)
 				{
-					network->WriteByte (DEM_CENTERVIEW);
+					CmdWriteByte (DEM_CENTERVIEW);
 				}
 			}
 			return;

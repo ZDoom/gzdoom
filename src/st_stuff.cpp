@@ -31,7 +31,7 @@
 #include "c_dispatch.h"
 #include "d_event.h"
 #include "gi.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "doomstat.h"
 #include "g_level.h"
 #include "g_levellocals.h"
@@ -433,8 +433,8 @@ static bool CheatAddKey (cheatseq_t *cheat, uint8_t key, bool *eat)
 
 static bool Cht_Generic (cheatseq_t *cheat)
 {
-	network->WriteByte (DEM_GENERICCHEAT);
-	network->WriteByte (cheat->Args[0]);
+	CmdWriteByte (DEM_GENERICCHEAT);
+	CmdWriteByte (cheat->Args[0]);
 	return true;
 }
 

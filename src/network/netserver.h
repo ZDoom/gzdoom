@@ -47,8 +47,6 @@ struct NetNode
 		usercmd_t input;
 	};
 	TicUpdate TicUpdates[BACKUPTICS];
-
-	FDynamicBuffer Commands; // "NetSpecs"
 };
 
 class NetServer : public Network
@@ -65,11 +63,8 @@ public:
 	ticcmd_t GetPlayerInput(int player) const override;
 	ticcmd_t GetSentInput(int tic) const override;
 
-	void RunCommands(int player) override;
-
 	void WriteLocalInput(ticcmd_t cmd) override;
 	void WriteBotInput(int player, const ticcmd_t &cmd) override;
-	void WriteBytes(const uint8_t *block, int len) override;
 
 	int GetPing(int player) const override;
 	int GetServerPing() const override;
@@ -94,8 +89,6 @@ private:
 	int mNodeForPlayer[MAXPLAYERS];
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
-	FDynamicBuffer mCurrentCommands;
-	FDynamicBuffer mSendCommands;
 
 	IDList<AActor> mNetIDList;
 

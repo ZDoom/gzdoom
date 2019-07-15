@@ -46,7 +46,7 @@
 #include "gi.h"
 #include "p_conversation.h"
 #include "p_3dmidtex.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_event.h"
 #include "gstrings.h"
 #include "po_man.h"
@@ -3125,7 +3125,7 @@ FUNC(LS_Autosave)
 	if (gameaction != ga_savegame)
 	{
 		Level->flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
-		network->WriteByte (DEM_CHECKAUTOSAVE);
+		CmdWriteByte (DEM_CHECKAUTOSAVE);
 	}
 	return true;
 }

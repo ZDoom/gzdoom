@@ -3,7 +3,6 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
-// Copyright 2018 Magnus Norddahl
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -21,31 +20,15 @@
 
 #pragma once
 
-#include "network/net.h"
+// Old ZDoom net commands that now only loop back as events internally in the playsim
 
-class NetSinglePlayer : public Network
-{
-public:
-	NetSinglePlayer();
+void LoopBackCommands();
+void RunCommands(int player);
+void DoCommand(int type, uint8_t** stream, int player);
 
-	void Update() override;
-
-	void SetCurrentTic(int tictime) override;
-	void EndCurrentTic() override;
-
-	int GetSendTick() const override;
-	ticcmd_t GetPlayerInput(int player) const override;
-	ticcmd_t GetSentInput(int tic) const override;
-
-	void WriteLocalInput(ticcmd_t cmd) override;
-	void WriteBotInput(int player, const ticcmd_t &cmd) override;
-
-	int GetPing(int player) const override;
-	int GetServerPing() const override;
-
-	void ListPingTimes() override;
-	void Network_Controller(int playernum, bool add) override;
-
-private:
-	ticcmd_t mCurrentInput[MAXPLAYERS];
-};
+void CmdWriteBytes(const uint8_t* block, int len);
+void CmdWriteByte(uint8_t it);
+void CmdWriteWord(short it);
+void CmdWriteLong(int it);
+void CmdWriteFloat(float it);
+void CmdWriteString(const char* it);

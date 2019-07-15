@@ -45,7 +45,7 @@
 #include "gstrings.h"
 #include "i_music.h"
 #include "p_setup.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_event.h"
 #include "doomstat.h"
 #include "c_console.h"
@@ -255,17 +255,17 @@ DEFINE_ACTION_FUNCTION(DConversationMenu, SendConversationReply)
 	switch (node)
 	{
 	case -1:
-		network->WriteByte(DEM_CONVNULL);
+		CmdWriteByte(DEM_CONVNULL);
 		break;
 
 	case -2:
-		network->WriteByte(DEM_CONVCLOSE);
+		CmdWriteByte(DEM_CONVCLOSE);
 		break;
 
 	default:
-		network->WriteByte(DEM_CONVREPLY);
-		network->WriteWord(node);
-		network->WriteByte(reply);
+		CmdWriteByte(DEM_CONVREPLY);
+		CmdWriteWord(node);
+		CmdWriteByte(reply);
 		break;
 	}
 	StaticLastReply = reply;

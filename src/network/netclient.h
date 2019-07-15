@@ -39,11 +39,8 @@ public:
 	ticcmd_t GetPlayerInput(int player) const override;
 	ticcmd_t GetSentInput(int tic) const override;
 
-	void RunCommands(int player) override;
-
 	void WriteLocalInput(ticcmd_t cmd) override;
 	void WriteBotInput(int player, const ticcmd_t &cmd) override;
-	void WriteBytes(const uint8_t *block, int len) override;
 
 	int GetPing(int player) const override;
 	int GetServerPing() const override;
@@ -81,8 +78,6 @@ private:
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	ticcmd_t mSentInput[BACKUPTICS];
-	FDynamicBuffer mCurrentCommands;
-	FDynamicBuffer mSendCommands;
 
 	IDList<AActor> mNetIDList;
 };

@@ -42,7 +42,7 @@
 #include "gstrings.h"
 #include "doomstat.h"
 #include "c_dispatch.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "g_game.h"
 #include "m_png.h"
 #include "doomerrors.h"
@@ -591,7 +591,7 @@ CCMD(finishgame)
 		return;
 	}
 	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last Level->
-	network->WriteByte(DEM_FINISHGAME);
+	CmdWriteByte(DEM_FINISHGAME);
 }
 
 ADD_STAT(statistics)

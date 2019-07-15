@@ -77,6 +77,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "network/net.h"
+#include "playsim/p_commands.h"
 #include "serializer.h"
 #include "d_player.h"
 #include "r_utility.h"
@@ -477,7 +478,7 @@ void player_t::SetFOV(float fov)
 		{
 			if (consoleplayer == Net_Arbitrator)
 			{
-				network->WriteByte(DEM_MYFOV);
+				CmdWriteByte(DEM_MYFOV);
 			}
 			else
 			{
@@ -487,9 +488,9 @@ void player_t::SetFOV(float fov)
 		}
 		else
 		{
-			network->WriteByte(DEM_MYFOV);
+			CmdWriteByte(DEM_MYFOV);
 		}
-		network->WriteFloat(clamp<float>(fov, 5.f, 179.f));
+		CmdWriteFloat(clamp<float>(fov, 5.f, 179.f));
 	}
 }
 
@@ -636,9 +637,9 @@ void player_t::SendPitchLimits() const
 			uppitch = downpitch = (int)maxviewpitch;
 		}
 
-		network->WriteByte(DEM_SETPITCHLIMIT);
-		network->WriteByte(uppitch);
-		network->WriteByte(downpitch);
+		CmdWriteByte(DEM_SETPITCHLIMIT);
+		CmdWriteByte(uppitch);
+		CmdWriteByte(downpitch);
 	}
 }
 

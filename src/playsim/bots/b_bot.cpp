@@ -44,7 +44,7 @@
 #include "p_local.h"
 #include "cmdlib.h"
 #include "teaminfo.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "serializer.h"
 #include "d_player.h"
 #include "w_wad.h"
@@ -212,7 +212,7 @@ CCMD (removebots)
 		return;
 	}
 
-	network->WriteByte (DEM_KILLBOTS);
+	CmdWriteByte (DEM_KILLBOTS);
 }
 
 CCMD (freeze)
@@ -226,8 +226,8 @@ CCMD (freeze)
 		return;
 	}
 
-	network->WriteByte (DEM_GENERICCHEAT);
-	network->WriteByte (CHT_FREEZE);
+	CmdWriteByte (DEM_GENERICCHEAT);
+	CmdWriteByte (CHT_FREEZE);
 }
 
 CCMD (listbots)

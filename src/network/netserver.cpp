@@ -207,9 +207,6 @@ void NetServer::EndCurrentTic()
 	}
 
 	mBroadcastCommands.ResetPos();
-
-	mCurrentCommands = mSendCommands;
-	mSendCommands.Clear();
 }
 
 int NetServer::GetSendTick() const
@@ -227,14 +224,6 @@ ticcmd_t NetServer::GetSentInput(int tic) const
 	return mCurrentInput[consoleplayer];
 }
 
-void NetServer::RunCommands(int player)
-{
-	if (player == consoleplayer)
-	{
-		Net_RunCommands(mCurrentCommands, consoleplayer);
-	}
-}
-
 void NetServer::WriteLocalInput(ticcmd_t cmd)
 {
 	mCurrentInput[consoleplayer] = cmd;
@@ -243,11 +232,6 @@ void NetServer::WriteLocalInput(ticcmd_t cmd)
 void NetServer::WriteBotInput(int player, const ticcmd_t &cmd)
 {
 	mCurrentInput[player] = cmd;
-}
-
-void NetServer::WriteBytes(const uint8_t *block, int len)
-{
-	mSendCommands.AppendData(block, len);
 }
 
 int NetServer::GetPing(int player) const

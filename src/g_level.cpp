@@ -67,7 +67,7 @@
 #include "sbarinfo.h"
 #include "p_lnspec.h"
 #include "cmdlib.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "d_netinf.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
@@ -1019,7 +1019,7 @@ IMPLEMENT_CLASS(DAutosaver, false, false)
 
 void DAutosaver::Tick ()
 {
-	network->WriteByte (DEM_CHECKAUTOSAVE);
+	CmdWriteByte (DEM_CHECKAUTOSAVE);
 	Destroy ();
 }
 

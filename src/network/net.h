@@ -34,29 +34,6 @@
 
 class AActor;
 
-class FDynamicBuffer
-{
-public:
-	FDynamicBuffer();
-	FDynamicBuffer(const FDynamicBuffer &src);
-	~FDynamicBuffer();
-
-	FDynamicBuffer &operator=(const FDynamicBuffer &src);
-
-	void Clear() { SetData(nullptr, 0); }
-	void SetData(const uint8_t *data, int len);
-	void AppendData(const uint8_t *data, int len);
-
-	uint8_t *GetData() { return m_Len ? m_Data : nullptr; }
-	const uint8_t *GetData() const { return m_Len ? m_Data : nullptr; }
-	int GetSize() const { return m_Len; }
-
-private:
-	uint8_t *m_Data = nullptr;
-	int m_Len = 0;
-	int m_BufferLen = 0;
-};
-
 class Network
 {
 public:
@@ -76,18 +53,9 @@ public:
 	virtual ticcmd_t GetPlayerInput(int player) const = 0;
 	virtual ticcmd_t GetSentInput(int tic) const = 0;
 
-	// Run network commands for the current tic
-	virtual void RunCommands(int player) = 0;
-
 	// Write outgoing data for the current tic
 	virtual void WriteLocalInput(ticcmd_t cmd) = 0;
 	virtual void WriteBotInput(int player, const ticcmd_t &cmd) = 0;
-	virtual void WriteBytes(const uint8_t *block, int len) = 0;
-	void WriteByte(uint8_t it);
-	void WriteWord(short it);
-	void WriteLong(int it);
-	void WriteFloat(float it);
-	void WriteString(const char *it);
 
 	// Statistics
 	virtual int GetPing(int player) const = 0;
@@ -121,10 +89,6 @@ public:
 
 extern std::unique_ptr<Network> network;
 extern std::unique_ptr<Network> netconnect;
-
-void Net_DoCommand (int type, uint8_t **stream, int player);
-void Net_SkipCommand (int type, uint8_t **stream);
-void Net_RunCommands (FDynamicBuffer &buffer, int player);
 
 // Old packet format. Kept for reference. Should be removed or updated once the c/s migration is complete.
 

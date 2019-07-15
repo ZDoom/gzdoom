@@ -166,8 +166,6 @@ void NetClient::SetCurrentTic(int tictime)
 
 void NetClient::EndCurrentTic()
 {
-	mCurrentCommands = mSendCommands;
-	mSendCommands.Clear();
 }
 
 int NetClient::GetSendTick() const
@@ -183,14 +181,6 @@ ticcmd_t NetClient::GetPlayerInput(int player) const
 ticcmd_t NetClient::GetSentInput(int tic) const
 {
 	return mSentInput[tic % BACKUPTICS];
-}
-
-void NetClient::RunCommands(int player)
-{
-	if (player == consoleplayer)
-	{
-		Net_RunCommands(mCurrentCommands, consoleplayer);
-	}
 }
 
 void NetClient::WriteLocalInput(ticcmd_t ticcmd)
@@ -215,11 +205,6 @@ void NetClient::WriteLocalInput(ticcmd_t ticcmd)
 void NetClient::WriteBotInput(int player, const ticcmd_t &cmd)
 {
 	mCurrentInput[player] = cmd;
-}
-
-void NetClient::WriteBytes(const uint8_t *block, int len)
-{
-	mSendCommands.AppendData(block, len);
 }
 
 int NetClient::GetPing(int player) const

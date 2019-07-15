@@ -47,7 +47,7 @@
 #include "c_bind.h"
 #include "p_conversation.h"
 #include "menu/menu.h"
-#include "network/net.h"
+#include "playsim/p_commands.h"
 #include "g_levellocals.h"
 #include "utf8.h"
 #include "templates.h"
@@ -866,7 +866,7 @@ bool DIntermissionController::Responder (event_t *ev)
 		int res = mScreen->Responder(ev);
 		if (res == -1 && !mSentAdvance)
 		{
-			network->WriteByte(DEM_ADVANCEINTER);
+			CmdWriteByte(DEM_ADVANCEINTER);
 			mSentAdvance = true;
 		}
 		return !!res;

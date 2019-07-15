@@ -350,7 +350,7 @@ int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stre
 	return 1;
 }
 
-
+#if 0
 int SkipTicCmd (uint8_t **stream, int count)
 {
 	int i, skip;
@@ -406,6 +406,7 @@ int SkipTicCmd (uint8_t **stream, int count)
 
 	return skip;
 }
+#endif
 
 uint8_t *lenspot;
 

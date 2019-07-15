@@ -23,7 +23,7 @@
 
 #include "netserver.h"
 #include "netcommand.h"
-#include "Playsim/a_dynlight.h"
+#include "playsim/a_dynlight.h"
 
 class NetClient : public Network
 {

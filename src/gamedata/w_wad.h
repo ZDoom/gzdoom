@@ -221,6 +221,7 @@ private:
 	void RenameNerve();
 	void FixMacHexen();
 	void DeleteAll();
+	void MoveIWadModifiers();
 	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };
 

@@ -147,6 +147,7 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray
 		int baselump = NumLumps;
 		AddFile (filenames[i]);
 	}
+	MoveIWadModifiers();
 
 	NumLumps = LumpInfo.Size();
 	if (NumLumps == 0)
@@ -1050,6 +1051,43 @@ void FWadCollection::FixMacHexen()
 	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
 	{
 		LumpInfo[i].lump->Name[0] = '\0';
+	}
+}
+
+//==========================================================================
+//
+// MoveIWadModifiers
+//
+// Moves all content from the after_iwad subfolder of the internal
+// resources to the first positions in the lump directory after the IWAD.
+// Used to allow modifying content in the base files, this is needed
+// so that Hacx and Harmony can override some content that clashes
+// with localization.
+//
+//==========================================================================
+
+void FWadCollection::MoveIWadModifiers()
+{
+	TArray<LumpRecord> lumpsToMove;
+
+	unsigned i;
+	for (i = 0; i < LumpInfo.Size(); i++)
+	{
+		auto& li = LumpInfo[i];
+		if (li.wadnum >= GetIwadNum()) break;
+		if (li.lump->FullName.Left(11).CompareNoCase("after_iwad/") == 0)
+		{
+			lumpsToMove.Push(li);
+			LumpInfo.Delete(i--);
+		}
+	}
+	if (lumpsToMove.Size() == 0) return;
+	for (; i < LumpInfo.Size() && LumpInfo[i].wadnum <= Wads.GetMaxIwadNum(); i++);
+	for (auto& li : lumpsToMove)
+	{
+		li.lump->LumpNameSetup(li.lump->FullName.Mid(11));
+		li.wadnum = Wads.GetMaxIwadNum();	// pretend this comes from the IWAD itself.
+		LumpInfo.Insert(i++, li);
 	}
 }
 

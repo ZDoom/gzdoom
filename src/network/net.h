@@ -29,8 +29,6 @@
 
 #define MAXNETNODES		8	// max computers in a game
 #define BACKUPTICS		36	// number of tics to remember
-#define MAXTICDUP		5
-#define LOCALCMDTICS	(BACKUPTICS*MAXTICDUP)
 
 class AActor;
 

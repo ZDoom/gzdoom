@@ -98,6 +98,8 @@ const char *neterror (void);
 #define neterror() strerror(errno)
 #endif
 
+#define NCMD_COMPRESSED			0x04		// remainder of packet is compressed
+
 class DoomComImpl : public doomcom_t
 {
 public:

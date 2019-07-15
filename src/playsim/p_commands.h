@@ -32,3 +32,6 @@ void CmdWriteWord(short it);
 void CmdWriteLong(int it);
 void CmdWriteFloat(float it);
 void CmdWriteString(const char* it);
+
+// Demo recording (To do: reimplement - it probably just copied the commands already written)
+inline size_t CopySpecData(int player, uint8_t* dest, size_t dest_size) { return 0; }

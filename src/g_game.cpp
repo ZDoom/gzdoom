@@ -535,8 +535,6 @@ ticcmd_t G_BuildTiccmd ()
 
 	ticcmd_t cmd;
 
-	cmd.consistency = network->GetConsoleConsistency();
-
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
 
@@ -546,7 +544,7 @@ ticcmd_t G_BuildTiccmd ()
 	//		and not the joystick, since we treat the joystick as
 	//		the analog device it is.
 	if (Button_Left.bDown || Button_Right.bDown)
-		turnheld += network->ticdup;
+		turnheld++;
 	else
 		turnheld = 0;
 
@@ -1152,24 +1150,6 @@ void G_Ticker ()
 				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
 			{
 				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
-			}
-
-			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%network->ticdup) == 0)
-			{
-				if (network->IsInconsistent(i, cmd->consistency))
-				{
-					players[i].inconsistant = gametic - BACKUPTICS*network->ticdup;
-				}
-				if (players[i].mo)
-				{
-					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
-					sum ^= players[i].health;
-					network->SetConsistency(i, sum);
-				}
-				else
-				{
-					network->SetConsistency(i, rngsum);
-				}
 			}
 		}
 	}
@@ -2380,7 +2360,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	demo_p += network->CopySpecData(player, demo_p, maxdemosize - (demo_p - demobuffer));
+	demo_p += CopySpecData(player, demo_p, maxdemosize - (demo_p - demobuffer));
 
 	// [RH] Now write out a "normal" ticcmd.
 	WriteUserCmdMessage (&cmd->ucmd, &players[player].cmd.ucmd, &demo_p);

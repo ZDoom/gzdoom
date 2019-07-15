@@ -1446,7 +1446,7 @@ void P_PredictPlayer (player_t *player)
 	act->BlockNode = NULL;
 
 	// Values too small to be usable for lerping can be considered "off".
-	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (network->ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
+	bool CanLerp = (!(cl_predict_lerpscale < 0.01f)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		if (!NoInterpolateOld)

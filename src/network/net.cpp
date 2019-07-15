@@ -98,11 +98,6 @@ static TArray<PacketStore> InBuffer;
 static TArray<PacketStore> OutBuffer;
 #endif
 
-int Network::GetHighPingThreshold() const
-{
-	return ((BACKUPTICS / 2 - 1) * ticdup) * (1000 / TICRATE);
-}
-
 #if 0 // For reference. Remove when c/s migration is complete
 
 void Network::ReadTicCmd(uint8_t **stream, int player, int tic)

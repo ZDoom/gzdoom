@@ -60,7 +60,7 @@ public:
 	// Statistics
 	virtual int GetPing(int player) const = 0;
 	virtual int GetServerPing() const = 0;
-	int GetHighPingThreshold() const;
+	int GetHighPingThreshold() const { return ((BACKUPTICS / 2 - 1)) * (1000 / TICRATE); }
 
 	// CCMDs
 	virtual void ListPingTimes() = 0;
@@ -74,62 +74,7 @@ public:
 	void Startup() { }
 	void Net_ClearBuffers() { }
 	void D_QuitNetGame() { }
-
-	// Demo recording
-	size_t CopySpecData(int player, uint8_t *dest, size_t dest_size) { return 0; }
-
-	// Obsolete; only needed for p2p
-	bool IsInconsistent(int player, int16_t checkvalue) const { return false; }
-	void SetConsistency(int player, int16_t checkvalue) { }
-	int16_t GetConsoleConsistency() const { return 0; }
-
-	// Should probably be removed.
-	int ticdup = 1;
 };
 
 extern std::unique_ptr<Network> network;
 extern std::unique_ptr<Network> netconnect;
-
-// Old packet format. Kept for reference. Should be removed or updated once the c/s migration is complete.
-
-// [RH]
-// New generic packet structure:
-//
-// Header:
-//  One byte with following flags.
-//  One byte with starttic
-//  One byte with master's maketic (master -> slave only!)
-//  If NCMD_RETRANSMIT set, one byte with retransmitfrom
-//  If NCMD_XTICS set, one byte with number of tics (minus 3, so theoretically up to 258 tics in one packet)
-//  If NCMD_QUITTERS, one byte with number of players followed by one byte with each player's consolenum
-//  If NCMD_MULTI, one byte with number of players followed by one byte with each player's consolenum
-//     - The first player's consolenum is not included in this list, because it always matches the sender
-//
-// For each tic:
-//  Two bytes with consistency check, followed by tic data
-//
-// Setup packets are different, and are described just before D_ArbitrateNetStart().
-
-#define NCMD_EXIT				0x80
-#define NCMD_RETRANSMIT 		0x40
-#define NCMD_SETUP				0x20
-#define NCMD_MULTI				0x10		// multiple players in this packet
-#define NCMD_QUITTERS			0x08		// one or more players just quit (packet server only)
-#define NCMD_COMPRESSED			0x04		// remainder of packet is compressed
-
-#define NCMD_XTICS				0x03		// packet contains >2 tics
-#define NCMD_2TICS				0x02		// packet contains 2 tics
-#define NCMD_1TICS				0x01		// packet contains 1 tic
-#define NCMD_0TICS				0x00		// packet contains 0 tics
-
-enum
-{
-	PRE_CONNECT,			// Sent from guest to host for initial connection
-	PRE_KEEPALIVE,
-	PRE_DISCONNECT,			// Sent from guest that aborts the game
-	PRE_ALLHERE,			// Sent from host to guest when everybody has connected
-	PRE_CONACK,				// Sent from host to guest to acknowledge PRE_CONNECT receipt
-	PRE_ALLFULL,			// Sent from host to an unwanted guest
-	PRE_ALLHEREACK,			// Sent from guest to host to acknowledge PRE_ALLHEREACK receipt
-	PRE_GO					// Sent from host to guest to continue game startup
-};

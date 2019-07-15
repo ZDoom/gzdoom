@@ -1,5 +1,6 @@
 
 #include <assert.h>
+#include <algorithm>
 
 #ifdef _WIN32
 #define VK_USE_PLATFORM_WIN32_KHR
@@ -49,7 +50,7 @@ bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 	else
 	{
 		const bool result = *count >= extensionCount;
-		*count = min(*count, extensionCount);
+		*count = std::min<unsigned int>(*count, extensionCount);
 
 		for (unsigned int i = 0; i < *count; ++i)
 		{

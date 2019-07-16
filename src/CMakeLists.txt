@@ -960,6 +960,7 @@ set (PCH_SOURCES
 	network/netsync.cpp
 	network/netclient.cpp
 	network/netcommand.cpp
+	network/netnode.cpp
 	network/i_net.cpp
 	d_netinfo.cpp
 	d_protocol.cpp

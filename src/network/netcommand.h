@@ -42,12 +42,15 @@ public:
 	bool IsAtEnd() const;
 	int BytesLeft() const;
 
+	const void* GetData() const { return mData; }
+	int GetSize() const { return (int)(ptrdiff_t)(pbStream - mData); }
+
 private:
 	void EnsureBitSpace(int bits, bool writing);
 
 	uint8_t *mData = nullptr; // Pointer to our stream of data
-	uint8_t *pbStream; // Cursor position for next read.
-	uint8_t *pbStreamEnd; // Pointer to the end of the stream. When pbStream >= pbStreamEnd, the entire stream has been read.
+	uint8_t *pbStream = nullptr; // Cursor position for next read.
+	uint8_t *pbStreamEnd = nullptr; // Pointer to the end of the stream. When pbStream >= pbStreamEnd, the entire stream has been read.
 
 	uint8_t *bitBuffer = nullptr;
 	int bitShift = -1;
@@ -82,8 +85,8 @@ private:
 	void EnsureBitSpace(int bits, bool writing);
 
 	uint8_t *mData = nullptr; // Pointer to our stream of data
-	uint8_t *pbStream; // Cursor position for next write
-	uint8_t *pbStreamEnd; // Pointer to the end of the data buffer
+	uint8_t *pbStream = nullptr; // Cursor position for next write
+	uint8_t *pbStreamEnd = nullptr; // Pointer to the end of the data buffer
 
 	uint8_t *bitBuffer = nullptr;
 	int bitShift = -1;
@@ -126,115 +129,3 @@ public:
 	void setUnreliable(bool a) { mUnreliable = a; }
 	int getSize() const;
 };
-
-#if 0
-class NetNodeOutputStream
-{
-public:
-	void WriteCommand(std::unique_ptr<NetCommand> command, bool unreliable)
-	{
-		mMessages.push_back({ std::move(command), mSerial, unreliable });
-	}
-		
-	void Send(doomcom_t *comm)
-	{
-		NetOutputPacket packet(mNodeIndex);
-		packet.stream.WriteByte(0);
-		packet.stream.WriteByte(mHeaderFlags);
-		packet.stream.WriteShort(mAck);
-		packet.stream.WriteShort(mSerial);
-		
-		auto it = mMessages.begin();
-		while (it != mMessages.end())
-		{
-			const auto &msg = *it;
-
-			packet.stream.WriteShort(msg.serial);
-			msg.command.writeCommandToStream(packet.stream);
-			
-			if (msg.unreliable)
-			{
-				it = mMessages.erase(it);
-			}
-			else
-			{
-				++it;
-			}
-		}
-		
-		comm->PacketSend(packet);
-		mSerial++;
-	}
-	
-	void AckPacket(uint8_t headerFlags, uint16_t serial, uint16_t ack)
-	{
-		mAck = ack;
-		mHeaderFlags |= 1;
-		
-		if (headerFlags & 1)
-		{
-			while (!mMessages.empty() && IsLessEqual(serial, mMessages.front().serial))
-			{
-				mMessages.erase(mMessages.begin());
-			}
-		}
-	}
-	
-private:
-	bool IsLessEqual(uint16_t serialA, uint16_t serialB)
-	{
-		if (serialA <= serialB)
-			return serialB - serialA < 0x7fff;
-		else
-			return serialA - serialB > 0x7fff;
-	}
-	
-	struct Entry
-	{
-		Entry(std::unique_ptr<NetCommand> command, uint16_t serial, bool unreliable) : command(std::move(command)), serial(serial), unreliable(unreliable) { }
-		
-		std::unique_ptr<NetCommand> command;
-		uint16_t serial = 0;
-		bool unreliable = false;
-	};
-	
-	int mNodeIndex = 0;
-	std::list<Entry> mMessages;
-	uint16_t mSerial = 0;
-	uint16_t mAck = 0;
-	uint8_t mHeaderFlags = 0;
-};
-
-class NetNodeInputStream
-{
-public:
-	std::unique_ptr<NetCommand> ReadCommand()
-	{
-		return nullptr;
-	}
-	
-	void ReceivedPacket(NetInputPacket &packet, NetNodeOutputStream &outputStream)
-	{
-		packet.stream.ReadByte();
-		uint8_t headerFlags = packet.stream.ReadByte();
-		uint16_t serial = packet.stream.ReadShort();
-		uint16_t ack = packet.stream.ReadShort();
-		
-		mPackets.push_back({ packet.stream.GetBuffer(), packet.stream.GetSize(), serial });
-		
-		outputStream.AckPacket(headerFlags, ack, serial);
-	}
-
-private:
-	struct Entry
-	{
-		Entry(const void *data, size_t size, uint16_t serial) : buffer((const uint8_t*)data, size), serial(serial) { }
-		
-		std::vector<uint8_t> buffer;
-		uint16_t serial;
-	};
-
-	std::list<Entry> mPackets;
-	uint16_t mLastSerial = 0;
-};
-#endif

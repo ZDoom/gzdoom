@@ -1,0 +1,180 @@
+default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cs,de,el,eo,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fr,hu,it,ko,pl,pt,ptg,ro,ru,sr
+,,,,,,,,,,,,,,,,,,,,
+Do you really think you can handle that?\n\npress 'Y' or 'N'...,NIGHTMARE,,,,"Opravdu si myslíš, že to zvládneš?
+
+Zmáčkni Y nebo N.","Bist du sicher, dass du das bewältigen kannst?
+
+Drücke Y oder N.",,,"¿Realmente crees que puedes con eso?
+
+Pulsa Y ó N...",,Vous pensez sérieusement que vous pourrez tenir le coup?\n\nAppuyez sur Y ou N...,,,"정말 이 난이도를 버틸 자신이 있으십니까?
+
+Y키, 아니면 N키를 누르시오...",,"Você acha que é capaz de aguentar?
+
+Aperte Y ou N...",,,,
+Spot marked,AMSTR_MARKEDSPOT,,,,Bod označen,Punkt markiert,,,Punto marcado,,Repère marqué.,Hely Megjelölve,Posizione segnata,마커 표시함,,Posição marcada,,,Отметка,Означено место
+Requires the GREEN keycard,PD_BLUEO,,,,Vyžaduje ZELENOU kartu,Benötigt die GRÜNE Schlüsselkarte,,,Requiere la tarjeta llave VERDE,,Carte VERTE demandée.,,,필요함: 초록색 키카드,,Você precisa do cartão de passe VERDE,,,,
+Requires the PURPLE keycard,PD_REDO,,,,Vyžaduje FIALOVOU kartu,Benötigt die VIOLETTE Schlüsselkarte,,,Requiere la tarjeta llave VIOLETA,,Carte VIOLETTE demandée.,,,필요함: 보라색 키카드,,Você precisa do cartão de passe ROXO,,,,
+Requires the YELLOW keycard,PD_YELLOWO,,,,Vyžaduje ŽLUTOU kartu,Benötigt die GELBE Schlüsselkarte,,,Requiere la tarjeta llave AMARILLA,,Carte JAUNE demandée.,,,필요함: 노란색 키카드,,Você precisa do cartão de passe AMARELO,,,,
+Requires the GREEN key,PD_BLUEK,,,,Vyžaduje ZELENÝ klíč,Benötigt den GRÜNEN Schlüssel,,,Requiere la llave VERDE,,Clé VERTE demandée.,,,필요함: 초록색 열쇠,,Você precisa da chave VERDE,,,,
+Requires the YELLOW key,PD_YELLOWK,,,,Vyžaduje ŽLUTÝ klíč,Benötigt den GELBEN Schlüssel,,,Requiere la llave AMARILLA,,Clé VIOLETTE demandée.,,,필요함: 노란색 열쇠,,Você precisa da chave AMARELA,,,,
+Requires the PURPLE key,PD_REDK,,,,Vyžaduje FIALOVÝ klíč,Benötigt den VIOLETTEN Schlüssel,,,Requiere la llave VIOLETA,,Clé JAUNE demandée.,,,필요함: 보라색 열쇠,,Você precisa da chave ROXA,,,,
+Picked up armor.,GOTARMOR,,,Picked up armour.,Sebráno brnění.,Panzer genommen.,,,Recogiste la armadura.,,Armure récupérée.,Felvettél egy páncélt.,Raccolto un'armatura.,획득: 전투복.,,Pegou uma armadura.,,,Получена броня.,Покупили сте панцир.
+Picked up Combat Armor.,GOTMEGAARMOR,"de: ""Kampfpanzer"" is a tank so the literal translation is out.",,Picked up Combat Armour.,Sebráno bojové brnění.,Super-Panzer genommen.,,,Recogiste la Armadura de Combate.,,Armure de combat récupérée.,,,획득: 강화된 전투복.,,Pegou uma Armadura de Combate.,,,,
+Superhealth,GOTMSPHERE,,,,Superzdraví,Super-Gesundheit,,,Supersalud,,Super-Santé,,,사용: 체력강화 버섯.,,Supersaúde,,,,
+Obtained the GREEN keycard.,GOTBLUECARD,,,,Sebrána ZELENÁ karta.,GRÜNE Schlüsselkarte erhalten,,,Obtenida la tarjeta llave VERDE.,,Carte VERTE obtenue.,,,획득: 초록색 키카드.,,Pegou o cartão de passe VERDE.,,,,
+Obtained the YELLOW keycard.,GOTYELWCARD,,,,Sebrána ŽLUTÁ karta.,GELBE Schlüsselkarte erhalten,,,Obtenida la tarjeta llave AMARILLA.,,Carte JAUNE obtenue.,,,획득: 노란색 키카드.,,Pegou o cartão de passe AMARELO.,,,,
+Obtained the PURPLE keycard.,GOTREDCARD,,,,Sebrána FIALOVÁ karta.,VIOLETTE Schlüsselkarte erhalten,,,Obtenida la tarjeta llave VIOLETA.,,Carte VIOLETTE obtenue.,,,획득: 보라색 키카드.,,Pegou o cartão de passe ROXO.,,,,
+Obtained the GREEN key.,GOTBLUESKUL,,,,Sebrán ZELENÝ klíč.,GRÜNEN Schlüssel erhalten,,,Obtenida la llave VERDE.,,Clé VERTE obtenue.,,,획득: 초록색 열쇠.,,Pegou a chave VERDE.,,,,
+Obtained the YELLOW key.,GOTYELWSKUL,,,,Sebrán ŽLUTÝ klíč.,GELBEN Schlüssel erhalten,,,Obtenida la llave AMARILLA.,,Clé JAUNE obtenue.,,,획득: 노란색 열쇠.,,Pegou a chave AMARELA.,,,,
+Obtained the PURPLE key.,GOTREDSKUL,,,,Sebrán FIALOVÝ klíč.,VIOLETTEN Schlüssel erhalten,,,Obtenida la llave VIOLETA.,,Clé VIOLETTE obtenue.,,,획득: 보라색 열쇠.,,Pegou a chave ROXA.,,,,
+Healing mushroom,GOTSTIM,,,,Léčivka,Heilpilz,,,Seta medicinal,,Champignon médicinal,,,사용: 체력회복 버섯.,,Cogumelo medicinal,,,,
+Acquired: medical kit.,GOTMEDIKIT,,,,Získána lékárnička.,Erhalten: Medikit,,,Adquirido: kit medicinal.,,Acquis: Kit médical.,,,사용: 의료 키트.,,Pegou um kit médico.,,,,
+Acquired: medical kit that you REALLY need.,GOTMEDINEED,,,,"Získána lékárnička, kterou OPRAVDU potřebuješ.","Erhalten: Medikit, das du WIRKLICH brauchst",,,Adquirido: kit medicinal que REALMENTE necesitabas.,,Acquis: Kit médical. Besoin critique.,,,사용: 당신을 살려줄 의료 키트.,,Pegou um kit médico que você REALMENTE precisa.,,,,
+Map,GOTMAP,,,,Mapa,Karte,,,Mapa,,Carte,,,획득: 지도.,,Mapa,,,,
+Acquired: case of bullets.,GOTCLIPBOX,,,,Získána krabice nábojů.,Erhalten: Munitionskiste,,,Adquirido: Caja de balas.,Pegou uma caixa de balas.,Acquis: Boîte de balles.,,,획득: 회전포 탄약.,,,,,,
+Acquired: Grenade.,GOTROCKET,,,,Ziskán granát.,Erhalten: Granate,,,Adquirido: Granada.,,Acquis: Grenade.,,,획득: 세열탄.,,Pegou uma granada.,,,,
+Acquired: Grenades.,GOTROCKBOX,,,,Ziskány granáty.,Erhalten: Granaten,,,Adquirido: Granadas.,,Acquis: Grenades.,,,획득: 세열탄 여러 개.,,Pegou granadas.,,,,
+Acquired: box of shotgun shells.,GOTSHELLBOX,,,,Získána krabice broků.,Erhalten: Schrotpatronen,,,Adquirido: Caja de cartuchos de escopeta.,,Acquis: Boîte de cartouches.,,,획득: 산탄총 탄약.,,Pegou uma caixa de cartuchos de espingarda.,,,,
+Acquired: ammo backpack.,GOTBACKPACK,,,,Ziskán batoh s municí.,Erhalten: Munitionsrucksack,,,Adquirido: Mochila de municiones.,,Acquis: Sac de munitions.,,,획득: 탄약 가방.,,Pegou uma mochila de munição.,,,,
+Acquired: Grenade.,GOTBFG9000,,,,Získán granát.,Erhalten: Granate,,,Adquirido: Granada.,,Acquis: Grenade.,,,획득: 세열탄.,,Pegou uma granada.,,,,
+Acquired: Minigun.,GOTCHAINGUN,,,,Získán kulomet.,Erhalten: Minigun,,,Adquirido: Miniarma.,,Acquis: Minigun.,,,획득: 회전포.,,Pegou uma metralhadora giratória.,,,,
+Acquired: Grenade launcher.,GOTLAUNCHER,,,,Získán granátomet.,Erhalten: Granatwerfer,,,Adquirido: Lanzagranadas.,,Acquis: Lance-Grenades,,,획득: 세열탄 추진기.,,Pegou um lança-granadas.,,,,
+Entropy thrower!,GOTPLASMA,,,,Vrhač entropie!,Entropiewerfer,,,¡Lanzador de Entropía!,,Acquis: Lanceur d'Entropie!,,,획득: 엔트로피 방사기!,,Lançador de entropia!,,,,
+Acquired: Shotgun.,GOTSHOTGUN,,,,Získána brokovnice.,Erhalten: Schrotflinte,,,Adquirido: Escopeta.,,Acquis: Fusil à pompe.,,,획득: 산탄총.,,Pegou uma espingarda.,,,,
+God Mode ON,STSTR_DQDON,,,,Nesmrtelnost ZAP,Gott-Modus AN,,,Modo Dios ACTIVADO,,Mode invulnérable ON,,,무적 치트: ON,,Modo Deus LIGADO,,,,
+God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,,Modo Dios DESACTIVADO,,Mode invulnérable OFF,,,무적 치트: OFF,,Modo Deus DESLIGADO,,,,
+All weapons/ ammo/ keys,STSTR_KFAADDED,,,,Všechny zbraně/munice/klíče,"Alle Waffen, Munition und Schlüssel",,,Todas las armas/municiones/llaves,,Toutes les armes/munitions/clés,,,추가: 모든 무기/탄약/열쇠 치트,,Todas as armas/munição/chaves,,,,
+All weapons and ammo,STSTR_FAADDED,,,,Všechny zbraně a munice,Alle Waffen und Munition,,,Todas las armas y municiones,,Toutes les armes et munitions,,,추가: 모든 무기/탄약 치트,,Todas as armas e munição completa,,,,
+Abduction,MAP01,,,,Únos,Entführung,,,Abducción,,Enlèvement,,,ACT 1: 유괴,,Abdução,,,,
+Harm's Way,MAP02,,,,Nebezpečí,In Gefahr,,,En Peligro,,Mise en Danger,,,ACT 2: 해함의 길,,No Caminho do Perigo,,,,
+Owt Mood,MAP03,,,,Špatný pocit,Missstimmung,,,Buen humor,,,,,ACT 3: 이상한 분위기,,Atrito,,,,
+Megalapolis,MAP04,,,,Megalopole,Megalopolis,,,Megalópolis,,Mégalopole,,,ACT 4: 거대 도시,,Megalópole,,,,
+The Hospital,MAP05,,,,Nemocnice,Das Hospital,,,El Hospital,,L'Hôpital,,,ACT 5: 병동,,O Hospital,,,,
+The Weapons Factory,MAP06,,,,Továrna na zbraně,Die Waffenfabrik,,,La Fábrica de Armas,,L'Usine d'Armes,,,ACT 6: 무기 공장,,A Fábrica de Armamento,,,,
+The Underwater Lab,MAP07,,,,Podvodní laboratoř,Das Unterwasserlabor,,,El Laboratorio Submarino,,Le Laboratoire Sous-marin,,,ACT 7: 해저 연구소,,O Laboratório Submarino,,,,
+Airstrip One,MAP08,,,,Přistávací dráha jedna,Flugplatz Eins,,,Pista de Aterrizaje Uno,,Piste D'Atterrisage Un,,,ACT 8: 활주로 1호,,Base Aérea Um,,,,
+The Launch Base,MAP09,,,,Vzletová základna,Die Startbasis,,,La Base de Despegue,,La Base de Lancement,,,ACT 9: 발진기지,,A Base de Lançamento,,,,
+The Radioactive Zone,MAP10,,,,Radioaktivní zóna,Die radioaktive Zone,,,La Zona Radioactiva,,La Zone Radioactive,,,ACT 10: 방사능 처리소,,A Zona Radioativa,,,,
+Echidna,MAP11,,,,,,,,,,,,,ACT 11: 에키드나,,Equidna,,,,
+YOU FEEL SICK IN YOU STOMACH...,CLUSTEREXIT1_CHECK,This is for checking only and must not be translated!,,,,,,,,,,,,,,,,,,
+"You feel sick to your stomach...
+Looking in the face of the mutant queen... 
+That thing... That used to be... 
+Your friend... Amira!
+
+Those monsters must have found a way to 
+mutate her and turn her into this
+hideous creature to bear their offspring.
+
+-sigh-
+
+You get yourself together... 
+They are going to pay for making you kill
+your friend...
+
+""Hell has no fury like a woman scorned!""
+
+     = T H E  E N D =",CLUSTEREXIT1,,,,"Zvedá se ti žaludek... když se díváš
+do obličeje mutantí královny...
+ta věc... která dřív byla...
+tvá kamarádka... Amira!
+
+Ta monstra musela najít způsob, jak
+ji zmutovat a přeměnit ji v tuto
+ohavnou kreaturu, nosící jejich potomky.
+
+Povzdechneš si.
+
+Dáš se zase dohromady...
+Však oni zaplatí za to, že tě donutili
+zabít svou přítelkyni...
+
+„Není běsu většího než hněv ženy zhrzené!“
+
+     = K O N E C =","Dir ist speiübel...
+Als du in das Gesicht der Mutanten-
+königin siehst... Das Ding... Das war mal...
+Deine Freundin... Amira!
+
+Diese Monster müssen einen Weg
+gefunden haben, sie zu mutieren und
+in diese widerliche Kreatur zu verwandeln.
+
+- seufz -
+
+Du reißt dich zusammen...
+Sie werden dafür bezahlen, was sie
+deiner Freundin angetan haben...
+
+""Die Hölle kennt den Zorn einer
+verhöhnten Frau nicht!""
+
+    = E N D E =",,,"Sientes que se te revuelve el estómago...
+Viendo el rostro de la reina mutante...
+Esa cosa... Que antes era...
+Tu amiga... ¡Amira!
+
+Esos monstruos han debido encontrar la
+forma de mutarla y convertirla en esta
+criatura horrible para parir a sus hijos.
+
+*suspiro*
+
+Consigues calmarte...
+Van a pagar por haberte obligado a matar
+a tu amiga...
+
+""¡No hay mayor furia en el Infierno que
+la de una mujer desdeñada!""
+
+    = F I N =",,"La nausée vous envahit..
+En regardant le visage de la reine
+des mutants.. cette chose.. devait
+être.. votre amie.. Amira!
+
+Ces monstres ont trouvé un moyen
+de la faire muter en cette horrible
+créature destinée à les faire se
+reproduire.
+
+*soupir*
+
+Vous vous calmez..
+Il vont payer pour vous avoir fait
+tuer votre amie..
+
+""L'Enfer n'a pas de fureur qui 
+égale celle d'une femme dédaignée!""
+
+  = F I N =",,,"갑자기 당신의 속이 울렁거린다... 방금 해치운 돌연변이 여왕의 실체...
+그 괴물은 당신과 친하게 지낸 친구였던... 아미라였다! 그 괴물들이
+그녀를 후손을 낳을 생물로 개조시킨 방법을 알아낸 것 같다. 
+개조에 성공하긴 했지만 그녀는 당신의 손에 죽은 지 오래다.
+
+""하아아...""
+
+당신은 마음을 가다듬고 자신의 친구를 이렇게 만든 놈들에게
+복수하기 위해서 다음 길로 나선다...
+
+""고통받은 여자의 심정보다 더한 지옥은 없지! 그 녀석들, 가만 안 둬!""
+
+= 끝 =",,"Você sente vontade de vomitar...
+Vendo o rosto da rainha mutante...
+Essa coisa... Que costumava ser...
+Sua amiga... Amira!
+
+Aqueles monstros devem ter encontrado
+uma maneira de causar uma mutação nela
+e transformá-la nesta criatura horrível para
+fazerem ela carregar suas crias.
+
+-suspiro-
+
+Você se recompõe...
+Eles vão pagar caro por fazer você matar
+a sua própria amiga...
+
+""Não há no inferno ferocidade como a de 
+uma mulher desprezada!""
+
+     = F I M =",,,,

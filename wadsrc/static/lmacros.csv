@@ -19,8 +19,10 @@ adj_2_rus,ru,ен,на,но,но
 adj_3_rus,ru,ён,на,но,но
 irreg_1_rus,ru,ёл,ла,ло,ло
 irreg_2_rus,ru,,ла,ло,ло
-ao_1_srb,sr,о,ла,ло,ло
-ao_2_srb,sr,ао,ла,ло,ло
+ao_1_sr,sr,о,ла,ло,ло
+ao_2_sr,sr,ао,ла,ло,ло
+adj_1_sr,sr,,а,о,о
+adj_2_sr,sr,ан,на,но,но
 adj_cs,cs,ý,á,é,é
 ao_cs,cs,,a,o,o
 psf1_cs,cs,ova,ina,ova,ova

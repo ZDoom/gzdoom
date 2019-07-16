@@ -267,7 +267,6 @@ version "4.2"
 
 #include "zscript/ui/statusbar/alt_hud.zs"
 #include "zscript/ui/statusbar/doom_sbar.zs"
-#include "zscript/ui/statusbar/harm_sbar.zs"
 #include "zscript/ui/statusbar/heretic_sbar.zs"
 #include "zscript/ui/statusbar/hexen_sbar.zs"
 #include "zscript/ui/statusbar/sbarinfowrapper.zs"

@@ -58,6 +58,8 @@ IWad
 	Mapinfo = "mapinfo/harmony.txt"
 	MustContain = "MAP01", "0HAWK01", "0CARA3", "0NOSE1"
 	BannerColors = "6e b4 d6", "45 4f 7e"
+	DeleteLumps = "DEHACKED", "MAPINFO", "LANGUAGE", "DECALDEF", "DBIGFONT"	// these get into the way of a clean setup.
+	IgnoreTitlePatches = 1
 }
 
 IWad
@@ -83,6 +85,7 @@ IWad
 	MustContain = "MAP01", "HACX-R"
 	BannerColors = "00 00 a8", "a8 a8 a8"
 	DeleteLumps = "FONTDEFS"
+	IgnoreTitlePatches = 1
 }
 
 IWad

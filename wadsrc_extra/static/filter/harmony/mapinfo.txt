@@ -6,6 +6,7 @@ gameinfo
 	statscreen_enteringfont = "*SmallFont"
 	statscreen_contentfont = "*BigFont", "teal"
 	playerclasses = "HarmonyPlayer"
+	quitmessages = "$HARMQUITMSG"
 }
 
 defaultmap

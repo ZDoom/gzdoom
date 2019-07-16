@@ -1220,8 +1220,9 @@ void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 void DBaseStatusBar::DrawLog ()
 {
 	int hudwidth, hudheight;
+	const FString & text = (inter_subtitles && CPlayer->SubtitleCounter) ? CPlayer->SubtitleText : CPlayer->LogText;
 
-	if (CPlayer->LogText.IsNotEmpty())
+	if (text.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
 		auto scale = active_con_scaletext(generic_ui);
@@ -1230,7 +1231,6 @@ void DBaseStatusBar::DrawLog ()
 		FFont *font = C_GetDefaultHUDFont();
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		const FString & text = (inter_subtitles && CPlayer->SubtitleCounter) ? CPlayer->SubtitleText : CPlayer->LogText;
 		auto lines = V_BreakLines (font, linelen, text[0] == '$'? GStrings(text.GetChars()+1) : text.GetChars());
 		int height = 20;
 

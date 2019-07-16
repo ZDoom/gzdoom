@@ -55,7 +55,7 @@ IWad
 	Game = "Doom"
 	Config = "Harmony"
 	IWADName = "harm1.wad"
-	Mapinfo = "mapinfo/harmony.txt"
+	Mapinfo = "mapinfo/doom2.txt"
 	MustContain = "MAP01", "0HAWK01", "0CARA3", "0NOSE1"
 	BannerColors = "6e b4 d6", "45 4f 7e"
 	DeleteLumps = "DEHACKED", "MAPINFO", "LANGUAGE", "DECALDEF", "DBIGFONT"	// these get into the way of a clean setup.
@@ -69,7 +69,7 @@ IWad
 	Config = "Hacx"
 	Autoname = "hacx.hacx2"
 	IWADName = "hacx2.wad"
-	Mapinfo = "mapinfo/hacx.txt"
+	Mapinfo = "mapinfo/doom2.txt"
 	MustContain = "MAP01", "HACX-E"
 	BannerColors = "ff ff ff", "00 88 22"
 }
@@ -81,7 +81,7 @@ IWad
 	Config = "Hacx"
 	Autoname = "hacx.hacx1"
 	IWADName = "hacx.wad"
-	Mapinfo = "mapinfo/hacx.txt"
+	Mapinfo = "mapinfo/doom2.txt"
 	MustContain = "MAP01", "HACX-R"
 	BannerColors = "00 00 a8", "a8 a8 a8"
 	DeleteLumps = "FONTDEFS"
@@ -95,7 +95,7 @@ IWad
 	Game = "Doom"
 	Config = "UrbanBrawl"
 	IWADName = "action2.wad"
-	Mapinfo = "mapinfo/urbanbrawl.txt"
+	Mapinfo = "mapinfo/doom2.txt"
 	MustContain = "MAP01", "AD2LIB"
 	BannerColors = "a8 a8 00", "a8 00 00"
 }
@@ -191,7 +191,7 @@ IWad
 	BannerColors = "f0 f0 f0", "6b 3c 18"
 	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
-	
+
 IWad
 {
 	Name = "Hexen: Deathkings of the Dark Citadel"
@@ -216,7 +216,7 @@ IWad
 	BannerColors = "f0 f0 f0", "6b 3c 18"
 	DeleteLumps = "FONTB01", "FONTB02", "FONTB03", "FONTB04", "FONTB06", "FONTB08", "FONTB09", "FONTB10", "FONTB11", "FONTB27", "FONTB28", "FONTB29", "FONTB30"
 }
-	
+
 IWad
 {
 	Name = "Blasphemer"
@@ -258,10 +258,11 @@ IWad
 
 IWad
 {
+	Autoname = "hereticshareware"
 	Name = "Heretic Shareware"
 	Game = "Heretic"
 	Config = "Heretic"
-	Mapinfo = "mapinfo/hereticsw.txt"
+	Mapinfo = "mapinfo/heretic.txt"
 	Compatibility = "Shareware"
 	MustContain = "E1M1", "TITLE", "MUS_E1M1"
 	BannerColors = "fc fc 00", "a8 00 00"
@@ -303,7 +304,7 @@ IWad
 	MustContain = "E1M1", "E2M1", "E3M1", "FREEDOOM"
 	BannerColors = "32 54 43", "c6 dc d1"
 }
-	
+
 IWad
 {
 	Name = "Freedoom: Demo Version"
@@ -314,7 +315,7 @@ IWad
 	MustContain = "E1M1", "FREEDOOM"
 	BannerColors = "32 54 43", "c6 dc d1"
 }
-	
+
 IWad
 {
 	Name = "DOOM: BFG Edition"
@@ -446,10 +447,10 @@ IWad
 	BannerColors = "a8 00 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
 }
-	
+
 
 Names
-{	
+{
 	"doom_complete.pk3"
 	"doom2.wad"
 	"plutonia.wad"

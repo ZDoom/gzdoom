@@ -1,6 +1,7 @@
 
 gameinfo
 {
+	cursorpic = "cursor"
 	forcenogfxsubstitution = false
 	statscreen_finishedfont = "*SmallFont"
 	statscreen_enteringfont = "*SmallFont"

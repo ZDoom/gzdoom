@@ -1,5 +1,3 @@
-include "mapinfo/heretic.txt"
-
 gameinfo
 {
 	finalepage = "ORDER"

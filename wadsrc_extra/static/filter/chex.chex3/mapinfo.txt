@@ -1,5 +1,3 @@
-include "mapinfo/chex.txt"
-
 // Chex Quest 3 gameinfo
 
 gameinfo

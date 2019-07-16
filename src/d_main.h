@@ -151,7 +151,7 @@ class FIWadManager
 	void AddIWADCandidates(const char *dir);
 	void ValidateIWADs();
 public:
-	FIWadManager(const char *fn);
+	FIWadManager(const char *fn, const char *fnopt);
 	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
 	const FString *GetAutoname(unsigned int num) const
 	{

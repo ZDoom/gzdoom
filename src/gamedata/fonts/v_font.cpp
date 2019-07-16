@@ -1583,10 +1583,16 @@ void V_InitFonts()
 
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
-		if (gameinfo.gametype & GAME_Raven)
+		if (Wads.CheckNumForName("FONTB_S") >= 0)
 		{
 			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
+	}
+	
+	if (!BigFont)
+	{
+		// Load the generic fallback if no BigFont is found.
+		BigFont = V_GetFont("BigFont", "ZBIGFONT");
 	}
 
 	if (gameinfo.gametype & GAME_Raven)

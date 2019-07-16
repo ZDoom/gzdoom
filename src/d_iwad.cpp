@@ -265,7 +265,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 FIWadManager::FIWadManager(const char *fn, const char *optfn)
 {
 	FResourceFile *resfile = FResourceFile::OpenResourceFile(optfn, true);
-	if (resfile != NULL && 0)
+	if (resfile != NULL)
 	{
 		uint32_t cnt = resfile->LumpCount();
 		for(int i=cnt-1; i>=0; i--)

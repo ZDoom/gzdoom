@@ -441,6 +441,8 @@ void player_t::SetSubtitle(int num)
 {
 	char lumpname[36];
 
+	if (gameinfo.flags & GI_SHAREWARE) return;	// Subtitles are only for the full game.
+
 	// Do we have a subtitle for this log entry's voice file?
 	mysnprintf(lumpname, countof(lumpname), "$TXT_SUB_LOG%d", num);
 	auto text = GStrings.GetLanguageString(lumpname+1, FStringTable::default_table);

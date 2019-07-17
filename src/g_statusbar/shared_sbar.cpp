@@ -661,6 +661,11 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 
 	FormatMapName(primaryLevel, crdefault, &textbuffer);
 
+	if (!generic_ui)
+	{
+		if (!font->CanPrint(textbuffer)) font = OriginalSmallFont;
+	}
+
 	auto lines = V_BreakLines(font, vwidth - 32, textbuffer, true);
 	auto numlines = lines.Size();
 	auto finalwidth = lines.Last().Width;

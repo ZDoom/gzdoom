@@ -895,9 +895,76 @@ int getAlternative(int code)
 		case 0x21b:
 			return 0x163;
 
+			// Greek characters with equivalents in either Latin or Cyrillic. This is only suitable for uppercase fonts!
+		case 0x391:
+			return 'A';
+
+		case 0x392:
+			return 'B';
+
+		case 0x393:
+			return 0x413;
+
+		case 0x395:
+			return 'E';
+
+		case 0x396:
+			return 'Z';
+
+		case 0x397:
+			return 'H';
+
+		case 0x399:
+			return 'I';
+
+		case 0x39a:
+			return 'K';
+
+		case 0x39c:
+			return 'M';
+
+		case 0x39d:
+			return 'N';
+	
+		case 0x39f:
+			return 'O';
+
+		case 0x3a0:
+			return 0x41f;
+
+		case 0x3a1:
+			return 'P';
+
+		case 0x3a4:
+			return 'T';
+
+		case 0x3a5:
+			return 'Y';
+
+		case 0x3a6:
+			return 0x424;
+
+		case 0x3a7:
+			return 'X';
+
+		case 0x3aa:
+			return 0xcf;
+
+		case 0x3ab:
+			return 0x178;
+
+		case 0x3bf:
+			return 'o';
+
 		case 0x3c2:
 			return 0x3c3;	// Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
-			
+
+		case 0x3ca:
+			return 0xef;
+
+		case 0x3cc:
+			return 0xf3;
+
 			// Cyrillic characters with equivalents in the Latin alphabet.
 		case 0x400:
 			return 0xc8;

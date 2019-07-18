@@ -81,6 +81,7 @@ extern	bool			multiplayernext;
 
 // clientside playsim 
 extern bool				netclient;
+extern bool				netserver;
 
 // Flag: true only if started as net deathmatch.
 EXTERN_CVAR (Int, deathmatch)

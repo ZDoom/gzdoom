@@ -92,8 +92,7 @@ void G_PlayDemo (char* name);
 void G_TimeDemo (const char* name);
 bool G_CheckDemoStatus (void);
 
-void G_InitServerNetGame(const char *mapname);
-void G_InitClientNetGame(int player, const char* mapname);
+void G_InitNetGame(int player, const char* mapname, bool client);
 void G_EndNetGame();
 
 void G_Ticker (void);

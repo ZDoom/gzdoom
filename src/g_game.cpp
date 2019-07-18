@@ -153,8 +153,8 @@ bool	 		viewactive;
 bool 			netgame;				// only true if packets are broadcast 
 bool			multiplayer;
 bool			multiplayernext = false;		// [SP] Map coop/dm implementation
-bool			netclient;				// clientside playsim
-bool			netserver = false;		// used to enforce 'netplay = true'
+bool			netserver;
+bool			netclient;
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
@@ -2761,39 +2761,14 @@ void G_TimeDemo (const char* name)
 	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
 }
 
-void G_InitServerNetGame(const char *mapname)
+void G_InitNetGame(int player, const char* mapname, bool client)
 {
 	netgame = true;
-	netserver = true;
-	netclient = false;
-	multiplayer = true;
-	multiplayernext = true;
-	consoleplayer = 0;
-	players[consoleplayer].settings_controller = true;
-	playeringame[consoleplayer] = true;
-
-	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
-	D_SetupUserInfo();
-
-	G_NetGameInitNew(mapname);
-}
-
-void G_InitClientNetGame(int player, const char* mapname)
-{
-	netgame = true;
-	netserver = false;
-	netclient = true;
+	netserver = !client;
+	netclient = client;
 	multiplayer = true;
 	multiplayernext = true;
 	consoleplayer = player;
-
-	for (int i = 0; i < MAXPLAYERS; i++)
-	{
-		playeringame[i] = false;
-		players[i].settings_controller = false;
-	}
-
-	playeringame[consoleplayer] = true;
 
 	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
 	D_SetupUserInfo();
@@ -2811,6 +2786,7 @@ void G_EndNetGame()
 	P_SetupWeapons_ntohton();
 	demoplayback = false;
 	netgame = false;
+	netserver = false;
 	netclient = false;
 	multiplayer = false;
 	multiplayernext = false;

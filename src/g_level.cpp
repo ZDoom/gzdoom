@@ -382,7 +382,6 @@ void G_NewInit ()
 	}
 
 	G_ClearSnapshots ();
-	netgame = (netclient || netserver);
 	multiplayer = multiplayernext;
 	multiplayernext = false;
 	if (demoplayback)
@@ -407,7 +406,6 @@ void G_NewInit ()
 		playeringame[i] = false;
 	}
 	BackupSaveName = "";
-	consoleplayer = 0;
 	NextSkill = -1;
 }
 

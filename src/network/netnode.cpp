@@ -13,7 +13,6 @@ void NetNodeOutput::Send(doomcom_t* comm, int nodeIndex)
 		return;
 
 	NetOutputPacket packet(nodeIndex);
-	packet.stream.WriteByte(0);
 	packet.stream.WriteByte(mHeaderFlags);
 	packet.stream.WriteShort(mAck);
 	packet.stream.WriteShort(mSerial);
@@ -67,38 +66,44 @@ bool NetNodeOutput::IsLessEqual(uint16_t serialA, uint16_t serialB)
 
 ByteInputStream NetNodeInput::ReadMessage()
 {
-	if (!mCurrentPacket || mCurrentOffset == mCurrentPacket->size)
+	while (true)
+	{
 		AdvanceToNextPacket();
 
-	if (!mCurrentPacket || mCurrentOffset == mCurrentPacket->size)
-		return {};
+		if (mPacketStream.IsAtEnd())
+			break;
 
-	ByteInputStream header(mCurrentPacket->data + mCurrentOffset, mCurrentPacket->size - mCurrentOffset);
-	uint16_t serial = header.ReadShort();
-	uint16_t size = header.ReadShort();
-	if (mCurrentPacket->size - mCurrentOffset - size < 0)
-		return {};
+		uint16_t serial = mPacketStream.ReadShort();
+		uint16_t size = mPacketStream.ReadShort();
+		ByteInputStream body = mPacketStream.ReadSubstream(size);
 
-	ByteInputStream body(mCurrentPacket->data + mCurrentOffset + 4, size);
-	mCurrentOffset += 4 + size;
-	return body;
+		if (SerialDiff(mLastSeenSerial, serial) > 0)
+			return body;
+	}
+	return {};
 }
 
 void NetNodeInput::AdvanceToNextPacket()
 {
+	if (!mPacketStream.IsAtEnd() || mPackets.empty())
+		return;
+
 	if (!mCurrentPacket)
 	{
 		mCurrentPacket = FindFirstPacket();
-		mCurrentOffset = 0;
+		mPacketStream = { mCurrentPacket->data, mCurrentPacket->size };
+		mLastSeenSerial = mCurrentPacket->serial - 1;
 	}
 	else
 	{
+		mLastSeenSerial = mCurrentPacket->serial;
+
 		Packet* nextPacket = FindNextPacket(mCurrentPacket);
 		if (nextPacket)
 		{
 			RemovePacket(mCurrentPacket);
 			mCurrentPacket = nextPacket;
-			mCurrentOffset = 0;
+			mPacketStream = { mCurrentPacket->data, mCurrentPacket->size };
 		}
 	}
 }
@@ -137,7 +142,7 @@ void NetNodeInput::RemovePacket(Packet* packet)
 {
 	for (auto it = mPackets.begin(); it != mPackets.end(); ++it)
 	{
-		if ((*it).get() == mCurrentPacket)
+		if ((*it).get() == packet)
 		{
 			mPackets.erase(it);
 			break;
@@ -147,7 +152,6 @@ void NetNodeInput::RemovePacket(Packet* packet)
 
 void NetNodeInput::ReceivedPacket(NetInputPacket& packet, NetNodeOutput& outputStream)
 {
-	const int packetHeaderSize = 6;
 	uint8_t headerFlags = packet.stream.ReadByte();
 	uint16_t serial = packet.stream.ReadShort();
 	uint16_t ack = packet.stream.ReadShort();
@@ -168,15 +172,15 @@ void NetNodeInput::ReceivedPacket(NetInputPacket& packet, NetNodeOutput& outputS
 		}
 	}
 
-	mPackets.push_back(std::make_unique<Packet>(static_cast<const uint8_t*>(packet.stream.GetData()) + packetHeaderSize, packet.stream.GetSize() - packetHeaderSize, serial));
+	mPackets.push_back(std::make_unique<Packet>(packet.stream.GetDataLeft(), packet.stream.BytesLeft(), serial));
 }
 
 int NetNodeInput::SerialDiff(uint16_t serialA, uint16_t serialB)
 {
 	int delta = static_cast<int>(serialB) - static_cast<int>(serialA);
 	if (delta < -0x7fff)
-		delta += 0xffff;
+		delta += 0x10000;
 	else if (delta > 0x7fff)
-		delta -= 0xffff;
+		delta -= 0x10000;
 	return delta;
 }

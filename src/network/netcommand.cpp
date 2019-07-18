@@ -252,7 +252,7 @@ int ByteInputStream::ReadShort()
 	int	Short = -1;
 
 	if ((pbStream + 2) <= pbStreamEnd)
-		Short = (short)((pbStream[0]) + (pbStream[1] << 8));
+		Short = static_cast<short>(pbStream[0]) | (static_cast<short>(pbStream[1]) << 8);
 
 	// Advance the pointer.
 	pbStream += 2;
@@ -266,7 +266,7 @@ int ByteInputStream::ReadLong()
 
 	if ((pbStream + 4) <= pbStreamEnd)
 	{
-		Long = ((pbStream[0]) + (pbStream[1] << 8) + (pbStream[2] << 16) + (pbStream[3] << 24));
+		Long = static_cast<int>(pbStream[0]) | (static_cast<int>(pbStream[1]) << 8) | (static_cast<int>(pbStream[2]) << 16) | (static_cast<int>(pbStream[3]) << 24);
 	}
 
 	// Advance the pointer.
@@ -382,6 +382,20 @@ bool ByteInputStream::IsAtEnd() const
 int ByteInputStream::BytesLeft() const
 {
 	return (int)(ptrdiff_t)(pbStreamEnd - pbStream);
+}
+
+ByteInputStream ByteInputStream::ReadSubstream(int length)
+{
+	if ((pbStream + length) > pbStreamEnd)
+	{
+		pbStream = pbStreamEnd;
+		return {};
+	}
+	else
+	{
+		pbStream += length;
+		return { pbStream - length, length };
+	}
 }
 
 void ByteInputStream::EnsureBitSpace(int bits, bool writing)

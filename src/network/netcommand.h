@@ -44,8 +44,9 @@ public:
 	bool IsAtEnd() const;
 	int BytesLeft() const;
 
-	const void* GetData() const { return mData; }
-	int GetSize() const { return (int)(ptrdiff_t)(pbStream - mData); }
+	const void* GetDataLeft() const { return pbStream; }
+
+	ByteInputStream ReadSubstream(int length);
 
 private:
 	void EnsureBitSpace(int bits, bool writing);

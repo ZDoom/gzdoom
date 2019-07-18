@@ -74,7 +74,7 @@ NetServer::NetServer()
 
 	mComm = I_InitNetwork(DOOMPORT);
 
-	G_InitServerNetGame("e1m1");
+	G_InitNetGame(0, "e1m1", false);
 }
 
 void NetServer::Update()
@@ -95,6 +95,9 @@ void NetServer::Update()
 		else
 		{
 			node.Input.ReceivedPacket(packet, node.Output);
+
+			if (node.Status == NodeStatus::Closed)
+				node.Status = NodeStatus::InPreGame;
 		}
 	}
 

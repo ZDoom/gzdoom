@@ -62,5 +62,6 @@ private:
 
 	std::list<std::unique_ptr<Packet>> mPackets;
 	Packet* mCurrentPacket = nullptr;
-	int mCurrentOffset = 0;
+	ByteInputStream mPacketStream;
+	uint16_t mLastSeenSerial = 0;
 };

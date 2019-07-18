@@ -84,6 +84,9 @@ NetClient::NetClient(FString server)
 
 void NetClient::Update()
 {
+	if (mStatus == NodeStatus::InPreGame)
+		mOutput.Send(mComm.get(), mServerNode);
+
 	while (true)
 	{
 		NetInputPacket packet;
@@ -93,7 +96,14 @@ void NetClient::Update()
 
 		if (packet.node == mServerNode)
 		{
-			mInput.ReceivedPacket(packet, mOutput);
+			if (packet.stream.IsAtEnd())
+			{
+				OnClose();
+			}
+			else
+			{
+				mInput.ReceivedPacket(packet, mOutput);
+			}
 		}
 		else
 		{
@@ -103,8 +113,6 @@ void NetClient::Update()
 
 	while (mStatus == NodeStatus::InPreGame)
 	{
-		mOutput.Send(mComm.get(), mServerNode);
-
 		ByteInputStream message = mInput.ReadMessage();
 		if (message.IsAtEnd())
 			break;
@@ -143,8 +151,6 @@ void NetClient::BeginTic()
 		ByteInputStream message = mInput.ReadMessage();
 		if (message.IsAtEnd())
 			break;
-
-		//UpdateLastReceivedTic(message.ReadByte());
 
 		NetPacketType type = (NetPacketType)message.ReadByte();
 		switch (type)
@@ -253,7 +259,7 @@ void NetClient::OnConnectResponse(ByteInputStream &stream)
 			mPlayer = playernum;
 			mStatus = NodeStatus::InGame;
 
-			G_InitClientNetGame(mPlayer, "e1m1");
+			G_InitNetGame(mPlayer, "e1m1", true);
 
 			network = std::move(netconnect);
 		}
@@ -287,9 +293,9 @@ void NetClient::OnTic(ByteInputStream &stream)
 	int inputtic = stream.ReadByte();
 	int delta = (mSendTic & 0xff) - inputtic;
 	if (delta < -0x7f)
-		delta += 0xff;
+		delta += 0x100;
 	else if (delta > 0x7f)
-		delta -= 0xff;
+		delta -= 0x100;
 	mReceiveTic = std::max(mSendTic - delta, 0);
 
 	DVector3 Pos, Vel;

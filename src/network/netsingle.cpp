@@ -65,14 +65,11 @@
 #include "events.h"
 #include "i_time.h"
 
-extern bool netserver, netclient;
-
 NetSinglePlayer::NetSinglePlayer()
 {
 	netgame = false;
-	netclient = false;
-	netserver = false;
 	multiplayer = false;
+	multiplayernext = false;
 	consoleplayer = 0;
 	players[0].settings_controller = true;
 	playeringame[0] = true;

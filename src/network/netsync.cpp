@@ -41,10 +41,10 @@ public:
 			if (firstwrite)
 			{
 				firstwrite = false;
-				cmd.addShort(NetID);
+				cmd.AddShort(NetID);
 			}
-			cmd.addByte(fieldindex);
-			cmd.addBuffer(actorval, (int)size);
+			cmd.AddByte(fieldindex);
+			cmd.AddBuffer(actorval, (int)size);
 			memcpy(compval, actorval, size);
 		}
 		fieldindex++;
@@ -54,7 +54,7 @@ public:
 	{
 		if (!firstwrite)
 		{
-			cmd.addByte(255);
+			cmd.AddByte(255);
 		}
 	}
 

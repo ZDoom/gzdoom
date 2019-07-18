@@ -1061,7 +1061,7 @@ public:
 
 		for (int i = 0; i < tics; i++)
 		{
-			network->SetCurrentTic(gametime.BaseGameTic() + i);
+			network->BeginTic();
 			network->WriteLocalInput(G_BuildTiccmd());
 
 			if (advancedemo)
@@ -1071,7 +1071,7 @@ public:
 			M_Ticker();
 			G_Ticker();
 
-			network->EndCurrentTic();
+			network->EndTic();
 			LoopBackCommands();
 		}
 

@@ -9,6 +9,9 @@ void NetNodeOutput::WriteMessage(const void* data, size_t size, bool unreliable)
 
 void NetNodeOutput::Send(doomcom_t* comm, int nodeIndex)
 {
+	if (mMessages.empty())
+		return;
+
 	NetOutputPacket packet(nodeIndex);
 	packet.stream.WriteByte(0);
 	packet.stream.WriteByte(mHeaderFlags);

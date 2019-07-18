@@ -40,11 +40,9 @@ public:
 	// Check for incoming packets
 	virtual void Update() = 0;
 
-	// Set current tic time
-	virtual void SetCurrentTic(int localtic) = 0;
-
-	// Send any pending outgoing data
-	virtual void EndCurrentTic() = 0;
+	// Called when starting and ending a playsim tic
+	virtual void BeginTic() = 0;
+	virtual void EndTic() = 0;
 
 	// Retrieve data about the current tic
 	virtual int GetSendTick() const = 0;
@@ -57,7 +55,6 @@ public:
 
 	// Statistics
 	virtual int GetPing(int player) const = 0;
-	virtual int GetServerPing() const = 0;
 	int GetHighPingThreshold() const { return ((BACKUPTICS / 2 - 1)) * (1000 / TICRATE); }
 
 	// CCMDs

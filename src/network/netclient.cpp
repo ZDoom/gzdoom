@@ -77,13 +77,9 @@ NetClient::NetClient(FString server)
 	mServerNode = mComm->Connect(server);
 	mStatus = NodeStatus::InPreGame;
 
-	NetOutputPacket packet(mServerNode);
-
-	NetCommand cmd ( NetPacketType::ConnectRequest );
-	cmd.addString("ZDoom Connect Request");
-	cmd.writeCommandToStream (packet.stream);
-
-	mComm->PacketSend(packet);
+	NetCommand cmd(NetPacketType::ConnectRequest);
+	cmd.AddString("ZDoom Connect Request");
+	cmd.WriteToNode(mOutput);
 }
 
 void NetClient::Update()
@@ -95,77 +91,81 @@ void NetClient::Update()
 		if (packet.node == -1)
 			break;
 
-		if (packet.node != mServerNode)
+		if (packet.node == mServerNode)
 		{
-			mComm->Close(packet.node);
-		}
-		else if (packet.stream.IsAtEnd())
-		{
-			OnClose();
-			break;
+			mInput.ReceivedPacket(packet, mOutput);
 		}
 		else
 		{
-			UpdateLastReceivedTic(packet.stream.ReadByte());
-
-			if (mStatus == NodeStatus::InPreGame)
-			{
-				ProcessCommands(packet.stream);
-			}
-			else
-			{
-				auto &ticUpdate = mTicUpdates[mLastReceivedTic % BACKUPTICS];
-				ticUpdate.Resize(packet.stream.BytesLeft());
-				packet.stream.ReadBuffer(ticUpdate.Data(), ticUpdate.Size());
-			}
+			mComm->Close(packet.node);
 		}
+	}
 
-		if (mStatus == NodeStatus::Closed)
+	while (mStatus == NodeStatus::InPreGame)
+	{
+		mOutput.Send(mComm.get(), mServerNode);
+
+		ByteInputStream message = mInput.ReadMessage();
+		if (message.IsAtEnd())
+			break;
+
+		NetPacketType type = (NetPacketType)message.ReadByte();
+		switch (type)
 		{
-			if (network.get() == this)
-			{
-				network.reset(new NetSinglePlayer());
-				G_EndNetGame();
-			}
-			else
-			{
-				netconnect.reset();
-			}
-			return;
+		default: OnClose(); break;
+		case NetPacketType::ConnectResponse: OnConnectResponse(message); break;
+		}
+	}
+
+	if (mStatus == NodeStatus::Closed)
+	{
+		if (network.get() == this)
+		{
+			network.reset(new NetSinglePlayer());
+			G_EndNetGame();
+		}
+		else
+		{
+			netconnect.reset();
 		}
 	}
 }
 
-void NetClient::SetCurrentTic(int tictime)
+void NetClient::BeginTic()
 {
-	gametic = tictime;
-	mSendTic = gametic + 10;
-
-	if (abs(gametic + mServerTicDelta - mLastReceivedTic) > jitter)
-	{
-		mServerTicDelta = mLastReceivedTic - gametic - jitter;
-	}
-
-	mServerTic = MAX(gametic + mServerTicDelta, 0);
-
-	mCurrentInput[consoleplayer] = mSentInput[gametic % BACKUPTICS];
-
 	// [BB] Don't check net packets while we are supposed to load a map.
 	// This way the commands from the full update will not be parsed before we loaded the map.
-	//if ((gameaction == ga_newgame) || (gameaction == ga_newgame2))
-	//	return;
+	if ((gameaction == ga_newgame) || (gameaction == ga_newgame2))
+		return;
 
-	TArray<uint8_t> &update = mTicUpdates[mServerTic % BACKUPTICS];
-	if (update.Size() > 0)
+	while (mStatus == NodeStatus::InGame)
 	{
-		ByteInputStream stream(update.Data(), update.Size());
-		ProcessCommands(stream);
-		update.Clear();
+		ByteInputStream message = mInput.ReadMessage();
+		if (message.IsAtEnd())
+			break;
+
+		//UpdateLastReceivedTic(message.ReadByte());
+
+		NetPacketType type = (NetPacketType)message.ReadByte();
+		switch (type)
+		{
+		default: OnClose(); break;
+		case NetPacketType::Disconnect: OnDisconnect(); break;
+		case NetPacketType::Tic: OnTic(message); break;
+		case NetPacketType::SpawnActor: OnSpawnActor(message); break;
+		case NetPacketType::DestroyActor: OnDestroyActor(message); break;
+		}
 	}
+
+	gametic = mReceiveTic;
+	mSendTic++;
+
+	mCurrentInput[consoleplayer] = mSentInput[gametic % BACKUPTICS];
 }
 
-void NetClient::EndCurrentTic()
+void NetClient::EndTic()
 {
+	mOutput.Send(mComm.get(), mServerNode);
 }
 
 int NetClient::GetSendTick() const
@@ -189,16 +189,10 @@ void NetClient::WriteLocalInput(ticcmd_t ticcmd)
 
 	if (mStatus == NodeStatus::InGame)
 	{
-		int targettic = (mSendTic + mServerTicDelta);
-
-		NetOutputPacket packet(mServerNode);
-
 		NetCommand cmd(NetPacketType::Tic);
-		cmd.addByte(targettic); // target gametic
-		cmd.addBuffer(&ticcmd.ucmd, sizeof(usercmd_t));
-		cmd.writeCommandToStream(packet.stream);
-
-		mComm->PacketSend(packet);
+		cmd.AddByte(mSendTic);
+		cmd.AddBuffer(&ticcmd.ucmd, sizeof(usercmd_t));
+		cmd.WriteToNode(mOutput, true);
 	}
 }
 
@@ -209,12 +203,10 @@ void NetClient::WriteBotInput(int player, const ticcmd_t &cmd)
 
 int NetClient::GetPing(int player) const
 {
-	return 0;
-}
-
-int NetClient::GetServerPing() const
-{
-	return 0;
+	if (player == consoleplayer)
+		return (mSendTic - mReceiveTic) * 1000 / TICRATE;
+	else
+		return 0;
 }
 
 void NetClient::ListPingTimes()
@@ -232,39 +224,6 @@ void NetClient::ActorSpawned(AActor *actor)
 
 void NetClient::ActorDestroyed(AActor *actor)
 {
-}
-
-void NetClient::UpdateLastReceivedTic(int tic)
-{
-	if (mLastReceivedTic != -1)
-	{
-		int delta = tic - (mLastReceivedTic & 0xff);
-		if (delta > 128) delta -= 256;
-		else if (delta < -128) delta += 256;
-		mLastReceivedTic += delta;
-	}
-	else
-	{
-		mLastReceivedTic = tic;
-	}
-	mLastReceivedTic = MAX(mLastReceivedTic, 0);
-}
-
-void NetClient::ProcessCommands(ByteInputStream &stream)
-{
-	while (stream.IsAtEnd() == false)
-	{
-		NetPacketType type = (NetPacketType)stream.ReadByte();
-		switch (type)
-		{
-		default: OnClose(); break;
-		case NetPacketType::ConnectResponse: OnConnectResponse(stream); break;
-		case NetPacketType::Disconnect: OnDisconnect(); break;
-		case NetPacketType::Tic: OnTic(stream); break;
-		case NetPacketType::SpawnActor: OnSpawnActor(stream); break;
-		case NetPacketType::DestroyActor: OnDestroyActor(stream); break;
-		}
-	}
 }
 
 void NetClient::OnClose()
@@ -293,7 +252,6 @@ void NetClient::OnConnectResponse(ByteInputStream &stream)
 		{
 			mPlayer = playernum;
 			mStatus = NodeStatus::InGame;
-			mServerTicDelta = mLastReceivedTic - gametic - jitter;
 
 			G_InitClientNetGame(mPlayer, "e1m1");
 
@@ -326,6 +284,14 @@ void NetClient::OnDisconnect()
 
 void NetClient::OnTic(ByteInputStream &stream)
 {
+	int inputtic = stream.ReadByte();
+	int delta = (mSendTic & 0xff) - inputtic;
+	if (delta < -0x7f)
+		delta += 0xff;
+	else if (delta > 0x7f)
+		delta -= 0xff;
+	mReceiveTic = std::max(mSendTic - delta, 0);
+
 	DVector3 Pos, Vel;
 	float yaw, pitch;
 	Pos.X = stream.ReadFloat();

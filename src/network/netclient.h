@@ -23,6 +23,7 @@
 
 #include "netserver.h"
 #include "netcommand.h"
+#include "netnode.h"
 #include "playsim/a_dynlight.h"
 
 class NetClient : public Network
@@ -32,8 +33,8 @@ public:
 
 	void Update() override;
 
-	void SetCurrentTic(int tictime) override;
-	void EndCurrentTic() override;
+	void BeginTic() override;
+	void EndTic() override;
 
 	int GetSendTick() const override;
 	ticcmd_t GetPlayerInput(int player) const override;
@@ -43,7 +44,6 @@ public:
 	void WriteBotInput(int player, const ticcmd_t &cmd) override;
 
 	int GetPing(int player) const override;
-	int GetServerPing() const override;
 
 	void ListPingTimes() override;
 	void Network_Controller(int playernum, bool add) override;
@@ -59,22 +59,15 @@ private:
 	void OnSpawnActor(ByteInputStream &stream);
 	void OnDestroyActor(ByteInputStream &stream);
 
-	void ProcessCommands(ByteInputStream &stream);
-	void UpdateLastReceivedTic(int tic);
-
 	std::unique_ptr<doomcom_t> mComm;
+	NetNodeInput mInput;
+	NetNodeOutput mOutput;
 	int mServerNode = -1;
 	int mPlayer = -1;
 	NodeStatus mStatus = NodeStatus::Closed;
 
-	int mSendTic = 0;
-	int mServerTic = 0;
-	int mServerTicDelta = -1;
-	int mLastReceivedTic = -1;
-
-	int jitter = 2;
-
-	TArray<uint8_t> mTicUpdates[BACKUPTICS];
+	int mReceiveTic = 0;
+	int mSendTic = 1;
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	ticcmd_t mSentInput[BACKUPTICS];

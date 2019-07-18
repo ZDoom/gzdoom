@@ -82,12 +82,12 @@ void NetSinglePlayer::Update()
 {
 }
 
-void NetSinglePlayer::SetCurrentTic(int tictime)
+void NetSinglePlayer::BeginTic()
 {
-	gametic = tictime;
+	gametic++;
 }
 
-void NetSinglePlayer::EndCurrentTic()
+void NetSinglePlayer::EndTic()
 {
 }
 
@@ -117,11 +117,6 @@ void NetSinglePlayer::WriteBotInput(int player, const ticcmd_t &cmd)
 }
 
 int NetSinglePlayer::GetPing(int player) const
-{
-	return 0;
-}
-
-int NetSinglePlayer::GetServerPing() const
 {
 	return 0;
 }

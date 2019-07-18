@@ -23,6 +23,7 @@
 
 #include "net.h"
 #include "netcommand.h"
+#include "netnode.h"
 
 enum class NodeStatus
 {
@@ -41,12 +42,8 @@ struct NetNode
 	int NodeIndex = -1;
 	bool FirstTic = true;
 
-	struct TicUpdate
-	{
-		bool received = false;
-		usercmd_t input;
-	};
-	TicUpdate TicUpdates[BACKUPTICS];
+	NetNodeInput Input;
+	NetNodeOutput Output;
 };
 
 class NetServer : public Network
@@ -56,8 +53,8 @@ public:
 
 	void Update() override;
 
-	void SetCurrentTic(int tictime) override;
-	void EndCurrentTic() override;
+	void BeginTic() override;
+	void EndTic() override;
 
 	int GetSendTick() const override;
 	ticcmd_t GetPlayerInput(int player) const override;
@@ -67,7 +64,6 @@ public:
 	void WriteBotInput(int player, const ticcmd_t &cmd) override;
 
 	int GetPing(int player) const override;
-	int GetServerPing() const override;
 
 	void ListPingTimes() override;
 	void Network_Controller(int playernum, bool add) override;
@@ -76,21 +72,24 @@ public:
 	void ActorDestroyed(AActor *actor) override;
 
 private:
-	void OnClose(NetNode &node, ByteInputStream &stream);
 	void OnConnectRequest(NetNode &node, ByteInputStream &stream);
 	void OnDisconnect(NetNode &node, ByteInputStream &stream);
 	void OnTic(NetNode &node, ByteInputStream &packet);
 
-	void CmdSpawnActor(ByteOutputStream &stream, AActor *actor);
-	void CmdDestroyActor(ByteOutputStream &stream, AActor *actor);
+	void CmdConnectResponse(int nodeIndex);
+	void CmdTic(int nodeIndex);
+	void CmdSpawnActor(int nodeIndex, AActor *actor);
+	void CmdDestroyActor(int nodeIndex, AActor *actor);
+
+	void Close(NetNode &node);
+	void WriteCommand(int nodeIndex, NetCommand& command, bool unreliable = false);
 
 	std::unique_ptr<doomcom_t> mComm;
 	NetNode mNodes[MAXNETNODES];
 	int mNodeForPlayer[MAXPLAYERS];
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
+	int mCurrentInputTic[MAXPLAYERS] = { 0 };
 
 	IDList<AActor> mNetIDList;
-
-	ByteOutputStream mBroadcastCommands; // Playsim events everyone should hear about
 };

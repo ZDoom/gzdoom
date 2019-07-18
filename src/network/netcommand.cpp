@@ -18,6 +18,7 @@
 
 #include "d_player.h"
 #include "netcommand.h"
+#include "netnode.h"
 #include "i_net.h"
 
 extern bool netserver, netclient;
@@ -411,31 +412,31 @@ NetCommand::NetCommand(const NetPacketType Header)
 	// To do: improve memory handling here. 8 kb per command is very wasteful
 	mStream.SetBuffer(MAX_UDP_PACKET);
 
-	addByte(static_cast<int>(Header));
+	AddByte(static_cast<int>(Header));
 }
 
-void NetCommand::addInteger(const int IntValue, const int Size)
+void NetCommand::AddInteger(const int IntValue, const int Size)
 {
 	for (int i = 0; i < Size; ++i)
 		mStream.WriteByte((IntValue >> (8 * i)) & 0xff);
 }
 
-void NetCommand::addByte(const int ByteValue)
+void NetCommand::AddByte(const int ByteValue)
 {
-	addInteger(static_cast<uint8_t> (ByteValue), sizeof(uint8_t));
+	AddInteger(static_cast<uint8_t> (ByteValue), sizeof(uint8_t));
 }
 
-void NetCommand::addShort(const int ShortValue)
+void NetCommand::AddShort(const int ShortValue)
 {
-	addInteger(static_cast<int16_t> (ShortValue), sizeof(int16_t));
+	AddInteger(static_cast<int16_t> (ShortValue), sizeof(int16_t));
 }
 
-void NetCommand::addLong(const int32_t LongValue)
+void NetCommand::AddLong(const int32_t LongValue)
 {
-	addInteger(LongValue, sizeof(int32_t));
+	AddInteger(LongValue, sizeof(int32_t));
 }
 
-void NetCommand::addFloat(const float FloatValue)
+void NetCommand::AddFloat(const float FloatValue)
 {
 	union
 	{
@@ -443,25 +444,25 @@ void NetCommand::addFloat(const float FloatValue)
 		int32_t	l;
 	} dat;
 	dat.f = FloatValue;
-	addInteger(dat.l, sizeof(int32_t));
+	AddInteger(dat.l, sizeof(int32_t));
 }
 
-void NetCommand::addBit(const bool value)
+void NetCommand::AddBit(const bool value)
 {
 	mStream.WriteBit(value);
 }
 
-void NetCommand::addVariable(const int value)
+void NetCommand::AddVariable(const int value)
 {
 	mStream.WriteVariable(value);
 }
 
-void NetCommand::addShortByte(int value, int bits)
+void NetCommand::AddShortByte(int value, int bits)
 {
 	mStream.WriteShortByte(value, bits);
 }
 
-void NetCommand::addString(const char *pszString)
+void NetCommand::AddString(const char *pszString)
 {
 	const int len = (pszString != nullptr) ? (int)strlen(pszString) : 0;
 
@@ -472,34 +473,29 @@ void NetCommand::addString(const char *pszString)
 	}
 
 	for (int i = 0; i < len; ++i)
-		addByte(pszString[i]);
-	addByte(0);
+		AddByte(pszString[i]);
+	AddByte(0);
 }
 
-void NetCommand::addName(FName name)
+void NetCommand::AddName(FName name)
 {
 	if (name.IsPredefined())
 	{
-		addShort(name);
+		AddShort(name);
 	}
 	else
 	{
-		addShort(-1);
-		addString(name);
+		AddShort(-1);
+		AddString(name);
 	}
 }
 
-void NetCommand::addBuffer(const void *pvBuffer, int nLength)
+void NetCommand::AddBuffer(const void *pvBuffer, int nLength)
 {
 	mStream.WriteBuffer(pvBuffer, nLength);
 }
 
-void NetCommand::writeCommandToStream(ByteOutputStream &stream) const
+void NetCommand::WriteToNode(NetNodeOutput& node, bool unreliable) const
 {
-	stream.WriteBuffer(mStream.GetData(), mStream.GetSize());
-}
-
-int NetCommand::getSize() const
-{
-	return mStream.GetSize();
+	node.WriteMessage(mStream.GetData(), mStream.GetSize(), unreliable);
 }

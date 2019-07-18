@@ -69,8 +69,6 @@ NetServer::NetServer()
 {
 	Printf("Started hosting multiplayer game..\n");
 
-	mBroadcastCommands.SetBuffer(MAX_MSGLEN);
-
 	for (int i = 0; i < MAXNETNODES; i++)
 		mNodes[i].NodeIndex = i;
 
@@ -81,132 +79,80 @@ NetServer::NetServer()
 
 void NetServer::Update()
 {
-	// Read all packets currently available from clients
 	while (true)
 	{
 		NetInputPacket packet;
 		mComm->PacketGet(packet);
 		if (packet.node == -1)
-			break; // No more packets. We are done.
+			break;
 
-		NetNode &node = mNodes[packet.node];
-
-		if (packet.stream.IsAtEnd()) // Connection to node closed (timed out)
+		NetNode& node = mNodes[packet.node];
+		if (packet.stream.IsAtEnd())
 		{
-			OnClose(node, packet.stream);
+			// Connection to node closed (timed out)
+			Close(node);
 		}
 		else
 		{
-			while (packet.stream.IsAtEnd() == false)
-			{
-				NetPacketType type = (NetPacketType)packet.stream.ReadByte();
-				switch (type)
-				{
-				default: OnClose(node, packet.stream); break;
-				case NetPacketType::ConnectRequest: OnConnectRequest(node, packet.stream); break;
-				case NetPacketType::Disconnect: OnDisconnect(node, packet.stream); break;
-				case NetPacketType::Tic: OnTic(node, packet.stream); break;
-				}
-			}
+			node.Input.ReceivedPacket(packet, node.Output);
 		}
 	}
-}
 
-void NetServer::SetCurrentTic(int tictime)
-{
-	gametic = tictime;
-
-	for (int i = 0; i < MAXNETNODES; i++)
+	for (int nodeIndex = 0; nodeIndex < MAXNETNODES; nodeIndex++)
 	{
-		NetNode &node = mNodes[i];
-		if (node.Status == NodeStatus::InGame && node.Player != -1)
+		NetNode &node = mNodes[nodeIndex];
+		while (node.Status != NodeStatus::Closed)
 		{
-			NetNode::TicUpdate &update = node.TicUpdates[gametic % BACKUPTICS];
-			if (update.received)
+			ByteInputStream message = node.Input.ReadMessage();
+			if (message.IsAtEnd())
+				break;
+
+			NetPacketType type = (NetPacketType)message.ReadByte();
+			switch (type)
 			{
-				mCurrentInput[node.Player].ucmd = update.input;
-				update.received = false;
+			default: Close(node); break;
+			case NetPacketType::ConnectRequest: OnConnectRequest(node, message); break;
+			case NetPacketType::Disconnect: OnDisconnect(node, message); break;
+			case NetPacketType::Tic: OnTic(node, message); break;
 			}
 		}
 	}
 }
 
-void NetServer::EndCurrentTic()
+void NetServer::BeginTic()
+{
+	gametic++;
+}
+
+void NetServer::EndTic()
 {
 	for (int i = 0; i < MAXNETNODES; i++)
 	{
 		if (mNodes[i].Status == NodeStatus::InGame)
 		{
-			int player = mNodes[i].Player;
-
-			NetOutputPacket packet(i);
-			packet.stream.WriteByte(gametic + 1);
+			//packet.stream.WriteByte(gametic + 1);
 
 			if (mNodes[i].FirstTic)
 			{
+				int player = mNodes[i].Player;
+
 				TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
 				AActor *mo;
 				while (mo = it.Next())
 				{
 					if (mo != players[player].mo)
 					{
-						CmdSpawnActor(packet.stream, mo);
+						CmdSpawnActor(i, mo);
 					}
 				}
 				mNodes[i].FirstTic = false;
 			}
 
-			packet.stream.WriteBuffer(mBroadcastCommands.GetData(), mBroadcastCommands.GetSize());
-
-			NetCommand cmd ( NetPacketType::Tic);
-
-			if (playeringame[player] && players[player].mo)
-			{
-				cmd.addFloat(static_cast<float> (players[player].mo->X()));
-				cmd.addFloat(static_cast<float> (players[player].mo->Y()));
-				cmd.addFloat(static_cast<float> (players[player].mo->Z()));
-				cmd.addFloat(static_cast<float> (players[player].mo->Vel.X));
-				cmd.addFloat(static_cast<float> (players[player].mo->Vel.Y));
-				cmd.addFloat(static_cast<float> (players[player].mo->Vel.Z));
-				cmd.addFloat(static_cast<float> (players[player].mo->Angles.Yaw.Degrees));
-				cmd.addFloat(static_cast<float> (players[player].mo->Angles.Pitch.Degrees));
-			}
-			else
-			{
-				cmd.addFloat(0.0f);
-				cmd.addFloat(0.0f);
-				cmd.addFloat(0.0f);
-				cmd.addFloat(0.0f);
-				cmd.addFloat(0.0f);
-				cmd.addFloat(0.0f);
-				cmd.addFloat(0.0f);
-				cmd.addFloat(0.0f);
-			}
-
-			TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
-			AActor *mo;
-			while (mo = it.Next())
-			{
-				if (mo != players[player].mo && mo->syncdata.NetID)
-				{
-					cmd.addShort(mo->syncdata.NetID);
-					cmd.addFloat(static_cast<float> (mo->X()));
-					cmd.addFloat(static_cast<float> (mo->Y()));
-					cmd.addFloat(static_cast<float> (mo->Z()));
-					cmd.addFloat(static_cast<float> (mo->Angles.Yaw.Degrees));
-					cmd.addFloat(static_cast<float> (mo->Angles.Pitch.Degrees));
-					cmd.addShort(mo->sprite);
-					cmd.addByte(mo->frame);
-				}
-			}
-			cmd.addShort(-1);
-
-			cmd.writeCommandToStream(packet.stream);
-			mComm->PacketSend(packet);
+			CmdTic(i);
 		}
-	}
 
-	mBroadcastCommands.ResetPos();
+		mNodes[i].Output.Send(mComm.get(), i);
+	}
 }
 
 int NetServer::GetSendTick() const
@@ -239,11 +185,6 @@ int NetServer::GetPing(int player) const
 	return 0;
 }
 
-int NetServer::GetServerPing() const
-{
-	return 0;
-}
-
 void NetServer::ListPingTimes()
 {
 #if 0
@@ -257,21 +198,6 @@ void NetServer::Network_Controller(int playernum, bool add)
 {
 }
 
-void NetServer::OnClose(NetNode &node, ByteInputStream &stream)
-{
-	if (node.Status == NodeStatus::InGame)
-	{
-		Printf("Player %d left the server\n", node.Player);
-
-		playeringame[node.Player] = false;
-		players[node.Player].settings_controller = false;
-		node.Player = -1;
-	}
-
-	node.Status = NodeStatus::Closed;
-	mComm->Close(node.NodeIndex);
-}
-
 void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 {
 	// Make the initial connect packet a bit more complex than a bunch of zeros..
@@ -283,8 +209,7 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 		}
 		else
 		{
-			node.Status = NodeStatus::Closed;
-			mComm->Close(node.NodeIndex);
+			Close(node);
 			return;
 		}
 	}
@@ -306,9 +231,6 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 	{
 		Printf("Player %d joined the server\n", node.Player);
 
-		for (int i = 0; i < BACKUPTICS; i++)
-			node.TicUpdates[i].received = false;
-
 		node.FirstTic = true;
 		node.Status = NodeStatus::InGame;
 		mNodeForPlayer[node.Player] = node.NodeIndex;
@@ -316,36 +238,127 @@ void NetServer::OnConnectRequest(NetNode &node, ByteInputStream &stream)
 		playeringame[node.Player] = true;
 		players[node.Player].settings_controller = false;
 
-		NetOutputPacket response(node.NodeIndex);
-		response.stream.WriteByte(gametic);
-
-		NetCommand cmd ( NetPacketType::ConnectResponse );
-		cmd.addByte ( 1 ); // Protocol version
-		cmd.addByte ( node.Player );
-		cmd.writeCommandToStream ( response.stream );
-
-		mComm->PacketSend(response);
+		CmdConnectResponse(node.NodeIndex);
 	}
 	else // Server is full.
 	{
-		node.Status = NodeStatus::Closed;
-
-		NetOutputPacket response(node.NodeIndex);
-		response.stream.WriteByte(gametic);
-
-		NetCommand cmd ( NetPacketType::ConnectResponse );
-		cmd.addByte ( 1 ); // Protocol version
-		cmd.addByte ( 255 );
-		cmd.writeCommandToStream (response.stream);
-
-		mComm->PacketSend(response);
-
-		node.Status = NodeStatus::Closed;
-		mComm->Close(node.NodeIndex);
+		CmdConnectResponse(node.NodeIndex);
+		node.Output.Send(mComm.get(), node.NodeIndex);
+		Close(node);
 	}
 }
 
 void NetServer::OnDisconnect(NetNode &node, ByteInputStream &stream)
+{
+	node.Output.Send(mComm.get(), node.NodeIndex);
+	Close(node);
+}
+
+void NetServer::OnTic(NetNode &node, ByteInputStream &stream)
+{
+	if (node.Status != NodeStatus::InGame)
+		return;
+
+	mCurrentInputTic[node.Player] = stream.ReadByte();
+	stream.ReadBuffer(&mCurrentInput[node.Player].ucmd, sizeof(usercmd_t));
+}
+
+void NetServer::CmdConnectResponse(int nodeIndex)
+{
+	int player = mNodes[nodeIndex].Player;
+	if (player == -1)
+		player = 255;
+
+	NetCommand cmd(NetPacketType::ConnectResponse);
+	cmd.AddByte(1); // Protocol version
+	cmd.AddByte(player);
+	WriteCommand(nodeIndex, cmd);
+}
+
+void NetServer::CmdTic(int nodeIndex)
+{
+	int player = mNodes[nodeIndex].Player;
+
+	NetCommand cmd(NetPacketType::Tic);
+
+	cmd.AddByte(mCurrentInputTic[player]);
+
+	if (playeringame[player] && players[player].mo)
+	{
+		cmd.AddFloat(static_cast<float> (players[player].mo->X()));
+		cmd.AddFloat(static_cast<float> (players[player].mo->Y()));
+		cmd.AddFloat(static_cast<float> (players[player].mo->Z()));
+		cmd.AddFloat(static_cast<float> (players[player].mo->Vel.X));
+		cmd.AddFloat(static_cast<float> (players[player].mo->Vel.Y));
+		cmd.AddFloat(static_cast<float> (players[player].mo->Vel.Z));
+		cmd.AddFloat(static_cast<float> (players[player].mo->Angles.Yaw.Degrees));
+		cmd.AddFloat(static_cast<float> (players[player].mo->Angles.Pitch.Degrees));
+	}
+	else
+	{
+		cmd.AddFloat(0.0f);
+		cmd.AddFloat(0.0f);
+		cmd.AddFloat(0.0f);
+		cmd.AddFloat(0.0f);
+		cmd.AddFloat(0.0f);
+		cmd.AddFloat(0.0f);
+		cmd.AddFloat(0.0f);
+		cmd.AddFloat(0.0f);
+	}
+
+	TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
+	AActor* mo;
+	while (mo = it.Next())
+	{
+		if (mo != players[player].mo && mo->syncdata.NetID)
+		{
+			cmd.AddShort(mo->syncdata.NetID);
+			cmd.AddFloat(static_cast<float> (mo->X()));
+			cmd.AddFloat(static_cast<float> (mo->Y()));
+			cmd.AddFloat(static_cast<float> (mo->Z()));
+			cmd.AddFloat(static_cast<float> (mo->Angles.Yaw.Degrees));
+			cmd.AddFloat(static_cast<float> (mo->Angles.Pitch.Degrees));
+			cmd.AddShort(mo->sprite);
+			cmd.AddByte(mo->frame);
+		}
+	}
+	cmd.AddShort(-1);
+
+	WriteCommand(nodeIndex, cmd, true);
+}
+
+void NetServer::CmdSpawnActor(int nodeIndex, AActor *actor)
+{
+	NetCommand cmd(NetPacketType::SpawnActor);
+	cmd.AddShort(actor->syncdata.NetID);
+	cmd.AddFloat(static_cast<float>(actor->X()));
+	cmd.AddFloat(static_cast<float>(actor->Y()));
+	cmd.AddFloat(static_cast<float>(actor->Z()));
+	WriteCommand(nodeIndex, cmd);
+}
+
+void NetServer::CmdDestroyActor(int nodeIndex, AActor *actor)
+{
+	NetCommand cmd(NetPacketType::DestroyActor);
+	cmd.AddShort(actor->syncdata.NetID);
+	WriteCommand(nodeIndex, cmd);
+}
+
+void NetServer::ActorSpawned(AActor *actor)
+{
+	actor->syncdata.NetID = mNetIDList.getNewID();
+	mNetIDList.useID(actor->syncdata.NetID, actor);
+
+	CmdSpawnActor(-1, actor);
+}
+
+void NetServer::ActorDestroyed(AActor *actor)
+{
+	CmdDestroyActor(-1, actor);
+	mNetIDList.freeID(actor->syncdata.NetID);
+}
+
+void NetServer::Close(NetNode &node)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
@@ -357,63 +370,25 @@ void NetServer::OnDisconnect(NetNode &node, ByteInputStream &stream)
 	}
 
 	node.Status = NodeStatus::Closed;
+	node.Input = {};
+	node.Output = {};
 	mComm->Close(node.NodeIndex);
 }
 
-void NetServer::OnTic(NetNode &node, ByteInputStream &stream)
+void NetServer::WriteCommand(int nodeIndex, NetCommand& command, bool unreliable)
 {
-	if (node.Status != NodeStatus::InGame)
-		return;
-
-	int tic = stream.ReadByte();
-	int delta = tic - (gametic & 0xff);
-	if (delta > 128) delta -= 256;
-	else if (delta < -128) delta += 256;
-	tic = gametic + delta;
-
-	NetNode::TicUpdate update;
-	update.received = true;
-	stream.ReadBuffer(&update.input, sizeof(usercmd_t));
-
-	if (tic <= gametic)
+	if (nodeIndex == -1)
 	{
-		// Packet arrived too late.
-		tic = gametic + 1;
-
-		if (tic < 0 || node.TicUpdates[tic % BACKUPTICS].received)
-			return; // We already received the proper packet.
+		for (int i = 0; i < MAXNETNODES; i++)
+		{
+			if (mNodes[i].Status == NodeStatus::InGame)
+			{
+				command.WriteToNode(mNodes[i].Output, unreliable);
+			}
+		}
 	}
-
-	node.TicUpdates[tic % BACKUPTICS] = update;
-}
-
-void NetServer::CmdSpawnActor(ByteOutputStream &stream, AActor *actor)
-{
-	NetCommand cmd(NetPacketType::SpawnActor);
-	cmd.addShort(actor->syncdata.NetID);
-	cmd.addFloat(static_cast<float>(actor->X()));
-	cmd.addFloat(static_cast<float>(actor->Y()));
-	cmd.addFloat(static_cast<float>(actor->Z()));
-	cmd.writeCommandToStream(stream);
-}
-
-void NetServer::CmdDestroyActor(ByteOutputStream &stream, AActor *actor)
-{
-	NetCommand cmd(NetPacketType::DestroyActor);
-	cmd.addShort(actor->syncdata.NetID);
-	cmd.writeCommandToStream(stream);
-}
-
-void NetServer::ActorSpawned(AActor *actor)
-{
-	actor->syncdata.NetID = mNetIDList.getNewID();
-	mNetIDList.useID(actor->syncdata.NetID, actor);
-
-	CmdSpawnActor(mBroadcastCommands, actor);
-}
-
-void NetServer::ActorDestroyed(AActor *actor)
-{
-	CmdDestroyActor(mBroadcastCommands, actor);
-	mNetIDList.freeID(actor->syncdata.NetID);
+	else
+	{
+		command.WriteToNode(mNodes[nodeIndex].Output, unreliable);
+	}
 }

@@ -30,8 +30,8 @@ public:
 
 	void Update() override;
 
-	void SetCurrentTic(int tictime) override;
-	void EndCurrentTic() override;
+	void BeginTic() override;
+	void EndTic() override;
 
 	int GetSendTick() const override;
 	ticcmd_t GetPlayerInput(int player) const override;
@@ -41,7 +41,6 @@ public:
 	void WriteBotInput(int player, const ticcmd_t &cmd) override;
 
 	int GetPing(int player) const override;
-	int GetServerPing() const override;
 
 	void ListPingTimes() override;
 	void Network_Controller(int playernum, bool add) override;

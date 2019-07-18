@@ -21,6 +21,8 @@ enum class NetPacketType
 	DestroyActor
 };
 
+class NetNodeOutput;
+
 class ByteInputStream
 {
 public:
@@ -108,24 +110,21 @@ private:
 class NetCommand
 {
 	ByteOutputStream mStream;
-	bool mUnreliable = false;
 
 public:
 	NetCommand ( const NetPacketType Header );
 
-	void addInteger( const int IntValue, const int Size );
-	void addByte ( const int ByteValue );
-	void addShort ( const int ShortValue );
-	void addLong ( const int32_t LongValue );
-	void addFloat ( const float FloatValue );
-	void addString ( const char *pszString );
-	void addName ( FName name );
-	void addBit ( const bool value );
-	void addVariable ( const int value );
-	void addShortByte ( int value, int bits );
-	void addBuffer ( const void *pvBuffer, int nLength );
-	void writeCommandToStream ( ByteOutputStream &stream ) const;
-	bool isUnreliable() const { return mUnreliable; }
-	void setUnreliable(bool a) { mUnreliable = a; }
-	int getSize() const;
+	void AddInteger( const int IntValue, const int Size );
+	void AddByte ( const int ByteValue );
+	void AddShort ( const int ShortValue );
+	void AddLong ( const int32_t LongValue );
+	void AddFloat ( const float FloatValue );
+	void AddString ( const char *pszString );
+	void AddName ( FName name );
+	void AddBit ( const bool value );
+	void AddVariable ( const int value );
+	void AddShortByte ( int value, int bits );
+	void AddBuffer ( const void *pvBuffer, int nLength );
+
+	void WriteToNode(NetNodeOutput &node, bool unreliable = false) const;
 };

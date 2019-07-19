@@ -81,8 +81,11 @@ namespace swrenderer
 		const double thingxscalemul = spriteScale.X / tex->GetScale().X;
 
 		// Calculate billboard line for the sprite
+		double SpriteOffX = (thing) ? thing->SpriteOffset.X : 0.;
 		DVector2 dir = { viewport->viewpoint.Sin, -viewport->viewpoint.Cos };
-		DVector2 pt1 = pos.XY() - viewport->viewpoint.Pos.XY() - dir * (((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul);
+		DVector2 trs = pos.XY() - viewport->viewpoint.Pos.XY();
+		trs = { trs.X + SpriteOffX * dir.X, trs.Y + SpriteOffX * dir.Y };
+		DVector2 pt1 = trs - dir * (((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul);
 		DVector2 pt2 = pt1 + dir * (tex->GetWidth() * thingxscalemul);
 
 		FWallCoords wallc;

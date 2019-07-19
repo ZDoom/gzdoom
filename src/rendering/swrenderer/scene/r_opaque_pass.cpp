@@ -1004,9 +1004,9 @@ namespace swrenderer
 
 	bool RenderOpaquePass::GetThingSprite(AActor *thing, ThingSprite &sprite)
 	{
+		// The X offsetting (SpriteOffset.X) is performed in r_sprite.cpp, in RenderSprite::Project().
 		sprite.pos = thing->InterpolatedPosition(Thread->Viewport->viewpoint.TicFrac);
-		sprite.pos.Z += thing->GetBobOffset(Thread->Viewport->viewpoint.TicFrac);
-
+		sprite.pos.Z += thing->GetBobOffset(Thread->Viewport->viewpoint.TicFrac) - thing->SpriteOffset.Y;
 		sprite.spritenum = thing->sprite;
 		sprite.tex = nullptr;
 		sprite.voxel = nullptr;

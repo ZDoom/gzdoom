@@ -73,7 +73,10 @@ NetServer::NetServer()
 		mNodes[i].NodeIndex = i;
 
 	mComm = I_InitNetwork(DOOMPORT);
+}
 
+void NetServer::Init()
+{
 	G_InitNetGame(0, "e1m1", false);
 }
 
@@ -133,8 +136,6 @@ void NetServer::EndTic()
 	{
 		if (mNodes[i].Status == NodeStatus::InGame)
 		{
-			//packet.stream.WriteByte(gametic + 1);
-
 			if (mNodes[i].FirstTic)
 			{
 				int player = mNodes[i].Player;

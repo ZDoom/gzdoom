@@ -1423,8 +1423,8 @@ void MapLoader::SpawnThings (int position)
 
 	for (int i=0; i < numthings; i++)
 	{
-		// Only spawn the player mobj for the client in a client/server game
-		if (netclient && (MapThingsConverted[i].info->Type || MapThingsConverted[i].info->Special != SMT_Player1Start + position))
+		// To do: should we spawn anything at all here? Might be better if the server explicitly spawned the playerpawn?
+		if (netclient && (MapThingsConverted[i].info->Special < SMT_Player1Start || MapThingsConverted[i].info->Special > SMT_DeathmatchStart))
 			continue;
 
 		AActor *actor = Level->SpawnMapThing (i, &MapThingsConverted[i], position);

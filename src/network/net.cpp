@@ -353,5 +353,7 @@ CCMD(connect)
 CCMD(hostgame)
 {
 	netconnect.reset();
-	network.reset(new NetServer());
+	std::unique_ptr<NetServer> netgame(new NetServer());
+	network = std::move(netgame);
+	netgame->Init();
 }

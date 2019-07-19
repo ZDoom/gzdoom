@@ -249,7 +249,7 @@ int ByteInputStream::ReadByte()
 
 int ByteInputStream::ReadShort()
 {
-	int	Short = -1;
+	short Short = -1;
 
 	if ((pbStream + 2) <= pbStreamEnd)
 		Short = static_cast<short>(pbStream[0]) | (static_cast<short>(pbStream[1]) << 8);

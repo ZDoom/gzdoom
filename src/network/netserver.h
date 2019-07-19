@@ -51,6 +51,8 @@ class NetServer : public Network
 public:
 	NetServer();
 
+	void Init();
+
 	void Update() override;
 
 	void BeginTic() override;

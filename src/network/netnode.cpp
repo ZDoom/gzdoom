@@ -96,11 +96,10 @@ void NetNodeInput::AdvanceToNextPacket()
 	}
 	else
 	{
-		mLastSeenSerial = mCurrentPacket->serial;
-
 		Packet* nextPacket = FindNextPacket(mCurrentPacket);
 		if (nextPacket)
 		{
+			mLastSeenSerial = mCurrentPacket->serial;
 			RemovePacket(mCurrentPacket);
 			mCurrentPacket = nextPacket;
 			mPacketStream = { mCurrentPacket->data, mCurrentPacket->size };
@@ -153,8 +152,8 @@ void NetNodeInput::RemovePacket(Packet* packet)
 void NetNodeInput::ReceivedPacket(NetInputPacket& packet, NetNodeOutput& outputStream)
 {
 	uint8_t headerFlags = packet.stream.ReadByte();
-	uint16_t serial = packet.stream.ReadShort();
 	uint16_t ack = packet.stream.ReadShort();
+	uint16_t serial = packet.stream.ReadShort();
 
 	outputStream.AckPacket(headerFlags, ack, serial);
 

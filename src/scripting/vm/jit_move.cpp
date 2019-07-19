@@ -57,9 +57,9 @@ static void CastTID2S(FString *a, int b) { auto tex = TexMan.GetTexture(*(FTextu
 
 void JitCompiler::EmitCAST()
 {
-	asmjit::X86Gp tmp, resultD;
-	asmjit::X86Xmm resultF;
-	asmjit::CCFuncCall *call = nullptr;
+	asmjit::x86::Gp tmp, resultD;
+	asmjit::x86::Xmm resultF;
+	asmjit::FuncCallNode *call = nullptr;
 
 	switch (C)
 	{
@@ -234,7 +234,7 @@ void JitCompiler::EmitDYNCAST_K()
 {
 	auto result = newResultIntPtr();
 	auto c = newTempIntPtr();
-	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
+	cc.mov(c, asmjit::imm(konsta[C].o));
 	auto call = CreateCall<DObject*, DObject*, PClass*>(DynCast);
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
@@ -262,7 +262,7 @@ void JitCompiler::EmitDYNCASTC_K()
 	using namespace asmjit;
 	auto result = newResultIntPtr();
 	auto c = newTempIntPtr();
-	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
+	cc.mov(c, asmjit::imm(konsta[C].o));
 	typedef PClass*(*FuncPtr)(PClass*, PClass*);
 	auto call = CreateCall<PClass*, PClass*, PClass*>(DynCastC);
 	call->setRet(0, result);

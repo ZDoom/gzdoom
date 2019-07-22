@@ -248,11 +248,77 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::FuncNode *func)
 	return info;
 }
 
+void AddUnwindInfoWindows(asmjit::CodeHolder* code, asmjit::FuncNode* func)
+{
+	using namespace asmjit;
+
+	if (code->archInfo().is64Bit())
+	{
+		Section* pdata = code->sectionByName(".pdata");
+		Section* rdata = code->sectionByName(".rdata");
+		if (!pdata) code->newSection(&pdata, ".pdata", 6, Section::kFlagConst, 16);
+		if (!rdata) code->newSection(&rdata, ".rdata", 6, Section::kFlagConst, 16);
+
+		uint64_t startaddr = 0;
+		uint64_t endaddr = code->textSection()->virtualSize();
+		uint64_t unwindinfoaddr = rdata->virtualSize();
+		uint64_t poffset = pdata->virtualSize();
+
+		TArray<uint16_t> unwindInfo = CreateUnwindInfoWindows(func);
+
+		uint32_t functionTable[3]; // this is a RUNTIME_FUNCTION struct
+		functionTable[0] = static_cast<uint32_t>(startaddr);
+		functionTable[1] = static_cast<uint32_t>(endaddr);
+		functionTable[2] = static_cast<uint32_t>(unwindinfoaddr);
+
+		size_t unwindInfoSize = unwindInfo.Size() * sizeof(uint16_t);
+		size_t functionTableSize = sizeof(uint32_t) * 3;
+
+		// Write result to sections
+		code->growBuffer(&rdata->buffer(), unwindInfoSize);
+		code->growBuffer(&pdata->buffer(), functionTableSize);
+		memcpy(rdata->data() + unwindinfoaddr, unwindInfo.Data(), unwindInfoSize);
+		memcpy(pdata->data() + poffset, functionTable, functionTableSize);
+		rdata->setVirtualSize(rdata->virtualSize() + unwindInfoSize);
+		pdata->setVirtualSize(pdata->virtualSize() + functionTableSize);
+		rdata->buffer()._size = rdata->virtualSize();
+		pdata->buffer()._size = pdata->virtualSize();
+	}
+}
+
+void RelocateUnwindInfoWindows(asmjit::CodeHolder* code)
+{
+	using namespace asmjit;
+	Section* pdata = code->sectionByName(".pdata");
+	Section* rdata = code->sectionByName(".rdata");
+	if (pdata && rdata)
+	{
+		Section* text = code->textSection();
+
+		uint32_t textOffset = static_cast<uint32_t>(text->offset());
+		uint32_t rdataOffset = static_cast<uint32_t>(rdata->offset());
+
+		size_t functionTableEntrySize = sizeof(uint32_t) * 3;
+		size_t count = pdata->virtualSize() / functionTableEntrySize;
+		uint32_t* d = reinterpret_cast<uint32_t*>(pdata->buffer().data());
+		for (size_t i = 0; i < count; i++)
+		{
+			uint32_t* entry = d + (i * 3);
+			entry[0] += textOffset;
+			entry[1] += textOffset;
+			entry[2] += rdataOffset;
+		}
+	}
+}
+
 void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 {
 	using namespace asmjit;
 
 	FuncNode *func = compiler->Codegen();
+
+	AddUnwindInfoWindows(code, func);
+
 	if (code->flatten() != kErrorOk)
 		return nullptr;
 	if (code->resolveUnresolvedLinks() != kErrorOk)
@@ -262,48 +328,33 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 	if (estimatedCodeSize == 0)
 		return nullptr;
 
-#ifdef _WIN64
-	TArray<uint16_t> unwindInfo = CreateUnwindInfoWindows(func);
-	size_t unwindInfoSize = unwindInfo.Size() * sizeof(uint16_t);
-	size_t functionTableSize = sizeof(RUNTIME_FUNCTION);
-#else
-	size_t unwindInfoSize = 0;
-	size_t functionTableSize = 0;
-#endif
-
-	uint8_t *p = (uint8_t *)AllocJitMemory(estimatedCodeSize + unwindInfoSize + functionTableSize);
+	uint8_t *p = (uint8_t *)AllocJitMemory(estimatedCodeSize);
 	if (!p)
 		return nullptr;
 
 	if (code->relocateToBase((uintptr_t)p) != kErrorOk)
 		return nullptr;
 
+	RelocateUnwindInfoWindows(code);
+
 	size_t codeSize = code->codeSize();
 	for (Section* section : code->sections())
 		memcpy(p + size_t(section->offset()), section->data(), size_t(section->bufferSize()));
 
-	size_t unwindStart = Support::alignUp(codeSize, 16);
-	JitBlockPos -= codeSize - unwindStart;
-
 #ifdef _WIN64
-	uint8_t *baseaddr = JitBlocks.Last();
+	uint8_t *baseaddr = p;
 	uint8_t *startaddr = p;
 	uint8_t *endaddr = p + codeSize;
-	uint8_t *unwindptr = p + unwindStart;
-	memcpy(unwindptr, &unwindInfo[0], unwindInfoSize);
 
-	RUNTIME_FUNCTION *table = (RUNTIME_FUNCTION*)(unwindptr + unwindInfoSize);
-	table[0].BeginAddress = (DWORD)(ptrdiff_t)(startaddr - baseaddr);
-	table[0].EndAddress = (DWORD)(ptrdiff_t)(endaddr - baseaddr);
-#ifndef __MINGW64__
-	table[0].UnwindInfoAddress = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
-#else
-	table[0].UnwindData = (DWORD)(ptrdiff_t)(unwindptr - baseaddr);
-#endif
-	BOOLEAN result = RtlAddFunctionTable(table, 1, (DWORD64)baseaddr);
-	JitFrames.Push((uint8_t*)table);
-	if (result == 0)
-		I_Error("RtlAddFunctionTable failed");
+	Section* pdata = code->sectionByName(".pdata");
+	if (pdata)
+	{
+		RUNTIME_FUNCTION* table = (RUNTIME_FUNCTION*)pdata->data();
+		BOOLEAN result = RtlAddFunctionTable(table, 1, (DWORD64)baseaddr);
+		JitFrames.Push((uint8_t*)table);
+		if (result == 0)
+			I_Error("RtlAddFunctionTable failed");
+	}
 
 	JitDebugInfo.Push({ compiler->GetScriptFunction()->PrintableName, compiler->GetScriptFunction()->SourceFileName, compiler->LineInfo, startaddr, endaddr });
 #endif

@@ -2780,11 +2780,11 @@ static void PlayerLandedOnThing (AActor *mo, AActor *onmobj)
 	P_FallingDamage (mo);
 
 	// [RH] only make noise if alive
-	if (!mo->player->morphTics && mo->health > 0)
+	if (mo->health > 0 && !mo->player->morphTics)
 	{
 		grunted = false;
 		// Why should this number vary by gravity?
-		if (mo->health > 0 && mo->Vel.Z < -mo->player->mo->FloatVar(NAME_GruntSpeed))
+		if (mo->Vel.Z < -mo->player->mo->FloatVar(NAME_GruntSpeed))
 		{
 			S_Sound (mo, CHAN_VOICE, "*grunt", 1, ATTN_NORM);
 			grunted = true;

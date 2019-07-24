@@ -172,11 +172,14 @@ void VulkanFrameBuffer::InitializeState()
 	mRenderState.reset(new VkRenderState());
 #endif
 
-	QueryPoolBuilder querybuilder;
-	querybuilder.setQueryType(VK_QUERY_TYPE_TIMESTAMP, MaxTimestampQueries);
-	mTimestampQueryPool = querybuilder.create(device);
+	if (device->graphicsTimeQueries)
+	{
+		QueryPoolBuilder querybuilder;
+		querybuilder.setQueryType(VK_QUERY_TYPE_TIMESTAMP, MaxTimestampQueries);
+		mTimestampQueryPool = querybuilder.create(device);
 
-	GetDrawCommands()->resetQueryPool(mTimestampQueryPool.get(), 0, MaxTimestampQueries);
+		GetDrawCommands()->resetQueryPool(mTimestampQueryPool.get(), 0, MaxTimestampQueries);
+	}
 }
 
 void VulkanFrameBuffer::Update()
@@ -831,7 +834,7 @@ void VulkanFrameBuffer::PushGroup(const FString &name)
 	if (!gpuStatActive)
 		return;
 
-	if (mNextTimestampQuery < VulkanFrameBuffer::MaxTimestampQueries)
+	if (mNextTimestampQuery < VulkanFrameBuffer::MaxTimestampQueries && device->graphicsTimeQueries)
 	{
 		TimestampQuery q;
 		q.name = name;
@@ -851,7 +854,7 @@ void VulkanFrameBuffer::PopGroup()
 	TimestampQuery &q = timeElapsedQueries[mGroupStack.back()];
 	mGroupStack.pop_back();
 
-	if (mNextTimestampQuery < VulkanFrameBuffer::MaxTimestampQueries)
+	if (mNextTimestampQuery < VulkanFrameBuffer::MaxTimestampQueries && device->graphicsTimeQueries)
 	{
 		q.endIndex = mNextTimestampQuery++;
 		GetDrawCommands()->writeTimestamp(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, mTimestampQueryPool.get(), q.endIndex);

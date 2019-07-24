@@ -54,6 +54,7 @@
 #include "actor.h"
 #include "p_setup.h"
 #include "maploader/maploader.h"
+#include "types.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -365,11 +366,21 @@ void MapLoader::SetCompatibilityParams(FName checksum)
 		if (cls->IsDescendantOf(RUNTIME_CLASS(DLevelCompatibility)))
 		{
 			PFunction *const func = dyn_cast<PFunction>(cls->FindSymbol("Apply", false));
-			if (func != nullptr)
+			if (func == nullptr)
 			{
-				VMValue param[] = { lc, checksum.GetIndex(), &Level->MapName };
-				VMCall(func->Variants[0].Implementation, param, 3, nullptr, 0);
+				Printf("Missing 'Apply' method in class '%s', level compatibility object ignored\n", cls->TypeName.GetChars());
+				continue;
 			}
+
+			auto argTypes = func->Variants[0].Proto->ArgumentTypes;
+			if (argTypes.Size() != 3 || argTypes[1] != TypeName || argTypes[2] != TypeString)
+			{
+				Printf("Wrong signature of 'Apply' method in class '%s', level compatibility object ignored\n", cls->TypeName.GetChars());
+				continue;
+			}
+
+			VMValue param[] = { lc, checksum.GetIndex(), &Level->MapName };
+			VMCall(func->Variants[0].Implementation, param, 3, nullptr, 0);
 		}
 	}
 }

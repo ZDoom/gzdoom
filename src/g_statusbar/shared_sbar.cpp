@@ -617,6 +617,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 
 	if (am_showtime)
 	{
+		if (vid_fps) y += (NewConsoleFont->GetHeight() * active_con_scale() + 5) / scale;
 		sec = Tics2Seconds(primaryLevel->time);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
@@ -660,6 +661,11 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	}
 
 	FormatMapName(primaryLevel, crdefault, &textbuffer);
+
+	if (!generic_ui)
+	{
+		if (!font->CanPrint(textbuffer)) font = OriginalSmallFont;
+	}
 
 	auto lines = V_BreakLines(font, vwidth - 32, textbuffer, true);
 	auto numlines = lines.Size();
@@ -1220,8 +1226,9 @@ void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 void DBaseStatusBar::DrawLog ()
 {
 	int hudwidth, hudheight;
+	const FString & text = (inter_subtitles && CPlayer->SubtitleCounter) ? CPlayer->SubtitleText : CPlayer->LogText;
 
-	if (CPlayer->LogText.IsNotEmpty())
+	if (text.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
 		auto scale = active_con_scaletext(generic_ui);
@@ -1230,7 +1237,6 @@ void DBaseStatusBar::DrawLog ()
 		FFont *font = C_GetDefaultHUDFont();
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
-		const FString & text = (inter_subtitles && CPlayer->SubtitleCounter) ? CPlayer->SubtitleText : CPlayer->LogText;
 		auto lines = V_BreakLines (font, linelen, text[0] == '$'? GStrings(text.GetChars()+1) : text.GetChars());
 		int height = 20;
 
@@ -1296,6 +1302,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 
 void DBaseStatusBar::DrawBottomStuff (EHudState state)
 {
+	primaryLevel->localEventManager->RenderUnderlay(state);
 	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
 }
 

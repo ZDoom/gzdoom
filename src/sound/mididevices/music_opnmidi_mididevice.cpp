@@ -40,6 +40,27 @@
 #include "opnmidi/opnmidi.h"
 #include "i_soundfont.h"
 
+class OPNMIDIDevice : public SoftSynthMIDIDevice
+{
+	struct OPN2_MIDIPlayer *Renderer;
+public:
+	OPNMIDIDevice(const char *args);
+	~OPNMIDIDevice();
+	
+	
+	int Open(MidiCallback, void *userdata);
+	int GetDeviceType() const override { return MDEV_OPN; }
+	
+protected:
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const uint8_t *data, int len);
+	void ComputeOutput(float *buffer, int len);
+	
+private:
+	int LoadCustomBank(const char *bankfile);
+};
+
+
 enum
 {
 	ME_NOTEOFF = 0x80,
@@ -255,3 +276,16 @@ void OPNMIDIDevice::ComputeOutput(float *buffer, int len)
 	OPN2_UInt8* right = reinterpret_cast<OPN2_UInt8*>(buffer + 1);
 	opn2_generateFormat(Renderer, len * 2, left, right, &audio_output_format);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+MIDIDevice *CreateOPNMIDIDevice(const char *args)
+{
+	return new OPNMIDIDevice(args);
+}
+
+

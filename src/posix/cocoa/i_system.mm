@@ -51,11 +51,6 @@
 #include "atterm.h"
 
 
-EXTERN_CVAR(String, language)
-
-uint32_t LanguageIDs[4];
-
-
 void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
 {
 }

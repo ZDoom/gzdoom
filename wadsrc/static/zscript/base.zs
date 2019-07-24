@@ -322,6 +322,7 @@ struct Font native
 	native int StringWidth(String code);
 	native bool CanPrint(String code);
 	native int GetHeight();
+	native int GetDisplacement();
 	native String GetCursor();
 
 	native static int FindFontColor(Name color);
@@ -401,6 +402,7 @@ struct GameInfoStruct native
 	native GIFont mStatscreenMapNameFont;
 	native GIFont mStatscreenEnteringFont;
 	native GIFont mStatscreenFinishedFont;
+	native GIFont mStatscreenContentFont;
 	native double gibfactor;
 	native bool intermissioncounter;
 	native Name mSliderColor;
@@ -440,7 +442,7 @@ class Object native
 	{
 		return level.PickPlayerStart(pnum, flags);
 	}
-	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM);
+	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
 	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);

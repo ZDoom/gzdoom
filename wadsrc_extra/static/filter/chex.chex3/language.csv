@@ -1,63 +1,63 @@
-default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cz,de,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fr,hu,it,ko,pl,pt,ro,ru,sr
-,,,,,,,,,,,,,,,,,
-Picked up a blue flemkey.,GOTBLUEFLEM,,,,,Blauen Flemschlüssel genommen,Recogiste una flemllave azul.,,Flemclé bleue récupérée.,,Raccolta una chiave-flem blu.,청색 플렘열쇠 획득.,Podniesiono niebieski flemowy klucz,Pegou uma flemchave azul.,,Получен синий флемключ.,
-Picked up a yellow flemkey.,GOTYELLOWFLEM,,,,,Gelben Flemschlüssel genommen,Recogiste una flemllave amarilla.,,Flemclé jaune récupérée.,,Raccolta una chiave-flem gialla.,황색 플렘열쇠 획득.,Podniesiono żółty flemowy klucz,Pegou uma flemchave amarela.,,Получен жёлтый флемключ.,
-Picked up a red flemkey.,GOTREDFLEM,,,,,Roten Flemschlüssel genommen.,Recogiste una flemllave roja.,,Flemclé rouge récupérée.,,Raccolta una chiave-flem rossa.,적색 플렘열쇠 획득.,Podniesiono czerwony flemowy klucz,Pegou uma flemchave vermelha.,,Получен красный флемключ.,
-Found Ultra Goggles,GOTGOGGLES,,,,,Ultrasichtbrille gefunden,Encontraste Ultra Gafas,,Ultra-lunettes récupérées.,,,울트라 고글 사용.,Znaleziono Ultra Gogle,Achou um Ultra Óculos.,,Получены Ультра-очки,
-You need a blue key to activate this object,PD_BLUECO,,,,,"Du brauchst einen blauen Schlüssel, um dieses Objekt zu aktivieren.",Necesitas una llave azul para activar este objeto,,Il vous faut une clé bleue pour activer cet objet.,Egy kék kulcs szükséges az objektum aktiválásához.,Ti serve una chiave blu per attivare questo oggetto,이걸 작동하려면 청색 열쇠가 필요합니다,"Potrzebujesz niebieskiego klucza, aby aktywować ten przedmiot",Você precisa de uma chave azul para ativar este objeto,,Для активации нужен синий ключ,Треба вам плави кључ да би активирали овај предмет
-You need a red key to activate this object,PD_REDCO,,,,,"Du brauchst einen roten Schlüssel, um dieses Objekt zu aktivieren.",Necesitas una llave roja para activar este objeto,,Il vous faut une clé rouge pour activer cet objet.,"Piros kulcs kell, hogy aktiválhasd ezt az objektumot.",Ti serve una chiave rossa per attivare questo oggetto,이걸 작동하려면 적색 열쇠가 필요합니다,"Potrzebujesz czerwonego klucza, aby aktywować ten przedmiot",Você precisa de uma chave vermelha para ativar este objeto,,Для активации нужен красный ключ,Треба вам црвени кључ да би активирали овај предмет
-You need a yellow key to activate this object,PD_YELLOWCO,,,,,"Du brauchst einen gelben Schlüssel, um dieses Objekt zu aktivieren.",Necesitas una llave amarilla para activar este objeto,,Il vous faut une clé jaune pour activer cet objet.,Egy sárga kulccsal aktiválható ez az objektum,Ti serve una chiave gialla per attivare questo oggetto,이걸 작동하려면 황색 열쇠가 필요합니다,"Potrzebujesz żółtego klucza, aby aktywować ten przedmiot",Você precisa de uma chave amarela para ativar este objeto,,Для активации нужен жёлтый ключ,Треба вам жути кључ да би активирали овај предмет
-You need a blue flemkey to activate this object,PD_BLUEFO,,,,,"Du brauchst einen blauen Flemschlüssel, um dieses Objekt zu aktivieren.",Necesitas una flemllave azul para activar este objeto,,Il vous faut une flemclé bleue pour activer cet objet.,,Ti serve una chiave-flem blu per attivare questo oggetto,이걸 작동하려면 청색 플렘열쇠가 필요합니다,"Potrzebujesz niebieskiego flemowego klucza, aby aktywować ten przedmiot",Você precisa de uma flemchave azul para ativar este objeto,,Для активации нужен синий флемключ,
-You need a red flemkey to activate this object,PD_REDFO,,,,,"Du brauchst einen roten Flemschlüssel, um dieses Objekt zu aktivieren.",Necesitas una flemllave roja para activar este objeto,,Il vous faut une flemclé rouge pour activer cet objet.,,Ti serve una chiave-flem rossa per attivare questo oggetto,이걸 작동하려면 적색 플렘열쇠가 필요합니다,"Potrzebujesz czerwonego flemowego klucza, aby aktywować ten przedmiot",Você precisa de uma flemchave vermelha para ativar este objeto,,Для активации нужен красный флемключ,
-You need a yellow flemkey to activate this object,PD_YELLOWFO,,,,,"Du brauchst einen gelben Flemschlüssel, um dieses Objekt zu aktivieren.",Necesitas unaflemllave amarilla para activar este objeto,,Il vous faut une flemclé jaune pour activer cet objet.,,Ti serve una chiave-flem gialla per attivare questo oggetto,이걸 작동하려면 황색 플렘열쇠가 필요합니다,"Potrzebujesz żółtego flemowego klucza, aby aktywować ten przedmiot",Você precisa de uma flemchave amarela para ativar este objeto,,Для активации нужен жёлтый флемключ,
-Picked up a zorcher.,PICKUP_PISTOL_DROPPED,,,,,Zorcher genommen.,Recogiste un zorcher.,,Zorcheur récupéré.,,,자쳐 습득.,Podniesiono Zorcher,Pegou um zorcher.,,Получен Зорчер.,
-Zorch and keys added,STSTR_KFAADDED,,,,,Zorch und Schlüssel hinzugefügt.,Zorch y llaves añadidas,,Zorch et clés ajoutées.,,,저치와 열쇠,Dodano amunicję Zorch i klucze,Zorch e chaves adicionadas,,Зорч и ключи получены,
-E1M1: Landing Zone,HUSTR_E1M1,,,,,E1M1: Landezone,E1M1: Zona de Aterrizaje,,E1M1: Zone D'Atterissage,E1M1: Landoló Zóna,E1M1: Zona di Atterraggio,E1M1: 착륙 지점,E1M1: Strefa Lądowania,E1M1: Zona de Pouso,,E1M1: Зона высадки,
-E1M2: Storage Facility,HUSTR_E1M2,,,,,E1M2: Lagerhalle,E1M2: Instalación de Almacenamiento,,E1M2: Centre de Stockage,,E1M2: Struttura di Immagazzinamento,E1M2: 저장 시설,E1M2: Magazyn,E1M2: Depósito,,E1M2: Хранилище,
-E1M3: Laboratory,HUSTR_E1M3,,,,,E1M3: Labor,E1M3: Laboratorio,,E1M3: Laboratoire,,E1M3: Laboratorio,E1M3: 연구소,E1M3: Laboratorium Eksperymentalne,E1M3: Laboratório de Experimentos,,E1M3: Лаборатория,
-E1M4: Arboretum,HUSTR_E1M4,,,,,,E1M4: Arboreto,,E1M4: Arboretum,,E1M4: Arboreto,E1M4: 수목원,E1M4: Arboretum,E1M4: Arvoredo,,E1M4: Дендрарий,
-E1M5: Caverns of Bazoik,HUSTR_E1M5,,,,,E1M5: Die Höhlen von Bazoik,E1M5: Cavernas de Bazoik,,E1M5: Cavernes de Bazoik,,E1M5: Caverne di Bazoik,E1M5: 바조이크의 대동굴,E1M5: Jaskinie Bazoik,E1M5: Cavernas de Bazoik,,E1M5: Пещеры Базоика,
-E2M1: Spaceport,HUSTR_E2M1,,,,,E2M1: Raumhafen,E2M1: Puerto Espacial,,E2M1: Spatioport,,E2M1: Spazioporto,E2M1: 우주공항,E2M1: Port Kosmiczny,E2M1: Espaçoporto,,E2M1: Космодром,
-E2M2: Cinema,HUSTR_E2M2,,,,,E2M2: Kino,E2M2: Cine,,E2M2: Cinéma,,,E2M2: 극장,E2M2: Kino,E2M2: Cinema,,E2M2: Кинотеатр,
-E2M3: Chex Museum,HUSTR_E2M3,,,,,,E2M3: Museo de Chex,,E2M3: Musée Chex,,E2M3: Museo di Chex,E2M3: 첵스 박물관,E2M3: Muzeum Chex,E2M3: Museu Chex,,E2M3: Музей Chex,
-E2M4: City Streets,HUSTR_E2M4,,,,,E2M4: städtische Straßen,E2M4: Calles de la Ciudad,,E2M4: Rues de la Ville,,E2M4: Strade della città,E2M4: 도시 거리,E2M4: Ulice Miasta,E2M4: Ruas da Cidade,,E2M4: Городские улицы,
-E2M5: Sewer System,HUSTR_E2M5,,,,,E2M5: Kanalisation,E2M5: Alcantarillado,,E2M5: Système d'égouts,,E2M5: Rete fognaria,E2M5: 하수도,E2M5: System Ścieków,E2M5: Rede de Esgoto,,E2M5: Канализация,
-E3M1: Central Command,HUSTR_E3M1,,,,,E3M1: Kommandozentrale,E3M1: Comando central,,E3M1: Commandement,,E3M1: Comando centrale,E3M1: 중앙 사령부,E3M1: Centrum Dowodzenia,E3M1: Comando Central,,E3M1: Командный центр,
-E3M2: United Cereals,HUSTR_E3M2,,,,,E3M2: Vereinigte Zerealien,E3M2: Cereales unidos,,E3M2: Céréales Unies,,E3M2: Cereali uniti,E3M2: 시리얼 연합,E3M2: Zjednoczone Płatki,E3M2: Cereais Unidos,,E3M2: Организация Объединённых Хлопьев,
-E3M3: Villa Chex,HUSTR_E3M3,,,,,,,,E3M3: Villa Chex,,,E3M3: 책스 주택,E3M3: Willa Chex,E3M3: Villa Chex,,E3M3: Вилла Chex,
-E3M4: Provincial Park,HUSTR_E3M4,,,,,E3M4: Provinzpark,E3M4: Parque provincial,,E3M4: Parc Naturel,,E3M4: Parco provinciale,E3M4: 주립공원,E3M4: Prowincjonalny Park,E3M4: Parque Natural,,E3M4: Провинциальный парк,
-E3M5: Meteor Spaceship,HUSTR_E3M5,,,,,E3M5: Meteor-Raumschiff,E3M5: Nave Meteoro,,E3M5: Vaisseau Météore,,E2M5: Astronave meteorica,E3M5: 거대 유성호,"E3M5: Statek Kosmiczny ""Meteor""",E3M5: Espaçonave Meteoro,,E3M5: Космический корабль “Метеор”,
-Commonus,CC_ZOMBIE,,,,,,,,,,,커머누스,Pospolitus,,,Обыкновеннус,
-Bipedicus,CC_SHOTGUN,,,,,,,,,,,바이피디쿠스,,,,Двуножка,
-Bipedicus with Armor,CC_IMP,,,,,Bipedicus mit Panzerung,Bipedicus con Armadura,,Bipedicus avec Armure,,Bipedicus corazzato,정예 바이피디쿠스,Opancerzony Bipedicus,Bipedicus de Armadura,,Бронированная двуножка,
-Stridicus,CC_DEMON,,,,,,,,,,,스트리디쿠스,,,,Длинноножка,
-Flem Mine,CC_LOST,,,,,,Flem-Mina,,,,Mina di Flem,플렘 지뢰,Flemowa Mina,Mina Flem,,Флем-мина,
-Super Cycloptis,CC_CACO,,,,,,,,,,,슈퍼 사이클롭티스,Super Cykloptis,,,Супер-циклоптис,
-Maximus,CC_BARON,,,,,,,,,,,맥시무스,,,,Максимус,
-The Flembomination,CC_SPIDER,,,,,Die Flembomination,La Flembominación,,La Flembomination,,La Flembominio,플렘보미네이션,Flembominacja,A Flembominação,,Флемомерзость,
-Lord Snotfolus,CC_CYBER,,,,,,Lord Mocofolus,,Seigneur Morvator,,,스놋폴러스 마왕,Lord Smarkofolus,Lorde Snotfolus,,Лорд Соплезелёнус,
-Chex Warrior,CC_HERO,,,,,Chex Krieger,Guerrero Chex,,Guerrier Chex,,Guerriero Chex,첵스 전사,Wojownik Chex,,,Воин Chex,
-You need a blue key to open this door,PD_BLUEC,,,,,"Du brauchst einen blauen Schlüssel, um diese Tür zu öffnen.",Necesitas una llave azul para abrir esta puerta,,Il vous faut une clé bleue pour ouvrir cette porte.,Az ajtót a kék kulcs nyitja.,Ti serve una chiave blu per aprire questa porta,이 문을 열려면 청색 열쇠가 필요합니다,"Potrzebujesz niebieskiego klucza, aby otworzyć te drzwi",Você precisa de uma chave azul para abrir essa porta,,"Нужен синий ключ, чтобы открыть",Треба вам плави кључ да би отворили ова врата
-You need a red key to open this door,PD_REDC,,,,,"Du brauchst einen roten Schlüssel, um diese Tür zu öffnen.",Necesitas una llave roja para abrir esta puerta,,Il vous faut une clé rouge pour ouvrir cette porte.,"Piros kulcs szükséges, hogy az ajtót kinyithasd.",Ti serve una chiave rossa per aprire questa porta,이 문을 열려면 적색 열쇠가 필요합니다,"Potrzebujesz czerwonego klucza, aby otworzyć te drzwi",Você precisa de uma chave vermelha para abrir essa porta,,"Нужен красный ключ, чтобы открыть",Треба вам црвени кључ да би отворили ова врата
-You need a yellow key to open this door,PD_YELLOWC,,,,,"Du brauchst einen gelben Schlüssel, um diese Tür zu öffnen.",Necesitas una llave amarilla para abrir esta puerta,,Il vous faut une clé jaune pour ouvrir cette porte.,Kell egy sárga kulcs hogy kinyisd ezt az ajtót.,Ti serve una chiave gialla per aprire questa porta,이 문을 열려면 황색 열쇠가 필요합니다,"Potrzebujesz żółtego klucza, aby otworzyć te drzwi",Você precisa de uma chave amarela para abrir essa porta,,"Нужен жёлтый ключ, чтобы открыть",Треба вам жути кључ да би отворили ова врата
-You need a blue flemkey to open this door,PD_BLUEF,,,,,"Du brauchst einen blauen Flemschlüssel, um diese Tür zu öffnen.",Necesitas una flemllave azul para abrir esta puerta,,Il vous faut une flemclé bleue pour ouvrir cette porte.,,Ti serve una chiave-flem blu per aprire questa porta,이 문을 열려면 청색 플렘열쇠가 필요합니다,"Potrzebujesz niebieskiego flemowego klucza, aby otworzyć te drzwi",Você precisa de uma flemchave azul para ativar este objeto,,"Нужен синий флемключ, чтобы открыть",
-You need a red flemkey to open this door,PD_REDF,,,,,"Du brauchst einen roten Flemschlüssel, um diese Tür zu öffnen.",Necesitas una flemllave roja para abrir esta puerta,,Il vous faut une flemclé rouge pour ouvrir cette porte.,,Ti serve una chiave-flem rossa per aprire questa porta,이 문을 열려면 적색 플렘열쇠가 필요합니다,"Potrzebujesz czerwonego flemowego klucza, aby otworzyć te drzwi",Você precisa de uma flemchave vermelha para ativar este objeto,,"Нужен красный флемключ, чтобы открыть",
-You need a yellow flemkey to open this door,PD_YELLOWF,,,,,"Du brauchst einen gelben Flemschlüssel, um diese Tür zu öffnen.",Necesitas una flemllave amarilla para abrir esta puerta,,Il vous faut une flemclé jaune pour ouvrir cette porte.,,Ti serve una chiave-flem gialla per aprire questa porta,이 문을 열려면 황색 플렘열쇠가 필요합니다,"Potrzebujesz żółtego flemowego klucza, aby otworzyć te drzwi",Você precisa de uma flemchave amarela para ativar este objeto,,"Нужен жёлтый флемключ, чтобы открыть",
-%o sinks into some slime.,OB_SLIME,,,,,%o versank im Schleim,%o se hunde en lodo.,,%o se noie dans la morve.,,,%o 는(은) 점액 속으로 가라앉았습니다.,%o topi się w szlamie.,%o afundou na gosma.,,Игрок %o утонул в слизи.,
-%o sinks into some slime.,OB_LAVA,,,,,%o versank im Schleim,%o se hunde en lodo.,,%o se noie dans la morve.,,,%o 는(은) 질척하게 가라앉았습니다.,%o topi się w szlamie.,%o afundou na gosma.,,Игрок %o утонул в слизи.,
-%o was hit by inter-dimensional slime!,OB_POWERSTRAND,,,,,%o wurde von interdimensionalem Schleim getroffen,¡%o fue alcanzad@[ao_esp] por lodo interdimensional!,,%o s'est fait@[e_fr] toucher par de la morve interdimensionelle!,,,%o 는(은) 차원균열 점액에 맞았습니다!,%o został@[ao_pl] uderzon@[adj_pl] przez międzywymiarowy szlam!,%o foi atingid@[ao_ptb] por gosma interdimensional!,,В игрока %o попала межпространственная слизь!,
-%o was hit by inter-dimensional slime!,OB_KILLEDSELF,,,,,%o wurde von interdimensionalem Schleim getroffen,¡%o fue alcanzad@[ao_esp] por lodo interdimensional!,,%o s'est fait@[e_fr] toucher par de la morve interdimensionelle!,,,%o 는(은) 모르는 사이에 점액에 당했습니다!,%o został@[ao_pl] uderzon@[adj_pl] przez międzywymiarowy szlam!,%o foi atingid@[ao_ptb] por gosma interdimensional!,,В игрока %o попала межпространственная слизь!,
-%o was boogered by a stridicus.,OB_STRIDICUS,,,,,%o wurde von einem Stridicus bepopelt.,%o fue moquead@[ao_esp] por un stridicus.,,%o s'est fait@[e_fr] engluer par un stridicus.,,,%o 는(은) 스트리디쿠스의 코딱지에 당했습니다.,%o został@[ao_pl] zaglutowan@[adj_pl] przez stridicusa.,%o foi melecad@[ao_ptb] por um stridicus.,,Игрока %o облепила соплями длинноножка. ,
-%o was gooed by a flem mine.,OB_FLEMMINE,,,,,%o wurde von einer Flem-Mine beschmiert.,%o fue pegotead@[ao_esp] por una flem-mina.,,%o s'est fait@[e_fr] éclabousser par une flem mine.,,,%o 는(은) 플렘 지뢰에 의해 점액 범벅이 됐습니다.,"%o został@[ao_pl] zabrejowan@[adj_pl] przez flemową minę.
-",%o foi engosmad@[ao_ptb] por uma mina flem.,,Игрока %o забрызгала флем-мина.,
-%o was slimed by a super cycloptis.,OB_SUPERCYCLOPTIS,,,,,%o wurde von einem Super Cycloptis vollgeschleimt.,%o fue enlodad@[ao_esp] por un super cycloptis.,,%o s'est fait@[e_fr] gélifier par un super cycloptis.,,,%o 는(은) 슈퍼 사이클롭티스의 점액에 당했습니다.,%o został@[ao_pl] oszlamion@[adj_pl] przez super cykloptisa.,%o foi lambuzad@[ao_ptb] por um super cyclóptis.,,Игрока %o обслюнявил супер-циклоптис.,
-%o was defeated by a Maximus.,OB_MAXIMUS,,,,,%o wurde von einem Maximus besiegt.,%o fue derrotad@[ao_esp] por un Maximus.,,%o s'est fait@[e_fr] battre par un Maximus.,,,%o 는(은) 맥시무스에게 패배했습니다.,%o został@[ao_pl] pokonan@[adj_pl] przez Maximusa.,%o foi derrotad@[ao_ptb] por um Maximus.,,Игрок %o проиграл Максимусу.,
-%o was gooed by a larva.,OB_LARVA,,,,,%o wurde von einer Larve beschmiert.,%o fue pegotead@[ao_esp] por una larva.,,%o s'est fait@[e_fr] tacher par une larve.,,,%o 는(은) 애벌레에 의해 점액 범벅이 됐습니다.,%o został@[ao_pl] zabrejowan@[adj_pl] przez larwę.,%o foi engosmad@[ao_ptb] por uma larva.,,Игрока %o обслюнявила личинка.,
-%o was slimed by a Quadrumpus.,OB_QUADRUMPUS,,,,,%o wurde von einem Quadrumpus vollgeschleimt.,%o fue enlodad@[ao_esp] por un Quadrumpus.,,%o s'est fait@[e_fr] morver par un quadrumpus.,,,%o 는(은) 쿼드럼푸스의 점액에 당했습니다.,%o został@[ao_pl] oszlamion@[adj_pl] przez Quadrumpusa.,%o foi melecad@[ao_ptb] por um Quadrumpus.,,Игрока %o обслюнявила многоручка. ,
-%o was defeated by the Flembomination.,OB_FLEMBOMINATION,,,,,%o wurde von der Flembomination besiegt.,%o fue derrotad@[ao_esp] por la Flembominación.,,%o s'est fait@[e_fr] éliminer par la Flembomination.,,,%o 는(은) 플렘보미네이션으로부터 벗어날 수 없었습니다.,%o został@[ao_pl] pokonan@[adj_pl] przez Flembominację.,%o foi derrotad@[ao_ptb] pela Flembominação.,,Игрока %o победила Флемомерзость.,
-%o was defeated by Lord Snotfolus.,OB_SNOTFOLUS,,,,,%o wurde von Lord Snotfolus besiegt.,%o fue derrotad@[ao_esp] por Lord Mocofolus.,,%o est tombé@[e_fr] face au Seigneur Morvator.,,,%o 는(은) 스놋폴러스 마왕과 싸울 준비를 제대로 하지 못했습니다.,%o został@[ao_pl] pokonan@[adj_pl] przez Lorda Smarkofolusa.,%o foi derrotad@[ao_ptb] pelo Lorde Snotfolus.,,Игрока %o победил лорд Соплезелёнус.,
-%o was hit by %k's propulsor.,OB_MPR_SPLASH,,,,,%o wurde von %ks Propeller getroffen,%o fue alcanzad@[ao_esp] por el propulsor de %k.,,%o s'est fait@[e_fr] propulser par %k.,,,%o 는(은) %k 의 추진력에 휘말렸습니다.,%o został@[ao_pl] uderzon@[adj_pl] przez pędnik %k.,%o foi atingid@[ao_ptb] pelo propulsor de %k.,,Игрок %o подстрелен из Ускорителя Зорча %k.,
-%o was lazzed by %k.,OB_MPBFG_SPLASH,,,,,%o wurde von %o weggezorcht.,%o fue lazead@[ao_esp] por %k.,,%o est entré@[e_fr] dans la zone de zorchage large de %k.,,,%o 는(은) %k 에게 레이져를 쐬였습니다.,%o został@[ao_pl] zLAZowan@[adj_pl] przez %k.,%o foi LAZead@[ao_ptb] por %k.,,Игрок %o получил заряд из «ЗБР» игрока %k.,
+default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cs,de,el,eo,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fi,fr,hu,it,jp,ko,pl,pt,ptg,ro,ru,sr
+,,,,,,,,,,,,,,,,,,,,,,
+Picked up a blue flemkey.,GOTBLUEFLEM,,,,Sebrán modrý slizoklíč.,Blauen Flemschlüssel genommen,,,Recogiste una flemllave azul.,,,Flemclé bleue récupérée.,,Raccolta una chiave-flem blu.,ブルー フレムキー をみつけた,청색 플렘열쇠 획득.,Podniesiono niebieski flemowy klucz,Pegou uma flemchave azul.,,,Получен синий флемключ.,
+Picked up a yellow flemkey.,GOTYELLOWFLEM,,,,Sebrán žlutý slizoklíč.,Gelben Flemschlüssel genommen,,,Recogiste una flemllave amarilla.,,,Flemclé jaune récupérée.,,Raccolta una chiave-flem gialla.,イエローフレムキー をみつけた,황색 플렘열쇠 획득.,Podniesiono żółty flemowy klucz,Pegou uma flemchave amarela.,,,Получен жёлтый флемключ.,
+Picked up a red flemkey.,GOTREDFLEM,,,,Sebrán červený slizoklíč.,Roten Flemschlüssel genommen.,,,Recogiste una flemllave roja.,,,Flemclé rouge récupérée.,,Raccolta una chiave-flem rossa.,レッド フレムキー をみつけた,적색 플렘열쇠 획득.,Podniesiono czerwony flemowy klucz,Pegou uma flemchave vermelha.,,,Получен красный флемключ.,
+Found Ultra Goggles,GOTGOGGLES,,,,Nalezeny ultrabrýle.,Ultrasichtbrille gefunden,,,Encontraste Ultra Gafas,,,Ultra-lunettes récupérées.,,,ウルトラゴーグル をみつけた,울트라 고글 사용.,Znaleziono Ultra Gogle,Achou um Ultra Óculos.,,,Получены Ультра-очки,
+You need a blue key to activate this object,PD_BLUECO,,,,Potřebuješ modrý klíč pro aktivaci tohoto objektu,"Du brauchst einen blauen Schlüssel, um dieses Objekt zu aktivieren.",,,Necesitas una llave azul para activar este objeto,,,Il vous faut une clé bleue pour activer cet objet.,Egy kék kulcs szükséges az objektum aktiválásához.,Ti serve una chiave blu per attivare questo oggetto,このそうちは ブルー キー がひつようだ,이걸 작동하려면 청색 열쇠가 필요합니다,"Potrzebujesz niebieskiego klucza, aby aktywować ten przedmiot",Você precisa de uma chave azul para ativar este objeto,,,Для активации нужен синий ключ,Треба вам плави кључ да би активирали овај предмет
+You need a red key to activate this object,PD_REDCO,,,,Potřebuješ červený klíč pro aktivaci tohoto objektu,"Du brauchst einen roten Schlüssel, um dieses Objekt zu aktivieren.",,,Necesitas una llave roja para activar este objeto,,,Il vous faut une clé rouge pour activer cet objet.,"Piros kulcs kell, hogy aktiválhasd ezt az objektumot.",Ti serve una chiave rossa per attivare questo oggetto,このそうちは レッド キー がひつようだ,이걸 작동하려면 적색 열쇠가 필요합니다,"Potrzebujesz czerwonego klucza, aby aktywować ten przedmiot",Você precisa de uma chave vermelha para ativar este objeto,,,Для активации нужен красный ключ,Треба вам црвени кључ да би активирали овај предмет
+You need a yellow key to activate this object,PD_YELLOWCO,,,,Potřebuješ žlutý klíč pro aktivaci tohoto objektu,"Du brauchst einen gelben Schlüssel, um dieses Objekt zu aktivieren.",,,Necesitas una llave amarilla para activar este objeto,,,Il vous faut une clé jaune pour activer cet objet.,Egy sárga kulccsal aktiválható ez az objektum,Ti serve una chiave gialla per attivare questo oggetto,このそうちは イエローキー がひつようだ,이걸 작동하려면 황색 열쇠가 필요합니다,"Potrzebujesz żółtego klucza, aby aktywować ten przedmiot",Você precisa de uma chave amarela para ativar este objeto,,,Для активации нужен жёлтый ключ,Треба вам жути кључ да би активирали овај предмет
+You need a blue flemkey to activate this object,PD_BLUEFO,,,,Potřebuješ modrý slizoklíč pro aktivaci tohoto objektu.,"Du brauchst einen blauen Flemschlüssel, um dieses Objekt zu aktivieren.",,,Necesitas una flemllave azul para activar este objeto,,,Il vous faut une flemclé bleue pour activer cet objet.,,Ti serve una chiave-flem blu per attivare questo oggetto,このそうちは ブルー キーがひつようだ,이걸 작동하려면 청색 플렘열쇠가 필요합니다,"Potrzebujesz niebieskiego flemowego klucza, aby aktywować ten przedmiot",Você precisa de uma flemchave azul para ativar este objeto,,,Для активации нужен синий флемключ,
+You need a red flemkey to activate this object,PD_REDFO,,,,Potřebuješ červený slizoklíč pro aktivaci tohoto objektu.,"Du brauchst einen roten Flemschlüssel, um dieses Objekt zu aktivieren.",,,Necesitas una flemllave roja para activar este objeto,,,Il vous faut une flemclé rouge pour activer cet objet.,,Ti serve una chiave-flem rossa per attivare questo oggetto,このそうちは レッド キーがひつようだ,이걸 작동하려면 적색 플렘열쇠가 필요합니다,"Potrzebujesz czerwonego flemowego klucza, aby aktywować ten przedmiot",Você precisa de uma flemchave vermelha para ativar este objeto,,,Для активации нужен красный флемключ,
+You need a yellow flemkey to activate this object,PD_YELLOWFO,,,,Potřebuješ žlutý slizoklíč pro aktivaci tohoto objektu.,"Du brauchst einen gelben Flemschlüssel, um dieses Objekt zu aktivieren.",,,Necesitas unaflemllave amarilla para activar este objeto,,,Il vous faut une flemclé jaune pour activer cet objet.,,Ti serve una chiave-flem gialla per attivare questo oggetto,このそうちは イエローキーがひつようだ,이걸 작동하려면 황색 플렘열쇠가 필요합니다,"Potrzebujesz żółtego flemowego klucza, aby aktywować ten przedmiot",Você precisa de uma flemchave amarela para ativar este objeto,,,Для активации нужен жёлтый флемключ,
+Picked up a zorcher.,PICKUP_PISTOL_DROPPED,,,,Sebrán bzukr.,Zorcher genommen.,,,Recogiste un zorcher.,,,Zorcheur récupéré.,,Ho preso uno zorcher.,ゾーカー をひろった,자쳐 습득.,Podniesiono Zorcher,Pegou um zorcher.,,,Получен Зорчер.,
+Zorch and keys added,STSTR_KFAADDED,,,,Bzukr a klíče přidány,Zorch und Schlüssel hinzugefügt.,,,Zorch y llaves añadidas,,,Zorch et clés ajoutées.,,Zorch e chiavi aggiunte,ゾーク と キーがとどいた,저치와 열쇠,Dodano amunicję Zorch i klucze,Zorch e chaves adicionadas,,,Зорч и ключи получены,
+E1M1: Landing Zone,HUSTR_E1M1,,,,E1M1: Přistávací zóna,E1M1: Landezone,,,E1M1: Zona de Aterrizaje,,,E1M1: Zone D'Atterissage,E1M1: Landoló Zóna,E1M1: Zona di Atterraggio,E1M1: ちゃくち ちてん,E1M1: 착륙 지점,E1M1: Strefa Lądowania,E1M1: Zona de Pouso,,,E1M1: Зона высадки,
+E1M2: Storage Facility,HUSTR_E1M2,,,,E1M2: Skladiště,E1M2: Lagerhalle,,,E1M2: Instalación de Almacenamiento,,,E1M2: Centre de Stockage,,E1M2: Struttura di Immagazzinamento,E1M2: ちょぞう しせつ,E1M2: 저장 시설,E1M2: Magazyn,E1M2: Depósito,,,E1M2: Хранилище,
+E1M3: Laboratory,HUSTR_E1M3,,,,E1M3: Testovací laboratoř,E1M3: Labor,,,E1M3: Laboratorio,,,E1M3: Laboratoire,,E1M3: Laboratorio,E1M3: ラボラトリー,E1M3: 연구소,E1M3: Laboratorium Eksperymentalne,E1M3: Laboratório de Experimentos,,,E1M3: Лаборатория,
+E1M4: Arboretum,HUSTR_E1M4,,,,,,,,E1M4: Arboreto,,,E1M4: Arboretum,,E1M4: Arboreto,E1M4: じゅもく園,E1M4: 수목원,E1M4: Arboretum,E1M4: Arvoredo,,,E1M4: Дендрарий,
+E1M5: Caverns of Bazoik,HUSTR_E1M5,,,,E1M5: Bazoikské jeskyně,E1M5: Die Höhlen von Bazoik,,,E1M5: Cavernas de Bazoik,,,E1M5: Cavernes de Bazoik,,E1M5: Caverne di Bazoik,E1M5: バゾイクのどうくつ,E1M5: 바조이크의 대동굴,E1M5: Jaskinie Bazoik,E1M5: Cavernas de Bazoik,,,E1M5: Пещеры Базоика,
+E2M1: Spaceport,HUSTR_E2M1,,,,E2M1: Kosmodrom,E2M1: Raumhafen,,,E2M1: Puerto Espacial,,,E2M1: Spatioport,,E2M1: Spazioporto,E2M1: スペースポート,E2M1: 우주공항,E2M1: Port Kosmiczny,E2M1: Espaçoporto,,,E2M1: Космодром,
+E2M2: Cinema,HUSTR_E2M2,,,,E2M2: Kino,E2M2: Kino,,,E2M2: Cine,,,E2M2: Cinéma,,,E2M2: シネマ,E2M2: 극장,E2M2: Kino,E2M2: Cinema,,,E2M2: Кинотеатр,
+E2M3: Chex Museum,HUSTR_E2M3,,,,E2M3: Muzem Chex,,,,E2M3: Museo de Chex,,,E2M3: Musée Chex,,E2M3: Museo di Chex,E2M3: チェックス ミュージアム,E2M3: 첵스 박물관,E2M3: Muzeum Chex,E2M3: Museu Chex,,,E2M3: Музей Chex,
+E2M4: City Streets,HUSTR_E2M4,,,,E2M4: Městské ulice,E2M4: städtische Straßen,,,E2M4: Calles de la Ciudad,,,E2M4: Rues de la Ville,,E2M4: Strade della città,E2M4: シティーストリート,E2M4: 도시 거리,E2M4: Ulice Miasta,E2M4: Ruas da Cidade,,,E2M4: Городские улицы,
+E2M5: Sewer System,HUSTR_E2M5,,,,E2M5: Kanalizace,E2M5: Kanalisation,,,E2M5: Alcantarillado,,,E2M5: Système d'égouts,,E2M5: Rete fognaria,E2M5: サワー システム,E2M5: 하수도,E2M5: System Ścieków,E2M5: Rede de Esgoto,,,E2M5: Канализация,
+E3M1: Central Command,HUSTR_E3M1,,,,E3M1: Centrální velení,E3M1: Kommandozentrale,,,E3M1: Comando central,,,E3M1: Commandement,,E3M1: Comando centrale,E3M1: 中央 しれいとう,E3M1: 중앙 사령부,E3M1: Centrum Dowodzenia,E3M1: Comando Central,,,E3M1: Командный центр,
+E3M2: United Cereals,HUSTR_E3M2,,,,E3M2: Spojené cereálie,E3M2: Vereinigte Zerealien,,,E3M2: Cereales unidos,,,E3M2: Céréales Unies,,E3M2: Cereali uniti,E3M2: ユナイテッド シリアル,E3M2: 시리얼 연합,E3M2: Zjednoczone Płatki,E3M2: Cereais Unidos,,,E3M2: Организация Объединённых Хлопьев,
+E3M3: Villa Chex,HUSTR_E3M3,,,,,,,,,,,E3M3: Villa Chex,,,E3M3: チェックスのべっそう,E3M3: 책스 주택,E3M3: Willa Chex,E3M3: Villa Chex,,,E3M3: Вилла Chex,
+E3M4: Provincial Park,HUSTR_E3M4,,,,E3M4: Provinciální park,E3M4: Provinzpark,,,E3M4: Parque provincial,,,E3M4: Parc Naturel,,E3M4: Parco provinciale,E3M4: 州立公園,E3M4: 주립공원,E3M4: Prowincjonalny Park,E3M4: Parque Natural,,,E3M4: Провинциальный парк,
+E3M5: Meteor Spaceship,HUSTR_E3M5,,,,E3M5: Meteorová vesmírná loď,E3M5: Meteor-Raumschiff,,,E3M5: Nave Meteoro,,,E3M5: Vaisseau Météore,,E2M5: Astronave meteorica,E3M5: メテオスペースシップ,E3M5: 거대 유성호,"E3M5: Statek Kosmiczny ""Meteor""",E3M5: Espaçonave Meteoro,,,E3M5: Космический корабль “Метеор”,
+Commonus,CC_ZOMBIE,,,,Obecnýs,,,,,,,,,,コモンズ,커머누스,Pospolitus,,,,Обыкновеннус,
+Bipedicus,CC_SHOTGUN,,,,Dvojnožus,,,,,,,,,,バイピディクス,바이피디쿠스,,,,,Двуножка,
+Bipedicus with Armor,CC_IMP,,,,Dvojnožus s brněním,Bipedicus mit Panzerung,,,Bipedicus con Armadura,,,Bipedicus avec Armure,,Bipedicus corazzato,アーマードバイピディクス,정예 바이피디쿠스,Opancerzony Bipedicus,Bipedicus de Armadura,,,Бронированная двуножка,
+Stridicus,CC_DEMON,,,,Běhakus,,,,,,,,,,ステュリクス,스트리디쿠스,,,,,Длинноножка,
+Flem Mine,CC_LOST,,,,Slizná mina,,,,Flem-Mina,,,,,Bomba a Flem,フレムマイン,플렘 지뢰,Flemowa Mina,Mina Flem,,,Флем-мина,
+Super Cycloptis,CC_CACO,,,,Superkykloptus,,,,,,,,,,スーパーサイクロプティス,슈퍼 사이클롭티스,Super Cykloptis,,,,Супер-циклоптис,
+Maximus,CC_BARON,,,,,,,,,,,,,,マクシムス,맥시무스,,,,,Максимус,
+The Flembomination,CC_SPIDER,,,,Slizavnost,Die Flembomination,,,La Flembominación,,,La Flembomination,,La Flembominio,フレンボミネーション,플렘보미네이션,Flembominacja,A Flembominação,,,Флемомерзость,
+Lord Snotfolus,CC_CYBER,,,,Lord Hlenfujus,,,,Lord Mocofolus,,,Seigneur Morvator,,,ロード スノフォールス,스놋폴러스 마왕,Lord Smarkofolus,Lorde Snotfolus,,,Лорд Соплезелёнус,
+Chex Warrior,CC_HERO,,,,Bojovník Chex,Chex Krieger,,,Guerrero Chex,,,Guerrier Chex,,Guerriero Chex,チェックスのせんし,첵스 전사,Wojownik Chex,,,,Воин Chex,
+You need a blue key to open this door,PD_BLUEC,,,,Potřebuješ modrý klíč pro otevření těchto dveří,"Du brauchst einen blauen Schlüssel, um diese Tür zu öffnen.",,,Necesitas una llave azul para abrir esta puerta,,,Il vous faut une clé bleue pour ouvrir cette porte.,Az ajtót a kék kulcs nyitja.,Ti serve una chiave blu per aprire questa porta,このとびらは ブルー キー がひつようだ,이 문을 열려면 청색 열쇠가 필요합니다,"Potrzebujesz niebieskiego klucza, aby otworzyć te drzwi",Você precisa de uma chave azul para abrir essa porta,,,"Нужен синий ключ, чтобы открыть",Треба вам плави кључ да би отворили ова врата
+You need a red key to open this door,PD_REDC,,,,Potřebuješ červený klíč pro otevření těchto dveří,"Du brauchst einen roten Schlüssel, um diese Tür zu öffnen.",,,Necesitas una llave roja para abrir esta puerta,,,Il vous faut une clé rouge pour ouvrir cette porte.,"Piros kulcs szükséges, hogy az ajtót kinyithasd.",Ti serve una chiave rossa per aprire questa porta,このとびらは レッド キー がひつようだ,이 문을 열려면 적색 열쇠가 필요합니다,"Potrzebujesz czerwonego klucza, aby otworzyć te drzwi",Você precisa de uma chave vermelha para abrir essa porta,,,"Нужен красный ключ, чтобы открыть",Треба вам црвени кључ да би отворили ова врата
+You need a yellow key to open this door,PD_YELLOWC,,,,Potřebuješ žlutý klíč pro otevření těchto dveří,"Du brauchst einen gelben Schlüssel, um diese Tür zu öffnen.",,,Necesitas una llave amarilla para abrir esta puerta,,,Il vous faut une clé jaune pour ouvrir cette porte.,Kell egy sárga kulcs hogy kinyisd ezt az ajtót.,Ti serve una chiave gialla per aprire questa porta,このとびらは イエローキー がひつようだ,이 문을 열려면 황색 열쇠가 필요합니다,"Potrzebujesz żółtego klucza, aby otworzyć te drzwi",Você precisa de uma chave amarela para abrir essa porta,,,"Нужен жёлтый ключ, чтобы открыть",Треба вам жути кључ да би отворили ова врата
+You need a blue flemkey to open this door,PD_BLUEF,,,,Potřebuješ modrý slizoklíč pro otevření těchto dveří,"Du brauchst einen blauen Flemschlüssel, um diese Tür zu öffnen.",,,Necesitas una flemllave azul para abrir esta puerta,,,Il vous faut une flemclé bleue pour ouvrir cette porte.,,Ti serve una chiave-flem blu per aprire questa porta,このとびらは ブルー キーがひつようだ,이 문을 열려면 청색 플렘열쇠가 필요합니다,"Potrzebujesz niebieskiego flemowego klucza, aby otworzyć te drzwi",Você precisa de uma flemchave azul para ativar este objeto,,,"Нужен синий флемключ, чтобы открыть",
+You need a red flemkey to open this door,PD_REDF,,,,Potřebuješ červený slizoklíč pro otevření těchto dveří,"Du brauchst einen roten Flemschlüssel, um diese Tür zu öffnen.",,,Necesitas una flemllave roja para abrir esta puerta,,,Il vous faut une flemclé rouge pour ouvrir cette porte.,,Ti serve una chiave-flem rossa per aprire questa porta,このとびらは レッド キーがひつようだ,이 문을 열려면 적색 플렘열쇠가 필요합니다,"Potrzebujesz czerwonego flemowego klucza, aby otworzyć te drzwi",Você precisa de uma flemchave vermelha para ativar este objeto,,,"Нужен красный флемключ, чтобы открыть",
+You need a yellow flemkey to open this door,PD_YELLOWF,,,,Potřebuješ žlutý slizoklíč pro otevření těchto dveří,"Du brauchst einen gelben Flemschlüssel, um diese Tür zu öffnen.",,,Necesitas una flemllave amarilla para abrir esta puerta,,,Il vous faut une flemclé jaune pour ouvrir cette porte.,,Ti serve una chiave-flem gialla per aprire questa porta,このとびらは イエローキーがひつようだ,이 문을 열려면 황색 플렘열쇠가 필요합니다,"Potrzebujesz żółtego flemowego klucza, aby otworzyć te drzwi",Você precisa de uma flemchave amarela para ativar este objeto,,,"Нужен жёлтый флемключ, чтобы открыть",
+%o sinks into some slime.,OB_SLIME,,,,%o se propadl@[ao_cs] do slizu.,%o versank im Schleim,,,%o se hunde en lodo.,,,%o se noie dans la morve.,,%o affonda in qualche melma.,%o はスライムにしずんだ。,%o 는(은) 점액 속으로 가라앉았습니다.,%o topi się w szlamie.,%o afundou na gosma.,,,Игрок %o утонул в слизи.,
+%o sinks into some slime.,OB_LAVA,,,,%o se propadl@[ao_cs] do slizu.,%o versank im Schleim,,,%o se hunde en lodo.,,,%o se noie dans la morve.,,%o affonda in qualche melma.,%o はスライムにしずんだ。,%o 는(은) 질척하게 가라앉았습니다.,%o topi się w szlamie.,%o afundou na gosma.,,,Игрок %o утонул в слизи.,
+%o was hit by inter-dimensional slime!,OB_POWERSTRAND,,,,%o byl@[ao_cs] zasažen@[ao_cs] mezidimenzionálním slizem!,%o wurde von interdimensionalem Schleim getroffen,,,¡%o fue alcanzad@[ao_esp] por lodo interdimensional!,,,%o s'est fait@[e_fr] toucher par de la morve interdimensionelle!,,%o è stato colpito da melma interdimensionale!,%o は いじげんスライムまみれになった!,%o 는(은) 차원균열 점액에 맞았습니다!,%o został@[ao_pl] uderzon@[adj_pl] przez międzywymiarowy szlam!,%o foi atingid@[ao_ptb] por gosma interdimensional!,,,В игрока %o попала межпространственная слизь!,
+%o was hit by inter-dimensional slime!,OB_KILLEDSELF,,,,%o byl@[ao_cs] zasažen@[ao_cs] mezidimenzionálním slizem!,%o wurde von interdimensionalem Schleim getroffen,,,¡%o fue alcanzad@[ao_esp] por lodo interdimensional!,,,%o s'est fait@[e_fr] toucher par de la morve interdimensionelle!,,%o è stato colpito da melma interdimensionale!,%o は いじげんスライムまみれになった!,%o 는(은) 모르는 사이에 점액에 당했습니다!,%o został@[ao_pl] uderzon@[adj_pl] przez międzywymiarowy szlam!,%o foi atingid@[ao_ptb] por gosma interdimensional!,,,В игрока %o попала межпространственная слизь!,
+%o was boogered by a stridicus.,OB_STRIDICUS,,,,%o dostal@[ao_cs] holuby od běhakem.,%o wurde von einem Stridicus bepopelt.,,,%o fue moquead@[ao_esp] por un stridicus.,,,%o s'est fait@[e_fr] engluer par un stridicus.,,%o è stato colpito da uno Stridicus.,%o は ステュリクスに おびやかされた。,%o 는(은) 스트리디쿠스의 코딱지에 당했습니다.,%o został@[ao_pl] zaglutowan@[adj_pl] przez stridicusa.,%o foi melecad@[ao_ptb] por um stridicus.,,,Игрока %o облепила соплями длинноножка. ,
+%o was gooed by a flem mine.,OB_FLEMMINE,,,,%o byl@[ao_cs] zablácen@[ao_cs] sliznou minou.,%o wurde von einer Flem-Mine beschmiert.,,,%o fue pegotead@[ao_esp] por una flem-mina.,,,%o s'est fait@[e_fr] éclabousser par une flem mine.,,%o è stata colpita da una bomba a flem.,%o はフレムマインに ヒドいめにあった。,%o 는(은) 플렘 지뢰에 의해 점액 범벅이 됐습니다.,"%o został@[ao_pl] zabrejowan@[adj_pl] przez flemową minę.
+",%o foi engosmad@[ao_ptb] por uma mina flem.,,,Игрока %o забрызгала флем-мина.,
+%o was slimed by a super cycloptis.,OB_SUPERCYCLOPTIS,,,,%o byl@[ao_cs] osliznut@[ao_cs] superkykloptem.,%o wurde von einem Super Cycloptis vollgeschleimt.,,,%o fue enlodad@[ao_esp] por un super cycloptis.,,,%o s'est fait@[e_fr] gélifier par un super cycloptis.,,%o è stato snellito da una Super Ciyloptis.,%o はスーパーサイクロプティスに とかされた。,%o 는(은) 슈퍼 사이클롭티스의 점액에 당했습니다.,%o został@[ao_pl] oszlamion@[adj_pl] przez super cykloptisa.,%o foi lambuzad@[ao_ptb] por um super cyclóptis.,,,Игрока %o обслюнявил супер-циклоптис.,
+%o was defeated by a Maximus.,OB_MAXIMUS,,,,%o byl@[ao_cs] poražen@[ao_cs] Maximem.,%o wurde von einem Maximus besiegt.,,,%o fue derrotad@[ao_esp] por un Maximus.,,,%o s'est fait@[e_fr] battre par un Maximus.,,%o è stato sconfitto da un Maximus.,%o はマクシムスに 敗北した。,%o 는(은) 맥시무스에게 패배했습니다.,%o został@[ao_pl] pokonan@[adj_pl] przez Maximusa.,%o foi derrotad@[ao_ptb] por um Maximus.,,,Игрок %o проиграл Максимусу.,
+%o was gooed by a larva.,OB_LARVA,,,,%o byl@[ao_cs] zacáknut@[ao_cs] larvou.,%o wurde von einer Larve beschmiert.,,,%o fue pegotead@[ao_esp] por una larva.,,,%o s'est fait@[e_fr] tacher par une larve.,,%o è stato colpito da una larva.,%o はラーバに ヒドいめにあわされた。,%o 는(은) 애벌레에 의해 점액 범벅이 됐습니다.,%o został@[ao_pl] zabrejowan@[adj_pl] przez larwę.,%o foi engosmad@[ao_ptb] por uma larva.,,,Игрока %o обслюнявила личинка.,
+%o was slimed by a Quadrumpus.,OB_QUADRUMPUS,,,,%o byl@[ao_cs] zahleněn@[ao_cs] Čtyřzadkem.,%o wurde von einem Quadrumpus vollgeschleimt.,,,%o fue enlodad@[ao_esp] por un Quadrumpus.,,,%o s'est fait@[e_fr] morver par un quadrumpus.,,%o è stato ridotto da un Quadrumpus.,%o はクワッドロンプスに スライムにされた。,%o 는(은) 쿼드럼푸스의 점액에 당했습니다.,%o został@[ao_pl] oszlamion@[adj_pl] przez Quadrumpusa.,%o foi melecad@[ao_ptb] por um Quadrumpus.,,,Игрока %o обслюнявила многоручка. ,
+%o was defeated by the Flembomination.,OB_FLEMBOMINATION,,,,%o byl@[ao_cs] poražen@[ao_cs] Slizavností.,%o wurde von der Flembomination besiegt.,,,%o fue derrotad@[ao_esp] por la Flembominación.,,,%o s'est fait@[e_fr] éliminer par la Flembomination.,,%o è stato sconfitto dalla Flembomination.,%o はフレンボミネーションに敗北した。,%o 는(은) 플렘보미네이션으로부터 벗어날 수 없었습니다.,%o został@[ao_pl] pokonan@[adj_pl] przez Flembominację.,%o foi derrotad@[ao_ptb] pela Flembominação.,,,Игрока %o победила Флемомерзость.,
+%o was defeated by Lord Snotfolus.,OB_SNOTFOLUS,,,,%o byl@[ao_cs] poražen@[ao_cs] Lordem Hlenfujem.,%o wurde von Lord Snotfolus besiegt.,,,%o fue derrotad@[ao_esp] por Lord Mocofolus.,,,%o est tombé@[e_fr] face au Seigneur Morvator.,,%o è stato sconfitto da Lord Snotfolus.,%o はロード スノフォールスに敗北した。,%o 는(은) 스놋폴러스 마왕과 싸울 준비를 제대로 하지 못했습니다.,%o został@[ao_pl] pokonan@[adj_pl] przez Lorda Smarkofolusa.,%o foi derrotad@[ao_ptb] pelo Lorde Snotfolus.,,,Игрока %o победил лорд Соплезелёнус.,
+%o was hit by %k's propulsor.,OB_MPR_SPLASH,,,,%o byl@[ao_cs] zasažen@[ao_cs] propulzorem hráče %k.,%o wurde von %ks Propeller getroffen,,,%o fue alcanzad@[ao_esp] por el propulsor de %k.,,,%o s'est fait@[e_fr] propulser par %k.,,%o è stato colpito dal propulsore di %k.,%o に %k のロケットゾーカーがとどいた。,%o 는(은) %k 의 추진력에 휘말렸습니다.,%o został@[ao_pl] uderzon@[adj_pl] przez pędnik %k.,%o foi atingid@[ao_ptb] pelo propulsor de %k.,,,Игрок %o подстрелен из Ускорителя Зорча %k.,
+%o was lazzed by %k.,OB_MPBFG_SPLASH,,,,%o byl@[ao_cs] odlazován@[ao_cs] hráčem %k.,%o wurde von %o weggezorcht.,,,%o fue lazead@[ao_esp] por %k.,,,%o est entré@[e_fr] dans la zone de zorchage large de %k.,,%o è stato lazzato da %k.,%o は %k にとかされた。,%o 는(은) %k 에게 레이져를 쐬였습니다.,%o został@[ao_pl] zLAZowan@[adj_pl] przez %k.,%o foi LAZead@[ao_ptb] por %k.,,,Игрок %o получил заряд из «ЗБР» игрока %k.,
 "After sending the monstrous Flembrane
 back to his own dimension, you free the
 captives. Yet flemoids are everywhere!
@@ -72,7 +72,19 @@ We haven't seen the last of the Flemoids.
 Unfortunately you are correct. For as you
 return home, you find that the Flemoids
 have somehow followed you here. Prepare
-for Chex Quest 2: Terror in Chex City!",E1TEXT,,,,,"Nachdem du die monströse Flembrane
+for Chex Quest 2: Terror in Chex City!",E1TEXT,,,,"Poté, co jsi poslal@[ao_cs] nestvůrnou Slizbránu
+zpět do její dimenze, osvobodíš rukojmí.
+Ale sliznatci jsou všude! Spolu s rukojmími
+podniknete útěk zpět do tvé lodi. Sliznatci
+osliznou tvou loď, ale těsně se vám podaří
+uniknout na orbitu. Během návratu ti je
+pogratulováno za odvážnou záchranu, ale
+ty je varuješ...
+Ještě jsme neviděli Sliznatce naposledy.
+
+Bohužel máš pravdu. Při návratu domů vidíš,
+že tě nějakým způsobem sliznatci následovali.
+Připrav se na Misi Chex 2: Hrůzu v Chex City!","Nachdem du die monströse Flembrane
 in ihre eigene Dimension zurückgeschickt
 hast, befreist du die Gefangenen.
 Und dennoch sind die Flemoiden
@@ -86,7 +98,7 @@ Unglückicherweise hast du Recht.
 Denn als du nach Hause kommst,
 erkennst du, dass dir die Flemoiden
 gefolgt sind. Bereite dich auf Chex
-Quest 2: Terror in Chex-City vor!","Tras enviar a la monstruosa Flembrana
+Quest 2: Terror in Chex-City vor!",,,"Tras enviar a la monstruosa Flembrana
 de vuelta a su dimensión, liberas a los
 rehenes. ¡Pero los flemoides están por
 todas partes! Tú y los rehenes escapais
@@ -100,7 +112,22 @@ Queda por ver lo último de los Flemoides.
 Desafortunadamente tienes razón. Ya que
 al llegar de vuelta a casa, te das cuenta de
 que de alguna manera los Flemoides te
-han seguido hasta aquí. ¡Preparate para
+han seguido hasta aquí. ¡Prepárate para
+Chex Quest 2: Terror en Chex City!","Tras enviar a la monstruosa Flembrana
+de vuelta a su dimensión, liberas a los
+rehenes. ¡Pero los flemoides están por
+todas partes! Tú y los rehenes escapan
+hacia tu nave. Los flemoides cubren de
+lodo tu nave, pero escapas en órbita por
+un pelo. Durante el regreso eres
+felicitad@[ao_esp] por tu valiente
+rescate, pero mandas una advertencia...
+Queda por ver lo último de los Flemoides.
+
+Desafortunadamente tienes razón. Ya que
+al llegar de vuelta a casa, te das cuenta de
+que de alguna manera los Flemoides te
+han seguido hasta aquí. ¡Prepárate para
 Chex Quest 2: Terror en Chex City!",,"Ayant renvoyé la terrible Flembrane dans
 sa dimension, vous libérez les prisonniers. 
 Pourtant, les flémoïdes sont partout! 
@@ -115,8 +142,36 @@ Malheureusement, vous avez raison.
 Quand vous retournez sur votre planète,
 vous découvrez que les flémoïdes vous
 ont suivi jusqu'ici. Préparez vous pour
-Chex Quest 2: Terreur à Chex City!",,,"플렘브레인을 원래 차원으로 보내버린 뒤, 당신은 인질들을 풀어줬지만,
-아직 플레모이드들이 사방에 있습니다! 당신과 인질들은 당신의
+Chex Quest 2: Terreur à Chex City!",,"Dopo aver rispedito il mostruoso Flembrane
+nella sua dimensione, si liberano i prigionieri.
+Eppure i flemoidi sono ovunque! Tu e i
+prigionieri fare una pausa per la vostra
+astronave. I flemoidi melma la vostra nave,
+ma si fuggire di poco in orbita.
+Durante il ritorno ci si congratula per
+l'audace salvataggio, ma si emette un
+avvertimento...
+Non abbiamo visto l'ultimo dei Flemoidi.
+
+Purtroppo hai ragione. Infatti, al vostro
+ritorno a casa, vi accorgerete che le
+flotte vi hanno in qualche modo seguito qui.
+Preparatevi per 
+Chex Quest 2: Terrore a Chex City!","巨大なフレムブレンを元の次元に送り ほりょを解放した。
+けれども、フレモイドはまだまだいる!
+フレモイドは 君の宇宙船を スライムまみれにしたため、
+君と ほりょは 船をこわし せまい道をたどって にげだした。
+目的地に たどりついたとき、君の 大たんな救出の成功を
+いわった。しかし 君はけいかいしていた...
+さいごのフレモイドはどこにいったか。
+
+ざんねんながら けいかいは 正しかった。
+家に着くと、フレモイドが 君を探していた形跡が見つかった。
+
+チェックス クエスト2 : チェックス シティーのきょうふ
+に そなえろ!
+","플렘브레인을 원래 차원으로 보내버린 뒤, 당신은 인질들을 풀어줬지만,
+아직 플레모이드들이 사방에 있었습니다! 당신과 인질들은 당신의
 우주선으로 도망갔습니다. 플레모이드들이 당신의 우주선에
 공격을 가하지만, 아슬아슬하게 궤도 밖으로 탈출하는데
 성공했습니다. 돌아오는 동안 당신의 용맹한 구출과 활약에
@@ -153,7 +208,7 @@ Infelizmente, você está corret@[ao_ptb].
 Pois ao retornar para casa, você descobre
 que os flemóides te seguiram até aqui de
 alguma forma. Prepare-se para o
-Chex Quest 2: Terror em Chexópolis!",,"Изгнав чудовищную Флембрану назад в её
+Chex Quest 2: Terror em Chexópolis!",,,"Изгнав чудовищную Флембрану назад в её
 измерение, ты освободил@[ao_rus] пленников.
 Флемоиды окружили вас со всех сторон!
 Вы с пленниками прорвались с боем к
@@ -161,7 +216,7 @@ Chex Quest 2: Terror em Chexópolis!",,"Изгнав чудовищную Фле
 облепили ваш корабль, но вы спаслись
 и улетели на орбиту. По дороге домой,
 пленники поблагодарили тебя за
-освобождение, но ты предупредил@[ao_rus] их…
+освобождение, но ты предупредил@[ao_rus] их...
 Мы ещё встретимся с Флемоидами.
 
 К сожалению, ты оказал@[refl_rus] прав@[ao_rus].
@@ -185,7 +240,22 @@ straight for the cereals' planet!
 
 Get ready for
 Chex Quest 3: Invasion!
-",E2TEXT,,,,,"Du zorchst die verbleibenden
+",E2TEXT,,,,"Vybzukl@[ao_cs] jsi poslední ze zbylých sliznatců,
+kteří se nahromadili ve stokách. Chex City
+je zachráněno. Zdá se, že hrozba sliznatců
+konečně skončila.
+
+
+Deset let uplyne v míru a prosperitě. Ale
+Sliznatci nebyli poraženi a jejich touha
+ovládnout nutričně bohatou dimenzi cereálií
+se nijak nezmenšila. Shromáždili veškeré
+své síly, otevřeli obrovskou mezidimenzionální
+vesmírnou trhlinu a nyní se na planetu
+cereálií řítí obrovská koule slizu!
+
+Připrav se na
+Misi Chex 3: Invazi!","Du zorchst die verbleibenden
 Flemoiden, die sich noch in der 
 Kanalisation aufhielten, weg. Chex
 City ist gerettet. Es sieht aus, als ob die
@@ -204,7 +274,7 @@ Schleims auf den Weg zum Zerealien-
 planeten.
 
 Mach dich bereit für Chex Quest 3:
-Invasion!","Electrizas a los flemoides restantes que
+Invasion!",,,"Electrizas a los flemoides restantes que
 estaban reunidos en las alcantarillas.
 Chex City ha sido salvada. Parece que la
 amenaza Flemoide al fin ha acabado.
@@ -220,7 +290,7 @@ una gran bola de lodo se dirige derecha
 al planeta de los cereales!
 
 Prepárate para
-Chex Quest 3: ¡Invasión!",,"Vous zorchez les derniers flémoïdes
+Chex Quest 3: ¡Invasión!",,,"Vous zorchez les derniers flémoïdes
 restant dans les égouts. Chex City
 est sauvée. Il semble que la menace
 flémoïde n'existe plus.
@@ -237,7 +307,36 @@ géante se dirige vers la planète
 des céréales!
 
 Préparez vous pour Chex Quest 3:
-Invasion!",,,"당신은 하수구에 모인 잔존 플레모이드들을 처리하는 데 성공했습니다.
+Invasion!",,"Hai zorch il restante flemoidi che si erano
+riuniti nelle fogne. Chex City è stata
+salvata. Sembra che la minaccia Flemoid è
+finalmente finita.
+
+Dieci anni passano in pace e prosperità.
+Ma i Flemoid non sono stati sconfitti
+e il loro desiderio di controllare la
+dimensione ricca di nutrienti cereali
+non è diminuito. Hanno raccolto tutte
+le loro forze, hanno aperto una gigantesca
+spaccatura interdimensionale nello spazio
+e ora una grande palla di melma è diretta
+direttamente verso il pianeta dei cereali!
+Preparati per
+Chex Quest 3: Invasione!
+","君は 下水道に集まっていたフレモイドを
+ぶっとばして、チェックス シティーを守った。
+フレモイドの きょういはようやく なくなったようだ。
+
+
+平和と はんえいの中で10年がたった。
+しかしフレモイドは敗北しておらず、えいようのある
+シリアルを せいふくするという野望は のこっていた。
+かれらは全ての力を集め、宇宙に巨大な次元のさけめを
+開いた。そして今や大きなボールオブスライムが
+シリアルプラネットに真っ直ぐ向かっている!
+
+チェックスクエスト3 : インベーション
+の じゅんびだ!","당신은 하수구에 모인 잔존 플레모이드들을 처리하는 데 성공했습니다.
 이제 책스 시티는 안전합니다. 플레모이드들의 위협도 이로써 막을
 내린 것 같습니다.
 
@@ -247,7 +346,7 @@ Invasion!",,,"당신은 하수구에 모인 잔존 플레모이드들을 처리�
 그들은 병력을 모아, 우주에 거대한 차원균열 관문을 열었고,
 그들의 거대한 녹색 점액 덩어리가 시리얼 행성을 향하고 있는데!
 
-다음 이야기는 """"첵스 퀘스트 3: 대침공""""에서 이어집니다!","Zorchujesz pozostałe flemoidy, które zebrały się
+다음 이야기는 ""첵스 퀘스트 3: 대침공""에서 이어집니다!","Zorchujesz pozostałe flemoidy, które zebrały się
 w ściekach. Miasto Chex zostało uratowane.
 Wygląda na to, że zagrożenie flemoidami zostało
 zakończone.
@@ -277,7 +376,7 @@ bola gigante de gosma está vindo direto
 para o planeta dos cereais!
 
 Se prepare para o
-Chex Quest 3: A Invasão!",,"С помощью Зорчера, ты освободил@[ao_rus]
+Chex Quest 3: A Invasão!",,,"С помощью Зорчера, ты освободил@[ao_rus]
 канализацию от оставшихся флемоидов.
 Город Chex спасён. Казалось, что с
 угрозой Флемоидов наконец-то покончено.
@@ -306,9 +405,21 @@ dimension.
 
 But if they do you know you will be
 ready for them!
-",E3TEXT,,,,,"Mit einem letzten Schuss zorchst du
+",E3TEXT,,,,"S posledním výstřelem jsi vybzukl@[ao_cs]
+lorda Hlenfuje zpět do jeho dimenze!
+Navzdory všemu jsi vlastnoručně
+zhatil@[ao_cs] celou invazi!
+
+Opravdu doufáš, že Sliznatci dostali
+za vyučenou a už se nikdy nepokusí
+vrátit do dimenze cereálií.
+
+
+
+Ale jestli se o to pokusí, víš,
+že na ně budeš připraven@[adj_cs]!","Mit einem letzten Schuss zorchst du
 Lord Snotfolus zurück in seine eigene
-Dimension!  Gegen alle Widerstände
+Dimension! Gegen alle Widerstände
 hast du eigenhändiig die Invasion
 scheitern lassen!
 
@@ -318,7 +429,7 @@ wieder in die Zerealiendimension
 zurückkehren.
 
 Aber falls sie das doch tun, wirst du
-bereit sein!","¡Con un último disparo, electrizas a Lord
+bereit sein!",,,"¡Con un último disparo, electrizas a Lord
 Mocofolus de vuelta a su dimensión!
 ¡Contra viento y marea tú sol@[ao_esp] has
 detenido la invasión!
@@ -329,7 +440,7 @@ más vuelvan a la dimension de cereales.
 
 
 ¡Pero si lo hacen sabes que estarás
-preparad@[ao_esp] para ellos!",,"Avec un dernier tir, vous zorchez
+preparad@[ao_esp] para ellos!",,,"Avec un dernier tir, vous zorchez
 Seigneur Morvator dans sa propre
 dimension! Contre toute attente,
 vous avez surmonté l'invasion
@@ -342,7 +453,27 @@ revenir envahir la dimension des
 céréales.
 
 Mais vous savez que vous serez
-prêt pour eux!",,,"최후의 한방으로, 당신은 스놋폴러스 마왕을 원래 세계로 추방했습니다!
+prêt pour eux!",,"Con un ultimo colpo, hai zorch Lord Snotfolus
+torna alla sua dimensione! contro tutte
+le probabilità che hai sventato
+l'invasione con una sola mano!
+
+Speri davvero che i flemoidi hanno
+finalmente imparato la lezione e non
+torneranno mai più alla dimensione dei cereali.
+
+Ma se lo sai che sarai pronto per loro!
+
+","さいごのいちげきで、ロード スノフォールスを元の次元に
+もどした。君一人で全てのオーズのしゅうげきを 阻止した!
+
+君は フレモイド達のことを みんなに教え、再び
+シリアル ディメンジョンに ぎゃくしゅうをしかけて
+こないよう ねがった。
+
+
+しかし、そんな考えを持っていたとしても
+君にはかなわないと思い知るだろう!","최후의 한방으로, 당신은 스놋폴러스 마왕을 원래 세계로 추방했습니다!
 그 모든 역경 속에서 당신은 손쉽게 모든 침공을 막아냈습니다!
 
 당신은 드디어 플레모이드들이 정신을 차리고 다신 시리얼
@@ -370,7 +501,7 @@ mais voltarão para a dimensão dos cereais.
 
 
 Mas se voltarem, você sabe que você
-estará preparad@[ao_ptb]!",,"Последним метким выстрелом из Зорчера,
+estará preparad@[ao_ptb]!",,,"Последним метким выстрелом из Зорчера,
 лорд Снотфолус был изгнан в назад своё измерение.
 Всем бедам вопреки, ты собственноручно
 покончил@[ao_rus] со вторжением!
@@ -383,6 +514,6 @@ estará preparad@[ao_ptb]!",,"Последним метким выстрелом
 
 Но если всё-таки проникнут,
 ты уже будешь к этому готов@[ao_rus]!",
-Rescue on Bazoik,M_EPI1,,,,,Rettung auf Bazoik,Rescate en Bazoik,,Sauvetage sur Bazoik,,,바조이크의 대동굴,Ratunek na Bazoik,Resgate em Bazoik,,Спасение на Базоике,
-Terror in Chex City,M_EPI2,,,,,,Terror en Chex City,,Terreur à Chex City,,,첵스 시티의 공포,Terror w Mieście Chex,Terror em Chexópolis,,Террор в Городе Chex,
-Invasion!,M_EPI3,,,,,,¡Invasión!,,,,,대침공!,Inwazja,A Invasão!,,Вторжение!,
+Rescue on Bazoik,M_EPI1,,,,Záchrana na Bazoiku,Rettung auf Bazoik,,,Rescate en Bazoik,,,Sauvetage sur Bazoik,,Salvataggio su Bazoik,バゾイクからのきゅうしゅつ,바조이크의 대동굴,Ratunek na Bazoik,Resgate em Bazoik,,,Спасение на Базоике,
+Terror in Chex City,M_EPI2,,,,Hrůza v Chex City,,,,Terror en Chex City,,,Terreur à Chex City,,Terrore a Chex City,チェックスシティーのきょうふ,첵스 시티의 공포,Terror w Mieście Chex,Terror em Chexópolis,,,Террор в Городе Chex,
+Invasion!,M_EPI3,,,,Invaze!,,,,¡Invasión!,,,,,Invasione!,しんにゅう!,대침공!,Inwazja,A Invasão!,,,Вторжение!,

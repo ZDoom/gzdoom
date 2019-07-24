@@ -71,7 +71,6 @@
 #include "d_netinf.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
-#include "r_renderer.h"
 #include "r_utility.h"
 #include "p_spec.h"
 #include "serializer.h"
@@ -882,7 +881,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 				if (tex != nullptr)
 				{
 					int filenum = Wads.GetLumpFile(tex->GetSourceLump());
-					if (filenum >= 0 && filenum <= Wads.GetIwadNum())
+					if (filenum >= 0 && filenum <= Wads.GetMaxIwadNum())
 					{
 						texids[i]->SetInvalid();
 					}

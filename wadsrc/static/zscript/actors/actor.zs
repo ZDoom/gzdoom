@@ -1052,8 +1052,9 @@ class Actor : Thinker native
 
 	deprecated("2.3") native void A_BulletAttack();
 	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", double snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, double runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
-	native clearscope void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false);
+	native clearscope void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false, double pitch = 0.0);
 	native void A_SoundVolume(int slot, double volume);
+	native void A_SoundPitch(int slot, double pitch);
 	deprecated("2.3") void A_PlayWeaponSound(sound whattoplay) { A_PlaySound(whattoplay, CHAN_WEAPON); }
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	deprecated("2.3") native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
@@ -1162,6 +1163,10 @@ class Actor : Thinker native
 	action native void A_OverlayFlags(int layer, int flags, bool set);
 	action native void A_OverlayAlpha(int layer, double alph);
 	action native void A_OverlayRenderStyle(int layer, int style);
+	
+	native bool A_AttachLightDef(Name lightid, Name lightdef);
+	native bool A_AttachLight(Name lightid, int type, Color lightcolor, int radius1, int radius2, int flags = 0, Vector3 ofs = (0,0,0), double param = 0, double spoti = 10, double spoto = 25, double spotp = 0);
+	native bool A_RemoveLight(Name lightid);
 
 	int ACS_NamedExecute(name script, int mapnum=0, int arg1=0, int arg2=0, int arg3=0)
 	{

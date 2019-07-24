@@ -106,6 +106,7 @@ class StatusScreen abstract play version("2.5")
 	PatchInfo 		mapname;
 	PatchInfo 		finished;
 	PatchInfo 		entering;
+	PatchInfo		content;
 
 	TextureID 		p_secret;
 	TextureID 		kills;
@@ -148,21 +149,19 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	int DrawName(int y, TextureID tex, String levelname)
+	int, int DrawName(int y, TextureID tex, String levelname)
 	{
 		// draw <LevelName> 
 		if (tex.isValid())
 		{
-			int w,h;
-			[w, h] = TexMan.GetSize(tex);
 			let size = TexMan.GetScaledSize(tex);
 			screen.DrawTexture(tex, true, (screen.GetWidth() - size.X * CleanXfac) /2, y, DTA_CleanNoMove, true);
-			if (h > 50)
+			if (size.Y > 50)
 			{ // Fix for Deus Vult II and similar wads that decide to make these hugely tall
 			  // patches with vast amounts of empty space at the bottom.
-				size.Y = TexMan.CheckRealHeight(tex) * size.Y / h;
+				size.Y = TexMan.CheckRealHeight(tex);
 			}
-			return y + (h + BigFont.GetHeight()/4) * CleanYfac;
+			return y + int(Size.Y), (BigFont.GetHeight() - BigFont.GetDisplacement()) * CleanYfac / 4;
 		}
 		else if (levelname.Length() > 0)
 		{
@@ -177,9 +176,9 @@ class StatusScreen abstract play version("2.5")
 				screen.DrawText(mapname.mFont, mapname.mColor, (screen.GetWidth() - lines.StringWidth(i) * CleanXfac) / 2, y + h, lines.StringAt(i), DTA_CleanNoMove, true);
 				h += lumph;
 			}
-			return y + h + lumph/4;
+			return y + h, (mapname.mFont.GetHeight() - mapname.mFont.GetDisplacement())/4;
 		}
-		return 0;
+		return 0, 0;
 	}
 
 	//====================================================================
@@ -234,11 +233,15 @@ class StatusScreen abstract play version("2.5")
 	virtual int drawLF ()
 	{
 		int y = TITLEY * CleanYfac;
+		int h;
 
-		y = DrawName(y, wbs.LName0, lnametexts[0]);
-	
+		[y, h] = DrawName(y, wbs.LName0, lnametexts[0]);
+
 		// Adjustment for different font sizes for map name and 'finished'.
-		y -= ((mapname.mFont.GetHeight() - finished.mFont.GetHeight()) * CleanYfac) / 4;
+		let fontspace1 = finished.mFont.GetDisplacement();
+		let fontspace2 = ((h + (finished.mFont.GetHeight() - fontspace1)/4)) / 2;
+
+		y += max(0, fontspace2 - fontspace1) * CleanYFac;
 
 		// draw "Finished!"
 
@@ -266,7 +269,16 @@ class StatusScreen abstract play version("2.5")
 		int y = TITLEY * CleanYfac;
 
 		y = DrawPatchOrText(y, entering, enteringPatch, "$WI_ENTERING");
-		y += entering.mFont.GetHeight() * CleanYfac / 4;
+		let h = (entering.mFont.GetHeight() - entering.mFont.GetDisplacement()) / 4;
+
+		if (!wbs.LName1.isValid())
+		{
+			// Factor out the font's displacement here.
+			let fontspace1 = mapname.mFont.GetDisplacement();
+			let fontspace2 = ((h + (mapname.mFont.GetHeight() - fontspace1)/4)) / 2;
+			h = max(0, fontspace2 - fontspace1) * CleanYFac;
+		}		
+		y += h * CleanYFac;
 		DrawName(y, wbs.LName1, lnametexts[1]);
 	}
 
@@ -754,6 +766,7 @@ class StatusScreen abstract play version("2.5")
 		entering.Init(gameinfo.mStatscreenEnteringFont);
 		finished.Init(gameinfo.mStatscreenFinishedFont);
 		mapname.Init(gameinfo.mStatscreenMapNameFont);
+		content.Init(gameinfo.mStatscreenContentFont);
 
 		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch);			// "kills"
 		Secret = TexMan.CheckForTexture("WIOSTS", TexMan.Type_MiscPatch);		// "scrt", not used

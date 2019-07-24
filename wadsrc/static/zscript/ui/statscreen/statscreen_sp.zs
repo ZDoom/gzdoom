@@ -145,34 +145,50 @@ class DoomStatusScreen : StatusScreen
 			&& TexMan.OkForLocalization(P_secret, "$TXT_IMSECRETS")
 			&& TexMan.OkForLocalization(Timepic, "$TXT_IMTIME")
 			&& (!wbs.partime || TexMan.OkForLocalization(Par, "$TXT_IMPAR"));
-			 
-		// Fixme: This should try to retrieve the color from the intermission font and use the best approximation here
-		let tcolor = useGfx? Font.CR_UNTRANSLATED : Font.CR_RED;
+
+		// The font color may only be used when the entire screen is printed as text.
+		// Otherwise the text based parts should not be translated to match the other graphics patches.
+		let tcolor = useGfx? Font.CR_UNTRANSLATED : content.mColor;
 
 		Font printFont;
-		Font textFont = generic_ui? NewSmallFont : BigFont;
+		Font textFont = generic_ui? NewSmallFont : content.mFont;
+		int statsx = SP_STATSX;
+
+
 		if (useGfx)
 		{
 			printFont = IntermissionFont;
-			screen.DrawTexture (Kills, true, SP_STATSX, SP_STATSY, DTA_Clean, true);
-			screen.DrawTexture (Items, true, SP_STATSX, SP_STATSY+lh, DTA_Clean, true);
-			screen.DrawTexture (P_secret, true, SP_STATSX, SP_STATSY+2*lh, DTA_Clean, true);
+			screen.DrawTexture (Kills, true, statsx, SP_STATSY, DTA_Clean, true);
+			screen.DrawTexture (Items, true, statsx, SP_STATSY+lh, DTA_Clean, true);
+			screen.DrawTexture (P_secret, true, statsx, SP_STATSY+2*lh, DTA_Clean, true);
 			screen.DrawTexture (Timepic, true, SP_TIMEX, SP_TIMEY, DTA_Clean, true);
 			if (wbs.partime) screen.DrawTexture (Par, true, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true);
 		}
 		else
 		{
+			// Check if everything fits on the screen.
+			String percentage = wi_percents? " 0000%" : " 0000/0000";
+			int perc_width = textFont.StringWidth(percentage);
+			int k_width = textFont.StringWidth("$TXT_IMKILLS");
+			int i_width = textFont.StringWidth("$TXT_IMITEMS");
+			int s_width = textFont.StringWidth("$TXT_IMSECRETS");
+			int allwidth = max(k_width, i_width, s_width) + perc_width;
+			if ((SP_STATSX*2 + allwidth) > 320)	// The content does not fit so adjust the position a bit.
+			{
+				statsx = max(0, (320 - allwidth) / 2);
+			}
+
 			printFont = generic_ui? IntermissionFont : BigFont;
-			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
-			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
-			screen.DrawText (textFont, tcolor, SP_STATSX, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, statsx, SP_STATSY, "$TXT_IMKILLS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, statsx, SP_STATSY+lh, "$TXT_IMITEMS", DTA_Clean, true);
+			screen.DrawText (textFont, tcolor, statsx, SP_STATSY+2*lh, "$TXT_IMSECRETS", DTA_Clean, true);
 			screen.DrawText (textFont, tcolor, SP_TIMEX, SP_TIMEY, "$TXT_IMTIME", DTA_Clean, true);
 			if (wbs.partime) screen.DrawText (textFont, tcolor, 160 + SP_TIMEX, SP_TIMEY, "$TXT_IMPAR", DTA_Clean, true);
 		}
 			 
-		drawPercent (printFont, 320 - SP_STATSX, SP_STATSY, cnt_kills[0], wbs.maxkills, true, tcolor);
-		drawPercent (printFont, 320 - SP_STATSX, SP_STATSY+lh, cnt_items[0], wbs.maxitems, true, tcolor);
-		drawPercent (printFont, 320 - SP_STATSX, SP_STATSY+2*lh, cnt_secret[0], wbs.maxsecret, true, tcolor);
+		drawPercent (printFont, 320 - statsx, SP_STATSY, cnt_kills[0], wbs.maxkills, true, tcolor);
+		drawPercent (printFont, 320 - statsx, SP_STATSY+lh, cnt_items[0], wbs.maxitems, true, tcolor);
+		drawPercent (printFont, 320 - statsx, SP_STATSY+2*lh, cnt_secret[0], wbs.maxsecret, true, tcolor);
 		drawTimeFont (printFont, 160 - SP_TIMEX, SP_TIMEY, cnt_time, tcolor);
 			 
 		// This really sucks - not just by its message - and should have been removed long ago!
@@ -189,7 +205,7 @@ class DoomStatusScreen : StatusScreen
 			}
 			else
 			{
-				screen.DrawText (textFont, Font.CR_UNTRANSLATED, x  - printFont.StringWidth("$TXT_IMSUCKS"), y - printFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
+				screen.DrawText (textFont, tColor, x  - printFont.StringWidth("$TXT_IMSUCKS"), y - printFont.GetHeight() - 2,	"$TXT_IMSUCKS", DTA_Clean, true);
 			}
 		}
 
@@ -214,32 +230,33 @@ class RavenStatusScreen : DoomStatusScreen
 
 		drawLF();
 
-		Font textFont = generic_ui? NewSmallFont : BigFont;
+		Font textFont = generic_ui? NewSmallFont : content.mFont;
+		let tcolor = content.mColor;
 
-		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 65, "$TXT_IMKILLS", DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 90, "$TXT_IMITEMS", DTA_Clean, true, DTA_Shadow, true);
-		screen.DrawText (textFont, Font.CR_UNTRANSLATED, 50, 115, "$TXT_IMSECRETS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, tcolor, 50, 65, "$TXT_IMKILLS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, tcolor, 50, 90, "$TXT_IMITEMS", DTA_Clean, true, DTA_Shadow, true);
+		screen.DrawText (textFont, tcolor, 50, 115, "$TXT_IMSECRETS", DTA_Clean, true, DTA_Shadow, true);
 
 		int countpos = gameinfo.gametype==GAME_Strife? 285:270;
 		if (sp_state >= 2)
 		{
-			drawPercent (IntermissionFont, countpos, 65, cnt_kills[0], wbs.maxkills);
+			drawPercent (IntermissionFont, countpos, 65, cnt_kills[0], wbs.maxkills, true, tcolor);
 		}
 		if (sp_state >= 4)
 		{
-			drawPercent (IntermissionFont, countpos, 90, cnt_items[0], wbs.maxitems);
+			drawPercent (IntermissionFont, countpos, 90, cnt_items[0], wbs.maxitems, true, tcolor);
 		}
 		if (sp_state >= 6)
 		{
-			drawPercent (IntermissionFont, countpos, 115, cnt_secret[0], wbs.maxsecret);
+			drawPercent (IntermissionFont, countpos, 115, cnt_secret[0], wbs.maxsecret, true, tcolor);
 		}
 		if (sp_state >= 8)
 		{
-			screen.DrawText (textFont, Font.CR_UNTRANSLATED, 85, 160, "$TXT_IMTIME", DTA_Clean, true, DTA_Shadow, true);
-			drawTime (249, 160, cnt_time);
+			screen.DrawText (textFont, tcolor, 85, 160, "$TXT_IMTIME", DTA_Clean, true, DTA_Shadow, true);
+			drawTimeFont (textFont, 249, 160, cnt_time, tcolor);
 			if (wi_showtotaltime)
 			{
-				drawTime (249, 180, cnt_total_time);
+				drawTimeFont (textFont, 249, 180, cnt_total_time, tcolor);
 			}
 		}
 	}

@@ -116,7 +116,6 @@ static void DestroyCustomCursor();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-EXTERN_CVAR(String, language);
 EXTERN_CVAR (Bool, queryiwad);
 // Used on welcome/IWAD screen.
 EXTERN_CVAR (Bool, disableautoload)
@@ -137,7 +136,6 @@ CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR (Bool, con_debugoutput, false, 0);
 
 double PerfToSec, PerfToMillisec;
-uint32_t LanguageIDs[4];
 
 UINT TimerPeriod;
 

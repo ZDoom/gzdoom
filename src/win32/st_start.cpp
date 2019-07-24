@@ -35,7 +35,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0501	// required to get the MARQUEE defines
 #include <windows.h>
 #include <commctrl.h>
 #include "resource.h"
@@ -1107,7 +1106,7 @@ void ST_Endoom()
 		exit(0);
 	}
 
-	if (Wads.GetLumpFile(endoom_lump) == Wads.GetIwadNum() && showendoom == 2)
+	if (Wads.GetLumpFile(endoom_lump) == Wads.GetMaxIwadNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
 		exit(0);

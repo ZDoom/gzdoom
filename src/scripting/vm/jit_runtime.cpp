@@ -1,4 +1,5 @@
 
+#include <memory>
 #include "jit.h"
 #include "jitintern.h"
 

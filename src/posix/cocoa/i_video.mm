@@ -48,7 +48,6 @@
 #include "i_system.h"
 #include "m_argv.h"
 #include "m_png.h"
-#include "r_renderer.h"
 #include "swrenderer/r_swrenderer.h"
 #include "st_console.h"
 #include "v_text.h"
@@ -355,8 +354,9 @@ public:
 
 	~CocoaVideo()
 	{
+#ifdef HAVE_VULKAN
 		delete m_vulkanDevice;
-
+#endif
 		ms_window = nil;
 	}
 
@@ -367,6 +367,7 @@ public:
 
 		SystemBaseFrameBuffer *fb = nullptr;
 
+#ifdef HAVE_VULKAN
 		if (ms_isVulkanEnabled)
 		{
 			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
@@ -421,6 +422,7 @@ public:
 			}
 		}
 		else
+#endif
 		{
 			SetupOpenGLView(ms_window);
 		}

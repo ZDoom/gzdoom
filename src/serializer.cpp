@@ -52,7 +52,7 @@
 #include "p_conversation.h"
 #include "dsectoreffect.h"
 #include "d_player.h"
-#include "g_shared/a_sharedglobal.h"
+#include "a_sharedglobal.h"
 #include "po_man.h"
 #include "v_font.h"
 #include "doomerrors.h"

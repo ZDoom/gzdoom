@@ -38,7 +38,7 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "v_palette.h"
-#include "v_colortables.h"
+#include "r_data/v_colortables.h"
 #include "colormatcher.h"
 #include "r_data/renderstyle.h"
 #include "r_data/r_translate.h"

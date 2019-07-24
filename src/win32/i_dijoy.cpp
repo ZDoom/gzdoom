@@ -35,7 +35,6 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x800
-#define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <dinput.h>
 #ifndef __GNUC__
@@ -51,7 +50,6 @@
 #include "cmdlib.h"
 #include "v_text.h"
 #include "m_argv.h"
-#include "rawinput.h"
 
 #define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
 
@@ -221,7 +219,6 @@ protected:
 	void OrderAxes();
 	bool ReorderAxisPair(const GUID &x, const GUID &y, int pos);
 	HRESULT SetDataFormat();
-	bool SetConfigSection(bool create);
 
 	friend class FDInputJoystickManager;
 };
@@ -256,8 +253,6 @@ protected:
 	static BOOL CALLBACK EnumCallback(LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef);
 	static int NameSort(const void *a, const void *b);
 	static bool IsXInputDevice(const GUID *guid);
-	static bool IsXInputDeviceFast(const GUID *guid);
-	static bool IsXInputDeviceSlow(const GUID *guid);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -265,8 +260,6 @@ protected:
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void MapAxis(FIntCVar &var, int num);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1139,140 +1132,6 @@ BOOL CALLBACK FDInputJoystickManager::EnumCallback(LPCDIDEVICEINSTANCE lpddi, LP
 
 //===========================================================================
 //
-// FDInputJoystickManager :: IsXInputDevice							STATIC
-//
-// Does the DirectInput product GUID correspond to an XInput controller?
-
-// If the product's device ID contains contains "IG_"
-// (ex. "VID_045E&PID_028E&IG_00"), then it is an XInput device.
-// Unfortunately this information can not be found by just using DirectInput.
-//
-//===========================================================================
-
-bool FDInputJoystickManager::IsXInputDevice(const GUID *guid)
-{
-	if (MyGetRawInputDeviceList == NULL || MyGetRawInputDeviceInfoA == NULL)
-	{
-		return IsXInputDeviceSlow(guid);
-	}
-	else
-	{
-		return IsXInputDeviceFast(guid);
-	}
-}
-
-//===========================================================================
-//
-// FDInputJoystickManager :: IsXInputDeviceSlow						STATIC
-//
-// Pretty much copied straight from the article "XInput and DirectInput".
-//
-// Enum each PNP device using WMI and check each device ID. This is
-// Microsoft's reference implementation, but it is damn slow. After
-// a hardware change, connecting to the WMI server can take nearly three
-// seconds, and creating the instance enumerator consistantly takes longer
-// than 0.25 seconds.
-//
-// The XInput DLL can apparently be hacked fairly simply to work with
-// Windows 2000, and since Raw Input wasn't introduced until XP, I think
-// that's reason enough to keep this version around, despite it being
-// so horrendously slow.
-//
-//===========================================================================
-
-bool FDInputJoystickManager::IsXInputDeviceSlow(const GUID *guid)
-{
-	IWbemLocator *wbemlocator = NULL;
-	IEnumWbemClassObject *enumdevices = NULL;
-	IWbemClassObject *devices[20] = { 0 };
-	IWbemServices *wbemservices = NULL;
-	BSTR namespce = NULL;
-	BSTR deviceid = NULL;
-	BSTR classname = NULL;
-	DWORD returned = 0;
-	bool isxinput = false;
-	UINT device = 0;
-	VARIANT var;
-	HRESULT hr;
-
-	// Create WMI
-	hr = CoCreateInstance(CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&wbemlocator);
-	if (FAILED(hr) || wbemlocator == NULL)
-		goto cleanup;
-
-	if (NULL == (namespce = SysAllocString(OLESTR("\\\\.\\root\\cimv2")))) goto cleanup;
-	if (NULL == (classname = SysAllocString(OLESTR("Win32_PNPEntity")))) goto cleanup;
-	if (NULL == (deviceid = SysAllocString(OLESTR("DeviceID")))) goto cleanup;
-
-	// Connect to WMI
-	hr = wbemlocator->ConnectServer(namespce, NULL, NULL, 0, 0, NULL, NULL, &wbemservices);
-	if (FAILED(hr) || wbemservices == NULL)
-		goto cleanup;
-
-	// Switch security level to IMPERSONATE.
-	CoSetProxyBlanket(wbemservices, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
-		RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
-
-	hr = wbemservices->CreateInstanceEnum(classname, 0, NULL, &enumdevices);
-	if (FAILED(hr) || enumdevices == NULL)
-		goto cleanup;
-
-	// Loop over all devices
-	for (;;)
-	{
-		// Get 20 at a time.
-		hr = enumdevices->Next(10000, countof(devices), devices, &returned);
-		if (FAILED(hr))
-			goto cleanup;
-		if (returned == 0)
-			break;
-
-		for (device = 0; device < returned; device++)
-		{
-			// For each device, get its device ID.
-			hr = devices[device]->Get(deviceid, 0L, &var, NULL, NULL);
-			if (SUCCEEDED(hr) && var.vt == VT_BSTR && var.bstrVal != NULL)
-			{
-				// Check if the device ID contains "IG_". If it does, then it's an XInput device.
-				// This information cannot be found from DirectInput.
-				if (wcsstr(var.bstrVal, L"IG_"))
-				{
-					// If it does, then get the VID/PID from var.bstrVal.
-					DWORD pid = 0, vid = 0;
-					WCHAR *strvid = wcsstr(var.bstrVal, L"VID_");
-					if (strvid && swscanf(strvid, L"VID_%4X", &vid) != 1)
-						vid = 0;
-					WCHAR *strpid = wcsstr(var.bstrVal, L"PID_");
-					if (strpid && swscanf(strpid, L"PID_%4X", &pid) != 1)
-						pid = 0;
-
-					// Compare the VID/PID to the DInput device.
-					DWORD vidpid = MAKELONG(vid, pid);
-					if (vidpid == guid->Data1)
-					{
-						isxinput = true;
-						goto cleanup;
-					}
-				}
-			}
-			SAFE_RELEASE(devices[device]);
-		}
-	}
-
-cleanup:
-	if (namespce)	SysFreeString(namespce);
-	if (deviceid)	SysFreeString(deviceid);
-	if (classname)	SysFreeString(classname);
-	for (device = 0; device < countof(devices); ++device)
-		SAFE_RELEASE(devices[device]);
-	SAFE_RELEASE(enumdevices);
-	SAFE_RELEASE(wbemlocator);
-	SAFE_RELEASE(wbemservices);
-	return isxinput;
-}
-
-//===========================================================================
-//
 // FDInputJoystickManager :: IsXInputDeviceFast						STATIC
 //
 // The theory of operation is the same as for IsXInputDeviceSlow, except that
@@ -1283,14 +1142,14 @@ cleanup:
 //
 //===========================================================================
 
-bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
+bool FDInputJoystickManager::IsXInputDevice(const GUID *guid)
 {
 	UINT nDevices, numDevices;
 	RAWINPUTDEVICELIST *devices;
 	UINT i;
 	bool isxinput = false;
 
-	if (MyGetRawInputDeviceList(NULL, &nDevices, sizeof(RAWINPUTDEVICELIST)) != 0)
+	if (GetRawInputDeviceList(NULL, &nDevices, sizeof(RAWINPUTDEVICELIST)) != 0)
 	{
 		return false;
 	}
@@ -1298,7 +1157,7 @@ bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
 	{
 		return false;
 	}
-	if ((numDevices = MyGetRawInputDeviceList(devices, &nDevices, sizeof(RAWINPUTDEVICELIST))) == (UINT)-1)
+	if ((numDevices = GetRawInputDeviceList(devices, &nDevices, sizeof(RAWINPUTDEVICELIST))) == (UINT)-1)
 	{
 		free(devices);
 		return false;
@@ -1314,7 +1173,7 @@ bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
 			UINT cbSize;
 
 			cbSize = rdi.cbSize = sizeof(rdi);
-			if ((INT)MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
+			if ((INT)GetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICEINFO, &rdi, &cbSize) >= 0)
 			{
 				if(MAKELONG(rdi.hid.dwVendorId, rdi.hid.dwProductId) == (LONG)guid->Data1)
 				{
@@ -1322,7 +1181,7 @@ bool FDInputJoystickManager::IsXInputDeviceFast(const GUID *guid)
 					UINT namelen = countof(name);
 					UINT reslen;
 
-					reslen = MyGetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICENAME, name, &namelen);
+					reslen = GetRawInputDeviceInfoA(devices[i].hDevice, RIDI_DEVICENAME, name, &namelen);
 					if (reslen != (UINT)-1)
 					{
 						isxinput = (strstr(name, "IG_") != NULL);

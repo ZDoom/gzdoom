@@ -41,7 +41,6 @@
 #include "p_setup.h"
 #include "c_bind.h"
 #include "serializer.h"
-#include "r_renderer.h"
 #include "r_sky.h"
 #include "sbar.h"
 #include "d_player.h"

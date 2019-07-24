@@ -39,6 +39,7 @@
 #include "i_soundinternal.h"
 
 class FileReader;
+struct FSoundChan;
 
 enum ECodecType
 {
@@ -129,6 +130,9 @@ public:
 
 	// Changes a channel's volume.
 	virtual void ChannelVolume (FISoundChannel *chan, float volume) = 0;
+
+	// Changes a channel's pitch.
+	virtual void ChannelPitch(FISoundChannel *chan, float volume) = 0;
 
 	// Marks a channel's start time without actually playing it.
 	virtual void MarkStartTime (FISoundChannel *chan) = 0;

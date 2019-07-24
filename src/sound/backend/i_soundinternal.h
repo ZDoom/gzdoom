@@ -109,6 +109,7 @@ struct FISoundChannel
 	float		DistanceScale;
 	float		DistanceSqr;
 	bool		ManualRolloff;
+	int			ChanFlags;
 };
 
 

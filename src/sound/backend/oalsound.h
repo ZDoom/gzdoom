@@ -144,6 +144,9 @@ public:
 	// Changes a channel's volume.
 	virtual void ChannelVolume(FISoundChannel *chan, float volume);
 
+	// Changes a channel's pitch.
+	virtual void ChannelPitch(FISoundChannel *chan, float pitch);
+
 	// Stops a sound channel.
 	virtual void StopChannel(FISoundChannel *chan);
 

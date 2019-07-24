@@ -179,7 +179,6 @@ struct FSoundChan : public FISoundChannel
 	FSoundID	SoundID;	// Sound ID of playing sound.
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.
 	float		Volume;
-	int			ChanFlags;
 	int16_t		Pitch;		// Pitch variation.
 	uint8_t		EntChannel;	// Actor's sound channel.
 	int8_t		Priority;
@@ -231,8 +230,12 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, float volume, f
 void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
 void S_Sound(FLevelLocals *Level, const DVector3 &pos, int channel, FSoundID sfxid, float volume, float attenuation);
 
+void S_SoundPitch (int channel, FSoundID sfxid, float volume, float attenuation, float pitch);
+void S_SoundPitchActor (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation, float pitch);
+
 // [Nash] Used by ACS and DECORATE
 void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local);
+void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch);
 
 // sound channels
 // channel 0 never willingly overrides
@@ -310,6 +313,10 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
 // Change a playing sound's volume
 void S_ChangeSoundVolume(AActor *actor, int channel, double volume);
 
+// Change a playing sound's pitch
+void S_ChangeSoundPitch(AActor *actor, int channel, double pitch);
+void S_SetPitch(FSoundChan *chan, float dpitch);
+
 // Moves all sounds from one mobj to another
 void S_RelinkSound (AActor *from, AActor *to);
 
@@ -372,7 +379,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
 void S_ParseMusInfo();
 bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time);
-void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local);
+void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch);
 
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.

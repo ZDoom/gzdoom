@@ -65,6 +65,8 @@ void PolyBuffer::Unmap()
 
 void *PolyBuffer::Lock(unsigned int size)
 {
+	if (mData.size() < (size_t)size)
+		Resize(size);
 	return map;
 }
 

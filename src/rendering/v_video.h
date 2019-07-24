@@ -394,6 +394,9 @@ public:
 	virtual ~DFrameBuffer();
 	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
 	virtual bool IsVulkan() { return false; }
+	virtual bool IsPoly() { return false; }
+
+	virtual DCanvas* GetCanvas() { return nullptr; }
 
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)

@@ -17,7 +17,7 @@ class PolyFrameBuffer : public SystemBaseFrameBuffer
 public:
 	RenderMemory *GetFrameMemory() { return &mFrameMemory; }
 	PolyRenderState *GetRenderState() { return mRenderState.get(); }
-	DCanvas *GetCanvas() { return mCanvas.get(); }
+	DCanvas *GetCanvas() override { return mCanvas.get(); }
 	PolyDepthStencil *GetDepthStencil() { return mDepthStencil.get(); }
 	const DrawerCommandQueuePtr &GetDrawCommands();
 	void FlushDrawCommands();
@@ -30,6 +30,8 @@ public:
 	~PolyFrameBuffer();
 
 	void Update();
+
+	bool IsPoly() override { return true; }
 
 	void InitializeState() override;
 

@@ -130,10 +130,9 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-	if (vid_enablevulkan == 2)
-	{
-		Video = new Win32PolyVideo();
-	}
+#if 1 // always use poly backend on this branch, for now.
+	Video = new Win32PolyVideo();
+#else
 #ifdef HAVE_VULKAN
 	else if (vid_enablevulkan == 1)
 	{
@@ -153,6 +152,7 @@ void I_InitGraphics ()
 	{
 		Video = new Win32GLVideo();
 	}
+#endif
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

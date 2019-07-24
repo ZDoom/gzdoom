@@ -132,7 +132,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, co
 static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, int channum, FVector3 &res);
 static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly, FVector3 &res);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
-	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff);
+	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff, float spitch);
 static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -929,7 +929,7 @@ static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly,
 
 static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation,
-	FRolloffInfo *forcedrolloff=NULL)
+	FRolloffInfo *forcedrolloff=NULL, float spitch = 0.0f)
 {
 	sfxinfo_t *sfx;
 	int chanflags;
@@ -1235,6 +1235,10 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		default:										break;
 		}
 	}
+
+	if (spitch > 0.0)
+		S_SetPitch(chan, spitch);
+
 	return chan;
 }
 
@@ -1318,9 +1322,14 @@ void S_RestartSound(FSoundChan *chan)
 //
 //==========================================================================
 
-void S_Sound (int channel, FSoundID sound_id, float volume, float attenuation)
+void S_SoundPitch(int channel, FSoundID sound_id, float volume, float attenuation, float pitch)
 {
-	S_StartSound (NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation);
+	S_StartSound(NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation, 0, pitch);
+}
+
+void S_Sound(int channel, FSoundID sound_id, float volume, float attenuation)
+{
+	S_StartSound (NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation, 0, 0.f);
 }
 
 DEFINE_ACTION_FUNCTION(DObject, S_Sound)
@@ -1330,7 +1339,8 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 	PARAM_INT(channel);
 	PARAM_FLOAT(volume);
 	PARAM_FLOAT(attn);
-	S_Sound(channel, id, static_cast<float>(volume), static_cast<float>(attn));
+	PARAM_FLOAT(pitch);
+	S_SoundPitch(channel, id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch));
 	return 0;
 }
 
@@ -1339,14 +1349,17 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 // S_Sound - An actor is source
 //
 //==========================================================================
-
-void S_Sound (AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation)
+void S_SoundPitchActor(AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation, float pitch)
 {
 	if (ent == nullptr || ent->Sector->Flags & SECF_SILENT || ent->Level != primaryLevel)
 		return;
-	S_StartSound (ent, nullptr, nullptr, nullptr, channel, sound_id, volume, attenuation);
+	S_StartSound (ent, nullptr, nullptr, nullptr, channel, sound_id, volume, attenuation, 0, pitch);
 }
 
+void S_Sound(AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation)
+{
+	S_SoundPitchActor(ent, channel, sound_id, volume, attenuation, 0.f);
+}
 //==========================================================================
 //
 // S_SoundMinMaxDist - An actor is source
@@ -1414,38 +1427,43 @@ void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, fl
 //
 //==========================================================================
 
-void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local)
+void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch)
 {
 	if (a == nullptr || a->Sector->Flags & SECF_SILENT || a->Level != primaryLevel)
 		return;
 
 	if (!local)
 	{
-		S_Sound(a, chan, sid, vol, atten);
+		S_SoundPitchActor(a, chan, sid, vol, atten, pitch);
 	}
 	else
 	{
 		if (a->CheckLocalView())
 		{
-			S_Sound(chan, sid, vol, ATTN_NONE);
+			S_SoundPitch(chan, sid, vol, ATTN_NONE, pitch);
 		}
 	}
 }
 
-void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local)
+void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local)
+{
+	S_PlaySoundPitch(a, chan, sid, vol, atten, local, 0.f);
+}
+
+void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch)
 {
 	if (!looping)
 	{
 		if (!(channel & CHAN_NOSTOP) || !S_IsActorPlayingSomething(self, channel & 7, soundid))
 		{
-			S_PlaySound(self, channel, soundid, (float)volume, (float)attenuation, local);
+			S_PlaySoundPitch(self, channel, soundid, (float)volume, (float)attenuation, local, (float)pitch);
 		}
 	}
 	else
 	{
 		if (!S_IsActorPlayingSomething(self, channel & 7, soundid))
 		{
-			S_PlaySound(self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation, local);
+			S_PlaySoundPitch(self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation, local, (float)pitch);
 		}
 	}
 }
@@ -1841,6 +1859,33 @@ void S_ChangeSoundVolume(AActor *actor, int channel, double dvolume)
 		}
 	}
 	return;
+}
+
+//==========================================================================
+//
+// S_ChangeSoundPitch
+//
+//==========================================================================
+
+void S_ChangeSoundPitch(AActor *actor, int channel, double pitch)
+{
+	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
+	{
+		if (chan->SourceType == SOURCE_Actor &&
+			chan->Actor == actor &&
+			chan->EntChannel == channel)
+		{
+			S_SetPitch(chan, (float)pitch);
+			return;
+		}
+	}
+	return;
+}
+
+void S_SetPitch(FSoundChan *chan, float pitch)
+{
+	GSnd->ChannelPitch(chan, MAX(0.0001f, pitch));
+	chan->Pitch = MAX(1, int(float(NORM_PITCH) * pitch));
 }
 
 //==========================================================================

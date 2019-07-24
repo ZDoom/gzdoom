@@ -158,6 +158,9 @@ public:
 	void ChannelVolume(FISoundChannel *, float)
 	{
 	}
+	void ChannelPitch(FISoundChannel *, float)
+	{
+	}
 
 	// Streaming sounds.
 	SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)

@@ -1870,6 +1870,20 @@ void OpenALSoundRenderer::ChannelVolume(FISoundChannel *chan, float volume)
 	alSourcef(source, AL_GAIN, SfxVolume * volume);
 }
 
+void OpenALSoundRenderer::ChannelPitch(FISoundChannel *chan, float pitch)
+{
+	if (chan == NULL || chan->SysChannel == NULL)
+		return;
+
+	alDeferUpdatesSOFT();
+
+	ALuint source = GET_PTRID(chan->SysChannel);
+	if (WasInWater && !(chan->ChanFlags & CHAN_UI))
+		alSourcef(source, AL_PITCH, MAX(pitch, 0.0001f)*PITCH_MULT);
+	else
+		alSourcef(source, AL_PITCH, MAX(pitch, 0.0001f));
+}
+
 void OpenALSoundRenderer::FreeSource(ALuint source)
 {
 	alSourceRewind(source);
@@ -2118,7 +2132,7 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 
 		const_cast<ReverbContainer*>(env)->Modified = false;
 	}
-
+	
 	// NOTE: Moving into and out of water will undo pitch variations on sounds.
 	if(listener->underwater || env->SoftwareWater)
 	{
@@ -2138,20 +2152,33 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 				alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
 
 				// Apply the updated filters on the sources
-				for(uint32_t i = 0;i < ReverbSfx.Size();++i)
+				FSoundChan *schan = Channels;
+				while (schan)
 				{
-					alSourcei(ReverbSfx[i], AL_DIRECT_FILTER, EnvFilters[0]);
-					alSource3i(ReverbSfx[i], AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+					ALuint source = GET_PTRID(schan->SysChannel);
+					if (source && !(schan->ChanFlags & CHAN_UI))
+					{
+						alSourcei(source, AL_DIRECT_FILTER, EnvFilters[0]);
+						alSource3i(source, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+					}
+					schan = schan->NextChan;
 				}
 			}
 
-			for(uint32_t i = 0;i < ReverbSfx.Size();++i)
-				alSourcef(ReverbSfx[i], AL_PITCH, PITCH_MULT);
+			FSoundChan *schan = Channels;
+			while (schan)
+			{
+				ALuint source = GET_PTRID(schan->SysChannel);
+				if (source && !(schan->ChanFlags & CHAN_UI))
+					alSourcef(source, AL_PITCH, schan->Pitch / 128.0f * PITCH_MULT);
+				schan = schan->NextChan;
+			}
 			getALError();
 		}
 	}
 	else if(WasInWater)
 	{
+		
 		WasInWater = false;
 
 		if(EnvSlot != 0)
@@ -2162,15 +2189,28 @@ void OpenALSoundRenderer::UpdateListener(SoundListener *listener)
 			alFilterf(EnvFilters[0], AL_LOWPASS_GAINHF, 1.f);
 			alFilterf(EnvFilters[1], AL_LOWPASS_GAIN, 1.f);
 			alFilterf(EnvFilters[1], AL_LOWPASS_GAINHF, 1.f);
-			for(uint32_t i = 0;i < ReverbSfx.Size();++i)
+
+			FSoundChan *schan = Channels;
+			while (schan)
 			{
-				alSourcei(ReverbSfx[i], AL_DIRECT_FILTER, EnvFilters[0]);
-				alSource3i(ReverbSfx[i], AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+				ALuint source = GET_PTRID(schan->SysChannel);
+				if (source && !(schan->ChanFlags & CHAN_UI))
+				{
+					alSourcei(source, AL_DIRECT_FILTER, EnvFilters[0]);
+					alSource3i(source, AL_AUXILIARY_SEND_FILTER, EnvSlot, 0, EnvFilters[1]);
+				}
+				schan = schan->NextChan;
 			}
 		}
 
-		for(uint32_t i = 0;i < ReverbSfx.Size();++i)
-			alSourcef(ReverbSfx[i], AL_PITCH, 1.f);
+		FSoundChan *schan = Channels;
+		while (schan)
+		{
+			ALuint source = GET_PTRID(schan->SysChannel);
+			if (source && !(schan->ChanFlags & CHAN_UI))
+				alSourcef(source, AL_PITCH, schan->Pitch / 128.0f);
+			schan = schan->NextChan;
+		}
 		getALError();
 	}
 }

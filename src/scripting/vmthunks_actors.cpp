@@ -142,6 +142,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeSoundPitch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_FLOAT(pitch);
+	S_ChangeSoundPitch(self, channel, pitch);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeSoundVolume)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -160,7 +169,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_BOOL(looping);
 	PARAM_FLOAT(attenuation);
 	PARAM_BOOL(local);
-	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local);
+	PARAM_FLOAT(pitch);
+	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
 	return 0;
 }
 

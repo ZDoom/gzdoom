@@ -76,6 +76,8 @@ private:
 
 	void CheckCanvas();
 
+	IDataBuffer *mLightBuffer = nullptr;
+
 	std::unique_ptr<PolyRenderState> mRenderState;
 	std::unique_ptr<DCanvas> mCanvas;
 	std::unique_ptr<PolyDepthStencil> mDepthStencil;

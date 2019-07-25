@@ -89,19 +89,13 @@ void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *v
 	const float *attrVertex = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_VERTEX]);
 	const float *attrTexcoord = reinterpret_cast<const float*>(vertex + mOffsets[VATTR_TEXCOORD]);
 	const uint8_t *attrColor = reinterpret_cast<const uint8_t*>(vertex + mOffsets[VATTR_COLOR]);
+	const uint32_t* attrNormal = reinterpret_cast<const uint32_t*>(vertex + mOffsets[VATTR_NORMAL]);
+	const uint32_t* attrNormal2 = reinterpret_cast<const uint32_t*>(vertex + mOffsets[VATTR_NORMAL2]);
 
 	thread->mainVertexShader.aPosition = { attrVertex[0], attrVertex[1], attrVertex[2], 1.0f };
 	thread->mainVertexShader.aTexCoord = { attrTexcoord[0], attrTexcoord[1] };
 
-	if (UseVertexData)
-	{
-		uint32_t r = attrColor[0];
-		uint32_t g = attrColor[1];
-		uint32_t b = attrColor[2];
-		uint32_t a = attrColor[3];
-		thread->mainVertexShader.aColor = MAKEARGB(a, r, g, b);
-	}
-	else
+	if ((UseVertexData & 1) == 0)
 	{
 		const auto &c = thread->mainVertexShader.Data.uVertexColor;
 		thread->mainVertexShader.aColor = MAKEARGB(
@@ -110,6 +104,34 @@ void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *v
 			static_cast<uint32_t>(c.Y * 255.0f + 0.5f),
 			static_cast<uint32_t>(c.Z * 255.0f + 0.5f)
 		);
+	}
+	else
+	{
+		uint32_t r = attrColor[0];
+		uint32_t g = attrColor[1];
+		uint32_t b = attrColor[2];
+		uint32_t a = attrColor[3];
+		thread->mainVertexShader.aColor = MAKEARGB(a, r, g, b);
+	}
+
+	if ((UseVertexData & 2) == 0)
+	{
+		const auto &n = thread->mainVertexShader.Data.uVertexNormal;
+		thread->mainVertexShader.aNormal = Vec4f(n.X, n.Y, n.Z, 1.0);
+		thread->mainVertexShader.aNormal2 = thread->mainVertexShader.aNormal;
+	}
+	else
+	{
+		int n = *attrNormal;
+		int n2 = *attrNormal2;
+		float x = ((n << 22) >> 22) / 512.0f;
+		float y = ((n << 12) >> 22) / 512.0f;
+		float z = ((n << 2) >> 22) / 512.0f;
+		float x2 = ((n2 << 22) >> 22) / 512.0f;
+		float y2 = ((n2 << 12) >> 22) / 512.0f;
+		float z2 = ((n2 << 2) >> 22) / 512.0f;
+		thread->mainVertexShader.aNormal = Vec4f(x, y, z, 0.0f);
+		thread->mainVertexShader.aNormal2 = Vec4f(x2, y2, z2, 0.0f);
 	}
 }
 

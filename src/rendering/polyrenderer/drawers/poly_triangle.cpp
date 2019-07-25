@@ -108,6 +108,11 @@ void PolyTriangleDrawer::SetIndexBuffer(const DrawerCommandQueuePtr &queue, cons
 	queue->Push<PolySetIndexBufferCommand>(elements);
 }
 
+void PolyTriangleDrawer::SetLightBuffer(const DrawerCommandQueuePtr& queue, const void *lights)
+{
+	queue->Push<PolySetLightBufferCommand>(lights);
+}
+
 void PolyTriangleDrawer::PushDrawArgs(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args)
 {
 	queue->Push<PolyPushDrawArgsCommand>(args);
@@ -308,6 +313,42 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 	{
 		drawargs.SetLight(GetColorTable(cm), 255, mainVertexShader.Viewpoint->mGlobVis * 32.0f, true);
 	}
+
+	int numLights = 0;
+	if (constants.uLightIndex >= 0)
+	{
+		const FVector4 &lightRange = lights[constants.uLightIndex];
+		static_assert(sizeof(FVector4) == 16, "sizeof(FVector4) is not 16 bytes");
+		if (lightRange.Y > lightRange.X)
+		{
+			int start = constants.uLightIndex + 1;
+			int modulatedStart = static_cast<int>(lightRange.X) + start;
+			int modulatedEnd = static_cast<int>(lightRange.Y) + start;
+			for (int i = modulatedStart; i < modulatedEnd; i += 4)
+			{
+				if (numLights == maxPolyLights)
+					break;
+
+				auto &lightpos = lights[i];
+				auto &lightcolor = lights[i + 1];
+				//auto &lightspot1 = lights[i + 2];
+				//auto &lightspot2 = lights[i + 3];
+				uint32_t r = (int)clamp(lightcolor.X * 255.0f, 0.0f, 255.0f);
+				uint32_t g = (int)clamp(lightcolor.Y * 255.0f, 0.0f, 255.0f);
+				uint32_t b = (int)clamp(lightcolor.Z * 255.0f, 0.0f, 255.0f);
+
+				auto& polylight = polyLights[numLights++];
+				polylight.x = lightpos.X;
+				polylight.y = lightpos.Y;
+				polylight.z = lightpos.Z;
+				polylight.radius = 256.0f / lightpos.W;
+				polylight.color = (r << 16) | (g << 8) | b;
+				if (lightcolor.W < 0.0f)
+					polylight.radius = -polylight.radius;
+			}
+		}
+	}
+	drawargs.SetLights(polyLights, numLights);
 
 	if (SpecialEffect != EFF_NONE)
 	{
@@ -794,6 +835,7 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 		return;
 
 	drawargs.SetColor(vert[0]->vColor, 0);
+	drawargs.SetNormal(FVector3(vert[0]->vWorldNormal.X, vert[0]->vWorldNormal.Y, vert[0]->vWorldNormal.Z));
 
 	// Cull, clip and generate additional vertices as needed
 	ScreenTriVertex clippedvert[max_additional_vertices];

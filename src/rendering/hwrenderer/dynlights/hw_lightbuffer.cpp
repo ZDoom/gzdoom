@@ -44,7 +44,7 @@ FLightBuffer::FLightBuffer()
 	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
 	// We only want to disable using SSBOs for lights but not disable the feature entirely.
 	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
-	if (screen->IsVulkan() || ((screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && !strstr(screen->vendorstring, "Intel")))
+	if (screen->IsVulkan() || screen->IsPoly() || ((screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && !strstr(screen->vendorstring, "Intel")))
 	{
 		mBufferType = true;
 		mBlockAlign = 0;

@@ -42,6 +42,7 @@ public:
 	static void SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input);
 	static void SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices);
 	static void SetIndexBuffer(const DrawerCommandQueuePtr &queue, const void *elements);
+	static void SetLightBuffer(const DrawerCommandQueuePtr& queue, const void *lights);
 	static void SetViewpointUniforms(const DrawerCommandQueuePtr &queue, const HWViewpointUniforms *uniforms);
 	static void SetDepthClamp(const DrawerCommandQueuePtr &queue, bool on);
 	static void SetDepthMask(const DrawerCommandQueuePtr &queue, bool on);
@@ -143,6 +144,7 @@ public:
 	void SetInputAssembly(PolyInputAssembly *input) { inputAssembly = input; }
 	void SetVertexBuffer(const void *data) { vertices = data; }
 	void SetIndexBuffer(const void *data) { elements = (const unsigned int *)data; }
+	void SetLightBuffer(const void *data) { lights = (const FVector4 *)data; }
 	void SetViewpointUniforms(const HWViewpointUniforms *uniforms);
 	void SetDepthClamp(bool on);
 	void SetDepthMask(bool on);
@@ -237,6 +239,10 @@ public:
 
 	const void *vertices = nullptr;
 	const unsigned int *elements = nullptr;
+	const FVector4 *lights = nullptr;
+
+	enum { maxPolyLights = 16 };
+	PolyLight polyLights[maxPolyLights];
 
 	PolyMainVertexShader mainVertexShader;
 
@@ -453,6 +459,16 @@ public:
 
 private:
 	const void *indices;
+};
+
+class PolySetLightBufferCommand : public PolyDrawerCommand
+{
+public:
+	PolySetLightBufferCommand(const void *lights) : lights(lights) { }
+	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetLightBuffer(lights); }
+
+private:
+	const void *lights;
 };
 
 class PolySetInputAssemblyCommand : public PolyDrawerCommand

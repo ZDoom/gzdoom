@@ -17,6 +17,7 @@ public:
 	Vec4f vTexCoord;
 	uint32_t vColor;
 	Vec4f pixelpos;
+	Vec4f vWorldNormal;
 };
 
 class PolyMainVertexShader : public ShadedTriVertex
@@ -33,7 +34,6 @@ public:
 	// Output
 	Vec3f glowdist;
 	Vec3f gradientdist;
-	Vec4f vWorldNormal;
 	Vec4f vEyeNormal;
 
 	// Defines
@@ -244,6 +244,8 @@ public:
 		}
 
 		vColor = drawargs->Color();
+
+		vWorldNormal = { drawargs->Normal().X, drawargs->Normal().Y, drawargs->Normal().Z };
 
 		// Calculate gl_ClipDistance[i]
 		for (int i = 0; i < 3; i++)

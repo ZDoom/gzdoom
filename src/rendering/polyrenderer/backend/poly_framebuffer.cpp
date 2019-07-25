@@ -100,6 +100,8 @@ void PolyFrameBuffer::InitializeState()
 	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
 
+	PolyTriangleDrawer::SetLightBuffer(GetDrawCommands(), mLightBuffer->Memory());
+
 	CheckCanvas();
 }
 
@@ -485,7 +487,10 @@ IIndexBuffer *PolyFrameBuffer::CreateIndexBuffer()
 
 IDataBuffer *PolyFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize)
 {
-	return new PolyDataBuffer(bindingpoint, ssbo, needsresize);
+	IDataBuffer *buffer = new PolyDataBuffer(bindingpoint, ssbo, needsresize);
+	if (bindingpoint == LIGHTBUF_BINDINGPOINT)
+		mLightBuffer = buffer;
+	return buffer;
 }
 
 void PolyFrameBuffer::SetTextureFilterMode()

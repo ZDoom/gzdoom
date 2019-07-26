@@ -112,7 +112,7 @@ class ConversationMenu : Menu
 		mShowGold = false;
 		ConversationPauseTic = gametic + 20;
 		DontDim = true;
-		if (!generic_ui)
+		if (!generic_ui && !dlg_vgafont)
 		{
 			displayFont = SmallFont;
 			displayWidth = CleanWidth;

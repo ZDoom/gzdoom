@@ -437,7 +437,7 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)
 	return 0;
 }
 
-void player_t::SetSubtitle(int num)
+void player_t::SetSubtitle(int num, FSoundID soundid)
 {
 	char lumpname[36];
 
@@ -449,7 +449,7 @@ void player_t::SetSubtitle(int num)
 	if (text != nullptr)
 	{
 		SubtitleText = lumpname;
-		SubtitleCounter = 7 * TICRATE;
+		SubtitleCounter = soundid == 0 ? 7 * TICRATE : S_GetMSLength(soundid) * TICRATE / 1000;
 	}
 }
 
@@ -457,7 +457,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSubtitleNumber)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(log);
-	self->SetSubtitle(log);
+	PARAM_SOUND(soundid);
+	self->SetSubtitle(log, soundid);
 	return 0;
 }
 

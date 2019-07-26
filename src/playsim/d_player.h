@@ -289,7 +289,7 @@ public:
 	void SetLogNumber (int num);
 	void SetLogText (const char *text);
 	void SendPitchLimits() const;
-	void SetSubtitle(int num);
+	void SetSubtitle(int num, FSoundID soundid);
 
 	AActor *mo = nullptr;
 	uint8_t		playerstate = 0;

@@ -160,7 +160,7 @@ void VulkanFrameBuffer::InitializeState()
 
 	// To do: move this to HW renderer interface maybe?
 	MatrixBuffer = new VkStreamBuffer(sizeof(MatricesUBO), 50000);
-	StreamBuffer = new VkStreamBuffer(sizeof(StreamUBO), 200);
+	StreamBuffer = new VkStreamBuffer(sizeof(StreamUBO), 300);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));

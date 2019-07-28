@@ -50,6 +50,7 @@
 #include "vk_buffers.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_streambuffer.h"
 #include "vulkan/renderer/vk_postprocess.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
@@ -106,8 +107,8 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	VKBuffer::ResetAll();
 	PPResource::ResetAll();
 
-	delete MatricesUBO;
-	delete StreamUBO;
+	delete MatrixBuffer;
+	delete StreamBuffer;
 	delete mVertexData;
 	delete mSkyData;
 	delete mViewpoints;
@@ -158,10 +159,8 @@ void VulkanFrameBuffer::InitializeState()
 	CreateFanToTrisIndexBuffer();
 
 	// To do: move this to HW renderer interface maybe?
-	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(-1, false, false);
-	StreamUBO = (VKDataBuffer*)CreateDataBuffer(-1, false, false);
-	MatricesUBO->SetData(UniformBufferAlignedSize<::MatricesUBO>() * 50000, nullptr, false);
-	StreamUBO->SetData(UniformBufferAlignedSize<::StreamUBO>() * 200, nullptr, false);
+	MatrixBuffer = new VkMatrixBuffer();
+	StreamBuffer = new VkStreamBuffer();
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));

@@ -314,7 +314,7 @@ void VkRenderState::ApplyStreamData()
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
 
-	mStreamData.useVertexData = passManager->VertexFormats[static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat].UseVertexData;
+	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
 		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.);
@@ -385,9 +385,9 @@ void VkRenderState::ApplyVertexBuffers()
 	if ((mVertexBuffer != mLastVertexBuffer || mVertexOffsets[0] != mLastVertexOffsets[0] || mVertexOffsets[1] != mLastVertexOffsets[1]) && mVertexBuffer)
 	{
 		auto vkbuf = static_cast<VKVertexBuffer*>(mVertexBuffer);
-		const auto &format = GetVulkanFrameBuffer()->GetRenderPassManager()->VertexFormats[vkbuf->VertexFormat];
+		const VkVertexFormat *format = GetVulkanFrameBuffer()->GetRenderPassManager()->GetVertexFormat(vkbuf->VertexFormat);
 		VkBuffer vertexBuffers[2] = { vkbuf->mBuffer->buffer, vkbuf->mBuffer->buffer };
-		VkDeviceSize offsets[] = { mVertexOffsets[0] * format.Stride, mVertexOffsets[1] * format.Stride };
+		VkDeviceSize offsets[] = { mVertexOffsets[0] * format->Stride, mVertexOffsets[1] * format->Stride };
 		mCommandBuffer->bindVertexBuffers(0, 2, vertexBuffers, offsets);
 		mLastVertexBuffer = mVertexBuffer;
 		mLastVertexOffsets[0] = mVertexOffsets[0];

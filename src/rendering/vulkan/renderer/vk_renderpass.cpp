@@ -93,6 +93,11 @@ int VkRenderPassManager::GetVertexFormat(int numBindingPoints, int numAttributes
 	return (int)VertexFormats.size() - 1;
 }
 
+VkVertexFormat *VkRenderPassManager::GetVertexFormat(int index)
+{
+	return &VertexFormats[index];
+}
+
 void VkRenderPassManager::CreateDynamicSetLayout()
 {
 	DescriptorSetLayoutBuilder builder;
@@ -289,7 +294,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	builder.addVertexShader(program->vert.get());
 	builder.addFragmentShader(program->frag.get());
 
-	const VkVertexFormat &vfmt = fb->GetRenderPassManager()->VertexFormats[key.VertexFormat];
+	const VkVertexFormat &vfmt = *fb->GetRenderPassManager()->GetVertexFormat(key.VertexFormat);
 
 	for (int i = 0; i < vfmt.NumBindingPoints; i++)
 		builder.addVertexBufferBinding(i, vfmt.Stride);

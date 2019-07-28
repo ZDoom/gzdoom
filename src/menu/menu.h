@@ -84,7 +84,7 @@ public:
 private:
 	int InsertSaveNode(FSaveGameNode *node);
 public:
-	void NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave);
+	void NotifyNewSave(const FString &file, const FString &title, bool okForQuicksave, bool forceQuicksave);
 	void ClearSaveGames();
 
 	void ReadSaveStrings();

@@ -373,11 +373,10 @@ void VkRenderState::ApplyPushConstants()
 
 void VkRenderState::ApplyMatrices()
 {
-	auto fb = GetVulkanFrameBuffer();
-	if (!fb->MatrixBuffer->Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled))
+	if (!mMatrixBufferWriter.Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled))
 	{
 		WaitForStreamBuffers();
-		fb->MatrixBuffer->Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled);
+		mMatrixBufferWriter.Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled);
 	}
 }
 
@@ -421,7 +420,7 @@ void VkRenderState::ApplyMaterial()
 void VkRenderState::ApplyDynamicSet()
 {
 	auto fb = GetVulkanFrameBuffer();
-	uint32_t matrixOffset = fb->MatrixBuffer->Offset();
+	uint32_t matrixOffset = mMatrixBufferWriter.Offset();
 	uint32_t streamDataOffset = mStreamBufferWriter.StreamDataOffset();
 	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset)
 	{
@@ -442,7 +441,7 @@ void VkRenderState::WaitForStreamBuffers()
 	GetVulkanFrameBuffer()->WaitForCommands(false);
 	mApplyCount = 0;
 	mStreamBufferWriter.Reset();
-	GetVulkanFrameBuffer()->MatrixBuffer->Reset();
+	mMatrixBufferWriter.Reset();
 }
 
 void VkRenderState::Bind(int bindingpoint, uint32_t offset)
@@ -478,7 +477,7 @@ void VkRenderState::EndRenderPass()
 
 void VkRenderState::EndFrame()
 {
-	GetVulkanFrameBuffer()->MatrixBuffer->Reset();
+	mMatrixBufferWriter.Reset();
 	mStreamBufferWriter.Reset();
 }
 

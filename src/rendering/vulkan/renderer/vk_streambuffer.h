@@ -5,6 +5,7 @@
 #include "vulkan/shaders/vk_shader.h"
 
 class VkStreamBuffer;
+class VkMatrixBuffer;
 
 class VkStreamBufferWriter
 {
@@ -23,10 +24,27 @@ private:
 	uint32_t mStreamDataOffset = 0;
 };
 
+class VkMatrixBufferWriter
+{
+public:
+	VkMatrixBufferWriter();
+
+	bool Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled);
+	void Reset();
+
+	uint32_t Offset() const { return mOffset; }
+
+private:
+	VkStreamBuffer* mBuffer;
+	MatricesUBO mMatrices = {};
+	VSMatrix mIdentityMatrix;
+	uint32_t mOffset = 0;
+};
+
 class VkStreamBuffer
 {
 public:
-	VkStreamBuffer();
+	VkStreamBuffer(size_t structSize, size_t count);
 	~VkStreamBuffer();
 
 	uint32_t NextStreamDataBlock();
@@ -35,24 +53,6 @@ public:
 	VKDataBuffer* UniformBuffer = nullptr;
 
 private:
+	uint32_t mBlockSize = 0;
 	uint32_t mStreamDataOffset = 0;
-};
-
-class VkMatrixBuffer
-{
-public:
-	VkMatrixBuffer();
-	~VkMatrixBuffer();
-
-	bool Write(const VSMatrix &modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled);
-	void Reset();
-
-	uint32_t Offset() const { return mOffset; }
-
-	VKDataBuffer* UniformBuffer = nullptr;
-
-private:
-	MatricesUBO mMatrices = {};
-	VSMatrix mIdentityMatrix;
-	uint32_t mOffset = 0;
 };

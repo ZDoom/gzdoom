@@ -159,8 +159,8 @@ void VulkanFrameBuffer::InitializeState()
 	CreateFanToTrisIndexBuffer();
 
 	// To do: move this to HW renderer interface maybe?
-	MatrixBuffer = new VkMatrixBuffer();
-	StreamBuffer = new VkStreamBuffer();
+	MatrixBuffer = new VkStreamBuffer(sizeof(MatricesUBO), 50000);
+	StreamBuffer = new VkStreamBuffer(sizeof(StreamUBO), 200);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));

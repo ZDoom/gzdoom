@@ -10,7 +10,6 @@ class VkShaderManager;
 class VkRenderPassManager;
 class VkRenderState;
 class VkStreamBuffer;
-class VkMatrixBuffer;
 class VKDataBuffer;
 class VkHardwareTexture;
 class VkRenderBuffers;
@@ -42,7 +41,7 @@ public:
 
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
-	VkMatrixBuffer *MatrixBuffer = nullptr;
+	VkStreamBuffer *MatrixBuffer = nullptr;
 	VkStreamBuffer *StreamBuffer = nullptr;
 
 	VKDataBuffer *LightNodes = nullptr;

@@ -4,14 +4,12 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/renderer/vk_streambuffer.h"
 
-template<typename T>
-int UniformBufferAlignedSize(int count) { return ((sizeof(T) + screen->uniformblockalignment - 1) / screen->uniformblockalignment * screen->uniformblockalignment) * count; }
-
-VkStreamBuffer::VkStreamBuffer()
+VkStreamBuffer::VkStreamBuffer(size_t structSize, size_t count)
 {
-	auto fb = GetVulkanFrameBuffer();
-	UniformBuffer = (VKDataBuffer*)fb->CreateDataBuffer(-1, false, false);
-	UniformBuffer->SetData(UniformBufferAlignedSize<StreamUBO>(200), nullptr, false);
+	mBlockSize = static_cast<uint32_t>((structSize + screen->uniformblockalignment - 1) / screen->uniformblockalignment * screen->uniformblockalignment);
+
+	UniformBuffer = (VKDataBuffer*)GetVulkanFrameBuffer()->CreateDataBuffer(-1, false, false);
+	UniformBuffer->SetData(mBlockSize * count, nullptr, false);
 }
 
 VkStreamBuffer::~VkStreamBuffer()
@@ -21,8 +19,8 @@ VkStreamBuffer::~VkStreamBuffer()
 
 uint32_t VkStreamBuffer::NextStreamDataBlock()
 {
-	mStreamDataOffset += sizeof(StreamUBO);
-	if (mStreamDataOffset + sizeof(StreamUBO) >= UniformBuffer->Size())
+	mStreamDataOffset += mBlockSize;
+	if (mStreamDataOffset + (size_t)mBlockSize >= UniformBuffer->Size())
 	{
 		mStreamDataOffset = 0;
 		return 0xffffffff;
@@ -61,18 +59,10 @@ void VkStreamBufferWriter::Reset()
 
 /////////////////////////////////////////////////////////////////////////////
 
-VkMatrixBuffer::VkMatrixBuffer()
+VkMatrixBufferWriter::VkMatrixBufferWriter()
 {
+	mBuffer = GetVulkanFrameBuffer()->MatrixBuffer;
 	mIdentityMatrix.loadIdentity();
-
-	auto fb = GetVulkanFrameBuffer();
-	UniformBuffer = (VKDataBuffer*)fb->CreateDataBuffer(-1, false, false);
-	UniformBuffer->SetData(UniformBufferAlignedSize<MatricesUBO>(50000), nullptr, false);
-}
-
-VkMatrixBuffer::~VkMatrixBuffer()
-{
-	delete UniformBuffer;
 }
 
 template<typename T>
@@ -92,7 +82,7 @@ static void BufferedSet(bool& modified, VSMatrix& dst, const VSMatrix& src)
 	modified = true;
 }
 
-bool VkMatrixBuffer::Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled)
+bool VkMatrixBufferWriter::Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled, const VSMatrix& textureMatrix, bool textureMatrixEnabled)
 {
 	bool modified = (mOffset == 0); // always modified first call
 
@@ -119,17 +109,19 @@ bool VkMatrixBuffer::Write(const VSMatrix& modelMatrix, bool modelMatrixEnabled,
 
 	if (modified)
 	{
-		if (mOffset + (size_t)UniformBufferAlignedSize<MatricesUBO>(2) >= UniformBuffer->Size())
+		mOffset = mBuffer->NextStreamDataBlock();
+		if (mOffset == 0xffffffff)
 			return false;
 
-		mOffset += UniformBufferAlignedSize<MatricesUBO>(1);
-		memcpy(static_cast<uint8_t*>(UniformBuffer->Memory()) + mOffset, &mMatrices, sizeof(MatricesUBO));
+		uint8_t* ptr = (uint8_t*)mBuffer->UniformBuffer->Memory();
+		memcpy(ptr + mOffset, &mMatrices, sizeof(MatricesUBO));
 	}
 
 	return true;
 }
 
-void VkMatrixBuffer::Reset()
+void VkMatrixBufferWriter::Reset()
 {
 	mOffset = 0;
+	mBuffer->Reset();
 }

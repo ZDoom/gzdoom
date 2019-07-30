@@ -100,7 +100,7 @@ bool VkMatrixBufferWriter::Write(const VSMatrix& modelMatrix, bool modelMatrixEn
 
 	if (textureMatrixEnabled)
 	{
-		BufferedSet(modified, mMatrices.TextureMatrix, textureMatrixEnabled);
+		BufferedSet(modified, mMatrices.TextureMatrix, textureMatrix);
 	}
 	else
 	{

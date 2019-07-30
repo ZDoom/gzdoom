@@ -103,6 +103,9 @@ public:
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
 	int GetDefaultKerning () const { return GlobalKerning; }
+	int GetMaxAscender(const uint8_t* text) const;
+	int GetMaxAscender(const char* text) const { return GetMaxAscender((uint8_t*)text); }
+	int GetMaxAscender(const FString &text) const { return GetMaxAscender((uint8_t*)text.GetChars()); }
 	virtual void LoadTranslations();
 	FName GetName() const { return FontName; }
 

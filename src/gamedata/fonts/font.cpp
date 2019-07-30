@@ -1109,6 +1109,53 @@ int FFont::StringWidth(const uint8_t *string) const
 
 //==========================================================================
 //
+// Get the largest ascender in the first line of this text.
+//
+//==========================================================================
+
+int FFont::GetMaxAscender(const uint8_t* string) const
+{
+	int retval = 0;
+
+	while (*string)
+	{
+		auto chr = GetCharFromString(string);
+		if (chr == TEXTCOLOR_ESCAPE)
+		{
+			// We do not need to check for UTF-8 in here.
+			if (*string == '[')
+			{
+				while (*string != '\0' && *string != ']')
+				{
+					++string;
+				}
+			}
+			if (*string != '\0')
+			{
+				++string;
+			}
+			continue;
+		}
+		else if (chr == '\n')
+		{
+			break;
+		}
+		else
+		{
+			auto ctex = GetChar(chr, CR_UNTRANSLATED, nullptr);
+			if (ctex)
+			{
+				auto offs = int(ctex->GetScaledTopOffset(0));
+				if (offs > retval) retval = offs;
+			}
+		}
+	}
+
+	return retval;
+}
+
+//==========================================================================
+//
 // FFont :: LoadTranslations
 //
 //==========================================================================

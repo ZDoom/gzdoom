@@ -84,7 +84,7 @@ void DrawFullscreenSubtitle(const char *text)
 	auto scale = active_con_scaletext(generic_ui);
 	int hudwidth = SCREENWIDTH / scale;
 	int hudheight = SCREENHEIGHT / scale;
-	FFont *font = C_GetDefaultHUDFont();
+	FFont *font = generic_ui? NewSmallFont : SmallFont;
 
 	int linelen = hudwidth < 640 ? Scale(hudwidth, 9, 10) - 40 : 560;
 	auto lines = V_BreakLines(font, linelen, text);

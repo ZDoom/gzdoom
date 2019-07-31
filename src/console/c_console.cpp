@@ -581,11 +581,6 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 	setmsgcolor (PRINTLEVELS+1, self);
 }
 
-FFont * C_GetDefaultHUDFont()
-{
-	return generic_ui? NewSmallFont : SmallFont;
-}
-
 void C_InitConback()
 {
 	conback = TexMan.CheckForTexture ("CONBACK", ETextureType::MiscPatch);

@@ -142,7 +142,7 @@ Level 9: Stronghold,THUSTR_9,,,,Level 9: Pevnost,Level 9: Festung,,Level 9: Fuor
 Level 10: Redemption,THUSTR_10,,,,Level 10: Vykoupení,Level 10: Erlösung,,Level 10: Elaĉeto,Nivel 10: Redención,,Taso 10: Lunastus,NIVEAU 10: Rédemption,Megváltás,Level 10: Redenzione,Level 10: 償還,레벨 10: 구원,Level 10: Odkupienie,Nível 10: Redenção,,Nivelul 10: Răscumpărare,Level 10: Искупление,Level 10: Искупљење
 Level 11: Storage Facility,THUSTR_11,,,,Level 11: Skladiště,Level 11: Lagerstätte,,Level 11: Konservejo,Nivel 11: Complejo de Almacenes,,Taso 11: Varastolaitos,NIVEAU 11: Complexe de Stockage,Raktárépület,Level 11: Impianto di Stoccaggio,Level 11: 貯蔵施設,레벨 11: 저장소,Level 11: Magazyn,Nível 11: Instalação de Armazenamento,,Nivelul 11: Stația de depozitare,Level 11: Склад,Level 11: Складиште
 Level 12: Crater,THUSTR_12,,,,Level 12: Kráter,Level 12: Krater,,Level 12: Kratero,Nivel 12: Cráter,,Taso 12: Kraateri,NIVEAU 12: Cratère,Kráter,Level 12: Cratere,Level 12: 火口,레벨 12: 분화구,Level 12: Krater,Nível 12: Cratera,,Nivelul 12: Crater,Level 12: Кратер,Level 12: Кратер
-Level 13: Nukage Processing,THUSTR_13,,,,Level 13: Zpracování odpadu,Level 13: Nuklearverarbeitung,,Level 13: Nukleaĵo-traktejo,Nivel 13: Procesamiento Nuclear,,Taso 13: Ydinjätekäsittely,NIVEAU 13: Traitement Nucléaire,Atomhulladék-feldolgozó,Level 13: Trattamento Nucleare,Level 13: 核廃棄物加工所,레벨 13: 폐기물 처리소,Level 13: Przetwórstwo Jądrowe,Nível 13: Processamento Nuclear,,Nivelul 13: Prelucrarea deșeurilor nucleare,Level 13: Переработка ядерных отходов,Level 13: Нуклеарна електрана
+Level 13: Nukage Processing,THUSTR_13,,,,Level 13: Zpracování odpadu,Level 13: Nuklearverarbeitung,,Level 13: Nukleaĵo-traktejo,Nivel 13: Procesamiento Nuclear,,Taso 13: Ydinjätekäsittely,NIVEAU 13: Traitement Nucléaire,Atomhulladék-feldolgozó,Level 13: Trattamento Nucleare,Level 13: 核廃棄物加工所,레벨 13: 폐기물 처리소,Level 13: Przetwórstwo Jądrowe,Nível 13: Processamento Nuclear,,Nivelul 13: Prelucrarea deșeurilor nucleare,Level 13: Переработка ядерных отходов,0
 Level 14: Steel Works,THUSTR_14,,,,Level 14: Ocelárna,Level 14: Stahlwerk,,Level 14: Ŝtalejo,Nivel 14: Siderúrgica,,Taso 14: Terästehdas,NIVEAU 14: Aciérie,Acélművek,Level 14: Acciaieria,Level 14: 製鉄所,레벨 14: 제강소,Level 14: Huta,Nível 14: Siderúrgica,,Nivelul 14: Oțelărie,Level 14: Металлургия,Level 14: Челичана
 Level 15: Dead Zone,THUSTR_15,,,,Level 15: Mrtvá zóna,Level 15: Tote Zone,,Level 15: Mortzono,Nivel 15: Zona Muerta,,Taso 15: Kuollut alue,NIVEAU 15: Zone Morte,A holtak zónája,Level 15: Zona Morta,Level 15: 危険地帯,레벨 15: 데드 존,Level 15: Martwa Strefa,Nível 15: Zona Morta,,Nivelul 15: Zonă moartă,Level 15: Мёртвая зона,Level 15: Зона смрти
 Level 16: Deepest Reaches,THUSTR_16,,,,Level 16: Nejhlubší sluje,Level 16: Tiefe,,Level 16: Plejsubejo,Nivel 16: Recodos profundos,,Taso 16: Syvyydet,NIVEAU 16: Profondeurs,Mélység,Level 16: Profondità,Level 16: 最深部,레벨 16: 깊숙한 강,Level 16: Głębiny,Nível 16: Profundezas,,,Level 16: Глубочайшие достижения,Level 16: Најдубља дубина
@@ -163,152 +163,152 @@ Level 30: Last Call,THUSTR_30,,,,Level 30: Poslední mise,Level 30: Letzter Aufr
 Level 31: Pharaoh,THUSTR_31,,,,Level 31: Faraón,Level 31: Pharao,,Level 31: Faraono,Nivel 31: Faraón,,Taso 31: Faarao,NIVEAU 31: Pharaon,Fáraó,Level 31: Faraone,Level 31: ファラオ,레벨 31: 파라오,Level 31: Faraon,Nível 31: Faraó,,Nivelul 31: Faraon,Level 31: Фараон,Level 31: Фараон
 Level 32: Caribbean,THUSTR_32,,,,Level 32: Karibik,Level 32: Karibik,,Level 32: Karibio,Nivel 32: Caribeño,,Taso 32: Karibia,NIVEAU 32: Caraïbes,Karib-térség,Level 32: Caraibi,Level 32: カリビアン,레벨 32: 카리브해,Level 32: Karaiby,Nível 32: Caribe,Nível 32: Caraíbas,Nivelul 32: Caraibe,Level 32: Карибы,Level 32: Кариби
 ,,Heretic,,,,,,,,,,,,,,,,,,,,
-The Docks,HHUSTR_E1M1,,,,Přístaviště,Die Docks,,,Los Muelles,,,Les Docks,A Kikötő,Il Molo,埠頭,항구,Doki,As Docas,,Docul,Доки,Лука
-The Dungeons,HHUSTR_E1M2,,,,Žaláře,Die Kerker,,,Los Calabozos,,,Le Donjon,A Kazamaták,I Sotterranei,地下牢,지하감옥,Lochy,As Masmorras,,Temnița,Темницы,Тамнице
-The Gatehouse,HHUSTR_E1M3,,,,Vrátnice,Das Pförtnerhaus,,,El Cuerpo de Guardia,,,Le Corps de Garde,A Kapuház,L'ingresso,門塔,문루,Stróżówka,O Portão de Entrada,,Casa portarului,Привратницкая,Стражарница
-The Guard Tower,HHUSTR_E1M4,,,,Střážní věž,Der Wachturm,,,La Torre de Guardia,,,La Tour de Garde,Az Őrtorony,La Torre di Guardia,監視塔,보초 누대,Wieża Strażnicza,A Torre de Guarda,,Turnul de veghe,Сторожевая башня,Извидница
-The Citadel,HHUSTR_E1M5,,,,Citadela,Die Festung,,,La Ciudadela,,,La Citadelle,A Citadella,La Cittadella,要塞,거점,Cytadela,A Cidadela,,Cetatea,Цитадель,Цитадела
-The Cathedral,HHUSTR_E1M6,,,,Katedrála,Die Kathedrale,,,La Catedral,,,La Cathédrale,A Katedrális,La Cattedrale,大聖堂,대성당,Katedra,A Catedral,,Catedrala,Кафедральный собор,Катедрала
-The Crypts,HHUSTR_E1M7,,,,Krypty,Die Krypten,,,Las Criptas,,,La Crypte,A Kripták,Le Cripte,地下聖堂,지하 묘실,Krypty,As Criptas,,Criptele,Склепы,Крипта
-Hell's Maw,HHUSTR_E1M8,,,,Chřtán pekla,Der Höllenschlund,,,Fauces del Infierno,,,La Geule de l'Enfer,A Pokol Szája,La Bocca dell'Inferno,地獄の肚,지옥의 목구멍,Paszcza Piekieł,A Boca do Inferno,,Gura către iad,Адская утроба,Паклено ждрело
-The Graveyard,HHUSTR_E1M9,,,,Hřbitov,Der Friedhof,,,El Cementerio,,,Le Cimetière,A Temető,Il Cimitero,墓場,공동묘지,Cmentarz,O Cemitério,,Cimitirul,Кладбище,Гробље
-The Crater,HHUSTR_E2M1,,,,Kráter,Der Krater,,,El Cráter,,,Le Cratère,A Kráter,Il Cratere,噴火口,깊은 혈,Krater,A Cratera,,Craterul,Кратер,Кратер
-The Lava Pits,HHUSTR_E2M2,,,,Lávové jámy,Die Lavagruben,,,Las Canteras de Lava,,,Les Puits de Lave,A Láva Gödrök,I Pozzi della Lava,溶岩の竪穴,용암 구덩이,Szyb Lawy,Os Fossos de Lava,,Gropile cu lavă,Лавовые очаги,Понор лаве
-The River of Fire,HHUSTR_E2M3,,,,Ohnivá řeka,Der Feuerfluss,,,El Río de Fuego,,,La Rivière de Feu,A Tűz Folyama,Il Fiume di Fuoco,火の河,화염의 강,Rzeka Ognia,O Rio de Fogo,,Râul de foc,Река огня,Река од ватре
-The Ice Grotto,HHUSTR_E2M4,,,,Ledová grotta,Die Eisgrotte,,,La Gruta de Hielo,,,La Grotte de Glace,A Jégbarlang,La Grotta del Ghiaccio,氷の洞窟,얼음 동굴,Lodowa Grota,A Gruta de Gelo,,Grota de gheață,Ледяной грот,Ледена пећина
-The Catacombs,HHUSTR_E2M5,,,,Katakomby,Die Katakomben,,,Las Catacumbas,,,Les Catacombes,A Katakombák,Le Catacombe,地下墓所,태고의 무덤,Katakumby,As Catacumbas,Os Túmulos,Catacombele,Катакомбы,Катакомбе
-The Labyrinth,HHUSTR_E2M6,,,,Labyrint,Das Labyrinth,,,El Laberinto,,,Le Labyrinthe,A Labirintus,Il Labirinto,迷宮,미궁,Labirynt,O Labirinto,,Labirintul,Лабиринт,Лавиринт
-The Great Hall,HHUSTR_E2M7,,,,Velký sál,Die große Halle,,,El Gran Salón,,,Le Grand Hall,A Nagy Folyosó,La Grande Sala,大公会堂,대회관,Wielki Hol,O Grande Salão,,Sala cea mare,Большой зал,Велика дворана
-The Portals of Chaos,HHUSTR_E2M8,,,,Portály chaosu,Das Portal des Chaos,,,Los Portales del Caos,,,Le Portail du Chaos,A Káosz Portáljai,I Portali del Caos,混沌への門,혼돈의 차원문,Portale Chaosu,Os Portais do Caos,,Portalurile de haos,Порталы хаоса,Портали хаоса
-The Glacier,HHUSTR_E2M9,,,,Ledovec,Der Gletscher,,,El Glaciar,,,Le Glacier,A Gleccser,Il Ghiacciaio,氷河,빙하 구역,Lodowiec,A Geleira,O Glaciar,Ghețarul,Ледник,Глечер
-The Storehouse,HHUSTR_E3M1,,,,Skladiště,Die Lagerhalle,,,El Almacén,,,L'Entrepôt,A Raktár,Il Magazzino,倉庫,저장고,Magazyn,O Armazém,,Depozitul,Кладовая,Складиште
-The Cesspool,HHUSTR_E3M2,,,,Žumpa,Die Latrine,,,El Pozo,,,Le Bourbier,A Pöcegödör,Il Pozzo Nero,汚水層,불결한 장소,Szambo,A Fossa,,Haznaua,Сточный колодец,Септичка јама
-The Confluence,HHUSTR_E3M3,,,,Soutok,Die Vereinigung,,,La Confluencia,,,La Confluence,A Kereszteződés,La Confluenza,合流点,합류점,Spływ,A Confluência,,Confluența,Слияние,Ушће
-The Azure Fortress,HHUSTR_E3M4,,,,Azurová pevnost,Die himmelblaue Festung,,,La Fortaleza de Azur,,,La Fortresse d'Azur,Az Azúr Erőd,La Fortezza Azzurra,紺碧の要塞,청천의 요새,Lazurowa Forteca,A Fortaleza Azul,,Fortăreața de azur,Лазурная крепость,Азурна дврђава
-The Ophidian Lair,HHUSTR_E3M5,,,,Hadí doupě,Das Schlangennest,,,La Guarida Ofídica,,,Le Repaire des Ophidiens,Az Opfidiánok Fészke,L'antro degli Ophidian,オフィディアンの塒,오피디안의 소굴,Gniazdo Węży,A Cova dos Ofídios,,Cuibul ofidienilor,Логово офидианов,Змијска јазбина
-The Halls of Fear,HHUSTR_E3M6,,,,Chodby strachu,Die Hallen der Angst,,,Los Salones del Miedo,,,Les Couloirs de la Peur,A Félelem Folyosói,Le Sale della Paura,恐怖の館,공포의 회관,Korytarze Strachu,Os Salões do Medo,,Sălile groazei,Залы страха,Дворана страха
-The Chasm,HHUSTR_E3M7,,,,Propast,Der Abgrund,,,El Abismo,,,Le Gouffre,A Szakadék,L'abisso,裂け目,깊은 골,Przepaść,O Abismo,,Prăpastia,Пропасть,Понор лаве
-D'Sparil's Keep,HHUSTR_E3M8,,,,D'Sparilova pevnost,D'Sparils Außenposten,,,Guarida de D'Sparil,,,Le Donjon de D'Sparil,D'Sparil Terme,La Dimora di D'sparil,デ’スパリルの間,드'스파릴의 초소,Baszta D'Sparila,Fortaleza de D'Sparil,,Palatul lui D'sparil,Крепость Д'Спарила,Д'Спарилова кула
-The Aquifer,HHUSTR_E3M9,,,,Zvodeň,Der Wasserspeicher,,,El Acuífero,,,L'Aquifère,A Víztorony,L'acquedotto,帯水層,대수층,Wodociąg,O Aquífero,,Galerii acvifere,Водоносный слой,Водоносник
-Catafalque,HHUSTR_E4M1,,,,Katafalk,Katafalk,,,Catafalco,,,Le Catafalque,Ravatal,Catafalco,棺台,관대,Katafalk,Catafalco,,Catafalc,Катафалк,Одар
-Blockhouse,HHUSTR_E4M2,,,,Tvrzka,Blockhaus,,,Fortín,,,Le Fortin,Gerendaház,Blocco di Case,丸太小屋,특화점,Blokhauz,O Forte,,Fort,Укрытие,Бункер
-Ambulatory,HHUSTR_E4M3,,,,Ochoz,Wandelgang,,,Ambulatorio,,,Le Déambulatoire,Kerengő,Ambulatorio,遊歩道,유보장,Krużganek,Ambulatório,,,Монастырская галерея,Амбуланта
-Sepulcher,HHUSTR_E4M4,,,,Hrob,Grabstätte,,,Sepulcro,,,Le Sépulcre,Síremlék,Sepolcro,埋葬所,매장소,Grób,Sepulcro,,Sepulcru,Гробница,Гробница
-Great Stair,HHUSTR_E4M5,,,,Velké schodiště,Große Treppe,,,Gran Escalera,,,Le Grand Escalier,Nagy Lépcső,Grande Scala,大階段,특급 계단,Wielka Gwiazda,Grande Escada,,Scara cea mare,Великая лестница,Велики степеник
-Halls of the Apostate,HHUSTR_E4M6,,,,Chodby odpadlictví,Halle des Abtrünnigen,,,Salas de los Apóstatas,,,Les Halls de l'Apôtre,A Hitehagyott Átjárója,Sale dell'Apostata,背教者の館,배교자의 회관,Korytarze Odszczepieńca,Os Salões dos Apóstatas,,Sălile apostatului,Залы отступников,Дворана апостола
-Ramparts of Perdition,HHUSTR_E4M7,,,,Náspy zatracení,Wälle der Verdammnis,,,Murallas de la Perdición,,,Les Remparts de la Perdition,A Kárhozat Támasza,Torrioni della Perdizione,破滅の塁壁,파멸의 성벽,Wał Potępienia,Muralhas da Perdição,,Meterezele pierzaniei,Твердыни погибели,Бедем пропасти
-Shattered Bridge,HHUSTR_E4M8,,,,Rozbitý most,Zerstörte Brücke,,,Puente Destrozado,,,Le Pont effondré,A Szétesett Híd,Ponte Distrutto,崩落の橋,붕괴된 다리,Zniszczony Most,Ponte Despedaçada,,Podul dărâmat,Разрушенный мост,Поломљен мост
-Mausoleum,HHUSTR_E4M9,,,,Mauzoleum,,,,Mausoleo,,,Le Mausolée,Mauzóleum,Mausoleo,霊廟,대영묘,Mauzoleum,Mausoléu,,Mausoleu,Мавзолей,Маузолеј
-Ochre Cliffs,HHUSTR_E5M1,,,,Okrové útesy,Ockerfarbene Klippen,,,Acantilados Ocres,,,Les Falaises Ochre,Okker Szakadékok,Colline Ocra,黄土絶壁,황토 산맥,Ochrowe Klify,Penhascos Ocres,,Stâncile de ocru,Охровые утёсы,Окер брда
-Rapids,HHUSTR_E5M2,,,,Peřeje,Stromschnellen,,,Rápidos,,,Les Rapides,Zuhatagok,Rapide,奔流,여울,Katarakty,Corredeiras,,Ape repezi,Стремнина,Брзак
-Quay,HHUSTR_E5M3,,,,Nábřeží,Kai,,,Muelle,,,Le Quai,Rakpart,Banchina,岸壁,부두,Wir,Cais,,Chei,Причал,Кеј
-Courtyard,HHUSTR_E5M4,,,,Nádvoří,Schlosshof,,,Patio,,,La Cour,Pitvar,Cortile,中庭,안마당,Dziedziniec,Pátio,,Curte,Внутренний двор,Двориште
+The Docks,HHUSTR_E1M1,,,,Přístaviště,Die Docks,,,Los Muelles,,Satamat,Les Docks,A Kikötő,Il Molo,埠頭,항구,Doki,As Docas,,Docul,Доки,Лука
+The Dungeons,HHUSTR_E1M2,,,,Žaláře,Die Kerker,,,Los Calabozos,,Tyrmät,Le Donjon,A Kazamaták,I Sotterranei,地下牢,지하감옥,Lochy,As Masmorras,,Temnița,Темницы,Тамнице
+The Gatehouse,HHUSTR_E1M3,,,,Vrátnice,Das Pförtnerhaus,,,El Cuerpo de Guardia,,Porttitalo,Le Corps de Garde,A Kapuház,L'ingresso,門塔,문루,Stróżówka,O Portão de Entrada,,Casa portarului,Привратницкая,Стражарница
+The Guard Tower,HHUSTR_E1M4,,,,Střážní věž,Der Wachturm,,,La Torre de Guardia,,Vartiotorni,La Tour de Garde,Az Őrtorony,La Torre di Guardia,監視塔,보초 누대,Wieża Strażnicza,A Torre de Guarda,,Turnul de veghe,Сторожевая башня,Извидница
+The Citadel,HHUSTR_E1M5,,,,Citadela,Die Festung,,,La Ciudadela,,Linnake,La Citadelle,A Citadella,La Cittadella,要塞,거점,Cytadela,A Cidadela,,Cetatea,Цитадель,Цитадела
+The Cathedral,HHUSTR_E1M6,,,,Katedrála,Die Kathedrale,,,La Catedral,,Katedraali,La Cathédrale,A Katedrális,La Cattedrale,大聖堂,대성당,Katedra,A Catedral,,Catedrala,Кафедральный собор,Катедрала
+The Crypts,HHUSTR_E1M7,,,,Krypty,Die Krypten,,,Las Criptas,,Kryptat,La Crypte,A Kripták,Le Cripte,地下聖堂,지하 묘실,Krypty,As Criptas,,Criptele,Склепы,Крипта
+Hell's Maw,HHUSTR_E1M8,,,,Chřtán pekla,Der Höllenschlund,,,Fauces del Infierno,,Helvetin kita,La Geule de l'Enfer,A Pokol Szája,La Bocca dell'Inferno,地獄の肚,지옥의 목구멍,Paszcza Piekieł,A Boca do Inferno,,Gura către iad,Адская утроба,Паклено ждрело
+The Graveyard,HHUSTR_E1M9,,,,Hřbitov,Der Friedhof,,,El Cementerio,,Hautausmaa,Le Cimetière,A Temető,Il Cimitero,墓場,공동묘지,Cmentarz,O Cemitério,,Cimitirul,Кладбище,Гробље
+The Crater,HHUSTR_E2M1,,,,Kráter,Der Krater,,,El Cráter,,Kraateri,Le Cratère,A Kráter,Il Cratere,噴火口,깊은 혈,Krater,A Cratera,,Craterul,Кратер,Кратер
+The Lava Pits,HHUSTR_E2M2,,,,Lávové jámy,Die Lavagruben,,,Las Canteras de Lava,,Laavamontut,Les Puits de Lave,A Láva Gödrök,I Pozzi della Lava,溶岩の竪穴,용암 구덩이,Szyb Lawy,Os Fossos de Lava,,Gropile cu lavă,Лавовые очаги,Понор лаве
+The River of Fire,HHUSTR_E2M3,,,,Ohnivá řeka,Der Feuerfluss,,,El Río de Fuego,,Tulijoki,La Rivière de Feu,A Tűz Folyama,Il Fiume di Fuoco,火の河,화염의 강,Rzeka Ognia,O Rio de Fogo,,Râul de foc,Река огня,Река од ватре
+The Ice Grotto,HHUSTR_E2M4,,,,Ledová grotta,Die Eisgrotte,,,La Gruta de Hielo,,Jääluola,La Grotte de Glace,A Jégbarlang,La Grotta del Ghiaccio,氷の洞窟,얼음 동굴,Lodowa Grota,A Gruta de Gelo,,Grota de gheață,Ледяной грот,Ледена пећина
+The Catacombs,HHUSTR_E2M5,,,,Katakomby,Die Katakomben,,,Las Catacumbas,,Katakombit,Les Catacombes,A Katakombák,Le Catacombe,地下墓所,태고의 무덤,Katakumby,As Catacumbas,Os Túmulos,Catacombele,Катакомбы,Катакомбе
+The Labyrinth,HHUSTR_E2M6,,,,Labyrint,Das Labyrinth,,,El Laberinto,,Labyrintti,Le Labyrinthe,A Labirintus,Il Labirinto,迷宮,미궁,Labirynt,O Labirinto,,Labirintul,Лабиринт,Лавиринт
+The Great Hall,HHUSTR_E2M7,,,,Velký sál,Die große Halle,,,El Gran Salón,,Suuri halli,Le Grand Hall,A Nagy Folyosó,La Grande Sala,大公会堂,대회관,Wielki Hol,O Grande Salão,,Sala cea mare,Большой зал,Велика дворана
+The Portals of Chaos,HHUSTR_E2M8,,,,Portály chaosu,Das Portal des Chaos,,,Los Portales del Caos,,Kaaoksen portaalit,Le Portail du Chaos,A Káosz Portáljai,I Portali del Caos,混沌への門,혼돈의 차원문,Portale Chaosu,Os Portais do Caos,,Portalurile de haos,Порталы хаоса,Портали хаоса
+The Glacier,HHUSTR_E2M9,,,,Ledovec,Der Gletscher,,,El Glaciar,,Jäätikkö,Le Glacier,A Gleccser,Il Ghiacciaio,氷河,빙하 구역,Lodowiec,A Geleira,O Glaciar,Ghețarul,Ледник,Глечер
+The Storehouse,HHUSTR_E3M1,,,,Skladiště,Die Lagerhalle,,,El Almacén,,Varasto,L'Entrepôt,A Raktár,Il Magazzino,倉庫,저장고,Magazyn,O Armazém,,Depozitul,Кладовая,Складиште
+The Cesspool,HHUSTR_E3M2,,,,Žumpa,Die Latrine,,,El Pozo,,Likakaivo,Le Bourbier,A Pöcegödör,Il Pozzo Nero,汚水層,불결한 장소,Szambo,A Fossa,,Haznaua,Сточный колодец,Септичка јама
+The Confluence,HHUSTR_E3M3,,,,Soutok,Die Vereinigung,,,La Confluencia,,Yhtymäkohta,La Confluence,A Kereszteződés,La Confluenza,合流点,합류점,Spływ,A Confluência,,Confluența,Слияние,Ушће
+The Azure Fortress,HHUSTR_E3M4,,,,Azurová pevnost,Die himmelblaue Festung,,,La Fortaleza de Azur,,Sininen linnoitus,La Fortresse d'Azur,Az Azúr Erőd,La Fortezza Azzurra,紺碧の要塞,청천의 요새,Lazurowa Forteca,A Fortaleza Azul,,Fortăreața de azur,Лазурная крепость,Азурна дврђава
+The Ophidian Lair,HHUSTR_E3M5,,,,Hadí doupě,Das Schlangennest,,,La Guarida Ofídica,,Käärmeiden pesä,Le Repaire des Ophidiens,Az Opfidiánok Fészke,L'antro degli Ophidian,オフィディアンの塒,오피디안의 소굴,Gniazdo Węży,A Cova dos Ofídios,,Cuibul ofidienilor,Логово офидианов,Змијска јазбина
+The Halls of Fear,HHUSTR_E3M6,,,,Chodby strachu,Die Hallen der Angst,,,Los Salones del Miedo,,Pelon salit,Les Couloirs de la Peur,A Félelem Folyosói,Le Sale della Paura,恐怖の館,공포의 회관,Korytarze Strachu,Os Salões do Medo,,Sălile groazei,Залы страха,Дворана страха
+The Chasm,HHUSTR_E3M7,,,,Propast,Der Abgrund,,,El Abismo,,Rotko,Le Gouffre,A Szakadék,L'abisso,裂け目,깊은 골,Przepaść,O Abismo,,Prăpastia,Пропасть,Понор лаве
+D'Sparil's Keep,HHUSTR_E3M8,,,,D'Sparilova pevnost,D'Sparils Außenposten,,,Guarida de D'Sparil,,D'Sparilin linna,Le Donjon de D'Sparil,D'Sparil Terme,La Dimora di D'sparil,デ’スパリルの間,드'스파릴의 초소,Baszta D'Sparila,Fortaleza de D'Sparil,,Palatul lui D'sparil,Крепость Д'Спарила,Д'Спарилова кула
+The Aquifer,HHUSTR_E3M9,,,,Zvodeň,Der Wasserspeicher,,,El Acuífero,,Akviferi,L'Aquifère,A Víztorony,L'acquedotto,帯水層,대수층,Wodociąg,O Aquífero,,Galerii acvifere,Водоносный слой,Водоносник
+Catafalque,HHUSTR_E4M1,,,,Katafalk,Katafalk,,,Catafalco,,Katafalkki,Le Catafalque,Ravatal,Catafalco,棺台,관대,Katafalk,Catafalco,,Catafalc,Катафалк,Одар
+Blockhouse,HHUSTR_E4M2,,,,Tvrzka,Blockhaus,,,Fortín,,Linnoitus,Le Fortin,Gerendaház,Blocco di Case,丸太小屋,특화점,Blokhauz,O Forte,,Fort,Укрытие,Бункер
+Ambulatory,HHUSTR_E4M3,,,,Ochoz,Wandelgang,,,Ambulatorio,,Kuorikäytävä,Le Déambulatoire,Kerengő,Ambulatorio,遊歩道,유보장,Krużganek,Ambulatório,,,Монастырская галерея,Амбуланта
+Sepulcher,HHUSTR_E4M4,,,,Hrob,Grabstätte,,,Sepulcro,,Hautakammio,Le Sépulcre,Síremlék,Sepolcro,埋葬所,매장소,Grób,Sepulcro,,Sepulcru,Гробница,Гробница
+Great Stair,HHUSTR_E4M5,,,,Velké schodiště,Große Treppe,,,Gran Escalera,,Suuret portaat,Le Grand Escalier,Nagy Lépcső,Grande Scala,大階段,특급 계단,Wielka Gwiazda,Grande Escada,,Scara cea mare,Великая лестница,Велики степеник
+Halls of the Apostate,HHUSTR_E4M6,,,,Chodby odpadlictví,Halle des Abtrünnigen,,,Salas de los Apóstatas,,Luopioiden salit,Les Halls de l'Apôtre,A Hitehagyott Átjárója,Sale dell'Apostata,背教者の館,배교자의 회관,Korytarze Odszczepieńca,Os Salões dos Apóstatas,,Sălile apostatului,Залы отступников,Дворана апостола
+Ramparts of Perdition,HHUSTR_E4M7,,,,Náspy zatracení,Wälle der Verdammnis,,,Murallas de la Perdición,,Kadotuksen vallit,Les Remparts de la Perdition,A Kárhozat Támasza,Torrioni della Perdizione,破滅の塁壁,파멸의 성벽,Wał Potępienia,Muralhas da Perdição,,Meterezele pierzaniei,Твердыни погибели,Бедем пропасти
+Shattered Bridge,HHUSTR_E4M8,,,,Rozbitý most,Zerstörte Brücke,,,Puente Destrozado,,Särkynyt silta,Le Pont effondré,A Szétesett Híd,Ponte Distrutto,崩落の橋,붕괴된 다리,Zniszczony Most,Ponte Despedaçada,,Podul dărâmat,Разрушенный мост,Поломљен мост
+Mausoleum,HHUSTR_E4M9,,,,Mauzoleum,,,,Mausoleo,,Mausoleumi,Le Mausolée,Mauzóleum,Mausoleo,霊廟,대영묘,Mauzoleum,Mausoléu,,Mausoleu,Мавзолей,Маузолеј
+Ochre Cliffs,HHUSTR_E5M1,,,,Okrové útesy,Ockerfarbene Klippen,,,Acantilados Ocres,,Okrajyrkänteet,Les Falaises Ochre,Okker Szakadékok,Colline Ocra,黄土絶壁,황토 산맥,Ochrowe Klify,Penhascos Ocres,,Stâncile de ocru,Охровые утёсы,Окер брда
+Rapids,HHUSTR_E5M2,,,,Peřeje,Stromschnellen,,,Rápidos,,Koski,Les Rapides,Zuhatagok,Rapide,奔流,여울,Katarakty,Corredeiras,,Ape repezi,Стремнина,Брзак
+Quay,HHUSTR_E5M3,,,,Nábřeží,Kai,,,Muelle,,Satamalaituri,Le Quai,Rakpart,Banchina,岸壁,부두,Wir,Cais,,Chei,Причал,10
+Courtyard,HHUSTR_E5M4,,,,Nádvoří,Schlosshof,,,Patio,,Linnanpiha,La Cour,Pitvar,Cortile,中庭,안마당,Dziedziniec,Pátio,,Curte,Внутренний двор,Двориште
 Hydratyr,HHUSTR_E5M5,,,,Hydratýr,,,,Hydratyr,,,L'Hydratyr,Hidratáló,Hydratyr,ヒュドラテュール,식수공급처,Hydratyr,,,Hidratir,Гидротир,Канализација
-Colonnade,HHUSTR_E5M6,,,,Kolonáda,Kolonnaden,,,Columnata,,,La Colonnade,Kolonnád,Colonnato,柱廊,열주의 길,Kolumnada,Colunata,,Colonadă,Колоннада,Колонада
-Foetid Manse,HHUSTR_E5M7,,,,Smrdutá vila,Stinkendes Pfarrhaus,,,Mansión Fétida,,,Le Presbytère Fétide,Bűzös Parókia,Fetido Castello,悪臭の牧師館,역겨운 목사관,Cuchnąca Plebania,Mansão Fétida,,,Зловонный особняк,Фетидна кућа
-Field of Judgement,HHUSTR_E5M8,,,,Soudná pole,Richtstätte,,,Campo de Juicio,,,Les Champs du Jugement,Az Itélet Mezeje,Campo del Giudizio,審判之地,심판의 평야,Pole Sądu,Campo do Julgamento,,Câmpul de Judecată,Поле высшего суда,Чистилиште
-Skein of D'sparil,HHUSTR_E5M9,,,,Hejno D'Sparila,DSparils Bau,,,Madeja de D'Sparil,,,L'échevaux de D'Sparil,D'Sparil Káosza,Groviglio di D'sparil,デ'スパリルの枷,드'스파릴의 타래,Motek D'Sparila,Meada de D'Sparil,,,Путаница Д'Спарила,Реке Д'Спарила
+Colonnade,HHUSTR_E5M6,,,,Kolonáda,Kolonnaden,,,Columnata,,Pylväikkö,La Colonnade,Kolonnád,Colonnato,柱廊,열주의 길,Kolumnada,Colunata,,Colonadă,Колоннада,Колонада
+Foetid Manse,HHUSTR_E5M7,,,,Smrdutá vila,Stinkendes Pfarrhaus,,,Mansión Fétida,,Löyhkäävä kartano,Le Presbytère Fétide,Bűzös Parókia,Fetido Castello,悪臭の牧師館,역겨운 목사관,Cuchnąca Plebania,Mansão Fétida,,,Зловонный особняк,Фетидна кућа
+Field of Judgement,HHUSTR_E5M8,,,,Soudná pole,Richtstätte,,,Campo de Juicio,,Tuomion kenttä,Les Champs du Jugement,Az Itélet Mezeje,Campo del Giudizio,審判之地,심판의 평야,Pole Sądu,Campo do Julgamento,,Câmpul de Judecată,Поле высшего суда,Чистилиште
+Skein of D'sparil,HHUSTR_E5M9,,,,Hejno D'Sparila,DSparils Bau,,,Madeja de D'Sparil,,D'Sparilin vyyhti,L'échevaux de D'Sparil,D'Sparil Káosza,Groviglio di D'sparil,デ'スパリルの枷,드'스파릴의 타래,Motek D'Sparila,Meada de D'Sparil,,,Путаница Д'Спарила,Реке Д'Спарила
 ,,Strife,,,,,,,,,,,,,,,,,,,,
-AREA 1: Sanctuary,TXT_STRIFE_MAP01,,,,ZÓNA 1: Svatyně,ZONE 1: Heiligtum,,,ÁREA 1: Santuario,,,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域,구역 1: 성소,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
-AREA 2: Town,TXT_STRIFE_MAP02,,,,ZÓNA 2: Město,ZONE 2: Stadt,,,ÁREA 2: Pueblo,,,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,"エリア 2: 町
+AREA 1: Sanctuary,TXT_STRIFE_MAP01,,,,ZÓNA 1: Svatyně,ZONE 1: Heiligtum,,,ÁREA 1: Santuario,,ALUE 1: Turvapaikka,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域,구역 1: 성소,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
+AREA 2: Town,TXT_STRIFE_MAP02,,,,ZÓNA 2: Město,ZONE 2: Stadt,,,ÁREA 2: Pueblo,,ALUE 2: Kylä,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,"エリア 2: 町
 ",구역 2: 마을,Strefa 2: Miasto,Área 2: Vila,,ZONA 2: Oraș,МЕСТНОСТЬ 2: Город,
-AREA 3: Front Base,TXT_STRIFE_MAP03,,,,ZÓNA 3: Základna Fronty,ZONE 3: Basis der Front,,,ÁREA 3: Base del Frente,,,ZONE 3: Base du Front,3. Terület: Elülső bázis,AREA 3: Base del Fronte,エリア 3: フロント基地,구역 3: 프론트 기지,Strefa 3: Baza Frontu,Área 3: Base da Frente,,ZONA 3: Baza Frontului,МЕСТНОСТЬ 3: База Сопротивления,
-AREA 4: Power Station,TXT_STRIFE_MAP04,,,,ZÓNA 4: Elektrárna,ZONE 4: Kraftwerk,,,ÁREA 4: Central Eléctrica,,,ZONE 4: Centrale,4. Terület: Erőmű,AREA 4: Centrale Elettrica,エリア 4: 発電所,구역 4: 발전소,Strefa 4: Elektrownia,Área 4: Usina de Energia,Área 4: Central Energética,,МЕСТНОСТЬ 4: Электростанция,
-AREA 5: Prison,TXT_STRIFE_MAP05,,,,ZÓNA 5: Vězení,ZONE 5: Gefängnis,,,ÁREA 5: Prisión,,,ZONE 5: Prison,5. Terület: Börtön,AREA 5: Carcere,エリア 5: 刑務所,구역 5: 감옥,Strefa 5: Więzienie,Área 5: Prisão,,ZONA 5: Închisoare,МЕСТНОСТЬ 5: Тюрьма,
-AREA 6: Sewers,TXT_STRIFE_MAP06,,,,ZÓNA 6: Kanály,ZONE 6: Kanalisation,,,ÁREA 6: Alcantarillas,,,ZONE 6: Egouts,6. Terület: Szennyvízcsatornák,AREA 6: Fogne,エリア 6: 下水道,구역 6: 하수도,Strefa 6: Kanały,Área 6: Esgoto,,ZONA 6: Canal,МЕСТНОСТЬ 6: Канализация,
-AREA 7: Castle,TXT_STRIFE_MAP07,,,,ZÓNA 7: Hrad,ZONE 7: Burg,,,ÁREA 7: Castillo,,,ZONE 7: Château,7. Terület: Vár,AREA 7: Castello,エリア 7: 城,구역 7: 성,Strefa 7: Zamek,Área 7: Castelo,,ZONA 7: Castel,МЕСТНОСТЬ 7: Замок,
-AREA 8: Audience Chamber,TXT_STRIFE_MAP08,,,,ZÓNA 8: Audienční sál,ZONE 8: Audienzsaal,,,ÁREA 8: Cámara de Audiencias,,,ZONE 8: Chambre d'Audience,8. Terület: Nézőtér,AREA 8: Sala delle Udienze,エリア 8: 観客席,구역 8: 알현실,Strefa 8: Izba Audiencji,Área 8: Câmara de Audiências,,ZONA 8: Camera de audiențe,МЕСТНОСТЬ 8: Приёмная,
-AREA 9: Castle: Programmer's Keep,TXT_STRIFE_MAP09,,,,ZÓNA 9: Hrad: Programátorovo doupě,ZONE 9: Burg: Unterkunft des Programmierers,,,ÁREA 9: Castillo: Guarida del Programador,,,ZONE 9: Château: Donjon du Programmeur,9. Terület: Vár: Programozó parcellája,AREA 9: Castello: Dimora del Programmatore,エリア 9: 城内:プログラマーの間,구역 9: 성: 프로그래머의 성채,Strefa 9: Zamek: Baszta Programisty,Área 9: Castelo: Torre do Programador,,,МЕСТНОСТЬ 9: Замок (Цитадель Программиста),
-AREA 10: New Front Base,TXT_STRIFE_MAP10,,,,ZÓNA 10: Nová základna Fronty,ZONE 10: Neue Basis der Front,,,ÁREA 10: Nueva Base del Frente,,,ZONE 10: Nouvelle Base du Front,10. Terület: Új első bázis,AREA 10: Nuova Base del Fronte,エリア 10: 新フロント基地,구역 10: 새 프론트 기지,Strefa 10: Nowa Baza Frontu,Área 10: Nova Base da Frente,,ZONA 10: Noua bază a Frontului,МЕСТНОСТЬ 10: Новая база Сопротивления,
-AREA 11: Borderlands,TXT_STRIFE_MAP11,,,,ZÓNA 11: Pohraničí,ZONE 11: Grenzgebiete,,,ÁREA 11: Tierras Fronterizas,,,ZONE 11: Terres Sauvages,11. Terület: Peremvidék,AREA 11: Lande di Confine,エリア 11: 国境地帯,구역 11: 접경지,Strefa 11: Pogranicze,Área 11: Fronteira,,ZONA 11: Frontiere,МЕСТНОСТЬ 11: Пограничье,
-AREA 12: The Temple of the Oracle,TXT_STRIFE_MAP12,,,,ZÓNA 12: Chrám Věštce,ZONE 12: Der Tempel des Orakels,,,ÁREA 12: El Templo del Oráculo,,,ZONE 12: Temple de l'Oracle,12. Terület: Az Orákulum Temploma,AREA 12: Il Tempio dell'Oracolo,エリア 12: オラクルの神殿,구역 12: 오라클의 신전,Strefa 12: Świątynia Wyroczni,Área 12: O Templo do Oráculo,,ZONA 12: Templul Oracolului,МЕСТНОСТЬ 12: Храм Оракула,
-AREA 13: Catacombs,TXT_STRIFE_MAP13,,,,ZÓNA 13: Katakomby,ZONE 13: Katakomben,,,ÁREA 13: Catacumbas,,,ZONE 13: Catacombes,13. Terület: Katakombák,AREA 13: Catacombe,エリア 13: 地下墓所,구역 13: 고대 묘지,Strefa 13: Katakumby,Área 13: Catacumbas,Área 13: Túmulos,ZONA 13: Catacombe,МЕСТНОСТЬ 13: Катакомбы,
-AREA 14: Mines,TXT_STRIFE_MAP14,,,,ZÓNA 14: Doly,ZONE 14: Die Minen,,,ÁREA 14: Minas,,,ZONE 14: Mines,14. Terület: Bánya,AREA 14: Miniere,エリア 14: 鉱山,구역 14: 광산,Strefa 14: Kopalnia,Área 14: Minas,,ZONA 14: Mine,МЕСТНОСТЬ 14: Шахты,
-AREA 15: Fortress: Administration,TXT_STRIFE_MAP15,,,,ZÓNA 15: Pevnost: Administrace,ZONE 15: Festung: Administration,,,ÁREA 15: Fortaleza: Administración,,,ZONE 15: Forteresse: Administration,15. Terület: Erőd: Adminisztráció,AREA 15: Fortezza: Amministrazione,エリア 15: 要塞:管理室,구역 15: 요새: 중앙 관리소,Strefa 15: Forteca: Administracja,Área 15: Fortaleza: Administração,,ZONA 15: Fortăreața: Administrația,МЕСТНОСТЬ 15: Крепость (Администрация),
-AREA 16: Fortress: Bishop's Tower,TXT_STRIFE_MAP16,,,,ZÓNA 16: Pevnost: Biskupova věž,ZONE 16: Festung: Bischofsturm,,,ÁREA 16: Fortaleza: Torre del Obispo,,,ZONE 16: Forteresse: Tour de l'évèque,16. Terület: Erőd: Püspök tornya,AREA 16: Fortezza: Torre del Vescovo,エリア 16: 要塞:ビショップの塔,구역 16: 요새: 비숍의 탑,Strefa 16: Forteca: Wieża Biskupa,Área 16: Fortaleza: Torre do Bispo,,ZONA 16: Fortăreața: Turnul Episcopului,МЕСТНОСТЬ 16: Крепость (Башня Епископа),
-AREA 17: Fortress: The Bailey,TXT_STRIFE_MAP17,,,,ZÓNA 17: Pevnost: Vnější opevnění,ZONE 17: Festung: Vorhof,,,ÁREA 17: Fortaleza: El Patio,,,ZONE 17: Forteresse: Mur d'enceinte,17. Terület: Erőd: Várfal,AREA 17: Fortezza: Bastione,エリア 17: 要塞:ベイリー,구역 17: 요새: 안뜰,Strefa 17: Forteca: Mur Obronny,Área 17: Fortaleza: O Pátio,,,МЕСТНОСТЬ 17: Крепость (Двор),
-AREA 18: Fortress: Stores,TXT_STRIFE_MAP18,,,,ZÓNA 18: Pevnost: Sklady,ZONE 18: Festung: Lager,,,ÁREA 18: Fortaleza: Almacenes,,,ZONE 18: Forteresse: Réserves,18. Terület: Erőd: Üzletek,AREA 18: Fortezza: Negozi,エリア 18: 要塞:商店,구역 18: 요새: 격납고,Strefa 18: Forteca: Sklepy,Área 18: Fortaleza: Reservas,,ZONA 18: Fortăreața: Depozite,МЕСТНОСТЬ 18: Крепость (Склады),
-AREA 19: Fortress: Security Complex,TXT_STRIFE_MAP19,,,,ZÓNA 19: Pevnost: Bezpečnostní komplex,ZONE 19: Festung: Sicherheitsanlage,,,ÁREA 19: Fortaleza: Complejo de Seguridad,,,ZONE 19: Forteresse: Complexe Sécurité,19. Terület: Erőd: Biztonsági Komplexum,AREA 19: Fortezza: Complesso di Sicurezza,エリア 19: 要塞:複合警備所,구역 19: 요새: 보안 담당 기지,Strefa 19: Forteca: Kompleks Ochronny,Área 19: Fortaleza: Complexo de Segurança,,,МЕСТНОСТЬ 19: Крепость (Охранный комплекс),
-AREA 20: Factory: Receiving,TXT_STRIFE_MAP20,,,,ZÓNA 20: Továrna: Příjem,ZONE 20: Fabrik: Empfang,,,ÁREA 20: Fábrica: Recepción,,,ZONE 20: Usine: Réception,20. Terület: Gyár: Beszállítás,AREA 20: Fabbrica: Ricevimento,"エリア 20: 工場:受取所
+AREA 3: Front Base,TXT_STRIFE_MAP03,,,,ZÓNA 3: Základna Fronty,ZONE 3: Basis der Front,,,ÁREA 3: Base del Frente,,ALUE 3: Etutukikohta,ZONE 3: Base du Front,3. Terület: Elülső bázis,AREA 3: Base del Fronte,エリア 3: フロント基地,구역 3: 프론트 기지,Strefa 3: Baza Frontu,Área 3: Base da Frente,,ZONA 3: Baza Frontului,МЕСТНОСТЬ 3: База Сопротивления,
+AREA 4: Power Station,TXT_STRIFE_MAP04,,,,ZÓNA 4: Elektrárna,ZONE 4: Kraftwerk,,,ÁREA 4: Central Eléctrica,,ALUE 4: Voimalaitos,ZONE 4: Centrale,4. Terület: Erőmű,AREA 4: Centrale Elettrica,エリア 4: 発電所,구역 4: 발전소,Strefa 4: Elektrownia,Área 4: Usina de Energia,Área 4: Central Energética,,МЕСТНОСТЬ 4: Электростанция,
+AREA 5: Prison,TXT_STRIFE_MAP05,,,,ZÓNA 5: Vězení,ZONE 5: Gefängnis,,,ÁREA 5: Prisión,,ALUE 5: Vankila,ZONE 5: Prison,5. Terület: Börtön,AREA 5: Carcere,エリア 5: 刑務所,구역 5: 감옥,Strefa 5: Więzienie,Área 5: Prisão,,ZONA 5: Închisoare,МЕСТНОСТЬ 5: Тюрьма,
+AREA 6: Sewers,TXT_STRIFE_MAP06,,,,ZÓNA 6: Kanály,ZONE 6: Kanalisation,,,ÁREA 6: Alcantarillas,,ALUE 6: Viemärit,ZONE 6: Egouts,6. Terület: Szennyvízcsatornák,AREA 6: Fogne,エリア 6: 下水道,구역 6: 하수도,Strefa 6: Kanały,Área 6: Esgoto,,ZONA 6: Canal,МЕСТНОСТЬ 6: Канализация,
+AREA 7: Castle,TXT_STRIFE_MAP07,,,,ZÓNA 7: Hrad,ZONE 7: Burg,,,ÁREA 7: Castillo,,ALUE 7: Linna,ZONE 7: Château,7. Terület: Vár,AREA 7: Castello,エリア 7: 城,구역 7: 성,Strefa 7: Zamek,Área 7: Castelo,,ZONA 7: Castel,МЕСТНОСТЬ 7: Замок,
+AREA 8: Audience Chamber,TXT_STRIFE_MAP08,,,,ZÓNA 8: Audienční sál,ZONE 8: Audienzsaal,,,ÁREA 8: Cámara de Audiencias,,ALUE 8: Yleisösali,ZONE 8: Chambre d'Audience,8. Terület: Nézőtér,AREA 8: Sala delle Udienze,エリア 8: 観客席,구역 8: 알현실,Strefa 8: Izba Audiencji,Área 8: Câmara de Audiências,,ZONA 8: Camera de audiențe,МЕСТНОСТЬ 8: Приёмная,
+AREA 9: Castle: Programmer's Keep,TXT_STRIFE_MAP09,,,,ZÓNA 9: Hrad: Programátorovo doupě,ZONE 9: Burg: Unterkunft des Programmierers,,,ÁREA 9: Castillo: Guarida del Programador,,ALUE 9: Linna: Ohjelmoijan asema,ZONE 9: Château: Donjon du Programmeur,9. Terület: Vár: Programozó parcellája,AREA 9: Castello: Dimora del Programmatore,エリア 9: 城内:プログラマーの間,구역 9: 성: 프로그래머의 성채,Strefa 9: Zamek: Baszta Programisty,Área 9: Castelo: Torre do Programador,,,МЕСТНОСТЬ 9: Замок (Цитадель Программиста),
+AREA 10: New Front Base,TXT_STRIFE_MAP10,,,,ZÓNA 10: Nová základna Fronty,ZONE 10: Neue Basis der Front,,,ÁREA 10: Nueva Base del Frente,,ALUE 10: Uusi etutukikohta,ZONE 10: Nouvelle Base du Front,10. Terület: Új első bázis,AREA 10: Nuova Base del Fronte,エリア 10: 新フロント基地,구역 10: 새 프론트 기지,Strefa 10: Nowa Baza Frontu,Área 10: Nova Base da Frente,,ZONA 10: Noua bază a Frontului,МЕСТНОСТЬ 10: Новая база Сопротивления,
+AREA 11: Borderlands,TXT_STRIFE_MAP11,,,,ZÓNA 11: Pohraničí,ZONE 11: Grenzgebiete,,,ÁREA 11: Tierras Fronterizas,,ALUE 11: Rajamaat,ZONE 11: Terres Sauvages,11. Terület: Peremvidék,AREA 11: Lande di Confine,エリア 11: 国境地帯,구역 11: 접경지,Strefa 11: Pogranicze,Área 11: Fronteira,,ZONA 11: Frontiere,МЕСТНОСТЬ 11: Пограничье,
+AREA 12: The Temple of the Oracle,TXT_STRIFE_MAP12,,,,ZÓNA 12: Chrám Věštce,ZONE 12: Der Tempel des Orakels,,,ÁREA 12: El Templo del Oráculo,,ALUE 12: Oraakkelin temppeli,ZONE 12: Temple de l'Oracle,12. Terület: Az Orákulum Temploma,AREA 12: Il Tempio dell'Oracolo,エリア 12: オラクルの神殿,구역 12: 오라클의 신전,Strefa 12: Świątynia Wyroczni,Área 12: O Templo do Oráculo,,ZONA 12: Templul Oracolului,МЕСТНОСТЬ 12: Храм Оракула,
+AREA 13: Catacombs,TXT_STRIFE_MAP13,,,,ZÓNA 13: Katakomby,ZONE 13: Katakomben,,,ÁREA 13: Catacumbas,,ALUE 13: Katakombit,ZONE 13: Catacombes,13. Terület: Katakombák,AREA 13: Catacombe,エリア 13: 地下墓所,구역 13: 고대 묘지,Strefa 13: Katakumby,Área 13: Catacumbas,Área 13: Túmulos,ZONA 13: Catacombe,МЕСТНОСТЬ 13: Катакомбы,
+AREA 14: Mines,TXT_STRIFE_MAP14,,,,ZÓNA 14: Doly,ZONE 14: Die Minen,,,ÁREA 14: Minas,,ALUE 14: Kaivokset,ZONE 14: Mines,14. Terület: Bánya,AREA 14: Miniere,エリア 14: 鉱山,구역 14: 광산,Strefa 14: Kopalnia,Área 14: Minas,,ZONA 14: Mine,МЕСТНОСТЬ 14: Шахты,
+AREA 15: Fortress: Administration,TXT_STRIFE_MAP15,,,,ZÓNA 15: Pevnost: Administrace,ZONE 15: Festung: Administration,,,ÁREA 15: Fortaleza: Administración,,ALUE 15: Linnoitus: hallinto,ZONE 15: Forteresse: Administration,15. Terület: Erőd: Adminisztráció,AREA 15: Fortezza: Amministrazione,エリア 15: 要塞:管理室,구역 15: 요새: 중앙 관리소,Strefa 15: Forteca: Administracja,Área 15: Fortaleza: Administração,,ZONA 15: Fortăreața: Administrația,МЕСТНОСТЬ 15: Крепость (Администрация),
+AREA 16: Fortress: Bishop's Tower,TXT_STRIFE_MAP16,,,,ZÓNA 16: Pevnost: Biskupova věž,ZONE 16: Festung: Bischofsturm,,,ÁREA 16: Fortaleza: Torre del Obispo,,ALUE 16: Linnoitus: Piispan torni,ZONE 16: Forteresse: Tour de l'évèque,16. Terület: Erőd: Püspök tornya,AREA 16: Fortezza: Torre del Vescovo,エリア 16: 要塞:ビショップの塔,구역 16: 요새: 비숍의 탑,Strefa 16: Forteca: Wieża Biskupa,Área 16: Fortaleza: Torre do Bispo,,ZONA 16: Fortăreața: Turnul Episcopului,МЕСТНОСТЬ 16: Крепость (Башня Епископа),
+AREA 17: Fortress: The Bailey,TXT_STRIFE_MAP17,,,,ZÓNA 17: Pevnost: Vnější opevnění,ZONE 17: Festung: Vorhof,,,ÁREA 17: Fortaleza: El Patio,,ALUE 17: Linnoitus: ulkomuuri,ZONE 17: Forteresse: Mur d'enceinte,17. Terület: Erőd: Várfal,AREA 17: Fortezza: Bastione,エリア 17: 要塞:ベイリー,구역 17: 요새: 안뜰,Strefa 17: Forteca: Mur Obronny,Área 17: Fortaleza: O Pátio,,,МЕСТНОСТЬ 17: Крепость (Двор),
+AREA 18: Fortress: Stores,TXT_STRIFE_MAP18,,,,ZÓNA 18: Pevnost: Sklady,ZONE 18: Festung: Lager,,,ÁREA 18: Fortaleza: Almacenes,,ALUE 18: Linnoitus: varastot,ZONE 18: Forteresse: Réserves,18. Terület: Erőd: Üzletek,AREA 18: Fortezza: Negozi,エリア 18: 要塞:商店,구역 18: 요새: 격납고,Strefa 18: Forteca: Sklepy,Área 18: Fortaleza: Reservas,,ZONA 18: Fortăreața: Depozite,МЕСТНОСТЬ 18: Крепость (Склады),
+AREA 19: Fortress: Security Complex,TXT_STRIFE_MAP19,,,,ZÓNA 19: Pevnost: Bezpečnostní komplex,ZONE 19: Festung: Sicherheitsanlage,,,ÁREA 19: Fortaleza: Complejo de Seguridad,,ALUE 19: Linnoitus: turvakompleksi,ZONE 19: Forteresse: Complexe Sécurité,19. Terület: Erőd: Biztonsági Komplexum,AREA 19: Fortezza: Complesso di Sicurezza,エリア 19: 要塞:複合警備所,구역 19: 요새: 보안 담당 기지,Strefa 19: Forteca: Kompleks Ochronny,Área 19: Fortaleza: Complexo de Segurança,,,МЕСТНОСТЬ 19: Крепость (Охранный комплекс),
+AREA 20: Factory: Receiving,TXT_STRIFE_MAP20,,,,ZÓNA 20: Továrna: Příjem,ZONE 20: Fabrik: Empfang,,,ÁREA 20: Fábrica: Recepción,,ALUE 20: Tehdas: vastaanotto,ZONE 20: Usine: Réception,20. Terület: Gyár: Beszállítás,AREA 20: Fabbrica: Ricevimento,"エリア 20: 工場:受取所
 ",구역 20: 공장: 수납구역,Strefa 20: Fabryka: Odbiór,Área 20: Fábrica: Recebimento,,,МЕСТНОСТЬ 20: Фабрика (Приём),
-AREA 21: Factory: Manufacturing,TXT_STRIFE_MAP21,,,,ZÓNA 21: Továrna: Výroba,ZONE 21: Fabrik: Herstellung,,,ÁREA 21: Fábrica: Manufactura,,,ZONE 21: Usine: Manufacture,21. Terület: Gyár: Sorozatgyártás,AREA 21: Fabbrica: Manifattura,エリア 21: 工場:製造機関,구역 21: 공장: 조립시설,Strefa 21: Fabryka: Przetwórstwo,Área 21: Fábrica: Manufatura,,,МЕСТНОСТЬ 21: Фабрика (Обработка),
-AREA 22: Factory: Forge,TXT_STRIFE_MAP22,,,,ZÓNA 22: Továrna: Kovárna,ZONE 22: Fabrik: Schmiede,,,ÁREA 22: Fábrica: Forja,,,ZONE 22: Usine: Forge,22. Terület: Gyár: Kohó,AREA 22: Fabbrica: Fucina,エリア 22: 工場:鉄工所,구역 22: 공장: 제련소,Strefa 22: Fabryka: Kuźnia,Área 22: Fábrica: Forja,,ZONA 22: Fabrica: Forja,МЕСТНОСТЬ 22: Фабрика (Кузня),
-AREA 23: Order Commons,TXT_STRIFE_MAP23,,,,ZÓNA 23: Náměstí Řádu,ZONE 23: Mensa des Ordens,,,ÁREA 23: Condominios de la Orden,,,ZONE 23: Mess de l'Ordre,23. Terület: Rendi köztér,AREA 23: Camera dell'Ordine,エリア 23: オーダーコモンズ,구역 23: 오더 식당가,Strefa 23: Wikt Zakonu,Área 23: Câmara da Ordem,,,МЕСТНОСТЬ 23: Поселение Ордена,
-AREA 24: Factory: Conversion Chapel,TXT_STRIFE_MAP24,,,,ZÓNA 24: Továrna: Kaple konverze,ZONE 24: Umwandlungskapelle,,,ÁREA 24: Fábrica: Capilla de Conversión,,,ZONE 24: Usine: Chapelle de Conversion,24. Terület: A megtérés kápolnája,AREA 24: Fabbrica: Cappella di Conversione,エリア 24: 工場:改宗礼拝堂,구역 24: 공장: 전향실,Strefa 24: Fabryka: Kaplica Przemiany,Área 24: Fábrica: Capela de Conversão,,,МЕСТНОСТЬ 24: Часовня обращения,
-AREA 25: Catacombs: Ruined Temple,TXT_STRIFE_MAP25,,,,ZÓNA 25: Katakomby: Zničený chrám,ZONE 25: Katakomben: Zerstörter Tempel,,,ÁREA 25: Catacumbas: Templo Arruinado,,,ZONE 25: Catacombes: Temple Ruiné,25. Terület: Katakombák: Romtemplom,AREA 25: Catacombe: Tempio in Rovina,エリア 25: 地下墓所:没落した寺院,구역 25: 고대 묘지: 무너진 사원,Strefa 25: Katakumby: Zrujnowana Świątynia,Área 25: Catacumbas: Templo Arruinado,Área 25: Túmulos: Templo Arruinado,,МЕСТНОСТЬ 25: Катакомбы (Руины храма),
-AREA 26: Proving Grounds,TXT_STRIFE_MAP26,,,,ZÓNA 26: Vojenský újezd,ZONE 26: Testgelände,,,ÁREA 26: Campo de Pruebas,,,ZONE 26: Terrain d'entraînement,26. Terület: Ígéretes föld,AREA 26: Banco di Prova,エリア 26: 試練場,구역 26: 증명의 전장,Strefa 26: Poligon Wojskowy,Área 26: Campo de Treinamento,Área 26: Campo de Treino,,МЕСТНОСТЬ 26: Испытательный полигон,
-AREA 27: The Lab,TXT_STRIFE_MAP27,,,,ZÓNA 27: Laboratoř,ZONE 27: Das Labor,,,ÁREA 27: El Laboratorio,,,ZONE 27: Laboratoire,27. Terület: A labor,AREA 27: Il Laboratorio,エリア 27: 研究所,구역 27: 연구소,Strefa 27: Laboratorium,Área 27: O Laboratório,,ZONA 27: Laboratorul,МЕСТНОСТЬ 27: Лаборатория,
-AREA 28: Alien Ship,TXT_STRIFE_MAP28,,,,ZÓNA 28: Mimozemská Loď,ZONE 28: Außerirdisches Schiff,,,ÁREA 28: Nave Alienígena,,,ZONE 28: Vaisseau Alien,28. Terület: Idegen űrhajó,AREA 28: Nave Aliena,エリア 28: エイリアンの船,구역 28: 외계 우주선,Strefa 28: Statek Obcych,Área 28: Nave Alienígena,,ZONA 28: Nava extraterestră,МЕСТНОСТЬ 28: Корабль пришельцев,
-AREA 29: Entity's Lair,TXT_STRIFE_MAP29,,,,ZÓNA 29: Doupě Bytosti,ZONE 29: Das Nest der Entität,,,ÁREA 29: Escondite de la Entidad,,,ZONE 29: Demeure de L'Entité,,AREA 29: Tana dell'Entità,エリア 29: エンティティの隠れ家,구역 29: 엔티티의 소굴,Strefa 29: Leże Bytu,Área 29: Covil da Entidade,,ZONA 29: Cuibul Entității,МЕСТНОСТЬ 29: Логово Сущности,
-AREA 30: Abandoned Front Base,TXT_STRIFE_MAP30,,,,ZÓNA 30: Opuštěná základna Fronty,ZONE 30: Verlassene Basis der Front,,,ÁREA 30: Base Abandonada del Frente,,,ZONE 30: Base Abandonnée du Front,30. Terület: Elhagyatott Előbázis,AREA 30: Base del Fronte abbandonata,エリア 30: 放棄された基地,구역 30: 버려진 프론트 기지,Strefa 30: Opuszczona Baza Frontu,Área 30: Base da Frente Abandonada,,ZONA 30: Baza abandonată a Frontului,МЕСТНОСТЬ 30: Заброшенная база Сопротивления,
-AREA 31: Training Facility,TXT_STRIFE_MAP31,,,,ZÓNA 31: Výcvikové zařízení,ZONE 31: Trainingseinrichtung,,,ÁREA 31: Facilidad de Entrenamiento,,,ZONE 31: Complexe d'Entraînement,31. Terület: Képzési létesítmény,AREA 31: Struttura di Addestramento,エリア 31: 研修施設,구역 31: 훈련 시설,Strefa 31: Centrum Szkoleniowe,Área 31: Instalação de Treinamento,,ZONA 31: Spațiul de antrenament,МЕСТНОСТЬ 31: Тренировочный корпус,
-AREA 1: Sanctuary,TXT_STRIFE_MAP32,,,,ZÓNA 1: Útočiště,ZONE 1: Heiligtum,,,ÁREA 1: Santuario,,,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域 ,구역 1: 성소,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
-AREA 2: Town,TXT_STRIFE_MAP33,,,,ZÓNA 2: Město,ZONE 2: Stadt,,,ÁREA 2: Pueblo,,,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,エリア 2: 町,구역 2: 마을,Strefa 2: Miasto,Área 2: Vila,,ZONA 2: Oraș,МЕСТНОСТЬ 2: Город,
-AREA 3: Movement Base,TXT_STRIFE_MAP34,,,,ZÓNA 3: Rebelská základna,ZONE 3: Rebellenbasis,,,ÁREA 3: Base del Movimiento,,,ZONE 3: Base du Front,3. Terület: Mozgalmi Bázis,AREA 3: Base del Movimento,エリア 3: 移転基地,구역 3: 반군 기지,Strefa 3: Baza Ruchu Oporu,Área 3: Base do Movimento,,,МЕСТНОСТЬ 3: База Сопротивления,
-AREA 35: Factory: Production,TXT_STRIFE_MAP35,,,,ZÓNA 35: Továrna: Produkce,ZONE 35: Fabrik: Produktion,,,ÁREA 35: Fábrica: Producción,,,ZONE 35: Usine: Production,35. Terület: Gyár: Termelés,AREA 35: Fabbrica: Produzione,エリア 35: 工場 : 生産ライン,구역 35: 공장: 제작실,Strefa 35: Fabryka: Produkcja,Área 35: Fábrica: Produção,,,МЕСТНОСТЬ 35: Фабрика (Производство),
-AREA 36: Castle Clash,TXT_STRIFE_MAP36,,,,ZÓNA 36: Střet na hradě,ZONE 36: Burg-Konflikt,,,ÁREA 36: Ataque al Castillo,,,ZONE 36: Bataille du Château,36: Terület: Vári ütközet,AREA 36: Collisione di Castello,エリア 36: キャッスルクラッシュ,구역 36: 성채간의 충돌,Strefa 36: Potyczka w Zamku,Área 36: Ataque ao Castelo,,,МЕСТНОСТЬ 36: Битва в замке,
-AREA 37: Killing Grounds,TXT_STRIFE_MAP37,,,,ZÓNA 37: Zabíjecí zahrady,ZONE 37: Kampfgelände,,,ÁREA 37: Campo de Matanza,,,ZONE 37: Zone de Chasse,37. Terület: Gyilkos Vidék,AREA 37: Campi di Uccisione,エリア 37: 殺害者の地,구역 37: 살육의 전장,Strefa 37: Śmiercionośny Grunt,Área 37: Campo de Matança,,,МЕСТНОСТЬ 37: Секторы обстрела,
-AREA 38: Ordered Chaos,TXT_STRIFE_MAP38,,,,ZÓNA 38: Nařízený chaos,ZONE 38: Geordnetes Chaos,,,ÁREA 38: Caos Ordenado,,,ZONE 38: Chaos Ordonné,38. Terület: Rendezett Káosz,AREA 38: Caos Ordinato,エリア 38: カオスの秩序,구역 38: 정돈된 혼란,Strefa 38: Uporządkowany Chaos,Área 38: Caos Ordenado,,,МЕСТНОСТЬ 38: Управляемый хаос,
+AREA 21: Factory: Manufacturing,TXT_STRIFE_MAP21,,,,ZÓNA 21: Továrna: Výroba,ZONE 21: Fabrik: Herstellung,,,ÁREA 21: Fábrica: Manufactura,,ALUE 21: Tehdas: valmistus,ZONE 21: Usine: Manufacture,21. Terület: Gyár: Sorozatgyártás,AREA 21: Fabbrica: Manifattura,エリア 21: 工場:製造機関,구역 21: 공장: 조립시설,Strefa 21: Fabryka: Przetwórstwo,Área 21: Fábrica: Manufatura,,,МЕСТНОСТЬ 21: Фабрика (Обработка),
+AREA 22: Factory: Forge,TXT_STRIFE_MAP22,,,,ZÓNA 22: Továrna: Kovárna,ZONE 22: Fabrik: Schmiede,,,ÁREA 22: Fábrica: Forja,,ALUE 22 Tehdas: paja,ZONE 22: Usine: Forge,22. Terület: Gyár: Kohó,AREA 22: Fabbrica: Fucina,エリア 22: 工場:鉄工所,구역 22: 공장: 제련소,Strefa 22: Fabryka: Kuźnia,Área 22: Fábrica: Forja,,ZONA 22: Fabrica: Forja,МЕСТНОСТЬ 22: Фабрика (Кузня),
+AREA 23: Order Commons,TXT_STRIFE_MAP23,,,,ZÓNA 23: Náměstí Řádu,ZONE 23: Mensa des Ordens,,,ÁREA 23: Condominios de la Orden,,ALUE 23: Veljeskunnan alahuone,ZONE 23: Mess de l'Ordre,23. Terület: Rendi köztér,AREA 23: Camera dell'Ordine,エリア 23: オーダーコモンズ,구역 23: 오더 식당가,Strefa 23: Wikt Zakonu,Área 23: Câmara da Ordem,,,МЕСТНОСТЬ 23: Поселение Ордена,
+AREA 24: Factory: Conversion Chapel,TXT_STRIFE_MAP24,,,,ZÓNA 24: Továrna: Kaple konverze,ZONE 24: Umwandlungskapelle,,,ÁREA 24: Fábrica: Capilla de Conversión,,ALUE 24: Tehdas: käännytyskappeli,ZONE 24: Usine: Chapelle de Conversion,24. Terület: A megtérés kápolnája,AREA 24: Fabbrica: Cappella di Conversione,エリア 24: 工場:改宗礼拝堂,구역 24: 공장: 전향실,Strefa 24: Fabryka: Kaplica Przemiany,Área 24: Fábrica: Capela de Conversão,,,МЕСТНОСТЬ 24: Часовня обращения,
+AREA 25: Catacombs: Ruined Temple,TXT_STRIFE_MAP25,,,,ZÓNA 25: Katakomby: Zničený chrám,ZONE 25: Katakomben: Zerstörter Tempel,,,ÁREA 25: Catacumbas: Templo Arruinado,,ALUE 25: Katakombit: temppeliraunio,ZONE 25: Catacombes: Temple Ruiné,25. Terület: Katakombák: Romtemplom,AREA 25: Catacombe: Tempio in Rovina,エリア 25: 地下墓所:没落した寺院,구역 25: 고대 묘지: 무너진 사원,Strefa 25: Katakumby: Zrujnowana Świątynia,Área 25: Catacumbas: Templo Arruinado,Área 25: Túmulos: Templo Arruinado,,МЕСТНОСТЬ 25: Катакомбы (Руины храма),
+AREA 26: Proving Grounds,TXT_STRIFE_MAP26,,,,ZÓNA 26: Vojenský újezd,ZONE 26: Testgelände,,,ÁREA 26: Campo de Pruebas,,ALUE 26: Koetuspaikka,ZONE 26: Terrain d'entraînement,26. Terület: Ígéretes föld,AREA 26: Banco di Prova,エリア 26: 試練場,구역 26: 증명의 전장,Strefa 26: Poligon Wojskowy,Área 26: Campo de Treinamento,Área 26: Campo de Treino,,МЕСТНОСТЬ 26: Испытательный полигон,
+AREA 27: The Lab,TXT_STRIFE_MAP27,,,,ZÓNA 27: Laboratoř,ZONE 27: Das Labor,,,ÁREA 27: El Laboratorio,,ALUE 27: Laboratorio,ZONE 27: Laboratoire,27. Terület: A labor,AREA 27: Il Laboratorio,エリア 27: 研究所,구역 27: 연구소,Strefa 27: Laboratorium,Área 27: O Laboratório,,ZONA 27: Laboratorul,МЕСТНОСТЬ 27: Лаборатория,
+AREA 28: Alien Ship,TXT_STRIFE_MAP28,,,,ZÓNA 28: Mimozemská Loď,ZONE 28: Außerirdisches Schiff,,,ÁREA 28: Nave Alienígena,,ALUE 28: Muukalaisalus,ZONE 28: Vaisseau Alien,28. Terület: Idegen űrhajó,AREA 28: Nave Aliena,エリア 28: エイリアンの船,구역 28: 외계 우주선,Strefa 28: Statek Obcych,Área 28: Nave Alienígena,,ZONA 28: Nava extraterestră,МЕСТНОСТЬ 28: Корабль пришельцев,
+AREA 29: Entity's Lair,TXT_STRIFE_MAP29,,,,ZÓNA 29: Doupě Bytosti,ZONE 29: Das Nest der Entität,,,ÁREA 29: Escondite de la Entidad,,ALUE 29: Tosiolevan maja,ZONE 29: Demeure de L'Entité,,AREA 29: Tana dell'Entità,エリア 29: エンティティの隠れ家,구역 29: 엔티티의 소굴,Strefa 29: Leże Bytu,Área 29: Covil da Entidade,,ZONA 29: Cuibul Entității,МЕСТНОСТЬ 29: Логово Сущности,
+AREA 30: Abandoned Front Base,TXT_STRIFE_MAP30,,,,ZÓNA 30: Opuštěná základna Fronty,ZONE 30: Verlassene Basis der Front,,,ÁREA 30: Base Abandonada del Frente,,ALUE 30: Hylätty etutukikohta,ZONE 30: Base Abandonnée du Front,30. Terület: Elhagyatott Előbázis,AREA 30: Base del Fronte abbandonata,エリア 30: 放棄された基地,구역 30: 버려진 프론트 기지,Strefa 30: Opuszczona Baza Frontu,Área 30: Base da Frente Abandonada,,ZONA 30: Baza abandonată a Frontului,МЕСТНОСТЬ 30: Заброшенная база Сопротивления,
+AREA 31: Training Facility,TXT_STRIFE_MAP31,,,,ZÓNA 31: Výcvikové zařízení,ZONE 31: Trainingseinrichtung,,,ÁREA 31: Facilidad de Entrenamiento,,ALUE 31: Koulutuslaitos,ZONE 31: Complexe d'Entraînement,31. Terület: Képzési létesítmény,AREA 31: Struttura di Addestramento,エリア 31: 研修施設,구역 31: 훈련 시설,Strefa 31: Centrum Szkoleniowe,Área 31: Instalação de Treinamento,,ZONA 31: Spațiul de antrenament,МЕСТНОСТЬ 31: Тренировочный корпус,
+AREA 1: Sanctuary,TXT_STRIFE_MAP32,,,,ZÓNA 1: Útočiště,ZONE 1: Heiligtum,,,ÁREA 1: Santuario,,ALUE 1: Turvapaikka,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域 ,구역 1: 성소,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
+AREA 2: Town,TXT_STRIFE_MAP33,,,,ZÓNA 2: Město,ZONE 2: Stadt,,,ÁREA 2: Pueblo,,ALUE 2: Kylä,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,エリア 2: 町,구역 2: 마을,Strefa 2: Miasto,Área 2: Vila,,ZONA 2: Oraș,МЕСТНОСТЬ 2: Город,
+AREA 3: Movement Base,TXT_STRIFE_MAP34,,,,ZÓNA 3: Rebelská základna,ZONE 3: Rebellenbasis,,,ÁREA 3: Base del Movimiento,,ALUE 3: Liikkeen tukikohta,ZONE 3: Base du Front,3. Terület: Mozgalmi Bázis,AREA 3: Base del Movimento,エリア 3: 移転基地,구역 3: 반군 기지,Strefa 3: Baza Ruchu Oporu,Área 3: Base do Movimento,,,МЕСТНОСТЬ 3: База Сопротивления,
+AREA 35: Factory: Production,TXT_STRIFE_MAP35,,,,ZÓNA 35: Továrna: Produkce,ZONE 35: Fabrik: Produktion,,,ÁREA 35: Fábrica: Producción,,ALUE 35: Tehdas: tuotanto,ZONE 35: Usine: Production,35. Terület: Gyár: Termelés,AREA 35: Fabbrica: Produzione,エリア 35: 工場 : 生産ライン,구역 35: 공장: 제작실,Strefa 35: Fabryka: Produkcja,Área 35: Fábrica: Produção,,,МЕСТНОСТЬ 35: Фабрика (Производство),
+AREA 36: Castle Clash,TXT_STRIFE_MAP36,,,,ZÓNA 36: Střet na hradě,ZONE 36: Burg-Konflikt,,,ÁREA 36: Ataque al Castillo,,ALUE 36: Linnayhteenotto,ZONE 36: Bataille du Château,36: Terület: Vári ütközet,AREA 36: Collisione di Castello,エリア 36: キャッスルクラッシュ,구역 36: 성채간의 충돌,Strefa 36: Potyczka w Zamku,Área 36: Ataque ao Castelo,,,МЕСТНОСТЬ 36: Битва в замке,
+AREA 37: Killing Grounds,TXT_STRIFE_MAP37,,,,ZÓNA 37: Zabíjecí zahrady,ZONE 37: Kampfgelände,,,ÁREA 37: Campo de Matanza,,ALUE 37: Tappotanner,ZONE 37: Zone de Chasse,37. Terület: Gyilkos Vidék,AREA 37: Campi di Uccisione,エリア 37: 殺害者の地,구역 37: 살육의 전장,Strefa 37: Śmiercionośny Grunt,Área 37: Campo de Matança,,,МЕСТНОСТЬ 37: Секторы обстрела,
+AREA 38: Ordered Chaos,TXT_STRIFE_MAP38,,,,ZÓNA 38: Nařízený chaos,ZONE 38: Geordnetes Chaos,,,ÁREA 38: Caos Ordenado,,ALUE 38: Järjestynyt kaaos,ZONE 38: Chaos Ordonné,38. Terület: Rendezett Káosz,AREA 38: Caos Ordinato,エリア 38: カオスの秩序,구역 38: 정돈된 혼란,Strefa 38: Uporządkowany Chaos,Área 38: Caos Ordenado,,,МЕСТНОСТЬ 38: Управляемый хаос,
 ,,Hexen,,,,,,,,,,,,,,,,,,,,
-Winnowing Hall,TXT_HEXEN_MAP01,,,,Sál prosetí,Trennungshalle,,,Sala de los Vientos,,,Chambre de la Séparation,Huzatos Folyosó,Camera di separazione,選抜の間,바람 회관,Hala Przesiewu,Sala de Separação,,,Зал отсеивания,Овејана дворана
-Seven Portals,TXT_HEXEN_MAP02,,,,Sedmero portálů,Sieben Portale,,,Siete Portales,,,Les Sept Portails,Hét Portál,I Sette Portali,漆之門,일곱 차원문,Siedem Portali,Sete Portais,,Șapte portaluri,Семь порталов,Седам портала
-Guardian of Ice,TXT_HEXEN_MAP03,,,,Strážce ledu,Wächter des Eises,,,Guardián de Hielo,,,Gardien de Glace,A Jég Őre,Guardiano del Ghiaccio,氷の守護者,얼음의 수호자,Strażnik Lodu,Guardião de Gelo,,Străjerul Gheții,Страж льда,Чувар леда
-Guardian of Fire,TXT_HEXEN_MAP04,,,,Strážce ohně,Wächter des Feuers,,,Guardián de Fuego,,,Gardien de Feu,A Tűz Őre,Guardiano del Fuoco,炎の守護者,화염의 수호자,Strażnik Ognia,Guardião de Fogo,,Străjerul Focului,Страж огня,Чувар ватре
-Guardian of Steel,TXT_HEXEN_MAP05,,,,Strážce oceli,Wächter des Stahls,,,Guardián de Acero,,,Gardien d'Acier,Az Acél Őre,Guardiano dell'Acciaio,鋼の守護者,강철의 수호자,Strażnik Stali,Guardião de Aço,,Străjerul Oțelului,Страж стали,Чувар челика
-Bright Crucible,TXT_HEXEN_MAP06,,,,Světlý očistec,Glänzende Feuerprobe,,,Crisol de Luz,,,Creuset Radiant,,Crogiolo Luminoso,光の坩堝,빛나는 고난,Próba Światła,Crisol de Luz,,,Испытание света,Испитивање светла
-Shadow Wood,TXT_HEXEN_MAP13,,,,Temný hvozd,Schattenwald,,,Bosque de la Sombra,,,Forêt des Ombres,Árnyék Erdő,Foresta Oscura,陰影樹,그림자 숲,Las Cieni,Floresta das Sombras,,Pădurea umbrelor,Лес теней,Шума сена
-Darkmere,TXT_HEXEN_MAP08,,,,Černý močál,Düstersee,,,Pantano,,,Marais Noir,,Palude Nera,暗黒の地,흙빛호수,Mroczne Bagno,Pantâno Negro,,,Болотная топь,Мочваре
-Caves of Circe,TXT_HEXEN_MAP09,,,,Jeskyně Kirké,Circes Höhle,,,Cuevas de Circe,,,Caves de Circé,Körök Barlangja,Grotte di Circe,キルケーの洞窟,키르케의 동굴,Jaskinie Kirke,Cavernas de Circe,,Peștera lui Circe,Пещеры цирцеи,Пећине цирке
-Wastelands,TXT_HEXEN_MAP10,,,,Pustiny,Ödland,,,Yermo,,,Terres Ruinées,Senkiföldje,Terre in rovina,荒野,황무지,Pustkowia,Terras Desoladas,,,Пустоши,Пустаре
-Sacred Grove,TXT_HEXEN_MAP11,,,,Posvátný háj,Heiliger Hain,,,Arboleda Sagrada,,,Bosquet Sacré,,Boschetto Sacro,神聖なる園,성스러운 수풀,Święty Gaj,Bosque Sagrado,,,Священная роща,Свети шумарак
-Hypostyle,TXT_HEXEN_MAP12,,,,Hypostyl,Säulenhalle,,,Hipóstila,,,Hypostyle,,Ipostilo,多柱の間,다주실,Hypostyl,Hipostilo,,,Гипостильный зал,Хипостил
-Heresiarch's Seminary,TXT_HEXEN_MAP27,,,,Arcikacířův alumnát,Seminar des Erzketzers,,,Seminario del Heresiarca,,,Séminaire de l'Hérésiarche,,Seminario dell'Heresiarch,ヘレシアークの神学舎,헤러시아크의 신학교,Seminarium Herezjarchy,Seminário do Heresiarca,,Seminarul Ereziarhului,Семинария Ересиарха,Јересијархов семинар
-Dragon Chapel,TXT_HEXEN_MAP28,,,,Dračí kaple,Drachenkapelle,,,Capilla Dragón,,,Chapelle du Dragon,Sárkány Szentély,Cappella del Drago,ドラゴンの庵寺,드래곤 예배실,Kaplica Smoka,Capela do Dragão,,Capela dragonilor,Часовня дракона,Змајева капела
-Griffin Chapel,TXT_HEXEN_MAP30,,,,Gryfí kaple,Greifenkapelle,,,Capilla Grifo,,,Chapelle du Grifon,Griff Szentély,Cappella del Grifone,グリフィンの庵寺,그리핀 예배실,Kaplica Gryfa,Capela do Grifo,,Capela grifonilor,Часовня грифона,Грифинова капела
-Deathwind Chapel,TXT_HEXEN_MAP31,,,,Kaple mrakosmrtě,Todeswindkapelle,,,Capilla Viento de Muerte,,,Chapelle du Vent Tueur,,Cappella del Vento Assassino,デスウィンドの庵寺,죽음바람 예배실,Kaplica Wiatru Śmierci,Capela do Vento da Morte,,Capela suflului morții,Часовня ветра смерти,Капела ветра смрти
-Orchard of Lamentations,TXT_HEXEN_MAP32,,,,Sad nářků,Garten der Wehklagen,,,Huerto de los Lamentos,,,Verger des Lamentations,,Frutteto delle Lamentazioni,哀悼茂る園,통탄의 과수원,Płaczący Sad,Pomar das Lamentações,,Livada amărăciunii,Сады плача,Воћњак тужбалица
-Silent Refectory,TXT_HEXEN_MAP33,,,,Tichý refektář,Stilles Refektorium,,,Refectorio Silencioso,,,Réfectoire Silencieux,,Refettorio silenzioso,寡黙なる食堂,침묵의 식당,Cichy Refektarz,Refeitório Silencioso,,Refectoriul tăcerii,Безмолвная трапезная,Тиха трпезарија
-Wolf Chapel,TXT_HEXEN_MAP34,,,,Vlčí kaple,Wolfskapelle,,,Capilla Lobo,,,Chapelle du Loup,Farkas Szentély,Cappella del Lupo,狼の庵寺,늑대 예배실,Kaplica Wilka,Capela do Lobo,,Capela lupilor,Часовня волка,Вучја капела
-Forsaken Outpost,TXT_HEXEN_MAP21,,,,Opuštěné stanoviště,Verlassener Vorposten,,,Puesto de Avanzada Abandonado,,,Base Abandonnée,,Avamposto Abbandonato,荒れ果てた前哨地,버려진 초소,Opuszczony Posterunek,Posto Abandonado,,Avanpostul părăsit,Покинутая застава,Напуштена постаја
-Castle of Grief,TXT_HEXEN_MAP22,,,,Hrad smutku,Leidensburg,,,Castillo del Pesar,,,Château de la Souffrance,,Castello della Sofferenza,嘆きの城,비탄의 성,Zamek Smutku,Castelo da Aflição,,,Замок скорби,Замак жалости
-Gibbet,TXT_HEXEN_MAP23,,,,Šibenice,Richtstätte,,,Horca,,,Gibet,,Forca,晒し台,교수대,Szubienica,Forca,,Eșafodul,Виселица,Вешала
-Effluvium,TXT_HEXEN_MAP24,,,,Výpary,Effluvium,,,Efluvio,,,Effluvium,,Effluvio,腐臭漂う残骸,악취,Odór,Eflúvio,,,Зловонный сток,Ефлувиум
-Dungeons,TXT_HEXEN_MAP25,,,,Žalář,Kerker,,,Calabozos,,,Donjons,Kazamaták,I Dungeon,地下牢,지하감옥,Lochy,Masmorras,,Temnițe,Подземелья,Тамнице
-Desolate Garden,TXT_HEXEN_MAP26,,,,Zpustošená zahrada,Verwildeter Garten,,,Jardín Desolado,,,Jardin de la Désolation,,Giardino Desolato,荒涼とした庭,황폐한 정원,Spustoszały Ogród,Jardim Desolado,,Grădina dezolantă,Заброшенный сад,Пуста башта
-Necropolis,TXT_HEXEN_MAP35,,,,Nekropole,Nekropole,,,Necrópolis,,,Nécropole,Halottak Városa,Necropoli,ネクロポリス,망자의 도시,Nekropolia,Necrópole,,Necropola,Некрополь,Некрополис
-Zedek's Tomb,TXT_HEXEN_MAP36,,,,Zedekova hrobka,Zedeks Gruft,,,Tumba de Zedek,,,Tombeau de Zedek,Zedek Sírja,Tomba di Zedek,ゼデクの墓,제닥의 무덤,Grobowiec Zedeka,Tumba de Zedek,Túmulo de Zedek,Mormântul lui Zedek,Гробница Зедека,Зедеков гроб
-Menelkir's Tomb,TXT_HEXEN_MAP37,,,,Menelkirova hrobka,Menelkirs Gruft,,,Tumba de Menelkir,,,Tombeau de Menelkir,Menelkir Sírja,Tomba di Menelkir,メネルキルの墓,메넬키어의 무덤,Grobowiec Menelkira,Tumba de Menelkir,Túmulo de Menelkir,Mormântul lui Menelkir,Гробница Менелкира,Менелкиров гроб
-Traductus' Tomb,TXT_HEXEN_MAP38,,,,Traduktova hrobka,Traductus' Gruft,,,Tumba de Traductus,,,Tombeau de Traductus,Traductus Sírja,Tomba di Traductus,トダクティスの墓,트라닥투스의 무덤,Grobowiec Traductusa,Tumba de Traductus,Túmulo de Traductus,Mormântul lui Traductus,Гробница Традактуса,Традуктусов гроб
-Vivarium,TXT_HEXEN_MAP39,,,,Vivárium,Vivarium,,,Vivario,,,Vivarium,Vivárium,Vivario,ビバリウム,사육장,Wiwarium,Viveiro,,Vivariu,Виварий,Зверињак
-Dark Crucible,TXT_HEXEN_MAP40,,,,Temný očistec,Dunkle Feuerprobe,,,Crisol de Oscuridad,,,Creuset Sombre,,Crogiolo Buio,"暗黒の坩堝
+Winnowing Hall,TXT_HEXEN_MAP01,,,,Sál prosetí,Trennungshalle,,,Sala de los Vientos,,Viskaussali,Chambre de la Séparation,Huzatos Folyosó,Camera di separazione,選抜の間,바람 회관,Hala Przesiewu,Sala de Separação,,,Зал отсеивания,Овејана дворана
+Seven Portals,TXT_HEXEN_MAP02,,,,Sedmero portálů,Sieben Portale,,,Siete Portales,,Seitsemän portaalia,Les Sept Portails,Hét Portál,I Sette Portali,漆之門,일곱 차원문,Siedem Portali,Sete Portais,,Șapte portaluri,Семь порталов,Седам портала
+Guardian of Ice,TXT_HEXEN_MAP03,,,,Strážce ledu,Wächter des Eises,,,Guardián de Hielo,,Jään vartija,Gardien de Glace,A Jég Őre,Guardiano del Ghiaccio,氷の守護者,얼음의 수호자,Strażnik Lodu,Guardião de Gelo,,Străjerul Gheții,Страж льда,Чувар леда
+Guardian of Fire,TXT_HEXEN_MAP04,,,,Strážce ohně,Wächter des Feuers,,,Guardián de Fuego,,Tulen vartija,Gardien de Feu,A Tűz Őre,Guardiano del Fuoco,炎の守護者,화염의 수호자,Strażnik Ognia,Guardião de Fogo,,Străjerul Focului,Страж огня,Чувар ватре
+Guardian of Steel,TXT_HEXEN_MAP05,,,,Strážce oceli,Wächter des Stahls,,,Guardián de Acero,,Teräksen vartija,Gardien d'Acier,Az Acél Őre,Guardiano dell'Acciaio,鋼の守護者,강철의 수호자,Strażnik Stali,Guardião de Aço,,Străjerul Oțelului,Страж стали,Чувар челика
+Bright Crucible,TXT_HEXEN_MAP06,,,,Světlý očistec,Glänzende Feuerprobe,,,Crisol de Luz,,Kirkas tulikoe,Creuset Radiant,,Crogiolo Luminoso,光の坩堝,빛나는 고난,Próba Światła,Crisol de Luz,,,Испытание света,Испитивање светла
+Shadow Wood,TXT_HEXEN_MAP13,,,,Temný hvozd,Schattenwald,,,Bosque de la Sombra,,Varjosalo,Forêt des Ombres,Árnyék Erdő,Foresta Oscura,陰影樹,그림자 숲,Las Cieni,Floresta das Sombras,,Pădurea umbrelor,Лес теней,Шума сена
+Darkmere,TXT_HEXEN_MAP08,,,,Černý močál,Düstersee,,,Pantano,,Pikiräme,Marais Noir,,Palude Nera,暗黒の地,흙빛호수,Mroczne Bagno,Pantâno Negro,,,Болотная топь,Мочваре
+Caves of Circe,TXT_HEXEN_MAP09,,,,Jeskyně Kirké,Circes Höhle,,,Cuevas de Circe,,Circeluolat,Caves de Circé,Körök Barlangja,Grotte di Circe,キルケーの洞窟,키르케의 동굴,Jaskinie Kirke,Cavernas de Circe,,Peștera lui Circe,Пещеры цирцеи,Пећине цирке
+Wastelands,TXT_HEXEN_MAP10,,,,Pustiny,Ödland,,,Yermo,,Erämaat,Terres Ruinées,Senkiföldje,Terre in rovina,荒野,황무지,Pustkowia,Terras Desoladas,,,Пустоши,Пустаре
+Sacred Grove,TXT_HEXEN_MAP11,,,,Posvátný háj,Heiliger Hain,,,Arboleda Sagrada,,Pyhä metsikkö,Bosquet Sacré,,Boschetto Sacro,神聖なる園,성스러운 수풀,Święty Gaj,Bosque Sagrado,,,Священная роща,Свети шумарак
+Hypostyle,TXT_HEXEN_MAP12,,,,Hypostyl,Säulenhalle,,,Hipóstila,,Hypostyyli,Hypostyle,,Ipostilo,多柱の間,다주실,Hypostyl,Hipostilo,,,Гипостильный зал,Хипостил
+Heresiarch's Seminary,TXT_HEXEN_MAP27,,,,Arcikacířův alumnát,Seminar des Erzketzers,,,Seminario del Heresiarca,,Kerettiarkin seminaari,Séminaire de l'Hérésiarche,,Seminario dell'Heresiarch,ヘレシアークの神学舎,헤러시아크의 신학교,Seminarium Herezjarchy,Seminário do Heresiarca,,Seminarul Ereziarhului,Семинария Ересиарха,Јересијархов семинар
+Dragon Chapel,TXT_HEXEN_MAP28,,,,Dračí kaple,Drachenkapelle,,,Capilla Dragón,,Lohikäärmekappeli,Chapelle du Dragon,Sárkány Szentély,Cappella del Drago,ドラゴンの庵寺,드래곤 예배실,Kaplica Smoka,Capela do Dragão,,Capela dragonilor,Часовня дракона,Змајева капела
+Griffin Chapel,TXT_HEXEN_MAP30,,,,Gryfí kaple,Greifenkapelle,,,Capilla Grifo,,Aarnikotkakappeli,Chapelle du Grifon,Griff Szentély,Cappella del Grifone,グリフィンの庵寺,그리핀 예배실,Kaplica Gryfa,Capela do Grifo,,Capela grifonilor,Часовня грифона,Грифинова капела
+Deathwind Chapel,TXT_HEXEN_MAP31,,,,Kaple mrakosmrtě,Todeswindkapelle,,,Capilla Viento de Muerte,,Kuolontuulikappeli,Chapelle du Vent Tueur,,Cappella del Vento Assassino,デスウィンドの庵寺,죽음바람 예배실,Kaplica Wiatru Śmierci,Capela do Vento da Morte,,Capela suflului morții,Часовня ветра смерти,Капела ветра смрти
+Orchard of Lamentations,TXT_HEXEN_MAP32,,,,Sad nářků,Garten der Wehklagen,,,Huerto de los Lamentos,,Valitusvirtten tarha,Verger des Lamentations,,Frutteto delle Lamentazioni,哀悼茂る園,통탄의 과수원,Płaczący Sad,Pomar das Lamentações,,Livada amărăciunii,Сады плача,Воћњак тужбалица
+Silent Refectory,TXT_HEXEN_MAP33,,,,Tichý refektář,Stilles Refektorium,,,Refectorio Silencioso,,Hiljainen ruokasali,Réfectoire Silencieux,,Refettorio silenzioso,寡黙なる食堂,침묵의 식당,Cichy Refektarz,Refeitório Silencioso,,Refectoriul tăcerii,Безмолвная трапезная,Тиха трпезарија
+Wolf Chapel,TXT_HEXEN_MAP34,,,,Vlčí kaple,Wolfskapelle,,,Capilla Lobo,,Susikappeli,Chapelle du Loup,Farkas Szentély,Cappella del Lupo,狼の庵寺,늑대 예배실,Kaplica Wilka,Capela do Lobo,,Capela lupilor,Часовня волка,Вучја капела
+Forsaken Outpost,TXT_HEXEN_MAP21,,,,Opuštěné stanoviště,Verlassener Vorposten,,,Puesto de Avanzada Abandonado,,Hylätty etuvartio,Base Abandonnée,,Avamposto Abbandonato,荒れ果てた前哨地,버려진 초소,Opuszczony Posterunek,Posto Abandonado,,Avanpostul părăsit,Покинутая застава,Напуштена постаја
+Castle of Grief,TXT_HEXEN_MAP22,,,,Hrad smutku,Leidensburg,,,Castillo del Pesar,,Surulinna,Château de la Souffrance,,Castello della Sofferenza,嘆きの城,비탄의 성,Zamek Smutku,Castelo da Aflição,,,Замок скорби,Замак жалости
+Gibbet,TXT_HEXEN_MAP23,,,,Šibenice,Richtstätte,,,Horca,,Hirsipuu,Gibet,,Forca,晒し台,교수대,Szubienica,Forca,,Eșafodul,Виселица,Вешала
+Effluvium,TXT_HEXEN_MAP24,,,,Výpary,Effluvium,,,Efluvio,,Katku,Effluvium,,Effluvio,腐臭漂う残骸,악취,Odór,Eflúvio,,,Зловонный сток,Ефлувиум
+Dungeons,TXT_HEXEN_MAP25,,,,Žalář,Kerker,,,Calabozos,,Tyrmät,Donjons,Kazamaták,I Dungeon,地下牢,지하감옥,Lochy,Masmorras,,Temnițe,Подземелья,Тамнице
+Desolate Garden,TXT_HEXEN_MAP26,,,,Zpustošená zahrada,Verwildeter Garten,,,Jardín Desolado,,Autio puutarha,Jardin de la Désolation,,Giardino Desolato,荒涼とした庭,황폐한 정원,Spustoszały Ogród,Jardim Desolado,,Grădina dezolantă,Заброшенный сад,Пуста башта
+Necropolis,TXT_HEXEN_MAP35,,,,Nekropole,Nekropole,,,Necrópolis,,Nekropoli,Nécropole,Halottak Városa,Necropoli,ネクロポリス,망자의 도시,Nekropolia,Necrópole,,Necropola,Некрополь,Некрополис
+Zedek's Tomb,TXT_HEXEN_MAP36,,,,Zedekova hrobka,Zedeks Gruft,,,Tumba de Zedek,,Sedekin hauta,Tombeau de Zedek,Zedek Sírja,Tomba di Zedek,ゼデクの墓,제닥의 무덤,Grobowiec Zedeka,Tumba de Zedek,Túmulo de Zedek,Mormântul lui Zedek,Гробница Зедека,Зедеков гроб
+Menelkir's Tomb,TXT_HEXEN_MAP37,,,,Menelkirova hrobka,Menelkirs Gruft,,,Tumba de Menelkir,,Menelkirin hauta,Tombeau de Menelkir,Menelkir Sírja,Tomba di Menelkir,メネルキルの墓,메넬키어의 무덤,Grobowiec Menelkira,Tumba de Menelkir,Túmulo de Menelkir,Mormântul lui Menelkir,Гробница Менелкира,Менелкиров гроб
+Traductus' Tomb,TXT_HEXEN_MAP38,,,,Traduktova hrobka,Traductus' Gruft,,,Tumba de Traductus,,Traduktuksen hauta,Tombeau de Traductus,Traductus Sírja,Tomba di Traductus,トダクティスの墓,트라닥투스의 무덤,Grobowiec Traductusa,Tumba de Traductus,Túmulo de Traductus,Mormântul lui Traductus,Гробница Традактуса,Традуктусов гроб
+Vivarium,TXT_HEXEN_MAP39,,,,Vivárium,Vivarium,,,Vivario,,Vivaario,Vivarium,Vivárium,Vivario,ビバリウム,사육장,Wiwarium,Viveiro,,Vivariu,Виварий,Зверињак
+Dark Crucible,TXT_HEXEN_MAP40,,,,Temný očistec,Dunkle Feuerprobe,,,Crisol de Oscuridad,,Pimeä tulikoe,Creuset Sombre,,Crogiolo Buio,"暗黒の坩堝
 ",어두운 고난,Próba Mroku,Crisol das Trevas,,,Испытание тьмы,Испитивање мрака
 ,,Hexen Deathkings,,,,,,,,,,,,,,,,,,,,
-Ruined Village,TXT_HEXDD_MAP41,,,,Zničená vesnice,Zerstörtes Dorf,,,Pueblo en Ruinas,,,Village en Ruines,Az Elpusztult Falu,Villagio in Rovine,廃村,파괴된 마을,Zrujnowana Wioska,Aldeia Destruída,Aldeia em Ruinas,Sat ruinat,Разрушенная деревня,Уништено село
-Blight,TXT_HEXDD_MAP42,,,,Pohroma,Fäule,,,Decaimiento,,,Peste,,Peste,疫病,황폐화,Zaraza,Peste,,,Упадок,Пошаст
-Sump,TXT_HEXDD_MAP43,,,,Žumpa,Sumpf,,,Pozo de Barro,,,Puisard,,Pozzetto,汚水槽,웅덩이,Studzienka,Poço de Lama,,,Грязеотстойник,Сливник
-Catacomb,TXT_HEXDD_MAP44,,,,Katakomby,Katakombe,,,Catacumba,,,Catacombe,,Catacombe,カタコンベ,지하 묘실,Katakumba,Catacumba,,Catacombă,Катакомба,Катакомба
-Badlands,TXT_HEXDD_MAP45,,,,Pustiny,Ödland,,,Páramos,,,Terres Sauvages,,Terre Selvagge,不毛地帯,불모지,Nieurodzaj,Ermo,,,Бесплодные земли,Пустош
-Brackenwood,TXT_HEXDD_MAP46,,,,Prales,Moorwald,,,Brackenwood,,,Forêt de Bracken,,Foresta di Felce,ワラビの樹,고사리숲,Las Paproci,Floresta de Samambaias,,,Брекенвуд,Папрат
-Pyre,TXT_HEXDD_MAP47,,,,Hranice,Scheiterhaufen,,,Pira Funeraria,,,Brasier,,Pira,火葬薪,화장,Stos,Pira,,Rug,Погребальный костёр,Ломача
-Constable's Gate,TXT_HEXDD_MAP48,,,,Konstáblova brána,Wachtor,,,Puerta del Alguacil,,,Portail du Constable,,Porta del Conestabile,城守達の門,무관장의 문,Brama Posterunkowego,Portão do Condestável,,,Комендантские врата,Чиновникова капија
-Treasury,TXT_HEXDD_MAP49,,,,Pokladnice,Schatzkammer,,,Tesorería,,,Trésorerie,,Tesoreria,宝庫,국고,Skarbiec,Tesouraria,,Vistierie,Сокровищница,Трезор
-Market Place,TXT_HEXDD_MAP50,,,,Tržnice,Marktplatz,,,Plaza del Mercado,,,Place du Marché,,Piazza del Mercato,市場,시장,Rynek,Feira,,Piață,Рыночная площадь,Пијаца
+Ruined Village,TXT_HEXDD_MAP41,,,,Zničená vesnice,Zerstörtes Dorf,,,Pueblo en Ruinas,,Rauniokylä,Village en Ruines,Az Elpusztult Falu,Villagio in Rovine,廃村,파괴된 마을,Zrujnowana Wioska,Aldeia Destruída,Aldeia em Ruinas,Sat ruinat,Разрушенная деревня,Уништено село
+Blight,TXT_HEXDD_MAP42,,,,Pohroma,Fäule,,,Decaimiento,,Turmelus,Peste,,Peste,疫病,황폐화,Zaraza,Peste,,,Упадок,Пошаст
+Sump,TXT_HEXDD_MAP43,,,,Žumpa,Sumpf,,,Pozo de Barro,,Likakaivo,Puisard,,Pozzetto,汚水槽,웅덩이,Studzienka,Poço de Lama,,,Грязеотстойник,Сливник
+Catacomb,TXT_HEXDD_MAP44,,,,Katakomby,Katakombe,,,Catacumba,,Katakombi,Catacombe,,Catacombe,カタコンベ,지하 묘실,Katakumba,Catacumba,,Catacombă,Катакомба,Катакомба
+Badlands,TXT_HEXDD_MAP45,,,,Pustiny,Ödland,,,Páramos,,Autiomaa,Terres Sauvages,,Terre Selvagge,不毛地帯,불모지,Nieurodzaj,Ermo,,,Бесплодные земли,Пустош
+Brackenwood,TXT_HEXDD_MAP46,,,,Prales,Moorwald,,,Brackenwood,,Saniaissalo,Forêt de Bracken,,Foresta di Felce,ワラビの樹,고사리숲,Las Paproci,Floresta de Samambaias,,,Брекенвуд,Папрат
+Pyre,TXT_HEXDD_MAP47,,,,Hranice,Scheiterhaufen,,,Pira Funeraria,,Rovio,Brasier,,Pira,火葬薪,화장,Stos,Pira,,Rug,Погребальный костёр,Ломача
+Constable's Gate,TXT_HEXDD_MAP48,,,,Konstáblova brána,Wachtor,,,Puerta del Alguacil,,Konstaapelin portti,Portail du Constable,,Porta del Conestabile,城守達の門,무관장의 문,Brama Posterunkowego,Portão do Condestável,,,Комендантские врата,Чиновникова капија
+Treasury,TXT_HEXDD_MAP49,,,,Pokladnice,Schatzkammer,,,Tesorería,,Rahasto,Trésorerie,,Tesoreria,宝庫,국고,Skarbiec,Tesouraria,,Vistierie,Сокровищница,Трезор
+Market Place,TXT_HEXDD_MAP50,,,,Tržnice,Marktplatz,,,Plaza del Mercado,,Markkinat,Place du Marché,,Piazza del Mercato,市場,시장,Rynek,Feira,,Piață,Рыночная площадь,Пијаца
 Locus Requiescat,TXT_HEXDD_MAP51,,,,,Locus Requiescat,,,Lugar de Descanso Eterno,,,Locus Requiescat,,,祈祷師の軌跡,명복의 장소,Locus Requiescat,,,,Место вечного упокоения,Место починка
-Ordeal,TXT_HEXDD_MAP52,,,,Utrpení,Heimsuchung,,,Prueba,,,Supplice,,Supplizio,試練,시죄의 시련,Męka,Suplício,,Supliciu,Испытание,Изазов
-Armory,TXT_HEXDD_MAP53,,,Armoury,Zbrojnice,Waffenkammer,,,Armería,,,Amurerie,Fegyverraktár,Armeria,武器庫,무기고,Zbrojownia,Arsenal,,Arsenal,Оружейная,Оружарница
-Nave,TXT_HEXDD_MAP54,,,,Chrámová loď,Kirchenschiff,,,La Nave,,,Nef,,Navata,身廊,본당,Nawa,,,Naos,Неф,Брод
-Chantry,TXT_HEXDD_MAP55,,,,Modlitebna,Kantorei,,,Capilla,,,Chapelle,,Cappella,小礼拝堂,예배당,Kaplica Wotywna,Capela,,,Часовня,Капела
-Abattoir,TXT_HEXDD_MAP56,,,,Jatka,Schlachthaus,,,Matadero,,,Abbatoire,,Mattatoio,屠殺場,도살장,Rzeźnia,Matadouro,,Abator,Бойня,Кланица
-Dark Watch,TXT_HEXDD_MAP57,,,,Tmavá hlídka,Dunkle Wache,,,Guardia Oscura,,,Garde Noire,,Guardia Oscura,闇の刻計,어둠의 감시초소,Ciemna Straż,Guarda Negra,,,Тёмный страж,Мрачни чувар
-Cloaca,TXT_HEXDD_MAP58,,,,Kloaka,Kloake,,,Cloaca,,,Cloaque,,,排泄腔,하수구,Kloaka,,,,Клоака,Клоака
-Ice Hold,TXT_HEXDD_MAP59,,,,Ledová pevnost,Eiskammer,,,Tierra de Hielo,,,Fort de Glace,,Fortezza di Ghiaccio,氷結,빙고,Lodowa Twierdza,Fortaleza de Gelo,,Fort glaciar,Ледяная твердь,Ледена утврда
-Dark Citadel,TXT_HEXDD_MAP60,,,,Temná citadela,Dunkle Festung,,,Fortaleza Oscura,,,Citadelle Sombre,,Cittadella Oscura,暗黒の城塞,어둠의 요새,Mroczna Cytadela,Cidadela Negra,,Cetatea întunecată,Тёмная цитадель,Мрачна цитадела
-Transit,TXT_HEXDD_MAP33,,,,Převoz,,,,Sala de Espera,,,Transit,,Passaggio,変遷,통로,Tranzyt,Sala de Espera,,Tranzit,Комната ожидания,Прелаз
-Over'n Under,TXT_HEXDD_MAP34,,,,Nad a Pod,Drunter und Drüber,,,Arriba y Abajo,,,Sens Dessus Dessous,,Sopra e Sotto,天と地,높낮이,Nad I Pod,Sobre e Sob,,Sus și jos,Выше и ниже,Изнад и испод
-Deathfog,TXT_HEXDD_MAP35,,,,Mha skonu,Todesnebel,,,Niebla de Muerte,,,Brume Mortelle,Halálköd,Nebbia di Morte,死の霧,죽음의 안개,Mgła Śmierci,Névoa da Morte,,Ceața morții,Туман смерти,Магла смрти
-Castle of Pain,TXT_HEXDD_MAP36,,,,Hrad bolesti,Burg der Angst,,,Castillo del Dolor,,,Château de la Douleur,,Castello del Dolore,苦しみの城,고통의 성,Zamek Bólu,Castelo da Dor,,,Замок боли,Тврђава бола
-Sewer Pit,TXT_HEXDD_MAP37,,,,Odpadní jáma,Kanalgrube,,,Pozo de Residuos,,,Trou d'Egout,,Fossa della Fogna,地下溝穴,하수도,Ściek,Fossa de Esgoto,,Groapa de scurgere,Сточная яма,Канализациона јама
-The Rose,TXT_HEXDD_MAP38,,,,Růže,Die Rose,,,La Rosa,,,La Rose,A Rózsa,La Rosa,薔薇,장밋빛,Róża,A Rosa,,Roza,Роза,Ружа
+Ordeal,TXT_HEXDD_MAP52,,,,Utrpení,Heimsuchung,,,Prueba,,Koettelemus,Supplice,,Supplizio,試練,시죄의 시련,Męka,Suplício,,Supliciu,Испытание,Изазов
+Armory,TXT_HEXDD_MAP53,,,Armoury,Zbrojnice,Waffenkammer,,,Armería,,Asehuone,Amurerie,Fegyverraktár,Armeria,武器庫,무기고,Zbrojownia,Arsenal,,Arsenal,Оружейная,Оружарница
+Nave,TXT_HEXDD_MAP54,,,,Chrámová loď,Kirchenschiff,,,La Nave,,Laiva,Nef,,Navata,身廊,본당,Nawa,,,Naos,Неф,Брод
+Chantry,TXT_HEXDD_MAP55,,,,Modlitebna,Kantorei,,,Capilla,,Kappeli,Chapelle,,Cappella,小礼拝堂,예배당,Kaplica Wotywna,Capela,,,Часовня,Капела
+Abattoir,TXT_HEXDD_MAP56,,,,Jatka,Schlachthaus,,,Matadero,,Teurastamo,Abbatoire,,Mattatoio,屠殺場,도살장,Rzeźnia,Matadouro,,Abator,Бойня,Кланица
+Dark Watch,TXT_HEXDD_MAP57,,,,Tmavá hlídka,Dunkle Wache,,,Guardia Oscura,,Pimeä vahti,Garde Noire,,Guardia Oscura,闇の刻計,어둠의 감시초소,Ciemna Straż,Guarda Negra,,,Тёмный страж,Мрачни чувар
+Cloaca,TXT_HEXDD_MAP58,,,,Kloaka,Kloake,,,Cloaca,,Kloaakki,Cloaque,,,排泄腔,하수구,Kloaka,,,,Клоака,Клоака
+Ice Hold,TXT_HEXDD_MAP59,,,,Ledová pevnost,Eiskammer,,,Tierra de Hielo,,Jääsäilö,Fort de Glace,,Fortezza di Ghiaccio,氷結,빙고,Lodowa Twierdza,Fortaleza de Gelo,,Fort glaciar,Ледяная твердь,Ледена утврда
+Dark Citadel,TXT_HEXDD_MAP60,,,,Temná citadela,Dunkle Festung,,,Fortaleza Oscura,,Pimeä linnake,Citadelle Sombre,,Cittadella Oscura,暗黒の城塞,어둠의 요새,Mroczna Cytadela,Cidadela Negra,,Cetatea întunecată,Тёмная цитадель,Мрачна цитадела
+Transit,TXT_HEXDD_MAP33,,,,Převoz,,,,Sala de Espera,,Läpikulku,Transit,,Passaggio,変遷,통로,Tranzyt,Sala de Espera,,Tranzit,Комната ожидания,Прелаз
+Over'n Under,TXT_HEXDD_MAP34,,,,Nad a Pod,Drunter und Drüber,,,Arriba y Abajo,,Yli ja ali,Sens Dessus Dessous,,Sopra e Sotto,天と地,높낮이,Nad I Pod,Sobre e Sob,,Sus și jos,Выше и ниже,Изнад и испод
+Deathfog,TXT_HEXDD_MAP35,,,,Mha skonu,Todesnebel,,,Niebla de Muerte,,Kuolonsumu,Brume Mortelle,Halálköd,Nebbia di Morte,死の霧,죽음의 안개,Mgła Śmierci,Névoa da Morte,,Ceața morții,Туман смерти,Магла смрти
+Castle of Pain,TXT_HEXDD_MAP36,,,,Hrad bolesti,Burg der Angst,,,Castillo del Dolor,,Tuskan linna,Château de la Douleur,,Castello del Dolore,苦しみの城,고통의 성,Zamek Bólu,Castelo da Dor,,,Замок боли,Тврђава бола
+Sewer Pit,TXT_HEXDD_MAP37,,,,Odpadní jáma,Kanalgrube,,,Pozo de Residuos,,Viemärimonttu,Trou d'Egout,,Fossa della Fogna,地下溝穴,하수도,Ściek,Fossa de Esgoto,,Groapa de scurgere,Сточная яма,Канализациона јама
+The Rose,TXT_HEXDD_MAP38,,,,Růže,Die Rose,,,La Rosa,,Ruusu,La Rose,A Rózsa,La Rosa,薔薇,장밋빛,Róża,A Rosa,,Roza,Роза,Ружа
 ,,Intermission texts,,,,,,,,,,,,,,,,,,,,
 "Once you beat the big badasses and
 clean out the moon base you're supposed
@@ -2585,7 +2585,7 @@ repulisti finale...","ゲートキーパーの間抜け面が辺り一面に散�
 
 なので君には俺の棺桶にロケットランチャーを供えるよう伝えておく。
 いつか死に、デイジーの元に迎え入れなければ、
-あの世のゴミ共に最後の審判を下す為に...","문지기의 사악한 얼굴이 사방으로 흩어졌다. 놈의 추악한 시체같이 변형된
+あの世のゴミ共へ最後の審判を下す為に...","문지기의 사악한 얼굴이 사방으로 흩어졌다. 놈의 추악한 시체같이 변형된
 지옥의 문이 마지막 남은 양자 가속기와 남아 있는 괴물들을 빨아들여 버렸다.
 당신이 해냈다. 지옥은 살아있는 생명체들 대신 죽어있는 유령들이 가득 찬
 지옥으로 돌아가고 말았다. 미래에 당신의 자손들한테 당신 관 속에 로켓포를
@@ -3259,9 +3259,11 @@ de demônios.",,,"Внезапно всё окуталось тишиной до
 пакла нестаје, небо ноћне море постаје
 плаво, гомиле леша чудовишта
 испарава и са њим зли смрад који је
-испуњавао ваздух. Да сам проклет,
-можда си завршио. Да ли стварно
-победио? Нешто тутњи у даљини. Плава
+испуњавао ваздух. Боже, можда сте
+завршили. Да ли сте стварно
+победили?
+
+Нешто тутњи у даљини. Плава
 светлост почиње да светли унутар
 уништене лобање избацивача демона."
 "What now? Looks totally different. Kind
@@ -3466,15 +3468,15 @@ pisoteadas da pata de ferro de um ciberdemônio.",,,"Пришло время д�
 
 Покинув транспортное средство,
 Вы слышите топот железного копыта
-кибердемона.","Време је за одмор. Уништио си утробу
-пакла и заслужено си спреман за
-одмор. Промумлаш сам себи. Можда
+кибердемона.","Време је за одмор. Уништили сте утробу
+пакла и заслужено сте спремни за
+одмор. Промумљате сами себи. Можда
 неко други може да растури тур паклу
 следећи пут. Напред је тиха варош, са
 мирним водама, старомодним
 зградама, и вероватно нема демона.
 
-Корачаш ван својег транспорта, и чујеш
+Корачате ван својег транспорта, и чујете
 удар челичног копита сајбердемона."
 "Trouble was brewing again in your favorite
 vacation spot... Hell. Some Cyberdemon
@@ -3723,22 +3725,22 @@ Esta atração está fechada.",,,"Ваше любимое место отдых�
 последний стон булькает из того,
 что осталось от его лица.
 
-Этот аттракцион закрыт.","Опет се кувала невоља на твом
+Этот аттракцион закрыт.","Опет се кувала невоља на вашем
 омиљеном месту за одмор... Пакао.
 Неки сајбердемон је мислио да може
 да претвори пакао у луна парк, а земља
 билетарница.
 
-Па, та полу-роботска наказа не зна шта
-му долази.  Не постоји ништа као
-стрелиште пуно демона да ти заврије
+Али та полу-роботска наказа не зна шта
+му долази. Не постоји ништа као
+стрелиште пуно демона да вам заврије
 крв...
 
 Сада зидови демоновог лавиринта
 одјекују са звуковима металних
 удовима који ударају под. Његов
 посмртни јаук грогори из збрке
-од лице са којем си га ти оставио.
+од лице са којем сте га вам оставили.
 
 Ова атракција је затворена."
 "With the destruction of the Iron
@@ -3808,7 +3810,22 @@ infierno desde el otro lado. Esto
 significa por supuesto que podrías
 quedarte atrapad@[ao_esp] en un mundo
 muy desagradable, ¡pero nadie ha dicho
-que ser un Hereje sería fácil!",,,"Avec la destruction des liches
+que ser un Hereje sería fácil!",,"Rautakalmojen ynnä niiden kätyreiden tuhon
+myötä viimeisetkin epäkuolleet on korjattu
+tältä olevaisuuden tasolta.
+
+Olentojen on täytynyt kuitenkin tulla
+jostakin, ja ounastelet helvetin kidan
+palavan portaalin aukeavan niiden
+kotiulottuvuuteen.
+
+Varmistaaksesi, ettei enempää epäkuolleita
+(tai vielä pahempaa) tule läpi, sinun on
+sinetöitävä helvetin kita toiselta puolelta.
+Se tietenkin tarkoittaa, että saatat jäädä
+jumiin hyvin vihamieliseen maailmaan, mutta
+kukaan ei sanonutkaan kerettiläisyyden
+olevan helppoa!","Avec la destruction des liches
 de fer et leur serviteurs, les derniers
 mort-vivants furent éliminés de
 cette plaine de l'existence.
@@ -4032,7 +4049,21 @@ maulotauros? ¿Podría haber seres más
 horribles al otro lado de esta puerta?
 La visión de un domo de cristal sobre ti
 donde debería estar el cielo no es
-ciertamente una buena señal...",,"Les puissants massetaures ont fini par
+ciertamente una buena señal...","Mahtavat maulotaurit eivät osoittautuneet
+sinulle vastukseksi, ja niiden savuavien
+ruumiiden syöksyessä maahan tunnet julmaa
+mielihyvää niiden tuhoutumisesta.
+
+Niiden vartioimat porttikäytävät ovat
+avautuneet paljastamaan tien, jonka toivot
+johtavan kotiin. Mutta astuessasi läpi
+kuulet pilkkaavan naurun soivan korvissasi.
+
+Hallitsiko jokin muu voima maulotaureja?
+Voisiko tämän portin takana olla vieläkin
+kamalampia olentoja? Yläpuolellesi kaartuva
+kristallikupoli, jossa taivaan pitäisi olla,
+ei ainakaan lupaa hyvää....","Les puissants massetaures ont fini par
 prouver qu'il n'étaient pas votre égal,
 et leurs cadavres fumants étalés sur
 le sol, vous sentez l'infernale
@@ -4274,7 +4305,25 @@ una invocación? No lo sabes,
 podría haber sido solo un grito.
 
 De todos modos, ¿Qué hay de los otros
-Jinetes de Serpientes?",,"La mort de D'Sparil a libéré les
+Jinetes de Serpientes?","D'Sparilin kuoleman heikennettyä
+taikavoimia, jotka sitovat hänen olentonsa
+tähän ulottuvuuteen, niiden kuolonhuudot
+hukuttavat allensa hänen omat piinaiset
+parahduksensa.
+
+Kostonvalasi täytettynä astut portaalista
+omaan maailmaasi vain hetkeä ennen kupolin
+särkymistä miljooniksi palasiksi.
+
+Mutta jos D'Sparilin voima on murrettu
+iäksi, mikset tunne oloasi turvalliseksi?
+Oliko se hänen viimeinen juuri ennen hänen
+kuolemaansa edeltänyt huuto, joka kuulosti
+kiroukselta? Tai manaukselta? Et voi olla
+ihan varma, mutta se saattoi olla vain huuto.
+
+Mutta toisaalta, miten on muiden
+Käärmeratsastajien laita?","La mort de D'Sparil a libéré les
 liens magiques liant les créatures
 de ce monde, leurs cris d'agonie
 surpassant ses propres hurlements.
@@ -4539,7 +4588,26 @@ debes entrar a esa fosa con la esperanza
 de encontrar una salida. Y en alguna
 parte, en la esquina más oscura de la
 heredad de D'Sparil, sus guardaespaldas
-personales aguardan tú llegada...",,"Vous aviez cru pouvoir retourner dans
+personales aguardan tú llegada...","Luulit palaavasi maailmaasi D'Sparilin
+kuoleman jälkeen, mutta hänen viimeinen
+tekonsa karkotti sinut hänen omaan
+ulottuvuuteensa. Täällä sinä astuit
+raunioisten maiden rippeisiin, jotka
+D'Sparil oli valloittanut. Päihitit näiden
+maiden viimeiset vartijat, mutta nyt seisot
+D'Sparilin linnoituksen porttien edessä.
+Ennen tätä hetkeä sinulla ei ollut
+epäilystäkään kyvyistäsi kohdata mitä
+tahansa vastaasi mahdollisesti tulevaa,
+mutta tämän portin takana sijaitsee juuri
+sen samaisen pahuuden sydän, joka oli
+hyökännyt maailmaasi. D'Sparil saattaa olla
+kuollut, mutta syvyys, josta hänet
+synnytettiin, jatkuu olemistaan. Nyt sinun
+on laskeuduttava siihen syvyyteen ulospääsyn
+toivossa, ja jossakin D'Sparilin piirin
+pimeimmässä nurkassa hänen henkivartijansa
+odottavat saapumistasi.","Vous aviez cru pouvoir retourner dans
 votre monde après que D'Sparil ne
 trépasse, mais son acte final fut
 de vous bannir dans sa propre
@@ -4772,7 +4840,24 @@ a continuar en el enfrentamiento de
 tal desesperación? ¿Tienes el valor?
 Encuentras que al final, no está en
 ti rendirte sin pelear. Con ojos abiertos,
-vas a encontrarte con tu destino. ",,,"Dès que le dernier massetaure eût mugi
+vas a encontrarte con tu destino. ",,"Viimeisen maulotaurin mylviessä
+kuolontuskaansa tajuat, ettet ole koskaan
+tullut näin lähelle omaa tuhoasi. Edes
+taistelu D'Sparilin ja hänen opetuslastensa
+kanssa ei ollut näin epätoivoinen. Tuijotat
+synkästi edessäsi aukeavia portteja miettien,
+johtavatko ne kotiin, vai avautuvatko ne
+johonkin kauhuun, josta et ole osannut
+uneksiakaan. Huomaat pohtivasi, onko sinulla
+voimia jatkaa, jos vastassasi ei ole muuta
+kuin kuolemaa ja tuskaa. Mutta mitä
+muutakaan voit tehdä, jos tahto taistella on
+loppu? Voitko pakottaa itsesi jatkamaan
+sellaisen toivottomuuden edessä? Riittääkö
+sinulla rohkeus? Päädyt lopulta siihen,
+ettei taistelematta luovuttaminen kuulu
+luontoosi. Menet silmät avoinna tapaamaan
+kohtalosi.","Dès que le dernier massetaure eût mugi
 son râle d'agonie, Vous réalisez que
 vous n'avez jamais été aussi proche de
 votre propre mort. Même le combat
@@ -7021,7 +7106,7 @@ Then get lost!,TXT_RYES1_SCRIPT02_D69736_THENG,,,,Tak vypadni!,Dann verzieh dich
 ほぼ使われていない。潜入してヤツを黙らせて、
 仕事をした証拠としてヤツの指輪を見せてくれ。","좋구만... 그래서, 내 지인이 말하기를 벨딘이라는 사람의 입을 다물게 만들라는군. 그는 지금 오더에 의해 성소에 감금됐네. 그 근처 강가에 있는 작은 부두 옆에 자주 쓰이지 않는 입구가 있다네. 거기로 향해서, 그의 입을 막게. 그리고 그의 반지를 증거로 가져오게.","Dobrze. Paru moich... ehmm... przyjaciół potrzebuje kogoś uciszyć. Beldin jest trzymany przez Zakon w ich sanktuarium. Jest tu gdzieś rzadko używane wejście przy małej przystani przy rzece, które jest niestrzeżone. Wejdź tam, ucisz go i przynieś mi jego pierścień jako dowód.","Ótimo. Alguns hã, amigos meus precisam silenciar alguém. Beldin foi detido pela Ordem no santuário deles. Há uma entrada pouco usada perto de um pequeno pier pelo rio que está sem guardas. Entre lá, cale a boca dele e traga o seu anel de volta pra mim como prova.",,,"Хорошо. Некоторые мои, э-э-э, приятели, хотят, чтобы кое-кто замолчал. Орден держит предателя по имени Белдин в своём святилище. На берегу реки есть вход, который редко используется, а потому не охраняется. Проберись внутрь, заставь предателя замолчать навсегда и принеси мне его кольцо в качестве доказательства.",
 Will it be worth the effort?,TXT_RPLY0_SCRIPT02_D72768_WILLI,,,,Bude mi to stát za to?,Wird es die Mühe denn wert sein?,,,¿Valdrá la pena el esfuerzo?,,,Est-ce que ça en vaudra l'effort?,Megéri az erőfeszítést?,,苦労に見合った報酬だろうな?,노력할만한 가치가 있나요?,Czy będzie to warte moich starań?,Será que vale a pena o esforço?,,,Оно того стоит?,
-"I'll guarantee 50 gold and if you return without setting off every alarm in town, there's the chance to earn much, much more, and here's a little helper that should give you an edge.",TXT_DLG_SCRIPT02_D74284_ILLGU,,,,"Garantuji ti padesát zlatých a jestliže se vrátíš bez toho, abys spustil každý poplach ve městě, je tu šance získat mnohem, mnohem víc. Tady je malý pomocník, který by ti měl pomoci.","Ich garantiere dir 50 Gold und wenn du zurückkehrst ohne den Alarm in der Stadt ausgelöst zu haben, dann hast du noch die Chance, viel, viel mehr zu verdienen und hier ist noch ein kleiner Helfer der dir einen Vorteil verschaffen wird.",,,"Te garantizo 50 de oro y si vuelves sin activar todas las alarmas del pueblo, existe la posibilidad de ganar mucho, mucho más, y aquí hay un pequeño ayudante que debería darte una ventaja.",,,"Je vous garantis 50 pièces et si vous revenez sans déclencher toutes les alarmes de la ville, vous avez la possibilité de gagner bien plus. Voilà une petite avance qui pourra vous aider.",,,"50ゴールドは保証するし街の警報を鳴らさず
+"I'll guarantee 50 gold and if you return without setting off every alarm in town, there's the chance to earn much, much more, and here's a little helper that should give you an edge.",TXT_DLG_SCRIPT02_D74284_ILLGU,,,,"Garantuji ti padesát zlatých a jestliže se vrátíš bez toho, abys spustil každý poplach ve městě, je tu šance vydělat si mnohem, mnohem víc. Tady je malý pomocník, který by ti měl pomoci.","Ich garantiere dir 50 Gold und wenn du zurückkehrst ohne den Alarm in der Stadt ausgelöst zu haben, dann hast du noch die Chance, viel, viel mehr zu verdienen und hier ist noch ein kleiner Helfer der dir einen Vorteil verschaffen wird.",,,"Te garantizo 50 de oro y si vuelves sin activar todas las alarmas del pueblo, existe la posibilidad de ganar mucho, mucho más, y aquí hay un pequeño ayudante que debería darte una ventaja.",,,"Je vous garantis 50 pièces et si vous revenez sans déclencher toutes les alarmes de la ville, vous avez la possibilité de gagner bien plus. Voilà une petite avance qui pourra vous aider.",,,"50ゴールドは保証するし街の警報を鳴らさず
 戻ってこれたら、もっと金を得られる機会が
 あるぞ。それと、お前の力となる物も渡そう。","만약 이 마을의 경보를 울리지 않고 조용히 완수하면 50 골드를 보상으로 주지. 이 외에도 더 많은 보상을 받을 수 있는 일들이 아주 많이 있다네. 그리고 여기, 모험에 도움이 될 만한 무기를 가져가게.","Gwarantuję 50 monet, a jeśli wrócisz bez włączania wszystkich alarmów w mieście, jest szansa, że mógłbyś dostać więcej. Znacznie więcej. Oto mały pomocnik, który da ci przewagę.","Garanto que você será pago 50 de ouro e se você retornar sem ativar todos os alarmes na cidade haverá uma chance de ganhar muito, muito mais. E aqui tem algo que pode te ajudar um pouco.",,,"Я обещаю тебе 50 золотых. И ты сможешь заработать куда больше, если выполнишь задание, не переполошив всю стражу в городе. А чтобы у тебя было некоторое преимущество, вот тебе небольшой помощник.
 ",

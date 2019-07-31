@@ -60,8 +60,8 @@ The Hospital,TXT_HARMMAP05,,,,Nemocnice,Das Hospital,,,El Hospital,,,L'Hôpital,
 The Weapons Factory,TXT_HARMMAP06,,,,Továrna na zbraně,Die Waffenfabrik,,,La Fábrica de Armas,,,L'Usine d'Armes,,La fabbrica di armi,ウェポンファクトリー,무기 공장,Fabryka Broni,A Fábrica de Armamento,,,Оружейный завод,
 The Underwater Lab,TXT_HARMMAP07,,,,Podvodní laboratoř,Das Unterwasserlabor,,,El Laboratorio Submarino,,,Le Laboratoire Sous-marin,,Il laboratorio subacqueo,アンダーウォーターラボ,해저 연구소,Podwodne Laboratorium,O Laboratório Submarino,,,Подводная лаборатория,
 Airstrip One,TXT_HARMMAP08,,,,Přistávací dráha jedna,Flugplatz Eins,,,Pista de Aterrizaje Uno,,,Piste D'Atterrisage Un,,Pista di atterraggio Uno,エアーシップ ワン,활주로 1호,Lądowisko Numer Jeden,Base Aérea Um,,,Взлётная полоса №1,
-The Launch Base,TXT_HARMMAP09,,,,Vzletová základna,Die Startbasis,,,La Base de Despegue,,,La Base de Lancement,,La base di lancio,ランチャーベース,발진기지,,A Base de Lançamento,,,Пусковая площадка,
-The Radioactive Zone,TXT_HARMMAP10,,,,Radioaktivní zóna,Die radioaktive Zone,,,La Zona Radioactiva,,,La Zone Radioactive,,La zona radioattiva,ラディオアクティブ ゾーン,방사능 처리소,,A Zona Radioativa,,,Заражённая зона,
+The Launch Base,TXT_HARMMAP09,,,,Vzletová základna,Die Startbasis,,,La Base de Despegue,,,La Base de Lancement,,La base di lancio,ランチャーベース,발진기지,Baza Startowa,A Base de Lançamento,,,Пусковая площадка,
+The Radioactive Zone,TXT_HARMMAP10,,,,Radioaktivní zóna,Die radioaktive Zone,,,La Zona Radioactiva,,,La Zone Radioactive,,La zona radioattiva,ラディオアクティブ ゾーン,방사능 처리소,Radioaktywna Strefa,A Zona Radioativa,,,Заражённая зона,
 Echidna,TXT_HARMMAP11,,,,,,,,,,,,,,エキドナ,에키드나,,Equidna,,,Ехидна,
 "You feel sick to your stomach...
 Looking in the face of the mutant queen... 
@@ -169,7 +169,7 @@ Pagheranno per farti uccidere la tuo amica...
 ""L'inferno non ha furia come una donna disprezzata!""
 
     = L A  F I N E =
-	
+        
 ","貴方はミュータントの女王の顔を見た時
 気分が凄まじく悪くなった...
 その顔は... 見覚えがあった...
@@ -194,7 +194,25 @@ Pagheranno per farti uccidere la tuo amica...
 
 ""고통받은 여자의 심정보다 더한 지옥은 없지! 그 녀석들, 가만 안 둬!""
 
-= 끝 =",,"Você sente vontade de vomitar...
+= 끝 =","Czujesz się niedobrze...
+Patrząc na twarz królowej mutantów...
+Ale rzecz w tym, że... to była kiedyś...
+Twoja przyjaciółka... Amira!
+
+Te potwory znalazły sposób, aby ją
+zmutować i zamienić ją w tą ohydną
+poczwarę, by mogły się rozmnażać.
+
+Ehh...
+
+Bierzesz się w garść...
+Zapłacą za to, że musiałaś zabić
+swoją przyjaciółkę...
+
+""Nawet piekło nie może być tak wściekłe
+jak zlekceważnona kobieta!""
+
+     =K O N I E C=","Você sente vontade de vomitar...
 Vendo o rosto da rainha mutante...
 Essa coisa... Que costumava ser...
 Sua amiga... Amira!
@@ -234,10 +252,11 @@ uma mulher desprezada!""
      = К О Н Е Ц =
 ",
 ,WI_FINISHED,This text is deliberately empty,,,,,,,,,,,,,,,,,,,,
-Loading,WI_ENTERING,Yellow needs retranslation,,,Vstupujete do,Lade,,Eniras,Entrando a:,,Seuraava kohde,Niveau Suivant,Következik,Caricamento,ローディング,불러오는 중,Wchodzisz,Próxima fase,Próximo nível,,Загрузка уровня,
-Very Easy,SKILL_BABY,,,,Velmi snadné,Sehr einfach,,,Muy facil,,,Trés facile,,Molto facile,ベリーイージー,아주 쉬움,,Muito facil,,,Очень лёгкий,
-Easy,SKILL_EASY,,,,Snadný,Einfach,,,Facil,,,Facile,,Facile,イージー,쉬움,,Fácil,,,Лёгкий,
-Medium,SKILL_NORMAL,,,,Střední,Mittel,,,Medio,,,Moyen,,Medio,ミディアム,중간,,Médio,,,Средний,
-Hard,SKILL_HARD,,,,Obtížný,Schwer,,,Difícil,,,Difficile,,Difficile,ハード,어려움,,Difícil,,,Тяжёлый,
-Very Hard,SKILL_NIGHTMARE,,,,Velmi obtížné,Sehr schwer,,,Muy difícil,,,Très difficile,,Molto difficile,ベリーハード,아주 어려윰,,Muito difícil,,,Очень тяжёлый,
-Thanks for playing,HARMQUITMSG,,,,Díky za hraní,Danke fürs Spielen,,,Gracias por jugar,,,Merci d'avoir joué,,Grazie per aver giocato,プレイ シテクレテ カンシャスル,플레이 해주셔서 감사드립니다,,Obrigado por jogar,,,"Спасибо, что сыграли в Harmony",
+Loading,WI_ENTERING,Yellow needs retranslation,,,Vstupujete do,Lade,,Eniras,Entrando a:,,Seuraava kohde,Niveau Suivant,Következik,Caricamento,ローディング,불러오는 중,Ładowanie,Próxima fase,Próximo nível,,Загрузка уровня,
+Very Easy,SKILL_BABY,,,,Velmi snadné,Sehr einfach,,,Muy facil,,,Trés facile,,Molto facile,ベリーイージー,아주 쉬움,Bardzo Łatwy,Muito facil,,,Очень лёгкий,
+Easy,SKILL_EASY,,,,Snadný,Einfach,,,Facil,,,Facile,,Facile,イージー,쉬움,Łatwy,Fácil,,,Лёгкий,
+Medium,SKILL_NORMAL,,,,Střední,Mittel,,,Medio,,,Moyen,,Medio,ミディアム,중간,Średni,Médio,,,Средний,
+Hard,SKILL_HARD,,,,Obtížný,Schwer,,,Difícil,,,Difficile,,Difficile,ハード,어려움,Trudny,Difícil,,,Тяжёлый,
+Very Hard,SKILL_NIGHTMARE,,,,Velmi obtížné,Sehr schwer,,,Muy difícil,,,Très difficile,,Molto difficile,ベリーハード,아주 어려윰,Bardzo Trudny,Muito difícil,,,Очень тяжёлый,
+Thanks for playing,HARMQUITMSG,,,,Díky za hraní,Danke fürs Spielen,,,Gracias por jugar,,,Merci d'avoir joué,,Grazie per aver giocato,プレイ シテクレテ カンシャスル,플레이 해주셔서 감사드립니다,Dziękuję za grę,Obrigado por jogar,,,"Спасибо, что сыграли в Harmony",
+Harmony,TXT_D2E1,,,,,,,,,,,,,,,,,,,,,

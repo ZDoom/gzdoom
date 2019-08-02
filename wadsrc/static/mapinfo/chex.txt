@@ -68,6 +68,7 @@ gameinfo
 	statscreen_finishedfont = "*BigFont"
 	statscreen_enteringfont = "*BigFont"
 	statscreen_contentfont = "*BigFont"
+	statscreen_authorFont = "*SmallFont", "gray"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "DoomStatusScreen"

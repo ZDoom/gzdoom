@@ -134,6 +134,7 @@ void G_LeavingHub(FLevelLocals *Level, int mode, cluster_info_t * cluster, wbsta
 				else
 				{
 					wbs->thisname = cluster->ClusterName;
+					wbs->thisauthor = "";
 				}
 				wbs->LName0.SetInvalid();	// The level's own name was just invalidated, and so was its name patch.
 			}

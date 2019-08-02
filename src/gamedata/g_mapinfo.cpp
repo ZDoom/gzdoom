@@ -242,6 +242,7 @@ void level_info_t::Reset()
 	flags3 = 0;
 	Music = "";
 	LevelName = "";
+	AuthorName = "";
 	FadeTable = "COLORMAP";
 	WallHorizLight = -8;
 	WallVertLight = +8;
@@ -921,6 +922,13 @@ DEFINE_MAP_OPTION(next, true)
 {
 	parse.ParseAssign();
 	parse.ParseNextMap(info->NextMap);
+}
+
+DEFINE_MAP_OPTION(author, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->AuthorName = parse.sc.String;
 }
 
 DEFINE_MAP_OPTION(secretnext, true)

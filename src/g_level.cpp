@@ -840,6 +840,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 	wminfo.finished_ep = cluster - 1;
 	wminfo.LName0 = TexMan.CheckForTexture(info->PName, ETextureType::MiscPatch);
 	wminfo.thisname = info->LookupLevelName(&langtable[0]);	// re-get the name so we have more info about its origin.
+	wminfo.thisauthor = info->AuthorName;
 	wminfo.current = MapName;
 
 	if (deathmatch &&
@@ -849,6 +850,7 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 		wminfo.next = MapName;
 		wminfo.LName1 = wminfo.LName0;
 		wminfo.nextname = wminfo.thisname;
+		wminfo.nextauthor = wminfo.thisauthor;
 	}
 	else
 	{
@@ -858,12 +860,14 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 			wminfo.next = "";
 			wminfo.LName1.SetInvalid();
 			wminfo.nextname = "";
+			wminfo.nextauthor = "";
 		}
 		else
 		{
 			wminfo.next = nextinfo->MapName;
 			wminfo.LName1 = TexMan.CheckForTexture(nextinfo->PName, ETextureType::MiscPatch);
 			wminfo.nextname = nextinfo->LookupLevelName(&langtable[1]);
+			wminfo.nextauthor = nextinfo->AuthorName;
 		}
 	}
 
@@ -1637,6 +1641,7 @@ void FLevelLocals::Init()
 	NextMap = info->NextMap;
 	NextSecretMap = info->NextSecretMap;
 	F1Pic = info->F1Pic;
+	AuthorName = info->AuthorName;
 	hazardcolor = info->hazardcolor;
 	hazardflash = info->hazardflash;
 	

@@ -40,23 +40,6 @@ class Armor : Inventory
 		Inventory.PickupSound "misc/armor_pkup";
 		+INVENTORY.ISARMOR
 	}
-
-	int GetSaveAmount ()
-	{
-		if (self is 'BasicArmorBonus')
-		{
-			let armor = BasicArmorBonus(self);
-			return !armor.bIgnoreSkill ? int(armor.SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor)) : armor.SaveAmount;
-		}
-
-		if (self is 'BasicArmorPickup')
-		{
-			let armor = BasicArmorPickup(self);
-			return !armor.bIgnoreSkill ? int(armor.SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor)) : armor.SaveAmount;
-		}
-
-		return 0;
-	}
 }
 
 //===========================================================================
@@ -342,6 +325,11 @@ class BasicArmorBonus : Armor
 	{
 		SaveAmount *= amount;
 	}
+
+	int GetSaveAmount ()
+	{
+		return !bIgnoreSkill ? int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor)) : SaveAmount;
+	}
 }
 
 //===========================================================================
@@ -443,6 +431,10 @@ class BasicArmorPickup : Armor
 		SaveAmount *= amount;
 	}
 	
+	int GetSaveAmount ()
+	{
+		return !bIgnoreSkill ? int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor)) : SaveAmount;
+	}
 }
 
 //===========================================================================

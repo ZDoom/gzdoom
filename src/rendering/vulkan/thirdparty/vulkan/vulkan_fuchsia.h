@@ -1,5 +1,5 @@
-#ifndef VULKAN_IOS_H_
-#define VULKAN_IOS_H_ 1
+#ifndef VULKAN_FUCHSIA_H_
+#define VULKAN_FUCHSIA_H_ 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,23 +28,23 @@ extern "C" {
 
 
 
-#define VK_MVK_ios_surface 1
-#define VK_MVK_IOS_SURFACE_SPEC_VERSION   2
-#define VK_MVK_IOS_SURFACE_EXTENSION_NAME "VK_MVK_ios_surface"
-typedef VkFlags VkIOSSurfaceCreateFlagsMVK;
-typedef struct VkIOSSurfaceCreateInfoMVK {
-    VkStructureType               sType;
-    const void*                   pNext;
-    VkIOSSurfaceCreateFlagsMVK    flags;
-    const void*                   pView;
-} VkIOSSurfaceCreateInfoMVK;
+#define VK_FUCHSIA_imagepipe_surface 1
+#define VK_FUCHSIA_IMAGEPIPE_SURFACE_SPEC_VERSION 1
+#define VK_FUCHSIA_IMAGEPIPE_SURFACE_EXTENSION_NAME "VK_FUCHSIA_imagepipe_surface"
+typedef VkFlags VkImagePipeSurfaceCreateFlagsFUCHSIA;
+typedef struct VkImagePipeSurfaceCreateInfoFUCHSIA {
+    VkStructureType                         sType;
+    const void*                             pNext;
+    VkImagePipeSurfaceCreateFlagsFUCHSIA    flags;
+    zx_handle_t                             imagePipeHandle;
+} VkImagePipeSurfaceCreateInfoFUCHSIA;
 
-typedef VkResult (VKAPI_PTR *PFN_vkCreateIOSSurfaceMVK)(VkInstance instance, const VkIOSSurfaceCreateInfoMVK* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
+typedef VkResult (VKAPI_PTR *PFN_vkCreateImagePipeSurfaceFUCHSIA)(VkInstance instance, const VkImagePipeSurfaceCreateInfoFUCHSIA* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 
 #ifndef VK_NO_PROTOTYPES
-VKAPI_ATTR VkResult VKAPI_CALL vkCreateIOSSurfaceMVK(
+VKAPI_ATTR VkResult VKAPI_CALL vkCreateImagePipeSurfaceFUCHSIA(
     VkInstance                                  instance,
-    const VkIOSSurfaceCreateInfoMVK*            pCreateInfo,
+    const VkImagePipeSurfaceCreateInfoFUCHSIA*  pCreateInfo,
     const VkAllocationCallbacks*                pAllocator,
     VkSurfaceKHR*                               pSurface);
 #endif

@@ -35,6 +35,7 @@
 
 #ifdef HAVE_VULKAN
 #define VK_USE_PLATFORM_MACOS_MVK
+#define VK_USE_PLATFORM_METAL_EXT
 #include "volk/volk.h"
 #endif
 
@@ -867,12 +868,37 @@ void I_GetVulkanDrawableSize(int *width, int *height)
 
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 {
-	static const char* extensions[] =
+	static std::vector<const char*> extensions;
+
+	if (extensions.empty())
 	{
-		VK_KHR_SURFACE_EXTENSION_NAME,
-		VK_MVK_MACOS_SURFACE_EXTENSION_NAME
-	};
-	static const unsigned int extensionCount = static_cast<unsigned int>(sizeof extensions / sizeof extensions[0]);
+		uint32_t extensionPropertyCount = 0;
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionPropertyCount, nullptr);
+
+		std::vector<VkExtensionProperties> extensionProperties(extensionPropertyCount);
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionPropertyCount, extensionProperties.data());
+
+		static const char* const EXTENSION_NAMES[] =
+		{
+			VK_KHR_SURFACE_EXTENSION_NAME,        // KHR_surface, required
+			VK_EXT_METAL_SURFACE_EXTENSION_NAME,  // EXT_metal_surface, optional, preferred
+			VK_MVK_MACOS_SURFACE_EXTENSION_NAME,  // MVK_macos_surface, optional, deprecated
+		};
+
+		for (const VkExtensionProperties &currentProperties : extensionProperties)
+		{
+			for (const char *const extensionName : EXTENSION_NAMES)
+			{
+				if (strcmp(currentProperties.extensionName, extensionName) == 0)
+				{
+					extensions.push_back(extensionName);
+				}
+			}
+		}
+	}
+
+	static const unsigned int extensionCount = static_cast<unsigned int>(extensions.size());
+	assert(extensionCount >= 2); // KHR_surface + at least one of the platform surface extentions
 
 	if (count == nullptr && names == nullptr)
 	{
@@ -899,6 +925,20 @@ bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 {
+	if (vkCreateMetalSurfaceEXT)
+	{
+		// Preferred surface creation path
+		VkMetalSurfaceCreateInfoEXT surfaceCreateInfo;
+		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+		surfaceCreateInfo.pNext = nullptr;
+		surfaceCreateInfo.flags = 0;
+		surfaceCreateInfo.pLayer = static_cast<CAMetalLayer*>(CocoaVideo::GetWindow().contentView.layer);
+
+		const VkResult result = vkCreateMetalSurfaceEXT(instance, &surfaceCreateInfo, nullptr, surface);
+		return result == VK_SUCCESS;
+	}
+
+	// Deprecated surface creation path
 	VkMacOSSurfaceCreateInfoMVK windowCreateInfo;
 	windowCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
 	windowCreateInfo.pNext = nullptr;

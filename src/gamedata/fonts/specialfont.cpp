@@ -102,7 +102,10 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 
 		if (charlumps[i] != nullptr)
 		{
-			charlumps[i]->SetUseType(ETextureType::FontChar);
+			// If texture is used as a sprite, do not set use type
+			// Changing it would break actors that use this sprite
+			if (charlumps[i]->GetUseType() != ETextureType::Sprite)
+				charlumps[i]->SetUseType(ETextureType::FontChar);
 
 			Chars[i].OriginalPic = charlumps[i];
 			if (!noTranslate)

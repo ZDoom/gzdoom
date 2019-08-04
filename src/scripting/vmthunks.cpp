@@ -2032,6 +2032,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
 	ACTION_RETURN_INT(StringWidth(self, str));
 }
 
+static int GetMaxAscender(FFont* font, const FString& str)
+{
+	const char* txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
+	return font->GetMaxAscender(txt);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetMaxAscender, GetMaxAscender)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_STRING(str);
+	ACTION_RETURN_INT(GetMaxAscender(self, str));
+}
+
 static int CanPrint(FFont *font, const FString &str)
 {
 	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();

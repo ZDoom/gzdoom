@@ -88,6 +88,8 @@ public:
 	VkRenderPassSetup *GetRenderPass(const VkRenderPassKey &key);
 	int GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
 
+	VkVertexFormat *GetVertexFormat(int index);
+
 	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 	VulkanPipelineLayout* GetPipelineLayout(int numLayers);
 
@@ -95,8 +97,6 @@ public:
 	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 
 	std::unique_ptr<VulkanDescriptorSet> DynamicSet;
-
-	std::vector<VkVertexFormat> VertexFormats;
 
 private:
 	void CreateDynamicSetLayout();
@@ -111,4 +111,5 @@ private:
 	std::unique_ptr<VulkanDescriptorPool> DynamicDescriptorPool;
 	std::vector<std::unique_ptr<VulkanDescriptorSetLayout>> TextureSetLayouts;
 	std::vector<std::unique_ptr<VulkanPipelineLayout>> PipelineLayouts;
+	std::vector<VkVertexFormat> VertexFormats;
 };

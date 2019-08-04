@@ -93,6 +93,11 @@ int VkRenderPassManager::GetVertexFormat(int numBindingPoints, int numAttributes
 	return (int)VertexFormats.size() - 1;
 }
 
+VkVertexFormat *VkRenderPassManager::GetVertexFormat(int index)
+{
+	return &VertexFormats[index];
+}
+
 void VkRenderPassManager::CreateDynamicSetLayout()
 {
 	DescriptorSetLayoutBuilder builder;
@@ -173,8 +178,8 @@ void VkRenderPassManager::UpdateDynamicSet()
 	WriteDescriptors update;
 	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
 	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightBufferSSO->mBuffer.get());
-	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatricesUBO->mBuffer.get(), 0, sizeof(MatricesUBO));
-	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamUBO->mBuffer.get(), 0, sizeof(StreamUBO));
+	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
+	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
 	update.addCombinedImageSampler(DynamicSet.get(), 4, fb->GetBuffers()->Shadowmap.View.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.updateSets(fb->device);
 }
@@ -289,7 +294,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 	builder.addVertexShader(program->vert.get());
 	builder.addFragmentShader(program->frag.get());
 
-	const VkVertexFormat &vfmt = fb->GetRenderPassManager()->VertexFormats[key.VertexFormat];
+	const VkVertexFormat &vfmt = *fb->GetRenderPassManager()->GetVertexFormat(key.VertexFormat);
 
 	for (int i = 0; i < vfmt.NumBindingPoints; i++)
 		builder.addVertexBufferBinding(i, vfmt.Stride);

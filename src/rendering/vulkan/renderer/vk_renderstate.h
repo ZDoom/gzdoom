@@ -4,6 +4,7 @@
 #include "vulkan/system/vk_buffers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_streambuffer.h"
 
 #include "name.h"
 
@@ -63,8 +64,8 @@ protected:
 	void ApplyVertexBuffers();
 	void ApplyMaterial();
 
-	void WaitForStreamBuffers();
 	void BeginRenderPass(VulkanCommandBuffer *cmdbuffer);
+	void WaitForStreamBuffers();
 
 	bool mDepthClamp = true;
 	VulkanCommandBuffer *mCommandBuffer = nullptr;
@@ -90,18 +91,15 @@ protected:
 	int mColorMask = 15;
 	int mCullMode = 0;
 
-	MatricesUBO mMatrices = {};
 	PushConstants mPushConstants = {};
 
 	uint32_t mLastViewpointOffset = 0xffffffff;
 	uint32_t mLastMatricesOffset = 0xffffffff;
 	uint32_t mLastStreamDataOffset = 0xffffffff;
 	uint32_t mViewpointOffset = 0;
-	uint32_t mMatricesOffset = 0;
-	uint32_t mDataIndex = -1;
-	uint32_t mStreamDataOffset = 0;
 
-	VSMatrix mIdentityMatrix;
+	VkStreamBufferWriter mStreamBufferWriter;
+	VkMatrixBufferWriter mMatrixBufferWriter;
 
 	int mLastVertexOffsets[2] = { 0, 0 };
 	IVertexBuffer *mLastVertexBuffer = nullptr;

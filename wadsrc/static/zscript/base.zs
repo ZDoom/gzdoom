@@ -320,6 +320,7 @@ struct Font native
 
 	native int GetCharWidth(int code);
 	native int StringWidth(String code);
+	native int GetMaxAscender(String code);
 	native bool CanPrint(String code);
 	native int GetHeight();
 	native int GetDisplacement();

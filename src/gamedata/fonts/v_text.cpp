@@ -125,7 +125,9 @@ TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str
 		if ((w > 0 && w + nw > maxwidth) || c == '\n')
 		{ // Time to break the line
 			if (!space)
-				space = string - 1;
+			{
+				for (space = string - 1; (*space & 0xc0) == 0x80 && space > start; space--);
+			}
 
 			auto index = Lines.Reserve(1);
 			breakit (&Lines[index], font, start, space, linecolor);

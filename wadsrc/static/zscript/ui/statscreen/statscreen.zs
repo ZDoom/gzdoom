@@ -149,7 +149,7 @@ class StatusScreen abstract play version("2.5")
 	//
 	//====================================================================
 
-	int, int DrawName(int y, TextureID tex, String levelname)
+	int DrawName(int y, TextureID tex, String levelname)
 	{
 		// draw <LevelName> 
 		if (tex.isValid())
@@ -161,7 +161,7 @@ class StatusScreen abstract play version("2.5")
 			  // patches with vast amounts of empty space at the bottom.
 				size.Y = TexMan.CheckRealHeight(tex);
 			}
-			return y + int(Size.Y), (BigFont.GetHeight() - BigFont.GetDisplacement()) * CleanYfac / 4;
+			return y + int(Size.Y) * CleanYfac;
 		}
 		else if (levelname.Length() > 0)
 		{
@@ -176,9 +176,9 @@ class StatusScreen abstract play version("2.5")
 				screen.DrawText(mapname.mFont, mapname.mColor, (screen.GetWidth() - lines.StringWidth(i) * CleanXfac) / 2, y + h, lines.StringAt(i), DTA_CleanNoMove, true);
 				h += lumph;
 			}
-			return y + h, (mapname.mFont.GetHeight() - mapname.mFont.GetDisplacement())/4;
+			return y + h;
 		}
-		return 0, 0;
+		return 0;
 	}
 
 	//====================================================================
@@ -232,17 +232,35 @@ class StatusScreen abstract play version("2.5")
 
 	virtual int drawLF ()
 	{
-		int y = TITLEY * CleanYfac;
+		bool ispatch = wbs.LName0.isValid();
+		int oldy = TITLEY * CleanYfac;
 		int h;
+		
+		if (!ispatch)
+		{
+			let asc = mapname.mFont.GetMaxAscender(lnametexts[1]);
+			if (asc > TITLEY - 2)
+			{
+				oldy = (asc+2) * CleanYfac;
+			}
+		}
+		
+		int y = DrawName(oldy, wbs.LName0, lnametexts[0]);
 
-		[y, h] = DrawName(y, wbs.LName0, lnametexts[0]);
-
-		// Adjustment for different font sizes for map name and 'finished'.
-		let fontspace1 = finished.mFont.GetDisplacement();
-		let fontspace2 = ((h + (finished.mFont.GetHeight() - fontspace1)/4)) / 2;
-
-		y += max(0, fontspace2 - fontspace1) * CleanYFac;
-
+		// If the displayed info is made of patches we need some additional offsetting here.
+		if (ispatch) 
+		{
+			int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+			int h2 = (y - oldy) / CleanYfac / 4;
+			let disp = min(h1, h2);
+			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
+			if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
+			{
+				disp += finished.mFont.GetMaxAscender("$WI_FINISHED");
+ 			}
+			y += disp * CleanYfac;
+		}
+		
 		// draw "Finished!"
 
 		int statsy = multiplayer? NG_STATSY : SP_STATSY * CleanYFac;
@@ -266,19 +284,36 @@ class StatusScreen abstract play version("2.5")
 
 	virtual void drawEL ()
 	{
-		int y = TITLEY * CleanYfac;
+		bool ispatch = TexMan.OkForLocalization(enteringPatch, "$WI_ENTERING");
+		int oldy = TITLEY * CleanYfac;
 
-		y = DrawPatchOrText(y, entering, enteringPatch, "$WI_ENTERING");
-		let h = (entering.mFont.GetHeight() - entering.mFont.GetDisplacement()) / 4;
-
-		if (!wbs.LName1.isValid())
+		if (!ispatch)
 		{
-			// Factor out the font's displacement here.
-			let fontspace1 = mapname.mFont.GetDisplacement();
-			let fontspace2 = ((h + (mapname.mFont.GetHeight() - fontspace1)/4)) / 2;
-			h = max(0, fontspace2 - fontspace1) * CleanYFac;
-		}		
-		y += h * CleanYFac;
+			let asc = entering.mFont.GetMaxAscender("$WI_ENTERING");
+			if (asc > TITLEY - 2)
+			{
+				oldy = (asc+2) * CleanYfac;
+			}
+		}
+
+		int y = DrawPatchOrText(oldy, entering, enteringPatch, "$WI_ENTERING");
+		
+		// If the displayed info is made of patches we need some additional offsetting here.
+		
+		if (ispatch)
+		{
+			int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+			let size = TexMan.GetScaledSize(enteringPatch);
+			int h2 = int(size.Y);
+			let disp = min(h1, h2) / 4;
+			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
+			if (!wbs.LName1.isValid())
+			{
+				disp += mapname.mFont.GetMaxAscender(lnametexts[1]);
+			}
+			y += disp * CleanYfac;
+		}
+
 		DrawName(y, wbs.LName1, lnametexts[1]);
 	}
 

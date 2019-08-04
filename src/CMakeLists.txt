@@ -905,6 +905,7 @@ set (VULKAN_SOURCES
 	rendering/vulkan/system/vk_buffers.cpp
 	rendering/vulkan/renderer/vk_renderstate.cpp
 	rendering/vulkan/renderer/vk_renderpass.cpp
+	rendering/vulkan/renderer/vk_streambuffer.cpp
 	rendering/vulkan/renderer/vk_postprocess.cpp
 	rendering/vulkan/renderer/vk_renderbuffers.cpp
 	rendering/vulkan/shaders/vk_shader.cpp

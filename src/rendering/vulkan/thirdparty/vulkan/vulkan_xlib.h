@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /*
-** Copyright (c) 2015-2018 The Khronos Group Inc.
+** Copyright (c) 2015-2019 The Khronos Group Inc.
 **
 ** Licensed under the Apache License, Version 2.0 (the "License");
 ** you may not use this file except in compliance with the License.
@@ -27,12 +27,11 @@ extern "C" {
 */
 
 
+
 #define VK_KHR_xlib_surface 1
 #define VK_KHR_XLIB_SURFACE_SPEC_VERSION  6
 #define VK_KHR_XLIB_SURFACE_EXTENSION_NAME "VK_KHR_xlib_surface"
-
 typedef VkFlags VkXlibSurfaceCreateFlagsKHR;
-
 typedef struct VkXlibSurfaceCreateInfoKHR {
     VkStructureType                sType;
     const void*                    pNext;
@@ -40,7 +39,6 @@ typedef struct VkXlibSurfaceCreateInfoKHR {
     Display*                       dpy;
     Window                         window;
 } VkXlibSurfaceCreateInfoKHR;
-
 
 typedef VkResult (VKAPI_PTR *PFN_vkCreateXlibSurfaceKHR)(VkInstance instance, const VkXlibSurfaceCreateInfoKHR* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkSurfaceKHR* pSurface);
 typedef VkBool32 (VKAPI_PTR *PFN_vkGetPhysicalDeviceXlibPresentationSupportKHR)(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, Display* dpy, VisualID visualID);

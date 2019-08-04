@@ -9,6 +9,7 @@ class VkSamplerManager;
 class VkShaderManager;
 class VkRenderPassManager;
 class VkRenderState;
+class VkStreamBuffer;
 class VKDataBuffer;
 class VkHardwareTexture;
 class VkRenderBuffers;
@@ -38,13 +39,10 @@ public:
 
 	unsigned int GetLightBufferBlockSize() const;
 
-	template<typename T>
-	int UniformBufferAlignedSize() const { return (sizeof(T) + uniformblockalignment - 1) / uniformblockalignment * uniformblockalignment; }
-
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
-	VKDataBuffer *MatricesUBO = nullptr;
-	VKDataBuffer *StreamUBO = nullptr;
+	VkStreamBuffer *MatrixBuffer = nullptr;
+	VkStreamBuffer *StreamBuffer = nullptr;
 
 	VKDataBuffer *LightNodes = nullptr;
 	VKDataBuffer *LightLines = nullptr;

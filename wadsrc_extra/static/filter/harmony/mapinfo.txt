@@ -7,6 +7,7 @@ gameinfo
 	statscreen_enteringfont = "*SmallFont"
 	statscreen_contentfont = "*BigFont", "teal"
 	playerclasses = "HarmonyPlayer"
+	statusbarclass = "HarmonyStatusBar"
 	quitmessages = "$HARMQUITMSG"
 }
 

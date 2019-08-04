@@ -925,6 +925,15 @@ bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 {
+	NSView *const view = CocoaVideo::GetWindow().contentView;
+	CALayer *const layer = view.layer;
+
+	// Set magnification filter for swapchain image when it's copied to a physical display surface
+	// This is needed for gfx-portability because MoltenVK uses preferred nearest sampling by default
+	const char *const magFilterEnv = getenv("MVK_CONFIG_SWAPCHAIN_MAG_FILTER_USE_NEAREST");
+	const bool useNearestFilter = magFilterEnv == nullptr || strtol(magFilterEnv, nullptr, 0) != 0;
+	layer.magnificationFilter = useNearestFilter ? kCAFilterNearest : kCAFilterLinear;
+
 	if (vkCreateMetalSurfaceEXT)
 	{
 		// Preferred surface creation path
@@ -932,7 +941,7 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
 		surfaceCreateInfo.pNext = nullptr;
 		surfaceCreateInfo.flags = 0;
-		surfaceCreateInfo.pLayer = static_cast<CAMetalLayer*>(CocoaVideo::GetWindow().contentView.layer);
+		surfaceCreateInfo.pLayer = static_cast<CAMetalLayer*>(layer);
 
 		const VkResult result = vkCreateMetalSurfaceEXT(instance, &surfaceCreateInfo, nullptr, surface);
 		return result == VK_SUCCESS;
@@ -943,7 +952,7 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 	windowCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
 	windowCreateInfo.pNext = nullptr;
 	windowCreateInfo.flags = 0;
-	windowCreateInfo.pView = [CocoaVideo::GetWindow() contentView];
+	windowCreateInfo.pView = view;
 
 	const VkResult result = vkCreateMacOSSurfaceMVK(instance, &windowCreateInfo, nullptr, surface);
 	return result == VK_SUCCESS;

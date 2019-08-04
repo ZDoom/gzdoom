@@ -1482,8 +1482,14 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif()
 
 if( APPLE )
+	set( LINK_FRAMEWORKS "-framework Cocoa -framework IOKit -framework OpenGL")
+
+	if( HAVE_VULKAN )
+		set( LINK_FRAMEWORKS "${LINK_FRAMEWORKS} -framework QuartzCore" )
+	endif()
+
 	set_target_properties(zdoom PROPERTIES
-		LINK_FLAGS "-framework Cocoa -framework IOKit -framework OpenGL"
+		LINK_FLAGS "${LINK_FRAMEWORKS}"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
 	# Dymanic libraries like libvulkan.dylib or libMoltenVK.dylib will be loaded by dlopen()

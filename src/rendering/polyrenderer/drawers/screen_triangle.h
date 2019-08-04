@@ -28,7 +28,6 @@
 #include "rendering/swrenderer/drawers/r_draw.h"
 
 class FString;
-class PolyDrawArgs;
 class PolyTriangleThreadData;
 
 struct ScreenTriVertex
@@ -49,7 +48,6 @@ struct TriDrawTriangleArgs
 	ScreenTriVertex *v1;
 	ScreenTriVertex *v2;
 	ScreenTriVertex *v3;
-	const PolyDrawArgs *uniforms;
 	ScreenTriangleStepVariables gradientX;
 	ScreenTriangleStepVariables gradientY;
 
@@ -94,8 +92,6 @@ private:
 		return ((c1 - c2) * (v1->x - v3->x) - (c0 - c2) * (v2->x - v3->x)) / bottomY;
 	}
 };
-
-class RectDrawArgs;
 
 enum class TriBlendMode
 {

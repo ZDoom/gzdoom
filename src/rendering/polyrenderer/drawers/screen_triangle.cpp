@@ -142,11 +142,11 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 	}
 
 	int opt = 0;
-	if (args->uniforms->DepthTest()) opt |= SWTRI_DepthTest;
-	if (args->uniforms->StencilTest()) opt |= SWTRI_StencilTest;
-	if (args->uniforms->WriteColor()) opt |= SWTRI_WriteColor;
-	if (args->uniforms->WriteDepth()) opt |= SWTRI_WriteDepth;
-	if (args->uniforms->WriteStencil()) opt |= SWTRI_WriteStencil;
+	if (thread->drawargs.DepthTest()) opt |= SWTRI_DepthTest;
+	if (thread->drawargs.StencilTest()) opt |= SWTRI_StencilTest;
+	if (thread->drawargs.WriteColor()) opt |= SWTRI_WriteColor;
+	if (thread->drawargs.WriteDepth()) opt |= SWTRI_WriteDepth;
+	if (thread->drawargs.WriteStencil()) opt |= SWTRI_WriteStencil;
 	
 	TriangleDrawers[opt](args, thread, edges, topY, bottomY);
 }
@@ -194,7 +194,7 @@ void DrawTriangle(const TriDrawTriangleArgs *args, PolyTriangleThreadData *threa
 
 	if (OptT::Flags & SWTRI_WriteColor)
 	{
-		int bmode = (int)args->uniforms->BlendMode();
+		int bmode = (int)thread->drawargs.BlendMode();
 		drawfunc = thread->dest_bgra ? ScreenTriangle::SpanDrawers32[bmode] : ScreenTriangle::SpanDrawers8[bmode];
 	}
 
@@ -216,10 +216,10 @@ void DrawTriangle(const TriDrawTriangleArgs *args, PolyTriangleThreadData *threa
 		pitch = thread->depthstencil->Width();
 
 	if (OptT::Flags & SWTRI_StencilTest)
-		stencilTestValue = args->uniforms->StencilTestValue();
+		stencilTestValue = thread->drawargs.StencilTestValue();
 
 	if (OptT::Flags & SWTRI_WriteStencil)
-		stencilWriteValue = args->uniforms->StencilWriteValue();
+		stencilWriteValue = thread->drawargs.StencilWriteValue();
 
 	float depthbias;
 	if ((OptT::Flags & SWTRI_DepthTest) || (OptT::Flags & SWTRI_WriteDepth))
@@ -547,8 +547,8 @@ void StepSpan(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriang
 
 	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
 	{
-		texWidth = args->uniforms->TextureWidth();
-		texHeight = args->uniforms->TextureHeight();
+		texWidth = thread->drawargs.TextureWidth();
+		texHeight = thread->drawargs.TextureHeight();
 	}
 
 	if (OptT::Flags & SWOPT_DynLights)
@@ -566,9 +566,9 @@ void StepSpan(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriang
 
 	if (!(OptT::Flags & SWOPT_FixedLight))
 	{
-		float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
+		float globVis = thread->drawargs.GlobVis() * (1.0f / 32.0f);
 
-		light = args->uniforms->Light();
+		light = thread->drawargs.Light();
 		shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
 		lightpos = (fixed_t)(globVis * posW * (float)FRACUNIT);
 		lightstep = (fixed_t)(globVis * stepW * (float)FRACUNIT);
@@ -730,12 +730,12 @@ void StepSpan(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTriang
 		float worldnormalX, worldnormalY, worldnormalZ;
 		uint32_t dynlightcolor;
 
-		lights = args->uniforms->Lights();
-		num_lights = args->uniforms->NumLights();
-		worldnormalX = args->uniforms->Normal().X;
-		worldnormalY = args->uniforms->Normal().Y;
-		worldnormalZ = args->uniforms->Normal().Z;
-		dynlightcolor = args->uniforms->DynLightColor();
+		lights = thread->drawargs.Lights();
+		num_lights = thread->drawargs.NumLights();
+		worldnormalX = thread->drawargs.Normal().X;
+		worldnormalY = thread->drawargs.Normal().Y;
+		worldnormalZ = thread->drawargs.Normal().Z;
+		dynlightcolor = thread->drawargs.DynLightColor();
 
 		// The normal vector cannot be uniform when drawing models. Calculate and use the face normal:
 		if (worldnormalX == 0.0f && worldnormalY == 0.0f && worldnormalZ == 0.0f)
@@ -899,39 +899,39 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyT
 
 	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
 	{
-		texPixels = (const uint32_t*)args->uniforms->TexturePixels();
+		texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
 	}
 
 	if (ModeT::SWFlags & SWSTYLEF_Translated)
 	{
-		translation = (const uint32_t*)args->uniforms->Translation();
+		translation = (const uint32_t*)thread->drawargs.Translation();
 	}
 
 	if ((ModeT::SWFlags & SWSTYLEF_Fill) || (ModeT::SWFlags & SWSTYLEF_Skycap) || (ModeT::Flags & STYLEF_ColorIsFixed))
 	{
-		fillcolor = args->uniforms->Color();
+		fillcolor = thread->drawargs.Color();
 	}
 
 	if (!(ModeT::Flags & STYLEF_Alpha1))
 	{
-		actoralpha = args->uniforms->Alpha();
+		actoralpha = thread->drawargs.Alpha();
 	}
 
 	if (OptT::Flags & SWOPT_FixedLight)
 	{
-		fixedlight = args->uniforms->Light();
+		fixedlight = thread->drawargs.Light();
 		fixedlight += fixedlight >> 7; // 255 -> 256
 	}
 
 	if (OptT::Flags & SWOPT_ColoredFog)
 	{
-		shade_fade_r = args->uniforms->ShadeFadeRed();
-		shade_fade_g = args->uniforms->ShadeFadeGreen();
-		shade_fade_b = args->uniforms->ShadeFadeBlue();
-		shade_light_r = args->uniforms->ShadeLightRed();
-		shade_light_g = args->uniforms->ShadeLightGreen();
-		shade_light_b = args->uniforms->ShadeLightBlue();
-		desaturate = args->uniforms->ShadeDesaturate();
+		shade_fade_r = thread->drawargs.ShadeFadeRed();
+		shade_fade_g = thread->drawargs.ShadeFadeGreen();
+		shade_fade_b = thread->drawargs.ShadeFadeBlue();
+		shade_light_r = thread->drawargs.ShadeLightRed();
+		shade_light_g = thread->drawargs.ShadeLightGreen();
+		shade_light_b = thread->drawargs.ShadeLightBlue();
+		desaturate = thread->drawargs.ShadeDesaturate();
 		inv_desaturate = 256 - desaturate;
 	}
 
@@ -1286,18 +1286,18 @@ void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTria
 {
 	using namespace TriScreenDrawerModes;
 
-	if (args->uniforms->NumLights() == 0 && args->uniforms->DynLightColor() == 0)
+	if (thread->drawargs.NumLights() == 0 && thread->drawargs.DynLightColor() == 0)
 	{
-		if (!args->uniforms->FixedLight())
+		if (!thread->drawargs.FixedLight())
 		{
-			if (args->uniforms->SimpleShade())
+			if (thread->drawargs.SimpleShade())
 				DrawSpanOpt32<ModeT, DrawerOpt>(y, x0, x1, args, thread);
 			else
 				DrawSpanOpt32<ModeT, DrawerOptC>(y, x0, x1, args, thread);
 		}
 		else
 		{
-			if (args->uniforms->SimpleShade())
+			if (thread->drawargs.SimpleShade())
 				DrawSpanOpt32<ModeT, DrawerOptF>(y, x0, x1, args, thread);
 			else
 				DrawSpanOpt32<ModeT, DrawerOptCF>(y, x0, x1, args, thread);
@@ -1305,16 +1305,16 @@ void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTria
 	}
 	else
 	{
-		if (!args->uniforms->FixedLight())
+		if (!thread->drawargs.FixedLight())
 		{
-			if (args->uniforms->SimpleShade())
+			if (thread->drawargs.SimpleShade())
 				DrawSpanOpt32<ModeT, DrawerOptL>(y, x0, x1, args, thread);
 			else
 				DrawSpanOpt32<ModeT, DrawerOptLC>(y, x0, x1, args, thread);
 		}
 		else
 		{
-			if (args->uniforms->SimpleShade())
+			if (thread->drawargs.SimpleShade())
 				DrawSpanOpt32<ModeT, DrawerOptLF>(y, x0, x1, args, thread);
 			else
 				DrawSpanOpt32<ModeT, DrawerOptLCF>(y, x0, x1, args, thread);
@@ -1341,26 +1341,26 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 	uint16_t *lightarray = thread->lightarray;
 	uint32_t *dynlights = thread->dynlights;
 
-	colormaps = args->uniforms->BaseColormap();
+	colormaps = thread->drawargs.BaseColormap();
 
 	if (!(ModeT::SWFlags & SWSTYLEF_Fill) && !(ModeT::SWFlags & SWSTYLEF_FogBoundary))
 	{
-		texPixels = args->uniforms->TexturePixels();
+		texPixels = thread->drawargs.TexturePixels();
 	}
 
 	if (ModeT::SWFlags & SWSTYLEF_Translated)
 	{
-		translation = args->uniforms->Translation();
+		translation = thread->drawargs.Translation();
 	}
 
 	if ((ModeT::SWFlags & SWSTYLEF_Fill) || (ModeT::SWFlags & SWSTYLEF_Skycap) || (ModeT::Flags & STYLEF_ColorIsFixed))
 	{
-		fillcolor = args->uniforms->Color();
+		fillcolor = thread->drawargs.Color();
 	}
 
 	if (!(ModeT::Flags & STYLEF_Alpha1))
 	{
-		actoralpha = args->uniforms->Alpha();
+		actoralpha = thread->drawargs.Alpha();
 	}
 
 	if (ModeT::SWFlags & SWSTYLEF_Skycap)
@@ -1368,7 +1368,7 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTr
 
 	if (OptT::Flags & SWOPT_FixedLight)
 	{
-		fixedlight = args->uniforms->Light();
+		fixedlight = thread->drawargs.Light();
 		fixedlight += fixedlight >> 7; // 255 -> 256
 		fixedlight = ((256 - fixedlight) * NUMCOLORMAPS) & 0xffffff00;
 	}
@@ -1636,16 +1636,16 @@ void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args, PolyTrian
 {
 	using namespace TriScreenDrawerModes;
 
-	if (args->uniforms->NumLights() == 0 && args->uniforms->DynLightColor() == 0)
+	if (thread->drawargs.NumLights() == 0 && thread->drawargs.DynLightColor() == 0)
 	{
-		if (!args->uniforms->FixedLight())
+		if (!thread->drawargs.FixedLight())
 			DrawSpanOpt8<ModeT, DrawerOptC>(y, x0, x1, args, thread);
 		else
 			DrawSpanOpt8<ModeT, DrawerOptCF>(y, x0, x1, args, thread);
 	}
 	else
 	{
-		if (!args->uniforms->FixedLight())
+		if (!thread->drawargs.FixedLight())
 			DrawSpanOpt8<ModeT, DrawerOptLC>(y, x0, x1, args, thread);
 		else
 			DrawSpanOpt8<ModeT, DrawerOptLCF>(y, x0, x1, args, thread);

@@ -537,7 +537,6 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 	elements += index;
 
 	TriDrawTriangleArgs args;
-	args.uniforms = &drawargs;
 
 	ShadedTriVertex vertbuffer[3];
 	ShadedTriVertex *vert[3] = { &vertbuffer[0], &vertbuffer[1], &vertbuffer[2] };
@@ -602,7 +601,6 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 		return;
 
 	TriDrawTriangleArgs args;
-	args.uniforms = &drawargs;
 
 	int vinput = index;
 
@@ -913,7 +911,7 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 
 	// Keep varyings in -128 to 128 range if possible
 	// But don't do this for the skycap mode since the V texture coordinate is used for blending
-	if (numclipvert > 0 && args->uniforms->BlendMode() != TriBlendMode::Skycap)
+	if (numclipvert > 0 && drawargs.BlendMode() != TriBlendMode::Skycap)
 	{
 		float newOriginU = floorf(clippedvert[0].u * 0.1f) * 10.0f;
 		float newOriginV = floorf(clippedvert[0].v * 0.1f) * 10.0f;

@@ -238,6 +238,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	int texHeight = thread->drawargs.TextureHeight();
 	const uint32_t* texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
 	auto constants = thread->PushConstants;
+	auto& streamdata = thread->mainVertexShader.Data;
 	uint32_t* fragcolor = thread->scanline.FragColor;
 	float* u = thread->scanline.U;
 	float* v = thread->scanline.V;
@@ -303,67 +304,102 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		}
 	}
 
-#if 0
 	if (constants->uTextureMode != TM_FOGLAYER)
 	{
-		texel.rgb += uAddColor.rgb;
+		if (streamdata.uAddColor.r != 0.0f || streamdata.uAddColor.g != 0.0f || streamdata.uAddColor.b != 0.0f)
+		{
+			uint32_t r = (int)(streamdata.uAddColor.r * 255.0f);
+			uint32_t g = (int)(streamdata.uAddColor.g * 255.0f);
+			uint32_t b = (int)(streamdata.uAddColor.b * 255.0f);
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = fragcolor[x];
+				fragcolor[x] = MAKEARGB(
+					APART(texel),
+					MIN(r + RPART(texel), (uint32_t)255),
+					MIN(g + GPART(texel), (uint32_t)255),
+					MIN(b + BPART(texel), (uint32_t)255));
+			}
+		}
 
-		if (uObjectColor2.a == 0.0) texel *= uObjectColor;
-		else texel *= mix(uObjectColor, uObjectColor2, gradientdist.z);
-		texel = desaturate(texel);
+		if (streamdata.uObjectColor2.a == 0.0f)
+		{
+			if (streamdata.uObjectColor.r != 0.0f || streamdata.uObjectColor.g != 0.0f || streamdata.uObjectColor.b != 0.0f)
+			{
+				uint32_t r = (int)(streamdata.uObjectColor.r * 256.0f);
+				uint32_t g = (int)(streamdata.uObjectColor.g * 256.0f);
+				uint32_t b = (int)(streamdata.uObjectColor.b * 256.0f);
+				for (int x = x0; x < x1; x++)
+				{
+					uint32_t texel = fragcolor[x];
+					fragcolor[x] = MAKEARGB(
+						APART(texel),
+						MIN((r * RPART(texel)) >> 8, (uint32_t)255),
+						MIN((g * GPART(texel)) >> 8, (uint32_t)255),
+						MIN((b * BPART(texel)) >> 8, (uint32_t)255));
+				}
+			}
+		}
+		else
+		{
+			float t = thread->mainVertexShader.gradientdist.Z;
+			float inv_t = 1.0f - t;
+			uint32_t r = (int)((streamdata.uObjectColor.r * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
+			uint32_t g = (int)((streamdata.uObjectColor.g * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
+			uint32_t b = (int)((streamdata.uObjectColor.b * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = fragcolor[x];
+				fragcolor[x] = MAKEARGB(
+					APART(texel),
+					MIN((r * RPART(texel)) >> 8, (uint32_t)255),
+					MIN((g * GPART(texel)) >> 8, (uint32_t)255),
+					MIN((b * BPART(texel)) >> 8, (uint32_t)255));
+			}
+		}
+
+		if (streamdata.uDesaturationFactor > 0.0f)
+		{
+			uint32_t t = (int)(streamdata.uDesaturationFactor * 256.0f);
+			uint32_t inv_t = 256 - t;
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = fragcolor[x];
+				uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
+				fragcolor[x] = MAKEARGB(
+					APART(texel),
+					(RPART(texel) * inv_t + gray * t + 127) >> 8,
+					(GPART(texel) * inv_t + gray * t + 127) >> 8, 
+					(BPART(texel) * inv_t + gray * t + 127) >> 8);
+			}
+		}
 	}
-#endif
 
-#if 0
-	for (int x = x0; x < x1; x++)
+	if (thread->mainVertexShader.vColor != 0xffffffff)
 	{
-		uint32_t texel = fragcolor[x];
-
-		//#ifndef NO_ALPHATEST
-		//if (texel.a <= uAlphaThreshold) discard;
-		//#endif
-
-		if (constants->uFogEnabled != -3)	// check for special 2D 'fog' mode.
+		uint32_t a = APART(thread->mainVertexShader.vColor);
+		uint32_t r = RPART(thread->mainVertexShader.vColor);
+		uint32_t g = GPART(thread->mainVertexShader.vColor);
+		uint32_t b = BPART(thread->mainVertexShader.vColor);
+		a += a >> 7;
+		r += r >> 7;
+		g += g >> 7;
+		b += b >> 7;
+		for (int x = x0; x < x1; x++)
 		{
-			float fogdist = 0.0f;
-			float fogfactor = 0.0f;
-
-			// calculate fog factor
-			if (constants->uFogEnabled != 0)
-			{
-				if (constants->uFogEnabled == 1 || constants->uFogEnabled == -1)
-					fogdist = max(16.0, pixelpos.w);
-				else
-					fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
-				fogfactor = exp2(constants->uFogDensity * fogdist);
-			}
-
-			if (constants->uTextureMode != 7)
-			{
-				texel = getLightColor(texel, fogdist, fogfactor);
-				if (constants->uFogEnabled < 0)
-					texel = applyFog(texel, fogfactor);
-			}
-			else
-			{
-				texel = vec4(uFogColor.rgb, (1.0 - fogfactor) * texel.a * 0.75 * vColor.a);
-			}
+			uint32_t texel = fragcolor[x];
+			fragcolor[x] = MAKEARGB(
+				(APART(texel) * a + 127) >> 8,
+				(RPART(texel) * r + 127) >> 8,
+				(GPART(texel) * g + 127) >> 8,
+				(BPART(texel) * b + 127) >> 8);
 		}
-		else // simple 2D (uses the fog color to add a color overlay)
-		{
-			if (constants->uTextureMode == 7)
-			{
-				float gray = grayscale(texel);
-				vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;
-				texel = vec4(clamp(cm.rgb, 0.0, 1.0), texel.a);
-			}
-			texel = texel * ProcessLight(texel, vColor);
-			texel.rgb = texel.rgb + uFogColor.rgb;
-		}
-
-		fragcolor[x] = texel;
 	}
-#endif
+
+	if (constants->uLightLevel >= 0.0f)
+	{
+		// To do: apply diminishing light and fog
+	}
 }
 
 static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)

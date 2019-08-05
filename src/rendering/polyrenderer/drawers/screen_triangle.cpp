@@ -74,25 +74,100 @@ static void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args
 	WriteVarying(args->v1->worldZ * args->v1->w + args->gradientX.WorldZ * startX + args->gradientY.WorldZ * startY, args->gradientX.WorldZ, x0, x1, thread->scanline.W, thread->scanline.WorldZ);
 }
 
-static void WriteBlend(int y, int x0, int x1, PolyTriangleThreadData* thread)
+static uint32_t BlendColor(FRenderStyle style, uint32_t fg, uint32_t bg)
+{
+	static const int shiftTable[] = {
+		0, 0, 0, 0, // STYLEALPHA_Zero
+		0, 0, 0, 0, // STYLEALPHA_One
+		24, 24, 24, 24, // STYLEALPHA_Src
+		24, 24, 24, 24, // STYLEALPHA_InvSrc
+		24, 16, 8, 0, // STYLEALPHA_SrcCol
+		24, 16, 8, 0, // STYLEALPHA_InvSrcCol
+		24, 16, 8, 0, // STYLEALPHA_DstCol
+		24, 16, 8, 0 // STYLEALPHA_InvDstCol
+	};
+
+	bool invsrc = style.SrcAlpha & 1;
+	bool invdst = style.DestAlpha & 1;
+
+	int srcinput = style.SrcAlpha <= STYLEALPHA_One ? 0 : (style.SrcAlpha >= STYLEALPHA_DstCol ? bg : fg);
+	int dstinput = style.DestAlpha <= STYLEALPHA_One ? 0 : (style.DestAlpha >= STYLEALPHA_DstCol ? bg : fg);
+
+	const int* shiftsrc = shiftTable + (style.SrcAlpha << 2);
+	const int* shiftdst = shiftTable + (style.DestAlpha << 2);
+
+	int32_t src[4], dst[4];
+	for (int i = 0; i < 4; i++)
+	{
+		// Grab component for scale factors
+		src[i] = (srcinput >> shiftsrc[i]) & 0xff;
+		dst[i] = (dstinput >> shiftdst[i]) & 0xff;
+
+		// Inverse if needed
+		src[i] = invsrc ? 0xff - src[i] : src[i];
+		dst[i] = invdst ? 0xff - dst[i] : dst[i];
+
+		// Rescale 0-255 to 0-256
+		src[i] = src[i] + (src[i] >> 7);
+		dst[i] = dst[i] + (dst[i] >> 7);
+
+		// Multiply with input
+		src[i] = src[i] * ((fg >> (24 - (i << 3))) & 0xff);
+		dst[i] = dst[i] * ((bg >> (24 - (i << 3))) & 0xff);
+	}
+
+	uint32_t out[4];
+	switch (style.BlendOp)
+	{
+	default:
+	case STYLEOP_Add: for (int i = 0; i < 4; i++) out[i] = clamp((src[i] + dst[i] + 127) >> 8, 0, 255); break;
+	case STYLEOP_Sub: for (int i = 0; i < 4; i++) out[i] = clamp((src[i] - dst[i] + 127) >> 8, 0, 255); break;
+	case STYLEOP_RevSub: for (int i = 0; i < 4; i++) out[i] = clamp((dst[i] - src[i] + 127) >> 8, 0, 255); break;
+	}
+	return MAKEARGB(out[0], out[1], out[2], out[3]);
+}
+
+static void WriteColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* dest = (uint32_t*)thread->dest;
 	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
+	FRenderStyle style = thread->RenderStyle;
+	uint32_t* fragcolor = thread->scanline.FragColor;
 
-	if (!thread->AlphaTest)
+	if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
 	{
-		for (int x = x0; x < x1; x++)
+		if (!thread->AlphaTest)
 		{
-			line[x] = thread->scanline.FragColor[x];
+			for (int x = x0; x < x1; x++)
+			{
+				line[x] = fragcolor[x];
+			}
+		}
+		else
+		{
+			for (int x = x0; x < x1; x++)
+			{
+				if (fragcolor[x] > 0x7f000000)
+					line[x] = fragcolor[x];
+			}
 		}
 	}
 	else
 	{
-		uint32_t* fragcolor = thread->scanline.FragColor;
-		for (int x = x0; x < x1; x++)
+		if (!thread->AlphaTest)
 		{
-			if (fragcolor[x] > 0x7f000000)
-				line[x] = thread->scanline.FragColor[x];
+			for (int x = x0; x < x1; x++)
+			{
+				line[x] = BlendColor(style, fragcolor[x], line[x]);
+			}
+		}
+		else
+		{
+			for (int x = x0; x < x1; x++)
+			{
+				if (fragcolor[x] > 0x7f000000)
+					line[x] = BlendColor(style, fragcolor[x], line[x]);
+			}
 		}
 	}
 }
@@ -173,7 +248,7 @@ static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 	RunShader(x0, x1, thread);
 
 	if (thread->drawargs.WriteColor())
-		WriteBlend(y, x0, x1, thread);
+		WriteColor(y, x0, x1, thread);
 	if (thread->drawargs.WriteDepth())
 		WriteDepth(y, x0, x1, thread);
 	if (thread->drawargs.WriteStencil())

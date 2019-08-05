@@ -303,16 +303,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 	mainVertexShader.Data = data;
 	mainVertexShader.uClipSplit = constants.uClipSplit;
 
-	FColormap cm;
-	cm.Clear();
-	if (constants.uLightLevel >= 0.0f)
-	{
-		drawargs.SetLight(GetColorTable(cm), (int)(constants.uLightLevel * 255.0f), mainVertexShader.Viewpoint->mGlobVis * 32.0f, false);
-	}
-	else
-	{
-		drawargs.SetLight(GetColorTable(cm), 255, mainVertexShader.Viewpoint->mGlobVis * 32.0f, true);
-	}
+	PushConstants = &constants;
 
 	int numLights = 0;
 	if (constants.uLightIndex >= 0)
@@ -350,74 +341,18 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 	}
 	drawargs.SetLights(polyLights, numLights);
 
-	if (SpecialEffect != EFF_NONE)
+#if 0
+	FColormap cm;
+	cm.Clear();
+	if (constants.uLightLevel >= 0.0f)
 	{
-		// To do: need new drawers for these
-		switch (SpecialEffect)
-		{
-		default: break;
-		case EFF_FOGBOUNDARY: drawargs.SetStyle(TriBlendMode::FogBoundary); break;
-		case EFF_SPHEREMAP: drawargs.SetStyle(TriBlendMode::Fill); break;
-		case EFF_BURN: drawargs.SetStyle(TriBlendMode::Fill); break;
-		case EFF_STENCIL: drawargs.SetStyle(TriBlendMode::Fill); break;
-		}
+		drawargs.SetLight(GetColorTable(cm), (int)(constants.uLightLevel * 255.0f), mainVertexShader.Viewpoint->mGlobVis * 32.0f, false);
 	}
 	else
 	{
-		switch (EffectState)
-		{
-		default:
-			break;
-		case SHADER_Paletted:
-			break;
-		case SHADER_NoTexture:
-			drawargs.SetStyle(TriBlendMode::FillTranslucent);
-			return;
-		case SHADER_BasicFuzz:
-		case SHADER_SmoothFuzz:
-		case SHADER_SwirlyFuzz:
-		case SHADER_TranslucentFuzz:
-		case SHADER_JaggedFuzz:
-		case SHADER_NoiseFuzz:
-		case SHADER_SmoothNoiseFuzz:
-		case SHADER_SoftwareFuzz:
-			drawargs.SetStyle(TriBlendMode::Fuzzy);
-			return;
-		}
-
-		auto style = RenderStyle;
-		if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
-		{
-			drawargs.SetStyle(AlphaTest ? TriBlendMode::AlphaTest : TriBlendMode::Opaque);
-		}
-		else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_InvSrc)
-		{
-			drawargs.SetStyle(TriBlendMode::Normal);
-		}
-		else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_One)
-		{
-			drawargs.SetStyle(TriBlendMode::SrcColor);
-		}
-		else
-		{
-			if (style == LegacyRenderStyles[STYLE_Normal]) drawargs.SetStyle(TriBlendMode::Normal);
-			else if (style == LegacyRenderStyles[STYLE_Stencil]) drawargs.SetStyle(TriBlendMode::Stencil);
-			else if (style == LegacyRenderStyles[STYLE_Translucent]) drawargs.SetStyle(TriBlendMode::Translucent);
-			else if (style == LegacyRenderStyles[STYLE_Add]) drawargs.SetStyle(TriBlendMode::Add);
-			//else if (style == LegacyRenderStyles[STYLE_Shaded]) drawargs.SetStyle(TriBlendMode::Shaded);
-			else if (style == LegacyRenderStyles[STYLE_TranslucentStencil]) drawargs.SetStyle(TriBlendMode::TranslucentStencil);
-			else if (style == LegacyRenderStyles[STYLE_Shadow]) drawargs.SetStyle(TriBlendMode::Shadow);
-			else if (style == LegacyRenderStyles[STYLE_Subtract]) drawargs.SetStyle(TriBlendMode::Subtract);
-			else if (style == LegacyRenderStyles[STYLE_AddStencil]) drawargs.SetStyle(TriBlendMode::AddStencil);
-			else if (style == LegacyRenderStyles[STYLE_AddShaded]) drawargs.SetStyle(TriBlendMode::AddShaded);
-			//else if (style == LegacyRenderStyles[STYLE_Multiply]) drawargs.SetStyle(TriBlendMode::Multiply);
-			//else if (style == LegacyRenderStyles[STYLE_InverseMultiply]) drawargs.SetStyle(TriBlendMode::InverseMultiply);
-			//else if (style == LegacyRenderStyles[STYLE_ColorBlend]) drawargs.SetStyle(TriBlendMode::ColorBlend);
-			else if (style == LegacyRenderStyles[STYLE_Source]) drawargs.SetStyle(TriBlendMode::Opaque);
-			//else if (style == LegacyRenderStyles[STYLE_ColorAdd]) drawargs.SetStyle(TriBlendMode::ColorAdd);
-			else drawargs.SetStyle(TriBlendMode::Opaque);
-		}
+		drawargs.SetLight(GetColorTable(cm), 255, mainVertexShader.Viewpoint->mGlobVis * 32.0f, true);
 	}
+#endif
 }
 
 void PolyTriangleThreadData::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)

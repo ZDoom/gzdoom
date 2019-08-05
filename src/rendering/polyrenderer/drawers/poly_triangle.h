@@ -238,6 +238,7 @@ public:
 	int SpecialEffect = EFF_NONE;
 	int EffectState = 0;
 	bool AlphaTest = false;
+	const PolyPushConstants* PushConstants = nullptr;
 
 	PolyDrawArgs drawargs;
 

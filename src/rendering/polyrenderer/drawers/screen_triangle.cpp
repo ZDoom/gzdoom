@@ -37,6 +37,7 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
 #include "x86.h"
+#include <cmath>
 
 static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
@@ -219,29 +220,155 @@ static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
+static float wrap(float value)
+{
+	return value - std::floor(value);
+}
+
+static uint32_t sampleTexture(float u, float v, const uint32_t* texPixels, int texWidth, int texHeight)
+{
+	int texelX = static_cast<int>(wrap(u) * texWidth);
+	int texelY = static_cast<int>(wrap(v) * texHeight);
+	return texPixels[texelX * texHeight + texelY];
+}
+
 static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 {
 	int texWidth = thread->drawargs.TextureWidth();
 	int texHeight = thread->drawargs.TextureHeight();
 	const uint32_t* texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
+	auto constants = thread->PushConstants;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	float* u = thread->scanline.U;
+	float* v = thread->scanline.V;
 
+	switch (constants->uTextureMode)
+	{
+	default:
+	case TM_NORMAL:
+	case TM_FOGLAYER:
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			fragcolor[x] = texel;
+		}
+		break;
+	case TM_STENCIL:	// TM_STENCIL
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			fragcolor[x] = texel | 0x00ffffff;
+		}
+		break;
+	case TM_OPAQUE:
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			fragcolor[x] = texel | 0xff000000;
+		}
+		break;
+	case TM_INVERSE:
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			fragcolor[x] = MAKEARGB(APART(texel), 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
+		}
+		break;
+	case TM_ALPHATEXTURE:
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
+			uint32_t alpha = APART(texel);
+			alpha += alpha >> 7;
+			alpha = (alpha * gray + 127) >> 8;
+			texel = (alpha << 24) | 0x00ffffff;
+			fragcolor[x] = texel;
+		}
+		break;
+	case TM_CLAMPY:
+		for (int x = x0; x < x1; x++)
+		{
+			if (v[x] >= 0.0 && v[x] <= 1.0)
+				fragcolor[x] = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			else
+				fragcolor[x] = 0;
+		}
+		break;
+	case TM_INVERTOPAQUE:
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			fragcolor[x] = MAKEARGB(0xff, 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
+		}
+	}
+
+#if 0
+	if (constants->uTextureMode != TM_FOGLAYER)
+	{
+		texel.rgb += uAddColor.rgb;
+
+		if (uObjectColor2.a == 0.0) texel *= uObjectColor;
+		else texel *= mix(uObjectColor, uObjectColor2, gradientdist.z);
+		texel = desaturate(texel);
+	}
+#endif
+
+#if 0
 	for (int x = x0; x < x1; x++)
 	{
-		float u = thread->scanline.U[x];
-		float v = thread->scanline.V[x];
-		u -= std::floor(u);
-		v -= std::floor(v);
+		uint32_t texel = fragcolor[x];
 
-		int texelX = (int)(u * texWidth);
-		int texelY = (int)(v * texHeight);
-		uint32_t fg = texPixels[texelX * texHeight + texelY];
-		thread->scanline.FragColor[x] = fg;
+		//#ifndef NO_ALPHATEST
+		//if (texel.a <= uAlphaThreshold) discard;
+		//#endif
+
+		if (constants->uFogEnabled != -3)	// check for special 2D 'fog' mode.
+		{
+			float fogdist = 0.0f;
+			float fogfactor = 0.0f;
+
+			// calculate fog factor
+			if (constants->uFogEnabled != 0)
+			{
+				if (constants->uFogEnabled == 1 || constants->uFogEnabled == -1)
+					fogdist = max(16.0, pixelpos.w);
+				else
+					fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
+				fogfactor = exp2(constants->uFogDensity * fogdist);
+			}
+
+			if (constants->uTextureMode != 7)
+			{
+				texel = getLightColor(texel, fogdist, fogfactor);
+				if (constants->uFogEnabled < 0)
+					texel = applyFog(texel, fogfactor);
+			}
+			else
+			{
+				texel = vec4(uFogColor.rgb, (1.0 - fogfactor) * texel.a * 0.75 * vColor.a);
+			}
+		}
+		else // simple 2D (uses the fog color to add a color overlay)
+		{
+			if (constants->uTextureMode == 7)
+			{
+				float gray = grayscale(texel);
+				vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;
+				texel = vec4(clamp(cm.rgb, 0.0, 1.0), texel.a);
+			}
+			texel = texel * ProcessLight(texel, vColor);
+			texel.rgb = texel.rgb + uFogColor.rgb;
+		}
+
+		fragcolor[x] = texel;
 	}
+#endif
 }
 
 static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
-	if (thread->drawargs.BlendMode() == TriBlendMode::Fill || thread->drawargs.BlendMode() == TriBlendMode::FillTranslucent)
+	if (thread->SpecialEffect != EFF_NONE || !(thread->EffectState == SHADER_Default || thread->EffectState == SHADER_Brightmap))
 		return;
 
 	WriteVaryings(y, x0, x1, args, thread);

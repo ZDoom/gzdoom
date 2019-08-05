@@ -130,6 +130,31 @@ enum class TriBlendMode
 class ScreenTriangle
 {
 public:
+	static void Draw(const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread);
+
+private:
+	static void(*TestSpanOpts[])(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread);
+};
+
+namespace TriScreenDrawerModes
+{
+	enum SWTestSpan
+	{
+		SWTRI_DepthTest = 1,
+		SWTRI_StencilTest = 2
+	};
+
+	struct TestSpanOpt0 { static const int Flags = 0; };
+	struct TestSpanOpt1 { static const int Flags = 1; };
+	struct TestSpanOpt2 { static const int Flags = 2; };
+	struct TestSpanOpt3 { static const int Flags = 3; };
+}
+
+#if 0
+
+class ScreenTriangle
+{
+public:
 	static void Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
 
 	static void(*TriangleDrawers[])(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread, int16_t *edges, int topY, int bottomY);
@@ -252,3 +277,5 @@ namespace TriScreenDrawerModes
 	struct TriangleOpt30 { static const int Flags = 30; };
 	struct TriangleOpt31 { static const int Flags = 31; };
 }
+
+#endif

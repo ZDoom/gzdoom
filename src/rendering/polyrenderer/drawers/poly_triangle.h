@@ -198,16 +198,20 @@ public:
 		return MAX(c, 0);
 	}
 
-	// Varyings
-	float worldposX[MAXWIDTH];
-	float worldposY[MAXWIDTH];
-	float worldposZ[MAXWIDTH];
-	uint32_t texel[MAXWIDTH];
-	int32_t texelV[MAXWIDTH];
-	uint16_t lightarray[MAXWIDTH];
-	uint32_t dynlights[MAXWIDTH];
-	float depthvalues[MAXWIDTH];
-	uint8_t alphatestbuffer[MAXWIDTH];
+	struct Scanline
+	{
+		float W[MAXWIDTH];
+		float U[MAXWIDTH];
+		float V[MAXWIDTH];
+		float WorldX[MAXWIDTH];
+		float WorldY[MAXWIDTH];
+		float WorldZ[MAXWIDTH];
+		uint32_t FragColor[MAXWIDTH];
+#if 0
+		uint16_t lightarray[MAXWIDTH];
+		uint32_t dynlights[MAXWIDTH];
+#endif
+	} scanline;
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 

@@ -909,6 +909,7 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 	}
 #endif
 
+#if 0
 	// Keep varyings in -128 to 128 range if possible
 	// But don't do this for the skycap mode since the V texture coordinate is used for blending
 	if (numclipvert > 0 && drawargs.BlendMode() != TriBlendMode::Skycap)
@@ -921,6 +922,7 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 			clippedvert[i].v -= newOriginV;
 		}
 	}
+#endif
 
 	if (twosided && numclipvert > 2)
 	{

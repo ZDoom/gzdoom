@@ -227,8 +227,8 @@ static float wrap(float value)
 
 static uint32_t sampleTexture(float u, float v, const uint32_t* texPixels, int texWidth, int texHeight)
 {
-	int texelX = static_cast<int>(wrap(u) * texWidth);
-	int texelY = static_cast<int>(wrap(v) * texHeight);
+	int texelX = MIN(static_cast<int>(wrap(u) * texWidth), texWidth - 1);
+	int texelY = MIN(static_cast<int>(wrap(v) * texHeight), texHeight - 1);
 	return texPixels[texelX * texHeight + texelY];
 }
 
@@ -257,10 +257,10 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 	else if (thread->SpecialEffect == EFF_STENCIL) // stencil.fp
 	{
-		for (int x = x0; x < x1; x++)
+		/*for (int x = x0; x < x1; x++)
 		{
 			fragcolor[x] = 0x00ffffff;
-		}
+		}*/
 		return;
 	}
 	else if (thread->EffectState == SHADER_NoTexture) // func_notexture

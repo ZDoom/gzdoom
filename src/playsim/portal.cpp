@@ -31,9 +31,9 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** There is no code here that is directly taken from Eternity
-** although some similarities may be inevitable because it has to
-** implement the same concepts.
+** Some code here is based on structure and algorithms from
+** The Eternity Engine's p_portal.cpp, based on the
+** work of Stephen "SoM" McGranahan.
 */
 
 

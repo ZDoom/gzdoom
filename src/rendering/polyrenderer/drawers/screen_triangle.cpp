@@ -54,6 +54,69 @@ static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 	}
 }
 
+static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+{
+	float startX = x0 + (0.5f - args->v1->x);
+	float startY = y + (0.5f - args->v1->y);
+	float posW = args->v1->w + args->gradientX.W * startX + args->gradientY.W * startY;
+	float stepW = args->gradientX.W;
+
+	float globVis = thread->mainVertexShader.Viewpoint->mGlobVis;
+
+	uint32_t light = (int)(thread->PushConstants->uLightLevel * 255.0f);
+	fixed_t shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
+	fixed_t lightpos = (fixed_t)(globVis * posW * (float)FRACUNIT);
+	fixed_t lightstep = (fixed_t)(globVis * stepW * (float)FRACUNIT);
+
+	fixed_t maxvis = 24 * FRACUNIT / 32;
+	fixed_t maxlight = 31 * FRACUNIT / 32;
+
+	uint16_t *lightarray = thread->scanline.lightarray;
+
+	fixed_t lightend = lightpos + lightstep * (x1 - x0);
+	if (lightpos < maxvis && shade >= lightpos && shade - lightpos <= maxlight &&
+		lightend < maxvis && shade >= lightend && shade - lightend <= maxlight)
+	{
+		//if (BitsPerPixel == 32)
+		{
+			lightpos += FRACUNIT - shade;
+			for (int x = x0; x < x1; x++)
+			{
+				lightarray[x] = lightpos >> 8;
+				lightpos += lightstep;
+			}
+		}
+		/*else
+		{
+			lightpos = shade - lightpos;
+			for (int x = x0; x < x1; x++)
+			{
+				lightarray[x] = (lightpos >> 3) & 0xffffff00;
+				lightpos -= lightstep;
+			}
+		}*/
+	}
+	else
+	{
+		//if (BitsPerPixel == 32)
+		{
+			for (int x = x0; x < x1; x++)
+			{
+				lightarray[x] = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
+				lightpos += lightstep;
+			}
+		}
+		/*else
+		{
+			for (int x = x0; x < x1; x++)
+			{
+				lightarray[x] = (clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight) >> 3) & 0xffffff00;
+				lightpos += lightstep;
+			}
+		}*/
+	}
+}
+
 static void WriteVarying(float pos, float step, int x0, int x1, const float* w, float* varying)
 {
 	for (int x = x0; x < x1; x++)
@@ -450,13 +513,29 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 
 	if (constants->uLightLevel >= 0.0f)
 	{
-		// To do: apply diminishing light and fog
+		uint16_t* lightarray = thread->scanline.lightarray;
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t fg = fragcolor[x];
+			int lightshade = lightarray[x];
+			fragcolor[x] = MAKEARGB(
+				APART(fg),
+				(RPART(fg) * lightshade) >> 8,
+				(GPART(fg) * lightshade) >> 8,
+				(BPART(fg) * lightshade) >> 8);
+		}
+
+		// To do: apply fog
 	}
 }
 
 static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	WriteVaryings(y, x0, x1, args, thread);
+
+	if (thread->PushConstants->uLightLevel >= 0.0f)
+		WriteLightArray(y, x0, x1, args, thread);
+
 	RunShader(x0, x1, thread);
 
 	if (thread->drawargs.WriteColor())

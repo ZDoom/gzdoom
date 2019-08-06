@@ -207,10 +207,8 @@ public:
 		float WorldY[MAXWIDTH];
 		float WorldZ[MAXWIDTH];
 		uint32_t FragColor[MAXWIDTH];
-#if 0
 		uint16_t lightarray[MAXWIDTH];
-		uint32_t dynlights[MAXWIDTH];
-#endif
+		//uint32_t dynlights[MAXWIDTH];
 	} scanline;
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);

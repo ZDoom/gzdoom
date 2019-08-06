@@ -234,101 +234,170 @@ static uint32_t sampleTexture(float u, float v, const uint32_t* texPixels, int t
 
 static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 {
-	int texWidth = thread->drawargs.TextureWidth();
-	int texHeight = thread->drawargs.TextureHeight();
-	const uint32_t* texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
 	auto constants = thread->PushConstants;
 	auto& streamdata = thread->mainVertexShader.Data;
 	uint32_t* fragcolor = thread->scanline.FragColor;
 	float* u = thread->scanline.U;
 	float* v = thread->scanline.V;
-
-	switch (constants->uTextureMode)
+	
+	if (thread->SpecialEffect == EFF_FOGBOUNDARY) // fogboundary.fp
 	{
-	default:
-	case TM_NORMAL:
-	case TM_FOGLAYER:
+		/*float fogdist = pixelpos.w;
+		float fogfactor = exp2(uFogDensity * fogdist);
+		FragColor = vec4(uFogColor.rgb, 1.0 - fogfactor);*/
+		return;
+	}
+	else if (thread->SpecialEffect == EFF_BURN) // burn.fp
+	{
+		/*vec4 frag = vColor;
+		vec4 t1 = texture(tex, vTexCoord.xy);
+		vec4 t2 = texture(texture2, vec2(vTexCoord.x, 1.0-vTexCoord.y));
+		FragColor = frag * vec4(t1.rgb, t2.a);*/
+		return;
+	}
+	else if (thread->SpecialEffect == EFF_STENCIL) // stencil.fp
+	{
 		for (int x = x0; x < x1; x++)
 		{
-			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
-			fragcolor[x] = texel;
+			fragcolor[x] = 0x00ffffff;
 		}
-		break;
-	case TM_STENCIL:	// TM_STENCIL
-		for (int x = x0; x < x1; x++)
+		return;
+	}
+	else if (thread->EffectState == SHADER_NoTexture) // func_notexture
+	{
+		uint32_t a = (int)(streamdata.uObjectColor.a * 255.0f);
+		uint32_t r = (int)(streamdata.uObjectColor.r * 255.0f);
+		uint32_t g = (int)(streamdata.uObjectColor.g * 255.0f);
+		uint32_t b = (int)(streamdata.uObjectColor.b * 255.0f);
+		uint32_t texel = MAKEARGB(a, r, g, b);
+		
+		if (streamdata.uDesaturationFactor > 0.0f)
 		{
-			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
-			fragcolor[x] = texel | 0x00ffffff;
-		}
-		break;
-	case TM_OPAQUE:
-		for (int x = x0; x < x1; x++)
-		{
-			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
-			fragcolor[x] = texel | 0xff000000;
-		}
-		break;
-	case TM_INVERSE:
-		for (int x = x0; x < x1; x++)
-		{
-			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
-			fragcolor[x] = MAKEARGB(APART(texel), 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
-		}
-		break;
-	case TM_ALPHATEXTURE:
-		for (int x = x0; x < x1; x++)
-		{
-			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			uint32_t t = (int)(streamdata.uDesaturationFactor * 256.0f);
+			uint32_t inv_t = 256 - t;
 			uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
-			uint32_t alpha = APART(texel);
-			alpha += alpha >> 7;
-			alpha = (alpha * gray + 127) >> 8;
-			texel = (alpha << 24) | 0x00ffffff;
+			texel = MAKEARGB(
+				APART(texel),
+				(RPART(texel) * inv_t + gray * t + 127) >> 8,
+				(GPART(texel) * inv_t + gray * t + 127) >> 8, 
+				(BPART(texel) * inv_t + gray * t + 127) >> 8);
+		}
+		
+		for (int x = x0; x < x1; x++)
+		{
 			fragcolor[x] = texel;
-		}
-		break;
-	case TM_CLAMPY:
-		for (int x = x0; x < x1; x++)
-		{
-			if (v[x] >= 0.0 && v[x] <= 1.0)
-				fragcolor[x] = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
-			else
-				fragcolor[x] = 0;
-		}
-		break;
-	case TM_INVERTOPAQUE:
-		for (int x = x0; x < x1; x++)
-		{
-			uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
-			fragcolor[x] = MAKEARGB(0xff, 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
 		}
 	}
-
-	if (constants->uTextureMode != TM_FOGLAYER)
+	else // func_normal
 	{
-		if (streamdata.uAddColor.r != 0.0f || streamdata.uAddColor.g != 0.0f || streamdata.uAddColor.b != 0.0f)
+		int texWidth = thread->drawargs.TextureWidth();
+		int texHeight = thread->drawargs.TextureHeight();
+		const uint32_t* texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
+		
+		switch (constants->uTextureMode)
 		{
-			uint32_t r = (int)(streamdata.uAddColor.r * 255.0f);
-			uint32_t g = (int)(streamdata.uAddColor.g * 255.0f);
-			uint32_t b = (int)(streamdata.uAddColor.b * 255.0f);
+		default:
+		case TM_NORMAL:
+		case TM_FOGLAYER:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = fragcolor[x];
-				fragcolor[x] = MAKEARGB(
-					APART(texel),
-					MIN(r + RPART(texel), (uint32_t)255),
-					MIN(g + GPART(texel), (uint32_t)255),
-					MIN(b + BPART(texel), (uint32_t)255));
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				fragcolor[x] = texel;
+			}
+			break;
+		case TM_STENCIL:	// TM_STENCIL
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				fragcolor[x] = texel | 0x00ffffff;
+			}
+			break;
+		case TM_OPAQUE:
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				fragcolor[x] = texel | 0xff000000;
+			}
+			break;
+		case TM_INVERSE:
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				fragcolor[x] = MAKEARGB(APART(texel), 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
+			}
+			break;
+		case TM_ALPHATEXTURE:
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
+				uint32_t alpha = APART(texel);
+				alpha += alpha >> 7;
+				alpha = (alpha * gray + 127) >> 8;
+				texel = (alpha << 24) | 0x00ffffff;
+				fragcolor[x] = texel;
+			}
+			break;
+		case TM_CLAMPY:
+			for (int x = x0; x < x1; x++)
+			{
+				if (v[x] >= 0.0 && v[x] <= 1.0)
+					fragcolor[x] = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				else
+					fragcolor[x] = 0;
+			}
+			break;
+		case TM_INVERTOPAQUE:
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				fragcolor[x] = MAKEARGB(0xff, 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
 			}
 		}
 
-		if (streamdata.uObjectColor2.a == 0.0f)
+		if (constants->uTextureMode != TM_FOGLAYER)
 		{
-			if (streamdata.uObjectColor.r != 0.0f || streamdata.uObjectColor.g != 0.0f || streamdata.uObjectColor.b != 0.0f)
+			if (streamdata.uAddColor.r != 0.0f || streamdata.uAddColor.g != 0.0f || streamdata.uAddColor.b != 0.0f)
 			{
-				uint32_t r = (int)(streamdata.uObjectColor.r * 256.0f);
-				uint32_t g = (int)(streamdata.uObjectColor.g * 256.0f);
-				uint32_t b = (int)(streamdata.uObjectColor.b * 256.0f);
+				uint32_t r = (int)(streamdata.uAddColor.r * 255.0f);
+				uint32_t g = (int)(streamdata.uAddColor.g * 255.0f);
+				uint32_t b = (int)(streamdata.uAddColor.b * 255.0f);
+				for (int x = x0; x < x1; x++)
+				{
+					uint32_t texel = fragcolor[x];
+					fragcolor[x] = MAKEARGB(
+						APART(texel),
+						MIN(r + RPART(texel), (uint32_t)255),
+						MIN(g + GPART(texel), (uint32_t)255),
+						MIN(b + BPART(texel), (uint32_t)255));
+				}
+			}
+
+			if (streamdata.uObjectColor2.a == 0.0f)
+			{
+				if (streamdata.uObjectColor.r != 0.0f || streamdata.uObjectColor.g != 0.0f || streamdata.uObjectColor.b != 0.0f)
+				{
+					uint32_t r = (int)(streamdata.uObjectColor.r * 256.0f);
+					uint32_t g = (int)(streamdata.uObjectColor.g * 256.0f);
+					uint32_t b = (int)(streamdata.uObjectColor.b * 256.0f);
+					for (int x = x0; x < x1; x++)
+					{
+						uint32_t texel = fragcolor[x];
+						fragcolor[x] = MAKEARGB(
+							APART(texel),
+							MIN((r * RPART(texel)) >> 8, (uint32_t)255),
+							MIN((g * GPART(texel)) >> 8, (uint32_t)255),
+							MIN((b * BPART(texel)) >> 8, (uint32_t)255));
+					}
+				}
+			}
+			else
+			{
+				float t = thread->mainVertexShader.gradientdist.Z;
+				float inv_t = 1.0f - t;
+				uint32_t r = (int)((streamdata.uObjectColor.r * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
+				uint32_t g = (int)((streamdata.uObjectColor.g * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
+				uint32_t b = (int)((streamdata.uObjectColor.b * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
 				for (int x = x0; x < x1; x++)
 				{
 					uint32_t texel = fragcolor[x];
@@ -339,38 +408,21 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 						MIN((b * BPART(texel)) >> 8, (uint32_t)255));
 				}
 			}
-		}
-		else
-		{
-			float t = thread->mainVertexShader.gradientdist.Z;
-			float inv_t = 1.0f - t;
-			uint32_t r = (int)((streamdata.uObjectColor.r * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
-			uint32_t g = (int)((streamdata.uObjectColor.g * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
-			uint32_t b = (int)((streamdata.uObjectColor.b * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
-			for (int x = x0; x < x1; x++)
-			{
-				uint32_t texel = fragcolor[x];
-				fragcolor[x] = MAKEARGB(
-					APART(texel),
-					MIN((r * RPART(texel)) >> 8, (uint32_t)255),
-					MIN((g * GPART(texel)) >> 8, (uint32_t)255),
-					MIN((b * BPART(texel)) >> 8, (uint32_t)255));
-			}
-		}
 
-		if (streamdata.uDesaturationFactor > 0.0f)
-		{
-			uint32_t t = (int)(streamdata.uDesaturationFactor * 256.0f);
-			uint32_t inv_t = 256 - t;
-			for (int x = x0; x < x1; x++)
+			if (streamdata.uDesaturationFactor > 0.0f)
 			{
-				uint32_t texel = fragcolor[x];
-				uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
-				fragcolor[x] = MAKEARGB(
-					APART(texel),
-					(RPART(texel) * inv_t + gray * t + 127) >> 8,
-					(GPART(texel) * inv_t + gray * t + 127) >> 8, 
-					(BPART(texel) * inv_t + gray * t + 127) >> 8);
+				uint32_t t = (int)(streamdata.uDesaturationFactor * 256.0f);
+				uint32_t inv_t = 256 - t;
+				for (int x = x0; x < x1; x++)
+				{
+					uint32_t texel = fragcolor[x];
+					uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
+					fragcolor[x] = MAKEARGB(
+						APART(texel),
+						(RPART(texel) * inv_t + gray * t + 127) >> 8,
+						(GPART(texel) * inv_t + gray * t + 127) >> 8, 
+						(BPART(texel) * inv_t + gray * t + 127) >> 8);
+				}
 			}
 		}
 	}
@@ -404,9 +456,6 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 
 static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
-	if (thread->SpecialEffect != EFF_NONE || !(thread->EffectState == SHADER_Default || thread->EffectState == SHADER_Brightmap))
-		return;
-
 	WriteVaryings(y, x0, x1, args, thread);
 	RunShader(x0, x1, thread);
 

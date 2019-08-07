@@ -1020,6 +1020,15 @@ DEFINE_MAP_OPTION(titlepatch, true)
 {
 	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->PName);
+	if (parse.format_type == FMapInfoParser::FMT_New)
+	{
+		if (parse.sc.CheckString(","))
+		{
+			parse.sc.MustGetNumber();
+			if (parse.sc.Number) info->flags3 |= LEVEL3_HIDEAUTHORNAME;
+			else info->flags3 &= ~LEVEL3_HIDEAUTHORNAME;
+		}
+	}
 }
 
 DEFINE_MAP_OPTION(partime, true)

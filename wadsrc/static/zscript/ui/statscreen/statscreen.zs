@@ -206,7 +206,7 @@ class StatusScreen abstract play version("2.5")
 			}
 			return y + h;
 		}
-		return 0;
+		return y;
 	}
 	
 	//====================================================================
@@ -278,18 +278,27 @@ class StatusScreen abstract play version("2.5")
 		// If the displayed info is made of patches we need some additional offsetting here.
 		if (ispatch) 
 		{
-			int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
-			int h2 = (y - oldy) / CleanYfac / 4;
-			let disp = min(h1, h2);
+			int disp = 0;
 			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
-			if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
+			if (authortexts[0].length() == 0)
 			{
-				disp += finished.mFont.GetMaxAscender("$WI_FINISHED");
- 			}
+				int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+				int h2 = (y - oldy) / CleanYfac / 4;
+				disp = min(h1, h2);
+				
+				if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
+				{
+					disp += finished.mFont.GetMaxAscender("$WI_FINISHED");
+				}
+			}
+			else
+			{
+					disp += author.mFont.GetMaxAscender(authortexts[0]);
+			}
 			y += disp * CleanYfac;
 		}
 		
-		if (!ispatch) y = DrawAuthor(y, authortexts[0]);
+		y = DrawAuthor(y, authortexts[0]);
 		
 		// draw "Finished!"
 
@@ -345,8 +354,14 @@ class StatusScreen abstract play version("2.5")
 		}
 
 		y = DrawName(y, wbs.LName1, lnametexts[1]);
-		ispatch = wbs.LName1.isValid();
-		if (!ispatch) DrawAuthor(y, authortexts[1]);
+
+		if (wbs.LName1.isValid() && authortexts[1].length() > 0) 
+		{
+			// Consdider the ascender height of the following text.
+			y += author.mFont.GetMaxAscender(authortexts[1]) * CleanYfac;
+		}
+			
+		DrawAuthor(y, authortexts[1]);
 
 	}
 

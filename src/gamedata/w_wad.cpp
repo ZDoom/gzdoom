@@ -895,7 +895,7 @@ void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 		}
 		else if (LumpInfo[i].lump->Namespace == ns_global)
 		{
-			if (LumpInfo[i].wadnum == GetIwadNum() && deletelumps.Find(LumpInfo[i].lump->Name) < deletelumps.Size())
+			if (LumpInfo[i].wadnum >= GetIwadNum() && LumpInfo[i].wadnum <= GetMaxIwadNum() && deletelumps.Find(LumpInfo[i].lump->Name) < deletelumps.Size())
 			{
 				LumpInfo[i].lump->Name[0] = 0;	// Lump must be deleted from directory.
 			}

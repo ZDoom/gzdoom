@@ -138,6 +138,7 @@ IWad
 	MustContain = "MAP35", "I_RELB", "FXAA_F"
 	BannerColors = "f0 f0 f0", "6b 3c 18"
 	Required = "Strife: Quest for the Sigil"
+	DeleteLumps = "LOG5", "LOG6", "LOG7", "LOG8", "LOG9", "LOG122", "LOG1101", "LOG1102", "LOG1201", "LOG122"	// SVE adds the teaser logs which clash with the full game.
 	Load = "voices.wad"
 }
 

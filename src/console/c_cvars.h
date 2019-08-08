@@ -119,6 +119,7 @@ public:
 	virtual UCVarValue GetGenericRepDefault (ECVarType type) const = 0;
 	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const = 0;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type) = 0;
+	virtual const void* GetReference() {return NULL;}
 
 	FBaseCVar &operator= (const FBaseCVar &var)
 		{ UCVarValue val; ECVarType type; val = var.GetFavoriteRep (&type); SetGenericRep (val, type); return *this; }
@@ -224,6 +225,7 @@ public:
 	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
 	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
+	virtual const void *GetReference() { return &Value; }
 
 	inline bool operator= (bool boolval)
 		{ UCVarValue val; val.Bool = boolval; SetGenericRep (val, CVAR_Bool); return boolval; }
@@ -250,6 +252,7 @@ public:
 	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
 	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
+	virtual const void* GetReference() { return &Value; }
 
 	int operator= (int intval)
 		{ UCVarValue val; val.Int = intval; SetGenericRep (val, CVAR_Int); return intval; }
@@ -278,6 +281,7 @@ public:
 	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
 	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
+	virtual const void *GetReference() { return &Value; }
 	const char *GetHumanString(int precision) const override;
 
 	float operator= (float floatval)
@@ -306,6 +310,7 @@ public:
 	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
 	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
 	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
+	virtual const void *GetReference() { return &Value; }
 
 	const char *operator= (const char *stringrep)
 		{ UCVarValue val; val.String = const_cast<char *>(stringrep); SetGenericRep (val, CVAR_String); return stringrep; }

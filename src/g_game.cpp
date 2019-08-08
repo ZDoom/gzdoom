@@ -184,9 +184,31 @@ short			consistancy[MAXPLAYERS][BACKUPTICS];
  
 #define TURBOTHRESHOLD	12800
 
+EXTERN_CVAR (Int, turnspeedwalkfast)
+EXTERN_CVAR (Int, turnspeedsprintfast)
+EXTERN_CVAR (Int, turnspeedwalkslow)
+EXTERN_CVAR (Int, turnspeedsprintslow)
+const char *TURNSPEEDCVARKEYS[4] = {"turnspeedwalkfast", "turnspeedsprintfast", "turnspeedwalkslow", "turnspeedsprintslow"};
+
+
+const int **getTurnSpeeds()
+{
+	const int **turnspeeds = new const int*[4];
+	FBaseCVar *cvar;
+	const int *speed;
+	for (int i = 0; i < 4; ++i)
+	{
+		cvar = FindCVar(TURNSPEEDCVARKEYS[i], NULL);
+		speed = 
+		turnspeeds[i] = (const int*)cvar->GetReference();
+	}
+
+	return turnspeeds;
+
+}
 
 int				forwardmove[2], sidemove[2];
-int		 		angleturn[4] = {640, 1280, 320, 320};		// + slow turn
+const int		 		**angleturn = getTurnSpeeds();
 int				flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
@@ -262,28 +284,35 @@ CCMD (turnspeeds)
 {
 	if (argv.argc() == 1)
 	{
-		Printf ("Current turn speeds: %d %d %d %d\n", angleturn[0],
-			angleturn[1], angleturn[2], angleturn[3]);
+		Printf ("\034H Current turn speeds:\n\
+				\034N turnspeedwalkfast: \034D %d\n\
+				\034N turnspeedsprintfast: \034D %d\n\
+				\034N turnspeedwalkslow: \034D %d\n\
+				\034N turnspeedsprintslow: \034D %d\n", *(angleturn[0]),
+			*(angleturn[1]), *(angleturn[2]), *(angleturn[3]));
 	}
 	else
 	{
 		int i;
-
+		char val[10];
 		for (i = 1; i <= 4 && i < argv.argc(); ++i)
 		{
-			angleturn[i-1] = atoi (argv[i]);
+			cvar_forceset(TURNSPEEDCVARKEYS[i - 1], argv[i]);
 		}
 		if (i <= 2)
 		{
-			angleturn[1] = angleturn[0] * 2;
+			sprintf(val, "%d", *(angleturn[0]) * 2);
+			cvar_forceset(TURNSPEEDCVARKEYS[1], val);
 		}
 		if (i <= 3)
 		{
-			angleturn[2] = angleturn[0] / 2;
+			sprintf(val, "%d", *(angleturn[0]) / 2);
+			cvar_forceset(TURNSPEEDCVARKEYS[2], val);
 		}
 		if (i <= 4)
 		{
-			angleturn[3] = angleturn[2];
+			sprintf(val, "%d", *(angleturn[2]));
+			cvar_forceset(TURNSPEEDCVARKEYS[3], val);
 		}
 	}
 }
@@ -570,11 +599,11 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		
 		if (Button_Right.bDown)
 		{
-			G_AddViewAngle (angleturn[tspeed]);
+			G_AddViewAngle (*(angleturn[tspeed]));
 		}
 		if (Button_Left.bDown)
 		{
-			G_AddViewAngle (-angleturn[tspeed]);
+			G_AddViewAngle (-*(angleturn[tspeed]));
 		}
 	}
 

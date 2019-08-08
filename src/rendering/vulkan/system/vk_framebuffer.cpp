@@ -98,6 +98,8 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
+	vkDeviceWaitIdle(device->device); // make sure the GPU is no longer using any objects before RAII tears them down
+
 	// screen is already null at this point, but VkHardwareTexture::ResetAll needs it during clean up. Is there a better way we can do this?
 	auto tmp = screen;
 	screen = this;

@@ -265,10 +265,10 @@ static int GetRenderInfo()
 	auto info = gl_getInfo();
 	if (!info.second)
 	{
-		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 3;
+		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 2;
 		return 1;
 	}
-	return 2;
+	return 3;
 }
 
 static int GetGLVersion()
@@ -287,24 +287,28 @@ static void D_DoHTTPRequest(const char *request)
 
 void D_DoAnonStats()
 {
-	if (sys_statsenabled != 1)
+#ifndef _DEBUG
+	// Do not repeat if already sent.
+	if (sys_statsenabled != 1 || sentstats_hwr_done >= CHECKVERSION)
 	{
 		return;
 	}
+#endif
 
 	static bool done = false;	// do this only once per session.
 	if (done) return;
 	done = true;
 
-	// Do not repeat if already sent.
-	if (sentstats_hwr_done >= CHECKVERSION) return;
 
 	static char requeststring[1024];
 	mysnprintf(requeststring, sizeof requeststring, "GET /stats_201903.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
 		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(gl.vendorstring).GetChars(), URLencode(gl.modelstring).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
+#ifndef _DEBUG
+	// Don't send info in debug builds
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
+#endif
 }
 
 

@@ -808,7 +808,7 @@ DSeqNode::DSeqNode (FLevelLocals *l, int sequence, int modenum)
 	}
 	else
 	{
-		Level->SequenceListHead->m_Prev = this;		GC::WriteBarrier(Level->SequenceListHead->m_Prev, this);
+		Level->SequenceListHead->m_Prev = this;		GC::WriteBarrier(Level->SequenceListHead, this);
 		m_Next = Level->SequenceListHead;			GC::WriteBarrier(this, Level->SequenceListHead);
 		Level->SequenceListHead = this;
 		m_Prev = nullptr;

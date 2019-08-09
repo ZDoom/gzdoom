@@ -267,19 +267,14 @@ ECVarType dummy;
 #define ANGLETURN(at) at->GetFavoriteRep(&dummy).Int
 CCMD (turnspeeds)
 {
-	int turnspeeds[4] = {
-		ANGLETURN(angleturn[0]), 
-		ANGLETURN(angleturn[0]), 
-		ANGLETURN(angleturn[0]), 
-		ANGLETURN(angleturn[0])};
 	if (argv.argc() == 1)
 	{
 		Printf ("\034H Current turn speeds:\n\
 				\034N turnspeedwalkfast: \034D %d\n\
 				\034N turnspeedsprintfast: \034D %d\n\
 				\034N turnspeedwalkslow: \034D %d\n\
-				\034N turnspeedsprintslow: \034D %d\n", turnspeeds[0],
-			turnspeeds[1], turnspeeds[2], turnspeeds[3]);
+				\034N turnspeedsprintslow: \034D %d\n", ANGLETURN(angleturn[0]),
+			ANGLETURN(angleturn[1]), ANGLETURN(angleturn[2]), ANGLETURN(angleturn[3]));
 	}
 	else
 	{
@@ -291,17 +286,17 @@ CCMD (turnspeeds)
 		}
 		if (i <= 2)
 		{
-			sprintf(val, "%d", turnspeeds[0] * 2);
+			sprintf(val, "%d", ANGLETURN(angleturn[0]) * 2);
 			cvar_forceset(TURNSPEEDCVARKEYS[1], val);
 		}
 		if (i <= 3)
 		{
-			sprintf(val, "%d", turnspeeds[0] / 2);
+			sprintf(val, "%d", ANGLETURN(angleturn[0]) / 2);
 			cvar_forceset(TURNSPEEDCVARKEYS[2], val);
 		}
 		if (i <= 4)
 		{
-			sprintf(val, "%d", turnspeeds[2]);
+			sprintf(val, "%d", ANGLETURN(angleturn[2]));
 			cvar_forceset(TURNSPEEDCVARKEYS[3], val);
 		}
 	}

@@ -460,6 +460,7 @@ void DBaseStatusBar::OnDestroy ()
 		while (msg)
 		{
 			DHUDMessageBase *next = msg->Next;
+			msg->Next = nullptr;
 			msg->Destroy();
 			msg = next;
 		}
@@ -745,7 +746,6 @@ void DBaseStatusBar::Tick ()
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *msg = Messages[i];
-		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (msg)
 		{
@@ -753,12 +753,8 @@ void DBaseStatusBar::Tick ()
 
 			if (msg->CallTick ())
 			{
-				*prev = next;
+				DetachMessage(msg);
 				msg->Destroy();
-			}
-			else
-			{
-				prev = &msg->Next;
 			}
 			msg = next;
 		}

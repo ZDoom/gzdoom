@@ -173,49 +173,40 @@ bool I_HTTPRequest(const char* request)
 static int GetOSVersion()
 {
 #ifdef _WIN32
-	if (sys_ostype == 1) return 1;
 	if (sizeof(void*) == 4)	// 32 bit
 	{
 		BOOL res;
 		if (IsWow64Process(GetCurrentProcess(), &res) && res)
 		{
-			return 6;
+			return 2;
 		}
-		if (sys_ostype == 2) return 2;
-		else return 4;
+		return 1;
 	}
 	else
 	{
 		if (sys_ostype == 2) return 3;
-		else return 5;
+		else return 4;
 	}
 
 #elif defined __APPLE__
 
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		return 7;
-	}
-	else
-	{
-		return 8;
-	}
+	return 5;
 
 #else
 
 // fall-through linux stuff here
 #ifdef __arm__
-	return 10;
+	return 8;
 #elif __ppc__
 	return 9;
 #else
 	if (sizeof(void*) == 4)	// 32 bit
 	{
-		return 11;
+		return 6;
 	}
 	else
 	{
-		return 12;
+		return 7;
 	}
 #endif
 
@@ -255,28 +246,29 @@ static int  GetCoreInfo()
 		ptr++;
 	}
 	free(buffer);
-	return cores < 2 ? 0 : cores < 4 ? 1 : cores < 6 ? 2 : cores < 8 ? 3 : 4;
+	return cores;
 }
 
 #else
 static int GetCoreInfo()
 {
 	int cores = std::thread::hardware_concurrency();
-	if (CPU.HyperThreading) cores /= 2;
-	return cores < 2? 0 : cores < 4? 1 : cores < 6? 2 : cores < 8? 3 : 4;
+	return cores;
 }
 #endif
 
+EXTERN_CVAR(Int, vid_enablevulkan)
+
 static int GetRenderInfo()
 {
+	if (vid_enablevulkan == 1) return 4;
 	auto info = gl_getInfo();
-	if (info.first < 3.3) return 0;
 	if (!info.second)
 	{
 		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 3;
-		return 4;
+		return 1;
 	}
-	return 5;
+	return 2;
 }
 
 static int GetGLVersion()
@@ -343,7 +335,7 @@ void D_ConfirmSendStats()
 
 #ifdef _WIN32
 	extern HWND Window;
-	enabled.Int = MessageBox(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
+	enabled.Int = MessageBoxA(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
 #elif defined __APPLE__
 	const CFStringRef messageString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, MESSAGE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
 	const CFStringRef titleString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, TITLE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);

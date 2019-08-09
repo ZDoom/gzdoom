@@ -191,14 +191,12 @@ EXTERN_CVAR (Int, turnspeedsprintslow)
 const char *TURNSPEEDCVARKEYS[4] = {"turnspeedwalkfast", "turnspeedsprintfast", "turnspeedwalkslow", "turnspeedsprintslow"};
 
 
-const int **getTurnSpeeds()
+FBaseCVar **getTurnSpeeds()
 {
-	const int **turnspeeds = new const int*[4];
-	FBaseCVar *cvar;
+	FBaseCVar **turnspeeds = new FBaseCVar*[4];
 	for (int i = 0; i < 4; ++i)
 	{
-		cvar = FindCVar(TURNSPEEDCVARKEYS[i], NULL);
-		turnspeeds[i] = (const int*)cvar->GetReference();
+		turnspeeds[i] = FindCVar(TURNSPEEDCVARKEYS[i], NULL);
 	}
 
 	return turnspeeds;
@@ -206,7 +204,7 @@ const int **getTurnSpeeds()
 }
 
 int				forwardmove[2], sidemove[2];
-const int		 		**angleturn = getTurnSpeeds();
+FBaseCVar		 		**angleturn = getTurnSpeeds();
 int				flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
@@ -278,16 +276,18 @@ CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL)
 #pragma optimize("", on)
 #endif // _M_X64 && _MSC_VER < 1910
 
+#define ANGLETURN(at) at->GetGenericRep(CVAR_Int).Int
 CCMD (turnspeeds)
 {
+	int turnspeeds[4] = {ANGLETURN(angleturn[0]), ANGLETURN(angleturn[1]), ANGLETURN(angleturn[2]), ANGLETURN(angleturn[3])};
 	if (argv.argc() == 1)
 	{
 		Printf ("\034H Current turn speeds:\n\
 				\034N turnspeedwalkfast: \034D %d\n\
 				\034N turnspeedsprintfast: \034D %d\n\
 				\034N turnspeedwalkslow: \034D %d\n\
-				\034N turnspeedsprintslow: \034D %d\n", *(angleturn[0]),
-			*(angleturn[1]), *(angleturn[2]), *(angleturn[3]));
+				\034N turnspeedsprintslow: \034D %d\n", turnspeeds[0],
+			turnspeeds[1], turnspeeds[2], turnspeeds[3]);
 	}
 	else
 	{
@@ -299,17 +299,17 @@ CCMD (turnspeeds)
 		}
 		if (i <= 2)
 		{
-			sprintf(val, "%d", *(angleturn[0]) * 2);
+			sprintf(val, "%d", turnspeeds[0] * 2);
 			cvar_forceset(TURNSPEEDCVARKEYS[1], val);
 		}
 		if (i <= 3)
 		{
-			sprintf(val, "%d", *(angleturn[0]) / 2);
+			sprintf(val, "%d", turnspeeds[0] / 2);
 			cvar_forceset(TURNSPEEDCVARKEYS[2], val);
 		}
 		if (i <= 4)
 		{
-			sprintf(val, "%d", *(angleturn[2]));
+			sprintf(val, "%d", turnspeeds[2]);
 			cvar_forceset(TURNSPEEDCVARKEYS[3], val);
 		}
 	}
@@ -597,11 +597,11 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		
 		if (Button_Right.bDown)
 		{
-			G_AddViewAngle (*(angleturn[tspeed]));
+			G_AddViewAngle (ANGLETURN(angleturn[tspeed]));
 		}
 		if (Button_Left.bDown)
 		{
-			G_AddViewAngle (-*(angleturn[tspeed]));
+			G_AddViewAngle (-ANGLETURN(angleturn[tspeed]));
 		}
 	}
 

@@ -119,6 +119,7 @@ class ConversationMenu : Menu
 		
 		let tex = TexMan.CheckForTexture (CurNode.Backdrop, TexMan.Type_MiscPatch);
 		mHasBackdrop = tex.isValid();
+		DontBlur = !mHasBackdrop;
 		
 		if (!generic_ui && !dlg_vgafont)
 		{

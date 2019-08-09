@@ -300,7 +300,7 @@ void D_DoAnonStats()
 	if (sentstats_hwr_done >= CHECKVERSION) return;
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_35.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_201903.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
 		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(gl.vendorstring).GetChars(), URLencode(gl.modelstring).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);

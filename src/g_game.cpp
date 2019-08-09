@@ -195,11 +195,9 @@ const int **getTurnSpeeds()
 {
 	const int **turnspeeds = new const int*[4];
 	FBaseCVar *cvar;
-	const int *speed;
 	for (int i = 0; i < 4; ++i)
 	{
 		cvar = FindCVar(TURNSPEEDCVARKEYS[i], NULL);
-		speed = 
 		turnspeeds[i] = (const int*)cvar->GetReference();
 	}
 

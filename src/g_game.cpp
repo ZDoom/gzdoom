@@ -190,21 +190,8 @@ EXTERN_CVAR (Int, turnspeedwalkslow)
 EXTERN_CVAR (Int, turnspeedsprintslow)
 const char *TURNSPEEDCVARKEYS[4] = {"turnspeedwalkfast", "turnspeedsprintfast", "turnspeedwalkslow", "turnspeedsprintslow"};
 
-
-FBaseCVar **getTurnSpeeds()
-{
-	FBaseCVar **turnspeeds = new FBaseCVar*[4];
-	for (int i = 0; i < 4; ++i)
-	{
-		turnspeeds[i] = FindCVar(TURNSPEEDCVARKEYS[i], NULL);
-	}
-
-	return turnspeeds;
-
-}
-
 int				forwardmove[2], sidemove[2];
-FBaseCVar		 		**angleturn = getTurnSpeeds();
+FIntCVar		*angleturn[4] = {&turnspeedwalkfast, &turnspeedsprintfast, &turnspeedwalkslow, &turnspeedsprintslow};
 int				flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
@@ -276,10 +263,15 @@ CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL)
 #pragma optimize("", on)
 #endif // _M_X64 && _MSC_VER < 1910
 
-#define ANGLETURN(at) at->GetGenericRep(CVAR_Int).Int
+ECVarType dummy;
+#define ANGLETURN(at) at->GetFavoriteRep(&dummy).Int
 CCMD (turnspeeds)
 {
-	int turnspeeds[4] = {ANGLETURN(angleturn[0]), ANGLETURN(angleturn[1]), ANGLETURN(angleturn[2]), ANGLETURN(angleturn[3])};
+	int turnspeeds[4] = {
+		ANGLETURN(angleturn[0]), 
+		ANGLETURN(angleturn[0]), 
+		ANGLETURN(angleturn[0]), 
+		ANGLETURN(angleturn[0])};
 	if (argv.argc() == 1)
 	{
 		Printf ("\034H Current turn speeds:\n\

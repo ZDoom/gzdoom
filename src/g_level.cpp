@@ -99,6 +99,8 @@ EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (String, playerclass)
 
+extern uint8_t globalfreeze, globalchangefreeze;
+
 #define SNAP_ID			MAKE_ID('s','n','A','p')
 #define DSNP_ID			MAKE_ID('d','s','N','p')
 #define VIST_ID			MAKE_ID('v','i','S','t')
@@ -470,6 +472,7 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	UnlatchCVars ();
 	G_VerifySkill();
 	UnlatchCVars ();
+	globalfreeze = globalchangefreeze = 0;
 	for (auto Level : AllLevels())
 	{
 		Level->Thinkers.DestroyThinkersInList(STAT_STATIC);
@@ -1585,6 +1588,7 @@ void FLevelLocals::Init()
 	flags2 = 0;
 	flags3 = 0;
 	ImpactDecalCount = 0;
+	frozenstate = 0;
 
 	info = FindLevelInfo (MapName);
 

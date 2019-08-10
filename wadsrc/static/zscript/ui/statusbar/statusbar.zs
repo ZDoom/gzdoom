@@ -582,7 +582,7 @@ class BaseStatusBar native ui
 		}
 		//Hexen counts basic armor also so we should too.
 		let armor = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
-		if(armor != NULL)
+		if(armor != NULL && armor.Amount > 0)
 		{
 			add += armor.SavePercent * 100;
 		}

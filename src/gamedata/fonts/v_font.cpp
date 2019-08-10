@@ -1609,8 +1609,6 @@ void V_InitFonts()
 				SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 				SmallFont->SetCursor('[');
 			}
-			OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-			OriginalSmallFont->SetCursor('[');
 		}
 		else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
 		{
@@ -1626,9 +1624,20 @@ void V_InitFonts()
 			{
 				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 			}
-			OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
 		}
 	}
+
+	// Create the original small font as a fallback for incomplete definitions.
+	if (Wads.CheckNumForName("FONTA_S") >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+		OriginalSmallFont->SetCursor('[');
+	}
+	else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
+	}
+
 	if (SmallFont)
 	{
 		uint32_t colors[256] = {};

@@ -237,6 +237,11 @@ uint32_t OpenGLFrameBuffer::GetCaps()
 	return (uint32_t)FlagSet;
 }
 
+const char* OpenGLFrameBuffer::DeviceName() const 
+{
+	return gl.modelstring;
+}
+
 //==========================================================================
 //
 // Swap the buffers

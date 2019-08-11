@@ -131,10 +131,11 @@ void VulkanFrameBuffer::InitializeState()
 		first = false;
 	}
 
+	// Use the same names here as OpenGL returns.
 	switch (device->PhysicalDevice.Properties.vendorID)
 	{
-	case 0x1002: vendorstring = "AMD";     break;
-	case 0x10DE: vendorstring = "NVIDIA";  break;
+	case 0x1002: vendorstring = "ATI Technologies Inc.";     break;
+	case 0x10DE: vendorstring = "NVIDIA Corporation";  break;
 	case 0x8086: vendorstring = "Intel";   break;
 	default:     vendorstring = "Unknown"; break;
 	}
@@ -623,6 +624,13 @@ uint32_t VulkanFrameBuffer::GetCaps()
 	return (uint32_t)FlagSet;
 }
 
+const char* VulkanFrameBuffer::DeviceName() const
+{
+	const auto &props = device->PhysicalDevice.Properties;
+	return props.deviceName;
+}
+
+
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
 	// This is handled in VulkanSwapChain::AcquireImage.
@@ -924,7 +932,7 @@ unsigned int VulkanFrameBuffer::GetLightBufferBlockSize() const
 
 void VulkanFrameBuffer::PrintStartupLog()
 {
-	const auto props = device->PhysicalDevice.Properties;
+	const auto &props = device->PhysicalDevice.Properties;
 
 	FString deviceType;
 	switch (props.deviceType)

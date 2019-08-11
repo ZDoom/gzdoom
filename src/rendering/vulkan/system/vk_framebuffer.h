@@ -76,6 +76,8 @@ public:
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
+	const char* DeviceName() const override;
+	int Backend() override { return 1; }
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;

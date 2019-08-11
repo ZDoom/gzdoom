@@ -27,6 +27,7 @@ public:
 	void CleanForRestart() override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
+	const char* DeviceName() const override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;

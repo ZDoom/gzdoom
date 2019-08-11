@@ -257,11 +257,10 @@ static int GetCoreInfo()
 }
 #endif
 
-EXTERN_CVAR(Int, vid_enablevulkan)
 
 static int GetRenderInfo()
 {
-	if (vid_enablevulkan == 1) return 4;
+	if (screen->Backend() == 1) return 4;
 	auto info = gl_getInfo();
 	if (!info.second)
 	{
@@ -273,6 +272,7 @@ static int GetRenderInfo()
 
 static int GetGLVersion()
 {
+	if (screen->Backend() == 1) return 50;
 	auto info = gl_getInfo();
 	return int(info.first * 10);
 }
@@ -302,7 +302,7 @@ void D_DoAnonStats()
 
 	static char requeststring[1024];
 	mysnprintf(requeststring, sizeof requeststring, "GET /stats_201903.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(gl.vendorstring).GetChars(), URLencode(gl.modelstring).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
+		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 #ifndef _DEBUG
 	// Don't send info in debug builds

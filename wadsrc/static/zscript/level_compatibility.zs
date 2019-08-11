@@ -1356,6 +1356,17 @@ class LevelCompatibility native play
 				// Fix misplaced vertex
 				SetVertex(202, -2, -873);
 			}
+			case 'E9EB4D16CA7E491E98D61615E4613E70': // sigil.wad e5m2
+			{
+				// Floating Skulls missing in lower difficulties
+				SetThingSkills(113, 31);
+				SetThingSkills(114, 31);
+			}
+			case 'C43B99F34E5211F9AF24459842852B0D': // sigil.wad e5m4
+			{
+				// Fix missing texture on the Baron-invulnerability-secret platform
+				SetWallTexture(1926, Line.back, Side.bottom, "MARBLE3");
+			}
 		}
 	}
 

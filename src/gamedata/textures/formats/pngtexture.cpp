@@ -657,6 +657,7 @@ FBitmap FPNGFileTexture::GetBgraBitmap(PalEntry *remap, int *trans)
 				pe[i].r = lump->ReadUInt8();
 				pe[i].g = lump->ReadUInt8();
 				pe[i].b = lump->ReadUInt8();
+				pe[i].a = 255;
 			}
 		}
 		lump->Seek(4, FileReader::SeekCur);	// Skip CRC

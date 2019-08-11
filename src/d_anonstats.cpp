@@ -40,9 +40,9 @@ CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 
-// Each machine will only send two  reports, one when started with hardware rendering and one when started with software rendering.
-#define CHECKVERSION 350
-#define CHECKVERSIONSTR "350"
+// Each machine will only send one report per survey
+#define CHECKVERSION 420
+#define CHECKVERSIONSTR "420"
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();

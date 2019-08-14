@@ -93,6 +93,34 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_mt_height, 4, CVAR_ARCHIVE | CVAR_GLOBALCON
 	if (self > 1024) self = 1024;
 }
 
+CVAR(Int, xbrz_colorformat, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+static void xbrzApplyOptions()
+{
+	if (gl_texture_hqresizemult != 0 && (gl_texture_hqresizemode == 4 || gl_texture_hqresizemode == 5))
+	{
+		if (xbrz_colorformat == 0)
+		{
+			Printf("Changing xBRZ options requires a restart when buffered color format is used.\n"
+				"To avoid this at cost of scaling performance, set xbrz_colorformat CVAR to non-zero value.");
+		}
+		else
+		{
+			TexMan.FlushAll();
+		}
+	}
+}
+
+#define XBRZ_CVAR(NAME, VALUE) \
+	CUSTOM_CVAR(Float, xbrz_##NAME, VALUE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL) { xbrzApplyOptions(); }
+
+XBRZ_CVAR(luminanceweight, 1.f)
+XBRZ_CVAR(equalcolortolerance, 30.f)
+XBRZ_CVAR(centerdirectionbias, 4.f)
+XBRZ_CVAR(dominantdirectionthreshold, 3.6f)
+XBRZ_CVAR(steepdirectionthreshold, 2.2f)
+
+#undef XBRZ_CVAR
 
 static void scale2x ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight )
 {
@@ -303,6 +331,28 @@ static unsigned char *hqNxHelper( void (HQX_CALLCONV *hqNxFunction) ( unsigned*,
 
 
 template <typename ConfigType>
+void xbrzSetupConfig(ConfigType& cfg);
+
+template <>
+void xbrzSetupConfig(xbrz::ScalerCfg& cfg)
+{
+	cfg.luminanceWeight = xbrz_luminanceweight;
+	cfg.equalColorTolerance = xbrz_equalcolortolerance;
+	cfg.centerDirectionBias = xbrz_centerdirectionbias;
+	cfg.dominantDirectionThreshold = xbrz_dominantdirectionthreshold;
+	cfg.steepDirectionThreshold = xbrz_steepdirectionthreshold;
+}
+
+template <>
+void xbrzSetupConfig(xbrz_old::ScalerCfg& cfg)
+{
+	cfg.luminanceWeight_ = xbrz_luminanceweight;
+	cfg.equalColorTolerance_ = xbrz_equalcolortolerance;
+	cfg.dominantDirectionThreshold = xbrz_dominantdirectionthreshold;
+	cfg.steepDirectionThreshold = xbrz_steepdirectionthreshold;
+}
+
+template <typename ConfigType>
 static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*, uint32_t*, int, int, xbrz::ColorFormat, const ConfigType&, int, int ),
 							  const int N,
 							  unsigned char *inputBuffer,
@@ -318,21 +368,28 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 	
 	const int thresholdWidth  = gl_texture_hqresize_mt_width;
 	const int thresholdHeight = gl_texture_hqresize_mt_height;
-	
+
+	ConfigType cfg;
+	xbrzSetupConfig(cfg);
+
+	const xbrz::ColorFormat colorFormat = xbrz_colorformat == 0
+		? xbrz::ColorFormat::ARGB
+		: xbrz::ColorFormat::ARGB_UNBUFFERED;
+
 	if (gl_texture_hqresize_multithread
 		&& inWidth  > thresholdWidth
 		&& inHeight > thresholdHeight)
 	{
-		parallel_for(inHeight, thresholdHeight, [=](int sliceY)
+		parallel_for(inHeight, thresholdHeight, [=, &cfg](int sliceY)
 		{
 			xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-				inWidth, inHeight, xbrz::ColorFormat::ARGB, ConfigType(), sliceY, sliceY + thresholdHeight);
+				inWidth, inHeight, colorFormat, cfg, sliceY, sliceY + thresholdHeight);
 		});
 	}
 	else
 	{
 		xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-			inWidth, inHeight, xbrz::ColorFormat::ARGB, ConfigType(), 0, std::numeric_limits<int>::max());
+			inWidth, inHeight, colorFormat, cfg, 0, std::numeric_limits<int>::max());
 	}
 
 	delete[] inputBuffer;

@@ -184,7 +184,7 @@ void bilinearScale(const uint32_t* src, int srcWidth, int srcHeight, int srcPitc
 
     //perf notes:
     //    -> double-based calculation is (slightly) faster than float
-    //    -> precalculation gives significant boost; std::vector<> memory allocation is negligible!
+    //    -> pre-calculation gives significant boost; std::vector<> memory allocation is negligible!
     struct CoeffsX
     {
         int     x1;
@@ -233,11 +233,9 @@ void bilinearScale(const uint32_t* src, int srcWidth, int srcHeight, int srcPitc
 
             auto interpolate = [=](int offset)
             {
-                /*
-                    https://en.wikipedia.org/wiki/Bilinear_interpolation
-                    (c11(x2 - x) + c21(x - x1)) * (y2 - y ) +
-                    (c12(x2 - x) + c22(x - x1)) * (y  - y1)
-                */
+                /* https://en.wikipedia.org/wiki/Bilinear_interpolation
+                     (c11(x2 - x) + c21(x - x1)) * (y2 - y ) +
+                     (c12(x2 - x) + c22(x - x1)) * (y  - y1)                          */
                 const auto c11 = (srcLine    [x1] >> (8 * offset)) & 0xff;
                 const auto c21 = (srcLine    [x2] >> (8 * offset)) & 0xff;
                 const auto c12 = (srcLineNext[x1] >> (8 * offset)) & 0xff;

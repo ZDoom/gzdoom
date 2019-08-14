@@ -302,8 +302,8 @@ static unsigned char *hqNxHelper( void (HQX_CALLCONV *hqNxFunction) ( unsigned*,
 }
 
 
-			
-static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*, uint32_t*, int, int, xbrz::ColorFormat, const xbrz::ScalerCfg&, int, int ),
+template <typename ConfigType>
+static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*, uint32_t*, int, int, xbrz::ColorFormat, const ConfigType&, int, int ),
 							  const int N,
 							  unsigned char *inputBuffer,
 							  const int inWidth,
@@ -326,23 +326,22 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 		parallel_for(inHeight, thresholdHeight, [=](int sliceY)
 		{
 			xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-				inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
+				inWidth, inHeight, xbrz::ColorFormat::ARGB, ConfigType(), sliceY, sliceY + thresholdHeight);
 		});
 	}
 	else
 	{
 		xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-			inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
+			inWidth, inHeight, xbrz::ColorFormat::ARGB, ConfigType(), 0, std::numeric_limits<int>::max());
 	}
 
 	delete[] inputBuffer;
 	return newBuffer;
 }
 
-static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight, xbrz::ColorFormat colFmt, const xbrz::ScalerCfg& cfg, int yFirst, int yLast)
+static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight, xbrz::ColorFormat colFmt, const xbrz_old::ScalerCfg& cfg, int yFirst, int yLast)
 {
-	static_assert(sizeof(xbrz::ScalerCfg) == sizeof(xbrz_old::ScalerCfg), "ScalerCfg classes have different layout");
-	xbrz_old::scale(factor, src, trg, srcWidth, srcHeight, reinterpret_cast<const xbrz_old::ScalerCfg&>(cfg), yFirst, yLast);
+	xbrz_old::scale(factor, src, trg, srcWidth, srcHeight, cfg, yFirst, yLast);
 }
 
 

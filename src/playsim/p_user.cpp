@@ -271,6 +271,8 @@ void player_t::CopyFrom(player_t &p, bool copyPSP)
 	FOV = p.FOV;
 	viewz = p.viewz;
 	viewheight = p.viewheight;
+	viewforward = p.viewforward;
+	viewside = p.viewside;
 	deltaviewheight = p.deltaviewheight;
 	bob = p.bob;
 	Vel = p.Vel;
@@ -1616,8 +1618,13 @@ void player_t::Serialize(FSerializer &arc)
 
 	arc("desiredfov", DesiredFOV)
 		("fov", FOV)
+		("viewangle", viewangle)
+		("viewpitch", viewpitch)
+		("viewroll", viewroll)
 		("viewz", viewz)
 		("viewheight", viewheight)
+		("viewforward", viewforward)
+		("viewside", viewside)
 		("deltaviewheight", deltaviewheight)
 		("bob", bob)
 		("vel", Vel)
@@ -1722,8 +1729,13 @@ DEFINE_FIELD_X(PlayerInfo, player_t, original_oldbuttons)
 DEFINE_FIELD_X(PlayerInfo, player_t, cls)
 DEFINE_FIELD_X(PlayerInfo, player_t, DesiredFOV)
 DEFINE_FIELD_X(PlayerInfo, player_t, FOV)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewangle)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewpitch)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewroll)
 DEFINE_FIELD_X(PlayerInfo, player_t, viewz)
 DEFINE_FIELD_X(PlayerInfo, player_t, viewheight)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewforward)
+DEFINE_FIELD_X(PlayerInfo, player_t, viewside)
 DEFINE_FIELD_X(PlayerInfo, player_t, deltaviewheight)
 DEFINE_FIELD_X(PlayerInfo, player_t, bob)
 DEFINE_FIELD_X(PlayerInfo, player_t, Vel)

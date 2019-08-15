@@ -30,12 +30,13 @@ class PlayerPawn : Actor
 	Name 		Portrait;
 	Name 		Slot[10];
 	double 		HexenArmor[5];
+	double		ViewAngle, ViewPitch, ViewRoll;
 
 	// [GRB] Player class properties
 	double		JumpZ;
 	double		GruntSpeed;
 	double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
-	double		ViewHeight;
+	double		ViewHeight, ViewForward, ViewSide;
 	double		ForwardMove1, ForwardMove2;
 	double		SideMove1, SideMove2;
 	TextureID	ScoreIcon;
@@ -65,6 +66,8 @@ class PlayerPawn : Actor
 	property GruntSpeed: GruntSpeed;
 	property FallingScreamSpeed: FallingScreamMinSpeed, FallingScreamMaxSpeed;
 	property ViewHeight: ViewHeight;
+	property ViewForward: ViewForward;
+	property ViewSide: ViewSide;
 	property UseRange: UseRange;
 	property AirCapacity: AirCapacity;
 	property MaxHealth: MaxHealth;
@@ -79,6 +82,11 @@ class PlayerPawn : Actor
 	flagdef NoThrustWhenInvul: PlayerFlags, 0;
 	flagdef CanSuperMorph: PlayerFlags, 1;
 	flagdef CrouchableMorph: PlayerFlags, 2;
+	flagdef ViewAbsOffset: PlayerFlags, 3;
+	flagdef ViewAbsPos: PlayerFlags, 4;
+	flagdef ViewAbsAngle: PlayerFlags, 5;
+	flagdef ViewAbsPitch: PlayerFlags, 6;
+	flagdef ViewAbsRoll: PlayerFlags, 7;
 	
 	Default
 	{
@@ -106,6 +114,8 @@ class PlayerPawn : Actor
 		Player.GruntSpeed 12;
 		Player.FallingScreamSpeed 35,40;
 		Player.ViewHeight 41;
+		Player.ViewForward 0;
+		Player.ViewSide 0;
 		Player.UseRange 64;
 		Player.ForwardMove 1,1;
 		Player.SideMove 1,1;
@@ -175,6 +185,8 @@ class PlayerPawn : Actor
 		else
 		{
 			player.SendPitchLimits();
+			player.viewforward = viewforward;
+			player.viewside = viewside;
 		}
 	}
 
@@ -503,6 +515,27 @@ class PlayerPawn : Actor
 			}
 		}
 	}
+
+	//-----------------------------------------------------------------------
+	// CalcView
+	// 
+	// Performs the camera offsetting when using viewforward and viewside. 
+	// Then offsets the view angles (yaw/pitch/roll)
+	//-----------------------------------------------------------------------
+	virtual void CalcView()
+	{
+		let player = self.player;
+
+		// Do not update the view if someone else is holding the camera.
+		if (player == NULL || player.mo != self || player.camera != self)
+			return;
+		
+		player.viewforward = viewforward;
+		player.viewside = viewside;
+		player.viewangle = viewangle;
+		player.viewpitch = viewpitch;
+		player.viewroll = viewroll;
+	}
 	
 	/*
 	==================
@@ -684,6 +717,7 @@ class PlayerPawn : Actor
 				Pitch = 0.;
 			}
 		}
+		player.mo.CalcView();
 		player.mo.CalcHeight ();
 			
 		if (player.attacker && player.attacker != self)
@@ -1616,7 +1650,8 @@ class PlayerPawn : Actor
 
 		CheckPitch();
 		HandleMovement();
-		CalcHeight ();
+		CalcView();
+		CalcHeight();
 
 		if (!(player.cheats & CF_PREDICTING))
 		{
@@ -2606,7 +2641,12 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native float DesiredFOV;
 	native float FOV;
 	native double viewz;
+	native double viewangle;
+	native double viewpitch;
+	native double viewroll;
 	native double viewheight;
+	native double viewforward;
+	native double viewside;
 	native double deltaviewheight;
 	native double bob;
 	native vector2 vel;

@@ -78,6 +78,7 @@ struct InterpolationViewer
 	struct instance
 	{
 		DVector3 Pos;
+		DVector3 ActorPos;
 		DRotator Angles;
 	};
 
@@ -781,36 +782,81 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		iview->Old = iview->New;
 	}
 
+	sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
+	sector_t *oldsecactor = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.ActorPos)->sector;
+
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0)))
 	{
-		sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
+		
 		// [RH] Use chasecam view
 		DVector3 campos;
 		DAngle camangle;
 		P_AimCamera (viewpoint.camera, campos, camangle, viewpoint.sector, unlinked);	// fixme: This needs to translate the angle, too.
-		iview->New.Pos = campos;
+		iview->New.Pos = iview->New.ActorPos = campos;
 		iview->New.Angles.Yaw = camangle;
 		
 		viewpoint.showviewer = true;
-		// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, so whenever we detect a portal transition
-		// it's probably best to just reset the interpolation for this move.
-		// Note that this can still cause problems with unusually linked portals
-		if (viewpoint.sector->PortalGroup != oldsector->PortalGroup || (unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256*256))
-		{
-			iview->otic = nowtic;
-			iview->Old = iview->New;
-			r_NoInterpolate = true;
-		}
 		viewpoint.ActorPos = campos;
+		iview->New.Angles = viewpoint.camera->Angles;
 	}
 	else
 	{
 		viewpoint.ActorPos = iview->New.Pos = { viewpoint.camera->Pos().XY(), viewpoint.camera->player ? viewpoint.camera->player->viewz : viewpoint.camera->Z() + viewpoint.camera->GetCameraHeight() };
-		viewpoint.sector = viewpoint.camera->Sector;
+		iview->New.ActorPos = viewpoint.ActorPos;
 		viewpoint.showviewer = false;
+		
+		if (gamestate != GS_TITLELEVEL && viewpoint.camera->player != nullptr)
+		{
+
+			auto plr = viewpoint.camera->player;
+			int flags = plr->GetFlags();
+
+			viewpoint.Angles.Yaw = ((flags & PFF_VIEWABSANGLE) ? 0. : viewpoint.camera->Angles.Yaw) + plr->viewangle;
+			viewpoint.Angles.Pitch = ((flags & PFF_VIEWABSPITCH) ? 0. : viewpoint.camera->Angles.Pitch) + plr->viewpitch;
+			viewpoint.Angles.Roll = ((flags & PFF_VIEWABSANGLE) ? 0. : viewpoint.camera->Angles.Roll) + plr->viewroll;
+
+			DVector3 next;
+			if (flags & PFF_VIEWABSPOS)
+			{
+				next = { plr->viewforward, plr->viewside, plr->viewz };
+			}
+			else if (flags & PFF_VIEWABSOFFSET)
+			{
+				next = viewpoint.camera->Vec2OffsetZ(plr->viewforward, plr->viewside, plr->viewz);
+			}
+			else
+			{
+				double c = viewpoint.Angles.Yaw.Cos();
+				double s = viewpoint.Angles.Yaw.Sin();
+
+				next = viewpoint.camera->Vec2OffsetZ(plr->viewforward * c + plr->viewside * s, plr->viewforward * s - plr->viewside * c, plr->viewz);
+			}
+
+			iview->New.Pos = viewpoint.Pos = next;
+			iview->New.Angles = viewpoint.Angles;
+		}
+		else
+			iview->New.Angles = viewpoint.camera->Angles;
+		
+		if (viewpoint.Pos.XY() != viewpoint.ActorPos.XY())
+			viewpoint.sector = viewpoint.ViewLevel->PointInRenderSubsector(viewpoint.Pos.XY())->sector;
+		else
+			viewpoint.sector = viewpoint.camera->Sector;
 	}
-	iview->New.Angles = viewpoint.camera->Angles;
+
+	// Interpolating this is a very complicated thing because nothing keeps track of the aim camera's movement, 
+	// so whenever we detect a portal transition it's probably best to just reset the interpolation for this move.
+	// Note that this can still cause problems with unusually linked portals
+	if (viewpoint.sector->PortalGroup != oldsector->PortalGroup ||
+		viewpoint.camera->Sector->PortalGroup != oldsecactor->PortalGroup ||
+		(unlinked && ((iview->New.Pos.XY() - iview->Old.Pos.XY()).LengthSquared()) > 256 * 256))
+	{
+		iview->otic = nowtic;
+		iview->Old = iview->New;
+		r_NoInterpolate = true;
+	}
+
 	if (viewpoint.camera->player != 0)
 	{
 		player = viewpoint.camera->player;

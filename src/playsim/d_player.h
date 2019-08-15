@@ -88,6 +88,11 @@ void PlayIdle(AActor *player);
 enum
 {
 	PPF_NOTHRUSTWHENINVUL = 1,	// Attacks do not thrust the player if they are invulnerable.
+	PFF_VIEWABSOFFSET =		1 << 3,
+	PFF_VIEWABSPOS =		1 << 4,
+	PFF_VIEWABSANGLE =		1 << 5,
+	PFF_VIEWABSPITCH =		1 << 6,
+	PFF_VIEWABSROLL =		1 << 7,
 };
 
 //
@@ -303,10 +308,16 @@ public:
 
 	float		DesiredFOV = 0;				// desired field of vision
 	float		FOV = 0;					// current field of vision
-	double		viewz = 0;					// focal origin above r.z
+	double		viewangle = 0;				// Angle offset (separate from actual angle)
+	double		viewpitch = 0;				// ^ for pitch
+	double		viewroll = 0;				// ...you get the point
+	double		viewz = 0;					// focal origin from r.z
+	double		viewforward = 0;			// base camera offset forward
+	double		viewside = 0;				// base camera offset right (when positive)
 	double		viewheight = 0;				// base height above floor for viewz
 	double		deltaviewheight = 0;		// squat speed.
 	double		bob = 0;					// bounded/scaled total velocity
+
 
 	// killough 10/98: used for realistic bobbing (i.e. not simply overall speed)
 	// mo->velx and mo->vely represent true velocity experienced by player.
@@ -415,6 +426,10 @@ public:
 		return mo->FloatVar(NAME_ViewHeight);
 	}
 
+	int GetFlags() const
+	{
+		return mo->IntVar(NAME_PlayerFlags);
+	}
 
 	void Uncrouch()
 	{

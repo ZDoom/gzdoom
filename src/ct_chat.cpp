@@ -41,6 +41,7 @@
 #include "v_video.h"
 #include "utf8.h"
 #include "gstrings.h"
+#include "vm.h"
 
 enum
 {
@@ -233,8 +234,30 @@ void CT_PasteChat(const char *clip)
 void CT_Drawer (void)
 {
 	FFont *displayfont = NewConsoleFont;
+
+	if (players[consoleplayer].camera != NULL &&
+		(Button_ShowScores.bDown ||
+		 players[consoleplayer].camera->health <= 0 ||
+		 SB_ForceActive) &&
+		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
+		 gamestate != GS_INTERMISSION)
+	{
+		HU_DrawScores (&players[consoleplayer]);
+	}
 	if (chatmodeon)
 	{
+		// [MK] allow the status bar to take over chat prompt drawing
+		bool skip = false;
+		IFVIRTUALPTR(StatusBar, DBaseStatusBar, DrawChat)
+		{
+			FString txt = ChatQueue;
+			VMValue params[] = { (DObject*)StatusBar, &txt };
+			int rv;
+			VMReturn ret(&rv);
+			VMCall(func, params, countof(params), &ret, 1);
+			if (!!rv) return;
+		}
+
 		FStringf prompt("%s ", GStrings("TXT_SAY"));
 		int x, scalex, y, promptwidth;
 
@@ -267,16 +290,6 @@ void CT_Drawer (void)
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 		screen->DrawText (displayfont, CR_GREY, promptwidth, y, printstr, 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-	}
-
-	if (players[consoleplayer].camera != NULL &&
-		(Button_ShowScores.bDown ||
-		 players[consoleplayer].camera->health <= 0 ||
-		 SB_ForceActive) &&
-		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
-		 gamestate != GS_INTERMISSION)
-	{
-		HU_DrawScores (&players[consoleplayer]);
 	}
 }
 

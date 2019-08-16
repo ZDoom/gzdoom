@@ -36,7 +36,7 @@ class PlayerPawn : Actor
 	double		JumpZ;
 	double		GruntSpeed;
 	double		FallingScreamMinSpeed, FallingScreamMaxSpeed;
-	double		ViewHeight, ViewForward, ViewSide;
+	double		ViewHeight, ViewHeightAbsolute, ViewForward, ViewSide;
 	double		ForwardMove1, ForwardMove2;
 	double		SideMove1, SideMove2;
 	TextureID	ScoreIcon;
@@ -66,6 +66,7 @@ class PlayerPawn : Actor
 	property GruntSpeed: GruntSpeed;
 	property FallingScreamSpeed: FallingScreamMinSpeed, FallingScreamMaxSpeed;
 	property ViewHeight: ViewHeight;
+	property ViewHeightAbsolute: ViewHeightAbsolute;
 	property ViewForward: ViewForward;
 	property ViewSide: ViewSide;
 	property UseRange: UseRange;
@@ -114,6 +115,7 @@ class PlayerPawn : Actor
 		Player.GruntSpeed 12;
 		Player.FallingScreamSpeed 35,40;
 		Player.ViewHeight 41;
+		Player.ViewHeightAbsolute 41;
 		Player.ViewForward 0;
 		Player.ViewSide 0;
 		Player.UseRange 64;
@@ -535,6 +537,7 @@ class PlayerPawn : Actor
 		player.viewangle = viewangle;
 		player.viewpitch = viewpitch;
 		player.viewroll = viewroll;
+		player.viewheightabsolute = viewheightabsolute;
 	}
 	
 	/*
@@ -2645,6 +2648,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native double viewpitch;
 	native double viewroll;
 	native double viewheight;
+	native double viewheightabsolute;
 	native double viewforward;
 	native double viewside;
 	native double deltaviewheight;

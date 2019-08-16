@@ -784,6 +784,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 	sector_t *oldsector = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.Pos)->sector;
 	sector_t *oldsecactor = viewpoint.ViewLevel->PointInRenderSubsector(iview->Old.ActorPos)->sector;
+	bool AbsoluteViewPosition = false;
 
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0)))
@@ -812,16 +813,17 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 			auto plr = viewpoint.camera->player;
 			int flags = plr->GetFlags();
 
-			viewpoint.Angles.Yaw = ((flags & PFF_VIEWABSANGLE) ? 0. : viewpoint.camera->Angles.Yaw) + plr->viewangle;
-			viewpoint.Angles.Pitch = ((flags & PFF_VIEWABSPITCH) ? 0. : viewpoint.camera->Angles.Pitch) + plr->viewpitch;
-			viewpoint.Angles.Roll = ((flags & PFF_VIEWABSANGLE) ? 0. : viewpoint.camera->Angles.Roll) + plr->viewroll;
+			viewpoint.Angles.Yaw = ((flags & PPF_VIEWABSANGLE) ? 0. : viewpoint.camera->Angles.Yaw) + plr->viewangle;
+			viewpoint.Angles.Pitch = ((flags & PPF_VIEWABSPITCH) ? 0. : viewpoint.camera->Angles.Pitch) + plr->viewpitch;
+			viewpoint.Angles.Roll = ((flags & PPF_VIEWABSROLL) ? 0. : viewpoint.camera->Angles.Roll) + plr->viewroll;
 
 			DVector3 next;
-			if (flags & PFF_VIEWABSPOS)
+			if (flags & PPF_VIEWABSPOS)
 			{
-				next = { plr->viewforward, plr->viewside, plr->viewz };
+				AbsoluteViewPosition = true;
+				next = { plr->viewforward, plr->viewside, plr->viewheightabsolute };
 			}
-			else if (flags & PFF_VIEWABSOFFSET)
+			else if (flags & PPF_VIEWABSOFFSET)
 			{
 				next = viewpoint.camera->Vec2OffsetZ(plr->viewforward, plr->viewside, plr->viewz);
 			}
@@ -879,21 +881,24 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	viewpoint.SetViewAngle (viewwindow);
 
 	// Keep the view within the sector's floor and ceiling
-	if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
+	if (!AbsoluteViewPosition)
 	{
-		double theZ = viewpoint.sector->ceilingplane.ZatPoint(viewpoint.Pos) - 4;
-		if (viewpoint.Pos.Z > theZ)
+		if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
 		{
-			viewpoint.Pos.Z = theZ;
+			double theZ = viewpoint.sector->ceilingplane.ZatPoint(viewpoint.Pos) - 4;
+			if (viewpoint.Pos.Z > theZ)
+			{
+				viewpoint.Pos.Z = theZ;
+			}
 		}
-	}
 
-	if (viewpoint.sector->PortalBlocksMovement(sector_t::floor))
-	{
-		double theZ = viewpoint.sector->floorplane.ZatPoint(viewpoint.Pos) + 4;
-		if (viewpoint.Pos.Z < theZ)
+		if (viewpoint.sector->PortalBlocksMovement(sector_t::floor))
 		{
-			viewpoint.Pos.Z = theZ;
+			double theZ = viewpoint.sector->floorplane.ZatPoint(viewpoint.Pos) + 4;
+			if (viewpoint.Pos.Z < theZ)
+			{
+				viewpoint.Pos.Z = theZ;
+			}
 		}
 	}
 

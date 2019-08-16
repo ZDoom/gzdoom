@@ -128,7 +128,7 @@ CVAR (Bool, crosshairon, true, CVAR_ARCHIVE);
 CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
 CVAR (Bool, crosshairforce, false, CVAR_ARCHIVE)
 CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
-CVAR (Bool, crosshairhealth, true, CVAR_ARCHIVE);
+CVAR (Int, crosshairhealth, 1, CVAR_ARCHIVE);
 CVAR (Float, crosshairscale, 1.0, CVAR_ARCHIVE);
 CVAR (Bool, crosshairgrow, false, CVAR_ARCHIVE);
 CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
@@ -1081,15 +1081,15 @@ void DBaseStatusBar::DrawCrosshair ()
 	w = int(CrosshairImage->GetDisplayWidth() * size);
 	h = int(CrosshairImage->GetDisplayHeight() * size);
 
-	if (crosshairhealth)
-	{
+	if (crosshairhealth == 1) {
+		// "Standard" crosshair health (green-red)
 		int health = Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health);
 
 		if (health >= 85)
 		{
 			color = 0x00ff00;
 		}
-		else 
+		else
 		{
 			int red, green;
 			health -= 25;
@@ -1109,6 +1109,50 @@ void DBaseStatusBar::DrawCrosshair ()
 			}
 			color = (red<<16) | (green<<8);
 		}
+	}
+	else if (crosshairhealth == 2)
+	{
+		// "Enhanced" crosshair health (green-white-yellow-red)
+		int health = Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health);
+		int red, green, blue;
+
+		if (health < 0)
+		{
+			health = 0;
+		}
+
+		if (health <= 25)
+		{
+			red = 255;
+			green = 0;
+			blue = 0;
+		}
+		else if (health <= 65)
+		{
+			red = 255;
+			green = 255 * ((health - 25) / 40.0);
+			blue = 0;
+		}
+		else if (health <= 100)
+		{
+			red = 255;
+			green = 255;
+			blue = 255 * ((health - 65) / 35.0);
+		}
+		else if (health < 200)
+		{
+			red = 255 - 255 * ((health - 100) / 100.0);
+			green = 255;
+			blue = 255 - 255 * ((health - 100) / 100.0);
+		}
+		else
+		{
+			red = 0;
+			green = 255;
+			blue = 0;
+		}
+
+		color = (red<<16) | (green<<8) | blue;
 	}
 	else
 	{

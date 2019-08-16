@@ -948,6 +948,13 @@ OptionMenu "VideoOptions" protected
 //
 //-------------------------------------------------------------------------------------------
 
+OptionValue CrosshairHealthTypes
+{
+	0.0, "$OPTVAL_NO"
+	1.0, "$OPTVAL_YES_STANDARD"
+	2.0, "$OPTVAL_YES_ENHANCED"
+}
+
 OptionValue DisplayTagsTypes
 {
 	0.0, "$OPTVAL_NONE"
@@ -1017,7 +1024,7 @@ OptionMenu "HUDOptions" protected
 	Option "$HUDMNU_FORCECROSSHAIR",		"crosshairforce", "OnOff"
 	Option "$HUDMNU_GROWCROSSHAIR",			"crosshairgrow", "OnOff"
 	ColorPicker "$HUDMNU_CROSSHAIRCOLOR", 	"crosshaircolor"
-	Option "$HUDMNU_CROSSHAIRHEALTH",		"crosshairhealth", "OnOff"
+	Option "$HUDMNU_CROSSHAIRHEALTH",		"crosshairhealth", "CrosshairHealthTypes"
 	Slider "$HUDMNU_CROSSHAIRSCALE",		"crosshairscale", 0.0, 2.0, 0.05, 2
 	StaticText " "
 	Option "$HUDMNU_NAMETAGS",				"displaynametags", "DisplayTagsTypes"

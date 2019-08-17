@@ -300,10 +300,6 @@ void FMapInfoParser::ParseSkill ()
 		}
 		else if (sc.Compare("DefaultSkill"))
 		{
-			if (DefaultSkill >= 0)
-			{
-				sc.ScriptError("%s is already the default skill\n", AllSkills[DefaultSkill].Name.GetChars());
-			}
 			thisisdefault = true;
 		}
 		else if (!ParseCloseBrace())

@@ -116,6 +116,24 @@ FString RemoveLegacyUserUniforms(FString code)
 		}
 	}
 
+	// Also remove all occurences of the token 'texture2d'. Some shaders may still use this deprecated function to access a sampler.
+	// Modern GLSL only allows use of 'texture'.
+	while (true)
+	{
+		long matchIndex = code.IndexOf("texture2d", startIndex);
+		if (matchIndex == -1)
+			break;
+
+		// Check if this is a real token.
+		bool isKeywordStart = matchIndex == 0 || !isalnum(chars[matchIndex - 1] & 255);
+		bool isKeywordEnd = matchIndex + 9 == len || !isalnum(chars[matchIndex + 9] & 255);
+		if (isKeywordStart && isKeywordEnd)
+		{
+			chars[matchIndex + 7] = chars[matchIndex + 8] = ' ';
+		}
+		startIndex = matchIndex + 9;
+	}
+
 	code.UnlockBuffer();
 
 	return code;

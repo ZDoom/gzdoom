@@ -64,6 +64,8 @@ Music_Emu::Music_Emu()
 	equalizer_.treble   = -1.0;
 	equalizer_.bass     = 60;
 	
+	emu_autoload_playback_limit_ = true;
+
 	static const char* const names [] = {
 		"Voice 1", "Voice 2", "Voice 3", "Voice 4",
 		"Voice 5", "Voice 6", "Voice 7", "Voice 8"
@@ -185,6 +187,16 @@ void Music_Emu::end_track_if_error( blargg_err_t err )
 		emu_track_ended_ = true;
 		set_warning( err );
 	}
+}
+
+bool Music_Emu::autoload_playback_limit() const
+{
+	return emu_autoload_playback_limit_;
+}
+
+void Music_Emu::set_autoload_playback_limit( bool do_autoload_limit )
+{
+	emu_autoload_playback_limit_ = do_autoload_limit;
 }
 
 // Tell/Seek

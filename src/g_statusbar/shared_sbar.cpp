@@ -1112,45 +1112,16 @@ void DBaseStatusBar::DrawCrosshair ()
 	}
 	else if (crosshairhealth == 2)
 	{
-		// "Enhanced" crosshair health (green-white-yellow-red)
-		int health = Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health);
-		int red, green, blue;
+		// "Enhanced" crosshair health (blue-green-yellow-red)
+		int health = clamp(Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health), 0, 200);
+		float rr, gg, bb;
 
-		if (health < 0)
-		{
-			health = 0;
-		}
+		float saturation = health < 150 ? 1.f : 1.f - (health - 150) / 100.f;
 
-		if (health <= 25)
-		{
-			red = 255;
-			green = 0;
-			blue = 0;
-		}
-		else if (health <= 65)
-		{
-			red = 255;
-			green = 255 * ((health - 25) / 40.0);
-			blue = 0;
-		}
-		else if (health <= 100)
-		{
-			red = 255;
-			green = 255;
-			blue = 255 * ((health - 65) / 35.0);
-		}
-		else if (health < 200)
-		{
-			red = 255 - 255 * ((health - 100) / 100.0);
-			green = 255;
-			blue = 255 - 255 * ((health - 100) / 100.0);
-		}
-		else
-		{
-			red = 0;
-			green = 255;
-			blue = 0;
-		}
+		HSVtoRGB(&rr, &gg, &bb, health * 1.2f, saturation, 1);
+		int red = int(rr * 255);
+		int green = int(gg * 255);
+		int blue = int(bb * 255);
 
 		color = (red<<16) | (green<<8) | blue;
 	}

@@ -115,7 +115,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddTexture(Chars[i].TranslatedPic);
 			}
-			else Chars[i].TranslatedPic = charlumps[i];
+			else Chars[i].TranslatedPic = Chars[i].OriginalPic;
 			Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
 		}
 		else

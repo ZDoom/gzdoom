@@ -409,7 +409,8 @@ enum ActorFlag8
 	MF8_HITOWNER		= 0x00000010,	// projectile can hit the actor that fired it
 	MF8_NOFRICTION		= 0x00000020,	// friction doesn't apply to the actor at all
 	MF8_NOFRICTIONBOUNCE	= 0x00000040,	// don't bounce off walls when on icy floors
-	MF8_RETARGETAFTERSLAM	= 0x00000080	// Forces jumping to the idle state after slamming into something
+	MF8_RETARGETAFTERSLAM	= 0x00000080,	// Forces jumping to the idle state after slamming into something
+	MF8_RECREATELIGHTS	= 0x00000100,	// Internal flag that signifies that the light attachments need to be recreated at the
 };
 
 // --- mobj.renderflags ---

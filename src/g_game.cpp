@@ -188,7 +188,6 @@ EXTERN_CVAR (Int, turnspeedwalkfast)
 EXTERN_CVAR (Int, turnspeedsprintfast)
 EXTERN_CVAR (Int, turnspeedwalkslow)
 EXTERN_CVAR (Int, turnspeedsprintslow)
-const char *TURNSPEEDCVARKEYS[4] = {"turnspeedwalkfast", "turnspeedsprintfast", "turnspeedwalkslow", "turnspeedsprintslow"};
 
 int				forwardmove[2], sidemove[2];
 FIntCVar		*angleturn[4] = {&turnspeedwalkfast, &turnspeedsprintfast, &turnspeedwalkslow, &turnspeedsprintslow};
@@ -263,41 +262,36 @@ CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL)
 #pragma optimize("", on)
 #endif // _M_X64 && _MSC_VER < 1910
 
-ECVarType dummy;
-#define ANGLETURN(at) at->GetFavoriteRep(&dummy).Int
 CCMD (turnspeeds)
 {
 	if (argv.argc() == 1)
 	{
-		Printf ("\034H Current turn speeds:\n\
-				\034N turnspeedwalkfast: \034D %d\n\
-				\034N turnspeedsprintfast: \034D %d\n\
-				\034N turnspeedwalkslow: \034D %d\n\
-				\034N turnspeedsprintslow: \034D %d\n", ANGLETURN(angleturn[0]),
-			ANGLETURN(angleturn[1]), ANGLETURN(angleturn[2]), ANGLETURN(angleturn[3]));
+		Printf ("Current turn speeds:\n"
+				TEXTCOLOR_BLUE " turnspeedwalkfast: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedsprintfast: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedwalkslow: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedsprintslow: " TEXTCOLOR_GREEN " %d\n", *turnspeedwalkfast,
+			*turnspeedsprintfast, *turnspeedwalkslow, *turnspeedsprintslow);
 	}
 	else
 	{
 		int i;
-		char val[10];
+
 		for (i = 1; i <= 4 && i < argv.argc(); ++i)
 		{
-			cvar_forceset(TURNSPEEDCVARKEYS[i - 1], argv[i]);
+			*angleturn[i-1] = atoi (argv[i]);
 		}
 		if (i <= 2)
 		{
-			sprintf(val, "%d", ANGLETURN(angleturn[0]) * 2);
-			cvar_forceset(TURNSPEEDCVARKEYS[1], val);
+			*angleturn[1] = *angleturn[0] * 2;
 		}
 		if (i <= 3)
 		{
-			sprintf(val, "%d", ANGLETURN(angleturn[0]) / 2);
-			cvar_forceset(TURNSPEEDCVARKEYS[2], val);
+			*angleturn[2] = *angleturn[0] / 2;
 		}
 		if (i <= 4)
 		{
-			sprintf(val, "%d", ANGLETURN(angleturn[2]));
-			cvar_forceset(TURNSPEEDCVARKEYS[3], val);
+			*angleturn[3] = *angleturn[2];
 		}
 	}
 }
@@ -584,11 +578,11 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		
 		if (Button_Right.bDown)
 		{
-			G_AddViewAngle (ANGLETURN(angleturn[tspeed]));
+			G_AddViewAngle (*angleturn[tspeed]);
 		}
 		if (Button_Left.bDown)
 		{
-			G_AddViewAngle (-ANGLETURN(angleturn[tspeed]));
+			G_AddViewAngle (-*angleturn[tspeed]);
 		}
 	}
 

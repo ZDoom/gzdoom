@@ -36,7 +36,7 @@ asmjit::CodeInfo GetHostCodeInfo()
 	if (firstCall)
 	{
 		asmjit::JitRuntime rt;
-		codeInfo = rt.getCodeInfo();
+		codeInfo = rt.codeInfo();
 		firstCall = false;
 	}
 
@@ -56,13 +56,12 @@ static void *AllocJitMemory(size_t size)
 	}
 	else
 	{
-		const size_t bytesToAllocate = MAX(size_t(1024 * 1024), size);
-		size_t allocatedSize = 0;
-		void *p = OSUtils::allocVirtualMemory(bytesToAllocate, &allocatedSize, OSUtils::kVMWritable | OSUtils::kVMExecutable);
-		if (!p)
+		const size_t bytesToAllocate = asmjit::Support::alignUp(MAX(size_t(1024 * 1024), size), VirtMem::info().pageGranularity);
+		void *p;
+		if (VirtMem::alloc(&p, bytesToAllocate, VirtMem::kAccessReadWrite | VirtMem::kAccessExecute) != asmjit::kErrorOk)
 			return nullptr;
 		JitBlocks.Push((uint8_t*)p);
-		JitBlockSize = allocatedSize;
+		JitBlockSize = bytesToAllocate;
 		JitBlockPos = size;
 		return p;
 	}
@@ -80,19 +79,15 @@ static void *AllocJitMemory(size_t size)
 #define UWOP_SAVE_XMM128_FAR 9
 #define UWOP_PUSH_MACHFRAME 10
 
-static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
+static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::FuncNode *func)
 {
 	using namespace asmjit;
-	FuncFrameLayout layout;
-	Error error = layout.init(func->getDetail(), func->getFrameInfo());
-	if (error != kErrorOk)
-		I_Error("FuncFrameLayout.init failed");
+	FuncFrame frame = func->frame();
 
-	// We need a dummy emitter for instruction size calculations
+	// We need a dummy assembler for instruction size calculations
 	CodeHolder code;
 	code.init(GetHostCodeInfo());
-	X86Assembler assembler(&code);
-	X86Emitter *emitter = assembler.asEmitter();
+	x86::Assembler assembler(&code);
 
 	// Build UNWIND_CODE codes:
 
@@ -101,26 +96,26 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 
 	// Note: this must match exactly what X86Internal::emitProlog does
 
-	X86Gp zsp = emitter->zsp();   // ESP|RSP register.
-	X86Gp zbp = emitter->zsp();   // EBP|RBP register.
-	zbp.setId(X86Gp::kIdBp);
-	X86Gp gpReg = emitter->zsp(); // General purpose register (temporary).
-	X86Gp saReg = emitter->zsp(); // Stack-arguments base register.
-	uint32_t gpSaved = layout.getSavedRegs(X86Reg::kKindGp);
+	x86::Gp zsp = assembler.zsp();   // ESP|RSP register.
+	x86::Gp zbp = assembler.zsp();   // EBP|RBP register.
+	zbp.setId(x86::Gp::kIdBp);
+	x86::Gp gpReg = assembler.zsp(); // General purpose register (temporary).
+	x86::Gp saReg = assembler.zsp(); // Stack-arguments base register.
+	uint32_t gpSaved = frame.savedRegs(x86::Reg::kGroupGp);
 
-	if (layout.hasPreservedFP())
+	if (frame.hasPreservedFP())
 	{
 		// Emit: 'push zbp'
 		//       'mov  zbp, zsp'.
-		gpSaved &= ~Utils::mask(X86Gp::kIdBp);
-		emitter->push(zbp);
+		gpSaved &= ~Support::bitMask(x86::Gp::kIdBp);
+		assembler.push(zbp);
 
-		opoffset = (uint32_t)assembler.getOffset();
+		opoffset = (uint32_t)assembler.offset();
 		opcode = UWOP_PUSH_NONVOL;
-		opinfo = X86Gp::kIdBp;
+		opinfo = x86::Gp::kIdBp;
 		codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
 
-		emitter->mov(zbp, zsp);
+		assembler.mov(zbp, zsp);
 	}
 
 	if (gpSaved)
@@ -130,48 +125,48 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 			if (!(i & 0x1)) continue;
 			// Emit: 'push gp' sequence.
 			gpReg.setId(regId);
-			emitter->push(gpReg);
+			assembler.push(gpReg);
 
-			opoffset = (uint32_t)assembler.getOffset();
+			opoffset = (uint32_t)assembler.offset();
 			opcode = UWOP_PUSH_NONVOL;
 			opinfo = regId;
 			codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
 		}
 	}
 
-	uint32_t stackArgsRegId = layout.getStackArgsRegId();
-	if (stackArgsRegId != Globals::kInvalidRegId && stackArgsRegId != X86Gp::kIdSp)
+	uint32_t saRegId = frame.saRegId();
+	if (saRegId != BaseReg::kIdBad && saRegId != x86::Gp::kIdSp)
 	{
-		saReg.setId(stackArgsRegId);
-		if (!(layout.hasPreservedFP() && stackArgsRegId == X86Gp::kIdBp))
+		saReg.setId(saRegId);
+		if (!(frame.hasPreservedFP() && saRegId == x86::Gp::kIdBp))
 		{
 			// Emit: 'mov saReg, zsp'.
-			emitter->mov(saReg, zsp);
+			assembler.mov(saReg, zsp);
 		}
 	}
 
-	if (layout.hasDynamicAlignment())
+	if (frame.hasDynamicAlignment())
 	{
 		// Emit: 'and zsp, StackAlignment'.
-		emitter->and_(zsp, -static_cast<int32_t>(layout.getStackAlignment()));
+		assembler.and_(zsp, -static_cast<int32_t>(frame.finalStackAlignment()));
 	}
 
-	if (layout.hasStackAdjustment())
+	if (frame.hasStackAdjustment())
 	{
 		// Emit: 'sub zsp, StackAdjustment'.
-		emitter->sub(zsp, layout.getStackAdjustment());
+		assembler.sub(zsp, frame.stackAdjustment());
 
-		uint32_t stackadjust = layout.getStackAdjustment();
+		uint32_t stackadjust = frame.stackAdjustment();
 		if (stackadjust <= 128)
 		{
-			opoffset = (uint32_t)assembler.getOffset();
+			opoffset = (uint32_t)assembler.offset();
 			opcode = UWOP_ALLOC_SMALL;
 			opinfo = stackadjust / 8 - 1;
 			codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
 		}
 		else if (stackadjust <= 512 * 1024 - 8)
 		{
-			opoffset = (uint32_t)assembler.getOffset();
+			opoffset = (uint32_t)assembler.offset();
 			opcode = UWOP_ALLOC_LARGE;
 			opinfo = 0;
 			codes.Push(stackadjust / 8);
@@ -179,7 +174,7 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 		}
 		else
 		{
-			opoffset = (uint32_t)assembler.getOffset();
+			opoffset = (uint32_t)assembler.offset();
 			opcode = UWOP_ALLOC_LARGE;
 			opinfo = 1;
 			codes.Push((uint16_t)(stackadjust >> 16));
@@ -188,21 +183,22 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 		}
 	}
 
-	if (layout.hasDynamicAlignment() && layout.hasDsaSlotUsed())
+	if (frame.hasDynamicAlignment() && frame.hasDAOffset())
 	{
 		// Emit: 'mov [zsp + dsaSlot], saReg'.
-		X86Mem saMem = x86::ptr(zsp, layout._dsaSlot);
-		emitter->mov(saMem, saReg);
+		x86::Mem saMem = x86::ptr(zsp, int32_t(frame.daOffset()));
+		assembler.mov(saMem, saReg);
 	}
 
-	uint32_t xmmSaved = layout.getSavedRegs(X86Reg::kKindVec);
+	uint32_t xmmSaved = frame.savedRegs(x86::Reg::kGroupVec);
 	if (xmmSaved)
 	{
-		X86Mem vecBase = x86::ptr(zsp, layout.getVecStackOffset());
-		X86Reg vecReg = x86::xmm(0);
-		bool avx = layout.isAvxEnabled();
-		bool aligned = layout.hasAlignedVecSR();
-		uint32_t vecInst = aligned ? (avx ? X86Inst::kIdVmovaps : X86Inst::kIdMovaps) : (avx ? X86Inst::kIdVmovups : X86Inst::kIdMovups);
+		int vecOffset = frame.nonGpSaveOffset();
+		x86::Mem vecBase = x86::ptr(zsp, vecOffset);
+		x86::Reg vecReg = x86::xmm(0);
+		bool avx = frame.isAvxEnabled();
+		bool aligned = frame.hasAlignedVecSR();
+		uint32_t vecInst = aligned ? (avx ? x86::Inst::kIdVmovaps : x86::Inst::kIdMovaps) : (avx ? x86::Inst::kIdVmovups : x86::Inst::kIdMovups);
 		uint32_t vecSize = 16;
 		for (uint32_t i = xmmSaved, regId = 0; i; i >>= 1, regId++)
 		{
@@ -210,24 +206,24 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 
 			// Emit 'movaps|movups [zsp + X], xmm0..15'.
 			vecReg.setId(regId);
-			emitter->emit(vecInst, vecBase, vecReg);
+			assembler.emit(vecInst, vecBase, vecReg);
 			vecBase.addOffsetLo32(static_cast<int32_t>(vecSize));
 
-			if (vecBase.getOffsetLo32() / vecSize < (1 << 16))
+			if (vecBase.offsetLo32() / vecSize < (1 << 16))
 			{
-				opoffset = (uint32_t)assembler.getOffset();
+				opoffset = (uint32_t)assembler.offset();
 				opcode = UWOP_SAVE_XMM128;
 				opinfo = regId;
-				codes.Push(vecBase.getOffsetLo32() / vecSize);
+				codes.Push(vecBase.offsetLo32() / vecSize);
 				codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
 			}
 			else
 			{
-				opoffset = (uint32_t)assembler.getOffset();
+				opoffset = (uint32_t)assembler.offset();
 				opcode = UWOP_SAVE_XMM128_FAR;
 				opinfo = regId;
-				codes.Push((uint16_t)(vecBase.getOffsetLo32() >> 16));
-				codes.Push((uint16_t)vecBase.getOffsetLo32());
+				codes.Push((uint16_t)(vecBase.offsetLo32() >> 16));
+				codes.Push((uint16_t)vecBase.offsetLo32());
 				codes.Push(opoffset | (opcode << 8) | (opinfo << 12));
 			}
 		}
@@ -236,7 +232,7 @@ static TArray<uint16_t> CreateUnwindInfoWindows(asmjit::CCFunc *func)
 	// Build the UNWIND_INFO structure:
 
 	uint16_t version = 1, flags = 0, frameRegister = 0, frameOffset = 0;
-	uint16_t sizeOfProlog = (uint16_t)assembler.getOffset();
+	uint16_t sizeOfProlog = (uint16_t)assembler.offset();
 	uint16_t countOfCodes = (uint16_t)codes.Size();
 
 	TArray<uint16_t> info;
@@ -256,10 +252,14 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 {
 	using namespace asmjit;
 
-	CCFunc *func = compiler->Codegen();
+	FuncNode *func = compiler->Codegen();
+	if (code->flatten() != kErrorOk)
+		return nullptr;
+	if (code->resolveUnresolvedLinks() != kErrorOk)
+		return nullptr;
 
-	size_t codeSize = code->getCodeSize();
-	if (codeSize == 0)
+	size_t estimatedCodeSize = Support::alignUp(code->codeSize(), 16);
+	if (estimatedCodeSize == 0)
 		return nullptr;
 
 #ifdef _WIN64
@@ -271,24 +271,24 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 	size_t functionTableSize = 0;
 #endif
 
-	codeSize = (codeSize + 15) / 16 * 16;
-
-	uint8_t *p = (uint8_t *)AllocJitMemory(codeSize + unwindInfoSize + functionTableSize);
+	uint8_t *p = (uint8_t *)AllocJitMemory(estimatedCodeSize + unwindInfoSize + functionTableSize);
 	if (!p)
 		return nullptr;
 
-	size_t relocSize = code->relocate(p);
-	if (relocSize == 0)
+	if (code->relocateToBase((uintptr_t)p) != kErrorOk)
 		return nullptr;
 
-	size_t unwindStart = relocSize;
-	unwindStart = (unwindStart + 15) / 16 * 16;
+	size_t codeSize = code->codeSize();
+	for (Section* section : code->sections())
+		memcpy(p + size_t(section->offset()), section->data(), size_t(section->bufferSize()));
+
+	size_t unwindStart = Support::alignUp(codeSize, 16);
 	JitBlockPos -= codeSize - unwindStart;
 
 #ifdef _WIN64
 	uint8_t *baseaddr = JitBlocks.Last();
 	uint8_t *startaddr = p;
-	uint8_t *endaddr = p + relocSize;
+	uint8_t *endaddr = p + codeSize;
 	uint8_t *unwindptr = p + unwindStart;
 	memcpy(unwindptr, &unwindInfo[0], unwindInfoSize);
 
@@ -403,7 +403,7 @@ static void WriteCIE(TArray<uint8_t> &stream, const TArray<uint8_t> &cieInstruct
 	unsigned int lengthPos = stream.Size();
 	WriteUInt32(stream, 0); // Length
 	WriteUInt32(stream, 0); // CIE ID
-	
+
 	WriteUInt8(stream, 1); // CIE Version
 	WriteUInt8(stream, 'z');
 	WriteUInt8(stream, 'R'); // fde encoding
@@ -428,7 +428,7 @@ static void WriteFDE(TArray<uint8_t> &stream, const TArray<uint8_t> &fdeInstruct
 	WriteUInt32(stream, 0); // Length
 	uint32_t offsetToCIE = stream.Size() - cieLocation;
 	WriteUInt32(stream, offsetToCIE);
-	
+
 	functionStart = stream.Size();
 	WriteUInt64(stream, 0); // func start
 	WriteUInt64(stream, 0); // func size
@@ -486,7 +486,7 @@ static void WriteRegisterStackLocation(TArray<uint8_t> &instructions, int dwarfR
 	WriteULEB128(instructions, stackLocation);
 }
 
-static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &functionStart)
+static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::FuncNode *func, unsigned int &functionStart)
 {
 	using namespace asmjit;
 
@@ -499,71 +499,67 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 	//
 	// The CFI_Parser<A>::decodeFDE parser on the other side..
 	// https://github.com/llvm-mirror/libunwind/blob/master/src/DwarfParser.hpp
-	
+
 	// Asmjit -> DWARF register id
 	int dwarfRegId[16];
-	dwarfRegId[X86Gp::kIdAx] = 0;
-	dwarfRegId[X86Gp::kIdDx] = 1;
-	dwarfRegId[X86Gp::kIdCx] = 2;
-	dwarfRegId[X86Gp::kIdBx] = 3;
-	dwarfRegId[X86Gp::kIdSi] = 4;
-	dwarfRegId[X86Gp::kIdDi] = 5;
-	dwarfRegId[X86Gp::kIdBp] = 6;
-	dwarfRegId[X86Gp::kIdSp] = 7;
-	dwarfRegId[X86Gp::kIdR8] = 8;
-	dwarfRegId[X86Gp::kIdR9] = 9;
-	dwarfRegId[X86Gp::kIdR10] = 10;
-	dwarfRegId[X86Gp::kIdR11] = 11;
-	dwarfRegId[X86Gp::kIdR12] = 12;
-	dwarfRegId[X86Gp::kIdR13] = 13;
-	dwarfRegId[X86Gp::kIdR14] = 14;
-	dwarfRegId[X86Gp::kIdR15] = 15;
+	dwarfRegId[x86::Gp::kIdAx] = 0;
+	dwarfRegId[x86::Gp::kIdDx] = 1;
+	dwarfRegId[x86::Gp::kIdCx] = 2;
+	dwarfRegId[x86::Gp::kIdBx] = 3;
+	dwarfRegId[x86::Gp::kIdSi] = 4;
+	dwarfRegId[x86::Gp::kIdDi] = 5;
+	dwarfRegId[x86::Gp::kIdBp] = 6;
+	dwarfRegId[x86::Gp::kIdSp] = 7;
+	dwarfRegId[x86::Gp::kIdR8] = 8;
+	dwarfRegId[x86::Gp::kIdR9] = 9;
+	dwarfRegId[x86::Gp::kIdR10] = 10;
+	dwarfRegId[x86::Gp::kIdR11] = 11;
+	dwarfRegId[x86::Gp::kIdR12] = 12;
+	dwarfRegId[x86::Gp::kIdR13] = 13;
+	dwarfRegId[x86::Gp::kIdR14] = 14;
+	dwarfRegId[x86::Gp::kIdR15] = 15;
 	int dwarfRegRAId = 16;
 	int dwarfRegXmmId = 17;
-	
+
 	TArray<uint8_t> cieInstructions;
 	TArray<uint8_t> fdeInstructions;
 
 	uint8_t returnAddressReg = dwarfRegRAId;
 	int stackOffset = 8; // Offset from RSP to the Canonical Frame Address (CFA) - stack position where the CALL return address is stored
 
-	WriteDefineCFA(cieInstructions, dwarfRegId[X86Gp::kIdSp], stackOffset);
+	WriteDefineCFA(cieInstructions, dwarfRegId[x86::Gp::kIdSp], stackOffset);
 	WriteRegisterStackLocation(cieInstructions, returnAddressReg, stackOffset);
-	
-	FuncFrameLayout layout;
-	Error error = layout.init(func->getDetail(), func->getFrameInfo());
-	if (error != kErrorOk)
-		I_Error("FuncFrameLayout.init failed");
 
-	// We need a dummy emitter for instruction size calculations
+	FuncFrame frame = func->frame();
+
+	// We need a dummy assembler for instruction size calculations
 	CodeHolder code;
 	code.init(GetHostCodeInfo());
-	X86Assembler assembler(&code);
-	X86Emitter *emitter = assembler.asEmitter();
+	x86::Assembler assembler(&code);
 	uint64_t lastOffset = 0;
 
 	// Note: the following code must match exactly what X86Internal::emitProlog does
 
-	X86Gp zsp = emitter->zsp();   // ESP|RSP register.
-	X86Gp zbp = emitter->zsp();   // EBP|RBP register.
-	zbp.setId(X86Gp::kIdBp);
-	X86Gp gpReg = emitter->zsp(); // General purpose register (temporary).
-	X86Gp saReg = emitter->zsp(); // Stack-arguments base register.
-	uint32_t gpSaved = layout.getSavedRegs(X86Reg::kKindGp);
+	x86::Gp zsp = assembler.zsp();   // ESP|RSP register.
+	x86::Gp zbp = assembler.zsp();   // EBP|RBP register.
+	zbp.setId(x86::Gp::kIdBp);
+	x86::Gp gpReg = assembler.zsp(); // General purpose register (temporary).
+	x86::Gp saReg = assembler.zsp(); // Stack-arguments base register.
+	uint32_t gpSaved = frame.savedRegs(x86::Reg::kGroupGp);
 
-	if (layout.hasPreservedFP())
+	if (frame.hasPreservedFP())
 	{
 		// Emit: 'push zbp'
 		//       'mov  zbp, zsp'.
-		gpSaved &= ~Utils::mask(X86Gp::kIdBp);
-		emitter->push(zbp);
+		gpSaved &= ~Support::bitMask(x86::Gp::kIdBp);
+		assembler.push(zbp);
 
 		stackOffset += 8;
-		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
+		WriteAdvanceLoc(fdeInstructions, assembler.offset(), lastOffset);
 		WriteDefineStackOffset(fdeInstructions, stackOffset);
-		WriteRegisterStackLocation(fdeInstructions, dwarfRegId[X86Gp::kIdBp], stackOffset);
+		WriteRegisterStackLocation(fdeInstructions, dwarfRegId[x86::Gp::kIdBp], stackOffset);
 
-		emitter->mov(zbp, zsp);
+		assembler.mov(zbp, zsp);
 	}
 
 	if (gpSaved)
@@ -573,58 +569,60 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 			if (!(i & 0x1)) continue;
 			// Emit: 'push gp' sequence.
 			gpReg.setId(regId);
-			emitter->push(gpReg);
+			assembler.push(gpReg);
 
 			stackOffset += 8;
-			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
+			WriteAdvanceLoc(fdeInstructions, assembler.offset(), lastOffset);
 			WriteDefineStackOffset(fdeInstructions, stackOffset);
 			WriteRegisterStackLocation(fdeInstructions, dwarfRegId[regId], stackOffset);
 		}
 	}
 
-	uint32_t stackArgsRegId = layout.getStackArgsRegId();
-	if (stackArgsRegId != Globals::kInvalidRegId && stackArgsRegId != X86Gp::kIdSp)
+	uint32_t saRegId = frame.saRegId();
+	if (saRegId != BaseReg::kIdBad && saRegId != x86::Gp::kIdSp)
 	{
-		saReg.setId(stackArgsRegId);
-		if (!(layout.hasPreservedFP() && stackArgsRegId == X86Gp::kIdBp))
-		{
-			// Emit: 'mov saReg, zsp'.
-			emitter->mov(saReg, zsp);
+		saReg.setId(saRegId);
+		if (frame.hasPreservedFP()) {
+			if (saRegId != x86::Gp::kIdBp)
+				assembler.mov(saReg, zbp);
+		}
+		else {
+			assembler.mov(saReg, zsp);
 		}
 	}
 
-	if (layout.hasDynamicAlignment())
+	if (frame.hasDynamicAlignment())
 	{
 		// Emit: 'and zsp, StackAlignment'.
-		emitter->and_(zsp, -static_cast<int32_t>(layout.getStackAlignment()));
+		assembler.and_(zsp, -static_cast<int32_t>(frame.finalStackAlignment()));
 	}
 
-	if (layout.hasStackAdjustment())
+	if (frame.hasStackAdjustment())
 	{
 		// Emit: 'sub zsp, StackAdjustment'.
-		emitter->sub(zsp, layout.getStackAdjustment());
+		assembler.sub(zsp, frame.stackAdjustment());
 
-		stackOffset += layout.getStackAdjustment();
-		WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
+		stackOffset += frame.stackAdjustment();
+		WriteAdvanceLoc(fdeInstructions, assembler.offset(), lastOffset);
 		WriteDefineStackOffset(fdeInstructions, stackOffset);
 	}
 
-	if (layout.hasDynamicAlignment() && layout.hasDsaSlotUsed())
+	if (frame.hasDynamicAlignment() && frame.hasDAOffset())
 	{
 		// Emit: 'mov [zsp + dsaSlot], saReg'.
-		X86Mem saMem = x86::ptr(zsp, layout._dsaSlot);
-		emitter->mov(saMem, saReg);
+		x86::Mem saMem = x86::ptr(zsp, int32_t(frame.daOffset()));
+		assembler.mov(saMem, saReg);
 	}
 
-	uint32_t xmmSaved = layout.getSavedRegs(X86Reg::kKindVec);
+	uint32_t xmmSaved = frame.savedRegs(x86::Reg::kGroupVec);
 	if (xmmSaved)
 	{
-		int vecOffset = layout.getVecStackOffset();
-		X86Mem vecBase = x86::ptr(zsp, layout.getVecStackOffset());
-		X86Reg vecReg = x86::xmm(0);
-		bool avx = layout.isAvxEnabled();
-		bool aligned = layout.hasAlignedVecSR();
-		uint32_t vecInst = aligned ? (avx ? X86Inst::kIdVmovaps : X86Inst::kIdMovaps) : (avx ? X86Inst::kIdVmovups : X86Inst::kIdMovups);
+		int vecOffset = frame.nonGpSaveOffset();
+		x86::Mem vecBase = x86::ptr(zsp, vecOffset);
+		x86::Reg vecReg = x86::xmm(0);
+		bool avx = frame.isAvxEnabled();
+		bool aligned = frame.hasAlignedVecSR();
+		uint32_t vecInst = aligned ? (avx ? x86::Inst::kIdVmovaps : x86::Inst::kIdMovaps) : (avx ? x86::Inst::kIdVmovups : x86::Inst::kIdMovups);
 		uint32_t vecSize = 16;
 		for (uint32_t i = xmmSaved, regId = 0; i; i >>= 1, regId++)
 		{
@@ -632,10 +630,10 @@ static TArray<uint8_t> CreateUnwindInfoUnix(asmjit::CCFunc *func, unsigned int &
 
 			// Emit 'movaps|movups [zsp + X], xmm0..15'.
 			vecReg.setId(regId);
-			emitter->emit(vecInst, vecBase, vecReg);
+			assembler.emit(vecInst, vecBase, vecReg);
 			vecBase.addOffsetLo32(static_cast<int32_t>(vecSize));
 
-			WriteAdvanceLoc(fdeInstructions, assembler.getOffset(), lastOffset);
+			WriteAdvanceLoc(fdeInstructions, assembler.offset(), lastOffset);
 			WriteRegisterStackLocation(fdeInstructions, dwarfRegXmmId + regId, stackOffset - vecOffset);
 			vecOffset += static_cast<int32_t>(vecSize);
 		}
@@ -652,33 +650,37 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 {
 	using namespace asmjit;
 
-	CCFunc *func = compiler->Codegen();
+	FuncNode *func = compiler->Codegen();
+	if (code->flatten() != kErrorOk)
+		return nullptr;
+	if (code->resolveUnresolvedLinks() != kErrorOk)
+		return nullptr;
 
-	size_t codeSize = code->getCodeSize();
-	if (codeSize == 0)
+	size_t estimatedCodeSize = Support::alignUp(code->codeSize(), 16);
+	if (estimatedCodeSize == 0)
 		return nullptr;
 
 	unsigned int fdeFunctionStart = 0;
 	TArray<uint8_t> unwindInfo = CreateUnwindInfoUnix(func, fdeFunctionStart);
 	size_t unwindInfoSize = unwindInfo.Size();
 
-	codeSize = (codeSize + 15) / 16 * 16;
-
-	uint8_t *p = (uint8_t *)AllocJitMemory(codeSize + unwindInfoSize);
+	uint8_t *p = (uint8_t *)AllocJitMemory(estimatedCodeSize + unwindInfoSize);
 	if (!p)
 		return nullptr;
 
-	size_t relocSize = code->relocate(p);
-	if (relocSize == 0)
+	if (code->relocateToBase((uintptr_t)p) != kErrorOk)
 		return nullptr;
 
-	size_t unwindStart = relocSize;
-	unwindStart = (unwindStart + 15) / 16 * 16;
+	size_t codeSize = code->codeSize();
+	for (Section* section : code->sections())
+		memcpy(p + size_t(section->offset()), section->data(), size_t(section->bufferSize()));
+
+	size_t unwindStart = Support::alignUp(codeSize, 16);
 	JitBlockPos -= codeSize - unwindStart;
 
 	uint8_t *baseaddr = JitBlocks.Last();
 	uint8_t *startaddr = p;
-	uint8_t *endaddr = p + relocSize;
+	uint8_t *endaddr = p + codeSize;
 	uint8_t *unwindptr = p + unwindStart;
 	memcpy(unwindptr, &unwindInfo[0], unwindInfoSize);
 
@@ -702,7 +704,7 @@ void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler)
 				uint64_t length64 = *((uint64_t *)(entry + 4));
 				if (length64 == 0)
 					break;
-				
+
 				uint64_t offset = *((uint64_t *)(entry + 12));
 				if (offset != 0)
 				{
@@ -750,7 +752,7 @@ void JitRelease()
 #endif
 	for (auto p : JitBlocks)
 	{
-		asmjit::OSUtils::releaseVirtualMemory(p, 1024 * 1024);
+		asmjit::VirtMem::release(p, 1024 * 1024);
 	}
 	JitDebugInfo.Clear();
 	JitFrames.Clear();

@@ -17,6 +17,13 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 	using namespace asmjit;
 	StringLogger logger;
+
+	// Keep annotations to make it easier to process the debug log in case of error.
+	logger.setFlags(
+		FormatOptions::kFlagDebugRA |
+		FormatOptions::kFlagRegCasts |
+		FormatOptions::kFlagAnnotations);
+
 	try
 	{
 		ThrowingErrorHandler errorHandler;
@@ -51,11 +58,11 @@ void JitDumpLog(FILE *file, VMScriptFunction *sfunc)
 		JitCompiler compiler(&code, sfunc);
 		compiler.Codegen();
 
-		fwrite(logger.getString(), logger.getLength(), 1, file);
+		fwrite(logger.data(), logger.dataSize(), 1, file);
 	}
 	catch (const std::exception &e)
 	{
-		fwrite(logger.getString(), logger.getLength(), 1, file);
+		fwrite(logger.data(), logger.dataSize(), 1, file);
 
 		FString err;
 		err.Format("Unexpected JIT error: %s\n", e.what());
@@ -69,7 +76,7 @@ void JitDumpLog(FILE *file, VMScriptFunction *sfunc)
 static void OutputJitLog(const asmjit::StringLogger &logger)
 {
 	// Write line by line since I_FatalError seems to cut off long strings
-	const char *pos = logger.getString();
+	const char *pos = logger.data();
 	const char *end = pos;
 	while (*end)
 	{
@@ -94,7 +101,7 @@ static const char *OpNames[NUM_OPS] =
 #undef xx
 };
 
-asmjit::CCFunc *JitCompiler::Codegen()
+asmjit::FuncNode *JitCompiler::Codegen()
 {
 	Setup();
 
@@ -129,7 +136,7 @@ asmjit::CCFunc *JitCompiler::Codegen()
 			cc.comment(lineinfo.GetChars(), lineinfo.Len());
 		}
 
-		labels[i].cursor = cc.getCursor();
+		labels[i].cursor = cc.cursor();
 		ResetTemp();
 		EmitOpcode();
 
@@ -141,7 +148,7 @@ asmjit::CCFunc *JitCompiler::Codegen()
 	cc.endFunc();
 	cc.finalize();
 
-	auto code = cc.getCode ();
+	auto code = cc.code();
 	for (unsigned int j = 0; j < LineInfo.Size (); j++)
 	{
 		auto info = LineInfo[j];
@@ -151,7 +158,7 @@ asmjit::CCFunc *JitCompiler::Codegen()
 			continue;
 		}
 
-		info.InstructionIndex = code->getLabelOffset (info.Label);
+		info.InstructionIndex = code->labelOffset(info.Label);
 
 		LineInfo[j] = info;
 	}
@@ -177,7 +184,7 @@ void JitCompiler::EmitOpcode()
 
 void JitCompiler::BindLabels()
 {
-	asmjit::CBNode *cursor = cc.getCursor();
+	asmjit::BaseNode *cursor = cc.cursor();
 	unsigned int size = labels.Size();
 	for (unsigned int i = 0; i < size; i++)
 	{
@@ -195,7 +202,7 @@ void JitCompiler::CheckVMFrame()
 {
 	if (!vmframeAllocated)
 	{
-		auto cursor = cc.getCursor();
+		auto cursor = cc.cursor();
 		cc.setCursor(vmframeCursor);
 
 		auto vmstack = cc.newStack(sfunc->StackSize, 16, "vmstack");
@@ -207,11 +214,11 @@ void JitCompiler::CheckVMFrame()
 	}
 }
 
-asmjit::X86Gp JitCompiler::GetCallReturns()
+asmjit::x86::Gp JitCompiler::GetCallReturns()
 {
 	if (!callReturnsAllocated)
 	{
-		auto cursor = cc.getCursor();
+		auto cursor = cc.cursor();
 		cc.setCursor(callReturnsCursor);
 		auto stackalloc = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn), "stackalloc");
 		callReturns = cc.newIntPtr("callReturns");
@@ -245,14 +252,14 @@ void JitCompiler::Setup()
 	ret = cc.newIntPtr("ret"); // VMReturn *ret
 	numret = cc.newInt32("numret"); // int numret
 
-	func = cc.addFunc(FuncSignature5<int, VMFunction *, void *, int, void *, int>());
+	func = cc.addFunc(FuncSignatureT<int, VMFunction *, void *, int, void *, int>());
 	cc.setArg(0, unusedFunc);
 	cc.setArg(1, args);
 	cc.setArg(2, numargs);
 	cc.setArg(3, ret);
 	cc.setArg(4, numret);
 
-	callReturnsCursor = cc.getCursor();
+	callReturnsCursor = cc.cursor();
 
 	konstd = sfunc->KonstD;
 	konstf = sfunc->KonstF;
@@ -292,7 +299,7 @@ void JitCompiler::SetupSimpleFrame()
 
 	// This is a simple frame with no constructors or destructors. Allocate it on the stack ourselves.
 
-	vmframeCursor = cc.getCursor();
+	vmframeCursor = cc.cursor();
 
 	int argsPos = 0;
 	int regd = 0, regf = 0, rega = 0;
@@ -360,7 +367,7 @@ void JitCompiler::SetupFullVMFrame()
 	stack = cc.newIntPtr("stack");
 	auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int>(CreateFullVMFrame);
 	allocFrame->setRet(0, stack);
-	allocFrame->setArg(0, imm_ptr(sfunc));
+	allocFrame->setArg(0, imm(sfunc));
 	allocFrame->setArg(1, args);
 	allocFrame->setArg(2, numargs);
 
@@ -401,7 +408,7 @@ void JitCompiler::IncrementVMCalls()
 	// VMCalls[0]++
 	auto vmcallsptr = newTempIntPtr();
 	auto vmcalls = newTempInt32();
-	cc.mov(vmcallsptr, asmjit::imm_ptr(VMCalls));
+	cc.mov(vmcallsptr, asmjit::imm(VMCalls));
 	cc.mov(vmcalls, asmjit::x86::dword_ptr(vmcallsptr));
 	cc.add(vmcalls, (int)1);
 	cc.mov(asmjit::x86::dword_ptr(vmcallsptr), vmcalls);
@@ -460,7 +467,7 @@ void JitCompiler::EmitThrowException(EVMAbortException reason)
 asmjit::Label JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
 {
 	auto label = cc.newLabel();
-	auto cursor = cc.getCursor();
+	auto cursor = cc.cursor();
 	cc.bind(label);
 	EmitThrowException(reason);
 	cc.setCursor(cursor);
@@ -473,7 +480,7 @@ asmjit::Label JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
 	return label;
 }
 
-asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)
+asmjit::x86::Gp JitCompiler::CheckRegD(int r0, int r1)
 {
 	if (r0 != r1)
 	{
@@ -487,7 +494,7 @@ asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)
 	}
 }
 
-asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1)
+asmjit::x86::Xmm JitCompiler::CheckRegF(int r0, int r1)
 {
 	if (r0 != r1)
 	{
@@ -501,7 +508,7 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1)
 	}
 }
 
-asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2)
+asmjit::x86::Xmm JitCompiler::CheckRegF(int r0, int r1, int r2)
 {
 	if (r0 != r1 && r0 != r2)
 	{
@@ -515,7 +522,7 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2)
 	}
 }
 
-asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3)
+asmjit::x86::Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3)
 {
 	if (r0 != r1 && r0 != r2 && r0 != r3)
 	{
@@ -529,7 +536,7 @@ asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3)
 	}
 }
 
-asmjit::X86Gp JitCompiler::CheckRegS(int r0, int r1)
+asmjit::x86::Gp JitCompiler::CheckRegS(int r0, int r1)
 {
 	if (r0 != r1)
 	{
@@ -543,7 +550,7 @@ asmjit::X86Gp JitCompiler::CheckRegS(int r0, int r1)
 	}
 }
 
-asmjit::X86Gp JitCompiler::CheckRegA(int r0, int r1)
+asmjit::x86::Gp JitCompiler::CheckRegA(int r0, int r1)
 {
 	if (r0 != r1)
 	{

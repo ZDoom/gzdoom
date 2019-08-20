@@ -70,6 +70,7 @@ struct FFileList
 bool ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 bool IsAbsPath(const char*);
 
+FString M_ZLibError(int zerrnum);
 
 
 #endif

@@ -122,6 +122,9 @@ void AttachLight(AActor *self)
 	light->visibletoplayer = true;
 	light->lighttype = (uint8_t)self->IntVar(NAME_lighttype);
 	self->AttachedLights.Push(light);
+
+	// Disable postponed processing of dynamic light because its setup has been completed by this function
+	self->flags8 &= ~MF8_RECREATELIGHTS;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(ADynamicLight, AttachLight, AttachLight)

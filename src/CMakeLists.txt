@@ -1308,7 +1308,6 @@ set (PCH_SOURCES
 	utility/stats.cpp
 	utility/atterm.cpp
 	utility/cmdlib.cpp
-	utility/colormatcher.cpp
 	utility/configfile.cpp
 	utility/i_module.cpp
 	utility/i_time.cpp

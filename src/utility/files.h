@@ -37,9 +37,11 @@
 #define FILES_H
 
 #include <stdio.h>
+#include <stdint.h>
 #include <functional>
-#include "doomtype.h"
+#include "basictypes.h"
 #include "m_swap.h"
+#include "tarray.h"
 
 // Zip compression methods, extended by some internal types to be passed to OpenDecompressor
 enum

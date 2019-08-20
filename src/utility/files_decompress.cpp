@@ -59,7 +59,7 @@ void DecompressorBase::DecompressionError(const char *error, ...) const
 	char errortext[MAX_ERRORTEXT];
 
 	va_start(argptr, error);
-	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	vsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 	va_end(argptr);
 
 	if (ErrorCallback != nullptr) ErrorCallback(errortext);

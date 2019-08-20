@@ -12,6 +12,7 @@
 #include "files.h"
 #include "doomdef.h"
 #include "tarray.h"
+#include "zstring.h"
 
 class FResourceFile;
 struct FResourceLump;

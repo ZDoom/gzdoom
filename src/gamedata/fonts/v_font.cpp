@@ -1745,3 +1745,33 @@ void V_ClearFonts()
 	AlternativeSmallFont = OriginalSmallFont = CurrentConsoleFont = NewSmallFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
 }
 
+//==========================================================================
+//
+// CleanseString
+//
+// Does some mild sanity checking on a string: If it ends with an incomplete
+// color escape, the escape is removed.
+//
+//==========================================================================
+
+char* CleanseString(char* str)
+{
+	char* escape = strrchr(str, TEXTCOLOR_ESCAPE);
+	if (escape != NULL)
+	{
+		if (escape[1] == '\0')
+		{
+			*escape = '\0';
+		}
+		else if (escape[1] == '[')
+		{
+			char* close = strchr(escape + 2, ']');
+			if (close == NULL)
+			{
+				*escape = '\0';
+			}
+		}
+	}
+	return str;
+}
+

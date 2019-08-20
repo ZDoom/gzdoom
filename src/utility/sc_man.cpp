@@ -1259,4 +1259,37 @@ void FScriptPosition::Message (int severity, const char *message, ...) const
 		color, type, FileName.GetChars(), ScriptLine, color, composed.GetChars());
 }
 
+//==========================================================================
+//
+// ParseHex
+//
+//==========================================================================
+
+int ParseHex(const char* hex, FScriptPosition* sc)
+{
+	const char* str;
+	int num;
+
+	num = 0;
+	str = hex;
+
+	while (*str)
+	{
+		num <<= 4;
+		if (*str >= '0' && *str <= '9')
+			num += *str - '0';
+		else if (*str >= 'a' && *str <= 'f')
+			num += 10 + *str - 'a';
+		else if (*str >= 'A' && *str <= 'F')
+			num += 10 + *str - 'A';
+		else {
+			sc->Message(MSG_WARNING, "Bad hex number: %s", hex);
+			return 0;
+		}
+		str++;
+	}
+
+	return num;
+}
+
 

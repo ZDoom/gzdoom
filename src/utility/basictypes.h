@@ -6,17 +6,6 @@
 typedef uint32_t				BITFIELD;
 typedef int						INTBOOL;
 
-#if !defined(GUID_DEFINED)
-#define GUID_DEFINED
-typedef struct _GUID
-{
-    uint32_t Data1;
-    uint16_t Data2;
-	uint16_t Data3;
-    uint8_t	Data4[8];
-} GUID;
-#endif
-
 //
 // fixed point, 32bit as 16.16.
 //

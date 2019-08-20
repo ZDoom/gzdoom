@@ -40,7 +40,7 @@
 #ifndef __COLORMATCHER_H__
 #define __COLORMATCHER_H__
 
-#include <stdint.h>
+#include "palette.h"
 
 int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num);
 

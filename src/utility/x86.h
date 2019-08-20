@@ -106,7 +106,6 @@ struct PalEntry;
 
 void CheckCPUID (CPUInfo *cpu);
 void DumpCPUInfo (const CPUInfo *cpu);
-void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 #endif
 

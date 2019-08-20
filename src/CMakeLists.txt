@@ -884,7 +884,7 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_walls_vertex.cpp
 	rendering/hwrenderer/scene/hw_weapon.cpp
 	r_data/models/models.cpp
-	r_data/matrix.cpp
+	utility/matrix.cpp
 	sound/adlmidi/adldata.cpp
 	sound/adlmidi/adlmidi.cpp
 	sound/adlmidi/adlmidi_load.cpp
@@ -1292,6 +1292,7 @@ set (PCH_SOURCES
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
+	utility/palette.cpp
 	utility/files.cpp
 	utility/files_decompress.cpp
 	utility/m_png.cpp

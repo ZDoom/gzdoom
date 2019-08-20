@@ -1763,7 +1763,7 @@ void C_MidPrint (FFont *font, const char *msg, bool bold)
 	IFVIRTUALPTR(StatusBar, DBaseStatusBar, ProcessMidPrint)
 	{
 		FString msgstr = msg;
-		VMValue params[] = { (DObject*)StatusBar, font, &msg, bold };
+		VMValue params[] = { (DObject*)StatusBar, font, &msgstr, bold };
 		int rv;
 		VMReturn ret(&rv);
 		VMCall(func, params, countof(params), &ret, 1);

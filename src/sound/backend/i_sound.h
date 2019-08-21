@@ -35,7 +35,6 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
-#include "doomtype.h"
 #include "i_soundinternal.h"
 
 class FileReader;

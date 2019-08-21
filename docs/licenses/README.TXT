@@ -11,6 +11,9 @@ The majority of original code uses a BSD-like lincese. See bsd.txt.
 The OpenGL renderer is released under the LGPL v3, except some bits
 of code that were inherited fro ZDoomGL.
 
+Some code was taken from the Eternity Engine.
+Copyright (c) James Haley, Stephen McGranahan, et al.
+
 This software is based in part on the work of the Independent JPEG Group.
 
 This software uses the 'zlib' general purpose compression library by

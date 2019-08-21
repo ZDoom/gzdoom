@@ -35,6 +35,11 @@
 #include "palette.h"
 #include "palentry.h"
 
+#include <float.h>
+#include <math.h>
+#include <stdlib.h>
+#include <string.h>
+
 /****************************/
 /* Palette management stuff */
 /****************************/

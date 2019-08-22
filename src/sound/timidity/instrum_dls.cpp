@@ -26,7 +26,6 @@
 #include <math.h>
 
 #include "timidity.h"
-#include "doomdef.h"
 
 #define __Sound_SetError(x)
 

@@ -4,7 +4,6 @@
 #include <math.h>
 #include <memory>
 
-#include "doomdef.h"
 #include "m_swap.h"
 #include "templates.h"
 #include "timidity.h"

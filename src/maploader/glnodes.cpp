@@ -1153,7 +1153,7 @@ UNSAFE_CCMD(clearnodecache)
 
 	if (!ScanDirectory(list, path))
 	{
-		Printf("Unable to scan node cache directory %s\n", path);
+		Printf("Unable to scan node cache directory %s\n", path.GetChars());
 		return;
 	}
 

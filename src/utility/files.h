@@ -36,6 +36,7 @@
 #ifndef FILES_H
 #define FILES_H
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <functional>

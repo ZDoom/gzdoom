@@ -76,6 +76,7 @@
 #include "v_video.h"
 #include "fragglescript/t_script.h"
 #include "atterm.h"
+#include "s_music.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
@@ -407,6 +408,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start();
+	S_StartMusic();
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);

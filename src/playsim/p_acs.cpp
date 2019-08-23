@@ -75,6 +75,7 @@
 #include "actorinlines.h"
 #include "types.h"
 #include "scriptutil.h"
+#include "s_music.h"
 
 	// P-codes for ACS scripts
 	enum

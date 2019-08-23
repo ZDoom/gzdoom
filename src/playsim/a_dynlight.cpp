@@ -989,4 +989,3 @@ void FLevelLocals::RecreateAllAttachedLights()
 		}
 	}
 }
-

@@ -34,6 +34,7 @@
 #ifndef __I_MUSIC_H__
 #define __I_MUSIC_H__
 
+#include "doomdef.h"
 #include "i_soundinternal.h"
 
 class FileReader;

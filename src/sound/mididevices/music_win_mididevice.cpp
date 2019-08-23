@@ -42,6 +42,7 @@
 
 #include "i_musicinterns.h"
 #include "templates.h"
+#include "doomdef.h"
 #include "m_swap.h"
 #include "doomerrors.h"
 

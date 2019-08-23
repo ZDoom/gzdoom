@@ -5,6 +5,7 @@
 #include "mus2midi.h"
 #include "i_sound.h"
 #include "i_music.h"
+#include "s_sound.h"
 #include "files.h"
 #include "wildmidi/wildmidi_lib.h"
 #include "midisources/midisource.h"

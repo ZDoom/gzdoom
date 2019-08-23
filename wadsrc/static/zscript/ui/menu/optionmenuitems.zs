@@ -725,7 +725,7 @@ class OptionMenuSliderBase : OptionMenuItem
 
 	private void DrawSliderElement (int color, int x, int y, String str)
 	{
-		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 16 * CleanXfac_1, DTA_CellY, 16 * CleanYfac_1);
+		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, (ui_classic? 8 : 16) * CleanXfac_1, DTA_CellY, (ui_classic? 8 : 16) * CleanYfac_1);
 	}
 
 	protected void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
@@ -734,8 +734,8 @@ class OptionMenuSliderBase : OptionMenuItem
 		String textbuf;
 		double range;
 		int maxlen = 0;
-		int right = x + (12*16 + 4) * CleanXfac_1;	// length of slider. This uses the old ConFont and 
-		int cy = y + CleanYFac;
+		int right = x + (12*(ui_classic? 8 : 16) + 4) * CleanXfac_1;	// length of slider. This uses the old ConFont and 
+		int cy = y + (ui_classic? 0 : CleanYFac);
 
 		range = max - min;
 		double ccur = clamp(cur, min, max) - min;
@@ -751,13 +751,13 @@ class OptionMenuSliderBase : OptionMenuItem
 		if (!mSliderShort)
 		{
 			DrawSliderElement(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 78) / range)) * 2 * CleanXfac_1), cy, "\x13");
+			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 78) / range)) * (ui_classic? 1 : 2) * CleanXfac_1), cy, "\x13");
 		}
 		else
 		{
 			// On 320x200 we need a shorter slider
 			DrawSliderElement(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x12");
-			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 38) / range)) * 2 * CleanXfac_1), cy, "\x13");
+			DrawSliderElement(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 38) / range)) * (ui_classic? 1 : 2) * CleanXfac_1), cy, "\x13");
 			right -= 5*8*CleanXfac;
 		}
 
@@ -813,8 +813,8 @@ class OptionMenuSliderBase : OptionMenuItem
 			lm.ReleaseFocus();
 		}
 
-		int slide_left = mDrawX+16*CleanXfac_1;
-		int slide_right = slide_left + (10*16*CleanXfac_1 >> mSliderShort);	// 10 char cells with 16 pixels each.
+		int slide_left = mDrawX+(ui_classic? 8 : 16)*CleanXfac_1;
+		int slide_right = slide_left + (10*(ui_classic? 8 : 16)*CleanXfac_1 >> mSliderShort);	// 10 char cells with 16 pixels each.
 
 		if (type == Menu.MOUSE_Click)
 		{
@@ -899,13 +899,17 @@ class OptionMenuItemColorPicker : OptionMenuItem
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
+		int linespacing;
+
+		linespacing = ui_classic? OptionMenuSettings.mOldLinespacing : OptionMenuSettings.mLinespacing;
+
 		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
 
 		if (mCVar != null)
 		{
 			int box_x = indent + CursorSpace();
 			int box_y = y + CleanYfac_1;
-			screen.Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + OptionMenuSettings.mLinespacing*CleanYfac_1, mCVar.GetInt() | 0xff000000);
+			screen.Clear (box_x, box_y, box_x + 32*CleanXfac_1, box_y + linespacing*CleanYfac_1, mCVar.GetInt() | 0xff000000);
 		}
 		return indent;
 	}

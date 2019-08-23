@@ -191,6 +191,23 @@ CUSTOM_CVAR(Bool, ui_generic, false, CVAR_NOINITCALL) // This is for allowing to
 	UpdateGenericUI(self);
 }
 
+void DisableGenericUI(bool cvar)
+{
+	if (generic_ui && cvar) generic_ui = false;
+	if (cvar)
+	{
+		CurrentConsoleFont = ConFont;
+	}
+	else
+	{
+		CurrentConsoleFont = NewConsoleFont;
+	}
+}
+
+CUSTOM_CVAR(Bool, ui_classic, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	DisableGenericUI(self);
+}
 
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 {

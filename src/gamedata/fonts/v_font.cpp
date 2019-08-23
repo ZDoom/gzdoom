@@ -72,10 +72,13 @@
 
 static int TranslationMapCompare (const void *a, const void *b);
 void UpdateGenericUI(bool cvar);
+void DisableGenericUI(bool cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int PrintColors[];
+
+EXTERN_CVAR(Bool, ui_classic);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -1733,6 +1736,8 @@ void V_InitFonts()
 	}
 	AlternativeSmallFont = OriginalSmallFont;
 	UpdateGenericUI(false);
+	if (ui_classic)
+		DisableGenericUI(true);
 }
 
 void V_ClearFonts()

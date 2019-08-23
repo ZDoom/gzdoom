@@ -182,6 +182,7 @@ struct FOptionMenuSettings
 	EColorRange mFontColorHighlight;
 	EColorRange mFontColorSelection;
 	int mLinespacing;
+	int mOldLinespacing;
 };
 
 class DOptionMenuDescriptor : public DMenuDescriptor

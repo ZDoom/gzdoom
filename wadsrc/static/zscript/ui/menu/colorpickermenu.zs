@@ -73,7 +73,7 @@ class ColorpickerMenu : OptionMenu
 	int mStartItem;
 
 	CVar mCVar;
-	
+
 	double GetColor(int index)
 	{
 		double v = index == 0? mRed : index == 1? mGreen : mBlue;
@@ -219,9 +219,9 @@ class ColorpickerMenu : OptionMenu
 
 		if (mDesc.mSelectedItem == -1 || mDesc.mSelectedItem == mStartItem+7)
 		{
-			int y = (-mDesc.mPosition + BigFont.GetHeight() + mDesc.mItems.Size() * OptionMenuSettings.mLinespacing) * CleanYfac_1;
+			int y = (-mDesc.mPosition + BigFont.GetHeight() + mDesc.mItems.Size() * linespacing) * CleanYfac_1;
 			int h = (screen.GetHeight() - y) / 16;
-			int fh = OptionMenuSettings.mLinespacing * CleanYfac_1;
+			int fh = linespacing * CleanYfac_1;
 			int w = fh;
 			int yy = y + 2 * CleanYfac_1;
 			int indent = (screen.GetWidth() / 2);
@@ -266,8 +266,9 @@ class ColorpickerMenu : OptionMenu
 		Super.Drawer();
 
 		if (mCVar == null) return;
-		int y = (-mDesc.mPosition + BigFont.GetHeight() + mDesc.mItems.Size() * OptionMenuSettings.mLinespacing) * CleanYfac_1;
-		int fh = OptionMenuSettings.mLinespacing * CleanYfac_1;
+
+		int y = (-mDesc.mPosition + BigFont.GetHeight() + mDesc.mItems.Size() * linespacing) * CleanYfac_1;
+		int fh = linespacing * CleanYfac_1;
 		int h = (screen.GetHeight() - y) / 16;
 		int w = fh;
 		int yy = y;

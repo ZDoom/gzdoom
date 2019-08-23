@@ -345,12 +345,11 @@ OptionMenuSettings
 {
 	// These can be overridden if a different menu fonts requires it.
 	Linespacing 17
-	/*
+	OldLinespacing 8
 	IfGame(Heretic, Hexen)
 	{
-		Linespacing 9
+		OldLinespacing 9
 	}
-	*/
 }
 
 DefaultOptionMenu

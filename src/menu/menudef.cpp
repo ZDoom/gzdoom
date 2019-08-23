@@ -745,6 +745,11 @@ static void ParseOptionSettings(FScanner &sc)
 			sc.MustGetNumber();
 			OptionSettings.mLinespacing = sc.Number;
 		}
+		else if (sc.Compare("OldLinespacing"))
+		{
+			sc.MustGetNumber();
+			OptionSettings.mOldLinespacing = sc.Number;
+		}
 		else if (sc.Compare("LabelOffset"))
 		{
 			sc.MustGetNumber();

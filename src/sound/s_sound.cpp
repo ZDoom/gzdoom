@@ -119,6 +119,7 @@ enum
 extern float S_GetMusicVolume (const char *music);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+void I_CloseSound();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -2592,3 +2593,41 @@ DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
 	return 0;
 }
 
+
+void S_UnloadAllSounds()
+{
+	for (unsigned i = 0; i < S_sfx.Size(); i++)
+	{
+		S_UnloadSound(&S_sfx[i]);
+	}
+}
+
+CCMD (snd_status)
+{
+	GSnd->PrintStatus ();
+}
+
+CCMD (snd_reset)
+{
+	S_SoundReset();
+}
+
+void S_SoundReset()
+{
+	I_ShutdownMusic();
+	S_EvictAllChannels();
+	I_CloseSound();
+	I_InitSound();
+	S_RestartMusic();
+	S_RestoreEvictedChannels();
+}
+
+CCMD (snd_listdrivers)
+{
+	GSnd->PrintDriversList ();
+}
+
+ADD_STAT (sound)
+{
+	return GSnd->GatherStats ();
+}

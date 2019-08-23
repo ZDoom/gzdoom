@@ -373,5 +373,7 @@ void S_SetEnvironment (const ReverbContainer *settings);
 ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);
 void S_AddEnvironment (ReverbContainer *settings);
+void S_UnloadAllSounds();
+void S_SoundReset();
 	
 #endif

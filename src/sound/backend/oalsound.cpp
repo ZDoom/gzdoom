@@ -2243,7 +2243,7 @@ void OpenALSoundRenderer::UpdateSounds()
 		if(connected == ALC_FALSE)
 		{
 			Printf("Sound device disconnected; restarting...\n");
-			AddCommandString("snd_reset");
+			S_SoundReset();
 			return;
 		}
 	}

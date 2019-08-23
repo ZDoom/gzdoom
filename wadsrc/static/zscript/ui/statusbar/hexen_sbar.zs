@@ -106,9 +106,21 @@ class HexenStatusBar : BaseStatusBar
 		DrawImage("H2BAR", (0, 134), DI_ITEM_OFFSETS);
 		
 		String Gem, Chain;
-		if (CPlayer.mo is "ClericPlayer")    { Gem = "LIFEGMC2"; Chain = "CHAIN2"; }
-		else if (CPlayer.mo is "MagePlayer") { Gem = "LIFEGMM2"; Chain = "CHAIN3"; }
-		else                                 { Gem = "LIFEGMF2"; Chain = "CHAIN";  }
+		if (CPlayer.mo is "ClericPlayer")
+			{
+				Gem = "LIFEGMC2";
+				Chain = "CHAIN2";
+			}
+		else if (CPlayer.mo is "MagePlayer")
+			{
+				Gem = "LIFEGMM2";
+				Chain = "CHAIN3";
+			}
+		else
+			{
+				Gem = "LIFEGMF2";
+				Chain = "CHAIN";
+			}
 
 		int inthealth =  mHealthInterpolator2.GetValue();
 		DrawGem(Chain, Gem, inthealth, CPlayer.mo.GetMaxHealth(true), (30, 193), -23, 49, 15, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 

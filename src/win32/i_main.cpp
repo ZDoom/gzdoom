@@ -74,6 +74,7 @@
 #include "i_system.h"
 #include "gstrings.h"
 #include "atterm.h"
+#include "s_music.h"
 
 #include "stats.h"
 #include "st_start.h"

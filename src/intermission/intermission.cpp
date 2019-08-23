@@ -51,6 +51,7 @@
 #include "g_levellocals.h"
 #include "utf8.h"
 #include "templates.h"
+#include "s_music.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 

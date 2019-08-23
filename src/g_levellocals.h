@@ -424,11 +424,8 @@ public:
 		return thinker;
 	}
 	
-	void SetMusic()
-	{
-		if (cdtrack == 0 || !S_ChangeCDMusic(cdtrack, cdid))
-			S_ChangeMusic(Music, musicorder);
-	}
+	void SetMusic();
+
 
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;

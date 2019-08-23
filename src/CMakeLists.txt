@@ -1001,6 +1001,7 @@ set (PCH_SOURCES
 	sound/s_environment.cpp
 	sound/s_sndseq.cpp
 	sound/s_sound.cpp
+	sound/s_music.cpp
 	serializer.cpp
 	scriptutil.cpp
 	st_stuff.cpp

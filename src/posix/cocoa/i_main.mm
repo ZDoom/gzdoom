@@ -46,6 +46,7 @@
 #include "st_console.h"
 #include "version.h"
 #include "doomerrors.h"
+#include "s_music.h"
 
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
@@ -199,8 +200,8 @@ int OriginalMain(int argc, char** argv)
 	// Set LC_NUMERIC environment variable in case some library decides to
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
-	setenv("LC_NUMERIC", "C", 1);
-	setlocale(LC_ALL, "C");
+	setenv("LC_NUMERIC", "en_US.UTF-8", 1);
+	setlocale(LC_ALL, "en_US.UTF-8");
 
 	// Set reasonable default values for video settings
 

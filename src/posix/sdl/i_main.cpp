@@ -170,9 +170,9 @@ int main (int argc, char **argv)
 	// Set LC_NUMERIC environment variable in case some library decides to
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
-	setenv ("LC_NUMERIC", "en_US.UTF-8", 1);
+	setenv ("LC_NUMERIC", "C", 1);
 
-	setlocale (LC_ALL, "en_US.UTF-8");
+	setlocale (LC_ALL, "C");
 
 	if (SDL_Init (0) < 0)
 	{

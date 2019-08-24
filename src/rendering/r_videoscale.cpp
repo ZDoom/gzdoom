@@ -32,15 +32,21 @@
 extern bool setsizeneeded;
 
 EXTERN_CVAR(Int, vid_aspect)
-CUSTOM_CVAR(Int, vid_scale_customwidth, VID_MIN_WIDTH, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Bool, ui_classic)
+
+CUSTOM_CVAR(Int, vid_scale_customwidth, 640, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < VID_MIN_WIDTH)
+	if (!ui_classic && self < 640)
+		self = 640;
+	else if (self < VID_MIN_WIDTH)
 		self = VID_MIN_WIDTH;
 	setsizeneeded = true;
 }
-CUSTOM_CVAR(Int, vid_scale_customheight, VID_MIN_HEIGHT, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, vid_scale_customheight, 400, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < VID_MIN_HEIGHT)
+	if (!ui_classic && self < 400)
+		self = 400;
+	else if (self < VID_MIN_HEIGHT)
 		self = VID_MIN_HEIGHT;
 	setsizeneeded = true;
 }
@@ -83,14 +89,14 @@ CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 	setsizeneeded = true;
 	if (self < 0.05 || self > 2.0)
 		self = 1.0;
-	if (self != 1.0)
-		R_ShowCurrentScaling();
+	R_ShowCurrentScaling();
 }
 
 CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	setsizeneeded = true;
-	if (isOutOfBounds(self))
+	if (!ui_classic && self == 2) self = 3;	// block 320x200 setting.
+	else if (isOutOfBounds(self))
 		self = 0;
 }
 
@@ -141,8 +147,15 @@ bool ViewportIsScaled43()
 void R_ShowCurrentScaling()
 {
 	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = ViewportScaledWidth(x1, y1), y2 = ViewportScaledHeight(x1, y1);
-	Printf("Current vid_scalefactor: %f\n", (float)(vid_scalefactor));
-	Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
+	if (!ui_classic && (x2 < 640 || y2 < 400))
+	{
+		vid_scalefactor = 1.;
+	}
+	else
+	{
+		Printf("Current vid_scalefactor: %f\n", (float)(vid_scalefactor));
+		Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
+	}
 }
 
 CCMD (vid_showcurrentscaling)

@@ -41,7 +41,10 @@
 #include "v_font.h"
 #include "utf8.h"
 
-CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
+EXTERN_CVAR(Int, vid_scalemode)
+EXTERN_CVAR(Float, vid_scalefactor)
+
+CVAR(Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -213,6 +216,8 @@ CUSTOM_CVAR(Bool, ui_classic, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	if (ui_generic && self)
 		ui_generic = false;
 	DisableGenericUI(self);
+	vid_scalemode.Callback();
+	vid_scalefactor.Callback();
 }
 
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)

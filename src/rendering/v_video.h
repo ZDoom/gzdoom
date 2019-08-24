@@ -46,8 +46,8 @@
 #include "v_2ddrawer.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 
-static const int VID_MIN_WIDTH = 640;
-static const int VID_MIN_HEIGHT = 400;
+static const int VID_MIN_WIDTH = 320;
+static const int VID_MIN_HEIGHT = 200;
 
 struct sector_t;
 class FTexture;

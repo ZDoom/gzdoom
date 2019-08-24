@@ -66,8 +66,8 @@ namespace
 		//	isValid,	isLinear,	GetScaledWidth(),									            	GetScaledHeight(),										        	isScaled43, isCustom
 		{ true,			false,		[](uint32_t Width)->uint32_t { return Width; },		        	[](uint32_t Height)->uint32_t { return Height; },	        		false,  	false   },	// 0  - Native
 		{ true,			true,		[](uint32_t Width)->uint32_t { return Width; },			        [](uint32_t Height)->uint32_t { return Height; },	        		false,  	false   },	// 1  - Native (Linear)
-		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },		            	[](uint32_t Height)->uint32_t { return 400; },			        	true,   	false   },	// 2  - 640x400 (formerly 320x200)
-		{ true,			true,		[](uint32_t Width)->uint32_t { return 960; },		            	[](uint32_t Height)->uint32_t { return 600; },				        true,   	false   },	// 3  - 960x600 (formerly 640x400)
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },		            	[](uint32_t Height)->uint32_t { return 400; },			        	true,   	false   },	// 2  - formerly 320x200
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },		            	[](uint32_t Height)->uint32_t { return 400; },				        true,   	false   },	// 3  - 640x400
 		{ true,			true,		[](uint32_t Width)->uint32_t { return 1280; },		            	[](uint32_t Height)->uint32_t { return 800; },	        			true,   	false   },	// 4  - 1280x800		
 		{ true,			true,		[](uint32_t Width)->uint32_t { return vid_scale_customwidth; },	[](uint32_t Height)->uint32_t { return vid_scale_customheight; },	true,   	true    },	// 5  - Custom
 	};
@@ -90,7 +90,8 @@ CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	setsizeneeded = true;
-	if (isOutOfBounds(self))
+	if (self == 2) self = 3;	// block 320x200 setting.
+	else if (isOutOfBounds(self))
 		self = 0;
 }
 

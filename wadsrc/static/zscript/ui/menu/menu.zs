@@ -286,34 +286,38 @@ class Menu : Object native ui version("2.4")
 	{
 		S_Sound (snd, CHAN_VOICE | CHAN_UI, snd_menuvolume, ATTN_NONE);
 	}
-	
+
 	deprecated("4.0") static void DrawConText (int color, int x, int y, String str)
 	{
 		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
 	}
-	
+
+	static void DrawConTextScaled (int color, int x, int y, String str)
+	{
+		screen.DrawText (ConFont, color, x, y, str, DTA_CellX, 8 * CleanXfac_1, DTA_CellY, 8 * CleanYfac_1);
+	}
+
 	static Font OptionFont()
 	{
 		return ui_classic? SmallFont : NewSmallFont;
 	}
-	
+
 	static int OptionHeight() 
 	{
 		return OptionFont().GetHeight();
 	}
-	
+
 	static int OptionWidth(String s)
 	{
 		return OptionFont().StringWidth(s);
 	}
-	
+
 	static void DrawOptionText(int x, int y, int color, String text, bool grayed = false)
 	{
 		String label = Stringtable.Localize(text);
 		int overlay = grayed? Color(96,48,0,0) : 0;
 		screen.DrawText (OptionFont(), color, x, y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
 	}
-	
 
 }
 

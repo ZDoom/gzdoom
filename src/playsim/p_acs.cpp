@@ -589,6 +589,9 @@ enum
 	PICKAF_RETURNTID = 2,
 };
 
+EXTERN_CVAR (Bool, sv_cheats)
+EXTERN_CVAR (Bool, ui_classic)
+
 // ACS specific conversion functions to and from fixed point.
 // These should be used to convert from and to sctipt variables
 // so that there is a clear distinction between leftover fixed point code
@@ -8720,8 +8723,25 @@ scriptwait:
 						(type & HUDMSG_LAYER_MASK) >> HUDMSG_LAYER_SHIFT);
 					if (type & HUDMSG_LOG)
 					{
-						int consolecolor = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
-						Printf(PRINT_NONOTIFY, "\n" TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", consolecolor, console_bar, work.GetChars(), console_bar);
+						if (ui_classic)
+						{
+							static const char bar[] = TEXTCOLOR_ORANGE "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+								"\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
+							char consolecolor[3];
+
+							consolecolor[0] = '\x1c';
+							consolecolor[1] = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+							consolecolor[2] = '\0';
+							AddToConsole (-1, bar);
+							AddToConsole (-1, consolecolor);
+							AddToConsole (-1, work);
+							AddToConsole (-1, bar);
+						}
+						else
+						{
+							int consolecolor = color >= CR_BRICK && color <= CR_YELLOW ? color + 'A' : '-';
+							Printf(PRINT_NONOTIFY, "\n" TEXTCOLOR_ESCAPESTR "%c%s\n%s\n%s\n", consolecolor, console_bar, work.GetChars(), console_bar);
+						}
 					}
 				}
 			}
@@ -10375,8 +10395,6 @@ static void addDefered (level_info_t *i, acsdefered_t::EType type, int script, c
 		DPrintf (DMSG_SPAMMY, "%s on map %s deferred\n", ScriptPresentation(script).GetChars(), i->MapName.GetChars());
 	}
 }
-
-EXTERN_CVAR (Bool, sv_cheats)
 
 int P_StartScript (FLevelLocals *Level, AActor *who, line_t *where, int script, const char *map, const int *args, int argcount, int flags)
 {

@@ -99,6 +99,7 @@ EXTERN_CVAR (Float, sv_gravity)
 EXTERN_CVAR (Float, sv_aircontrol)
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (String, playerclass)
+EXTERN_CVAR (Bool, ui_classic)
 
 extern uint8_t globalfreeze, globalchangefreeze;
 
@@ -1096,8 +1097,20 @@ void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool au
 	if (isPrimaryLevel())
 	{
 		FString mapname = nextmapname;
-		mapname.ToUpper();
-		Printf("\n%s\n\n" TEXTCOLOR_BOLD "%s - %s\n\n", console_bar, mapname.GetChars(), LevelName.GetChars());
+		if (ui_classic)
+		{
+			mapname.ToLower();
+			Printf(
+				"\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
+				"\36\36\36\36\36\36\36\36\36\36\36\36\37\n\n"
+				TEXTCOLOR_BOLD "%s - %s\n\n",
+				mapname.GetChars(), LevelName.GetChars());
+		}
+		else
+		{
+			mapname.ToUpper();
+			Printf("\n%s\n\n" TEXTCOLOR_BOLD "%s - %s\n\n", console_bar, mapname.GetChars(), LevelName.GetChars());
+		}
 	}
 
 	// Set the sky map.

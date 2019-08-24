@@ -471,7 +471,7 @@ class OptionMenu : Menu
 			if (i == mDesc.mScrollTop)
 			{
 				i += mDesc.mScrollPos;
-				if (i >= mDesc.mItems.Size()) break;	// skipped beyond end of menu 
+				if (i >= mDesc.mItems.Size()) break;	// skipped beyond end of menu
 			}
 			bool isSelected = mDesc.mSelectedItem == i;
 			int cur_indent = mDesc.mItems[i].Draw(mDesc, y, indent, isSelected);
@@ -479,7 +479,10 @@ class OptionMenu : Menu
 			{
 				if (((MenuTime() % 8) < 6) || GetCurrentMenu() != self)
 				{
-					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, OptionMenuSettings.mFontColorSelection, "◄");
+					if (ui_classic)
+						DrawConTextScaled(OptionMenuSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y+fontheight-9*CleanYfac_1, "\xd");
+					else
+						DrawOptionText(cur_indent + 3 * CleanXfac_1, y, OptionMenuSettings.mFontColorSelection, "◄");
 				}
 			}
 			y += fontheight;
@@ -491,11 +494,17 @@ class OptionMenu : Menu
 
 		if (CanScrollUp)
 		{
-			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1, ytop, OptionMenuSettings.mFontColorSelection, "▲");
+			if (ui_classic)
+				DrawConTextScaled(OptionMenuSettings.mFontColorSelection, 3 * CleanXfac_1, ytop, "\x1a");
+			else
+				DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1, ytop, OptionMenuSettings.mFontColorSelection, "▲");
 		}
 		if (CanScrollDown)
 		{
-			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, OptionMenuSettings.mFontColorSelection, "▼");
+			if (ui_classic)
+				DrawConTextScaled(OptionMenuSettings.mFontColorSelection, 3 * CleanXfac_1, y - 8*CleanYfac_1, "\x1b");
+			else
+				DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, OptionMenuSettings.mFontColorSelection, "▼");
 		}
 		Super.Drawer();
 	}

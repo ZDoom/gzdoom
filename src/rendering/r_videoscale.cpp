@@ -33,6 +33,8 @@ extern bool setsizeneeded;
 
 EXTERN_CVAR(Int, vid_aspect)
 EXTERN_CVAR(Bool, ui_classic)
+EXTERN_CVAR(Int, menu_resolution_custom_width)
+EXTERN_CVAR(Int, menu_resolution_custom_height)
 
 CUSTOM_CVAR(Int, vid_scale_customwidth, 640, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -89,6 +91,10 @@ CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 	setsizeneeded = true;
 	if (self < 0.05 || self > 2.0)
 		self = 1.0;
+	if (!ui_classic && (menu_resolution_custom_width < 640 || menu_resolution_custom_height < 400))
+	{
+		C_DoCommand("menu_resolution_commit_changes");
+	}
 	R_ShowCurrentScaling();
 }
 
@@ -147,7 +153,7 @@ bool ViewportIsScaled43()
 void R_ShowCurrentScaling()
 {
 	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = ViewportScaledWidth(x1, y1), y2 = ViewportScaledHeight(x1, y1);
-	if (!ui_classic && (x2 < 640 || y2 < 400))
+	if ((!ui_classic && (x2 < 640 || y2 < 400)) && vid_scalefactor != 1)
 	{
 		vid_scalefactor = 1.;
 	}

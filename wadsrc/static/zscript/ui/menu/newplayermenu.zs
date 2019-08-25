@@ -417,6 +417,10 @@ class NewPlayerMenu : OptionMenu
 	const PLAYERDISPLAY_W = 144;
 	const PLAYERDISPLAY_H = 160;
 	const PLAYERDISPLAY_SPACE = 180;
+	const PLAYERDISPLAY_X_CUI = 80;
+	const PLAYERDISPLAY_W_CUI = 72;
+	const PLAYERDISPLAY_H_CUI = 80;
+	const PLAYERDISPLAY_SPACE_CUI = 90;
 	
 	override void Init(Menu parent, OptionMenuDescriptor desc)
 	{
@@ -439,9 +443,9 @@ class NewPlayerMenu : OptionMenu
 
 	override int GetIndent()
 	{
-		return Super.GetIndent() - 75*CleanXfac_1;
+		return Super.GetIndent() - (ui_classic && screen.GetWidth() < 640? 125 : 75)*CleanXfac_1;
 	}
-	
+
 
 	//=============================================================================
 	//
@@ -548,14 +552,25 @@ class NewPlayerMenu : OptionMenu
 	{
 		Super.Drawer();
 		mPlayerDisplay.Drawer(false);
-		
-		int x = screen.GetWidth()/(CleanXfac_1*2) + PLAYERDISPLAY_X + PLAYERDISPLAY_W/2;
-		int y = PLAYERDISPLAY_Y + PLAYERDISPLAY_H + 5;
-		String str = Stringtable.Localize("$PLYRMNU_PRESSSPACE");
-		screen.DrawText (NewSmallFont, Font.CR_GOLD, x - NewSmallFont.StringWidth(str)/2, y, str, DTA_VirtualWidth, CleanWidth_1, DTA_VirtualHeight, CleanHeight_1, DTA_KeepRatio, true);
-		str = Stringtable.Localize(mRotation ? "$PLYRMNU_SEEFRONT" : "$PLYRMNU_SEEBACK");
-		y += NewSmallFont.GetHeight();
-		screen.DrawText (NewSmallFont, Font.CR_GOLD,x - NewSmallFont.StringWidth(str)/2, y, str, DTA_VirtualWidth, CleanWidth_1, DTA_VirtualHeight, CleanHeight_1, DTA_KeepRatio, true);
 
-	}	
+		let font = ui_classic? SmallFont : NewSmallFont;
+		int x,y;
+
+		if (ui_classic)
+		{
+			x = screen.GetWidth()/(CleanXfac_1*2) + PLAYERDISPLAY_X_CUI + PLAYERDISPLAY_W_CUI/2;
+			y = PLAYERDISPLAY_Y + PLAYERDISPLAY_H_CUI + 5;
+		}
+		else
+		{
+			x = screen.GetWidth()/(CleanXfac_1*2) + PLAYERDISPLAY_X + PLAYERDISPLAY_W/2;
+			y = PLAYERDISPLAY_Y + PLAYERDISPLAY_H + 5;
+		}
+		String str = Stringtable.Localize("$PLYRMNU_PRESSSPACE");
+		screen.DrawText (font, Font.CR_GOLD, x - font.StringWidth(str)/2, y, str, DTA_VirtualWidth, CleanWidth_1, DTA_VirtualHeight, CleanHeight_1, DTA_KeepRatio, true);
+		str = Stringtable.Localize(mRotation ? "$PLYRMNU_SEEFRONT" : "$PLYRMNU_SEEBACK");
+		y += font.GetHeight();
+		screen.DrawText (font, Font.CR_GOLD,x - font.StringWidth(str)/2, y, str, DTA_VirtualWidth, CleanWidth_1, DTA_VirtualHeight, CleanHeight_1, DTA_KeepRatio, true);
+
+	}
 }

@@ -251,6 +251,8 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 
 void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 {
+	mRenderState->EndRenderPass();
+
 	if (mDrawCommands || mTransferCommands)
 	{
 		VulkanCommandBuffer *commands[2];

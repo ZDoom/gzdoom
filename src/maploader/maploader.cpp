@@ -728,13 +728,21 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		if (compressed)
 		{
 			FileReader zip;
-			if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false))
+			try
 			{
-				LoadZNodes(zip, type);
+				if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
+				{
+					LoadZNodes(zip, type);
+				}
+				else
+				{
+					Printf("Error loading nodes: Corrupt data.\n");
+					return false;
+				}
 			}
-			else
+			catch (const CRecoverableError& err)
 			{
-				Printf("Error loading nodes: Corrupt data.\n");
+				Printf("Error loading nodes: %s.\n", err.what());
 				return false;
 			}
 		}

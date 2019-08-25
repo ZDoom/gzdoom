@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "utility/vectors.h"
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "name.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 

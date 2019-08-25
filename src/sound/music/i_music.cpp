@@ -47,6 +47,7 @@
 #include "stats.h"
 #include "timidity/timidity.h"
 #include "vm.h"
+#include "s_music.h"
 
 
 

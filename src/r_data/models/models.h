@@ -24,7 +24,7 @@
 #define __GL_MODELS_H_
 
 #include "tarray.h"
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "actor.h"
 #include "dobject.h"
 #include "p_pspr.h"

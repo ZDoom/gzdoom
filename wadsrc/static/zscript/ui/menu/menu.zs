@@ -90,6 +90,7 @@ class Menu : Object native ui version("2.4")
 	native bool mMouseCapture;
 	native bool mBackbuttonSelected;
 	native bool DontDim;
+	native bool DontBlur;
 
 	native static int MenuTime();
 	native static Menu GetCurrentMenu();
@@ -113,6 +114,7 @@ class Menu : Object native ui version("2.4")
 		mMouseCapture = false;
 		mBackbuttonSelected = false;
 		DontDim = false;
+		DontBlur = false;
 	}
 	
 	//=============================================================================

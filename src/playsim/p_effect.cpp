@@ -300,25 +300,6 @@ void P_SpawnParticle(FLevelLocals *Level, const DVector3 &pos, const DVector3 &v
 }
 
 //
-// P_RunEffects
-//
-// Run effects on all actors in the world
-//
-void P_RunEffects (FLevelLocals *Level)
-{
-	AActor *actor;
-	auto iterator = Level->GetThinkerIterator<AActor>();
-
-	while ( (actor = iterator.Next ()) )
-	{
-		if (actor->effects || actor->fountaincolor)
-		{
-			P_RunEffect (actor, actor->effects);
-		}
-	}
-}
-
-//
 // JitterParticle
 //
 // Creates a particle with "jitter"

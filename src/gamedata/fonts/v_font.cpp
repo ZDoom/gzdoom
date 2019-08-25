@@ -1609,8 +1609,6 @@ void V_InitFonts()
 				SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 				SmallFont->SetCursor('[');
 			}
-			OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-			OriginalSmallFont->SetCursor('[');
 		}
 		else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
 		{
@@ -1626,9 +1624,20 @@ void V_InitFonts()
 			{
 				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 			}
-			OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
 		}
 	}
+
+	// Create the original small font as a fallback for incomplete definitions.
+	if (Wads.CheckNumForName("FONTA_S") >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+		OriginalSmallFont->SetCursor('[');
+	}
+	else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
+	}
+
 	if (SmallFont)
 	{
 		uint32_t colors[256] = {};
@@ -1734,5 +1743,35 @@ void V_ClearFonts()
 	}
 	FFont::FirstFont = nullptr;
 	AlternativeSmallFont = OriginalSmallFont = CurrentConsoleFont = NewSmallFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
+}
+
+//==========================================================================
+//
+// CleanseString
+//
+// Does some mild sanity checking on a string: If it ends with an incomplete
+// color escape, the escape is removed.
+//
+//==========================================================================
+
+char* CleanseString(char* str)
+{
+	char* escape = strrchr(str, TEXTCOLOR_ESCAPE);
+	if (escape != NULL)
+	{
+		if (escape[1] == '\0')
+		{
+			*escape = '\0';
+		}
+		else if (escape[1] == '[')
+		{
+			char* close = strchr(escape + 2, ']');
+			if (close == NULL)
+			{
+				*escape = '\0';
+			}
+		}
+	}
+	return str;
 }
 

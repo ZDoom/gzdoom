@@ -70,6 +70,12 @@ enum
 	TELEFRAG_DAMAGE = 1000000
 };
 
+inline int Tics2Seconds(int tics)
+{
+	return tics / TICRATE;
+}
+
+
 
 typedef float skill_t;
 

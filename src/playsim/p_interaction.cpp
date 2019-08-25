@@ -266,7 +266,22 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 
 	if (message == NULL)
 	{
-		message = GStrings.GetString("OB_DEFAULT", nullptr, self->player->userinfo.GetGender());
+		// one last thing: Synthesize a string label from the actor's class name and try to resolve that.
+		auto cls = attacker->GetClass()->TypeName.GetChars();
+		if (mod == NAME_Melee)
+		{
+			FStringf ob("DEFHITOB_%s", cls);
+			message = GStrings.GetString(ob, nullptr, self->player->userinfo.GetGender());
+		}
+		if (message == nullptr)
+		{
+			FStringf ob("DEFOB_%s", cls);
+			message = GStrings.GetString(ob, nullptr, self->player->userinfo.GetGender());
+		}
+		if (message == nullptr)
+		{
+			message = GStrings.GetString("OB_DEFAULT", nullptr, self->player->userinfo.GetGender());
+		}
 	}
 
 	// [CK] Don't display empty strings

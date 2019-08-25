@@ -51,6 +51,7 @@
 #include "g_levellocals.h"
 #include "utf8.h"
 #include "templates.h"
+#include "s_music.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -859,6 +860,15 @@ bool DIntermissionController::Responder (event_t *ev)
 				 !stricmp(cmd, "screenshot")))
 			{
 				return false;
+			}
+
+			// The following is needed to be able to enter main menu with a controller,
+			// by pressing buttons that are usually assigned to this action, Start and Back by default
+			if (!stricmp(cmd, "menu_main") || !stricmp(cmd, "pause"))
+			{
+				M_StartControlPanel(true);
+				M_SetMenu(NAME_Mainmenu, -1);
+				return true;
 			}
 		}
 

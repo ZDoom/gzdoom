@@ -478,6 +478,8 @@ public:
 	// Report a game restart
 	void SetClearColor(int color);
 	virtual uint32_t GetCaps();
+	virtual int Backend() { return 0; }
+	virtual const char* DeviceName() const { return "Unknown"; }
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 

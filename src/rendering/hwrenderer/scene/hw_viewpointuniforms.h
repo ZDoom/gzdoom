@@ -1,6 +1,6 @@
 #pragma once
 
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "r_utility.h"
 
 struct HWDrawInfo;

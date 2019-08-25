@@ -93,6 +93,7 @@ class ConversationMenu : Menu
 	int fontScale;
 	int refwidth;
 	int refheight;
+	double fontfactor;
 	
 	int SpeechWidth;
 	int ReplyWidth;
@@ -118,6 +119,7 @@ class ConversationMenu : Menu
 		
 		let tex = TexMan.CheckForTexture (CurNode.Backdrop, TexMan.Type_MiscPatch);
 		mHasBackdrop = tex.isValid();
+		DontBlur = !mHasBackdrop;
 		
 		if (!generic_ui && !dlg_vgafont)
 		{
@@ -125,6 +127,7 @@ class ConversationMenu : Menu
 			displayWidth = CleanWidth;
 			displayHeight = CleanHeight;
 			fontScale = CleanXfac;
+			fontFactor = 1;
 			refwidth = 320;
 			refheight = 200;
 			ReplyWidth = 320-50-10;
@@ -137,6 +140,7 @@ class ConversationMenu : Menu
 		{
 			displayFont = NewSmallFont;
 			fontScale = (CleanXfac+1) / 2;
+			fontFactor = double(CleanXfac) / fontScale;
 			refwidth = 640;
 			refheight = 400;
 			ReplyWidth = 640-100-20;
@@ -151,10 +155,9 @@ class ConversationMenu : Menu
 			}
 			else
 			{
-				let formatWidth = Screen.GetHeight() * 1.3333;
-				SpeechWidth = formatWidth / fontScale - (24*3 * CleanXfac / fontScale);
+				speechDisplayWidth = int(Screen.GetHeight() * 1.3333 / fontScale);
+				SpeechWidth = speechDisplayWidth - (24*3 * CleanXfac / fontScale);
 				mConfineTextToBackdrop = true;
-				speechDisplayWidth = formatWidth / fontScale;
 			}
 			
 			LineHeight = displayFont.GetHeight() + 2;
@@ -363,10 +366,12 @@ class ConversationMenu : Menu
 		// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
 		x = ((x - (screen.GetWidth() / 2)) / fontScale) + refWidth/2;
 		y = ((y - (screen.GetHeight() / 2)) / fontScale) + refHeight/2;
+		
+		int ypos = int(mYpos * FontFactor);
 
-		if (x >= 24 && x <= refWidth-24 && y >= mYpos && y < mYpos + fh * mResponseLines.Size())
+		if (x >= 24 && x <= refWidth-24 && y >= ypos && y < ypos + fh * mResponseLines.Size())
 		{
-			sel = (y - mYpos) / fh;
+			sel = (y - ypos) / fh;
 			for(int i = 0; i < mResponses.Size(); i++)
 			{
 				if (mResponses[i] > sel)

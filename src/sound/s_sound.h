@@ -323,24 +323,6 @@ void S_RelinkSound (AActor *from, AActor *to);
 // Stores/retrieves playing channel information in an archive.
 void S_SerializeSounds(FSerializer &arc);
 
-// Start music using <music_name>
-bool S_StartMusic (const char *music_name);
-
-// Start music using <music_name>, and set whether looping
-bool S_ChangeMusic (const char *music_name, int order=0, bool looping=true, bool force=false);
-
-// Start playing a cd track as music
-bool S_ChangeCDMusic (int track, unsigned int id=0, bool looping=true);
-
-void S_RestartMusic ();
-
-void S_MIDIDeviceChanged();
-
-int S_GetMusic (const char **name);
-
-// Stops the music for sure.
-void S_StopMusic (bool force);
-
 // Stop and resume music, during game PAUSE.
 void S_PauseSound (bool notmusic, bool notsfx);
 void S_ResumeSound (bool notsfx);
@@ -377,7 +359,6 @@ void S_ShrinkPlayerSoundLists ();
 void S_UnloadSound (sfxinfo_t *sfx);
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
-void S_ParseMusInfo();
 bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time);
 void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch);
 
@@ -392,22 +373,7 @@ void S_SetEnvironment (const ReverbContainer *settings);
 ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);
 void S_AddEnvironment (ReverbContainer *settings);
-
-struct MidiDeviceSetting
-{
-	int device;
-	FString args;
-
-	MidiDeviceSetting()
-	{
-		device = MDEV_DEFAULT;
-	}
-};
-
-typedef TMap<FName, FName> MusicAliasMap;
-typedef TMap<FName, MidiDeviceSetting> MidiDeviceMap;
-
-extern MusicAliasMap MusicAliases;
-extern MidiDeviceMap MidiDevices;
-
+void S_UnloadAllSounds();
+void S_SoundReset();
+	
 #endif

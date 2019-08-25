@@ -119,6 +119,7 @@ enum
 extern float S_GetMusicVolume (const char *music);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+void I_CloseSound();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -138,16 +139,7 @@ static void S_SetListener(SoundListener &listener, AActor *listenactor);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static bool		SoundPaused;		// whether sound is paused
-static bool		MusicPaused;		// whether music is paused
-MusPlayingInfo mus_playing;	// music currently being played
-static FString	 LastSong;			// last music that was played
-static FPlayList *PlayList;
 static int		RestartEvictionsAt;	// do not restart evicted channels before this time
-
-DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -333,9 +325,6 @@ void S_Init ()
 	{
 		S_ReturnChannel(Channels);
 	}
-
-	// no sounds are playing, and they are not paused
-	MusicPaused = false;
 }
 
 //==========================================================================
@@ -376,15 +365,6 @@ void S_Shutdown ()
 		delete chan;
 	}
 	FreeChannels = NULL;
-
-	if (PlayList != NULL)
-	{
-		delete PlayList;
-		PlayList = NULL;
-	}
-	S_StopMusic (true);
-	mus_playing.name = "";
-	LastSong = "";
 }
 
 //==========================================================================
@@ -413,58 +393,43 @@ void S_Start ()
 			LocalSndInfo = primaryLevel->info->SoundInfo;
 			LocalSndSeq = primaryLevel->info->SndSeq;
 		}
-
-			bool parse_ss = false;
-
-			// This level uses a different local SNDINFO
+		
+		bool parse_ss = false;
+		
+		// This level uses a different local SNDINFO
 		if (LastLocalSndInfo.CompareNoCase(LocalSndInfo) != 0 || !primaryLevel->info)
+		{
+			// First delete the old sound list
+			for(unsigned i = 1; i < S_sfx.Size(); i++)
 			{
-				// First delete the old sound list
-			for(unsigned i = 1; i < S_sfx.Size(); i++) 
-				{
-					S_UnloadSound(&S_sfx[i]);
-				}
-				
-				// Parse the global SNDINFO
-				S_ParseSndInfo(true);
-				
-				if (LocalSndInfo.IsNotEmpty())
-				{
-					// Now parse the local SNDINFO
-					int j = Wads.CheckNumForFullName(LocalSndInfo, true);
-					if (j>=0) S_AddLocalSndInfo(j);
-				}
-
-				// Also reload the SNDSEQ if the SNDINFO was replaced!
-				parse_ss = true;
-			}
-			else if (LastLocalSndSeq.CompareNoCase(LocalSndSeq) != 0)
-			{
-				parse_ss = true;
-			}
-
-			if (parse_ss)
-			{
-				S_ParseSndSeq(LocalSndSeq.IsNotEmpty()? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
+				S_UnloadSound(&S_sfx[i]);
 			}
 			
-			LastLocalSndInfo = LocalSndInfo;
-			LastLocalSndSeq = LocalSndSeq;
+			// Parse the global SNDINFO
+			S_ParseSndInfo(true);
+			
+			if (LocalSndInfo.IsNotEmpty())
+			{
+				// Now parse the local SNDINFO
+				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
+				if (j>=0) S_AddLocalSndInfo(j);
+			}
+			
+			// Also reload the SNDSEQ if the SNDINFO was replaced!
+			parse_ss = true;
 		}
-
-	// stop the old music if it has been paused.
-	// This ensures that the new music is started from the beginning
-	// if it's the same as the last one and it has been paused.
-	if (MusicPaused) S_StopMusic(true);
-
-	// start new music for the level
-	MusicPaused = false;
-
-	// Don't start the music if loading a savegame, because the music is stored there.
-	// Don't start the music if revisiting a level in a hub for the same reason.
-	if (!primaryLevel->IsReentering())
-	{
-		primaryLevel->SetMusic();
+		else if (LastLocalSndSeq.CompareNoCase(LocalSndSeq) != 0)
+		{
+			parse_ss = true;
+		}
+		
+		if (parse_ss)
+		{
+			S_ParseSndSeq(LocalSndSeq.IsNotEmpty()? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
+		}
+		
+		LastLocalSndInfo = LocalSndInfo;
+		LastLocalSndSeq = LocalSndSeq;
 	}
 }
 
@@ -2004,65 +1969,6 @@ bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id)
 
 //==========================================================================
 //
-// S_PauseSound
-//
-// Stop music and sound effects, during game PAUSE.
-//==========================================================================
-
-void S_PauseSound (bool notmusic, bool notsfx)
-{
-	if (!notmusic && mus_playing.handle && !MusicPaused)
-	{
-		mus_playing.handle->Pause();
-		MusicPaused = true;
-	}
-	if (!notsfx)
-	{
-		SoundPaused = true;
-		GSnd->SetSfxPaused (true, 0);
-	}
-}
-
-DEFINE_ACTION_FUNCTION(DObject, S_PauseSound)
-{
-	PARAM_PROLOGUE;
-	PARAM_BOOL(notmusic);
-	PARAM_BOOL(notsfx);
-	S_PauseSound(notmusic, notsfx);
-	return 0;
-}
-
-//==========================================================================
-//
-// S_ResumeSound
-//
-// Resume music and sound effects, after game PAUSE.
-//==========================================================================
-
-void S_ResumeSound (bool notsfx)
-{
-	if (mus_playing.handle && MusicPaused)
-	{
-		mus_playing.handle->Resume();
-		MusicPaused = false;
-	}
-	if (!notsfx)
-	{
-		SoundPaused = false;
-		GSnd->SetSfxPaused (false, 0);
-	}
-}
-
-DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
-{
-	PARAM_PROLOGUE;
-	PARAM_BOOL(notsfx);
-	S_ResumeSound(notsfx);
-	return 0;
-}
-
-//==========================================================================
-//
 // S_SetSoundPaused
 //
 // Called with state non-zero when the app is active, zero when it isn't.
@@ -2201,19 +2107,6 @@ void S_UpdateSounds (AActor *listenactor)
 {
 	FVector3 pos, vel;
 	SoundListener listener;
-
-	I_UpdateMusic();
-
-	// [RH] Update music and/or playlist. IsPlaying() must be called
-	// to attempt to reconnect to broken net streams and to advance the
-	// playlist when the current song finishes.
-	if (mus_playing.handle != NULL &&
-		!mus_playing.handle->IsPlaying() &&
-		PlayList)
-	{
-		PlayList->Advance();
-		S_ActivatePlayList(false);
-	}
 
 	// should never happen
 	S_SetListener(listener, listenactor);
@@ -2551,331 +2444,6 @@ void S_SerializeSounds(FSerializer &arc)
 	GSnd->UpdateSounds();
 }
 
-//==========================================================================
-//
-// S_ActivatePlayList
-//
-// Plays the next song in the playlist. If no songs in the playlist can be
-// played, then it is deleted.
-//==========================================================================
-
-void S_ActivatePlayList (bool goBack)
-{
-	int startpos, pos;
-
-	startpos = pos = PlayList->GetPosition ();
-	S_StopMusic (true);
-	while (!S_ChangeMusic (PlayList->GetSong (pos), 0, false, true))
-	{
-		pos = goBack ? PlayList->Backup () : PlayList->Advance ();
-		if (pos == startpos)
-		{
-			delete PlayList;
-			PlayList = NULL;
-			Printf ("Cannot play anything in the playlist.\n");
-			return;
-		}
-	}
-}
-
-//==========================================================================
-//
-// S_ChangeCDMusic
-//
-// Starts a CD track as music.
-//==========================================================================
-
-bool S_ChangeCDMusic (int track, unsigned int id, bool looping)
-{
-	char temp[32];
-
-	if (id != 0)
-	{
-		mysnprintf (temp, countof(temp), ",CD,%d,%x", track, id);
-	}
-	else
-	{
-		mysnprintf (temp, countof(temp), ",CD,%d", track);
-	}
-	return S_ChangeMusic (temp, 0, looping);
-}
-
-//==========================================================================
-//
-// S_StartMusic
-//
-// Starts some music with the given name.
-//==========================================================================
-
-bool S_StartMusic (const char *m_id)
-{
-	return S_ChangeMusic (m_id, 0, false);
-}
-
-//==========================================================================
-//
-// S_ChangeMusic
-//
-// Starts playing a music, possibly looping.
-//
-// [RH] If music is a MOD, starts it at position order. If name is of the
-// format ",CD,<track>,[cd id]" song is a CD track, and if [cd id] is
-// specified, it will only be played if the specified CD is in a drive.
-//==========================================================================
-
-bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
-{
-	if (!force && PlayList)
-	{ // Don't change if a playlist is active
-		return false;
-	}
-
-	// allow specifying "*" as a placeholder to play the level's default music.
-	if (musicname != NULL && !strcmp(musicname, "*"))
-	{
-		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
-		{
-			musicname = primaryLevel->Music;
-			order = primaryLevel->musicorder;
-		}
-		else
-		{
-			musicname = NULL;
-		}
-	}
-
-	if (musicname == NULL || musicname[0] == 0)
-	{
-		// Don't choke if the map doesn't have a song attached
-		S_StopMusic (true);
-		mus_playing.name = "";
-		LastSong = "";
-		return true;
-	}
-
-	FString DEH_Music;
-	if (musicname[0] == '$')
-	{
-		// handle dehacked replacement.
-		// Any music name defined this way needs to be prefixed with 'D_' because
-		// Doom.exe does not contain the prefix so these strings don't either.
-		const char * mus_string = GStrings[musicname+1];
-		if (mus_string != NULL)
-		{
-			DEH_Music << "D_" << mus_string;
-			musicname = DEH_Music;
-		}
-	}
-
-	FName *aliasp = MusicAliases.CheckKey(musicname);
-	if (aliasp != NULL) 
-	{
-		if (*aliasp == NAME_None)
-		{
-			return true;	// flagged to be ignored
-		}
-		musicname = aliasp->GetChars();
-	}
-
-	if (!mus_playing.name.IsEmpty() &&
-		mus_playing.handle != NULL &&
-		stricmp (mus_playing.name, musicname) == 0 &&
-		mus_playing.handle->m_Looping == looping)
-	{
-		if (order != mus_playing.baseorder)
-		{
-			if (mus_playing.handle->SetSubsong(order))
-			{
-				mus_playing.baseorder = order;
-			}
-		}
-		else if (!mus_playing.handle->IsPlaying())
-		{
-			mus_playing.handle->Play(looping, order);
-		}
-		return true;
-	}
-
-	if (strnicmp (musicname, ",CD,", 4) == 0)
-	{
-		int track = strtoul (musicname+4, NULL, 0);
-		const char *more = strchr (musicname+4, ',');
-		unsigned int id = 0;
-
-		if (more != NULL)
-		{
-			id = strtoul (more+1, NULL, 16);
-		}
-		S_StopMusic (true);
-		mus_playing.handle = I_RegisterCDSong (track, id);
-	}
-	else
-	{
-		int lumpnum = -1;
-		int length = 0;
-		MusInfo *handle = NULL;
-		MidiDeviceSetting *devp = MidiDevices.CheckKey(musicname);
-
-		// Strip off any leading file:// component.
-		if (strncmp(musicname, "file://", 7) == 0)
-		{
-			musicname += 7;
-		}
-
-		FileReader reader;
-		if (!FileExists (musicname))
-		{
-			if ((lumpnum = Wads.CheckNumForFullName (musicname, true, ns_music)) == -1)
-			{
-				Printf ("Music \"%s\" not found\n", musicname);
-				return false;
-			}
-			if (handle == NULL)
-			{
-				if (Wads.LumpLength (lumpnum) == 0)
-				{
-					return false;
-				}
-				reader = Wads.ReopenLumpReader(lumpnum);
-			}
-		}
-		else
-		{
-			// Load an external file.
-			if (!reader.OpenFile(musicname))
-			{
-				return false;
-			}
-		}
-
-		// shutdown old music
-		S_StopMusic (true);
-
-		// Just record it if volume is 0
-		if (snd_musicvolume <= 0)
-		{
-			mus_playing.loop = looping;
-			mus_playing.name = musicname;
-			mus_playing.baseorder = order;
-			LastSong = musicname;
-			return true;
-		}
-
-		// load & register it
-		if (handle != NULL)
-		{
-			mus_playing.handle = handle;
-		}
-		else
-		{
-			mus_playing.handle = I_RegisterSong (reader, devp);
-		}
-	}
-
-	mus_playing.loop = looping;
-	mus_playing.name = musicname;
-	mus_playing.baseorder = 0;
-	LastSong = "";
-
-	if (mus_playing.handle != 0)
-	{ // play it
-		mus_playing.handle->Start(looping, S_GetMusicVolume (musicname), order);
-		mus_playing.baseorder = order;
-		return true;
-	}
-	return false;
-}
-
-DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
-{
-	PARAM_PROLOGUE;
-	PARAM_STRING(music);
-	PARAM_INT(order);
-	PARAM_BOOL(looping);
-	PARAM_BOOL(force);
-	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
-}
-
-
-//==========================================================================
-//
-// S_RestartMusic
-//
-// Must only be called from snd_reset in i_sound.cpp!
-//==========================================================================
-
-void S_RestartMusic ()
-{
-	if (!LastSong.IsEmpty())
-	{
-		FString song = LastSong;
-		LastSong = "";
-		S_ChangeMusic (song, mus_playing.baseorder, mus_playing.loop, true);
-	}
-}
-
-//==========================================================================
-//
-// S_MIDIDeviceChanged
-//
-//==========================================================================
-
-void S_MIDIDeviceChanged()
-{
-	if (mus_playing.handle != NULL && mus_playing.handle->IsMIDI())
-	{
-		mus_playing.handle->Stop();
-		mus_playing.handle->Start(mus_playing.loop, -1, mus_playing.baseorder);
-	}
-}
-
-//==========================================================================
-//
-// S_GetMusic
-//
-//==========================================================================
-
-int S_GetMusic (const char **name)
-{
-	int order;
-
-	if (mus_playing.name.IsNotEmpty())
-	{
-		*name = mus_playing.name;
-		order = mus_playing.baseorder;
-	}
-	else
-	{
-		*name = NULL;
-		order = 0;
-	}
-	return order;
-}
-
-//==========================================================================
-//
-// S_StopMusic
-//
-//==========================================================================
-
-void S_StopMusic (bool force)
-{
-	// [RH] Don't stop if a playlist is active.
-	if ((force || PlayList == NULL) && !mus_playing.name.IsEmpty())
-	{
-		if (mus_playing.handle != NULL)
-		{
-			if (MusicPaused)
-				mus_playing.handle->Resume();
-
-			mus_playing.handle->Stop();
-			delete mus_playing.handle;
-			mus_playing.handle = NULL;
-		}
-		LastSong = mus_playing.name;
-		mus_playing.name = "";
-	}
-}
 
 //==========================================================================
 //
@@ -2927,303 +2495,6 @@ CCMD (loopsound)
 
 //==========================================================================
 //
-// CCMD idmus
-//
-//==========================================================================
-
-CCMD (idmus)
-{
-	level_info_t *info;
-	FString map;
-	int l;
-
-	if (!nomusic)
-	{
-		if (argv.argc() > 1)
-		{
-			if (gameinfo.flags & GI_MAPxx)
-			{
-				l = atoi (argv[1]);
-			if (l <= 99)
-				{
-					map = CalcMapName (0, l);
-				}
-				else
-				{
-					Printf ("%s\n", GStrings("STSTR_NOMUS"));
-					return;
-				}
-			}
-			else
-			{
-				map = CalcMapName (argv[1][0] - '0', argv[1][1] - '0');
-			}
-
-			if ( (info = FindLevelInfo (map)) )
-			{
-				if (info->Music.IsNotEmpty())
-				{
-					S_ChangeMusic (info->Music, info->musicorder);
-					Printf ("%s\n", GStrings("STSTR_MUS"));
-				}
-			}
-			else
-			{
-				Printf ("%s\n", GStrings("STSTR_NOMUS"));
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-// CCMD changemus
-//
-//==========================================================================
-
-CCMD (changemus)
-{
-	if (!nomusic)
-	{
-		if (argv.argc() > 1)
-		{
-			if (PlayList)
-			{
-				delete PlayList;
-				PlayList = NULL;
-			}
-			S_ChangeMusic (argv[1], argv.argc() > 2 ? atoi (argv[2]) : 0);
-		}
-		else
-		{
-			const char *currentmus = mus_playing.name.GetChars();
-			if(currentmus != NULL && *currentmus != 0)
-			{
-				Printf ("currently playing %s\n", currentmus);
-			}
-			else
-			{
-				Printf ("no music playing\n");
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-// CCMD stopmus
-//
-//==========================================================================
-
-CCMD (stopmus)
-{
-	if (PlayList)
-	{
-		delete PlayList;
-		PlayList = NULL;
-	}
-	S_StopMusic (false);
-	LastSong = "";	// forget the last played song so that it won't get restarted if some volume changes occur
-}
-
-//==========================================================================
-//
-// CCMD cd_play
-//
-// Plays a specified track, or the entire CD if no track is specified.
-//==========================================================================
-
-CCMD (cd_play)
-{
-	char musname[16];
-
-	if (argv.argc() == 1)
-	{
-		strcpy (musname, ",CD,");
-	}
-	else
-	{
-		mysnprintf (musname, countof(musname), ",CD,%d", atoi(argv[1]));
-	}
-	S_ChangeMusic (musname, 0, true);
-}
-
-//==========================================================================
-//
-// CCMD cd_stop
-//
-//==========================================================================
-
-CCMD (cd_stop)
-{
-	CD_Stop ();
-}
-
-//==========================================================================
-//
-// CCMD cd_eject
-//
-//==========================================================================
-
-CCMD (cd_eject)
-{
-	CD_Eject ();
-}
-
-//==========================================================================
-//
-// CCMD cd_close
-//
-//==========================================================================
-
-CCMD (cd_close)
-{
-	CD_UnEject ();
-}
-
-//==========================================================================
-//
-// CCMD cd_pause
-//
-//==========================================================================
-
-CCMD (cd_pause)
-{
-	CD_Pause ();
-}
-
-//==========================================================================
-//
-// CCMD cd_resume
-//
-//==========================================================================
-
-CCMD (cd_resume)
-{
-	CD_Resume ();
-}
-
-//==========================================================================
-//
-// CCMD playlist
-//
-//==========================================================================
-
-UNSAFE_CCMD (playlist)
-{
-	int argc = argv.argc();
-
-	if (argc < 2 || argc > 3)
-	{
-		Printf ("playlist <playlist.m3u> [<position>|shuffle]\n");
-	}
-	else
-	{
-		if (PlayList != NULL)
-		{
-			PlayList->ChangeList (argv[1]);
-		}
-		else
-		{
-			PlayList = new FPlayList (argv[1]);
-		}
-		if (PlayList->GetNumSongs () == 0)
-		{
-			delete PlayList;
-			PlayList = NULL;
-		}
-		else
-		{
-			if (argc == 3)
-			{
-				if (stricmp (argv[2], "shuffle") == 0)
-				{
-					PlayList->Shuffle ();
-				}
-				else
-				{
-					PlayList->SetPosition (atoi (argv[2]));
-				}
-			}
-			S_ActivatePlayList (false);
-		}
-	}
-}
-
-//==========================================================================
-//
-// CCMD playlistpos
-//
-//==========================================================================
-
-static bool CheckForPlaylist ()
-{
-	if (PlayList == NULL)
-	{
-		Printf ("No playlist is playing.\n");
-		return false;
-	}
-	return true;
-}
-
-CCMD (playlistpos)
-{
-	if (CheckForPlaylist() && argv.argc() > 1)
-	{
-		PlayList->SetPosition (atoi (argv[1]) - 1);
-		S_ActivatePlayList (false);
-	}
-}
-
-//==========================================================================
-//
-// CCMD playlistnext
-//
-//==========================================================================
-
-CCMD (playlistnext)
-{
-	if (CheckForPlaylist())
-	{
-		PlayList->Advance ();
-		S_ActivatePlayList (false);
-	}
-}
-
-//==========================================================================
-//
-// CCMD playlistprev
-//
-//==========================================================================
-
-CCMD (playlistprev)
-{
-	if (CheckForPlaylist())
-	{
-		PlayList->Backup ();
-		S_ActivatePlayList (true);
-	}
-}
-
-//==========================================================================
-//
-// CCMD playliststatus
-//
-//==========================================================================
-
-CCMD (playliststatus)
-{
-	if (CheckForPlaylist ())
-	{
-		Printf ("Song %d of %d:\n%s\n",
-			PlayList->GetPosition () + 1,
-			PlayList->GetNumSongs (),
-			PlayList->GetSong (PlayList->GetPosition ()));
-	}
-}
-
-//==========================================================================
-//
 // CCMD cachesound <sound name>
 //
 //==========================================================================
@@ -3265,14 +2536,98 @@ CCMD(listsoundchannels)
 	Printf("%d sounds playing\n", count);
 }
 
-CCMD(currentmusic)
+// intentionally moved here to keep the s_music include out of the rest of the file.
+
+//==========================================================================
+//
+// S_PauseSound
+//
+// Stop music and sound effects, during game PAUSE.
+//==========================================================================
+#include "s_music.h"
+
+void S_PauseSound (bool notmusic, bool notsfx)
 {
-	if (mus_playing.name.IsNotEmpty())
+	if (!notmusic)
 	{
-		Printf("Currently playing music '%s'\n", mus_playing.name.GetChars());
+		S_PauseMusic();
 	}
-	else
+	if (!notsfx)
 	{
-		Printf("Currently no music playing\n");
+		SoundPaused = true;
+		GSnd->SetSfxPaused (true, 0);
 	}
+}
+
+DEFINE_ACTION_FUNCTION(DObject, S_PauseSound)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(notmusic);
+	PARAM_BOOL(notsfx);
+	S_PauseSound(notmusic, notsfx);
+	return 0;
+}
+
+//==========================================================================
+//
+// S_ResumeSound
+//
+// Resume music and sound effects, after game PAUSE.
+//==========================================================================
+
+void S_ResumeSound (bool notsfx)
+{
+	S_ResumeMusic();
+	if (!notsfx)
+	{
+		SoundPaused = false;
+		GSnd->SetSfxPaused (false, 0);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(notsfx);
+	S_ResumeSound(notsfx);
+	return 0;
+}
+
+
+void S_UnloadAllSounds()
+{
+	for (unsigned i = 0; i < S_sfx.Size(); i++)
+	{
+		S_UnloadSound(&S_sfx[i]);
+	}
+}
+
+CCMD (snd_status)
+{
+	GSnd->PrintStatus ();
+}
+
+CCMD (snd_reset)
+{
+	S_SoundReset();
+}
+
+void S_SoundReset()
+{
+	I_ShutdownMusic();
+	S_EvictAllChannels();
+	I_CloseSound();
+	I_InitSound();
+	S_RestartMusic();
+	S_RestoreEvictedChannels();
+}
+
+CCMD (snd_listdrivers)
+{
+	GSnd->PrintDriversList ();
+}
+
+ADD_STAT (sound)
+{
+	return GSnd->GatherStats ();
 }

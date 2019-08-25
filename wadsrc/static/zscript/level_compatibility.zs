@@ -628,6 +628,24 @@ class LevelCompatibility native play
 				break;
 			}
 			
+			case '6C620F43705BEC0ABBABBF46AC3E62D2': // Doom II MAP10
+			{
+				// Allow player to leave exit room
+				SetLineSpecial(786, Door_Raise, 0, 16, 150, 0);
+				SetLineActivation(786, SPAC_Use);
+				SetLineFlags(786, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '1AF4DEC2627360A55B3EB397BC15C39D': // Doom II MAP12
+			{
+				// Missing texture
+				SetWallTexture(648, Line.back, Side.bottom, "PIPES");
+				// Remove erroneous tag for teleporter at the south building
+				ClearSectorTags(149);
+				break;
+			}
+			
 			case 'FBA6547B9FD44E95671A923A066E516F': // Doom II MAP13
 			{
 				// Missing texture
@@ -671,6 +689,7 @@ class LevelCompatibility native play
 			
 			case '1A540BA717BF9EC85F8522594C352F2A': // Doom II, map15
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(147, 0);
 				// Missing textures
 				SetWallTexture(94, Line.back, Side.top, "METAL");
@@ -716,6 +735,9 @@ class LevelCompatibility native play
 				{
 					SetWallTextureID(286+i, Line.back, Side.bottom, STEP4);
 				}
+				// Southwest teleporter in the teleporter room now works on
+				// easier difficulties
+				SetThingSkills(112, 31);
 				break;
 			}
 			
@@ -724,6 +746,13 @@ class LevelCompatibility native play
 				// push ceiling down in glitchy sectors above the stair switches
 				OffsetSectorPlane(50, Sector.ceiling, -56);
 				OffsetSectorPlane(54, Sector.ceiling, -56);
+				break;
+			}
+			
+			case '4AA9B3CE449FB614497756E96509F096': // Doom II MAP22
+			{
+				// Only use switch once to raise sector to rocket launcher
+				SetLineFlags(120, 0, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 			
@@ -743,8 +772,17 @@ class LevelCompatibility native play
 			
 			case '110F84DE041052B59307FAF0293E6BC0': // Doom II, map27
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(93, 0);
+				// Missing texture
 				SetWallTexture(582, Line.back, Side.top, "ZIMMER3");
+				// Make line near switch to level exit passable
+				SetLineFlags(342, 0, Line.ML_BLOCKING);
+				// Can leave Pain Elemental room if stuck
+				SetLineSpecial(580, Door_Open, 0, 16);
+				SetLineActivation(580, SPAC_Use);
+				SetLineSpecial(581, Door_Open, 0, 16);
+				SetLineActivation(581, SPAC_Use);
 				break;
 			}
 			
@@ -761,6 +799,12 @@ class LevelCompatibility native play
 				SetWallTexture(531, Line.back, Side.top, "WOOD8");
 				SetWallTexture(547, Line.back, Side.top, "WOOD8");
 				SetWallTexture(548, Line.back, Side.top, "WOOD8");
+				// Raise holes near level exit when walking over them
+				for(int i=0; i<12; i++)
+				{
+					SetLineSpecial(584+i, Floor_RaiseToNearest, 5, 8);
+					SetLineActivation(584+i, SPAC_Cross);
+				}
 				break;
 			}
 			
@@ -1311,6 +1355,20 @@ class LevelCompatibility native play
 			{
 				// Fix misplaced vertex
 				SetVertex(202, -2, -873);
+				break;
+			}
+			case 'E9EB4D16CA7E491E98D61615E4613E70': // sigil.wad e5m2
+			{
+				// Floating Skulls missing in lower difficulties
+				SetThingSkills(113, 31);
+				SetThingSkills(114, 31);
+				break;
+			}
+			case 'C43B99F34E5211F9AF24459842852B0D': // sigil.wad e5m4
+			{
+				// Fix missing texture on the Baron-invulnerability-secret platform
+				SetWallTexture(1926, Line.back, Side.bottom, "MARBLE3");
+				break;
 			}
 		}
 	}

@@ -107,6 +107,7 @@ class StatusScreen abstract play version("2.5")
 	PatchInfo 		finished;
 	PatchInfo 		entering;
 	PatchInfo		content;
+	PatchInfo		author;
 
 	TextureID 		p_secret;
 	TextureID 		kills;
@@ -120,6 +121,7 @@ class StatusScreen abstract play version("2.5")
 
 	// [RH] Info to dynamically generate the level name graphics
 	String			lnametexts[2];
+	String			authortexts[2];
 
 	bool 			snl_pointeron;
 
@@ -181,6 +183,32 @@ class StatusScreen abstract play version("2.5")
 		return 0;
 	}
 
+	//====================================================================
+	//
+	// Draws a level author's name with the big font
+	//
+	//====================================================================
+	
+	int DrawAuthor(int y, String levelname)
+	{
+		if (levelname.Length() > 0)
+		{
+			int h = 0;
+			int lumph = author.mFont.GetHeight() * CleanYfac;
+			
+			BrokenLines lines = author.mFont.BreakLines(levelname, screen.GetWidth() / CleanXfac);
+			
+			int count = lines.Count();
+			for (int i = 0; i < count; i++)
+			{
+				screen.DrawText(author.mFont, author.mColor, (screen.GetWidth() - lines.StringWidth(i) * CleanXfac) / 2, y + h, lines.StringAt(i), DTA_CleanNoMove, true);
+				h += lumph;
+			}
+			return y + h;
+		}
+		return y;
+	}
+	
 	//====================================================================
 	//
 	// Only kept so that mods that were accessing it continue to compile
@@ -250,16 +278,27 @@ class StatusScreen abstract play version("2.5")
 		// If the displayed info is made of patches we need some additional offsetting here.
 		if (ispatch) 
 		{
-			int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
-			int h2 = (y - oldy) / CleanYfac / 4;
-			let disp = min(h1, h2);
+			int disp = 0;
 			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
-			if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
+			if (authortexts[0].length() == 0)
 			{
-				disp += finished.mFont.GetMaxAscender("$WI_FINISHED");
- 			}
+				int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+				int h2 = (y - oldy) / CleanYfac / 4;
+				disp = min(h1, h2);
+				
+				if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
+				{
+					disp += finished.mFont.GetMaxAscender("$WI_FINISHED");
+				}
+			}
+			else
+			{
+					disp += author.mFont.GetMaxAscender(authortexts[0]);
+			}
 			y += disp * CleanYfac;
 		}
+		
+		y = DrawAuthor(y, authortexts[0]);
 		
 		// draw "Finished!"
 
@@ -314,7 +353,16 @@ class StatusScreen abstract play version("2.5")
 			y += disp * CleanYfac;
 		}
 
-		DrawName(y, wbs.LName1, lnametexts[1]);
+		y = DrawName(y, wbs.LName1, lnametexts[1]);
+
+		if (wbs.LName1.isValid() && authortexts[1].length() > 0) 
+		{
+			// Consdider the ascender height of the following text.
+			y += author.mFont.GetMaxAscender(authortexts[1]) * CleanYfac;
+		}
+			
+		DrawAuthor(y, authortexts[1]);
+
 	}
 
 
@@ -802,6 +850,7 @@ class StatusScreen abstract play version("2.5")
 		finished.Init(gameinfo.mStatscreenFinishedFont);
 		mapname.Init(gameinfo.mStatscreenMapNameFont);
 		content.Init(gameinfo.mStatscreenContentFont);
+		author.Init(gameinfo.mStatscreenAuthorFont);
 
 		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch);			// "kills"
 		Secret = TexMan.CheckForTexture("WIOSTS", TexMan.Type_MiscPatch);		// "scrt", not used
@@ -815,6 +864,8 @@ class StatusScreen abstract play version("2.5")
 
 		lnametexts[0] = wbstartstruct.thisname;		
 		lnametexts[1] = wbstartstruct.nextname;
+		authortexts[0] = wbstartstruct.thisauthor;
+		authortexts[1] = wbstartstruct.nextauthor;
 
 		bg = InterBackground.Create(wbs);
 		noautostartmap = bg.LoadBackground(false);

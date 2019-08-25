@@ -248,6 +248,7 @@ enum ELevelFlags : unsigned int
 	LEVEL3_EXITNORMALUSED		= 0x00000020,
 	LEVEL3_EXITSECRETUSED		= 0x00000040,
 	LEVEL3_FORCEWORLDPANNING	= 0x00000080,	// Forces the world panning flag for all textures, even those without it explicitly set.
+	LEVEL3_HIDEAUTHORNAME		= 0x00000100,
 };
 
 
@@ -323,6 +324,7 @@ struct level_info_t
 
 	FString		Music;
 	FString		LevelName;
+	FString		AuthorName;
 	int8_t		WallVertLight, WallHorizLight;
 	int			musicorder;
 	FCompressedBuffer	Snapshot;

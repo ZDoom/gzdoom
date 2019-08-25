@@ -40,6 +40,7 @@
 #include "w_wad.h"
 #include "gi.h"
 #include "doomstat.h"
+#include "doomtype.h"
 
 
 //==========================================================================

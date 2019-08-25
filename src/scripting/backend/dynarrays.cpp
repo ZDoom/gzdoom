@@ -54,12 +54,6 @@ typedef TArray<void*> FDynArray_Ptr;
 typedef TArray<DObject*> FDynArray_Obj;
 typedef TArray<FString> FDynArray_String;
 
-//-----------------------------------------------------
-//
-// Int8 array
-//
-//-----------------------------------------------------
-
 template<class T> void ArrayCopy(T *self, T *other)
 {
 	*self = *other;
@@ -68,6 +62,11 @@ template<class T> void ArrayCopy(T *self, T *other)
 template<class T> void ArrayMove(T *self, T* other)
 {
 	*self = std::move(*other);
+}
+
+template<class T> void ArrayAppend(T *self, const T *other)
+{
+	self->Append(*other);
 }
 
 template<class T, class U> int ArrayFind(T *self, U val)
@@ -139,6 +138,12 @@ template<class T> void ArrayClear(T *self)
 // without this the two-argument templates cannot be used in macros.
 #define COMMA ,
 
+//-----------------------------------------------------
+//
+// Int8 array
+//
+//-----------------------------------------------------
+
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Copy, ArrayCopy<FDynArray_I8>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
@@ -152,6 +157,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Move, ArrayMove<FDynArray_I8>)
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
 	PARAM_POINTER(other, FDynArray_I8);
 	*self = std::move(*other);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I8, Append, ArrayAppend<FDynArray_I8>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
+	PARAM_POINTER(other, FDynArray_I8);
+	self->Append(*other);
 	return 0;
 }
 
@@ -258,6 +271,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Move, ArrayMove<FDynArray_I16>)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Append, ArrayAppend<FDynArray_I16>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
+	PARAM_POINTER(other, FDynArray_I16);
+	self->Append(*other);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I16, Find, ArrayFind<FDynArray_I16 COMMA int>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
@@ -358,6 +379,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Move, ArrayMove<FDynArray_I32>)
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
 	PARAM_POINTER(other, FDynArray_I32);
 	*self = std::move(*other);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_I32, Append, ArrayAppend<FDynArray_I32>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
+	PARAM_POINTER(other, FDynArray_I32);
+	self->Append(*other);
 	return 0;
 }
 
@@ -464,6 +493,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Move, ArrayMove<FDynArray_F32>)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Append, ArrayAppend<FDynArray_F32>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
+	PARAM_POINTER(other, FDynArray_F32);
+	self->Append(*other);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F32, Find, ArrayFind<FDynArray_F32 COMMA double>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
@@ -564,6 +601,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Move, ArrayMove<FDynArray_F64>)
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
 	PARAM_POINTER(other, FDynArray_F64);
 	*self = std::move(*other);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_F64, Append, ArrayAppend<FDynArray_F64>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
+	PARAM_POINTER(other, FDynArray_F64);
+	self->Append(*other);
 	return 0;
 }
 
@@ -670,6 +715,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Move, ArrayMove<FDynArray_Ptr>)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Append, ArrayAppend<FDynArray_Ptr>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
+	PARAM_POINTER(other, FDynArray_Ptr);
+	self->Append(*other);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Ptr, Find, ArrayFind<FDynArray_Ptr COMMA void*>)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
@@ -771,6 +824,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Move, ArrayMove<FDynArray_Obj>)
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
 	PARAM_POINTER(other, FDynArray_Obj);
 	*self = std::move(*other);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_Obj, Append, ArrayAppend<FDynArray_Obj>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_POINTER(other, FDynArray_Obj);
+	self->Append(*other);
 	return 0;
 }
 
@@ -887,6 +948,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Move, ArrayMove<FDynArray_String
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
 	PARAM_POINTER(other, FDynArray_String);
 	*self = std::move(*other);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FDynArray_String, Append, ArrayAppend<FDynArray_String>)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
+	PARAM_POINTER(other, FDynArray_String);
+	self->Append(*other);
 	return 0;
 }
 

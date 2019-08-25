@@ -38,6 +38,7 @@
 #include <shlobj.h>
 
 #include "cmdlib.h"
+#include "doomtype.h"
 #include "m_misc.h"
 #include "version.h"	// for GAMENAME
 

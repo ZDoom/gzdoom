@@ -184,9 +184,13 @@ short			consistancy[MAXPLAYERS][BACKUPTICS];
  
 #define TURBOTHRESHOLD	12800
 
+EXTERN_CVAR (Int, turnspeedwalkfast)
+EXTERN_CVAR (Int, turnspeedsprintfast)
+EXTERN_CVAR (Int, turnspeedwalkslow)
+EXTERN_CVAR (Int, turnspeedsprintslow)
 
 int				forwardmove[2], sidemove[2];
-int		 		angleturn[4] = {640, 1280, 320, 320};		// + slow turn
+FIntCVar		*angleturn[4] = {&turnspeedwalkfast, &turnspeedsprintfast, &turnspeedwalkslow, &turnspeedsprintslow};
 int				flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
@@ -262,8 +266,12 @@ CCMD (turnspeeds)
 {
 	if (argv.argc() == 1)
 	{
-		Printf ("Current turn speeds: %d %d %d %d\n", angleturn[0],
-			angleturn[1], angleturn[2], angleturn[3]);
+		Printf ("Current turn speeds:\n"
+				TEXTCOLOR_BLUE " turnspeedwalkfast: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedsprintfast: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedwalkslow: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedsprintslow: " TEXTCOLOR_GREEN " %d\n", *turnspeedwalkfast,
+			*turnspeedsprintfast, *turnspeedwalkslow, *turnspeedsprintslow);
 	}
 	else
 	{
@@ -271,19 +279,19 @@ CCMD (turnspeeds)
 
 		for (i = 1; i <= 4 && i < argv.argc(); ++i)
 		{
-			angleturn[i-1] = atoi (argv[i]);
+			*angleturn[i-1] = atoi (argv[i]);
 		}
 		if (i <= 2)
 		{
-			angleturn[1] = angleturn[0] * 2;
+			*angleturn[1] = *angleturn[0] * 2;
 		}
 		if (i <= 3)
 		{
-			angleturn[2] = angleturn[0] / 2;
+			*angleturn[2] = *angleturn[0] / 2;
 		}
 		if (i <= 4)
 		{
-			angleturn[3] = angleturn[2];
+			*angleturn[3] = *angleturn[2];
 		}
 	}
 }
@@ -570,11 +578,11 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		
 		if (Button_Right.bDown)
 		{
-			G_AddViewAngle (angleturn[tspeed]);
+			G_AddViewAngle (*angleturn[tspeed]);
 		}
 		if (Button_Left.bDown)
 		{
-			G_AddViewAngle (-angleturn[tspeed]);
+			G_AddViewAngle (-*angleturn[tspeed]);
 		}
 	}
 

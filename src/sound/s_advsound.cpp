@@ -49,6 +49,7 @@
 #include "vm.h"
 #include "i_system.h"
 #include "atterm.h"
+#include "s_music.h"
 
 // MACROS ------------------------------------------------------------------
 

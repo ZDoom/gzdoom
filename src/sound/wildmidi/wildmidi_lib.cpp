@@ -151,7 +151,6 @@ struct _mdi {
 		reverb = NULL;
 	}
 
-	std::mutex lock;
 	unsigned long int samples_to_mix;
 
 	unsigned short midi_master_vol;
@@ -254,8 +253,6 @@ struct _hndl {
 	struct _hndl *next;
 	struct _hndl *prev;
 };
-
-static struct _hndl *first_handle = NULL;
 
 /* f: ( VOLUME / 127.0 ) * 1024.0 */
 static signed short int lin_volume[] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72,
@@ -2028,37 +2025,6 @@ static void do_sysex_yamaha_reset(struct _mdi *mdi, struct _event_data *data) {
 	do_sysex_gm_reset(mdi, data);
 }
 
-static int add_handle(void * handle) {
-	struct _hndl *tmp_handle = NULL;
-
-	if (first_handle == NULL) {
-		first_handle = (struct _hndl*)malloc(sizeof(struct _hndl));
-		if (first_handle == NULL) {
-			_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, " to get ram", errno);
-			return -1;
-		}
-		first_handle->handle = handle;
-		first_handle->prev = NULL;
-		first_handle->next = NULL;
-	} else {
-		tmp_handle = first_handle;
-		if (tmp_handle->next) {
-			while (tmp_handle->next)
-				tmp_handle = tmp_handle->next;
-		}
-		tmp_handle->next = (struct _hndl*)malloc(sizeof(struct _hndl));
-		if (tmp_handle->next == NULL) {
-			_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, " to get ram", errno);
-			return -1;
-		}
-		tmp_handle->next->prev = tmp_handle;
-		tmp_handle = tmp_handle->next;
-		tmp_handle->next = NULL;
-		tmp_handle->handle = handle;
-	}
-	return 0;
-}
-
 static struct _mdi *
 Init_MDI(void) {
 	struct _mdi *mdi;
@@ -2104,7 +2070,7 @@ static void freeMDI(struct _mdi *mdi) {
 
 	free(mdi->tmp_info);
 	_WM_free_reverb(mdi->reverb);
-	free(mdi->mix_buffer);
+	if (mdi->mix_buffer) free(mdi->mix_buffer);
 	delete mdi;
 }
 
@@ -2580,7 +2546,6 @@ WM_SYMBOL int WildMidi_GetSampleRate(void)
 
 WM_SYMBOL int WildMidi_MasterVolume(unsigned char master_volume) {
 	struct _mdi *mdi = NULL;
-	struct _hndl * tmp_handle = first_handle;
 	int i = 0;
 
 	if (!WM_Initialized) {
@@ -2600,7 +2565,6 @@ WM_SYMBOL int WildMidi_MasterVolume(unsigned char master_volume) {
 
 WM_SYMBOL int WildMidi_Close(midi * handle) {
 	struct _mdi *mdi = (struct _mdi *) handle;
-	struct _hndl * tmp_handle;
 
 	if (!WM_Initialized) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
@@ -2611,37 +2575,8 @@ WM_SYMBOL int WildMidi_Close(midi * handle) {
 				0);
 		return -1;
 	}
-	if (first_handle == NULL) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(no midi's open)",
-				0);
-		return -1;
-	}
-	std::lock_guard<std::mutex> lock(mdi->lock);
-	if (first_handle->handle == handle) {
-		tmp_handle = first_handle->next;
-		free(first_handle);
-		first_handle = tmp_handle;
-		if (first_handle)
-			first_handle->prev = NULL;
-	} else {
-		tmp_handle = first_handle;
-		while (tmp_handle->handle != handle) {
-			tmp_handle = tmp_handle->next;
-			if (tmp_handle == NULL) {
-				break;
-			}
-		}
-		if (tmp_handle) {
-			tmp_handle->prev->next = tmp_handle->next;
-			if (tmp_handle->next) {
-				tmp_handle->next->prev = tmp_handle->prev;
-			}
-			free(tmp_handle);
-		}
-	}
 
 	freeMDI(mdi);
-
 	return 0;
 }
 
@@ -2653,12 +2588,6 @@ midi *WildMidi_NewMidi() {
 		return NULL;
 	}
 	ret = Init_MDI();
-	if (ret) {
-		if (add_handle(ret) != 0) {
-			WildMidi_Close(ret);
-			ret = NULL;
-		}
-	}
 
 	if ((((_mdi*)ret)->reverb = _WM_init_reverb(_WM_SampleRate, reverb_room_width,
 			reverb_room_length, reverb_listen_posx, reverb_listen_posy))
@@ -2687,7 +2616,6 @@ WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 	}
 
 	mdi = (struct _mdi *) handle;
-	std::lock_guard<std::mutex> lock(mdi->lock);
 	if ((!(options & 0x0007)) || (options & 0xFFF8)) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(invalid option)",
 				0);
@@ -2712,49 +2640,12 @@ WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 	return 0;
 }
 
-WM_SYMBOL struct _WM_Info *
-WildMidi_GetInfo(midi * handle) {
-	struct _mdi *mdi = (struct _mdi *) handle;
-	if (!WM_Initialized) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
-		return NULL;
-	}
-	if (handle == NULL) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(NULL handle)",
-				0);
-		return NULL;
-	}
-	std::lock_guard<std::mutex> lock(mdi->lock);
-	if (mdi->tmp_info == NULL) {
-		mdi->tmp_info = (struct _WM_Info*)malloc(sizeof(struct _WM_Info));
-		if (mdi->tmp_info == NULL) {
-			_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to set info", 0);
-			return NULL;
-		}
-		mdi->tmp_info->copyright = NULL;
-	}
-	mdi->tmp_info->current_sample = mdi->info.current_sample;
-	mdi->tmp_info->approx_total_samples = mdi->info.approx_total_samples;
-	mdi->tmp_info->mixer_options = mdi->info.mixer_options;
-	if (mdi->info.copyright) {
-		free(mdi->tmp_info->copyright);
-		mdi->tmp_info->copyright = (char*)malloc(strlen(mdi->info.copyright) + 1);
-		strcpy(mdi->tmp_info->copyright, mdi->info.copyright);
-	} else {
-		mdi->tmp_info->copyright = NULL;
-	}
-	return mdi->tmp_info;
-}
-
 WM_SYMBOL int WildMidi_Shutdown(void) {
 	if (!WM_Initialized) {
 		// No error if trying to shut down an uninitialized device.
 		return 0;
 	}
-	while (first_handle) {
-		/* closes open handle and rotates the handles list. */
-		WildMidi_Close((struct _mdi *) first_handle->handle);
-	}
+
 	WM_FreePatches();
 	free_gauss();
 

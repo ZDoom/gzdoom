@@ -404,6 +404,7 @@ struct GameInfoStruct native
 	native GIFont mStatscreenEnteringFont;
 	native GIFont mStatscreenFinishedFont;
 	native GIFont mStatscreenContentFont;
+	native GIFont mStatscreenAuthorFont;
 	native double gibfactor;
 	native bool intermissioncounter;
 	native Name mSliderColor;
@@ -685,6 +686,7 @@ struct LevelLocals native
 	native String NextSecretMap;
 	native readonly String F1Pic;
 	native readonly int maptype;
+	native readonly String AuthorName;
 	native readonly String Music;
 	native readonly int musicorder;
 	native readonly TextureID skytexture1;

@@ -48,6 +48,7 @@
 #include "v_text.h"
 #include "c_cvars.h"
 #include "stats.h"
+#include "s_music.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 EXTERN_CVAR (Float, snd_musicvolume)
@@ -299,10 +300,7 @@ void I_InitSound ()
 void I_CloseSound ()
 {
 	// Free all loaded samples
-	for (unsigned i = 0; i < S_sfx.Size(); i++)
-	{
-		S_UnloadSound(&S_sfx[i]);
-	}
+	S_UnloadAllSounds();
 
 	delete GSnd;
 	GSnd = NULL;
@@ -336,32 +334,6 @@ const char *GetChannelConfigName(enum ChannelConfig chan)
         case ChannelConfig_Stereo: return "Stereo";
     }
     return "(invalid channel config)";
-}
-
-
-CCMD (snd_status)
-{
-	GSnd->PrintStatus ();
-}
-
-CCMD (snd_reset)
-{
-	I_ShutdownMusic();
-	S_EvictAllChannels();
-	I_CloseSound();
-	I_InitSound();
-	S_RestartMusic();
-	S_RestoreEvictedChannels();
-}
-
-CCMD (snd_listdrivers)
-{
-	GSnd->PrintDriversList ();
-}
-
-ADD_STAT (sound)
-{
-	return GSnd->GatherStats ();
 }
 
 SoundRenderer::SoundRenderer ()

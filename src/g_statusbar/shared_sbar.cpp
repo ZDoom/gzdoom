@@ -128,7 +128,7 @@ CVAR (Bool, crosshairon, true, CVAR_ARCHIVE);
 CVAR (Int, crosshair, 0, CVAR_ARCHIVE)
 CVAR (Bool, crosshairforce, false, CVAR_ARCHIVE)
 CVAR (Color, crosshaircolor, 0xff0000, CVAR_ARCHIVE);
-CVAR (Bool, crosshairhealth, true, CVAR_ARCHIVE);
+CVAR (Int, crosshairhealth, 1, CVAR_ARCHIVE);
 CVAR (Float, crosshairscale, 1.0, CVAR_ARCHIVE);
 CVAR (Bool, crosshairgrow, false, CVAR_ARCHIVE);
 CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
@@ -460,6 +460,7 @@ void DBaseStatusBar::OnDestroy ()
 		while (msg)
 		{
 			DHUDMessageBase *next = msg->Next;
+			msg->Next = nullptr;
 			msg->Destroy();
 			msg = next;
 		}
@@ -745,7 +746,6 @@ void DBaseStatusBar::Tick ()
 	for (size_t i = 0; i < countof(Messages); ++i)
 	{
 		DHUDMessageBase *msg = Messages[i];
-		TObjPtr<DHUDMessageBase *>*prev = &Messages[i];
 
 		while (msg)
 		{
@@ -753,12 +753,8 @@ void DBaseStatusBar::Tick ()
 
 			if (msg->CallTick ())
 			{
-				*prev = next;
+				DetachMessage(msg);
 				msg->Destroy();
-			}
-			else
-			{
-				prev = &msg->Next;
 			}
 			msg = next;
 		}
@@ -1085,15 +1081,15 @@ void DBaseStatusBar::DrawCrosshair ()
 	w = int(CrosshairImage->GetDisplayWidth() * size);
 	h = int(CrosshairImage->GetDisplayHeight() * size);
 
-	if (crosshairhealth)
-	{
+	if (crosshairhealth == 1) {
+		// "Standard" crosshair health (green-red)
 		int health = Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health);
 
 		if (health >= 85)
 		{
 			color = 0x00ff00;
 		}
-		else 
+		else
 		{
 			int red, green;
 			health -= 25;
@@ -1113,6 +1109,21 @@ void DBaseStatusBar::DrawCrosshair ()
 			}
 			color = (red<<16) | (green<<8);
 		}
+	}
+	else if (crosshairhealth == 2)
+	{
+		// "Enhanced" crosshair health (blue-green-yellow-red)
+		int health = clamp(Scale(CPlayer->health, 100, CPlayer->mo->GetDefault()->health), 0, 200);
+		float rr, gg, bb;
+
+		float saturation = health < 150 ? 1.f : 1.f - (health - 150) / 100.f;
+
+		HSVtoRGB(&rr, &gg, &bb, health * 1.2f, saturation, 1);
+		int red = int(rr * 255);
+		int green = int(gg * 255);
+		int blue = int(bb * 255);
+
+		color = (red<<16) | (green<<8) | blue;
 	}
 	else
 	{

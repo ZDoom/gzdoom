@@ -424,11 +424,8 @@ public:
 		return thinker;
 	}
 	
-	void SetMusic()
-	{
-		if (cdtrack == 0 || !S_ChangeCDMusic(cdtrack, cdid))
-			S_ChangeMusic(Music, musicorder);
-	}
+	void SetMusic();
+
 
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
@@ -512,6 +509,7 @@ public:
 	FString		MapName;			// the lump name (E1M1, MAP01, etc)
 	FString		NextMap;			// go here when using the regular exit
 	FString		NextSecretMap;		// map to go to when used secret exit
+	FString		AuthorName;
 	FString		F1Pic;
 	FTranslator *Translator;
 	EMapType	maptype;

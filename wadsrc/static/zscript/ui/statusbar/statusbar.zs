@@ -334,7 +334,14 @@ class BaseStatusBar native ui
 	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
-	
+
+	// [MK] let the HUD handle notifications and centered print messages
+	virtual bool ProcessNotify(EPrintLevel printlevel, String outline) { return false; }
+	virtual void FlushNotify() {}
+	virtual bool ProcessMidPrint(Font fnt, String msg, bool bold) { return false; }
+	// [MK] let the HUD handle drawing the chat prompt
+	virtual bool DrawChat(String txt) { return false; }
+
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
@@ -582,7 +589,7 @@ class BaseStatusBar native ui
 		}
 		//Hexen counts basic armor also so we should too.
 		let armor = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
-		if(armor != NULL)
+		if(armor != NULL && armor.Amount > 0)
 		{
 			add += armor.SavePercent * 100;
 		}

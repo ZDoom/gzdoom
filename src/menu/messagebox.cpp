@@ -183,7 +183,7 @@ CCMD (quicksave)
 		return;
 	}
 		
-	if (savegameManager.quickSaveSlot == NULL)
+	if (savegameManager.quickSaveSlot == NULL || savegameManager.quickSaveSlot == (FSaveGameNode*)1)
 	{
 		S_Sound(CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 		M_StartControlPanel(false);
@@ -228,7 +228,7 @@ CCMD (quickload)
 		return;
 	}
 		
-	if (savegameManager.quickSaveSlot == NULL)
+	if (savegameManager.quickSaveSlot == NULL || savegameManager.quickSaveSlot == (FSaveGameNode*)1)
 	{
 		M_StartControlPanel(true);
 		// signal that whatever gets loaded should be the new quicksave

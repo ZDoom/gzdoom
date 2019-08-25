@@ -62,6 +62,8 @@ TArray<FEpisode> AllEpisodes;
 
 extern TMap<int, FString> HexenMusic;
 
+TArray<int> ParsedLumps(8, true);
+
 //==========================================================================
 //
 //
@@ -242,6 +244,7 @@ void level_info_t::Reset()
 	flags3 = 0;
 	Music = "";
 	LevelName = "";
+	AuthorName = "";
 	FadeTable = "COLORMAP";
 	WallHorizLight = -8;
 	WallVertLight = +8;
@@ -923,6 +926,13 @@ DEFINE_MAP_OPTION(next, true)
 	parse.ParseNextMap(info->NextMap);
 }
 
+DEFINE_MAP_OPTION(author, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->AuthorName = parse.sc.String;
+}
+
 DEFINE_MAP_OPTION(secretnext, true)
 {
 	parse.ParseAssign();
@@ -1012,6 +1022,15 @@ DEFINE_MAP_OPTION(titlepatch, true)
 {
 	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->PName);
+	if (parse.format_type == FMapInfoParser::FMT_New)
+	{
+		if (parse.sc.CheckString(","))
+		{
+			parse.sc.MustGetNumber();
+			if (parse.sc.Number) info->flags3 |= LEVEL3_HIDEAUTHORNAME;
+			else info->flags3 &= ~LEVEL3_HIDEAUTHORNAME;
+		}
+	}
 }
 
 DEFINE_MAP_OPTION(partime, true)
@@ -2184,6 +2203,15 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 	defaultinfo = gamedefaults;
 	HexenHack = false;
 
+	if (ParsedLumps.Find(lump) != ParsedLumps.Size())
+	{
+		sc.ScriptMessage("MAPINFO file is processed more than once\n");
+	}
+	else
+	{
+		ParsedLumps.Push(lump);
+	}
+
 	while (sc.GetString ())
 	{
 		if (sc.Compare("include"))
@@ -2368,6 +2396,7 @@ static void ClearMapinfo()
 	DeinitIntermissions();
 	primaryLevel->info = nullptr;
 	primaryLevel->F1Pic = "";
+	ParsedLumps.Clear();
 }
 
 //==========================================================================

@@ -91,6 +91,11 @@ CCMD (menu_resolution_commit_changes)
 		fullscreen = true;
 		vid_scalemode = 5;
 		if (vid_scalefactor != 1) vid_scalefactor = 1.;
+		if (!ui_classic && (menu_resolution_custom_width < 640 || menu_resolution_custom_height < 400))
+		{
+			menu_resolution_custom_width = 640;
+			menu_resolution_custom_height = 400;
+		}
 		vid_scale_customwidth = menu_resolution_custom_width;
 		vid_scale_customheight = menu_resolution_custom_height;
 		vid_scale_customstretched = false;

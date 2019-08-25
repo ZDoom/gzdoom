@@ -209,6 +209,7 @@ void VulkanFrameBuffer::Update()
 
 void VulkanFrameBuffer::DeleteFrameObjects()
 {
+	mRenderState->ResetCommandBuffer();
 	FrameDeleteList.Images.clear();
 	FrameDeleteList.ImageViews.clear();
 	FrameDeleteList.Framebuffers.clear();

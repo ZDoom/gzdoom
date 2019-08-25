@@ -49,6 +49,7 @@ public:
 	void Bind(int bindingpoint, uint32_t offset);
 	void EndRenderPass();
 	void EndFrame();
+	void ResetCommandBuffer() { mCommandBuffer = nullptr; }
 
 protected:
 	void Apply(int dt);

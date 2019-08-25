@@ -618,7 +618,7 @@ public:
 	int			killed_monsters;
 
 	double      max_velocity;
-	double      sum_velocity;
+	double      avg_velocity;
 
 	double		gravity;
 	double		aircontrol;

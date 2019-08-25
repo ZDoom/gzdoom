@@ -73,6 +73,7 @@
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
+EXTERN_CVAR(Bool, ui_classic)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -559,16 +560,22 @@ void V_UpdateModeSize (int width, int height)
 
 	int w = screen->GetWidth();
 	int factor;
-	if (w < 640) factor = 1;
-	else if (w >= 1024 && w < 1280) factor = 2;
-	else if (w >= 1600 && w < 1920) factor = 3; 
-	else  factor = w / 640;
 
-	if (w < 1360) factor = 1;
-	else if (w < 1920) factor = 2;
-	else factor = int(factor * 0.7);
+	if (ui_classic)
+	{
+		if (w < 1024) factor = 1;
+		else if (w >= 1024 && w < 1600) factor = 2;
+		else if (w >= 1600 && w < 1920) factor = 3; 
+		else factor = int(w / 640 * 0.7);
+	}
+	else
+	{
+		if (w < 1360) factor = 1;
+		else if (w < 1920) factor = 2;
+		else factor = int(w / 640 * 0.7);
+	}
 
-	CleanYfac_1 = CleanXfac_1 = factor;// MAX(1, int(factor * 0.7));
+	CleanYfac_1 = CleanXfac_1 = factor;
 	CleanWidth_1 = width / CleanXfac_1;
 	CleanHeight_1 = height / CleanYfac_1;
 

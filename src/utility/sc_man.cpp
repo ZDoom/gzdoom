@@ -1283,7 +1283,8 @@ int ParseHex(const char* hex, FScriptPosition* sc)
 		else if (*str >= 'A' && *str <= 'F')
 			num += 10 + *str - 'A';
 		else {
-			sc->Message(MSG_WARNING, "Bad hex number: %s", hex);
+			if (sc) sc->Message(MSG_WARNING, "Bad hex number: %s", hex);
+			else Printf("Bad hex number: %s\n", hex);
 			return 0;
 		}
 		str++;

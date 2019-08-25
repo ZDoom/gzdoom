@@ -431,8 +431,19 @@ class OptionMenu : Menu
 
 	virtual int GetIndent()
 	{
-		int indent = max(0, (mDesc.mIndent + 40) - CleanWidth_1 / 2);
-		return screen.GetWidth() / 2 + indent * CleanXfac_1;
+		int indent;
+
+		if (ui_classic && screen.GetWidth() < 400)
+		{
+			indent = mDesc.mIndent;
+			indent = (indent - 110) * CleanXfac_1 + screen.GetWidth() / 2;
+		}
+		else
+		{
+			indent = max(0, (mDesc.mIndent + 40) - CleanWidth_1 / 2);
+			indent = screen.GetWidth() / 2 + indent * CleanXfac_1;
+		}
+		return indent;
 	}
 
 	override void Drawer ()

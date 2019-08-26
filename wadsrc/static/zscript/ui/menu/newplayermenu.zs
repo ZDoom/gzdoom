@@ -425,8 +425,8 @@ class NewPlayerMenu : OptionMenu
 	override void Init(Menu parent, OptionMenuDescriptor desc)
 	{
 		Super.Init(parent, desc);
-		let BaseColor = gameinfo.gametype == GAME_Hexen? 0x200000 : 0x000700;
-		let AddColor = gameinfo.gametype == GAME_Hexen? 0x800040 : 0x405340;
+		let BaseColor = gameinfo.gametype == GAME_Hexen? 0x000700 : 0x200000;
+		let AddColor = gameinfo.gametype == GAME_Hexen? 0x405340 : 0x800040;
 		mPlayerDisplay = new("PlayerMenuPlayerDisplay");
 		mPlayerDisplay.init(BaseColor, AddColor);
 		PickPlayerClass();

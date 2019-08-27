@@ -1382,7 +1382,6 @@ class LevelCompatibility native play
 			case '5084755C29FB0A1912113E36F37C958A': // Illusions of Home e3m4
 			{
 				// Fix action of final switch
-				SetLineActivation (765, SPAC_Use);
 				SetLineSpecial (765, Door_Open, 0, 16);
 				break;
 			}

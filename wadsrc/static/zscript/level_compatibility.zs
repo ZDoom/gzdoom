@@ -1389,8 +1389,9 @@ class LevelCompatibility native play
 			{
 				// Fix red key and red key area door
 				SetThingFlags(247, 2016);
-				SetLineActivation(49, SPAC_Use);
+				SetLineActivation(49, SPAC_Use | SPAC_MUse);
 				SetLineSpecial(49, Door_Raise, 0, 16, 150, 0);
+				SetLineFlags(49, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 		}

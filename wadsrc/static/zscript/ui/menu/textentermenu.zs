@@ -176,7 +176,7 @@ class TextEnterMenu : Menu
 	override bool MouseEvent(int type, int x, int y)
 	{
 		int cell_width = 18 * CleanXfac_1;
-		int cell_height = 16 * CleanYfac_1;
+		int cell_height = (ui_classic? 12 : 16) * CleanYfac_1;
 		int screen_y = screen.GetHeight() - INPUTGRID_HEIGHT * cell_height;
 		int screen_x = (screen.GetWidth() - INPUTGRID_WIDTH * cell_width) / 2;
 
@@ -317,7 +317,7 @@ class TextEnterMenu : Menu
 		{
 			String InputGridChars = Chars;
 			int cell_width = 18 * CleanXfac_1;
-			int cell_height = 16 * CleanYfac_1;
+			int cell_height = (ui_classic? 12 : 16) * CleanYfac_1;
 			int top_padding = cell_height / 2 - displayFont.GetHeight() * CleanYfac_1 / 2;
 
 			// Darken the background behind the character grid.

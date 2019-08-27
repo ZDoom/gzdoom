@@ -69,6 +69,7 @@ static void HU_DrawPlayer(player_t *, bool, int, int, int, int, int, int, int, i
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 EXTERN_CVAR (Float, timelimit)
+EXTERN_CVAR (Bool, ui_classic)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -146,8 +147,8 @@ static int FontScale;
 
 void HU_DrawScores (player_t *player)
 {
-	displayFont = NewSmallFont;
-	FontScale = MAX(screen->GetHeight() / 400, 1);
+	displayFont = ui_classic? SmallFont : NewSmallFont;
+	FontScale = MAX(screen->GetHeight() / (ui_classic? 200 : 400), 1);
 
 	if (deathmatch)
 	{
@@ -201,7 +202,7 @@ void HU_DrawScores (player_t *player)
 
 void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight)
 {
-	displayFont = NewSmallFont;
+	displayFont = ui_classic? SmallFont : NewSmallFont;
 	maxnamewidth = displayFont->StringWidth("Name");
 	maxscorewidth = 0;
 	maxiconheight = 0;
@@ -339,10 +340,10 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		*text_name = GStrings("SCORE_NAME"),
 		*text_delay = GStrings("SCORE_DELAY");
 
-	col2 = (displayFont->StringWidth(text_color) + 16) * FontScale;
-	col3 = col2 + (displayFont->StringWidth(text_frags) + 16) * FontScale;
+	col2 = (displayFont->StringWidth(text_color) + ui_classic? 8 : 16) * FontScale;
+	col3 = col2 + (displayFont->StringWidth(text_frags) + ui_classic? 8 : 16) * FontScale;
 	col4 = col3 + maxscorewidth * FontScale;
-	col5 = col4 + (maxnamewidth + 16) * FontScale;
+	col5 = col4 + (maxnamewidth + ui_classic? 8 : 16) * FontScale;
 	x = (SCREENWIDTH >> 1) - (((displayFont->StringWidth(text_delay) * FontScale) + col5) >> 1);
 
 	//HU_DrawFontScaled(x, y, color, text_color);

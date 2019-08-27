@@ -1382,7 +1382,7 @@ class LevelCompatibility native play
 			case '5084755C29FB0A1912113E36F37C958A': // Illusions of Home e3m4
 			{
 				// Fix action of final switch
-				SetLineSpecial(765, Door_Open, 0, 16);
+				SetLineSpecial(765, Door_Open, 6, 16);
 				break;
 			}
 			case '0EF86635676FD512CE0E962040125553': // Illusions of Home e3m7

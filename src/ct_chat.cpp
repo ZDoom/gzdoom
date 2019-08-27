@@ -233,7 +233,7 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
-	FFont *displayfont = NewConsoleFont;
+	FFont *displayfont = CurrentConsoleFont;
 
 	if (players[consoleplayer].camera != NULL &&
 		(Button_ShowScores.bDown ||

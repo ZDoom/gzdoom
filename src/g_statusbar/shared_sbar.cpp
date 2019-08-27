@@ -618,7 +618,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 
 	if (am_showtime)
 	{
-		if (vid_fps) y += (NewConsoleFont->GetHeight() * active_con_scale() + 5) / scale;
+		if (vid_fps) y += (CurrentConsoleFont->GetHeight() * active_con_scale() + 5) / scale;
 		sec = Tics2Seconds(primaryLevel->time);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,

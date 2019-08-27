@@ -1370,6 +1370,27 @@ class LevelCompatibility native play
 				SetWallTexture(1926, Line.back, Side.bottom, "MARBLE3");
 				break;
 			}
+			case 'A7C4FC8CAEB3E375B7214E35C6298B03': // Illusions of Home e1m6
+			{
+				// Convert zero-tagged GR door into regular open-stay door to fix map
+				SetLineActivation(37, SPAC_Use);
+				SetLineSpecial(37, Door_Open, 0, 16);
+				SetLineActivation(203, SPAC_Use);
+				SetLineSpecial(203, Door_Open, 0, 16);
+				break;
+			}
+			case '5084755C29FB0A1912113E36F37C958A': // Illusions of Home e3m4
+			{
+				// Fix action of final switch
+				SetLineSpecial(765, Door_Open, 0, 16);
+				break;
+			}
+			case '0EF86635676FD512CE0E962040125553': // Illusions of Home e3m7
+			{
+				// Fix red key
+				SetThingFlags(247, 2016);
+				break;
+			}
 		}
 	}
 

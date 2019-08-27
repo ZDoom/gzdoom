@@ -186,9 +186,13 @@ void UpdateGenericUI(bool cvar)
 	}
 }
 
+EXTERN_CVAR(Bool, ui_classic);
+
 CUSTOM_CVAR(Bool, ui_generic, false, CVAR_NOINITCALL) // This is for allowing to test the generic font system with all languages
 {
-	UpdateGenericUI(self);
+	if (ui_classic && self)
+		self = false;
+	else UpdateGenericUI(self);
 }
 
 void DisableGenericUI(bool cvar)
@@ -206,6 +210,8 @@ void DisableGenericUI(bool cvar)
 
 CUSTOM_CVAR(Bool, ui_classic, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
+	if (ui_generic && self)
+		ui_generic = false;
 	DisableGenericUI(self);
 }
 
@@ -218,4 +224,6 @@ CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
 	}
 	UpdateGenericUI(ui_generic);
+	if (ui_classic)
+		DisableGenericUI(true);
 }

@@ -1387,8 +1387,10 @@ class LevelCompatibility native play
 			}
 			case '0EF86635676FD512CE0E962040125553': // Illusions of Home e3m7
 			{
-				// Fix red key
+				// Fix red key and red key area door
 				SetThingFlags(247, 2016);
+				SetLineActivation(49, SPAC_Use);
+				SetLineSpecial(49, Door_Raise, 0, 16, 150, 0);
 				break;
 			}
 		}

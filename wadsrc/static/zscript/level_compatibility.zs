@@ -1388,6 +1388,7 @@ class LevelCompatibility native play
 				SetLineActivation(413, SPAC_Use);
 				SetLineSpecial(413, Door_Raise, 0, 16, 150, 0);
 				SetLineFlags(413, Line.ML_REPEAT_SPECIAL);
+				break;
 			}
 			case '5084755C29FB0A1912113E36F37C958A': // Illusions of Home e3m4
 			{

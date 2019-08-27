@@ -1379,6 +1379,16 @@ class LevelCompatibility native play
 				SetLineSpecial(203, Door_Open, 0, 16);
 				break;
 			}
+			case 'D8AB5E8EF9CFD153B146DD7E5B3208CF': // Illusions of Home e1m7
+			{
+				// Fix yellow key door
+				SetLineActivation(407, SPAC_Use);
+				SetLineSpecial(407, Door_Raise, 0, 16, 150, 0);
+				SetLineFlags(407, Line.ML_REPEAT_SPECIAL);
+				SetLineActivation(413, SPAC_Use);
+				SetLineSpecial(413, Door_Raise, 0, 16, 150, 0);
+				SetLineFlags(413, Line.ML_REPEAT_SPECIAL);
+			}
 			case '5084755C29FB0A1912113E36F37C958A': // Illusions of Home e3m4
 			{
 				// Fix action of final switch

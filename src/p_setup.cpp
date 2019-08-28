@@ -264,6 +264,8 @@ void FLevelLocals::ClearLevelData()
 	total_monsters = total_items = total_secrets =
 	killed_monsters = found_items = found_secrets = 0;
 
+	max_velocity = avg_velocity = 0;
+
 	for (int i = 0; i < 4; i++)
 	{
 		UDMFKeys[i].Clear();

@@ -121,7 +121,7 @@ class ConversationMenu : Menu
 		mHasBackdrop = tex.isValid();
 		DontBlur = !mHasBackdrop;
 		
-		if (!generic_ui && !dlg_vgafont)
+		if (!generic_ui && (!dlg_vgafont || ui_classic))
 		{
 			displayFont = SmallFont;
 			displayWidth = CleanWidth;

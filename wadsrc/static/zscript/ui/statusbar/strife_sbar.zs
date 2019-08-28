@@ -146,7 +146,7 @@ class StrifeStatusBar : BaseStatusBar
 	override bool MustDrawLog(int state)
 	{
 		// Tell the base class to draw the log if the pop screen won't be displayed.
-		return generic_ui || log_vgafont;
+		return generic_ui || (log_vgafont && !ui_classic);
 	}
 
 	void Reset ()

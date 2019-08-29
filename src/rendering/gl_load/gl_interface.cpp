@@ -177,7 +177,7 @@ void gl_LoadExtensions()
 
 	// Mesa implements shader storage only for fragment shaders.
 	// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
-	int v;
+	int v = 0;
 	glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
 	if (v == 0)
 		gl.flags &= ~RFL_SHADER_STORAGE_BUFFER;

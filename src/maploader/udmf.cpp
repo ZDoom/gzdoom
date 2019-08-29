@@ -252,7 +252,7 @@ double UDMFParserBase::CheckCoordinate(const char *key)
 	}
 	if (sc.Float < -32768 || sc.Float > 32768)
 	{
-		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is ]-32768 .. 32768]", sc.Float, key);
+		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is [-32768 .. 32768]", sc.Float, key);
 		BadCoordinates = true;	// If this happens the map must not allowed to be started.
 	}
 	return sc.Float;
@@ -2161,7 +2161,7 @@ public:
 			case NAME_Strife:
 				namespace_bits = St;
 				Level->Translator = P_LoadTranslator("xlat/strife_base.txt");
-				Level->flags2 |= LEVEL2_DUMMYSWITCHES|LEVEL2_RAILINGHACK;
+				Level->flags2 |= LEVEL2_DUMMYSWITCHES;
 				floordrop = true;
 				break;
 			default:

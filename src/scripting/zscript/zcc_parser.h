@@ -515,6 +515,7 @@ struct ZCC_FuncParamDecl : ZCC_TreeNode
 struct ZCC_DeclFlags : ZCC_TreeNode
 {
 	ZCC_Identifier *Id;
+	FString *DeprecationMessage;
 	VersionInfo Version;
 	int Flags;
 };
@@ -537,6 +538,7 @@ struct ZCC_Declarator : ZCC_TreeNode
 struct ZCC_VarDeclarator : ZCC_Declarator
 {
 	ZCC_VarName *Names;
+	FString *DeprecationMessage;
 };
 
 // A function in a class.
@@ -546,6 +548,7 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 	ENamedName Name;
 	ZCC_Statement *Body;
 	ZCC_Identifier *UseFlags;
+	FString *DeprecationMessage;
 };
 
 struct ZCC_Default : ZCC_CompoundStmt

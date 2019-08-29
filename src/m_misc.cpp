@@ -65,6 +65,8 @@
 #include "gi.h"
 
 #include "gameconfigfile.h"
+#include "gstrings.h"
+#include "atterm.h"
 
 FGameConfigFile *GameConfig;
 
@@ -511,7 +513,7 @@ void WritePNGfile (FileWriter *file, const uint8_t *buffer, const PalEntry *pale
 		!M_AppendPNGText (file, "Software", software) ||
 		!M_FinishPNG (file))
 	{
-		Printf ("Could not create screenshot.\n");
+		Printf ("%s\n", GStrings("TXT_SCREENSHOTERR"));
 	}
 }
 
@@ -654,32 +656,3 @@ UNSAFE_CCMD (screenshot)
 		G_ScreenShot (argv[1]);
 }
 
-//
-// M_ZlibError
-//
-FString M_ZLibError(int zerr)
-{
-	if (zerr >= 0)
-	{
-		return "OK";
-	}
-	else if (zerr < -6)
-	{
-		FString out;
-		out.Format("%d", zerr);
-		return out;
-	}
-	else
-	{
-		static const char *errs[6] =
-		{
-			"Errno",
-			"Stream Error",
-			"Data Error",
-			"Memory Error",
-			"Buffer Error",
-			"Version Error"
-		};
-		return errs[-zerr - 1];
-	}
-}

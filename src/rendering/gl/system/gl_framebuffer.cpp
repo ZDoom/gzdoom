@@ -82,15 +82,17 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 	gl_RenderState.Reset();
 
 	GLRenderer = nullptr;
-	InitPalette();
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
 {
+	PPResource::ResetAll();
+
 	if (mVertexData != nullptr) delete mVertexData;
 	if (mSkyData != nullptr) delete mSkyData;
 	if (mViewpoints != nullptr) delete mViewpoints;
 	if (mLights != nullptr) delete mLights;
+	mShadowMap.Reset();
 
 	if (GLRenderer)
 	{
@@ -124,7 +126,7 @@ void OpenGLFrameBuffer::InitializeState()
 	glslversion = gl.glslversion;
 	uniformblockalignment = gl.uniformblockalignment;
 	maxuniformblock = gl.maxuniformblock;
-	gl_vendorstring = gl.vendorstring;
+	vendorstring = gl.vendorstring;
 
 	if (first)
 	{
@@ -152,11 +154,13 @@ void OpenGLFrameBuffer::InitializeState()
 
 	mVertexData = new FFlatVertexBuffer(GetWidth(), GetHeight());
 	mSkyData = new FSkyVertexBuffer;
-	mViewpoints = new GLViewpointBuffer;
+	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
 
 	GLRenderer = new FGLRenderer(this);
 	GLRenderer->Initialize(GetWidth(), GetHeight());
+
+	static_cast<GLDataBuffer*>(mLights->GetBuffer())->BindBase();
 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
@@ -233,6 +237,11 @@ uint32_t OpenGLFrameBuffer::GetCaps()
 	return (uint32_t)FlagSet;
 }
 
+const char* OpenGLFrameBuffer::DeviceName() const 
+{
+	return gl.modelstring;
+}
+
 //==========================================================================
 //
 // Swap the buffers
@@ -247,6 +256,7 @@ void OpenGLFrameBuffer::Swap()
 	Finish.Reset();
 	Finish.Clock();
 	if (swapbefore) glFinish();
+	FPSLimit();
 	SwapBuffers();
 	if (!swapbefore) glFinish();
 	Finish.Unclock();
@@ -322,12 +332,7 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)
 {
-	return new FGLModelRenderer(nullptr, gl_RenderState, mli);
-}
-
-IShaderProgram *OpenGLFrameBuffer::CreateShaderProgram() 
-{ 
-	return new FShaderProgram; 
+	return new FHWModelRenderer(nullptr, gl_RenderState, mli);
 }
 
 IVertexBuffer *OpenGLFrameBuffer::CreateVertexBuffer()
@@ -340,7 +345,7 @@ IIndexBuffer *OpenGLFrameBuffer::CreateIndexBuffer()
 	return new GLIndexBuffer; 
 }
 
-IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo)
+IDataBuffer *OpenGLFrameBuffer::CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize)
 {
 	return new GLDataBuffer(bindingpoint, ssbo);
 }
@@ -447,10 +452,8 @@ void OpenGLFrameBuffer::Draw2D()
 {
 	if (GLRenderer != nullptr)
 	{
-		FGLDebug::PushGroup("Draw2D");
 		GLRenderer->mBuffers->BindCurrentFB();
 		::Draw2D(&m2DDrawer, gl_RenderState);
-		FGLDebug::PopGroup();
 	}
 }
 

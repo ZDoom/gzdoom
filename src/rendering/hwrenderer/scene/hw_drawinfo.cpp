@@ -135,7 +135,7 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 		VPUniforms.mClipLine.X = -1000001.f;
 		VPUniforms.mClipHeight = 0;
 	}
-	else VPUniforms.SetDefaults();
+	else VPUniforms.SetDefaults(this);
 	mClipper->SetViewpoint(Viewpoint);
 
 	ClearBuffers();
@@ -387,14 +387,15 @@ HWPortal * HWDrawInfo::FindPortal(const void * src)
 //
 //-----------------------------------------------------------------------------
 
-void HWViewpointUniforms::SetDefaults()
+void HWViewpointUniforms::SetDefaults(HWDrawInfo *drawInfo)
 {
 	mProjectionMatrix.loadIdentity();
 	mViewMatrix.loadIdentity();
 	mNormalViewMatrix.loadIdentity();
 	mViewHeight = viewheight;
 	mGlobVis = (float)R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
-	mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8) | (static_cast<int>(gl_lightmode) << 16);
+	const int lightMode = drawInfo == nullptr ? static_cast<int>(*gl_lightmode) : static_cast<int>(drawInfo->lightmode);
+	mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8) | (lightMode << 16);
 	mClipLine.X = -10000000.0f;
 	mShadowmapFilter = gl_shadowmap_filter;
 
@@ -406,9 +407,9 @@ void HWViewpointUniforms::SetDefaults()
 //
 //-----------------------------------------------------------------------------
 
-GLDecal *HWDrawInfo::AddDecal(bool onmirror)
+HWDecal *HWDrawInfo::AddDecal(bool onmirror)
 {
-	auto decal = (GLDecal*)RenderDataAllocator.Alloc(sizeof(GLDecal));
+	auto decal = (HWDecal*)RenderDataAllocator.Alloc(sizeof(HWDecal));
 	Decals[onmirror ? 1 : 0].Push(decal);
 	return decal;
 }
@@ -468,7 +469,6 @@ void HWDrawInfo::RenderScene(FRenderState &state)
 
 	state.SetDepthMask(true);
 
-	screen->mLights->BindBase();
 	state.EnableFog(true);
 	state.SetRenderStyle(STYLE_Source);
 

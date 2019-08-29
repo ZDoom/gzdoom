@@ -47,20 +47,18 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
-#include "hwrenderer/postprocessing/hw_presentshader.h"
-#include "hwrenderer/postprocessing/hw_present3dRowshader.h"
-#include "hwrenderer/postprocessing/hw_shadowmapshader.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
-#include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/textures/gl_samplers.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "r_videoscale.h"
 #include "r_data/models/models.h"
 #include "gl/renderer/gl_postprocessstate.h"
+#include "gl/system/gl_buffers.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
@@ -99,7 +97,6 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresent3dColumnShader = new FPresent3DColumnShader();
 	mPresent3dRowShader = new FPresent3DRowShader();
 	mShadowMapShader = new FShadowMapShader();
-	mCustomPostProcessShaders = new FCustomPostProcessShaders();
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
 	glGenQueries(1, &PortalQueryObject);
@@ -137,7 +134,6 @@ FGLRenderer::~FGLRenderer()
 	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
 	if (mPresent3dRowShader) delete mPresent3dRowShader;
 	if (mShadowMapShader) delete mShadowMapShader;
-	delete mCustomPostProcessShaders;
 }
 
 //===========================================================================
@@ -196,11 +192,17 @@ void FGLRenderer::UpdateShadowMap()
 
 		FGLPostProcessState savedState;
 
+		static_cast<GLDataBuffer*>(screen->mShadowMap.mLightList)->BindBase();
+		static_cast<GLDataBuffer*>(screen->mShadowMap.mNodesBuffer)->BindBase();
+		static_cast<GLDataBuffer*>(screen->mShadowMap.mLinesBuffer)->BindBase();
+
 		mBuffers->BindShadowMapFB();
 
-		mShadowMapShader->Bind(NOQUEUE);
+		mShadowMapShader->Bind();
 		mShadowMapShader->Uniforms->ShadowmapQuality = gl_shadowmap_quality;
-		mShadowMapShader->Uniforms.Set();
+		mShadowMapShader->Uniforms->NodesCount = screen->mShadowMap.NodesCount();
+		mShadowMapShader->Uniforms.SetData();
+		static_cast<GLDataBuffer*>(mShadowMapShader->Uniforms.GetBuffer())->BindBase();
 
 		glViewport(0, 0, gl_shadowmap_quality, 1024);
 		RenderScreenQuad();

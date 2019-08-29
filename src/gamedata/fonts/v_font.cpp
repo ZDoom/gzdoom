@@ -71,6 +71,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int TranslationMapCompare (const void *a, const void *b);
+void UpdateGenericUI(bool cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -122,6 +123,7 @@ static const uint16_t loweruppercase[] = {
 0x0078,0x0058,
 0x0079,0x0059,
 0x007A,0x005A,
+0x00DF,0x1E9E,
 0x00E0,0x00C0,
 0x00E1,0x00C1,
 0x00E2,0x00C2,
@@ -776,10 +778,13 @@ void InitLowerUpper()
 	{
 		auto lower = loweruppercase[i];
 		auto upper = loweruppercase[i + 1];
-		if (upperforlower[upper] == upper) lowerforupper[upper] = lower;	// This mapping is ambiguous (see 0x0131 -> 0x0049, (small Turkish 'i' without dot.) so only pick the first match.
+		if (lowerforupper[upper] == upper) lowerforupper[upper] = lower;	// This mapping is ambiguous (see 0x0131 -> 0x0049, (small Turkish 'i' without dot.) so only pick the first match.
 		if (upperforlower[lower] == lower) upperforlower[lower] = upper;
 		isuppermap[upper] = islowermap[lower] = true;
 	}
+	// Special treatment for the two variants of the small sigma in Greek.
+	islowermap[0x3c2] = true;
+	upperforlower[0x3c2] = 0x3a3;
 }
 
 
@@ -789,7 +794,14 @@ bool myislower(int code)
 	return false;
 }
 
-// Returns a character without an accent mark (or one with a similar looking accent in some cases where direct support is unlikely.
+bool myisupper(int code)
+{
+	if (code >= 0 && code < 65536) return isuppermap[code];
+	return false;
+}
+
+
+// Returns a character without an accent mark (or one with a similar looking accent in some cases where direct support is unlikely.)
 
 int stripaccent(int code)
 {
@@ -807,6 +819,7 @@ int stripaccent(int code)
 			return 'z';
 		if (code == 0x9f)	// Latin capital letter Y with diaeresis
 			return 'Y';
+		if (code == 0xab || code == 0xbb) return '"';	// typographic quotation marks.
 		if (code == 0xff)	// Latin small letter Y with diaeresis
 			return 'y';
 		// Every other accented character has the high two bits set.
@@ -839,32 +852,168 @@ int stripaccent(int code)
 	else if (code >= 0x100 && code < 0x180)
 	{
 		// For the double-accented Hungarian letters it makes more sense to first map them to the very similar looking Umlauts.
-		// (And screw the crappy specs here that do not allow UTF-8 multibyte characters here.)
+		// (And screw the crappy specs that do not allow UTF-8 multibyte character literals here.)
 		if (code == 0x150) code = 0xd6;
 		else if (code == 0x151) code = 0xf6;
 		else if (code == 0x170) code = 0xdc;
 		else if (code == 0x171) code = 0xfc;
 		else
 		{
-			static const char accentless[] = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiIiJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZz ";
+			static const char accentless[] = "AaAaAaCcCcCcCcDdDdEeEeEeEeEeGgGgGgGgHhHhIiIiIiIiIiIiJjKkkLlLlLlLlLlNnNnNnnNnOoOoOoOoRrRrRrSsSsSsSsTtTtTtUuUuUuUuUuUuWwYyYZzZzZzs";
 			return accentless[code - 0x100];
 		}
 	}
-	else if (code >= 0x200 && code < 0x21c)
+	else if (code >= 0x200 && code < 0x218)
 	{
-		// 0x200-0x217 are probably irrelevant but easy to map to other characters more likely to exist. 0x218-0x21b are relevant for Romanian but also have a fallback within ranges that are more likely to be supported.
-		static const uint16_t u200map[] = {0xc4, 0xe4, 0xc2, 0xe2, 0xcb, 0xeb, 0xca, 0xea, 0xcf, 0xef, 0xce, 0xee, 0xd6, 0xf6, 0xd4, 0xe4, 'R', 'r', 'R', 'r', 0xdc, 0xfc, 0xdb, 0xfb, 0x15e, 0x15f, 0x162, 0x163};
+		// 0x200-0x217 are irrelevant but easy to map to other characters more likely to exist.
+		static const uint16_t u200map[] = {0xc4, 0xe4, 0xc2, 0xe2, 0xcb, 0xeb, 0xca, 0xea, 0xcf, 0xef, 0xce, 0xee, 0xd6, 0xf6, 0xd4, 0xe4, 'R', 'r', 'R', 'r', 0xdc, 0xfc, 0xdb, 0xfb};
 		return u200map[code - 0x200];
 	}
+	return getAlternative(code);
+}
+
+int getAlternative(int code)
+{
+	// This is for determining replacements that do not make CanPrint fail.
+	switch (code)
+	{
+		default:
+			return code;
+			
+		case 0x17f:		// The 'long s' can be safely remapped to the regular variant, not that this gets used in any real text...
+			return 's';
+			
+		case 0x218:		// Romanian S with comma below may get remapped to S with cedilla.
+			return 0x15e;
+			
+		case 0x219:
+			return 0x15f;
+			
+		case 0x21a:		// Romanian T with comma below may get remapped to T with cedilla.
+			return 0x162;
+			
+		case 0x21b:
+			return 0x163;
+
+			// Greek characters with equivalents in either Latin or Cyrillic. This is only suitable for uppercase fonts!
+		case 0x391:
+			return 'A';
+
+		case 0x392:
+			return 'B';
+
+		case 0x393:
+			return 0x413;
+
+		case 0x395:
+			return 'E';
+
+		case 0x396:
+			return 'Z';
+
+		case 0x397:
+			return 'H';
+
+		case 0x399:
+			return 'I';
+
+		case 0x39a:
+			return 'K';
+
+		case 0x39c:
+			return 'M';
+
+		case 0x39d:
+			return 'N';
 	
-	// skip the rest of Latin characters because none of them are relevant for modern languages.
+		case 0x39f:
+			return 'O';
+
+		case 0x3a0:
+			return 0x41f;
+
+		case 0x3a1:
+			return 'P';
+
+		case 0x3a4:
+			return 'T';
+
+		case 0x3a5:
+			return 'Y';
+
+		case 0x3a6:
+			return 0x424;
+
+		case 0x3a7:
+			return 'X';
+
+		case 0x3aa:
+			return 0xcf;
+
+		case 0x3ab:
+			return 0x178;
+
+		case 0x3bf:
+			return 'o';
+
+		case 0x3c2:
+			return 0x3c3;	// Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
+
+		case 0x3ca:
+			return 0xef;
+
+		case 0x3cc:
+			return 0xf3;
+
+			// Cyrillic characters with equivalents in the Latin alphabet.
+		case 0x400:
+			return 0xc8;
+			
+		case 0x401:
+			return 0xcb;
+			
+		case 0x405:
+			return 'S';
+			
+		case 0x406:
+			return 'I';
+			
+		case 0x407:
+			return 0xcf;
+			
+		case 0x408:
+			return 'J';
+			
+		case 0x450:
+			return 0xe8;
+			
+		case 0x451:
+			return 0xeb;
+			
+		case 0x455:
+			return 's';
+			
+		case 0x456:
+			return 'i';
+			
+		case 0x457:
+			return 0xef;
+			
+		case 0x458:
+			return 'j';
+			
+	}
+	
+	// skip the rest of Latin characters because none of them are relevant for modern languages, except Vietnamese which cannot be represented with the tiny bitmap fonts anyway.
 	
 	return code;
 }
 
+
 FFont *V_GetFont(const char *name, const char *fontlumpname)
 {
-	if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
+	if (!stricmp(name, "DBIGFONT")) name = "BigFont";
+	else if (!stricmp(name, "CONFONT")) name = "ConsoleFont";	// several mods have used the name CONFONT directly and effectively duplicated the font.
 	FFont *font = FFont::FindFont (name);
 	if (font == nullptr)
 	{
@@ -1118,15 +1267,6 @@ void V_InitFontColors ()
 
 	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
 	{
-		if (gameinfo.flags & GI_NOTEXTCOLOR)
-		{
-			// Chex3 contains a bad TEXTCOLO lump, probably to force all text to be green.
-			// This renders the Gray, Gold, Red and Yellow color range inoperable, some of
-			// which are used by the menu. So we have no choice but to skip this lump so that
-			// all colors work properly.
-			// The text colors should be the end user's choice anyway.
-			if (Wads.GetLumpFile(lump) == Wads.GetIwadNum()) continue;
-		}
 		FScanner sc(lump);
 		while (sc.GetString())
 		{
@@ -1441,19 +1581,71 @@ void V_InitFonts()
 	InitLowerUpper();
 	V_InitCustomFonts();
 
+	FFont *CreateHexLumpFont(const char *fontname, int lump);
+	FFont *CreateHexLumpFont2(const char *fontname, int lump);
+
+	auto lump = Wads.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
+	if (lump == -1) I_FatalError("newconsolefont.hex not found");	// This font is needed - do not start up without it.
+	NewConsoleFont = CreateHexLumpFont("NewConsoleFont", lump);
+	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
+	CurrentConsoleFont = NewConsoleFont;
+
 	// load the heads-up font
 	if (!(SmallFont = V_GetFont("SmallFont", "SMALLFNT")))
 	{
 		if (Wads.CheckNumForName("FONTA_S") >= 0)
 		{
-			SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
-			SmallFont->SetCursor('[');
+			int wadfile = -1;
+			auto a = Wads.CheckNumForName("FONTA33", ns_graphics);
+			if (a != -1) wadfile = Wads.GetLumpFile(a);
+			if (wadfile > Wads.GetIwadNum())
+			{
+				// The font has been replaced, so we need to create a copy of the original as well.
+				SmallFont = new FFont("SmallFont", "FONTA%02u", nullptr, HU_FONTSTART, HU_FONTSIZE, 1, -1);
+				SmallFont->SetCursor('[');
+			}
+			else
+			{
+				SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
+				SmallFont->SetCursor('[');
+			}
 		}
 		else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
 		{
-			SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+			int wadfile = -1;
+			auto a = Wads.CheckNumForName("STCFN065", ns_graphics);
+			if (a != -1) wadfile = Wads.GetLumpFile(a);
+			if (wadfile > Wads.GetIwadNum())
+			{
+				// The font has been replaced, so we need to create a copy of the original as well.
+				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+			}
+			else
+			{
+				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+			}
 		}
 	}
+
+	// Create the original small font as a fallback for incomplete definitions.
+	if (Wads.CheckNumForName("FONTA_S") >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+		OriginalSmallFont->SetCursor('[');
+	}
+	else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
+	}
+
+	if (SmallFont)
+	{
+		uint32_t colors[256] = {};
+		SmallFont->RecordAllTextureColors(colors);
+		if (OriginalSmallFont != nullptr) OriginalSmallFont->SetDefaultTranslation(colors);
+		NewSmallFont->SetDefaultTranslation(colors);
+	}
+
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
 		if (Wads.CheckNumForName("STBFN033", ns_graphics) >= 0)
@@ -1467,10 +1659,32 @@ void V_InitFonts()
 
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
-		if (gameinfo.gametype & GAME_Raven)
+		if (Wads.CheckNumForName("FONTB_S") >= 0)
 		{
 			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
+	}
+	
+	if (!BigFont)
+	{
+		// Load the generic fallback if no BigFont is found.
+		BigFont = V_GetFont("BigFont", "ZBIGFONT");
+	}
+
+	if (gameinfo.gametype & GAME_Raven)
+	{
+		OriginalBigFont = new FFont("OriginalBigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+	}
+	else
+	{
+		OriginalBigFont = new FFont("OriginalBigFont", nullptr, "bigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+	}
+
+	if (BigFont)
+	{
+		uint32_t colors[256] = {};
+		BigFont->RecordAllTextureColors(colors);
+		if (OriginalBigFont != nullptr) OriginalBigFont->SetDefaultTranslation(colors);
 	}
 
 	// let PWAD BIGFONTs override the stock BIGUPPER font. (This check needs to be made smarter.)
@@ -1507,7 +1721,7 @@ void V_InitFonts()
 	// SmallFont and SmallFont2 have no default provided by the engine. BigFont only has in non-Raven games.
 	if (SmallFont == nullptr)
 	{
-		SmallFont = ConFont;
+		SmallFont = OriginalSmallFont;
 	}
 	if (SmallFont2 == nullptr)
 	{
@@ -1515,8 +1729,10 @@ void V_InitFonts()
 	}
 	if (BigFont == nullptr)
 	{
-		BigFont = SmallFont;
+		BigFont = OriginalBigFont;
 	}
+	AlternativeSmallFont = OriginalSmallFont;
+	UpdateGenericUI(false);
 }
 
 void V_ClearFonts()
@@ -1526,6 +1742,36 @@ void V_ClearFonts()
 		delete FFont::FirstFont;
 	}
 	FFont::FirstFont = nullptr;
-	SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
+	AlternativeSmallFont = OriginalSmallFont = CurrentConsoleFont = NewSmallFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
+}
+
+//==========================================================================
+//
+// CleanseString
+//
+// Does some mild sanity checking on a string: If it ends with an incomplete
+// color escape, the escape is removed.
+//
+//==========================================================================
+
+char* CleanseString(char* str)
+{
+	char* escape = strrchr(str, TEXTCOLOR_ESCAPE);
+	if (escape != NULL)
+	{
+		if (escape[1] == '\0')
+		{
+			*escape = '\0';
+		}
+		else if (escape[1] == '[')
+		{
+			char* close = strchr(escape + 2, ']');
+			if (close == NULL)
+			{
+				*escape = '\0';
+			}
+		}
+	}
+	return str;
 }
 

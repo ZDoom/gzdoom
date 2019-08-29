@@ -3,7 +3,7 @@
 
 #include <string.h>
 #include "gl_load/gl_interface.h"
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 

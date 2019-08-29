@@ -16,6 +16,8 @@ public:
 	IShadowMap() { }
 	virtual ~IShadowMap();
 
+	void Reset();
+
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
 	bool ShadowTest(FDynamicLight *light, const DVector3 &pos);
 
@@ -30,6 +32,12 @@ public:
 	void FinishUpdate()
 	{
 		UpdateCycles.Clock();
+	}
+
+	unsigned int NodesCount() const
+	{
+		assert(mAABBTree);
+		return mAABBTree->NodesCount();
 	}
 
 protected:
@@ -57,6 +65,8 @@ protected:
 	IShadowMap &operator=(IShadowMap &) = delete;
 
 	// OpenGL storage buffer with the list of lights in the shadow map texture
+	// These buffers need to be accessed by the OpenGL backend directly so that they can be bound.
+public:
 	IDataBuffer *mLightList = nullptr;
 
 	// OpenGL storage buffers for the AABB tree

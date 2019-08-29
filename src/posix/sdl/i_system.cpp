@@ -51,10 +51,9 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "c_dispatch.h"
+#include "atterm.h"
 
 #include "gameconfigfile.h"
-
-EXTERN_CVAR (String, language)
 
 extern "C"
 {
@@ -71,7 +70,6 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 #endif
 
 double PerfToSec, PerfToMillisec;
-uint32_t LanguageIDs[4];
 	
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
@@ -91,20 +89,6 @@ void I_EndRead(void)
 {
 }
 
-
-//
-// SetLanguageIDs
-//
-void SetLanguageIDs ()
-{
-	size_t langlen = strlen(language);
-
-	uint32_t lang = (langlen < 2 || langlen > 3) ?
-		MAKE_ID('e','n','u','\0') :
-		MAKE_ID(language[0],language[1],language[2],'\0');
-
-	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
-}
 
 //
 // I_Init

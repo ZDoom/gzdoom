@@ -34,17 +34,6 @@
 struct ticcmd_t;
 struct WadStuff;
 
-// Index values into the LanguageIDs array
-enum
-{
-	LANGIDX_UserPreferred,
-	LANGIDX_UserDefault,
-	LANGIDX_SysPreferred,
-	LANGIDX_SysDefault
-};
-extern uint32_t LanguageIDs[4];
-extern void SetLanguageIDs ();
-
 // [RH] Detects the OS the game is running under.
 void I_DetectOS (void);
 
@@ -90,9 +79,6 @@ void I_Quit (void);
 
 
 void I_Tactile (int on, int off, int total);
-
-void atterm (void (*func)(void));
-void popterm ();
 
 // Set the mouse cursor. The texture must be 32x32.
 class FTexture;

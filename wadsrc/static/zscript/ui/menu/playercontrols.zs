@@ -187,7 +187,7 @@ class ListMenuItemPlayerNameBox : ListMenuItemSelectable
 		if (mkey == Menu.MKEY_Enter)
 		{
 			Menu.MenuSound ("menu/choose");
-			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), SmallFont, mPlayerName, 128, fromcontroller);
+			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), mPlayerName, 128, fromcontroller);
 			mEnter.ActivateMenu();
 			return true;
 		}

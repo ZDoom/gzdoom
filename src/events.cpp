@@ -44,8 +44,14 @@
 #include "utf8.h"
 
 EventManager staticEventManager;
-EventManager eventManager;
 
+void EventManager::CallOnRegister()
+{
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+	{
+		handler->OnRegister();
+	}
+}
 
 bool EventManager::RegisterHandler(DStaticEventHandler* handler)
 {
@@ -255,7 +261,12 @@ void EventManager::InitStaticHandlers(FLevelLocals *l, bool map)
 void EventManager::Shutdown()
 {
 	// delete handlers.
+	TArray<DStaticEventHandler *> list;
 	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
+	{
+		list.Push(handler);
+	}
+	for (auto handler : list)
 	{
 		handler->Destroy();
 	}
@@ -480,6 +491,14 @@ void EventManager::RenderOverlay(EHudState state)
 		handler->RenderOverlay(state);
 }
 
+void EventManager::RenderUnderlay(EHudState state)
+{
+	if (ShouldCallStatic(false)) staticEventManager.RenderUnderlay(state);
+
+	for (DStaticEventHandler* handler = FirstEventHandler; handler; handler = handler->next)
+		handler->RenderUnderlay(state);
+}
+
 bool EventManager::CheckUiProcessors()
 {
 	if (ShouldCallStatic(false))
@@ -623,11 +642,6 @@ DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
 	PARAM_SELF_PROLOGUE(DStaticEventHandler);
 	PARAM_INT(order);
-
-	/* not really needed - this is never checked again. To re-add, the handlers need a pointer to their manager but that's not worth it just for this check.
-	if (eventManager.CheckHandler(self))
-		return 0;
-	*/
 
 	self->Order = order;
 	return 0;
@@ -954,6 +968,19 @@ void DStaticEventHandler::RenderOverlay(EHudState state)
 	}
 }
 
+void DStaticEventHandler::RenderUnderlay(EHudState state)
+{
+	IFVIRTUAL(DStaticEventHandler, RenderUnderlay)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (isEmpty(func)) return;
+		FRenderEvent e = owner->SetupRenderEvent();
+		e.HudState = int(state);
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
 void DStaticEventHandler::PlayerEntered(int num, bool fromhub)
 {
 	IFVIRTUAL(DStaticEventHandler, PlayerEntered)
@@ -1216,7 +1243,7 @@ void DStaticEventHandler::NewGame()
 //
 void DStaticEventHandler::OnDestroy()
 {
-	eventManager.UnregisterHandler(this);
+	owner->UnregisterHandler(this);
 	Super::OnDestroy();
 }
 
@@ -1245,7 +1272,7 @@ CCMD(netevent)
 {
 	if (gamestate != GS_LEVEL/* && gamestate != GS_TITLELEVEL*/) // not sure if this should work in title level, but probably not, because this is for actual playing
 	{
-		Printf("netevent cannot be used outside of a map.\n");
+		DPrintf(DMSG_SPAMMY, "netevent cannot be used outside of a map.\n");
 		return;
 	}
 

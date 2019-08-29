@@ -35,13 +35,61 @@
 
 EXTERN_CVAR(Float, transsouls)
 
+IMPLEMENT_CLASS(DShape2DTransform, false, false)
+
+DEFINE_ACTION_FUNCTION(DShape2DTransform, Clear)
+{
+	PARAM_SELF_PROLOGUE(DShape2DTransform);
+	self->transform.Identity();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DShape2DTransform, Rotate)
+{
+	PARAM_SELF_PROLOGUE(DShape2DTransform);
+	PARAM_FLOAT(angle);
+	self->transform = DMatrix3x3::Rotate2D(DEG2RAD(angle)) * self->transform;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DShape2DTransform, Scale)
+{
+	PARAM_SELF_PROLOGUE(DShape2DTransform);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	self->transform = DMatrix3x3::Scale2D(DVector2(x, y)) * self->transform;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DShape2DTransform, Translate)
+{
+	PARAM_SELF_PROLOGUE(DShape2DTransform);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	self->transform = DMatrix3x3::Translate2D(DVector2(x, y)) * self->transform;
+	return 0;
+}
+
 IMPLEMENT_CLASS(DShape2D, false, false)
+
+DEFINE_ACTION_FUNCTION(DShape2D, SetTransform)
+{
+	PARAM_SELF_PROLOGUE(DShape2D);
+	PARAM_OBJECT(transform, DShape2DTransform);
+	self->transform = transform->transform;
+	self->dirty = true;
+	return 0;
+}
 
 DEFINE_ACTION_FUNCTION(DShape2D, Clear)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
 	PARAM_INT(which);
-	if ( which&C_Verts ) self->mVertices.Clear();
+	if ( which&C_Verts )
+	{
+		self->mVertices.Clear();
+		self->dirty = true;
+	}
 	if ( which&C_Coords ) self->mCoords.Clear();
 	if ( which&C_Indices ) self->mIndices.Clear();
 	return 0;
@@ -53,6 +101,7 @@ DEFINE_ACTION_FUNCTION(DShape2D, PushVertex)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	self->mVertices.Push(DVector2(x,y));
+	self->dirty = true;
 	return 0;
 }
 
@@ -363,6 +412,10 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 
 void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 {
+	// [MK] bail out if vertex/coord array sizes are mismatched
+	if ( shape->mVertices.Size() != shape->mCoords.Size() )
+		ThrowAbortException(X_OTHER, "Mismatch in vertex/coord count: %u != %u", shape->mVertices.Size(), shape->mCoords.Size());
+
 	if (parms.style.BlendOp == STYLEOP_None) return;	// not supposed to be drawn.
 
 	PalEntry vertexcolor;
@@ -380,13 +433,22 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 	if (!img->isHardwareCanvas() && parms.remap != nullptr && !parms.remap->Inactive)
 		dg.mTranslation = parms.remap;
 
+	if (shape->dirty) {
+		if (shape->mVertices.Size() != shape->mTransformedVertices.Size())
+			shape->mTransformedVertices.Resize(shape->mVertices.Size());
+		for (int i = 0; i < dg.mVertCount; i++) {
+			shape->mTransformedVertices[i] = (shape->transform * DVector3(shape->mVertices[i], 1.0)).XY();
+		}
+		shape->dirty = false;
+	}
+
 	double minx = 16383, miny = 16383, maxx = -16384, maxy = -16384;
 	for ( int i=0; i<dg.mVertCount; i++ )
 	{
-		if ( shape->mVertices[i].X < minx ) minx = shape->mVertices[i].X;
-		if ( shape->mVertices[i].Y < miny ) miny = shape->mVertices[i].Y;
-		if ( shape->mVertices[i].X > maxx ) maxx = shape->mVertices[i].X;
-		if ( shape->mVertices[i].Y > maxy ) maxy = shape->mVertices[i].Y;
+		if ( shape->mTransformedVertices[i].X < minx ) minx = shape->mTransformedVertices[i].X;
+		if ( shape->mTransformedVertices[i].Y < miny ) miny = shape->mTransformedVertices[i].Y;
+		if ( shape->mTransformedVertices[i].X > maxx ) maxx = shape->mTransformedVertices[i].X;
+		if ( shape->mTransformedVertices[i].Y > maxy ) maxy = shape->mTransformedVertices[i].Y;
 	}
 	if (minx < (double)parms.lclip || miny < (double)parms.uclip || maxx >(double)parms.rclip || maxy >(double)parms.dclip)
 	{
@@ -402,11 +464,21 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 	dg.mVertIndex = (int)mVertices.Reserve(dg.mVertCount);
 	TwoDVertex *ptr = &mVertices[dg.mVertIndex];
 	for ( int i=0; i<dg.mVertCount; i++ )
-		ptr[i].Set(shape->mVertices[i].X, shape->mVertices[i].Y, 0, shape->mCoords[i].X, shape->mCoords[i].Y, vertexcolor);
+		ptr[i].Set(shape->mTransformedVertices[i].X, shape->mTransformedVertices[i].Y, 0, shape->mCoords[i].X, shape->mCoords[i].Y, vertexcolor);
 	dg.mIndexIndex = mIndices.Size();
 	dg.mIndexCount += shape->mIndices.Size();
 	for ( int i=0; i<int(shape->mIndices.Size()); i+=3 )
+	{
+		// [MK] bail out if any indices are out of bounds
+		for ( int j=0; j<3; j++ )
+		{
+			if ( shape->mIndices[i+j] < 0 )
+				ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u is negative: %i\n", i/3, j, shape->mIndices[i+j]);
+			if ( shape->mIndices[i+j] >= dg.mVertCount )
+				ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Triangle %u index %u: %u, max: %u\n", i/3, j, shape->mIndices[i+j], dg.mVertCount-1);
+		}
 		AddIndices(dg.mVertIndex, 3, shape->mIndices[i], shape->mIndices[i+1], shape->mIndices[i+2]);
+	}
 	AddCommand(&dg);
 }
 
@@ -485,10 +557,10 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		mVertices[poly.mVertIndex+i].Set(points[i].X, points[i].Y, 0, u*uscale, v*vscale, color0);
 	}
 	poly.mIndexIndex = mIndices.Size();
-	poly.mIndexCount += (npoints - 2) * 3;
 
 	if (indices == nullptr || indexcount == 0)
 	{
+		poly.mIndexCount += (npoints - 2) * 3;
 		for (int i = 2; i < npoints; ++i)
 		{
 			AddIndices(poly.mVertIndex, 3, 0, i - 1, i);
@@ -496,10 +568,11 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	}
 	else
 	{
+		poly.mIndexCount += (int)indexcount;
 		int addr = mIndices.Reserve(indexcount);
 		for (size_t i = 0; i < indexcount; i++)
 		{
-			mIndices[addr + i] = addr + indices[i];
+			mIndices[addr + i] = poly.mVertIndex + indices[i];
 		}
 	}
 

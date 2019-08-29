@@ -188,9 +188,9 @@ double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
 
         for (uint32_t i = 0; i < 256 * 256 * 256; ++i) //startup time: 114 ms on Intel Core i5 (four cores)
         {
-            const int r_diff = getByte<2>(i) * 2 - 0xFF;
-            const int g_diff = getByte<1>(i) * 2 - 0xFF;
-            const int b_diff = getByte<0>(i) * 2 - 0xFF;
+            const int r_diff = static_cast<signed char>(getByte<2>(i)) * 2;
+            const int g_diff = static_cast<signed char>(getByte<1>(i)) * 2;
+            const int b_diff = static_cast<signed char>(getByte<0>(i)) * 2;
 
             const double k_b = 0.0593; //ITU-R BT.2020 conversion
             const double k_r = 0.2627; //
@@ -212,22 +212,30 @@ double distYCbCrBuffered(uint32_t pix1, uint32_t pix2)
     //    return 0;
     //if (pix1 < pix2)
     //    std::swap(pix1, pix2); -> 30% perf degradation!!!
-#if 1
+
     const int r_diff = static_cast<int>(getRed  (pix1)) - getRed  (pix2);
     const int g_diff = static_cast<int>(getGreen(pix1)) - getGreen(pix2);
     const int b_diff = static_cast<int>(getBlue (pix1)) - getBlue (pix2);
 
-    return diffToDist[(((r_diff + 0xFF) / 2) << 16) | //slightly reduce precision (division by 2) to squeeze value into single byte
-                                        (((g_diff + 0xFF) / 2) <<  8) |
-                                        (( b_diff + 0xFF) / 2)];
-#else //not noticeably faster:
-    const int r_diff_tmp = ((pix1 & 0xFF0000) + 0xFF0000 - (pix2 & 0xFF0000)) / 2;
-    const int g_diff_tmp = ((pix1 & 0x00FF00) + 0x00FF00 - (pix2 & 0x00FF00)) / 2; //slightly reduce precision (division by 2) to squeeze value into single byte
-    const int b_diff_tmp = ((pix1 & 0x0000FF) + 0x0000FF - (pix2 & 0x0000FF)) / 2;
+    const size_t index = (static_cast<unsigned char>(r_diff / 2) << 16) | //slightly reduce precision (division by 2) to squeeze value into single byte
+                         (static_cast<unsigned char>(g_diff / 2) <<  8) |
+                         (static_cast<unsigned char>(b_diff / 2));
 
-    return diffToDist[(r_diff_tmp & 0xFF0000) | (g_diff_tmp & 0x00FF00) | (b_diff_tmp & 0x0000FF)];
+#if 0 //attention: the following calculation creates an asymmetric color distance!!! (e.g. r_diff=46 will be unpacked as 45, but r_diff=-46 unpacks to -47
+    const size_t index = (((r_diff + 0xFF) / 2) << 16) | //slightly reduce precision (division by 2) to squeeze value into single byte
+                         (((g_diff + 0xFF) / 2) <<  8) |
+                         (( b_diff + 0xFF) / 2);
 #endif
+    return diffToDist[index];
 }
+
+
+#if defined _MSC_VER && !defined NDEBUG
+    const int debugPixelX = -1;
+    const int debugPixelY = 58;
+
+    thread_local bool breakIntoDebugger = false;
+#endif
 
 
 enum BlendType
@@ -271,6 +279,11 @@ template <class ColorDistance>
 FORCE_INLINE //detect blend direction
 BlendResult preProcessCorners(const Kernel_4x4& ker, const xbrz::ScalerCfg& cfg) //result: F, G, J, K corners of "GradientType"
 {
+#if defined _MSC_VER && !defined NDEBUG
+    if (breakIntoDebugger)
+        __debugbreak(); //__asm int 3;
+#endif
+
     BlendResult result = {};
 
     if ((ker.f == ker.g &&
@@ -281,9 +294,8 @@ BlendResult preProcessCorners(const Kernel_4x4& ker, const xbrz::ScalerCfg& cfg)
 
     auto dist = [&](uint32_t pix1, uint32_t pix2) { return ColorDistance::dist(pix1, pix2, cfg.luminanceWeight); };
 
-    const int weight = 4;
-    double jg = dist(ker.i, ker.f) + dist(ker.f, ker.c) + dist(ker.n, ker.k) + dist(ker.k, ker.h) + weight * dist(ker.j, ker.g);
-    double fk = dist(ker.e, ker.j) + dist(ker.j, ker.o) + dist(ker.b, ker.g) + dist(ker.g, ker.l) + weight * dist(ker.f, ker.k);
+    double jg = dist(ker.i, ker.f) + dist(ker.f, ker.c) + dist(ker.n, ker.k) + dist(ker.k, ker.h) + cfg.centerDirectionBias * dist(ker.j, ker.g);
+    double fk = dist(ker.e, ker.j) + dist(ker.j, ker.o) + dist(ker.b, ker.g) + dist(ker.g, ker.l) + cfg.centerDirectionBias * dist(ker.f, ker.k);
 
     if (jg < fk) //test sample: 70% of values max(jg, fk) / min(jg, fk) are between 1.1 and 3.7 with median being 1.8
     {
@@ -360,13 +372,6 @@ template <> inline unsigned char rotateBlendInfo<ROT_180>(unsigned char b) { ret
 template <> inline unsigned char rotateBlendInfo<ROT_270>(unsigned char b) { return ((b << 6) | (b >> 2)) & 0xff; }
 
 
-#if 0 //#ifndef NDEBUG
-    int debugPixelX = -1;
-    int debugPixelY = 12;
-    __declspec(thread) bool breakIntoDebugger = false;
-#endif
-
-
 /*
 input kernel area naming convention:
 -------------
@@ -384,7 +389,7 @@ void blendPixel(const Kernel_3x3& ker,
                 unsigned char blendInfo, //result of preprocessing all four corners of pixel "e"
                 const xbrz::ScalerCfg& cfg)
 {
-#define a get_a<rotDeg>(ker)
+    //#define a get_a<rotDeg>(ker)
 #define b get_b<rotDeg>(ker)
 #define c get_c<rotDeg>(ker)
 #define d get_d<rotDeg>(ker)
@@ -394,12 +399,10 @@ void blendPixel(const Kernel_3x3& ker,
 #define h get_h<rotDeg>(ker)
 #define i get_i<rotDeg>(ker)
 
-#if 0 //#ifndef NDEBUG
+#if defined _MSC_VER && !defined NDEBUG
     if (breakIntoDebugger)
         __debugbreak(); //__asm int 3;
 #endif
-
-    (void)a; //silence Clang's -Wunused-function
 
     const unsigned char blend = rotateBlendInfo<rotDeg>(blendInfo);
 
@@ -457,7 +460,7 @@ void blendPixel(const Kernel_3x3& ker,
             Scaler::blendCorner(px, out);
     }
 
-#undef a
+    //#undef a
 #undef b
 #undef c
 #undef d
@@ -554,7 +557,7 @@ void scaleImage(const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight,
 
         for (int x = 0; x < srcWidth; ++x, out += Scaler::scale)
         {
-#if 0 //#ifndef NDEBUG
+#if defined _MSC_VER && !defined NDEBUG
             breakIntoDebugger = debugPixelX == x && debugPixelY == y;
 #endif
             //all those bounds checks have only insignificant impact on performance!
@@ -1079,6 +1082,12 @@ struct ColorGradientARGB
 
 void xbrz::scale(size_t factor, const uint32_t* src, uint32_t* trg, int srcWidth, int srcHeight, ColorFormat colFmt, const xbrz::ScalerCfg& cfg, int yFirst, int yLast)
 {
+    if (factor == 1)
+    {
+        std::copy(src + yFirst * srcWidth, src + yLast * srcWidth, trg);
+        return;
+    }
+
     static_assert(SCALE_FACTOR_MAX == 6, "");
     switch (colFmt)
     {
@@ -1213,7 +1222,7 @@ void bilinearScaleAmp(const uint32_t* src, int srcWidth, int srcHeight, //throw 
         const int y = idx[0];
         const int x = idx[1];
         //Perf notes:
-        //    -> float-based calculation is (almost 2x) faster than double!
+        //    -> float-based calculation is (almost) 2x as fas as double!
         //    -> no noticeable improvement via tiling: https://msdn.microsoft.com/en-us/magazine/hh882447.aspx
         //    -> no noticeable improvement with restrict(amp,cpu)
         //    -> iterating over y-axis only is significantly slower!

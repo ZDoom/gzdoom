@@ -43,7 +43,7 @@
 #include "a_keys.h"
 #include "p_enemy.h"
 #include "gstrings.h"
-#include "sound/i_music.h"
+#include "i_music.h"
 #include "p_setup.h"
 #include "d_net.h"
 #include "d_event.h"
@@ -70,6 +70,7 @@ static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
 static void TerminalResponse (const char *str);
 
+CVAR(Bool, dlg_vgafont, false, CVAR_ARCHIVE)
 
 //============================================================================
 //
@@ -381,6 +382,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 			I_SetMusicVolume (dlg_musicvolume);
 			S_Sound (npc, CHAN_VOICE|CHAN_NOPAUSE, CurNode->SpeakerVoice, 1, ATTN_NORM);
 		}
+		M_StartControlPanel(false, true);
 
 		// Create the menu. This may be a user-defined class so check if it is good to use.
 		FName cls = CurNode->MenuClassName;
@@ -405,7 +407,6 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		}
 
 		// And open the menu
-		M_StartControlPanel (false);
 		M_ActivateMenu((DMenu*)cmenu);
 		menuactive = MENU_OnNoPause;
 	}
@@ -586,6 +587,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	{
 		int rootnode = npc->ConversationRoot;
 		const unsigned next = (unsigned)(rootnode + reply->NextNode - 1);
+		FString nextname = reply->NextNodeName;
 
 		if (next < Level->StrifeDialogues.Size())
 		{
@@ -606,7 +608,10 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		}
 		else
 		{
-			Printf ("Next node %u is invalid, no such dialog page\n", next);
+			if (nextname.IsEmpty())
+				Printf ("Next node %u is invalid, no such dialog page\n", next);
+			else
+				Printf ("Next node %u ('%s') is invalid, no such dialog page\n", next, nextname.GetChars());
 		}
 	}
 
@@ -695,13 +700,12 @@ static void TerminalResponse (const char *str)
 
 		if (StatusBar != NULL)
 		{
-			AddToConsole(-1, str);
-			AddToConsole(-1, "\n");
+			Printf(PRINT_NONOTIFY, "%s\n", str);
 			// The message is positioned a bit above the menu choices, because
 			// merchants can tell you something like this but continue to show
 			// their dialogue screen. I think most other conversations use this
 			// only as a response for terminating the dialogue.
-			StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, str,
+			StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, str,
 				float(CleanWidth/2) + 0.4f, float(ConversationMenuY - 110 + CleanHeight/2), CleanWidth, -CleanHeight,
 				CR_UNTRANSLATED, 3.f, 1.f), MAKE_ID('T','A','L','K'));
 		}

@@ -531,7 +531,7 @@ class Scanner : PowerupGiver
 		{
 			if (Owner.CheckLocalView())
 			{
-				Console.MidPrint("SmallFont", "$TXT_NEEDMAP");
+				Console.MidPrint(null, "$TXT_NEEDMAP");
 			}
 			return false;
 		}
@@ -632,7 +632,7 @@ class RaiseAlarm : DummyStrifeItem
 			dropper.target.SoundAlert(dropper.target);
 			if (dropper.target.CheckLocalView())
 			{
-				Console.MidPrint(SmallFont, "$TXT_YOUFOOL");
+				Console.MidPrint(null, "$TXT_YOUFOOL");
 			}
 		}
 		Destroy ();
@@ -672,7 +672,7 @@ class CloseDoor222 : DummyStrifeItem
 		{
 			if (dropper.target.CheckLocalView())
 			{
-				Console.MidPrint(SmallFont, "$TXT_YOUREDEAD");
+				Console.MidPrint(null, "$TXT_YOUREDEAD");
 			}
 			dropper.target.SoundAlert(dropper.target);
 		}

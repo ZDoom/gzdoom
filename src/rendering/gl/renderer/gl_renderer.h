@@ -4,8 +4,8 @@
 #include "r_defs.h"
 #include "v_video.h"
 #include "vectors.h"
-#include "r_renderer.h"
-#include "r_data/matrix.h"
+#include "swrenderer/r_renderer.h"
+#include "matrix.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
@@ -24,25 +24,22 @@ class HWPortal;
 class FLightBuffer;
 class DPSprite;
 class FGLRenderBuffers;
-class FPresentShader;
-class FPresent3DCheckerShader;
-class FPresent3DColumnShader; 
-class FPresent3DRowShader;
 class FGL2DDrawer;
 class FHardwareTexture;
-class FShadowMapShader;
 class SWSceneDrawer;
-class GLViewpointBuffer;
+class HWViewpointBuffer;
 struct FRenderViewpoint;
-class FPresentShaderBase;
 
 namespace OpenGLRenderer
 {
 	class FSamplerManager;
-	class FCustomPostProcessShaders;
 	class OpenGLFrameBuffer;
-
-#define NOQUEUE nullptr	// just some token to be used as a placeholder
+	class FPresentShaderBase;
+	class FPresentShader;
+	class FPresent3DCheckerShader;
+	class FPresent3DColumnShader;
+	class FPresent3DRowShader;
+	class FShadowMapShader;
 
 class FGLRenderer
 {
@@ -68,7 +65,6 @@ public:
 	FPresent3DColumnShader *mPresent3dColumnShader = nullptr;
 	FPresent3DRowShader *mPresent3dRowShader = nullptr;
 	FShadowMapShader *mShadowMapShader = nullptr;
-	FCustomPostProcessShaders *mCustomPostProcessShaders = nullptr;
 
 	//FRotator mAngles;
 

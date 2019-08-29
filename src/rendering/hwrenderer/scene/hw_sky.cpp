@@ -41,7 +41,7 @@ CVAR(Bool,gl_noskyboxes, false, 0)
 //
 //==========================================================================
 
-void GLSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
+void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 {
 	memset(this, 0, sizeof(*this));
 	if ((sky1 & PL_SKYFLAT) && (sky1 & (PL_SKYFLAT - 1)))
@@ -108,7 +108,7 @@ void GLSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 //
 //==========================================================================
 
-void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowreflect)
+void HWWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowreflect)
 {
 	int ptype = -1;
 
@@ -118,7 +118,7 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 	// Either a regular sky or a skybox with skyboxes disabled
 	if ((sportal == nullptr && sector->GetTexture(plane) == skyflatnum) || (gl_noskyboxes && sportal != nullptr && sportal->mType == PORTS_SKYVIEWPOINT))
 	{
-		GLSkyInfo skyinfo;
+		HWSkyInfo skyinfo;
 		skyinfo.init(di, sector->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
 		sky = &skyinfo;
@@ -173,10 +173,10 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 //
 //==========================================================================
 
-void GLWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
+void HWWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 {
 	FSectorPortal *secport = line->GetTransferredPortal();
-	GLSkyInfo skyinfo;
+	HWSkyInfo skyinfo;
 	int ptype;
 
 	// JUSTHIT is used as an indicator that a skybox is in use.
@@ -207,7 +207,7 @@ void GLWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 //
 //==========================================================================
 
-void GLWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2)
 {
 	ztop[0]=ztop[1]=32768.0f;
 	zbottom[0]=zceil[0];
@@ -226,7 +226,7 @@ void GLWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2
 //
 //==========================================================================
 
-void GLWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
@@ -276,7 +276,7 @@ void GLWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 		{
 			zbottom[0] = bs->ceilingplane.ZatPoint(v1);
 			zbottom[1] = bs->ceilingplane.ZatPoint(v2);
-			flags|=GLWF_SKYHACK;	// mid textures on such lines need special treatment!
+			flags|=HWF_SKYHACK;	// mid textures on such lines need special treatment!
 		}
 	}
 	else 
@@ -320,7 +320,7 @@ void GLWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 //
 //==========================================================================
 
-void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
@@ -355,7 +355,7 @@ void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 		{
 			ztop[0] = bs->floorplane.ZatPoint(v1);
 			ztop[1] = bs->floorplane.ZatPoint(v2);
-			flags |= GLWF_SKYHACK;	// mid textures on such lines need special treatment!
+			flags |= HWF_SKYHACK;	// mid textures on such lines need special treatment!
 		}
 	}
 	else 

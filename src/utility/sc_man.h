@@ -169,12 +169,14 @@ struct FScriptPosition
 
 	FScriptPosition()
 	{
+		FileName = NAME_None;
 		ScriptLine=0;
 	}
 	FScriptPosition(const FScriptPosition &other);
 	FScriptPosition(FString fname, int line);
 	FScriptPosition(FScanner &sc);
 	FScriptPosition &operator=(const FScriptPosition &other);
+	FScriptPosition &operator=(FScanner &sc);
 	void Message(int severity, const char *message,...) const GCCPRINTF(3,4);
 	static void ResetErrorCounter()
 	{
@@ -182,6 +184,8 @@ struct FScriptPosition
 		ErrorCounter = 0;
 	}
 };
+
+int ParseHex(const char* hex, FScriptPosition* sc);
 
 
 #endif //__SC_MAN_H__

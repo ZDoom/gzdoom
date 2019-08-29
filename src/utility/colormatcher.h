@@ -29,26 +29,43 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
+** Once upon a time, this tried to be a fast closest color finding system.
+** It was, but the results were not as good as I would like, so I didn't
+** actually use it. But I did keep the code around in case I ever felt like
+** revisiting the problem. I never did, so now it's relegated to the mists
+** of SVN history, and this is just a thin wrapper around BestColor().
+**
 */
 
 #ifndef __COLORMATCHER_H__
 #define __COLORMATCHER_H__
 
+#include "palette.h"
+
+int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num);
+
 class FColorMatcher
 {
 public:
-	FColorMatcher ();
-	FColorMatcher (const uint32_t *palette);
-	FColorMatcher (const FColorMatcher &other);
+	FColorMatcher () = default;
+	FColorMatcher (const uint32_t *palette) { Pal = reinterpret_cast<const PalEntry*>(palette); }
+	FColorMatcher (const FColorMatcher &other) = default;
 
-	void SetPalette (const uint32_t *palette);
-	uint8_t Pick (int r, int g, int b);
+	void SetPalette (const uint32_t *palette) { Pal = reinterpret_cast<const PalEntry*>(palette); }
+	uint8_t Pick (int r, int g, int b)
+	{
+		if (Pal == nullptr)
+			return 1;
+
+		return (uint8_t)BestColor ((uint32_t *)Pal, r, g, b, 1, 255);
+	}
+	
 	uint8_t Pick (PalEntry pe)
 	{
 		return Pick(pe.r, pe.g, pe.b);
 	}
 
-	FColorMatcher &operator= (const FColorMatcher &other);
+	FColorMatcher &operator= (const FColorMatcher &other) = default;
 
 private:
 	const PalEntry *Pal;

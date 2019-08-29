@@ -40,6 +40,7 @@
 #include "zstring.h"
 #include "v_text.h"
 #include "utf8.h"
+#include "fontinternals.h"
 
 FNullStringData FString::NullString =
 {
@@ -393,8 +394,8 @@ size_t FString::CharacterCount() const
 
 int FString::GetNextCharacter(int &position) const
 {
-	const uint8_t *cp = (const uint8_t*)Chars;
-	const uint8_t *cpread = cp + position;
+	const uint8_t *cp = (const uint8_t*)Chars + position;
+	const uint8_t *cpread = cp;
 	int chr = GetCharFromString(cpread);
 	position += int(cpread - cp);
 	return chr;
@@ -680,22 +681,30 @@ void FString::ToLower ()
 	UnlockBuffer();
 }
 
-void FString::SwapCase ()
+FString FString::MakeLower() const
 {
-	LockBuffer();
-	size_t max = Len();
-	for (size_t i = 0; i < max; ++i)
+	TArray<uint8_t> builder(Len());
+	int pos = 0;
+	while (int c = GetNextCharacter(pos))
 	{
-		if (isupper(Chars[i]))
-		{
-			Chars[i] = (char)tolower(Chars[i]);
-		}
-		else
-		{
-			Chars[i] = (char)toupper(Chars[i]);
-		}
+		if (c < 65536) c = lowerforupper[c];
+		auto cp = MakeUTF8(c);
+		while (auto uc = *cp++) builder.Push(uc);
 	}
-	UnlockBuffer();
+	return FString(builder);
+}
+
+FString FString::MakeUpper() const
+{
+	TArray<uint8_t> builder(Len());
+	int pos = 0;
+	while (int c = GetNextCharacter(pos))
+	{
+		if (c < 65536) c = upperforlower[c];
+		auto cp = MakeUTF8(c);
+		while (auto uc = *cp++) builder.Push(uc);
+	}
+	return FString(builder);
 }
 
 void FString::StripLeft ()
@@ -828,12 +837,12 @@ void FString::StripLeftRight ()
 	if (max == 0) return;
 	for (i = 0; i < max; ++i)
 	{
-		if (!isspace((unsigned char)Chars[i]))
+		if (Chars[i] < 0 || !isspace((unsigned char)Chars[i]))
 			break;
 	}
 	for (j = max - 1; j >= i; --j)
 	{
-		if (!isspace((unsigned char)Chars[j]))
+		if (Chars[i] < 0 || !isspace((unsigned char)Chars[j]))
 			break;
 	}
 	if (i == 0 && j == max - 1)
@@ -1250,6 +1259,8 @@ void FString::Split(TArray<FString>& tokens, const char *delimiter, EmptyTokenTy
 	const long delimLen = static_cast<long>(strlen(delimiter));
 	long lastPos = 0;
 
+	if (selfLen == 0) return;	// Empty strings do not contain tokens, even with TOK_KEEPEMPTY.
+
 	while (lastPos <= selfLen)
 	{
 		long pos = IndexOf(delimiter, lastPos);
@@ -1312,6 +1323,7 @@ FString &FString::operator=(const wchar_t *copyStr)
 
 std::wstring WideString(const char *cin)
 {
+	if (!cin) return L"";
 	const uint8_t *in = (const uint8_t*)cin;
 	// This is a bit tricky because we need to support both UTF-8 and legacy content in ISO-8859-1
 	// and thanks to user-side string manipulation it can be that a text mixes both.

@@ -132,19 +132,6 @@ class BasicArmor : Armor
 			// You shouldn't be picking up BasicArmor anyway.
 			return true;
 		}
-		if (!item.bIgnoreSkill)
-		{
-			if (item is "BasicArmorBonus")
-			{
-				let armor = BasicArmorBonus(item);
-				armor.SaveAmount = int(armor.SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor));
-			}
-			else if (item is "BasicArmorPickup")
-			{
-				let armor = BasicArmorPickup(item);
-				armor.SaveAmount = int(armor.SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor));
-			}
-		}
 		return false;
 	}
 	
@@ -263,12 +250,6 @@ class BasicArmorBonus : Armor
 	override Inventory CreateCopy (Actor other)
 	{
 		let copy = BasicArmorBonus(Super.CreateCopy (other));
-
-		if (!bIgnoreSkill)
-		{
-			SaveAmount = int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor));
-		}
-
 		copy.SavePercent = SavePercent;
 		copy.SaveAmount = SaveAmount;
 		copy.MaxSaveAmount = MaxSaveAmount;
@@ -309,7 +290,7 @@ class BasicArmorBonus : Armor
 			result = true;
 		}
 
-		int saveAmount = min(SaveAmount, MaxSaveAmount);
+		int saveAmount = min(GetSaveAmount(), MaxSaveAmount);
 
 		if (saveAmount <= 0)
 		{ // If it can't give you anything, it's as good as used.
@@ -343,6 +324,11 @@ class BasicArmorBonus : Armor
 	override void SetGiveAmount(Actor receiver, int amount, bool bycheat)
 	{
 		SaveAmount *= amount;
+	}
+
+	int GetSaveAmount ()
+	{
+		return !bIgnoreSkill ? int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor)) : SaveAmount;
 	}
 }
 
@@ -383,12 +369,6 @@ class BasicArmorPickup : Armor
 	override Inventory CreateCopy (Actor other)
 	{
 		let copy = BasicArmorPickup(Super.CreateCopy (other));
-
-		if (!bIgnoreSkill)
-		{
-			SaveAmount = int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor));
-		}
-
 		copy.SavePercent = SavePercent;
 		copy.SaveAmount = SaveAmount;
 		copy.MaxAbsorb = MaxAbsorb;
@@ -410,6 +390,7 @@ class BasicArmorPickup : Armor
 
 	override bool Use (bool pickup)
 	{
+		int SaveAmount = GetSaveAmount();
 		let armor = BasicArmor(Owner.FindInventory("BasicArmor"));
 
 		// This should really never happen but let's be prepared for a broken inventory.
@@ -450,6 +431,10 @@ class BasicArmorPickup : Armor
 		SaveAmount *= amount;
 	}
 	
+	int GetSaveAmount ()
+	{
+		return !bIgnoreSkill ? int(SaveAmount * G_SkillPropertyFloat(SKILLP_ArmorFactor)) : SaveAmount;
+	}
 }
 
 //===========================================================================

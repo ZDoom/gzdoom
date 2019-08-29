@@ -1,0 +1,62 @@
+graphic "AMMOICON", 113, 69
+{
+	xscale 6
+	yscale 6
+	patch "AMMOA0", 0, 0
+	{
+	}
+}
+
+graphic "SBOXICON", 98, 62
+{
+	xscale 5
+	yscale 5
+	patch "SBOXA0", 0, 0
+	{
+	}
+}
+
+graphic "ROCKICON", 31, 31
+{
+	xscale 2
+	yscale 2
+	patch "ROCKA0", 0, 0
+	{
+	}
+}
+
+graphic "CELPICON", 72, 74
+{
+	xscale 4
+	yscale 4
+	patch "CELPA0", 0, 0
+	{
+	}
+}
+
+graphic "MEDIA0", 109, 62
+{
+	xscale 3
+	yscale 3
+	patch "MEDIA0", 0, 0
+	{
+	}
+}
+
+graphic "ARM1A0", 70, 70
+{
+	xscale 3
+	yscale 3
+	patch "ARM1A0", 0, 0
+	{
+	}
+}
+
+graphic "ARM2A0", 81, 78
+{
+	xscale 3
+	yscale 3
+	patch "ARM2A0", 0, 0
+	{
+	}
+}

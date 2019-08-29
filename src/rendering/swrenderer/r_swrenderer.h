@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "r_renderer.h"
+#include "swrenderer/r_renderer.h"
 #include "swrenderer/scene/r_scene.h"
 
 struct FSoftwareRenderer : public FRenderer
@@ -12,7 +12,7 @@ struct FSoftwareRenderer : public FRenderer
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 
 	// render 3D view
-	void RenderView(player_t *player, DCanvas *target, void *videobuffer) override;
+	void RenderView(player_t *player, DCanvas *target, void *videobuffer, int bufferpitch) override;
 
 	// renders view to a savegame picture
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;

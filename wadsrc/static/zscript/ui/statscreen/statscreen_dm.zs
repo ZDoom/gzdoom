@@ -2,6 +2,9 @@
 class DeathmatchStatusScreen : StatusScreen
 {
 	int textcolor;
+	double FontScale;
+	int RowHeight;
+	Font displayFont;
 	
 	//====================================================================
 	//
@@ -13,10 +16,14 @@ class DeathmatchStatusScreen : StatusScreen
 	{
 		int i, j;
 
-		textcolor = (gameinfo.gametype & GAME_Raven) ? Font.CR_GREEN : Font.CR_UNTRANSLATED;
-		
+		textcolor = Font.CR_GRAY;
+
 		CurState = StatCount;
 		acceleratestage = 0;
+		displayFont = NewSmallFont;
+		FontScale = max(screen.GetHeight() / 400, 1);
+		RowHeight = int(max((displayFont.GetHeight() + 1) * FontScale, 1));
+
 		for(i = 0; i < MAXPLAYERS; i++)
 		{
 			playerready[i] = false;
@@ -160,7 +167,7 @@ class DeathmatchStatusScreen : StatusScreen
 		Vector2 readyoffset = TexMan.GetScaledOffset(readyico);
 		height = int(readysize.Y - readyoffset.Y);
 		maxiconheight = MAX(height, maxiconheight);
-		height = SmallFont.GetHeight() * CleanYfac;
+		height = int(displayFont.GetHeight() * FontScale);
 		lineheight = MAX(height, maxiconheight * CleanYfac);
 		ypadding = (lineheight - height + 1) / 2;
 		y += CleanYfac;
@@ -169,22 +176,22 @@ class DeathmatchStatusScreen : StatusScreen
 		//text_color = Stringtable.Localize("$SCORE_COLOR");
 		text_frags = Stringtable.Localize("$SCORE_FRAGS");
 
-		icon_x = 8 * CleanXfac;
-		name_x = icon_x + maxscorewidth * CleanXfac;
-		frags_x = name_x + (maxnamewidth + MAX(SmallFont.StringWidth("XXXXX"), SmallFont.StringWidth(text_frags)) + 8) * CleanXfac;
-		deaths_x = frags_x + ((deaths_len = SmallFont.StringWidth(text_deaths)) + 8) * CleanXfac;
-
+		icon_x = int(8 * FontScale);
+		name_x = int(icon_x + maxscorewidth * FontScale);
+		frags_x = name_x + int((maxnamewidth + 1 + MAX(displayFont.StringWidth("XXXXXXXXXX"), displayFont.StringWidth(text_frags)) + 16) * FontScale);
+		deaths_x = frags_x + int(((deaths_len = displayFont.StringWidth(text_deaths)) + 16) * FontScale);
+		
 		x = (Screen.GetWidth() - deaths_x) >> 1;
 		icon_x += x;
 		name_x += x;
 		frags_x += x;
 		deaths_x += x;
 
-		screen.DrawText(SmallFont, textcolor, name_x, y, Stringtable.Localize("$SCORE_NAME"), DTA_CleanNoMove, true);
-		screen.DrawText(SmallFont, textcolor, frags_x - SmallFont.StringWidth(text_frags) * CleanXfac, y, text_frags, DTA_CleanNoMove, true);
-		screen.DrawText(SmallFont, textcolor, deaths_x - deaths_len * CleanXfac, y, text_deaths, DTA_CleanNoMove, true);
-		y += height + 6 * CleanYfac;
-
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_NAME"), FontScale, textcolor);
+		drawTextScaled(displayFont, frags_x - displayFont.StringWidth(text_frags) * FontScale, y, text_frags, FontScale, textcolor);
+		drawTextScaled(displayFont, deaths_x - deaths_len * FontScale, y, text_deaths, FontScale, textcolor);
+		y += height + int(6 * FontScale);
+		
 		// Sort all players
 		Array<int> sortedplayers;
 		GetSortedPlayers(sortedplayers, teamplay);
@@ -208,22 +215,25 @@ class DeathmatchStatusScreen : StatusScreen
 			{
 				screen.DrawTexture(player.mo.ScoreIcon, true, icon_x, y, DTA_CleanNoMove, true);
 			}
-			screen.DrawText(SmallFont, thiscolor, name_x, y + ypadding, player.GetUserName(), DTA_CleanNoMove, true);
-			drawNum(SmallFont, frags_x, y + ypadding, cnt_frags[pnum], 0, false, thiscolor, true);
+			
+			drawTextScaled(displayFont, name_x, y + ypadding, player.GetUserName(), FontScale, thiscolor);
+			drawNumScaled(displayFont, frags_x, y + ypadding, FontScale, cnt_frags[pnum], 0, textcolor);
+
 			if (ng_state >= 2)
 			{
-				drawNum(SmallFont, deaths_x, y + ypadding, cnt_deaths[pnum], 0, false, thiscolor, true);
+				drawNumScaled(displayFont, deaths_x, y + ypadding, FontScale, cnt_deaths[pnum], 0, textcolor);
 			}
 			y += lineheight + CleanYfac;
 		}
 
 		// Draw "TOTAL" line
 		y += height + 3 * CleanYfac;
-		screen.DrawText(SmallFont, textcolor, name_x, y, Stringtable.Localize("$SCORE_TOTAL"), DTA_CleanNoMove, true);
-		drawNum(SmallFont, frags_x, y, total_frags, 0, false, textcolor, true);
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_TOTAL"), FontScale, textcolor);
+		drawNumScaled(displayFont, frags_x, y, FontScale, total_frags, 0, textcolor);
+		
 		if (ng_state >= 4)
 		{
-			drawNum(SmallFont, deaths_x, y, total_deaths, 0, false, textcolor, true);
+			drawNumScaled(displayFont, deaths_x, y, FontScale, total_deaths, 0, textcolor);
 		}
 
 		// Draw game time
@@ -235,7 +245,6 @@ class DeathmatchStatusScreen : StatusScreen
 		seconds = seconds % 60;
 
 		String leveltime = Stringtable.Localize("$SCORE_LVLTIME") .. ": " .. String.Format("%02i:%02i:%02i", hours, minutes, seconds);
-
-		screen.DrawText(SmallFont, textcolor, x, y, leveltime, DTA_CleanNoMove, true);
+		drawTextScaled(displayFont, x, y, leveltime, FontScale, textcolor);
 	}
 }

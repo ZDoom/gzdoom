@@ -9,6 +9,18 @@
 
 struct DrawParms;
 
+class DShape2DTransform : public DObject
+{
+
+DECLARE_CLASS(DShape2DTransform, DObject)
+public:
+	DShape2DTransform()
+	{
+		transform.Identity();
+	}
+	DMatrix3x3 transform;
+};
+
 // intermediate struct for shape drawing
 
 enum EClearWhich
@@ -23,9 +35,21 @@ class DShape2D : public DObject
 
 	DECLARE_CLASS(DShape2D,DObject)
 public:
+	DShape2D()
+	{
+		transform.Identity();
+	}
+
 	TArray<int> mIndices;
 	TArray<DVector2> mVertices;
 	TArray<DVector2> mCoords;
+
+	DMatrix3x3 transform;
+
+	// dirty stores whether we need to re-apply the transformation
+	// otherwise it uses the cached values
+	bool dirty = true;
+	TArray<DVector2> mTransformedVertices;
 };
 
 class F2DDrawer
@@ -105,13 +129,14 @@ public:
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
 				mTranslation == other.mTranslation &&
-				mSpecialColormap == other.mSpecialColormap &&
+				mSpecialColormap[0].d == other.mSpecialColormap[0].d &&
+				mSpecialColormap[1].d == other.mSpecialColormap[1].d &&
 				!memcmp(mScissor, other.mScissor, sizeof(mScissor)) &&
 				mDesaturate == other.mDesaturate &&
 				mRenderStyle == other.mRenderStyle &&
 				mDrawMode == other.mDrawMode &&
 				mFlags == other.mFlags &&
-				mColor1 == other.mColor1;
+				mColor1.d == other.mColor1.d;
 
 		}
 	};

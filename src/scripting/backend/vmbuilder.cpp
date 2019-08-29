@@ -367,6 +367,7 @@ void VMFunctionBuilder::ParamChange(int delta)
 VMFunctionBuilder::RegAvailability::RegAvailability()
 {
 	memset(Used, 0, sizeof(Used));
+	memset(Dirty, 0, sizeof(Dirty));
 	MostUsed = 0;
 }
 
@@ -493,16 +494,19 @@ void VMFunctionBuilder::RegAvailability::Return(int reg, int count)
 		// because for that case it pushes the self pointer a second time without reallocating, so it gets freed twice.
 		//assert((Used[firstword] & mask) == mask);
 		Used[firstword] &= ~mask;
+		Dirty[firstword] |= mask;
 	}
 	else
 	{ // Range is in two words.
 		partialmask = mask << firstbit;
 		assert((Used[firstword] & partialmask) == partialmask);
 		Used[firstword] &= ~partialmask;
+		Dirty[firstword] |= partialmask;
 
 		partialmask = mask >> (32 - firstbit);
 		assert((Used[firstword + 1] & partialmask) == partialmask);
 		Used[firstword + 1] &= ~partialmask;
+		Dirty[firstword + 1] |= partialmask;
 	}
 }
 

@@ -47,6 +47,10 @@
 #include "i_soundfont.h"
 #include "i_system.h"
 #include "v_video.h"
+#include "gstrings.h"
+#include "teaminfo.h"
+#include "r_data/sprites.h"
+#include "atterm.h"
 
 
 void ClearSaveGames();
@@ -132,6 +136,7 @@ DEFINE_ACTION_FUNCTION(FOptionValues, GetText)
 
 void DeinitMenus()
 {
+	M_ClearMenus();
 	{
 		FOptionMap::Iterator it(OptionValues);
 
@@ -145,7 +150,6 @@ void DeinitMenus()
 	}
 	MenuDescriptors.Clear();
 	OptionValues.Clear();
-	CurrentMenu = nullptr;
 	savegameManager.ClearSaveGames();
 }
 
@@ -1105,6 +1109,7 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 			}
 
 			
+			int posx = (int)ld->mXpos;
 			int posy = (int)ld->mYpos;
 			int topy = posy;
 
@@ -1132,6 +1137,23 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 				}
 
 				if (!isOld) ld->mSelectedItem = ld->mItems.Size();
+
+				for (unsigned i = 0; i < AllEpisodes.Size(); i++)
+				{
+					DMenuItemBase *it = nullptr;
+					if (AllEpisodes[i].mPicName.IsNotEmpty())
+					{
+						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
+						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
+							continue;	// We do not measure patch based entries. They are assumed to fit
+					}
+					const char *c = AllEpisodes[i].mEpisodeName;
+					if (*c == '$') c = GStrings(c + 1);
+					int textwidth = ld->mFont->StringWidth(c);
+					int textright = posx + textwidth;
+					if (posx + textright > 320) posx = std::max(0, 320 - textright);
+				}
+
 				for(unsigned i = 0; i < AllEpisodes.Size(); i++)
 				{
 					DMenuItemBase *it = nullptr;
@@ -1139,11 +1161,11 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
 						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
-							it = CreateListMenuItemPatch(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
+							it = CreateListMenuItemPatch(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
 					}
 					if (it == nullptr)
 					{
-						it = CreateListMenuItemText(ld->mXpos, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
+						it = CreateListMenuItemText(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, 
 							AllEpisodes[i].mEpisodeName, ld->mFont, ld->mFontColor, ld->mFontColor2, NAME_Skillmenu, i);
 					}
 					ld->mItems.Push(it);
@@ -1524,6 +1546,95 @@ void M_CreateMenus()
 	{
 		I_BuildALResamplersList(*opt);
 	}
+	opt = OptionValues.CheckKey(NAME_PlayerTeam);
+	if (opt != nullptr)
+	{
+		auto op = *opt; 
+		op->mValues.Resize(Teams.Size() + 1);
+		op->mValues[0].Value = 0;
+		op->mValues[0].Text = "$OPTVAL_NONE";
+		for (unsigned i = 0; i < Teams.Size(); i++)
+		{
+			op->mValues[i+1].Value = i+1;
+			op->mValues[i+1].Text = Teams[i].GetName();
+		}
+	}
+	opt = OptionValues.CheckKey(NAME_PlayerClass);
+	if (opt != nullptr)
+	{
+		auto op = *opt;
+		int o = 0;
+		if (!gameinfo.norandomplayerclass && PlayerClasses.Size() > 1)
+		{
+			op->mValues.Resize(PlayerClasses.Size()+1);
+			op->mValues[0].Value = -1;
+			op->mValues[0].Text = "$MNU_RANDOM";
+			o = 1;
+		}
+		else op->mValues.Resize(PlayerClasses.Size());
+		for (unsigned i = 0; i < PlayerClasses.Size(); i++)
+		{
+			op->mValues[i+o].Value = i;
+			op->mValues[i+o].Text = GetPrintableDisplayName(PlayerClasses[i].Type);
+		}
+	}
+}
+
+
+DEFINE_ACTION_FUNCTION(DMenu, UpdateColorsets)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(playerClass, FPlayerClass);
+
+	TArray<int> PlayerColorSets;
+
+	EnumColorSets(playerClass->Type, &PlayerColorSets);
+
+	auto opt = OptionValues.CheckKey(NAME_PlayerColors);
+	if (opt != nullptr)
+	{
+		auto op = *opt;
+		op->mValues.Resize(PlayerColorSets.Size() + 1);
+		op->mValues[0].Value = -1;
+		op->mValues[0].Text = "$OPTVAL_CUSTOM";
+		for (unsigned i = 0; i < PlayerColorSets.Size(); i++)
+		{
+			auto cset = GetColorSet(playerClass->Type, PlayerColorSets[i]);
+			op->mValues[i + 1].Value = PlayerColorSets[i];
+			op->mValues[i + 1].Text = cset? cset->Name.GetChars() : "?";	// The null case should never happen here.
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DMenu, UpdateSkinOptions)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(playerClass, FPlayerClass);
+
+	auto opt = OptionValues.CheckKey(NAME_PlayerSkin);
+	if (opt != nullptr)
+	{
+		auto op = *opt;
+
+		if ((GetDefaultByType(playerClass->Type)->flags4 & MF4_NOSKIN) || players[consoleplayer].userinfo.GetPlayerClassNum() == -1)
+		{
+			op->mValues.Resize(1);
+			op->mValues[0].Value = -1;
+			op->mValues[0].Text = "$OPTVAL_DEFAULT";
+		}
+		else
+		{
+			op->mValues.Clear();
+			for (unsigned i = 0; i < Skins.Size(); i++)
+			{
+				op->mValues.Reserve(1);
+				op->mValues.Last().Value = i;
+				op->mValues.Last().Text = Skins[i].Name;
+			}
+		}
+	}
+	return 0;
 }
 
 //=============================================================================
@@ -1580,7 +1691,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 		if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 		{
 			DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-			int x = (int)ld->mXpos;
+			int posx = (int)ld->mXpos;
 			int y = (int)ld->mYpos;
 
 			// Delete previous contents
@@ -1634,6 +1745,30 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				}
 			}
 
+			for (unsigned int i = 0; i < MenuSkills.Size(); i++)
+			{
+				FSkillInfo &skill = *MenuSkills[i];
+				DMenuItemBase *li = nullptr;
+
+				FString *pItemText = nullptr;
+				if (gs->PlayerClass != nullptr)
+				{
+					pItemText = skill.MenuNamesForPlayerClass.CheckKey(gs->PlayerClass);
+				}
+
+				if (skill.PicName.Len() != 0 && pItemText == nullptr)
+				{
+					FTextureID tex = GetMenuTexture(skill.PicName);
+					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
+						continue;
+				}
+				const char *c = pItemText ? pItemText->GetChars() : skill.MenuName.GetChars();
+				if (*c == '$') c = GStrings(c + 1);
+				int textwidth = ld->mFont->StringWidth(c);
+				int textright = posx + textwidth;
+				if (posx + textright > 320) posx = std::max(0, 320 - textright);
+			}
+
 			unsigned firstitem = ld->mItems.Size();
 			for(unsigned int i = 0; i < MenuSkills.Size(); i++)
 			{
@@ -1654,11 +1789,11 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
 					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
-						li = CreateListMenuItemPatch(ld->mXpos, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
+						li = CreateListMenuItemPatch(posx, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
 				}
 				if (li == nullptr)
 				{
-					li = CreateListMenuItemText(x, y, ld->mLinespacing, skill.Shortcut,
+					li = CreateListMenuItemText(posx, y, ld->mLinespacing, skill.Shortcut,
 									pItemText? *pItemText : skill.MenuName, ld->mFont, color,ld->mFontColor2, action, SkillIndices[i]);
 				}
 				ld->mItems.Push(li);

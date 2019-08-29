@@ -41,6 +41,10 @@ class MessageBoxMenu : Menu
 	int mMouseLeft, mMouseRight, mMouseY;
 	Name mAction;
 
+	Font textFont, arrowFont;
+	int destWidth, destHeight;
+	String selector;
+
 	native static void CallHandler(voidptr hnd);
 
 
@@ -57,11 +61,35 @@ class MessageBoxMenu : Menu
 		messageSelection = 0;
 		mMouseLeft = 140;
 		mMouseY = 0x80000000;
-		int mr1 = 170 + SmallFont.StringWidth(Stringtable.Localize("$TXT_YES"));
-		int mr2 = 170 + SmallFont.StringWidth(Stringtable.Localize("$TXT_NO"));
+		textFont = null;
+
+		if (!generic_ui)
+		{
+			if (SmallFont && SmallFont.CanPrint(message) && SmallFont.CanPrint("$TXT_YES") && SmallFont.CanPrint("$TXT_NO")) textFont = SmallFont;
+			else if (OriginalSmallFont && OriginalSmallFont.CanPrint(message) && OriginalSmallFont.CanPrint("$TXT_YES") && OriginalSmallFont.CanPrint("$TXT_NO")) textFont = OriginalSmallFont;
+		}
+		
+		if (!textFont)
+		{
+			arrowFont = textFont = NewSmallFont;
+			int factor = (CleanXfac+1) / 2;
+			destWidth = screen.GetWidth() / factor;
+			destHeight = screen.GetHeight() / factor;
+			selector = "▶";
+		}
+		else
+		{
+			arrowFont = ConFont;
+			destWidth = CleanWidth;
+			destHeight = CleanHeight;
+			selector = "\xd";
+		}
+
+		int mr1 = destWidth/2 + 10 + textFont.StringWidth(Stringtable.Localize("$TXT_YES"));
+		int mr2 = destWidth/2 + 10 + textFont.StringWidth(Stringtable.Localize("$TXT_NO"));
 		mMouseRight = MAX(mr1, mr2);
 		mParentMenu = parent;
-		mMessage = SmallFont.BreakLines(Stringtable.Localize(message), 300);
+		mMessage = textFont.BreakLines(Stringtable.Localize(message), generic_ui? 600 : 300);
 		mMessageMode = messagemode;
 		if (playsound)
 		{
@@ -79,18 +107,16 @@ class MessageBoxMenu : Menu
 	override void Drawer ()
 	{
 		int i, y;
+		int fontheight = textFont.GetHeight();
 
-		int fontheight = SmallFont.GetHeight();
-
-		y = 100;
+		y = destHeight / 2;
 
 		int c = mMessage.Count();
-		for (i = 0; i < c; i++)
-			y -= SmallFont.GetHeight () / 2;
+		y -= c * fontHeight / 2;
 
 		for (i = 0; i < c; i++)
 		{
-			screen.DrawText (SmallFont, Font.CR_UNTRANSLATED, 160 - mMessage.StringWidth(i)/2, y, mMessage.StringAt(i), DTA_Clean, true);
+			screen.DrawText (textFont, Font.CR_UNTRANSLATED, destWidth/2 - mMessage.StringWidth(i)/2, y, mMessage.StringAt(i), DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, true);
 			y += fontheight;
 		}
 
@@ -98,17 +124,15 @@ class MessageBoxMenu : Menu
 		{
 			y += fontheight;
 			mMouseY = y;
-			screen.DrawText(SmallFont, messageSelection == 0? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, 160, y, Stringtable.Localize("$TXT_YES"), DTA_Clean, true);
-			screen.DrawText(SmallFont, messageSelection == 1? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, 160, y + fontheight + 1, Stringtable.Localize("$TXT_NO"), DTA_Clean, true);
+			screen.DrawText(textFont, messageSelection == 0? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, destWidth / 2, y, Stringtable.Localize("$TXT_YES"), DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, true);
+			screen.DrawText(textFont, messageSelection == 1? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, destWidth / 2, y + fontheight, Stringtable.Localize("$TXT_NO"), DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, true);
 
 			if (messageSelection >= 0)
 			{
 				if ((MenuTime() % 8) < 6)
 				{
-					screen.DrawText(ConFont, OptionMenuSettings.mFontColorSelection,
-						(150 - 160) * CleanXfac + screen.GetWidth() / 2,
-						(y + (fontheight + 1) * messageSelection - 100 + fontheight/2 - 5) * CleanYfac + screen.GetHeight() / 2,
-						"\xd", DTA_CellX, 8 * CleanXfac, DTA_CellY, 8 * CleanYfac);
+					screen.DrawText(arrowFont, OptionMenuSettings.mFontColorSelection,
+						destWidth/2 - 11, y + fontheight * messageSelection, selector, DTA_VirtualWidth, destWidth, DTA_VirtualHeight, destHeight, DTA_KeepRatio, true);
 				}
 			}
 		}
@@ -268,11 +292,11 @@ class MessageBoxMenu : Menu
 		else
 		{
 			int sel = -1;
-			int fh = SmallFont.GetHeight() + 1;
+			int fh = textFont.GetHeight() + 1;
 
 			// convert x/y from screen to virtual coordinates, according to CleanX/Yfac use in DrawTexture
-			x = ((x - (screen.GetWidth() / 2)) / CleanXfac) + 160;
-			y = ((y - (screen.GetHeight() / 2)) / CleanYfac) + 100;
+			x = x * destWidth / screen.GetWidth();
+			y = y * destHeight / screen.GetHeight();
 
 			if (x >= mMouseLeft && x <= mMouseRight && y >= mMouseY && y < mMouseY + 2 * fh)
 			{

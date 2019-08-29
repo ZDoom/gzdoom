@@ -50,6 +50,7 @@
 #include "am_map.h"
 #include "v_video.h"
 #include "gi.h"
+#include "fontinternals.h"
 #include "intermission/intermission.h"
 
 DVector2 AM_GetPosition();
@@ -176,6 +177,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharCodeAt, StringCharCodeAt)
 	ACTION_RETURN_INT(StringCharCodeAt(self, pos));
 }
 
+static int StringByteAt(FString *self, int pos)
+{
+	if ((unsigned)pos >= self->Len()) return 0;
+	else return (uint8_t)((*self)[pos]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ByteAt, StringByteAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(StringByteAt(self, pos));
+}
+
 static void StringFilter(FString *self, FString *result)
 {
 	*result = strbin1(*self);
@@ -250,6 +264,53 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToLower, StringToLower)
 	return 0;
 }
 
+static void StringMakeUpper(FString *self, FString *out)
+{
+	*out = self->MakeUpper();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeUpper, StringMakeUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(self->MakeUpper());
+}
+
+static void StringMakeLower(FString *self, FString *out)
+{
+	*out = self->MakeLower();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeLower, StringMakeLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(self->MakeLower());
+}
+
+static int StringCharUpper(int ch)
+{
+	return ch >= 0 && ch < 65536 ? upperforlower[ch] : ch;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharUpper, StringCharUpper)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(ch);
+	ACTION_RETURN_INT(StringCharUpper(ch));
+}
+
+static int StringCharLower(int ch)
+{
+	return ch >= 0 && ch < 65536 ? lowerforupper[ch] : ch;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharLower, StringCharLower)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(ch);
+	ACTION_RETURN_INT(StringCharLower(ch));
+}
+
+
 static int StringToInt(FString *self, int base)
 {
 	return (int)self->ToLong(base);
@@ -287,6 +348,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Split, StringSplit)
 	StringSplit(self, tokens, delimiter, keepEmpty);
 	return 0;
 }
+
+static int StringCodePointCount(FString *self)
+{
+	return (int)self->CharacterCount();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CodePointCount, StringCodePointCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_INT(StringCodePointCount(self));
+}
+
+static int StringNextCodePoint(FString *self, int inposition, int *position)
+{
+	int codepoint = self->GetNextCharacter(inposition);
+	if (position) *position = inposition;
+	return codepoint;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, GetNextCodePoint, StringNextCodePoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	if (numret > 0) ret[0].SetInt(self->GetNextCharacter(pos));
+	if (numret > 1) ret[1].SetInt(pos);
+	return numret;
+}
+
 
 //=====================================================================================
 //
@@ -1911,6 +2000,17 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetHeight, GetHeight)
 	ACTION_RETURN_INT(self->GetHeight());
 }
 
+static int GetDisplacement(FFont* font)
+{
+	return font->GetDisplacement();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetDisplacement, GetDisplacement)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	ACTION_RETURN_INT(self->GetDisplacement());
+}
+
 double GetBottomAlignOffset(FFont *font, int c);
 DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetBottomAlignOffset, GetBottomAlignOffset)
 {
@@ -1930,6 +2030,32 @@ DEFINE_ACTION_FUNCTION_NATIVE(FFont, StringWidth, StringWidth)
 	PARAM_SELF_STRUCT_PROLOGUE(FFont);
 	PARAM_STRING(str);
 	ACTION_RETURN_INT(StringWidth(self, str));
+}
+
+static int GetMaxAscender(FFont* font, const FString& str)
+{
+	const char* txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
+	return font->GetMaxAscender(txt);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, GetMaxAscender, GetMaxAscender)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_STRING(str);
+	ACTION_RETURN_INT(GetMaxAscender(self, str));
+}
+
+static int CanPrint(FFont *font, const FString &str)
+{
+	const char *txt = str[0] == '$' ? GStrings(&str[1]) : str.GetChars();
+	return font->CanPrint(txt);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FFont, CanPrint, CanPrint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FFont);
+	PARAM_STRING(str);
+	ACTION_RETURN_INT(CanPrint(self, str));
 }
 
 static int FindFontColor(int name)
@@ -2543,9 +2669,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetInventoryIcon, GetInventoryIcon
 //
 //=====================================================================================
 
-DHUDFont *CreateHudFont(FFont *fnt, int spac, bool mono, int sx, int sy)
+DHUDFont *CreateHudFont(FFont *fnt, int spac, int mono, int sx, int sy)
 {
-	return (Create<DHUDFont>(fnt, spac, mono, sy, sy));
+	return (Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
@@ -2553,10 +2679,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(DHUDFont, Create, CreateHudFont)
 	PARAM_PROLOGUE;
 	PARAM_POINTER(fnt, FFont);
 	PARAM_INT(spac);
-	PARAM_BOOL(mono);
+	PARAM_INT(mono);
 	PARAM_INT(sx);
 	PARAM_INT(sy);
-	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, mono, sy, sy));
+	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, EMonospacing(mono), sy, sy));
 }
 
 
@@ -2589,7 +2715,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, GetSpotState, GetSpotState)
 
 EXTERN_CVAR(Int, am_showmaplabel)
 
-static void FormatMapName(FLevelLocals *self, int cr, FString *result)
+void FormatMapName(FLevelLocals *self, int cr, FString *result)
 {
 	char mapnamecolor[3] = { '\34', char(cr + 'A'), 0 };
 
@@ -2850,7 +2976,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, SphericalCoords, SphericalCoords)
 	PARAM_FLOAT(viewPitch);
 	PARAM_BOOL(absolute);
 	DVector3 result;
-	SphericalCoords(self, viewpointX, viewpointY, viewpointZ, targetX, targetY, targetZ, viewYaw, viewpointZ, absolute, &result);
+	SphericalCoords(self, viewpointX, viewpointY, viewpointZ, targetX, targetY, targetZ, viewYaw, viewPitch, absolute, &result);
 	ACTION_RETURN_VEC3(result);
 }
 
@@ -2863,7 +2989,7 @@ static int isFrozen(FLevelLocals *self)
 DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, isFrozen, isFrozen)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	return isFrozen(self);
+	ACTION_RETURN_INT(isFrozen(self));
 }
 
 void setFrozen(FLevelLocals *self, int on)
@@ -2935,6 +3061,7 @@ DEFINE_FIELD(FLevelLocals, MapName)
 DEFINE_FIELD(FLevelLocals, NextMap)
 DEFINE_FIELD(FLevelLocals, NextSecretMap)
 DEFINE_FIELD(FLevelLocals, F1Pic)
+DEFINE_FIELD(FLevelLocals, AuthorName)
 DEFINE_FIELD(FLevelLocals, maptype)
 DEFINE_FIELD(FLevelLocals, Music)
 DEFINE_FIELD(FLevelLocals, musicorder)

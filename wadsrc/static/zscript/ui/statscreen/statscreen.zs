@@ -17,7 +17,19 @@ struct PatchInfo play version("2.5")
 
 	void Init(GIFont gifont)
 	{
-		mFont = Font.GetFont(gifont.fontname);
+		// Replace with the VGA-Unicode font if needed.
+		// The default settings for this are marked with a *.
+		// If some mod changes this it is assumed that it doesn't provide any localization for the map name in a language not supported by the font.
+		String s = gifont.fontname;
+		if (s.Left(1) != "*")
+			mFont = Font.GetFont(gifont.fontname);
+		else if (generic_ui)
+			mFont = NewSmallFont;
+		else
+		{
+			s = s.Mid(1);
+			mFont = Font.GetFont(s);
+		}
 		mColor = Font.FindFontColor(gifont.color);
 		if (mFont == NULL)
 		{
@@ -94,6 +106,8 @@ class StatusScreen abstract play version("2.5")
 	PatchInfo 		mapname;
 	PatchInfo 		finished;
 	PatchInfo 		entering;
+	PatchInfo		content;
+	PatchInfo		author;
 
 	TextureID 		p_secret;
 	TextureID 		kills;
@@ -107,6 +121,7 @@ class StatusScreen abstract play version("2.5")
 
 	// [RH] Info to dynamically generate the level name graphics
 	String			lnametexts[2];
+	String			authortexts[2];
 
 	bool 			snl_pointeron;
 
@@ -141,16 +156,14 @@ class StatusScreen abstract play version("2.5")
 		// draw <LevelName> 
 		if (tex.isValid())
 		{
-			int w,h;
-			[w, h] = TexMan.GetSize(tex);
 			let size = TexMan.GetScaledSize(tex);
 			screen.DrawTexture(tex, true, (screen.GetWidth() - size.X * CleanXfac) /2, y, DTA_CleanNoMove, true);
-			if (h > 50)
+			if (size.Y > 50)
 			{ // Fix for Deus Vult II and similar wads that decide to make these hugely tall
 			  // patches with vast amounts of empty space at the bottom.
-				size.Y = TexMan.CheckRealHeight(tex) * size.Y / h;
+				size.Y = TexMan.CheckRealHeight(tex);
 			}
-			return y + (h + BigFont.GetHeight()/4) * CleanYfac;
+			return y + int(Size.Y) * CleanYfac;
 		}
 		else if (levelname.Length() > 0)
 		{
@@ -165,11 +178,37 @@ class StatusScreen abstract play version("2.5")
 				screen.DrawText(mapname.mFont, mapname.mColor, (screen.GetWidth() - lines.StringWidth(i) * CleanXfac) / 2, y + h, lines.StringAt(i), DTA_CleanNoMove, true);
 				h += lumph;
 			}
-			return y + h + lumph/4;
+			return y + h;
 		}
 		return 0;
 	}
 
+	//====================================================================
+	//
+	// Draws a level author's name with the big font
+	//
+	//====================================================================
+	
+	int DrawAuthor(int y, String levelname)
+	{
+		if (levelname.Length() > 0)
+		{
+			int h = 0;
+			int lumph = author.mFont.GetHeight() * CleanYfac;
+			
+			BrokenLines lines = author.mFont.BreakLines(levelname, screen.GetWidth() / CleanXfac);
+			
+			int count = lines.Count();
+			for (int i = 0; i < count; i++)
+			{
+				screen.DrawText(author.mFont, author.mColor, (screen.GetWidth() - lines.StringWidth(i) * CleanXfac) / 2, y + h, lines.StringAt(i), DTA_CleanNoMove, true);
+				h += lumph;
+			}
+			return y + h;
+		}
+		return y;
+	}
+	
 	//====================================================================
 	//
 	// Only kept so that mods that were accessing it continue to compile
@@ -221,13 +260,46 @@ class StatusScreen abstract play version("2.5")
 
 	virtual int drawLF ()
 	{
-		int y = TITLEY * CleanYfac;
+		bool ispatch = wbs.LName0.isValid();
+		int oldy = TITLEY * CleanYfac;
+		int h;
+		
+		if (!ispatch)
+		{
+			let asc = mapname.mFont.GetMaxAscender(lnametexts[1]);
+			if (asc > TITLEY - 2)
+			{
+				oldy = (asc+2) * CleanYfac;
+			}
+		}
+		
+		int y = DrawName(oldy, wbs.LName0, lnametexts[0]);
 
-		y = DrawName(y, wbs.LName0, lnametexts[0]);
-	
-		// Adjustment for different font sizes for map name and 'finished'.
-		y -= ((mapname.mFont.GetHeight() - finished.mFont.GetHeight()) * CleanYfac) / 4;
-
+		// If the displayed info is made of patches we need some additional offsetting here.
+		if (ispatch) 
+		{
+			int disp = 0;
+			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
+			if (authortexts[0].length() == 0)
+			{
+				int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+				int h2 = (y - oldy) / CleanYfac / 4;
+				disp = min(h1, h2);
+				
+				if (!TexMan.OkForLocalization(finishedPatch, "$WI_FINISHED"))
+				{
+					disp += finished.mFont.GetMaxAscender("$WI_FINISHED");
+				}
+			}
+			else
+			{
+					disp += author.mFont.GetMaxAscender(authortexts[0]);
+			}
+			y += disp * CleanYfac;
+		}
+		
+		y = DrawAuthor(y, authortexts[0]);
+		
 		// draw "Finished!"
 
 		int statsy = multiplayer? NG_STATSY : SP_STATSY * CleanYFac;
@@ -251,11 +323,46 @@ class StatusScreen abstract play version("2.5")
 
 	virtual void drawEL ()
 	{
-		int y = TITLEY * CleanYfac;
+		bool ispatch = TexMan.OkForLocalization(enteringPatch, "$WI_ENTERING");
+		int oldy = TITLEY * CleanYfac;
 
-		y = DrawPatchOrText(y, entering, enteringPatch, "$WI_ENTERING");
-		y += entering.mFont.GetHeight() * CleanYfac / 4;
-		DrawName(y, wbs.LName1, lnametexts[1]);
+		if (!ispatch)
+		{
+			let asc = entering.mFont.GetMaxAscender("$WI_ENTERING");
+			if (asc > TITLEY - 2)
+			{
+				oldy = (asc+2) * CleanYfac;
+			}
+		}
+
+		int y = DrawPatchOrText(oldy, entering, enteringPatch, "$WI_ENTERING");
+		
+		// If the displayed info is made of patches we need some additional offsetting here.
+		
+		if (ispatch)
+		{
+			int h1 = BigFont.GetHeight() - BigFont.GetDisplacement();
+			let size = TexMan.GetScaledSize(enteringPatch);
+			int h2 = int(size.Y);
+			let disp = min(h1, h2) / 4;
+			// The offset getting applied here must at least be as tall as the largest ascender in the following text to avoid overlaps.
+			if (!wbs.LName1.isValid())
+			{
+				disp += mapname.mFont.GetMaxAscender(lnametexts[1]);
+			}
+			y += disp * CleanYfac;
+		}
+
+		y = DrawName(y, wbs.LName1, lnametexts[1]);
+
+		if (wbs.LName1.isValid() && authortexts[1].length() > 0) 
+		{
+			// Consdider the ascender height of the following text.
+			y += author.mFont.GetMaxAscender(authortexts[1]) * CleanYfac;
+		}
+			
+		DrawAuthor(y, authortexts[1]);
+
 	}
 
 
@@ -294,7 +401,7 @@ class StatusScreen abstract play version("2.5")
 		{
 			// Digits are centered in a box the width of the '3' character.
 			// Other characters (specifically, '-') are right-aligned in their cell.
-			int c = text.CharCodeAt(text_p);
+			int c = text.ByteAt(text_p);
 			if (c >= "0" && c <= "9")
 			{
 				x -= fntwidth;
@@ -351,6 +458,53 @@ class StatusScreen abstract play version("2.5")
 			}
 			drawNum (fnt, x, y, p, -1, false, color);
 		}
+	}
+
+	//====================================================================
+	//
+	//
+	//====================================================================
+
+	void drawTextScaled (Font fnt, double x, double y, String text, double scale, int translation = Font.CR_UNTRANSLATED)
+	{
+		screen.DrawText(fnt, translation, x / scale, y / scale, text, DTA_VirtualWidthF, screen.GetWidth() / scale, DTA_VirtualHeightF, screen.GetHeight() / scale);
+	}
+
+	//====================================================================
+	//
+	//
+	//====================================================================
+
+	void drawNumScaled (Font fnt, int x, int y, double scale, int n, int digits, int translation = Font.CR_UNTRANSLATED)
+	{
+		String s = String.Format("%d", n);
+		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, translation);
+	}
+
+	//====================================================================
+	//
+	//
+	//
+	//====================================================================
+
+	void drawPercentScaled (Font fnt, int x, int y, int p, int b, double scale, bool show_total = true, int color = Font.CR_UNTRANSLATED)
+	{
+		if (p < 0) return;
+
+		String s;
+		if (wi_percents)
+		{
+			s = String.Format("%d%%", b == 0 ? 100 : p * 100 / b);
+		}
+		else if (show_total)
+		{
+			s = String.Format("%d/%3d", p, b);
+		}
+		else
+		{
+			s = String.Format("%d", p);
+		}
+		drawTextScaled(fnt, x - fnt.StringWidth(s) * scale, y, s, scale, color);
 	}
 
 	//====================================================================
@@ -695,6 +849,8 @@ class StatusScreen abstract play version("2.5")
 		entering.Init(gameinfo.mStatscreenEnteringFont);
 		finished.Init(gameinfo.mStatscreenFinishedFont);
 		mapname.Init(gameinfo.mStatscreenMapNameFont);
+		content.Init(gameinfo.mStatscreenContentFont);
+		author.Init(gameinfo.mStatscreenAuthorFont);
 
 		Kills = TexMan.CheckForTexture("WIOSTK", TexMan.Type_MiscPatch);			// "kills"
 		Secret = TexMan.CheckForTexture("WIOSTS", TexMan.Type_MiscPatch);		// "scrt", not used
@@ -708,6 +864,8 @@ class StatusScreen abstract play version("2.5")
 
 		lnametexts[0] = wbstartstruct.thisname;		
 		lnametexts[1] = wbstartstruct.nextname;
+		authortexts[0] = wbstartstruct.thisauthor;
+		authortexts[1] = wbstartstruct.nextauthor;
 
 		bg = InterBackground.Create(wbs);
 		noautostartmap = bg.LoadBackground(false);

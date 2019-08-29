@@ -66,8 +66,8 @@ class GLDataBuffer : public IDataBuffer, public GLBuffer
 	int mBindingPoint;
 public:
 	GLDataBuffer(int bindingpoint, bool is_ssbo) : GLBuffer(is_ssbo? GL_SHADER_STORAGE_BUFFER : GL_UNIFORM_BUFFER), mBindingPoint(bindingpoint) {}
-	void BindRange(size_t start, size_t length) override;
-	void BindBase() override;
+	void BindRange(FRenderState* state, size_t start, size_t length);
+	void BindBase();
 };
 
 }

@@ -2,6 +2,9 @@
 class CoopStatusScreen : StatusScreen
 {
 	int textcolor;
+	double FontScale;
+	int RowHeight;
+	Font displayFont;
 
 	//====================================================================
 	//
@@ -11,11 +14,14 @@ class CoopStatusScreen : StatusScreen
 
 	override void initStats ()
 	{
-		textcolor = (gameinfo.gametype & GAME_Raven) ? Font.CR_GREEN : Font.CR_UNTRANSLATED;
+		textcolor = Font.CR_GRAY;
 
 		CurState = StatCount;
 		acceleratestage = 0;
 		ng_state = 1;
+		displayFont = NewSmallFont;
+		FontScale = max(screen.GetHeight() / 400, 1);
+		RowHeight = int(max((displayFont.GetHeight() + 1) * FontScale, 1));
 
 		cnt_pause = Thinker.TICRATE;
 
@@ -223,7 +229,7 @@ class CoopStatusScreen : StatusScreen
 		Vector2 readyoffset = TexMan.GetScaledOffset(readyico);
 		height = int(readysize.Y - readyoffset.Y);
 		maxiconheight = MAX(height, maxiconheight);
-		height = SmallFont.GetHeight() * CleanYfac;
+		height = int(displayFont.GetHeight() * FontScale);
 		lineheight = MAX(height, maxiconheight * CleanYfac);
 		ypadding = (lineheight - height + 1) / 2;
 		y += CleanYfac;
@@ -232,11 +238,11 @@ class CoopStatusScreen : StatusScreen
 		text_secret = Stringtable.Localize("$SCORE_SECRET");
 		text_kills = Stringtable.Localize("$SCORE_KILLS");
 
-		icon_x = 8 * CleanXfac;
-		name_x = icon_x + maxscorewidth * CleanXfac;
-		kills_x = name_x + (maxnamewidth + MAX(SmallFont.StringWidth("XXXXX"), SmallFont.StringWidth(text_kills)) + 8) * CleanXfac;
-		bonus_x = kills_x + ((bonus_len = SmallFont.StringWidth(text_bonus)) + 8) * CleanXfac;
-		secret_x = bonus_x + ((secret_len = SmallFont.StringWidth(text_secret)) + 8) * CleanXfac;
+		icon_x = int(8 * FontScale);
+		name_x = int(icon_x + maxscorewidth * FontScale);
+		kills_x = int(name_x + (maxnamewidth + 1 + MAX(displayFont.StringWidth("XXXXXXXXXX"), displayFont.StringWidth(text_kills)) + 16) * FontScale);
+		bonus_x = int(kills_x + ((bonus_len = displayFont.StringWidth(text_bonus)) + 16) * FontScale);
+		secret_x = int(bonus_x + ((secret_len = displayFont.StringWidth(text_secret)) + 16) * FontScale);
 
 		x = (screen.GetWidth() - secret_x) >> 1;
 		icon_x += x;
@@ -246,11 +252,11 @@ class CoopStatusScreen : StatusScreen
 		secret_x += x;
 
 
-		screen.DrawText(SmallFont, textcolor, name_x, y, Stringtable.Localize("$SCORE_NAME"), DTA_CleanNoMove, true);
-		screen.DrawText(SmallFont, textcolor, kills_x - SmallFont.StringWidth(text_kills)*CleanXfac, y, text_kills, DTA_CleanNoMove, true);
-		screen.DrawText(SmallFont, textcolor, bonus_x - bonus_len*CleanXfac, y, text_bonus, DTA_CleanNoMove, true);
-		screen.DrawText(SmallFont, textcolor, secret_x - secret_len*CleanXfac, y, text_secret, DTA_CleanNoMove, true);
-		y += height + 6 * CleanYfac;
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_NAME"), FontScale, textcolor);
+		drawTextScaled(displayFont, kills_x - displayFont.StringWidth(text_kills) * FontScale, y, text_kills, FontScale, textcolor);
+		drawTextScaled(displayFont, bonus_x - bonus_len * FontScale, y, text_bonus, FontScale, textcolor);
+		drawTextScaled(displayFont, secret_x - secret_len * FontScale, y, text_secret, FontScale, textcolor);
+		y += int(height + 6 * FontScale);
 
 		missed_kills = wbs.maxkills;
 		missed_items = wbs.maxitems;
@@ -274,16 +280,16 @@ class CoopStatusScreen : StatusScreen
 			{
 				screen.DrawTexture(player.mo.ScoreIcon, true, icon_x, y, DTA_CleanNoMove, true);
 			}
-			screen.DrawText(SmallFont, thiscolor, name_x, y + ypadding, player.GetUserName(), DTA_CleanNoMove, true);
-			drawPercent(SmallFont, kills_x, y + ypadding, cnt_kills[i], wbs.maxkills, false, thiscolor, true);
+			drawTextScaled(displayFont, name_x, y + ypadding, player.GetUserName(), FontScale, thiscolor);
+			drawPercentScaled(displayFont, kills_x, y + ypadding, cnt_kills[i], wbs.maxkills, FontScale, thiscolor);
 			missed_kills -= cnt_kills[i];
 			if (ng_state >= 4)
 			{
-				drawPercent(SmallFont, bonus_x, y + ypadding, cnt_items[i], wbs.maxitems, false, thiscolor, true);
+				drawPercentScaled(displayFont, bonus_x, y + ypadding, cnt_items[i], wbs.maxitems, FontScale, thiscolor);
 				missed_items -= cnt_items[i];
 				if (ng_state >= 6)
 				{
-					drawPercent(SmallFont, secret_x, y + ypadding, cnt_secret[i], wbs.maxsecret, false, thiscolor, true);
+					drawPercentScaled(displayFont, secret_x, y + ypadding, cnt_secret[i], wbs.maxsecret, FontScale, thiscolor);
 					missed_secrets -= cnt_secret[i];
 				}
 			}
@@ -292,27 +298,27 @@ class CoopStatusScreen : StatusScreen
 
 		// Draw "MISSED" line
 		y += 3 * CleanYfac;
-		screen.DrawText(SmallFont, Font.CR_DARKGRAY, name_x, y, Stringtable.Localize("$SCORE_MISSED"), DTA_CleanNoMove, true);
-		drawPercent(SmallFont, kills_x, y, missed_kills, wbs.maxkills, false, Font.CR_DARKGRAY, true);
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_MISSED"), FontScale, Font.CR_DARKGRAY);
+		drawPercentScaled(displayFont, kills_x, y, missed_kills, wbs.maxkills, FontScale, Font.CR_DARKGRAY);
 		if (ng_state >= 4)
 		{
-			drawPercent(SmallFont, bonus_x, y, missed_items, wbs.maxitems, false, Font.CR_DARKGRAY, true);
+			drawPercentScaled(displayFont, bonus_x, y, missed_items, wbs.maxitems, FontScale, Font.CR_DARKGRAY);
 			if (ng_state >= 6)
 			{
-				drawPercent(SmallFont, secret_x, y, missed_secrets, wbs.maxsecret, false, Font.CR_DARKGRAY, true);
+				drawPercentScaled(displayFont, secret_x, y, missed_secrets, wbs.maxsecret, FontScale, Font.CR_DARKGRAY);
 			}
 		}
 
 		// Draw "TOTAL" line
 		y += height + 3 * CleanYfac;
-		screen.DrawText(SmallFont, textcolor, name_x, y, Stringtable.Localize("$SCORE_TOTAL"), DTA_CleanNoMove, true);
-		drawNum(SmallFont, kills_x, y, wbs.maxkills, 0, false, textcolor, true);
+		drawTextScaled(displayFont, name_x, y, Stringtable.Localize("$SCORE_TOTAL"), FontScale, textcolor);
+		drawNumScaled(displayFont, kills_x, y, FontScale, wbs.maxkills, 0, textcolor);
 		if (ng_state >= 4)
 		{
-			drawNum(SmallFont, bonus_x, y, wbs.maxitems, 0, false, textcolor, true);
+			drawNumScaled(displayFont, bonus_x, y, FontScale, wbs.maxitems, 0, textcolor);
 			if (ng_state >= 6)
 			{
-				drawNum(SmallFont, secret_x, y, wbs.maxsecret, 0, false, textcolor, true);
+				drawNumScaled(displayFont, secret_x, y, FontScale, wbs.maxsecret, 0, textcolor);
 			}
 		}
 	}

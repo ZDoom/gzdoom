@@ -44,6 +44,7 @@ struct FBrokenLines
 };
 
 #define TEXTCOLOR_ESCAPE		'\034'
+#define TEXTCOLOR_ESCAPESTR		"\034"
 
 #define TEXTCOLOR_BRICK			"\034A"
 #define TEXTCOLOR_TAN			"\034B"
@@ -84,7 +85,5 @@ inline TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const char 
  { return V_BreakLines (font, maxwidth, (const uint8_t *)str, preservecolor); }
 inline TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const FString &str, bool preservecolor = false)
  { return V_BreakLines (font, maxwidth, (const uint8_t *)str.GetChars(), preservecolor); }
-
-int GetCharFromString(const uint8_t *&string);
 
 #endif //__V_TEXT_H__

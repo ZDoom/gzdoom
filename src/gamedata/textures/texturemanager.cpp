@@ -51,7 +51,6 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "v_video.h"
-#include "r_renderer.h"
 #include "r_sky.h"
 #include "vm.h"
 #include "image.h"
@@ -403,9 +402,11 @@ FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype
 // 3: Only replace if the string is not the default and the graphic comes from the IWAD. Never replace a localized graphic.
 // 4: Like 1, but lets localized graphics pass.
 //
+// The default is 3, which only replaces known content with non-default texts.
+//
 //==========================================================================
 
-CUSTOM_CVAR(Int, cl_localizationmode,0, CVAR_ARCHIVE)
+CUSTOM_CVAR(Int, cl_gfxlocalization, 3, CVAR_ARCHIVE)
 {
 	if (self < 0 || self > 4) self = 0;
 }
@@ -421,11 +422,12 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (!texnum.isValid()) return false;
 	
 	// First the unconditional settings, 0='never' and 1='always'.
-	if (cl_localizationmode == 1 || gameinfo.forcetextinmenus) return false;
-	if (cl_localizationmode == 0) return true;
+	if (cl_gfxlocalization == 1 || gameinfo.forcetextinmenus) return false;
+	if (cl_gfxlocalization == 0 || gameinfo.forcenogfxsubstitution) return true;
 	
 	uint32_t langtable = 0;
 	if (*substitute == '$') substitute = GStrings.GetString(substitute+1, &langtable);
+	else return true;	// String literals from the source data should never override graphics from the same definition.
 	if (substitute == nullptr) return true;	// The text does not exist.
 	
 	// Modes 2, 3 and 4 must not replace localized textures.
@@ -433,15 +435,15 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (localizedTex != texnum.GetIndex()) return true;	// Do not substitute a localized variant of the graphics patch.
 	
 	// For mode 4 we are done now.
-	if (cl_localizationmode == 4) return false;
+	if (cl_gfxlocalization == 4) return false;
 	
 	// Mode 2 and 3 must reject any text replacement from the default language tables.
 	if ((langtable & MAKE_ID(255,0,0,0)) == MAKE_ID('*', 0, 0, 0)) return true;	// Do not substitute if the string comes from the default table.
-	if (cl_localizationmode == 2) return false;
+	if (cl_gfxlocalization == 2) return false;
 	
 	// Mode 3 must also reject substitutions for non-IWAD content.
 	int file = Wads.GetLumpFile(Textures[texnum.GetIndex()].Texture->SourceLump);
-	if (file > Wads.GetIwadNum()) return true;
+	if (file > Wads.GetMaxIwadNum()) return true;
 
 	return false;
 }
@@ -925,6 +927,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 {
 	int firsttexture = Textures.Size();
 	int lumpcount = Wads.GetNumLumps();
+	bool iwad = wadnum >= Wads.GetIwadNum() && wadnum <= Wads.GetMaxIwadNum();
 
 	FirstTextureForFile.Push(firsttexture);
 
@@ -977,16 +980,33 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 			if (Wads.CheckLumpName(i, "BLOCKMAP")) continue;
 			if (Wads.CheckLumpName(i, "BEHAVIOR")) continue;
 
+			bool force = false;
 			// Don't bother looking at this lump if something later overrides it.
-			if (Wads.CheckNumForName(Name, ns_graphics) != i) continue;
+			if (Wads.CheckNumForName(Name, ns_graphics) != i)
+			{
+				if (iwad)
+				{ 
+					// We need to make an exception for font characters of the SmallFont coming from the IWAD to be able to construct the original font.
+					if (Name.IndexOf("STCFN") != 0 && Name.IndexOf("FONTA") != 0) continue;
+					force = true;
+				}
+				else continue;
+			}
 
 			// skip this if it has already been added as a wall patch.
-			if (CheckForTexture(Name, ETextureType::WallPatch, 0).Exists()) continue;
+			if (!force && CheckForTexture(Name, ETextureType::WallPatch, 0).Exists()) continue;
 		}
 		else if (ns == ns_graphics)
 		{
-			// Don't bother looking this lump if something later overrides it.
-			if (Wads.CheckNumForName(Name, ns_graphics) != i) continue;
+			if (Wads.CheckNumForName(Name, ns_graphics) != i)
+			{
+				if (iwad)
+				{
+					// We need to make an exception for font characters of the SmallFont coming from the IWAD to be able to construct the original font.
+					if (Name.IndexOf("STCFN") != 0 && Name.IndexOf("FONTA") != 0) continue;
+				}
+				else continue;
+			}
 		}
 		else if (ns >= ns_firstskin)
 		{
@@ -1300,17 +1320,20 @@ int FTextureManager::PalCheck(int tex)
 // FTextureManager :: PalCheck
 //
 //==========================================================================
+EXTERN_CVAR(String, language)
 
 int FTextureManager::ResolveLocalizedTexture(int tex)
 {
-	for(int i = 0; i < 4; i++)
-	{
-		uint32_t lang = LanguageIDs[i];
-		uint64_t index = (uint64_t(lang) << 32) + tex;
-		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
-		index = (uint64_t(lang & MAKE_ID(255, 255, 0, 0)) << 32) + tex;
-		if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
-	}
+	size_t langlen = strlen(language);
+	int lang = (langlen < 2 || langlen > 3) ?
+		MAKE_ID('e', 'n', 'u', '\0') :
+		MAKE_ID(language[0], language[1], language[2], '\0');
+
+	uint64_t index = (uint64_t(lang) << 32) + tex;
+	if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+	index = (uint64_t(lang & MAKE_ID(255, 255, 0, 0)) << 32) + tex;
+	if (auto pTex = LocalizedTextures.CheckKey(index)) return *pTex;
+
 	return tex;
 }
 
@@ -1426,14 +1449,14 @@ void FTextureManager::AdjustSpriteOffsets()
 
 	for (int i = 0; i < numtex; i++)
 	{
-		if (Wads.GetLumpFile(i) > Wads.GetIwadNum()) break; // we are past the IWAD
-		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == Wads.GetIwadNum())
+		if (Wads.GetLumpFile(i) > Wads.GetMaxIwadNum()) break; // we are past the IWAD
+		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) >= Wads.GetIwadNum() && Wads.GetLumpFile(i) <= Wads.GetMaxIwadNum())
 		{
 			char str[9];
 			Wads.GetLumpName(str, i);
 			str[8] = 0;
 			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
-			if (texid.isValid() && Wads.GetLumpFile(GetTexture(texid)->SourceLump) > Wads.GetIwadNum())
+			if (texid.isValid() && Wads.GetLumpFile(GetTexture(texid)->SourceLump) > Wads.GetMaxIwadNum())
 			{
 				// This texture has been replaced by some PWAD.
 				memcpy(&sprid, str, 4);
@@ -1475,9 +1498,9 @@ void FTextureManager::AdjustSpriteOffsets()
 				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
 				{
 					int wadno = Wads.GetLumpFile(lumpnum);
-					if ((iwadonly && wadno == Wads.GetIwadNum()) || (!iwadonly && wadno == ofslumpno))
+					if ((iwadonly && wadno >= Wads.GetIwadNum() && wadno <= Wads.GetMaxIwadNum()) || (!iwadonly && wadno == ofslumpno))
 					{
-						if (wadno == Wads.GetIwadNum() && !forced && iwadonly)
+						if (wadno >= Wads.GetIwadNum() && wadno <= Wads.GetMaxIwadNum() && !forced && iwadonly)
 						{
 							memcpy(&sprid, &tex->Name[0], 4);
 							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.

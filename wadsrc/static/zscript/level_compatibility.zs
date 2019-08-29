@@ -628,6 +628,24 @@ class LevelCompatibility native play
 				break;
 			}
 			
+			case '6C620F43705BEC0ABBABBF46AC3E62D2': // Doom II MAP10
+			{
+				// Allow player to leave exit room
+				SetLineSpecial(786, Door_Raise, 0, 16, 150, 0);
+				SetLineActivation(786, SPAC_Use);
+				SetLineFlags(786, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '1AF4DEC2627360A55B3EB397BC15C39D': // Doom II MAP12
+			{
+				// Missing texture
+				SetWallTexture(648, Line.back, Side.bottom, "PIPES");
+				// Remove erroneous tag for teleporter at the south building
+				ClearSectorTags(149);
+				break;
+			}
+			
 			case 'FBA6547B9FD44E95671A923A066E516F': // Doom II MAP13
 			{
 				// Missing texture
@@ -671,6 +689,7 @@ class LevelCompatibility native play
 			
 			case '1A540BA717BF9EC85F8522594C352F2A': // Doom II, map15
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(147, 0);
 				// Missing textures
 				SetWallTexture(94, Line.back, Side.top, "METAL");
@@ -716,6 +735,9 @@ class LevelCompatibility native play
 				{
 					SetWallTextureID(286+i, Line.back, Side.bottom, STEP4);
 				}
+				// Southwest teleporter in the teleporter room now works on
+				// easier difficulties
+				SetThingSkills(112, 31);
 				break;
 			}
 			
@@ -724,6 +746,13 @@ class LevelCompatibility native play
 				// push ceiling down in glitchy sectors above the stair switches
 				OffsetSectorPlane(50, Sector.ceiling, -56);
 				OffsetSectorPlane(54, Sector.ceiling, -56);
+				break;
+			}
+			
+			case '4AA9B3CE449FB614497756E96509F096': // Doom II MAP22
+			{
+				// Only use switch once to raise sector to rocket launcher
+				SetLineFlags(120, 0, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 			
@@ -743,8 +772,17 @@ class LevelCompatibility native play
 			
 			case '110F84DE041052B59307FAF0293E6BC0': // Doom II, map27
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(93, 0);
+				// Missing texture
 				SetWallTexture(582, Line.back, Side.top, "ZIMMER3");
+				// Make line near switch to level exit passable
+				SetLineFlags(342, 0, Line.ML_BLOCKING);
+				// Can leave Pain Elemental room if stuck
+				SetLineSpecial(580, Door_Open, 0, 16);
+				SetLineActivation(580, SPAC_Use);
+				SetLineSpecial(581, Door_Open, 0, 16);
+				SetLineActivation(581, SPAC_Use);
 				break;
 			}
 			
@@ -761,6 +799,12 @@ class LevelCompatibility native play
 				SetWallTexture(531, Line.back, Side.top, "WOOD8");
 				SetWallTexture(547, Line.back, Side.top, "WOOD8");
 				SetWallTexture(548, Line.back, Side.top, "WOOD8");
+				// Raise holes near level exit when walking over them
+				for(int i=0; i<12; i++)
+				{
+					SetLineSpecial(584+i, Floor_RaiseToNearest, 5, 8);
+					SetLineActivation(584+i, SPAC_Cross);
+				}
 				break;
 			}
 			
@@ -889,6 +933,18 @@ class LevelCompatibility native play
 				SetSectorTexture(145, Sector.floor, "F_CONCRP");
 				SetSectorLight(138, 192);
 				SetWallTexture(3431, Line.back, Side.top, "BRKGRY01");
+				break;
+			}
+
+			case '8D7A24B169717907DDA8399D8C1655DF': // strife1.wad map15
+			{
+				SetWallTexture(319, Line.back, Side.top, "WALTEK21");
+				break;
+			}
+
+			case 'D5FD90FA7A8133E7BFED682D3D313962': // strife1.wad map21
+			{
+				SetWallTexture(603, Line.front, Side.bottom, "IRON04");
 				break;
 			}
 
@@ -1229,6 +1285,116 @@ class LevelCompatibility native play
 				// Fix incorrectly tagged underwater sector which causes render glitches.
 				ClearSectorTags(7857);
 				AddSectorTag(7857, 82);
+				break;
+			}
+			
+			case '7B1EB6C1231CD03E90F4A1C0D51A8B6D': // ur_final.wad map17
+			{
+				SetLineSpecial(3020, Transfer_Heights, 19);
+				break;
+			}
+			
+			case '01592ACF001C534076556D9E1B5D85E7': // Darken2.wad map12
+			{
+				// fix some holes the player can fall in. This map went a bit too far with lighting hacks depending on holes in the floor.
+				OffsetSectorPlane(126, Sector.floor, 1088);
+				level.sectors[126].SetPlaneLight(Sector.floor, level.sectors[125].GetLightLevel() - level.sectors[126].GetLightLevel());
+				OffsetSectorPlane(148, Sector.floor, 1136);
+				level.sectors[148].SetPlaneLight(Sector.floor, level.sectors[122].GetLightLevel() - level.sectors[148].GetLightLevel());
+				OffsetSectorPlane(149, Sector.floor, 1136);
+				level.sectors[149].SetPlaneLight(Sector.floor, level.sectors[122].GetLightLevel() - level.sectors[149].GetLightLevel());
+				OffsetSectorPlane(265, Sector.floor, 992);
+				level.sectors[265].SetPlaneLight(Sector.floor, level.sectors[264].GetLightLevel() - level.sectors[265].GetLightLevel());
+				OffsetSectorPlane(279, Sector.floor, 1072);
+				level.sectors[279].SetPlaneLight(Sector.floor, level.sectors[267].GetLightLevel() - level.sectors[279].GetLightLevel());
+				SetSectorTexture(279, Sector.floor, "OMETL13");
+				OffsetSectorPlane(280, Sector.floor, 1072);
+				level.sectors[280].SetPlaneLight(Sector.floor, level.sectors[267].GetLightLevel() - level.sectors[280].GetLightLevel());
+				SetSectorTexture(280, Sector.floor, "OMETL13");
+				OffsetSectorPlane(281, Sector.floor, 1072);
+				level.sectors[281].SetPlaneLight(Sector.floor, level.sectors[267].GetLightLevel() - level.sectors[281].GetLightLevel());
+				SetSectorTexture(281, Sector.floor, "OMETL13");
+				OffsetSectorPlane(292, Sector.floor, 1056);
+				level.sectors[292].SetPlaneLight(Sector.floor, level.sectors[291].GetLightLevel() - level.sectors[292].GetLightLevel());
+				OffsetSectorPlane(472, Sector.floor, 1136);
+				level.sectors[472].SetPlaneLight(Sector.floor, level.sectors[216].GetLightLevel() - level.sectors[472].GetLightLevel());
+				OffsetSectorPlane(473, Sector.floor, 1136);
+				level.sectors[473].SetPlaneLight(Sector.floor, level.sectors[216].GetLightLevel() - level.sectors[473].GetLightLevel());
+				OffsetSectorPlane(526, Sector.floor, 1024);
+				level.sectors[526].SetPlaneLight(Sector.floor, level.sectors[525].GetLightLevel() - level.sectors[526].GetLightLevel());
+				OffsetSectorPlane(527, Sector.floor, 1024);
+				level.sectors[527].SetPlaneLight(Sector.floor, level.sectors[500].GetLightLevel() - level.sectors[527].GetLightLevel());
+				OffsetSectorPlane(528, Sector.floor, 1024);
+				level.sectors[528].SetPlaneLight(Sector.floor, level.sectors[525].GetLightLevel() - level.sectors[528].GetLightLevel());
+				OffsetSectorPlane(554, Sector.floor, 1024);
+				level.sectors[554].SetPlaneLight(Sector.floor, level.sectors[500].GetLightLevel() - level.sectors[554].GetLightLevel());
+				OffsetSectorPlane(588, Sector.floor, 928);
+				level.sectors[588].SetPlaneLight(Sector.floor, level.sectors[587].GetLightLevel() - level.sectors[588].GetLightLevel());
+				OffsetSectorPlane(604, Sector.floor, 1056);
+				level.sectors[604].SetPlaneLight(Sector.floor, level.sectors[298].GetLightLevel() - level.sectors[604].GetLightLevel());
+				OffsetSectorPlane(697, Sector.floor, 1136);
+				level.sectors[697].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[697].GetLightLevel());
+				OffsetSectorPlane(698, Sector.floor, 1136);
+				level.sectors[698].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[698].GetLightLevel());
+				OffsetSectorPlane(699, Sector.floor, 1136);
+				level.sectors[699].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[699].GetLightLevel());
+				OffsetSectorPlane(700, Sector.floor, 1136);
+				level.sectors[700].SetPlaneLight(Sector.floor, level.sectors[696].GetLightLevel() - level.sectors[700].GetLightLevel());
+				break;
+			}
+			
+			case '3B1F637295F5669E99BE63F1B1CA29DF': // titan426.wad map01
+			{
+				// Missing teleport destinations on easy skill
+				SetThingSkills(138, 31); // secret
+				SetThingSkills(1127, 31); // return from exit room
+				break;
+			}
+
+			case '5E9AF879343D6E44E429F91D57777D26': // cchest.wad map16
+			{
+				// Fix misplaced vertex
+				SetVertex(202, -2, -873);
+				break;
+			}
+			case 'E9EB4D16CA7E491E98D61615E4613E70': // sigil.wad e5m2
+			{
+				// Floating Skulls missing in lower difficulties
+				SetThingSkills(113, 31);
+				SetThingSkills(114, 31);
+				break;
+			}
+			case 'C43B99F34E5211F9AF24459842852B0D': // sigil.wad e5m4
+			{
+				// Fix missing texture on the Baron-invulnerability-secret platform
+				SetWallTexture(1926, Line.back, Side.bottom, "MARBLE3");
+				break;
+			}
+			case 'A7C4FC8CAEB3E375B7214E35C6298B03': // Illusions of Home e1m6
+			{
+				// Convert zero-tagged GR door into regular open-stay door to fix map
+				SetLineActivation(37, SPAC_Use);
+				SetLineSpecial(37, Door_Open, 0, 16);
+				SetLineActivation(203, SPAC_Use);
+				SetLineSpecial(203, Door_Open, 0, 16);
+				break;
+			}
+			case '5084755C29FB0A1912113E36F37C958A': // Illusions of Home e3m4
+			{
+				// Fix action of final switch
+				SetLineSpecial(765, Door_Open, 6, 16);
+				break;
+			}
+			case '0EF86635676FD512CE0E962040125553': // Illusions of Home e3m7
+			{
+				// Fix red key and red key area door
+				// Also fix missing texture in red key area
+				SetThingFlags(247, 2016);
+				SetThingSkills(247, 31);
+				SetLineActivation(49, SPAC_Use);
+				SetLineSpecial(49, Door_Raise, 0, 16, 150, 0);
+				SetLineFlags(49, Line.ML_REPEAT_SPECIAL);
+				SetWallTexture(608, Line.back, Side.bottom, "GRAY5");
 				break;
 			}
 		}

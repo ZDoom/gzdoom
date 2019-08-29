@@ -93,7 +93,7 @@ public:
 		Custom
 	};
 
-	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false);
+	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false);
 	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
@@ -103,6 +103,9 @@ public:
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
 	int GetDefaultKerning () const { return GlobalKerning; }
+	int GetMaxAscender(const uint8_t* text) const;
+	int GetMaxAscender(const char* text) const { return GetMaxAscender((uint8_t*)text); }
+	int GetMaxAscender(const FString &text) const { return GetMaxAscender((uint8_t*)text.GetChars()); }
 	virtual void LoadTranslations();
 	FName GetName() const { return FontName; }
 
@@ -113,11 +116,22 @@ public:
 	inline int StringWidth (const char *str) const { return StringWidth ((const uint8_t *)str); }
 	inline int StringWidth (const FString &str) const { return StringWidth ((const uint8_t *)str.GetChars()); }
 
+	// Checks if the font contains all characters to print this text.
+	bool CanPrint(const uint8_t *str) const;
+	inline bool CanPrint(const char *str) const { return CanPrint((const uint8_t *)str); }
+	inline bool CanPrint(const FString &str) const { return CanPrint((const uint8_t *)str.GetChars()); }
+
 	int GetCharCode(int code, bool needpic) const;
 	char GetCursor() const { return Cursor; }
 	void SetCursor(char c) { Cursor = c; }
 	void SetKerning(int c) { GlobalKerning = c; }
 	bool NoTranslate() const { return noTranslate; }
+	void RecordAllTextureColors(uint32_t *usedcolors);
+	virtual void SetDefaultTranslation(uint32_t *colors);
+	void CheckCase();
+
+	int GetDisplacement() const { return Displacement; }
+
 
 protected:
 	FFont (int lump);
@@ -135,12 +149,15 @@ protected:
 	int FirstChar, LastChar;
 	int SpaceWidth;
 	int FontHeight;
+	int AsciiHeight = 0;
 	int GlobalKerning;
 	int TranslationType = 0;
+	int Displacement = 0;
 	char Cursor;
 	bool noTranslate;
 	bool translateUntranslated;
 	bool MixedCase = false;
+	bool forceremap = false;
 	struct CharData
 	{
 		FTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
@@ -164,7 +181,7 @@ protected:
 };
 
 
-extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont;
+extern FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
 
 void V_InitFonts();
 void V_ClearFonts();
@@ -173,5 +190,7 @@ PalEntry V_LogColorFromColorRange (EColorRange range);
 EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int boldcolor);
 FFont *V_GetFont(const char *fontname, const char *fontlumpname = nullptr);
 void V_InitFontColors();
+char* CleanseString(char* str);
+
 
 #endif //__V_FONT_H__

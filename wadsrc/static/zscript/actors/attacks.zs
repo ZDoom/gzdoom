@@ -492,7 +492,7 @@ extend class Actor
 		let bo = Spawn(missile, pos + (0, 0, (-Floorclip + GetBobOffset() + zheight + 35 + (player? player.crouchoffset : 0.))), ALLOW_REPLACE);
 		if (bo)
 		{
-			bo.PlaySpawnSound(self);
+			self.PlaySpawnSound(bo);
 			if (xyvel != 0)
 				bo.Speed = xyvel;
 			bo.Angle = Angle + (random[grenade](-4, 3) * (360./256.));
@@ -596,6 +596,7 @@ extend class Actor
 		int pflags = 0;
 		if (flags & XF_HURTSOURCE)	pflags |= RADF_HURTSOURCE;
 		if (flags & XF_NOTMISSILE)	pflags |= RADF_SOURCEISSPOT;
+		if (flags & XF_THRUSTZ)	pflags |= RADF_THRUSTZ;
 
 		int count = RadiusAttack (target, damage, distance, damagetype, pflags, fulldamagedistance);
 		if (!(flags & XF_NOSPLASH)) CheckSplash(distance);

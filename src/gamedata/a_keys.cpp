@@ -220,7 +220,7 @@ static void PrintMessage (const char *str)
 		{
 			str = GStrings(str+1);
 		}
-		C_MidPrint (SmallFont, str);
+		C_MidPrint (nullptr, str);
 	}
 }
 

@@ -1461,7 +1461,7 @@ class CommandDrawNumber : public CommandDrawString
 					if(statusBar->CPlayer->mo->waterlevel < 3)
 						num = primaryLevel->airsupply/TICRATE;
 					else
-						num = clamp<int>((statusBar->CPlayer->air_finished - primaryLevel->time + (TICRATE-1))/TICRATE, 0, INT_MAX);
+						num = clamp<int>((statusBar->CPlayer->air_finished - primaryLevel->maptime + (TICRATE-1))/TICRATE, 0, INT_MAX);
 					break;
 				}
 				case SELECTEDINVENTORY:
@@ -1484,7 +1484,7 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case INTCVAR:
 				{
-					FBaseCVar *CVar = GetCVar(statusBar->CPlayer->mo, cvarName);
+					FBaseCVar *CVar = GetCVar(int(statusBar->CPlayer - players), cvarName);
 					if (CVar != nullptr)
 					{
 						ECVarType cvartype = CVar->GetRealType();
@@ -2751,7 +2751,7 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				}
 				case AIRTIME:
-					value = clamp<int>(statusBar->CPlayer->air_finished - primaryLevel->time, 0, INT_MAX);
+					value = clamp<int>(statusBar->CPlayer->air_finished - primaryLevel->maptime, 0, INT_MAX);
 					max = primaryLevel->airsupply;
 					break;
 				case POWERUPTIME:
@@ -3534,7 +3534,7 @@ class CommandIfCVarInt : public SBarInfoNegatableFlowControl
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
 			bool result = false;
-			cvar = GetCVar(statusBar->CPlayer->mo, cvarname);
+			cvar = GetCVar(int(statusBar->CPlayer - players), cvarname);
 
 			if (cvar != nullptr)
 			{

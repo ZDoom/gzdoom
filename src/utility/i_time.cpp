@@ -39,6 +39,7 @@
 #include "doomdef.h"
 #include "c_cvars.h"
 #include "doomstat.h"
+#include "doomtype.h"
 
 //==========================================================================
 //

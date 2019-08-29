@@ -32,7 +32,6 @@
 **
 */
 
-#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
@@ -44,11 +43,15 @@
 #include "m_argv.h"
 #include "version.h"
 #include "win32glvideo.h"
+#ifdef HAVE_VULKAN
+#include "win32vulkanvideo.h"
+#endif
 #include "doomerrors.h"
 #include "i_system.h"
 #include "swrenderer/r_swrenderer.h"
+#include "atterm.h"
 
-EXTERN_CVAR(Int, vid_maxfps)
+EXTERN_CVAR(Int, vid_enablevulkan)
 
 extern HWND Window;
 
@@ -126,95 +129,28 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-	Video = new Win32GLVideo();
+#ifdef HAVE_VULKAN
+	if (vid_enablevulkan == 1)
+	{
+		// first try Vulkan, if that fails OpenGL
+		try
+		{
+			Video = new Win32VulkanVideo();
+		}
+		catch (CVulkanError &error)
+		{
+			Printf(TEXTCOLOR_RED "Initialization of Vulkan failed: %s\n", error.what());
+			Video = new Win32GLVideo();
+		}
+	}
+	else
+#endif
+	{
+		Video = new Win32GLVideo();
+	}
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
 	
 	atterm (I_ShutdownGraphics);
 }
-
-
-static UINT FPSLimitTimer;
-HANDLE FPSLimitEvent;
-
-//==========================================================================
-//
-// SetFPSLimit
-//
-// Initializes an event timer to fire at a rate of <limit>/sec. The video
-// update will wait for this timer to trigger before updating.
-//
-// Pass 0 as the limit for unlimited.
-// Pass a negative value for the limit to use the value of vid_maxfps.
-//
-//==========================================================================
-
-static void StopFPSLimit()
-{
-	I_SetFPSLimit(0);
-}
-
-void I_SetFPSLimit(int limit)
-{
-	if (limit < 0)
-	{
-		limit = vid_maxfps;
-	}
-	// Kill any leftover timer.
-	if (FPSLimitTimer != 0)
-	{
-		timeKillEvent(FPSLimitTimer);
-		FPSLimitTimer = 0;
-	}
-	if (limit == 0)
-	{ // no limit
-		if (FPSLimitEvent != NULL)
-		{
-			CloseHandle(FPSLimitEvent);
-			FPSLimitEvent = NULL;
-		}
-		DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
-	}
-	else
-	{
-		if (FPSLimitEvent == NULL)
-		{
-			FPSLimitEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
-			if (FPSLimitEvent == NULL)
-			{ // Could not create event, so cannot use timer.
-				Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
-				return;
-			}
-		}
-		atterm(StopFPSLimit);
-		// Set timer event as close as we can to limit/sec, in milliseconds.
-		UINT period = 1000 / limit;
-		FPSLimitTimer = timeSetEvent(period, 0, (LPTIMECALLBACK)FPSLimitEvent, 0, TIME_PERIODIC | TIME_CALLBACK_EVENT_SET);
-		if (FPSLimitTimer == 0)
-		{
-			CloseHandle(FPSLimitEvent);
-			FPSLimitEvent = NULL;
-			Printf("Failed to create FPS limiter timer\n");
-			return;
-		}
-		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", period);
-	}
-}
-
-//==========================================================================
-//
-// StopFPSLimit
-//
-// Used for cleanup during application shutdown.
-//
-//==========================================================================
-
-void I_FPSLimit()
-{
-	if (FPSLimitEvent != NULL)
-	{
-		WaitForSingleObject(FPSLimitEvent, 1000);
-	}
-}
-

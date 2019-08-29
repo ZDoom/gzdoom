@@ -464,7 +464,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 			section.ToUpper();
 
 			const char *ep_name = StartEpisode->mEpisodeName;
-			if (*ep_name == '$') ep_name = GStrings[ep_name+1];
+			if (*ep_name == '$') ep_name = GStrings(ep_name+1);
 			FStatistics *sl = GetStatisticsList(EpisodeStatistics, section, ep_name);
 
 			int statvals[6] = {0,0,0,0,0,0};
@@ -598,4 +598,14 @@ ADD_STAT(statistics)
 {
 	StoreLevelStats(primaryLevel);	// Refresh the current level's results.
 	return GetStatString();
+}
+
+ADD_STAT(velocity)
+{
+	FString compose;
+	if (players[consoleplayer].mo != NULL && gamestate == GS_LEVEL) {
+		compose.AppendFormat("Current velocity: %.2f\n", players[consoleplayer].mo->Vel.Length());
+		compose.AppendFormat("Level %s - Velocity Max: %.2f, Velocity Average: %.2f\n", primaryLevel->MapName.GetChars(), primaryLevel->max_velocity, primaryLevel->avg_velocity);
+	}
+	return compose;
 }

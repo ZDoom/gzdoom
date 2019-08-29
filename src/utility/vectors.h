@@ -979,6 +979,35 @@ Outside comments: A faster version with only 10 (not 24) multiplies.
 
 	TMatrix3x3(const Vector3 &axis, TAngle<vec_t> degrees);
 
+	static TMatrix3x3 Rotate2D(double radians)
+	{
+		double c = g_cos(radians);
+		double s = g_sin(radians);
+		TMatrix3x3 ret;
+		ret.Cells[0][0] = c; ret.Cells[0][1] = -s; ret.Cells[0][2] = 0;
+		ret.Cells[1][0] = s; ret.Cells[1][1] =  c; ret.Cells[1][2] = 0;
+		ret.Cells[2][0] = 0; ret.Cells[2][1] =  0; ret.Cells[2][2] = 1;
+		return ret;
+	}
+
+	static TMatrix3x3 Scale2D(TVector2<vec_t> scaleVec)
+	{
+		TMatrix3x3 ret;
+		ret.Cells[0][0] = scaleVec.X; ret.Cells[0][1] =          0; ret.Cells[0][2] = 0;
+		ret.Cells[1][0] =          0; ret.Cells[1][1] = scaleVec.Y; ret.Cells[1][2] = 0;
+		ret.Cells[2][0] =          0; ret.Cells[2][1] =          0; ret.Cells[2][2] = 1;
+		return ret;
+	}
+
+	static TMatrix3x3 Translate2D(TVector2<vec_t> translateVec)
+	{
+		TMatrix3x3 ret;
+		ret.Cells[0][0] = 1; ret.Cells[0][1] = 0; ret.Cells[0][2] = translateVec.X;
+		ret.Cells[1][0] = 0; ret.Cells[1][1] = 1; ret.Cells[1][2] = translateVec.Y;
+		ret.Cells[2][0] = 0; ret.Cells[2][1] = 0; ret.Cells[2][2] =              1;
+		return ret;
+	}
+
 	void Zero()
 	{
 		memset (this, 0, sizeof *this);

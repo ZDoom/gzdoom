@@ -988,6 +988,7 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 			for (auto &b : BuiltTextures)
 			{
 				Printf("%s\n", b.Name.GetChars());
+				b.tex->SetUseType(ETextureType::Null);
 			}
 			break;
 		}

@@ -441,7 +441,7 @@ struct FPlayerStart
 	DVector3 pos;
 	int16_t angle, type;
 
-	FPlayerStart() { }
+	FPlayerStart() = default;
 	FPlayerStart(const FMapThing *mthing, int pnum)
 	: pos(mthing->pos),
 	  angle(mthing->angle),

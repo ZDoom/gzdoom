@@ -29,6 +29,7 @@
 #include "gl_load/gl_system.h"
 #include "templates.h"
 #include "c_cvars.h"
+#include "doomtype.h"
 #include "r_data/colormaps.h"
 #include "hwrenderer/textures/hw_material.h"
 
@@ -191,6 +192,7 @@ void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 	int rh = GetTexDimension(h);
 	if (texelsize < 1 || texelsize > 4) texelsize = 4;
 	glTextureBytes = texelsize;
+	bufferpitch = w;
 	if (rw == w || rh == h)
 	{
 		glGenBuffers(1, &glBufferID);

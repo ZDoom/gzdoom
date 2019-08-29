@@ -90,7 +90,7 @@ namespace swrenderer
 		clearcolor = color;
 	}
 
-	void RenderScene::RenderView(player_t *player, DCanvas *target, void *videobuffer)
+	void RenderScene::RenderView(player_t *player, DCanvas *target, void *videobuffer, int bufferpitch)
 	{
 		auto viewport = MainThread()->Viewport.get();
 		viewport->RenderTarget = target;
@@ -132,7 +132,7 @@ namespace swrenderer
 		RenderActorView(player->mo, true, false);
 
 		auto copyqueue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
-		copyqueue->Push<MemcpyCommand>(videobuffer, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
+		copyqueue->Push<MemcpyCommand>(videobuffer, bufferpitch, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
 		DrawerThreads::Execute(copyqueue);
 
 		DrawerWaitCycles.Clock();
@@ -154,8 +154,6 @@ namespace swrenderer
 
 		CameraLight::Instance()->SetCamera(MainThread()->Viewport->viewpoint, MainThread()->Viewport->RenderTarget, actor);
 		MainThread()->Viewport->SetupFreelook();
-
-		NetUpdate();
 
 		this->dontmaplines = dontmaplines;
 
@@ -202,7 +200,7 @@ namespace swrenderer
 	{
 		int numThreads = std::thread::hardware_concurrency();
 		if (numThreads == 0)
-			numThreads = 4;
+			numThreads = 1;
 
 		if (r_scene_multithreaded == 0 || r_multithreaded == 0)
 			numThreads = 1;
@@ -289,9 +287,6 @@ namespace swrenderer
 		thread->OpaquePass->RenderScene(thread->Viewport->Level());
 		thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 
-		if (thread->MainThread)
-			NetUpdate();
-
 		if (viewactive)
 		{
 			thread->PlaneList->Render();
@@ -299,13 +294,7 @@ namespace swrenderer
 			thread->Portal->RenderPlanePortals();
 			thread->Portal->RenderLinePortals();
 
-			if (thread->MainThread)
-				NetUpdate();
-
 			thread->TranslucentPass->Render();
-
-			if (thread->MainThread)
-				NetUpdate();
 		}
 
 		DrawerThreads::Execute(thread->DrawQueue);

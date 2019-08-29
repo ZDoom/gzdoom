@@ -701,6 +701,7 @@ void WI_Ticker()
 {
 	if (WI_Screen)
 	{
+		ScaleOverrider s;
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
 		{
 			VMValue self = WI_Screen;
@@ -720,6 +721,7 @@ void WI_Drawer()
 {
 	if (WI_Screen)
 	{
+		ScaleOverrider s;
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
 			VMValue self = WI_Screen;
@@ -767,6 +769,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		SN_StopAllSequences(Level);
 	}
 	WI_Screen = cls->CreateNew();
+	ScaleOverrider s;
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{
 		VMValue val[2] = { WI_Screen, wbstartstruct };
@@ -857,6 +860,8 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, current);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextname);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, thisname);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextauthor);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, thisauthor);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName0);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName1);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxkills);

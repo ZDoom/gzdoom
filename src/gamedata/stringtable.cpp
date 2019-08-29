@@ -43,8 +43,8 @@
 #include "v_text.h"
 #include "gi.h"
 #include "d_player.h"
-#include "xlsxread/xlsxio_read.h"
 
+EXTERN_CVAR(String, language)
 
 //==========================================================================
 //
@@ -57,36 +57,102 @@ void FStringTable::LoadStrings ()
 	int lastlump, lump;
 
 	lastlump = 0;
+	while ((lump = Wads.FindLump("LMACROS", &lastlump)) != -1)
+	{
+		readMacros(lump);
+	}
 
+	lastlump = 0;
 	while ((lump = Wads.FindLump ("LANGUAGE", &lastlump)) != -1)
 	{
-		if (!LoadLanguageFromSpreadsheet(lump))
-			LoadLanguage (lump);
+		auto lumpdata = Wads.ReadLumpIntoArray(lump);
+
+		if (!ParseLanguageCSV(lump, lumpdata))
+ 			LoadLanguage (lump, lumpdata);
 	}
-	SetLanguageIDs();
 	UpdateLanguage();
 	allMacros.Clear();
 }
 
+
 //==========================================================================
 //
-//
+// This was tailored to parse CSV as exported by Google Docs.
 //
 //==========================================================================
 
-bool FStringTable::LoadLanguageFromSpreadsheet(int lumpnum)
+
+TArray<TArray<FString>> FStringTable::parseCSV(const TArray<uint8_t> &buffer)
 {
-	xlsxioreader xlsxio;
-	//open .xlsx file for reading
-	if ((xlsxio = xlsxioread_open(lumpnum)) == nullptr)
-	{
-		return false;
-	}
-	readMacros(xlsxio, "macros");
-	readSheetIntoTable(xlsxio, "strings");
+	const size_t bufLength = buffer.Size();
+	TArray<TArray<FString>> data;
+	TArray<FString> row;
+	TArray<char> cell;
+	bool quoted = false;
 
-	xlsxioread_close(xlsxio);
-	return true;
+	/*
+			auto myisspace = [](int ch) { return ch == '\t' || ch == '\r' || ch == '\n' || ch == ' '; };
+			while (*vcopy && myisspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
+			auto vend = vcopy + strlen(vcopy);
+			while (vend > vcopy && myisspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
+	*/
+
+	for (size_t i = 0; i < bufLength; ++i)
+	{
+		if (buffer[i] == '"')
+		{
+			// Double quotes inside a quoted string count as an escaped quotation mark.
+			if (quoted && i < bufLength - 1 && buffer[i + 1] == '"')
+			{
+				cell.Push('"');
+				i++;
+			}
+			else if (cell.Size() == 0 || quoted)
+			{
+				quoted = !quoted;
+			}
+		}
+		else if (buffer[i] == ',')
+		{
+			if (!quoted)
+			{
+				cell.Push(0);
+				ProcessEscapes(cell.Data());
+				row.Push(cell.Data());
+				cell.Clear();
+			}
+			else
+			{
+				cell.Push(buffer[i]);
+			}
+		}
+		else if (buffer[i] == '\r')
+		{
+			// Ignore all CR's.
+		}
+		else if (buffer[i] == '\n' && !quoted)
+		{
+			cell.Push(0);
+			ProcessEscapes(cell.Data());
+			row.Push(cell.Data());
+			data.Push(std::move(row));
+			cell.Clear();
+		}
+		else
+		{
+			cell.Push(buffer[i]);
+		}
+	}
+
+	// Handle last line without linebreak
+	if (cell.Size() > 0 || row.Size() > 0)
+	{
+		cell.Push(0);
+		ProcessEscapes(cell.Data());
+		row.Push(cell.Data());
+		data.Push(std::move(row));
+	}
+	return data;
 }
 
 //==========================================================================
@@ -95,38 +161,27 @@ bool FStringTable::LoadLanguageFromSpreadsheet(int lumpnum)
 //
 //==========================================================================
 
-bool FStringTable::readMacros(xlsxioreader reader, const char *sheetname)
+bool FStringTable::readMacros(int lumpnum)
 {
-	xlsxioreadersheet sheet = xlsxioread_sheet_open(reader, sheetname, XLSXIOREAD_SKIP_NONE);
-	if (sheet == nullptr) return false;
+	auto lumpdata = Wads.ReadLumpIntoArray(lumpnum);
+	auto data = parseCSV(lumpdata);
 
-	while (xlsxioread_sheet_next_row(sheet))
+	for (unsigned i = 1; i < data.Size(); i++)
 	{
-		auto macroname = xlsxioread_sheet_next_cell(sheet);
-		auto language = xlsxioread_sheet_next_cell(sheet);
-		if (!macroname || !language) continue;
-		FStringf combined_name("%s/%s", language, macroname);
-		free(language);
-		free(macroname);
+		auto macroname = data[i][0];
+		auto language = data[i][1];
+		if (macroname.IsEmpty() || language.IsEmpty()) continue;
+		FStringf combined_name("%s/%s", language.GetChars(), macroname.GetChars());
 		FName name = combined_name;
 
 		StringMacro macro;
 
-		char *value;
-		for (int i = 0; i < 4; i++)
+		for (int k = 0; k < 4; k++)
 		{
-			value = xlsxioread_sheet_next_cell(sheet);
-			macro.Replacements[i] = value;
-			free(value);
-		}
-		// This is needed because the reader code would choke on incompletely read rows.
-		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
-		{
-			free(value);
+			macro.Replacements[k] = data[i][k+2];
 		}
 		allMacros.Insert(name, macro);
 	}
-	xlsxioread_sheet_close(sheet);
 	return true;
 }
 
@@ -136,51 +191,28 @@ bool FStringTable::readMacros(xlsxioreader reader, const char *sheetname)
 //
 //==========================================================================
 
-bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname)
+bool FStringTable::ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer)
 {
-
-	xlsxioreadersheet sheet = xlsxioread_sheet_open(reader, sheetname, XLSXIOREAD_SKIP_NONE);
-	if (sheet == nullptr) return false;
-
-	int row = 0;
-	TArray<TArray<FString>> table;
-
-	while (xlsxioread_sheet_next_row(sheet))
-	{
-		int column = 0;
-		char *value;
-		table.Reserve(1);
-		while ((value = xlsxioread_sheet_next_cell(sheet)) != nullptr)
-		{
-			auto vcopy = value;
-			if (table.Size() <= (unsigned)row) table.Reserve(1);
-			while (*vcopy && iswspace((unsigned char)*vcopy)) vcopy++;	// skip over leaading whitespace;
-			auto vend = vcopy + strlen(vcopy);
-			while (vend > vcopy && iswspace((unsigned char)vend[-1])) *--vend = 0;	// skip over trailing whitespace
-			ProcessEscapes(vcopy);
-			table[row].Push(vcopy);
-			column++;
-			free(value);
-		}
-		row++;
-	}
+	if (memcmp(buffer.Data(), "default,", 8)) return false;
+	auto data = parseCSV(buffer);
 
 	int labelcol = -1;
 	int filtercol = -1;
 	TArray<std::pair<int, unsigned>> langrows;
+	bool hasDefaultEntry = false;
 
-	if (table.Size() > 0)
+	if (data.Size() > 0)
 	{
-		for (unsigned column = 0; column < table[0].Size(); column++)
+		for (unsigned column = 0; column < data[0].Size(); column++)
 		{
-			auto &entry = table[0][column];
+			auto &entry = data[0][column];
 			if (entry.CompareNoCase("filter") == 0)
 			{
 				filtercol = column;
 			}
 			else if (entry.CompareNoCase("identifier") == 0)
 			{
-				labelcol = column;;
+				labelcol = column;
 			}
 			else
 			{
@@ -190,6 +222,7 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 					if (lang.CompareNoCase("default") == 0)
 					{
 						langrows.Push(std::make_pair(column, default_table));
+						hasDefaultEntry = true;
 					}
 					else if (lang.Len() < 4)
 					{
@@ -200,9 +233,9 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 			}
 		}
 
-		for (unsigned i = 1; i < table.Size(); i++)
+		for (unsigned i = 1; i < data.Size(); i++)
 		{
-			auto &row = table[i];
+			auto &row = data[i];
 			if (filtercol > -1)
 			{
 				auto filterstr = row[filtercol];
@@ -212,17 +245,24 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 			}
 
 			FName strName = row[labelcol];
+			if (hasDefaultEntry)
+			{
+				DeleteForLabel(lumpnum, strName);
+			}
 			for (auto &langentry : langrows)
 			{
 				auto str = row[langentry.first];
 				if (str.Len() > 0)
 				{
-					InsertString(langentry.second, strName, str);
+					InsertString(lumpnum, langentry.second, strName, str);
+				}
+				else
+				{
+					DeleteString(langentry.second, strName);
 				}
 			}
 		}
 	}
-	xlsxioread_sheet_close(sheet);
 	return true;
 }
 
@@ -232,11 +272,14 @@ bool FStringTable::readSheetIntoTable(xlsxioreader reader, const char *sheetname
 //
 //==========================================================================
 
-void FStringTable::LoadLanguage (int lumpnum)
+void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 {
 	bool errordone = false;
 	TArray<uint32_t> activeMaps;
-	FScanner sc(lumpnum);
+	FScanner sc;
+	bool hasDefaultEntry = false;
+
+	sc.OpenMem("LANGUAGE", buffer);
 	sc.SetCMode (true);
 	while (sc.GetString ())
 	{
@@ -258,11 +301,14 @@ void FStringTable::LoadLanguage (int lumpnum)
 					}
 					if (len == 1 && sc.String[0] == '*')
 					{
+						activeMaps.Clear();
 						activeMaps.Push(global_table);
 					}
 					else if (len == 7 && stricmp (sc.String, "default") == 0)
 					{
+						activeMaps.Clear();
 						activeMaps.Push(default_table);
+						hasDefaultEntry = true;
 					}
 					else
 					{
@@ -272,7 +318,8 @@ void FStringTable::LoadLanguage (int lumpnum)
 				}
 				else
 				{
-					activeMaps.Push(MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0));
+					if (activeMaps.Size() != 1 || (activeMaps[0] != default_table && activeMaps[0] != global_table))
+						activeMaps.Push(MAKE_ID(tolower(sc.String[0]), tolower(sc.String[1]), tolower(sc.String[2]), 0));
 				}
 				sc.MustGetString ();
 			} while (!sc.Compare ("]"));
@@ -325,10 +372,14 @@ void FStringTable::LoadLanguage (int lumpnum)
 			}
 			if (!skip)
 			{
+				if (hasDefaultEntry)
+				{
+					DeleteForLabel(lumpnum, strName);
+				}
 				// Insert the string into all relevant tables.
 				for (auto map : activeMaps)
 				{
-					InsertString(map, strName, strText);
+					InsertString(lumpnum, map, strName, strText);
 				}
 			}
 		}
@@ -341,10 +392,45 @@ void FStringTable::LoadLanguage (int lumpnum)
 //
 //==========================================================================
 
-void FStringTable::InsertString(int langid, FName label, const FString &string)
+void FStringTable::DeleteString(int langid, FName label)
+{
+	allStrings[langid].Remove(label);
+}
+
+//==========================================================================
+//
+// This deletes all older entries for a given label. This gets called
+// when a string in the default table gets updated. 
+//
+//==========================================================================
+
+void FStringTable::DeleteForLabel(int lumpnum, FName label)
+{
+	decltype(allStrings)::Iterator it(allStrings);
+	decltype(allStrings)::Pair *pair;
+	auto filenum = Wads.GetLumpFile(lumpnum);
+
+	while (it.NextPair(pair))
+	{
+		auto entry = pair->Value.CheckKey(label);
+		if (entry && entry->filenum < filenum)
+		{
+			pair->Value.Remove(label);
+		}
+	}
+
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FStringTable::InsertString(int lumpnum, int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
-	TableElement te = { string, string, string, string };
+	TableElement te = { Wads.GetLumpFile(lumpnum), { string, string, string, string } };
 	long index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{
@@ -355,7 +441,7 @@ void FStringTable::InsertString(int langid, FName label, const FString &string)
 			break;
 		}
 		FString macroname(te.strings[0].GetChars() + index + 2, endindex - index - 2);
- 		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
+		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
 		FStringf replacee("@[%s]", macroname.GetChars());
 		FName lookupname(lookupstr, true);
 		auto replace = allMacros.CheckKey(lookupname);
@@ -376,6 +462,12 @@ void FStringTable::InsertString(int langid, FName label, const FString &string)
 
 void FStringTable::UpdateLanguage()
 {
+	size_t langlen = strlen(language);
+
+	int LanguageID = (langlen < 2 || langlen > 3) ?
+		MAKE_ID('e', 'n', 'u', '\0') :
+		MAKE_ID(language[0], language[1], language[2], '\0');
+
 	currentLanguageSet.Clear();
 
 	auto checkone = [&](uint32_t lang_id)
@@ -387,11 +479,8 @@ void FStringTable::UpdateLanguage()
 
 	checkone(dehacked_table);
 	checkone(global_table);
-	for (int i = 0; i < 4; ++i)
-	{
-		checkone(LanguageIDs[i]);
-		checkone(LanguageIDs[i] & MAKE_ID(0xff, 0xff, 0, 0));
-	}
+	checkone(LanguageID);
+	checkone(LanguageID & MAKE_ID(0xff, 0xff, 0, 0));
 	checkone(default_table);
 }
 
@@ -514,6 +603,20 @@ const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable
 		}
 	}
 	return nullptr;
+}
+
+bool FStringTable::MatchDefaultString(const char *name, const char *content) const
+{
+	// This only compares the first line to avoid problems with bad linefeeds. For the few cases where this feature is needed it is sufficient.
+	auto c = GetLanguageString(name, FStringTable::default_table);
+	if (!c) return false;
+	
+	// Check a secondary key, in case the text comparison cannot be done due to needed orthographic fixes (see Harmony's exit text)
+	FStringf checkkey("%s_CHECK", name);
+	auto cc = GetLanguageString(checkkey, FStringTable::default_table);
+	if (cc) c = cc;
+
+	return (c && !strnicmp(c, content, strcspn(content, "\n\r\t")));
 }
 
 //==========================================================================

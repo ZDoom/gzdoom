@@ -142,6 +142,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeSoundPitch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_FLOAT(pitch);
+	S_ChangeSoundPitch(self, channel, pitch);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeSoundVolume)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -160,7 +169,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_BOOL(looping);
 	PARAM_FLOAT(attenuation);
 	PARAM_BOOL(local);
-	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local);
+	PARAM_FLOAT(pitch);
+	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
 	return 0;
 }
 
@@ -512,7 +522,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2OffsetZ, Vec2OffsetZ)
 
 static void Vec2Offset(AActor *self, double x, double y, bool absolute, DVector2 *result)
 {
-	*result = self->Vec2OffsetZ(x, y, absolute);
+	*result = self->Vec2Offset(x, y, absolute);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2Offset, Vec2Offset)
@@ -911,21 +921,19 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FindUniqueTid, P_FindUniqueTID)
 
 static void RemoveFromHash(AActor *self)
 {
-	self->RemoveFromHash();
+	self->SetTID(0);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveFromHash, RemoveFromHash)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->RemoveFromHash();
+	RemoveFromHash(self);
 	return 0;
 }
 
 static void ChangeTid(AActor *self, int tid)
 {
-	self->RemoveFromHash();
-	self->tid = tid;
-	self->AddToHash();
+	self->SetTID(tid);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, ChangeTid, ChangeTid)

@@ -35,6 +35,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <cwctype>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -54,6 +55,7 @@
 #include "vm.h"
 #include "image.h"
 #include "utf8.h"
+#include "myiswalpha.h"
 #include "textures/formats/fontchars.h"
 #include "textures/formats/multipatchtexture.h"
 
@@ -69,7 +71,7 @@
 //
 //==========================================================================
 
-FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate)
+FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate, bool iwadonly)
 {
 	int i;
 	FTextureID lump;
@@ -80,7 +82,6 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 
 	noTranslate = notranslate;
 	Lump = fdlump;
-	FontHeight = 0;
 	GlobalKerning = false;
 	FontName = name;
 	Next = FirstFont;
@@ -111,9 +112,8 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
 		Wads.GetLumpsInFolder(path, folderdata, nametemplate == nullptr);
 		
-		if (nametemplate == nullptr)
+		//if (nametemplate == nullptr)
 		{
-			// Only take font.inf from the actual folder we are processing but not from an older folder that may have been superseded.
 			FStringf infpath("fonts/%s/font.inf", filetemplate);
 			
 			unsigned index = folderdata.FindEx([=](const FolderEntry &entry)
@@ -191,31 +191,75 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	{
 		if (nametemplate != nullptr)
 		{
-			for (i = 0; i < lcount; i++)
+			if (!iwadonly)
 			{
-				int position = '!' + i;
-				mysnprintf(buffer, countof(buffer), nametemplate, i + start);
+				for (i = 0; i < lcount; i++)
+				{
+					int position = lfirst + i;
+					mysnprintf(buffer, countof(buffer), nametemplate, i + start);
 
-				lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
-				if (doomtemplate && lump.isValid() && i + start == 121)
-				{ // HACKHACK: Don't load STCFN121 in doom(2), because
-				  // it's not really a lower-case 'y' but a '|'.
-				  // Because a lot of wads with their own font seem to foolishly
-				  // copy STCFN121 and make it a '|' themselves, wads must
-				  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-					if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
-						!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
+					lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
+					if (doomtemplate && lump.isValid() && i + start == 121)
+					{ // HACKHACK: Don't load STCFN121 in doom(2), because
+					  // it's not really a lower-case 'y' but a '|'.
+					  // Because a lot of wads with their own font seem to foolishly
+					  // copy STCFN121 and make it a '|' themselves, wads must
+					  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
+						if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
+							!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
+						{
+							// insert the incorrectly named '|' graphic in its correct position.
+							position = 124;
+						}
+					}
+					if (lump.isValid())
 					{
-						// insert the incorrectly named '|' graphic in its correct position.
-						position = 124;
+						Type = Multilump;
+						if (position < minchar) minchar = position;
+						if (position > maxchar) maxchar = position;
+						charMap.Insert(position, TexMan.GetTexture(lump));
 					}
 				}
-				if (lump.isValid())
+			}
+			else
+			{
+				FTexture *texs[256] = {};
+				if (lcount > 256 - start) lcount = 256 - start;
+				for (i = 0; i < lcount; i++)
 				{
-					Type = Multilump;
-					if (position < minchar) minchar = position;
-					if (position > maxchar) maxchar = position;
-					charMap.Insert(position, TexMan.GetTexture(lump));
+					TArray<FTextureID> array;
+					mysnprintf(buffer, countof(buffer), nametemplate, i + start);
+
+					TexMan.ListTextures(buffer, array, true);
+					for (auto entry : array)
+					{
+						FTexture *tex = TexMan.GetTexture(entry, false);
+						if (tex && tex->SourceLump >= 0 && Wads.GetLumpFile(tex->SourceLump) <= Wads.GetMaxIwadNum() && tex->UseType == ETextureType::MiscPatch)
+						{
+							texs[i] = tex;
+						}
+					}
+				}
+				if (doomtemplate)
+				{
+					// Handle the misplaced '|'.
+					if (texs[121 - '!'] && !texs[120 - '!'] && !texs[122 - '!'] && !texs[124 - '!'])
+					{
+						texs[124 - '!'] = texs[121 - '!'];
+						texs[121 - '!'] = nullptr;
+					}
+				}
+
+				for (i = 0; i < lcount; i++)
+				{
+					if (texs[i])
+					{
+						int position = lfirst + i;
+						Type = Multilump;
+						if (position < minchar) minchar = position;
+						if (position > maxchar) maxchar = position;
+						charMap.Insert(position, texs[i]);
+					}
 				}
 			}
 		}
@@ -247,6 +291,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		auto count = maxchar - minchar + 1;
 		Chars.Resize(count);
 		int fontheight = 0;
+		int asciiheight = 0;
 
 		for (i = 0; i < count; i++)
 		{
@@ -268,12 +313,19 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					{
 						fontheight = height;
 					}
+					if (height > asciiheight && FirstChar + 1 < 128)
+					{
+						asciiheight = height;
+					}
 				}
 
-				pic->SetUseType(ETextureType::FontChar);
+				Chars[i].OriginalPic = new FImageTexture(pic->GetImage(), "");
+				Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
+				Chars[i].OriginalPic->CopySize(pic);
+				TexMan.AddTexture(Chars[i].OriginalPic);
+
 				if (!noTranslate)
 				{
-					Chars[i].OriginalPic = pic;
 					Chars[i].TranslatedPic = new FImageTexture(new FFontChar1(pic->GetImage()), "");
 					Chars[i].TranslatedPic->CopySize(pic);
 					Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
@@ -281,7 +333,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				}
 				else
 				{
-					Chars[i].TranslatedPic = pic;
+					Chars[i].TranslatedPic = Chars[i].OriginalPic;
 				}
 
 				Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
@@ -309,11 +361,14 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 			}
 		}
 		if (FontHeight == 0) FontHeight = fontheight;
+		if (AsciiHeight == 0) AsciiHeight = asciiheight;
 
 		FixXMoves();
 	}
 
 	if (!noTranslate) LoadTranslations();
+
+
 }
 
 void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
@@ -393,10 +448,13 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 
 			auto b = pic->Get8BitPixels(false);
 
-			Chars[i].OriginalPic = pic;
+			Chars[i].OriginalPic = new FImageTexture(pic->GetImage(), "");
+			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
+			Chars[i].OriginalPic->CopySize(pic);
 			Chars[i].TranslatedPic = new FImageTexture(new FFontChar1(pic->GetImage()), "");
 			Chars[i].TranslatedPic->CopySize(pic);
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
+			TexMan.AddTexture(Chars[i].OriginalPic);
 			TexMan.AddTexture(Chars[i].TranslatedPic);
 		}
 		Chars[i].XMove = width;
@@ -437,6 +495,51 @@ FFont::~FFont ()
 	if (font != nullptr)
 	{
 		*prev = font->Next;
+	}
+}
+
+//==========================================================================
+//
+// FFont :: CheckCase
+//
+//==========================================================================
+
+void FFont::CheckCase()
+{
+	int lowercount = 0, uppercount = 0;
+	for (unsigned i = 0; i < Chars.Size(); i++)
+	{
+		unsigned chr = i + FirstChar;
+		if (lowerforupper[chr] == chr && upperforlower[chr] == chr)
+		{
+			continue;	// not a letter;
+		}
+		if (myislower(chr))
+		{
+			if (Chars[i].TranslatedPic != nullptr) lowercount++;
+		}
+		else
+		{
+			if (Chars[i].TranslatedPic != nullptr) uppercount++;
+		}
+	}
+	if (lowercount == 0) return;	// This is an uppercase-only font and we are done.
+
+	// The ß needs special treatment because it is far more likely to be supplied lowercase only, even in an uppercase font.
+	if (Chars[0xdf - FirstChar].TranslatedPic != nullptr)
+	{
+		if (LastChar < 0x1e9e)
+		{
+			Chars.Resize(0x1e9f - FirstChar);
+			LastChar = 0x1e9e;
+		}
+		if (Chars[0x1e9e - FirstChar].TranslatedPic == nullptr)
+		{
+			std::swap(Chars[0xdf - FirstChar], Chars[0x1e9e - FirstChar]);
+			lowercount--;
+			uppercount++;
+			if (lowercount == 0) return;
+		}
 	}
 }
 
@@ -486,6 +589,87 @@ void RecordTextureColors (FImageSource *pic, uint32_t *usedcolors)
 		usedcolors[pixels[x]]++;
 	}
 }
+
+//==========================================================================
+//
+// RecordAllTextureColors
+//
+// Given a 256 entry buffer, sets every entry that corresponds to a color
+// used by the font.
+//
+//==========================================================================
+
+void FFont::RecordAllTextureColors(uint32_t *usedcolors)
+{
+	for (unsigned int i = 0; i < Chars.Size(); i++)
+	{
+		if (Chars[i].TranslatedPic)
+		{
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
+			if (pic)
+			{
+				// The remap must be temporarily reset here because this can be called on an initialized font.
+				auto sr = pic->ResetSourceRemap();
+				RecordTextureColors(pic, usedcolors);
+				pic->SetSourceRemap(sr);
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// SetDefaultTranslation
+//
+// Builds a translation to map the stock font to a mod provided replacement.
+//
+//==========================================================================
+
+void FFont::SetDefaultTranslation(uint32_t *othercolors)
+{
+	uint32_t mycolors[256] = {};
+	RecordAllTextureColors(mycolors);
+
+	uint8_t mytranslation[256], othertranslation[256], myreverse[256], otherreverse[256];
+	TArray<double> myluminosity, otherluminosity;
+
+	SimpleTranslation(mycolors, mytranslation, myreverse, myluminosity);
+	SimpleTranslation(othercolors, othertranslation, otherreverse, otherluminosity);
+
+	FRemapTable remap(ActiveColors);
+	remap.Remap[0] = 0;
+	remap.Palette[0] = 0;
+
+	for (unsigned l = 1; l < myluminosity.Size(); l++)
+	{
+		for (unsigned o = 1; o < otherluminosity.Size()-1; o++)	// luminosity[0] is for the transparent color
+		{
+			if (myluminosity[l] >= otherluminosity[o] && myluminosity[l] <= otherluminosity[o+1])
+			{
+				PalEntry color1 = GPalette.BaseColors[otherreverse[o]];
+				PalEntry color2 = GPalette.BaseColors[otherreverse[o+1]];
+				double weight = 0;
+				if (otherluminosity[o] != otherluminosity[o + 1])
+				{
+					weight = (myluminosity[l] - otherluminosity[o]) / (otherluminosity[o + 1] - otherluminosity[o]);
+				}
+				int r = int(color1.r + weight * (color2.r - color1.r));
+				int g = int(color1.g + weight * (color2.g - color1.g));
+				int b = int(color1.b + weight * (color2.b - color1.b));
+
+				r = clamp(r, 0, 255);
+				g = clamp(g, 0, 255);
+				b = clamp(b, 0, 255);
+				remap.Remap[l] = ColorMatcher.Pick(r, g, b);
+				remap.Palette[l] = PalEntry(255, r, g, b);
+				break;
+			}
+		}
+	}
+	Ranges[CR_UNTRANSLATED] = remap;
+	forceremap = true;
+}
+
 
 //==========================================================================
 //
@@ -710,7 +894,7 @@ int FFont::GetCharCode(int code, bool needpic) const
 	{
 		return code;
 	}
-
+	
 	// Use different substitution logic based on the fonts content:
 	// In a font which has both upper and lower case, prefer unaccented small characters over capital ones.
 	// In a pure upper-case font, do not check for lower case replacements.
@@ -782,23 +966,15 @@ int FFont::GetCharCode(int code, bool needpic) const
 
 FTexture *FFont::GetChar (int code, int translation, int *const width, bool *redirected) const
 {
-	code = GetCharCode(code, false);
+	code = GetCharCode(code, true);
 	int xmove = SpaceWidth;
 
 	if (code >= 0)
 	{
 		code -= FirstChar;
 		xmove = Chars[code].XMove;
-		if (Chars[code].TranslatedPic == nullptr)
-		{
-			code = GetCharCode(code + FirstChar, true);
-			if (code >= 0)
-			{
-				code -= FirstChar;
-				xmove = Chars[code].XMove;
-			}
-		}
 	}
+	
 	if (width != nullptr)
 	{
 		*width = xmove;
@@ -806,7 +982,7 @@ FTexture *FFont::GetChar (int code, int translation, int *const width, bool *red
 	if (code < 0) return nullptr;
 
 
-	if (translation == CR_UNTRANSLATED)
+	if (translation == CR_UNTRANSLATED && !forceremap)
 	{
 		bool redirect = Chars[code].OriginalPic && Chars[code].OriginalPic != Chars[code].TranslatedPic;
 		if (redirected) *redirected = redirect;
@@ -829,8 +1005,9 @@ FTexture *FFont::GetChar (int code, int translation, int *const width, bool *red
 
 int FFont::GetCharWidth (int code) const
 {
-	code = GetCharCode(code, false);
-	return (code < 0) ? SpaceWidth : Chars[code - FirstChar].XMove;
+	code = GetCharCode(code, true);
+	if (code >= 0) return Chars[code - FirstChar].XMove;
+	return SpaceWidth;
 }
 
 //==========================================================================
@@ -848,6 +1025,48 @@ double GetBottomAlignOffset(FFont *font, int c)
 	if (texc) offset += texc->GetDisplayTopOffsetDouble();
 	if (tex_zero) offset += -tex_zero->GetDisplayTopOffsetDouble() + tex_zero->GetDisplayHeightDouble();
 	return offset;
+}
+
+//==========================================================================
+//
+// Checks if the font contains proper glyphs for all characters in the string
+//
+//==========================================================================
+
+bool FFont::CanPrint(const uint8_t *string) const
+{
+	if (!string) return true;
+	while (*string)
+	{
+		auto chr = GetCharFromString(string);
+		if (!MixedCase) chr = upperforlower[chr];	// For uppercase-only fonts we shouldn't check lowercase characters.
+		if (chr == TEXTCOLOR_ESCAPE)
+		{
+			// We do not need to check for UTF-8 in here.
+			if (*string == '[')
+			{
+				while (*string != '\0' && *string != ']')
+				{
+					++string;
+				}
+			}
+			if (*string != '\0')
+			{
+				++string;
+			}
+			continue;
+		}
+		else if (chr != '\n')
+		{
+			int cc = GetCharCode(chr, true);
+			if (chr != cc && myiswalpha(chr) && cc != getAlternative(chr))
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
 }
 
 //==========================================================================
@@ -897,6 +1116,53 @@ int FFont::StringWidth(const uint8_t *string) const
 
 //==========================================================================
 //
+// Get the largest ascender in the first line of this text.
+//
+//==========================================================================
+
+int FFont::GetMaxAscender(const uint8_t* string) const
+{
+	int retval = 0;
+
+	while (*string)
+	{
+		auto chr = GetCharFromString(string);
+		if (chr == TEXTCOLOR_ESCAPE)
+		{
+			// We do not need to check for UTF-8 in here.
+			if (*string == '[')
+			{
+				while (*string != '\0' && *string != ']')
+				{
+					++string;
+				}
+			}
+			if (*string != '\0')
+			{
+				++string;
+			}
+			continue;
+		}
+		else if (chr == '\n')
+		{
+			break;
+		}
+		else
+		{
+			auto ctex = GetChar(chr, CR_UNTRANSLATED, nullptr);
+			if (ctex)
+			{
+				auto offs = int(ctex->GetScaledTopOffset(0));
+				if (offs > retval) retval = offs;
+			}
+		}
+	}
+
+	return retval;
+}
+
+//==========================================================================
+//
 // FFont :: LoadTranslations
 //
 //==========================================================================
@@ -920,8 +1186,6 @@ void FFont::LoadTranslations()
 			}
 		}
 	}
-
-	// Fixme: This needs to build a translation based on the source palette, not some intermediate 'ordered' table.
 
 	ActiveColors = SimpleTranslation (usedcolors, PatchRemap, identity, Luminosity);
 
@@ -988,6 +1252,11 @@ void FFont::FixXMoves()
 				}
 			}
 			Chars[i].XMove = SpaceWidth;
+		}
+		if (Chars[i].OriginalPic)
+		{
+			int ofs = Chars[i].OriginalPic->GetScaledTopOffset(0);
+			if (ofs > Displacement) Displacement = ofs;
 		}
 	}
 }

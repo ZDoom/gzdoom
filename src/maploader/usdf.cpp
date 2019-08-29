@@ -482,11 +482,74 @@ class USDFParser : public UDMFParserBase
 			return false;
 		}
 		Level->SetConversation(dlgid, type, startpos);
-		for(;startpos < Level->StrifeDialogues.Size(); startpos++)
+
+		auto& dialogues = Level->StrifeDialogues;
+		const auto numnodes = dialogues.Size();
+
+		for (auto i = startpos; i < numnodes; i++)
 		{
-			Level->StrifeDialogues[startpos]->SpeakerType = type;
-			Level->StrifeDialogues[startpos]->MenuClassName = clsid;
+			dialogues[i]->SpeakerType = type;
+			dialogues[i]->MenuClassName = clsid;
 		}
+
+		if (namespace_bits == Gz) // string page name linker
+		{
+			TMap<FString, int> nameToIndex;
+
+			for (auto i = startpos; i < numnodes; i++)
+			{
+				FString key = dialogues[i]->ThisNodeName;
+				if (key.IsNotEmpty())
+				{
+					key.ToLower();
+					if (nameToIndex.CheckKey(key))
+						Printf("Warning! Duplicate page name '%s'!\n", dialogues[i]->ThisNodeName.GetChars());
+					else
+					{
+						nameToIndex[key] = i - startpos;
+						DPrintf(DMSG_NOTIFY, "GZSDF linker: Assigning pagename '%s' to node %i\n", key.GetChars(), i);
+					}
+				}
+			}
+
+			if (nameToIndex.CountUsed())
+			{
+				for (auto i = startpos; i < numnodes; i++)
+				{
+					FString itemLinkKey = dialogues[i]->ItemCheckNodeName;
+					if (itemLinkKey.IsNotEmpty())
+					{
+						itemLinkKey.ToLower();
+						if (nameToIndex.CheckKey(itemLinkKey))
+						{
+							dialogues[i]->ItemCheckNode = nameToIndex[itemLinkKey] + 1;
+							DPrintf(DMSG_NOTIFY, "GZSDF linker: Item Link '%s' in node %i was index %i\n", itemLinkKey.GetChars(), i, nameToIndex[itemLinkKey]);
+						}
+						else
+							Printf("Warning! Reference to non-existent item-linked dialogue page name '%s' in page %i!\n", dialogues[i]->ItemCheckNodeName.GetChars(), i);
+					}
+
+					FStrifeDialogueReply *NodeCheck = dialogues[i]->Children;
+					while (NodeCheck)
+					{
+						if (NodeCheck->NextNodeName.IsNotEmpty())
+						{
+							FString key = NodeCheck->NextNodeName;
+							key.ToLower();
+							if (nameToIndex.CheckKey(key))
+							{
+								NodeCheck->NextNode = nameToIndex[key] + 1;
+								DPrintf(DMSG_NOTIFY, "GZSDF linker: Nextpage Link '%s' in node %i was index %i\n", key.GetChars(), i, nameToIndex[key]);
+							}
+							else
+								Printf("Warning! Reference to non-existent reply-linked dialogue page name '%s' in page %i!\n", NodeCheck->NextNodeName.GetChars(), i);
+						}
+						NodeCheck = NodeCheck->Next;
+					}
+				}
+			}
+		}
+
 		return true;
 	}
 
@@ -551,57 +614,6 @@ public:
 			}
 		}
 
-		if (namespace_bits == Gz) // string page name linker
-		{
-			int numnodes = Level->StrifeDialogues.Size();
-			int usedstrings = false;
-
-			TMap<FString, int> nameToIndex;
-			for (int i = 0; i < numnodes; i++)
-			{
-				FString key = Level->StrifeDialogues[i]->ThisNodeName;
-				if (key.IsNotEmpty())
-				{
-					key.ToLower();
-					if (nameToIndex.CheckKey(key))
-						Printf("Warning! Duplicate page name '%s'!\n", Level->StrifeDialogues[i]->ThisNodeName.GetChars());
-					else
-						nameToIndex[key] = i;
-					usedstrings = true;
-				}
-			}
-			if (usedstrings)
-			{
-				for (int i = 0; i < numnodes; i++)
-				{
-					FString itemLinkKey = Level->StrifeDialogues[i]->ItemCheckNodeName;
-					if (itemLinkKey.IsNotEmpty())
-					{
-						itemLinkKey.ToLower();
-						if (nameToIndex.CheckKey(itemLinkKey))
-							Level->StrifeDialogues[i]->ItemCheckNode = nameToIndex[itemLinkKey] + 1;
-						else
-							Printf("Warning! Reference to non-existent item-linked dialogue page name '%s' in page %i!\n", Level->StrifeDialogues[i]->ItemCheckNodeName.GetChars(), i);
-					}
-
-					FStrifeDialogueReply *NodeCheck = Level->StrifeDialogues[i]->Children;
-					while (NodeCheck)
-					{
-						if (NodeCheck->NextNodeName.IsNotEmpty())
-						{
-							FString key = NodeCheck->NextNodeName;
-							key.ToLower();
-							if (nameToIndex.CheckKey(key))
-								NodeCheck->NextNode = nameToIndex[key] + 1;
-							else
-								Printf("Warning! Reference to non-existent reply-linked dialogue page name '%s' in page %i!\n", NodeCheck->NextNodeName.GetChars(), i);
-						}
-						NodeCheck = NodeCheck->Next;
-					}
-				}
-			}
-
-		}
 		return true;
 	}
 };

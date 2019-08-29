@@ -44,7 +44,7 @@ FLightBuffer::FLightBuffer()
 	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
 	// We only want to disable using SSBOs for lights but not disable the feature entirely.
 	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
-	if (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER && !strstr(screen->gl_vendorstring, "Intel"))
+	if (screen->IsVulkan() || ((screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && !strstr(screen->vendorstring, "Intel")))
 	{
 		mBufferType = true;
 		mBlockAlign = 0;
@@ -60,7 +60,7 @@ FLightBuffer::FLightBuffer()
 		mByteSize += screen->maxuniformblock;	// to avoid mapping beyond the end of the buffer.
 	}
 
-	mBuffer = screen->CreateDataBuffer(LIGHTBUF_BINDINGPOINT, mBufferType);
+	mBuffer = screen->CreateDataBuffer(LIGHTBUF_BINDINGPOINT, mBufferType, false);
 	mBuffer->SetData(mByteSize, nullptr, false);
 
 	Clear();
@@ -74,7 +74,6 @@ FLightBuffer::~FLightBuffer()
 void FLightBuffer::Clear()
 {
 	mIndex = 0;
-	mLastMappedIndex = UINT_MAX;
 }
 
 int FLightBuffer::UploadLights(FDynLightData &data)
@@ -127,16 +126,13 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 	}
 }
 
-int FLightBuffer::DoBindUBO(unsigned int index)
+int FLightBuffer::GetBinding(unsigned int index, size_t* pOffset, size_t* pSize)
 {
 	// this function will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start.
 	unsigned int offset = (index / mBlockAlign) * mBlockAlign;
 
-	if (offset != mLastMappedIndex)
-	{
-		mLastMappedIndex = offset;
-		mBuffer->BindRange(offset * ELEMENT_SIZE, mBlockSize * ELEMENT_SIZE);
-	}
+	*pOffset = offset * ELEMENT_SIZE;
+	*pSize = mBlockSize * ELEMENT_SIZE;
 	return (index - offset);
 }
 

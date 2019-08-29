@@ -40,6 +40,7 @@
 #include "w_wad.h"
 #include "gi.h"
 #include "doomstat.h"
+#include "doomtype.h"
 
 
 //==========================================================================
@@ -367,6 +368,7 @@ void FResourceFile::PostProcessArchive(void *lumps, size_t lumpsize)
 {
 	// Entries in archives are sorted alphabetically
 	qsort(lumps, NumLumps, lumpsize, lumpcmp);
+	
 
 	// Filter out lumps using the same names as the Autoload.* sections
 	// in the ini file use. We reduce the maximum lump concidered after
@@ -406,7 +408,17 @@ int FResourceFile::FilterLumps(FString filtername, void *lumps, size_t lumpsize,
 		return 0;
 	}
 	filter << "filter/" << filtername << '/';
-	if (FindPrefixRange(filter, lumps, lumpsize, max, start, end))
+	
+	bool found = FindPrefixRange(filter, lumps, lumpsize, max, start, end);
+	
+	// Workaround for old Doom filter names.
+	if (!found && filtername.IndexOf("doom.id.doom") == 0)
+	{
+		filter.Substitute("doom.id.doom", "doom.doom");
+		found = FindPrefixRange(filter, lumps, lumpsize, max, start, end);
+	}
+
+	if (found)
 	{
 		void *from = (uint8_t *)lumps + start * lumpsize;
 

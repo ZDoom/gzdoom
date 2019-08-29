@@ -253,4 +253,7 @@ EXTERN_CVAR (Int, compatflags2);
 // Filters from AddAutoloadFiles(). Used to filter files from archives.
 extern FString LumpFilterIWAD;
 
+// These control whether certain items use generic text output instead of game-specific one.
+extern bool generic_ui;
+
 #endif

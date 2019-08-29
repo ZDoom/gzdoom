@@ -51,6 +51,7 @@
 #include "g_levellocals.h"
 #include "utf8.h"
 #include "templates.h"
+#include "s_music.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 
@@ -68,6 +69,58 @@ IMPLEMENT_POINTERS_END
 extern int		NoWipe;
 
 CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+//==========================================================================
+//
+// This also gets used by the title loop.
+//
+//==========================================================================
+
+void DrawFullscreenSubtitle(const char *text)
+{
+	if (!text || !*text || !inter_subtitles) return;
+
+	// This uses the same scaling as regular HUD messages
+	auto scale = active_con_scaletext(generic_ui);
+	int hudwidth = SCREENWIDTH / scale;
+	int hudheight = SCREENHEIGHT / scale;
+	FFont *font = generic_ui? NewSmallFont : SmallFont;
+
+	int linelen = hudwidth < 640 ? Scale(hudwidth, 9, 10) - 40 : 560;
+	auto lines = V_BreakLines(font, linelen, text);
+	int height = 20;
+
+	for (unsigned i = 0; i < lines.Size(); i++) height += font->GetHeight();
+
+	int x, y, w;
+
+	if (linelen < 560)
+	{
+		x = hudwidth / 20;
+		y = hudheight * 9 / 10 - height;
+		w = hudwidth - 2 * x;
+	}
+	else
+	{
+		x = (hudwidth >> 1) - 300;
+		y = hudheight * 9 / 10 - height;
+		if (y < 0) y = 0;
+		w = 600;
+	}
+	screen->Dim(0, 0.5f, Scale(x, SCREENWIDTH, hudwidth), Scale(y, SCREENHEIGHT, hudheight),
+		Scale(w, SCREENWIDTH, hudwidth), Scale(height, SCREENHEIGHT, hudheight));
+	x += 20;
+	y += 10;
+	for (const FBrokenLines &line : lines)
+	{
+		screen->DrawText(font, CR_UNTRANSLATED, x, y, line.Text,
+			DTA_KeepRatio, true,
+			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
+		y += font->GetHeight();
+	}
+}
+
 //==========================================================================
 //
 //
@@ -127,6 +180,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, ETextureType::MiscPatch);
 	}
 	mTicker = 0;
+	mSubtitle = desc->mSubtitle;
 }
 
 
@@ -181,6 +235,12 @@ void DIntermissionScreen::Drawer ()
 			screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	if (!mFlatfill) screen->FillBorder (NULL);
+	if (mSubtitle)
+	{
+		const char *sub = mSubtitle.GetChars();
+		if (sub && *sub == '$') sub = GStrings[sub + 1];
+		if (sub) DrawFullscreenSubtitle(sub);
+	}
 }
 
 void DIntermissionScreen::OnDestroy()
@@ -253,17 +313,34 @@ void DIntermissionScreenText::Init(FIntermissionAction *desc, bool first)
 	if (mText[0] == '$') mText = GStrings(&mText[1]);
 	mTextSpeed = static_cast<FIntermissionActionTextscreen*>(desc)->mTextSpeed;
 	mTextX = static_cast<FIntermissionActionTextscreen*>(desc)->mTextX;
-	bool usesDefault = mTextX < 0;
+	usesDefault = mTextX < 0;
 	if (mTextX < 0) mTextX =gameinfo.TextScreenX;
 	mTextY = static_cast<FIntermissionActionTextscreen*>(desc)->mTextY;
 	if (mTextY < 0) mTextY =gameinfo.TextScreenY;
 
-	// If the text is too wide, center it so that it works better on widescreen displays.
-	// On 4:3 it'd still be cut off, though.
-	int width = SmallFont->StringWidth(mText);
-	if (usesDefault && mTextX + width > 320 - mTextX)
+	if (!generic_ui)
 	{
-		mTextX = (320 - width) / 2;
+		// Todo: Split too long texts
+
+		// If the text is too wide, center it so that it works better on widescreen displays.
+		// On 4:3 it'd still be cut off, though.
+		int width = SmallFont->StringWidth(mText);
+		if (usesDefault && mTextX + width > 320 - mTextX)
+		{
+			mTextX = (320 - width) / 2;
+		}
+	}
+	else
+	{
+		// Todo: Split too long texts
+
+		mTextX *= 2;
+		mTextY *= 2;
+		int width = NewSmallFont->StringWidth(mText);
+		if (usesDefault && mTextX + width > 640 - mTextX)
+		{
+			mTextX = (640 - width) / 2;
+		}
 	}
 
 
@@ -298,45 +375,59 @@ void DIntermissionScreenText::Drawer ()
 		int c;
 		const FRemapTable *range;
 		const uint8_t *ch = (const uint8_t*)mText.GetChars();
-		const int kerning = SmallFont->GetDefaultKerning();
 
 		// Count number of rows in this text. Since it does not word-wrap, we just count
 		// line feed characters.
 		int numrows;
+		auto font = generic_ui ? NewSmallFont : SmallFont;
+		auto fontscale = generic_ui ? MIN(screen->GetWidth()/640, screen->GetHeight()/400) : MIN(screen->GetWidth()/400, screen->GetHeight() / 250);
+		int cleanwidth = screen->GetWidth() / fontscale;
+		int cleanheight = screen->GetHeight() / fontscale;
+		int refwidth = generic_ui ? 640 : 320;
+		int refheight = generic_ui ? 400 : 200;
+		const int kerning = font->GetDefaultKerning();
 
 		for (numrows = 1, c = 0; ch[c] != '\0'; ++c)
 		{
 			numrows += (ch[c] == '\n');
 		}
 
-		int rowheight = SmallFont->GetHeight() * CleanYfac;
-		int rowpadding = (gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1) * CleanYfac;
+		int rowheight = font->GetHeight() * fontscale;
+		int rowpadding = (generic_ui? 2 : ((gameinfo.gametype & (GAME_DoomStrifeChex) ? 3 : -1))) * fontscale;
 
-		int cx = (mTextX - 160)*CleanXfac + screen->GetWidth() / 2;
-		int cy = (mTextY - 100)*CleanYfac + screen->GetHeight() / 2;
+		int cx = (mTextX - refwidth/2) * fontscale + screen->GetWidth() / 2;
+		int cy = (mTextY - refheight/2) * fontscale + screen->GetHeight() / 2;
 		cx = MAX<int>(0, cx);
 		int startx = cx;
 
-		// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
-		while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+		if (usesDefault)
 		{
-			rowpadding--;
-		}
-		// If it's still off the bottom, try to center it vertically.
-		if (cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
-		{
-			cy = (screen->GetHeight() - (numrows * (rowheight + rowpadding) - rowpadding)) / 2;
-			// If it's off the top now, you're screwed. It's too tall to fit.
-			if (cy < 0)
+			int allheight;
+			while ((allheight = numrows * (rowheight + rowpadding)), allheight > screen->GetHeight() && rowpadding > 0)
 			{
-				cy = 0;
+				rowpadding--;
 			}
+			allheight = numrows * (rowheight + rowpadding);
+			if (screen->GetHeight() - cy - allheight < cy)
+			{
+				cy = (screen->GetHeight() - allheight) / 2;
+				if (cy < 0) cy = 0;
+			}
+		}
+		else
+		{
+			// Does this text fall off the end of the screen? If so, try to eliminate some margins first.
+			while (rowpadding > 0 && cy + numrows * (rowheight + rowpadding) - rowpadding > screen->GetHeight())
+			{
+				rowpadding--;
+			}
+			// If it's still off the bottom, you are screwed if the origin is fixed.
 		}
 		rowheight += rowpadding;
 
 		// draw some of the text onto the screen
 		count = (mTicker - mTextDelay) / mTextSpeed;
-		range = SmallFont->GetColorTranslation (mTextColor);
+		range = font->GetColorTranslation (mTextColor);
 
 		for ( ; count > 0 ; count-- )
 		{
@@ -350,13 +441,13 @@ void DIntermissionScreenText::Drawer ()
 				continue;
 			}
 
-			pic = SmallFont->GetChar (c, mTextColor, &w);
+			pic = font->GetChar (c, mTextColor, &w);
 			w += kerning;
-			w *= CleanXfac;
+			w *= fontscale;
 			if (cx + w > SCREENWIDTH)
 				continue;
 
-			screen->DrawChar(SmallFont, mTextColor, cx, cy, c, DTA_CleanNoMove, true, TAG_DONE);
+			screen->DrawChar(font, mTextColor, cx/fontscale, cy/fontscale, c, DTA_KeepRatio, true, DTA_VirtualWidth, cleanwidth, DTA_VirtualHeight, cleanheight, TAG_DONE);
 			cx += w;
 		}
 	}
@@ -542,9 +633,10 @@ void DIntermissionScreenCast::Drawer ()
 	const char *name = mName;
 	if (name != NULL)
 	{
+		auto font = generic_ui ? NewSmallFont : SmallFont;
 		if (*name == '$') name = GStrings(name+1);
-		screen->DrawText (SmallFont, CR_UNTRANSLATED,
-			(SCREENWIDTH - SmallFont->StringWidth (name) * CleanXfac)/2,
+		screen->DrawText (font, CR_UNTRANSLATED,
+			(SCREENWIDTH - font->StringWidth (name) * CleanXfac)/2,
 			(SCREENHEIGHT * 180) / 200,
 			name,
 			DTA_CleanNoMove, true, TAG_DONE);
@@ -769,6 +861,15 @@ bool DIntermissionController::Responder (event_t *ev)
 			{
 				return false;
 			}
+
+			// The following is needed to be able to enter main menu with a controller,
+			// by pressing buttons that are usually assigned to this action, Start and Back by default
+			if (!stricmp(cmd, "menu_main") || !stricmp(cmd, "pause"))
+			{
+				M_StartControlPanel(true);
+				M_SetMenu(NAME_Mainmenu, -1);
+				return true;
+			}
 		}
 
 		if (mScreen->mTicker < 2) return false;	// prevent some leftover events from auto-advancing
@@ -804,7 +905,7 @@ void DIntermissionController::Ticker ()
 				primaryLevel->SetMusic();
 				gamestate = GS_LEVEL;
 				wipegamestate = GS_LEVEL;
-				P_ResumeConversation ();
+				gameaction = ga_resumeconversation;
 				viewactive = true;
 				Destroy();
 				break;
@@ -847,6 +948,7 @@ void DIntermissionController::OnDestroy ()
 
 void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
 {
+	ScaleOverrider s;
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Destroy();
@@ -892,6 +994,7 @@ void F_StartIntermission(FName seq, uint8_t state)
 
 bool F_Responder (event_t* ev)
 {
+	ScaleOverrider s;
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		return DIntermissionController::CurrentIntermission->Responder(ev);
@@ -907,6 +1010,7 @@ bool F_Responder (event_t* ev)
 
 void F_Ticker ()
 {
+	ScaleOverrider s;
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Ticker();
@@ -921,6 +1025,7 @@ void F_Ticker ()
 
 void F_Drawer ()
 {
+	ScaleOverrider s;
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Drawer();
@@ -936,6 +1041,7 @@ void F_Drawer ()
 
 void F_EndFinale ()
 {
+	ScaleOverrider s;
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->Destroy();
@@ -951,9 +1057,48 @@ void F_EndFinale ()
 
 void F_AdvanceIntermission()
 {
+	ScaleOverrider s;
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
 		DIntermissionController::CurrentIntermission->mAdvance = true;
 	}
 }
 
+#include "c_dispatch.h"
+
+CCMD(measureintermissions)
+{
+	static const char *intermissions[] = {
+		"E1TEXT", "E2TEXT", "E3TEXT", "E4TEXT",
+		"C1TEXT", "C2TEXT", "C3TEXT", "C4TEXT", "C5TEXT",
+		"P1TEXT", "P2TEXT", "P3TEXT", "P4TEXT", "P5TEXT",
+		"T1TEXT", "T2TEXT", "T3TEXT", "T4TEXT", "T5TEXT", "NERVETEXT",
+		"HE1TEXT", "HE2TEXT", "HE3TEXT", "HE4TEXT", "HE5TEXT",
+		"TXT_HEXEN_CLUS1MSG", "TXT_HEXEN_CLUS2MSG","TXT_HEXEN_CLUS3MSG","TXT_HEXEN_CLUS4MSG",
+		"TXT_HEXEN_WIN1MSG", "TXT_HEXEN_WIN2MSG","TXT_HEXEN_WIN3MSG",
+		"TXT_HEXDD_CLUS1MSG", "TXT_HEXDD_CLUS2MSG",
+		"TXT_HEXDD_WIN1MSG", "TXT_HEXDD_WIN2MSG","TXT_HEXDD_WIN3MSG" };
+
+	static const char *languages[] = { "", "cz", "de", "eng", "es", "esm", "fr", "hu", "it", "pl", "pt", "ro", "ru", "sr" };
+
+	for (auto l : languages)
+	{
+		int langid = *l ? MAKE_ID(l[0], l[1], l[2], 0) : FStringTable::default_table;
+		for (auto t : intermissions)
+		{
+			auto text = GStrings.GetLanguageString(t, langid);
+			if (text)
+			{
+				auto ch = text;
+				int numrows, c;
+				for (numrows = 1, c = 0; ch[c] != '\0'; ++c)
+				{
+					numrows += (ch[c] == '\n');
+				}
+				int width = SmallFont->StringWidth(text);
+				if (width > 360 || numrows > 20)
+					Printf("%s, %s: %d x %d\n", t, l, width, numrows);
+			}
+		}
+	}
+}

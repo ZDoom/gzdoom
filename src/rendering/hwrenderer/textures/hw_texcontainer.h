@@ -25,6 +25,11 @@ private:
 			if (hwTexture) delete hwTexture;
 			hwTexture = nullptr;
 		}
+
+		void DeleteDescriptors()
+		{
+			if (hwTexture) hwTexture->DeleteDescriptors();
+		}
 		
 		~TranslatedTexture()
 		{
@@ -69,10 +74,15 @@ public:
 	{
 		if (cleannormal) hwDefTex[0].Delete();
 		if (cleanexpanded) hwDefTex[1].Delete();
+		hwDefTex[0].DeleteDescriptors();
+		hwDefTex[1].DeleteDescriptors();
 		for (int i = hwTex_Translated.Size() - 1; i >= 0; i--)
 		{
 			if (cleannormal && hwTex_Translated[i].translation > 0) hwTex_Translated.Delete(i);
 			else if (cleanexpanded && hwTex_Translated[i].translation < 0) hwTex_Translated.Delete(i);
+
+			for (unsigned int j = 0; j < hwTex_Translated.Size(); j++)
+				hwTex_Translated[j].DeleteDescriptors();
 		}
 	}
 	
@@ -88,7 +98,7 @@ public:
 		tt->Delete();
 		tt->hwTexture =tex;
 	}
-	
+
 	//===========================================================================
 	// 
 	// Deletes all allocated resources and considers translations
@@ -123,6 +133,13 @@ public:
 			auto remap = TranslationToTable(translation);
 			return remap == nullptr ? 0 : remap->GetUniqueIndex();
 		}
+	}
+
+	template<class T>
+	void Iterate(T callback)
+	{
+		for (auto & t : hwDefTex) if (t.hwTexture) callback(t.hwTexture);
+		for (auto & t : hwTex_Translated) if (t.hwTexture) callback(t.hwTexture);
 	}
 
 	

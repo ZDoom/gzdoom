@@ -2,23 +2,31 @@
 layout(location = 0) in vec4 aPosition;
 layout(location = 1) in vec2 aTexCoord;
 layout(location = 2) in vec4 aColor;
+
+layout(location = 0) out vec4 vTexCoord;
+layout(location = 1) out vec4 vColor;
+
 #ifndef SIMPLE	// we do not need these for simple shaders
 layout(location = 3) in vec4 aVertex2;
 layout(location = 4) in vec4 aNormal;
 layout(location = 5) in vec4 aNormal2;
-out vec4 pixelpos;
-out vec3 glowdist;
-out vec3 gradientdist;
 
-out vec4 vWorldNormal;
-out vec4 vEyeNormal;
+layout(location = 2) out vec4 pixelpos;
+layout(location = 3) out vec3 glowdist;
+layout(location = 4) out vec3 gradientdist;
+layout(location = 5) out vec4 vWorldNormal;
+layout(location = 6) out vec4 vEyeNormal;
 #endif
 
-out vec4 vTexCoord;
-out vec4 vColor;
+#ifdef NO_CLIPDISTANCE_SUPPORT
+layout(location = 7) out vec4 ClipDistanceA;
+layout(location = 8) out vec4 ClipDistanceB;
+#endif
 
 void main()
 {
+	float ClipDistance0, ClipDistance1, ClipDistance2, ClipDistance3, ClipDistance4;
+
 	vec2 parmTexCoord;
 	vec4 parmPosition;
 	
@@ -33,7 +41,14 @@ void main()
 
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;
 
-	vColor = aColor;
+	#ifdef HAS_UNIFORM_VERTEX_DATA
+		if ((useVertexData & 1) == 0)
+			vColor = uVertexColor;
+		else
+			vColor = aColor;
+	#else
+		vColor = aColor;
+	#endif
 
 	#ifndef SIMPLE
 		pixelpos.xyz = worldcoord.xyz;
@@ -59,11 +74,18 @@ void main()
 		
 		if (uSplitBottomPlane.z != 0.0)
 		{
-			gl_ClipDistance[3] = ((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
-			gl_ClipDistance[4] = worldcoord.y - ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
+			ClipDistance3 = ((uSplitTopPlane.w + uSplitTopPlane.x * worldcoord.x + uSplitTopPlane.y * worldcoord.z) * uSplitTopPlane.z) - worldcoord.y;
+			ClipDistance4 = worldcoord.y - ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
 
-		vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+		#ifdef HAS_UNIFORM_VERTEX_DATA
+			if ((useVertexData & 2) == 0)
+				vWorldNormal = NormalModelMatrix * vec4(uVertexNormal.xyz, 1.0);
+			else
+				vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+		#else
+			vWorldNormal = NormalModelMatrix * vec4(normalize(mix(aNormal.xyz, aNormal2.xyz, uInterpolationFactor)), 1.0);
+		#endif
 		vEyeNormal = NormalViewMatrix * vWorldNormal;
 	#endif
 	
@@ -79,22 +101,44 @@ void main()
 	#endif
 	
 	gl_Position = ProjectionMatrix * eyeCoordPos;
-		
+
+	#ifdef VULKAN_COORDINATE_SYSTEM
+	gl_Position.z = (gl_Position.z + gl_Position.w) / 2.0;
+	#endif
+
 	if (uClipHeightDirection != 0.0) // clip planes used for reflective flats
 	{
-		gl_ClipDistance[0] = (worldcoord.y - uClipHeight) * uClipHeightDirection;
+		ClipDistance0 = (worldcoord.y - uClipHeight) * uClipHeightDirection;
 	}
 	else if (uClipLine.x > -1000000.0) // and for line portals - this will never be active at the same time as the reflective planes clipping so it can use the same hardware clip plane.
 	{
-		gl_ClipDistance[0] = -( (worldcoord.z - uClipLine.y) * uClipLine.z + (uClipLine.x - worldcoord.x) * uClipLine.w ) + 1.0/32768.0;	// allow a tiny bit of imprecisions for colinear linedefs.
+		ClipDistance0 = -( (worldcoord.z - uClipLine.y) * uClipLine.z + (uClipLine.x - worldcoord.x) * uClipLine.w ) + 1.0/32768.0;	// allow a tiny bit of imprecisions for colinear linedefs.
 	}
 	else
 	{
-		gl_ClipDistance[0] = 1;
+		ClipDistance0 = 1;
 	}
 
 	// clip planes used for translucency splitting
-	gl_ClipDistance[1] = worldcoord.y - uClipSplit.x;
-	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
-	
+	ClipDistance1 = worldcoord.y - uClipSplit.x;
+	ClipDistance2 = uClipSplit.y - worldcoord.y;
+
+	if (uSplitTopPlane == vec4(0.0))
+	{
+		ClipDistance3 = 1.0;
+		ClipDistance4 = 1.0;
+	}
+
+#ifdef NO_CLIPDISTANCE_SUPPORT
+	ClipDistanceA = vec4(ClipDistance0, ClipDistance1, ClipDistance2, ClipDistance3);
+	ClipDistanceB = vec4(ClipDistance4, 0.0, 0.0, 0.0);
+#else
+	gl_ClipDistance[0] = ClipDistance0;
+	gl_ClipDistance[1] = ClipDistance1;
+	gl_ClipDistance[2] = ClipDistance2;
+	gl_ClipDistance[3] = ClipDistance3;
+	gl_ClipDistance[4] = ClipDistance4;
+#endif
+
+	gl_PointSize = 1.0;
 }

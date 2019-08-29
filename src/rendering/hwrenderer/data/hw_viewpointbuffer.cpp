@@ -33,25 +33,25 @@
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
 
-GLViewpointBuffer::GLViewpointBuffer()
+HWViewpointBuffer::HWViewpointBuffer()
 {
 	mBufferSize = INITIAL_BUFFER_SIZE;
 	mBlockAlign = ((sizeof(HWViewpointUniforms) / screen->uniformblockalignment) + 1) * screen->uniformblockalignment;
 	mByteSize = mBufferSize * mBlockAlign;
-	mBuffer = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false);
+	mBuffer = screen->CreateDataBuffer(VIEWPOINT_BINDINGPOINT, false, true);
 	mBuffer->SetData(mByteSize, nullptr, false);
 	Clear();
 	mLastMappedIndex = UINT_MAX;
 	mClipPlaneInfo.Push(0);
 }
 
-GLViewpointBuffer::~GLViewpointBuffer()
+HWViewpointBuffer::~HWViewpointBuffer()
 {
 	delete mBuffer;
 }
 
 
-void GLViewpointBuffer::CheckSize()
+void HWViewpointBuffer::CheckSize()
 {
 	if (mUploadIndex >= mBufferSize)
 	{
@@ -62,23 +62,23 @@ void GLViewpointBuffer::CheckSize()
 	}
 }
 
-int GLViewpointBuffer::Bind(FRenderState &di, unsigned int index)
+int HWViewpointBuffer::Bind(FRenderState &di, unsigned int index)
 {
 	if (index != mLastMappedIndex)
 	{
 		mLastMappedIndex = index;
-		mBuffer->BindRange(index * mBlockAlign, mBlockAlign);
+		mBuffer->BindRange(&di, index * mBlockAlign, mBlockAlign);
 		di.EnableClipDistance(0, mClipPlaneInfo[index]);
 	}
 	return index;
 }
 
-void GLViewpointBuffer::Set2D(FRenderState &di, int width, int height)
+void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height)
 {
 	if (width != m2DWidth || height != m2DHeight)
 	{
 		HWViewpointUniforms matrices;
-		matrices.SetDefaults();
+		matrices.SetDefaults(nullptr);
 		matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 		matrices.CalcDependencies();
 		mBuffer->Map();
@@ -91,7 +91,7 @@ void GLViewpointBuffer::Set2D(FRenderState &di, int width, int height)
 	Bind(di, 0);
 }
 
-int GLViewpointBuffer::SetViewpoint(FRenderState &di, HWViewpointUniforms *vp)
+int HWViewpointBuffer::SetViewpoint(FRenderState &di, HWViewpointUniforms *vp)
 {
 	CheckSize();
 	mBuffer->Map();
@@ -102,7 +102,7 @@ int GLViewpointBuffer::SetViewpoint(FRenderState &di, HWViewpointUniforms *vp)
 	return Bind(di, mUploadIndex++);
 }
 
-void GLViewpointBuffer::Clear()
+void HWViewpointBuffer::Clear()
 {
 	// Index 0 is reserved for the 2D projection.
 	mUploadIndex = 1;

@@ -949,6 +949,7 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		decl->Name = C.FuncName;
 		decl->UseFlags = A == nullptr? nullptr : A->Id;
 		decl->Flags = (A == nullptr? 0 : A->Flags) | C.FuncFlags;
+		decl->DeprecationMessage = A == nullptr ? nullptr : A->DeprecationMessage;
 		if (A == nullptr) decl->Version = {0,0,0};
 		else decl->Version = A->Version;
 
@@ -964,11 +965,13 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		{
 			decl->Flags = 0;
 			decl->Version = {0,0,0};
+			decl->DeprecationMessage = nullptr;
 		}
 		else
 		{
 			decl->Flags = A->Flags;
 			decl->Version = A->Version;
+			decl->DeprecationMessage = A->DeprecationMessage;
 		}
 		X = decl;
 	}
@@ -1061,6 +1064,7 @@ decl_flags(X) ::= decl_flags(F) decl_flag(A).
 		X->Id = nullptr;
 		X->Flags = A.Int;
 		X->Version = { 0, 0 };
+		X->DeprecationMessage = nullptr;
 	}
 	else
 	{
@@ -1079,6 +1083,7 @@ decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
 		X->Flags = ZCC_Action;
 		X->Id = nullptr;
 		X->Version = { 0, 0 };
+		X->DeprecationMessage = nullptr;
 	}
 	else
 	{
@@ -1088,8 +1093,11 @@ decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
 	X->Id = A;
 }
 
-decl_flags(X) ::= decl_flags(F) DEPRECATED(B) LPAREN STRCONST(A) RPAREN.	
-{ 
+opt_deprecation_message(X) ::= . { X.String = nullptr; X.SourceLoc = stat->sc->GetMessageLine(); }
+opt_deprecation_message(X) ::= COMMA STRCONST(C). { X = C; }
+
+decl_flags(X) ::= decl_flags(F) DEPRECATED(B) LPAREN STRCONST(A) opt_deprecation_message(C) RPAREN.
+{
 	if (F == nullptr)
 	{
 		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
@@ -1104,6 +1112,7 @@ decl_flags(X) ::= decl_flags(F) DEPRECATED(B) LPAREN STRCONST(A) RPAREN.
 		X->Flags |= ZCC_Deprecated;
 	}
 	X->Version = A.String->GetChars();
+	X->DeprecationMessage = C.String;
 }
 
 decl_flags(X) ::= decl_flags(F) VERSION(B) LPAREN STRCONST(A) RPAREN.	
@@ -1115,6 +1124,7 @@ decl_flags(X) ::= decl_flags(F) VERSION(B) LPAREN STRCONST(A) RPAREN.
 		X->Flags = ZCC_Version;
 		X->Id = nullptr;
 		X->Version = { 0, 0 };
+		X->DeprecationMessage = nullptr;
 	}
 	else
 	{

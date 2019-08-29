@@ -38,7 +38,7 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "v_palette.h"
-#include "v_colortables.h"
+#include "r_data/v_colortables.h"
 #include "colormatcher.h"
 #include "r_data/renderstyle.h"
 #include "r_data/r_translate.h"
@@ -293,8 +293,10 @@ class FTexture
 	friend class FWarpTexture;
 	friend class FMaterial;
 	friend class OpenGLRenderer::FGLRenderState;	// For now this needs access to some fields in ApplyMaterial. This should be rerouted through the Material class
+	friend class VkRenderState;
 	friend struct FTexCoordInfo;
 	friend class OpenGLRenderer::FHardwareTexture;
+	friend class VkHardwareTexture;
 	friend class FMultiPatchTexture;
 	friend class FSkyBox;
 	friend class FBrightmapTexture;
@@ -349,6 +351,7 @@ public:
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	void SetUseType(ETextureType type) { UseType = type; }
+	ETextureType GetUseType() const { return UseType; }
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);

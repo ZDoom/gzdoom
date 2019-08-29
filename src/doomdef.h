@@ -70,6 +70,12 @@ enum
 	TELEFRAG_DAMAGE = 1000000
 };
 
+inline int Tics2Seconds(int tics)
+{
+	return tics / TICRATE;
+}
+
+
 
 typedef float skill_t;
 
@@ -329,6 +335,9 @@ enum : unsigned int
 	COMPATF2_TELEPORT		= 1 << 5,	// Don't let indirect teleports trigger sector actions
 	COMPATF2_PUSHWINDOW		= 1 << 6,	// Disable the window check in CheckForPushSpecial()
 	COMPATF2_CHECKSWITCHRANGE = 1 << 7,	// Enable buggy CheckSwitchRange behavior
+	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
+	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
+	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar

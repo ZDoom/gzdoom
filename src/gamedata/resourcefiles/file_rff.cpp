@@ -36,6 +36,7 @@
 #include "resourcefile.h"
 #include "templates.h"
 #include "w_wad.h"
+#include "doomtype.h"
 
 //==========================================================================
 //

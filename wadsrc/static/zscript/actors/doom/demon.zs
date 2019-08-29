@@ -71,7 +71,7 @@ class Spectre : Demon
 		PainSound "spectre/pain";
 		DeathSound "spectre/death";
 		ActiveSound "spectre/active";
-		HitObituary "$OB_SPECTREHIT";
+		Obituary "$OB_SPECTREHIT";
 		Tag "$FN_SPECTRE";
 	}
 }

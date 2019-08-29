@@ -1,7 +1,9 @@
 #pragma once
 
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "r_utility.h"
+
+struct HWDrawInfo;
 
 struct HWViewpointUniforms
 {
@@ -23,7 +25,7 @@ struct HWViewpointUniforms
 		mNormalViewMatrix.computeNormalMatrix(mViewMatrix);
 	}
 
-	void SetDefaults();
+	void SetDefaults(HWDrawInfo *drawInfo);
 
 };
 

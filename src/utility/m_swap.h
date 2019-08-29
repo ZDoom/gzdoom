@@ -119,12 +119,12 @@ inline unsigned short BigShort(unsigned short x)
 	return x;
 }
 
-inline unsigned int BigLong(unsigned int &x)
+inline unsigned int BigLong(unsigned int x)
 {
 	return x;
 }
 
-inline int BigLong(int &x)
+inline int BigLong(int x)
 {
 	return x;
 }

@@ -530,8 +530,5 @@ namespace swrenderer
 			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac + xiscale / 2, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, RenderStyle, false);
 			frac += xiscale;
 		}
-
-		if (thread->MainThread)
-			NetUpdate();
 	}
 }

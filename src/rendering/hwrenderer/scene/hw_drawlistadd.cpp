@@ -35,19 +35,19 @@ EXTERN_CVAR(Bool, gl_seamless)
 //
 //==========================================================================
 
-void HWDrawInfo::AddWall(GLWall *wall)
+void HWDrawInfo::AddWall(HWWall *wall)
 {
-	if (wall->flags & GLWall::GLWF_TRANSLUCENT)
+	if (wall->flags & HWWall::HWF_TRANSLUCENT)
 	{
 		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
 		*newwall = *wall;
 	}
 	else
 	{
-		bool masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
+		bool masked = HWWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
 		int list;
 
-		if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S))
+		if ((wall->flags & HWWall::HWF_SKYHACK && wall->type == RENDERWALL_M2S))
 		{
 			list = GLDL_MASKEDWALLSOFS;
 		}
@@ -66,7 +66,7 @@ void HWDrawInfo::AddWall(GLWall *wall)
 //
 //==========================================================================
 
-void HWDrawInfo::AddMirrorSurface(GLWall *w)
+void HWDrawInfo::AddMirrorSurface(HWWall *w)
 {
 	w->type = RENDERWALL_MIRRORSURFACE;
 	auto newwall = drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
@@ -77,8 +77,8 @@ void HWDrawInfo::AddMirrorSurface(GLWall *w)
 
 	FVector3 v = newwall->glseg.Normal();
 	auto tcs = newwall->tcs;
-	tcs[GLWall::LOLFT].u = tcs[GLWall::LORGT].u = tcs[GLWall::UPLFT].u = tcs[GLWall::UPRGT].u = v.X;
-	tcs[GLWall::LOLFT].v = tcs[GLWall::LORGT].v = tcs[GLWall::UPLFT].v = tcs[GLWall::UPRGT].v = v.Z;
+	tcs[HWWall::LOLFT].u = tcs[HWWall::LORGT].u = tcs[HWWall::UPLFT].u = tcs[HWWall::UPRGT].u = v.X;
+	tcs[HWWall::LOLFT].v = tcs[HWWall::LORGT].v = tcs[HWWall::UPLFT].v = tcs[HWWall::UPRGT].v = v.Z;
 	newwall->MakeVertices(this, false);
 	newwall->ProcessDecals(this);
 }
@@ -92,7 +92,7 @@ void HWDrawInfo::AddMirrorSurface(GLWall *w)
 //
 //==========================================================================
 
-void HWDrawInfo::AddFlat(GLFlat *flat, bool fog)
+void HWDrawInfo::AddFlat(HWFlat *flat, bool fog)
 {
 	int list;
 
@@ -131,7 +131,7 @@ void HWDrawInfo::AddFlat(GLFlat *flat, bool fog)
 // 
 //
 //==========================================================================
-void HWDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
+void HWDrawInfo::AddSprite(HWSprite *sprite, bool translucent)
 {
 	int list;
 	// [BB] Allow models to be drawn in the GLDL_TRANSLUCENT pass.

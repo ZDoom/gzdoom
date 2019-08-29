@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <assert.h>
 
+class FRenderState;
+
 // The low level code needs to know which attributes exist.
 // OpenGL needs to change the state of all of them per buffer binding.
 // VAOs are mostly useless for this because they lump buffer and binding state together which the model code does not want.
@@ -76,7 +78,6 @@ class IDataBuffer : virtual public IBuffer
 {
 	// Can be either uniform or shader storage buffer, depending on its needs.
 public:
-	virtual void BindRange(size_t start, size_t length) = 0;
-	virtual void BindBase() = 0;
+	virtual void BindRange(FRenderState *state, size_t start, size_t length) = 0;
 
 };

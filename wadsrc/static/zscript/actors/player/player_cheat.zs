@@ -49,9 +49,6 @@ extend class PlayerPawn
 		Class<Inventory> type;
 		let player = self.player;
 
-		if (PlayerNumber() != consoleplayer)
-			A_Log(String.Format ("%s is a cheater: give %s\n", player.GetUserName(), name));
-
 		if (player.mo == NULL || player.health <= 0)
 		{
 			return;

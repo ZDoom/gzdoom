@@ -52,7 +52,6 @@
 #include "sbar.h"
 #include "r_utility.h"
 #include "r_sky.h"
-#include "r_renderer.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"
@@ -60,6 +59,7 @@
 #include "r_sky.h"
 #include "version.h"
 #include "fragglescript/t_script.h"
+#include "s_music.h"
 
 EXTERN_CVAR(Bool, save_formatted)
 
@@ -960,8 +960,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 		("scrolls", Scrolls)
 		("automap", automap)
 		("interpolator", interpolator)
-		("frozenstate", frozenstate)
-		("sndseqlisthead", SequenceListHead);
+		("frozenstate", frozenstate);
 
 
 	// Hub transitions must keep the current total time
@@ -994,6 +993,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	// [ZZ] serialize events
 	arc("firstevent", localEventManager->FirstEventHandler)
 		("lastevent", localEventManager->LastEventHandler);
+	if (arc.isReading()) localEventManager->CallOnRegister();
 	Thinkers.SerializeThinkers(arc, hubload);
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
@@ -1002,6 +1002,8 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	canvasTextureInfo.Serialize(arc);
 	SerializePlayers(arc, hubload);
 	SerializeSounds(arc);
+	arc("sndseqlisthead", SequenceListHead);
+
 
 	// Regenerate some data that wasn't saved
 	if (arc.isReading())

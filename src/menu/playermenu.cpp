@@ -53,12 +53,12 @@ EXTERN_CVAR(Bool, cl_run)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(r);
 	PARAM_INT(g);
 	PARAM_INT(b);
 	// only allow if the menu is active to prevent abuse.
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		char command[24];
 		players[consoleplayer].userinfo.ColorChanged(MAKERGB(r, g, b));
@@ -78,12 +78,12 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_STRING(s);
 	const char *pp = s;
 	FString command("name \"");
 
-	if (self == CurrentMenu || self == CurrentMenu->mParentMenu)
+	if (DMenu::InMenu)
 	{
 		// Escape any backslashes or quotation marks before sending the name to the console.
 		for (auto p = pp; *p != '\0'; ++p)
@@ -108,9 +108,9 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, PlayerNameChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorSetChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(sel);
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		players[consoleplayer].userinfo.ColorSetChanged(sel);
 		char command[24];
@@ -128,13 +128,14 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ColorSetChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, ClassChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(sel);
 	PARAM_POINTER(cls, FPlayerClass);
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
-		players[consoleplayer].userinfo.PlayerClassNumChanged(gameinfo.norandomplayerclass ? sel : sel - 1);
-		cvar_set("playerclass", sel == 0 && !gameinfo.norandomplayerclass ? "Random" : GetPrintableDisplayName(cls->Type).GetChars());
+		const char *pclass = sel == -1 ? "Random" : GetPrintableDisplayName(cls->Type).GetChars();
+		players[consoleplayer].userinfo.PlayerClassChanged(pclass);
+		cvar_set("playerclass", pclass);
 	}
 	return 0;
 }
@@ -148,9 +149,9 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, ClassChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, SkinChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(sel);
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		players[consoleplayer].userinfo.SkinNumChanged(sel);
 		cvar_set("skin", Skins[sel].Name);
@@ -166,10 +167,10 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, SkinChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, AutoaimChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_FLOAT(val);
 	// only allow if the menu is active to prevent abuse.
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		autoaim = float(val);
 	}
@@ -184,10 +185,10 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, AutoaimChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, TeamChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(val);
 	// only allow if the menu is active to prevent abuse.
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		team = val == 0 ? TEAM_NONE : val - 1;
 	}
@@ -202,10 +203,10 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, TeamChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, GenderChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(v);
 	// only allow if the menu is active to prevent abuse.
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		switch(v)
 		{
@@ -226,10 +227,10 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, GenderChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, SwitchOnPickupChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(v);
 	// only allow if the menu is active to prevent abuse.
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		neverswitchonpickup = !!v;
 	}
@@ -244,10 +245,10 @@ DEFINE_ACTION_FUNCTION(DPlayerMenu, SwitchOnPickupChanged)
 
 DEFINE_ACTION_FUNCTION(DPlayerMenu, AlwaysRunChanged)
 {
-	PARAM_SELF_PROLOGUE(DMenu);
+	PARAM_PROLOGUE;
 	PARAM_INT(v);
 	// only allow if the menu is active to prevent abuse.
-	if (self == CurrentMenu)
+	if (DMenu::InMenu)
 	{
 		cl_run = !!v;
 	}

@@ -38,12 +38,11 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
-#include "hwrenderer/postprocessing/hw_presentshader.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/data/flatvertices.h"
-#include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
 
@@ -64,27 +63,15 @@ void FGLRenderer::RenderScreenQuad()
 
 void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
-	hw_postprocess.fixedcm = fixedcm;
-	hw_postprocess.SceneWidth = mBuffers->GetSceneWidth();
-	hw_postprocess.SceneHeight = mBuffers->GetSceneHeight();
+	int sceneWidth = mBuffers->GetSceneWidth();
+	int sceneHeight = mBuffers->GetSceneHeight();
 
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
+	GLPPRenderState renderstate(mBuffers);
 
-	mBuffers->CompileEffectShaders();
-	mBuffers->UpdateEffectTextures();
-
-	mBuffers->RenderEffect("UpdateCameraExposure");
-	mCustomPostProcessShaders->Run("beforebloom");
-	mBuffers->RenderEffect("BloomScene");
+	hw_postprocess.Pass1(&renderstate, fixedcm, sceneWidth, sceneHeight);
 	mBuffers->BindCurrentFB();
 	afterBloomDrawEndScene2D();
-	mBuffers->RenderEffect("TonemapScene");
-	mBuffers->RenderEffect("ColormapScene");
-	mBuffers->RenderEffect("LensDistortScene");
-	mBuffers->RenderEffect("ApplyFXAA");
-	mCustomPostProcessShaders->Run("scene");
+	hw_postprocess.Pass2(&renderstate, fixedcm, sceneWidth, sceneHeight);
 }
 
 //-----------------------------------------------------------------------------
@@ -95,43 +82,32 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 
 void FGLRenderer::AmbientOccludeScene(float m5)
 {
-	hw_postprocess.SceneWidth = mBuffers->GetSceneWidth();
-	hw_postprocess.SceneHeight = mBuffers->GetSceneHeight();
-	hw_postprocess.m5 = m5;
+	int sceneWidth = mBuffers->GetSceneWidth();
+	int sceneHeight = mBuffers->GetSceneHeight();
 
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	mBuffers->CompileEffectShaders();
-	mBuffers->UpdateEffectTextures();
-
-	mBuffers->RenderEffect("AmbientOccludeScene");
+	GLPPRenderState renderstate(mBuffers);
+	hw_postprocess.ssao.Render(&renderstate, m5, sceneWidth, sceneHeight);
 }
 
 void FGLRenderer::BlurScene(float gameinfobluramount)
 {
-	hw_postprocess.gameinfobluramount = gameinfobluramount;
+	int sceneWidth = mBuffers->GetSceneWidth();
+	int sceneHeight = mBuffers->GetSceneHeight();
 
-	hw_postprocess.DeclareShaders();
-	hw_postprocess.UpdateTextures();
-	hw_postprocess.UpdateSteps();
-
-	mBuffers->CompileEffectShaders();
-	mBuffers->UpdateEffectTextures();
+	GLPPRenderState renderstate(mBuffers);
 
 	auto vrmode = VRMode::GetVRMode(true);
 	int eyeCount = vrmode->mEyeCount;
 	for (int i = 0; i < eyeCount; ++i)
 	{
-		mBuffers->RenderEffect("BlurScene");
+		hw_postprocess.bloom.RenderBlur(&renderstate, sceneWidth, sceneHeight, gameinfobluramount);
 		if (eyeCount - i > 1) mBuffers->NextEye(eyeCount);
 	}
 }
 
 void FGLRenderer::ClearTonemapPalette()
 {
-	hw_postprocess.Textures.Remove("Tonemap.Palette");
+	hw_postprocess.tonemap.ClearTonemapPalette();
 }
 
 //-----------------------------------------------------------------------------
@@ -179,7 +155,8 @@ void FGLRenderer::CopyToBackbuffer(const IntRect *bounds, bool applyGamma)
 	screen->Draw2D();	// draw all pending 2D stuff before copying the buffer
 	screen->Clear2D();
 
-	mCustomPostProcessShaders->Run("screen");
+	GLPPRenderState renderstate(mBuffers);
+	hw_postprocess.customShaders.Run(&renderstate, "screen");
 
 	FGLDebug::PushGroup("CopyToBackbuffer");
 	FGLPostProcessState savedState;
@@ -220,7 +197,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	mPresentShader->Bind(NOQUEUE);
+	mPresentShader->Bind();
 	if (!applyGamma || framebuffer->IsHWGammaActive())
 	{
 		mPresentShader->Uniforms->InvGamma = 1.0f;
@@ -240,15 +217,18 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 	{
 		// Full screen exclusive mode treats a rgba16f frame buffer as linear.
 		// It probably will eventually in desktop mode too, but the DWM doesn't seem to support that.
-		mPresentShader->Uniforms->InvGamma *= 2.2f;
+		mPresentShader->Uniforms->HdrMode = 1;
 		mPresentShader->Uniforms->ColorScale = (gl_dither_bpc == -1) ? 1023.0f : (float)((1 << gl_dither_bpc) - 1);
 	}
 	else
 	{
+		mPresentShader->Uniforms->HdrMode = 0;
 		mPresentShader->Uniforms->ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)((1 << gl_dither_bpc) - 1);
 	}
 	mPresentShader->Uniforms->Scale = { screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight() };
-	mPresentShader->Uniforms.Set();
+	mPresentShader->Uniforms->Offset = { 0.0f, 0.0f };
+	mPresentShader->Uniforms.SetData();
+	static_cast<GLDataBuffer*>(mPresentShader->Uniforms.GetBuffer())->BindBase();
 	RenderScreenQuad();
 }
 

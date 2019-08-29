@@ -34,6 +34,7 @@
 
 #include "resourcefile.h"
 #include "w_wad.h"
+#include "doomtype.h"
 
 //==========================================================================
 //

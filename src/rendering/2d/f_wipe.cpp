@@ -336,7 +336,7 @@ void Wiper_Burn::SetTextures(FTexture *startscreen, FTexture *endscreen)
 	startScreen = startscreen;
 	endScreen = endscreen;
 	BurnTexture = new FBurnTexture(WIDTH, HEIGHT);
-	auto mat = FMaterial::ValidateTexture(startscreen, false);
+	auto mat = FMaterial::ValidateTexture(endScreen, false);
 	mat->AddTextureLayer(BurnTexture);
 }
 
@@ -374,6 +374,8 @@ bool Wiper_Burn::Run(int ticks)
 	}
 
 	BurnTexture->SystemTextures.Clean(true, true);
+	endScreen->SystemTextures.Clean(false, false);
+
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();
 	for (int y = HEIGHT; y != 0; --y)

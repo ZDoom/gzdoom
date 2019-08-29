@@ -258,6 +258,8 @@ enum EExplodeFlags
 	XF_NOTMISSILE = 4,
 	XF_EXPLICITDAMAGETYPE = 8,
 	XF_NOSPLASH = 16,
+	XF_THRUSTZ = 32,
+
 };
 
 // Flags for A_RadiusThrust
@@ -1338,4 +1340,29 @@ enum ECompatFlags
 	COMPATF2_TELEPORT		= 1 << 5,	// Don't let indirect teleports trigger sector actions
 	COMPATF2_PUSHWINDOW		= 1 << 6,	// Disable the window check in CheckForPushSpecial()
 	COMPATF2_CHECKSWITCHRANGE = 1 << 7,	// Enable buggy CheckSwitchRange behavior
+	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
+	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
+	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
+};
+
+enum EMonospacing
+{
+	Mono_Off = 0,
+	Mono_CellLeft = 1,
+	Mono_CellCenter = 2,
+	Mono_CellRight = 3
+};
+
+enum EPrintLevel
+{
+	PRINT_LOW,		// pickup messages
+	PRINT_MEDIUM,	// death messages
+	PRINT_HIGH,		// critical messages
+	PRINT_CHAT,		// chat messages
+	PRINT_TEAMCHAT,	// chat messages from a teammate
+	PRINT_LOG,		// only to logfile
+	PRINT_BOLD = 200,				// What Printf_Bold used
+	PRINT_TYPES = 1023,		// Bitmask.
+	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
+	PRINT_NOLOG = 2048,		// Flag - do not print to log file
 };

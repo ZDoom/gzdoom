@@ -41,7 +41,7 @@
 
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_debug.h"
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/shaders/gl_shader.h"
 #include <map>
@@ -121,33 +121,33 @@ static void LoadShaders()
 		FString path = CreateProgramCacheName(false);
 		FileReader fr;
 		if (!fr.OpenFile(path))
-			throw std::runtime_error("Could not open shader file");
+			I_Error("Could not open shader file");
 
 		char magic[4];
 		fr.Read(magic, 4);
 		if (memcmp(magic, ShaderMagic, 4) != 0)
-			throw std::runtime_error("Not a shader cache file");
+			I_Error("Not a shader cache file");
 
 		uint32_t count = fr.ReadUInt32();
 		if (count > 512)
-			throw std::runtime_error("Too many shaders cached");
+			I_Error("Too many shaders cached");
 
 		for (uint32_t i = 0; i < count; i++)
 		{
 			char hexdigest[33];
 			if (fr.Read(hexdigest, 32) != 32)
-				throw std::runtime_error("Read error");
+				I_Error("Read error");
 			hexdigest[32] = 0;
 
 			std::unique_ptr<ProgramBinary> binary(new ProgramBinary());
 			binary->format = fr.ReadUInt32();
 			uint32_t size = fr.ReadUInt32();
 			if (size > 1024 * 1024)
-				throw std::runtime_error("Shader too big, probably file corruption");
+				I_Error("Shader too big, probably file corruption");
 
 			binary->data.Resize(size);
 			if (fr.Read(binary->data.Data(), binary->data.Size()) != binary->data.Size())
-				throw std::runtime_error("Read error");
+				I_Error("Read error");
 
 			ShaderCache[hexdigest] = std::move(binary);
 		}
@@ -300,7 +300,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform sampler2D texture6;\n";
 
 	// timer data
-	i_data += "uniform float timer;\n"; // To do: we must search user shaders for this declaration and remove it
+	i_data += "uniform float timer;\n";
 
 	// material types
 	i_data += "#if defined(SPECULAR)\n";
@@ -360,8 +360,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	vp_comb << "#line 1\n";
 	fp_comb << "#line 1\n";
 
-	vp_comb << vp_data.GetString().GetChars() << "\n";
-	fp_comb << fp_data.GetString().GetChars() << "\n";
+	vp_comb << RemoveLayoutLocationDecl(vp_data.GetString(), "out").GetChars() << "\n";
+	fp_comb << RemoveLayoutLocationDecl(fp_data.GetString(), "in").GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{
@@ -539,7 +539,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
-	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
@@ -635,55 +634,6 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 //
 //
 //==========================================================================
-struct FDefaultShader 
-{
-	const char * ShaderName;
-	const char * gettexelfunc;
-	const char * lightfunc;
-	const char * Defines;
-};
-
-// Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
-static const FDefaultShader defaultshaders[]=
-{	
-	{"Default",	"shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Warp 1",	"shaders/glsl/func_warp1.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Warp 2",	"shaders/glsl/func_warp2.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Brightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_normal.fp", "#define BRIGHTMAP\n"},
-	{"Specular", "shaders/glsl/func_spec.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
-	{"SpecularBrightmap", "shaders/glsl/func_spec.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n#define BRIGHTMAP\n"},
-	{"PBR","shaders/glsl/func_pbr.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
-	{"PBRBrightmap","shaders/glsl/func_pbr.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n#define BRIGHTMAP\n"},
-	{"Paletted",	"shaders/glsl/func_paletted.fp", "shaders/glsl/material_nolight.fp", ""},
-	{"No Texture", "shaders/glsl/func_notexture.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Software Fuzz", "shaders/glsl/fuzz_software.fp", "shaders/glsl/material_normal.fp", ""},
-	{nullptr,nullptr,nullptr,nullptr}
-};
-
-struct FEffectShader
-{
-	const char *ShaderName;
-	const char *vp;
-	const char *fp1;
-	const char *fp2;
-	const char *fp3;
-	const char *defines;
-};
-
-static const FEffectShader effectshaders[]=
-{
-	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", nullptr, nullptr, "#define NO_ALPHATEST\n" },
-	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
-	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
-	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
-};
 
 FShaderManager::FShaderManager()
 {

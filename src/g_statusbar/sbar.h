@@ -52,6 +52,8 @@ enum EHudState
 	HUD_AltHud // Used for passing through popups to the alt hud
 };
 
+enum EMonospacing : int;
+
 // HUD Message base object --------------------------------------------------
 
 // This is a mo-op base class to allow derived ZScript message types that can be managed by the status bar.
@@ -206,7 +208,7 @@ class DHUDMessageTypeOnFadeOut : public DHUDMessageFadeOut
 	DECLARE_CLASS (DHUDMessageTypeOnFadeOut, DHUDMessageFadeOut)
 public:
 	DHUDMessageTypeOnFadeOut (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
-		EColorRange textColor, float typeTime, float holdTime, float fadeOutTime);
+		EColorRange textColor, float typeTime, float holdTime, float fadeOutTimee);
 
 	virtual void Serialize(FSerializer &arc);
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
@@ -291,7 +293,8 @@ class FMugShot
 		FMugShotState *CurrentState;
 		int RampageTimer;
 		int LastDamageAngle;
-		int FaceHealth;
+		int FaceHealthNow;
+		int FaceHealthLast;
 		bool bEvilGrin;
 		bool bDamageFaceActive;
 		bool bNormal;
@@ -332,12 +335,12 @@ class DHUDFont : public DObject
 public:
 	FFont *mFont;
 	int mSpacing;
-	bool mMonospaced;
+	EMonospacing mMonospacing;
 	int mShadowX;
 	int mShadowY;
 
-	DHUDFont(FFont *f, int sp, bool ms, int sx, int sy)
-		: mFont(f), mSpacing(sp), mMonospaced(ms), mShadowX(sx), mShadowY(sy)
+	DHUDFont(FFont *f, int sp, EMonospacing ms, int sx, int sy)
+		: mFont(f), mSpacing(sp), mMonospacing(ms), mShadowX(sx), mShadowY(sy)
 	{}
 };
 
@@ -434,7 +437,7 @@ public:
 	void DrawAltHUD();
 
 	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY);
-	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
+	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY);
 	void TransformRect(double &x, double &y, double &w, double &h, int flags = 0);
 	void Fill(PalEntry color, double x, double y, double w, double h, int flags = 0);
 	void SetClipRect(double x, double y, double w, double h, int flags = 0);
@@ -447,6 +450,7 @@ public:
 	{
 		return SBarTop;
 	}
+	void DoDrawAutomapHUD(int crdefault, int highlight);
 
 //protected:
 	void DrawPowerups ();

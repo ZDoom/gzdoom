@@ -130,6 +130,9 @@ void HU_SortPlayers
 */
 
 bool SB_ForceActive = false;
+static FFont *displayFont;
+static int FontScale;
+
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -143,6 +146,9 @@ bool SB_ForceActive = false;
 
 void HU_DrawScores (player_t *player)
 {
+	displayFont = NewSmallFont;
+	FontScale = MAX(screen->GetHeight() / 400, 1);
+
 	if (deathmatch)
 	{
 		if (teamplay)
@@ -195,7 +201,8 @@ void HU_DrawScores (player_t *player)
 
 void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheight)
 {
-	maxnamewidth = SmallFont->StringWidth("Name");
+	displayFont = NewSmallFont;
+	maxnamewidth = displayFont->StringWidth("Name");
 	maxscorewidth = 0;
 	maxiconheight = 0;
 
@@ -203,7 +210,7 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 	{
 		if (playeringame[i])
 		{
-			int width = SmallFont->StringWidth(players[i].userinfo.GetName());
+			int width = displayFont->StringWidth(players[i].userinfo.GetName());
 			if (width > maxnamewidth)
 			{
 				maxnamewidth = width;
@@ -235,6 +242,11 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 //
 //==========================================================================
 
+static void HU_DrawFontScaled(double x, double y, int color, const char *text)
+{
+	screen->DrawText(displayFont, color, x / FontScale, y / FontScale, text, DTA_VirtualWidth, screen->GetWidth() / FontScale, DTA_VirtualHeight, screen->GetHeight() / FontScale, TAG_END);
+}
+
 static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
 {
 	int color;
@@ -258,7 +270,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	}
 
 	HU_GetPlayerWidths(maxnamewidth, maxscorewidth, maxiconheight);
-	height = SmallFont->GetHeight() * CleanYfac;
+	height = displayFont->GetHeight() * FontScale;
 	lineheight = MAX(height, maxiconheight * CleanYfac);
 	ypadding = (lineheight - height + 1) / 2;
 
@@ -327,23 +339,16 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 		*text_name = GStrings("SCORE_NAME"),
 		*text_delay = GStrings("SCORE_DELAY");
 
-	col2 = (SmallFont->StringWidth(text_color) + 8) * CleanXfac;
-	col3 = col2 + (SmallFont->StringWidth(text_frags) + 8) * CleanXfac;
-	col4 = col3 + maxscorewidth * CleanXfac;
-	col5 = col4 + (maxnamewidth + 8) * CleanXfac;
-	x = (SCREENWIDTH >> 1) - (((SmallFont->StringWidth(text_delay) * CleanXfac) + col5) >> 1);
+	col2 = (displayFont->StringWidth(text_color) + 16) * FontScale;
+	col3 = col2 + (displayFont->StringWidth(text_frags) + 16) * FontScale;
+	col4 = col3 + maxscorewidth * FontScale;
+	col5 = col4 + (maxnamewidth + 16) * FontScale;
+	x = (SCREENWIDTH >> 1) - (((displayFont->StringWidth(text_delay) * FontScale) + col5) >> 1);
 
-	screen->DrawText (SmallFont, color, x, y, text_color,
-		DTA_CleanNoMove, true, TAG_DONE);
-
-	screen->DrawText (SmallFont, color, x + col2, y, text_frags,
-		DTA_CleanNoMove, true, TAG_DONE);
-
-	screen->DrawText (SmallFont, color, x + col4, y, text_name,
-		DTA_CleanNoMove, true, TAG_DONE);
-
-	screen->DrawText(SmallFont, color, x + col5, y, text_delay,
-		DTA_CleanNoMove, true, TAG_DONE);
+	//HU_DrawFontScaled(x, y, color, text_color);
+	HU_DrawFontScaled(x + col2, y, color, text_frags);
+	HU_DrawFontScaled(x + col4, y, color, text_name);
+	HU_DrawFontScaled(x + col5, y, color, text_delay);
 
 	y += height + 6 * CleanYfac;
 	bottom -= height;
@@ -385,9 +390,8 @@ static void HU_DrawTimeRemaining (int y)
 			mysnprintf (str, countof(str), "Level ends in %d:%02d:%02d", hours, minutes, seconds);
 		else
 			mysnprintf (str, countof(str), "Level ends in %d:%02d", minutes, seconds);
-		
-		screen->DrawText (SmallFont, CR_GREY, SCREENWIDTH/2 - SmallFont->StringWidth (str)/2*CleanXfac,
-			y, str, DTA_CleanNoMove, true, TAG_DONE);
+
+		HU_DrawFontScaled(SCREENWIDTH / 2 - displayFont->StringWidth(str) / 2 * FontScale, y, CR_GRAY, str);
 	}
 }
 
@@ -407,7 +411,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 		// The teamplay mode uses colors to show teams, so we need some
 		// other way to do highlighting. And it may as well be used for
 		// all modes for the sake of consistancy.
-		screen->Dim(MAKERGB(200,245,255), 0.125f, col1 - 12*CleanXfac, y - 1, col5 + (maxnamewidth + 24)*CleanXfac, height + 2);
+		screen->Dim(MAKERGB(200,245,255), 0.125f, col1 - 12*FontScale, y - 1, col5 + (maxnamewidth + 24)*FontScale, height + 2);
 	}
 
 	col2 += col1;
@@ -419,8 +423,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	HU_DrawColorBar(col1, y, height, (int)(player - players));
 	mysnprintf (str, countof(str), "%d", deathmatch ? player->fragcount : player->killcount);
 
-	screen->DrawText (SmallFont, color, col2, y + ypadding, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str,
-		DTA_CleanNoMove, true, TAG_DONE);
+	HU_DrawFontScaled(col2, y + ypadding, color, player->playerstate == PST_DEAD && !deathmatch ? "DEAD" : str);
 
 	auto icon = FSetTextureID(player->mo->IntVar(NAME_ScoreIcon));
 	if (icon.isValid())
@@ -431,8 +434,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 			TAG_DONE);
 	}
 
-	screen->DrawText (SmallFont, color, col4, y + ypadding, player->userinfo.GetName(),
-		DTA_CleanNoMove, true, TAG_DONE);
+	HU_DrawFontScaled(col4, y + ypadding, color, player->userinfo.GetName());
 
 	int avgdelay = 0;
 	for (int i = 0; i < BACKUPTICS; i++)
@@ -443,8 +445,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 
 	mysnprintf(str, countof(str), "%d", (avgdelay * ticdup) * (1000 / TICRATE));
 
-	screen->DrawText(SmallFont, color, col5, y + ypadding, str,
-		DTA_CleanNoMove, true, TAG_DONE);
+	HU_DrawFontScaled(col5, y + ypadding, color, str);
 
 	if (teamplay && Teams[player->userinfo.GetTeam()].GetLogo().IsNotEmpty ())
 	{
@@ -467,7 +468,10 @@ void HU_DrawColorBar(int x, int y, int height, int playernum)
 	D_GetPlayerColor (playernum, &h, &s, &v, NULL);
 	HSVtoRGB (&r, &g, &b, h, s, v);
 
-	screen->Clear (x, y, x + 24*CleanXfac, y + height, -1,
+	//float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
+	//if (!AspectTallerThanWide(aspect)) x += (screen->GetWidth() - AspectBaseWidth(aspect)) / 2;
+
+	screen->Clear (x, y, x + 24*FontScale, y + height, -1,
 		MAKEARGB(255,clamp(int(r*255.f),0,255),
 					 clamp(int(g*255.f),0,255),
 					 clamp(int(b*255.f),0,255)));

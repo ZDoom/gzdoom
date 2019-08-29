@@ -4,16 +4,25 @@
 #define __CMDLIB__
 
 
-#include "doomtype.h"
-#include "doomdef.h"
-#include "m_fixed.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include "zstring.h"
+
+#if !defined(GUID_DEFINED)
+#define GUID_DEFINED
+typedef struct _GUID
+{
+	uint32_t Data1;
+	uint16_t Data2;
+	uint16_t Data3;
+	uint8_t	Data4[8];
+} GUID;
+#endif
+
 
 // the dec offsetof macro doesnt work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
@@ -33,7 +42,6 @@ FString	ExtractFilePath (const char *path);
 FString	ExtractFileBase (const char *path, bool keep_extension=false);
 
 struct FScriptPosition;
-int		ParseHex(const char *str, FScriptPosition *sc = nullptr);
 bool	IsNum (const char *str);		// [RH] added
 
 char	*copystring(const char *s);
@@ -47,7 +55,6 @@ const char *myasctime ();
 
 int strbin (char *str);
 FString strbin1 (const char *start);
-char *CleanseString (char *str);
 
 void CreatePath(const char * fn);
 
@@ -60,14 +67,10 @@ struct FFileList
 	bool isDirectory;
 };
 
-void ScanDirectory(TArray<FFileList> &list, const char *dirpath);
+bool ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 bool IsAbsPath(const char*);
 
-
-inline int Tics2Seconds(int tics)
-{
-	return tics / TICRATE;
-}
+FString M_ZLibError(int zerrnum);
 
 
 #endif

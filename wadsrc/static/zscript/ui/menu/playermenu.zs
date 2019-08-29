@@ -42,16 +42,16 @@ class PlayerMenu : ListMenu
 	Array<int> mPlayerSkins;
 	
 	// All write function for the player config are native to prevent abuse.
-	protected native void AutoaimChanged(float val);
-	protected native void TeamChanged(int val);
-	protected native void AlwaysRunChanged(int val);
-	protected native void GenderChanged(int val);
-	protected native void SwitchOnPickupChanged(int val);
-	protected native void ColorChanged(int red, int green, int blue);
-	protected native void ColorSetChanged(int red);
-	protected native void PlayerNameChanged(String name);
-	protected native void SkinChanged (int val);
-	protected native void ClassChanged(int sel, PlayerClass cls);
+	static native void AutoaimChanged(float val);
+	static native void TeamChanged(int val);
+	static native void AlwaysRunChanged(int val);
+	static native void GenderChanged(int val);
+	static native void SwitchOnPickupChanged(int val);
+	static native void ColorChanged(int red, int green, int blue);
+	static native void ColorSetChanged(int red);
+	static native void PlayerNameChanged(String name);
+	static native void SkinChanged (int val);
+	static native void ClassChanged(int sel, PlayerClass cls);
 	
 	//=============================================================================
 	//

@@ -52,7 +52,7 @@
 #include "p_conversation.h"
 #include "dsectoreffect.h"
 #include "d_player.h"
-#include "g_shared/a_sharedglobal.h"
+#include "a_sharedglobal.h"
 #include "po_man.h"
 #include "v_font.h"
 #include "doomerrors.h"
@@ -2147,19 +2147,14 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 {
 	if (arc.isWriting())
 	{
-		FName n = font->GetName();
+		FName n = font? font->GetName() : NAME_None;
 		return arc(key, n);
 	}
 	else
 	{
 		FName n = NAME_None;
 		arc(key, n);
-		font = V_GetFont(n);
-		if (font == nullptr)
-		{
-			Printf(TEXTCOLOR_ORANGE "Could not load font %s\n", n.GetChars());
-			font = SmallFont;
-		}
+		font = n == NAME_None? nullptr : V_GetFont(n);
 		return arc;
 	}
 

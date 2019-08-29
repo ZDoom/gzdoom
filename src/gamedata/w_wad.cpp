@@ -134,7 +134,7 @@ void FWadCollection::DeleteAll ()
 //
 //==========================================================================
 
-void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
+void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps)
 {
 	int numfiles;
 
@@ -147,6 +147,7 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 		int baselump = NumLumps;
 		AddFile (filenames[i]);
 	}
+	MoveIWadModifiers();
 
 	NumLumps = LumpInfo.Size();
 	if (NumLumps == 0)
@@ -154,7 +155,7 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames)
 		I_FatalError ("W_InitMultipleFiles: no files found");
 	}
 	RenameNerve();
-	RenameSprites();
+	RenameSprites(deletelumps);
 	FixMacHexen();
 
 	// [RH] Set up hash table
@@ -755,7 +756,7 @@ void FWadCollection::InitHashChains (void)
 //
 //==========================================================================
 
-void FWadCollection::RenameSprites ()
+void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 {
 	bool renameAll;
 	bool MNTRZfound = false;
@@ -894,18 +895,15 @@ void FWadCollection::RenameSprites ()
 		}
 		else if (LumpInfo[i].lump->Namespace == ns_global)
 		{
-			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
-			if (!strcmp(LumpInfo[i].lump->Name, altbigfont)) 
-				strcpy(LumpInfo[i].lump->Name, "BIGFONT");
-
-			if (LumpInfo[i].wadnum == GetIwadNum() && gameinfo.flags & GI_IGNOREBIGFONTLUMP)
+			if (LumpInfo[i].wadnum >= GetIwadNum() && LumpInfo[i].wadnum <= GetMaxIwadNum() && deletelumps.Find(LumpInfo[i].lump->Name) < deletelumps.Size())
 			{
-				if (!strcmp(LumpInfo[i].lump->Name, "BIGFONT"))
-				{
-					LumpInfo[i].lump->Name[0] = 0;
-				}
+				LumpInfo[i].lump->Name[0] = 0;	// Lump must be deleted from directory.
 			}
-
+			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
+			else if (!strcmp(LumpInfo[i].lump->Name, altbigfont))
+			{
+				strcpy(LumpInfo[i].lump->Name, "BIGFONT");
+			}
 		}
 	}
 }
@@ -1053,6 +1051,43 @@ void FWadCollection::FixMacHexen()
 	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
 	{
 		LumpInfo[i].lump->Name[0] = '\0';
+	}
+}
+
+//==========================================================================
+//
+// MoveIWadModifiers
+//
+// Moves all content from the after_iwad subfolder of the internal
+// resources to the first positions in the lump directory after the IWAD.
+// Used to allow modifying content in the base files, this is needed
+// so that Hacx and Harmony can override some content that clashes
+// with localization.
+//
+//==========================================================================
+
+void FWadCollection::MoveIWadModifiers()
+{
+	TArray<LumpRecord> lumpsToMove;
+
+	unsigned i;
+	for (i = 0; i < LumpInfo.Size(); i++)
+	{
+		auto& li = LumpInfo[i];
+		if (li.wadnum >= GetIwadNum()) break;
+		if (li.lump->FullName.Left(11).CompareNoCase("after_iwad/") == 0)
+		{
+			lumpsToMove.Push(li);
+			LumpInfo.Delete(i--);
+		}
+	}
+	if (lumpsToMove.Size() == 0) return;
+	for (; i < LumpInfo.Size() && LumpInfo[i].wadnum <= Wads.GetMaxIwadNum(); i++);
+	for (auto& li : lumpsToMove)
+	{
+		li.lump->LumpNameSetup(li.lump->FullName.Mid(11));
+		li.wadnum = Wads.GetMaxIwadNum();	// pretend this comes from the IWAD itself.
+		LumpInfo.Insert(i++, li);
 	}
 }
 
@@ -1368,7 +1403,7 @@ TArray<uint8_t> FWadCollection::ReadLumpIntoArray(int lump, int pad)
 {
 	auto lumpr = OpenLumpReader(lump);
 	auto size = lumpr.GetLength();
-	TArray<uint8_t> data(size + pad);
+	TArray<uint8_t> data(size + pad, true);
 	auto numread = lumpr.Read(data.Data(), size);
 
 	if (numread != size)

@@ -35,7 +35,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <mmsystem.h>
 #include <objbase.h>
@@ -74,6 +73,8 @@
 #include "vm.h"
 #include "i_system.h"
 #include "gstrings.h"
+#include "atterm.h"
+#include "s_music.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -97,7 +98,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
-void CreateCrashLog (char *custominfo, DWORD customsize, HWND richedit);
+void CreateCrashLog (const char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
 extern uint8_t *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
 void I_FlushBufferedConsoleStuff();
@@ -153,65 +154,9 @@ DYN_WIN32_SYM(SHGetKnownFolderPath);
 
 static const WCHAR WinClassName[] = WGAMENAME "MainWindow";
 static HMODULE hwtsapi32;		// handle to wtsapi32.dll
-static void (*TermFuncs[MAX_TERMS])(void);
-static int NumTerms;
 
 // CODE --------------------------------------------------------------------
 
-//==========================================================================
-//
-// atterm
-//
-// Our own atexit because atexit can be problematic under Linux, though I
-// forget the circumstances that cause trouble.
-//
-//==========================================================================
-
-void atterm (void (*func)(void))
-{
-	// Make sure this function wasn't already registered.
-	for (int i = 0; i < NumTerms; ++i)
-	{
-		if (TermFuncs[i] == func)
-		{
-			return;
-		}
-	}
-	if (NumTerms == MAX_TERMS)
-	{
-		func ();
-		I_FatalError ("Too many exit functions registered.\nIncrease MAX_TERMS in i_main.cpp");
-	}
-	TermFuncs[NumTerms++] = func;
-}
-
-//==========================================================================
-//
-// popterm
-//
-// Removes the most recently register atterm function.
-//
-//==========================================================================
-
-void popterm ()
-{
-	if (NumTerms)
-		NumTerms--;
-}
-
-//==========================================================================
-//
-// call_terms
-//
-//==========================================================================
-
-static void call_terms (void)
-{
-	while (NumTerms > 0)
-	{
-		TermFuncs[--NumTerms]();
-	}
-}
 
 #ifdef _MSC_VER
 static int NewFailure (size_t size)
@@ -878,12 +823,7 @@ void DoMain (HINSTANCE hInstance)
 			}
 			if (StdOut == NULL)
 			{
-				// AttachConsole was introduced with Windows XP. (OTOH, since we
-				// have to share the console with the shell, I'm not sure if it's
-				// a good idea to actually attach to it.)
-				typedef BOOL (WINAPI *ac)(DWORD);
-				ac attach_console = kernel != NULL ? (ac)GetProcAddress(kernel, "AttachConsole") : NULL;
-				if (attach_console != NULL && attach_console(ATTACH_PARENT_PROCESS))
+				if (AttachConsole(ATTACH_PARENT_PROCESS))
 				{
 					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 					DWORD foo; WriteFile(StdOut, "\n", 1, &foo, NULL);
@@ -892,6 +832,29 @@ void DoMain (HINSTANCE hInstance)
 				if (StdOut == NULL && AllocConsole())
 				{
 					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				}
+
+				// These two functions do not exist in Windows XP.
+				BOOL (WINAPI* p_GetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+				BOOL (WINAPI* p_SetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+
+				p_SetCurrentConsoleFontEx = (decltype(p_SetCurrentConsoleFontEx))GetProcAddress(kernel, "SetCurrentConsoleFontEx");
+				p_GetCurrentConsoleFontEx = (decltype(p_GetCurrentConsoleFontEx))GetProcAddress(kernel, "GetCurrentConsoleFontEx");
+				if (p_SetCurrentConsoleFontEx && p_GetCurrentConsoleFontEx)
+				{
+					CONSOLE_FONT_INFOEX cfi;
+					cfi.cbSize = sizeof(cfi);
+
+					if (p_GetCurrentConsoleFontEx(StdOut, false, &cfi))
+					{
+						if (*cfi.FaceName == 0)	// If the face name is empty, the default (useless) raster font is actoive.
+						{
+							//cfi.dwFontSize = { 8, 14 };
+							wcscpy(cfi.FaceName, L"Lucida Console");
+							cfi.FontFamily = FF_DONTCARE;
+							p_SetCurrentConsoleFontEx(StdOut, false, &cfi);
+						}
+					}
 				}
 				FancyStdOut = true;
 			}
@@ -1093,7 +1056,8 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	int i;
 
 	buffer += mysnprintf (buffer, buffend - buffer, GAMENAME " version %s (%s)", GetVersionString(), GetGitHash());
-	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", GetCommandLine());
+	FString cmdline(GetCommandLineW());
+	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", cmdline.GetChars() );
 
 	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
 	{

@@ -56,6 +56,7 @@
 #include "scripting/types.h"
 
 int DMenu::InMenu;
+static ScaleOverrider *CurrentScaleOverrider;
 //
 // Todo: Move these elsewhere
 //
@@ -64,7 +65,6 @@ CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 CVAR (Int, m_showinputgrid, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -348,7 +348,7 @@ bool DMenu::TranslateKeyboardEvents()
 //
 //=============================================================================
 
-void M_StartControlPanel (bool makeSound)
+void M_StartControlPanel (bool makeSound, bool scaleoverride)
 {
 	// intro might call this repeatedly
 	if (CurrentMenu != nullptr)
@@ -372,6 +372,8 @@ void M_StartControlPanel (bool makeSound)
 	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
+	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider;
+	else if (!scaleoverride && CurrentScaleOverrider) delete CurrentScaleOverrider;
 }
 
 //=============================================================================
@@ -405,7 +407,7 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
-EXTERN_CVAR(Int, cl_localizationmode)
+EXTERN_CVAR(Int, cl_gfxlocalization)
 
 
 void M_SetMenu(FName menu, int param)
@@ -420,7 +422,7 @@ void M_SetMenu(FName menu, int param)
 			{
 				menu = NAME_MainmenuTextOnly;
 			}
-			else
+			else if (cl_gfxlocalization != 0 && !gameinfo.forcenogfxsubstitution)
 			{
 				// For these games we must check up-front if they get localized because in that case another template must be used.
 				DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Mainmenu);
@@ -429,7 +431,7 @@ void M_SetMenu(FName menu, int param)
 					if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
 					{
 						DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
-						if (ld->mFromEngine && cl_localizationmode != 0)
+						if (ld->mFromEngine)
 						{
 							// This assumes that replacing one graphic will replace all of them.
 							// So this only checks the "New game" entry for localization capability.
@@ -515,6 +517,10 @@ void M_SetMenu(FName menu, int param)
 		void ActivateEndGameMenu();
 		ActivateEndGameMenu();
 		return;
+
+	case NAME_Playermenu:
+		menu = NAME_NewPlayerMenu;	// redirect the old player menu to the new one.
+		break;
 	}
 
 	// End of special checks
@@ -863,12 +869,6 @@ static void M_Dim()
 		amount = gameinfo.dimamount;
 	}
 
-	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
-	{ // On the Hexen title screen, the default dimming is not
-	  // enough to make the menus readable.
-		amount = MIN<float>(1.f, amount*2.f);
-	}
-
 	screen->Dim(dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
 }
 
@@ -887,7 +887,7 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		screen->BlurScene(gameinfo.bluramount);
+		if (!CurrentMenu->DontBlur) screen->BlurScene(gameinfo.bluramount);
 		if (!CurrentMenu->DontDim)
 		{
 			M_Dim();
@@ -912,6 +912,8 @@ void M_ClearMenus()
 		CurrentMenu = parent;
 	}
 	menuactive = MENU_Off;
+	if (CurrentScaleOverrider)  delete CurrentScaleOverrider;
+	CurrentScaleOverrider = nullptr;
 }
 
 //=============================================================================
@@ -1195,6 +1197,7 @@ DEFINE_FIELD(DMenu, mParentMenu)
 DEFINE_FIELD(DMenu, mMouseCapture);
 DEFINE_FIELD(DMenu, mBackbuttonSelected);
 DEFINE_FIELD(DMenu, DontDim);
+DEFINE_FIELD(DMenu, DontBlur);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)

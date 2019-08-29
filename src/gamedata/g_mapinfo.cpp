@@ -50,6 +50,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "i_system.h"
+#include "atterm.h"
 
 static TArray<cluster_info_t> wadclusterinfos;
 TArray<level_info_t> wadlevelinfos;
@@ -60,6 +61,8 @@ static cluster_info_t TheDefaultClusterInfo;
 TArray<FEpisode> AllEpisodes;
 
 extern TMap<int, FString> HexenMusic;
+
+TArray<int> ParsedLumps(8, true);
 
 //==========================================================================
 //
@@ -241,6 +244,7 @@ void level_info_t::Reset()
 	flags3 = 0;
 	Music = "";
 	LevelName = "";
+	AuthorName = "";
 	FadeTable = "COLORMAP";
 	WallHorizLight = -8;
 	WallVertLight = +8;
@@ -765,12 +769,30 @@ void FMapInfoParser::ParseCluster()
 			ParseAssign();
 			if (ParseLookupName(clusterinfo->EnterText))
 				clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
+			else
+			{
+				FStringf testlabel("CLUSTERENTER%d", clusterinfo->cluster);
+				if (GStrings.MatchDefaultString(testlabel, clusterinfo->EnterText))
+				{
+					clusterinfo->EnterText = testlabel;
+					clusterinfo->flags |= CLUSTER_LOOKUPENTERTEXT;
+				}
+			}
 		}
 		else if (sc.Compare("exittext"))
 		{
 			ParseAssign();
 			if (ParseLookupName(clusterinfo->ExitText))
 				clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
+			else
+			{
+				FStringf testlabel("CLUSTEREXIT%d", clusterinfo->cluster);
+				if (GStrings.MatchDefaultString(testlabel, clusterinfo->ExitText))
+				{
+					clusterinfo->ExitText = testlabel;
+					clusterinfo->flags |= CLUSTER_LOOKUPEXITTEXT;
+				}
+			}
 		}
 		else if (sc.Compare("music"))
 		{
@@ -904,6 +926,13 @@ DEFINE_MAP_OPTION(next, true)
 	parse.ParseNextMap(info->NextMap);
 }
 
+DEFINE_MAP_OPTION(author, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->AuthorName = parse.sc.String;
+}
+
 DEFINE_MAP_OPTION(secretnext, true)
 {
 	parse.ParseAssign();
@@ -993,6 +1022,15 @@ DEFINE_MAP_OPTION(titlepatch, true)
 {
 	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->PName);
+	if (parse.format_type == FMapInfoParser::FMT_New)
+	{
+		if (parse.sc.CheckString(","))
+		{
+			parse.sc.MustGetNumber();
+			if (parse.sc.Number) info->flags3 |= LEVEL3_HIDEAUTHORNAME;
+			else info->flags3 &= ~LEVEL3_HIDEAUTHORNAME;
+		}
+	}
 }
 
 DEFINE_MAP_OPTION(partime, true)
@@ -1601,6 +1639,8 @@ MapFlagHandlers[] =
 	{ "rememberstate",					MITYPE_CLRFLAG2,	LEVEL2_FORGETSTATE, 0 },
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "spawnwithweaponraised",			MITYPE_SETFLAG2,	LEVEL2_PRERAISEWEAPON, 0 },
+	{ "needclustertext",				MITYPE_SETFLAG2,	LEVEL2_NEEDCLUSTERTEXT, 0 },
+	{ "noclustertext",					MITYPE_SETFLAG2,	LEVEL2_NOCLUSTERTEXT, 0 },	// Normally there shouldn't be a need to explicitly set this 
 	{ "forcefakecontrast",				MITYPE_SETFLAG3,	LEVEL3_FORCEFAKECONTRAST, 0 },
 	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
 	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
@@ -1642,6 +1682,9 @@ MapFlagHandlers[] =
 	{ "compat_teleport",				MITYPE_COMPATFLAG, 0, COMPATF2_TELEPORT },
 	{ "compat_pushwindow",				MITYPE_COMPATFLAG, 0, COMPATF2_PUSHWINDOW },
 	{ "compat_checkswitchrange",		MITYPE_COMPATFLAG, 0, COMPATF2_CHECKSWITCHRANGE },
+	{ "compat_explode1",				MITYPE_COMPATFLAG, 0, COMPATF2_EXPLODE1 },
+	{ "compat_explode2",				MITYPE_COMPATFLAG, 0, COMPATF2_EXPLODE2 },
+	{ "compat_railing",					MITYPE_COMPATFLAG, 0, COMPATF2_RAILING },
 	{ "cd_start_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end1_track",					MITYPE_EATNEXT,	0, 0 },
 	{ "cd_end2_track",					MITYPE_EATNEXT,	0, 0 },
@@ -1927,20 +1970,32 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 		}
 		else
 		{
-			levelinfo->LevelName = sc.String;
+			// Workaround to allow localizazion of IWADs which do not have a string label here (e.g. HACX.WAD)
+			// This checks for a string labelled with the MapName and if that is identical to what got parsed here
+			// the string table entry will be used.
 
-			if (HexenHack)
+			if (GStrings.MatchDefaultString(levelinfo->MapName, sc.String))
 			{
-				// Try to localize Hexen's map names.
-				int fileno = Wads.GetLumpFile(sc.LumpNum);
-				auto fn = Wads.GetWadName(fileno);
-				if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
+				levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+				levelinfo->LevelName = levelinfo->MapName;
+			}
+			else
+			{
+				levelinfo->LevelName = sc.String;
+
+				if (HexenHack)
 				{
-					FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
-					if (GStrings.exists(key))
+					// Try to localize Hexen's map names. This does not use the above feature to allow these names to be unique.
+					int fileno = Wads.GetLumpFile(sc.LumpNum);
+					auto fn = Wads.GetWadName(fileno);
+					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
-						levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
-						levelinfo->LevelName = key;
+						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
+						if (GStrings.exists(key))
+						{
+							levelinfo->flags |= LEVEL_LOOKUPLEVELNAME;
+							levelinfo->LevelName = key;
+						}
 					}
 				}
 			}
@@ -2026,6 +2081,8 @@ void FMapInfoParser::ParseEpisodeInfo ()
 			ParseAssign();
 			sc.MustGetString ();
 			pic = sc.String;
+			// If no name has been specified, synthesize a string table reference with the same name as the patch.
+			if (name.IsEmpty()) name.Format("$%s", sc.String);
 		}
 		else if (sc.Compare ("remove"))
 		{
@@ -2145,6 +2202,15 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 
 	defaultinfo = gamedefaults;
 	HexenHack = false;
+
+	if (ParsedLumps.Find(lump) != ParsedLumps.Size())
+	{
+		sc.ScriptMessage("MAPINFO file is processed more than once\n");
+	}
+	else
+	{
+		ParsedLumps.Push(lump);
+	}
 
 	while (sc.GetString ())
 	{
@@ -2330,6 +2396,7 @@ static void ClearMapinfo()
 	DeinitIntermissions();
 	primaryLevel->info = nullptr;
 	primaryLevel->F1Pic = "";
+	ParsedLumps.Clear();
 }
 
 //==========================================================================

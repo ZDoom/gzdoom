@@ -34,8 +34,8 @@ EXTERN_CVAR(Int, gl_particles_style)
 
 void RenderPolyParticle::Render(PolyRenderThread *thread, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
 {
-	double timefrac = r_viewpoint.TicFrac;
-	if (paused || r_viewpoint.ViewLevel->isFrozen())
+	double timefrac = PolyRenderer::Instance()->Viewpoint.TicFrac;
+	if (paused || PolyRenderer::Instance()->Viewpoint.ViewLevel->isFrozen())
 		timefrac = 0.;
 	DVector3 pos = particle->Pos + (particle->Vel * timefrac);
 	double psize = particle->size / 8.0;

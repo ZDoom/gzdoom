@@ -167,6 +167,7 @@ class BFGExtra : Actor
 	{
 		+NOBLOCKMAP
 		+NOGRAVITY
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 0.75;
 		DamageType "BFGSplash";

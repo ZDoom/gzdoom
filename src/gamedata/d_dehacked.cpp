@@ -282,6 +282,7 @@ static int PatchSize;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
 static bool  including, includenotext;
+static int LumpFileNum;
 
 static const char *unknown_str = "Unknown key %s encountered in %s %d.\n";
 
@@ -351,14 +352,8 @@ inline double DEHToDouble(int acsval)
 
 static void PushTouchedActor(PClassActor *cls)
 {
-	for(unsigned i = 0; i < TouchedActors.Size(); i++)
-	{
-		if (TouchedActors[i] == cls)
-		{
-			return;
-		}
-	}
-	TouchedActors.Push(cls);
+	if (TouchedActors.Find(cls) == TouchedActors.Size())
+		TouchedActors.Push(cls);
 }
 
 
@@ -2169,7 +2164,7 @@ static int PatchMusic (int dummy)
 		
 		keystring << "MUSIC_" << Line1;
 
-		TableElement te = { newname, newname, newname, newname };
+		TableElement te = { LumpFileNum, { newname, newname, newname, newname } };
 		DehStrings.Insert(keystring, te);
 		DPrintf (DMSG_SPAMMY, "Music %s set to:\n%s\n", keystring.GetChars(), newname.GetChars());
 	}
@@ -2285,7 +2280,7 @@ static int PatchText (int oldSize)
 		if (str != NULL)
 		{
 			FString newname = newStr;
-			TableElement te = { newname, newname, newname, newname };
+			TableElement te = { LumpFileNum, { newname, newname, newname, newname } };
 			DehStrings.Insert(str, te);
 			EnglishStrings.Remove(str);	// remove entry so that it won't get found again by the next iteration or  by another replacement later
 			good = true;
@@ -2340,7 +2335,7 @@ static int PatchStrings (int dummy)
 		// Account for a discrepancy between Boom's and ZDoom's name for the red skull key pickup message
 		const char *ll = Line1;
 		if (!stricmp(ll, "GOTREDSKULL")) ll = "GOTREDSKUL";
-		TableElement te = { holdstring, holdstring, holdstring, holdstring };
+		TableElement te = { LumpFileNum, { holdstring, holdstring, holdstring, holdstring } };
 		DehStrings.Insert(ll, te);
 		DPrintf (DMSG_SPAMMY, "%s set to:\n%s\n", Line1, holdstring.GetChars());
 	}
@@ -2450,12 +2445,12 @@ int D_LoadDehLumps(DehLumpSource source)
 	{
 		const int filenum = Wads.GetLumpFile(lumpnum);
 		
-		if (FromIWAD == source && filenum > Wads.GetIwadNum())
+		if (FromIWAD == source && filenum > Wads.GetMaxIwadNum())
 		{
 			// No more DEHACKED lumps in IWAD
 			break;
 		}
-		else if (FromPWADs == source && filenum <= Wads.GetIwadNum())
+		else if (FromPWADs == source && filenum <= Wads.GetMaxIwadNum())
 		{
 			// Skip DEHACKED lumps from IWAD
 			continue;
@@ -2496,13 +2491,19 @@ int D_LoadDehLumps(DehLumpSource source)
 
 bool D_LoadDehLump(int lumpnum)
 {
+	auto ls = LumpFileNum;
+	LumpFileNum = Wads.GetLumpFile(lumpnum);
+
 	PatchSize = Wads.LumpLength(lumpnum);
 
 	PatchName = copystring(Wads.GetLumpFullPath(lumpnum));
 	PatchFile = new char[PatchSize + 1];
 	Wads.ReadLump(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
-	return DoDehPatch();
+	auto res = DoDehPatch();
+	LumpFileNum = ls;
+
+	return res;
 }
 
 bool D_LoadDehFile(const char *patchfile)
@@ -3005,6 +3006,13 @@ void FinishDehPatch ()
 	unsigned int touchedIndex;
 	unsigned int nameindex = 0;
 
+	// For compatibility all potentially altered actors now using A_SkullFly need to be set to the original slamming behavior.
+	// Since this flag does not affect anything else let's just set it for everything, it will just be ignored by non-charging things.
+	for (auto cls : InfoNames)
+	{
+		GetDefaultByType(cls)->flags8 |= MF8_RETARGETAFTERSLAM;
+	}
+
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
 		PClassActor *subclass;
@@ -3070,10 +3078,8 @@ void FinishDehPatch ()
 		}
 	}
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
-	StateMap.Clear();
-	StateMap.ShrinkToFit();
-	TouchedActors.Clear();
-	TouchedActors.ShrinkToFit();
+	StateMap.Reset();
+	TouchedActors.Reset();
 	EnglishStrings.Clear();
 	GStrings.SetDehackedStrings(std::move(DehStrings));
 

@@ -225,9 +225,10 @@ class OptionMenu : Menu
 
 					if (y <= 0)
 					{
-						if (mDesc.mFont && mDesc.mTitle.Length() > 0)
+						let font = generic_ui || !mDesc.mFont? NewSmallFont : mDesc.mFont;
+						if (font && mDesc.mTitle.Length() > 0)
 						{
-							y = -y + mDesc.mFont.GetHeight();
+							y = -y + font.GetHeight();
 						}
 						else
 						{
@@ -410,19 +411,26 @@ class OptionMenu : Menu
 	//
 	//=============================================================================
 
+	virtual int GetIndent()
+	{
+		int indent = max(0, (mDesc.mIndent + 40) - CleanWidth_1 / 2);
+		return screen.GetWidth() / 2 + indent * CleanXfac_1;
+	}
+
 	override void Drawer ()
 	{
 		int y = mDesc.mPosition;
 
 		if (y <= 0)
 		{
-			if (mDesc.mFont && mDesc.mTitle.Length() > 0)
+			let font = generic_ui || !mDesc.mFont? NewSmallFont : mDesc.mFont;
+			if (font && mDesc.mTitle.Length() > 0)
 			{
 				let tt = Stringtable.Localize(mDesc.mTitle);
-				screen.DrawText (mDesc.mFont, OptionMenuSettings.mTitleColor,
-					(screen.GetWidth() - mDesc.mFont.StringWidth(tt) * CleanXfac_1) / 2, 10*CleanYfac_1,
+				screen.DrawText (font, OptionMenuSettings.mTitleColor,
+					(screen.GetWidth() - font.StringWidth(tt) * CleanXfac_1) / 2, 10*CleanYfac_1,
 					tt, DTA_CleanNoMove_1, true);
-				y = -y + mDesc.mFont.GetHeight();
+				y = -y + font.GetHeight();
 			}
 			else
 			{
@@ -433,25 +441,10 @@ class OptionMenu : Menu
 		int fontheight = OptionMenuSettings.mLinespacing * CleanYfac_1;
 		y *= CleanYfac_1;
 
-		int indent = mDesc.mIndent;
-		if (indent > 280)
-		{ // kludge for the compatibility options with their extremely long labels
-			if (indent + 40 <= CleanWidth_1)
-			{
-				indent = (screen.GetWidth() - ((indent + 40) * CleanXfac_1)) / 2 + indent * CleanXfac_1;
-			}
-			else
-			{
-				indent = screen.GetWidth() - 40 * CleanXfac_1;
-			}
-		}
-		else
-		{
-			indent = (indent - 160) * CleanXfac_1 + screen.GetWidth() / 2;
-		}
+		int indent = GetIndent();
 
 		int ytop = y + mDesc.mScrollTop * 8 * CleanYfac_1;
-		int lastrow = screen.GetHeight() - SmallFont.GetHeight() * CleanYfac_1;
+		int lastrow = screen.GetHeight() - OptionHeight() * CleanYfac_1;
 
 		int i;
 		for (i = 0; i < mDesc.mItems.Size() && y <= lastrow; i++)
@@ -468,7 +461,7 @@ class OptionMenu : Menu
 			{
 				if (((MenuTime() % 8) < 6) || GetCurrentMenu() != self)
 				{
-					DrawConText(OptionMenuSettings.mFontColorSelection, cur_indent + 3 * CleanXfac_1, y+fontheight-9*CleanYfac_1, "\xd");
+					DrawOptionText(cur_indent + 3 * CleanXfac_1, y, OptionMenuSettings.mFontColorSelection, "◄");
 				}
 			}
 			y += fontheight;
@@ -480,11 +473,11 @@ class OptionMenu : Menu
 
 		if (CanScrollUp)
 		{
-			DrawConText(Font.CR_ORANGE, 3 * CleanXfac_1, ytop, "\x1a");
+			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1, ytop, OptionMenuSettings.mFontColorSelection, "▲");
 		}
 		if (CanScrollDown)
 		{
-			DrawConText(Font.CR_ORANGE, 3 * CleanXfac_1, y - 8*CleanYfac_1, "\x1b");
+			DrawOptionText(screen.GetWidth() - 11 * CleanXfac_1 , y - 8*CleanYfac_1, OptionMenuSettings.mFontColorSelection, "▼");
 		}
 		Super.Drawer();
 	}
@@ -519,8 +512,8 @@ class GameplayMenu : OptionMenu
 		Super.Drawer();
 
 		String s = String.Format("dmflags = %d   dmflags2 = %d", dmflags, dmflags2);
-		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue,
-			(screen.GetWidth() - SmallFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
+		screen.DrawText (OptionFont(), OptionMenuSettings.mFontColorValue,
+			(screen.GetWidth() - OptionWidth (s) * CleanXfac_1) / 2, 35 * CleanXfac_1, s,
 			DTA_CleanNoMove_1, true);
 	}
 }
@@ -532,8 +525,8 @@ class CompatibilityMenu : OptionMenu
 		Super.Drawer();
 
 		String s = String.Format("compatflags = %d  compatflags2 = %d", compatflags, compatflags2);
-		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue,
-			(screen.GetWidth() - SmallFont.StringWidth (s) * CleanXfac_1) / 2, 0, s,
+		screen.DrawText (OptionFont(), OptionMenuSettings.mFontColorValue,
+			(screen.GetWidth() - OptionWidth (s) * CleanXfac_1) / 2, 35 * CleanXfac_1, s,
 			DTA_CleanNoMove_1, true);
 	}
 }

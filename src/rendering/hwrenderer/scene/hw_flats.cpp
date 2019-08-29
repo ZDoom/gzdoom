@@ -34,7 +34,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "p_lnspec.h"
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
@@ -56,7 +56,7 @@ CVAR(Int, gl_breaksec, -1, 0)
 //
 //==========================================================================
 
-bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &dest)
+bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FMaterial * gltexture, VSMatrix &dest)
 {
 	// only manipulate the texture matrix if needed.
 	if (!secplane->Offs.isZero() ||
@@ -99,7 +99,7 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 //
 //==========================================================================
 
-void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
+void HWFlat::CreateSkyboxVertices(FFlatVertex *vert)
 {
 	float minx = FLT_MAX, miny = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX;
@@ -126,8 +126,8 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 
 	vert[0].Set(minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
 	vert[1].Set(minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
-	vert[2].Set(maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
-	vert[3].Set(maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	vert[2].Set(maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	vert[3].Set(maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
 }
 
 //==========================================================================
@@ -136,7 +136,7 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 //
 //==========================================================================
 
-void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
+void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
 {
 	Plane p;
 
@@ -180,7 +180,7 @@ void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 //
 //==========================================================================
 
-void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
+void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 {
 	if (di->Level->HasDynamicLights && screen->BuffersArePersistent() && !di->isFullbrightScene())
 	{
@@ -201,7 +201,7 @@ void GLFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 //
 //==========================================================================
 
-void GLFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
+void HWFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 {
     state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
     
@@ -229,7 +229,7 @@ void GLFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 //
 //==========================================================================
 
-void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
+void HWFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 {
 	// Flood gaps with the back side's ceiling/floor texture
 	// This requires a stencil because the projected plane interferes with
@@ -258,20 +258,20 @@ void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 		state.SetEffect(EFF_STENCIL);
 		state.EnableTexture(false);
 		state.SetStencil(0, SOP_Increment, SF_ColorMaskOff);
-		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+		state.Draw(DT_TriangleStrip, fnode->vertexindex, 4);
 
 		// Draw projected plane into stencil
 		state.EnableTexture(true);
 		state.SetEffect(EFF_NONE);
 		state.SetStencil(1, SOP_Keep, SF_DepthMaskOff);
 		state.EnableDepthTest(false);
-		state.Draw(DT_TriangleFan, fnode->vertexindex + 4, 4);
+		state.Draw(DT_TriangleStrip, fnode->vertexindex + 4, 4);
 
 		// clear stencil
 		state.SetEffect(EFF_STENCIL);
 		state.EnableTexture(false);
 		state.SetStencil(1, SOP_Decrement, SF_ColorMaskOff | SF_DepthMaskOff);
-		state.Draw(DT_TriangleFan, fnode->vertexindex, 4);
+		state.Draw(DT_TriangleStrip, fnode->vertexindex, 4);
 
 		// restore old stencil op.
 		state.EnableTexture(true);
@@ -291,7 +291,7 @@ void GLFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 //
 //
 //==========================================================================
-void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
+void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 {
 #ifdef _DEBUG
 	if (sector->sectornum == gl_breaksec)
@@ -330,7 +330,7 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.SetMaterial(gltexture, CLAMP_XY, 0, -1);
 			state.SetLightIndex(dynlightindex);
-			state.Draw(DT_TriangleFan,iboindex, 4);
+			state.Draw(DT_TriangleStrip,iboindex, 4);
 			flatvertices += 4;
 			flatprimitives++;
 		}
@@ -363,13 +363,13 @@ void GLFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 //==========================================================================
 //
-// GLFlat::PutFlat
+// HWFlat::PutFlat
 //
 // submit to the renderer
 //
 //==========================================================================
 
-inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
+inline void HWFlat::PutFlat(HWDrawInfo *di, bool fog)
 {
 	if (di->isFullbrightScene())
 	{
@@ -392,7 +392,7 @@ inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 //
 //==========================================================================
 
-void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
+void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 {
 	plane.GetFromSector(model, whichplane);
 	if (whichplane != int(ceiling))
@@ -436,7 +436,7 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 //
 //==========================================================================
 
-void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
+void HWFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 {
 	F3DFloor::planeref & plane = top? rover->top : rover->bottom;
 
@@ -471,7 +471,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 //
 //==========================================================================
 
-void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
+void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 {
 	lightlist_t * light;
 	FSectorPortal *port;

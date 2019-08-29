@@ -91,7 +91,6 @@
 #include "m_cheat.h"
 #include "m_joy.h"
 #include "po_man.h"
-#include "r_renderer.h"
 #include "p_local.h"
 #include "autosegs.h"
 #include "fragglescript/t_fs.h"
@@ -102,6 +101,8 @@
 #include "i_system.h"
 #include "g_cvars.h"
 #include "r_data/r_vanillatrans.h"
+#include "atterm.h"
+#include "s_music.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
@@ -132,6 +133,7 @@ void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
 void ParseGLDefs();
+void DrawFullscreenSubtitle(const char *text);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -227,6 +229,7 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FTexture *Advisory;
 FTextureID Page;
+const char *Subtitle;
 bool nospriterename;
 FStartupInfo DoomStartupInfo;
 FString lastIWAD;
@@ -534,28 +537,11 @@ CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
 
 EXTERN_CVAR(Int, compatmode)
 
-static int GetCompatibility(FLevelLocals *Level, int mask)
-{
-	if (Level->info == nullptr) return mask;
-	else return (mask & ~Level->info->compatmask) | (Level->info->compatflags & Level->info->compatmask);
-}
-
-static int GetCompatibility2(FLevelLocals *Level, int mask)
-{
-	return (Level->info == nullptr) ? mask
-		: (mask & ~Level->info->compatmask2) | (Level->info->compatflags2 & Level->info->compatmask2);
-}
-
 CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	for (auto Level : AllLevels())
 	{
-		int old = Level->i_compatflags;
-		Level->i_compatflags = GetCompatibility(Level, self) | Level->ii_compatflags;
-		if ((old ^ Level->i_compatflags) & COMPATF_POLYOBJ)
-		{
-			Level->ClearAllSubsectorLinks();
-		}
+		Level->ApplyCompatibility();
 	}
 }
 
@@ -563,7 +549,7 @@ CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCAL
 {
 	for (auto Level : AllLevels())
 	{
-		Level->i_compatflags2 = GetCompatibility2(Level, self) | Level->ii_compatflags2;
+		Level->ApplyCompatibility2();
 		Level->SetCompatLineOnSide(true);
 	}
 }
@@ -580,22 +566,23 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		break;
 
 	case 1:	// Doom2.exe compatible with a few relaxed settings
-		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
-			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_DEHHEALTH|COMPATF_CROSSDROPOFF|
-			COMPATF_LIGHT|COMPATF_MASKEDMIDTEX;
-		w= COMPATF2_FLOORMOVE;
+		v = COMPATF_SHORTTEX | COMPATF_STAIRINDEX | COMPATF_USEBLOCKING | COMPATF_NODOORLIGHT | COMPATF_SPRITESORT |
+			COMPATF_TRACE | COMPATF_MISSILECLIP | COMPATF_SOUNDTARGET | COMPATF_DEHHEALTH | COMPATF_CROSSDROPOFF |
+			COMPATF_LIGHT | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_FLOORMOVE | COMPATF2_EXPLODE1;
 		break;
 
 	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
-		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
-			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_NO_PASSMOBJ|COMPATF_LIMITPAIN|
-			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|
-			COMPATF_WALLRUN|COMPATF_NOTOSSDROPS|COMPATF_LIGHT|COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_BADANGLES|COMPATF2_FLOORMOVE|COMPATF2_POINTONLINE;
+		v = COMPATF_SHORTTEX | COMPATF_STAIRINDEX | COMPATF_USEBLOCKING | COMPATF_NODOORLIGHT | COMPATF_SPRITESORT |
+			COMPATF_TRACE | COMPATF_MISSILECLIP | COMPATF_SOUNDTARGET | COMPATF_NO_PASSMOBJ | COMPATF_LIMITPAIN |
+			COMPATF_DEHHEALTH | COMPATF_INVISIBILITY | COMPATF_CROSSDROPOFF | COMPATF_CORPSEGIBS | COMPATF_HITSCAN |
+			COMPATF_WALLRUN | COMPATF_NOTOSSDROPS | COMPATF_LIGHT | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_BADANGLES | COMPATF2_FLOORMOVE | COMPATF2_POINTONLINE | COMPATF2_EXPLODE2;
 		break;
 
 	case 3: // Boom compat mode
 		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_EXPLODE1;
 		break;
 
 	case 4: // Old ZDoom compat mode
@@ -604,14 +591,15 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		break;
 
 	case 5: // MBF compat mode
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_MUSHROOM|
-			COMPATF_MBFMONSTERMOVE|COMPATF_NOBLOCKFRIENDS|COMPATF_MASKEDMIDTEX;
+		v = COMPATF_TRACE | COMPATF_SOUNDTARGET | COMPATF_BOOMSCROLL | COMPATF_MISSILECLIP | COMPATF_MUSHROOM |
+			COMPATF_MBFMONSTERMOVE | COMPATF_NOBLOCKFRIENDS | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_EXPLODE1;
 		break;
 
 	case 6:	// Boom with some added settings to reenable some 'broken' behavior
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_NO_PASSMOBJ|
-			COMPATF_INVISIBILITY|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|COMPATF_WALLRUN|COMPATF_NOTOSSDROPS|COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_POINTONLINE;
+		v = COMPATF_TRACE | COMPATF_SOUNDTARGET | COMPATF_BOOMSCROLL | COMPATF_MISSILECLIP | COMPATF_NO_PASSMOBJ |
+			COMPATF_INVISIBILITY | COMPATF_CORPSEGIBS | COMPATF_HITSCAN | COMPATF_WALLRUN | COMPATF_NOTOSSDROPS | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_POINTONLINE | COMPATF2_EXPLODE2;
 		break;
 
 	}
@@ -659,6 +647,9 @@ CVAR (Flag, compat_multiexit,			compatflags2, COMPATF2_MULTIEXIT);
 CVAR (Flag, compat_teleport,			compatflags2, COMPATF2_TELEPORT);
 CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 CVAR (Flag, compat_checkswitchrange,	compatflags2, COMPATF2_CHECKSWITCHRANGE);
+CVAR (Flag, compat_explode1,			compatflags2, COMPATF2_EXPLODE1);
+CVAR (Flag, compat_explode2,			compatflags2, COMPATF2_EXPLODE2);
+CVAR (Flag, compat_railing,				compatflags2, COMPATF2_RAILING);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -742,27 +733,33 @@ void D_Display ()
 		wipegamestate = gamestate;
 	}
 	// No wipes when in a stereo3D VR mode
-	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL && (vr_mode == 0 || vid_rendermode != 4))
-	{ // save the current screen if about to wipe
-		wipe = screen->WipeStartScreen ();
-		switch (wipegamestate)
+	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
+	{
+		if (vr_mode == 0 || vid_rendermode != 4)
 		{
-		default:
-			wipe_type = wipetype;
-			break;
+			// save the current screen if about to wipe
+			wipe = screen->WipeStartScreen ();
 
-		case GS_FORCEWIPEFADE:
-			wipe_type = wipe_Fade;
-			break;
+			switch (wipegamestate)
+			{
+			default:
+				wipe_type = wipetype;
+				break;
 
-		case GS_FORCEWIPEBURN:
-			wipe_type =wipe_Burn;
-			break;
+			case GS_FORCEWIPEFADE:
+				wipe_type = wipe_Fade;
+				break;
 
-		case GS_FORCEWIPEMELT:
-			wipe_type = wipe_Melt;
-			break;
+			case GS_FORCEWIPEBURN:
+				wipe_type = wipe_Burn;
+				break;
+
+			case GS_FORCEWIPEMELT:
+				wipe_type = wipe_Melt;
+				break;
+			}
 		}
+
 		wipegamestate = gamestate;
 	}
 	else
@@ -790,7 +787,7 @@ void D_Display ()
 		screen->DrawBlend(viewsec);
 		if (automapactive)
 		{
-			primaryLevel->automap->Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
+			primaryLevel->automap->Drawer ((hud_althud && viewheight == SCREENHEIGHT) ? viewheight : StatusBar->GetTopOfStatusbar());
 		}
 		
 		// for timing the statusbar code.
@@ -863,7 +860,6 @@ void D_Display ()
 	{
 		FTexture *tex;
 		int x;
-		FString pstring = "By ";
 
 		tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
 		x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
@@ -871,9 +867,11 @@ void D_Display ()
 		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 		if (paused && multiplayer)
 		{
-			pstring += players[paused - 1].userinfo.GetName();
-			screen->DrawText(SmallFont, CR_RED,
-				(screen->GetWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
+			FFont *font = generic_ui? NewSmallFont : SmallFont;
+			FString pstring = GStrings("TXT_BY");
+			pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
+			screen->DrawText(font, CR_RED,
+				(screen->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
 				(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
 		}
 	}
@@ -995,6 +993,7 @@ void D_DoomLoop ()
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
 	Page.SetInvalid();
+	Subtitle = nullptr;
 	Advisory = nullptr;
 
 	vid_cursor.Callback();
@@ -1036,6 +1035,7 @@ void D_DoomLoop ()
 			// Update display, next frame, with current state.
 			I_StartTic ();
 			D_Display ();
+			S_UpdateMusic();
 			if (wantToRestart)
 			{
 				wantToRestart = false;
@@ -1088,14 +1088,11 @@ void D_PageDrawer (void)
 			DTA_BilinearFilter, true,
 			TAG_DONE);
 	}
-	else
+	if (Subtitle != nullptr)
 	{
-		if (!PageBlank)
-		{
-			screen->DrawText (SmallFont, CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
-		}
+		DrawFullscreenSubtitle(GStrings[Subtitle]);
 	}
-	if (Advisory != NULL)
+	if (Advisory != nullptr)
 	{
 		screen->DrawTexture (Advisory, 4, 160, DTA_320x200, true, TAG_DONE);
 	}
@@ -1131,7 +1128,8 @@ void D_DoStrifeAdvanceDemo ()
 		"svox/voc91", "svox/voc92", "svox/voc93", "svox/voc94", "svox/voc95", "svox/voc96"
 	};
 	const char *const *voices = gameinfo.flags & GI_SHAREWARE ? teaserVoices : fullVoices;
-	const char *pagename = NULL;
+	const char *pagename = nullptr;
+	const char *subtitle = nullptr;
 
 	gamestate = GS_DEMOSCREEN;
 	PageBlank = false;
@@ -1170,6 +1168,7 @@ void D_DoStrifeAdvanceDemo ()
 	case 3:
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
+		subtitle = "TXT_SUB_INTRO1";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[0], 1, ATTN_NORM);
 		// The new Strife teaser has D_FMINTR.
 		// The full retail Strife has D_INTRO.
@@ -1180,30 +1179,35 @@ void D_DoStrifeAdvanceDemo ()
 	case 4:
 		pagetic = 9 * TICRATE;
 		pagename = "PANEL2";
+		subtitle = "TXT_SUB_INTRO2";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[1], 1, ATTN_NORM);
 		break;
 
 	case 5:
 		pagetic = 12 * TICRATE;
 		pagename = "PANEL3";
+		subtitle = "TXT_SUB_INTRO3";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[2], 1, ATTN_NORM);
 		break;
 
 	case 6:
 		pagetic = 11 * TICRATE;
 		pagename = "PANEL4";
+		subtitle = "TXT_SUB_INTRO4";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[3], 1, ATTN_NORM);
 		break;
 
 	case 7:
 		pagetic = 10 * TICRATE;
 		pagename = "PANEL5";
+		subtitle = "TXT_SUB_INTRO5";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[4], 1, ATTN_NORM);
 		break;
 
 	case 8:
 		pagetic = 16 * TICRATE;
 		pagename = "PANEL6";
+		subtitle = "TXT_SUB_INTRO6";
 		S_Sound (CHAN_VOICE | CHAN_UI, voices[5], 1, ATTN_NORM);
 		break;
 
@@ -1224,7 +1228,15 @@ void D_DoStrifeAdvanceDemo ()
 	if (demosequence == 9 && !(gameinfo.flags & GI_SHAREWARE))
 		demosequence = 10;
 
-	if (pagename != nullptr) Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
+	if (pagename != nullptr)
+	{
+		Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
+		Subtitle = subtitle;
+	}
+	else
+	{
+		Subtitle = nullptr;
+	}
 }
 
 //==========================================================================
@@ -1292,6 +1304,7 @@ void D_DoAdvanceDemo (void)
 			}
 			else
 			{
+				singledemo = false;
 				G_DeferedPlayDemo (demoname);
 				demosequence = 2;
 				break;
@@ -2327,7 +2340,7 @@ void D_DoomMain (void)
 
 	FString optionalwad = BaseFileSearch(OPTIONALWAD, NULL, true);
 
-	iwad_man = new FIWadManager(basewad);
+	iwad_man = new FIWadManager(basewad, optionalwad);
 
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
@@ -2357,7 +2370,7 @@ void D_DoomMain (void)
 
 		if (iwad_man == NULL)
 		{
-			iwad_man = new FIWadManager(basewad);
+			iwad_man = new FIWadManager(basewad, optionalwad);
 		}
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad, optionalwad);
 		gameinfo.gametype = iwad_info->gametype;
@@ -2406,7 +2419,7 @@ void D_DoomMain (void)
 		}
 
 		if (!batchrun) Printf ("W_Init: Init WADfiles.\n");
-		Wads.InitMultipleFiles (allwads);
+		Wads.InitMultipleFiles (allwads, iwad_info->DeleteLumps);
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();
@@ -2448,6 +2461,7 @@ void D_DoomMain (void)
 
 		if (!batchrun) Printf ("S_Init: Setting up sound.\n");
 		S_Init ();
+		S_InitMusic();
 
 		if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
 		if (!restart)
@@ -2741,6 +2755,7 @@ void D_DoomMain (void)
 		R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
 		gameinfo.~gameinfo_t();
 		new (&gameinfo) gameinfo_t;		// Reset gameinfo
+		S_ShutdownMusic();
 		S_Shutdown();					// free all channels and delete playlist
 		C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 		DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods

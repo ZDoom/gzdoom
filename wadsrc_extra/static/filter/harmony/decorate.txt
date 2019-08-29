@@ -1,0 +1,1833 @@
+actor HarmonyPlayer : PlayerPawn
+{
+	scale 0.30
+	speed 1
+	health 100
+	radius 16
+	height 56
+	mass 100
+	painchance 255
+	player.colorrange 112, 127
+	player.displayname "Harmony"
+	player.startitem "NeutronGun"
+	player.startitem "HandGrenades"
+	player.startitem "MinigunAmmo", 8
+	player.weaponslot 1, HandGrenades
+	player.weaponslot 2, NeutronGun
+	player.weaponslot 3, Compensator
+	player.weaponslot 4, Minigun
+	player.weaponslot 5, GrenadeLauncher
+	player.weaponslot 6, EntrophyThrower
+	player.weaponslot 7, HandGrenades
+	states
+	{
+		Spawn:
+			PLAY A -1
+			loop
+		See:
+			PLAY ABCD 4
+			loop
+		Pain:
+			PLAY G 4
+			PLAY G 4 A_Pain
+			goto Spawn
+		Missile:
+			PLAY E 12 
+			goto Spawn
+		Melee:
+			PLAY F 6 bright
+			goto Missile
+		Death:
+			PLAY H 10
+			PLAY I 10 A_PlayerScream
+			PLAY J 10 A_NoBlocking
+			PLAY KLM 10
+			PLAY N -1
+			stop
+		XDeath:
+			SPOS M 5
+			SPOS N 5 A_XScream
+			SPOS O 5 A_Fall
+			SPOS PQRST 5
+			SPOS U -1
+			stop
+	}
+}
+
+actor Beastling replaces ZombieMan
+{
+	scale .30
+	health 150
+	speed 12
+	radius 30
+	height 56
+	reactiontime 8
+	painchance 180
+	mass 400
+	dropitem "Flies" 256
+	seesound "demon/sight"
+	attacksound "demon/melee"
+	painsound "demon/pain"
+	deathsound "demon/death"
+	activesound "demon/active"
+	MONSTER
+	+FLOORCLIP
+	states
+	{
+		Spawn:
+			SARG AB 10 A_Look
+			loop
+		See:
+			SARG AABBCCDD 2 Fast A_Chase
+			loop
+		Pain:
+			SARG H 2 Fast
+			SARG H 2 Fast A_Pain
+			goto See
+		Melee:
+			SARG EF 8 Fast A_FaceTarget
+			SARG G 8 Fast A_SargAttack
+			goto See
+		Missile:
+			SARG E 10 A_FaceTarget
+			SARG F 4 A_SkullAttack
+			SARG EF 4
+			loop
+		Death:
+			SARG I 8
+			SARG J 8 A_Scream
+			SARG K 4
+			SARG L 4 A_Fall
+			SARG M 4
+			SARG N -1
+			stop
+		Raise:
+			SARG NMLKJI 5
+			Goto See			
+	}
+}
+
+actor Follower replaces ShotgunGuy
+{
+	scale .33
+	health 60
+	radius 20
+	height 56
+	mass 75
+	speed 8
+	painchance 170
+	seesound "shotgun/sight"
+	painsound "shotguy/pain"
+	deathsound "shotguy/death"
+	activesound "shotguy/active"
+	dropitem "Compensator" 256
+	MONSTER
+	+FLOORCLIP
+	states
+	{
+		Spawn:
+			SPOS AB 10 A_Look
+			loop
+		See:
+			SPOS AABBCCDD 3 A_Chase
+			loop
+		Pain:
+			SPOS G 3
+			SPOS G 3 A_Pain
+			goto See
+		Missile:
+			SPOS E 10 A_FaceTarget
+			SPOS F 10 bright A_SPosAttack
+			SPOS E 10
+			goto See
+		Death:
+			SPOS H 7
+			SPOS I 7 A_Scream
+			SPOS J 6 A_Fall
+			SPOS KL 5
+			VILE Z -1
+			stop
+		XDeath:
+			SPOS M 5
+			SPOS N 5 A_XScream
+			SPOS O 5 A_Fall
+			SPOS PQRST 5
+			SPOS U -1
+			stop
+		Raise:
+			stop
+	}
+}
+
+actor FallingFollower replaces Archvile
+{
+	scale .30
+	health 60
+	speed 8
+	radius 20
+	height 56
+	reactiontime 8
+	painchance 170
+	mass 100
+	MaxTargetRange 896
+	seesound "shotguy/sight"
+	attacksound "shotguy/attack"
+	painsound "shotguy/pain"
+	deathsound "shotguy/raise"
+	activesound "shotgun/active"
+	MONSTER
+	+FLOORCLIP
+	+NOTARGET
+	+QUICKTORETALIATE
+	states
+	{
+		Spawn:
+			FCAN A 10 A_Look
+			loop
+		See:
+			FCAN B 2 A_Chase
+			FCAN B 1 A_Chase
+			FCAN C 2 A_Chase
+			FCAN C 1 A_Chase
+			BON1 A 2 A_Chase
+			BON1 A 1 A_Chase
+			BON1 B 2 A_Chase
+			BON1 B 2 A_Chase
+			BON1 CC 6 A_Chase
+			BON1 D 2 A_Chase
+			BON1 D 6 A_Chase
+		See2:
+			SPOS AABBCCDD 3 A_Chase
+			loop
+		Pain:
+			SPOS G 3
+			SPOS G 3 A_Pain
+			goto See2
+		Missile:
+			SPOS E 10 A_FaceTarget
+			SPOS F 10 bright A_SPosAttack
+			SPOS E 10
+			goto See2
+		Death:
+			VILE R 5 A_Scream
+			VILE S 5 A_Fall
+			VILE TUVWX 5
+			VILE Y -1
+			stop
+		XDeath:
+			SPOS M 5
+			SPOS N 5 A_XScream
+			SPOS O 5 A_Fall
+			SPOS PQRST 5
+			SPOS U -1
+			stop
+		Raise:
+			SPOS LKJIH 5
+			goto See2
+	}
+}
+
+actor WalkingCentaur replaces Revenant
+{
+	scale 0.30
+	health 300
+	speed 10
+	radius 20
+	height 56
+	reactiontime 8
+	painchance 100
+	mass 500
+	seesound "skeleton/sight"
+	painsound "cyber/hoof"
+	deathsound "skeleton/death"
+	MONSTER
+	+FLOORCLIP
+	+LONGMELEERANGE
+	+MISSILEMORE
+	states
+	{
+		Spawn:
+			CYBR AB 10 A_Look
+			loop
+		See:
+			CYBR AABBCCDD 3 A_Chase
+			loop
+		Pain:
+			CYBR G 10 A_Pain
+			goto See
+		Missile:
+		Melee:
+			SKEL G 10 A_FaceTarget
+			SKEL H 10 bright A_FaceTarget
+			SKEL I 10 bright A_SkelMissile
+			SKEL G 10 A_FaceTarget
+			goto See
+		Death:
+			CYBR H 5
+			CYBR I 5 A_Scream
+			CYBR JKL 5
+			CYBR M -1 A_Fall
+			stop
+	}
+}
+
+actor GuidedChaos replaces RevenantTracer
+{
+	scale 0.30
+	radius 11
+	height 8
+	speed 10
+	damage 10
+	deathsound "skeleton/active"
+	PROJECTILE
+	+SEEKERMISSILE 
+	+RANDOMIZE
+	seesound "skeleton/attack"
+	renderstyle Add
+	states
+	{
+		Spawn:
+			FATB AB 2 bright A_Tracer
+			loop
+		Death:
+			FBXP A 8 bright
+			FBXP B 6 bright
+			FBXP C 4 bright
+			stop
+	}
+}
+
+actor WhiteSpark replaces RevenantTracerSmoke
+{
+	renderstyle Translucent
+	alpha 0.5
+	+NOBLOCKMAP
+	states
+	{
+		Spawn:
+			TRE1 A 300 bright
+			stop
+	}
+}
+
+actor Obstacle1 replaces Fatso
+{
+	health 600
+	speed 8
+	radius 48
+	height 64
+	painchance 80
+	mass 1000
+	MONSTER
+	+SHOOTABLE
+	+FLOORCLIP
+	-COUNTKILL
+	states
+	{
+		Spawn:
+			HEAD A 1 A_Look
+			loop
+		See:
+		Death:
+			HEAD H 8 A_Scream
+			HEAD IJ 8
+			HEAD K 8 A_Fall
+			HEAD L -1
+			stop
+	}
+}
+
+actor Soldier replaces ChaingunGuy
+{
+	scale 0.30
+	health 150
+	speed 8
+	radius 20
+	height 56
+	reactiontime 8
+	painchance 170
+	mass 100
+	seesound "imp/sight"
+	painsound "vile/pain"
+	attacksound "chainguy/attack"
+	deathsound "chainguy/death"
+	activesound "chainguy/active"
+	dropitem "Minigun" 256
+	MONSTER
+	+FLOORCLIP
+	states
+	{
+		Spawn:
+			CPOS AB 10 A_Look
+			loop
+		See:
+			CPOS AABBCCDD 3 A_Chase
+			loop
+		Missile:
+			CPOS E 10 A_FaceTarget
+			CPOS FE 4 bright A_CPosAttack
+			CPOS F 1 A_CPosRefire
+			goto Missile+1
+		Pain:
+			CPOS G 3
+			CPOS G 3 A_Pain
+			goto See
+		Death:
+			CPOS H 5
+			CPOS I 5 A_Scream
+			CPOS J 5 A_Fall
+			CPOS K 5
+			CPOS L -1
+			stop
+		XDeath:
+			SPOS M 5
+			SPOS N 5 A_XScream
+			SPOS O 5 A_Fall
+			SPOS PQRST 5
+			SPOS U -1
+			stop
+		Raise:
+			CPOS NMLKJIH 5
+			goto See
+	}
+}
+
+// Probably unused
+actor Unknown1 replaces DoomImp
+{
+	health 60
+	speed 8
+	radius 20
+	height 56
+	reactiontime 8
+	painchance 200
+	mass 100
+	seesound "imp/sight"
+	painsound "imp/pain"
+	deathsound "imp/death"
+	MONSTER
+	+FLOORCLIP
+	states
+	{
+		Spawn:
+			TROO AB 10 A_Look
+			loop
+		See:
+			TROO AABBCC 3 A_Chase
+			loop
+		Pain:
+			TROO G 1 bright
+			loop
+		Melee:
+		Missile:
+			TROO E 8 A_FaceTarget
+			TROO F 8 A_SargAttack
+		See2:
+			BOSS AABBCCDD 3 A_Chase
+			loop
+		Death:
+			TROO I 8
+			TROO J 8 A_Scream
+			TROO K 6
+			TROO L 6 A_Fall
+			TROO M -1
+			stop
+		XDeath:
+			TROO N 5
+			TROO O 5 A_XScream
+			TROO P 5
+			TROO Q 5 A_Fall
+			TROO RST 5
+			TROO U -1
+			stop
+		Raise:
+			TROO ML 8
+			TROO KJI 6
+			goto See
+	}
+}
+
+actor Unknown2 replaces Demon
+{
+	health 1000
+	speed 10
+	radius 30
+	height 56
+	reactiontime 0
+	painchance 180
+	mass 400
+	seesound "weapons/sawfull"
+	states
+	{
+		Spawn:
+			HEAD A 1 A_Look
+			loop
+		See:
+		Death:
+			HEAD H 8 A_Scream
+			HEAD IJ 8
+			HEAD K 8 A_Fall
+			HEAD L -1
+			stop
+	}
+}
+
+actor Critter replaces BaronOfHell
+{
+	scale 0.33
+	health 40
+	speed 12
+	radius 24
+	height 22
+	reactiontime 8
+	painchance 50
+	mass 1000
+	seesound "baron/sight"
+	painsound "baron/pain"
+	deathsound "baron/death"
+	MONSTER
+	-SOLID
+	-COUNTKILL
+	states
+	{
+		Spawn:
+			BOSS AB 10 A_Look
+			loop
+		See:
+			BOSS AABBCCDD 3 A_Chase
+			loop
+		Pain:
+			BOSS I 0 A_Die
+		Death:
+			BOSS I 8
+			BOSS J 8 A_Scream
+			BOSS K 8
+			BOSS L 8 A_Fall
+			BOSS M -1 A_BossDeath
+			stop
+		Raise:
+			BOSS ONMLKJI 8
+			goto See
+	}
+}
+
+actor Mine replaces LostSoul
+{
+	scale 0.30
+	health 30
+	speed 0
+	radius 16
+	height 8
+	damage 3
+	painchance 256
+	mass 100
+	MONSTER
+	-SOLID
+	+NOICEDEATH
+	+DONTFALL
+	-COUNTKILL
+	+NOBLOOD
+	states
+	{
+		Spawn:
+			PAIN A 10 A_Look
+			loop
+		See:
+			PAIN AABB 3 A_Chase
+			loop
+		Melee:
+			BAL2 D 0 A_Die
+		Death:
+			BAL2 D 0 bright A_PlaySound("weapons/sshotc")
+			MISL B 8 bright A_Explode
+			MISL C 6 bright
+			MISL D 4 bright
+			BAL2 D 4 bright
+			BAL2 E 4 bright
+			stop
+	}
+}
+
+actor Echida replaces SpiderMastermind
+{
+	scale 0.33
+	health 5000
+	speed 12
+	radius 128
+	height 110
+	reactiontime 8
+	painchance 40
+	mass 1000
+	seesound "spider/sight"
+	attacksound "grunt/attack"
+	painsound "skull/melee"
+	deathsound "spider/death"
+	activesound "spider/active"
+	MONSTER
+	+BOSS
+	+FLOORCLIP
+	+NORADIUSDMG
+	+DONTMORPH
+	+MISSILEMORE
+	states
+	{
+		Spawn:
+			SPID AB 10 A_Look
+			loop
+		See:
+			SPID AABB 3 A_Chase
+			SPID C 3 A_Metal
+			SPID C 3 A_Chase
+			loop
+		Missile:
+			POSS A 10 A_FaceTarget
+			POSS B 10 bright A_SkelMissile
+			POSS B 10 bright A_FaceTarget
+			POSS C 10 A_FaceTarget
+			POSS D 10 bright A_SkelMissile
+			POSS D 10 bright A_FaceTarget
+			SPID A 20 bright A_FaceTarget
+			SPID GH 4 bright A_SPosAttack
+			SPID H 1 bright A_SpidRefire
+			goto Missile+7
+		Death:
+			SPID J 20 A_Scream
+			SPID K 10 A_Fall
+			SPID LMNOPQR 10
+			SPID S 30
+			SPID S -1 A_KeenDie
+			stop
+	}
+}
+
+actor WalkingPhage replaces Arachnotron
+{
+	scale 0.30
+	health 500
+	speed 12
+	radius 48
+	height 64
+	reactiontime 8
+	painchance 128
+	mass 600
+	seesound "baby/sight"
+	painsound "spider/pain"
+	MONSTER
+	+FLOORCLIP
+	states
+	{
+		Spawn:
+			SSWV AB 10 A_Look
+			loop
+		See:
+			SSWV AAABBCC 3 A_Chase
+			loop
+		Pain:
+			BOSS G 8 A_Pain
+			goto See
+		Missile:
+			BOSS E 20 A_FaceTarget
+			BOSS F 4 bright A_BspiAttack
+			BOSS F 4 bright
+			BOSS F 1 A_SpidRefire
+			goto Missile+1
+		Death:
+			SSWV N 7
+			SSWV O 7 A_PlaySound("weapons/sshotl")
+			SSWV P 6 A_Fall
+			SSWV QR 5
+			SSWV S -1
+			stop
+	}
+}
+
+actor WalkingPredator replaces Cyberdemon
+{
+	scale 0.30
+	health 3000
+	speed 16
+	radius 40
+	height 110
+	reactiontime 8
+	painchance 20
+	mass 1000
+	seesound "cyber/sight"
+	painsound "skull/melee"
+	deathsound "cyber/death"
+	activesound "cyber/active"
+	MONSTER
+	+BOSS
+	+FLOORCLIP
+	+NORADIUSDMG
+	+DONTMORPH
+	+MISSILEMORE
+	states
+	{
+		Spawn:
+			TROO AB 10 A_Look
+			loop
+		See:
+			TROO AABBCC 3 A_Chase
+			loop
+		Pain:
+			TROO D 3 A_Pain
+			goto See
+		Missile:
+			CYBR E 6 A_FaceTarget
+			CYBR F 12 bright A_PainAttack
+			CYBR E 12 A_FaceTarget
+			CYBR F 12 bright A_CyberAttack
+			CYBR E 12 A_FaceTarget
+			CYBR F 12 bright A_CyberAttack
+			goto See
+		Death:
+			SKEL M 7
+			SKEL N 7 A_Scream
+			SKEL O 7 A_Fall
+			SKEL P 7
+			SKEL Q -1
+	}
+}
+
+actor Unknown3 replaces PainElemental
+{
+	health 400
+	speed 8
+	radius 31
+	height 56
+	reactiontime 8
+	painchance 128
+	mass 400
+	seesound "pain/sight"
+	painsound "pain/pain"
+	deathsound "pain/death"
+	activesound "pain/active"
+	MONSTER
+	states
+	{
+		Spawn:
+			PAIN A 10 A_Look
+			loop
+		See:
+			PAIN AABB 3 A_Chase
+			loop
+		Missile:
+			PAIN DE 5 A_FaceTarget
+			PAIN F 5 bright A_FaceTarget
+			PAIN F 5 bright A_PainAttack
+			goto See
+		Death:
+			PAIN H 8 bright
+			PAIN I 8 bright A_Scream
+			PAIN JK 8 bright
+			PAIN L 8 bright A_PainDie
+			PAIN M 8 bright
+			stop
+		Raise:
+			PAIN MLKJIH 8
+			goto See
+	}
+}
+
+actor WalkingPhage2 replaces WolfensteinSS
+{
+	scale 0.30
+	health 50
+	speed 8
+	radius 20
+	height 56
+	reactiontime 8
+	painchance 170
+	mass 100
+	seesound "wolfss/sight"
+	painsound "wolfss/pain"
+	deathsound "wolfss/death"
+	activesound "wolfss/active"
+	MONSTER
+	states
+	{
+		Spawn:
+			SSWV AB 10 A_Look
+			loop
+		See:
+			SSWV AABBCC 3 A_Chase
+			loop
+		Pain:
+			SSWV H 3
+			SSWV H 3 A_Pain
+			goto See
+		Missile:
+			SSWV EF 10 A_FaceTarget
+			SSWV G 4 bright A_CPosAttack
+			SSWV F 6 A_FaceTarget
+			SSWV G 4 bright A_CPosAttack
+			SSWV F 1 A_CPosRefire
+			goto Missile+1
+		Death:
+			SSWV I 5
+			SSWV J 5 A_Scream
+			SSWV K 5 A_Fall
+			SSWV L 5
+			SSWV M -1
+			stop
+		XDeath:
+			SSWV N 7
+			SSWV O 7 A_PlaySound("weapons/sshotl")
+			SSWV P 6 A_Fall
+			SSWV QR 5
+			SSWV S -1
+			stop
+		Raise:
+			SSWV MLKJI 5
+			goto See
+	}
+}
+
+actor Unknown4 replaces BossEye
+{
+	health 1000
+	speed 0
+	radius 20
+	height 32
+	mass 100
+	+NOBLOCKMAP
+	+NOSECTOR
+	states
+	{
+		Spawn:
+			SSWV A 10 A_Look
+			loop
+		See:
+			SSWV A 181 A_BrainAwake
+			SSWV A 150 A_BrainSpit
+			wait
+	}
+}
+
+actor SecurityBeams replaces SpawnShot
+{
+	scale 0.30
+	health 1000
+	speed 40
+	radius 6
+	height 32
+	damage 3
+	mass 100
+	seesound "weapons/plasmaf"
+	deathsound "weapons/plasmax"
+	+NOGRAVITY
+	+NOCLIP
+	-ACTIVATEPCROSS
+	PROJECTILE
+	states
+	{
+		Spawn:
+			MISL A 1 bright
+			loop
+		Death:
+			PLSE A 6 bright
+			PLSE BCD 4 bright
+			stop
+	}
+}
+
+actor RedBarrel replaces ExplosiveBarrel
+{
+	scale 0.30
+	health 20
+	radius 10
+	height 42
+	mass 100
+	+SOLID
+	+SHOOTABLE
+	+NOBLOOD
+	+ACTIVATEMCROSS
+	+DONTGIB
+	+NOICEDEATH
+	+OLDRADIUSDMG
+	states
+	{
+		Spawn:
+			BAR1 AB 6
+			loop
+		Death:
+			BAL2 D 0 bright A_PlaySound("weapons/sshotc")
+			MISL B 8 bright A_Explode
+			MISL C 6 bright
+			MISL D 4 bright
+			BAL2 D 4 bright
+			BAL2 E 4 bright
+			stop
+	}
+}
+
+actor GrenadeExplosion replaces CacodemonBall
+{
+	scale 0.33
+	health 100
+	speed 8
+	radius 6
+	height 8
+	damage 2
+	mass 100
+	seesound "caco/attack"
+	deathsound "caco/shotx"
+	PROJECTILE
+	-NOGRAVITY
+	states
+	{
+		Spawn:
+			BAL2 AB 4 bright
+			loop
+		Death:
+			BAL2 C 100 bright
+			stop
+	}
+}
+
+actor Neutron replaces Rocket
+{
+	scale 0.30
+	health 1000
+	speed 30
+	radius 11
+	height 8
+	damage 20
+	seesound "weapons/rocklf"
+	deathsound "weapons/rocklx"
+	PROJECTILE
+	states
+	{
+		Spawn:
+			PLSS AB 6 bright
+			loop
+		Death:
+			MISL B 8 bright A_Explode
+			MISL C 6 bright
+			MISL D 4 bright
+			BAL2 D 4 bright
+			BAL2 E 4 bright
+			stop
+	}
+}
+
+actor HarmonyGrenade replaces PlasmaBall
+{
+	scale 0.30
+	health 1000
+	speed 40
+	radius 13
+	height 8
+	damage 5
+	mass 100
+	seesound "weapons/plasmaf"
+	PROJECTILE
+	states
+	{
+		Spawn:
+			MISL A 1 bright
+			loop
+		Death:
+			PLSE A 6 bright
+			PLSE BCD 4 bright
+			stop
+	}
+}
+
+actor TimeBomb replaces BFGBall
+{
+	scale 0.30
+	health 1000
+	speed 25
+	radius 13
+	height 8
+	damage 100
+	reactiontime 1
+	mass 100
+	deathsound "weapons/rocklx"
+	PROJECTILE
+	-NOGRAVITY
+	states
+	{
+		Spawn:
+			PLSS AB 6 bright
+			loop
+		Death:
+			MISL B 8 bright A_Explode
+			MISL C 6 bright
+			MISL D 4 bright
+			BAL2 D 4 bright
+			BAL2 E 4 bright
+			stop
+	}
+}
+
+actor PhageNeutron replaces ArachnotronPlasma
+{
+	scale 0.30
+	health 1000
+	speed 40
+	radius 13
+	height 8
+	damage 5
+	mass 100
+	seesound "weapons/plasmaf"
+	PROJECTILE
+	states
+	{
+		Spawn:
+			TROO G 1 bright
+			loop
+		Death:
+			APBX A 6 bright
+			APBX BCD 4 bright
+			stop
+	}
+}
+
+actor HarmonyPuff : BulletPuff replaces BulletPuff
+{
+	scale 0.30
+}
+
+actor Idem : Blood replaces Blood
+{
+	scale 0.30
+}
+
+actor RedAmazoneArmor : GreenArmor replaces GreenArmor
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			ARM1 A -1
+			stop
+	}
+}
+
+actor NDFArmor : BlueArmor replaces BlueArmor
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			ARM2 A -1
+			stop
+	}
+}
+
+actor GreenKeycard : Key replaces BlueCard
+{
+	scale 0.30
+	radius 20
+	height 16
+	inventory.pickupmessage "$GOTBLUECARD"
+	inventory.icon "STKEYS0"
+	+NOTDMATCH
+	states
+	{
+		Spawn:
+			BKEY A 6 bright
+			TLMP A 6 bright
+			BKEY B 6 bright
+			TLMP B 6 bright
+			loop
+	}
+}
+
+actor PurpleKeycard : Key replaces RedCard
+{
+	scale 0.30
+	radius 20
+	height 16
+	inventory.pickupmessage "$GOTREDCARD"
+	inventory.icon "STKEYS2"
+	+NOTDMATCH
+	states
+	{
+		Spawn:
+			RKEY A 6 bright
+			TLP2 C 6 bright
+			RKEY B 6 bright
+			TLP2 D 6 bright
+			loop
+	}
+}
+
+actor YellowKeycard : Key replaces YellowCard
+{
+	scale 0.30
+	radius 20
+	height 16
+	inventory.pickupmessage "$GOTYELWCARD"
+	inventory.icon "STKEYS1"
+	+NOTDMATCH
+	states
+	{
+		Spawn:
+			YKEY A 6 bright
+			TLP2 A 6 bright
+			YKEY B 6 bright
+			TLP2 B 6 bright
+			loop
+	}
+}
+
+actor YellowPPKey : Key replaces YellowSkull
+{
+	scale 0.30
+	radius 20
+	height 16
+	inventory.pickupmessage "$GOTYELWSKUL"
+	inventory.icon "STKEYS4"
+	states
+	{
+		Spawn:
+			YSKU A 6 bright
+			TBLU A 6 bright
+			YSKU B 6 bright
+			TBLU B 6 bright
+			loop
+	}
+}
+
+actor PurplePPKey : Key replaces RedSkull
+{
+	scale 0.30
+	radius 20
+	height 16
+	inventory.pickupmessage "$GOTREDSKUL"
+	inventory.icon "STKEYS5"
+	states
+	{
+		Spawn:
+			RSKU A 6 bright
+			TBLU C 6 bright
+			RSKU B 6 bright
+			TBLU D 6 bright
+			loop
+	}
+}
+
+actor GreenPPKey : Key replaces BlueSkull
+{
+	scale 0.30
+	radius 20
+	height 16
+	inventory.pickupmessage "$GOTBLUESKUL"
+	inventory.icon "STKEYS3"
+	states
+	{
+		Spawn:
+			BSKU A 6 bright
+			TLMP C 6 bright
+			BSKU B 6 bright
+			TLMP D 6 bright
+			loop
+	}
+}
+
+actor HealingMushroom : Stimpack replaces Stimpack
+{
+	scale 0.30
+}
+
+actor Medkit : Medikit replaces Medikit
+{
+	scale 0.30
+}
+
+actor BigHealingMushroom : Soulsphere replaces Soulsphere
+{
+	scale 0.30
+}
+
+actor ComputerMap : Allmap replaces Allmap
+{
+	scale 0.30
+}
+
+// This is no longer used for ammo.
+actor Flies replaces Clip
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			CEYE A 200
+		Idle:
+			CEYE BC 4
+			COL5 A 4
+			loop
+	}
+}
+
+actor MinigunAmmo : Ammo replaces ClipBox
+{
+	scale 0.30
+	inventory.pickupmessage "$GOTCLIPBOX"
+	inventory.amount 40
+	inventory.maxamount 200
+	inventory.icon "AMMOICON"
+	ammo.backpackamount 8
+	ammo.backpackmaxamount 400
+	states
+	{
+		Spawn:
+			AMMO A -1
+			stop
+	}
+}
+
+actor TimeBombAmmo : Ammo replaces RocketAmmo
+{
+	scale 0.30
+	inventory.pickupmessage "$GOTROCKET"
+	inventory.amount 1
+	inventory.maxamount 24
+	inventory.icon "ROCKICON"
+	ammo.backpackamount 1
+	ammo.backpackmaxamount 48
+	states
+	{
+		Spawn:
+			ROCK A -1
+			stop
+	}
+}
+
+actor BeltWithGrenades : TimeBombAmmo replaces RocketBox
+{
+	scale 0.30
+	inventory.pickupmessage "$GOTROCKBOX"
+	inventory.amount 5
+	states
+	{
+		Spawn:
+			BROK A -1
+			stop
+	}
+}
+
+actor ChaosBarsAmmo : Ammo replaces Cell
+{
+	inventory.pickupmessage "$GOTCELL"
+	inventory.amount 20
+	inventory.maxamount 240
+	inventory.icon "CELPICON"
+	ammo.backpackamount 20
+	ammo.backpackmaxamount 480
+	states
+	{
+		Spawn:
+			CELL A -1
+			stop
+	}
+}
+
+actor ChoasBars : ChaosBarsAmmo replaces CellPack
+{
+	scale 0.30
+	inventory.pickupmessage "$GOTCELLBOX"
+	inventory.amount 100
+	states
+	{
+		Spawn:
+			CELP A -1
+			stop
+	}
+}
+
+actor Shells : Ammo replaces Shell
+{
+	scale 0.30
+	inventory.pickupmessage "$GOTSHELLS"
+	inventory.amount 2
+	inventory.maxamount 24
+	inventory.icon "SBOXICON"
+	ammo.backpackamount 2
+	ammo.backpackmaxamount 48
+	states
+	{
+		Spawn:
+			SHEL A -1
+			stop
+	}
+}
+
+actor BoxOfShells : Shells replaces ShellBox
+{
+	scale 0.30
+	inventory.pickupmessage "$GOTSHELLBOX"
+	inventory.amount 10
+	states
+	{
+		Spawn:
+			SBOX A -1
+			stop
+	}
+}
+
+actor HarmonyBackpack : Backpack replaces Backpack
+{
+	scale 0.30
+}
+
+actor TimeBombWeapon : Weapon replaces BFG9000
+{
+	scale 0.30
+	weapon.kickback 100
+	weapon.selectionorder 2800
+	weapon.ammouse 1
+	weapon.ammogive 2
+	weapon.ammotype "TimeBombAmmo"
+	inventory.pickupmessage "$GOTBFG9000"
+	inventory.icon "BFUGA0"
+	+WEAPON.NOAUTOFIRE
+	+WEAPON.NOAUTOAIM
+	states
+	{
+		Select:
+			BFGG A 1 A_Raise
+			loop
+		Deselect:
+			BFGG A 1 A_Lower
+			loop
+		Ready:
+			BFGG A 1 A_WeaponReady
+			loop
+		Fire:
+			SHT2 A 3
+			SHT2 A 7 A_CheckReload
+			SHT2 B 1 A_BFGSound
+			SHT2 B 7
+			SHT2 C 6
+			SHT2 D 7 A_FireBFG
+			SHT2 E 7
+			SHT2 F 7 A_Light0
+			SHT2 H 6 A_Light0
+			SHT2 A 5 A_Refire
+			goto Ready
+		Flash:
+			BFGF A 11 bright A_Light1
+			BFGF B 6 bright A_Light2
+			SHTG E 0 A_Light0
+			stop
+		Spawn:
+			BFUG A -1
+			stop
+	}
+}
+// The player should start with the hand grenades weapon, but no ammo.
+// TimeBombWeapon is used as the pickup which should only be picked up once 
+// in multi player.
+actor HandGrenades : TimeBombWeapon
+{
+	weapon.ammogive 0
+}
+
+actor Minigun : Weapon replaces Chaingun
+{
+	scale 0.30
+	weapon.selectionorder 700
+	weapon.ammouse 1
+	weapon.ammogive 16
+	weapon.ammotype "MinigunAmmo"
+	inventory.pickupmessage "$GOTCHAINGUN"
+	inventory.icon "MGUNA0"
+	Obituary "$OB_MPCHAINGUN"
+	states
+	{
+		Select:
+			CHGG A 1 A_Raise
+			loop
+		Deselect:
+			CHGG A 1 A_Lower
+			loop
+		Ready:
+			CHGG A 1 A_WeaponReady
+			loop
+		Fire:
+			PUNG A 4 bright A_FirePistol
+			PUNG A 0 bright A_FirePistol
+			SAWG A 4 bright A_FirePistol
+			SAWG A 0 bright A_FirePistol
+			PUNG A 4 bright A_FirePistol
+			PUNG A 0 bright A_FirePistol
+			SAWG A 4 bright A_FirePistol
+			SAWG A 0 bright A_FirePistol
+			CHGG AB 2 A_Refire
+			CHGG AB 4 A_Refire
+			goto Ready
+		Flash:
+			CHGF A 5 bright A_Light1
+			Goto LightDone
+			CHGF B 5 bright A_Light1
+			Goto LightDone
+		Spawn:
+			MGUN A -1
+			stop
+	}
+}
+
+actor GrenadeLauncher : Weapon replaces RocketLauncher
+{
+	scale 0.30
+	weapon.selectionorder 2500
+	weapon.ammouse 1
+	weapon.ammogive 2
+	weapon.ammotype "TimeBombAmmo"
+	inventory.pickupmessage "$GOTLAUNCHER"
+	inventory.icon "LAUNA0"
+	+WEAPON.NOAUTOFIRE
+	states
+	{
+		Select:
+			MISG A 1 A_Raise
+			loop
+		Deselect:
+			MISG A 1 A_Lower
+			loop
+		Ready:
+			MISG A 1 A_WeaponReady
+			loop
+		Fire:
+			MISG B 8 A_GunFlash
+			MISG B 26 A_FireMissile
+			MISG B 1 A_Refire
+			goto Ready
+		Flash:
+			MISF A 6 bright A_Light1
+			PUNG B 6 bright A_Light2
+			MISF B 8 bright
+			MISF CD 8 bright A_Light2
+			SHTG E 0 A_Light0
+			stop
+		Spawn:
+			LAUN A -1
+			stop
+	}
+}
+
+actor EntrophyThrower : Weapon replaces PlasmaRifle
+{
+	scale 0.30
+	weapon.selectionorder 100
+	weapon.ammouse 1
+	weapon.ammogive 40
+	weapon.ammotype "ChaosBarsAmmo"
+	inventory.pickupmessage "$GOTPLASMA"
+	inventory.icon "PLASA0"
+	states
+	{
+		Select:
+			PLSG A 1 A_Raise
+			loop
+		Deselect:
+			PLSG A 1 A_Lower
+			loop
+		Ready:
+			PLSG A 1 A_WeaponReady
+			loop
+		Fire:
+			PLSG A 3 A_FirePlasma
+			PLSG B 15 A_Refire
+			goto Ready
+		LightDone:
+			SHTG E 0 A_Light0
+			stop
+		Flash:
+			PLSF A 4 bright A_Light1
+			goto LightDone
+			PLSF A 4 bright A_Light1
+			goto LightDone
+		Spawn:
+			PLAS A -1
+			stop
+	}
+}
+
+actor Compensator : Weapon replaces Shotgun
+{
+	scale 0.30
+	weapon.selectionorder 1300
+	weapon.ammouse 1
+	weapon.ammogive 4
+	weapon.ammotype "Shells"
+	inventory.pickupmessage "$GOTSHOTGUN"
+	inventory.icon "SHOTA0"
+	obituary "$OB_MPSHOTGUN"
+	states
+	{
+		Select:
+			SHTG A 1 A_Raise
+			loop
+		Deselect:
+			SHTG A 1 A_Lower
+			loop
+		Ready:
+			SHTG A 1 A_WeaponReady
+			loop
+		Fire:
+			SHTG A 3
+			SHTG A 7 A_FireShotgun
+			SHTG BC 5
+			SHTG D 4
+			SHTG C 0 A_OpenShotgun2
+			SHTG CB 5
+			SHTG A 3
+			SHTG A 7 A_Refire
+			goto Ready
+		Flash:
+			SHTF A 4 bright A_Light1
+			SHTF B 3 bright A_Light2
+			SHTG E 0 A_Light0
+			stop
+		Spawn:
+			SHOT A -1
+			stop
+	}
+}
+
+actor NeutronGun : Weapon
+{
+	weapon.selectionorder 1900
+	obituary "$OB_MPPISTOL"
+	+WEAPON.WIMPY_WEAPON
+	states
+	{
+		Select:
+			PISG A 1 A_Raise
+			loop
+		Deselect:
+			PISG A 1 A_Lower
+			loop
+		Ready:
+			PISG A 1 A_WeaponReady
+			loop
+		Fire:
+			PISG A 4
+			PISG B 15 A_FirePlasma
+			PISG C 6
+			PISG B 6 A_Refire
+			goto Ready
+		Flash:
+			PISF A 7 bright A_Light1
+			SHTG E 0 A_Light0
+			stop
+	}
+}
+
+actor LaserLamp : Column replaces Column
+{
+	scale 0.30
+}
+
+actor BigMushroom : TallGreenColumn replaces TallGreenColumn
+{
+	scale 0.30
+}
+
+actor TruckPipe : ShortGreenColumn replaces ShortGreenColumn
+{
+	scale 0.30
+}
+
+actor AbductedAmira : TallRedColumn replaces TallRedColumn
+{
+	scale 0.33
+}
+
+actor ArtySphereWithHeads : ShortRedColumn replaces ShortRedColumn
+{
+	scale 0.30
+}
+
+actor LoopingExplosion : HeartColumn replaces HeartColumn
+{
+	scale 0.33
+	states
+	{
+		Spawn:
+			MISL B 8 bright
+			MISL C 6 bright
+			MISL D 4 bright
+			BAL2 DE 4 bright
+			CEYE A 14 bright
+			loop
+	}
+}
+
+actor DrippingWater : FloatingSkull replaces FloatingSkull
+{
+	-SOLID
+	states
+	{
+		Spawn:
+			FSKU ABC 6
+			COL5 B 6
+			loop
+	}
+}
+
+// I have a feeling this actor isn't used anymore
+actor DeadBeastlingWithFlies : BlueTorch replaces BlueTorch
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			TBLU A 6 bright
+			YSKU B 6 bright
+			TBLU B 6 bright
+			YSKU A 6 bright
+			loop
+	}
+}
+
+actor Dopefish : GreenTorch replaces GreenTorch
+{
+	scale 0.50
+	states
+	{
+		Spawn:
+			TGRN ABCD 8
+			loop
+	}
+}
+
+actor GreenWaterSplash : RedTorch replaces RedTorch
+{
+	-SOLID
+	states
+	{
+		Spawn:
+			TRED ABCD 4
+			loop
+	}
+}
+
+actor Fire : ShortBlueTorch replaces ShortBlueTorch
+{
+	scale 0.30
+}
+
+actor CeilingSpark : ShortGreenTorch replaces ShortGreenTorch
+{
+	height 16
+	+SPAWNCEILING
+	+NOGRAVITY
+	-SOLID
+}
+
+actor Firebox : ShortRedTorch replaces ShortRedTorch
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			SMRT ABCD 4
+			loop
+	}
+}
+
+actor Unknown5 : Stalagtite replaces Stalagtite
+{
+	radius 8
+}
+
+actor TallLamp : TechPillar replaces TechPillar
+{
+	scale 0.30
+}
+
+actor WhiteCandle : Candlestick replaces Candlestick
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			CAND A 8 bright
+			CBRA A 8 bright
+			loop
+	}
+}
+
+actor WhiteCandle2 : Candelabra replaces Candelabra
+{
+	+SHOOTABLE
+	states
+	{
+		Spawn:
+			CBRA A 8 bright
+			CAND A 8 bright
+			loop
+	}
+}
+
+actor NeutronbeamBlocker replaces Meat3
+{
+	health 9900
+	mass 9000
+	radius 16
+	height 84
+	+SHOOTABLE
+	+NOBLOOD
+	states
+	{
+		Spawn:
+			GOR3 A -1
+			stop
+	}
+}
+
+actor HangingFire : BloodyTwitch replaces BloodyTwitch
+{
+	states
+	{
+		Spawn:
+			GOR1 ABCB 4
+			loop
+	}
+}
+
+actor HangingFire2 : HangingFire replaces NonsolidTwitch
+{
+	scale 0.30
+	-SOLID
+}
+
+actor DeadAmazone replaces DeadMarine
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			ARM2 B -1
+			stop
+	}
+}
+
+actor DeadBeastling : Beastling replaces DeadDemon
+{
+	skip_super
+	scale 0.30
+	states
+	{
+		Spawn:
+			goto Super::Death+4
+	}
+}
+
+actor DeadFollower : DeadShotgunGuy replaces DeadShotgunGuy
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			ARM1 B -1
+			stop
+	}
+}
+
+actor Tentacle : HeadsOnAStick replaces HeadsOnAStick
+{
+	scale 0.30
+}
+
+actor SilverRocket : HeadOnAStick replaces HeadOnAStick
+{
+	scale 0.30
+	states
+	{
+		Spawn:
+			SMT2 A -1
+			stop
+	}
+}
+
+actor SilverRocketLaunched : HeadCandles replaces HeadCandles
+{
+	scale 0.30
+}
+
+actor ShootableCrate : LiveStick replaces LiveStick
+{
+	scale 0.30
+}
+
+actor LargeTree : BigTree replaces BigTree
+{
+	scale 0.30
+}
+
+actor HangingChain : HangNoGuts replaces HangNoGuts
+{
+	-SOLID
+}
+
+actor StoredMiniguns : HangBNoBrain replaces HangBNoBrain
+{
+	scale 0.30
+	-NOGRAVITY
+	-SPAWNCEILING
+}
+
+actor StoredShotguns : HangTLookingDown replaces HangTLookingDown
+{
+	scale 0.30
+	-NOGRAVITY
+	-SPAWNCEILING
+}
+
+actor Unknown6 replaces HangTSkull
+{
+	speed 12
+	radius 16
+	height 64
+	mass 100
+	reactiontime 0
+	+FLOAT
+	+SPAWNCEILING
+	states
+	{
+		Spawn:
+			HEAD A 1 A_Look
+			loop
+		See:
+			SPOS AABBCCDD 3 A_Chase
+			loop
+	}
+}
+
+actor CrateExplosion replaces ColonGibs
+{
+	scale 0.33
+	speed 0
+	radius 20
+	height 16
+	reactiontime 0
+	mass 100
+	seesound "weapons/rocklx"
+	states
+	{
+		Spawn:
+			HEAD A 1 A_Look
+			loop
+		See:
+			MISL B 8 bright A_Explode
+			MISL C 6 bright
+			MISL D 4 bright
+			BAL2 D 4 bright
+			BAL2 E 4 bright
+			stop
+	}
+}
+
+actor HangingLight : BrainStem replaces BrainStem
+{
+	scale 0.25
+	+SPAWNCEILING
+	+NOGRAVITY
+}

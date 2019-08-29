@@ -51,7 +51,7 @@ void HWDrawInfo::DispatchRenderHacks()
 	TMap<int, gl_subsectorrendernode*>::Pair *pair;
 	TMap<int, gl_floodrendernode*>::Pair *fpair;
 	TMap<int, gl_subsectorrendernode*>::Iterator ofi(otherFloorPlanes);
-	GLFlat glflat;
+	HWFlat glflat;
 	glflat.section = nullptr;
 	while (ofi.NextPair(pair))
 	{
@@ -679,8 +679,8 @@ void HWDrawInfo::CreateFloodStencilPoly(wallseg * ws, FFlatVertex *vertices)
 {
 	vertices[0].Set(ws->x1, ws->z1, ws->y1, 0, 0);
 	vertices[1].Set(ws->x1, ws->z2, ws->y1, 0, 0);
-	vertices[2].Set(ws->x2, ws->z2, ws->y2, 0, 0);
-	vertices[3].Set(ws->x2, ws->z1, ws->y2, 0, 0);
+	vertices[2].Set(ws->x2, ws->z1, ws->y2, 0, 0);
+	vertices[3].Set(ws->x2, ws->z2, ws->y2, 0, 0);
 }
 
 //==========================================================================
@@ -712,8 +712,8 @@ void HWDrawInfo::CreateFloodPoly(wallseg * ws, FFlatVertex *vertices, float plan
 
 	vertices[0].Set(px1, planez, py1, px1 / 64, -py1 / 64);
 	vertices[1].Set(px2, planez, py2, px2 / 64, -py2 / 64);
-	vertices[2].Set(px3, planez, py3, px3 / 64, -py3 / 64);
-	vertices[3].Set(px4, planez, py4, px4 / 64, -py4 / 64);
+	vertices[2].Set(px4, planez, py4, px4 / 64, -py4 / 64);
+	vertices[3].Set(px3, planez, py3, px3 / 64, -py3 / 64);
 }
 
 //==========================================================================
@@ -1114,7 +1114,7 @@ void HWDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
     for(unsigned int j=0;j<lowersegs.Size();j++)
     {
         seg_t * seg=lowersegs[j];
-        GLWall wall;
+        HWWall wall;
         wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
         rendered_lines++;
     }

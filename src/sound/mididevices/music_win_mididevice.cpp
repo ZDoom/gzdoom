@@ -34,7 +34,9 @@
 
 #ifdef _WIN32
 
-#include "i_midi_win32.h"
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <mmsystem.h>
 
 // HEADER FILES ------------------------------------------------------------
 

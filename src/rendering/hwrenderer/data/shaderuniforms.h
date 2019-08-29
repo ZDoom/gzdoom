@@ -8,7 +8,10 @@ enum
 {
 	LIGHTBUF_BINDINGPOINT = 1,
 	POSTPROCESS_BINDINGPOINT = 2,
-	VIEWPOINT_BINDINGPOINT = 3
+	VIEWPOINT_BINDINGPOINT = 3,
+	LIGHTNODES_BINDINGPOINT = 4,
+	LIGHTLINES_BINDINGPOINT = 5,
+	LIGHTLIST_BINDINGPOINT = 6
 };
 
 enum class UniformType
@@ -46,7 +49,11 @@ public:
 	{
 		FString decl;
 		FString layout;
-		if (screen->glslversion < 4.20)
+		if (bindingpoint == -1)
+		{
+			layout = "push_constant";
+		}
+		else if (screen->glslversion < 4.20)
 		{
 			layout = "std140";
 		}
@@ -116,17 +123,19 @@ public:
 	void Init()
 	{
 		if (mBuffer == nullptr)
-			mBuffer = screen->CreateDataBuffer(bindingpoint, false);
+			mBuffer = screen->CreateDataBuffer(bindingpoint, false, false);
 	}
 
-	void Set(bool bind = true)
+	void SetData()
 	{
 		if (mBuffer != nullptr)
 			mBuffer->SetData(sizeof(T), &Values);
+	}
 
-		// Let's hope this can be done better when things have moved further ahead.
-		// This really is not the best place to add something that depends on API behavior.
-		if (bind) mBuffer->BindBase();
+	IDataBuffer* GetBuffer() const
+	{
+		// OpenGL needs to mess around with this in ways that should not be part of the interface.
+		return mBuffer;
 	}
 
 	T *operator->() { return &Values; }

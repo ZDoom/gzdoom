@@ -231,7 +231,7 @@ class PlayerPawn : Actor
 
 	virtual void OnRespawn()
 	{
-		if (sv_respawnprotect && (multiplayer || alwaysapplydmflags))
+		if (sv_respawnprotect && (deathmatch || alwaysapplydmflags))
 		{
 			let invul = Powerup(Spawn("PowerInvulnerable"));
 			invul.EffectTics = 3 * TICRATE;
@@ -252,7 +252,7 @@ class PlayerPawn : Actor
 		if (victim.player != player && victim.IsTeammate(self))
 		{
 			victim = self;
-			return String.Format("$OB_FRIENDLY%c", random[Obituary](49, 53));
+			return String.Format("$OB_FRIENDLY%d", random[Obituary](1, 4));
 		}
 		else
 		{
@@ -718,7 +718,7 @@ class PlayerPawn : Actor
 		}		
 
 		if ((player.cmd.buttons & BT_USE ||
-			((multiplayer || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
+			((deathmatch || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
 		{
 			if (Level.maptime >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
 			{
@@ -1834,9 +1834,7 @@ class PlayerPawn : Actor
 		// BasicArmor must come right after that. It should not affect any
 		// other protection item as well but needs to process the damage
 		// before the HexenArmor does.
-		let barmor = BasicArmor(Spawn('BasicArmor'));
-		barmor.BecomeItem ();
-		AddInventory (barmor);
+		GiveInventoryType('BasicArmor');
 
 		// Now add the items from the DECORATE definition
 		let di = GetDropItems();
@@ -1885,7 +1883,7 @@ class PlayerPawn : Actor
 							// This problem is only detectable when it's too late to do something about it...
 							ThrowAbortException("Cannot give morph item '%s' when starting a game!", di.Name);
 						}
-						}
+					}
 					let weap = Weapon(item);
 					if (weap != NULL && weap.CheckAmmo(Weapon.EitherFire, false))
 					{
@@ -2544,6 +2542,7 @@ class PSprite : Object native play
 	native bool bPowDouble;
 	native bool bCVarFast;
 	native bool bFlip;	
+	native bool bMirror;
 	
 	native void SetState(State newstate, bool pending = false);
 
@@ -2693,6 +2692,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native PSprite FindPSprite(int id) const;
 	native void SetLogNumber (int text);
 	native void SetLogText (String text);
+	native void SetSubtitleNumber (int text, Sound sound_id = 0);
 	native bool Resurrect();
 
 	native String GetUserName() const;

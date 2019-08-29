@@ -82,6 +82,8 @@ static const FLOP FxFlops[] =
 	{ NAME_CosH,	FLOP_COSH,		[](double v) { return g_cosh(v); } },
 	{ NAME_SinH,	FLOP_SINH,		[](double v) { return g_sinh(v); } },
 	{ NAME_TanH,	FLOP_TANH,		[](double v) { return g_tanh(v); } },
+
+	{ NAME_Round,	FLOP_ROUND,		[](double v) { return round(v);  } },
 };
 
 
@@ -4835,7 +4837,7 @@ ExpEmit FxConditional::Emit(VMFunctionBuilder *build)
 			// If this is a local variable we need another register for the result.
 			if (trueop.Fixed)
 			{
-				out = ExpEmit(build, trueop.RegType);
+				out = ExpEmit(build, trueop.RegType, trueop.RegCount);
 				build->Emit(truex->ValueType->GetMoveOp(), out.RegNum, trueop.RegNum, 0);
 			}
 			else out = trueop;
@@ -6127,18 +6129,17 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 			{
 				if (sym->mVersion <= ctx.Version)
 				{
-					if (!(ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) == 0)
-					{
-						ScriptPosition.Message(MSG_WARNING, "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
-					}
-					else
-					{
-						// Allow use of deprecated symbols in deprecated functions of the internal code. This is meant to allow deprecated code to remain as it was, 
-						// even if it depends on some deprecated symbol. 
-						// The main motivation here is to keep the deprecated static functions accessing the global level variable as they were.
-						// Print these only if debug output is active and at the highest verbosity level.
-						ScriptPosition.Message(MSG_DEBUGMSG, TEXTCOLOR_BLUE "Accessing deprecated global variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
-					}
+					// Allow use of deprecated symbols in deprecated functions of the internal code. This is meant to allow deprecated code to remain as it was, 
+					// even if it depends on some deprecated symbol. 
+					// The main motivation here is to keep the deprecated static functions accessing the global level variable as they were.
+					// Print these only if debug output is active and at the highest verbosity level.
+					const bool internal = (ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) == 0;
+					const FString &deprecationMessage = vsym->DeprecationMessage;
+
+					ScriptPosition.Message(internal ? MSG_DEBUGMSG : MSG_WARNING, 
+						"%sAccessing deprecated global variable %s - deprecated since %d.%d.%d%s%s", internal ? TEXTCOLOR_BLUE : "",
+						sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision,
+						deprecationMessage.IsEmpty() ? "" : ", ", deprecationMessage.GetChars());
 				}
 			}
 			
@@ -6234,7 +6235,9 @@ FxExpression *FxIdentifier::ResolveMember(FCompileContext &ctx, PContainerType *
 			{
 				if (sym->mVersion <= ctx.Version)
 				{
-					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision);
+					const FString &deprecationMessage = vsym->DeprecationMessage;
+					ScriptPosition.Message(MSG_WARNING, "Accessing deprecated member variable %s - deprecated since %d.%d.%d%s%s", sym->SymbolName.GetChars(), vsym->mVersion.major, vsym->mVersion.minor, vsym->mVersion.revision,
+						deprecationMessage.IsEmpty() ? "" : ", ", deprecationMessage.GetChars());
 				}
 			}
 
@@ -7343,6 +7346,10 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
 			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
+		else if (Array->ExprType == EFX_ArrayElement)
+		{
+			SizeAddr = ~0u;
+		}
 		else
 		{
 			ScriptPosition.Message(MSG_ERROR, "Invalid resizable array");
@@ -7415,30 +7422,54 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	ExpEmit arrayvar = Array->Emit(build);
 	ExpEmit start;
 	ExpEmit bound;
-
+	bool nestedarray = false;
+	
 	if (SizeAddr != ~0u)
 	{
 		bool ismeta = Array->ExprType == EFX_ClassMember && static_cast<FxClassMember*>(Array)->membervar->Flags & VARF_Meta;
+
+		start = ExpEmit(build, REGT_POINTER);
+		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
+
+		auto f = Create<PField>(NAME_None, TypeUInt32, ismeta? VARF_Meta : 0, SizeAddr);
+		auto arraymemberbase = static_cast<FxMemberBase *>(Array);
+
+		auto origmembervar = arraymemberbase->membervar;
+		auto origaddrreq = arraymemberbase->AddressRequested;
+		auto origvaluetype = Array->ValueType;
+
+		arraymemberbase->membervar = f;
+		arraymemberbase->AddressRequested = false;
+		Array->ValueType = TypeUInt32;
+
+		bound = Array->Emit(build);
+
+		arraymemberbase->membervar = origmembervar;
+		arraymemberbase->AddressRequested = origaddrreq;
+		Array->ValueType = origvaluetype;
+
+		arrayvar.Free(build);
+	}
+	else if (Array->ExprType == EFX_ArrayElement && Array->isStaticArray())
+	{
+		bound = ExpEmit(build, REGT_INT);
+		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(myoffsetof(FArray, Count)));
 
 		arrayvar.Free(build);
 		start = ExpEmit(build, REGT_POINTER);
 		build->Emit(OP_LP, start.RegNum, arrayvar.RegNum, build->GetConstantInt(0));
 
-		auto f = Create<PField>(NAME_None, TypeUInt32, ismeta? VARF_Meta : 0, SizeAddr);
-		static_cast<FxMemberBase *>(Array)->membervar = f;
-		static_cast<FxMemberBase *>(Array)->AddressRequested = false;
-		Array->ValueType = TypeUInt32;
-		bound = Array->Emit(build);
+		nestedarray = true;
 	}
 	else start = arrayvar;
 
 	if (index->isConstant())
 	{
 		unsigned indexval = static_cast<FxConstant *>(index)->GetValue().GetInt();
-		assert(SizeAddr != ~0u || (indexval < arraytype->ElementCount && "Array index out of bounds"));
+		assert(SizeAddr != ~0u || nestedarray || (indexval < arraytype->ElementCount && "Array index out of bounds"));
 
 		// For resizable arrays we even need to check the bounds if if the index is constant because they are not known at compile time.
-		if (SizeAddr != ~0u)
+		if (SizeAddr != ~0u || nestedarray)
 		{
 			ExpEmit indexreg(build, REGT_INT);
 			build->EmitLoadInt(indexreg.RegNum, indexval);
@@ -7485,7 +7516,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	else
 	{
 		ExpEmit indexv(index->Emit(build));
-		if (SizeAddr != ~0u)
+		if (SizeAddr != ~0u || nestedarray)
 		{
 			build->Emit(OP_BOUND_R, indexv.RegNum, bound.RegNum);
 			bound.Free(build);
@@ -7690,7 +7721,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 
 	if (ctx.Class != nullptr)
 	{
-		PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version);
+		PFunction *afd = FindClassMemberFunction(ctx.Class, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version, !ctx.FromDecorate);
 
 		if (afd != nullptr)
 		{
@@ -8092,7 +8123,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					if (novirtual)
 					{
 						bool error;
-						PFunction *afd = FindClassMemberFunction(ccls, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version);
+						PFunction *afd = FindClassMemberFunction(ccls, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version, !ctx.FromDecorate);
 						if ((nullptr != afd) && (afd->Variants[0].Flags & VARF_Method) && (afd->Variants[0].Flags & VARF_Virtual))
 						{
 							staticonly = false;
@@ -8399,7 +8430,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 
 isresolved:
 	bool error = false;
-	PFunction *afd = FindClassMemberFunction(cls, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version);
+	PFunction *afd = FindClassMemberFunction(cls, ctx.Class, MethodName, ScriptPosition, &error, ctx.Version, !ctx.FromDecorate);
 	if (error)
 	{
 		delete this;
@@ -8746,7 +8777,9 @@ bool FxVMFunctionCall::CheckAccessibility(const VersionInfo &ver)
 	{
 		if (Function->mVersion <= ver)
 		{
-			ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision);
+			const FString &deprecationMessage = Function->Variants[0].DeprecationMessage;
+			ScriptPosition.Message(MSG_WARNING, "Accessing deprecated function %s - deprecated since %d.%d.%d%s%s", Function->SymbolName.GetChars(), Function->mVersion.major, Function->mVersion.minor, Function->mVersion.revision, 
+				deprecationMessage.IsEmpty() ? "" : ", ", deprecationMessage.GetChars());
 		}
 	}
 	return true;
@@ -11323,8 +11356,59 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 		{
 			if (RegNum == -1)
 			{
-				if (!(VarFlags & VARF_Out)) RegNum = build->Registers[ValueType->GetRegType()].Get(RegCount);
-				else RegNum = build->Registers[REGT_POINTER].Get(1);
+				if (!(VarFlags & VARF_Out))
+				{
+					const int regType = ValueType->GetRegType();
+					assert(regType <= REGT_TYPE);
+
+					auto& registers = build->Registers[regType];
+					RegNum = registers.Get(RegCount);
+
+					// Check for reused registers and clean them if needed
+					bool useDirtyRegisters = false;
+
+					for (int reg = RegNum, end = RegNum + RegCount; reg < end; ++reg)
+					{
+						if (!registers.IsDirty(reg))
+						{
+							continue;
+						}
+
+						useDirtyRegisters = true;
+
+						switch (regType)
+						{
+						case REGT_INT:
+							build->Emit(OP_LI, reg, 0, 0);
+							break;
+
+						case REGT_FLOAT:
+							build->Emit(OP_LKF, reg, build->GetConstantFloat(0.0));
+							break;
+
+						case REGT_STRING:
+							build->Emit(OP_LKS, reg, build->GetConstantString(nullptr));
+							break;
+
+						case REGT_POINTER:
+							build->Emit(OP_LKP, reg, build->GetConstantAddress(nullptr));
+							break;
+
+						default:
+							assert(false);
+							break;
+						}
+					}
+
+					if (useDirtyRegisters)
+					{
+						ScriptPosition.Message(MSG_DEBUGMSG, "Implicit initialization of variable %s", Name.GetChars());
+					}
+				}
+				else
+				{
+					RegNum = build->Registers[REGT_POINTER].Get(1);
+				}
 			}
 		}
 		else

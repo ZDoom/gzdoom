@@ -1,0 +1,7 @@
+gameinfo
+{
+	finalepage = "ORDER"
+	infopage = "ORDER", "HELP1", "HELP2", "CREDIT"
+	borderflat = "FLOOR04"
+}
+

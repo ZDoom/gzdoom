@@ -39,7 +39,6 @@
 #include "v_video.h"
 #include "r_defs.h"
 #include "r_utility.h"
-#include "r_renderer.h"
 #include "doomstat.h"
 #include "gi.h"
 #include "g_level.h"
@@ -86,6 +85,28 @@ int GetUIScale(int altval)
 	int max = MAX(vmax, hmax);
 	return MAX(1,MIN(scaleval, max));
 }
+
+// The new console font is twice as high, so the scaling calculation must factor that in.
+int GetConScale(int altval)
+{
+	int scaleval;
+	if (altval > 0) scaleval = (altval+1) / 2;
+	else if (uiscale == 0)
+	{
+		// Default should try to scale to 640x400
+		int vscale = screen->GetHeight() / 800;
+		int hscale = screen->GetWidth() / 1280;
+		scaleval = clamp(vscale, 1, hscale);
+	}
+	else scaleval = (uiscale+1) / 2;
+
+	// block scales that result in something larger than the current screen.
+	int vmax = screen->GetHeight() / 400;
+	int hmax = screen->GetWidth() / 640;
+	int max = MAX(vmax, hmax);
+	return MAX(1, MIN(scaleval, max));
+}
+
 
 // [RH] Stretch values to make a 320x200 image best fit the screen
 // without using fractional steppings
@@ -523,6 +544,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->srcwidth = 1.;
 	parms->srcheight = 1.;
 	parms->burn = false;
+	parms->monospace = EMonospacing::Off;
+	parms->spacing = 0;
 
 	// Parse the tag list for attributes. (For floating point attributes,
 	// consider that the C ABI dictates that all floats be promoted to
@@ -874,7 +897,15 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 		case DTA_CellY:
 			parms->celly = ListGetInt(tags);
 			break;
-		
+
+		case DTA_Monospace:
+			parms->monospace = ListGetInt(tags);
+			break;
+
+		case DTA_Spacing:
+			parms->spacing = ListGetInt(tags);
+			break;
+
 		case DTA_Burn:
 			parms->burn = true;
 			break;

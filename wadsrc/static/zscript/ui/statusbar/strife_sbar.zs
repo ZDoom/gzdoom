@@ -63,9 +63,9 @@ class StrifeStatusBar : BaseStatusBar
 
 		CursorImage = Images[imgINVCURS].IsValid() ? imgINVCURS : imgCURSOR01;
 		
-		mYelFont = HUDFont.Create("Indexfont_Strife_Yellow", 7, true, 1, 1);
-		mGrnFont = HUDFont.Create("Indexfont_Strife_Green", 7, true, 1, 1);
-		mBigFont = HUDFont.Create("BigFont", 0, false, 2, 2);
+		mYelFont = HUDFont.Create("Indexfont_Strife_Yellow", 7, Mono_CellLeft, 1, 1);
+		mGrnFont = HUDFont.Create("Indexfont_Strife_Green", 7, Mono_CellLeft, 1, 1);
+		mBigFont = HUDFont.Create("BigFont", 0, Mono_Off, 2, 2);
 	}
 
 	override void NewGame ()
@@ -109,7 +109,7 @@ class StrifeStatusBar : BaseStatusBar
 	override void ShowPop (int popnum)
 	{
 		Super.ShowPop(popnum);
-		if (popnum == CurrentPop)
+		if (popnum == CurrentPop || (popnum == POP_LOG && MustDrawLog(0)))
 		{
 			if (popnum == POP_Keys)
 			{
@@ -146,7 +146,7 @@ class StrifeStatusBar : BaseStatusBar
 	override bool MustDrawLog(int state)
 	{
 		// Tell the base class to draw the log if the pop screen won't be displayed.
-		return false;
+		return generic_ui || log_vgafont;
 	}
 
 	void Reset ()

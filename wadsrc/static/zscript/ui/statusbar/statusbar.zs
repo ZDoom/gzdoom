@@ -18,7 +18,7 @@ struct MugShot
 class HUDFont native ui
 {
 	native Font mFont;
-	native static HUDFont Create(Font fnt, int spacing = 0, bool monospaced = false, int shadowx = 0, int shadowy = 0);
+	native static HUDFont Create(Font fnt, int spacing = 0, EMonospacing monospacing = Mono_Off, int shadowx = 0, int shadowy = 0);
 }
 
 class InventoryBarState ui
@@ -306,8 +306,6 @@ class BaseStatusBar native ui
 	native double drawClip[4];		// defines a clipping rectangle (not used yet)
 	native bool fullscreenOffsets;	// current screen is displayed with fullscreen behavior.
 	
-	private HUDFont mSmallFont;
-	
 	native void AttachMessage(HUDMessageBase msg, uint msgid = 0, int layer = HUDMSGLayer_Default);
 	native HUDMessageBase DetachMessage(HUDMessageBase msg);
 	native HUDMessageBase DetachMessageID(uint msgid);
@@ -322,7 +320,6 @@ class BaseStatusBar native ui
 
 	virtual void Init() 
 	{
-		mSmallFont = HUDFont.Create("SmallFont");
 	}
 
 	native virtual void Tick ();
@@ -337,7 +334,14 @@ class BaseStatusBar native ui
 	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
-	
+
+	// [MK] let the HUD handle notifications and centered print messages
+	virtual bool ProcessNotify(EPrintLevel printlevel, String outline) { return false; }
+	virtual void FlushNotify() {}
+	virtual bool ProcessMidPrint(Font fnt, String msg, bool bold) { return false; }
+	// [MK] let the HUD handle drawing the chat prompt
+	virtual bool DrawChat(String txt) { return false; }
+
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
@@ -585,7 +589,7 @@ class BaseStatusBar native ui
 		}
 		//Hexen counts basic armor also so we should too.
 		let armor = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
-		if(armor != NULL)
+		if(armor != NULL && armor.Amount > 0)
 		{
 			add += armor.SavePercent * 100;
 		}
@@ -599,7 +603,7 @@ class BaseStatusBar native ui
 		if(CPlayer.mo.waterlevel < 3)
 			return Level.airsupply;
 		else
-			return max(CPlayer.air_finished - Level.time, 0);
+			return max(CPlayer.air_finished - Level.maptime, 0);
 	}
 	
 	int GetSelectedInventoryAmount()
@@ -831,81 +835,11 @@ class BaseStatusBar native ui
 	// automap HUD common drawer
 	// This is not called directly to give a status bar the opportunity to
 	// change the text colors. If you want to do something different,
-	// override DrawAutomap directly.
+	// override DrawAutomapHUD directly.
 	//
 	//============================================================================
 
-	protected void DoDrawAutomapHUD(int crdefault, int highlight)
-	{
-		let scale = GetHUDScale();
-		double textdist = 8. / scale.Y;
-		int height = SmallFont.GetHeight();
-		String printtext;
-		int SCREENWIDTH = screen.GetWidth();
-
-		BeginHUD();
-		
-		// Draw timer
-		let y = textdist;
-		let width = SmallFont.StringWidth("00:00:00");
-		if (am_showtime)
-		{
-			printtext = Level.TimeFormatted();
-			DrawString(mSmallFont, Level.TimeFormatted(), (-textdist-width, y), 0, crdefault);
-			y += height;
-		}
-		if (am_showtotaltime)
-		{
-			DrawString(mSmallFont, Level.TimeFormatted(true), (-textdist-width, y), 0, crdefault);
-		}
-
-		if (!deathmatch)
-		{
-			y = textdist;
-
-			// Draw monster count
-			if (am_showmonsters)
-			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_MONSTERS"), crdefault+65, Level.killed_monsters, Level.total_monsters), (textdist, y), 0, highlight);
-				y += height;
-			}
-
-			// Draw secret count
-			if (am_showsecrets)
-			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_SECRETS"), crdefault+65, Level.found_secrets, Level.total_secrets), (textdist, y), 0, highlight);
-				y += height;
-			}
-
-			// Draw item count
-			if (am_showitems)
-			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, Level.found_items, Level.total_items), (textdist, y), 0, highlight);
-			}
-		}
-
-		String mapname = Level.FormatMapName(crdefault);
-		BrokenLines lines = SmallFont.BreakLines(mapname, int(SCREENWIDTH / scale.X));
-		int numlines = lines.Count();
-		int finalwidth = int(SmallFont.StringWidth(lines.StringAt(numlines-1)) * scale.X);
-		
-		// calculate the top of the statusbar including any protrusion and transform it from status bar to screen space.
-		double tmp, hres;
-		[tmp, tmp, hres] = StatusbarToRealCoords(0, 0, HorizontalResolution);
-		int protrusion = GetProtrusion(finalwidth / hres);
-		[tmp, tmp, tmp, hres] = StatusbarToRealCoords(0, 0, 0, protrusion);
-	
-
-		// transform the top of the status bar position from screen to HUD space (a direct transformation from status bar to HUD space does not exist.)
-		y = (GetTopOfStatusBar() - hres) / scale.Y - height * numlines;
-
-		// Draw the texts centered above the status bar.
-		for(int i = 0; i < numlines; i++)
-		{
-			DrawString(mSmallFont, lines.StringAt(i), (0, y), DI_TEXT_ALIGN_CENTER|DI_SCREEN_HCENTER|DI_SCREEN_TOP, highlight);
-			y += height;
-		}
-	}
+	protected native void DoDrawAutomapHUD(int crdefault, int highlight);
 	
 	virtual void DrawAutomapHUD(double ticFrac)
 	{

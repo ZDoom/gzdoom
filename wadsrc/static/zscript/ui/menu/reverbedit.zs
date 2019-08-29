@@ -132,8 +132,7 @@ class OptionMenuItemReverbSelect : OptionMenuItemSubMenu
 		int x = drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
 
 		String text = ReverbEdit.GetSelectedEnvironment();
-		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
-		
+		drawValue(indent, y, OptionMenuSettings.mFontColorValue, text);
 		return indent;
 	}
 }
@@ -210,7 +209,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 
 	virtual String Represent()
 	{
-		return mEnter.GetText() .. SmallFont.GetCursor();
+		return mEnter.GetText() .. Menu.OptionFont().GetCursor();
 	}
 
 	//=============================================================================
@@ -221,7 +220,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 		mDrawX = indent + CursorSpace();
 		if (mEnter)
 		{
-			screen.DrawText(SmallFont, OptionMenuSettings.mFontColorValue, mDrawX, y, Represent(), DTA_CleanNoMove_1, true);
+			drawText(mDrawX, y, OptionMenuSettings.mFontColorValue, Represent());
 		}
 		else
 		{
@@ -235,7 +234,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 		if (mkey == Menu.MKEY_Enter)
 		{
 			Menu.MenuSound("menu/choose");
-			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), SmallFont, String.Format("%.3f", GetSliderValue()), -1, fromcontroller);
+			mEnter = TextEnterMenu.OpenTextEnter(Menu.GetCurrentMenu(), Menu.OptionFont(), String.Format("%.3f", GetSliderValue()), -1, fromcontroller);
 			mEnter.ActivateMenu();
 			return true;
 		}

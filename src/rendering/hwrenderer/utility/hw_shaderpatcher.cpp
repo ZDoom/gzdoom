@@ -69,6 +69,10 @@ static bool isShaderType(const char *name)
 FString RemoveLegacyUserUniforms(FString code)
 {
 	// User shaders must declare their uniforms via the GLDEFS file.
+
+	code.Substitute("uniform sampler2D tex;", "                      ");
+	code.Substitute("uniform float timer;", "                    ");
+
 	// The following code searches for legacy uniform declarations in the shader itself and replaces them with whitespace.
 
 	long len = (long)code.Len();
@@ -110,6 +114,24 @@ FString RemoveLegacyUserUniforms(FString code)
 		{
 			startIndex = matchIndex + 7;
 		}
+	}
+
+	// Also remove all occurences of the token 'texture2d'. Some shaders may still use this deprecated function to access a sampler.
+	// Modern GLSL only allows use of 'texture'.
+	while (true)
+	{
+		long matchIndex = code.IndexOf("texture2d", startIndex);
+		if (matchIndex == -1)
+			break;
+
+		// Check if this is a real token.
+		bool isKeywordStart = matchIndex == 0 || !isalnum(chars[matchIndex - 1] & 255);
+		bool isKeywordEnd = matchIndex + 9 == len || !isalnum(chars[matchIndex + 9] & 255);
+		if (isKeywordStart && isKeywordEnd)
+		{
+			chars[matchIndex + 7] = chars[matchIndex + 8] = ' ';
+		}
+		startIndex = matchIndex + 9;
 	}
 
 	code.UnlockBuffer();
@@ -185,3 +207,89 @@ FString RemoveSamplerBindings(FString code, TArray<std::pair<FString, int>> &sam
 	return code;
 }
 
+FString RemoveLayoutLocationDecl(FString code, const char *inoutkeyword)
+{
+	long len = (long)code.Len();
+	char *chars = code.LockBuffer();
+
+	long startIndex = 0;
+	while (true)
+	{
+		long matchIndex = code.IndexOf("layout(location", startIndex);
+		if (matchIndex == -1)
+			break;
+
+		long endIndex = matchIndex;
+
+		// Find end of layout declaration
+		while (chars[endIndex] != ')' && chars[endIndex] != 0)
+			endIndex++;
+
+		if (chars[endIndex] == ')')
+			endIndex++;
+		else if (chars[endIndex] == 0)
+			break;
+
+		// Skip whitespace
+		while (IsGlslWhitespace(chars[endIndex]))
+			endIndex++;
+
+		// keyword following the declaration?
+		bool keywordFound = true;
+		long i;
+		for (i = 0; inoutkeyword[i] != 0; i++)
+		{
+			if (chars[endIndex + i] != inoutkeyword[i])
+			{
+				keywordFound = false;
+				break;
+			}
+		}
+		if (keywordFound && IsGlslWhitespace(chars[endIndex + i]))
+		{
+			// yes - replace declaration with spaces
+			for (long i = matchIndex; i < endIndex; i++)
+				chars[i] = ' ';
+		}
+
+		startIndex = endIndex;
+	}
+
+	code.UnlockBuffer();
+
+	return code;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+// Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
+const FDefaultShader defaultshaders[] =
+{
+	{"Default",	"shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Warp 1",	"shaders/glsl/func_warp1.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Warp 2",	"shaders/glsl/func_warp2.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Brightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_normal.fp", "#define BRIGHTMAP\n"},
+	{"Specular", "shaders/glsl/func_spec.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
+	{"SpecularBrightmap", "shaders/glsl/func_spec.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n#define BRIGHTMAP\n"},
+	{"PBR","shaders/glsl/func_pbr.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"PBRBrightmap","shaders/glsl/func_pbr.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n#define BRIGHTMAP\n"},
+	{"Paletted",	"shaders/glsl/func_paletted.fp", "shaders/glsl/material_nolight.fp", ""},
+	{"No Texture", "shaders/glsl/func_notexture.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Software Fuzz", "shaders/glsl/fuzz_software.fp", "shaders/glsl/material_normal.fp", ""},
+	{nullptr,nullptr,nullptr,nullptr}
+};
+
+const FEffectShader effectshaders[] =
+{
+	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", nullptr, nullptr, "#define NO_ALPHATEST\n" },
+	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
+	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+};

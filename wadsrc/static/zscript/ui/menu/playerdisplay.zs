@@ -154,7 +154,7 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 
 	bool UpdatePlayerClass()
 	{
-		if (mOwner.mSelectedItem >= 0)
+		if (mOwner && mOwner.mSelectedItem >= 0)
 		{
 			int classnum;
 			Name seltype;
@@ -286,6 +286,69 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 						DTA_TranslationIndex, trans,
 						DTA_FlipX, flip);
 				}
+			}
+		}
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class PlayerMenuPlayerDisplay : ListMenuItemPlayerDisplay
+{
+	void Init(Color c1, Color c2)
+	{
+		Super.Init(null, 0, 0, c1, c2, true, 'none');
+	}
+	
+	override void Drawer(bool selected)
+	{
+		int x = screen.GetWidth()/2 + NewPlayerMenu.PLAYERDISPLAY_X * CleanXfac_1;
+		int y = NewPlayerMenu.PLAYERDISPLAY_Y * CleanYfac_1;
+
+		int r = mBaseColor.r + mAddColor.r;
+		int g = mBaseColor.g + mAddColor.g;
+		int b = mBaseColor.b + mAddColor.b;
+		int m = max(r, g, b);
+		r = r * 255 / m;
+		g = g * 255 / m;
+		b = b * 255 / m;
+		Color c = Color(255, r, g, b);
+		
+		screen.DrawTexture(mBackdrop, false, x, y - 1,
+			DTA_DestWidth, NewPlayerMenu.PLAYERDISPLAY_W * CleanXfac_1,
+			DTA_DestHeight, NewPlayerMenu.PLAYERDISPLAY_H * CleanYfac_1,
+			DTA_Color, c,
+			DTA_KeepRatio, mNoPortrait,
+			DTA_Masked, true);
+
+		Screen.DrawFrame (x, y, NewPlayerMenu.PLAYERDISPLAY_W*CleanXfac_1, NewPlayerMenu.PLAYERDISPLAY_H*CleanYfac_1-1);
+
+		if (mPlayerState != NULL)
+		{
+			Vector2 Scale;
+			TextureID sprite;
+			bool flip;
+			
+			let playdef = GetDefaultByType((class<PlayerPawn>)(mPlayerClass.Type));
+			[sprite, flip, Scale] = mPlayerState.GetSpriteTexture(mRotation, mSkin, playdef.Scale);
+		
+			if (sprite.IsValid())
+			{
+				int trans = mTranslate? Translation.MakeID(TRANSLATION_Players, MAXPLAYERS) : 0;
+				let tscale = TexMan.GetScaledSize(sprite);
+				Scale.X *= CleanXfac_1 * tscale.X * 2;
+				Scale.Y *= CleanYfac_1 * tscale.Y * 2;
+				
+				screen.DrawTexture (sprite, false,
+					x + (NewPlayerMenu.PLAYERDISPLAY_W/2) * CleanXfac_1, y + (NewPlayerMenu.PLAYERDISPLAY_H-16) * CleanYfac_1,
+					DTA_DestWidthF, Scale.X, DTA_DestHeightF, Scale.Y,
+					DTA_TranslationIndex, trans,
+					DTA_KeepRatio, mNoPortrait,
+					DTA_FlipX, flip);
 			}
 		}
 	}

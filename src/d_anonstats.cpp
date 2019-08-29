@@ -12,7 +12,6 @@ void D_ConfirmSendStats()
 #else // !NO_SEND_STATS
 
 #if defined(_WIN32)
-#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winsock2.h>
@@ -174,49 +173,40 @@ bool I_HTTPRequest(const char* request)
 static int GetOSVersion()
 {
 #ifdef _WIN32
-	if (sys_ostype == 1) return 1;
 	if (sizeof(void*) == 4)	// 32 bit
 	{
 		BOOL res;
 		if (IsWow64Process(GetCurrentProcess(), &res) && res)
 		{
-			return 6;
+			return 2;
 		}
-		if (sys_ostype == 2) return 2;
-		else return 4;
+		return 1;
 	}
 	else
 	{
 		if (sys_ostype == 2) return 3;
-		else return 5;
+		else return 4;
 	}
 
 #elif defined __APPLE__
 
-	if (sizeof(void*) == 4)	// 32 bit
-	{
-		return 7;
-	}
-	else
-	{
-		return 8;
-	}
+	return 5;
 
 #else
 
 // fall-through linux stuff here
 #ifdef __arm__
-	return 10;
+	return 8;
 #elif __ppc__
 	return 9;
 #else
 	if (sizeof(void*) == 4)	// 32 bit
 	{
-		return 11;
+		return 6;
 	}
 	else
 	{
-		return 12;
+		return 7;
 	}
 #endif
 
@@ -256,32 +246,33 @@ static int  GetCoreInfo()
 		ptr++;
 	}
 	free(buffer);
-	return cores < 2 ? 0 : cores < 4 ? 1 : cores < 6 ? 2 : cores < 8 ? 3 : 4;
+	return cores;
 }
 
 #else
 static int GetCoreInfo()
 {
 	int cores = std::thread::hardware_concurrency();
-	if (CPU.HyperThreading) cores /= 2;
-	return cores < 2? 0 : cores < 4? 1 : cores < 6? 2 : cores < 8? 3 : 4;
+	return cores;
 }
 #endif
 
+
 static int GetRenderInfo()
 {
+	if (screen->Backend() == 1) return 4;
 	auto info = gl_getInfo();
-	if (info.first < 3.3) return 0;
 	if (!info.second)
 	{
-		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 3;
-		return 4;
+		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 2;
+		return 1;
 	}
-	return 5;
+	return 3;
 }
 
 static int GetGLVersion()
 {
+	if (screen->Backend() == 1) return 50;
 	auto info = gl_getInfo();
 	return int(info.first * 10);
 }
@@ -296,24 +287,28 @@ static void D_DoHTTPRequest(const char *request)
 
 void D_DoAnonStats()
 {
-	if (sys_statsenabled != 1)
+#ifndef _DEBUG
+	// Do not repeat if already sent.
+	if (sys_statsenabled != 1 || sentstats_hwr_done >= CHECKVERSION)
 	{
 		return;
 	}
+#endif
 
 	static bool done = false;	// do this only once per session.
 	if (done) return;
 	done = true;
 
-	// Do not repeat if already sent.
-	if (sentstats_hwr_done >= CHECKVERSION) return;
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_35.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(gl.vendorstring).GetChars(), URLencode(gl.modelstring).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_201903.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\nUser-Agent: %s %s\r\n\r\n",
+		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(screen->vendorstring).GetChars(), URLencode(screen->DeviceName()).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
+#ifndef _DEBUG
+	// Don't send info in debug builds
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
+#endif
 }
 
 
@@ -344,7 +339,7 @@ void D_ConfirmSendStats()
 
 #ifdef _WIN32
 	extern HWND Window;
-	enabled.Int = MessageBox(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
+	enabled.Int = MessageBoxA(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
 #elif defined __APPLE__
 	const CFStringRef messageString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, MESSAGE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
 	const CFStringRef titleString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, TITLE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);

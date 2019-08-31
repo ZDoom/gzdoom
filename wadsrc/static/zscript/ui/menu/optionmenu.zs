@@ -106,6 +106,19 @@ class OptionMenu : Menu
 		mParentMenu = parent;
 		mDesc = desc;
 		DontDim = desc.mDontDim;
+
+		let last = mDesc.mItems[mDesc.mItems.size() - 1];
+		bool lastIsText = (last is "OptionMenuItemStaticText");
+		if (lastIsText)
+		{
+			String text = last.mLabel;
+			bool lastIsSpace = (text == "" || text == " ");
+			if (lastIsSpace)
+			{
+				mDesc.mItems.Pop();
+			}
+		}
+
 		if (mDesc != NULL && mDesc.mSelectedItem == -1) mDesc.mSelectedItem = FirstSelectable();
 		mDesc.CalcIndent();
 

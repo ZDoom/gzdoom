@@ -404,10 +404,15 @@ add_subdirectory( libraries/lzma )
 add_subdirectory( tools )
 add_subdirectory( libraries/dumb )
 add_subdirectory( libraries/gdtoa )
+
 add_subdirectory( wadsrc )
-add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
-add_subdirectory( wadsrc_extra )
+option (BUILD_NONFREE "Build nonfree components" ON)
+if( BUILD_NONFREE )
+	add_subdirectory( wadsrc_bm )
+	add_subdirectory( wadsrc_extra )
+endif()
+
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )

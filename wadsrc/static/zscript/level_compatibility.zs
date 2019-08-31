@@ -1397,6 +1397,32 @@ class LevelCompatibility native play
 				SetWallTexture(608, Line.back, Side.bottom, "GRAY5");
 				break;
 			}
+
+			case '1C795660D2BA9FC93DA584C593FD1DA3': // Scythe 2 MAP17
+			{
+				// Texture displays incorrectly in hardware renderer
+				SetVertex(2687, -4540, -1083); //Fixes bug with minimal effect on geometry
+				break;
+			}
+			case '7483D7BDB8375358F12D146E1D63A85C': // Scythe 2 MAP24
+			{
+				// Missing texture
+				TextureID adel_q62 = TexMan.CheckForTexture("ADEL_Q62", TexMan.Type_Wall);
+				SetWallTextureID(7775, Line.front, Side.bottom, adel_q62);
+				break;
+			}
+
+			case '16E621E46F87418F6F8DB71D68433AE0': // Hell Revealed MAP23
+			{
+				// Arachnotrons near beginning sometimes don't spawn if imps block
+				// their one-time teleport. Make these teleports repeatable to ensure
+				// maxkills are always possible.
+				SetLineFlags(2036, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(2038, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(2039, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(2040, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
 		}
 	}
 

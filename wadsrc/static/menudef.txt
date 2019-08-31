@@ -1200,6 +1200,7 @@ OptionMenu "MiscOptions" protected
 	Slider "$MISCMNU_CACHETIME",				"gl_cachetime", 0.0, 2.0, 0.1
 	SafeCommand "$MISCMNU_CLEARNODECACHE",		"clearnodecache"
 	StaticText " "
+	Command "$OPTMNU_SWITCHUI", "switchui"
 	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
 	IfOption(Windows)
 	{

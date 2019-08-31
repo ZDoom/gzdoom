@@ -57,6 +57,9 @@
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
+
+EXTERN_CVAR(Bool, ui_classic)
+
 //
 // Todo: Move these elsewhere
 //
@@ -1174,7 +1177,6 @@ CCMD(reset2saved)
 	R_SetViewSize (screenblocks);
 }
 
-
 // This really should be in the script but we can't do scripted CCMDs yet.
 CCMD(undocolorpic)
 {
@@ -1186,6 +1188,13 @@ CCMD(undocolorpic)
 			VMCall(func, params, countof(params), nullptr, 0);
 		}
 	}
+}
+
+CCMD(switchui)
+{
+	if (ui_classic) ui_classic = false;
+	else ui_classic = true;
+	M_ClearMenus();
 }
 
 

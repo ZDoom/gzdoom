@@ -77,7 +77,7 @@ class HereticStatusBar : BaseStatusBar
 			DrawImage("GOD2", (287, 167), DI_ITEM_OFFSETS);
 		}
 		//health
-		DrawImage("CHAINCAC", (0, 190), DI_ITEM_OFFSETS);
+		DrawImage("CHAINBAC", (0, 190), DI_ITEM_OFFSETS);
 		// wiggle the chain if it moves
 		int inthealth =  mHealthInterpolator.GetValue();
 		DrawGem("CHAIN", "LIFEGEM2",inthealth, CPlayer.mo.GetMaxHealth(true), (2, 191 + wiggle), 15, 25, 16, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 

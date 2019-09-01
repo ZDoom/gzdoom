@@ -140,6 +140,7 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
 DEFINE_FIELD_BIT(DPSprite, Flags, bCVarFast, PSPF_CVARFAST)
 DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
 DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 
 //------------------------------------------------------------------------
 //

@@ -3542,13 +3542,13 @@ Dull Green,TXT_COLOR_DULLGREEN,,,,Bledě zelená,Blassgrün,,,Verde pálido,,Haa
 Bright Green,TXT_COLOR_BRIGHTGREEN,,,,Jasně zelená,Hellgrün,,,Verde claro,,Vaaleanvihreä,Vert clair,,Verde chiaro,鮮,밝은 녹색,Helder groen,Jasnozielony,Verde claro,,,Ярко-зелёный,Светла зелена
 Dark Green,TXT_COLOR_DARKGREEN,,,,Tmavě zelená,Dunkelgrün,,,Verde oscuro,,Tummanvihreä,Vert sombre,Sötétzöld,Verde scuro,深,흑녹색,Donkergroen,Ciemnozielony,Verde escuro,,,Тёмно-зелёный,Тамна зелена
 Rust,TXT_COLOR_RUST,,,,Rez,Rostbraun,,,Óxido,,Ruoste,Rouille,,Arrugginito,錆,주황 적갈색,Roest,Rdzawy,Ferrugem,,,Ржавый,Рђа
-Quicksave rotation,MISCMNU_QUICKSAVEROTATION,,,,Rotace rychle uložených her,Schnellspeicherrotation,,,Rotación de Salvado Rápido,,Pikatallennuskierto,Rotation Sauvegardes Rapides,,Rotazione rapide della quicksave,クイックセーブ間隔,빠른 저장 간격,Roteer quicksaves,Rotacja szybkich zapisów,Rotação de quicksave,,,,
-Number of quicksaves in rotation,MISCMNU_QUICKSAVECOUNT,,,,Počet rychle uložených her v rotaci,Anzahl Schnellspeicherplätze,,,Número de Salvados Rápidos en Rotación,,Pikatallennusten määrä kierrossa,Nombre de sauvegardes en rotation,,Numero di quicksaves in rotazione,間隔クイックセーブの数,빠른 저장 간격의 수,Aantal roterende quicksaves,Ilość szybkich zapisów w rotacji,Número de quicksaves em rotação,,,,
-Select Environment,REVMNU_SELECT,,,,Vybrat prostředí,Umgebung wählen,,,Seleccionar Ambiente,,Valitse tila,Sélectionner un environnement,,Seleziona ambiente,反響選択,환경 선택,Selecteer omgeving,Wybierz Środowisko,Selecione o Ambiente,,,,
-Test Environment,REVMNU_TEST,,,,Testovat prostředí,Umgebung testen,,,Probar Ambiente,,Testaa tilaa,Tester un environnement,,Testare ambiente,反響テスト,환경 테스트,Test omgeving,Testuj Środowisko,Testar Ambiente,,,,
-Edit Environment,REVMNU_EDIT,,,,Upravit prostředí,Umgebung editieren,,,Editar Ambiente,,Muokkaa tilaa,Modifier un environnement,,Modifica ambiente,反響編集,환경 편집,Omgeving bewerken,Edytuj Środowisko,Editar Ambiente,,,,
-New Environment,REVMNU_NEW,,,,Nové prostředí,Neue Umgebung,,,Nuevo Ambiente,,Uusi tila,Nouveau environnement,,Nuovo ambiente,新規反響設定,새로운 환경 생성,Nieuwe omgeving,Nowe Środowisko,Novo Ambiente,,,,
-Revert settings,REVMNU_REVERT,,,,Obnovit nastavení,Zurücksetzen,,,Revertir Configuración,,Palauta asetukset,Réinitialiser les paramètres,,Ripristina impostazioni,設定を戻す,설정 되돌리기,Instellingen terugzetten,Przywróć ustawienia,Reverter definições,,,,
+Quicksave rotation,MISCMNU_QUICKSAVEROTATION,,,,Rotace rychle uložených her,Schnellspeicherrotation,,,Rotación de Salvado Rápido,,Pikatallennuskierto,Rotation Sauvegardes Rapides,,Rotazione rapide della quicksave,クイックセーブ間隔,빠른 저장 간격,Roteer quicksaves,Rotacja szybkich zapisów,Rotação de quicksave,,,,Окретање брзих чувања
+Number of quicksaves in rotation,MISCMNU_QUICKSAVECOUNT,,,,Počet rychle uložených her v rotaci,Anzahl Schnellspeicherplätze,,,Número de Salvados Rápidos en Rotación,,Pikatallennusten määrä kierrossa,Nombre de sauvegardes en rotation,,Numero di quicksaves in rotazione,間隔クイックセーブの数,빠른 저장 간격의 수,Aantal roterende quicksaves,Ilość szybkich zapisów w rotacji,Número de quicksaves em rotação,,,,Број брзих чувања у окретању
+Select Environment,REVMNU_SELECT,,,,Vybrat prostředí,Umgebung wählen,,,Seleccionar Ambiente,,Valitse tila,Sélectionner un environnement,,Seleziona ambiente,反響選択,환경 선택,Selecteer omgeving,Wybierz Środowisko,Selecione o Ambiente,,,,Изабери окружење
+Test Environment,REVMNU_TEST,,,,Testovat prostředí,Umgebung testen,,,Probar Ambiente,,Testaa tilaa,Tester un environnement,,Testare ambiente,反響テスト,환경 테스트,Test omgeving,Testuj Środowisko,Testar Ambiente,,,,Тестирај окружење
+Edit Environment,REVMNU_EDIT,,,,Upravit prostředí,Umgebung editieren,,,Editar Ambiente,,Muokkaa tilaa,Modifier un environnement,,Modifica ambiente,反響編集,환경 편집,Omgeving bewerken,Edytuj Środowisko,Editar Ambiente,,,,Уреди окружење
+New Environment,REVMNU_NEW,,,,Nové prostředí,Neue Umgebung,,,Nuevo Ambiente,,Uusi tila,Nouveau environnement,,Nuovo ambiente,新規反響設定,새로운 환경 생성,Nieuwe omgeving,Nowe Środowisko,Novo Ambiente,,,,Ново окружење
+Revert settings,REVMNU_REVERT,,,,Obnovit nastavení,Zurücksetzen,,,Revertir Configuración,,Palauta asetukset,Réinitialiser les paramètres,,Ripristina impostazioni,設定を戻す,설정 되돌리기,Instellingen terugzetten,Przywróć ustawienia,Reverter definições,,,,Врати подешавања
 Environment Size,REVMNU_ENVIRONMENTSIZE,Please translate only if you know how to properly name this technical jargon!,,,,,,,Tamaño de Ambiente,,Tilan koko,Taille Environnement,,,反響サイズ,공간 크기,,,Tamanho do Ambiente,,,,
 Environment Diffusion,REVMNU_ENVIRONMENT_DIFFUSION,,,,,,,,Difusión de Ambiente,,Tilan äänen hajautuminen,Diffusion Environnement,,,反響伝播,공간 잔향 확산,,,Difusão do Ambiente,,,,
 Room,REVMNU_ROOM,,,,,,,,Sala,,Tilan keskitaajuudet,Salle,,,,룸 효과,,,Sala,,,,
@@ -3585,21 +3585,21 @@ Reverb Scale,REVMNU_Reverb_Scale,,,,,,,,Escala de Reverberación,,Jälkikaiunnan
 Reverb Delay Scale,REVMNU_Reverb_Delay_Scale,,,,,,,,Escala de Retraso de Reverberación,,Jälkikaiunnan viiveen skaala,Délai d'échelle Reverb,,,Reverb Delay音階,리버브 딜레이 음계,,,Escala de Atraso de Reverberação,,,,
 Echo Time Scale,REVMNU_Echo_Time_Scale,,,,,,,,Escala de Tiempo de Eco,,Kaikuajan skaala,Echelle temporelle Echo,,,Echo Time音階,에코 시간 음계,,,Escala de Tempo de Eco,,,,
 Modulation Time Scale,REVMNU_Modulation_Time_Scale,,,,,,,,Escala de Tiempo de Modulación,,Modulaatioajan skaala,Echelle temporelle Modulation,,,Modulation Time音階,전조 시간 음계,,,Escala de Tempo de Modulação,,,,
-Based on,REVMNU_Based_on,,,,Založeno na,Basierend auf,,,Basado En,,Perustana,Basé sur,,Basato su,音響の元,음향 원본,Gebaseerd op,Bazowane na,Baseado em,,,,
-Name,REVMNU_Name,,,,Název,,,,Nombre,,Nimi,Nom,,Name,名前,이름,Naam,Nazwa,Nome,,,,
+Based on,REVMNU_Based_on,,,,Založeno na,Basierend auf,,,Basado En,,Perustana,Basé sur,,Basato su,音響の元,음향 원본,Gebaseerd op,Bazowane na,Baseado em,,,,Засновано на
+Name,REVMNU_Name,,,,Název,,,,Nombre,,Nimi,Nom,,Name,名前,이름,Naam,Nazwa,Nome,,,,Назив
 ID #1,REVMNU_ID_1,,,,,,,,ID Nº1,,,,,,,,,ID #1,,,,,
 ID #2,REVMNU_ID_2,,,,,,,,ID Nº2,,,,,,,,,ID #2,,,,,
-Create,REVMNU_Create,,,,Vytvořit,Erstellen,,,Crear,,Luo,Créer,,Creare,作成,생성,Creëren,Stwórz,Criar,,,,
-Save...,REVMNU_Save,,,,Uložit...,Speichern...,,,Guardar...,,Tallenna...,Sauvegarder...,,Salvare...,セーブする...,저장 하기...,Opslaan ...,Zapisz...,Salvar...,,,,
-File name,REVMNU_File_name,,,,Název souboru,Dateiname,,,Nombre de Archivo,,Tiedostonimi,Nom de fichier,,Nome del file,ファイル名,파일 이름,Bestandsnaam,Nazwa pliku,Nome do arquivo,,,,
-Environments to save,REVMNU_Environments_to_save,,,,Prostředí k uložení,Zu speichernde Umgebungen,,,Ambientes para Guardar,,Tallennettavat tilat,Environnements à sauvegarder,,Ambienti da salvare,音響を保存,저장할 공간,Omgevingen om op te slaan,Środowiska do zapisu,Ambientes para salvar,,,,
-Tonemap Palette Colormap,GLPREFMNU_PALTONECMAP,,,,,,,,,,,,,,,,,,,,,,
-Prevent gray shadows,GLPREFMNU_PALTONENOGREY,,,Prevent grey shadows,Předejít šedým stínům,Vermeide graue Schatten,,,Prevenir las sombras grises,,,Prévenir les ombres grises,,Prevenire le ombre grigie,,,Voorkom grijze schaduwen,,Prevenir sombras cinzentas,,,,
-Font Options,HUDMNU_FONTOPTIONS,,,,,Zeichensatzoptionen,,,Opciones de fuentes,,,Options de police,,Opzioni di font,,,Lettertype opties,,Opções de fontes,,,,
-Use standard font for log display,FONTMNU_LOG,,,,,Benutze Standardzeichensatz für das Log,,,Usar la fuente estándar para la visualización del registro,,,Utiliser une police standard pour l'affichage des journaux,,Usa font standard per la visualizzazione dei messaggi di log,,,Gebruik het standaardlettertype voor de weergave van logboekberichten,,Usar fonte Standard para exibição de log,,,,
-Use standard font for dialogues,FONTMNU_DLG,,,,,Benutze Standardzeichensatz für Dialoge,,,Usar la fuente estándar para los diálogos,,,Utiliser une police standard pour les dialogues,,Usa font standard per la visualizzazione dei dialoghi,,,Gebruik het standaardlettertype voor dialoogweergave,,Usar fonte Standard para diálogos,,,,
-Standard,OPTVAL_YES_STANDARD,copied from elsewhere,,,Standardní,,,,Estándar,,Normaali,,,,標準,기본,Standaard,Standard,Padrão,,,Стандартный,Стандардно
-Enhanced,OPTVAL_YES_ENHANCED,,,,,Verbessert,,,Mejorado,,,Amélioré,,Migliorata,,,Verbeterd,,Melhorado,,,,
+Create,REVMNU_Create,,,,Vytvořit,Erstellen,,,Crear,,Luo,Créer,,Creare,作成,생성,Creëren,Stwórz,Criar,,,,Направи
+Save...,REVMNU_Save,,,,Uložit...,Speichern...,,,Guardar...,,Tallenna...,Sauvegarder...,,Salvare...,セーブする...,저장 하기...,Opslaan ...,Zapisz...,Salvar...,,,,Сачувај...
+File name,REVMNU_File_name,,,,Název souboru,Dateiname,,,Nombre de Archivo,,Tiedostonimi,Nom de fichier,,Nome del file,ファイル名,파일 이름,Bestandsnaam,Nazwa pliku,Nome do arquivo,,,,Назив фајла
+Environments to save,REVMNU_Environments_to_save,,,,Prostředí k uložení,Zu speichernde Umgebungen,,,Ambientes para Guardar,,Tallennettavat tilat,Environnements à sauvegarder,,Ambienti da salvare,音響を保存,저장할 공간,Omgevingen om op te slaan,Środowiska do zapisu,Ambientes para salvar,,,,Окружења за чување
+Tonemap Palette Colormap,GLPREFMNU_PALTONECMAP,,,,,,,,,,,Tonemap type colormap palette,,,,,,,,,,,
+Prevent gray shadows,GLPREFMNU_PALTONENOGREY,,,Prevent grey shadows,Předejít šedým stínům,Vermeide graue Schatten,,,Prevenir las sombras grises,,,Eviter les ombres grises,,Prevenire le ombre grigie,,,Voorkom grijze schaduwen,,Prevenir sombras cinzentas,,,,Онемогући сиве сенке
+Font Options,HUDMNU_FONTOPTIONS,,,,,Zeichensatzoptionen,,,Opciones de fuentes,,,Options de police,,Opzioni di font,,,Lettertype opties,,Opções de fontes,,,,Подешавања фонта
+Use standard font for log display,FONTMNU_LOG,,,,,Benutze Standardzeichensatz für das Log,,,Usar la fuente estándar para la visualización del registro,,,Police standard pour affichage du log,,Usa font standard per la visualizzazione dei messaggi di log,,,Gebruik het standaardlettertype voor de weergave van logboekberichten,,Usar fonte Standard para exibição de log,,,,Користи стандардни фонт за приказ лога
+Use standard font for dialogues,FONTMNU_DLG,,,,,Benutze Standardzeichensatz für Dialoge,,,Usar la fuente estándar para los diálogos,,,Police standard pour dialogues,,Usa font standard per la visualizzazione dei dialoghi,,,Gebruik het standaardlettertype voor dialoogweergave,,Usar fonte Standard para diálogos,,,,Користи стандардни фонт за дијалоге
+Standard,OPTVAL_YES_STANDARD,copied from elsewhere,,,Standardní,,,,Estándar,,Normaali,,,,標準,기본,Standaard,Standard,Padrão,,,Стандартный,Стандардни
+Enhanced,OPTVAL_YES_ENHANCED,,,,,Verbessert,,,Mejorado,,,Amélioré,,Migliorata,,,Verbeterd,,Melhorado,,,,Побољшани
 ,USE_GENERIC_FONT,This is not a text to be translated but an engine switch for complex languages.,,,,,,,,,,,,,1,1,,,,,,,
 ,REQUIRED_CHARACTERS,This should list all uppercase characters that are REQUIRED for proper language display. If it is acceptable that accents get omitted a character should NOT be listed here!,,,ÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ,ÄÖÜẞ,ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩς,ĈĜĤĴŜŬ,ÁÉÍÓÚÑÜ,,ÄÖ,ÀÂÇÉÈÊËÎÏÔŒÙÛŸ,ÁÉÍÓÖÚÜŐŰ,ÀÈÉÌÒÙ,,,"ÉËÖ
 ",ĄĆĘŁŃÓŚŹŻ,ÁÉÍÓÚÀÃÕÂÊÔÇ,,,АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ,АБВГДЂЕЖЗИЈКЛЉМНЊОПРСТЋУФХЦЧЏШ

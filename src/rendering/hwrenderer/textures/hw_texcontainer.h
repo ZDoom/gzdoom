@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "tarray.h"
 #include "hwrenderer/textures/hw_ihwtexture.h"
 
@@ -17,12 +19,11 @@ public:
 private:
 	struct TranslatedTexture
 	{
-		IHardwareTexture *hwTexture = nullptr;
+		std::unique_ptr<IHardwareTexture> hwTexture;
 		int translation = 0;
 
-		void Delete()
+		void Delete() noexcept
 		{
-			if (hwTexture) delete hwTexture;
 			hwTexture = nullptr;
 		}
 
@@ -30,14 +31,8 @@ private:
 		{
 			if (hwTexture) hwTexture->DeleteDescriptors();
 		}
-		
-		~TranslatedTexture()
-		{
-			Delete();
-		}
 	};
 
-private:
 
 	TranslatedTexture hwDefTex[2];
 	TArray<TranslatedTexture> hwTex_Translated;
@@ -89,14 +84,13 @@ public:
 	IHardwareTexture * GetHardwareTexture(int translation, bool expanded)
 	{
 		auto tt = GetTexID(translation, expanded);
-		return tt->hwTexture;
+		return tt->hwTexture.get();
 	}
 	
 	void AddHardwareTexture(int translation, bool expanded, IHardwareTexture *tex)
 	{
 		auto tt = GetTexID(translation, expanded);
-		tt->Delete();
-		tt->hwTexture =tex;
+		tt->hwTexture.reset(tex);
 	}
 
 	//===========================================================================
@@ -138,8 +132,8 @@ public:
 	template<class T>
 	void Iterate(T callback)
 	{
-		for (auto & t : hwDefTex) if (t.hwTexture) callback(t.hwTexture);
-		for (auto & t : hwTex_Translated) if (t.hwTexture) callback(t.hwTexture);
+		for (auto & t : hwDefTex) if (t.hwTexture) callback(t.hwTexture.get());
+		for (auto & t : hwTex_Translated) if (t.hwTexture) callback(t.hwTexture.get());
 	}
 
 	

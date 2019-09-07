@@ -290,7 +290,7 @@ uma mulher desprezada!""
      = К О Н Е Ц =
 ",
 ,WI_FINISHED,This text is deliberately empty,,,,,,,,,,,,,,,,,,,,,
-Loading,WI_ENTERING,Yellow needs retranslation,,,Vstupujete do,Lade,,Eniras,Cargando,,Ladattavana,Niveau Suivant,Következik,Caricamento,ローディング,불러오는 중,Laden van,Ładowanie,Próxima fase,Próximo nível,,Загрузка уровня,
+Loading,WI_ENTERING,Yellow needs retranslation,,,Vstupujete do,Lade,,Eniras,Cargando,,Ladattavana,Chargement,Következik,Caricamento,ローディング,불러오는 중,Laden van,Ładowanie,Próxima fase,Próximo nível,,Загрузка уровня,
 Very Easy,SKILL_BABY,,,,Velmi snadné,Sehr einfach,,Tre Facila,Muy facil,,Erittäin helppo,Trés facile,,Molto facile,ベリーイージー,아주 쉬움,Zeer gemakkelijk,Bardzo Łatwy,Muito facil,,,Очень лёгкий,
 Easy,SKILL_EASY,,,,Snadný,Einfach,,Facila,Facil,,Helppo,Facile,,Facile,イージー,쉬움,Gemakkelijk,Łatwy,Fácil,,,Лёгкий,
 Medium,SKILL_NORMAL,,,,Střední,Mittel,,Meza,Medio,,Keskivaikea,Moyen,,Medio,ミディアム,중간,Middel,Średni,Médio,,,Средний,

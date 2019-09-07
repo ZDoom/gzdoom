@@ -1019,6 +1019,7 @@ OptionMenu "HUDOptions" protected
 	Submenu "$HUDMNU_MESSAGE", 				"MessageOptions"
 	Submenu "$HUDMNU_FLASH", 				"FlashOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 		"ScoreboardOptions"
+	Submenu "$HUDMNU_FONTOPTIONS",			"FontOptions"
 	StaticText " "
 	Option "$HUDMNU_CROSSHAIRON",			"crosshairon", "OnOff"
 	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
@@ -1523,6 +1524,19 @@ OptionMenu ScoreboardOptions protected
 	StaticText " "
 	Option "$SCRBRDMNU_ENABLE",				"sb_teamdeathmatch_enable", "YesNo"
 	Option "$SCRBRDMNU_HEADERCOLOR",		"sb_teamdeathmatch_headingcolor", "TextColors"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Font options
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu FontOptions protected
+{
+	Title "$HUDMNU_FONTOPTIONS"
+	Option "$FONTMNU_LOG",					"log_vgafont", "YesNo"
+	Option "$FONTMNU_DLG",					"dlg_vgafont", "YesNo"
 }
 
 /*=======================================

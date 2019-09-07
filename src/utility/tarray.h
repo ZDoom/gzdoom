@@ -38,8 +38,10 @@
 #include <assert.h>
 #include <string.h>
 #include <new>
+#include <memory>
 #include <utility>
 #include <iterator>
+#include <algorithm>
 
 #if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
@@ -287,7 +289,7 @@ public:
 	unsigned int Push (const T &item)
 	{
 		Grow (1);
-		::new((void*)&Array[Count]) T(item);
+		std::uninitialized_copy_n(&item, 1, &Array[Count]);
 		return Count++;
 	}
 
@@ -305,10 +307,7 @@ public:
 		Grow(item.Size());
 		Count += item.Size();
 
-		for (unsigned i = 0; i < item.Size(); i++)
-		{
-			new(&Array[start + i]) T(item[i]);
-		}
+		std::uninitialized_copy_n(item.begin(), item.Size(), &Array[start]);
 		return start;
 	}
 
@@ -321,7 +320,7 @@ public:
 
 		for (unsigned i = 0; i < item.Size(); i++)
 		{
-			new(&Array[start + i]) T(std::move(item[i]));
+			::new(&Array[start + i]) T(std::move(item[i]));
 		}
 		return start;
 	}
@@ -339,7 +338,7 @@ public:
 	{
 		if (Count > 0)
 		{
-			item = Array[--Count];
+			item = std::move(Array[--Count]);
 			Array[Count].~T();
 			return true;
 		}
@@ -349,11 +348,11 @@ public:
 	{
 		if (index < Count)
 		{
-			Array[index].~T();
 			if (index < --Count)
 			{
-				memmove (&Array[index], &Array[index+1], sizeof(T)*(Count - index));
+				std::move(&Array[index+1], &Array[Count+1], &Array[index]);
 			}
+			DoDelete(Count, Count);
 		}
 	}
 
@@ -365,15 +364,12 @@ public:
 		}
 		if (deletecount > 0)
 		{
-			for (int i = 0; i < deletecount; i++)
-			{
-				Array[index + i].~T();
-			}
 			Count -= deletecount;
 			if (index < Count)
 			{
-				memmove (&Array[index], &Array[index+deletecount], sizeof(T)*(Count - index));
+				std::move(&Array[index+deletecount], &Array[Count+deletecount], &Array[index]);
 			}
+			DoDelete(Count, Count+deletecount-1);
 		}
 	}
 
@@ -384,20 +380,27 @@ public:
 		{
 			// Inserting somewhere past the end of the array, so we can
 			// just add it without moving things.
-			Resize (index + 1);
+			Grow (index-Count + 1);
+			if(index > Count)
+				ConstructEmpty(Count, index - 1);
 			::new ((void *)&Array[index]) T(item);
+			Count = index + 1;
 		}
 		else
 		{
 			// Inserting somewhere in the middle of the array,
 			// so make room for it
-			Resize (Count + 1);
+			Grow (1);
 
 			// Now move items from the index and onward out of the way
-			memmove (&Array[index+1], &Array[index], sizeof(T)*(Count - index - 1));
+			::new (&Array[Count]) T(std::move(Array[Count-1]));
+			std::move_backward(&Array[index], &Array[Count-1], &Array[Count]);
 
-			// And put the new element in
+			// And put the new element in. Should this do copy
+			// initialization, or copy assignment?
+			DoDelete(index, index);
 			::new ((void *)&Array[index]) T(item);
+			++Count;
 		}
 	}
 
@@ -523,10 +526,7 @@ private:
 		if (Count != 0)
 		{
 			Array = (T *)M_Malloc (sizeof(T)*Most);
-			for (unsigned int i = 0; i < Count; ++i)
-			{
-				::new(&Array[i]) T(other.Array[i]);
-			}
+			std::uninitialized_copy_n(&other.Array[0], Count, &Array[0]);
 		}
 		else
 		{

@@ -107,15 +107,19 @@ class OptionMenu : Menu
 		mDesc = desc;
 		DontDim = desc.mDontDim;
 
-		let last = mDesc.mItems[mDesc.mItems.size() - 1];
-		bool lastIsText = (last is "OptionMenuItemStaticText");
-		if (lastIsText)
+		let itemCount = mDesc.mItems.size();
+		if (itemCount > 0)
 		{
-			String text = last.mLabel;
-			bool lastIsSpace = (text == "" || text == " ");
-			if (lastIsSpace)
+			let last = mDesc.mItems[itemCount - 1];
+			bool lastIsText = (last is "OptionMenuItemStaticText");
+			if (lastIsText)
 			{
-				mDesc.mItems.Pop();
+				String text = last.mLabel;
+				bool lastIsSpace = (text == "" || text == " ");
+				if (lastIsSpace)
+				{
+					mDesc.mItems.Pop();
+				}
 			}
 		}
 

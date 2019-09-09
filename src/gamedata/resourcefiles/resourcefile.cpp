@@ -130,7 +130,7 @@ void FResourceLump::LumpNameSetup(FString iname)
 	// Since '\' can't be used as a file name's part inside a ZIP
 	// we have to work around this for sprites because it is a valid
 	// frame character.
-	else if (Namespace == ns_sprites || Namespace == ns_voxels)
+	else if (Namespace == ns_sprites || Namespace == ns_voxels || Namespace == ns_hires)
 	{
 		char *c;
 

@@ -5877,7 +5877,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_PlayActorSound:
 			// PlaySound(tid, "SoundName", channel, volume, looping, attenuation, local)
 			{
-				FSoundID sid;
+				FSoundID sid = 0;
 
 				if (funcIndex == ACSF_PlaySound)
 				{

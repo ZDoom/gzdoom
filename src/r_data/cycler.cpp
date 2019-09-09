@@ -60,22 +60,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FCycler &c, FCycler *d
 	return arc;
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FCycler::FCycler()
-{
-	m_cycle = 0.;
-	m_cycleType = CYCLE_Linear;
-	m_shouldCycle = false;
-	m_start = m_current = 0.;
-	m_end = 0.;
-	m_increment = true;
-}
-
 
 //==========================================================================
 //

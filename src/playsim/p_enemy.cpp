@@ -2994,7 +2994,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	if (self->player && self->player->morphTics == 0)
 	{
 		const char *pain_amount;
-		FSoundID sfx_id;
+		FSoundID sfx_id = 0;
 
 		if (self->health < 25)
 			pain_amount = "*pain25";

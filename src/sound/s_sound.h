@@ -99,10 +99,8 @@ extern TArray<sfxinfo_t> S_sfx;
 class FSoundID
 {
 public:
-	FSoundID()
-	{
-		ID = 0;
-	}
+	FSoundID() = default;
+
 	FSoundID(int id)
 	{
 		ID = id;

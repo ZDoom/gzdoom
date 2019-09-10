@@ -65,8 +65,12 @@ class HexenStatusBar : BaseStatusBar
 	protected void DrawFullScreenStuff ()
 	{
 		//health
-		DrawImage("PTN1A0", (51, -3));
+		DrawImage("PTN1A0", (60, -3));
 		DrawString(mBigFont, FormatNumber(mHealthInterpolator.GetValue()), (41, -21), DI_TEXT_ALIGN_RIGHT);
+
+		//armor
+		DrawImage("AR_1A0", (60, -23));
+		DrawString(mBigFont, FormatNumber(GetArmorSavePercent() / 5, 2), (41, -41), DI_TEXT_ALIGN_RIGHT);
 
 		//frags/keys
 		if (deathmatch)

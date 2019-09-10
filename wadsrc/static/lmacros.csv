@@ -9,8 +9,11 @@ tgs_pr1_cs,cs,e,íc,íc,íc
 e_de,de,,e,,
 in_de,de,,in,,
 pp_de,de,seine,ihre,seine,seine
+pro_eo,eo,li,ŝi,ĝi,ĝi
 ao_esp,es,o,a,o,o
 e_fr,fr,,e,,
+hij_ze_nl,nl,hij,ze,hij,hij
+zijn_haar_nl,nl,zijn,haar,zijn,zijn
 ao_pl,pl,,a,o,o
 adj_pl,pl,y,a,e,e
 irreg_1_pl,pl,szedł 	,eszła,eszło,eszło
@@ -30,9 +33,7 @@ irreg_3_rus,ru,ёг,егла,егло,егло
 pron_rus,ru,него,неё,него,него
 ao_1_sr,sr,о,ла,ло,ло
 ao_2_sr,sr,ао,ла,ло,ло
+ao_3_sr,sr,ог,у,ог,ог
 adj_1_sr,sr,,а,о,о
 adj_2_sr,sr,ан,на,но,но
 adj_3_sr,sr,ар,ра,ро,ро
-pro_eo,eo,li,ŝi,ĝi,ĝi
-hij_ze_nl,nl,hij,ze,hij,hij
-zijn_haar_nl,nl,zijn,haar,zijn,zijn

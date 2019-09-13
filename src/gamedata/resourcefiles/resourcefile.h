@@ -74,7 +74,7 @@ struct FResourceLump
 	int ReleaseCache();
 
 protected:
-	virtual int FillCache() {}
+	virtual int FillCache() { return -1; }
 
 };
 

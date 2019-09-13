@@ -74,7 +74,7 @@ struct FResourceLump
 	int ReleaseCache();
 
 protected:
-	virtual int FillCache() = 0;
+	virtual int FillCache() {}
 
 };
 
@@ -114,6 +114,8 @@ public:
 	uint32_t LumpCount() const { return NumLumps; }
 	uint32_t GetFirstLump() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
+	const FString &GetHash() const { return Hash; }
+
 
 	virtual void FindStrifeTeaserVoices ();
 	virtual bool Open(bool quiet) = 0;

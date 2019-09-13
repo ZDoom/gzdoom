@@ -363,6 +363,7 @@ bool FZipFile::Open(bool quiet)
 
 	if (!quiet && !batchrun) Printf(TEXTCOLOR_NORMAL ", %d lumps\n", NumLumps);
 	
+	GenerateHash();
 	PostProcessArchive(&Lumps[0], sizeof(FZipLump));
 	return true;
 }

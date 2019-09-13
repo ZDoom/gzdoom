@@ -85,11 +85,13 @@ public:
 	FString FileName;
 protected:
 	uint32_t NumLumps;
+	FString Hash;
 
 	FResourceFile(const char *filename);
 	FResourceFile(const char *filename, FileReader &r);
 
 	// for archives that can contain directories
+	void GenerateHash();
 	void PostProcessArchive(void *lumps, size_t lumpsize);
 
 private:

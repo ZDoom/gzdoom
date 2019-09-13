@@ -41,6 +41,7 @@
 #include "gi.h"
 #include "doomstat.h"
 #include "doomtype.h"
+#include "md5.h"
 
 
 //==========================================================================
@@ -351,6 +352,39 @@ int lumpcmp(const void * a, const void * b)
 	FResourceLump * rec2 = (FResourceLump *)b;
 
 	return rec1->FullName.CompareNoCase(rec2->FullName);
+}
+
+//==========================================================================
+//
+// FResourceFile :: GenerateHash
+//
+// Generates a hash identifier for use in file identification.
+// Potential uses are mod-wide compatibility settings or localization add-ons.
+// This only hashes the lump directory but not the actual content
+//
+//==========================================================================
+
+void FResourceFile::GenerateHash()
+{
+	// hash the lump directory after sorting
+	
+	Hash.Format(("%08X-%04X-"), (unsigned)Reader.GetLength(), NumLumps);
+	
+	MD5Context md5;
+	
+	uint8_t digest[16];
+	for(uint32_t i = 0; i < NumLumps; i++)
+	{
+		auto lump = GetLump(i);
+		md5.Update((const uint8_t*)lump->Name, strlen(lump->Name) + 1); // +1 to hash the terminating 0 as well.
+		md5.Update((const uint8_t*)lump->FullName.GetChars(), lump->FullName.Len() + 1);
+		md5.Update((const uint8_t*)&lump->LumpSize, 4);
+	}
+	md5.Final(digest);
+	for (auto c : digest)
+	{
+		Hash.AppendFormat("%02X", c);
+	}
 }
 
 //==========================================================================

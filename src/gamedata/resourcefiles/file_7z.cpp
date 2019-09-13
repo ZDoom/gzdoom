@@ -316,6 +316,7 @@ bool F7ZFile::Open(bool quiet)
 
 	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 
+	GenerateHash();
 	PostProcessArchive(&Lumps[0], sizeof(F7ZLump));
 	return true;
 }

@@ -4803,7 +4803,7 @@ int P_LineTrace(AActor *t1, DAngle angle, double distance,
 	if ( flags & TRF_NOSKY ) tflags |= TRACE_NoSky;
 
 	// Do trace
-	bool ret = Trace(startpos, t1->Sector, direction, distance, aflags, lflags, t1, trace, tflags, CheckLineTrace, &TData);
+	bool ret = Trace(startpos, t1->Level->PointInSector(startpos), direction, distance, aflags, lflags, t1, trace, tflags, CheckLineTrace, &TData);
 	if ( outdata )
 	{
 		memset(outdata,0,sizeof(*outdata));

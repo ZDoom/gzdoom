@@ -376,8 +376,8 @@ void FResourceFile::GenerateHash()
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		auto lump = GetLump(i);
-		md5.Update((const uint8_t*)lump->Name, strlen(lump->Name) + 1); // +1 to hash the terminating 0 as well.
-		md5.Update((const uint8_t*)lump->FullName.GetChars(), lump->FullName.Len() + 1);
+		md5.Update((const uint8_t*)lump->Name, (unsigned)strlen(lump->Name) + 1); // +1 to hash the terminating 0 as well.
+		md5.Update((const uint8_t*)lump->FullName.GetChars(), (unsigned)lump->FullName.Len() + 1);
 		md5.Update((const uint8_t*)&lump->LumpSize, 4);
 	}
 	md5.Final(digest);

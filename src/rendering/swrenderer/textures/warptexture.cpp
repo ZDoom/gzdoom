@@ -40,6 +40,7 @@
 #include "warpbuffer.h"
 #include "v_video.h"
 
+EXTERN_CVAR(Int, gl_texture_hqresizemult)
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
 	: FSoftwareTexture (source)
@@ -60,8 +61,9 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 	if (time != GenTime[2])
 	{
 		auto otherpix = FSoftwareTexture::GetPixelsBgra();
-		WarpedPixelsRgba.Resize(GetWidth() * GetHeight());
-		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixelsRgba.Resize(GetWidth() * GetHeight() * gl_texture_hqresizemult * gl_texture_hqresizemult);
+		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth() * gl_texture_hqresizemult, GetHeight() * gl_texture_hqresizemult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		// GenerateBgraMipmapsFast(); // this doesn't work, and needs fixed before this can be completed
 		FreeAllSpans();
 		GenTime[2] = time;
 	}
@@ -75,8 +77,8 @@ const uint8_t *FWarpTexture::GetPixels(int index)
 	if (time != GenTime[index])
 	{
 		const uint8_t *otherpix = FSoftwareTexture::GetPixels(index);
-		WarpedPixels[index].Resize(GetWidth() * GetHeight());
-		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixels[index].Resize(GetWidth() * GetHeight() * gl_texture_hqresizemult * gl_texture_hqresizemult);
+		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth() * gl_texture_hqresizemult, GetHeight() * gl_texture_hqresizemult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
 		FreeAllSpans();
 		GenTime[index] = time;
 	}

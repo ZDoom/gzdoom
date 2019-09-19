@@ -41,6 +41,7 @@
 #include "v_video.h"
 
 EXTERN_CVAR(Int, gl_texture_hqresizemult)
+EXTERN_CVAR(Int, gl_texture_hqresizemode)
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
 	: FSoftwareTexture (source)
@@ -58,11 +59,16 @@ bool FWarpTexture::CheckModified (int style)
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
 	uint64_t time = screen->FrameTime;
+	uint64_t resizeMult = gl_texture_hqresizemult;
+
 	if (time != GenTime[2])
 	{
+		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1)
+			resizeMult = 1;
+
 		auto otherpix = FSoftwareTexture::GetPixelsBgra();
-		WarpedPixelsRgba.Resize(GetWidth() * GetHeight() * gl_texture_hqresizemult * gl_texture_hqresizemult * 4 / 3 + 1);
-		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth() * gl_texture_hqresizemult, GetHeight() * gl_texture_hqresizemult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixelsRgba.Resize(GetWidth() * GetHeight() * resizeMult * resizeMult * 4 / 3 + 1);
+		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth() * resizeMult, GetHeight() * resizeMult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
 		GenerateBgraMipmapsFast();
 		FreeAllSpans();
 		GenTime[2] = time;
@@ -74,11 +80,16 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 const uint8_t *FWarpTexture::GetPixels(int index)
 {
 	uint64_t time = screen->FrameTime;
+	uint64_t resizeMult = gl_texture_hqresizemult;
+
 	if (time != GenTime[index])
 	{
+		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1)
+			resizeMult = 1;
+
 		const uint8_t *otherpix = FSoftwareTexture::GetPixels(index);
-		WarpedPixels[index].Resize(GetWidth() * GetHeight() * gl_texture_hqresizemult * gl_texture_hqresizemult);
-		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth() * gl_texture_hqresizemult, GetHeight() * gl_texture_hqresizemult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixels[index].Resize(GetWidth() * GetHeight() * resizeMult * resizeMult);
+		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth() * resizeMult, GetHeight() * resizeMult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
 		FreeAllSpans();
 		GenTime[index] = time;
 	}

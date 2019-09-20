@@ -689,8 +689,6 @@ class LevelCompatibility native play
 			
 			case '1A540BA717BF9EC85F8522594C352F2A': // Doom II, map15
 			{
-				// Remove unreachable secret
-				SetSectorSpecial(147, 0);
 				// Missing textures
 				SetWallTexture(94, Line.back, Side.top, "METAL");
 				SetWallTexture(95, Line.back, Side.top, "METAL");

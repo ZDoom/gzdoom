@@ -6,7 +6,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -fomit-frame-pointer" )
 endif()
 
-set (CMAKE_C_FLAGS ${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG})
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
 
 include_directories( timiditypp )
 

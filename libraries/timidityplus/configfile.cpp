@@ -26,7 +26,6 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "common.h"
 #include "instrum.h"
 #include "quantity.h"
-#include "cmdlib.h"
 
 
 namespace TimidityPlus
@@ -642,8 +641,9 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 	init_mblock(&varbuf);
 	if (!self)
 	{
-		basedir = strdup_mblock(&varbuf, tf->filename.c_str());
-		FixPathSeperator((char*)basedir);
+		char *c = strdup_mblock(&varbuf, tf->filename.c_str());
+		basedir = c;
+		for (; *c; c++) if (*c == '\\') *c = '/';
 		sep = (char*)strrchr(basedir, '/');
 	}
 	else
@@ -1397,7 +1397,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				continue;
 			}
 			for (i = 1; i < words; i++)
-                sfreader->AddPath(w[i]);
+                sfreader->timidityplus_add_path(w[i]);
 		}
 		else if (!strcmp(w[0], "source") || !strcmp(w[0], "trysource"))
 		{

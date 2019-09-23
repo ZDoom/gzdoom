@@ -210,11 +210,6 @@ void Effect::do_effect(int32_t *buf, int32_t count)
 	effect_left_right_delay(buf, count);
 }
 
-uint32_t Effect::frand(void)
-{
-	return rng.GenRand32();
-}
-
 int32_t Effect::my_mod(int32_t x, int32_t n)
 {
 	if (x >= n)

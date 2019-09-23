@@ -23,11 +23,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 
 #include <string.h>
 #include <ctype.h>
-#include "m_random.h"
 #include "common.h"
+#include "controls.h"
 
 namespace TimidityPlus
 {
@@ -113,80 +114,70 @@ int string_to_7bit_range(const char *string_, int *start, int *end)
 }
 
 
-static FRandom pr_rnd;
+double GenRand_Real1()
+{
+	return rand() * (1. / RAND_MAX);
+}
 
 int int_rand(int n)
 {
-	return (int)pr_rnd.GenRand_Real1() * n;
+	return (int)GenRand_Real1() * n;
 }
 
 double flt_rand()
 {
-	return (int)pr_rnd.GenRand_Real1();
+	return (int)GenRand_Real1();
 }
 
-struct timidity_file *open_file(const char *name, FSoundFontReader *sfreader)
+struct timidity_file *open_file(const char *name, SoundFontReaderInterface *sfreader)
 {
-    FileReader fr;
-    FString filename;
-    if (name == nullptr)
-    {
-        fr = sfreader->OpenMainConfigFile();
-        filename = sfreader->basePath() + "timidity.cfg";
-    }
-    else
-    {
-        auto res = sfreader->LookupFile(name);
-        fr = std::move(res.first);
-        filename = res.second;
-    }
-    if (!fr.isOpen()) return nullptr;
-    
-	auto tf = new timidity_file;
-	tf->url = std::move(fr);
-	tf->filename = filename.GetChars();
-	return tf;
+	return sfreader->open_timidityplus_file(name);
 }
 
 /* This closes files opened with open_file */
 void tf_close(struct timidity_file *tf)
 {
-	tf->url.Close();
 	delete tf;
 }
 
 /* This is meant for skipping a few bytes. */
 void skip(struct timidity_file *tf, size_t len)
 {
-	tf->url.Seek((long)len, FileReader::SeekCur);
-}
-
-char *tf_gets(char *buff, int n, struct timidity_file *tf)
-{
-	return tf->url.Gets(buff, n);
+	tf_seek(tf, (long)len, SEEK_CUR);
 }
 
 int tf_getc(struct timidity_file *tf)
 {
 	unsigned char c;
-	auto read = tf->url.Read(&c, 1);
+	auto read = tf_read(&c, 1, 1, tf);
 	return read == 0 ? EOF : c;
 }
 
-long tf_read(void *buff, int32_t size, int32_t nitems, struct timidity_file *tf)
+void default_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
 {
-	return (long)tf->url.Read(buff, size * nitems) / size;
+	if (verbosity_level >= VERB_DEBUG) return;	// Don't waste time on diagnostics.
+
+	char buffer[2048];
+	va_list args;
+	va_start(args, fmt);
+
+	switch (type)
+	{
+	case CMSG_ERROR:
+		vprintf("Error: %s\n", args);
+		break;
+
+	case CMSG_WARNING:
+		vprintf("Warning: %s\n", args);
+		break;
+
+	case CMSG_INFO:
+		vprintf("Info: %s\n", args);
+		break;
+	}
 }
 
-long tf_seek(struct timidity_file *tf, long offset, int whence)
-{
-
-	return (long)tf->url.Seek(offset, (FileReader::ESeek)whence);
-}
-
-long tf_tell(struct timidity_file *tf)
-{
-	return (long)tf->url.Tell();
-}
+// Allow hosting applications to capture the messages and deal with them themselves.
+void (*ctl_cmsg)(int type, int verbosity_level, const char* fmt, ...) = default_ctl_cmsg;
 
 }

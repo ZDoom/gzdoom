@@ -3,6 +3,7 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"
+#include "timiditypp/timidity_file.h"
 
 enum
 {
@@ -26,7 +27,7 @@ struct FSoundFontInfo
 //
 //==========================================================================
 
-class FSoundFontReader
+class FSoundFontReader : public TimidityPlus::SoundFontReaderInterface
 {
 protected:
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
@@ -44,12 +45,24 @@ public:
     
     virtual ~FSoundFontReader() {}
     virtual FileReader OpenMainConfigFile() = 0;    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
+	virtual FString MainConfigFileName()
+	{
+		return basePath() + "timidity.cfg";
+	}
+
     virtual FileReader OpenFile(const char *name) = 0;
     std::pair<FileReader , FString> LookupFile(const char *name);
     void AddPath(const char *str);
 	virtual FString basePath() const
 	{
 		return "";	// archived patch sets do not use paths
+	}
+
+	virtual FileReader Open(const char* name, std::string &filename);
+	virtual struct TimidityPlus::timidity_file* open_timidityplus_file(const char* name);
+	virtual void timidityplus_add_path(const char* name)
+	{
+		return AddPath(name);
 	}
 };
 

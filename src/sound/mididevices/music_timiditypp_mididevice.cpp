@@ -44,6 +44,43 @@
 #include "timiditypp/playmidi.h"
 
 
+//==========================================================================
+//
+// Error printing override to redirect to the internal console instead of stdout.
+//
+//==========================================================================
+
+static void gzdoom_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
+{
+	if (verbosity_level >= TimidityPlus::VERB_DEBUG) return;	// Don't waste time on diagnostics.
+
+	va_list args;
+	va_start(args, fmt);
+	FString msg;
+	msg.VFormat(fmt, args);
+	va_end(args);
+
+	switch (type)
+	{
+	case TimidityPlus::CMSG_ERROR:
+		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
+		break;
+
+	case TimidityPlus::CMSG_WARNING:
+		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
+		break;
+
+	case TimidityPlus::CMSG_INFO:
+		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
+		break;
+	}
+}
+
+//==========================================================================
+//
+// CVar interface to configurable parameters
+//
+//==========================================================================
 
 template<class T> void ChangeVarSync(T& var, T value)
 {
@@ -237,11 +274,11 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args, int samplerate)
 		delete instruments;
 		instruments = nullptr;
 	}
+	TimidityPlus::ctl_cmsg = gzdoom_ctl_cmsg;
 	TimidityPlus::set_playback_rate(SampleRate);
 
 	if (instruments == nullptr)
 	{
-
 		auto sfreader = sfmanager.OpenSoundFont(args, SF_SF2 | SF_GUS);
 		if (sfreader != nullptr)
 		{
@@ -366,31 +403,4 @@ void TimidityPP_Shutdown()
 	TimidityPPMIDIDevice::ClearInstruments();
 	TimidityPlus::free_gauss_table();
 	TimidityPlus::free_global_mblock();
-}
-
-
-void TimidityPlus::ctl_cmsg(int type, int verbosity_level, const char *fmt, ...)
-{
-	if (verbosity_level >= VERB_DEBUG) return;	// Don't waste time on diagnostics.
-
-	va_list args;
-	va_start(args, fmt);
-	FString msg;
-	msg.VFormat(fmt, args);
-	va_end(args);
-
-	switch (type)
-	{
-	case CMSG_ERROR:
-		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
-		break;
-
-	case CMSG_WARNING:
-		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
-		break;
-
-	case CMSG_INFO:
-		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
-		break;
-	}
 }

@@ -52,7 +52,7 @@ inline bool RC_IS_SKIP_FILE(int rc)
 }
 
 
-void ctl_cmsg(int type, int verbosity_level, const char *fmt, ...);
+extern void (*ctl_cmsg)(int type, int verbosity_level, const char* fmt, ...);
 
 
 }

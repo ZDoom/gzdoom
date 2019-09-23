@@ -32,6 +32,8 @@
 
 namespace TimidityPlus
 {
+	//class SoundFontReaderInterface;
+	using SoundFontReaderInterface = FSoundFontReader;
 
 struct timidity_file
 {
@@ -39,7 +41,7 @@ struct timidity_file
 	std::string filename;
 };
 
-extern struct timidity_file *open_file(const char *name, FSoundFontReader *);
+extern struct timidity_file *open_file(const char *name, SoundFontReaderInterface *);
 extern void tf_close(struct timidity_file *tf);
 extern void skip(struct timidity_file *tf, size_t len);
 extern char *tf_gets(char *buff, int n, struct timidity_file *tf);

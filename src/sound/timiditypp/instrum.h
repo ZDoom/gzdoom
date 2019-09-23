@@ -31,7 +31,6 @@
 #include "sflayer.h"
 #include "sfitem.h"
 
-class FSoundFontReader;
 
 namespace TimidityPlus
 {
@@ -233,7 +232,7 @@ struct  SampleImporter;
 class Instruments
 {
 	std::string configFileName;
-    FSoundFontReader *sfreader;
+    SoundFontReaderInterface *sfreader;
 
 	ToneBank standard_tonebank, standard_drumset;
 
@@ -462,7 +461,7 @@ class Instruments
 public:
 
 	Instruments();
-	bool load(const char *config);
+	bool load(SoundFontReaderInterface *);
 	~Instruments();
 
 	const ToneBank *toneBank(int i) const
@@ -556,12 +555,6 @@ public:
 	{
 		set_default_instrument(def_instr_name);
 	}
-
-	bool checkConfig(const char *filename)
-	{
-		return configFileName.compare(filename) == 0;
-	}
-
 };
 
 

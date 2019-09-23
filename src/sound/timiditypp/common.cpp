@@ -127,14 +127,14 @@ double flt_rand()
 	return (int)GenRand_Real1();
 }
 
-struct timidity_file *open_file(const char *name, FSoundFontReader *sfreader)
+struct timidity_file *open_file(const char *name, SoundFontReaderInterface *sfreader)
 {
     FileReader fr;
     FString filename;
     if (name == nullptr)
     {
         fr = sfreader->OpenMainConfigFile();
-        filename = sfreader->basePath() + "timidity.cfg";
+		filename = sfreader->MainConfigFileName();
     }
     else
     {

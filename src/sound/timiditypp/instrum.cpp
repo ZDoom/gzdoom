@@ -52,16 +52,13 @@ Instruments::Instruments()
 	memcpy(layer_items, static_layer_items, sizeof(layer_items));
 }
 
-bool Instruments::load(const char *config)
+bool Instruments::load(SoundFontReaderInterface *sf)
 {
-    sfreader = sfmanager.OpenSoundFont(config, SF_SF2 | SF_GUS);
-    if (sfreader == nullptr) return false;
-    
+	sfreader = sf;
 	if (read_config_file(nullptr, 0, 0) == RC_OK)
 	{
 		init_load_soundfont();
 		set_default_instrument();
-		configFileName = config;
 		return true;
 	}
 	return false;

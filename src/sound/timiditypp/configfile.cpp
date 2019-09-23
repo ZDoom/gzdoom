@@ -643,7 +643,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 	{
 		char *c = strdup_mblock(&varbuf, tf->filename.c_str());
 		basedir = c;
-		for (; c; c++) if (*c == '\\') *c = '/';
+		for (; *c; c++) if (*c == '\\') *c = '/';
 		sep = (char*)strrchr(basedir, '/');
 	}
 	else

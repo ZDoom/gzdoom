@@ -44,6 +44,11 @@ public:
     
     virtual ~FSoundFontReader() {}
     virtual FileReader OpenMainConfigFile() = 0;    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
+	virtual FString MainConfigFileName()
+	{
+		return basePath() + "timidity.cfg";
+	}
+
     virtual FileReader OpenFile(const char *name) = 0;
     std::pair<FileReader , FString> LookupFile(const char *name);
     void AddPath(const char *str);

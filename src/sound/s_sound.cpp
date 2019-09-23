@@ -1199,10 +1199,10 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		case SOURCE_Unattached:	chan->Point[0] = pt->X; chan->Point[1] = pt->Y; chan->Point[2] = pt->Z;	break;
 		default:										break;
 		}
-	}
 
-	if (spitch > 0.0)
-		S_SetPitch(chan, spitch);
+		if (spitch > 0.0)
+			S_SetPitch(chan, spitch);
+	}
 
 	return chan;
 }
@@ -1849,6 +1849,7 @@ void S_ChangeSoundPitch(AActor *actor, int channel, double pitch)
 
 void S_SetPitch(FSoundChan *chan, float pitch)
 {
+	assert(chan != nullptr);
 	GSnd->ChannelPitch(chan, MAX(0.0001f, pitch));
 	chan->Pitch = MAX(1, int(float(NORM_PITCH) * pitch));
 }

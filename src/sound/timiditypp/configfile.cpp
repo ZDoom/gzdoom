@@ -1397,7 +1397,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				continue;
 			}
 			for (i = 1; i < words; i++)
-                sfreader->AddPath(w[i]);
+                sfreader->timidityplus_add_path(w[i]);
 		}
 		else if (!strcmp(w[0], "source") || !strcmp(w[0], "trysource"))
 		{

@@ -36,6 +36,7 @@
 #include "i_musicinterns.h"
 #include "v_text.h"
 #include "timidity.h"
+#include "i_soundfont.h"
 
 CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {

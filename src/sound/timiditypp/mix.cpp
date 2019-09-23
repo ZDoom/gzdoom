@@ -32,15 +32,10 @@
 #include "resample.h"
 #include "mix.h"
 #include "optcode.h"
-#include "c_cvars.h"
-
-CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0) self = 0;
-}
 
 namespace TimidityPlus
 {
+extern float min_sustain_time;
 
 
 #define FROM_FINAL_VOLUME(a) (a)

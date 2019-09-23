@@ -35,6 +35,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include "i_soundfont.h"
+#include "i_soundinternal.h"
 #include "cmdlib.h"
 #include "i_system.h"
 #include "gameconfigfile.h"
@@ -42,6 +43,33 @@
 #include "timiditypp/common.h"
 
 FSoundFontManager sfmanager;
+
+struct timidity_file_FileReader : public TimidityPlus::timidity_file
+{
+	FileReader fr;
+
+	char* gets(char* buff, int n) override
+	{
+		if (!fr.isOpen()) return nullptr;
+		return fr.Gets(buff, n);
+	}
+	long read(void* buff, int32_t size, int32_t nitems) override
+	{
+		if (!fr.isOpen()) return 0;
+		return (long)fr.Read(buff, size * nitems) / size;
+	}
+	long seek(long offset, int whence) override
+	{
+		if (!fr.isOpen()) return 0;
+		return (long)fr.Seek(offset, (FileReader::ESeek)whence);
+	}
+	long tell() override
+	{
+		if (!fr.isOpen()) return 0;
+		return (long)fr.Tell();
+	}
+
+};
 
 //==========================================================================
 //
@@ -122,15 +150,15 @@ FileReader FSoundFontReader::Open(const char *name, std::string& filename)
 //
 //==========================================================================
 
-struct TimidityPlus::timidity_file* FSoundFontReader::open_timidity_file(const char* name)
+struct TimidityPlus::timidity_file* FSoundFontReader::open_timidityplus_file(const char* name)
 {
 	std::string filename;
 
 	FileReader fr = Open(name, filename);
 	if (!fr.isOpen()) return nullptr;
 
-	auto tf = new TimidityPlus::timidity_file;
-	tf->url = std::move(fr);
+	auto tf = new timidity_file_FileReader;
+	tf->fr = std::move(fr);
 	tf->filename = std::move(filename);
 	return tf;
 }

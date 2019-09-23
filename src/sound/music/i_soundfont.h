@@ -3,6 +3,7 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"
+#include "timiditypp/timidity_file.h"
 
 enum
 {
@@ -20,17 +21,13 @@ struct FSoundFontInfo
     int type;
 };
 
-namespace TimidityPlus
-{
-	struct timidity_file;
-}
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-class FSoundFontReader
+class FSoundFontReader : public TimidityPlus::SoundFontReaderInterface
 {
 protected:
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
@@ -62,7 +59,11 @@ public:
 	}
 
 	virtual FileReader Open(const char* name, std::string &filename);
-	virtual struct TimidityPlus::timidity_file* open_timidity_file(const char* name);
+	virtual struct TimidityPlus::timidity_file* open_timidityplus_file(const char* name);
+	virtual void timidityplus_add_path(const char* name)
+	{
+		return AddPath(name);
+	}
 };
 
 //==========================================================================

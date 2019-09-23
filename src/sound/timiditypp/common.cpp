@@ -129,48 +129,27 @@ double flt_rand()
 
 struct timidity_file *open_file(const char *name, SoundFontReaderInterface *sfreader)
 {
-	return sfreader->open_timidity_file(name);
+	return sfreader->open_timidityplus_file(name);
 }
 
 /* This closes files opened with open_file */
 void tf_close(struct timidity_file *tf)
 {
-	tf->url.Close();
 	delete tf;
 }
 
 /* This is meant for skipping a few bytes. */
 void skip(struct timidity_file *tf, size_t len)
 {
-	tf->url.Seek((long)len, FileReader::SeekCur);
-}
-
-char *tf_gets(char *buff, int n, struct timidity_file *tf)
-{
-	return tf->url.Gets(buff, n);
+	tf_seek(tf, (long)len, SEEK_CUR);
 }
 
 int tf_getc(struct timidity_file *tf)
 {
 	unsigned char c;
-	auto read = tf->url.Read(&c, 1);
+	auto read = tf_read(&c, 1, 1, tf);
 	return read == 0 ? EOF : c;
 }
 
-long tf_read(void *buff, int32_t size, int32_t nitems, struct timidity_file *tf)
-{
-	return (long)tf->url.Read(buff, size * nitems) / size;
-}
-
-long tf_seek(struct timidity_file *tf, long offset, int whence)
-{
-
-	return (long)tf->url.Seek(offset, (FileReader::ESeek)whence);
-}
-
-long tf_tell(struct timidity_file *tf)
-{
-	return (long)tf->url.Tell();
-}
 
 }

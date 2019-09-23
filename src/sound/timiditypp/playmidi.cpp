@@ -59,6 +59,7 @@ namespace TimidityPlus
 	float timidity_drum_power = 1.f;
 	int timidity_key_adjust = 0;
 	float timidity_tempo_adjust = 1.f;
+	float min_sustain_time = 5000;
 
 	// The following options have no generic use and are only meaningful for some SYSEX events not normally found in common MIDIs.
 	// For now they are kept as unchanging global variables
@@ -194,6 +195,12 @@ CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	if (self < 0.25) self = 0.25;
 	else if (self > 10) self = 10;
 	ChangeVarSync(TimidityPlus::timidity_tempo_adjust, *self);
+}
+
+CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 0;
+	ChangeVarSync(TimidityPlus::min_sustain_time, *self);
 }
 
 

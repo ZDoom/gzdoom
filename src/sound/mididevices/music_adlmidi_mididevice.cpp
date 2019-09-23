@@ -35,7 +35,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
-#include "adlmidi/adlmidi.h"
+#include "adlmidi.h"
 #include "i_soundfont.h"
 
 class ADLMIDIDevice : public SoftSynthMIDIDevice

@@ -468,7 +468,7 @@ set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_L
 if (HAVE_VULKAN)
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
 endif()
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${ADL_INCLUDE_DIR}" )
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
@@ -677,7 +677,6 @@ file( GLOB HEADER_FILES
 	maploader/*.h
 	menu/*.h
 	sound/*.h
-	sound/adlmidi/*.h*
 	sound/backend/*.h*
 	sound/music/*.h*
 	sound/opnmidi/*.h*
@@ -885,19 +884,6 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_weapon.cpp
 	r_data/models/models.cpp
 	utility/matrix.cpp
-	sound/adlmidi/adldata.cpp
-	sound/adlmidi/adlmidi.cpp
-	sound/adlmidi/adlmidi_load.cpp
-	sound/adlmidi/adlmidi_midiplay.cpp
-	sound/adlmidi/adlmidi_opl3.cpp
-	sound/adlmidi/adlmidi_private.cpp
-	sound/adlmidi/chips/dosbox/dbopl.cpp
-	sound/adlmidi/chips/dosbox_opl3.cpp
-	sound/adlmidi/chips/nuked/nukedopl3_174.c
-	sound/adlmidi/chips/nuked/nukedopl3.c
-	sound/adlmidi/chips/nuked_opl3.cpp
-	sound/adlmidi/chips/nuked_opl3_v174.cpp
-	sound/adlmidi/wopl/wopl_file.c
 	sound/opnmidi/chips/gens_opn2.cpp
 	sound/opnmidi/chips/gens/Ym2612_Emu.cpp
 	sound/opnmidi/chips/mame/mame_ym2612fm.c
@@ -1385,7 +1371,7 @@ if( UNIX )
 	endif()
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma adl )
 
 include_directories( .
 	g_statusbar

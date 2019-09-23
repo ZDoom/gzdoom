@@ -30,6 +30,7 @@
 
 #include "controls.h"
 #include "mblock.h"
+#include <mutex>
 #include <stdint.h>
 
 #ifdef _MSC_VER
@@ -124,6 +125,7 @@
 namespace TimidityPlus
 {
 
+extern std::mutex CvarCritSec;
 extern bool timidity_modulation_wheel;
 extern bool timidity_portamento;
 extern int timidity_reverb;
@@ -139,6 +141,8 @@ extern bool timidity_pan_delay;
 extern float timidity_drum_power;
 extern int timidity_key_adjust;
 extern float timidity_tempo_adjust;
+extern float min_sustain_time;
+extern int timidity_lpf_def;
 
 extern int32_t playback_rate;
 extern int32_t control_ratio;	// derived from playback_rate

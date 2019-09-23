@@ -28,7 +28,7 @@
 
 #include <stdint.h> // int types are defined here
 
-#include "m_swap.h"
+#include "t_swap.h"
 
 namespace TimidityPlus
 {

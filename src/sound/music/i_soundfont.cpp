@@ -39,6 +39,7 @@
 #include "i_system.h"
 #include "gameconfigfile.h"
 #include "resourcefiles/resourcefile.h"
+#include "timiditypp/common.h"
 
 FSoundFontManager sfmanager;
 
@@ -96,6 +97,44 @@ int FSoundFontReader::pathcmp(const char *p1, const char *p2)
 {
 	return mCaseSensitivePaths? strcmp(p1, p2) : stricmp(p1, p2);
 }
+
+
+FileReader FSoundFontReader::Open(const char *name, std::string& filename)
+{
+	FileReader fr;
+	if (name == nullptr)
+	{
+		fr = OpenMainConfigFile();
+		filename = MainConfigFileName();
+	}
+	else
+	{
+		auto res = LookupFile(name);
+		fr = std::move(res.first);
+		filename = res.second;
+	}
+	return fr;
+}
+
+//==========================================================================
+//
+// This is the interface function for Timidity++
+//
+//==========================================================================
+
+struct TimidityPlus::timidity_file* FSoundFontReader::open_timidity_file(const char* name)
+{
+	std::string filename;
+
+	FileReader fr = Open(name, filename);
+	if (!fr.isOpen()) return nullptr;
+
+	auto tf = new TimidityPlus::timidity_file;
+	tf->url = std::move(fr);
+	tf->filename = std::move(filename);
+	return tf;
+}
+
 
 //==========================================================================
 //

@@ -129,25 +129,7 @@ double flt_rand()
 
 struct timidity_file *open_file(const char *name, SoundFontReaderInterface *sfreader)
 {
-    FileReader fr;
-    FString filename;
-    if (name == nullptr)
-    {
-        fr = sfreader->OpenMainConfigFile();
-		filename = sfreader->MainConfigFileName();
-    }
-    else
-    {
-        auto res = sfreader->LookupFile(name);
-        fr = std::move(res.first);
-        filename = res.second;
-    }
-    if (!fr.isOpen()) return nullptr;
-    
-	auto tf = new timidity_file;
-	tf->url = std::move(fr);
-	tf->filename = filename.GetChars();
-	return tf;
+	return sfreader->open_timidity_file(name);
 }
 
 /* This closes files opened with open_file */

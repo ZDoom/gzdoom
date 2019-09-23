@@ -20,6 +20,10 @@ struct FSoundFontInfo
     int type;
 };
 
+namespace TimidityPlus
+{
+	struct timidity_file;
+}
 //==========================================================================
 //
 //
@@ -56,6 +60,9 @@ public:
 	{
 		return "";	// archived patch sets do not use paths
 	}
+
+	virtual FileReader Open(const char* name, std::string &filename);
+	virtual struct TimidityPlus::timidity_file* open_timidity_file(const char* name);
 };
 
 //==========================================================================

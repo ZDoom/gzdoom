@@ -170,6 +170,5 @@ const int max_voices = DEFAULT_VOICES;
 const int temper_type_mute = 0;
 const int opt_preserve_silence = 0;
 const int opt_init_keysig = 8;
-
 }
 #endif /* TIMIDITY_H_INCLUDED */

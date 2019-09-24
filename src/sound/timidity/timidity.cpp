@@ -24,19 +24,7 @@
 #include <stdlib.h>
 #include <memory>
 
-#include "templates.h"
-#include "cmdlib.h"
-#include "c_cvars.h"
-#include "c_dispatch.h"
-#include "doomerrors.h"
-#include "i_system.h"
-#include "files.h"
-#include "w_wad.h"
-#include "i_soundfont.h"
-#include "i_musicinterns.h"
-#include "v_text.h"
 #include "timidity.h"
-#include "i_soundfont.h"
 #include "timidity_file.h"
 #include "common.h"
 #include "instrum.h"
@@ -615,7 +603,7 @@ int Instruments::LoadDMXGUS(int gus_memsize)
 	int status = -1;
 	int gusbank = (gus_memsize >= 1 && gus_memsize <= 4) ? gus_memsize : -1;
 
-	data->seek(0, FileReader::SeekSet);
+	data->seek(0, SEEK_SET);
 
 	while (data->gets(readbuffer, 1024) && read < size)
 	{
@@ -706,9 +694,7 @@ int Instruments::LoadDMXGUS(int gus_memsize)
 	return 0;
 }
 
-DLS_Data *LoadDLS(FILE *src);
 void FreeDLS(DLS_Data *data);
-
 Renderer::Renderer(float sample_rate, int voices_, Instruments *inst)
 {
 	int res = 0;
@@ -722,7 +708,7 @@ Renderer::Renderer(float sample_rate, int voices_, Instruments *inst)
 	voice = NULL;
 	adjust_panning_immediately = false;
 
-	control_ratio = clamp(int(rate / CONTROLS_PER_SECOND), 1, MAX_CONTROL_RATIO);
+	control_ratio = std::min(1, std::max(MAX_CONTROL_RATIO, int(rate / CONTROLS_PER_SECOND)));
 
 	lost_notes = 0;
 	cut_notes = 0;

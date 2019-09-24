@@ -9,32 +9,20 @@ endif()
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
 
-include_directories( timiditypp )
+include_directories( timidity )
 
 file( GLOB HEADER_FILES
-	timiditypp/*.h
+	timidity/*.h
 	)
-add_library( timidityplus STATIC
-	fft4g.cpp
-	reverb.cpp
+add_library( timidity STATIC
 	common.cpp
-	configfile.cpp
-	effect.cpp
-	filter.cpp
-	freq.cpp
 	instrum.cpp
-	mblock.cpp
+	instrum_dls.cpp
+	instrum_font.cpp
+	instrum_sf2.cpp
 	mix.cpp
 	playmidi.cpp
-	quantity.cpp
-	readmidic.cpp
-	recache.cpp
 	resample.cpp
-	sbkconv.cpp
-	sffile.cpp
-	sfitem.cpp
-	smplfile.cpp
-	sndfont.cpp
-	tables.cpp
+	timidity.cpp
 	)
-target_link_libraries( timidityplus )
+target_link_libraries( timidity )

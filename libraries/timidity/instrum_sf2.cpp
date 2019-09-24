@@ -3,10 +3,10 @@
 #include <errno.h>
 #include <math.h>
 #include <memory>
+#include <assert.h>
+#include <algorithm>
 
-#include "doomdef.h"
 #include "t_swap.h"
-#include "templates.h"
 #include "timidity.h"
 #include "timidity_file.h"
 #include "common.h"
@@ -683,10 +683,10 @@ static void ParseShdr(SFFile *sf2, timidity_file *f, uint32_t chunkid, uint32_t 
 		}
 
 		// Clamp sample positions to the available sample data.
-		sample->Start = MIN(sample->Start, sf2->SizeSampleData - 1);
-		sample->End = MIN(sample->End, sf2->SizeSampleData - 1);
-		sample->StartLoop = MIN(sample->StartLoop, sf2->SizeSampleData - 1);
-		sample->EndLoop = MIN(sample->EndLoop, sf2->SizeSampleData - 1);
+		sample->Start = std::min(sample->Start, sf2->SizeSampleData - 1);
+		sample->End = std::min(sample->End, sf2->SizeSampleData - 1);
+		sample->StartLoop = std::min(sample->StartLoop, sf2->SizeSampleData - 1);
+		sample->EndLoop = std::min(sample->EndLoop, sf2->SizeSampleData - 1);
 
 		if (sample->Start >= sample->End)
 		{
@@ -872,7 +872,7 @@ void SFFile::SetAllOrders(int order)
 	{
 		Presets[i].LoadOrder = order;
 	}
-	for (unsigned int i = 0; i < Percussion.Size(); ++i)
+	for (size_t i = 0; i < Percussion.size(); ++i)
 	{
 		Percussion[i].LoadOrder = order;
 	}
@@ -887,7 +887,7 @@ Instrument *SFFile::LoadInstrumentOrder(Renderer *song, int order, int drum, int
 {
 	if (drum)
 	{
-		for (unsigned int i = 0; i < Percussion.Size(); ++i)
+		for (size_t i = 0; i < Percussion.size(); ++i)
 		{
 			if ((order < 0 || Percussion[i].LoadOrder == order) &&
 				Percussion[i].Generators.drumset == bank &&
@@ -1040,11 +1040,11 @@ void SFFile::CheckZones(int start, int stop, bool instr)
 		// Check for swapped ranges. (Should we fix them or ignore them?)
 		if (bag[i].KeyRange.Lo > bag[i].KeyRange.Hi)
 		{
-			swapvalues(bag[i].KeyRange.Lo, bag[i].KeyRange.Hi);
+			std::swap(bag[i].KeyRange.Lo, bag[i].KeyRange.Hi);
 		}
 		if (bag[i].VelRange.Lo > bag[i].VelRange.Hi)
 		{
-			swapvalues(bag[i].VelRange.Lo, bag[i].VelRange.Hi);
+			std::swap(bag[i].VelRange.Lo, bag[i].VelRange.Hi);
 		}
 	}
 }
@@ -1147,10 +1147,10 @@ void SFFile::TranslatePercussionPresetZone(SFPreset *preset, SFBag *pzone)
 			AddPresetGenerators(&perc.Generators, pzone->GenIndex, (pzone + 1)->GenIndex, preset);
 			perc.Generators.drumset = (uint8_t)preset->Program;
 			perc.Generators.key = key;
-			perc.Generators.velRange.Lo = MAX(pzone->VelRange.Lo, InstrBags[i].VelRange.Lo);
-			perc.Generators.velRange.Hi = MIN(pzone->VelRange.Hi, InstrBags[i].VelRange.Hi);
+			perc.Generators.velRange.Lo = std::max(pzone->VelRange.Lo, InstrBags[i].VelRange.Lo);
+			perc.Generators.velRange.Hi = std::min(pzone->VelRange.Hi, InstrBags[i].VelRange.Hi);
 			perc.Generators.sampleID = InstrBags[i].Target;
-			Percussion.Push(perc);
+			Percussion.push_back(perc);
 		}
 	}
 }
@@ -1222,7 +1222,7 @@ void SFFile::AddPresetGenerators(SFGenComposite *composite, int start, int stop,
 		}
 		else
 		{
-			added = clamp<int>(added, def->Min, def->Max);
+			added = std::max<int>(def->Max, std::min<int>(def->Min, added));
 		}
 		((int16_t *)composite)[def->StructIndex] = added;
 		gen_set[gen->Oper] = true;
@@ -1235,7 +1235,7 @@ void SFFile::AddPresetGenerators(SFGenComposite *composite, int start, int stop,
 
 Instrument *SFFile::LoadPercussion(Renderer *song, SFPerc *perc)
 {
-	unsigned int i;
+	size_t i;
 	int drumkey;
 	int drumset;
 	int j;
@@ -1246,7 +1246,7 @@ Instrument *SFFile::LoadPercussion(Renderer *song, SFPerc *perc)
 	drumset = perc->Generators.drumset;
 
 	// Count all percussion composites that match this one's key and set.
-	for (i = 0; i < Percussion.Size(); ++i)
+	for (i = 0; i < Percussion.size(); ++i)
 	{
 		if (Percussion[i].Generators.key == drumkey &&
 			Percussion[i].Generators.drumset == drumset &&
@@ -1272,7 +1272,7 @@ Instrument *SFFile::LoadPercussion(Renderer *song, SFPerc *perc)
 	memset(ip->sample, 0, sizeof(Sample) * ip->samples);
 
 	// Fill in Sample structure for each composite.
-	for (j = 0, i = 0; i < Percussion.Size(); ++i)
+	for (j = 0, i = 0; i < Percussion.size(); ++i)
 	{
 		SFPerc *zone = &Percussion[i];
 		SFGenComposite *gen = &zone->Generators;
@@ -1385,12 +1385,12 @@ Instrument *SFFile::LoadPreset(Renderer *song, SFPreset *preset)
 				Sample *sp = ip->sample + k++;
 
 				// Set velocity range
-				sp->low_vel = MAX(InstrBags[j].VelRange.Lo, PresetBags[i].VelRange.Lo);
-				sp->high_vel = MIN(InstrBags[j].VelRange.Hi, PresetBags[i].VelRange.Hi);
+				sp->low_vel = std::max(InstrBags[j].VelRange.Lo, PresetBags[i].VelRange.Lo);
+				sp->high_vel = std::min(InstrBags[j].VelRange.Hi, PresetBags[i].VelRange.Hi);
 
 				// Set frequency range
-				sp->low_freq = note_to_freq(MAX(InstrBags[j].KeyRange.Lo, PresetBags[i].KeyRange.Lo));
-				sp->high_freq = note_to_freq(MIN(InstrBags[j].KeyRange.Hi, PresetBags[i].KeyRange.Hi));
+				sp->low_freq = note_to_freq(std::max(InstrBags[j].KeyRange.Lo, PresetBags[i].KeyRange.Lo));
+				sp->high_freq = note_to_freq(std::min(InstrBags[j].KeyRange.Hi, PresetBags[i].KeyRange.Hi));
 
 				gen = DefaultGenerators;
 				if (inst->bHasGlobalZone)
@@ -1426,10 +1426,10 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 	int start, end;
 	start = gen->startAddrsOffset + gen->startAddrsCoarseOffset * 32768;
 	end = gen->endAddrsOffset + gen->endAddrsCoarseOffset * 32768;
-	start = MAX<int>(sfsamp->Start, sfsamp->Start + start);
-	end = MIN<int>(sfsamp->End, sfsamp->End + end);
-	sp->loop_start = MAX<int>(start, sfsamp->StartLoop + gen->startLoopAddrsOffset + gen->startLoopAddrsCoarseOffset * 32768);
-	sp->loop_end = MIN<int>(end, sfsamp->EndLoop + gen->endLoopAddrsOffset + gen->endLoopAddrsCoarseOffset * 32768);
+	start = std::max<int>(sfsamp->Start, sfsamp->Start + start);
+	end = std::min<int>(sfsamp->End, sfsamp->End + end);
+	sp->loop_start = std::max<int>(start, sfsamp->StartLoop + gen->startLoopAddrsOffset + gen->startLoopAddrsCoarseOffset * 32768);
+	sp->loop_end = std::min<int>(end, sfsamp->EndLoop + gen->endLoopAddrsOffset + gen->endLoopAddrsCoarseOffset * 32768);
 
 	sp->loop_start = (sp->loop_start - start) << FRACTION_BITS;
 	sp->loop_end = (sp->loop_end - start) << FRACTION_BITS;

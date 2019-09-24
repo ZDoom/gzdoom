@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <memory>
+#include <algorithm>
 
 #include "timidity.h"
 #include "gf1patch.h"
@@ -598,11 +599,11 @@ int Renderer::fill_bank(int dr, int b)
 			{
 				if (bank->tone[i].fontbank >= 0)
 				{
-					ip = load_instrument_font(bank->tone[i].name, dr, b, i);
+					ip = load_instrument_font(bank->tone[i].name.c_str(), dr, b, i);
 				}
 				else
 				{
-					ip = load_instrument(bank->tone[i].name, 
+					ip = load_instrument(bank->tone[i].name.c_str(), 
 						(dr) ? 1 : 0,
 						bank->tone[i].pan,
 						(bank->tone[i].note != -1) ? bank->tone[i].note : ((dr) ? i : -1),
@@ -618,7 +619,7 @@ int Renderer::fill_bank(int dr, int b)
 			bank->instrument[i] = ip;
 			if (ip == NULL)
 			{
-				if (bank->tone[i].name.IsEmpty())
+				if (bank->tone[i].name.length() == 0)
 				{
 					cmsg(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_DEBUG,
 						"No instrument mapped to %s %d, program %d%s\n",
@@ -629,7 +630,7 @@ int Renderer::fill_bank(int dr, int b)
 				{
 					cmsg(CMSG_ERROR, VERB_DEBUG,
 						"Couldn't load instrument %s (%s %d, program %d)\n",
-						bank->tone[i].name.GetChars(),
+						bank->tone[i].name.c_str(),
 						(dr) ? "drum set" : "tone bank", b, i);
 				}
 				if (b != 0)

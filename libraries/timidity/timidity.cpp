@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory>
+#include <algorithm>
+#include <stdarg.h>
 
 #include "timidity.h"
 #include "timidity_file.h"
@@ -596,7 +598,7 @@ int Instruments::LoadDMXGUS(int gus_memsize)
 	long read = 0;
 	uint8_t remap[256];
 
-	FString patches[256];
+	std::string patches[256];
 	memset(remap, 255, sizeof(remap));
 	char temp[16];
 	int current = -1;
@@ -680,7 +682,7 @@ int Instruments::LoadDMXGUS(int gus_memsize)
 		int j = (gusbank > 0) ? remap[k] : k;
 		if (k == 128) bank = drumset[0];
 		// No need to bother with things that don't exist
-		if (patches[j].IsEmpty())
+		if (patches[j].length() == 0)
 			continue;
 
 		int val = k % 128;
@@ -727,7 +729,7 @@ Renderer::~Renderer()
 {
 	if (resample_buffer != NULL)
 	{
-		M_Free(resample_buffer);
+		free(resample_buffer);
 	}
 	if (voice != NULL)
 	{
@@ -752,7 +754,7 @@ void Renderer::ComputeOutput(float *buffer, int count)
 	if (resample_buffer_size < count)
 	{
 		resample_buffer_size = count;
-		resample_buffer = (sample_t *)M_Realloc(resample_buffer, count * sizeof(float) * 2);
+		resample_buffer = (sample_t *)realloc(resample_buffer, count * sizeof(float) * 2);
 	}
 	for (int i = 0; i < voices; i++, v++)
 	{

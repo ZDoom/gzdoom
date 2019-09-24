@@ -116,7 +116,7 @@ struct ToneBankElement
 		note(0), pan(0), strip_loop(0), strip_envelope(0), strip_tail(0)
 	{}
 
-	FString name;
+	std::string name;
 	int note, pan, fontbank, fontpreset, fontnote;
 	int8_t strip_loop, strip_envelope, strip_tail;
 };

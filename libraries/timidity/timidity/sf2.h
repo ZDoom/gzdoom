@@ -1,4 +1,5 @@
 #pragma once
+#include <vector>
 namespace Timidity
 {
 typedef uint16_t SFGenerator;
@@ -304,7 +305,7 @@ struct SFFile : public FontFile
 	SFBag		*InstrBags;
 	SFGenList	*InstrGenerators;
 	SFSample	*Samples;
-	TArray<SFPerc> Percussion;
+	std::vector<SFPerc> Percussion;
 	int			 MinorVersion;
 	uint32_t		 SampleDataOffset;
 	uint32_t		 SampleDataLSBOffset;

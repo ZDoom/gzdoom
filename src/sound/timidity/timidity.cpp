@@ -65,7 +65,7 @@ namespace Timidity
 
 ToneBank *tonebank[MAXBANK], *drumset[MAXBANK];
 
-static FString def_instr_name;
+static std::string def_instr_name;
 std::unique_ptr<FSoundFontReader> gus_sfreader;
 
 static bool InitReader(const char *config_file)
@@ -733,8 +733,8 @@ Renderer::Renderer(float sample_rate, const char *args)
 
 	default_instrument = NULL;
 	default_program = DEFAULT_PROGRAM;
-	if (def_instr_name.IsNotEmpty())
-		set_default_instrument(def_instr_name);
+	if (def_instr_name.length() > 0)
+		set_default_instrument(def_instr_name.c_str());
 
 	voices = MAX(*midi_voices, 16);
 	voice = new Voice[voices];

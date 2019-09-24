@@ -20,8 +20,10 @@
 #ifndef TIMIDITY_H
 #define TIMIDITY_H
 
-#include "doomtype.h"
-#include "files.h"
+#include <stdint.h>
+#include <string>
+
+class FileReader;	// this needs to go away.
 
 namespace Timidity
 {
@@ -185,7 +187,7 @@ enum
 	VERB_DEBUG
 };
 
-void cmsg(int type, int verbosity_level, const char *fmt, ...) GCCPRINTF(3,4);
+void cmsg(int type, int verbosity_level, const char *fmt, ...);
 
 
 /*
@@ -338,10 +340,10 @@ instrum_font.cpp
 class FontFile
 {
 public:
-	FontFile(FString filename);
+	FontFile(const char *filename);
 	virtual ~FontFile();
 
-	FString Filename;
+	std::string Filename;
 	FontFile *Next;
 
 	virtual Instrument *LoadInstrument(struct Renderer *song, int drum, int bank, int program) = 0;

@@ -763,7 +763,7 @@ SFFile *ReadSF2(const char *filename, FileReader &f)
 	return NULL;
 }
 
-SFFile::SFFile(FString filename)
+SFFile::SFFile(const char *filename)
 : FontFile(filename)
 {
 	Presets = NULL;
@@ -1507,7 +1507,7 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 
 void SFFile::LoadSample(SFSample *sample)
 {
-	FileReader fp = gus_sfreader->LookupFile(Filename).first;
+	FileReader fp = gus_sfreader->LookupFile(Filename.c_str()).first;
 	uint32_t i;
 
 	if (!fp.isOpen())

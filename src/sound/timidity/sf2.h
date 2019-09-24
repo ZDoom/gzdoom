@@ -270,7 +270,7 @@ struct SFPerc
 
 struct SFFile : public Timidity::FontFile
 {
-	SFFile(FString filename);
+	SFFile(const char * filename);
 	~SFFile();
 	Timidity::Instrument *LoadInstrument(struct Timidity::Renderer *song, int drum, int bank, int program);
 	Timidity::Instrument *LoadInstrumentOrder(struct Timidity::Renderer *song, int order, int drum, int bank, int program);

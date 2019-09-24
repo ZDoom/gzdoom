@@ -25,8 +25,17 @@
 #include <string.h>
 #include <math.h>
 
+#include "m_swap.h"
 #include "timidity.h"
-#include "doomdef.h"
+
+#ifndef MAKE_ID
+#ifndef __BIG_ENDIAN__
+#define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
+#else
+#define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
+#endif
+#endif
+
 
 #define __Sound_SetError(x)
 
@@ -785,7 +794,7 @@ static const char *SourceToString(USHORT usSource)
 		case CONN_SRC_CC93:
 			return "CC93";
 		default:
-			mysnprintf(unknown, countof(unknown), "UNKNOWN (0x%04x)", usSource);
+			snprintf(unknown, sizeof(unknown), "UNKNOWN (0x%04x)", usSource);
 			return unknown;
 	}
 }
@@ -803,7 +812,7 @@ static const char *TransformToString(USHORT usTransform)
 		case CONN_TRN_SWITCH:
 			return "SWITCH";
 		default:
-			mysnprintf(unknown, countof(unknown), "UNKNOWN (0x%04x)", usTransform);
+			snprintf(unknown, sizeof(unknown), "UNKNOWN (0x%04x)", usTransform);
 			return unknown;
 	}
 }
@@ -877,7 +886,7 @@ static const char *DestinationToString(USHORT usDestination)
 		case CONN_DST_FILTER_Q:
 			return "FILTER_Q";
 		default:
-			mysnprintf(unknown, countof(unknown), "UNKNOWN (0x%04x)", usDestination);
+			snprintf(unknown, sizeof(unknown), "UNKNOWN (0x%04x)", usDestination);
 			return unknown;
 	}
 }

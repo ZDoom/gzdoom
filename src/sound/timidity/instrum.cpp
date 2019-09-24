@@ -30,7 +30,7 @@
 #include <memory>
 
 #include "timidity.h"
-#include "templates.h"
+//#include "templates.h"
 #include "gf1patch.h"
 #include "i_soundfont.h"
 
@@ -165,14 +165,14 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 	if (!fp.isOpen())
 	{
 		/* Try with various extensions */
-		FString tmp = name;
+		std::string tmp = name;
 		tmp += ".pat";
-		fp = gus_sfreader->LookupFile(tmp).first;
+		fp = gus_sfreader->LookupFile(tmp.c_str()).first;
 		if (!fp.isOpen())
 		{
-#ifdef __unix__			// Windows isn't case-sensitive.
-			tmp.ToUpper();
-			fp = gus_sfreader->LookupFile(tmp).first;
+#ifndef _WIN32			// Windows isn't case-sensitive.
+			std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](unsigned char c){ return toupper(c); } );
+			fp = gus_sfreader->LookupFile(tmp.c_str()).first;
 			if (!fp.isOpen())
 #endif
 			{
@@ -401,7 +401,7 @@ fail:
 		{
 			sp->envelope.gf1.rate[j] = patch_data.EnvelopeRate[j];
 			/* [RH] GF1NEW clamps the offsets to the range [5,251], so we do too. */
-			sp->envelope.gf1.offset[j] = clamp<uint8_t>(patch_data.EnvelopeOffset[j], 5, 251);
+			sp->envelope.gf1.offset[j] = std::max<uint8_t>(5, std::min<uint8_t>(251, patch_data.EnvelopeOffset[j]));
 		}
 
 		/* Then read the sample data */

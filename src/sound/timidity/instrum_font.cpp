@@ -33,7 +33,7 @@ FontFile *font_find(const char *filename)
 {
 	for (FontFile *font = Fonts; font != NULL; font = font->Next)
 	{
-		if (stricmp(filename, font->Filename) == 0)
+		if (stricmp(filename, font->Filename.c_str()) == 0)
 		{
 			return font;
 		}
@@ -108,7 +108,7 @@ Instrument *load_instrument_font_order(struct Renderer *song, int order, int dru
 	return NULL;
 }
 
-FontFile::FontFile(FString filename)
+FontFile::FontFile(const char *filename)
 : Filename(filename)
 {
 	Next = Fonts;

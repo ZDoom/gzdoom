@@ -372,10 +372,12 @@ enum
 
 #define BLINKTHRESHOLD (4*32)
 
+#ifndef MAKE_ID
 #ifndef __BIG_ENDIAN__
 #define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
 #else
 #define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
+#endif
 #endif
 
 #endif	// __DOOMDEF_H__

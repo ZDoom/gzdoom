@@ -54,7 +54,7 @@ struct _WM_Info {
 typedef void midi;
 
 WM_SYMBOL const char * WildMidi_GetString (unsigned short int info);
-WM_SYMBOL int WildMidi_Init (const char * config_file, unsigned short int rate, unsigned short int options);
+WM_SYMBOL int WildMidi_Init (FSoundFontReader *reader, unsigned short int rate, unsigned short int options);
 WM_SYMBOL int WildMidi_MasterVolume (unsigned char master_volume);
 WM_SYMBOL int WildMidi_SetOption (midi * handle, unsigned short int options, unsigned short int setting);
 WM_SYMBOL int WildMidi_Close (midi * handle);

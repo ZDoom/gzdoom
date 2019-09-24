@@ -42,20 +42,7 @@
 #include "i_soundfont.h"
 
 std::unique_ptr<FSoundFontReader> wm_sfreader;
-static FString config_name;
 
-bool _WM_InitReader(const char *config_file)
-{
-	auto reader = sfmanager.OpenSoundFont(config_file, SF_GUS);
-	if (reader == nullptr)
-	{
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, config_file, errno);
-		return false;	// No sound font could be opened.
-	}
-	wm_sfreader.reset(reader);
-	config_name = config_file;
-	return true;
-}
 
 unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size) 
 {
@@ -64,7 +51,7 @@ unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size)
 	if (filename == nullptr)
 	{
 		fp = wm_sfreader->OpenMainConfigFile();
-		filename = config_name;
+		filename = wm_sfreader->MainConfigFileName();
 	}
 	else
 	{

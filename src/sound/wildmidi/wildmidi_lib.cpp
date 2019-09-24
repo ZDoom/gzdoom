@@ -44,7 +44,6 @@
 #include "reverb.h"
 #include "gus_pat.h"
 #include "wildmidi_lib.h"
-#include "files.h"
 #include "i_soundfont.h"
 
 #define IS_DIR_SEPARATOR(c)	((c) == '/' || (c) == '\\')
@@ -663,21 +662,13 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 	int token_count = 0;
 	auto config_parm = config_file;
 
-	FileReader fr;
-	if (main)
-	{
-		if (!_WM_InitReader(config_file)) return -1;	// unable to open this as a config file.
-		config_parm = nullptr;
-	}
-
 	config_buffer = (char *)_WM_BufferFile(config_parm, &config_size);
 	if (!config_buffer) {
 		WM_FreePatches();
 		return -1;
 	}
 
-	FString bp = wm_sfreader->basePath();
-	if (config_parm == nullptr) config_file = bp.GetChars();	// Re-get the base path because for archives this is empty.
+	if (config_parm == nullptr) config_file = wm_sfreader->basePath().GetChars();	// Re-get the base path because for archives this is empty.
 
 	// This part was rewritten because the original depended on a header that was GPL'd.
 	dir_end = strrchr(config_file, '/');
@@ -2502,20 +2493,16 @@ WildMidi_GetString(unsigned short int info) {
 	return NULL;
 }
 
-WM_SYMBOL int WildMidi_Init(const char * config_file, unsigned short int rate,
+WM_SYMBOL int WildMidi_Init(FSoundFontReader *reader, unsigned short int rate,
 		unsigned short int options) {
 	if (WM_Initialized) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_ALR_INIT, NULL, 0);
 		return -1;
 	}
 
-	if (config_file == NULL) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
-				"(NULL config file pointer)", 0);
-		return -1;
-	}
 	WM_InitPatches();
-	if (WM_LoadConfig(config_file, true) == -1) {
+	wm_sfreader.reset(reader);
+	if (WM_LoadConfig(nullptr, true) == -1) {
 		return -1;
 	}
 

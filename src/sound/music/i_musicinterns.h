@@ -88,6 +88,7 @@ public:
 
 
 
+void Timidity_Shutdown();
 void TimidityPP_Shutdown();
 
 // Base class for software synthesizer MIDI output devices ------------------

@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <exception>
-#include "timidity.h"
 
 
 namespace Timidity

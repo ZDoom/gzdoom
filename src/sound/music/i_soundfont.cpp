@@ -44,7 +44,8 @@
 
 FSoundFontManager sfmanager;
 
-struct timidity_file_FileReader : public TimidityPlus::timidity_file
+template<class base>
+struct file_interface : public base
 {
 	FileReader fr;
 
@@ -67,6 +68,10 @@ struct timidity_file_FileReader : public TimidityPlus::timidity_file
 	{
 		if (!fr.isOpen()) return 0;
 		return (long)fr.Tell();
+	}
+	void close()
+	{
+		delete this;
 	}
 
 };
@@ -157,12 +162,30 @@ struct TimidityPlus::timidity_file* FSoundFontReader::open_timidityplus_file(con
 	FileReader fr = Open(name, filename);
 	if (!fr.isOpen()) return nullptr;
 
-	auto tf = new timidity_file_FileReader;
+	auto tf = new file_interface<TimidityPlus::timidity_file>;
 	tf->fr = std::move(fr);
 	tf->filename = std::move(filename);
 	return tf;
 }
 
+//==========================================================================
+//
+// This is the interface function for Timidity(GUS)
+//
+//==========================================================================
+
+struct Timidity::timidity_file* FSoundFontReader::open_timidity_file(const char* name)
+{
+	std::string filename;
+
+	FileReader fr = Open(name, filename);
+	if (!fr.isOpen()) return nullptr;
+
+	auto tf = new file_interface<Timidity::timidity_file>;
+	tf->fr = std::move(fr);
+	tf->filename = std::move(filename);
+	return tf;
+}
 
 //==========================================================================
 //
@@ -284,14 +307,16 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	}
 }
 
-FPatchSetReader::FPatchSetReader()
+FPatchSetReader::FPatchSetReader(FileReader &reader)
 {
 	// This constructor is for reading DMXGUS
 	mAllowAbsolutePaths = true;
+	dmxgus = std::move(reader);
 }
 
 FileReader FPatchSetReader::OpenMainConfigFile()
 {
+	if (dmxgus.isOpen()) return std::move(dmxgus);
 	FileReader fr;
 	fr.OpenFile(mFullPathToConfig);
 	return fr;

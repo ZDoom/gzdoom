@@ -158,9 +158,9 @@ void I_ShutdownMusic(bool onexit)
 		S_StopMusic (true);
 		assert (currSong == nullptr);
 	}
-	Timidity::FreeAll();
 	if (onexit)
 	{
+		Timidity_Shutdown();
 		WildMidi_Shutdown();
 		TimidityPP_Shutdown();
 		dumb_exit();

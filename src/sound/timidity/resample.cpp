@@ -26,6 +26,10 @@
 #include <stdlib.h>
 
 #include "timidity.h"
+#include "common.h"
+#include "instrum.h"
+#include "playmidi.h"
+
 
 namespace Timidity
 {
@@ -560,10 +564,6 @@ void pre_resample(Renderer *song, Sample *sp)
 
 	if (sp->scale_factor != 0)
 		return;
-
-	cmsg(CMSG_INFO, VERB_NOISY, " * pre-resampling for note %d (%s%d)\n",
-		sp->scale_note,
-		note_name[sp->scale_note % 12], (sp->scale_note & 0x7F) / 12);
 
 	a = (sp->sample_rate * note_to_freq(sp->scale_note)) / (sp->root_freq * song->rate);
 	if (a <= 0)

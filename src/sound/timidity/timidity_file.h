@@ -1,9 +1,9 @@
 /*
-    TiMidity++ -- File interface for the pure sequencer.
+    TiMidity -- File interface for the pure sequencer.
     Copyright (C) 2019 Christoph Oelckers
 
     This program is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
+    it under the terms of the GNU Lesser General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
 
@@ -22,7 +22,7 @@
 #include <vector>
 #include <string>
 
-namespace TimidityPlus
+namespace Timidity
 {
 
 struct timidity_file
@@ -32,6 +32,7 @@ struct timidity_file
 	virtual ~timidity_file() {}
 	virtual char* gets(char* buff, int n) = 0;
 	virtual long read(void* buff, int32_t size, int32_t nitems) = 0;
+	long read(void* buff, int32_t size) { return read(buff, 1, size); }
 	virtual long seek(long offset, int whence) = 0;
 	virtual long tell() = 0;
 	virtual void close() = 0;
@@ -40,8 +41,9 @@ struct timidity_file
 class SoundFontReaderInterface
 {
 public:
-	virtual struct timidity_file* open_timidityplus_file(const char* fn) = 0;
-	virtual void timidityplus_add_path(const char* path) = 0;
+	virtual ~SoundFontReaderInterface() {}
+	virtual struct timidity_file* open_timidity_file(const char* fn) = 0;
+	virtual void timidity_add_path(const char* path) = 0;
 };
 
 

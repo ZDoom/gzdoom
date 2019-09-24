@@ -37,6 +37,10 @@
 #include "i_musicinterns.h"
 #include "v_text.h"
 #include "timidity/timidity.h"
+#include "timidity/playmidi.h"
+#include "timidity/instrum.h"
+#include "i_soundfont.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -52,7 +56,78 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// Internal TiMidity MIDI device --------------------------------------------
+// CVARS for this device - all of them require a device reset --------------------------------------------
+
+static void CheckRestart()
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_GUS)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart();
+}
+
+CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// This was 'true' but since it requires special setup that's not such a good idea.
+{
+	CheckRestart();
+}
+
+CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart();
+}
+
+CUSTOM_CVAR(Int, midi_voices, 32, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart();
+}
+
+CUSTOM_CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart();
+}
+
+//==========================================================================
+//
+// Error printing override to redirect to the internal console instead of stdout.
+//
+//==========================================================================
+
+static void gzdoom_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
+{
+	if (verbosity_level >= Timidity::VERB_DEBUG) return;	// Don't waste time on diagnostics.
+
+	va_list args;
+	va_start(args, fmt);
+	FString msg;
+	msg.VFormat(fmt, args);
+	va_end(args);
+
+	switch (type)
+	{
+	case Timidity::CMSG_ERROR:
+		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
+		break;
+
+	case Timidity::CMSG_WARNING:
+		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
+		break;
+
+	case Timidity::CMSG_INFO:
+		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
+		break;
+	}
+}
+
+//==========================================================================
+//
+// The actual device.
+//
+//==========================================================================
 
 namespace Timidity { struct Renderer; }
 
@@ -64,7 +139,6 @@ public:
 	
 	int Open(MidiCallback, void *userdata);
 	void PrecacheInstruments(const uint16_t *instruments, int count);
-	FString GetStats();
 	int GetDeviceType() const override { return MDEV_GUS; }
 	
 protected:
@@ -73,12 +147,79 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
+	void LoadConfig(const char *);
 };
 
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+// DATA DEFINITIONS -------------------------------------------------
+
+static FString currentConfig;
+static Timidity::Instruments* instruments;
 
 // CODE --------------------------------------------------------------------
+
+void TimidityMIDIDevice::LoadConfig(const char *config)
+{
+	if ((midi_dmxgus && *config == 0) || !stricmp(config, "DMXGUS"))
+	{
+		if (currentConfig.CompareNoCase("DMXGUS") == 0) return; // aleady loaded
+		int lump = Wads.CheckNumForName("DMXGUS");
+		if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
+		if (lump >= 0)
+		{
+			auto data = Wads.OpenLumpReader(lump);
+			if (data.GetLength() > 0)
+			{
+				// Check if we got some GUS data before using it.
+				FString ultradir = getenv("ULTRADIR");
+				if (ultradir.IsNotEmpty() || *(*gus_patchdir) != 0)
+				{
+
+					auto psreader = new FPatchSetReader(data);
+
+					// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
+					if (ultradir.IsNotEmpty())
+					{
+						ultradir += "/midi";
+						psreader->AddPath(ultradir);
+					}
+					if (instruments) delete instruments;
+					instruments = new Timidity::Instruments(psreader);
+
+					// Load DMXGUS lump and patches from gus_patchdir
+					if (*(*gus_patchdir) != 0) psreader->AddPath(gus_patchdir);
+
+					if (instruments->LoadDMXGUS(gus_memsize) < 0)
+					{
+						delete instruments;
+						instruments = nullptr;
+						I_Error("Unable to initialize instruments for GUS MIDI device");
+					}
+					currentConfig = "DMXGUS";
+				}
+			}
+		}
+	}
+	if (*config == 0) config = midi_config;
+	if (currentConfig.CompareNoCase(config) == 0) return;
+	if (instruments) delete instruments;
+	instruments = nullptr;
+
+	auto reader = sfmanager.OpenSoundFont(config, SF_GUS | SF_SF2);
+	if (reader == nullptr)
+	{
+		I_Error("GUS: %s: Unable to load sound font\n",config);
+	}
+
+	instruments = new Timidity::Instruments(reader);
+	if (instruments->LoadConfig() < 0)
+	{
+		delete instruments;
+		instruments = nullptr;
+		I_Error("Unable to initialize instruments for GUS MIDI device");
+	}
+	currentConfig = config;
+}
 
 //==========================================================================
 //
@@ -89,7 +230,9 @@ protected:
 TimidityMIDIDevice::TimidityMIDIDevice(const char *args, int samplerate)
 	: SoftSynthMIDIDevice(samplerate, 11025, 65535)
 {
-	Renderer = new Timidity::Renderer((float)SampleRate, args);
+	LoadConfig(args);
+	Timidity::cmsg = gzdoom_ctl_cmsg;
+	Renderer = new Timidity::Renderer((float)SampleRate, midi_voices, instruments);
 }
 
 //==========================================================================
@@ -181,66 +324,6 @@ void TimidityMIDIDevice::ComputeOutput(float *buffer, int len)
 
 //==========================================================================
 //
-// TimidityMIDIDevice :: GetStats
-//
-//==========================================================================
-
-FString TimidityMIDIDevice::GetStats()
-{
-	FString dots;
-	FString out;
-	int i, used;
-
-	std::lock_guard<std::mutex> lock(CritSec);
-	for (i = used = 0; i < Renderer->voices; ++i)
-	{
-		int status = Renderer->voice[i].status;
-
-		if (!(status & Timidity::VOICE_RUNNING))
-		{
-			dots << TEXTCOLOR_PURPLE".";
-		}
-		else
-		{
-			used++;
-			if (status & Timidity::VOICE_SUSTAINING)
-			{
-				dots << TEXTCOLOR_BLUE;
-			}
-			else if (status & Timidity::VOICE_RELEASING)
-			{
-				dots << TEXTCOLOR_ORANGE;
-			}
-			else if (status & Timidity::VOICE_STOPPING)
-			{
-				dots << TEXTCOLOR_RED;
-			}
-			else
-			{
-				dots << TEXTCOLOR_GREEN;
-			}
-			if (!Renderer->voice[i].eg1.env.bUpdating)
-			{
-				dots << "+";
-			}
-			else
-			{
-				dots << ('0' + Renderer->voice[i].eg1.gf1.stage);
-			}
-		}
-	}
-	CritSec.unlock();
-	out.Format(TEXTCOLOR_YELLOW"%3d/%3d ", used, Renderer->voices);
-	out += dots;
-	if (Renderer->cut_notes | Renderer->lost_notes)
-	{
-		out.AppendFormat(TEXTCOLOR_RED" %d/%d", Renderer->cut_notes, Renderer->lost_notes);
-	}
-	return out;
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -250,3 +333,8 @@ MIDIDevice *CreateTimidityMIDIDevice(const char *args, int samplerate)
 	return new TimidityMIDIDevice(args, samplerate);
 }
 
+void Timidity_Shutdown()
+{
+	if (instruments) delete instruments;
+	instruments = nullptr;
+}

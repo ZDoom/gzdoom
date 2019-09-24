@@ -4,6 +4,7 @@
 #include "w_wad.h"
 #include "files.h"
 #include "timiditypp/timidity_file.h"
+#include "timidity/timidity_file.h"
 
 enum
 {
@@ -27,7 +28,7 @@ struct FSoundFontInfo
 //
 //==========================================================================
 
-class FSoundFontReader : public TimidityPlus::SoundFontReaderInterface
+class FSoundFontReader : public TimidityPlus::SoundFontReaderInterface, public Timidity::SoundFontReaderInterface
 {
 protected:
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
@@ -59,11 +60,21 @@ public:
 	}
 
 	virtual FileReader Open(const char* name, std::string &filename);
-	virtual struct TimidityPlus::timidity_file* open_timidityplus_file(const char* name);
-	virtual void timidityplus_add_path(const char* name)
+
+	// Timidity++ interface
+	struct TimidityPlus::timidity_file* open_timidityplus_file(const char* name) override;
+	void timidityplus_add_path(const char* name) override
 	{
 		return AddPath(name);
 	}
+
+	// Timidity(GUS) interface - essentially the same but different namespace
+	virtual struct Timidity::timidity_file* open_timidity_file(const char* name) override;
+	virtual void timidity_add_path(const char* name) override
+	{
+		return AddPath(name);
+	}
+
 };
 
 //==========================================================================
@@ -131,9 +142,10 @@ class FPatchSetReader : public FSoundFontReader
 {
 	FString mBasePath;
 	FString mFullPathToConfig;
+	FileReader dmxgus;
 
 public:
-	FPatchSetReader();
+	FPatchSetReader(FileReader &reader);
 	FPatchSetReader(const char *filename);
 	virtual FileReader OpenMainConfigFile() override;
 	virtual FileReader OpenFile(const char *name) override;

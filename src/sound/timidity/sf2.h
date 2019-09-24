@@ -1,4 +1,8 @@
+#pragma once
+namespace Timidity
+{
 typedef uint16_t SFGenerator;
+struct timidity_file;
 
 struct SFRange
 {
@@ -268,12 +272,12 @@ struct SFPerc
 
 // Container for all parameters from a SoundFont file
 
-struct SFFile : public Timidity::FontFile
+struct SFFile : public FontFile
 {
 	SFFile(const char * filename);
 	~SFFile();
-	Timidity::Instrument *LoadInstrument(struct Timidity::Renderer *song, int drum, int bank, int program);
-	Timidity::Instrument *LoadInstrumentOrder(struct Timidity::Renderer *song, int order, int drum, int bank, int program);
+	Instrument *LoadInstrument(struct Renderer *song, int drum, int bank, int program);
+	Instrument *LoadInstrumentOrder(struct Renderer *song, int order, int drum, int bank, int program);
 	void		 SetOrder(int order, int drum, int bank, int program);
 	void		 SetAllOrders(int order);
 
@@ -288,10 +292,10 @@ struct SFFile : public Timidity::FontFile
 	void		 AddPresetGenerators(SFGenComposite *composite, int start, int stop, SFPreset *preset);
 	void		 AddPresetGenerators(SFGenComposite *composite, int start, int stop, bool gen_set[GEN_NumGenerators]);
 
-	Timidity::Instrument *LoadPercussion(Timidity::Renderer *song, SFPerc *perc);
-	Timidity::Instrument *LoadPreset(Timidity::Renderer *song, SFPreset *preset);
-	void		 LoadSample(SFSample *sample);
-	void		 ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Timidity::Renderer *song, Timidity::Sample *sp);
+	Instrument *LoadPercussion(Renderer *song, SFPerc *perc);
+	Instrument *LoadPreset(Renderer *song, SFPreset *preset);
+	void		 LoadSample(Renderer* song, SFSample *sample);
+	void		 ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Renderer *song, Sample *sp);
 
 	SFPreset	*Presets;
 	SFBag		*PresetBags;
@@ -315,4 +319,5 @@ struct SFFile : public Timidity::FontFile
 	int			 NumSamples;
 };
 
-SFFile *ReadSF2(const char *filename, FileReader &f);
+SFFile *ReadSF2(const char *filename, timidity_file *f);
+}

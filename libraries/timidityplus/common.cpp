@@ -137,7 +137,7 @@ struct timidity_file *open_file(const char *name, SoundFontReaderInterface *sfre
 /* This closes files opened with open_file */
 void tf_close(struct timidity_file *tf)
 {
-	delete tf;
+	if (tf) tf->close();
 }
 
 /* This is meant for skipping a few bytes. */
@@ -157,7 +157,6 @@ void default_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
 {
 	if (verbosity_level >= VERB_DEBUG) return;	// Don't waste time on diagnostics.
 
-	char buffer[2048];
 	va_list args;
 	va_start(args, fmt);
 

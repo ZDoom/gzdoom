@@ -30,17 +30,18 @@
 #include <memory>
 
 #include "timidity.h"
-//#include "templates.h"
 #include "gf1patch.h"
-#include "i_soundfont.h"
+#include "timidity_file.h"
+#include "t_swap.h"
+
+#include "common.h"
+#include "instrum.h"
+#include "playmidi.h"
 
 namespace Timidity
 {
 
-	extern std::unique_ptr<FSoundFontReader> gus_sfreader;
-
-
-extern Instrument *load_instrument_dls(Renderer *song, int drum, int bank, int instrument);
+Instrument *load_instrument_dls(Renderer *song, int drum, int bank, int instrument);
 
 Instrument::Instrument()
 : samples(0), sample(NULL)
@@ -84,22 +85,22 @@ ToneBank::~ToneBank()
 	}
 }
 
-int convert_tremolo_sweep(Renderer *song, uint8_t sweep)
+int Renderer::convert_tremolo_sweep(uint8_t sweep)
 {
 	if (sweep == 0)
 		return 0;
 
 	return
-		int(((song->control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) / (song->rate * sweep));
+		int(((control_ratio * SWEEP_TUNING) << SWEEP_SHIFT) / (rate * sweep));
 }
 
-int convert_vibrato_sweep(Renderer *song, uint8_t sweep, int vib_control_ratio)
+int Renderer::convert_vibrato_sweep(uint8_t sweep, int vib_control_ratio)
 {
 	if (sweep == 0)
 		return 0;
 
 	return
-		(int) (FSCALE((double) (vib_control_ratio) * SWEEP_TUNING, SWEEP_SHIFT) / (song->rate * sweep));
+		(int)(FSCALE((double)(vib_control_ratio)* SWEEP_TUNING, SWEEP_SHIFT) / (rate * sweep));
 
 	/* this was overflowing with seashore.pat
 
@@ -107,17 +108,17 @@ int convert_vibrato_sweep(Renderer *song, uint8_t sweep, int vib_control_ratio)
 	*/
 }
 
-int convert_tremolo_rate(Renderer *song, uint8_t rate)
+int Renderer::convert_tremolo_rate(uint8_t rate)
 {
 	return
-		int(((song->control_ratio * rate) << RATE_SHIFT) / (TREMOLO_RATE_TUNING * song->rate));
+		int(((control_ratio * rate) << RATE_SHIFT) / (TREMOLO_RATE_TUNING * rate));
 }
 
-int convert_vibrato_rate(Renderer *song, uint8_t rate)
+int Renderer::convert_vibrato_rate(uint8_t rate)
 {
 	/* Return a suitable vibrato_control_ratio value */
 	return
-		int((VIBRATO_RATE_TUNING * song->rate) / (rate * 2 * VIBRATO_SAMPLE_INCREMENTS));
+		int((VIBRATO_RATE_TUNING * rate) / (rate * 2 * VIBRATO_SAMPLE_INCREMENTS));
 }
 
 static void reverse_data(sample_t *sp, int ls, int le)
@@ -144,7 +145,7 @@ static void reverse_data(sample_t *sp, int ls, int le)
 	undefined.
 
 	TODO: do reverse loops right */
-static Instrument *load_instrument(Renderer *song, const char *name, int percussion,
+Instrument *Renderer::load_instrument(const char *name, int percussion,
 					int panning, int note_to_use,
 					int strip_loop, int strip_envelope,
 					int strip_tail)
@@ -157,23 +158,24 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 	GF1PatchData patch_data;
 	int i, j;
 	bool noluck = false;
+	auto reader = instruments->sfreader;
 
-	if (!name || gus_sfreader == nullptr) return nullptr;
+	if (!name || reader == nullptr) return nullptr;
 
 	/* Open patch file */
-	auto fp = gus_sfreader->LookupFile(name).first;
-	if (!fp.isOpen())
+	auto fp = reader->open_timidity_file(name);
+	if (!fp)
 	{
 		/* Try with various extensions */
 		std::string tmp = name;
 		tmp += ".pat";
-		fp = gus_sfreader->LookupFile(tmp.c_str()).first;
-		if (!fp.isOpen())
+		fp = reader->open_timidity_file(tmp.c_str());
+		if (!fp)
 		{
 #ifndef _WIN32			// Windows isn't case-sensitive.
 			std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](unsigned char c){ return toupper(c); } );
-			fp = gus_sfreader->LookupFile(tmp.c_str()).first;
-			if (!fp.isOpen())
+			fp = reader->open_timidity_file(tmp.c_str());
+			if (!fp)
 #endif
 			{
 				noluck = true;
@@ -183,7 +185,7 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 
 	if (noluck)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "Instrument `%s' can't be found.\n", name);
+		cmsg(CMSG_ERROR, VERB_DEBUG, "Instrument `%s' can't be found.\n", name);
 		return 0;
 	}
 
@@ -191,23 +193,26 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 
 	/* Read some headers and do cursory sanity checks. */
 
-	if (sizeof(header) != fp.Read(&header, sizeof(header)))
+	if (sizeof(header) != fp->read(&header, sizeof(header)))
 	{
 failread:
 		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Error reading instrument.\n", name);
+		fp->close();
 		return 0;
 	}
 	if (strncmp(header.Header, GF1_HEADER_TEXT, HEADER_SIZE - 4) != 0)
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Not an instrument.\n", name);
+		fp->close();
 		return 0;
 	}
 	if (strcmp(header.Header + 8, "110") < 0)
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Is an old and unsupported patch version.\n", name);
+		fp->close();
 		return 0;
 	}
-	if (sizeof(idata) != fp.Read(&idata, sizeof(idata)))
+	if (sizeof(idata) != fp->read(&idata, sizeof(idata)))
 	{
 		goto failread;
 	}
@@ -220,16 +225,18 @@ failread:
 	if (header.Instruments != 1 && header.Instruments != 0) /* instruments. To some patch makers, 0 means 1 */
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle patches with %d instruments.\n", header.Instruments);
+		fp->close();
 		return 0;
 	}
 
 	if (idata.Layers != 1 && idata.Layers != 0) /* layers. What's a layer? */
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle instruments with %d layers.\n", idata.Layers);
+		fp->close();
 		return 0;
 	}
 
-	if (sizeof(layer_data) != fp.Read(&layer_data, sizeof(layer_data)))
+	if (sizeof(layer_data) != fp->read(&layer_data, sizeof(layer_data)))
 	{
 		goto failread;
 	}
@@ -237,6 +244,7 @@ failread:
 	if (layer_data.Samples == 0)
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Instrument has 0 samples.\n");
+		fp->close();
 		return 0;
 	}
 
@@ -246,11 +254,12 @@ failread:
 	memset(ip->sample, 0, sizeof(Sample) * layer_data.Samples);
 	for (i = 0; i < layer_data.Samples; ++i)
 	{
-		if (sizeof(patch_data) != fp.Read(&patch_data, sizeof(patch_data)))
+		if (sizeof(patch_data) != fp->read(&patch_data, sizeof(patch_data)))
 		{
 fail:
 			cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d.\n", i);
 			delete ip;
+			fp->close();
 			return 0;
 		}
 
@@ -276,7 +285,7 @@ fail:
 		{
 			sp->panning = (panning & 0x7f) * 1000 / 127 - 500;
 		}
-		song->compute_pan((sp->panning + 500) / 1000.0, INST_GUS, sp->left_offset, sp->right_offset);
+		compute_pan((sp->panning + 500) / 1000.0, INST_GUS, sp->left_offset, sp->right_offset);
 
 		/* tremolo */
 		if (patch_data.TremoloRate == 0 || patch_data.TremoloDepth == 0)
@@ -288,8 +297,8 @@ fail:
 		}
 		else
 		{
-			sp->tremolo_sweep_increment = convert_tremolo_sweep(song, patch_data.TremoloSweep);
-			sp->tremolo_phase_increment = convert_tremolo_rate(song, patch_data.TremoloRate);
+			sp->tremolo_sweep_increment = convert_tremolo_sweep(patch_data.TremoloSweep);
+			sp->tremolo_phase_increment = convert_tremolo_rate(patch_data.TremoloRate);
 			sp->tremolo_depth = patch_data.TremoloDepth;
 			cmsg(CMSG_INFO, VERB_DEBUG, " * tremolo: sweep %d, phase %d, depth %d\n",
 				sp->tremolo_sweep_increment, sp->tremolo_phase_increment, sp->tremolo_depth);
@@ -305,8 +314,8 @@ fail:
 		}
 		else
 		{
-			sp->vibrato_control_ratio = convert_vibrato_rate(song, patch_data.VibratoRate);
-			sp->vibrato_sweep_increment = convert_vibrato_sweep(song, patch_data.VibratoSweep, sp->vibrato_control_ratio);
+			sp->vibrato_control_ratio = convert_vibrato_rate(patch_data.VibratoRate);
+			sp->vibrato_sweep_increment = convert_vibrato_sweep(patch_data.VibratoSweep, sp->vibrato_control_ratio);
 			sp->vibrato_depth = patch_data.VibratoDepth;
 			cmsg(CMSG_INFO, VERB_DEBUG, " * vibrato: sweep %d, ctl %d, depth %d\n",
 				sp->vibrato_sweep_increment, sp->vibrato_control_ratio, sp->vibrato_depth);
@@ -412,7 +421,7 @@ fail:
 		}
 		sp->data = (sample_t *)safe_malloc(sp->data_length);
 
-		if (sp->data_length != fp.Read(sp->data, sp->data_length))
+		if (sp->data_length != fp->read(sp->data, sp->data_length))
 			goto fail;
 
 		convert_sample_data(sp, sp->data);
@@ -449,7 +458,7 @@ fail:
 		   and it's not looped, we can resample it now. */
 		if (sp->scale_factor == 0 && !(sp->modes & PATCH_LOOPEN))
 		{
-			pre_resample(song, sp);
+			pre_resample(this, sp);
 		}
 
 		if (strip_tail == 1)
@@ -459,6 +468,7 @@ fail:
 			sp->data_length = sp->loop_end;
 		}
 	}
+	fp->close();
 	return ip;
 }
 
@@ -561,14 +571,14 @@ void convert_sample_data(Sample *sp, const void *data)
 	sp->data = newdata;
 }
 
-static int fill_bank(Renderer *song, int dr, int b)
+int Renderer::fill_bank(int dr, int b)
 {
 	int i, errors = 0;
-	ToneBank *bank = ((dr) ? drumset[b] : tonebank[b]);
+	ToneBank *bank = ((dr) ? instruments->drumset[b] : instruments->tonebank[b]);
 	if (bank == NULL)
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, 
-			"Huh. Tried to load instruments in non-existent %s %d\n",
+			"Tried to load instruments in non-existent %s %d\n",
 			(dr) ? "drumset" : "tone bank", b);
 		return 0;
 	}
@@ -577,22 +587,22 @@ static int fill_bank(Renderer *song, int dr, int b)
 		if (bank->instrument[i] == MAGIC_LOAD_INSTRUMENT)
 		{
 			bank->instrument[i] = NULL;
-			bank->instrument[i] = load_instrument_dls(song, dr, b, i);
+			bank->instrument[i] = load_instrument_dls(this, dr, b, i);
 			if (bank->instrument[i] != NULL)
 			{
 				continue;
 			}
 			Instrument *ip;
-			ip = load_instrument_font_order(song, 0, dr, b, i);
+			ip = load_instrument_font_order(0, dr, b, i);
 			if (ip == NULL)
 			{
 				if (bank->tone[i].fontbank >= 0)
 				{
-					ip = load_instrument_font(song, bank->tone[i].name, dr, b, i);
+					ip = load_instrument_font(bank->tone[i].name, dr, b, i);
 				}
 				else
 				{
-					ip = load_instrument(song, bank->tone[i].name, 
+					ip = load_instrument(bank->tone[i].name, 
 						(dr) ? 1 : 0,
 						bank->tone[i].pan,
 						(bank->tone[i].note != -1) ? bank->tone[i].note : ((dr) ? i : -1),
@@ -602,7 +612,7 @@ static int fill_bank(Renderer *song, int dr, int b)
 				}
 				if (ip == NULL)
 				{
-					ip = load_instrument_font_order(song, 1, dr, b, i);
+					ip = load_instrument_font_order(1, dr, b, i);
 				}
 			}
 			bank->instrument[i] = ip;
@@ -610,14 +620,14 @@ static int fill_bank(Renderer *song, int dr, int b)
 			{
 				if (bank->tone[i].name.IsEmpty())
 				{
-					cmsg(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_NORMAL,
+					cmsg(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_DEBUG,
 						"No instrument mapped to %s %d, program %d%s\n",
 						(dr) ? "drum set" : "tone bank", b, i, 
 						(b != 0) ? "" : " - this instrument will not be heard");
 				}
 				else
 				{
-					cmsg(CMSG_ERROR, VERB_NORMAL, 
+					cmsg(CMSG_ERROR, VERB_DEBUG,
 						"Couldn't load instrument %s (%s %d, program %d)\n",
 						bank->tone[i].name.GetChars(),
 						(dr) ? "drum set" : "tone bank", b, i);
@@ -626,9 +636,9 @@ static int fill_bank(Renderer *song, int dr, int b)
 				{
 					/* Mark the corresponding instrument in the default
 					   bank / drumset for loading (if it isn't already) */
-					if (((dr) ? drumset[0] : tonebank[0])->instrument[i] != NULL)
+					if (((dr) ? instruments->drumset[0] : instruments->tonebank[0])->instrument[i] != NULL)
 					{
-						((dr) ? drumset[0] : tonebank[0])->instrument[i] = MAGIC_LOAD_INSTRUMENT;
+						((dr) ? instruments->drumset[0] : instruments->tonebank[0])->instrument[i] = MAGIC_LOAD_INSTRUMENT;
 					}
 				}
 				errors++;
@@ -643,15 +653,15 @@ int Renderer::load_missing_instruments()
 	int i = MAXBANK, errors = 0;
 	while (i--)
 	{
-		if (tonebank[i] != NULL)
-			errors += fill_bank(this, 0,i);
-		if (drumset[i] != NULL)
-			errors += fill_bank(this, 1,i);
+		if (instruments->tonebank[i] != NULL)
+			errors += fill_bank(0, i);
+		if (instruments->drumset[i] != NULL)
+			errors += fill_bank(1, i);
 	}
 	return errors;
 }
 
-void free_instruments()
+void Instruments::free_instruments()
 {
 	int i = MAXBANK;
 	while (i--)
@@ -669,10 +679,39 @@ void free_instruments()
 	}
 }
 
+Instruments::Instruments(SoundFontReaderInterface *reader)
+{
+	sfreader = reader;
+	tonebank[0] = new ToneBank;
+	drumset[0] = new ToneBank;
+}
+
+Instruments::~Instruments()
+{
+	free_instruments();
+	font_freeall();
+	for (int i = 0; i < MAXBANK; ++i)
+	{
+		if (tonebank[i] != NULL)
+		{
+			delete tonebank[i];
+			tonebank[i] = NULL;
+		}
+		if (drumset[i] != NULL)
+		{
+			delete drumset[i];
+			drumset[i] = NULL;
+		}
+	}
+	if (sfreader != nullptr) delete sfreader;
+	sfreader = nullptr;
+}
+
+
 int Renderer::set_default_instrument(const char *name)
 {
 	Instrument *ip;
-	if ((ip = load_instrument(this, name, 0, -1, -1, 0, 0, 0)) == NULL)
+	if ((ip = load_instrument(name, 0, -1, -1, 0, 0, 0)) == NULL)
 	{
 		return -1;
 	}
@@ -684,5 +723,6 @@ int Renderer::set_default_instrument(const char *name)
 	default_program = SPECIAL_PROGRAM;
 	return 0;
 }
+
 
 }

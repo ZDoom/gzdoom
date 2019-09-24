@@ -3,21 +3,22 @@
 #include <memory>
 
 #include "timidity.h"
+#include "timidity_file.h"
+#include "common.h"
+#include "instrum.h"
 #include "sf2.h"
-#include "i_soundfont.h"
+
 
 namespace Timidity
 {
 
-FontFile *Fonts;
-extern std::unique_ptr<FSoundFontReader> gus_sfreader;
 
-FontFile *ReadDLS(const char *filename, FileReader &f)
+FontFile *Instruments::ReadDLS(const char *filename, timidity_file *f)
 {
 	return NULL;
 }
 
-void font_freeall()
+void Instruments::font_freeall()
 {
 	FontFile *font, *next;
 
@@ -29,7 +30,7 @@ void font_freeall()
 	Fonts = NULL;
 }
 
-FontFile *font_find(const char *filename)
+FontFile * Instruments::font_find(const char *filename)
 {
 	for (FontFile *font = Fonts; font != NULL; font = font->Next)
 	{
@@ -41,7 +42,7 @@ FontFile *font_find(const char *filename)
 	return NULL;
 }
 
-void font_add(const char *filename, int load_order)
+void Instruments::font_add(const char *filename, int load_order)
 {
 	FontFile *font;
 
@@ -52,19 +53,23 @@ void font_add(const char *filename, int load_order)
 	}
 	else
 	{
-		FileReader fp = gus_sfreader->LookupFile(filename).first;
+		auto fp = sfreader->open_timidity_file(filename);
 
-		if (fp.isOpen())
+		if (fp)
 		{
 			if ((font = ReadSF2(filename, fp)) || (font = ReadDLS(filename, fp)))
 			{
+				font->Next = Fonts;
+				Fonts = font;
+
 				font->SetAllOrders(load_order);
 			}
+			fp->close();
 		}
 	}
 }
 
-void font_remove(const char *filename)
+void Instruments::font_remove(const char *filename)
 {
 	FontFile *font;
 
@@ -77,7 +82,7 @@ void font_remove(const char *filename)
 	}
 }
 
-void font_order(int order, int bank, int preset, int keynote)
+void Instruments::font_order(int order, int bank, int preset, int keynote)
 {
 	for (FontFile *font = Fonts; font != NULL; font = font->Next)
 	{
@@ -85,21 +90,21 @@ void font_order(int order, int bank, int preset, int keynote)
 	}
 }
 
-Instrument *load_instrument_font(struct Renderer *song, const char *font, int drum, int bank, int instr)
+Instrument *Renderer::load_instrument_font(const char *font, int drum, int bank, int instr)
 {
-	FontFile *fontfile = font_find(font);
+	FontFile *fontfile = instruments->font_find(font);
 	if (fontfile != NULL)
 	{
-		return fontfile->LoadInstrument(song, drum, bank, instr);
+		return fontfile->LoadInstrument(this, drum, bank, instr);
 	}
 	return NULL;
 }
 
-Instrument *load_instrument_font_order(struct Renderer *song, int order, int drum, int bank, int instr)
+Instrument *Renderer::load_instrument_font_order(int order, int drum, int bank, int instr)
 {
-	for (FontFile *font = Fonts; font != NULL; font = font->Next)
+	for (FontFile *font = instruments->Fonts; font != NULL; font = font->Next)
 	{
-		Instrument *ip = font->LoadInstrument(song, drum, bank, instr);
+		Instrument *ip = font->LoadInstrument(this, drum, bank, instr);
 		if (ip != NULL)
 		{
 			return ip;
@@ -111,20 +116,10 @@ Instrument *load_instrument_font_order(struct Renderer *song, int order, int dru
 FontFile::FontFile(const char *filename)
 : Filename(filename)
 {
-	Next = Fonts;
-	Fonts = this;
 }
 
 FontFile::~FontFile()
 {
-	for (FontFile **probe = &Fonts; *probe != NULL; probe = &(*probe)->Next)
-	{
-		if (*probe == this)
-		{
-			*probe = Next;
-			break;
-		}
-	}
 }
 
 }

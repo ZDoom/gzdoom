@@ -25,8 +25,12 @@
 #include <string.h>
 #include <math.h>
 
-#include "m_swap.h"
+#include "t_swap.h"
 #include "timidity.h"
+#include "common.h"
+#include "instrum.h"
+#include "playmidi.h"
+
 
 #ifndef MAKE_ID
 #ifndef __BIG_ENDIAN__

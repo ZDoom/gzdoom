@@ -27,9 +27,32 @@
 #include <math.h>
 
 #include "timidity.h"
+#include "common.h"
+#include "instrum.h"
+#include "playmidi.h"
+
 
 namespace Timidity
 {
+
+bool Envelope::Update(struct Voice* v)
+{
+	if (Type == INST_GUS)
+		return gf1.Update(v);
+	return sf2.Update(v);
+}
+void Envelope::ApplyToAmp(struct Voice* v)
+{
+	if (Type == INST_GUS)
+		return gf1.ApplyToAmp(v);
+	return sf2.ApplyToAmp(v);
+}
+void Envelope::Release(struct Voice* v)
+{
+	if (Type == INST_GUS)
+		return gf1.Release(v);
+	return sf2.Release(v);
+}
 
 void Renderer::reset_voices()
 {
@@ -342,9 +365,9 @@ void Renderer::start_note(int chan, int note, int vel)
 	note &= 0x7f;
 	if (ISDRUMCHANNEL(chan))
 	{
-		if (NULL == drumset[bank] || NULL == (ip = drumset[bank]->instrument[note]))
+		if (NULL == instruments->drumset[bank] || NULL == (ip = instruments->drumset[bank]->instrument[note]))
 		{
-			if (!(ip = drumset[0]->instrument[note]))
+			if (!(ip = instruments->drumset[0]->instrument[note]))
 				return; /* No instrument? Then we can't play. */
 		}
 		assert(ip != MAGIC_LOAD_INSTRUMENT);
@@ -364,9 +387,9 @@ void Renderer::start_note(int chan, int note, int vel)
 		{
 			ip = default_instrument;
 		}
-		else if (NULL == tonebank[bank] || NULL == (ip = tonebank[bank]->instrument[prog]))
+		else if (NULL == instruments->tonebank[bank] || NULL == (ip = instruments->tonebank[bank]->instrument[prog]))
 		{
-			if (NULL == (ip = tonebank[0]->instrument[prog]))
+			if (NULL == (ip = instruments->tonebank[0]->instrument[prog]))
 				return; /* No instrument? Then we can't play. */
 		}
 		assert(ip != MAGIC_LOAD_INSTRUMENT);

@@ -164,6 +164,7 @@ public:
 	const uint32_t *GetPixelsBgra() override;
 	const uint8_t *GetPixels(int style) override;
 	bool CheckModified (int which) override;
+	void GenerateBgraMipmapsFast();
 
 private:
 

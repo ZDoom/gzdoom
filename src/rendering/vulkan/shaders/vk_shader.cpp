@@ -38,7 +38,7 @@ VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
 			FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
 
 			VkShaderProgram prog;
-			prog.vert = LoadVertShader(name, mainvp, defaultshaders[i].Defines);
+			prog.vert = LoadVertShader(name, mainvp, defines);
 			prog.frag = LoadFragShader(name, mainfp, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, gbufferpass);
 			mMaterialShaders[j].push_back(std::move(prog));
 		}

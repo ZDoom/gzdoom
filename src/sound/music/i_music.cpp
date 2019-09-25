@@ -451,6 +451,10 @@ MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 	{
 		info = new OPLMUSSong (reader, device != nullptr? device->args.GetChars() : "");
 	}
+	else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
+	{
+		info = XA_OpenSong(reader);
+	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
 	{

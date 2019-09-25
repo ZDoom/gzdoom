@@ -1,24 +1,29 @@
 #include "i_musicinterns.h"
 /**
  * PlayStation XA (ADPCM) source support for MultiVoc
- * Adapted and remixed from superxa2wav (taken from EDuke32)
+ * Adapted and remixed from superxa2wav 
+ *
+ * taken from EDuke32 and adapted for GZDoom by Christoph Oelckers
  */
 
 
 //#define NO_XA_HEADER
 
-#define kNumOfSamples   224
-#define kNumOfSGs       18
-#define TTYWidth        80
+enum
+{
+kNumOfSamples   = 224,
+kNumOfSGs       = 18,
+TTYWidth        = 80,
 
-#define kBufSize (kNumOfSGs*kNumOfSamples)
-#define kSamplesMono (kNumOfSGs*kNumOfSamples)
-#define kSamplesStereo (kNumOfSGs*kNumOfSamples/2)
+kBufSize		= (kNumOfSGs*kNumOfSamples),
+kSamplesMono	= (kNumOfSGs*kNumOfSamples),
+kSamplesStereo	= (kNumOfSGs*kNumOfSamples/2),
 
 /* ADPCM */
-#define XA_DATA_START   (0x44-48)
+XA_DATA_START   = (0x44-48)
+};
 
-#define DblToPCMF(dt) ((dt) / 32768.f)
+inline float constexpr DblToPCMF(double dt) { return float(dt) * (1.f/32768.f); }
 
 typedef struct {
    FileReader reader;
@@ -94,7 +99,7 @@ static void decodeSoundSectMono(XASector *ssct, xa_data * xad)
     int32_t unit, sample;
     int32_t sndgrp;
     double tmp2, tmp3, tmp4, tmp5;
-    int8_t &decodeBuf = xad->block;
+    auto &decodeBuf = xad->block;
 
     for (sndgrp = 0; sndgrp < kNumOfSGs; sndgrp++)
     {
@@ -111,7 +116,7 @@ static void decodeSoundSectMono(XASector *ssct, xa_data * xad)
                 tmp5 = xad->t2 * K1[filt];
                 xad->t2 = xad->t1;
                 xad->t1 = tmp3 + tmp4 + tmp5;
-                decodeBuf[count++] = DblToPCM(xad->t1);
+                decodeBuf[count++] = DblToPCMF(xad->t1);
             }
         }
     }
@@ -122,11 +127,10 @@ static void decodeSoundSectStereo(XASector *ssct, xa_data * xad)
     size_t count = 0;
     int8_t snddat, filt, range;
     int8_t filt1, range1;
-    int16_t decoded;
     int32_t unit, sample;
     int32_t sndgrp;
     double tmp2, tmp3, tmp4, tmp5;
-    int8_t &decodeBuf = xad->block;
+    auto &decodeBuf = xad->block;
 
     for (sndgrp = 0; sndgrp < kNumOfSGs; sndgrp++)
     {
@@ -169,7 +173,7 @@ static void decodeSoundSectStereo(XASector *ssct, xa_data * xad)
 //
 //==========================================================================
 
-static bool getNextXABlock(xa_data *xad, bool looping )
+static void getNextXABlock(xa_data *xad, bool looping )
 {
     XASector ssct;
     int coding;
@@ -190,34 +194,31 @@ static bool getNextXABlock(xa_data *xad, bool looping )
 
     coding = ssct.sectorFiller[47];
 
-	xa->blockIsMono = (coding & 3) == 0;
-    xa->blockIs18K = (((coding >> 2) & 3) == 1);
+	xad->committed = 0;
+	xad->blockIsMono = (coding & 3) == 0;
+    xad->blockIs18K = (((coding >> 2) & 3) == 1);
 
-    uint32_t samples;
-
-    if (!xa->blockIsMono)
+    if (!xad->blockIsMono)
     {
         decodeSoundSectStereo(&ssct, xad);
-        samples = kSamplesStereo;
     }
     else
     {
         decodeSoundSectMono(&ssct, xad);
-        samples = kSamplesMono;
     }
 
-    if (xad->GetLength() == xad->Tell())
+    if (xad->reader.GetLength() == xad->reader.Tell())
     {
         if (looping)
         {
-            xad->pos = XA_DATA_START;
+			xad->reader.Seek(XA_DATA_START, FileReader::SeekSet);
             xad->t1 = xad->t2 = xad->t1_x = xad->t2_x = 0;
         }
         else
-            xa->finished = true;
+            xad->finished = true;
     }
 
-    xa->finished = false;
+    xad->finished = false;
 }
 
 //==========================================================================
@@ -229,8 +230,8 @@ static bool getNextXABlock(xa_data *xad, bool looping )
 class XASong : public StreamSong
 {
 public:
-	GMESong(FileReader & readr);
-	~GMESong();
+	XASong(FileReader & readr);
+	~XASong();
 	bool SetSubsong(int subsong);
 	void Play(bool looping, int subsong);
 
@@ -248,21 +249,13 @@ protected:
 
 XASong::XASong(FileReader &reader)
 {
-	ChannelConfig iChannels;
-	SampleType Type;
-	
-
-	xad.ptr = std::move(reader);
-	xad.pos = XA_DATA_START;
+	reader.Seek(XA_DATA_START, FileReader::SeekSet);
+	xad.reader = std::move(reader);
 	xad.t1 = xad.t2 = xad.t1_x = xad.t2_x = 0;
 	getNextXABlock(&xad, false);
 	auto SampleRate = xad.blockIs18K? 18900 : 37800;
 
-	const uint32_t sampleLength = (uint32_t)decoder->getSampleLength();
-	Reader = std::move(reader);
-	Decoder = decoder;
-	Channels = 2;	// Since the format can theoretically switch between mono and stereo we need to output everything as stereo.
-	m_Stream = GSnd->CreateStream(Read, 64 * 1024, 0, SampleRate, this);
+	m_Stream = GSnd->CreateStream(Read, 64 * 1024, SoundStream::Float, SampleRate, this);	// create a floating point stereo stream.
 }
 
 //==========================================================================
@@ -294,9 +287,8 @@ void XASong::Play(bool looping, int track)
 	m_Looping = looping;
 	if (xad.finished && looping)
 	{
-		xad.pos = XA_DATA_START;
+		xad.reader.Seek(XA_DATA_START, FileReader::SeekSet);
 		xad.t1 = xad.t2 = xad.t1_x = xad.t2_x = 0;
-		xad.reader.Seek(0, FileReader::SeekSet);
 		xad.finished = false;
 	}
 	if (m_Stream->Play(looping, 1))
@@ -325,16 +317,37 @@ bool XASong::SetSubsong(int track)
 bool XASong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdata)
 {
 	auto self = (XASong*)userdata;
+	float *dest = (float*)vbuff;
 	while (ilen > 0)
 	{
-		if (self->xad.committed < kBufSize)
+		auto ptr = self->xad.committed;
+		auto block = self->xad.block + ptr;
+		if (ptr < kBufSize)
 		{
 			// commit the data
 			if (self->xad.blockIsMono)
 			{
+				size_t numsamples = ilen / 8;
+				size_t availdata = kBufSize - ptr;
+				
+				for(size_t tocopy = std::min(numsamples, availdata); tocopy > 0; tocopy--)
+				{
+					float f = *block++;
+					*dest++ = f;
+					*dest++ = f;
+					ilen -= 8;
+					ptr++;
+				}
+				self->xad.committed = ptr;
 			}
 			else
 			{
+				size_t availdata = (kBufSize - ptr) * 4;
+				size_t tocopy = std::min(availdata, (size_t)ilen);
+				memcpy(dest, block, tocopy);
+				dest += tocopy / 4;
+				ilen -= (int)tocopy;
+				self->xad.committed += tocopy / 4;
 			}
 		}
 		if (self->xad.finished)
@@ -344,7 +357,7 @@ bool XASong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdata)
 		if (ilen > 0)
 		{
 			// we ran out of data and need more
-			getNextXABlock(&self->xad, m_Looping);
+			getNextXABlock(&self->xad, self->m_Looping);
 			// repeat until done.
 		}
 		else break;

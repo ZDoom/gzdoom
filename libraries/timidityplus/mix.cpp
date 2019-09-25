@@ -1182,9 +1182,6 @@ int Mixer::recompute_envelope(int v)
 /* Envelope ran out. */
 void Mixer::voice_ran_out(int v)
 {
-	/* Already displayed as dead */
-	int died = (player->voice[v].status == VOICE_DIE);
-	
 	player->free_voice(v);
 }
 

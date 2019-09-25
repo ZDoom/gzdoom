@@ -32,6 +32,8 @@
 #include "common.h"
 #include "reverb.h"
 
+namespace WildMidi
+{
 /*
  reverb function
  */
@@ -396,3 +398,4 @@ void _WM_do_reverb(struct _rvb *rvb, signed int *buffer, int size) {
 	}
 }
 
+}

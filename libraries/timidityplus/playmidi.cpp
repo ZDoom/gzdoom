@@ -137,7 +137,7 @@ Player::Player(Instruments *instr)
 	temper_adj = 0;
 	current_play_tempo = 500000;
 	opt_realtime_playing = 0;
-	check_eot_flag;
+	check_eot_flag = 0;
 	playmidi_seek_flag = 0;
 	opt_pure_intonation = 0;
 	current_freq_table = 0;
@@ -6040,7 +6040,6 @@ static const struct ctl_chg_types {
 
 int Player::convert_midi_control_change(int chn, int type, int val, MidiEvent *ev_ret)
 {
-	int etype = -1;
 	for (auto &t : ctl_chg_list)
 	{
 		if (t.mtype == type)

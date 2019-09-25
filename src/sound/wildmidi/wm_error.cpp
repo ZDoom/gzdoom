@@ -29,22 +29,26 @@
 #include <string.h>
 #include <stdarg.h>
 #include "wm_error.h"
-#include "doomtype.h"
-#include "v_text.h"
+
+namespace WildMidi
+{
+static void def_error_func(const char *wmfmt, va_list args)
+{
+	vprintf(wmfmt, args);
+}
+	
+void (*wm_error_func)(const char *wmfmt, va_list args) = def_error_func;
 
 void _WM_ERROR_NEW(const char * wmfmt, ...) {
 	va_list args;
-	fprintf(stderr, "\r");
 	va_start(args, wmfmt);
-	vfprintf(stderr, wmfmt, args);
-	va_end(args);
-	fprintf(stderr, "\n");
+	wm_error_func(wmfmt, args);
 }
 
 void _WM_ERROR(const char * func, unsigned int lne, int wmerno,
 		const char * wmfor, int error) {
 
-	static const char *errors[WM_ERR_MAX+1] = {
+	static const char *const errors[WM_ERR_MAX+1] = {
 		"No error",
 		"Unable to obtain memory",
 		"Unable to stat",
@@ -67,20 +71,21 @@ void _WM_ERROR(const char * func, unsigned int lne, int wmerno,
 
 	if (wmfor != NULL) {
 		if (error != 0) {
-			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s %s (%s)\n", func,
-					lne, errors[wmerno], wmfor, strerror(error));
+			_WM_ERROR_NEW("libWildMidi(%s:%u): ERROR %s %s (%s)\n", func, lne,
+					errors[wmerno], wmfor, strerror(error));
 		} else {
-			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s %s\n", func, lne,
+			_WM_ERROR_NEW("libWildMidi(%s:%u): ERROR %s %s\n", func, lne,
 					errors[wmerno], wmfor);
 		}
 	} else {
 		if (error != 0) {
-			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s (%s)\n", func, lne,
+			_WM_ERROR_NEW("libWildMidi(%s:%u): ERROR %s (%s)\n", func, lne,
 					errors[wmerno], strerror(error));
 		} else {
-			Printf(TEXTCOLOR_RED "libWildMidi(%s:%u): ERROR %s\n", func, lne,
+			_WM_ERROR_NEW("libWildMidi(%s:%u): ERROR %s\n", func, lne,
 					errors[wmerno]);
 		}
 	}
 }
 
+}

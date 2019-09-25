@@ -27,22 +27,21 @@
 #ifndef __COMMON_H
 #define __COMMON_H
 
-#define SAMPLE_16BIT	0x01
-#define SAMPLE_UNSIGNED	0x02
-#define SAMPLE_LOOP		0x04
-#define SAMPLE_PINGPONG	0x08
-#define SAMPLE_REVERSE	0x10
-#define SAMPLE_SUSTAIN	0x20
-#define SAMPLE_ENVELOPE	0x40
-#define SAMPLE_CLAMPED	0x80
+namespace WildMidi
+{
 
-#ifdef DEBUG_SAMPLES
-#define SAMPLE_CONVERT_DEBUG(dx) printf("\r%s\n",dx)
-#else
-#define SAMPLE_CONVERT_DEBUG(dx)
-#endif
+enum
+{
+	SAMPLE_16BIT	= 0x01,
+	SAMPLE_UNSIGNED	= 0x02,
+	SAMPLE_LOOP		= 0x04,
+	SAMPLE_PINGPONG	= 0x08,
+	SAMPLE_REVERSE	= 0x10,
+	SAMPLE_SUSTAIN	= 0x20,
+	SAMPLE_ENVELOPE	= 0x40,
+	SAMPLE_CLAMPED	= 0x80,
+};
 
-extern unsigned short int _WM_SampleRate;
 
 struct _sample {
 	unsigned int data_length;
@@ -90,5 +89,7 @@ struct _patch {
 #ifndef M_LN2
 #define M_LN2 0.69314718055994530942
 #endif
+	
+}
 
 #endif /* __COMMON_H */

@@ -27,6 +27,9 @@
 #ifndef __REVERB_H
 #define __REVERB_H
 
+namespace WildMidi
+{
+
 struct _rvb {
 	/* filter data */
 	signed int l_buf_flt_in[8][6][2];
@@ -53,5 +56,7 @@ struct _rvb {
  extern struct _rvb *_WM_init_reverb(int rate, float room_x, float room_y, float listen_x, float listen_y);
  extern void _WM_free_reverb (struct _rvb *rvb);
  extern void _WM_do_reverb (struct _rvb *rvb, signed int *buffer, int size);
+
+}
 
 #endif /* __REVERB_H */

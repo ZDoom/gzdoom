@@ -40,6 +40,7 @@ struct timidity_file
 class SoundFontReaderInterface
 {
 public:
+	virtual ~SoundFontReaderInterface() {}
 	virtual struct timidity_file* open_timidityplus_file(const char* fn) = 0;
 	virtual void timidityplus_add_path(const char* path) = 0;
 };

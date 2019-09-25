@@ -27,6 +27,9 @@
 #ifndef __WM_ERROR_H
 #define __WM_ERROR_H
 
+namespace WildMidi
+{
+
 enum {
 	WM_ERR_NONE = 0,
 	WM_ERR_MEM,
@@ -53,4 +56,5 @@ enum {
  extern void _WM_ERROR(const char * func, unsigned int lne, int wmerno,
 		const char * wmfor, int error);
 
+}
 #endif /* __WM_ERROR_H */

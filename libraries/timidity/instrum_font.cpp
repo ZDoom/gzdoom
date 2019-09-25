@@ -8,6 +8,10 @@
 #include "instrum.h"
 #include "sf2.h"
 
+#ifndef _WIN32
+#include <strings.h>
+#define stricmp strcasecmp
+#endif
 
 namespace Timidity
 {

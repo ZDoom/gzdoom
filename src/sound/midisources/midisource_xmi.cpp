@@ -34,7 +34,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_musicinterns.h"
+#include "midisource.h"
+#include "basictypes.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -128,7 +129,7 @@ XMISong::XMISong (FileReader &reader)
 	memset(Songs, 0, sizeof(*Songs) * NumSongs);
 	FindXMIDforms(&MusHeader[0], MusHeader.Size(), Songs);
 	CurrSong = Songs;
-	DPrintf(DMSG_SPAMMY, "XMI song count: %d\n", NumSongs);
+	//DPrintf(DMSG_SPAMMY, "XMI song count: %d\n", NumSongs);
 }
 
 //==========================================================================

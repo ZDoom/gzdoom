@@ -34,7 +34,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_musicinterns.h"
+#include "midisource.h"
+#include "basictypes.h"
 #include "templates.h"
 
 // MACROS ------------------------------------------------------------------

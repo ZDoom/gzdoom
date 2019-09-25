@@ -10,9 +10,13 @@
 
 #include <stdint.h>
 #include <functional>
+#include "files.h"
+#include "mus2midi.h"
+#include "mididefs.h"
 
 extern char MIDI_EventLengths[7];
 extern char MIDI_CommonLengths[15];
+
 
 // base class for the different MIDI sources --------------------------------------
 

@@ -26,29 +26,6 @@ struct MidiHeader
 	MidiHeader *lpNext;
 };
 
-// These constants must match the corresponding values of the Windows headers
-// to avoid readjustment in the native Windows device's playback functions 
-// and should not be changed.
-enum
-{
-	MIDIDEV_MIDIPORT = 1,
-	MIDIDEV_SYNTH,
-	MIDIDEV_SQSYNTH,
-	MIDIDEV_FMSYNTH,
-	MIDIDEV_MAPPER,
-	MIDIDEV_WAVETABLE,
-	MIDIDEV_SWSYNTH
-};
-
-enum : uint8_t
-{
-	MEVENT_TEMPO		= 1,
-	MEVENT_NOP			= 2,
-	MEVENT_LONGMSG		= 128,
-};
-
-#define MEVENT_EVENTTYPE(x)	((uint8_t)((x) >> 24))
-#define MEVENT_EVENTPARM(x)   ((x) & 0xffffff)
 
 class MIDIStreamer;
 
@@ -204,11 +181,6 @@ protected:
 };
 
 // Base class for streaming MUS and MIDI files ------------------------------
-
-enum
-{
-	MAX_MIDI_EVENTS = 128
-};
 
 class MIDIStreamer : public MusInfo
 {

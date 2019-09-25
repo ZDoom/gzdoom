@@ -68,12 +68,6 @@
 // Maximum number of files that might appear in a crash report.
 #define MAX_FILES 5
 
-#ifndef __BIG_ENDIAN__
-#define MAKE_ID(a,b,c,d)	((a)|((b)<<8)|((c)<<16)|((d)<<24))
-#else
-#define MAKE_ID(a,b,c,d)	((d)|((c)<<8)|((b)<<16)|((a)<<24))
-#endif
-
 #define ZIP_LOCALFILE	MAKE_ID('P','K',3,4)
 #define ZIP_CENTRALFILE	MAKE_ID('P','K',1,2)
 #define ZIP_ENDOFDIR	MAKE_ID('P','K',5,6)

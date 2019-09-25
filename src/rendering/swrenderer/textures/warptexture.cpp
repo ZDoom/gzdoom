@@ -67,8 +67,8 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 			resizeMult = 1;
 
 		auto otherpix = FSoftwareTexture::GetPixelsBgra();
-		WarpedPixelsRgba.Resize(GetWidth() * GetHeight() * resizeMult * resizeMult * 4 / 3 + 1);
-		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth() * resizeMult, GetHeight() * resizeMult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixelsRgba.Resize(unsigned(GetWidth() * GetHeight() * resizeMult * resizeMult * 4 / 3 + 1));
+		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, int(GetWidth() * resizeMult), int(GetHeight() * resizeMult), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
 		GenerateBgraMipmapsFast();
 		FreeAllSpans();
 		GenTime[2] = time;
@@ -88,8 +88,8 @@ const uint8_t *FWarpTexture::GetPixels(int index)
 			resizeMult = 1;
 
 		const uint8_t *otherpix = FSoftwareTexture::GetPixels(index);
-		WarpedPixels[index].Resize(GetWidth() * GetHeight() * resizeMult * resizeMult);
-		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth() * resizeMult, GetHeight() * resizeMult, WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixels[index].Resize(unsigned(GetWidth() * GetHeight() * resizeMult * resizeMult));
+		WarpBuffer(WarpedPixels[index].Data(), otherpix, int(GetWidth() * resizeMult), int(GetHeight() * resizeMult), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
 		FreeAllSpans();
 		GenTime[index] = time;
 	}

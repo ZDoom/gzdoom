@@ -5,7 +5,7 @@
 #include "files.h"
 #include "timiditypp/timidity_file.h"
 #include "timidity/timidity_file.h"
-#include "wildmidi_file.h"
+#include "wildmidi/wildmidi_file.h"
 
 enum
 {

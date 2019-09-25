@@ -37,7 +37,7 @@
 #endif
 #include <stdlib.h>
 #include <memory>
-#include <mutex>
+#include <algorithm>
 
 #include "common.h"
 #include "wm_error.h"

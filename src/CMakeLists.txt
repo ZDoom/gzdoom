@@ -468,7 +468,7 @@ set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_L
 if (HAVE_VULKAN)
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
 endif()
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" )
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
@@ -693,7 +693,6 @@ file( GLOB HEADER_FILES
 	sound/oplsynth/*.h
 	sound/oplsynth/dosbox/*.h
 	sound/thirdparty/*.h
-	sound/wildmidi/*.h
 	rendering/*.h
 	rendering/2d/*.h
 	rendering/swrenderer/*.h
@@ -1219,11 +1218,6 @@ set (PCH_SOURCES
 	sound/oplsynth/dosbox/opl.cpp
 	sound/oplsynth/OPL3.cpp
 	sound/oplsynth/nukedopl3.cpp
-	sound/wildmidi/file_io.cpp
-	sound/wildmidi/gus_pat.cpp
-	sound/wildmidi/reverb.cpp
-	sound/wildmidi/wildmidi_lib.cpp
-	sound/wildmidi/wm_error.cpp
 	rendering/swrenderer/textures/r_swtexture.cpp
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
@@ -1320,7 +1314,7 @@ if( UNIX )
 	endif()
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma adl opn timidity timidityplus )
+target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma adl opn timidity timidityplus wildmidi )
 
 include_directories( .
 	g_statusbar
@@ -1338,7 +1332,6 @@ include_directories( .
 	sound/music
 	sound/backend
 	sound/oplsynth
-	sound/wildmidi
 	xlat
 	utility
 	utility/nodebuilder
@@ -1450,7 +1443,6 @@ source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/soun
 source_group("Audio Files\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/backend/.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cpp sound/oplsynth/dosbox/opl.h)
-source_group("Audio Files\\WildMidi" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/wildmidi/.+")
 source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/mididevices/.+")
 source_group("Audio Files\\MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/midisources/.+")
 source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")

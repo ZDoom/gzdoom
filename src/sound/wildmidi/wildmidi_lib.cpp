@@ -635,7 +635,7 @@ int Instruments::LoadConfig(const char *config_parm)
 	// This part was rewritten because the original depended on a header that was GPL'd.
 	dir_end = strrchr(config_file, '/');
 #ifdef _WIN32
-	const char *dir_end2 = strrchr(config_file.c, '\\');
+	const char *dir_end2 = strrchr(config_file, '\\');
 	if (dir_end2 > dir_end) dir_end = dir_end2;
 #endif
 
@@ -1322,6 +1322,13 @@ void Instruments::load_patch(struct _mdi *mdi, unsigned short patchid)
 	mdi->patches[mdi->patch_count - 1] = tmp_patch;
 	tmp_patch->inuse_count++;
 }
+
+Instruments::~Instruments()
+{
+	FreePatches();
+	delete sfreader;
+}
+
 
 static struct _sample *get_sample_data(struct _patch *sample_patch, unsigned long int freq)
 	{
@@ -2517,6 +2524,7 @@ int Renderer::SetOption(int options, int setting)
 Renderer::Renderer(Instruments *instr, unsigned mixOpt)
 {
 	init_gauss();
+	instruments = instr;
 	WM_MixerOptions = mixOpt;
 	handle = NewMidi();
 }

@@ -75,10 +75,10 @@ unsigned char *_WM_BufferFile(SoundFontReaderInterface *reader, const char *file
 
 	fp->seek(0, SEEK_SET);
 	fp->read(data, fsize);
+	if (fullname)* fullname = fp->filename;
 	fp->close();
 	data[fsize] = 0;
 	*size = (long)fsize;
-	if (fullname) *fullname = fp->filename;
 	return data;
 }
 }

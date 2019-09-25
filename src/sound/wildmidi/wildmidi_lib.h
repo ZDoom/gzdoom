@@ -75,7 +75,8 @@ struct Instruments
 		sfreader = reader;
 		_WM_SampleRate = samplerate;
 	}
-
+	~Instruments();
+	
 	int LoadConfig(const char *config_file);
 	int load_sample(struct _patch *sample_patch);
 	struct _patch *get_patch_data(unsigned short patchid);

@@ -42,6 +42,12 @@
 #include "resourcefiles/resourcefile.h"
 #include "timiditypp/common.h"
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FSoundFontManager sfmanager;
 
 template<class base>
@@ -131,6 +137,11 @@ int FSoundFontReader::pathcmp(const char *p1, const char *p2)
 	return mCaseSensitivePaths? strcmp(p1, p2) : stricmp(p1, p2);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FileReader FSoundFontReader::Open(const char *name, std::string& filename)
 {
@@ -151,40 +162,45 @@ FileReader FSoundFontReader::Open(const char *name, std::string& filename)
 
 //==========================================================================
 //
-// This is the interface function for Timidity++
+//
 //
 //==========================================================================
 
-struct TimidityPlus::timidity_file* FSoundFontReader::open_timidityplus_file(const char* name)
+template<class interface>
+interface* FSoundFontReader::open_interface(const char* name)
 {
 	std::string filename;
-
+	
 	FileReader fr = Open(name, filename);
 	if (!fr.isOpen()) return nullptr;
-
-	auto tf = new file_interface<TimidityPlus::timidity_file>;
+	
+	auto tf = new file_interface<interface>;
 	tf->fr = std::move(fr);
 	tf->filename = std::move(filename);
 	return tf;
 }
 
+
 //==========================================================================
 //
-// This is the interface function for Timidity(GUS)
+// The file interfaces for the different MIDI renderers
+// They are all the same except for the class names.
 //
 //==========================================================================
+
+struct TimidityPlus::timidity_file* FSoundFontReader::open_timidityplus_file(const char* name)
+{
+	return open_interface<TimidityPlus::timidity_file>(name);
+}
 
 struct Timidity::timidity_file* FSoundFontReader::open_timidity_file(const char* name)
 {
-	std::string filename;
+	return open_interface<Timidity::timidity_file>(name);
+}
 
-	FileReader fr = Open(name, filename);
-	if (!fr.isOpen()) return nullptr;
-
-	auto tf = new file_interface<Timidity::timidity_file>;
-	tf->fr = std::move(fr);
-	tf->filename = std::move(filename);
-	return tf;
+struct WildMidi::wildmidi_file* FSoundFontReader::open_wildmidi_file(const char* name)
+{
+	return open_interface<WildMidi::wildmidi_file>(name);
 }
 
 //==========================================================================

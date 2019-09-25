@@ -27,21 +27,21 @@
 #ifndef WILDMIDI_LIB_H
 #define WILDMIDI_LIB_H
 
-#define WM_MO_LOG_VOLUME	0x0001
-#define WM_MO_ENHANCED_RESAMPLING 0x0002
-#define WM_MO_REVERB		0x0004
-#define WM_MO_WHOLETEMPO	0x8000
-#define WM_MO_ROUNDTEMPO	0x2000
+namespace WildMidi
+{
+enum EMixerOptions
+{
+	WM_MO_LOG_VOLUME	= 0x0001,
+	WM_MO_ENHANCED_RESAMPLING = 0x0002,
+	WM_MO_REVERB		= 0x0004,
+	WM_MO_WHOLETEMPO	= 0x8000,
+	WM_MO_ROUNDTEMPO	= 0x2000,
+	
+	WM_GS_VERSION		= 0x0001,
+};
 
-#define WM_GS_VERSION		0x0001
 
-#define WM_SYMBOL	// we do not need this in ZDoom
-
-/*
-#if defined(__cplusplus)
-extern "C" {
-#endif
-*/
+class SoundFontReaderInterface;
 
 struct _WM_Info {
 	char *copyright;
@@ -52,36 +52,89 @@ struct _WM_Info {
 };
 
 typedef void midi;
-
-WM_SYMBOL const char * WildMidi_GetString (unsigned short int info);
-WM_SYMBOL int WildMidi_Init (FSoundFontReader *reader, unsigned short int rate, unsigned short int options);
-WM_SYMBOL int WildMidi_MasterVolume (unsigned char master_volume);
-WM_SYMBOL int WildMidi_SetOption (midi * handle, unsigned short int options, unsigned short int setting);
-WM_SYMBOL int WildMidi_Close (midi * handle);
-WM_SYMBOL int WildMidi_Shutdown (void);
-WM_SYMBOL int WildMidi_GetSampleRate (void);
-
-/*
-#if defined(__cplusplus)
-}
-#endif
-*/
-
-class WildMidi_Renderer
+	
+struct Instruments
 {
+	SoundFontReaderInterface *sfreader;
+
+	struct _patch *patch[128] = {};
+	float reverb_room_width = 16.875f;
+	float reverb_room_length = 22.5f;
+	
+	float reverb_listen_posx = 8.4375f;
+	float reverb_listen_posy = 16.875f;
+	
+	int fix_release = 0;
+	int auto_amp = 0;
+	int auto_amp_with_amp = 0;
+	
+	unsigned short int _WM_SampleRate;	// WildMidi makes the sample rate a property of the patches, not the renderer. Meaning that the instruments need to be reloaded when it changes... :?
+
+	Instruments(SoundFontReaderInterface *reader, int samplerate)
+	{
+		sfreader = reader;
+		_WM_SampleRate = samplerate;
+	}
+
+	int LoadConfig(const char *config_file);
+	int load_sample(struct _patch *sample_patch);
+	struct _patch *get_patch_data(unsigned short patchid);
+	void load_patch(struct _mdi *mdi, unsigned short patchid);
+	int GetSampleRate() { return _WM_SampleRate; }
+	struct _sample * load_gus_pat(const char *filename);
+
+private:
+	void FreePatches(void);
+};
+
+const char * WildMidi_GetString (unsigned short int info);
+
+
+
+class Renderer
+{
+	Instruments *instruments;
+
+	signed int WM_MasterVolume = 948;
+	unsigned int WM_MixerOptions = 0;
+
 public:
-	WildMidi_Renderer();
-	~WildMidi_Renderer();
+	Renderer(Instruments *instr, unsigned mixOpt = 0);
+	~Renderer();
 
 	void ShortEvent(int status, int parm1, int parm2);
 	void LongEvent(const unsigned char *data, int len);
 	void ComputeOutput(float *buffer, int len);
 	void LoadInstrument(int bank, int percussion, int instr);
 	int GetVoiceCount();
-	void SetOption(int opt, int set);
+	int SetOption(int opt, int set);
+	
+	void SetMasterVolume(unsigned char master_volume);
+	midi * NewMidi();
+
 private:
 	void *handle;
+	
+	void AdjustNoteVolumes(struct _mdi *mdi, unsigned char ch, struct _note *nte);
+	void AdjustChannelVolumes(struct _mdi *mdi, unsigned char ch);
+	void do_note_on(struct _mdi *mdi, struct _event_data *data);
+	void do_aftertouch(struct _mdi *mdi, struct _event_data *data);
+	void do_control_channel_volume(struct _mdi *mdi, struct _event_data *data);
+	void do_control_channel_balance(struct _mdi *mdi, struct _event_data *data);
+	void do_control_channel_pan(struct _mdi *mdi, struct _event_data *data);
+	void do_control_channel_expression(struct _mdi *mdi, struct _event_data *data);
+	void do_control_channel_controllers_off(struct _mdi *mdi, struct _event_data *data);
+	void do_pitch(struct _mdi *mdi, struct _event_data *data);
+	void do_patch(struct _mdi *mdi, struct _event_data *data);
+	void do_channel_pressure(struct _mdi *mdi, struct _event_data *data);
+	void do_sysex_roland_drum_track(struct _mdi *mdi, struct _event_data *data);
+	void do_sysex_gm_reset(struct _mdi *mdi, struct _event_data *data);
+	void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data);
+	void do_sysex_yamaha_reset(struct _mdi *mdi, struct _event_data *data);
+	struct _mdi *Init_MDI();
+	unsigned long int get_inc(struct _mdi *mdi, struct _note *nte);
 };
+}
 
 #endif /* WILDMIDI_LIB_H */
 

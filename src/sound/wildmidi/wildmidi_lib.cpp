@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
+#include <string.h>
 #ifndef _WIN32
 #include <strings.h>
 #endif
@@ -44,7 +45,9 @@
 #include "reverb.h"
 #include "gus_pat.h"
 #include "wildmidi_lib.h"
-#include "i_soundfont.h"
+
+namespace WildMidi
+{
 
 #define IS_DIR_SEPARATOR(c)	((c) == '/' || (c) == '\\')
 #ifdef _WIN32
@@ -63,28 +66,8 @@
 
 #define MEM_CHUNK 8192
 
-static int WM_Initialized = 0;
-static signed short int WM_MasterVolume = 948;
-static unsigned short int WM_MixerOptions = 0;
 
-static char WM_Version[] = "WildMidi Processing Library";
-
-unsigned short int _WM_SampleRate;
-
-static struct _patch *patch[128];
-
-static float reverb_room_width = 16.875f;
-static float reverb_room_length = 22.5f;
-
-static float reverb_listen_posx = 8.4375f;
-static float reverb_listen_posy = 16.875f;
-
-static int fix_release = 0;
-static int auto_amp = 0;
-static int auto_amp_with_amp = 0;
-
-static std::mutex patch_lock;
-extern std::unique_ptr<FSoundFontReader> wm_sfreader;
+static const char WM_Version[] = "WildMidi Processing Library";
 
 struct _channel {
 	unsigned char bank;
@@ -174,10 +157,8 @@ struct _mdi {
 
 /* Gauss Interpolation code adapted from code supplied by Eric. A. Welsh */
 static double newt_coeffs[58][58];	/* for start/end of samples */
-#define MAX_GAUSS_ORDER 34		/* 34 is as high as we can go before errors crop up */
-static double *gauss_table = NULL;	/* *gauss_table[1<<FPBITS] */
-static int gauss_n = MAX_GAUSS_ORDER;
-static std::mutex gauss_lock;
+static std::vector<double> gauss_table;	/* *gauss_table[1<<FPBITS] */
+static const int gauss_n = 34;	/* 34 is as high as we can go before errors crop up */
 
 static void init_gauss(void) {
 	/* init gauss table */
@@ -190,8 +171,7 @@ static void init_gauss(void) {
 	double z[35];
 	double *gptr, *t;
 
-	std::lock_guard<std::mutex> lock(gauss_lock);
-	if (gauss_table) {
+	if (gauss_table.size()) {
 		return;
 	}
 
@@ -218,7 +198,8 @@ static void init_gauss(void) {
 		for (j = 0, sign = (int)pow(-1., i); j <= i; j++, sign *= -1)
 			newt_coeffs[i][j] *= sign;
 
-	t = (double*)malloc((1<<FPBITS) * (n + 1) * sizeof(double));
+	gauss_table.resize((1<<FPBITS) * (n + 1));
+	t = gauss_table.data();
 	x_inc = 1.0 / (1<<FPBITS);
 	for (m = 0, x = 0.0; m < (1<<FPBITS); m++, x += x_inc) {
 		xz = (x + n_half) / (4 * M_PI);
@@ -236,25 +217,11 @@ static void init_gauss(void) {
 			*gptr++ = ck;
 		}
 	}
-
-	gauss_table = t;
 }
 
-static void free_gauss(void) 
-{
-	std::lock_guard<std::mutex> lock(gauss_lock);
-	free(gauss_table);
-	gauss_table = NULL;
-}
-
-struct _hndl {
-	void * handle;
-	struct _hndl *next;
-	struct _hndl *prev;
-};
 
 /* f: ( VOLUME / 127.0 ) * 1024.0 */
-static signed short int lin_volume[] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72,
+static const signed short int lin_volume[] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72,
 		80, 88, 96, 104, 112, 120, 129, 137, 145, 153, 161, 169, 177, 185, 193,
 		201, 209, 217, 225, 233, 241, 249, 258, 266, 274, 282, 290, 298, 306,
 		314, 322, 330, 338, 346, 354, 362, 370, 378, 387, 395, 403, 411, 419,
@@ -266,7 +233,7 @@ static signed short int lin_volume[] = { 0, 8, 16, 24, 32, 40, 48, 56, 64, 72,
 		991, 999, 1007, 1015, 1024 };
 
 /* f: As per midi 2 standard */
-static float dBm_volume[] = { -999999.999999f, -84.15214884f, -72.11094901f,
+static const float dBm_volume[] = { -999999.999999f, -84.15214884f, -72.11094901f,
 	-65.06729865f, -60.06974919f, -56.19334866f, -53.02609882f, -50.34822724f,
 	-48.02854936f, -45.98244846f, -44.15214884f, -42.49644143f, -40.984899f,
 	-39.59441475f, -38.30702741f, -37.10849848f, -35.98734953f, -34.93419198f,
@@ -294,7 +261,7 @@ static float dBm_volume[] = { -999999.999999f, -84.15214884f, -72.11094901f,
 	-0.5559443807f, -0.4152814317f, -0.2757483179f, -0.1373270335f, 0 };
 
 /* f: As per midi 2 standard */
-static float dBm_pan_volume[127] = {
+static const float dBm_pan_volume[127] = {
 	-999999.999999f, -87.6945020928f, -73.8331126923f, -65.7264009888f,
 	-59.9763864074f, -55.5181788833f, -51.8774481743f, -48.8011722841f,
 	-46.1383198371f, -43.7914727130f, -41.6941147218f, -39.7988027954f,
@@ -328,7 +295,7 @@ static float dBm_pan_volume[127] = {
 	-0.0560023899f, -0.0388794497f, -0.0248770409f, -0.0139907967f,
 	-0.0062173263f, -0.0015542108f, 0.0000000000f };
 
-static unsigned int freq_table[] = { 837201792, 837685632, 838169728,
+static const unsigned int freq_table[] = { 837201792, 837685632, 838169728,
 		838653568, 839138240, 839623232, 840108480, 840593984, 841079680,
 		841565184, 842051648, 842538240, 843025152, 843512320, 843999232,
 		844486976, 844975040, 845463360, 845951936, 846440320, 846929536,
@@ -544,19 +511,13 @@ static unsigned int freq_table[] = { 837201792, 837685632, 838169728,
  * =========================
  */
 
-static void WM_InitPatches(void) {
-	int i;
-	for (i = 0; i < 128; i++) {
-		patch[i] = NULL;
-	}
-}
 
-static void WM_FreePatches(void) {
+void Instruments::FreePatches()
+{
 	int i;
 	struct _patch * tmp_patch;
 	struct _sample * tmp_sample;
 
-	std::lock_guard<std::mutex> lock(patch_lock);
 	for (i = 0; i < 128; i++) {
 		while (patch[i]) {
 			while (patch[i]->first_sample) {
@@ -649,7 +610,8 @@ static char** WM_LC_Tokenize_Line(char *line_data)
 	return token_data;
 }
 
-static int WM_LoadConfig(const char *config_file, bool main) {
+int Instruments::LoadConfig(const char *config_parm)
+{
 	unsigned long int config_size = 0;
 	char *config_buffer = NULL;
 	const char *dir_end = NULL;
@@ -660,20 +622,20 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 	struct _patch * tmp_patch;
 	char **line_tokens = NULL;
 	int token_count = 0;
-	auto config_parm = config_file;
+	std::string config_file_s;
 
-	config_buffer = (char *)_WM_BufferFile(config_parm, &config_size);
+	config_buffer = (char *)_WM_BufferFile(sfreader, config_parm, &config_size, &config_file_s);
 	if (!config_buffer) {
-		WM_FreePatches();
+		FreePatches();
 		return -1;
 	}
-
-	if (config_parm == nullptr) config_file = wm_sfreader->basePath().GetChars();	// Re-get the base path because for archives this is empty.
+	
+	auto config_file = config_file_s.c_str();
 
 	// This part was rewritten because the original depended on a header that was GPL'd.
 	dir_end = strrchr(config_file, '/');
 #ifdef _WIN32
-	const char *dir_end2 = strrchr(config_file, '\\');
+	const char *dir_end2 = strrchr(config_file.c, '\\');
 	if (dir_end2 > dir_end) dir_end = dir_end2;
 #endif
 
@@ -683,7 +645,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 			_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to parse config",
 					errno);
 			_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, config_file, 0);
-			WM_FreePatches();
+			FreePatches();
 			free(config_buffer);
 			return -1;
 		}
@@ -714,7 +676,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									"(missing name in dir line)", 0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(line_tokens);
 							free(config_buffer);
 							return -1;
@@ -723,7 +685,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									"to parse config", errno);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(line_tokens);
 							free(config_buffer);
 							return -1;
@@ -739,7 +701,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									"(missing name in source line)", 0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(line_tokens);
 							free(config_buffer);
 							return -1;
@@ -752,7 +714,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 										"to parse config", errno);
 								_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 										config_file, 0);
-								WM_FreePatches();
+								FreePatches();
 								free(config_dir);
 								free(line_tokens);
 								free(config_buffer);
@@ -766,13 +728,13 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 										"to parse config", errno);
 								_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 										config_file, 0);
-								WM_FreePatches();
+								FreePatches();
 								free(line_tokens);
 								free(config_buffer);
 								return -1;
 							}
 						}
-						if (WM_LoadConfig(new_config, false) == -1) {
+						if (LoadConfig(new_config) == -1) {
 							free(new_config);
 							free(line_tokens);
 							free(config_buffer);
@@ -786,7 +748,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									"(syntax error in bank line)", 0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(config_dir);
 							free(line_tokens);
 							free(config_buffer);
@@ -799,7 +761,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									"(syntax error in drumset line)", 0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(config_dir);
 							free(line_tokens);
 							free(config_buffer);
@@ -813,7 +775,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(config_dir);
 							free(line_tokens);
 							free(config_buffer);
@@ -838,7 +800,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(config_dir);
 							free(line_tokens);
 							free(config_buffer);
@@ -863,7 +825,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(config_dir);
 							free(line_tokens);
 							free(config_buffer);
@@ -885,7 +847,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(config_dir);
 							free(line_tokens);
 							free(config_buffer);
@@ -920,7 +882,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 										NULL, errno);
 								_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 										config_file, 0);
-								WM_FreePatches();
+								FreePatches();
 								free(config_dir);
 								free(line_tokens);
 								free(config_buffer);
@@ -958,7 +920,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 											_WM_ERROR(__FUNCTION__, __LINE__,
 													WM_ERR_LOAD, config_file,
 													0);
-											WM_FreePatches();
+											FreePatches();
 											free(config_dir);
 											free(line_tokens);
 											free(config_buffer);
@@ -988,7 +950,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 												WM_ERR_MEM, NULL, errno);
 										_WM_ERROR(__FUNCTION__, __LINE__,
 												WM_ERR_LOAD, config_file, 0);
-										WM_FreePatches();
+										FreePatches();
 										free(config_dir);
 										free(line_tokens);
 										free(config_buffer);
@@ -1011,7 +973,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 									"(missing name in patch line)", 0);
 							_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 									config_file, 0);
-							WM_FreePatches();
+							FreePatches();
 							free(config_dir);
 							free(line_tokens);
 							free(config_buffer);
@@ -1025,7 +987,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 										NULL, 0);
 								_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 										config_file, 0);
-								WM_FreePatches();
+								FreePatches();
 								free(config_dir);
 								free(line_tokens);
 								free(config_buffer);
@@ -1039,7 +1001,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 										NULL, 0);
 								_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD,
 										config_file, 0);
-								WM_FreePatches();
+								FreePatches();
 								free(config_dir);
 								free(line_tokens);
 								free(config_buffer);
@@ -1185,7 +1147,8 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 
 /* sample loading */
 
-static int load_sample(struct _patch *sample_patch) {
+int Instruments::load_sample(struct _patch *sample_patch)
+	{
 	struct _sample *guspat = NULL;
 	struct _sample *tmp_sample = NULL;
 	unsigned int i = 0;
@@ -1193,7 +1156,7 @@ static int load_sample(struct _patch *sample_patch) {
 	/* we only want to try loading the guspat once. */
 	sample_patch->loaded = 1;
 
-	if ((guspat = _WM_load_gus_pat(sample_patch->filename, fix_release)) == NULL) {
+	if ((guspat = load_gus_pat(sample_patch->filename)) == NULL) {
 		return -1;
 	}
 
@@ -1305,11 +1268,9 @@ static int load_sample(struct _patch *sample_patch) {
 	return 0;
 }
 
-static struct _patch *
-get_patch_data(unsigned short patchid) {
+struct _patch *Instruments::get_patch_data(unsigned short patchid)
+{
 	struct _patch *search_patch;
-
-	std::lock_guard<std::mutex> lock(patch_lock);
 
 	search_patch = patch[patchid & 0x007F];
 
@@ -1329,7 +1290,8 @@ get_patch_data(unsigned short patchid) {
 	return NULL;
 }
 
-static void load_patch(struct _mdi *mdi, unsigned short patchid) {
+void Instruments::load_patch(struct _mdi *mdi, unsigned short patchid)
+{
 	unsigned int i;
 	struct _patch *tmp_patch = NULL;
 
@@ -1344,7 +1306,6 @@ static void load_patch(struct _mdi *mdi, unsigned short patchid) {
 		return;
 	}
 
-	std::lock_guard<std::mutex> lock(patch_lock);
 	if (!tmp_patch->loaded) {
 		if (load_sample(tmp_patch) == -1) {
 			return;
@@ -1362,12 +1323,11 @@ static void load_patch(struct _mdi *mdi, unsigned short patchid) {
 	tmp_patch->inuse_count++;
 }
 
-static struct _sample *
-get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
+static struct _sample *get_sample_data(struct _patch *sample_patch, unsigned long int freq)
+	{
 	struct _sample *last_sample = NULL;
 	struct _sample *return_sample = NULL;
 
-	std::lock_guard<std::mutex> lock(patch_lock);
 	if (sample_patch == NULL) {
 		return NULL;
 	}
@@ -1394,7 +1354,8 @@ get_sample_data(struct _patch *sample_patch, unsigned long int freq) {
 }
 
 /* Should be called in any function that effects note volumes */
-void _WM_AdjustNoteVolumes(struct _mdi *mdi, unsigned char ch, struct _note *nte) {
+void Renderer::AdjustNoteVolumes(struct _mdi *mdi, unsigned char ch, struct _note *nte)
+	{
     double premix_dBm;
     double premix_lin;
 	int pan_ofs;
@@ -1450,7 +1411,8 @@ void _WM_AdjustNoteVolumes(struct _mdi *mdi, unsigned char ch, struct _note *nte
 
 /* Should be called in any function that effects channel volumes */
 /* Calling this function with a value > 15 will make it adjust notes on all channels */
-void _WM_AdjustChannelVolumes(struct _mdi *mdi, unsigned char ch) {
+void Renderer::AdjustChannelVolumes(struct _mdi *mdi, unsigned char ch)
+{
     struct _note *nte = mdi->note;
     if (nte != NULL) {
         do {
@@ -1460,8 +1422,8 @@ void _WM_AdjustChannelVolumes(struct _mdi *mdi, unsigned char ch) {
                 }
             } else {
             _DO_ADJUST:
-                _WM_AdjustNoteVolumes(mdi, ch, nte);
-                if (nte->replay) _WM_AdjustNoteVolumes(mdi, ch, nte->replay);
+                AdjustNoteVolumes(mdi, ch, nte);
+                if (nte->replay) AdjustNoteVolumes(mdi, ch, nte->replay);
             }
             nte = nte->next;
         } while (nte != NULL);
@@ -1538,7 +1500,8 @@ static void do_note_off(struct _mdi *mdi, struct _event_data *data) {
 	}
 }
 
-static inline unsigned long int get_inc(struct _mdi *mdi, struct _note *nte) {
+unsigned long int Renderer::get_inc(struct _mdi *mdi, struct _note *nte)
+{
 	int ch = nte->noteid >> 8;
 	signed long int note_f;
 	unsigned long int freq;
@@ -1555,11 +1518,12 @@ static inline unsigned long int get_inc(struct _mdi *mdi, struct _note *nte) {
 		note_f = 12700;
 	}
 	freq = freq_table[(note_f % 1200)] >> (10 - (note_f / 1200));
-	return (((freq / ((_WM_SampleRate * 100) / 1024)) * 1024
+	return (((freq / ((instruments->GetSampleRate() * 100) / 1024)) * 1024
 			/ nte->sample->inc_div));
 }
 
-static void do_note_on(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_note_on(struct _mdi *mdi, struct _event_data *data)
+{
 	struct _note *nte;
 	struct _note *prev_nte;
 	struct _note *nte_array;
@@ -1584,7 +1548,7 @@ static void do_note_on(struct _mdi *mdi, struct _event_data *data) {
 		}
 		freq = freq_table[(note % 12) * 100] >> (10 - (note / 12));
 	} else {
-		patch = get_patch_data(((mdi->channel[ch].bank << 8) | note | 0x80));
+		patch = instruments->get_patch_data(((mdi->channel[ch].bank << 8) | note | 0x80));
 		if (patch == NULL) {
 			return;
 		}
@@ -1648,10 +1612,11 @@ static void do_note_on(struct _mdi *mdi, struct _event_data *data) {
 	nte->hold = mdi->channel[ch].hold;
 	nte->replay = NULL;
 	nte->is_off = 0;
-	_WM_AdjustNoteVolumes(mdi, ch, nte);
+	AdjustNoteVolumes(mdi, ch, nte);
 }
 
-static void do_aftertouch(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_aftertouch(struct _mdi *mdi, struct _event_data *data)
+{
 	struct _note *nte;
 	unsigned char ch = data->channel;
 
@@ -1666,10 +1631,10 @@ static void do_aftertouch(struct _mdi *mdi, struct _event_data *data) {
 	}
 
 	nte->velocity = (unsigned char)data->data;
-	_WM_AdjustNoteVolumes(mdi, ch, nte);
+	AdjustNoteVolumes(mdi, ch, nte);
 	if (nte->replay) {
 		nte->replay->velocity = (unsigned char)data->data;
-		_WM_AdjustNoteVolumes(mdi, ch, nte->replay);
+		AdjustNoteVolumes(mdi, ch, nte->replay);
 	}
 }
 
@@ -1692,37 +1657,38 @@ static void do_control_data_entry_course(struct _mdi *mdi,
 	}
 }
 
-static void do_control_channel_volume(struct _mdi *mdi,
-		struct _event_data *data) {
+void Renderer::do_control_channel_volume(struct _mdi *mdi, struct _event_data *data)
+{
 	struct _note *note_data = mdi->note;
 	unsigned char ch = data->channel;
 
 	mdi->channel[ch].volume = (unsigned char)data->data;
-	_WM_AdjustChannelVolumes(mdi, ch);
+	AdjustChannelVolumes(mdi, ch);
 }
 
-static void do_control_channel_balance(struct _mdi *mdi,
-		struct _event_data *data) {
+void Renderer::do_control_channel_balance(struct _mdi *mdi, struct _event_data *data)
+{
 	unsigned char ch = data->channel;
 
 	mdi->channel[ch].balance = (signed char)(data->data);
-	_WM_AdjustChannelVolumes(mdi, ch);
+	AdjustChannelVolumes(mdi, ch);
 }
 
-static void do_control_channel_pan(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_control_channel_pan(struct _mdi *mdi, struct _event_data *data)
+	{
 	unsigned char ch = data->channel;
 
 	mdi->channel[ch].pan = (signed char)(data->data);
-	_WM_AdjustChannelVolumes(mdi, ch);
+	AdjustChannelVolumes(mdi, ch);
 }
 
-static void do_control_channel_expression(struct _mdi *mdi,
-		struct _event_data *data) {
+void Renderer::do_control_channel_expression(struct _mdi *mdi, struct _event_data *data)
+{
 	struct _note *note_data = mdi->note;
 	unsigned char ch = data->channel;
 
 	mdi->channel[ch].expression = (unsigned char)data->data;
-	_WM_AdjustChannelVolumes(mdi, ch);
+	AdjustChannelVolumes(mdi, ch);
 }
 
 static void do_control_data_entry_fine(struct _mdi *mdi,
@@ -1862,8 +1828,8 @@ static void do_control_channel_sound_off(struct _mdi *mdi,
 	}
 }
 
-static void do_control_channel_controllers_off(struct _mdi *mdi,
-		struct _event_data *data) {
+void Renderer::do_control_channel_controllers_off(struct _mdi *mdi, struct _event_data *data)
+{
 	struct _note *note_data = mdi->note;
 	unsigned char ch = data->channel;
 
@@ -1875,7 +1841,7 @@ static void do_control_channel_controllers_off(struct _mdi *mdi,
 	mdi->channel[ch].pitch_adjust = 0;
 	mdi->channel[ch].hold = 0;
 
-	_WM_AdjustChannelVolumes(mdi, ch);
+	AdjustChannelVolumes(mdi, ch);
 }
 
 static void do_control_channel_notes_off(struct _mdi *mdi,
@@ -1911,17 +1877,19 @@ static void do_control_channel_notes_off(struct _mdi *mdi,
 	}
 }
 
-static void do_patch(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_patch(struct _mdi *mdi, struct _event_data *data)
+{
 	unsigned char ch = data->channel;
 	MIDI_EVENT_DEBUG(__FUNCTION__,ch);
 	if (!mdi->channel[ch].isdrum) {
-		mdi->channel[ch].patch = get_patch_data((unsigned short)(((mdi->channel[ch].bank << 8) | data->data)));
+		mdi->channel[ch].patch = instruments->get_patch_data((unsigned short)(((mdi->channel[ch].bank << 8) | data->data)));
 	} else {
 		mdi->channel[ch].bank = (unsigned char)data->data;
 	}
 }
 
-static void do_channel_pressure(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_channel_pressure(struct _mdi *mdi, struct _event_data *data)
+{
 	struct _note *note_data = mdi->note;
 	unsigned char ch = data->channel;
 
@@ -1930,17 +1898,18 @@ static void do_channel_pressure(struct _mdi *mdi, struct _event_data *data) {
 	while (note_data) {
 		if ((note_data->noteid >> 8) == ch) {
 			note_data->velocity = (unsigned char)data->data;
-			_WM_AdjustNoteVolumes(mdi, ch, note_data);
+			AdjustNoteVolumes(mdi, ch, note_data);
 			if (note_data->replay) {
 				note_data->replay->velocity = (unsigned char)data->data;
-				_WM_AdjustNoteVolumes(mdi, ch, note_data->replay);
+				AdjustNoteVolumes(mdi, ch, note_data->replay);
 			}
 		}
 		note_data = note_data->next;
 	}
 }
 
-static void do_pitch(struct _mdi *mdi, struct _event_data *data) {
+	void Renderer::do_pitch(struct _mdi *mdi, struct _event_data *data)
+{
 	struct _note *note_data = mdi->note;
 	unsigned char ch = data->channel;
 
@@ -1965,8 +1934,8 @@ static void do_pitch(struct _mdi *mdi, struct _event_data *data) {
 	}
 }
 
-static void do_sysex_roland_drum_track(struct _mdi *mdi,
-		struct _event_data *data) {
+void Renderer::do_sysex_roland_drum_track(struct _mdi *mdi, struct _event_data *data)
+{
 	unsigned char ch = data->channel;
 
 	MIDI_EVENT_DEBUG(__FUNCTION__,ch);
@@ -1976,16 +1945,17 @@ static void do_sysex_roland_drum_track(struct _mdi *mdi,
 		mdi->channel[ch].patch = NULL;
 	} else {
 		mdi->channel[ch].isdrum = 0;
-		mdi->channel[ch].patch = get_patch_data(0);
+		mdi->channel[ch].patch = instruments->get_patch_data(0);
 	}
 }
 
-static void do_sysex_gm_reset(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_sysex_gm_reset(struct _mdi *mdi, struct _event_data *data)
+{
 	int i;
 	for (i = 0; i < 16; i++) {
 		mdi->channel[i].bank = 0;
 		if (i != 9) {
-			mdi->channel[i].patch = get_patch_data(0);
+			mdi->channel[i].patch = instruments->get_patch_data(0);
 		} else {
 			mdi->channel[i].patch = NULL;
 		}
@@ -2002,22 +1972,24 @@ static void do_sysex_gm_reset(struct _mdi *mdi, struct _event_data *data) {
 	}
 	/* I would not expect notes to be active when this event
 	 triggers but we'll adjust active notes as well just in case */
-	_WM_AdjustChannelVolumes(mdi,16); // A setting > 15 adjusts all channels
+	AdjustChannelVolumes(mdi,16); // A setting > 15 adjusts all channels
 
 	mdi->channel[9].isdrum = 1;
 	UNUSED(data); /* NOOP, to please the compiler gods */
 }
 
-static void do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_sysex_roland_reset(struct _mdi *mdi, struct _event_data *data)
+{
 	do_sysex_gm_reset(mdi, data);
 }
 
-static void do_sysex_yamaha_reset(struct _mdi *mdi, struct _event_data *data) {
+void Renderer::do_sysex_yamaha_reset(struct _mdi *mdi, struct _event_data *data)
+{
 	do_sysex_gm_reset(mdi, data);
 }
 
-static struct _mdi *
-Init_MDI(void) {
+struct _mdi *Renderer::Init_MDI()
+{
 	struct _mdi *mdi;
 
 	mdi = new _mdi;
@@ -2025,7 +1997,7 @@ Init_MDI(void) {
 	mdi->info.copyright = NULL;
 	mdi->info.mixer_options = WM_MixerOptions;
 
-	load_patch(mdi, 0x0000);
+	instruments->load_patch(mdi, 0x0000);
 
 	mdi->samples_to_mix = 0;
 	mdi->info.current_sample = 0;
@@ -2037,12 +2009,12 @@ Init_MDI(void) {
 	return mdi;
 }
 
-static void freeMDI(struct _mdi *mdi) {
+static void freeMDI(struct _mdi *mdi)
+{
 	struct _sample *tmp_sample;
 	unsigned long int i;
 
 	if (mdi->patch_count != 0) {
-		std::lock_guard<std::mutex> lock(patch_lock);
 		for (i = 0; i < mdi->patch_count; i++) {
 			mdi->patches[i]->inuse_count--;
 			if (mdi->patches[i]->inuse_count == 0) {
@@ -2243,7 +2215,7 @@ static int *WM_Mix_Linear(midi * handle, int * buffer, unsigned long int count)
 
 static int *WM_Mix_Gauss(midi * handle, int * buffer, unsigned long int count)
 {
-	if (!gauss_table) init_gauss();
+	if (!gauss_table.size()) init_gauss();
 
 	struct _mdi *mdi = (struct _mdi *)handle;
 	unsigned long int data_pos;
@@ -2484,118 +2456,32 @@ int *WM_Mix(midi *handle, int *buffer, unsigned long count)
  * =========================
  */
 
-WM_SYMBOL const char *
-WildMidi_GetString(unsigned short int info) {
-	switch (info) {
+const char *WildMidi_GetString(unsigned short int info)
+{
+	switch (info)
+	{
 	case WM_GS_VERSION:
 		return WM_Version;
 	}
 	return NULL;
 }
 
-WM_SYMBOL int WildMidi_Init(FSoundFontReader *reader, unsigned short int rate,
-		unsigned short int options) {
-	if (WM_Initialized) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_ALR_INIT, NULL, 0);
-		return -1;
-	}
 
-	WM_InitPatches();
-	wm_sfreader.reset(reader);
-	if (WM_LoadConfig(nullptr, true) == -1) {
-		return -1;
-	}
-
-	if (options & 0x5FF8) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(invalid option)",
-				0);
-		WM_FreePatches();
-		return -1;
-	}
-	WM_MixerOptions = options;
-
-	if (rate < 11025) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
-				"(rate out of bounds, range is 11025 - 65535)", 0);
-		WM_FreePatches();
-		return -1;
-	}
-	_WM_SampleRate = rate;
-	WM_Initialized = 1;
-
-	return 0;
-}
-
-WM_SYMBOL int WildMidi_GetSampleRate(void)
+midi * Renderer::NewMidi()
 {
-	return _WM_SampleRate;
-}
-
-WM_SYMBOL int WildMidi_MasterVolume(unsigned char master_volume) {
-	struct _mdi *mdi = NULL;
-	int i = 0;
-
-	if (!WM_Initialized) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
-		return -1;
-	}
-	if (master_volume > 127) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG,
-				"(master volume out of range, range is 0-127)", 0);
-		return -1;
-	}
-
-	WM_MasterVolume = lin_volume[master_volume];
-
-	return 0;
-}
-
-WM_SYMBOL int WildMidi_Close(midi * handle) {
-	struct _mdi *mdi = (struct _mdi *) handle;
-
-	if (!WM_Initialized) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
-		return -1;
-	}
-	if (handle == NULL) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(NULL handle)",
-				0);
-		return -1;
-	}
-
-	freeMDI(mdi);
-	return 0;
-}
-
-midi *WildMidi_NewMidi() {
 	midi * ret = NULL;
 
-	if (!WM_Initialized) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
-		return NULL;
-	}
 	ret = Init_MDI();
 
-	if ((((_mdi*)ret)->reverb = _WM_init_reverb(_WM_SampleRate, reverb_room_width,
-			reverb_room_length, reverb_listen_posx, reverb_listen_posy))
-			== NULL) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_MEM, "to init reverb", 0);
-		WildMidi_Close(ret);
-		ret = NULL;
-	}
-
-
+	((_mdi*)ret)->reverb = _WM_init_reverb(instruments->GetSampleRate(), instruments->reverb_room_width,
+										  instruments->reverb_room_length, instruments->reverb_listen_posx, instruments->reverb_listen_posy);
 	return ret;
 }
 
-WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
-		unsigned short int setting) {
+int Renderer::SetOption(int options, int setting)
+{
 	struct _mdi *mdi;
 
-	if (!WM_Initialized) {
-		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_NOT_INIT, NULL, 0);
-		return -1;
-	}
 	if (handle == NULL) {
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_INVALID_ARG, "(NULL handle)",
 				0);
@@ -2618,7 +2504,7 @@ WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 			| (options & setting));
 
 	if (options & WM_MO_LOG_VOLUME) {
-		_WM_AdjustChannelVolumes(mdi, 16);	// Settings greater than 15
+		AdjustChannelVolumes(mdi, 16);	// Settings greater than 15
 											// adjust all channels
 	} else if (options & WM_MO_REVERB) {
 		_WM_reset_reverb(mdi->reverb);
@@ -2627,42 +2513,20 @@ WM_SYMBOL int WildMidi_SetOption(midi * handle, unsigned short int options,
 	return 0;
 }
 
-WM_SYMBOL int WildMidi_Shutdown(void) {
-	if (!WM_Initialized) {
-		// No error if trying to shut down an uninitialized device.
-		return 0;
-	}
 
-	WM_FreePatches();
-	free_gauss();
-
-	/* reset the globals */
-	WM_MasterVolume = 948;
-	WM_MixerOptions = 0;
-	fix_release = 0;
-	auto_amp = 0;
-	auto_amp_with_amp = 0;
-	reverb_room_width = 16.875f;
-	reverb_room_length = 22.5f;
-	reverb_listen_posx = 8.4375f;
-	reverb_listen_posy = 16.875f;
-
-	WM_Initialized = 0;
-
-	return 0;
-}
-
-WildMidi_Renderer::WildMidi_Renderer()
+Renderer::Renderer(Instruments *instr, unsigned mixOpt)
 {
-	handle = WildMidi_NewMidi();
+	init_gauss();
+	WM_MixerOptions = mixOpt;
+	handle = NewMidi();
 }
 
-WildMidi_Renderer::~WildMidi_Renderer()
+Renderer::~Renderer()
 {
-	WildMidi_Close((midi *)handle);
+	freeMDI((_mdi *)handle);
 }
 
-void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
+void Renderer::ShortEvent(int status, int parm1, int parm2)
 {
 	_mdi *mdi = (_mdi *)handle;
 	_event_data ev;
@@ -2725,7 +2589,7 @@ void WildMidi_Renderer::ShortEvent(int status, int parm1, int parm2)
 	}
 }
 
-void WildMidi_Renderer::LongEvent(const unsigned char *data, int len)
+void Renderer::LongEvent(const unsigned char *data, int len)
 {
 	// Check for Roland SysEx
 	if (len >= 11 &&			// Must be at least 11 bytes
@@ -2782,7 +2646,7 @@ void WildMidi_Renderer::LongEvent(const unsigned char *data, int len)
 	}
 }
 
-void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)
+void Renderer::ComputeOutput(float *fbuffer, int len)
 {
 	_mdi *mdi = (_mdi *)handle;
 	int *buffer = (int *)fbuffer;
@@ -2797,12 +2661,12 @@ void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)
 	}
 }
 
-void WildMidi_Renderer::LoadInstrument(int bank, int percussion, int instr)
+void Renderer::LoadInstrument(int bank, int percussion, int instr)
 {
-	load_patch((_mdi *)handle, (bank << 8) | instr | (percussion ? 0x80 : 0));
+	instruments->load_patch((_mdi *)handle, (bank << 8) | instr | (percussion ? 0x80 : 0));
 }
 
-int WildMidi_Renderer::GetVoiceCount()
+int Renderer::GetVoiceCount()
 {
 	int count = 0;
 	for (_note *note_data = ((_mdi *)handle)->note; note_data != NULL; note_data = note_data->next)
@@ -2812,7 +2676,10 @@ int WildMidi_Renderer::GetVoiceCount()
 	return count;
 }
 
-void WildMidi_Renderer::SetOption(int opt, int set)
+
+void Renderer::SetMasterVolume(unsigned char master_volume)
 {
-	WildMidi_SetOption((_mdi*)handle, (unsigned short)opt, (unsigned short)set);
+	WM_MasterVolume = lin_volume[std::min<unsigned char>(127, master_volume)];
+}
+
 }

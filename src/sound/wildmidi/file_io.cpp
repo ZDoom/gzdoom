@@ -36,35 +36,27 @@
 #include <errno.h>
 #include <memory>
 
-#include "files.h"
 #include "wm_error.h"
 #include "file_io.h"
-#include "i_soundfont.h"
-
-std::unique_ptr<FSoundFontReader> wm_sfreader;
+#include "wildmidi_file.h"
 
 
-unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size) 
+namespace WildMidi
 {
-	FileReader fp;
 
-	if (filename == nullptr)
-	{
-		fp = wm_sfreader->OpenMainConfigFile();
-		filename = wm_sfreader->MainConfigFileName();
-	}
-	else
-	{
-		fp = wm_sfreader->OpenFile(filename);
-	}
+static const int WM_MAXFILESIZE = 0x1fffffff;
+	
+unsigned char *_WM_BufferFile(SoundFontReaderInterface *reader, const char *filename, unsigned long int *size, std::string *fullname)
+{
+	auto fp = reader->open_wildmidi_file(filename);
 
-	if (!fp.isOpen())
+	if (!fp)
 	{
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, errno);
 		return NULL;
 	}
 
-	auto fsize = fp.GetLength();
+	auto fsize = (fp->seek(0, SEEK_END), fp->tell());
 
 	if (fsize > WM_MAXFILESIZE) 
 	{
@@ -81,8 +73,12 @@ unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size)
 		return NULL;
 	}
 
-	fp.Read(data, fsize);
+	fp->seek(0, SEEK_SET);
+	fp->read(data, fsize);
+	fp->close();
 	data[fsize] = 0;
 	*size = (long)fsize;
+	if (fullname) *fullname = fp->filename;
 	return data;
+}
 }

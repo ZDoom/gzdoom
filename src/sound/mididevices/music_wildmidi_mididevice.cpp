@@ -56,7 +56,7 @@ public:
 	int GetDeviceType() const override { return MDEV_WILDMIDI; }
 	
 protected:
-	WildMidi_Renderer *Renderer;
+	WildMidi::Renderer *Renderer;
 	
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
@@ -93,13 +93,20 @@ CVAR(Int, wildmidi_frequency, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (currSong != NULL)
-		currSong->WildMidiSetOption(WM_MO_REVERB, *self? WM_MO_REVERB:0);
+		currSong->WildMidiSetOption(WildMidi::WM_MO_REVERB, *self? WildMidi::WM_MO_REVERB:0);
 }
 
 CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (currSong != NULL)
-		currSong->WildMidiSetOption(WM_MO_ENHANCED_RESAMPLING, *self? WM_MO_ENHANCED_RESAMPLING:0);
+		currSong->WildMidiSetOption(WildMidi::WM_MO_ENHANCED_RESAMPLING, *self? WildMidi::WM_MO_ENHANCED_RESAMPLING:0);
+}
+
+static WildMidi::Instruments *instruments;
+
+void WildMidi_Shutdown()
+{
+	if (instruments) delete instruments;
 }
 
 // CODE --------------------------------------------------------------------
@@ -117,32 +124,32 @@ WildMIDIDevice::WildMIDIDevice(const char *args, int samplerate)
 
 	if (args == NULL || *args == 0) args = wildmidi_config;
 
-	if (CurrentConfig.CompareNoCase(args) != 0 || SampleRate != WildMidi_GetSampleRate())
+	if (instruments == nullptr || (CurrentConfig.CompareNoCase(args) != 0 || SampleRate != instruments->GetSampleRate()))
 	{
-		if (CurrentConfig.IsNotEmpty())
-		{
-			WildMidi_Shutdown();
-			CurrentConfig = "";
-		}
+		if (instruments) delete instruments;
+		instruments = nullptr;
+		CurrentConfig = "";
 
-		auto reader = sfmanager.OpenSoundFont(CurrentConfig, SF_GUS);
+		auto reader = sfmanager.OpenSoundFont(args, SF_GUS);
 		if (reader == nullptr)
 		{
-			I_Error("WildMidi: Unable to open sound font %s\n", CurrentConfig.GetChars());
+			I_Error("WildMidi: Unable to open sound font %s\n", args);
 		}
 
-		if (!WildMidi_Init(args, SampleRate, 0))
+		instruments = new WildMidi::Instruments(reader, SampleRate);
+		if (instruments->LoadConfig(nullptr) < 0)
 		{
-			CurrentConfig = args;
+			I_Error("WildMidi: Unable to load instruments for sound font %s\n", args);
 		}
+		CurrentConfig = args;
 	}
 	if (CurrentConfig.IsNotEmpty())
 	{
-		Renderer = new WildMidi_Renderer();
+		Renderer = new WildMidi::Renderer(instruments);
 		int flags = 0;
-		if (wildmidi_enhanced_resampling) flags |= WM_MO_ENHANCED_RESAMPLING;
-		if (wildmidi_reverb) flags |= WM_MO_REVERB;
-		Renderer->SetOption(WM_MO_ENHANCED_RESAMPLING | WM_MO_REVERB, flags);
+		if (wildmidi_enhanced_resampling) flags |= WildMidi::WM_MO_ENHANCED_RESAMPLING;
+		if (wildmidi_reverb) flags |= WildMidi::WM_MO_REVERB;
+		Renderer->SetOption(WildMidi::WM_MO_ENHANCED_RESAMPLING | WildMidi::WM_MO_REVERB, flags);
 	}
 	else
 	{

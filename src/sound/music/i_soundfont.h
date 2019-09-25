@@ -5,6 +5,7 @@
 #include "files.h"
 #include "timiditypp/timidity_file.h"
 #include "timidity/timidity_file.h"
+#include "wildmidi_file.h"
 
 enum
 {
@@ -28,7 +29,8 @@ struct FSoundFontInfo
 //
 //==========================================================================
 
-class FSoundFontReader : public TimidityPlus::SoundFontReaderInterface, public Timidity::SoundFontReaderInterface
+class FSoundFontReader : public TimidityPlus::SoundFontReaderInterface, public Timidity::SoundFontReaderInterface, public WildMidi::SoundFontReaderInterface
+// Yes, it's 3 copies of essentially the same interface, but since we want to keep the 3 renderers as isolated modules we have to pull in their own implementations here.
 {
 protected:
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
@@ -74,6 +76,16 @@ public:
 	{
 		return AddPath(name);
 	}
+
+	// WildMidi interface - essentially the same again but yet another namespace
+	virtual struct WildMidi::wildmidi_file* open_wildmidi_file(const char* name) override;
+	virtual void wildmidi_add_path(const char* name) override
+	{
+		return AddPath(name);
+	}
+	
+	template<class interface>
+	interface* open_interface(const char* name);
 
 };
 

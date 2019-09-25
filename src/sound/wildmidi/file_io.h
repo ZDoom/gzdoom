@@ -27,8 +27,11 @@
 #ifndef __FILE_IO_H
 #define __FILE_IO_H
 
-#define WM_MAXFILESIZE 0x1fffffff
-extern unsigned char *_WM_BufferFile (const char *filename, unsigned long int *size);
-extern bool _WM_InitReader(const char *config_name);
+#include "wildmidi_file.h"
+
+namespace WildMidi
+{
+	unsigned char *_WM_BufferFile(SoundFontReaderInterface *reader, const char *filename, unsigned long int *size, std::string *fullname = nullptr);
+}
 
 #endif /* __FILE_IO_H */

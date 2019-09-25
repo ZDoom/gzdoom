@@ -75,7 +75,7 @@ FGameConfigFile::FGameConfigFile ()
 
 	FString pathname;
 
-	OkayToWrite = false;	// Do not allow saving of the config before DoGameSetup()
+	OkayToWrite = false;	// Do not allow saving of the config before DoKeySetup()
 	bModSetup = false;
 	pathname = GetConfigPath (true);
 	ChangePathName (pathname);
@@ -569,7 +569,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 			}
 		}
 	}
-	OkayToWrite = true;
 }
 
 // Moved from DoGameSetup so that it can happen after wads are loaded
@@ -603,6 +602,7 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 			}
 		}
 	}
+	OkayToWrite = true;
 }
 
 // Like DoGameSetup(), but for mod-specific cvars.

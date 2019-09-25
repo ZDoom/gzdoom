@@ -9,6 +9,13 @@ endif()
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
 
+include( CheckFunctionExists )
+
+CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
+if( NOT STRICMP_EXISTS )
+	add_definitions( -Dstricmp=strcasecmp )
+endif()
+
 include_directories( timidity )
 
 file( GLOB HEADER_FILES

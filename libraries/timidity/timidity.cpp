@@ -25,6 +25,7 @@
 #include <memory>
 #include <algorithm>
 #include <stdarg.h>
+#include <string.h>
 
 #include "timidity.h"
 #include "timidity_file.h"

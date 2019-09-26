@@ -43,6 +43,8 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "c_cvars.h"
+#include "doomtype.h"
+#include "i_musicinterns.h"
 
 #define IMF_RATE				700.0
 

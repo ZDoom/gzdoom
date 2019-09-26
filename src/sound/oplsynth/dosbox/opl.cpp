@@ -24,12 +24,8 @@
  * Ken Silverman's official web site: "http://www.advsys.net/ken"
  */
 
-#include "doomtype.h"
 #include "../opl.h"
 #include <math.h>
-#include "m_random.h"
-
-static FRandom pr_opl;
 
 typedef uintptr_t	Bitu;
 typedef intptr_t	Bits;
@@ -153,7 +149,7 @@ void operator_advance_drums(op_type* op_pt1, Bit32s vib1, op_type* op_pt2, Bit32
 	Bit32u c3 = op_pt3->tcount/FIXEDPT;
 	Bit32u phasebit = (((c1 & 0x88) ^ ((c1<<5) & 0x80)) | ((c3 ^ (c3<<2)) & 0x20)) ? 0x02 : 0x00;
 
-	Bit32u noisebit = pr_opl.GenRand32() & 1;
+	Bit32u noisebit = rand() & 1;
 
 	Bit32u snare_phase_bit = (Bit32u)(((Bitu)((op_pt1->tcount/FIXEDPT) / 0x100))&1);
 

@@ -45,14 +45,12 @@
 
 #include <math.h>
 
-#include "doomtype.h"
 #include "opl.h"
-#include "m_random.h"
-#include "xs_Float.h"
-
-static FRandom pr_opl3;
+#include "opl3_Float.h"
 
 #define VOLUME_MUL		0.3333
+
+static const double OPL_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
 
 namespace JavaOPL3
 {
@@ -1645,7 +1643,8 @@ double HighHatOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	// Top Cymbal, so we use the parent method and modify its output
 	// accordingly afterwards.
 	double operatorOutput = TopCymbalOperator::getOperatorOutput(OPL3, modulator, topCymbalOperatorPhase);
-	if(operatorOutput == 0) operatorOutput = pr_opl3.GenRand_Real1()*envelope;
+	double randval = rand() / (double)RAND_MAX;
+	if(operatorOutput == 0) operatorOutput = randval*envelope;
 	return operatorOutput;
 }
 
@@ -1667,7 +1666,8 @@ double SnareDrumOperator::getOperatorOutput(OPL3 *OPL3, double modulator) {
 	
 	double operatorOutput = getOutput(modulator, phase, waveform);
 
-	double noise = pr_opl3.GenRand_Real1() * envelope;        
+	double randval = rand() / (double)RAND_MAX;
+	double noise = randval * envelope;        
 	
 	if(operatorOutput/envelope != 1 && operatorOutput/envelope != -1) {
 		if(operatorOutput > 0)  operatorOutput = noise;
@@ -1777,7 +1777,7 @@ void OPL3DataStruct::loadTremoloTable()
 void OperatorDataStruct::loadWaveforms() {
 	int i;
 	// 1st waveform: sinusoid.
-	double theta = 0, thetaIncrement = 2*M_PI / 1024;
+	double theta = 0, thetaIncrement = 2*OPL_PI / 1024;
 	
 	for(i=0, theta=0; i<1024; i++, theta += thetaIncrement)
 		waveforms[0][i] = sin(theta);

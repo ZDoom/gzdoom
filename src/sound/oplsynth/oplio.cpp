@@ -24,13 +24,13 @@
 //
 
 #include <math.h>
+#include <assert.h>
+#include <algorithm>
 #include "genmidi.h"
 #include "oplio.h"
 #include "opl.h"
-#include "c_cvars.h"
-#include "templates.h"
 
-const double HALF_PI = (M_PI*0.5);
+const double HALF_PI = (3.14159265358979323846 * 0.5);
 
 OPLio::~OPLio()
 {
@@ -52,7 +52,7 @@ void OPLio::WriteDelay(int ticks)
 
 int OPLio::Init(int core, uint32_t numchips, bool stereo, bool initopl3)
 {
-	assert(numchips >= 1 && numchips <= countof(chips));
+	assert(numchips >= 1 && numchips <= OPL_NUM_VOICES);
 	uint32_t i;
 	IsOPL3 = (core == 1 || core == 2 || core == 3);
 
@@ -113,12 +113,12 @@ void OPLio::WriteInitState(bool initopl3)
 
 void OPLio::Reset(void)
 {
-	for (size_t i = 0; i < countof(chips); ++i)
+	for (auto &c : chips)
 	{
-		if (chips[i] != NULL)
+		if (c != nullptr)
 		{
-			delete chips[i];
-			chips[i] = NULL;
+			delete c;
+			c = nullptr;
 		}
 	}
 }
@@ -347,7 +347,7 @@ void OPLio::WriteVolume(uint32_t channel, struct GenMidiVoice *voice, uint32_t v
 {
 	if (voice != nullptr)
 	{
-		uint32_t full_volume = volumetable[MIN<uint32_t>(127, (uint32_t)((uint64_t)vol1*vol2*vol3) / (127 * 127))];
+		uint32_t full_volume = volumetable[std::min<uint32_t>(127, (uint32_t)((uint64_t)vol1*vol2*vol3) / (127 * 127))];
 		int reg_volume2 = ((0x3f - voice->carrier.level) * full_volume) / 128;
 		reg_volume2 = (0x3f - reg_volume2) | voice->carrier.scale;
 		WriteOperator(OPL_REGS_LEVEL, channel, 1, reg_volume2);

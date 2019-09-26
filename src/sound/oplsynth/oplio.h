@@ -84,18 +84,6 @@ struct OPLio
 	bool IsOPL3;
 };
 
-struct DiskWriterIO : public OPLio
-{
-	DiskWriterIO(const char *filename);
-	~DiskWriterIO();
-
-	int Init(uint32_t numchips, bool notused, bool initopl3);
-	void SetClockRate(double samples_per_tick);
-	void WriteDelay(int ticks);
-
-	FString Filename;
-};
-
 struct OPLChannel
 {
 	uint32_t Instrument;

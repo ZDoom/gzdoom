@@ -29,8 +29,6 @@
 #include <string.h>
 #include "musicblock.h"
 
-#include "c_cvars.h"
-
 musicBlock::musicBlock ()
 {
 	memset (this, 0, sizeof(*this));
@@ -186,7 +184,7 @@ void musicBlock::voiceKeyOn(uint32_t slot, uint32_t channo, GenMidiInstrument *i
 //
 //----------------------------------------------------------------------------
 
-CVAR(Bool, opl_singlevoice, 0, 0)
+bool opl_singlevoice;
 
 void musicBlock::noteOn(uint32_t channel, uint8_t key, int volume)
 {

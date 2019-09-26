@@ -1,5 +1,5 @@
 #pragma once
-#include "doomtype.h"
+#include <stdint.h>
 #include "genmidi.h"
 #include "oplio.h"
 

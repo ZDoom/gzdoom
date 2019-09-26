@@ -1,8 +1,6 @@
 #ifndef OPL_H
 #define OPL_H
 
-#include "zstring.h"
-
 // Abstract base class for OPL emulators
 
 class OPLEmul

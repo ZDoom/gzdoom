@@ -24,7 +24,10 @@
  * Ken Silverman's official web site: "http://www.advsys.net/ken"
  */
 
-#include "../opl.h"
+#include "../oplsynth/opl.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
 #include <math.h>
 
 typedef uintptr_t	Bitu;

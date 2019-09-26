@@ -39,7 +39,7 @@
 #include "w_wad.h"
 #include "v_text.h"
 #include "doomerrors.h"
-#include "opl.h"
+#include "oplsynth/opl.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -83,6 +83,8 @@ Revision History:
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <stdint.h>
+#include <string>
 //#include "driver.h"		/* use M.A.M.E. */
 #include "opl.h"
 
@@ -1615,7 +1617,7 @@ public:
 		}
 	}
 
-	FString GetVoiceString(void *chip)
+	std::string GetVoiceString(void *chip)
 	{
 		FM_OPL *OPL = (FM_OPL *)chip;
 		char out[9*3];
@@ -1636,7 +1638,7 @@ public:
 			out[i*3+1] = color;
 			out[i*3+2] = '*';
 		}
-		return FString (out, 9*3);
+		return std::string (out, 9*3);
 	}
 };
 

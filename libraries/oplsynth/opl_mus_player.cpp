@@ -258,7 +258,6 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 	std::lock_guard<std::mutex> lock(ChipAccess);
 	while (numsamples > 0)
 	{
-		double ticky = NextTickIn;
 		int tick_in = int(NextTickIn);
 		int samplesleft = std::min(numsamples, tick_in);
 		size_t i;

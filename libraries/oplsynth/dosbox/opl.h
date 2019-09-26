@@ -155,7 +155,6 @@ typedef struct operator_struct {
 class DBOPL : public OPLEmul
 {
 private:
-	Bitu chip_num;
 	op_type op[MAXOPERATORS];
 
 	Bits int_samplerate;

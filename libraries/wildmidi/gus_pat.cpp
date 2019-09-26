@@ -784,8 +784,6 @@ struct _sample * Instruments::load_gus_pat(const char *filename)
 	};
 	unsigned long int tmp_loop;
 
-	/*unused*/fix_release;
-
 	SAMPLE_CONVERT_DEBUG(__FUNCTION__); SAMPLE_CONVERT_DEBUG(filename);
 
 	if ((gus_patch = _WM_BufferFile(sfreader, filename, &gus_size)) == NULL) {

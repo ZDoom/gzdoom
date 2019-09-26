@@ -361,9 +361,9 @@ OPNMIDI_EXPORT void opn2_setLoopEnabled(OPN2_MIDIPlayer *device, int loopEn)
 {
     if(!device)
         return;
-    MidiPlayer *play = GET_MIDI_PLAYER(device);
-    assert(play);
 #ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
+	MidiPlayer *play = GET_MIDI_PLAYER(device);
+	assert(play);
     play->m_sequencer.setLoopEnabled(loopEn != 0);
 #else
     ADL_UNUSED(loopEn);

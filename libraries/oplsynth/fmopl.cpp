@@ -552,8 +552,6 @@ static const int8_t lfo_pm_table[8*8*2] = {
 };
 
 
-/* lock level of common table */
-static int num_lock = 0;
 
 /* work table */
 static signed int phase_modulation;		/* phase modulation input (SLOT 2) */

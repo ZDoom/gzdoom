@@ -65,9 +65,17 @@ int getOPLCore(const char* args);
 OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
+	const char* error;
 
 	int core = getOPLCore(args);
-	Music = new OPLmusicFile (reader, core);
+	auto data = reader.Read();
+	Music = new OPLmusicFile (data.Data(), data.Size(), core, opl_numchips, error);
+	if (!Music->IsValid())
+	{
+		Printf(PRINT_BOLD, "%s", error? error : "Invalid OPL format\n");
+		delete Music;
+		return;
+	}
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
 		(core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
@@ -97,7 +105,7 @@ bool OPLMUSSong::IsValid () const
 
 void OPLMUSSong::ResetChips ()
 {
-	Music->ResetChips ();
+	Music->ResetChips (opl_numchips);
 }
 
 bool OPLMUSSong::IsPlaying ()

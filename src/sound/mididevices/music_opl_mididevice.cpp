@@ -84,7 +84,7 @@ int getOPLCore(const char* args)
 
 
 OPLMIDIDevice::OPLMIDIDevice(const char *args)
-	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(getOPLCore(args))
+	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(getOPLCore(args), opl_numchips)
 {
 	FullPan = opl_fullpan;
 	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);

@@ -140,18 +140,6 @@ protected:
 
 // OPL dumper implementation of a MIDI output device ------------------------
 
-struct DiskWriterIO : public OPLio
-{
-	DiskWriterIO(const char* filename);
-	~DiskWriterIO();
-
-	int Init(uint32_t numchips, bool notused, bool initopl3);
-	void SetClockRate(double samples_per_tick);
-	void WriteDelay(int ticks);
-
-	FString Filename;
-};
-
 class OPLDumperMIDIDevice : public OPLMIDIDevice
 {
 public:
@@ -226,7 +214,6 @@ public:
 	}
 
 	bool DumpWave(const char *filename, int subsong, int samplerate);
-	bool DumpOPL(const char *filename, int subsong);
 
 
 protected:

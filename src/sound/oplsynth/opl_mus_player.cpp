@@ -37,26 +37,22 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <algorithm>
 
 #include "opl_mus_player.h"
 #include "opl.h"
-#include "w_wad.h"
-#include "templates.h"
-#include "c_cvars.h"
-#include "doomtype.h"
-#include "i_musicinterns.h"
+#include "o_swap.h"
+
 
 #define IMF_RATE				700.0
 
-EXTERN_CVAR (Int, opl_numchips)
-
-OPLmusicBlock::OPLmusicBlock(int core)
+OPLmusicBlock::OPLmusicBlock(int core, int numchips)
 {
 	currentCore = core;
 	scoredata = NULL;
 	NextTickIn = 0;
 	LastOffset = 0;
-	NumChips = MIN(*opl_numchips, 2);
+	NumChips = std::min(numchips, 2);
 	Looping = false;
 	FullPan = false;
 	io = NULL;
@@ -68,11 +64,11 @@ OPLmusicBlock::~OPLmusicBlock()
 	delete io;
 }
 
-void OPLmusicBlock::ResetChips ()
+void OPLmusicBlock::ResetChips (int numchips)
 {
 	std::lock_guard<std::mutex> lock(ChipAccess);
 	io->Reset ();
-	NumChips = io->Init(currentCore, MIN(*opl_numchips, 2), FullPan, false);
+	NumChips = io->Init(currentCore, std::min(numchips, 2), FullPan, false);
 }
 
 void OPLmusicBlock::Restart()
@@ -83,22 +79,18 @@ void OPLmusicBlock::Restart()
 	LastOffset = 0;
 }
 
-OPLmusicFile::OPLmusicFile (FileReader &reader, int core)
-	: OPLmusicBlock(core), ScoreLen ((int)reader.GetLength())
+OPLmusicFile::OPLmusicFile (const void *data, size_t length, int core, int numchips, const char *&errormessage)
+	: OPLmusicBlock(core, numchips), ScoreLen ((int)length)
 {
-	if (io == NULL)
+	static char errorbuffer[80];
+	errormessage = nullptr;
+	if (io == nullptr)
 	{
 		return;
 	}
 
 	scoredata = new uint8_t[ScoreLen];
-
-    if (reader.Read(scoredata, ScoreLen) != ScoreLen)
-    {
-fail:	delete[] scoredata;
-        scoredata = NULL;
-        return;
-    }
+	memcpy(scoredata, data, length);
 
 	if (0 == (NumChips = io->Init(core, NumChips, false, false)))
 	{
@@ -106,8 +98,7 @@ fail:	delete[] scoredata;
 	}
 
 	// Check for RDosPlay raw OPL format
-	if (((uint32_t *)scoredata)[0] == MAKE_ID('R','A','W','A') &&
-			 ((uint32_t *)scoredata)[1] == MAKE_ID('D','A','T','A'))
+	if (!memcmp(scoredata, "RAWADATA", 8))
 	{
 		RawPlayer = RDosPlay;
 		if (*(uint16_t *)(scoredata + 8) == 0)
@@ -117,26 +108,27 @@ fail:	delete[] scoredata;
 		SamplesPerTick = LittleShort(*(uint16_t *)(scoredata + 8)) / ADLIB_CLOCK_MUL;
 	}
 	// Check for DosBox OPL dump
-	else if (((uint32_t *)scoredata)[0] == MAKE_ID('D','B','R','A') &&
-		((uint32_t *)scoredata)[1] == MAKE_ID('W','O','P','L'))
+	else if (!memcmp(scoredata, "DBRAWOPL", 8))
 	{
 		if (LittleShort(((uint16_t *)scoredata)[5]) == 1)
 		{
 			RawPlayer = DosBox1;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
-			ScoreLen = MIN<int>(ScoreLen - 24, LittleLong(((uint32_t *)scoredata)[4])) + 24;
+			ScoreLen = std::min<int>(ScoreLen - 24, LittleLong(((uint32_t *)scoredata)[4])) + 24;
 		}
-		else if (((uint32_t *)scoredata)[2] == MAKE_ID(2,0,0,0))
+		else if (LittleLong(((uint32_t *)scoredata)[2]) == 2)
 		{
 			bool okay = true;
 			if (scoredata[21] != 0)
 			{
-				Printf("Unsupported DOSBox Raw OPL format %d\n", scoredata[20]);
+				snprintf(errorbuffer, 80, "Unsupported DOSBox Raw OPL format %d\n", scoredata[20]);
+				errormessage = errorbuffer;
 				okay = false;
 			}
 			if (scoredata[22] != 0)
 			{
-				Printf("Unsupported DOSBox Raw OPL compression %d\n", scoredata[21]);
+				snprintf(errorbuffer, 80, "Unsupported DOSBox Raw OPL compression %d\n", scoredata[21]);
+				errormessage = errorbuffer;
 				okay = false;
 			}
 			if (!okay)
@@ -144,17 +136,17 @@ fail:	delete[] scoredata;
 			RawPlayer = DosBox2;
 			SamplesPerTick = OPL_SAMPLE_RATE / 1000;
 			int headersize = 0x1A + scoredata[0x19];
-			ScoreLen = MIN<int>(ScoreLen - headersize, LittleLong(((uint32_t *)scoredata)[3]) * 2) + headersize;
+			ScoreLen = std::min<int>(ScoreLen - headersize, LittleLong(((uint32_t *)scoredata)[3]) * 2) + headersize;
 		}
 		else
 		{
-			Printf("Unsupported DOSBox Raw OPL version %d.%d\n", LittleShort(((uint16_t *)scoredata)[4]), LittleShort(((uint16_t *)scoredata)[5]));
+			snprintf(errorbuffer, 80, "Unsupported DOSBox Raw OPL version %d.%d\n", LittleShort(((uint16_t *)scoredata)[4]), LittleShort(((uint16_t *)scoredata)[5]));
+			errormessage = errorbuffer;
 			goto fail;
 		}
 	}
 	// Check for modified IMF format (includes a header)
-	else if (((uint32_t *)scoredata)[0] == MAKE_ID('A','D','L','I') &&
-		     scoredata[4] == 'B' && scoredata[5] == 1)
+	else if (!memcmp(scoredata, "ADLIB\1", 6))
 	{
 		int songlen;
 		uint8_t *max = scoredata + ScoreLen;
@@ -170,9 +162,7 @@ fail:	delete[] scoredata;
 		if (score < max) score++;	// Skip unknown byte
 		if (score + 8 > max)
 		{ // Not enough room left for song data
-			delete[] scoredata;
-			scoredata = NULL;
-			return;
+			goto fail;
 		}
 		songlen = LittleLong(*(uint32_t *)score);
 		if (songlen != 0 && (songlen +=4) < ScoreLen - (score - scoredata))
@@ -182,10 +172,18 @@ fail:	delete[] scoredata;
 	}
 	else
 	{
+		errormessage = "Unknown OPL format";
 		goto fail;
 	}
 
 	Restart ();
+	return;
+
+fail:
+	delete[] scoredata;
+	scoredata = nullptr;
+	return;
+
 }
 
 OPLmusicFile::~OPLmusicFile ()
@@ -262,7 +260,7 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 	{
 		double ticky = NextTickIn;
 		int tick_in = int(NextTickIn);
-		int samplesleft = MIN(numsamples, tick_in);
+		int samplesleft = std::min(numsamples, tick_in);
 		size_t i;
 
 		if (samplesleft > 0)
@@ -367,7 +365,7 @@ void OPLmusicBlock::OffsetSamples(float *buff, int count)
 	}
 	else
 	{
-		ramp = MIN(count, MAX(196, largest_at));
+		ramp = std::min(count, std::max(196, largest_at));
 		step = (offset - LastOffset) / ramp;
 	}
 	offset = LastOffset;
@@ -531,34 +529,3 @@ int OPLmusicFile::PlayTick ()
 	return 0;
 }
 
-OPLmusicFile::OPLmusicFile(int core, const OPLmusicFile *source, const char *filename)
-	: OPLmusicBlock(core)
-{
-	ScoreLen = source->ScoreLen;
-	scoredata = new uint8_t[ScoreLen];
-	memcpy(scoredata, source->scoredata, ScoreLen);
-	SamplesPerTick = source->SamplesPerTick;
-	RawPlayer = source->RawPlayer;
-	score = source->score;
-	NumChips = source->NumChips;
-	WhichChip = 0;
-	if (io != NULL)
-	{
-		delete io;
-	}
-	io = new DiskWriterIO(filename);
-	NumChips = io->Init(core, NumChips, false, false);
-	Restart();
-}
-
-void OPLmusicFile::Dump()
-{
-	int time;
-
-	time = PlayTick();
-	while (time != 0)
-	{
-		io->WriteDelay(time);
-		time = PlayTick();
-	}
-}

@@ -694,39 +694,6 @@ static MIDISource *GetMIDISource(const char *fn)
 	}
 	return source;
 }
-//==========================================================================
-//
-// CCMD writeopl
-//
-// If the current song can be played with OPL instruments, dump it to
-// the specified file on disk.
-//
-//==========================================================================
-
-UNSAFE_CCMD (writeopl)
-{
-	if (argv.argc() >= 3 && argv.argc() <= 7)
-	{
-		auto source = GetMIDISource(argv[1]);
-		if (source == nullptr) return;
-
-		// We must stop the currently playing music to avoid interference between two synths. 
-		auto savedsong = mus_playing;
-		S_StopMusic(true);
-		auto streamer = new MIDIStreamer(MDEV_OPL, nullptr);
-		streamer->SetMIDISource(source);
-		streamer->DumpOPL(argv[2], argv.argc() <4 ? 0 : (int)strtol(argv[3], nullptr, 10));
-		delete streamer;
-		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
-
-	}
-	else
-	{
-		Printf("Usage: writeopl <midi> <filename> [subsong]\n"
-			" - use '*' as song name to dump the currently playing song\n"
-			" - use 0 for subsong to play the default\n");
-	}
-}
 
 //==========================================================================
 //

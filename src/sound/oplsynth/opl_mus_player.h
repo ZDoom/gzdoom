@@ -1,17 +1,17 @@
 #pragma once
 #include <mutex>
+#include <vector>
+#include <string>
 #include "musicblock.h"
-
-class FileReader;
 
 class OPLmusicBlock : public musicBlock
 {
 public:
-	OPLmusicBlock(int core);
+	OPLmusicBlock(int core, int numchips);
 	virtual ~OPLmusicBlock();
 
 	bool ServiceStream(void *buff, int numbytes);
-	void ResetChips();
+	void ResetChips(int numchips);
 
 	virtual void Restart();
 
@@ -36,17 +36,15 @@ protected:
 class OPLmusicFile : public OPLmusicBlock
 {
 public:
-	OPLmusicFile(FileReader &reader, int core);
-	OPLmusicFile(int core, const OPLmusicFile *source, const char *filename);
+	OPLmusicFile(const void *data, size_t length, int core, int numchips, const char *&errormessage);
 	virtual ~OPLmusicFile();
 
 	bool IsValid() const;
 	void SetLooping(bool loop);
 	void Restart();
-	void Dump();
 
 protected:
-	OPLmusicFile(int core) : OPLmusicBlock(core) {}
+	OPLmusicFile(int core, int numchips) : OPLmusicBlock(core, numchips) {}
 	int PlayTick();
 
 	enum { RDosPlay, IMF, DosBox1, DosBox2 } RawPlayer;

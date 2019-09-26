@@ -313,23 +313,6 @@ void MIDIStreamer::Play(bool looping, int subsong)
 //
 //==========================================================================
 
-bool MIDIStreamer::DumpOPL(const char *filename, int subsong)
-{
-	m_Looping = false;
-	if (source == nullptr) return false;	// We have nothing to play so abort.
-	source->SetMIDISubsong(subsong);
-
-	assert(MIDI == NULL);
-	MIDI = new OPLDumperMIDIDevice(filename);
-	return InitPlayback();
-}
-
-//==========================================================================
-//
-// MIDIStreamer :: DumpWave
-//
-//==========================================================================
-
 bool MIDIStreamer::DumpWave(const char *filename, int subsong, int samplerate)
 {
 	m_Looping = false;

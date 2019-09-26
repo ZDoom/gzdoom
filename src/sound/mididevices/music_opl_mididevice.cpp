@@ -30,26 +30,15 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-** Uses Vladimir Arnost's MUS player library.
+**
 */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
-#include "w_wad.h"
-#include "v_text.h"
-#include "doomerrors.h"
 #include "oplsynth/opl.h"
 
 // MACROS ------------------------------------------------------------------
-
-#if defined(_DEBUG) && defined(_WIN32) && defined(_MSC_VER)
-void I_DebugPrint(const char *cp);
-#define DEBUGOUT(m,c,s,t) \
-	{ char foo[128]; mysnprintf(foo, countof(foo), m, c, s, t); I_DebugPrint(foo); }
-#else
-#define DEBUGOUT(m,c,s,t)
-#endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -59,13 +48,31 @@ void I_DebugPrint(const char *cp);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-EXTERN_CVAR(Int, opl_numchips)
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
+// OPL implementation of a MIDI output device -------------------------------
 
-CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
+{
+public:
+	OPLMIDIDevice(OPLMidiConfig *config);
+	int Open(MidiCallback, void *userdata);
+	void Close();
+	int GetTechnology() const;
+	FString GetStats();
+
+protected:
+	void CalcTickRate();
+	int PlayTick();
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const uint8_t *data, int len);
+	void ComputeOutput(float *buffer, int len);
+	bool ServiceStream(void *buff, int numbytes);
+	int GetDeviceType() const override { return MDEV_OPL; }
+};
+
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // CODE --------------------------------------------------------------------
 
@@ -74,27 +81,12 @@ CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 // OPLMIDIDevice Contructor
 //
 //==========================================================================
-EXTERN_CVAR(Int, opl_core)
-int getOPLCore(const char* args)
+
+OPLMIDIDevice::OPLMIDIDevice(OPLMidiConfig *config)
+	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(config->core, config->numchips)
 {
-	int current_opl_core = opl_core;
-	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
-	return current_opl_core;
-}
-
-
-OPLMIDIDevice::OPLMIDIDevice(const char *args)
-	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(getOPLCore(args), opl_numchips)
-{
-	FullPan = opl_fullpan;
-	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
-	if (lump < 0) I_Error("No GENMIDI lump found");
-	auto data = Wads.OpenLumpReader(lump);
-
-	uint8_t filehdr[8];
-	data.Read(filehdr, 8);
-	if (memcmp(filehdr, "#OPL_II#", 8)) I_Error("Corrupt GENMIDI lump");
-	data.Read(OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
+	FullPan = config->fullpan;
+	memcpy(OPLinstruments, config->OPLinstruments, sizeof(OPLinstruments));
 }
 
 //==========================================================================
@@ -107,7 +99,7 @@ OPLMIDIDevice::OPLMIDIDevice(const char *args)
 
 int OPLMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
-	if (io == NULL || 0 == (NumChips = io->Init(currentCore, opl_numchips, FullPan, true)))
+	if (io == NULL || 0 == (NumChips = io->Init(currentCore, NumChips, FullPan, true)))
 	{
 		return 1;
 	}
@@ -116,7 +108,6 @@ int OPLMIDIDevice::Open(MidiCallback callback, void *userdata)
 	{
 		stopAllVoices();
 		resetAllControllers(100);
-		DEBUGOUT("========= New song started ==========\n", 0, 0, 0);
 	}
 	return ret;
 }
@@ -210,7 +201,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		break;
 
 	case MIDI_POLYPRESS:
-		DEBUGOUT("Unhandled note aftertouch: Channel %d, note %d, value %d\n", channel, parm1, parm2);
+		//DEBUGOUT("Unhandled note aftertouch: Channel %d, note %d, value %d\n", channel, parm1, parm2);
 		break;
 
 	case MIDI_CTRLCHANGE:
@@ -238,7 +229,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		//case 126:	changeMono(channel, parm2);							break;
 		//case 127:	changePoly(channel, parm2);							break;
 		default:
-			DEBUGOUT("Unhandled controller: Channel %d, controller %d, value %d\n", channel, parm1, parm2);
+			//DEBUGOUT("Unhandled controller: Channel %d, controller %d, value %d\n", channel, parm1, parm2);
 			break;
 		}
 		break;
@@ -248,7 +239,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		break;
 
 	case MIDI_CHANPRESS:
-		DEBUGOUT("Unhandled channel aftertouch: Channel %d, value %d\n", channel, parm1, 0);
+		//DEBUGOUT("Unhandled channel aftertouch: Channel %d, value %d\n", channel, parm1, 0);
 		break;
 
 	case MIDI_PITCHBEND:
@@ -299,26 +290,31 @@ bool OPLMIDIDevice::ServiceStream(void *buff, int numbytes)
 FString OPLMIDIDevice::GetStats()
 {
 	FString out;
-	char star[3] = { TEXTCOLOR_ESCAPE, 'A', '*' };
 	for (uint32_t i = 0; i < io->NumChannels; ++i)
 	{
+		char star = '*';
 		if (voices[i].index == ~0u)
 		{
-			star[1] = CR_BRICK + 'A';
+			star = '/';
 		}
 		else if (voices[i].sustained)
 		{
-			star[1] = CR_ORANGE + 'A';
+			star = '-';
 		}
 		else if (voices[i].current_instr_voice == &voices[i].current_instr->voices[1])
 		{
-			star[1] = CR_BLUE + 'A';
+			star = '\\';
 		}
 		else
 		{
-			star[1] = CR_GREEN + 'A';
+			star = '+';
 		}
-		out.AppendCStrPart (star, 3);
+		out += star;
 	}
 	return out;
+}
+
+MIDIDevice* CreateOplMIDIDevice(OPLMidiConfig* config)
+{
+	return new OPLMIDIDevice(config);
 }

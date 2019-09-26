@@ -37,6 +37,7 @@
 #include "i_soundfont.h"
 #include "adlmidi.h"
 #include "cmdlib.h"
+#include "doomerrors.h"
 
 // do this without including windows.h for this one single prototype
 extern "C" unsigned __stdcall GetSystemDirectoryA(char* lpBuffer, unsigned uSize);
@@ -51,7 +52,8 @@ static void CheckRestart(int devtype)
 
 ADLConfig adlConfig;
 FluidConfig fluidConfig;
-	
+OPLMidiConfig oplMidiConfig;
+
 
 CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -413,3 +415,57 @@ CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR
 	}
 }
 
+
+
+
+CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (*self <= 0)
+	{
+		self = 1;
+	}
+	else if (*self > MAXOPL2CHIPS)
+	{
+		self = MAXOPL2CHIPS;
+	}
+	else 
+	{
+		if (currSong != NULL)
+			currSong->ChangeSettingInt("opl.numchips", self);
+		oplMidiConfig.numchips = self;
+	}
+}
+
+CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	oplMidiConfig.fullpan = self;
+}
+
+void LoadGenMidi()
+{
+	// The OPL renderer should not care about where this comes from.
+	// Note: No I_Error here - this needs to be consistent with the rest of the music code.
+	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
+	if (lump < 0) throw std::runtime_error("No GENMIDI lump found");
+	auto data = Wads.OpenLumpReader(lump);
+
+	uint8_t filehdr[8];
+	data.Read(filehdr, 8);
+	if (memcmp(filehdr, "#OPL_II#", 8)) throw std::runtime_error("Corrupt GENMIDI lump");
+	data.Read(oplMidiConfig.OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
+}
+
+int getOPLCore(const char* args)
+{
+	int current_opl_core = opl_core;
+	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
+	return current_opl_core;
+}

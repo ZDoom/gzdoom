@@ -36,29 +36,7 @@
 
 static bool OPL_Active;
 
-CUSTOM_CVAR (Int, opl_numchips, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (*self <= 0)
-	{
-		self = 1;
-	}
-	else if (*self > MAXOPL2CHIPS)
-	{
-		self = MAXOPL2CHIPS;
-	}
-	else if (OPL_Active && currSong != NULL)
-	{
-		static_cast<OPLMUSSong *>(currSong)->ResetChips ();
-	}
-}
-
-CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
+EXTERN_CVAR (Int, opl_numchips)
 
 int getOPLCore(const char* args);
 

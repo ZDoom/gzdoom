@@ -65,6 +65,17 @@ struct FluidConfig
 
 extern FluidConfig fluidConfig;
 
+struct OPLMidiConfig
+{
+	int numchips = 2;
+	int core = 0;
+	bool fullpan = true;
+	struct GenMidiInstrument OPLinstruments[GENMIDI_NUM_TOTAL];
+};
+
+extern OPLMidiConfig oplMidiConfig;
+
+
 class MIDIStreamer;
 
 typedef void(*MidiCallback)(void *);
@@ -155,37 +166,6 @@ protected:
 	virtual void ComputeOutput(float *buffer, int len) = 0;
 };
 
-// OPL implementation of a MIDI output device -------------------------------
-
-class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
-{
-public:
-	OPLMIDIDevice(const char *args);
-	int Open(MidiCallback, void *userdata);
-	void Close();
-	int GetTechnology() const;
-	FString GetStats();
-
-protected:
-	void CalcTickRate();
-	int PlayTick();
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	bool ServiceStream(void *buff, int numbytes);
-	int GetDeviceType() const override { return MDEV_OPL; }
-};
-
-// OPL dumper implementation of a MIDI output device ------------------------
-
-class OPLDumperMIDIDevice : public OPLMIDIDevice
-{
-public:
-	OPLDumperMIDIDevice(const char *filename);
-	~OPLDumperMIDIDevice();
-	int Resume();
-	void Stop();
-};
 
 // Internal disk writing version of a MIDI device ------------------
 
@@ -370,6 +350,12 @@ class CDDAFile : public CDSong
 public:
 	CDDAFile (FileReader &reader);
 };
+
+// Data interface
+
+int BuildFluidPatchSetList(const char* patches, bool systemfallback);
+void LoadGenMidi();
+int getOPLCore(const char* args);
 
 // Module played via foo_dumb -----------------------------------------------
 

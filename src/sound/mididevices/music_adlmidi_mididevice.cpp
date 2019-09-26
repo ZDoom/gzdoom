@@ -83,12 +83,13 @@ ADLMIDIDevice::ADLMIDIDevice(const char *args, const ADLConfig *config)
 	{
 		adl_switchEmulator(Renderer, config->adl_emulator_id);
 		adl_setRunAtPcmRate(Renderer, config->adl_run_at_pcm_rate);
-		if(!LoadCustomBank(config->adl_custom_bank, config))
+		if (!LoadCustomBank(config->adl_custom_bank, config))
 			adl_setBank(Renderer, config->adl_bank);
 		adl_setNumChips(Renderer, config->adl_chips_count);
 		adl_setVolumeRangeModel(Renderer, config->adl_volume_model);
 		adl_setSoftPanEnabled(Renderer, config->adl_fullpan);
 	}
+	else throw std::runtime_error("Failed to create ADL MIDI renderer.");
 }
 
 //==========================================================================

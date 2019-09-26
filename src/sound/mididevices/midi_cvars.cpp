@@ -69,3 +69,4 @@ CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_
 	CheckRestart(MDEV_ADL);
 	adlConfig.adl_volume_model = self;
 }
+

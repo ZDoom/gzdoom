@@ -79,9 +79,9 @@ public:
 	virtual FString GetStats();
 	virtual MusInfo *GetOPLDumper(const char *filename);
 	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
-	virtual void FluidSettingInt(const char *setting, int value);			// FluidSynth settings
-	virtual void FluidSettingNum(const char *setting, double value);		// "
-	virtual void FluidSettingStr(const char *setting, const char *value);	// "
+	virtual void ChangeSettingInt(const char *setting, int value);			// FluidSynth settings
+	virtual void ChangeSettingNum(const char *setting, double value);		// "
+	virtual void ChangeSettingString(const char *setting, const char *value);	// "
 	virtual void WildMidiSetOption(int opt, int set);
 	virtual void GMEDepthChanged(float val);
 

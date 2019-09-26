@@ -50,7 +50,7 @@
 #ifdef _WIN32
 MIDIDevice *CreateWinMIDIDevice(int mididevice);
 #endif
-MIDIDevice *CreateFluidSynthMIDIDevice(const char *args, int samplerate);
+MIDIDevice *CreateFluidSynthMIDIDevice(const char *args, int samplerate, int (*printfunc_)(const char*, ...));
 MIDIDevice *CreateTimidityMIDIDevice(const char *args, int samplerate);
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
 MIDIDevice *CreateADLMIDIDevice(const char *args, const ADLConfig* config);
@@ -227,7 +227,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				// Intentional fall-through for non-Windows systems.
 
 			case MDEV_FLUIDSYNTH:
-				dev = CreateFluidSynthMIDIDevice(Args, samplerate);
+				dev = CreateFluidSynthMIDIDevice(Args, samplerate, Printf);
 				break;
 
 			case MDEV_OPL:
@@ -246,9 +246,9 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				break;
 			}
 		}
-		catch (CRecoverableError &err)
+		catch (std::runtime_error &err)
 		{
-			DPrintf(DMSG_WARNING, "%s\n", err.GetMessage());
+			DPrintf(DMSG_WARNING, "%s\n", err.what());
 			checked[devtype] = true;
 			devtype = MDEV_DEFAULT;
 			// Opening the requested device did not work out so choose another one.
@@ -555,43 +555,43 @@ void MIDIStreamer::MusicVolumeChanged()
 
 //==========================================================================
 //
-// MIDIStreamer :: FluidSettingInt
+// MIDIStreamer :: ChangeSettingInt
 //
 //==========================================================================
 
-void MIDIStreamer::FluidSettingInt(const char *setting, int value)
+void MIDIStreamer::ChangeSettingInt(const char *setting, int value)
 {
 	if (MIDI != NULL)
 	{
-		MIDI->FluidSettingInt(setting, value);
+		MIDI->ChangeSettingInt(setting, value);
 	}
 }
 
 //==========================================================================
 //
-// MIDIStreamer :: FluidSettingNum
+// MIDIStreamer :: ChangeSettingNum
 //
 //==========================================================================
 
-void MIDIStreamer::FluidSettingNum(const char *setting, double value)
+void MIDIStreamer::ChangeSettingNum(const char *setting, double value)
 {
 	if (MIDI != NULL)
 	{
-		MIDI->FluidSettingNum(setting, value);
+		MIDI->ChangeSettingNum(setting, value);
 	}
 }
 
 //==========================================================================
 //
-// MIDIDeviceStreamer :: FluidSettingStr
+// MIDIDeviceStreamer :: ChangeSettingString
 //
 //==========================================================================
 
-void MIDIStreamer::FluidSettingStr(const char *setting, const char *value)
+void MIDIStreamer::ChangeSettingString(const char *setting, const char *value)
 {
 	if (MIDI != NULL)
 	{
-		MIDI->FluidSettingStr(setting, value);
+		MIDI->ChangeSettingString(setting, value);
 	}
 }
 
@@ -1042,31 +1042,31 @@ bool MIDIDevice::Update()
 
 //==========================================================================
 //
-// MIDIDevice :: FluidSettingInt
+// MIDIDevice :: ChangeSettingInt
 //
 //==========================================================================
 
-void MIDIDevice::FluidSettingInt(const char *setting, int value)
+void MIDIDevice::ChangeSettingInt(const char *setting, int value)
 {
 }
 
 //==========================================================================
 //
-// MIDIDevice :: FluidSettingNum
+// MIDIDevice :: ChangeSettingNum
 //
 //==========================================================================
 
-void MIDIDevice::FluidSettingNum(const char *setting, double value)
+void MIDIDevice::ChangeSettingNum(const char *setting, double value)
 {
 }
 
 //==========================================================================
 //
-// MIDIDevice :: FluidSettingStr
+// MIDIDevice :: ChangeSettingString
 //
 //==========================================================================
 
-void MIDIDevice::FluidSettingStr(const char *setting, const char *value)
+void MIDIDevice::ChangeSettingString(const char *setting, const char *value)
 {
 }
 

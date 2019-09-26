@@ -245,15 +245,15 @@ void MusInfo::GMEDepthChanged(float val)
 {
 }
 
-void MusInfo::FluidSettingInt(const char *, int)
+void MusInfo::ChangeSettingInt(const char *, int)
 {
 }
 
-void MusInfo::FluidSettingNum(const char *, double)
+void MusInfo::ChangeSettingNum(const char *, double)
 {
 }
 
-void MusInfo::FluidSettingStr(const char *, const char *)
+void MusInfo::ChangeSettingString(const char *, const char *)
 {
 }
 

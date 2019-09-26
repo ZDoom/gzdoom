@@ -69,9 +69,9 @@ public:
 	virtual void InitPlayback();
 	virtual bool Update();
 	virtual void PrecacheInstruments(const uint16_t *instruments, int count);
-	virtual void FluidSettingInt(const char *setting, int value);
-	virtual void FluidSettingNum(const char *setting, double value);
-	virtual void FluidSettingStr(const char *setting, const char *value);
+	virtual void ChangeSettingInt(const char *setting, int value);
+	virtual void ChangeSettingNum(const char *setting, double value);
+	virtual void ChangeSettingString(const char *setting, const char *value);
 	virtual void WildMidiSetOption(int opt, int set);
 	virtual bool Preprocess(MIDIStreamer *song, bool looping);
 	virtual FString GetStats();
@@ -215,9 +215,9 @@ public:
 	bool SetSubsong(int subsong) override;
 	void Update() override;
 	FString GetStats() override;
-	void FluidSettingInt(const char *setting, int value) override;
-	void FluidSettingNum(const char *setting, double value) override;
-	void FluidSettingStr(const char *setting, const char *value) override;
+	void ChangeSettingInt(const char *setting, int value) override;
+	void ChangeSettingNum(const char *setting, double value) override;
+	void ChangeSettingString(const char *setting, const char *value) override;
 	void WildMidiSetOption(int opt, int set) override;
 	int ServiceEvent();
 	void SetMIDISource(MIDISource *_source);

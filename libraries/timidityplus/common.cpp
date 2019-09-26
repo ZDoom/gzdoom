@@ -177,6 +177,6 @@ void default_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
 }
 
 // Allow hosting applications to capture the messages and deal with them themselves.
-void (*ctl_cmsg)(int type, int verbosity_level, const char* fmt, ...) = default_ctl_cmsg;
+void (*printMessage)(int type, int verbosity_level, const char* fmt, ...) = default_ctl_cmsg;
 
 }

@@ -48,7 +48,7 @@ enum
 	VERB_DEBUG
 };
 
-extern void (*cmsg)(int type, int verbosity_level, const char *fmt, ...);
+extern void (*printMessage)(int type, int verbosity_level, const char *fmt, ...);
 
 
 /*

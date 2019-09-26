@@ -745,15 +745,15 @@ SFFile *ReadSF2(const char *filename, timidity_file *f)
 	}
 	catch (CIOErr)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading %s: %s\n", filename, strerror(errno));
+		printMessage(CMSG_ERROR, VERB_NORMAL, "Error reading %s: %s\n", filename, strerror(errno));
 	}
 	catch (CBadForm)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "%s is corrupted.\n", filename);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "%s is corrupted.\n", filename);
 	}
 	catch (CBadVer)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "%s is not a SoundFont version 2 file.\n", filename);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "%s is not a SoundFont version 2 file.\n", filename);
 	}
 	if (sf2 != NULL)
 	{

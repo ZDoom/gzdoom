@@ -261,7 +261,7 @@ void Instruments::init_sf(SFInsts *rec)
 	int i;
 
 	if ((rec->tf = open_file(rec->fname, sfreader)) == NULL) {
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			  "Can't open soundfont file %s", rec->fname);
 		end_soundfont(rec);
 		return;
@@ -359,7 +359,7 @@ Instrument *Instruments::try_load_soundfont(SFInsts *rec, int order, int bank,in
 			return NULL;
 		if ((rec->tf = open_file(rec->fname, sfreader)) == NULL)
 		{
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				  "Can't open soundfont file %s", rec->fname);
 			end_soundfont(rec);
 			return NULL;
@@ -924,7 +924,7 @@ int Instruments::make_patch(SFInfo *sf, int pridx, LayerTable *tbl)
 
 	if(sample->sampletype & SF_SAMPLETYPE_ROM) /* is ROM sample? */
     {
-	ctl_cmsg(CMSG_INFO, VERB_DEBUG, "preset %d is ROM sample: 0x%x",
+	printMessage(CMSG_INFO, VERB_DEBUG, "preset %d is ROM sample: 0x%x",
 		  pridx, sample->sampletype);
 	return AWE_RET_SKIP;
     }
@@ -1209,7 +1209,7 @@ void Instruments::set_init_info(SFInfo *sf, SampleList *vp, LayerTable *tbl)
     if(tbl->set[SF_keynum])
 		vp->v.note_to_use = (int)tbl->val[SF_keynum];
 	if(tbl->set[SF_velocity] && (int)tbl->val[SF_velocity] != 0) {
-		ctl_cmsg(CMSG_INFO,VERB_DEBUG,"error: fixed-velocity is not supported.");
+		printMessage(CMSG_INFO,VERB_DEBUG,"error: fixed-velocity is not supported.");
 	}
 
 	vp->v.sample_type = sample->sampletype;
@@ -1263,7 +1263,7 @@ void Instruments::set_init_info(SFInfo *sf, SampleList *vp, LayerTable *tbl)
 	} else if(sample->sampletype == SF_SAMPLETYPE_LEFT) {	/* leftSample = 4 */
 		vp->v.panning = 0;
 	} else if(sample->sampletype == SF_SAMPLETYPE_LINKED) {	/* linkedSample = 8 */
-		ctl_cmsg(CMSG_ERROR,VERB_NOISY,"error: linkedSample is not supported.");
+		printMessage(CMSG_ERROR,VERB_NOISY,"error: linkedSample is not supported.");
 	}
 
 	memset(vp->v.envelope_keyf, 0, sizeof(vp->v.envelope_keyf));

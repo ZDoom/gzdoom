@@ -157,14 +157,14 @@ int Instruments::load_soundfont(SFInfo *sf, struct timidity_file *fd)
 	/* check RIFF file header */
 	READCHUNK(&chunk, fd);
 	if (chunkid(chunk.id) != RIFF_ID) {
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"%s: *** not a RIFF file", fd->filename.c_str());
 		return -1;
 	}
 	/* check file id */
 	READID(chunk.id, fd);
 	if (chunkid(chunk.id) != SFBK_ID) {
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"%s: *** not a SoundFont file", fd->filename.c_str());
 		return -1;
 	}
@@ -177,7 +177,7 @@ int Instruments::load_soundfont(SFInfo *sf, struct timidity_file *fd)
 				break;
 		}
 		else {
-			ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 0: %4.4s %4d",	fd->filename.c_str(), chunk.id, chunk.size);			
+			printMessage(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 0: %4.4s %4d",	fd->filename.c_str(), chunk.id, chunk.size);			
 			FSKIP(chunk.size, fd);
 			// Not aborting here will inevitably crash.
 			return -1;
@@ -278,7 +278,7 @@ int Instruments::process_list(int size, SFInfo *sf, struct timidity_file *fd)
 
 	/* read the following id string */
 	READID(chunk.id, fd); size -= 4;
-	ctl_cmsg(CMSG_INFO, VERB_DEBUG, "%c%c%c%c:",
+	printMessage(CMSG_INFO, VERB_DEBUG, "%c%c%c%c:",
 		chunk.id[0], chunk.id[1], chunk.id[2], chunk.id[3]);
 	switch (chunkid(chunk.id)) {
 	case INFO_ID:
@@ -288,7 +288,7 @@ int Instruments::process_list(int size, SFInfo *sf, struct timidity_file *fd)
 	case PDTA_ID:
 		return process_pdta(size, sf, fd);
 	default:
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 1: %4.4s",	fd->filename.c_str(), chunk.id);
+		printMessage(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 1: %4.4s",	fd->filename.c_str(), chunk.id);
 		FSKIP(size, fd); /* skip it */
 		return 0;
 	}
@@ -313,14 +313,14 @@ int Instruments::process_info(int size, SFInfo *sf, struct timidity_file *fd)
 			return -1;
 		size -= 8;
 
-		ctl_cmsg(CMSG_INFO, VERB_DEBUG, " %c%c%c%c:",
+		printMessage(CMSG_INFO, VERB_DEBUG, " %c%c%c%c:",
 			chunk.id[0], chunk.id[1], chunk.id[2], chunk.id[3]);
 		switch (chunkid(chunk.id)) {
 		case IFIL_ID:
 			/* soundfont file version */
 			READW(&sf->version, fd);
 			READW(&sf->minorversion, fd);
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+			printMessage(CMSG_INFO, VERB_DEBUG,
 				"  version %d, minor %d",
 				sf->version, sf->minorversion);
 			break;
@@ -329,7 +329,7 @@ int Instruments::process_info(int size, SFInfo *sf, struct timidity_file *fd)
 			sf->sf_name = (char*)safe_malloc(chunk.size + 1);
 			tf_read(sf->sf_name, 1, chunk.size, fd);
 			sf->sf_name[chunk.size] = 0;
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+			printMessage(CMSG_INFO, VERB_DEBUG,
 				"  name %s", sf->sf_name);
 			break;
 
@@ -357,7 +357,7 @@ int Instruments::process_sdta(int size, SFInfo *sf, struct timidity_file *fd)
 			return -1;
 		size -= 8;
 
-		ctl_cmsg(CMSG_INFO, VERB_DEBUG, " %c%c%c%c:",
+		printMessage(CMSG_INFO, VERB_DEBUG, " %c%c%c%c:",
 			chunk.id[0], chunk.id[1], chunk.id[2], chunk.id[3]);
 		switch (chunkid(chunk.id)) {
 		case SNAM_ID:
@@ -394,7 +394,7 @@ int Instruments::process_pdta(int size, SFInfo *sf, struct timidity_file *fd)
 			return -1;
 		size -= 8;
 
-		ctl_cmsg(CMSG_INFO, VERB_DEBUG, " %c%c%c%c:",
+		printMessage(CMSG_INFO, VERB_DEBUG, " %c%c%c%c:",
 			chunk.id[0], chunk.id[1], chunk.id[2], chunk.id[3]);
 		switch (chunkid(chunk.id)) {
 		case PHDR_ID:
@@ -438,7 +438,7 @@ void Instruments::load_sample_names(int size, SFInfo *sf, struct timidity_file *
 {
 	int i, nsamples;
 	if (sf->version > 1) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** version 2 has obsolete format??",fd->filename.c_str());
+		printMessage(CMSG_WARNING, VERB_NORMAL,	"%s: *** version 2 has obsolete format??",fd->filename.c_str());
 		FSKIP(size, fd);
 		return;
 	}
@@ -450,7 +450,7 @@ void Instruments::load_sample_names(int size, SFInfo *sf, struct timidity_file *
 		sf->sample = NEW(SFSampleInfo, sf->nsamples);
 	}
 	else if (sf->nsamples != nsamples) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** different # of samples ?? (%d : %d)\n",fd->filename.c_str(), sf->nsamples, nsamples);
+		printMessage(CMSG_WARNING, VERB_NORMAL,	"%s: *** different # of samples ?? (%d : %d)\n",fd->filename.c_str(), sf->nsamples, nsamples);
 		FSKIP(size, fd);
 		return;
 	}
@@ -504,7 +504,7 @@ void Instruments::load_inst_header(int size, SFInfo *sf, struct timidity_file *f
 		sf->inst[i].hdr.nlayers = 0;
 		sf->inst[i].hdr.layer = NULL;
 
-		ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+		printMessage(CMSG_INFO, VERB_DEBUG,
 			"  InstHdr %d (%s) bagNdx=%d",
 			i, sf->inst[i].hdr.name, sf->inst[i].hdr.bagNdx);
 	}
@@ -617,7 +617,7 @@ void Instruments::convert_layers(SFInfo *sf)
 
 	if (prbags.bag == NULL || prbags.gen == NULL ||
 		inbags.bag == NULL || inbags.gen == NULL) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal bags / gens", sf->sf_name);
+		printMessage(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal bags / gens", sf->sf_name);
 		return;
 	}
 
@@ -645,7 +645,7 @@ void Instruments::generate_layers(SFHeader *hdr, SFHeader *next, SFBags *bags)
 
 	hdr->nlayers = next->bagNdx - hdr->bagNdx;
 	if (hdr->nlayers < 0) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: illegal layer numbers %d",	"", hdr->nlayers);
+		printMessage(CMSG_WARNING, VERB_NORMAL,	"%s: illegal layer numbers %d",	"", hdr->nlayers);
 		return;
 	}
 	if (hdr->nlayers == 0)
@@ -656,7 +656,7 @@ void Instruments::generate_layers(SFHeader *hdr, SFHeader *next, SFBags *bags)
 		int genNdx = bags->bag[i];
 		layp->nlists = bags->bag[i + 1] - genNdx;
 		if (layp->nlists < 0) {
-			ctl_cmsg(CMSG_WARNING, VERB_NORMAL, "%s: illegal list numbers %d", "", layp->nlists);
+			printMessage(CMSG_WARNING, VERB_NORMAL, "%s: illegal list numbers %d", "", layp->nlists);
 			return;
 		}
 		layp->list = (SFGenRec*)safe_malloc(sizeof(SFGenRec) * layp->nlists);

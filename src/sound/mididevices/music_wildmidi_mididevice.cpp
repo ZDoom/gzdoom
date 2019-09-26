@@ -38,6 +38,9 @@
 #include "doomerrors.h"
 #include "i_soundfont.h"
 
+#include "c_console.h"
+#include "v_text.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -111,6 +114,12 @@ void WildMidi_Shutdown()
 
 // CODE --------------------------------------------------------------------
 
+static void gzdoom_error_func(const char* wmfmt, va_list args)
+{
+	Printf(TEXTCOLOR_RED);
+	VPrintf(PRINT_HIGH, wmfmt, args);
+}
+
 //==========================================================================
 //
 // WildMIDIDevice Constructor
@@ -121,6 +130,7 @@ WildMIDIDevice::WildMIDIDevice(const char *args, int samplerate)
 	:SoftSynthMIDIDevice(samplerate <= 0? wildmidi_frequency : samplerate, 11025, 65535)
 {
 	Renderer = NULL;
+	WildMidi::wm_error_func = gzdoom_error_func;
 
 	if (args == NULL || *args == 0) args = wildmidi_config;
 

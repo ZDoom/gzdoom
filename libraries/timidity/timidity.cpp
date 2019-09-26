@@ -187,13 +187,13 @@ int Instruments::read_config_file(const char *name)
 
 	if (rcf_count > 50)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "Timidity: Probable source loop in configuration files\n");
+		printMessage(CMSG_ERROR, VERB_NORMAL, "Timidity: Probable source loop in configuration files\n");
 		return (-1);
 	}
 	auto fp = sfreader->open_timidity_file(name);
 	if (!fp)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "Timidity: Unable to open config file\n");
+		printMessage(CMSG_ERROR, VERB_NORMAL, "Timidity: Unable to open config file\n");
 		return -1;
 	}
 
@@ -258,7 +258,7 @@ int Instruments::read_config_file(const char *name)
 			* before TiMidity kills the note. This may be useful to implement
 			* later, but I don't see any urgent need for it.
 			*/
-			//cmsg(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"timeout\" in TiMidity config.\n");
+			//printMessage(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"timeout\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "copydrumset")	/* "copydrumset" drumset */
 			|| !strcmp(w[0], "copybank"))		/* "copybank" bank       */
@@ -268,7 +268,7 @@ int Instruments::read_config_file(const char *name)
 			* the current drumset or bank. May be useful later, but not a
 			* high priority.
 			*/
-			//cmsg(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"%s\" in TiMidity config.\n", w[0]);
+			//printMessage(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"%s\" in TiMidity config.\n", w[0]);
 		}
 		else if (!strcmp(w[0], "undef"))		/* "undef" progno */
 		{
@@ -276,7 +276,7 @@ int Instruments::read_config_file(const char *name)
 			* Undefines the tone "progno" of the current tone bank (or
 			* drum set?). Not a high priority.
 			*/
-			//cmsg(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"undef\" in TiMidity config.\n");
+			//printMessage(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"undef\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "altassign")) /* "altassign" prog1 prog2 ... */
 		{
@@ -284,7 +284,7 @@ int Instruments::read_config_file(const char *name)
 			* Sets the alternate assign for drum set. Whatever that's
 			* supposed to mean.
 			*/
-			//cmsg(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"altassign\" in TiMidity config.\n");
+			//printMessage(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"altassign\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "soundfont"))
 		{
@@ -295,7 +295,7 @@ int Instruments::read_config_file(const char *name)
 			*/
 			if (words < 2)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No soundfont given\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No soundfont given\n", name, line);
 				return -2;
 			}
 			if (words > 2 && !strcmp(w[2], "remove"))
@@ -310,7 +310,7 @@ int Instruments::read_config_file(const char *name)
 				{
 					if (!(cp = strchr(w[i], '=')))
 					{
-						cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: bad soundfont option %s\n", name, line, w[i]);
+						printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: bad soundfont option %s\n", name, line, w[i]);
 						return -2;
 					}
 				}
@@ -327,7 +327,7 @@ int Instruments::read_config_file(const char *name)
 
 			if (words < 3)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error\n", name, line);
 				return -2;
 			}
 
@@ -343,7 +343,7 @@ int Instruments::read_config_file(const char *name)
 			}
 			else
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: font subcommand must be 'order' or 'exclude'\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: font subcommand must be 'order' or 'exclude'\n", name, line);
 				return -2;
 			}
 			if (i < words)
@@ -377,7 +377,7 @@ int Instruments::read_config_file(const char *name)
 			* apparently it sets some sort of base offset for tone numbers.
 			* Why anyone would want to do this is beyond me.
 			*/
-			//cmsg(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"progbase\" in TiMidity config.\n");
+			//printMessage(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"progbase\" in TiMidity config.\n");
 		}
 		else if (!strcmp(w[0], "map")) /* "map" name set1 elem1 set2 elem2 */
 		{
@@ -387,7 +387,7 @@ int Instruments::read_config_file(const char *name)
 			* documentation whatsoever for it, but it looks like it's used
 			* for remapping one instrument to another somehow.
 			*/
-			//cmsg(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"map\" in TiMidity config.\n");
+			//printMessage(CMSG_ERROR, VERB_NORMAL, "FIXME: Implement \"map\" in TiMidity config.\n");
 		}
 
 		/* Standard TiMidity config */
@@ -396,7 +396,7 @@ int Instruments::read_config_file(const char *name)
 		{
 			if (words < 2)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No directory given\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No directory given\n", name, line);
 				return -2;
 			}
 			for (i = 1; i < words; i++)
@@ -409,7 +409,7 @@ int Instruments::read_config_file(const char *name)
 		{
 			if (words < 2)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No file name given\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No file name given\n", name, line);
 				return -2;
 			}
 			for (i=1; i<words; i++)
@@ -423,7 +423,7 @@ int Instruments::read_config_file(const char *name)
 		{
 			if (words != 2)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Must specify exactly one patch name\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Must specify exactly one patch name\n", name, line);
 				return -2;
 			}
 			def_instr_name = w[1];
@@ -432,13 +432,13 @@ int Instruments::read_config_file(const char *name)
 		{
 			if (words < 2)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No drum set number given\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No drum set number given\n", name, line);
 				return -2;
 			}
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Drum set must be between 0 and 127\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Drum set must be between 0 and 127\n", name, line);
 				return -2;
 			}
 			if (drumset[i] == NULL)
@@ -451,13 +451,13 @@ int Instruments::read_config_file(const char *name)
 		{
 			if (words < 2)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No bank number given\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: No bank number given\n", name, line);
 				return -2;
 			}
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Tone bank must be between 0 and 127\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Tone bank must be between 0 and 127\n", name, line);
 				return -2;
 			}
 			if (tonebank[i] == NULL)
@@ -470,18 +470,18 @@ int Instruments::read_config_file(const char *name)
 		{
 			if ((words < 2) || (*w[0] < '0' || *w[0] > '9'))
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error\n", name, line);
 				return -2;
 			}
 			i = atoi(w[0]);
 			if (i < 0 || i > 127)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Program must be between 0 and 127\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Program must be between 0 and 127\n", name, line);
 				return -2;
 			}
 			if (bank == NULL)
 			{
-				cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Must specify tone bank or drum set before assignment\n", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: Must specify tone bank or drum set before assignment\n", name, line);
 				return -2;
 			}
 			bank->tone[i].note = bank->tone[i].pan =
@@ -515,7 +515,7 @@ int Instruments::read_config_file(const char *name)
 			{
 				if (!(cp=strchr(w[j], '=')))
 				{
-					cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: bad patch option %s\n", name, line, w[j]);
+					printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: bad patch option %s\n", name, line, w[j]);
 					return -2;
 				}
 				*cp++ = 0;
@@ -528,7 +528,7 @@ int Instruments::read_config_file(const char *name)
 					k = atoi(cp);
 					if ((k < 0 || k > 127) || (*cp < '0' || *cp > '9'))
 					{
-						cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: note must be between 0 and 127\n", name, line);
+						printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: note must be between 0 and 127\n", name, line);
 						return -2;
 					}
 					bank->tone[i].note = k;
@@ -546,7 +546,7 @@ int Instruments::read_config_file(const char *name)
 					if ((k < 0 || k > 127) ||
 						(k == 0 && *cp != '-' && (*cp < '0' || *cp > '9')))
 					{
-						cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: panning must be left, right, "
+						printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: panning must be left, right, "
 							"center, or between -100 and 100\n", name, line);
 						return -2;
 					}
@@ -560,7 +560,7 @@ int Instruments::read_config_file(const char *name)
 						bank->tone[i].strip_loop = 0;
 					else
 					{
-						cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: keep must be env or loop\n", name, line);
+						printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: keep must be env or loop\n", name, line);
 						return -2;
 					}
 				}
@@ -574,13 +574,13 @@ int Instruments::read_config_file(const char *name)
 						bank->tone[i].strip_tail = 1;
 					else
 					{
-						cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: strip must be env, loop, or tail\n", name, line);
+						printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: strip must be env, loop, or tail\n", name, line);
 						return -2;
 					}
 				}
 				else
 				{
-					cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: bad patch option %s\n", name, line, w[j]);
+					printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: bad patch option %s\n", name, line, w[j]);
 					return -2;
 				}
 			}
@@ -821,7 +821,7 @@ static void default_cmsg(int type, int verbosity_level, const char* fmt, ...)
 }
 
 // Allow hosting applications to capture the messages and deal with them themselves.
-void (*cmsg)(int type, int verbosity_level, const char* fmt, ...) = default_cmsg;
+void (*printMessage)(int type, int verbosity_level, const char* fmt, ...) = default_cmsg;
 
 
 }

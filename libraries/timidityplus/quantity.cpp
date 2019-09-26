@@ -212,7 +212,7 @@ static int GetQuantityHints(uint16_t type, QuantityHint *units)
 			REGISTER_TYPE_INT("ms", VIBRATO_SWEEP_MS);
 			END_QUANTITY_TYPE;
 		default:
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "Internal parameter error (%d)", type);
+			printMessage(CMSG_ERROR, VERB_NORMAL, "Internal parameter error (%d)", type);
 			return 0;
 	}
 	return 1;
@@ -284,7 +284,7 @@ static int GetQuantityConvertProc(const Quantity *quantity, QuantityConvertProc 
 		}
 		unit++;
 	}
-	ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "Internal parameter error");
+	printMessage(CMSG_ERROR, VERB_NORMAL, "Internal parameter error");
 	return -1;
 }
 

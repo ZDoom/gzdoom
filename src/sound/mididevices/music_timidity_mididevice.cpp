@@ -231,7 +231,7 @@ TimidityMIDIDevice::TimidityMIDIDevice(const char *args, int samplerate)
 	: SoftSynthMIDIDevice(samplerate, 11025, 65535)
 {
 	LoadConfig(args);
-	Timidity::cmsg = gzdoom_ctl_cmsg;
+	Timidity::printMessage = gzdoom_ctl_cmsg;
 	Renderer = new Timidity::Renderer((float)SampleRate, midi_voices, instruments);
 }
 

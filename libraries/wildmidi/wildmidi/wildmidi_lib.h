@@ -135,6 +135,8 @@ private:
 	struct _mdi *Init_MDI();
 	unsigned long int get_inc(struct _mdi *mdi, struct _note *nte);
 };
+
+extern void (*wm_error_func)(const char *wmfmt, va_list args); 
 }
 
 #endif /* WILDMIDI_LIB_H */

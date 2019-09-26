@@ -34,7 +34,7 @@ namespace TimidityPlus
 #define MAXWORDS 130
 #define CHECKERRLIMIT \
   if(++errcnt >= 10) { \
-    ctl_cmsg(CMSG_ERROR, VERB_NORMAL, \
+    printMessage(CMSG_ERROR, VERB_NORMAL, \
       "Too many errors... Give up read %s", name); \
     reuse_mblock(&varbuf); \
     tf_close(tf); return 1; }
@@ -192,7 +192,7 @@ static Quantity **config_parse_modulation(const char *name, int line, const char
 			if ((delim = strpbrk(strncpy(buf, p, sizeof buf - 1), ":,")) != NULL)
 				*delim = '\0';
 			if (*buf != '\0' && (err = string_to_quantity(buf, &mod_list[i][j], qtypes[mod_type * 3 + j])) != NULL) {
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: %s: parameter %d of item %d: %s (%s)",
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: %s: parameter %d of item %d: %s (%s)",
 					name, line, qtypestr[mod_type], j + 1, i + 1, err, buf);
 				free_ptr_list(mod_list, *num);
 				mod_list = NULL;
@@ -257,7 +257,7 @@ int Instruments::set_gus_patchconf_opts(const char *name, int line, char *opts, 
 	int k;
 
 	if (!(cp = strchr(opts, '='))) {
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"%s: line %d: bad patch option %s", name, line, opts);
 		return 1;
 	}
@@ -265,7 +265,7 @@ int Instruments::set_gus_patchconf_opts(const char *name, int line, char *opts, 
 	if (!strcmp(opts, "amp")) {
 		k = atoi(cp);
 		if ((k < 0 || k > MAX_AMPLIFICATION) || (*cp < '0' || *cp > '9')) {
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: amplification must be between 0 and %d",
 				name, line, MAX_AMPLIFICATION);
 			return 1;
@@ -275,7 +275,7 @@ int Instruments::set_gus_patchconf_opts(const char *name, int line, char *opts, 
 	else if (!strcmp(opts, "note")) {
 		k = atoi(cp);
 		if ((k < 0 || k > 127) || (*cp < '0' || *cp > '9')) {
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: note must be between 0 and 127",
 				name, line);
 			return 1;
@@ -294,7 +294,7 @@ int Instruments::set_gus_patchconf_opts(const char *name, int line, char *opts, 
 			k = ((atoi(cp) + 100) * 100) / 157;
 			if ((k < 0 || k > 127)
 				|| (k == 0 && *cp != '-' && (*cp < '0' || *cp > '9'))) {
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: panning must be left, right, "
 					"center, or between -100 and 100",
 					name, line);
@@ -315,7 +315,7 @@ int Instruments::set_gus_patchconf_opts(const char *name, int line, char *opts, 
 		else if (!strcmp(cp, "loop"))
 			tone->strip_loop = 0;
 		else {
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: keep must be env or loop", name, line);
 			return 1;
 		}
@@ -328,7 +328,7 @@ int Instruments::set_gus_patchconf_opts(const char *name, int line, char *opts, 
 		else if (!strcmp(cp, "tail"))
 			tone->strip_tail = 1;
 		else {
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: strip must be env, loop, or tail",
 				name, line);
 			return 1;
@@ -391,7 +391,7 @@ int Instruments::set_gus_patchconf_opts(const char *name, int line, char *opts, 
 	else if (!strcmp(opts, "qvelf"))		/* resonance velocity-follow */
 		tone->vel_to_resonance = atoi(cp);
 	else {
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"%s: line %d: bad patch option %s",
 			name, line, opts);
 		return 1;
@@ -429,7 +429,7 @@ int Instruments::set_gus_patchconf(const char *name, int line, ToneBankElement *
 		if (opts[0] == NULL || opts[1] == NULL || opts[2] == NULL ||
 			(atoi(opts[1]) == 128 && opts[3] == NULL))
 		{
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: Syntax error", name, line);
 			return 1;
 		}
@@ -465,7 +465,7 @@ int Instruments::set_gus_patchconf(const char *name, int line, ToneBankElement *
 
 		if (opts[0] == NULL)
 		{
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: Syntax error", name, line);
 			return 1;
 		}
@@ -502,12 +502,12 @@ int Instruments::set_patchconf(const char *name, int line, ToneBank *bank, char 
 	if (i < 0 || i > 127)
 	{
 		if (dr)
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: Drum number must be between "
 				"0 and 127",
 				name, line);
 		else
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+			printMessage(CMSG_ERROR, VERB_NORMAL,
 				"%s: line %d: Program must be between "
 				"%d and %d",
 				name, line, progbase, 127 + progbase);
@@ -515,7 +515,7 @@ int Instruments::set_patchconf(const char *name, int line, ToneBank *bank, char 
 	}
 	if (!bank)
 	{
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"%s: line %d: Must specify tone bank or drum set "
 			"before assignment", name, line);
 		return 1;
@@ -628,7 +628,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 
 	if (rcf_count > 50)
 	{
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"Probable source loop in configuration files");
 		return READ_CONFIG_RECURSION;
 	}
@@ -699,7 +699,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			{
 				if (!isspace(terminator[1]) && terminator[1] != '\0')
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: there must be at least one whitespace between "
 						"string terminator (%c) and the next parameter", name, line, tmp[i]);
 					CHECKERRLIMIT;
@@ -734,14 +734,14 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -750,7 +750,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension timeout "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -763,7 +763,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No copydrumset number given",
 					name, line);
 				CHECKERRLIMIT;
@@ -772,7 +772,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension copydrumset "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -780,7 +780,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or "
 					"drum set before assignment", name, line);
 				CHECKERRLIMIT;
@@ -793,7 +793,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No copybank number given",
 					name, line);
 				CHECKERRLIMIT;
@@ -802,7 +802,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension copybank "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -810,7 +810,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or "
 					"drum set before assignment", name, line);
 				CHECKERRLIMIT;
@@ -826,35 +826,35 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if ((mapto = mapname2id(w[1], &toisdrum)) == -1)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Invalid map name: %s", name, line, w[1]);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if ((mapfrom = mapname2id(w[2], &fromisdrum)) == -1)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Invalid map name: %s", name, line, w[2]);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (toisdrum != fromisdrum)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Map type should be matched", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (copymap(mapto, mapfrom, toisdrum))
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No free %s available to map",
 					name, line, toisdrum ? "drum set" : "tone bank");
 				CHECKERRLIMIT;
@@ -866,7 +866,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No undef number given",
 					name, line);
 				CHECKERRLIMIT;
@@ -875,7 +875,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension undef "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -883,7 +883,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or "
 					"drum set before assignment", name, line);
 				CHECKERRLIMIT;
@@ -898,7 +898,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before altassign", name, line);
 				CHECKERRLIMIT;
@@ -906,14 +906,14 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			}
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No alternate assignment", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 
 			if (!dr) {
-				ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
+				printMessage(CMSG_WARNING, VERB_NORMAL,
 					"%s: line %d: Warning: Not a drumset altassign"
 					" (ignored)",
 					name, line);
@@ -927,14 +927,14 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -943,7 +943,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension legato "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -955,14 +955,14 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -971,7 +971,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension damper "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -983,14 +983,14 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -999,7 +999,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension rnddelay "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -1011,13 +1011,13 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -1026,7 +1026,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[2]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension level "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -1046,13 +1046,13 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -1061,7 +1061,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[2]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension reverbsend "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -1081,13 +1081,13 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -1096,7 +1096,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[2]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension chorussend "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -1116,13 +1116,13 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -1131,7 +1131,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[2]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension delaysend "
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -1151,13 +1151,13 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 3)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
+				printMessage(CMSG_ERROR, VERB_NORMAL, "%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if (!bank)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify tone bank or drum set "
 					"before assignment", name, line);
 				CHECKERRLIMIT;
@@ -1166,7 +1166,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[2]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: extension playnote"
 					"must be between 0 and 127", name, line);
 				CHECKERRLIMIT;
@@ -1189,7 +1189,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No soundfont file given",
 					name, line);
 				CHECKERRLIMIT;
@@ -1208,7 +1208,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				}
 				if (!(cp = strchr(w[j], '=')))
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: bad patch option %s",
 						name, line, w[j]);
 					CHECKERRLIMIT;
@@ -1220,7 +1220,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				{
 					if (k < 0 || (*cp < '0' || *cp > '9'))
 					{
-						ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+						printMessage(CMSG_ERROR, VERB_NORMAL,
 							"%s: line %d: order must be a digit",
 							name, line);
 						CHECKERRLIMIT;
@@ -1232,7 +1232,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				{
 					if (k < 0 || (*cp < '0' || *cp > '9'))
 					{
-						ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+						printMessage(CMSG_ERROR, VERB_NORMAL,
 							"%s: line %d: cutoff must be a digit",
 							name, line);
 						CHECKERRLIMIT;
@@ -1244,7 +1244,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				{
 					if (k < 0 || (*cp < '0' || *cp > '9'))
 					{
-						ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+						printMessage(CMSG_ERROR, VERB_NORMAL,
 							"%s: line %d: reso must be a digit",
 							name, line);
 						CHECKERRLIMIT;
@@ -1267,7 +1267,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			int bank, preset, keynote;
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: no font command", name, line);
 				CHECKERRLIMIT;
 				continue;
@@ -1276,7 +1276,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			{
 				if (words < 3)
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: No bank/preset/key is given",
 						name, line);
 					CHECKERRLIMIT;
@@ -1293,7 +1293,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 					keynote = -1;
 				if (exclude_soundfont(bank, preset, keynote))
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: No soundfont is given",
 						name, line);
 					CHECKERRLIMIT;
@@ -1304,7 +1304,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				int order;
 				if (words < 4)
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: No order/bank is given",
 						name, line);
 					CHECKERRLIMIT;
@@ -1322,7 +1322,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 					keynote = -1;
 				if (order_soundfont(bank, preset, keynote, order))
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: No soundfont is given",
 						name, line);
 					CHECKERRLIMIT;
@@ -1333,7 +1333,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words < 2 || *w[1] < '0' || *w[1] > '9')
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
@@ -1346,14 +1346,14 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 
 			if (words != 6)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;
 			}
 			if ((arg[0] = mapname2id(w[1], &isdrum)) == -1)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Invalid map name: %s", name, line, w[1]);
 				CHECKERRLIMIT;
 				continue;
@@ -1376,7 +1376,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 					break;
 			if (i != 5)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Invalid parameter", name, line);
 				CHECKERRLIMIT;
 				continue;
@@ -1391,7 +1391,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No directory given", name, line);
 				CHECKERRLIMIT;
 				continue;
@@ -1403,7 +1403,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No file name given", name, line);
 				CHECKERRLIMIT;
 				continue;
@@ -1433,7 +1433,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		{
 			if (words != 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Must specify exactly one patch name",
 					name, line);
 				CHECKERRLIMIT;
@@ -1450,7 +1450,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No drum set number given", name, line);
 				CHECKERRLIMIT;
 				continue;
@@ -1459,7 +1459,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			{
 				if ((newmapid = mapname2id(w[1], &isdrum)) == -1 || !isdrum)
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: Invalid drum set map name: %s", name, line, w[1]);
 					CHECKERRLIMIT;
 					continue;
@@ -1472,7 +1472,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]) - progbase;
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Drum set must be between %d and %d",
 					name, line,
 					progbase, progbase + 127);
@@ -1484,7 +1484,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = alloc_instrument_map_bank(1, newmapid, i);
 			if (i == -1)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No free drum set available to map",
 					name, line);
 				CHECKERRLIMIT;
@@ -1503,7 +1503,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			{
 				if (words < 4 || *w[2] < '0' || *w[2] > '9')
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: syntax error", name, line);
 					CHECKERRLIMIT;
 					continue;
@@ -1522,7 +1522,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 
 			if (words < 2)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No bank number given", name, line);
 				CHECKERRLIMIT;
 				continue;
@@ -1531,7 +1531,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			{
 				if ((newmapid = mapname2id(w[1], &isdrum)) == -1 || isdrum)
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: Invalid bank map name: %s", name, line, w[1]);
 					CHECKERRLIMIT;
 					continue;
@@ -1544,7 +1544,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: Tone bank must be between 0 and 127",
 					name, line);
 				CHECKERRLIMIT;
@@ -1555,7 +1555,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			i = alloc_instrument_map_bank(0, newmapid, i);
 			if (i == -1)
 			{
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: No free tone bank available to map",
 					name, line);
 				CHECKERRLIMIT;
@@ -1574,7 +1574,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			{
 				if (words < 4 || *w[2] < '0' || *w[2] > '9')
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"%s: line %d: syntax error", name, line);
 					CHECKERRLIMIT;
 					continue;
@@ -1592,7 +1592,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 			{
 				if (extension_flag)
 					continue;
-				ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+				printMessage(CMSG_ERROR, VERB_NORMAL,
 					"%s: line %d: syntax error", name, line);
 				CHECKERRLIMIT;
 				continue;

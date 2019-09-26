@@ -274,7 +274,7 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args, int samplerate)
 		delete instruments;
 		instruments = nullptr;
 	}
-	TimidityPlus::ctl_cmsg = gzdoom_ctl_cmsg;
+	TimidityPlus::printMessage = gzdoom_ctl_cmsg;
 	TimidityPlus::set_playback_rate(SampleRate);
 
 	if (instruments == nullptr)

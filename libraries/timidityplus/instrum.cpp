@@ -614,7 +614,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		&& tone->fcnum == 0 && tone->resonum == 0)
 		if ((ip = search_instrument_cache(name, panning, amp, note_to_use,
 			strip_loop, strip_envelope, strip_tail)) != NULL) {
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG, " * Cached");
+			printMessage(CMSG_INFO, VERB_DEBUG, " * Cached");
 			return ip;
 		}
 	/* Open patch file */
@@ -648,7 +648,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 	}
 	if (noluck) 
 	{
-		ctl_cmsg(CMSG_INFO, VERB_DEBUG, "Instrument `%s' can't be found.", name);
+		printMessage(CMSG_INFO, VERB_DEBUG, "Instrument `%s' can't be found.", name);
 		return 0;
 	}
 	/* Read some headers and do cursory sanity checks. There are loads
@@ -664,19 +664,19 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		|| (memcmp(tmp, "GF1PATCH110\0ID#000002", 22)
 			&& memcmp(tmp, "GF1PATCH100\0ID#000002", 22))) {
 		/* don't know what the differences are */
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
 		tf_close(tf);
 		return 0;
 	}
 	/* instruments.  To some patch makers, 0 means 1 */
 	if (tmp[82] != 1 && tmp[82] != 0) {
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"Can't handle patches with %d instruments", tmp[82]);
 		tf_close(tf);
 		return 0;
 	}
 	if (tmp[151] != 1 && tmp[151] != 0) {	/* layers.  What's a layer? */
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+		printMessage(CMSG_ERROR, VERB_NORMAL,
 			"Can't handle instruments with %d layers", tmp[151]);
 		tf_close(tf);
 		return 0;
@@ -690,7 +690,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		skip(tf, 7);	/* Skip the wave name */
 		if (tf_read(&fractions, 1, 1, tf) != 1) {
 		fail:
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
+			printMessage(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
 			for (j = 0; j < i; j++)
 				free(ip->sample[j].data);
 			free(ip->sample);
@@ -729,7 +729,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		READ_LONG(sp->root_freq);
 		skip(tf, 2);	/* Why have a "root frequency" and then "tuning"?? */
 		READ_CHAR(tmp[0]);
-		ctl_cmsg(CMSG_INFO, VERB_DEBUG, "Rate/Low/Hi/Root = %d/%d/%d/%d",
+		printMessage(CMSG_INFO, VERB_DEBUG, "Rate/Low/Hi/Root = %d/%d/%d/%d",
 			sp->sample_rate, sp->low_freq, sp->high_freq, sp->root_freq);
 		if (panning == -1)
 			/* 0x07 and 0x08 are both center panning */
@@ -742,13 +742,13 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		if (!tmp[13] || !tmp[14]) {
 			sp->tremolo_sweep_increment = sp->tremolo_phase_increment = 0;
 			sp->tremolo_depth = 0;
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG, " * no tremolo");
+			printMessage(CMSG_INFO, VERB_DEBUG, " * no tremolo");
 		}
 		else {
 			sp->tremolo_sweep_increment = convert_tremolo_sweep(tmp[12]);
 			sp->tremolo_phase_increment = convert_tremolo_rate(tmp[13]);
 			sp->tremolo_depth = tmp[14];
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+			printMessage(CMSG_INFO, VERB_DEBUG,
 				" * tremolo: sweep %d, phase %d, depth %d",
 				sp->tremolo_sweep_increment, sp->tremolo_phase_increment,
 				sp->tremolo_depth);
@@ -756,20 +756,20 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		if (!tmp[16] || !tmp[17]) {
 			sp->vibrato_sweep_increment = sp->vibrato_control_ratio = 0;
 			sp->vibrato_depth = 0;
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG, " * no vibrato");
+			printMessage(CMSG_INFO, VERB_DEBUG, " * no vibrato");
 		}
 		else {
 			sp->vibrato_control_ratio = convert_vibrato_rate(tmp[16]);
 			sp->vibrato_sweep_increment = convert_vibrato_sweep(tmp[15],
 				sp->vibrato_control_ratio);
 			sp->vibrato_depth = tmp[17];
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+			printMessage(CMSG_INFO, VERB_DEBUG,
 				" * vibrato: sweep %d, ctl %d, depth %d",
 				sp->vibrato_sweep_increment, sp->vibrato_control_ratio,
 				sp->vibrato_depth);
 		}
 		READ_CHAR(sp->modes);
-		ctl_cmsg(CMSG_INFO, VERB_DEBUG, " * mode: 0x%02x", sp->modes);
+		printMessage(CMSG_INFO, VERB_DEBUG, " * mode: 0x%02x", sp->modes);
 		READ_SHORT(sp->scale_freq);
 		READ_SHORT(sp->scale_factor);
 		skip(tf, 36);	/* skip reserved space */
@@ -787,12 +787,12 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			| MODES_PINGPONG | MODES_REVERSE))) {
 			sp->modes &= ~(MODES_SUSTAIN | MODES_LOOPING
 				| MODES_PINGPONG | MODES_REVERSE);
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+			printMessage(CMSG_INFO, VERB_DEBUG,
 				" - Removing loop and/or sustain");
 		}
 		if (strip_envelope == 1) {
 			if (sp->modes & MODES_ENVELOPE)
-				ctl_cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope");
+				printMessage(CMSG_INFO, VERB_DEBUG, " - Removing envelope");
 			sp->modes &= ~MODES_ENVELOPE;
 		}
 		else if (strip_envelope != 0) {
@@ -803,7 +803,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 				 * No envelope needed either...
 				 */
 				sp->modes &= ~(MODES_SUSTAIN | MODES_ENVELOPE);
-				ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+				printMessage(CMSG_INFO, VERB_DEBUG,
 					" - No loop, removing sustain and envelope");
 			}
 			else if (!memcmp(tmp, "??????", 6) || tmp[11] >= 100) {
@@ -812,7 +812,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 				 * That's a weird envelope.  Take it out.
 				 */
 				sp->modes &= ~MODES_ENVELOPE;
-				ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+				printMessage(CMSG_INFO, VERB_DEBUG,
 					" - Weirdness, removing envelope");
 			}
 			else if (!(sp->modes & MODES_SUSTAIN)) {
@@ -822,7 +822,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 				 * mostly drums.  I think.
 				 */
 				sp->modes &= ~MODES_ENVELOPE;
-				ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+				printMessage(CMSG_INFO, VERB_DEBUG,
 					" - No sustain, removing envelope");
 			}
 		}
@@ -845,7 +845,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		sp->data = (sample_t *)safe_malloc(sp->data_length + 4);
 		sp->data_alloced = 1;
 		if ((j = tf_read(sp->data, 1, sp->data_length, tf))	!= (int)sp->data_length) {
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "Too small this patch length: %d < %d", j, sp->data_length);
+			printMessage(CMSG_ERROR, VERB_NORMAL, "Too small this patch length: %d < %d", j, sp->data_length);
 			goto fail;
 		}
 		if (!(sp->modes & MODES_16BIT)) {	/* convert to 16-bit data */
@@ -890,7 +890,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			sp->loop_end = sp->data_length - t;
 			sp->modes &= ~MODES_REVERSE;
 			sp->modes |= MODES_LOOPING;	/* just in case */
-			ctl_cmsg(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s", name);
+			printMessage(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s", name);
 		}
 		/* If necessary do some anti-aliasing filtering */
 		if (antialiasing_allowed)
@@ -910,7 +910,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 				if ((a = abs(tmp[i])) > maxamp)
 					maxamp = a;
 			sp->volume = 32768 / (double)maxamp;
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG,
+			printMessage(CMSG_INFO, VERB_DEBUG,
 				" * volume comp: %f", sp->volume);
 		}
 		/* These are in bytes.  Convert into samples. */
@@ -959,7 +959,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		if (strip_tail == 1) {
 			/* Let's not really, just say we did. */
 			sp->data_length = sp->loop_end;
-			ctl_cmsg(CMSG_INFO, VERB_DEBUG, " - Stripping tail");
+			printMessage(CMSG_INFO, VERB_DEBUG, " - Stripping tail");
 		}
 	}
 	tf_close(tf);
@@ -1104,7 +1104,7 @@ int Instruments::fill_bank(int dr, int b, int *rc)
 				if (bank->tone[i].instrument == NULL)
 				{
 					// This would be too annoying on 'warning' level.
-					ctl_cmsg(CMSG_WARNING, VERB_DEBUG,
+					printMessage(CMSG_WARNING, VERB_DEBUG,
 						"No instrument mapped to %s %d, program %d%s",
 						dr ? "drum set" : "tone bank",
 						dr ? b + progbase : b,
@@ -1144,7 +1144,7 @@ int Instruments::fill_bank(int dr, int b, int *rc)
 				bank->tone[i].instrument = load_instrument(dr, b, i);
 				if (!bank->tone[i].instrument)
 				{
-					ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
+					printMessage(CMSG_ERROR, VERB_NORMAL,
 						"Couldn't load instrument %s "
 						"(%s %d, program %d)", bank->tone[i].name,
 						dr ? "drum set" : "tone bank",
@@ -2014,7 +2014,7 @@ Instrument *Instruments::recompute_userdrum(int bank, int prog)
 			copy_tone_bank_element(&drumset[bank]->tone[prog], &drumset[0]->tone[source_note]);
 		}
 		else {
-			ctl_cmsg(CMSG_WARNING, VERB_NORMAL, "Referring user drum set %d, note %d not found - this instrument will not be heard as expected", bank, prog);
+			printMessage(CMSG_WARNING, VERB_NORMAL, "Referring user drum set %d, note %d not found - this instrument will not be heard as expected", bank, prog);
 		}
 	}
 	return ip;

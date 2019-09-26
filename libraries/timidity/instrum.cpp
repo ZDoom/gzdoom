@@ -186,30 +186,30 @@ Instrument *Renderer::load_instrument(const char *name, int percussion,
 
 	if (noluck)
 	{
-		cmsg(CMSG_ERROR, VERB_DEBUG, "Instrument `%s' can't be found.\n", name);
+		printMessage(CMSG_ERROR, VERB_DEBUG, "Instrument `%s' can't be found.\n", name);
 		return 0;
 	}
 
-	cmsg(CMSG_INFO, VERB_NOISY, "Loading instrument %s\n", name);
+	printMessage(CMSG_INFO, VERB_NOISY, "Loading instrument %s\n", name);
 
 	/* Read some headers and do cursory sanity checks. */
 
 	if (sizeof(header) != fp->read(&header, sizeof(header)))
 	{
 failread:
-		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Error reading instrument.\n", name);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "%s: Error reading instrument.\n", name);
 		fp->close();
 		return 0;
 	}
 	if (strncmp(header.Header, GF1_HEADER_TEXT, HEADER_SIZE - 4) != 0)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Not an instrument.\n", name);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "%s: Not an instrument.\n", name);
 		fp->close();
 		return 0;
 	}
 	if (strcmp(header.Header + 8, "110") < 0)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Is an old and unsupported patch version.\n", name);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "%s: Is an old and unsupported patch version.\n", name);
 		fp->close();
 		return 0;
 	}
@@ -225,14 +225,14 @@ failread:
 
 	if (header.Instruments != 1 && header.Instruments != 0) /* instruments. To some patch makers, 0 means 1 */
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle patches with %d instruments.\n", header.Instruments);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "Can't handle patches with %d instruments.\n", header.Instruments);
 		fp->close();
 		return 0;
 	}
 
 	if (idata.Layers != 1 && idata.Layers != 0) /* layers. What's a layer? */
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle instruments with %d layers.\n", idata.Layers);
+		printMessage(CMSG_ERROR, VERB_NORMAL, "Can't handle instruments with %d layers.\n", idata.Layers);
 		fp->close();
 		return 0;
 	}
@@ -244,7 +244,7 @@ failread:
 
 	if (layer_data.Samples == 0)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, "Instrument has 0 samples.\n");
+		printMessage(CMSG_ERROR, VERB_NORMAL, "Instrument has 0 samples.\n");
 		fp->close();
 		return 0;
 	}
@@ -258,7 +258,7 @@ failread:
 		if (sizeof(patch_data) != fp->read(&patch_data, sizeof(patch_data)))
 		{
 fail:
-			cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d.\n", i);
+			printMessage(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d.\n", i);
 			delete ip;
 			fp->close();
 			return 0;
@@ -294,14 +294,14 @@ fail:
 			sp->tremolo_sweep_increment = 0;
 			sp->tremolo_phase_increment = 0;
 			sp->tremolo_depth = 0;
-			cmsg(CMSG_INFO, VERB_DEBUG, " * no tremolo\n");
+			printMessage(CMSG_INFO, VERB_DEBUG, " * no tremolo\n");
 		}
 		else
 		{
 			sp->tremolo_sweep_increment = convert_tremolo_sweep(patch_data.TremoloSweep);
 			sp->tremolo_phase_increment = convert_tremolo_rate(patch_data.TremoloRate);
 			sp->tremolo_depth = patch_data.TremoloDepth;
-			cmsg(CMSG_INFO, VERB_DEBUG, " * tremolo: sweep %d, phase %d, depth %d\n",
+			printMessage(CMSG_INFO, VERB_DEBUG, " * tremolo: sweep %d, phase %d, depth %d\n",
 				sp->tremolo_sweep_increment, sp->tremolo_phase_increment, sp->tremolo_depth);
 		}
 
@@ -311,14 +311,14 @@ fail:
 			sp->vibrato_sweep_increment = 0;
 			sp->vibrato_control_ratio = 0;
 			sp->vibrato_depth = 0;
-			cmsg(CMSG_INFO, VERB_DEBUG, " * no vibrato\n");
+			printMessage(CMSG_INFO, VERB_DEBUG, " * no vibrato\n");
 		}
 		else
 		{
 			sp->vibrato_control_ratio = convert_vibrato_rate(patch_data.VibratoRate);
 			sp->vibrato_sweep_increment = convert_vibrato_sweep(patch_data.VibratoSweep, sp->vibrato_control_ratio);
 			sp->vibrato_depth = patch_data.VibratoDepth;
-			cmsg(CMSG_INFO, VERB_DEBUG, " * vibrato: sweep %d, ctl %d, depth %d\n",
+			printMessage(CMSG_INFO, VERB_DEBUG, " * vibrato: sweep %d, ctl %d, depth %d\n",
 				sp->vibrato_sweep_increment, sp->vibrato_control_ratio, sp->vibrato_depth);
 		}
 
@@ -344,7 +344,7 @@ fail:
 			}
 			if (sp->scale_factor != 1024)
 			{
-				cmsg(CMSG_INFO, VERB_DEBUG, " * Scale: note %d, factor %d\n",
+				printMessage(CMSG_INFO, VERB_DEBUG, " * Scale: note %d, factor %d\n",
 					sp->scale_note, sp->scale_factor);
 			}
 		}
@@ -375,7 +375,7 @@ fail:
 		if ((strip_loop == 1) && 
 			(sp->modes & (PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD)))
 		{
-			cmsg(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain\n");
+			printMessage(CMSG_INFO, VERB_DEBUG, " - Removing loop and/or sustain\n");
 			if (j == DESC_SIZE)
 			{
 				sp->modes &= ~(PATCH_SUSTAIN | PATCH_LOOPEN | PATCH_BIDIR | PATCH_BACKWARD);
@@ -384,7 +384,7 @@ fail:
 
 		if (strip_envelope == 1)
 		{
-			cmsg(CMSG_INFO, VERB_DEBUG, " - Removing envelope\n");
+			printMessage(CMSG_INFO, VERB_DEBUG, " - Removing envelope\n");
 			/* [RH] The envelope isn't really removed, but this is the way the standard
 			 * Gravis patches get that effect: All rates at maximum, and all offsets at
 			 * a constant level.
@@ -434,7 +434,7 @@ fail:
 			/* The GUS apparently plays reverse loops by reversing the
 			   whole sample. We do the same because the GUS does not SUCK. */
 
-			cmsg(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s\n", name);
+			printMessage(CMSG_WARNING, VERB_NORMAL, "Reverse loop in %s\n", name);
 			reverse_data((sample_t *)sp->data, 0, sp->data_length);
 			sp->data[sp->data_length] = sp->data[sp->data_length - 1];
 
@@ -465,7 +465,7 @@ fail:
 		if (strip_tail == 1)
 		{
 			/* Let's not really, just say we did. */
-			cmsg(CMSG_INFO, VERB_DEBUG, " - Stripping tail\n");
+			printMessage(CMSG_INFO, VERB_DEBUG, " - Stripping tail\n");
 			sp->data_length = sp->loop_end;
 		}
 	}
@@ -578,7 +578,7 @@ int Renderer::fill_bank(int dr, int b)
 	ToneBank *bank = ((dr) ? instruments->drumset[b] : instruments->tonebank[b]);
 	if (bank == NULL)
 	{
-		cmsg(CMSG_ERROR, VERB_NORMAL, 
+		printMessage(CMSG_ERROR, VERB_NORMAL, 
 			"Tried to load instruments in non-existent %s %d\n",
 			(dr) ? "drumset" : "tone bank", b);
 		return 0;
@@ -621,14 +621,14 @@ int Renderer::fill_bank(int dr, int b)
 			{
 				if (bank->tone[i].name.length() == 0)
 				{
-					cmsg(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_DEBUG,
+					printMessage(CMSG_WARNING, (b != 0) ? VERB_VERBOSE : VERB_DEBUG,
 						"No instrument mapped to %s %d, program %d%s\n",
 						(dr) ? "drum set" : "tone bank", b, i, 
 						(b != 0) ? "" : " - this instrument will not be heard");
 				}
 				else
 				{
-					cmsg(CMSG_ERROR, VERB_DEBUG,
+					printMessage(CMSG_ERROR, VERB_DEBUG,
 						"Couldn't load instrument %s (%s %d, program %d)\n",
 						bank->tone[i].name.c_str(),
 						(dr) ? "drum set" : "tone bank", b, i);

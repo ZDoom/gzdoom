@@ -72,7 +72,7 @@ struct OPLio
 	void MuteChannel(uint32_t chan);
 	void StopPlayback();
 
-	virtual int	 Init(uint32_t numchips, bool stereo = false, bool initopl3 = false);
+	virtual int	 Init(int core, uint32_t numchips, bool stereo, bool initopl3);
 	virtual void Reset();
 	virtual void WriteRegister(int which, uint32_t reg, uint8_t data);
 	virtual void SetClockRate(double samples_per_tick);

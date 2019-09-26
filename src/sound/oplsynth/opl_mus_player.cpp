@@ -48,8 +48,9 @@
 
 EXTERN_CVAR (Int, opl_numchips)
 
-OPLmusicBlock::OPLmusicBlock()
+OPLmusicBlock::OPLmusicBlock(int core)
 {
+	currentCore = core;
 	scoredata = NULL;
 	NextTickIn = 0;
 	LastOffset = 0;
@@ -69,7 +70,7 @@ void OPLmusicBlock::ResetChips ()
 {
 	std::lock_guard<std::mutex> lock(ChipAccess);
 	io->Reset ();
-	NumChips = io->Init(MIN(*opl_numchips, 2), FullPan);
+	NumChips = io->Init(currentCore, MIN(*opl_numchips, 2), FullPan, false);
 }
 
 void OPLmusicBlock::Restart()
@@ -80,8 +81,8 @@ void OPLmusicBlock::Restart()
 	LastOffset = 0;
 }
 
-OPLmusicFile::OPLmusicFile (FileReader &reader)
-	: ScoreLen ((int)reader.GetLength())
+OPLmusicFile::OPLmusicFile (FileReader &reader, int core)
+	: OPLmusicBlock(core), ScoreLen ((int)reader.GetLength())
 {
 	if (io == NULL)
 	{
@@ -97,7 +98,7 @@ fail:	delete[] scoredata;
         return;
     }
 
-	if (0 == (NumChips = io->Init(NumChips)))
+	if (0 == (NumChips = io->Init(core, NumChips, false, false)))
 	{
 		goto fail;
 	}
@@ -528,14 +529,8 @@ int OPLmusicFile::PlayTick ()
 	return 0;
 }
 
-/*
-ADD_STAT (opl)
-{
-	return YM3812GetVoiceString ();
-}
-*/
-
-OPLmusicFile::OPLmusicFile(const OPLmusicFile *source, const char *filename)
+OPLmusicFile::OPLmusicFile(int core, const OPLmusicFile *source, const char *filename)
+	: OPLmusicBlock(core)
 {
 	ScoreLen = source->ScoreLen;
 	scoredata = new uint8_t[ScoreLen];
@@ -550,7 +545,7 @@ OPLmusicFile::OPLmusicFile(const OPLmusicFile *source, const char *filename)
 		delete io;
 	}
 	io = new DiskWriterIO(filename);
-	NumChips = io->Init(NumChips);
+	NumChips = io->Init(core, NumChips, false, false);
 	Restart();
 }
 

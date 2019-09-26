@@ -59,24 +59,18 @@ CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		MIDIDeviceChanged(-1, true);
 	}
 }
-int current_opl_core;
 
-// Get OPL core override from $mididevice
-void OPL_SetCore(const char *args)
-{
-	current_opl_core = opl_core;
-	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
-}
+int getOPLCore(const char* args);
 
 OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
 
-	OPL_SetCore(args);
-	Music = new OPLmusicFile (reader);
+	int core = getOPLCore(args);
+	Music = new OPLmusicFile (reader, core);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
-		(current_opl_core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
+		(core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
 	if (m_Stream == NULL)
 	{
 		Printf (PRINT_BOLD, "Could not create music stream.\n");
@@ -131,23 +125,3 @@ bool OPLMUSSong::FillStream (SoundStream *stream, void *buff, int len, void *use
 	return song->Music->ServiceStream (buff, len);
 }
 
-MusInfo *OPLMUSSong::GetOPLDumper(const char *filename)
-{
-	return new OPLMUSDumper(this, filename);
-}
-
-OPLMUSSong::OPLMUSSong(const OPLMUSSong *original, const char *filename)
-{
-	Music = new OPLmusicFile(original->Music, filename);
-	m_Stream = NULL;
-}
-
-OPLMUSDumper::OPLMUSDumper(const OPLMUSSong *original, const char *filename)
-: OPLMUSSong(original, filename)
-{
-}
-
-void OPLMUSDumper::Play(bool looping, int)
-{
-	Music->Dump();
-}

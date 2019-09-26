@@ -52,7 +52,6 @@ void I_DebugPrint(const char *cp);
 #endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-void OPL_SetCore(const char *args);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -75,11 +74,18 @@ CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 // OPLMIDIDevice Contructor
 //
 //==========================================================================
+EXTERN_CVAR(Int, opl_core)
+int getOPLCore(const char* args)
+{
+	int current_opl_core = opl_core;
+	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
+	return current_opl_core;
+}
+
 
 OPLMIDIDevice::OPLMIDIDevice(const char *args)
-	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE)
+	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(getOPLCore(args))
 {
-	OPL_SetCore(args);
 	FullPan = opl_fullpan;
 	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
 	if (lump < 0) I_Error("No GENMIDI lump found");
@@ -101,7 +107,7 @@ OPLMIDIDevice::OPLMIDIDevice(const char *args)
 
 int OPLMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
-	if (io == NULL || 0 == (NumChips = io->Init(opl_numchips, FullPan, true)))
+	if (io == NULL || 0 == (NumChips = io->Init(currentCore, opl_numchips, FullPan, true)))
 	{
 		return 1;
 	}

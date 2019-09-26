@@ -297,21 +297,12 @@ public:
 	bool IsPlaying ();
 	bool IsValid () const;
 	void ResetChips ();
-	MusInfo *GetOPLDumper(const char *filename);
 
 protected:
-	OPLMUSSong(const OPLMUSSong *original, const char *filename);	// OPL dump constructor
 
 	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 
 	OPLmusicFile *Music;
-};
-
-class OPLMUSDumper : public OPLMUSSong
-{
-public:
-	OPLMUSDumper(const OPLMUSSong *original, const char *filename);
-	void Play(bool looping, int);
 };
 
 // CD track/disk played through the multimedia system -----------------------

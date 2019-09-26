@@ -32,9 +32,6 @@
 
 const double HALF_PI = (M_PI*0.5);
 
-EXTERN_CVAR(Int, opl_core)
-extern int current_opl_core;
-
 OPLio::~OPLio()
 {
 }
@@ -53,11 +50,11 @@ void OPLio::WriteDelay(int ticks)
 //
 //----------------------------------------------------------------------------
 
-int OPLio::Init(uint32_t numchips, bool stereo, bool initopl3)
+int OPLio::Init(int core, uint32_t numchips, bool stereo, bool initopl3)
 {
 	assert(numchips >= 1 && numchips <= countof(chips));
 	uint32_t i;
-	IsOPL3 = (current_opl_core == 1 || current_opl_core == 2 || current_opl_core == 3);
+	IsOPL3 = (core == 1 || core == 2 || core == 3);
 
 	memset(chips, 0, sizeof(chips));
 	if (IsOPL3)
@@ -66,7 +63,7 @@ int OPLio::Init(uint32_t numchips, bool stereo, bool initopl3)
 	}
 	for (i = 0; i < numchips; ++i)
 	{
-		OPLEmul *chip = IsOPL3 ? (current_opl_core == 1 ? DBOPLCreate(stereo) : (current_opl_core == 2 ? JavaOPLCreate(stereo) : NukedOPL3Create(stereo))) : YM3812Create(stereo);
+		OPLEmul *chip = IsOPL3 ? (core == 1 ? DBOPLCreate(stereo) : (core == 2 ? JavaOPLCreate(stereo) : NukedOPL3Create(stereo))) : YM3812Create(stereo);
 		if (chip == NULL)
 		{
 			break;

@@ -6,7 +6,7 @@ class FileReader;
 class OPLmusicBlock : public musicBlock
 {
 public:
-	OPLmusicBlock();
+	OPLmusicBlock(int core);
 	virtual ~OPLmusicBlock();
 
 	bool ServiceStream(void *buff, int numbytes);
@@ -20,12 +20,13 @@ protected:
 
 	uint8_t *score;
 	uint8_t *scoredata;
-	int playingcount;
 	double NextTickIn;
 	double SamplesPerTick;
-	int NumChips;
-	bool Looping;
 	double LastOffset;
+	int playingcount;
+	int NumChips;
+	int currentCore;
+	bool Looping;
 	bool FullPan;
 
 	std::mutex ChipAccess;
@@ -34,8 +35,8 @@ protected:
 class OPLmusicFile : public OPLmusicBlock
 {
 public:
-	OPLmusicFile(FileReader &reader);
-	OPLmusicFile(const OPLmusicFile *source, const char *filename);
+	OPLmusicFile(FileReader &reader, int core);
+	OPLmusicFile(int core, const OPLmusicFile *source, const char *filename);
 	virtual ~OPLmusicFile();
 
 	bool IsValid() const;
@@ -44,7 +45,7 @@ public:
 	void Dump();
 
 protected:
-	OPLmusicFile() {}
+	OPLmusicFile(int core) : OPLmusicBlock(core) {}
 	int PlayTick();
 
 	enum { RDosPlay, IMF, DosBox1, DosBox2 } RawPlayer;

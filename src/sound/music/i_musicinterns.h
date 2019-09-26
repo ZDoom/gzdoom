@@ -35,15 +35,14 @@ struct ADLConfig
 	int adl_volume_model = 3; // DMX
 	bool adl_run_at_pcm_rate = 0;
 	bool adl_fullpan = 1;
-	bool adl_use_custom_bank = 0;
-	const char *adl_custom_bank = nullptr;
+	std::string adl_custom_bank;
 };
 
 extern ADLConfig adlConfig;
 
 struct FluidConfig
 {
-	const char* fluid_lib = nullptr;
+	std::string fluid_lib;
 	std::vector<std::string> fluid_patchset;
 	bool fluid_reverb = false;
 	bool fluid_chorus = false;
@@ -72,6 +71,18 @@ struct OPLMidiConfig
 	bool fullpan = true;
 	struct GenMidiInstrument OPLinstruments[GENMIDI_NUM_TOTAL];
 };
+
+struct OpnConfig
+{
+	int opn_chips_count = 8;
+	int opn_emulator_id = 0;
+	bool opn_run_at_pcm_rate = false;
+	bool opn_fullpan = 1;
+	std::string opn_custom_bank;
+	std::vector<uint8_t> default_bank;
+};
+
+
 
 extern OPLMidiConfig oplMidiConfig;
 
@@ -351,11 +362,20 @@ public:
 	CDDAFile (FileReader &reader);
 };
 
+// MIDI devices
+
+MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const FluidConfig* config, int (*printfunc)(const char*, ...));
+MIDIDevice *CreateADLMIDIDevice(const ADLConfig* config);
+MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
+MIDIDevice *CreateOplMIDIDevice(const OPLMidiConfig* config);
+
 // Data interface
 
 int BuildFluidPatchSetList(const char* patches, bool systemfallback);
+void SetAdlCustomBank(const char *Args);
 void LoadGenMidi();
 int getOPLCore(const char* args);
+void SetOpnCustomBank(const char *Args);
 
 // Module played via foo_dumb -----------------------------------------------
 

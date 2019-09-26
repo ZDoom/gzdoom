@@ -44,7 +44,7 @@ class OPNMIDIDevice : public SoftSynthMIDIDevice
 {
 	struct OPN2_MIDIPlayer *Renderer;
 public:
-	OPNMIDIDevice(const char *args);
+	OPNMIDIDevice(const OpnConfig *config);
 	~OPNMIDIDevice();
 	
 	
@@ -72,53 +72,6 @@ enum
 	ME_PITCHWHEEL = 0xE0
 };
 
-CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (opn_use_custom_bank && currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
 
 //==========================================================================
 //
@@ -126,27 +79,30 @@ CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-OPNMIDIDevice::OPNMIDIDevice(const char *args)
+OPNMIDIDevice::OPNMIDIDevice(const OpnConfig *config)
 	:SoftSynthMIDIDevice(44100)
 {
 	Renderer = opn2_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
-		if (!LoadCustomBank(opn_custom_bank))
+		if (!LoadCustomBank(config->opn_custom_bank.c_str()))
 		{
-			int lump = Wads.CheckNumForFullName("xg.wopn");
-			if (lump < 0)
+			if(config->default_bank.size() == 0)
 			{
-				I_Error("No OPN bank found");
+				opn2_close(Renderer);
+				throw std::runtime_error("No OPN bank found");
 			}
-			FMemLump data = Wads.ReadLump(lump);
-			opn2_openBankData(Renderer, data.GetMem(), (long)data.GetSize());
+			opn2_openBankData(Renderer, config->default_bank.data(), (long)config->default_bank.size());
 		}
 
-		opn2_switchEmulator(Renderer, (int)opn_emulator_id);
-		opn2_setRunAtPcmRate(Renderer, (int)opn_run_at_pcm_rate);
-		opn2_setNumChips(Renderer, opn_chips_count);
-		opn2_setSoftPanEnabled(Renderer, (int)opn_fullpan);
+		opn2_switchEmulator(Renderer, (int)config->opn_emulator_id);
+		opn2_setRunAtPcmRate(Renderer, (int)config->opn_run_at_pcm_rate);
+		opn2_setNumChips(Renderer, config->opn_chips_count);
+		opn2_setSoftPanEnabled(Renderer, (int)config->opn_fullpan);
+	}
+	else
+	{
+		throw std::runtime_error("Unable to create OPN renderer.");
 	}
 }
 
@@ -177,12 +133,8 @@ OPNMIDIDevice::~OPNMIDIDevice()
 
 int OPNMIDIDevice::LoadCustomBank(const char *bankfile)
 {
-	if(!opn_use_custom_bank)
+	if(!bankfile || !*bankfile)
 		return 0;
-	auto info = sfmanager.FindSoundFont(bankfile, SF_WOPN);
-	if(info == nullptr)
-		return 0;
-	bankfile = info->mFilename.GetChars();
 	return (opn2_openBankFile(Renderer, bankfile) == 0);
 }
 
@@ -283,9 +235,9 @@ void OPNMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateOPNMIDIDevice(const char *args)
+MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *config)
 {
-	return new OPNMIDIDevice(args);
+	return new OPNMIDIDevice(config);
 }
 
 

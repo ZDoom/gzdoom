@@ -50,14 +50,9 @@
 #ifdef _WIN32
 MIDIDevice *CreateWinMIDIDevice(int mididevice);
 #endif
-MIDIDevice* CreateFluidSynthMIDIDevice(int samplerate, FluidConfig* config, int (*printfunc)(const char*, ...));
 MIDIDevice *CreateTimidityMIDIDevice(const char *args, int samplerate);
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
-MIDIDevice *CreateADLMIDIDevice(const char *args, const ADLConfig* config);
-MIDIDevice *CreateOPNMIDIDevice(const char *args);
 MIDIDevice *CreateWildMIDIDevice(const char *args, int samplerate);
-MIDIDevice* CreateOplMIDIDevice(OPLMidiConfig* config);
-int BuildFluidPatchSetList(const char* patches, bool systemfallback);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -213,10 +208,12 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				break;
 
 			case MDEV_ADL:
-				dev = CreateADLMIDIDevice(Args, &adlConfig);
+				SetAdlCustomBank(Args);
+				dev = CreateADLMIDIDevice(&adlConfig);
 				break;
 
 			case MDEV_OPN:
+				SetOpnCustomBank(Args);
 				dev = CreateOPNMIDIDevice(Args);
 				break;
 

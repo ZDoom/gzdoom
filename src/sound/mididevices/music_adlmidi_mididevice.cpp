@@ -41,7 +41,7 @@ class ADLMIDIDevice : public SoftSynthMIDIDevice
 {
 	struct ADL_MIDIPlayer *Renderer;
 public:
-	ADLMIDIDevice(const char *args, const ADLConfig *config);
+	ADLMIDIDevice(const ADLConfig *config);
 	~ADLMIDIDevice();
 	
 	int Open(MidiCallback, void *userdata);
@@ -54,7 +54,7 @@ protected:
 	void ComputeOutput(float *buffer, int len);
 	
 private:
-	int LoadCustomBank(const char *bankfile, const ADLConfig *config);
+	int LoadCustomBank(const ADLConfig *config);
 };
 
 
@@ -75,7 +75,7 @@ enum
 //
 //==========================================================================
 
-ADLMIDIDevice::ADLMIDIDevice(const char *args, const ADLConfig *config)
+ADLMIDIDevice::ADLMIDIDevice(const ADLConfig *config)
 	:SoftSynthMIDIDevice(44100)
 {
 	Renderer = adl_init(44100);	// todo: make it configurable
@@ -83,7 +83,7 @@ ADLMIDIDevice::ADLMIDIDevice(const char *args, const ADLConfig *config)
 	{
 		adl_switchEmulator(Renderer, config->adl_emulator_id);
 		adl_setRunAtPcmRate(Renderer, config->adl_run_at_pcm_rate);
-		if (!LoadCustomBank(config->adl_custom_bank, config))
+		if (!LoadCustomBank(config))
 			adl_setBank(Renderer, config->adl_bank);
 		adl_setNumChips(Renderer, config->adl_chips_count);
 		adl_setVolumeRangeModel(Renderer, config->adl_volume_model);
@@ -116,9 +116,10 @@ ADLMIDIDevice::~ADLMIDIDevice()
 //
 //==========================================================================
 
-int ADLMIDIDevice::LoadCustomBank(const char *bankfile, const ADLConfig *config)
+int ADLMIDIDevice::LoadCustomBank(const ADLConfig *config)
 {
-	if(!config->adl_use_custom_bank || !bankfile || !*bankfile)
+	const char *bankfile = config->adl_custom_bank.c_str();
+	if(!*bankfile)
 		return 0;
 	return (adl_openBankFile(Renderer, bankfile) == 0);
 }
@@ -225,9 +226,9 @@ void ADLMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateADLMIDIDevice(const char *args, const ADLConfig *config)
+MIDIDevice *CreateADLMIDIDevice(const ADLConfig *config)
 {
-	return new ADLMIDIDevice(args, config);
+	return new ADLMIDIDevice(config);
 }
 
 

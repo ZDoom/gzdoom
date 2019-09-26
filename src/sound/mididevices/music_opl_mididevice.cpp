@@ -55,7 +55,7 @@
 class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
 {
 public:
-	OPLMIDIDevice(OPLMidiConfig *config);
+	OPLMIDIDevice(const OPLMidiConfig *config);
 	int Open(MidiCallback, void *userdata);
 	void Close();
 	int GetTechnology() const;
@@ -82,7 +82,7 @@ protected:
 //
 //==========================================================================
 
-OPLMIDIDevice::OPLMIDIDevice(OPLMidiConfig *config)
+OPLMIDIDevice::OPLMIDIDevice(const OPLMidiConfig *config)
 	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(config->core, config->numchips)
 {
 	FullPan = config->fullpan;
@@ -314,7 +314,7 @@ FString OPLMIDIDevice::GetStats()
 	return out;
 }
 
-MIDIDevice* CreateOplMIDIDevice(OPLMidiConfig* config)
+MIDIDevice* CreateOplMIDIDevice(const OPLMidiConfig* config)
 {
 	return new OPLMIDIDevice(config);
 }

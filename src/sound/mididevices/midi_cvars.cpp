@@ -40,7 +40,9 @@
 #include "doomerrors.h"
 
 // do this without including windows.h for this one single prototype
+#ifdef _WIN32
 extern "C" unsigned __stdcall GetSystemDirectoryA(char* lpBuffer, unsigned uSize);
+#endif
 
 static void CheckRestart(int devtype)
 {
@@ -53,7 +55,7 @@ static void CheckRestart(int devtype)
 ADLConfig adlConfig;
 FluidConfig fluidConfig;
 OPLMidiConfig oplMidiConfig;
-
+OpnConfig opnConfig;
 
 CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -87,19 +89,37 @@ CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	adlConfig.adl_use_custom_bank = self;
 	CheckRestart(MDEV_ADL);
 }
 
 CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	CheckRestart(MDEV_ADL);
-
-	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
-	auto info = sfmanager.FindSoundFont(self, SF_WOPL);
-	if (info == nullptr) adlConfig.adl_custom_bank = nullptr;
-	else adlConfig.adl_custom_bank = info->mFilename;
+	if (adl_use_custom_bank) CheckRestart(MDEV_ADL);
 }
+
+void SetAdlCustomBank(const char *Args)
+{
+	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
+	const char *bank = Args && *Args? Args : adl_use_custom_bank? *adl_custom_bank : nullptr;
+	adlConfig.adl_bank = adl_bank;
+	if (bank && *bank)
+	{
+		auto info = sfmanager.FindSoundFont(bank, SF_WOPL);
+		if (info == nullptr)
+		{
+			if (*bank >= '0' && *bank <= '9')
+			{
+				adlConfig.adl_bank = (int)strtoll(bank, nullptr, 10);
+			}
+			adlConfig.adl_custom_bank = nullptr;
+		}
+		else
+		{
+			adlConfig.adl_custom_bank = info->mFilename;
+		}
+	}
+}
+
 
 CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -468,4 +488,88 @@ int getOPLCore(const char* args)
 	int current_opl_core = opl_core;
 	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
 	return current_opl_core;
+}
+
+
+
+
+
+CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	opnConfig.opn_chips_count = self;
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	opnConfig.opn_emulator_id = self;
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	opnConfig.opn_run_at_pcm_rate = self;
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	opnConfig.opn_fullpan = self;
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (opn_use_custom_bank && currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+void SetOpnCustomBank(const char *Args)
+{
+	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
+	const char *bank = Args && *Args? Args : opn_use_custom_bank? *opn_custom_bank : nullptr;
+	if (bank && *bank)
+	{
+		auto info = sfmanager.FindSoundFont(bank, SF_WOPN);
+		if (info == nullptr)
+		{
+			opnConfig.opn_custom_bank = "";
+		}
+		else
+		{
+			opnConfig.opn_custom_bank = info->mFilename;
+		}
+	}
+	
+	int lump = Wads.CheckNumForFullName("xg.wopn");
+	if (lump < 0)
+	{
+		opnConfig.default_bank.resize(0);
+		return;
+	}
+	FMemLump data = Wads.ReadLump(lump);
+	opnConfig.default_bank.resize(data.GetSize());
+	memcpy(opnConfig.default_bank.data(), data.GetMem(), data.GetSize());
 }

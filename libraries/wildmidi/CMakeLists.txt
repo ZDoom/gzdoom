@@ -9,6 +9,18 @@ endif()
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
 
+include( CheckFunctionExists )
+
+CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
+if( NOT STRICMP_EXISTS )
+	add_definitions( -Dstricmp=strcasecmp )
+endif()
+
+CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
+if( NOT STRNICMP_EXISTS )
+	add_definitions( -Dstrnicmp=strncasecmp )
+endif()
+
 include_directories( wildmidi )
 
 file( GLOB HEADER_FILES

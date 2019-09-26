@@ -35,6 +35,7 @@
 
 #include <errno.h>
 #include <memory>
+#include <stdlib.h>
 
 #include "wm_error.h"
 #include "file_io.h"

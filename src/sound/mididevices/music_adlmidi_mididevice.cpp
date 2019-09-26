@@ -36,13 +36,12 @@
 
 #include "i_musicinterns.h"
 #include "adlmidi.h"
-#include "i_soundfont.h"
 
 class ADLMIDIDevice : public SoftSynthMIDIDevice
 {
 	struct ADL_MIDIPlayer *Renderer;
 public:
-	ADLMIDIDevice(const char *args);
+	ADLMIDIDevice(const char *args, const ADLConfig *config);
 	~ADLMIDIDevice();
 	
 	int Open(MidiCallback, void *userdata);
@@ -55,7 +54,7 @@ protected:
 	void ComputeOutput(float *buffer, int len);
 	
 private:
-	int LoadCustomBank(const char *bankfile);
+	int LoadCustomBank(const char *bankfile, const ADLConfig *config);
 };
 
 
@@ -70,90 +69,25 @@ enum
 	ME_PITCHWHEEL = 0xE0
 };
 
-CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Int, adl_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Bool, adl_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Bool, adl_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-
-CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (adl_use_custom_bank && currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
 //==========================================================================
 //
 // ADLMIDIDevice Constructor
 //
 //==========================================================================
 
-ADLMIDIDevice::ADLMIDIDevice(const char *args)
+ADLMIDIDevice::ADLMIDIDevice(const char *args, const ADLConfig *config)
 	:SoftSynthMIDIDevice(44100)
 {
 	Renderer = adl_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
-		adl_switchEmulator(Renderer, (int)adl_emulator_id);
-		adl_setRunAtPcmRate(Renderer, (int)adl_run_at_pcm_rate);
-		if(!LoadCustomBank(adl_custom_bank))
-			adl_setBank(Renderer, (int)adl_bank);
-		adl_setNumChips(Renderer, (int)adl_chips_count);
-		adl_setVolumeRangeModel(Renderer, (int)adl_volume_model);
-		adl_setSoftPanEnabled(Renderer, (int)adl_fullpan);
+		adl_switchEmulator(Renderer, config->adl_emulator_id);
+		adl_setRunAtPcmRate(Renderer, config->adl_run_at_pcm_rate);
+		if(!LoadCustomBank(config->adl_custom_bank, config))
+			adl_setBank(Renderer, config->adl_bank);
+		adl_setNumChips(Renderer, config->adl_chips_count);
+		adl_setVolumeRangeModel(Renderer, config->adl_volume_model);
+		adl_setSoftPanEnabled(Renderer, config->adl_fullpan);
 	}
 }
 
@@ -181,14 +115,15 @@ ADLMIDIDevice::~ADLMIDIDevice()
 //
 //==========================================================================
 
-int ADLMIDIDevice::LoadCustomBank(const char *bankfile)
+int ADLMIDIDevice::LoadCustomBank(const char *bankfile, const ADLConfig *config)
 {
-	if(!adl_use_custom_bank)
+	if(!config->adl_use_custom_bank)
 		return 0;
-	auto info = sfmanager.FindSoundFont(bankfile, SF_WOPL);
-	if(info == nullptr)
-		return 0;
-	bankfile = info->mFilename.GetChars();
+	if (config->adl_full_path)
+	{
+		bankfile = config->adl_full_path(bankfile);
+		if(bankfile == nullptr)	return 0;
+	}
 	return (adl_openBankFile(Renderer, bankfile) == 0);
 }
 
@@ -294,9 +229,9 @@ void ADLMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateADLMIDIDevice(const char *args)
+MIDIDevice *CreateADLMIDIDevice(const char *args, const ADLConfig *config)
 {
-	return new ADLMIDIDevice(args);
+	return new ADLMIDIDevice(args, config);
 }
 
 

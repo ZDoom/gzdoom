@@ -1,5 +1,6 @@
 
 #include <mutex>
+#include <string>
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
 #include "mus2midi.h"
@@ -25,6 +26,21 @@ struct MidiHeader
 	uint32_t dwBytesRecorded;
 	MidiHeader *lpNext;
 };
+
+struct ADLConfig
+{
+	const char * (*adl_full_path)(const char* filename);
+	int adl_chips_count;
+	int adl_emulator_id;
+	int adl_bank;
+	int adl_volume_model;
+	bool adl_run_at_pcm_rate;
+	bool adl_fullpan;
+	bool adl_use_custom_bank;
+	const char *adl_custom_bank;
+};
+
+extern ADLConfig adlConfig;
 
 
 class MIDIStreamer;

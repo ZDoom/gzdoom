@@ -1,6 +1,7 @@
 #ifndef __BASICTYPES_H
 #define __BASICTYPES_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 typedef uint32_t				BITFIELD;

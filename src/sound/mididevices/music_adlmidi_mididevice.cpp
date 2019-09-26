@@ -118,13 +118,8 @@ ADLMIDIDevice::~ADLMIDIDevice()
 
 int ADLMIDIDevice::LoadCustomBank(const char *bankfile, const ADLConfig *config)
 {
-	if(!config->adl_use_custom_bank)
+	if(!config->adl_use_custom_bank || !bankfile || !*bankfile)
 		return 0;
-	if (config->adl_full_path)
-	{
-		bankfile = config->adl_full_path(bankfile);
-		if(bankfile == nullptr)	return 0;
-	}
 	return (adl_openBankFile(Renderer, bankfile) == 0);
 }
 

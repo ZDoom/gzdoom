@@ -29,19 +29,41 @@ struct MidiHeader
 
 struct ADLConfig
 {
-	const char * (*adl_full_path)(const char* filename);
-	int adl_chips_count;
-	int adl_emulator_id;
-	int adl_bank;
-	int adl_volume_model;
-	bool adl_run_at_pcm_rate;
-	bool adl_fullpan;
-	bool adl_use_custom_bank;
-	const char *adl_custom_bank;
+	int adl_chips_count = 6;
+	int adl_emulator_id = 0;
+	int adl_bank = 14;
+	int adl_volume_model = 3; // DMX
+	bool adl_run_at_pcm_rate = 0;
+	bool adl_fullpan = 1;
+	bool adl_use_custom_bank = 0;
+	const char *adl_custom_bank = nullptr;
 };
 
 extern ADLConfig adlConfig;
 
+struct FluidConfig
+{
+	const char* fluid_lib = nullptr;
+	std::vector<std::string> fluid_patchset;
+	bool fluid_reverb = false;
+	bool fluid_chorus = false;
+	int fluid_voices = 128;
+	int fluid_interp = 1;
+	int fluid_samplerate = 0;
+	int fluid_threads = 1;
+	int fluid_chorus_voices = 3;
+	int fluid_chorus_type = 0;
+	float fluid_gain = 0.5f;
+	float fluid_reverb_roomsize = 0.61f;
+	float fluid_reverb_damping = 0.23f;
+	float fluid_reverb_width = 0.76f;
+	float fluid_reverb_level = 0.57f;
+	float fluid_chorus_level = 1.2f;
+	float fluid_chorus_speed = 0.3f;
+	float fluid_chorus_depth = 8;
+};
+
+extern FluidConfig fluidConfig;
 
 class MIDIStreamer;
 

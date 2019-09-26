@@ -96,7 +96,7 @@ CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
 	auto info = sfmanager.FindSoundFont(self, SF_WOPL);
 	if (info == nullptr) adlConfig.adl_custom_bank = nullptr;
-	adlConfig.adl_custom_bank = info->mFilename;
+	else adlConfig.adl_custom_bank = info->mFilename;
 }
 
 CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

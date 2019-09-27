@@ -168,6 +168,7 @@ public:
 	ToneBank* tonebank[MAXBANK] = {};
 	ToneBank* drumset[MAXBANK] = {};
 	FontFile* Fonts = nullptr;
+	std::string def_instr_name;
 
 	Instruments(SoundFontReaderInterface* reader);
 	~Instruments();

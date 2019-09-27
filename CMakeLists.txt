@@ -156,6 +156,22 @@ macro( use_fast_math )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
 endmacro()
 
+include( CheckFunctionExists )
+
+macro( require_stricmp )
+	CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
+	if( NOT STRICMP_EXISTS )
+		add_definitions( -Dstricmp=strcasecmp )
+	endif()
+endmacro()
+
+macro( require_strnicmp )
+	CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
+	if( NOT STRNICMP_EXISTS )
+		add_definitions( -Dstrnicmp=strncasecmp )
+	endif()
+endmacro()
+
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )

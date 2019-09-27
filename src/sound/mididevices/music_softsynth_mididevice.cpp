@@ -54,7 +54,7 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR(Bool, synth_watch, false, 0)
+//CVAR(Bool, synth_watch, false, 0)
 
 // CODE --------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ SoftSynthMIDIDevice::SoftSynthMIDIDevice(int samplerate, int minrate, int maxrat
 	Events = NULL;
 	Started = false;
 	SampleRate = samplerate;
-	if (SampleRate < minrate || SampleRate > maxrate) SampleRate = GSnd != NULL ? clamp((int)GSnd->GetOutputRate(), minrate, maxrate) : 44100;
+	if (SampleRate < minrate || SampleRate > maxrate) SampleRate = 44100;
 }
 
 //==========================================================================
@@ -318,6 +318,7 @@ int SoftSynthMIDIDevice::PlayTick()
 			int parm2 = (event[2] >> 16) & 0x7f;
 			HandleEvent(status, parm1, parm2);
 
+#if 0
 			if (synth_watch)
 			{
 				static const char *const commands[8] =
@@ -339,6 +340,7 @@ int SoftSynthMIDIDevice::PlayTick()
 				fputs(buffer, stderr);
 #endif
 			}
+#endif
 		}
 
 		// Advance to next event.

@@ -98,7 +98,6 @@ public:
 //protected:
 	static void CALLBACK CallbackFunc(HMIDIOUT, UINT, DWORD_PTR, DWORD, DWORD);
 
-	MIDIStreamer *Streamer;
 	HMIDISTRM MidiOut;
 	UINT DeviceID;
 	DWORD SavedVolume;

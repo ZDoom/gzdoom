@@ -160,7 +160,7 @@ void I_ShutdownMusic(bool onexit)
 	}
 	if (onexit)
 	{
-		WildMidi_Shutdown();
+		// free static data in the backends.
 		TimidityPP_Shutdown();
 		dumb_exit();
 	}
@@ -253,10 +253,6 @@ void MusInfo::ChangeSettingNum(const char *, double)
 }
 
 void MusInfo::ChangeSettingString(const char *, const char *)
-{
-}
-
-void MusInfo::WildMidiSetOption(int opt, int set)
 {
 }
 

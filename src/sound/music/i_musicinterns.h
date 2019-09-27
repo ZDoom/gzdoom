@@ -121,7 +121,6 @@ namespace TimidityPlus
 
 struct TimidityConfig
 {
-	int samplerate = 0;
 	void (*errorfunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
 
 	TimidityPlus::SoundFontReaderInterface* reader;
@@ -136,6 +135,25 @@ struct TimidityConfig
 };
 
 extern TimidityConfig timidityConfig;
+
+struct WildMidiConfig
+{
+	bool reverb = false;
+	bool enhanced_resampling = true;
+	void (*errorfunc)(const char* wmfmt, va_list args) = nullptr;
+
+	WildMidi::SoundFontReaderInterface* reader;
+	std::string readerName;
+
+	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.
+	// Thus, this config should always be stored globally to avoid this.
+	// If the last loaded instrument set is to be reused or the caller wants to manage them itself, 'reader' should be left empty.
+	std::string loadedConfig;
+	std::shared_ptr<WildMidi::Instruments> instruments;	// this is held both by the config and the device
+
+};
+
+extern WildMidiConfig wildMidiConfig;
 
 class MIDIStreamer;
 
@@ -166,7 +184,6 @@ public:
 	virtual void ChangeSettingInt(const char *setting, int value);
 	virtual void ChangeSettingNum(const char *setting, double value);
 	virtual void ChangeSettingString(const char *setting, const char *value);
-	virtual void WildMidiSetOption(int opt, int set);
 	virtual bool Preprocess(MIDIStreamer *song, bool looping);
 	virtual FString GetStats();
 	virtual int GetDeviceType() const { return MDEV_DEFAULT; }
@@ -176,7 +193,6 @@ public:
 
 
 void TimidityPP_Shutdown();
-void WildMidi_Shutdown ();
 
 
 // Base class for software synthesizer MIDI output devices ------------------
@@ -280,7 +296,6 @@ public:
 	void ChangeSettingInt(const char *setting, int value) override;
 	void ChangeSettingNum(const char *setting, double value) override;
 	void ChangeSettingString(const char *setting, const char *value) override;
-	void WildMidiSetOption(int opt, int set) override;
 	int ServiceEvent();
 	void SetMIDISource(MIDISource *_source);
 
@@ -419,8 +434,11 @@ MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
 MIDIDevice *CreateOplMIDIDevice(const OPLMidiConfig* config);
 MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate);
 MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
+MIDIDevice *CreateWildMIDIDevice(WildMidiConfig *config, int samplerate);
 
-MIDIDevice *CreateWildMIDIDevice(const char *args, int samplerate);
+#ifdef _WIN32
+MIDIDevice* CreateWinMIDIDevice(int mididevice);
+#endif
 
 // Data interface
 
@@ -430,6 +448,7 @@ void OPL_SetupConfig(OPLMidiConfig *config, const char *args);
 void OPN_SetupConfig(OpnConfig *config, const char *Args);
 bool GUS_SetupConfig(GUSConfig *config, const char *args);
 bool Timidity_SetupConfig(TimidityConfig* config, const char* args);
+bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args);
 
 // Module played via foo_dumb -----------------------------------------------
 

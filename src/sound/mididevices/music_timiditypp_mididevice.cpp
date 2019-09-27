@@ -105,7 +105,7 @@ void TimidityPPMIDIDevice::LoadInstruments(TimidityConfig* config)
 //==========================================================================
 
 TimidityPPMIDIDevice::TimidityPPMIDIDevice(TimidityConfig *config, int samplerate) 
-	:SoftSynthMIDIDevice(samplerate <= 0? config->samplerate : samplerate, 4000, 65000)
+	:SoftSynthMIDIDevice(samplerate, 4000, 65000)
 {
 	TimidityPlus::set_playback_rate(SampleRate);
 	LoadInstruments(config);

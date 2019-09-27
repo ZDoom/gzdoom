@@ -50,7 +50,7 @@
 class WildMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	WildMIDIDevice(const char *args, int samplerate);
+	WildMIDIDevice(WildMidiConfig* config, int samplerate);
 	~WildMIDIDevice();
 	
 	int Open(MidiCallback, void *userdata);
@@ -60,11 +60,14 @@ public:
 	
 protected:
 	WildMidi::Renderer *Renderer;
+	std::shared_ptr<WildMidi::Instruments> instruments;
 	
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
-	void WildMidiSetOption(int opt, int set);
+	void ChangeSettingInt(const char *opt, int set);
+	void LoadInstruments(WildMidiConfig* config);
+
 };
 
 
@@ -80,44 +83,43 @@ protected:
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static FString CurrentConfig;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_WILDMIDI)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
 
-CVAR(Int, wildmidi_frequency, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (currSong != NULL)
-		currSong->WildMidiSetOption(WildMidi::WM_MO_REVERB, *self? WildMidi::WM_MO_REVERB:0);
-}
-
-CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (currSong != NULL)
-		currSong->WildMidiSetOption(WildMidi::WM_MO_ENHANCED_RESAMPLING, *self? WildMidi::WM_MO_ENHANCED_RESAMPLING:0);
-}
-
-static WildMidi::Instruments *instruments;
-
-void WildMidi_Shutdown()
-{
-	if (instruments) delete instruments;
-}
 
 // CODE --------------------------------------------------------------------
 
-static void gzdoom_error_func(const char* wmfmt, va_list args)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void WildMIDIDevice::LoadInstruments(WildMidiConfig* config)
 {
-	Printf(TEXTCOLOR_RED);
-	VPrintf(PRINT_HIGH, wmfmt, args);
+	if (config->reader)
+	{
+		config->loadedConfig = config->readerName;
+		config->instruments.reset(new WildMidi::Instruments(config->reader, SampleRate));
+		bool success = config->instruments->LoadConfig(config->readerName.c_str());
+		config->reader = nullptr;
+
+		if (!success)
+		{
+			config->instruments.reset();
+			config->loadedConfig = "";
+			throw std::runtime_error("Unable to initialize instruments for WildMidi device");
+		}
+	}
+	else if (config->instruments == nullptr)
+	{
+		throw std::runtime_error("No instruments set for WildMidi device");
+	}
+	instruments = config->instruments;
+	if (instruments->LoadConfig(nullptr) < 0)
+	{
+		throw std::runtime_error("Unable to load instruments set for WildMidi device");
+	}
 }
 
 //==========================================================================
@@ -126,45 +128,17 @@ static void gzdoom_error_func(const char* wmfmt, va_list args)
 //
 //==========================================================================
 
-WildMIDIDevice::WildMIDIDevice(const char *args, int samplerate)
-	:SoftSynthMIDIDevice(samplerate <= 0? wildmidi_frequency : samplerate, 11025, 65535)
+WildMIDIDevice::WildMIDIDevice(WildMidiConfig *config, int samplerate)
+	:SoftSynthMIDIDevice(samplerate, 11025, 65535)
 {
 	Renderer = NULL;
-	WildMidi::wm_error_func = gzdoom_error_func;
+	LoadInstruments(config);
 
-	if (args == NULL || *args == 0) args = wildmidi_config;
-
-	if (instruments == nullptr || (CurrentConfig.CompareNoCase(args) != 0 || SampleRate != instruments->GetSampleRate()))
-	{
-		if (instruments) delete instruments;
-		instruments = nullptr;
-		CurrentConfig = "";
-
-		auto reader = sfmanager.OpenSoundFont(args, SF_GUS);
-		if (reader == nullptr)
-		{
-			I_Error("WildMidi: Unable to open sound font %s\n", args);
-		}
-
-		instruments = new WildMidi::Instruments(reader, SampleRate);
-		if (instruments->LoadConfig(nullptr) < 0)
-		{
-			I_Error("WildMidi: Unable to load instruments for sound font %s\n", args);
-		}
-		CurrentConfig = args;
-	}
-	if (CurrentConfig.IsNotEmpty())
-	{
-		Renderer = new WildMidi::Renderer(instruments);
-		int flags = 0;
-		if (wildmidi_enhanced_resampling) flags |= WildMidi::WM_MO_ENHANCED_RESAMPLING;
-		if (wildmidi_reverb) flags |= WildMidi::WM_MO_REVERB;
-		Renderer->SetOption(WildMidi::WM_MO_ENHANCED_RESAMPLING | WildMidi::WM_MO_REVERB, flags);
-	}
-	else
-	{
-		I_Error("Failed to load any MIDI patches");
-	}
+	Renderer = new WildMidi::Renderer(instruments.get());
+	int flags = 0;
+	if (config->enhanced_resampling) flags |= WildMidi::WM_MO_ENHANCED_RESAMPLING;
+	if (config->reverb) flags |= WildMidi::WM_MO_REVERB;
+	Renderer->SetOption(WildMidi::WM_MO_ENHANCED_RESAMPLING | WildMidi::WM_MO_REVERB, flags);
 }
 
 //==========================================================================
@@ -180,7 +154,6 @@ WildMIDIDevice::~WildMIDIDevice()
 	{
 		delete Renderer;
 	}
-	// Do not shut down the device so that it can be reused for the next song being played.
 }
 
 //==========================================================================
@@ -277,9 +250,14 @@ FString WildMIDIDevice::GetStats()
 //
 //==========================================================================
 
-void WildMIDIDevice::WildMidiSetOption(int opt, int set)
+void WildMIDIDevice::ChangeSettingInt(const char *opt, int set)
 {
-	Renderer->SetOption(opt, set);
+	int option;
+	if (!stricmp(opt, "wildmidi.reverb")) option = WildMidi::WM_MO_REVERB;
+	else if (!stricmp(opt, "wildmidi.resampling")) option = WildMidi::WM_MO_ENHANCED_RESAMPLING;
+	else return;
+	int setit = option * int(set);
+	Renderer->SetOption(option, setit);
 }
 
 //==========================================================================
@@ -288,8 +266,8 @@ void WildMIDIDevice::WildMidiSetOption(int opt, int set)
 //
 //==========================================================================
 
-MIDIDevice *CreateWildMIDIDevice(const char *args, int samplerate)
+MIDIDevice *CreateWildMIDIDevice(WildMidiConfig *config, int samplerate)
 {
-	return new WildMIDIDevice(args, samplerate);
+	return new WildMIDIDevice(config, samplerate);
 }
 

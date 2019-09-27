@@ -45,6 +45,7 @@
 #include "timiditypp/timidity.h"
 #include "timiditypp/instrum.h"
 #include "v_text.h"
+#include "c_console.h"
 
 // do this without including windows.h for this one single prototype
 #ifdef _WIN32
@@ -65,6 +66,7 @@ OPLMidiConfig oplMidiConfig;
 OpnConfig opnConfig;
 GUSConfig gusConfig;
 TimidityConfig timidityConfig;
+WildMidiConfig wildMidiConfig;
 
 //==========================================================================
 //
@@ -843,9 +845,6 @@ CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	CheckRestart(MDEV_TIMIDITY);
 }
 
-CVAR(Int, timidity_frequency, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
-
 bool Timidity_SetupConfig(TimidityConfig* config, const char* args)
 {
 	config->errorfunc = gus_printfunc;
@@ -863,3 +862,56 @@ bool Timidity_SetupConfig(TimidityConfig* config, const char* args)
 	config->readerName = args;
 	return true;
 }
+
+//==========================================================================
+//
+// WildMidi
+//
+//==========================================================================
+
+CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_WILDMIDI);
+}
+
+CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (currSong != NULL)
+		currSong->ChangeSettingInt("wildmidi.reverb", self ? WildMidi::WM_MO_REVERB : 0);
+	wildMidiConfig.reverb = self;
+}
+
+CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (currSong != NULL)
+		currSong->ChangeSettingInt("wildmidi.resampling", self ? WildMidi::WM_MO_ENHANCED_RESAMPLING : 0);
+	wildMidiConfig.enhanced_resampling = self;
+}
+
+static void wm_printfunc(const char* wmfmt, va_list args)
+{
+	Printf(TEXTCOLOR_RED);
+	VPrintf(PRINT_HIGH, wmfmt, args);
+}
+
+
+bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
+{
+	config->errorfunc = wm_printfunc;
+	if (*args == 0) args = wildmidi_config;
+	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+
+	auto reader = sfmanager.OpenSoundFont(args, SF_GUS);
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "WildMidi: %s: Unable to load sound font\n", args);
+		throw std::runtime_error(error);
+	}
+	config->reader = reader;
+	config->readerName = args;
+	config->reverb = wildmidi_reverb;
+	config->enhanced_resampling = wildmidi_enhanced_resampling;
+	return true;
+}
+

@@ -38,9 +38,18 @@
 #include "adlmidi.h"
 #include "cmdlib.h"
 #include "doomerrors.h"
+#include "timidity/timidity.h"
+#include "timidity/playmidi.h"
+#include "timidity/instrum.h"
+#include "timiditypp/controls.h"
+#include "timiditypp/timidity.h"
+#include "timiditypp/instrum.h"
+#include "v_text.h"
+#include "c_console.h"
 
 #ifdef _WIN32
 // do this without including windows.h for this one single prototype
+#ifdef _WIN32
 extern "C" unsigned __stdcall GetSystemDirectoryA(char* lpBuffer, unsigned uSize);
 #endif // _WIN32
 
@@ -55,7 +64,16 @@ static void CheckRestart(int devtype)
 ADLConfig adlConfig;
 FluidConfig fluidConfig;
 OPLMidiConfig oplMidiConfig;
+OpnConfig opnConfig;
+GUSConfig gusConfig;
+TimidityConfig timidityConfig;
+WildMidiConfig wildMidiConfig;
 
+//==========================================================================
+//
+// ADL Midi device
+//
+//==========================================================================
 
 CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -89,25 +107,50 @@ CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	adlConfig.adl_use_custom_bank = self;
 	CheckRestart(MDEV_ADL);
 }
 
 CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	CheckRestart(MDEV_ADL);
-
-	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
-	auto info = sfmanager.FindSoundFont(self, SF_WOPL);
-	if (info == nullptr) adlConfig.adl_custom_bank = nullptr;
-	else adlConfig.adl_custom_bank = info->mFilename;
+	if (adl_use_custom_bank) CheckRestart(MDEV_ADL);
 }
+
+void ADL_SetupConfig(ADLConfig *config, const char *Args)
+{
+	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
+	const char *bank = Args && *Args? Args : adl_use_custom_bank? *adl_custom_bank : nullptr;
+	config->adl_bank = adl_bank;
+	if (bank && *bank)
+	{
+		auto info = sfmanager.FindSoundFont(bank, SF_WOPL);
+		if (info == nullptr)
+		{
+			if (*bank >= '0' && *bank <= '9')
+			{
+				config->adl_bank = (int)strtoll(bank, nullptr, 10);
+			}
+			config->adl_custom_bank = nullptr;
+		}
+		else
+		{
+			config->adl_custom_bank = info->mFilename;
+		}
+	}
+}
+
 
 CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	adlConfig.adl_volume_model = self;
 	CheckRestart(MDEV_ADL);
 }
+
+//==========================================================================
+//
+// Fluidsynth MIDI device
+//
+//==========================================================================
+
 
 #define FLUID_CHORUS_MOD_SINE		0
 #define FLUID_CHORUS_MOD_TRIANGLE	1
@@ -119,13 +162,13 @@ CUSTOM_CVAR(String, fluid_lib, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	fluidConfig.fluid_lib = self;	// only takes effect for next song.
 }
 
-int BuildFluidPatchSetList(const char* patches, bool systemfallback)
+void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfallback)
 {
 	fluidConfig.fluid_patchset.clear();
 	//Resolve the paths here, the renderer will only get a final list of file names.
 	auto info = sfmanager.FindSoundFont(patches, SF_SF2);
 	if (info != nullptr) patches = info->mFilename.GetChars();
-
+	
 	int count;
 	char* wpatches = strdup(patches);
 	char* tok;
@@ -134,11 +177,9 @@ int BuildFluidPatchSetList(const char* patches, bool systemfallback)
 #else
 	const char* const delim = ":";
 #endif
-
-	if (wpatches == NULL)
+	
+	if (wpatches != NULL)
 	{
-		return 0;
-	}
 	tok = strtok(wpatches, delim);
 	count = 0;
 	while (tok != NULL)
@@ -159,7 +200,7 @@ int BuildFluidPatchSetList(const char* patches, bool systemfallback)
 		}
 		if (FileExists(path))
 		{
-			fluidConfig.fluid_patchset.push_back(path.GetChars());
+				config->fluid_patchset.push_back(path.GetChars());
 		}
 		else
 		{
@@ -168,14 +209,15 @@ int BuildFluidPatchSetList(const char* patches, bool systemfallback)
 		tok = strtok(NULL, delim);
 	}
 	free(wpatches);
-	if (fluidConfig.fluid_patchset.size() > 0) return 1;
+		if (config->fluid_patchset.size() > 0) return;
+	}
 
 	if (systemfallback)
 	{
 		// The following will only be used if no soundfont at all is provided, i.e. even the standard one coming with GZDoom is missing.
 #ifdef __unix__
 		// This is the standard location on Ubuntu.
-		return BuildFluidPatchSetList("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2", false);
+		Fluid_SetupConfig(config, "/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2", false);
 #endif
 #ifdef _WIN32
 		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
@@ -186,22 +228,21 @@ int BuildFluidPatchSetList(const char* patches, bool systemfallback)
 			strcat(sysdir, "\\CT4MGM.SF2");
 			if (FileExists(sysdir))
 			{
-				fluidConfig.fluid_patchset.push_back(sysdir);
-				return 1;
+				config->fluid_patchset.push_back(sysdir);
+				return;
 			}
 			// Try again with CT2MGM.SF2
 			sysdir[filepart + 3] = '2';
 			if (FileExists(sysdir))
 			{
-				fluidConfig.fluid_patchset.push_back(sysdir);
-				return 1;
+				config->fluid_patchset.push_back(sysdir);
+				return;
 			}
 		}
 
 #endif
 
 	}
-	return 0;
 }
 
 CUSTOM_CVAR(String, fluid_patchset, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -418,7 +459,11 @@ CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR
 }
 
 
-
+//==========================================================================
+//
+// OPL MIDI device
+//
+//==========================================================================
 
 CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -440,10 +485,7 @@ CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
+	CheckRestart(MDEV_OPL);
 }
 
 CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -451,7 +493,7 @@ CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	oplMidiConfig.fullpan = self;
 }
 
-void LoadGenMidi()
+void OPL_SetupConfig(OPLMidiConfig *config, const char *args)
 {
 	// The OPL renderer should not care about where this comes from.
 	// Note: No I_Error here - this needs to be consistent with the rest of the music code.
@@ -463,11 +505,414 @@ void LoadGenMidi()
 	data.Read(filehdr, 8);
 	if (memcmp(filehdr, "#OPL_II#", 8)) throw std::runtime_error("Corrupt GENMIDI lump");
 	data.Read(oplMidiConfig.OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
+	
+	config->core = opl_core;
+	if (args != NULL && *args >= '0' && *args < '4') config->core = *args - '0';
 }
 
-int getOPLCore(const char* args)
+
+//==========================================================================
+//
+// OPN MIDI device
+//
+//==========================================================================
+
+
+CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	int current_opl_core = opl_core;
-	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
-	return current_opl_core;
+	opnConfig.opn_chips_count = self;
+	CheckRestart(MDEV_OPN);
 }
+
+CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	opnConfig.opn_emulator_id = self;
+	CheckRestart(MDEV_OPN);
+
+}
+
+CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	opnConfig.opn_run_at_pcm_rate = self;
+	CheckRestart(MDEV_OPN);
+
+}
+
+CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	opnConfig.opn_fullpan = self;
+	CheckRestart(MDEV_OPN);
+
+}
+
+CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_OPN);
+
+}
+
+CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (opn_use_custom_bank)
+	{
+		CheckRestart(MDEV_OPN);
+	}
+}
+
+void OPN_SetupConfig(OpnConfig *config, const char *Args)
+{
+	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
+	const char *bank = Args && *Args? Args : opn_use_custom_bank? *opn_custom_bank : nullptr;
+	if (bank && *bank)
+	{
+		auto info = sfmanager.FindSoundFont(bank, SF_WOPN);
+		if (info == nullptr)
+		{
+			config->opn_custom_bank = "";
+		}
+		else
+		{
+			config->opn_custom_bank = info->mFilename;
+		}
+	}
+	
+	int lump = Wads.CheckNumForFullName("xg.wopn");
+	if (lump < 0)
+	{
+		config->default_bank.resize(0);
+		return;
+	}
+	FMemLump data = Wads.ReadLump(lump);
+	config->default_bank.resize(data.GetSize());
+	memcpy(config->default_bank.data(), data.GetMem(), data.GetSize());
+}
+
+
+//==========================================================================
+//
+// GUS MIDI device
+//
+//==========================================================================
+
+
+CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// This was 'true' but since it requires special setup that's not such a good idea.
+{
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	gusConfig.gus_patchdir = self;
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(Int, midi_voices, 32, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	gusConfig.midi_voices = self;
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	gusConfig.gus_memsize = self;
+	CheckRestart(MDEV_GUS);
+}
+
+//==========================================================================
+//
+// Error printing override to redirect to the internal console instead of stdout.
+//
+//==========================================================================
+
+static void gus_printfunc(int type, int verbosity_level, const char* fmt, ...)
+{
+	if (verbosity_level >= Timidity::VERB_DEBUG) return;	// Don't waste time on diagnostics.
+	
+	va_list args;
+	va_start(args, fmt);
+	FString msg;
+	msg.VFormat(fmt, args);
+	va_end(args);
+	
+	switch (type)
+	{
+		case Timidity::CMSG_ERROR:
+			Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
+			break;
+			
+		case Timidity::CMSG_WARNING:
+			Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
+			break;
+			
+		case Timidity::CMSG_INFO:
+			DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
+			break;
+	}
+}
+
+// make sure we can use the above function for the Timidity++ device as well.
+static_assert(Timidity::CMSG_ERROR == TimidityPlus::CMSG_ERROR, "Timidity constant mismatch");
+static_assert(Timidity::CMSG_WARNING == TimidityPlus::CMSG_WARNING, "Timidity constant mismatch");
+static_assert(Timidity::CMSG_INFO == TimidityPlus::CMSG_INFO, "Timidity constant mismatch");
+static_assert(Timidity::VERB_DEBUG == TimidityPlus::VERB_DEBUG, "Timidity constant mismatch");
+
+//==========================================================================
+//
+// Sets up the date to load the instruments for the GUS device.
+// The actual instrument loader is part of the device.
+//
+//==========================================================================
+
+bool GUS_SetupConfig(GUSConfig *config, const char *args)
+{
+	config->errorfunc = gus_printfunc;
+	if ((midi_dmxgus && *args == 0) || !stricmp(args, "DMXGUS"))
+	{
+		if (stricmp(config->loadedConfig.c_str(), "DMXGUS") == 0) return false; // aleady loaded
+		int lump = Wads.CheckNumForName("DMXGUS");
+		if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
+		if (lump >= 0)
+		{
+			auto data = Wads.OpenLumpReader(lump);
+			if (data.GetLength() > 0)
+			{
+				config->dmxgus.resize(data.GetLength());
+				data.Read(config->dmxgus.data(), data.GetLength());
+				return true;
+			}
+		}
+	}
+	if (*args == 0) args = midi_config;
+	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+	
+	auto reader = sfmanager.OpenSoundFont(args, SF_GUS | SF_SF2);
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "GUS: %s: Unable to load sound font\n",args);
+		throw std::runtime_error(error);
+	}
+	config->reader = reader;
+	config->readerName = args;
+	return true;
+}
+
+
+//==========================================================================
+//
+// CVar interface to configurable parameters
+//
+// Timidity++ uses a static global set of configuration variables
+// THese can be changed while the synth is playing but need synchronization.
+//
+// Currently the synth is not fully reentrant due to this and a handful
+// of other global variables.
+//
+//==========================================================================
+
+template<class T> void ChangeVarSync(T& var, T value)
+{
+	std::lock_guard<std::mutex> lock(TimidityPlus::ConfigMutex);
+	var = value;
+}
+
+CUSTOM_CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_modulation_wheel, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_portamento, *self);
+}
+/*
+* reverb=0     no reverb                 0
+* reverb=1     old reverb                1
+* reverb=1,n   set reverb level to n   (-1 to -127)
+* reverb=2     "global" old reverb       2
+* reverb=2,n   set reverb level to n   (-1 to -127) - 128
+* reverb=3     new reverb                3
+* reverb=3,n   set reverb level to n   (-1 to -127) - 256
+* reverb=4     "global" new reverb       4
+* reverb=4,n   set reverb level to n   (-1 to -127) - 384
+*/
+EXTERN_CVAR(Int, timidity_reverb_level)
+EXTERN_CVAR(Int, timidity_reverb)
+
+static void SetReverb()
+{
+	int value = 0;
+	int mode = timidity_reverb;
+	int level = timidity_reverb_level;
+
+	if (mode == 0 || level == 0) value = mode;
+	else value = (mode - 1) * -128 - level;
+	ChangeVarSync(TimidityPlus::timidity_reverb, value);
+}
+
+CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 4) self = 0;
+	else SetReverb();
+}
+
+CUSTOM_CVAR(Int, timidity_reverb_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 127) self = 0;
+	else SetReverb();
+}
+
+CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_chorus, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
+	CheckRestart(MDEV_TIMIDITY);
+}
+
+CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_channel_pressure, *self);
+}
+
+CUSTOM_CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_lpf_def, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_temper_control, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_modulation_envelope, *self);
+	CheckRestart(MDEV_TIMIDITY);
+}
+
+CUSTOM_CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_overlap_voice_allow, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_drum_effect, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_pan_delay, *self);
+}
+
+CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /* coef. of drum amplitude */
+{
+	if (self < 0) self = 0;
+	else if (self > MAX_AMPLIFICATION / 100.f) self = MAX_AMPLIFICATION / 100.f;
+	ChangeVarSync(TimidityPlus::timidity_drum_power, *self);
+}
+CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < -24) self = -24;
+	else if (self > 24) self = 24;
+	ChangeVarSync(TimidityPlus::timidity_key_adjust, *self);
+}
+// For testing mainly.
+CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.25) self = 0.25;
+	else if (self > 10) self = 10;
+	ChangeVarSync(TimidityPlus::timidity_tempo_adjust, *self);
+}
+
+CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 0;
+	ChangeVarSync(TimidityPlus::min_sustain_time, *self);
+}
+
+// Config file to use
+CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_TIMIDITY);
+}
+
+bool Timidity_SetupConfig(TimidityConfig* config, const char* args)
+{
+	config->errorfunc = gus_printfunc;
+	if (*args == 0) args = timidity_config;
+	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+
+	auto reader = sfmanager.OpenSoundFont(args, SF_GUS | SF_SF2);
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "Timidity++: %s: Unable to load sound font\n", args);
+		throw std::runtime_error(error);
+	}
+	config->reader = reader;
+	config->readerName = args;
+	return true;
+}
+
+//==========================================================================
+//
+// WildMidi
+//
+//==========================================================================
+
+CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_WILDMIDI);
+}
+
+CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (currSong != NULL)
+		currSong->ChangeSettingInt("wildmidi.reverb", self ? WildMidi::WM_MO_REVERB : 0);
+	wildMidiConfig.reverb = self;
+}
+
+CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (currSong != NULL)
+		currSong->ChangeSettingInt("wildmidi.resampling", self ? WildMidi::WM_MO_ENHANCED_RESAMPLING : 0);
+	wildMidiConfig.enhanced_resampling = self;
+}
+
+static void wm_printfunc(const char* wmfmt, va_list args)
+{
+	Printf(TEXTCOLOR_RED);
+	VPrintf(PRINT_HIGH, wmfmt, args);
+}
+
+
+bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
+{
+	config->errorfunc = wm_printfunc;
+	if (*args == 0) args = wildmidi_config;
+	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+
+	auto reader = sfmanager.OpenSoundFont(args, SF_GUS);
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "WildMidi: %s: Unable to load sound font\n", args);
+		throw std::runtime_error(error);
+	}
+	config->reader = reader;
+	config->readerName = args;
+	config->reverb = wildmidi_reverb;
+	config->enhanced_resampling = wildmidi_enhanced_resampling;
+	return true;
+}
+

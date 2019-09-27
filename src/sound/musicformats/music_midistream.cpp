@@ -47,17 +47,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-#ifdef _WIN32
-MIDIDevice *CreateWinMIDIDevice(int mididevice);
-#endif
-MIDIDevice* CreateFluidSynthMIDIDevice(int samplerate, FluidConfig* config, int (*printfunc)(const char*, ...));
-MIDIDevice *CreateTimidityMIDIDevice(const char *args, int samplerate);
-MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
-MIDIDevice *CreateADLMIDIDevice(const char *args, const ADLConfig* config);
-MIDIDevice *CreateOPNMIDIDevice(const char *args);
-MIDIDevice *CreateWildMIDIDevice(const char *args, int samplerate);
-MIDIDevice* CreateOplMIDIDevice(OPLMidiConfig* config);
-int BuildFluidPatchSetList(const char* patches, bool systemfallback);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -209,15 +198,18 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 			switch (devtype)
 			{
 			case MDEV_GUS:
-				dev = CreateTimidityMIDIDevice(Args, samplerate);
+				GUS_SetupConfig(&gusConfig, Args);
+				dev = CreateTimidityMIDIDevice(&gusConfig, samplerate);
 				break;
 
 			case MDEV_ADL:
-				dev = CreateADLMIDIDevice(Args, &adlConfig);
+				ADL_SetupConfig(&adlConfig, Args);
+				dev = CreateADLMIDIDevice(&adlConfig);
 				break;
 
 			case MDEV_OPN:
-				dev = CreateOPNMIDIDevice(Args);
+				OPN_SetupConfig(&opnConfig, Args);
+				dev = CreateOPNMIDIDevice(&opnConfig);
 				break;
 
 			case MDEV_MMAPI:
@@ -229,22 +221,23 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				// Intentional fall-through for non-Windows systems.
 
 			case MDEV_FLUIDSYNTH:
-				BuildFluidPatchSetList(Args, true);
+				Fluid_SetupConfig(&fluidConfig, Args, true);
 				dev = CreateFluidSynthMIDIDevice(samplerate, &fluidConfig, Printf);
 				break;
 
 			case MDEV_OPL:
-				LoadGenMidi();
-				oplMidiConfig.core = getOPLCore(Args);
+				OPL_SetupConfig(&oplMidiConfig, Args);
 				dev = CreateOplMIDIDevice(&oplMidiConfig);
 				break;
 
 			case MDEV_TIMIDITY:
-				dev = CreateTimidityPPMIDIDevice(Args, samplerate);
+				Timidity_SetupConfig(&timidityConfig, Args);
+				dev = CreateTimidityPPMIDIDevice(&timidityConfig, samplerate);
 				break;
 
 			case MDEV_WILDMIDI:
-				dev = CreateWildMIDIDevice(Args, samplerate);
+				WildMidi_SetupConfig(&wildMidiConfig, Args);
+				dev = CreateWildMIDIDevice(&wildMidiConfig, samplerate);
 				break;
 
 			default:
@@ -308,7 +301,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	m_Looping = looping;
 	source->SetMIDISubsong(subsong);
 	devtype = SelectMIDIDevice(DeviceType);
-	MIDI = CreateMIDIDevice(devtype, 0);
+	MIDI = CreateMIDIDevice(devtype, (int)GSnd->GetOutputRate());
 	InitPlayback();
 }
 
@@ -597,21 +590,6 @@ void MIDIStreamer::ChangeSettingString(const char *setting, const char *value)
 	if (MIDI != NULL)
 	{
 		MIDI->ChangeSettingString(setting, value);
-	}
-}
-
-
-//==========================================================================
-//
-// MIDIDeviceStreamer :: WildMidiSetOption
-//
-//==========================================================================
-
-void MIDIStreamer::WildMidiSetOption(int opt, int set)
-{
-	if (MIDI != NULL)
-	{
-		MIDI->WildMidiSetOption(opt, set);
 	}
 }
 
@@ -1072,16 +1050,6 @@ void MIDIDevice::ChangeSettingNum(const char *setting, double value)
 //==========================================================================
 
 void MIDIDevice::ChangeSettingString(const char *setting, const char *value)
-{
-}
-
-//==========================================================================
-//
-// MIDIDevice :: WildMidiSetOption
-//
-//==========================================================================
-
-void MIDIDevice::WildMidiSetOption(int opt, int set)
 {
 }
 

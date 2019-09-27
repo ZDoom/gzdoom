@@ -38,8 +38,6 @@
 namespace Timidity
 {
 
-static std::string def_instr_name;
-
 static long ParseCommandLine(const char* args, int* argc, char** argv)
 {
 	int count;
@@ -718,8 +716,8 @@ Renderer::Renderer(float sample_rate, int voices_, Instruments *inst)
 
 	default_instrument = NULL;
 	default_program = DEFAULT_PROGRAM;
-	if (def_instr_name.length() > 0)
-		set_default_instrument(def_instr_name.c_str());
+	if (inst->def_instr_name.length() > 0)
+		set_default_instrument(inst->def_instr_name.c_str());
 
 	voices = std::max(voices_, 16);
 	voice = new Voice[voices];

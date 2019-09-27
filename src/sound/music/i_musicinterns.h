@@ -35,15 +35,14 @@ struct ADLConfig
 	int adl_volume_model = 3; // DMX
 	bool adl_run_at_pcm_rate = 0;
 	bool adl_fullpan = 1;
-	bool adl_use_custom_bank = 0;
-	const char *adl_custom_bank = nullptr;
+	std::string adl_custom_bank;
 };
 
 extern ADLConfig adlConfig;
 
 struct FluidConfig
 {
-	const char* fluid_lib = nullptr;
+	std::string fluid_lib;
 	std::vector<std::string> fluid_patchset;
 	bool fluid_reverb = false;
 	bool fluid_chorus = false;
@@ -75,6 +74,86 @@ struct OPLMidiConfig
 
 extern OPLMidiConfig oplMidiConfig;
 
+struct OpnConfig
+{
+	int opn_chips_count = 8;
+	int opn_emulator_id = 0;
+	bool opn_run_at_pcm_rate = false;
+	bool opn_fullpan = 1;
+	std::string opn_custom_bank;
+	std::vector<uint8_t> default_bank;
+};
+
+extern OpnConfig opnConfig;
+
+namespace Timidity
+{
+	class Instruments;
+	class SoundFontReaderInterface;
+}
+
+struct GUSConfig
+{
+	// This one is a bit more complex because it also implements the instrument cache.
+	int midi_voices = 32;
+	int gus_memsize = 0;
+	void (*errorfunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
+
+	Timidity::SoundFontReaderInterface *reader;
+	std::string readerName;
+	std::vector<uint8_t> dmxgus;				// can contain the contents of a DMXGUS lump that may be used as the instrument set. In this case gus_patchdir must point to the location of the GUS data.
+	std::string gus_patchdir;
+	
+	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.
+	// Thus, this config should always be stored globally to avoid this.
+	// If the last loaded instrument set is to be reused or the caller wants to manage them itself, both 'reader' and 'dmxgus' fields should be left empty.
+	std::string loadedConfig;
+	std::shared_ptr<Timidity::Instruments> instruments;	// this is held both by the config and the device
+};
+
+extern GUSConfig gusConfig;
+
+namespace TimidityPlus
+{
+	class Instruments;
+	class SoundFontReaderInterface;
+}
+
+struct TimidityConfig
+{
+	void (*errorfunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
+
+	TimidityPlus::SoundFontReaderInterface* reader;
+	std::string readerName;
+
+	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.
+	// Thus, this config should always be stored globally to avoid this.
+	// If the last loaded instrument set is to be reused or the caller wants to manage them itself, 'reader' should be left empty.
+	std::string loadedConfig;
+	std::shared_ptr<TimidityPlus::Instruments> instruments;	// this is held both by the config and the device
+
+};
+
+extern TimidityConfig timidityConfig;
+
+struct WildMidiConfig
+{
+	bool reverb = false;
+	bool enhanced_resampling = true;
+	void (*errorfunc)(const char* wmfmt, va_list args) = nullptr;
+
+	WildMidi::SoundFontReaderInterface* reader;
+	std::string readerName;
+
+	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.
+	// Thus, this config should always be stored globally to avoid this.
+	// If the last loaded instrument set is to be reused or the caller wants to manage them itself, 'reader' should be left empty.
+	std::string loadedConfig;
+	std::shared_ptr<WildMidi::Instruments> instruments;	// this is held both by the config and the device
+
+};
+
+extern WildMidiConfig wildMidiConfig;
 
 class MIDIStreamer;
 
@@ -105,7 +184,6 @@ public:
 	virtual void ChangeSettingInt(const char *setting, int value);
 	virtual void ChangeSettingNum(const char *setting, double value);
 	virtual void ChangeSettingString(const char *setting, const char *value);
-	virtual void WildMidiSetOption(int opt, int set);
 	virtual bool Preprocess(MIDIStreamer *song, bool looping);
 	virtual FString GetStats();
 	virtual int GetDeviceType() const { return MDEV_DEFAULT; }
@@ -114,9 +192,7 @@ public:
 
 
 
-void Timidity_Shutdown();
 void TimidityPP_Shutdown();
-void WildMidi_Shutdown ();
 
 
 // Base class for software synthesizer MIDI output devices ------------------
@@ -220,7 +296,6 @@ public:
 	void ChangeSettingInt(const char *setting, int value) override;
 	void ChangeSettingNum(const char *setting, double value) override;
 	void ChangeSettingString(const char *setting, const char *value) override;
-	void WildMidiSetOption(int opt, int set) override;
 	int ServiceEvent();
 	void SetMIDISource(MIDISource *_source);
 
@@ -313,7 +388,7 @@ public:
 	void Play (bool looping, int subsong);
 	bool IsPlaying ();
 	bool IsValid () const;
-	void ResetChips ();
+	void ChangeSettingInt (const char *, int) override;
 
 protected:
 
@@ -351,11 +426,29 @@ public:
 	CDDAFile (FileReader &reader);
 };
 
+// MIDI devices
+
+MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const FluidConfig* config, int (*printfunc)(const char*, ...));
+MIDIDevice *CreateADLMIDIDevice(const ADLConfig* config);
+MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
+MIDIDevice *CreateOplMIDIDevice(const OPLMidiConfig* config);
+MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate);
+MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
+MIDIDevice *CreateWildMIDIDevice(WildMidiConfig *config, int samplerate);
+
+#ifdef _WIN32
+MIDIDevice* CreateWinMIDIDevice(int mididevice);
+#endif
+
 // Data interface
 
-int BuildFluidPatchSetList(const char* patches, bool systemfallback);
-void LoadGenMidi();
-int getOPLCore(const char* args);
+void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfallback);
+void ADL_SetupConfig(ADLConfig *config, const char *Args);
+void OPL_SetupConfig(OPLMidiConfig *config, const char *args);
+void OPN_SetupConfig(OpnConfig *config, const char *Args);
+bool GUS_SetupConfig(GUSConfig *config, const char *args);
+bool Timidity_SetupConfig(TimidityConfig* config, const char* args);
+bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args);
 
 // Module played via foo_dumb -----------------------------------------------
 

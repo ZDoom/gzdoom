@@ -51,7 +51,7 @@ struct fluid_synth_t;
 class FluidSynthMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	FluidSynthMIDIDevice(int samplerate, FluidConfig *config, int (*printfunc_)(const char *, ...));
+	FluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc_)(const char *, ...));
 	~FluidSynthMIDIDevice();
 	
 	int Open(MidiCallback, void *userdata);
@@ -65,7 +65,7 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
-	int LoadPatchSets(FluidConfig *config);
+	int LoadPatchSets(const FluidConfig *config);
 	
 	fluid_settings_t *FluidSettings;
 	fluid_synth_t *FluidSynth;
@@ -162,7 +162,7 @@ const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinpr
 //
 //==========================================================================
 
-FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, FluidConfig *config, int (*printfunc_)(const char*, ...) = nullptr)
+FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc_)(const char*, ...) = nullptr)
 	: SoftSynthMIDIDevice(samplerate <= 0? config->fluid_samplerate : samplerate, 22050, 96000)
 {
 	// These are needed for changing the settings. If something posts a transient config in here we got no way to retrieve the values afterward.
@@ -180,7 +180,7 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, FluidConfig *config, 
 	FluidSynth = NULL;
 	FluidSettings = NULL;
 #ifdef DYN_FLUIDSYNTH
-	if (!LoadFluidSynth(config->fluid_lib))
+	if (!LoadFluidSynth(config->fluid_lib.c_str()))
 	{
 		throw std::runtime_error("Failed to load FluidSynth.\n");
 	}
@@ -348,7 +348,7 @@ void FluidSynthMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-int FluidSynthMIDIDevice::LoadPatchSets(FluidConfig *config)
+int FluidSynthMIDIDevice::LoadPatchSets(const FluidConfig *config)
 {
 	int count = 0;
 	for (auto& file : config->fluid_patchset)
@@ -621,7 +621,7 @@ void FluidSynthMIDIDevice::UnloadFluidSynth()
 //
 //==========================================================================
 
-MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, FluidConfig *config, int (*printfunc)(const char*, ...))
+MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc)(const char*, ...))
 {
 	return new FluidSynthMIDIDevice(samplerate, config, printfunc);
 }

@@ -37,8 +37,15 @@
 static bool OPL_Active;
 
 EXTERN_CVAR (Int, opl_numchips)
+EXTERN_CVAR(Int, opl_core)
 
-int getOPLCore(const char* args);
+int getOPLCore(const char* args)
+{
+	int current_opl_core = opl_core;
+	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
+	return current_opl_core;
+}
+
 
 OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
 {
@@ -81,9 +88,10 @@ bool OPLMUSSong::IsValid () const
 	return m_Stream != NULL;
 }
 
-void OPLMUSSong::ResetChips ()
+void OPLMUSSong::ChangeSettingInt(const char * name, int val)
 {
-	Music->ResetChips (opl_numchips);
+	if (!strcmp(name, "opl.numchips"))
+		Music->ResetChips (val);
 }
 
 bool OPLMUSSong::IsPlaying ()

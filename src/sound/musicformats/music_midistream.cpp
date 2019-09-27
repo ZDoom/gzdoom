@@ -50,9 +50,6 @@
 #ifdef _WIN32
 MIDIDevice *CreateWinMIDIDevice(int mididevice);
 #endif
-MIDIDevice *CreateTimidityMIDIDevice(const char *args, int samplerate);
-MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
-MIDIDevice *CreateWildMIDIDevice(const char *args, int samplerate);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -204,17 +201,18 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 			switch (devtype)
 			{
 			case MDEV_GUS:
-				dev = CreateTimidityMIDIDevice(Args, samplerate);
+				GUS_SetupConfig(&gusConfig, Args);
+				dev = CreateTimidityMIDIDevice(&gusConfig, samplerate);
 				break;
 
 			case MDEV_ADL:
-				SetAdlCustomBank(Args);
+				ADL_SetupConfig(&adlConfig, Args);
 				dev = CreateADLMIDIDevice(&adlConfig);
 				break;
 
 			case MDEV_OPN:
-				SetOpnCustomBank(Args);
-				dev = CreateOPNMIDIDevice(Args);
+				OPN_SetupConfig(&opnConfig, Args);
+				dev = CreateOPNMIDIDevice(&opnConfig);
 				break;
 
 			case MDEV_MMAPI:
@@ -226,13 +224,12 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				// Intentional fall-through for non-Windows systems.
 
 			case MDEV_FLUIDSYNTH:
-				BuildFluidPatchSetList(Args, true);
+				Fluid_SetupConfig(&fluidConfig, Args, true);
 				dev = CreateFluidSynthMIDIDevice(samplerate, &fluidConfig, Printf);
 				break;
 
 			case MDEV_OPL:
-				LoadGenMidi();
-				oplMidiConfig.core = getOPLCore(Args);
+				OPL_SetupConfig(&oplMidiConfig, Args);
 				dev = CreateOplMIDIDevice(&oplMidiConfig);
 				break;
 

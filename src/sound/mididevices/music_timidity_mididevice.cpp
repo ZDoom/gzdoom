@@ -56,72 +56,6 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// CVARS for this device - all of them require a device reset --------------------------------------------
-
-static void CheckRestart()
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_GUS)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	CheckRestart();
-}
-
-CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// This was 'true' but since it requires special setup that's not such a good idea.
-{
-	CheckRestart();
-}
-
-CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	CheckRestart();
-}
-
-CUSTOM_CVAR(Int, midi_voices, 32, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	CheckRestart();
-}
-
-CUSTOM_CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	CheckRestart();
-}
-
-//==========================================================================
-//
-// Error printing override to redirect to the internal console instead of stdout.
-//
-//==========================================================================
-
-static void gzdoom_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
-{
-	if (verbosity_level >= Timidity::VERB_DEBUG) return;	// Don't waste time on diagnostics.
-
-	va_list args;
-	va_start(args, fmt);
-	FString msg;
-	msg.VFormat(fmt, args);
-	va_end(args);
-
-	switch (type)
-	{
-	case Timidity::CMSG_ERROR:
-		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
-		break;
-
-	case Timidity::CMSG_WARNING:
-		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
-		break;
-
-	case Timidity::CMSG_INFO:
-		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
-		break;
-	}
-}
 
 //==========================================================================
 //
@@ -133,8 +67,9 @@ namespace Timidity { struct Renderer; }
 
 class TimidityMIDIDevice : public SoftSynthMIDIDevice
 {
+	void LoadInstruments(GUSConfig *config);
 public:
-	TimidityMIDIDevice(const char *args, int samplerate);
+	TimidityMIDIDevice(GUSConfig *config, int samplerate);
 	~TimidityMIDIDevice();
 	
 	int Open(MidiCallback, void *userdata);
@@ -147,78 +82,69 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
-	void LoadConfig(const char *);
 };
 
 
-// DATA DEFINITIONS -------------------------------------------------
-
-static FString currentConfig;
-static Timidity::Instruments* instruments;
-
 // CODE --------------------------------------------------------------------
 
-void TimidityMIDIDevice::LoadConfig(const char *config)
+
+void TimidityMIDIDevice::LoadInstruments(GUSConfig *config)
 {
-	if ((midi_dmxgus && *config == 0) || !stricmp(config, "DMXGUS"))
+	if (config->dmxgus.size())
 	{
-		if (currentConfig.CompareNoCase("DMXGUS") == 0) return; // aleady loaded
-		int lump = Wads.CheckNumForName("DMXGUS");
-		if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
-		if (lump >= 0)
+		// Check if we got some GUS data before using it.
+		FString ultradir = getenv("ULTRADIR");
+		if (ultradir.IsNotEmpty() || config->gus_patchdir.length() != 0)
 		{
-			auto data = Wads.OpenLumpReader(lump);
-			if (data.GetLength() > 0)
+			FileReader fr;
+			fr.OpenMemory((const char *)config->dmxgus.data(), (long)config->dmxgus.size());
+			auto psreader = new FPatchSetReader(fr);
+			
+			// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
+			if (ultradir.IsNotEmpty())
 			{
-				// Check if we got some GUS data before using it.
-				FString ultradir = getenv("ULTRADIR");
-				if (ultradir.IsNotEmpty() || *(*gus_patchdir) != 0)
-				{
-
-					auto psreader = new FPatchSetReader(data);
-
-					// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
-					if (ultradir.IsNotEmpty())
-					{
-						ultradir += "/midi";
-						psreader->AddPath(ultradir);
-					}
-					if (instruments) delete instruments;
-					instruments = new Timidity::Instruments(psreader);
-
-					// Load DMXGUS lump and patches from gus_patchdir
-					if (*(*gus_patchdir) != 0) psreader->AddPath(gus_patchdir);
-
-					if (instruments->LoadDMXGUS(gus_memsize) < 0)
-					{
-						delete instruments;
-						instruments = nullptr;
-						I_Error("Unable to initialize instruments for GUS MIDI device");
-					}
-					currentConfig = "DMXGUS";
-				}
+				ultradir += "/midi";
+				psreader->timidity_add_path(ultradir);
+			}
+			// Load DMXGUS lump and patches from gus_patchdir
+			if (config->gus_patchdir.length() != 0) psreader->timidity_add_path(config->gus_patchdir.c_str());
+			
+			config->instruments.reset(new Timidity::Instruments(psreader));
+			bool success = config->instruments->LoadDMXGUS(config->gus_memsize) >= 0;
+			
+			delete psreader;
+			config->dmxgus.clear();
+			
+			if (success)
+			{
+				config->loadedConfig = "DMXGUS";
+				return;
 			}
 		}
+		config->loadedConfig = "";
+		config->instruments.reset();
+		throw std::runtime_error("Unable to initialize DMXGUS for GUS MIDI device");
 	}
-	if (*config == 0) config = midi_config;
-	if (currentConfig.CompareNoCase(config) == 0) return;
-	if (instruments) delete instruments;
-	instruments = nullptr;
-
-	auto reader = sfmanager.OpenSoundFont(config, SF_GUS | SF_SF2);
-	if (reader == nullptr)
+	else if (config->reader)
 	{
-		I_Error("GUS: %s: Unable to load sound font\n",config);
+		config->loadedConfig = config->readerName;
+		config->instruments.reset(new Timidity::Instruments(config->reader));
+		bool err = config->instruments->LoadConfig() < 0;
+		delete config->reader;
+		config->reader = nullptr;
+		
+		if (err)
+		{
+			config->instruments.reset();
+			config->loadedConfig = "";
+			throw std::runtime_error("Unable to initialize instruments for GUS MIDI device");
+		}
 	}
-
-	instruments = new Timidity::Instruments(reader);
-	if (instruments->LoadConfig() < 0)
+	else if (config->instruments == nullptr)
 	{
-		delete instruments;
-		instruments = nullptr;
-		I_Error("Unable to initialize instruments for GUS MIDI device");
+		throw std::runtime_error("No instruments set for GUS device");
 	}
-	currentConfig = config;
+	
 }
 
 //==========================================================================
@@ -227,12 +153,11 @@ void TimidityMIDIDevice::LoadConfig(const char *config)
 //
 //==========================================================================
 
-TimidityMIDIDevice::TimidityMIDIDevice(const char *args, int samplerate)
+TimidityMIDIDevice::TimidityMIDIDevice(GUSConfig *config, int samplerate)
 	: SoftSynthMIDIDevice(samplerate, 11025, 65535)
 {
-	LoadConfig(args);
-	Timidity::printMessage = gzdoom_ctl_cmsg;
-	Renderer = new Timidity::Renderer((float)SampleRate, midi_voices, instruments);
+	LoadInstruments(config);
+	Renderer = new Timidity::Renderer((float)SampleRate, config->midi_voices, config->instruments.get());
 }
 
 //==========================================================================
@@ -328,13 +253,7 @@ void TimidityMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateTimidityMIDIDevice(const char *args, int samplerate)
+MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate)
 {
-	return new TimidityMIDIDevice(args, samplerate);
-}
-
-void Timidity_Shutdown()
-{
-	if (instruments) delete instruments;
-	instruments = nullptr;
+	return new TimidityMIDIDevice(config, samplerate);
 }

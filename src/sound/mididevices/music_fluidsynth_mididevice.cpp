@@ -65,7 +65,7 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
-	int LoadPatchSets(FluidConfig *config);
+	int LoadPatchSets(const FluidConfig *config);
 	
 	fluid_settings_t *FluidSettings;
 	fluid_synth_t *FluidSynth;
@@ -348,7 +348,7 @@ void FluidSynthMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-int FluidSynthMIDIDevice::LoadPatchSets(FluidConfig *config)
+int FluidSynthMIDIDevice::LoadPatchSets(const FluidConfig *config)
 {
 	int count = 0;
 	for (auto& file : config->fluid_patchset)

@@ -72,6 +72,8 @@ struct OPLMidiConfig
 	struct GenMidiInstrument OPLinstruments[GENMIDI_NUM_TOTAL];
 };
 
+extern OPLMidiConfig oplMidiConfig;
+
 struct OpnConfig
 {
 	int opn_chips_count = 8;
@@ -82,10 +84,34 @@ struct OpnConfig
 	std::vector<uint8_t> default_bank;
 };
 
+extern OpnConfig opnConfig;
 
+namespace Timidity
+{
+	class Instruments;
+	class SoundFontReaderInterface;
+}
 
-extern OPLMidiConfig oplMidiConfig;
+struct GUSConfig
+{
+	// This one is a bit more complex because it also implements the instrument cache.
+	int midi_voices = 32;
+	int gus_memsize = 0;
+	void (*errorfunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
 
+	Timidity::SoundFontReaderInterface *reader;
+	std::string readerName;
+	std::vector<uint8_t> dmxgus;				// can contain the contents of a DMXGUS lump that may be used as the instrument set. In this case gus_patchdir must point to the location of the GUS data.
+	std::string gus_patchdir;
+	
+	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.
+	// Thus, this config should always be stored globally to avoid this.
+	// If the last loaded instrument set is to be reused or the caller wants to manage them itself, both 'reader' and 'dmxgus' fields should be left empty.
+	std::string loadedConfig;
+	std::shared_ptr<Timidity::Instruments> instruments;	// this is held both by the config and the device
+};
+
+extern GUSConfig gusConfig;
 
 class MIDIStreamer;
 
@@ -125,7 +151,6 @@ public:
 
 
 
-void Timidity_Shutdown();
 void TimidityPP_Shutdown();
 void WildMidi_Shutdown ();
 
@@ -324,7 +349,7 @@ public:
 	void Play (bool looping, int subsong);
 	bool IsPlaying ();
 	bool IsValid () const;
-	void ResetChips ();
+	void ChangeSettingInt (const char *, int) override;
 
 protected:
 
@@ -368,14 +393,18 @@ MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const FluidConfig* config
 MIDIDevice *CreateADLMIDIDevice(const ADLConfig* config);
 MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
 MIDIDevice *CreateOplMIDIDevice(const OPLMidiConfig* config);
+MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate);
+
+MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
+MIDIDevice *CreateWildMIDIDevice(const char *args, int samplerate);
 
 // Data interface
 
-int BuildFluidPatchSetList(const char* patches, bool systemfallback);
-void SetAdlCustomBank(const char *Args);
-void LoadGenMidi();
-int getOPLCore(const char* args);
-void SetOpnCustomBank(const char *Args);
+void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfallback);
+void ADL_SetupConfig(ADLConfig *config, const char *Args);
+void OPL_SetupConfig(OPLMidiConfig *config, const char *args);
+void OPN_SetupConfig(OpnConfig *config, const char *Args);
+bool GUS_SetupConfig(GUSConfig *config, const char *args);
 
 // Module played via foo_dumb -----------------------------------------------
 

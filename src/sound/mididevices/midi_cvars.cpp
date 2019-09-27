@@ -38,6 +38,10 @@
 #include "adlmidi.h"
 #include "cmdlib.h"
 #include "doomerrors.h"
+#include "timidity/timidity.h"
+#include "timidity/playmidi.h"
+#include "timidity/instrum.h"
+#include "v_text.h"
 
 // do this without including windows.h for this one single prototype
 #ifdef _WIN32
@@ -56,6 +60,7 @@ ADLConfig adlConfig;
 FluidConfig fluidConfig;
 OPLMidiConfig oplMidiConfig;
 OpnConfig opnConfig;
+GUSConfig gusConfig;
 
 CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -97,11 +102,11 @@ CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	if (adl_use_custom_bank) CheckRestart(MDEV_ADL);
 }
 
-void SetAdlCustomBank(const char *Args)
+void ADL_SetupConfig(ADLConfig *config, const char *Args)
 {
 	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
 	const char *bank = Args && *Args? Args : adl_use_custom_bank? *adl_custom_bank : nullptr;
-	adlConfig.adl_bank = adl_bank;
+	config->adl_bank = adl_bank;
 	if (bank && *bank)
 	{
 		auto info = sfmanager.FindSoundFont(bank, SF_WOPL);
@@ -109,13 +114,13 @@ void SetAdlCustomBank(const char *Args)
 		{
 			if (*bank >= '0' && *bank <= '9')
 			{
-				adlConfig.adl_bank = (int)strtoll(bank, nullptr, 10);
+				config->adl_bank = (int)strtoll(bank, nullptr, 10);
 			}
-			adlConfig.adl_custom_bank = nullptr;
+			config->adl_custom_bank = nullptr;
 		}
 		else
 		{
-			adlConfig.adl_custom_bank = info->mFilename;
+			config->adl_custom_bank = info->mFilename;
 		}
 	}
 }
@@ -137,13 +142,13 @@ CUSTOM_CVAR(String, fluid_lib, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	fluidConfig.fluid_lib = self;	// only takes effect for next song.
 }
 
-int BuildFluidPatchSetList(const char* patches, bool systemfallback)
+void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfallback)
 {
 	fluidConfig.fluid_patchset.clear();
 	//Resolve the paths here, the renderer will only get a final list of file names.
 	auto info = sfmanager.FindSoundFont(patches, SF_SF2);
 	if (info != nullptr) patches = info->mFilename.GetChars();
-
+	
 	int count;
 	char* wpatches = strdup(patches);
 	char* tok;
@@ -152,48 +157,47 @@ int BuildFluidPatchSetList(const char* patches, bool systemfallback)
 #else
 	const char* const delim = ":";
 #endif
-
-	if (wpatches == NULL)
+	
+	if (wpatches != NULL)
 	{
-		return 0;
-	}
-	tok = strtok(wpatches, delim);
-	count = 0;
-	while (tok != NULL)
-	{
-		FString path;
+		tok = strtok(wpatches, delim);
+		count = 0;
+		while (tok != NULL)
+		{
+			FString path;
 #ifdef _WIN32
-		// If the path does not contain any path separators, automatically
-		// prepend $PROGDIR to the path.
-		if (strcspn(tok, ":/\\") == strlen(tok))
-		{
-			path << "$PROGDIR/" << tok;
-			path = NicePath(path);
-		}
-		else
+			// If the path does not contain any path separators, automatically
+			// prepend $PROGDIR to the path.
+			if (strcspn(tok, ":/\\") == strlen(tok))
+			{
+				path << "$PROGDIR/" << tok;
+				path = NicePath(path);
+			}
+			else
 #endif
-		{
-			path = NicePath(tok);
+			{
+				path = NicePath(tok);
+			}
+			if (FileExists(path))
+			{
+				config->fluid_patchset.push_back(path.GetChars());
+			}
+			else
+			{
+				Printf("Could not find patch set %s.\n", tok);
+			}
+			tok = strtok(NULL, delim);
 		}
-		if (FileExists(path))
-		{
-			fluidConfig.fluid_patchset.push_back(path.GetChars());
-		}
-		else
-		{
-			Printf("Could not find patch set %s.\n", tok);
-		}
-		tok = strtok(NULL, delim);
+		free(wpatches);
+		if (config->fluid_patchset.size() > 0) return;
 	}
-	free(wpatches);
-	if (fluidConfig.fluid_patchset.size() > 0) return 1;
 
 	if (systemfallback)
 	{
 		// The following will only be used if no soundfont at all is provided, i.e. even the standard one coming with GZDoom is missing.
 #ifdef __unix__
 		// This is the standard location on Ubuntu.
-		return BuildFluidPatchSetList("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2", false);
+		Fluid_SetupConfig(config, "/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2", false);
 #endif
 #ifdef _WIN32
 		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
@@ -204,22 +208,21 @@ int BuildFluidPatchSetList(const char* patches, bool systemfallback)
 			strcat(sysdir, "\\CT4MGM.SF2");
 			if (FileExists(sysdir))
 			{
-				fluidConfig.fluid_patchset.push_back(sysdir);
+				config->fluid_patchset.push_back(sysdir);
 				return 1;
 			}
 			// Try again with CT2MGM.SF2
 			sysdir[filepart + 3] = '2';
 			if (FileExists(sysdir))
 			{
-				fluidConfig.fluid_patchset.push_back(sysdir);
-				return 1;
+				config->fluid_patchset.push_back(sysdir);
+				return;
 			}
 		}
 
 #endif
 
 	}
-	return 0;
 }
 
 CUSTOM_CVAR(String, fluid_patchset, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -458,10 +461,7 @@ CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPL)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
+	CheckRestart(MDEV_OPL);
 }
 
 CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -469,7 +469,7 @@ CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	oplMidiConfig.fullpan = self;
 }
 
-void LoadGenMidi()
+void OPL_SetupConfig(OPLMidiConfig *config, const char *args)
 {
 	// The OPL renderer should not care about where this comes from.
 	// Note: No I_Error here - this needs to be consistent with the rest of the music code.
@@ -481,72 +481,54 @@ void LoadGenMidi()
 	data.Read(filehdr, 8);
 	if (memcmp(filehdr, "#OPL_II#", 8)) throw std::runtime_error("Corrupt GENMIDI lump");
 	data.Read(oplMidiConfig.OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
+	
+	config->core = opl_core;
+	if (args != NULL && *args >= '0' && *args < '4') config->core = *args - '0';
 }
-
-int getOPLCore(const char* args)
-{
-	int current_opl_core = opl_core;
-	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
-	return current_opl_core;
-}
-
-
-
 
 
 CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	opnConfig.opn_chips_count = self;
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
+	CheckRestart(MDEV_OPN);
 }
 
 CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	opnConfig.opn_emulator_id = self;
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
+	CheckRestart(MDEV_OPN);
+
 }
 
 CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	opnConfig.opn_run_at_pcm_rate = self;
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
+	CheckRestart(MDEV_OPN);
+
 }
 
 CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	opnConfig.opn_fullpan = self;
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
+	CheckRestart(MDEV_OPN);
+
 }
 
 CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
+	CheckRestart(MDEV_OPN);
+
 }
 
 CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (opn_use_custom_bank && currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	if (opn_use_custom_bank)
 	{
-		MIDIDeviceChanged(-1, true);
+		CheckRestart(MDEV_OPN);
 	}
 }
 
-void SetOpnCustomBank(const char *Args)
+void OPN_SetupConfig(OpnConfig *config, const char *Args)
 {
 	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
 	const char *bank = Args && *Args? Args : opn_use_custom_bank? *opn_custom_bank : nullptr;
@@ -555,21 +537,127 @@ void SetOpnCustomBank(const char *Args)
 		auto info = sfmanager.FindSoundFont(bank, SF_WOPN);
 		if (info == nullptr)
 		{
-			opnConfig.opn_custom_bank = "";
+			config->opn_custom_bank = "";
 		}
 		else
 		{
-			opnConfig.opn_custom_bank = info->mFilename;
+			config->opn_custom_bank = info->mFilename;
 		}
 	}
 	
 	int lump = Wads.CheckNumForFullName("xg.wopn");
 	if (lump < 0)
 	{
-		opnConfig.default_bank.resize(0);
+		config->default_bank.resize(0);
 		return;
 	}
 	FMemLump data = Wads.ReadLump(lump);
-	opnConfig.default_bank.resize(data.GetSize());
-	memcpy(opnConfig.default_bank.data(), data.GetMem(), data.GetSize());
+	config->default_bank.resize(data.GetSize());
+	memcpy(config->default_bank.data(), data.GetMem(), data.GetSize());
 }
+
+
+// CVARS for this device - all of them require a device reset --------------------------------------------
+
+
+
+CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// This was 'true' but since it requires special setup that's not such a good idea.
+{
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(Int, midi_voices, 32, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	gusConfig.midi_voices = self;
+	CheckRestart(MDEV_GUS);
+}
+
+CUSTOM_CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	gusConfig.gus_memsize = self;
+	CheckRestart(MDEV_GUS);
+}
+
+//==========================================================================
+//
+// Error printing override to redirect to the internal console instead of stdout.
+//
+//==========================================================================
+
+static void gus_printfunc(int type, int verbosity_level, const char* fmt, ...)
+{
+	if (verbosity_level >= Timidity::VERB_DEBUG) return;	// Don't waste time on diagnostics.
+	
+	va_list args;
+	va_start(args, fmt);
+	FString msg;
+	msg.VFormat(fmt, args);
+	va_end(args);
+	
+	switch (type)
+	{
+		case Timidity::CMSG_ERROR:
+			Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
+			break;
+			
+		case Timidity::CMSG_WARNING:
+			Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
+			break;
+			
+		case Timidity::CMSG_INFO:
+			DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
+			break;
+	}
+}
+
+//==========================================================================
+//
+// Sets up the date to load the instruments for the GUS device.
+// The actual instrument loader is part of the device.
+//
+//==========================================================================
+
+bool GUS_SetupConfig(GUSConfig *config, const char *args)
+{
+	config->errorfunc = gus_printfunc;
+	if ((midi_dmxgus && *args == 0) || !stricmp(args, "DMXGUS"))
+	{
+		if (stricmp(config->loadedConfig.c_str(), "DMXGUS") == 0) return false; // aleady loaded
+		int lump = Wads.CheckNumForName("DMXGUS");
+		if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
+		if (lump >= 0)
+		{
+			auto data = Wads.OpenLumpReader(lump);
+			if (data.GetLength() > 0)
+			{
+				config->dmxgus.resize(data.GetLength());
+				data.Read(config->dmxgus.data(), data.GetLength());
+				return true;
+			}
+		}
+	}
+	if (*args == 0) args = midi_config;
+	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+	
+	auto reader = sfmanager.OpenSoundFont(args, SF_GUS | SF_SF2);
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "GUS: %s: Unable to load sound font\n",args);
+		throw std::runtime_error(error);
+	}
+	config->reader = reader;
+	config->readerName = args;
+	return true;
+}
+

@@ -44,194 +44,19 @@
 #include "timiditypp/playmidi.h"
 
 
-//==========================================================================
-//
-// Error printing override to redirect to the internal console instead of stdout.
-//
-//==========================================================================
-
-static void gzdoom_ctl_cmsg(int type, int verbosity_level, const char* fmt, ...)
-{
-	if (verbosity_level >= TimidityPlus::VERB_DEBUG) return;	// Don't waste time on diagnostics.
-
-	va_list args;
-	va_start(args, fmt);
-	FString msg;
-	msg.VFormat(fmt, args);
-	va_end(args);
-
-	switch (type)
-	{
-	case TimidityPlus::CMSG_ERROR:
-		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
-		break;
-
-	case TimidityPlus::CMSG_WARNING:
-		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
-		break;
-
-	case TimidityPlus::CMSG_INFO:
-		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
-		break;
-	}
-}
-
-//==========================================================================
-//
-// CVar interface to configurable parameters
-//
-//==========================================================================
-
-template<class T> void ChangeVarSync(T& var, T value)
-{
-	std::lock_guard<std::mutex> lock(TimidityPlus::CvarCritSec);
-	var = value;
-}
-
-CUSTOM_CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_modulation_wheel, *self);
-}
-
-CUSTOM_CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_portamento, *self);
-}
-/*
-* reverb=0     no reverb                 0
-* reverb=1     old reverb                1
-* reverb=1,n   set reverb level to n   (-1 to -127)
-* reverb=2     "global" old reverb       2
-* reverb=2,n   set reverb level to n   (-1 to -127) - 128
-* reverb=3     new reverb                3
-* reverb=3,n   set reverb level to n   (-1 to -127) - 256
-* reverb=4     "global" new reverb       4
-* reverb=4,n   set reverb level to n   (-1 to -127) - 384
-*/
-EXTERN_CVAR(Int, timidity_reverb_level)
-EXTERN_CVAR(Int, timidity_reverb)
-
-static void SetReverb()
-{
-	int value = 0;
-	int mode = timidity_reverb;
-	int level = timidity_reverb_level;
-
-	if (mode == 0 || level == 0) value = mode;
-	else value = (mode - 1) * -128 - level;
-	ChangeVarSync(TimidityPlus::timidity_reverb, value);
-}
-
-CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0 || self > 4) self = 0;
-	else SetReverb();
-}
-
-CUSTOM_CVAR(Int, timidity_reverb_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0 || self > 127) self = 0;
-	else SetReverb();
-}
-
-CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_chorus, *self);
-}
-
-CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
-}
-
-CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_channel_pressure, *self);
-}
-
-CUSTOM_CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_lpf_def, *self);
-}
-
-CUSTOM_CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_temper_control, *self);
-}
-
-CUSTOM_CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_modulation_envelope, *self);
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
-	{
-		MIDIDeviceChanged(-1, true);
-	}
-}
-
-CUSTOM_CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_overlap_voice_allow, *self);
-}
-
-CUSTOM_CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_drum_effect, *self);
-}
-
-CUSTOM_CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	ChangeVarSync(TimidityPlus::timidity_pan_delay, *self);
-}
-
-CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /* coef. of drum amplitude */
-{
-	if (self < 0) self = 0;
-	else if (self > MAX_AMPLIFICATION / 100.f) self = MAX_AMPLIFICATION / 100.f;
-	ChangeVarSync(TimidityPlus::timidity_drum_power, *self);
-}
-CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < -24) self = -24;
-	else if (self > 24) self = 24;
-	ChangeVarSync(TimidityPlus::timidity_key_adjust, *self);
-}
-// For testing mainly.
-CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0.25) self = 0.25;
-	else if (self > 10) self = 10;
-	ChangeVarSync(TimidityPlus::timidity_tempo_adjust, *self);
-}
-
-CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0) self = 0;
-	ChangeVarSync(TimidityPlus::min_sustain_time, *self);
-}
 
 
 class TimidityPPMIDIDevice : public SoftSynthMIDIDevice
 {
-	static TimidityPlus::Instruments *instruments;
-	static FString configName;
-	int sampletime;
+	std::shared_ptr<TimidityPlus::Instruments> instruments;
 public:
-	TimidityPPMIDIDevice(const char *args, int samplerate);
+	TimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
 	~TimidityPPMIDIDevice();
 
 	int Open(MidiCallback, void *userdata);
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	//FString GetStats();
 	int GetDeviceType() const override { return MDEV_TIMIDITY; }
-	static void ClearInstruments()
-	{
-		if (instruments != nullptr) delete instruments;
-		instruments = nullptr;
-	}
 
 	double test[3] = { 0, 0, 0 };
 
@@ -241,21 +66,37 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
+	void LoadInstruments(TimidityConfig* config);
 };
-TimidityPlus::Instruments *TimidityPPMIDIDevice::instruments;
-FString TimidityPPMIDIDevice::configName;
 
-// Config file to use
-CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void TimidityPPMIDIDevice::LoadInstruments(TimidityConfig* config)
 {
-	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
+	if (config->reader)
 	{
-		MIDIDeviceChanged(-1, true);
+		config->loadedConfig = config->readerName;
+		config->instruments.reset(new TimidityPlus::Instruments());
+		bool success = config->instruments->load(config->reader);
+		config->reader = nullptr;
+
+		if (!success)
+		{
+			config->instruments.reset();
+			config->loadedConfig = "";
+			throw std::runtime_error("Unable to initialize instruments for Timidity++ MIDI device");
+		}
 	}
+	else if (config->instruments == nullptr)
+	{
+		throw std::runtime_error("No instruments set for Timidity++ device");
+	}
+	instruments = config->instruments;
 }
-
-
-CVAR (Int, timidity_frequency, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 //==========================================================================
 //
@@ -263,42 +104,12 @@ CVAR (Int, timidity_frequency, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args, int samplerate) 
-	:SoftSynthMIDIDevice(samplerate <= 0? timidity_frequency : samplerate, 4000, 65000)
+TimidityPPMIDIDevice::TimidityPPMIDIDevice(TimidityConfig *config, int samplerate) 
+	:SoftSynthMIDIDevice(samplerate <= 0? config->samplerate : samplerate, 4000, 65000)
 {
-	if (args == NULL || *args == 0) args = timidity_config;
-
-	Renderer = nullptr;
-	if (instruments != nullptr && configName.CompareNoCase(args))	// Only load instruments if they have changed from the last played song.
-	{
-		delete instruments;
-		instruments = nullptr;
-	}
-	TimidityPlus::printMessage = gzdoom_ctl_cmsg;
 	TimidityPlus::set_playback_rate(SampleRate);
-
-	if (instruments == nullptr)
-	{
-		auto sfreader = sfmanager.OpenSoundFont(args, SF_SF2 | SF_GUS);
-		if (sfreader != nullptr)
-		{
-			instruments = new TimidityPlus::Instruments;
-			if (!instruments->load(sfreader))
-			{
-				delete instruments;
-				instruments = nullptr;
-			}
-		}
-	}
-	if (instruments != nullptr)
-	{
-		Renderer = new TimidityPlus::Player(instruments);
-	}
-	else
-	{
-		I_Error("Failed to load any MIDI patches");
-	}
-	sampletime = 0;
+	LoadInstruments(config);
+	Renderer = new TimidityPlus::Player(instruments.get());
 }
 
 //==========================================================================
@@ -329,8 +140,6 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 	{
 		Renderer->playmidi_stream_init();
 	}
-	// No instruments loaded means we cannot play...
-	if (instruments == nullptr) return 0;
 	return ret;
 }
 
@@ -393,14 +202,14 @@ void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate)
+MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig* config, int samplerate)
 {
-	return new TimidityPPMIDIDevice(args, samplerate);
+	return new TimidityPPMIDIDevice(config, samplerate);
 }
+
 
 void TimidityPP_Shutdown()
 {
-	TimidityPPMIDIDevice::ClearInstruments();
 	TimidityPlus::free_gauss_table();
 	TimidityPlus::free_global_mblock();
 }

@@ -125,7 +125,7 @@
 namespace TimidityPlus
 {
 
-extern std::mutex CvarCritSec;
+extern std::mutex ConfigMutex;
 extern bool timidity_modulation_wheel;
 extern bool timidity_portamento;
 extern int timidity_reverb;

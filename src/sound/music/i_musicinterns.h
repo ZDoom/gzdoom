@@ -113,6 +113,30 @@ struct GUSConfig
 
 extern GUSConfig gusConfig;
 
+namespace TimidityPlus
+{
+	class Instruments;
+	class SoundFontReaderInterface;
+}
+
+struct TimidityConfig
+{
+	int samplerate = 0;
+	void (*errorfunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
+
+	TimidityPlus::SoundFontReaderInterface* reader;
+	std::string readerName;
+
+	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.
+	// Thus, this config should always be stored globally to avoid this.
+	// If the last loaded instrument set is to be reused or the caller wants to manage them itself, 'reader' should be left empty.
+	std::string loadedConfig;
+	std::shared_ptr<TimidityPlus::Instruments> instruments;	// this is held both by the config and the device
+
+};
+
+extern TimidityConfig timidityConfig;
+
 class MIDIStreamer;
 
 typedef void(*MidiCallback)(void *);
@@ -394,8 +418,8 @@ MIDIDevice *CreateADLMIDIDevice(const ADLConfig* config);
 MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
 MIDIDevice *CreateOplMIDIDevice(const OPLMidiConfig* config);
 MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate);
+MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
 
-MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
 MIDIDevice *CreateWildMIDIDevice(const char *args, int samplerate);
 
 // Data interface
@@ -405,6 +429,7 @@ void ADL_SetupConfig(ADLConfig *config, const char *Args);
 void OPL_SetupConfig(OPLMidiConfig *config, const char *args);
 void OPN_SetupConfig(OpnConfig *config, const char *Args);
 bool GUS_SetupConfig(GUSConfig *config, const char *args);
+bool Timidity_SetupConfig(TimidityConfig* config, const char* args);
 
 // Module played via foo_dumb -----------------------------------------------
 

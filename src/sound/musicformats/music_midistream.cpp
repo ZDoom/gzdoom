@@ -234,7 +234,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				break;
 
 			case MDEV_TIMIDITY:
-				dev = CreateTimidityPPMIDIDevice(Args, samplerate);
+				Timidity_SetupConfig(&timidityConfig, Args);
+				dev = CreateTimidityPPMIDIDevice(&timidityConfig, samplerate);
 				break;
 
 			case MDEV_WILDMIDI:

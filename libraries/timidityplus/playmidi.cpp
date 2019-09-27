@@ -41,7 +41,7 @@
 
 namespace TimidityPlus
 {
-	std::mutex CvarCritSec;
+	std::mutex ConfigMutex;
 	bool timidity_modulation_wheel = true;
 	bool timidity_portamento = false;
 	int timidity_reverb = 0;
@@ -4997,7 +4997,7 @@ int Player::compute_data(float *buffer, int32_t count)
 {
 	if (count == 0) return RC_OK;
 
-	std::lock_guard<std::mutex> lock(CvarCritSec);
+	std::lock_guard<std::mutex> lock(ConfigMutex);
 
 	if (last_reverb_setting != timidity_reverb)
 	{

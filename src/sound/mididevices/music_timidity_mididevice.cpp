@@ -78,6 +78,7 @@ public:
 	
 protected:
 	Timidity::Renderer *Renderer;
+	std::shared_ptr<Timidity::Instruments> instruments;	// The device needs to hold a reference to this while the renderer is in use.
 	
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
@@ -142,7 +143,7 @@ void TimidityMIDIDevice::LoadInstruments(GUSConfig *config)
 	{
 		throw std::runtime_error("No instruments set for GUS device");
 	}
-	
+	instruments = config->instruments;
 }
 
 //==========================================================================
@@ -155,7 +156,7 @@ TimidityMIDIDevice::TimidityMIDIDevice(GUSConfig *config, int samplerate)
 	: SoftSynthMIDIDevice(samplerate, 11025, 65535)
 {
 	LoadInstruments(config);
-	Renderer = new Timidity::Renderer((float)SampleRate, config->midi_voices, config->instruments.get());
+	Renderer = new Timidity::Renderer((float)SampleRate, config->midi_voices, instruments.get());
 }
 
 //==========================================================================

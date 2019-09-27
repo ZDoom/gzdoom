@@ -41,6 +41,9 @@
 #include "timidity/timidity.h"
 #include "timidity/playmidi.h"
 #include "timidity/instrum.h"
+#include "timiditypp/controls.h"
+#include "timiditypp/timidity.h"
+#include "timiditypp/instrum.h"
 #include "v_text.h"
 
 // do this without including windows.h for this one single prototype
@@ -61,6 +64,13 @@ FluidConfig fluidConfig;
 OPLMidiConfig oplMidiConfig;
 OpnConfig opnConfig;
 GUSConfig gusConfig;
+TimidityConfig timidityConfig;
+
+//==========================================================================
+//
+// ADL Midi device
+//
+//==========================================================================
 
 CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -131,6 +141,13 @@ CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_
 	adlConfig.adl_volume_model = self;
 	CheckRestart(MDEV_ADL);
 }
+
+//==========================================================================
+//
+// Fluidsynth MIDI device
+//
+//==========================================================================
+
 
 #define FLUID_CHORUS_MOD_SINE		0
 #define FLUID_CHORUS_MOD_TRIANGLE	1
@@ -439,7 +456,11 @@ CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR
 }
 
 
-
+//==========================================================================
+//
+// OPL MIDI device
+//
+//==========================================================================
 
 CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -485,6 +506,13 @@ void OPL_SetupConfig(OPLMidiConfig *config, const char *args)
 	config->core = opl_core;
 	if (args != NULL && *args >= '0' && *args < '4') config->core = *args - '0';
 }
+
+
+//==========================================================================
+//
+// OPN MIDI device
+//
+//==========================================================================
 
 
 CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -557,8 +585,11 @@ void OPN_SetupConfig(OpnConfig *config, const char *Args)
 }
 
 
-// CVARS for this device - all of them require a device reset --------------------------------------------
-
+//==========================================================================
+//
+// GUS MIDI device
+//
+//==========================================================================
 
 
 CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -621,6 +652,12 @@ static void gus_printfunc(int type, int verbosity_level, const char* fmt, ...)
 	}
 }
 
+// make sure we can use the above function for the Timidity++ device as well.
+static_assert(Timidity::CMSG_ERROR == TimidityPlus::CMSG_ERROR, "Timidity constant mismatch");
+static_assert(Timidity::CMSG_WARNING == TimidityPlus::CMSG_WARNING, "Timidity constant mismatch");
+static_assert(Timidity::CMSG_INFO == TimidityPlus::CMSG_INFO, "Timidity constant mismatch");
+static_assert(Timidity::VERB_DEBUG == TimidityPlus::VERB_DEBUG, "Timidity constant mismatch");
+
 //==========================================================================
 //
 // Sets up the date to load the instruments for the GUS device.
@@ -662,3 +699,167 @@ bool GUS_SetupConfig(GUSConfig *config, const char *args)
 	return true;
 }
 
+
+//==========================================================================
+//
+// CVar interface to configurable parameters
+//
+// Timidity++ uses a static global set of configuration variables
+// THese can be changed while the synth is playing but need synchronization.
+//
+// Currently the synth is not fully reentrant due to this and a handful
+// of other global variables.
+//
+//==========================================================================
+
+template<class T> void ChangeVarSync(T& var, T value)
+{
+	std::lock_guard<std::mutex> lock(TimidityPlus::ConfigMutex);
+	var = value;
+}
+
+CUSTOM_CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_modulation_wheel, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_portamento, *self);
+}
+/*
+* reverb=0     no reverb                 0
+* reverb=1     old reverb                1
+* reverb=1,n   set reverb level to n   (-1 to -127)
+* reverb=2     "global" old reverb       2
+* reverb=2,n   set reverb level to n   (-1 to -127) - 128
+* reverb=3     new reverb                3
+* reverb=3,n   set reverb level to n   (-1 to -127) - 256
+* reverb=4     "global" new reverb       4
+* reverb=4,n   set reverb level to n   (-1 to -127) - 384
+*/
+EXTERN_CVAR(Int, timidity_reverb_level)
+EXTERN_CVAR(Int, timidity_reverb)
+
+static void SetReverb()
+{
+	int value = 0;
+	int mode = timidity_reverb;
+	int level = timidity_reverb_level;
+
+	if (mode == 0 || level == 0) value = mode;
+	else value = (mode - 1) * -128 - level;
+	ChangeVarSync(TimidityPlus::timidity_reverb, value);
+}
+
+CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 4) self = 0;
+	else SetReverb();
+}
+
+CUSTOM_CVAR(Int, timidity_reverb_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 127) self = 0;
+	else SetReverb();
+}
+
+CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_chorus, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
+	CheckRestart(MDEV_TIMIDITY);
+}
+
+CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_channel_pressure, *self);
+}
+
+CUSTOM_CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_lpf_def, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_temper_control, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_modulation_envelope, *self);
+	CheckRestart(MDEV_TIMIDITY);
+}
+
+CUSTOM_CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_overlap_voice_allow, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_drum_effect, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_pan_delay, *self);
+}
+
+CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /* coef. of drum amplitude */
+{
+	if (self < 0) self = 0;
+	else if (self > MAX_AMPLIFICATION / 100.f) self = MAX_AMPLIFICATION / 100.f;
+	ChangeVarSync(TimidityPlus::timidity_drum_power, *self);
+}
+CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < -24) self = -24;
+	else if (self > 24) self = 24;
+	ChangeVarSync(TimidityPlus::timidity_key_adjust, *self);
+}
+// For testing mainly.
+CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.25) self = 0.25;
+	else if (self > 10) self = 10;
+	ChangeVarSync(TimidityPlus::timidity_tempo_adjust, *self);
+}
+
+CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0) self = 0;
+	ChangeVarSync(TimidityPlus::min_sustain_time, *self);
+}
+
+// Config file to use
+CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	CheckRestart(MDEV_TIMIDITY);
+}
+
+CVAR(Int, timidity_frequency, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+
+bool Timidity_SetupConfig(TimidityConfig* config, const char* args)
+{
+	config->errorfunc = gus_printfunc;
+	if (*args == 0) args = timidity_config;
+	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+
+	auto reader = sfmanager.OpenSoundFont(args, SF_GUS | SF_SF2);
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "Timidity++: %s: Unable to load sound font\n", args);
+		throw std::runtime_error(error);
+	}
+	config->reader = reader;
+	config->readerName = args;
+	return true;
+}

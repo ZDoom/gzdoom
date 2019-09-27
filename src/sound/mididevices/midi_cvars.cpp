@@ -39,8 +39,10 @@
 #include "cmdlib.h"
 #include "doomerrors.h"
 
+#ifdef _WIN32
 // do this without including windows.h for this one single prototype
 extern "C" unsigned __stdcall GetSystemDirectoryA(char* lpBuffer, unsigned uSize);
+#endif // _WIN32
 
 static void CheckRestart(int devtype)
 {

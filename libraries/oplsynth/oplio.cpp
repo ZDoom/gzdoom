@@ -26,6 +26,8 @@
 #include <math.h>
 #include <assert.h>
 #include <algorithm>
+#include <string.h>
+
 #include "genmidi.h"
 #include "oplio.h"
 #include "opl.h"

@@ -1,6 +1,7 @@
 cmake_minimum_required( VERSION 2.8.7 )
 
 make_release_only()
+use_fast_math()
 
 # we play with out own sequencer
 add_definitions(-DOPNMIDI_DISABLE_MIDI_SEQUENCER)
@@ -11,8 +12,6 @@ add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -fomit-frame-pointer" )
 endif()
-
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
 
 add_library( opn STATIC
 	chips/gens_opn2.cpp

@@ -209,7 +209,7 @@ void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfall
 			if (FileExists(sysdir))
 			{
 				config->fluid_patchset.push_back(sysdir);
-				return 1;
+				return;
 			}
 			// Try again with CT2MGM.SF2
 			sysdir[filepart + 3] = '2';
@@ -573,6 +573,7 @@ CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// This 
 
 CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
+	gusConfig.gus_patchdir = self;
 	CheckRestart(MDEV_GUS);
 }
 

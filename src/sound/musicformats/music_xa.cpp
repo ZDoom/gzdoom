@@ -1,5 +1,6 @@
-#include "i_musicinterns.h"
 #include "streamsource.h"
+#include "../libraries/music_common/fileio.h"
+
 /**
  * PlayStation XA (ADPCM) source support for MultiVoc
  * Adapted and remixed from superxa2wav 
@@ -27,8 +28,9 @@ XA_DATA_START   = (0x44-48)
 inline float constexpr DblToPCMF(double dt) { return float(dt) * (1.f/32768.f); }
 
 typedef struct {
-   FileReader reader;
+   MusicIO::FileInterface *reader;
    size_t committed;
+   size_t length;
    bool blockIsMono;
    bool blockIs18K;
    bool finished;
@@ -184,12 +186,12 @@ static void getNextXABlock(xa_data *xad, bool looping )
 
     do
     {
-        size_t bytes = xad->reader.GetLength() - xad->reader.Tell();
+        size_t bytes = xad->length - xad->reader->tell();
 
         if (sizeof(XASector) < bytes)
             bytes = sizeof(XASector);
 
-		xad->reader.Read(&ssct, bytes);
+		xad->reader->read(&ssct, (int)bytes);
     }
     while (ssct.sectorFiller[46] != (SUBMODE_REAL_TIME_SECTOR | SUBMODE_FORM | SUBMODE_AUDIO_DATA));
 
@@ -208,11 +210,11 @@ static void getNextXABlock(xa_data *xad, bool looping )
         decodeSoundSectMono(&ssct, xad);
     }
 
-    if (xad->reader.GetLength() == xad->reader.Tell())
+    if (xad->length == xad->reader->tell())
     {
         if (looping)
         {
-			xad->reader.Seek(XA_DATA_START, FileReader::SeekSet);
+			xad->reader->seek(XA_DATA_START, SEEK_SET);
             xad->t1 = xad->t2 = xad->t1_x = xad->t2_x = 0;
         }
         else
@@ -231,7 +233,7 @@ static void getNextXABlock(xa_data *xad, bool looping )
 class XASong : public StreamSource
 {
 public:
-	XASong(FileReader & readr);
+	XASong(MusicIO::FileInterface *readr);
 	SoundStreamInfo GetFormat() override;
 	bool Start() override;
 	bool GetData(void *buffer, size_t len) override;
@@ -246,11 +248,14 @@ protected:
 //
 //==========================================================================
 
-XASong::XASong(FileReader &reader)
+XASong::XASong(MusicIO::FileInterface * reader)
 {
-	reader.Seek(XA_DATA_START, FileReader::SeekSet);
-	xad.reader = std::move(reader);
+	reader->seek(0, SEEK_END);
+	xad.length = reader->tell();
+	reader->seek(XA_DATA_START, SEEK_SET);
+	xad.reader = reader;
 	xad.t1 = xad.t2 = xad.t1_x = xad.t2_x = 0;
+
 	getNextXABlock(&xad, false);
 }
 
@@ -270,7 +275,7 @@ bool XASong::Start()
 {
 	if (xad.finished && m_Looping)
 	{
-		xad.reader.Seek(XA_DATA_START, FileReader::SeekSet);
+		xad.reader->seek(XA_DATA_START, SEEK_SET);
 		xad.t1 = xad.t2 = xad.t1_x = xad.t2_x = 0;
 		xad.finished = false;
 	}
@@ -342,7 +347,7 @@ bool XASong::GetData(void *vbuff, size_t len)
 //
 //==========================================================================
 
-StreamSource *XA_OpenSong(FileReader &reader)
+StreamSource *XA_OpenSong(MusicIO::FileInterface *reader)
 {
 	return new XASong(reader);
 }

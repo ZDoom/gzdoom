@@ -465,7 +465,8 @@ MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 	}
 	else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
 	{
-		streamsource = XA_OpenSong(reader);
+		auto mreader = new FileReaderMusicInterface(reader);
+		streamsource = XA_OpenSong(mreader);	// this takes over the reader.
 	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')

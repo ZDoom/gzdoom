@@ -1,9 +1,10 @@
 /*
 ** music_stream.cpp
-** Wrapper around the sound system's streaming feature for music.
+** Plays a streaming song from a StreamSource 
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008 Randy Heit
+** Copyright 2019 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -33,18 +34,50 @@
 
 #include "i_musicinterns.h"
 
+class StreamSong : public MusInfo
+{
+public:
+	StreamSong (StreamSource *source);
+	~StreamSong ();
+	void Play (bool looping, int subsong) override;
+	void Pause () override;
+	void Resume () override;
+	void Stop () override;
+	bool IsPlaying () override;
+	bool IsValid () const override { return m_Stream != nullptr && m_Source != nullptr; }
+	bool SetPosition (unsigned int pos) override;
+	bool SetSubsong (int subsong) override;
+	FString GetStats() override;
+	void ChangeSettingInt(const char *name, int value) override { if (m_Source) m_Source->ChangeSettingInt(name, value); }
+	void ChangeSettingNum(const char *name, double value) override { if (m_Source) m_Source->ChangeSettingNum(name, value); }
+	void ChangeSettingString(const char *name, const char *value) override { if(m_Source) m_Source->ChangeSettingString(name, value); }
+
+	
+protected:
+	
+	SoundStream *m_Stream = nullptr;
+	StreamSource *m_Source = nullptr;
+	
+private:
+	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
+};
+
+
+
 void StreamSong::Play (bool looping, int subsong)
 {
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	if (m_Stream->Play (m_Looping, 1))
+	if (m_Stream != nullptr && m_Source != nullptr)
 	{
-		if (subsong != 0)
+		m_Source->SetPlayMode(looping);
+		m_Source->SetSubsong(subsong);
+		if (m_Source->Start())
 		{
-			m_Stream->SetOrder (subsong);
+			m_Status = STATE_Playing;
+			m_Stream->Play(m_Looping, 1);
 		}
-		m_Status = STATE_Playing;
 	}
 }
 
@@ -78,16 +111,26 @@ void StreamSong::Stop ()
 StreamSong::~StreamSong ()
 {
 	Stop ();
-	if (m_Stream != NULL)
+	if (m_Stream != nullptr)
 	{
 		delete m_Stream;
-		m_Stream = NULL;
+		m_Stream = nullptr;
+	}
+	if (m_Source != nullptr)
+	{
+		delete m_Source;
+		m_Source = nullptr;
 	}
 }
 
-StreamSong::StreamSong (FileReader &reader)
+StreamSong::StreamSong (StreamSource *source)
 {
-    m_Stream = GSnd->OpenStream (reader, SoundStream::Loop);
+	m_Source = source;
+	auto fmt = source->GetFormat();
+	int flags = fmt.mNumChannels < 0? 0 : SoundStream::Float;
+	if (abs(fmt.mNumChannels) < 2) flags |= SoundStream::Mono;
+
+	m_Stream = GSnd->CreateStream(FillStream, fmt.mBufferSize, flags, fmt.mSampleRate, this);
 }
 
 bool StreamSong::IsPlaying ()
@@ -111,9 +154,9 @@ bool StreamSong::IsPlaying ()
 
 bool StreamSong::SetPosition(unsigned int pos)
 {
-	if (m_Stream != NULL)
+	if (m_Source != nullptr)
 	{
-		return m_Stream->SetPosition(pos);
+		return m_Source->SetPosition(pos);
 	}
 	else
 	{
@@ -123,9 +166,9 @@ bool StreamSong::SetPosition(unsigned int pos)
 
 bool StreamSong::SetSubsong(int subsong)
 {
-	if (m_Stream != NULL)
+	if (m_Stream != nullptr)
 	{
-		return m_Stream->SetOrder(subsong);
+		return m_Source->SetSubsong(subsong);
 	}
 	else
 	{
@@ -135,9 +178,39 @@ bool StreamSong::SetSubsong(int subsong)
 
 FString StreamSong::GetStats()
 {
+	FString s1, s2;
 	if (m_Stream != NULL)
 	{
-		return m_Stream->GetStats();
+		s1 = m_Stream->GetStats();
 	}
-	return "No song loaded\n";
+	if (m_Source != NULL)
+	{
+		s2 = m_Source->GetStats();
+	}
+	if (s1.IsEmpty() && s2.IsEmpty()) return "No song loaded\n";
+	if (s1.IsEmpty()) return s2;
+	if (s2.IsEmpty()) return s1;
+	return FStringf("%s\n%s", s1.GetChars(), s2.GetChars());
 }
+
+bool StreamSong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
+{
+	StreamSong *song = (StreamSong *)userdata;
+	
+	bool written = song->m_Source->GetData(buff, len);
+	if (!written)
+	{
+		memset((char*)buff, 0, len);
+		return false;
+	}
+	return true;
+}
+
+MusInfo *OpenStreamSong(StreamSource *source)
+{
+	auto song = new StreamSong(source);
+	if (song->IsValid()) return song;
+	delete song;
+	return nullptr;
+}
+

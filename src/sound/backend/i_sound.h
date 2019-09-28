@@ -58,7 +58,7 @@ enum EStartSoundFlags
 class SoundStream
 {
 public:
-	virtual ~SoundStream ();
+	virtual ~SoundStream () {}
 
 	enum
 	{	// For CreateStream
@@ -77,8 +77,6 @@ public:
 	virtual bool SetPaused(bool paused) = 0;
 	virtual unsigned int GetPosition() = 0;
 	virtual bool IsEnded() = 0;
-	virtual bool SetPosition(unsigned int pos);
-	virtual bool SetOrder(int order);
 	virtual FString GetStats();
 };
 

@@ -227,18 +227,16 @@ static void getNextXABlock(xa_data *xad, bool looping )
 //
 //==========================================================================
 
-class XASong : public StreamSong
+class XASong : public StreamSource
 {
 public:
 	XASong(FileReader & readr);
-	~XASong();
-	bool SetSubsong(int subsong);
-	void Play(bool looping, int subsong);
+	SoundStreamInfo GetFormat() override;
+	bool Start() override;
+	bool GetData(void *buffer, size_t len) override;
 
 protected:
 	xa_data xad;
-
-	static bool Read(SoundStream *stream, void *buff, int len, void *userdata);
 };
 
 //==========================================================================
@@ -253,27 +251,13 @@ XASong::XASong(FileReader &reader)
 	xad.reader = std::move(reader);
 	xad.t1 = xad.t2 = xad.t1_x = xad.t2_x = 0;
 	getNextXABlock(&xad, false);
-	auto SampleRate = xad.blockIs18K? 18900 : 37800;
-
-	m_Stream = GSnd->CreateStream(Read, 64 * 1024, SoundStream::Float, SampleRate, this);	// create a floating point stereo stream.
 }
 
-//==========================================================================
-//
-// XASong - Destructor
-//
-//==========================================================================
-
-XASong::~XASong()
+SoundStreamInfo XASong::GetFormat()
 {
-	Stop();
-	if (m_Stream != nullptr)
-	{
-		delete m_Stream;
-		m_Stream = nullptr;
-	}
+	auto SampleRate = xad.blockIs18K? 18900 : 37800;
+	return { 64*1024, SampleRate, 2};
 }
-
 
 //==========================================================================
 //
@@ -281,53 +265,37 @@ XASong::~XASong()
 //
 //==========================================================================
 
-void XASong::Play(bool looping, int track)
+bool XASong::Start()
 {
-	m_Status = STATE_Stopped;
-	m_Looping = looping;
-	if (xad.finished && looping)
+	if (xad.finished && m_Looping)
 	{
 		xad.reader.Seek(XA_DATA_START, FileReader::SeekSet);
 		xad.t1 = xad.t2 = xad.t1_x = xad.t2_x = 0;
 		xad.finished = false;
 	}
-	if (m_Stream->Play(looping, 1))
-	{
-		m_Status = STATE_Playing;
-	}
+	return true;
 }
 
 //==========================================================================
 //
-// XASong :: SetSubsong
+// XASong :: Read
 //
 //==========================================================================
 
-bool XASong::SetSubsong(int track)
+bool XASong::GetData(void *vbuff, size_t len)
 {
-	return false;
-}
-
-//==========================================================================
-//
-// XASong :: Read													STATIC
-//
-//==========================================================================
-
-bool XASong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdata)
-{
-	auto self = (XASong*)userdata;
+	auto olen = len;
 	float *dest = (float*)vbuff;
-	while (ilen > 0)
+	while (len > 0)
 	{
-		auto ptr = self->xad.committed;
-		auto block = self->xad.block + ptr;
+		auto ptr = xad.committed;
+		auto block = xad.block + ptr;
 		if (ptr < kBufSize)
 		{
 			// commit the data
-			if (self->xad.blockIsMono)
+			if (xad.blockIsMono)
 			{
-				size_t numsamples = ilen / 8;
+				size_t numsamples = len / 8;
 				size_t availdata = kBufSize - ptr;
 				
 				for(size_t tocopy = std::min(numsamples, availdata); tocopy > 0; tocopy--)
@@ -335,35 +303,36 @@ bool XASong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdata)
 					float f = *block++;
 					*dest++ = f;
 					*dest++ = f;
-					ilen -= 8;
+					len -= 8;
 					ptr++;
 				}
-				self->xad.committed = ptr;
+				xad.committed = ptr;
 			}
 			else
 			{
 				size_t availdata = (kBufSize - ptr) * 4;
-				size_t tocopy = std::min(availdata, (size_t)ilen);
+				size_t tocopy = std::min(availdata, len);
 				memcpy(dest, block, tocopy);
 				dest += tocopy / 4;
-				ilen -= (int)tocopy;
-				self->xad.committed += tocopy / 4;
+				len -= tocopy;
+				xad.committed += tocopy / 4;
 			}
 		}
-		if (self->xad.finished)
+		if (xad.finished)
 		{
-			// fill the rest with 0's.
+			memset(dest, 0, len);
+			return true;
 		}
-		if (ilen > 0)
+		if (len > 0)
 		{
 			// we ran out of data and need more
-			getNextXABlock(&self->xad, self->m_Looping);
+			getNextXABlock(&xad, m_Looping);
 			// repeat until done.
 		}
 		else break;
 		
 	}
-	return !self->xad.finished;
+	return !xad.finished;
 } 
 
 //==========================================================================
@@ -372,7 +341,7 @@ bool XASong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdata)
 //
 //==========================================================================
 
-MusInfo *XA_OpenSong(FileReader &reader)
+StreamSource *XA_OpenSong(FileReader &reader)
 {
 	return new XASong(reader);
 }

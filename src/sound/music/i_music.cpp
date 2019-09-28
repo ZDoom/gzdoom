@@ -47,8 +47,9 @@
 #include "stats.h"
 #include "vm.h"
 #include "s_music.h"
-#include "..//libraries/zmusic/midisources/midisource.h"
+#include "../libraries/zmusic/midisources/midisource.h"
 
+EXTERN_CVAR(Float, gme_stereodepth)
 
 
 #define GZIP_ID1		31
@@ -261,11 +262,6 @@ FString MusInfo::GetStats()
 	return "No stats available for this song";
 }
 
-MusInfo *MusInfo::GetOPLDumper(const char *filename)
-{
-	return nullptr;
-}
-
 MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 {
 	return nullptr;
@@ -371,6 +367,7 @@ static EMIDIType IdentifyMIDIType(uint32_t *id, int size)
 MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 {
 	MusInfo *info = nullptr;
+	StreamSource *streamsource = nullptr;
 	const char *fmt;
 	uint32_t id[32/4];
 
@@ -446,26 +443,28 @@ MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
 		(id[0] == MAKE_ID('A','D','L','I') && *((uint8_t *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
-		info = new OPLMUSSong (reader, device != nullptr? device->args.GetChars() : "");
+		streamsource = OPL_OpenSong(reader, device != nullptr? device->args.GetChars() : "");
 	}
 	else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
 	{
-		info = XA_OpenSong(reader);
+		streamsource = XA_OpenSong(reader);
 	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
 	{
-		info = GME_OpenSong(reader, fmt);
+		streamsource = GME_OpenSong(reader, fmt, gme_stereodepth);
 	}
 	// Check for module formats
 	else
 	{
-		info = MOD_OpenSong(reader);
+		streamsource = MOD_OpenSong(reader);
 	}
-	if (info == nullptr)
+	if (info == nullptr && streamsource == nullptr)
 	{
-		info = SndFile_OpenSong(reader);
+		streamsource = SndFile_OpenSong(reader);
 	}
+	
+	if (streamsource) info = OpenStreamSong(streamsource);
 
     if (info == nullptr)
     {

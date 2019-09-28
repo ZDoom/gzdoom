@@ -110,45 +110,31 @@ protected:
 
 // Anything supported by the sound system out of the box --------------------
 
-class StreamSong : public MusInfo
+class StreamSource
 {
+protected:
+	bool m_Looping = true;
+	int m_OutputRate;
+	
 public:
-    StreamSong (FileReader &reader);
-	~StreamSong ();
-	void Play (bool looping, int subsong);
-	void Pause ();
-	void Resume ();
-	void Stop ();
-	bool IsPlaying ();
-	bool IsValid () const { return m_Stream != NULL; }
-	bool SetPosition (unsigned int pos);
-	bool SetSubsong (int subsong);
-	FString GetStats();
+
+	StreamSource (int outputRate) { m_OutputRate = outputRate; }
+	virtual ~StreamSource () {}
+	virtual void SetPlayMode(bool looping) { m_Looping = looping; }
+	virtual bool Start() { return true; }
+	virtual bool SetPosition(unsigned position) { return false; }
+	virtual bool SetSubsong(int subsong) { return false; }
+	virtual bool GetData(void *buffer, size_t len) = 0;
+	virtual SoundStreamInfo GetFormat() { return {65536, m_OutputRate, 2  }; }	// Default format is: System's output sample rate, 32 bit float, stereo
+	virtual FString GetStats() { return ""; }
+	virtual void ChangeSettingInt(const char *name, int value) {  }
+	virtual void ChangeSettingNum(const char *name, double value) {  }
+	virtual void ChangeSettingString(const char *name, const char *value) {  }
 
 protected:
-	StreamSong () : m_Stream(NULL) {}
-
-	SoundStream *m_Stream;
+	StreamSource() = default;
 };
 
-// MUS file played by a software OPL2 synth and streamed through the sound system
-
-class OPLMUSSong : public StreamSong
-{
-public:
-	OPLMUSSong (FileReader &reader, const char *args);
-	~OPLMUSSong ();
-	void Play (bool looping, int subsong);
-	bool IsPlaying ();
-	bool IsValid () const;
-	void ChangeSettingInt (const char *, int) override;
-
-protected:
-
-	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
-
-	OPLmusicFile *Music;
-};
 
 // CD track/disk played through the multimedia system -----------------------
 
@@ -191,14 +177,17 @@ bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args);
 
 // Module played via foo_dumb -----------------------------------------------
 
-MusInfo *MOD_OpenSong(FileReader &reader);
+StreamSource *MOD_OpenSong(FileReader &reader);
+StreamSource *GME_OpenSong(FileReader &reader, const char *fmt, float depth);
+StreamSource *SndFile_OpenSong(FileReader &fr);
+StreamSource* XA_OpenSong(FileReader& reader);
+StreamSource *OPL_OpenSong(FileReader &reader, const char *args);
 
-// Music played via Game Music Emu ------------------------------------------
+// stream song ------------------------------------------
+
+MusInfo *OpenStreamSong(StreamSource *source);
 
 const char *GME_CheckFormat(uint32_t header);
-MusInfo *GME_OpenSong(FileReader &reader, const char *fmt);
-MusInfo *SndFile_OpenSong(FileReader &fr);
-MusInfo* XA_OpenSong(FileReader& reader);
 
 // --------------------------------------------------------------------------
 

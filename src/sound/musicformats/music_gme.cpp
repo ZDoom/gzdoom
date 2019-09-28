@@ -37,6 +37,7 @@
 // Uncomment if you are using the DLL version of GME.
 //#define GME_DLL
 
+#include <algorithm>
 #include "i_musicinterns.h"
 #include <gme/gme.h>
 #include <mutex>
@@ -47,14 +48,17 @@
 
 // TYPES -------------------------------------------------------------------
 
-class GMESong : public StreamSong
+class GMESong : public StreamSource
 {
 public:
 	GMESong(Music_Emu *emu, int sample_rate);
 	~GMESong();
-	bool SetSubsong(int subsong);
-	void Play(bool looping, int subsong);
-	FString GetStats();
+	bool SetSubsong(int subsong) override;
+	bool Start() override;
+	void ChangeSettingNum(const char *name, double val) override;
+	FString GetStats() override;
+	bool GetData(void *buffer, size_t len) override;
+	SoundStreamInfo GetFormat() override;
 
 protected:
 	std::mutex CritSec;
@@ -62,13 +66,11 @@ protected:
 	gme_info_t *TrackInfo;
 	int SampleRate;
 	int CurrTrack;
+	bool started = false;
 
 	bool StartTrack(int track, bool getcritsec=true);
 	bool GetTrackInfo();
 	int CalcSongLength();
-	void GMEDepthChanged(float val);
-
-	static bool Read(SoundStream *stream, void *buff, int len, void *userdata);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -82,13 +84,6 @@ protected:
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // Currently not used.
-CVAR (Float, spc_amp, 1.875f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (currSong != nullptr)
-		currSong->GMEDepthChanged(self);
-}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -111,7 +106,7 @@ const char *GME_CheckFormat(uint32_t id)
 //
 //==========================================================================
 
-MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
+StreamSource *GME_OpenSong(FileReader &reader, const char *fmt, float stereo_depth)
 {
 	gme_type_t type;
 	gme_err_t err;
@@ -152,7 +147,7 @@ MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
         reader.Seek(fpos, FileReader::SeekSet);
 		return nullptr;
 	}
-	gme_set_stereo_depth(emu, clamp(*gme_stereodepth, 0.f, 1.f));
+	gme_set_stereo_depth(emu, std::min(std::max(stereo_depth, 0.f), 1.f));
 	gme_set_fade(emu, -1); // Enable infinite loop
 	return new GMESong(emu, sample_rate);
 }
@@ -169,7 +164,12 @@ GMESong::GMESong(Music_Emu *emu, int sample_rate)
 	SampleRate = sample_rate;
 	CurrTrack = 0;
 	TrackInfo = NULL;
-	m_Stream = GSnd->CreateStream(Read, 32*1024, 0, sample_rate, this);
+}
+
+
+SoundStreamInfo GMESong::GetFormat()
+{
+	return { 32*1024, SampleRate, -2 };
 }
 
 //==========================================================================
@@ -180,12 +180,6 @@ GMESong::GMESong(Music_Emu *emu, int sample_rate)
 
 GMESong::~GMESong()
 {
-	Stop();
-	if (m_Stream != NULL)
-	{
-		delete m_Stream;
-		m_Stream = NULL;
-	}
 	if (TrackInfo != NULL)
 	{
 		gme_free_info(TrackInfo);
@@ -203,12 +197,13 @@ GMESong::~GMESong()
 //
 //==========================================================================
 
-void GMESong::GMEDepthChanged(float val)
+void GMESong::ChangeSettingNum(const char *name, double val)
 {
-	if (Emu != nullptr)
-		gme_set_stereo_depth(Emu, clamp(val, 0.f, 1.f));
+	if (Emu != nullptr && !stricmp(name, "gme.stereodepth"))
+	{
+		gme_set_stereo_depth(Emu, clamp((float)val, 0.f, 1.f));
+	}
 }
-
 
 //==========================================================================
 //
@@ -216,15 +211,11 @@ void GMESong::GMEDepthChanged(float val)
 //
 //==========================================================================
 
-void GMESong::Play(bool looping, int track)
+bool GMESong::Start()
 {
-	m_Status = STATE_Stopped;
-	m_Looping = looping;
-	if (StartTrack(track) && m_Stream->Play(looping, 1))
-	{
-		m_Status = STATE_Playing;
-	}
+	return StartTrack(CurrTrack);
 }
+
 
 //==========================================================================
 //
@@ -236,7 +227,12 @@ bool GMESong::SetSubsong(int track)
 {
 	if (CurrTrack == track)
 	{
-		return false;
+		return true;
+	}
+	if (!started)
+	{
+		CurrTrack = track;
+		return true;
 	}
 	return StartTrack(track);
 }
@@ -353,24 +349,23 @@ int GMESong::CalcSongLength()
 //
 //==========================================================================
 
-bool GMESong::Read(SoundStream *stream, void *buff, int len, void *userdata)
+bool GMESong::GetData(void *buffer, size_t len)
 {
 	gme_err_t err;
-	GMESong *song = (GMESong *)userdata;
 
-	std::lock_guard<std::mutex> lock(song->CritSec);
-	if (gme_track_ended(song->Emu))
+	std::lock_guard<std::mutex> lock(CritSec);
+	if (gme_track_ended(Emu))
 	{
-		if (song->m_Looping)
+		if (m_Looping)
 		{
-			song->StartTrack(song->CurrTrack, false);
+			StartTrack(CurrTrack, false);
 		}
 		else
 		{
-			memset(buff, 0, len);
+			memset(buffer, 0, len);
 			return false;
 		}
 	}
-	err = gme_play(song->Emu, len >> 1, (short *)buff);
+	err = gme_play(Emu, int(len >> 1), (short *)buffer);
 	return (err == NULL);
 }

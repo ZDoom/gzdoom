@@ -44,19 +44,31 @@
 #include "../dumb/include/dumb.h"
 #include "../dumb/include/internal/it.h"
 
+//==========================================================================
+//
+// dumb_decode_vorbis
+//
+//==========================================================================
+
+static short *DUMBCALLBACK dumb_decode_vorbis_(int outlen, const void *oggstream, int sizebytes)
+{
+	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
+}
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
-class input_mod : public StreamSong
+class DumbSong : public StreamSource
 {
 public:
-	input_mod(DUH *myduh);
-	~input_mod();
+	DumbSong(DUH *myduh);
+	~DumbSong();
 	//bool SetPosition(int ms);
-	bool SetSubsong(int subsong);
-	void Play(bool looping, int subsong);
-	FString GetStats();
+	bool SetSubsong(int subsong) override;
+	bool Start() override;
+	SoundStreamInfo GetFormat() override;
+	FString GetStats() override;
 
 	FString Codec;
 	FString TrackerVersion;
@@ -71,6 +83,7 @@ protected:
 	double delta;
 	double length;
 	bool eof;
+	bool started = false;
 	size_t written;
 	DUH *duh;
 	DUH_SIGRENDERER *sr;
@@ -79,7 +92,8 @@ protected:
 	bool open2(long pos);
 	long render(double volume, double delta, long samples, sample_t **buffer);
 	int decode_run(void *buffer, unsigned int size);
-	static bool read(SoundStream *stream, void *buff, int len, void *userdata);
+	bool GetData(void *buffer, size_t len) override;
+
 };
 
 #pragma pack(1)
@@ -165,7 +179,7 @@ static inline uint64_t time_to_samples(double p_time,int p_sample_rate)
 //
 //==========================================================================
 
-static void ReadDUH(DUH * duh, input_mod *info, bool meta, bool dos)
+static void ReadDUH(DUH * duh, DumbSong *info, bool meta, bool dos)
 {
 	if (!duh) return;
 
@@ -249,7 +263,7 @@ static void ReadDUH(DUH * duh, input_mod *info, bool meta, bool dos)
 //
 //==========================================================================
 
-static bool ReadIT(const uint8_t * ptr, unsigned size, input_mod *info, bool meta)
+static bool ReadIT(const uint8_t * ptr, unsigned size, DumbSong *info, bool meta)
 {
 	PITFILEHEADER pifh = (PITFILEHEADER) ptr;
 	if ((!ptr) || (size < 0x100)) return false;
@@ -759,7 +773,7 @@ static void MOD_SetAutoChip(DUH *duh)
 //
 //==========================================================================
 
-MusInfo *MOD_OpenSong(FileReader &reader)
+StreamSource *MOD_OpenSong(FileReader &reader)
 {
 	DUH *duh = 0;
 	int headsize;
@@ -770,7 +784,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	};
 	dumbfile_mem_status filestate;
 	DUMBFILE *f = NULL;
-	input_mod *state = NULL;
+	DumbSong *state = NULL;
 
 	bool is_it = false;
 	bool is_dos = true;
@@ -920,17 +934,10 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 		{
 			MOD_SetAutoChip(duh);
 		}
-		state = new input_mod(duh);
-		if (!state->IsValid())
-		{
-			delete state;
-			state = NULL;
-		}
-		else
-		{
-			if (is_it) ReadIT(filestate.ptr, size, state, false);
-			else ReadDUH(duh, state, false, is_dos);
-		}
+		state = new DumbSong(duh);
+
+		if (is_it) ReadIT(filestate.ptr, size, state, false);
+		else ReadDUH(duh, state, false, is_dos);
 	}
 	else
 	{
@@ -946,22 +953,22 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 
 //==========================================================================
 //
-// input_mod :: read												static
+// DumbSong :: read												static
 //
 //==========================================================================
 
-bool input_mod::read(SoundStream *stream, void *buffer, int sizebytes, void *userdata)
+bool DumbSong::GetData(void *buffer, size_t sizebytes)
 {
-	input_mod *state = (input_mod *)userdata;
-	if (state->eof)
+	if (eof)
 	{
 		memset(buffer, 0, sizebytes);
 		return false;
 	}
-	std::lock_guard<std::mutex> lock(state->crit_sec);
+	std::lock_guard<std::mutex> lock_(crit_sec);
+	
 	while (sizebytes > 0)
 	{
-		int written = state->decode_run(buffer, sizebytes / 8);
+		int written = decode_run(buffer, (unsigned)sizebytes / 8);
 		if (written < 0)
 		{
 			return false;
@@ -987,12 +994,13 @@ bool input_mod::read(SoundStream *stream, void *buffer, int sizebytes, void *use
 
 //==========================================================================
 //
-// input_mod constructor
+// DumbSong constructor
 //
 //==========================================================================
 
-input_mod::input_mod(DUH *myduh)
+DumbSong::DumbSong(DUH *myduh)
 {
+	dumb_decode_vorbis = dumb_decode_vorbis_;
 	duh = myduh;
 	sr = NULL;
 	eof = false;
@@ -1009,57 +1017,60 @@ input_mod::input_mod(DUH *myduh)
 	{
 		srate = (int)GSnd->GetOutputRate();
 	}
-	m_Stream = GSnd->CreateStream(read, 32*1024, SoundStream::Float, srate, this);
 	delta = 65536.0 / srate;
 }
 
 //==========================================================================
 //
-// input_mod destructor
+// DumbSong destructor
 //
 //==========================================================================
 
-input_mod::~input_mod()
+DumbSong::~DumbSong()
 {
-	Stop();
-	if (m_Stream != NULL)
-	{
-		delete m_Stream;
-		m_Stream = NULL;
-	}
 	if (sr) duh_end_sigrenderer(sr);
 	if (duh) unload_duh(duh);
 }
 
 //==========================================================================
 //
-// input_mod :: Play
+// DumbSong GetFormat
 //
 //==========================================================================
 
-void input_mod::Play(bool looping, int order)
+SoundStreamInfo DumbSong::GetFormat()
 {
-	m_Status = STATE_Stopped;
-	m_Looping = looping;
-
-	start_order = order;
-	if (open2(0) && m_Stream->Play(m_Looping, 1))
-	{
-		m_Status = STATE_Playing;
-	}
+	return { 32*1024, srate, 2 };
 }
 
 //==========================================================================
 //
-// input_mod :: SetSubsong
+// DumbSong :: Play
 //
 //==========================================================================
 
-bool input_mod::SetSubsong(int order)
+bool DumbSong::Start()
+{
+	started = open2(0);
+	return started;
+}
+
+//==========================================================================
+//
+// DumbSong :: SetSubsong
+//
+//==========================================================================
+
+bool DumbSong::SetSubsong(int order)
 {
 	if (order == start_order)
 	{
-		return false;
+		return true;
+	}
+	if (!started)
+	{
+		start_order = order;
+		return true;
 	}
 	std::lock_guard<std::mutex> lock(crit_sec);
 	DUH_SIGRENDERER *oldsr = sr;
@@ -1076,11 +1087,11 @@ bool input_mod::SetSubsong(int order)
 
 //==========================================================================
 //
-// input_mod :: open2
+// DumbSong :: open2
 //
 //==========================================================================
 
-bool input_mod::open2(long pos)
+bool DumbSong::open2(long pos)
 {
 	if (start_order != 0)
 	{
@@ -1110,11 +1121,11 @@ bool input_mod::open2(long pos)
 
 //==========================================================================
 //
-// input_mod :: render
+// DumbSong :: render
 //
 //==========================================================================
 
-long input_mod::render(double volume, double delta, long samples, sample_t **buffer)
+long DumbSong::render(double volume, double delta, long samples, sample_t **buffer)
 {
 	long written = duh_sigrenderer_generate_samples(sr, volume, delta, samples, buffer);
 
@@ -1139,18 +1150,19 @@ long input_mod::render(double volume, double delta, long samples, sample_t **buf
 
 //==========================================================================
 //
-// input_mod :: decode_run
+// DumbSong :: decode_run
 //
 // Given a buffer of 32-bit PCM stereo pairs and a size specified in
 // samples, returns the number of samples written to the buffer.
 //
 //==========================================================================
 
-int input_mod::decode_run(void *buffer, unsigned int size)
+int DumbSong::decode_run(void *buffer, unsigned int size)
 {
 	if (eof) return 0;
 
 	DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sr);
+	if (itsr == nullptr) return 0;
 	int dt = int(delta * 65536.0 + 0.5);
 	long samples = long((((LONG_LONG)itsr->time_left << 16) | itsr->sub_time_left) / dt);
 	if (samples == 0 || samples > (long)size) samples = size;
@@ -1170,11 +1182,11 @@ retry:
 
 //==========================================================================
 //
-// input_mod :: GetStats
+// DumbSong :: GetStats
 //
 //==========================================================================
 
-FString input_mod::GetStats()
+FString DumbSong::GetStats()
 {
 	//return StreamSong::GetStats();
 	DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sr);
@@ -1211,13 +1223,3 @@ FString input_mod::GetStats()
 	return out;
 }
 
-//==========================================================================
-//
-// dumb_decode_vorbis
-//
-//==========================================================================
-
-extern "C" short *DUMBCALLBACK dumb_decode_vorbis(int outlen, const void *oggstream, int sizebytes)
-{
-	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
-}

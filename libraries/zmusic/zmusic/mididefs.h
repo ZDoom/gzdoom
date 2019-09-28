@@ -44,3 +44,12 @@ enum EMidiDevice
 
 	MDEV_COUNT
 };
+
+struct SoundStreamInfo
+{
+	// Format is always 32 bit float. If mBufferSize is 0, the song doesn't use streaming but plays through a different interface.
+	int mBufferSize;
+	int mSampleRate;
+	int mNumChannels;
+};
+

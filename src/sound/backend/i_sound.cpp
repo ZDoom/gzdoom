@@ -379,20 +379,6 @@ void SoundRenderer::DrawWaveDebug(int mode)
 {
 }
 
-SoundStream::~SoundStream ()
-{
-}
-
-bool SoundStream::SetPosition(unsigned int pos)
-{
-	return false;
-}
-
-bool SoundStream::SetOrder(int order)
-{
-	return false;
-}
-
 FString SoundStream::GetStats()
 {
 	return "No stream stats available.";

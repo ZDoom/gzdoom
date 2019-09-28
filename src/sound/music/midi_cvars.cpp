@@ -915,3 +915,11 @@ bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
 // This one is for Win32 MMAPI.
 
 CVAR(Bool, snd_midiprecache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+// GME
+
+CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr)
+		currSong->ChangeSettingNum("GME.stereodepth", *self);
+}

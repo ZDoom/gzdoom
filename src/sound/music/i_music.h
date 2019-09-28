@@ -78,7 +78,6 @@ public:
 	virtual void Update();
 	virtual int GetDeviceType() const { return MDEV_DEFAULT; }	// MDEV_DEFAULT stands in for anything that cannot change playback parameters which needs a restart.
 	virtual FString GetStats();
-	virtual MusInfo *GetOPLDumper(const char *filename);
 	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
 	virtual void ChangeSettingInt(const char *setting, int value);			// FluidSynth settings
 	virtual void ChangeSettingNum(const char *setting, double value);		// "

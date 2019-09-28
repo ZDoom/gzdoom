@@ -35,59 +35,78 @@
 #include "../libraries/oplsynth/oplsynth/opl.h"
 #include "../libraries/oplsynth/oplsynth/opl_mus_player.h"
 
-static bool OPL_Active;
-
 EXTERN_CVAR (Int, opl_numchips)
 EXTERN_CVAR(Int, opl_core)
 
-int getOPLCore(const char* args)
-{
-	int current_opl_core = opl_core;
-	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
-	return current_opl_core;
-}
 
+//==========================================================================
+//
+// OPL file played by a software OPL2 synth and streamed through the sound system
+//
+//==========================================================================
+
+class OPLMUSSong : public StreamSource
+{
+public:
+	OPLMUSSong (FileReader &reader, const char *args);
+	~OPLMUSSong ();
+	bool Start() override;
+	void ChangeSettingInt(const char *name, int value) override;
+	SoundStreamInfo GetFormat() override;
+
+protected:
+	bool GetData(void *buffer, size_t len) override;
+
+	OPLmusicFile *Music;
+	int current_opl_core;
+};
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
 {
-	int samples = int(OPL_SAMPLE_RATE / 14);
-	const char* error;
+	current_opl_core = opl_core;
+	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
 
-	int core = getOPLCore(args);
-	auto data = reader.Read();
-	Music = new OPLmusicFile (data.Data(), data.Size(), core, opl_numchips, error);
-	if (!Music->IsValid())
-	{
-		Printf(PRINT_BOLD, "%s", error? error : "Invalid OPL format\n");
-		delete Music;
-		return;
-	}
-
-	m_Stream = GSnd->CreateStream (FillStream, samples*4,
-		(core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);
-	if (m_Stream == NULL)
-	{
-		Printf (PRINT_BOLD, "Could not create music stream.\n");
-		delete Music;
-		return;
-	}
-	OPL_Active = true;
+	Music = nullptr ;// new OPLmusicFile(reader, current_opl_core);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+SoundStreamInfo OPLMUSSong::GetFormat()
+{
+	int samples = int(OPL_SAMPLE_RATE / 14);
+	return { samples * 4, int(OPL_SAMPLE_RATE), current_opl_core == 0? 1:2  };
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 OPLMUSSong::~OPLMUSSong ()
 {
-	OPL_Active = false;
-	Stop ();
 	if (Music != NULL)
 	{
 		delete Music;
 	}
 }
 
-bool OPLMUSSong::IsValid () const
-{
-	return m_Stream != NULL;
-}
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 void OPLMUSSong::ChangeSettingInt(const char * name, int val)
 {
@@ -95,28 +114,31 @@ void OPLMUSSong::ChangeSettingInt(const char * name, int val)
 		Music->ResetChips (val);
 }
 
-bool OPLMUSSong::IsPlaying ()
-{
-	return m_Status == STATE_Playing;
-}
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
-void OPLMUSSong::Play (bool looping, int subsong)
+bool OPLMUSSong::Start()
 {
-	m_Status = STATE_Stopped;
-	m_Looping = looping;
-
-	Music->SetLooping (looping);
+	Music->SetLooping (m_Looping);
 	Music->Restart ();
-
-	if (m_Stream == NULL || m_Stream->Play (true, snd_musicvolume))
-	{
-		m_Status = STATE_Playing;
-	}
+	return true;
 }
 
-bool OPLMUSSong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+bool OPLMUSSong::GetData(void *buffer, size_t len)
 {
-	OPLMUSSong *song = (OPLMUSSong *)userdata;
-	return song->Music->ServiceStream (buff, len);
+	return Music->ServiceStream(buffer, int(len)) ? len : 0;
 }
 
+StreamSource *OPL_OpenSong(FileReader &reader, const char *args)
+{
+	return new OPLMUSSong(reader, args);
+}

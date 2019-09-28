@@ -44,14 +44,14 @@
 
 // TYPES -------------------------------------------------------------------
 
-class SndFileSong : public StreamSong
+class SndFileSong : public StreamSource
 {
 public:
 	SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass);
 	~SndFileSong();
-	bool SetSubsong(int subsong);
-	void Play(bool looping, int subsong);
-	FString GetStats();
+	FString GetStats() override;
+	SoundStreamInfo GetFormat() override;
+	bool GetData(void *buffer, size_t len) override;
 	
 protected:
 	std::mutex CritSec;
@@ -64,8 +64,6 @@ protected:
 	uint32_t Loop_End;
 
 	int CalcSongLength();
-
-	static bool Read(SoundStream *stream, void *buff, int len, void *userdata);
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -267,7 +265,7 @@ void FindLoopTags(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end
 //
 //==========================================================================
 
-MusInfo *SndFile_OpenSong(FileReader &fr)
+StreamSource *SndFile_OpenSong(FileReader &fr)
 {
 	fr.Seek(0, FileReader::SeekSet);
 
@@ -303,7 +301,11 @@ SndFileSong::SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loo
 	Reader = std::move(reader);
 	Decoder = decoder;
 	Channels = iChannels == ChannelConfig_Stereo? 2:1;
-	m_Stream = GSnd->CreateStream(Read, snd_streambuffersize * 1024, iChannels == ChannelConfig_Stereo? 0 : SoundStream::Mono, SampleRate, this);
+}
+
+SoundStreamInfo SndFileSong::GetFormat()
+{
+	return { snd_streambuffersize * 1024, SampleRate, -Channels };
 }
 
 //==========================================================================
@@ -314,44 +316,10 @@ SndFileSong::SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loo
 
 SndFileSong::~SndFileSong()
 {
-	Stop();
-	if (m_Stream != nullptr)
-	{
-		delete m_Stream;
-		m_Stream = nullptr;
-	}
 	if (Decoder != nullptr)
 	{
 		delete Decoder;
 	}
-}
-
-
-//==========================================================================
-//
-// SndFileSong :: Play
-//
-//==========================================================================
-
-void SndFileSong::Play(bool looping, int track)
-{
-	m_Status = STATE_Stopped;
-	m_Looping = looping;
-	if (m_Stream->Play(looping, 1))
-	{
-		m_Status = STATE_Playing;
-	}
-}
-
-//==========================================================================
-//
-// SndFileSong :: SetSubsong
-//
-//==========================================================================
-
-bool SndFileSong::SetSubsong(int track)
-{
-	return false;
 }
 
 //==========================================================================
@@ -384,19 +352,17 @@ FString SndFileSong::GetStats()
 //
 //==========================================================================
 
-bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdata)
+bool SndFileSong::GetData(void *vbuff, size_t len)
 {
 	char *buff = (char*)vbuff;
-	SndFileSong *song = (SndFileSong *)userdata;
-	std::lock_guard<std::mutex> lock(song->CritSec);
+	std::lock_guard<std::mutex> lock(CritSec);
 	
-	size_t len = size_t(ilen);
-	size_t currentpos = song->Decoder->getSampleOffset();
-	size_t framestoread = len / (song->Channels*2);
+	size_t currentpos = Decoder->getSampleOffset();
+	size_t framestoread = len / (Channels*2);
 	bool err = false;
-	if (!song->m_Looping)
+	if (!m_Looping)
 	{
-		size_t maxpos = song->Decoder->getSampleLength();
+		size_t maxpos = Decoder->getSampleLength();
 		if (currentpos == maxpos)
 		{
 			memset(buff, 0, len);
@@ -404,36 +370,36 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 		}
 		if (currentpos + framestoread > maxpos)
 		{
-			size_t got = song->Decoder->read(buff, (maxpos - currentpos) * song->Channels * 2);
+			size_t got = Decoder->read(buff, (maxpos - currentpos) * Channels * 2);
 			memset(buff + got, 0, len - got);
 		}
 		else
 		{
-			size_t got = song->Decoder->read(buff, len);
+			size_t got = Decoder->read(buff, len);
 			err = (got != len);
 		}
 	}
 	else
 	{
 		// This looks a bit more complicated than necessary because libmpg123 will not read the full requested length for the last block in the file.
-		if (currentpos + framestoread > song->Loop_End)
+		if (currentpos + framestoread > Loop_End)
 		{
 			// Loop can be very short, make sure the current position doesn't exceed it
-			if (currentpos < song->Loop_End)
+			if (currentpos < Loop_End)
 			{
-				size_t endblock = (song->Loop_End - currentpos) * song->Channels * 2;
-				size_t endlen = song->Decoder->read(buff, endblock);
+				size_t endblock = (Loop_End - currentpos) * Channels * 2;
+				size_t endlen = Decoder->read(buff, endblock);
 
 				// Even if zero bytes was read give it a chance to start from the beginning
 				buff += endlen;
 				len -= endlen;
 			}
 
-			song->Decoder->seek(song->Loop_Start, false, true);
+			Decoder->seek(Loop_Start, false, true);
 		}
 		while (len > 0)
 		{
-			size_t readlen = song->Decoder->read(buff, len);
+			size_t readlen = Decoder->read(buff, len);
 			if (readlen == 0)
 			{
 				return false;
@@ -442,7 +408,7 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 			len -= readlen;
 			if (len > 0)
 			{
-				song->Decoder->seek(song->Loop_Start, false, true);
+				Decoder->seek(Loop_Start, false, true);
 			}
 		}
 	}

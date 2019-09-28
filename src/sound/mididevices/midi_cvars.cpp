@@ -49,7 +49,6 @@
 
 #ifdef _WIN32
 // do this without including windows.h for this one single prototype
-#ifdef _WIN32
 extern "C" unsigned __stdcall GetSystemDirectoryA(char* lpBuffer, unsigned uSize);
 #endif // _WIN32
 

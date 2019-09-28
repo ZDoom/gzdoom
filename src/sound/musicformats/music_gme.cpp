@@ -38,12 +38,10 @@
 //#define GME_DLL
 
 #include <algorithm>
-#include "i_musicinterns.h"
+#include "streamsource.h"
 #include <gme/gme.h>
 #include <mutex>
-#include "v_text.h"
-#include "templates.h"
-#include "streamsource.h"
+#include "../..//libraries/music_common/fileio.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -107,34 +105,34 @@ const char *GME_CheckFormat(uint32_t id)
 //
 //==========================================================================
 
-StreamSource *GME_OpenSong(FileReader &reader, const char *fmt, float stereo_depth)
+StreamSource *GME_OpenSong(MusicIO::FileInterface *reader, const char *fmt, float stereo_depth, int sample_rate)
 {
 	gme_type_t type;
 	gme_err_t err;
 	uint8_t *song;
 	Music_Emu *emu;
-	int sample_rate;
 	
 	type = gme_identify_extension(fmt);
 	if (type == NULL)
 	{
 		return NULL;
 	}
-	sample_rate = (int)GSnd->GetOutputRate();
 	emu = gme_new_emu(type, sample_rate);
 	if (emu == nullptr)
 	{
 		return nullptr;
 	}
 
-    auto fpos = reader.Tell();
-	auto len = reader.GetLength();
-    song = new uint8_t[len];
-    if (reader.Read(song, len) != len)
+    auto fpos = reader->tell();
+	reader->seek(0, SEEK_END);
+	auto len = reader->tell();
+	reader->seek(fpos, SEEK_SET);
+	song = new uint8_t[len];
+    if (reader->read(song, len) != len)
     {
         delete[] song;
         gme_delete(emu);
-        reader.Seek(fpos, FileReader::SeekSet);
+        reader->seek(fpos, SEEK_SET);
         return nullptr;
     }
 
@@ -143,10 +141,8 @@ StreamSource *GME_OpenSong(FileReader &reader, const char *fmt, float stereo_dep
 
 	if (err != nullptr)
 	{
-		Printf("Failed loading song: %s\n", err);
 		gme_delete(emu);
-        reader.Seek(fpos, FileReader::SeekSet);
-		return nullptr;
+		throw std::runtime_error(err);
 	}
 	gme_set_stereo_depth(emu, std::min(std::max(stereo_depth, 0.f), 1.f));
 	gme_set_fade(emu, -1); // Enable infinite loop
@@ -202,7 +198,7 @@ void GMESong::ChangeSettingNum(const char *name, double val)
 {
 	if (Emu != nullptr && !stricmp(name, "gme.stereodepth"))
 	{
-		gme_set_stereo_depth(Emu, clamp((float)val, 0.f, 1.f));
+		gme_set_stereo_depth(Emu, std::min(std::max(0., val), 1.));
 	}
 }
 
@@ -259,7 +255,9 @@ bool GMESong::StartTrack(int track, bool getcritsec)
 	}
 	if (err != NULL)
 	{
-		Printf("Could not start track %d: %s\n", track, err);
+		// This is called in the data reader thread which may not interact with the UI.
+		// TBD: How to get the message across? An exception may not be used here!
+		// Printf("Could not start track %d: %s\n", track, err);
 		return false;
 	}
 	CurrTrack = track;
@@ -313,7 +311,9 @@ bool GMESong::GetTrackInfo()
 	err = gme_track_info(Emu, &TrackInfo, CurrTrack);
 	if (err != NULL)
 	{
-		Printf("Could not get track %d info: %s\n", CurrTrack, err);
+		// This is called in the data reader thread which may not interact with the UI.
+		// TBD: How to get the message across? An exception may not be used here!
+		//Printf("Could not get track %d info: %s\n", CurrTrack, err);
 		return false;
 	}
 	return true;

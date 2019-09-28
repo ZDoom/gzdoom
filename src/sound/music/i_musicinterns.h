@@ -153,7 +153,7 @@ void Dumb_SetupConfig(DumbConfig* config);
 class StreamSource;
 
 StreamSource *MOD_OpenSong(MusicIO::FileInterface* reader, DumbConfig* config, int samplerate);
-StreamSource *GME_OpenSong(FileReader &reader, const char *fmt, float depth);
+StreamSource* GME_OpenSong(MusicIO::FileInterface* reader, const char* fmt, float stereo_depth, int sample_rate);
 StreamSource *SndFile_OpenSong(FileReader &fr);
 StreamSource* XA_OpenSong(FileReader& reader);
 StreamSource *OPL_OpenSong(FileReader &reader, const char *args);

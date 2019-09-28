@@ -53,6 +53,10 @@ struct FileReaderMusicInterface : public MusicIO::FileInterface
 	{
 		delete this;
 	}
+	FileReader &&GetReader()
+	{
+		return std::move(fr);
+	}
 
 };
 

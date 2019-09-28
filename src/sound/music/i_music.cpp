@@ -466,7 +466,10 @@ MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
 	{
-		streamsource = GME_OpenSong(reader, fmt, gme_stereodepth);
+		auto mreader = new FileReaderMusicInterface(reader);
+		streamsource = GME_OpenSong(mreader, fmt, gme_stereodepth, (int)GSnd->GetOutputRate());
+		reader = mreader->GetReader();	// We need to get this back for the rest of this function.
+		delete mreader;
 	}
 	// Check for module formats
 	else
@@ -474,6 +477,7 @@ MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 		auto mreader = new FileReaderMusicInterface(reader);
 		Dumb_SetupConfig(&dumbConfig);
 		streamsource = MOD_OpenSong(mreader, &dumbConfig, (int)GSnd->GetOutputRate());
+		reader = mreader->GetReader();	// We need to get this back for the rest of this function.
 		delete mreader;
 	}
 	if (info == nullptr && streamsource == nullptr)

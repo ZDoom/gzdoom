@@ -3,9 +3,7 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"
-#include "../libraries/timidityplus/timiditypp/timidity_file.h"
-#include "../libraries/timidity/timidity/timidity_file.h"
-#include "../libraries/wildmidi/wildmidi/wildmidi_file.h"
+#include "../libraries/music_common/fileio.h"
 
 enum
 {
@@ -23,13 +21,48 @@ struct FSoundFontInfo
     int type;
 };
 
+struct FileReaderMusicInterface : public MusicIO::FileInterface
+{
+	FileReader fr;
+
+	FileReaderMusicInterface(FileReader& fr_in)
+	{
+		fr = std::move(fr_in);
+	}
+	char* gets(char* buff, int n) override
+	{
+		if (!fr.isOpen()) return nullptr;
+		return fr.Gets(buff, n);
+	}
+	long read(void* buff, int32_t size, int32_t nitems) override
+	{
+		if (!fr.isOpen()) return 0;
+		return (long)fr.Read(buff, size * nitems) / size;
+	}
+	long seek(long offset, int whence) override
+	{
+		if (!fr.isOpen()) return 0;
+		return (long)fr.Seek(offset, (FileReader::ESeek)whence);
+	}
+	long tell() override
+	{
+		if (!fr.isOpen()) return 0;
+		return (long)fr.Tell();
+	}
+	void close()
+	{
+		delete this;
+	}
+
+};
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-class FSoundFontReader : public TimidityPlus::SoundFontReaderInterface, public Timidity::SoundFontReaderInterface, public WildMidi::SoundFontReaderInterface
+class FSoundFontReader : public MusicIO::SoundFontReaderInterface
 // Yes, it's 3 copies of essentially the same interface, but since we want to keep the 3 renderers as isolated modules we have to pull in their own implementations here.
 {
 protected:
@@ -64,28 +97,13 @@ public:
 	virtual FileReader Open(const char* name, std::string &filename);
 
 	// Timidity++ interface
-	struct TimidityPlus::timidity_file* open_timidityplus_file(const char* name) override;
-	void timidityplus_add_path(const char* name) override
+	struct MusicIO::FileInterface* open_file(const char* name) override;
+	void add_search_path(const char* name) override
 	{
 		return AddPath(name);
 	}
 
-	// Timidity(GUS) interface - essentially the same but different namespace
-	virtual struct Timidity::timidity_file* open_timidity_file(const char* name) override;
-	virtual void timidity_add_path(const char* name) override
-	{
-		return AddPath(name);
-	}
-
-	// WildMidi interface - essentially the same again but yet another namespace
-	virtual struct WildMidi::wildmidi_file* open_wildmidi_file(const char* name) override;
-	virtual void wildmidi_add_path(const char* name) override
-	{
-		return AddPath(name);
-	}
-	
-	template<class interface>
-	interface* open_interface(const char* name);
+	MusicIO::FileInterface* open_interface(const char* name);
 
 };
 
@@ -154,7 +172,6 @@ class FPatchSetReader : public FSoundFontReader
 {
 	FString mBasePath;
 	FString mFullPathToConfig;
-	FileReader dmxgus;
 
 public:
 	FPatchSetReader(FileReader &reader);

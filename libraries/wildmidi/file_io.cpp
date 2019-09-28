@@ -39,7 +39,6 @@
 
 #include "wm_error.h"
 #include "file_io.h"
-#include "wildmidi_file.h"
 
 
 namespace WildMidi
@@ -47,9 +46,9 @@ namespace WildMidi
 
 static const int WM_MAXFILESIZE = 0x1fffffff;
 	
-unsigned char *_WM_BufferFile(SoundFontReaderInterface *reader, const char *filename, unsigned long int *size, std::string *fullname)
+unsigned char *_WM_BufferFile(MusicIO::SoundFontReaderInterface *reader, const char *filename, unsigned long int *size, std::string *fullname)
 {
-	auto fp = reader->open_wildmidi_file(filename);
+	auto fp = reader->open_file(filename);
 
 	if (!fp)
 	{

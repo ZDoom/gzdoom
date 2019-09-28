@@ -27,11 +27,11 @@
 #ifndef __FILE_IO_H
 #define __FILE_IO_H
 
-#include "wildmidi_file.h"
+#include "../../music_common/fileio.h"
 
 namespace WildMidi
 {
-	unsigned char *_WM_BufferFile(SoundFontReaderInterface *reader, const char *filename, unsigned long int *size, std::string *fullname = nullptr);
+	unsigned char *_WM_BufferFile(MusicIO::SoundFontReaderInterface *reader, const char *filename, unsigned long int *size, std::string *fullname = nullptr);
 }
 
 #endif /* __FILE_IO_H */

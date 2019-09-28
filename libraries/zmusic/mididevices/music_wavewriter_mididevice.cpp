@@ -37,6 +37,7 @@
 
 #include "mididevice.h"
 #include "zmusic/m_swap.h"
+#include "../music_common/fileio.h"
 #include <errno.h>
 
 // MACROS ------------------------------------------------------------------
@@ -75,28 +76,6 @@ struct FmtChunk
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-#ifdef _WIN32
-	// I'd rather not include Windows.h for just this.
-extern "C" __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned CodePage, unsigned long  dwFlags, const char* lpMultiByteStr, int cbMultiByte, const wchar_t* lpWideCharStr, int cchWideChar);
-#endif
-
-static FILE* my_fopen(const char* filename)
-{
-#ifndef _WIN32
-	return fopen(filename, "wb");
-#else
-	// This is supposed to handle UTF-8 which Windows does not support with fopen. :(
-	const int CP_UTF8 = 65001;
-
-	std::wstring filePathW;
-	auto len = strlen(filename);
-	filePathW.resize(len);
-	int newSize = MultiByteToWideChar(CP_UTF8, 0, filename, (int)len, const_cast<wchar_t*>(filePathW.c_str()), (int)len);
-	filePathW.resize(newSize);
-	return _wfopen(filePathW.c_str(), L"wb");
-#endif
-
-}
 
 //==========================================================================
 //
@@ -107,7 +86,7 @@ static FILE* my_fopen(const char* filename)
 MIDIWaveWriter::MIDIWaveWriter(const char *filename, SoftSynthMIDIDevice *playdevice)
 	: SoftSynthMIDIDevice(playdevice->GetSampleRate())
 {
-	File = my_fopen(filename);
+	File = MusicIO::utf8_fopen(filename, "wt");
 	playDevice = playdevice;
 	if (File != nullptr)
 	{ // Write wave header

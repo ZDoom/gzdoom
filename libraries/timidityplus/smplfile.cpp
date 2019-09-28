@@ -248,7 +248,7 @@ static void apply_GeneralInstrumentInfo(int samples, Sample *sample, const Gener
 #define SAMPLE_BIG_ENDIAN		(1 << 0)
 #define SAMPLE_8BIT_UNSIGNED	(1 << 1)
 
-static int read_sample_data(int32_t flags, struct timidity_file *tf, int bits, int samples, int frames, sample_t **sdata);
+static int read_sample_data(int32_t flags, timidity_file *tf, int bits, int samples, int frames, sample_t **sdata);
 
 /*************** WAV Importer ***************/
 
@@ -269,13 +269,13 @@ typedef struct {
 	int32_t	loop_dwStart, loop_dwEnd, loop_dwFraction;
 } WAVSamplerChunk;
 
-static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, int psize);
-static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl, int psize);
-static int read_WAVInstrumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, int psize);
+static int read_WAVFormatChunk(timidity_file *tf, WAVFormatChunk *fmt, int psize);
+static int read_WAVSamplerChunk(timidity_file *tf, WAVSamplerChunk *smpl, int psize);
+static int read_WAVInstrumentChunk(timidity_file *tf, GeneralInstrumentInfo *inst, int psize);
 
 int Instruments::import_wave_discriminant(char *sample_file)
 {
-	struct timidity_file	*tf;
+	timidity_file	*tf;
 	char				buf[12];
 	
 	if ((tf = open_file(sample_file, sfreader)) == NULL)
@@ -295,7 +295,7 @@ int Instruments::import_wave_discriminant(char *sample_file)
 
 int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 {
-	struct timidity_file	*tf;
+	timidity_file	*tf;
 	union {
 		int32_t i[3];
 		char c[12];
@@ -424,7 +424,7 @@ int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 	return (state != 2);
 }
 
-static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, int csize)
+static int read_WAVFormatChunk(timidity_file *tf, WAVFormatChunk *fmt, int csize)
 {
 	int32_t		tmplong;
 	int16_t		tmpshort;
@@ -443,7 +443,7 @@ static int read_WAVFormatChunk(struct timidity_file *tf, WAVFormatChunk *fmt, in
 		return 0;
 }
 
-static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl, int psize)
+static int read_WAVSamplerChunk(timidity_file *tf, WAVSamplerChunk *smpl, int psize)
 {
 	int32_t		tmplong;
 	int			i, loopCount, cbSamplerData, dwPlayCount;
@@ -495,7 +495,7 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 		return 0;
 }
 
-static int read_WAVInstrumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, int psize)
+static int read_WAVInstrumentChunk(timidity_file *tf, GeneralInstrumentInfo *inst, int psize)
 {
 	int8_t		tmpchar;
 	
@@ -542,13 +542,13 @@ typedef struct {
 	uint32_t			position;
 } AIFFMarkerData;
 
-static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize);
-static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **markers, int csize);
+static int read_AIFFInstumentChunk(timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize);
+static int read_AIFFMarkerChunk(timidity_file *tf, AIFFMarkerData **markers, int csize);
 static int AIFFGetMarkerPosition(int16_t id, const AIFFMarkerData *markers, uint32_t *position);
 
 int Instruments::import_aiff_discriminant(char *sample_file)
 {
-	struct timidity_file	*tf;
+	timidity_file	*tf;
 	char				buf[12];
 	
 	if ((tf = open_file(sample_file, sfreader)) == NULL)
@@ -576,7 +576,7 @@ int Instruments::import_aiff_discriminant(char *sample_file)
 
 int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 {
-	struct timidity_file	*tf;
+	timidity_file	*tf;
 	union {
 		int32_t i[3];
 		char c[12];
@@ -733,7 +733,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 	return 0;
 }
 
- int Instruments::read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed)
+ int Instruments::read_AIFFCommonChunk(timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed)
 {
 	int32_t		tmplong;
 	int16_t		tmpshort;
@@ -775,7 +775,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 		return 0;
 }
 
-int Instruments::read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode)
+int Instruments::read_AIFFSoundDataChunk(timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode)
 {
 	int32_t		tmplong;
 	uint32_t		offset, blockSize;
@@ -809,7 +809,7 @@ int Instruments::read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundData
 		return 0;
 }
 
-int Instruments::read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, AIFFCommonChunk *common)
+int Instruments::read_AIFFSoundData(timidity_file *tf, Instrument *inst, AIFFCommonChunk *common)
 {
 	int				i, samples;
 	Sample			*sample;
@@ -834,7 +834,7 @@ int Instruments::read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, 
 		return 0;
 }
 
-static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize)
+static int read_AIFFInstumentChunk(timidity_file *tf, GeneralInstrumentInfo *inst, AIFFLoopInfo *loop, int csize)
 {
 	int8_t		tmpchar;
 	int16_t		tmpshort;
@@ -867,7 +867,7 @@ static int read_AIFFInstumentChunk(struct timidity_file *tf, GeneralInstrumentIn
 		return 0;
 }
 
-static int read_AIFFMarkerChunk(struct timidity_file *tf, AIFFMarkerData **markers, int csize)
+static int read_AIFFMarkerChunk(timidity_file *tf, AIFFMarkerData **markers, int csize)
 {
 	int32_t		tmplong;
 	int16_t		tmpshort;
@@ -940,7 +940,7 @@ static int AIFFGetMarkerPosition(int16_t id, const AIFFMarkerData *markers, uint
 					for(j = 0; j < (block_frame_count * (fch)); i++)
 #define BLOCK_READ_END		} } }
 
-static int read_sample_data(int32_t flags, struct timidity_file *tf, int bits, int channels, int frames, sample_t **sdata)
+static int read_sample_data(int32_t flags, timidity_file *tf, int bits, int channels, int frames, sample_t **sdata)
 {
 	int				i, block_frame_count;
 	

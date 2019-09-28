@@ -3,7 +3,6 @@
 #include <memory>
 
 #include "timidity.h"
-#include "timidity_file.h"
 #include "common.h"
 #include "instrum.h"
 #include "sf2.h"
@@ -57,7 +56,7 @@ void Instruments::font_add(const char *filename, int load_order)
 	}
 	else
 	{
-		auto fp = sfreader->open_timidity_file(filename);
+		auto fp = sfreader->open_file(filename);
 
 		if (fp)
 		{

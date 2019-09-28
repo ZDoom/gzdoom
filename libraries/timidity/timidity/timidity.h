@@ -22,11 +22,11 @@
 
 #include <stdint.h>
 #include <string>
-#include "timidity_file.h"
+#include "../../music_common/fileio.h"
 
 namespace Timidity
 {
-	struct timidity_file;
+	using timidity_file = MusicIO::FileInterface;
 
 
 /*

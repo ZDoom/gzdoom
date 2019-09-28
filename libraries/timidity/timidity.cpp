@@ -28,7 +28,6 @@
 #include <string.h>
 
 #include "timidity.h"
-#include "timidity_file.h"
 #include "common.h"
 #include "instrum.h"
 #include "playmidi.h"
@@ -188,7 +187,7 @@ int Instruments::read_config_file(const char *name)
 		printMessage(CMSG_ERROR, VERB_NORMAL, "Timidity: Probable source loop in configuration files\n");
 		return (-1);
 	}
-	auto fp = sfreader->open_timidity_file(name);
+	auto fp = sfreader->open_file(name);
 	if (!fp)
 	{
 		printMessage(CMSG_ERROR, VERB_NORMAL, "Timidity: Unable to open config file\n");
@@ -400,7 +399,7 @@ int Instruments::read_config_file(const char *name)
 			for (i = 1; i < words; i++)
 			{
 				// Q: How does this deal with relative paths? In this form it just does not work.
-				sfreader->timidity_add_path(w[i]);
+				sfreader->add_search_path(w[i]);
 			}
 		}
 		else if (!strcmp(w[0], "source"))

@@ -27,6 +27,8 @@
 #ifndef WILDMIDI_LIB_H
 #define WILDMIDI_LIB_H
 
+#include "../../music_common/fileio.h"
+
 namespace WildMidi
 {
 enum EMixerOptions
@@ -55,7 +57,7 @@ typedef void midi;
 	
 struct Instruments
 {
-	SoundFontReaderInterface *sfreader;
+	MusicIO::SoundFontReaderInterface *sfreader;
 
 	struct _patch *patch[128] = {};
 	float reverb_room_width = 16.875f;
@@ -70,7 +72,7 @@ struct Instruments
 	
 	unsigned short int _WM_SampleRate;	// WildMidi makes the sample rate a property of the patches, not the renderer. Meaning that the instruments need to be reloaded when it changes... :?
 
-	Instruments(SoundFontReaderInterface *reader, int samplerate)
+	Instruments(MusicIO::SoundFontReaderInterface *reader, int samplerate)
 	{
 		sfreader = reader;
 		_WM_SampleRate = samplerate;

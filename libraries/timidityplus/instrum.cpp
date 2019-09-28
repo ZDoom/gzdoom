@@ -27,6 +27,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "../music_common/fileio.h"
 #include "timidity.h"
 #include "common.h"
 #include "instrum.h"
@@ -52,7 +53,7 @@ Instruments::Instruments()
 	memcpy(layer_items, static_layer_items, sizeof(layer_items));
 }
 
-bool Instruments::load(SoundFontReaderInterface *sf)
+bool Instruments::load(MusicIO::SoundFontReaderInterface *sf)
 {
 	sfreader = sf;
 	if (read_config_file(nullptr, 0, 0) == RC_OK)
@@ -578,7 +579,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 	ToneBankElement *tone;
 	int amp, note_to_use, panning, strip_envelope, strip_loop, strip_tail;
 	Instrument *ip;
-	struct timidity_file *tf;
+	timidity_file *tf;
 	uint8_t tmp[1024], fractions;
 	Sample *sp;
 	int i, j, noluck = 0;

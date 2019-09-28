@@ -615,7 +615,7 @@ char *Instruments::expand_variables(char *string, MBlockList *varbuf, const char
 
 int Instruments::read_config_file(const char *name, int self, int allow_missing_file)
 {
-	struct timidity_file *tf;
+	timidity_file *tf;
 	char buf[1024], *tmp, *w[MAXWORDS + 1], *cp;
 	ToneBank *bank = NULL;
 	int i, j, k, line = 0, words, errcnt = 0;
@@ -1397,7 +1397,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				continue;
 			}
 			for (i = 1; i < words; i++)
-                sfreader->timidityplus_add_path(w[i]);
+                sfreader->add_search_path(w[i]);
 		}
 		else if (!strcmp(w[0], "source") || !strcmp(w[0], "trysource"))
 		{

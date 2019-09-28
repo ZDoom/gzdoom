@@ -64,7 +64,7 @@ namespace TimidityPlus
 
 #define NEW(type,nums)	(type*)safe_malloc(sizeof(type) * (nums))
 
-static int READCHUNK(SFChunk *vp, struct timidity_file *tf)
+static int READCHUNK(SFChunk *vp, timidity_file *tf)
 {
 	if (tf_read(vp, 8, 1, tf) != 1)
 		return -1;
@@ -72,7 +72,7 @@ static int READCHUNK(SFChunk *vp, struct timidity_file *tf)
 	return 1;
 }
 
-static int READDW(uint32_t *vp, struct timidity_file *tf)
+static int READDW(uint32_t *vp, timidity_file *tf)
 {
 	if (tf_read(vp, 4, 1, tf) != 1)
 		return -1;
@@ -80,7 +80,7 @@ static int READDW(uint32_t *vp, struct timidity_file *tf)
 	return 1;
 }
 
-static int READW(uint16_t *vp, struct timidity_file *tf)
+static int READW(uint16_t *vp, timidity_file *tf)
 {
 	if (tf_read(vp, 2, 1, tf) != 1)
 		return -1;
@@ -88,7 +88,7 @@ static int READW(uint16_t *vp, struct timidity_file *tf)
 	return 1;
 }
 
-static int READSTR(char *str, struct timidity_file *tf)
+static int READSTR(char *str, timidity_file *tf)
 {
 	int n;
 
@@ -140,7 +140,7 @@ enum {
 	* load a soundfont file
 	*================================================================*/
 
-int Instruments::load_soundfont(SFInfo *sf, struct timidity_file *fd)
+int Instruments::load_soundfont(SFInfo *sf, timidity_file *fd)
 {
 	SFChunk chunk;
 
@@ -272,7 +272,7 @@ int Instruments::chunkid(char *id)
 	* process a list chunk
 	*================================================================*/
 
-int Instruments::process_list(int size, SFInfo *sf, struct timidity_file *fd)
+int Instruments::process_list(int size, SFInfo *sf, timidity_file *fd)
 {
 	SFChunk chunk;
 
@@ -299,7 +299,7 @@ int Instruments::process_list(int size, SFInfo *sf, struct timidity_file *fd)
 	* process info list
 	*================================================================*/
 
-int Instruments::process_info(int size, SFInfo *sf, struct timidity_file *fd)
+int Instruments::process_info(int size, SFInfo *sf, timidity_file *fd)
 {
 	sf->infopos = tf_tell(fd);
 	sf->infosize = size;
@@ -347,7 +347,7 @@ int Instruments::process_info(int size, SFInfo *sf, struct timidity_file *fd)
 	* process sample data list
 	*================================================================*/
 
-int Instruments::process_sdta(int size, SFInfo *sf, struct timidity_file *fd)
+int Instruments::process_sdta(int size, SFInfo *sf, timidity_file *fd)
 {
 	while (size > 0) {
 		SFChunk chunk;
@@ -384,7 +384,7 @@ int Instruments::process_sdta(int size, SFInfo *sf, struct timidity_file *fd)
 	* process preset data list
 	*================================================================*/
 
-int Instruments::process_pdta(int size, SFInfo *sf, struct timidity_file *fd)
+int Instruments::process_pdta(int size, SFInfo *sf, timidity_file *fd)
 {
 	while (size > 0) {
 		SFChunk chunk;
@@ -434,7 +434,7 @@ int Instruments::process_pdta(int size, SFInfo *sf, struct timidity_file *fd)
 	* store sample name list; sf1 only
 	*----------------------------------------------------------------*/
 
-void Instruments::load_sample_names(int size, SFInfo *sf, struct timidity_file *fd)
+void Instruments::load_sample_names(int size, SFInfo *sf, timidity_file *fd)
 {
 	int i, nsamples;
 	if (sf->version > 1) {
@@ -466,7 +466,7 @@ void Instruments::load_sample_names(int size, SFInfo *sf, struct timidity_file *
 	* preset header list
 	*----------------------------------------------------------------*/
 
-void Instruments::load_preset_header(int size, SFInfo *sf, struct timidity_file *fd)
+void Instruments::load_preset_header(int size, SFInfo *sf, timidity_file *fd)
 {
 	int i;
 
@@ -491,7 +491,7 @@ void Instruments::load_preset_header(int size, SFInfo *sf, struct timidity_file 
 	* instrument header list
 	*----------------------------------------------------------------*/
 
-void Instruments::load_inst_header(int size, SFInfo *sf, struct timidity_file *fd)
+void Instruments::load_inst_header(int size, SFInfo *sf, timidity_file *fd)
 {
 	int i;
 
@@ -515,7 +515,7 @@ void Instruments::load_inst_header(int size, SFInfo *sf, struct timidity_file *f
 	* load preset/instrument bag list on the private table
 	*----------------------------------------------------------------*/
 
-void Instruments::load_bag(int size, SFBags *bagp, struct timidity_file *fd)
+void Instruments::load_bag(int size, SFBags *bagp, timidity_file *fd)
 {
 	int i;
 
@@ -533,7 +533,7 @@ void Instruments::load_bag(int size, SFBags *bagp, struct timidity_file *fd)
 	* load preset/instrument generator list on the private table
 	*----------------------------------------------------------------*/
 
-void Instruments::load_gen(int size, SFBags *bagp, struct timidity_file *fd)
+void Instruments::load_gen(int size, SFBags *bagp, timidity_file *fd)
 {
 	int i;
 
@@ -551,7 +551,7 @@ void Instruments::load_gen(int size, SFBags *bagp, struct timidity_file *fd)
 	* load sample info list
 	*----------------------------------------------------------------*/
 
-void Instruments::load_sample_info(int size, SFInfo *sf, struct timidity_file *fd)
+void Instruments::load_sample_info(int size, SFInfo *sf, timidity_file *fd)
 {
 	int i;
 	int in_rom;

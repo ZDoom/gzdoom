@@ -32,7 +32,6 @@
 
 #include "timidity.h"
 #include "gf1patch.h"
-#include "timidity_file.h"
 #include "t_swap.h"
 
 #include "common.h"
@@ -164,18 +163,18 @@ Instrument *Renderer::load_instrument(const char *name, int percussion,
 	if (!name || reader == nullptr) return nullptr;
 
 	/* Open patch file */
-	auto fp = reader->open_timidity_file(name);
+	auto fp = reader->open_file(name);
 	if (!fp)
 	{
 		/* Try with various extensions */
 		std::string tmp = name;
 		tmp += ".pat";
-		fp = reader->open_timidity_file(tmp.c_str());
+		fp = reader->open_file(tmp.c_str());
 		if (!fp)
 		{
 #ifndef _WIN32			// Windows isn't case-sensitive.
 			std::transform(tmp.begin(), tmp.end(), tmp.begin(), [](unsigned char c){ return toupper(c); } );
-			fp = reader->open_timidity_file(tmp.c_str());
+			fp = reader->open_file(tmp.c_str());
 			if (!fp)
 #endif
 			{
@@ -680,7 +679,7 @@ void Instruments::free_instruments()
 	}
 }
 
-Instruments::Instruments(SoundFontReaderInterface *reader)
+Instruments::Instruments(MusicIO::SoundFontReaderInterface *reader)
 {
 	sfreader = reader;
 	tonebank[0] = new ToneBank;

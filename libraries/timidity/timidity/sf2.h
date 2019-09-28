@@ -1,9 +1,12 @@
 #pragma once
 #include <vector>
+#include "../../music_common/fileio.h"
+
 namespace Timidity
 {
 typedef uint16_t SFGenerator;
-struct timidity_file;
+
+using timidity_file = MusicIO::FileInterface;
 
 struct SFRange
 {

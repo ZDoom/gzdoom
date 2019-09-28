@@ -38,8 +38,7 @@
 #include "timidity/timidity.h"
 #include "timidity/playmidi.h"
 #include "timidity/instrum.h"
-#define USE_BASE_INTERFACE
-#include "timidity/timidity_file.h"
+#include "../../music_common/fileio.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -96,16 +95,16 @@ void TimidityMIDIDevice::LoadInstruments(GUSConfig *config)
 		std::string ultradir = getenv("ULTRADIR");
 		if (ultradir.length() || config->gus_patchdir.length() != 0)
 		{
-			auto psreader = new Timidity::BaseSoundFontReader;
+			auto psreader = new MusicIO::FileSystemSoundFontReader("");
 			
 			// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
 			if (ultradir.length())
 			{
 				ultradir += "/midi";
-				psreader->timidity_add_path(ultradir.c_str());
+				psreader->add_search_path(ultradir.c_str());
 			}
 			// Load DMXGUS lump and patches from gus_patchdir
-			if (config->gus_patchdir.length() != 0) psreader->timidity_add_path(config->gus_patchdir.c_str());
+			if (config->gus_patchdir.length() != 0) psreader->add_search_path(config->gus_patchdir.c_str());
 			
 			config->instruments.reset(new Timidity::Instruments(psreader));
 			bool success = config->instruments->LoadDMXGUS(config->gus_memsize, (const char*)config->dmxgus.data(), config->dmxgus.size()) >= 0;

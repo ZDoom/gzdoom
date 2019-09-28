@@ -30,10 +30,12 @@
 #include "sffile.h"
 #include "sflayer.h"
 #include "sfitem.h"
+#include "../../music_common/fileio.h"
 
 
 namespace TimidityPlus
 {
+	using timidity_file = MusicIO::FileInterface;
 
 enum
 {
@@ -232,7 +234,7 @@ struct  SampleImporter;
 class Instruments
 {
 	std::string configFileName;
-    SoundFontReaderInterface *sfreader;
+    MusicIO::SoundFontReaderInterface *sfreader;
 
 	ToneBank standard_tonebank, standard_drumset;
 
@@ -384,9 +386,9 @@ class Instruments
 	int import_wave_load(char *sample_file, Instrument *inst);
 	int import_aiff_discriminant(char *sample_file);
 	int import_aiff_load(char *sample_file, Instrument *inst);
-	int read_AIFFCommonChunk(struct timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed);
-	int read_AIFFSoundData(struct timidity_file *tf, Instrument *inst, AIFFCommonChunk *common);
-	int read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode);
+	int read_AIFFCommonChunk(timidity_file *tf, AIFFCommonChunk *comm, int csize, int compressed);
+	int read_AIFFSoundData(timidity_file *tf, Instrument *inst, AIFFCommonChunk *common);
+	int read_AIFFSoundDataChunk(timidity_file *tf, AIFFSoundDataChunk *sound, int csize, int mode);
 
 	// sndfont.cpp
 
@@ -440,20 +442,20 @@ class Instruments
 	// sffile.cpp
 
 	int chunkid(char *id);
-	int process_list(int size, SFInfo *sf, struct timidity_file *fd);
-	int process_info(int size, SFInfo *sf, struct timidity_file *fd);
-	int process_sdta(int size, SFInfo *sf, struct timidity_file *fd);
-	int process_pdta(int size, SFInfo *sf, struct timidity_file *fd);
-	void load_sample_names(int size, SFInfo *sf, struct timidity_file *fd);
-	void load_preset_header(int size, SFInfo *sf, struct timidity_file *fd);
-	void load_inst_header(int size, SFInfo *sf, struct timidity_file *fd);
-	void load_bag(int size, SFBags *bagp, struct timidity_file *fd);
-	void load_gen(int size, SFBags *bagp, struct timidity_file *fd);
-	void load_sample_info(int size, SFInfo *sf, struct timidity_file *fd);
+	int process_list(int size, SFInfo *sf, timidity_file *fd);
+	int process_info(int size, SFInfo *sf, timidity_file *fd);
+	int process_sdta(int size, SFInfo *sf, timidity_file *fd);
+	int process_pdta(int size, SFInfo *sf, timidity_file *fd);
+	void load_sample_names(int size, SFInfo *sf, timidity_file *fd);
+	void load_preset_header(int size, SFInfo *sf, timidity_file *fd);
+	void load_inst_header(int size, SFInfo *sf, timidity_file *fd);
+	void load_bag(int size, SFBags *bagp, timidity_file *fd);
+	void load_gen(int size, SFBags *bagp, timidity_file *fd);
+	void load_sample_info(int size, SFInfo *sf, timidity_file *fd);
 	void convert_layers(SFInfo *sf);
 	void generate_layers(SFHeader *hdr, SFHeader *next, SFBags *bags);
 	void free_layer(SFHeader *hdr);
-	int load_soundfont(SFInfo *sf, struct timidity_file *fd);
+	int load_soundfont(SFInfo *sf, timidity_file *fd);
 	void free_soundfont(SFInfo *sf);
 	void correct_samples(SFInfo *sf);
 
@@ -461,7 +463,7 @@ class Instruments
 public:
 
 	Instruments();
-	bool load(SoundFontReaderInterface *);
+	bool load(MusicIO::SoundFontReaderInterface *);
 	~Instruments();
 
 	const ToneBank *toneBank(int i) const

@@ -8,7 +8,6 @@
 
 #include "t_swap.h"
 #include "timidity.h"
-#include "timidity_file.h"
 #include "common.h"
 #include "instrum.h"
 #include "playmidi.h"
@@ -1506,7 +1505,7 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 
 void SFFile::LoadSample(Renderer *song, SFSample *sample)
 {
-	auto fp = song->instruments->sfreader->open_timidity_file(Filename.c_str());
+	auto fp = song->instruments->sfreader->open_file(Filename.c_str());
 	uint32_t i;
 
 	if (!fp)

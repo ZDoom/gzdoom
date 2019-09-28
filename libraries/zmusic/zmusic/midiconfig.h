@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "../../libraries/music_common/fileio.h"
 
 struct ADLConfig
 {
@@ -68,7 +69,7 @@ struct GUSConfig
 	int gus_memsize = 0;
 	void (*errorfunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
 
-	Timidity::SoundFontReaderInterface *reader;
+	MusicIO::SoundFontReaderInterface *reader;
 	std::string readerName;
 	std::vector<uint8_t> dmxgus;				// can contain the contents of a DMXGUS lump that may be used as the instrument set. In this case gus_patchdir must point to the location of the GUS data.
 	std::string gus_patchdir;
@@ -90,7 +91,7 @@ struct TimidityConfig
 {
 	void (*errorfunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
 
-	TimidityPlus::SoundFontReaderInterface* reader;
+	MusicIO::SoundFontReaderInterface* reader;
 	std::string readerName;
 
 	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.
@@ -113,7 +114,7 @@ struct WildMidiConfig
 	bool enhanced_resampling = true;
 	void (*errorfunc)(const char* wmfmt, va_list args) = nullptr;
 
-	WildMidi::SoundFontReaderInterface* reader;
+	MusicIO::SoundFontReaderInterface* reader;
 	std::string readerName;
 
 	// These next two fields are for caching the instruments for repeated use. The GUS device will work without them being cached in the config but it'd require reloading the instruments each time.

@@ -50,38 +50,6 @@
 
 FSoundFontManager sfmanager;
 
-template<class base>
-struct file_interface : public base
-{
-	FileReader fr;
-
-	char* gets(char* buff, int n) override
-	{
-		if (!fr.isOpen()) return nullptr;
-		return fr.Gets(buff, n);
-	}
-	long read(void* buff, int32_t size, int32_t nitems) override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Read(buff, size * nitems) / size;
-	}
-	long seek(long offset, int whence) override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Seek(offset, (FileReader::ESeek)whence);
-	}
-	long tell() override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Tell();
-	}
-	void close()
-	{
-		delete this;
-	}
-
-};
-
 //==========================================================================
 //
 // returns both a file reader and the full name of the looked up file
@@ -166,42 +134,29 @@ FileReader FSoundFontReader::Open(const char *name, std::string& filename)
 //
 //==========================================================================
 
-template<class interface>
-interface* FSoundFontReader::open_interface(const char* name)
+MusicIO::FileInterface* FSoundFontReader::open_interface(const char* name)
 {
 	std::string filename;
 	
 	FileReader fr = Open(name, filename);
 	if (!fr.isOpen()) return nullptr;
-	
-	auto tf = new file_interface<interface>;
-	tf->fr = std::move(fr);
-	tf->filename = std::move(filename);
-	return tf;
+	auto fri = new FileReaderMusicInterface(fr);
+	fri->filename = std::move(filename);
+	return fri;
 }
 
 
 //==========================================================================
 //
-// The file interfaces for the different MIDI renderers
-// They are all the same except for the class names.
+// The file interface for the backend
 //
 //==========================================================================
 
-struct TimidityPlus::timidity_file* FSoundFontReader::open_timidityplus_file(const char* name)
+struct MusicIO::FileInterface* FSoundFontReader::open_file(const char* name)
 {
-	return open_interface<TimidityPlus::timidity_file>(name);
+	return open_interface(name);
 }
 
-struct Timidity::timidity_file* FSoundFontReader::open_timidity_file(const char* name)
-{
-	return open_interface<Timidity::timidity_file>(name);
-}
-
-struct WildMidi::wildmidi_file* FSoundFontReader::open_wildmidi_file(const char* name)
-{
-	return open_interface<WildMidi::wildmidi_file>(name);
-}
 
 //==========================================================================
 //
@@ -323,16 +278,9 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	}
 }
 
-FPatchSetReader::FPatchSetReader(FileReader &reader)
-{
-	// This constructor is for reading DMXGUS
-	mAllowAbsolutePaths = true;
-	dmxgus = std::move(reader);
-}
 
 FileReader FPatchSetReader::OpenMainConfigFile()
 {
-	if (dmxgus.isOpen()) return std::move(dmxgus);
 	FileReader fr;
 	fr.OpenFile(mFullPathToConfig);
 	return fr;

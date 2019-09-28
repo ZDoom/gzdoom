@@ -123,7 +123,7 @@ struct SFOrder {
 	((int)(((unsigned)bank ^ (unsigned)preset ^ (unsigned)keynote) % INSTHASHSIZE))
 
 struct SFInsts {
-	struct timidity_file *tf;
+	timidity_file *tf;
 	char *fname;
 	int8_t def_order, def_cutoff_allowed, def_resonance_allowed;
 	uint16_t version, minorversion;

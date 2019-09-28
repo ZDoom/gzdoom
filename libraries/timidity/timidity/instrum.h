@@ -1,4 +1,7 @@
 #pragma once
+
+#include "../../music_common/fileio.h"
+
 namespace Timidity
 {
 /*
@@ -164,13 +167,13 @@ public:
 class Instruments
 {
 public:
-	SoundFontReaderInterface *sfreader;
+	MusicIO::SoundFontReaderInterface *sfreader;
 	ToneBank* tonebank[MAXBANK] = {};
 	ToneBank* drumset[MAXBANK] = {};
 	FontFile* Fonts = nullptr;
 	std::string def_instr_name;
 
-	Instruments(SoundFontReaderInterface* reader);
+	Instruments(MusicIO::SoundFontReaderInterface* reader);
 	~Instruments();
 
 	int LoadConfig() { return read_config_file(nullptr); }

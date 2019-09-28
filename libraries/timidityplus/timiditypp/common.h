@@ -27,34 +27,37 @@
 #include <string>
 #include <vector>
 #include <stdint.h>
-#include "timidity_file.h"
+#include "../../music_common/fileio.h"
+
 
 namespace TimidityPlus
 {
-inline char* tf_gets(char* buff, int n, struct timidity_file* tf)
+using timidity_file = MusicIO::FileInterface;
+
+inline char* tf_gets(char* buff, int n, timidity_file* tf)
 {
 	return tf->gets(buff, n);
 }
 
-inline long tf_read(void* buff, int32_t size, int32_t nitems, struct timidity_file* tf)
+inline long tf_read(void* buff, int32_t size, int32_t nitems, timidity_file* tf)
 {
 	return (long)tf->read(buff, size, nitems);
 }
 
-inline long tf_seek(struct timidity_file* tf, long offset, int whence)
+inline long tf_seek(timidity_file* tf, long offset, int whence)
 {
 	return (long)tf->seek(offset, whence);
 }
 
-inline long tf_tell(struct timidity_file* tf)
+inline long tf_tell(timidity_file* tf)
 {
 	return (long)tf->tell();
 }
 
-extern struct timidity_file *open_file(const char *name, SoundFontReaderInterface *);
-extern void tf_close(struct timidity_file *tf);
-extern void skip(struct timidity_file *tf, size_t len);
-int tf_getc(struct timidity_file *tf);
+extern timidity_file *open_file(const char *name, MusicIO::SoundFontReaderInterface *);
+extern void tf_close(timidity_file *tf);
+extern void skip(timidity_file *tf, size_t len);
+int tf_getc(timidity_file *tf);
 extern int int_rand(int n);	/* random [0..n-1] */
 double flt_rand();
 

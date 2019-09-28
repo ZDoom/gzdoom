@@ -1,6 +1,8 @@
 
 #include <mutex>
 #include <string>
+#include <memory>
+
 #include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
 #include "mus2midi.h"

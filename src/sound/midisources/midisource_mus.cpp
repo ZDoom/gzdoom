@@ -34,7 +34,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "midisource.h"
-#include "templates.h"
+#include "m_swap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -84,39 +84,30 @@ static const uint8_t CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FileReader &reader)
-: MusHeader(0), MusBuffer(0)
+MUSSong2::MUSSong2 (const uint8_t *data, size_t len)
 {
-	uint8_t front[32];
 	int start;
-
-	if (reader.Read(front, sizeof(front)) != sizeof(front))
-	{
-		return;
-	}
 
 	// To tolerate sloppy wads (diescum.wad, I'm looking at you), we search
 	// the first 32 bytes of the file for a signature. My guess is that DMX
 	// does no validation whatsoever and just assumes it was passed a valid
 	// MUS file, since where the header is offset affects how it plays.
-	start = MUSHeaderSearch(front, sizeof(front));
+	start = MUSHeaderSearch(data, 32);
 	if (start < 0)
 	{
 		return;
 	}
+	data += start;
+	len -= start;
 
 	// Read the remainder of the song.
-	int len = int(reader.GetLength() - start);
-	if (len < (int)sizeof(MusHeader))
+	if (len < sizeof(MUSHeader))
 	{ // It's too short.
 		return;
 	}
-	MusHeader = (MUSHeader *)new uint8_t[len];
-    memcpy(MusHeader, front + start, sizeof(front) - start);
-    if (reader.Read((uint8_t *)MusHeader + sizeof(front) - start, len - (sizeof(front) - start)) != (len - (32 - start)))
-    {
-        return;
-    }
+	MusData.resize(len);
+	memcpy(MusData.data(), data, len);
+	auto MusHeader = (MUSHeader*)MusData.data();
 
 	// Do some validation of the MUS file.
 	if (LittleShort(MusHeader->NumChans) > 15)
@@ -124,24 +115,10 @@ MUSSong2::MUSSong2 (FileReader &reader)
 		return;
 	}
 
-	MusBuffer = (uint8_t *)MusHeader + LittleShort(MusHeader->SongStart);
-	MaxMusP = MIN<int>(LittleShort(MusHeader->SongLen), len - LittleShort(MusHeader->SongStart));
+	MusBuffer = MusData.data() + LittleShort(MusHeader->SongStart);
+	MaxMusP = std::min<int>(LittleShort(MusHeader->SongLen), int(len) - LittleShort(MusHeader->SongStart));
 	Division = 140;
 	Tempo = InitialTempo = 1000000;
-}
-
-//==========================================================================
-//
-// MUSSong2 Destructor
-//
-//==========================================================================
-
-MUSSong2::~MUSSong2 ()
-{
-	if (MusHeader != NULL)
-	{
-		delete[] (uint8_t *)MusHeader;
-	}
 }
 
 //==========================================================================
@@ -193,13 +170,17 @@ bool MUSSong2::CheckDone()
 //
 //==========================================================================
 
-TArray<uint16_t> MUSSong2::PrecacheData()
+std::vector<uint16_t> MUSSong2::PrecacheData()
 {
-	TArray<uint16_t> work(LittleShort(MusHeader->NumInstruments));
-	const uint8_t *used = (uint8_t *)MusHeader + sizeof(MUSHeader) / sizeof(uint8_t);
+	auto MusHeader = (MUSHeader*)MusData.data();
+	std::vector<uint16_t> work;
+	const uint8_t *used = MusData.data() + sizeof(MUSHeader) / sizeof(uint8_t);
 	int i, k;
+	size_t p = 0;
 
-	for (i = k = 0; i < LittleShort(MusHeader->NumInstruments); ++i)
+	int numinstr = LittleShort(MusHeader->NumInstruments);
+	work.reserve(LittleShort(MusHeader->NumInstruments));
+	for (i = k = 0; i < numinstr; ++i)
 	{
 		uint8_t instr = used[k++];
 		uint16_t val;
@@ -224,12 +205,12 @@ TArray<uint16_t> MUSSong2::PrecacheData()
 		{
 			for (int b = 0; b < numbanks; b++)
 			{
-				work.Push(val | (used[k++] << 7));
+				work.push_back(val | (used[k++] << 7));
 			}
 		}
 		else
 		{
-			work.Push(val);
+			work.push_back(val);
 		}
 	}
 	return work;
@@ -248,6 +229,7 @@ uint32_t *MUSSong2::MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t
 {
 	uint32_t tot_time = 0;
 	uint32_t time = 0;
+	auto MusHeader = (MUSHeader*)MusData.data();
 
 	max_time = max_time * Division / Tempo;
 
@@ -321,7 +303,7 @@ uint32_t *MUSSong2::MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t
 				if (mid1 == 7)
 				{ // Clamp volume to 127, since DMX apparently allows 8-bit volumes.
 				  // Fix courtesy of Gez, courtesy of Ben Ryves.
-					mid2 = VolumeControllerChange(channel, MIN<int>(mid2, 0x7F));
+					mid2 = VolumeControllerChange(channel, std::min<int>(mid2, 0x7F));
 				}
 			}
 			break;

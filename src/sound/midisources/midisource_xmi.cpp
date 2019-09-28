@@ -35,7 +35,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "midisource.h"
-#include "basictypes.h"
+#include "m_swap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -50,6 +50,14 @@
 		track->Finished = true; \
 		return events; \
 	}
+
+#ifndef MAKE_ID
+#ifndef __BIG_ENDIAN__
+#define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
+#else
+#define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
+#endif
+#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -102,14 +110,14 @@ struct XMISong::TrackInfo
 //
 //==========================================================================
 
-XMISong::XMISong (FileReader &reader)
+XMISong::XMISong (const uint8_t* data, size_t len)
 : MusHeader(0), Songs(0)
 {
-	MusHeader = reader.Read();
-	if (MusHeader.Size() == 0) return;
+	MusHeader.resize(len);
+	memcpy(MusHeader.data(), data, len);
 
 	// Find all the songs in this file.
-	NumSongs = FindXMIDforms(&MusHeader[0], MusHeader.Size(), nullptr);
+	NumSongs = FindXMIDforms(&MusHeader[0], (int)MusHeader.size(), nullptr);
 	if (NumSongs == 0)
 	{
 		return;
@@ -125,25 +133,11 @@ XMISong::XMISong (FileReader &reader)
 	Division = 60;
 	Tempo = InitialTempo = 500000;
 
-	Songs = new TrackInfo[NumSongs];
-	memset(Songs, 0, sizeof(*Songs) * NumSongs);
-	FindXMIDforms(&MusHeader[0], MusHeader.Size(), Songs);
-	CurrSong = Songs;
+	Songs.resize(NumSongs);
+	memset(Songs.data(), 0, sizeof(Songs[0]) * NumSongs);
+	FindXMIDforms(&MusHeader[0], (int)MusHeader.size(), Songs.data());
+	CurrSong = Songs.data();
 	//DPrintf(DMSG_SPAMMY, "XMI song count: %d\n", NumSongs);
-}
-
-//==========================================================================
-//
-// XMISong Destructor
-//
-//==========================================================================
-
-XMISong::~XMISong ()
-{
-	if (Songs != nullptr)
-	{
-		delete[] Songs;
-	}
 }
 
 //==========================================================================
@@ -267,7 +261,7 @@ void XMISong::DoRestart()
 	CurrSong->Finished = false;
 	CurrSong->PlayedTime = 0;
 	CurrSong->ForDepth = 0;
-	NoteOffs.Clear();
+	NoteOffs.clear();
 
 	ProcessInitialMetaEvents ();
 
@@ -673,14 +667,14 @@ uint32_t XMISong::TrackInfo::ReadDelay()
 XMISong::EventSource XMISong::FindNextDue()
 {
 	// Are there still events available?
-	if (CurrSong->Finished && NoteOffs.Size() == 0)
+	if (CurrSong->Finished && NoteOffs.size() == 0)
 	{
 		return EVENT_None;
 	}
 
 	// Which is due sooner? The current song or the note-offs?
 	uint32_t real_delay = CurrSong->Finished ? 0xFFFFFFFF : CurrSong->Delay;
-	uint32_t fake_delay = NoteOffs.Size() == 0 ? 0xFFFFFFFF : NoteOffs[0].Delay;
+	uint32_t fake_delay = NoteOffs.size() == 0 ? 0xFFFFFFFF : NoteOffs[0].Delay;
 
 	return (fake_delay <= real_delay) ? EVENT_Fake : EVENT_Real;
 }

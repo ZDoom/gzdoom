@@ -95,14 +95,14 @@ struct MIDISong2::TrackInfo
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FileReader &reader)
+MIDISong2::MIDISong2 (const uint8_t* data, size_t len)
 : MusHeader(0), Tracks(0)
 {
 	unsigned p;
 	int i;
 
-	MusHeader = reader.Read();
-	if (MusHeader.Size() == 0) return;
+	MusHeader.resize(len);
+	memcpy(MusHeader.data(), data, len);
 
 	// Do some validation of the MIDI file
 	if (MusHeader[4] != 0 || MusHeader[5] != 0 || MusHeader[6] != 0 || MusHeader[7] != 6)
@@ -129,10 +129,10 @@ MIDISong2::MIDISong2 (FileReader &reader)
 		return;
 	}
 
-	Tracks = new TrackInfo[NumTracks];
+	Tracks.resize(NumTracks);
 
 	// Gather information about each track
-	for (i = 0, p = 14; i < NumTracks && p < MusHeader.Size() + 8; ++i)
+	for (i = 0, p = 14; i < NumTracks && p < MusHeader.size() + 8; ++i)
 	{
 		uint32_t chunkLen =
 			(MusHeader[p+4]<<24) |
@@ -140,9 +140,9 @@ MIDISong2::MIDISong2 (FileReader &reader)
 			(MusHeader[p+6]<<8)  |
 			(MusHeader[p+7]);
 
-		if (chunkLen + p + 8 > MusHeader.Size())
+		if (chunkLen + p + 8 > MusHeader.size())
 		{ // Track too long, so truncate it
-			chunkLen = MusHeader.Size() - p - 8;
+			chunkLen = (uint32_t)MusHeader.size() - p - 8;
 		}
 
 		if (MusHeader[p+0] == 'M' &&
@@ -165,20 +165,6 @@ MIDISong2::MIDISong2 (FileReader &reader)
 	if (NumTracks == 0)
 	{ // No tracks, so nothing to play
 		return;
-	}
-}
-
-//==========================================================================
-//
-// MIDISong2 Destructor
-//
-//==========================================================================
-
-MIDISong2::~MIDISong2 ()
-{
-	if (Tracks != nullptr)
-	{
-		delete[] Tracks;
 	}
 }
 
@@ -255,7 +241,7 @@ void MIDISong2 :: DoRestart()
 	{
 		Tracks[i].Delay = Tracks[i].ReadVarLen();
 	}
-	TrackDue = Tracks;
+	TrackDue = Tracks.data();
 	TrackDue = FindNextDue();
 }
 
@@ -764,7 +750,7 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 	switch (Format)
 	{
 	case 0:
-		return Tracks[0].Finished ? nullptr : Tracks;
+		return Tracks[0].Finished ? nullptr : Tracks.data();
 		
 	case 1:
 		track = nullptr;

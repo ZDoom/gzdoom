@@ -10,7 +10,7 @@
 
 #include <stdint.h>
 #include <functional>
-#include "files.h"
+#include <vector>
 #include "mus2midi.h"
 #include "mididefs.h"
 
@@ -49,7 +49,7 @@ public:
 	virtual void DoInitialSetup() = 0;
 	virtual void DoRestart() = 0;
 	virtual bool CheckDone() = 0;
-	virtual TArray<uint16_t> PrecacheData();
+	virtual std::vector<uint16_t> PrecacheData();
 	virtual bool SetMIDISubsong(int subsong);
 	virtual uint32_t *MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t max_time) = 0;
 	
@@ -74,7 +74,7 @@ public:
 		TempoCallback = cb;
 	}
 	
-	void CreateSMF(TArray<uint8_t> &file, int looplimit);
+	void CreateSMF(std::vector<uint8_t> &file, int looplimit);
 
 };
 
@@ -83,19 +83,18 @@ public:
 class MUSSong2 : public MIDISource
 {
 public:
-	MUSSong2(FileReader &reader);
-	~MUSSong2();
+	MUSSong2(const uint8_t *data, size_t len);
 	
 protected:
 	void DoInitialSetup() override;
 	void DoRestart() override;
 	bool CheckDone() override;
-	TArray<uint16_t> PrecacheData() override;
+	std::vector<uint16_t> PrecacheData() override;
 	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time) override;
 	
 private:
-	MUSHeader *MusHeader;
-	uint8_t *MusBuffer;
+	std::vector<uint8_t> MusData;
+	uint8_t* MusBuffer;
 	uint8_t LastVelocity[16];
 	size_t MusP, MaxMusP;
 };
@@ -106,8 +105,7 @@ private:
 class MIDISong2 : public MIDISource
 {
 public:
-	MIDISong2(FileReader &reader);
-	~MIDISong2();
+	MIDISong2(const uint8_t* data, size_t len);
 	
 protected:
 	void CheckCaps(int tech) override;
@@ -125,8 +123,8 @@ private:
 	uint32_t *SendCommand (uint32_t *event, TrackInfo *track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
 	TrackInfo *FindNextDue ();
 	
-	TArray<uint8_t> MusHeader;
-	TrackInfo *Tracks;
+	std::vector<uint8_t> MusHeader;
+	std::vector<TrackInfo> Tracks;
 	TrackInfo *TrackDue;
 	int NumTracks;
 	int Format;
@@ -141,7 +139,7 @@ struct AutoNoteOff
 	uint8_t Channel, Key;
 };
 // Sorry, std::priority_queue, but I want to be able to modify the contents of the heap.
-class NoteOffQueue : public TArray<AutoNoteOff>
+class NoteOffQueue : public std::vector<AutoNoteOff>
 {
 public:
 	void AddNoteOff(uint32_t delay, uint8_t channel, uint8_t key);
@@ -159,8 +157,7 @@ protected:
 class HMISong : public MIDISource
 {
 public:
-	HMISong(FileReader &reader);
-	~HMISong();
+	HMISong(const uint8_t* data, size_t len);
 	
 protected:
 	
@@ -184,9 +181,9 @@ private:
 	static uint32_t ReadVarLenHMI(TrackInfo *);
 	static uint32_t ReadVarLenHMP(TrackInfo *);
 	
-	TArray<uint8_t> MusHeader;
+	std::vector<uint8_t> MusHeader;
 	int NumTracks;
-	TrackInfo *Tracks;
+	std::vector<TrackInfo> Tracks;
 	TrackInfo *TrackDue;
 	TrackInfo *FakeTrack;
 	uint32_t (*ReadVarLen)(TrackInfo *);
@@ -198,8 +195,7 @@ private:
 class XMISong : public MIDISource
 {
 public:
-	XMISong(FileReader &reader);
-	~XMISong();
+	XMISong(const uint8_t* data, size_t len);
 	
 protected:
 	bool SetMIDISubsong(int subsong) override;
@@ -220,9 +216,9 @@ private:
 	uint32_t *SendCommand (uint32_t *event, EventSource track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
 	EventSource FindNextDue();
 	
-	TArray<uint8_t> MusHeader;
+	std::vector<uint8_t> MusHeader;
 	int NumSongs;
-	TrackInfo *Songs;
+	std::vector<TrackInfo> Songs;
 	TrackInfo *CurrSong;
 	NoteOffQueue NoteOffs;
 	EventSource EventDue;

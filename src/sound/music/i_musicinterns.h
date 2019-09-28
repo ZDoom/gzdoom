@@ -359,7 +359,7 @@ protected:
 		SONG_ERROR
 	};
 
-	MIDIDevice *MIDI = nullptr;
+	std::unique_ptr<MIDIDevice> MIDI;
 	uint32_t Events[2][MAX_MIDI_EVENTS*3];
 	MidiHeader Buffer[2];
 	int BufferNum;
@@ -373,8 +373,8 @@ protected:
 	bool CallbackIsThreaded;
 	int LoopLimit;
 	FString Args;
-	MIDISource *source = nullptr;
-	SoundStream* Stream = nullptr;
+	std::unique_ptr<MIDISource> source;
+	std::unique_ptr<SoundStream> Stream;
 };
 
 // Anything supported by the sound system out of the box --------------------

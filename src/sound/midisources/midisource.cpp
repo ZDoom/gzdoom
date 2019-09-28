@@ -124,7 +124,7 @@ int MIDISource::VolumeControllerChange(int channel, int volume)
 //
 //==========================================================================
 
-TArray<uint16_t> MIDISource::PrecacheData()
+std::vector<uint16_t> MIDISource::PrecacheData()
 {
 	uint32_t Events[2][MAX_MIDI_EVENTS*3];
 	uint8_t found_instruments[256] = { 0, };
@@ -189,7 +189,7 @@ TArray<uint16_t> MIDISource::PrecacheData()
 	DoRestart();
 	
 	// Now pack everything into a contiguous region for the PrecacheInstruments call().
-	TArray<uint16_t> packed;
+	std::vector<uint16_t> packed;
 	
 	for (int i = 0; i < 256; ++i)
 	{
@@ -198,7 +198,7 @@ TArray<uint16_t> MIDISource::PrecacheData()
 			uint16_t packnum = (i & 127) | ((i & 128) << 7);
 			if (!multiple_banks)
 			{
-				packed.Push(packnum);
+				packed.push_back(packnum);
 			}
 			else
 			{ // In order to avoid having to multiplex tracks in a type 1 file,
@@ -208,7 +208,7 @@ TArray<uint16_t> MIDISource::PrecacheData()
 				{
 					if (found_banks[j + (i & 128)])
 					{
-						packed.Push(packnum | (j << 7));
+						packed.push_back(packnum | (j << 7));
 					}
 				}
 			}
@@ -249,7 +249,7 @@ bool MIDISource::SetMIDISubsong(int subsong)
 //
 //==========================================================================
 
-static void WriteVarLen (TArray<uint8_t> &file, uint32_t value)
+static void WriteVarLen (std::vector<uint8_t> &file, uint32_t value)
 {
 	uint32_t buffer = value & 0x7F;
 	
@@ -261,7 +261,7 @@ static void WriteVarLen (TArray<uint8_t> &file, uint32_t value)
 	
 	for (;;)
 	{
-		file.Push(uint8_t(buffer));
+		file.push_back(uint8_t(buffer));
 		if (buffer & 0x80)
 		{
 			buffer >>= 8;
@@ -281,7 +281,7 @@ static void WriteVarLen (TArray<uint8_t> &file, uint32_t value)
 //
 //==========================================================================
 
-void MIDISource::CreateSMF(TArray<uint8_t> &file, int looplimit)
+void MIDISource::CreateSMF(std::vector<uint8_t> &file, int looplimit)
 {
 	const int EXPORT_LOOP_LIMIT =	30;		// Maximum number of times to loop when exporting a MIDI file.
 	// (for songs with loop controller events)
@@ -307,8 +307,8 @@ void MIDISource::CreateSMF(TArray<uint8_t> &file, int looplimit)
 	DoRestart();
 	StartPlayback(false, LoopLimit);
 	
-	file.Reserve(sizeof(StaticMIDIhead));
-	memcpy(&file[0], StaticMIDIhead, sizeof(StaticMIDIhead));
+	file.resize(sizeof(StaticMIDIhead));
+	memcpy(file.data(), StaticMIDIhead, sizeof(StaticMIDIhead));
 	file[12] = Division >> 8;
 	file[13] = Division & 0xFF;
 	file[26] = InitialTempo >> 16;
@@ -326,12 +326,12 @@ void MIDISource::CreateSMF(TArray<uint8_t> &file, int looplimit)
 				WriteVarLen(file, delay);
 				delay = 0;
 				uint32_t tempo = MEVENT_EVENTPARM(event[2]);
-				file.Push(MIDI_META);
-				file.Push(MIDI_META_TEMPO);
-				file.Push(3);
-				file.Push(uint8_t(tempo >> 16));
-				file.Push(uint8_t(tempo >> 8));
-				file.Push(uint8_t(tempo));
+				file.push_back(MIDI_META);
+				file.push_back(MIDI_META_TEMPO);
+				file.push_back(3);
+				file.push_back(uint8_t(tempo >> 16));
+				file.push_back(uint8_t(tempo >> 8));
+				file.push_back(uint8_t(tempo));
 				running_status = 255;
 			}
 			else if (MEVENT_EVENTTYPE(event[2]) == MEVENT_LONGMSG)
@@ -343,15 +343,19 @@ void MIDISource::CreateSMF(TArray<uint8_t> &file, int looplimit)
 				if (bytes[0] == MIDI_SYSEX)
 				{
 					len--;
-					file.Push(MIDI_SYSEX);
+					file.push_back(MIDI_SYSEX);
 					WriteVarLen(file, len);
-					memcpy(&file[file.Reserve(len)], bytes + 1, len);
+					auto p = file.size();
+					file.resize(p + len);
+					memcpy(&file[p], bytes + 1, len);
 				}
 				else
 				{
-					file.Push(MIDI_SYSEXEND);
+					file.push_back(MIDI_SYSEXEND);
 					WriteVarLen(file, len);
-					memcpy(&file[file.Reserve(len)], bytes, len);
+					auto p = file.size();
+					file.resize(p + len);
+					memcpy(&file[p], bytes, len);
 				}
 				running_status = 255;
 			}
@@ -363,12 +367,12 @@ void MIDISource::CreateSMF(TArray<uint8_t> &file, int looplimit)
 				if (status != running_status)
 				{
 					running_status = status;
-					file.Push(status);
+					file.push_back(status);
 				}
-				file.Push(uint8_t((event[2] >> 8) & 0x7F));
+				file.push_back(uint8_t((event[2] >> 8) & 0x7F));
 				if (MIDI_EventLengths[(status >> 4) & 7] == 2)
 				{
-					file.Push(uint8_t((event[2] >> 16) & 0x7F));
+					file.push_back(uint8_t((event[2] >> 16) & 0x7F));
 				}
 			}
 			// Advance to next event
@@ -385,12 +389,12 @@ void MIDISource::CreateSMF(TArray<uint8_t> &file, int looplimit)
 	
 	// End track
 	WriteVarLen(file, delay);
-	file.Push(MIDI_META);
-	file.Push(MIDI_META_EOT);
-	file.Push(0);
+	file.push_back(MIDI_META);
+	file.push_back(MIDI_META_EOT);
+	file.push_back(0);
 	
 	// Fill in track length
-	uint32_t len = file.Size() - 22;
+	uint32_t len = (uint32_t)file.size() - 22;
 	file[18] = uint8_t(len >> 24);
 	file[19] = uint8_t(len >> 16);
 	file[20] = uint8_t(len >> 8);

@@ -370,7 +370,15 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else if (!mus_playing.handle->IsPlaying())
 		{
-			mus_playing.handle->Play(looping, order);
+			try
+			{
+				mus_playing.handle->Play(looping, order);
+			}
+			catch (const std::runtime_error& err)
+			{
+				Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), err.what());
+			}
+
 		}
 		return true;
 	}
@@ -447,7 +455,14 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else
 		{
-			mus_playing.handle = I_RegisterSong (reader, devp);
+			try
+			{
+				mus_playing.handle = I_RegisterSong(reader, devp);
+			}
+			catch (const std::runtime_error& err)
+			{
+				Printf("Unable to load %s: %s\n", mus_playing.name.GetChars(), err.what());
+			}
 		}
 	}
 
@@ -458,8 +473,15 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 
 	if (mus_playing.handle != 0)
 	{ // play it
-		mus_playing.handle->Start(looping, S_GetMusicVolume (musicname), order);
-		mus_playing.baseorder = order;
+		try
+		{
+			mus_playing.handle->Start(looping, S_GetMusicVolume(musicname), order);
+			mus_playing.baseorder = order;
+		}
+		catch (const std::runtime_error& err)
+		{
+			Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), err.what());
+		}
 		return true;
 	}
 	return false;
@@ -503,8 +525,16 @@ void S_MIDIDeviceChanged()
 {
 	if (mus_playing.handle != nullptr && mus_playing.handle->IsMIDI())
 	{
-		mus_playing.handle->Stop();
-		mus_playing.handle->Start(mus_playing.loop, -1, mus_playing.baseorder);
+		try
+		{
+			mus_playing.handle->Stop();
+			mus_playing.handle->Start(mus_playing.loop, -1, mus_playing.baseorder);
+		}
+		catch (const std::runtime_error& err)
+		{
+			Printf("Unable to restart music %s: %s\n", mus_playing.name.GetChars(), err.what());
+		}
+
 	}
 }
 
@@ -539,19 +569,32 @@ int S_GetMusic (const char **name)
 
 void S_StopMusic (bool force)
 {
-	// [RH] Don't stop if a playlist is active.
-	if ((force || PlayList == nullptr) && !mus_playing.name.IsEmpty())
+	try
 	{
+		// [RH] Don't stop if a playlist is active.
+		if ((force || PlayList == nullptr) && !mus_playing.name.IsEmpty())
+		{
+			if (mus_playing.handle != nullptr)
+			{
+				if (MusicPaused)
+					mus_playing.handle->Resume();
+
+				mus_playing.handle->Stop();
+				delete mus_playing.handle;
+				mus_playing.handle = nullptr;
+			}
+			LastSong = mus_playing.name;
+			mus_playing.name = "";
+		}
+	}
+	catch (const std::runtime_error& err)
+	{
+		//Printf("Unable to stop %s: %s\n", mus_playing.name.GetChars(), err.what());
 		if (mus_playing.handle != nullptr)
 		{
-			if (MusicPaused)
-				mus_playing.handle->Resume();
-
-			mus_playing.handle->Stop();
 			delete mus_playing.handle;
 			mus_playing.handle = nullptr;
 		}
-		LastSong = mus_playing.name;
 		mus_playing.name = "";
 	}
 }

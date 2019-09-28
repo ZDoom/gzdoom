@@ -34,9 +34,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <algorithm>
 #include "midisource.h"
-#include "basictypes.h"
-#include "templates.h"
+#include "m_swap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -123,40 +123,24 @@ struct HMISong::TrackInfo
 //
 //==========================================================================
 
-HMISong::HMISong (FileReader &reader)
+HMISong::HMISong (const uint8_t *data, size_t len)
 {
-    int len = (int)reader.GetLength();
 	if (len < 0x100)
 	{ // Way too small to be HMI.
 		return;
 	}
-	MusHeader = reader.Read();
+	MusHeader.resize(len);
+	memcpy(MusHeader.data(), data, len);
 	NumTracks = 0;
-	if (MusHeader.Size() == 0)
-		return;
 
 	// Do some validation of the MIDI file
 	if (memcmp(&MusHeader[0], HMI_SONG_MAGIC, sizeof(HMI_SONG_MAGIC)) == 0)
 	{
-		SetupForHMI(len);
+		SetupForHMI((int)len);
 	}
 	else if (memcmp(&MusHeader[0], "HMIMIDIP", 8) == 0)
 	{
-		SetupForHMP(len);
-	}
-}
-
-//==========================================================================
-//
-// HMISong Destructor
-//
-//==========================================================================
-
-HMISong::~HMISong()
-{
-	if (Tracks != nullptr)
-	{
-		delete[] Tracks;
+		SetupForHMP((int)len);
 	}
 }
 
@@ -187,7 +171,7 @@ void HMISong::SetupForHMI(int len)
 	Division = GetShort(MusPtr + HMI_DIVISION_OFFSET) << 2;
 	Tempo = InitialTempo = 4000000;
 
-	Tracks = new TrackInfo[NumTracks + 1];
+	Tracks.resize(NumTracks + 1);
 	int track_dir = GetInt(MusPtr + HMI_TRACK_DIR_PTR_OFFSET);
 
 	// Gather information about each track
@@ -218,7 +202,7 @@ void HMISong::SetupForHMI(int len)
 			tracklen = GetInt(MusPtr + track_dir + i*4 + 4) - start;
 		}
 		// Clamp incomplete tracks to the end of the file.
-		tracklen = MIN(tracklen, len - start);
+		tracklen = std::min(tracklen, len - start);
 		if (tracklen <= 0)
 		{
 			continue;
@@ -290,7 +274,7 @@ void HMISong::SetupForHMP(int len)
 	Division = GetInt(MusPtr + HMP_DIVISION_OFFSET);
 	Tempo = InitialTempo = 1000000;
 
-	Tracks = new TrackInfo[NumTracks + 1];
+	Tracks.resize(NumTracks + 1);
 
 	// Gather information about each track
 	for (i = 0, p = 0; i < NumTracks; ++i)
@@ -307,7 +291,7 @@ void HMISong::SetupForHMP(int len)
 		track_data += tracklen;
 
 		// Clamp incomplete tracks to the end of the file.
-		tracklen = MIN(tracklen, len - start);
+		tracklen = std::min(tracklen, len - start);
 		if (tracklen <= 0)
 		{
 			continue;
@@ -385,7 +369,7 @@ void HMISong::CheckCaps(int tech)
 	{
 		Tracks[i].Enabled = false;
 		// Track designations are stored in a 0-terminated array.
-		for (unsigned int j = 0; j < countof(Tracks[i].Designation) && Tracks[i].Designation[j] != 0; ++j)
+		for (unsigned int j = 0; j < NUM_HMI_DESIGNATIONS && Tracks[i].Designation[j] != 0; ++j)
 		{
 			if (Tracks[i].Designation[j] == tech)
 			{
@@ -446,7 +430,7 @@ void HMISong :: DoRestart()
 
 	// Set initial state.
 	FakeTrack = &Tracks[NumTracks];
-	NoteOffs.Clear();
+	NoteOffs.clear();
 	for (i = 0; i <= NumTracks; ++i)
 	{
 		Tracks[i].TrackP = 0;
@@ -461,7 +445,7 @@ void HMISong :: DoRestart()
 	}
 	Tracks[i].Delay = 0;	// for the FakeTrack
 	Tracks[i].Enabled = true;
-	TrackDue = Tracks;
+	TrackDue = Tracks.data();
 	TrackDue = FindNextDue();
 }
 
@@ -883,7 +867,8 @@ uint32_t HMISong::TrackInfo::ReadVarLenHMP()
 
 void NoteOffQueue::AddNoteOff(uint32_t delay, uint8_t channel, uint8_t key)
 {
-	unsigned int i = Reserve(1);
+	uint32_t i = (uint32_t)size();
+	resize(i + 1);
 	while (i > 0 && (*this)[Parent(i)].Delay > delay)
 	{
 		(*this)[i] = (*this)[Parent(i)];
@@ -902,9 +887,11 @@ void NoteOffQueue::AddNoteOff(uint32_t delay, uint8_t channel, uint8_t key)
 
 bool NoteOffQueue::Pop(AutoNoteOff &item)
 {
-	item = (*this)[0];
-	if (TArray<AutoNoteOff>::Pop((*this)[0]))
+	if (size() > 0)
 	{
+		item = front();
+		front() = back();
+		pop_back();
 		Heapify();
 		return true;
 	}
@@ -921,10 +908,10 @@ void NoteOffQueue::AdvanceTime(uint32_t time)
 {
 	// Because the time is decreasing by the same amount for every entry,
 	// the heap property is maintained.
-	for (unsigned int i = 0; i < Size(); ++i)
+	for (auto &item : *this)
 	{
-		assert((*this)[i].Delay >= time);
-		(*this)[i].Delay -= time;
+		assert(item.Delay >= time);
+		item.Delay -= time;
 	}
 }
 
@@ -942,11 +929,11 @@ void NoteOffQueue::Heapify()
 		unsigned int l = Left(i);
 		unsigned int r = Right(i);
 		unsigned int smallest = i;
-		if (l < Size() && (*this)[l].Delay < (*this)[i].Delay)
+		if (l < (unsigned)size() && (*this)[l].Delay < (*this)[i].Delay)
 		{
 			smallest = l;
 		}
-		if (r < Size() && (*this)[r].Delay < (*this)[smallest].Delay)
+		if (r < (unsigned)size() && (*this)[r].Delay < (*this)[smallest].Delay)
 		{
 			smallest = r;
 		}
@@ -954,7 +941,7 @@ void NoteOffQueue::Heapify()
 		{
 			break;
 		}
-		swapvalues((*this)[i], (*this)[smallest]);
+		std::swap((*this)[i], (*this)[smallest]);
 		i = smallest;
 	}
 }
@@ -979,7 +966,7 @@ HMISong::TrackInfo *HMISong::FindNextDue ()
 	{
 		return TrackDue;
 	}
-	if (TrackDue == FakeTrack && NoteOffs.Size() != 0 && NoteOffs[0].Delay == 0)
+	if (TrackDue == FakeTrack && NoteOffs.size() != 0 && NoteOffs[0].Delay == 0)
 	{
 		FakeTrack->Delay = 0;
 		return FakeTrack;
@@ -997,7 +984,7 @@ HMISong::TrackInfo *HMISong::FindNextDue ()
 		}
 	}
 	// Check automatic note-offs.
-	if (NoteOffs.Size() != 0 && NoteOffs[0].Delay <= best)
+	if (NoteOffs.size() != 0 && NoteOffs[0].Delay <= best)
 	{
 		FakeTrack->Delay = NoteOffs[0].Delay;
 		return FakeTrack;

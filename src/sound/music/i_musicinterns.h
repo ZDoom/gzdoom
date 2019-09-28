@@ -161,7 +161,7 @@ typedef void(*MidiCallback)(void *);
 class MIDIDevice
 {
 public:
-	MIDIDevice();
+	MIDIDevice() = default;
 	virtual ~MIDIDevice();
 
 	virtual int Open(MidiCallback, void *userdata) = 0;

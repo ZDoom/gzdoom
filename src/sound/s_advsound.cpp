@@ -50,6 +50,7 @@
 #include "i_system.h"
 #include "atterm.h"
 #include "s_music.h"
+#include "mididevices/mididevice.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1462,6 +1463,8 @@ static void S_AddSNDINFO (int lump)
 				else if (sc.Compare("fluidsynth")) devset.device = MDEV_FLUIDSYNTH;
 				else if (sc.Compare("gus")) devset.device = MDEV_GUS;
 				else if (sc.Compare("wildmidi")) devset.device = MDEV_WILDMIDI;
+				else if (sc.Compare("adl")) devset.device = MDEV_ADL;
+				else if (sc.Compare("opn")) devset.device = MDEV_OPN;
 				else sc.ScriptError("Unknown MIDI device %s\n", sc.String);
 
 				if (sc.CheckString(","))

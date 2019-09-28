@@ -48,7 +48,7 @@ public:
 
 
 // A minimalistic sound font reader interface. Normally this should be replaced with something better tied into the host application.
-#ifdef USE_BASE_INTERFACE	
+#if 1//def USE_BASE_INTERFACE	
 
 // Base version of timidity_file using stdio's FILE.
 struct timidity_file_FILE : public timidity_file
@@ -89,7 +89,7 @@ struct timidity_file_FILE : public timidity_file
 class BaseSoundFontReader : public SoundFontReaderInterface
 {
 	std::vector<std::string> paths;
-	
+
 	bool IsAbsPath(const char *name)
 	{
 		if (name[0] == '/' || name[0] == '\\') return true;
@@ -100,7 +100,8 @@ class BaseSoundFontReader : public SoundFontReaderInterface
 		return 0;
 	}
 
-	struct timidity_file* open_timidityplus_file(const char* fn)
+public:
+	struct timidity_file* open_timidity_file(const char* fn)
 	{
 		FILE *f = nullptr;
 		std::string fullname;
@@ -129,7 +130,7 @@ class BaseSoundFontReader : public SoundFontReaderInterface
 		return tf;
 	}
 	
-	void timidityplus_add_path(const char* path) 
+	void timidity_add_path(const char* path) 
 	{
 		std::string p  = path;
 		if (p.back() != '/' && p.back() != '\\') p += '/';	// always let it end with a slash.

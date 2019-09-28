@@ -35,10 +35,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 
-#include "i_musicinterns.h"
-#include "templates.h"
-#include "doomerrors.h"
-#include "v_text.h"
+#include "mididevice.h"
 
 
 //==========================================================================
@@ -69,21 +66,6 @@ MIDIDevice::~MIDIDevice()
 
 void MIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
 {
-}
-
-//==========================================================================
-//
-// MIDIDevice :: Preprocess
-//
-// Gives the MIDI device a chance to do some processing with the song before
-// it starts playing it. Returns true if MIDIStreamer should perform its
-// standard playback startup sequence.
-//
-//==========================================================================
-
-bool MIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
-{
-	return true;
 }
 
 //==========================================================================
@@ -183,7 +165,7 @@ void MIDIDevice::ChangeSettingString(const char *setting, const char *value)
 //
 //==========================================================================
 
-FString MIDIDevice::GetStats()
+std::string MIDIDevice::GetStats()
 {
 	return "This MIDI device does not have any stats.";
 }

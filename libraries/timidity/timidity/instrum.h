@@ -175,7 +175,7 @@ public:
 
 	int LoadConfig() { return read_config_file(nullptr); }
 	int read_config_file(const char* name);
-	int LoadDMXGUS(int gus_memsize);
+	int LoadDMXGUS(int gus_memsize, const char *dmxgusdata, size_t dmxgussize);
 
 	void font_freeall();
 	FontFile* font_find(const char* filename);

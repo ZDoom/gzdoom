@@ -55,7 +55,7 @@
 static void WriteVarLen (TArray<uint8_t> &file, uint32_t value);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
+EXTERN_CVAR(Bool, snd_midiprecache);
 EXTERN_CVAR(Float, snd_musicvolume)
 EXTERN_CVAR(Int, snd_mididevice)
 
@@ -207,7 +207,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 			case MDEV_MMAPI:
 
 #ifdef _WIN32
-				dev = CreateWinMIDIDevice(mididevice);
+				dev = CreateWinMIDIDevice(mididevice, snd_midiprecache);
 				break;
 #endif
 				// Intentional fall-through for non-Windows systems.
@@ -316,8 +316,16 @@ bool MIDIStreamer::DumpWave(const char *filename, int subsong, int samplerate)
 		throw std::runtime_error("MMAPI device is not supported");
 	}
 	auto iMIDI = CreateMIDIDevice(devtype, samplerate);
-	MIDI.reset(new MIDIWaveWriter(filename, static_cast<SoftSynthMIDIDevice *>(iMIDI)));
-	return InitPlayback();
+	auto writer = new MIDIWaveWriter(filename, static_cast<SoftSynthMIDIDevice*>(iMIDI));
+	MIDI.reset(writer);
+	bool res = InitPlayback();
+	if (!writer->CloseFile())
+	{
+		char buffer[80];
+		snprintf(buffer, 80, "Could not finish writing wave file: %s\n", strerror(errno));
+		throw std::runtime_error(buffer);
+	}
+	return res;
 }
 
 //==========================================================================
@@ -349,13 +357,10 @@ bool MIDIStreamer::InitPlayback()
 		Stream.reset(GSnd->CreateStream(FillStream, streamInfo.mBufferSize, streamInfo.mNumChannels == 1 ? SoundStream::Float | SoundStream::Mono : SoundStream::Float, streamInfo.mSampleRate, MIDI.get()));
 	}
 
-	if (MIDI->Preprocess(this, m_Looping))
-	{
-		StartPlayback();
-		if (MIDI == nullptr)
-		{ // The MIDI file had no content and has been automatically closed.
-			return false;
-		}
+	StartPlayback();
+	if (MIDI == nullptr)
+	{ // The MIDI file had no content and has been automatically closed.
+		return false;
 	}
 
 	int res = 1;
@@ -893,7 +898,8 @@ FString MIDIStreamer::GetStats()
 	{
 		return "No MIDI device in use.";
 	}
-	return MIDI->GetStats();
+	auto s = MIDI->GetStats();
+	return s.c_str();
 }
 
 //==========================================================================

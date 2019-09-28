@@ -718,6 +718,8 @@ UNSAFE_CCMD (writewave)
 			else if (!stricmp(argv[5], "Timidity") || !stricmp(argv[5], "Timidity++")) dev = MDEV_TIMIDITY;
 			else if (!stricmp(argv[5], "FluidSynth")) dev = MDEV_FLUIDSYNTH;
 			else if (!stricmp(argv[5], "OPL")) dev = MDEV_OPL;
+			else if (!stricmp(argv[5], "OPN")) dev = MDEV_OPN;
+			else if (!stricmp(argv[5], "ADL")) dev = MDEV_ADL;
 			else
 			{
 				Printf("%s: Unknown MIDI device\n", argv[5]);
@@ -728,12 +730,18 @@ UNSAFE_CCMD (writewave)
 		auto savedsong = mus_playing;
 		S_StopMusic(true);
 		if (dev == MDEV_DEFAULT && snd_mididevice >= 0) dev = MDEV_FLUIDSYNTH;	// The Windows system synth cannot dump a wave.
-		auto streamer = new MIDIStreamer(dev, argv.argc() < 6 ? nullptr : argv[6]);
-		streamer->SetMIDISource(source);
-		streamer->DumpWave(argv[2], argv.argc() <4? 0: (int)strtol(argv[3], nullptr, 10), argv.argc() <5 ? 0 : (int)strtol(argv[4], nullptr, 10));
-		delete streamer;
-		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
+		try
+		{
+			MIDIStreamer streamer(dev, argv.argc() < 6 ? nullptr : argv[6]);
+			streamer.SetMIDISource(source);
+			streamer.DumpWave(argv[2], argv.argc() < 4 ? 0 : (int)strtol(argv[3], nullptr, 10), argv.argc() < 5 ? 0 : (int)strtol(argv[4], nullptr, 10));
+		}
+		catch (const std::runtime_error& err)
+		{
+			Printf("MIDI dump failed: %s\n", err.what());
+		}
 
+		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
 	}
 	else
 	{

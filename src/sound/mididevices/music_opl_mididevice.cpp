@@ -35,8 +35,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_musicinterns.h"
+#include "mididevice.h"
+#include "mus2midi.h"
 #include "oplsynth/opl.h"
+#include "oplsynth/opl_mus_player.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -59,7 +61,7 @@ public:
 	int OpenRenderer();
 	void Close();
 	int GetTechnology() const;
-	FString GetStats();
+	std::string GetStats() override;
 
 protected:
 	void CalcTickRate();
@@ -285,9 +287,9 @@ bool OPLMIDIDevice::ServiceStream(void *buff, int numbytes)
 //
 //==========================================================================
 
-FString OPLMIDIDevice::GetStats()
+std::string OPLMIDIDevice::GetStats()
 {
-	FString out;
+	std::string out;
 	for (uint32_t i = 0; i < io->NumChannels; ++i)
 	{
 		char star = '*';

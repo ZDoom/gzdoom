@@ -37,14 +37,15 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
+#include <algorithm>
+#include <mutex>
+#include <assert.h>
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_musicinterns.h"
-#include "templates.h"
-#include "doomdef.h"
+#include "mididevice.h"
 #include "m_swap.h"
-#include "doomerrors.h"
+#include "mus2midi.h"
 
 #ifndef __GNUC__
 #include <mmdeviceapi.h>
@@ -68,7 +69,7 @@ static bool IgnoreMIDIVolume(UINT id);
 class WinMIDIDevice : public MIDIDevice
 {
 public:
-	WinMIDIDevice(int dev_id);
+	WinMIDIDevice(int dev_id, bool precache);
 	~WinMIDIDevice();
 	int Open();
 	void Close();
@@ -104,6 +105,7 @@ public:
 	MIDIHDR WinMidiHeaders[2];
 	int HeaderIndex;
 	bool VolumeWorks;
+	bool Precache;
 
 	HANDLE BufferDoneEvent;
 	HANDLE ExitEvent;
@@ -114,8 +116,6 @@ public:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR (Bool, snd_midiprecache, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -124,22 +124,25 @@ CVAR (Bool, snd_midiprecache, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 //
 //==========================================================================
 
-WinMIDIDevice::WinMIDIDevice(int dev_id)
+WinMIDIDevice::WinMIDIDevice(int dev_id, bool precache)
 {
-	DeviceID = MAX<DWORD>(dev_id, 0);
+	DeviceID = std::max<DWORD>(dev_id, 0);
 	MidiOut = 0;
 	HeaderIndex = 0;
+	Precache = precache;
 	memset(WinMidiHeaders, 0, sizeof(WinMidiHeaders));
 
 	BufferDoneEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (BufferDoneEvent == nullptr)
 	{
-		Printf(PRINT_BOLD, "Could not create buffer done event for MIDI playback\n");
+		throw std::runtime_error("Could not create buffer done event for MIDI playback");
 	}
 	ExitEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	if (ExitEvent == nullptr)
 	{
-		Printf(PRINT_BOLD, "Could not create exit event for MIDI playback\n");
+		CloseHandle(BufferDoneEvent);
+		BufferDoneEvent = nullptr;
+		throw std::runtime_error("Could not create exit event for MIDI playback");
 	}
 	PlayerThread = nullptr;
 }
@@ -297,9 +300,8 @@ int WinMIDIDevice::Resume()
 		PlayerThread = CreateThread(nullptr, 0, PlayerProc, this, 0, &tid);
 		if (PlayerThread == nullptr)
 		{
-			Printf("Creating MIDI thread failed\n");
 			Stop();
-			return MMSYSERR_NOTSUPPORTED;
+			throw std::runtime_error("Creating MIDI thread failed\n");
 		}
 	}
 	return ret;
@@ -400,7 +402,7 @@ void WinMIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
 {
 	// Setting snd_midiprecache to false disables this precaching, since it
 	// does involve sleeping for more than a miniscule amount of time.
-	if (!snd_midiprecache)
+	if (!Precache)
 	{
 		return;
 	}
@@ -606,20 +608,21 @@ bool WinMIDIDevice::Update()
 		GetExitCodeThread(PlayerThread, &code);
 		CloseHandle(PlayerThread);
 		PlayerThread = nullptr;
-		Printf("MIDI playback failure: ");
-		if (code < countof(MMErrorCodes))
+		char errmsg[100];
+		const char *m = "MIDI playback failure: ";
+		if (code < 8)
 		{
-			Printf("%s\n", MMErrorCodes[code]);
+			snprintf(errmsg, 100, "%s%s", m, MMErrorCodes[code]);
 		}
-		else if (code >= MIDIERR_BASE && code < MIDIERR_BASE + countof(MidiErrorCodes))
+		else if (code >= MIDIERR_BASE && code < MIDIERR_BASE + 8)
 		{
-			Printf("%s\n", MidiErrorCodes[code - MIDIERR_BASE]);
+			snprintf(errmsg, 100, "%s%s", m, MMErrorCodes[code - MIDIERR_BASE]);
 		}
 		else
 		{
-			Printf("%08x\n", code);
+			snprintf(errmsg, 100, "%s%08x", m, code);
 		}
-		return false;
+		throw std::runtime_error(errmsg);
 	}
 	return true;
 }
@@ -683,15 +686,9 @@ static bool IgnoreMIDIVolume(UINT id)
 	return false;
 }
 
-MIDIDevice *CreateWinMIDIDevice(int mididevice)
+MIDIDevice *CreateWinMIDIDevice(int mididevice, bool precache)
 {
-	auto d = new WinMIDIDevice(mididevice);
-	if (d->BufferDoneEvent == nullptr || d->ExitEvent == nullptr)
-	{
-		delete d;
-		I_Error("failed to create MIDI events");
-	}
-	return d;
+	return new WinMIDIDevice(mididevice, precache);
 }
 #endif
 

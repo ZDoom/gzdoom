@@ -915,3 +915,6 @@ bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
 	return true;
 }
 
+// This one is for Win32 MMAPI.
+
+CVAR(Bool, snd_midiprecache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);

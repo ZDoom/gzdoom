@@ -587,13 +587,40 @@ int Instruments::read_config_file(const char *name)
 	return 0;
 }
 
-// When loading DMXGUS the sfreader's default file must be the DMXGUS file, not the config as for patch sets.
+static char* gets(const char *&input, const char *eof, char* strbuf, size_t len)
+{
+	if (ptrdiff_t(len) > eof - input) len = eof - input;
+	if (len <= 0) return nullptr;
 
-int Instruments::LoadDMXGUS(int gus_memsize)
+	char* p = strbuf;
+	while (len > 1)
+	{
+		if (*input == 0)
+		{
+			input++;
+			break;
+		}
+		if (*input != '\r')
+		{
+			*p++ = *input;
+			len--;
+			if (*input == '\n')
+			{
+				input++;
+				break;
+			}
+		}
+		input++;
+	}
+	if (p == strbuf) return nullptr;
+	*p++ = 0;
+	return strbuf;
+}
+
+int Instruments::LoadDMXGUS(int gus_memsize, const char* dmxgusdata, size_t dmxgussize)
 {
 	char readbuffer[1024];
-	auto data = sfreader->open_timidity_file(nullptr);
-	long size = (data->seek(0, SEEK_END), data->tell());
+	const char* eof = dmxgusdata + dmxgussize;
 	long read = 0;
 	uint8_t remap[256];
 
@@ -604,9 +631,7 @@ int Instruments::LoadDMXGUS(int gus_memsize)
 	int status = -1;
 	int gusbank = (gus_memsize >= 1 && gus_memsize <= 4) ? gus_memsize : -1;
 
-	data->seek(0, SEEK_SET);
-
-	while (data->gets(readbuffer, 1024) && read < size)
+	while (gets(dmxgusdata, eof, readbuffer, 1024))
 	{
 		int i = 0;
 		while (readbuffer[i] != 0 && i < 1024)

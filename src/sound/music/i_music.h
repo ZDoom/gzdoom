@@ -75,7 +75,7 @@ public:
 	virtual bool SetPosition (unsigned int ms);
 	virtual bool SetSubsong (int subsong);
 	virtual void Update();
-	virtual int GetDeviceType() const { return MDEV_DEFAULT; }	// MDEV_DEFAULT stands in for anything that cannot change playback parameters which needs a restart.
+	virtual int GetDeviceType() const { return -1; }	// MDEV_DEFAULT stands in for anything that cannot change playback parameters which needs a restart.
 	virtual FString GetStats();
 	virtual MusInfo *GetOPLDumper(const char *filename);
 	virtual MusInfo *GetWaveDumper(const char *filename, int rate);

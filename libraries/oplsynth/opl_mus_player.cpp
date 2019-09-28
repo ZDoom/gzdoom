@@ -269,7 +269,6 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 				io->chips[i]->Update(samples1, samplesleft);
 			}
 			OffsetSamples(samples1, samplesleft << stereoshift);
-			assert(NextTickIn == ticky);
 			NextTickIn -= samplesleft;
 			assert (NextTickIn >= 0);
 			numsamples -= samplesleft;

@@ -72,11 +72,6 @@ struct MidiDeviceSetting
 {
 	int device;
 	FString args;
-
-	MidiDeviceSetting()
-	{
-		device = MDEV_DEFAULT;
-	}
 };
 
 typedef TMap<FName, FName> MusicAliasMap;

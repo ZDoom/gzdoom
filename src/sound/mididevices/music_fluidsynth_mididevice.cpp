@@ -34,7 +34,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_musicinterns.h"
+#include <mutex>
+#include <stdio.h>
+#include "mididevice.h"
+#include "mus2midi.h"
 
 // FluidSynth implementation of a MIDI device -------------------------------
 
@@ -55,7 +58,7 @@ public:
 	~FluidSynthMIDIDevice();
 	
 	int OpenRenderer();
-	FString GetStats();
+	std::string GetStats() override;
 	void ChangeSettingInt(const char *setting, int value);
 	void ChangeSettingNum(const char *setting, double value);
 	void ChangeSettingString(const char *setting, const char *value);
@@ -504,13 +507,12 @@ void FluidSynthMIDIDevice::ChangeSettingString(const char *setting, const char *
 //
 //==========================================================================
 
-FString FluidSynthMIDIDevice::GetStats()
+std::string FluidSynthMIDIDevice::GetStats()
 {
 	if (FluidSynth == NULL || FluidSettings == NULL)
 	{
 		return "FluidSynth is invalid";
 	}
-	FString out;
 
 	std::lock_guard<std::mutex> lock(CritSec);
 	int polyphony = fluid_synth_get_polyphony(FluidSynth);
@@ -521,7 +523,8 @@ FString FluidSynthMIDIDevice::GetStats()
 	fluid_settings_getint(FluidSettings, "synth.reverb.active", &reverb);
 	fluid_settings_getint(FluidSettings, "synth.polyphony", &maxpoly);
 
-	out.Format("Voices: %3d/%3d(%3d) %6.2f%% CPU   Reverb: %3s Chorus: %3s",
+	char out[100];
+	snprintf(out, 100,"Voices: %3d/%3d(%3d) %6.2f%% CPU   Reverb: %3s Chorus: %3s",
 		voices, polyphony, maxpoly, load, reverb ? "yes" : "no", chorus ? "yes" : "no");
 	return out;
 }

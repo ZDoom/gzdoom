@@ -34,12 +34,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_musicinterns.h"
-#include "doomerrors.h"
-#include "i_soundfont.h"
-
-#include "c_console.h"
-#include "v_text.h"
+#include "mididevice.h"
+#include "wildmidi/wildmidi_lib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -55,7 +51,7 @@ public:
 	
 	int OpenRenderer();
 	void PrecacheInstruments(const uint16_t *instruments, int count);
-	FString GetStats();
+	std::string GetStats();
 	int GetDeviceType() const override { return MDEV_WILDMIDI; }
 	
 protected:
@@ -69,22 +65,6 @@ protected:
 	void LoadInstruments(WildMidiConfig* config);
 
 };
-
-
-
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
 
 
 // CODE --------------------------------------------------------------------
@@ -228,16 +208,16 @@ void WildMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-FString WildMIDIDevice::GetStats()
+std::string WildMIDIDevice::GetStats()
 {
-	FString out;
-	out.Format("%3d voices", Renderer->GetVoiceCount());
+	char out[20];
+	snprintf(out, 20, "%3d voices", Renderer->GetVoiceCount());
 	return out;
 }
 
 //==========================================================================
 //
-// WildMIDIDevice :: GetStats
+// WildMIDIDevice :: ChangeSettingInt
 //
 //==========================================================================
 

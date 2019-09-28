@@ -35,7 +35,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "i_musicinterns.h"
+#include "mididevice.h"
+#include "m_swap.h"
 #include <errno.h>
 
 // MACROS ------------------------------------------------------------------
@@ -44,7 +45,7 @@
 
 struct FmtChunk
 {
-	uint32_t ChunkID;
+	//uint32_t ChunkID;
 	uint32_t ChunkLen;
 	uint16_t  FormatTag;
 	uint16_t  Channels;
@@ -74,32 +75,48 @@ struct FmtChunk
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+#ifdef _WIN32
+	// I'd rather not include Windows.h for just this.
+extern "C" __declspec(dllimport) int __stdcall MultiByteToWideChar(unsigned CodePage, unsigned long  dwFlags, const char* lpMultiByteStr, int cbMultiByte, const wchar_t* lpWideCharStr, int cchWideChar);
+#endif
+
+static FILE* my_fopen(const char* filename)
+{
+#ifndef _WIN32
+	return fopen(filename, "wb");
+#else
+	// This is supposed to handle UTF-8 which Windows does not support with fopen. :(
+	const int CP_UTF8 = 65001;
+
+	std::wstring filePathW;
+	auto len = strlen(filename);
+	filePathW.resize(len);
+	int newSize = MultiByteToWideChar(CP_UTF8, 0, filename, (int)len, const_cast<wchar_t*>(filePathW.c_str()), (int)len);
+	filePathW.resize(newSize);
+	return _wfopen(filePathW.c_str(), L"wb");
+#endif
+
+}
 
 //==========================================================================
 //
-// TimidityWaveWriterMIDIDevice Constructor
+// MIDIWaveWriter Constructor
 //
 //==========================================================================
 
 MIDIWaveWriter::MIDIWaveWriter(const char *filename, SoftSynthMIDIDevice *playdevice)
 	: SoftSynthMIDIDevice(playdevice->GetSampleRate())
 {
-	File = FileWriter::Open(filename);
+	File = my_fopen(filename);
 	playDevice = playdevice;
 	if (File != nullptr)
 	{ // Write wave header
-		uint32_t work[3];
 		FmtChunk fmt;
 
-		work[0] = MAKE_ID('R','I','F','F');
-		work[1] = 0;								// filled in later
-		work[2] = MAKE_ID('W','A','V','E');
-		if (4*3 != File->Write(work, 4 * 3)) goto fail;
-
+		if (fwrite("RIFF\0\0\0\0WAVEfmt ", 1, 16, File) != 16) goto fail;
 
 		playDevice->CalcTickRate();
-		fmt.ChunkID = MAKE_ID('f','m','t',' ');
-		fmt.ChunkLen = LittleLong(uint32_t(sizeof(fmt) - 8));
+		fmt.ChunkLen = LittleLong(uint32_t(sizeof(fmt) - 4));
 		fmt.FormatTag = LittleShort((uint16_t)0xFFFE);		// WAVE_FORMAT_EXTENSIBLE
 		fmt.Channels = LittleShort((uint16_t)2);
 		fmt.SamplesPerSec = LittleLong(SampleRate);
@@ -120,58 +137,60 @@ MIDIWaveWriter::MIDIWaveWriter(const char *filename, SoftSynthMIDIDevice *playde
 		fmt.SubFormatD[5] = 0x38;
 		fmt.SubFormatD[6] = 0x9b;
 		fmt.SubFormatD[7] = 0x71;
-		if (sizeof(fmt) != File->Write(&fmt, sizeof(fmt))) goto fail;
+		if (sizeof(fmt) != fwrite(&fmt, 1, sizeof(fmt), File)) goto fail;
 
-		work[0] = MAKE_ID('d','a','t','a');
-		work[1] = 0;								// filled in later
-		if (8 !=File->Write(work, 8)) goto fail;
+		if (fwrite("data\0\0\0\0", 1, 8, File) != 8) goto fail;
 
 		return;
-fail:
-		Printf("Failed to write %s: %s\n", filename, strerror(errno));
-		delete File;
+	fail:
+		char buffer[80];
+		fclose(File);
 		File = nullptr;
+		snprintf(buffer, 80, "Failed to write %s: %s\n", filename, strerror(errno));
+		throw std::runtime_error(buffer);
 	}
 }
 
 //==========================================================================
 //
-// TimidityWaveWriterMIDIDevice Destructor
+// MIDIWaveWriter Destructor
 //
 //==========================================================================
 
-MIDIWaveWriter::~MIDIWaveWriter()
+bool MIDIWaveWriter::CloseFile()
 {
 	if (File != nullptr)
 	{
-		long pos = File->Tell();
+		auto pos = ftell(File);
 		uint32_t size;
 
 		// data chunk size
 		size = LittleLong(uint32_t(pos - 8));
-		if (0 == File->Seek(4, SEEK_SET))
+		if (0 == fseek(File, 4, SEEK_SET))
 		{
-			if (4 == File->Write(&size, 4))
+			if (4 == fwrite(&size, 1, 4, File))
 			{
 				size = LittleLong(uint32_t(pos - 12 - sizeof(FmtChunk) - 8));
-				if (0 == File->Seek(4 + sizeof(FmtChunk) + 4, SEEK_CUR))
+				if (0 == fseek(File, 4 + sizeof(FmtChunk) + 4, SEEK_CUR))
 				{
-					if (4 == File->Write(&size, 4))
+					if (4 == fwrite(&size, 1, 5, File))
 					{
-						delete File;
-						return;
+						fclose(File);
+						File = nullptr;
+						return true;
 					}
 				}
 			}
 		}
-		Printf("Could not finish writing wave file: %s\n", strerror(errno));
-		delete File;
+		fclose(File);
+		File = nullptr;
+		return false;
 	}
 }
 
 //==========================================================================
 //
-// TimidityWaveWriterMIDIDevice :: Resume
+// MIDIWaveWriter :: Resume
 //
 //==========================================================================
 
@@ -181,10 +200,13 @@ int MIDIWaveWriter::Resume()
 
 	while (ServiceStream(writebuffer, sizeof(writebuffer)))
 	{
-		if (File->Write(writebuffer, sizeof(writebuffer)) != sizeof(writebuffer))
+		if (fwrite(writebuffer, 1, sizeof(writebuffer), File) != sizeof(writebuffer))
 		{
-			Printf("Could not write entire wave file: %s\n", strerror(errno));
-			return 1;
+			fclose(File);
+			File = nullptr;
+			char buffer[80];
+			snprintf(buffer, 80, "Could not write entire wave file: %s\n", strerror(errno));
+			throw std::runtime_error(buffer);
 		}
 	}
 	return 0;
@@ -192,7 +214,7 @@ int MIDIWaveWriter::Resume()
 
 //==========================================================================
 //
-// TimidityWaveWriterMIDIDevice Stop
+// MIDIWaveWriter Stop
 //
 //==========================================================================
 

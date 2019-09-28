@@ -11,8 +11,8 @@
 #include <stdint.h>
 #include <functional>
 #include <vector>
-#include "mus2midi.h"
-#include "mididefs.h"
+#include "mididevices/mus2midi.h"
+#include "mididevices/mididefs.h"
 
 extern char MIDI_EventLengths[7];
 extern char MIDI_CommonLengths[15];

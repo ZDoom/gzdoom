@@ -187,3 +187,14 @@ FString MIDIDevice::GetStats()
 {
 	return "This MIDI device does not have any stats.";
 }
+
+//==========================================================================
+//
+// MIDIDevice :: GetStreamInfo
+//
+//==========================================================================
+
+SoundStreamInfo MIDIDevice::GetStreamInfo() const
+{
+	return { 0, 0, 0 };	// i.e. do not use streaming.
+}

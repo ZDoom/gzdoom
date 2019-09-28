@@ -48,7 +48,7 @@ public:
 	~OPNMIDIDevice();
 	
 	
-	int Open(MidiCallback, void *userdata);
+	int OpenRenderer();
 	int GetDeviceType() const override { return MDEV_OPN; }
 	
 protected:
@@ -146,14 +146,10 @@ int OPNMIDIDevice::LoadCustomBank(const char *bankfile)
 //
 //==========================================================================
 
-int OPNMIDIDevice::Open(MidiCallback callback, void *userdata)
+int OPNMIDIDevice::OpenRenderer()
 {
-	int ret = OpenStream(2, 0, callback, userdata);
-	if (ret == 0)
-	{
-		opn2_rt_resetState(Renderer);
-	}
-	return ret;
+	opn2_rt_resetState(Renderer);
+	return 0;
 }
 
 //==========================================================================

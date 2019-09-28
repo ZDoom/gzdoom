@@ -155,6 +155,15 @@ struct WildMidiConfig
 
 extern WildMidiConfig wildMidiConfig;
 
+struct SoundStreamInfo
+{
+	// Format is always 32 bit float. If mBufferSize is 0, the song doesn't use streaming but plays through a different interface.
+	int mBufferSize;
+	int mSampleRate;
+	int mNumChannels;
+};
+
+
 class MIDIStreamer;
 
 typedef void(*MidiCallback)(void *);
@@ -164,7 +173,12 @@ public:
 	MIDIDevice() = default;
 	virtual ~MIDIDevice();
 
-	virtual int Open(MidiCallback, void *userdata) = 0;
+	void SetCallback(MidiCallback callback, void* userdata)
+	{
+		Callback = callback;
+		CallbackData = userdata;
+	}
+	virtual int Open() = 0;
 	virtual void Close() = 0;
 	virtual bool IsOpen() const = 0;
 	virtual int GetTechnology() const = 0;
@@ -188,6 +202,11 @@ public:
 	virtual FString GetStats();
 	virtual int GetDeviceType() const { return MDEV_DEFAULT; }
 	virtual bool CanHandleSysex() const { return true; }
+	virtual SoundStreamInfo GetStreamInfo() const;
+
+protected:
+	MidiCallback Callback;
+	void* CallbackData;
 };
 
 
@@ -215,28 +234,29 @@ public:
 	void Stop();
 	bool Pause(bool paused);
 
+	virtual int Open();
+	virtual bool ServiceStream(void* buff, int numbytes);
+	int GetSampleRate() const { return SampleRate; }
+	SoundStreamInfo GetStreamInfo() const override;
+
 protected:
 	std::mutex CritSec;
-	SoundStream *Stream;
 	double Tempo;
 	double Division;
 	double SamplesPerTick;
 	double NextTickIn;
 	MidiHeader *Events;
 	bool Started;
+	bool isMono = false; // only relevant for OPL.
+	bool isOpen = false;
 	uint32_t Position;
 	int SampleRate;
-
-	MidiCallback Callback;
-	void *CallbackData;
+	int StreamBlockSize = 2;
 
 	virtual void CalcTickRate();
 	int PlayTick();
-	int OpenStream(int chunks, int flags, MidiCallback, void *userdata);
-	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
-	virtual bool ServiceStream (void *buff, int numbytes);
-	int GetSampleRate() const { return SampleRate; }
 
+	virtual int OpenRenderer() = 0;
 	virtual void HandleEvent(int status, int parm1, int parm2) = 0;
 	virtual void HandleLongEvent(const uint8_t *data, int len) = 0;
 	virtual void ComputeOutput(float *buffer, int len) = 0;
@@ -250,24 +270,25 @@ class MIDIWaveWriter : public SoftSynthMIDIDevice
 public:
 	MIDIWaveWriter(const char *filename, SoftSynthMIDIDevice *devtouse);
 	~MIDIWaveWriter();
-	int Resume();
-	int Open(MidiCallback cb, void *userdata)
+	int Resume() override;
+	int Open() override
 	{
-		return playDevice->Open(cb, userdata);
+		return playDevice->Open();
 	}
-	void Stop();
-	void HandleEvent(int status, int parm1, int parm2) { playDevice->HandleEvent(status, parm1, parm2);  }
-	void HandleLongEvent(const uint8_t *data, int len) { playDevice->HandleLongEvent(data, len);  }
-	void ComputeOutput(float *buffer, int len) { playDevice->ComputeOutput(buffer, len);  }
-	int StreamOutSync(MidiHeader *data) { return playDevice->StreamOutSync(data); }
-	int StreamOut(MidiHeader *data) { return playDevice->StreamOut(data); }
+	int OpenRenderer() override { return playDevice->OpenRenderer();  }
+	void Stop() override;
+	void HandleEvent(int status, int parm1, int parm2) override { playDevice->HandleEvent(status, parm1, parm2);  }
+	void HandleLongEvent(const uint8_t *data, int len) override { playDevice->HandleLongEvent(data, len);  }
+	void ComputeOutput(float *buffer, int len) override { playDevice->ComputeOutput(buffer, len);  }
+	int StreamOutSync(MidiHeader *data) override { return playDevice->StreamOutSync(data); }
+	int StreamOut(MidiHeader *data) override { return playDevice->StreamOut(data); }
 	int GetDeviceType() const override { return playDevice->GetDeviceType(); }
-	bool ServiceStream (void *buff, int numbytes) { return playDevice->ServiceStream(buff, numbytes); }
-	int GetTechnology() const { return playDevice->GetTechnology(); }
-	int SetTempo(int tempo) { return playDevice->SetTempo(tempo); }
-	int SetTimeDiv(int timediv) { return playDevice->SetTimeDiv(timediv); }
-	bool IsOpen() const { return playDevice->IsOpen(); }
-	void CalcTickRate() { playDevice->CalcTickRate(); }
+	bool ServiceStream (void *buff, int numbytes) override { return playDevice->ServiceStream(buff, numbytes); }
+	int GetTechnology() const override { return playDevice->GetTechnology(); }
+	int SetTempo(int tempo) override { return playDevice->SetTempo(tempo); }
+	int SetTimeDiv(int timediv) override { return playDevice->SetTimeDiv(timediv); }
+	bool IsOpen() const override { return playDevice->IsOpen(); }
+	void CalcTickRate() override { playDevice->CalcTickRate(); }
 
 protected:
 	FileWriter *File;
@@ -307,6 +328,7 @@ public:
 	}
 
 	bool DumpWave(const char *filename, int subsong, int samplerate);
+	static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata);
 
 
 protected:
@@ -337,7 +359,7 @@ protected:
 		SONG_ERROR
 	};
 
-	MIDIDevice *MIDI;
+	MIDIDevice *MIDI = nullptr;
 	uint32_t Events[2][MAX_MIDI_EVENTS*3];
 	MidiHeader Buffer[2];
 	int BufferNum;
@@ -351,8 +373,8 @@ protected:
 	bool CallbackIsThreaded;
 	int LoopLimit;
 	FString Args;
-	MIDISource *source;
-
+	MIDISource *source = nullptr;
+	SoundStream* Stream = nullptr;
 };
 
 // Anything supported by the sound system out of the box --------------------

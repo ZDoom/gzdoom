@@ -54,7 +54,7 @@ public:
 	FluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc_)(const char *, ...));
 	~FluidSynthMIDIDevice();
 	
-	int Open(MidiCallback, void *userdata);
+	int OpenRenderer();
 	FString GetStats();
 	void ChangeSettingInt(const char *setting, int value);
 	void ChangeSettingNum(const char *setting, double value);
@@ -165,6 +165,8 @@ const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinpr
 FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc_)(const char*, ...) = nullptr)
 	: SoftSynthMIDIDevice(samplerate <= 0? config->fluid_samplerate : samplerate, 22050, 96000)
 {
+	StreamBlockSize = 4;
+
 	// These are needed for changing the settings. If something posts a transient config in here we got no way to retrieve the values afterward.
 	fluid_reverb_roomsize = config->fluid_reverb_roomsize;
 	fluid_reverb_damping = config->fluid_reverb_damping;
@@ -255,18 +257,10 @@ FluidSynthMIDIDevice::~FluidSynthMIDIDevice()
 //
 //==========================================================================
 
-int FluidSynthMIDIDevice::Open(MidiCallback callback, void *userdata)
+int FluidSynthMIDIDevice::OpenRenderer()
 {
-	if (FluidSynth == NULL)
-	{
-		return 2;
-	}
-	int ret = OpenStream(4, 0, callback, userdata);
-	if (ret == 0)
-	{
-		fluid_synth_system_reset(FluidSynth);
-	}
-	return ret;
+	fluid_synth_system_reset(FluidSynth);
+	return 0;
 }
 
 //==========================================================================

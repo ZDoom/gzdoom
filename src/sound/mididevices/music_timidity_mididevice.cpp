@@ -72,7 +72,7 @@ public:
 	TimidityMIDIDevice(GUSConfig *config, int samplerate);
 	~TimidityMIDIDevice();
 	
-	int Open(MidiCallback, void *userdata);
+	int OpenRenderer();
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	int GetDeviceType() const override { return MDEV_GUS; }
 	
@@ -182,14 +182,10 @@ TimidityMIDIDevice::~TimidityMIDIDevice()
 //
 //==========================================================================
 
-int TimidityMIDIDevice::Open(MidiCallback callback, void *userdata)
+int TimidityMIDIDevice::OpenRenderer()
 {
-	int ret = OpenStream(2, 0, callback, userdata);
-	if (ret == 0)
-	{
-		Renderer->Reset();
-	}
-	return ret;
+	Renderer->Reset();
+	return 9;
 }
 
 //==========================================================================

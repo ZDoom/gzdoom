@@ -53,7 +53,7 @@ public:
 	TimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
 	~TimidityPPMIDIDevice();
 
-	int Open(MidiCallback, void *userdata);
+	int OpenRenderer();
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	//FString GetStats();
 	int GetDeviceType() const override { return MDEV_TIMIDITY; }
@@ -133,14 +133,10 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 //
 //==========================================================================
 
-int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
+int TimidityPPMIDIDevice::OpenRenderer()
 {
-	int ret = OpenStream(2, 0, callback, userdata);
-	if (ret == 0 && Renderer != nullptr)
-	{
-		Renderer->playmidi_stream_init();
-	}
-	return ret;
+	Renderer->playmidi_stream_init();
+	return 0;
 }
 
 //==========================================================================

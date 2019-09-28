@@ -44,9 +44,9 @@ public:
 	ADLMIDIDevice(const ADLConfig *config);
 	~ADLMIDIDevice();
 	
-	int Open(MidiCallback, void *userdata);
+	int OpenRenderer();
 	int GetDeviceType() const override { return MDEV_ADL; }
-	
+
 protected:
 	
 	void HandleEvent(int status, int parm1, int parm2);
@@ -133,14 +133,10 @@ int ADLMIDIDevice::LoadCustomBank(const ADLConfig *config)
 //
 //==========================================================================
 
-int ADLMIDIDevice::Open(MidiCallback callback, void *userdata)
+int ADLMIDIDevice::OpenRenderer()
 {
-	int ret = OpenStream(2, 0, callback, userdata);
-	if (ret == 0)
-	{
-		adl_rt_resetState(Renderer);
-	}
-	return ret;
+	adl_rt_resetState(Renderer);
+	return 0;
 }
 
 //==========================================================================

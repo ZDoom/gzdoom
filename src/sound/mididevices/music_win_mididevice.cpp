@@ -70,7 +70,7 @@ class WinMIDIDevice : public MIDIDevice
 public:
 	WinMIDIDevice(int dev_id);
 	~WinMIDIDevice();
-	int Open(MidiCallback, void *userdata);
+	int Open();
 	void Close();
 	bool IsOpen() const;
 	int GetTechnology() const;
@@ -104,9 +104,6 @@ public:
 	MIDIHDR WinMidiHeaders[2];
 	int HeaderIndex;
 	bool VolumeWorks;
-
-	MidiCallback Callback;
-	void *CallbackData;
 
 	HANDLE BufferDoneEvent;
 	HANDLE ExitEvent;
@@ -173,12 +170,10 @@ WinMIDIDevice::~WinMIDIDevice()
 //
 //==========================================================================
 
-int WinMIDIDevice::Open(MidiCallback callback, void *userdata)
+int WinMIDIDevice::Open()
 {
 	MMRESULT err;
 
-	Callback = callback;
-	CallbackData = userdata;
 	if (MidiOut == nullptr)
 	{
 		err = midiStreamOpen(&MidiOut, &DeviceID, 1, (DWORD_PTR)CallbackFunc, (DWORD_PTR)this, CALLBACK_FUNCTION);

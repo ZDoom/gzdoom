@@ -56,7 +56,7 @@ class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
 {
 public:
 	OPLMIDIDevice(const OPLMidiConfig *config);
-	int Open(MidiCallback, void *userdata);
+	int OpenRenderer();
 	void Close();
 	int GetTechnology() const;
 	FString GetStats();
@@ -87,6 +87,7 @@ OPLMIDIDevice::OPLMIDIDevice(const OPLMidiConfig *config)
 {
 	FullPan = config->fullpan;
 	memcpy(OPLinstruments, config->OPLinstruments, sizeof(OPLinstruments));
+	StreamBlockSize = 14;
 }
 
 //==========================================================================
@@ -97,19 +98,16 @@ OPLMIDIDevice::OPLMIDIDevice(const OPLMidiConfig *config)
 //
 //==========================================================================
 
-int OPLMIDIDevice::Open(MidiCallback callback, void *userdata)
+int OPLMIDIDevice::OpenRenderer()
 {
 	if (io == NULL || 0 == (NumChips = io->Init(currentCore, NumChips, FullPan, true)))
 	{
 		return 1;
 	}
-	int ret = OpenStream(14, (FullPan || io->IsOPL3) ? 0 : SoundStream::Mono, callback, userdata);
-	if (ret == 0)
-	{
-		stopAllVoices();
-		resetAllControllers(100);
-	}
-	return ret;
+	isMono = !FullPan && !io->IsOPL3;
+	stopAllVoices();
+	resetAllControllers(100);
+	return 0;
 }
 
 //==========================================================================

@@ -53,7 +53,7 @@ public:
 	WildMIDIDevice(WildMidiConfig* config, int samplerate);
 	~WildMIDIDevice();
 	
-	int Open(MidiCallback, void *userdata);
+	int OpenRenderer();
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 	int GetDeviceType() const override { return MDEV_WILDMIDI; }
@@ -164,18 +164,9 @@ WildMIDIDevice::~WildMIDIDevice()
 //
 //==========================================================================
 
-int WildMIDIDevice::Open(MidiCallback callback, void *userdata)
+int WildMIDIDevice::OpenRenderer()
 {
-	if (Renderer == NULL)
-	{
-		return 1;
-	}
-	int ret = OpenStream(2, 0, callback, userdata);
-	if (ret == 0)
-	{
-//		Renderer->Reset();
-	}
-	return ret;
+	return 0;	// This one's a no-op
 }
 
 //==========================================================================

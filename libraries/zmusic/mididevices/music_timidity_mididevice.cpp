@@ -93,16 +93,16 @@ void TimidityMIDIDevice::LoadInstruments(GUSConfig *config)
 	if (config->dmxgus.size())
 	{
 		// Check if we got some GUS data before using it.
-		FString ultradir = getenv("ULTRADIR");
-		if (ultradir.IsNotEmpty() || config->gus_patchdir.length() != 0)
+		std::string ultradir = getenv("ULTRADIR");
+		if (ultradir.length() || config->gus_patchdir.length() != 0)
 		{
 			auto psreader = new Timidity::BaseSoundFontReader;
 			
 			// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
-			if (ultradir.IsNotEmpty())
+			if (ultradir.length())
 			{
 				ultradir += "/midi";
-				psreader->timidity_add_path(ultradir);
+				psreader->timidity_add_path(ultradir.c_str());
 			}
 			// Load DMXGUS lump and patches from gus_patchdir
 			if (config->gus_patchdir.length() != 0) psreader->timidity_add_path(config->gus_patchdir.c_str());

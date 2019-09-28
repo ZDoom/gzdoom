@@ -1,29 +1,16 @@
 #pragma once
 
 #include <mutex>
-#include "midiconfig.h"
-#include "mididefs.h"
+#include "zmusic/midiconfig.h"
+#include "zmusic/mididefs.h"
+
+#include "mididevices/mididevice.h"
 
 void TimidityPP_Shutdown();
 typedef void(*MidiCallback)(void *);
 
 // A device that provides a WinMM-like MIDI streaming interface -------------
 
-enum EMidiDevice
-{
-	MDEV_DEFAULT = -1,
-	MDEV_MMAPI = 0,
-	MDEV_OPL = 1,
-	MDEV_SNDSYS = 2,
-	MDEV_TIMIDITY = 3,
-	MDEV_FLUIDSYNTH = 4,
-	MDEV_GUS = 5,
-	MDEV_WILDMIDI = 6,
-	MDEV_ADL = 7,
-	MDEV_OPN = 8,
-
-	MDEV_COUNT
-};
 
 struct MidiHeader
 {

@@ -36,7 +36,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "mididevice.h"
-#include "m_swap.h"
+#include "zmusic/m_swap.h"
 #include <errno.h>
 
 // MACROS ------------------------------------------------------------------
@@ -184,8 +184,8 @@ bool MIDIWaveWriter::CloseFile()
 		}
 		fclose(File);
 		File = nullptr;
-		return false;
 	}
+	return false;
 }
 
 //==========================================================================

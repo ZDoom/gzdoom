@@ -55,6 +55,7 @@ enum
 };
 
 struct GenMidiVoice;
+struct genmidi_op_t;
 
 struct OPLio 
 {

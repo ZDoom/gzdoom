@@ -86,8 +86,6 @@
 #include "textures/bitmap.h"
 #include "atterm.h"
 
-#include "optwin32.h"
-
 // MACROS ------------------------------------------------------------------
 
 #ifdef _MSC_VER

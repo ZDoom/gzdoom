@@ -35,17 +35,14 @@
 */
 #include "i_musicinterns.h"
 #include "i_soundfont.h"
-#include "adlmidi.h"
 #include "cmdlib.h"
 #include "doomerrors.h"
-#include "timidity/timidity.h"
-#include "timidity/playmidi.h"
-#include "timidity/instrum.h"
-#include "timiditypp/controls.h"
-#include "timiditypp/timidity.h"
-#include "timiditypp/instrum.h"
 #include "v_text.h"
 #include "c_console.h"
+
+#include "../libraries/timidity/timidity/timidity.h"
+#include "../libraries/timidityplus/timiditypp/timidity.h"
+#include "../libraries/oplsynth/oplsynth/oplio.h"
 
 #ifdef _WIN32
 // do this without including windows.h for this one single prototype
@@ -138,7 +135,7 @@ void ADL_SetupConfig(ADLConfig *config, const char *Args)
 }
 
 
-CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, adl_volume_model, 3/*ADLMIDI_VolumeModel_DMX*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	adlConfig.adl_volume_model = self;
 	CheckRestart(MDEV_ADL);
@@ -503,7 +500,7 @@ void OPL_SetupConfig(OPLMidiConfig *config, const char *args)
 	uint8_t filehdr[8];
 	data.Read(filehdr, 8);
 	if (memcmp(filehdr, "#OPL_II#", 8)) throw std::runtime_error("Corrupt GENMIDI lump");
-	data.Read(oplMidiConfig.OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
+	data.Read(oplMidiConfig.OPLinstruments, 175 * 36);
 	
 	config->core = opl_core;
 	if (args != NULL && *args >= '0' && *args < '4') config->core = *args - '0';
@@ -877,14 +874,14 @@ CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (currSong != NULL)
-		currSong->ChangeSettingInt("wildmidi.reverb", self ? WildMidi::WM_MO_REVERB : 0);
+		currSong->ChangeSettingInt("wildmidi.reverb", *self);
 	wildMidiConfig.reverb = self;
 }
 
 CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (currSong != NULL)
-		currSong->ChangeSettingInt("wildmidi.resampling", self ? WildMidi::WM_MO_ENHANCED_RESAMPLING : 0);
+		currSong->ChangeSettingInt("wildmidi.resampling", *self);
 	wildMidiConfig.enhanced_resampling = self;
 }
 

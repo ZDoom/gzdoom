@@ -44,8 +44,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "mididevice.h"
-#include "m_swap.h"
-#include "mus2midi.h"
+#include "zmusic/m_swap.h"
+#include "zmusic/mus2midi.h"
 
 #ifndef __GNUC__
 #include <mmdeviceapi.h>

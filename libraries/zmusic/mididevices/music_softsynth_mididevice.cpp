@@ -35,6 +35,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <mutex>
+#include <algorithm>
+#include <assert.h>
 #include "mididevice.h"
 
 // MACROS ------------------------------------------------------------------

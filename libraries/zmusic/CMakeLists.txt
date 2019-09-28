@@ -1,0 +1,58 @@
+cmake_minimum_required( VERSION 2.8.7 )
+
+if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -fomit-frame-pointer" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
+endif()
+
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
+
+include( CheckFunctionExists )
+
+option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
+
+CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
+if( NOT STRICMP_EXISTS )
+	add_definitions( -Dstricmp=strcasecmp )
+endif()
+
+CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
+if( NOT STRNICMP_EXISTS )
+	add_definitions( -Dstrnicmp=strncasecmp )
+endif()
+
+include_directories( "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+if (WIN32)
+set( PLAT_WIN32_SOURCES
+	mididevices/music_win_mididevice.cpp)
+endif()
+
+file( GLOB HEADER_FILES
+	zmusic/*.h
+	)
+add_library( zmusic STATIC
+	i_module.cpp
+	mididevices/music_base_mididevice.cpp
+	mididevices/music_adlmidi_mididevice.cpp
+	mididevices/music_opl_mididevice.cpp
+	mididevices/music_opnmidi_mididevice.cpp
+	mididevices/music_timiditypp_mididevice.cpp
+	mididevices/music_fluidsynth_mididevice.cpp
+	mididevices/music_softsynth_mididevice.cpp
+	mididevices/music_timidity_mididevice.cpp
+	mididevices/music_wildmidi_mididevice.cpp
+	mididevices/music_wavewriter_mididevice.cpp
+	midisources/midisource.cpp
+	midisources/midisource_mus.cpp
+	midisources/midisource_smf.cpp
+	midisources/midisource_hmi.cpp
+	midisources/midisource_xmi.cpp
+	${PLAT_WIN32_SOURCES}
+	)
+target_link_libraries( zmusic )
+
+
+source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mididevices/.+")
+source_group("MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/midisources/.+")
+source_group("MIDI Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/zmusic/.+")

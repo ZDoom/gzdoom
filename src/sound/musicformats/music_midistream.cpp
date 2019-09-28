@@ -40,6 +40,9 @@
 #include "doomerrors.h"
 #include "v_text.h"
 
+#include "mididevices/mididevice.h"
+#include "midisources/midisource.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define MAX_TIME	(1000000/10)	// Send out 1/10 of a sec of events at a time.
@@ -885,6 +888,12 @@ void MIDIStreamer::SetMIDISource(MIDISource *_source)
 	source->setTempoCallback([=](int tempo) { return !!MIDI->SetTempo(tempo); } );
 }
 
+int MIDIStreamer::GetDeviceType() const 
+{
+	return nullptr == MIDI
+		? MusInfo::GetDeviceType()
+		: MIDI->GetDeviceType();
+}
 
 //==========================================================================
 //

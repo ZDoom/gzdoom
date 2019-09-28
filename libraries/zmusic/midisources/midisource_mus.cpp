@@ -33,8 +33,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <algorithm>
 #include "midisource.h"
-#include "m_swap.h"
+#include "zmusic/m_swap.h"
 
 // MACROS ------------------------------------------------------------------
 

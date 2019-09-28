@@ -587,7 +587,7 @@ void S_StopMusic (bool force)
 			mus_playing.name = "";
 		}
 	}
-	catch (const std::runtime_error& err)
+	catch (const std::runtime_error& )
 	{
 		//Printf("Unable to stop %s: %s\n", mus_playing.name.GetChars(), err.what());
 		if (mus_playing.handle != nullptr)

@@ -36,7 +36,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "mididevice.h"
-#include "mus2midi.h"
+#include "zmusic/mus2midi.h"
 #include "oplsynth/opl.h"
 #include "oplsynth/opl_mus_player.h"
 

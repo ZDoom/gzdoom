@@ -37,11 +37,15 @@
 #include <mutex>
 #include <stdio.h>
 #include "mididevice.h"
-#include "mus2midi.h"
+#include "zmusic/mus2midi.h"
 
 // FluidSynth implementation of a MIDI device -------------------------------
 
-#ifndef DYN_FLUIDSYNTH
+#if !defined DYN_FLUIDSYNTH && defined _WIN32
+#define DYN_FLUIDSYNTH 1	// On Windows this is the only supported way to link to FluidSynth.
+#endif
+
+#if !defined DYN_FLUIDSYNTH
 #include <fluidsynth.h>
 #else
 #include "i_module.h"

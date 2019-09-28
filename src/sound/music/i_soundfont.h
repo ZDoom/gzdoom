@@ -3,9 +3,9 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"
-#include "timiditypp/timidity_file.h"
-#include "timidity/timidity_file.h"
-#include "wildmidi/wildmidi_file.h"
+#include "../libraries/timidityplus/timiditypp/timidity_file.h"
+#include "../libraries/timidity/timidity/timidity_file.h"
+#include "../libraries/wildmidi/wildmidi/wildmidi_file.h"
 
 enum
 {

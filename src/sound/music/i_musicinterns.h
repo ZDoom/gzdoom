@@ -1,21 +1,22 @@
 
 #include <mutex>
 #include <string>
-#include "oplsynth/opl_mus_player.h"
 #include "c_cvars.h"
-#include "mididevices/mus2midi.h"
 #include "i_sound.h"
 #include "i_music.h"
 #include "s_sound.h"
 #include "files.h"
-#include "wildmidi/wildmidi_lib.h"
-#include "midisources/midisource.h"
-#include "mididevices/mididevice.h"
+#include "zmusic/midiconfig.h"
+#include "zmusic/mididefs.h"
+
+#include "zmusic/..//mididevices/mididevice.h"	// this is still needed...
 
 void I_InitMusicWin32 ();
 
 extern float relative_volume;
 class MIDISource;
+class MIDIDevice;
+class OPLmusicFile;
 
 
 extern ADLConfig adlConfig;
@@ -55,12 +56,7 @@ public:
 	int ServiceEvent();
 	void SetMIDISource(MIDISource *_source);
 
-	int GetDeviceType() const override
-	{
-		return nullptr == MIDI
-			? MusInfo::GetDeviceType()
-			: MIDI->GetDeviceType();
-	}
+	int GetDeviceType() const override;
 
 	bool DumpWave(const char *filename, int subsong, int samplerate);
 	static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata);

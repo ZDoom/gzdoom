@@ -221,8 +221,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				break;
 
 			case MDEV_OPL:
-				OPL_SetupConfig(&oplMidiConfig, Args);
-				dev = CreateOplMIDIDevice(&oplMidiConfig);
+				OPL_SetupConfig(&oplConfig, Args);
+				dev = CreateOplMIDIDevice(&oplConfig);
 				break;
 
 			case MDEV_TIMIDITY:

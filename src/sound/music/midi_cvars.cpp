@@ -60,7 +60,7 @@ static void CheckRestart(int devtype)
 
 ADLConfig adlConfig;
 FluidConfig fluidConfig;
-OPLMidiConfig oplMidiConfig;
+OPLConfig oplConfig;
 OpnConfig opnConfig;
 GUSConfig gusConfig;
 TimidityConfig timidityConfig;
@@ -477,7 +477,7 @@ CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	{
 		if (currSong != NULL)
 			currSong->ChangeSettingInt("opl.numchips", self);
-		oplMidiConfig.numchips = self;
+		oplConfig.numchips = self;
 	}
 }
 
@@ -488,21 +488,26 @@ CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	oplMidiConfig.fullpan = self;
+	oplConfig.fullpan = self;
 }
 
-void OPL_SetupConfig(OPLMidiConfig *config, const char *args)
+void OPL_SetupConfig(OPLConfig *config, const char *args, bool midi)
 {
-	// The OPL renderer should not care about where this comes from.
-	// Note: No I_Error here - this needs to be consistent with the rest of the music code.
-	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
-	if (lump < 0) throw std::runtime_error("No GENMIDI lump found");
-	auto data = Wads.OpenLumpReader(lump);
+	// This needs to be done only once.
+	if (!config->genmidiset && midi)
+	{
+		// The OPL renderer should not care about where this comes from.
+		// Note: No I_Error here - this needs to be consistent with the rest of the music code.
+		auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
+		if (lump < 0) throw std::runtime_error("No GENMIDI lump found");
+		auto data = Wads.OpenLumpReader(lump);
 
-	uint8_t filehdr[8];
-	data.Read(filehdr, 8);
-	if (memcmp(filehdr, "#OPL_II#", 8)) throw std::runtime_error("Corrupt GENMIDI lump");
-	data.Read(oplMidiConfig.OPLinstruments, 175 * 36);
+		uint8_t filehdr[8];
+		data.Read(filehdr, 8);
+		if (memcmp(filehdr, "#OPL_II#", 8)) throw std::runtime_error("Corrupt GENMIDI lump");
+		data.Read(oplConfig.OPLinstruments, 175 * 36);
+		config->genmidiset = true;
+	}
 	
 	config->core = opl_core;
 	if (args != NULL && *args >= '0' && *args < '4') config->core = *args - '0';

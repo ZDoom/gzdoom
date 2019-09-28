@@ -21,7 +21,7 @@ class OPLmusicFile;
 
 extern ADLConfig adlConfig;
 extern FluidConfig fluidConfig;
-extern OPLMidiConfig oplMidiConfig;
+extern OPLConfig oplConfig;
 extern OpnConfig opnConfig;
 extern GUSConfig gusConfig;
 extern TimidityConfig timidityConfig;
@@ -141,7 +141,7 @@ public:
 
 void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfallback);
 void ADL_SetupConfig(ADLConfig *config, const char *Args);
-void OPL_SetupConfig(OPLMidiConfig *config, const char *args);
+void OPL_SetupConfig(OPLConfig *config, const char *args, bool midi = true);
 void OPN_SetupConfig(OpnConfig *config, const char *Args);
 bool GUS_SetupConfig(GUSConfig *config, const char *args);
 bool Timidity_SetupConfig(TimidityConfig* config, const char* args);
@@ -156,7 +156,7 @@ StreamSource *MOD_OpenSong(MusicIO::FileInterface* reader, DumbConfig* config, i
 StreamSource* GME_OpenSong(MusicIO::FileInterface* reader, const char* fmt, float stereo_depth, int sample_rate);
 StreamSource *SndFile_OpenSong(FileReader &fr);
 StreamSource* XA_OpenSong(FileReader& reader);
-StreamSource *OPL_OpenSong(FileReader &reader, const char *args);
+StreamSource* OPL_OpenSong(MusicIO::FileInterface* reader, OPLConfig *config);
 
 // stream song ------------------------------------------
 

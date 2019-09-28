@@ -38,11 +38,12 @@ struct FluidConfig
 	float fluid_chorus_depth = 8;
 };
 
-struct OPLMidiConfig
+struct OPLConfig
 {
 	int numchips = 2;
 	int core = 0;
 	bool fullpan = true;
+	bool genmidiset = false;
 	uint8_t OPLinstruments[36 * 175]; // it really is 'struct GenMidiInstrument OPLinstruments[GENMIDI_NUM_TOTAL]'; but since this is a public header it cannot pull in a dependency from oplsynth.
 };
 

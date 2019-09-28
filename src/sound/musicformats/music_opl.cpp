@@ -31,13 +31,11 @@
 **---------------------------------------------------------------------------
 */
 
-#include "i_musicinterns.h"
 #include "streamsource.h"
 #include "../libraries/oplsynth/oplsynth/opl.h"
 #include "../libraries/oplsynth/oplsynth/opl_mus_player.h"
-
-EXTERN_CVAR (Int, opl_numchips)
-EXTERN_CVAR(Int, opl_core)
+#include "../libraries/music_common/fileio.h"
+#include "zmusic/midiconfig.h"
 
 
 //==========================================================================
@@ -49,7 +47,7 @@ EXTERN_CVAR(Int, opl_core)
 class OPLMUSSong : public StreamSource
 {
 public:
-	OPLMUSSong (FileReader &reader, const char *args);
+	OPLMUSSong (MusicIO::FileInterface *reader, OPLConfig *config);
 	~OPLMUSSong ();
 	bool Start() override;
 	void ChangeSettingInt(const char *name, int value) override;
@@ -69,12 +67,20 @@ protected:
 //
 //==========================================================================
 
-OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
+OPLMUSSong::OPLMUSSong(MusicIO::FileInterface* reader, OPLConfig* config)
 {
-	current_opl_core = opl_core;
-	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
-
-	Music = nullptr ;// new OPLmusicFile(reader, current_opl_core);
+	const char* error = nullptr;
+	reader->seek(0, SEEK_END);
+	auto fs = reader->tell();
+	reader->seek(0, SEEK_SET);
+	std::vector<uint8_t> data(fs);
+	reader->read(data.data(), (int)data.size());
+	Music = new OPLmusicFile(data.data(), data.size(), config->core, config->numchips, error);
+	if (error)
+	{
+		delete Music;
+		throw std::runtime_error(error);
+	}
 }
 
 //==========================================================================
@@ -139,7 +145,7 @@ bool OPLMUSSong::GetData(void *buffer, size_t len)
 	return Music->ServiceStream(buffer, int(len)) ? len : 0;
 }
 
-StreamSource *OPL_OpenSong(FileReader &reader, const char *args)
+StreamSource *OPL_OpenSong(MusicIO::FileInterface* reader, OPLConfig *config)
 {
-	return new OPLMUSSong(reader, args);
+	return new OPLMUSSong(reader, config);
 }

@@ -149,7 +149,7 @@ protected:
 MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const FluidConfig* config, int (*printfunc)(const char*, ...));
 MIDIDevice *CreateADLMIDIDevice(const ADLConfig* config);
 MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
-MIDIDevice *CreateOplMIDIDevice(const OPLMidiConfig* config);
+MIDIDevice *CreateOplMIDIDevice(const OPLConfig* config);
 MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate);
 MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
 MIDIDevice *CreateWildMIDIDevice(WildMidiConfig *config, int samplerate);

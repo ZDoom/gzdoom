@@ -48,7 +48,7 @@
 #include "m_swap.h"
 #include "zmusic/mididefs.h"
 #include "zmusic/midiconfig.h"
-#include "../..//libraries/music_common/fileio.h"
+#include "../../libraries/music_common/fileio.h"
 
 // MACROS ------------------------------------------------------------------
 

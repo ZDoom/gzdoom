@@ -147,10 +147,9 @@ protected:
     virtual bool open(FileReader &reader) = 0;
     friend class SoundRenderer;
 
-private:
     // Make non-copyable
-    SoundDecoder(const SoundDecoder &rhs);
-    SoundDecoder& operator=(const SoundDecoder &rhs);
+    SoundDecoder(const SoundDecoder &rhs) = delete;
+    SoundDecoder& operator=(const SoundDecoder &rhs) = delete;
 };
 
 class MusInfo;

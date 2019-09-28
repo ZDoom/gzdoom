@@ -457,7 +457,11 @@ MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
 		(id[0] == MAKE_ID('A','D','L','I') && *((uint8_t *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
-		streamsource = OPL_OpenSong(reader, device != nullptr? device->args.GetChars() : "");
+		OPL_SetupConfig(&oplConfig, device->args.GetChars(), false);
+		auto mreader = new FileReaderMusicInterface(reader);
+		streamsource = OPL_OpenSong(mreader, &oplConfig);
+		reader = mreader->GetReader();	// We need to get this back for the rest of this function.
+		delete mreader;
 	}
 	else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
 	{

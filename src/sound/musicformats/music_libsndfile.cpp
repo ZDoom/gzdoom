@@ -39,6 +39,7 @@
 #include "v_text.h"
 #include "templates.h"
 #include "m_fixed.h"
+#include "streamsource.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -49,7 +50,7 @@ class SndFileSong : public StreamSource
 public:
 	SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass);
 	~SndFileSong();
-	FString GetStats() override;
+	std::string GetStats() override;
 	SoundStreamInfo GetFormat() override;
 	bool GetData(void *buffer, size_t len) override;
 	
@@ -328,18 +329,17 @@ SndFileSong::~SndFileSong()
 //
 //==========================================================================
 
-FString SndFileSong::GetStats()
+std::string SndFileSong::GetStats()
 {
-	FString out;
+	char out[80];
 	
 	size_t SamplePos;
 	
 	SamplePos = Decoder->getSampleOffset();
 	int time = int (SamplePos / SampleRate);
 	
-	out.Format(
-		"Track: " TEXTCOLOR_YELLOW "%s, %dHz" TEXTCOLOR_NORMAL
-		"  Time:" TEXTCOLOR_YELLOW "%02d:%02d" TEXTCOLOR_NORMAL,
+	snprintf(out, 80,
+		"Track: %s, %dHz  Time: %02d:%02d",
 		Channels == 2? "Stereo" : "Mono", SampleRate,
 		time/60,
 		time % 60);

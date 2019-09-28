@@ -43,6 +43,7 @@
 #include "../libraries/timidity/timidity/timidity.h"
 #include "../libraries/timidityplus/timiditypp/timidity.h"
 #include "../libraries/oplsynth/oplsynth/oplio.h"
+#include "../libraries/dumb/include/dumb.h"
 
 #ifdef _WIN32
 // do this without including windows.h for this one single prototype
@@ -64,6 +65,7 @@ OpnConfig opnConfig;
 GUSConfig gusConfig;
 TimidityConfig timidityConfig;
 WildMidiConfig wildMidiConfig;
+DumbConfig dumbConfig;
 
 //==========================================================================
 //
@@ -912,14 +914,54 @@ bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
 	return true;
 }
 
+//==========================================================================
+//
 // This one is for Win32 MMAPI.
+//
+//==========================================================================
 
 CVAR(Bool, snd_midiprecache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
+//==========================================================================
+//
 // GME
+//
+//==========================================================================
 
 CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (currSong != nullptr)
 		currSong->ChangeSettingNum("GME.stereodepth", *self);
+}
+
+//==========================================================================
+//
+// Dumb
+//
+//==========================================================================
+
+CVAR(Int,  mod_samplerate,				0,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_volramp,					2,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_interp,					DUMB_LQ_CUBIC,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Bool, mod_autochip,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_autochip_size_force,		100,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_autochip_size_scan,		500,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CVAR(Int,  mod_autochip_scan_threshold, 12,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
+CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0.5f) self = 0.5f;
+	else if (self > 16.f) self = 16.f;
+}
+
+
+void Dumb_SetupConfig(DumbConfig* config)
+{
+	config->mod_samplerate					= mod_samplerate;			
+    config->mod_volramp                     = mod_volramp;            
+    config->mod_interp                      = mod_interp;               
+    config->mod_autochip                    = mod_autochip;
+    config->mod_autochip_size_force         = mod_autochip_size_force;
+    config->mod_autochip_size_scan          = mod_autochip_size_scan;
+    config->mod_autochip_scan_threshold     = mod_autochip_scan_threshold;
+    config->mod_dumb_mastervolume           = mod_dumb_mastervolume;
 }

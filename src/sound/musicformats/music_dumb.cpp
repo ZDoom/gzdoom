@@ -37,23 +37,18 @@
 
 #include <math.h>
 #include <mutex>
-#include "i_musicinterns.h"
+#include <string>
+#include <stdint.h>
+#include "streamsource.h"
 
 
 #undef CDECL	// w32api's windef.h defines this
 #include "../dumb/include/dumb.h"
 #include "../dumb/include/internal/it.h"
-
-//==========================================================================
-//
-// dumb_decode_vorbis
-//
-//==========================================================================
-
-static short *DUMBCALLBACK dumb_decode_vorbis_(int outlen, const void *oggstream, int sizebytes)
-{
-	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
-}
+#include "m_swap.h"
+#include "zmusic/mididefs.h"
+#include "zmusic/midiconfig.h"
+#include "../..//libraries/music_common/fileio.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -62,20 +57,22 @@ static short *DUMBCALLBACK dumb_decode_vorbis_(int outlen, const void *oggstream
 class DumbSong : public StreamSource
 {
 public:
-	DumbSong(DUH *myduh);
+	DumbSong(DUH *myduh, DumbConfig *config, int samplerate);
 	~DumbSong();
 	//bool SetPosition(int ms);
 	bool SetSubsong(int subsong) override;
 	bool Start() override;
 	SoundStreamInfo GetFormat() override;
-	FString GetStats() override;
+	void ChangeSettingNum(const char* setting, double val) override;
+	std::string GetStats() override;
 
-	FString Codec;
-	FString TrackerVersion;
-	FString FormatVersion;
+	std::string Codec;
+	std::string TrackerVersion;
+	std::string FormatVersion;
 	int NumChannels;
 	int NumPatterns;
 	int NumOrders;
+	float MasterVolume;
 
 protected:
 	int srate, interp, volramp;
@@ -97,6 +94,12 @@ protected:
 };
 
 #pragma pack(1)
+
+#if defined(__GNUC__)
+#define FORCE_PACKED __attribute__((__packed__))
+#else
+#define FORCE_PACKED
+#endif
 
 typedef struct tagITFILEHEADER
 {
@@ -142,19 +145,6 @@ typedef struct MODMIDICFG
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-CVAR(Int,  mod_samplerate,				0,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_volramp,					2,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_interp,					DUMB_LQ_CUBIC,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Bool, mod_autochip,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_autochip_size_force,		100,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_autochip_size_scan,		500,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_autochip_scan_threshold, 12,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0.5f) self = 0.5f;
-	else if (self > 16.f) self = 16.f;
-}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -205,12 +195,17 @@ static void ReadDUH(DUH * duh, DumbSong *info, bool meta, bool dos)
 		}
 	}
 
-	info->Codec = duh_get_tag(duh, "FORMAT");
-	info->TrackerVersion = duh_get_tag(duh, "TRACKERVERSION");
-	info->FormatVersion = duh_get_tag(duh, "FORMATVERSION");
+	// std::string does not like nullptr assignments. Was this really necessary? :(
+	auto a = duh_get_tag(duh, "FORMAT");
+	if (a) info->Codec = a;
+	a = duh_get_tag(duh, "TRACKERVERSION");
+	if (a) info->TrackerVersion = a;
+	a = duh_get_tag(duh, "FORMATVERSION");
+	if (a) info->FormatVersion = a;
+
 
 #if 0
-	FString name;
+	std::string name;
 
 	if (itsd->n_samples)
 	{
@@ -276,12 +271,12 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, DumbSong *info, bool meta
 		LittleShort(pifh->smpnum)*4 +
 		LittleShort(pifh->patnum)*4 > size) return false;
 
-	FString ver;
+	char ver[40];
 
-	ver.Format("IT v%u.%02x", LittleShort(pifh->cmwt) >> 8, LittleShort(pifh->cmwt) & 255);
+	snprintf(ver, 40, "IT v%u.%02x", LittleShort(pifh->cmwt) >> 8, LittleShort(pifh->cmwt) & 255);
 	info->Codec = ver;
 
-	ver.Format("%u.%02x", LittleShort(pifh->cwtv) >> 8, LittleShort(pifh->cwtv) & 255);
+	snprintf(ver, 40, "%u.%02x", LittleShort(pifh->cwtv) >> 8, LittleShort(pifh->cwtv) & 255);
 	info->TrackerVersion = ver;
 
 	//if ( pifh->smpnum ) info.info_set_int( field_samples, LittleShort(pifh->smpnum) );
@@ -296,7 +291,7 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, DumbSong *info, bool meta
 	unsigned msgend = msgoffset + LittleShort(pifh->msglength);
 
 	uint32_t * offset;
-//	FString name;
+//	std::string name;
 	
 	if (meta)
 	{
@@ -466,7 +461,7 @@ static bool ReadIT(const uint8_t * ptr, unsigned size, DumbSong *info, bool meta
 	if ( meta && ( LittleShort(pifh->special) & 1 ) && ( msgend - msgoffset ) && ( msgend < size ) )
 	{
 		const char * str = (const char *) ptr + msgoffset;
-		FString msg(str);
+		std::string msg(str);
 		//info.meta_add( field_comment, string_utf8_from_it_multiline( msg ) );
 	}
 
@@ -558,7 +553,7 @@ static DUMBFILE_SYSTEM mem_dfs = {
 //
 //==========================================================================
 
-DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, FileReader &reader, int lenhave, int lenfull)
+DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, MusicIO::FileInterface *reader, int lenhave, int lenfull)
 {
 	filestate->size = lenfull;
 	filestate->offset = 0;
@@ -568,7 +563,7 @@ DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, File
     {
         uint8_t *mem = new uint8_t[lenfull];
         memcpy(mem, start, lenhave);
-        if (reader.Read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
+        if (reader->read(mem + lenhave, lenfull - lenhave) != (lenfull - lenhave))
         {
             delete[] mem;
             return NULL;
@@ -587,12 +582,12 @@ DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, File
 //
 //==========================================================================
 
-static void MOD_SetAutoChip(DUH *duh)
+static void MOD_SetAutoChip(DUH *duh, DumbConfig *config)
 {
-	int size_force = mod_autochip_size_force;
-	int size_scan = mod_autochip_size_scan;
-	int scan_threshold_8 = ((mod_autochip_scan_threshold * 0x100) + 50) / 100;
-	int scan_threshold_16 = ((mod_autochip_scan_threshold * 0x10000) + 50) / 100;
+	int size_force = config->mod_autochip_size_force;
+	int size_scan = config->mod_autochip_size_scan;
+	int scan_threshold_8 = ((config->mod_autochip_scan_threshold * 0x100) + 50) / 100;
+	int scan_threshold_16 = ((config->mod_autochip_scan_threshold * 0x10000) + 50) / 100;
 	DUMB_IT_SIGDATA * itsd = duh_get_it_sigdata(duh);
 
 	if (itsd)
@@ -773,7 +768,7 @@ static void MOD_SetAutoChip(DUH *duh)
 //
 //==========================================================================
 
-StreamSource *MOD_OpenSong(FileReader &reader)
+StreamSource* MOD_OpenSong(MusicIO::FileInterface *reader, DumbConfig* config, int samplerate)
 {
 	DUH *duh = 0;
 	int headsize;
@@ -789,14 +784,16 @@ StreamSource *MOD_OpenSong(FileReader &reader)
 	bool is_it = false;
 	bool is_dos = true;
 
-    int size = (int)reader.GetLength();
-	auto fpos = reader.Tell();
+	auto fpos = reader->tell();
+	reader->seek(0, SEEK_END);
+    int size = (int)reader->tell();
+	reader->seek(fpos, SEEK_SET);
 
 	filestate.ptr = start;
 	filestate.offset = 0;
 	headsize = MIN((int)sizeof(start), size);
 
-    if (headsize != reader.Read(start, headsize))
+    if (headsize != reader->read(start, headsize))
     {
         return NULL;
     }
@@ -908,7 +905,7 @@ StreamSource *MOD_OpenSong(FileReader &reader)
 		{
 			if (!(f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 			{
-                reader.Seek(fpos, FileReader::SeekSet);
+                reader->seek(fpos, SEEK_SET);
 				return NULL;
 			}
 		}
@@ -930,11 +927,11 @@ StreamSource *MOD_OpenSong(FileReader &reader)
 	}
 	if ( duh )
 	{
-		if (mod_autochip)
+		if (config->mod_autochip)
 		{
-			MOD_SetAutoChip(duh);
+			MOD_SetAutoChip(duh, config);
 		}
-		state = new DumbSong(duh);
+		state = new DumbSong(duh, config, samplerate);
 
 		if (is_it) ReadIT(filestate.ptr, size, state, false);
 		else ReadDUH(duh, state, false, is_dos);
@@ -942,7 +939,7 @@ StreamSource *MOD_OpenSong(FileReader &reader)
 	else
 	{
 		// Reposition file pointer for other codecs to do their checks.
-        reader.Seek(fpos, FileReader::SeekSet);
+        reader->seek(fpos, SEEK_SET);
 	}
 	if (filestate.ptr != (uint8_t *)start)
 	{
@@ -983,7 +980,7 @@ bool DumbSong::GetData(void *buffer, size_t sizebytes)
 			// Convert to float
 			for (int i = 0; i < written * 2; ++i)
 			{
-				((float *)buffer)[i] = (((int *)buffer)[i] / (float)(1 << 24)) * mod_dumb_mastervolume;
+				((float *)buffer)[i] = (((int *)buffer)[i] / (float)(1 << 24)) * MasterVolume;
 			}
 		}
 		buffer = (uint8_t *)buffer + written * 8;
@@ -994,28 +991,40 @@ bool DumbSong::GetData(void *buffer, size_t sizebytes)
 
 //==========================================================================
 //
+// ChangeSetting
+//
+//==========================================================================
+
+void DumbSong::ChangeSettingNum(const char* setting, double val)
+{
+	if (!stricmp(setting, "dumb.mastervolume"))
+		MasterVolume = (float)val;
+}
+
+//==========================================================================
+//
 // DumbSong constructor
 //
 //==========================================================================
 
-DumbSong::DumbSong(DUH *myduh)
+DumbSong::DumbSong(DUH* myduh, DumbConfig* config, int samplerate)
 {
-	dumb_decode_vorbis = dumb_decode_vorbis_;
 	duh = myduh;
 	sr = NULL;
 	eof = false;
-	interp = mod_interp;
-	volramp = mod_volramp;
+	interp = config->mod_interp;
+	volramp = config->mod_volramp;
 	written = 0;
 	length = 0;
 	start_order = 0;
-	if (mod_samplerate != 0)
+	MasterVolume = (float)config->mod_dumb_mastervolume;
+	if (config->mod_samplerate != 0)
 	{
-		srate = mod_samplerate;
+		srate = config->mod_samplerate;
 	}
 	else
 	{
-		srate = (int)GSnd->GetOutputRate();
+		srate = samplerate;
 	}
 	delta = 65536.0 / srate;
 }
@@ -1186,12 +1195,11 @@ retry:
 //
 //==========================================================================
 
-FString DumbSong::GetStats()
+std::string DumbSong::GetStats()
 {
 	//return StreamSong::GetStats();
 	DUMB_IT_SIGRENDERER *itsr = duh_get_it_sigrenderer(sr);
 	DUMB_IT_SIGDATA *itsd = duh_get_it_sigdata(duh);
-	FString out;
 
 	int channels = 0;
 	for (int i = 0; i < DUMB_IT_N_CHANNELS; i++)
@@ -1206,12 +1214,13 @@ FString DumbSong::GetStats()
 
 	if (itsr == NULL || itsd == NULL)
 	{
-		out = "Problem getting stats";
+		return "Problem getting stats";
 	}
 	else
 	{
-		out.Format("%s, Order:%3d/%d Patt:%2d/%d Row:%2d/%2d Chan:%2d/%2d Speed:%2d Tempo:%3d",
-			Codec.GetChars(),
+		char out[120];
+		snprintf(out, 120, "%s, Order:%3d/%d Patt:%2d/%d Row:%2d/%2d Chan:%2d/%2d Speed:%2d Tempo:%3d",
+			Codec.c_str(),
 			itsr->order, NumOrders,
 			(itsd->order && itsr->order < itsd->n_orders ? itsd->order[itsr->order] : 0), NumPatterns,
 			itsr->row, itsr->n_rows,
@@ -1219,7 +1228,7 @@ FString DumbSong::GetStats()
 			itsr->speed,
 			itsr->tempo
 			);
+		return out;
 	}
-	return out;
 }
 

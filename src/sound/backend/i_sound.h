@@ -40,12 +40,6 @@
 class FileReader;
 struct FSoundChan;
 
-enum ECodecType
-{
-	CODEC_Unknown,
-	CODEC_Vorbis,
-};
-
 enum EStartSoundFlags
 {
 	SNDF_LOOP=1,
@@ -54,6 +48,13 @@ enum EStartSoundFlags
 	SNDF_ABSTIME=8,
 	SNDF_NOREVERB=16,
 };
+
+enum ECodecType
+{
+	CODEC_Unknown,
+	CODEC_Vorbis,
+};
+
 
 class SoundStream
 {

@@ -26,10 +26,10 @@ extern OpnConfig opnConfig;
 extern GUSConfig gusConfig;
 extern TimidityConfig timidityConfig;
 extern WildMidiConfig wildMidiConfig;
+extern DumbConfig dumbConfig;
 
 
 class MIDIStreamer;
-
 
 // Base class for streaming MUS and MIDI files ------------------------------
 
@@ -108,34 +108,6 @@ protected:
 	std::unique_ptr<SoundStream> Stream;
 };
 
-// Anything supported by the sound system out of the box --------------------
-
-class StreamSource
-{
-protected:
-	bool m_Looping = true;
-	int m_OutputRate;
-	
-public:
-
-	StreamSource (int outputRate) { m_OutputRate = outputRate; }
-	virtual ~StreamSource () {}
-	virtual void SetPlayMode(bool looping) { m_Looping = looping; }
-	virtual bool Start() { return true; }
-	virtual bool SetPosition(unsigned position) { return false; }
-	virtual bool SetSubsong(int subsong) { return false; }
-	virtual bool GetData(void *buffer, size_t len) = 0;
-	virtual SoundStreamInfo GetFormat() { return {65536, m_OutputRate, 2  }; }	// Default format is: System's output sample rate, 32 bit float, stereo
-	virtual FString GetStats() { return ""; }
-	virtual void ChangeSettingInt(const char *name, int value) {  }
-	virtual void ChangeSettingNum(const char *name, double value) {  }
-	virtual void ChangeSettingString(const char *name, const char *value) {  }
-
-protected:
-	StreamSource() = default;
-};
-
-
 // CD track/disk played through the multimedia system -----------------------
 
 class CDSong : public MusInfo
@@ -174,10 +146,13 @@ void OPN_SetupConfig(OpnConfig *config, const char *Args);
 bool GUS_SetupConfig(GUSConfig *config, const char *args);
 bool Timidity_SetupConfig(TimidityConfig* config, const char* args);
 bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args);
+void Dumb_SetupConfig(DumbConfig* config);
 
 // Module played via foo_dumb -----------------------------------------------
 
-StreamSource *MOD_OpenSong(FileReader &reader);
+class StreamSource;
+
+StreamSource *MOD_OpenSong(MusicIO::FileInterface* reader, DumbConfig* config, int samplerate);
 StreamSource *GME_OpenSong(FileReader &reader, const char *fmt, float depth);
 StreamSource *SndFile_OpenSong(FileReader &fr);
 StreamSource* XA_OpenSong(FileReader& reader);

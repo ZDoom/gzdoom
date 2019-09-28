@@ -32,6 +32,7 @@
 */
 
 #include "i_musicinterns.h"
+#include "streamsource.h"
 #include "../libraries/oplsynth/oplsynth/opl.h"
 #include "../libraries/oplsynth/oplsynth/opl_mus_player.h"
 

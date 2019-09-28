@@ -1,4 +1,5 @@
 #include "i_musicinterns.h"
+#include "streamsource.h"
 /**
  * PlayStation XA (ADPCM) source support for MultiVoc
  * Adapted and remixed from superxa2wav 

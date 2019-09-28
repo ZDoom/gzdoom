@@ -47,7 +47,9 @@
 #include "stats.h"
 #include "vm.h"
 #include "s_music.h"
+#include "i_soundfont.h"
 #include "../libraries/zmusic/midisources/midisource.h"
+#include "../libraries/dumb/include/dumb.h"
 
 EXTERN_CVAR(Float, gme_stereodepth)
 
@@ -87,6 +89,17 @@ MusInfo *currSong;
 int		nomusic = 0;
 float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
+
+//==========================================================================
+//
+// dumb_decode_vorbis
+//
+//==========================================================================
+
+static short* dumb_decode_vorbis_(int outlen, const void* oggstream, int sizebytes)
+{
+	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
+}
 
 //==========================================================================
 //
@@ -140,6 +153,7 @@ void I_InitMusic (void)
 #endif // _WIN32
 	
 	MusicDown = false;
+	dumb_decode_vorbis = dumb_decode_vorbis_;
 }
 
 
@@ -457,15 +471,25 @@ MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 	// Check for module formats
 	else
 	{
-		streamsource = MOD_OpenSong(reader);
+		auto mreader = new FileReaderMusicInterface(reader);
+		Dumb_SetupConfig(&dumbConfig);
+		streamsource = MOD_OpenSong(mreader, &dumbConfig, (int)GSnd->GetOutputRate());
+		delete mreader;
 	}
 	if (info == nullptr && streamsource == nullptr)
 	{
 		streamsource = SndFile_OpenSong(reader);
 	}
 	
-	if (streamsource) info = OpenStreamSong(streamsource);
-
+	if (streamsource)
+	{
+		info = OpenStreamSong(streamsource);
+		if (!info)
+		{
+			// If this fails we have no more valid data - but it couldn't be a CDDA file anyway.
+			return nullptr;
+		}
+	}
     if (info == nullptr)
     {
         // Check for CDDA "format"

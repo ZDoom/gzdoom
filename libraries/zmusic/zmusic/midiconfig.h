@@ -126,3 +126,14 @@ struct WildMidiConfig
 };
 
 
+struct DumbConfig
+{
+	int  mod_samplerate;
+    int  mod_volramp;
+    int  mod_interp;
+    bool mod_autochip;
+    int  mod_autochip_size_force;
+    int  mod_autochip_size_scan;
+    int  mod_autochip_scan_threshold;
+    float mod_dumb_mastervolume;
+};

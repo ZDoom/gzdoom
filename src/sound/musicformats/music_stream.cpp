@@ -33,6 +33,7 @@
 */
 
 #include "i_musicinterns.h"
+#include "streamsource.h"
 
 class StreamSong : public MusInfo
 {
@@ -185,7 +186,8 @@ FString StreamSong::GetStats()
 	}
 	if (m_Source != NULL)
 	{
-		s2 = m_Source->GetStats();
+		auto stat = m_Source->GetStats();
+		s2 = stat.c_str();
 	}
 	if (s1.IsEmpty() && s2.IsEmpty()) return "No song loaded\n";
 	if (s1.IsEmpty()) return s2;

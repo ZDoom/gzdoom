@@ -463,7 +463,7 @@ set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_L
 if (HAVE_VULKAN)
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
 endif()
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" )
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
@@ -1161,13 +1161,8 @@ set (PCH_SOURCES
 	sound/backend/i_sound.cpp
 	sound/music/midi_cvars.cpp
 	sound/musicformats/music_cd.cpp
-	sound/musicformats/music_dumb.cpp
-	sound/musicformats/music_gme.cpp
-	sound/musicformats/music_libsndfile.cpp
 	sound/musicformats/music_midistream.cpp
-	sound/musicformats/music_opl.cpp
 	sound/musicformats/music_stream.cpp
-	sound/musicformats/music_xa.cpp
 	rendering/swrenderer/textures/r_swtexture.cpp
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
@@ -1288,7 +1283,6 @@ include_directories( .
 	rendering
 	rendering/vulkan/thirdparty
 	../libraries/gdtoa
-	../libraries/dumb/include
 	../libraries/glslang/glslang/Public
 	../libraries/glslang/spirv
 	${CMAKE_BINARY_DIR}/libraries/gdtoa

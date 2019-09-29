@@ -38,7 +38,7 @@ elseif( FLUIDSYNTH_FOUND )
 endif()
 
 
-include_directories( "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
+include_directories( "../libraries/dumb/include" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
 
 if (WIN32)
 set( PLAT_WIN32_SOURCES
@@ -50,6 +50,7 @@ file( GLOB HEADER_FILES
 	mididevices/*.h
 	midisources/*.h
 	decoder/*.h
+	streamsources/*.h
 	thirdparty/*.h
 	)
 add_library( zmusic STATIC
@@ -70,6 +71,11 @@ add_library( zmusic STATIC
 	midisources/midisource_smf.cpp
 	midisources/midisource_hmi.cpp
 	midisources/midisource_xmi.cpp
+	streamsources/music_dumb.cpp
+	streamsources/music_gme.cpp
+	streamsources/music_libsndfile.cpp
+	streamsources/music_opl.cpp
+	streamsources/music_xa.cpp
 	decoder/sounddecoder.cpp
 	decoder/sndfile_decoder.cpp
 	decoder/mpg123_decoder.cpp
@@ -82,4 +88,5 @@ source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mid
 source_group("MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/midisources/.+")
 source_group("MIDI Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/zmusic/.+")
 source_group("Sound Decoding" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/decoder/.+")
+source_group("Stream Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/streamsources/.+")
 source_group("Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/.+")

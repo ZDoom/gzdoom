@@ -33,7 +33,7 @@
 */
 
 #include "i_musicinterns.h"
-#include "streamsource.h"
+#include "streamsources/streamsource.h"
 
 class StreamSong : public MusInfo
 {

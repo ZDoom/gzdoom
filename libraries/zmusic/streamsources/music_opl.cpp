@@ -32,9 +32,9 @@
 */
 
 #include "streamsource.h"
-#include "../libraries/oplsynth/oplsynth/opl.h"
-#include "../libraries/oplsynth/oplsynth/opl_mus_player.h"
-#include "../libraries/music_common/fileio.h"
+#include "oplsynth/opl.h"
+#include "oplsynth/opl_mus_player.h"
+#include "../../libraries/music_common/fileio.h"
 #include "zmusic/midiconfig.h"
 
 

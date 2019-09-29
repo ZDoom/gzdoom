@@ -45,7 +45,7 @@
 #undef CDECL	// w32api's windef.h defines this
 #include "../dumb/include/dumb.h"
 #include "../dumb/include/internal/it.h"
-#include "m_swap.h"
+#include "zmusic/m_swap.h"
 #include "zmusic/mididefs.h"
 #include "zmusic/midiconfig.h"
 #include "../../libraries/music_common/fileio.h"

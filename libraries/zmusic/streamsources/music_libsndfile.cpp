@@ -35,6 +35,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <mutex>
+#include <algorithm>
 #include "streamsource.h"
 #include "zmusic/sounddecoder.h"
 

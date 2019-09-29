@@ -1,5 +1,6 @@
+#include <algorithm>
 #include "streamsource.h"
-#include "../libraries/music_common/fileio.h"
+#include "../../libraries/music_common/fileio.h"
 
 /**
  * PlayStation XA (ADPCM) source support for MultiVoc

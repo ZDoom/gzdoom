@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 enum
 {
 	MAX_MIDI_EVENTS = 128

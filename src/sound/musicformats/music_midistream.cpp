@@ -68,6 +68,84 @@ extern unsigned mididevice;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// Base class for streaming MUS and MIDI files ------------------------------
+
+class MIDIStreamer : public MusInfo
+{
+public:
+	MIDIStreamer(EMidiDevice type, const char* args);
+	~MIDIStreamer();
+
+	void MusicVolumeChanged() override;
+	void Play(bool looping, int subsong) override;
+	void Pause() override;
+	void Resume() override;
+	void Stop() override;
+	bool IsPlaying() override;
+	bool IsMIDI() const override;
+	bool IsValid() const override;
+	bool SetSubsong(int subsong) override;
+	void Update() override;
+	FString GetStats() override;
+	void ChangeSettingInt(const char* setting, int value) override;
+	void ChangeSettingNum(const char* setting, double value) override;
+	void ChangeSettingString(const char* setting, const char* value) override;
+	int ServiceEvent();
+	void SetMIDISource(MIDISource* _source);
+
+	int GetDeviceType() const override;
+
+	bool DumpWave(const char* filename, int subsong, int samplerate);
+	static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata);
+
+
+protected:
+	MIDIStreamer(const char* dumpname, EMidiDevice type);
+
+	void OutputVolume(uint32_t volume);
+	int FillBuffer(int buffer_num, int max_events, uint32_t max_time);
+	int FillStopBuffer(int buffer_num);
+	uint32_t* WriteStopNotes(uint32_t* events);
+	int VolumeControllerChange(int channel, int volume);
+	void SetTempo(int new_tempo);
+	void Precache();
+	void StartPlayback();
+	bool InitPlayback();
+
+	//void SetMidiSynth(MIDIDevice *synth);
+
+
+	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
+	MIDIDevice* CreateMIDIDevice(EMidiDevice devtype, int samplerate);
+
+	static void Callback(void* userdata);
+
+	enum
+	{
+		SONG_MORE,
+		SONG_DONE,
+		SONG_ERROR
+	};
+
+	std::unique_ptr<MIDIDevice> MIDI;
+	uint32_t Events[2][MAX_MIDI_EVENTS * 3];
+	MidiHeader Buffer[2];
+	int BufferNum;
+	int EndQueued;
+	bool VolumeChanged;
+	bool Restarting;
+	bool InitialPlayback;
+	uint32_t NewVolume;
+	uint32_t Volume;
+	EMidiDevice DeviceType;
+	bool CallbackIsThreaded;
+	int LoopLimit;
+	FString Args;
+	std::unique_ptr<MIDISource> source;
+	std::unique_ptr<SoundStream> Stream;
+};
+
+
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -933,4 +1011,24 @@ bool MIDIStreamer::FillStream(SoundStream* stream, void* buff, int len, void* us
 {
 	SoftSynthMIDIDevice* device = (SoftSynthMIDIDevice*)userdata;
 	return device->ServiceStream(buff, len);
+}
+
+//==========================================================================
+//
+// create a streamer
+//
+//==========================================================================
+
+MusInfo* CreateMIDIStreamer(MIDISource *source, EMidiDevice devtype, const char* args)
+{
+	auto me = new MIDIStreamer(devtype, args);
+	me->SetMIDISource(source);
+	return me;
+}
+
+void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char *devarg, const char *outname, int subsong, int samplerate)
+{
+	MIDIStreamer me(devtype, devarg);
+	me.SetMIDISource(source);
+	me.DumpWave(outname, subsong, samplerate);
 }

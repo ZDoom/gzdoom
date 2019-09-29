@@ -34,6 +34,38 @@
 #include "i_musicinterns.h"
 #include "i_cd.h"
 
+
+// CD track/disk played through the multimedia system -----------------------
+
+class CDSong : public MusInfo
+{
+public:
+	CDSong(int track, int id);
+	~CDSong();
+	void Play(bool looping, int subsong);
+	void Pause();
+	void Resume();
+	void Stop();
+	bool IsPlaying();
+	bool IsValid() const { return m_Inited; }
+
+protected:
+	CDSong() : m_Inited(false) {}
+
+	int m_Track;
+	bool m_Inited;
+};
+
+// CD track on a specific disk played through the multimedia system ---------
+
+class CDDAFile : public CDSong
+{
+public:
+	CDDAFile(MusicIO::FileInterface* reader);
+};
+
+
+
 void CDSong::Play (bool looping, int subsong)
 {
 	m_Status = STATE_Stopped;
@@ -145,4 +177,14 @@ CDDAFile::CDDAFile (MusicIO::FileInterface* reader)
 			return;
 		}
 	}
+}
+
+MusInfo* CD_OpenSong(int track, int id)
+{
+	return new CDSong(track, id);
+}
+
+MusInfo* CDDA_OpenSong(MusicIO::FileInterface* reader)
+{
+	return new CDDAFile(reader);
 }

@@ -1159,7 +1159,7 @@ set (PCH_SOURCES
 	sound/music/i_music.cpp
 	sound/music/i_soundfont.cpp
 	sound/backend/i_sound.cpp
-	sound/music/midi_cvars.cpp
+	sound/music/music_config.cpp
 	sound/musicformats/music_cd.cpp
 	sound/musicformats/music_midistream.cpp
 	sound/musicformats/music_stream.cpp

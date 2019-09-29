@@ -146,8 +146,8 @@ protected:
 
 // MIDI devices
 
-MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const FluidConfig* config, int (*printfunc)(const char*, ...));
-MIDIDevice *CreateADLMIDIDevice(const ADLConfig* config);
+MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const char *Args);
+MIDIDevice *CreateADLMIDIDevice(const char* args);
 MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
 MIDIDevice *CreateOplMIDIDevice(const OPLConfig* config);
 MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate);
@@ -155,6 +155,6 @@ MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
 MIDIDevice *CreateWildMIDIDevice(WildMidiConfig *config, int samplerate);
 
 #ifdef _WIN32
-MIDIDevice* CreateWinMIDIDevice(int mididevice, bool precache);
+MIDIDevice* CreateWinMIDIDevice(int mididevice);
 #endif
 

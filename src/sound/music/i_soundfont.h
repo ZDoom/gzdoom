@@ -5,14 +5,6 @@
 #include "files.h"
 #include "filereadermusicinterface.h"
 
-enum
-{
-    SF_SF2 = 1,
-    SF_GUS = 2,
-    SF_WOPL = 4,
-    SF_WOPN = 8
-};
-
 struct FSoundFontInfo
 {
     FString mName;        // This is what the sounfont is identified with. It's the extension-less base file name

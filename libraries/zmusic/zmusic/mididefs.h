@@ -56,6 +56,15 @@ enum EMidiDevice
 	MDEV_COUNT
 };
 
+enum ESoundFontTypes
+{
+    SF_SF2 = 1,
+    SF_GUS = 2,
+    SF_WOPL = 4,
+    SF_WOPN = 8
+};
+
+
 struct SoundStreamInfo
 {
 	int mBufferSize;	// If mBufferSize is 0, the song doesn't use streaming but plays through a different interface. 

@@ -126,18 +126,18 @@ namespace TimidityPlus
 {
 
 extern std::mutex ConfigMutex;
-extern bool timidity_modulation_wheel;
-extern bool timidity_portamento;
+extern int timidity_modulation_wheel;
+extern int timidity_portamento;
 extern int timidity_reverb;
-extern int  timidity_chorus;
-extern bool timidity_surround_chorus;
-extern bool timidity_channel_pressure;
+extern int timidity_chorus;
+extern int timidity_surround_chorus;
+extern int timidity_channel_pressure;
 extern int timidity_lpf_de;
-extern bool timidity_temper_control;
-extern bool timidity_modulation_envelope;
-extern bool timidity_overlap_voice_allow;
-extern bool timidity_drum_effect;
-extern bool timidity_pan_delay;
+extern int timidity_temper_control;
+extern int timidity_modulation_envelope;
+extern int timidity_overlap_voice_allow;
+extern int timidity_drum_effect;
+extern int timidity_pan_delay;
 extern float timidity_drum_power;
 extern int timidity_key_adjust;
 extern float timidity_tempo_adjust;

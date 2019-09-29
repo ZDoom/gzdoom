@@ -251,6 +251,13 @@ inline FILE* utf8_fopen(const char* filename, const char *mode)
 
 }
 
+inline bool fileExists(const char *fn)
+{
+	FILE *f = utf8_fopen(fn, "rb");
+	if (!f) return false;
+	fclose(f);
+	return true;
+}
 
 //==========================================================================
 //

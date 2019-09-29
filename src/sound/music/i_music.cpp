@@ -45,7 +45,10 @@
 #include "c_dispatch.h"
 #include "templates.h"
 #include "stats.h"
+#include "c_console.h"
 #include "vm.h"
+#include "v_text.h"
+#include "i_soundfont.h"
 #include "s_music.h"
 #include "zmusic/zmusic.h"
 #include "streamsources/streamsource.h"
@@ -129,6 +132,56 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 //==========================================================================
 //
+// Callbacks for the music system.
+//
+//==========================================================================
+
+static void tim_printfunc(int type, int verbosity_level, const char* fmt, ...)
+{
+	if (verbosity_level >= 3/*Timidity::VERB_DEBUG*/) return;	// Don't waste time on diagnostics.
+
+	va_list args;
+	va_start(args, fmt);
+	FString msg;
+	msg.VFormat(fmt, args);
+	va_end(args);
+
+	switch (type)
+	{
+	case 2:// Timidity::CMSG_ERROR:
+		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
+		break;
+
+	case 1://Timidity::CMSG_WARNING:
+		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
+		break;
+
+	case 0://Timidity::CMSG_INFO:
+		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
+		break;
+	}
+}
+
+static void wm_printfunc(const char* wmfmt, va_list args)
+{
+	Printf(TEXTCOLOR_RED);
+	VPrintf(PRINT_HIGH, wmfmt, args);
+}
+
+static std::string mus_NicePath(const char* str)
+{
+	FString strv = NicePath(str);
+	return strv.GetChars();
+}
+
+static const char* mus_pathToSoundFont(const char* sfname, int type)
+{
+	auto info = sfmanager.FindSoundFont(sfname, type);
+	return info ? info->mFilename.GetChars() : nullptr;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -147,6 +200,15 @@ void I_InitMusic (void)
 	
 	MusicDown = false;
 	dumb_decode_vorbis = dumb_decode_vorbis_;
+
+	Callbacks callbacks;
+
+	callbacks.Fluid_MessageFunc = Printf;
+	callbacks.GUS_MessageFunc = callbacks.Timidity_Messagefunc = tim_printfunc;
+	callbacks.WildMidi_MessageFunc = wm_printfunc;
+	callbacks.NicePath = mus_NicePath;
+	callbacks.PathForSoundfont = mus_pathToSoundFont;
+	SetCallbacks(&callbacks);
 }
 
 

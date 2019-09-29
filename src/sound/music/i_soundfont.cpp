@@ -40,6 +40,7 @@
 #include "i_system.h"
 #include "gameconfigfile.h"
 #include "filereadermusicinterface.h"
+#include "zmusic/zmusic.h"
 #include "resourcefiles/resourcefile.h"
 #include "../libraries/timidityplus/timiditypp/common.h"
 

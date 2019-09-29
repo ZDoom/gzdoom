@@ -222,9 +222,45 @@ void ADLMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateADLMIDIDevice(const ADLConfig *config)
+extern ADLConfig adlConfig;
+
+MIDIDevice *CreateADLMIDIDevice(const char *Args)
 {
-	return new ADLMIDIDevice(config);
+	ADLConfig config = adlConfig;
+
+	const char* bank = Args && *Args ? Args : adlConfig.adl_use_custom_bank ? adlConfig.adl_custom_bank.c_str() : nullptr;
+	if (bank && *bank)
+	{
+		if (*bank >= '0' && *bank <= '9')
+		{
+			// Args specify a bank by index.
+			int newbank = (int)strtoll(bank, nullptr, 10);
+			config.adl_use_custom_bank = false;
+		}
+		else
+		{
+			const char* info;
+			if (musicCallbacks.PathForSoundfont)
+			{
+				info = musicCallbacks.PathForSoundfont(bank, SF_WOPL);
+			}
+			else
+			{
+				info = bank;
+			}
+			if (info == nullptr)
+			{
+				config.adl_custom_bank = "";
+				config.adl_use_custom_bank = false;
+			}
+			else
+			{
+				config.adl_custom_bank = info;
+				config.adl_use_custom_bank = true;
+			}
+		}
+	}
+	return new ADLMIDIDevice(&config);
 }
 
 

@@ -42,18 +42,18 @@
 namespace TimidityPlus
 {
 	std::mutex ConfigMutex;
-	bool timidity_modulation_wheel = true;
-	bool timidity_portamento = false;
+	int timidity_modulation_wheel = true;
+	int timidity_portamento = false;
 	int timidity_reverb = 0;
-	int  timidity_chorus = 0;
-	bool timidity_surround_chorus = false;	// requires restart!
-	bool timidity_channel_pressure = false;
+	int timidity_chorus = 0;
+	int timidity_surround_chorus = false;	// requires restart!
+	int timidity_channel_pressure = false;
 	int timidity_lpf_def = true;
-	bool timidity_temper_control = true;
-	bool timidity_modulation_envelope = true;
-	bool timidity_overlap_voice_allow = true;
-	bool timidity_drum_effect = false;
-	bool timidity_pan_delay = false;
+	int timidity_temper_control = true;
+	int timidity_modulation_envelope = true;
+	int timidity_overlap_voice_allow = true;
+	int timidity_drum_effect = false;
+	int timidity_pan_delay = false;
 	float timidity_drum_power = 1.f;
 	int timidity_key_adjust = 0;
 	float timidity_tempo_adjust = 1.f;

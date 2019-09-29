@@ -1,7 +1,7 @@
 /*
 ** music_config.cpp
-** All game side configuration settings for the various parts of the
-** music system
+** This forwards all CVAR changes to the music system which
+** was designed for any kind of configuration system.
 **
 **---------------------------------------------------------------------------
 ** Copyright 1999-2016 Randy Heit
@@ -39,7 +39,9 @@
 #include "doomerrors.h"
 #include "v_text.h"
 #include "c_console.h"
+#include "zmusic/zmusic.h"
 
+#include "zmusic/midiconfig.h"
 #include "../libraries/timidity/timidity/timidity.h"
 #include "../libraries/timidityplus/timiditypp/timidity.h"
 #include "../libraries/oplsynth/oplsynth/oplio.h"
@@ -58,89 +60,67 @@ static void CheckRestart(int devtype)
 	}
 }
 
-ADLConfig adlConfig;
-FluidConfig fluidConfig;
-OPLConfig oplConfig;
-OpnConfig opnConfig;
-GUSConfig gusConfig;
-TimidityConfig timidityConfig;
-WildMidiConfig wildMidiConfig;
-DumbConfig dumbConfig;
-
 //==========================================================================
 //
 // ADL Midi device
 //
 //==========================================================================
 
-CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+#define FORWARD_CVAR(key) \
+	decltype(*self) newval; \
+	auto ret = ChangeMusicSetting(ZMusic::key, *self, &newval); \
+	self = (decltype(*self))newval; \
+	if (ret) MIDIDeviceChanged(-1, true); 
+
+#define FORWARD_BOOL_CVAR(key) \
+	int newval; \
+	auto ret = ChangeMusicSetting(ZMusic::key, *self, &newval); \
+	self = !!newval; \
+	if (ret) MIDIDeviceChanged(-1, true); 
+
+#define FORWARD_STRING_CVAR(key) \
+	auto ret = ChangeMusicSetting(ZMusic::key, *self); \
+	if (ret) MIDIDeviceChanged(-1, true); 
+
+
+CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	adlConfig.adl_chips_count = self;
-	CheckRestart(MDEV_ADL);
+	FORWARD_CVAR(adl_chips_count);
 }
 
-CUSTOM_CVAR(Int, adl_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, adl_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	adlConfig.adl_emulator_id = self;
-	CheckRestart(MDEV_ADL);
+	FORWARD_CVAR(adl_emulator_id);
 }
 
-CUSTOM_CVAR(Bool, adl_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, adl_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	adlConfig.adl_run_at_pcm_rate = self;
-	CheckRestart(MDEV_ADL);
+	FORWARD_BOOL_CVAR(adl_run_at_pcm_rate);
 }
 
-CUSTOM_CVAR(Bool, adl_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, adl_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	adlConfig.adl_fullpan = self;
-	CheckRestart(MDEV_ADL);
+	FORWARD_BOOL_CVAR(adl_fullpan);
 }
 
-CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	adlConfig.adl_bank = self;
-	CheckRestart(MDEV_ADL);
+	FORWARD_CVAR(adl_bank);
 }
 
-CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	CheckRestart(MDEV_ADL);
+	FORWARD_BOOL_CVAR(adl_use_custom_bank);
 }
 
-CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (adl_use_custom_bank) CheckRestart(MDEV_ADL);
+	FORWARD_STRING_CVAR(adl_custom_bank);
 }
 
-void ADL_SetupConfig(ADLConfig *config, const char *Args)
+CUSTOM_CVAR(Int, adl_volume_model, 3/*ADLMIDI_VolumeModel_DMX*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
-	const char *bank = Args && *Args? Args : adl_use_custom_bank? *adl_custom_bank : nullptr;
-	config->adl_bank = adl_bank;
-	if (bank && *bank)
-	{
-		auto info = sfmanager.FindSoundFont(bank, SF_WOPL);
-		if (info == nullptr)
-		{
-			if (*bank >= '0' && *bank <= '9')
-			{
-				config->adl_bank = (int)strtoll(bank, nullptr, 10);
-			}
-			config->adl_custom_bank = nullptr;
-		}
-		else
-		{
-			config->adl_custom_bank = info->mFilename;
-		}
-	}
-}
-
-
-CUSTOM_CVAR(Int, adl_volume_model, 3/*ADLMIDI_VolumeModel_DMX*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	adlConfig.adl_volume_model = self;
-	CheckRestart(MDEV_ADL);
+	FORWARD_CVAR(adl_bank);
 }
 
 //==========================================================================
@@ -149,311 +129,95 @@ CUSTOM_CVAR(Int, adl_volume_model, 3/*ADLMIDI_VolumeModel_DMX*/, CVAR_ARCHIVE | 
 //
 //==========================================================================
 
-
-#define FLUID_CHORUS_MOD_SINE		0
-#define FLUID_CHORUS_MOD_TRIANGLE	1
-#define FLUID_CHORUS_DEFAULT_TYPE FLUID_CHORUS_MOD_SINE
-
-
-CUSTOM_CVAR(String, fluid_lib, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, fluid_lib, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	fluidConfig.fluid_lib = self;	// only takes effect for next song.
+	FORWARD_STRING_CVAR(fluid_lib);
 }
 
-void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfallback)
+CUSTOM_CVAR(String, fluid_patchset, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	fluidConfig.fluid_patchset.clear();
-	//Resolve the paths here, the renderer will only get a final list of file names.
-	auto info = sfmanager.FindSoundFont(patches, SF_SF2);
-	if (info != nullptr) patches = info->mFilename.GetChars();
-	
-	int count;
-	char* wpatches = strdup(patches);
-	char* tok;
-#ifdef _WIN32
-	const char* const delim = ";";
-#else
-	const char* const delim = ":";
-#endif
-	
-	if (wpatches != NULL)
-	{
-	tok = strtok(wpatches, delim);
-	count = 0;
-	while (tok != NULL)
-	{
-		FString path;
-#ifdef _WIN32
-		// If the path does not contain any path separators, automatically
-		// prepend $PROGDIR to the path.
-		if (strcspn(tok, ":/\\") == strlen(tok))
-		{
-			path << "$PROGDIR/" << tok;
-			path = NicePath(path);
-		}
-		else
-#endif
-		{
-			path = NicePath(tok);
-		}
-		if (FileExists(path))
-		{
-				config->fluid_patchset.push_back(path.GetChars());
-		}
-		else
-		{
-			Printf("Could not find patch set %s.\n", tok);
-		}
-		tok = strtok(NULL, delim);
-	}
-	free(wpatches);
-		if (config->fluid_patchset.size() > 0) return;
-	}
-
-	if (systemfallback)
-	{
-		// The following will only be used if no soundfont at all is provided, i.e. even the standard one coming with GZDoom is missing.
-#ifdef __unix__
-		// This is the standard location on Ubuntu.
-		Fluid_SetupConfig(config, "/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2", false);
-#endif
-#ifdef _WIN32
-		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
-		char sysdir[PATH_MAX + sizeof("\\CT4MGM.SF2")];
-		uint32_t filepart;
-		if (0 != (filepart = GetSystemDirectoryA(sysdir, PATH_MAX)))
-		{
-			strcat(sysdir, "\\CT4MGM.SF2");
-			if (FileExists(sysdir))
-			{
-				config->fluid_patchset.push_back(sysdir);
-				return;
-			}
-			// Try again with CT2MGM.SF2
-			sysdir[filepart + 3] = '2';
-			if (FileExists(sysdir))
-			{
-				config->fluid_patchset.push_back(sysdir);
-				return;
-			}
-		}
-
-#endif
-
-	}
+	FORWARD_STRING_CVAR(fluid_patchset);
 }
 
-CUSTOM_CVAR(String, fluid_patchset, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_gain, 0.5, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	CheckRestart(MDEV_FLUIDSYNTH);
+	FORWARD_CVAR(fluid_gain);
 }
 
-CUSTOM_CVAR(Float, fluid_gain, 0.5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, fluid_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 10)
-		self = 10;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.synth.gain", self);
-		fluidConfig.fluid_gain = self;
-	}
+	FORWARD_BOOL_CVAR(fluid_reverb);
 }
 
-CUSTOM_CVAR(Bool, fluid_reverb, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, fluid_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (currSong != NULL)
-		currSong->ChangeSettingInt("fluidsynth.synth.reverb.active", self);
-	fluidConfig.fluid_reverb = self;
+	FORWARD_BOOL_CVAR(fluid_chorus);
 }
 
-CUSTOM_CVAR(Bool, fluid_chorus, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_voices, 128, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (currSong != NULL)
-		currSong->ChangeSettingInt("fluidsynth.synth.chorus.active", self);
-	fluidConfig.fluid_chorus = self;
+	FORWARD_CVAR(fluid_voices);
 }
 
-CUSTOM_CVAR(Int, fluid_voices, 128, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_interp, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 16)
-		self = 16;
-	else if (self > 4096)
-		self = 4096;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingInt("fluidsynth.synth.polyphony", self);
-		fluidConfig.fluid_voices = self;
-	}
+	FORWARD_CVAR(fluid_interp);
 }
 
-CUSTOM_CVAR(Int, fluid_interp, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_samplerate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	// Values are: 0 = FLUID_INTERP_NONE
-	//             1 = FLUID_INTERP_LINEAR
-	//             4 = FLUID_INTERP_4THORDER (the FluidSynth default)
-	//             7 = FLUID_INTERP_7THORDER
-	// (And here I thought it was just a linear list.)
-	// Round undefined values to the nearest valid one.
-	if (self < 0)
-		self = 0;
-	else if (self == 2)
-		self = 1;
-	else if (self == 3 || self == 5)
-		self = 4;
-	else if (self == 6 || self > 7)
-		self = 7;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingInt("fluidsynth.synth.interpolation", self);
-		fluidConfig.fluid_interp = self;
-	}
+	FORWARD_CVAR(fluid_samplerate);
 }
 
-CUSTOM_CVAR(Int, fluid_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_threads, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	fluidConfig.fluid_samplerate = std::max<int>(*self, 0);
+	FORWARD_CVAR(fluid_threads);
 }
 
-// I don't know if this setting even matters for us, since we aren't letting
-// FluidSynth drives its own output.
-CUSTOM_CVAR(Int, fluid_threads, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_roomsize, 0.61f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 1)
-		self = 1;
-	else if (self > 256)
-		self = 256;
-	else
-		fluidConfig.fluid_threads = self;
+	FORWARD_CVAR(fluid_reverb_roomsize);
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_roomsize, 0.61f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_damping, 0.23f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 1.2f)
-		self = 1.2f;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.reverb-roomsize", self);
-		fluidConfig.fluid_reverb_roomsize = self;
-	}
+	FORWARD_CVAR(fluid_reverb_damping);
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_damping, 0.23f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_width, 0.76f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 1)
-		self = 1;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.reverb-damping", self);
-		fluidConfig.fluid_reverb_damping = self;
-	}
+	FORWARD_CVAR(fluid_reverb_width);
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_width, 0.76f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_reverb_level, 0.57f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 100)
-		self = 100;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.reverb-width", self);
-		fluidConfig.fluid_reverb_width = self;
-	}
+	FORWARD_CVAR(fluid_reverb_level);
 }
 
-CUSTOM_CVAR(Float, fluid_reverb_level, 0.57f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_chorus_voices, 3, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 1)
-		self = 1;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.reverb-level", self);
-		fluidConfig.fluid_reverb_level = self;
-	}
+	FORWARD_CVAR(fluid_chorus_voices);
 }
 
-CUSTOM_CVAR(Int, fluid_chorus_voices, 3, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_chorus_level, 1.2f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 99)
-		self = 99;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.chorus-voices", self);
-		fluidConfig.fluid_chorus_voices = self;
-	}
+	FORWARD_CVAR(fluid_chorus_level);
 }
 
-CUSTOM_CVAR(Float, fluid_chorus_level, 1.2f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_chorus_speed, 0.3f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 1)
-		self = 1;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.chorus-level", self);
-		fluidConfig.fluid_chorus_level = self;
-	}
-}
-
-CUSTOM_CVAR(Float, fluid_chorus_speed, 0.3f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0.29f)
-		self = 0.29f;
-	else if (self > 5)
-		self = 5;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.chorus-speed", self);
-		fluidConfig.fluid_chorus_speed = self;
-	}
+	FORWARD_CVAR(fluid_chorus_speed);
 }
 
 // depth is in ms and actual maximum depends on the sample rate
-CUSTOM_CVAR(Float, fluid_chorus_depth, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, fluid_chorus_depth, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self < 0)
-		self = 0;
-	else if (self > 21)
-		self = 21;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.chorus-depth", self);
-		fluidConfig.fluid_chorus_depth = self;
-	}
+	FORWARD_CVAR(fluid_chorus_depth);
 }
 
-CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, fluid_chorus_type, 0/*FLUID_CHORUS_DEFAULT_TYPE*/, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	if (self != FLUID_CHORUS_MOD_SINE && self != FLUID_CHORUS_MOD_TRIANGLE)
-		self = FLUID_CHORUS_DEFAULT_TYPE;
-	else 
-	{
-		if (currSong != NULL)
-			currSong->ChangeSettingNum("fluidsynth.z.chorus-type", self); // Uses float to simplify the checking code in the renderer.
-		fluidConfig.fluid_chorus_type = self;
-	}
+	FORWARD_CVAR(fluid_chorus_type);
 }
 
 
@@ -463,7 +227,7 @@ CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR
 //
 //==========================================================================
 
-CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (*self <= 0)
 	{
@@ -481,12 +245,12 @@ CUSTOM_CVAR(Int, opl_numchips, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	CheckRestart(MDEV_OPL);
 }
 
-CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	oplConfig.fullpan = self;
 }
@@ -521,40 +285,40 @@ void OPL_SetupConfig(OPLConfig *config, const char *args, bool midi)
 //==========================================================================
 
 
-CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	opnConfig.opn_chips_count = self;
 	CheckRestart(MDEV_OPN);
 }
 
-CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	opnConfig.opn_emulator_id = self;
 	CheckRestart(MDEV_OPN);
 
 }
 
-CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	opnConfig.opn_run_at_pcm_rate = self;
 	CheckRestart(MDEV_OPN);
 
 }
 
-CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, opn_fullpan, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	opnConfig.opn_fullpan = self;
 	CheckRestart(MDEV_OPN);
 
 }
 
-CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	CheckRestart(MDEV_OPN);
 
 }
 
-CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (opn_use_custom_bank)
 	{
@@ -598,65 +362,34 @@ void OPN_SetupConfig(OpnConfig *config, const char *Args)
 //==========================================================================
 
 
-CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	CheckRestart(MDEV_GUS);
 }
 
-CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// This was 'true' but since it requires special setup that's not such a good idea.
+CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)	// This was 'true' but since it requires special setup that's not such a good idea.
 {
 	CheckRestart(MDEV_GUS);
 }
 
-CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, gus_patchdir, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	gusConfig.gus_patchdir = self;
 	CheckRestart(MDEV_GUS);
 }
 
-CUSTOM_CVAR(Int, midi_voices, 32, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, midi_voices, 32, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	gusConfig.midi_voices = self;
 	CheckRestart(MDEV_GUS);
 }
 
-CUSTOM_CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	gusConfig.gus_memsize = self;
 	CheckRestart(MDEV_GUS);
 }
 
-//==========================================================================
-//
-// Error printing override to redirect to the internal console instead of stdout.
-//
-//==========================================================================
-
-static void gus_printfunc(int type, int verbosity_level, const char* fmt, ...)
-{
-	if (verbosity_level >= Timidity::VERB_DEBUG) return;	// Don't waste time on diagnostics.
-	
-	va_list args;
-	va_start(args, fmt);
-	FString msg;
-	msg.VFormat(fmt, args);
-	va_end(args);
-	
-	switch (type)
-	{
-		case Timidity::CMSG_ERROR:
-			Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
-			break;
-			
-		case Timidity::CMSG_WARNING:
-			Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
-			break;
-			
-		case Timidity::CMSG_INFO:
-			DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
-			break;
-	}
-}
 
 // make sure we can use the above function for the Timidity++ device as well.
 static_assert(Timidity::CMSG_ERROR == TimidityPlus::CMSG_ERROR, "Timidity constant mismatch");
@@ -673,7 +406,6 @@ static_assert(Timidity::VERB_DEBUG == TimidityPlus::VERB_DEBUG, "Timidity consta
 
 bool GUS_SetupConfig(GUSConfig *config, const char *args)
 {
-	config->errorfunc = gus_printfunc;
 	if ((midi_dmxgus && *args == 0) || !stricmp(args, "DMXGUS"))
 	{
 		if (stricmp(config->loadedConfig.c_str(), "DMXGUS") == 0) return false; // aleady loaded
@@ -718,20 +450,22 @@ bool GUS_SetupConfig(GUSConfig *config, const char *args)
 //
 //==========================================================================
 
+/*
 template<class T> void ChangeVarSync(T& var, T value)
 {
 	std::lock_guard<std::mutex> lock(TimidityPlus::ConfigMutex);
 	var = value;
 }
+*/
 
-CUSTOM_CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_modulation_wheel, *self);
+	////ChangeVarSync(TimidityPlus::timidity_modulation_wheel, *self);
 }
 
-CUSTOM_CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_portamento, *self);
+	////ChangeVarSync(TimidityPlus::timidity_portamento, *self);
 }
 /*
 * reverb=0     no reverb                 0
@@ -755,103 +489,102 @@ static void SetReverb()
 
 	if (mode == 0 || level == 0) value = mode;
 	else value = (mode - 1) * -128 - level;
-	ChangeVarSync(TimidityPlus::timidity_reverb, value);
+	//ChangeVarSync(TimidityPlus::timidity_reverb, value);
 }
 
-CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (self < 0 || self > 4) self = 0;
 	else SetReverb();
 }
 
-CUSTOM_CVAR(Int, timidity_reverb_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, timidity_reverb_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (self < 0 || self > 127) self = 0;
 	else SetReverb();
 }
 
-CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_chorus, *self);
+	//ChangeVarSync(TimidityPlus::timidity_chorus, *self);
 }
 
-CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
+	//ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
 	CheckRestart(MDEV_TIMIDITY);
 }
 
-CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_channel_pressure, *self);
+	//ChangeVarSync(TimidityPlus::timidity_channel_pressure, *self);
 }
 
-CUSTOM_CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_lpf_def, *self);
+	//ChangeVarSync(TimidityPlus::timidity_lpf_def, *self);
 }
 
-CUSTOM_CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_temper_control, *self);
+	//ChangeVarSync(TimidityPlus::timidity_temper_control, *self);
 }
 
-CUSTOM_CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_modulation_envelope, *self);
+	//ChangeVarSync(TimidityPlus::timidity_modulation_envelope, *self);
 	CheckRestart(MDEV_TIMIDITY);
 }
 
-CUSTOM_CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_overlap_voice_allow, *self);
+	//ChangeVarSync(TimidityPlus::timidity_overlap_voice_allow, *self);
 }
 
-CUSTOM_CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_drum_effect, *self);
+	//ChangeVarSync(TimidityPlus::timidity_drum_effect, *self);
 }
 
-CUSTOM_CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	ChangeVarSync(TimidityPlus::timidity_pan_delay, *self);
+	//ChangeVarSync(TimidityPlus::timidity_pan_delay, *self);
 }
 
-CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /* coef. of drum amplitude */
+CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL) /* coef. of drum amplitude */
 {
 	if (self < 0) self = 0;
 	else if (self > MAX_AMPLIFICATION / 100.f) self = MAX_AMPLIFICATION / 100.f;
-	ChangeVarSync(TimidityPlus::timidity_drum_power, *self);
+	//ChangeVarSync(TimidityPlus::timidity_drum_power, *self);
 }
-CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (self < -24) self = -24;
 	else if (self > 24) self = 24;
-	ChangeVarSync(TimidityPlus::timidity_key_adjust, *self);
+	//ChangeVarSync(TimidityPlus::timidity_key_adjust, *self);
 }
 // For testing mainly.
-CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (self < 0.25) self = 0.25;
 	else if (self > 10) self = 10;
-	ChangeVarSync(TimidityPlus::timidity_tempo_adjust, *self);
+	//ChangeVarSync(TimidityPlus::timidity_tempo_adjust, *self);
 }
 
-CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (self < 0) self = 0;
-	ChangeVarSync(TimidityPlus::min_sustain_time, *self);
+	//ChangeVarSync(TimidityPlus::min_sustain_time, *self);
 }
 
 // Config file to use
-CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	CheckRestart(MDEV_TIMIDITY);
 }
 
 bool Timidity_SetupConfig(TimidityConfig* config, const char* args)
 {
-	config->errorfunc = gus_printfunc;
 	if (*args == 0) args = timidity_config;
 	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
 
@@ -873,35 +606,28 @@ bool Timidity_SetupConfig(TimidityConfig* config, const char* args)
 //
 //==========================================================================
 
-CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, wildmidi_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	CheckRestart(MDEV_WILDMIDI);
 }
 
-CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, wildmidi_reverb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_NOINITCALL)
 {
 	if (currSong != NULL)
 		currSong->ChangeSettingInt("wildmidi.reverb", *self);
 	wildMidiConfig.reverb = self;
 }
 
-CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL | CVAR_NOINITCALL)
 {
 	if (currSong != NULL)
 		currSong->ChangeSettingInt("wildmidi.resampling", *self);
 	wildMidiConfig.enhanced_resampling = self;
 }
 
-static void wm_printfunc(const char* wmfmt, va_list args)
-{
-	Printf(TEXTCOLOR_RED);
-	VPrintf(PRINT_HIGH, wmfmt, args);
-}
-
 
 bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
 {
-	config->errorfunc = wm_printfunc;
 	if (*args == 0) args = wildmidi_config;
 	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
 
@@ -925,7 +651,7 @@ bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
 //
 //==========================================================================
 
-CVAR(Bool, snd_midiprecache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, snd_midiprecache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
 
 //==========================================================================
 //
@@ -933,7 +659,7 @@ CVAR(Bool, snd_midiprecache, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //
 //==========================================================================
 
-CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (currSong != nullptr)
 		currSong->ChangeSettingNum("GME.stereodepth", *self);
@@ -945,14 +671,14 @@ CUSTOM_CVAR(Float, gme_stereodepth, 0.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-CVAR(Int,  mod_samplerate,				0,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_volramp,					2,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_interp,					DUMB_LQ_CUBIC,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Bool, mod_autochip,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_autochip_size_force,		100,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_autochip_size_scan,		500,   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Int,  mod_autochip_scan_threshold, 12,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int,  mod_samplerate,				0,	   CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
+CVAR(Int,  mod_volramp,					2,	   CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
+CVAR(Int,  mod_interp,					DUMB_LQ_CUBIC,	CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
+CVAR(Bool, mod_autochip,				false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
+CVAR(Int,  mod_autochip_size_force,		100,   CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
+CVAR(Int,  mod_autochip_size_scan,		500,   CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
+CVAR(Int,  mod_autochip_scan_threshold, 12,	   CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL);
+CUSTOM_CVAR(Float, mod_dumb_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (self < 0.5f) self = 0.5f;
 	else if (self > 16.f) self = 16.f;
@@ -977,7 +703,7 @@ void Dumb_SetupConfig(DumbConfig* config)
 //
 //==========================================================================
 
-CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	if (self < 16)
 	{

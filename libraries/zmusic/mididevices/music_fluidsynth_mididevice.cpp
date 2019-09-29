@@ -54,7 +54,7 @@ struct fluid_synth_t;
 class FluidSynthMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	FluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc_)(const char *, ...));
+	FluidSynthMIDIDevice(int samplerate, std::vector<std::string> &config, int (*printfunc_)(const char *, ...));
 	~FluidSynthMIDIDevice();
 	
 	int OpenRenderer();
@@ -68,18 +68,12 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
-	int LoadPatchSets(const FluidConfig *config);
+	int LoadPatchSets(const std::vector<std::string>& config);
 	
 	fluid_settings_t *FluidSettings;
 	fluid_synth_t *FluidSynth;
 	int (*printfunc)(const char*, ...);
 
-	// These are getting set together, so if we want to keep the renderer and the config data separate we need to store local copies to apply changes.
-	float fluid_reverb_roomsize, fluid_reverb_damping, fluid_reverb_width, fluid_reverb_level;
-	float fluid_chorus_level,fluid_chorus_speed, fluid_chorus_depth;
-	int fluid_chorus_voices, fluid_chorus_type;
-
-	
 #ifdef DYN_FLUIDSYNTH
 	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
 	static TReqProc<FluidSynthModule, fluid_settings_t *(*)()> new_fluid_settings;
@@ -165,27 +159,16 @@ const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinpr
 //
 //==========================================================================
 
-FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc_)(const char*, ...) = nullptr)
-	: SoftSynthMIDIDevice(samplerate <= 0? config->fluid_samplerate : samplerate, 22050, 96000)
+FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, std::vector<std::string> &config, int (*printfunc_)(const char*, ...) = nullptr)
+	: SoftSynthMIDIDevice(samplerate <= 0? fluidConfig.fluid_samplerate : samplerate, 22050, 96000)
 {
 	StreamBlockSize = 4;
-
-	// These are needed for changing the settings. If something posts a transient config in here we got no way to retrieve the values afterward.
-	fluid_reverb_roomsize = config->fluid_reverb_roomsize;
-	fluid_reverb_damping = config->fluid_reverb_damping;
-	fluid_reverb_width = config->fluid_reverb_width;
-	fluid_reverb_level = config->fluid_reverb_level;
-	fluid_chorus_voices = config->fluid_chorus_voices;
-	fluid_chorus_level = config->fluid_chorus_level;
-	fluid_chorus_speed = config->fluid_chorus_speed;
-	fluid_chorus_depth = config->fluid_chorus_depth;
-	fluid_chorus_type = config->fluid_chorus_type;
 
 	printfunc = printfunc_;
 	FluidSynth = NULL;
 	FluidSettings = NULL;
 #ifdef DYN_FLUIDSYNTH
-	if (!LoadFluidSynth(config->fluid_lib.c_str()))
+	if (!LoadFluidSynth(fluidConfig.fluid_lib.c_str()))
 	{
 		throw std::runtime_error("Failed to load FluidSynth.\n");
 	}
@@ -196,22 +179,22 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, const FluidConfig *co
 		throw std::runtime_error("Failed to create FluidSettings.\n");
 	}
 	fluid_settings_setnum(FluidSettings, "synth.sample-rate", SampleRate);
-	fluid_settings_setnum(FluidSettings, "synth.gain", config->fluid_gain);
-	fluid_settings_setint(FluidSettings, "synth.reverb.active", config->fluid_reverb);
-	fluid_settings_setint(FluidSettings, "synth.chorus.active", config->fluid_chorus);
-	fluid_settings_setint(FluidSettings, "synth.polyphony", config->fluid_voices);
-	fluid_settings_setint(FluidSettings, "synth.cpu-cores", config->fluid_threads);
+	fluid_settings_setnum(FluidSettings, "synth.gain", fluidConfig.fluid_gain);
+	fluid_settings_setint(FluidSettings, "synth.reverb.active", fluidConfig.fluid_reverb);
+	fluid_settings_setint(FluidSettings, "synth.chorus.active", fluidConfig.fluid_chorus);
+	fluid_settings_setint(FluidSettings, "synth.polyphony", fluidConfig.fluid_voices);
+	fluid_settings_setint(FluidSettings, "synth.cpu-cores", fluidConfig.fluid_threads);
 	FluidSynth = new_fluid_synth(FluidSettings);
 	if (FluidSynth == NULL)
 	{
 		delete_fluid_settings(FluidSettings);
 		throw std::runtime_error("Failed to create FluidSynth.\n");
 	}
-	fluid_synth_set_interp_method(FluidSynth, -1, config->fluid_interp);
-	fluid_synth_set_reverb(FluidSynth, fluid_reverb_roomsize, fluid_reverb_damping,
-		fluid_reverb_width, fluid_reverb_level);
-	fluid_synth_set_chorus(FluidSynth, fluid_chorus_voices, fluid_chorus_level,
-		fluid_chorus_speed, fluid_chorus_depth, fluid_chorus_type);
+	fluid_synth_set_interp_method(FluidSynth, -1, fluidConfig.fluid_interp);
+	fluid_synth_set_reverb(FluidSynth, fluidConfig.fluid_reverb_roomsize, fluidConfig.fluid_reverb_damping,
+		fluidConfig.fluid_reverb_width, fluidConfig.fluid_reverb_level);
+	fluid_synth_set_chorus(FluidSynth, fluidConfig.fluid_chorus_voices, fluidConfig.fluid_chorus_level,
+		fluidConfig.fluid_chorus_speed, fluidConfig.fluid_chorus_depth, fluidConfig.fluid_chorus_type);
 
 	// try loading a patch set that got specified with $mididevice.
 	int res = 0;
@@ -345,10 +328,10 @@ void FluidSynthMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-int FluidSynthMIDIDevice::LoadPatchSets(const FluidConfig *config)
+int FluidSynthMIDIDevice::LoadPatchSets(const std::vector<std::string> &config)
 {
 	int count = 0;
-	for (auto& file : config->fluid_patchset)
+	for (auto& file : config)
 	{
 		if (FLUID_FAILED != fluid_synth_sfload(FluidSynth, file.c_str(), count == 0))
 		{
@@ -424,58 +407,18 @@ void FluidSynthMIDIDevice::ChangeSettingNum(const char *setting, double value)
 	}
 	setting += 11;
 
-	bool reverbchanged = false, choruschanged = false;
-	if (strcmp(setting, "z.reverb-roomsize") == 0)
+	if (strcmp(setting, "z.reverb") == 0)
 	{
-		fluid_reverb_roomsize = (float)value;
-		reverbchanged = true;
+		fluid_synth_set_reverb(FluidSynth, fluidConfig.fluid_reverb_roomsize, fluidConfig.fluid_reverb_damping, fluidConfig.fluid_reverb_width, fluidConfig.fluid_reverb_level);
 	}
-	else if (strcmp(setting, "z.reverb-damping") == 0)
+	else if (strcmp(setting, "z.chorus") == 0)
 	{
-		fluid_reverb_damping = (float)value;
-		reverbchanged = true;
-	}
-	else if (strcmp(setting, "z.reverb-width") == 0)
-	{
-		fluid_reverb_width = (float)value;
-		reverbchanged = true;
-	}
-	else if (strcmp(setting, "z.reverb-level") == 0)
-	{
-		fluid_reverb_level = (float)value;
-		reverbchanged = true;
-	}
-	else if (strcmp(setting, "z.chorus-voices") == 0)
-	{
-		fluid_chorus_voices = (int)value;
-		choruschanged = true;
-	}
-	else if (strcmp(setting, "z.chorus-level") == 0)
-	{
-		fluid_chorus_level = (float)value;
-		choruschanged = true;
-	}
-	else if (strcmp(setting, "z.chorus-speed") == 0)
-	{
-		fluid_chorus_speed = (float)value;
-		choruschanged = true;
-	}
-	else if (strcmp(setting, "z.chorus-depth") == 0)
-	{
-		fluid_chorus_depth = (float)value;
-		choruschanged = true;
-	}
-	else if (strcmp(setting, "z.chorus-type") == 0)
-	{
-		fluid_chorus_type = (int)value;
-		choruschanged = true;
+		fluid_synth_set_chorus(FluidSynth, fluidConfig.fluid_chorus_voices, fluidConfig.fluid_chorus_level, fluidConfig.fluid_chorus_speed, fluidConfig.fluid_chorus_depth, fluidConfig.fluid_chorus_type);
 	}
 	else if (0 == fluid_settings_setnum(FluidSettings, setting, value))
 	{
 		if (printfunc) printfunc("Failed to set %s to %g.\n", setting, value);
 	}
-	if (reverbchanged) fluid_synth_set_reverb(FluidSynth, fluid_reverb_roomsize, fluid_reverb_damping, fluid_reverb_width, fluid_reverb_level);
-	if (choruschanged) fluid_synth_set_chorus(FluidSynth, (int)fluid_chorus_voices, fluid_chorus_level, fluid_chorus_speed, fluid_chorus_depth, (int)fluid_chorus_type);
 
 }
 
@@ -612,13 +555,118 @@ void FluidSynthMIDIDevice::UnloadFluidSynth()
 
 #endif
 
+
+//==========================================================================
+//
+// sndfile
+//
+//==========================================================================
+
+
+#ifdef _WIN32
+// do this without including windows.h for this one single prototype
+extern "C" unsigned __stdcall GetSystemDirectoryA(char* lpBuffer, unsigned uSize);
+#endif // _WIN32
+
+void Fluid_SetupConfig(const char* patches, std::vector<std::string> &patch_paths, bool systemfallback)
+{
+	//Resolve the paths here, the renderer will only get a final list of file names.
+
+	if (musicCallbacks.PathForSoundfont)
+	{
+		auto info = musicCallbacks.PathForSoundfont(patches, SF_SF2);
+		if (info) patches = info;
+	}
+
+	int count;
+	char* wpatches = strdup(patches);
+	char* tok;
+#ifdef _WIN32
+	const char* const delim = ";";
+#else
+	const char* const delim = ":";
+#endif
+
+	if (wpatches != NULL)
+	{
+		tok = strtok(wpatches, delim);
+		count = 0;
+		while (tok != NULL)
+		{
+			std::string path;
+#ifdef _WIN32
+			// If the path does not contain any path separators, automatically
+			// prepend $PROGDIR to the path.
+			if (strcspn(tok, ":/\\") == strlen(tok))
+			{
+				path = module_progdir + "/" + tok;
+			}
+			else
+#endif
+			{
+				path = tok;
+			}
+			if (musicCallbacks.NicePath)
+				path = musicCallbacks.NicePath(path.c_str());
+
+			if (MusicIO::fileExists(path.c_str()))
+			{
+				patch_paths.push_back(path);
+			}
+			else
+			{
+				if (musicCallbacks.Fluid_MessageFunc)
+					musicCallbacks.Fluid_MessageFunc("Could not find patch set %s.\n", tok);
+			}
+			tok = strtok(NULL, delim);
+		}
+		free(wpatches);
+		if (patch_paths.size() > 0) return;
+	}
+
+	if (systemfallback)
+	{
+		// The following will only be used if no soundfont at all is provided, i.e. even the standard one coming with GZDoom is missing.
+#ifdef __unix__
+		// This is the standard location on Ubuntu.
+		Fluid_SetupConfig("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2", patch_paths, false);
+#endif
+#ifdef _WIN32
+		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
+		char sysdir[260 + sizeof("\\CT4MGM.SF2")];
+		uint32_t filepart;
+		if (0 != (filepart = GetSystemDirectoryA(sysdir, 260)))
+		{
+			strcat(sysdir, "\\CT4MGM.SF2");
+			if (MusicIO::fileExists(sysdir))
+			{
+				patch_paths.push_back(sysdir);
+				return;
+			}
+			// Try again with CT2MGM.SF2
+			sysdir[filepart + 3] = '2';
+			if (MusicIO::fileExists(sysdir))
+			{
+				patch_paths.push_back(sysdir);
+				return;
+			}
+		}
+
+#endif
+
+	}
+}
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const FluidConfig *config, int (*printfunc)(const char*, ...))
+MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const char *Args)
 {
-	return new FluidSynthMIDIDevice(samplerate, config, printfunc);
+	std::vector<std::string> fluid_patchset;
+
+	Fluid_SetupConfig(Args, fluid_patchset, true);
+	return new FluidSynthMIDIDevice(samplerate, fluid_patchset, musicCallbacks.Fluid_MessageFunc);
 }

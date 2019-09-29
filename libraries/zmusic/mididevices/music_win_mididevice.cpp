@@ -686,9 +686,9 @@ static bool IgnoreMIDIVolume(UINT id)
 	return false;
 }
 
-MIDIDevice *CreateWinMIDIDevice(int mididevice, bool precache)
+MIDIDevice *CreateWinMIDIDevice(int mididevice)
 {
-	return new WinMIDIDevice(mididevice, precache);
+	return new WinMIDIDevice(mididevice, miscConfig.snd_midiprecache);
 }
 #endif
 

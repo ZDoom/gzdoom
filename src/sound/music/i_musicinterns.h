@@ -19,7 +19,6 @@ class MIDIDevice;
 class OPLmusicFile;
 
 
-extern ADLConfig adlConfig;
 extern FluidConfig fluidConfig;
 extern OPLConfig oplConfig;
 extern OpnConfig opnConfig;

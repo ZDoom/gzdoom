@@ -92,12 +92,12 @@ public:
 	void ChangeSettingString(const char* setting, const char* value) override;
 	int ServiceEvent();
 	void SetMIDISource(MIDISource* _source);
+	bool ServiceStream(void* buff, int len) override;
 	SoundStreamInfo GetStreamInfo() const override;
 
 	int GetDeviceType() const override;
 
 	bool DumpWave(const char* filename, int subsong, int samplerate);
-	static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata);
 
 
 protected:
@@ -143,9 +143,6 @@ protected:
 	int LoopLimit;
 	FString Args;
 	std::unique_ptr<MIDISource> source;
-
-	std::unique_ptr<SoundStream> Stream;
-
 };
 
 
@@ -443,14 +440,6 @@ bool MIDIStreamer::InitPlayback()
 	else
 	{
 		m_Status = STATE_Playing;
-
-		auto streamInfo = MIDI->GetStreamInfo();
-		if (streamInfo.mBufferSize > 0)
-		{
-			Stream.reset(GSnd->CreateStream(FillStream, streamInfo.mBufferSize, streamInfo.mNumChannels == 1 ? SoundStream::Float | SoundStream::Mono : SoundStream::Float, streamInfo.mSampleRate, MIDI.get()));
-		}
-
-		if (Stream) res = Stream->Play(true, 1);
 		return true;
 	}
 }
@@ -532,10 +521,6 @@ void MIDIStreamer::Pause()
 		{
 			OutputVolume(0);
 		}
-		if (Stream != nullptr)
-		{
-			Stream->SetPaused(true);
-		}
 	}
 }
 
@@ -555,10 +540,6 @@ void MIDIStreamer::Resume()
 		if (!MIDI->Pause(false))
 		{
 			OutputVolume(Volume);
-		}
-		if (Stream != nullptr)
-		{
-			Stream->SetPaused(false);
 		}
 		m_Status = STATE_Playing;
 	}
@@ -587,12 +568,6 @@ void MIDIStreamer::Stop()
 	{
 		MIDI.reset();
 	}
-	if (Stream != nullptr)
-	{
-		Stream->Stop();
-		Stream.reset();
-	}
-
 	m_Status = STATE_Stopped;
 }
 
@@ -1012,14 +987,13 @@ bool MIDIStreamer::SetSubsong(int subsong)
 
 //==========================================================================
 //
-// SoftSynthMIDIDevice :: FillStream								static
+// MIDIStreamer :: FillStream
 //
 //==========================================================================
 
-bool MIDIStreamer::FillStream(SoundStream* stream, void* buff, int len, void* userdata)
+bool MIDIStreamer::ServiceStream(void* buff, int len)
 {
-	SoftSynthMIDIDevice* device = (SoftSynthMIDIDevice*)userdata;
-	return device->ServiceStream(buff, len);
+	return static_cast<SoftSynthMIDIDevice*>(MIDI.get())->ServiceStream(buff, len);
 }
 
 //==========================================================================

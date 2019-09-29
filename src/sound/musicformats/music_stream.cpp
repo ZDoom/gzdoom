@@ -45,22 +45,20 @@ public:
 	void Resume () override;
 	void Stop () override;
 	bool IsPlaying () override;
-	bool IsValid () const override { return m_Stream != nullptr && m_Source != nullptr; }
+	bool IsValid () const override { return m_Source != nullptr; }
 	bool SetPosition (unsigned int pos) override;
 	bool SetSubsong (int subsong) override;
 	FString GetStats() override;
 	void ChangeSettingInt(const char *name, int value) override { if (m_Source) m_Source->ChangeSettingInt(name, value); }
 	void ChangeSettingNum(const char *name, double value) override { if (m_Source) m_Source->ChangeSettingNum(name, value); }
 	void ChangeSettingString(const char *name, const char *value) override { if(m_Source) m_Source->ChangeSettingString(name, value); }
+	bool ServiceStream(void* buff, int len) override;
+	SoundStreamInfo GetStreamInfo() const override { return m_Source->GetFormat(); }
 
 	
 protected:
 	
-	SoundStream *m_Stream = nullptr;
 	StreamSource *m_Source = nullptr;
-	
-private:
-	static bool FillStream (SoundStream *stream, void *buff, int len, void *userdata);
 };
 
 
@@ -70,53 +68,35 @@ void StreamSong::Play (bool looping, int subsong)
 	m_Status = STATE_Stopped;
 	m_Looping = looping;
 
-	if (m_Stream != nullptr && m_Source != nullptr)
+	if (m_Source != nullptr)
 	{
 		m_Source->SetPlayMode(looping);
 		m_Source->SetSubsong(subsong);
 		if (m_Source->Start())
 		{
 			m_Status = STATE_Playing;
-			m_Stream->Play(m_Looping, 1);
 		}
 	}
 }
 
 void StreamSong::Pause ()
 {
-	if (m_Status == STATE_Playing && m_Stream != NULL)
-	{
-		if (m_Stream->SetPaused (true))
-			m_Status = STATE_Paused;
-	}
+	m_Status = STATE_Paused;
 }
 
 void StreamSong::Resume ()
 {
-	if (m_Status == STATE_Paused && m_Stream != NULL)
-	{
-		if (m_Stream->SetPaused (false))
-			m_Status = STATE_Playing;
-	}
+	m_Status = STATE_Playing;
 }
 
 void StreamSong::Stop ()
 {
-	if (m_Status != STATE_Stopped && m_Stream)
-	{
-		m_Stream->Stop ();
-	}
 	m_Status = STATE_Stopped;
 }
 
 StreamSong::~StreamSong ()
 {
 	Stop ();
-	if (m_Stream != nullptr)
-	{
-		delete m_Stream;
-		m_Stream = nullptr;
-	}
 	if (m_Source != nullptr)
 	{
 		delete m_Source;
@@ -127,22 +107,12 @@ StreamSong::~StreamSong ()
 StreamSong::StreamSong (StreamSource *source)
 {
 	m_Source = source;
-	auto fmt = source->GetFormat();
-	int flags = fmt.mNumChannels < 0? 0 : SoundStream::Float;
-	if (abs(fmt.mNumChannels) < 2) flags |= SoundStream::Mono;
-
-	m_Stream = GSnd->CreateStream(FillStream, fmt.mBufferSize, flags, fmt.mSampleRate, this);
 }
 
 bool StreamSong::IsPlaying ()
 {
 	if (m_Status != STATE_Stopped)
 	{
-		if (m_Stream->IsEnded())
-		{
-			Stop();
-			return false;
-		}
 		return true;
 	}
 	return false;
@@ -167,23 +137,12 @@ bool StreamSong::SetPosition(unsigned int pos)
 
 bool StreamSong::SetSubsong(int subsong)
 {
-	if (m_Stream != nullptr)
-	{
-		return m_Source->SetSubsong(subsong);
-	}
-	else
-	{
-		return false;
-	}
+	return m_Source->SetSubsong(subsong);
 }
 
 FString StreamSong::GetStats()
 {
 	FString s1, s2;
-	if (m_Stream != NULL)
-	{
-		s1 = m_Stream->GetStats();
-	}
 	if (m_Source != NULL)
 	{
 		auto stat = m_Source->GetStats();
@@ -195,11 +154,9 @@ FString StreamSong::GetStats()
 	return FStringf("%s\n%s", s1.GetChars(), s2.GetChars());
 }
 
-bool StreamSong::FillStream (SoundStream *stream, void *buff, int len, void *userdata)
+bool StreamSong::ServiceStream (void *buff, int len)
 {
-	StreamSong *song = (StreamSong *)userdata;
-	
-	bool written = song->m_Source->GetData(buff, len);
+	bool written = m_Source->GetData(buff, len);
 	if (!written)
 	{
 		memset((char*)buff, 0, len);

@@ -152,6 +152,55 @@ void S_ShutdownMusic ()
 
 //==========================================================================
 //
+// 
+//
+// Create a sound system stream for the currently playing song 
+//==========================================================================
+
+static std::unique_ptr<SoundStream> musicStream;
+
+static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
+{
+	bool written = mus_playing.handle? mus_playing.handle->ServiceStream(buff, len) : 0;
+	if (!written)
+	{
+		memset((char*)buff, 0, len);
+		return false;
+	}
+	return true;
+}
+
+
+void S_CreateStream()
+{
+	if (!mus_playing.handle) return;
+	auto fmt = mus_playing.handle->GetStreamInfo();
+	if (fmt.mBufferSize > 0)
+	{
+		int flags = fmt.mNumChannels < 0 ? 0 : SoundStream::Float;
+		if (abs(fmt.mNumChannels) < 2) flags |= SoundStream::Mono;
+
+		musicStream.reset(GSnd->CreateStream(FillStream, fmt.mBufferSize, flags, fmt.mSampleRate, nullptr));
+		if (musicStream) musicStream->Play(true, 1);
+	}
+}
+
+void S_PauseStream(bool paused)
+{
+	if (musicStream) musicStream->SetPaused(paused);
+}
+
+void S_StopStream()
+{
+	if (musicStream)
+	{
+		musicStream->Stop();
+		musicStream.reset();
+	}
+}
+
+//==========================================================================
+//
 // S_PauseSound
 //
 // Stop music and sound effects, during game PAUSE.
@@ -162,6 +211,7 @@ void S_PauseMusic ()
 	if (mus_playing.handle && !MusicPaused)
 	{
 		mus_playing.handle->Pause();
+		S_PauseStream(true);
 		MusicPaused = true;
 	}
 }
@@ -178,6 +228,7 @@ void S_ResumeMusic ()
 	if (mus_playing.handle && MusicPaused)
 	{
 		mus_playing.handle->Resume();
+		S_PauseStream(false);
 		MusicPaused = false;
 	}
 }
@@ -375,6 +426,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			try
 			{
 				mus_playing.handle->Play(looping, order);
+				S_CreateStream();
 			}
 			catch (const std::runtime_error& err)
 			{
@@ -479,6 +531,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		try
 		{
 			mus_playing.handle->Start(looping, S_GetMusicVolume(musicname), order);
+			S_CreateStream();
 			mus_playing.baseorder = order;
 		}
 		catch (const std::runtime_error& err)
@@ -530,8 +583,8 @@ void S_MIDIDeviceChanged()
 	{
 		try
 		{
-			mus_playing.handle->Stop();
 			mus_playing.handle->Start(mus_playing.loop, -1, mus_playing.baseorder);
+			S_CreateStream();
 		}
 		catch (const std::runtime_error& err)
 		{
@@ -579,9 +632,8 @@ void S_StopMusic (bool force)
 		{
 			if (mus_playing.handle != nullptr)
 			{
-				if (MusicPaused)
-					mus_playing.handle->Resume();
-
+				S_ResumeMusic();
+				S_StopStream();
 				mus_playing.handle->Stop();
 				delete mus_playing.handle;
 				mus_playing.handle = nullptr;

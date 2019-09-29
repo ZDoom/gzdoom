@@ -124,7 +124,6 @@ class MusInfo;
 class SoundStream;
 struct MusPlayingInfo
 {
-	SoundStream* musicStream;
 	FString name;
 	MusInfo *handle;
 	int   baseorder;

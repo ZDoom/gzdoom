@@ -99,7 +99,7 @@ SoundStreamInfo SoftSynthMIDIDevice::GetStreamInfo() const
 	{
 		chunksize *= 2;
 	}
-	return { chunksize, SampleRate, isMono };
+	return { chunksize, SampleRate, isMono? 1:2 };
 }
 
 //==========================================================================

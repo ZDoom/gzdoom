@@ -47,8 +47,13 @@ endif()
 
 file( GLOB HEADER_FILES
 	zmusic/*.h
+	mididevices/*.h
+	midisources/*.h
+	decoder/*.h
+	thirdparty/*.h
 	)
 add_library( zmusic STATIC
+	${HEADER_FILES}
 	i_module.cpp
 	mididevices/music_base_mididevice.cpp
 	mididevices/music_adlmidi_mididevice.cpp
@@ -76,3 +81,5 @@ target_link_libraries( zmusic )
 source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mididevices/.+")
 source_group("MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/midisources/.+")
 source_group("MIDI Headers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/zmusic/.+")
+source_group("Sound Decoding" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/decoder/.+")
+source_group("Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/.+")

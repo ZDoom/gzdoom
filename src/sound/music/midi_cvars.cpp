@@ -970,3 +970,22 @@ void Dumb_SetupConfig(DumbConfig* config)
     config->mod_autochip_scan_threshold     = mod_autochip_scan_threshold;
     config->mod_dumb_mastervolume           = mod_dumb_mastervolume;
 }
+
+//==========================================================================
+//
+// sndfile
+//
+//==========================================================================
+
+CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 16)
+	{
+		self = 16;
+	}
+	else if (self > 1024)
+	{
+		self = 1024;
+	}
+}
+

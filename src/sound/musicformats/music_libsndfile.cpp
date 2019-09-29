@@ -35,10 +35,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <mutex>
-#include "i_musicinterns.h"
-#include "v_text.h"
-#include "templates.h"
-#include "m_fixed.h"
 #include "streamsource.h"
 #include "zmusic/sounddecoder.h"
 
@@ -77,21 +73,104 @@ protected:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 16)
-	{
-		self = 16;
-	}
-	else if (self > 1024)
-	{
-		self = 1024;
-	}
-}
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// S_ParseTimeTag
+//
+// Passed the value of a loop point tag, converts it to numbers.
+//
+// This may be of the form 00:00:00.00 (HH:MM:SS.ss) to specify by play
+// time. Various parts may be left off. The only requirement is that it
+// contain a colon. e.g. To start the loop at 20 seconds in, you can use
+// ":20", "0:20", "00:00:20", ":20.0", etc. Values after the decimal are
+// fractions of a second.
+//
+// If you don't include a colon but just have a raw number, then it's
+// the number of PCM samples at which to loop.
+//
+// Returns true if the tag made sense, false if not.
+//
+//==========================================================================
+
+bool S_ParseTimeTag(const char* tag, bool* as_samples, unsigned int* time)
+{
+	const int time_count = 3;
+	const char* bit = tag;
+	char ms[3] = { 0 };
+	unsigned int times[time_count] = { 0 };
+	int ms_pos = 0, time_pos = 0;
+	bool pcm = true, in_ms = false;
+
+	for (bit = tag; *bit != '\0'; ++bit)
+	{
+		if (*bit >= '0' && *bit <= '9')
+		{
+			if (in_ms)
+			{
+				// Ignore anything past three fractional digits.
+				if (ms_pos < 3)
+				{
+					ms[ms_pos++] = *bit - '0';
+				}
+			}
+			else
+			{
+				times[time_pos] = times[time_pos] * 10 + *bit - '0';
+			}
+		}
+		else if (*bit == ':')
+		{
+			if (in_ms)
+			{ // If we already specified milliseconds, we can't take any more parts.
+				return false;
+			}
+			pcm = false;
+			if (++time_pos == time_count)
+			{ // Time too long. (Seriously, starting the loop days in?)
+				return false;
+			}
+		}
+		else if (*bit == '.')
+		{
+			if (pcm || in_ms)
+			{ // It doesn't make sense to have fractional PCM values.
+			  // It also doesn't make sense to have more than one dot.
+				return false;
+			}
+			in_ms = true;
+		}
+		else
+		{ // Anything else: We don't understand this.
+			return false;
+		}
+	}
+	if (pcm)
+	{
+		*as_samples = true;
+		*time = times[0];
+	}
+	else
+	{
+		unsigned int mytime = 0;
+
+		// Add in hours, minutes, and seconds
+		for (int i = 0; i <= time_pos; ++i)
+		{
+			mytime = mytime * 60 + times[i];
+		}
+
+		// Add in milliseconds
+		mytime = mytime * 1000 + ms[0] * 100 + ms[1] * 10 + ms[2];
+
+		*as_samples = false;
+		*time = mytime;
+	}
+	return true;
+}
 
 //==========================================================================
 //
@@ -274,7 +353,7 @@ StreamSource *SndFile_OpenSong(MusicIO::FileInterface *fr)
 	bool startass = false, endass = false;
 	FindLoopTags(fr, &loop_start, &startass, &loop_end, &endass);
 
-	fr->seek(0, FileReader::SeekSet);
+	fr->seek(0, SEEK_SET);
 	auto decoder = SoundDecoder::CreateDecoder(fr);
 	if (decoder == nullptr) return nullptr;	// If this fails the file reader has not been taken over and the caller needs to clean up. This is to allow further analysis of the passed file.
 	return new SndFileSong(decoder, loop_start, loop_end, startass, endass);
@@ -285,6 +364,11 @@ StreamSource *SndFile_OpenSong(MusicIO::FileInterface *fr)
 // SndFileSong - Constructor
 //
 //==========================================================================
+
+static int32_t Scale(int32_t a, int32_t b, int32_t c)
+{
+	return (int32_t)(((int64_t)a * b) / c);
+}
 
 SndFileSong::SndFileSong(SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass)
 {
@@ -298,14 +382,15 @@ SndFileSong::SndFileSong(SoundDecoder *decoder, uint32_t loop_start, uint32_t lo
 
 	const uint32_t sampleLength = (uint32_t)decoder->getSampleLength();
 	Loop_Start = loop_start;
-	Loop_End = sampleLength == 0 ? loop_end : clamp<uint32_t>(loop_end, 0, sampleLength);
+	Loop_End = sampleLength == 0 ? loop_end : std::min<uint32_t>(loop_end, sampleLength);
 	Decoder = decoder;
 	Channels = iChannels == ChannelConfig_Stereo? 2:1;
 }
 
 SoundStreamInfo SndFileSong::GetFormat()
 {
-	return { snd_streambuffersize * 1024, SampleRate, -Channels };
+	// deal with this once the configuration is handled better.
+	return { 64/*snd_streambuffersize*/ * 1024, SampleRate, -Channels };
 }
 
 //==========================================================================

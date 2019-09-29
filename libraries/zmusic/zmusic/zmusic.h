@@ -69,6 +69,9 @@ enum EIntConfigKey
 
 	snd_streambuffersize,
 	
+	snd_mididevice,
+	snd_outputrate,
+
 	NUM_INT_CONFIGS
 };
 
@@ -89,6 +92,10 @@ enum EFloatConfigKey
 
 	gme_stereodepth,
 	mod_dumb_mastervolume,
+
+	snd_musicvolume,
+	relative_volume,
+	snd_mastervolume,
 
 	NUM_FLOAT_CONFIGS
 };
@@ -147,8 +154,9 @@ class MIDISource;	// abstract for the client
 EMIDIType IdentifyMIDIType(uint32_t *id, int size);
 MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype);
 
+class MusInfo;
 // Configuration interface. The return value specifies if a music restart is needed.
 // RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.
-bool ChangeMusicSetting(ZMusic::EIntConfigKey key, int value, int *pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, float value, float *pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EStringConfigKey key, const char *value);
+bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo *song, int value, int *pRealValue = nullptr);
+bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, MusInfo* song, float value, float *pRealValue = nullptr);
+bool ChangeMusicSetting(ZMusic::EStringConfigKey key, MusInfo* song, const char *value);

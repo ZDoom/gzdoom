@@ -35,36 +35,20 @@
 // HEADER FILES ------------------------------------------------------------
 
 
-#include "i_musicinterns.h"
-#include "templates.h"
-#include "doomerrors.h"
-#include "v_text.h"
-
+#include "zmusic/musinfo.h"
 #include "mididevices/mididevice.h"
 #include "midisources/midisource.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_TIME	(1000000/10)	// Send out 1/10 of a sec of events at a time.
-
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+enum
+{
+	MAX_TIME	= (1000000/10)	// Send out 1/10 of a sec of events at a time.
+};
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void WriteVarLen (TArray<uint8_t> &file, uint32_t value);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-EXTERN_CVAR(Bool, snd_midiprecache);
-EXTERN_CVAR(Float, snd_musicvolume)
-EXTERN_CVAR(Int, snd_mididevice)
-
-#ifdef _WIN32
-extern unsigned mididevice;
-#endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -86,7 +70,7 @@ public:
 	bool IsValid() const override;
 	bool SetSubsong(int subsong) override;
 	void Update() override;
-	FString GetStats() override;
+	std::string GetStats() override;
 	void ChangeSettingInt(const char* setting, int value) override;
 	void ChangeSettingNum(const char* setting, double value) override;
 	void ChangeSettingString(const char* setting, const char* value) override;
@@ -229,7 +213,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 	{
 		return device;
 	}
-	switch (snd_mididevice)
+	switch (miscConfig.snd_mididevice)
 	{
 	case -1:		return MDEV_SNDSYS;
 	case -2:		return MDEV_TIMIDITY;
@@ -285,7 +269,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 			case MDEV_MMAPI:
 
 #ifdef _WIN32
-				dev = CreateWinMIDIDevice(mididevice);
+				dev = CreateWinMIDIDevice(std::max(0, miscConfig.snd_mididevice));
 				break;
 #endif
 				// Intentional fall-through for non-Windows systems.
@@ -312,7 +296,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 		}
 		catch (std::runtime_error &err)
 		{
-			DPrintf(DMSG_WARNING, "%s\n", err.what());
+			//DPrintf(DMSG_WARNING, "%s\n", err.what());
 			checked[devtype] = true;
 			devtype = MDEV_DEFAULT;
 			// Opening the requested device did not work out so choose another one.
@@ -327,8 +311,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 
 			if (devtype == MDEV_DEFAULT)
 			{
-				Printf("Failed to play music: Unable to open any MIDI Device.\n");
-				return nullptr;
+				std::string message = std::string(err.what()) + "\n\nFailed to play music: Unable to open any MIDI Device.";
+				throw std::runtime_error(message);
 			}
 		}
 	}
@@ -346,7 +330,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 
 		lastRequestedDevice = requestedDevice;
 		lastSelectedDevice = selectedDevice;
-		Printf(TEXTCOLOR_RED "Unable to create " TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED " MIDI device. Falling back to " TEXTCOLOR_ORANGE "%s\n", devnames[requestedDevice], devnames[selectedDevice]);
+		if (musicCallbacks.Fluid_MessageFunc)
+			musicCallbacks.Fluid_MessageFunc("Unable to create %s MIDI device. Falling back to %s\n", devnames[requestedDevice], devnames[selectedDevice]);
 	}
 	return dev;
 }
@@ -367,7 +352,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	m_Looping = looping;
 	source->SetMIDISubsong(subsong);
 	devtype = SelectMIDIDevice(DeviceType);
-	MIDI.reset(CreateMIDIDevice(devtype, (int)GSnd->GetOutputRate()));
+	MIDI.reset(CreateMIDIDevice(devtype, miscConfig.snd_outputrate));
 	InitPlayback();
 }
 
@@ -603,8 +588,9 @@ void MIDIStreamer::MusicVolumeChanged()
 {
 	if (MIDI != NULL && MIDI->FakeVolume())
 	{
-		float realvolume = clamp<float>(snd_musicvolume * relative_volume * snd_mastervolume, 0.f, 1.f);
-		Volume = clamp<uint32_t>((uint32_t)(realvolume * 65535.f), 0, 65535);
+		float realvolume = miscConfig.snd_musicvolume * miscConfig.relative_volume * miscConfig.snd_mastervolume;
+		if (realvolume < 0 || realvolume > 1) realvolume = 1;
+		Volume = (uint32_t)(realvolume * 65535.f);
 	}
 	else
 	{
@@ -843,7 +829,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 	{
 		// Be more responsive when unpausing by only playing each buffer
 		// for a third of the maximum time.
-		events[0] = MAX<uint32_t>(1, (max_time / 3) * source->getDivision() / source->getTempo());
+		events[0] = std::max<uint32_t>(1, (max_time / 3) * source->getDivision() / source->getTempo());
 		events[1] = 0;
 		events[2] = MEVENT_NOP << 24;
 		events += 3;
@@ -956,14 +942,13 @@ int MIDIStreamer::GetDeviceType() const
 //
 //==========================================================================
 
-FString MIDIStreamer::GetStats()
+std::string MIDIStreamer::GetStats()
 {
 	if (MIDI == NULL)
 	{
 		return "No MIDI device in use.";
 	}
-	auto s = MIDI->GetStats();
-	return s.c_str();
+	return MIDI->GetStats();
 }
 
 //==========================================================================

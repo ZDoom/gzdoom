@@ -119,16 +119,7 @@ void FindLoopTags(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, u
 
 const char *GetSampleTypeName(enum SampleType type);
 const char *GetChannelConfigName(enum ChannelConfig chan);
-
-class MusInfo;
 class SoundStream;
-struct MusPlayingInfo
-{
-	FString name;
-	MusInfo *handle;
-	int   baseorder;
-	bool  loop;
-};
 
 
 

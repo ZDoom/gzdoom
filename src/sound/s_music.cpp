@@ -86,6 +86,7 @@
 #include "atterm.h"
 #include "s_music.h"
 #include "filereadermusicinterface.h"
+#include "zmusic/musinfo.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -102,6 +103,8 @@ static bool		MusicPaused;		// whether music is paused
 MusPlayingInfo mus_playing;	// music currently being played
 static FString	 LastSong;			// last music that was played
 static FPlayList *PlayList;
+float	relative_volume = 1.f;
+float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
 
 DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
@@ -198,6 +201,30 @@ void S_StopStream()
 		musicStream.reset();
 	}
 }
+
+
+//==========================================================================
+//
+// starts playing this song
+//
+//==========================================================================
+
+static void S_StartMusicPlaying(MusInfo* song, bool loop, float rel_vol, int subsong)
+{
+	if (rel_vol > 0.f)
+	{
+		float factor = relative_volume / saved_relative_volume;
+		saved_relative_volume = rel_vol;
+		I_SetRelativeVolume(saved_relative_volume * factor);
+	}
+	song->Stop();
+	song->Play(loop, subsong);
+	song->m_NotStartedYet = false;
+
+	// Notify the sound system of the changed relative volume
+	snd_musicvolume.Callback();
+}
+
 
 //==========================================================================
 //
@@ -530,7 +557,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	{ // play it
 		try
 		{
-			mus_playing.handle->Start(looping, S_GetMusicVolume(musicname), order);
+			S_StartMusicPlaying(mus_playing.handle, looping, S_GetMusicVolume(musicname), order);
 			S_CreateStream();
 			mus_playing.baseorder = order;
 		}
@@ -577,21 +604,36 @@ void S_RestartMusic ()
 //
 //==========================================================================
 
-void S_MIDIDeviceChanged()
-{
-	if (mus_playing.handle != nullptr && mus_playing.handle->IsMIDI())
-	{
-		try
-		{
-			mus_playing.handle->Start(mus_playing.loop, -1, mus_playing.baseorder);
-			S_CreateStream();
-		}
-		catch (const std::runtime_error& err)
-		{
-			Printf("Unable to restart music %s: %s\n", mus_playing.name.GetChars(), err.what());
-		}
 
+void S_MIDIDeviceChanged(int newdev, bool force)
+{
+	static int oldmididev = INT_MIN;
+
+	// If a song is playing, move it to the new device.
+	if (oldmididev != newdev || force)
+	{
+		if (mus_playing.handle != nullptr && mus_playing.handle->IsMIDI())
+		{
+			MusInfo* song = mus_playing.handle;
+			if (song->m_Status == MusInfo::STATE_Playing)
+			{
+				if (song->GetDeviceType() == MDEV_FLUIDSYNTH && force)
+				{
+					// FluidSynth must reload the song to change the patch set.
+					auto mi = mus_playing;
+					S_StopMusic(true);
+					S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
+				}
+				else
+				{
+					song->Stop();
+					S_StartMusicPlaying(song, song->m_Looping, -1, 0);
+				}
+			}
+		}
 	}
+	// 'force' 
+	if (!force) oldmididev = newdev;
 }
 
 //==========================================================================

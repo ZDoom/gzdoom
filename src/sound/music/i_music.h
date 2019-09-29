@@ -50,6 +50,7 @@ void I_BuildMIDIMenuList (FOptionValues *);
 void I_UpdateMusic ();
 
 // Volume.
+void I_SetRelativeVolume(float);
 void I_SetMusicVolume (double volume);
 
 // Registers a song handle to song data.
@@ -58,44 +59,6 @@ struct MidiDeviceSetting;
 MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 
-// The base music class. Everything is derived from this --------------------
-
-class MusInfo
-{
-public:
-	MusInfo ();
-	virtual ~MusInfo ();
-	virtual void MusicVolumeChanged();		// snd_musicvolume changed
-	virtual void Play (bool looping, int subsong) = 0;
-	virtual void Pause () = 0;
-	virtual void Resume () = 0;
-	virtual void Stop () = 0;
-	virtual bool IsPlaying () = 0;
-	virtual bool IsMIDI () const;
-	virtual bool IsValid () const = 0;
-	virtual bool SetPosition (unsigned int ms);
-	virtual bool SetSubsong (int subsong);
-	virtual void Update();
-	virtual int GetDeviceType() const { return MDEV_DEFAULT; }	// MDEV_DEFAULT stands in for anything that cannot change playback parameters which needs a restart.
-	virtual FString GetStats();
-	virtual MusInfo *GetWaveDumper(const char *filename, int rate);
-	virtual void ChangeSettingInt(const char *setting, int value);			// FluidSynth settings
-	virtual void ChangeSettingNum(const char *setting, double value);		// "
-	virtual void ChangeSettingString(const char *setting, const char *value);	// "
-	virtual bool ServiceStream(void *buff, int len) { return false;  }
-	virtual SoundStreamInfo GetStreamInfo() const { return { 0,0,0 }; }
-
-	void Start(bool loop, float rel_vol = -1.f, int subsong = 0);
-
-	enum EState
-	{
-		STATE_Stopped,
-		STATE_Playing,
-		STATE_Paused
-	} m_Status;
-	bool m_Looping;
-	bool m_NotStartedYet;	// Song has been created but not yet played
-};
 extern int nomusic;
 
 #endif //__I_MUSIC_H__

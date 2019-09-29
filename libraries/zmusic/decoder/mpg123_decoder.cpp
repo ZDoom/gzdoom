@@ -33,7 +33,7 @@
 
 #include <algorithm>
 #include <stdio.h>
-#include "zmusic/mpg123_decoder.h"
+#include "mpg123_decoder.h"
 #include "i_module.h"
 
 #ifdef HAVE_MPG123

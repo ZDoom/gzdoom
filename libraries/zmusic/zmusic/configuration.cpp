@@ -38,6 +38,7 @@
 #include "../../libraries/dumb/include/dumb.h"
 
 #include "zmusic.h"
+#include "musinfo.h"
 #include "midiconfig.h"
 
 struct Dummy
@@ -46,13 +47,9 @@ struct Dummy
 	void ChangeSettingNum(const char*, double) {}
 	void ChangeSettingString(const char*, const char*) {}
 };
-static Dummy* currSong;
-	//extern MusInfo *CurrSong;
-int devType()
-{
-	/*if (CurrSong) return CurrSong->GetDeviceType();
-	else*/ return MDEV_DEFAULT;
-}
+
+#define devType() ((currSong)? (currSong)->GetDeviceType() : MDEV_DEFAULT)
+
 
 MiscConfig miscConfig;
 Callbacks musicCallbacks;
@@ -147,7 +144,7 @@ using namespace ZMusic;
 //
 //==========================================================================
 
-bool ChangeMusicSetting(ZMusic::EIntConfigKey key, int value, int *pRealValue)
+bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo *currSong, int value, int *pRealValue)
 {
 	switch (key)
 	{
@@ -452,11 +449,20 @@ bool ChangeMusicSetting(ZMusic::EIntConfigKey key, int value, int *pRealValue)
 		case mod_autochip_scan_threshold:
 			ChangeAndReturn(dumbConfig.mod_autochip_scan_threshold, value, pRealValue);
 			return false;
+
+		case snd_mididevice:
+			miscConfig.snd_mididevice = value;
+			return false;
+
+		case snd_outputrate:
+			miscConfig.snd_outputrate = value;
+			return false;
+
 	}
 	return false;
 }
 
-bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, float value, float *pRealValue)
+bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, MusInfo* currSong, float value, float *pRealValue)
 {
 	switch (key)
 	{
@@ -588,11 +594,24 @@ bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, float value, float *pRealVa
 			if (value < 0) value = 0;
 			ChangeAndReturn(dumbConfig.mod_dumb_mastervolume, value, pRealValue);
 			return false;
+
+		case snd_musicvolume:
+			miscConfig.snd_musicvolume = value;
+			return false;
+
+		case relative_volume:
+			miscConfig.relative_volume = value;
+			return false;
+
+		case snd_mastervolume:
+			miscConfig.snd_mastervolume = value;
+			return false;
+
 	}
 	return false;
 }
 
-bool ChangeMusicSetting(ZMusic::EStringConfigKey key, const char *value)
+bool ChangeMusicSetting(ZMusic::EStringConfigKey key, MusInfo* currSong, const char *value)
 {
 	switch (key)
 	{

@@ -32,7 +32,7 @@
 */
 
 #include <algorithm>
-#include "zmusic/sndfile_decoder.h"
+#include "sndfile_decoder.h"
 #include "i_module.h"
 
 #ifdef HAVE_SNDFILE

@@ -138,7 +138,12 @@ struct MiscConfig
 {
 	int snd_midiprecache;
 	float gme_stereodepth;
-	int snd_streambuffersize;
+	int snd_streambuffersize = 64;
+	int snd_mididevice;
+	int snd_outputrate = 44100;
+	float snd_musicvolume = 1.f;
+	float relative_volume = 1.f;
+	float snd_mastervolume = 1.f;
 };
 
 extern ADLConfig adlConfig;

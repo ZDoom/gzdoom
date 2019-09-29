@@ -35,8 +35,10 @@
 
 #include "i_musicinterns.h"
 #include "c_cvars.h"
+#include "s_music.h"
 #include "zmusic/zmusic.h"
 
+extern MusPlayingInfo mus_playing;
 
 //==========================================================================
 //
@@ -46,19 +48,19 @@
 
 #define FORWARD_CVAR(key) \
 	decltype(*self) newval; \
-	auto ret = ChangeMusicSetting(ZMusic::key, *self, &newval); \
+	auto ret = ChangeMusicSetting(ZMusic::key, mus_playing.handle, *self, &newval); \
 	self = (decltype(*self))newval; \
-	if (ret) MIDIDeviceChanged(-1, true); 
+	if (ret) S_MIDIDeviceChanged(-1, true); 
 
 #define FORWARD_BOOL_CVAR(key) \
 	int newval; \
-	auto ret = ChangeMusicSetting(ZMusic::key, *self, &newval); \
+	auto ret = ChangeMusicSetting(ZMusic::key, mus_playing.handle,*self, &newval); \
 	self = !!newval; \
-	if (ret) MIDIDeviceChanged(-1, true); 
+	if (ret) S_MIDIDeviceChanged(-1, true); 
 
 #define FORWARD_STRING_CVAR(key) \
-	auto ret = ChangeMusicSetting(ZMusic::key, *self); \
-	if (ret) MIDIDeviceChanged(-1, true); 
+	auto ret = ChangeMusicSetting(ZMusic::key, mus_playing.handle,*self); \
+	if (ret) S_MIDIDeviceChanged(-1, true); 
 
 
 CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)

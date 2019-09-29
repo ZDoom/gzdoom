@@ -31,7 +31,9 @@
 **
 */
 
-#include "i_musicinterns.h"
+#include "zmusic/musinfo.h"
+#include "zmusic/zmusic.h"
+#include "zmusic/m_swap.h"
 #include "i_cd.h"
 
 

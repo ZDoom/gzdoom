@@ -32,7 +32,7 @@
 **---------------------------------------------------------------------------
 */
 
-#include "i_musicinterns.h"
+#include "zmusic/musinfo.h"
 #include "streamsources/streamsource.h"
 
 class StreamSong : public MusInfo
@@ -48,7 +48,7 @@ public:
 	bool IsValid () const override { return m_Source != nullptr; }
 	bool SetPosition (unsigned int pos) override;
 	bool SetSubsong (int subsong) override;
-	FString GetStats() override;
+	std::string GetStats() override;
 	void ChangeSettingInt(const char *name, int value) override { if (m_Source) m_Source->ChangeSettingInt(name, value); }
 	void ChangeSettingNum(const char *name, double value) override { if (m_Source) m_Source->ChangeSettingNum(name, value); }
 	void ChangeSettingString(const char *name, const char *value) override { if(m_Source) m_Source->ChangeSettingString(name, value); }
@@ -140,18 +140,18 @@ bool StreamSong::SetSubsong(int subsong)
 	return m_Source->SetSubsong(subsong);
 }
 
-FString StreamSong::GetStats()
+std::string StreamSong::GetStats()
 {
-	FString s1, s2;
+	std::string s1, s2;
 	if (m_Source != NULL)
 	{
 		auto stat = m_Source->GetStats();
 		s2 = stat.c_str();
 	}
-	if (s1.IsEmpty() && s2.IsEmpty()) return "No song loaded\n";
-	if (s1.IsEmpty()) return s2;
-	if (s2.IsEmpty()) return s1;
-	return FStringf("%s\n%s", s1.GetChars(), s2.GetChars());
+	if (s1.empty() && s2.empty()) return "No song loaded\n";
+	if (s1.empty()) return s2;
+	if (s2.empty()) return s1;
+	return s1 + "\n" + s2;
 }
 
 bool StreamSong::ServiceStream (void *buff, int len)

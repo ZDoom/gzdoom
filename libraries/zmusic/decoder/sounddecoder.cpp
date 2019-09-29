@@ -33,8 +33,8 @@
 */
 
 
-#include "zmusic/sndfile_decoder.h"
-#include "zmusic/mpg123_decoder.h"
+#include "sndfile_decoder.h"
+#include "mpg123_decoder.h"
 
 SoundDecoder *SoundDecoder::CreateDecoder(MusicIO::FileInterface *reader)
 {

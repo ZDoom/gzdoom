@@ -51,6 +51,7 @@
 #include "i_soundfont.h"
 #include "s_music.h"
 #include "zmusic/zmusic.h"
+#include "zmusic/musinfo.h"
 #include "streamsources/streamsource.h"
 #include "filereadermusicinterface.h"
 #include "../libraries/zmusic/midisources/midisource.h"
@@ -70,6 +71,7 @@
 extern int MUSHeaderSearch(const uint8_t *head, int len);
 void I_InitSoundFonts();
 extern "C" void dumb_exit();
+extern MusPlayingInfo mus_playing;
 
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Int, snd_mididevice)
@@ -80,8 +82,6 @@ static bool ungzip(uint8_t *data, int size, std::vector<uint8_t> &newdata);
 
 MusInfo *currSong;
 int		nomusic = 0;
-float	relative_volume = 1.f;
-float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
 
 //==========================================================================
 //
@@ -99,15 +99,16 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else
 	{
 		// Set general music volume.
+		ChangeMusicSetting(ZMusic::snd_musicvolume, nullptr, self);
 		if (GSnd != nullptr)
 		{
 			GSnd->SetMusicVolume(clamp<float>(self * relative_volume * snd_mastervolume, 0, 1));
 		}
 		// For music not implemented through the digital sound system,
 		// let them know about the change.
-		if (currSong != nullptr)
+		if (mus_playing.handle != nullptr)
 		{
-			currSong->MusicVolumeChanged();
+			mus_playing.handle->MusicVolumeChanged();
 		}
 		else
 		{ // If the music was stopped because volume was 0, start it now.
@@ -286,101 +287,6 @@ void I_ShutdownMusic(bool onexit)
 		dumb_exit();
 	}
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-MusInfo::MusInfo()
-: m_Status(STATE_Stopped), m_Looping(false), m_NotStartedYet(true)
-{
-}
-
-MusInfo::~MusInfo ()
-{
-	if (currSong == this) currSong = nullptr;
-}
-
-//==========================================================================
-//
-// starts playing this song
-//
-//==========================================================================
-
-void MusInfo::Start(bool loop, float rel_vol, int subsong)
-{
-	if (rel_vol > 0.f)
-	{
-		float factor = relative_volume / saved_relative_volume;
-		saved_relative_volume = rel_vol;
-		relative_volume = saved_relative_volume * factor;
-	}
-	Stop ();
-	Play (loop, subsong);
-	m_NotStartedYet = false;
-	
-	if (m_Status == MusInfo::STATE_Playing)
-		currSong = this;
-	else
-		currSong = nullptr;
-		
-	// Notify the sound system of the changed relative volume
-	snd_musicvolume.Callback();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-bool MusInfo::SetPosition (unsigned int ms)
-{
-	return false;
-}
-
-bool MusInfo::IsMIDI() const
-{
-	return false;
-}
-
-bool MusInfo::SetSubsong (int subsong)
-{
-	return false;
-}
-
-void MusInfo::Update ()
-{
-}
-
-void MusInfo::MusicVolumeChanged()
-{
-}
-
-void MusInfo::ChangeSettingInt(const char *, int)
-{
-}
-
-void MusInfo::ChangeSettingNum(const char *, double)
-{
-}
-
-void MusInfo::ChangeSettingString(const char *, const char *)
-{
-}
-
-FString MusInfo::GetStats()
-{
-	return "No stats available for this song";
-}
-
-MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
-{
-	return nullptr;
-}
-
 
 //==========================================================================
 //
@@ -648,6 +554,13 @@ void I_UpdateMusic()
 	}
 }
 
+
+void I_SetRelativeVolume(float vol)
+{
+	relative_volume = (float)vol;
+	ChangeMusicSetting(ZMusic::relative_volume, nullptr, (float)vol);
+	snd_musicvolume.Callback();
+}
 //==========================================================================
 //
 // Sets relative music volume. Takes $musicvolume in SNDINFO into consideration
@@ -657,8 +570,7 @@ void I_UpdateMusic()
 void I_SetMusicVolume (double factor)
 {
 	factor = clamp(factor, 0., 2.0);
-	relative_volume = saved_relative_volume * float(factor);
-	snd_musicvolume.Callback();
+	I_SetRelativeVolume(factor);
 }
 
 //==========================================================================
@@ -671,8 +583,7 @@ CCMD(testmusicvol)
 {
 	if (argv.argc() > 1) 
 	{
-		relative_volume = (float)strtod(argv[1], nullptr);
-		snd_musicvolume.Callback();
+		I_SetRelativeVolume((float)strtod(argv[1], nullptr));
 	}
 	else
 		Printf("Current relative volume is %1.2f\n", relative_volume);
@@ -686,9 +597,9 @@ CCMD(testmusicvol)
 
 ADD_STAT(music)
 {
-	if (currSong != nullptr)
+	if (mus_playing.handle != nullptr)
 	{
-		return currSong->GetStats();
+		return FString(mus_playing.handle->GetStats().c_str());
 	}
 	return "No song playing";
 }

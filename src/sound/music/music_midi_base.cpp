@@ -43,6 +43,7 @@
 
 #include "v_text.h"
 #include "menu/menu.h"
+#include "zmusic/zmusic.h"
 #include "s_music.h"
 
 static uint32_t	nummididevices;
@@ -70,43 +71,6 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 
 }
 
-extern MusPlayingInfo mus_playing;
-
-void MIDIDeviceChanged(int newdev, bool force)
-{
-	static int oldmididev = INT_MIN;
-
-	// If a song is playing, move it to the new device.
-	if (oldmididev != newdev || force)
-	{
-		if (currSong != NULL && currSong->IsMIDI())
-		{
-			MusInfo *song = currSong;
-			if (song->m_Status == MusInfo::STATE_Playing)
-			{
-				if (song->GetDeviceType() == MDEV_FLUIDSYNTH && force)
-				{
-					// FluidSynth must reload the song to change the patch set.
-					auto mi = mus_playing;
-					S_StopMusic(true);
-					S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
-				}
-				else
-				{
-					song->Stop();
-					song->Start(song->m_Looping);
-				}
-			}
-		}
-		else
-		{
-			S_MIDIDeviceChanged();
-		}
-	}
-	// 'force' 
-	if (!force) oldmididev = newdev;
-}
-
 #define DEF_MIDIDEV -5
 
 #ifdef _WIN32
@@ -114,8 +78,6 @@ void MIDIDeviceChanged(int newdev, bool force)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-
-unsigned mididevice;
 
 CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
@@ -133,8 +95,8 @@ CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		return;
 	}
 	else if (self == -1) self = DEF_MIDIDEV;
-	mididevice = MAX<int>(0, self);
-	MIDIDeviceChanged(self);
+	ChangeMusicSetting(ZMusic::snd_mididevice, nullptr, self);
+	S_MIDIDeviceChanged(self, false);
 }
 
 void I_InitMusicWin32 ()
@@ -244,7 +206,10 @@ CUSTOM_CVAR(Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else if (self > -2)
 		self = -2;
 	else
-		MIDIDeviceChanged(self);
+	{
+		ChangeMusicSetting(ZMusic::snd_mididevice, nullptr, self);
+		S_MIDIDeviceChanged(self, false);
+	}
 }
 
 void I_BuildMIDIMenuList (FOptionValues *opt)

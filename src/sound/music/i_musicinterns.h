@@ -13,7 +13,6 @@
 
 void I_InitMusicWin32 ();
 
-extern float relative_volume;
 class MIDISource;
 class MIDIDevice;
 class OPLmusicFile;

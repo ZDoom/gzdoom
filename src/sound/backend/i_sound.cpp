@@ -41,8 +41,7 @@
 
 #include "i_module.h"
 #include "cmdlib.h"
-#include "zmusic/mpg123_decoder.h"
-#include "zmusic/sndfile_decoder.h"
+#include "zmusic/sounddecoder.h"
 
 #include "c_dispatch.h"
 #include "i_music.h"
@@ -51,6 +50,7 @@
 #include "c_cvars.h"
 #include "stats.h"
 #include "s_music.h"
+#include "zmusic/zmusic.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 EXTERN_CVAR (Float, snd_musicvolume)
@@ -93,6 +93,8 @@ CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVA
 		self = 0.f;
 	else if (self > 1.f)
 		self = 1.f;
+
+	ChangeMusicSetting(ZMusic::snd_mastervolume, nullptr, self);
 	snd_sfxvolume.Callback();
 	snd_musicvolume.Callback();
 }

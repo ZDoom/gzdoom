@@ -138,3 +138,111 @@ struct DumbConfig
     int  mod_autochip_scan_threshold;
     float mod_dumb_mastervolume;
 };
+
+
+struct misc
+{
+	bool snd_midiprecache;
+	float gme_stereodepth
+	int snd_streambuffersize;
+};
+
+
+
+enum EZMusicIntConfigKey
+{
+	adl_chips_count,
+	adl_emulator_id,
+	adl_run_at_pcm_rate,
+	adl_fullpan,
+	adl_bank,
+	adl_use_custom_bank,
+	adl_volume_model,
+
+	fluid_reverb,
+	fluid_chorus,
+	fluid_voices,
+	fluid_interp,
+	fluid_samplerate,
+	fluid_threads,
+	fluid_chorus_voices,
+	fluid_chorus_type,
+
+	opl_numchips,
+	opl_core,
+	opl_fullpan,
+	oplConfig.fullpan = self;
+
+	opn_chips_count,
+	opn_emulator_id,
+	opn_run_at_pcm_rate,
+	opn_fullpan,
+	opn_use_custom_bank,
+
+	midi_dmxgus,
+	midi_voices,
+	gus_memsize,
+
+	timidity_modulation_wheel,
+	timidity_portamento,
+	timidity_reverb,
+	timidity_reverb_level,
+	timidity_chorus,
+	timidity_surround_chorus,
+	timidity_channel_pressure,
+	timidity_lpf_def,
+	timidity_temper_control,
+	timidity_modulation_envelope,
+	timidity_overlap_voice_allow,
+	timidity_drum_effect,
+	timidity_pan_delay,
+	timidity_key_adjust,
+
+	wildmidi_reverb,
+	wildmidi_enhanced_resampling,
+
+	snd_midiprecache,
+
+	mod_samplerate,
+	mod_volramp,
+	mod_interp,
+	mod_autochip,
+	mod_autochip_size_force,
+	mod_autochip_size_scan,
+	mod_autochip_scan_threshold,
+
+	snd_streambuffersize,
+	
+	NUM_INT_CONFIGS
+}
+
+enum EZMusicFloatConfigKey
+{
+	fluid_gain,
+	fluid_reverb_roomsize,
+	fluid_reverb_damping,
+	fluid_reverb_width,
+	fluid_reverb_level,
+	fluid_chorus_level,
+	fluid_chorus_speed,
+	fluid_chorus_depth,
+
+	timidity_drum_power,
+	timidity_tempo_adjust,
+	min_sustain_time,
+
+	gme_stereodepth,
+	mod_dumb_mastervolume,
+};
+
+enum EMusicStringConfigKey
+{
+	adl_custom_bank,
+	fluid_lib,
+	fluid_patchset,
+	opn_custom_bank,
+	midi_config,
+	gus_patchdir,
+	timidity_config,
+	wildmidi_config,
+};

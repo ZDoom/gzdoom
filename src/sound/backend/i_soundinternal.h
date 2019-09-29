@@ -121,8 +121,10 @@ const char *GetSampleTypeName(enum SampleType type);
 const char *GetChannelConfigName(enum ChannelConfig chan);
 
 class MusInfo;
+class SoundStream;
 struct MusPlayingInfo
 {
+	SoundStream* musicStream;
 	FString name;
 	MusInfo *handle;
 	int   baseorder;

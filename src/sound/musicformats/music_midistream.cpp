@@ -92,6 +92,7 @@ public:
 	void ChangeSettingString(const char* setting, const char* value) override;
 	int ServiceEvent();
 	void SetMIDISource(MIDISource* _source);
+	SoundStreamInfo GetStreamInfo() const override;
 
 	int GetDeviceType() const override;
 
@@ -142,7 +143,9 @@ protected:
 	int LoopLimit;
 	FString Args;
 	std::unique_ptr<MIDISource> source;
+
 	std::unique_ptr<SoundStream> Stream;
+
 };
 
 
@@ -425,21 +428,13 @@ bool MIDIStreamer::InitPlayback()
 	source->CheckCaps(MIDI->GetTechnology());
 	if (!MIDI->CanHandleSysex()) source->SkipSysex();
 
-	auto streamInfo = MIDI->GetStreamInfo();
-	if (streamInfo.mBufferSize > 0)
-	{
-		Stream.reset(GSnd->CreateStream(FillStream, streamInfo.mBufferSize, streamInfo.mNumChannels == 1 ? SoundStream::Float | SoundStream::Mono : SoundStream::Float, streamInfo.mSampleRate, MIDI.get()));
-	}
-
 	StartPlayback();
 	if (MIDI == nullptr)
 	{ // The MIDI file had no content and has been automatically closed.
 		return false;
 	}
 
-	int res = 1;
-	if (Stream) res = Stream->Play(true, 1);
-	if (res) res = MIDI->Resume();
+	int res = MIDI->Resume();
 
 	if (res)
 	{
@@ -448,8 +443,22 @@ bool MIDIStreamer::InitPlayback()
 	else
 	{
 		m_Status = STATE_Playing;
+
+		auto streamInfo = MIDI->GetStreamInfo();
+		if (streamInfo.mBufferSize > 0)
+		{
+			Stream.reset(GSnd->CreateStream(FillStream, streamInfo.mBufferSize, streamInfo.mNumChannels == 1 ? SoundStream::Float | SoundStream::Mono : SoundStream::Float, streamInfo.mSampleRate, MIDI.get()));
+		}
+
+		if (Stream) res = Stream->Play(true, 1);
 		return true;
 	}
+}
+
+SoundStreamInfo MIDIStreamer::GetStreamInfo() const
+{
+	if (MIDI) return MIDI->GetStreamInfo();
+	else return { 0, 0, 0 };
 }
 
 //==========================================================================

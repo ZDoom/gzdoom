@@ -82,6 +82,7 @@ public:
 	virtual void ChangeSettingInt(const char *setting, int value);			// FluidSynth settings
 	virtual void ChangeSettingNum(const char *setting, double value);		// "
 	virtual void ChangeSettingString(const char *setting, const char *value);	// "
+	virtual SoundStreamInfo GetStreamInfo() const { return { 0,0,0 }; }
 
 	void Start(bool loop, float rel_vol = -1.f, int subsong = 0);
 

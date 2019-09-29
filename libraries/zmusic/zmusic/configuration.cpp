@@ -54,21 +54,31 @@ int devType()
 	else*/ return MDEV_DEFAULT;
 }
 
-// Ordered by configurable device.
-ADLConfig adlConfig;
-FluidConfig fluidConfig;
-OPLConfig oplConfig;
-OpnConfig opnConfig;
-GUSConfig gusConfig;
-TimidityConfig timidityConfig;
-WildMidiConfig wildMidiConfig;
-DumbConfig dumbConfig;
 MiscConfig miscConfig;
 Callbacks musicCallbacks;
 
 void SetCallbacks(const Callbacks* cb)
 {
+	dumb_decode_vorbis = cb->DumbVorbisDecode;
 	musicCallbacks = *cb;
+}
+
+void SetGenMidi(const uint8_t* data)
+{
+	memcpy(oplConfig.OPLinstruments, data, 175 * 36);
+	oplConfig.genmidiset = true;
+}
+
+void SetWgOpn(const void* data, unsigned len)
+{
+	opnConfig.default_bank.resize(len);
+	memcpy(opnConfig.default_bank.data(), data, len);
+}
+
+void SetDmxGus(const void* data, unsigned len)
+{
+	gusConfig.dmxgus.resize(len);
+	memcpy(gusConfig.dmxgus.data(), data, len);
 }
 
 template<class valtype>
@@ -268,6 +278,8 @@ bool ChangeMusicSetting(ZMusic::EIntConfigKey key, int value, int *pRealValue)
 			return false;
 
 		case opl_core:
+			if (value < 0) value = 0;
+			else if (value > 3) value = 3;
 			ChangeAndReturn(oplConfig.core, value, pRealValue);
 			return devType() == MDEV_OPL;
 
@@ -620,138 +632,3 @@ bool ChangeMusicSetting(ZMusic::EStringConfigKey key, const char *value)
 	return false;
 }
 
-#if 0
-
-void OPL_SetupConfig(OPLConfig *config, const char *args, bool midi)
-{
-	// This needs to be done only once.
-	if (!config->genmidiset && midi)
-	{
-		// The OPL renderer should not care about where this comes from.
-		// Note: No I_Error here - this needs to be consistent with the rest of the music code.
-		auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
-		if (lump < 0) throw std::runtime_error("No GENMIDI lump found");
-		auto data = Wads.OpenLumpReader(lump);
-
-		uint8_t filehdr[8];
-		data.Read(filehdr, 8);
-		if (memcmp(filehdr, "#OPL_II#", 8)) throw std::runtime_error("Corrupt GENMIDI lump");
-		data.Read(oplConfig.OPLinstruments, 175 * 36);
-		config->genmidiset = true;
-	}
-	
-	config->core = opl_core;
-	if (args != NULL && *args >= '0' && *args < '4') config->core = *args - '0';
-}
-
-
-void OPN_SetupConfig(OpnConfig *config, const char *Args)
-{
-	//Resolve the path here, so that the renderer does not have to do the work itself and only needs to process final names.
-	const char *bank = Args && *Args? Args : opn_use_custom_bank? *opn_custom_bank : nullptr;
-	if (bank && *bank)
-	{
-		auto info = sfmanager.FindSoundFont(bank, SF_WOPN);
-		if (info == nullptr)
-		{
-			config->opn_custom_bank = "";
-		}
-		else
-		{
-			config->opn_custom_bank = info->mFilename;
-		}
-	}
-	
-	int lump = Wads.CheckNumForFullName("xg.wopn");
-	if (lump < 0)
-	{
-		config->default_bank.resize(0);
-		return;
-	}
-	FMemLump data = Wads.ReadLump(lump);
-	config->default_bank.resize(data.GetSize());
-	memcpy(config->default_bank.data(), data.GetMem(), data.GetSize());
-}
-
-
-//==========================================================================
-//
-// Sets up the date to load the instruments for the GUS device.
-// The actual instrument loader is part of the device.
-//
-//==========================================================================
-
-bool GUS_SetupConfig(GUSConfig *config, const char *args)
-{
-	config->errorfunc = gus_printfunc;
-	if ((midi_dmxgus && *args == 0) || !stricmp(args, "DMXGUS"))
-	{
-		if (stricmp(config->loadedConfig.c_str(), "DMXGUS") == 0) return false; // aleady loaded
-		int lump = Wads.CheckNumForName("DMXGUS");
-		if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
-		if (lump >= 0)
-		{
-			auto data = Wads.OpenLumpReader(lump);
-			if (data.GetLength() > 0)
-			{
-				config->dmxgus.resize(data.GetLength());
-				data.Read(config->dmxgus.data(), data.GetLength());
-				return true;
-			}
-		}
-	}
-	if (*args == 0) args = midi_config;
-	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
-	
-	auto reader = sfmanager.OpenSoundFont(args, SF_GUS | SF_SF2);
-	if (reader == nullptr)
-	{
-		char error[80];
-		snprintf(error, 80, "GUS: %s: Unable to load sound font\n",args);
-		throw std::runtime_error(error);
-	}
-	config->reader = reader;
-	config->readerName = args;
-	return true;
-}
-
-
-bool Timidity_SetupConfig(TimidityConfig* config, const char* args)
-{
-	config->errorfunc = gus_printfunc;
-	if (*args == 0) args = timidity_config;
-	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
-
-	auto reader = sfmanager.OpenSoundFont(args, SF_GUS | SF_SF2);
-	if (reader == nullptr)
-	{
-		char error[80];
-		snprintf(error, 80, "Timidity++: %s: Unable to load sound font\n", args);
-		throw std::runtime_error(error);
-	}
-	config->reader = reader;
-	config->readerName = args;
-	return true;
-}
-
-bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args)
-{
-	config->errorfunc = wm_printfunc;
-	if (*args == 0) args = wildmidi_config;
-	if (stricmp(config->loadedConfig.c_str(), args) == 0) return false; // aleady loaded
-
-	auto reader = sfmanager.OpenSoundFont(args, SF_GUS);
-	if (reader == nullptr)
-	{
-		char error[80];
-		snprintf(error, 80, "WildMidi: %s: Unable to load sound font\n", args);
-		throw std::runtime_error(error);
-	}
-	config->reader = reader;
-	config->readerName = args;
-	config->reverb = wildmidi_reverb;
-	config->enhanced_resampling = wildmidi_enhanced_resampling;
-	return true;
-}
-
-#endif

@@ -41,6 +41,8 @@
 
 // FluidSynth implementation of a MIDI device -------------------------------
 
+FluidConfig fluidConfig;
+
 #if !defined DYN_FLUIDSYNTH
 #include <fluidsynth.h>
 #else

@@ -148,11 +148,11 @@ protected:
 
 MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const char *Args);
 MIDIDevice *CreateADLMIDIDevice(const char* args);
-MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *args);
-MIDIDevice *CreateOplMIDIDevice(const OPLConfig* config);
-MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate);
-MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
-MIDIDevice *CreateWildMIDIDevice(WildMidiConfig *config, int samplerate);
+MIDIDevice *CreateOPNMIDIDevice(const char *args);
+MIDIDevice *CreateOplMIDIDevice(const char* Args);
+MIDIDevice *CreateTimidityMIDIDevice(const char* Args, int samplerate);
+MIDIDevice *CreateTimidityPPMIDIDevice(const char *Args, int samplerate);
+MIDIDevice *CreateWildMIDIDevice(const char *Args, int samplerate);
 
 #ifdef _WIN32
 MIDIDevice* CreateWinMIDIDevice(int mididevice);

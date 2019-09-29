@@ -54,6 +54,7 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+GUSConfig gusConfig;
 
 //==========================================================================
 //
@@ -65,9 +66,9 @@ namespace Timidity { struct Renderer; }
 
 class TimidityMIDIDevice : public SoftSynthMIDIDevice
 {
-	void LoadInstruments(GUSConfig *config);
+	void LoadInstruments();
 public:
-	TimidityMIDIDevice(GUSConfig *config, int samplerate);
+	TimidityMIDIDevice(int samplerate);
 	~TimidityMIDIDevice();
 	
 	int OpenRenderer();
@@ -76,7 +77,6 @@ public:
 	
 protected:
 	Timidity::Renderer *Renderer;
-	std::shared_ptr<Timidity::Instruments> instruments;	// The device needs to hold a reference to this while the renderer is in use.
 	
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
@@ -87,13 +87,13 @@ protected:
 // CODE --------------------------------------------------------------------
 
 
-void TimidityMIDIDevice::LoadInstruments(GUSConfig *config)
+void TimidityMIDIDevice::LoadInstruments()
 {
-	if (config->dmxgus.size())
+	if (gusConfig.dmxgus.size())
 	{
 		// Check if we got some GUS data before using it.
 		std::string ultradir = getenv("ULTRADIR");
-		if (ultradir.length() || config->gus_patchdir.length() != 0)
+		if (ultradir.length() || gusConfig.gus_patchdir.length() != 0)
 		{
 			auto psreader = new MusicIO::FileSystemSoundFontReader("");
 			
@@ -104,42 +104,41 @@ void TimidityMIDIDevice::LoadInstruments(GUSConfig *config)
 				psreader->add_search_path(ultradir.c_str());
 			}
 			// Load DMXGUS lump and patches from gus_patchdir
-			if (config->gus_patchdir.length() != 0) psreader->add_search_path(config->gus_patchdir.c_str());
+			if (gusConfig.gus_patchdir.length() != 0) psreader->add_search_path(gusConfig.gus_patchdir.c_str());
 			
-			config->instruments.reset(new Timidity::Instruments(psreader));
-			bool success = config->instruments->LoadDMXGUS(config->gus_memsize, (const char*)config->dmxgus.data(), config->dmxgus.size()) >= 0;
+			gusConfig.instruments.reset(new Timidity::Instruments(psreader));
+			bool success = gusConfig.instruments->LoadDMXGUS(gusConfig.gus_memsize, (const char*)gusConfig.dmxgus.data(), gusConfig.dmxgus.size()) >= 0;
 			
-			config->dmxgus.clear();
+			gusConfig.dmxgus.clear();
 			
 			if (success)
 			{
-				config->loadedConfig = "DMXGUS";
+				gusConfig.loadedConfig = "DMXGUS";
 				return;
 			}
 		}
-		config->loadedConfig = "";
-		config->instruments.reset();
+		gusConfig.loadedConfig = "";
+		gusConfig.instruments.reset();
 		throw std::runtime_error("Unable to initialize DMXGUS for GUS MIDI device");
 	}
-	else if (config->reader)
+	else if (gusConfig.reader)
 	{
-		config->loadedConfig = config->readerName;
-		config->instruments.reset(new Timidity::Instruments(config->reader));
-		bool err = config->instruments->LoadConfig() < 0;
-		config->reader = nullptr;
+		gusConfig.loadedConfig = gusConfig.readerName;
+		gusConfig.instruments.reset(new Timidity::Instruments(gusConfig.reader));
+		bool err = gusConfig.instruments->LoadConfig() < 0;
+		gusConfig.reader = nullptr;
 		
 		if (err)
 		{
-			config->instruments.reset();
-			config->loadedConfig = "";
+			gusConfig.instruments.reset();
+			gusConfig.loadedConfig = "";
 			throw std::runtime_error("Unable to initialize instruments for GUS MIDI device");
 		}
 	}
-	else if (config->instruments == nullptr)
+	else if (gusConfig.instruments == nullptr)
 	{
 		throw std::runtime_error("No instruments set for GUS device");
 	}
-	instruments = config->instruments;
 }
 
 //==========================================================================
@@ -148,11 +147,11 @@ void TimidityMIDIDevice::LoadInstruments(GUSConfig *config)
 //
 //==========================================================================
 
-TimidityMIDIDevice::TimidityMIDIDevice(GUSConfig *config, int samplerate)
+TimidityMIDIDevice::TimidityMIDIDevice(int samplerate)
 	: SoftSynthMIDIDevice(samplerate, 11025, 65535)
 {
-	LoadInstruments(config);
-	Renderer = new Timidity::Renderer((float)SampleRate, config->midi_voices, instruments.get());
+	LoadInstruments();
+	Renderer = new Timidity::Renderer((float)SampleRate, gusConfig.midi_voices, gusConfig.instruments.get());
 }
 
 //==========================================================================
@@ -244,7 +243,53 @@ void TimidityMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateTimidityMIDIDevice(GUSConfig *config, int samplerate)
+//==========================================================================
+//
+// Sets up the date to load the instruments for the GUS device.
+// The actual instrument loader is part of the device.
+//
+//==========================================================================
+
+bool GUS_SetupConfig(const char* args)
 {
-	return new TimidityMIDIDevice(config, samplerate);
+	gusConfig.reader = nullptr;
+	if ((gusConfig.gus_dmxgus && *args == 0) || !stricmp(args, "DMXGUS"))
+	{
+		if (stricmp(gusConfig.loadedConfig.c_str(), "DMXGUS") == 0) return false; // aleady loaded
+		if (gusConfig.dmxgus.size() > 0)
+		{
+			gusConfig.readerName = "DMXGUS";
+			return true;
+		}
+	}
+	if (*args == 0) args = gusConfig.gus_config.c_str();
+	if (stricmp(gusConfig.loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+
+	MusicIO::SoundFontReaderInterface *reader;
+	if (musicCallbacks.OpenSoundFont)
+	{
+		reader = musicCallbacks.OpenSoundFont(args, SF_GUS | SF_SF2);
+	}
+	else if (MusicIO::fileExists(args))
+	{
+		reader = new MusicIO::FileSystemSoundFontReader(args, true);
+	}
+
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "GUS: %s: Unable to load sound font\n", args);
+		throw std::runtime_error(error);
+	}
+	gusConfig.reader = reader;
+	gusConfig.readerName = args;
+	return true;
+}
+
+
+
+MIDIDevice *CreateTimidityMIDIDevice(const char *Args, int samplerate)
+{
+	GUS_SetupConfig(Args);
+	return new TimidityMIDIDevice(samplerate);
 }

@@ -37,6 +37,8 @@
 #include "mididevice.h"
 #include "adlmidi.h"
 
+ADLConfig adlConfig;
+
 class ADLMIDIDevice : public SoftSynthMIDIDevice
 {
 	struct ADL_MIDIPlayer *Renderer;

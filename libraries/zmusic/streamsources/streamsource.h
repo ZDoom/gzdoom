@@ -32,8 +32,8 @@ protected:
 };
 
 
-StreamSource *MOD_OpenSong(MusicIO::FileInterface* reader, DumbConfig* config, int samplerate);
-StreamSource* GME_OpenSong(MusicIO::FileInterface* reader, const char* fmt, float stereo_depth, int sample_rate);
+StreamSource *MOD_OpenSong(MusicIO::FileInterface* reader, int samplerate);
+StreamSource* GME_OpenSong(MusicIO::FileInterface* reader, const char* fmt, int sample_rate);
 StreamSource *SndFile_OpenSong(MusicIO::FileInterface* fr);
 StreamSource* XA_OpenSong(MusicIO::FileInterface* reader);
 StreamSource* OPL_OpenSong(MusicIO::FileInterface* reader, OPLConfig *config);

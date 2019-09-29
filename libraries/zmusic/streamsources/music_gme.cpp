@@ -105,7 +105,7 @@ const char *GME_CheckFormat(uint32_t id)
 //
 //==========================================================================
 
-StreamSource *GME_OpenSong(MusicIO::FileInterface *reader, const char *fmt, float stereo_depth, int sample_rate)
+StreamSource *GME_OpenSong(MusicIO::FileInterface *reader, const char *fmt, int sample_rate)
 {
 	gme_type_t type;
 	gme_err_t err;
@@ -143,7 +143,7 @@ StreamSource *GME_OpenSong(MusicIO::FileInterface *reader, const char *fmt, floa
 		gme_delete(emu);
 		throw std::runtime_error(err);
 	}
-	gme_set_stereo_depth(emu, std::min(std::max(stereo_depth, 0.f), 1.f));
+	gme_set_stereo_depth(emu, std::min(std::max(miscConfig.gme_stereodepth, 0.f), 1.f));
 	gme_set_fade(emu, -1); // Enable infinite loop
 	return new GMESong(emu, sample_rate);
 }

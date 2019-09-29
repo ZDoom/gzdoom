@@ -52,12 +52,14 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+OPLConfig oplConfig;
+
 // OPL implementation of a MIDI output device -------------------------------
 
 class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
 {
 public:
-	OPLMIDIDevice(const OPLConfig *config);
+	OPLMIDIDevice(int core);
 	int OpenRenderer();
 	void Close();
 	int GetTechnology() const;
@@ -84,11 +86,11 @@ protected:
 //
 //==========================================================================
 
-OPLMIDIDevice::OPLMIDIDevice(const OPLConfig *config)
-	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(config->core, config->numchips)
+OPLMIDIDevice::OPLMIDIDevice(int core)
+	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE), OPLmusicBlock(core, oplConfig.numchips)
 {
-	FullPan = config->fullpan;
-	memcpy(OPLinstruments, config->OPLinstruments, sizeof(OPLinstruments));
+	FullPan = oplConfig.fullpan;
+	memcpy(OPLinstruments, oplConfig.OPLinstruments, sizeof(OPLinstruments));
 	StreamBlockSize = 14;
 }
 
@@ -314,7 +316,11 @@ std::string OPLMIDIDevice::GetStats()
 	return out;
 }
 
-MIDIDevice* CreateOplMIDIDevice(const OPLConfig* config)
+
+MIDIDevice* CreateOplMIDIDevice(const char *Args)
 {
-	return new OPLMIDIDevice(config);
+	if (!oplConfig.genmidiset) throw std::runtime_error("Cannot play OPL without GENMIDI data");
+	int core = oplConfig.core;
+	if (Args != NULL && *Args >= '0' && *Args < '4') core = *Args - '0';
+	return new OPLMIDIDevice(core);
 }

@@ -54,10 +54,12 @@
 
 // TYPES -------------------------------------------------------------------
 
+DumbConfig dumbConfig;
+
 class DumbSong : public StreamSource
 {
 public:
-	DumbSong(DUH *myduh, DumbConfig *config, int samplerate);
+	DumbSong(DUH *myduh, int samplerate);
 	~DumbSong();
 	//bool SetPosition(int ms);
 	bool SetSubsong(int subsong) override;
@@ -582,12 +584,12 @@ DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, Musi
 //
 //==========================================================================
 
-static void MOD_SetAutoChip(DUH *duh, DumbConfig *config)
+static void MOD_SetAutoChip(DUH *duh)
 {
-	int size_force = config->mod_autochip_size_force;
-	int size_scan = config->mod_autochip_size_scan;
-	int scan_threshold_8 = ((config->mod_autochip_scan_threshold * 0x100) + 50) / 100;
-	int scan_threshold_16 = ((config->mod_autochip_scan_threshold * 0x10000) + 50) / 100;
+	int size_force = dumbConfig.mod_autochip_size_force;
+	int size_scan = dumbConfig.mod_autochip_size_scan;
+	int scan_threshold_8 = ((dumbConfig.mod_autochip_scan_threshold * 0x100) + 50) / 100;
+	int scan_threshold_16 = ((dumbConfig.mod_autochip_scan_threshold * 0x10000) + 50) / 100;
 	DUMB_IT_SIGDATA * itsd = duh_get_it_sigdata(duh);
 
 	if (itsd)
@@ -768,7 +770,7 @@ static void MOD_SetAutoChip(DUH *duh, DumbConfig *config)
 //
 //==========================================================================
 
-StreamSource* MOD_OpenSong(MusicIO::FileInterface *reader, DumbConfig* config, int samplerate)
+StreamSource* MOD_OpenSong(MusicIO::FileInterface *reader, int samplerate)
 {
 	DUH *duh = 0;
 	int headsize;
@@ -925,11 +927,11 @@ StreamSource* MOD_OpenSong(MusicIO::FileInterface *reader, DumbConfig* config, i
 	}
 	if ( duh )
 	{
-		if (config->mod_autochip)
+		if (dumbConfig.mod_autochip)
 		{
-			MOD_SetAutoChip(duh, config);
+			MOD_SetAutoChip(duh);
 		}
-		state = new DumbSong(duh, config, samplerate);
+		state = new DumbSong(duh, samplerate);
 
 		if (is_it) ReadIT(filestate.ptr, size, state, false);
 		else ReadDUH(duh, state, false, is_dos);
@@ -1005,20 +1007,20 @@ void DumbSong::ChangeSettingNum(const char* setting, double val)
 //
 //==========================================================================
 
-DumbSong::DumbSong(DUH* myduh, DumbConfig* config, int samplerate)
+DumbSong::DumbSong(DUH* myduh, int samplerate)
 {
 	duh = myduh;
 	sr = NULL;
 	eof = false;
-	interp = config->mod_interp;
-	volramp = config->mod_volramp;
+	interp = dumbConfig.mod_interp;
+	volramp = dumbConfig.mod_volramp;
 	written = 0;
 	length = 0;
 	start_order = 0;
-	MasterVolume = (float)config->mod_dumb_mastervolume;
-	if (config->mod_samplerate != 0)
+	MasterVolume = (float)dumbConfig.mod_dumb_mastervolume;
+	if (dumbConfig.mod_samplerate != 0)
 	{
-		srate = config->mod_samplerate;
+		srate = dumbConfig.mod_samplerate;
 	}
 	else
 	{

@@ -37,11 +37,13 @@
 #include "mididevice.h"
 #include "opnmidi.h"
 
+OpnConfig opnConfig;
+
 class OPNMIDIDevice : public SoftSynthMIDIDevice
 {
 	struct OPN2_MIDIPlayer *Renderer;
 public:
-	OPNMIDIDevice(const OpnConfig *config);
+	OPNMIDIDevice(const char *bank);
 	~OPNMIDIDevice();
 	
 	
@@ -76,26 +78,26 @@ enum
 //
 //==========================================================================
 
-OPNMIDIDevice::OPNMIDIDevice(const OpnConfig *config)
+OPNMIDIDevice::OPNMIDIDevice(const char *bank)
 	:SoftSynthMIDIDevice(44100)
 {
 	Renderer = opn2_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
-		if (!LoadCustomBank(config->opn_custom_bank.c_str()))
+		if (!opnConfig.opn_use_custom_bank || !LoadCustomBank(opnConfig.opn_custom_bank.c_str()))
 		{
-			if(config->default_bank.size() == 0)
+			if(opnConfig.default_bank.size() == 0)
 			{
 				opn2_close(Renderer);
 				throw std::runtime_error("No OPN bank found");
 			}
-			opn2_openBankData(Renderer, config->default_bank.data(), (long)config->default_bank.size());
+			opn2_openBankData(Renderer, opnConfig.default_bank.data(), (long)opnConfig.default_bank.size());
 		}
 
-		opn2_switchEmulator(Renderer, (int)config->opn_emulator_id);
-		opn2_setRunAtPcmRate(Renderer, (int)config->opn_run_at_pcm_rate);
-		opn2_setNumChips(Renderer, config->opn_chips_count);
-		opn2_setSoftPanEnabled(Renderer, (int)config->opn_fullpan);
+		opn2_switchEmulator(Renderer, (int)opnConfig.opn_emulator_id);
+		opn2_setRunAtPcmRate(Renderer, (int)opnConfig.opn_run_at_pcm_rate);
+		opn2_setNumChips(Renderer, opnConfig.opn_chips_count);
+		opn2_setSoftPanEnabled(Renderer, (int)opnConfig.opn_fullpan);
 	}
 	else
 	{
@@ -228,9 +230,19 @@ void OPNMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateOPNMIDIDevice(const OpnConfig *config)
+MIDIDevice *CreateOPNMIDIDevice(const char *Args)
 {
-	return new OPNMIDIDevice(config);
+	const char* bank = Args && *Args ? Args : opnConfig.opn_use_custom_bank ? opnConfig.opn_custom_bank.c_str() : nullptr;
+	if (bank && *bank)
+	{
+		if (musicCallbacks.PathForSoundfont)
+		{ 
+			auto info = musicCallbacks.PathForSoundfont(bank, SF_WOPN);
+			if (info != nullptr) bank = info;
+		}
+	}
+
+	return new OPNMIDIDevice(bank);
 }
 
 

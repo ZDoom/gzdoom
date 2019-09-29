@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mididefs.h"
+#include "../../music_common/fileio.h"
 
 namespace ZMusic	// Namespaced because these conflict with the same-named CVARs
 {
@@ -122,12 +123,24 @@ struct Callbacks
 	// The sound font callbacks are for allowing the client to customize sound font management
 	// Without them only paths to real files can be used.
 	const char *(*PathForSoundfont)(const char *name, int type) = nullptr;
+	MusicIO::SoundFontReaderInterface *(*OpenSoundFont)(const char* name, int type) = nullptr;
 	
 	// Used to handle client-specific path macros. If not set, the path may not contain any special tokens that may need expansion.
 	std::string (*NicePath)(const char *path) = nullptr;
+
+	// For playing modules with compressed samples.
+	short* (*DumbVorbisDecode)(int outlen, const void* oggstream, int sizebytes);
+
 };
 
+// Sets callbacks for functionality that the client needs to provide.
 void SetCallbacks(const Callbacks *callbacks);
+// Sets GenMidi data for OPL playback. If this isn't provided the OPL synth will not work.
+void SetGenMidi(const uint8_t* data);
+// Set default bank for OPN. Without this OPN only works with custom banks.
+void SetWgOpn(const void* data, unsigned len);
+// Set DMXGUS data for running the GUS synth in actual GUS mode.
+void SetDmxGus(const void* data, unsigned len);
 
 // These exports is needed by the MIDI dumpers which need to remain on the client side.
 class MIDISource;	// abstract for the client

@@ -81,7 +81,7 @@ struct GUSConfig
 	MusicIO::SoundFontReaderInterface *reader;
 	std::string readerName;
 	std::string loadedConfig;
-	std::shared_ptr<Timidity::Instruments> instruments;	// this is held both by the config and the device
+	std::unique_ptr<Timidity::Instruments> instruments;
 };
 
 namespace TimidityPlus

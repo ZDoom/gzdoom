@@ -39,13 +39,13 @@
 #include "timiditypp/playmidi.h"
 
 
-
+TimidityConfig timidityConfig;
 
 class TimidityPPMIDIDevice : public SoftSynthMIDIDevice
 {
 	std::shared_ptr<TimidityPlus::Instruments> instruments;
 public:
-	TimidityPPMIDIDevice(TimidityConfig *config, int samplerate);
+	TimidityPPMIDIDevice(int samplerate);
 	~TimidityPPMIDIDevice();
 
 	int OpenRenderer();
@@ -61,7 +61,7 @@ protected:
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
-	void LoadInstruments(TimidityConfig* config);
+	void LoadInstruments();
 };
 
 //==========================================================================
@@ -70,27 +70,27 @@ protected:
 //
 //==========================================================================
 
-void TimidityPPMIDIDevice::LoadInstruments(TimidityConfig* config)
+void TimidityPPMIDIDevice::LoadInstruments()
 {
-	if (config->reader)
+	if (timidityConfig.reader)
 	{
-		config->loadedConfig = config->readerName;
-		config->instruments.reset(new TimidityPlus::Instruments());
-		bool success = config->instruments->load(config->reader);
-		config->reader = nullptr;
+		timidityConfig.loadedConfig = timidityConfig.readerName;
+		timidityConfig.instruments.reset(new TimidityPlus::Instruments());
+		bool success = timidityConfig.instruments->load(timidityConfig.reader);
+		timidityConfig.reader = nullptr;
 
 		if (!success)
 		{
-			config->instruments.reset();
-			config->loadedConfig = "";
+			timidityConfig.instruments.reset();
+			timidityConfig.loadedConfig = "";
 			throw std::runtime_error("Unable to initialize instruments for Timidity++ MIDI device");
 		}
 	}
-	else if (config->instruments == nullptr)
+	else if (timidityConfig.instruments == nullptr)
 	{
 		throw std::runtime_error("No instruments set for Timidity++ device");
 	}
-	instruments = config->instruments;
+	instruments = timidityConfig.instruments;
 }
 
 //==========================================================================
@@ -99,11 +99,11 @@ void TimidityPPMIDIDevice::LoadInstruments(TimidityConfig* config)
 //
 //==========================================================================
 
-TimidityPPMIDIDevice::TimidityPPMIDIDevice(TimidityConfig *config, int samplerate) 
+TimidityPPMIDIDevice::TimidityPPMIDIDevice(int samplerate) 
 	:SoftSynthMIDIDevice(samplerate, 4000, 65000)
 {
 	TimidityPlus::set_playback_rate(SampleRate);
-	LoadInstruments(config);
+	LoadInstruments();
 	Renderer = new TimidityPlus::Player(instruments.get());
 }
 
@@ -193,9 +193,36 @@ void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateTimidityPPMIDIDevice(TimidityConfig* config, int samplerate)
+bool Timidity_SetupConfig(const char* args)
 {
-	return new TimidityPPMIDIDevice(config, samplerate);
+	if (*args == 0) args = timidityConfig.timidity_config.c_str();
+	if (stricmp(timidityConfig.loadedConfig.c_str(), args) == 0) return false; // aleady loaded
+
+	MusicIO::SoundFontReaderInterface* reader;
+	if (musicCallbacks.OpenSoundFont)
+	{
+		reader = musicCallbacks.OpenSoundFont(args, SF_GUS | SF_SF2);
+	}
+	else if (MusicIO::fileExists(args))
+	{
+		reader = new MusicIO::FileSystemSoundFontReader(args, true);
+	}
+
+	if (reader == nullptr)
+	{
+		char error[80];
+		snprintf(error, 80, "Timidity++: %s: Unable to load sound font\n", args);
+		throw std::runtime_error(error);
+	}
+	timidityConfig.reader = reader;
+	timidityConfig.readerName = args;
+	return true;
+}
+
+MIDIDevice *CreateTimidityPPMIDIDevice(const char *Args, int samplerate)
+{
+	Timidity_SetupConfig(Args);
+	return new TimidityPPMIDIDevice(samplerate);
 }
 
 

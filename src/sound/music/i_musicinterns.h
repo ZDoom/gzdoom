@@ -138,15 +138,6 @@ public:
 
 // Data interface
 
-void Fluid_SetupConfig(FluidConfig *config, const char* patches, bool systemfallback);
-void ADL_SetupConfig(ADLConfig *config, const char *Args);
-void OPL_SetupConfig(OPLConfig *config, const char *args, bool midi = true);
-void OPN_SetupConfig(OpnConfig *config, const char *Args);
-bool GUS_SetupConfig(GUSConfig *config, const char *args);
-bool Timidity_SetupConfig(TimidityConfig* config, const char* args);
-bool WildMidi_SetupConfig(WildMidiConfig* config, const char* args);
-void Dumb_SetupConfig(DumbConfig* config);
-
 // Module played via foo_dumb -----------------------------------------------
 
 class StreamSource;

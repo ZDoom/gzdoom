@@ -56,9 +56,6 @@
 #include "../libraries/zmusic/midisources/midisource.h"
 #include "../libraries/dumb/include/dumb.h"
 
-EXTERN_CVAR(Float, gme_stereodepth)
-
-
 #define GZIP_ID1		31
 #define GZIP_ID2		139
 #define GZIP_CM			8
@@ -85,17 +82,6 @@ MusInfo *currSong;
 int		nomusic = 0;
 float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
-
-//==========================================================================
-//
-// dumb_decode_vorbis
-//
-//==========================================================================
-
-static short* dumb_decode_vorbis_(int outlen, const void* oggstream, int sizebytes)
-{
-	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
-}
 
 //==========================================================================
 //
@@ -168,6 +154,17 @@ static void wm_printfunc(const char* wmfmt, va_list args)
 	VPrintf(PRINT_HIGH, wmfmt, args);
 }
 
+//==========================================================================
+//
+// other callbacks
+//
+//==========================================================================
+
+static short* dumb_decode_vorbis_(int outlen, const void* oggstream, int sizebytes)
+{
+	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
+}
+
 static std::string mus_NicePath(const char* str)
 {
 	FString strv = NicePath(str);
@@ -179,6 +176,56 @@ static const char* mus_pathToSoundFont(const char* sfname, int type)
 	auto info = sfmanager.FindSoundFont(sfname, type);
 	return info ? info->mFilename.GetChars() : nullptr;
 }
+
+static MusicIO::SoundFontReaderInterface* mus_openSoundFont(const char* sfname, int type)
+{
+	return sfmanager.OpenSoundFont(sfname, type);
+}
+
+
+//==========================================================================
+//
+// Pass some basic working data to the music backend
+// We do this once at startup for everything available.
+//
+//==========================================================================
+
+static void SetupGenMidi()
+{
+	// The OPL renderer should not care about where this comes from.
+	// Note: No I_Error here - this needs to be consistent with the rest of the music code.
+	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
+	if (lump < 0) Printf("No GENMIDI lump found. OPL playback not available.");
+	auto data = Wads.OpenLumpReader(lump);
+
+	auto genmidi = data.Read();
+	if (genmidi.Size() < 8 + 175 * 36 || memcmp(genmidi.Data(), "#OPL_II#", 8)) return;
+	SetGenMidi(genmidi.Data()+8);
+}
+
+static void SetupWgOpn()
+{
+	int lump = Wads.CheckNumForFullName("xg.wopn");
+	if (lump < 0)
+	{
+		return;
+	}
+	FMemLump data = Wads.ReadLump(lump);
+	SetWgOpn(data.GetMem(), (uint32_t)data.GetSize());
+}
+
+static void SetupDMXGUS()
+{
+	int lump = Wads.CheckNumForFullName("DMXGUS");
+	if (lump < 0)
+	{
+		return;
+	}
+	FMemLump data = Wads.ReadLump(lump);
+	SetDmxGus(data.GetMem(), (uint32_t)data.GetSize());
+}
+
+
 
 //==========================================================================
 //
@@ -199,7 +246,6 @@ void I_InitMusic (void)
 #endif // _WIN32
 	
 	MusicDown = false;
-	dumb_decode_vorbis = dumb_decode_vorbis_;
 
 	Callbacks callbacks;
 
@@ -208,7 +254,12 @@ void I_InitMusic (void)
 	callbacks.WildMidi_MessageFunc = wm_printfunc;
 	callbacks.NicePath = mus_NicePath;
 	callbacks.PathForSoundfont = mus_pathToSoundFont;
+	callbacks.OpenSoundFont = mus_openSoundFont;
+	callbacks.DumbVorbisDecode = dumb_decode_vorbis_;
+
 	SetCallbacks(&callbacks);
+	SetupGenMidi();
+	SetupDMXGUS();
 }
 
 
@@ -460,7 +511,6 @@ MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *devi
 				(id[0] == MAKE_ID('D', 'B', 'R', 'A') && id[1] == MAKE_ID('W', 'O', 'P', 'L')) ||		// DosBox Raw OPL
 				(id[0] == MAKE_ID('A', 'D', 'L', 'I') && *((uint8_t*)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 			{
-				OPL_SetupConfig(&oplConfig, device->args.GetChars(), false);
 				streamsource = OPL_OpenSong(reader, &oplConfig);
 			}
 			else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
@@ -471,13 +521,12 @@ MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *devi
 			// Check for game music
 			else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
 			{
-				streamsource = GME_OpenSong(reader, fmt, gme_stereodepth, (int)GSnd->GetOutputRate());
+				streamsource = GME_OpenSong(reader, fmt, (int)GSnd->GetOutputRate());
 			}
 			// Check for module formats
 			else
 			{
-				Dumb_SetupConfig(&dumbConfig);
-				streamsource = MOD_OpenSong(reader, &dumbConfig, (int)GSnd->GetOutputRate());
+				streamsource = MOD_OpenSong(reader, (int)GSnd->GetOutputRate());
 			}
 			if (streamsource == nullptr)
 			{

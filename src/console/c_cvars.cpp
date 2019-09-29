@@ -87,6 +87,7 @@ FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBa
 	m_Callback = callback;
 	Flags = 0;
 	Name = NULL;
+	inCallback = false;
 
 	if (var_name)
 	{

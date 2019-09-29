@@ -65,6 +65,7 @@ enum
 	CVAR_IGNORE			= 16384,// do not send cvar across the network/inaccesible from ACS (dummy mod cvar)
 	CVAR_CHEAT			= 32768,// can be set only when sv_cheats is enabled
 	CVAR_UNSAFECONTEXT	= 65536,// cvar value came from unsafe context
+	CVAR_VIRTUAL		= 0x20000,	//do not invoke the callback recursively so it can be used to mirror an external variable.
 };
 
 union UCVarValue
@@ -97,7 +98,15 @@ public:
 	FBaseCVar (const char *name, uint32_t flags, void (*callback)(FBaseCVar &));
 	virtual ~FBaseCVar ();
 
-	inline void Callback () { if (m_Callback) m_Callback (*this); }
+	inline void Callback () 
+	{ 
+		if (m_Callback && !inCallback)
+		{
+			inCallback = !!(Flags & CVAR_VIRTUAL);	// Virtual CVARs never invoke the callback recursively, giving it a chance to manipulate the value without side effects.
+			m_Callback(*this);
+			inCallback = false;
+		}
+	}
 
 	inline const char *GetName () const { return Name; }
 	inline uint32_t GetFlags () const { return Flags; }
@@ -145,6 +154,7 @@ protected:
 	char *Name;
 	FString SafeValue;
 	uint32_t Flags;
+	bool inCallback;
 
 private:
 	FBaseCVar (const FBaseCVar &var) = delete;

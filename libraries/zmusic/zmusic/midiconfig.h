@@ -139,15 +139,18 @@ struct DumbConfig
     float mod_dumb_mastervolume;
 };
 
+// The rest is not used yet.
 
 struct misc
 {
 	bool snd_midiprecache;
-	float gme_stereodepth
+	float gme_stereodepth;
 	int snd_streambuffersize;
 };
 
 
+namespace ZMusic
+{
 
 enum EZMusicIntConfigKey
 {
@@ -171,7 +174,6 @@ enum EZMusicIntConfigKey
 	opl_numchips,
 	opl_core,
 	opl_fullpan,
-	oplConfig.fullpan = self;
 
 	opn_chips_count,
 	opn_emulator_id,
@@ -214,7 +216,7 @@ enum EZMusicIntConfigKey
 	snd_streambuffersize,
 	
 	NUM_INT_CONFIGS
-}
+};
 
 enum EZMusicFloatConfigKey
 {
@@ -233,6 +235,8 @@ enum EZMusicFloatConfigKey
 
 	gme_stereodepth,
 	mod_dumb_mastervolume,
+
+	NUM_FLOAT_CONFIGS
 };
 
 enum EMusicStringConfigKey
@@ -245,4 +249,8 @@ enum EMusicStringConfigKey
 	gus_patchdir,
 	timidity_config,
 	wildmidi_config,
+
+	NUM_STRING_CONFIGS
 };
+
+}

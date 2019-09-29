@@ -404,3 +404,86 @@ void MIDISource::CreateSMF(std::vector<uint8_t> &file, int looplimit)
 }
 
 
+//==========================================================================
+//
+// Global interface (identification / creation of MIDI sources)
+//
+//==========================================================================
+
+extern int MUSHeaderSearch(const uint8_t *head, int len);
+
+//==========================================================================
+//
+// identify MIDI file type
+//
+//==========================================================================
+
+EMIDIType IdentifyMIDIType(uint32_t *id, int size)
+{
+	// Check for MUS format
+	// Tolerate sloppy wads by searching up to 32 bytes for the header
+	if (MUSHeaderSearch((uint8_t*)id, size) >= 0)
+	{
+		return MIDI_MUS;
+	}
+	// Check for HMI format
+	else 
+	if (id[0] == MAKE_ID('H','M','I','-') &&
+		id[1] == MAKE_ID('M','I','D','I') &&
+		id[2] == MAKE_ID('S','O','N','G'))
+	{
+		return MIDI_HMI;
+	}
+	// Check for HMP format
+	else
+	if (id[0] == MAKE_ID('H','M','I','M') &&
+		id[1] == MAKE_ID('I','D','I','P'))
+	{
+		return MIDI_HMI;
+	}
+	// Check for XMI format
+	else
+	if ((id[0] == MAKE_ID('F','O','R','M') &&
+		 id[2] == MAKE_ID('X','D','I','R')) ||
+		((id[0] == MAKE_ID('C','A','T',' ') || id[0] == MAKE_ID('F','O','R','M')) &&
+		 id[2] == MAKE_ID('X','M','I','D')))
+	{
+		return MIDI_XMI;
+	}
+	// Check for MIDI format
+	else if (id[0] == MAKE_ID('M','T','h','d'))
+	{
+		return MIDI_MIDI;
+	}
+	else
+	{
+		return MIDI_NOTMIDI;
+	}
+}
+
+//==========================================================================
+//
+// create a source based on MIDI file type
+//
+//==========================================================================
+
+MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype)
+{
+	switch (miditype)
+	{
+	case MIDI_MUS:
+		return new MUSSong2(data, length);
+
+	case MIDI_MIDI:
+		return new MIDISong2(data, length);
+
+	case MIDI_HMI:
+		return new HMISong(data, length);
+
+	case MIDI_XMI:
+		return new XMISong(data, length);
+
+	default:
+		return nullptr;
+	}
+}

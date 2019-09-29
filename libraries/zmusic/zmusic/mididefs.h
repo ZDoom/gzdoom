@@ -13,7 +13,7 @@ inline constexpr uint32_t MEVENT_EVENTPARM(uint32_t x) { return ((x) & 0xffffff)
 // These constants must match the corresponding values of the Windows headers
 // to avoid readjustment in the native Windows device's playback functions 
 // and should not be changed.
-enum
+enum EMidiDeviceClass
 {
 	MIDIDEV_MIDIPORT = 1,
 	MIDIDEV_SYNTH,
@@ -24,7 +24,16 @@ enum
 	MIDIDEV_SWSYNTH
 };
 
-enum : uint8_t
+enum EMIDIType
+{
+	MIDI_NOTMIDI,
+	MIDI_MIDI,
+	MIDI_HMI,
+	MIDI_XMI,
+	MIDI_MUS
+};
+
+enum EMidiEvent : uint8_t
 {
 	MEVENT_TEMPO = 1,
 	MEVENT_NOP = 2,
@@ -49,10 +58,9 @@ enum EMidiDevice
 
 struct SoundStreamInfo
 {
-	// Format is always 32 bit float. If mBufferSize is 0, the song doesn't use streaming but plays through a different interface.
-	int mBufferSize;
+	int mBufferSize;	// If mBufferSize is 0, the song doesn't use streaming but plays through a different interface. 
 	int mSampleRate;
-	int mNumChannels;
+	int mNumChannels;	// If mNumChannels is negative, 16 bit integer format is used instead of floating point.
 };
 
 #ifndef MAKE_ID

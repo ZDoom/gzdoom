@@ -51,19 +51,19 @@ public:
 	WildMIDIDevice(int samplerate);
 	~WildMIDIDevice();
 	
-	int OpenRenderer();
-	void PrecacheInstruments(const uint16_t *instruments, int count);
-	std::string GetStats();
+	int OpenRenderer() override;
+	void PrecacheInstruments(const uint16_t *instruments, int count) override;
+	std::string GetStats() override;
 	int GetDeviceType() const override { return MDEV_WILDMIDI; }
 	
 protected:
 	WildMidi::Renderer *Renderer;
 	std::shared_ptr<WildMidi::Instruments> instruments;
 	
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	void ChangeSettingInt(const char *opt, int set);
+	void HandleEvent(int status, int parm1, int parm2) override;
+	void HandleLongEvent(const uint8_t *data, int len) override;
+	void ComputeOutput(float *buffer, int len) override;
+	void ChangeSettingInt(const char *opt, int set) override;
 	void LoadInstruments();
 
 };
@@ -244,7 +244,7 @@ bool WildMidi_SetupConfig(const char* args)
 	if (*args == 0) args = wildMidiConfig.config.c_str();
 	if (stricmp(wildMidiConfig.loadedConfig.c_str(), args) == 0) return false; // aleady loaded
 
-	MusicIO::SoundFontReaderInterface* reader;
+	MusicIO::SoundFontReaderInterface* reader = nullptr;
 	if (musicCallbacks.OpenSoundFont)
 	{
 		reader = musicCallbacks.OpenSoundFont(args, SF_GUS);

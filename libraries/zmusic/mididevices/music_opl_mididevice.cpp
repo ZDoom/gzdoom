@@ -60,18 +60,18 @@ class OPLMIDIDevice : public SoftSynthMIDIDevice, protected OPLmusicBlock
 {
 public:
 	OPLMIDIDevice(int core);
-	int OpenRenderer();
-	void Close();
-	int GetTechnology() const;
+	int OpenRenderer() override;
+	void Close() override;
+	int GetTechnology() const override;
 	std::string GetStats() override;
 
 protected:
-	void CalcTickRate();
-	int PlayTick();
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
-	bool ServiceStream(void *buff, int numbytes);
+	void CalcTickRate() override;
+	int PlayTick() override;
+	void HandleEvent(int status, int parm1, int parm2) override;
+	void HandleLongEvent(const uint8_t *data, int len) override;
+	void ComputeOutput(float *buffer, int len) override;
+	bool ServiceStream(void *buff, int numbytes) override;
 	int GetDeviceType() const override { return MDEV_OPL; }
 };
 

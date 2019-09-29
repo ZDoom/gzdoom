@@ -71,16 +71,16 @@ public:
 	TimidityMIDIDevice(int samplerate);
 	~TimidityMIDIDevice();
 	
-	int OpenRenderer();
-	void PrecacheInstruments(const uint16_t *instruments, int count);
+	int OpenRenderer() override;
+	void PrecacheInstruments(const uint16_t *instruments, int count) override;
 	int GetDeviceType() const override { return MDEV_GUS; }
 	
 protected:
 	Timidity::Renderer *Renderer;
 	
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
+	void HandleEvent(int status, int parm1, int parm2) override;
+	void HandleLongEvent(const uint8_t *data, int len) override;
+	void ComputeOutput(float *buffer, int len) override;
 };
 
 
@@ -265,7 +265,7 @@ bool GUS_SetupConfig(const char* args)
 	if (*args == 0) args = gusConfig.gus_config.c_str();
 	if (stricmp(gusConfig.loadedConfig.c_str(), args) == 0) return false; // aleady loaded
 
-	MusicIO::SoundFontReaderInterface *reader;
+	MusicIO::SoundFontReaderInterface *reader = nullptr;
 	if (musicCallbacks.OpenSoundFont)
 	{
 		reader = musicCallbacks.OpenSoundFont(args, SF_GUS | SF_SF2);

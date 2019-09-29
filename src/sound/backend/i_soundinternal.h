@@ -6,6 +6,7 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "tarray.h"
+#include "zmusic/sounddecoder.h"
 #include "../../libraries/music_common/fileio.h"
 
 class FileReader;
@@ -116,9 +117,6 @@ struct FISoundChannel
 
 void FindLoopTags(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
 
-
-const char *GetSampleTypeName(enum SampleType type);
-const char *GetChannelConfigName(enum ChannelConfig chan);
 class SoundStream;
 
 

@@ -47,6 +47,9 @@
 #include "zmusic/sounddecoder.h"
 #include "filereadermusicinterface.h"
 
+const char *GetSampleTypeName(SampleType type);
+const char *GetChannelConfigName(ChannelConfig chan);
+
 FModule OpenALModule{"OpenAL"};
 
 #include "oalload.h"

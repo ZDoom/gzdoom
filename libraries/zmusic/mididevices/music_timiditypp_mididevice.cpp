@@ -48,8 +48,8 @@ public:
 	TimidityPPMIDIDevice(int samplerate);
 	~TimidityPPMIDIDevice();
 
-	int OpenRenderer();
-	void PrecacheInstruments(const uint16_t *instruments, int count);
+	int OpenRenderer() override;
+	void PrecacheInstruments(const uint16_t *instruments, int count) override;
 	//std::string GetStats();
 	int GetDeviceType() const override { return MDEV_TIMIDITY; }
 
@@ -58,9 +58,9 @@ public:
 protected:
 	TimidityPlus::Player *Renderer;
 
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
+	void HandleEvent(int status, int parm1, int parm2) override;
+	void HandleLongEvent(const uint8_t *data, int len) override;
+	void ComputeOutput(float *buffer, int len) override;
 	void LoadInstruments();
 };
 
@@ -198,7 +198,7 @@ bool Timidity_SetupConfig(const char* args)
 	if (*args == 0) args = timidityConfig.timidity_config.c_str();
 	if (stricmp(timidityConfig.loadedConfig.c_str(), args) == 0) return false; // aleady loaded
 
-	MusicIO::SoundFontReaderInterface* reader;
+	MusicIO::SoundFontReaderInterface* reader = nullptr;
 	if (musicCallbacks.OpenSoundFont)
 	{
 		reader = musicCallbacks.OpenSoundFont(args, SF_GUS | SF_SF2);

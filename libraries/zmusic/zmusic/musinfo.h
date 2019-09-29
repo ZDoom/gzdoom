@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "mididefs.h"
 
 // The base music class. Everything is derived from this --------------------

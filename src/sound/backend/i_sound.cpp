@@ -321,7 +321,7 @@ void I_ShutdownSound()
 	}
 }
 
-const char *GetSampleTypeName(enum SampleType type)
+const char *GetSampleTypeName(SampleType type)
 {
     switch(type)
     {
@@ -331,7 +331,7 @@ const char *GetSampleTypeName(enum SampleType type)
     return "(invalid sample type)";
 }
 
-const char *GetChannelConfigName(enum ChannelConfig chan)
+const char *GetChannelConfigName(ChannelConfig chan)
 {
     switch(chan)
     {

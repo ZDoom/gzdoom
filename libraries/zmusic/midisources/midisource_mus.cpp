@@ -177,7 +177,6 @@ std::vector<uint16_t> MUSSong2::PrecacheData()
 	std::vector<uint16_t> work;
 	const uint8_t *used = MusData.data() + sizeof(MUSHeader) / sizeof(uint8_t);
 	int i, k;
-	size_t p = 0;
 
 	int numinstr = LittleShort(MusHeader->NumInstruments);
 	work.reserve(LittleShort(MusHeader->NumInstruments));

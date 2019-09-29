@@ -154,17 +154,6 @@ typedef struct MODMIDICFG
 
 //==========================================================================
 //
-// time_to_samples
-//
-//==========================================================================
-
-static inline uint64_t time_to_samples(double p_time,int p_sample_rate)
-{
-	return (uint64_t)floor((double)p_sample_rate * p_time + 0.5);
-}
-
-//==========================================================================
-//
 // ReadDUH
 //
 // Reads metadata from a generic module.

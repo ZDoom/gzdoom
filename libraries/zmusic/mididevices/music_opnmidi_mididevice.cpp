@@ -47,13 +47,13 @@ public:
 	~OPNMIDIDevice();
 	
 	
-	int OpenRenderer();
+	int OpenRenderer() override;
 	int GetDeviceType() const override { return MDEV_OPN; }
 	
 protected:
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
+	void HandleEvent(int status, int parm1, int parm2) override;
+	void HandleLongEvent(const uint8_t *data, int len) override;
+	void ComputeOutput(float *buffer, int len) override;
 	
 private:
 	int LoadCustomBank(const char *bankfile);

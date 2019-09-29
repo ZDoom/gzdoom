@@ -148,6 +148,9 @@ bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo *currSong, int value,
 {
 	switch (key)
 	{
+		default:
+			return false;
+			
 		case adl_chips_count: 
 			ChangeAndReturn(adlConfig.adl_chips_count, value, pRealValue);
 			return devType() == MDEV_ADL;
@@ -466,6 +469,9 @@ bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, MusInfo* currSong, float va
 {
 	switch (key)
 	{
+		default:
+			return false;
+			
 		case fluid_gain: 
 			if (value < 0)
 				value = 0;
@@ -615,6 +621,9 @@ bool ChangeMusicSetting(ZMusic::EStringConfigKey key, MusInfo* currSong, const c
 {
 	switch (key)
 	{
+		default:
+			return false;
+			
 		case adl_custom_bank: 
 			adlConfig.adl_custom_bank = value;
 			return devType() == MDEV_ADL;

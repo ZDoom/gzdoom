@@ -369,7 +369,6 @@ bool SoftSynthMIDIDevice::ServiceStream (void *buff, int numbytes)
 	float *samples = (float *)buff;
 	float *samples1;
 	int numsamples = numbytes / sizeof(float) / 2;
-	bool prev_ended = false;
 	bool res = true;
 
 	samples1 = samples;

@@ -46,14 +46,14 @@ public:
 	ADLMIDIDevice(const ADLConfig *config);
 	~ADLMIDIDevice();
 	
-	int OpenRenderer();
+	int OpenRenderer() override;
 	int GetDeviceType() const override { return MDEV_ADL; }
 
 protected:
 	
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
+	void HandleEvent(int status, int parm1, int parm2) override;
+	void HandleLongEvent(const uint8_t *data, int len) override;
+	void ComputeOutput(float *buffer, int len) override;
 	
 private:
 	int LoadCustomBank(const ADLConfig *config);
@@ -236,7 +236,7 @@ MIDIDevice *CreateADLMIDIDevice(const char *Args)
 		if (*bank >= '0' && *bank <= '9')
 		{
 			// Args specify a bank by index.
-			int newbank = (int)strtoll(bank, nullptr, 10);
+			config.adl_bank = (int)strtoll(bank, nullptr, 10);
 			config.adl_use_custom_bank = false;
 		}
 		else

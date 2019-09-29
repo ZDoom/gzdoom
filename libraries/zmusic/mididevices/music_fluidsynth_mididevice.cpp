@@ -59,17 +59,17 @@ public:
 	FluidSynthMIDIDevice(int samplerate, std::vector<std::string> &config, int (*printfunc_)(const char *, ...));
 	~FluidSynthMIDIDevice();
 	
-	int OpenRenderer();
+	int OpenRenderer() override;
 	std::string GetStats() override;
-	void ChangeSettingInt(const char *setting, int value);
-	void ChangeSettingNum(const char *setting, double value);
-	void ChangeSettingString(const char *setting, const char *value);
+	void ChangeSettingInt(const char *setting, int value) override;
+	void ChangeSettingNum(const char *setting, double value) override;
+	void ChangeSettingString(const char *setting, const char *value) override;
 	int GetDeviceType() const override { return MDEV_FLUIDSYNTH; }
 	
 protected:
-	void HandleEvent(int status, int parm1, int parm2);
-	void HandleLongEvent(const uint8_t *data, int len);
-	void ComputeOutput(float *buffer, int len);
+	void HandleEvent(int status, int parm1, int parm2) override;
+	void HandleLongEvent(const uint8_t *data, int len) override;
+	void ComputeOutput(float *buffer, int len) override;
 	int LoadPatchSets(const std::vector<std::string>& config);
 	
 	fluid_settings_t *FluidSettings;
@@ -199,7 +199,6 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, std::vector<std::stri
 		fluidConfig.fluid_chorus_speed, fluidConfig.fluid_chorus_depth, fluidConfig.fluid_chorus_type);
 
 	// try loading a patch set that got specified with $mididevice.
-	int res = 0;
 
 	if (LoadPatchSets(config))
 	{

@@ -70,18 +70,18 @@ public:
 	SoftSynthMIDIDevice(int samplerate, int minrate = 1, int maxrate = 1000000 /* something higher than any valid value */);
 	~SoftSynthMIDIDevice();
 
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	int StreamOut(MidiHeader *data);
-	int StreamOutSync(MidiHeader *data);
-	int Resume();
-	void Stop();
-	bool Pause(bool paused);
+	void Close() override;
+	bool IsOpen() const override;
+	int GetTechnology() const override;
+	int SetTempo(int tempo) override;
+	int SetTimeDiv(int timediv) override;
+	int StreamOut(MidiHeader *data) override;
+	int StreamOutSync(MidiHeader *data) override;
+	int Resume() override;
+	void Stop() override;
+	bool Pause(bool paused) override;
 
-	virtual int Open();
+	virtual int Open() override;
 	virtual bool ServiceStream(void* buff, int numbytes);
 	int GetSampleRate() const { return SampleRate; }
 	SoundStreamInfo GetStreamInfo() const override;

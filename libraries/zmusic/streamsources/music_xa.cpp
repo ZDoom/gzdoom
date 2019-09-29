@@ -291,7 +291,6 @@ bool XASong::Start()
 
 bool XASong::GetData(void *vbuff, size_t len)
 {
-	auto olen = len;
 	float *dest = (float*)vbuff;
 	while (len > 0)
 	{

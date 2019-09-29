@@ -68,7 +68,7 @@ class AltHud ui
 		if (IndexFont == NULL) IndexFont = ConFont;	// Emergency fallback
 
 		invgem_left = TexMan.CheckForTexture("INVGEML1", TexMan.Type_MiscPatch);
-		invgem_left = TexMan.CheckForTexture("INVGEMR1", TexMan.Type_MiscPatch);
+		invgem_right = TexMan.CheckForTexture("INVGEMR1", TexMan.Type_MiscPatch);
 		tnt1a0 = TexMan.CheckForTexture("TNT1A0", TexMan.Type_Sprite);
 		fragpic = TexMan.CheckForTexture("HU_FRAGS", TexMan.Type_MiscPatch);
 		statspace = SmallFont.StringWidth("Ac:");

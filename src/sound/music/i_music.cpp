@@ -372,60 +372,68 @@ MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *devi
 			info = streamer;
 		}
 
-		// Check for various raw OPL formats
-		else if (
-			(id[0] == MAKE_ID('R', 'A', 'W', 'A') && id[1] == MAKE_ID('D', 'A', 'T', 'A')) ||		// Rdos Raw OPL
-			(id[0] == MAKE_ID('D', 'B', 'R', 'A') && id[1] == MAKE_ID('W', 'O', 'P', 'L')) ||		// DosBox Raw OPL
-			(id[0] == MAKE_ID('A', 'D', 'L', 'I') && *((uint8_t*)id + 4) == 'B'))		// Martin Fernandez's modified IMF
+		// Check for CDDA "format"
+		else if (id[0] == (('R') | (('I') << 8) | (('F') << 16) | (('F') << 24)))
 		{
-			OPL_SetupConfig(&oplConfig, device->args.GetChars(), false);
-			streamsource = OPL_OpenSong(reader, &oplConfig);
-		}
-		else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
-		{
-			streamsource = XA_OpenSong(reader);	// this takes over the reader.
-			reader = nullptr;					// We do not own this anymore.
-		}
-		// Check for game music
-		else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
-		{
-			streamsource = GME_OpenSong(reader, fmt, gme_stereodepth, (int)GSnd->GetOutputRate());
-		}
-		// Check for module formats
-		else
-		{
-			Dumb_SetupConfig(&dumbConfig);
-			streamsource = MOD_OpenSong(reader, &dumbConfig, (int)GSnd->GetOutputRate());
-		}
-		if (info == nullptr && streamsource == nullptr)
-		{
-			streamsource = SndFile_OpenSong(reader);		// this only takes over the reader if it succeeds. We need to look out for this.
-			if (streamsource != nullptr) reader = nullptr;
-		}
+			uint32_t subid;
 
-		if (streamsource)
-		{
-			info = OpenStreamSong(streamsource);
-		}
-		if (info == nullptr && reader != nullptr)
-		{
-			// Check for CDDA "format"
-			if (id[0] == (('R') | (('I') << 8) | (('F') << 16) | (('F') << 24)))
+			reader->seek(8, SEEK_CUR);
+			if (reader->read(&subid, 4) == 4)
 			{
-				uint32_t subid;
+				reader->seek(-12, SEEK_CUR);
 
-				reader->seek(8, SEEK_CUR);
-				if (reader->read(&subid, 4) == 4)
+				if (subid == (('C') | (('D') << 8) | (('D') << 16) | (('A') << 24)))
 				{
-					reader->seek(-12, SEEK_CUR);
-
-					if (subid == (('C') | (('D') << 8) | (('D') << 16) | (('A') << 24)))
-					{
-						// This is a CDDA file
-						info = new CDDAFile(reader);
-					}
+					// This is a CDDA file
+					info = new CDDAFile(reader);
 				}
 			}
+		}
+
+		// Check for various raw OPL formats
+		else
+		{
+			if (
+				(id[0] == MAKE_ID('R', 'A', 'W', 'A') && id[1] == MAKE_ID('D', 'A', 'T', 'A')) ||		// Rdos Raw OPL
+				(id[0] == MAKE_ID('D', 'B', 'R', 'A') && id[1] == MAKE_ID('W', 'O', 'P', 'L')) ||		// DosBox Raw OPL
+				(id[0] == MAKE_ID('A', 'D', 'L', 'I') && *((uint8_t*)id + 4) == 'B'))		// Martin Fernandez's modified IMF
+			{
+				OPL_SetupConfig(&oplConfig, device->args.GetChars(), false);
+				streamsource = OPL_OpenSong(reader, &oplConfig);
+			}
+			else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
+			{
+				streamsource = XA_OpenSong(reader);	// this takes over the reader.
+				reader = nullptr;					// We do not own this anymore.
+			}
+			// Check for game music
+			else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
+			{
+				streamsource = GME_OpenSong(reader, fmt, gme_stereodepth, (int)GSnd->GetOutputRate());
+			}
+			// Check for module formats
+			else
+			{
+				Dumb_SetupConfig(&dumbConfig);
+				streamsource = MOD_OpenSong(reader, &dumbConfig, (int)GSnd->GetOutputRate());
+			}
+			if (streamsource == nullptr)
+			{
+				streamsource = SndFile_OpenSong(reader);		// this only takes over the reader if it succeeds. We need to look out for this.
+				if (streamsource != nullptr) reader = nullptr;
+			}
+
+			if (streamsource)
+			{
+				info = OpenStreamSong(streamsource);
+			}
+		}
+
+		if (!info)
+		{
+			// File could not be identified as music.
+			if (reader) reader->close();
+			return nullptr;
 		}
 
 		if (info && !info->IsValid())
@@ -440,7 +448,7 @@ MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *devi
 		if (reader) reader->close();
 		throw;
 	}
-
+	if (reader) reader->close();
 	return info;
 }
 

@@ -30,10 +30,10 @@
 **---------------------------------------------------------------------------
 **
 */
-#include "sndfile_decoder.h"
-#include "templates.h"
+
+#include <algorithm>
+#include "zmusic/sndfile_decoder.h"
 #include "i_module.h"
-#include "cmdlib.h"
 
 #ifdef HAVE_SNDFILE
 
@@ -61,7 +61,8 @@ bool IsSndFilePresent()
 	if (!done)
 	{
 		done = true;
-		cached_result = SndFileModule.Load({NicePath("$PROGDIR/" SNDFILELIB), SNDFILELIB});
+		auto abspath = module_progdir + "/" SNDFILELIB;
+		cached_result = SndFileModule.Load({abspath.c_str(), SNDFILELIB});
 	}
 	return cached_result;
 #endif
@@ -71,22 +72,22 @@ bool IsSndFilePresent()
 sf_count_t SndFileDecoder::file_get_filelen(void *user_data)
 {
     auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
-    return reader.GetLength();
+	return reader->filelength();
 }
 
 sf_count_t SndFileDecoder::file_seek(sf_count_t offset, int whence, void *user_data)
 {
 	auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
 
-    if(reader.Seek((long)offset, (FileReader::ESeek)whence) != 0)
+    if(reader->seek((long)offset, whence) != 0)
         return -1;
-    return reader.Tell();
+    return reader->tell();
 }
 
 sf_count_t SndFileDecoder::file_read(void *ptr, sf_count_t count, void *user_data)
 {
 	auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
-	return reader.Read(ptr, (long)count);
+	return reader->read(ptr, (long)count);
 }
 
 sf_count_t SndFileDecoder::file_write(const void *ptr, sf_count_t count, void *user_data)
@@ -97,7 +98,7 @@ sf_count_t SndFileDecoder::file_write(const void *ptr, sf_count_t count, void *u
 sf_count_t SndFileDecoder::file_tell(void *user_data)
 {
 	auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
-	return reader.Tell();
+	return reader->tell();
 }
 
 
@@ -106,15 +107,18 @@ SndFileDecoder::~SndFileDecoder()
     if(SndFile)
         sf_close(SndFile);
     SndFile = 0;
+
+	if (Reader) Reader->close();
+	Reader = nullptr;
 }
 
-bool SndFileDecoder::open(FileReader &reader)
+bool SndFileDecoder::open(MusicIO::FileInterface *reader)
 {
 	if (!IsSndFilePresent()) return false;
 	
 	SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
-	Reader = std::move(reader);
+	Reader = reader;
 	SndInfo.format = 0;
 	SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
 	if (SndFile)
@@ -125,7 +129,7 @@ bool SndFileDecoder::open(FileReader &reader)
 		sf_close(SndFile);
 		SndFile = 0;
 	}
-	reader = std::move(Reader);	// need to give it back.
+	Reader = nullptr;	// need to give it back.
 	return false;
 }
 
@@ -156,30 +160,30 @@ size_t SndFileDecoder::read(char *buffer, size_t bytes)
     // could be more.
     while(total < frames)
     {
-        size_t todo = MIN<size_t>(frames-total, 64/SndInfo.channels);
+        size_t todo = std::min<size_t>(frames-total, 64/SndInfo.channels);
         float tmp[64];
 
         size_t got = (size_t)sf_readf_float(SndFile, tmp, todo);
         if(got < todo) frames = total + got;
 
         for(size_t i = 0;i < got*SndInfo.channels;i++)
-            *out++ = (short)xs_CRoundToInt(clamp(tmp[i] * 32767.f, -32768.f, 32767.f));
+            *out++ = (short)std::max(std::min(tmp[i] * 32767.f, 32767.f), -32768.f);
         total += got;
     }
     return total * SndInfo.channels * 2;
 }
 
-TArray<uint8_t> SndFileDecoder::readAll()
+std::vector<uint8_t> SndFileDecoder::readAll()
 {
     if(SndInfo.frames <= 0)
         return SoundDecoder::readAll();
 
     int framesize = 2 * SndInfo.channels;
-    TArray<uint8_t> output;
+	std::vector<uint8_t> output;
 
-    output.Resize((unsigned)(SndInfo.frames * framesize));
-    size_t got = read((char*)&output[0], output.Size());
-    output.Resize((unsigned)got);
+    output.resize((unsigned)(SndInfo.frames * framesize));
+    size_t got = read((char*)&output[0], output.size());
+    output.resize((unsigned)got);
 
     return output;
 }

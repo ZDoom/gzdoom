@@ -1,8 +1,9 @@
 /*
-** i_module.cpp
+** sounddecoder.cpp
+** baseclass for sound format decoders
 **
 **---------------------------------------------------------------------------
-** Copyright 2016 Braden Obrzut
+** Copyright 2008-2019 Chris Robinson
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -31,78 +32,50 @@
 **
 */
 
-#include "i_module.h"
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#else
-#include <dlfcn.h>
+#include "zmusic/sndfile_decoder.h"
+#include "zmusic/mpg123_decoder.h"
+
+SoundDecoder *SoundDecoder::CreateDecoder(MusicIO::FileInterface *reader)
+{
+    SoundDecoder *decoder = NULL;
+    auto pos = reader->tell();
+
+#ifdef HAVE_SNDFILE
+		decoder = new SndFileDecoder;
+		if (decoder->open(reader))
+			return decoder;
+		reader->seek(pos, SEEK_SET);
+
+		delete decoder;
+		decoder = NULL;
 #endif
+#ifdef HAVE_MPG123
+		decoder = new MPG123Decoder;
+		if (decoder->open(reader))
+			return decoder;
+		reader->seek(pos, SEEK_SET);
 
-
-#ifndef _WIN32
-#define LoadLibraryA(x) dlopen((x), RTLD_LAZY)
-#define GetProcAddress(a,b) dlsym((a),(b))
-#define FreeLibrary(x) dlclose((x))
-using HMODULE = void*;
+		delete decoder;
+		decoder = NULL;
 #endif
-
-bool FModule::Load(std::initializer_list<const char*> libnames)
-{
-	for(auto lib : libnames)
-	{
-		if(!Open(lib))
-			continue;
-
-		StaticProc *proc;
-		for(proc = reqSymbols;proc;proc = proc->Next)
-		{
-			if(!(proc->Call = GetSym(proc->Name)) && !proc->Optional)
-			{
-				Unload();
-				break;
-			}
-		}
-
-		if(IsLoaded())
-			return true;
-	}
-
-	return false;
+    return decoder;
 }
 
-void FModule::Unload()
-{
-	if(handle)
-	{
-		FreeLibrary((HMODULE)handle);
-		handle = nullptr;
-	}
-}
 
-bool FModule::Open(const char* lib)
+// Default readAll implementation, for decoders that can't do anything better
+std::vector<uint8_t> SoundDecoder::readAll()
 {
-#ifdef _WIN32
-	if((handle = GetModuleHandleA(lib)) != nullptr)
-		return true;
-#else
-	// Loading an empty string in Linux doesn't do what we expect it to.
-	if(*lib == '\0')
-		return false;
-#endif
-	handle = LoadLibraryA(lib);
-	return handle != nullptr;
-}
+    std::vector<uint8_t> output;
+    unsigned total = 0;
+    unsigned got;
 
-void *FModule::GetSym(const char* name)
-{
-	return (void *)GetProcAddress((HMODULE)handle, name);
-}
-
-std::string module_progdir(".");	// current program directory used to look up dynamic libraries. Default to something harmless in case the user didn't set it.
-
-void FModule_SetProgDir(const char* progdir)
-{
-	module_progdir = progdir;
+    output.resize(total+32768);
+    while((got=(unsigned)read((char*)&output[total], output.size()-total)) > 0)
+    {
+        total += got;
+        output.resize(total*2);
+    }
+    output.resize(total);
+    return output;
 }

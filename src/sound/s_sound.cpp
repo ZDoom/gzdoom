@@ -1532,7 +1532,7 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 
 	std::pair<SoundHandle, bool> snd;
 
-	if (pBuffer->mBuffer.Size() > 0)
+	if (pBuffer->mBuffer.size() > 0)
 	{
 		snd = GSnd->LoadSoundBuffered(pBuffer, true);
 	}

@@ -39,8 +39,10 @@
 
 #include "oalsound.h"
 
-#include "mpg123_decoder.h"
-#include "sndfile_decoder.h"
+#include "i_module.h"
+#include "cmdlib.h"
+#include "zmusic/mpg123_decoder.h"
+#include "zmusic/sndfile_decoder.h"
 
 #include "c_dispatch.h"
 #include "i_music.h"
@@ -247,6 +249,7 @@ public:
 
 void I_InitSound ()
 {
+	FModule_SetProgDir(progdir);
 	/* Get command line options: */
 	nosound = !!Args->CheckParm ("-nosound");
 	nosfx = !!Args->CheckParm ("-nosfx");
@@ -351,16 +354,20 @@ FString SoundRenderer::GatherStats ()
 
 short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
 {
-	FileReader reader;
     short *samples = (short*)calloc(1, outlen);
     ChannelConfig chans;
     SampleType type;
     int srate;
 
-	reader.OpenMemory(coded, sizebytes);
+	// The decoder will take ownership of the reader if it succeeds so this may not be a local variable.
+	MusicIO::MemoryReader *reader = new MusicIO::MemoryReader((const uint8_t*)coded, sizebytes);
 
-    SoundDecoder *decoder = CreateDecoder(reader);
-    if(!decoder) return samples;
+    SoundDecoder *decoder = SoundDecoder::CreateDecoder(reader);
+	if (!decoder)
+	{
+		reader->close();
+		return samples;
+	}
 
     decoder->getInfo(&srate, &chans, &type);
     if(chans != ChannelConfig_Mono || type != SampleType_Int16)
@@ -545,46 +552,3 @@ std::pair<SoundHandle, bool> SoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *
 	return std::make_pair(retval, true);
 }
 
-SoundDecoder *SoundRenderer::CreateDecoder(FileReader &reader)
-{
-    SoundDecoder *decoder = NULL;
-    auto pos = reader.Tell();
-
-#ifdef HAVE_SNDFILE
-		decoder = new SndFileDecoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader.Seek(pos, FileReader::SeekSet);
-
-		delete decoder;
-		decoder = NULL;
-#endif
-#ifdef HAVE_MPG123
-		decoder = new MPG123Decoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader.Seek(pos, FileReader::SeekSet);
-
-		delete decoder;
-		decoder = NULL;
-#endif
-    return decoder;
-}
-
-
-// Default readAll implementation, for decoders that can't do anything better
-TArray<uint8_t> SoundDecoder::readAll()
-{
-    TArray<uint8_t> output;
-    unsigned total = 0;
-    unsigned got;
-
-    output.Resize(total+32768);
-    while((got=(unsigned)read((char*)&output[total], output.Size()-total)) > 0)
-    {
-        total += got;
-        output.Resize(total*2);
-    }
-    output.Resize(total);
-    return output;
-}

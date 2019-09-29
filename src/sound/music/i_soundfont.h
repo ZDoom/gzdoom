@@ -3,7 +3,7 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"
-#include "../libraries/music_common/fileio.h"
+#include "filereadermusicinterface.h"
 
 enum
 {
@@ -19,45 +19,6 @@ struct FSoundFontInfo
 	FString mNameExt;     // Same with extension. Used for comparing with input names so they can be done with or without extension.
 	FString mFilename;    // Full path to the backing file - this is needed by FluidSynth to load the sound font.
     int type;
-};
-
-struct FileReaderMusicInterface : public MusicIO::FileInterface
-{
-	FileReader fr;
-
-	FileReaderMusicInterface(FileReader& fr_in)
-	{
-		fr = std::move(fr_in);
-	}
-	char* gets(char* buff, int n) override
-	{
-		if (!fr.isOpen()) return nullptr;
-		return fr.Gets(buff, n);
-	}
-	long read(void* buff, int32_t size, int32_t nitems) override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Read(buff, size * nitems) / size;
-	}
-	long seek(long offset, int whence) override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Seek(offset, (FileReader::ESeek)whence);
-	}
-	long tell() override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Tell();
-	}
-	void close()
-	{
-		delete this;
-	}
-	FileReader &&GetReader()
-	{
-		return std::move(fr);
-	}
-
 };
 
 //==========================================================================

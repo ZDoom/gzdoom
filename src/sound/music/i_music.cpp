@@ -47,7 +47,7 @@
 #include "stats.h"
 #include "vm.h"
 #include "s_music.h"
-#include "i_soundfont.h"
+#include "filereadermusicinterface.h"
 #include "../libraries/zmusic/midisources/midisource.h"
 #include "../libraries/dumb/include/dumb.h"
 
@@ -83,7 +83,7 @@ EXTERN_CVAR (Int, snd_mididevice)
 
 static bool MusicDown = true;
 
-static bool ungzip(uint8_t *data, int size, TArray<uint8_t> &newdata);
+static bool ungzip(uint8_t *data, int size, std::vector<uint8_t> &newdata);
 
 MusInfo *currSong;
 int		nomusic = 0;
@@ -205,8 +205,6 @@ MusInfo::~MusInfo ()
 
 void MusInfo::Start(bool loop, float rel_vol, int subsong)
 {
-	if (nomusic) return;
-
 	if (rel_vol > 0.f)
 	{
 		float factor = relative_volume / saved_relative_volume;
@@ -287,24 +285,21 @@ MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-static MIDISource *CreateMIDISource(FileReader &reader, EMIDIType miditype)
+static MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype)
 {
-	MIDISource *source = nullptr;
-	auto data = reader.Read();
-	if (data.Size() <= 0) return nullptr;
 	switch (miditype)
 	{
 	case MIDI_MUS:
-		return new MUSSong2(data.Data(), data.Size());
+		return new MUSSong2(data, length);
 
 	case MIDI_MIDI:
-		return new MIDISong2(data.Data(), data.Size());
+		return new MIDISong2(data, length);
 
 	case MIDI_HMI:
-		return new HMISong(data.Data(), data.Size());
+		return new HMISong(data, length);
 
 	case MIDI_XMI:
-		return new XMISong(data.Data(), data.Size());
+		return new XMISong(data, length);
 
 	default:
 		return nullptr;
@@ -378,153 +373,154 @@ static EMIDIType IdentifyMIDIType(uint32_t *id, int size)
 //
 //==========================================================================
 
-MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
+MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *device)
 {
 	MusInfo *info = nullptr;
 	StreamSource *streamsource = nullptr;
 	const char *fmt;
 	uint32_t id[32/4];
 
-	if (nomusic)
+	if(reader->read(id, 32) != 32 || reader->seek(-32, FileReader::SeekCur) != 0)
 	{
+		reader->close();
 		return nullptr;
 	}
-
-	if(reader.Read(id, 32) != 32 || reader.Seek(-32, FileReader::SeekCur) != 0)
+	try
 	{
-		return nullptr;
-	}
-
-    // Check for gzip compression. Some formats are expected to have players
-    // that can handle it, so it simplifies things if we make all songs
-    // gzippable.
-	if ((id[0] & MAKE_ID(255, 255, 255, 0)) == GZIP_ID)
-	{
-
-		if (!reader.OpenMemoryArray([&reader](TArray<uint8_t> &array)
+		// Check for gzip compression. Some formats are expected to have players
+		// that can handle it, so it simplifies things if we make all songs
+		// gzippable.
+		if ((id[0] & MAKE_ID(255, 255, 255, 0)) == GZIP_ID)
 		{
-			bool res = false;
-			auto len = reader.GetLength();
-			uint8_t *gzipped = new uint8_t[len];
-			if (reader.Read(gzipped, len) == len)
+			// swap out the reader with one that reads the decompressed content.
+			auto zreader = new MusicIO::VectorReader([reader](std::vector<uint8_t>& array)
+				{
+					bool res = false;
+					auto len = reader->filelength();
+					uint8_t* gzipped = new uint8_t[len];
+					if (reader->read(gzipped, len) == len)
+					{
+						res = ungzip(gzipped, (int)len, array);
+					}
+					delete[] gzipped;
+				});
+			reader->close();
+			reader = zreader;
+
+
+			if (reader->read(id, 32) != 32 || reader->seek(-32, FileReader::SeekCur) != 0)
 			{
-				res = ungzip(gzipped, (int)len, array);
+				reader->close();
+				return nullptr;
 			}
-			delete[] gzipped;
-			return res;
-		}))
-		{
-			return nullptr;
 		}
 
-		if (reader.Read(id, 32) != 32 || reader.Seek(-32, FileReader::SeekCur) != 0)
+		EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
+		if (miditype != MIDI_NOTMIDI)
 		{
-			return nullptr;
-		}
-	}
+			std::vector<uint8_t> data(reader->filelength());
+			if (reader->read(data.data(), (long)data.size()) != (long)data.size())
+			{
+				reader->close();
+				return nullptr;
+			}
+			auto source = CreateMIDISource(data.data(), data.size(), miditype);
+			if (source == nullptr)
+			{
+				reader->close();
+				return nullptr;
+			}
+			if (!source->isValid())
+			{
+				delete source;
+				return nullptr;
+			}
 
-	EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
-	if (miditype != MIDI_NOTMIDI)
-	{
-		auto source = CreateMIDISource(reader, miditype);
-		if (source == nullptr) return nullptr;
-		if (!source->isValid())
-		{
-			delete source;
-			return nullptr;
-		}
-		
-		EMidiDevice devtype = device == nullptr? MDEV_DEFAULT : (EMidiDevice)device->device;
+			EMidiDevice devtype = device == nullptr ? MDEV_DEFAULT : (EMidiDevice)device->device;
 #ifndef _WIN32
-		// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
-		if (devtype == MDEV_MMAPI)
-			devtype = MDEV_SNDSYS;
+			// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
+			if (devtype == MDEV_MMAPI)
+				devtype = MDEV_SNDSYS;
 #endif
 
-		MIDIStreamer *streamer = CreateMIDIStreamer(devtype, device != nullptr? device->args.GetChars() : "");
-		if (streamer == nullptr)
-		{
-			delete source;
-			return nullptr;
+			MIDIStreamer* streamer = CreateMIDIStreamer(devtype, device != nullptr ? device->args.GetChars() : "");
+			if (streamer == nullptr)
+			{
+				delete source;
+				reader->close();
+				return nullptr;
+			}
+			streamer->SetMIDISource(source);
+			info = streamer;
 		}
-		streamer->SetMIDISource(source);
-		info = streamer;
-	}
 
-	// Check for various raw OPL formats
-	else if (
-		(id[0] == MAKE_ID('R','A','W','A') && id[1] == MAKE_ID('D','A','T','A')) ||		// Rdos Raw OPL
-		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
-		(id[0] == MAKE_ID('A','D','L','I') && *((uint8_t *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
-	{
-		OPL_SetupConfig(&oplConfig, device->args.GetChars(), false);
-		auto mreader = new FileReaderMusicInterface(reader);
-		streamsource = OPL_OpenSong(mreader, &oplConfig);
-		reader = mreader->GetReader();	// We need to get this back for the rest of this function.
-		delete mreader;
-	}
-	else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
-	{
-		auto mreader = new FileReaderMusicInterface(reader);
-		streamsource = XA_OpenSong(mreader);	// this takes over the reader.
-	}
-	// Check for game music
-	else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
-	{
-		auto mreader = new FileReaderMusicInterface(reader);
-		streamsource = GME_OpenSong(mreader, fmt, gme_stereodepth, (int)GSnd->GetOutputRate());
-		reader = mreader->GetReader();	// We need to get this back for the rest of this function.
-		delete mreader;
-	}
-	// Check for module formats
-	else
-	{
-		auto mreader = new FileReaderMusicInterface(reader);
-		Dumb_SetupConfig(&dumbConfig);
-		streamsource = MOD_OpenSong(mreader, &dumbConfig, (int)GSnd->GetOutputRate());
-		reader = mreader->GetReader();	// We need to get this back for the rest of this function.
-		delete mreader;
-	}
-	if (info == nullptr && streamsource == nullptr)
-	{
-		streamsource = SndFile_OpenSong(reader);
-	}
-	
-	if (streamsource)
-	{
-		info = OpenStreamSong(streamsource);
-		if (!info)
+		// Check for various raw OPL formats
+		else if (
+			(id[0] == MAKE_ID('R', 'A', 'W', 'A') && id[1] == MAKE_ID('D', 'A', 'T', 'A')) ||		// Rdos Raw OPL
+			(id[0] == MAKE_ID('D', 'B', 'R', 'A') && id[1] == MAKE_ID('W', 'O', 'P', 'L')) ||		// DosBox Raw OPL
+			(id[0] == MAKE_ID('A', 'D', 'L', 'I') && *((uint8_t*)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 		{
-			// If this fails we have no more valid data - but it couldn't be a CDDA file anyway.
-			return nullptr;
+			OPL_SetupConfig(&oplConfig, device->args.GetChars(), false);
+			streamsource = OPL_OpenSong(reader, &oplConfig);
+		}
+		else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'X', 'A')))
+		{
+			streamsource = XA_OpenSong(reader);	// this takes over the reader.
+			reader = nullptr;					// We do not own this anymore.
+		}
+		// Check for game music
+		else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
+		{
+			streamsource = GME_OpenSong(reader, fmt, gme_stereodepth, (int)GSnd->GetOutputRate());
+		}
+		// Check for module formats
+		else
+		{
+			Dumb_SetupConfig(&dumbConfig);
+			streamsource = MOD_OpenSong(reader, &dumbConfig, (int)GSnd->GetOutputRate());
+		}
+		if (info == nullptr && streamsource == nullptr)
+		{
+			streamsource = SndFile_OpenSong(reader);		// this only takes over the reader if it succeeds. We need to look out for this.
+			if (streamsource != nullptr) reader = nullptr;
+		}
+
+		if (streamsource)
+		{
+			info = OpenStreamSong(streamsource);
+		}
+		if (info == nullptr && reader != nullptr)
+		{
+			// Check for CDDA "format"
+			if (id[0] == (('R') | (('I') << 8) | (('F') << 16) | (('F') << 24)))
+			{
+				uint32_t subid;
+
+				reader->seek(8, SEEK_CUR);
+				if (reader->read(&subid, 4) == 4)
+				{
+					reader->seek(-12, SEEK_CUR);
+
+					if (subid == (('C') | (('D') << 8) | (('D') << 16) | (('A') << 24)))
+					{
+						// This is a CDDA file
+						info = new CDDAFile(reader);
+					}
+				}
+			}
+		}
+
+		if (info && !info->IsValid())
+		{
+			delete info;
+			info = nullptr;
 		}
 	}
-    if (info == nullptr)
-    {
-        // Check for CDDA "format"
-        if (id[0] == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
-        {
-            uint32_t subid;
-
-            reader.Seek(8, FileReader::SeekCur);
-            if (reader.Read (&subid, 4) != 4)
-            {
-                return nullptr;
-            }
-            reader.Seek(-12, FileReader::SeekCur);
-
-            if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
-            {
-                // This is a CDDA file
-                info = new CDDAFile (reader);
-            }
-        }
-    }
-
-	if (info && !info->IsValid ())
+	catch (...)
 	{
-		delete info;
-		info = nullptr;
+		// Make sure the reader is closed if this function abnormally terminates
+		if (reader) reader->close();
+		throw;
 	}
 
 	return info;
@@ -558,7 +554,7 @@ MusInfo *I_RegisterCDSong (int track, int id)
 //
 //==========================================================================
 
-static bool ungzip(uint8_t *data, int complen, TArray<uint8_t> &newdata)
+static bool ungzip(uint8_t *data, int complen, std::vector<uint8_t> &newdata)
 {
 	const uint8_t *max = data + complen - 8;
 	const uint8_t *compstart = data + 10;
@@ -597,7 +593,7 @@ static bool ungzip(uint8_t *data, int complen, TArray<uint8_t> &newdata)
 
 	// Decompress
 	isize = LittleLong(*(uint32_t *)(data + complen - 4));
-    newdata.Resize(isize);
+    newdata.resize(isize);
 
 	stream.next_in = (Bytef *)compstart;
 	stream.avail_in = (uInt)(max - compstart);
@@ -705,6 +701,7 @@ static MIDISource *GetMIDISource(const char *fn)
 	}
 
 	auto wlump = Wads.OpenLumpReader(lump);
+
 	uint32_t id[32 / 4];
 
 	if (wlump.Read(id, 32) != 32 || wlump.Seek(-32, FileReader::SeekCur) != 0)
@@ -712,9 +709,15 @@ static MIDISource *GetMIDISource(const char *fn)
 		Printf("Unable to read lump %s\n", src.GetChars());
 		return nullptr;
 	}
-
 	auto type = IdentifyMIDIType(id, 32);
-	auto source = CreateMIDISource(wlump, type);
+	if (type == MIDI_NOTMIDI)
+	{
+		Printf("%s is not MIDI-based.\n", src.GetChars());
+		return nullptr;
+	}
+
+	auto data = wlump.Read();
+	auto source = CreateMIDISource(data.Data(), data.Size(), type);
 
 	if (source == nullptr)
 	{

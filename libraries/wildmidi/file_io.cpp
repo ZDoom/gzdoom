@@ -56,7 +56,7 @@ unsigned char *_WM_BufferFile(MusicIO::SoundFontReaderInterface *reader, const c
 		return NULL;
 	}
 
-	auto fsize = (fp->seek(0, SEEK_END), fp->tell());
+	auto fsize = fp->filelength();
 
 	if (fsize > WM_MAXFILESIZE) 
 	{

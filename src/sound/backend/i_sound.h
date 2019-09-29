@@ -88,7 +88,7 @@ class MIDIDevice;
 
 struct FSoundLoadBuffer
 {
-	TArray<uint8_t> mBuffer;
+	std::vector<uint8_t> mBuffer;
 	uint32_t loop_start;
 	uint32_t loop_end;
 	ChannelConfig chans;
@@ -169,8 +169,6 @@ public:
 	virtual short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
 
 	virtual void DrawWaveDebug(int mode);
-
-    static SoundDecoder *CreateDecoder(FileReader &reader);
 };
 
 extern SoundRenderer *GSnd;

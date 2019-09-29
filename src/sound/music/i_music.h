@@ -55,7 +55,7 @@ void I_SetMusicVolume (double volume);
 // Registers a song handle to song data.
 class MusInfo;
 struct MidiDeviceSetting;
-MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device);
+MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 
 // The base music class. Everything is derived from this --------------------

@@ -111,33 +111,33 @@ bool CDSong::IsPlaying ()
 	return m_Status != STATE_Stopped;
 }
 
-CDDAFile::CDDAFile (FileReader &reader)
+CDDAFile::CDDAFile (MusicIO::FileInterface* reader)
 	: CDSong ()
 {
 	uint32_t chunk;
 	uint16_t track;
 	uint32_t discid;
-	auto endpos = reader.Tell() + reader.GetLength() - 8;
+	auto endpos = reader->tell() + reader->filelength() - 8;
 
 	// I_RegisterSong already identified this as a CDDA file, so we
 	// just need to check the contents we're interested in.
-	reader.Seek(12, FileReader::SeekCur);
+	reader->seek(12, SEEK_CUR);
 
-	while (reader.Tell() < endpos)
+	while (reader->tell() < endpos)
 	{
-        reader.Read(&chunk, 4);
+        reader->read(&chunk, 4);
 		if (chunk != (('f')|(('m')<<8)|(('t')<<16)|((' ')<<24)))
 		{
-            reader.Read(&chunk, 4);
-            reader.Seek(chunk, FileReader::SeekCur);
+            reader->read(&chunk, 4);
+            reader->seek(LittleLong(chunk), SEEK_CUR);
 		}
 		else
 		{
-            reader.Seek(6, FileReader::SeekCur);
-            reader.Read(&track, 2);
-            reader.Read(&discid, 4);
+            reader->seek(6, SEEK_CUR);
+            reader->read(&track, 2);
+            reader->read(&discid, 4);
 
-			if (CD_InitID (discid) && CD_CheckTrack (track))
+			if (CD_InitID (LittleLong(discid)) && CD_CheckTrack (LittleShort(track)))
 			{
 				m_Inited = true;
 				m_Track = track;

@@ -1,8 +1,7 @@
 #ifndef SNDFILE_DECODER_H
 #define SNDFILE_DECODER_H
 
-#include "i_soundinternal.h"
-#include "files.h"
+#include "sounddecoder.h"
 
 #ifdef HAVE_SNDFILE
 
@@ -14,25 +13,25 @@
 
 struct SndFileDecoder : public SoundDecoder
 {
-    virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type);
+    virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type) override;
 
-    virtual size_t read(char *buffer, size_t bytes);
-    virtual TArray<uint8_t> readAll();
-    virtual bool seek(size_t ms_offset, bool ms, bool mayrestart);
-	virtual size_t getSampleOffset();
-    virtual size_t getSampleLength();
+    virtual size_t read(char *buffer, size_t bytes) override;
+    virtual std::vector<uint8_t> readAll() override;
+    virtual bool seek(size_t ms_offset, bool ms, bool mayrestart) override;
+	virtual size_t getSampleOffset() override;
+    virtual size_t getSampleLength() override;
 
     SndFileDecoder() : SndFile(0) { }
     virtual ~SndFileDecoder();
 
 protected:
-    virtual bool open(FileReader &reader);
+    virtual bool open(MusicIO::FileInterface *reader) override;
 
 private:
     SNDFILE *SndFile;
     SF_INFO SndInfo;
 
-    FileReader Reader;
+	MusicIO::FileInterface* Reader;
     static sf_count_t file_get_filelen(void *user_data);
     static sf_count_t file_seek(sf_count_t offset, int whence, void *user_data);
     static sf_count_t file_read(void *ptr, sf_count_t count, void *user_data);

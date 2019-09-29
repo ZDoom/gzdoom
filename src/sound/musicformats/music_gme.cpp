@@ -124,9 +124,8 @@ StreamSource *GME_OpenSong(MusicIO::FileInterface *reader, const char *fmt, floa
 	}
 
     auto fpos = reader->tell();
-	reader->seek(0, SEEK_END);
-	auto len = reader->tell();
-	reader->seek(fpos, SEEK_SET);
+	auto len = reader->filelength();
+
 	song = new uint8_t[len];
     if (reader->read(song, len) != len)
     {

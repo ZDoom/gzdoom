@@ -785,9 +785,7 @@ StreamSource* MOD_OpenSong(MusicIO::FileInterface *reader, DumbConfig* config, i
 	bool is_dos = true;
 
 	auto fpos = reader->tell();
-	reader->seek(0, SEEK_END);
-    int size = (int)reader->tell();
-	reader->seek(fpos, SEEK_SET);
+    int size = (int)reader->filelength();
 
 	filestate.ptr = start;
 	filestate.offset = 0;

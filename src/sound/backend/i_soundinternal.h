@@ -6,6 +6,7 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "tarray.h"
+#include "../../libraries/music_common/fileio.h"
 
 class FileReader;
 
@@ -113,44 +114,11 @@ struct FISoundChannel
 };
 
 
-void FindLoopTags(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
+void FindLoopTags(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
 
-
-enum SampleType
-{
-    SampleType_UInt8,
-    SampleType_Int16
-};
-enum ChannelConfig
-{
-    ChannelConfig_Mono,
-    ChannelConfig_Stereo
-};
 
 const char *GetSampleTypeName(enum SampleType type);
 const char *GetChannelConfigName(enum ChannelConfig chan);
-
-struct SoundDecoder
-{
-    virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type) = 0;
-
-    virtual size_t read(char *buffer, size_t bytes) = 0;
-    virtual TArray<uint8_t> readAll();
-    virtual bool seek(size_t ms_offset, bool ms, bool mayrestart) = 0;
-    virtual size_t getSampleOffset() = 0;
-    virtual size_t getSampleLength() { return 0; }
-
-    SoundDecoder() { }
-    virtual ~SoundDecoder() { }
-
-protected:
-    virtual bool open(FileReader &reader) = 0;
-    friend class SoundRenderer;
-
-    // Make non-copyable
-    SoundDecoder(const SoundDecoder &rhs) = delete;
-    SoundDecoder& operator=(const SoundDecoder &rhs) = delete;
-};
 
 class MusInfo;
 struct MusPlayingInfo

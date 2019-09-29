@@ -1,8 +1,7 @@
 #ifndef MPG123_DECODER_H
 #define MPG123_DECODER_H
 
-#include "i_soundinternal.h"
-#include "files.h"
+#include "sounddecoder.h"
 
 #ifdef HAVE_MPG123
 
@@ -19,25 +18,25 @@ typedef ptrdiff_t ssize_t;
 
 struct MPG123Decoder : public SoundDecoder
 {
-    virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type);
+	virtual void getInfo(int* samplerate, ChannelConfig* chans, SampleType* type) override;
 
-    virtual size_t read(char *buffer, size_t bytes);
-    virtual bool seek(size_t ms_offset, bool ms, bool mayrestart);
-    virtual size_t getSampleOffset();
-    virtual size_t getSampleLength();
+	virtual size_t read(char* buffer, size_t bytes) override;
+	virtual bool seek(size_t ms_offset, bool ms, bool mayrestart) override;
+	virtual size_t getSampleOffset() override;
+	virtual size_t getSampleLength() override;
 
-    MPG123Decoder() : MPG123(0) { }
-    virtual ~MPG123Decoder();
+	MPG123Decoder() : MPG123(0) { }
+	virtual ~MPG123Decoder();
 
 protected:
-    virtual bool open(FileReader &reader);
+    virtual bool open(MusicIO::FileInterface *reader) override;
 
 private:
     mpg123_handle *MPG123;
     bool Done;
 
-    FileReader Reader;
-    static off_t file_lseek(void *handle, off_t offset, int whence);
+	MusicIO::FileInterface* Reader;
+	static off_t file_lseek(void *handle, off_t offset, int whence);
     static ssize_t file_read(void *handle, void *buffer, size_t bytes);
 
     // Make non-copyable

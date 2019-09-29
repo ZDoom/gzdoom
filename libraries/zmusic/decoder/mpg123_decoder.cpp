@@ -31,9 +31,10 @@
 **
 */
 
-#include "mpg123_decoder.h"
+#include <algorithm>
+#include <stdio.h>
+#include "zmusic/mpg123_decoder.h"
 #include "i_module.h"
-#include "cmdlib.h"
 
 #ifdef HAVE_MPG123
 
@@ -61,7 +62,8 @@ bool IsMPG123Present()
 	if (!done)
 	{
 		done = true;
-		cached_result = MPG123Module.Load({NicePath("$PROGDIR/" MPG123LIB), MPG123LIB});
+		auto abspath = module_progdir + "/" MPG123LIB;
+		cached_result = MPG123Module.Load({abspath.c_str(), MPG123LIB});
 	}
 	return cached_result;
 #endif
@@ -77,24 +79,24 @@ off_t MPG123Decoder::file_lseek(void *handle, off_t offset, int whence)
 
     if(whence == SEEK_CUR)
     {
-        if(offset < 0 && reader.Tell()+offset < 0)
+        if(offset < 0 && reader->tell()+offset < 0)
             return -1;
     }
     else if(whence == SEEK_END)
     {
-        if(offset < 0 && reader.GetLength()+offset < 0)
+        if(offset < 0 && reader->filelength() + offset < 0)
             return -1;
     }
 
-    if(reader.Seek(offset, (FileReader::ESeek)whence) != 0)
+    if(reader->seek(offset, whence) != 0)
         return -1;
-    return (off_t)reader.Tell();
+    return (off_t)reader->tell();
 }
 
 ssize_t MPG123Decoder::file_read(void *handle, void *buffer, size_t bytes)
 {
     auto &reader = reinterpret_cast<MPG123Decoder*>(handle)->Reader;
-    return (ssize_t)reader.Read(buffer, (long)bytes);
+    return (ssize_t)reader->read(buffer, (long)bytes);
 }
 
 
@@ -106,9 +108,11 @@ MPG123Decoder::~MPG123Decoder()
         mpg123_delete(MPG123);
         MPG123 = 0;
     }
+	if (Reader) Reader->close();
+	Reader = nullptr;
 }
 
-bool MPG123Decoder::open(FileReader &reader)
+bool MPG123Decoder::open(MusicIO::FileInterface *reader)
 {
     if(!inited)
     {
@@ -117,7 +121,7 @@ bool MPG123Decoder::open(FileReader &reader)
 		inited = true;
     }
 
-	Reader = std::move(reader);
+	Reader = reader;
 
     {
         MPG123 = mpg123_new(NULL, NULL);
@@ -144,7 +148,7 @@ bool MPG123Decoder::open(FileReader &reader)
         MPG123 = 0;
     }
 
-	reader = std::move(Reader);	// need to give it back.
+	Reader = nullptr;	// need to give it back.
 	return false;
 }
 
@@ -214,7 +218,7 @@ bool MPG123Decoder::seek(size_t ms_offset, bool ms, bool mayrestart)
 			mpg123_delete(MPG123);
 			MPG123 = 0;
 		}
-		Reader.Seek(0, FileReader::SeekSet);
+		Reader->seek(0, SEEK_SET);
 		// Do not call open with our own reader variable, that would be catastrophic.
 		auto reader = std::move(Reader);
 		return open(reader);

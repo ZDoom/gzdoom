@@ -41,10 +41,6 @@
 
 // FluidSynth implementation of a MIDI device -------------------------------
 
-#if !defined DYN_FLUIDSYNTH && defined _WIN32
-#define DYN_FLUIDSYNTH 1	// On Windows this is the only supported way to link to FluidSynth.
-#endif
-
 #if !defined DYN_FLUIDSYNTH
 #include <fluidsynth.h>
 #else

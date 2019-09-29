@@ -40,6 +40,7 @@
 #include "templates.h"
 #include "m_fixed.h"
 #include "streamsource.h"
+#include "zmusic/sounddecoder.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -48,7 +49,7 @@
 class SndFileSong : public StreamSource
 {
 public:
-	SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass);
+	SndFileSong(SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass);
 	~SndFileSong();
 	std::string GetStats() override;
 	SoundStreamInfo GetFormat() override;
@@ -56,7 +57,6 @@ public:
 	
 protected:
 	std::mutex CritSec;
-	FileReader Reader;
 	SoundDecoder *Decoder;
 	int Channels;
 	int SampleRate;
@@ -103,23 +103,23 @@ CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-static void ParseVorbisComments(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
+static void ParseVorbisComments(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
 {
 	uint8_t vc_data[4];
 
 	// The VC block starts with a 32LE integer for the vendor string length,
 	// followed by the vendor string
-	if(fr.Read(vc_data, 4) != 4)
+	if(fr->read(vc_data, 4) != 4)
 		return;
 	uint32_t vndr_len = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
 
 	// Skip vendor string
-	if(fr.Seek(vndr_len, FileReader::SeekCur) == -1)
+	if(fr->seek(vndr_len, SEEK_CUR) == -1)
 		return;
 
 	// Following the vendor string is a 32LE integer for the number of
 	// comments, followed by each comment.
-	if(fr.Read(vc_data, 4) != 4)
+	if(fr->read(vc_data, 4) != 4)
 		return;
 	size_t count = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
 
@@ -127,20 +127,20 @@ static void ParseVorbisComments(FileReader &fr, uint32_t *start, bool *startass,
 	{
 		// Each comment is a 32LE integer for the comment length, followed by
 		// the comment text (not null terminated!)
-		if(fr.Read(vc_data, 4) != 4)
+		if(fr->read(vc_data, 4) != 4)
 			return;
 		uint32_t length = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
 
 		if(length >= 128)
 		{
 			// If the comment is "big", skip it
-			if(fr.Seek(length, FileReader::SeekCur) == -1)
+			if(fr->seek(length, SEEK_CUR) == -1)
 				return;
 			continue;
 		}
 
 		char strdat[128];
-		if(fr.Read(strdat, length) != (long)length)
+		if(fr->read(strdat, length) != (long)length)
 			return;
 		strdat[length] = 0;
 
@@ -151,13 +151,13 @@ static void ParseVorbisComments(FileReader &fr, uint32_t *start, bool *startass,
 	}
 }
 
-static void FindFlacComments(FileReader &fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
+static void FindFlacComments(MusicIO::FileInterface *fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
 {
 	// Already verified the fLaC marker, so we're 4 bytes into the file
 	bool lastblock = false;
 	uint8_t header[4];
 
-	while(!lastblock && fr.Read(header, 4) == 4)
+	while(!lastblock && fr->read(header, 4) == 4)
 	{
 		// The first byte of the block header contains the type and a flag
 		// indicating the last metadata block
@@ -173,18 +173,18 @@ static void FindFlacComments(FileReader &fr, uint32_t *loop_start, bool *startas
 			return;
 		}
 
-		if(fr.Seek(blocksize, FileReader::SeekCur) == -1)
+		if(fr->seek(blocksize, SEEK_CUR) == -1)
 			break;
 	}
 }
 
-static void FindOggComments(FileReader &fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
+static void FindOggComments(MusicIO::FileInterface *fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
 {
 	uint8_t ogghead[27];
 
 	// We already read and verified the OggS marker, so skip the first 4 bytes
 	// of the Ogg page header.
-	while(fr.Read(ogghead+4, 23) == 23)
+	while(fr->read(ogghead+4, 23) == 23)
 	{
 		// The 19th byte of the Ogg header is a 32LE integer for the page
 		// number, and the 27th is a uint8 for the number of segments in the
@@ -197,7 +197,7 @@ static void FindOggComments(FileReader &fr, uint32_t *loop_start, bool *startass
 		// each segment in the page. The page segment data follows contiguously
 		// after.
 		uint8_t segsizes[256];
-		if(fr.Read(segsizes, ogg_segments) != ogg_segments)
+		if(fr->read(segsizes, ogg_segments) != ogg_segments)
 			break;
 
 		// Find the segment with the Vorbis Comment packet (type 3)
@@ -208,7 +208,7 @@ static void FindOggComments(FileReader &fr, uint32_t *loop_start, bool *startass
 			if(segsize > 16)
 			{
 				uint8_t vorbhead[7];
-				if(fr.Read(vorbhead, 7) != 7)
+				if(fr->read(vorbhead, 7) != 7)
 					return;
 
 				if(vorbhead[0] == 3 && memcmp(vorbhead+1, "vorbis", 6) == 0)
@@ -235,7 +235,7 @@ static void FindOggComments(FileReader &fr, uint32_t *loop_start, bool *startass
 
 				segsize -= 7;
 			}
-			if(fr.Seek(segsize, FileReader::SeekCur) == -1)
+			if(fr->seek(segsize, SEEK_CUR) == -1)
 				return;
 		}
 
@@ -243,16 +243,16 @@ static void FindOggComments(FileReader &fr, uint32_t *loop_start, bool *startass
 		if(ogg_pagenum >= 2)
 			break;
 
-		if(fr.Read(ogghead, 4) != 4 || memcmp(ogghead, "OggS", 4) != 0)
+		if(fr->read(ogghead, 4) != 4 || memcmp(ogghead, "OggS", 4) != 0)
 			break;
 	}
 }
 
-void FindLoopTags(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
+void FindLoopTags(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
 {
 	uint8_t signature[4];
 
-	fr.Read(signature, 4);
+	fr->read(signature, 4);
 	if(memcmp(signature, "fLaC", 4) == 0)
 		FindFlacComments(fr, start, startass, end, endass);
 	else if(memcmp(signature, "OggS", 4) == 0)
@@ -266,18 +266,18 @@ void FindLoopTags(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end
 //
 //==========================================================================
 
-StreamSource *SndFile_OpenSong(FileReader &fr)
+StreamSource *SndFile_OpenSong(MusicIO::FileInterface *fr)
 {
-	fr.Seek(0, FileReader::SeekSet);
+	fr->seek(0, SEEK_SET);
 
 	uint32_t loop_start = 0, loop_end = ~0u;
 	bool startass = false, endass = false;
 	FindLoopTags(fr, &loop_start, &startass, &loop_end, &endass);
 
-	fr.Seek(0, FileReader::SeekSet);
-	auto decoder = SoundRenderer::CreateDecoder(fr);
-	if (decoder == nullptr) return nullptr;
-	return new SndFileSong(fr, decoder, loop_start, loop_end, startass, endass);
+	fr->seek(0, FileReader::SeekSet);
+	auto decoder = SoundDecoder::CreateDecoder(fr);
+	if (decoder == nullptr) return nullptr;	// If this fails the file reader has not been taken over and the caller needs to clean up. This is to allow further analysis of the passed file.
+	return new SndFileSong(decoder, loop_start, loop_end, startass, endass);
 }
 
 //==========================================================================
@@ -286,7 +286,7 @@ StreamSource *SndFile_OpenSong(FileReader &fr)
 //
 //==========================================================================
 
-SndFileSong::SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass)
+SndFileSong::SndFileSong(SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass)
 {
 	ChannelConfig iChannels;
 	SampleType Type;
@@ -299,7 +299,6 @@ SndFileSong::SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loo
 	const uint32_t sampleLength = (uint32_t)decoder->getSampleLength();
 	Loop_Start = loop_start;
 	Loop_End = sampleLength == 0 ? loop_end : clamp<uint32_t>(loop_end, 0, sampleLength);
-	Reader = std::move(reader);
 	Decoder = decoder;
 	Channels = iChannels == ChannelConfig_Stereo? 2:1;
 }

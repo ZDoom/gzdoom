@@ -50,16 +50,35 @@ namespace MusicIO
 struct FileInterface
 {
 	std::string filename;
+	long length = -1;
 
 	// It's really too bad that the using code requires long instead of size_t.
 	// Fortunately 2GB files are unlikely to come by here.
+protected:
+	// 
 	virtual ~FileInterface() {}
+public:
 	virtual char* gets(char* buff, int n) = 0;
 	virtual long read(void* buff, int32_t size, int32_t nitems) = 0;
 	long read(void* buff, int32_t size) { return read(buff, 1, size); }
 	virtual long seek(long offset, int whence) = 0;
 	virtual long tell() = 0;
-	virtual void close() = 0;
+	virtual void close()
+	{
+		delete this;
+	}
+
+	long filelength()
+	{
+		if (length == -1)
+		{
+			long pos = tell();
+			seek(0, SEEK_END);
+			length = tell();
+			seek(pos, SEEK_SET);
+		}
+		return length;
+	}
 };
 
 //==========================================================================
@@ -96,11 +115,6 @@ struct StdioFileReader : public FileInterface
 		if (!f) return 0;
 		return ftell(f);
 	}
-	void close() override
-	{
-		if (f) fclose(f);
-		delete this;
-	}
 };
 
 
@@ -113,7 +127,7 @@ struct StdioFileReader : public FileInterface
 struct MemoryReader : public FileInterface
 {
 	const uint8_t *mData;
-	const long mLength;
+	long mLength;
 	long mPos;
 	
 	MemoryReader(const uint8_t *data, long length)
@@ -180,12 +194,31 @@ struct MemoryReader : public FileInterface
 	{
 		return mPos;
 	}
-	void close() override
-	{
-		delete this;
-	}
-	
+protected:
+	MemoryReader() {}
 };
+
+//==========================================================================
+//
+// Inplementation of the FileInterface for an std::vector owned by the reader
+//
+//==========================================================================
+
+struct VectorReader : public MemoryReader
+{
+	std::vector<uint8_t> mVector;
+
+	template <class getFunc>
+	VectorReader(getFunc getter)	// read contents to a buffer and return a reader to it
+	{
+		getter(mVector);
+		mData = mVector.data();
+		mLength = (long)mVector.size();
+	}
+
+
+};
+
 
 //==========================================================================
 //

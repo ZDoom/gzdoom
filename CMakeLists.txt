@@ -407,6 +407,11 @@ install(DIRECTORY docs/
 		DESTINATION ${INSTALL_DOCS_PATH}
 		COMPONENT "Documentation")
 
+option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
+option( DYN_OPENAL "Dynamically load OpenAL" ON )
+option( DYN_SNDFILE "Dynamically load libsndfile" ON )
+option( DYN_MPG123 "Dynamically load libmpg123" ON )
+
 add_subdirectory( libraries/lzma )
 add_subdirectory( tools )
 add_subdirectory( libraries/dumb )

@@ -85,6 +85,7 @@
 #include "g_game.h"
 #include "atterm.h"
 #include "s_music.h"
+#include "filereadermusicinterface.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -304,6 +305,7 @@ bool S_StartMusic (const char *m_id)
 
 bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 {
+	if (nomusic) return false;	// skip the entire procedure if music is globally disabled.
 	if (!force && PlayList)
 	{ // Don't change if a playlist is active
 		return false;
@@ -457,7 +459,8 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			try
 			{
-				mus_playing.handle = I_RegisterSong(reader, devp);
+				auto mreader = new FileReaderMusicInterface(reader);
+				mus_playing.handle = I_RegisterSong(mreader, devp);
 			}
 			catch (const std::runtime_error& err)
 			{
@@ -647,6 +650,10 @@ CCMD (idmus)
 			}
 		}
 	}
+	else
+	{
+		Printf("Music is disabled\n");
+	}
 }
 
 //==========================================================================
@@ -680,6 +687,10 @@ CCMD (changemus)
 				Printf ("no music playing\n");
 			}
 		}
+	}
+	else
+	{
+		Printf("Music is disabled\n");
 	}
 }
 

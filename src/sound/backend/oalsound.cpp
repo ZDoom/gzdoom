@@ -44,6 +44,8 @@
 #include "i_music.h"
 #include "cmdlib.h"
 #include "menu/menu.h"
+#include "zmusic/sounddecoder.h"
+#include "filereadermusicinterface.h"
 
 FModule OpenALModule{"OpenAL"};
 
@@ -229,7 +231,6 @@ class OpenALSoundStream : public SoundStream
 	ALfloat Volume;
 
 
-	FileReader Reader;
 	SoundDecoder *Decoder;
 	static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
 	{
@@ -612,9 +613,13 @@ public:
 		}
 
 		if(Decoder) delete Decoder;
-		Reader = std::move(reader);
-		Decoder = Renderer->CreateDecoder(Reader);
-		if(!Decoder) return false;
+		auto mreader = new FileReaderMusicInterface(reader);
+		Decoder = SoundDecoder::CreateDecoder(mreader);
+		if (!Decoder)
+		{
+			mreader->close();
+			return false;
+		}
 
 		Callback = DecoderCallback;
 		UserData = NULL;
@@ -1285,7 +1290,6 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, 
 std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *pBuffer)
 {
 	SoundHandle retval = { NULL };
-	FileReader reader;
 	ALenum format = AL_NONE;
 	ChannelConfig chans;
 	SampleType type;
@@ -1296,13 +1300,16 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	/* Only downmix to mono if we can't spatialize multi-channel sounds. */
 	monoize = monoize && !AL.SOFT_source_spatialize;
 
-	reader.OpenMemory(sfxdata, length);
-
-	FindLoopTags(reader, &loop_start, &startass, &loop_end, &endass);
-
-	reader.Seek(0, FileReader::SeekSet);
-	std::unique_ptr<SoundDecoder> decoder(CreateDecoder(reader));
-	if (!decoder) return std::make_pair(retval, true);
+	auto mreader = new MusicIO::MemoryReader(sfxdata, length);
+	FindLoopTags(mreader, &loop_start, &startass, &loop_end, &endass);
+	mreader->seek(0, SEEK_SET);
+	std::unique_ptr<SoundDecoder> decoder(SoundDecoder::CreateDecoder(mreader));
+	if (!decoder)
+	{
+		delete mreader;
+		return std::make_pair(retval, true);
+	}
+	// the decode will take ownership of the reader here.
 
 	decoder->getInfo(&srate, &chans, &type);
 	int samplesize = 1;
@@ -1324,12 +1331,12 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 		return std::make_pair(retval, true);
 	}
 
-	TArray<uint8_t> data = decoder->readAll();
+	auto data = decoder->readAll();
 
 	if(chans != ChannelConfig_Mono && monoize)
 	{
 		size_t chancount = GetChannelCount(chans);
-		size_t frames = data.Size() / chancount /
+		size_t frames = data.size() / chancount /
 						(type == SampleType_Int16 ? 2 : 1);
 		if(type == SampleType_Int16)
 		{
@@ -1353,13 +1360,13 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 				sfxdata[i] = uint8_t((sum / chancount) + 128);
 			}
 		}
-		data.Resize(unsigned(data.Size()/chancount));
+		data.resize((data.size()/chancount));
 	}
 
 	ALenum err;
 	ALuint buffer = 0;
 	alGenBuffers(1, &buffer);
-	alBufferData(buffer, format, &data[0], data.Size(), srate);
+	alBufferData(buffer, format, &data[0], (ALsizei)data.size(), srate);
 	if((err=getALError()) != AL_NO_ERROR)
 	{
 		Printf("Failed to buffer data: %s\n", alGetString(err));
@@ -1370,7 +1377,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 
 	if (!startass) loop_start = Scale(loop_start, srate, 1000);
 	if (!endass && loop_end != ~0u) loop_end = Scale(loop_end, srate, 1000);
-	const uint32_t samples = data.Size() / samplesize;
+	const uint32_t samples = (uint32_t)data.size() / samplesize;
 	if (loop_start > samples) loop_start = 0;
 	if (loop_end > samples) loop_end = samples;
 
@@ -1425,12 +1432,12 @@ std::pair<SoundHandle, bool> OpenALSoundRenderer::LoadSoundBuffered(FSoundLoadBu
 		return std::make_pair(retval, true);
 	}
 
-	TArray<uint8_t> &data = pBuffer->mBuffer;
+	auto &data = pBuffer->mBuffer;
 
 	if (pBuffer->chans == ChannelConfig_Stereo && monoize)
 	{
 		size_t chancount = GetChannelCount(chans);
-		size_t frames = data.Size() / chancount /
+		size_t frames = data.size() / chancount /
 			(type == SampleType_Int16 ? 2 : 1);
 		if (type == SampleType_Int16)
 		{
@@ -1454,13 +1461,13 @@ std::pair<SoundHandle, bool> OpenALSoundRenderer::LoadSoundBuffered(FSoundLoadBu
 				sfxdata[i] = uint8_t((sum / chancount) + 128);
 			}
 		}
-		data.Resize(unsigned(data.Size() / chancount));
+		data.resize(data.size() / chancount);
 	}
 
 	ALenum err;
 	ALuint buffer = 0;
 	alGenBuffers(1, &buffer);
-	alBufferData(buffer, format, &data[0], data.Size(), srate);
+	alBufferData(buffer, format, &data[0], (ALsizei)data.size(), srate);
 	if ((err = getALError()) != AL_NO_ERROR)
 	{
 		Printf("Failed to buffer data: %s\n", alGetString(err));

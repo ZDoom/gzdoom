@@ -23,10 +23,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	endif()
 endif()
 
-option( DYN_OPENAL "Dynamically load OpenAL" ON )
-option( DYN_SNDFILE "Dynamically load libsndfile" ON )
-option( DYN_MPG123 "Dynamically load libmpg123" ON )
-
 if( APPLE )
     option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
 endif()
@@ -623,24 +619,6 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-if( DYN_SNDFILE)
-	add_definitions( -DHAVE_SNDFILE -DDYN_SNDFILE )
-elseif( SNDFILE_FOUND )
-	add_definitions( -DHAVE_SNDFILE )
-endif()
-
-if( DYN_MPG123)
-	add_definitions( -DHAVE_MPG123 -DDYN_MPG123 )
-elseif( MPG123_FOUND )
-	add_definitions( -DHAVE_MPG123 )
-endif()
-
-if( DYN_FLUIDSYNTH )
-	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
-elseif( FLUIDSYNTH_FOUND )
-	add_definitions( -DHAVE_FLUIDSYNTH )
-endif()
-
 option( SEND_ANON_STATS "Enable sending of anonymous hardware statistics" ON )
 
 if( NOT SEND_ANON_STATS )
@@ -832,10 +810,8 @@ set( FASTMATH_SOURCES
 	rendering/swrenderer/r_all.cpp
 	rendering/swrenderer/r_swscene.cpp
 	rendering/polyrenderer/poly_all.cpp
-	sound/backend/mpg123_decoder.cpp
 	sound/music/music_midi_base.cpp
 	sound/backend/oalsound.cpp
-	sound/backend/sndfile_decoder.cpp
 	gamedata/textures/hires/hqnx/init.cpp
 	gamedata/textures/hires/hqnx/hq2x.cpp
 	gamedata/textures/hires/hqnx/hq3x.cpp

@@ -9,8 +9,6 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
 
 include( CheckFunctionExists )
 
-option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
-
 CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
 if( NOT STRICMP_EXISTS )
 	add_definitions( -Dstricmp=strcasecmp )
@@ -20,6 +18,25 @@ CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
 if( NOT STRNICMP_EXISTS )
 	add_definitions( -Dstrnicmp=strncasecmp )
 endif()
+
+if( DYN_SNDFILE)
+	add_definitions( -DHAVE_SNDFILE -DDYN_SNDFILE )
+elseif( SNDFILE_FOUND )
+	add_definitions( -DHAVE_SNDFILE )
+endif()
+
+if( DYN_MPG123)
+	add_definitions( -DHAVE_MPG123 -DDYN_MPG123 )
+elseif( MPG123_FOUND )
+	add_definitions( -DHAVE_MPG123 )
+endif()
+
+if( DYN_FLUIDSYNTH )
+	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
+elseif( FLUIDSYNTH_FOUND )
+	add_definitions( -DHAVE_FLUIDSYNTH )
+endif()
+
 
 include_directories( "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
 
@@ -48,6 +65,9 @@ add_library( zmusic STATIC
 	midisources/midisource_smf.cpp
 	midisources/midisource_hmi.cpp
 	midisources/midisource_xmi.cpp
+	decoder/sounddecoder.cpp
+	decoder/sndfile_decoder.cpp
+	decoder/mpg123_decoder.cpp
 	${PLAT_WIN32_SOURCES}
 	)
 target_link_libraries( zmusic )

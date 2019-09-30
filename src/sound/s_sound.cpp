@@ -62,7 +62,6 @@
 #include "i_system.h"
 #include "i_sound.h"
 #include "i_music.h"
-#include "i_cd.h"
 #include "s_sound.h"
 #include "s_sndseq.h"
 #include "s_playlist.h"

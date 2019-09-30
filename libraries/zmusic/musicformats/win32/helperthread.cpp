@@ -3,7 +3,7 @@
 **
 ** Implements FHelperThread, the base class for helper threads. Includes
 ** a message queue for passing messages from the main thread to the
-** helper thread.
+** helper thread. (Only used by the CD Audio player)
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit

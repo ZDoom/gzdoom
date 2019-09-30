@@ -57,12 +57,13 @@
 #include <stdlib.h>
 #ifdef _WIN32
 #include <io.h>
+#include "musicformats/win32/i_cd.h"
 #endif
 
 #include "i_system.h"
 #include "i_sound.h"
 #include "i_music.h"
-#include "i_cd.h"
+
 #include "s_sound.h"
 #include "s_sndseq.h"
 #include "s_playlist.h"
@@ -827,6 +828,7 @@ CCMD (cd_play)
 	S_ChangeMusic (musname, 0, true);
 }
 
+#ifdef _WIN32
 //==========================================================================
 //
 // CCMD cd_stop
@@ -881,7 +883,7 @@ CCMD (cd_resume)
 {
 	CD_Resume ();
 }
-
+#endif
 //==========================================================================
 //
 // CCMD playlist

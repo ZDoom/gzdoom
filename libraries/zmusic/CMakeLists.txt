@@ -41,8 +41,11 @@ endif()
 include_directories( "../libraries/dumb/include" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
 
 if (WIN32)
-set( PLAT_WIN32_SOURCES
-	mididevices/music_win_mididevice.cpp)
+set( PLAT_SOURCES
+	mididevices/music_win_mididevice.cpp
+	musicformats/win32/i_cd.cpp
+	musicformats/win32/helperthread.cpp
+	)
 endif()
 
 file( GLOB HEADER_FILES
@@ -79,11 +82,12 @@ add_library( zmusic STATIC
 	streamsources/music_xa.cpp
 	musicformats/music_stream.cpp
 	musicformats/music_midi.cpp
+	musicformats/music_cd.cpp
 	decoder/sounddecoder.cpp
 	decoder/sndfile_decoder.cpp
 	decoder/mpg123_decoder.cpp
 	zmusic/configuration.cpp
-	${PLAT_WIN32_SOURCES}
+	${PLAT_SOURCES}
 	)
 target_link_libraries( zmusic )
 
@@ -91,6 +95,7 @@ target_link_libraries( zmusic )
 source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mididevices/.+")
 source_group("MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/midisources/.+")
 source_group("Music Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/musicformats/.+")
+source_group("Music Formats\\Win32" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/musicformats/win32/.+")
 source_group("Public Interface" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/zmusic/.+")
 source_group("Sound Decoding" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/decoder/.+")
 source_group("Stream Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/streamsources/.+")

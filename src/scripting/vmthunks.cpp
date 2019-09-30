@@ -46,7 +46,6 @@
 #include "a_weapons.h"
 #include "d_player.h"
 #include "p_setup.h"
-#include "i_music.h"
 #include "am_map.h"
 #include "v_video.h"
 #include "gi.h"

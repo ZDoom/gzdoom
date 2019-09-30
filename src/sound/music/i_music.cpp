@@ -45,17 +45,19 @@
 #include "c_dispatch.h"
 #include "templates.h"
 #include "stats.h"
+#include "c_cvars.h"
 #include "c_console.h"
 #include "vm.h"
 #include "v_text.h"
+#include "i_sound.h"
 #include "i_soundfont.h"
 #include "s_music.h"
+#include "doomstat.h"
 #include "zmusic/zmusic.h"
 #include "zmusic/musinfo.h"
 #include "streamsources/streamsource.h"
 #include "filereadermusicinterface.h"
 #include "../libraries/zmusic/midisources/midisource.h"
-#include "../libraries/dumb/include/dumb.h"
 
 #define GZIP_ID1		31
 #define GZIP_ID2		139
@@ -68,9 +70,9 @@
 #define GZIP_FNAME		8
 #define GZIP_FCOMMENT	16
 
-extern int MUSHeaderSearch(const uint8_t *head, int len);
+
 void I_InitSoundFonts();
-extern "C" void dumb_exit();
+
 extern MusPlayingInfo mus_playing;
 
 EXTERN_CVAR (Int, snd_samplerate)
@@ -80,7 +82,6 @@ static bool MusicDown = true;
 
 static bool ungzip(uint8_t *data, int size, std::vector<uint8_t> &newdata);
 
-MusInfo *currSong;
 int		nomusic = 0;
 
 //==========================================================================
@@ -275,16 +276,14 @@ void I_ShutdownMusic(bool onexit)
 	if (MusicDown)
 		return;
 	MusicDown = true;
-	if (currSong)
+	if (mus_playing.handle)
 	{
 		S_StopMusic (true);
-		assert (currSong == nullptr);
+		assert (mus_playing.handle == nullptr);
 	}
 	if (onexit)
 	{
-		// free static data in the backends.
-		TimidityPP_Shutdown();
-		dumb_exit();
+		ZMusic_Shutdown();
 	}
 }
 
@@ -294,7 +293,7 @@ void I_ShutdownMusic(bool onexit)
 //
 //==========================================================================
 
-MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *device)
+MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args)
 {
 	MusInfo *info = nullptr;
 	StreamSource *streamsource = nullptr;
@@ -357,14 +356,13 @@ MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *devi
 				return nullptr;
 			}
 
-			EMidiDevice devtype = device == nullptr ? MDEV_DEFAULT : (EMidiDevice)device->device;
 #ifndef _WIN32
 			// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
-			if (devtype == MDEV_MMAPI)
-				devtype = MDEV_SNDSYS;
+			if (device == MDEV_MMAPI)
+				device = MDEV_SNDSYS;
 #endif
 
-			info = CreateMIDIStreamer(source, devtype, device != nullptr ? device->args.GetChars() : "");
+			info = CreateMIDIStreamer(source, device, Args? Args : "");
 		}
 
 		// Check for CDDA "format"
@@ -545,15 +543,6 @@ static bool ungzip(uint8_t *data, int complen, std::vector<uint8_t> &newdata)
 // 
 //
 //==========================================================================
-
-void I_UpdateMusic()
-{
-	if (currSong != nullptr)
-	{
-		currSong->Update();
-	}
-}
-
 
 void I_SetRelativeVolume(float vol)
 {

@@ -34,10 +34,6 @@
 #ifndef __I_MUSIC_H__
 #define __I_MUSIC_H__
 
-#include "doomdef.h"
-#include "zmusic/mididefs.h"
-#include "i_soundinternal.h"
-
 class FileReader;
 struct FOptionValues;
 
@@ -47,17 +43,11 @@ struct FOptionValues;
 void I_InitMusic ();
 void I_ShutdownMusic (bool onexit = false);
 void I_BuildMIDIMenuList (FOptionValues *);
-void I_UpdateMusic ();
 
 // Volume.
 void I_SetRelativeVolume(float);
 void I_SetMusicVolume (double volume);
 
-// Registers a song handle to song data.
-class MusInfo;
-struct MidiDeviceSetting;
-MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, MidiDeviceSetting *device);
-MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 
 extern int nomusic;
 

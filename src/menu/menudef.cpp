@@ -51,6 +51,7 @@
 #include "teaminfo.h"
 #include "r_data/sprites.h"
 #include "atterm.h"
+#include "zmusic/zmusic.h"
 
 
 void ClearSaveGames();

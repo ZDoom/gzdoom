@@ -41,7 +41,6 @@
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "i_module.h"
-#include "i_music.h"
 #include "cmdlib.h"
 #include "menu/menu.h"
 #include "zmusic/sounddecoder.h"

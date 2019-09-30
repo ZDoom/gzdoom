@@ -89,6 +89,8 @@
 #include "filereadermusicinterface.h"
 #include "zmusic/musinfo.h"
 
+#include "i_musicinterns.h"
+
 // MACROS ------------------------------------------------------------------
 
 
@@ -269,17 +271,18 @@ void S_ResumeMusic ()
 
 void S_UpdateMusic ()
 {
-	I_UpdateMusic();
-	
-	// [RH] Update music and/or playlist. IsPlaying() must be called
-	// to attempt to reconnect to broken net streams and to advance the
-	// playlist when the current song finishes.
-	if (mus_playing.handle != nullptr &&
-		!mus_playing.handle->IsPlaying() &&
-		PlayList)
+	if (mus_playing.handle != nullptr)
 	{
-		PlayList->Advance();
-		S_ActivatePlayList(false);
+		mus_playing.handle->Update();
+		
+		// [RH] Update music and/or playlist. IsPlaying() must be called
+		// to attempt to reconnect to broken net streams and to advance the
+		// playlist when the current song finishes.
+		if (!mus_playing.handle->IsPlaying() && PlayList)
+		{
+			PlayList->Advance();
+			S_ActivatePlayList(false);
+		}
 	}
 }
 
@@ -540,7 +543,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			try
 			{
 				auto mreader = new FileReaderMusicInterface(reader);
-				mus_playing.handle = I_RegisterSong(mreader, devp);
+				mus_playing.handle = I_RegisterSong(mreader, devp? (EMidiDevice)devp->device : MDEV_DEFAULT, devp? devp->args.GetChars() : "");
 			}
 			catch (const std::runtime_error& err)
 			{

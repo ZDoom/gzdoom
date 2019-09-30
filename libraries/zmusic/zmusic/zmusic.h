@@ -149,10 +149,11 @@ void SetWgOpn(const void* data, unsigned len);
 // Set DMXGUS data for running the GUS synth in actual GUS mode.
 void SetDmxGus(const void* data, unsigned len);
 
-// These exports is needed by the MIDI dumpers which need to remain on the client side.
+// These exports are needed by the MIDI dumpers which need to remain on the client side.
 class MIDISource;	// abstract for the client
 EMIDIType IdentifyMIDIType(uint32_t *id, int size);
 MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype);
+void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char* devarg, const char* outname, int subsong, int samplerate);
 
 class MusInfo;
 // Configuration interface. The return value specifies if a music restart is needed.

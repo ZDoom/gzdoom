@@ -38,7 +38,6 @@
 #include <mmsystem.h>
 #endif
 
-#include "i_musicinterns.h"
 #include "c_dispatch.h"
 
 #include "v_text.h"

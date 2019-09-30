@@ -33,7 +33,9 @@
 **
 */
 
-#include "i_musicinterns.h"
+#include <stdint.h>
+#include <mutex>
+#include <string>
 #include "c_cvars.h"
 #include "s_music.h"
 #include "zmusic/zmusic.h"

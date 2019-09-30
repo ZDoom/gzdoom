@@ -478,7 +478,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			id = strtoul (more+1, nullptr, 16);
 		}
 		S_StopMusic (true);
-		mus_playing.handle = I_RegisterCDSong (track, id);
+		mus_playing.handle = ZMusic_OpenCDSong (track, id);
 	}
 	else
 	{
@@ -542,7 +542,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			try
 			{
 				auto mreader = new FileReaderMusicInterface(reader);
-				mus_playing.handle = I_RegisterSong(mreader, devp? (EMidiDevice)devp->device : MDEV_DEFAULT, devp? devp->args.GetChars() : "");
+				mus_playing.handle = ZMusic_OpenSong(mreader, devp? (EMidiDevice)devp->device : MDEV_DEFAULT, devp? devp->args.GetChars() : "");
 			}
 			catch (const std::runtime_error& err)
 			{

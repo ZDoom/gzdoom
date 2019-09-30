@@ -156,7 +156,7 @@ CDDAFile::CDDAFile (MusicIO::FileInterface* reader)
 	uint32_t discid;
 	auto endpos = reader->tell() + reader->filelength() - 8;
 
-	// I_RegisterSong already identified this as a CDDA file, so we
+	// ZMusic_OpenSong already identified this as a CDDA file, so we
 	// just need to check the contents we're interested in.
 	reader->seek(12, SEEK_CUR);
 

@@ -54,25 +54,25 @@ struct Dummy
 MiscConfig miscConfig;
 Callbacks musicCallbacks;
 
-void SetCallbacks(const Callbacks* cb)
+void ZMusic_SetCallbacks(const Callbacks* cb)
 {
 	dumb_decode_vorbis = cb->DumbVorbisDecode;
 	musicCallbacks = *cb;
 }
 
-void SetGenMidi(const uint8_t* data)
+void ZMusic_SetGenMidi(const uint8_t* data)
 {
 	memcpy(oplConfig.OPLinstruments, data, 175 * 36);
 	oplConfig.genmidiset = true;
 }
 
-void SetWgOpn(const void* data, unsigned len)
+void ZMusic_SetWgOpn(const void* data, unsigned len)
 {
 	opnConfig.default_bank.resize(len);
 	memcpy(opnConfig.default_bank.data(), data, len);
 }
 
-void SetDmxGus(const void* data, unsigned len)
+void ZMusic_SetDmxGus(const void* data, unsigned len)
 {
 	gusConfig.dmxgus.resize(len);
 	memcpy(gusConfig.dmxgus.data(), data, len);

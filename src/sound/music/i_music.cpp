@@ -192,7 +192,7 @@ static void SetupGenMidi()
 
 	auto genmidi = data.Read();
 	if (genmidi.Size() < 8 + 175 * 36 || memcmp(genmidi.Data(), "#OPL_II#", 8)) return;
-	SetGenMidi(genmidi.Data()+8);
+	ZMusic_SetGenMidi(genmidi.Data()+8);
 }
 
 static void SetupWgOpn()
@@ -203,7 +203,7 @@ static void SetupWgOpn()
 		return;
 	}
 	FMemLump data = Wads.ReadLump(lump);
-	SetWgOpn(data.GetMem(), (uint32_t)data.GetSize());
+	ZMusic_SetWgOpn(data.GetMem(), (uint32_t)data.GetSize());
 }
 
 static void SetupDMXGUS()
@@ -214,7 +214,7 @@ static void SetupDMXGUS()
 		return;
 	}
 	FMemLump data = Wads.ReadLump(lump);
-	SetDmxGus(data.GetMem(), (uint32_t)data.GetSize());
+	ZMusic_SetDmxGus(data.GetMem(), (uint32_t)data.GetSize());
 }
 
 
@@ -249,9 +249,10 @@ void I_InitMusic (void)
 	callbacks.OpenSoundFont = mus_openSoundFont;
 	callbacks.DumbVorbisDecode = dumb_decode_vorbis_;
 
-	SetCallbacks(&callbacks);
+	ZMusic_SetCallbacks(&callbacks);
 	SetupGenMidi();
 	SetupDMXGUS();
+	SetupWgOpn();
 }
 
 

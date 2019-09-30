@@ -141,13 +141,13 @@ struct Callbacks
 };
 
 // Sets callbacks for functionality that the client needs to provide.
-void SetCallbacks(const Callbacks *callbacks);
+void ZMusic_SetCallbacks(const Callbacks *callbacks);
 // Sets GenMidi data for OPL playback. If this isn't provided the OPL synth will not work.
-void SetGenMidi(const uint8_t* data);
+void ZMusic_SetGenMidi(const uint8_t* data);
 // Set default bank for OPN. Without this OPN only works with custom banks.
-void SetWgOpn(const void* data, unsigned len);
+void ZMusic_SetWgOpn(const void* data, unsigned len);
 // Set DMXGUS data for running the GUS synth in actual GUS mode.
-void SetDmxGus(const void* data, unsigned len);
+void ZMusic_SetDmxGus(const void* data, unsigned len);
 
 // These exports are needed by the MIDI dumpers which need to remain on the client side.
 class MIDISource;	// abstract for the client
@@ -156,8 +156,8 @@ EMIDIType IdentifyMIDIType(uint32_t *id, int size);
 MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype);
 void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char* devarg, const char* outname, int subsong, int samplerate);
 
-MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args);
-MusInfo *I_RegisterCDSong (int track, int cdid = 0);
+MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args);
+MusInfo *ZMusic_OpenCDSong (int track, int cdid = 0);
 
 void ZMusic_Shutdown();
 

@@ -148,7 +148,7 @@ static bool ungzip(uint8_t *data, int complen, std::vector<uint8_t> &newdata)
 //
 //==========================================================================
 
-MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args)
+MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args)
 {
 	MusInfo *info = nullptr;
 	StreamSource *streamsource = nullptr;
@@ -304,7 +304,7 @@ MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, EMidiDevice device, con
 //
 //==========================================================================
 
-MusInfo *I_RegisterCDSong (int track, int id)
+MusInfo *ZMusic_OpenCDSong (int track, int id)
 {
 	MusInfo *info = CD_OpenSong (track, id);
 	

@@ -49,6 +49,12 @@
 #include "x86.h"
 #include "g_levellocals.h"
 
+uint32_t Col2RGB8[65][256];
+uint32_t *Col2RGB8_LessPrecision[65];
+uint32_t Col2RGB8_Inverse[65][256];
+ColorTable32k RGB32k;
+ColorTable256k RGB256k;
+
 FPalette GPalette;
 FColorMatcher ColorMatcher;
 
@@ -304,6 +310,63 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 	}
 }
 
+//==========================================================================
+//
+// BuildTransTable
+//
+// Build the tables necessary for blending
+//
+//==========================================================================
+
+static void BuildTransTable (const PalEntry *palette)
+{
+	int r, g, b;
+	
+	// create the RGB555 lookup table
+	for (r = 0; r < 32; r++)
+		for (g = 0; g < 32; g++)
+			for (b = 0; b < 32; b++)
+				RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
+	// create the RGB666 lookup table
+	for (r = 0; r < 64; r++)
+		for (g = 0; g < 64; g++)
+			for (b = 0; b < 64; b++)
+				RGB256k.RGB[r][g][b] = ColorMatcher.Pick ((r<<2)|(r>>4), (g<<2)|(g>>4), (b<<2)|(b>>4));
+	
+	int x, y;
+	
+	// create the swizzled palette
+	for (x = 0; x < 65; x++)
+		for (y = 0; y < 256; y++)
+			Col2RGB8[x][y] = (((palette[y].r*x)>>4)<<20) |
+			((palette[y].g*x)>>4) |
+			(((palette[y].b*x)>>4)<<10);
+	
+	// create the swizzled palette with the lsb of red and blue forced to 0
+	// (for green, a 1 is okay since it never gets added into)
+	uint32_t Col2RGB8_2[63][256];
+	for (x = 1; x < 64; x++)
+	{
+		Col2RGB8_LessPrecision[x] = Col2RGB8_2[x-1];
+		for (y = 0; y < 256; y++)
+		{
+			Col2RGB8_2[x-1][y] = Col2RGB8[x][y] & 0x3feffbff;
+		}
+	}
+	Col2RGB8_LessPrecision[0] = Col2RGB8[0];
+	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
+	
+	// create the inverse swizzled palette
+	for (x = 0; x < 65; x++)
+		for (y = 0; y < 256; y++)
+		{
+			Col2RGB8_Inverse[x][y] = (((((255-palette[y].r)*x)>>4)<<20) |
+									  (((255-palette[y].g)*x)>>4) |
+									  ((((255-palette[y].b)*x)>>4)<<10)) & 0x3feffbff;
+		}
+}
+
+
 void InitPalette ()
 {
 	uint8_t pal[768];
@@ -323,6 +386,8 @@ void InitPalette ()
 	// Colormaps have to be initialized before actors are loaded,
 	// otherwise Powerup.Colormap will not work.
 	R_InitColormaps ();
+	BuildTransTable (GPalette.BaseColors);
+
 }
 
 CCMD (testblend)

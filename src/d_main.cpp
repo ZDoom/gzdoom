@@ -2453,8 +2453,26 @@ void D_DoomMain (void)
 			I_Init ();
 		}
 
+		// [RH] Initialize palette management
+		InitPalette ();
+		
 		if (!batchrun) Printf ("V_Init: allocate screen.\n");
-		V_Init (!!restart);
+		if (!restart)
+		{
+			V_InitScreenSize();
+		}
+		
+		if (!restart)
+		{
+			// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
+			V_InitScreen ();
+		}
+		
+		if (restart)
+		{
+			// Update screen palette when restarting
+			screen->UpdatePalette();
+		}
 
 		// Base systems have been inited; enable cvar callbacks
 		FBaseCVar::EnableCallbacks ();

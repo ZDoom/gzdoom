@@ -594,7 +594,8 @@ EXTERN_CVAR (Float, Gamma)
 
 
 // Allocates buffer screens, call before R_Init.
-void V_Init (bool restart);
+void V_InitScreenSize();
+void V_InitScreen();
 
 // Initializes graphics mode for the first time.
 void V_Init2 ();

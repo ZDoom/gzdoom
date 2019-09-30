@@ -34,7 +34,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-
+#include <string>
 #include "zmusic/musinfo.h"
 #include "mididevices/mididevice.h"
 #include "midisources/midisource.h"
@@ -125,7 +125,7 @@ protected:
 	EMidiDevice DeviceType;
 	bool CallbackIsThreaded;
 	int LoopLimit;
-	FString Args;
+	std::string Args;
 	std::unique_ptr<MIDISource> source;
 };
 
@@ -255,15 +255,15 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 			switch (devtype)
 			{
 			case MDEV_GUS:
-				dev = CreateTimidityMIDIDevice(Args, samplerate);
+				dev = CreateTimidityMIDIDevice(Args.c_str(), samplerate);
 				break;
 
 			case MDEV_ADL:
-				dev = CreateADLMIDIDevice(Args);
+				dev = CreateADLMIDIDevice(Args.c_str());
 				break;
 
 			case MDEV_OPN:
-				dev = CreateOPNMIDIDevice(Args);
+				dev = CreateOPNMIDIDevice(Args.c_str());
 				break;
 
 			case MDEV_MMAPI:
@@ -275,19 +275,19 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				// Intentional fall-through for non-Windows systems.
 
 			case MDEV_FLUIDSYNTH:
-				dev = CreateFluidSynthMIDIDevice(samplerate, Args);
+				dev = CreateFluidSynthMIDIDevice(samplerate, Args.c_str());
 				break;
 
 			case MDEV_OPL:
-				dev = CreateOplMIDIDevice(Args);
+				dev = CreateOplMIDIDevice(Args.c_str());
 				break;
 
 			case MDEV_TIMIDITY:
-				dev = CreateTimidityPPMIDIDevice(Args, samplerate);
+				dev = CreateTimidityPPMIDIDevice(Args.c_str(), samplerate);
 				break;
 
 			case MDEV_WILDMIDI:
-				dev = CreateWildMIDIDevice(Args, samplerate);
+				dev = CreateWildMIDIDevice(Args.c_str(), samplerate);
 				break;
 
 			default:
@@ -783,8 +783,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 
 	int i;
 	uint32_t *events = Events[buffer_num], *max_event_p;
-	uint32_t tot_time = 0;
-	uint32_t time = 0;
+
 
 	// The final event is for a NOP to hold the delay from the last event.
 	max_event_p = events + (max_events - 1) * 3;

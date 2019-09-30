@@ -1161,8 +1161,6 @@ set (PCH_SOURCES
 	sound/backend/i_sound.cpp
 	sound/music/music_config.cpp
 	sound/musicformats/music_cd.cpp
-	sound/musicformats/music_midistream.cpp
-	sound/musicformats/music_stream.cpp
 	rendering/swrenderer/textures/r_swtexture.cpp
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp

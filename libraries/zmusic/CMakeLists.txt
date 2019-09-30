@@ -49,6 +49,7 @@ file( GLOB HEADER_FILES
 	zmusic/*.h
 	mididevices/*.h
 	midisources/*.h
+	musicformats/*.h
 	decoder/*.h
 	streamsources/*.h
 	thirdparty/*.h
@@ -76,6 +77,8 @@ add_library( zmusic STATIC
 	streamsources/music_libsndfile.cpp
 	streamsources/music_opl.cpp
 	streamsources/music_xa.cpp
+	musicformats/music_stream.cpp
+	musicformats/music_midi.cpp
 	decoder/sounddecoder.cpp
 	decoder/sndfile_decoder.cpp
 	decoder/mpg123_decoder.cpp
@@ -87,6 +90,7 @@ target_link_libraries( zmusic )
 
 source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mididevices/.+")
 source_group("MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/midisources/.+")
+source_group("Music Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/musicformats/.+")
 source_group("Public Interface" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/zmusic/.+")
 source_group("Sound Decoding" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/decoder/.+")
 source_group("Stream Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/streamsources/.+")

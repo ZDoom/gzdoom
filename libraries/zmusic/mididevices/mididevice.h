@@ -4,8 +4,6 @@
 #include "zmusic/midiconfig.h"
 #include "zmusic/mididefs.h"
 
-#include "mididevices/mididevice.h"
-
 void TimidityPP_Shutdown();
 typedef void(*MidiCallback)(void *);
 

@@ -172,10 +172,6 @@ public:
 	{
 		return NULL;
 	}
-	SoundStream *OpenStream (FileReader &reader, int flags)
-	{
-		return NULL;
-	}
 
 	// Starts a sound.
 	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan)

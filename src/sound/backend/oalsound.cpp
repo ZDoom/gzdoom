@@ -232,25 +232,6 @@ class OpenALSoundStream : public SoundStream
 	bool Looping;
 	ALfloat Volume;
 
-
-	SoundDecoder *Decoder;
-	static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
-	{
-		OpenALSoundStream *self = static_cast<OpenALSoundStream*>(_sstream);
-		if(length < 0) return false;
-
-		size_t got = self->Decoder->read((char*)ptr, length);
-		if(got < (unsigned int)length)
-		{
-			if(!self->Looping || !self->Decoder->seek(0, false, true))
-				return false;
-			got += self->Decoder->read((char*)ptr+got, length-got);
-		}
-
-		return (got == (unsigned int)length);
-	}
-
-
 	bool SetupSource()
 	{
 		/* Get a source, killing the farthest, lowest-priority sound if needed */
@@ -294,7 +275,7 @@ class OpenALSoundStream : public SoundStream
 
 public:
 	OpenALSoundStream(OpenALSoundRenderer *renderer)
-	  : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f), Decoder(NULL)
+	  : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f)
 	{
 		memset(Buffers, 0, sizeof(Buffers));
 		Renderer->AddStream(this);
@@ -319,8 +300,6 @@ public:
 			memset(Buffers, 0, sizeof(Buffers));
 		}
 		getALError();
-
-		delete Decoder;
 	}
 
 
@@ -390,46 +369,6 @@ public:
 		return (getALError()==AL_NO_ERROR);
 	}
 
-	virtual bool SetPosition(unsigned int ms_pos)
-	{
-		std::unique_lock<std::mutex> lock(Renderer->StreamLock);
-		if(!Decoder->seek(ms_pos, true, false))
-			return false;
-
-		if(!Playing.load())
-			return true;
-		// Stop the source so that all buffers become processed, which will
-		// allow the next update to restart the source queue with the new
-		// position.
-		alSourceStop(Source);
-		getALError();
-		lock.unlock();
-		Renderer->StreamWake.notify_all();
-		return true;
-	}
-
-	virtual unsigned int GetPosition()
-	{
-		std::unique_lock<std::mutex> lock(Renderer->StreamLock);
-		ALint offset, queued, state;
-		alGetSourcei(Source, AL_SAMPLE_OFFSET, &offset);
-		alGetSourcei(Source, AL_BUFFERS_QUEUED, &queued);
-		alGetSourcei(Source, AL_SOURCE_STATE, &state);
-		if(getALError() != AL_NO_ERROR)
-			return 0;
-
-		size_t pos = Decoder->getSampleOffset();
-		lock.unlock();
-
-		if(state != AL_STOPPED)
-		{
-			size_t rem = queued*(Data.Size()/FrameSize) - offset;
-			if(pos > rem) pos -= rem;
-			else pos = 0;
-		}
-		return (unsigned int)(pos * 1000.0 / SampleRate);
-	}
-
 	virtual bool IsEnded()
 	{
 		return !Playing.load();
@@ -460,34 +399,11 @@ public:
 			return stats;
 		}
 
-		if (Decoder != nullptr)
-		{
-			pos = Decoder->getSampleOffset();
-			len = Decoder->getSampleLength();
-		}
 		lock.unlock();
 
 		stats = (state == AL_INITIAL) ? "Buffering" : (state == AL_STOPPED) ? "Underrun" :
 				(state == AL_PLAYING || state == AL_PAUSED) ? "Ready" : "Unknown state";
 
-		if (Decoder != nullptr)
-		{
-			if (state == AL_STOPPED)
-				offset = BufferCount * (Data.Size() / FrameSize);
-			else
-			{
-				size_t rem = queued*(Data.Size() / FrameSize) - offset;
-				if (pos > rem) pos -= rem;
-				else if (len > 0) pos += len - rem;
-				else pos = 0;
-			}
-			pos = (size_t)(pos * 1000.0 / SampleRate);
-			len = (size_t)(len * 1000.0 / SampleRate);
-			stats.AppendFormat(",%3u%% buffered", 100 - 100 * offset / (BufferCount*(Data.Size() / FrameSize)));
-			stats.AppendFormat(", %zu.%03zu", pos / 1000, pos % 1000);
-			if (len > 0)
-				stats.AppendFormat(" / %zu.%03zu", len / 1000, len % 1000);
-		}
 		if(state == AL_PAUSED)
 			stats += ", paused";
 		if(state == AL_PLAYING)
@@ -607,60 +523,6 @@ public:
 		return true;
 	}
 
-	bool Init(FileReader &reader, bool loop)
-	{
-		if(!SetupSource())
-		{
-			return false;
-		}
-
-		if(Decoder) delete Decoder;
-		auto mreader = new FileReaderMusicInterface(reader);
-		Decoder = SoundDecoder::CreateDecoder(mreader);
-		if (!Decoder)
-		{
-			mreader->close();
-			return false;
-		}
-
-		Callback = DecoderCallback;
-		UserData = NULL;
-		Format = AL_NONE;
-		FrameSize = 1;
-
-		ChannelConfig chans;
-		SampleType type;
-		int srate;
-
-		Decoder->getInfo(&srate, &chans, &type);
-		if(chans == ChannelConfig_Mono)
-		{
-			if(type == SampleType_UInt8) Format = AL_FORMAT_MONO8;
-			if(type == SampleType_Int16) Format = AL_FORMAT_MONO16;
-			FrameSize *= 1;
-		}
-		if(chans == ChannelConfig_Stereo)
-		{
-			if(type == SampleType_UInt8) Format = AL_FORMAT_STEREO8;
-			if(type == SampleType_Int16) Format = AL_FORMAT_STEREO16;
-			FrameSize *= 2;
-		}
-		if(type == SampleType_UInt8) FrameSize *= 1;
-		if(type == SampleType_Int16) FrameSize *= 2;
-
-		if(Format == AL_NONE)
-		{
-			Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
-				   GetSampleTypeName(type));
-			return false;
-		}
-		SampleRate = srate;
-		Looping = loop;
-
-		Data.Resize((SampleRate / 5) * FrameSize);
-
-		return true;
-	}
 };
 
 
@@ -1540,19 +1402,6 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 		StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
 	OpenALSoundStream *stream = new OpenALSoundStream(this);
 	if (!stream->Init(callback, buffbytes, flags, samplerate, userdata))
-	{
-		delete stream;
-		return NULL;
-	}
-	return stream;
-}
-
-SoundStream *OpenALSoundRenderer::OpenStream(FileReader &reader, int flags)
-{
-	if(StreamThread.get_id() == std::thread::id())
-		StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);
-	OpenALSoundStream *stream = new OpenALSoundStream(this);
-	if (!stream->Init(reader, !!(flags&SoundStream::Loop)))
 	{
 		delete stream;
 		return NULL;

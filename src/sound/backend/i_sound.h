@@ -76,7 +76,6 @@ public:
 	virtual void Stop() = 0;
 	virtual void SetVolume(float volume) = 0;
 	virtual bool SetPaused(bool paused) = 0;
-	virtual unsigned int GetPosition() = 0;
 	virtual bool IsEnded() = 0;
 	virtual FString GetStats();
 };
@@ -117,8 +116,7 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
-    virtual SoundStream *OpenStream (FileReader &reader, int flags) = 0;
-
+  
 	// Starts a sound.
 	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan) = 0;
 	virtual FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan) = 0;

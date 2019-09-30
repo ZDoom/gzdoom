@@ -149,6 +149,11 @@ static int DoomSpecificInfo (char *buffer, char *end)
 	return p;
 }
 
+void I_DetectOS()
+{
+	// The POSIX version never implemented this.
+}
+
 void I_StartupJoysticks();
 void I_ShutdownJoysticks();
 

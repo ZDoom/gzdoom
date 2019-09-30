@@ -2286,6 +2286,7 @@ void D_DoomMain (void)
 	const char *batchout = Args->CheckValue("-errorlog");
 	
 	C_InitConsole(80*8, 25*8, false);
+	I_DetectOS();
 
 	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.
 	FString logfile = Args->TakeValue("+logfile");

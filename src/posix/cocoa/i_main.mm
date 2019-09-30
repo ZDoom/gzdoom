@@ -90,7 +90,7 @@ struct NSOperatingSystemVersion
 
 #endif // before 10.10
 
-static void I_DetectOS()
+void I_DetectOS()
 {
 	NSOperatingSystemVersion version = {};
 	NSProcessInfo* const processInfo = [NSProcessInfo processInfo];
@@ -172,7 +172,6 @@ void OriginalMainTry(int argc, char** argv)
 	progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
 	progdir += "/";
 
-	I_DetectOS();
 	D_DoomMain();
 }
 

@@ -2284,6 +2284,8 @@ void D_DoomMain (void)
 	int argcount;	
 	FIWadManager *iwad_man;
 	const char *batchout = Args->CheckValue("-errorlog");
+	
+	C_InitConsole(80*8, 25*8, false);
 
 	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.
 	FString logfile = Args->TakeValue("+logfile");

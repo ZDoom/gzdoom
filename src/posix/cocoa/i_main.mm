@@ -172,8 +172,6 @@ void OriginalMainTry(int argc, char** argv)
 	progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
 	progdir += "/";
 
-	C_InitConsole(80 * 8, 25 * 8, false);
-	
 	I_DetectOS();
 	D_DoomMain();
 }

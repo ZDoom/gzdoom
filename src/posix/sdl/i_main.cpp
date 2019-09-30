@@ -222,7 +222,6 @@ int main (int argc, char **argv)
 		}
 
 		I_StartupJoysticks();
-		C_InitConsole (80*8, 25*8, false);
 		D_DoomMain ();
     }
     catch (std::exception &error)

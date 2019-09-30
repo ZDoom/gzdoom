@@ -978,9 +978,7 @@ void DoMain (HINSTANCE hInstance)
 
 		CoInitialize (NULL);
 		atexit (UnCOM);
-
-		C_InitConsole (((WinWidth / 8) + 2) * 8, (WinHeight / 12) * 8, false);
-
+		
 		I_DetectOS ();
 		D_DoomMain ();
 	}

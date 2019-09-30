@@ -979,6 +979,7 @@ bool MIDIStreamer::SetSubsong(int subsong)
 
 bool MIDIStreamer::ServiceStream(void* buff, int len)
 {
+	if (!MIDI) return false;
 	return static_cast<SoftSynthMIDIDevice*>(MIDI.get())->ServiceStream(buff, len);
 }
 

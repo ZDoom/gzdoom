@@ -277,10 +277,17 @@ void S_UpdateMusic ()
 		// [RH] Update music and/or playlist. IsPlaying() must be called
 		// to attempt to reconnect to broken net streams and to advance the
 		// playlist when the current song finishes.
-		if (!mus_playing.handle->IsPlaying() && PlayList)
+		if (!mus_playing.handle->IsPlaying())
 		{
-			PlayList->Advance();
-			S_ActivatePlayList(false);
+			if (PlayList)
+			{
+				PlayList->Advance();
+				S_ActivatePlayList(false);
+			}
+			else
+			{
+				S_StopMusic(true);
+			}
 		}
 	}
 }

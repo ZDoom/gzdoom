@@ -38,7 +38,7 @@ elseif( FLUIDSYNTH_FOUND )
 endif()
 
 
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../libraries/dumb/include" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../libraries/dumb/include" "${ZLIB_INCLUDE_DIR}" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
 
 if (WIN32)
 set( PLAT_SOURCES
@@ -53,6 +53,7 @@ file( GLOB HEADER_FILES
 	mididevices/*.h
 	midisources/*.h
 	musicformats/*.h
+	musicformats/win32/*.h
 	decoder/*.h
 	streamsources/*.h
 	thirdparty/*.h

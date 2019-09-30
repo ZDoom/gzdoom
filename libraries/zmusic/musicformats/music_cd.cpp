@@ -37,7 +37,7 @@
 #ifdef _WIN32
 
 #include "zmusic/m_swap.h"
-#include "i_cd.h"
+#include "win32/i_cd.h"
 
 
 // CD track/disk played through the multimedia system -----------------------
@@ -126,7 +126,7 @@ CDSong::CDSong (int track, int id)
 	}
 	else
 	{
-		success = CD_Init ();
+		success = CD_Init (-1);
 	}
 
 	if (success && (track == 0 || CD_CheckTrack (track)))

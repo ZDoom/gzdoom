@@ -48,8 +48,8 @@ enum ECDModes
 // Opens a CD device. If device is non-negative, it specifies which device
 // to open. 0 is drive A:, 1 is drive B:, etc. If device is not specified,
 // the user's preference is used to decide which device to open.
-bool CD_Init ();
-bool CD_Init (int device);
+bool CD_Enable (const char *drive);
+bool CD_Init (int device = -1);
 
 // Open a CD device containing a specific CD. Tries device guess first.
 bool CD_InitID (unsigned int id, int guess=-1);

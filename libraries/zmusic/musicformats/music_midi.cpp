@@ -35,6 +35,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <string>
+#include <algorithm>
+#include <assert.h>
 #include "zmusic/musinfo.h"
 #include "mididevices/mididevice.h"
 #include "midisources/midisource.h"

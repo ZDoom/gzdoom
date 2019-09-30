@@ -60,7 +60,6 @@
 
 
 
-
 void I_InitSoundFonts();
 
 extern MusPlayingInfo mus_playing;
@@ -73,6 +72,45 @@ static bool MusicDown = true;
 static bool ungzip(uint8_t *data, int size, std::vector<uint8_t> &newdata);
 
 int		nomusic = 0;
+
+#ifdef _WIN32
+
+void I_InitMusicWin32();
+
+#include "musicformats/win32/i_cd.h"
+//==========================================================================
+//
+// CVAR: cd_drive
+//
+// Which drive (letter) to use for CD audio. If not a valid drive letter,
+// let the operating system decide for us.
+//
+//==========================================================================
+EXTERN_CVAR(Bool, cd_enabled);
+
+CUSTOM_CVAR(String, cd_drive, "", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+{
+	if (cd_enabled && !Args->CheckParm("-nocdaudio")) CD_Enable(self);
+}
+
+//==========================================================================
+//
+// CVAR: cd_enabled
+//
+// Use the CD device? Can be overridden with -nocdaudio on the command line
+//
+//==========================================================================
+
+CUSTOM_CVAR(Bool, cd_enabled, true, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+{
+	if (self && !Args->CheckParm("-nocdaudio"))
+		CD_Enable(cd_drive);
+	else
+		CD_Enable(nullptr);
+}
+
+
+#endif
 
 //==========================================================================
 //
@@ -299,7 +337,7 @@ void I_SetRelativeVolume(float vol)
 void I_SetMusicVolume (double factor)
 {
 	factor = clamp(factor, 0., 2.0);
-	I_SetRelativeVolume(factor);
+	I_SetRelativeVolume((float)factor);
 }
 
 //==========================================================================

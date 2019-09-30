@@ -36,16 +36,8 @@
 #include <windows.h>
 #include <mmsystem.h>
 #include <stdlib.h>
-
-#include "doomtype.h"
-#include "c_cvars.h"
-#include "m_argv.h"
-#include "version.h"
-#include "i_system.h"
-
-#include "i_cd.h"
 #include "helperthread.h"
-#include "atterm.h"
+#include "i_cd.h"
 
 extern HWND Window;
 extern HINSTANCE g_hInst;
@@ -101,36 +93,7 @@ protected:
 
 static FCDThread *CDThread;
 static int Inited = NOT_INITED;
-
-//==========================================================================
-//
-// CVAR: cd_enabled
-//
-// Use the CD device? Can be overridden with -nocdaudio on the command line
-//
-//==========================================================================
-
-CUSTOM_CVAR (Bool, cd_enabled, true, CVAR_ARCHIVE|CVAR_NOINITCALL|CVAR_GLOBALCONFIG)
-{
-	if (self)
-		CD_Init ();
-	else
-		CD_Close ();
-}
-
-//==========================================================================
-//
-// CVAR: cd_drive
-//
-// Which drive (letter) to use for CD audio. If not a valid drive letter,
-// let the operating system decide for us.
-//
-//==========================================================================
-
-CUSTOM_CVAR (String, cd_drive, "", CVAR_ARCHIVE|CVAR_NOINITCALL|CVAR_GLOBALCONFIG)
-{
-	CD_Init ();
-}
+static int Enabled = false;
 
 //==========================================================================
 //
@@ -173,7 +136,7 @@ bool FCDThread::Init ()
 	CD_WindowClass.style = CS_NOCLOSE;
 	CD_WindowClass.lpfnWndProc = CD_WndProc;
 	CD_WindowClass.hInstance = g_hInst;
-	CD_WindowClass.lpszClassName = WGAMENAME " CD Player";
+	CD_WindowClass.lpszClassName = L"ZNusic CD Player";
 	CD_WindowAtom = RegisterClass (&CD_WindowClass);
 
 	if (CD_WindowAtom == 0)
@@ -181,7 +144,7 @@ bool FCDThread::Init ()
 
 	CD_Window = CreateWindow (
 		(LPCTSTR)(INT_PTR)(int)CD_WindowAtom,
-		WGAMENAME " CD Player",
+		CD_WindowClass.lpszClassName,
 		0,
 		0, 0, 10, 10,
 		NULL,
@@ -453,8 +416,16 @@ static void KillThread ()
 //
 //==========================================================================
 
-bool CD_Init ()
+bool CD_Enable (const char *cd_drive)
 {
+	if (!cd_drive)
+	{
+		// lock the CD system.
+		Enabled = false;
+		CD_Close();
+		return false;
+	}
+	Enabled = true;	// this must have been called at least once to consider the use of the CD system
 	if ((cd_drive)[0] == 0 || (cd_drive)[1] != 0)
 	{
 		return CD_Init (-1);
@@ -463,21 +434,22 @@ bool CD_Init ()
 	{
 		char drive = toupper ((cd_drive)[0]);
 
-		if (drive >= 'A' && drive <= 'Z' && !CD_Init (drive - 'A'))
-			return CD_Init (-1);
+		if (drive >= 'A' && drive <= 'Z' && !CD_Init(drive - 'A'))
+		{
+			return CD_Init(-1);
+		}
 	}
 	return true;
 }
 
 bool CD_Init (int device)
 {
-	if (!cd_enabled || Args->CheckParm ("-nocdaudio"))
-		return false;
+	if (!Enabled) return false;
 
 	if (CDThread == NULL)
 	{
 		CDThread = new FCDThread;
-		atterm (KillThread);
+		atexit (KillThread);
 	}
 
 	if (Inited != device)

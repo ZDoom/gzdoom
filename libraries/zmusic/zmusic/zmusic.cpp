@@ -221,21 +221,10 @@ MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, co
 		}
 		
 		// Check for CDDA "format"
-		else if (id[0] == (('R') | (('I') << 8) | (('F') << 16) | (('F') << 24)))
+		else if ((id[0] == MAKE_ID('R', 'I', 'F', 'F') && id[2] == MAKE_ID('C', 'D', 'D', 'A')))
 		{
-			uint32_t subid;
-			
-			reader->seek(8, SEEK_CUR);
-			if (reader->read(&subid, 4) == 4)
-			{
-				reader->seek(-12, SEEK_CUR);
-				
-				if (subid == (('C') | (('D') << 8) | (('D') << 16) | (('A') << 24)))
-				{
-					// This is a CDDA file
-					info = CDDA_OpenSong(reader);
-				}
-			}
+			// This is a CDDA file
+			info = CDDA_OpenSong(reader);
 		}
 		
 		// Check for various raw OPL formats

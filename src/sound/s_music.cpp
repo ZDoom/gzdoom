@@ -88,8 +88,7 @@
 #include "s_music.h"
 #include "filereadermusicinterface.h"
 #include "zmusic/musinfo.h"
-
-#include "i_musicinterns.h"
+#include "zmusic/zmusic.h"
 
 // MACROS ------------------------------------------------------------------
 

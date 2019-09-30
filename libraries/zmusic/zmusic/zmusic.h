@@ -151,9 +151,15 @@ void SetDmxGus(const void* data, unsigned len);
 
 // These exports are needed by the MIDI dumpers which need to remain on the client side.
 class MIDISource;	// abstract for the client
+class MusInfo;
 EMIDIType IdentifyMIDIType(uint32_t *id, int size);
 MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype);
 void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char* devarg, const char* outname, int subsong, int samplerate);
+
+MusInfo *I_RegisterSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args);
+MusInfo *I_RegisterCDSong (int track, int cdid = 0);
+
+void ZMusic_Shutdown();
 
 class MusInfo;
 // Configuration interface. The return value specifies if a music restart is needed.

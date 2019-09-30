@@ -38,7 +38,7 @@ elseif( FLUIDSYNTH_FOUND )
 endif()
 
 
-include_directories( "../libraries/dumb/include" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../libraries/dumb/include" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
 
 if (WIN32)
 set( PLAT_SOURCES
@@ -87,6 +87,7 @@ add_library( zmusic STATIC
 	decoder/sndfile_decoder.cpp
 	decoder/mpg123_decoder.cpp
 	zmusic/configuration.cpp
+	zmusic/zmusic.cpp
 	${PLAT_SOURCES}
 	)
 target_link_libraries( zmusic )

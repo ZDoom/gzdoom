@@ -93,20 +93,6 @@ void I_Init(void)
 	I_InitSound();
 }
 
-static int has_exited;
-
-void I_Quit()
-{
-	has_exited = 1; // Prevent infinitely recursive exits -- killough
-
-	if (demorecording)
-	{
-		G_CheckDemoStatus();
-	}
-
-	C_DeinitConsole();
-}
-
 
 extern FILE* Logfile;
 bool gameisdead;
@@ -137,12 +123,7 @@ static void I_FatalError(const char* const error, va_list ap)
 		fprintf(stderr, "%s\n", errortext);
 		exit(-1);
 	}
-
-	if (!has_exited) // If it hasn't exited yet, exit now -- killough
-	{
-		has_exited = 1; // Prevent infinitely recursive exits -- killough
-		exit(-1);
-	}
+	std::terminate();
 }
 
 void I_FatalError(const char* const error, ...)

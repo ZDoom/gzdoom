@@ -103,22 +103,6 @@ void I_Init (void)
 }
 
 //
-// I_Quit
-//
-static int has_exited;
-
-void I_Quit (void)
-{
-	has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
-
-	if (demorecording)
-		G_CheckDemoStatus();
-
-	C_DeinitConsole();
-}
-
-
-//
 // I_Error
 //
 extern FILE *Logfile;
@@ -189,12 +173,7 @@ void I_FatalError (const char *error, va_list ap)
 		fprintf (stderr, "%s\n", errortext);
 		exit (-1);
 	}
-
-	if (!has_exited)	// If it hasn't exited yet, exit now -- killough
-	{
-		has_exited = 1;	// Prevent infinitely recursive exits -- killough
-		exit(-1);
-	}
+	std::terminate();
 }
 
 void I_FatalError(const char* const error, ...)

@@ -149,24 +149,7 @@ void OriginalMainTry(int argc, char** argv)
 {
 	Args = new FArgs(argc, argv);
 
-	/*
-	 killough 1/98:
-
-	 This fixes some problems with exit handling
-	 during abnormal situations.
-
-	 The old code called I_Quit() to end program,
-	 while now I_Quit() is installed as an exit
-	 handler and exit() is called to exit, either
-	 normally or abnormally. Seg faults are caught
-	 and the error handler is used, to prevent
-	 being left in graphics mode or having very
-	 loud SFX noise because the sound card is
-	 left in an unstable state.
-	 */
-
 	atexit(call_terms);
-	atterm(I_Quit);
 
 	NSString* exePath = [[NSBundle mainBundle] executablePath];
 	progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];

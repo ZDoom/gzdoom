@@ -749,6 +749,11 @@ void PeekThreadedErrorPane()
 	PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE);
 }
 
+static void UnTbp()
+{
+	timeEndPeriod(TimerPeriod);
+}
+
 //==========================================================================
 //
 // DoMain
@@ -857,22 +862,9 @@ void DoMain (HINSTANCE hInstance)
 			TimerPeriod = tc.wPeriodMin;
 
 		timeBeginPeriod (TimerPeriod);
-
-		/*
-		killough 1/98:
-
-		This fixes some problems with exit handling
-		during abnormal situations.
-
-		The old code called I_Quit() to end program,
-		while now I_Quit() is installed as an exit
-		handler and exit() is called to exit, either
-		normally or abnormally.
-		*/
+		atexit(UnTbp);
 
 		atexit (call_terms);
-
-		atterm (I_Quit);
 
 		// Figure out what directory the program resides in.
 		WCHAR progbuff[1024];

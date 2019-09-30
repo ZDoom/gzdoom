@@ -46,6 +46,8 @@
 EXTERN_CVAR (Bool, saveloadconfirmation) // [mxd]
 EXTERN_CVAR (Bool, quicksaverotation)
 
+CVAR(Bool, m_quickexit, false, CVAR_ARCHIVE)
+
 typedef void(*hfunc)();
 DEFINE_ACTION_FUNCTION(DMessageBoxMenu, CallHandler)
 {
@@ -85,9 +87,14 @@ DMenu *CreateMessageBoxMenu(DMenu *parent, const char *message, int messagemode,
 
 CCMD (menu_quit)
 {	// F10
+	if (m_quickexit)
+	{
+		ST_Endoom();
+	}
+
 	M_StartControlPanel (true);
 
-	int messageindex = gametic % gameinfo.quitmessages.Size();
+	const size_t messageindex = static_cast<size_t>(gametic) % gameinfo.quitmessages.Size();
 	FString EndString;
 	const char *msg = gameinfo.quitmessages[messageindex];
 	if (msg[0] == '$')

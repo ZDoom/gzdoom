@@ -1202,6 +1202,10 @@ OptionMenu "MiscOptions" protected
 	SafeCommand "$MISCMNU_CLEARNODECACHE",		"clearnodecache"
 	StaticText " "
 	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
+
+	StaticText " "
+	Option "$MISCMNU_QUICKEXIT",				"m_quickexit", "OnOff"
+
 	IfOption(Windows)
 	{
 		StaticText " "

@@ -225,7 +225,11 @@ static void SetupGenMidi()
 	// The OPL renderer should not care about where this comes from.
 	// Note: No I_Error here - this needs to be consistent with the rest of the music code.
 	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
-	if (lump < 0) Printf("No GENMIDI lump found. OPL playback not available.");
+	if (lump < 0)
+	{
+		Printf("No GENMIDI lump found. OPL playback not available.");
+		return;
+	}
 	auto data = Wads.OpenLumpReader(lump);
 
 	auto genmidi = data.Read();

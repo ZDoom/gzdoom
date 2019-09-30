@@ -111,6 +111,18 @@ public:
 	CVulkanError(const char *message) : CDoomError(message) {}
 };
 
+class CExitEvent : public std::exception
+{
+	int m_reason;
+public:
+	CExitEvent(int reason) { m_reason = reason; }
+	char const *what() const noexcept override
+	{
+		return "The game wants to exit";
+	}
+	int Reason() const { return m_reason; }
+};
+
 void I_Error (const char *error, ...) GCCPRINTF(1,2);
 void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 

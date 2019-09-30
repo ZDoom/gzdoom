@@ -939,7 +939,10 @@ void DoMain (HINSTANCE hInstance)
 				NULL);
 
 		if (!Window)
-			I_FatalError ("Could not open window");
+		{
+			MessageBoc(nullptr, "Fatal", "Unable to create main window", MB_ICONEXCLAMATION|MB_OK);
+			exit(-1);
+		}
 
 		if (kernel != NULL)
 		{

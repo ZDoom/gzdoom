@@ -42,6 +42,8 @@
 #include "s_sound.h"
 #include "s_music.h"
 #include "d_main.h"
+#include "textures.h"
+#include "image.h"
 
 void I_GetEvent();	// i_input.h pulls in too much garbage.
 
@@ -308,6 +310,7 @@ static const uint16_t IBM437ToUnicode[] = {
 };
 
 BitmapInfo* StartupBitmap;
+FTexture * StartupTexture;
 
 // Hexen startup screen
 #define ST_MAX_NOTCHES			32
@@ -392,6 +395,21 @@ static const int StrifeStartupPicSizes[4 + 2 + 1] =
 	2304
 };
 
+FImageSource *CreateStartScreenTexture(BitmapInfo *srcdata);
+
+void InvalidateTexture()
+{
+	if (StartupTexture == nullptr)
+	{
+		auto imgsource = CreateStartScreenTexture(StartupBitmap);
+		StartupTexture = new FImageTexture(imgsource);
+		StartupTexture->SetUseType(ETextureType::Override);
+	}
+	else
+	{
+		StartupTexture->SystemTextures.Clean(true, true);
+	}
+}
 
 //==========================================================================
 //

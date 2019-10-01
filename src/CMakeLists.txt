@@ -500,16 +500,15 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp
-	win32/st_start_util.cpp
 	win32/gl_sysfb.cpp
 	win32/base_sysfb.cpp
 	win32/win32basevideo.cpp
 	win32/win32glvideo.cpp)
-	
+
 if (HAVE_VULKAN)
 	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} win32/win32vulkanvideo.cpp )
 endif()
-	
+
 set( PLAT_POSIX_SOURCES
 	posix/i_steam.cpp )
 set( PLAT_SDL_SOURCES
@@ -839,7 +838,7 @@ set( FASTMATH_SOURCES
 	r_data/models/models.cpp
 	utility/matrix.cpp
 )
-	
+
 #Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
 set (VULKAN_SOURCES
 	rendering/vulkan/system/vk_device.cpp
@@ -934,6 +933,7 @@ set (PCH_SOURCES
 	serializer.cpp
 	scriptutil.cpp
 	st_stuff.cpp
+	st_start_util.cpp
 	rendering/v_framebuffer.cpp
 	r_data/v_palette.cpp
 	rendering/v_video.cpp
@@ -1090,6 +1090,7 @@ set (PCH_SOURCES
 	gamedata/textures/formats/emptytexture.cpp
 	gamedata/textures/formats/shadertexture.cpp
 	gamedata/textures/formats/tgatexture.cpp
+	gamedata/textures/formats/startscreentexture.cpp
 	gamedata/textures/hires/hqresize.cpp
 	gamedata/textures/hires/hirestex.cpp
 	gamedata/fonts/singlelumpfont.cpp
@@ -1098,7 +1099,7 @@ set (PCH_SOURCES
 	gamedata/fonts/font.cpp
 	gamedata/fonts/hexfont.cpp
 	gamedata/fonts/v_font.cpp
-	gamedata/fonts/v_text.cpp	
+	gamedata/fonts/v_text.cpp
 	gamedata/p_xlat.cpp
 	gamedata/xlat/parse_xlat.cpp
 	gamedata/xlat/parsecontext.cpp

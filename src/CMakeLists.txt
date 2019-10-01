@@ -500,6 +500,7 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp
+	win32/st_start_util.cpp
 	win32/gl_sysfb.cpp
 	win32/base_sysfb.cpp
 	win32/win32basevideo.cpp

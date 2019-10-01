@@ -72,6 +72,7 @@ public:
 	void Update();
 
 	void InitializeState() override;
+	void ReloadState() override;
 
 	void CleanForRestart() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;

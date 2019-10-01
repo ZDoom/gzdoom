@@ -22,6 +22,7 @@ public:
 	~OpenGLFrameBuffer();
 
 	void InitializeState() override;
+	void ReloadState() override;
 	void Update() override;
 
 	void CleanForRestart() override;

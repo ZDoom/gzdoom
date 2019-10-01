@@ -2449,6 +2449,10 @@ void D_DoomMain (void)
 			// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
 			V_InitScreen();
 		}
+		else
+		{
+			screen->ReloadState();
+		}
 
 		GameConfig->DoKeySetup(gameinfo.ConfigName);
 

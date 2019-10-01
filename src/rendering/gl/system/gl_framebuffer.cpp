@@ -103,6 +103,22 @@ OpenGLFrameBuffer::~OpenGLFrameBuffer()
 
 //==========================================================================
 //
+// The entire state is encapsulated in GLRenderer, so deleting
+// and recreating that woll do what we need, most importantly
+// recompilation of the shaders.
+//
+//==========================================================================
+
+void OpenGLFrameBuffer::ReloadState()
+{
+	if (GLRenderer) delete GLRenderer;
+	GLRenderer = new FGLRenderer(this);
+	GLRenderer->Initialize(GetWidth(), GetHeight());
+}
+
+
+//==========================================================================
+//
 // Initializes the GL renderer
 //
 //==========================================================================

@@ -184,6 +184,11 @@ void VulkanFrameBuffer::InitializeState()
 	}
 }
 
+void VulkanFrameBuffer::ReloadState()
+{
+	InitializeState();
+}
+
 void VulkanFrameBuffer::Update()
 {
 	twoD.Reset();

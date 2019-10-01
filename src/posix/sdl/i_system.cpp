@@ -98,7 +98,7 @@ void I_Init (void)
 	CheckCPUID (&CPU);
 	DumpCPUInfo (&CPU);
 
-	atterm (I_ShutdownSound);
+	atterm(I_ShutdownSound);
 	I_InitSound ();
 }
 
@@ -171,7 +171,7 @@ void I_FatalError (const char *error, va_list ap)
 		}
 //		throw CFatalError (errortext);
 		fprintf (stderr, "%s\n", errortext);
-		exit (-1);
+		exit(-1);
 	}
 	std::terminate();
 }

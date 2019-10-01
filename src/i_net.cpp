@@ -435,7 +435,7 @@ void StartNetwork (bool autoPort)
 	}
 #endif
 
-	atterm (CloseNetwork);
+	atterm(CloseNetwork);
 
 	netgame = true;
 	multiplayer = true;
@@ -689,14 +689,14 @@ void HostGame (int i)
 
 	doomcom.numnodes = 1;
 
-	atterm (SendAbort);
+	atterm(SendAbort);
 
 	StartScreen->NetInit ("Waiting for players", numplayers);
 
 	// Wait for numplayers-1 different connections
 	if (!StartScreen->NetLoop (Host_CheckForConnects, (void *)(intptr_t)numplayers))
 	{
-		exit (0);
+		exit(0);
 	}
 
 	// Now inform everyone of all machines involved in the game
@@ -706,7 +706,7 @@ void HostGame (int i)
 
 	if (!StartScreen->NetLoop (Host_SendAllHere, (void *)gotack))
 	{
-		exit (0);
+		exit(0);
 	}
 
 	popterm ();
@@ -858,20 +858,20 @@ void JoinGame (int i)
 	sendplayer[1] = 0;
 	doomcom.numnodes = 2;
 
-	atterm (SendAbort);
+	atterm(SendAbort);
 
 	// Let host know we are here
 	StartScreen->NetInit ("Contacting host", 0);
 
 	if (!StartScreen->NetLoop (Guest_ContactHost, NULL))
 	{
-		exit (0);
+		exit(0);
 	}
 
 	// Wait for everyone else to connect
 	if (!StartScreen->NetLoop (Guest_WaitForOthers, 0))
 	{
-		exit (0);
+		exit(0);
 	}
 
 	popterm ();

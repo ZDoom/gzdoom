@@ -305,7 +305,7 @@ void S_Init ()
 {
 	int curvelump;
 
-	atterm (S_Shutdown);
+	atterm(S_Shutdown);
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
 	curvelump = Wads.CheckNumForName ("SNDCURVE");

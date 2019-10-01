@@ -643,7 +643,7 @@ void S_ParseReverbDef ()
 {
 	int lump, lastlump = 0;
 
-	atterm (S_UnloadReverbDef);
+	atterm(S_UnloadReverbDef);
 	S_UnloadReverbDef ();
 
 	while ((lump = Wads.FindLump ("REVERBS", &lastlump)) != -1)

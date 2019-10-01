@@ -209,7 +209,7 @@ static int cregcmp (const void *a, const void *b) NO_SANITIZE
 
 void PClass::StaticInit ()
 {
-	atterm (StaticShutdown);
+	atterm(StaticShutdown);
 
 	Namespaces.GlobalNamespace = Namespaces.NewNamespace(0);
 

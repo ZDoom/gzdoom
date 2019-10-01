@@ -1604,7 +1604,7 @@ void D_ArbitrateNetStart (void)
 	StartScreen->NetInit ("Exchanging game information", 1);
 	if (!StartScreen->NetLoop (DoArbitrate, &data))
 	{
-		exit (0);
+		exit(0);
 	}
 
 	if (consoleplayer == Net_Arbitrator)

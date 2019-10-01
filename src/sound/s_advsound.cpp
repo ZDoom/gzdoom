@@ -986,7 +986,7 @@ void S_ParseSndInfo (bool redefine)
 	int lump;
 
 	if (!redefine) SavedPlayerSounds.Clear();	// clear skin sounds only for initial parsing.
-	atterm (S_ClearSoundData);
+	atterm(S_ClearSoundData);
 	S_ClearSoundData();	// remove old sound data first!
 
 	CurrentPitchMask = 0;

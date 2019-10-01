@@ -563,7 +563,7 @@ void V_InitScreenSize ()
 	const char *i;
 	int width, height, bits;
 	
-	atterm (V_Shutdown);
+	atterm(V_Shutdown);
 	
 	
 	width = height = bits = 0;

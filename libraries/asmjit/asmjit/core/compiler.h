@@ -327,7 +327,7 @@ public:
   FuncDetail _funcDetail;
   //! Function frame.
   FuncFrame _frame;
-  //! Function exit (label).
+  //! Function exit(label).
   LabelNode* _exitNode;
   //! Function end (sentinel).
   SentinelNode* _end;

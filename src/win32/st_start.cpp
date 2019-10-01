@@ -1343,13 +1343,11 @@ void FStrifeStartupScreen::DrawStuff(int old_laser, int new_laser)
 //
 //==========================================================================
 
-void ST_Endoom()
+int RunEndoom()
 {
-	if (showendoom == 0) exit(0);
-
-	if (gameinfo.Endoom.Len() == 0) 
+	if (showendoom == 0 || gameinfo.Endoom.Len() == 0) 
 	{
-		exit(0);
+		return 0;
 	}
 
 	int endoom_lump = Wads.CheckNumForFullName (gameinfo.Endoom, true);
@@ -1363,25 +1361,25 @@ void ST_Endoom()
 
 	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
 	{
-		exit(0);
+		return 0;
 	}
 
 	if (Wads.GetLumpFile(endoom_lump) == Wads.GetMaxIwadNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
-		exit(0);
+		return 0;
 	}
 
 	font = ST_Util_LoadFont (TEXT_FONT_NAME);
 	if (font == NULL)
 	{
-		exit(0);
+		return 0;
 	}
 
 	if (!ST_Util_CreateStartupWindow())
 	{
 		ST_Util_FreeFont (font);
-		exit(0);
+		return 0;
 	}
 
 	I_ShutdownGraphics ();
@@ -1432,7 +1430,7 @@ void ST_Endoom()
 			}
 			ST_Util_FreeBitmap (StartupBitmap);
 			ST_Util_FreeFont (font);
-			exit (int(bRet == 0 ? mess.wParam : 0));
+			return int(bRet == 0 ? mess.wParam : 0);
 		}
 		else if (blinking && mess.message == WM_TIMER && mess.hwnd == Window && mess.wParam == 0x5A15A)
 		{
@@ -1442,6 +1440,13 @@ void ST_Endoom()
 		TranslateMessage (&mess);
 		DispatchMessage (&mess);
 	}
+}
+
+void ST_Endoom()
+{
+	int code = RunEndoom();
+	exit(code);
+
 }
 
 //==========================================================================

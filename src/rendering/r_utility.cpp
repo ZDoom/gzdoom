@@ -380,7 +380,7 @@ FRenderer *CreateSWRenderer();
 
 void R_Init ()
 {
-	atterm (R_Shutdown);
+	atterm(R_Shutdown);
 
 	StartScreen->Progress();
 	R_InitTranslationTables ();

@@ -636,6 +636,7 @@ const char* VulkanFrameBuffer::DeviceName() const
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
 	// This is handled in VulkanSwapChain::AcquireImage.
+	cur_vsync = vsync;
 }
 
 void VulkanFrameBuffer::CleanForRestart()

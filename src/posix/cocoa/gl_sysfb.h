@@ -56,7 +56,7 @@ public:
 	int GetClientWidth() override;
 	int GetClientHeight() override;
 	void ToggleFullscreen(bool yes) override;
-	void SetWindowSize(int width, int height) override;
+	void SetWindowSize(int width, int height, bool temporary) override;
 
 	virtual void SetMode(bool fullscreen, bool hiDPI);
 

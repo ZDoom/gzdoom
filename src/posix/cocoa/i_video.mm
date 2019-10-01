@@ -510,22 +510,25 @@ void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 	SetMode(yes, m_hiDPI);
 }
 
-void SystemBaseFrameBuffer::SetWindowSize(int width, int height)
+void SystemBaseFrameBuffer::SetWindowSize(int width, int height, bool temporary)
 {
 	if (width < VID_MIN_WIDTH || height < VID_MIN_HEIGHT)
 	{
 		return;
 	}
 
-	if (fullscreen)
+	if (fullscreen && !temporary)
 	{
 		// Enter windowed mode in order to calculate title bar height
 		fullscreen = false;
 		SetMode(false, m_hiDPI);
 	}
 
-	win_w = width;
-	win_h = height + GetTitleBarHeight();
+	if (!temporary)
+	{
+		win_w = width;
+		win_h = height + GetTitleBarHeight();
+	}
 
 	SetMode(false, m_hiDPI);
 

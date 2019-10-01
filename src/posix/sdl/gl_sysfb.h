@@ -19,7 +19,7 @@ public:
 	int GetClientHeight() override;
 
 	void ToggleFullscreen(bool yes) override;
-	void SetWindowSize(int client_w, int client_h) override;
+	void SetWindowSize(int client_w, int client_h, bool temporary) override;
 
 protected:
 	SystemBaseFrameBuffer () {}

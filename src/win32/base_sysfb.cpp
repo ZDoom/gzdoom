@@ -219,7 +219,7 @@ void SystemBaseFrameBuffer::RestoreWindowedPos()
 //
 //==========================================================================
 
-void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
+void SystemBaseFrameBuffer::SetWindowSize(int w, int h, bool temporary)
 {
 	if (w < 0 || h < 0)
 	{
@@ -251,15 +251,15 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 			KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
 		}
 
-		if (!fullscreen)
+		if (!fullscreen || temporary)
 		{
 			ShowWindow(Window, SW_SHOWNORMAL);
 			SetWindowPos(Window, nullptr, winx, winy, winw, winh, SWP_NOZORDER | SWP_FRAMECHANGED);
 			win_maximized = false;
 			SetSize(GetClientWidth(), GetClientHeight());
-			SaveWindowedPos();
+			if (!temporary) SaveWindowedPos();
 		}
-		else
+		else if (!temporary)
 		{
 			win_x = winx;
 			win_y = winy;

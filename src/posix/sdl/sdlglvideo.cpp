@@ -368,16 +368,19 @@ void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 	}
 }
 
-void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
+void SystemBaseFrameBuffer::SetWindowSize(int w, int h, bool temporary)
 {
 	if (w < VID_MIN_WIDTH || h < VID_MIN_HEIGHT)
 	{
 		w = VID_MIN_WIDTH;
 		h = VID_MIN_HEIGHT;
 	}
-	win_w = w;
-	win_h = h;
-	if ( fullscreen )
+	if (!temporary)
+	{
+		win_w = w;
+		win_h = h;
+	}
+	if ( fullscreen && !temporary )
 	{
 		fullscreen = false;
 	}
@@ -389,8 +392,11 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 		SetSize(GetClientWidth(), GetClientHeight());
 		int x, y;
 		SDL_GetWindowPosition(Priv::window, &x, &y);
-		win_x = x;
-		win_y = y;
+		if (!temporary)
+		{
+			win_w = w;
+			win_h = h;
+		}
 	}
 }
 

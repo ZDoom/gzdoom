@@ -21,7 +21,7 @@ public:
 
 	bool IsFullscreen() override;
 	void ToggleFullscreen(bool yes) override;
-	void SetWindowSize(int client_w, int client_h);
+	void SetWindowSize(int client_w, int client_h, bool temporary);
 
 protected:
 

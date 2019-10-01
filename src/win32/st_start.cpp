@@ -647,51 +647,9 @@ bool ST_Util_CreateStartupWindow ()
 
 void ST_Util_SizeWindowForBitmap (int scale)
 {
-	DEVMODE displaysettings;
-	int w, h, cx, cy, x, y;
-	RECT rect;
-
-	if (GameTitleWindow != NULL)
-	{
-		GetClientRect (GameTitleWindow, &rect);
-	}
-	else
-	{
-		rect.bottom = 0;
-	}
-	RECT sizerect = { 0, 0, StartupBitmap->bmiHeader.biWidth * scale,
-		StartupBitmap->bmiHeader.biHeight * scale + rect.bottom };
-	AdjustWindowRectEx(&sizerect, WS_VISIBLE|WS_OVERLAPPEDWINDOW, FALSE, WS_EX_APPWINDOW);
-	w = sizerect.right - sizerect.left;
-	h = sizerect.bottom - sizerect.top;
-
-	// Resize the window, but keep its center point the same, unless that
-	// puts it partially offscreen.
-	memset (&displaysettings, 0, sizeof(displaysettings));
-	displaysettings.dmSize = sizeof(displaysettings);
-	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
-	GetWindowRect (Window, &rect);
-	cx = (rect.left + rect.right) / 2;
-	cy = (rect.top + rect.bottom) / 2;
-	x = cx - w / 2;
-	y = cy - h / 2;
-	if (x + w > (int)displaysettings.dmPelsWidth)
-	{
-		x = displaysettings.dmPelsWidth - w;
-	}
-	if (x < 0)
-	{
-		x = 0;
-	}
-	if (y + h > (int)displaysettings.dmPelsHeight)
-	{
-		y = displaysettings.dmPelsHeight - h;
-	}
-	if (y < 0)
-	{
-		y = 0;
-	}
-	MoveWindow (Window, x, y, w, h, TRUE);
+	int w = StartupBitmap->bmiHeader.biWidth * scale;
+	int h = StartupBitmap->bmiHeader.biHeight * scale;
+	screen->SetWindowSize(w, h, true);
 }
 
 //==========================================================================

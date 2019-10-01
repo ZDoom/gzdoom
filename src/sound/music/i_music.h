@@ -41,7 +41,6 @@ struct FOptionValues;
 //	MUSIC I/O
 //
 void I_InitMusic ();
-void I_ShutdownMusic (bool onexit = false);
 void I_BuildMIDIMenuList (FOptionValues *);
 
 // Volume.

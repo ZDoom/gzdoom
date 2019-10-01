@@ -37,7 +37,6 @@ void S_ParseMusInfo();
 
 //
 void S_InitMusic ();
-void S_ShutdownMusic ();
 void S_StartMusic ();
 
 
@@ -86,7 +85,10 @@ struct MusPlayingInfo
 	MusInfo* handle;
 	int   baseorder;
 	bool  loop;
+	FString	 LastSong;			// last music that was played
 };
+
+extern MusPlayingInfo mus_playing;
 
 extern float relative_volume, saved_relative_volume;
 

@@ -40,8 +40,6 @@
 #include "s_music.h"
 #include "zmusic/zmusic.h"
 
-extern MusPlayingInfo mus_playing;
-
 //==========================================================================
 //
 // ADL Midi device

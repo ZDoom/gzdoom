@@ -174,7 +174,6 @@ extern bool nosfx;
 extern bool nosound;
 
 void I_InitSound ();
-void I_ShutdownSound ();
 
 void S_ChannelEnded(FISoundChannel *schan);
 void S_ChannelVirtualChanged(FISoundChannel *schan, bool is_virtual);

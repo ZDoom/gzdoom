@@ -30,7 +30,29 @@
 namespace TimidityPlus
 {
 
-static MBlockNode *free_mblock_list = NULL;
+struct MBlock
+{
+	MBlockNode* free_mblock_list = NULL;
+
+	~MBlock()
+	{
+		int cnt;
+
+		cnt = 0;
+		while (free_mblock_list)
+		{
+			MBlockNode* tmp;
+
+			tmp = free_mblock_list;
+			free_mblock_list = free_mblock_list->next;
+			free(tmp);
+			cnt++;
+		}
+	}
+};
+
+static MBlock free_list;
+
 #define ADDRALIGN 8
 /* #define DEBUG */
 
@@ -50,7 +72,7 @@ static MBlockNode *new_mblock_node(size_t n)
 			return NULL;
 		p->block_size = n;
 	}
-	else if (free_mblock_list == NULL)
+	else if (free_list.free_mblock_list == NULL)
 	{
 		if ((p = (MBlockNode *)safe_malloc(sizeof(MBlockNode) + MIN_MBLOCK_SIZE)) == NULL)
 			return NULL;
@@ -58,8 +80,8 @@ static MBlockNode *new_mblock_node(size_t n)
 	}
 	else
 	{
-		p = free_mblock_list;
-		free_mblock_list = free_mblock_list->next;
+		p = free_list.free_mblock_list;
+		free_list.free_mblock_list = free_list.free_mblock_list->next;
 	}
 
 	p->offset = 0;
@@ -115,8 +137,8 @@ static void reuse_mblock1(MBlockNode *p)
 		free(p);
 	else /* p->block_size <= MIN_MBLOCK_SIZE */
 	{
-		p->next = free_mblock_list;
-		free_mblock_list = p;
+		p->next = free_list.free_mblock_list;
+		free_list.free_mblock_list = p;
 	}
 }
 
@@ -147,23 +169,6 @@ char *strdup_mblock(MBlockList *mblock, const char *str)
     p = (char *)new_segment(mblock, len + 1); /* for '\0' */
     memcpy(p, str, len + 1);
     return p;
-}
-
-int free_global_mblock(void)
-{
-	int cnt;
-
-	cnt = 0;
-	while (free_mblock_list)
-	{
-		MBlockNode *tmp;
-
-		tmp = free_mblock_list;
-		free_mblock_list = free_mblock_list->next;
-		free(tmp);
-		cnt++;
-	}
-	return cnt;
 }
 
 }

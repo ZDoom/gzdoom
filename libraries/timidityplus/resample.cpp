@@ -42,6 +42,7 @@ static float newt_coeffs[58][58];
 static int sample_bounds_min, sample_bounds_max; /* min/max bounds for sample data */
 
 #define DEFAULT_GAUSS_ORDER	25
+std::vector<float> gauss_table_data;
 static float *gauss_table[(1 << FRACTION_BITS)] = { 0 };	/* don't need doubles */
 static int gauss_n = DEFAULT_GAUSS_ORDER;
 
@@ -209,7 +210,9 @@ void initialize_gauss_table(int n)
 		zsin[i] = sin(i / (4 * M_PI));
 
 	x_inc = 1.0 / (1 << FRACTION_BITS);
-	gptr = (float*)safe_realloc(gauss_table[0], (n + 1) * sizeof(float)*(1 << FRACTION_BITS));
+
+	gauss_table_data.resize((n + 1) * sizeof(float) * (1 << FRACTION_BITS));
+	gptr = gauss_table_data.data();
 	for (m = 0, x = 0.0; m < (1 << FRACTION_BITS); m++, x += x_inc)
 	{
 		xz = (x + n_half) / (4 * M_PI);

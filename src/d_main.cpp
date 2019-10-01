@@ -2494,7 +2494,6 @@ void D_DoomMain (void)
 
 		if (!batchrun) Printf ("S_Init: Setting up sound.\n");
 		S_Init ();
-		S_InitMusic();
 
 		if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
 		if (!restart)
@@ -2803,7 +2802,6 @@ void D_Cleanup()
 	R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
 	gameinfo.~gameinfo_t();
 	new (&gameinfo) gameinfo_t;		// Reset gameinfo
-	S_ShutdownMusic();
 	S_Shutdown();					// free all channels and delete playlist
 	C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 	DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods

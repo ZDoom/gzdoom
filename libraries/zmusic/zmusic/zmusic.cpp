@@ -306,18 +306,3 @@ MusInfo *ZMusic_OpenCDSong (int track, int id)
 	return info;
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void TimidityPP_Shutdown();
-extern "C" void dumb_exit();
-
-void ZMusic_Shutdown()
-{
-	// free static data in the backends.
-	TimidityPP_Shutdown();
-	dumb_exit();
-}

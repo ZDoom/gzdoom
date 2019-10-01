@@ -159,8 +159,6 @@ void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char* devarg, c
 MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args);
 MusInfo *ZMusic_OpenCDSong (int track, int cdid = 0);
 
-void ZMusic_Shutdown();
-
 class MusInfo;
 // Configuration interface. The return value specifies if a music restart is needed.
 // RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.

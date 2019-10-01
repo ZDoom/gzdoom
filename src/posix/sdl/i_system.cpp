@@ -97,9 +97,6 @@ void I_Init (void)
 {
 	CheckCPUID (&CPU);
 	DumpCPUInfo (&CPU);
-
-	atterm(I_ShutdownSound);
-	I_InitSound ();
 }
 
 //

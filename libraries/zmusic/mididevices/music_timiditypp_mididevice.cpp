@@ -225,9 +225,3 @@ MIDIDevice *CreateTimidityPPMIDIDevice(const char *Args, int samplerate)
 	return new TimidityPPMIDIDevice(samplerate);
 }
 
-
-void TimidityPP_Shutdown()
-{
-	TimidityPlus::free_gauss_table();
-	TimidityPlus::free_global_mblock();
-}

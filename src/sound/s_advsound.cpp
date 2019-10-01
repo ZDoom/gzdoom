@@ -948,10 +948,7 @@ static void S_ClearSoundData()
 	unsigned int i;
 
 	S_StopAllChannels();
-	for (i = 0; i < S_sfx.Size(); ++i)
-	{
-		S_UnloadSound(&S_sfx[i]);
-	}
+	S_UnloadAllSounds();
 	S_sfx.Clear();
 	Ambients.Clear();
 	while (MusicVolumes != NULL)

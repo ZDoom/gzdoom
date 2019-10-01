@@ -108,7 +108,7 @@ EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
 void DrawHUD();
 void D_DoAnonStats();
-void I_DetectOS;
+void I_DetectOS();
 
 
 // MACROS ------------------------------------------------------------------

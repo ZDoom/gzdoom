@@ -2163,17 +2163,6 @@ void FMapInfoParser::ParseEpisodeInfo ()
 
 //==========================================================================
 //
-// Clears episode definitions
-//
-//==========================================================================
-
-void ClearEpisodes()
-{
-	AllEpisodes.Clear();
-}
-
-//==========================================================================
-//
 // SetLevelNum
 // Avoid duplicate levelnums. The level being set always has precedence.
 //
@@ -2277,7 +2266,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 		}
 		else if (sc.Compare("clearepisodes"))
 		{
-			ClearEpisodes();
+			AllEpisodes.Clear();
 		}
 		else if (sc.Compare("skill"))
 		{
@@ -2391,7 +2380,7 @@ static void ClearMapinfo()
 {
 	wadclusterinfos.Clear();
 	wadlevelinfos.Clear();
-	ClearEpisodes();
+	AllEpisodes.Clear();
 	AllSkills.Clear();
 	DefaultSkill = -1;
 	DeinitIntermissions();

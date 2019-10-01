@@ -8,6 +8,8 @@
 #ifndef midisources_h
 #define midisources_h
 
+#include <stddef.h>
+#include <string.h>
 #include <stdint.h>
 #include <functional>
 #include <vector>

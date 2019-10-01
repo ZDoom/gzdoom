@@ -91,7 +91,7 @@ add_library( zmusic STATIC
 	zmusic/zmusic.cpp
 	${PLAT_SOURCES}
 	)
-target_link_libraries( zmusic )
+target_link_libraries( zmusic adl dumb gme oplsynth opn timidity timidityplus wildmidi )
 
 
 source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mididevices/.+")

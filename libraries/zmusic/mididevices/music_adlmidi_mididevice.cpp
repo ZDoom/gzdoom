@@ -34,6 +34,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdlib.h>
+
 #include "mididevice.h"
 #include "adlmidi.h"
 

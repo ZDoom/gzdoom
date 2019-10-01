@@ -2439,6 +2439,17 @@ void D_DoomMain (void)
 		allwads.ShrinkToFit();
 		SetMapxxFlag();
 
+		if (!restart)
+		{
+			if (!batchrun) Printf("I_Init: Setting up machine state.\n");
+			I_Init();
+			if (!batchrun) Printf("V_Init: allocate screen.\n");
+			V_InitScreenSize();
+
+			// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
+			V_InitScreen();
+		}
+
 		GameConfig->DoKeySetup(gameinfo.ConfigName);
 
 		// Now that wads are loaded, define mod-specific cvars.
@@ -2462,26 +2473,8 @@ void D_DoomMain (void)
 
 		CT_Init ();
 
-		if (!restart)
-		{
-			if (!batchrun) Printf ("I_Init: Setting up machine state.\n");
-			I_Init ();
-		}
-
 		// [RH] Initialize palette management
 		InitPalette ();
-		
-		if (!batchrun) Printf ("V_Init: allocate screen.\n");
-		if (!restart)
-		{
-			V_InitScreenSize();
-		}
-		
-		if (!restart)
-		{
-			// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
-			V_InitScreen ();
-		}
 		
 		if (restart)
 		{

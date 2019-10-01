@@ -353,7 +353,7 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void *hMonitor, bool fullscreen) : 
 {
 	m_Monitor = hMonitor;
 	m_displayDeviceName = 0;
-	PositionWindow(fullscreen, true);
+	//PositionWindow(fullscreen, true);
 
 	HDC hDC = GetDC(Window);
 

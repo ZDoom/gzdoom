@@ -60,22 +60,6 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 // ---------------------------------------------------------------------------
 
 
-class FBasicStartupScreen : public FStartupScreen
-{
-public:
-	FBasicStartupScreen(int maxProgress, bool showBar);
-	~FBasicStartupScreen();
-
-	virtual void Progress();
-
-	virtual void NetInit(const char* message, int playerCount);
-	virtual void NetProgress(int count);
-	virtual void NetMessage(const char *format, ...);
-	virtual void NetDone();
-	virtual bool NetLoop(bool (*timerCallback)(void*), void* userData);
-};
-
-
 FBasicStartupScreen::FBasicStartupScreen(int maxProgress, bool showBar)
 : FStartupScreen(maxProgress)
 {

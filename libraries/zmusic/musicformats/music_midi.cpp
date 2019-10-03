@@ -276,9 +276,11 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 #endif
 				// Intentional fall-through for non-Windows systems.
 
+#ifdef HAVE_FLUIDSYNTH
 			case MDEV_FLUIDSYNTH:
 				dev = CreateFluidSynthMIDIDevice(samplerate, Args.c_str());
 				break;
+#endif // HAVE_FLUIDSYNTH
 
 			case MDEV_OPL:
 				dev = CreateOplMIDIDevice(Args.c_str());

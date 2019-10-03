@@ -43,6 +43,8 @@
 
 FluidConfig fluidConfig;
 
+#ifdef HAVE_FLUIDSYNTH
+
 #if !defined DYN_FLUIDSYNTH
 #include <fluidsynth.h>
 #else
@@ -671,3 +673,5 @@ MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const char *Args)
 	Fluid_SetupConfig(Args, fluid_patchset, true);
 	return new FluidSynthMIDIDevice(samplerate, fluid_patchset, musicCallbacks.Fluid_MessageFunc);
 }
+
+#endif // HAVE_FLUIDSYNTH

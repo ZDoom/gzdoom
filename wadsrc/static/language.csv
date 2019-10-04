@@ -3550,7 +3550,7 @@ Test Environment,REVMNU_TEST,,,,Testovat prostředí,Umgebung testen,,,Probar Am
 Edit Environment,REVMNU_EDIT,,,,Upravit prostředí,Umgebung editieren,,,Editar Ambiente,,Muokkaa tilaa,Modifier un environnement,,Modifica ambiente,反響編集,환경 편집,Omgeving bewerken,Edytuj Środowisko,Editar Ambiente,,,Редактировать окружение,Уреди окружење
 New Environment,REVMNU_NEW,,,,Nové prostředí,Neue Umgebung,,,Nuevo Ambiente,,Uusi tila,Nouveau environnement,,Nuovo ambiente,新規反響設定,새로운 환경 생성,Nieuwe omgeving,Nowe Środowisko,Novo Ambiente,,,Новое окружение,Ново окружење
 Revert settings,REVMNU_REVERT,,,,Obnovit nastavení,Zurücksetzen,,,Revertir Configuración,,Palauta asetukset,Réinitialiser les paramètres,,Ripristina impostazioni,設定を戻す,설정 되돌리기,Instellingen terugzetten,Przywróć ustawienia,Reverter definições,,,Настройки по умолчанию,Врати подешавања
-Environment Size,REVMNU_ENVIRONMENTSIZE,Please translate only if you know how to properly name this technical jargon!,,,,,,,Tamaño de Ambiente,,Tilan koko,Taille Environnement,,,反響サイズ,공간 크기,,,Tamanho do Ambiente,,,,
+Environment Size,REVMNU_ENVIRONMENT_SIZE,Please translate only if you know how to properly name this technical jargon!,,,,,,,Tamaño de Ambiente,,Tilan koko,Taille Environnement,,,反響サイズ,공간 크기,,,Tamanho do Ambiente,,,,
 Environment Diffusion,REVMNU_ENVIRONMENT_DIFFUSION,,,,,,,,Difusión de Ambiente,,Tilan äänen hajautuminen,Diffusion Environnement,,,反響伝播,공간 잔향 확산,,,Difusão do Ambiente,,,,
 Room,REVMNU_ROOM,,,,,,,,Sala,,Tilan keskitaajuudet,Salle,,,,룸 효과,,,Sala,,,,
 Room HF,REVMNU_ROOM_HF,,,,,,,,Sala (Frecuencia Alta),,Tilan korkeat taajuudet,HF Salle,,,,룸 효과 HF,,,Sala (Alta Frequência),,,,

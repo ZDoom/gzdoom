@@ -625,6 +625,7 @@ void V_Init2()
 	menu_resolution_custom_width = SCREENWIDTH;
 	menu_resolution_custom_height = SCREENHEIGHT;
 
+	screen->SetVSync(vid_vsync);
 	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();

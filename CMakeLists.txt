@@ -143,6 +143,19 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif()
 
+# Fast math flags, required by some subprojects
+set( ZD_FASTMATH_FLAG "" )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
+elseif( MSVC )
+	set( ZD_FASTMATH_FLAG "/fp:fast" )
+endif()
+
+macro( use_fast_math )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
+endmacro()
+
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
@@ -303,14 +316,6 @@ if (HAVE_VULKAN)
 	add_subdirectory( libraries/glslang/glslang)
 	add_subdirectory( libraries/glslang/spirv )
 	add_subdirectory( libraries/glslang/OGLCompilersDLL )
-endif()
-
-# Fast math flags, required by some subprojects
-set( ZD_FASTMATH_FLAG "" )
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
-elseif( MSVC )
-	set( ZD_FASTMATH_FLAG "/fp:fast" )
 endif()
 
 if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )

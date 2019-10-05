@@ -136,7 +136,7 @@ bool FCDThread::Init ()
 	CD_WindowClass.style = CS_NOCLOSE;
 	CD_WindowClass.lpfnWndProc = CD_WndProc;
 	CD_WindowClass.hInstance = g_hInst;
-	CD_WindowClass.lpszClassName = L"ZNusic CD Player";
+	CD_WindowClass.lpszClassName = L"ZMusic CD Player";
 	CD_WindowAtom = RegisterClass (&CD_WindowClass);
 
 	if (CD_WindowAtom == 0)

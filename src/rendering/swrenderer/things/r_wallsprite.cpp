@@ -141,19 +141,7 @@ namespace swrenderer
 		vis->wallc = wallc;
 		vis->foggy = foggy;
 
-		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && basecolormap->Fade != 0)
-		{
-			basecolormap = GetSpecialLights(basecolormap->Color, 0, basecolormap->Desaturate);
-		}
-		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
-
-		bool invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
-		if (vis->RenderStyle.Flags & STYLEF_InvertSource)
-			invertcolormap = !invertcolormap;
-
-		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
-
-		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, false, false, false, false, false);
 
 		thread->SpriteList->Push(vis);
 	}

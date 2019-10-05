@@ -243,7 +243,7 @@ inline std::wstring wideString(const char *filename)
 inline FILE* utf8_fopen(const char* filename, const char *mode)
 {
 #ifndef _WIN32
-	return fopen(filename, "wb");
+	return fopen(filename, mode);
 #else
 	auto fn = wideString(filename);
 	auto mo = wideString(mode);

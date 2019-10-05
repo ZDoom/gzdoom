@@ -401,15 +401,8 @@ if( NOT STRUPR_EXISTS )
 	add_definitions( -DNEED_STRUPR=1 )
 endif()
 
-CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
-if( NOT STRICMP_EXISTS )
-	add_definitions( -Dstricmp=strcasecmp )
-endif()
-
-CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
-if( NOT STRNICMP_EXISTS )
-	add_definitions( -Dstrnicmp=strncasecmp )
-endif()
+require_stricmp()
+require_strnicmp()
 
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )

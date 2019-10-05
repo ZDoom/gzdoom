@@ -222,6 +222,7 @@ namespace swrenderer
 		{
 			if (calclighting)
 			{
+				drawerargs.SetBaseColormap(spr->Light.BaseColormap);
 				drawerargs.SetLight(light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
 			}
 			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))

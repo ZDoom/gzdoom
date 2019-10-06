@@ -36,6 +36,7 @@
 
 #include <mutex>
 #include <stdio.h>
+#include <stdlib.h>
 #include "mididevice.h"
 #include "zmusic/mus2midi.h"
 

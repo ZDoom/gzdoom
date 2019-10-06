@@ -341,42 +341,6 @@ void I_Init()
 
 //==========================================================================
 //
-// I_FatalError
-//
-// Throw an error that will end the game.
-//
-//==========================================================================
-
-void I_FatalError(const char *error, ...)
-{
-	static BOOL alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown)		// ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-		char errortext[MAX_ERRORTEXT];
-		va_list argptr;
-		va_start(argptr, error);
-		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
-		va_end(argptr);
-		OutputDebugStringA(errortext);
-
-		// Record error to log (if logging)
-		if (Logfile)
-		{
-			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush(Logfile);
-		}
-
-		throw CFatalError(errortext);
-	}
-	std::terminate();
-}
-
-
-//==========================================================================
-//
 // I_PrintStr
 //
 // Send output to the list box shown during startup (and hidden during

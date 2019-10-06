@@ -64,13 +64,13 @@ extern "C"
 #ifndef NO_GTK
 bool I_GtkAvailable ();
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
-void I_FatalError_Gtk(const char* errortext);
+void I_ShowFatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
 
 double PerfToSec, PerfToMillisec;
-	
+
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
 }
@@ -140,48 +140,20 @@ void Linux_I_FatalError(const char* errortext)
 }
 #endif
 
-void I_FatalError (const char *error, va_list ap)
+
+void I_ShowFatalError(const char *message)
 {
-	static bool alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown)		// ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-		char errortext[MAX_ERRORTEXT];
-		int index;
-		index = vsnprintf (errortext, MAX_ERRORTEXT, error, ap);
-
 #ifdef __APPLE__
-		Mac_I_FatalError(errortext);
-#endif // __APPLE__		
-
-#ifdef __linux__
-		Linux_I_FatalError(errortext);
+	Mac_I_FatalError(message);
+#elif defined __linux__
+	Linux_I_FatalError(message);
+#else
+	// ???
 #endif
-		
-		// Record error to log (if logging)
-		if (Logfile)
-		{
-			fprintf (Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush (Logfile);
-		}
-//		throw CFatalError (errortext);
-		fprintf (stderr, "%s\n", errortext);
-		exit(-1);
-	}
-	std::terminate();
+	
 }
 
-void I_FatalError(const char* const error, ...)
-{
-	va_list argptr;
-	va_start(argptr, error);
-	I_FatalError(error, argptr);
-	va_end(argptr);
-
-}
-
+	
 void I_SetIWADInfo ()
 {
 }

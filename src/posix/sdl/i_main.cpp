@@ -188,65 +188,23 @@ int main (int argc, char **argv)
 
 	printf("\n");
 	
-    try
-    {
-		Args = new FArgs(argc, argv);
 
-		atexit (call_terms);
-
-		// Should we even be doing anything with progdir on Unix systems?
-		char program[PATH_MAX];
-		if (realpath (argv[0], program) == NULL)
-			strcpy (program, argv[0]);
-		char *slash = strrchr (program, '/');
-		if (slash != NULL)
-		{
-			*(slash + 1) = '\0';
-			progdir = program;
-		}
-		else
-		{
-			progdir = "./";
-		}
-
-		I_StartupJoysticks();
-		D_DoomMain ();
-    }
-    catch (std::exception &error)
-    {
-		I_ShutdownJoysticks();
-
-		const char *const message = error.what();
-
-		if (strcmp(message, "NoRunExit"))
-		{
-			if (CVMAbortException::stacktrace.IsNotEmpty())
-			{
-				Printf("%s", CVMAbortException::stacktrace.GetChars());
-			}
-
-			if (batchrun)
-			{
-				Printf("%s\n", message);
-			}
-			else
-			{
-#ifdef __APPLE__
-				Mac_I_FatalError(message);
-#endif // __APPLE__
-
-#ifdef __linux__
-				Linux_I_FatalError(message);
-#endif // __linux__
-			}
-		}
-
-		return -1;
-    }
-    catch (...)
-    {
-		call_terms ();
-		throw;
-    }
+	// Should we even be doing anything with progdir on Unix systems?
+	char program[PATH_MAX];
+	if (realpath (argv[0], program) == NULL)
+		strcpy (program, argv[0]);
+	char *slash = strrchr (program, '/');
+	if (slash != NULL)
+	{
+		*(slash + 1) = '\0';
+		progdir = program;
+	}
+	else
+	{
+		progdir = "./";
+	}
+	
+	I_StartupJoysticks();
+	D_DoomMain ();
     return 0;
 }

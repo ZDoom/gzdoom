@@ -123,6 +123,7 @@ public:
 	int Reason() const { return m_reason; }
 };
 
+void I_ShowFatalError(const char *message);
 void I_Error (const char *error, ...) GCCPRINTF(1,2);
 void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 

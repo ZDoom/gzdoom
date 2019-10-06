@@ -90,48 +90,6 @@ void I_Init(void)
 	DumpCPUInfo(&CPU);
 }
 
-
-extern FILE* Logfile;
-bool gameisdead;
-
-static void I_FatalError(const char* const error, va_list ap)
-{
-	static bool alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown) // ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-
-		char errortext[MAX_ERRORTEXT];
-		int index;
-		index = vsnprintf(errortext, MAX_ERRORTEXT, error, ap);
-
-		extern void Mac_I_FatalError(const char*);
-		Mac_I_FatalError(errortext);
-		
-		// Record error to log (if logging)
-		if (Logfile)
-		{
-			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush(Logfile);
-		}
-
-		fprintf(stderr, "%s\n", errortext);
-		exit(-1);
-	}
-	std::terminate();
-}
-
-void I_FatalError(const char* const error, ...)
-{
-	va_list argptr;
-	va_start(argptr, error);
-	I_FatalError(error, argptr);
-	va_end(argptr);
-
-}
-
 void I_SetIWADInfo()
 {
 }

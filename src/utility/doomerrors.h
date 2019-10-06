@@ -82,13 +82,6 @@ protected:
 	char m_Message[MAX_ERRORTEXT];
 };
 
-class CNoRunExit : public std::runtime_error
-{
-public:
-	CNoRunExit() : std::runtime_error("NoRunExit")
-	{
-	}
-};
 
 class CRecoverableError : public CDoomError
 {

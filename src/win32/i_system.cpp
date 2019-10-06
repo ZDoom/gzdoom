@@ -137,7 +137,6 @@ double PerfToSec, PerfToMillisec;
 
 UINT TimerPeriod;
 
-bool gameisdead;
 int sys_ostype = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

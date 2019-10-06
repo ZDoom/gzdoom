@@ -2326,6 +2326,11 @@ void I_FatalError(const char *error, ...)
 	std::terminate(); // recursive I_FatalErrors must immediately terminate.
 }
 
+static void NewFailure ()
+{
+    I_FatalError ("Failed to allocate memory from system heap");
+}
+
 //==========================================================================
 //
 // I_Quit
@@ -2348,7 +2353,7 @@ void I_Quit()
 //
 //==========================================================================
 
-void D_DoomMain (void)
+static void D_DoomMain_Internal (void)
 {
 	int p;
 	const char *v;
@@ -2357,6 +2362,8 @@ void D_DoomMain (void)
 	FString *args;
 	int argcount;	
 	FIWadManager *iwad_man;
+	
+	std::set_new_handler(NewFailure);
 	const char *batchout = Args->CheckValue("-errorlog");
 	
 	C_InitConsole(80*8, 25*8, false);
@@ -2739,7 +2746,7 @@ void D_DoomMain (void)
 
 			if (Args->CheckParm("-norun") || batchrun)
 			{
-				throw CNoRunExit();
+				return;
 			}
 
 			V_Init2();
@@ -2828,6 +2835,25 @@ void D_DoomMain (void)
 		gamestate = GS_STARTUP;
 	}
 	while (1);
+}
+
+int D_DoomMain()
+{
+	int ret = 0;
+	try
+	{
+		D_DoomMain_Internal();
+		ret = 1337;
+	}
+	catch (std::exception &error)
+	{
+		I_ShowFatalError(error.what());
+		ret = -1;
+	}
+	// Unless something really bad happened, the game should only exit through this single point in the code.
+	// No more 'exit', please.
+	// Todo: Move all engine cleanup here instead of using exit handlers and replace the scattered 'exit' calls with a special exception.
+	return ret;
 }
 
 //==========================================================================

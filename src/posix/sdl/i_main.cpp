@@ -94,10 +94,6 @@ FArgs *Args;
 // CODE --------------------------------------------------------------------
 
 
-static void NewFailure ()
-{
-    I_FatalError ("Failed to allocate memory from system heap");
-}
 
 static int DoomSpecificInfo (char *buffer, char *end)
 {
@@ -170,8 +166,6 @@ int main (int argc, char **argv)
 		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid (getuid ());
-    std::set_new_handler (NewFailure);
-
 	// Set LC_NUMERIC environment variable in case some library decides to
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
@@ -205,6 +199,5 @@ int main (int argc, char **argv)
 	}
 	
 	I_StartupJoysticks();
-	D_DoomMain ();
-    return 0;
+	return D_DoomMain ();
 }

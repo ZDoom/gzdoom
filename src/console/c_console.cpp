@@ -917,7 +917,7 @@ int PrintString (int iprintlevel, const char *outline)
 	return 0;	// Don't waste time on calculating this if nothing at all was printed...
 }
 
-extern bool gameisdead;
+bool gameisdead;
 
 int VPrintf (int printlevel, const char *format, va_list parms)
 {

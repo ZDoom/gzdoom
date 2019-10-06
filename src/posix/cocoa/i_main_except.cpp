@@ -39,41 +39,10 @@
 #include "atterm.h"
 
 // Import some functions from i_main.mm
-void Mac_I_FatalError(const char* const message);
+
 void OriginalMainTry(int argc, char** argv);
 
 void OriginalMainExcept(int argc, char** argv)
 {
-	try
-	{
-		OriginalMainTry(argc, argv);
-	}
-	catch(const std::exception& error)
-	{
-		const char* const message = error.what();
-
-		if (strcmp(message, "NoRunExit"))
-		{
-			if (CVMAbortException::stacktrace.IsNotEmpty())
-			{
-				Printf("%s", CVMAbortException::stacktrace.GetChars());
-			}
-
-			if (batchrun)
-			{
-				Printf("%s\n", message);
-			}
-			else
-			{
-				Mac_I_FatalError(message);
-			}
-		}
-
-		exit(-1);
-	}
-	catch(...)
-	{
-		call_terms();
-		throw;
-	}
+	OriginalMainTry(argc, argv);
 }

@@ -147,6 +147,14 @@ void I_PrintStr(const char* const message)
 }
 
 
+void Mac_I_FatalError(const char* const message);
+
+void I_ShowFatalError(const char *message)
+{
+	Mac_I_FatalError(message);
+}
+
+
 int I_PickIWad(WadStuff* const wads, const int numwads, const bool showwin, const int defaultiwad)
 {
 	if (!showwin)

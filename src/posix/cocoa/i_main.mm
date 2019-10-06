@@ -141,11 +141,7 @@ void I_DetectOS()
 FArgs* Args; // command line arguments
 
 
-// Newer versions of GCC than 4.2 have a bug with C++ exceptions in Objective-C++ code.
-// To work around we'll implement the try and catch in standard C++.
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=61759
-void OriginalMainExcept(int argc, char** argv);
-void OriginalMainTry(int argc, char** argv)
+int OriginalMainTry(int argc, char** argv)
 {
 	Args = new FArgs(argc, argv);
 
@@ -155,7 +151,7 @@ void OriginalMainTry(int argc, char** argv)
 	progdir = [[exePath stringByDeletingLastPathComponent] UTF8String];
 	progdir += "/";
 
-	D_DoomMain();
+	return D_DoomMain();
 }
 
 namespace
@@ -163,19 +159,12 @@ namespace
 
 TArray<FString> s_argv;
 
-
-void NewFailure()
-{
-	I_FatalError("Failed to allocate memory from system heap");
-}
-
 int OriginalMain(int argc, char** argv)
 {
 	printf(GAMENAME" %s - %s - Cocoa version\nCompiled on %s\n\n",
 		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid(getuid());
-	std::set_new_handler(NewFailure);
 
 	// Set LC_NUMERIC environment variable in case some library decides to
 	// clear the setlocale call at least this will be correct.
@@ -190,9 +179,7 @@ int OriginalMain(int argc, char** argv)
 	vid_defheight = static_cast<int>(screenSize.height);
 	vid_vsync     = true;
 
-	OriginalMainExcept(argc, argv);
-
-	return 0;
+	return OriginalMainTry(argc, argv);
 }
 
 } // unnamed namespace

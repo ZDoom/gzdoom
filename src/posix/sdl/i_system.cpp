@@ -103,7 +103,6 @@ void I_Init (void)
 // I_Error
 //
 extern FILE *Logfile;
-bool gameisdead;
 
 #ifdef __APPLE__
 void Mac_I_FatalError(const char* errortext);

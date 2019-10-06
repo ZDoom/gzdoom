@@ -2268,6 +2268,34 @@ static void CheckCmdLine()
 	}
 }
 
+//==========================================================================
+//
+// I_Error
+//
+// Throw an error that will send us to the console if we are far enough
+// along in the startup process.
+//
+//==========================================================================
+
+void I_Error(const char *error, ...)
+{
+	va_list argptr;
+	char errortext[MAX_ERRORTEXT];
+
+	va_start(argptr, error);
+	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	va_end(argptr);
+	I_DebugPrint(errortext);
+
+	throw CRecoverableError(errortext);
+}
+
+//==========================================================================
+//
+// I_Quit
+//
+//==========================================================================
+
 void I_Quit()
 {
 	if (demorecording)

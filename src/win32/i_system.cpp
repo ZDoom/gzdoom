@@ -374,31 +374,6 @@ void I_FatalError(const char *error, ...)
 	std::terminate();
 }
 
-//==========================================================================
-//
-// I_Error
-//
-// Throw an error that will send us to the console if we are far enough
-// along in the startup process.
-//
-//==========================================================================
-
-void I_Error(const char *error, ...)
-{
-	va_list argptr;
-	char errortext[MAX_ERRORTEXT];
-
-	va_start(argptr, error);
-	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
-	va_end(argptr);
-	if (IsDebuggerPresent())
-	{
-		auto wstr = WideString(errortext);
-		OutputDebugStringW(wstr.c_str());
-	}
-
-	throw CRecoverableError(errortext);
-}
 
 //==========================================================================
 //
@@ -560,8 +535,11 @@ static TArray<FString> bufferedConsoleStuff;
 
 void I_DebugPrint(const char *cp)
 {
-	auto wstr = WideString(cp);
-	OutputDebugStringW(wstr.c_str());
+	if (IsDebuggerPresent())
+	{
+		auto wstr = WideString(cp);
+		OutputDebugStringW(wstr.c_str());
+	}
 }
 
 void I_PrintStr(const char *cp)

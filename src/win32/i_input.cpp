@@ -739,7 +739,7 @@ void I_GetEvent ()
 	while (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE))
 	{
 		if (mess.message == WM_QUIT)
-			exit(mess.wParam);
+			throw CExitEvent(mess.wParam);
 
 		if (GUICapture)
 		{

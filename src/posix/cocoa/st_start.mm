@@ -39,6 +39,7 @@
 #include "doomtype.h"
 #include "st_console.h"
 #include "st_start.h"
+#include "doomerrors.h"
 
 
 FStartupScreen *StartScreen;
@@ -174,5 +175,5 @@ void ST_Endoom()
 	extern void I_ShutdownJoysticks();
 	I_ShutdownJoysticks();
 
-	exit(0);
+	throw CExitEvent(0);
 }

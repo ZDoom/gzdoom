@@ -350,5 +350,5 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 void ST_Endoom()
 {
 	I_ShutdownJoysticks();
-	exit(0);
+	throw CExitEvent(0);
 }

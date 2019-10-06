@@ -945,8 +945,6 @@ void FPlayerSoundHashTable::MarkUsed()
 
 static void S_ClearSoundData()
 {
-	unsigned int i;
-
 	S_StopAllChannels();
 	S_UnloadAllSounds();
 	S_sfx.Clear();

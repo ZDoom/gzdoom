@@ -331,6 +331,7 @@ FImageSource *JPEGImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *DDSImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PCXImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *TGAImage_TryCreate(FileReader &, int lumpnum);
+FImageSource *StbImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *RawPageImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *FlatImage_TryCreate(FileReader &, int lumpnum);
 FImageSource *PatchImage_TryCreate(FileReader &, int lumpnum);
@@ -348,6 +349,7 @@ FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype)
 		{ JPEGImage_TryCreate,			ETextureType::Any },
 		{ DDSImage_TryCreate,			ETextureType::Any },
 		{ PCXImage_TryCreate,			ETextureType::Any },
+		{ StbImage_TryCreate,			ETextureType::Any },
 		{ TGAImage_TryCreate,			ETextureType::Any },
 		{ RawPageImage_TryCreate,		ETextureType::MiscPatch },
 		{ FlatImage_TryCreate,			ETextureType::Flat },

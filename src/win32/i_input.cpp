@@ -423,8 +423,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_DESTROY:
 		SetPriorityClass (GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-		//PostQuitMessage (0);
-		exit(0);
+		PostQuitMessage (0);
 		break;
 
 	case WM_HOTKEY:

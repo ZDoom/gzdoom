@@ -82,13 +82,6 @@ protected:
 	char m_Message[MAX_ERRORTEXT];
 };
 
-class CNoRunExit : public std::runtime_error
-{
-public:
-	CNoRunExit() : std::runtime_error("NoRunExit")
-	{
-	}
-};
 
 class CRecoverableError : public CDoomError
 {
@@ -123,6 +116,7 @@ public:
 	int Reason() const { return m_reason; }
 };
 
+void I_ShowFatalError(const char *message);
 void I_Error (const char *error, ...) GCCPRINTF(1,2);
 void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 

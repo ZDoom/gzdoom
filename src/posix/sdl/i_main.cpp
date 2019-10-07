@@ -56,12 +56,8 @@
 #include "doomerrors.h"
 #include "i_system.h"
 #include "g_game.h"
-#include "atterm.h"
 
 // MACROS ------------------------------------------------------------------
-
-// The maximum number of functions that can be registered with atterm.
-#define MAX_TERMS	64
 
 // TYPES -------------------------------------------------------------------
 
@@ -94,10 +90,6 @@ FArgs *Args;
 // CODE --------------------------------------------------------------------
 
 
-static void NewFailure ()
-{
-    I_FatalError ("Failed to allocate memory from system heap");
-}
 
 static int DoomSpecificInfo (char *buffer, char *end)
 {
@@ -155,7 +147,6 @@ void I_DetectOS()
 }
 
 void I_StartupJoysticks();
-void I_ShutdownJoysticks();
 
 int main (int argc, char **argv)
 {
@@ -170,8 +161,6 @@ int main (int argc, char **argv)
 		GetVersionString(), GetGitTime(), __DATE__);
 
 	seteuid (getuid ());
-    std::set_new_handler (NewFailure);
-
 	// Set LC_NUMERIC environment variable in case some library decides to
 	// clear the setlocale call at least this will be correct.
 	// Note that the LANG environment variable is overridden by LC_*
@@ -188,65 +177,22 @@ int main (int argc, char **argv)
 
 	printf("\n");
 	
-    try
-    {
-		Args = new FArgs(argc, argv);
 
-		atexit (call_terms);
-
-		// Should we even be doing anything with progdir on Unix systems?
-		char program[PATH_MAX];
-		if (realpath (argv[0], program) == NULL)
-			strcpy (program, argv[0]);
-		char *slash = strrchr (program, '/');
-		if (slash != NULL)
-		{
-			*(slash + 1) = '\0';
-			progdir = program;
-		}
-		else
-		{
-			progdir = "./";
-		}
-
-		I_StartupJoysticks();
-		D_DoomMain ();
-    }
-    catch (std::exception &error)
-    {
-		I_ShutdownJoysticks();
-
-		const char *const message = error.what();
-
-		if (strcmp(message, "NoRunExit"))
-		{
-			if (CVMAbortException::stacktrace.IsNotEmpty())
-			{
-				Printf("%s", CVMAbortException::stacktrace.GetChars());
-			}
-
-			if (batchrun)
-			{
-				Printf("%s\n", message);
-			}
-			else
-			{
-#ifdef __APPLE__
-				Mac_I_FatalError(message);
-#endif // __APPLE__
-
-#ifdef __linux__
-				Linux_I_FatalError(message);
-#endif // __linux__
-			}
-		}
-
-		return -1;
-    }
-    catch (...)
-    {
-		call_terms ();
-		throw;
-    }
-    return 0;
+	// Should we even be doing anything with progdir on Unix systems?
+	char program[PATH_MAX];
+	if (realpath (argv[0], program) == NULL)
+		strcpy (program, argv[0]);
+	char *slash = strrchr (program, '/');
+	if (slash != NULL)
+	{
+		*(slash + 1) = '\0';
+		progdir = program;
+	}
+	else
+	{
+		progdir = "./";
+	}
+	
+	I_StartupJoysticks();
+	return D_DoomMain ();
 }

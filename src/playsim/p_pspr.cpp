@@ -977,6 +977,9 @@ DEFINE_ACTION_FUNCTION(AActor, BulletSlope)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_POINTER(t, FTranslatedLineTarget);
 	PARAM_INT(aimflags);
+	I_Error("blah");
+
+
 	ACTION_RETURN_FLOAT(P_BulletSlope(self, t, aimflags).Degrees);
 }
 

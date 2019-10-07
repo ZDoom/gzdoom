@@ -57,7 +57,7 @@ void JitCompiler::EmitSCOPE()
 	cc.jz(label);
 
 	auto f = newTempIntPtr();
-	cc.mov(f, asmjit::imm(konsta[C].v));
+	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
 
 	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
 	auto call = CreateCall<void, DObject*, VMFunction*, int>(ValidateCall);
@@ -77,7 +77,7 @@ void JitCompiler::EmitRET()
 	if (B == REGT_NIL)
 	{
 		EmitPopFrame();
-		x86::Gp vReg = newTempInt32();
+		X86Gp vReg = newTempInt32();
 		cc.mov(vReg, 0);
 		cc.ret(vReg);
 	}
@@ -86,8 +86,8 @@ void JitCompiler::EmitRET()
 		int a = A;
 		int retnum = a & ~RET_FINAL;
 
-		x86::Gp reg_retnum = newTempInt32();
-		x86::Gp location = newTempIntPtr();
+		X86Gp reg_retnum = newTempInt32();
+		X86Gp location = newTempIntPtr();
 		Label L_endif = cc.newLabel();
 
 		cc.mov(reg_retnum, retnum);
@@ -161,7 +161,7 @@ void JitCompiler::EmitRET()
 			cc.add(ptr, (int)(retnum * sizeof(VMReturn)));
 			auto call = CreateCall<void, VMReturn*, FString*>(SetString);
 			call->setArg(0, ptr);
-			if (regtype & REGT_KONST) call->setArg(1, asmjit::imm(&konsts[regnum]));
+			if (regtype & REGT_KONST) call->setArg(1, asmjit::imm_ptr(&konsts[regnum]));
 			else                      call->setArg(1, regS[regnum]);
 			break;
 		}
@@ -171,7 +171,7 @@ void JitCompiler::EmitRET()
 				if (regtype & REGT_KONST)
 				{
 					auto ptr = newTempIntPtr();
-					cc.mov(ptr, asmjit::imm(konsta[regnum].v));
+					cc.mov(ptr, asmjit::imm_ptr(konsta[regnum].v));
 					cc.mov(x86::qword_ptr(location), ptr);
 				}
 				else
@@ -184,7 +184,7 @@ void JitCompiler::EmitRET()
 				if (regtype & REGT_KONST)
 				{
 					auto ptr = newTempIntPtr();
-					cc.mov(ptr, asmjit::imm(konsta[regnum].v));
+					cc.mov(ptr, asmjit::imm_ptr(konsta[regnum].v));
 					cc.mov(x86::dword_ptr(location), ptr);
 				}
 				else
@@ -218,8 +218,8 @@ void JitCompiler::EmitRETI()
 	int a = A;
 	int retnum = a & ~RET_FINAL;
 
-	x86::Gp reg_retnum = newTempInt32();
-	x86::Gp location = newTempIntPtr();
+	X86Gp reg_retnum = newTempInt32();
+	X86Gp location = newTempIntPtr();
 	Label L_endif = cc.newLabel();
 
 	cc.mov(reg_retnum, retnum);
@@ -251,7 +251,7 @@ void JitCompiler::EmitTHROW()
 
 void JitCompiler::EmitBOUND()
 {
-	auto cursor = cc.cursor();
+	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
 	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
@@ -270,7 +270,7 @@ void JitCompiler::EmitBOUND()
 
 void JitCompiler::EmitBOUND_K()
 {
-	auto cursor = cc.cursor();
+	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
 	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
@@ -289,7 +289,7 @@ void JitCompiler::EmitBOUND_K()
 
 void JitCompiler::EmitBOUND_R()
 {
-	auto cursor = cc.cursor();
+	auto cursor = cc.getCursor();
 	auto label = cc.newLabel();
 	cc.bind(label);
 	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);

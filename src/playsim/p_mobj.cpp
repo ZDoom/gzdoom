@@ -4397,7 +4397,7 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	}
 	else
 	{
-		actor->Conversation = NULL;
+		actor->Conversation = nullptr;
 	}
 
 	actor->SetXYZ(pos);
@@ -4531,6 +4531,7 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 		actor->CallBeginPlay ();
 		if (actor->ObjectFlags & OF_EuthanizeMe)
 		{
+			actor = nullptr;
 			return;
 		}
 	}
@@ -4555,12 +4556,14 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 	}
 	// force scroller check in the first tic.
 	actor->flags8 |= MF8_INSCROLLSEC;
+
+	return;
 }
 
 
 AActor *AActor::StaticSpawn(FLevelLocals *Level, PClassActor *type, const DVector3 &pos, replace_t allowreplacement, bool SpawningMapThing)
 {
-	if (type == NULL)
+	if (type == nullptr)
 	{
 		I_Error("Tried to spawn a class-less actor\n");
 	}
@@ -5008,6 +5011,7 @@ AActor *FLevelLocals::SpawnPlayer (FPlayerStart *mthing, int playernum, int flag
 
 	mobj = Spawn (this, p->cls, spawn, NO_REPLACE);
 
+	if (mobj == nullptr) return nullptr;
 	if (this->flags & LEVEL_USEPLAYERSTARTZ)
 	{
 		if (spawn.Z == ONFLOORZ)
@@ -6071,6 +6075,8 @@ foundone:
 			if (splash->SplashChunk)
 			{
 				mo = Spawn(sec->Level, splash->SplashChunk, pos, ALLOW_REPLACE);
+
+				if (!mo) return false;
 				mo->target = thing;
 				if (splash->ChunkXVelShift != 255)
 				{
@@ -6352,11 +6358,11 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 		return nullptr;
 	}
 
-	if (dest == NULL)
+	if (dest == nullptr)
 	{
 		Printf ("P_SpawnMissilyXYZ: Tried to shoot %s from %s with no dest\n",
 			type->TypeName.GetChars(), source->GetClass()->TypeName.GetChars());
-		return NULL;
+		return nullptr;
 	}
 
 	if (pos.Z != ONFLOORZ && pos.Z != ONCEILINGZ)
@@ -6365,11 +6371,12 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 	}
 
 	AActor *th = Spawn (source->Level, type, pos, ALLOW_REPLACE);
-	
+
+	if (th == nullptr) return nullptr;
 	P_PlaySpawnSound(th, source);
 
 	// record missile's originator
-	if (owner == NULL) owner = source;
+	if (owner == nullptr) owner = source;
 	th->target = owner;
 
 	double speed = th->Speed;
@@ -6415,7 +6422,7 @@ AActor *P_SpawnMissileXYZ (DVector3 pos, AActor *source, AActor *dest, PClassAct
 		th->SetFriendPlayer(owner->player);
 	}
 
-	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : NULL;
+	return (!checkspawn || P_CheckMissileSpawn (th, source->radius)) ? th : nullptr;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, SpawnMissileXYZ)
@@ -6477,6 +6484,7 @@ AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassAct
 	}
 	AActor *th = Spawn (source->Level, type, source->PosPlusZ(32.), ALLOW_REPLACE);
 
+	if (th == nullptr) return nullptr;
 	P_PlaySpawnSound(th, source);
 	th->target = owner;		// record missile's originator
 
@@ -6591,8 +6599,9 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 
 	mo = Spawn (source->Level, type, source->PosAtZ(z), ALLOW_REPLACE);
 
+	if (mo == nullptr) return nullptr;
 	P_PlaySpawnSound(mo, source);
-	if (owner == NULL) owner = source;
+	if (owner == nullptr) owner = source;
 	mo->target = owner;
 	mo->Angles.Yaw = angle;
 	mo->VelFromAngle(speed);
@@ -6603,7 +6612,7 @@ AActor *P_SpawnMissileAngleZSpeed (AActor *source, double z,
 		mo->SetFriendPlayer(owner->player);
 	}
 
-	return (!checkspawn || P_CheckMissileSpawn(mo, source->radius)) ? mo : NULL;
+	return (!checkspawn || P_CheckMissileSpawn(mo, source->radius)) ? mo : nullptr;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, SpawnMissileAngleZSpeed)
@@ -6738,6 +6747,8 @@ AActor *P_SpawnPlayerMissile (AActor *source, double x, double y, double z,
 	}
 	DVector3 pos = source->Vec2OffsetZ(x, y, z);
 	AActor *MissileActor = Spawn (source->Level, type, pos, ALLOW_REPLACE);
+
+	if (MissileActor == nullptr) return nullptr;
 	if (pMissileActor) *pMissileActor = MissileActor;
 	P_PlaySpawnSound(MissileActor, source);
 	MissileActor->target = source;

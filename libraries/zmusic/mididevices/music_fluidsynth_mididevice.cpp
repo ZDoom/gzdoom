@@ -79,8 +79,14 @@ protected:
 	fluid_synth_t *FluidSynth;
 	int (*printfunc)(const char*, ...);
 
+	// Possible results returned by fluid_settings_...() functions
+	// Initial values are for FluidSynth 2.x
+	int FluidSettingsResultOk     = FLUID_OK;
+	int FluidSettingsResultFailed = FLUID_FAILED;
+
 #ifdef DYN_FLUIDSYNTH
 	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
+	static TReqProc<FluidSynthModule, void (*)(int *, int*, int*)> fluid_version;
 	static TReqProc<FluidSynthModule, fluid_settings_t *(*)()> new_fluid_settings;
 	static TReqProc<FluidSynthModule, fluid_synth_t *(*)(fluid_settings_t *)> new_fluid_synth;
 	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> delete_fluid_synth;
@@ -178,6 +184,16 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, std::vector<std::stri
 		throw std::runtime_error("Failed to load FluidSynth.\n");
 	}
 #endif
+	int major = 0, minor = 0, micro = 0;
+	fluid_version(&major, &minor, &micro);
+
+	if (major < 2)
+	{
+		// FluidSynth 1.x: fluid_settings_...() functions return 1 on success and 0 otherwise
+		FluidSettingsResultOk = 1;
+		FluidSettingsResultFailed = 0;
+	}
+
 	FluidSettings = new_fluid_settings();
 	if (FluidSettings == NULL)
 	{
@@ -380,7 +396,7 @@ void FluidSynthMIDIDevice::ChangeSettingInt(const char *setting, int value)
 			if (printfunc) printfunc("Setting polyphony to %d failed.\n", value);
 		}
 	}
-	else if (0 == fluid_settings_setint(FluidSettings, setting, value))
+	else if (FluidSettingsResultFailed == fluid_settings_setint(FluidSettings, setting, value))
 	{
 		if (printfunc) printfunc("Failed to set %s to %d.\n", setting, value);
 	}
@@ -419,7 +435,7 @@ void FluidSynthMIDIDevice::ChangeSettingNum(const char *setting, double value)
 	{
 		fluid_synth_set_chorus(FluidSynth, fluidConfig.fluid_chorus_voices, fluidConfig.fluid_chorus_level, fluidConfig.fluid_chorus_speed, fluidConfig.fluid_chorus_depth, fluidConfig.fluid_chorus_type);
 	}
-	else if (0 == fluid_settings_setnum(FluidSettings, setting, value))
+	else if (FluidSettingsResultFailed == fluid_settings_setnum(FluidSettings, setting, value))
 	{
 		if (printfunc) printfunc("Failed to set %s to %g.\n", setting, value);
 	}
@@ -442,7 +458,7 @@ void FluidSynthMIDIDevice::ChangeSettingString(const char *setting, const char *
 	}
 	setting += 11;
 
-	if (0 == fluid_settings_setstr(FluidSettings, setting, value))
+	if (FluidSettingsResultFailed == fluid_settings_setstr(FluidSettings, setting, value))
 	{
 		if (printfunc) printfunc("Failed to set %s to %s.\n", setting, value);
 	}
@@ -489,6 +505,7 @@ std::string FluidSynthMIDIDevice::GetStats()
 FModuleMaybe<DYN_FLUIDSYNTH> FluidSynthModule{"FluidSynth"};
 
 #define DYN_FLUID_SYM(x) decltype(FluidSynthMIDIDevice::x) FluidSynthMIDIDevice::x{#x}
+DYN_FLUID_SYM(fluid_version);
 DYN_FLUID_SYM(new_fluid_settings);
 DYN_FLUID_SYM(new_fluid_synth);
 DYN_FLUID_SYM(delete_fluid_synth);

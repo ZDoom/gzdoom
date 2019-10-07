@@ -181,14 +181,14 @@ bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo *currSong, int value,
 
 		case fluid_reverb: 
 			if (currSong != NULL)
-				currSong->ChangeSettingInt("fluidsynth.synth.reverb", value);
+				currSong->ChangeSettingInt("fluidsynth.synth.reverb.active", value);
 
 			ChangeAndReturn(fluidConfig.fluid_reverb, value, pRealValue);
 			return false;
 
 		case fluid_chorus: 
 			if (currSong != NULL)
-				currSong->ChangeSettingInt("fluidsynth.synth.chorus", value);
+				currSong->ChangeSettingInt("fluidsynth.synth.chorus.active", value);
 
 			ChangeAndReturn(fluidConfig.fluid_chorus, value, pRealValue);
 			return false;

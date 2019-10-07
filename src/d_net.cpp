@@ -1548,7 +1548,7 @@ bool D_ArbitrateNetStart (void)
 
 	// Return right away if we're just playing with ourselves.
 	if (doomcom.numnodes == 1)
-		return;
+		return true;
 
 	autostart = true;
 

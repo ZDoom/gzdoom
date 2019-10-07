@@ -749,7 +749,7 @@ static void UnTbp()
 //
 //==========================================================================
 
-void DoMain (HINSTANCE hInstance)
+int DoMain (HINSTANCE hInstance)
 {
 	LONG WinWidth, WinHeight;
 	int height, width, x, y;
@@ -853,7 +853,7 @@ void DoMain (HINSTANCE hInstance)
 	WCHAR progbuff[1024];
 	if (GetModuleFileNameW(nullptr, progbuff, sizeof progbuff) == 0)
 	{
-		MessageBoc(nullptr, "Fatal", "Could not determine program location.", MB_ICONEXCLAMATION|MB_OK);
+		MessageBoxA(nullptr, "Fatal", "Could not determine program location.", MB_ICONEXCLAMATION|MB_OK);
 		exit(-1);
 	}
 	
@@ -992,7 +992,6 @@ void I_ShowFatalError(const char *msg)
 	RestoreConView ();
 	S_StopMusic(true);
 	I_FlushBufferedConsoleStuff();
-	auto msg = error.what();
 
 	if (CVMAbortException::stacktrace.IsNotEmpty())
 	{
@@ -1287,11 +1286,11 @@ int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE nothing, LPWSTR cmdline, int
 	//_crtBreakAlloc = 227524;
 #endif
 
-	DoMain (hInstance);
+	int ret = DoMain (hInstance);
 
 	CloseHandle (MainThread);
 	MainThread = INVALID_HANDLE_VALUE;
-	return 0;
+	return ret;
 }
 
 // each platform has its own specific version of this function.

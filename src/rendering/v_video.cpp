@@ -69,7 +69,6 @@
 #include "version.h"
 #include "g_levellocals.h"
 #include "am_map.h"
-#include "atterm.h"
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
@@ -563,9 +562,6 @@ void V_InitScreenSize ()
 	const char *i;
 	int width, height, bits;
 	
-	atterm(V_Shutdown);
-	
-	
 	width = height = bits = 0;
 	
 	if ( (i = Args->CheckValue ("-width")) )
@@ -630,17 +626,6 @@ void V_Init2()
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	setsizeneeded = true;
-}
-
-void V_Shutdown()
-{
-	if (screen)
-	{
-		DFrameBuffer *s = screen;
-		screen = NULL;
-		delete s;
-	}
-	V_ClearFonts();
 }
 
 CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)

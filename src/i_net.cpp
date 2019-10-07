@@ -62,7 +62,6 @@
 #include "st_start.h"
 #include "m_misc.h"
 #include "doomerrors.h"
-#include "atterm.h"
 #include "cmdlib.h"
 
 #include "i_net.h"
@@ -434,8 +433,6 @@ void StartNetwork (bool autoPort)
 		I_FatalError ("Could not initialize Windows Sockets");
 	}
 #endif
-
-	atterm(CloseNetwork);
 
 	netgame = true;
 	multiplayer = true;

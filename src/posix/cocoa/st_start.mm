@@ -172,8 +172,5 @@ FStartupScreen *FStartupScreen::CreateInstance(const int maxProgress)
 
 void ST_Endoom()
 {
-	extern void I_ShutdownJoysticks();
-	I_ShutdownJoysticks();
-
 	throw CExitEvent(0);
 }

@@ -51,7 +51,6 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "c_dispatch.h"
-#include "atterm.h"
 
 #include "gameconfigfile.h"
 

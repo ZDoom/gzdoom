@@ -48,7 +48,6 @@
 #include "r_data/sprites.h"
 #include "vm.h"
 #include "i_system.h"
-#include "atterm.h"
 #include "s_music.h"
 #include "mididevices/mididevice.h"
 
@@ -943,7 +942,7 @@ void FPlayerSoundHashTable::MarkUsed()
 // be cleared for each level
 //==========================================================================
 
-static void S_ClearSoundData()
+void S_ClearSoundData()
 {
 	S_StopAllChannels();
 	S_UnloadAllSounds();
@@ -981,7 +980,6 @@ void S_ParseSndInfo (bool redefine)
 	int lump;
 
 	if (!redefine) SavedPlayerSounds.Clear();	// clear skin sounds only for initial parsing.
-	atterm(S_ClearSoundData);
 	S_ClearSoundData();	// remove old sound data first!
 
 	CurrentPitchMask = 0;

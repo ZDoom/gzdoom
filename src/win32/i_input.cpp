@@ -88,7 +88,6 @@
 #include "doomerrors.h"
 #include "i_system.h"
 #include "g_levellocals.h"
-#include "atterm.h"
 
 
 // Compensate for w32api's lack
@@ -613,7 +612,6 @@ bool I_InitInput (void *hwnd)
 	HRESULT hr;
 
 	Printf ("I_InitInput\n");
-	atterm(I_ShutdownInput);
 
 	noidle = !!Args->CheckParm ("-noidle");
 	g_pdi = NULL;

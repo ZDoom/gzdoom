@@ -130,6 +130,7 @@ protected:
 
 extern FStartupScreen *StartScreen;
 
+void DeleteStartupScreen();
 extern void ST_Endoom();
 
 // The entire set of functions here uses native Windows types. These are recreations of those types so that the code doesn't need to be changed more than necessary

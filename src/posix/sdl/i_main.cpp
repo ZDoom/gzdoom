@@ -177,6 +177,7 @@ int main (int argc, char **argv)
 
 	printf("\n");
 	
+	Args = new FArgs(argc, argv);
 
 	// Should we even be doing anything with progdir on Unix systems?
 	char program[PATH_MAX];

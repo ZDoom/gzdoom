@@ -125,7 +125,7 @@ void Linux_I_FatalError(const char* errortext)
 #ifndef NO_GTK
 	else if (I_GtkAvailable())
 	{
-		I_FatalError_Gtk(errortext);
+		I_ShowFatalError_Gtk(errortext);
 	}
 #endif
 	else

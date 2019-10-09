@@ -104,14 +104,10 @@ void InitSkyMap(FLevelLocals *Level)
 	//                  of the texture is at the top of the screen when looking fully up.
 	skyheight = skytex1->GetDisplayHeight();
 
-	if (skyheight >= 128 && skyheight < 200)
-	{
-		Level->skystretch = (r_skymode == 1
-			&& skyheight >= 128
-			&& Level->IsFreelookAllowed()
-			&& !(Level->flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
-	}
-	else Level->skystretch = false;
+	Level->skystretch = (r_skymode == 1
+		&& skyheight >= 128 && skyheight < 310
+		&& Level->IsFreelookAllowed()
+		&& !(Level->flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
 }
 
 void R_InitSkyMap()

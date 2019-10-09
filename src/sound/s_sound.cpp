@@ -352,7 +352,9 @@ void S_Shutdown ()
 	mus_playing.LastSong = "";	// If this isn't reset here, the song would attempt resume at the most inpopportune time...
 	S_StopAllChannels();
 
-	GSnd->UpdateSounds();
+	if (GSnd)
+		GSnd->UpdateSounds();
+
 	for (chan = FreeChannels; chan != NULL; chan = next)
 	{
 		next = chan->NextChan;
@@ -1752,7 +1754,9 @@ void S_StopAllChannels ()
 		S_StopChannel(chan);
 		chan = next;
 	}
-	GSnd->UpdateSounds();
+
+	if (GSnd)
+		GSnd->UpdateSounds();
 }
 
 //==========================================================================

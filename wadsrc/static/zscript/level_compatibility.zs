@@ -1387,13 +1387,9 @@ class LevelCompatibility native play
 			}
 			case '0EF86635676FD512CE0E962040125553': // Illusions of Home e3m7
 			{
-				// Fix red key and red key area door
-				// Also fix missing texture in red key area
+				// Fix red key and missing texture in red key area
 				SetThingFlags(247, 2016);
 				SetThingSkills(247, 31);
-				SetLineActivation(49, SPAC_Use);
-				SetLineSpecial(49, Door_Raise, 0, 16, 150, 0);
-				SetLineFlags(49, Line.ML_REPEAT_SPECIAL);
 				SetWallTexture(608, Line.back, Side.bottom, "GRAY5");
 				break;
 			}

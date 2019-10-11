@@ -102,39 +102,47 @@ static int DoomSpecificInfo (char *buffer, char *end)
 #ifdef __VERSION__
 	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
 #endif
-	p += snprintf (buffer+p, size-p, "\nCommand line:");
-	for (i = 0; i < Args->NumArgs(); ++i)
-	{
-		p += snprintf (buffer+p, size-p, " %s", Args->GetArg(i));
-	}
-	p += snprintf (buffer+p, size-p, "\n");
-	
-	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
-	{
-		p += snprintf (buffer+p, size-p, "\nWad %d: %s", i, arg);
-	}
 
-	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
+	// If Args is nullptr, then execution is at either
+	//  * early stage of initialization, additional info contains only default values
+	//  * late stage of shutdown, most likely main() was done, and accessing global variables is no longer safe
+	if (Args)
 	{
-		p += snprintf (buffer+p, size-p, "\n\nNot in a level.");
-	}
-	else
-	{
-		p += snprintf (buffer+p, size-p, "\n\nCurrent map: %s", primaryLevel->MapName.GetChars());
-
-		if (!viewactive)
+		p += snprintf(buffer + p, size - p, "\nCommand line:");
+		for (i = 0; i < Args->NumArgs(); ++i)
 		{
-			p += snprintf (buffer+p, size-p, "\n\nView not active.");
+			p += snprintf(buffer + p, size - p, " %s", Args->GetArg(i));
+		}
+		p += snprintf(buffer + p, size - p, "\n");
+
+		for (i = 0; (arg = Wads.GetWadName(i)) != NULL; ++i)
+		{
+			p += snprintf(buffer + p, size - p, "\nWad %d: %s", i, arg);
+		}
+
+		if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
+		{
+			p += snprintf(buffer + p, size - p, "\n\nNot in a level.");
 		}
 		else
 		{
-            auto &vp = r_viewpoint;
-			p += snprintf (buffer+p, size-p, "\n\nviewx = %f", vp.Pos.X);
-			p += snprintf (buffer+p, size-p, "\nviewy = %f", vp.Pos.Y);
-			p += snprintf (buffer+p, size-p, "\nviewz = %f", vp.Pos.Z);
-			p += snprintf (buffer+p, size-p, "\nviewangle = %f", vp.Angles.Yaw.Degrees);
+			p += snprintf(buffer + p, size - p, "\n\nCurrent map: %s", primaryLevel->MapName.GetChars());
+
+			if (!viewactive)
+			{
+				p += snprintf(buffer + p, size - p, "\n\nView not active.");
+			}
+			else
+			{
+				auto& vp = r_viewpoint;
+				p += snprintf(buffer + p, size - p, "\n\nviewx = %f", vp.Pos.X);
+				p += snprintf(buffer + p, size - p, "\nviewy = %f", vp.Pos.Y);
+				p += snprintf(buffer + p, size - p, "\nviewz = %f", vp.Pos.Z);
+				p += snprintf(buffer + p, size - p, "\nviewangle = %f", vp.Angles.Yaw.Degrees);
+			}
 		}
 	}
+
 	buffer[p++] = '\n';
 	buffer[p++] = '\0';
 

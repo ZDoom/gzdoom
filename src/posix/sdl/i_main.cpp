@@ -173,7 +173,6 @@ int main (int argc, char **argv)
 		fprintf (stderr, "Could not initialize SDL:\n%s\n", SDL_GetError());
 		return -1;
 	}
-	atexit (SDL_Quit);	// This one should NOT be in the engine's list of exit handlers!
 
 	printf("\n");
 	
@@ -195,5 +194,10 @@ int main (int argc, char **argv)
 	}
 	
 	I_StartupJoysticks();
-	return D_DoomMain ();
+
+	const int result = D_DoomMain();
+
+	SDL_Quit();
+
+	return result;
 }

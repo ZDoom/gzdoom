@@ -1419,6 +1419,17 @@ class LevelCompatibility native play
 				SetLineFlags(2040, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
+
+			case '0E379EEBEB189F294ED122BC60D10A68': // Hellbound MAP29
+			{
+				// Remove the cyberdemons stuck in the closet boxes that cannot teleport.
+				SetThingFlags(2970,0);
+				SetThingFlags(2969,0);
+				SetThingFlags(2968,0);
+				SetThingFlags(2169,0);
+				SetThingFlags(2168,0);
+				SetThingFlags(2167,0);
+			}
 		}
 	}
 

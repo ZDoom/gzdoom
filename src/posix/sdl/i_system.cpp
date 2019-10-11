@@ -117,9 +117,8 @@ void Linux_I_FatalError(const char* errortext)
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
 		FString cmd;
-		cmd << "kdialog --title \"" GAMESIG " ";
-		cmd << GetVersionString() << ": No IWAD found\" ";
-		cmd << "--msgbox \"" << errortext << "\"";
+		cmd << "kdialog --title \"" GAMESIG " " << GetVersionString()
+			<< "\" --msgbox \"" << errortext << "\"";
 		popen(cmd, "r");
 	}
 #ifndef NO_GTK
@@ -130,10 +129,13 @@ void Linux_I_FatalError(const char* errortext)
 #endif
 	else
 	{
-		FString message;
-		message << GAMESIG " ";
-		message << GetVersionString() << ": No IWAD found";
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, message, errortext, NULL);
+		FString title;
+		title << GAMESIG " " << GetVersionString();
+
+		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, errortext, NULL) < 0)
+		{
+			printf("\n%s\n", errortext);
+		}
 	}
 }
 #endif

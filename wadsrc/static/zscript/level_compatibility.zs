@@ -1426,21 +1426,13 @@ class LevelCompatibility native play
 
 			case '0E379EEBEB189F294ED122BC60D10A68': // Hellbound MAP29
 			{
-				// The ceiling to the teleporters is just a little too low, blocking
-				// the cyberdemons from teleporting. Raise the ceilings by 64 units so
-				// there's enough room to get through. These use specials that stop
-				// the floor a small distance above the ground itself, affecting
-				// both the monster closets AND accessible map parts. This means
-				// the height is not tall enough for the cyberdemons to pass through.
-				double val = 64;
-				OffsetSectorPlane(3243, Sector.ceiling, val);
-				OffsetSectorPlane(3235, Sector.ceiling, val);
-				OffsetSectorPlane(3251, Sector.ceiling, val);
-				OffsetSectorPlane(3239, Sector.ceiling, val);
-				OffsetSectorPlane(3045, Sector.ceiling, val);
-				OffsetSectorPlane(990,	Sector.ceiling, val);
-				OffsetSectorPlane(245,	Sector.ceiling, val);
-				OffsetSectorPlane(3044,	Sector.ceiling, val);
+				// Remove the cyberdemons stuck in the closet boxes that cannot teleport.
+				SetThingFlags(2970,0);
+				SetThingFlags(2969,0);
+				SetThingFlags(2968,0);
+				SetThingFlags(2169,0);
+				SetThingFlags(2168,0);
+				SetThingFlags(2167,0);
 			}
 		}
 	}

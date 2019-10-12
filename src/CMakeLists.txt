@@ -491,7 +491,6 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
 	posix/cocoa/i_main.mm
-	posix/cocoa/i_main_except.cpp
 	posix/cocoa/i_system.mm
 	posix/cocoa/i_video.mm
 	posix/cocoa/st_console.mm

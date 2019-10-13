@@ -228,12 +228,12 @@ void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, float volume, f
 void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
 void S_Sound(FLevelLocals *Level, const DVector3 &pos, int channel, FSoundID sfxid, float volume, float attenuation);
 
-void S_SoundPitch (int channel, FSoundID sfxid, float volume, float attenuation, float pitch);
-void S_SoundPitchActor (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation, float pitch);
+void S_SoundPitch (int channel, FSoundID sfxid, float volume, float attenuation, float pitch, float startTime);
+void S_SoundPitchActor (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation, float pitch, float startTime);
 
 // [Nash] Used by ACS and DECORATE
 void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local);
-void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch);
+void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch, float startTime);
 
 // sound channels
 // channel 0 never willingly overrides
@@ -358,7 +358,7 @@ void S_ShrinkPlayerSoundLists ();
 void S_UnloadSound (sfxinfo_t *sfx);
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
-void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch);
+void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch, double startTime);
 
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.

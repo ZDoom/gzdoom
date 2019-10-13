@@ -132,7 +132,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector, co
 static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, int channum, FVector3 &res);
 static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly, FVector3 &res);
 static FSoundChan *S_StartSound(AActor *mover, const sector_t *sec, const FPolyObj *poly,
-	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff, float spitch);
+	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo *rolloff, float spitch, float startTime);
 static void S_SetListener(SoundListener &listener, AActor *listenactor);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -896,7 +896,7 @@ static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly,
 
 static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyObj *poly,
 	const FVector3 *pt, int channel, FSoundID sound_id, float volume, float attenuation,
-	FRolloffInfo *forcedrolloff=NULL, float spitch = 0.0f)
+	FRolloffInfo *forcedrolloff=NULL, float spitch = 0.0f, float startTime = 0.f)
 {
 	sfxinfo_t *sfx;
 	int chanflags;
@@ -1159,17 +1159,17 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
             S_LoadSound3D(sfx, &SoundBuffer);
 			SoundListener listener;
 			S_SetListener(listener, players[consoleplayer].camera);
-            chan = (FSoundChan*)GSnd->StartSound3D (sfx->data3d, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL);
+            chan = (FSoundChan*)GSnd->StartSound3D (sfx->data3d, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL, startTime);
 		}
 		else
 		{
-			chan = (FSoundChan*)GSnd->StartSound (sfx->data, float(volume), pitch, startflags, NULL);
+			chan = (FSoundChan*)GSnd->StartSound (sfx->data, float(volume), pitch, startflags, NULL, startTime);
 		}
 	}
 	if (chan == NULL && (chanflags & CHAN_LOOP))
 	{
 		chan = (FSoundChan*)S_GetChannel(NULL);
-		GSnd->MarkStartTime(chan);
+		GSnd->MarkStartTime(chan, startTime);
 		chanflags |= CHAN_EVICTED;
 	}
 	if (attenuation > 0)
@@ -1289,9 +1289,9 @@ void S_RestartSound(FSoundChan *chan)
 //
 //==========================================================================
 
-void S_SoundPitch(int channel, FSoundID sound_id, float volume, float attenuation, float pitch)
+void S_SoundPitch(int channel, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime = 0.f)
 {
-	S_StartSound(NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation, 0, pitch);
+	S_StartSound(NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation, 0, pitch, startTime);
 }
 
 void S_Sound(int channel, FSoundID sound_id, float volume, float attenuation)
@@ -1307,7 +1307,8 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 	PARAM_FLOAT(volume);
 	PARAM_FLOAT(attn);
 	PARAM_FLOAT(pitch);
-	S_SoundPitch(channel, id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch));
+	PARAM_FLOAT(startTime);
+	S_SoundPitch(channel, id, static_cast<float>(volume), static_cast<float>(attn), static_cast<float>(pitch), static_cast<float>(startTime));
 	return 0;
 }
 
@@ -1316,11 +1317,11 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 // S_Sound - An actor is source
 //
 //==========================================================================
-void S_SoundPitchActor(AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation, float pitch)
+void S_SoundPitchActor(AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime = 0.f)
 {
 	if (ent == nullptr || ent->Sector->Flags & SECF_SILENT || ent->Level != primaryLevel)
 		return;
-	S_StartSound (ent, nullptr, nullptr, nullptr, channel, sound_id, volume, attenuation, 0, pitch);
+	S_StartSound (ent, nullptr, nullptr, nullptr, channel, sound_id, volume, attenuation, 0, pitch, startTime);
 }
 
 void S_Sound(AActor *ent, int channel, FSoundID sound_id, float volume, float attenuation)
@@ -1394,20 +1395,20 @@ void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, fl
 //
 //==========================================================================
 
-void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch)
+void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch, float startTime = 0.f)
 {
 	if (a == nullptr || a->Sector->Flags & SECF_SILENT || a->Level != primaryLevel)
 		return;
 
 	if (!local)
 	{
-		S_SoundPitchActor(a, chan, sid, vol, atten, pitch);
+		S_SoundPitchActor(a, chan, sid, vol, atten, pitch, startTime);
 	}
 	else
 	{
 		if (a->CheckLocalView())
 		{
-			S_SoundPitch(chan, sid, vol, ATTN_NONE, pitch);
+			S_SoundPitch(chan, sid, vol, ATTN_NONE, pitch, startTime);
 		}
 	}
 }
@@ -1417,20 +1418,20 @@ void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool
 	S_PlaySoundPitch(a, chan, sid, vol, atten, local, 0.f);
 }
 
-void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch)
+void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch, double startTime = 0.f)
 {
 	if (!looping)
 	{
 		if (!(channel & CHAN_NOSTOP) || !S_IsActorPlayingSomething(self, channel & 7, soundid))
 		{
-			S_PlaySoundPitch(self, channel, soundid, (float)volume, (float)attenuation, local, (float)pitch);
+			S_PlaySoundPitch(self, channel, soundid, (float)volume, (float)attenuation, local, (float)pitch, (float)startTime);
 		}
 	}
 	else
 	{
 		if (!S_IsActorPlayingSomething(self, channel & 7, soundid))
 		{
-			S_PlaySoundPitch(self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation, local, (float)pitch);
+			S_PlaySoundPitch(self, channel | CHAN_LOOP, soundid, (float)volume, (float)attenuation, local, (float)pitch, (float)startTime);
 		}
 	}
 }

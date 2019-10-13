@@ -138,8 +138,10 @@ protected:
 
 #ifdef __APPLE__
 #define FLUIDSYNTHLIB1	"libfluidsynth.1.dylib"
+#define FLUIDSYNTHLIB2	"libfluidsynth.2.dylib"
 #else // !__APPLE__
 #define FLUIDSYNTHLIB1	"libfluidsynth.so.1"
+#define FLUIDSYNTHLIB2	"libfluidsynth.so.2"
 #endif // __APPLE__
 #endif
 
@@ -547,19 +549,12 @@ bool FluidSynthMIDIDevice::LoadFluidSynth(const char *fluid_lib)
 			return true;
 	}
 
-#ifdef FLUIDSYNTHLIB2
 	if(!FluidSynthModule.Load({FLUIDSYNTHLIB1, FLUIDSYNTHLIB2}))
 	{
 		if (printfunc) printfunc("Could not load " FLUIDSYNTHLIB1 " or " FLUIDSYNTHLIB2 "\n");
 		return false;
 	}
-#else
-	if(!FluidSynthModule.Load({fluid_lib, FLUIDSYNTHLIB1}))
-	{
-		if (printfunc) printfunc("Could not load " FLUIDSYNTHLIB1 ": %s\n", dlerror());
-		return false;
-	}
-#endif
+
 	return true;
 }
 

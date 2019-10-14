@@ -3810,7 +3810,7 @@ static void DoDamage(AActor *dmgtarget, AActor *inflictor, AActor *source, int a
 	
 		if (amount > 0)
 		{ //Should wind up passing them through just fine.
-			if (flags & DMSS_INFLICTORDMGTYPE)
+			if (inflictor && (flags & DMSS_INFLICTORDMGTYPE))
 				DamageType = inflictor->DamageType;
 
 			P_DamageMobj(dmgtarget, inflictor, source, amount, DamageType, dmgFlags);

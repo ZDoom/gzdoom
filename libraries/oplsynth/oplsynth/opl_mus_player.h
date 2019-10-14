@@ -29,8 +29,6 @@ protected:
 	int currentCore;
 	bool Looping;
 	bool FullPan;
-
-	std::mutex ChipAccess;
 };
 
 class OPLmusicFile : public OPLmusicBlock

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <mutex>
 #include "mididefs.h"
 
 // The base music class. Everything is derived from this --------------------
@@ -37,4 +38,5 @@ public:
 		STATE_Paused
 	} m_Status = STATE_Stopped;
 	bool m_Looping = false;
+	std::mutex CritSec;
 };

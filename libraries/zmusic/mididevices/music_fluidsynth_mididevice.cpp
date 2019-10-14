@@ -479,7 +479,6 @@ std::string FluidSynthMIDIDevice::GetStats()
 		return "FluidSynth is invalid";
 	}
 
-	std::lock_guard<std::mutex> lock(CritSec);
 	int polyphony = fluid_synth_get_polyphony(FluidSynth);
 	int voices = fluid_synth_get_active_voice_count(FluidSynth);
 	double load = fluid_synth_get_cpu_load(FluidSynth);

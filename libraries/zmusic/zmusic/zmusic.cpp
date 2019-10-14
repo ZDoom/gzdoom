@@ -312,10 +312,11 @@ MusInfo *ZMusic_OpenCDSong (int track, int id)
 //
 //==========================================================================
 
-bool ZMusic_FillStream(MusInfo* stream, void* buff, int len)
+bool ZMusic_FillStream(MusInfo* song, void* buff, int len)
 {
-	if (stream == nullptr) return false;
-	return stream->ServiceStream(buff, len);
+	if (song == nullptr) return false;
+	std::lock_guard<std::mutex> lock(song->CritSec);
+	return song->ServiceStream(buff, len);
 }
 
 //==========================================================================
@@ -339,36 +340,42 @@ void ZMusic_Start(MusInfo *song, int subsong, bool loop)
 void ZMusic_Pause(MusInfo *song)
 {
 	if (!song) return;
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Pause();
 }
 
 void ZMusic_Resume(MusInfo *song)
 {
 	if (!song) return;
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Resume();
 }
 
 void ZMusic_Update(MusInfo *song)
 {
 	if (!song) return;
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Update();
 }
 
 bool ZMusic_IsPlaying(MusInfo *song)
 {
 	if (!song) return false;
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	return song->IsPlaying();
 }
 
 void ZMusic_Stop(MusInfo *song)
 {
 	if (!song) return;
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Stop();
 }
 
 bool ZMusic_SetSubsong(MusInfo *song, int subsong)
 {
 	if (!song) return false;
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	return song->SetSubsong(subsong);
 }
 
@@ -387,21 +394,27 @@ bool ZMusic_IsMIDI(MusInfo *song)
 SoundStreamInfo ZMusic_GetStreamInfo(MusInfo *song)
 {
 	if (!song) return {};
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	return song->GetStreamInfo();
 }
 
 void ZMusic_Close(MusInfo *song)
 {
-	if (song) delete song;
+	if (!song) return;
+	std::lock_guard<std::mutex> lock(song->CritSec);
+	delete song;
 }
 
 void ZMusic_VolumeChanged(MusInfo *song)
 {
-	if (song) song->MusicVolumeChanged();
+	if (!song) return;
+	std::lock_guard<std::mutex> lock(song->CritSec);
+	song->MusicVolumeChanged();
 }
 
 std::string ZMusic_GetStats(MusInfo *song)
 {
 	if (!song) return "";
+	std::lock_guard<std::mutex> lock(song->CritSec);
 	return song->GetStats();
 }

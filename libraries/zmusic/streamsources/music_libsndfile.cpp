@@ -53,7 +53,6 @@ public:
 	bool GetData(void *buffer, size_t len) override;
 	
 protected:
-	std::mutex CritSec;
 	SoundDecoder *Decoder;
 	int Channels;
 	int SampleRate;
@@ -440,7 +439,6 @@ std::string SndFileSong::GetStats()
 bool SndFileSong::GetData(void *vbuff, size_t len)
 {
 	char *buff = (char*)vbuff;
-	std::lock_guard<std::mutex> lock(CritSec);
 	
 	size_t currentpos = Decoder->getSampleOffset();
 	size_t framestoread = len / (Channels*2);

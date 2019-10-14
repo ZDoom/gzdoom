@@ -53,7 +53,6 @@
 #include "s_music.h"
 #include "doomstat.h"
 #include "zmusic/zmusic.h"
-#include "zmusic/musinfo.h"
 #include "streamsources/streamsource.h"
 #include "filereadermusicinterface.h"
 #include "../libraries/zmusic/midisources/midisource.h"
@@ -133,7 +132,7 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		// let them know about the change.
 		if (mus_playing.handle != nullptr)
 		{
-			mus_playing.handle->MusicVolumeChanged();
+			ZMusic_VolumeChanged(mus_playing.handle);
 		}
 		else
 		{ // If the music was stopped because volume was 0, start it now.
@@ -274,6 +273,7 @@ void I_InitMusic (void)
 #ifdef _WIN32
 	I_InitMusicWin32 ();
 #endif // _WIN32
+	snd_mididevice.Callback();
 	
 	Callbacks callbacks;
 
@@ -342,7 +342,7 @@ ADD_STAT(music)
 {
 	if (mus_playing.handle != nullptr)
 	{
-		return FString(mus_playing.handle->GetStats().c_str());
+		return FString(ZMusic_GetStats(mus_playing.handle).c_str());
 	}
 	return "No song playing";
 }

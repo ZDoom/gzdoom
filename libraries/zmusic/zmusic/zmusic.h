@@ -159,7 +159,21 @@ void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char* devarg, c
 MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args);
 MusInfo *ZMusic_OpenCDSong (int track, int cdid = 0);
 
-class MusInfo;
+bool ZMusic_FillStream(MusInfo* stream, void* buff, int len);
+void ZMusic_Start(MusInfo *song, int subsong, bool loop);
+void ZMusic_Pause(MusInfo *song);
+void ZMusic_Resume(MusInfo *song);
+void ZMusic_Update(MusInfo *song);
+bool ZMusic_IsPlaying(MusInfo *song);
+void ZMusic_Stop(MusInfo *song);
+void ZMusic_Close(MusInfo *song);
+bool ZMusic_SetSubsong(MusInfo *song, int subsong);
+bool ZMusic_IsLooping(MusInfo *song);
+bool ZMusic_IsMIDI(MusInfo *song);
+void ZMusic_VolumeChanged(MusInfo *song);
+SoundStreamInfo ZMusic_GetStreamInfo(MusInfo *song);
+std::string ZMusic_GetStats(MusInfo *song);
+
 // Configuration interface. The return value specifies if a music restart is needed.
 // RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.
 bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo *song, int value, int *pRealValue = nullptr);

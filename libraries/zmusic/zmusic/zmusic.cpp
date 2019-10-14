@@ -306,3 +306,102 @@ MusInfo *ZMusic_OpenCDSong (int track, int id)
 	return info;
 }
 
+//==========================================================================
+//
+// streaming callback
+//
+//==========================================================================
+
+bool ZMusic_FillStream(MusInfo* stream, void* buff, int len)
+{
+	if (stream == nullptr) return false;
+	return stream->ServiceStream(buff, len);
+}
+
+//==========================================================================
+//
+// starts playback
+//
+//==========================================================================
+
+void ZMusic_Start(MusInfo *song, int subsong, bool loop)
+{
+	if (!song) return;
+	song->Play(loop, subsong);
+}
+
+//==========================================================================
+//
+// Utilities
+//
+//==========================================================================
+
+void ZMusic_Pause(MusInfo *song)
+{
+	if (!song) return;
+	song->Pause();
+}
+
+void ZMusic_Resume(MusInfo *song)
+{
+	if (!song) return;
+	song->Resume();
+}
+
+void ZMusic_Update(MusInfo *song)
+{
+	if (!song) return;
+	song->Update();
+}
+
+bool ZMusic_IsPlaying(MusInfo *song)
+{
+	if (!song) return false;
+	return song->IsPlaying();
+}
+
+void ZMusic_Stop(MusInfo *song)
+{
+	if (!song) return;
+	song->Stop();
+}
+
+bool ZMusic_SetSubsong(MusInfo *song, int subsong)
+{
+	if (!song) return false;
+	return song->SetSubsong(subsong);
+}
+
+bool ZMusic_IsLooping(MusInfo *song)
+{
+	if (!song) return false;
+	return song->m_Looping;
+}
+
+bool ZMusic_IsMIDI(MusInfo *song)
+{
+	if (!song) return false;
+	return song->IsMIDI();
+}
+
+SoundStreamInfo ZMusic_GetStreamInfo(MusInfo *song)
+{
+	if (!song) return {};
+	return song->GetStreamInfo();
+}
+
+void ZMusic_Close(MusInfo *song)
+{
+	if (song) delete song;
+}
+
+void ZMusic_VolumeChanged(MusInfo *song)
+{
+	if (song) song->MusicVolumeChanged();
+}
+
+std::string ZMusic_GetStats(MusInfo *song)
+{
+	if (!song) return "";
+	return song->GetStats();
+}

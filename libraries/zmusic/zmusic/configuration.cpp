@@ -454,8 +454,11 @@ bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo *currSong, int value,
 			return false;
 
 		case snd_mididevice:
+		{
+			bool change = miscConfig.snd_mididevice != value;
 			miscConfig.snd_mididevice = value;
-			return false;
+			return change;
+		}
 
 		case snd_outputrate:
 			miscConfig.snd_outputrate = value;

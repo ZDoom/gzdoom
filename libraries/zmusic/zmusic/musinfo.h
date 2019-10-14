@@ -37,5 +37,4 @@ public:
 		STATE_Paused
 	} m_Status = STATE_Stopped;
 	bool m_Looping = false;
-	bool m_NotStartedYet = false;	// Song has been created but not yet played
 };

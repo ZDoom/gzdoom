@@ -45,8 +45,10 @@
 #include "zmusic/zmusic.h"
 #include "s_music.h"
 
+#define DEF_MIDIDEV -5
+
+EXTERN_CVAR(Int, snd_mididevice)
 static uint32_t	nummididevices;
-static bool		nummididevicesset;
 
 #define NUM_DEF_DEVICES 7
 
@@ -70,39 +72,11 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 
 }
 
-#define DEF_MIDIDEV -5
-
 #ifdef _WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-
-CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (!nummididevicesset)
-		return;
-
-	if ((self >= (signed)nummididevices) || (self < -8))
-	{
-		// Don't do repeated message spam if there is no valid device.
-		if (self != 0)
-		{
-			Printf("ID out of range. Using default device.\n");
-			self = DEF_MIDIDEV;
-		}
-		return;
-	}
-	else if (self == -1) self = DEF_MIDIDEV;
-	ChangeMusicSetting(ZMusic::snd_mididevice, nullptr, self);
-	S_MIDIDeviceChanged(self, false);
-}
 
 void I_InitMusicWin32 ()
 {
 	nummididevices = midiOutGetNumDevs ();
-	nummididevicesset = true;
-	snd_mididevice.Callback ();
 }
 
 void I_BuildMIDIMenuList (FOptionValues *opt)
@@ -196,21 +170,6 @@ CCMD (snd_listmididevices)
 
 #else
 
-// Everything but Windows uses this code.
-
-CUSTOM_CVAR(Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < -8)
-		self = -8;
-	else if (self > -2)
-		self = -2;
-	else
-	{
-		ChangeMusicSetting(ZMusic::snd_mididevice, nullptr, self);
-		S_MIDIDeviceChanged(self, false);
-	}
-}
-
 void I_BuildMIDIMenuList (FOptionValues *opt)
 {
 	AddDefaultMidiDevices(opt);
@@ -227,3 +186,25 @@ CCMD (snd_listmididevices)
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 }
 #endif
+
+
+CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if ((self >= (signed)nummididevices) || (self < -8))
+	{
+		// Don't do repeated message spam if there is no valid device.
+		if (self != 0)
+		{
+			Printf("ID out of range. Using default device.\n");
+		}
+		self = DEF_MIDIDEV;
+		return;
+	}
+	else if (self == -1)
+	{
+		self = DEF_MIDIDEV;
+		return;
+	}
+	bool change = ChangeMusicSetting(ZMusic::snd_mididevice, nullptr, self);
+	if (change) S_MIDIDeviceChanged(self);
+}

@@ -401,7 +401,6 @@ SoundStreamInfo ZMusic_GetStreamInfo(MusInfo *song)
 void ZMusic_Close(MusInfo *song)
 {
 	if (!song) return;
-	std::lock_guard<std::mutex> lock(song->CritSec);
 	delete song;
 }
 

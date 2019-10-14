@@ -626,8 +626,9 @@ void S_StopMusic (bool force)
 				S_ResumeMusic();
 				S_StopStream();
 				ZMusic_Stop(mus_playing.handle);
-				ZMusic_Close(mus_playing.handle);
+				auto h = mus_playing.handle;
 				mus_playing.handle = nullptr;
+				ZMusic_Close(h);
 			}
 			mus_playing.LastSong = std::move(mus_playing.name);
 		}
@@ -637,8 +638,9 @@ void S_StopMusic (bool force)
 		//Printf("Unable to stop %s: %s\n", mus_playing.name.GetChars(), err.what());
 		if (mus_playing.handle != nullptr)
 		{
-			ZMusic_Close(mus_playing.handle);
+			auto h = mus_playing.handle;
 			mus_playing.handle = nullptr;
+			ZMusic_Close(h);
 		}
 		mus_playing.name = "";
 	}

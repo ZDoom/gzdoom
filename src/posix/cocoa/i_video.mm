@@ -65,7 +65,7 @@
 {
 	NSButton* closeButton = [self standardWindowButton:NSWindowCloseButton];
 	[closeButton setAction:@selector(sendExitEvent:)];
-	[closeButton setTarget:NSApp.delegate];
+	[closeButton setTarget:[NSApp delegate]];
 }
 
 @end

@@ -461,7 +461,7 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 		[m_netAbortButton setBezelStyle:NSRoundedBezelStyle];
 		[m_netAbortButton setTitle:@"Cancel"];
 		[m_netAbortButton setKeyEquivalent:@"\r"];
-		[m_netAbortButton setTarget:NSApp.delegate];
+		[m_netAbortButton setTarget:[NSApp delegate]];
 		[m_netAbortButton setAction:@selector(sendExitEvent:)];
 
 		// Panel for controls above

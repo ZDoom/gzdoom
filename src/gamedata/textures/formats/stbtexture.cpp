@@ -124,7 +124,6 @@ TArray<uint8_t> FStbTexture::CreatePalettedPixels(int conversion)
 	FBitmap bitmap;
 	bitmap.Create(Width, Height);
 	CopyPixels(&bitmap, conversion);
-	FMemLump lump = Wads.ReadLump (SourceLump);
 	const uint8_t *data = bitmap.GetPixels();
 
 	uint8_t *dest_p;

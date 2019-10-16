@@ -563,6 +563,13 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 		Level->StartLightning();
 	}
 
+	auto it = Level->GetThinkerIterator<AActor>();
+	AActor* ac;
+	// Initial setup of the dynamic lights.
+	while ((ac = it.Next()))
+	{
+		ac->SetDynamicLights();
+	}
 }
 
 //

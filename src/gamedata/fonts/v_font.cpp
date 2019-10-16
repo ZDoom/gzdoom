@@ -1719,6 +1719,10 @@ void V_InitFonts()
 		I_FatalError("Console font not found.");
 	}
 	// SmallFont and SmallFont2 have no default provided by the engine. BigFont only has in non-Raven games.
+	if (OriginalSmallFont == nullptr)
+	{
+		OriginalSmallFont = ConFont;
+	}
 	if (SmallFont == nullptr)
 	{
 		SmallFont = OriginalSmallFont;

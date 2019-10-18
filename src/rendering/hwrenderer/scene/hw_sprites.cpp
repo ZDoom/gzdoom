@@ -38,7 +38,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "r_data/r_vanillatrans.h"
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "r_data/models/models.h"
 #include "vectors.h"
 

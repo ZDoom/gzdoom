@@ -66,7 +66,6 @@
 
 #include "gameconfigfile.h"
 #include "gstrings.h"
-#include "atterm.h"
 
 FGameConfigFile *GameConfig;
 
@@ -271,7 +270,8 @@ bool M_SaveDefaults (const char *filename)
 	FString oldpath;
 	bool success;
 
-	if (filename != NULL)
+	if (GameConfig == nullptr) return true;
+	if (filename != nullptr)
 	{
 		oldpath = GameConfig->GetPathName();
 		GameConfig->ChangePathName (filename);
@@ -282,7 +282,7 @@ bool M_SaveDefaults (const char *filename)
 		GameConfig->ArchiveGameData (gameinfo.ConfigName);
 	}
 	success = GameConfig->WriteConfigFile ();
-	if (filename != NULL)
+	if (filename != nullptr)
 	{
 		GameConfig->ChangePathName (filename);
 	}
@@ -291,12 +291,13 @@ bool M_SaveDefaults (const char *filename)
 
 void M_SaveDefaultsFinal ()
 {
-	while (!M_SaveDefaults (NULL) && I_WriteIniFailed ())
+	if (GameConfig == nullptr) return;
+	while (!M_SaveDefaults (nullptr) && I_WriteIniFailed ())
 	{
 		/* Loop until the config saves or I_WriteIniFailed() returns false */
 	}
 	delete GameConfig;
-	GameConfig = NULL;
+	GameConfig = nullptr;
 }
 
 UNSAFE_CCMD (writeini)
@@ -320,7 +321,6 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
-	atterm (M_SaveDefaultsFinal);
 }
 
 
@@ -656,32 +656,3 @@ UNSAFE_CCMD (screenshot)
 		G_ScreenShot (argv[1]);
 }
 
-//
-// M_ZlibError
-//
-FString M_ZLibError(int zerr)
-{
-	if (zerr >= 0)
-	{
-		return "OK";
-	}
-	else if (zerr < -6)
-	{
-		FString out;
-		out.Format("%d", zerr);
-		return out;
-	}
-	else
-	{
-		static const char *errs[6] =
-		{
-			"Errno",
-			"Stream Error",
-			"Data Error",
-			"Memory Error",
-			"Buffer Error",
-			"Version Error"
-		};
-		return errs[-zerr - 1];
-	}
-}

@@ -36,10 +36,13 @@
 #ifndef FILES_H
 #define FILES_H
 
+#include <stddef.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <functional>
-#include "doomtype.h"
+#include "basictypes.h"
 #include "m_swap.h"
+#include "tarray.h"
 
 // Zip compression methods, extended by some internal types to be passed to OpenDecompressor
 enum
@@ -70,12 +73,18 @@ public:
 
 class DecompressorBase : public FileReaderInterface
 {
+	std::function<void(const char*)> ErrorCallback = nullptr;
 public:
 	// These do not work but need to be defined to satisfy the FileReaderInterface.
 	// They will just error out when called.
 	long Tell() const override;
 	long Seek(long offset, int origin) override;
 	char *Gets(char *strbuf, int len) override;
+	void DecompressionError(const char* error, ...) const;
+	void SetErrorCallback(const std::function<void(const char*)>& cb)
+	{
+		ErrorCallback = cb;
+	}
 };
 
 class MemoryReader : public FileReaderInterface
@@ -167,7 +176,7 @@ public:
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
 	bool OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
-	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
+	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, const std::function<void(const char*)>& cb);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
 	Size Tell() const
 	{
@@ -318,5 +327,6 @@ public:
 	virtual size_t Write(const void *buffer, size_t len) override;
 	TArray<unsigned char> *GetBuffer() { return &mBuffer; }
 };
+
 
 #endif

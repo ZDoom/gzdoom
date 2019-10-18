@@ -16,7 +16,7 @@ matrix:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
     - os: osx
-      osx_image: xcode10.3
+      osx_image: xcode11.2
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
@@ -43,18 +43,6 @@ matrix:
     - os: linux
       compiler: gcc
       env:
-        - GCC_VERSION=5
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
-      addons:
-        apt:
-          packages:
-            - g++-5
-            - libsdl2-dev
-            - libgtk-3-dev
-
-    - os: linux
-      compiler: gcc
-      env:
         - GCC_VERSION=6
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
       addons:
@@ -65,20 +53,6 @@ matrix:
             - g++-6
             - libsdl2-dev
             - libgtk2.0-dev
-
-    - os: linux
-      compiler: gcc
-      env:
-        - GCC_VERSION=7
-        - CMAKE_OPTIONS="-DCMAKE_CXX_FLAGS=-Wno-implicit-fallthrough"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-            - libsdl2-dev
-            - libgtk-3-dev
 
     - os: linux
       compiler: gcc
@@ -110,12 +84,23 @@ matrix:
     - os: linux
       compiler: clang
       env:
+        - CLANG_VERSION=3.6
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+      addons:
+        apt:
+          packages:
+            - clang-3.6
+            - libsdl2-dev
+            - libgtk2.0-dev
+
+    - os: linux
+      compiler: clang
+      env:
         - CLANG_VERSION=8
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
+        - CMAKE_OPTIONS="-DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
             - llvm-toolchain-xenial-8
           packages:
             - clang-8

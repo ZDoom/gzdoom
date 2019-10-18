@@ -51,7 +51,6 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "c_dispatch.h"
-#include "atterm.h"
 
 #include "gameconfigfile.h"
 
@@ -64,13 +63,13 @@ extern "C"
 #ifndef NO_GTK
 bool I_GtkAvailable ();
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
-void I_FatalError_Gtk(const char* errortext);
+void I_ShowFatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
 
 double PerfToSec, PerfToMillisec;
-	
+
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
 }
@@ -97,32 +96,12 @@ void I_Init (void)
 {
 	CheckCPUID (&CPU);
 	DumpCPUInfo (&CPU);
-
-	atterm (I_ShutdownSound);
-	I_InitSound ();
 }
-
-//
-// I_Quit
-//
-static int has_exited;
-
-void I_Quit (void)
-{
-	has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
-
-	if (demorecording)
-		G_CheckDemoStatus();
-
-	C_DeinitConsole();
-}
-
 
 //
 // I_Error
 //
 extern FILE *Logfile;
-bool gameisdead;
 
 #ifdef __APPLE__
 void Mac_I_FatalError(const char* errortext);
@@ -138,86 +117,43 @@ void Linux_I_FatalError(const char* errortext)
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
 		FString cmd;
-		cmd << "kdialog --title \"" GAMESIG " ";
-		cmd << GetVersionString() << ": No IWAD found\" ";
-		cmd << "--msgbox \"" << errortext << "\"";
+		cmd << "kdialog --title \"" GAMESIG " " << GetVersionString()
+			<< "\" --msgbox \"" << errortext << "\"";
 		popen(cmd, "r");
 	}
 #ifndef NO_GTK
 	else if (I_GtkAvailable())
 	{
-		I_FatalError_Gtk(errortext);
+		I_ShowFatalError_Gtk(errortext);
 	}
 #endif
 	else
 	{
-		FString message;
-		message << GAMESIG " ";
-		message << GetVersionString() << ": No IWAD found";
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, message, errortext, NULL);
-	}
-}
-#endif
+		FString title;
+		title << GAMESIG " " << GetVersionString();
 
-void I_FatalError (const char *error, va_list ap)
-{
-	static bool alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown)		// ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-		char errortext[MAX_ERRORTEXT];
-		int index;
-		index = vsnprintf (errortext, MAX_ERRORTEXT, error, ap);
-
-#ifdef __APPLE__
-		Mac_I_FatalError(errortext);
-#endif // __APPLE__		
-
-#ifdef __linux__
-		Linux_I_FatalError(errortext);
-#endif
-		
-		// Record error to log (if logging)
-		if (Logfile)
+		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, errortext, NULL) < 0)
 		{
-			fprintf (Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush (Logfile);
+			printf("\n%s\n", errortext);
 		}
-//		throw CFatalError (errortext);
-		fprintf (stderr, "%s\n", errortext);
-		exit (-1);
-	}
-
-	if (!has_exited)	// If it hasn't exited yet, exit now -- killough
-	{
-		has_exited = 1;	// Prevent infinitely recursive exits -- killough
-		exit(-1);
 	}
 }
+#endif
 
-void I_FatalError(const char* const error, ...)
+
+void I_ShowFatalError(const char *message)
 {
-	va_list argptr;
-	va_start(argptr, error);
-	I_FatalError(error, argptr);
-	va_end(argptr);
-
+#ifdef __APPLE__
+	Mac_I_FatalError(message);
+#elif defined __linux__
+	Linux_I_FatalError(message);
+#else
+	// ???
+#endif
+	
 }
 
-void I_Error (const char *error, ...)
-{
-	va_list argptr;
-	char errortext[MAX_ERRORTEXT];
-
-	va_start(argptr, error);
-
-	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
-	va_end (argptr);
-	throw CRecoverableError(errortext);
-}
-
+	
 void I_SetIWADInfo ()
 {
 }

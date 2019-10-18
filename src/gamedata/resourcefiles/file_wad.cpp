@@ -83,7 +83,7 @@ public:
 		if(Compressed)
 		{
 			FileReader lzss;
-			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false))
+			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false, [](const char* err) { I_Error("%s", err); }))
 			{
 				lzss.Read(Cache, LumpSize);
 			}
@@ -203,6 +203,7 @@ bool FWadFile::Open(bool quiet)
 	}
 
 	delete[] fileinfo;
+	GenerateHash(); // Do this before the lump processing below.
 
 	if (!quiet)
 	{

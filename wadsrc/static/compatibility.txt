@@ -287,3 +287,8 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 	clipmidtex
 	checkswitchrange
 }
+
+F50C91A05E1A1E646690517641F0D1DD // daedalus.wad map19
+{
+	scriptwait
+}

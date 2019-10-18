@@ -141,7 +141,19 @@ namespace swrenderer
 		vis->wallc = wallc;
 		vis->foggy = foggy;
 
-		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, false, false, false, false, false);
+		if (vis->RenderStyle == LegacyRenderStyles[STYLE_Add] && basecolormap->Fade != 0)
+		{
+			basecolormap = GetSpecialLights(basecolormap->Color, 0, basecolormap->Desaturate);
+		}
+		bool fullbright = !vis->foggy && ((renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
+
+		bool invertcolormap = (vis->RenderStyle.Flags & STYLEF_InvertOverlay) != 0;
+		if (vis->RenderStyle.Flags & STYLEF_InvertSource)
+			invertcolormap = !invertcolormap;
+
+		bool fadeToBlack = (vis->RenderStyle.Flags & STYLEF_FadeToBlack) != 0;
+
+		vis->Light.SetColormap(thread, tz, lightlevel, foggy, basecolormap, fullbright, invertcolormap, fadeToBlack, false, false);
 
 		thread->SpriteList->Push(vis);
 	}
@@ -222,6 +234,7 @@ namespace swrenderer
 		{
 			if (calclighting)
 			{
+				drawerargs.SetBaseColormap(spr->Light.BaseColormap);
 				drawerargs.SetLight(light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
 			}
 			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))

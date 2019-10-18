@@ -618,7 +618,7 @@ struct TraceResults native
 	native bool unlinked;		// passed through a portal without static offset.
 
 	native ETraceResult HitType;
-	// F3DFloor *ffloor;
+	native F3DFloor ffloor;
 
 	native Sector CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
 	native vector3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
@@ -833,10 +833,6 @@ struct State native
 	native bool ValidateSpriteFrame();
 	native TextureID, bool, Vector2 GetSpriteTexture(int rotation, int skin = 0, Vector2 scale = (0,0));
 	native bool InStateSequence(State base);
-}
-
-struct F3DFloor native
-{
 }
 
 struct Wads

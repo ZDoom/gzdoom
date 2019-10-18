@@ -55,6 +55,7 @@
 #include "vm.h"
 #include "image.h"
 #include "utf8.h"
+#include "myiswalpha.h"
 #include "textures/formats/fontchars.h"
 #include "textures/formats/multipatchtexture.h"
 
@@ -1058,7 +1059,7 @@ bool FFont::CanPrint(const uint8_t *string) const
 		else if (chr != '\n')
 		{
 			int cc = GetCharCode(chr, true);
-			if (chr != cc && iswalpha(chr) && cc != getAlternative(chr))
+			if (chr != cc && myiswalpha(chr) && cc != getAlternative(chr))
 			{
 				return false;
 			}

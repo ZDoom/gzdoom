@@ -39,24 +39,46 @@
 #include <bzlib.h>
 
 #include "files.h"
-#include "doomerrors.h"
 #include "templates.h"
-#include "m_misc.h"
+#include "cmdlib.h"
 
+
+//==========================================================================
+//
+// I_Error
+//
+// Throw an error that will send us to the console if we are far enough
+// along in the startup process.
+//
+//==========================================================================
+
+void DecompressorBase::DecompressionError(const char *error, ...) const 
+{
+	const int MAX_ERRORTEXT = 300;
+	va_list argptr;
+	char errortext[MAX_ERRORTEXT];
+
+	va_start(argptr, error);
+	vsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	va_end(argptr);
+
+	if (ErrorCallback != nullptr) ErrorCallback(errortext);
+	else throw std::runtime_error(errortext);
+}
 
 long DecompressorBase::Tell () const
 {
-	I_Error("Cannot get position of decompressor stream");
+	DecompressionError("Cannot get position of decompressor stream");
 	return 0;
 }
 long DecompressorBase::Seek (long offset, int origin)
 {
-	I_Error("Cannot seek in decompressor stream");
+	DecompressionError("Cannot seek in decompressor stream");
 	return 0;
 }
 char *DecompressorBase::Gets(char *strbuf, int len)
 {
-	I_Error("Cannot use Gets on decompressor stream");
+	DecompressionError("Cannot use Gets on decompressor stream");
 	return nullptr;
 }
 
@@ -79,11 +101,12 @@ class DecompressorZ : public DecompressorBase
 	uint8_t InBuff[BUFF_SIZE];
 	
 public:
-	DecompressorZ (FileReader &file, bool zip)
+	DecompressorZ (FileReader &file, bool zip, const std::function<void(const char*)>& cb)
 	: File(file), SawEOF(false)
 	{
 		int err;
 
+		SetErrorCallback(cb);
 		FillBuffer ();
 
 		Stream.zalloc = Z_NULL;
@@ -94,7 +117,7 @@ public:
 
 		if (err != Z_OK)
 		{
-			I_Error ("DecompressorZ: inflateInit failed: %s\n", M_ZLibError(err).GetChars());
+			DecompressionError ("DecompressorZ: inflateInit failed: %s\n", M_ZLibError(err).GetChars());
 		}
 	}
 
@@ -121,12 +144,12 @@ public:
 
 		if (err != Z_OK && err != Z_STREAM_END)
 		{
-			I_Error ("Corrupt zlib stream");
+			DecompressionError ("Corrupt zlib stream");
 		}
 
 		if (Stream.avail_out != 0)
 		{
-			I_Error ("Ran out of data in zlib stream");
+			DecompressionError ("Ran out of data in zlib stream");
 		}
 
 		return len - Stream.avail_out;
@@ -155,6 +178,10 @@ public:
 //
 //==========================================================================
 
+class DecompressorBZ2;
+static DecompressorBZ2 * stupidGlobal;	// Why does that dumb global error callback not pass the decompressor state?
+										// Thanks to that brain-dead interface we have to use a global variable to get the error to the proper handler.
+
 class DecompressorBZ2 : public DecompressorBase
 {
 	enum { BUFF_SIZE = 4096 };
@@ -165,11 +192,13 @@ class DecompressorBZ2 : public DecompressorBase
 	uint8_t InBuff[BUFF_SIZE];
 	
 public:
-	DecompressorBZ2 (FileReader &file)
+	DecompressorBZ2 (FileReader &file, const std::function<void(const char*)>& cb)
 	: File(file), SawEOF(false)
 	{
 		int err;
 
+		SetErrorCallback(cb);
+		stupidGlobal = this;
 		FillBuffer ();
 
 		Stream.bzalloc = NULL;
@@ -180,12 +209,13 @@ public:
 
 		if (err != BZ_OK)
 		{
-			I_Error ("DecompressorBZ2: bzDecompressInit failed: %d\n", err);
+			DecompressionError ("DecompressorBZ2: bzDecompressInit failed: %d\n", err);
 		}
 	}
 
 	~DecompressorBZ2 ()
 	{
+		stupidGlobal = this;
 		BZ2_bzDecompressEnd (&Stream);
 	}
 
@@ -193,6 +223,7 @@ public:
 	{
 		int err;
 
+		stupidGlobal = this;
 		Stream.next_out = (char *)buffer;
 		Stream.avail_out = len;
 
@@ -207,12 +238,12 @@ public:
 
 		if (err != BZ_OK && err != BZ_STREAM_END)
 		{
-			I_Error ("Corrupt bzip2 stream");
+			DecompressionError ("Corrupt bzip2 stream");
 		}
 
 		if (Stream.avail_out != 0)
 		{
-			I_Error ("Ran out of data in bzip2 stream");
+			DecompressionError ("Ran out of data in bzip2 stream");
 		}
 
 		return len - Stream.avail_out;
@@ -242,7 +273,8 @@ public:
 
 extern "C" void bz_internal_error (int errcode)
 {
-	I_FatalError("libbzip2: internal error number %d\n", errcode);
+	if (stupidGlobal) stupidGlobal->DecompressionError("libbzip2: internal error number %d\n", errcode);
+	else std::terminate();
 }
 
 //==========================================================================
@@ -273,11 +305,12 @@ class DecompressorLZMA : public DecompressorBase
 
 public:
 
-	DecompressorLZMA (FileReader &file, size_t uncompressed_size)
+	DecompressorLZMA (FileReader &file, size_t uncompressed_size, const std::function<void(const char*)>& cb)
 	: File(file), SawEOF(false)
 	{
 		uint8_t header[4 + LZMA_PROPS_SIZE];
 		int err;
+		SetErrorCallback(cb);
 
 		Size = uncompressed_size;
 		OutProcessed = 0;
@@ -285,11 +318,11 @@ public:
 		// Read zip LZMA properties header
 		if (File.Read(header, sizeof(header)) < (long)sizeof(header))
 		{
-			I_Error("DecompressorLZMA: File too short\n");
+			DecompressionError("DecompressorLZMA: File too short\n");
 		}
 		if (header[2] + header[3] * 256 != LZMA_PROPS_SIZE)
 		{
-			I_Error("DecompressorLZMA: LZMA props size is %d (expected %d)\n",
+			DecompressionError("DecompressorLZMA: LZMA props size is %d (expected %d)\n",
 				header[2] + header[3] * 256, LZMA_PROPS_SIZE);
 		}
 
@@ -300,7 +333,7 @@ public:
 
 		if (err != SZ_OK)
 		{
-			I_Error("DecompressorLZMA: LzmaDec_Allocate failed: %d\n", err);
+			DecompressionError("DecompressorLZMA: LzmaDec_Allocate failed: %d\n", err);
 		}
 
 		LzmaDec_Init(&Stream);
@@ -330,13 +363,13 @@ public:
 			len = (long)(len - out_processed);
 			if (err != SZ_OK)
 			{
-				I_Error ("Corrupt LZMA stream");
+				DecompressionError ("Corrupt LZMA stream");
 			}
 			if (in_processed == 0 && out_processed == 0)
 			{
 				if (status != LZMA_STATUS_FINISHED_WITH_MARK)
 				{
-					I_Error ("Corrupt LZMA stream");
+					DecompressionError ("Corrupt LZMA stream");
 				}
 			}
 			if (InSize == 0 && !SawEOF)
@@ -347,12 +380,12 @@ public:
 
 		if (err != Z_OK && err != Z_STREAM_END)
 		{
-			I_Error ("Corrupt LZMA stream");
+			DecompressionError ("Corrupt LZMA stream");
 		}
 
 		if (len != 0)
 		{
-			I_Error ("Ran out of data in LZMA stream");
+			DecompressionError ("Ran out of data in LZMA stream");
 		}
 
 		return (long)(next_out - (Byte *)buffer);
@@ -500,8 +533,9 @@ class DecompressorLZSS : public DecompressorBase
 	}
 
 public:
-	DecompressorLZSS(FileReader &file) : File(file), SawEOF(false)
+	DecompressorLZSS(FileReader &file, const std::function<void(const char*)>& cb) : File(file), SawEOF(false)
 	{
+		SetErrorCallback(cb);
 		Stream.State = STREAM_EMPTY;
 		Stream.WindowData = Stream.InternalBuffer = Stream.Window+WINDOW_SIZE;
 		Stream.InternalOut = 0;
@@ -562,26 +596,26 @@ public:
 };
 
 
-bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, bool seekable)
+bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, bool seekable, const std::function<void(const char*)>& cb)
 {
 	DecompressorBase *dec = nullptr;
 	switch (method)
 	{
 		case METHOD_DEFLATE:
 		case METHOD_ZLIB:
-			dec = new DecompressorZ(parent, method == METHOD_DEFLATE);
+			dec = new DecompressorZ(parent, method == METHOD_DEFLATE, cb);
 			break;
 
 		case METHOD_BZIP2:
-			dec = new DecompressorBZ2(parent);
+			dec = new DecompressorBZ2(parent, cb);
 			break;
 
 		case METHOD_LZMA:
-			dec = new DecompressorLZMA(parent, length);
+			dec = new DecompressorLZMA(parent, length, cb);
 			break;
 
 		case METHOD_LZSS:
-			dec = new DecompressorLZSS(parent);
+			dec = new DecompressorLZSS(parent, cb);
 			break;
 			
 		// todo: METHOD_IMPLODE, METHOD_SHRINK

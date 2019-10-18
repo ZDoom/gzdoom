@@ -34,6 +34,7 @@
 
 #include "resourcefile.h"
 #include "w_wad.h"
+#include "doomtype.h"
 
 //==========================================================================
 //
@@ -112,7 +113,7 @@ bool FPakFile::Open(bool quiet)
 		Lumps[i].LumpSize = LittleLong(fileinfo[i].filelen);
 		Lumps[i].CheckEmbedded();
 	}
-
+	GenerateHash();
 	return true;
 }
 

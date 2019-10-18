@@ -16,8 +16,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <cassert>
+#ifdef _MSC_VER
 #include <direct.h>
 #include <io.h>
+#endif // _MSC_VER
 #include <limits>
 #include <memory>
 #include <tuple>

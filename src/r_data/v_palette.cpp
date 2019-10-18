@@ -49,6 +49,12 @@
 #include "x86.h"
 #include "g_levellocals.h"
 
+uint32_t Col2RGB8[65][256];
+uint32_t *Col2RGB8_LessPrecision[65];
+uint32_t Col2RGB8_Inverse[65][256];
+ColorTable32k RGB32k;
+ColorTable256k RGB256k;
+
 FPalette GPalette;
 FColorMatcher ColorMatcher;
 
@@ -92,72 +98,6 @@ CCMD (bumpgamma)
 }
 
 
-/****************************/
-/* Palette management stuff */
-/****************************/
-
-int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
-{
-	const PalEntry *pal = (const PalEntry *)pal_in;
-	int bestcolor = first;
-	int bestdist = 257 * 257 + 257 * 257 + 257 * 257;
-
-	for (int color = first; color < num; color++)
-	{
-		int x = r - pal[color].r;
-		int y = g - pal[color].g;
-		int z = b - pal[color].b;
-		int dist = x*x + y*y + z*z;
-		if (dist < bestdist)
-		{
-			if (dist == 0)
-				return color;
-
-			bestdist = dist;
-			bestcolor = color;
-		}
-	}
-	return bestcolor;
-}
-
-
-// [SP] Re-implemented BestColor for more precision rather than speed. This function is only ever called once until the game palette is changed.
-
-int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, bool reverselookup, float powtable_val, int first, int num)
-{
-	const PalEntry *pal = (const PalEntry *)pal_in;
-	static double powtable[256];
-	static bool firstTime = true;
-	static float trackpowtable = 0.;
-
-	double fbestdist = DBL_MAX, fdist;
-	int bestcolor = 0;
-
-	if (firstTime || trackpowtable != powtable_val)
-	{
-		auto pt = powtable_val;
-		trackpowtable = pt;
-		firstTime = false;
-		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)pt);
-	}
-
-	for (int color = first; color < num; color++)
-	{
-		double x = powtable[abs(r-pal[color].r)];
-		double y = powtable[abs(g-pal[color].g)];
-		double z = powtable[abs(b-pal[color].b)];
-		fdist = x + y + z;
-		if (color == first || (reverselookup?(fdist <= fbestdist):(fdist < fbestdist)))
-		{
-			if (fdist == 0 && !reverselookup)
-				return color;
-
-			fbestdist = fdist;
-			bestcolor = color;
-		}
-	}
-	return bestcolor;
-}
 
 
 
@@ -370,6 +310,63 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 	}
 }
 
+//==========================================================================
+//
+// BuildTransTable
+//
+// Build the tables necessary for blending
+//
+//==========================================================================
+
+static void BuildTransTable (const PalEntry *palette)
+{
+	int r, g, b;
+	
+	// create the RGB555 lookup table
+	for (r = 0; r < 32; r++)
+		for (g = 0; g < 32; g++)
+			for (b = 0; b < 32; b++)
+				RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
+	// create the RGB666 lookup table
+	for (r = 0; r < 64; r++)
+		for (g = 0; g < 64; g++)
+			for (b = 0; b < 64; b++)
+				RGB256k.RGB[r][g][b] = ColorMatcher.Pick ((r<<2)|(r>>4), (g<<2)|(g>>4), (b<<2)|(b>>4));
+	
+	int x, y;
+	
+	// create the swizzled palette
+	for (x = 0; x < 65; x++)
+		for (y = 0; y < 256; y++)
+			Col2RGB8[x][y] = (((palette[y].r*x)>>4)<<20) |
+			((palette[y].g*x)>>4) |
+			(((palette[y].b*x)>>4)<<10);
+	
+	// create the swizzled palette with the lsb of red and blue forced to 0
+	// (for green, a 1 is okay since it never gets added into)
+	uint32_t Col2RGB8_2[63][256];
+	for (x = 1; x < 64; x++)
+	{
+		Col2RGB8_LessPrecision[x] = Col2RGB8_2[x-1];
+		for (y = 0; y < 256; y++)
+		{
+			Col2RGB8_2[x-1][y] = Col2RGB8[x][y] & 0x3feffbff;
+		}
+	}
+	Col2RGB8_LessPrecision[0] = Col2RGB8[0];
+	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
+	
+	// create the inverse swizzled palette
+	for (x = 0; x < 65; x++)
+		for (y = 0; y < 256; y++)
+		{
+			Col2RGB8_Inverse[x][y] = (((((255-palette[y].r)*x)>>4)<<20) |
+									  (((255-palette[y].g)*x)>>4) |
+									  ((((255-palette[y].b)*x)>>4)<<10)) & 0x3feffbff;
+		}
+}
+
+
 void InitPalette ()
 {
 	uint8_t pal[768];
@@ -389,58 +386,8 @@ void InitPalette ()
 	// Colormaps have to be initialized before actors are loaded,
 	// otherwise Powerup.Colormap will not work.
 	R_InitColormaps ();
-}
+	BuildTransTable (GPalette.BaseColors);
 
-void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
-
-void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
-{
-	if (a == 0)
-	{
-		if (from != to)
-		{
-			memcpy (to, from, count * sizeof(uint32_t));
-		}
-		return;
-	}
-	else if (a == 256)
-	{
-		uint32_t t = MAKERGB(r,g,b);
-		int i;
-
-		for (i = 0; i < count; i++)
-		{
-			to[i] = t;
-		}
-		return;
-	}
-#if defined(_M_X64) || defined(_M_IX86) || defined(__i386__) || defined(__amd64__)
-	else if (count >= 4)
-	{
-		int not3count = count & ~3;
-		DoBlending_SSE2 (from, to, not3count, r, g, b, a);
-		count &= 3;
-		if (count <= 0)
-		{
-			return;
-		}
-		from += not3count;
-		to += not3count;
-	}
-#endif
-	int i, ia;
-
-	ia = 256 - a;
-	r *= a;
-	g *= a;
-	b *= a;
-
-	for (i = count; i > 0; i--, to++, from++)
-	{
-		to->r = (r + from->r * ia) >> 8;
-		to->g = (g + from->g * ia) >> 8;
-		to->b = (b + from->b * ia) >> 8;
-	}
 }
 
 CCMD (testblend)
@@ -472,81 +419,6 @@ CCMD (testblend)
 		BaseBlendG = GPART(color);
 		BaseBlendB = BPART(color);
 		BaseBlendA = amt;
-	}
-}
-
-/****** Colorspace Conversion Functions ******/
-
-// Code from http://www.cs.rit.edu/~yxv4997/t_convert.html
-
-// r,g,b values are from 0 to 1
-// h = [0,360], s = [0,1], v = [0,1]
-//				if s == 0, then h = -1 (undefined)
-
-// Green Doom guy colors:
-// RGB - 0: {    .46  1 .429 } 7: {    .254 .571 .206 } 15: {    .0317 .0794 .0159 }
-// HSV - 0: { 116.743 .571 1 } 7: { 112.110 .639 .571 } 15: { 105.071  .800 .0794 }
-void RGBtoHSV (float r, float g, float b, float *h, float *s, float *v)
-{
-	float min, max, delta, foo;
-
-	if (r == g && g == b)
-	{
-		*h = 0;
-		*s = 0;
-		*v = r;
-		return;
-	}
-
-	foo = r < g ? r : g;
-	min = (foo < b) ? foo : b;
-	foo = r > g ? r : g;
-	max = (foo > b) ? foo : b;
-
-	*v = max;									// v
-
-	delta = max - min;
-
-	*s = delta / max;							// s
-
-	if (r == max)
-		*h = (g - b) / delta;					// between yellow & magenta
-	else if (g == max)
-		*h = 2 + (b - r) / delta;				// between cyan & yellow
-	else
-		*h = 4 + (r - g) / delta;				// between magenta & cyan
-
-	*h *= 60;									// degrees
-	if (*h < 0)
-		*h += 360;
-}
-
-void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v)
-{
-	int i;
-	float f, p, q, t;
-
-	if (s == 0)
-	{ // achromatic (grey)
-		*r = *g = *b = v;
-		return;
-	}
-
-	h /= 60;									// sector 0 to 5
-	i = (int)floor (h);
-	f = h - i;									// factorial part of h
-	p = v * (1 - s);
-	q = v * (1 - s * f);
-	t = v * (1 - s * (1 - f));
-
-	switch (i)
-	{
-	case 0:		*r = v; *g = t; *b = p; break;
-	case 1:		*r = q; *g = v; *b = p; break;
-	case 2:		*r = p; *g = v; *b = t; break;
-	case 3:		*r = p; *g = q; *b = v; break;
-	case 4:		*r = t; *g = p; *b = v; break;
-	default:	*r = v; *g = p; *b = q; break;
 	}
 }
 

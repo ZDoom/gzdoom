@@ -51,6 +51,7 @@
 #include "scriptutil.h"
 #include "vm.h"
 #include "a_lights.h"
+#include "s_music.h"
 
 static FRandom pr_script("FScript");
 

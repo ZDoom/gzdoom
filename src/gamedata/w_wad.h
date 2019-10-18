@@ -12,6 +12,7 @@
 #include "files.h"
 #include "doomdef.h"
 #include "tarray.h"
+#include "zstring.h"
 
 class FResourceFile;
 struct FResourceLump;
@@ -221,7 +222,8 @@ private:
 	void RenameNerve();
 	void FixMacHexen();
 	void DeleteAll();
-	void MoveIWadModifiers();
+	void MoveLumpsInFolder(const char *);
+
 	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };
 

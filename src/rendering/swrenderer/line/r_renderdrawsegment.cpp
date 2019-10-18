@@ -143,7 +143,7 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
-		if (curline->sidedef->GetTexture(side_t::mid).isNull())
+		if (!curline->sidedef->GetTexture(side_t::mid).isValid())
 			return false;
 
 		FTexture *ttex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::mid), true);

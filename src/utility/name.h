@@ -52,7 +52,7 @@ public:
 	FName (const char *text, size_t textlen, bool noCreate) { Index = NameData.FindName (text, textlen, noCreate); }
 	FName (const FString &text);
 	FName (const FString &text, bool noCreate);
-	FName (const FName &other) { Index = other.Index; }
+	FName (const FName &other) = default;
 	FName (ENamedName index) { Index = index; }
  //   ~FName () {}	// Names can be added but never removed.
 

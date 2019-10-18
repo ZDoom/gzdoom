@@ -212,6 +212,55 @@ struct SecPlane native play
 	native double PointToDist(Vector2 xy, double z) const;
 }
 
+struct F3DFloor native play
+{
+	enum EF3DFloorFlags
+	{
+		FF_EXISTS        = 0x1,    //MAKE SURE IT'S VALID
+		FF_SOLID         = 0x2,    //Does it clip things?
+		FF_RENDERSIDES   = 0x4,    //Render the sides?
+		FF_RENDERPLANES  = 0x8,    //Render the floor/ceiling?
+		FF_RENDERALL     = 0xC,    //Render everything?
+		FF_SWIMMABLE     = 0x10,   //Can we swim?
+		FF_NOSHADE       = 0x20,   //Does it mess with the lighting?
+		FF_BOTHPLANES    = 0x200,  //Render both planes all the time?
+		FF_TRANSLUCENT   = 0x800,  //See through!
+		FF_FOG           = 0x1000, //Fog "brush"?
+		FF_INVERTPLANES  = 0x2000, //Reverse the plane visibility rules?
+		FF_ALLSIDES      = 0x4000, //Render inside and outside sides?
+		FF_INVERTSIDES   = 0x8000, //Only render inside sides?
+		FF_DOUBLESHADOW  = 0x10000,//Make two lightlist entries to reset light?
+		FF_UPPERTEXTURE	 = 0x20000,
+		FF_LOWERTEXTURE  = 0x40000,
+		FF_THINFLOOR     = 0x80000,	// EDGE
+		FF_SCROLLY       = 0x100000,  // EDGE - not yet implemented!!!
+		FF_FIX           = 0x200000,  // use floor of model sector as floor and floor of real sector as ceiling
+		FF_INVERTSECTOR  = 0x400000,	// swap meaning of sector planes
+		FF_DYNAMIC       = 0x800000,	// created by partitioning another 3D-floor due to overlap
+		FF_CLIPPED       = 0x1000000,	// split into several dynamic ffloors
+		FF_SEETHROUGH    = 0x2000000,
+		FF_SHOOTTHROUGH  = 0x4000000,
+		FF_FADEWALLS     = 0x8000000,	// Applies real fog to walls and doesn't blend the view		
+		FF_ADDITIVETRANS = 0x10000000, // Render this floor with additive translucency
+		FF_FLOOD         = 0x20000000, // extends towards the next lowest flooding or solid 3D floor or the bottom of the sector
+		FF_THISINSIDE    = 0x40000000, // hack for software 3D with FF_BOTHPLANES
+		FF_RESET         = 0x80000000, // light effect is completely reset, once interrupted  
+	};
+
+	native readonly secplane bottom;
+	native readonly secplane top;
+
+	native readonly uint flags;
+	native readonly Line master;
+
+	native readonly Sector model;
+	native readonly Sector target;
+
+	native readonly int alpha;
+
+	native TextureID GetTexture(int pos);
+}
+
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
 struct SecSpecial play
 {
@@ -366,6 +415,11 @@ struct Sector native play
 
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
+
+	native F3DFloor Get3DFloor(int index);
+	native int Get3DFloorCount();
+	native Sector GetAttached(int index);
+	native int GetAttachedCount();
 
 	native void RemoveForceField();
 	deprecated("3.8") static clearscope Sector PointInSector(Vector2 pt)

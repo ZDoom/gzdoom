@@ -150,17 +150,20 @@ void FThinkerCollection::RunThinkers(FLevelLocals *Level)
 			}
 		} while (count != 0);
 
-		// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
-		auto &prof = Profiles[NAME_InternalDynamicLight];
-		prof.timer.Clock();
-		for (auto light = Level->lights; light;)
+		if (Level->lights)
 		{
-			prof.numcalls++;
-			auto next = light->next;
-			light->Tick();
-			light = next;
+			// Also profile the internal dynamic lights, even though they are not implemented as thinkers.
+			auto &prof = Profiles[NAME_InternalDynamicLight];
+			prof.timer.Clock();
+			for (auto light = Level->lights; light;)
+			{
+				prof.numcalls++;
+				auto next = light->next;
+				light->Tick();
+				light = next;
+			}
+			prof.timer.Unclock();
 		}
-		prof.timer.Unclock();
 
 
 		struct SortedProfileInfo

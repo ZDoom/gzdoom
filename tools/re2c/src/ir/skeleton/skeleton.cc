@@ -116,7 +116,7 @@ Skeleton::Skeleton
 	if (maxlen == Node::DIST_MAX)
 	{
 		error ("DFA path %sis too long", incond (cond).c_str ());
-		exit (1);
+		exit(1);
 	}
 
 	// calculate maximal rule rank (disregarding default and none rules)

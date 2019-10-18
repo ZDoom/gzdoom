@@ -87,6 +87,7 @@ static FDynamicLight *GetLight(FLevelLocals *Level)
 	}
 	else ret = (FDynamicLight*)DynLightArena.Alloc(sizeof(FDynamicLight));
 	memset(ret, 0, sizeof(*ret));
+	ret->m_cycler.m_increment = true;
 	ret->next = Level->lights;
 	Level->lights = ret;
 	if (ret->next) ret->next->prev = ret;
@@ -122,6 +123,9 @@ void AttachLight(AActor *self)
 	light->visibletoplayer = true;
 	light->lighttype = (uint8_t)self->IntVar(NAME_lighttype);
 	self->AttachedLights.Push(light);
+
+	// Disable postponed processing of dynamic light because its setup has been completed by this function
+	self->flags8 &= ~MF8_RECREATELIGHTS;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(ADynamicLight, AttachLight, AttachLight)
@@ -338,7 +342,7 @@ void FDynamicLight::Tick()
 		
 		if (scale == 0.f) scale = 1.f;
 		
-		intensity = Sector->lightlevel * scale;
+		intensity = Sector? Sector->lightlevel * scale : 0;
 		intensity = clamp<float>(intensity, 0.f, 255.f);
 		
 		m_currentRadius = intensity;
@@ -989,4 +993,3 @@ void FLevelLocals::RecreateAllAttachedLights()
 		}
 	}
 }
-

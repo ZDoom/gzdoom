@@ -61,7 +61,6 @@ EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Color, am_wallcolor)
 EXTERN_CVAR (Color, am_fdwallcolor)
 EXTERN_CVAR (Color, am_cdwallcolor)
-EXTERN_CVAR (Float, spc_amp)
 EXTERN_CVAR (Bool, wi_percents)
 EXTERN_CVAR (Int, gl_texture_hqresizemode)
 EXTERN_CVAR (Int, gl_texture_hqresizemult)
@@ -75,7 +74,7 @@ FGameConfigFile::FGameConfigFile ()
 
 	FString pathname;
 
-	OkayToWrite = false;	// Do not allow saving of the config before DoGameSetup()
+	OkayToWrite = false;	// Do not allow saving of the config before DoKeySetup()
 	bModSetup = false;
 	pathname = GetConfigPath (true);
 	ChangePathName (pathname);
@@ -324,6 +323,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					vsync->ResetToDefault ();
 				}
 			}
+			/* spc_amp no longer exists
 			if (last < 206)
 			{ // spc_amp is now a float, not an int.
 				if (spc_amp > 16)
@@ -331,6 +331,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					spc_amp = spc_amp / 16.f;
 				}
 			}
+			*/
 			if (last < 207)
 			{ // Now that snd_midiprecache works again, you probably don't want it on.
 				FBaseCVar *precache = FindCVar ("snd_midiprecache", NULL);
@@ -569,7 +570,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 			}
 		}
 	}
-	OkayToWrite = true;
 }
 
 // Moved from DoGameSetup so that it can happen after wads are loaded
@@ -603,6 +603,7 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 			}
 		}
 	}
+	OkayToWrite = true;
 }
 
 // Like DoGameSetup(), but for mod-specific cvars.

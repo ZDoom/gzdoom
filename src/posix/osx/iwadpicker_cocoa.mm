@@ -40,6 +40,7 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "gameconfigfile.h"
+#include "doomerrors.h"
 
 #include <Cocoa/Cocoa.h>
 #include <wordexp.h>
@@ -360,7 +361,7 @@ static NSArray* GetKnownExtensions()
 
 	if ( @selector(terminate:) == [menuItem action] )
 	{
-		exit(0);
+		throw CExitEvent(0);
 	}
 }
 

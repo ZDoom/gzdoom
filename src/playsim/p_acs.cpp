@@ -69,12 +69,12 @@
 #include "p_effect.h"
 #include "r_utility.h"
 #include "a_morph.h"
-#include "i_music.h"
 #include "thingdef.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "types.h"
 #include "scriptutil.h"
+#include "s_music.h"
 
 	// P-codes for ACS scripts
 	enum
@@ -5876,7 +5876,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_PlayActorSound:
 			// PlaySound(tid, "SoundName", channel, volume, looping, attenuation, local)
 			{
-				FSoundID sid;
+				FSoundID sid = 0;
 
 				if (funcIndex == ACSF_PlaySound)
 				{
@@ -8307,9 +8307,21 @@ scriptwait:
 			break;
 
 		case PCD_SCRIPTWAITDIRECT:
-			statedata = uallong(pc[0]);
-			pc++;
-			goto scriptwait;
+			if (!(Level->i_compatflags2 & COMPATF2_SCRIPTWAIT))
+			{
+				statedata = uallong(pc[0]);
+				pc++;
+				goto scriptwait;
+			}
+			else
+			{
+				// Old implementation for compatibility with Daedalus MAP19
+				state = SCRIPT_ScriptWait;
+				statedata = uallong(pc[0]);
+				pc++;
+				PutLast();
+				break;
+			}
 
 		case PCD_SCRIPTWAITNAMED:
 			statedata = -FName(Level->Behaviors.LookupString(STACK(1)));

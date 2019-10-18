@@ -188,7 +188,7 @@ CCMD (snd_listmididevices)
 #endif
 
 
-CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
 	if ((self >= (signed)nummididevices) || (self < -8))
 	{

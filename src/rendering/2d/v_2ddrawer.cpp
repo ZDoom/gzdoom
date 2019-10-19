@@ -81,48 +81,68 @@ DEFINE_ACTION_FUNCTION(DShape2D, SetTransform)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DShape2D, Clear)
+static void Shape2D_Clear(DShape2D* self, int which)
 {
-	PARAM_SELF_PROLOGUE(DShape2D);
-	PARAM_INT(which);
-	if ( which&C_Verts )
+	if (which & C_Verts)
 	{
 		self->mVertices.Clear();
 		self->dirty = true;
 	}
-	if ( which&C_Coords ) self->mCoords.Clear();
-	if ( which&C_Indices ) self->mIndices.Clear();
+	if (which & C_Coords) self->mCoords.Clear();
+	if (which & C_Indices) self->mIndices.Clear();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, Clear, Shape2D_Clear)
+{
+	PARAM_SELF_PROLOGUE(DShape2D);
+	PARAM_INT(which);
+	Shape2D_Clear(self, which);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DShape2D, PushVertex)
+static void Shape2D_PushVertex(DShape2D* self, double x, double y)
+{
+	self->mVertices.Push(DVector2(x, y));
+	self->dirty = true;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushVertex, Shape2D_PushVertex)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	self->mVertices.Push(DVector2(x,y));
-	self->dirty = true;
+	Shape2D_PushVertex(self, x, y);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DShape2D, PushCoord)
+static void Shape2D_PushCoord(DShape2D* self, double u, double v)
+{
+	self->mCoords.Push(DVector2(u, v));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushCoord, Shape2D_PushCoord)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
 	PARAM_FLOAT(u);
 	PARAM_FLOAT(v);
-	self->mCoords.Push(DVector2(u,v));
+	Shape2D_PushCoord(self, u, v);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DShape2D, PushTriangle)
+static void Shape2D_PushTriangle(DShape2D* self, int a, int b, int c)
+{
+	self->mIndices.Push(a);
+	self->mIndices.Push(b);
+	self->mIndices.Push(c);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, PushTriangle, Shape2D_PushTriangle)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
 	PARAM_INT(a);
 	PARAM_INT(b);
 	PARAM_INT(c);
-	self->mIndices.Push(a);
-	self->mIndices.Push(b);
-	self->mIndices.Push(c);
+	Shape2D_PushTriangle(self, a, b, c);
 	return 0;
 }
 

@@ -2998,6 +2998,11 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af, in
 					int comboflags = afd->Variants[0].UseFlags & StateFlags;
 					if (comboflags == StateFlags)	// the function must satisfy all the flags the state requires
 					{
+						if ((afd->Variants[0].Flags & VARF_Private) && afd->OwningClass != cls->VMType)
+						{
+							Error(af, "%s is declared private and not accessible", FName(id->Identifier).GetChars());
+						}
+						
 						return new FxVMFunctionCall(new FxSelf(*af), afd, argumentlist, *af, false);
 					}
 					else

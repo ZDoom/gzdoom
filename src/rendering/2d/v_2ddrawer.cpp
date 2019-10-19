@@ -37,47 +37,72 @@ EXTERN_CVAR(Float, transsouls)
 
 IMPLEMENT_CLASS(DShape2DTransform, false, false)
 
-DEFINE_ACTION_FUNCTION(DShape2DTransform, Clear)
+static void Shape2DTransform_Clear(DShape2DTransform* self)
+{
+	self->transform.Identity();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2DTransform, Clear, Shape2DTransform_Clear)
 {
 	PARAM_SELF_PROLOGUE(DShape2DTransform);
-	self->transform.Identity();
+	Shape2DTransform_Clear(self);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DShape2DTransform, Rotate)
+static void Shape2DTransform_Rotate(DShape2DTransform* self, double angle)
+{
+	self->transform = DMatrix3x3::Rotate2D(DEG2RAD(angle)) * self->transform;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2DTransform, Rotate, Shape2DTransform_Rotate)
 {
 	PARAM_SELF_PROLOGUE(DShape2DTransform);
 	PARAM_FLOAT(angle);
-	self->transform = DMatrix3x3::Rotate2D(DEG2RAD(angle)) * self->transform;
+	Shape2DTransform_Rotate(self, angle);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DShape2DTransform, Scale)
+static void Shape2DTransform_Scale(DShape2DTransform* self, double x, double y)
 {
-	PARAM_SELF_PROLOGUE(DShape2DTransform);
-	PARAM_FLOAT(x);
-	PARAM_FLOAT(y);
 	self->transform = DMatrix3x3::Scale2D(DVector2(x, y)) * self->transform;
-	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(DShape2DTransform, Translate)
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2DTransform, Scale, Shape2DTransform_Scale)
 {
 	PARAM_SELF_PROLOGUE(DShape2DTransform);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
+	Shape2DTransform_Scale(self, x, y);
+	return 0;
+}
+
+static void Shape2DTransform_Translate(DShape2DTransform* self, double x, double y)
+{
 	self->transform = DMatrix3x3::Translate2D(DVector2(x, y)) * self->transform;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2DTransform, Translate, Shape2DTransform_Translate)
+{
+	PARAM_SELF_PROLOGUE(DShape2DTransform);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	Shape2DTransform_Translate(self, x, y);
 	return 0;
 }
 
 IMPLEMENT_CLASS(DShape2D, false, false)
 
-DEFINE_ACTION_FUNCTION(DShape2D, SetTransform)
+static void Shape2D_SetTransform(DShape2D* self, DShape2DTransform *transform)
+{
+	self->transform = transform->transform;
+	self->dirty = true;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(DShape2D, SetTransform, Shape2D_SetTransform)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
 	PARAM_OBJECT(transform, DShape2DTransform);
-	self->transform = transform->transform;
-	self->dirty = true;
+	Shape2D_SetTransform(self, transform);
 	return 0;
 }
 

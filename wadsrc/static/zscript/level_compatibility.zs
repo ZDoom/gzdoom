@@ -1429,6 +1429,14 @@ class LevelCompatibility native play
 				SetThingFlags(2169,0);
 				SetThingFlags(2168,0);
 				SetThingFlags(2167,0);
+				break;
+			}
+
+			case '66B931B03618EDE5C022A1EC87189158': // Restoring Deimos MAP03
+			{
+				// Missing teleport destination on easy skill
+				SetThingSkills(62, 31);
+				break;
 			}
 		}
 	}

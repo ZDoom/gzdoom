@@ -570,10 +570,12 @@ bool MIDIStreamer::IsPlaying()
 {
 	if (m_Status != STATE_Stopped && (MIDI == NULL || (EndQueued != 0 && EndQueued < 4)))
 	{
+		std::lock_guard<std::mutex> lock(CritSec);
 		Stop();
 	}
 	if (m_Status != STATE_Stopped && !MIDI->IsOpen())
 	{
+		std::lock_guard<std::mutex> lock(CritSec);
 		Stop();
 	}
 	return m_Status != STATE_Stopped;
@@ -695,7 +697,11 @@ void MIDIStreamer::Callback(void *userdata)
 
 void MIDIStreamer::Update()
 {
-	if (MIDI != nullptr && !MIDI->Update()) Stop();
+	if (MIDI != nullptr && !MIDI->Update())
+	{
+		std::lock_guard<std::mutex> lock(CritSec);
+		Stop();
+	}
 }
 
 //==========================================================================

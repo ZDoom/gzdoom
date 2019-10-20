@@ -3885,7 +3885,7 @@ void AActor::Tick ()
 		// (for backwards compatibility this must check for lack of damage function, not for zero damage!)
 		if ((flags & MF_MISSILE) && Vel.X == 0 && Vel.Y == 0 && !IsZeroDamage())
 		{
-			Vel.X = MinVel;
+			VelFromAngle(MinVel);
 		}
 
 		// Handle X and Y velocities

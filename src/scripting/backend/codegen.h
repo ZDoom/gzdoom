@@ -2131,6 +2131,12 @@ class FxLocalVariableDeclaration : public FxExpression
 	FxExpression *Init;
 	int VarFlags;
 	int RegCount;
+
+protected:
+	FxExpression *clearExpr;
+
+	void ClearDynamicArray(VMFunctionBuilder *build);
+
 public:
 	int StackOffset = -1;
 	int RegNum = -1;
@@ -2194,7 +2200,6 @@ class FxLocalArrayDeclaration : public FxLocalVariableDeclaration
 {
 	PType *ElementType;
 	FArgumentList values;
-	FxExpression *clearExpr;
 
 public:
 

@@ -52,6 +52,7 @@
 uint32_t Col2RGB8[65][256];
 uint32_t *Col2RGB8_LessPrecision[65];
 uint32_t Col2RGB8_Inverse[65][256];
+uint32_t Col2RGB8_2[63][256]; // this array's second dimension is called up by pointer as Col2RGB8_LessPrecision[] elsewhere.
 ColorTable32k RGB32k;
 ColorTable256k RGB256k;
 
@@ -321,7 +322,6 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 static void BuildTransTable (const PalEntry *palette)
 {
 	int r, g, b;
-	static uint32_t Col2RGB8_2[63][256];
 	
 	// create the RGB555 lookup table
 	for (r = 0; r < 32; r++)

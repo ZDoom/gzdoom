@@ -1394,6 +1394,12 @@ class LevelCompatibility native play
 				break;
 			}
 
+			case '63BDD083A98A48C04B8CD58AA857F77D': // Scythe MAP22
+			{
+				// Wall behind start creates HOM in software renderer due to weird sector
+				OffsetSectorPlane(236, Sector.Floor, -40);
+			}
+
 			case '1C795660D2BA9FC93DA584C593FD1DA3': // Scythe 2 MAP17
 			{
 				// Texture displays incorrectly in hardware renderer

@@ -7129,7 +7129,15 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		{
 			// since this is a vector, all potential things that may get here are single float or an xy-vector.
 			auto locvar = static_cast<FxLocalVariable *>(classx);
-			locvar->RegOffset = int(membervar->Offset / 8);
+			if (!(locvar->Variable->VarFlags & VARF_Out))
+			{
+				locvar->RegOffset = int(membervar->Offset / 8);
+			}
+			else
+			{
+				locvar->RegOffset = int(membervar->Offset);
+			}
+			
 			locvar->ValueType = membervar->Type;
 			classx = nullptr;
 			delete this;

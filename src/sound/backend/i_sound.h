@@ -131,7 +131,7 @@ public:
 	virtual void ChannelPitch(FISoundChannel *chan, float volume) = 0;
 
 	// Marks a channel's start time without actually playing it.
-	virtual void MarkStartTime (FISoundChannel *chan, float startTime) = 0;
+	virtual void MarkStartTime (FISoundChannel *chan, float startTime = 0.f) = 0;
 
 	// Returns position of sound on this channel, in samples.
 	virtual unsigned int GetPosition(FISoundChannel *chan) = 0;

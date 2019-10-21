@@ -1409,7 +1409,7 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 	return stream;
 }
 
-FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime = 0.f)
+FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
 {
 	if(FreeSfx.Size() == 0)
 	{
@@ -1460,7 +1460,10 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
-		alSourcef(source, AL_SEC_OFFSET, fmod(startTime, (float)GetMSLength(sfx) / 1000.f));
+	{
+		float st = (chanflags&SNDF_LOOP) ? fmod(startTime, (float)GetMSLength(sfx) / 1000.f) : clamp<float>(startTime, 0.f, (float)GetMSLength(sfx));
+		alSourcef(source, AL_SEC_OFFSET, st);
+	}
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
@@ -1509,7 +1512,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 
 FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener *listener, float vol,
 	FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel,
-	int channum, int chanflags, FISoundChannel *reuse_chan, float startTime = 0.f)
+	int channum, int chanflags, FISoundChannel *reuse_chan, float startTime)
 {
 	float dist_sqr = (float)(pos - listener->position).LengthSquared();
 
@@ -1671,7 +1674,10 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 		alSourcef(source, AL_PITCH, PITCH(pitch));
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
-		alSourcef(source, AL_SEC_OFFSET, fmod(startTime, (float)GetMSLength(sfx) / 1000.f));
+	{
+		float st = (chanflags & SNDF_LOOP) ? fmod(startTime, (float)GetMSLength(sfx) / 1000.f) : clamp<float>(startTime, 0.f, (float)GetMSLength(sfx));
+		alSourcef(source, AL_SEC_OFFSET, st);
+	}
 	else
 	{
 		if((chanflags&SNDF_ABSTIME))
@@ -2113,7 +2119,7 @@ bool OpenALSoundRenderer::IsValid()
 	return Device != NULL;
 }
 
-void OpenALSoundRenderer::MarkStartTime(FISoundChannel *chan, float startTime = 0.f)
+void OpenALSoundRenderer::MarkStartTime(FISoundChannel *chan, float startTime)
 {
 	// FIXME: Get current time (preferably from the audio clock, but the system
 	// time will have to do)

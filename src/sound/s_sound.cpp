@@ -1289,7 +1289,7 @@ void S_RestartSound(FSoundChan *chan)
 //
 //==========================================================================
 
-void S_SoundPitch(int channel, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime = 0.f)
+void S_SoundPitch(int channel, FSoundID sound_id, float volume, float attenuation, float pitch, float startTime)
 {
 	S_StartSound(NULL, NULL, NULL, NULL, channel, sound_id, volume, attenuation, 0, pitch, startTime);
 }
@@ -1395,7 +1395,7 @@ void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, fl
 //
 //==========================================================================
 
-void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch, float startTime = 0.f)
+void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch, float startTime)
 {
 	if (a == nullptr || a->Sector->Flags & SECF_SILENT || a->Level != primaryLevel)
 		return;
@@ -1415,10 +1415,10 @@ void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten,
 
 void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local)
 {
-	S_PlaySoundPitch(a, chan, sid, vol, atten, local, 0.f);
+	S_PlaySoundPitch(a, chan, sid, vol, atten, local, 0.f, 0.f);
 }
 
-void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch, double startTime = 0.f)
+void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch, double startTime)
 {
 	if (!looping)
 	{

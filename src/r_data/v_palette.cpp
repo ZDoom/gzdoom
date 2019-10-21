@@ -321,6 +321,7 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 static void BuildTransTable (const PalEntry *palette)
 {
 	int r, g, b;
+	static uint32_t Col2RGB8_2[63][256];
 	
 	// create the RGB555 lookup table
 	for (r = 0; r < 32; r++)
@@ -344,7 +345,6 @@ static void BuildTransTable (const PalEntry *palette)
 	
 	// create the swizzled palette with the lsb of red and blue forced to 0
 	// (for green, a 1 is okay since it never gets added into)
-	uint32_t Col2RGB8_2[63][256];
 	for (x = 1; x < 64; x++)
 	{
 		Col2RGB8_LessPrecision[x] = Col2RGB8_2[x-1];

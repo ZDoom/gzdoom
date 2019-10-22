@@ -92,16 +92,19 @@ class DoomStatusBar : BaseStatusBar
 		if (locks[1] && locks[4]) image = "ZTKEYS1";
 		else if (locks[1]) image = "STKEYS0";
 		else if (locks[4]) image = "STKEYS3";
+		else image = "";
 		DrawImage(image, (239, 171), DI_ITEM_OFFSETS);
 		// key 2
 		if (locks[2] && locks[5]) image = "ZTKEYS2";
 		else if (locks[2]) image = "STKEYS1";
 		else if (locks[5]) image = "STKEYS4";
+		else image = "";
 		DrawImage(image, (239, 181), DI_ITEM_OFFSETS);
 		// key 3
 		if (locks[0] && locks[3]) image = "ZTKEYS3";
 		else if (locks[0]) image = "STKEYS2";
 		else if (locks[3]) image = "STKEYS5";
+		else image = "";
 		DrawImage(image, (239, 191), DI_ITEM_OFFSETS);
 	}
 	

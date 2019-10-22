@@ -9047,6 +9047,14 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 					else
 					{
 						ArgList[i]->RequestAddress(ctx, &writable);
+
+						if ((flag & VARF_Out) && !writable)
+						{
+							ScriptPosition.Message(MSG_ERROR, "Argument must be a modifiable value");
+							delete this;
+							return nullptr;
+						}
+
 						if (flag & VARF_Ref)ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
 					}
 

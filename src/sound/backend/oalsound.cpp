@@ -1461,7 +1461,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
 	{
-		float st = (chanflags&SNDF_LOOP) ? fmod(startTime, (float)GetMSLength(sfx) / 1000.f) : clamp<float>(startTime, 0.f, (float)GetMSLength(sfx));
+		float st = (chanflags&SNDF_LOOP) ? fmod(startTime, (float)GetMSLength(sfx) / 1000.f) : clamp<float>(startTime, 0.f, (float)GetMSLength(sfx) / 1000.f);
 		alSourcef(source, AL_SEC_OFFSET, st);
 	}
 	else
@@ -1675,7 +1675,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 
 	if(!reuse_chan || reuse_chan->StartTime == 0)
 	{
-		float st = (chanflags & SNDF_LOOP) ? fmod(startTime, (float)GetMSLength(sfx) / 1000.f) : clamp<float>(startTime, 0.f, (float)GetMSLength(sfx));
+		float st = (chanflags & SNDF_LOOP) ? fmod(startTime, (float)GetMSLength(sfx) / 1000.f) : clamp<float>(startTime, 0.f, (float)GetMSLength(sfx) / 1000.f);
 		alSourcef(source, AL_SEC_OFFSET, st);
 	}
 	else

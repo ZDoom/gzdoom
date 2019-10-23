@@ -170,7 +170,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_FLOAT(attenuation);
 	PARAM_BOOL(local);
 	PARAM_FLOAT(pitch);
-	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
+	PARAM_FLOAT(startTime);
+	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch, startTime);
 	return 0;
 }
 

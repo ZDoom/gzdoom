@@ -101,6 +101,10 @@ add_library(${ASMJITNAME} STATIC ${ASMJIT_SRCS} ${ASMJIT_PUBLIC_HDRS})
 
 set_target_properties(${ASMJITNAME} PROPERTIES OUTPUT_NAME asmjit)
 
+if(UNIX)
+    target_link_libraries(${ASMJITNAME} PRIVATE rt)
+endif()
+
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
     install(TARGETS ${ASMJITNAME}
         RUNTIME DESTINATION bin

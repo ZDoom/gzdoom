@@ -7297,6 +7297,16 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(Array,ctx);
 	SAFE_RESOLVE(index,ctx);
 
+	if (Array->ValueType->isRealPointer())
+	{
+		auto pointedType = Array->ValueType->toPointer()->PointedType;
+		if (pointedType && pointedType->isDynArray())
+		{
+			Array = new FxOutVarDereference(Array, Array->ScriptPosition);
+			SAFE_RESOLVE(Array, ctx);
+		}
+	}
+
 	if (index->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
@@ -7354,7 +7364,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
 			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
-		else if (Array->ExprType == EFX_ArrayElement)
+		else if (Array->ExprType == EFX_ArrayElement || Array->ExprType == EFX_OutVarDereference)
 		{
 			SizeAddr = ~0u;
 		}
@@ -7458,7 +7468,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 
 		arrayvar.Free(build);
 	}
-	else if (Array->ExprType == EFX_ArrayElement && Array->isStaticArray())
+	else if ((Array->ExprType == EFX_ArrayElement || Array->ExprType == EFX_OutVarDereference) && Array->isStaticArray())
 	{
 		bound = ExpEmit(build, REGT_INT);
 		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(myoffsetof(FArray, Count)));
@@ -8148,6 +8158,16 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	if (Self->ValueType->isRealPointer())
+	{
+		auto pointedType = Self->ValueType->toPointer()->PointedType;
+		if (pointedType && pointedType->isDynArray())
+		{
+			Self = new FxOutVarDereference(Self, Self->ScriptPosition);
+			SAFE_RESOLVE(Self, ctx);
+		}
+	}
+
 	if (Self->ExprType == EFX_Super)
 	{
 		if (ctx.Function == nullptr)
@@ -8272,6 +8292,17 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					delete this;
 					return nullptr;
 				}
+
+				if (a->ValueType->isRealPointer())
+				{
+					auto pointedType = a->ValueType->toPointer()->PointedType;
+					if (pointedType && pointedType->isDynArray())
+					{
+						a = new FxOutVarDereference(a, a->ScriptPosition);
+						SAFE_RESOLVE(a, ctx);
+					}
+				}
+
 				if (isDynArrayObj && ((MethodName == NAME_Push && idx == 0) || (MethodName == NAME_Insert && idx == 1)))
 				{
 					// Null pointers are always valid.
@@ -9038,6 +9069,17 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				bool writable;
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// must be resolved before the address is requested.
+
+				if (ArgList[i]->ValueType->isRealPointer())
+				{
+					auto pointedType = ArgList[i]->ValueType->toPointer()->PointedType;
+					if (pointedType && pointedType->isDynArray())
+					{
+						ArgList[i] = new FxOutVarDereference(ArgList[i], ArgList[i]->ScriptPosition);
+						SAFE_RESOLVE(ArgList[i], ctx);
+					}
+				}
+
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
 					if (type == ArgList[i]->ValueType && type->isRealPointer() && type->toPointer()->PointedType->isStruct())
@@ -11784,4 +11826,76 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 	build->Registers[REGT_INT].Return(arrOffsetReg, 1);
 
 	return ExpEmit();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxOutVarDereference::~FxOutVarDereference()
+{
+	SAFE_DELETE(Self);
+}
+
+bool FxOutVarDereference::RequestAddress(FCompileContext &ctx, bool *writable)
+{
+	if (writable != nullptr) *writable = AddressWritable;
+	return true;
+}
+
+FxExpression *FxOutVarDereference::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+
+	SAFE_RESOLVE(Self, ctx);
+
+	assert(Self->ValueType->isPointer()); // 'Self' must be a pointer.
+
+	Self->RequestAddress(ctx, &AddressWritable);
+	SelfType = Self->ValueType->toPointer()->PointedType;
+	ValueType = SelfType;
+
+	if (SelfType->GetRegType() == REGT_NIL && !SelfType->isRealPointer() && !SelfType->isDynArray())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot dereference pointer");
+		delete this;
+		return nullptr;
+	}
+
+	return this;
+}
+
+ExpEmit FxOutVarDereference::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit selfEmit = Self->Emit(build);
+	assert(selfEmit.RegType == REGT_POINTER);
+	assert(SelfType->GetRegCount() == 1 && selfEmit.RegCount == 1);
+
+	int regType = 0;
+	int loadOp = 0;
+
+	if (SelfType->GetRegType() != REGT_NIL)
+	{
+		regType = SelfType->GetRegType();
+		loadOp = SelfType->GetLoadOp ();
+	}
+	else if (SelfType->isRealPointer())
+	{
+		regType = REGT_POINTER;
+		loadOp = OP_LP;
+	}
+	else if (SelfType->isDynArray())
+	{
+		regType = REGT_POINTER;
+		loadOp = OP_MOVEA;
+	}
+
+	ExpEmit out = ExpEmit(build, regType);
+
+	build->Emit(loadOp, out.RegNum, selfEmit.RegNum, 0);
+	selfEmit.Free(build);
+
+	return out;
 }

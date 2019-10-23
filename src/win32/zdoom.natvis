@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+
+<Type Name="TArray&lt;*&gt;">
+    <DisplayString>Size = {Count}</DisplayString>
+    <Expand>
+        <Item Name="Size">Count</Item>
+        <Item Name="Capacity">Most</Item>
+        <ArrayItems>
+            <Size>Count</Size>
+            <ValuePointer>(value_type*)Array</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="TArrayView&lt;*&gt;">
+    <DisplayString>Size = {Count}</DisplayString>
+    <Expand>
+        <Item Name="Size">Count</Item>
+        <ArrayItems>
+            <Size>Count</Size>
+            <ValuePointer>(value_type*)Array</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="TStaticPointedArray&lt;*&gt;">
+    <DisplayString>Size = {Count}</DisplayString>
+    <Expand>
+        <Item Name="Size">Count</Item>
+        <ArrayItems>
+            <Size>Count</Size>
+            <ValuePointer>(value_type*)Array</ValuePointer>
+        </ArrayItems>
+    </Expand>
+</Type>
+
+<Type Name="FName">
+    <DisplayString>{FName::NameData.NameArray[Index].Text, s}</DisplayString>
+</Type>
+
+<Type Name="FString">
+    <DisplayString>{Chars, s}</DisplayString>
+    <Expand>
+        <Item Name="Size">((FStringData*)Chars - 1)->Len</Item>
+        <Item Name="Capacity">((FStringData*)Chars - 1)->AllocLen</Item>
+        <Item Name="Reference Count">((FStringData*)Chars - 1)->RefCount</Item>
+    </Expand>
+</Type>
+
+<Type Name="TAngle&lt;*&gt;">
+    <DisplayString>{Degrees}</DisplayString>
+</Type>
+
+<Type Name="PClass">
+    <DisplayString>{TypeName}</DisplayString>
+</Type>
+
+<Type Name="DObject">
+    <DisplayString>{Class->TypeName}</DisplayString>
+</Type>
+
+<Type Name="TObjPtr&lt;*&gt;">
+    <DisplayString Condition="o == nullptr">&lt;NULL&gt;</DisplayString>
+    <DisplayString Condition="o != nullptr">{o->Class->TypeName}</DisplayString>
+</Type>
+
+<Type Name="FTextureID">
+    <DisplayString Condition="texnum == -1">&lt;None&gt;</DisplayString>
+    <DisplayString Condition="texnum != -1">{TexMan.Textures[texnum].Texture->Name}</DisplayString>
+    <Expand>
+        <Item Name="Index">texnum</Item>
+        <Item Name="Texture">TexMan.Textures[texnum].Texture</Item>
+    </Expand>
+</Type>
+
+<Type Name="FSoundID">
+    <DisplayString Condition="ID == 0">&lt;None&gt;</DisplayString>
+    <DisplayString Condition="ID != 0">{S_sfx[ID].name}</DisplayString>
+</Type>
+
+</AutoVisualizer>

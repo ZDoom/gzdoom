@@ -743,6 +743,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	scripting/zscript/zcc-parse.lemon
 	zcc-parse.c
 	zcc-parse.h
+	win32/zdoom.natvis
 )
 
 set( VM_JIT_SOURCES

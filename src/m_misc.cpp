@@ -366,7 +366,8 @@ inline void putc(unsigned char chr, FileWriter *file)
 void WritePCXfile (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
-	uint8_t temprow[MAXWIDTH * 3];
+	TArray<uint8_t> temprow_storage(width * 3, true);
+	uint8_t *temprow = &temprow_storage[0];
 	const uint8_t *data;
 	int x, y;
 	int runlen;

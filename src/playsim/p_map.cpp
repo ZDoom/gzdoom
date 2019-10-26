@@ -5855,6 +5855,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 
 	P_GeometryRadiusAttack(bombspot, bombsource, bombdamage, bombdistance, bombmod, fulldamagedistance);
 
+	TArray<AActor*> targets;
 	int count = 0;
 	while ((it.Next(&cres)))
 	{
@@ -5885,6 +5886,11 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			)
 			)	continue;
 
+		targets.Push(thing);
+	}
+
+	for (AActor *thing : targets)
+	{
 		// Barrels always use the original code, since this makes
 		// them far too "active." BossBrains also use the old code
 		// because some user levels require they have a height of 16,

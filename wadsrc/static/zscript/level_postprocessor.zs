@@ -1,0 +1,82 @@
+
+class LevelPostProcessor native play
+{
+	protected native LevelLocals level;
+
+	protected void Apply(Name checksum, String mapname)
+	{
+	}
+
+	protected native void ClearSectorTags(int sector);
+	protected native void AddSectorTag(int sector, int tag);
+	protected native void ClearLineIDs(int line);
+	protected native void AddLineID(int line, int tag);
+	protected native void OffsetSectorPlane(int sector, int plane, double offset);
+	protected native void SetThingSkills(int thing, int skills);
+	protected native void SetThingXY(int thing, double x, double y);
+	protected native void SetThingZ(int thing, double z);
+	protected native void SetThingFlags(int thing, int flags);
+	protected native void SetVertex(uint vertex, double x, double y);
+	protected native void SetLineSectorRef(uint line, uint side, uint sector);
+	protected native Actor GetDefaultActor(Name actorclass);
+
+	protected void SetWallTexture(int line, int side, int texpart, String texture)
+	{
+		SetWallTextureID(line, side, texpart, TexMan.CheckForTexture(texture, TexMan.Type_Wall));
+	}
+
+	protected void SetWallTextureID(int line, int side, int texpart, TextureID texture)
+	{
+		level.Lines[line].sidedef[side].SetTexture(texpart, texture);
+	}
+
+	protected void SetLineFlags(int line, int setflags, int clearflags = 0)
+	{
+		level.Lines[line].flags = (level.Lines[line].flags & ~clearflags) | setflags;
+	}
+
+	protected void SetLineActivation(int line, int acttype)
+	{
+		level.Lines[line].activation = acttype;
+	}
+
+	protected void ClearLineSpecial(int line)
+	{
+		level.Lines[line].special = 0;
+	}
+
+	protected void SetLineSpecial(int line, int special, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0)
+	{
+		level.Lines[line].special = special;
+		level.Lines[line].args[0] = arg1;
+		level.Lines[line].args[1] = arg2;
+		level.Lines[line].args[2] = arg3;
+		level.Lines[line].args[3] = arg4;
+		level.Lines[line].args[4] = arg5;
+	}
+
+	protected void SetSectorSpecial(int sectornum, int special)
+	{
+		level.sectors[sectornum].special = special;
+	}
+
+	protected void SetSectorTextureID(int sectornum, int plane, TextureID texture)
+	{
+		level.sectors[sectornum].SetTexture(plane, texture);
+	}
+
+	protected void SetSectorTexture(int sectornum, int plane, String texture)
+	{
+		SetSectorTextureID(sectornum, plane, TexMan.CheckForTexture(texture, TexMan.Type_Flat));
+	}
+
+	protected void SetSectorLight(int sectornum, int newval)
+	{
+		level.sectors[sectornum].SetLightLevel(newval);
+	}
+
+	protected void SetWallYScale(int line, int side, int texpart, double scale)
+	{
+		level.lines[line].sidedef[side].SetTextureYScale(texpart, scale);
+	}
+}

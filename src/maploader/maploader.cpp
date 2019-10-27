@@ -79,6 +79,7 @@
 #include "swrenderer/r_swrenderer.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "xlat/xlat.h"
+#include "vm.h"
 
 enum
 {
@@ -3053,7 +3054,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		ParseTextMap(map, missingtex);
 	}
 
-	SetCompatibilityParams(checksum);
+	PostProcessLevel(checksum);
 
 	LoopSidedefs(true);
 
@@ -3269,3 +3270,208 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	if (!Level->IsReentering())
 		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 }
+
+//==========================================================================
+//
+// PostProcessLevel
+//
+//==========================================================================
+
+class DLevelPostProcessor : public DObject
+{
+	DECLARE_ABSTRACT_CLASS(DLevelPostProcessor, DObject)
+public:
+	MapLoader *loader;
+	FLevelLocals *Level;
+};
+
+IMPLEMENT_CLASS(DLevelPostProcessor, true, false);
+
+void MapLoader::PostProcessLevel(FName checksum)
+{
+	auto lc = Create<DLevelPostProcessor>();
+	lc->loader = this;
+	lc->Level = Level;
+	for(auto cls : PClass::AllClasses)
+	{
+		if (cls->IsDescendantOf(RUNTIME_CLASS(DLevelPostProcessor)))
+		{
+			PFunction *const func = dyn_cast<PFunction>(cls->FindSymbol("Apply", false));
+			if (func == nullptr)
+			{
+				Printf("Missing 'Apply' method in class '%s', level compatibility object ignored\n", cls->TypeName.GetChars());
+				continue;
+			}
+
+			auto argTypes = func->Variants[0].Proto->ArgumentTypes;
+			if (argTypes.Size() != 3 || argTypes[1] != TypeName || argTypes[2] != TypeString)
+			{
+				Printf("Wrong signature of 'Apply' method in class '%s', level compatibility object ignored\n", cls->TypeName.GetChars());
+				continue;
+			}
+
+			VMValue param[] = { lc, checksum.GetIndex(), &Level->MapName };
+			VMCall(func->Variants[0].Implementation, param, 3, nullptr, 0);
+		}
+	}
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, OffsetSectorPlane)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(sector);
+	PARAM_INT(planeval);
+	PARAM_FLOAT(delta);
+
+	if ((unsigned)sector < self->Level->sectors.Size())
+	{
+		sector_t *sec = &self->Level->sectors[sector];
+		secplane_t& plane = sector_t::floor == planeval? sec->floorplane : sec->ceilingplane;
+		plane.ChangeHeight(delta);
+		sec->ChangePlaneTexZ(planeval, delta);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, ClearSectorTags)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(sector);
+	self->Level->tagManager.RemoveSectorTags(sector);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, AddSectorTag)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(sector);
+	PARAM_INT(tag);
+
+	if ((unsigned)sector < self->Level->sectors.Size())
+	{
+		self->Level->tagManager.AddSectorTag(sector, tag);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, ClearLineIDs)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(line);
+	self->Level->tagManager.RemoveLineIDs(line);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, AddLineID)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(line);
+	PARAM_INT(tag);
+
+	if ((unsigned)line < self->Level->lines.Size())
+	{
+		self->Level->tagManager.AddLineID(line, tag);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingSkills)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(thing);
+	PARAM_INT(skillmask);
+
+	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].SkillFilter = skillmask;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingXY)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(thing);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+
+	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	{
+		auto& pos = self->loader->MapThingsConverted[thing].pos;
+		pos.X = x;
+		pos.Y = y;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingZ)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(thing);
+	PARAM_FLOAT(z);
+
+	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].pos.Z = z;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingFlags)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_INT(thing);
+	PARAM_INT(flags);
+
+	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].flags = flags;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertex)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(vertex);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+
+	if (vertex < self->Level->vertexes.Size())
+	{
+		self->Level->vertexes[vertex].p = DVector2(x, y);
+	}
+	self->loader->ForceNodeBuild = true;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetLineSectorRef)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(lineidx);
+	PARAM_UINT(sideidx);
+	PARAM_UINT(sectoridx);
+
+	if (   sideidx < 2
+		&& lineidx < self->Level->lines.Size()
+		&& sectoridx < self->Level->sectors.Size())
+	{
+		line_t *line = &self->Level->lines[lineidx];
+		side_t *side = line->sidedef[sideidx];
+		side->sector = &self->Level->sectors[sectoridx];
+		if (sideidx == 0) line->frontsector = side->sector;
+		else line->backsector = side->sector;
+	}
+	self->loader->ForceNodeBuild = true;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetDefaultActor)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_NAME(actorclass);
+	ACTION_RETURN_OBJECT(GetDefaultByName(actorclass));
+}
+
+DEFINE_FIELD(DLevelPostProcessor, Level);
+

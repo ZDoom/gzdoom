@@ -35,6 +35,9 @@ class LevelPostProcessor native play
 	protected native uint GetThingFlags(uint thing);
 	protected native void SetThingFlags(uint thing, uint flags);
 
+	protected native int GetThingID(uint thing);
+	protected native void SetThingID(uint thing, int id);
+
 	protected native int GetThingSpecial(uint thing);
 	protected native void SetThingSpecial(uint thing, int special);
 

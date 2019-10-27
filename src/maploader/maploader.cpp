@@ -3599,6 +3599,29 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingArgument)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingID)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const int id = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].thingid : 0;
+	ACTION_RETURN_INT(id);
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingID)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+	PARAM_INT(id);
+
+	if (thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].thingid = id;
+	}
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertex)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);

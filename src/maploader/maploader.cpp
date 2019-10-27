@@ -3515,6 +3515,54 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingFlags)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingSpecial)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const int result = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].special : 0;
+	ACTION_RETURN_INT(result);
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingSpecial)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+	PARAM_INT(special);
+
+	if (thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].special = special;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingArgument)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+	PARAM_UINT(index);
+
+	const int result = index < 5 && thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].args[index] : 0;
+	ACTION_RETURN_INT(result);
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingArgument)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+	PARAM_UINT(index);
+	PARAM_INT(value);
+
+	if (index < 5 && thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].args[index] = value;
+	}
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertex)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);

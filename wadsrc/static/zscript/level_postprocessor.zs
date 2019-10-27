@@ -12,10 +12,19 @@ class LevelPostProcessor native play
 	protected native void ClearLineIDs(int line);
 	protected native void AddLineID(int line, int tag);
 	protected native void OffsetSectorPlane(int sector, int plane, double offset);
-	protected native void SetThingSkills(int thing, int skills);
-	protected native void SetThingXY(int thing, double x, double y);
-	protected native void SetThingZ(int thing, double z);
-	protected native void SetThingFlags(int thing, int flags);
+
+	protected native uint GetThingCount();
+
+	protected native uint GetThingSkills(uint thing);
+	protected native void SetThingSkills(uint thing, uint skills);
+
+	protected native vector3 GetThingPos(uint thing);
+	protected native void SetThingXY(uint thing, double x, double y);
+	protected native void SetThingZ(uint thing, double z);
+
+	protected native uint GetThingFlags(uint thing);
+	protected native void SetThingFlags(uint thing, uint flags);
+
 	protected native void SetVertex(uint vertex, double x, double y);
 	protected native void SetLineSectorRef(uint line, uint side, uint sector);
 	protected native Actor GetDefaultActor(Name actorclass);

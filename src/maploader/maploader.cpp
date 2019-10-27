@@ -3381,6 +3381,54 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingCount)
 	ACTION_RETURN_INT(self->loader->MapThingsConverted.Size());
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingEdNum)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const int result = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].EdNum : 0;
+	ACTION_RETURN_INT(result);
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingEdNum)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+	PARAM_UINT(ednum);
+
+	if (thing < self->loader->MapThingsConverted.Size())
+	{
+		auto &mti = self->loader->MapThingsConverted[thing];
+		mti.EdNum = ednum;
+		mti.info = DoomEdMap.CheckKey(ednum);
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingAngle)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const int result = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].angle : 0;
+	ACTION_RETURN_INT(result);
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingAngle)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+	PARAM_UINT(angle);
+
+	if (thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].angle = angle;
+	}
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingSkills)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);

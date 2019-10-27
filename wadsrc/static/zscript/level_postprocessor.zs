@@ -15,6 +15,12 @@ class LevelPostProcessor native play
 
 	protected native uint GetThingCount();
 
+	protected native int GetThingEdNum(uint thing);
+	protected native void SetThingEdNum(uint thing, int ednum);
+
+	protected native int GetThingAngle(uint thing);
+	protected native void SetThingAngle(uint thing, int angle);
+
 	protected native uint GetThingSkills(uint thing);
 	protected native void SetThingSkills(uint thing, uint skills);
 

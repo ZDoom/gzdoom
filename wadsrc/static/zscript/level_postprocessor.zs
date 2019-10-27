@@ -22,15 +22,15 @@ class LevelPostProcessor native play
 	protected native int GetThingEdNum(uint thing);
 	protected native void SetThingEdNum(uint thing, int ednum);
 
+	protected native vector3 GetThingPos(uint thing);
+	protected native void SetThingXY(uint thing, double x, double y);
+	protected native void SetThingZ(uint thing, double z);
+
 	protected native int GetThingAngle(uint thing);
 	protected native void SetThingAngle(uint thing, int angle);
 
 	protected native uint GetThingSkills(uint thing);
 	protected native void SetThingSkills(uint thing, uint skills);
-
-	protected native vector3 GetThingPos(uint thing);
-	protected native void SetThingXY(uint thing, double x, double y);
-	protected native void SetThingZ(uint thing, double z);
 
 	protected native uint GetThingFlags(uint thing);
 	protected native void SetThingFlags(uint thing, uint flags);

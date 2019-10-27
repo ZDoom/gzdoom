@@ -3381,6 +3381,42 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingCount)
 	ACTION_RETURN_INT(self->loader->MapThingsConverted.Size());
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, AddThing)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(ednum);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_INT(angle);
+	PARAM_UINT(skills);
+	PARAM_UINT(flags);
+
+	auto &things = self->loader->MapThingsConverted;
+	const unsigned newindex = things.Size();
+	things.Resize(newindex + 1);
+
+	auto &newthing = things.Last();
+	memset(&newthing, 0, sizeof newthing);
+
+	newthing.Gravity = 1;
+	newthing.SkillFilter = skills;
+	newthing.ClassFilter = 0xFFFF;
+	newthing.RenderStyle = STYLE_Count;
+	newthing.Alpha = -1;
+	newthing.Health = 1;
+	newthing.FloatbobPhase = -1;
+	newthing.pos.X = x;
+	newthing.pos.Y = y;
+	newthing.pos.Z = z;
+	newthing.angle = angle;
+	newthing.EdNum = ednum;
+	newthing.info = DoomEdMap.CheckKey(ednum);
+	newthing.flags = flags;
+
+	ACTION_RETURN_INT(newindex);
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingEdNum)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);

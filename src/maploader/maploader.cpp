@@ -3375,27 +3375,54 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, AddLineID)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingCount)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	ACTION_RETURN_INT(self->loader->MapThingsConverted.Size());
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingSkills)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const int result = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].SkillFilter : 0;
+	ACTION_RETURN_INT(result);
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingSkills)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
-	PARAM_INT(thing);
-	PARAM_INT(skillmask);
+	PARAM_UINT(thing);
+	PARAM_UINT(skillmask);
 
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	if (thing < self->loader->MapThingsConverted.Size())
 	{
 		self->loader->MapThingsConverted[thing].SkillFilter = skillmask;
 	}
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingPos)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const DVector3 result = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].pos
+		: DVector3(0, 0, 0);
+	ACTION_RETURN_VEC3(result);
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingXY)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
-	PARAM_INT(thing);
+	PARAM_UINT(thing);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	if (thing < self->loader->MapThingsConverted.Size())
 	{
 		auto& pos = self->loader->MapThingsConverted[thing].pos;
 		pos.X = x;
@@ -3407,23 +3434,33 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingXY)
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingZ)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
-	PARAM_INT(thing);
+	PARAM_UINT(thing);
 	PARAM_FLOAT(z);
 
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	if (thing < self->loader->MapThingsConverted.Size())
 	{
 		self->loader->MapThingsConverted[thing].pos.Z = z;
 	}
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingFlags)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const unsigned result = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].flags : 0;
+	ACTION_RETURN_INT(result);
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingFlags)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
-	PARAM_INT(thing);
-	PARAM_INT(flags);
+	PARAM_UINT(thing);
+	PARAM_UINT(flags);
 
-	if ((unsigned)thing < self->loader->MapThingsConverted.Size())
+	if (thing < self->loader->MapThingsConverted.Size())
 	{
 		self->loader->MapThingsConverted[thing].flags = flags;
 	}

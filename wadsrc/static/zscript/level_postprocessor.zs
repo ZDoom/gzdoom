@@ -42,7 +42,9 @@ class LevelPostProcessor native play
 	protected native void SetThingSpecial(uint thing, int special);
 
 	protected native int GetThingArgument(uint thing, uint index);
+	protected native Name GetThingStringArgument(uint thing);
 	protected native void SetThingArgument(uint thing, uint index, int value);
+	protected native void SetThingStringArgument(uint thing, Name value);
 
 	protected native void SetVertex(uint vertex, double x, double y);
 	protected native void SetLineSectorRef(uint line, uint side, uint sector);

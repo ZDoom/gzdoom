@@ -3585,6 +3585,16 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingArgument)
 	ACTION_RETURN_INT(argument);
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingStringArgument)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+
+	const FName argument = thing < self->loader->MapThingsConverted.Size()
+		? self->loader->MapThingsConverted[thing].arg0str : NAME_None;
+	ACTION_RETURN_INT(argument);
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingArgument)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
@@ -3595,6 +3605,19 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingArgument)
 	if (index < 5 && thing < self->loader->MapThingsConverted.Size())
 	{
 		self->loader->MapThingsConverted[thing].args[index] = value;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingStringArgument)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(thing);
+	PARAM_INT(value);
+
+	if (thing < self->loader->MapThingsConverted.Size())
+	{
+		self->loader->MapThingsConverted[thing].arg0str = ENamedName(value);
 	}
 	return 0;
 }

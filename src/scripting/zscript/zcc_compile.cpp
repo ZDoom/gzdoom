@@ -1505,7 +1505,7 @@ bool ZCCCompiler::CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &Propertie
 				{
 					Error(p, "Variable %s not found in %s", referenced.GetChars(), type->TypeName.GetChars());
 				}
-				if (!field->Type->isInt() || field->Type->Size != 4)
+				else if (!field->Type->isInt() || field->Type->Size != 4)
 				{
 					Error(p, "Variable %s in %s must have a size of 4 bytes for use as flag storage", referenced.GetChars(), type->TypeName.GetChars());
 				}

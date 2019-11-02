@@ -105,7 +105,7 @@ void InitSkyMap(FLevelLocals *Level)
 	skyheight = skytex1->GetDisplayHeight();
 
 	Level->skystretch = (r_skymode == 1
-		&& skyheight >= 128 && skyheight < 310
+		&& skyheight >= 128 && skyheight <= 256
 		&& Level->IsFreelookAllowed()
 		&& !(Level->flags & LEVEL_FORCETILEDSKY)) ? 1 : 0;
 }

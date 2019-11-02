@@ -1445,6 +1445,14 @@ class LevelCompatibility native play
 				break;
 			}
 
+			case '6B9D31106CE290205A724FA61C165A80': // Restoring Deimos MAP07
+			{
+				// Missing map spots on easy skill
+				SetThingSkills(507, 31);
+				SetThingSkills(509, 31);
+				break;
+			}
+
 			case '17314071AB76F4789763428FA2E8DA4C': // Skulldash Expanded Edition MAP04
 			{
 				// Missing teleport destination on easy skill

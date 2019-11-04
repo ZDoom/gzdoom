@@ -165,8 +165,13 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 				break;
 			}
 
-			origNextNode = node->SiblingNext;
-			node = mixinDef->Body;
+			if (mixinDef->Body != nullptr)
+			{
+				origNextNode = node->SiblingNext;
+				node = mixinDef->Body;
+
+				continue;
+			}
 		}
 		break;
 

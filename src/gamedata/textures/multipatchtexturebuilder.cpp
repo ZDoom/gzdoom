@@ -261,8 +261,8 @@ void FMultipatchTextureBuilder::BuildTexture(const void *texdef, FPatchLookup *p
 	}
 
 	// Insert the incomplete texture right here so that it's in the correct place.
-	MakeTexture(buildinfo, usetype);
 	buildinfo.DefinitionLump = deflumpnum;
+	MakeTexture(buildinfo, usetype);
 }
 
 //==========================================================================

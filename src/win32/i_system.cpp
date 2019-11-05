@@ -119,6 +119,7 @@ EXTERN_CVAR (Bool, queryiwad);
 EXTERN_CVAR (Bool, disableautoload)
 EXTERN_CVAR (Bool, autoloadlights)
 EXTERN_CVAR (Bool, autoloadbrightmaps)
+EXTERN_CVAR (Int, vid_enablevulkan)
 
 extern HWND Window, ConWindow, GameTitleWindow;
 extern HANDLE StdOut;
@@ -588,6 +589,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		// Check the current video settings.
 		//SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
 		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN, BM_SETCHECK, vid_enablevulkan ? BST_CHECKED : BST_UNCHECKED, 0 );
 
 		// [SP] This is our's
 		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, disableautoload ? BST_CHECKED : BST_UNCHECKED, 0 );
@@ -633,6 +635,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			SetQueryIWad(hDlg);
 			// [SP] Upstreamed from Zandronum
 			fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+			vid_enablevulkan = SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
 
 			// [SP] This is our's.
 			disableautoload = SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0 ) == BST_CHECKED;

@@ -67,7 +67,6 @@ namespace swrenderer
 		void Set(RenderThread *thread, const ProjectedWallTexcoords& texcoords, int x1, int x2, fixed_t xoffset, double yscale);
 
 		float yscale;
-		float iscale, iscalestep;
 
 		explicit operator bool() const { return UPos; }
 

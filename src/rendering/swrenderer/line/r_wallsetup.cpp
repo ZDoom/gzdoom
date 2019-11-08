@@ -230,22 +230,7 @@ namespace swrenderer
 			VStep[i] = texcoords.VStep[i];
 		}
 
-		double istart = VStep[x1] * yscale;
-		double iend = VStep[x2 - 1] * yscale;
-
-		istart = 1 / istart;
-		iend = 1 / iend;
-
 		this->yscale = (float)yscale;
-		iscale = (float)istart;
-		if (x2 - x1 > 1)
-		{
-			iscalestep = float((iend - istart) / (x2 - x1 - 1));
-		}
-		else
-		{
-			iscalestep = 0;
-		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////

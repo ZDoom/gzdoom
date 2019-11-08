@@ -170,7 +170,7 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
-	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
+	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT, bool flipx)
 	{
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - viewport->CenterX);
 		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - viewport->CenterX);
@@ -206,39 +206,45 @@ namespace swrenderer
 				invZ += zGradient;
 			}
 		}
+
+		if (flipx)
+		{
+			int right = (int)walxrepeat - 1;
+			for (int i = x1; i < x2; i++)
+			{
+				UPos[i] = right - UPos[i];
+			}
+		}
 	}
 
-	void ProjectedWallTexcoords::ProjectPos(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT)
+	/////////////////////////////////////////////////////////////////////////
+
+	void DrawSegmentWallTexcoords::Set(RenderThread* thread, const ProjectedWallTexcoords& texcoords, int x1, int x2, fixed_t xoffset, double yscale)
 	{
-		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - viewport->CenterX);
-		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - viewport->CenterX);
-		float uGradient = WallT.UoverZstep;
-		float zGradient = WallT.InvZstep;
-		float xrepeat = (float)fabs(walxrepeat);
+		UPos = thread->FrameMemory->AllocMemory<fixed_t>(x2 - x1) - x1;
+		VStep = thread->FrameMemory->AllocMemory<float>(x2 - x1) - x1;
 
-		if (walxrepeat < 0.0f)
+		for (int i = x1; i < x2; i++)
 		{
-			for (int x = x1; x < x2; x++)
-			{
-				float u = uOverZ / invZ * xrepeat - xrepeat;
+			UPos[i] = texcoords.UPos[i] + xoffset;
+			VStep[i] = texcoords.VStep[i];
+		}
 
-				UPos[x] = (fixed_t)(u * FRACUNIT);
+		double istart = VStep[x1] * yscale;
+		double iend = VStep[x2 - 1] * yscale;
 
-				uOverZ += uGradient;
-				invZ += zGradient;
-			}
+		istart = 1 / istart;
+		iend = 1 / iend;
+
+		this->yscale = (float)yscale;
+		iscale = (float)istart;
+		if (x2 - x1 > 1)
+		{
+			iscalestep = float((iend - istart) / (x2 - x1 - 1));
 		}
 		else
 		{
-			for (int x = x1; x < x2; x++)
-			{
-				float u = uOverZ / invZ * xrepeat;
-
-				UPos[x] = (fixed_t)(u * FRACUNIT);
-
-				uOverZ += uGradient;
-				invZ += zGradient;
-			}
+			iscalestep = 0;
 		}
 	}
 

@@ -418,10 +418,6 @@ namespace swrenderer
 					(mFloorClipped != ProjectedWallCull::OutsideAbove || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 					(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
 				{
-					float *swal;
-					fixed_t *lwal;
-					int i;
-
 					maskedtexture = true;
 
 					// kg3D - backup for mid and fake walls
@@ -429,16 +425,12 @@ namespace swrenderer
 					memcpy(draw_segment->bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 
 					draw_segment->bFogBoundary = IsFogBoundary(mFrontSector, mBackSector);
-					if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls())
+					bool is_translucent = sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls();
+					if (is_translucent)
 					{
 						if (sidedef->GetTexture(side_t::mid).isValid())
 							draw_segment->SetHas3DFloorMidTexture();
 
-						draw_segment->maskedtexturecol = Thread->FrameMemory->AllocMemory<fixed_t>(stop - start);
-						draw_segment->swall = Thread->FrameMemory->AllocMemory<float>(stop - start);
-
-						lwal = draw_segment->maskedtexturecol;
-						swal = draw_segment->swall;
 						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 						FSoftwareTexture *pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
 						double yscale = (pic ? pic->GetScale().Y : 1.0) * sidedef->GetTextureYScale(side_t::mid);
@@ -449,40 +441,13 @@ namespace swrenderer
 							xoffset = xs_RoundToInt(xoffset * lwallscale);
 						}
 
-						for (i = start; i < stop; i++)
-						{
-							*lwal++ = walltexcoords.UPos[i] + xoffset;
-							*swal++ = walltexcoords.VStep[i];
-						}
-
-						double istart = draw_segment->swall[0] * yscale;
-						double iend = *(swal - 1) * yscale;
-#if 0
-						///This was for avoiding overflow when using fixed point. It might not be needed anymore.
-						const double mini = 3 / 65536.0;
-						if (istart < mini && istart >= 0) istart = mini;
-						if (istart > -mini && istart < 0) istart = -mini;
-						if (iend < mini && iend >= 0) iend = mini;
-						if (iend > -mini && iend < 0) iend = -mini;
-#endif
-						istart = 1 / istart;
-						iend = 1 / iend;
-						draw_segment->yscale = (float)yscale;
-						draw_segment->iscale = (float)istart;
-						if (stop - start > 1)
-						{
-							draw_segment->iscalestep = float((iend - istart) / (stop - start - 1));
-						}
-						else
-						{
-							draw_segment->iscalestep = 0;
-						}
+						draw_segment->texcoords.Set(Thread, walltexcoords, start, stop, xoffset, yscale);
 					}
 
 					draw_segment->light = mLight.GetLightPos(start);
 					draw_segment->lightstep = mLight.GetLightStep();
 
-					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
+					if (draw_segment->bFogBoundary || is_translucent)
 					{
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}
@@ -1118,7 +1083,7 @@ namespace swrenderer
 		double yscale = rw_pic->GetScale().Y * mTopPart.TextureScaleV;
 		if (xscale != lwallscale)
 		{
-			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 			lwallscale = xscale;
 		}
 		fixed_t offset;
@@ -1136,7 +1101,7 @@ namespace swrenderer
 		}
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, offset, mLight, GetLightList());
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -1149,7 +1114,7 @@ namespace swrenderer
 		double yscale = rw_pic->GetScale().Y * mMiddlePart.TextureScaleV;
 		if (xscale != lwallscale)
 		{
-			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 			lwallscale = xscale;
 		}
 		fixed_t offset;
@@ -1167,7 +1132,7 @@ namespace swrenderer
 		}
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -1181,7 +1146,7 @@ namespace swrenderer
 		double yscale = rw_pic->GetScale().Y * mBottomPart.TextureScaleV;
 		if (xscale != lwallscale)
 		{
-			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+			walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
 			lwallscale = xscale;
 		}
 		fixed_t offset;
@@ -1199,7 +1164,7 @@ namespace swrenderer
 		}
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
 	}
 
 	FLightNode *SWRenderLine::GetLightList()

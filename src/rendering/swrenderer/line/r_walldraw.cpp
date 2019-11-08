@@ -54,7 +54,7 @@
 
 namespace swrenderer
 {
-	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
+	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal)
 	{
 		if (rw_pic == nullptr)
 			return;
@@ -410,7 +410,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
+	void RenderWallPart::ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal)
 	{
 		ProjectedWallLine most1, most2, most3;
 		const short *up;
@@ -445,7 +445,7 @@ namespace swrenderer
 		ProcessNormalWall(up, dwal, texturemid, swal, lwal);
 	}
 
-	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
+	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal)
 	{
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
@@ -469,7 +469,7 @@ namespace swrenderer
 	//
 	//=============================================================================
 
-	void RenderWallPart::ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal, double top, double bot)
+	void RenderWallPart::ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal, double top, double bot)
 	{
 		ProjectedWallLine most1, most2, most3;
 		double texheight = rw_pic->GetHeight();
@@ -530,7 +530,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, float *swall, fixed_t *lwall, double yscale, double top, double bottom, bool mask, bool additive, fixed_t alpha, fixed_t xoffset, const ProjectedWallLight &light, FLightNode *light_list)
+	void RenderWallPart::Render(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, double texturemid, const ProjectedWallTexcoords& texcoords, double yscale, double top, double bottom, bool mask, bool additive, fixed_t alpha, fixed_t xoffset, const ProjectedWallLight &light, FLightNode *light_list)
 	{
 		this->x1 = x1;
 		this->x2 = x2;
@@ -550,11 +550,39 @@ namespace swrenderer
 
 		if (rw_pic->GetHeight() != 1 << rw_pic->GetHeightBits())
 		{
-			ProcessWallNP2(walltop, wallbottom, texturemid, swall, lwall, top, bottom);
+			ProcessWallNP2(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos, top, bottom);
 		}
 		else
 		{
-			ProcessWall(walltop, wallbottom, texturemid, swall, lwall);
+			ProcessWall(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos);
+		}
+	}
+
+	void RenderWallPart::Render(sector_t* frontsector, seg_t* curline, const FWallCoords& WallC, FSoftwareTexture* pic, int x1, int x2, const short* walltop, const short* wallbottom, double texturemid, const DrawSegmentWallTexcoords& texcoords, double yscale, double top, double bottom, bool mask, bool additive, fixed_t alpha, fixed_t xoffset, const ProjectedWallLight& light, FLightNode* light_list)
+	{
+		this->x1 = x1;
+		this->x2 = x2;
+		this->frontsector = frontsector;
+		this->curline = curline;
+		this->WallC = WallC;
+		this->yrepeat = yscale;
+		this->mLight = light;
+		this->xoffset = xoffset;
+		this->light_list = light_list;
+		this->rw_pic = pic;
+		this->mask = mask;
+		this->additive = additive;
+		this->alpha = alpha;
+
+		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
+
+		if (rw_pic->GetHeight() != 1 << rw_pic->GetHeightBits())
+		{
+			ProcessWallNP2(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos, top, bottom);
+		}
+		else
+		{
+			ProcessWall(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos);
 		}
 	}
 

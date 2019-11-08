@@ -115,7 +115,7 @@ namespace swrenderer
 			RenderFogBoundary renderfog;
 			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight);
 
-			if (ds->maskedtexturecol == nullptr)
+			if (!ds->texcoords)
 				renderwall = false;
 		}
 		else if ((ds->Has3DFloorWalls() && !ds->Has3DFloorMidTexture()) || !visible)
@@ -156,11 +156,7 @@ namespace swrenderer
 		const short *mfloorclip = ds->sprbottomclip - ds->x1;
 		const short *mceilingclip = ds->sprtopclip - ds->x1;
 
-		float *MaskedSWall = ds->swall - ds->x1;
-		float MaskedScaleY = ds->yscale;
-		fixed_t *maskedtexturecol = ds->maskedtexturecol - ds->x1;
-		double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-		float rw_scalestep = ds->iscalestep;
+		float MaskedScaleY = ds->texcoords.yscale;
 
 		// find positioning
 		double texheight = tex->GetScaledHeightDouble();
@@ -311,19 +307,12 @@ namespace swrenderer
 				for (int x = x1; x < x2; ++x)
 				{
 					if (needslight)
+					{
 						columndrawerargs.SetLight(lightpos, mLight.GetLightLevel(), mLight.GetFoggy(), Thread->Viewport.get());
+						lightpos += mLight.GetLightStep();
+					}
 
-					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
-					double sprtopscreen;
-					if (sprflipvert)
-						sprtopscreen = viewport->CenterY + texturemid * spryscale;
-					else
-						sprtopscreen = viewport->CenterY - texturemid * spryscale;
-
-					columndrawerargs.DrawMaskedColumn(Thread, x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, renderstyle);
-
-					lightpos += mLight.GetLightStep();
-					spryscale += rw_scalestep;
+					columndrawerargs.DrawMaskedColumn(Thread, x, tex, ds->texcoords, texturemid, MaskedScaleY, sprflipvert, mfloorclip, mceilingclip, renderstyle);
 				}
 			}
 		}
@@ -390,7 +379,7 @@ namespace swrenderer
 			bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 			RenderWallPart renderWallpart(Thread);
-			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, additive, alpha, rw_offset, mLight, nullptr);
+			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, ds->texcoords, ds->texcoords.yscale, top, bot, true, additive, alpha, rw_offset, mLight, nullptr);
 		}
 
 		return false;
@@ -411,9 +400,6 @@ namespace swrenderer
 
 		const short *mfloorclip = ds->sprbottomclip - ds->x1;
 		const short *mceilingclip = ds->sprtopclip - ds->x1;
-
-		//double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-		float *MaskedSWall = ds->swall - ds->x1;
 
 		// find positioning
 		side_t *scaledside;
@@ -478,13 +464,13 @@ namespace swrenderer
 		}
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.ProjectPos(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->WallC.sx1, ds->WallC.sx2, WallT);
+		walltexcoords.Project(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->WallC.sx1, ds->WallC.sx2, WallT);
 
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, rw_offset, mLight, nullptr);
+		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, walltexcoords, yscale, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, rw_offset, mLight, nullptr);
 
 		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, mLight, wallupper.ScreenY, walllower.ScreenY, true);
 	}

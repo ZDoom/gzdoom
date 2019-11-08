@@ -29,18 +29,16 @@ namespace swrenderer
 	{
 		seg_t *curline;
 		float light, lightstep;
-		float iscale, iscalestep;
 		short x1, x2; // Same as sx1 and sx2, but clipped to the drawseg
 		FWallCoords WallC;
-		float yscale;
 		uint8_t silhouette = 0; // 0=none, 1=bottom, 2=top, 3=both
 		bool bFogBoundary = false;
+
+		DrawSegmentWallTexcoords texcoords;
 
 		// Pointers to lists for sprite clipping, all three adjusted so [x1] is first value.
 		short *sprtopclip = nullptr;
 		short *sprbottomclip = nullptr;
-		fixed_t *maskedtexturecol = nullptr;
-		float *swall = nullptr;
 		short *bkup = nullptr; // sprtopclip backup, for mid and fake textures
 		bool sprclipped = false; // True if draw segment was used for clipping sprites
 		

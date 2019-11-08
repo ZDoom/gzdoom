@@ -242,18 +242,7 @@ namespace swrenderer
 		}
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), WallSpriteTile->GetWidth(), x1, x2, WallT);
-
-		if (flipx)
-		{
-			int i;
-			int right = (WallSpriteTile->GetWidth() << FRACBITS) - 1;
-
-			for (i = x1; i < x2; i++)
-			{
-				walltexcoords.UPos[i] = right - walltexcoords.UPos[i];
-			}
-		}
+		walltexcoords.Project(thread->Viewport.get(), WallSpriteTile->GetWidth(), x1, x2, WallT, flipx);
 
 		// Prepare lighting
 		usecolormap = light.GetBaseColormap();
@@ -302,7 +291,7 @@ namespace swrenderer
 					{ // calculate lighting
 						drawerargs.SetLight(lightpos, light.GetLightLevel(), light.GetFoggy(), thread->Viewport.get());
 					}
-					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
+					drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
 					lightpos += light.GetLightStep();
 					x++;
 				}
@@ -314,20 +303,5 @@ namespace swrenderer
 			mceilingclip = thread->OpaquePass->floorclip;
 			mfloorclip = wallbottom;
 		} while (needrepeat--);
-	}
-
-	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
-	{
-		auto viewport = thread->Viewport.get();
-		
-		float iscale = walltexcoords.VStep[x] * maskedScaleY;
-		double spryscale = 1 / iscale;
-		double sprtopscreen;
-		if (sprflipvert)
-			sprtopscreen = viewport->CenterY + texturemid * spryscale;
-		else
-			sprtopscreen = viewport->CenterY - texturemid * spryscale;
-
-		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
 	}
 }

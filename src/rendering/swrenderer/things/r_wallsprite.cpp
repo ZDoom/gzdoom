@@ -175,19 +175,10 @@ namespace swrenderer
 		WallT.InitFromWallCoords(thread, &spr->wallc);
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), spr->pic->GetWidth() << FRACBITS, x1, x2, WallT);
+		walltexcoords.Project(thread->Viewport.get(), spr->pic->GetWidth(), x1, x2, WallT, spr->renderflags & RF_XFLIP);
 
 		iyscale = 1 / spr->yscale;
 		double texturemid = (spr->gzt - thread->Viewport->viewpoint.Pos.Z) * iyscale;
-		if (spr->renderflags & RF_XFLIP)
-		{
-			int right = (spr->pic->GetWidth() << FRACBITS) - 1;
-
-			for (int i = x1; i < x2; i++)
-			{
-				walltexcoords.UPos[i] = right - walltexcoords.UPos[i];
-			}
-		}
 
 		// Prepare lighting
 
@@ -238,24 +229,9 @@ namespace swrenderer
 				drawerargs.SetLight(light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
 			}
 			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
-				DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
+				drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
 			light += lightstep;
 			x++;
 		}
-	}
-
-	void RenderWallSprite::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
-	{
-		auto viewport = thread->Viewport.get();
-		
-		float iscale = walltexcoords.VStep[x] * maskedScaleY;
-		double spryscale = 1 / iscale;
-		double sprtopscreen;
-		if (sprflipvert)
-			sprtopscreen = viewport->CenterY + texturemid * spryscale;
-		else
-			sprtopscreen = viewport->CenterY - texturemid * spryscale;
-
-		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
 	}
 }

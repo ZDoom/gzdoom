@@ -214,8 +214,6 @@ namespace swrenderer
 			draw_segment->silhouette = SIL_BOTH;
 			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
 			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
-			draw_segment->maskedtexturecol = nullptr;
-			draw_segment->swall = nullptr;
 			draw_segment->bFogBoundary = false;
 			draw_segment->curline = nullptr;
 			memcpy(draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));

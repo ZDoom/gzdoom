@@ -156,7 +156,7 @@ namespace swrenderer
 			// [ZZ] the same as above
 			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
-			if (ds->maskedtexturecol || ds->bFogBoundary)
+			if (ds->texcoords || ds->bFogBoundary)
 			{
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2, clip3DFloor);

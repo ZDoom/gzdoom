@@ -43,6 +43,36 @@ namespace swrenderer
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 	}
 
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread* thread, int x, FSoftwareTexture* WallSpriteTile, const ProjectedWallTexcoords& walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short* mfloorclip, const short* mceilingclip, FRenderStyle style)
+	{
+		auto viewport = thread->Viewport.get();
+
+		float iscale = walltexcoords.VStep[x] * maskedScaleY;
+		double spryscale = 1 / iscale;
+		double sprtopscreen;
+		if (sprflipvert)
+			sprtopscreen = viewport->CenterY + texturemid * spryscale;
+		else
+			sprtopscreen = viewport->CenterY - texturemid * spryscale;
+
+		DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
+	}
+
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread* thread, int x, FSoftwareTexture* WallSpriteTile, const DrawSegmentWallTexcoords& walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short* mfloorclip, const short* mceilingclip, FRenderStyle style)
+	{
+		auto viewport = thread->Viewport.get();
+
+		float iscale = walltexcoords.VStep[x] * maskedScaleY;
+		double spryscale = 1 / iscale;
+		double sprtopscreen;
+		if (sprflipvert)
+			sprtopscreen = viewport->CenterY + texturemid * spryscale;
+		else
+			sprtopscreen = viewport->CenterY - texturemid * spryscale;
+
+		DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
+	}
+
 	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked)
 	{
 		if (x < thread->X1 || x >= thread->X2)

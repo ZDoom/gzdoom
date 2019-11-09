@@ -427,7 +427,9 @@ namespace swrenderer
 							xoffset = xs_RoundToInt(xoffset * lwallscale);
 						}
 
-						draw_segment->texcoords.Set(Thread, walltexcoords, start, stop, xoffset, yscale);
+						draw_segment->texcoords = walltexcoords;
+						draw_segment->texcoords.xoffset = xoffset;
+						draw_segment->texcoords.yscale = yscale;
 					}
 
 					draw_segment->light = mLight.GetLightPos(start);

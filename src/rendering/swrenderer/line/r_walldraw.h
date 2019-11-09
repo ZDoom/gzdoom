@@ -66,34 +66,13 @@ namespace swrenderer
 			const ProjectedWallLight &light,
 			FLightNode *light_list);
 
-		void Render(
-			sector_t* frontsector,
-			seg_t* curline,
-			const FWallCoords& WallC,
-			FSoftwareTexture* rw_pic,
-			int x1,
-			int x2,
-			const short* walltop,
-			const short* wallbottom,
-			double texturemid,
-			const DrawSegmentWallTexcoords& texcoords,
-			double yscale,
-			double top,
-			double bottom,
-			bool mask,
-			bool additive,
-			fixed_t alpha,
-			fixed_t xoffset,
-			const ProjectedWallLight& light,
-			FLightNode* light_list);
-
 		RenderThread *Thread = nullptr;
 
 	private:
-		void ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal, double top, double bot);
-		void ProcessWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal);
-		void ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal);
-		void ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal);
+		void ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords, double top, double bot);
+		void ProcessWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords);
+		void ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords);
+		void ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords);
 		void SetLights(WallDrawerArgs &drawerargs, int x, int y1);
 
 		int x1 = 0;

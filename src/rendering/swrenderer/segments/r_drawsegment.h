@@ -34,7 +34,7 @@ namespace swrenderer
 		uint8_t silhouette = 0; // 0=none, 1=bottom, 2=top, 3=both
 		bool bFogBoundary = false;
 
-		DrawSegmentWallTexcoords texcoords;
+		ProjectedWallTexcoords texcoords;
 
 		// Pointers to lists for sprite clipping, all three adjusted so [x1] is first value.
 		short *sprtopclip = nullptr;

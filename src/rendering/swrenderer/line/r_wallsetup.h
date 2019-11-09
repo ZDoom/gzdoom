@@ -63,27 +63,23 @@ namespace swrenderer
 	public:
 		void Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT, bool flipx = false);
 
-	private:
-		float VStep[MAXWIDTH]; // swall
-		fixed_t UPos[MAXWIDTH]; // lwall
+		float VStep(int x) const;
+		fixed_t UPos(int x) const;
 
-		friend class DrawSegmentWallTexcoords;
-		friend class RenderWallPart;
-		friend class SpriteDrawerArgs;
-	};
+		float yscale = 1.0f;
+		fixed_t xoffset = 0;
 
-	class DrawSegmentWallTexcoords
-	{
-	public:
-		void Set(RenderThread *thread, const ProjectedWallTexcoords& texcoords, int x1, int x2, fixed_t xoffset, double yscale);
-
-		float yscale;
-
-		explicit operator bool() const { return UPos; }
+		explicit operator bool() const { return valid; }
 
 	private:
-		float* VStep = nullptr; // swall
-		fixed_t* UPos = nullptr; // maskedtexturecol
+		bool valid = false;
+		double CenterX;
+		double WallTMapScale2;
+		double walxrepeat;
+		int x1;
+		int x2;
+		FWallTmapVals WallT;
+		bool flipx;
 
 		friend class RenderWallPart;
 		friend class SpriteDrawerArgs;

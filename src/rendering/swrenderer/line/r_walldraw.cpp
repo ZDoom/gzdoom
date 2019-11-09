@@ -54,7 +54,7 @@
 
 namespace swrenderer
 {
-	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal)
+	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords)
 	{
 		if (rw_pic == nullptr)
 			return;
@@ -114,12 +114,12 @@ namespace swrenderer
 				if (!fixed)
 					drawerargs.SetLight(curlight, mLight.GetLightLevel(), mLight.GetFoggy(), viewport);
 
-				if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+				if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(texcoords.UPos(x + 1)) - FIXED2DBL(texcoords.UPos(x)));
 
-				fixed_t xxoffset = (lwal[x] + xoffset + FLOAT2FIXED(xmagnitude * 0.5)) * rw_pic->GetPhysicalScale();
+				fixed_t xxoffset = (texcoords.UPos(x) + xoffset + FLOAT2FIXED(xmagnitude * 0.5)) * rw_pic->GetPhysicalScale();
 
 				// Normalize to 0-1 range:
-				double uv_stepd = swal[x] * yrepeat;
+				double uv_stepd = texcoords.VStep(x) * yrepeat;
 				double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / rw_pic->GetHeight();
 				v = v - floor(v);
 				double v_step = uv_stepd / rw_pic->GetHeight();
@@ -227,18 +227,18 @@ namespace swrenderer
 				if (!fixed)
 					drawerargs.SetLight(curlight, mLight.GetLightLevel(), mLight.GetFoggy(), viewport);
 
-				if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(lwal[x + 1]) - FIXED2DBL(lwal[x]));
+				if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(texcoords.UPos(x + 1)) - FIXED2DBL(texcoords.UPos(x)));
 
 				uint32_t uv_pos;
 				uint32_t uv_step;
 
-				fixed_t xxoffset = (lwal[x] + xoffset + FLOAT2FIXED(xmagnitude * 0.5)) * rw_pic->GetPhysicalScale();
+				fixed_t xxoffset = (texcoords.UPos(x) + xoffset + FLOAT2FIXED(xmagnitude * 0.5)) * rw_pic->GetPhysicalScale();
 
 				if (uv_fracbits != 32)
 				{
 					// Find start uv in [0-base_height[ range.
 					// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
-					double uv_stepd = swal[x] * yrepeat;
+					double uv_stepd = texcoords.VStep(x) * yrepeat;
 					double v = (texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / rw_pic->GetHeight();
 					v = v - floor(v);
 					v *= height;
@@ -410,7 +410,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal)
+	void RenderWallPart::ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords)
 	{
 		ProjectedWallLine most1, most2, most3;
 		const short *up;
@@ -434,7 +434,7 @@ namespace swrenderer
 				{
 					down[j] = clamp(most3.ScreenY[j], up[j], dwal[j]);
 				}
-				ProcessNormalWall(up, down, texturemid, swal, lwal);
+				ProcessNormalWall(up, down, texturemid, texcoords);
 				up = down;
 				down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 			}
@@ -442,19 +442,19 @@ namespace swrenderer
 			mLight.SetColormap(frontsector, curline, &frontsector->e->XFloor.lightlist[i]);
 		}
 
-		ProcessNormalWall(up, dwal, texturemid, swal, lwal);
+		ProcessNormalWall(up, dwal, texturemid, texcoords);
 	}
 
-	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal)
+	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords)
 	{
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
 		{
-			ProcessNormalWall(uwal, dwal, texturemid, swal, lwal);
+			ProcessNormalWall(uwal, dwal, texturemid, texcoords);
 		}
 		else
 		{
-			ProcessStripedWall(uwal, dwal, texturemid, swal, lwal);
+			ProcessStripedWall(uwal, dwal, texturemid, texcoords);
 		}
 	}
 
@@ -469,7 +469,7 @@ namespace swrenderer
 	//
 	//=============================================================================
 
-	void RenderWallPart::ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, const float *swal, const fixed_t *lwal, double top, double bot)
+	void RenderWallPart::ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords, double top, double bot)
 	{
 		ProjectedWallLine most1, most2, most3;
 		double texheight = rw_pic->GetHeight();
@@ -495,14 +495,14 @@ namespace swrenderer
 					{
 						down[j] = clamp(most3.ScreenY[j], up[j], dwal[j]);
 					}
-					ProcessWall(up, down, texturemid, swal, lwal);
+					ProcessWall(up, down, texturemid, texcoords);
 					up = down;
 					down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 				}
 				partition -= scaledtexheight;
 				texturemid -= texheight;
 			}
-			ProcessWall(up, dwal, texturemid, swal, lwal);
+			ProcessWall(up, dwal, texturemid, texcoords);
 		}
 		else
 		{ // upside down: draw strips from bottom to top
@@ -519,14 +519,14 @@ namespace swrenderer
 					{
 						up[j] = clamp(most3.ScreenY[j], uwal[j], down[j]);
 					}
-					ProcessWall(up, down, texturemid, swal, lwal);
+					ProcessWall(up, down, texturemid, texcoords);
 					down = up;
 					up = (up == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 				}
 				partition -= scaledtexheight;
 				texturemid -= texheight;
 			}
-			ProcessWall(uwal, down, texturemid, swal, lwal);
+			ProcessWall(uwal, down, texturemid, texcoords);
 		}
 	}
 
@@ -550,39 +550,11 @@ namespace swrenderer
 
 		if (rw_pic->GetHeight() != 1 << rw_pic->GetHeightBits())
 		{
-			ProcessWallNP2(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos, top, bottom);
+			ProcessWallNP2(walltop, wallbottom, texturemid, texcoords, top, bottom);
 		}
 		else
 		{
-			ProcessWall(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos);
-		}
-	}
-
-	void RenderWallPart::Render(sector_t* frontsector, seg_t* curline, const FWallCoords& WallC, FSoftwareTexture* pic, int x1, int x2, const short* walltop, const short* wallbottom, double texturemid, const DrawSegmentWallTexcoords& texcoords, double yscale, double top, double bottom, bool mask, bool additive, fixed_t alpha, fixed_t xoffset, const ProjectedWallLight& light, FLightNode* light_list)
-	{
-		this->x1 = x1;
-		this->x2 = x2;
-		this->frontsector = frontsector;
-		this->curline = curline;
-		this->WallC = WallC;
-		this->yrepeat = yscale;
-		this->mLight = light;
-		this->xoffset = xoffset;
-		this->light_list = light_list;
-		this->rw_pic = pic;
-		this->mask = mask;
-		this->additive = additive;
-		this->alpha = alpha;
-
-		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
-
-		if (rw_pic->GetHeight() != 1 << rw_pic->GetHeightBits())
-		{
-			ProcessWallNP2(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos, top, bottom);
-		}
-		else
-		{
-			ProcessWall(walltop, wallbottom, texturemid, texcoords.VStep, texcoords.UPos);
+			ProcessWall(walltop, wallbottom, texturemid, texcoords);
 		}
 	}
 

@@ -86,6 +86,7 @@ static const FLOP FxFlops[] =
 	{ NAME_Round,	FLOP_ROUND,		[](double v) { return round(v);  } },
 };
 
+static bool AreCompatiblePointerTypes(PType* dest, PType* source, bool forcompare = false);
 
 //==========================================================================
 //
@@ -143,9 +144,12 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	// A prototype that defines fewer return types can be compatible with
 	// one that defines more if the shorter one matches the initial types
 	// for the longer one.
+	bool swapped = false;
+
 	if (ReturnProto->ReturnTypes.Size() < proto->ReturnTypes.Size())
 	{ // Make proto the shorter one to avoid code duplication below.
 		swapvalues(proto, ReturnProto);
+		swapped = true;
 	}
 	// If one prototype returns nothing, they both must.
 	if (proto->ReturnTypes.Size() == 0)
@@ -159,9 +163,13 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	{
 		for (unsigned i = 0; i < proto->ReturnTypes.Size(); i++)
 		{
-			if (ReturnProto->ReturnTypes[i] != proto->ReturnTypes[i])
+			PType* expected = ReturnProto->ReturnTypes[i];
+			PType* actual = proto->ReturnTypes[i];
+			if (swapped) swapvalues(expected, actual);
+
+			if (expected != actual && !AreCompatiblePointerTypes(expected, actual))
 			{ // Incompatible
-				Printf("Return type %s mismatch with %s\n", ReturnProto->ReturnTypes[i]->DescriptiveName(), proto->ReturnTypes[i]->DescriptiveName());
+				Printf("Return type %s mismatch with %s\n", expected->DescriptiveName(), actual->DescriptiveName());
 				fail = true;
 				break;
 			}
@@ -274,7 +282,7 @@ static PFunction *FindBuiltinFunction(FName funcname)
 //
 //==========================================================================
 
-static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare = false)
+static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 {
 	if (dest->isPointer() && source->isPointer())
 	{

@@ -52,11 +52,8 @@ namespace swrenderer
 
 	struct WallPartTexture
 	{
-		fixed_t TextureOffsetU;
-		double TextureMid;
-		double TextureScaleU;
-		double TextureScaleV;
 		FSoftwareTexture *Texture;
+		ProjectedWallTexcoords texcoords;
 	};
 
 	class SWRenderLine : VisibleSegmentRenderer

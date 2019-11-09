@@ -109,21 +109,7 @@ namespace swrenderer
 		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos))
 			return;
 
-		vertex_t *v1 = line->linedef->v1;
-		vertex_t *v2 = line->linedef->v2;
-
-		if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
-		{ // The seg is the entire wall.
-			WallT.InitFromWallCoords(Thread, &WallC);
-		}
-		else
-		{ // The seg is only part of the wall.
-			if (line->linedef->sidedef[0] != line->sidedef)
-			{
-				swapvalues(v1, v2);
-			}
-			WallT.InitFromLine(Thread, v1->fPos() - Thread->Viewport->viewpoint.Pos, v2->fPos() - Thread->Viewport->viewpoint.Pos);
-		}
+		WallT.InitFromLine(Thread, line);
 
 		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
 		mFrontFloorZ1 = mFrontSector->floorplane.ZatPoint(line->v1);
@@ -1252,49 +1238,5 @@ namespace swrenderer
 		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
 
 		return sx2 <= sx1;
-	}
-
-	/////////////////////////////////////////////////////////////////////////
-
-	void FWallTmapVals::InitFromWallCoords(RenderThread *thread, const FWallCoords *wallc)
-	{
-		const FVector2 *left = &wallc->tleft;
-		const FVector2 *right = &wallc->tright;
-		
-		RenderPortal *renderportal = thread->Portal.get();
-
-		if (renderportal->MirrorFlags & RF_XFLIP)
-		{
-			swapvalues(left, right);
-		}
-		UoverZorg = left->X * thread->Viewport->CenterX;
-		UoverZstep = -left->Y;
-		InvZorg = (left->X - right->X) * thread->Viewport->CenterX;
-		InvZstep = right->Y - left->Y;
-	}
-
-	void FWallTmapVals::InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right)
-	{
-		// Coordinates should have already had viewx,viewy subtracted
-
-		auto viewport = thread->Viewport.get();
-
-		double fullx1 = left.X * viewport->viewpoint.Sin - left.Y * viewport->viewpoint.Cos;
-		double fullx2 = right.X * viewport->viewpoint.Sin - right.Y * viewport->viewpoint.Cos;
-		double fully1 = left.X * viewport->viewpoint.TanCos + left.Y * viewport->viewpoint.TanSin;
-		double fully2 = right.X * viewport->viewpoint.TanCos + right.Y * viewport->viewpoint.TanSin;
-		
-		RenderPortal *renderportal = thread->Portal.get();
-
-		if (renderportal->MirrorFlags & RF_XFLIP)
-		{
-			fullx1 = -fullx1;
-			fullx2 = -fullx2;
-		}
-
-		UoverZorg = float(fullx1 * viewport->CenterX);
-		UoverZstep = float(-fully1);
-		InvZorg = float((fullx1 - fullx2) * viewport->CenterX);
-		InvZstep = float(fully2 - fully1);
 	}
 }

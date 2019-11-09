@@ -170,6 +170,57 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
+	void FWallTmapVals::InitFromWallCoords(RenderThread* thread, const FWallCoords* wallc)
+	{
+		const FVector2* left = &wallc->tleft;
+		const FVector2* right = &wallc->tright;
+
+		if (thread->Portal->MirrorFlags & RF_XFLIP)
+		{
+			swapvalues(left, right);
+		}
+
+		UoverZorg = left->X * thread->Viewport->CenterX;
+		UoverZstep = -left->Y;
+		InvZorg = (left->X - right->X) * thread->Viewport->CenterX;
+		InvZstep = right->Y - left->Y;
+	}
+
+	void FWallTmapVals::InitFromLine(RenderThread* thread, seg_t* line)
+	{
+		auto viewport = thread->Viewport.get();
+		auto renderportal = thread->Portal.get();
+
+		vertex_t* v1 = line->linedef->v1;
+		vertex_t* v2 = line->linedef->v2;
+
+		if (line->linedef->sidedef[0] != line->sidedef)
+		{
+			swapvalues(v1, v2);
+		}
+
+		DVector2 left = v1->fPos() - viewport->viewpoint.Pos;
+		DVector2 right = v2->fPos() - viewport->viewpoint.Pos;
+
+		double viewspaceX1 = left.X * viewport->viewpoint.Sin - left.Y * viewport->viewpoint.Cos;
+		double viewspaceX2 = right.X * viewport->viewpoint.Sin - right.Y * viewport->viewpoint.Cos;
+		double viewspaceY1 = left.X * viewport->viewpoint.TanCos + left.Y * viewport->viewpoint.TanSin;
+		double viewspaceY2 = right.X * viewport->viewpoint.TanCos + right.Y * viewport->viewpoint.TanSin;
+
+		if (renderportal->MirrorFlags & RF_XFLIP)
+		{
+			viewspaceX1 = -viewspaceX1;
+			viewspaceX2 = -viewspaceX2;
+		}
+
+		UoverZorg = float(viewspaceX1 * viewport->CenterX);
+		UoverZstep = float(-viewspaceY1);
+		InvZorg = float((viewspaceX1 - viewspaceX2) * viewport->CenterX);
+		InvZstep = float(viewspaceY2 - viewspaceY1);
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
 	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT, bool flipx)
 	{
 		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - viewport->CenterX);

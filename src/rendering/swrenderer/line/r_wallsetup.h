@@ -28,7 +28,6 @@
 namespace swrenderer
 {
 	struct FWallCoords;
-	struct FWallTmapVals;
 
 	enum class ProjectedWallCull
 	{
@@ -45,6 +44,18 @@ namespace swrenderer
 		ProjectedWallCull Project(RenderViewport *viewport, double z1, double z2, const FWallCoords *wallc);
 		ProjectedWallCull Project(RenderViewport *viewport, const secplane_t &plane, const FWallCoords *wallc, seg_t *line, bool xflip);
 		ProjectedWallCull Project(RenderViewport *viewport, double z, const FWallCoords *wallc);
+	};
+
+	struct FWallTmapVals
+	{
+		void InitFromWallCoords(RenderThread* thread, const FWallCoords* wallc);
+		void InitFromLine(RenderThread* thread, seg_t* line);
+
+	private:
+		float UoverZorg, UoverZstep;
+		float InvZorg, InvZstep;
+
+		friend class ProjectedWallTexcoords;
 	};
 
 	class ProjectedWallTexcoords

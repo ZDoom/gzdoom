@@ -50,15 +50,6 @@ namespace swrenderer
 		bool Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close);
 	};
 
-	struct FWallTmapVals
-	{
-		float		UoverZorg, UoverZstep;
-		float		InvZorg, InvZstep;
-
-		void InitFromWallCoords(RenderThread *thread, const FWallCoords *wallc);
-		void InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right);
-	};
-
 	struct WallPartTexture
 	{
 		fixed_t TextureOffsetU;

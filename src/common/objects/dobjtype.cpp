@@ -51,6 +51,7 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+bool AreCompatiblePointerTypes(PType* dest, PType* source, bool forcompare = false);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -665,7 +666,7 @@ PClass *PClass::FindClassTentative(FName name)
 //
 //==========================================================================
 
-int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc)
+int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc, bool exactReturnType)
 {
 	auto proto = variant->Proto;
 	for (unsigned i = 0; i < Virtuals.Size(); i++)
@@ -693,7 +694,10 @@ int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction 
 
 			for (unsigned a = 0; a < proto->ReturnTypes.Size(); a++)
 			{
-				if (proto->ReturnTypes[a] != vproto->ReturnTypes[a])
+				PType* expected = vproto->ReturnTypes[a];
+				PType* actual = proto->ReturnTypes[a];
+
+				if (expected != actual && (exactReturnType || !AreCompatiblePointerTypes(expected, actual)))
 				{
 					fail = true;
 					break;

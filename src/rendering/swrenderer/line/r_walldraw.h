@@ -54,25 +54,22 @@ namespace swrenderer
 			int x2,
 			const short *walltop,
 			const short *wallbottom,
-			double texturemid,
 			const ProjectedWallTexcoords &texcoords,
-			double yscale,
 			double top,
 			double bottom,
 			bool mask,
 			bool additive,
 			fixed_t alpha,
-			fixed_t xoffset,
 			const ProjectedWallLight &light,
 			FLightNode *light_list);
 
 		RenderThread *Thread = nullptr;
 
 	private:
-		void ProcessWallNP2(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords, double top, double bot);
-		void ProcessWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords);
-		void ProcessStripedWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords);
-		void ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, const ProjectedWallTexcoords& texcoords);
+		void ProcessWallNP2(const short *uwal, const short *dwal, ProjectedWallTexcoords texcoords, double top, double bot);
+		void ProcessWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
+		void ProcessStripedWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
+		void ProcessNormalWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void SetLights(WallDrawerArgs &drawerargs, int x, int y1);
 
 		int x1 = 0;
@@ -84,8 +81,6 @@ namespace swrenderer
 
 		ProjectedWallLight mLight;
 
-		double yrepeat = 0.0;
-		fixed_t xoffset = 0;
 		FLightNode *light_list = nullptr;
 		bool mask = false;
 		bool additive = false;

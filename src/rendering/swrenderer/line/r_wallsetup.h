@@ -68,6 +68,7 @@ namespace swrenderer
 
 		float yscale = 1.0f;
 		fixed_t xoffset = 0;
+		double texturemid = 0.0f;
 
 		explicit operator bool() const { return valid; }
 

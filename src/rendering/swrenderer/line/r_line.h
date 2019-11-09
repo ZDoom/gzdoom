@@ -125,8 +125,6 @@ namespace swrenderer
 
 		ProjectedWallLight mLight;
 
-		double lwallscale;
-
 		bool markfloor; // False if the back side is the same plane.
 		bool markceiling;
 		
@@ -141,7 +139,6 @@ namespace swrenderer
 		ProjectedWallLine wallbottom;
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;
-		ProjectedWallTexcoords walltexcoords;
 
 		sector_t tempsec; // killough 3/8/98: ceiling/water hack
 	};

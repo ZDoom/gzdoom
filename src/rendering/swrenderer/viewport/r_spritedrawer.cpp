@@ -43,17 +43,17 @@ namespace swrenderer
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread* thread, int x, FSoftwareTexture* WallSpriteTile, const ProjectedWallTexcoords& walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short* mfloorclip, const short* mceilingclip, FRenderStyle style)
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread* thread, int x, FSoftwareTexture* WallSpriteTile, const ProjectedWallTexcoords& walltexcoords, bool sprflipvert, const short* mfloorclip, const short* mceilingclip, FRenderStyle style)
 	{
 		auto viewport = thread->Viewport.get();
 
-		float iscale = walltexcoords.VStep(x) * maskedScaleY;
+		float iscale = walltexcoords.VStep(x) * walltexcoords.yscale;
 		double spryscale = 1 / iscale;
 		double sprtopscreen;
 		if (sprflipvert)
-			sprtopscreen = viewport->CenterY + texturemid * spryscale;
+			sprtopscreen = viewport->CenterY + walltexcoords.texturemid * spryscale;
 		else
-			sprtopscreen = viewport->CenterY - texturemid * spryscale;
+			sprtopscreen = viewport->CenterY - walltexcoords.texturemid * spryscale;
 
 		DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos(x), spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
 	}

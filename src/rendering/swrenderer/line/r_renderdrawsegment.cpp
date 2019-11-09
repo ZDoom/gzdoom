@@ -299,6 +299,10 @@ namespace swrenderer
 			auto cameraLight = CameraLight::Instance();
 			bool needslight = (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0);
 
+			ProjectedWallTexcoords texcoords = ds->texcoords;
+			texcoords.texturemid = texturemid;
+			texcoords.yscale = MaskedScaleY;
+
 			// draw the columns one at a time
 			if (visible)
 			{
@@ -312,7 +316,7 @@ namespace swrenderer
 						lightpos += mLight.GetLightStep();
 					}
 
-					columndrawerargs.DrawMaskedColumn(Thread, x, tex, ds->texcoords, texturemid, MaskedScaleY, sprflipvert, mfloorclip, mceilingclip, renderstyle);
+					columndrawerargs.DrawMaskedColumn(Thread, x, tex, ds->texcoords, sprflipvert, mfloorclip, mceilingclip, renderstyle);
 				}
 			}
 		}
@@ -369,7 +373,9 @@ namespace swrenderer
 				mfloorclip = walllower.ScreenY;
 			}
 
-			rw_offset = 0;
+			ProjectedWallTexcoords texcoords = ds->texcoords;
+			texcoords.texturemid = texturemid;
+
 			FSoftwareTexture *rw_pic = tex;
 
 			double top, bot;
@@ -379,7 +385,7 @@ namespace swrenderer
 			bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 			RenderWallPart renderWallpart(Thread);
-			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, ds->texcoords, ds->texcoords.yscale, top, bot, true, additive, alpha, rw_offset, mLight, nullptr);
+			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, mLight, nullptr);
 		}
 
 		return false;
@@ -424,7 +430,7 @@ namespace swrenderer
 
 		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
-		rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
+		fixed_t rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
 		if (rowoffset < 0)
 		{
 			rowoffset += rw_pic->GetHeight();
@@ -465,12 +471,15 @@ namespace swrenderer
 
 		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.Project(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->WallC.sx1, ds->WallC.sx2, WallT);
+		walltexcoords.texturemid = texturemid;
+		walltexcoords.yscale = yscale;
+		walltexcoords.xoffset = rw_offset;
 
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, walltexcoords, yscale, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, rw_offset, mLight, nullptr);
+		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, mLight, nullptr);
 
 		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, mLight, wallupper.ScreenY, walllower.ScreenY, true);
 	}

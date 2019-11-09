@@ -174,9 +174,6 @@ namespace swrenderer
 		FWallTmapVals WallT;
 		WallT.InitFromWallCoords(thread, &spr->wallc);
 
-		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), spr->pic->GetWidth(), x1, x2, WallT, spr->renderflags & RF_XFLIP);
-
 		iyscale = 1 / spr->yscale;
 		double texturemid = (spr->gzt - thread->Viewport->viewpoint.Pos.Z) * iyscale;
 
@@ -218,6 +215,11 @@ namespace swrenderer
 
 		int x = x1;
 
+		ProjectedWallTexcoords walltexcoords;
+		walltexcoords.Project(thread->Viewport.get(), spr->pic->GetWidth(), x1, x2, WallT, spr->renderflags & RF_XFLIP);
+		walltexcoords.yscale = maskedScaleY;
+		walltexcoords.texturemid = texturemid;
+
 		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
 		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
@@ -229,7 +231,7 @@ namespace swrenderer
 				drawerargs.SetLight(light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
 			}
 			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
-				drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
+				drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
 			light += lightstep;
 			x++;
 		}

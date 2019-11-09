@@ -422,6 +422,15 @@ namespace swrenderer
 						double yscale = (pic ? pic->GetScale().Y : 1.0) * sidedef->GetTextureYScale(side_t::mid);
 						fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
 
+						double lwallscale =
+							tex ? ((pic ? pic->GetScale().X : 1.0) * sidedef->GetTextureXScale(side_t::mid)) :
+							mTopPart.Texture ? (mTopPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::top)) :
+							mBottomPart.Texture ? (mBottomPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::bottom)) :
+							1.;
+
+						ProjectedWallTexcoords walltexcoords;
+						walltexcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
+
 						if (pic && pic->useWorldPanning(sidedef->GetLevel()))
 						{
 							xoffset = xs_RoundToInt(xoffset * lwallscale);
@@ -713,14 +722,6 @@ namespace swrenderer
 		// calculate light table
 		if (segtextured || (mBackSector && IsFogBoundary(mFrontSector, mBackSector)))
 		{
-			lwallscale =
-				ftex ? ((midtex? midtex->GetScale().X : 1.0) * sidedef->GetTextureXScale(side_t::mid)) :
-				mTopPart.Texture ? (mTopPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::top)) :
-				mBottomPart.Texture ? (mBottomPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::bottom)) :
-				1.;
-
-			walltexcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
-
 			mLight.SetLightLeft(Thread, WallC);
 		}
 	}
@@ -1069,27 +1070,28 @@ namespace swrenderer
 		auto rw_pic = mTopPart.Texture;
 		double xscale = rw_pic->GetScale().X * mTopPart.TextureScaleU;
 		double yscale = rw_pic->GetScale().Y * mTopPart.TextureScaleV;
-		if (xscale != lwallscale)
-		{
-			walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-			lwallscale = xscale;
-		}
-		fixed_t offset;
+
+		ProjectedWallTexcoords walltexcoords;
+		walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+
 		if (mTopPart.Texture->useWorldPanning(mLineSegment->GetLevel()))
 		{
-			offset = xs_RoundToInt(mTopPart.TextureOffsetU * xscale);
+			walltexcoords.xoffset = xs_RoundToInt(mTopPart.TextureOffsetU * xscale);
 		}
 		else
 		{
-			offset = mTopPart.TextureOffsetU;
+			walltexcoords.xoffset = mTopPart.TextureOffsetU;
 		}
 		if (xscale < 0)
 		{
-			offset = -offset;
+			walltexcoords.xoffset = -walltexcoords.xoffset;
 		}
 
+		walltexcoords.yscale = yscale;
+		walltexcoords.texturemid = mTopPart.TextureMid;
+
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, walltexcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, mLight, GetLightList());
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -1100,27 +1102,28 @@ namespace swrenderer
 		auto rw_pic = mMiddlePart.Texture;
 		double xscale = rw_pic->GetScale().X * mMiddlePart.TextureScaleU;
 		double yscale = rw_pic->GetScale().Y * mMiddlePart.TextureScaleV;
-		if (xscale != lwallscale)
-		{
-			walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-			lwallscale = xscale;
-		}
-		fixed_t offset;
+
+		ProjectedWallTexcoords walltexcoords;
+		walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+
 		if (mMiddlePart.Texture->useWorldPanning(mLineSegment->GetLevel()))
 		{
-			offset = xs_RoundToInt(mMiddlePart.TextureOffsetU * xscale);
+			walltexcoords.xoffset = xs_RoundToInt(mMiddlePart.TextureOffsetU * xscale);
 		}
 		else
 		{
-			offset = mMiddlePart.TextureOffsetU;
+			walltexcoords.xoffset = mMiddlePart.TextureOffsetU;
 		}
 		if (xscale < 0)
 		{
-			offset = -offset;
+			walltexcoords.xoffset = -walltexcoords.xoffset;
 		}
 
+		walltexcoords.yscale = yscale;
+		walltexcoords.texturemid = mMiddlePart.TextureMid;
+
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, walltexcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, mLight, GetLightList());
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -1132,27 +1135,28 @@ namespace swrenderer
 		auto rw_pic = mBottomPart.Texture;
 		double xscale = rw_pic->GetScale().X * mBottomPart.TextureScaleU;
 		double yscale = rw_pic->GetScale().Y * mBottomPart.TextureScaleV;
-		if (xscale != lwallscale)
-		{
-			walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-			lwallscale = xscale;
-		}
-		fixed_t offset;
+
+		ProjectedWallTexcoords walltexcoords;
+		walltexcoords.Project(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
+
 		if (mBottomPart.Texture->useWorldPanning(mLineSegment->GetLevel()))
 		{
-			offset = xs_RoundToInt(mBottomPart.TextureOffsetU * xscale);
+			walltexcoords.xoffset = xs_RoundToInt(mBottomPart.TextureOffsetU * xscale);
 		}
 		else
 		{
-			offset = mBottomPart.TextureOffsetU;
+			walltexcoords.xoffset = mBottomPart.TextureOffsetU;
 		}
 		if (xscale < 0)
 		{
-			offset = -offset;
+			walltexcoords.xoffset = -walltexcoords.xoffset;
 		}
 
+		walltexcoords.yscale = yscale;
+		walltexcoords.texturemid = mBottomPart.TextureMid;
+
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, walltexcoords, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, mLight, GetLightList());
 	}
 
 	FLightNode *SWRenderLine::GetLightList()

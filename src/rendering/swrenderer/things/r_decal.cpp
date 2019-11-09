@@ -241,9 +241,6 @@ namespace swrenderer
 			return;
 		}
 
-		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), WallSpriteTile->GetWidth(), x1, x2, WallT, flipx);
-
 		// Prepare lighting
 		usecolormap = light.GetBaseColormap();
 
@@ -271,6 +268,12 @@ namespace swrenderer
 		}
 
 		maskedScaleY = float(1 / yscale);
+
+		ProjectedWallTexcoords walltexcoords;
+		walltexcoords.Project(thread->Viewport.get(), WallSpriteTile->GetWidth(), x1, x2, WallT, flipx);
+		walltexcoords.yscale = maskedScaleY;
+		walltexcoords.texturemid = texturemid;
+
 		do
 		{
 			int x = x1;
@@ -291,7 +294,7 @@ namespace swrenderer
 					{ // calculate lighting
 						drawerargs.SetLight(lightpos, light.GetLightLevel(), light.GetFoggy(), thread->Viewport.get());
 					}
-					drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
+					drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
 					lightpos += light.GetLightStep();
 					x++;
 				}

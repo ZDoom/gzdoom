@@ -54,8 +54,6 @@ namespace swrenderer
 
 		ProjectedWallLight mLight;
 
-		fixed_t rw_offset = 0;
-
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;
 	};

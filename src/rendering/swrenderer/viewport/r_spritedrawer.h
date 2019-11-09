@@ -34,7 +34,7 @@ namespace swrenderer
 		void SetSolidColor(int color) { dc_color = color; dc_color_bgra = GPalette.BaseColors[color]; }
 		void SetDynamicLight(uint32_t color) { dynlightcolor = color; }
 
-		void DrawMaskedColumn(RenderThread* thread, int x, FSoftwareTexture* WallSpriteTile, const ProjectedWallTexcoords& walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short* mfloorclip, const short* mceilingclip, FRenderStyle style);
+		void DrawMaskedColumn(RenderThread* thread, int x, FSoftwareTexture* WallSpriteTile, const ProjectedWallTexcoords& walltexcoords, bool sprflipvert, const short* mfloorclip, const short* mceilingclip, FRenderStyle style);
 		void DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked = false);
 		void FillColumn(RenderThread *thread);
 		void DrawVoxelBlocks(RenderThread *thread, const VoxelBlock *blocks, int blockcount);

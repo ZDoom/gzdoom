@@ -227,6 +227,7 @@ namespace swrenderer
 		this->x1 = x1;
 		this->x2 = x2;
 		this->WallT = WallT;
+		this->flipx = flipx;
 		CenterX = viewport->CenterX;
 		WallTMapScale2 = viewport->WallTMapScale2;
 		valid = true;

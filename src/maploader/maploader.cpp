@@ -3665,13 +3665,16 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, FlipLine)
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
 	PARAM_UINT(lineidx);
 
-	line_t *line = &self->Level->lines[lineidx];
-	vertex_t *v1 = line->v1;
-	vertex_t *v2 = line->v2;
+	if (lineidx < self->Level->lines.Size())
+	{
+		line_t *line = &self->Level->lines[lineidx];
+		vertex_t *v1 = line->v1;
+		vertex_t *v2 = line->v2;
 
-	line->v1 = v2;
-	line->v2 = v1;
+		line->v1 = v2;
+		line->v2 = v1;
 
+	}
 	self->loader->ForceNodeBuild = true;
 	return 0;
 }

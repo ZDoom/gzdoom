@@ -1003,6 +1003,7 @@ set (PCH_SOURCES
 	maploader/polyobjects.cpp
 	maploader/renderinfo.cpp
 	maploader/compatibility.cpp
+	maploader/postprocessor.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

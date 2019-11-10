@@ -3660,6 +3660,22 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetVertex)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelPostProcessor, FlipLine)
+{
+	PARAM_SELF_PROLOGUE(DLevelPostProcessor);
+	PARAM_UINT(lineidx);
+
+	line_t *line = &self->Level->lines[lineidx];
+	vertex_t *v1 = line->v1;
+	vertex_t *v2 = line->v2;
+
+	line->v1 = v2;
+	line->v2 = v1;
+
+	self->loader->ForceNodeBuild = true;
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetLineSectorRef)
 {
 	PARAM_SELF_PROLOGUE(DLevelPostProcessor);

@@ -39,8 +39,8 @@ namespace swrenderer
 	private:
 		bool RenderWall(DrawSegment *ds, int x1, int x2);
 		void ClipMidtex(DrawSegment* ds, int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
-		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);
+		void Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
+		void Render3DFloorWallRange(DrawSegment *ds, int x1, int x2);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 
 		sector_t *frontsector = nullptr;

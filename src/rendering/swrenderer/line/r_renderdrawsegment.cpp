@@ -115,7 +115,7 @@ namespace swrenderer
 
 		if (ds->Has3DFloorFrontSectorWalls() || ds->Has3DFloorBackSectorWalls())
 		{
-			RenderFakeWallRange(ds, x1, x2);
+			Render3DFloorWallRange(ds, x1, x2);
 		}
 
 		if (!notrelevant)
@@ -288,8 +288,7 @@ namespace swrenderer
 		return false;
 	}
 
-	// kg3D - render one fake wall
-	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
+	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
 	{
 		int i;
 		double xscale;
@@ -378,8 +377,7 @@ namespace swrenderer
 		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, mLight, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
-	// kg3D - walls of fake floors
-	void RenderDrawSegment::RenderFakeWallRange(DrawSegment *ds, int x1, int x2)
+	void RenderDrawSegment::Render3DFloorWallRange(DrawSegment *ds, int x1, int x2)
 	{
 		int i, j;
 		F3DFloor *rover, *fover = nullptr;
@@ -602,7 +600,7 @@ namespace swrenderer
 					//mLight.lightlevel = ds->lightlevel;
 					mLight.SetColormap(frontsector, curline, lit);
 
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
+					Render3DFloorWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
 			}
@@ -784,7 +782,7 @@ namespace swrenderer
 					//mLight.lightlevel = ds->lightlevel;
 					mLight.SetColormap(frontsector, curline, lit);
 
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
+					Render3DFloorWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
 			}

@@ -37,9 +37,8 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		bool RenderWall(DrawSegment *ds, int x1, int x2, SpriteDrawerArgs &columndrawerargs, bool visible);
-		void RenderWrapWall(DrawSegment* ds, int x1, int x2, FSoftwareTexture* tex);
-		void ClipMidtex(int x1, int x2);
+		bool RenderWall(DrawSegment *ds, int x1, int x2);
+		void ClipMidtex(DrawSegment* ds, int x1, int x2);
 		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
 		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
@@ -49,9 +48,6 @@ namespace swrenderer
 
 		seg_t *curline = nullptr;
 		Fake3DTranslucent m3DFloor;
-
-		FWallCoords WallC;
-		FWallTmapVals WallT;
 
 		ProjectedWallLight mLight;
 

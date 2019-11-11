@@ -412,57 +412,57 @@ namespace swrenderer
 					memcpy(draw_segment->bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 
 					draw_segment->bFogBoundary = IsFogBoundary(mFrontSector, mBackSector);
-					bool is_translucent = sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls();
-					if (is_translucent)
+					if (sidedef->GetTexture(side_t::mid).isValid())
 					{
-						if (sidedef->GetTexture(side_t::mid).isValid())
-							draw_segment->SetHas3DFloorMidTexture();
-
 						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 						FSoftwareTexture *pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+						if (pic)
+						{
+							draw_segment->SetHas3DFloorMidTexture();
 
-						double yscale = GetYScale(sidedef, pic, side_t::mid);
-						double cameraZ = Thread->Viewport->viewpoint.Pos.Z;
+							double yscale = GetYScale(sidedef, pic, side_t::mid);
+							double cameraZ = Thread->Viewport->viewpoint.Pos.Z;
 
-						double texZFloor = MAX(mFrontSector->GetPlaneTexZ(sector_t::floor), mBackSector->GetPlaneTexZ(sector_t::floor));
-						double texZCeiling = MIN(mFrontSector->GetPlaneTexZ(sector_t::ceiling), mBackSector->GetPlaneTexZ(sector_t::ceiling));
+							double texZFloor = MAX(mFrontSector->GetPlaneTexZ(sector_t::floor), mBackSector->GetPlaneTexZ(sector_t::floor));
+							double texZCeiling = MIN(mFrontSector->GetPlaneTexZ(sector_t::ceiling), mBackSector->GetPlaneTexZ(sector_t::ceiling));
 
-						double TextureMid;
-						if (yscale >= 0)
-						{ // normal orientation
-							if (linedef->flags & ML_DONTPEGBOTTOM)
-							{ // bottom of texture at bottom
-								TextureMid = (texZFloor - cameraZ) * yscale + pic->GetHeight();
+							double TextureMid;
+							if (yscale >= 0)
+							{ // normal orientation
+								if (linedef->flags & ML_DONTPEGBOTTOM)
+								{ // bottom of texture at bottom
+									TextureMid = (texZFloor - cameraZ) * yscale + pic->GetHeight();
+								}
+								else
+								{ // top of texture at top
+									TextureMid = (texZCeiling - cameraZ) * yscale;
+								}
 							}
 							else
-							{ // top of texture at top
-								TextureMid = (texZCeiling - cameraZ) * yscale;
+							{ // upside down
+								if (linedef->flags & ML_DONTPEGBOTTOM)
+								{ // top of texture at bottom
+									TextureMid = (texZFloor - cameraZ) * yscale;
+								}
+								else
+								{ // bottom of texture at top
+									TextureMid = (texZCeiling - cameraZ) * yscale + pic->GetHeight();
+								}
 							}
-						}
-						else
-						{ // upside down
-							if (linedef->flags & ML_DONTPEGBOTTOM)
-							{ // top of texture at bottom
-								TextureMid = (texZFloor - cameraZ) * yscale;
-							}
-							else
-							{ // bottom of texture at top
-								TextureMid = (texZCeiling - cameraZ) * yscale + pic->GetHeight();
-							}
-						}
 
-						TextureMid += GetRowOffset(linedef, sidedef, pic, side_t::mid);
+							TextureMid += GetRowOffset(linedef, sidedef, pic, side_t::mid);
 
-						draw_segment->texcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), WallC.sx1, WallC.sx2, WallT);
-						draw_segment->texcoords.xoffset = GetXOffset(sidedef, pic, side_t::mid);
-						draw_segment->texcoords.yscale = yscale;
-						draw_segment->texcoords.texturemid = TextureMid;
+							draw_segment->texcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), WallC.sx1, WallC.sx2, WallT);
+							draw_segment->texcoords.xoffset = GetXOffset(sidedef, pic, side_t::mid);
+							draw_segment->texcoords.yscale = yscale;
+							draw_segment->texcoords.texturemid = TextureMid;
+						}
 					}
 
 					draw_segment->light = mLight.GetLightPos(start);
 					draw_segment->lightstep = mLight.GetLightStep();
 
-					if (draw_segment->bFogBoundary || is_translucent)
+					if (draw_segment->bFogBoundary || draw_segment->texcoords || draw_segment->Has3DFloorWalls())
 					{
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}

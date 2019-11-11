@@ -301,6 +301,7 @@ namespace swrenderer
 			SetWallVariables();
 		}
 
+		line_t *linedef = mLineSegment->linedef;
 		side_t *sidedef = mLineSegment->sidedef;
 
 		RenderPortal *renderportal = Thread->Portal.get();
@@ -419,23 +420,43 @@ namespace swrenderer
 
 						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
 						FSoftwareTexture *pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
-						double yscale = (pic ? pic->GetScale().Y : 1.0) * sidedef->GetTextureYScale(side_t::mid);
 
-						double lwallscale =
-							tex ? ((pic ? pic->GetScale().X : 1.0) * sidedef->GetTextureXScale(side_t::mid)) :
-							mTopTexture ? (mTopTexture->GetScale().X * sidedef->GetTextureXScale(side_t::top)) :
-							mBottomTexture ? (mBottomTexture->GetScale().X * sidedef->GetTextureXScale(side_t::bottom)) :
-							1.;
+						double yscale = GetYScale(sidedef, pic, side_t::mid);
+						double cameraZ = Thread->Viewport->viewpoint.Pos.Z;
 
-						fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
-						if (pic && pic->useWorldPanning(sidedef->GetLevel()))
-						{
-							xoffset = xs_RoundToInt(xoffset * lwallscale);
+						double texZFloor = MAX(mFrontSector->GetPlaneTexZ(sector_t::floor), mBackSector->GetPlaneTexZ(sector_t::floor));
+						double texZCeiling = MIN(mFrontSector->GetPlaneTexZ(sector_t::ceiling), mBackSector->GetPlaneTexZ(sector_t::ceiling));
+
+						double TextureMid;
+						if (yscale >= 0)
+						{ // normal orientation
+							if (linedef->flags & ML_DONTPEGBOTTOM)
+							{ // bottom of texture at bottom
+								TextureMid = (texZFloor - cameraZ) * yscale + pic->GetHeight();
+							}
+							else
+							{ // top of texture at top
+								TextureMid = (texZCeiling - cameraZ) * yscale;
+							}
+						}
+						else
+						{ // upside down
+							if (linedef->flags & ML_DONTPEGBOTTOM)
+							{ // top of texture at bottom
+								TextureMid = (texZFloor - cameraZ) * yscale;
+							}
+							else
+							{ // bottom of texture at top
+								TextureMid = (texZCeiling - cameraZ) * yscale + pic->GetHeight();
+							}
 						}
 
-						draw_segment->texcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
-						draw_segment->texcoords.xoffset = xoffset;
+						TextureMid += GetRowOffset(linedef, sidedef, pic, side_t::mid);
+
+						draw_segment->texcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), WallC.sx1, WallC.sx2, WallT);
+						draw_segment->texcoords.xoffset = GetXOffset(sidedef, pic, side_t::mid);
 						draw_segment->texcoords.yscale = yscale;
+						draw_segment->texcoords.texturemid = TextureMid;
 					}
 
 					draw_segment->light = mLight.GetLightPos(start);

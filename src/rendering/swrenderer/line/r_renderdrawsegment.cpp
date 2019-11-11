@@ -156,32 +156,32 @@ namespace swrenderer
 		const short *mfloorclip = ds->sprbottomclip - ds->x1;
 		const short *mceilingclip = ds->sprtopclip - ds->x1;
 
-		float MaskedScaleY = ds->texcoords.yscale;
-
-		// find positioning
-		double texheight = tex->GetScaledHeightDouble();
-		double texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
-		if (texheightscale != 1)
-		{
-			texheight = texheight / texheightscale;
-		}
-
-		double texturemid;
-		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
-		{
-			texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
-		}
-		else
-		{
-			texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
-		}
-
-		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
-
 		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 		if (!wrap)
 		{ // Texture does not wrap vertically.
 			double textop;
+
+			float MaskedScaleY = ds->texcoords.yscale;
+
+			// find positioning
+			double texheight = tex->GetScaledHeightDouble();
+			double texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
+			if (texheightscale != 1)
+			{
+				texheight = texheight / texheightscale;
+			}
+
+			double texturemid;
+			if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+			{
+				texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
+			}
+			else
+			{
+				texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+			}
+
+			double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 
 			bool sprflipvert = false;
 
@@ -322,19 +322,6 @@ namespace swrenderer
 		}
 		else
 		{ // Texture does wrap vertically.
-			if (tex->useWorldPanning(curline->GetLevel()))
-			{
-				// rowoffset is added before the multiply so that the masked texture will
-				// still be positioned in world units rather than texels.
-				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z + rowoffset) * MaskedScaleY;
-			}
-			else
-			{
-				// rowoffset is added outside the multiply so that it positions the texture
-				// by texels instead of world units.
-				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
-			}
-
 			WallC.sz1 = ds->WallC.sz1;
 			WallC.sz2 = ds->WallC.sz2;
 			WallC.sx1 = ds->WallC.sx1;
@@ -373,11 +360,6 @@ namespace swrenderer
 				mfloorclip = walllower.ScreenY;
 			}
 
-			ProjectedWallTexcoords texcoords = ds->texcoords;
-			texcoords.texturemid = texturemid;
-
-			FSoftwareTexture *rw_pic = tex;
-
 			double top, bot;
 			GetMaskedWallTopBottom(ds, top, bot);
 
@@ -385,7 +367,7 @@ namespace swrenderer
 			bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 			RenderWallPart renderWallpart(Thread);
-			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texcoords, top, bot, true, additive, alpha, mLight, nullptr);
+			renderWallpart.Render(frontsector, curline, WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, mLight, nullptr);
 		}
 
 		return false;

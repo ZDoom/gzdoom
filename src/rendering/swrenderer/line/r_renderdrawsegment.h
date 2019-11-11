@@ -38,6 +38,7 @@ namespace swrenderer
 
 	private:
 		bool RenderWall(DrawSegment *ds, int x1, int x2, SpriteDrawerArgs &columndrawerargs, bool visible);
+		void RenderWrapWall(DrawSegment* ds, int x1, int x2, FSoftwareTexture* tex);
 		void ClipMidtex(int x1, int x2);
 		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
 		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);

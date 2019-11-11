@@ -316,7 +316,7 @@ namespace swrenderer
 						lightpos += mLight.GetLightStep();
 					}
 
-					columndrawerargs.DrawMaskedColumn(Thread, x, tex, ds->texcoords, sprflipvert, mfloorclip, mceilingclip, renderstyle);
+					columndrawerargs.DrawMaskedColumn(Thread, x, tex, texcoords, sprflipvert, mfloorclip, mceilingclip, renderstyle);
 				}
 			}
 		}
@@ -385,7 +385,7 @@ namespace swrenderer
 			bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 			RenderWallPart renderWallpart(Thread);
-			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, mLight, nullptr);
+			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texcoords, top, bot, true, additive, alpha, mLight, nullptr);
 		}
 
 		return false;

@@ -50,12 +50,6 @@ namespace swrenderer
 		bool Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close);
 	};
 
-	struct WallPartTexture
-	{
-		FSoftwareTexture *Texture;
-		ProjectedWallTexcoords texcoords;
-	};
-
 	class SWRenderLine : VisibleSegmentRenderer
 	{
 	public:
@@ -67,6 +61,7 @@ namespace swrenderer
 	private:
 		bool RenderWallSegment(int x1, int x2) override;
 		void SetWallVariables();
+		void SetTextures();
 		void SetTopTexture();
 		void SetMiddleTexture();
 		void SetBottomTexture();
@@ -78,6 +73,12 @@ namespace swrenderer
 		void RenderTopTexture(int x1, int x2);
 		void RenderMiddleTexture(int x1, int x2);
 		void RenderBottomTexture(int x1, int x2);
+
+		fixed_t GetXOffset(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
+		double GetXScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
+		double GetYScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
+
+		double GetRowOffset(line_t* linedef, side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
 
 		FLightNode *GetLightList();
 
@@ -125,9 +126,9 @@ namespace swrenderer
 		bool markfloor; // False if the back side is the same plane.
 		bool markceiling;
 		
-		WallPartTexture mTopPart;
-		WallPartTexture mMiddlePart;
-		WallPartTexture mBottomPart;
+		FSoftwareTexture* mTopTexture;
+		FSoftwareTexture* mMiddleTexture;
+		FSoftwareTexture* mBottomTexture;
 
 		ProjectedWallCull mCeilingClipped;
 		ProjectedWallCull mFloorClipped;

@@ -67,8 +67,6 @@
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
-
 namespace swrenderer
 {
 	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *ppic, const DVector2 &scale, int renderflags, int lightlevel, bool foggy, FDynamicColormap *basecolormap)
@@ -162,20 +160,10 @@ namespace swrenderer
 	{
 		auto spr = this;
 
-		int x1, x2;
-		double iyscale;
-		bool sprflipvert;
-
-		x1 = MAX<int>(spr->x1, spr->wallc.sx1);
-		x2 = MIN<int>(spr->x2, spr->wallc.sx2);
+		int x1 = MAX<int>(spr->x1, spr->wallc.sx1);
+		int x2 = MIN<int>(spr->x2, spr->wallc.sx2);
 		if (x1 >= x2)
 			return;
-
-		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(thread, &spr->wallc);
-
-		iyscale = 1 / spr->yscale;
-		double texturemid = (spr->gzt - thread->Viewport->viewpoint.Pos.Z) * iyscale;
 
 		// Prepare lighting
 
@@ -200,30 +188,18 @@ namespace swrenderer
 
 		// Draw it
 		auto WallSpriteTile = spr->pic;
-		if (spr->renderflags & RF_YFLIP)
-		{
-			sprflipvert = true;
-			iyscale = -iyscale;
-			texturemid -= spr->pic->GetHeight();
-		}
-		else
-		{
-			sprflipvert = false;
-		}
 
-		float maskedScaleY = (float)iyscale;
-
-		int x = x1;
+		FWallTmapVals WallT;
+		WallT.InitFromWallCoords(thread, &spr->wallc);
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), spr->pic->GetWidth(), x1, x2, WallT, spr->renderflags & RF_XFLIP);
-		walltexcoords.yscale = maskedScaleY;
-		walltexcoords.texturemid = texturemid;
+		walltexcoords.ProjectSprite(thread->Viewport.get(), spr->gzt, spr->yscale, spr->renderflags & RF_XFLIP, spr->renderflags & RF_YFLIP, x1, x2, WallT, WallSpriteTile);
 
 		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
 		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
-		while (x < x2)
+		bool sprflipvert = (spr->renderflags & RF_YFLIP);
+		for (int x = x1; x < x2; x++)
 		{
 			if (calclighting)
 			{
@@ -233,7 +209,6 @@ namespace swrenderer
 			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
 				drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
 			light += lightstep;
-			x++;
 		}
 	}
 }

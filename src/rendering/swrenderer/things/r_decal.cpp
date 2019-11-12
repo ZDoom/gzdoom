@@ -69,8 +69,6 @@ namespace swrenderer
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
-		double yscale;
-		uint8_t flipx;
 		double zpos;
 		int needrepeat = 0;
 		sector_t *back;
@@ -127,7 +125,6 @@ namespace swrenderer
 		}
 
 		FTexture *tex = TexMan.GetPalettedTexture(decal->PicNum, true);
-		flipx = (uint8_t)(decal->RenderFlags & RF_XFLIP);
 
 		if (tex == NULL || !tex->isValid())
 		{
@@ -149,13 +146,11 @@ namespace swrenderer
 		decal_pos = { dcx, dcy };
 
 		DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
-		float maskedScaleY;
 
 		decal_left = decal_pos - edge_left * angvec - thread->Viewport->viewpoint.Pos;
 		decal_right = decal_pos + edge_right * angvec - thread->Viewport->viewpoint.Pos;
 
 		CameraLight *cameraLight;
-		double texturemid;
 
 		FWallCoords WallC;
 		if (WallC.Init(thread, decal_left, decal_right, TOO_CLOSE_Z))
@@ -166,9 +161,6 @@ namespace swrenderer
 
 		if (x1 >= clipper->x2 || x2 <= clipper->x1)
 			return;
-
-		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(thread, &WallC);
 
 		if (drawsegPass)
 		{
@@ -230,9 +222,6 @@ namespace swrenderer
 			}
 		}
 
-		yscale = decal->ScaleY;
-		texturemid = WallSpriteTile->GetTopOffset(0) + (zpos - thread->Viewport->viewpoint.Pos.Z) / yscale;
-
 		// Clip sprite to drawseg
 		x1 = MAX<int>(clipper->x1, x1);
 		x2 = MIN<int>(clipper->x2, x2);
@@ -255,24 +244,12 @@ namespace swrenderer
 		cameraLight = CameraLight::Instance();
 
 		// Draw it
-		bool sprflipvert;
-		if (decal->RenderFlags & RF_YFLIP)
-		{
-			sprflipvert = true;
-			yscale = -yscale;
-			texturemid -= WallSpriteTile->GetHeight();
-		}
-		else
-		{
-			sprflipvert = false;
-		}
 
-		maskedScaleY = float(1 / yscale);
+		FWallTmapVals WallT;
+		WallT.InitFromWallCoords(thread, &WallC);
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), WallSpriteTile->GetWidth(), x1, x2, WallT, flipx);
-		walltexcoords.yscale = maskedScaleY;
-		walltexcoords.texturemid = texturemid;
+		walltexcoords.ProjectSprite(thread->Viewport.get(), zpos, decal->ScaleY, decal->RenderFlags & RF_XFLIP, decal->RenderFlags & RF_YFLIP, x1, x2, WallT, WallSpriteTile);
 
 		do
 		{
@@ -288,6 +265,7 @@ namespace swrenderer
 			if (visible)
 			{
 				thread->PrepareTexture(WallSpriteTile, decal->RenderStyle);
+				bool sprflipvert = (decal->RenderFlags & RF_YFLIP);
 				while (x < x2)
 				{
 					if (calclighting)

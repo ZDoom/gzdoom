@@ -432,6 +432,19 @@ namespace swrenderer
 		Project(viewport, lineseg->sidedef->TexelLength * xscale, x1, x2, WallT);
 	}
 
+	void ProjectedWallTexcoords::ProjectSprite(RenderViewport* viewport, double topZ, double scale, bool flipX, bool flipY, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic)
+	{
+		yscale = 1.0 / scale;
+		texturemid = pic->GetTopOffset(0) + (topZ - viewport->viewpoint.Pos.Z) * yscale;
+		if (flipY)
+		{
+			yscale = -yscale;
+			texturemid -= pic->GetHeight();
+		}
+
+		Project(viewport, pic->GetWidth(), x1, x2, WallT, flipX);
+	}
+
 	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT, bool flipx)
 	{
 		this->walxrepeat = walxrepeat;

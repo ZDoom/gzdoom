@@ -157,7 +157,7 @@ namespace swrenderer
 				texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 			double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 			if (tex->useWorldPanning(curline->GetLevel()))
-				rowoffset /= fabs(ds->texcoords.yscale);
+				rowoffset /= fabs(tex->GetScale().Y * curline->sidedef->GetTextureYScale(side_t::mid));
 			double textop = texturemid + rowoffset - Thread->Viewport->viewpoint.Pos.Z;
 
 			// [RH] Don't bother drawing segs that are completely offscreen

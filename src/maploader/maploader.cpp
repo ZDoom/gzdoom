@@ -3054,6 +3054,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		ParseTextMap(map, missingtex);
 	}
 
+	CalcIndices();
 	PostProcessLevel(checksum);
 
 	LoopSidedefs(true);

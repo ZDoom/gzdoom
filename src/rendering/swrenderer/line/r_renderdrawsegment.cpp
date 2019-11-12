@@ -149,15 +149,16 @@ namespace swrenderer
 		{ // Texture does not wrap vertically.
 
 			// find positioning
-			double texheight = tex->GetScaledHeightDouble();
-			double texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
-			if (texheightscale != 1)
-			{
-				texheight = texheight / texheightscale;
-			}
-
-			bool sprflipvert = ds->texcoords.yscale < 0;
-			double textop = ds->texcoords.texturemid / ds->texcoords.yscale;
+			double texheight = tex->GetScaledHeightDouble() / fabs(curline->sidedef->GetTextureYScale(side_t::mid));
+			double texturemid;
+			if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+				texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
+			else
+				texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+			double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+			if (tex->useWorldPanning(curline->GetLevel()))
+				rowoffset /= fabs(ds->texcoords.yscale);
+			double textop = texturemid + rowoffset - Thread->Viewport->viewpoint.Pos.Z;
 
 			// [RH] Don't bother drawing segs that are completely offscreen
 			if (viewport->globaldclip * ds->WallC.sz1 < -textop && viewport->globaldclip * ds->WallC.sz2 < -textop)
@@ -290,10 +291,6 @@ namespace swrenderer
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
 	{
-		int i;
-		double xscale;
-		double yscale;
-
 		fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
 		if (Alpha <= 0)
 			return;
@@ -303,70 +300,23 @@ namespace swrenderer
 		const short *mfloorclip = ds->sprbottomclip - ds->x1;
 		const short *mceilingclip = ds->sprtopclip - ds->x1;
 
-		// find positioning
-		side_t *scaledside;
-		side_t::ETexpart scaledpart;
-		if (rover->flags & FF_UPPERTEXTURE)
-		{
-			scaledside = curline->sidedef;
-			scaledpart = side_t::top;
-		}
-		else if (rover->flags & FF_LOWERTEXTURE)
-		{
-			scaledside = curline->sidedef;
-			scaledpart = side_t::bottom;
-		}
-		else
-		{
-			scaledside = rover->master->sidedef[0];
-			scaledpart = side_t::mid;
-		}
-		xscale = rw_pic->GetScale().X * scaledside->GetTextureXScale(scaledpart);
-		yscale = rw_pic->GetScale().Y * scaledside->GetTextureYScale(scaledpart);
-
-		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
-		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
-		fixed_t rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
-		if (rowoffset < 0)
-		{
-			rowoffset += rw_pic->GetHeight();
-		}
-		double texturemid = (planez - Thread->Viewport->viewpoint.Pos.Z) * yscale;
-		if (rw_pic->useWorldPanning(curline->GetLevel()))
-		{
-			// rowoffset is added before the multiply so that the masked texture will
-			// still be positioned in world units rather than texels.
-
-			texturemid = texturemid + rowoffset * yscale;
-			rw_offset = xs_RoundToInt(rw_offset * xscale);
-		}
-		else
-		{
-			// rowoffset is added outside the multiply so that it positions the texture
-			// by texels instead of world units.
-			texturemid += rowoffset;
-		}
-
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 
-		for (i = x1; i < x2; i++)
+		for (int i = x1; i < x2; i++)
 		{
 			if (wallupper.ScreenY[i] < mceilingclip[i])
 				wallupper.ScreenY[i] = mceilingclip[i];
 		}
-		for (i = x1; i < x2; i++)
+		for (int i = x1; i < x2; i++)
 		{
 			if (walllower.ScreenY[i] > mfloorclip[i])
 				walllower.ScreenY[i] = mfloorclip[i];
 		}
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->WallC.sx1, ds->WallC.sx2, ds->tmapvals);
-		walltexcoords.texturemid = texturemid;
-		walltexcoords.yscale = yscale;
-		walltexcoords.xoffset = rw_offset;
+		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC.sx1, ds->WallC.sx2, ds->tmapvals, rw_pic);
 
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);

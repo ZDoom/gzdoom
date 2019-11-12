@@ -74,12 +74,6 @@ namespace swrenderer
 		void RenderMiddleTexture(int x1, int x2);
 		void RenderBottomTexture(int x1, int x2);
 
-		fixed_t GetXOffset(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
-		double GetXScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
-		double GetYScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
-
-		double GetRowOffset(line_t* linedef, side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
-
 		FLightNode *GetLightList();
 
 		bool IsFogBoundary(sector_t *front, sector_t *back) const;

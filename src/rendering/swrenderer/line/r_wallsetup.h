@@ -61,6 +61,12 @@ namespace swrenderer
 	class ProjectedWallTexcoords
 	{
 	public:
+		void ProjectTop(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
+		void ProjectMid(RenderViewport* viewport, sector_t* frontsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
+		void ProjectBottom(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
+		void ProjectTranslucent(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
+		void Project3DFloor(RenderViewport* viewport, F3DFloor* rover, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
+
 		void Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT, bool flipx = false);
 
 		float VStep(int x) const;
@@ -73,6 +79,11 @@ namespace swrenderer
 		explicit operator bool() const { return valid; }
 
 	private:
+		static fixed_t GetXOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart);
+		static double GetRowOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart);
+		static double GetXScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
+		static double GetYScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
+
 		bool valid = false;
 		double CenterX;
 		double WallTMapScale2;

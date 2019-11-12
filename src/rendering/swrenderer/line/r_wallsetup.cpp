@@ -221,6 +221,217 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////
 
+	void ProjectedWallTexcoords::ProjectTop(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic)
+	{
+		side_t* sidedef = lineseg->sidedef;
+		line_t* linedef = lineseg->linedef;
+
+		yscale = GetYScale(sidedef, pic, side_t::top);
+		double cameraZ = viewport->viewpoint.Pos.Z;
+
+		if (yscale >= 0)
+		{ // normal orientation
+			if (linedef->flags & ML_DONTPEGTOP)
+			{ // top of texture at top
+				texturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - cameraZ) * yscale;
+			}
+			else
+			{ // bottom of texture at bottom
+				texturemid = (backsector->GetPlaneTexZ(sector_t::ceiling) - cameraZ) * yscale + pic->GetHeight();
+			}
+		}
+		else
+		{ // upside down
+			if (linedef->flags & ML_DONTPEGTOP)
+			{ // bottom of texture at top
+				texturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - cameraZ) * yscale + pic->GetHeight();
+			}
+			else
+			{ // top of texture at bottom
+				texturemid = (backsector->GetPlaneTexZ(sector_t::ceiling) - cameraZ) * yscale;
+			}
+		}
+
+		texturemid += GetRowOffset(lineseg, pic, side_t::top);
+
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::top), x1, x2, WallT);
+		xoffset = GetXOffset(lineseg, pic, side_t::top);
+	}
+
+	void ProjectedWallTexcoords::ProjectMid(RenderViewport* viewport, sector_t* frontsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic)
+	{
+		side_t* sidedef = lineseg->sidedef;
+		line_t* linedef = lineseg->linedef;
+
+		yscale = GetYScale(sidedef, pic, side_t::mid);
+		double cameraZ = viewport->viewpoint.Pos.Z;
+
+		if (yscale >= 0)
+		{ // normal orientation
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // bottom of texture at bottom
+				texturemid = (frontsector->GetPlaneTexZ(sector_t::floor) - cameraZ) * yscale + pic->GetHeight();
+			}
+			else
+			{ // top of texture at top
+				texturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - cameraZ) * yscale;
+			}
+		}
+		else
+		{ // upside down
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // top of texture at bottom
+				texturemid = (frontsector->GetPlaneTexZ(sector_t::floor) - cameraZ) * yscale;
+			}
+			else
+			{ // bottom of texture at top
+				texturemid = (frontsector->GetPlaneTexZ(sector_t::ceiling) - cameraZ) * yscale + pic->GetHeight();
+			}
+		}
+
+		texturemid += GetRowOffset(lineseg, pic, side_t::mid);
+
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), x1, x2, WallT);
+		xoffset = GetXOffset(lineseg, pic, side_t::mid);
+	}
+
+	void ProjectedWallTexcoords::ProjectBottom(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic)
+	{
+		side_t* sidedef = lineseg->sidedef;
+		line_t* linedef = lineseg->linedef;
+
+		double frontlowertop = frontsector->GetPlaneTexZ(sector_t::ceiling);
+		if (frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum)
+		{
+			// Putting sky ceilings on the front and back of a line alters the way unpegged
+			// positioning works.
+			frontlowertop = backsector->GetPlaneTexZ(sector_t::ceiling);
+		}
+
+		yscale = GetYScale(sidedef, pic, side_t::bottom);
+		double cameraZ = viewport->viewpoint.Pos.Z;
+
+		if (yscale >= 0)
+		{ // normal orientation
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // bottom of texture at bottom
+				texturemid = (frontlowertop - cameraZ) * yscale;
+			}
+			else
+			{ // top of texture at top
+				texturemid = (backsector->GetPlaneTexZ(sector_t::floor) - cameraZ) * yscale;
+			}
+		}
+		else
+		{ // upside down
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // top of texture at bottom
+				texturemid = (frontlowertop - cameraZ) * yscale;
+			}
+			else
+			{ // bottom of texture at top
+				texturemid = (backsector->GetPlaneTexZ(sector_t::floor) - cameraZ) * yscale + pic->GetHeight();
+			}
+		}
+
+		texturemid += GetRowOffset(lineseg, pic, side_t::bottom);
+
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::bottom), x1, x2, WallT);
+		xoffset = GetXOffset(lineseg, pic, side_t::bottom);
+	}
+
+	void ProjectedWallTexcoords::ProjectTranslucent(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic)
+	{
+		line_t* linedef = lineseg->linedef;
+		side_t* sidedef = lineseg->sidedef;
+
+		yscale = GetYScale(sidedef, pic, side_t::mid);
+		double cameraZ = viewport->viewpoint.Pos.Z;
+
+		double texZFloor = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor));
+		double texZCeiling = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+
+		if (yscale >= 0)
+		{ // normal orientation
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // bottom of texture at bottom
+				texturemid = (texZFloor - cameraZ) * yscale + pic->GetHeight();
+			}
+			else
+			{ // top of texture at top
+				texturemid = (texZCeiling - cameraZ) * yscale;
+			}
+		}
+		else
+		{ // upside down
+			if (linedef->flags & ML_DONTPEGBOTTOM)
+			{ // top of texture at bottom
+				texturemid = (texZFloor - cameraZ) * yscale;
+			}
+			else
+			{ // bottom of texture at top
+				texturemid = (texZCeiling - cameraZ) * yscale + pic->GetHeight();
+			}
+		}
+
+		texturemid += GetRowOffset(lineseg, pic, side_t::mid);
+
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), x1, x2, WallT);
+		xoffset = GetXOffset(lineseg, pic, side_t::mid);
+	}
+
+	void ProjectedWallTexcoords::Project3DFloor(RenderViewport* viewport, F3DFloor* rover, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic)
+	{
+		// find positioning
+		side_t* scaledside;
+		side_t::ETexpart scaledpart;
+		if (rover->flags & FF_UPPERTEXTURE)
+		{
+			scaledside = lineseg->sidedef;
+			scaledpart = side_t::top;
+		}
+		else if (rover->flags & FF_LOWERTEXTURE)
+		{
+			scaledside = lineseg->sidedef;
+			scaledpart = side_t::bottom;
+		}
+		else
+		{
+			scaledside = rover->master->sidedef[0];
+			scaledpart = side_t::mid;
+		}
+
+		double xscale = pic->GetScale().X * scaledside->GetTextureXScale(scaledpart);
+		yscale = pic->GetScale().Y * scaledside->GetTextureYScale(scaledpart);
+
+		double rowoffset = lineseg->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
+		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
+
+		xoffset = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
+		if (rowoffset < 0)
+		{
+			rowoffset += pic->GetHeight();
+		}
+
+		texturemid = (planez - viewport->viewpoint.Pos.Z) * yscale;
+		if (pic->useWorldPanning(lineseg->GetLevel()))
+		{
+			// rowoffset is added before the multiply so that the masked texture will
+			// still be positioned in world units rather than texels.
+
+			texturemid = texturemid + rowoffset * yscale;
+			xoffset = xs_RoundToInt(xoffset * xscale);
+		}
+		else
+		{
+			// rowoffset is added outside the multiply so that it positions the texture
+			// by texels instead of world units.
+			texturemid += rowoffset;
+		}
+
+		Project(viewport, lineseg->sidedef->TexelLength * xscale, x1, x2, WallT);
+	}
+
 	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, int x1, int x2, const FWallTmapVals &WallT, bool flipx)
 	{
 		this->walxrepeat = walxrepeat;
@@ -271,6 +482,74 @@ namespace swrenderer
 		}
 
 		return value + xoffset;
+	}
+
+	double ProjectedWallTexcoords::GetRowOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart)
+	{
+		double yrepeat = GetYScale(lineseg->sidedef, tex, texpart);
+		double rowoffset = lineseg->sidedef->GetTextureYOffset(texpart);
+		if (yrepeat >= 0)
+		{
+			// check if top of texture at top:
+			bool top_at_top =
+				(texpart == side_t::top && (lineseg->linedef->flags & ML_DONTPEGTOP)) ||
+				(texpart != side_t::top && !(lineseg->linedef->flags & ML_DONTPEGBOTTOM));
+
+			if (rowoffset < 0 && top_at_top)
+			{
+				rowoffset += tex->GetHeight();
+			}
+		}
+		else
+		{
+			rowoffset = -rowoffset;
+		}
+
+		if (tex->useWorldPanning(lineseg->GetLevel()))
+		{
+			return rowoffset * yrepeat;
+		}
+		else
+		{
+			// rowoffset is added outside the multiply so that it positions the texture
+			// by texels instead of world units.
+			return rowoffset;
+		}
+	}
+
+	fixed_t ProjectedWallTexcoords::GetXOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart)
+	{
+		fixed_t TextureOffsetU = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(texpart));
+		double xscale = GetXScale(lineseg->sidedef, tex, texpart);
+
+		fixed_t xoffset;
+		if (tex->useWorldPanning(lineseg->GetLevel()))
+		{
+			xoffset = xs_RoundToInt(TextureOffsetU * xscale);
+		}
+		else
+		{
+			xoffset = TextureOffsetU;
+		}
+
+		if (xscale < 0)
+		{
+			xoffset = -xoffset;
+		}
+
+		return xoffset;
+	}
+
+	double ProjectedWallTexcoords::GetXScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart)
+	{
+		double TextureScaleU = sidedef->GetTextureXScale(texpart);
+		return tex->GetScale().X * TextureScaleU;
+	}
+
+	double ProjectedWallTexcoords::GetYScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart)
+	{
+		double TextureScaleV = sidedef->GetTextureYScale(texpart);
+		return tex->GetScale().Y * TextureScaleV;
 	}
 
 	/////////////////////////////////////////////////////////////////////////

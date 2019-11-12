@@ -47,9 +47,16 @@ class LevelPostProcessor native play
 	protected native void SetThingStringArgument(uint thing, Name value);
 
 	protected native void SetVertex(uint vertex, double x, double y);
-	protected native void FlipLine(uint Line);
+	protected native void SetLineVertexes(uint Line, uint v1, uint v2);
 	protected native void SetLineSectorRef(uint line, uint side, uint sector);
 	protected native Actor GetDefaultActor(Name actorclass);
+
+	protected void FlipLine(uint Line)
+	{
+		uint v1 = level.lines[Line].v1.Index();
+		uint v2 = level.lines[Line].v2.Index();
+		SetLineVertexes(Line, v2, v1);
+	}
 
 	protected void SetWallTexture(int line, int side, int texpart, String texture)
 	{

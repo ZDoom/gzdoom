@@ -94,16 +94,16 @@ namespace swrenderer
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		bool visible = alpha > 0.0f;
-		if (!visible && !ds->bFogBoundary && !ds->Has3DFloorWalls())
+		if (!visible && !ds->drawsegclip.bFogBoundary && !ds->Has3DFloorWalls())
 		{
 			return;
 		}
 
 		// [RH] Draw fog partition
-		if (ds->bFogBoundary)
+		if (ds->drawsegclip.bFogBoundary)
 		{
-			const short *mfloorclip = ds->sprbottomclip - ds->x1;
-			const short *mceilingclip = ds->sprtopclip - ds->x1;
+			const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
+			const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
 
 			RenderFogBoundary renderfog;
 			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight);
@@ -120,8 +120,8 @@ namespace swrenderer
 
 		if (!notrelevant)
 		{
-			ds->sprclipped = true;
-			fillshort(ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
+			ds->drawsegclip.sprclipped = true;
+			fillshort(ds->drawsegclip.sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
 		}
 	}
 
@@ -141,8 +141,8 @@ namespace swrenderer
 		}
 		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 
-		const short *mfloorclip = ds->sprbottomclip - ds->x1;
-		const short *mceilingclip = ds->sprtopclip - ds->x1;
+		const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
+		const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
 
 		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 		if (!wrap)
@@ -297,8 +297,8 @@ namespace swrenderer
 
 		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
 
-		const short *mfloorclip = ds->sprbottomclip - ds->x1;
-		const short *mceilingclip = ds->sprtopclip - ds->x1;
+		const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
+		const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);

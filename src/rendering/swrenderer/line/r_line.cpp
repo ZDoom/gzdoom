@@ -313,27 +313,27 @@ namespace swrenderer
 		if (m3DFloor.type == Fake3DOpaque::Normal)
 			Thread->DrawSegments->Push(draw_segment);
 
-		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
+		draw_segment->drawsegclip.CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		draw_segment->WallC = WallC;
 		draw_segment->tmapvals = WallT;
 		draw_segment->x1 = start;
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;
-		draw_segment->SubsectorDepth = Thread->OpaquePass->GetSubsectorDepth(mSubsector->Index());
+		draw_segment->drawsegclip.SubsectorDepth = Thread->OpaquePass->GetSubsectorDepth(mSubsector->Index());
 
 		bool markportal = ShouldMarkPortal();
 
 		if (markportal)
 		{
-			draw_segment->silhouette = SIL_BOTH;
+			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 		}
 		else if (mBackSector == NULL)
 		{
-			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			fillshort(draw_segment->sprtopclip, stop - start, viewheight);
-			memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
-			draw_segment->silhouette = SIL_BOTH;
+			draw_segment->drawsegclip.sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
+			draw_segment->drawsegclip.sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
+			fillshort(draw_segment->drawsegclip.sprtopclip, stop - start, viewheight);
+			memset(draw_segment->drawsegclip.sprbottomclip, -1, (stop - start) * sizeof(short));
+			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 		}
 		else
 		{
@@ -341,13 +341,13 @@ namespace swrenderer
 			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 ||
 				mBackSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
-				draw_segment->silhouette = SIL_BOTTOM;
+				draw_segment->drawsegclip.silhouette = SIL_BOTTOM;
 			}
 
 			if (mFrontCeilingZ1 < mBackCeilingZ1 || mFrontCeilingZ2 < mBackCeilingZ2 ||
 				mBackSector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
-				draw_segment->silhouette |= SIL_TOP;
+				draw_segment->drawsegclip.silhouette |= SIL_TOP;
 			}
 
 			// killough 1/17/98: this test is required if the fix
@@ -361,15 +361,15 @@ namespace swrenderer
 			{
 				if (mDoorClosed || (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2))
 				{
-					draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-					memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
-					draw_segment->silhouette |= SIL_BOTTOM;
+					draw_segment->drawsegclip.sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
+					memset(draw_segment->drawsegclip.sprbottomclip, -1, (stop - start) * sizeof(short));
+					draw_segment->drawsegclip.silhouette |= SIL_BOTTOM;
 				}
 				if (mDoorClosed || (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2))
 				{						// killough 1/17/98, 2/8/98
-					draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-					fillshort(draw_segment->sprtopclip, stop - start, viewheight);
-					draw_segment->silhouette |= SIL_TOP;
+					draw_segment->drawsegclip.sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
+					fillshort(draw_segment->drawsegclip.sprtopclip, stop - start, viewheight);
+					draw_segment->drawsegclip.silhouette |= SIL_TOP;
 				}
 			}
 
@@ -407,10 +407,10 @@ namespace swrenderer
 					maskedtexture = true;
 
 					// kg3D - backup for mid and fake walls
-					draw_segment->bkup = Thread->FrameMemory->AllocMemory<short>(stop - start);
-					memcpy(draw_segment->bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
+					draw_segment->drawsegclip.bkup = Thread->FrameMemory->AllocMemory<short>(stop - start);
+					memcpy(draw_segment->drawsegclip.bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 
-					draw_segment->bFogBoundary = IsFogBoundary(mFrontSector, mBackSector);
+					draw_segment->drawsegclip.bFogBoundary = IsFogBoundary(mFrontSector, mBackSector);
 					if (sidedef->GetTexture(side_t::mid).isValid())
 					{
 						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
@@ -425,7 +425,7 @@ namespace swrenderer
 					draw_segment->light = mLight.GetLightPos(start);
 					draw_segment->lightstep = mLight.GetLightStep();
 
-					if (draw_segment->bFogBoundary || draw_segment->texcoords || draw_segment->Has3DFloorWalls())
+					if (draw_segment->drawsegclip.bFogBoundary || draw_segment->texcoords || draw_segment->Has3DFloorWalls())
 					{
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}
@@ -447,21 +447,21 @@ namespace swrenderer
 		MarkOpaquePassClip(start, stop);
 
 		// save sprite clipping info
-		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == nullptr)
+		if (((draw_segment->drawsegclip.silhouette & SIL_TOP) || maskedtexture) && draw_segment->drawsegclip.sprtopclip == nullptr)
 		{
-			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			memcpy(draw_segment->sprtopclip, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
+			draw_segment->drawsegclip.sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
+			memcpy(draw_segment->drawsegclip.sprtopclip, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 		}
 
-		if (((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == nullptr)
+		if (((draw_segment->drawsegclip.silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->drawsegclip.sprbottomclip == nullptr)
 		{
-			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			memcpy(draw_segment->sprbottomclip, &Thread->OpaquePass->floorclip[start], sizeof(short)*(stop - start));
+			draw_segment->drawsegclip.sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
+			memcpy(draw_segment->drawsegclip.sprbottomclip, &Thread->OpaquePass->floorclip[start], sizeof(short)*(stop - start));
 		}
 
 		if (maskedtexture && mLineSegment->sidedef->GetTexture(side_t::mid).isValid())
 		{
-			draw_segment->silhouette |= SIL_TOP | SIL_BOTTOM;
+			draw_segment->drawsegclip.silhouette |= SIL_TOP | SIL_BOTTOM;
 		}
 
 		RenderMiddleTexture(start, stop);
@@ -477,7 +477,7 @@ namespace swrenderer
 
 		if (markportal)
 		{
-			Thread->Portal->AddLinePortal(mLineSegment->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
+			Thread->Portal->AddLinePortal(mLineSegment->linedef, draw_segment->x1, draw_segment->x2, draw_segment->drawsegclip.sprtopclip, draw_segment->drawsegclip.sprbottomclip);
 		}
 
 		return true;

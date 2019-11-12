@@ -55,6 +55,7 @@ namespace swrenderer
 		fixed_t backcyl = 0;
 		double skymid = 0.0;
 		angle_t skyangle = 0;
+		int skyoffset = 0;
 
 		SkyDrawerArgs drawerargs;
 	};

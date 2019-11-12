@@ -82,7 +82,6 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "g_game.h"
-#include "atterm.h"
 #include "s_music.h"
 
 // MACROS ------------------------------------------------------------------
@@ -306,8 +305,6 @@ void S_Init ()
 {
 	int curvelump;
 
-	atterm(S_Shutdown);
-
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
 	I_InitSound();
 	curvelump = Wads.CheckNumForName ("SNDCURVE");
@@ -355,7 +352,9 @@ void S_Shutdown ()
 	mus_playing.LastSong = "";	// If this isn't reset here, the song would attempt resume at the most inpopportune time...
 	S_StopAllChannels();
 
-	GSnd->UpdateSounds();
+	if (GSnd)
+		GSnd->UpdateSounds();
+
 	for (chan = FreeChannels; chan != NULL; chan = next)
 	{
 		next = chan->NextChan;
@@ -1755,7 +1754,9 @@ void S_StopAllChannels ()
 		S_StopChannel(chan);
 		chan = next;
 	}
-	GSnd->UpdateSounds();
+
+	if (GSnd)
+		GSnd->UpdateSounds();
 }
 
 //==========================================================================

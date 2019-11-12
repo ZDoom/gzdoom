@@ -32,8 +32,7 @@ if( MSVC )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4101 /wd4800 /wd4702 /wd4706 /wd4805 /wd4310 /wd4244 /wd4456 /wd4459 /wd4146 /wd4127 /wd4458 /wd4267 /wd4804")
 endif()
 
-# Enable fast flag for GME
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
+use_fast_math()
 
 # Default emulators to build (all of them! ;)
 # [ZDoom] No options, enable all of them by default.

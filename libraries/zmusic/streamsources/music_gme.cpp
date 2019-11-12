@@ -60,7 +60,6 @@ public:
 	SoundStreamInfo GetFormat() override;
 
 protected:
-	std::mutex CritSec;
 	Music_Emu *Emu;
 	gme_info_t *TrackInfo;
 	int SampleRate;
@@ -145,6 +144,11 @@ StreamSource *GME_OpenSong(MusicIO::FileInterface *reader, const char *fmt, int 
 	}
 	gme_set_stereo_depth(emu, std::min(std::max(miscConfig.gme_stereodepth, 0.f), 1.f));
 	gme_set_fade(emu, -1); // Enable infinite loop
+
+#if GME_VERSION >= 0x602
+	gme_set_autoload_playback_limit(emu, 0);
+#endif // GME_VERSION >= 0x602
+
 	return new GMESong(emu, sample_rate);
 }
 
@@ -245,7 +249,6 @@ bool GMESong::StartTrack(int track, bool getcritsec)
 
 	if (getcritsec)
 	{
-		std::lock_guard<std::mutex> lock(CritSec);
 		err = gme_start_track(Emu, track);
 	}
 	else
@@ -351,7 +354,6 @@ bool GMESong::GetData(void *buffer, size_t len)
 {
 	gme_err_t err;
 
-	std::lock_guard<std::mutex> lock(CritSec);
 	if (gme_track_ended(Emu))
 	{
 		if (m_Looping)

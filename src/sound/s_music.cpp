@@ -84,10 +84,8 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "g_game.h"
-#include "atterm.h"
 #include "s_music.h"
 #include "filereadermusicinterface.h"
-#include "zmusic/musinfo.h"
 #include "zmusic/zmusic.h"
 
 // MACROS ------------------------------------------------------------------
@@ -127,7 +125,8 @@ static std::unique_ptr<SoundStream> musicStream;
 
 static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 {
-	bool written = mus_playing.handle? mus_playing.handle->ServiceStream(buff, len) : 0;
+	bool written = ZMusic_FillStream(mus_playing.handle, buff, len);
+	
 	if (!written)
 	{
 		memset((char*)buff, 0, len);
@@ -140,7 +139,7 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 void S_CreateStream()
 {
 	if (!mus_playing.handle) return;
-	auto fmt = mus_playing.handle->GetStreamInfo();
+	auto fmt = ZMusic_GetStreamInfo(mus_playing.handle);
 	if (fmt.mBufferSize > 0)
 	{
 		int flags = fmt.mNumChannels < 0 ? 0 : SoundStream::Float;
@@ -180,9 +179,8 @@ static void S_StartMusicPlaying(MusInfo* song, bool loop, float rel_vol, int sub
 		saved_relative_volume = rel_vol;
 		I_SetRelativeVolume(saved_relative_volume * factor);
 	}
-	song->Stop();
-	song->Play(loop, subsong);
-	song->m_NotStartedYet = false;
+	ZMusic_Stop(song);
+	ZMusic_Start(song, subsong, loop);
 
 	// Notify the sound system of the changed relative volume
 	snd_musicvolume.Callback();
@@ -200,7 +198,7 @@ void S_PauseMusic ()
 {
 	if (mus_playing.handle && !MusicPaused)
 	{
-		mus_playing.handle->Pause();
+		ZMusic_Pause(mus_playing.handle);
 		S_PauseStream(true);
 		MusicPaused = true;
 	}
@@ -217,7 +215,7 @@ void S_ResumeMusic ()
 {
 	if (mus_playing.handle && MusicPaused)
 	{
-		mus_playing.handle->Resume();
+		ZMusic_Resume(mus_playing.handle);
 		S_PauseStream(false);
 		MusicPaused = false;
 	}
@@ -233,12 +231,12 @@ void S_UpdateMusic ()
 {
 	if (mus_playing.handle != nullptr)
 	{
-		mus_playing.handle->Update();
+		ZMusic_Update(mus_playing.handle);
 		
 		// [RH] Update music and/or playlist. IsPlaying() must be called
 		// to attempt to reconnect to broken net streams and to advance the
 		// playlist when the current song finishes.
-		if (!mus_playing.handle->IsPlaying())
+		if (!ZMusic_IsPlaying(mus_playing.handle))
 		{
 			if (PlayList.GetNumSongs())
 			{
@@ -409,20 +407,20 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	if (!mus_playing.name.IsEmpty() &&
 		mus_playing.handle != nullptr &&
 		stricmp (mus_playing.name, musicname) == 0 &&
-		mus_playing.handle->m_Looping == looping)
+		ZMusic_IsLooping(mus_playing.handle) == looping)
 	{
 		if (order != mus_playing.baseorder)
 		{
-			if (mus_playing.handle->SetSubsong(order))
+			if (ZMusic_SetSubsong(mus_playing.handle, order))
 			{
 				mus_playing.baseorder = order;
 			}
 		}
-		else if (!mus_playing.handle->IsPlaying())
+		else if (!ZMusic_IsPlaying(mus_playing.handle))
 		{
 			try
 			{
-				mus_playing.handle->Play(looping, order);
+				ZMusic_Start(mus_playing.handle, looping, order);
 				S_CreateStream();
 			}
 			catch (const std::runtime_error& err)
@@ -575,35 +573,16 @@ void S_RestartMusic ()
 //==========================================================================
 
 
-void S_MIDIDeviceChanged(int newdev, bool force)
+void S_MIDIDeviceChanged(int newdev)
 {
-	static int oldmididev = INT_MIN;
-
-	// If a song is playing, move it to the new device.
-	if (oldmididev != newdev || force)
+	MusInfo* song = mus_playing.handle;
+	if (song != nullptr && ZMusic_IsMIDI(song) && ZMusic_IsPlaying(song))
 	{
-		if (mus_playing.handle != nullptr && mus_playing.handle->IsMIDI())
-		{
-			MusInfo* song = mus_playing.handle;
-			if (song->m_Status == MusInfo::STATE_Playing)
-			{
-				if (song->GetDeviceType() == MDEV_FLUIDSYNTH && force)
-				{
-					// FluidSynth must reload the song to change the patch set.
-					auto mi = mus_playing;
-					S_StopMusic(true);
-					S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
-				}
-				else
-				{
-					song->Stop();
-					S_StartMusicPlaying(song, song->m_Looping, -1, 0);
-				}
-			}
-		}
+		// Reload the song to change the device
+		auto mi = mus_playing;
+		S_StopMusic(true);
+		S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
 	}
-	// 'force' 
-	if (!force) oldmididev = newdev;
 }
 
 //==========================================================================
@@ -646,9 +625,10 @@ void S_StopMusic (bool force)
 			{
 				S_ResumeMusic();
 				S_StopStream();
-				mus_playing.handle->Stop();
-				delete mus_playing.handle;
+				ZMusic_Stop(mus_playing.handle);
+				auto h = mus_playing.handle;
 				mus_playing.handle = nullptr;
+				ZMusic_Close(h);
 			}
 			mus_playing.LastSong = std::move(mus_playing.name);
 		}
@@ -658,8 +638,9 @@ void S_StopMusic (bool force)
 		//Printf("Unable to stop %s: %s\n", mus_playing.name.GetChars(), err.what());
 		if (mus_playing.handle != nullptr)
 		{
-			delete mus_playing.handle;
+			auto h = mus_playing.handle;
 			mus_playing.handle = nullptr;
+			ZMusic_Close(h);
 		}
 		mus_playing.name = "";
 	}

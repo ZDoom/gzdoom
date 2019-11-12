@@ -250,6 +250,7 @@ void FThinkerCollection::DestroyAllThinkers()
 	GC::FullGC();
 	if (error)
 	{
+		ClearGlobalVMStack();
 		I_Error("DestroyAllThinkers failed");
 	}
 }

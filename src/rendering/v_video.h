@@ -664,9 +664,13 @@ public:
 		savedyfac = CleanYfac;
 		savedwidth = CleanWidth;
 		savedheight = CleanHeight;
-		V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
-		CleanWidth = screen->GetWidth() / CleanXfac;
-		CleanHeight = screen->GetHeight() / CleanYfac;
+
+		if (screen)
+		{
+			V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
+			CleanWidth = screen->GetWidth() / CleanXfac;
+			CleanHeight = screen->GetHeight() / CleanYfac;
+		}
 	}
 
 	~ScaleOverrider()

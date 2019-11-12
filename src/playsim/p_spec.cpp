@@ -592,12 +592,10 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 		{
 			if (printmessage)
 			{
-				if (!showsecretsector || sectornum < 0) C_MidPrint(nullptr, GStrings["SECRETMESSAGE"]);
-				else
+				C_MidPrint(nullptr, GStrings["SECRETMESSAGE"]);
+				if (showsecretsector && sectornum >= 0) 
 				{
-					FString s = GStrings["SECRETMESSAGE"];
-					s.AppendFormat(" (Sector %d)", sectornum);
-					C_MidPrint(nullptr, s);
+					Printf(PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
 				}
 			}
 			if (playsound) S_Sound (CHAN_AUTO | CHAN_UI, "misc/secret", 1, ATTN_NORM);

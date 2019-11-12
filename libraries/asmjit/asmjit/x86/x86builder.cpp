@@ -1,54 +1,66 @@
 // [AsmJit]
-// Machine Code Generation for C++.
+// Complete x86/x64 JIT and Remote Assembler for C++.
 //
 // [License]
 // Zlib - See LICENSE.md file in the package.
 
+// [Export]
 #define ASMJIT_EXPORTS
 
-#include "../core/build.h"
-#if defined(ASMJIT_BUILD_X86) && !defined(ASMJIT_NO_COMPILER)
+// [Guard]
+#include "../asmjit_build.h"
+#if defined(ASMJIT_BUILD_X86) && !defined(ASMJIT_DISABLE_COMPILER)
 
-#include "../x86/x86assembler.h"
+// [Dependencies]
 #include "../x86/x86builder.h"
 
-ASMJIT_BEGIN_SUB_NAMESPACE(x86)
+// [Api-Begin]
+#include "../asmjit_apibegin.h"
+
+namespace asmjit {
 
 // ============================================================================
-// [asmjit::x86::Builder - Construction / Destruction]
+// [asmjit::X86Builder - Construction / Destruction]
 // ============================================================================
 
-Builder::Builder(CodeHolder* code) noexcept : BaseBuilder() {
+X86Builder::X86Builder(CodeHolder* code) noexcept : CodeBuilder() {
   if (code)
     code->attach(this);
 }
-Builder::~Builder() noexcept {}
+X86Builder::~X86Builder() noexcept {}
 
 // ============================================================================
-// [asmjit::x86::Builder - Finalize]
+// [asmjit::X86Builder - Events]
 // ============================================================================
 
-Error Builder::finalize() {
-  ASMJIT_PROPAGATE(runPasses());
-  Assembler a(_code);
-  return serialize(&a);
-}
-
-// ============================================================================
-// [asmjit::x86::Builder - Events]
-// ============================================================================
-
-Error Builder::onAttach(CodeHolder* code) noexcept {
-  uint32_t archId = code->archId();
-  if (!ArchInfo::isX86Family(archId))
+Error X86Builder::onAttach(CodeHolder* code) noexcept {
+  uint32_t archType = code->getArchType();
+  if (!ArchInfo::isX86Family(archType))
     return DebugUtils::errored(kErrorInvalidArch);
 
   ASMJIT_PROPAGATE(Base::onAttach(code));
 
-  _gpRegInfo.setSignature(archId == ArchInfo::kIdX86 ? uint32_t(Gpd::kSignature) : uint32_t(Gpq::kSignature));
+  if (archType == ArchInfo::kTypeX86)
+    _nativeGpArray = x86OpData.gpd;
+  else
+    _nativeGpArray = x86OpData.gpq;
+  _nativeGpReg = _nativeGpArray[0];
   return kErrorOk;
 }
 
-ASMJIT_END_SUB_NAMESPACE
+// ============================================================================
+// [asmjit::X86Builder - Inst]
+// ============================================================================
 
-#endif // ASMJIT_BUILD_X86 && !ASMJIT_NO_COMPILER
+Error X86Builder::_emit(uint32_t instId, const Operand_& o0, const Operand_& o1, const Operand_& o2, const Operand_& o3) {
+  // TODO:
+  return kErrorOk;
+}
+
+} // asmjit namespace
+
+// [Api-End]
+#include "../asmjit_apiend.h"
+
+// [Guard]
+#endif // ASMJIT_BUILD_X86 && !ASMJIT_DISABLE_COMPILER

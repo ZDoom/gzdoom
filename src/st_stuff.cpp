@@ -300,6 +300,7 @@ static cheatseq_t SpecialCheats[] =
 
 
 CVAR(Bool, allcheats, false, CVAR_ARCHIVE)
+CVAR(Bool, nocheats, false, CVAR_ARCHIVE)
 
 // Respond to keyboard input events, intercept cheats.
 // [RH] Cheats eat the last keypress used to trigger them
@@ -307,7 +308,11 @@ bool ST_Responder (event_t *ev)
 {
 	bool eat = false;
 
-	if (!allcheats)
+	if (nocheats)
+	{
+		return false;
+	}
+	else if (!allcheats)
 	{
 		cheatseq_t *cheats;
 		int numcheats;

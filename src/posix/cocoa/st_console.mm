@@ -172,7 +172,7 @@ void FConsoleWindow::ShowFatalError(const char* const message)
 	[quitButton setTitle:@"Quit"];
 	[quitButton setKeyEquivalent:@"\r"];
 	[quitButton setTarget:NSApp];
-	[quitButton setAction:@selector(terminate:)];
+	[quitButton setAction:@selector(stopModal)];
 
 	NSView* quitPanel = [[NSView alloc] initWithFrame:NSMakeRect(0.0f, 0.0f, textViewWidth, 32.0f)];
 	[quitPanel setAutoresizingMask:NSViewWidthSizable];
@@ -461,8 +461,8 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 		[m_netAbortButton setBezelStyle:NSRoundedBezelStyle];
 		[m_netAbortButton setTitle:@"Cancel"];
 		[m_netAbortButton setKeyEquivalent:@"\r"];
-		[m_netAbortButton setTarget:NSApp];
-		[m_netAbortButton setAction:@selector(terminate:)];
+		[m_netAbortButton setTarget:[NSApp delegate]];
+		[m_netAbortButton setAction:@selector(sendExitEvent:)];
 
 		// Panel for controls above
 		m_netView = [[NSView alloc] initWithFrame:NSMakeRect(0.0f, 0.0f, 512.0f, NET_VIEW_HEIGHT)];

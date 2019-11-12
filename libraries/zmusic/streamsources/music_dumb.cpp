@@ -86,7 +86,6 @@ protected:
 	size_t written;
 	DUH *duh;
 	DUH_SIGRENDERER *sr;
-	std::mutex crit_sec;
 
 	bool open2(long pos);
 	long render(double volume, double delta, long samples, sample_t **buffer);
@@ -950,7 +949,6 @@ bool DumbSong::GetData(void *buffer, size_t sizebytes)
 		memset(buffer, 0, sizebytes);
 		return false;
 	}
-	std::lock_guard<std::mutex> lock_(crit_sec);
 	
 	while (sizebytes > 0)
 	{
@@ -1070,7 +1068,6 @@ bool DumbSong::SetSubsong(int order)
 		start_order = order;
 		return true;
 	}
-	std::lock_guard<std::mutex> lock(crit_sec);
 	DUH_SIGRENDERER *oldsr = sr;
 	sr = NULL;
 	start_order = order;

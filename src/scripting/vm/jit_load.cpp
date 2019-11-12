@@ -17,7 +17,7 @@ void JitCompiler::EmitLK()
 void JitCompiler::EmitLKF()
 {
 	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm(konstf + BC));
+	cc.mov(base, asmjit::imm_ptr(konstf + BC));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(base));
 }
 
@@ -25,7 +25,7 @@ void JitCompiler::EmitLKS()
 {
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, regS[A]);
-	call->setArg(1, asmjit::imm(konsts + BC));
+	call->setArg(1, asmjit::imm_ptr(konsts + BC));
 }
 
 void JitCompiler::EmitLKP()
@@ -36,26 +36,26 @@ void JitCompiler::EmitLKP()
 void JitCompiler::EmitLK_R()
 {
 	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm(konstd + C));
-	cc.mov(regD[A], asmjit::x86::ptr(base, regD[B].cloneAs(base), 2));
+	cc.mov(base, asmjit::imm_ptr(konstd + C));
+	cc.mov(regD[A], asmjit::x86::ptr(base, regD[B], 2));
 }
 
 void JitCompiler::EmitLKF_R()
 {
 	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm(konstf + C));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(base, regD[B].cloneAs(base), 3));
+	cc.mov(base, asmjit::imm_ptr(konstf + C));
+	cc.movsd(regF[A], asmjit::x86::qword_ptr(base, regD[B], 3));
 }
 
 void JitCompiler::EmitLKS_R()
 {
 	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm(konsts + C));
+	cc.mov(base, asmjit::imm_ptr(konsts + C));
 	auto ptr = newTempIntPtr();
 	if (cc.is64Bit())
-		cc.lea(ptr, asmjit::x86::ptr(base, regD[B].cloneAs(base), 3));
+		cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 3));
 	else
-		cc.lea(ptr, asmjit::x86::ptr(base, regD[B].cloneAs(base), 2));
+		cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 2));
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);
@@ -64,11 +64,11 @@ void JitCompiler::EmitLKS_R()
 void JitCompiler::EmitLKP_R()
 {
 	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm(konsta + C));
+	cc.mov(base, asmjit::imm_ptr(konsta + C));
 	if (cc.is64Bit())
-		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B].cloneAs(base), 3));
+		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 3));
 	else
-		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B].cloneAs(base), 2));
+		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 2));
 }
 
 void JitCompiler::EmitLFP()
@@ -107,7 +107,7 @@ void JitCompiler::EmitLB()
 void JitCompiler::EmitLB_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsx(regD[A], asmjit::x86::byte_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.movsx(regD[A], asmjit::x86::byte_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLH()
@@ -119,7 +119,7 @@ void JitCompiler::EmitLH()
 void JitCompiler::EmitLH_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsx(regD[A], asmjit::x86::word_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.movsx(regD[A], asmjit::x86::word_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLW()
@@ -131,7 +131,7 @@ void JitCompiler::EmitLW()
 void JitCompiler::EmitLW_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.mov(regD[A], asmjit::x86::dword_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.mov(regD[A], asmjit::x86::dword_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLBU()
@@ -143,19 +143,19 @@ void JitCompiler::EmitLBU()
 void JitCompiler::EmitLBU_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movzx(regD[A], asmjit::x86::byte_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.movzx(regD[A].r8Lo(), asmjit::x86::byte_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLHU()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movzx(regD[A], asmjit::x86::word_ptr(regA[B], konstd[C]));
+	cc.movzx(regD[A].r16(), asmjit::x86::word_ptr(regA[B], konstd[C]));
 }
 
 void JitCompiler::EmitLHU_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movzx(regD[A], asmjit::x86::word_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.movzx(regD[A].r16(), asmjit::x86::word_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLSP()
@@ -169,7 +169,7 @@ void JitCompiler::EmitLSP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	cc.xorpd(regF[A], regF[A]);
-	cc.cvtss2sd(regF[A], asmjit::x86::dword_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.cvtss2sd(regF[A], asmjit::x86::dword_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLDP()
@@ -181,7 +181,7 @@ void JitCompiler::EmitLDP()
 void JitCompiler::EmitLDP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.movsd(regF[A], asmjit::x86::qword_ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLS()
@@ -198,7 +198,7 @@ void JitCompiler::EmitLS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = newTempIntPtr();
-	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);
@@ -234,7 +234,7 @@ void JitCompiler::EmitLO_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 
-	cc.mov(regA[A], asmjit::x86::ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.mov(regA[A], asmjit::x86::ptr(regA[B], regD[C]));
 	EmitReadBarrier();
 }
 
@@ -264,7 +264,7 @@ void JitCompiler::EmitLO_R()
 	EmitNullPointerThrow(B, X_READ_NIL);
 
 	auto ptr = newTempIntPtr();
-	cc.mov(ptr, asmjit::x86::ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.mov(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 
 	auto result = newResultIntPtr();
 	auto call = CreateCall<DObject*, DObject*>(ReadBarrier);
@@ -284,7 +284,7 @@ void JitCompiler::EmitLP()
 void JitCompiler::EmitLP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.mov(regA[A], asmjit::x86::ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.mov(regA[A], asmjit::x86::ptr(regA[B], regD[C]));
 }
 
 void JitCompiler::EmitLV2()
@@ -300,7 +300,7 @@ void JitCompiler::EmitLV2_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto tmp = newTempIntPtr();
-	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
 }
@@ -319,7 +319,7 @@ void JitCompiler::EmitLV3_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto tmp = newTempIntPtr();
-	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
 	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
@@ -344,7 +344,7 @@ void JitCompiler::EmitLCS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
 	auto ptr = newTempIntPtr();
-	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C].cloneAs(regA[B])));
+	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
 	auto call = CreateCall<void, FString*, char**>(SetString);
 	call->setArg(0, regS[A]);
 	call->setArg(1, ptr);
@@ -356,5 +356,5 @@ void JitCompiler::EmitLBIT()
 	cc.movsx(regD[A], asmjit::x86::byte_ptr(regA[B]));
 	cc.and_(regD[A], C);
 	cc.cmp(regD[A], 0);
-	cc.setne(regD[A].r8());
+	cc.setne(regD[A]);
 }

@@ -196,16 +196,14 @@ MusInfo* CDDA_OpenSong(MusicIO::FileInterface* reader)
 
 #else
 
-#include <stdexcept>
-
 MusInfo* CD_OpenSong(int track, int id)
 {
-	throw std::runtime_error("CD Audio playback not supported");
+	return nullptr;
 }
 
 MusInfo* CDDA_OpenSong(MusicIO::FileInterface* reader)
 {
-	throw std::runtime_error("CD Audio playback not supported");
+	return nullptr;
 }
 
 

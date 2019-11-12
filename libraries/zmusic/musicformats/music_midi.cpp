@@ -276,9 +276,11 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 #endif
 				// Intentional fall-through for non-Windows systems.
 
+#ifdef HAVE_FLUIDSYNTH
 			case MDEV_FLUIDSYNTH:
 				dev = CreateFluidSynthMIDIDevice(samplerate, Args.c_str());
 				break;
+#endif // HAVE_FLUIDSYNTH
 
 			case MDEV_OPL:
 				dev = CreateOplMIDIDevice(Args.c_str());
@@ -568,10 +570,12 @@ bool MIDIStreamer::IsPlaying()
 {
 	if (m_Status != STATE_Stopped && (MIDI == NULL || (EndQueued != 0 && EndQueued < 4)))
 	{
+		std::lock_guard<std::mutex> lock(CritSec);
 		Stop();
 	}
 	if (m_Status != STATE_Stopped && !MIDI->IsOpen())
 	{
+		std::lock_guard<std::mutex> lock(CritSec);
 		Stop();
 	}
 	return m_Status != STATE_Stopped;
@@ -693,7 +697,11 @@ void MIDIStreamer::Callback(void *userdata)
 
 void MIDIStreamer::Update()
 {
-	if (MIDI != nullptr && !MIDI->Update()) Stop();
+	if (MIDI != nullptr && !MIDI->Update())
+	{
+		std::lock_guard<std::mutex> lock(CritSec);
+		Stop();
+	}
 }
 
 //==========================================================================

@@ -73,6 +73,9 @@
 #define RIGHTMARGIN 8
 #define BOTTOMARGIN 12
 
+extern bool hud_toggled;
+void D_ToggleHud();
+
 
 CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -917,7 +920,7 @@ int PrintString (int iprintlevel, const char *outline)
 	return 0;	// Don't waste time on calculating this if nothing at all was printed...
 }
 
-extern bool gameisdead;
+bool gameisdead;
 
 int VPrintf (int printlevel, const char *format, va_list parms)
 {
@@ -1256,6 +1259,8 @@ void C_DrawConsole ()
 
 void C_FullConsole ()
 {
+	if (hud_toggled)
+		D_ToggleHud();
 	if (demoplayback)
 		G_CheckDemoStatus ();
 	D_QuitNetGame ();
@@ -1290,6 +1295,8 @@ void C_ToggleConsole ()
 		HistPos = NULL;
 		TabbedLast = false;
 		TabbedList = false;
+		if (hud_toggled)
+			D_ToggleHud();
 	}
 	else if (gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP)
 	{

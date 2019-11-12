@@ -69,8 +69,6 @@ namespace swrenderer
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
-		double yscale;
-		uint8_t flipx;
 		double zpos;
 		int needrepeat = 0;
 		sector_t *back;
@@ -127,7 +125,6 @@ namespace swrenderer
 		}
 
 		FTexture *tex = TexMan.GetPalettedTexture(decal->PicNum, true);
-		flipx = (uint8_t)(decal->RenderFlags & RF_XFLIP);
 
 		if (tex == NULL || !tex->isValid())
 		{
@@ -149,13 +146,11 @@ namespace swrenderer
 		decal_pos = { dcx, dcy };
 
 		DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
-		float maskedScaleY;
 
 		decal_left = decal_pos - edge_left * angvec - thread->Viewport->viewpoint.Pos;
 		decal_right = decal_pos + edge_right * angvec - thread->Viewport->viewpoint.Pos;
 
 		CameraLight *cameraLight;
-		double texturemid;
 
 		FWallCoords WallC;
 		if (WallC.Init(thread, decal_left, decal_right, TOO_CLOSE_Z))
@@ -166,9 +161,6 @@ namespace swrenderer
 
 		if (x1 >= clipper->x2 || x2 <= clipper->x1)
 			return;
-
-		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(thread, &WallC);
 
 		if (drawsegPass)
 		{
@@ -230,29 +222,12 @@ namespace swrenderer
 			}
 		}
 
-		yscale = decal->ScaleY;
-		texturemid = WallSpriteTile->GetTopOffset(0) + (zpos - thread->Viewport->viewpoint.Pos.Z) / yscale;
-
 		// Clip sprite to drawseg
 		x1 = MAX<int>(clipper->x1, x1);
 		x2 = MIN<int>(clipper->x2, x2);
 		if (x1 >= x2)
 		{
 			return;
-		}
-
-		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project(thread->Viewport.get(), WallSpriteTile->GetWidth(), x1, x2, WallT);
-
-		if (flipx)
-		{
-			int i;
-			int right = (WallSpriteTile->GetWidth() << FRACBITS) - 1;
-
-			for (i = x1; i < x2; i++)
-			{
-				walltexcoords.UPos[i] = right - walltexcoords.UPos[i];
-			}
 		}
 
 		// Prepare lighting
@@ -269,19 +244,13 @@ namespace swrenderer
 		cameraLight = CameraLight::Instance();
 
 		// Draw it
-		bool sprflipvert;
-		if (decal->RenderFlags & RF_YFLIP)
-		{
-			sprflipvert = true;
-			yscale = -yscale;
-			texturemid -= WallSpriteTile->GetHeight();
-		}
-		else
-		{
-			sprflipvert = false;
-		}
 
-		maskedScaleY = float(1 / yscale);
+		FWallTmapVals WallT;
+		WallT.InitFromWallCoords(thread, &WallC);
+
+		ProjectedWallTexcoords walltexcoords;
+		walltexcoords.ProjectSprite(thread->Viewport.get(), zpos, decal->ScaleY, decal->RenderFlags & RF_XFLIP, decal->RenderFlags & RF_YFLIP, x1, x2, WallT, WallSpriteTile);
+
 		do
 		{
 			int x = x1;
@@ -296,13 +265,14 @@ namespace swrenderer
 			if (visible)
 			{
 				thread->PrepareTexture(WallSpriteTile, decal->RenderStyle);
+				bool sprflipvert = (decal->RenderFlags & RF_YFLIP);
 				while (x < x2)
 				{
 					if (calclighting)
 					{ // calculate lighting
 						drawerargs.SetLight(lightpos, light.GetLightLevel(), light.GetFoggy(), thread->Viewport.get());
 					}
-					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
+					drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
 					lightpos += light.GetLightStep();
 					x++;
 				}
@@ -314,20 +284,5 @@ namespace swrenderer
 			mceilingclip = thread->OpaquePass->floorclip;
 			mfloorclip = wallbottom;
 		} while (needrepeat--);
-	}
-
-	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
-	{
-		auto viewport = thread->Viewport.get();
-		
-		float iscale = walltexcoords.VStep[x] * maskedScaleY;
-		double spryscale = 1 / iscale;
-		double sprtopscreen;
-		if (sprflipvert)
-			sprtopscreen = viewport->CenterY + texturemid * spryscale;
-		else
-			sprtopscreen = viewport->CenterY - texturemid * spryscale;
-
-		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
 	}
 }

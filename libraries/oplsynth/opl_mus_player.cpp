@@ -66,7 +66,6 @@ OPLmusicBlock::~OPLmusicBlock()
 
 void OPLmusicBlock::ResetChips (int numchips)
 {
-	std::lock_guard<std::mutex> lock(ChipAccess);
 	io->Reset ();
 	NumChips = io->Init(currentCore, std::min(numchips, 2), FullPan, false);
 }
@@ -255,7 +254,6 @@ bool OPLmusicBlock::ServiceStream (void *buff, int numbytes)
 
 	memset(buff, 0, numbytes);
 
-	std::lock_guard<std::mutex> lock(ChipAccess);
 	while (numsamples > 0)
 	{
 		int tick_in = int(NextTickIn);

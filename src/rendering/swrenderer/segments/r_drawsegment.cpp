@@ -131,10 +131,10 @@ namespace swrenderer
 			{
 				ds = Segment(groupIndex);
 
-				if (ds->silhouette & SIL_BOTTOM)
+				if (ds->drawsegclip.silhouette & SIL_BOTTOM)
 				{
 					short *clip1 = clipbottom + ds->x1;
-					const short *clip2 = ds->sprbottomclip;
+					const short *clip2 = ds->drawsegclip.sprbottomclip;
 					int i = ds->x2 - ds->x1;
 					do
 					{
@@ -145,10 +145,10 @@ namespace swrenderer
 					} while (--i);
 				}
 
-				if (ds->silhouette & SIL_TOP)
+				if (ds->drawsegclip.silhouette & SIL_TOP)
 				{
 					short *clip1 = cliptop + ds->x1;
-					const short *clip2 = ds->sprtopclip;
+					const short *clip2 = ds->drawsegclip.sprtopclip;
 					int i = ds->x2 - ds->x1;
 					do
 					{

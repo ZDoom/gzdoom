@@ -611,7 +611,7 @@ int RunEndoom()
 void ST_Endoom()
 {
 	int code = RunEndoom();
-	exit(code);
+	throw CExitEvent(code);
 
 }
 

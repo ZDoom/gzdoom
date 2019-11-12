@@ -45,7 +45,7 @@ struct CRestartException
 	char dummy;
 };
 
-void D_DoomMain (void);
+int D_DoomMain (void);
 
 
 void D_Display ();

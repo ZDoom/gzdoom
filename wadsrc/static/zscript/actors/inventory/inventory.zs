@@ -790,7 +790,7 @@ class Inventory : Actor
 			if (player != NULL)
 			{
 				PlayPickupSound (player.mo);
-				if (!bNoScreenFlash)
+				if (!bNoScreenFlash && player.playerstate != PST_DEAD)
 				{
 					player.bonuscount = BONUSADD;
 				}

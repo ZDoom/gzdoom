@@ -84,7 +84,6 @@ public:
 	SoundStreamInfo GetStreamInfo() const override;
 
 protected:
-	std::mutex CritSec;
 	double Tempo;
 	double Division;
 	double SamplesPerTick;

@@ -1,40 +1,43 @@
 cmake_minimum_required( VERSION 2.8.7 )
 
+use_fast_math()
+require_stricmp()
+require_strnicmp()
+
 if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wno-unused-parameter -fomit-frame-pointer" )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11" )
 endif()
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}")
-
 include( CheckFunctionExists )
-
-CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
-if( NOT STRICMP_EXISTS )
-	add_definitions( -Dstricmp=strcasecmp )
-endif()
-
-CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
-if( NOT STRNICMP_EXISTS )
-	add_definitions( -Dstrnicmp=strncasecmp )
-endif()
 
 if( DYN_SNDFILE)
 	add_definitions( -DHAVE_SNDFILE -DDYN_SNDFILE )
-elseif( SNDFILE_FOUND )
-	add_definitions( -DHAVE_SNDFILE )
+else()
+	find_package( SndFile )
+
+	if( SNDFILE_FOUND )
+		add_definitions( -DHAVE_SNDFILE )
+	endif()
 endif()
 
 if( DYN_MPG123)
 	add_definitions( -DHAVE_MPG123 -DDYN_MPG123 )
-elseif( MPG123_FOUND )
-	add_definitions( -DHAVE_MPG123 )
+else()
+	find_package( MPG123 )
+
+	if( MPG123_FOUND )
+		add_definitions( -DHAVE_MPG123 )
+	endif()
 endif()
 
 if( DYN_FLUIDSYNTH )
 	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
-elseif( FLUIDSYNTH_FOUND )
-	add_definitions( -DHAVE_FLUIDSYNTH )
+else()
+	find_package( FluidSynth )
+
+	if( FLUIDSYNTH_FOUND )
+		add_definitions( -DHAVE_FLUIDSYNTH )
+	endif()
 endif()
 
 
@@ -93,6 +96,20 @@ add_library( zmusic STATIC
 	)
 target_link_libraries( zmusic adl dumb gme oplsynth opn timidity timidityplus wildmidi )
 
+if( NOT DYN_SNDFILE AND SNDFILE_FOUND )
+	include_directories( "${SNDFILE_INCLUDE_DIRS}" )
+	target_link_libraries( zmusic ${SNDFILE_LIBRARIES} )
+endif()
+
+if( NOT DYN_MPG123 AND MPG123_FOUND )
+	include_directories( "${MPG123_INCLUDE_DIR}" )
+	target_link_libraries( zmusic ${MPG123_LIBRARIES} )
+endif()
+
+if( NOT DYN_FLUIDSYNTH AND FLUIDSYNTH_FOUND )
+	include_directories( "${FLUIDSYNTH_INCLUDE_DIR}" )
+	target_link_libraries( zmusic ${FLUIDSYNTH_LIBRARIES} )
+endif()
 
 source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mididevices/.+")
 source_group("MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/midisources/.+")

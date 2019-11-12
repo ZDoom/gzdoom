@@ -36,12 +36,15 @@
 
 #include <mutex>
 #include <stdio.h>
+#include <stdlib.h>
 #include "mididevice.h"
 #include "zmusic/mus2midi.h"
 
 // FluidSynth implementation of a MIDI device -------------------------------
 
 FluidConfig fluidConfig;
+
+#ifdef HAVE_FLUIDSYNTH
 
 #if !defined DYN_FLUIDSYNTH
 #include <fluidsynth.h>
@@ -76,8 +79,14 @@ protected:
 	fluid_synth_t *FluidSynth;
 	int (*printfunc)(const char*, ...);
 
+	// Possible results returned by fluid_settings_...() functions
+	// Initial values are for FluidSynth 2.x
+	int FluidSettingsResultOk     = FLUID_OK;
+	int FluidSettingsResultFailed = FLUID_FAILED;
+
 #ifdef DYN_FLUIDSYNTH
 	enum { FLUID_FAILED = -1, FLUID_OK = 0 };
+	static TReqProc<FluidSynthModule, void (*)(int *, int*, int*)> fluid_version;
 	static TReqProc<FluidSynthModule, fluid_settings_t *(*)()> new_fluid_settings;
 	static TReqProc<FluidSynthModule, fluid_synth_t *(*)(fluid_settings_t *)> new_fluid_synth;
 	static TReqProc<FluidSynthModule, int (*)(fluid_synth_t *)> delete_fluid_synth;
@@ -129,8 +138,10 @@ protected:
 
 #ifdef __APPLE__
 #define FLUIDSYNTHLIB1	"libfluidsynth.1.dylib"
+#define FLUIDSYNTHLIB2	"libfluidsynth.2.dylib"
 #else // !__APPLE__
 #define FLUIDSYNTHLIB1	"libfluidsynth.so.1"
+#define FLUIDSYNTHLIB2	"libfluidsynth.so.2"
 #endif // __APPLE__
 #endif
 
@@ -175,6 +186,16 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(int samplerate, std::vector<std::stri
 		throw std::runtime_error("Failed to load FluidSynth.\n");
 	}
 #endif
+	int major = 0, minor = 0, micro = 0;
+	fluid_version(&major, &minor, &micro);
+
+	if (major < 2)
+	{
+		// FluidSynth 1.x: fluid_settings_...() functions return 1 on success and 0 otherwise
+		FluidSettingsResultOk = 1;
+		FluidSettingsResultFailed = 0;
+	}
+
 	FluidSettings = new_fluid_settings();
 	if (FluidSettings == NULL)
 	{
@@ -377,7 +398,7 @@ void FluidSynthMIDIDevice::ChangeSettingInt(const char *setting, int value)
 			if (printfunc) printfunc("Setting polyphony to %d failed.\n", value);
 		}
 	}
-	else if (0 == fluid_settings_setint(FluidSettings, setting, value))
+	else if (FluidSettingsResultFailed == fluid_settings_setint(FluidSettings, setting, value))
 	{
 		if (printfunc) printfunc("Failed to set %s to %d.\n", setting, value);
 	}
@@ -416,7 +437,7 @@ void FluidSynthMIDIDevice::ChangeSettingNum(const char *setting, double value)
 	{
 		fluid_synth_set_chorus(FluidSynth, fluidConfig.fluid_chorus_voices, fluidConfig.fluid_chorus_level, fluidConfig.fluid_chorus_speed, fluidConfig.fluid_chorus_depth, fluidConfig.fluid_chorus_type);
 	}
-	else if (0 == fluid_settings_setnum(FluidSettings, setting, value))
+	else if (FluidSettingsResultFailed == fluid_settings_setnum(FluidSettings, setting, value))
 	{
 		if (printfunc) printfunc("Failed to set %s to %g.\n", setting, value);
 	}
@@ -439,7 +460,7 @@ void FluidSynthMIDIDevice::ChangeSettingString(const char *setting, const char *
 	}
 	setting += 11;
 
-	if (0 == fluid_settings_setstr(FluidSettings, setting, value))
+	if (FluidSettingsResultFailed == fluid_settings_setstr(FluidSettings, setting, value))
 	{
 		if (printfunc) printfunc("Failed to set %s to %s.\n", setting, value);
 	}
@@ -458,7 +479,6 @@ std::string FluidSynthMIDIDevice::GetStats()
 		return "FluidSynth is invalid";
 	}
 
-	std::lock_guard<std::mutex> lock(CritSec);
 	int polyphony = fluid_synth_get_polyphony(FluidSynth);
 	int voices = fluid_synth_get_active_voice_count(FluidSynth);
 	double load = fluid_synth_get_cpu_load(FluidSynth);
@@ -486,6 +506,7 @@ std::string FluidSynthMIDIDevice::GetStats()
 FModuleMaybe<DYN_FLUIDSYNTH> FluidSynthModule{"FluidSynth"};
 
 #define DYN_FLUID_SYM(x) decltype(FluidSynthMIDIDevice::x) FluidSynthMIDIDevice::x{#x}
+DYN_FLUID_SYM(fluid_version);
 DYN_FLUID_SYM(new_fluid_settings);
 DYN_FLUID_SYM(new_fluid_synth);
 DYN_FLUID_SYM(delete_fluid_synth);
@@ -527,19 +548,12 @@ bool FluidSynthMIDIDevice::LoadFluidSynth(const char *fluid_lib)
 			return true;
 	}
 
-#ifdef FLUIDSYNTHLIB2
 	if(!FluidSynthModule.Load({FLUIDSYNTHLIB1, FLUIDSYNTHLIB2}))
 	{
 		if (printfunc) printfunc("Could not load " FLUIDSYNTHLIB1 " or " FLUIDSYNTHLIB2 "\n");
 		return false;
 	}
-#else
-	if(!FluidSynthModule.Load({fluid_lib, FLUIDSYNTHLIB1}))
-	{
-		if (printfunc) printfunc("Could not load " FLUIDSYNTHLIB1 ": %s\n", dlerror());
-		return false;
-	}
-#endif
+
 	return true;
 }
 
@@ -571,6 +585,8 @@ extern "C" unsigned __stdcall GetSystemDirectoryA(char* lpBuffer, unsigned uSize
 
 void Fluid_SetupConfig(const char* patches, std::vector<std::string> &patch_paths, bool systemfallback)
 {
+	if (*patches == 0) patches = fluidConfig.fluid_patchset.c_str();
+
 	//Resolve the paths here, the renderer will only get a final list of file names.
 
 	if (musicCallbacks.PathForSoundfont)
@@ -671,3 +687,5 @@ MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const char *Args)
 	Fluid_SetupConfig(Args, fluid_patchset, true);
 	return new FluidSynthMIDIDevice(samplerate, fluid_patchset, musicCallbacks.Fluid_MessageFunc);
 }
+
+#endif // HAVE_FLUIDSYNTH

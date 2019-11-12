@@ -54,8 +54,6 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/viewport/r_spritedrawer.h"
 
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
-
 namespace swrenderer
 {
 	RenderDrawSegment::RenderDrawSegment(RenderThread *thread)
@@ -95,49 +93,39 @@ namespace swrenderer
 		float alpha = (float)MIN(curline->linedef->alpha, 1.);
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
-		SpriteDrawerArgs columndrawerargs;
-		ColormapLight cmlight;
-		cmlight.SetColormap(Thread, MINZ, mLight.GetLightLevel(), mLight.GetFoggy(), mLight.GetBaseColormap(), false, false, false, false, false);
-		bool visible = columndrawerargs.SetStyle(viewport, LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, cmlight);
-		if (!visible && !ds->bFogBoundary && !ds->Has3DFloorWalls())
+		bool visible = alpha > 0.0f;
+		if (!visible && !ds->drawsegclip.bFogBoundary && !ds->Has3DFloorWalls())
 		{
 			return;
 		}
 
 		// [RH] Draw fog partition
-		bool renderwall = true;
-		bool notrelevant = false;
-		if (ds->bFogBoundary)
+		if (ds->drawsegclip.bFogBoundary)
 		{
-			const short *mfloorclip = ds->sprbottomclip - ds->x1;
-			const short *mceilingclip = ds->sprtopclip - ds->x1;
+			const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
+			const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
 
 			RenderFogBoundary renderfog;
 			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight);
-
-			if (ds->maskedtexturecol == nullptr)
-				renderwall = false;
-		}
-		else if ((ds->Has3DFloorWalls() && !ds->Has3DFloorMidTexture()) || !visible)
-		{
-			renderwall = false;
 		}
 
-		if (renderwall)
-			notrelevant = RenderWall(ds, x1, x2, columndrawerargs, visible);
+		bool notrelevant = false;
+		if (ds->texcoords && visible)
+			notrelevant = RenderWall(ds, x1, x2);
 
 		if (ds->Has3DFloorFrontSectorWalls() || ds->Has3DFloorBackSectorWalls())
 		{
-			RenderFakeWallRange(ds, x1, x2);
+			Render3DFloorWallRange(ds, x1, x2);
 		}
+
 		if (!notrelevant)
 		{
-			ds->sprclipped = true;
-			fillshort(ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
+			ds->drawsegclip.sprclipped = true;
+			fillshort(ds->drawsegclip.sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
 		}
 	}
 
-	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2, SpriteDrawerArgs &columndrawerargs, bool visible)
+	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2)
 	{
 		auto renderstyle = DefaultRenderStyle();
 		auto viewport = Thread->Viewport.get();
@@ -153,67 +141,24 @@ namespace swrenderer
 		}
 		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 
-		const short *mfloorclip = ds->sprbottomclip - ds->x1;
-		const short *mceilingclip = ds->sprtopclip - ds->x1;
-
-		float *MaskedSWall = ds->swall - ds->x1;
-		float MaskedScaleY = ds->yscale;
-		fixed_t *maskedtexturecol = ds->maskedtexturecol - ds->x1;
-		double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-		float rw_scalestep = ds->iscalestep;
-
-		// find positioning
-		double texheight = tex->GetScaledHeightDouble();
-		double texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
-		if (texheightscale != 1)
-		{
-			texheight = texheight / texheightscale;
-		}
-
-		double texturemid;
-		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
-		{
-			texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
-		}
-		else
-		{
-			texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
-		}
-
-		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+		const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
+		const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
 
 		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 		if (!wrap)
 		{ // Texture does not wrap vertically.
-			double textop;
 
-			bool sprflipvert = false;
-
-			if (MaskedScaleY < 0)
-			{
-				MaskedScaleY = -MaskedScaleY;
-				sprflipvert = true;
-			}
-			if (tex->useWorldPanning(curline->GetLevel()))
-			{
-				// rowoffset is added before the multiply so that the masked texture will
-				// still be positioned in world units rather than texels.
-				texturemid += rowoffset - Thread->Viewport->viewpoint.Pos.Z;
-				textop = texturemid;
-				texturemid *= MaskedScaleY;
-			}
+			// find positioning
+			double texheight = tex->GetScaledHeightDouble() / fabs(curline->sidedef->GetTextureYScale(side_t::mid));
+			double texturemid;
+			if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+				texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
 			else
-			{
-				// rowoffset is added outside the multiply so that it positions the texture
-				// by texels instead of world units.
-				textop = texturemid + rowoffset / MaskedScaleY - Thread->Viewport->viewpoint.Pos.Z;
-				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
-			}
-			if (sprflipvert)
-			{
-				MaskedScaleY = -MaskedScaleY;
-				texturemid -= tex->GetHeight() << FRACBITS;
-			}
+				texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+			double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+			if (tex->useWorldPanning(curline->GetLevel()))
+				rowoffset /= fabs(tex->GetScale().Y * curline->sidedef->GetTextureYScale(side_t::mid));
+			double textop = texturemid + rowoffset - Thread->Viewport->viewpoint.Pos.Z;
 
 			// [RH] Don't bother drawing segs that are completely offscreen
 			if (viewport->globaldclip * ds->WallC.sz1 < -textop && viewport->globaldclip * ds->WallC.sz2 < -textop)
@@ -234,11 +179,6 @@ namespace swrenderer
 			{
 				return true;
 			}
-
-			WallC.sz1 = ds->WallC.sz1;
-			WallC.sz2 = ds->WallC.sz2;
-			WallC.sx1 = ds->WallC.sx1;
-			WallC.sx2 = ds->WallC.sx2;
 
 			// Unclipped vanilla Doom range for the wall. Relies on ceiling/floor clip to clamp the wall in range.
 			double ceilZ = textop;
@@ -271,8 +211,8 @@ namespace swrenderer
 				floorZ = MAX(floorZ, clipZ);
 			}
 
-			wallupper.Project(Thread->Viewport.get(), ceilZ, &WallC);
-			walllower.Project(Thread->Viewport.get(), floorZ, &WallC);
+			wallupper.Project(Thread->Viewport.get(), ceilZ, &ds->WallC);
+			walllower.Project(Thread->Viewport.get(), floorZ, &ds->WallC);
 
 			for (int i = x1; i < x2; i++)
 			{
@@ -293,59 +233,15 @@ namespace swrenderer
 					(curline->sidedef->Flags & WALLF_CLIP_MIDTEX) ||
 					(curline->GetLevel()->ib_compatflags & BCOMPATF_CLIPMIDTEX))
 				{
-					ClipMidtex(x1, x2);
+					ClipMidtex(ds, x1, x2);
 				}
 			}
 
 			mfloorclip = walllower.ScreenY;
 			mceilingclip = wallupper.ScreenY;
-
-			auto cameraLight = CameraLight::Instance();
-			bool needslight = (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0);
-
-			// draw the columns one at a time
-			if (visible)
-			{
-				Thread->PrepareTexture(tex, renderstyle);
-				float lightpos = mLight.GetLightPos(x1);
-				for (int x = x1; x < x2; ++x)
-				{
-					if (needslight)
-						columndrawerargs.SetLight(lightpos, mLight.GetLightLevel(), mLight.GetFoggy(), Thread->Viewport.get());
-
-					fixed_t iscale = xs_Fix<16>::ToFix(MaskedSWall[x] * MaskedScaleY);
-					double sprtopscreen;
-					if (sprflipvert)
-						sprtopscreen = viewport->CenterY + texturemid * spryscale;
-					else
-						sprtopscreen = viewport->CenterY - texturemid * spryscale;
-
-					columndrawerargs.DrawMaskedColumn(Thread, x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, renderstyle);
-
-					lightpos += mLight.GetLightStep();
-					spryscale += rw_scalestep;
-				}
-			}
 		}
 		else
 		{ // Texture does wrap vertically.
-			if (tex->useWorldPanning(curline->GetLevel()))
-			{
-				// rowoffset is added before the multiply so that the masked texture will
-				// still be positioned in world units rather than texels.
-				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z + rowoffset) * MaskedScaleY;
-			}
-			else
-			{
-				// rowoffset is added outside the multiply so that it positions the texture
-				// by texels instead of world units.
-				texturemid = (texturemid - Thread->Viewport->viewpoint.Pos.Z) * MaskedScaleY + rowoffset;
-			}
-
-			WallC.sz1 = ds->WallC.sz1;
-			WallC.sz2 = ds->WallC.sz2;
-			WallC.sx1 = ds->WallC.sx1;
-			WallC.sx2 = ds->WallC.sx2;
 
 			if (clip3d->CurrentSkybox)
 			{ // Midtex clipping doesn't work properly with skyboxes, since you're normally below the floor
@@ -355,13 +251,13 @@ namespace swrenderer
 					(curline->sidedef->Flags & WALLF_CLIP_MIDTEX) ||
 					(curline->GetLevel()->ib_compatflags & BCOMPATF_CLIPMIDTEX))
 				{
-					ClipMidtex(x1, x2);
+					ClipMidtex(ds, x1, x2);
 				}
 			}
 
 			if (m3DFloor.clipTop)
 			{
-				wallupper.Project(Thread->Viewport.get(), m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
+				wallupper.Project(Thread->Viewport.get(), m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 				for (int i = x1; i < x2; i++)
 				{
 					if (wallupper.ScreenY[i] < mceilingclip[i])
@@ -371,7 +267,7 @@ namespace swrenderer
 			}
 			if (m3DFloor.clipBottom)
 			{
-				walllower.Project(Thread->Viewport.get(), m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
+				walllower.Project(Thread->Viewport.get(), m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 				for (int i = x1; i < x2; i++)
 				{
 					if (walllower.ScreenY[i] > mfloorclip[i])
@@ -379,118 +275,59 @@ namespace swrenderer
 				}
 				mfloorclip = walllower.ScreenY;
 			}
-
-			rw_offset = 0;
-			FSoftwareTexture *rw_pic = tex;
-
-			double top, bot;
-			GetMaskedWallTopBottom(ds, top, bot);
-
-			float alpha = FLOAT2FIXED((float)MIN(curline->linedef->alpha, 1.));
-			bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
-
-			RenderWallPart renderWallpart(Thread);
-			renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, additive, alpha, rw_offset, mLight, nullptr);
 		}
+
+		double top, bot;
+		GetMaskedWallTopBottom(ds, top, bot);
+
+		float alpha = FLOAT2FIXED((float)MIN(curline->linedef->alpha, 1.));
+		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
+
+		RenderWallPart renderWallpart(Thread);
+		renderWallpart.Render(frontsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, mLight, nullptr);
 
 		return false;
 	}
 
-	// kg3D - render one fake wall
-	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
+	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
 	{
-		int i;
-		double xscale;
-		double yscale;
-
 		fixed_t Alpha = Scale(rover->alpha, OPAQUE, 255);
 		if (Alpha <= 0)
 			return;
 
 		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
 
-		const short *mfloorclip = ds->sprbottomclip - ds->x1;
-		const short *mceilingclip = ds->sprtopclip - ds->x1;
-
-		//double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-		float *MaskedSWall = ds->swall - ds->x1;
-
-		// find positioning
-		side_t *scaledside;
-		side_t::ETexpart scaledpart;
-		if (rover->flags & FF_UPPERTEXTURE)
-		{
-			scaledside = curline->sidedef;
-			scaledpart = side_t::top;
-		}
-		else if (rover->flags & FF_LOWERTEXTURE)
-		{
-			scaledside = curline->sidedef;
-			scaledpart = side_t::bottom;
-		}
-		else
-		{
-			scaledside = rover->master->sidedef[0];
-			scaledpart = side_t::mid;
-		}
-		xscale = rw_pic->GetScale().X * scaledside->GetTextureXScale(scaledpart);
-		yscale = rw_pic->GetScale().Y * scaledside->GetTextureYScale(scaledpart);
-
-		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
-		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
-		rw_offset = FLOAT2FIXED(curline->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
-		if (rowoffset < 0)
-		{
-			rowoffset += rw_pic->GetHeight();
-		}
-		double texturemid = (planez - Thread->Viewport->viewpoint.Pos.Z) * yscale;
-		if (rw_pic->useWorldPanning(curline->GetLevel()))
-		{
-			// rowoffset is added before the multiply so that the masked texture will
-			// still be positioned in world units rather than texels.
-
-			texturemid = texturemid + rowoffset * yscale;
-			rw_offset = xs_RoundToInt(rw_offset * xscale);
-		}
-		else
-		{
-			// rowoffset is added outside the multiply so that it positions the texture
-			// by texels instead of world units.
-			texturemid += rowoffset;
-		}
-
-		WallC = ds->WallC;
-		WallT = ds->tmapvals;
+		const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
+		const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
-		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
-		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
+		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
+		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 
-		for (i = x1; i < x2; i++)
+		for (int i = x1; i < x2; i++)
 		{
 			if (wallupper.ScreenY[i] < mceilingclip[i])
 				wallupper.ScreenY[i] = mceilingclip[i];
 		}
-		for (i = x1; i < x2; i++)
+		for (int i = x1; i < x2; i++)
 		{
 			if (walllower.ScreenY[i] > mfloorclip[i])
 				walllower.ScreenY[i] = mfloorclip[i];
 		}
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.ProjectPos(Thread->Viewport.get(), curline->sidedef->TexelLength*xscale, ds->WallC.sx1, ds->WallC.sx2, WallT);
+		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC.sx1, ds->WallC.sx2, ds->tmapvals, rw_pic);
 
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, rw_offset, mLight, nullptr);
+		renderWallpart.Render(frontsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, mLight, nullptr);
 
 		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, mLight, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
-	// kg3D - walls of fake floors
-	void RenderDrawSegment::RenderFakeWallRange(DrawSegment *ds, int x1, int x2)
+	void RenderDrawSegment::Render3DFloorWallRange(DrawSegment *ds, int x1, int x2)
 	{
 		int i, j;
 		F3DFloor *rover, *fover = nullptr;
@@ -713,7 +550,7 @@ namespace swrenderer
 					//mLight.lightlevel = ds->lightlevel;
 					mLight.SetColormap(frontsector, curline, lit);
 
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
+					Render3DFloorWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
 			}
@@ -895,7 +732,7 @@ namespace swrenderer
 					//mLight.lightlevel = ds->lightlevel;
 					mLight.SetColormap(frontsector, curline, lit);
 
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
+					Render3DFloorWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
 			}
@@ -903,19 +740,19 @@ namespace swrenderer
 	}
 
 	// Clip a midtexture to the floor and ceiling of the sector in front of it.
-	void RenderDrawSegment::ClipMidtex(int x1, int x2)
+	void RenderDrawSegment::ClipMidtex(DrawSegment* ds, int x1, int x2)
 	{
 		ProjectedWallLine most;
 
 		RenderPortal *renderportal = Thread->Portal.get();
 
-		most.Project(Thread->Viewport.get(), curline->frontsector->ceilingplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+		most.Project(Thread->Viewport.get(), curline->frontsector->ceilingplane, &ds->WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
 			if (wallupper.ScreenY[i] < most.ScreenY[i])
 				wallupper.ScreenY[i] = most.ScreenY[i];
 		}
-		most.Project(Thread->Viewport.get(), curline->frontsector->floorplane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+		most.Project(Thread->Viewport.get(), curline->frontsector->floorplane, &ds->WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 		for (int i = x1; i < x2; ++i)
 		{
 			if (walllower.ScreenY[i] > most.ScreenY[i])

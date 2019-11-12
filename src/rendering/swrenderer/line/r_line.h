@@ -50,24 +50,6 @@ namespace swrenderer
 		bool Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close);
 	};
 
-	struct FWallTmapVals
-	{
-		float		UoverZorg, UoverZstep;
-		float		InvZorg, InvZstep;
-
-		void InitFromWallCoords(RenderThread *thread, const FWallCoords *wallc);
-		void InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right);
-	};
-
-	struct WallPartTexture
-	{
-		fixed_t TextureOffsetU;
-		double TextureMid;
-		double TextureScaleU;
-		double TextureScaleV;
-		FSoftwareTexture *Texture;
-	};
-
 	class SWRenderLine : VisibleSegmentRenderer
 	{
 	public:
@@ -79,6 +61,7 @@ namespace swrenderer
 	private:
 		bool RenderWallSegment(int x1, int x2) override;
 		void SetWallVariables();
+		void SetTextures();
 		void SetTopTexture();
 		void SetMiddleTexture();
 		void SetBottomTexture();
@@ -134,14 +117,12 @@ namespace swrenderer
 
 		ProjectedWallLight mLight;
 
-		double lwallscale;
-
 		bool markfloor; // False if the back side is the same plane.
 		bool markceiling;
 		
-		WallPartTexture mTopPart;
-		WallPartTexture mMiddlePart;
-		WallPartTexture mBottomPart;
+		FSoftwareTexture* mTopTexture;
+		FSoftwareTexture* mMiddleTexture;
+		FSoftwareTexture* mBottomTexture;
 
 		ProjectedWallCull mCeilingClipped;
 		ProjectedWallCull mFloorClipped;
@@ -150,7 +131,6 @@ namespace swrenderer
 		ProjectedWallLine wallbottom;
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;
-		ProjectedWallTexcoords walltexcoords;
 
 		sector_t tempsec; // killough 3/8/98: ceiling/water hack
 	};

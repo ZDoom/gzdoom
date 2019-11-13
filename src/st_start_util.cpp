@@ -60,38 +60,38 @@ void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int righ
 bool ST_Util_CreateStartupWindow();
 
 static const uint16_t IBM437ToUnicode[] = {
-	0x0000, //#nullptr
-	0x0001, //#START OF HEADING
-	0x0002, //#START OF TEXT
-	0x0003, //#END OF TEXT
-	0x0004, //#END OF TRANSMISSION
-	0x0005, //#ENQUIRY
-	0x0006, //#ACKNOWLEDGE
-	0x0007, //#BELL
-	0x0008, //#BACKSPACE
-	0x0009, //#HORIZONTAL TABULATION
-	0x000a, //#LINE FEED
-	0x000b, //#VERTICAL TABULATION
-	0x000c, //#FORM FEED
-	0x000d, //#CARRIAGE RETURN
-	0x000e, //#SHIFT OUT
-	0x000f, //#SHIFT IN
-	0x0010, //#DATA LINK ESCAPE
-	0x0011, //#DEVICE CONTROL ONE
-	0x0012, //#DEVICE CONTROL TWO
-	0x0013, //#DEVICE CONTROL THREE
-	0x0014, //#DEVICE CONTROL FOUR
-	0x0015, //#NEGATIVE ACKNOWLEDGE
-	0x0016, //#SYNCHRONOUS IDLE
-	0x0017, //#END OF TRANSMISSION BLOCK
-	0x0018, //#CANCEL
-	0x0019, //#END OF MEDIUM
-	0x001a, //#SUBSTITUTE
-	0x001b, //#ESCAPE
-	0x001c, //#FILE SEPARATOR
-	0x001d, //#GROUP SEPARATOR
-	0x001e, //#RECORD SEPARATOR
-	0x001f, //#UNIT SEPARATOR
+	0x0000, //#NULL
+	0x263a, //#START OF HEADING
+	0x263b, //#START OF TEXT
+	0x2665, //#END OF TEXT
+	0x2666, //#END OF TRANSMISSION
+	0x2663, //#ENQUIRY
+	0x2660, //#ACKNOWLEDGE
+	0x2022, //#BELL
+	0x25d8, //#BACKSPACE
+	0x25cb, //#HORIZONTAL TABULATION
+	0x25d9, //#LINE FEED
+	0x2642, //#VERTICAL TABULATION
+	0x2640, //#FORM FEED
+	0x266a, //#CARRIAGE RETURN
+	0x266b, //#SHIFT OUT
+	0x263c, //#SHIFT IN
+	0x25ba, //#DATA LINK ESCAPE
+	0x25c4, //#DEVICE CONTROL ONE
+	0x2195, //#DEVICE CONTROL TWO
+	0x203c, //#DEVICE CONTROL THREE
+	0x00b6, //#DEVICE CONTROL FOUR
+	0x00a7, //#NEGATIVE ACKNOWLEDGE
+	0x25ac, //#SYNCHRONOUS IDLE
+	0x21a8, //#END OF TRANSMISSION BLOCK
+	0x2191, //#CANCEL
+	0x2193, //#END OF MEDIUM
+	0x2192, //#SUBSTITUTE
+	0x2190, //#ESCAPE
+	0x221f, //#FILE SEPARATOR
+	0x2194, //#GROUP SEPARATOR
+	0x25b2, //#RECORD SEPARATOR
+	0x25bc, //#UNIT SEPARATOR
 	0x0020, //#SPACE
 	0x0021, //#EXCLAMATION MARK
 	0x0022, //#QUOTATION MARK
@@ -187,7 +187,7 @@ static const uint16_t IBM437ToUnicode[] = {
 	0x007c, //#VERTICAL LINE
 	0x007d, //#RIGHT CURLY BRACKET
 	0x007e, //#TILDE
-	0x007f, //#DELETE
+	0x2302, //#DELETE
 	0x00c7, //#LATIN CAPITAL LETTER C WITH CEDILLA
 	0x00fc, //#LATIN SMALL LETTER U WITH DIAERESIS
 	0x00e9, //#LATIN SMALL LETTER E WITH ACUTE
@@ -416,6 +416,12 @@ FStartupScreen::FStartupScreen(int max_progress)
 	CurPos = 0;
 	NotchPos = 0;
 	int cells = CellSize(DoomStartupInfo.Name);
+	StartupTitle = CreateBitmap(cells*8, 16, 4);
+
+	auto imgsource = CreateStartScreenTexture(StartupTitle);
+	StartupTitleTexture = new FImageTexture(imgsource);
+	StartupTitleTexture->SetUseType(ETextureType::Override);
+
 
 	FString Name;
 	uint32_t FgColor;			// Foreground color for title banner
@@ -437,10 +443,20 @@ FStartupScreen::~FStartupScreen()
 		FreeBitmap(StartupBitmap);
 		StartupBitmap = nullptr;
 	}
+	if (StartupTitle != nullptr)
+	{
+		FreeBitmap(StartupTitle);
+		StartupTitle = nullptr;
+	}
 	if (StartupTexture)
 	{
 		delete StartupTexture;
 		StartupTexture = nullptr;
+	}
+	if (StartupTitleTexture)
+	{
+		delete StartupTitleTexture;
+		StartupTitleTexture = nullptr;
 	}
 }
 

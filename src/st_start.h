@@ -96,7 +96,9 @@ protected:
 	int MaxPos, CurPos, NotchPos;
 	int Scale = 1;
 	BitmapInfo* StartupBitmap = nullptr;
-	FTexture* StartupTexture = nullptr;	
+	BitmapInfo* StartupTitle = nullptr;
+	FTexture* StartupTexture = nullptr;
+	FTexture* StartupTitleTexture = nullptr;
 
 	void InvalidateTexture();
 	void SizeWindowForBitmap(int scale);

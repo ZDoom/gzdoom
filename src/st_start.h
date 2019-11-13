@@ -37,7 +37,40 @@
 #include <stdint.h>
 
 class FTexture;
-extern FTexture* StartupTexture;
+
+// The entire set of functions here uses native Windows types. These are recreations of those types so that the code doesn't need to be changed more than necessary
+
+struct BitmapInfoHeader
+{
+	uint32_t      biSize;
+	int32_t       biWidth;
+	int32_t       biHeight;
+	uint16_t      biPlanes;
+	uint16_t      biBitCount;
+	uint32_t      biCompression;
+	uint32_t      biSizeImage;
+	int32_t       biXPelsPerMeter;
+	int32_t       biYPelsPerMeter;
+	uint32_t      biClrUsed;
+	uint32_t      biClrImportant;
+};
+
+struct RgbQuad
+{
+	uint8_t    rgbBlue;
+	uint8_t    rgbGreen;
+	uint8_t    rgbRed;
+	uint8_t    rgbReserved;
+};
+
+
+struct BitmapInfo
+{
+	BitmapInfoHeader    bmiHeader;
+	RgbQuad             bmiColors[1];
+};
+
+
 
 class FStartupScreen
 {
@@ -57,10 +90,29 @@ public:
 	virtual void NetMessage(const char *format, ...);	// cover for printf
 	virtual void NetDone();
 	virtual bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+	int RunEndoom();
+	static uint8_t* BitsForBitmap(BitmapInfo* bitmap_info);
 protected:
 	int MaxPos, CurPos, NotchPos;
 	int Scale = 1;
+	BitmapInfo* StartupBitmap = nullptr;
+	FTexture* StartupTexture = nullptr;	
+
 	void InvalidateTexture();
+	void SizeWindowForBitmap(int scale);
+	void PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int height);
+	void DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height);
+	void ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int bytewidth, int height);
+	BitmapInfo* CreateBitmap(int width, int height, int color_bits);
+	void FreeBitmap(BitmapInfo* bitmap_info);
+	void BitmapColorsFromPlaypal(BitmapInfo* bitmap_info);
+	BitmapInfo* AllocTextBitmap();
+	void DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen);
+	void DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t attrib);
+	void DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib);
+	void UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, bool on);
+	int CellSize(const char* unitext);
+
 };
 
 class FBasicStartupScreen : public FStartupScreen
@@ -138,53 +190,4 @@ extern FStartupScreen *StartScreen;
 
 void DeleteStartupScreen();
 extern void ST_Endoom();
-
-// The entire set of functions here uses native Windows types. These are recreations of those types so that the code doesn't need to be changed more than necessary
-
-struct BitmapInfoHeader 
-{
-	uint32_t      biSize;
-	int32_t       biWidth;
-	int32_t       biHeight;
-	uint16_t      biPlanes;
-	uint16_t      biBitCount;
-	uint32_t      biCompression;
-	uint32_t      biSizeImage;
-	int32_t       biXPelsPerMeter;
-	int32_t       biYPelsPerMeter;
-	uint32_t      biClrUsed;
-	uint32_t      biClrImportant;
-};
-
-struct RgbQuad 
-{
-	uint8_t    rgbBlue;
-	uint8_t    rgbGreen;
-	uint8_t    rgbRed;
-	uint8_t    rgbReserved;
-};
-
-
-struct BitmapInfo 
-{
-	BitmapInfoHeader    bmiHeader;
-	RgbQuad             bmiColors[1];
-};
-
-extern BitmapInfo* StartupBitmap;
-
-
-void ST_Util_PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int height);
-void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height);
-void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int bytewidth, int height);
-BitmapInfo* ST_Util_CreateBitmap(int width, int height, int color_bits);
-uint8_t* ST_Util_BitsForBitmap(BitmapInfo* bitmap_info);
-void ST_Util_FreeBitmap(BitmapInfo* bitmap_info);
-void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info);
-BitmapInfo* ST_Util_AllocTextBitmap();
-void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen);
-void ST_Util_DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t attrib);
-void ST_Util_DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib);
-void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, bool on);
-int ST_Util_CellSize(const char* unitext);
 

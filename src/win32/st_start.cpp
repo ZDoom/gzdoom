@@ -51,6 +51,7 @@
 #include "d_main.h"
 #include "doomerrors.h"
 #include "s_music.h"
+#include "i_time.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -60,7 +61,6 @@
 // The number here therefore corresponds roughly to the blink rate on a
 // 60 Hz display.
 #define BLINK_PERIOD			267
-#define TEXT_FONT_NAME			"vga-rom-font.16"
 
 
 // TYPES -------------------------------------------------------------------
@@ -71,8 +71,6 @@ void RestoreConView();
 void LayoutMainWindow (HWND hWnd, HWND pane);
 int LayoutNetStartPane (HWND pane, int w);
 
-bool ST_Util_CreateStartupWindow ();
-void ST_Util_SizeWindowForBitmap(int scale);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -372,43 +370,13 @@ static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LP
 
 //==========================================================================
 //
-// FGraphicalStartupScreen Constructor
-//
-// This doesn't really do anything. The subclass is responsible for
-// creating the resources that will be freed by this class's destructor.
-//
-//==========================================================================
-
-FGraphicalStartupScreen::FGraphicalStartupScreen(int max_progress)
-: FBasicStartupScreen(max_progress, false)
-{
-}
-
-//==========================================================================
-//
-// FGraphicalStartupScreen Destructor
-//
-//==========================================================================
-
-FGraphicalStartupScreen::~FGraphicalStartupScreen()
-{
-	if (StartupBitmap != NULL)
-	{
-		ST_Util_FreeBitmap (StartupBitmap);
-		StartupBitmap = NULL;
-	}
-}
-
-
-//==========================================================================
-//
 // ST_Endoom
 //
 // Shows an ENDOOM text screen
 //
 //==========================================================================
 
-int RunEndoom()
+int FStartupScreen::RunEndoom()
 {
 	if (showendoom == 0 || gameinfo.Endoom.Len() == 0) 
 	{
@@ -434,13 +402,6 @@ int RunEndoom()
 		return 0;
 	}
 
-	/*
-	if (!ST_Util_CreateStartupWindow())
-	{
-		return 0;
-	}
-	*/
-
 	I_ShutdownGraphics ();
 	RestoreConView ();
 	S_StopMusic(true);
@@ -448,8 +409,8 @@ int RunEndoom()
 	Wads.ReadLump (endoom_lump, endoom_screen);
 
 	// Draw the loading screen to a bitmap.
-	StartupBitmap = ST_Util_AllocTextBitmap ();
-	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen);
+	StartupBitmap = AllocTextBitmap ();
+	DrawTextScreen (StartupBitmap, endoom_screen);
 
 	// Make the title banner go away.
 	if (GameTitleWindow != NULL)
@@ -458,7 +419,7 @@ int RunEndoom()
 		GameTitleWindow = NULL;
 	}
 
-	ST_Util_SizeWindowForBitmap (1);
+	SizeWindowForBitmap (1);
 	LayoutMainWindow (Window, NULL);
 	//InvalidateRect (StartupScreen, NULL, TRUE);
 
@@ -476,34 +437,36 @@ int RunEndoom()
 		blinking = false;
 	}
 
+
 	// Wait until any key has been pressed or a quit message has been received
 	for (;;)
 	{
-		bRet = GetMessage (&mess, NULL, 0, 0);
-		if (bRet == 0 || bRet == -1 ||	// bRet == 0 means we received WM_QUIT
-			mess.message == WM_KEYDOWN || mess.message == WM_SYSKEYDOWN || mess.message == WM_LBUTTONDOWN)
+		auto nowtime = I_msTime();
+		// Do not refresh too often. This function gets called a lot more frequently than the screen can update.
+		if (nowtime - screen->FrameTime > 33)
 		{
-			if (blinking)
+			screen->FrameTime = nowtime;
+			screen->BeginFrame();
+			screen->ClearClipRect();
+			screen->Begin2D();
+			if (blinking && 1 /* todo: proper timer counter*/)
 			{
-				KillTimer (Window, 0x5A15A);
+				UpdateTextBlink(StartupBitmap, endoom_screen, blinkstate);
+				blinkstate = !blinkstate;
 			}
-			ST_Util_FreeBitmap (StartupBitmap);
-			return int(bRet == 0 ? mess.wParam : 0);
+
+			I_GetEvent();
+			InvalidateTexture();
+			screen->DrawTexture(StartupTexture, 0, 0 / Scale, DTA_KeepRatio, true, DTA_VirtualWidth, screen->GetWidth() / Scale, DTA_VirtualHeight, screen->GetHeight() / Scale, TAG_END);
+			screen->End2DAndUpdate();
 		}
-		else if (blinking && mess.message == WM_TIMER && mess.hwnd == Window && mess.wParam == 0x5A15A)
-		{
-			ST_Util_UpdateTextBlink (StartupBitmap, endoom_screen, blinkstate);
-			blinkstate = !blinkstate;
-		}
-		TranslateMessage (&mess);
-		DispatchMessage (&mess);
 	}
 }
 
 void ST_Endoom()
 {
-	int code = RunEndoom();
+	FStartupScreen startupScreen(0);
+	int code = startupScreen.RunEndoom();
 	throw CExitEvent(code);
-
 }
 

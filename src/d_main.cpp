@@ -2998,53 +2998,6 @@ UNSAFE_CCMD(restart)
 	wantToRestart = true;
 }
 
-//==========================================================================
-//
-// FStartupScreen Constructor
-//
-//==========================================================================
-
-FStartupScreen::FStartupScreen(int max_progress)
-{
-	MaxPos = max_progress;
-	CurPos = 0;
-	NotchPos = 0;
-}
-
-//==========================================================================
-//
-// FStartupScreen Destructor
-//
-//==========================================================================
-
-FStartupScreen::~FStartupScreen()
-{
-}
-
-//==========================================================================
-//
-// FStartupScreen :: LoadingStatus
-//
-// Used by Heretic for the Loading Status "window."
-//
-//==========================================================================
-
-void FStartupScreen::LoadingStatus(const char *message, int colors)
-{
-}
-
-//==========================================================================
-//
-// FStartupScreen :: AppendStatusLine
-//
-// Used by Heretic for the "status line" at the bottom of the screen.
-//
-//==========================================================================
-
-void FStartupScreen::AppendStatusLine(const char *status)
-{
-}
-
 //===========================================================================
 //
 // DeleteStartupScreen
@@ -3063,37 +3016,6 @@ void DeleteStartupScreen()
 }
 
 
-
-void FStartupScreen::Progress(void) 
-{
-	auto nowtime = I_msTime();
-	// Do not refresh too often. This function gets called a lot more frequently than the screen can update.
-	if (nowtime - screen->FrameTime > 33)
-	{
-		screen->FrameTime = nowtime;
-		screen->BeginFrame();
-		screen->ClearClipRect();
-		screen->Begin2D();
-		DoProgress();
-		I_GetEvent();
-		InvalidateTexture();
-		screen->DrawTexture(StartupTexture, 0, 40/Scale, DTA_KeepRatio, true, DTA_VirtualWidth, screen->GetWidth()/Scale, DTA_VirtualHeight, screen->GetHeight() / Scale, TAG_END);
-		screen->End2DAndUpdate();
-	}
-	else
-	{
-		// This is necessary to increment the start screen's ticker.
-		DoProgress();
-	}
-}
-
-
-void FStartupScreen::DoProgress(void) {}
-void FStartupScreen::NetInit(char const *,int) {}
-void FStartupScreen::NetProgress(int) {}
-void FStartupScreen::NetMessage(char const *,...) {}
-void FStartupScreen::NetDone(void) {}
-bool FStartupScreen::NetLoop(bool (*)(void *),void *) { return false; }
 
 DEFINE_FIELD_X(InputEventData, event_t, type)
 DEFINE_FIELD_X(InputEventData, event_t, subtype)

@@ -1,6 +1,6 @@
 /*
 ** startscreentexture.cpp
-** Texture class to create a texture from the start screen's imagé
+** Texture class to create a texture from the start screen's image.
 **
 **---------------------------------------------------------------------------
 ** Copyright 2004-2006 Randy Heit
@@ -98,7 +98,7 @@ int FStartScreenTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	const RgbQuad *psource = info->bmiColors;
 	PalEntry paldata[256] = {};
-	auto pixels = ST_Util_BitsForBitmap(info);
+	auto pixels = FStartupScreen::BitsForBitmap(info);
 	for (uint32_t i = 0; i < info->bmiHeader.biClrUsed; i++)
 	{
 		PalEntry &pe = paldata[i];

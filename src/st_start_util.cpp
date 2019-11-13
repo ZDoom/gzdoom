@@ -49,6 +49,7 @@
 #include "v_video.h"
 #include "v_font.h"
 #include "utf8.h"
+#include "i_time.h"
 
 void I_GetEvent();	// i_input.h pulls in too much garbage.
 
@@ -57,10 +58,9 @@ void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int righ
 
 }
 bool ST_Util_CreateStartupWindow();
-void ST_Util_SizeWindowForBitmap(int scale);
 
 static const uint16_t IBM437ToUnicode[] = {
-	0x0000, //#NULL
+	0x0000, //#nullptr
 	0x0001, //#START OF HEADING
 	0x0002, //#START OF TEXT
 	0x0003, //#END OF TEXT
@@ -318,8 +318,6 @@ static const uint16_t IBM437ToUnicode[] = {
 	0x00a0, //#NO-BREAK SPACE
 };
 
-BitmapInfo* StartupBitmap;
-FTexture * StartupTexture;
 
 // Hexen startup screen
 #define ST_MAX_NOTCHES			32
@@ -406,6 +404,88 @@ static const int StrifeStartupPicSizes[4 + 2 + 1] =
 
 FImageSource *CreateStartScreenTexture(BitmapInfo *srcdata);
 
+//==========================================================================
+//
+// FStartupScreen Constructor
+//
+//==========================================================================
+
+FStartupScreen::FStartupScreen(int max_progress)
+{
+	MaxPos = max_progress;
+	CurPos = 0;
+	NotchPos = 0;
+	int cells = CellSize(DoomStartupInfo.Name);
+
+	FString Name;
+	uint32_t FgColor;			// Foreground color for title banner
+	uint32_t BkColor;			// Background color for title banner
+
+
+}
+
+//==========================================================================
+//
+// FStartupScreen Destructor
+//
+//==========================================================================
+
+FStartupScreen::~FStartupScreen()
+{
+	if (StartupBitmap != nullptr)
+	{
+		FreeBitmap(StartupBitmap);
+		StartupBitmap = nullptr;
+	}
+	if (StartupTexture)
+	{
+		delete StartupTexture;
+		StartupTexture = nullptr;
+	}
+}
+
+//==========================================================================
+//
+// FStartupScreen :: LoadingStatus
+//
+// Used by Heretic for the Loading Status "window."
+//
+//==========================================================================
+
+void FStartupScreen::LoadingStatus(const char* message, int colors)
+{
+}
+
+//==========================================================================
+//
+// FStartupScreen :: AppendStatusLine
+//
+// Used by Heretic for the "status line" at the bottom of the screen.
+//
+//==========================================================================
+
+void FStartupScreen::AppendStatusLine(const char* status)
+{
+}
+
+//==========================================================================
+//
+// ST_Util_SizeWindowForBitmap
+//
+// Resizes the main window so that the startup bitmap will be drawn
+// at the desired scale.
+//
+//==========================================================================
+
+void FStartupScreen::SizeWindowForBitmap(int scale)
+{
+	int w = StartupBitmap->bmiHeader.biWidth * scale;
+	int h = (StartupBitmap->bmiHeader.biHeight + 40) * scale;	// The 40 is for the caption line.
+	screen->SetWindowSize(w, h, true);
+}
+
+
+
 void FStartupScreen::InvalidateTexture()
 {
 	if (StartupTexture == nullptr)
@@ -420,6 +500,40 @@ void FStartupScreen::InvalidateTexture()
 	}
 }
 
+void FStartupScreen::Progress(void)
+{
+	auto nowtime = I_msTime();
+	// Do not refresh too often. This function gets called a lot more frequently than the screen can update.
+	if (nowtime - screen->FrameTime > 33)
+	{
+		screen->FrameTime = nowtime;
+		screen->BeginFrame();
+		screen->ClearClipRect();
+		screen->Begin2D();
+		DoProgress();
+		I_GetEvent();
+		InvalidateTexture();
+		screen->Dim(DoomStartupInfo.BkColor, 1.f, 0, 0, screen->GetWidth(), 40);
+
+		screen->DrawTexture(StartupTexture, 0, 40 / Scale, DTA_KeepRatio, true, DTA_VirtualWidth, screen->GetWidth() / Scale, DTA_VirtualHeight, screen->GetHeight() / Scale, TAG_END);
+		screen->End2DAndUpdate();
+	}
+	else
+	{
+		// This is necessary to increment the start screen's ticker.
+		DoProgress();
+	}
+}
+
+
+void FStartupScreen::DoProgress(void) {}
+void FStartupScreen::NetInit(char const*, int) {}
+void FStartupScreen::NetProgress(int) {}
+void FStartupScreen::NetMessage(char const*, ...) {}
+void FStartupScreen::NetDone(void) {}
+bool FStartupScreen::NetLoop(bool (*)(void*), void*) { return false; }
+
+
 //==========================================================================
 //
 // FStartupScreen :: CreateInstance
@@ -431,7 +545,7 @@ void FStartupScreen::InvalidateTexture()
 
 FStartupScreen* FStartupScreen::CreateInstance(int max_progress)
 {
-	FStartupScreen* scr = NULL;
+	FStartupScreen* scr = nullptr;
 	long hr;
 
 	InitHexFont();
@@ -452,18 +566,43 @@ FStartupScreen* FStartupScreen::CreateInstance(int max_progress)
 		{
 			scr = new FStrifeStartupScreen(max_progress, hr);
 		}
-		if (scr != NULL && hr < 0)
+		if (scr != nullptr && hr < 0)
 		{
 			delete scr;
-			scr = NULL;
+			scr = nullptr;
 		}
 	}
-	if (scr == NULL)
+	if (scr == nullptr)
 	{
 		scr = new FBasicStartupScreen(max_progress, true);
 	}
 	return scr;
 }
+
+//==========================================================================
+//
+// FGraphicalStartupScreen Constructor
+//
+// This doesn't really do anything. The subclass is responsible for
+// creating the resources that will be freed by this class's destructor.
+//
+//==========================================================================
+
+FGraphicalStartupScreen::FGraphicalStartupScreen(int max_progress)
+	: FBasicStartupScreen(max_progress, false)
+{
+}
+
+//==========================================================================
+//
+// FGraphicalStartupScreen Destructor
+//
+//==========================================================================
+
+FGraphicalStartupScreen::~FGraphicalStartupScreen()
+{
+}
+
 
 //==========================================================================
 //
@@ -489,7 +628,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 		netnotch_lump < 0 || Wads.LumpLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
 		notch_lump < 0 || Wads.LumpLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
 	{
-		NetNotchBits = NotchBits = NULL;
+		NetNotchBits = NotchBits = nullptr;
 		return;
 	}
 
@@ -509,7 +648,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 
 	c.color.rgbReserved = 0;
 
-	StartupBitmap = ST_Util_CreateBitmap(640, 480, 4);
+	StartupBitmap = CreateBitmap(640, 480, 4);
 
 	// Initialize the bitmap palette.
 	for (int i = 0; i < 16; ++i)
@@ -525,7 +664,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 	// Fill in the bitmap data. Convert to chunky, because I can't figure out
 	// if Windows actually supports planar images or not, despite the presence
 	// of biPlanes in the BITMAPINFOHEADER.
-	ST_Util_PlanarToChunky4(ST_Util_BitsForBitmap(StartupBitmap), startup_screen + 48, 640, 480);
+	PlanarToChunky4(BitsForBitmap(StartupBitmap), startup_screen + 48, 640, 480);
 
 
 	if (!batchrun)
@@ -581,7 +720,7 @@ void FHexenStartupScreen::DoProgress()
 			{
 				x = ST_PROGRESS_X + ST_NOTCH_WIDTH * NotchPos;
 				y = ST_PROGRESS_Y;
-				ST_Util_DrawBlock(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
+				DrawBlock(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
 			}
 			S_Sound(CHAN_BODY, "StartupTick", 1, ATTN_NONE);
 		}
@@ -608,7 +747,7 @@ void FHexenStartupScreen::NetProgress(int count)
 		{
 			x = ST_NETPROGRESS_X + ST_NETNOTCH_WIDTH * oldpos;
 			y = ST_NETPROGRESS_Y;
-			ST_Util_DrawBlock(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
+			DrawBlock(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
 		}
 		S_Sound(CHAN_BODY, "misc/netnotch", 1, ATTN_NONE);
 		I_GetEvent();
@@ -638,7 +777,7 @@ void FHexenStartupScreen::NetDone()
 
 void FHexenStartupScreen::SetWindowSize()
 {
-	ST_Util_SizeWindowForBitmap(1);
+	SizeWindowForBitmap(1);
 }
 
 //==========================================================================
@@ -673,8 +812,8 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 	loading_screen[2 * 160 + 49 * 2] = HERETIC_MINOR_VERSION;
 
 	// Draw the loading screen to a bitmap.
-	StartupBitmap = ST_Util_AllocTextBitmap();
-	ST_Util_DrawTextScreen(StartupBitmap, loading_screen);
+	StartupBitmap = AllocTextBitmap();
+	DrawTextScreen(StartupBitmap, loading_screen);
 
 	ThermX = THERM_X * 8;
 	ThermY = THERM_Y * 16;
@@ -709,7 +848,7 @@ void FHereticStartupScreen::DoProgress()
 			int top = ThermY;
 			int right = notch_pos + ThermX;
 			int bottom = top + ThermHeight;
-			ST_Util_ClearBlock(StartupBitmap, THERM_COLOR, left, top, right - left, bottom - top);
+			ClearBlock(StartupBitmap, THERM_COLOR, left, top, right - left, bottom - top);
 			NotchPos = notch_pos;
 		}
 	}
@@ -729,9 +868,8 @@ void FHereticStartupScreen::LoadingStatus(const char* message, int colors)
 
 	for (x = 0; message[x] != '\0'; ++x)
 	{
-		ST_Util_DrawChar(StartupBitmap, 17 + x, HMsgY, message[x], colors);
+		DrawChar(StartupBitmap, 17 + x, HMsgY, message[x], colors);
 	}
-	ST_Util_InvalidateRect(StartupBitmap, 17 * 8, HMsgY * 16, (17 + x) * 8, HMsgY * 16 + 16);
 	HMsgY++;
 	I_GetEvent();
 }
@@ -750,9 +888,8 @@ void FHereticStartupScreen::AppendStatusLine(const char* status)
 
 	for (x = 0; status[x] != '\0'; ++x)
 	{
-		ST_Util_DrawChar(StartupBitmap, SMsgX + x, 24, status[x], 0x1f);
+		DrawChar(StartupBitmap, SMsgX + x, 24, status[x], 0x1f);
 	}
-	ST_Util_InvalidateRect(StartupBitmap, SMsgX * 8, 24 * 16, (SMsgX + x) * 8, 25 * 16);
 	SMsgX += x;
 	I_GetEvent();
 }
@@ -765,7 +902,7 @@ void FHereticStartupScreen::AppendStatusLine(const char* status)
 
 void FHereticStartupScreen::SetWindowSize()
 {
-	ST_Util_SizeWindowForBitmap(1);
+	SizeWindowForBitmap(1);
 }
 
 //==========================================================================
@@ -793,7 +930,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 	hr = -1;
 	for (i = 0; i < 4 + 2 + 1; ++i)
 	{
-		StartupPics[i] = NULL;
+		StartupPics[i] = nullptr;
 	}
 
 	if (startup_lump < 0 || Wads.LumpLength(startup_lump) != 64000)
@@ -801,14 +938,14 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 		return;
 	}
 
-	StartupBitmap = ST_Util_CreateBitmap(320, 200, 8);
-	ST_Util_BitmapColorsFromPlaypal(StartupBitmap);
+	StartupBitmap = CreateBitmap(320, 200, 8);
+	BitmapColorsFromPlaypal(StartupBitmap);
 
 	// Fill bitmap with the startup image.
-	memset(ST_Util_BitsForBitmap(StartupBitmap), 0xF0, 64000);
+	memset(BitsForBitmap(StartupBitmap), 0xF0, 64000);
 	auto lumpr = Wads.OpenLumpReader(startup_lump);
 	lumpr.Seek(57 * 320, FileReader::SeekSet);
-	lumpr.Read(ST_Util_BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
+	lumpr.Read(BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
 
 	// Load the animated overlays.
 	for (i = 0; i < 4 + 2 + 1; ++i)
@@ -842,11 +979,11 @@ FStrifeStartupScreen::~FStrifeStartupScreen()
 {
 	for (int i = 0; i < 4 + 2 + 1; ++i)
 	{
-		if (StartupPics[i] != NULL)
+		if (StartupPics[i] != nullptr)
 		{
 			delete[] StartupPics[i];
 		}
-		StartupPics[i] = NULL;
+		StartupPics[i] = nullptr;
 	}
 }
 
@@ -890,27 +1027,27 @@ void FStrifeStartupScreen::DrawStuff(int old_laser, int new_laser)
 	auto bitmap_info = StartupBitmap;
 
 	// Clear old laser
-	ST_Util_ClearBlock(bitmap_info, 0xF0, ST_LASERSPACE_X + old_laser,
+	ClearBlock(bitmap_info, 0xF0, ST_LASERSPACE_X + old_laser,
 		ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 	// Draw new laser
-	ST_Util_DrawBlock(bitmap_info, StartupPics[LASER_INDEX + (new_laser & 1)],
+	DrawBlock(bitmap_info, StartupPics[LASER_INDEX + (new_laser & 1)],
 		ST_LASERSPACE_X + new_laser, ST_LASERSPACE_Y, ST_LASER_WIDTH, ST_LASER_HEIGHT);
 
 	// The bot jumps up and down like crazy.
 	y = std::max(0, (new_laser >> 1) % 5 - 2);
 	if (y > 0)
 	{
-		ST_Util_ClearBlock(bitmap_info, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);
+		ClearBlock(bitmap_info, 0xF0, ST_BOT_X, ST_BOT_Y, ST_BOT_WIDTH, y);
 	}
-	ST_Util_DrawBlock(bitmap_info, StartupPics[BOT_INDEX], ST_BOT_X, ST_BOT_Y + y, ST_BOT_WIDTH, ST_BOT_HEIGHT);
+	DrawBlock(bitmap_info, StartupPics[BOT_INDEX], ST_BOT_X, ST_BOT_Y + y, ST_BOT_WIDTH, ST_BOT_HEIGHT);
 	if (y < (5 - 1) - 2)
 	{
-		ST_Util_ClearBlock(bitmap_info, 0xF0, ST_BOT_X, ST_BOT_Y + ST_BOT_HEIGHT + y, ST_BOT_WIDTH, 2 - y);
+		ClearBlock(bitmap_info, 0xF0, ST_BOT_X, ST_BOT_Y + ST_BOT_HEIGHT + y, ST_BOT_WIDTH, 2 - y);
 	}
 
 	// The peasant desperately runs in place, trying to get away from the laser.
 	// Yet, despite all his limb flailing, he never manages to get anywhere.
-	ST_Util_DrawBlock(bitmap_info, StartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
+	DrawBlock(bitmap_info, StartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
 		ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT);
 }
 
@@ -923,19 +1060,19 @@ void FStrifeStartupScreen::DrawStuff(int old_laser, int new_laser)
 void FStrifeStartupScreen::SetWindowSize()
 {
 	Scale = 2;
-	ST_Util_SizeWindowForBitmap(2);
+	SizeWindowForBitmap(2);
 }
 
 
 //==========================================================================
 //
-// ST_Util_PlanarToChunky4
+// PlanarToChunky4
 //
 // Convert a 4-bpp planar image to chunky pixels.
 //
 //==========================================================================
 
-void ST_Util_PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int height)
+void FStartupScreen::PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int height)
 {
 	int y, x;
 	const uint8_t* src1, * src2, * src3, * src4;
@@ -973,22 +1110,20 @@ void ST_Util_PlanarToChunky4(uint8_t* dest, const uint8_t* src, int width, int h
 
 //==========================================================================
 //
-// ST_Util_DrawBlock
+// DrawBlock
 //
 //==========================================================================
 
-void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height)
+void FStartupScreen::DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y, int bytewidth, int height)
 {
-	if (src == NULL)
+	if (src == nullptr)
 	{
 		return;
 	}
 
 	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
 	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
-
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	uint8_t* dest = BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
 
 	if (bytewidth == 8)
 	{ // progress notches
@@ -1022,17 +1157,15 @@ void ST_Util_DrawBlock(BitmapInfo* bitmap_info, const uint8_t* src, int x, int y
 
 //==========================================================================
 //
-// ST_Util_ClearBlock
+// ClearBlock
 //
 //==========================================================================
 
-void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int bytewidth, int height)
+void FStartupScreen::ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int bytewidth, int height)
 {
 	int pitchshift = int(bitmap_info->bmiHeader.biBitCount == 4);
 	int destpitch = bitmap_info->bmiHeader.biWidth >> pitchshift;
-	uint8_t* dest = ST_Util_BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
-
-	ST_Util_InvalidateRect(bitmap_info, x, y, x + (bytewidth << pitchshift), y + height);
+	uint8_t* dest = BitsForBitmap(bitmap_info) + (x >> pitchshift) + y * destpitch;
 
 	while (height > 0)
 	{
@@ -1044,7 +1177,7 @@ void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int
 
 //==========================================================================
 //
-// ST_Util_CreateBitmap
+// CreateBitmap
 //
 // Creates a BitmapInfoHeader, RgbQuad, and pixel data arranged
 // consecutively in memory (in other words, a normal Windows BMP file).
@@ -1055,7 +1188,7 @@ void ST_Util_ClearBlock(BitmapInfo* bitmap_info, uint8_t fill, int x, int y, int
 //
 //==========================================================================
 
-BitmapInfo* ST_Util_CreateBitmap(int width, int height, int color_bits)
+BitmapInfo* FStartupScreen::CreateBitmap(int width, int height, int color_bits)
 {
 	uint32_t size_image = (width * height) >> int(color_bits == 4);
 	BitmapInfo* bitmap_info = (BitmapInfo*)M_Malloc(sizeof(BitmapInfoHeader) +
@@ -1086,33 +1219,33 @@ BitmapInfo* ST_Util_CreateBitmap(int width, int height, int color_bits)
 //
 //==========================================================================
 
-uint8_t* ST_Util_BitsForBitmap(BitmapInfo* bitmap_info)
+uint8_t* FStartupScreen::BitsForBitmap(BitmapInfo* bitmap_info)
 {
 	return (uint8_t*)bitmap_info + sizeof(BitmapInfoHeader) + (sizeof(RgbQuad) << bitmap_info->bmiHeader.biBitCount);
 }
 
 //==========================================================================
 //
-// ST_Util_FreeBitmap
+// FreeBitmap
 //
 // Frees all the data for a bitmap created by ST_Util_CreateBitmap.
 //
 //==========================================================================
 
-void ST_Util_FreeBitmap(BitmapInfo* bitmap_info)
+void FStartupScreen::FreeBitmap(BitmapInfo* bitmap_info)
 {
 	M_Free(bitmap_info);
 }
 
 //==========================================================================
 //
-// ST_Util_BitmapColorsFromPlaypal
+// BitmapColorsFromPlaypal
 //
 // Fills the bitmap palette from the PLAYPAL lump.
 //
 //==========================================================================
 
-void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
+void FStartupScreen::BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
 {
 	uint8_t playpal[768];
 
@@ -1135,9 +1268,9 @@ void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
 //
 //==========================================================================
 
-BitmapInfo* ST_Util_AllocTextBitmap()
+BitmapInfo* FStartupScreen::AllocTextBitmap()
 {
-	BitmapInfo* bitmap = ST_Util_CreateBitmap(80 * 8, 25 * 16, 4);
+	BitmapInfo* bitmap = CreateBitmap(80 * 8, 25 * 16, 4);
 	memcpy(bitmap->bmiColors, TextModePalette, sizeof(TextModePalette));
 	return bitmap;
 }
@@ -1151,7 +1284,7 @@ BitmapInfo* ST_Util_AllocTextBitmap()
 //
 //==========================================================================
 
-void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen)
+void FStartupScreen::DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen)
 {
 	int x, y;
 
@@ -1159,7 +1292,7 @@ void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen)
 	{
 		for (x = 0; x < 80; ++x)
 		{
-			ST_Util_DrawChar(bitmap_info, x, y, text_screen[0], text_screen[1]);
+			DrawChar(bitmap_info, x, y, text_screen[0], text_screen[1]);
 			text_screen += 2;
 		}
 	}
@@ -1167,14 +1300,14 @@ void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen)
 
 //==========================================================================
 //
-// ST_Util_DrawChar
+// DrawChar
 //
 // Draws a character on the bitmap. X and Y specify the character cell,
 // and fg and bg are 4-bit colors.
 //
 //==========================================================================
 
-void ST_Util_DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t attrib)
+void FStartupScreen::DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t attrib)
 {
 	static const uint8_t space[16] = {};
 	const uint8_t bg_left = attrib & 0x70;
@@ -1185,7 +1318,7 @@ void ST_Util_DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t
 	auto map = hexdata.glyphmap[IBM437ToUnicode[charnum]];
 	auto src = map? &hexdata.glyphdata[map] + 1 : space;	// This cannot pick a wide char.
 	int pitch = screen->bmiHeader.biWidth >> 1;
-	uint8_t* dest = ST_Util_BitsForBitmap(screen) + x * 4 + y * 16 * pitch;
+	uint8_t* dest = BitsForBitmap(screen) + x * 4 + y * 16 * pitch;
 
 	for (y = 16; y > 0; --y)
 	{
@@ -1205,13 +1338,13 @@ void ST_Util_DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t
 
 //==========================================================================
 //
-// ST_Util_DrawUniChar
+// DrawUniChar
 //
 // Draws a character on the bitmap. X and Y specify the cell position
 //
 //==========================================================================
 
-void ST_Util_DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib)
+void FStartupScreen::DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib)
 {
 	static const uint8_t space[17] = { 16 };
 	const uint8_t bg_left = attrib & 0x70;
@@ -1222,7 +1355,7 @@ void ST_Util_DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uin
 	auto map = hexdata.glyphmap[charnum];
 	auto src = map ? &hexdata.glyphdata[map] : space;
 	int pitch = screen->bmiHeader.biWidth >> 1;
-	uint8_t* dest = ST_Util_BitsForBitmap(screen) + x * 4 + y * 16 * pitch;
+	uint8_t* dest = BitsForBitmap(screen) + x * 4 + y * 16 * pitch;
 
 	int size = *src++ / 16;
 	for (y = 16; y > 0; --y)
@@ -1247,13 +1380,11 @@ void ST_Util_DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uin
 
 //==========================================================================
 //
-// ST_Util_DrawUniChar
 //
-// Draws a character on the bitmap. X and Y specify the pixel position
 //
 //==========================================================================
 
-int ST_Util_CellSize(const char *unitext)
+int FStartupScreen::CellSize(const char *unitext)
 {
 	const uint8_t* text = (uint8_t*)unitext;
 	int cells = 0;
@@ -1271,14 +1402,14 @@ int ST_Util_CellSize(const char *unitext)
 
 //==========================================================================
 //
-// ST_Util_UpdateTextBlink
+// UpdateTextBlink
 //
 // Draws the parts of the text screen that blink to the bitmap. The bitmap
 // must be the proper size for the font.
 //
 //==========================================================================
 
-void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, bool on)
+void FStartupScreen::UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, bool on)
 {
 	int x, y;
 
@@ -1288,25 +1419,9 @@ void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen
 		{
 			if (text_screen[1] & 0x80)
 			{
-				ST_Util_DrawChar(bitmap_info, x, y, on ? text_screen[0] : ' ', text_screen[1]);
+				DrawChar(bitmap_info, x, y, on ? text_screen[0] : ' ', text_screen[1]);
 			}
 			text_screen += 2;
 		}
 	}
 }
-//==========================================================================
-//
-// ST_Util_SizeWindowForBitmap
-//
-// Resizes the main window so that the startup bitmap will be drawn
-// at the desired scale.
-//
-//==========================================================================
-
-void ST_Util_SizeWindowForBitmap(int scale)
-{
-	int w = StartupBitmap->bmiHeader.biWidth * scale;
-	int h = (StartupBitmap->bmiHeader.biHeight + 40) * scale;	// The 40 is for the caption line.
-	screen->SetWindowSize(w, h, true);
-}
-

@@ -456,6 +456,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 		}
 		// Draw startup screen
+#if 0
 		else if (wParam == IDC_STATIC_STARTUP)
 		{
 			if (StartupScreen != NULL)
@@ -484,6 +485,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				return TRUE;
 			}
 		}
+#endif
 		// Draw stop icon.
 		else if (wParam == IDC_ICONPIC)
 		{

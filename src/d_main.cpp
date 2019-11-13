@@ -2961,6 +2961,7 @@ void D_Cleanup()
 	
 	assert(GC::Root == nullptr);
 	
+	TexMan.DeleteAll();
 	restart++;
 	PClass::bShutdown = false;
 	PClass::bVMOperational = false;

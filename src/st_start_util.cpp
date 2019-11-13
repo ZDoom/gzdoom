@@ -53,12 +53,6 @@
 
 void I_GetEvent();	// i_input.h pulls in too much garbage.
 
-void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int right, int bottom)
-{
-
-}
-bool ST_Util_CreateStartupWindow();
-
 static const uint16_t IBM437ToUnicode[] = {
 	0x0000, //#NULL
 	0x263a, //#START OF HEADING
@@ -418,16 +412,23 @@ FStartupScreen::FStartupScreen(int max_progress)
 	int cells = CellSize(DoomStartupInfo.Name);
 	StartupTitle = CreateBitmap(cells*8, 16, 4);
 
+	StartupTitle->bmiColors[0].rgbRed = RPART(DoomStartupInfo.BkColor);
+	StartupTitle->bmiColors[0].rgbGreen = GPART(DoomStartupInfo.BkColor);
+	StartupTitle->bmiColors[0].rgbBlue = BPART(DoomStartupInfo.BkColor);
+	StartupTitle->bmiColors[1].rgbRed = RPART(DoomStartupInfo.FgColor);
+	StartupTitle->bmiColors[1].rgbGreen = GPART(DoomStartupInfo.FgColor);
+	StartupTitle->bmiColors[1].rgbBlue = BPART(DoomStartupInfo.FgColor);
+
+	const uint8_t* name = (const uint8_t*)DoomStartupInfo.Name.GetChars();
+	int x = 0;
+	while (int c = GetCharFromString(name))
+	{
+		x += DrawUniChar(StartupTitle, x, 0, c, 0x01);
+	}
+
 	auto imgsource = CreateStartScreenTexture(StartupTitle);
 	StartupTitleTexture = new FImageTexture(imgsource);
 	StartupTitleTexture->SetUseType(ETextureType::Override);
-
-
-	FString Name;
-	uint32_t FgColor;			// Foreground color for title banner
-	uint32_t BkColor;			// Background color for title banner
-
-
 }
 
 //==========================================================================
@@ -530,7 +531,8 @@ void FStartupScreen::Progress(void)
 		I_GetEvent();
 		InvalidateTexture();
 		screen->Dim(DoomStartupInfo.BkColor, 1.f, 0, 0, screen->GetWidth(), 40);
-
+		int ttl_x = (screen->GetWidth() - StartupTitleTexture->GetDisplayWidth()) >> 1;
+		screen->DrawTexture(StartupTitleTexture, ttl_x, 12, DTA_KeepRatio, true, TAG_END);
 		screen->DrawTexture(StartupTexture, 0, 40 / Scale, DTA_KeepRatio, true, DTA_VirtualWidth, screen->GetWidth() / Scale, DTA_VirtualHeight, screen->GetHeight() / Scale, TAG_END);
 		screen->End2DAndUpdate();
 	}
@@ -1360,7 +1362,7 @@ void FStartupScreen::DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum,
 //
 //==========================================================================
 
-void FStartupScreen::DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib)
+int FStartupScreen::DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib)
 {
 	static const uint8_t space[17] = { 16 };
 	const uint8_t bg_left = attrib & 0x70;
@@ -1392,6 +1394,7 @@ void FStartupScreen::DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t char
 		}
 		dest += pitch - size * 4;
 	}
+	return size;
 }
 
 //==========================================================================
@@ -1410,8 +1413,8 @@ int FStartupScreen::CellSize(const char *unitext)
 		if (map > 0)
 		{
 			cells += hexdata.glyphdata[map] / 16;
-
 		}
+		else cells++;
 	}
 	return cells;
 }

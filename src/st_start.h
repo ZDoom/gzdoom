@@ -111,7 +111,7 @@ protected:
 	BitmapInfo* AllocTextBitmap();
 	void DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen);
 	void DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t attrib);
-	void DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib);
+	int DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib);
 	void UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, bool on);
 	int CellSize(const char* unitext);
 

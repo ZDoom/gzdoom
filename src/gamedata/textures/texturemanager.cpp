@@ -1178,7 +1178,6 @@ FTexture *CreateShaderTexture(bool, bool);
 
 void FTextureManager::Init()
 {
-	DeleteAll();
 	GenerateGlobalBrightmapFromColormap();
 	SpriteFrames.Clear();
 	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();

@@ -77,6 +77,18 @@ enum EColorRange : int
 
 extern int NumTextColors;
 
+struct HexDataSource
+{
+	int FirstChar = INT_MAX, LastChar = INT_MIN;
+	TArray<uint8_t> glyphdata;
+	unsigned glyphmap[65536] = {};
+
+	void ParseDefinition(int lumpnum);
+};
+
+extern HexDataSource hexdata;
+void InitHexFont();
+
 
 class FFont
 {

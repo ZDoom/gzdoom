@@ -107,7 +107,24 @@ int FStartScreenTexture::CopyPixels(FBitmap *bmp, int conversion)
 		pe.b = psource[i].rgbBlue;
 		pe.a = 255;
 	}
-	bmp->CopyPixelData(0, 0, pixels, Width, Height, 1, (Width + 3) & ~3, 0, paldata);
+	if (info->bmiHeader.biBitCount == 4)
+	{
+		// This should always be 640 or at least a multiple of 8.
+		assert((info->bmiHeader.biWidth & 7) == 0);
+		TArray<uint8_t> buffer(info->bmiHeader.biWidth * info->bmiHeader.biHeight, true);
+		for (uint32_t p = 0; p < buffer.Size(); p+=2)
+		{
+			// Not the most efficient way, but here it really does not matter.
+			int pix = pixels[p >> 1];
+			buffer[p] = pix >> 4;
+			buffer[p + 1] = pix & 15;
+		}
+		bmp->CopyPixelData(0, 0, buffer.Data(), Width, Height, 1, (Width + 3) & ~3, 0, paldata);
+	}
+	else
+	{
+		bmp->CopyPixelData(0, 0, pixels, Width, Height, 1, (Width + 3) & ~3, 0, paldata);
+	}
 	
 	return 0;
 }

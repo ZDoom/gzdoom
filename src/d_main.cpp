@@ -128,6 +128,7 @@ void P_Shutdown();
 void M_SaveDefaultsFinal();
 void R_Shutdown();
 void I_ShutdownInput();
+void I_GetEvent();
 
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -3063,7 +3064,31 @@ void DeleteStartupScreen()
 
 
 
-void FStartupScreen::Progress(void) {}
+void FStartupScreen::Progress(void) 
+{
+	auto nowtime = I_msTime();
+	// Do not refresh too often. This function gets called a lot more frequently than the screen can update.
+	if (nowtime - screen->FrameTime > 33)
+	{
+		screen->FrameTime = nowtime;
+		screen->BeginFrame();
+		screen->ClearClipRect();
+		screen->Begin2D();
+		DoProgress();
+		I_GetEvent();
+		InvalidateTexture();
+		screen->DrawTexture(StartupTexture, 0, 40/Scale, DTA_KeepRatio, true, DTA_VirtualWidth, screen->GetWidth()/Scale, DTA_VirtualHeight, screen->GetHeight() / Scale, TAG_END);
+		screen->End2DAndUpdate();
+	}
+	else
+	{
+		// This is necessary to increment the start screen's ticker.
+		DoProgress();
+	}
+}
+
+
+void FStartupScreen::DoProgress(void) {}
 void FStartupScreen::NetInit(char const *,int) {}
 void FStartupScreen::NetProgress(int) {}
 void FStartupScreen::NetMessage(char const *,...) {}

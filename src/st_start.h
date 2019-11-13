@@ -36,6 +36,9 @@
 */
 #include <stdint.h>
 
+class FTexture;
+extern FTexture* StartupTexture;
+
 class FStartupScreen
 {
 public:
@@ -44,7 +47,8 @@ public:
 	FStartupScreen(int max_progress);
 	virtual ~FStartupScreen();
 
-	virtual void Progress();
+	void Progress();
+	virtual void DoProgress();
 	virtual void LoadingStatus(const char *message, int colors); // Used by Heretic only
 	virtual void AppendStatusLine(const char *status);			 // Used by Heretic only
 
@@ -55,6 +59,8 @@ public:
 	virtual bool NetLoop(bool (*timer_callback)(void *), void *userdata);
 protected:
 	int MaxPos, CurPos, NotchPos;
+	int Scale = 1;
+	void InvalidateTexture();
 };
 
 class FBasicStartupScreen : public FStartupScreen
@@ -63,7 +69,7 @@ public:
 	FBasicStartupScreen(int max_progress, bool show_bar);
 	~FBasicStartupScreen();
 
-	void Progress();
+	//void DoProgress();
 	void NetInit(const char* message, int num_players);
 	void NetProgress(int count);
 	void NetMessage(const char* format, ...);	// cover for printf
@@ -86,7 +92,7 @@ class FHereticStartupScreen : public FGraphicalStartupScreen
 public:
 	FHereticStartupScreen(int max_progress, long &hr);
 
-	void Progress();
+	void DoProgress();
 	void LoadingStatus(const char *message, int colors);
 	void AppendStatusLine(const char *status);
 protected:
@@ -102,7 +108,7 @@ public:
 	FHexenStartupScreen(int max_progress, long &hr);
 	~FHexenStartupScreen();
 
-	void Progress();
+	void DoProgress();
 	void NetProgress(int count);
 	void NetDone();
 	void SetWindowSize();
@@ -118,7 +124,7 @@ public:
 	FStrifeStartupScreen(int max_progress, long &hr);
 	~FStrifeStartupScreen();
 
-	void Progress();
+	void DoProgress();
 protected:
 	void DrawStuff(int old_laser, int new_laser);
 	void SetWindowSize();

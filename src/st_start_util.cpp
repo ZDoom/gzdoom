@@ -44,11 +44,18 @@
 #include "d_main.h"
 #include "textures.h"
 #include "image.h"
+#include "gi.h"
+#include "m_argv.h"
+#include "v_video.h"
 
 void I_GetEvent();	// i_input.h pulls in too much garbage.
 
-void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int right, int bottom);
+void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int right, int bottom)
+{
+
+}
 bool ST_Util_CreateStartupWindow();
+void ST_Util_SizeWindowForBitmap(int scale);
 
 static const uint16_t IBM437ToUnicode[] = {
 	0x0000, //#NULL
@@ -397,7 +404,7 @@ static const int StrifeStartupPicSizes[4 + 2 + 1] =
 
 FImageSource *CreateStartScreenTexture(BitmapInfo *srcdata);
 
-void InvalidateTexture()
+void FStartupScreen::InvalidateTexture()
 {
 	if (StartupTexture == nullptr)
 	{
@@ -409,6 +416,50 @@ void InvalidateTexture()
 	{
 		StartupTexture->SystemTextures.Clean(true, true);
 	}
+}
+
+//==========================================================================
+//
+// FStartupScreen :: CreateInstance
+//
+// Initializes the startup screen for the detected game.
+// Sets the size of the progress bar and displays the startup screen.
+//
+//==========================================================================
+
+FStartupScreen* FStartupScreen::CreateInstance(int max_progress)
+{
+	FStartupScreen* scr = NULL;
+	long hr;
+
+	if (!Args->CheckParm("-nostartup"))
+	{
+		if (DoomStartupInfo.Type == FStartupInfo::HexenStartup ||
+			(gameinfo.gametype == GAME_Hexen && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
+		{
+			scr = new FHexenStartupScreen(max_progress, hr);
+		}
+		else if (DoomStartupInfo.Type == FStartupInfo::HereticStartup ||
+			(gameinfo.gametype == GAME_Heretic && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
+		{
+			scr = new FHereticStartupScreen(max_progress, hr);
+		}
+		else if (DoomStartupInfo.Type == FStartupInfo::StrifeStartup ||
+			(gameinfo.gametype == GAME_Strife && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
+		{
+			scr = new FStrifeStartupScreen(max_progress, hr);
+		}
+		if (scr != NULL && hr < 0)
+		{
+			delete scr;
+			scr = NULL;
+		}
+	}
+	if (scr == NULL)
+	{
+		scr = new FBasicStartupScreen(max_progress, true);
+	}
+	return scr;
 }
 
 //==========================================================================
@@ -513,7 +564,7 @@ FHexenStartupScreen::~FHexenStartupScreen()
 //
 //==========================================================================
 
-void FHexenStartupScreen::Progress()
+void FHexenStartupScreen::DoProgress()
 {
 	int notch_pos, x, y;
 
@@ -532,7 +583,6 @@ void FHexenStartupScreen::Progress()
 			S_Sound(CHAN_BODY, "StartupTick", 1, ATTN_NONE);
 		}
 	}
-	I_GetEvent();
 }
 
 //==========================================================================
@@ -576,6 +626,17 @@ void FHexenStartupScreen::NetDone()
 	FGraphicalStartupScreen::NetDone();
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FHexenStartupScreen::SetWindowSize()
+{
+	ST_Util_SizeWindowForBitmap(1);
+}
 
 //==========================================================================
 //
@@ -639,7 +700,7 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 //
 //==========================================================================
 
-void FHereticStartupScreen::Progress()
+void FHereticStartupScreen::DoProgress()
 {
 	int notch_pos;
 
@@ -657,7 +718,6 @@ void FHereticStartupScreen::Progress()
 			NotchPos = notch_pos;
 		}
 	}
-	I_GetEvent();
 }
 
 //==========================================================================
@@ -710,6 +770,17 @@ void FHereticStartupScreen::AppendStatusLine(const char* status)
 		SMsgX += x;
 		I_GetEvent();
 	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FHereticStartupScreen::SetWindowSize()
+{
+	ST_Util_SizeWindowForBitmap(1);
 }
 
 //==========================================================================
@@ -802,7 +873,7 @@ FStrifeStartupScreen::~FStrifeStartupScreen()
 //
 //==========================================================================
 
-void FStrifeStartupScreen::Progress()
+void FStrifeStartupScreen::DoProgress()
 {
 	int notch_pos;
 
@@ -816,7 +887,6 @@ void FStrifeStartupScreen::Progress()
 			NotchPos = notch_pos;
 		}
 	}
-	I_GetEvent();
 }
 
 //==========================================================================
@@ -857,6 +927,18 @@ void FStrifeStartupScreen::DrawStuff(int old_laser, int new_laser)
 	// Yet, despite all his limb flailing, he never manages to get anywhere.
 	ST_Util_DrawBlock(bitmap_info, StartupPics[PEASANT_INDEX + ((new_laser >> 1) & 3)],
 		ST_PEASANT_X, ST_PEASANT_Y, ST_PEASANT_WIDTH, ST_PEASANT_HEIGHT);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FStrifeStartupScreen::SetWindowSize()
+{
+	Scale = 2;
+	ST_Util_SizeWindowForBitmap(2);
 }
 
 
@@ -1201,3 +1283,19 @@ void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen
 		}
 	}
 }
+//==========================================================================
+//
+// ST_Util_SizeWindowForBitmap
+//
+// Resizes the main window so that the startup bitmap will be drawn
+// at the desired scale.
+//
+//==========================================================================
+
+void ST_Util_SizeWindowForBitmap(int scale)
+{
+	int w = StartupBitmap->bmiHeader.biWidth * scale;
+	int h = (StartupBitmap->bmiHeader.biHeight + 40) * scale;	// The 40 is for the caption line.
+	screen->SetWindowSize(w, h, true);
+}
+

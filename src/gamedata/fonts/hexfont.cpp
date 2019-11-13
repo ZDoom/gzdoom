@@ -42,50 +42,7 @@
 
 #include "fontinternals.h"
 
-
-struct HexDataSource
-{
-	int FirstChar = INT_MAX, LastChar = INT_MIN;
-	TArray<uint8_t> glyphdata;
-	unsigned glyphmap[65536] = {};
-
-	//==========================================================================
-	//
-	// parse a HEX font
-	//
-	//==========================================================================
-
-	void ParseDefinition(int lumpnum)
-	{
-		FScanner sc;
-
-		sc.OpenLumpNum(lumpnum);
-		sc.SetCMode(true);
-		glyphdata.Push(0);	// ensure that index 0 can be used as 'not present'.
-		while (sc.GetString())
-		{
-			int codepoint = (int)strtoull(sc.String, nullptr, 16);
-			sc.MustGetStringName(":");
-			sc.MustGetString();
-			if (codepoint >= 0 && codepoint < 65536 && !sc.Compare("00000000000000000000000000000000"))	// don't set up empty glyphs.
-			{
-				unsigned size = (unsigned)strlen(sc.String);
-				unsigned offset = glyphdata.Reserve(size / 2 + 1);
-				glyphmap[codepoint] = offset;
-				glyphdata[offset++] = size / 2;
-				for (unsigned i = 0; i < size; i += 2)
-				{
-					char hex[] = { sc.String[i], sc.String[i + 1], 0 };
-					glyphdata[offset++] = (uint8_t)strtoull(hex, nullptr, 16);
-				}
-				if (codepoint < FirstChar) FirstChar = codepoint;
-				if (codepoint > LastChar) LastChar = codepoint;
-			}
-		}
-	}
-};
-
-static HexDataSource hexdata;
+HexDataSource hexdata;
 
 // This is a font character that reads RLE compressed data.
 class FHexFontChar : public FImageSource
@@ -100,6 +57,41 @@ protected:
 	const uint8_t *SourceData;
 };
 
+
+//==========================================================================
+//
+// parse a HEX font
+//
+//==========================================================================
+
+void HexDataSource::ParseDefinition(int lumpnum)
+{
+	FScanner sc;
+
+	sc.OpenLumpNum(lumpnum);
+	sc.SetCMode(true);
+	glyphdata.Push(0);	// ensure that index 0 can be used as 'not present'.
+	while (sc.GetString())
+	{
+		int codepoint = (int)strtoull(sc.String, nullptr, 16);
+		sc.MustGetStringName(":");
+		sc.MustGetString();
+		if (codepoint >= 0 && codepoint < 65536 && !sc.Compare("00000000000000000000000000000000"))	// don't set up empty glyphs.
+		{
+			unsigned size = (unsigned)strlen(sc.String);
+			unsigned offset = glyphdata.Reserve(size / 2 + 1);
+			glyphmap[codepoint] = offset;
+			glyphdata[offset++] = size / 2;
+			for (unsigned i = 0; i < size; i += 2)
+			{
+				char hex[] = { sc.String[i], sc.String[i + 1], 0 };
+				glyphdata[offset++] = (uint8_t)strtoull(hex, nullptr, 16);
+			}
+			if (codepoint < FirstChar) FirstChar = codepoint;
+			if (codepoint > LastChar) LastChar = codepoint;
+		}
+	}
+}
 
 //==========================================================================
 //
@@ -423,6 +415,22 @@ public:
 	}
 
 };
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void InitHexFont()
+{
+	if (hexdata.FirstChar == INT_MAX)
+	{
+		auto lump = Wads.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
+		if (lump == -1) I_FatalError("newconsolefont.hex not found");	// This font is needed - do not start up without it.
+		hexdata.ParseDefinition(lump);
+	}
+}
 
 
 //==========================================================================

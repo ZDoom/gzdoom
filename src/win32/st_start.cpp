@@ -72,8 +72,7 @@ void LayoutMainWindow (HWND hWnd, HWND pane);
 int LayoutNetStartPane (HWND pane, int w);
 
 bool ST_Util_CreateStartupWindow ();
-void ST_Util_SizeWindowForBitmap (int scale);
-void ST_Util_InvalidateRect (HWND hwnd, BitmapInfo *bitmap_info, int left, int top, int right, int bottom);
+void ST_Util_SizeWindowForBitmap(int scale);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -99,50 +98,6 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-// FStartupScreen :: CreateInstance
-//
-// Initializes the startup screen for the detected game.
-// Sets the size of the progress bar and displays the startup screen.
-//
-//==========================================================================
-
-FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
-{
-	FStartupScreen *scr = NULL;
-	HRESULT hr;
-
-	if (!Args->CheckParm("-nostartup"))
-	{
-		if (DoomStartupInfo.Type == FStartupInfo::HexenStartup ||
-			(gameinfo.gametype == GAME_Hexen && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
-		{
-			scr = new FHexenStartupScreen(max_progress, hr);
-		}
-		else if (DoomStartupInfo.Type == FStartupInfo::HereticStartup ||
-			(gameinfo.gametype == GAME_Heretic && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
-		{
-			scr = new FHereticStartupScreen(max_progress, hr);
-		}
-		else if (DoomStartupInfo.Type == FStartupInfo::StrifeStartup ||
-			(gameinfo.gametype == GAME_Strife && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
-		{
-			scr = new FStrifeStartupScreen(max_progress, hr);
-		}
-		if (scr != NULL && FAILED(hr))
-		{
-			delete scr;
-			scr = NULL;
-		}
-	}
-	if (scr == NULL)
-	{
-		scr = new FBasicStartupScreen(max_progress, true);
-	}
-	return scr;
-}
 
 //==========================================================================
 //
@@ -186,23 +141,6 @@ FBasicStartupScreen::~FBasicStartupScreen()
 		LayoutMainWindow (Window, NULL);
 	}
 	KillTimer(Window, 1337);
-}
-
-//==========================================================================
-//
-// FBasicStartupScreen :: Progress
-//
-// Bumps the progress meter one notch.
-//
-//==========================================================================
-
-void FBasicStartupScreen::Progress()
-{
-	if (CurPos < MaxPos)
-	{
-		CurPos++;
-		SendMessage (ProgressBar, PBM_SETPOS, CurPos, 0);
-	}
 }
 
 //==========================================================================
@@ -462,44 +400,6 @@ FGraphicalStartupScreen::~FGraphicalStartupScreen()
 	}
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FHexenStartupScreen::SetWindowSize()
-{
-	ST_Util_SizeWindowForBitmap(1);
-	LayoutMainWindow(Window, NULL);
-	InvalidateRect(StartupScreen, NULL, TRUE);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FHereticStartupScreen::SetWindowSize()
-{
-	ST_Util_SizeWindowForBitmap(1);
-	LayoutMainWindow(Window, NULL);
-	InvalidateRect(StartupScreen, NULL, TRUE);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FStrifeStartupScreen::SetWindowSize()
-{
-	ST_Util_SizeWindowForBitmap(2);
-	LayoutMainWindow(Window, NULL);
-	InvalidateRect(StartupScreen, NULL, TRUE);
-}
 
 //==========================================================================
 //
@@ -636,44 +536,3 @@ bool ST_Util_CreateStartupWindow ()
 	return true;
 }
 
-//==========================================================================
-//
-// ST_Util_SizeWindowForBitmap
-//
-// Resizes the main window so that the startup bitmap will be drawn
-// at the desired scale.
-//
-//==========================================================================
-
-void ST_Util_SizeWindowForBitmap (int scale)
-{
-	int w = StartupBitmap->bmiHeader.biWidth * scale;
-	int h = StartupBitmap->bmiHeader.biHeight * scale;
-	screen->SetWindowSize(w, h, true);
-}
-
-//==========================================================================
-//
-// ST_Util_InvalidateRect
-//
-// Invalidates the portion of the window that the specified rect of the
-// bitmap appears in.
-//
-//==========================================================================
-
-void ST_Util_InvalidateRect (HWND hwnd, BitmapInfo *bitmap_info, int left, int top, int right, int bottom)
-{
-	RECT rect;
-
-	GetClientRect (hwnd, &rect);
-	rect.left = left * rect.right / bitmap_info->bmiHeader.biWidth - 1;
-	rect.top = top * rect.bottom / bitmap_info->bmiHeader.biHeight - 1;
-	rect.right = right * rect.right / bitmap_info->bmiHeader.biWidth + 1;
-	rect.bottom = bottom * rect.bottom / bitmap_info->bmiHeader.biHeight + 1;
-	InvalidateRect (hwnd, &rect, FALSE);
-}
-
-void ST_Util_InvalidateRect(BitmapInfo* bitmap_info, int left, int top, int right, int bottom)
-{
-	ST_Util_InvalidateRect(StartupScreen , bitmap_info, left, top, right, bottom);
-}

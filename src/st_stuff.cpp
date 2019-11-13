@@ -39,6 +39,7 @@
 EXTERN_CVAR (Bool, ticker);
 EXTERN_CVAR (Bool, noisedebug);
 EXTERN_CVAR (Int, am_cheat);
+EXTERN_CVAR (Int, cl_blockcheats);
 
 struct cheatseq_t
 {
@@ -308,7 +309,7 @@ bool ST_Responder (event_t *ev)
 {
 	bool eat = false;
 
-	if (nocheats)
+	if (nocheats || !!cl_blockcheats)
 	{
 		return false;
 	}

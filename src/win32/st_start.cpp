@@ -83,7 +83,7 @@ static INT_PTR CALLBACK NetStartPaneProc (HWND hDlg, UINT msg, WPARAM wParam, LP
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern HINSTANCE g_hInst;
-extern HWND Window, ConWindow, ProgressBar, NetStartPane, StartupScreen, GameTitleWindow;
+extern HWND Window, ConWindow, ProgressBar, NetStartPane, GameTitleWindow;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -110,6 +110,7 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
 : FStartupScreen(max_progress)
 {
+	/*
 	if (show_bar)
 	{
 		ProgressBar = CreateWindowEx(0, PROGRESS_CLASS,
@@ -119,6 +120,7 @@ FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
 		SendMessage (ProgressBar, PBM_SETRANGE, 0, MAKELPARAM(0,MaxPos));
 		LayoutMainWindow (Window, NULL);
 	}
+	*/
 	NetMaxPos = 0;
 	NetCurPos = 0;
 }
@@ -134,12 +136,14 @@ FBasicStartupScreen::FBasicStartupScreen(int max_progress, bool show_bar)
 
 FBasicStartupScreen::~FBasicStartupScreen()
 {
+	/*
 	if (ProgressBar != NULL)
 	{
 		DestroyWindow (ProgressBar);
 		ProgressBar = NULL;
 		LayoutMainWindow (Window, NULL);
 	}
+	*/
 	KillTimer(Window, 1337);
 }
 
@@ -388,11 +392,6 @@ FGraphicalStartupScreen::FGraphicalStartupScreen(int max_progress)
 
 FGraphicalStartupScreen::~FGraphicalStartupScreen()
 {
-	if (StartupScreen != NULL)
-	{
-		DestroyWindow (StartupScreen);
-		StartupScreen = NULL;
-	}
 	if (StartupBitmap != NULL)
 	{
 		ST_Util_FreeBitmap (StartupBitmap);
@@ -419,7 +418,6 @@ int RunEndoom()
 	int endoom_lump = Wads.CheckNumForFullName (gameinfo.Endoom, true);
 
 	uint8_t endoom_screen[4000];
-	uint8_t *font;
 	MSG mess;
 	BOOL bRet;
 	bool blinking = false, blinkstate = false;
@@ -436,17 +434,12 @@ int RunEndoom()
 		return 0;
 	}
 
-	font = ST_Util_LoadFont (TEXT_FONT_NAME);
-	if (font == NULL)
-	{
-		return 0;
-	}
-
+	/*
 	if (!ST_Util_CreateStartupWindow())
 	{
-		ST_Util_FreeFont (font);
 		return 0;
 	}
+	*/
 
 	I_ShutdownGraphics ();
 	RestoreConView ();
@@ -455,8 +448,8 @@ int RunEndoom()
 	Wads.ReadLump (endoom_lump, endoom_screen);
 
 	// Draw the loading screen to a bitmap.
-	StartupBitmap = ST_Util_AllocTextBitmap (font);
-	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen, font);
+	StartupBitmap = ST_Util_AllocTextBitmap ();
+	ST_Util_DrawTextScreen (StartupBitmap, endoom_screen);
 
 	// Make the title banner go away.
 	if (GameTitleWindow != NULL)
@@ -467,7 +460,7 @@ int RunEndoom()
 
 	ST_Util_SizeWindowForBitmap (1);
 	LayoutMainWindow (Window, NULL);
-	InvalidateRect (StartupScreen, NULL, TRUE);
+	//InvalidateRect (StartupScreen, NULL, TRUE);
 
 	// Does this screen need blinking?
 	for (i = 0; i < 80*25; ++i)
@@ -495,12 +488,11 @@ int RunEndoom()
 				KillTimer (Window, 0x5A15A);
 			}
 			ST_Util_FreeBitmap (StartupBitmap);
-			ST_Util_FreeFont (font);
 			return int(bRet == 0 ? mess.wParam : 0);
 		}
 		else if (blinking && mess.message == WM_TIMER && mess.hwnd == Window && mess.wParam == 0x5A15A)
 		{
-			ST_Util_UpdateTextBlink (StartupBitmap, endoom_screen, font, blinkstate);
+			ST_Util_UpdateTextBlink (StartupBitmap, endoom_screen, blinkstate);
 			blinkstate = !blinkstate;
 		}
 		TranslateMessage (&mess);
@@ -513,26 +505,5 @@ void ST_Endoom()
 	int code = RunEndoom();
 	throw CExitEvent(code);
 
-}
-
-//==========================================================================
-//
-// ST_Util_CreateStartupWindow
-//
-// Creates the static control that will draw the startup screen.
-//
-//==========================================================================
-
-bool ST_Util_CreateStartupWindow ()
-{
-	StartupScreen = CreateWindowEx (WS_EX_NOPARENTNOTIFY, L"STATIC", NULL,
-		WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW,
-		0, 0, 0, 0, Window, NULL, g_hInst, NULL);
-	if (StartupScreen == NULL)
-	{
-		return false;
-	}
-	SetWindowLong (StartupScreen, GWL_ID, IDC_STATIC_STARTUP);
-	return true;
 }
 

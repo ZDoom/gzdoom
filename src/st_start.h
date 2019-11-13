@@ -181,10 +181,10 @@ BitmapInfo* ST_Util_CreateBitmap(int width, int height, int color_bits);
 uint8_t* ST_Util_BitsForBitmap(BitmapInfo* bitmap_info);
 void ST_Util_FreeBitmap(BitmapInfo* bitmap_info);
 void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info);
-uint8_t* ST_Util_LoadFont(const char* filename);
-void ST_Util_FreeFont(uint8_t* font);
-BitmapInfo* ST_Util_AllocTextBitmap(const uint8_t* font);
-void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen, const uint8_t* font);
-void ST_Util_DrawChar(BitmapInfo* screen, const uint8_t* font, int x, int y, uint8_t charnum, uint8_t attrib);
-void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, const uint8_t* font, bool on);
+BitmapInfo* ST_Util_AllocTextBitmap();
+void ST_Util_DrawTextScreen(BitmapInfo* bitmap_info, const uint8_t* text_screen);
+void ST_Util_DrawChar(BitmapInfo* screen, int x, int y, uint8_t charnum, uint8_t attrib);
+void ST_Util_DrawUniChar(BitmapInfo* screen, int x, int y, uint32_t charnum, uint8_t attrib);
+void ST_Util_UpdateTextBlink(BitmapInfo* bitmap_info, const uint8_t* text_screen, bool on);
+int ST_Util_CellSize(const char* unitext);
 

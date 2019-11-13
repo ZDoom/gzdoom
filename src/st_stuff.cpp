@@ -309,7 +309,7 @@ bool ST_Responder (event_t *ev)
 {
 	bool eat = false;
 
-	if (nocheats || !!cl_blockcheats)
+	if (nocheats || !!cl_blockcheats || (gameinfo.nokeyboardcheats && !allcheats))
 	{
 		return false;
 	}

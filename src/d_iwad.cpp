@@ -128,6 +128,10 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetString();
 					iwad->MapInfo = sc.String;
 				}
+				else if (sc.Compare("NoKeyboardCheats"))
+				{
+					iwad->nokeyboardcheats = true;
+				}
 				else if (sc.Compare("Compatibility"))
 				{
 					sc.MustGetStringName("=");

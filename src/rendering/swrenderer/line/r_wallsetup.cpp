@@ -168,6 +168,22 @@ namespace swrenderer
 		}
 	}
 
+	void ProjectedWallLine::ClipTop(int x1, int x2, const DrawSegmentClipInfo& clip)
+	{
+		for (int i = x1; i < x2; i++)
+		{
+			ScreenY[i] = std::max(ScreenY[i], clip.sprtopclip[i]);
+		}
+	}
+
+	void ProjectedWallLine::ClipBottom(int x1, int x2, const DrawSegmentClipInfo& clip)
+	{
+		for (int i = x1; i < x2; i++)
+		{
+			ScreenY[i] = std::min(ScreenY[i], clip.sprbottomclip[i]);
+		}
+	}
+
 	/////////////////////////////////////////////////////////////////////////
 
 	void FWallTmapVals::InitFromWallCoords(RenderThread* thread, const FWallCoords* wallc)

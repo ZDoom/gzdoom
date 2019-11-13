@@ -102,11 +102,8 @@ namespace swrenderer
 		// [RH] Draw fog partition
 		if (ds->drawsegclip.bFogBoundary)
 		{
-			const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
-			const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
-
 			RenderFogBoundary renderfog;
-			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight);
+			renderfog.Render(Thread, x1, x2, ds->drawsegclip, mLight);
 		}
 
 		bool notrelevant = false;
@@ -120,8 +117,7 @@ namespace swrenderer
 
 		if (!notrelevant)
 		{
-			ds->drawsegclip.sprclipped = true;
-			fillshort(ds->drawsegclip.sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
+			ds->drawsegclip.SetRangeDrawn(x1, x2);
 		}
 	}
 
@@ -141,8 +137,8 @@ namespace swrenderer
 		}
 		FSoftwareTexture *tex = ttex->GetSoftwareTexture();
 
-		const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
-		const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
+		const short *mfloorclip = ds->drawsegclip.sprbottomclip;
+		const short *mceilingclip = ds->drawsegclip.sprtopclip;
 
 		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 		if (!wrap)
@@ -214,16 +210,8 @@ namespace swrenderer
 			wallupper.Project(Thread->Viewport.get(), ceilZ, &ds->WallC);
 			walllower.Project(Thread->Viewport.get(), floorZ, &ds->WallC);
 
-			for (int i = x1; i < x2; i++)
-			{
-				if (wallupper.ScreenY[i] < mceilingclip[i])
-					wallupper.ScreenY[i] = mceilingclip[i];
-			}
-			for (int i = x1; i < x2; i++)
-			{
-				if (walllower.ScreenY[i] > mfloorclip[i])
-					walllower.ScreenY[i] = mfloorclip[i];
-			}
+			wallupper.ClipTop(x1, x2, ds->drawsegclip);
+			walllower.ClipBottom(x1, x2, ds->drawsegclip);
 
 			if (clip3d->CurrentSkybox)
 			{ // Midtex clipping doesn't work properly with skyboxes, since you're normally below the floor
@@ -297,23 +285,12 @@ namespace swrenderer
 
 		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
 
-		const short *mfloorclip = ds->drawsegclip.sprbottomclip - ds->x1;
-		const short *mceilingclip = ds->drawsegclip.sprtopclip - ds->x1;
-
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 
-		for (int i = x1; i < x2; i++)
-		{
-			if (wallupper.ScreenY[i] < mceilingclip[i])
-				wallupper.ScreenY[i] = mceilingclip[i];
-		}
-		for (int i = x1; i < x2; i++)
-		{
-			if (walllower.ScreenY[i] > mfloorclip[i])
-				walllower.ScreenY[i] = mfloorclip[i];
-		}
+		wallupper.ClipTop(x1, x2, ds->drawsegclip);
+		walllower.ClipBottom(x1, x2, ds->drawsegclip);
 
 		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC.sx1, ds->WallC.sx2, ds->tmapvals, rw_pic);

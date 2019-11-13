@@ -156,17 +156,15 @@ namespace swrenderer
 			// [ZZ] the same as above
 			if (ds->drawsegclip.CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
+
 			if (ds->texcoords || ds->drawsegclip.bFogBoundary)
 			{
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2, clip3DFloor);
-				if (renew && ds->drawsegclip.bFogBoundary) // don't draw fogboundary again
-					ds->drawsegclip.bFogBoundary = false;
-
-				if (renew && ds->drawsegclip.sprclipped)
+				if (renew)
 				{
-					memcpy(ds->drawsegclip.sprtopclip, ds->drawsegclip.bkup, (ds->x2 - ds->x1) * sizeof(short));
-					ds->drawsegclip.sprclipped = false;
+					ds->drawsegclip.bFogBoundary = false; // don't draw fogboundary again
+					ds->drawsegclip.SetRangeUndrawn(ds->x1, ds->x2);
 				}
 			}
 		}

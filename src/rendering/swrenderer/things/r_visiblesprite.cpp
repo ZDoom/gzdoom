@@ -434,7 +434,7 @@ namespace swrenderer
 					if (ds->drawsegclip.silhouette & SIL_BOTTOM) //bottom sil
 					{
 						short *clip1 = clipbot + r1;
-						const short *clip2 = ds->drawsegclip.sprbottomclip + r1 - ds->x1;
+						const short *clip2 = ds->drawsegclip.sprbottomclip + r1;
 						int i = r2 - r1;
 						do
 						{
@@ -448,7 +448,7 @@ namespace swrenderer
 					if (ds->drawsegclip.silhouette & SIL_TOP)   // top sil
 					{
 						short *clip1 = cliptop + r1;
-						const short *clip2 = ds->drawsegclip.sprtopclip + r1 - ds->x1;
+						const short *clip2 = ds->drawsegclip.sprtopclip + r1;
 						int i = r2 - r1;
 						do
 						{

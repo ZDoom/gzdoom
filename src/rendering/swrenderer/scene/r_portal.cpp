@@ -212,12 +212,10 @@ namespace swrenderer
 			draw_segment->x1 = pl->left;
 			draw_segment->x2 = pl->right;
 			draw_segment->drawsegclip.silhouette = SIL_BOTH;
-			draw_segment->drawsegclip.sprbottomclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
-			draw_segment->drawsegclip.sprtopclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
+			draw_segment->drawsegclip.SetTopClip(Thread, pl->left, pl->right, ceilingclip);
+			draw_segment->drawsegclip.SetBottomClip(Thread, pl->left, pl->right, floorclip);
 			draw_segment->drawsegclip.bFogBoundary = false;
 			draw_segment->curline = nullptr;
-			memcpy(draw_segment->drawsegclip.sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
-			memcpy(draw_segment->drawsegclip.sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			drawseglist->Push(draw_segment);
 
 			Thread->OpaquePass->RenderScene(Thread->Viewport->Level());

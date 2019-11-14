@@ -100,7 +100,7 @@ FBasicStartupScreen::~FBasicStartupScreen()
 	FConsoleWindow::GetInstance().SetProgressBar(false);
 }
 
-
+#if 0
 void FBasicStartupScreen::Progress()
 {
 	if (CurPos < MaxPos)
@@ -110,6 +110,7 @@ void FBasicStartupScreen::Progress()
 
 	FConsoleWindow::GetInstance().Progress(CurPos, MaxPos);
 }
+#endif
 
 
 void FBasicStartupScreen::NetInit(const char* const message, const int playerCount)
@@ -161,10 +162,12 @@ bool FBasicStartupScreen::NetLoop(bool (*timerCallback)(void*), void* const user
 // ---------------------------------------------------------------------------
 
 
+#if 0
 FStartupScreen *FStartupScreen::CreateInstance(const int maxProgress)
 {
 	return new FBasicStartupScreen(maxProgress, true);
 }
+#endif
 
 
 // ---------------------------------------------------------------------------

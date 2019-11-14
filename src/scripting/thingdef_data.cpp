@@ -322,6 +322,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF8, NOFRICTION, AActor, flags8),
 	DEFINE_FLAG(MF8, NOFRICTIONBOUNCE, AActor, flags8),
 	DEFINE_FLAG(MF8, RETARGETAFTERSLAM, AActor, flags8),
+	DEFINE_FLAG(MF8, STOPRAILS, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

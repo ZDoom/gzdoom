@@ -157,13 +157,13 @@ namespace swrenderer
 			if (ds->drawsegclip.CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
 
-			if (ds->texcoords || ds->drawsegclip.bFogBoundary)
+			if (ds->HasTranslucentMidTexture() || ds->Has3DFloorWalls() || ds->HasFogBoundary())
 			{
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2, clip3DFloor);
 				if (renew)
 				{
-					ds->drawsegclip.bFogBoundary = false; // don't draw fogboundary again
+					ds->ClearFogBoundary(); // don't draw fogboundary again
 					ds->drawsegclip.SetRangeUndrawn(ds->x1, ds->x2);
 				}
 			}

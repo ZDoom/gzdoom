@@ -75,8 +75,6 @@ namespace swrenderer
 		float VStep(int x) const;
 		fixed_t UPos(int x) const;
 
-		explicit operator bool() const { return valid; }
-
 	private:
 		void Project(RenderViewport* viewport, double walxrepeat, int x1, int x2, const FWallTmapVals& WallT, bool flipx = false);
 
@@ -85,7 +83,6 @@ namespace swrenderer
 		static double GetXScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
 		static double GetYScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
 
-		bool valid = false;
 		double CenterX;
 		double WallTMapScale2;
 		double walxrepeat;

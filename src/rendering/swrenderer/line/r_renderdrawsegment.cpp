@@ -90,27 +90,22 @@ namespace swrenderer
 			}
 		}
 
-		float alpha = (float)MIN(curline->linedef->alpha, 1.);
-		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
-
-		bool visible = alpha > 0.0f;
-		if (!visible && !ds->drawsegclip.bFogBoundary && !ds->Has3DFloorWalls())
+		if (!ds->HasTranslucentMidTexture() && !ds->HasFogBoundary() && !ds->Has3DFloorWalls())
 		{
 			return;
 		}
 
-		// [RH] Draw fog partition
-		if (ds->drawsegclip.bFogBoundary)
+		if (ds->HasFogBoundary())
 		{
 			RenderFogBoundary renderfog;
 			renderfog.Render(Thread, x1, x2, ds->drawsegclip, mLight);
 		}
 
 		bool notrelevant = false;
-		if (ds->texcoords && visible)
+		if (ds->HasTranslucentMidTexture())
 			notrelevant = RenderWall(ds, x1, x2);
 
-		if (ds->Has3DFloorFrontSectorWalls() || ds->Has3DFloorBackSectorWalls())
+		if (ds->Has3DFloorWalls())
 		{
 			Render3DFloorWallRange(ds, x1, x2);
 		}

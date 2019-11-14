@@ -214,7 +214,6 @@ namespace swrenderer
 			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 			draw_segment->drawsegclip.SetTopClip(Thread, pl->left, pl->right, ceilingclip);
 			draw_segment->drawsegclip.SetBottomClip(Thread, pl->left, pl->right, floorclip);
-			draw_segment->drawsegclip.bFogBoundary = false;
 			draw_segment->curline = nullptr;
 			drawseglist->Push(draw_segment);
 

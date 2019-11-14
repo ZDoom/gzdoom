@@ -470,7 +470,6 @@ namespace swrenderer
 		this->flipx = flipx;
 		CenterX = viewport->CenterX;
 		WallTMapScale2 = viewport->WallTMapScale2;
-		valid = true;
 	}
 
 	float ProjectedWallTexcoords::VStep(int x) const

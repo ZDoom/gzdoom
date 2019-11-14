@@ -405,7 +405,7 @@ namespace swrenderer
 					DrawSegment *ds = segmentlist->Segment(index);
 
 					// determine if the drawseg obscures the sprite
-					if (ds->x1 >= x2 || ds->x2 <= x1 || (!(ds->drawsegclip.silhouette & SIL_BOTH) && !ds->texcoords && !ds->drawsegclip.bFogBoundary))
+					if (ds->x1 >= x2 || ds->x2 <= x1 || (!(ds->drawsegclip.silhouette & SIL_BOTH) && !ds->Has3DFloorWalls() && !ds->HasTranslucentMidTexture() && !ds->HasFogBoundary()))
 					{
 						// does not cover sprite
 						continue;

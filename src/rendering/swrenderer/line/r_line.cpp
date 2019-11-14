@@ -287,9 +287,6 @@ namespace swrenderer
 	// A wall segment will be drawn between start and stop pixels (inclusive).
 	bool SWRenderLine::RenderWallSegment(int start, int stop)
 	{
-		int i;
-		bool maskedtexture = false;
-
 		if (!rw_prepped)
 		{
 			rw_prepped = true;
@@ -320,9 +317,11 @@ namespace swrenderer
 
 		if (markportal)
 		{
+			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
+			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, Thread->OpaquePass->floorclip);
 			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 		}
-		else if (mBackSector == NULL)
+		else if (!mBackSector)
 		{
 			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, viewheight);
 			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, -1);
@@ -331,14 +330,12 @@ namespace swrenderer
 		else
 		{
 			// two sided line
-			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 ||
-				mBackSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
+			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 || mBackSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
 				draw_segment->drawsegclip.silhouette = SIL_BOTTOM;
 			}
 
-			if (mFrontCeilingZ1 < mBackCeilingZ1 || mFrontCeilingZ2 < mBackCeilingZ2 ||
-				mBackSector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
+			if (mFrontCeilingZ1 < mBackCeilingZ1 || mFrontCeilingZ2 < mBackCeilingZ2 || mBackSector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
 				draw_segment->drawsegclip.silhouette |= SIL_TOP;
 			}
@@ -351,71 +348,65 @@ namespace swrenderer
 			//
 			// killough 4/7/98: make doorclosed external variable
 
+			if (mDoorClosed || (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2))
 			{
-				if (mDoorClosed || (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2))
-				{
-					draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, -1);
-					draw_segment->drawsegclip.silhouette |= SIL_BOTTOM;
-				}
-				if (mDoorClosed || (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2))
-				{
-					draw_segment->drawsegclip.SetTopClip(Thread, start, stop, viewheight);
-					draw_segment->drawsegclip.silhouette |= SIL_TOP;
-				}
+				draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, -1);
+				draw_segment->drawsegclip.silhouette |= SIL_BOTTOM;
+			}
+			if (mDoorClosed || (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2))
+			{
+				draw_segment->drawsegclip.SetTopClip(Thread, start, stop, viewheight);
+				draw_segment->drawsegclip.silhouette |= SIL_TOP;
 			}
 
 			if (m3DFloor.type == Fake3DOpaque::Normal)
 			{
-				if (r_3dfloors)
-				{
-					if (mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
-						for (i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
-							F3DFloor *rover = mBackSector->e->XFloor.ffloors[i];
-							if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
-								draw_segment->SetHas3DFloorBackSectorWalls();
-								break;
-							}
-						}
-					}
-					if (mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
-						for (i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
-							F3DFloor *rover = mFrontSector->e->XFloor.ffloors[i];
-							if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
-								draw_segment->SetHas3DFloorFrontSectorWalls();
-								break;
-							}
-						}
-					}
-				}
-
-				// allocate space for masked texture tables, if needed
-				// [RH] Don't just allocate the space; fill it in too.
-				if ((sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls() || IsFogBoundary(mFrontSector, mBackSector)) &&
-					(mCeilingClipped != ProjectedWallCull::OutsideBelow || !sidedef->GetTexture(side_t::top).isValid()) &&
+				if ((mCeilingClipped != ProjectedWallCull::OutsideBelow || !sidedef->GetTexture(side_t::top).isValid()) &&
 					(mFloorClipped != ProjectedWallCull::OutsideAbove || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 					(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
 				{
-					maskedtexture = true;
-
-					// kg3D - backup for mid and fake walls
-					draw_segment->drawsegclip.SetBackupClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
-					draw_segment->drawsegclip.bFogBoundary = IsFogBoundary(mFrontSector, mBackSector);
-					if (sidedef->GetTexture(side_t::mid).isValid())
+					if (r_3dfloors)
 					{
-						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-						FSoftwareTexture *pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
-						if (pic)
-						{
-							draw_segment->SetHas3DFloorMidTexture();
-							draw_segment->texcoords.ProjectTranslucent(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, pic);
+						if (mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
+							for (int i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
+								F3DFloor* rover = mBackSector->e->XFloor.ffloors[i];
+								if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
+									draw_segment->SetHas3DFloorBackSectorWalls();
+									break;
+								}
+							}
+						}
+						if (mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
+							for (int i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
+								F3DFloor* rover = mFrontSector->e->XFloor.ffloors[i];
+								if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
+									draw_segment->SetHas3DFloorFrontSectorWalls();
+									break;
+								}
+							}
 						}
 					}
 
-					draw_segment->light = mLight.GetLightPos(start);
-					draw_segment->lightstep = mLight.GetLightStep();
+					if (IsFogBoundary(mFrontSector, mBackSector))
+						draw_segment->SetHasFogBoundary();
 
-					if (draw_segment->drawsegclip.bFogBoundary || draw_segment->texcoords || draw_segment->Has3DFloorWalls())
+					if (mLineSegment->linedef->alpha > 0.0f && sidedef->GetTexture(side_t::mid).isValid())
 					{
+						FTexture* tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
+						FSoftwareTexture* pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+						if (pic)
+						{
+							draw_segment->SetHasTranslucentMidTexture();
+							draw_segment->texcoords.ProjectTranslucent(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, pic);
+							draw_segment->drawsegclip.silhouette |= SIL_TOP | SIL_BOTTOM;
+						}
+					}
+
+					if (draw_segment->HasFogBoundary() || draw_segment->HasTranslucentMidTexture() || draw_segment->Has3DFloorWalls())
+					{
+						draw_segment->drawsegclip.SetBackupClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
+						draw_segment->light = mLight.GetLightPos(start);
+						draw_segment->lightstep = mLight.GetLightStep();
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}
 				}
@@ -435,20 +426,16 @@ namespace swrenderer
 
 		MarkOpaquePassClip(start, stop);
 
-		// save sprite clipping info
-		if (((draw_segment->drawsegclip.silhouette & SIL_TOP) || maskedtexture) && draw_segment->drawsegclip.sprtopclip == nullptr)
+		bool needcliplists = draw_segment->HasFogBoundary() || draw_segment->HasTranslucentMidTexture() || draw_segment->Has3DFloorWalls();
+
+		if (((draw_segment->drawsegclip.silhouette & SIL_TOP) || needcliplists) && !draw_segment->drawsegclip.sprtopclip)
 		{
 			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
 		}
 
-		if (((draw_segment->drawsegclip.silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->drawsegclip.sprbottomclip == nullptr)
+		if (((draw_segment->drawsegclip.silhouette & SIL_BOTTOM) || needcliplists) && !draw_segment->drawsegclip.sprbottomclip)
 		{
 			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, Thread->OpaquePass->floorclip);
-		}
-
-		if (maskedtexture && mLineSegment->sidedef->GetTexture(side_t::mid).isValid())
-		{
-			draw_segment->drawsegclip.silhouette |= SIL_TOP | SIL_BOTTOM;
 		}
 
 		RenderMiddleTexture(start, stop);

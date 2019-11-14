@@ -44,6 +44,11 @@
 #include "colormaps.h"
 #include "templates.h"
 
+CUSTOM_CVAR(Bool, cl_disableinvertedcolormap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	R_InitColormaps();
+}
+
 TArray<FakeCmap> fakecmaps;
 
 TArray<FSpecialColormap> SpecialColormaps;
@@ -241,6 +246,13 @@ void R_InitColormaps ()
 			}
 		}
 	}
+
+	// some of us really don't like Doom's idea of an invulnerability sphere colormap
+	// this hack will override that
+	if (cl_disableinvertedcolormap)
+		SpecialColormapParms[0] = {{0.0, 0.0, 0.2}, { 1.3, 1.3, 0.95}};
+	else
+		SpecialColormapParms[0] = {{1.0, 1.0, 1.0}, { 0.0, 0.0, 0.0}};
 
 	// build default special maps (e.g. invulnerability)
 

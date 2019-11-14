@@ -5127,7 +5127,8 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	{
 		data->count++;
 	}
-	return (data->StopAtOne || (data->limit && (data->count >= data->limit))) ? TRACE_Stop : TRACE_Continue;
+	return (data->StopAtOne || (data->limit && (data->count >= data->limit)) || (res.Actor->flags8 & MF8_STOPRAILS)) 
+			? TRACE_Stop : TRACE_Continue;
 }
 
 //==========================================================================

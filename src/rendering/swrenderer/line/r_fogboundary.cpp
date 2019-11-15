@@ -54,14 +54,11 @@
 
 namespace swrenderer
 {
-	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, const DrawSegmentClipInfo& clip, const ProjectedWallLight &wallLight)
+	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, const short* uclip, const short* dclip, const ProjectedWallLight &wallLight)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that
 		// we need to use a new colormap.
-
-		const short* uclip = clip.sprtopclip;
-		const short* dclip = clip.sprbottomclip;
 
 		int wallshade = LightVisibility::LightLevelToShade(wallLight.GetLightLevel(), wallLight.GetFoggy(), thread->Viewport.get());
 		int x = x2 - 1;

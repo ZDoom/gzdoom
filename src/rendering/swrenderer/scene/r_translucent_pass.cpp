@@ -161,11 +161,9 @@ namespace swrenderer
 			{
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2, clip3DFloor);
+
 				if (renew)
-				{
-					ds->ClearFogBoundary(); // don't draw fogboundary again
 					ds->drawsegclip.SetRangeUndrawn(ds->x1, ds->x2);
-				}
 			}
 		}
 	}

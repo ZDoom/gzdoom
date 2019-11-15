@@ -90,40 +90,24 @@ namespace swrenderer
 			}
 		}
 
-		if (!ds->HasTranslucentMidTexture() && !ds->HasFogBoundary() && !ds->Has3DFloorWalls())
-		{
-			return;
-		}
-
 		if (ds->HasFogBoundary())
-		{
-			RenderFogBoundary renderfog;
-			renderfog.Render(Thread, x1, x2, ds->drawsegclip, mLight);
-		}
+			RenderFog(ds, x1, x2);
 
-		bool notrelevant = false;
 		if (ds->HasTranslucentMidTexture())
-			notrelevant = RenderWall(ds, x1, x2);
+			RenderWall(ds, x1, x2);
 
 		if (ds->Has3DFloorWalls())
-		{
 			Render3DFloorWallRange(ds, x1, x2);
-		}
 
-		if (!notrelevant)
-		{
+		if (ds->HasFogBoundary() || ds->HasTranslucentMidTexture() || ds->Has3DFloorWalls())
 			ds->drawsegclip.SetRangeDrawn(x1, x2);
-		}
 	}
 
-	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2)
+	void RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2)
 	{
 		auto renderstyle = DefaultRenderStyle();
 		auto viewport = Thread->Viewport.get();
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
-
-		if (!curline->sidedef->GetTexture(side_t::mid).isValid())
-			return false;
 
 		FTexture *ttex = TexMan.GetPalettedTexture(curline->sidedef->GetTexture(side_t::mid), true);
 		if (curline->GetLevel()->i_compatflags & COMPATF_MASKEDMIDTEX)
@@ -139,41 +123,17 @@ namespace swrenderer
 		if (!wrap)
 		{ // Texture does not wrap vertically.
 
-			// find positioning
-			double texheight = tex->GetScaledHeightDouble() / fabs(curline->sidedef->GetTextureYScale(side_t::mid));
-			double texturemid;
-			if (curline->linedef->flags & ML_DONTPEGBOTTOM)
-				texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
-			else
-				texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
-			double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
-			if (tex->useWorldPanning(curline->GetLevel()))
-				rowoffset /= fabs(tex->GetScale().Y * curline->sidedef->GetTextureYScale(side_t::mid));
-			double textop = texturemid + rowoffset - Thread->Viewport->viewpoint.Pos.Z;
+			double ceilZ, floorZ;
+			GetNoWrapMidTextureZ(ds, tex, ceilZ, floorZ);
 
-			// [RH] Don't bother drawing segs that are completely offscreen
-			if (viewport->globaldclip * ds->WallC.sz1 < -textop && viewport->globaldclip * ds->WallC.sz2 < -textop)
-			{ // Texture top is below the bottom of the screen
-				return false;
-			}
+			// Texture top is below the bottom of the screen
+			if (viewport->globaldclip * ds->WallC.sz1 < -ceilZ && viewport->globaldclip * ds->WallC.sz2 < -ceilZ) return;
 
-			if (viewport->globaluclip * ds->WallC.sz1 > texheight - textop && viewport->globaluclip * ds->WallC.sz2 > texheight - textop)
-			{ // Texture bottom is above the top of the screen
-				return false;
-			}
+			// Texture bottom is above the top of the screen
+			if (viewport->globaluclip * ds->WallC.sz1 > -floorZ && viewport->globaluclip * ds->WallC.sz2 > -floorZ) return;
 
-			if (m3DFloor.clipBottom && textop < m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z)
-			{
-				return true;
-			}
-			if (m3DFloor.clipTop && textop - texheight > m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z)
-			{
-				return true;
-			}
-
-			// Unclipped vanilla Doom range for the wall. Relies on ceiling/floor clip to clamp the wall in range.
-			double ceilZ = textop;
-			double floorZ = textop - texheight;
+			if (m3DFloor.clipBottom && ceilZ < m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z) return;
+			if (m3DFloor.clipTop && floorZ > m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z) return;
 
 			// The 3D Floors implementation destroys the ceiling clip when doing its height passes..
 			if (m3DFloor.clipTop || m3DFloor.clipBottom)
@@ -241,21 +201,13 @@ namespace swrenderer
 			if (m3DFloor.clipTop)
 			{
 				wallupper.Project(Thread->Viewport.get(), m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
-				for (int i = x1; i < x2; i++)
-				{
-					if (wallupper.ScreenY[i] < mceilingclip[i])
-						wallupper.ScreenY[i] = mceilingclip[i];
-				}
+				wallupper.ClipTop(x1, x2, ds->drawsegclip);
 				mceilingclip = wallupper.ScreenY;
 			}
 			if (m3DFloor.clipBottom)
 			{
 				walllower.Project(Thread->Viewport.get(), m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
-				for (int i = x1; i < x2; i++)
-				{
-					if (walllower.ScreenY[i] > mfloorclip[i])
-						walllower.ScreenY[i] = mfloorclip[i];
-				}
+				walllower.ClipBottom(x1, x2, ds->drawsegclip);
 				mfloorclip = walllower.ScreenY;
 			}
 		}
@@ -268,8 +220,6 @@ namespace swrenderer
 
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(frontsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, mLight, nullptr);
-
-		return false;
 	}
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
@@ -280,7 +230,6 @@ namespace swrenderer
 
 		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
 
-		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 
@@ -312,16 +261,11 @@ namespace swrenderer
 		frontsector = curline->frontsector;
 		backsector = curline->backsector;
 
-		if (backsector == nullptr)
-		{
+		if (!backsector)
 			return;
-		}
+
 		if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
-		{
-			sector_t *sec = backsector;
-			backsector = frontsector;
-			frontsector = sec;
-		}
+			std::swap(frontsector, backsector);
 
 		floorHeight = backsector->CenterFloor();
 		ceilingHeight = backsector->CenterCeiling();
@@ -711,6 +655,29 @@ namespace swrenderer
 		}
 	}
 
+	void RenderDrawSegment::RenderFog(DrawSegment* ds, int x1, int x2)
+	{
+		const short* mfloorclip = ds->drawsegclip.sprbottomclip;
+		const short* mceilingclip = ds->drawsegclip.sprtopclip;
+
+		if (m3DFloor.clipTop)
+		{
+			wallupper.Project(Thread->Viewport.get(), m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
+			wallupper.ClipTop(x1, x2, ds->drawsegclip);
+			mceilingclip = wallupper.ScreenY;
+		}
+
+		if (m3DFloor.clipBottom)
+		{
+			walllower.Project(Thread->Viewport.get(), m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
+			walllower.ClipBottom(x1, x2, ds->drawsegclip);
+			mfloorclip = walllower.ScreenY;
+		}
+
+		RenderFogBoundary renderfog;
+		renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight);
+	}
+
 	// Clip a midtexture to the floor and ceiling of the sector in front of it.
 	void RenderDrawSegment::ClipMidtex(DrawSegment* ds, int x1, int x2)
 	{
@@ -749,5 +716,23 @@ namespace swrenderer
 		{
 			bot = MAX(bot, m3DFloor.sclipBottom);
 		}
+	}
+
+	void RenderDrawSegment::GetNoWrapMidTextureZ(DrawSegment* ds, FSoftwareTexture* tex, double& ceilZ, double& floorZ)
+	{
+		double texheight = tex->GetScaledHeightDouble() / fabs(curline->sidedef->GetTextureYScale(side_t::mid));
+		double texturemid;
+		if (curline->linedef->flags & ML_DONTPEGBOTTOM)
+			texturemid = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor)) + texheight;
+		else
+			texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
+		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+		if (tex->useWorldPanning(curline->GetLevel()))
+			rowoffset /= fabs(tex->GetScale().Y * curline->sidedef->GetTextureYScale(side_t::mid));
+		double textop = texturemid + rowoffset - Thread->Viewport->viewpoint.Pos.Z;
+
+		// Unclipped vanilla Doom range for the wall. Relies on ceiling/floor clip to clamp the wall in range.
+		ceilZ = textop;
+		floorZ = textop - texheight;
 	}
 }

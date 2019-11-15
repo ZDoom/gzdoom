@@ -51,8 +51,7 @@ namespace swrenderer
 	struct DrawSegment
 	{
 		seg_t *curline;
-		float light, lightstep;
-		short x1, x2; // Same as sx1 and sx2, but clipped to the drawseg
+		short x1, x2;
 
 		FWallCoords WallC;
 		FWallTmapVals tmapvals;

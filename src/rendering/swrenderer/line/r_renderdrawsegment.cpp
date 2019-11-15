@@ -71,25 +71,6 @@ namespace swrenderer
 		frontsector = curline->frontsector;
 		backsector = curline->backsector;
 
-		// killough 4/13/98: get correct lightlevel for 2s normal textures
-		sector_t tempsec;
-		const sector_t *sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
-
-		mLight.SetColormap(sec, curline);
-		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
-
-		Clip3DFloors *clip3d = Thread->Clip3D.get();
-
-		double clipTop = m3DFloor.clipTop ? m3DFloor.sclipTop : sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
-		for (int i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
-		{
-			if (clipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
-			{
-				mLight.SetColormap(frontsector, curline, &frontsector->e->XFloor.lightlist[i]);
-				break;
-			}
-		}
-
 		if (ds->HasFogBoundary())
 			RenderFog(ds, x1, x2);
 
@@ -212,6 +193,23 @@ namespace swrenderer
 			}
 		}
 
+		sector_t tempsec;
+		const sector_t* sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
+
+		ProjectedWallLight walllight;
+		walllight.SetColormap(sec, curline);
+		walllight.SetLightLeft(Thread, ds->WallC);
+
+		double clipTop = m3DFloor.clipTop ? m3DFloor.sclipTop : sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
+		for (int i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+		{
+			if (clipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
+			{
+				walllight.SetColormap(frontsector, curline, &frontsector->e->XFloor.lightlist[i]);
+				break;
+			}
+		}
+
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
 
@@ -219,7 +217,7 @@ namespace swrenderer
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, mLight, nullptr);
+		renderWallpart.Render(frontsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, walllight, nullptr);
 	}
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
@@ -228,7 +226,37 @@ namespace swrenderer
 		if (Alpha <= 0)
 			return;
 
-		mLight.SetLightLeft(ds->light, ds->lightstep, ds->x1);
+		lightlist_t* lit = nullptr;
+		CameraLight* cameraLight = CameraLight::Instance();
+		if (cameraLight->FixedLightLevel() < 0)
+		{
+			if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
+			{
+				for (int j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
+				{
+					if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
+					{
+						lit = &backsector->e->XFloor.lightlist[j];
+						break;
+					}
+				}
+			}
+			else
+			{
+				for (int j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
+				{
+					if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
+					{
+						lit = &frontsector->e->XFloor.lightlist[j];
+						break;
+					}
+				}
+			}
+		}
+
+		ProjectedWallLight walllight;
+		walllight.SetColormap(frontsector, curline, lit);
+		walllight.SetLightLeft(Thread, ds->WallC);
 
 		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
@@ -243,9 +271,9 @@ namespace swrenderer
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, mLight, nullptr);
+		renderWallpart.Render(frontsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, walllight, nullptr);
 
-		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, mLight, wallupper.ScreenY, walllower.ScreenY, true);
+		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, walllight, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
 	void RenderDrawSegment::Render3DFloorWallRange(DrawSegment *ds, int x1, int x2)
@@ -434,38 +462,6 @@ namespace swrenderer
 
 				if (rw_pic && !swimmable_found)
 				{
-					// correct colors now
-					lightlist_t *lit = nullptr;
-					CameraLight *cameraLight = CameraLight::Instance();
-					if (cameraLight->FixedLightLevel() < 0)
-					{
-						if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
-						{
-							for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-							{
-								if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
-								{
-									lit = &backsector->e->XFloor.lightlist[j];
-									break;
-								}
-							}
-						}
-						else
-						{
-							for (j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-							{
-								if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
-								{
-									lit = &frontsector->e->XFloor.lightlist[j];
-									break;
-								}
-							}
-						}
-					}
-
-					//mLight.lightlevel = ds->lightlevel;
-					mLight.SetColormap(frontsector, curline, lit);
-
 					Render3DFloorWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
@@ -617,37 +613,6 @@ namespace swrenderer
 
 				if (rw_pic && !swimmable_found)
 				{
-					// correct colors now
-					lightlist_t *lit = nullptr;
-					CameraLight *cameraLight = CameraLight::Instance();
-					if (cameraLight->FixedLightLevel() < 0)
-					{
-						if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
-						{
-							for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-							{
-								if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
-								{
-									lit = &backsector->e->XFloor.lightlist[j];
-									break;
-								}
-							}
-						}
-						else
-						{
-							for (j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-							{
-								if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
-								{
-									lit = &frontsector->e->XFloor.lightlist[j];
-									break;
-								}
-							}
-						}
-					}
-					//mLight.lightlevel = ds->lightlevel;
-					mLight.SetColormap(frontsector, curline, lit);
-
 					Render3DFloorWall(ds, x1, x2, fover ? fover : rover, clipTop, clipBottom, rw_pic);
 				}
 				break;
@@ -674,8 +639,15 @@ namespace swrenderer
 			mfloorclip = walllower.ScreenY;
 		}
 
+		sector_t tempsec;
+		const sector_t* sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
+
+		ProjectedWallLight walllight;
+		walllight.SetColormap(sec, curline);
+		walllight.SetLightLeft(Thread, ds->WallC);
+
 		RenderFogBoundary renderfog;
-		renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, mLight);
+		renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, walllight);
 	}
 
 	// Clip a midtexture to the floor and ceiling of the sector in front of it.

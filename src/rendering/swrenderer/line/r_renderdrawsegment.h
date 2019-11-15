@@ -51,8 +51,6 @@ namespace swrenderer
 		seg_t *curline = nullptr;
 		Fake3DTranslucent m3DFloor;
 
-		ProjectedWallLight mLight;
-
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;
 	};

@@ -110,8 +110,6 @@ namespace swrenderer
 		float GetLightStep() const { return lightstep; }
 
 		void SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit = nullptr);
-
-		void SetLightLeft(float left, float step, int startx) { lightleft = left; lightstep = step; x1 = startx; }
 		void SetLightLeft(RenderThread *thread, const FWallCoords &wallc);
 
 	private:

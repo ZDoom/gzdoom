@@ -405,8 +405,6 @@ namespace swrenderer
 					if (draw_segment->HasFogBoundary() || draw_segment->HasTranslucentMidTexture() || draw_segment->Has3DFloorWalls())
 					{
 						draw_segment->drawsegclip.SetBackupClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
-						draw_segment->light = mLight.GetLightPos(start);
-						draw_segment->lightstep = mLight.GetLightStep();
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}
 				}
@@ -446,7 +444,10 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!markportal)
 		{
-			RenderDecal::RenderDecals(Thread, mLineSegment->sidedef, draw_segment, mLineSegment, mLight, walltop.ScreenY, wallbottom.ScreenY, false);
+			ProjectedWallLight walllight;
+			walllight.SetColormap(mFrontSector, mLineSegment);
+			walllight.SetLightLeft(Thread, WallC);
+			RenderDecal::RenderDecals(Thread, mLineSegment->sidedef, draw_segment, mLineSegment, walllight, walltop.ScreenY, wallbottom.ScreenY, false);
 		}
 
 		if (markportal)
@@ -660,22 +661,6 @@ namespace swrenderer
 					walltop.Project(Thread->Viewport.get(), mBackSector->ceilingplane, &WallC, mLineSegment, Thread->Portal->MirrorFlags & RF_XFLIP);
 				}
 			}
-		}
-
-		FTexture *ftex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-		FSoftwareTexture *midtex = ftex && ftex->isValid() ? ftex->GetSoftwareTexture() : nullptr;
-
-		bool segtextured = ftex != NULL || mTopTexture != NULL || mBottomTexture != NULL;
-
-		if (m3DFloor.type == Fake3DOpaque::Normal)
-		{
-			mLight.SetColormap(mFrontSector, mLineSegment);
-		}
-
-		// calculate light table
-		if (segtextured || (mBackSector && IsFogBoundary(mFrontSector, mBackSector)))
-		{
-			mLight.SetLightLeft(Thread, WallC);
 		}
 	}
 
@@ -899,8 +884,12 @@ namespace swrenderer
 		ProjectedWallTexcoords texcoords;
 		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mTopTexture);
 
+		ProjectedWallLight walllight;
+		walllight.SetColormap(mFrontSector, mLineSegment);
+		walllight.SetLightLeft(Thread, WallC);
+
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, walllight, GetLightList());
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -911,8 +900,12 @@ namespace swrenderer
 		ProjectedWallTexcoords texcoords;
 		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mMiddleTexture);
 
+		ProjectedWallLight walllight;
+		walllight.SetColormap(mFrontSector, mLineSegment);
+		walllight.SetLightLeft(Thread, WallC);
+
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, walllight, GetLightList());
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -924,8 +917,12 @@ namespace swrenderer
 		ProjectedWallTexcoords texcoords;
 		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mBottomTexture);
 
+		ProjectedWallLight walllight;
+		walllight.SetColormap(mFrontSector, mLineSegment);
+		walllight.SetLightLeft(Thread, WallC);
+
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, walllight, GetLightList());
 	}
 
 	FLightNode *SWRenderLine::GetLightList()

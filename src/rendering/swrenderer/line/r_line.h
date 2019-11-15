@@ -115,8 +115,6 @@ namespace swrenderer
 
 		bool rw_prepped;
 
-		ProjectedWallLight mLight;
-
 		bool markfloor; // False if the back side is the same plane.
 		bool markceiling;
 		

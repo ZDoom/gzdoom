@@ -203,7 +203,7 @@ namespace swrenderer
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, nullptr);
+		renderWallpart.Render(lightsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha);
 	}
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
@@ -227,7 +227,7 @@ namespace swrenderer
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, nullptr);
+		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
 
 		ProjectedWallLight walllight;
 		walllight.SetColormap(lightsector, curline);

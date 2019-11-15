@@ -59,8 +59,7 @@ namespace swrenderer
 			double bottom,
 			bool mask,
 			bool additive,
-			fixed_t alpha,
-			FLightNode *light_list);
+			fixed_t alpha);
 
 		RenderThread *Thread = nullptr;
 
@@ -70,6 +69,7 @@ namespace swrenderer
 		void ProcessStripedWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void ProcessNormalWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void SetLights(WallDrawerArgs &drawerargs, int x, int y1);
+		FLightNode* GetLightList();
 
 		int x1 = 0;
 		int x2 = 0;

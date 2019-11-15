@@ -884,7 +884,7 @@ namespace swrenderer
 		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mTopTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
@@ -896,7 +896,7 @@ namespace swrenderer
 		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mMiddleTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
@@ -909,18 +909,7 @@ namespace swrenderer
 		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mBottomTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, GetLightList());
-	}
-
-	FLightNode *SWRenderLine::GetLightList()
-	{
-		CameraLight *cameraLight = CameraLight::Instance();
-		if ((cameraLight->FixedLightLevel() >= 0) || cameraLight->FixedColormap())
-			return nullptr; // [SP] Don't draw dynlights if invul/lightamp active
-		else if (mLineSegment && mLineSegment->sidedef)
-			return mLineSegment->sidedef->lighthead;
-		else
-			return nullptr;
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE);
 	}
 
 	////////////////////////////////////////////////////////////////////////////

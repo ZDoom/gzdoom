@@ -528,18 +528,30 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(const sector_t *lightsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, const ProjectedWallTexcoords& texcoords, double top, double bottom, bool mask, bool additive, fixed_t alpha, FLightNode *light_list)
+	FLightNode* RenderWallPart::GetLightList()
+	{
+		CameraLight* cameraLight = CameraLight::Instance();
+		if ((cameraLight->FixedLightLevel() >= 0) || cameraLight->FixedColormap())
+			return nullptr; // [SP] Don't draw dynlights if invul/lightamp active
+		else if (curline && curline->sidedef)
+			return curline->sidedef->lighthead;
+		else
+			return nullptr;
+	}
+
+	void RenderWallPart::Render(const sector_t *lightsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, const ProjectedWallTexcoords& texcoords, double top, double bottom, bool mask, bool additive, fixed_t alpha)
 	{
 		this->x1 = x1;
 		this->x2 = x2;
 		this->lightsector = lightsector;
 		this->curline = curline;
 		this->WallC = WallC;
-		this->light_list = light_list;
 		this->rw_pic = pic;
 		this->mask = mask;
 		this->additive = additive;
 		this->alpha = alpha;
+
+		light_list = GetLightList();
 
 		mLight.SetColormap(lightsector, curline);
 		mLight.SetLightLeft(Thread, WallC);

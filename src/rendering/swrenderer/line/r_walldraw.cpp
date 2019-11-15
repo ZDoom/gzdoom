@@ -446,85 +446,13 @@ namespace swrenderer
 	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords)
 	{
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0 || !(lightsector->e && lightsector->e->XFloor.lightlist.Size()))
+		if (cameraLight->FixedColormap() || cameraLight->FixedLightLevel() >= 0 || !(lightsector->e && lightsector->e->XFloor.lightlist.Size()))
 		{
 			ProcessNormalWall(uwal, dwal, texcoords);
 		}
 		else
 		{
 			ProcessStripedWall(uwal, dwal, texcoords);
-		}
-	}
-
-	//=============================================================================
-	//
-	// ProcessWallNP2
-	//
-	// This is a wrapper around ProcessWall that helps it tile textures whose heights
-	// are not powers of 2. It divides the wall into texture-sized strips and calls
-	// ProcessNormalWall for each of those. Since only one repetition of the texture fits
-	// in each strip, ProcessWall will not tile.
-	//
-	//=============================================================================
-
-	void RenderWallPart::ProcessWallNP2(const short *uwal, const short *dwal, ProjectedWallTexcoords texcoords, double top, double bot)
-	{
-		ProjectedWallLine most1, most2, most3;
-		double texheight = rw_pic->GetHeight();
-		double partition;
-		double scaledtexheight = texheight / texcoords.yscale;
-
-		if (texcoords.yscale >= 0)
-		{ // normal orientation: draw strips from top to bottom
-			partition = top - fmod(top - texcoords.texturemid / texcoords.yscale - Thread->Viewport->viewpoint.Pos.Z, scaledtexheight);
-			if (partition == top)
-			{
-				partition -= scaledtexheight;
-			}
-			const short *up = uwal;
-			short *down = most1.ScreenY;
-			texcoords.texturemid = (partition - Thread->Viewport->viewpoint.Pos.Z) * texcoords.yscale + texheight;
-			while (partition > bot)
-			{
-				ProjectedWallCull j = most3.Project(Thread->Viewport.get(), partition - Thread->Viewport->viewpoint.Pos.Z, &WallC);
-				if (j != ProjectedWallCull::OutsideAbove)
-				{
-					for (int j = x1; j < x2; ++j)
-					{
-						down[j] = clamp(most3.ScreenY[j], up[j], dwal[j]);
-					}
-					ProcessWall(up, down, texcoords);
-					up = down;
-					down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
-				}
-				partition -= scaledtexheight;
-				texcoords.texturemid -= texheight;
-			}
-			ProcessWall(up, dwal, texcoords);
-		}
-		else
-		{ // upside down: draw strips from bottom to top
-			partition = bot - fmod(bot - texcoords.texturemid / texcoords.yscale - Thread->Viewport->viewpoint.Pos.Z, scaledtexheight);
-			short *up = most1.ScreenY;
-			const short *down = dwal;
-			texcoords.texturemid = (partition - Thread->Viewport->viewpoint.Pos.Z) * texcoords.yscale + texheight;
-			while (partition < top)
-			{
-				ProjectedWallCull j = most3.Project(Thread->Viewport.get(), partition - Thread->Viewport->viewpoint.Pos.Z, &WallC);
-				if (j != ProjectedWallCull::OutsideBelow)
-				{
-					for (int j = x1; j < x2; ++j)
-					{
-						up[j] = clamp(most3.ScreenY[j], uwal[j], down[j]);
-					}
-					ProcessWall(up, down, texcoords);
-					down = up;
-					up = (up == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
-				}
-				partition -= scaledtexheight;
-				texcoords.texturemid -= texheight;
-			}
-			ProcessWall(uwal, down, texcoords);
 		}
 	}
 
@@ -539,7 +467,7 @@ namespace swrenderer
 			return nullptr;
 	}
 
-	void RenderWallPart::Render(const sector_t *lightsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, const ProjectedWallTexcoords& texcoords, double top, double bottom, bool mask, bool additive, fixed_t alpha)
+	void RenderWallPart::Render(const sector_t *lightsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, const ProjectedWallTexcoords& texcoords, bool mask, bool additive, fixed_t alpha)
 	{
 		this->x1 = x1;
 		this->x2 = x2;
@@ -558,14 +486,7 @@ namespace swrenderer
 
 		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 
-		if (rw_pic->GetHeight() != (1 << rw_pic->GetHeightBits()))
-		{
-			ProcessWallNP2(walltop, wallbottom, texcoords, top, bottom);
-		}
-		else
-		{
-			ProcessWall(walltop, wallbottom, texcoords);
-		}
+		ProcessWall(walltop, wallbottom, texcoords);
 	}
 
 	RenderWallPart::RenderWallPart(RenderThread *thread)

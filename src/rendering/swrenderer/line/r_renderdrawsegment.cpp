@@ -196,14 +196,11 @@ namespace swrenderer
 		sector_t tempsec;
 		const sector_t* lightsector = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
-		double top, bot;
-		GetMaskedWallTopBottom(ds, top, bot);
-
 		fixed_t alpha = FLOAT2FIXED((float)MIN(curline->linedef->alpha, 1.));
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha);
+		renderWallpart.Render(lightsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, true, additive, alpha);
 	}
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
@@ -223,11 +220,8 @@ namespace swrenderer
 		ProjectedWallTexcoords walltexcoords;
 		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC.sx1, ds->WallC.sx2, ds->tmapvals, rw_pic);
 
-		double top, bot;
-		GetMaskedWallTopBottom(ds, top, bot);
-
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
+		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
 
 		RenderDecal::RenderDecals(Thread, ds, curline, lightsector, wallupper.ScreenY, walllower.ScreenY, true);
 	}

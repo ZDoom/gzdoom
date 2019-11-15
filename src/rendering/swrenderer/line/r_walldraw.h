@@ -55,8 +55,6 @@ namespace swrenderer
 			const short *walltop,
 			const short *wallbottom,
 			const ProjectedWallTexcoords &texcoords,
-			double top,
-			double bottom,
 			bool mask,
 			bool additive,
 			fixed_t alpha);
@@ -64,7 +62,6 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		void ProcessWallNP2(const short *uwal, const short *dwal, ProjectedWallTexcoords texcoords, double top, double bot);
 		void ProcessWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void ProcessStripedWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void ProcessNormalWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);

@@ -46,17 +46,17 @@
 
 CUSTOM_CVAR(Bool, cl_customizeinvulmap, false, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
-	R_InitColormaps();
+	R_InitColormaps(true);
 }
 CUSTOM_CVAR(Color, cl_custominvulmapcolor1, 0x00001a, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	if (cl_customizeinvulmap)
-		R_InitColormaps();
+		R_InitColormaps(true);
 }
 CUSTOM_CVAR(Color, cl_custominvulmapcolor2, 0xa6a67a, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	if (cl_customizeinvulmap)
-		R_InitColormaps();
+		R_InitColormaps(true);
 }
 
 
@@ -180,7 +180,7 @@ void R_DeinitColormaps ()
 //
 //==========================================================================
 
-void R_InitColormaps ()
+void R_InitColormaps (bool allowCustomColormap)
 {
 	// [RH] Try and convert BOOM colormaps into blending values.
 	//		This is a really rough hack, but it's better than
@@ -260,7 +260,7 @@ void R_InitColormaps ()
 
 	// some of us really don't like Doom's idea of an invulnerability sphere colormap
 	// this hack will override that
-	if (cl_customizeinvulmap)
+	if (allowCustomColormap && cl_customizeinvulmap)
 	{
 		uint32_t color1 = cl_custominvulmapcolor1;
 		uint32_t color2 = cl_custominvulmapcolor2;

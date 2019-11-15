@@ -106,6 +106,7 @@
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
+EXTERN_CVAR(Bool, cl_customizeinvulmap)
 void DrawHUD();
 void D_DoAnonStats();
 void I_DetectOS();
@@ -2751,6 +2752,10 @@ static int D_DoomMain_Internal (void)
 		Net_NewMakeTic ();
 		C_RunDelayedCommands();
 		gamestate = GS_STARTUP;
+
+		// enable custom invulnerability map here
+		if (cl_customizeinvulmap)
+			R_InitColormaps(true);
 
 		if (!restart)
 		{

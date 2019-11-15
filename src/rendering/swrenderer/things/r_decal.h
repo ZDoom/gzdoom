@@ -12,10 +12,9 @@ namespace swrenderer
 	class RenderDecal
 	{
 	public:
-		static void RenderDecals(RenderThread *thread, side_t *wall, DrawSegment *draw_segment, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass);
+		static void RenderDecals(RenderThread *thread, DrawSegment *draw_segment, seg_t *curline, const sector_t* lightsector, const short *walltop, const short *wallbottom, bool drawsegPass);
 
 	private:
-		static void Render(RenderThread *thread, side_t *wall, DBaseDecal *first, DrawSegment *clipper, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass);
-		static void DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FSoftwareTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style);
+		static void Render(RenderThread *thread, DBaseDecal *first, DrawSegment *clipper, seg_t *curline, const sector_t* lightsector, const short *walltop, const short *wallbottom, bool drawsegPass);
 	};
 }

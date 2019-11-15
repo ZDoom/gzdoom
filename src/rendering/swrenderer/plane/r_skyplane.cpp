@@ -83,7 +83,7 @@ namespace swrenderer
 		FSoftwareTexture *sskytex2 = skytex2->GetSoftwareTexture();
 		skytexturemid = 0;
 		int skyheight = skytex1->GetDisplayHeight();
-		skyoffset = cl_oldfreelooklimit? 0 : skyheight >= 200? 110 : 138;
+		skyoffset = cl_oldfreelooklimit? 0 : skyheight == 256? 166 : skyheight >= 240? 150 : skyheight >= 200? 110 : 138;
 		if (skyheight >= 128 && skyheight < 200)
 		{
 			skytexturemid = -28;

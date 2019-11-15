@@ -215,6 +215,7 @@ struct VectorReader : public MemoryReader
 		getter(mVector);
 		mData = mVector.data();
 		mLength = (long)mVector.size();
+		mPos = 0;
 	}
 
 

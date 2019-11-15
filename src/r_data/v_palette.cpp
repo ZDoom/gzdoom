@@ -52,6 +52,7 @@
 uint32_t Col2RGB8[65][256];
 uint32_t *Col2RGB8_LessPrecision[65];
 uint32_t Col2RGB8_Inverse[65][256];
+uint32_t Col2RGB8_2[63][256]; // this array's second dimension is called up by pointer as Col2RGB8_LessPrecision[] elsewhere.
 ColorTable32k RGB32k;
 ColorTable256k RGB256k;
 
@@ -344,7 +345,6 @@ static void BuildTransTable (const PalEntry *palette)
 	
 	// create the swizzled palette with the lsb of red and blue forced to 0
 	// (for green, a 1 is okay since it never gets added into)
-	uint32_t Col2RGB8_2[63][256];
 	for (x = 1; x < 64; x++)
 	{
 		Col2RGB8_LessPrecision[x] = Col2RGB8_2[x-1];

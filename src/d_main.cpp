@@ -161,6 +161,8 @@ EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, sv_cheats)
 EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, I_FriendlyWindowTitle)
+EXTERN_CVAR (Bool, r_drawplayersprites)
+EXTERN_CVAR (Bool, show_messages)
 
 extern bool setmodeneeded;
 extern bool gameisdead;
@@ -218,6 +220,7 @@ CVAR (Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLO
 CVAR (Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, r_debug_disable_vis_filter, false, 0)
 
+bool hud_toggled = false;
 bool wantToRestart;
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 TArray<FString> allwads;
@@ -258,6 +261,42 @@ static int demosequence;
 static int pagetic;
 
 // CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// D_ToggleHud
+//
+// Turns off 2D drawing temporarily.
+//
+//==========================================================================
+
+void D_ToggleHud()
+{
+	static int saved_screenblocks;
+	static bool saved_drawplayersprite, saved_showmessages;
+
+	if (hud_toggled = !hud_toggled)
+	{
+		saved_screenblocks = screenblocks;
+		saved_drawplayersprite = r_drawplayersprites;
+		saved_showmessages = show_messages;
+		screenblocks = 12;
+		r_drawplayersprites = false;
+		show_messages = false;
+		C_HideConsole();
+		M_ClearMenus();
+	}
+	else
+	{
+		screenblocks = saved_screenblocks;
+		r_drawplayersprites = saved_drawplayersprite;
+		show_messages = saved_showmessages;
+	}
+}
+CCMD(togglehud)
+{
+	D_ToggleHud();
+}
 
 //==========================================================================
 //
@@ -793,46 +832,49 @@ void D_Display ()
 		}, true);
 
 		screen->Begin2D();
-		screen->DrawBlend(viewsec);
-		if (automapactive)
+		if (!hud_toggled)
 		{
-			primaryLevel->automap->Drawer ((hud_althud && viewheight == SCREENHEIGHT) ? viewheight : StatusBar->GetTopOfStatusbar());
-		}
-		
-		// for timing the statusbar code.
-		//cycle_t stb;
-		//stb.Reset();
-		//stb.Clock();
-		if (!automapactive || viewactive)
-		{
-			StatusBar->RefreshViewBorder ();
-		}
-		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
-		{
-			StatusBar->DrawBottomStuff (HUD_AltHud);
-			if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
-			if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
+			screen->DrawBlend(viewsec);
+			if (automapactive)
 			{
-				StatusBar->DrawCrosshair();
+				primaryLevel->automap->Drawer ((hud_althud && viewheight == SCREENHEIGHT) ? viewheight : StatusBar->GetTopOfStatusbar());
 			}
-			StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
-			StatusBar->DrawTopStuff (HUD_AltHud);
+		
+			// for timing the statusbar code.
+			//cycle_t stb;
+			//stb.Reset();
+			//stb.Clock();
+			if (!automapactive || viewactive)
+			{
+				StatusBar->RefreshViewBorder ();
+			}
+			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
+			{
+				StatusBar->DrawBottomStuff (HUD_AltHud);
+				if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
+				if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
+				{
+					StatusBar->DrawCrosshair();
+				}
+				StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
+				StatusBar->DrawTopStuff (HUD_AltHud);
+			}
+			else if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
+			{
+				EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
+				StatusBar->DrawBottomStuff (state);
+				StatusBar->CallDraw (state, vp.TicFrac);
+				StatusBar->DrawTopStuff (state);
+			}
+			else
+			{
+				StatusBar->DrawBottomStuff (HUD_StatusBar);
+				StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
+				StatusBar->DrawTopStuff (HUD_StatusBar);
+			}
+			//stb.Unclock();
+			//Printf("Stbar = %f\n", stb.TimeMS());
 		}
-		else if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
-		{
-			EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
-			StatusBar->DrawBottomStuff (state);
-			StatusBar->CallDraw (state, vp.TicFrac);
-			StatusBar->DrawTopStuff (state);
-		}
-		else
-		{
-			StatusBar->DrawBottomStuff (HUD_StatusBar);
-			StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
-			StatusBar->DrawTopStuff (HUD_StatusBar);
-		}
-		//stb.Unclock();
-		//Printf("Stbar = %f\n", stb.TimeMS());
 	}
 	else
 	{
@@ -862,50 +904,53 @@ void D_Display ()
 				break;
 		}
 	}
-	CT_Drawer ();
-
-	// draw pause pic
-	if ((paused || pauseext) && menuactive == MENU_Off)
+	if (!hud_toggled)
 	{
-		FTexture *tex;
-		int x;
+		CT_Drawer ();
 
-		tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
-		x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
-			tex->GetDisplayLeftOffset() * CleanXfac;
-		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
-		if (paused && multiplayer)
+		// draw pause pic
+		if ((paused || pauseext) && menuactive == MENU_Off)
 		{
-			FFont *font = generic_ui? NewSmallFont : SmallFont;
-			FString pstring = GStrings("TXT_BY");
-			pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
-			screen->DrawText(font, CR_RED,
-				(screen->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
-				(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+			FTexture *tex;
+			int x;
+
+			tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
+			x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
+				tex->GetDisplayLeftOffset() * CleanXfac;
+			screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+			if (paused && multiplayer)
+			{
+				FFont *font = generic_ui? NewSmallFont : SmallFont;
+				FString pstring = GStrings("TXT_BY");
+				pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
+				screen->DrawText(font, CR_RED,
+					(screen->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
+					(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+			}
+		}
+
+		// [RH] Draw icon, if any
+		if (D_DrawIcon)
+		{
+			FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, ETextureType::MiscPatch);
+
+			D_DrawIcon = NULL;
+			if (picnum.isValid())
+			{
+				FTexture *tex = TexMan.GetTexture(picnum);
+				screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
+					DTA_320x200, true, TAG_DONE);
+			}
+			NoWipe = 10;
+		}
+
+		if (snd_drawoutput)
+		{
+			GSnd->DrawWaveDebug(snd_drawoutput);
 		}
 	}
 
-	// [RH] Draw icon, if any
-	if (D_DrawIcon)
-	{
-		FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, ETextureType::MiscPatch);
-
-		D_DrawIcon = NULL;
-		if (picnum.isValid())
-		{
-			FTexture *tex = TexMan.GetTexture(picnum);
-			screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
-				DTA_320x200, true, TAG_DONE);
-		}
-		NoWipe = 10;
-	}
-
-	if (snd_drawoutput)
-	{
-		GSnd->DrawWaveDebug(snd_drawoutput);
-	}
-
-	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
+	if (!wipe || NoWipe < 0 || wipe_type == wipe_None || hud_toggled)
 	{
 		if (wipe != nullptr) delete wipe;
 		wipe = nullptr;
@@ -914,7 +959,8 @@ void D_Display ()
 		// draw ZScript UI stuff
 		C_DrawConsole ();	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
-		FStat::PrintStat ();
+		if (!hud_toggled)
+			FStat::PrintStat ();
 		screen->End2DAndUpdate ();
 	}
 	else
@@ -984,6 +1030,7 @@ void D_ErrorCleanup ()
 	}
 	if (gamestate == GS_INTERMISSION) gamestate = GS_DEMOSCREEN;
 	insave = false;
+	ClearGlobalVMStack();
 }
 
 //==========================================================================
@@ -2433,6 +2480,7 @@ static int D_DoomMain_Internal (void)
 		if (!iwad_info) return 0;	// user exited the selection popup via cancel button.
 		gameinfo.gametype = iwad_info->gametype;
 		gameinfo.flags = iwad_info->flags;
+		gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
 		gameinfo.ConfigName = iwad_info->Configname;
 		lastIWAD = iwad;
 

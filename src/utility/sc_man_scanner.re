@@ -157,6 +157,7 @@ std2:
 		'void'						{ RET(TK_Void); }
 		'struct'					{ RET(TK_Struct); }
 		'class'						{ RET(TK_Class); }
+		'mixin'						{ RET(TK_Mixin); }
 		'enum'						{ RET(TK_Enum); }
 		'name'						{ RET(TK_Name); }
 		'string'					{ RET(TK_String); }

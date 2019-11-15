@@ -1324,8 +1324,14 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			(thing->flags5 & MF5_DONTRIP) ||
 			((tm.thing->flags6 & MF6_NOBOSSRIP) && (thing->flags2 & MF2_BOSS)))
 		{
+			if (thing->flags & MF_SPECIAL)
+			{
+				// Vanilla condition, i.e. without equality, for item pickups
+				if ((tm.thing->Z() > topz) || (tm.thing->Top() < thing->Z()))
+					return true;
+			}
 			// Some things prefer not to overlap each other, if possible (Q: Is this even needed anymore? It was just for dealing with some deficiencies in the code below in Heretic.)
-			if (!(tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP))
+			else if (!(tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP))
 			{
 				if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
 					return true;
@@ -5855,6 +5861,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 
 	P_GeometryRadiusAttack(bombspot, bombsource, bombdamage, bombdistance, bombmod, fulldamagedistance);
 
+	TArray<AActor*> targets;
 	int count = 0;
 	while ((it.Next(&cres)))
 	{
@@ -5885,6 +5892,11 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			)
 			)	continue;
 
+		targets.Push(thing);
+	}
+
+	for (AActor *thing : targets)
+	{
 		// Barrels always use the original code, since this makes
 		// them far too "active." BossBrains also use the old code
 		// because some user levels require they have a height of 16,

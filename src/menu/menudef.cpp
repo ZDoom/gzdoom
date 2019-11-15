@@ -203,7 +203,7 @@ static bool CheckSkipGameBlock(FScanner &sc)
 	if (!filter)
 	{
 		SkipSubBlock(sc);
-		return true;
+		return !sc.CheckString("else");
 	}
 	return false;
 }

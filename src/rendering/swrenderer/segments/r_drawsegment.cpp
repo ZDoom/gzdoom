@@ -131,10 +131,10 @@ namespace swrenderer
 			{
 				ds = Segment(groupIndex);
 
-				if (ds->silhouette & SIL_BOTTOM)
+				if (ds->drawsegclip.silhouette & SIL_BOTTOM)
 				{
 					short *clip1 = clipbottom + ds->x1;
-					const short *clip2 = ds->sprbottomclip;
+					const short *clip2 = ds->drawsegclip.sprbottomclip + ds->x1;
 					int i = ds->x2 - ds->x1;
 					do
 					{
@@ -145,10 +145,10 @@ namespace swrenderer
 					} while (--i);
 				}
 
-				if (ds->silhouette & SIL_TOP)
+				if (ds->drawsegclip.silhouette & SIL_TOP)
 				{
 					short *clip1 = cliptop + ds->x1;
-					const short *clip2 = ds->sprtopclip;
+					const short *clip2 = ds->drawsegclip.sprtopclip + ds->x1;
 					int i = ds->x2 - ds->x1;
 					do
 					{
@@ -166,6 +166,60 @@ namespace swrenderer
 			memcpy(group.sprbottomclip, clipbottom + group.x1, (group.x2 - group.x1) * sizeof(short));
 
 			SegmentGroups.Push(group);
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	void DrawSegmentClipInfo::SetTopClip(RenderThread* thread, int x1, int x2, const short* ceilingclip)
+	{
+		short* clip = thread->FrameMemory->AllocMemory<short>(x2 - x1);
+		memcpy(clip, ceilingclip + x1, (x2 - x1) * sizeof(short));
+		sprtopclip = clip - x1;
+	}
+
+	void DrawSegmentClipInfo::SetTopClip(RenderThread* thread, int x1, int x2, short value)
+	{
+		short* clip = thread->FrameMemory->AllocMemory<short>(x2 - x1);
+		for (int i = 0; i < x2 - x1; i++)
+			clip[i] = value;
+		sprtopclip = clip - x1;
+	}
+
+	void DrawSegmentClipInfo::SetBottomClip(RenderThread* thread, int x1, int x2, const short* floorclip)
+	{
+		short* clip = thread->FrameMemory->AllocMemory<short>(x2 - x1);
+		memcpy(clip, floorclip + x1, (x2 - x1) * sizeof(short));
+		sprbottomclip = clip - x1;
+	}
+
+	void DrawSegmentClipInfo::SetBottomClip(RenderThread* thread, int x1, int x2, short value)
+	{
+		short* clip = thread->FrameMemory->AllocMemory<short>(x2 - x1);
+		for (int i = 0; i < x2 - x1; i++)
+			clip[i] = value;
+		sprbottomclip = clip - x1;
+	}
+
+	void DrawSegmentClipInfo::SetBackupClip(RenderThread* thread, int x1, int x2, const short* ceilingclip)
+	{
+		short* clip = thread->FrameMemory->AllocMemory<short>(x2 - x1);
+		memcpy(clip, ceilingclip + x1, (x2 - x1) * sizeof(short));
+		bkup = clip - x1;
+	}
+
+	void DrawSegmentClipInfo::SetRangeDrawn(int x1, int x2)
+	{
+		sprclipped = true;
+		fillshort(const_cast<short*>(sprtopclip) + x1, x2 - x1, viewheight);
+	}
+
+	void DrawSegmentClipInfo::SetRangeUndrawn(int x1, int x2)
+	{
+		if (sprclipped)
+		{
+			sprclipped = false;
+			memcpy(const_cast<short*>(sprtopclip) + x1, bkup + x1, (x2 - x1) * sizeof(short));
 		}
 	}
 }

@@ -340,28 +340,24 @@ void ZMusic_Start(MusInfo *song, int subsong, bool loop)
 void ZMusic_Pause(MusInfo *song)
 {
 	if (!song) return;
-	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Pause();
 }
 
 void ZMusic_Resume(MusInfo *song)
 {
 	if (!song) return;
-	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Resume();
 }
 
 void ZMusic_Update(MusInfo *song)
 {
 	if (!song) return;
-	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Update();
 }
 
 bool ZMusic_IsPlaying(MusInfo *song)
 {
 	if (!song) return false;
-	std::lock_guard<std::mutex> lock(song->CritSec);
 	return song->IsPlaying();
 }
 

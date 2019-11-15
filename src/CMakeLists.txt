@@ -743,6 +743,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	scripting/zscript/zcc-parse.lemon
 	zcc-parse.c
 	zcc-parse.h
+	win32/zdoom.natvis
 )
 
 set( VM_JIT_SOURCES
@@ -1002,6 +1003,7 @@ set (PCH_SOURCES
 	maploader/polyobjects.cpp
 	maploader/renderinfo.cpp
 	maploader/compatibility.cpp
+	maploader/postprocessor.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp

@@ -1,8 +1,6 @@
 
-class LevelCompatibility native play
+class LevelCompatibility : LevelPostProcessor
 {
-	native LevelLocals level;
-	
 	protected void Apply(Name checksum, String mapname)
 	{
 		switch (checksum)
@@ -1394,6 +1392,12 @@ class LevelCompatibility native play
 				break;
 			}
 
+			case '63BDD083A98A48C04B8CD58AA857F77D': // Scythe MAP22
+			{
+				// Wall behind start creates HOM in software renderer due to weird sector
+				OffsetSectorPlane(236, Sector.Floor, -40);
+			}
+
 			case '1C795660D2BA9FC93DA584C593FD1DA3': // Scythe 2 MAP17
 			{
 				// Texture displays incorrectly in hardware renderer
@@ -1429,80 +1433,30 @@ class LevelCompatibility native play
 				SetThingFlags(2169,0);
 				SetThingFlags(2168,0);
 				SetThingFlags(2167,0);
+				break;
+			}
+
+			case '66B931B03618EDE5C022A1EC87189158': // Restoring Deimos MAP03
+			{
+				// Missing teleport destination on easy skill
+				SetThingSkills(62, 31);
+				break;
+			}
+
+			case '6B9D31106CE290205A724FA61C165A80': // Restoring Deimos MAP07
+			{
+				// Missing map spots on easy skill
+				SetThingSkills(507, 31);
+				SetThingSkills(509, 31);
+				break;
+			}
+
+			case '17314071AB76F4789763428FA2E8DA4C': // Skulldash Expanded Edition MAP04
+			{
+				// Missing teleport destination on easy skill
+				SetThingSkills(164, 31);
+				break;
 			}
 		}
-	}
-
-	protected native void ClearSectorTags(int sector);
-	protected native void AddSectorTag(int sector, int tag);
-	protected native void ClearLineIDs(int line);
-	protected native void AddLineID(int line, int tag);
-	protected native void OffsetSectorPlane(int sector, int plane, double offset);
-	protected native void SetThingSkills(int thing, int skills);
-	protected native void SetThingXY(int thing, double x, double y);
-	protected native void SetThingZ(int thing, double z);
-	protected native void SetThingFlags(int thing, int flags);
-	protected native void SetVertex(uint vertex, double x, double y);
-	protected native void SetLineSectorRef(uint line, uint side, uint sector);
-	protected native Actor GetDefaultActor(Name actorclass);
-	
-	protected void SetWallTexture(int line, int side, int texpart, String texture)
-	{
-		SetWallTextureID(line, side, texpart, TexMan.CheckForTexture(texture, TexMan.Type_Wall));
-	}
-
-	protected void SetWallTextureID(int line, int side, int texpart, TextureID texture)
-	{
-		level.Lines[line].sidedef[side].SetTexture(texpart, texture);
-	}
-	
-	protected void SetLineFlags(int line, int setflags, int clearflags = 0)
-	{
-		level.Lines[line].flags = (level.Lines[line].flags & ~clearflags) | setflags;
-	}
-	
-	protected void SetLineActivation(int line, int acttype)
-	{
-		level.Lines[line].activation = acttype;
-	}
-	
-	protected void ClearLineSpecial(int line)
-	{
-		level.Lines[line].special = 0;
-	}
-	
-	protected void SetLineSpecial(int line, int special, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0)
-	{
-		level.Lines[line].special = special;
-		level.Lines[line].args[0] = arg1;
-		level.Lines[line].args[1] = arg2;
-		level.Lines[line].args[2] = arg3;
-		level.Lines[line].args[3] = arg4;
-		level.Lines[line].args[4] = arg5;
-	}
-	
-	protected void SetSectorSpecial(int sectornum, int special)
-	{
-		level.sectors[sectornum].special = special;
-	}
-
-	protected void SetSectorTextureID(int sectornum, int plane, TextureID texture)
-	{
-		level.sectors[sectornum].SetTexture(plane, texture);
-	}
-
-	protected void SetSectorTexture(int sectornum, int plane, String texture)
-	{
-		SetSectorTextureID(sectornum, plane, TexMan.CheckForTexture(texture, TexMan.Type_Flat));
-	}
-
-	protected void SetSectorLight(int sectornum, int newval)
-	{
-		level.sectors[sectornum].SetLightLevel(newval);
-	}
-
-	protected void SetWallYScale(int line, int side, int texpart, double scale)
-	{
-		level.lines[line].sidedef[side].SetTextureYScale(texpart, scale);
 	}
 }

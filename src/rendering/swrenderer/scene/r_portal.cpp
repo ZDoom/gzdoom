@@ -206,20 +206,15 @@ namespace swrenderer
 
 			// Create a drawseg to clip sprites to the sky plane
 			DrawSegment *draw_segment = Thread->FrameMemory->NewObject<DrawSegment>();
-			draw_segment->CurrentPortalUniq = CurrentPortalUniq;
+			draw_segment->drawsegclip.CurrentPortalUniq = CurrentPortalUniq;
 			draw_segment->WallC.sz1 = 0;
 			draw_segment->WallC.sz2 = 0;
 			draw_segment->x1 = pl->left;
 			draw_segment->x2 = pl->right;
-			draw_segment->silhouette = SIL_BOTH;
-			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
-			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(pl->right - pl->left);
-			draw_segment->maskedtexturecol = nullptr;
-			draw_segment->swall = nullptr;
-			draw_segment->bFogBoundary = false;
+			draw_segment->drawsegclip.silhouette = SIL_BOTH;
+			draw_segment->drawsegclip.SetTopClip(Thread, pl->left, pl->right, ceilingclip);
+			draw_segment->drawsegclip.SetBottomClip(Thread, pl->left, pl->right, floorclip);
 			draw_segment->curline = nullptr;
-			memcpy(draw_segment->sprbottomclip, floorclip + pl->left, (pl->right - pl->left) * sizeof(short));
-			memcpy(draw_segment->sprtopclip, ceilingclip + pl->left, (pl->right - pl->left) * sizeof(short));
 			drawseglist->Push(draw_segment);
 
 			Thread->OpaquePass->RenderScene(Thread->Viewport->Level());

@@ -264,12 +264,12 @@ void R_InitColormaps ()
 	{
 		uint32_t color1 = cl_custominvulmapcolor1;
 		uint32_t color2 = cl_custominvulmapcolor2;
-		float r1 = (1.f/128.f) * ((color1 & 0xff0000) >> 16);
-		float g1 = (1.f/128.f) * ((color1 & 0x00ff00) >> 8);
-		float b1 = (1.f/128.f) * ((color1 & 0x0000ff) >> 0);
-		float r2 = (1.f/128.f) * ((color2 & 0xff0000) >> 16);
-		float g2 = (1.f/128.f) * ((color2 & 0x00ff00) >> 8);
-		float b2 = (1.f/128.f) * ((color2 & 0x0000ff) >> 0);
+		float r1 = (float)((color1 & 0xff0000) >> 16) / 128.f;
+		float g1 = (float)((color1 & 0x00ff00) >> 8) / 128.f;
+		float b1 = (float)((color1 & 0x0000ff) >> 0) / 128.f;
+		float r2 = (float)((color2 & 0xff0000) >> 16) / 128.f;
+		float g2 = (float)((color2 & 0x00ff00) >> 8) / 128.f;
+		float b2 = (float)((color2 & 0x0000ff) >> 0) / 128.f;
 		SpecialColormapParms[0] = {{r1, g1, b1}, {r2, g2, b2}};
 	}
 	else

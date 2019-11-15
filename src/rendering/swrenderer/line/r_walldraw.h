@@ -49,7 +49,7 @@ namespace swrenderer
 			const sector_t *lightsector,
 			seg_t *curline,
 			const FWallCoords &WallC,
-			FSoftwareTexture *rw_pic,
+			FSoftwareTexture *pic,
 			int x1,
 			int x2,
 			const short *walltop,
@@ -59,18 +59,17 @@ namespace swrenderer
 			bool additive,
 			fixed_t alpha);
 
-		RenderThread *Thread = nullptr;
-
 	private:
-		void ProcessWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void ProcessStripedWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void ProcessNormalWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void SetLights(WallDrawerArgs &drawerargs, int x, int y1);
 		FLightNode* GetLightList();
 
+		RenderThread* Thread = nullptr;
+
 		int x1 = 0;
 		int x2 = 0;
-		FSoftwareTexture *rw_pic = nullptr;
+		FSoftwareTexture *pic = nullptr;
 		const sector_t *lightsector = nullptr;
 		seg_t *curline = nullptr;
 		FWallCoords WallC;

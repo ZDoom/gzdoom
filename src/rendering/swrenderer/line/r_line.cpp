@@ -443,10 +443,7 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!markportal)
 		{
-			ProjectedWallLight walllight;
-			walllight.SetColormap(mFrontSector, mLineSegment);
-			walllight.SetLightLeft(Thread, WallC);
-			RenderDecal::RenderDecals(Thread, mLineSegment->sidedef, draw_segment, mLineSegment, walllight, walltop.ScreenY, wallbottom.ScreenY, false);
+			RenderDecal::RenderDecals(Thread, draw_segment, mLineSegment, mFrontSector, walltop.ScreenY, wallbottom.ScreenY, false);
 		}
 
 		if (markportal)

@@ -53,19 +53,17 @@
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
-
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
+	void RenderDecal::RenderDecals(RenderThread *thread, DrawSegment *draw_segment, seg_t *curline, const sector_t* lightsector, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
-		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
+		for (DBaseDecal *decal = curline->sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			Render(thread, sidedef, decal, draw_segment, curline, light, walltop, wallbottom, drawsegPass);
+			Render(thread, decal, draw_segment, curline, lightsector, walltop, wallbottom, drawsegPass);
 		}
 	}
 
-	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, seg_t *curline, const ProjectedWallLight &light, const short *walltop, const short *wallbottom, bool drawsegPass)
+	void RenderDecal::Render(RenderThread *thread, DBaseDecal *decal, DrawSegment *clipper, seg_t *curline, const sector_t* lightsector, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -142,7 +140,7 @@ namespace swrenderer
 		edge_left *= decal->ScaleX;
 
 		double dcx, dcy;
-		decal->GetXY(wall, dcx, dcy);
+		decal->GetXY(curline->sidedef, dcx, dcy);
 		decal_pos = { dcx, dcy };
 
 		DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
@@ -231,6 +229,9 @@ namespace swrenderer
 		}
 
 		// Prepare lighting
+		ProjectedWallLight light;
+		light.SetColormap(lightsector, curline);
+		light.SetLightLeft(thread, WallC);
 		usecolormap = light.GetBaseColormap();
 
 		// Decals that are added to the scene must fade to black.

@@ -229,10 +229,7 @@ namespace swrenderer
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);
 
-		ProjectedWallLight walllight;
-		walllight.SetColormap(lightsector, curline);
-		walllight.SetLightLeft(Thread, ds->WallC);
-		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, walllight, wallupper.ScreenY, walllower.ScreenY, true);
+		RenderDecal::RenderDecals(Thread, ds, curline, lightsector, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
 	void RenderDrawSegment::Render3DFloorWallRange(DrawSegment *ds, int x1, int x2)

@@ -423,9 +423,9 @@ namespace swrenderer
 		RenderPortal *renderportal = Thread->Portal.get();
 
 		// kg3D - fake floors instead of zdoom light list
-		for (unsigned int i = 0; i < frontsector->e->XFloor.lightlist.Size(); i++)
+		for (unsigned int i = 0; i < lightsector->e->XFloor.lightlist.Size(); i++)
 		{
-			ProjectedWallCull j = most3.Project(Thread->Viewport.get(), frontsector->e->XFloor.lightlist[i].plane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
+			ProjectedWallCull j = most3.Project(Thread->Viewport.get(), lightsector->e->XFloor.lightlist[i].plane, &WallC, curline, renderportal->MirrorFlags & RF_XFLIP);
 			if (j != ProjectedWallCull::OutsideAbove)
 			{
 				for (int j = x1; j < x2; ++j)
@@ -437,7 +437,7 @@ namespace swrenderer
 				down = (down == most1.ScreenY) ? most2.ScreenY : most1.ScreenY;
 			}
 
-			mLight.SetColormap(frontsector, curline, &frontsector->e->XFloor.lightlist[i]);
+			mLight.SetColormap(lightsector, curline, &lightsector->e->XFloor.lightlist[i]);
 		}
 
 		ProcessNormalWall(up, dwal, texcoords);
@@ -446,7 +446,7 @@ namespace swrenderer
 	void RenderWallPart::ProcessWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords)
 	{
 		CameraLight *cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0 || !(frontsector->e && frontsector->e->XFloor.lightlist.Size()))
+		if (cameraLight->FixedColormap() != NULL || cameraLight->FixedLightLevel() >= 0 || !(lightsector->e && lightsector->e->XFloor.lightlist.Size()))
 		{
 			ProcessNormalWall(uwal, dwal, texcoords);
 		}
@@ -528,19 +528,21 @@ namespace swrenderer
 		}
 	}
 
-	void RenderWallPart::Render(sector_t *frontsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, const ProjectedWallTexcoords& texcoords, double top, double bottom, bool mask, bool additive, fixed_t alpha, const ProjectedWallLight &light, FLightNode *light_list)
+	void RenderWallPart::Render(const sector_t *lightsector, seg_t *curline, const FWallCoords &WallC, FSoftwareTexture *pic, int x1, int x2, const short *walltop, const short *wallbottom, const ProjectedWallTexcoords& texcoords, double top, double bottom, bool mask, bool additive, fixed_t alpha, FLightNode *light_list)
 	{
 		this->x1 = x1;
 		this->x2 = x2;
-		this->frontsector = frontsector;
+		this->lightsector = lightsector;
 		this->curline = curline;
 		this->WallC = WallC;
-		this->mLight = light;
 		this->light_list = light_list;
 		this->rw_pic = pic;
 		this->mask = mask;
 		this->additive = additive;
 		this->alpha = alpha;
+
+		mLight.SetColormap(lightsector, curline);
+		mLight.SetLightLeft(Thread, WallC);
 
 		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 

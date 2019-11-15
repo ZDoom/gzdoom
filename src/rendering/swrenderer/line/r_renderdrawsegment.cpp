@@ -194,21 +194,7 @@ namespace swrenderer
 		}
 
 		sector_t tempsec;
-		const sector_t* sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
-
-		ProjectedWallLight walllight;
-		walllight.SetColormap(sec, curline);
-		walllight.SetLightLeft(Thread, ds->WallC);
-
-		double clipTop = m3DFloor.clipTop ? m3DFloor.sclipTop : sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
-		for (int i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
-		{
-			if (clipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
-			{
-				walllight.SetColormap(frontsector, curline, &frontsector->e->XFloor.lightlist[i]);
-				break;
-			}
-		}
+		const sector_t* lightsector = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
@@ -217,7 +203,7 @@ namespace swrenderer
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, walllight, nullptr);
+		renderWallpart.Render(lightsector, curline, ds->WallC, tex, x1, x2, mceilingclip, mfloorclip, ds->texcoords, top, bot, true, additive, alpha, nullptr);
 	}
 
 	void RenderDrawSegment::Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic)
@@ -226,37 +212,7 @@ namespace swrenderer
 		if (Alpha <= 0)
 			return;
 
-		lightlist_t* lit = nullptr;
-		CameraLight* cameraLight = CameraLight::Instance();
-		if (cameraLight->FixedLightLevel() < 0)
-		{
-			if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
-			{
-				for (int j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-				{
-					if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
-					{
-						lit = &backsector->e->XFloor.lightlist[j];
-						break;
-					}
-				}
-			}
-			else
-			{
-				for (int j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
-				{
-					if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
-					{
-						lit = &frontsector->e->XFloor.lightlist[j];
-						break;
-					}
-				}
-			}
-		}
-
-		ProjectedWallLight walllight;
-		walllight.SetColormap(frontsector, curline, lit);
-		walllight.SetLightLeft(Thread, ds->WallC);
+		sector_t* lightsector = (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls()) ? backsector : frontsector;
 
 		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
 		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &ds->WallC);
@@ -271,8 +227,11 @@ namespace swrenderer
 		GetMaskedWallTopBottom(ds, top, bot);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(frontsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, walllight, nullptr);
+		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, top, bot, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha, nullptr);
 
+		ProjectedWallLight walllight;
+		walllight.SetColormap(lightsector, curline);
+		walllight.SetLightLeft(Thread, ds->WallC);
 		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, curline, walllight, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
@@ -640,10 +599,10 @@ namespace swrenderer
 		}
 
 		sector_t tempsec;
-		const sector_t* sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
+		const sector_t* lightsector = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		ProjectedWallLight walllight;
-		walllight.SetColormap(sec, curline);
+		walllight.SetColormap(lightsector, curline);
 		walllight.SetLightLeft(Thread, ds->WallC);
 
 		RenderFogBoundary renderfog;

@@ -46,7 +46,7 @@ namespace swrenderer
 		RenderWallPart(RenderThread *thread);
 
 		void Render(
-			sector_t *frontsector,
+			const sector_t *lightsector,
 			seg_t *curline,
 			const FWallCoords &WallC,
 			FSoftwareTexture *rw_pic,
@@ -60,7 +60,6 @@ namespace swrenderer
 			bool mask,
 			bool additive,
 			fixed_t alpha,
-			const ProjectedWallLight &light,
 			FLightNode *light_list);
 
 		RenderThread *Thread = nullptr;
@@ -75,7 +74,7 @@ namespace swrenderer
 		int x1 = 0;
 		int x2 = 0;
 		FSoftwareTexture *rw_pic = nullptr;
-		sector_t *frontsector = nullptr;
+		const sector_t *lightsector = nullptr;
 		seg_t *curline = nullptr;
 		FWallCoords WallC;
 

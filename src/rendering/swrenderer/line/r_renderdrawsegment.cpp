@@ -215,7 +215,7 @@ namespace swrenderer
 		double top, bot;
 		GetMaskedWallTopBottom(ds, top, bot);
 
-		float alpha = FLOAT2FIXED((float)MIN(curline->linedef->alpha, 1.));
+		fixed_t alpha = FLOAT2FIXED((float)MIN(curline->linedef->alpha, 1.));
 		bool additive = (curline->linedef->flags & ML_ADDTRANS) != 0;
 
 		RenderWallPart renderWallpart(Thread);

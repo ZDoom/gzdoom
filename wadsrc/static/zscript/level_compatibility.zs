@@ -1457,69 +1457,6 @@ class LevelCompatibility : LevelPostProcessor
 				SetThingSkills(164, 31);
 				break;
 			}
-			
-			case '1B27E04F707E7988800582F387F609CD':	//One against hell (ONE1.wad)
-			{
-				//Turn map spots into teleport destinations so that teleports work
-				SetThingEdNum(19,14);
-				SetThingEdNum(20,14);
-				SetThingEdNum(22,14);
-				SetThingEdNum(23,14);
-				SetThingEdNum(34,14);
-				SetThingEdNum(35,14);
-				SetThingEdNum(36,14);
-				SetThingEdNum(39,14);
-				SetThingEdNum(40,14);
-				SetThingEdNum(172,14);
-				SetThingEdNum(173,14);
-				SetThingEdNum(225,14);
-				SetThingEdNum(226,14);
-				SetThingEdNum(247,14);
-				break;
-			}
-			
-			case 'FDFB3D209CC0F3706AAF3E51646003D5':	//swan fox doom v2.4.wad map23
-			{
-				//Fix the exit portal to allow walking into it instead of shooting it
-				SetLineSpecial(1970,Exit_Normal,0);
-				SetLineActivation(1970,SPAC_Cross);
-				ClearLineSpecial(2010);
-				break;
-			}
-			
-			case '52F532F95E2D5862E56F7214FA5C5C59':	//Toon Doom II (toon2b.wad) map10
-			{
-				//This lift needs to be repeatable to prevent trapping the player
-				SetLineSpecial(224,Plat_DownWaitUpStayLip,5,32,105);
-				SetLineActivation(224,SPAC_Use);
-				SetLineFlags(224,Line.ML_REPEAT_SPECIAL);
-				break;
-			}
-			
-			case '3345D12AD97F20EDCA5E27BA4288F758':	//Toon Doom II (toon2b.wad) map30
-			{
-				//These doors need to be repeatable to prevent trapping the player
-				SetLineSpecial(417,Door_Raise,17,16,150);
-				SetLineActivation(417,SPAC_Use);
-				SetLineFlags(417,Line.ML_REPEAT_SPECIAL);
-				SetLineSpecial(425,Door_Raise,15,16,150);
-				SetLineActivation(425,SPAC_Use);
-				SetLineFlags(425,Line.ML_REPEAT_SPECIAL);
-				SetLineSpecial(430,Door_Raise,16,16,150);
-				SetLineActivation(430,SPAC_Use);
-				SetLineFlags(430,Line.ML_REPEAT_SPECIAL);
-				break;
-			}
-			
-			case 'BA1288DF7A7AD637948825EA87E18728':	//vltnight.wad map02
-			{
-				//This door's backside had a backwards linedef so it wouldn't work
-				FlipLine(306);
-				FlipLineSideRefs(306);
-				//Set the exit to point to Position 0, since that's the only one on the next map
-				SetLineSpecial(564,Exit_Normal,0);
-				break;
-			}
 		}
 	}
 }

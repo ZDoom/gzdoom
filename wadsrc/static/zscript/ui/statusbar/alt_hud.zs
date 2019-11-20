@@ -44,7 +44,7 @@ class AltHud ui
 	const POWERUPICONSIZE = 32;
 
 	
-	void Init()
+	virtual void Init()
 	{
 		switch (gameinfo.gametype)
 		{

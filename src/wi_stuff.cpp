@@ -59,6 +59,7 @@ CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_noautostartmap, false, CVAR_USERINFO | CVAR_ARCHIVE)
 CVAR(Int, wi_autoadvance, 0, CVAR_SERVERINFO)
+CVAR(Bool, wi_instant, false, CVAR_ARCHIVE)
 
 // States for the intermission
 enum EState

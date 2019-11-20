@@ -7,7 +7,7 @@ class DoomStatusScreen : StatusScreen
 	{
 		intermissioncounter = gameinfo.intermissioncounter;
 		CurState = StatCount;
-		acceleratestage = 0;
+		acceleratestage = wi_instant;
 		sp_state = 1;
 		cnt_kills[0] = cnt_items[0] = cnt_secret[0] = -1;
 		cnt_time = cnt_par = -1;
@@ -22,7 +22,10 @@ class DoomStatusScreen : StatusScreen
 		{
 			acceleratestage = 0;
 			sp_state = 10;
-			PlaySound("intermission/nextstage");
+			if (!wi_instant)
+			{
+				PlaySound("intermission/nextstage");
+			}
 
 			cnt_kills[0] = Plrs[me].skills;
 			cnt_items[0] = Plrs[me].sitems;

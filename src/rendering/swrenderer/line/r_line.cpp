@@ -87,7 +87,7 @@ namespace swrenderer
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 			return;
 
-		if (WallC.Init(Thread, pt1, pt2, 32.0 / (1 << 12)))
+		if (WallC.Init(Thread, pt1, pt2, line))
 			return;
 
 		RenderPortal *renderportal = Thread->Portal.get();
@@ -107,8 +107,6 @@ namespace swrenderer
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
 		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos))
 			return;
-
-		WallT.InitFromLine(Thread, line);
 
 		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
 		mFrontFloorZ1 = mFrontSector->floorplane.ZatPoint(line->v1);
@@ -306,7 +304,6 @@ namespace swrenderer
 
 		draw_segment->drawsegclip.CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		draw_segment->WallC = WallC;
-		draw_segment->tmapvals = WallT;
 		draw_segment->x1 = start;
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;
@@ -396,7 +393,7 @@ namespace swrenderer
 						if (pic)
 						{
 							draw_segment->SetHasTranslucentMidTexture();
-							draw_segment->texcoords.ProjectTranslucent(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, pic);
+							draw_segment->texcoords.ProjectTranslucent(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, pic);
 							draw_segment->drawsegclip.silhouette |= SIL_TOP | SIL_BOTTOM;
 						}
 					}
@@ -878,7 +875,7 @@ namespace swrenderer
 		if (!viewactive) return;
 
 		ProjectedWallTexcoords texcoords;
-		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mTopTexture);
+		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mTopTexture);
 
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
@@ -890,7 +887,7 @@ namespace swrenderer
 		if (!viewactive) return;
 
 		ProjectedWallTexcoords texcoords;
-		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mMiddleTexture);
+		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC, mMiddleTexture);
 
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
@@ -903,85 +900,9 @@ namespace swrenderer
 		if (!viewactive) return;
 
 		ProjectedWallTexcoords texcoords;
-		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC.sx1, WallC.sx2, WallT, mBottomTexture);
+		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mBottomTexture);
 
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
-	}
-
-	////////////////////////////////////////////////////////////////////////////
-
-	// Transform and clip coordinates. Returns true if it was clipped away
-	bool FWallCoords::Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close)
-	{
-		auto viewport = thread->Viewport.get();
-		RenderPortal *renderportal = thread->Portal.get();
-
-		tleft.X = float(pt1.X * viewport->viewpoint.Sin - pt1.Y * viewport->viewpoint.Cos);
-		tright.X = float(pt2.X * viewport->viewpoint.Sin - pt2.Y * viewport->viewpoint.Cos);
-
-		tleft.Y = float(pt1.X * viewport->viewpoint.TanCos + pt1.Y * viewport->viewpoint.TanSin);
-		tright.Y = float(pt2.X * viewport->viewpoint.TanCos + pt2.Y * viewport->viewpoint.TanSin);
-
-		if (renderportal->MirrorFlags & RF_XFLIP)
-		{
-			float t = -tleft.X;
-			tleft.X = -tright.X;
-			tright.X = t;
-			swapvalues(tleft.Y, tright.Y);
-		}
-
-		float fsx1, fsz1, fsx2, fsz2;
-
-		if (tleft.X >= -tleft.Y)
-		{
-			if (tleft.X > tleft.Y) return true;	// left edge is off the right side
-			if (tleft.Y == 0) return true;
-			fsx1 = viewport->CenterX + tleft.X * viewport->CenterX / tleft.Y;
-			fsz1 = tleft.Y;
-		}
-		else
-		{
-			if (tright.X < -tright.Y) return true;	// wall is off the left side
-			float den = tleft.X - tright.X - tright.Y + tleft.Y;
-			if (den == 0) return true;
-			fsx1 = 0;
-			fsz1 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X + tleft.Y) / den;
-		}
-
-		if (fsz1 < too_close)
-			return true;
-
-		if (tright.X <= tright.Y)
-		{
-			if (tright.X < -tright.Y) return true;	// right edge is off the left side
-			if (tright.Y == 0) return true;
-			fsx2 = viewport->CenterX + tright.X * viewport->CenterX / tright.Y;
-			fsz2 = tright.Y;
-		}
-		else
-		{
-			if (tleft.X > tleft.Y) return true;	// wall is off the right side
-			float den = tright.Y - tleft.Y - tright.X + tleft.X;
-			if (den == 0) return true;
-			fsx2 = viewwidth;
-			fsz2 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X - tleft.Y) / den;
-		}
-
-		if (fsz2 < too_close)
-			return true;
-
-		sx1 = xs_RoundToInt(fsx1);
-		sx2 = xs_RoundToInt(fsx2);
-
-		float delta = fsx2 - fsx1;
-		float t1 = (sx1 + 0.5f - fsx1) / delta;
-		float t2 = (sx2 + 0.5f - fsx1) / delta;
-		float invZ1 = 1.0f / fsz1;
-		float invZ2 = 1.0f / fsz2;
-		sz1 = 1.0f / (invZ1 * (1.0f - t1) + invZ2 * t1);
-		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
-
-		return sx2 <= sx1;
 	}
 }

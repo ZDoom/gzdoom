@@ -54,7 +54,6 @@ namespace swrenderer
 		short x1, x2;
 
 		FWallCoords WallC;
-		FWallTmapVals tmapvals;
 		ProjectedWallTexcoords texcoords;
 
 		DrawSegmentClipInfo drawsegclip;

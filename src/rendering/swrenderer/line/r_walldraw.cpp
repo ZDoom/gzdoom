@@ -120,16 +120,117 @@ namespace swrenderer
 		ProcessNormalWall(up, dwal, texcoords);
 	}
 
-	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords)
+	static void DrawWallColumn32(RenderThread* thread, WallDrawerArgs& drawerargs, int x, int y1, int y2, uint32_t texelX, uint32_t texelY, uint32_t texelStepX, uint32_t texelStepY, FSoftwareTexture* pic, int texwidth, int texheight)
 	{
-		int fracbits = 32 - pic->GetHeightBits();
-		if (fracbits == 32)
-		{ // Hack for one pixel tall textures
-			fracbits = 0;
+		double xmagnitude = fabs(static_cast<int32_t>(texelStepX) * (1.0 / 0x1'0000'0000LL));
+		double ymagnitude = fabs(static_cast<int32_t>(texelStepY) * (1.0 / 0x1'0000'0000LL));
+		double magnitude = MAX(ymagnitude, xmagnitude);
+		double min_lod = -1000.0;
+		double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+		bool magnifying = lod < 0.0f;
+
+		int mipmap_offset = 0;
+		int mip_width = texwidth;
+		int mip_height = texheight;
+		if (r_mipmap && pic->Mipmapped() && mip_width > 1 && mip_height > 1)
+		{
+			int level = (int)lod;
+			while (level > 0 && mip_width > 1 && mip_height > 1)
+			{
+				mipmap_offset += mip_width * mip_height;
+				level--;
+				mip_width = MAX(mip_width >> 1, 1);
+				mip_height = MAX(mip_height >> 1, 1);
+			}
 		}
 
+		const uint32_t* pixels = pic->GetPixelsBgra() + mipmap_offset;
+		fixed_t xxoffset = (texelX >> 16) * mip_width;
+
+		const uint8_t* source;
+		const uint8_t* source2;
+		uint32_t texturefracx;
+		bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+		if (filter_nearest)
+		{
+			int tx = (xxoffset >> FRACBITS) % mip_width;
+			source = (uint8_t*)(pixels + tx * mip_height);
+			source2 = nullptr;
+			texturefracx = 0;
+		}
+		else
+		{
+			xxoffset -= FRACUNIT / 2;
+			int tx0 = (xxoffset >> FRACBITS) % mip_width;
+			if (tx0 < 0)
+				tx0 += mip_width;
+			int tx1 = (tx0 + 1) % mip_width;
+			source = (uint8_t*)(pixels + tx0 * mip_height);
+			source2 = (uint8_t*)(pixels + tx1 * mip_height);
+			texturefracx = (xxoffset >> (FRACBITS - 4)) & 15;
+		}
+
+		int count = y2 - y1;
+		drawerargs.SetDest(thread->Viewport.get(), x, y1);
+		drawerargs.SetCount(count);
+		drawerargs.SetTexture(source, source2, mip_height);
+		drawerargs.SetTextureUPos(texturefracx);
+		drawerargs.SetTextureVPos(texelY);
+		drawerargs.SetTextureVStep(texelStepY);
+		drawerargs.DrawColumn(thread);
+	}
+
+	static void DrawWallColumn8(RenderThread* thread, WallDrawerArgs& drawerargs, int x, int y1, int y2, uint32_t texelX, uint32_t texelY, uint32_t texelStepY, FSoftwareTexture* pic, int texwidth, int texheight, int fracbits, uint32_t uv_max)
+	{
+		texelY = (static_cast<uint64_t>(texelY)* texheight) >> (32 - fracbits);
+		texelStepY = (static_cast<uint64_t>(texelStepY)* texheight) >> (32 - fracbits);
+
+		const uint8_t* pixels = pic->GetColumn(DefaultRenderStyle(), ((texelX >> 16)* texwidth) >> 16, nullptr);
+
+		drawerargs.SetTexture(pixels, nullptr, texheight);
+		drawerargs.SetTextureVStep(texelStepY);
+
+		if (uv_max == 0 || texelStepY == 0) // power of two
+		{
+			int count = y2 - y1;
+
+			drawerargs.SetDest(thread->Viewport.get(), x, y1);
+			drawerargs.SetCount(count);
+			drawerargs.SetTextureVPos(texelY);
+			drawerargs.DrawColumn(thread);
+		}
+		else
+		{
+			uint32_t left = y2 - y1;
+			int y = y1;
+			while (left > 0)
+			{
+				uint32_t available = uv_max - texelY;
+				uint32_t next_uv_wrap = available / texelStepY;
+				if (available % texelStepY != 0)
+					next_uv_wrap++;
+				uint32_t count = MIN(left, next_uv_wrap);
+
+				drawerargs.SetDest(thread->Viewport.get(), x, y);
+				drawerargs.SetCount(count);
+				drawerargs.SetTextureVPos(texelY);
+				drawerargs.DrawColumn(thread);
+
+				y += count;
+				left -= count;
+				texelY += texelStepY * count;
+				if (texelY >= uv_max)
+					texelY -= uv_max;
+			}
+		}
+	}
+
+	void RenderWallPart::ProcessNormalWall(const short* uwal, const short* dwal, const ProjectedWallTexcoords& texcoords)
+	{
+		CameraLight* cameraLight = CameraLight::Instance();
+		RenderViewport* viewport = Thread->Viewport.get();
+
 		WallDrawerArgs drawerargs;
-		drawerargs.SetTextureFracBits(Thread->Viewport->RenderTarget->IsBgra() ? FRACBITS : fracbits);
 
 		// Textures that aren't masked can use the faster opaque drawer
 		if (!pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
@@ -141,13 +242,9 @@ namespace swrenderer
 			drawerargs.SetStyle(mask, additive, alpha, mLight.GetBaseColormap());
 		}
 
-		RenderViewport *viewport = Thread->Viewport.get();
-
-		CameraLight *cameraLight = CameraLight::Instance();
 		bool fixed = (cameraLight->FixedColormap() || cameraLight->FixedLightLevel() >= 0);
 
 		bool haslights = r_dynlights && light_list;
-
 		if (haslights)
 		{
 			float dx = WallC.tright.X - WallC.tleft.X;
@@ -158,218 +255,73 @@ namespace swrenderer
 			drawerargs.dc_normal.Z = 0.0f;
 		}
 
-		double xmagnitude = 1.0;
+		int texwidth = pic->GetPhysicalWidth();
+		int texheight = pic->GetPhysicalHeight();
+
+		int fracbits = 32 - pic->GetHeightBits();
+		if (fracbits == 32) fracbits = 0; // One pixel tall textures
+		if (viewport->RenderTarget->IsBgra()) fracbits = 32;
+		drawerargs.SetTextureFracBits(fracbits);
+
+		uint32_t uv_max;
+		int uv_fracbits = 32 - pic->GetHeightBits();
+		if (uv_fracbits != 32)
+			uv_max = texheight << uv_fracbits;
 
 		float curlight = mLight.GetLightPos(x1);
 		float lightstep = mLight.GetLightStep();
 
-		if (viewport->RenderTarget->IsBgra())
+		float upos = texcoords.upos, ustepX = texcoords.ustepX, ustepY = texcoords.ustepY;
+		float vpos = texcoords.vpos, vstepX = texcoords.vstepX, vstepY = texcoords.vstepY;
+		float wpos = texcoords.wpos, wstepX = texcoords.wstepX, wstepY = texcoords.wstepY;
+		float startX = texcoords.startX;
+
+		upos += ustepX * (x1 + 0.5f - startX);
+		vpos += vstepX * (x1 + 0.5f - startX);
+		wpos += wstepX * (x1 + 0.5f - startX);
+
+		float centerY = Thread->Viewport->CenterY;
+		centerY -= 0.5f;
+
+		for (int x = x1; x < x2; x++)
 		{
-			for (int x = x1; x < x2; x++, curlight += lightstep)
+			int y1 = uwal[x];
+			int y2 = dwal[x];
+			if (y2 > y1)
 			{
-				int y1 = uwal[x];
-				int y2 = dwal[x];
-				if (y2 <= y1)
-					continue;
-
-				if (!fixed)
-					drawerargs.SetLight(curlight, mLight.GetLightLevel(), mLight.GetFoggy(), viewport);
-
-				if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(texcoords.UPos(x + 1)) - FIXED2DBL(texcoords.UPos(x)));
-
-				fixed_t xxoffset = (texcoords.UPos(x) + FLOAT2FIXED(xmagnitude * 0.5)) * pic->GetPhysicalScale();
-
-				// Normalize to 0-1 range:
-				double uv_stepd = texcoords.VStep(x) * texcoords.yscale;
-				double v = (texcoords.texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / pic->GetHeight();
-				v = v - floor(v);
-				double v_step = uv_stepd / pic->GetHeight();
-
-				if (std::isnan(v) || std::isnan(v_step)) // this should never happen, but it apparently does..
-				{
-					uv_stepd = 0.0;
-					v = 0.0;
-					v_step = 0.0;
-				}
-
-				// Convert to uint32_t:
-				uint32_t uv_pos = (uint32_t)(int64_t)(v * 0x100000000LL);
-				uint32_t uv_step = (uint32_t)(int64_t)(v_step * 0x100000000LL);
-
-				// Texture mipmap and filter selection:
-				double ymagnitude = fabs(uv_stepd);
-				double magnitude = MAX(ymagnitude, xmagnitude);
-				double min_lod = -1000.0;
-				double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
-				bool magnifying = lod < 0.0f;
-
-				int mipmap_offset = 0;
-				int mip_width = pic->GetPhysicalWidth();
-				int mip_height = pic->GetPhysicalHeight();
-				if (r_mipmap && pic->Mipmapped() && mip_width > 1 && mip_height > 1)
-				{
-					uint32_t xpos = (uint32_t)((((uint64_t)xxoffset) << FRACBITS) / mip_width);
-
-					int level = (int)lod;
-					while (level > 0 && mip_width > 1 && mip_height > 1)
-					{
-						mipmap_offset += mip_width * mip_height;
-						level--;
-						mip_width = MAX(mip_width >> 1, 1);
-						mip_height = MAX(mip_height >> 1, 1);
-					}
-					xxoffset = (xpos >> FRACBITS) * mip_width;
-				}
-
-				const uint32_t *pixels = pic->GetPixelsBgra() + mipmap_offset;
-
-				const uint8_t *source;
-				const uint8_t *source2;
-				uint32_t texturefracx;
-				uint32_t height;
-				bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
-				if (filter_nearest)
-				{
-					int tx = (xxoffset >> FRACBITS) % mip_width;
-					if (tx < 0)
-						tx += mip_width;
-					source = (uint8_t*)(pixels + tx * mip_height);
-					source2 = nullptr;
-					height = mip_height;
-					texturefracx = 0;
-				}
-				else
-				{
-					xxoffset -= FRACUNIT / 2;
-					int tx0 = (xxoffset >> FRACBITS) % mip_width;
-					if (tx0 < 0)
-						tx0 += mip_width;
-					int tx1 = (tx0 + 1) % mip_width;
-					source = (uint8_t*)(pixels + tx0 * mip_height);
-					source2 = (uint8_t*)(pixels + tx1 * mip_height);
-					height = mip_height;
-					texturefracx = (xxoffset >> (FRACBITS - 4)) & 15;
-				}
-
-				drawerargs.SetTexture(source, source2, height);
-
+				if (!fixed) drawerargs.SetLight(curlight, mLight.GetLightLevel(), mLight.GetFoggy(), viewport);
 				if (haslights)
 					SetLights(drawerargs, x, y1);
 				else
 					drawerargs.dc_num_lights = 0;
 
-				drawerargs.SetTextureUPos(texturefracx);
-				drawerargs.SetTextureVStep(uv_step);
+				float dy = (y1 - centerY);
+				float u = upos + ustepY * dy;
+				float v = vpos + vstepY * dy;
+				float w = wpos + wstepY * dy;
+				float scaleU = ustepX;
+				float scaleV = vstepY;
+				w = 1.0f / w;
+				u *= w;
+				v *= w;
+				scaleU *= w;
+				scaleV *= w;
 
-				int count = y2 - y1;
+				uint32_t texelX = (uint32_t)(int64_t)((u - std::floor(u)) * 0x1'0000'0000LL);
+				uint32_t texelY = (uint32_t)(int64_t)((v - std::floor(v)) * 0x1'0000'0000LL);
+				uint32_t texelStepX = (uint32_t)(int64_t)(scaleU * 0x1'0000'0000LL);
+				uint32_t texelStepY = (uint32_t)(int64_t)(scaleV * 0x1'0000'0000LL);
 
-				drawerargs.SetDest(viewport, x, y1);
-				drawerargs.SetCount(count);
-				drawerargs.SetTextureVPos(uv_pos);
-				drawerargs.DrawColumn(Thread);
+				if (fracbits != 32)
+					DrawWallColumn8(Thread, drawerargs, x, y1, y2, texelX, texelY, texelStepY, pic, texwidth, texheight, fracbits, uv_max);
+				else
+					DrawWallColumn32(Thread, drawerargs, x, y1, y2, texelX, texelY, texelStepX, texelStepY, pic, texwidth, texheight);
 			}
-		}
-		else
-		{
-			uint32_t height = pic->GetPhysicalHeight();
 
-			uint32_t uv_max;
-			int uv_fracbits = 32 - pic->GetHeightBits();
-			if (uv_fracbits != 32)
-				uv_max = height << uv_fracbits;
-
-			for (int x = x1; x < x2; x++, curlight += lightstep)
-			{
-				int y1 = uwal[x];
-				int y2 = dwal[x];
-				if (y2 <= y1)
-					continue;
-
-				if (!fixed)
-					drawerargs.SetLight(curlight, mLight.GetLightLevel(), mLight.GetFoggy(), viewport);
-
-				if (x + 1 < x2) xmagnitude = fabs(FIXED2DBL(texcoords.UPos(x + 1)) - FIXED2DBL(texcoords.UPos(x)));
-
-				uint32_t uv_pos;
-				uint32_t uv_step;
-
-				fixed_t xxoffset = (texcoords.UPos(x) + FLOAT2FIXED(xmagnitude * 0.5)) * pic->GetPhysicalScale();
-
-				if (uv_fracbits != 32)
-				{
-					// Find start uv in [0-base_height[ range.
-					// Not using xs_ToFixed because it rounds the result and we need something that always rounds down to stay within the range.
-					double uv_stepd = texcoords.VStep(x) * texcoords.yscale;
-					double v = (texcoords.texturemid + uv_stepd * (y1 - viewport->CenterY + 0.5)) / pic->GetHeight();
-					v = v - floor(v);
-					v *= height;
-					v *= (1 << uv_fracbits);
-
-					uv_pos = (uint32_t)(int64_t)v;
-					uv_step = xs_ToFixed(uv_fracbits, uv_stepd * pic->GetPhysicalScale());
-					if (uv_step == 0) // To prevent divide by zero elsewhere
-						uv_step = 1;
-				}
-				else
-				{ // Hack for one pixel tall textures
-					uv_pos = 0;
-					uv_step = 0;
-					uv_max = 1;
-				}
-
-				int col = xxoffset >> FRACBITS;
-
-				// If the texture's width isn't a power of 2, then we need to make it a
-				// positive offset for proper clamping.
-				int width;
-				if (col < 0 && (width = pic->GetPhysicalWidth()) != (1 << pic->GetWidthBits()))
-				{
-					col = width + (col % width);
-				}
-
-				drawerargs.SetTexture(pic->GetColumn(DefaultRenderStyle(), col, nullptr), nullptr, height);
-
-				if (haslights)
-					SetLights(drawerargs, x, y1);
-				else
-					drawerargs.dc_num_lights = 0;
-
-				drawerargs.SetTextureVStep(uv_step);
-
-				if (uv_max == 0 || uv_step == 0) // power of two
-				{
-					int count = y2 - y1;
-
-					drawerargs.SetDest(viewport, x, y1);
-					drawerargs.SetCount(count);
-					drawerargs.SetTextureVPos(uv_pos);
-					drawerargs.DrawColumn(Thread);
-				}
-				else
-				{
-					uint32_t left = y2 - y1;
-					int y = y1;
-					while (left > 0)
-					{
-						uint32_t available = uv_max - uv_pos;
-						uint32_t next_uv_wrap = available / uv_step;
-						if (available % uv_step != 0)
-							next_uv_wrap++;
-						uint32_t count = MIN(left, next_uv_wrap);
-
-						drawerargs.SetDest(viewport, x, y);
-						drawerargs.SetCount(count);
-						drawerargs.SetTextureVPos(uv_pos);
-						drawerargs.DrawColumn(Thread);
-
-						y += count;
-						left -= count;
-						uv_pos += uv_step * count;
-						if (uv_pos >= uv_max)
-							uv_pos -= uv_max;
-					}
-				}
-			}
+			upos += ustepX;
+			vpos += vstepX;
+			wpos += wstepX;
+			curlight += lightstep;
 		}
 
 		if (r_modelscene)

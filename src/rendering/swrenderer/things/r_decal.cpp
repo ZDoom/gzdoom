@@ -148,10 +148,8 @@ namespace swrenderer
 		decal_left = decal_pos - edge_left * angvec - thread->Viewport->viewpoint.Pos;
 		decal_right = decal_pos + edge_right * angvec - thread->Viewport->viewpoint.Pos;
 
-		CameraLight *cameraLight;
-
 		FWallCoords WallC;
-		if (WallC.Init(thread, decal_left, decal_right, TOO_CLOSE_Z))
+		if (WallC.Init(thread, decal_left, decal_right))
 			return;
 
 		x1 = WallC.sx1;
@@ -240,43 +238,19 @@ namespace swrenderer
 			usecolormap = GetSpecialLights(usecolormap->Color, 0, usecolormap->Desaturate);
 		}
 
-		float lightpos = light.GetLightPos(x1);
-
-		cameraLight = CameraLight::Instance();
-
 		// Draw it
-
-		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(thread, &WallC);
-
-		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.ProjectSprite(thread->Viewport.get(), zpos, decal->ScaleY, decal->RenderFlags & RF_XFLIP, decal->RenderFlags & RF_YFLIP, x1, x2, WallT, WallSpriteTile);
 
 		do
 		{
-			int x = x1;
-
 			ColormapLight cmlight;
 			cmlight.SetColormap(thread, MINZ, light.GetLightLevel(), light.GetFoggy(), usecolormap, decal->RenderFlags & RF_FULLBRIGHT, false, false, false, false);
 
 			SpriteDrawerArgs drawerargs;
 			bool visible = drawerargs.SetStyle(thread->Viewport.get(), decal->RenderStyle, (float)decal->Alpha, decal->Translation, decal->AlphaColor, cmlight);
-			bool calclighting = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap();
-
 			if (visible)
 			{
 				thread->PrepareTexture(WallSpriteTile, decal->RenderStyle);
-				bool sprflipvert = (decal->RenderFlags & RF_YFLIP);
-				while (x < x2)
-				{
-					if (calclighting)
-					{ // calculate lighting
-						drawerargs.SetLight(lightpos, light.GetLightLevel(), light.GetFoggy(), thread->Viewport.get());
-					}
-					drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
-					lightpos += light.GetLightStep();
-					x++;
-				}
+				drawerargs.DrawMasked(thread, zpos + WallSpriteTile->GetTopOffset(0) * decal->ScaleY, decal->ScaleY, decal->RenderFlags & RF_XFLIP, decal->RenderFlags & RF_YFLIP, WallC, light, WallSpriteTile, mfloorclip, mceilingclip, decal->RenderStyle);
 			}
 
 			// If this sprite is RF_CLIPFULL on a two-sided line, needrepeat will

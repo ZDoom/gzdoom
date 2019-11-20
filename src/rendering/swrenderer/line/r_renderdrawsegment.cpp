@@ -218,7 +218,7 @@ namespace swrenderer
 		walllower.ClipBottom(x1, x2, ds->drawsegclip);
 
 		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC.sx1, ds->WallC.sx2, ds->tmapvals, rw_pic);
+		walltexcoords.Project3DFloor(Thread->Viewport.get(), rover, curline, ds->WallC, rw_pic);
 
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(lightsector, curline, ds->WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, walltexcoords, true, (rover->flags & FF_ADDITIVETRANS) != 0, Alpha);

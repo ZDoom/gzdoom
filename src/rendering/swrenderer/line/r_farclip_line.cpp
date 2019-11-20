@@ -81,7 +81,7 @@ namespace swrenderer
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 			return;
 
-		if (WallC.Init(Thread, pt1, pt2, 32.0 / (1 << 12)))
+		if (WallC.Init(Thread, pt1, pt2, line))
 			return;
 
 		RenderPortal *renderportal = Thread->Portal.get();

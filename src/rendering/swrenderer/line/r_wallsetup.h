@@ -27,8 +27,20 @@
 
 namespace swrenderer
 {
-	struct FWallCoords;
 	struct DrawSegmentClipInfo;
+
+	struct FWallCoords
+	{
+		FVector2	tleft;		// coords at left of wall in view space				rx1,ry1
+		FVector2	tright;		// coords at right of wall in view space			rx2,ry2
+
+		float		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
+		short		sx1, sx2;	// x coords at left, right of wall in screen space	xb1,xb2
+
+		float tx1, tx2; // texture coordinate fractions
+
+		bool Init(RenderThread* thread, const DVector2& pt1, const DVector2& pt2, seg_t* lineseg = nullptr);
+	};
 
 	enum class ProjectedWallCull
 	{
@@ -50,53 +62,54 @@ namespace swrenderer
 		void ClipBottom(int x1, int x2, const DrawSegmentClipInfo& clip);
 	};
 
-	struct FWallTmapVals
-	{
-		void InitFromWallCoords(RenderThread* thread, const FWallCoords* wallc);
-		void InitFromLine(RenderThread* thread, seg_t* line);
-
-	private:
-		float UoverZorg, UoverZstep;
-		float InvZorg, InvZstep;
-
-		friend class ProjectedWallTexcoords;
-	};
-
 	class ProjectedWallTexcoords
 	{
 	public:
-		void ProjectTop(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
-		void ProjectMid(RenderViewport* viewport, sector_t* frontsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
-		void ProjectBottom(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
-		void ProjectTranslucent(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
-		void Project3DFloor(RenderViewport* viewport, F3DFloor* rover, seg_t* lineseg, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
-		void ProjectSprite(RenderViewport* viewport, double topZ, double scale, bool flipX, bool flipY, int x1, int x2, const FWallTmapVals& WallT, FSoftwareTexture* pic);
+		void ProjectTop(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic);
+		void ProjectMid(RenderViewport* viewport, sector_t* frontsector, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic);
+		void ProjectBottom(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic);
+		void ProjectTranslucent(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic);
+		void Project3DFloor(RenderViewport* viewport, F3DFloor* rover, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic);
 
-		float VStep(int x) const;
-		fixed_t UPos(int x) const;
+		// Gradients
+		float upos, ustepX, ustepY;
+		float vpos, vstepX, vstepY;
+		float wpos, wstepX, wstepY;
+		float startX;
 
 	private:
-		void Project(RenderViewport* viewport, double walxrepeat, int x1, int x2, const FWallTmapVals& WallT, bool flipx = false);
+		void Project(RenderViewport* viewport, double walxrepeat, const FWallCoords& WallC, FSoftwareTexture* pic, bool flipx);
 
 		static fixed_t GetXOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart);
 		static double GetRowOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart);
 		static double GetXScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
 		static double GetYScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
 
-		double CenterX;
-		double WallTMapScale2;
-		double walxrepeat;
-		int x1;
-		int x2;
-		FWallTmapVals WallT;
-		bool flipx;
-
 		float yscale = 1.0f;
 		fixed_t xoffset = 0;
 		double texturemid = 0.0f;
 
-		friend class RenderWallPart;
-		friend class SpriteDrawerArgs;
+		struct Vertex
+		{
+			float x, y, w;
+			float u, v;
+		};
+
+		float FindGradientX(float bottomX, float c0, float c1, float c2, const Vertex& v1, const Vertex& v2, const Vertex& v3)
+		{
+			c0 *= v1.w;
+			c1 *= v2.w;
+			c2 *= v3.w;
+			return ((c1 - c2) * (v1.y - v3.y) - (c0 - c2) * (v2.y - v3.y)) / bottomX;
+		}
+
+		float FindGradientY(float bottomY, float c0, float c1, float c2, const Vertex& v1, const Vertex& v2, const Vertex& v3)
+		{
+			c0 *= v1.w;
+			c1 *= v2.w;
+			c2 *= v3.w;
+			return ((c1 - c2) * (v1.x - v3.x) - (c0 - c2) * (v2.x - v3.x)) / bottomY;
+		}
 	};
 
 	class ProjectedWallLight
@@ -108,14 +121,17 @@ namespace swrenderer
 
 		float GetLightPos(int x) const { return lightleft + lightstep * (x - x1); }
 		float GetLightStep() const { return lightstep; }
+		bool IsSpriteLight() const { return spritelight; }
 
 		void SetColormap(const sector_t *frontsector, seg_t *lineseg, lightlist_t *lit = nullptr);
 		void SetLightLeft(RenderThread *thread, const FWallCoords &wallc);
+		void SetSpriteLight() { lightleft = 0.0f; lightstep = 0.0f; spritelight = true; }
 
 	private:
 		int lightlevel;
 		bool foggy;
 		FDynamicColormap *basecolormap;
+		bool spritelight;
 
 		int x1;
 		float lightleft;

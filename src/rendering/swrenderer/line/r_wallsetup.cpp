@@ -292,9 +292,10 @@ namespace swrenderer
 		side_t* sidedef = lineseg->sidedef;
 		line_t* linedef = lineseg->linedef;
 
-		yscale = GetYScale(sidedef, pic, side_t::top);
+		float yscale = GetYScale(sidedef, pic, side_t::top);
 		double cameraZ = viewport->viewpoint.Pos.Z;
 
+		double texturemid;
 		if (yscale >= 0)
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGTOP)
@@ -319,9 +320,9 @@ namespace swrenderer
 		}
 
 		texturemid += GetRowOffset(lineseg, pic, side_t::top);
-		xoffset = GetXOffset(lineseg, pic, side_t::top);
+		fixed_t xoffset = GetXOffset(lineseg, pic, side_t::top);
 
-		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::top), WallC, pic, false);
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::top), WallC, pic, xoffset, texturemid, yscale, false);
 	}
 
 	void ProjectedWallTexcoords::ProjectMid(RenderViewport* viewport, sector_t* frontsector, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic)
@@ -329,9 +330,10 @@ namespace swrenderer
 		side_t* sidedef = lineseg->sidedef;
 		line_t* linedef = lineseg->linedef;
 
-		yscale = GetYScale(sidedef, pic, side_t::mid);
+		float yscale = GetYScale(sidedef, pic, side_t::mid);
 		double cameraZ = viewport->viewpoint.Pos.Z;
 
+		double texturemid;
 		if (yscale >= 0)
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -356,9 +358,9 @@ namespace swrenderer
 		}
 
 		texturemid += GetRowOffset(lineseg, pic, side_t::mid);
-		xoffset = GetXOffset(lineseg, pic, side_t::mid);
+		fixed_t xoffset = GetXOffset(lineseg, pic, side_t::mid);
 
-		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), WallC, pic, false);
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), WallC, pic, xoffset, texturemid, yscale, false);
 	}
 
 	void ProjectedWallTexcoords::ProjectBottom(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic)
@@ -374,9 +376,10 @@ namespace swrenderer
 			frontlowertop = backsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 
-		yscale = GetYScale(sidedef, pic, side_t::bottom);
+		float yscale = GetYScale(sidedef, pic, side_t::bottom);
 		double cameraZ = viewport->viewpoint.Pos.Z;
 
+		double texturemid;
 		if (yscale >= 0)
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -401,9 +404,9 @@ namespace swrenderer
 		}
 
 		texturemid += GetRowOffset(lineseg, pic, side_t::bottom);
-		xoffset = GetXOffset(lineseg, pic, side_t::bottom);
+		fixed_t xoffset = GetXOffset(lineseg, pic, side_t::bottom);
 
-		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::bottom), WallC, pic, false);
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::bottom), WallC, pic, xoffset, texturemid, yscale, false);
 	}
 
 	void ProjectedWallTexcoords::ProjectTranslucent(RenderViewport* viewport, sector_t* frontsector, sector_t* backsector, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic)
@@ -411,12 +414,13 @@ namespace swrenderer
 		line_t* linedef = lineseg->linedef;
 		side_t* sidedef = lineseg->sidedef;
 
-		yscale = GetYScale(sidedef, pic, side_t::mid);
+		float yscale = GetYScale(sidedef, pic, side_t::mid);
 		double cameraZ = viewport->viewpoint.Pos.Z;
 
 		double texZFloor = MAX(frontsector->GetPlaneTexZ(sector_t::floor), backsector->GetPlaneTexZ(sector_t::floor));
 		double texZCeiling = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 
+		double texturemid;
 		if (yscale >= 0)
 		{ // normal orientation
 			if (linedef->flags & ML_DONTPEGBOTTOM)
@@ -441,9 +445,9 @@ namespace swrenderer
 		}
 
 		texturemid += GetRowOffset(lineseg, pic, side_t::mid);
-		xoffset = GetXOffset(lineseg, pic, side_t::mid);
+		fixed_t xoffset = GetXOffset(lineseg, pic, side_t::mid);
 
-		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), WallC, pic, false);
+		Project(viewport, sidedef->TexelLength * GetXScale(sidedef, pic, side_t::mid), WallC, pic, xoffset, texturemid, yscale, false);
 	}
 
 	void ProjectedWallTexcoords::Project3DFloor(RenderViewport* viewport, F3DFloor* rover, seg_t* lineseg, const FWallCoords& WallC, FSoftwareTexture* pic)
@@ -468,18 +472,18 @@ namespace swrenderer
 		}
 
 		double xscale = pic->GetScale().X * scaledside->GetTextureXScale(scaledpart);
-		yscale = pic->GetScale().Y * scaledside->GetTextureYScale(scaledpart);
+		float yscale = pic->GetScale().Y * scaledside->GetTextureYScale(scaledpart);
 
 		double rowoffset = lineseg->sidedef->GetTextureYOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureYOffset(side_t::mid);
 		double planez = rover->model->GetPlaneTexZ(sector_t::ceiling);
 
-		xoffset = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
+		fixed_t xoffset = FLOAT2FIXED(lineseg->sidedef->GetTextureXOffset(side_t::mid) + rover->master->sidedef[0]->GetTextureXOffset(side_t::mid));
 		if (rowoffset < 0)
 		{
 			rowoffset += pic->GetHeight();
 		}
 
-		texturemid = (planez - viewport->viewpoint.Pos.Z) * yscale;
+		double texturemid = (planez - viewport->viewpoint.Pos.Z) * yscale;
 		if (pic->useWorldPanning(lineseg->GetLevel()))
 		{
 			// rowoffset is added before the multiply so that the masked texture will
@@ -495,10 +499,10 @@ namespace swrenderer
 			texturemid += rowoffset;
 		}
 
-		Project(viewport, lineseg->sidedef->TexelLength * xscale, WallC, pic, false);
+		Project(viewport, lineseg->sidedef->TexelLength * xscale, WallC, pic, xoffset, texturemid, yscale, false);
 	}
 
-	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, const FWallCoords& WallC, FSoftwareTexture* pic, bool flipx)
+	void ProjectedWallTexcoords::Project(RenderViewport *viewport, double walxrepeat, const FWallCoords& WallC, FSoftwareTexture* pic, fixed_t xoffset, double texturemid, float yscale, bool flipx)
 	{
 		float texwidth = pic->GetWidth();
 		float texheight = pic->GetHeight();
@@ -540,7 +544,7 @@ namespace swrenderer
 		v3.y = v1.y - 100.0f;
 		v3.w = v1.w;
 		v3.u = v1.u;
-		v3.v = v1.v + 1.0f / yscale * 100.0f / texheight;
+		v3.v = v1.v + yscale * 100.0f / texheight;
 
 		// Project to screen space
 

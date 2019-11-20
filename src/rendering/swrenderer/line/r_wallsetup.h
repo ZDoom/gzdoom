@@ -78,16 +78,12 @@ namespace swrenderer
 		float startX;
 
 	private:
-		void Project(RenderViewport* viewport, double walxrepeat, const FWallCoords& WallC, FSoftwareTexture* pic, bool flipx);
+		void Project(RenderViewport* viewport, double walxrepeat, const FWallCoords& WallC, FSoftwareTexture* pic, fixed_t xoffset, double texturemid, float yscale, bool flipx);
 
 		static fixed_t GetXOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart);
 		static double GetRowOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart);
 		static double GetXScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
 		static double GetYScale(side_t* sidedef, FSoftwareTexture* tex, side_t::ETexpart texpart);
-
-		float yscale = 1.0f;
-		fixed_t xoffset = 0;
-		double texturemid = 0.0f;
 
 		struct Vertex
 		{

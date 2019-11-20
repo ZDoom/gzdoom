@@ -335,6 +335,35 @@ void ST_CreateStatusBar(bool bTitleLevel)
 //
 //---------------------------------------------------------------------------
 
+static DObject* CreateAltHud(const FName classname)
+{
+	if (classname == NAME_None)
+		return nullptr;
+
+	auto cls = PClass::FindClass(classname);
+	if (!cls)
+	{
+		Printf(TEXTCOLOR_RED "Unknown alternative HUD class \"%s\"\n", classname.GetChars());
+		return nullptr;
+	}
+
+	if (!cls->IsDescendantOf(NAME_AltHud))
+	{
+		Printf(TEXTCOLOR_RED "Alternative HUD class \"%s\" is not derived from AltHud\n", classname.GetChars());
+		return nullptr;
+	}
+
+	auto althud = cls->CreateNew();
+
+	IFVIRTUALPTRNAME(althud, NAME_AltHud, Init)
+	{
+		VMValue params[] = { althud };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
+
+	return althud;
+}
+
 DBaseStatusBar::DBaseStatusBar ()
 {
 	CompleteBorder = false;
@@ -347,20 +376,13 @@ DBaseStatusBar::DBaseStatusBar ()
 	ShowLog = false;
 	defaultScale = { (double)CleanXfac, (double)CleanYfac };
 
-	// Create the AltHud object. Todo: Make class type configurable.
-	FName classname = "AltHud";
-	auto cls = PClass::FindClass(classname);
-	if (cls)
-	{
-		AltHud = cls->CreateNew();
+	// Create the AltHud object.
+	AltHud = CreateAltHud(gameinfo.althudclass);
 
-		VMFunction * func = PClass::FindFunction(classname, "Init"); 
-		if (func != nullptr)
-		{
-			VMValue params[] = { AltHud };
-			VMCall(func, params, countof(params), nullptr, 0);
-		}
-	}
+	if (!AltHud)
+		AltHud = CreateAltHud(NAME_AltHud);
+
+	assert(AltHud);
 }
 
 static void ValidateResolution(int &hres, int &vres)

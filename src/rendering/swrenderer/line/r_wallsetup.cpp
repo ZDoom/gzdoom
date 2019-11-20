@@ -551,9 +551,6 @@ namespace swrenderer
 		v1.w = 1.0f / v1.w;
 		v2.w = 1.0f / v2.w;
 		v3.w = 1.0f / v3.w;
-		//v1.x = viewport->CenterX + v1.x * v1.w * viewport->CenterX;
-		//v2.x = viewport->CenterX + v2.x * v2.w * viewport->CenterX;
-		//v3.x = viewport->CenterX + v3.x * v3.w * viewport->CenterX;
 		v1.y = viewport->CenterY - v1.y * v1.w * viewport->InvZtoScale;
 		v2.y = viewport->CenterY - v2.y * v2.w * viewport->InvZtoScale;
 		v3.y = viewport->CenterY - v3.y * v3.w * viewport->InvZtoScale;
@@ -576,54 +573,6 @@ namespace swrenderer
 		vpos = v1.v * v1.w;
 		wpos = v1.w;
 	}
-
-#if 0
-	float ProjectedWallTexcoords::VStep(int x) const
-	{
-		return 0.0001f;
-		/*
-		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
-		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
-		float uGradient = WallT.UoverZstep;
-		float zGradient = WallT.InvZstep;
-		float depthScale = (float)(WallT.InvZstep * WallTMapScale2);
-		float depthOrg = (float)(-WallT.UoverZstep * WallTMapScale2);
-		float u = (uOverZ + uGradient * (x - x1)) / (invZ + zGradient * (x - x1));
-
-		return depthOrg + u * depthScale;
-		*/
-	}
-
-	fixed_t ProjectedWallTexcoords::UPos(int x) const
-	{
-		return 0;
-		/*
-		float uOverZ = WallT.UoverZorg + WallT.UoverZstep * (float)(x1 + 0.5 - CenterX);
-		float invZ = WallT.InvZorg + WallT.InvZstep * (float)(x1 + 0.5 - CenterX);
-		float uGradient = WallT.UoverZstep;
-		float zGradient = WallT.InvZstep;
-		float u = (uOverZ + uGradient * (x - x1)) / (invZ + zGradient * (x - x1));
-
-		fixed_t value;
-		if (walxrepeat < 0.0)
-		{
-			float xrepeat = -walxrepeat;
-			value = (fixed_t)((xrepeat - u * xrepeat) * FRACUNIT);
-		}
-		else
-		{
-			value = (fixed_t)(u * walxrepeat * FRACUNIT);
-		}
-
-		if (flipx)
-		{
-			value = (int)walxrepeat - 1 - value;
-		}
-
-		return value + xoffset;
-		*/
-	}
-#endif
 
 	double ProjectedWallTexcoords::GetRowOffset(seg_t* lineseg, FSoftwareTexture* tex, side_t::ETexpart texpart)
 	{

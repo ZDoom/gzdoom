@@ -13,9 +13,8 @@ namespace swrenderer
 		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor) override;
 
 	private:
-		fixed_t xscale = 0;
-		fixed_t	startfrac = 0; // horizontal position of x1
-		fixed_t	xiscale = 0; // negative if flipped
+		FWallCoords wallc;
+		double SpriteScale;
 
 		uint32_t Translation = 0;
 		uint32_t FillColor = 0;

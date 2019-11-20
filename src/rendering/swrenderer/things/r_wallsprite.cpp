@@ -94,7 +94,7 @@ namespace swrenderer
 		right.Y = left.Y + x2 * angsin;
 
 		// Is it off-screen?
-		if (wallc.Init(thread, left, right, TOO_CLOSE_Z))
+		if (wallc.Init(thread, left, right))
 			return;
 			
 		RenderPortal *renderportal = thread->Portal.get();
@@ -180,35 +180,25 @@ namespace swrenderer
 		if (!visible)
 			return;
 
-		float lightleft = float(thread->Light->WallVis(spr->wallc.sz1, foggy));
-		float lightstep = float((thread->Light->WallVis(spr->wallc.sz2, foggy) - lightleft) / (spr->wallc.sx2 - spr->wallc.sx1));
-		float light = lightleft + (x1 - spr->wallc.sx1) * lightstep;
-		CameraLight *cameraLight = CameraLight::Instance();
-		bool calclighting = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap();
+		ProjectedWallLight mlight;
+		mlight.SetLightLeft(thread, wallc);
 
 		// Draw it
 		auto WallSpriteTile = spr->pic;
 
-		FWallTmapVals WallT;
-		WallT.InitFromWallCoords(thread, &spr->wallc);
-
-		ProjectedWallTexcoords walltexcoords;
-		walltexcoords.ProjectSprite(thread->Viewport.get(), spr->gzt, spr->yscale, spr->renderflags & RF_XFLIP, spr->renderflags & RF_YFLIP, x1, x2, WallT, WallSpriteTile);
-
-		RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
-
 		thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
-		bool sprflipvert = (spr->renderflags & RF_YFLIP);
+
+		RenderTranslucentPass* translucentPass = thread->TranslucentPass.get();
+		short floorclip[MAXWIDTH];
 		for (int x = x1; x < x2; x++)
 		{
-			if (calclighting)
-			{
-				drawerargs.SetBaseColormap(spr->Light.BaseColormap);
-				drawerargs.SetLight(light, spr->sector->lightlevel, spr->foggy, thread->Viewport.get());
-			}
-			if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
-				drawerargs.DrawMaskedColumn(thread, x, WallSpriteTile, walltexcoords, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
-			light += lightstep;
+			if (translucentPass->ClipSpriteColumnWithPortals(x, spr))
+				floorclip[x] = mceilingclip[x];
+			else
+				floorclip[x] = mfloorclip[x];
 		}
+
+		drawerargs.SetBaseColormap(spr->Light.BaseColormap);
+		drawerargs.DrawMasked(thread, spr->gzt, spr->yscale, spr->renderflags & RF_XFLIP, spr->renderflags & RF_YFLIP, spr->wallc, mlight, WallSpriteTile, floorclip, mceilingclip, spr->RenderStyle);
 	}
 }

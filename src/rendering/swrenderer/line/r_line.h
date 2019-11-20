@@ -39,17 +39,6 @@ namespace swrenderer
 	class RenderThread;
 	struct VisiblePlane;
 
-	struct FWallCoords
-	{
-		FVector2	tleft;		// coords at left of wall in view space				rx1,ry1
-		FVector2	tright;		// coords at right of wall in view space			rx2,ry2
-
-		float		sz1, sz2;	// depth at left, right of wall in screen space		yb1,yb2
-		short		sx1, sx2;	// x coords at left, right of wall in screen space	xb1,xb2
-
-		bool Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close);
-	};
-
 	class SWRenderLine : VisibleSegmentRenderer
 	{
 	public:
@@ -107,7 +96,6 @@ namespace swrenderer
 		bool mDoorClosed;
 
 		FWallCoords WallC;
-		FWallTmapVals WallT;
 
 		// Wall segment variables:
 

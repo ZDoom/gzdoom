@@ -510,7 +510,8 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 						sc.UnGet();
 						ParseFunctionParameters(sc, cls, args, func, "", nullptr);
 					}
-					return new FxVMFunctionCall(new FxSelf(sc), func, args, sc, false);
+					// FxVMFunctionCall cannot be used here as it lacks some important checks
+					return new FxFunctionCall(identifier, NAME_None, args, sc);
 				}
 			}
 

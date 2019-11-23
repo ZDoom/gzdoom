@@ -1520,6 +1520,148 @@ class LevelCompatibility : LevelPostProcessor
 				SetLineSpecial(564, Exit_Normal, 0);
 				break;
 			}
+			
+			case '9B966DA88265AC8972B7E15C86928AFB': // Clavicula Nox: Revised Edition map01
+			{
+				// All swimmable water in Clavicula Nox is Vavoom-style, and doesn't work.
+				// Change it to ZDoom-style and extend the control sector heights to fill.
+				// Lava also sometimes needs the damage effect added manually.
+				SetLineSpecial(698, 160, 4, 2, 0, 128);
+				OffsetSectorPlane(121, Sector.floor, -32);
+				break;
+			}
+			
+			case '9FD0C47C2E132F64B48CA5BFBDE47F1D': // clavnoxr map02
+			{
+				SetLineSpecial(953, 160, 12, 2, 0, 128);
+				OffsetSectorPlane(139, Sector.floor, -24);
+				SetLineSpecial(989, 160, 13, 2, 0, 128);
+				OffsetSectorPlane(143, Sector.floor, -24);
+				SetLineSpecial(1601, 160, 19, 2, 0, 128);
+				SetLineSpecial(1640, 160, 20, 2, 0, 128);
+				SetLineSpecial(1641, 160, 21, 2, 0, 128);
+				OffsetSectorPlane(236, Sector.floor, -96);
+				break;
+			}
+			
+			case '969B9691007490CF022B632B2729CA49': // clavnoxr map03
+			{
+				SetLineSpecial(96, 160, 1, 2, 0, 128);
+				OffsetSectorPlane(11, Sector.floor, -80);
+				SetLineSpecial(955, 160, 13, 2, 0, 128);
+				OffsetSectorPlane(173, Sector.floor, -16);
+				SetLineSpecial(1082, 160, 14, 2, 0, 128);
+				OffsetSectorPlane(195, Sector.floor, -16);
+				SetLineSpecial(1111, 160, 15, 2, 0, 128);
+				OffsetSectorPlane(203, Sector.floor, -16);
+				SetLineSpecial(1115, 160, 16, 2, 0, 128);
+				OffsetSectorPlane(204, Sector.floor, -16);
+				SetLineSpecial(1163, 160, 17, 2, 0, 128);
+				OffsetSectorPlane(216, Sector.floor, -56);
+				SetLineSpecial(1169, 160, 18, 2, 0, 128);
+				OffsetSectorPlane(217, Sector.floor, -16);
+				break;
+			}
+			
+			case '748EDAEB3990F13B22C13C593631B2E6': // clavnoxr map04
+			{
+				SetLineSpecial(859, 160, 22, 2, 0, 128);
+				SetLineSpecial(861, 160, 23, 2, 0, 128);
+				OffsetSectorPlane(172, Sector.floor, -168);
+				break;
+			}
+			
+			case 'A066B0B432FAE8ED20B83383F9E03E12': // clavnoxr map05
+			{
+				SetLineSpecial(1020, 160, 2, 2, 0, 128);
+				SetSectorSpecial(190, 69);
+				OffsetSectorPlane(190, Sector.floor, -24);
+				break;
+			}
+			
+			case '5F36D758ED26CAE907FA79902330877D': // clavnoxr map06
+			{
+				SetLineSpecial(1086, 160, 1, 2, 0, 128);
+				SetLineSpecial(60, 160, 4, 2, 0, 128);
+				SetLineSpecial(561, 160, 2, 2, 0, 128);
+				SetLineSpecial(280, 160, 3, 2, 0, 128);
+				SetLineSpecial(692, 160, 5, 2, 0, 128);
+				SetLineSpecial(1090, 160, 7, 2, 0, 128);
+				SetLineSpecial(1091, 160, 8, 2, 0, 128);
+				SetLineSpecial(1094, 160, 9, 2, 0, 128);
+				SetLineSpecial(1139, 160, 12, 2, 0, 128);
+				SetLineSpecial(1595, 160, 16, 2, 0, 128);
+				SetLineSpecial(1681, 160, 17, 2, 0, 128);
+				SetLineSpecial(1878, 160, 20, 2, 0, 128);
+				SetLineSpecial(1882, 160, 22, 2, 0, 128);
+				OffsetSectorPlane(8, Sector.floor, -64);
+				OffsetSectorPlane(34, Sector.floor, -24);
+				OffsetSectorPlane(64, Sector.floor, -16);
+				OffsetSectorPlane(102, Sector.floor, -16);
+				OffsetSectorPlane(170, Sector.floor, -64);
+				OffsetSectorPlane(171, Sector.floor, -64);
+				OffsetSectorPlane(178, Sector.floor, -16);
+				OffsetSectorPlane(236, Sector.floor, -16);
+				OffsetSectorPlane(250, Sector.floor, -16);
+				OffsetSectorPlane(283, Sector.floor, -64);
+				OffsetSectorPlane(284, Sector.floor, -56);
+				break;
+			}
+			
+			case 'B7E98C1EA1B38B707ADA8097C25CFA75': // clavnoxr map07
+			{
+				SetLineSpecial(1307, 160, 22, 2, 0, 128);
+				SetLineSpecial(1305, 160, 23, 2, 0, 128);
+				OffsetSectorPlane(218, Sector.floor, -64);
+				break;
+			}
+			
+			case '7DAB2E8BB5759D742211505A3E5054D1': // clavnoxr map08
+			{
+				SetLineSpecial(185, 160, 1, 2, 0, 128);
+				SetLineSpecial(735, 160, 13, 2, 0, 128);
+				OffsetSectorPlane(20, Sector.floor, -16);
+				SetSectorSpecial(20, 69);
+				OffsetSectorPlane(102, Sector.floor, -64);
+				break;
+			}
+			
+			case 'C17A9D1350399E251C70711EB22856AE': // clavnoxr map09
+			{
+				SetLineSpecial(63, 160, 1, 2, 0, 128);
+				SetLineSpecial(84, 160, 2, 2, 0, 128);
+				SetLineSpecial(208, 160, 4, 2, 0, 128);
+				SetLineSpecial(326, 160, 6, 2, 0, 128);
+				SetLineSpecial(433, 160, 10, 2, 0, 128);
+				OffsetSectorPlane(6, Sector.floor, -64);
+				OffsetSectorPlane(9, Sector.floor, -64);
+				OffsetSectorPlane(34, Sector.floor, -64);
+				OffsetSectorPlane(59, Sector.floor, -64);
+				SetSectorSpecial(75, 69);
+				OffsetSectorPlane(75, Sector.floor, -64);
+				break;
+			}
+			
+			case 'B6BB8A1792FE51C773E6770CD91DB618': // clavnoxr map11
+			{
+				SetLineSpecial(1235, 160, 23, 2, 0, 128);
+				SetLineSpecial(1238, 160, 24, 2, 0, 128);
+				OffsetSectorPlane(240, Sector.floor, -80);
+				break;
+			}
+			
+			case 'ADDF57B80E389F86D324571D43F3CAB7': // clavnoxr map12
+			{
+				SetLineSpecial(1619, 160, 19, 2, 0, 128);
+				SetLineSpecial(1658, 160, 20, 2, 0, 128);
+				SetLineSpecial(1659, 160, 21, 2, 0, 128);
+				OffsetSectorPlane(254, Sector.floor, -160);				
+				// Raising platforms in MAP12 didn't work, so this will redo them.
+				SetLineSpecial(1469, 160, 6, 1, 0, 255);
+				OffsetSectorPlane(65, Sector.floor, -8);
+				OffsetSectorPlane(65, Sector.ceiling, 8);
+				break;
+			}
 		}
 	}
 }

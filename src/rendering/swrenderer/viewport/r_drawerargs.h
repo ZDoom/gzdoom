@@ -38,6 +38,7 @@ namespace swrenderer
 
 		uint8_t *Colormap(RenderViewport *viewport) const;
 		uint8_t *TranslationMap() const { return mTranslation; }
+		FSWColormap* BaseColormap() const { return mBaseColormap; }
 
 		ShadeConstants ColormapConstants() const;
 		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }

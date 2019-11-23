@@ -62,7 +62,6 @@ namespace swrenderer
 	private:
 		void ProcessStripedWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
 		void ProcessNormalWall(const short *uwal, const short *dwal, const ProjectedWallTexcoords& texcoords);
-		void SetLights(WallDrawerArgs &drawerargs, int x, int y1);
 		FLightNode* GetLightList();
 
 		RenderThread* Thread = nullptr;

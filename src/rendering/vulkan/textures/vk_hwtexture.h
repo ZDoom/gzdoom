@@ -78,5 +78,8 @@ private:
 
 	VkTextureImage mDepthStencil;
 
+	std::unique_ptr<VulkanBuffer> mTransferBuffer;
+	std::unique_ptr<VulkanImage> mTransferImage;
+
 	uint8_t* mappedSWFB = nullptr;
 };

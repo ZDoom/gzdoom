@@ -309,7 +309,7 @@ public:
 	void addImage(VulkanImage *image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int baseMipLevel = 0, int levelCount = 1);
 	void addImage(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int baseMipLevel = 0, int levelCount = 1);
 	void addQueueTransfer(int srcFamily, int dstFamily, VulkanBuffer *buffer, VkAccessFlags srcAccessMask, VkAccessFlags dstAccessMask);
-	void addQueueTransfer(int srcFamily, int dstFamily, VulkanImage *image, VkImageLayout layout, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int baseMipLevel = 0, int levelCount = 1);
+	void addQueueTransfer(int srcFamily, int dstFamily, VulkanImage *image, VkImageLayout oldlayout, VkImageLayout newlayout, VkImageAspectFlags aspectMask = VK_IMAGE_ASPECT_COLOR_BIT, int baseMipLevel = 0, int levelCount = 1);
 
 	void execute(VulkanCommandBuffer *commandBuffer, VkPipelineStageFlags srcStageMask, VkPipelineStageFlags dstStageMask, VkDependencyFlags dependencyFlags = 0);
 
@@ -1234,12 +1234,12 @@ inline void PipelineBarrier::addQueueTransfer(int srcFamily, int dstFamily, Vulk
 	bufferMemoryBarriers.push_back(barrier);
 }
 
-inline void PipelineBarrier::addQueueTransfer(int srcFamily, int dstFamily, VulkanImage *image, VkImageLayout layout, VkImageAspectFlags aspectMask, int baseMipLevel, int levelCount)
+inline void PipelineBarrier::addQueueTransfer(int srcFamily, int dstFamily, VulkanImage *image, VkImageLayout oldlayout, VkImageLayout newlayout, VkImageAspectFlags aspectMask, int baseMipLevel, int levelCount)
 {
 	VkImageMemoryBarrier barrier = { };
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.oldLayout = layout;
-	barrier.newLayout = layout;
+	barrier.oldLayout = oldlayout;
+	barrier.newLayout = newlayout;
 	barrier.srcQueueFamilyIndex = srcFamily;
 	barrier.dstQueueFamilyIndex = dstFamily;
 	barrier.image = image->image;

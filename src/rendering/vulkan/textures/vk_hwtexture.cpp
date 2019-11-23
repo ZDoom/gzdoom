@@ -71,13 +71,18 @@ void VkHardwareTexture::Reset()
 
 		if (mappedSWFB)
 		{
-			mImage.Image->Unmap();
+			if (mTransferBuffer)
+				mTransferBuffer->Unmap();
+			else
+				mImage.Image->Unmap();
 			mappedSWFB = nullptr;
 		}
 
 		auto &deleteList = fb->FrameDeleteList;
 		if (mImage.Image) deleteList.Images.push_back(std::move(mImage.Image));
 		if (mImage.View) deleteList.ImageViews.push_back(std::move(mImage.View));
+		if (mTransferImage) deleteList.Images.push_back(std::move(mTransferImage));
+		if (mTransferBuffer) deleteList.Buffers.push_back(std::move(mTransferBuffer));
 		for (auto &it : mImage.RSFramebuffers) deleteList.Framebuffers.push_back(std::move(it.second));
 		if (mDepthStencil.Image) deleteList.Images.push_back(std::move(mDepthStencil.Image));
 		if (mDepthStencil.View) deleteList.ImageViews.push_back(std::move(mDepthStencil.View));
@@ -324,17 +329,52 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 
 		VkFormat format = texelsize == 4 ? VK_FORMAT_B8G8R8A8_UNORM : VK_FORMAT_R8_UNORM;
 
-		ImageBuilder imgbuilder;
-		VkDeviceSize allocatedBytes = 0;
-		imgbuilder.setFormat(format);
-		imgbuilder.setSize(w, h);
-		imgbuilder.setLinearTiling();
-		imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
-		imgbuilder.setMemoryType(
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		mImage.Image = imgbuilder.create(fb->device, &allocatedBytes);
-		mImage.Image->SetDebugName("VkHardwareTexture.mImage");
+		if (fb->device->copyQueueTransferFamily != -1)
+		{
+			// Use DMA transfer to get the image to the GPU
+
+			BufferBuilder bufbuilder;
+			bufbuilder.setUsage(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+			bufbuilder.setSize(w * h * texelsize);
+			mTransferBuffer = bufbuilder.create(fb->device);
+			mTransferBuffer->SetDebugName("VkHardwareTexture.mTransferBuffer");
+
+			ImageBuilder imgbuilder0;
+			imgbuilder0.setFormat(format);
+			imgbuilder0.setSize(w, h);
+			imgbuilder0.setUsage(VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+			mTransferImage = imgbuilder0.create(fb->device);
+			mTransferImage->SetDebugName("VkHardwareTexture.mTransferImage");
+
+			ImageBuilder imgbuilder1;
+			imgbuilder1.setFormat(format);
+			imgbuilder1.setSize(w, h);
+			imgbuilder1.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT);
+			mImage.Image = imgbuilder1.create(fb->device);
+			mImage.Image->SetDebugName("VkHardwareTexture.mImage");
+
+			bufferpitch = w;
+		}
+		else
+		{
+			// Memory map the image directly for GPUs where we have no transfer queue (i.e. Intel embedded GPUs)
+
+			ImageBuilder imgbuilder;
+			imgbuilder.setFormat(format);
+			imgbuilder.setSize(w, h);
+			imgbuilder.setLinearTiling();
+			imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT, VMA_MEMORY_USAGE_UNKNOWN, VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
+			imgbuilder.setMemoryType(
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+			VkDeviceSize allocatedBytes = 0;
+			mImage.Image = imgbuilder.create(fb->device, &allocatedBytes);
+			mImage.Image->SetDebugName("VkHardwareTexture.mImage");
+
+			bufferpitch = int(allocatedBytes / h / texelsize);
+		}
+
 		mTexelsize = texelsize;
 
 		ImageViewBuilder viewbuilder;
@@ -347,20 +387,68 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 		VkImageTransition imageTransition;
 		imageTransition.addImage(&mImage, VK_IMAGE_LAYOUT_GENERAL, true);
 		imageTransition.execute(cmdbuffer);
-
-		bufferpitch = int(allocatedBytes / h / texelsize);
 	}
 }
 
 uint8_t *VkHardwareTexture::MapBuffer()
 {
 	if (!mappedSWFB)
-		mappedSWFB = (uint8_t*)mImage.Image->Map(0, mImage.Image->width * mImage.Image->height * mTexelsize);
+	{
+		if (mTransferBuffer)
+			mappedSWFB = (uint8_t*)mTransferBuffer->Map(0, mImage.Image->width * mImage.Image->height * mTexelsize);
+		else
+			mappedSWFB = (uint8_t*)mImage.Image->Map(0, mImage.Image->width * mImage.Image->height * mTexelsize);
+	}
 	return mappedSWFB;
 }
 
 unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
 {
+	if (mTransferBuffer)
+	{
+		auto fb = GetVulkanFrameBuffer();
+		auto copyqueue = fb->GetCopyQueueCommands();
+
+		// Acquire image, transfer buffer via copy queue (PCIe DMA), release image
+
+		PipelineBarrier barrier0;
+		barrier0.addQueueTransfer(fb->device->graphicsFamily, fb->device->copyQueueTransferFamily, mTransferImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		barrier0.execute(copyqueue, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		VkBufferImageCopy region = {};
+		region.imageExtent.width = mTransferImage->width;
+		region.imageExtent.height = mTransferImage->height;
+		region.imageExtent.depth = 1;
+		region.imageSubresource.mipLevel = 0;
+		region.imageSubresource.layerCount = 1;
+		region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		copyqueue->copyBufferToImage(mTransferBuffer->buffer, mTransferImage->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+		PipelineBarrier barrier1;
+		barrier1.addQueueTransfer(fb->device->copyQueueTransferFamily, fb->device->graphicsFamily, mTransferImage.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		barrier1.execute(copyqueue, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		// Acquire image on graphics queue, make a copy of it (on the GPU), then release the image again back to the copy queue
+
+		auto gfxqueue = fb->GetTransferCommands();
+
+		PipelineBarrier barrier2;
+		barrier2.addImage(mImage.Image.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+		barrier2.addQueueTransfer(fb->device->copyQueueTransferFamily, fb->device->graphicsFamily, mTransferImage.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+		barrier2.execute(gfxqueue, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+
+		VkImageCopy imgregion = {};
+		imgregion.extent = region.imageExtent;
+		imgregion.srcSubresource = region.imageSubresource;
+		imgregion.dstSubresource = region.imageSubresource;
+		gfxqueue->copyImage(mTransferImage->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, mImage.Image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &imgregion);
+
+		PipelineBarrier barrier3;
+		barrier3.addImage(mImage.Image.get(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mImage.Layout, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT);
+		barrier3.addQueueTransfer(fb->device->graphicsFamily, fb->device->copyQueueTransferFamily, mTransferImage.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		barrier3.execute(gfxqueue, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+	}
+
 	return 0;
 }
 

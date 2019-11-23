@@ -163,6 +163,18 @@ void VulkanDevice::SelectPhysicalDevice()
 			}
 		}
 
+		// Search for a transfer family made specifically for uploading. For nvidia this allows us to upload using DMA transfers via PCIe.
+		// To identify it, we look for a transfer family that must not have graphics or compute capabilities.
+		for (int i = 0; i < (int)info.QueueFamilies.size(); i++)
+		{
+			const auto& queueFamily = info.QueueFamilies[i];
+			if (queueFamily.queueCount > 0 && (queueFamily.queueFlags & (VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT)) == 0 && (queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT))
+			{
+				dev.copyQueueTransferFamily = i;
+				break;
+			}
+		}
+
 		if (dev.graphicsFamily != -1 && dev.presentFamily != -1)
 		{
 			SupportedDevices.push_back(dev);
@@ -206,6 +218,7 @@ void VulkanDevice::SelectPhysicalDevice()
 	PhysicalDevice = *SupportedDevices[selected].device;
 	graphicsFamily = SupportedDevices[selected].graphicsFamily;
 	presentFamily = SupportedDevices[selected].presentFamily;
+	copyQueueTransferFamily = SupportedDevices[selected].copyQueueTransferFamily;
 	graphicsTimeQueries = SupportedDevices[selected].graphicsTimeQueries;
 }
 
@@ -234,6 +247,8 @@ void VulkanDevice::CreateDevice()
 	std::set<int> neededFamilies;
 	neededFamilies.insert(graphicsFamily);
 	neededFamilies.insert(presentFamily);
+	if (copyQueueTransferFamily != -1)
+		neededFamilies.insert(copyQueueTransferFamily);
 
 	for (int index : neededFamilies)
 	{
@@ -261,6 +276,9 @@ void VulkanDevice::CreateDevice()
 
 	vkGetDeviceQueue(device, graphicsFamily, 0, &graphicsQueue);
 	vkGetDeviceQueue(device, presentFamily, 0, &presentQueue);
+
+	if (copyQueueTransferFamily != -1)
+		vkGetDeviceQueue(device, copyQueueTransferFamily, 0, &copyQueue);
 }
 
 void VulkanDevice::CreateSurface()

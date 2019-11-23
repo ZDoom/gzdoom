@@ -27,6 +27,7 @@ public:
 	uint32_t presentImageIndex = 0xffffffff;
 	bool cur_vsync;
 
+	VulkanCommandBuffer *GetCopyQueueCommands();
 	VulkanCommandBuffer *GetTransferCommands();
 	VulkanCommandBuffer *GetDrawCommands();
 	VkShaderManager *GetShaderManager() { return mShaderManager.get(); }
@@ -118,7 +119,7 @@ private:
 	void CopyScreenToBuffer(int w, int h, void *data);
 	void UpdateShadowMap();
 	void DeleteFrameObjects();
-	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit);
+	void FlushCommands(VkQueue queue, VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit);
 
 	std::unique_ptr<VkShaderManager> mShaderManager;
 	std::unique_ptr<VkSamplerManager> mSamplerManager;
@@ -127,6 +128,8 @@ private:
 	std::unique_ptr<VkPostprocess> mPostprocess;
 	std::unique_ptr<VkRenderPassManager> mRenderPassManager;
 	std::unique_ptr<VulkanCommandPool> mCommandPool;
+	std::unique_ptr<VulkanCommandPool> mCopyQueueCommandPool;
+	std::unique_ptr<VulkanCommandBuffer> mCopyQueueCommands;
 	std::unique_ptr<VulkanCommandBuffer> mTransferCommands;
 	std::unique_ptr<VkRenderState> mRenderState;
 

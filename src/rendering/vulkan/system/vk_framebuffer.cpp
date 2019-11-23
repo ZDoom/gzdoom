@@ -146,6 +146,8 @@ void VulkanFrameBuffer::InitializeState()
 	maxuniformblock = device->PhysicalDevice.Properties.limits.maxUniformBufferRange;
 
 	mCommandPool.reset(new VulkanCommandPool(device, device->graphicsFamily));
+	if (device->copyQueueTransferFamily != -1)
+		mCopyQueueCommandPool.reset(new VulkanCommandPool(device, device->copyQueueTransferFamily));
 
 	mScreenBuffers.reset(new VkRenderBuffers());
 	mSaveBuffers.reset(new VkRenderBuffers());
@@ -218,7 +220,7 @@ void VulkanFrameBuffer::DeleteFrameObjects()
 	FrameDeleteList.CommandBuffers.clear();
 }
 
-void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit)
+void VulkanFrameBuffer::FlushCommands(VkQueue queue, VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit)
 {
 	int currentIndex = mNextSubmit % maxConcurrentSubmitCount;
 
@@ -245,13 +247,22 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 	if (!lastsubmit)
 		submit.addSignal(mSubmitSemaphore[currentIndex].get());
 
-	submit.execute(device, device->graphicsQueue, mSubmitFence[currentIndex].get());
+	submit.execute(device, queue, mSubmitFence[currentIndex].get());
 	mNextSubmit++;
 }
 
 void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 {
 	mRenderState->EndRenderPass();
+
+	if (mCopyQueueCommands)
+	{
+		mCopyQueueCommands->end();
+		VulkanCommandBuffer* command = mCopyQueueCommands.get();
+		FrameDeleteList.CommandBuffers.push_back(std::move(mCopyQueueCommands));
+
+		FlushCommands(device->copyQueue, &command, 1, false, false);
+	}
 
 	if (mDrawCommands || mTransferCommands)
 	{
@@ -272,7 +283,7 @@ void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 			FrameDeleteList.CommandBuffers.push_back(std::move(mDrawCommands));
 		}
 
-		FlushCommands(commands, count, finish, lastsubmit);
+		FlushCommands(device->graphicsQueue, commands, count, finish, lastsubmit);
 
 		current_rendered_commandbuffers += (int)count;
 	}
@@ -904,6 +915,17 @@ void VulkanFrameBuffer::UpdateGpuStats()
 void VulkanFrameBuffer::Draw2D()
 {
 	::Draw2D(&m2DDrawer, *mRenderState);
+}
+
+VulkanCommandBuffer *VulkanFrameBuffer::GetCopyQueueCommands()
+{
+	if (!mCopyQueueCommands)
+	{
+		mCopyQueueCommands = mCopyQueueCommandPool->createBuffer();
+		mCopyQueueCommands->SetDebugName("VulkanFrameBuffer.mCopyQueueCommands");
+		mCopyQueueCommands->begin();
+	}
+	return mCopyQueueCommands.get();
 }
 
 VulkanCommandBuffer *VulkanFrameBuffer::GetTransferCommands()

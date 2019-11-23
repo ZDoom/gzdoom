@@ -225,7 +225,11 @@ namespace swrenderer
 
 	void DrawWallCommand::Execute(DrawerThread* thread)
 	{
-		WallColumnDrawerArgs drawerargs(wallargs);
+		if (!thread->columndrawer)
+			thread->columndrawer = std::make_shared<WallColumnDrawerArgs>();
+
+		WallColumnDrawerArgs& drawerargs = *thread->columndrawer.get();
+		drawerargs.wallargs = &wallargs;
 
 		bool fixed = wallargs.fixedlight;
 

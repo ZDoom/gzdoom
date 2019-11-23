@@ -17,8 +17,6 @@ namespace swrenderer
 	class WallColumnDrawerArgs
 	{
 	public:
-		WallColumnDrawerArgs(const WallDrawerArgs& wallargs) : wallargs(wallargs) { }
-
 		void SetDest(int x, int y)
 		{
 			dc_dest = Viewport()->GetDest(x, y);
@@ -43,10 +41,10 @@ namespace swrenderer
 		int DestY() const { return dc_dest_y; }
 		int Count() const { return dc_count; }
 
-		uint32_t* SrcBlend() const { return wallargs.SrcBlend(); }
-		uint32_t* DestBlend() const { return wallargs.DestBlend(); }
-		fixed_t SrcAlpha() const { return wallargs.SrcAlpha(); }
-		fixed_t DestAlpha() const { return wallargs.DestAlpha(); }
+		uint32_t* SrcBlend() const { return wallargs->SrcBlend(); }
+		uint32_t* DestBlend() const { return wallargs->DestBlend(); }
+		fixed_t SrcAlpha() const { return wallargs->SrcAlpha(); }
+		fixed_t DestAlpha() const { return wallargs->DestAlpha(); }
 
 		uint32_t TextureUPos() const { return dc_texturefracx; }
 		fixed_t TextureVPos() const { return dc_texturefrac; }
@@ -65,11 +63,11 @@ namespace swrenderer
 		DrawerLight dc_lights[MAX_DRAWER_LIGHTS];
 		int dc_num_lights = 0;
 
-		RenderViewport* Viewport() const { return wallargs.Viewport(); }
+		RenderViewport* Viewport() const { return wallargs->Viewport(); }
 
 		uint8_t* Colormap(RenderViewport* viewport) const
 		{
-			auto basecolormap = wallargs.BaseColormap();
+			auto basecolormap = wallargs->BaseColormap();
 			if (basecolormap)
 			{
 				if (viewport->RenderTarget->IsBgra())
@@ -79,20 +77,20 @@ namespace swrenderer
 			}
 			else
 			{
-				return wallargs.TranslationMap();
+				return wallargs->TranslationMap();
 			}
 		}
 
-		uint8_t* TranslationMap() const { return wallargs.TranslationMap(); }
+		uint8_t* TranslationMap() const { return wallargs->TranslationMap(); }
 
-		ShadeConstants ColormapConstants() const { return wallargs.ColormapConstants(); }
+		ShadeConstants ColormapConstants() const { return wallargs->ColormapConstants(); }
 		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }
 
-		FLightNode* LightList() const { return wallargs.lightlist; }
+		FLightNode* LightList() const { return wallargs->lightlist; }
+
+		const WallDrawerArgs* wallargs;
 
 	private:
-		const WallDrawerArgs& wallargs;
-
 		uint8_t* dc_dest = nullptr;
 		int dc_dest_y = 0;
 		int dc_count = 0;

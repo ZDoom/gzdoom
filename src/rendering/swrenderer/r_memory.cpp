@@ -75,7 +75,7 @@ void RenderMemory::Clear()
 	}
 }
 
-static void* AlignedAlloc(size_t alignment, size_t size)
+static void* Aligned_Alloc(size_t alignment, size_t size)
 {
 	void* ptr;
 #if defined _MSC_VER
@@ -93,7 +93,7 @@ static void* AlignedAlloc(size_t alignment, size_t size)
 	return ptr;
 }
 
-static void AlignedFree(void* ptr)
+static void Aligned_Free(void* ptr)
 {
 	if (ptr)
 	{
@@ -105,11 +105,11 @@ static void AlignedFree(void* ptr)
 	}
 }
 
-RenderMemory::MemoryBlock::MemoryBlock() : Data(static_cast<uint8_t*>(AlignedAlloc(16, BlockSize))), Position(0)
+RenderMemory::MemoryBlock::MemoryBlock() : Data(static_cast<uint8_t*>(Aligned_Alloc(16, BlockSize))), Position(0)
 {
 }
 
 RenderMemory::MemoryBlock::~MemoryBlock()
 {
-	AlignedFree(Data);
+	Aligned_Free(Data);
 }

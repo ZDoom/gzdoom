@@ -1478,12 +1478,39 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 			
+			case '25E178C981BAC28BA586B3B0A2A0FD72': // swan fox doom v2.4.wad map13
+			{
+				//Actors with no game mode will now appear
+				SetThingFlags(0, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				for(int i = 2; i < 452; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				break;
+			}
+		
 			case 'FDFB3D209CC0F3706AAF3E51646003D5': // swan fox doom v2.4.wad map23
 			{
 				//Fix the exit portal to allow walking into it instead of shooting it
 				SetLineSpecial(1970, Exit_Normal, 0);
 				SetLineActivation(1970, SPAC_Cross);
 				ClearLineSpecial(2010);
+				break;
+			}
+
+			case 'BC969ED0191CCD9B69B316864362B0D7': // swan fox doom v2.4.wad map24
+			{
+				//Actors with no game mode will now appear
+				for(int i = 1; i < 88; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				break;
+			}
+
+			case 'ED740248422026326650F6A4BC1C0A5A': // swan fox doom v2.4.wad map25
+			{
+				//Actors with no game mode will now appear
+				for(int i = 0; i < 8; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				for(int i = 9; i < 26; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
 				break;
 			}
 			
@@ -1659,6 +1686,15 @@ class LevelCompatibility : LevelPostProcessor
 				SetLineSpecial(1469, 160, 6, 1, 0, 255);
 				OffsetSectorPlane(65, Sector.floor, -8);
 				OffsetSectorPlane(65, Sector.ceiling, 8);
+				break;
+			}
+
+			case '75E2685CA8AB29108DBF1AC98C5450AC': // Ancient Beliefs (beliefs.wad) map01
+			{
+				//Actors with no game mode will now appear
+				SetThingFlags(0, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				for(int i = 2; i < 7; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
 				break;
 			}
 		}

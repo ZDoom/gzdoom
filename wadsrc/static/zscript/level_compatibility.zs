@@ -1514,8 +1514,7 @@ class LevelCompatibility : LevelPostProcessor
 			case 'BA1288DF7A7AD637948825EA87E18728': // Valletta's Doom Nightmare (vltnight.wad) map02
 			{
 				//This door's backside had a backwards linedef so it wouldn't work
-				FlipLine(306);
-				FlipLineSideRefs(306);
+				FlipLineCompletely(306);
 				//Set the exit to point to Position 0, since that's the only one on the next map
 				SetLineSpecial(564, Exit_Normal, 0);
 				break;

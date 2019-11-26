@@ -44,6 +44,22 @@
 #include "colormaps.h"
 #include "templates.h"
 
+CUSTOM_CVAR(Bool, cl_customizeinvulmap, false, CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	R_InitColormaps(true);
+}
+CUSTOM_CVAR(Color, cl_custominvulmapcolor1, 0x00001a, CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	if (cl_customizeinvulmap)
+		R_InitColormaps(true);
+}
+CUSTOM_CVAR(Color, cl_custominvulmapcolor2, 0xa6a67a, CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	if (cl_customizeinvulmap)
+		R_InitColormaps(true);
+}
+
+
 TArray<FakeCmap> fakecmaps;
 
 TArray<FSpecialColormap> SpecialColormaps;
@@ -164,7 +180,7 @@ void R_DeinitColormaps ()
 //
 //==========================================================================
 
-void R_InitColormaps ()
+void R_InitColormaps (bool allowCustomColormap)
 {
 	// [RH] Try and convert BOOM colormaps into blending values.
 	//		This is a really rough hack, but it's better than
@@ -240,6 +256,25 @@ void R_InitColormaps ()
 				fakecmaps[j].blend = PalEntry (255, r * 255 / maxcol, g * 255 / maxcol, b * 255 / maxcol);
 			}
 		}
+	}
+
+	// some of us really don't like Doom's idea of an invulnerability sphere colormap
+	// this hack will override that
+	if (allowCustomColormap && cl_customizeinvulmap)
+	{
+		uint32_t color1 = cl_custominvulmapcolor1;
+		uint32_t color2 = cl_custominvulmapcolor2;
+		float r1 = (float)((color1 & 0xff0000) >> 16) / 128.f;
+		float g1 = (float)((color1 & 0x00ff00) >> 8) / 128.f;
+		float b1 = (float)((color1 & 0x0000ff) >> 0) / 128.f;
+		float r2 = (float)((color2 & 0xff0000) >> 16) / 128.f;
+		float g2 = (float)((color2 & 0x00ff00) >> 8) / 128.f;
+		float b2 = (float)((color2 & 0x0000ff) >> 0) / 128.f;
+		SpecialColormapParms[0] = {{r1, g1, b1}, {r2, g2, b2}};
+	}
+	else
+	{
+		SpecialColormapParms[0] = {{1.0, 1.0, 1.0}, {0.0, 0.0, 0.0}};
 	}
 
 	// build default special maps (e.g. invulnerability)

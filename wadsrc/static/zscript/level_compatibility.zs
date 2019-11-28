@@ -1501,7 +1501,6 @@ class LevelCompatibility : LevelPostProcessor
 				SetLineSpecial(1970, Exit_Normal, 0);
 				SetLineActivation(1970, SPAC_Cross);
 				ClearLineSpecial(2010);
-				//SetLineFlags(1966, 0);
 				SetWallTexture(1966, Line.back, Side.mid, "TELR1");
 				OffsetSectorPlane(170, Sector.floor, -120);
 				break;

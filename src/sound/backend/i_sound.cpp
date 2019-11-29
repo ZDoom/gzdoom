@@ -87,7 +87,7 @@ void I_CloseSound ();
 // Maximum volume of all audio
 //==========================================================================
 
-CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.f)
 		self = 0.f;

@@ -895,6 +895,7 @@ struct TerrainDef native
 	native Sound RightStepSound;
 	native bool IsLiquid;
 	native bool AllowProtection;
+	native bool DamageOnLand;
 	native double Friction;
 	native double MoveFactor;
 };

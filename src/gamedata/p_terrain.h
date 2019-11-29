@@ -115,6 +115,7 @@ struct FTerrainDef
 	FSoundID RightStepSound;
 	bool IsLiquid;
 	bool AllowProtection;
+	bool DamageOnLand;
 	double Friction;
 	double MoveFactor;
 };

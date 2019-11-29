@@ -6043,6 +6043,13 @@ foundone:
 	if (splashnum == -1)
 		return Terrains[terrainnum].IsLiquid;
 
+	const bool dealDamageOnLand = thing->player
+		&& Terrains[terrainnum].DamageOnLand
+		&& Terrains[terrainnum].DamageAmount
+		&& (thing->Level->time & Terrains[terrainnum].DamageTimeMask);
+	if (dealDamageOnLand)
+		P_DamageMobj(thing, nullptr, nullptr, Terrains[terrainnum].DamageAmount, Terrains[terrainnum].DamageMOD);
+
 	// don't splash when touching an underwater floor
 	if (thing->waterlevel >= 1 && pos.Z <= thing->floorz) return Terrains[terrainnum].IsLiquid;
 

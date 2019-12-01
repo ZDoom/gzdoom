@@ -119,7 +119,8 @@ EXTERN_CVAR (Bool, queryiwad);
 EXTERN_CVAR (Bool, disableautoload)
 EXTERN_CVAR (Bool, autoloadlights)
 EXTERN_CVAR (Bool, autoloadbrightmaps)
-EXTERN_CVAR (Int, vid_enablevulkan)
+//EXTERN_CVAR (Int, vid_enablevulkan) // hack - we're just disabling it for now, this code does nothing
+uint32_t vid_enablevulkan = 0;
 
 extern HWND Window, ConWindow, GameTitleWindow;
 extern HANDLE StdOut;

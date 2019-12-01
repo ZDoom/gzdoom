@@ -51,7 +51,7 @@
 #include "i_system.h"
 #include "swrenderer/r_swrenderer.h"
 
-EXTERN_CVAR(Int, vid_enablevulkan)
+EXTERN_CVAR(Int, vid_preferbackend)
 
 extern HWND Window;
 
@@ -129,11 +129,12 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-#if 1 // always use poly backend on this branch, for now.
-	Video = new Win32PolyVideo();
-#else
+	if (vid_preferbackend == 2)
+	{
+		Video = new Win32PolyVideo();
+	}
 #ifdef HAVE_VULKAN
-	else if (vid_enablevulkan == 1)
+	else if (vid_preferbackend == 1)
 	{
 		// first try Vulkan, if that fails OpenGL
 		try
@@ -151,8 +152,11 @@ void I_InitGraphics ()
 	{
 		Video = new Win32GLVideo();
 	}
-#endif
 
+	if (Video == NULL)
+		Video = new Win32PolyVideo();
+
+	// we somehow STILL don't have a display!!
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
 	

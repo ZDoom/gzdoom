@@ -417,7 +417,7 @@ int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	return Gtk::PickIWad (wads, numwads, showwin, defaultiwad);
 }
 
-void I_FatalError_Gtk(const char* errortext) {
+void I_ShowFatalError_Gtk(const char* errortext) {
 	Gtk::ShowError(errortext);
 }
 

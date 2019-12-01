@@ -493,7 +493,7 @@ public:
     // Add a branch to the continue_target of the current (innermost) loop.
     void createLoopContinue();
 
-    // Add an exit (e.g. "break") from the innermost loop that we're currently
+    // Add an exit(e.g. "break") from the innermost loop that we're currently
     // in.
     void createLoopExit();
 

@@ -42,8 +42,6 @@
 #include "m_misc.h"
 #include "version.h"	// for GAMENAME
 
-#include "optwin32.h"
-
 // Vanilla MinGW does not have folder ids
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)
 static const GUID FOLDERID_LocalAppData = { 0xf1b32785, 0x6fba, 0x4fcf, 0x9d, 0x55, 0x7b, 0x8e, 0x7f, 0x15, 0x70, 0x91 };

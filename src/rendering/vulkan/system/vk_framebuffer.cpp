@@ -251,6 +251,8 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 
 void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 {
+	mRenderState->EndRenderPass();
+
 	if (mDrawCommands || mTransferCommands)
 	{
 		VulkanCommandBuffer *commands[2];
@@ -634,6 +636,7 @@ const char* VulkanFrameBuffer::DeviceName() const
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
 	// This is handled in VulkanSwapChain::AcquireImage.
+	cur_vsync = vsync;
 }
 
 void VulkanFrameBuffer::CleanForRestart()

@@ -884,9 +884,20 @@ void FFunctionBuildList::Build()
 				sfunc->NumArgs = 0;
 				// NumArgs for the VMFunction must be the amount of stack elements, which can differ from the amount of logical function arguments if vectors are in the list.
 				// For the VM a vector is 2 or 3 args, depending on size.
-				for (auto s : item.Func->Variants[0].Proto->ArgumentTypes)
+				auto funcVariant = item.Func->Variants[0];
+				for (unsigned int i = 0; i < funcVariant.Proto->ArgumentTypes.Size(); i++)
 				{
-					sfunc->NumArgs += s->GetRegCount();
+					auto argType = funcVariant.Proto->ArgumentTypes[i];
+					auto argFlags = funcVariant.ArgFlags[i];
+					if (argFlags & VARF_Out)
+					{
+						auto argPointer = NewPointer(argType);
+						sfunc->NumArgs += argPointer->GetRegCount();
+					}
+					else
+					{
+						sfunc->NumArgs += argType->GetRegCount();
+					}
 				}
 
 				if (dump != nullptr)

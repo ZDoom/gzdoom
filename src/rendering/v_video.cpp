@@ -69,7 +69,6 @@
 #include "version.h"
 #include "g_levellocals.h"
 #include "am_map.h"
-#include "atterm.h"
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
@@ -152,14 +151,6 @@ int DisplayWidth, DisplayHeight;
 
 FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
 
-uint32_t Col2RGB8[65][256];
-uint32_t *Col2RGB8_LessPrecision[65];
-uint32_t Col2RGB8_Inverse[65][256];
-ColorTable32k RGB32k;
-ColorTable256k RGB256k;
-
-
-static uint32_t Col2RGB8_2[63][256];
 
 // [RH] The framebuffer is no longer a mere byte array.
 // There's also only one, not four.
@@ -482,61 +473,6 @@ int V_GetColor(const uint32_t *palette, FScanner &sc)
 	return V_GetColor(palette, sc.String, &scc);
 }
 
-//==========================================================================
-//
-// BuildTransTable
-//
-// Build the tables necessary for blending
-//
-//==========================================================================
-
-static void BuildTransTable (const PalEntry *palette)
-{
-	int r, g, b;
-
-	// create the RGB555 lookup table
-	for (r = 0; r < 32; r++)
-		for (g = 0; g < 32; g++)
-			for (b = 0; b < 32; b++)
-				RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
-	// create the RGB666 lookup table
-	for (r = 0; r < 64; r++)
-		for (g = 0; g < 64; g++)
-			for (b = 0; b < 64; b++)
-				RGB256k.RGB[r][g][b] = ColorMatcher.Pick ((r<<2)|(r>>4), (g<<2)|(g>>4), (b<<2)|(b>>4));
-
-	int x, y;
-
-	// create the swizzled palette
-	for (x = 0; x < 65; x++)
-		for (y = 0; y < 256; y++)
-			Col2RGB8[x][y] = (((palette[y].r*x)>>4)<<20) |
-							  ((palette[y].g*x)>>4) |
-							 (((palette[y].b*x)>>4)<<10);
-
-	// create the swizzled palette with the lsb of red and blue forced to 0
-	// (for green, a 1 is okay since it never gets added into)
-	for (x = 1; x < 64; x++)
-	{
-		Col2RGB8_LessPrecision[x] = Col2RGB8_2[x-1];
-		for (y = 0; y < 256; y++)
-		{
-			Col2RGB8_2[x-1][y] = Col2RGB8[x][y] & 0x3feffbff;
-		}
-	}
-	Col2RGB8_LessPrecision[0] = Col2RGB8[0];
-	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
-
-	// create the inverse swizzled palette
-	for (x = 0; x < 65; x++)
-		for (y = 0; y < 256; y++)
-		{
-			Col2RGB8_Inverse[x][y] = (((((255-palette[y].r)*x)>>4)<<20) |
-									  (((255-palette[y].g)*x)>>4) |
-									  ((((255-palette[y].b)*x)>>4)<<10)) & 0x3feffbff;
-		}
-}
-
 CCMD(clean)
 {
 	Printf ("CleanXfac: %d\nCleanYfac: %d\n", CleanXfac, CleanYfac);
@@ -621,55 +557,43 @@ bool IVideo::SetResolution ()
 // V_Init
 //
 
-void V_Init (bool restart) 
+void V_InitScreenSize ()
 { 
 	const char *i;
 	int width, height, bits;
-
-	atterm (V_Shutdown);
-
-	// [RH] Initialize palette management
-	InitPalette ();
-
-	if (!restart)
+	
+	width = height = bits = 0;
+	
+	if ( (i = Args->CheckValue ("-width")) )
+		width = atoi (i);
+	
+	if ( (i = Args->CheckValue ("-height")) )
+		height = atoi (i);
+	
+	if (width == 0)
 	{
-		width = height = bits = 0;
-
-		if ( (i = Args->CheckValue ("-width")) )
-			width = atoi (i);
-
-		if ( (i = Args->CheckValue ("-height")) )
-			height = atoi (i);
-
-		if (width == 0)
+		if (height == 0)
 		{
-			if (height == 0)
-			{
-				width = vid_defwidth;
-				height = vid_defheight;
-			}
-			else
-			{
-				width = (height * 8) / 6;
-			}
+			width = vid_defwidth;
+			height = vid_defheight;
 		}
-		else if (height == 0)
+		else
 		{
-			height = (width * 6) / 8;
+			width = (height * 8) / 6;
 		}
-		// Remember the passed arguments for the next time the game starts up windowed.
-		vid_defwidth = width;
-		vid_defheight = height;
-
-		screen = new DDummyFrameBuffer (width, height);
 	}
-	// Update screen palette when restarting
-	else
+	else if (height == 0)
 	{
-		screen->UpdatePalette();
+		height = (width * 6) / 8;
 	}
+	// Remember the passed arguments for the next time the game starts up windowed.
+	vid_defwidth = width;
+	vid_defheight = height;
+}
 
-	BuildTransTable (GPalette.BaseColors);
+void V_InitScreen()
+{
+	screen = new DDummyFrameBuffer (vid_defwidth, vid_defheight);
 }
 
 void V_Init2()
@@ -697,21 +621,11 @@ void V_Init2()
 	menu_resolution_custom_width = SCREENWIDTH;
 	menu_resolution_custom_height = SCREENHEIGHT;
 
+	screen->SetVSync(vid_vsync);
 	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	setsizeneeded = true;
-}
-
-void V_Shutdown()
-{
-	if (screen)
-	{
-		DFrameBuffer *s = screen;
-		screen = NULL;
-		delete s;
-	}
-	V_ClearFonts();
 }
 
 CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)

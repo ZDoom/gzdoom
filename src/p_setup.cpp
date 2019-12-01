@@ -75,14 +75,12 @@
 #include "i_system.h"
 #include "v_video.h"
 #include "fragglescript/t_script.h"
-#include "atterm.h"
 #include "s_music.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
 extern unsigned int R_OldBlend;
 
-static void P_Shutdown ();
 
 //===========================================================================
 //
@@ -263,6 +261,8 @@ void FLevelLocals::ClearLevelData()
 
 	total_monsters = total_items = total_secrets =
 	killed_monsters = found_items = found_secrets = 0;
+
+	max_velocity = avg_velocity = 0;
 
 	for (int i = 0; i < 4; i++)
 	{
@@ -563,6 +563,13 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 		Level->StartLightning();
 	}
 
+	auto it = Level->GetThinkerIterator<AActor>();
+	AActor* ac;
+	// Initial setup of the dynamic lights.
+	while ((ac = it.Next()))
+	{
+		ac->SetDynamicLights();
+	}
 }
 
 //
@@ -570,15 +577,13 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 //
 void P_Init ()
 {
-	atterm (P_Shutdown);
-
 	P_InitEffects ();		// [RH]
 	P_InitTerrainTypes ();
 	P_InitKeyMessages ();
 	R_InitSprites ();
 }
 
-static void P_Shutdown ()
+void P_Shutdown ()
 {
 	for (auto Level : AllLevels())
 	{

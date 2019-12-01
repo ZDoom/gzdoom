@@ -1541,14 +1541,14 @@ bool DoArbitrate (void *userdata)
 	return false;
 }
 
-void D_ArbitrateNetStart (void)
+bool D_ArbitrateNetStart (void)
 {
 	ArbitrateData data;
 	int i;
 
 	// Return right away if we're just playing with ourselves.
 	if (doomcom.numnodes == 1)
-		return;
+		return true;
 
 	autostart = true;
 
@@ -1604,7 +1604,7 @@ void D_ArbitrateNetStart (void)
 	StartScreen->NetInit ("Exchanging game information", 1);
 	if (!StartScreen->NetLoop (DoArbitrate, &data))
 	{
-		exit (0);
+		return false;
 	}
 
 	if (consoleplayer == Net_Arbitrator)
@@ -1621,6 +1621,7 @@ void D_ArbitrateNetStart (void)
 		}
 	}
 	StartScreen->NetDone();
+	return true;
 }
 
 static void SendSetup (uint32_t playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len)
@@ -1653,7 +1654,7 @@ static void SendSetup (uint32_t playersdetected[MAXNETNODES], uint8_t gotsetup[M
 // Works out player numbers among the net participants
 //
 
-void D_CheckNetGame (void)
+bool D_CheckNetGame (void)
 {
 	const char *v;
 	int i;
@@ -1674,8 +1675,13 @@ void D_CheckNetGame (void)
 			"\nIf the game is running well below expected speeds, use netmode 0 (P2P) instead.\n");
 	}
 
+	int result = I_InitNetwork ();
 	// I_InitNetwork sets doomcom and netgame
-	if (I_InitNetwork ())
+	if (result == -1)
+	{
+		return false;
+	}
+	else if (result > 0)
 	{
 		// For now, stop auto selecting PacketServer, as it's more likely to cause confusion.
 		//NetMode = NET_PacketServer;
@@ -1721,7 +1727,7 @@ void D_CheckNetGame (void)
 	if (netgame)
 	{
 		GameConfig->ReadNetVars ();	// [RH] Read network ServerInfo cvars
-		D_ArbitrateNetStart ();
+		if (!D_ArbitrateNetStart ()) return false;
 	}
 
 	// read values out of doomcom
@@ -1739,6 +1745,8 @@ void D_CheckNetGame (void)
 
 	if (!batchrun) Printf ("player %i of %i (%i nodes)\n",
 			consoleplayer+1, doomcom.numplayers, doomcom.numnodes);
+	
+	return true;
 }
 
 

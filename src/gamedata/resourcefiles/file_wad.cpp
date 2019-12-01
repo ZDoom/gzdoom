@@ -203,6 +203,7 @@ bool FWadFile::Open(bool quiet)
 	}
 
 	delete[] fileinfo;
+	GenerateHash(); // Do this before the lump processing below.
 
 	if (!quiet)
 	{

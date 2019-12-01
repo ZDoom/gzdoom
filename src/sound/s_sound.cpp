@@ -62,7 +62,6 @@
 #include "i_system.h"
 #include "i_sound.h"
 #include "i_music.h"
-#include "i_cd.h"
 #include "s_sound.h"
 #include "s_sndseq.h"
 #include "s_playlist.h"
@@ -83,7 +82,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "g_game.h"
-#include "atterm.h"
+#include "s_music.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -306,9 +305,8 @@ void S_Init ()
 {
 	int curvelump;
 
-	atterm (S_Shutdown);
-
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
+	I_InitSound();
 	curvelump = Wads.CheckNumForName ("SNDCURVE");
 	if (curvelump >= 0)
 	{
@@ -350,22 +348,26 @@ void S_Shutdown ()
 {
 	FSoundChan *chan, *next;
 
-	chan = Channels;
-	while (chan != NULL)
-	{
-		next = chan->NextChan;
-		S_StopChannel(chan);
-		chan = next;
-	}
+	S_StopMusic(true);
+	mus_playing.LastSong = "";	// If this isn't reset here, the song would attempt resume at the most inpopportune time...
+	S_StopAllChannels();
 
-	GSnd->UpdateSounds();
+	if (GSnd)
+		GSnd->UpdateSounds();
+
 	for (chan = FreeChannels; chan != NULL; chan = next)
 	{
 		next = chan->NextChan;
 		delete chan;
 	}
 	FreeChannels = NULL;
+
+	if (GSnd != NULL)
+	{
+		I_CloseSound();
+	}
 }
+
 
 //==========================================================================
 //
@@ -1199,10 +1201,10 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 		case SOURCE_Unattached:	chan->Point[0] = pt->X; chan->Point[1] = pt->Y; chan->Point[2] = pt->Z;	break;
 		default:										break;
 		}
-	}
 
-	if (spitch > 0.0)
-		S_SetPitch(chan, spitch);
+		if (spitch > 0.0)
+			S_SetPitch(chan, spitch);
+	}
 
 	return chan;
 }
@@ -1532,7 +1534,7 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 
 	std::pair<SoundHandle, bool> snd;
 
-	if (pBuffer->mBuffer.Size() > 0)
+	if (pBuffer->mBuffer.size() > 0)
 	{
 		snd = GSnd->LoadSoundBuffered(pBuffer, true);
 	}
@@ -1752,7 +1754,9 @@ void S_StopAllChannels ()
 		S_StopChannel(chan);
 		chan = next;
 	}
-	GSnd->UpdateSounds();
+
+	if (GSnd)
+		GSnd->UpdateSounds();
 }
 
 //==========================================================================
@@ -1849,6 +1853,7 @@ void S_ChangeSoundPitch(AActor *actor, int channel, double pitch)
 
 void S_SetPitch(FSoundChan *chan, float pitch)
 {
+	assert(chan != nullptr);
 	GSnd->ChannelPitch(chan, MAX(0.0001f, pitch));
 	chan->Pitch = MAX(1, int(float(NORM_PITCH) * pitch));
 }
@@ -2614,7 +2619,7 @@ CCMD (snd_reset)
 
 void S_SoundReset()
 {
-	I_ShutdownMusic();
+	S_StopMusic(true);
 	S_EvictAllChannels();
 	I_CloseSound();
 	I_InitSound();

@@ -48,8 +48,8 @@
 #include "r_data/sprites.h"
 #include "vm.h"
 #include "i_system.h"
-#include "atterm.h"
 #include "s_music.h"
+#include "mididevices/mididevice.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -942,15 +942,10 @@ void FPlayerSoundHashTable::MarkUsed()
 // be cleared for each level
 //==========================================================================
 
-static void S_ClearSoundData()
+void S_ClearSoundData()
 {
-	unsigned int i;
-
 	S_StopAllChannels();
-	for (i = 0; i < S_sfx.Size(); ++i)
-	{
-		S_UnloadSound(&S_sfx[i]);
-	}
+	S_UnloadAllSounds();
 	S_sfx.Clear();
 	Ambients.Clear();
 	while (MusicVolumes != NULL)
@@ -985,7 +980,6 @@ void S_ParseSndInfo (bool redefine)
 	int lump;
 
 	if (!redefine) SavedPlayerSounds.Clear();	// clear skin sounds only for initial parsing.
-	atterm (S_ClearSoundData);
 	S_ClearSoundData();	// remove old sound data first!
 
 	CurrentPitchMask = 0;
@@ -1462,6 +1456,8 @@ static void S_AddSNDINFO (int lump)
 				else if (sc.Compare("fluidsynth")) devset.device = MDEV_FLUIDSYNTH;
 				else if (sc.Compare("gus")) devset.device = MDEV_GUS;
 				else if (sc.Compare("wildmidi")) devset.device = MDEV_WILDMIDI;
+				else if (sc.Compare("adl")) devset.device = MDEV_ADL;
+				else if (sc.Compare("opn")) devset.device = MDEV_OPN;
 				else sc.ScriptError("Unknown MIDI device %s\n", sc.String);
 
 				if (sc.CheckString(","))
@@ -1949,113 +1945,18 @@ int S_FindSkinnedSound (AActor *actor, FSoundID refid)
 int S_FindSkinnedSoundEx (AActor *actor, const char *name, const char *extendedname)
 {
 	FString fullname;
-	FSoundID id;
 
 	// Look for "name-extendedname";
 	fullname = name;
 	fullname += '-';
 	fullname += extendedname;
-	id = fullname;
+	FSoundID id = fullname;
 
 	if (id == 0)
 	{ // Look for "name"
 		id = name;
 	}
 	return S_FindSkinnedSound (actor, id);
-}
-
-//==========================================================================
-//
-// S_ParseTimeTag
-//
-// Passed the value of a loop point tag, converts it to numbers.
-//
-// This may be of the form 00:00:00.00 (HH:MM:SS.ss) to specify by play
-// time. Various parts may be left off. The only requirement is that it
-// contain a colon. e.g. To start the loop at 20 seconds in, you can use
-// ":20", "0:20", "00:00:20", ":20.0", etc. Values after the decimal are
-// fractions of a second.
-//
-// If you don't include a colon but just have a raw number, then it's
-// the number of PCM samples at which to loop.
-//
-// Returns true if the tag made sense, false if not.
-//
-//==========================================================================
-
-bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time)
-{
-	const char *bit = tag;
-	char ms[3] = { 0 };
-	unsigned int times[3] = { 0 };
-	int ms_pos = 0, time_pos = 0;
-	bool pcm = true, in_ms = false;
-
-	for (bit = tag; *bit != '\0'; ++bit)
-	{
-		if (*bit >= '0' && *bit <= '9')
-		{
-			if (in_ms)
-			{
-				// Ignore anything past three fractional digits.
-				if (ms_pos < 3)
-				{
-					ms[ms_pos++] = *bit - '0';
-				}
-			}
-			else
-			{
-				times[time_pos] = times[time_pos] * 10 + *bit - '0';
-			}
-		}
-		else if (*bit == ':')
-		{
-			if (in_ms)
-			{ // If we already specified milliseconds, we can't take any more parts.
-				return false;
-			}
-			pcm = false;
-			if (++time_pos == countof(times))
-			{ // Time too long. (Seriously, starting the loop days in?)
-				return false;
-			}
-		}
-		else if (*bit == '.')
-		{
-			if (pcm || in_ms)
-			{ // It doesn't make sense to have fractional PCM values.
-			  // It also doesn't make sense to have more than one dot.
-				return false;
-			}
-			in_ms = true;
-		}
-		else
-		{ // Anything else: We don't understand this.
-			return false;
-		}
-	}
-	if (pcm)
-	{
-		*as_samples = true;
-		*time = times[0];
-	}
-	else
-	{
-		unsigned int mytime = 0;
-
-		// Add in hours, minutes, and seconds
-		for (int i = 0; i <= time_pos; ++i)
-		{
-			mytime = mytime * 60 + times[i];
-		}
-
-		// Add in milliseconds
-		mytime = mytime * 1000 + ms[0] * 100 + ms[1] * 10 + ms[2];
-
-		*as_samples = false;
-		*time = mytime;
-	}
-	return true;
 }
 
 //==========================================================================

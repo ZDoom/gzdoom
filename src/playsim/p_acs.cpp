@@ -69,7 +69,6 @@
 #include "p_effect.h"
 #include "r_utility.h"
 #include "a_morph.h"
-#include "i_music.h"
 #include "thingdef.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
@@ -5877,7 +5876,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_PlayActorSound:
 			// PlaySound(tid, "SoundName", channel, volume, looping, attenuation, local)
 			{
-				FSoundID sid;
+				FSoundID sid = 0;
 
 				if (funcIndex == ACSF_PlaySound)
 				{
@@ -6691,7 +6690,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int lineno = it.Next();
 			if (lineno < 0) return 0;
 			DVector2 delta = Level->lines[lineno].Delta();
-			double result = delta[funcIndex - ACSF_GetLineX] * ACSToDouble(args[1]);
+			double result = Level->lines[lineno].v1->fPos()[funcIndex - ACSF_GetLineX] + delta[funcIndex - ACSF_GetLineX] * ACSToDouble(args[1]);
 			if (args[2])
 			{
 				DVector2 normal = DVector2(delta.Y, -delta.X).Unit();
@@ -8308,9 +8307,21 @@ scriptwait:
 			break;
 
 		case PCD_SCRIPTWAITDIRECT:
-			statedata = uallong(pc[0]);
-			pc++;
-			goto scriptwait;
+			if (!(Level->i_compatflags2 & COMPATF2_SCRIPTWAIT))
+			{
+				statedata = uallong(pc[0]);
+				pc++;
+				goto scriptwait;
+			}
+			else
+			{
+				// Old implementation for compatibility with Daedalus MAP19
+				state = SCRIPT_ScriptWait;
+				statedata = uallong(pc[0]);
+				pc++;
+				PutLast();
+				break;
+			}
 
 		case PCD_SCRIPTWAITNAMED:
 			statedata = -FName(Level->Behaviors.LookupString(STACK(1)));

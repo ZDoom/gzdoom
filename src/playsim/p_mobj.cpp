@@ -1340,7 +1340,7 @@ bool AActor::Massacre ()
 //
 //----------------------------------------------------------------------------
 
-void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
+void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky, FName damageType)
 {
 	// [ZZ] line damage callback
 	if (line)
@@ -1372,7 +1372,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 			if (nextstate == NULL) nextstate = mo->FindState(NAME_Death, NAME_Extreme);
 		}
 	}
-	if (nextstate == NULL) nextstate = mo->FindState(NAME_Death);
+	if (nextstate == NULL) nextstate = mo->FindState(NAME_Death, damageType);
 	
 	if (onsky || (line != NULL && line->special == Line_Horizon))
 	{
@@ -3885,7 +3885,7 @@ void AActor::Tick ()
 		// (for backwards compatibility this must check for lack of damage function, not for zero damage!)
 		if ((flags & MF_MISSILE) && Vel.X == 0 && Vel.Y == 0 && !IsZeroDamage())
 		{
-			Vel.X = MinVel;
+			VelFromAngle(MinVel);
 		}
 
 		// Handle X and Y velocities
@@ -7154,6 +7154,7 @@ void AActor::Revive()
 	flags5 = info->flags5;
 	flags6 = info->flags6;
 	flags7 = info->flags7;
+	flags8 = info->flags8; 
 	if (SpawnFlags & MTF_FRIENDLY) flags |= MF_FRIENDLY;
 	DamageType = info->DamageType;
 	health = SpawnHealth();

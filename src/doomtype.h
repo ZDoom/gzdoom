@@ -232,11 +232,6 @@ inline float RAD2DEG(float deg)
 }
 
 
-template <typename T, size_t N>
-char ( &_ArraySizeHelper( T (&array)[N] ))[N];
-
-#define countof( array ) (sizeof( _ArraySizeHelper( array ) ))
-
 // Auto-registration sections for GCC.
 // Apparently, you cannot do string concatenation inside section attributes.
 #ifdef __MACH__

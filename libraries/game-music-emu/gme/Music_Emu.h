@@ -13,7 +13,7 @@ public:
 
 	// Set output sample rate. Must be called only once before loading file.
 	blargg_err_t set_sample_rate( long sample_rate );
-        
+
 	// specifies if all 8 voices get rendered to their own stereo channel
 	// default implementation of Music_Emu always returns not supported error (i.e. no multichannel support by default)
 	// derived emus must override this if they support multichannel rendering
@@ -40,8 +40,8 @@ public:
 	
 	// Names of voices
 	const char** voice_names() const;
-        
-        bool multi_channel() const;
+
+	bool multi_channel() const;
 	
 // Track status/control
 
@@ -67,6 +67,13 @@ public:
 	// true. Fade time can be changed while track is playing.
 	void set_fade( long start_msec, long length_msec = 8000 );
 	
+	// Controls whether or not to automatically load and obey track length
+	// metadata for supported emulators.
+	//
+	// @since 0.6.2.
+	bool autoload_playback_limit() const;
+	void set_autoload_playback_limit( bool do_autoload_limit );
+
 	// Disable automatic end-of-track detection and skipping of silence at beginning
 	void ignore_silence( bool disable = true );
 	
@@ -134,7 +141,7 @@ protected:
 	double gain() const                         { return gain_; }
 	double tempo() const                        { return tempo_; }
 	void remute_voices();
-        blargg_err_t set_multi_channel_( bool is_enabled );
+	blargg_err_t set_multi_channel_( bool is_enabled );
 	
 	virtual blargg_err_t set_sample_rate_( long sample_rate ) = 0;
 	virtual void set_equalizer_( equalizer_t const& ) { }
@@ -158,10 +165,10 @@ private:
 	double tempo_;
 	double gain_;
 	bool multi_channel_;
-        
+
 	// returns the number of output channels, i.e. usually 2 for stereo, unlesss multi_channel_ == true
 	int out_channels() const { return this->multi_channel() ? 2*8 : 2; }
-        
+
 	long sample_rate_;
 	blargg_long msec_to_samples( blargg_long msec ) const;
 	
@@ -170,6 +177,7 @@ private:
 	blargg_long out_time;  // number of samples played since start of track
 	blargg_long emu_time;  // number of samples emulator has generated since start of track
 	bool emu_track_ended_; // emulator has reached end of track
+	bool emu_autoload_playback_limit_; // whether to load and obey track length by default
 	volatile bool track_ended_;
 	void clear_track_vars();
 	void end_track_if_error( blargg_err_t );

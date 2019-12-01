@@ -31,15 +31,24 @@
 **
 */
 
-#include "i_musicinterns.h"
+#ifdef _WIN32
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <mmsystem.h>
+#endif
+
 #include "c_dispatch.h"
 
 #include "v_text.h"
 #include "menu/menu.h"
+#include "zmusic/zmusic.h"
 #include "s_music.h"
 
+#define DEF_MIDIDEV -5
+
+EXTERN_CVAR(Int, snd_mididevice)
 static uint32_t	nummididevices;
-static bool		nummididevicesset;
 
 #define NUM_DEF_DEVICES 7
 
@@ -63,78 +72,11 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 
 }
 
-extern MusPlayingInfo mus_playing;
-
-void MIDIDeviceChanged(int newdev, bool force)
-{
-	static int oldmididev = INT_MIN;
-
-	// If a song is playing, move it to the new device.
-	if (oldmididev != newdev || force)
-	{
-		if (currSong != NULL && currSong->IsMIDI())
-		{
-			MusInfo *song = currSong;
-			if (song->m_Status == MusInfo::STATE_Playing)
-			{
-				if (song->GetDeviceType() == MDEV_FLUIDSYNTH && force)
-				{
-					// FluidSynth must reload the song to change the patch set.
-					auto mi = mus_playing;
-					S_StopMusic(true);
-					S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
-				}
-				else
-				{
-					song->Stop();
-					song->Start(song->m_Looping);
-				}
-			}
-		}
-		else
-		{
-			S_MIDIDeviceChanged();
-		}
-	}
-	// 'force' 
-	if (!force) oldmididev = newdev;
-}
-
-#define DEF_MIDIDEV -5
-
 #ifdef _WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-
-unsigned mididevice;
-
-CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (!nummididevicesset)
-		return;
-
-	if ((self >= (signed)nummididevices) || (self < -8))
-	{
-		// Don't do repeated message spam if there is no valid device.
-		if (self != 0)
-		{
-			Printf("ID out of range. Using default device.\n");
-			self = DEF_MIDIDEV;
-		}
-		return;
-	}
-	else if (self == -1) self = DEF_MIDIDEV;
-	mididevice = MAX<int>(0, self);
-	MIDIDeviceChanged(self);
-}
 
 void I_InitMusicWin32 ()
 {
 	nummididevices = midiOutGetNumDevs ();
-	nummididevicesset = true;
-	snd_mididevice.Callback ();
 }
 
 void I_BuildMIDIMenuList (FOptionValues *opt)
@@ -228,18 +170,6 @@ CCMD (snd_listmididevices)
 
 #else
 
-// Everything but Windows uses this code.
-
-CUSTOM_CVAR(Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < -8)
-		self = -8;
-	else if (self > -2)
-		self = -2;
-	else
-		MIDIDeviceChanged(self);
-}
-
 void I_BuildMIDIMenuList (FOptionValues *opt)
 {
 	AddDefaultMidiDevices(opt);
@@ -256,3 +186,25 @@ CCMD (snd_listmididevices)
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 }
 #endif
+
+
+CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	if ((self >= (signed)nummididevices) || (self < -8))
+	{
+		// Don't do repeated message spam if there is no valid device.
+		if (self != 0)
+		{
+			Printf("ID out of range. Using default device.\n");
+		}
+		self = DEF_MIDIDEV;
+		return;
+	}
+	else if (self == -1)
+	{
+		self = DEF_MIDIDEV;
+		return;
+	}
+	bool change = ChangeMusicSetting(ZMusic::snd_mididevice, nullptr, self);
+	if (change) S_MIDIDeviceChanged(self);
+}

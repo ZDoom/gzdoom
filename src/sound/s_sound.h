@@ -99,10 +99,8 @@ extern TArray<sfxinfo_t> S_sfx;
 class FSoundID
 {
 public:
-	FSoundID()
-	{
-		ID = 0;
-	}
+	FSoundID() = default;
+
 	FSoundID(int id)
 	{
 		ID = id;
@@ -336,6 +334,7 @@ void S_UpdateSounds (AActor *listener);
 void S_RestoreEvictedChannels();
 
 // [RH] S_sfx "maintenance" routines
+void S_ClearSoundData();
 void S_ParseSndInfo (bool redefine);
 void S_ParseReverbDef ();
 void S_UnloadReverbDef ();
@@ -359,7 +358,6 @@ void S_ShrinkPlayerSoundLists ();
 void S_UnloadSound (sfxinfo_t *sfx);
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
-bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time);
 void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch);
 
 // [RH] Prints sound debug info to the screen.

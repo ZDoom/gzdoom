@@ -193,7 +193,7 @@ class Berserk : CustomInventory
 	States
 	{
 	Spawn:
-		PSTR A -1;
+		PSTR A -1 Bright;
 		Stop;
 	Pickup:
 		TNT1 A 0 A_GiveInventory("PowerStrength");

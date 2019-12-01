@@ -41,11 +41,6 @@
 #include "v_text.h"
 #include "files.h"
 
-FPlayList::FPlayList (const char *path)
-{
-	ChangeList (path);
-}
-
 FPlayList::~FPlayList ()
 {
 }

@@ -264,9 +264,8 @@ void P_InitTerrainTypes ()
 
 static void MakeDefaultTerrain ()
 {
-	FTerrainDef def;
+	FTerrainDef def = {};
 
-	memset (&def, 0, sizeof(def));
 	def.Name = "Solid";
 	def.Splash = -1;
 	Terrains.Push (def);

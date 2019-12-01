@@ -385,6 +385,7 @@ OptionMenu "OptionsMenu" protected
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	StaticText " "
 }
 
 //-------------------------------------------------------------------------------------------
@@ -924,6 +925,9 @@ OptionMenu "VideoOptions" protected
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
 	StaticText " "
+	Option "$DSPLYMNU_CUSTOMINVERTMAP",			"cl_customizeinvulmap", "OnOff"
+	ColorPicker "$DSPLYMNU_CUSTOMINVERTC1",		"cl_custominvulmapcolor1"
+	ColorPicker "$DSPLYMNU_CUSTOMINVERTC2",		"cl_custominvulmapcolor2"
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
@@ -950,7 +954,7 @@ OptionMenu "VideoOptions" protected
 
 OptionValue CrosshairHealthTypes
 {
-	0.0, "$OPTVAL_NO"
+	0.0, "$TXT_NO"
 	1.0, "$OPTVAL_YES_STANDARD"
 	2.0, "$OPTVAL_YES_ENHANCED"
 }
@@ -1018,6 +1022,7 @@ OptionMenu "HUDOptions" protected
 	Submenu "$HUDMNU_MESSAGE", 				"MessageOptions"
 	Submenu "$HUDMNU_FLASH", 				"FlashOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 		"ScoreboardOptions"
+	Submenu "$HUDMNU_FONTOPTIONS",			"FontOptions"
 	StaticText " "
 	Option "$HUDMNU_CROSSHAIRON",			"crosshairon", "OnOff"
 	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
@@ -1185,6 +1190,7 @@ OptionMenu "MiscOptions" protected
 	}
 	Option "$MISCMNU_QUERYIWAD",				"queryiwad", "OnOff"
 	StaticText " "
+	Option "$MISCMNU_NOCHEATS",				"nocheats", "OnOff"
 	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
 	Option "$MISCMNU_ENABLEAUTOSAVES",			"disableautosave", "Autosave"
 	Option "$MISCMNU_SAVELOADCONFIRMATION",			"saveloadconfirmation", "OnOff"
@@ -1200,6 +1206,10 @@ OptionMenu "MiscOptions" protected
 	SafeCommand "$MISCMNU_CLEARNODECACHE",		"clearnodecache"
 	StaticText " "
 	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
+
+	StaticText " "
+	Option "$MISCMNU_QUICKEXIT",				"m_quickexit", "OnOff"
+
 	IfOption(Windows)
 	{
 		StaticText " "
@@ -1522,6 +1532,19 @@ OptionMenu ScoreboardOptions protected
 	StaticText " "
 	Option "$SCRBRDMNU_ENABLE",				"sb_teamdeathmatch_enable", "YesNo"
 	Option "$SCRBRDMNU_HEADERCOLOR",		"sb_teamdeathmatch_headingcolor", "TextColors"
+}
+
+//-------------------------------------------------------------------------------------------
+//
+// Font options
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu FontOptions protected
+{
+	Title "$HUDMNU_FONTOPTIONS"
+	Option "$FONTMNU_LOG",					"log_vgafont", "YesNo"
+	Option "$FONTMNU_DLG",					"dlg_vgafont", "YesNo"
 }
 
 /*=======================================
@@ -2668,7 +2691,7 @@ OptionMenu "ReverbSettings" protected
 	SliderReverbEditOption "$REVMNU_Echo_Depth", 0, 1, 0.01, 3, 20
 	SliderReverbEditOption "$REVMNU_Modulation_Time", 0.04, 4, 0.01, 3, 21
 	SliderReverbEditOption "$REVMNU_Modulation_Depth",0, 1, 0.01, 3, 22
-	SliderReverbEditOption "$REVMNU_Air Absorption_HF", -100, 0, 0.01, 3, 23
+	SliderReverbEditOption "$REVMNU_Air_Absorption_HF", -100, 0, 0.01, 3, 23
 	SliderReverbEditOption "$REVMNU_HF_Reference", 10000, 200000, 1, 3, 24
 	SliderReverbEditOption "$REVMNU_LF_Reference",20, 10000, 0.1, 3, 25
 	SliderReverbEditOption "$REVMNU_Room_Rolloff_Factor",0, 10, 0.01, 3, 26
@@ -2725,7 +2748,8 @@ OptionString "LanguageOptions"
 	"fr", "Français (French)"
 	"it", "Italiano (Italian)"
 	"jp", "日本語 (Japanese)"
-	"ko", "한국의 (Korean)"
+	"ko", "한국어 (Korean)"
+	"nl", "Nederlands (Dutch)"
 	"pl", "Polski (Polish)"
 	"ptg", "Português (European Portuguese)"
 	"pt", "Português do Brasil (Brazilian Portuguese)"

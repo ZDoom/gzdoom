@@ -95,6 +95,65 @@ CVAR(Bool, map_point_coordinates, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// show 
 
 //---------------------------------------------------------------------------
 //
+// Create Alternative HUD
+//
+//---------------------------------------------------------------------------
+
+CUSTOM_CVAR(Bool, hud_althud_forceinternal, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (StatusBar)
+		StatusBar->CreateAltHUD();
+}
+
+static DObject* DoCreateAltHUD(const FName classname)
+{
+	if (classname == NAME_None)
+		return nullptr;
+
+	const auto cls = PClass::FindClass(classname);
+	if (!cls)
+	{
+		Printf(TEXTCOLOR_RED "Unknown alternative HUD class \"%s\"\n", classname.GetChars());
+		return nullptr;
+	}
+
+	if (!cls->IsDescendantOf(NAME_AltHud))
+	{
+		Printf(TEXTCOLOR_RED "Alternative HUD class \"%s\" is not derived from AltHud\n", classname.GetChars());
+		return nullptr;
+	}
+
+	const auto althud = cls->CreateNew();
+
+	IFVIRTUALPTRNAME(althud, NAME_AltHud, Init)
+	{
+		VMValue params[] = { althud };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
+
+	return althud;
+}
+
+void DBaseStatusBar::CreateAltHUD()
+{
+	if (AltHud)
+	{
+		AltHud->Destroy();
+		AltHud = nullptr;
+	}
+
+	if (!hud_althud_forceinternal)
+		AltHud = DoCreateAltHUD(gameinfo.althudclass);
+
+	if (!AltHud)
+		AltHud = DoCreateAltHUD(NAME_AltHud);
+
+	assert(AltHud);
+}
+
+
+//---------------------------------------------------------------------------
+//
 // draw the HUD
 //
 //---------------------------------------------------------------------------

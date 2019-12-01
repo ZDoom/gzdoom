@@ -1,6 +1,7 @@
 cmake_minimum_required( VERSION 2.8.7 )
 
 make_release_only()
+use_fast_math()
 
 include( CheckFunctionExists )
 include( CheckCXXCompilerFlag )
@@ -13,9 +14,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
 		set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-but-set-variable" )
 	endif()
 endif()
-
-# Enable fast flag for dumb
-set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
 
 CHECK_FUNCTION_EXISTS( itoa ITOA_EXISTS )
 if( NOT ITOA_EXISTS )

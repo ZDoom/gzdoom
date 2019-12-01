@@ -56,6 +56,7 @@
 
 CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR(Int, r_skymode)
+EXTERN_CVAR(Bool, cl_oldfreelooklimit)
 
 namespace swrenderer
 {
@@ -82,11 +83,12 @@ namespace swrenderer
 		FSoftwareTexture *sskytex2 = skytex2->GetSoftwareTexture();
 		skytexturemid = 0;
 		int skyheight = skytex1->GetDisplayHeight();
+		skyoffset = cl_oldfreelooklimit? 0 : skyheight == 256? 166 : skyheight >= 240? 150 : skyheight >= 200? 110 : 138;
 		if (skyheight >= 128 && skyheight < 200)
 		{
 			skytexturemid = -28;
 		}
-		else if (skyheight > 200)
+		else if (skyheight >= 200)
 		{
 			skytexturemid = (200 - skyheight) * sskytex1->GetScale().Y + ((r_skymode == 2 && !(Level->flags & LEVEL_FORCETILEDSKY)) ? skytex1->GetSkyOffset() : 0);
 		}
@@ -102,9 +104,9 @@ namespace swrenderer
 
 		if (Level->skystretch)
 		{
-			skyscale *= (double)SKYSTRETCH_HEIGHT / skyheight;
-			skyiscale *= skyheight / (float)SKYSTRETCH_HEIGHT;
-			skytexturemid *= skyheight / (double)SKYSTRETCH_HEIGHT;
+			skyscale *= (double)(SKYSTRETCH_HEIGHT + skyoffset) / skyheight;
+			skyiscale *= skyheight / (float)(SKYSTRETCH_HEIGHT + skyoffset);
+			skytexturemid *= skyheight / (double)(SKYSTRETCH_HEIGHT + skyoffset);
 		}
 
 		// The standard Doom sky texture is 256 pixels wide, repeated 4 times over 360 degrees,
@@ -204,7 +206,7 @@ namespace swrenderer
 				frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
 				if (Level->skystretch)
 				{
-					skymid = skymid * frontskytex->GetScaledHeightDouble() / SKYSTRETCH_HEIGHT;
+					skymid = skymid * frontskytex->GetScaledHeightDouble() / (SKYSTRETCH_HEIGHT + skyoffset);
 				}
 			}
 		}
@@ -274,7 +276,7 @@ namespace swrenderer
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)
 	{
-		if (1 << frontskytex->GetHeightBits() == frontskytex->GetPhysicalHeight())
+		if (1 << frontskytex->GetHeightBits() >= frontskytex->GetPhysicalHeight())
 		{
 			double texturemid = skymid * frontskytex->GetScale().Y + frontskytex->GetHeight();
 			DrawSkyColumnStripe(start_x, y1, y2, frontskytex->GetScale().Y, texturemid, frontskytex->GetScale().Y);

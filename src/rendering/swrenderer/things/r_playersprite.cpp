@@ -70,6 +70,8 @@ EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
+CVAR(Bool, r_noaccel, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
 namespace swrenderer
 {
 	RenderPlayerSprites::RenderPlayerSprites(RenderThread *thread)
@@ -325,7 +327,7 @@ namespace swrenderer
 		if (vis.x1 > x1)
 			vis.startfrac += vis.xiscale*(vis.x1 - x1);
 
-		noaccel = false;
+		noaccel = r_noaccel;
 		FDynamicColormap *colormap_to_use = nullptr;
 		if (pspr->GetID() < PSP_TARGETCENTER)
 		{
@@ -489,46 +491,23 @@ namespace swrenderer
 
 	void NoAccelPlayerSprite::Render(RenderThread *thread)
 	{
-		if (xscale == 0 || fabs(yscale) < (1.0f / 32000.0f))
-		{ // scaled to 0; can't see
-			return;
-		}
-
 		SpriteDrawerArgs drawerargs;
 		bool visible = drawerargs.SetStyle(thread->Viewport.get(), RenderStyle, Alpha, Translation, FillColor, Light);
 		if (!visible)
 			return;
 
-		double spryscale = yscale;
-		bool sprflipvert = false;
-		fixed_t iscale = FLOAT2FIXED(1 / yscale);
-		
-		auto viewport = thread->Viewport.get();
-
-		double sprtopscreen;
+		double centerY = viewheight / 2;
+		double y1, y2;
 		if (renderflags & RF_YFLIP)
 		{
-			sprflipvert = true;
-			spryscale = -spryscale;
-			iscale = -iscale;
-			sprtopscreen = viewport->CenterY + (texturemid - pic->GetHeight()) * spryscale;
+			y1 = centerY + (texturemid - pic->GetHeight()) * (-yscale);
+			y2 = y1 + pic->GetHeight() * (-yscale);
 		}
 		else
 		{
-			sprflipvert = false;
-			sprtopscreen = viewport->CenterY - texturemid * spryscale;
+			y1 = centerY - texturemid * yscale;
+			y2 = y1 + pic->GetHeight() * yscale;
 		}
-
-		// clip to screen bounds
-		short *mfloorclip = screenheightarray;
-		short *mceilingclip = zeroarray;
-
-		fixed_t frac = startfrac;
-		thread->PrepareTexture(pic, RenderStyle);
-		for (int x = x1; x < x2; x++)
-		{
-			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac + xiscale / 2, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, RenderStyle, false);
-			frac += xiscale;
-		}
+		drawerargs.DrawMasked2D(thread, x1, x2, y1, y2, pic, RenderStyle);
 	}
 }

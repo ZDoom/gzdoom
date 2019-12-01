@@ -77,4 +77,6 @@ private:
 	int mTexelsize = 4;
 
 	VkTextureImage mDepthStencil;
+
+	uint8_t* mappedSWFB = nullptr;
 };

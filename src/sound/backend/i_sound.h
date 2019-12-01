@@ -40,12 +40,6 @@
 class FileReader;
 struct FSoundChan;
 
-enum ECodecType
-{
-	CODEC_Unknown,
-	CODEC_Vorbis,
-};
-
 enum EStartSoundFlags
 {
 	SNDF_LOOP=1,
@@ -55,10 +49,17 @@ enum EStartSoundFlags
 	SNDF_NOREVERB=16,
 };
 
+enum ECodecType
+{
+	CODEC_Unknown,
+	CODEC_Vorbis,
+};
+
+
 class SoundStream
 {
 public:
-	virtual ~SoundStream ();
+	virtual ~SoundStream () {}
 
 	enum
 	{	// For CreateStream
@@ -75,10 +76,7 @@ public:
 	virtual void Stop() = 0;
 	virtual void SetVolume(float volume) = 0;
 	virtual bool SetPaused(bool paused) = 0;
-	virtual unsigned int GetPosition() = 0;
 	virtual bool IsEnded() = 0;
-	virtual bool SetPosition(unsigned int pos);
-	virtual bool SetOrder(int order);
 	virtual FString GetStats();
 };
 
@@ -89,7 +87,7 @@ class MIDIDevice;
 
 struct FSoundLoadBuffer
 {
-	TArray<uint8_t> mBuffer;
+	std::vector<uint8_t> mBuffer;
 	uint32_t loop_start;
 	uint32_t loop_end;
 	ChannelConfig chans;
@@ -118,8 +116,7 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
-    virtual SoundStream *OpenStream (FileReader &reader, int flags) = 0;
-
+  
 	// Starts a sound.
 	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan) = 0;
 	virtual FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan) = 0;
@@ -170,8 +167,6 @@ public:
 	virtual short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
 
 	virtual void DrawWaveDebug(int mode);
-
-    static SoundDecoder *CreateDecoder(FileReader &reader);
 };
 
 extern SoundRenderer *GSnd;
@@ -179,7 +174,6 @@ extern bool nosfx;
 extern bool nosound;
 
 void I_InitSound ();
-void I_ShutdownSound ();
 
 void S_ChannelEnded(FISoundChannel *schan);
 void S_ChannelVirtualChanged(FISoundChannel *schan, bool is_virtual);

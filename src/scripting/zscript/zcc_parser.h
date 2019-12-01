@@ -135,6 +135,8 @@ enum EZCCTreeNodeType
 	AST_StaticArrayStatement,
 	AST_Property,
 	AST_FlagDef,
+	AST_MixinDef,
+	AST_MixinStmt,
 
 	NUM_AST_NODE_TYPES
 };
@@ -166,6 +168,13 @@ enum EZCCBuiltinType
 	ZCC_Let,
 
 	ZCC_NUM_BUILT_IN_TYPES
+};
+
+enum EZCCMixinType
+{
+	ZCC_Mixin_Class,
+
+	ZCC_NUM_MIXIN_TYPES
 };
 
 enum EZCCExprType
@@ -239,6 +248,13 @@ struct ZCC_Class : ZCC_Struct
 	ZCC_Identifier *Replaces;
 
 	PClass *CType() { return static_cast<PClassType *>(Type)->Descriptor; }
+};
+
+struct ZCC_MixinDef : ZCC_NamedNode
+{
+	ZCC_TreeNode *Body;
+
+	EZCCMixinType MixinType;
 };
 
 struct ZCC_Enum : ZCC_NamedNode
@@ -515,6 +531,7 @@ struct ZCC_FuncParamDecl : ZCC_TreeNode
 struct ZCC_DeclFlags : ZCC_TreeNode
 {
 	ZCC_Identifier *Id;
+	FString *DeprecationMessage;
 	VersionInfo Version;
 	int Flags;
 };
@@ -537,6 +554,7 @@ struct ZCC_Declarator : ZCC_TreeNode
 struct ZCC_VarDeclarator : ZCC_Declarator
 {
 	ZCC_VarName *Names;
+	FString *DeprecationMessage;
 };
 
 // A function in a class.
@@ -546,6 +564,7 @@ struct ZCC_FuncDeclarator : ZCC_Declarator
 	ENamedName Name;
 	ZCC_Statement *Body;
 	ZCC_Identifier *UseFlags;
+	FString *DeprecationMessage;
 };
 
 struct ZCC_Default : ZCC_CompoundStmt
@@ -563,6 +582,11 @@ struct ZCC_FlagStmt : ZCC_Statement
 {
 	ZCC_Identifier *name;
 	bool set;
+};
+
+struct ZCC_MixinStmt : ZCC_Statement
+{
+	ENamedName MixinName;
 };
 
 FString ZCC_PrintAST(ZCC_TreeNode *root);

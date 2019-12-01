@@ -39,8 +39,9 @@
 
 #include "oalsound.h"
 
-#include "mpg123_decoder.h"
-#include "sndfile_decoder.h"
+#include "i_module.h"
+#include "cmdlib.h"
+#include "zmusic/sounddecoder.h"
 
 #include "c_dispatch.h"
 #include "i_music.h"
@@ -49,6 +50,7 @@
 #include "c_cvars.h"
 #include "stats.h"
 #include "s_music.h"
+#include "zmusic/zmusic.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 EXTERN_CVAR (Float, snd_musicvolume)
@@ -85,12 +87,14 @@ void I_CloseSound ();
 // Maximum volume of all audio
 //==========================================================================
 
-CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.f)
 		self = 0.f;
 	else if (self > 1.f)
 		self = 1.f;
+
+	ChangeMusicSetting(ZMusic::snd_mastervolume, nullptr, self);
 	snd_sfxvolume.Callback();
 	snd_musicvolume.Callback();
 }
@@ -165,10 +169,6 @@ public:
 
 	// Streaming sounds.
 	SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata)
-	{
-		return NULL;
-	}
-	SoundStream *OpenStream (FileReader &reader, int flags)
 	{
 		return NULL;
 	}
@@ -247,6 +247,7 @@ public:
 
 void I_InitSound ()
 {
+	FModule_SetProgDir(progdir);
 	/* Get command line options: */
 	nosound = !!Args->CheckParm ("-nosound");
 	nosfx = !!Args->CheckParm ("-nosfx");
@@ -306,17 +307,7 @@ void I_CloseSound ()
 	GSnd = NULL;
 }
 
-void I_ShutdownSound()
-{
-	I_ShutdownMusic(true);
-	if (GSnd != NULL)
-	{
-		S_StopAllChannels();
-		I_CloseSound();
-	}
-}
-
-const char *GetSampleTypeName(enum SampleType type)
+const char *GetSampleTypeName(SampleType type)
 {
     switch(type)
     {
@@ -326,7 +317,7 @@ const char *GetSampleTypeName(enum SampleType type)
     return "(invalid sample type)";
 }
 
-const char *GetChannelConfigName(enum ChannelConfig chan)
+const char *GetChannelConfigName(ChannelConfig chan)
 {
     switch(chan)
     {
@@ -351,16 +342,20 @@ FString SoundRenderer::GatherStats ()
 
 short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
 {
-	FileReader reader;
     short *samples = (short*)calloc(1, outlen);
     ChannelConfig chans;
     SampleType type;
     int srate;
 
-	reader.OpenMemory(coded, sizebytes);
+	// The decoder will take ownership of the reader if it succeeds so this may not be a local variable.
+	MusicIO::MemoryReader *reader = new MusicIO::MemoryReader((const uint8_t*)coded, sizebytes);
 
-    SoundDecoder *decoder = CreateDecoder(reader);
-    if(!decoder) return samples;
+    SoundDecoder *decoder = SoundDecoder::CreateDecoder(reader);
+	if (!decoder)
+	{
+		reader->close();
+		return samples;
+	}
 
     decoder->getInfo(&srate, &chans, &type);
     if(chans != ChannelConfig_Mono || type != SampleType_Int16)
@@ -377,20 +372,6 @@ short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes,
 
 void SoundRenderer::DrawWaveDebug(int mode)
 {
-}
-
-SoundStream::~SoundStream ()
-{
-}
-
-bool SoundStream::SetPosition(unsigned int pos)
-{
-	return false;
-}
-
-bool SoundStream::SetOrder(int order)
-{
-	return false;
 }
 
 FString SoundStream::GetStats()
@@ -559,46 +540,3 @@ std::pair<SoundHandle, bool> SoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *
 	return std::make_pair(retval, true);
 }
 
-SoundDecoder *SoundRenderer::CreateDecoder(FileReader &reader)
-{
-    SoundDecoder *decoder = NULL;
-    auto pos = reader.Tell();
-
-#ifdef HAVE_SNDFILE
-		decoder = new SndFileDecoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader.Seek(pos, FileReader::SeekSet);
-
-		delete decoder;
-		decoder = NULL;
-#endif
-#ifdef HAVE_MPG123
-		decoder = new MPG123Decoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader.Seek(pos, FileReader::SeekSet);
-
-		delete decoder;
-		decoder = NULL;
-#endif
-    return decoder;
-}
-
-
-// Default readAll implementation, for decoders that can't do anything better
-TArray<uint8_t> SoundDecoder::readAll()
-{
-    TArray<uint8_t> output;
-    unsigned total = 0;
-    unsigned got;
-
-    output.Resize(total+32768);
-    while((got=(unsigned)read((char*)&output[total], output.Size()-total)) > 0)
-    {
-        total += got;
-        output.Resize(total*2);
-    }
-    output.Resize(total);
-    return output;
-}

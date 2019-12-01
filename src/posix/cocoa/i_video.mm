@@ -54,7 +54,6 @@
 #include "v_text.h"
 #include "version.h"
 #include "doomerrors.h"
-#include "atterm.h"
 
 #include "gl/system/gl_framebuffer.h"
 #include "vulkan/system/vk_framebuffer.h"
@@ -65,8 +64,8 @@
 - (void)exitAppOnClose
 {
 	NSButton* closeButton = [self standardWindowButton:NSWindowCloseButton];
-	[closeButton setAction:@selector(terminate:)];
-	[closeButton setTarget:NSApp];
+	[closeButton setAction:@selector(sendExitEvent:)];
+	[closeButton setTarget:[NSApp delegate]];
 }
 
 @end
@@ -92,7 +91,6 @@
 
 @end
 
-EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
@@ -752,7 +750,6 @@ void I_ShutdownGraphics()
 void I_InitGraphics()
 {
 	Video = new CocoaVideo;
-	atterm(I_ShutdownGraphics);
 }
 
 

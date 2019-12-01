@@ -328,4 +328,5 @@ public:
 	TArray<unsigned char> *GetBuffer() { return &mBuffer; }
 };
 
+
 #endif

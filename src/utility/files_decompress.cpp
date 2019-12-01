@@ -63,7 +63,7 @@ void DecompressorBase::DecompressionError(const char *error, ...) const
 	va_end(argptr);
 
 	if (ErrorCallback != nullptr) ErrorCallback(errortext);
-	else std::terminate();
+	else throw std::runtime_error(errortext);
 }
 
 long DecompressorBase::Tell () const

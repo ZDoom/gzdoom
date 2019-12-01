@@ -50,7 +50,6 @@
 #include "types.h"
 #include "scriptutil.h"
 #include "i_system.h"
-#include "atterm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -209,8 +208,6 @@ static int cregcmp (const void *a, const void *b) NO_SANITIZE
 
 void PClass::StaticInit ()
 {
-	atterm (StaticShutdown);
-
 	Namespaces.GlobalNamespace = Namespaces.NewNamespace(0);
 
 	FAutoSegIterator probe(CRegHead, CRegTail);

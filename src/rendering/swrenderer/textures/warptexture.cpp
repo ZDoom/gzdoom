@@ -40,6 +40,8 @@
 #include "warpbuffer.h"
 #include "v_video.h"
 
+EXTERN_CVAR(Int, gl_texture_hqresizemult)
+EXTERN_CVAR(Int, gl_texture_hqresizemode)
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
 	: FSoftwareTexture (source)
@@ -57,11 +59,17 @@ bool FWarpTexture::CheckModified (int style)
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
 	uint64_t time = screen->FrameTime;
+	uint64_t resizeMult = gl_texture_hqresizemult;
+
 	if (time != GenTime[2])
 	{
+		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1)
+			resizeMult = 1;
+
 		auto otherpix = FSoftwareTexture::GetPixelsBgra();
-		WarpedPixelsRgba.Resize(GetWidth() * GetHeight());
-		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixelsRgba.Resize(unsigned(GetWidth() * GetHeight() * resizeMult * resizeMult * 4 / 3 + 1));
+		WarpBuffer(WarpedPixelsRgba.Data(), otherpix, int(GetWidth() * resizeMult), int(GetHeight() * resizeMult), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		GenerateBgraMipmapsFast();
 		FreeAllSpans();
 		GenTime[2] = time;
 	}
@@ -72,11 +80,16 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 const uint8_t *FWarpTexture::GetPixels(int index)
 {
 	uint64_t time = screen->FrameTime;
+	uint64_t resizeMult = gl_texture_hqresizemult;
+
 	if (time != GenTime[index])
 	{
+		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1)
+			resizeMult = 1;
+
 		const uint8_t *otherpix = FSoftwareTexture::GetPixels(index);
-		WarpedPixels[index].Resize(GetWidth() * GetHeight());
-		WarpBuffer(WarpedPixels[index].Data(), otherpix, GetWidth(), GetHeight(), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
+		WarpedPixels[index].Resize(unsigned(GetWidth() * GetHeight() * resizeMult * resizeMult));
+		WarpBuffer(WarpedPixels[index].Data(), otherpix, int(GetWidth() * resizeMult), int(GetHeight() * resizeMult), WidthOffsetMultiplier, HeightOffsetMultiplier, time, mTexture->shaderspeed, bWarped);
 		FreeAllSpans();
 		GenTime[index] = time;
 	}
@@ -103,4 +116,45 @@ int FWarpTexture::NextPo2 (int v)
 	v |= v >> 8;
 	v |= v >> 16;
 	return ++v;
+}
+
+void FWarpTexture::GenerateBgraMipmapsFast()
+{
+	uint32_t *src = WarpedPixelsRgba.Data();
+	uint32_t *dest = src + GetPhysicalWidth() * GetPhysicalHeight();
+	int levels = MipmapLevels();
+	for (int i = 1; i < levels; i++)
+	{
+		int srcw = MAX(GetPhysicalWidth() >> (i - 1), 1);
+		int srch = MAX(GetPhysicalHeight() >> (i - 1), 1);
+		int w = MAX(GetPhysicalWidth() >> i, 1);
+		int h = MAX(GetPhysicalHeight() >> i, 1);
+
+		for (int x = 0; x < w; x++)
+		{
+			int sx0 = x * 2;
+			int sx1 = MIN((x + 1) * 2, srcw - 1);
+
+			for (int y = 0; y < h; y++)
+			{
+				int sy0 = y * 2;
+				int sy1 = MIN((y + 1) * 2, srch - 1);
+
+				uint32_t src00 = src[sy0 + sx0 * srch];
+				uint32_t src01 = src[sy1 + sx0 * srch];
+				uint32_t src10 = src[sy0 + sx1 * srch];
+				uint32_t src11 = src[sy1 + sx1 * srch];
+
+				uint32_t alpha = (APART(src00) + APART(src01) + APART(src10) + APART(src11) + 2) / 4;
+				uint32_t red = (RPART(src00) + RPART(src01) + RPART(src10) + RPART(src11) + 2) / 4;
+				uint32_t green = (GPART(src00) + GPART(src01) + GPART(src10) + GPART(src11) + 2) / 4;
+				uint32_t blue = (BPART(src00) + BPART(src01) + BPART(src10) + BPART(src11) + 2) / 4;
+
+				dest[y + x * h] = (alpha << 24) | (red << 16) | (green << 8) | blue;
+			}
+		}
+
+		src = dest;
+		dest += w * h;
+	}
 }

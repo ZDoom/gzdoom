@@ -71,6 +71,7 @@ public:
 	void SetTexture(const uint8_t *texels, int width, int height);
 	void SetTexture(FSoftwareTexture *texture, FRenderStyle style);
 	void SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style);
+	void SetTexture2(const uint8_t* texels, int width, int height);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);
 	void SetNoColormap() { mLight = 255; mFixedLight = true; mLightRed = 256; mLightGreen = 256; mLightBlue = 256; mLightAlpha = 256; mFadeRed = 0; mFadeGreen = 0; mFadeBlue = 0; mFadeAlpha = 0; mDesaturate = 0; mSimpleShade = true; mColormaps = nullptr; }
 	void SetDepthTest(bool enable) { mDepthTest = enable; }
@@ -94,6 +95,10 @@ public:
 	int TextureWidth() const { return mTextureWidth; }
 	int TextureHeight() const { return mTextureHeight; }
 	const uint8_t *Translation() const { return mTranslation; }
+
+	const uint8_t* Texture2Pixels() const { return mTexture2Pixels; }
+	int Texture2Width() const { return mTexture2Width; }
+	int Texture2Height() const { return mTexture2Height; }
 
 	bool WriteStencil() const { return mWriteStencil; }
 	bool StencilTest() const { return mStencilTest; }
@@ -142,6 +147,9 @@ private:
 	int mTextureWidth = 0;
 	int mTextureHeight = 0;
 	const uint8_t *mTranslation = nullptr;
+	const uint8_t* mTexture2Pixels = nullptr;
+	int mTexture2Width = 0;
+	int mTexture2Height = 0;
 	uint8_t mStencilTestValue = 0;
 	uint8_t mStencilWriteValue = 0;
 	const uint8_t *mColormaps = nullptr;

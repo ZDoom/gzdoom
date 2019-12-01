@@ -59,6 +59,13 @@ void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, FRenderStyle style)
 	mTranslation = nullptr;
 }
 
+void PolyDrawArgs::SetTexture2(const uint8_t* texels, int width, int height)
+{
+	mTexture2Pixels = texels;
+	mTexture2Width = width;
+	mTexture2Height = height;
+}
+
 void PolyDrawArgs::SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style)
 {
 	// Alphatexture overrides translations.

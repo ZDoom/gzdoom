@@ -57,7 +57,7 @@ public:
 	static void SetScissor(const DrawerCommandQueuePtr &queue, int x, int y, int w, int h);
 	static void EnableDepthTest(const DrawerCommandQueuePtr &queue, bool on);
 	static void SetRenderStyle(const DrawerCommandQueuePtr &queue, FRenderStyle style);
-	static void SetTexture(const DrawerCommandQueuePtr &queue, void *pixels, int width, int height);
+	static void SetTexture(const DrawerCommandQueuePtr &queue, int unit, void *pixels, int width, int height);
 	static void SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest);
 	static void PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants);
 	static void PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
@@ -159,7 +159,7 @@ public:
 	void SetScissor(int x, int y, int w, int h);
 	void EnableDepthTest(bool on);
 	void SetRenderStyle(FRenderStyle style);
-	void SetTexture(void *pixels, int width, int height);
+	void SetTexture(int unit, void *pixels, int width, int height);
 	void SetShader(int specialEffect, int effectState, bool alphaTest);
 
 	void UpdateClip();
@@ -423,10 +423,11 @@ private:
 class PolySetTextureCommand : public PolyDrawerCommand
 {
 public:
-	PolySetTextureCommand(void *pixels, int width, int height) : pixels(pixels), width(width), height(height) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetTexture(pixels, width, height); }
+	PolySetTextureCommand(int unit, void *pixels, int width, int height) : unit(unit), pixels(pixels), width(width), height(height) { }
+	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetTexture(unit, pixels, width, height); }
 
 private:
+	int unit;
 	void *pixels;
 	int width;
 	int height;

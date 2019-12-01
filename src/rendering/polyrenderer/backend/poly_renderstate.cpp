@@ -233,7 +233,7 @@ void PolyRenderState::ApplyMaterial()
 		if (base)
 		{
 			DCanvas *texcanvas = base->GetImage(mMaterial);
-			PolyTriangleDrawer::SetTexture(GetPolyFrameBuffer()->GetDrawCommands(), 0, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth());
+			PolyTriangleDrawer::SetTexture(GetPolyFrameBuffer()->GetDrawCommands(), 0, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
 
 			int numLayers = mMaterial.mMaterial->GetLayers();
 			for (int i = 1; i < numLayers; i++)
@@ -242,7 +242,7 @@ void PolyRenderState::ApplyMaterial()
 				auto systex = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(i, 0, &layer));
 
 				texcanvas = systex->GetImage(mMaterial);
-				PolyTriangleDrawer::SetTexture(GetPolyFrameBuffer()->GetDrawCommands(), i, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth());
+				PolyTriangleDrawer::SetTexture(GetPolyFrameBuffer()->GetDrawCommands(), i, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
 			}
 		}
 

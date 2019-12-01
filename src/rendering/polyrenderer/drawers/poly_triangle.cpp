@@ -153,9 +153,9 @@ void PolyTriangleDrawer::SetRenderStyle(const DrawerCommandQueuePtr &queue, FRen
 	queue->Push<PolySetRenderStyleCommand>(style);
 }
 
-void PolyTriangleDrawer::SetTexture(const DrawerCommandQueuePtr &queue, int unit, void *pixels, int width, int height)
+void PolyTriangleDrawer::SetTexture(const DrawerCommandQueuePtr &queue, int unit, void *pixels, int width, int height, bool bgra)
 {
-	queue->Push<PolySetTextureCommand>(unit, pixels, width, height);
+	queue->Push<PolySetTextureCommand>(unit, pixels, width, height, bgra);
 }
 
 void PolyTriangleDrawer::SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest)
@@ -408,9 +408,9 @@ void PolyTriangleThreadData::SetShader(int specialEffect, int effectState, bool 
 	AlphaTest = alphaTest;
 }
 
-void PolyTriangleThreadData::SetTexture(int unit, void *pixels, int width, int height)
+void PolyTriangleThreadData::SetTexture(int unit, const void *pixels, int width, int height, bool bgra)
 {
-	textures[unit].pixels = (uint8_t*)pixels;
+	textures[unit].pixels = pixels;
 	textures[unit].width = width;
 	textures[unit].height = height;
 	textures[unit].bgra = true;

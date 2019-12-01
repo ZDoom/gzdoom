@@ -351,11 +351,20 @@ static float wrap(float value)
 }
 #endif
 
-static uint32_t sampleTexture(float u, float v, const uint32_t* texPixels, int texWidth, int texHeight)
+static uint32_t sampleTexture(float u, float v, const void* texPixels, int texWidth, int texHeight, bool texBgra)
 {
 	int texelX = MIN(static_cast<int>(wrap(u) * texWidth), texWidth - 1);
 	int texelY = MIN(static_cast<int>(wrap(v) * texHeight), texHeight - 1);
-	return texPixels[texelX * texHeight + texelY];
+	int texelOffset = texelX * texHeight + texelY;
+	if (texBgra)
+	{
+		return static_cast<const uint32_t*>(texPixels)[texelOffset];
+	}
+	else
+	{
+		uint32_t c = static_cast<const uint8_t*>(texPixels)[texelOffset];
+		return c | 0xff000000;
+	}
 }
 
 static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
@@ -377,11 +386,13 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	{
 		int texWidth = thread->textures[0].width;
 		int texHeight = thread->textures[0].height;
-		const uint32_t* texPixels = (const uint32_t*)thread->textures[0].pixels;
+		const void* texPixels = thread->textures[0].pixels;
+		bool texBgra = thread->textures[0].bgra;
 
 		int tex2Width = thread->textures[1].width;
 		int tex2Height = thread->textures[1].height;
-		const uint32_t* tex2Pixels = (const uint32_t*)thread->textures[1].pixels;
+		const void* tex2Pixels = thread->textures[1].pixels;
+		bool tex2Bgra = thread->textures[1].bgra;
 
 		uint32_t frag = thread->mainVertexShader.vColor;
 		uint32_t frag_r = RPART(frag);
@@ -394,8 +405,8 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		frag_a += frag_a >> 7; // 255 -> 256
 		for (int x = x0; x < x1; x++)
 		{
-			uint32_t t1 = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
-			uint32_t t2 = sampleTexture(u[x], 1.0f - v[x], tex2Pixels, tex2Width, tex2Height);
+			uint32_t t1 = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+			uint32_t t2 = sampleTexture(u[x], 1.0f - v[x], tex2Pixels, tex2Width, tex2Height, tex2Bgra);
 
 			uint32_t r = (frag_r * RPART(t1)) >> 8;
 			uint32_t g = (frag_g * GPART(t1)) >> 8;
@@ -443,7 +454,8 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	{
 		int texWidth = thread->textures[0].width;
 		int texHeight = thread->textures[0].height;
-		const uint32_t* texPixels = (const uint32_t*)thread->textures[0].pixels;
+		const void* texPixels = thread->textures[0].pixels;
+		bool texBgra = thread->textures[0].bgra;
 		
 		switch (constants->uTextureMode)
 		{
@@ -452,35 +464,35 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		case TM_FOGLAYER:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = texel;
 			}
 			break;
 		case TM_STENCIL:	// TM_STENCIL
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = texel | 0x00ffffff;
 			}
 			break;
 		case TM_OPAQUE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = texel | 0xff000000;
 			}
 			break;
 		case TM_INVERSE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = MAKEARGB(APART(texel), 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
 			}
 			break;
 		case TM_ALPHATEXTURE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
 				uint32_t alpha = APART(texel);
 				alpha += alpha >> 7;
@@ -493,7 +505,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 			for (int x = x0; x < x1; x++)
 			{
 				if (v[x] >= 0.0 && v[x] <= 1.0)
-					fragcolor[x] = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+					fragcolor[x] = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				else
 					fragcolor[x] = 0;
 			}
@@ -501,7 +513,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		case TM_INVERTOPAQUE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = MAKEARGB(0xff, 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
 			}
 		}

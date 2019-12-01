@@ -65,7 +65,7 @@ public:
 	static void SetScissor(const DrawerCommandQueuePtr &queue, int x, int y, int w, int h);
 	static void EnableDepthTest(const DrawerCommandQueuePtr &queue, bool on);
 	static void SetRenderStyle(const DrawerCommandQueuePtr &queue, FRenderStyle style);
-	static void SetTexture(const DrawerCommandQueuePtr &queue, int unit, void *pixels, int width, int height);
+	static void SetTexture(const DrawerCommandQueuePtr &queue, int unit, void *pixels, int width, int height, bool bgra);
 	static void SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest);
 	static void PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants);
 	static void PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
@@ -149,7 +149,7 @@ public:
 	void SetScissor(int x, int y, int w, int h);
 	void EnableDepthTest(bool on);
 	void SetRenderStyle(FRenderStyle style);
-	void SetTexture(int unit, void *pixels, int width, int height);
+	void SetTexture(int unit, const void *pixels, int width, int height, bool bgra);
 	void SetShader(int specialEffect, int effectState, bool alphaTest);
 
 	void UpdateClip();
@@ -245,7 +245,7 @@ public:
 
 	struct TextureUnit
 	{
-		const uint8_t* pixels = nullptr;
+		const void* pixels = nullptr;
 		int width = 0;
 		int height = 0;
 		bool bgra = true;
@@ -429,14 +429,15 @@ private:
 class PolySetTextureCommand : public PolyDrawerCommand
 {
 public:
-	PolySetTextureCommand(int unit, void *pixels, int width, int height) : unit(unit), pixels(pixels), width(width), height(height) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetTexture(unit, pixels, width, height); }
+	PolySetTextureCommand(int unit, void *pixels, int width, int height, bool bgra) : unit(unit), pixels(pixels), width(width), height(height), bgra(bgra) { }
+	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetTexture(unit, pixels, width, height, bgra); }
 
 private:
 	int unit;
 	void *pixels;
 	int width;
 	int height;
+	bool bgra;
 };
 
 class PolySetShaderCommand : public PolyDrawerCommand

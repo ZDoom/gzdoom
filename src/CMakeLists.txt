@@ -708,7 +708,6 @@ set ( SWRENDER_SOURCES
 
 set( POLYRENDER_SOURCES
 	rendering/polyrenderer/drawers/poly_triangle.cpp
-	rendering/polyrenderer/drawers/poly_draw_args.cpp
 	rendering/polyrenderer/drawers/screen_triangle.cpp
 	rendering/polyrenderer/math/gpu_types.cpp
 )

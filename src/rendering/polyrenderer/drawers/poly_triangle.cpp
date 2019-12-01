@@ -319,18 +319,18 @@ void PolyTriangleThreadData::SetDepthClamp(bool on)
 
 void PolyTriangleThreadData::SetDepthMask(bool on)
 {
-	drawargs.SetWriteDepth(on);
+	WriteDepth = on;
 }
 
 void PolyTriangleThreadData::SetDepthFunc(int func)
 {
 	if (func == DF_LEqual || func == DF_Less)
 	{
-		drawargs.SetDepthTest(true);
+		DepthTest = true;
 	}
 	else if (func == DF_Always)
 	{
-		drawargs.SetDepthTest(false);
+		DepthTest = false;
 	}
 }
 
@@ -352,23 +352,26 @@ void PolyTriangleThreadData::SetDepthBias(float depthBiasConstantFactor, float d
 
 void PolyTriangleThreadData::SetColorMask(bool r, bool g, bool b, bool a)
 {
-	drawargs.SetWriteColor(r);
+	WriteColor = r;
 }
 
 void PolyTriangleThreadData::SetStencil(int stencilRef, int op)
 {
-	drawargs.SetStencilTestValue(stencilRef);
+	StencilTestValue = stencilRef;
 	if (op == SOP_Increment)
 	{
-		drawargs.SetWriteStencil(drawargs.StencilTest(), MIN(stencilRef + 1, (int)255));
+		WriteStencil = StencilTest;
+		StencilWriteValue = MIN(stencilRef + 1, (int)255);
 	}
 	else if (op == SOP_Decrement)
 	{
-		drawargs.SetWriteStencil(drawargs.StencilTest(), MAX(stencilRef - 1, (int)0));
+		WriteStencil = StencilTest;
+		StencilWriteValue = MAX(stencilRef - 1, (int)0);
 	}
 	else // SOP_Keep
 	{
-		drawargs.SetWriteStencil(false, stencilRef);
+		WriteStencil = false;
+		StencilWriteValue = stencilRef;
 	}
 }
 
@@ -384,13 +387,13 @@ void PolyTriangleThreadData::EnableClipDistance(int num, bool state)
 
 void PolyTriangleThreadData::EnableStencil(bool on)
 {
-	drawargs.SetStencilTest(on);
-	drawargs.SetWriteStencil(on && drawargs.StencilTestValue() != drawargs.StencilWriteValue(), drawargs.StencilWriteValue());
+	StencilTest = on;
+	WriteStencil = on && StencilTestValue != StencilWriteValue;
 }
 
 void PolyTriangleThreadData::EnableDepthTest(bool on)
 {
-	drawargs.SetDepthTest(on);
+	DepthTest = on;
 }
 
 void PolyTriangleThreadData::SetRenderStyle(FRenderStyle style)
@@ -407,10 +410,10 @@ void PolyTriangleThreadData::SetShader(int specialEffect, int effectState, bool 
 
 void PolyTriangleThreadData::SetTexture(int unit, void *pixels, int width, int height)
 {
-	if (unit == 0)
-		drawargs.SetTexture((uint8_t*)pixels, width, height);
-	else if (unit == 1)
-		drawargs.SetTexture2((uint8_t*)pixels, width, height);
+	textures[unit].pixels = (uint8_t*)pixels;
+	textures[unit].width = width;
+	textures[unit].height = height;
+	textures[unit].bgra = true;
 }
 
 void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode drawmode)

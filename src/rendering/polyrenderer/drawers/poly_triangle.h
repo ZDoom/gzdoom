@@ -26,7 +26,6 @@
 #include "swrenderer/drawers/r_thread.h"
 #include "polyrenderer/drawers/screen_triangle.h"
 #include "polyrenderer/math/gpu_types.h"
-#include "polyrenderer/drawers/poly_draw_args.h"
 #include "polyrenderer/drawers/poly_vertex_shader.h"
 
 class DCanvas;
@@ -228,8 +227,6 @@ public:
 	bool AlphaTest = false;
 	const PolyPushConstants* PushConstants = nullptr;
 
-	PolyDrawArgs drawargs;
-
 	const void *vertices = nullptr;
 	const unsigned int *elements = nullptr;
 	const FVector4 *lights = nullptr;
@@ -245,6 +242,22 @@ public:
 	PolyLight polyLights[maxPolyLights];*/
 
 	PolyMainVertexShader mainVertexShader;
+
+	struct TextureUnit
+	{
+		const uint8_t* pixels = nullptr;
+		int width = 0;
+		int height = 0;
+		bool bgra = true;
+	} textures[16];
+
+	bool DepthTest = false;
+	bool StencilTest = true;
+	bool WriteStencil = true;
+	bool WriteColor = true;
+	bool WriteDepth = true;
+	uint8_t StencilTestValue = 0;
+	uint8_t StencilWriteValue = 0;
 
 private:
 	ShadedTriVertex ShadeVertex(int index);

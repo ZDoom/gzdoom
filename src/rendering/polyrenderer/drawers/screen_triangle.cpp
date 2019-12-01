@@ -319,7 +319,7 @@ static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	size_t pitch = thread->depthstencil->Width();
 	uint8_t* line = thread->depthstencil->StencilValues() + pitch * y;
-	uint8_t value = thread->drawargs.StencilWriteValue();
+	uint8_t value = thread->StencilWriteValue;
 	if (!thread->AlphaTest)
 	{
 		for (int x = x0; x < x1; x++)
@@ -375,13 +375,13 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 	else if (thread->SpecialEffect == EFF_BURN) // burn.fp
 	{
-		int texWidth = thread->drawargs.TextureWidth();
-		int texHeight = thread->drawargs.TextureHeight();
-		const uint32_t* texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
+		int texWidth = thread->textures[0].width;
+		int texHeight = thread->textures[0].height;
+		const uint32_t* texPixels = (const uint32_t*)thread->textures[0].pixels;
 
-		int tex2Width = thread->drawargs.Texture2Width();
-		int tex2Height = thread->drawargs.Texture2Height();
-		const uint32_t* tex2Pixels = (const uint32_t*)thread->drawargs.Texture2Pixels();
+		int tex2Width = thread->textures[1].width;
+		int tex2Height = thread->textures[1].height;
+		const uint32_t* tex2Pixels = (const uint32_t*)thread->textures[1].pixels;
 
 		uint32_t frag = thread->mainVertexShader.vColor;
 		uint32_t frag_r = RPART(frag);
@@ -441,9 +441,9 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 	else // func_normal
 	{
-		int texWidth = thread->drawargs.TextureWidth();
-		int texHeight = thread->drawargs.TextureHeight();
-		const uint32_t* texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
+		int texWidth = thread->textures[0].width;
+		int texHeight = thread->textures[0].height;
+		const uint32_t* texPixels = (const uint32_t*)thread->textures[0].pixels;
 		
 		switch (constants->uTextureMode)
 		{
@@ -626,11 +626,11 @@ static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 
 	RunShader(x0, x1, thread);
 
-	if (thread->drawargs.WriteColor())
+	if (thread->WriteColor)
 		WriteColor(y, x0, x1, thread);
-	if (thread->drawargs.WriteDepth())
+	if (thread->WriteDepth)
 		WriteDepth(y, x0, x1, thread);
-	if (thread->drawargs.WriteStencil())
+	if (thread->WriteStencil)
 		WriteStencil(y, x0, x1, thread);
 }
 
@@ -652,7 +652,7 @@ static void TestSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 		{
 			stencilbuffer = thread->depthstencil->StencilValues();
 			stencilLine = stencilbuffer + pitch * y;
-			stencilTestValue = thread->drawargs.StencilTestValue();
+			stencilTestValue = thread->StencilTestValue;
 		}
 
 		float* zbuffer;
@@ -760,8 +760,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs* args, PolyTriangleThreadDat
 	void(*testfunc)(int y, int x0, int x1, const TriDrawTriangleArgs * args, PolyTriangleThreadData * thread);
 
 	int opt = 0;
-	if (thread->drawargs.DepthTest()) opt |= TriScreenDrawerModes::SWTRI_DepthTest;
-	if (thread->drawargs.StencilTest()) opt |= TriScreenDrawerModes::SWTRI_StencilTest;
+	if (thread->DepthTest) opt |= TriScreenDrawerModes::SWTRI_DepthTest;
+	if (thread->StencilTest) opt |= TriScreenDrawerModes::SWTRI_StencilTest;
 	testfunc = ScreenTriangle::TestSpanOpts[opt];
 
 	topY += thread->skipped_by_thread(topY);

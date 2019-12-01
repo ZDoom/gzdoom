@@ -93,40 +93,6 @@ private:
 	}
 };
 
-enum class TriBlendMode
-{
-	Opaque,
-	Skycap,
-	FogBoundary,
-	SrcColor,
-	Fill,
-	FillTranslucent,
-	Normal,
-	AlphaTest,
-	Fuzzy,
-	Stencil,
-	Translucent,
-	Add,
-	Shaded,
-	TranslucentStencil,
-	Shadow,
-	Subtract,
-	AddStencil,
-	AddShaded,
-	OpaqueTranslated,
-	SrcColorTranslated,
-	NormalTranslated,
-	StencilTranslated,
-	TranslucentTranslated,
-	AddTranslated,
-	ShadedTranslated,
-	TranslucentStencilTranslated,
-	ShadowTranslated,
-	SubtractTranslated,
-	AddStencilTranslated,
-	AddShadedTranslated
-};
-
 class ScreenTriangle
 {
 public:

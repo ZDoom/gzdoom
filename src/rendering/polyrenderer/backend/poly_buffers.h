@@ -11,8 +11,6 @@
 #pragma warning(disable:4250) 
 #endif
 
-struct TriVertex;
-
 class PolyBuffer : virtual public IBuffer
 {
 public:

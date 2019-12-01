@@ -264,7 +264,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 
 	PushConstants = &constants;
 
-	int numLights = 0;
+	/*int numLights = 0;
 	if (constants.uLightIndex >= 0)
 	{
 		const FVector4 &lightRange = lights[constants.uLightIndex];
@@ -298,7 +298,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 			}
 		}
 	}
-	drawargs.SetLights(polyLights, numLights);
+	drawargs.SetLights(polyLights, numLights);*/
 }
 
 void PolyTriangleThreadData::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
@@ -690,9 +690,6 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 	// Reject triangle if degenerate
 	if (IsDegenerate(vert))
 		return;
-
-	drawargs.SetColor(vert[0]->vColor, 0);
-	drawargs.SetNormal(FVector3(vert[0]->vWorldNormal.X, vert[0]->vWorldNormal.Y, vert[0]->vWorldNormal.Z));
 
 	// Cull, clip and generate additional vertices as needed
 	ScreenTriVertex clippedvert[max_additional_vertices];

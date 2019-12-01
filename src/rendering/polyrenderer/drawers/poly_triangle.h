@@ -35,6 +35,15 @@ class PolyInputAssembly;
 class PolyDepthStencil;
 struct PolyPushConstants;
 
+enum class PolyDrawMode
+{
+	Points,
+	Lines,
+	Triangles,
+	TriangleFan,
+	TriangleStrip
+};
+
 class PolyTriangleDrawer
 {
 public:
@@ -225,8 +234,15 @@ public:
 	const unsigned int *elements = nullptr;
 	const FVector4 *lights = nullptr;
 
+	/*struct PolyLight
+	{
+		uint32_t color;
+		float x, y, z;
+		float radius;
+	};
+
 	enum { maxPolyLights = 16 };
-	PolyLight polyLights[maxPolyLights];
+	PolyLight polyLights[maxPolyLights];*/
 
 	PolyMainVertexShader mainVertexShader;
 

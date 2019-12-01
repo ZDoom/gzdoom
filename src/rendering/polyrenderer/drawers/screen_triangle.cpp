@@ -375,10 +375,35 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 	else if (thread->SpecialEffect == EFF_BURN) // burn.fp
 	{
-		/*vec4 frag = vColor;
-		vec4 t1 = texture(tex, vTexCoord.xy);
-		vec4 t2 = texture(texture2, vec2(vTexCoord.x, 1.0-vTexCoord.y));
-		FragColor = frag * vec4(t1.rgb, t2.a);*/
+		int texWidth = thread->drawargs.TextureWidth();
+		int texHeight = thread->drawargs.TextureHeight();
+		const uint32_t* texPixels = (const uint32_t*)thread->drawargs.TexturePixels();
+
+		int tex2Width = thread->drawargs.Texture2Width();
+		int tex2Height = thread->drawargs.Texture2Height();
+		const uint32_t* tex2Pixels = (const uint32_t*)thread->drawargs.Texture2Pixels();
+
+		uint32_t frag = thread->mainVertexShader.vColor;
+		uint32_t frag_r = RPART(frag);
+		uint32_t frag_g = GPART(frag);
+		uint32_t frag_b = BPART(frag);
+		uint32_t frag_a = APART(frag);
+		frag_r += frag_r >> 7; // 255 -> 256
+		frag_g += frag_g >> 7; // 255 -> 256
+		frag_b += frag_b >> 7; // 255 -> 256
+		frag_a += frag_a >> 7; // 255 -> 256
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t t1 = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight);
+			uint32_t t2 = sampleTexture(u[x], 1.0f - v[x], tex2Pixels, tex2Width, tex2Height);
+
+			uint32_t r = (frag_r * RPART(t1)) >> 8;
+			uint32_t g = (frag_g * GPART(t1)) >> 8;
+			uint32_t b = (frag_b * BPART(t1)) >> 8;
+			uint32_t a = (frag_a * APART(t2)) >> 8;
+
+			fragcolor[x] = MAKEARGB(a, r, g, b);
+		}
 		return;
 	}
 	else if (thread->SpecialEffect == EFF_STENCIL) // stencil.fp

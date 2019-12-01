@@ -39,6 +39,7 @@
 #include "x86.h"
 #include <cmath>
 
+#ifdef NO_SSE
 static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	float startX = x0 + (0.5f - args->v1->x);
@@ -53,6 +54,36 @@ static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 		posW += stepW;
 	}
 }
+#else
+static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+{
+	float startX = x0 + (0.5f - args->v1->x);
+	float startY = y + (0.5f - args->v1->y);
+
+	float posW = args->v1->w + args->gradientX.W * startX + args->gradientY.W * startY;
+	float stepW = args->gradientX.W;
+	float* w = thread->scanline.W;
+
+	int ssecount = ((x1 - x0) & 3);
+	int sseend = x0 + ssecount;
+
+	__m128 mstepW = _mm_set1_ps(stepW * 4.0f);
+	__m128 mposW = _mm_setr_ps(posW, posW + stepW, posW + stepW + stepW, posW + stepW + stepW + stepW);
+
+	for (int x = x0; x < sseend; x += 4)
+	{
+		_mm_storeu_ps(w + x, _mm_rcp_ps(mposW));
+		mposW = _mm_add_ps(mposW, mstepW);
+	}
+
+	posW += ssecount * stepW;
+	for (int x = sseend; x < x1; x++)
+	{
+		w[x] = 1.0f / posW;
+		posW += stepW;
+	}
+}
+#endif
 
 static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
@@ -117,6 +148,7 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 	}
 }
 
+#ifdef NO_SSE
 static void WriteVarying(float pos, float step, int x0, int x1, const float* w, float* varying)
 {
 	for (int x = x0; x < x1; x++)
@@ -125,6 +157,29 @@ static void WriteVarying(float pos, float step, int x0, int x1, const float* w, 
 		pos += step;
 	}
 }
+#else
+static void WriteVarying(float pos, float step, int x0, int x1, const float* w, float* varying)
+{
+	int ssecount = ((x1 - x0) & 3);
+	int sseend = x0 + ssecount;
+
+	__m128 mstep = _mm_set1_ps(step * 4.0f);
+	__m128 mpos = _mm_setr_ps(pos, pos + step, pos + step + step, pos + step + step + step);
+
+	for (int x = x0; x < sseend; x += 4)
+	{
+		_mm_storeu_ps(varying + x, _mm_mul_ps(mpos, _mm_loadu_ps(w + x)));
+		mpos = _mm_add_ps(mpos, mstep);
+	}
+
+	pos += ssecount * step;
+	for (int x = sseend; x < x1; x++)
+	{
+		varying[x] = pos * w[x];
+		pos += step;
+	}
+}
+#endif
 
 static void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
@@ -283,10 +338,18 @@ static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
+#ifdef NO_SSE
 static float wrap(float value)
 {
 	return value - std::floor(value);
 }
+#else
+static float wrap(float value)
+{
+	__m128 mvalue = _mm_set_ss(value);
+	return _mm_cvtss_f32(_mm_sub_ss(mvalue, _mm_floor_ss(_mm_setzero_ps(), mvalue)));
+}
+#endif
 
 static uint32_t sampleTexture(float u, float v, const uint32_t* texPixels, int texWidth, int texHeight)
 {

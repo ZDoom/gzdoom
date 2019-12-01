@@ -121,6 +121,22 @@ void PolyHardwareTexture::CreateWipeTexture(int w, int h, const char *name)
 		mCanvas.reset(new DCanvas(0, 0, true));
 		mCanvas->Resize(w, h, false);
 	}
+
+	auto fb = static_cast<PolyFrameBuffer*>(screen);
+
+	fb->FlushDrawCommands();
+	DrawerThreads::WaitForWorkers();
+
+	uint32_t* dest = (uint32_t*)mCanvas->GetPixels();
+	uint32_t* src = (uint32_t*)fb->GetCanvas()->GetPixels();
+	int dpitch = mCanvas->GetPitch();
+	int spitch = fb->GetCanvas()->GetPitch();
+	int pixelsize = 4;
+
+	for (int y = 0; y < h; y++)
+	{
+		memcpy(dest + dpitch * (h - 1 - y), src + spitch * y, w * pixelsize);
+	}
 }
 
 void PolyHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)

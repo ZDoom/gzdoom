@@ -67,7 +67,7 @@ struct PolyLight
 class PolyDrawArgs
 {
 public:
-	void SetClipPlane(int index, const PolyClipPlane &plane) { mClipPlane[index] = plane; }
+	//void SetClipPlane(int index, const PolyClipPlane &plane) { mClipPlane[index] = plane; }
 	void SetTexture(const uint8_t *texels, int width, int height);
 	void SetTexture(FSoftwareTexture *texture, FRenderStyle style);
 	void SetTexture(FSoftwareTexture *texture, uint32_t translationID, FRenderStyle style);
@@ -86,7 +86,7 @@ public:
 	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
 	void SetDynLightColor(uint32_t color) { mDynLightColor = color; }
 
-	const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }
+	//const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }
 
 	bool WriteColor() const { return mWriteColor; }
 

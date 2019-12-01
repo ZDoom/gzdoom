@@ -53,6 +53,7 @@ namespace swrenderer
 		bool MirrorWorldToClip;
 	};
 
+#if 0
 	class SWModelRenderer : public FModelRenderer
 	{
 	public:
@@ -115,4 +116,5 @@ namespace swrenderer
 		TArray<FModelVertex> mVertexBuffer;
 		TArray<unsigned int> mIndexBuffer;
 	};
+#endif
 }

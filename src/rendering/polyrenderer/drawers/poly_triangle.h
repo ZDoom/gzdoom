@@ -66,14 +66,6 @@ public:
 	static void Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static void DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static bool IsBgra();
-
-	// Old softpoly/swrenderer interface
-	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
-	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
-	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
-	static void SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor);
-	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
-	static void PushDrawArgs(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args);
 };
 
 class PolyDepthStencil
@@ -116,30 +108,20 @@ public:
 	virtual void Load(PolyTriangleThreadData *thread, const void *vertices, int index) = 0;
 };
 
-class PolySWInputAssembly : public PolyInputAssembly
-{
-public:
-	void Load(PolyTriangleThreadData *thread, const void *vertices, int index) override;
-};
-
 class PolyTriangleThreadData
 {
 public:
 	PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes, int numa_start_y, int numa_end_y)
 		: core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes), numa_start_y(numa_start_y), numa_end_y(numa_end_y)
 	{
-		swVertexShader.drawargs = &drawargs;
 	}
 
 	void ClearDepth(float value);
 	void ClearStencil(uint8_t value);
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil *depthstencil);
 
-	void SetTransform(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 	void SetCullCCW(bool value) { ccw = value; }
 	void SetTwoSided(bool value) { twosided = value; }
-	void SetWeaponScene(bool value) { depthbias = value ? -1.0f : 0.0f; }
-	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; swVertexShader.modelInterpolationFactor = interpolationFactor; }
 
 	void SetInputAssembly(PolyInputAssembly *input) { inputAssembly = input; }
 	void SetVertexBuffer(const void *data) { vertices = data; }
@@ -164,7 +146,6 @@ public:
 
 	void UpdateClip();
 
-	void PushDrawArgs(const PolyDrawArgs &args);
 	void PushStreamData(const StreamData &data, const PolyPushConstants &constants);
 	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
 
@@ -248,10 +229,6 @@ public:
 	PolyLight polyLights[maxPolyLights];
 
 	PolyMainVertexShader mainVertexShader;
-
-	int modelFrame1 = -1;
-	int modelFrame2 = -1;
-	PolySWVertexShader swVertexShader;
 
 private:
 	ShadedTriVertex ShadeVertex(int index);
@@ -485,59 +462,6 @@ private:
 	PolyInputAssembly *input;
 };
 
-class PolySetTransformCommand : public PolyDrawerCommand
-{
-public:
-	PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld) : objectToClip(objectToClip), objectToWorld(objectToWorld) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetTransform(objectToClip, objectToWorld); }
-
-private:
-	const Mat4f *objectToClip;
-	const Mat4f *objectToWorld;
-};
-
-class PolySetCullCCWCommand : public PolyDrawerCommand
-{
-public:
-	PolySetCullCCWCommand(bool ccw) : ccw(ccw) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetCullCCW(ccw); }
-
-private:
-	bool ccw;
-};
-
-class PolySetTwoSidedCommand : public PolyDrawerCommand
-{
-public:
-	PolySetTwoSidedCommand(bool twosided) : twosided(twosided) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetTwoSided(twosided); }
-
-private:
-	bool twosided;
-};
-
-class PolySetWeaponSceneCommand : public PolyDrawerCommand
-{
-public:
-	PolySetWeaponSceneCommand(bool value) : value(value) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetWeaponScene(value); }
-
-private:
-	bool value;
-};
-
-class PolySetModelVertexShaderCommand : public PolyDrawerCommand
-{
-public:
-	PolySetModelVertexShaderCommand(int frame1, int frame2, float interpolationFactor) : frame1(frame1), frame2(frame2), interpolationFactor(interpolationFactor) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetModelVertexShader(frame1, frame2, interpolationFactor); }
-
-private:
-	int frame1;
-	int frame2;
-	float interpolationFactor;
-};
-
 class PolyClearDepthCommand : public PolyDrawerCommand
 {
 public:
@@ -610,16 +534,6 @@ public:
 private:
 	StreamData data;
 	PolyPushConstants constants;
-};
-
-class PolyPushDrawArgsCommand : public PolyDrawerCommand
-{
-public:
-	PolyPushDrawArgsCommand(const PolyDrawArgs &args) : args(args) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->PushDrawArgs(args); }
-
-private:
-	PolyDrawArgs args;
 };
 
 class PolyDrawCommand : public PolyDrawerCommand

@@ -73,31 +73,6 @@ void PolyTriangleDrawer::SetInputAssembly(const DrawerCommandQueuePtr &queue, Po
 	queue->Push<PolySetInputAssemblyCommand>(input);
 }
 
-void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld)
-{
-	queue->Push<PolySetTransformCommand>(objectToClip, objectToWorld);
-}
-
-void PolyTriangleDrawer::SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw)
-{
-	queue->Push<PolySetCullCCWCommand>(ccw);
-}
-
-void PolyTriangleDrawer::SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided)
-{
-	queue->Push<PolySetTwoSidedCommand>(twosided);
-}
-
-void PolyTriangleDrawer::SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable)
-{
-	queue->Push<PolySetWeaponSceneCommand>(enable);
-}
-
-void PolyTriangleDrawer::SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor)
-{
-	queue->Push<PolySetModelVertexShaderCommand>(frame1, frame2, interpolationFactor);
-}
-
 void PolyTriangleDrawer::SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices)
 {
 	queue->Push<PolySetVertexBufferCommand>(vertices);
@@ -111,11 +86,6 @@ void PolyTriangleDrawer::SetIndexBuffer(const DrawerCommandQueuePtr &queue, cons
 void PolyTriangleDrawer::SetLightBuffer(const DrawerCommandQueuePtr& queue, const void *lights)
 {
 	queue->Push<PolySetLightBufferCommand>(lights);
-}
-
-void PolyTriangleDrawer::PushDrawArgs(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args)
-{
-	queue->Push<PolyPushDrawArgsCommand>(args);
 }
 
 void PolyTriangleDrawer::SetDepthClamp(const DrawerCommandQueuePtr &queue, bool on)
@@ -285,17 +255,6 @@ void PolyTriangleThreadData::UpdateClip()
 	clip.top = MAX(MAX(viewport_y, scissor.top), 0);
 	clip.right = MIN(MIN(viewport_x + viewport_width, scissor.right), dest_width);
 	clip.bottom = MIN(MIN(viewport_y + viewport_height, scissor.bottom), dest_height);
-}
-
-void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Mat4f *newObjectToWorld)
-{
-	swVertexShader.objectToClip = newObjectToClip;
-	swVertexShader.objectToWorld = newObjectToWorld;
-}
-
-void PolyTriangleThreadData::PushDrawArgs(const PolyDrawArgs &args)
-{
-	drawargs = args;
 }
 
 void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPushConstants &constants)
@@ -593,33 +552,6 @@ ShadedTriVertex PolyTriangleThreadData::ShadeVertex(int index)
 	mainVertexShader.SPHEREMAP = (SpecialEffect == EFF_SPHEREMAP);
 	mainVertexShader.main();
 	return mainVertexShader;
-}
-
-void PolySWInputAssembly::Load(PolyTriangleThreadData *thread, const void *vertices, int index)
-{
-	if (thread->modelFrame1 == -1)
-	{
-		thread->swVertexShader.v1 = static_cast<const TriVertex*>(vertices)[index];
-	}
-	else
-	{
-		const FModelVertex &v1 = static_cast<const FModelVertex*>(vertices)[thread->modelFrame1 + index];
-		const FModelVertex &v2 = static_cast<const FModelVertex*>(vertices)[thread->modelFrame2 + index];
-
-		thread->swVertexShader.v1.x = v1.x;
-		thread->swVertexShader.v1.y = v1.y;
-		thread->swVertexShader.v1.z = v1.z;
-		thread->swVertexShader.v1.w = 1.0f;
-		thread->swVertexShader.v1.u = v1.u;
-		thread->swVertexShader.v1.v = v1.v;
-
-		thread->swVertexShader.v2.x = v2.x;
-		thread->swVertexShader.v2.y = v2.y;
-		thread->swVertexShader.v2.z = v2.z;
-		thread->swVertexShader.v2.w = 1.0f;
-		thread->swVertexShader.v2.u = v2.u;
-		thread->swVertexShader.v2.v = v2.v;
-	}
 }
 
 bool PolyTriangleThreadData::IsDegenerate(const ShadedTriVertex *const* vert)

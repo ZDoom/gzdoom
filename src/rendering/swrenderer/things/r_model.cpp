@@ -74,6 +74,7 @@ namespace swrenderer
 
 	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
+#if 0
 		SWModelRenderer renderer(thread, clip3DFloor, &WorldToClip, MirrorWorldToClip);
 
 		renderer.sector = actor->Sector;
@@ -94,6 +95,7 @@ namespace swrenderer
 		renderer.AddLights(actor);
 		renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
+#endif
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -116,6 +118,7 @@ namespace swrenderer
 
 	void RenderHUDModel(RenderThread *thread, DPSprite *psp, float ofsx, float ofsy)
 	{
+#if 0
 		SWModelRenderer renderer(thread, Fake3DTranslucent(), &thread->Viewport->WorldToClip, false);
 
 		AActor *playermo = players[consoleplayer].camera;
@@ -141,10 +144,12 @@ namespace swrenderer
 
 		renderer.RenderHUDModel(psp, ofsx, ofsy);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
+#endif
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
 
+#if 0
 	SWModelRenderer::SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor, Mat4f *worldToClip, bool mirrorWorldToClip)
 		: Thread(thread), Clip3DFloor(clip3DFloor), WorldToClip(worldToClip), MirrorWorldToClip(mirrorWorldToClip)
 	{
@@ -431,4 +436,5 @@ namespace swrenderer
 
 		PolyTriangleDrawer::SetModelVertexShader(swrenderer->Thread->DrawQueue, frame1, frame2, swrenderer->InterpolationFactor);
 	}
+#endif
 }

@@ -49,12 +49,12 @@ extern FString gpuStatOutput;
 
 #ifdef WIN32
 void I_PolyPresentInit();
-uint8_t *I_PolyPresentLock(int w, int h, int &pitch);
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch);
 void I_PolyPresentUnlock(int x, int y, int w, int h);
 void I_PolyPresentDeinit();
 #else
 void I_PolyPresentInit() { }
-uint8_t *I_PolyPresentLock(int w, int h, int &pitch) { pitch = 0; return nullptr; }
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch) { pitch = 0; return nullptr; }
 void I_PolyPresentUnlock(int x, int y, int w, int h) { }
 void I_PolyPresentDeinit() { }
 #endif
@@ -157,7 +157,7 @@ void PolyFrameBuffer::Update()
 		int pixelsize = 4;
 		const uint8_t *src = (const uint8_t*)mCanvas->GetPixels();
 		int pitch = 0;
-		uint8_t *dst = I_PolyPresentLock(w, h, pitch);
+		uint8_t *dst = I_PolyPresentLock(w, h, cur_vsync, pitch);
 		if (dst)
 		{
 #if 1
@@ -444,7 +444,7 @@ uint32_t PolyFrameBuffer::GetCaps()
 
 void PolyFrameBuffer::SetVSync(bool vsync)
 {
-	// This is handled in PolySwapChain::AcquireImage.
+	cur_vsync = vsync;
 }
 
 void PolyFrameBuffer::CleanForRestart()

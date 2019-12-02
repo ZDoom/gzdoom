@@ -19,14 +19,14 @@ namespace
 	int ClientHeight = 0;
 	bool CurrentVSync = false;
 
-	IDirect3D9 *d3d9 = nullptr;
-	IDirect3DDevice9 *device = nullptr;
-	IDirect3DSurface9 *surface = nullptr;
+	IDirect3D9Ex *d3d9 = nullptr;
+	IDirect3DDevice9Ex *device = nullptr;
+	IDirect3DSurface9* surface = nullptr;
 }
 
 void I_PolyPresentInit()
 {
-	d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+	Direct3DCreate9Ex(D3D_SDK_VERSION, &d3d9);
 	if (!d3d9)
 	{
 		I_FatalError("Direct3DCreate9 failed");
@@ -35,33 +35,32 @@ void I_PolyPresentInit()
 	RECT rect = {};
 	GetClientRect(Window, &rect);
 
-	CurrentVSync = vid_vsync;
 	ClientWidth = rect.right;
 	ClientHeight = rect.bottom;
 
 	D3DPRESENT_PARAMETERS pp = {};
 	pp.Windowed = true;
-	pp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+	pp.SwapEffect = D3DSWAPEFFECT_FLIPEX;
 	pp.BackBufferWidth = ClientWidth;
 	pp.BackBufferHeight = ClientHeight;
 	pp.BackBufferCount = 1;
 	pp.hDeviceWindow = Window;
-	pp.PresentationInterval = CurrentVSync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+	pp.PresentationInterval = CurrentVSync ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_IMMEDIATE;
 
-	HRESULT result = d3d9->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window, D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, &device);
+	HRESULT result = d3d9->CreateDeviceEx(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, Window, D3DCREATE_HARDWARE_VERTEXPROCESSING, &pp, nullptr, &device);
 	if (FAILED(result))
 	{
 		I_FatalError("IDirect3D9.CreateDevice failed");
 	}
 }
 
-uint8_t *I_PolyPresentLock(int w, int h, int &pitch)
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
 {
 	HRESULT result;
 
 	RECT rect = {};
 	GetClientRect(Window, &rect);
-	if (rect.right != ClientWidth || rect.bottom != ClientHeight || CurrentVSync != vid_vsync)
+	if (rect.right != ClientWidth || rect.bottom != ClientHeight || CurrentVSync != vsync)
 	{
 		if (surface)
 		{
@@ -69,18 +68,18 @@ uint8_t *I_PolyPresentLock(int w, int h, int &pitch)
 			surface = nullptr;
 		}
 
-		CurrentVSync = vid_vsync;
+		CurrentVSync = vsync;
 		ClientWidth = rect.right;
 		ClientHeight = rect.bottom;
 
 		D3DPRESENT_PARAMETERS pp = {};
 		pp.Windowed = true;
-		pp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+		pp.SwapEffect = D3DSWAPEFFECT_FLIPEX;
 		pp.BackBufferWidth = ClientWidth;
 		pp.BackBufferHeight = ClientHeight;
 		pp.BackBufferCount = 1;
 		pp.hDeviceWindow = Window;
-		pp.PresentationInterval = CurrentVSync ? D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
+		pp.PresentationInterval = CurrentVSync ? D3DPRESENT_INTERVAL_DEFAULT : D3DPRESENT_INTERVAL_IMMEDIATE;
 		device->Reset(&pp);
 	}
 
@@ -173,7 +172,7 @@ void I_PolyPresentUnlock(int x, int y, int width, int height)
 
 		result = device->EndScene();
 		if (SUCCEEDED(result))
-			device->Present(nullptr, nullptr, 0, nullptr);
+			device->PresentEx(nullptr, nullptr, 0, nullptr, CurrentVSync ? 0 : D3DPRESENT_FORCEIMMEDIATE);
 	}
 
 	backbuffer->Release();

@@ -83,6 +83,8 @@ private:
 	std::unique_ptr<PolyDepthStencil> mDepthStencil;
 	std::shared_ptr<DrawerCommandQueue> mDrawCommands;
 	RenderMemory mFrameMemory;
+
+	bool cur_vsync = false;
 };
 
 inline PolyFrameBuffer *GetPolyFrameBuffer() { return static_cast<PolyFrameBuffer*>(screen); }

@@ -73,7 +73,7 @@ EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
-EXTERN_CVAR (Int, vid_enablevulkan)
+EXTERN_CVAR (Int, vid_preferbackend)
 EXTERN_CVAR (Bool, cl_capfps)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -246,7 +246,7 @@ SDLVideo::SDLVideo ()
 	}
 
 #ifdef HAVE_VULKAN
-	Priv::vulkanEnabled = vid_enablevulkan == 1
+	Priv::vulkanEnabled = vid_preferbackend == 1
 		&& Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
 
 	if (Priv::vulkanEnabled)

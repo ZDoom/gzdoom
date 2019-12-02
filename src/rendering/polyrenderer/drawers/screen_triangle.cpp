@@ -346,8 +346,10 @@ static float wrap(float value)
 #else
 static float wrap(float value)
 {
-	__m128 mvalue = _mm_set_ss(value);
-	return _mm_cvtss_f32(_mm_sub_ss(mvalue, _mm_floor_ss(_mm_setzero_ps(), mvalue)));
+	__m128 f = _mm_set_ss(value);
+	__m128 t = _mm_cvtepi32_ps(_mm_cvttps_epi32(f));
+	__m128 r = _mm_sub_ps(t, _mm_and_ps(_mm_cmplt_ps(f, t), _mm_set_ss(1.0f)));
+	return _mm_cvtss_f32(_mm_sub_ss(f, r));
 }
 #endif
 

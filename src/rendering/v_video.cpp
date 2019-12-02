@@ -114,9 +114,19 @@ CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
 	// do it right without memory leaks
 
-	// 0 - OpenGL
-	// 1 - Vulkan
-	// 2 - SoftPoly v2
+	switch(self)
+	{
+	case 2:
+		Printf("Selecting SoftPoly backend...\n");
+		break;
+#ifdef HAVE_VULKAN
+	case 1:
+		Printf("Selecting Vulkan backend...\n");
+		break;
+#endif
+	default:
+		Printf("Selecting OpenGL backend...\n");
+	}
 
 	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
 }

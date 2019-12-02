@@ -363,7 +363,7 @@ static uint32_t sampleTexture(float u, float v, const void* texPixels, int texWi
 	else
 	{
 		uint32_t c = static_cast<const uint8_t*>(texPixels)[texelOffset];
-		return c | 0xff000000;
+		return (c << 16) | 0xff000000;
 	}
 }
 

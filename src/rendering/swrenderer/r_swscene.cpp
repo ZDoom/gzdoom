@@ -86,7 +86,7 @@ SWSceneDrawer::~SWSceneDrawer()
 
 sector_t *SWSceneDrawer::RenderView(player_t *player)
 {
-	if (!screen->IsPoly())
+	if (!V_IsTrueColor() || !screen->IsPoly())
 	{
 		// Avoid using the pixel buffer from the last frame
 		FBTextureIndex = (FBTextureIndex + 1) % 2;

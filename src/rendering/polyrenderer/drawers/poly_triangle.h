@@ -73,7 +73,6 @@ public:
 	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
 	static void Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static void DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
-	static bool IsBgra();
 };
 
 class PolyDepthStencil

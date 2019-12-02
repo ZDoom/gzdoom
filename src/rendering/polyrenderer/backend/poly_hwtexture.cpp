@@ -101,6 +101,7 @@ void PolyHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 	{
 		mCanvas.reset(new DCanvas(0, 0, texelsize == 4));
 		mCanvas->Resize(w, h, false);
+		bufferpitch = mCanvas->GetPitch();
 	}
 }
 

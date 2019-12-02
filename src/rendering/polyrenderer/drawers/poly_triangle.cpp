@@ -39,13 +39,6 @@
 #include "screen_triangle.h"
 #include "x86.h"
 
-static bool isBgraRenderTarget = false;
-
-bool PolyTriangleDrawer::IsBgra()
-{
-	return isBgraRenderTarget;
-}
-
 void PolyTriangleDrawer::ClearDepth(const DrawerCommandQueuePtr &queue, float value)
 {
 	queue->Push<PolyClearDepthCommand>(value);
@@ -63,7 +56,6 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	int dest_height = canvas->GetHeight();
 	int dest_pitch = canvas->GetPitch();
 	bool dest_bgra = canvas->IsBgra();
-	isBgraRenderTarget = dest_bgra;
 
 	queue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil);
 }
@@ -413,7 +405,7 @@ void PolyTriangleThreadData::SetTexture(int unit, const void *pixels, int width,
 	textures[unit].pixels = pixels;
 	textures[unit].width = width;
 	textures[unit].height = height;
-	textures[unit].bgra = true;
+	textures[unit].bgra = bgra;
 }
 
 void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode drawmode)

@@ -136,9 +136,12 @@ namespace swrenderer
 
 		RenderActorView(player->mo, true, false);
 
-		auto copyqueue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
-		copyqueue->Push<MemcpyCommand>(videobuffer, bufferpitch, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
-		DrawerThreads::Execute(copyqueue);
+		if (videobuffer != target->GetPixels())
+		{
+			auto copyqueue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
+			copyqueue->Push<MemcpyCommand>(videobuffer, bufferpitch, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
+			DrawerThreads::Execute(copyqueue);
+		}
 
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();

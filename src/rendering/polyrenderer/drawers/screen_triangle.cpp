@@ -425,6 +425,20 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		}*/
 		return;
 	}
+	else if (thread->EffectState == SHADER_Paletted) // func_paletted
+	{
+		int texWidth = thread->textures[0].width;
+		int texHeight = thread->textures[0].height;
+		const void* texPixels = thread->textures[0].pixels;
+		bool texBgra = thread->textures[0].bgra;
+
+		const uint32_t* lut = (const uint32_t*)thread->textures[1].pixels;
+
+		for (int x = x0; x < x1; x++)
+		{
+			fragcolor[x] = lut[RPART(sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra))] | 0xff000000;
+		}
+	}
 	else if (thread->EffectState == SHADER_NoTexture) // func_notexture
 	{
 		uint32_t a = (int)(streamdata.uObjectColor.a * 255.0f);

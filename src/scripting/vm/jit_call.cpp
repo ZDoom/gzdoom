@@ -78,7 +78,7 @@ void JitCompiler::EmitVMCall(asmjit::X86Gp vmfunc, VMFunction *target)
 	if (numparams != B)
 		I_Error("OP_CALL parameter count does not match the number of preceding OP_PARAM instructions");
 
-	if ((pc - 1)->op == OP_VTBL)
+	if (pc > sfunc->Code && (pc - 1)->op == OP_VTBL)
 		EmitVtbl(pc - 1);
 
 	FillReturns(pc + 1, C);
@@ -318,7 +318,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 {
 	using namespace asmjit;
 
-	if ((pc - 1)->op == OP_VTBL)
+	if (pc > sfunc->Code && (pc - 1)->op == OP_VTBL)
 	{
 		I_Error("Native direct member function calls not implemented\n");
 	}

@@ -300,13 +300,13 @@ void I_PolyPresentUnlock(int x, int y, int width, int height)
 	{
 		clearrects[count].x = x + width;
 		clearrects[count].y = y;
-		clearrects[count].x = ClientWidth - clearrects[count].x;
-		clearrects[count].y = height - clearrects[count].y;
+		clearrects[count].w = ClientWidth - clearrects[count].x;
+		clearrects[count].h = height;
 		count++;
 	}
 
 	if (count > 0)
-		SDL_FillRects(windowsurface, clearrects, count, 0xff000000);
+		SDL_FillRects(windowsurface, clearrects, count, SDL_MapRGBA(windowsurface->format, 0, 0, 0, 255));
 
 	SDL_Rect dstrect;
 	dstrect.x = x;

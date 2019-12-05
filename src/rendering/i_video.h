@@ -1,6 +1,7 @@
 #ifndef __I_VIDEO_H__
 #define __I_VIDEO_H__
 
+#include <cstdint>
 
 class DFrameBuffer;
 

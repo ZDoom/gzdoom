@@ -359,7 +359,7 @@ SDLVideo::SDLVideo ()
 	}
 	else if (Priv::softpolyEnabled)
 	{
-		Priv::CreateWindow(SDL_WINDOW_HIDDEN);
+		Priv::CreateWindow(SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL);
 	}
 #endif
 }

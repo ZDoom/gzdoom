@@ -139,6 +139,9 @@ namespace swrenderer
 		int texwidth = tex->GetPhysicalWidth();
 		int texheight = tex->GetPhysicalHeight();
 
+		dc_viewport = thread->Viewport.get();
+		dc_textureheight = texheight;
+
 		vstepY *= texheight;
 
 		for (int x = sx0; x < sx1; x++)

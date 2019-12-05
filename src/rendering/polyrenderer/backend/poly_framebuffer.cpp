@@ -8,6 +8,8 @@
 #include "g_game.h"
 #include "gamedata/fonts/v_text.h"
 
+#include "rendering/i_video.h"
+
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/utility/hw_cvars.h"
@@ -46,18 +48,6 @@ extern int current_rendered_commandbuffers;
 extern bool gpuStatActive;
 extern bool keepGpuStatActive;
 extern FString gpuStatOutput;
-
-#ifdef WIN32
-void I_PolyPresentInit();
-uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch);
-void I_PolyPresentUnlock(int x, int y, int w, int h);
-void I_PolyPresentDeinit();
-#else
-void I_PolyPresentInit() { }
-uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch) { pitch = 0; return nullptr; }
-void I_PolyPresentUnlock(int x, int y, int w, int h) { }
-void I_PolyPresentDeinit() { }
-#endif
 
 PolyFrameBuffer::PolyFrameBuffer(void *hMonitor, bool fullscreen) : Super(hMonitor, fullscreen) 
 {

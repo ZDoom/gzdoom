@@ -955,3 +955,20 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 	return result == VK_SUCCESS;
 }
 #endif
+
+void I_PolyPresentInit()
+{
+}
+
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
+{
+	return nullptr;
+}
+
+void I_PolyPresentUnlock(int x, int y, int w, int h)
+{
+}
+
+void I_PolyPresentDeinit()
+{
+}

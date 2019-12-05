@@ -1834,34 +1834,6 @@ OptionValue BufferCounts
 }
 
 
-OptionString SoundOutputsWindows
-{
-	"Default",		"$OPTVAL_DEFAULT"
-	"DirectSound",	"$OPTSTR_DIRECTSOUND"
-	"WASAPI",		"$OPTSTR_WASAPI"
-	"ASIO",			"$OPTSTR_ASIO"
-	"WaveOut",		"$OPTSTR_WAVEOUT"
-	"No sound",		"$OPTSTR_NOSOUND"
-}
-
-
-OptionString SoundOutputsUnix
-{
-	"Default",		"$OPTVAL_DEFAULT"
-	"OSS",			"$OPTSTR_OSS"
-	"ALSA",			"$OPTSTR_ALSA"
-	"SDL",			"$OPTSTR_SDL"
-	"ESD",			"$OPTSTR_ESD"
-	"PulseAudio",	"$OPTSTR_PULSEAUDIO"
-	"No sound",		"$OPTSTR_NOSOUND"
-}
-
-OptionString SoundOutputsMac
-{
-	"Core Audio",		"$OPTSTR_COREAUDIO"
-	"No sound",			"$OPTSTR_NOSOUND"
-}
-
 OptionString ALDevices
 {
 	// filled in by the sound code

@@ -6,7 +6,7 @@ Inferno,TXT_D1E3,,,,,,Πυρ το Εξώτερον,,,,,,,,インフェルノ,연
 Thy Flesh Consumed,TXT_D1E4,"The episode and levels' names in E4 are taken from the Bible.
 
 Proverbs 5:11",,,Tvé tělo pozřeto,Dein Leib verzehrt,Η Σάρκα σου θα Καταναλωθεί,Via Karno Konsumita,Tu Carne Consumida,,Lihasi kulutettu,Votre Chair Consumée,Húsod megemésztetik,La tua Carne Consumata,焦がす汝の身,쇠패해진 그대의 육신,Uw verbruikte vlees,Ciało Twe Zwiotczeje,Tua Carne Consumida,No Consumir-se da Carne,Carnea ta fără de vlagă,Твоя плоть истощена,Твоје месо строшено
-Hell On Earth,TXT_D2E1,,,,Peklo na zemi,Hölle auf Erden,Αρμαγεδδών,Infero Sur La Tero,Infierno en la Tierra,,Helvetti maan päällä,Enfer sur Terre,Pokol a Földön,Inferno sulla Terra,第三惑星:地獄,지상에 강림한 지옥,De hel op aarde,Piekło na Ziemi,Inferno na Terra,,Iadul pe pământ,Ад на Земле,Пакао на земљи
+Hell On Earth,TXT_D2E1,,,,Peklo na zemi,Hölle auf Erden,Αρμαγεδδών,Infero Sur La Tero,Infierno en la Tierra,,Helvetti maan päällä,Enfer sur Terre,Pokol a Földön,Inferno sulla Terra,第三惑星:地獄,지상에 강림한 지옥,De hel op aarde,Piekło na Ziemi,Inferno na Terra,,Iadul pe pământ,Ад на Земле,Пакао на Земљи
 No Rest for the Living,TXT_D2E2,"References ""No rest for the wicked"" in Isaiah 48:22",,,Nemajíť živí pokoje,Keine Ruhe für die Lebenden,Καμία Ανάπαυση για τους Ζωντανούς,Nenia Ripozo por la Vivantoj,No hay Descanso para los Vivos,,Ei lepoa eläville,Pas de repos pour les vivants,Nincs békesség az élőnek,Nessun Riposo per i Vivi,休息なき生計,산 자에게 휴식은 없다,Geen rust voor de levenden,Brak Wytchnienia Dla Żywych,Não Há Descanso Para os Vivos,,Cei vii fără de odihnă,Нет покоя для живых,Нема одмора живима
 The Plutonia Experiment,TXT_PLUT_EP,,,,Experiment Plutonia,Das Plutonia Experiment,Το Πείραμα Πλουτώνια,La Eksperimento de Plutonia,El Experimento Plutonia,,Plutoniakokemus,L'expérience Plutonia,A Plutonia-kísérlet,L'Esperimento di Plutonia,プルトニア記,플루토니아 익스페리먼트,Het Plutonia experiment,Eksperyment Plutonia,O Experimento Plutonia,A Experiência Plutonia,Experimentul Plutonia,Эксперимент «Плутония»,Експеримент Плутонија
 TNT: Evilution,TXT_TNT_EP,,,,TNT: Zlovoluce,,ΤΝΤ: Κακοξέλιξη,TNT: Mavalucio,TNT: Malvolución,,TNT: Paholuutio,,,TNT: Malvoluzione,TNT:邪神化,TNT: 이블루션,Tnt: Evilutie,TNT: Ewolucja Zła,TNT: Malvolução,,,TNT: Дьяволюция,TNT: Евилуција
@@ -17,15 +17,15 @@ E1M1: Hangar,HUSTR_E1M1,,,,E1M1: Hangár,,E1Χ1: Υπόστεγο,E1M1: Hangaro,
 E1M2: Nuclear Plant,HUSTR_E1M2,,,,E1M2: Jaderná elektrárna,E1M2: Nuklearfabrik,E1Χ2: Πυρηνικό Εργοστάσιο,E1M2: Nuklea Centralo,E1M2: Planta Nuclear,,E1M2: Ydinvoimala,E1M2: Centrale Nucléaire,E1M2: Atomerőmű,E1M2: Centrale Nucleare,E1M2: 原子力発電所,E1M2: 원자력 발전소,E1m2: Kerncentrale,E1M2: Elektrownia Jądrowa,E1M2: Usina Nuclear,E1M2: Central Nuclear,E1M2: Uzina nucleară,E1M2: Атомная электростанция,E1M2: Нуклеарна електрана
 E1M3: Toxin Refinery,HUSTR_E1M3,,,,E1M3: Chemická rafinerie,E1M3: Giftraffinerie,E1Χ3: Διυλιστήριο Τοξινών,E1M3: Toksinrafinejo,E1M3: Refinería de Toxinas,,E1M3: Myrkkyjalostamo,E1M3: Raffinerie de Toxines,E1M3: Méregfinomító,E1M3: Raffineria delle Tossine,E1M3: 毒素精錬所 ,E1M3: 폐기물 정제소,E1m3: Giftstof raffinaderij,E1M3: Rafineria Toksyn,E1M3: Refinaria de Toxinas,,E1M3: Rafinăria de toxine,E1M3: Завод по переработке токсинов,E1M3: Рафинерија за токсине
 E1M4: Command Control,HUSTR_E1M4,,,,E1M4: Řídící velení,E1M4: Betriebssteuerung,E1Χ4: Κέντρο Ελέγχου,E1M4: Kontrolcentro,E1M4: Control de Mando,,E1M4: Komentohallinta,E1M4: Centre de Contrôle,E1M4: Parancsvezérlő,E1M4: Centrale di Comando,E1M4: 指令管制塔,E1M4: 지휘 통제소,E1m4: Commando controle,E1M4: Kontrola Dowodzenia,E1M4: Controle de Comando,E1M4: Controlo de Comando,E1M4: Comandă și control,E1M4: Командный пункт,E1M4: Заповедни центар
-E1M5: Phobos Lab,HUSTR_E1M5,,,,E1M5: Phobosská laboratoř,E1M5: Phobos-Labor,E1Χ5: Εργαστήριο Φόβου,E1M5: Fobo-Laboratorio,E1M5: Laboratorio de Phobos,,E1M5: Phoboksen laboratorio,E1M5: Laboratoires Phobos,E1M5: Phobos Laboratórium,E1M5: Laboratorio di Phobos,E1M5: フォボス研究所,E1M5: 포보스 연구소,E1m5: Phobos laboratorium,E1M5: Laboratoria Fobosa,E1M5: Laboratório de Fobos,,E1M5: Laboratorul Phobos,E1M5: Лаборатория на Фобосе,E1M5: Лабораторија на Фобосу
+E1M5: Phobos Lab,HUSTR_E1M5,,,,E1M5: Phobosská laboratoř,E1M5: Phobos-Labor,E1Χ5: Εργαστήριο Φόβου,E1M5: Fobo-Laboratorio,E1M5: Laboratorio de Phobos,,E1M5: Phoboksen laboratorio,E1M5: Laboratoires Phobos,E1M5: Phoboszi laboratórium,E1M5: Laboratorio di Phobos,E1M5: フォボス研究所,E1M5: 포보스 연구소,E1m5: Phobos laboratorium,E1M5: Laboratoria Fobosa,E1M5: Laboratório de Fobos,,E1M5: Laboratorul Phobos,E1M5: Лаборатория на Фобосе,E1M5: Лабораторија на Фобосу
 E1M6: Central Processing,HUSTR_E1M6,,,,E1M6: Centrální zpracování,E1M6: Zentralverarbeitung,E1Χ6: Κεντρική Επεξεργασία,E1M6: Centra Traktejo,E1M6: Procesador Central,,E1M6: Käsittelykeskus,E1M6: Centre de Traitement,E1M6: Központi feldolgozó,E1M6: Zona Elaboratori,E1M6: 中央処理施設,E1M6: 중앙 처리 본부,E1m6: Centrale verwerking,E1M6: Centralne Przetwarzanie,E1M6: Processamento Central,,E1M6: Prelucrare centrală,E1M6: Центральный пункт обработки,E1M6: Централна обрада
 E1M7: Computer Station,HUSTR_E1M7,,,,E1M7: Počítačová stanice,E1M7: Computerstation,E1Χ7: Σταθμός Υπολογιστών,E1M7: Komputilo-stacio,E1M7: Estación de Cómputo,,E1M7: Tietokoneasema,E1M7: Station Informatique,E1M7: Számítógépközpont,E1M7: Stazione dei Computer,E1M7: コンピューターステーション,E1M7: 컴퓨터 기지,E1m7: Computerstation,E1M7: Stacja Komputerowa,E1M7: Estação de Computadores,,E1M7: Stația de calculatoare,E1M7: Вычислительный центр,E1M7: Компјутерска станица
-E1M8: Phobos Anomaly,HUSTR_E1M8,,,,E1M8: Phobosská anomálie,E1M8: Phobos-Anomalie,E1Χ8: Ανωμαλία στον Φόβο,E1M8: Nenormalaĵo de Fobo,E1M8: Anomalía de Phobos,,E1M8: Phoboksen poikkeama,E1M8: Anomalie de Phobos,E1M8: Phobos-anomália,E1M8: L'anomalia di Phobos,E1M8: フォボスの変則,E1M8: 포보스 이상거점,E1m8: Phobos anomalie,E1M8: Anomalia Fobosa,E1M8: Anomalia de Fobos,,E1M8: Anomalia Phobos,E1M8: Аномалия Фобоса,E1M8: Аномалија на Фобосу
+E1M8: Phobos Anomaly,HUSTR_E1M8,,,,E1M8: Phobosská anomálie,E1M8: Phobos-Anomalie,E1Χ8: Ανωμαλία στον Φόβο,E1M8: Nenormalaĵo de Fobo,E1M8: Anomalía de Phobos,,E1M8: Phoboksen poikkeama,E1M8: Anomalie de Phobos,E1M8: Phoboszi anomália,E1M8: L'anomalia di Phobos,E1M8: フォボスの変則,E1M8: 포보스 이상거점,E1m8: Phobos anomalie,E1M8: Anomalia Fobosa,E1M8: Anomalia de Fobos,,E1M8: Anomalia Phobos,E1M8: Аномалия Фобоса,E1M8: Аномалија на Фобосу
 E1M9: Military Base,HUSTR_E1M9,,,,E1M9: Vojenská základna,E1M9: Militärbasis,E1Χ9: Στρατιωτική Βάση,E1M9: Militbazo,E1M9: Base Militar,,E1M9: Sotilastukikohta,E1M9: Base Militaire ,E1M9: Katonai bázis,E1M9: Base militare,E1M9: 軍事基地,E1M9: 군사 기지,E1m9: Militaire basis,E1M9: Baza Wojskowa,E1M9: Base Militar,,E1M9: Baza militară,E1M9: Военная база,E1M9: Војна база
-E2M1: Deimos Anomaly,HUSTR_E2M1,,,,E2M1: Deimosská anomálie,E2M1: Deimos-Anomalie,E2Χ1: Ανωμαλία στον Δείμο,E2M1: Nenormalaĵo de Dejmo,E2M1: Anomalía de Deimos,,E2M1: Deimoksen poikkeama,E2M1: Anomalie de Déimos,E2M1: Deimos-anomália,E2M1: L'anomalia di Deimos,E2M1: 異常なるダイモス,E2M1: 데이모스 이상거점,E2m1: Deimos anomalie,E2M1: Anomalia Deimosa,E2M1: Anomalia de Deimos,,E2M1: Anomalia Deimos,E2M1: Аномалия Деймоса,E2M1: Аномалија на Дејмосу
+E2M1: Deimos Anomaly,HUSTR_E2M1,,,,E2M1: Deimosská anomálie,E2M1: Deimos-Anomalie,E2Χ1: Ανωμαλία στον Δείμο,E2M1: Nenormalaĵo de Dejmo,E2M1: Anomalía de Deimos,,E2M1: Deimoksen poikkeama,E2M1: Anomalie de Déimos,E2M1: Deimoszi anomália,E2M1: L'anomalia di Deimos,E2M1: 異常なるダイモス,E2M1: 데이모스 이상거점,E2m1: Deimos anomalie,E2M1: Anomalia Deimosa,E2M1: Anomalia de Deimos,,E2M1: Anomalia Deimos,E2M1: Аномалия Деймоса,E2M1: Аномалија на Дејмосу
 E2M2: Containment Area,HUSTR_E2M2,,,,E2M2: Kontrolní oblast,E2M2: Lagerhalle,E2Χ2: Ζώνη Περιορισμού,E2M2: Enhavarejo,E2M2: Área de Confinamiento,,E2M2: Säilöntäalue,E2M2: Zone de Stockage,E2M2: Raktár,E2M2: Area di contenimento,E2M2: 収容エリア,E2M2: 화물 보관구역,E2m2: Inperkingsgebied,E2M2: Obszar Zastrzeżony,E2M2: Area de Contenção,E2M2: Área de Confinamento,E2M2: Zona de izolare,E2M2: Хранилище,E2M2: Складишта
 E2M3: Refinery,HUSTR_E2M3,,,,E2M3: Rafinerie,E2M3: Raffinerie,E2Χ3: Διυλιστήριο,E2M3: Refinejo,E2M3: Refinería,,E2M3: Jalostamo,E2M3: Raffinerie,E2M3: Finomító,E2M3: Raffineria,E2M3: 精製所,E2M3: 정제소,E2m3: Raffinaderij,E2M3: Rafineria,E2M3: Refinaria,,E2M3: Rafinărie,E2M3: Очистительный завод,E2M3: Рафинерија
-E2M4: Deimos Lab,HUSTR_E2M4,,,,E2M4: Deimosská laboratoř,E2M4: Deimos Labor,E2Χ4: Εργαστήριο Δείμου,E2M4: Dejmo-Laboratorio,E2M4: Laboratorio de Deimos,,E2M4: Deimoksen laboratorio,E2M4: Laboratoires Déimos,E2M4: Deimos Laboratórium,E2M4: Laboratorio di Deimos,E2M4: ダイモス研究所,E2M4: 데이모스 연구소,E2m4: Deimos laboratorium,E2M4: Laboratoria Deimosa,E2M4: Laboratório de Deimos,,E2M4: Laboratorul Deimos,E2M4: Лаборатория на Деймосе,E2M4: Лабораторија на Дејмосу
+E2M4: Deimos Lab,HUSTR_E2M4,,,,E2M4: Deimosská laboratoř,E2M4: Deimos Labor,E2Χ4: Εργαστήριο Δείμου,E2M4: Dejmo-Laboratorio,E2M4: Laboratorio de Deimos,,E2M4: Deimoksen laboratorio,E2M4: Laboratoires Déimos,E2M4: Deimoszi laboratórium,E2M4: Laboratorio di Deimos,E2M4: ダイモス研究所,E2M4: 데이모스 연구소,E2m4: Deimos laboratorium,E2M4: Laboratoria Deimosa,E2M4: Laboratório de Deimos,,E2M4: Laboratorul Deimos,E2M4: Лаборатория на Деймосе,E2M4: Лабораторија на Дејмосу
 E2M5: Command Center,HUSTR_E2M5,,,,E2M5: Řídící centrum,E2M5: Kommandozentrum,E2Χ5: Κέντρο Διοίκησης,E2M5: Komandcentro,E2M5: Centro de Mando,,E2M5: Komentokeskus,E2M5: Centre de Commandement,E2M5: Parancsnoki központ,E2M5: Centro di Comando,E2M5: 指令本部,E2M5: 사령부,E2m5: Commando centrum,E2M5: Centrum Dowodzenia,E2M5: Centro de Comando,,E2M5: Centru de comandă,E2M5: Командный центр,E2M5: Командни центар
 E2M6: Halls of the Damned,HUSTR_E2M6,,,,E2M6: Chodby zatracených,E2M6: Säle der Verdammten,E2X6: Διάδρομοι των Κολασμένων,E2M6: Koridoroj de La Damnitaj,E2M6: Salones de los Malditos,,E2M6: Kirottujen salit,E2M6: Halls des Damnés,E2M6: Az átkozottak csarnokai,E2M6: Sale dei Dannati,E2M6: ダムドの会堂,E2M6: 저주받은 회랑,E2m6: Zalen van de verdoemden,E2M6: Korytarze Przeklętych,E2M6: Salões dos Condenados,,E2M6: Camerele blestemaților,E2M6: Залы проклятых,E2M6: Дворана проклетих
 E2M7: Spawning Vats,HUSTR_E2M7,,,,E2M7: Plodné kádě,E2M7: Materialisationskammern,E2X7: Δεξαμενές Γέννησης,E2M7: Nasko-kuvegoj,E2M7: Silos de Materialización,,E2M7: Sikiämissammiot,E2M7: Cuves de Reproduction,E2M7: Szaporító tartályok,E2M7: Vasche di Riproduzione,E2M7: 産卵桶,E2M7: 산란독,E2m7: Materialisatie kamers,E2M7: Kadzie Reprodukcyjne,E2M7: Cubas de Desova,,E2M7: Cuve de reproducere,E2M7: Нерестилище,E2M7: Размножавалишта
@@ -44,7 +44,7 @@ E4M1: Hell Beneath,HUSTR_E4M1,Proverbs 15:24,,,E4M1: Peklo v hlubinách,E4M1: Di
 E4M2: Perfect Hatred,HUSTR_E4M2,Psalm 139:22,,,E4M2: Naprostá nenávist,E4M2: Perfekter Hass,E4Χ2: Τέλειο Μίσος,E4M2: Perfekta Malamo,E4M2: Odio Perfecto,,E4M2: Kaikella vihalla,E4M2: Une Parfaite Haine,E4M2: Teljes gyűlölettel,E4M2: Odio Perfetto,E4M2: 完全なる憎悪,E4M2: 완벽한 증오,E4m2: Perfecte haat,E4M2: Pełnia Nienawiści,E4M2: Ódio Perfeito,,E4M2: Ură desăvârșită,E4M2: Полная ненависть,E4M2: Крајња мржња
 E4M3: Sever The Wicked,HUSTR_E4M3,Matthew 13:49,,,E4M3: Oddělit zkažené,E4M3: Scheidet die Bösen,E4Χ3: Ξερίζωσε τους Πονηρούς,E4M3: Apartigi la Malbonulojn,E4M3: Cercena a los impíos,,E4M3: Erottavat pahat,E4M3: Séparer les Vicieux,E4M3: Felnégyelni a bűnösöket,E4M3: Separeranno I Cattivi,E4M3: 邪悪を絶つ,E4M3: 악령처단,E4m3: Scheid de goddelozen af,E4M3: Oddzielą Niegodziwych,E4M3: Separarão os Perversos,E4M3: Separarão o Mal,E4M3: Să desparți pe cei răi,E4M3: Отделить злых,E4M3: Издвојити зле
 E4M4: Unruly Evil,HUSTR_E4M4,James 3:8,,,E4M4: Nezkrotitelné zlo,E4M4: Schandbare Worte,E4X4: Ασυγκράτητο Κακό,E4M4: Neretenebla Malbono,E4M4: Maldad Incontrolable,,E4M4: Levotointa pahuutta,E4M4: Un Mal Irrépréssible,E4M4: Féktelen gonosz,E4M4: Male Senza Posa,E4M4: 手に負えない悪,E4M4: 광폭한 악마,E4m4: Het weerbarstige kwaad,E4M4: Niepohamowane Zło,E4M4: Mal Irrefreável,E4M4: Mal que não Refreia,E4M4: Un rău fără astâmpăr,E4M4: Неудержимое зло,Е4М4: Немирно зло
-E4M5: They Will Repent,HUSTR_E4M5,Luke 16:30,,,E4M5: Budou činit pokání,E4M5: Sie werden bereuen,E4X5: Θα Μετανοήσουν,E4M5: Ili Pentos,E4M5: Se Arrepentirán,,E4M5: He parannuksen tekisivät,E4M5: Ils se repentiront,E4M5: Megtérnek majd,E4M5: Si Ravvederanno,E4M5: 奴等に後悔を,E4M5: 그들은 회개할 지어다,E4m5: Ze zullen berouw hebben,E4M5: Nawrócą Się,E4M5: Eles se Arrependerão,E4M5: Eles Arrepender-se-iam,E4M5: Se vor pocăi,E4M5: Они покаются,E4M5: Покајати ће се
+E4M5: They Will Repent,HUSTR_E4M5,Luke 16:30,,,E4M5: Budou činit pokání,E4M5: Sie werden bereuen,E4X5: Θα Μετανοήσουν,E4M5: Ili Pentos,E4M5: Se Arrepentirán,,E4M5: He parannuksen tekisivät,E4M5: Ils se repentiront,E4M5: Megtérnek majd,E4M5: Si Ravvederanno,E4M5: 奴等に後悔を,E4M5: 그들은 회개할 지어다,E4m5: Ze zullen berouw hebben,E4M5: Nawrócą Się,E4M5: Eles se Arrependerão,E4M5: Eles Arrepender-se-iam,E4M5: Se vor pocăi,E4M5: Они покаются,E4M5: Покајаће се
 E4M6: Against Thee Wickedly,HUSTR_E4M6,Psalm 139:20,,,E4M6: Při svých pletichách,E4M6: Feinde erheben sich,E4X6: Κακόβουλα Εναντίον Σου,E4M6: Kontraŭ Vi Malvirte,E4M6: Perversamente Contra Tí,,E4M6: Sinusta petollisesti,E4M6: D'une manière criminelle,E4M6: Hitványul ellened,E4M6: Contro di te Malvagiamente,E4M6: 汝への悪逆,E4M6: 그대와 짖궂게 맞서다,E4m6: Tegen de goddeloze,E4M6: Podstępnie Przeciw Tobie,E4M6: Contra Ti Perversamente,E4M6: Malvadamente Contra Ti,E4M6: Te grăiesc de rău,E4M6: Против тебя нечестиво,E4M6: Против тебе сплеткаре
 E4M7: And Hell Followed,HUSTR_E4M7,Revelation 6:8,,,E4M7: A peklo šlo za ním,E4M7: Und die Hölle folgte,E4X7: Και η Κόλαση Ακολούθησε,E4M7: Kaj Hades Sekvis,E4M7: Y el Infierno Continuó,E4M7: E o Inferno Seguiu,E4M7: Ja Tuonela seurasi,E4M7: Et l'Enfer Suivit,E4M7: És a pokol követé azt,E4M7: E l'inferno seguitava,E4M7: そして地獄は従った,E4M7: 그리고 지옥이 뒤따른다,E4m7: En de hel volgde,E4M7: A Piekło Szło Za Nim,E4M7: E o Inferno Seguiu,E4M7: Inferno o Seguia,E4M7: Iadul se ținea după el,E4M7: И последовал Ад,E4M7: И пакао иђаше
 E4M8: Unto The Cruel,HUSTR_E4M8,Proverbs 5:9,,,E4M8: Ukrutníku odevzdáš,E4M8: Deine Jahre dem Grausamen,E4X8: Προς Τους Ανελεήμονες,E4M8: Al La Kruelulo,E4M8: En lo Cruel,,E4M8: Armottomalle,E4M8: A un Homme cruel,E4M8: A kegyetlennek,E4M8: Al Crudele,E4M8: 容赦なき者へ,E4M8: 잔혹한 자에게로,E4m8: Naar de wrede,E4M8: Kto Nie Zna Litości,E4M8: Para os Cruéis,E4M8: Entregue a Cruéis,E4M8: Unuia fără de milă,E4M8: К мучителю,E4M8: Окрутним људима
@@ -126,7 +126,7 @@ Level 26: Bunker,PHUSTR_26,,,,Level 26: Bunkr,Level 26: Bunker,,Nivelo 26: Bunkr
 Level 27: Anti-christ,PHUSTR_27,,,,Level 27: Antikrist,Level 27: Antichrist,,Nivelo 27: Antikristo,Nivel 27: Anti-cristo,,Taso 27: Antikristus,NIVEAU 27: Anti-Christ,Antikrisztus,Level 27: Anticristo,Level 27: アンチキリスト,레벨 27: 적그리스도,Level 27: Antichrist,Level 27: Antychryst,Nível 27: Anticristo,,Nivelul 27: Antihrist,Level 27: Антихрист,Level 27: Антихрист
 Level 28: The Sewers,PHUSTR_28,,,,Level 28: Kanály,Level 28: Die Kanäle,,Nivelo 28: La Kanalo,Nivel 28: Las Alcantarillas,,Taso 28: Viemärit,NIVEAU 28: Les Egouts,A csatornák,Level 28: Le Fogne,Level 28: 下水道,레벨 28: 하수구,Level 28: De rioleringen,Level 28: Ścieki,Nível 28: Os Esgotos,,Nivelul 28: Canalizarea,Level 28: Канализация,Level 28: Канализација
 Level 29: Odyssey of Noises,PHUSTR_29,,,,Level 29: Odysea křiku,Level 29: Odyssee der Geräusche,,Nivelo 29: Vojaĝo de Sonoj,Nivel 29: Odisea de Ruidos,,Taso 29: Äänten harharetki,NIVEAU 29: Odysée de Bruits,A zajok bolyongása,Level 29: Odissea di Rumori,Level 29: オデッセイのノイズ,레벨 29: 속삭임의 여정,Level 29: Odyssee van geluiden,Level 29: Odyseja Wrzawy,Nível 29: Odisséia de Ruidos,,Nivelul 29: Odiseea zgomotelor,Level 29: Одиссея шумов,Level 29: Одисеја шумова
-Level 30: The Gateway of Hell,PHUSTR_30,,,,Level 30: Brána pekla,Level 30: Tor zur Hölle,,Nivelo 30: La Pordego de Infero,Nivel 30: La Puerta del Infierno,,Taso 30: Helvetin porttikäytävä,NIVEAU 30: La Porte des Enfers,Átjáró a pokolba,Level 30: La Porta dell'Inferno,Level 30: 地獄の関門,레벨 30: 지옥의 차원문,Level 30: De poort van de hel,Level 30: Brama Piekieł,Nível 30: O Portão do Inferno,,Nivelul 30: Poarta spre infern,Level 30: Врата ада,Level 30: Пролаз пакла
+Level 30: The Gateway of Hell,PHUSTR_30,,,,Level 30: Brána pekla,Level 30: Tor zur Hölle,,Nivelo 30: La Pordego de Inferno,Nivel 30: La Puerta del Infierno,,Taso 30: Helvetin porttikäytävä,NIVEAU 30: La Porte des Enfers,Átjáró a pokolba,Level 30: La Porta dell'Inferno,Level 30: 地獄の関門,레벨 30: 지옥의 차원문,Level 30: De poort van de hel,Level 30: Brama Piekieł,Nível 30: O Portão do Inferno,,Nivelul 30: Poarta spre infern,Level 30: Врата ада,Level 30: Пролаз пакла
 Level 31: Cyberden,PHUSTR_31,,,,Level 31: Kyberdoupě,Level 31: Cyberbau,,Nivelo 31: Cibornesto,Nivel 31: Ciber-guarida,,Taso 31: Kyberpesä,NIVEAU 31: Cyber-Antre,Kiberodú,Level 31: Cybergabbia,Level 31: サイバーの巣,레벨 31: 사이버소굴,,Level 31: Cybernora,Nível 31: Ciberantro,,,Level 31: Киберлогово,Level 31: Сајбер-јазбина
 Level 32: Go 2 It,PHUSTR_32,,,,Level 32: Jdi do toho,,,Nivelo 32: 2m Muĝo!,Nivel 32: ¡Ve A x Ello!,Nivel 32: ¡Ve Adelante!,Taso 32: Iske kii,NIVEAU 32: Go 2 It,Menj oda!,Level 32: Dacci Dentro,Level 32: 逝ってこい,레벨 32: 함 해 봐,Level 32: Ga ervoor,Level 32: Do Dzieła,Nível 32: Vai Fundo,Nível 32: Siga em Frente,Nivelul 32: Du-te la ei,Level 32: Иди к сему,Level 32: Иди ка њему
 ,,TNT: Evilution,,,,,,,,,,,,,,,,,,,,,
@@ -164,7 +164,7 @@ Level 31: Pharaoh,THUSTR_31,,,,Level 31: Faraón,Level 31: Pharao,,Nivelo 31: Fa
 Level 32: Caribbean,THUSTR_32,,,,Level 32: Karibik,Level 32: Karibik,,Nivelo 32: Karibio,Nivel 32: Caribeño,,Taso 32: Karibia,NIVEAU 32: Caraïbes,Karib-térség,Level 32: Caraibi,Level 32: カリビアン,레벨 32: 카리브해,Level 32: Caribisch,Level 32: Karaiby,Nível 32: Caribe,Nível 32: Caraíbas,Nivelul 32: Caraibe,Level 32: Карибы,Level 32: Кариби
 ,,Heretic,,,,,,,,,,,,,,,,,,,,,
 The Docks,HHUSTR_E1M1,,,,Přístav,Die Docks,,La Havenoj,Los Muelles,,Satamat,Les Docks,A Kikötő,Il Molo,埠頭,항구,De dokken,Doki,As Docas,,Docul,Доки,Лука
-The Dungeons,HHUSTR_E1M2,,,,Žaláře,Die Kerker,,La Karceroj,Los Calabozos,,Tyrmät,Le Donjon,A Kazamaták,I Sotterranei,地下牢,지하감옥,De kerkers,Lochy,As Masmorras,,Temnița,Темницы,Тамнице
+The Dungeons,HHUSTR_E1M2,,,,Žaláře,Die Kerker,,La Malliberejoj,Los Calabozos,,Tyrmät,Le Donjon,A Kazamaták,I Sotterranei,地下牢,지하감옥,De kerkers,Lochy,As Masmorras,,Temnița,Темницы,Тамнице
 The Gatehouse,HHUSTR_E1M3,,,,Vrátnice,Das Pförtnerhaus,,La Pordegejo,El Cuerpo de Guardia,,Porttitalo,Le Corps de Garde,A Kapuház,L'ingresso,門塔,문루,Het poortgebouw,Stróżówka,O Portão de Entrada,,Casa portarului,Привратницкая,Стражарница
 The Guard Tower,HHUSTR_E1M4,,,,Strážní věž,Der Wachturm,,La Gardturo,La Torre de Guardia,,Vartiotorni,La Tour de Garde,Az Őrtorony,La Torre di Guardia,監視塔,보초 누대,De wachttoren,Wieża Strażnicza,A Torre de Guarda,,Turnul de veghe,Сторожевая башня,Извидница
 The Citadel,HHUSTR_E1M5,,,,Citadela,Die Festung,,La Citadelo,La Ciudadela,,Linnake,La Citadelle,A Citadella,La Cittadella,要塞,거점,De citadel,Cytadela,A Cidadela,,Cetatea,Цитадель,Цитадела
@@ -188,7 +188,7 @@ The Azure Fortress,HHUSTR_E3M4,,,,Azurová pevnost,Die himmelblaue Festung,,La L
 The Ophidian Lair,HHUSTR_E3M5,,,,Hadí doupě,Das Schlangennest,,La Nestego de Ophidia,La Guarida Ofídica,,Käärmeiden pesä,Le Repaire des Ophidiens,Az Opfidiánok Fészke,L'antro degli Ophidian,オフィディアンの塒,오피디안의 소굴,Het slangennest,Gniazdo Węży,A Cova dos Ofídios,,Cuibul ofidienilor,Логово офидианов,Змијска јазбина
 The Halls of Fear,HHUSTR_E3M6,,,,Chodby strachu,Die Hallen der Angst,,La Koridoroj de Timo,Los Salones del Miedo,,Pelon salit,Les Couloirs de la Peur,A Félelem Folyosói,Le Sale della Paura,恐怖の館,공포의 회관,De zalen van angst,Korytarze Strachu,Os Salões do Medo,,Sălile groazei,Залы страха,Дворана страха
 The Chasm,HHUSTR_E3M7,,,,Propast,Der Abgrund,,La Fendego,El Abismo,,Rotko,Le Gouffre,A Szakadék,L'abisso,裂け目,깊은 골,De kloof,Przepaść,O Abismo,,Prăpastia,Пропасть,Понор лаве
-D'Sparil's Keep,HHUSTR_E3M8,,,,D'Sparilova pevnost,D'Sparils Außenposten,,Fortikaĵo de D'Sparil,Guarida de D'Sparil,,D'Sparilin linna,Le Donjon de D'Sparil,D'Sparil Terme,La Dimora di D'sparil,デ’スパリルの間,드'스파릴의 초소,D'Sparil's voorpost,Baszta D'Sparila,Fortaleza de D'Sparil,,Palatul lui D'sparil,Крепость Д'Спарила,Д'Спарилова кула
+D'Sparil's Keep,HHUSTR_E3M8,,,,D'Sparilova pevnost,D'Sparils Außenposten,,Ĉefturo de Desparilo,Guarida de D'Sparil,,D'Sparilin linna,Le Donjon de D'Sparil,D'Sparil Terme,La Dimora di D'sparil,デ’スパリルの間,드'스파릴의 초소,D'Sparil's voorpost,Baszta D'Sparila,Fortaleza de D'Sparil,,Palatul lui D'sparil,Крепость Д'Спарила,Д'Спарилова кула
 The Aquifer,HHUSTR_E3M9,,,,Zvodeň,Der Wasserspeicher,,La Akvigilo,El Acuífero,,Akviferi,L'Aquifère,A Víztorony,L'acquedotto,帯水層,대수층,Het water reservoir,Wodociąg,O Aquífero,,Galerii acvifere,Водоносный слой,Водоносник
 Catafalque,HHUSTR_E4M1,,,,Katafalk,Katafalk,,Katafalko,Catafalco,,Katafalkki,Le Catafalque,Ravatal,Catafalco,棺台,관대,Catafalk,Katafalk,Catafalco,,Catafalc,Катафалк,Одар
 Blockhouse,HHUSTR_E4M2,,,,Tvrzka,Blockhaus,,Blokhaŭso,Fortín,,Linnoitus,Le Fortin,Gerendaház,Blocco di Case,丸太小屋,특화점,Blokhuis,Blokhauz,O Forte,,Fort,Укрытие,Бункер
@@ -203,52 +203,52 @@ Ochre Cliffs,HHUSTR_E5M1,,,,Okrové útesy,Ockerfarbene Klippen,,Okro-klifo,Acan
 Rapids,HHUSTR_E5M2,,,,Peřeje,Stromschnellen,,Rapidfluoj,Rápidos,,Koski,Les Rapides,Zuhatagok,Rapide,奔流,여울,Stroomversnellingen,Katarakty,Corredeiras,,Ape repezi,Стремнина,Брзак
 Quay,HHUSTR_E5M3,,,,Nábřeží,Kai,,Kajo,Muelle,,Satamalaituri,Le Quai,Rakpart,Banchina,岸壁,부두,Kade,Wir,Cais,,Chei,Причал,10
 Courtyard,HHUSTR_E5M4,,,,Nádvoří,Schlosshof,,Korto,Patio,,Linnanpiha,La Cour,Pitvar,Cortile,中庭,안마당,Binnenplaats,Dziedziniec,Pátio,,Curte,Внутренний двор,Двориште
-Hydratyr,HHUSTR_E5M5,,,,Hydratýr,,,Akvotyr,Hydratyr,,,L'Hydratyr,Hidratáló,Hydratyr,ヒュドラテュール,식수공급처,,Hydratyr,,,Hidratir,Гидротир,Канализација
+Hydratyr,HHUSTR_E5M5,,,,Hydratýr,,,Akvotyr,Hydratyr,,,L'Hydratyr,Hidratáló,Hydratyr,ヒュドラテュール,식수공급처,,Hydratyr,Reservatório,,Hidratir,Гидротир,Канализација
 Colonnade,HHUSTR_E5M6,,,,Kolonáda,Kolonnaden,,Kolonaro,Columnata,,Pylväikkö,La Colonnade,Kolonnád,Colonnato,柱廊,열주의 길,Zuilengalerij,Kolumnada,Colunata,,Colonadă,Колоннада,Колонада
 Foetid Manse,HHUSTR_E5M7,,,,Smrdutá vila,Stinkendes Pfarrhaus,,Haladza Domego,Mansión Fétida,,Löyhkäävä kartano,Le Presbytère Fétide,Bűzös Parókia,Fetido Castello,悪臭の牧師館,역겨운 목사관,Stinkende pastorie,Cuchnąca Plebania,Mansão Fétida,,,Зловонный особняк,Фетидна кућа
-Field of Judgement,HHUSTR_E5M8,,,,Soudná pole,Richtstätte,,Kampo de Juĝo,Campo de Juicio,,Tuomion kenttä,Les Champs du Jugement,Az Itélet Mezeje,Campo del Giudizio,審判之地,심판의 평야,Plaats van oordeelsvorming,Pole Sądu,Campo do Julgamento,,Câmpul de Judecată,Поле высшего суда,Чистилиште
+Field of Judgement,HHUSTR_E5M8,,,,Soudná pole,Richtstätte,,Kampo de Juĝo,Campo de Juicio,,Tuomion kenttä,Les Champs du Jugement,Az Itélet Mezeje,Campo del Giudizio,審判之地,심판의 평야,Plaats van oordeelsvorming,Pole Sądu,Campo de Julgamento,,Câmpul de Judecată,Поле высшего суда,Чистилиште
 Skein of D'sparil,HHUSTR_E5M9,,,,Hejno D'Sparilovo,DSparils Bau,,Fadenaro de D'Sparil,Madeja de D'Sparil,,D'Sparilin vyyhti,L'échevaux de D'Sparil,D'Sparil Káosza,Groviglio di D'sparil,デ'スパリルの枷,드'스파릴의 타래,D'Sparil's gebouw,Motek D'Sparila,Meada de D'Sparil,,,Путаница Д'Спарила,Реке Д'Спарила
 ,,Strife,,,,,,,,,,,,,,,,,,,,,
-AREA 1: Sanctuary,TXT_STRIFE_MAP01,,,,ZÓNA 1: Svatyně,ZONE 1: Heiligtum,,,ÁREA 1: Santuario,,ALUE 1: Turvapaikka,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域,구역 1: 성소,Zone 1: Heiligdom,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
-AREA 2: Town,TXT_STRIFE_MAP02,,,,ZÓNA 2: Město,ZONE 2: Stadt,,,ÁREA 2: Pueblo,,ALUE 2: Kylä,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,"エリア 2: 町
+AREA 1: Sanctuary,TXT_STRIFE_MAP01,,,,ZÓNA 1: Svatyně,ZONE 1: Heiligtum,,AREO 1: Sanktejo,ÁREA 1: Santuario,,ALUE 1: Turvapaikka,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域,구역 1: 성소,Zone 1: Heiligdom,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
+AREA 2: Town,TXT_STRIFE_MAP02,,,,ZÓNA 2: Město,ZONE 2: Stadt,,AREO 2: Urbeto,ÁREA 2: Pueblo,,ALUE 2: Kylä,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,"エリア 2: 町
 ",구역 2: 마을,Zone 2: Stad,Strefa 2: Miasto,Área 2: Vila,,ZONA 2: Oraș,МЕСТНОСТЬ 2: Город,
-AREA 3: Front Base,TXT_STRIFE_MAP03,,,,ZÓNA 3: Základna Fronty,ZONE 3: Basis der Front,,,ÁREA 3: Base del Frente,,ALUE 3: Rintaman tukikohta,ZONE 3: Base du Front,3. Terület: Elülső bázis,AREA 3: Base del Fronte,エリア 3: フロント基地,구역 3: 프론트 기지,Zone 3: Front basis,Strefa 3: Baza Frontu,Área 3: Base da Frente,,ZONA 3: Baza Frontului,МЕСТНОСТЬ 3: База Сопротивления,
-AREA 4: Power Station,TXT_STRIFE_MAP04,,,,ZÓNA 4: Elektrárna,ZONE 4: Kraftwerk,,,ÁREA 4: Central Eléctrica,,ALUE 4: Voimalaitos,ZONE 4: Centrale,4. Terület: Erőmű,AREA 4: Centrale Elettrica,エリア 4: 発電所,구역 4: 발전소,Zone 4: Energiecentrale,Strefa 4: Elektrownia,Área 4: Usina de Energia,Área 4: Central Energética,,МЕСТНОСТЬ 4: Электростанция,
-AREA 5: Prison,TXT_STRIFE_MAP05,,,,ZÓNA 5: Vězení,ZONE 5: Gefängnis,,,ÁREA 5: Prisión,,ALUE 5: Vankila,ZONE 5: Prison,5. Terület: Börtön,AREA 5: Carcere,エリア 5: 刑務所,구역 5: 감옥,Zone 5: Gevangenis,Strefa 5: Więzienie,Área 5: Prisão,,ZONA 5: Închisoare,МЕСТНОСТЬ 5: Тюрьма,
-AREA 6: Sewers,TXT_STRIFE_MAP06,,,,ZÓNA 6: Stoky,ZONE 6: Kanalisation,,,ÁREA 6: Alcantarillas,,ALUE 6: Viemärit,ZONE 6: Egouts,6. Terület: Szennyvízcsatornák,AREA 6: Fogne,エリア 6: 下水道,구역 6: 하수도,Zone 6: Riolering,Strefa 6: Kanały,Área 6: Esgoto,,ZONA 6: Canal,МЕСТНОСТЬ 6: Канализация,
-AREA 7: Castle,TXT_STRIFE_MAP07,,,,ZÓNA 7: Hrad,ZONE 7: Burg,,,ÁREA 7: Castillo,,ALUE 7: Linna,ZONE 7: Château,7. Terület: Vár,AREA 7: Castello,エリア 7: 城,구역 7: 성,Zone 7: Kasteel,Strefa 7: Zamek,Área 7: Castelo,,ZONA 7: Castel,МЕСТНОСТЬ 7: Замок,
-AREA 8: Audience Chamber,TXT_STRIFE_MAP08,,,,ZÓNA 8: Audienční sál,ZONE 8: Audienzsaal,,,ÁREA 8: Cámara de Audiencias,,ALUE 8: Yleisösali,ZONE 8: Chambre d'Audience,8. Terület: Nézőtér,AREA 8: Sala delle Udienze,エリア 8: 観客席,구역 8: 알현실,Zone 8: Auditorium,Strefa 8: Izba Audiencji,Área 8: Câmara de Audiências,,ZONA 8: Camera de audiențe,МЕСТНОСТЬ 8: Приёмная,
-AREA 9: Castle: Programmer's Keep,TXT_STRIFE_MAP09,,,,ZÓNA 9: Hrad: Programátorovo doupě,ZONE 9: Burg: Unterkunft des Programmierers,,,ÁREA 9: Castillo: Guarida del Programador,,ALUE 9: Linna: Ohjelmoijan asema,ZONE 9: Château: Donjon du Programmeur,9. Terület: Vár: Programozó parcellája,AREA 9: Castello: Dimora del Programmatore,エリア 9: 城内:プログラマーの間,구역 9: 성: 프로그래머의 성채,Zone 9: Kasteel: Onderdak van de programmeur,Strefa 9: Zamek: Baszta Programisty,Área 9: Castelo: Torre do Programador,,,МЕСТНОСТЬ 9: Замок (Цитадель Программиста),
-AREA 10: New Front Base,TXT_STRIFE_MAP10,,,,ZÓNA 10: Nová základna Fronty,ZONE 10: Neue Basis der Front,,,ÁREA 10: Nueva Base del Frente,,ALUE 10: Uusi Rintaman tukikohta,ZONE 10: Nouvelle Base du Front,10. Terület: Új első bázis,AREA 10: Nuova Base del Fronte,エリア 10: 新フロント基地,구역 10: 새 프론트 기지,Zone 10: Nieuwe Front basis,Strefa 10: Nowa Baza Frontu,Área 10: Nova Base da Frente,,ZONA 10: Noua bază a Frontului,МЕСТНОСТЬ 10: Новая база Сопротивления,
-AREA 11: Borderlands,TXT_STRIFE_MAP11,,,,ZÓNA 11: Pohraničí,ZONE 11: Grenzgebiete,,,ÁREA 11: Tierras Fronterizas,,ALUE 11: Rajamaat,ZONE 11: Terres Sauvages,11. Terület: Peremvidék,AREA 11: Lande di Confine,エリア 11: 国境地帯,구역 11: 접경지,Zone 11: Grensgebieden,Strefa 11: Pogranicze,Área 11: Fronteira,,ZONA 11: Frontiere,МЕСТНОСТЬ 11: Пограничье,
-AREA 12: The Temple of the Oracle,TXT_STRIFE_MAP12,,,,ZÓNA 12: Věštcův chrám,ZONE 12: Der Tempel des Orakels,,,ÁREA 12: El Templo del Oráculo,,ALUE 12: Oraakkelin temppeli,ZONE 12: Temple de l'Oracle,12. Terület: Az Orákulum Temploma,AREA 12: Il Tempio dell'Oracolo,エリア 12: オラクルの神殿,구역 12: 오라클의 신전,Zone 12: De tempel van het Orakel,Strefa 12: Świątynia Wyroczni,Área 12: O Templo do Oráculo,,ZONA 12: Templul Oracolului,МЕСТНОСТЬ 12: Храм Оракула,
-AREA 13: Catacombs,TXT_STRIFE_MAP13,,,,ZÓNA 13: Katakomby,ZONE 13: Katakomben,,,ÁREA 13: Catacumbas,,ALUE 13: Katakombit,ZONE 13: Catacombes,13. Terület: Katakombák,AREA 13: Catacombe,エリア 13: 地下墓所,구역 13: 고대 묘지,Zone 13: Catacomben,Strefa 13: Katakumby,Área 13: Catacumbas,Área 13: Túmulos,ZONA 13: Catacombe,МЕСТНОСТЬ 13: Катакомбы,
-AREA 14: Mines,TXT_STRIFE_MAP14,,,,ZÓNA 14: Doly,ZONE 14: Die Minen,,,ÁREA 14: Minas,,ALUE 14: Kaivokset,ZONE 14: Mines,14. Terület: Bánya,AREA 14: Miniere,エリア 14: 鉱山,구역 14: 광산,Zone 14: De mijnen,Strefa 14: Kopalnia,Área 14: Minas,,ZONA 14: Mine,МЕСТНОСТЬ 14: Шахты,
-AREA 15: Fortress: Administration,TXT_STRIFE_MAP15,,,,ZÓNA 15: Pevnost: Administrace,ZONE 15: Festung: Administration,,,ÁREA 15: Fortaleza: Administración,,ALUE 15: Linnoitus: hallinto,ZONE 15: Forteresse: Administration,15. Terület: Erőd: Adminisztráció,AREA 15: Fortezza: Amministrazione,エリア 15: 要塞:管理室,구역 15: 요새: 중앙 관리소,Zone 15: Vesting: Administratieve organisatie,Strefa 15: Forteca: Administracja,Área 15: Fortaleza: Administração,,ZONA 15: Fortăreața: Administrația,МЕСТНОСТЬ 15: Крепость (Администрация),
-AREA 16: Fortress: Bishop's Tower,TXT_STRIFE_MAP16,,,,ZÓNA 16: Pevnost: Biskupova věž,ZONE 16: Festung: Bischofsturm,,,ÁREA 16: Fortaleza: Torre del Obispo,,ALUE 16: Linnoitus: Piispan torni,ZONE 16: Forteresse: Tour de l'évèque,16. Terület: Erőd: Püspök tornya,AREA 16: Fortezza: Torre del Vescovo,エリア 16: 要塞:ビショップの塔,구역 16: 요새: 비숍의 탑,Zone 16: Vesting: Bisschopstoren,Strefa 16: Forteca: Wieża Biskupa,Área 16: Fortaleza: Torre do Bispo,,ZONA 16: Fortăreața: Turnul Episcopului,МЕСТНОСТЬ 16: Крепость (Башня Епископа),
-AREA 17: Fortress: The Bailey,TXT_STRIFE_MAP17,,,,ZÓNA 17: Pevnost: Předhradí,ZONE 17: Festung: Vorhof,,,ÁREA 17: Fortaleza: El Patio,,ALUE 17: Linnoitus: ulkomuuri,ZONE 17: Forteresse: Mur d'enceinte,17. Terület: Erőd: Várfal,AREA 17: Fortezza: Bastione,エリア 17: 要塞:ベイリー,구역 17: 요새: 안뜰,Zone 17: Vesting: Voorplein,Strefa 17: Forteca: Mur Obronny,Área 17: Fortaleza: O Pátio,,,МЕСТНОСТЬ 17: Крепость (Двор),
-AREA 18: Fortress: Stores,TXT_STRIFE_MAP18,,,,ZÓNA 18: Pevnost: Sklady,ZONE 18: Festung: Lager,,,ÁREA 18: Fortaleza: Almacenes,,ALUE 18: Linnoitus: varastot,ZONE 18: Forteresse: Réserves,18. Terület: Erőd: Üzletek,AREA 18: Fortezza: Negozi,エリア 18: 要塞:商店,구역 18: 요새: 격납고,Zone 18: Vesting: Lager,Strefa 18: Forteca: Sklepy,Área 18: Fortaleza: Reservas,,ZONA 18: Fortăreața: Depozite,МЕСТНОСТЬ 18: Крепость (Склады),
-AREA 19: Fortress: Security Complex,TXT_STRIFE_MAP19,,,,ZÓNA 19: Pevnost: Bezpečnostní komplex,ZONE 19: Festung: Sicherheitsanlage,,,ÁREA 19: Fortaleza: Complejo de Seguridad,,ALUE 19: Linnoitus: turvakompleksi,ZONE 19: Forteresse: Complexe Sécurité,19. Terület: Erőd: Biztonsági Komplexum,AREA 19: Fortezza: Complesso di Sicurezza,エリア 19: 要塞:複合警備所,구역 19: 요새: 보안 담당 기지,Zone 19: Vesting: Beveiligingssysteem,Strefa 19: Forteca: Kompleks Ochronny,Área 19: Fortaleza: Complexo de Segurança,,,МЕСТНОСТЬ 19: Крепость (Охранный комплекс),
-AREA 20: Factory: Receiving,TXT_STRIFE_MAP20,,,,ZÓNA 20: Továrna: Příjem,ZONE 20: Fabrik: Empfang,,,ÁREA 20: Fábrica: Recepción,,ALUE 20: Tehdas: vastaanotto,ZONE 20: Usine: Réception,20. Terület: Gyár: Beszállítás,AREA 20: Fabbrica: Ricevimento,"エリア 20: 工場:受取所
+AREA 3: Front Base,TXT_STRIFE_MAP03,,,,ZÓNA 3: Základna Fronty,ZONE 3: Basis der Front,,AREO 3: Front-Bazo,ÁREA 3: Base del Frente,,ALUE 3: Rintaman tukikohta,ZONE 3: Base du Front,3. Terület: Elülső bázis,AREA 3: Base del Fronte,エリア 3: フロント基地,구역 3: 프론트 기지,Zone 3: Front basis,Strefa 3: Baza Frontu,Área 3: Base da Frente,,ZONA 3: Baza Frontului,МЕСТНОСТЬ 3: База Сопротивления,
+AREA 4: Power Station,TXT_STRIFE_MAP04,,,,ZÓNA 4: Elektrárna,ZONE 4: Kraftwerk,,AREO 4: Elektrocentralo,ÁREA 4: Central Eléctrica,,ALUE 4: Voimalaitos,ZONE 4: Centrale,4. Terület: Erőmű,AREA 4: Centrale Elettrica,エリア 4: 発電所,구역 4: 발전소,Zone 4: Energiecentrale,Strefa 4: Elektrownia,Área 4: Usina de Energia,Área 4: Central Energética,,МЕСТНОСТЬ 4: Электростанция,
+AREA 5: Prison,TXT_STRIFE_MAP05,,,,ZÓNA 5: Vězení,ZONE 5: Gefängnis,,AREO 5: Malliberejo,ÁREA 5: Prisión,,ALUE 5: Vankila,ZONE 5: Prison,5. Terület: Börtön,AREA 5: Carcere,エリア 5: 刑務所,구역 5: 감옥,Zone 5: Gevangenis,Strefa 5: Więzienie,Área 5: Prisão,,ZONA 5: Închisoare,МЕСТНОСТЬ 5: Тюрьма,
+AREA 6: Sewers,TXT_STRIFE_MAP06,,,,ZÓNA 6: Stoky,ZONE 6: Kanalisation,,AREO 6: Kloako,ÁREA 6: Alcantarillas,,ALUE 6: Viemärit,ZONE 6: Egouts,6. Terület: Szennyvízcsatornák,AREA 6: Fogne,エリア 6: 下水道,구역 6: 하수도,Zone 6: Riolering,Strefa 6: Kanały,Área 6: Esgoto,,ZONA 6: Canal,МЕСТНОСТЬ 6: Канализация,
+AREA 7: Castle,TXT_STRIFE_MAP07,,,,ZÓNA 7: Hrad,ZONE 7: Burg,,AREO 7: Kastelo,ÁREA 7: Castillo,,ALUE 7: Linna,ZONE 7: Château,7. Terület: Vár,AREA 7: Castello,エリア 7: 城,구역 7: 성,Zone 7: Kasteel,Strefa 7: Zamek,Área 7: Castelo,,ZONA 7: Castel,МЕСТНОСТЬ 7: Замок,
+AREA 8: Audience Chamber,TXT_STRIFE_MAP08,,,,ZÓNA 8: Audienční sál,ZONE 8: Audienzsaal,,AREO 8: Aŭdicencejo,ÁREA 8: Cámara de Audiencias,,ALUE 8: Yleisösali,ZONE 8: Chambre d'Audience,8. Terület: Nézőtér,AREA 8: Sala delle Udienze,エリア 8: 観客席,구역 8: 알현실,Zone 8: Auditorium,Strefa 8: Izba Audiencji,Área 8: Câmara de Audiências,,ZONA 8: Camera de audiențe,МЕСТНОСТЬ 8: Приёмная,
+AREA 9: Castle: Programmer's Keep,TXT_STRIFE_MAP09,,,,ZÓNA 9: Hrad: Programátorovo doupě,ZONE 9: Burg: Unterkunft des Programmierers,,AREO 9: Kastelo: Fortikaĵo de Programisto,ÁREA 9: Castillo: Guarida del Programador,,ALUE 9: Linna: Ohjelmoijan asema,ZONE 9: Château: Donjon du Programmeur,9. Terület: Vár: Programozó parcellája,AREA 9: Castello: Dimora del Programmatore,エリア 9: 城内:プログラマーの間,구역 9: 성: 프로그래머의 성채,Zone 9: Kasteel: Onderdak van de programmeur,Strefa 9: Zamek: Baszta Programisty,Área 9: Castelo: Torre do Programador,,,МЕСТНОСТЬ 9: Замок (Цитадель Программиста),
+AREA 10: New Front Base,TXT_STRIFE_MAP10,,,,ZÓNA 10: Nová základna Fronty,ZONE 10: Neue Basis der Front,,AREO 10: Nova Frontbazo,ÁREA 10: Nueva Base del Frente,,ALUE 10: Uusi Rintaman tukikohta,ZONE 10: Nouvelle Base du Front,10. Terület: Új első bázis,AREA 10: Nuova Base del Fronte,エリア 10: 新フロント基地,구역 10: 새 프론트 기지,Zone 10: Nieuwe Front basis,Strefa 10: Nowa Baza Frontu,Área 10: Nova Base da Frente,,ZONA 10: Noua bază a Frontului,МЕСТНОСТЬ 10: Новая база Сопротивления,
+AREA 11: Borderlands,TXT_STRIFE_MAP11,,,,ZÓNA 11: Pohraničí,ZONE 11: Grenzgebiete,,AREO 11: Limlando,ÁREA 11: Tierras Fronterizas,,ALUE 11: Rajamaat,ZONE 11: Terres Sauvages,11. Terület: Peremvidék,AREA 11: Lande di Confine,エリア 11: 国境地帯,구역 11: 접경지,Zone 11: Grensgebieden,Strefa 11: Pogranicze,Área 11: Fronteira,,ZONA 11: Frontiere,МЕСТНОСТЬ 11: Пограничье,
+AREA 12: The Temple of the Oracle,TXT_STRIFE_MAP12,,,,ZÓNA 12: Věštcův chrám,ZONE 12: Der Tempel des Orakels,,AREO 12: La Templo de La Oraklo,ÁREA 12: El Templo del Oráculo,,ALUE 12: Oraakkelin temppeli,ZONE 12: Temple de l'Oracle,12. Terület: Az Orákulum Temploma,AREA 12: Il Tempio dell'Oracolo,エリア 12: オラクルの神殿,구역 12: 오라클의 신전,Zone 12: De tempel van het Orakel,Strefa 12: Świątynia Wyroczni,Área 12: O Templo do Oráculo,,ZONA 12: Templul Oracolului,МЕСТНОСТЬ 12: Храм Оракула,
+AREA 13: Catacombs,TXT_STRIFE_MAP13,,,,ZÓNA 13: Katakomby,ZONE 13: Katakomben,,AREO 13: Katakombo,ÁREA 13: Catacumbas,,ALUE 13: Katakombit,ZONE 13: Catacombes,13. Terület: Katakombák,AREA 13: Catacombe,エリア 13: 地下墓所,구역 13: 고대 묘지,Zone 13: Catacomben,Strefa 13: Katakumby,Área 13: Catacumbas,Área 13: Túmulos,ZONA 13: Catacombe,МЕСТНОСТЬ 13: Катакомбы,
+AREA 14: Mines,TXT_STRIFE_MAP14,,,,ZÓNA 14: Doly,ZONE 14: Die Minen,,AREO 14: Minejo,ÁREA 14: Minas,,ALUE 14: Kaivokset,ZONE 14: Mines,14. Terület: Bánya,AREA 14: Miniere,エリア 14: 鉱山,구역 14: 광산,Zone 14: De mijnen,Strefa 14: Kopalnia,Área 14: Minas,,ZONA 14: Mine,МЕСТНОСТЬ 14: Шахты,
+AREA 15: Fortress: Administration,TXT_STRIFE_MAP15,,,,ZÓNA 15: Pevnost: Administrace,ZONE 15: Festung: Administration,,AREO 15: Fortreso: Administrejo,ÁREA 15: Fortaleza: Administración,,ALUE 15: Linnoitus: hallinto,ZONE 15: Forteresse: Administration,15. Terület: Erőd: Adminisztráció,AREA 15: Fortezza: Amministrazione,エリア 15: 要塞:管理室,구역 15: 요새: 중앙 관리소,Zone 15: Vesting: Administratieve organisatie,Strefa 15: Forteca: Administracja,Área 15: Fortaleza: Administração,,ZONA 15: Fortăreața: Administrația,МЕСТНОСТЬ 15: Крепость (Администрация),
+AREA 16: Fortress: Bishop's Tower,TXT_STRIFE_MAP16,,,,ZÓNA 16: Pevnost: Biskupova věž,ZONE 16: Festung: Bischofsturm,,AREO 16: Fortreso: Turo de Episkopo,ÁREA 16: Fortaleza: Torre del Obispo,,ALUE 16: Linnoitus: Piispan torni,ZONE 16: Forteresse: Tour de l'évèque,16. Terület: Erőd: Püspök tornya,AREA 16: Fortezza: Torre del Vescovo,エリア 16: 要塞:ビショップの塔,구역 16: 요새: 비숍의 탑,Zone 16: Vesting: Bisschopstoren,Strefa 16: Forteca: Wieża Biskupa,Área 16: Fortaleza: Torre do Bispo,,ZONA 16: Fortăreața: Turnul Episcopului,МЕСТНОСТЬ 16: Крепость (Башня Епископа),
+AREA 17: Fortress: The Bailey,TXT_STRIFE_MAP17,,,,ZÓNA 17: Pevnost: Předhradí,ZONE 17: Festung: Vorhof,,AREO 17: Fortreso: La Murego,ÁREA 17: Fortaleza: El Patio,,ALUE 17: Linnoitus: ulkomuuri,ZONE 17: Forteresse: Mur d'enceinte,17. Terület: Erőd: Várfal,AREA 17: Fortezza: Bastione,エリア 17: 要塞:ベイリー,구역 17: 요새: 안뜰,Zone 17: Vesting: Voorplein,Strefa 17: Forteca: Mur Obronny,Área 17: Fortaleza: O Pátio,,,МЕСТНОСТЬ 17: Крепость (Двор),
+AREA 18: Fortress: Stores,TXT_STRIFE_MAP18,,,,ZÓNA 18: Pevnost: Sklady,ZONE 18: Festung: Lager,,AREO 18: Fortreso: Stokejoj,ÁREA 18: Fortaleza: Almacenes,,ALUE 18: Linnoitus: varastot,ZONE 18: Forteresse: Réserves,18. Terület: Erőd: Üzletek,AREA 18: Fortezza: Negozi,エリア 18: 要塞:商店,구역 18: 요새: 격납고,Zone 18: Vesting: Lager,Strefa 18: Forteca: Sklepy,Área 18: Fortaleza: Reservas,,ZONA 18: Fortăreața: Depozite,МЕСТНОСТЬ 18: Крепость (Склады),
+AREA 19: Fortress: Security Complex,TXT_STRIFE_MAP19,,,,ZÓNA 19: Pevnost: Bezpečnostní komplex,ZONE 19: Festung: Sicherheitsanlage,,AREO 19: Fortreso: Sekurkomplekso,ÁREA 19: Fortaleza: Complejo de Seguridad,,ALUE 19: Linnoitus: turvakompleksi,ZONE 19: Forteresse: Complexe Sécurité,19. Terület: Erőd: Biztonsági Komplexum,AREA 19: Fortezza: Complesso di Sicurezza,エリア 19: 要塞:複合警備所,구역 19: 요새: 보안 담당 기지,Zone 19: Vesting: Beveiligingssysteem,Strefa 19: Forteca: Kompleks Ochronny,Área 19: Fortaleza: Complexo de Segurança,,,МЕСТНОСТЬ 19: Крепость (Охранный комплекс),
+AREA 20: Factory: Receiving,TXT_STRIFE_MAP20,,,,ZÓNA 20: Továrna: Příjem,ZONE 20: Fabrik: Empfang,,AREO 20: Fabrikejo: Ricevejo,ÁREA 20: Fábrica: Recepción,,ALUE 20: Tehdas: vastaanotto,ZONE 20: Usine: Réception,20. Terület: Gyár: Beszállítás,AREA 20: Fabbrica: Ricevimento,"エリア 20: 工場:受取所
 ",구역 20: 공장: 수납구역,Zone 20: Fabriek: Ontvangst,Strefa 20: Fabryka: Odbiór,Área 20: Fábrica: Recebimento,,ZONA 20: Fabrica: Recepție,МЕСТНОСТЬ 20: Фабрика (Приём),
-AREA 21: Factory: Manufacturing,TXT_STRIFE_MAP21,,,,ZÓNA 21: Továrna: Výroba,ZONE 21: Fabrik: Herstellung,,,ÁREA 21: Fábrica: Manufactura,,ALUE 21: Tehdas: valmistus,ZONE 21: Usine: Manufacture,21. Terület: Gyár: Sorozatgyártás,AREA 21: Fabbrica: Manifattura,エリア 21: 工場:製造機関,구역 21: 공장: 조립시설,Zone 21: Fabriek: Productie,Strefa 21: Fabryka: Przetwórstwo,Área 21: Fábrica: Manufatura,,,МЕСТНОСТЬ 21: Фабрика (Обработка),
-AREA 22: Factory: Forge,TXT_STRIFE_MAP22,,,,ZÓNA 22: Továrna: Kovárna,ZONE 22: Fabrik: Schmiede,,,ÁREA 22: Fábrica: Forja,,ALUE 22 Tehdas: paja,ZONE 22: Usine: Forge,22. Terület: Gyár: Kohó,AREA 22: Fabbrica: Fucina,エリア 22: 工場:鉄工所,구역 22: 공장: 제련소,Zone 22: Fabriek: Smederij,Strefa 22: Fabryka: Kuźnia,Área 22: Fábrica: Forja,,ZONA 22: Fabrica: Forja,МЕСТНОСТЬ 22: Фабрика (Кузня),
-AREA 23: Order Commons,TXT_STRIFE_MAP23,,,,ZÓNA 23: Náměstí Řádu,ZONE 23: Mensa des Ordens,,,ÁREA 23: Condominios de la Orden,,ALUE 23: Veljeskunnan alahuone,ZONE 23: Mess de l'Ordre,23. Terület: Rendi köztér,AREA 23: Camera dell'Ordine,エリア 23: オーダーコモンズ,구역 23: 오더 식당가,Zone 23: Mensa van de orde,Strefa 23: Wikt Zakonu,Área 23: Câmara da Ordem,,,МЕСТНОСТЬ 23: Поселение Ордена,
-AREA 24: Factory: Conversion Chapel,TXT_STRIFE_MAP24,,,,ZÓNA 24: Továrna: Kaple konverze,ZONE 24: Umwandlungskapelle,,,ÁREA 24: Fábrica: Capilla de Conversión,,ALUE 24: Tehdas: käännytyskappeli,ZONE 24: Usine: Chapelle de Conversion,24. Terület: A megtérés kápolnája,AREA 24: Fabbrica: Cappella di Conversione,エリア 24: 工場:改宗礼拝堂,구역 24: 공장: 전향실,Zone 24: Verbouwingskapel,Strefa 24: Fabryka: Kaplica Przemiany,Área 24: Fábrica: Capela de Conversão,,,МЕСТНОСТЬ 24: Часовня обращения,
-AREA 25: Catacombs: Ruined Temple,TXT_STRIFE_MAP25,,,,ZÓNA 25: Katakomby: Zničený chrám,ZONE 25: Katakomben: Zerstörter Tempel,,,ÁREA 25: Catacumbas: Templo Arruinado,,ALUE 25: Katakombit: temppeliraunio,ZONE 25: Catacombes: Temple Ruiné,25. Terület: Katakombák: Romtemplom,AREA 25: Catacombe: Tempio in Rovina,エリア 25: 地下墓所:没落した寺院,구역 25: 고대 묘지: 무너진 사원,Zone 25: Catacomben: Vernietigde tempel,Strefa 25: Katakumby: Zrujnowana Świątynia,Área 25: Catacumbas: Templo Arruinado,Área 25: Túmulos: Templo Arruinado,,МЕСТНОСТЬ 25: Катакомбы (Руины храма),
-AREA 26: Proving Grounds,TXT_STRIFE_MAP26,,,,ZÓNA 26: Vojenský újezd,ZONE 26: Testgelände,,,ÁREA 26: Campo de Pruebas,,ALUE 26: Koetuspaikka,ZONE 26: Terrain d'entraînement,26. Terület: Ígéretes föld,AREA 26: Banco di Prova,エリア 26: 試練場,구역 26: 증명의 전장,Zone 26: Testgebied,Strefa 26: Poligon Wojskowy,Área 26: Campo de Treinamento,Área 26: Campo de Treino,,МЕСТНОСТЬ 26: Испытательный полигон,
-AREA 27: The Lab,TXT_STRIFE_MAP27,,,,ZÓNA 27: Laboratoř,ZONE 27: Das Labor,,,ÁREA 27: El Laboratorio,,ALUE 27: Laboratorio,ZONE 27: Laboratoire,27. Terület: A labor,AREA 27: Il Laboratorio,エリア 27: 研究所,구역 27: 연구소,Zone 27: Het laboratorium,Strefa 27: Laboratorium,Área 27: O Laboratório,,ZONA 27: Laboratorul,МЕСТНОСТЬ 27: Лаборатория,
-AREA 28: Alien Ship,TXT_STRIFE_MAP28,,,,ZÓNA 28: Mimozemská Loď,ZONE 28: Außerirdisches Schiff,,,ÁREA 28: Nave Alienígena,,ALUE 28: Muukalaisalus,ZONE 28: Vaisseau Alien,28. Terület: Idegen űrhajó,AREA 28: Nave Aliena,エリア 28: エイリアンの船,구역 28: 외계 우주선,Zone 28: Buitenaards schip,Strefa 28: Statek Obcych,Área 28: Nave Alienígena,,ZONA 28: Nava extraterestră,МЕСТНОСТЬ 28: Корабль пришельцев,
-AREA 29: Entity's Lair,TXT_STRIFE_MAP29,,,,ZÓNA 29: Doupě Bytosti,ZONE 29: Das Nest der Entität,,,ÁREA 29: Escondite de la Entidad,,ALUE 29: Tosiolevan maja,ZONE 29: Demeure de L'Entité,,AREA 29: Tana dell'Entità,エリア 29: エンティティの隠れ家,구역 29: 엔티티의 소굴,Zone 29: Het nest van de entiteit,Strefa 29: Leże Bytu,Área 29: Covil da Entidade,,ZONA 29: Cuibul Entității,МЕСТНОСТЬ 29: Логово Сущности,
-AREA 30: Abandoned Front Base,TXT_STRIFE_MAP30,,,,ZÓNA 30: Opuštěná základna Fronty,ZONE 30: Verlassene Basis der Front,,,ÁREA 30: Base Abandonada del Frente,,ALUE 30: Hylätty Rintaman tukikohta,ZONE 30: Base Abandonnée du Front,30. Terület: Elhagyatott Előbázis,AREA 30: Base del Fronte abbandonata,エリア 30: 放棄された基地,구역 30: 버려진 프론트 기지,Zone 30: Verlaten frontbasis,Strefa 30: Opuszczona Baza Frontu,Área 30: Base da Frente Abandonada,,ZONA 30: Baza abandonată a Frontului,МЕСТНОСТЬ 30: Заброшенная база Сопротивления,
-AREA 31: Training Facility,TXT_STRIFE_MAP31,,,,ZÓNA 31: Výcvikové zařízení,ZONE 31: Trainingseinrichtung,,,ÁREA 31: Facilidad de Entrenamiento,,ALUE 31: Koulutuslaitos,ZONE 31: Complexe d'Entraînement,31. Terület: Képzési létesítmény,AREA 31: Struttura di Addestramento,エリア 31: 研修施設,구역 31: 훈련 시설,Zone 31: Trainingsfaciliteit,Strefa 31: Centrum Szkoleniowe,Área 31: Instalação de Treinamento,,ZONA 31: Spațiul de antrenament,МЕСТНОСТЬ 31: Тренировочный корпус,
-AREA 1: Sanctuary,TXT_STRIFE_MAP32,,,,ZÓNA 1: Útočiště,ZONE 1: Heiligtum,,,ÁREA 1: Santuario,,ALUE 1: Turvapaikka,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域 ,구역 1: 성소,Zone 1: Heiligdom,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
-AREA 2: Town,TXT_STRIFE_MAP33,,,,ZÓNA 2: Město,ZONE 2: Stadt,,,ÁREA 2: Pueblo,,ALUE 2: Kylä,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,エリア 2: 町,구역 2: 마을,Zone 2: Stad,Strefa 2: Miasto,Área 2: Vila,,ZONA 2: Oraș,МЕСТНОСТЬ 2: Город,
-AREA 3: Movement Base,TXT_STRIFE_MAP34,,,,ZÓNA 3: Rebelská základna,ZONE 3: Rebellenbasis,,,ÁREA 3: Base del Movimiento,,ALUE 3: Liikkeen tukikohta,ZONE 3: Base du Front,3. Terület: Mozgalmi Bázis,AREA 3: Base del Movimento,エリア 3: 移転基地,구역 3: 반군 기지,Zone 3: Front basis,Strefa 3: Baza Ruchu Oporu,Área 3: Base do Movimento,,,МЕСТНОСТЬ 3: База Сопротивления,
-AREA 35: Factory: Production,TXT_STRIFE_MAP35,,,,ZÓNA 35: Továrna: Produkce,ZONE 35: Fabrik: Produktion,,,ÁREA 35: Fábrica: Producción,,ALUE 35: Tehdas: tuotanto,ZONE 35: Usine: Production,35. Terület: Gyár: Termelés,AREA 35: Fabbrica: Produzione,エリア 35: 工場 : 生産ライン,구역 35: 공장: 제작실,Zone 35: Fabriek: Productie,Strefa 35: Fabryka: Produkcja,Área 35: Fábrica: Produção,,,МЕСТНОСТЬ 35: Фабрика (Производство),
-AREA 36: Castle Clash,TXT_STRIFE_MAP36,,,,ZÓNA 36: Střet na hradě,ZONE 36: Burg-Konflikt,,,ÁREA 36: Ataque al Castillo,,ALUE 36: Linnayhteenotto,ZONE 36: Bataille du Château,36: Terület: Vári ütközet,AREA 36: Collisione di Castello,エリア 36: キャッスルクラッシュ,구역 36: 성채간의 충돌,Zone 36: Kasteelconflict,Strefa 36: Potyczka w Zamku,Área 36: Ataque ao Castelo,,,МЕСТНОСТЬ 36: Битва в замке,
-AREA 37: Killing Grounds,TXT_STRIFE_MAP37,,,,ZÓNA 37: Zabíjecí zahrady,ZONE 37: Kampfgelände,,,ÁREA 37: Campo de Matanza,,ALUE 37: Tappotanner,ZONE 37: Zone de Chasse,37. Terület: Gyilkos Vidék,AREA 37: Campi di Uccisione,エリア 37: 殺害者の地,구역 37: 살육의 전장,Zone 37: Slagveld,Strefa 37: Śmiercionośny Grunt,Área 37: Campo de Matança,,,МЕСТНОСТЬ 37: Секторы обстрела,
-AREA 38: Ordered Chaos,TXT_STRIFE_MAP38,,,,ZÓNA 38: Nařízený chaos,ZONE 38: Geordnetes Chaos,,,ÁREA 38: Caos Ordenado,,ALUE 38: Järjestynyt kaaos,ZONE 38: Chaos Ordonné,38. Terület: Rendezett Káosz,AREA 38: Caos Ordinato,エリア 38: カオスの秩序,구역 38: 정돈된 혼란,Zone 38: Ordelijke chaos,Strefa 38: Uporządkowany Chaos,Área 38: Caos Ordenado,,,МЕСТНОСТЬ 38: Управляемый хаос,
+AREA 21: Factory: Manufacturing,TXT_STRIFE_MAP21,,,,ZÓNA 21: Továrna: Výroba,ZONE 21: Fabrik: Herstellung,,AREO 21: Fabrikejo,ÁREA 21: Fábrica: Manufactura,,ALUE 21: Tehdas: valmistus,ZONE 21: Usine: Manufacture,21. Terület: Gyár: Sorozatgyártás,AREA 21: Fabbrica: Manifattura,エリア 21: 工場:製造機関,구역 21: 공장: 조립시설,Zone 21: Fabriek: Productie,Strefa 21: Fabryka: Przetwórstwo,Área 21: Fábrica: Manufatura,,,МЕСТНОСТЬ 21: Фабрика (Обработка),
+AREA 22: Factory: Forge,TXT_STRIFE_MAP22,,,,ZÓNA 22: Továrna: Kovárna,ZONE 22: Fabrik: Schmiede,,AREO 22: Fabrikejo: Forĝejo,ÁREA 22: Fábrica: Forja,,ALUE 22 Tehdas: paja,ZONE 22: Usine: Forge,22. Terület: Gyár: Kohó,AREA 22: Fabbrica: Fucina,エリア 22: 工場:鉄工所,구역 22: 공장: 제련소,Zone 22: Fabriek: Smederij,Strefa 22: Fabryka: Kuźnia,Área 22: Fábrica: Forja,,ZONA 22: Fabrica: Forja,МЕСТНОСТЬ 22: Фабрика (Кузня),
+AREA 23: Order Commons,TXT_STRIFE_MAP23,,,,ZÓNA 23: Náměstí Řádu,ZONE 23: Mensa des Ordens,,AREO 23: Komunejo de La Ordeno,ÁREA 23: Condominios de la Orden,,ALUE 23: Veljeskunnan alahuone,ZONE 23: Mess de l'Ordre,23. Terület: Rendi köztér,AREA 23: Camera dell'Ordine,エリア 23: オーダーコモンズ,구역 23: 오더 식당가,Zone 23: Mensa van de orde,Strefa 23: Wikt Zakonu,Área 23: Câmara da Ordem,,,МЕСТНОСТЬ 23: Поселение Ордена,
+AREA 24: Factory: Conversion Chapel,TXT_STRIFE_MAP24,,,,ZÓNA 24: Továrna: Kaple konverze,ZONE 24: Umwandlungskapelle,,AREO 24: Fabrikejo: Konvert-Kapelo,ÁREA 24: Fábrica: Capilla de Conversión,,ALUE 24: Tehdas: käännytyskappeli,ZONE 24: Usine: Chapelle de Conversion,24. Terület: A megtérés kápolnája,AREA 24: Fabbrica: Cappella di Conversione,エリア 24: 工場:改宗礼拝堂,구역 24: 공장: 전향실,Zone 24: Verbouwingskapel,Strefa 24: Fabryka: Kaplica Przemiany,Área 24: Fábrica: Capela de Conversão,,,МЕСТНОСТЬ 24: Часовня обращения,
+AREA 25: Catacombs: Ruined Temple,TXT_STRIFE_MAP25,,,,ZÓNA 25: Katakomby: Zničený chrám,ZONE 25: Katakomben: Zerstörter Tempel,,AREO: 25: Katakombo: Ruiniga Templo,ÁREA 25: Catacumbas: Templo Arruinado,,ALUE 25: Katakombit: temppeliraunio,ZONE 25: Catacombes: Temple Ruiné,25. Terület: Katakombák: Romtemplom,AREA 25: Catacombe: Tempio in Rovina,エリア 25: 地下墓所:没落した寺院,구역 25: 고대 묘지: 무너진 사원,Zone 25: Catacomben: Vernietigde tempel,Strefa 25: Katakumby: Zrujnowana Świątynia,Área 25: Catacumbas: Templo Arruinado,Área 25: Túmulos: Templo Arruinado,,МЕСТНОСТЬ 25: Катакомбы (Руины храма),
+AREA 26: Proving Grounds,TXT_STRIFE_MAP26,,,,ZÓNA 26: Vojenský újezd,ZONE 26: Testgelände,,AREO 26: Provejo,ÁREA 26: Campo de Pruebas,,ALUE 26: Koetuspaikka,ZONE 26: Terrain d'entraînement,26. Terület: Ígéretes föld,AREA 26: Banco di Prova,エリア 26: 試練場,구역 26: 증명의 전장,Zone 26: Testgebied,Strefa 26: Poligon Wojskowy,Área 26: Campo de Treinamento,Área 26: Campo de Treino,,МЕСТНОСТЬ 26: Испытательный полигон,
+AREA 27: The Lab,TXT_STRIFE_MAP27,,,,ZÓNA 27: Laboratoř,ZONE 27: Das Labor,,AREO 27: La Labotorio,ÁREA 27: El Laboratorio,,ALUE 27: Laboratorio,ZONE 27: Laboratoire,27. Terület: A labor,AREA 27: Il Laboratorio,エリア 27: 研究所,구역 27: 연구소,Zone 27: Het laboratorium,Strefa 27: Laboratorium,Área 27: O Laboratório,,ZONA 27: Laboratorul,МЕСТНОСТЬ 27: Лаборатория,
+AREA 28: Alien Ship,TXT_STRIFE_MAP28,,,,ZÓNA 28: Mimozemská Loď,ZONE 28: Außerirdisches Schiff,,AREO 28: Alilanda Ŝipo,ÁREA 28: Nave Alienígena,,ALUE 28: Muukalaisalus,ZONE 28: Vaisseau Alien,28. Terület: Idegen űrhajó,AREA 28: Nave Aliena,エリア 28: エイリアンの船,구역 28: 외계 우주선,Zone 28: Buitenaards schip,Strefa 28: Statek Obcych,Área 28: Nave Alienígena,,ZONA 28: Nava extraterestră,МЕСТНОСТЬ 28: Корабль пришельцев,
+AREA 29: Entity's Lair,TXT_STRIFE_MAP29,,,,ZÓNA 29: Doupě Bytosti,ZONE 29: Das Nest der Entität,,AREO 29: Nestego de Estulo,ÁREA 29: Escondite de la Entidad,,ALUE 29: Tosiolevan maja,ZONE 29: Demeure de L'Entité,,AREA 29: Tana dell'Entità,エリア 29: エンティティの隠れ家,구역 29: 엔티티의 소굴,Zone 29: Het nest van de entiteit,Strefa 29: Leże Bytu,Área 29: Covil da Entidade,,ZONA 29: Cuibul Entității,МЕСТНОСТЬ 29: Логово Сущности,
+AREA 30: Abandoned Front Base,TXT_STRIFE_MAP30,,,,ZÓNA 30: Opuštěná základna Fronty,ZONE 30: Verlassene Basis der Front,,AREO 30: Forlasita Front-Bazo,ÁREA 30: Base Abandonada del Frente,,ALUE 30: Hylätty Rintaman tukikohta,ZONE 30: Base Abandonnée du Front,30. Terület: Elhagyatott Előbázis,AREA 30: Base del Fronte abbandonata,エリア 30: 放棄された基地,구역 30: 버려진 프론트 기지,Zone 30: Verlaten frontbasis,Strefa 30: Opuszczona Baza Frontu,Área 30: Base da Frente Abandonada,,ZONA 30: Baza abandonată a Frontului,МЕСТНОСТЬ 30: Заброшенная база Сопротивления,
+AREA 31: Training Facility,TXT_STRIFE_MAP31,,,,ZÓNA 31: Výcvikové zařízení,ZONE 31: Trainingseinrichtung,,AREO 31: Trejnejo,ÁREA 31: Facilidad de Entrenamiento,,ALUE 31: Koulutuslaitos,ZONE 31: Complexe d'Entraînement,31. Terület: Képzési létesítmény,AREA 31: Struttura di Addestramento,エリア 31: 研修施設,구역 31: 훈련 시설,Zone 31: Trainingsfaciliteit,Strefa 31: Centrum Szkoleniowe,Área 31: Instalação de Treinamento,,ZONA 31: Spațiul de antrenament,МЕСТНОСТЬ 31: Тренировочный корпус,
+AREA 1: Sanctuary,TXT_STRIFE_MAP32,,,,ZÓNA 1: Útočiště,ZONE 1: Heiligtum,,AREO 1: Sanktejo,ÁREA 1: Santuario,,ALUE 1: Turvapaikka,ZONE 1: Sanctuaire,1. Terület: Szentély,AREA 1: Santuario,エリア 1: 聖域 ,구역 1: 성소,Zone 1: Heiligdom,Strefa 1: Sanktuarium,Área 1: Santuário,,ZONA 1: Sanctuar,МЕСТНОСТЬ 1: Святилище,
+AREA 2: Town,TXT_STRIFE_MAP33,,,,ZÓNA 2: Město,ZONE 2: Stadt,,AREO 2: Urbeto,ÁREA 2: Pueblo,,ALUE 2: Kylä,ZONE 2: Ville,2. Terület: Város,AREA 2: Città,エリア 2: 町,구역 2: 마을,Zone 2: Stad,Strefa 2: Miasto,Área 2: Vila,,ZONA 2: Oraș,МЕСТНОСТЬ 2: Город,
+AREA 3: Movement Base,TXT_STRIFE_MAP34,,,,ZÓNA 3: Rebelská základna,ZONE 3: Rebellenbasis,,AREO 3: Movad-Bazo,ÁREA 3: Base del Movimiento,,ALUE 3: Liikkeen tukikohta,ZONE 3: Base du Front,3. Terület: Mozgalmi Bázis,AREA 3: Base del Movimento,エリア 3: 移転基地,구역 3: 반군 기지,Zone 3: Front basis,Strefa 3: Baza Ruchu Oporu,Área 3: Base do Movimento,,,МЕСТНОСТЬ 3: База Сопротивления,
+AREA 35: Factory: Production,TXT_STRIFE_MAP35,,,,ZÓNA 35: Továrna: Produkce,ZONE 35: Fabrik: Produktion,,AREO 35: Fabrikejo: Produktejo,ÁREA 35: Fábrica: Producción,,ALUE 35: Tehdas: tuotanto,ZONE 35: Usine: Production,35. Terület: Gyár: Termelés,AREA 35: Fabbrica: Produzione,エリア 35: 工場 : 生産ライン,구역 35: 공장: 제작실,Zone 35: Fabriek: Productie,Strefa 35: Fabryka: Produkcja,Área 35: Fábrica: Produção,,,МЕСТНОСТЬ 35: Фабрика (Производство),
+AREA 36: Castle Clash,TXT_STRIFE_MAP36,,,,ZÓNA 36: Střet na hradě,ZONE 36: Burg-Konflikt,,AREO 36: Batalo ĉe Kastelo,ÁREA 36: Ataque al Castillo,,ALUE 36: Linnayhteenotto,ZONE 36: Bataille du Château,36: Terület: Vári ütközet,AREA 36: Collisione di Castello,エリア 36: キャッスルクラッシュ,구역 36: 성채간의 충돌,Zone 36: Kasteelconflict,Strefa 36: Potyczka w Zamku,Área 36: Ataque ao Castelo,,,МЕСТНОСТЬ 36: Битва в замке,
+AREA 37: Killing Grounds,TXT_STRIFE_MAP37,,,,ZÓNA 37: Zabíjecí zahrady,ZONE 37: Kampfgelände,,AREO 37: Tereno de Mortigado,ÁREA 37: Campo de Matanza,,ALUE 37: Tappotanner,ZONE 37: Zone de Chasse,37. Terület: Gyilkos Vidék,AREA 37: Campi di Uccisione,エリア 37: 殺害者の地,구역 37: 살육의 전장,Zone 37: Slagveld,Strefa 37: Śmiercionośny Grunt,Área 37: Campo de Matança,,,МЕСТНОСТЬ 37: Секторы обстрела,
+AREA 38: Ordered Chaos,TXT_STRIFE_MAP38,,,,ZÓNA 38: Nařízený chaos,ZONE 38: Geordnetes Chaos,,AREO 38: Orda Kaoso,ÁREA 38: Caos Ordenado,,ALUE 38: Järjestynyt kaaos,ZONE 38: Chaos Ordonné,38. Terület: Rendezett Káosz,AREA 38: Caos Ordinato,エリア 38: カオスの秩序,구역 38: 정돈된 혼란,Zone 38: Ordelijke chaos,Strefa 38: Uporządkowany Chaos,Área 38: Caos Ordenado,,,МЕСТНОСТЬ 38: Управляемый хаос,
 ,,Hexen,,,,,,,,,,,,,,,,,,,,,
 Winnowing Hall,TXT_HEXEN_MAP01,,,,Sál prosetí,Trennungshalle,,Solenejo de Separado,Sala de los Vientos,,Viskaussali,Chambre de la Séparation,Huzatos Folyosó,Camera di separazione,選抜の間,바람 회관,Scheidingszaal,Hala Przesiewu,Sala de Separação,,,Зал отсеивания,Овејана дворана
 Seven Portals,TXT_HEXEN_MAP02,,,,Sedmero portálů,Sieben Portale,,Sep Portaloj,Siete Portales,,Seitsemän portaalia,Les Sept Portails,Hét Portál,I Sette Portali,漆之門,일곱 차원문,Zeven portalen,Siedem Portali,Sete Portais,,Șapte portaluri,Семь порталов,Седам портала
@@ -256,7 +256,7 @@ Guardian of Ice,TXT_HEXEN_MAP03,,,,Strážce ledu,Wächter des Eises,,Gardanto d
 Guardian of Fire,TXT_HEXEN_MAP04,,,,Strážce ohně,Wächter des Feuers,,Gardanto de Fajro,Guardián de Fuego,,Tulen vartija,Gardien de Feu,A Tűz Őre,Guardiano del Fuoco,炎の守護者,화염의 수호자,Bewaker van vuur,Strażnik Ognia,Guardião de Fogo,,Străjerul Focului,Страж огня,Чувар ватре
 Guardian of Steel,TXT_HEXEN_MAP05,,,,Strážce oceli,Wächter des Stahls,,Gardanto de Ŝtalo,Guardián de Acero,,Teräksen vartija,Gardien d'Acier,Az Acél Őre,Guardiano dell'Acciaio,鋼の守護者,강철의 수호자,Bewaker van staal,Strażnik Stali,Guardião de Aço,,Străjerul Oțelului,Страж стали,Чувар челика
 Bright Crucible,TXT_HEXEN_MAP06,,,,Světlý očistec,Glänzende Feuerprobe,,Luma Krisolo,Crisol de Luz,,Kirkas tulikoe,Creuset Radiant,,Crogiolo Luminoso,光の坩堝,빛나는 고난,Heldere beproeving,Próba Światła,Crisol de Luz,,,Испытание света,Испитивање светла
-Shadow Wood,TXT_HEXEN_MAP13,,,,Temný hvozd,Schattenwald,,Ombro-Arbareto,Bosque de la Sombra,,Varjosalo,Forêt des Ombres,Árnyék Erdő,Foresta Oscura,陰影樹,그림자 숲,Schaduwbos,Las Cieni,Floresta das Sombras,,Pădurea umbrelor,Лес теней,Шума сена
+Shadow Wood,TXT_HEXEN_MAP13,,,,Temný hvozd,Schattenwald,,Ombro-arbareto,Bosque de la Sombra,,Varjosalo,Forêt des Ombres,Árnyék Erdő,Foresta Oscura,陰影樹,그림자 숲,Schaduwbos,Las Cieni,Floresta das Sombras,,Pădurea umbrelor,Лес теней,Шума сена
 Darkmere,TXT_HEXEN_MAP08,,,,Černý močál,Düstersee,,Malluma Marĉo,Pantano,,Pikiräme,Marais Noir,,Palude Nera,暗黒の地,흙빛호수,Sombermeer,Mroczne Bagno,Pantâno Negro,,,Болотная топь,Мочваре
 Caves of Circe,TXT_HEXEN_MAP09,,,,Jeskyně Kirké,Circes Höhle,,Kavernoj de Circe,Cuevas de Circe,,Circeluolat,Caves de Circé,Körök Barlangja,Grotte di Circe,キルケーの洞窟,키르케의 동굴,Grotten van Circe,Jaskinie Kirke,Cavernas de Circe,,Peștera lui Circe,Пещеры цирцеи,Пећине цирке
 Wastelands,TXT_HEXEN_MAP10,,,,Pustiny,Ödland,,Senvivejo,Yermo,,Erämaat,Terres Ruinées,Senkiföldje,Terre in rovina,荒野,황무지,Woestenij,Pustkowia,Terras Desoladas,,,Пустоши,Пустаре
@@ -264,7 +264,7 @@ Sacred Grove,TXT_HEXEN_MAP11,,,,Posvátný háj,Heiliger Hain,,Sankta Bosketo,Ar
 Hypostyle,TXT_HEXEN_MAP12,,,,Hypostyl,Säulenhalle,,Kolonejo,Hipóstila,,Hypostyyli,Hypostyle,,Ipostilo,多柱の間,다주실,Zuilenhal,Hypostyl,Hipostilo,,,Гипостильный зал,Хипостил
 Heresiarch's Seminary,TXT_HEXEN_MAP27,,,,Arcikacířův alumnát,Seminar des Erzketzers,,Seminario de Ĉefherezulo,Seminario del Heresiarca,,Kerettiarkin seminaari,Séminaire de l'Hérésiarche,,Seminario dell'Heresiarch,ヘレシアークの神学舎,헤러시아크의 신학교,Seminarie van ketterij,Seminarium Herezjarchy,Seminário do Heresiarca,,Seminarul Ereziarhului,Семинария Ересиарха,Јересијархов семинар
 Dragon Chapel,TXT_HEXEN_MAP28,,,,Dračí kaple,Drachenkapelle,,Drakkapelo,Capilla Dragón,,Lohikäärmekappeli,Chapelle du Dragon,Sárkány Szentély,Cappella del Drago,ドラゴンの庵寺,드래곤 예배실,Drakenkapel,Kaplica Smoka,Capela do Dragão,,Capela dragonilor,Часовня дракона,Змајева капела
-Griffin Chapel,TXT_HEXEN_MAP30,,,,Gryfí kaple,Greifenkapelle,,Grifkapelo,Capilla Grifo,,Aarnikotkakappeli,Chapelle du Grifon,Griff Szentély,Cappella del Grifone,グリフィンの庵寺,그리핀 예배실,Griffioenenkapel,Kaplica Gryfa,Capela do Grifo,,Capela grifonilor,Часовня грифона,Грифинова капела
+Griffin Chapel,TXT_HEXEN_MAP30,,,,Gryfova kaple,Greifenkapelle,,Grifkapelo,Capilla Grifo,,Aarnikotkakappeli,Chapelle du Grifon,Griff Szentély,Cappella del Grifone,グリフィンの庵寺,그리핀 예배실,Griffioenenkapel,Kaplica Gryfa,Capela do Grifo,,Capela grifonilor,Часовня грифона,Грифинова капела
 Deathwind Chapel,TXT_HEXEN_MAP31,,,,Kaple mrakosmrtě,Todeswindkapelle,,Mortvento-kapelo,Capilla Viento de Muerte,,Kuolontuulikappeli,Chapelle du Vent Tueur,,Cappella del Vento Assassino,デスウィンドの庵寺,죽음바람 예배실,Dodenwind kapel,Kaplica Wiatru Śmierci,Capela do Vento da Morte,,Capela suflului morții,Часовня ветра смерти,Капела ветра смрти
 Orchard of Lamentations,TXT_HEXEN_MAP32,,,,Sad nářků,Garten der Wehklagen,,Horto de Lamentoj,Huerto de los Lamentos,,Valitusvirtten tarha,Verger des Lamentations,,Frutteto delle Lamentazioni,哀悼茂る園,통탄의 과수원,Boomgaard van klaagliederen,Płaczący Sad,Pomar das Lamentações,,Livada amărăciunii,Сады плача,Воћњак тужбалица
 Silent Refectory,TXT_HEXEN_MAP33,,,,Tichý refektář,Stilles Refektorium,,Silenta Manĝejo,Refectorio Silencioso,,Hiljainen ruokasali,Réfectoire Silencieux,,Refettorio silenzioso,寡黙なる食堂,침묵의 식당,Stil refectory,Cichy Refektarz,Refeitório Silencioso,,Refectoriul tăcerii,Безмолвная трапезная,Тиха трпезарија
@@ -294,7 +294,7 @@ Constable's Gate,TXT_HEXDD_MAP48,,,,Konstáblova brána,Wachtor,,Pordego de Ĝen
 Treasury,TXT_HEXDD_MAP49,,,,Pokladnice,Schatzkammer,,Trezorejo,Tesorería,,Rahasto,Trésorerie,,Tesoreria,宝庫,국고,Schatkist,Skarbiec,Tesouraria,,Vistierie,Сокровищница,Трезор
 Market Place,TXT_HEXDD_MAP50,,,,Tržnice,Marktplatz,,Foirejo,Plaza del Mercado,,Markkinat,Place du Marché,,Piazza del Mercato,市場,시장,Markt,Rynek,Feira,,Piață,Рыночная площадь,Пијаца
 Locus Requiescat,TXT_HEXDD_MAP51,,,,,Locus Requiescat,,Locus Requiescat,Lugar de Descanso Eterno,,,Locus Requiescat,,,祈祷師の軌跡,명복의 장소,,Locus Requiescat,,,,Место вечного упокоения,Место починка
-Ordeal,TXT_HEXDD_MAP52,,,,Utrpení,Heimsuchung,,Provo via Aflikto,Prueba,,Koettelemus,Supplice,,Supplizio,試練,시죄의 시련,Orde,Męka,Suplício,,Supliciu,Испытание,Изазов
+Ordeal,TXT_HEXDD_MAP52,,,,Utrpení,Heimsuchung,,Provo Per Aflikto,Prueba,,Koettelemus,Supplice,,Supplizio,試練,시죄의 시련,Orde,Męka,Suplício,,Supliciu,Испытание,Изазов
 Armory,TXT_HEXDD_MAP53,,,Armoury,Zbrojnice,Waffenkammer,,Armilejo,Armería,,Asehuone,Amurerie,Fegyverraktár,Armeria,武器庫,무기고,Wapenkamer,Zbrojownia,Arsenal,,Arsenal,Оружейная,Оружарница
 Nave,TXT_HEXDD_MAP54,,,,Chrámová loď,Kirchenschiff,,Navo,La Nave,,Laiva,Nef,,Navata,身廊,본당,Naaf,Nawa,,,Naos,Неф,Брод
 Chantry,TXT_HEXDD_MAP55,,,,Modlitebna,Kantorei,,Kapelo,Capilla,,Kappeli,Chapelle,,Cappella,小礼拝堂,예배당,,Kaplica Wotywna,Capela,,,Часовня,Капела
@@ -363,8 +363,8 @@ vi estas kaptita sur La Bordoj de Infero.
 La sola eliro estas tra.
 
 Por daŭrigi travivi DOOM, ludu
-""La Bordoj de Infero"" kaj ĝian
-mirigan sekvon, ""Inferno""!","Una vez has vencido a los tremendos bastardos 
+""La Bordoj de Infero"" kaj
+ĝian mirigan sekvon — ""Inferno""!","Una vez has vencido a los tremendos bastardos 
 y limpiado la base lunar se supone 
 que deberías ganar, ¿verdad? ¡¿Verdad?! 
 ¿Dónde esta tu suculenta recompensa 
@@ -893,10 +893,10 @@ fine justludas, ĉar vi eliras la pordon
 kaj vidas la verdajn kampojn de la Tero!
 Ĉe hejm' fine.
 
-Vi pripensas, kion okazis sur la Tero dum
-vi batalis pekon deĉenigan. Estas bone,
-ke nenia inferido eblis veni tra la pordo
-kun vi...","El abominable demonio arácnido que orquestó
+Vi pensas pri tio, kio okazis sur la Tero
+dum vi batalis malicon deĉenigan.
+Bonas, ke neniu inferido eblis veni
+tra la pordo kun vi...","El abominable demonio arácnido que orquestó
 la invasión de las bases lunares y causó
 innumerables muertes ha recibido una patada
 en el trasero para siempre.
@@ -1143,11 +1143,11 @@ Infero, sed vi marŝis antaŭen kaj venigis
 kiel vera heroo farus, kiam frontanta ion
 tiel peka.
 
-Cetere, iu pagos pro kio okazis je Daisy,
+Cetere, iu pagos pro kio okazis je Daisy —
 via doma kuniklo
 
 Sed nun, vi vidas, disvastigan antaŭ vi, pli
-eblajn doloran kaj buĉadon, dum popolo 
+eblajn doloron kaj buĉadon, dum popolo 
 de demonoj amoke kuras en nia urboj.
 
 Sekva haltejo: Infero Sur La Tero!","La mente-maestra arácnida debió haber
@@ -1385,13 +1385,13 @@ eine befestigte Zone. Wenn du daran vorbei
 kommst, kannst du in das Herz der
 Basis eindringen und den Schalter finden,
 der die Menschheit als Geiseln hält.",,"Vi eniris profunden en la infestitan kosmo-
-havenon, sed io ne ĝustas. La monstroj
+havenon, sed io estas misa. La monstroj
 alportis sian propran realon kun ili, kaj
 la teknologio de la kosmo-haveno estas
-subfosata de ilia ĉeesto.
+kontraŭata de ilia ĉeesto.
 
-Antaŭe, vi vidas postenon de infero --
-fortika regiono. Se vi eblas iri preter ĝi,
+Antaŭe, vi vidas postenon de infero —
+fortika regiono. Se vi eblos iri preter ĝi,
 vi eblus penetri en la hantatan koron de
 la kosmo-bazo kaj trovi la kontrolŝaltilon,
 kiu kaptas la popolon de la Tero.","Te has introducido profundamente en el
@@ -1609,15 +1609,15 @@ fantomoj estas viaj nur najboroj. Vi
 sidas kaj atendas morton, kontenta ĉar
 vi savis vian specion.
 
-Sed poste, la kontrolcentro transigas
+Tamen poste, la kontrolcentro transigas
 mesaĝon el kosmo: ""Sensiloj trovis la
-devenon de la eksterteran invadon.
+fonton de la eksterteran invadon.
 Se vi irus tien, vi eble povas bari ilian
 eniron. La ekstertera bazo estas en la
 koro de via propra hejm-urbo, ne fora
 de la kosmo-haveno."" malrapide kaj 
 dolore, vi leviĝas kaj revenas al la
-batalon.","¡Has ganado! Tu victoria ha permitido a la
+batalo.","¡Has ganado! Tu victoria ha permitido a la
 humanidad evacuar la Tierra y escapar de
 la pesadilla. Ahora tú eres el único ser
 humano que queda sobre la faz del planeta.
@@ -2035,7 +2035,7 @@ Du wischst den Schweiß von deiner Stirn und
 begibst dich auf den langen Weg nach Hause.
 Der Wiederaufbau der Erde dürfte
 erfreulicher sein, als ihre Zerstörung.",,"La horora vizaĝo de la plej granda
-demono, kiun vi vidis iam ajn
+demono, kiun vi vidis iam ajn,
 pecetiĝas antaŭ vi, post vi pumpis
 raketojn en lian nudan cerbon. Dum
 la monstro ŝrumpas kaj mortas, ĝiaj
@@ -2309,7 +2309,7 @@ Super-Geheimlevel gefunden.
 Sieh zu, dass du hier schnellstens
 rauskommst!
 ",,"Gratulon! Vi trovis la super-sekretan
-nivelon! Vi kuru tra ĉi tio!","¡Enorabuena, has encontrado el nivel
+nivelon! Vi povu kuri tra ĉi tio!","¡Enorabuena, has encontrado el nivel
 súper secreto! ¡Será mejor que eches
 lumbre a través de este!","¡Felicitaciones, has encontrado el nivel
 súper secreto! ¡Será mejor que eches
@@ -3550,7 +3550,7 @@ In der Ferne rumpelt etwas.
 Ein blaues Licht beginnt im Inneren 
 des Schädels zu leuchten.",,"Ĉio subite silentas de unu horizonto ĝis
 la alia. La agoniantaj eĥoj de La Infero
-malaperis, la inkub-ĉielo fariĝas blua,
+malaperas, la inkub-ĉielo fariĝas blua,
 la amaso de monstro-kadavroj ekas
 vaporiĝi kun la mava odoro, kiu plenigis
 la aeron. Ho, eble vi finis.
@@ -3794,7 +3794,7 @@ urbeto kun trankvila flua akvo, bonstrangaj
 arĥitekturo, kaj supozeble, nenioj inferidoj.
 
 Dum vi paŝas for la veturilo, vi aŭdas la 
-laŭtan paŝon de la ŝuo de cirbogdemono.","Hora de tomarse unas vacaciones.
+laŭtan paŝon de la ŝuo de ciborgdemono.","Hora de tomarse unas vacaciones.
 Arrasaste con las entrañas del
 Infierno y por Dios que estás 
 list@[ao_esp] para un descanso.
@@ -3989,7 +3989,23 @@ Sein Stöhnen tönt durch das Chaos, das
 du hier hinterlassen hast.
 
 Der Jahrmarkt ist geschlossen.
-",,,"Otra vez se avecinan problemas en
+",,"Problemoj bolis en via favorata feriejo...
+Diable.  Kelka ciborgdemono huligano
+pensis, ke li povis fari personan amuzejon
+el La Infero, kaj fari La Teron
+wn la biletvendejon.
+
+Nu, tiu duon-robota grotekulo ne sciis tiun,
+kiu estis venonta al la foiro. Nenio estas
+pli bona ol pafejo plena da inferidoj por
+fari sangon pumpata...
+
+Nun la muroj de la labirinto de la demono
+resonas la sonon de liaj metalaj membroj
+trafantaj la plankon. Lia mortĝemo gluglas
+tra la kaĉo, kiun vi faris el lia vizaĝo.
+
+Ĉi tiu rajdo estas fermita.","Otra vez se avecinan problemas en
 tu lugar de vacaciones favorito... 
 El infierno. A un bruto ciberdemonio
 se le ocurrió convertir el infierno
@@ -4247,7 +4263,22 @@ anderen Seite versiegeln. Das bedeutet,
 dass in einer sehr unfreundlichen Welt
 festsitzen wirst, aber hat jemals jemand
 behauptet, dass das Leben eines Ketzers
-einfach ist?",,,"Con la destrucción de los Liches de
+einfach ist?",,"Per la detruo de la ferliĉoj kaj iliaj
+servistoj, la revivantaj ceteraj estas
+foriga el ĉi tiu ebeno de ekzisto.
+
+Tamen, tiuj estuloj devis veni de ie,
+kaj vi suspektas, ke la pordego fajra
+de la faŭko de infero kondukas en
+ilian dimension hejman.
+
+Por certi, ke pli revivantaj (aŭ eĉ pli
+malbona aĵoj) ne travenos, vi bezonas
+fermi la faŭkon de infero ĉe la flanko alia.
+Nature, tio signifas, ke vi eble estos
+kaptita en mondo tre malamika, sed
+neniu diris, ke esti herezulo estas facila!
+","Con la destrucción de los Liches de
 Hierro y sus lacayos, los últimos
 no-muertos son limpiados de este plano
 de existencia.
@@ -4485,7 +4516,22 @@ Seite dieser Tore?
 
 Die Krümmung einer riesigen Kuppel,
 dort wo der Himmel sein sollte, ist
-jedenfalls kein gutes Zeichen.",,,"Los poderosos maulotauros han probado
+jedenfalls kein gutes Zeichen.",,"La bategtaŭroj potencaj montriĝis
+tro malforta kontraŭ vi, kaj dum iliaj
+kadavroj vaporantaj falas sur la teron,
+vi sentas kontenton malafablan, pro
+ke ili estas detruita.
+
+La pordegoj, kiojn ili gardis, malfermiĝas
+en, kion espereble estas hejmo, sed
+dum vi trapaŝas, ridado mokanta
+resonas en viaj oreloj.
+
+Ĉu forto alia kontrolis la bategtaŭrojn?
+Ĉu estas eble eĉ pli estuloj hororaj tra
+ĉi tiu pordego? La kupolo kristala vasta
+supre, kie la ĉielo devas esti, certe ne
+estas antaŭsigno bona...","Los poderosos maulotauros han probado
 no ser un encuentro difícil para ti, y mientras
 que sus cadáveres humeantes
 se deslizan al suelo sientes una
@@ -4751,7 +4797,25 @@ war es doch nur ein Schrei.
 
 Und dennoch: Was ist mit den anderen
 Schlangenreitern?
-",,,"La muerte de D'Sparil ha soltado
+",,"La morto de D'Sparil malfiksis la ligilojn
+sorĉajn, kiuj tenis lian estulojn sur tion
+ĉi ebeno, dum iliaj kriegoj mortaj sonas
+super liaj kriegoj propraj de agonio.
+
+Nun via ĵuro de venĝo estas veriga, do
+vi eniras la portalon al vian mondon
+propran nur momentojn antaŭ la
+kupolo disfrakasiĝas en milionojn
+da pecoj
+
+Sed se la povo de D'Sparil estas eterne
+detruita, kial vi ne sentas sekura? Ĉu
+estas ĉar la fina kriego tuj antaŭ lia
+morto — tiu, kiu sonis, kiel malbeno?
+Aŭ alvoko? Vi vere ne povas certi,
+sed ĝi eble estis nur kriego.
+
+Tamen, kio pri la aliaj serpentrajdistoj?","La muerte de D'Sparil ha soltado
 los vínculos mágicos que mantenían
 a sus criaturas en este plano, sus
 gritos moribundos abrumando sus
@@ -5054,7 +5118,23 @@ einen Weg dort heraus zu finden. Und
 irgendwo dort, in den dunkelsten Ecken
 von D'Sparils Reich, warten seine
 Leibwächter auf dich...
-",,,"Creíste que volverías a tu propio
+",,"Vi pensis, ke vi revenus al via mondo
+propra post D'Sparil mortis, sed lia fina
+ago forpelis vin al lia ebeno. Ĉi tie vi
+eniris la restaĵojn frakasitajn el landoj
+konkeritaj de D'Sparil. Vi venkis la finajn
+gardistojn de ĉi tiuj landoj, sed nun vi
+staras antaŭ la pordegoj inter vi kaj la
+fuorto de D'Sparil. Antaŭ ĉi tiu momento,
+vi ne dubis, ke vi povus kontraŭi ĉion ajn,
+kioj vi eble trovos, sed preter ĉi tiu
+pordego estas la koro de mavo mem, 
+kio invadis vian mondon. D'Sparil estas
+mortinta, sed le truo, kie li naskiĝis,
+restas. Nun vi bezonas eniri tiun truon,
+esperante trovi elirejon. Kaj ie, en la plej
+malhela ejoj de la posedaĵo de D'Sparil,
+liaj personaj gardistoj atendas vian venon...","Creíste que volverías a tu propio
 mundo después de que D'Sparil
 hubiera muerto, pero su acto final
 te ha desterrado hacia su propio
@@ -5347,7 +5427,25 @@ Hast du den Mut dazu? Aber es ist
 nicht dein Ding, ohne Kampf
 einfach aufzugeben, also wirst du
 dich mit offenen Augen deinem
-Schicksal stellen.",,,"Mientras el último maulotauro brama
+Schicksal stellen.",,"Dum la bategtaŭro fina blekas lian
+agonion, vi konscias, ke vi neniam
+estis tiom prokisme de via detruo
+propra. Eĉ ne la batalo kun D'Sparil
+kaj liaj disĉiploj estis tiom aflikta.
+Vi malgaje rigardas la pordegon,
+kiu malfermiĝas antaŭ vi, scivolante
+ĉu ĝi kondukas hejmen, aŭ ĉu ĝi
+kondukas al iu teruro neprirevita.
+Vi troviĝas scivolanta ĉu vi havas
+forton pro daŭri plu, se nenio krom
+morto kaj doloro atendas vin. Sed
+kion vi povas fari, se la volo batali
+estas for? Ĉu vi povas devigi vin daŭri
+kontraŭ tia malespero? Ĉu vi havas
+tiom bravecon? Vi vine trovis, ke vi
+ne havas la povo por rezigni sen 
+batalo. Kun malfermitaj okuloj,
+vi iras por renkonti vian destinon.","Mientras el último maulotauro brama
 su muerte agonizante, te das cuenta
 que nunca has estado tan cerca de tu
 propia destrucción. Ni la pelea con
@@ -5586,7 +5684,24 @@ du es dir wünschen könntest.
 Und dahinter, flackernd in der Ferne,
 scheinen die sich ständig verändernen
 Wände der Säulenhalle all
-deinen Fortschritt zu verspotten.",,,"Habiendo pasado los siete portales que
+deinen Fortschritt zu verspotten.",,"Pasinde la sep portalojn, kiuj obturis
+ĉi tion regionon, vi staras antaŭ vasta
+regno de severa sovaĝejo. Fajro, glacio,
+kaj ŝtelo provis vin. Tamen, pli grandaj
+provoj restas antaŭe. La densa ĥaoso
+de la arbaro nepre kaŝas kontraŭajn
+okulojn, sed tio, kiu situas antaŭe,
+estos pli malbona.
+
+Senvivaj dezertoj, humidaj marĉoj,
+kaj mucidaj kavernoj baras vian vojon,
+sed vi devas ne lasi ĉion ajn teni vin for
+de via destino, eĉ se vi deziros, ke ili
+farus tion.
+
+Kaj pretere, flagrante malproksime,
+la movadantaj muroj de la kolonejo
+ŝajne mokas ĉiom da viaj klopodoj.","Habiendo pasado los siete portales que
 sellaban este reino, un vasto dominio
 de tierra salvaje se extiende ante ti.
 Fuego, hielo y acero te han probado,
@@ -5843,7 +5958,24 @@ den Adern gefrieren. Bei all den
 Göttern des Todes! An welchem Ort
 bist du hier nur gelandet? Bei all
 den Göttern des Schmerzes, wie wirst
-du jemals hinaus finden können?",,,"Con tú mente aún nublada por tus
+du jemals hinaus finden können?",,"Via menso ankoraŭ ŝpinante pro viaj
+renkontoj en la kolonejo, vi ŝanceliĝas
+al tio, kion vi esperas esti eliro.
+Ĉio ŝajnas movi pli kaj pli rapide,
+via vido malklariĝas kaj ekas dissolvi...
+
+Dum la mondo disfalas ĉirkaŭ vi,
+la heleco de portalo englutas vin.
+Ekbrilas, kaj poste vi lace ekstaras
+sur via piedoj.
+
+Vi staras supre sur alta turo, kaj de
+malsupre, venas la kriegoj de la
+damnitaj. Vi paŝas antaŭen, kaj tuje la
+sono de demona ĉantado glaciigas vian
+sangon. Per ĉiuj el la dioj de morto!
+Kien vi venis? Per ĉiuj el la dioj de
+doloro, kiel iam trovos vi vian eliron?","Con tú mente aún nublada por tus
 batallas en el hipóstilo, te tambaleas
 hacia lo que esperas que sea una
 salida. Las cosas parecen moverse
@@ -6079,7 +6211,25 @@ verzerren sich hinter klaffenden
 Fenstern. Dutzende von bösen Augen
 blicken auf dich herab.
 Irgendwo da drin warten deine Feinde
-auf dich...",,,"Las armas y artefactos más poderosos
+auf dich...",,"La plej potencaj armoj kaj artefaktoj
+de la antikvuloj apenaŭ sufiĉis
+por venki la ĉefherezulon kaj
+liajn servistojn, sed nun iliaj
+sordidaj restaĵoj situas disĵetita 
+ĉe viaj piedoj. arigante vian restantan
+forton, vi preparas vin por eniri
+la portalon, kiu kondukas el la ena
+sanktejo de la ĉefherezulo.
+
+Super vi, la muregoj de grandega 
+kastelo staras. Silentaj turoj kaj nudaj
+muroj ĉirkaŭas solan turon el nigra
+ŝtono, kiu situas ĉe la centro de la
+kastelo, kiel cerbumanta giganto.
+Fajro kaj ombraĵo tordiĝante preter
+faŭkantaj fenestroj, dekduoj de
+sinistraj okuloj regardegante sub al vi.
+Ie interne, viaj malamikoj atendas...","Las armas y artefactos más poderosos
 de los Antiguos apenas fueron
 suficientes para derrotar al Heresiarca
 y sus secuaces, pero ahora sus sucios
@@ -6292,7 +6442,17 @@ mag niemand vorraussagen.“
 
 
 
-Verdammt.",,,"""... y él viajará hasta el reino
+Verdammt.",,"""... kaj li veturos en la regnon de la
+mortinta, kaj kontraŭos la fortojn en
+tie, eĉ ĉe la pordegoj de malespero,
+sed neniu scias, ĉu vi revenos refoje
+al la mondo de lumo.""
+
+
+
+
+
+diable.","""... y él viajará hasta el reino
 de los muertos y competirá contra
 las fuerzas que estén en él, hasta
 las mismísimas puertas de la
@@ -6418,7 +6578,17 @@ großen Saal wieder, gefüllt mit
 geisterhaften Echos und bedrohlichen
 Schatten. In der Ferne siehst du ein
 erhabenes Podium und darauf die
-einzige Lichtquelle in dieser Welt.",,,"Con un grito de agonía eres
+einzige Lichtquelle in dieser Welt.",,"Kun kriego de agonio, vi iĝas tiregita 
+el ĉi tiu mondo en alian, dum ĉiuj
+partoj de via korpo estas kovrita en
+mistika fajro. Kiam via vido klariĝas,
+vi troviĝas stari en grandega halo,
+kiu estas plena de fantomaj eĥoj 
+kaj minacaj ombroj. Malproksime
+vi povas vidi levitan estradon,
+kaj sur ĝi estas la sola fonto de lumo
+en ĉi tiu mondo.
+","Con un grito de agonía eres
 arrancado de este mundo a otro,
 cada parte de tu cuerpo
 es envuelta en un fuego místico.
@@ -6534,7 +6704,16 @@ kosmischen Spiel der Macht
 beitreten. Genau so wie der Bauer
 zur Königin befördert wird, ist nun
 das gesamte Spielbrett für dich zum
-Greifen nahe.",,,"Esta solo puede ser la esfera del caos,
+Greifen nahe.",,"Ĉi tio povas esti nur la ĥaos-sfero —
+la fonto de la povo de Korax. Per tio,
+vi povas krei mondojn... aŭ detrui ilin.
+Laŭ rajtoj de batalo kaj konkero, Ĝi
+estas via, kaj per tremantaj manoj,
+vi etendas ilin por preni ĝin. Eble nun
+nova ludanto eniros la kosman ludon
+por povo. Kiel la peono, kiu estas
+promociita al reĝino, la malproksimoj
+de la tabulo ŝajnas esti atingebla.","Esta solo puede ser la esfera del caos,
 la fuente del poder de Korax. Con
 ella tu puedes crear mundos... o
 destruirlos. Por derechos de batalla
@@ -6635,7 +6814,9 @@ next moves?",TXT_HEXEN_WIN3MSG,,,,"\nAle jsou tu i jiní hráči, mocnější ne
 a kdo může předvídat jejich další tahy?","\nAber es gibt andere Spieler, die
 mächtiger sind als du, und wer
 kann schon deren nächste
-Züge erahnen?",,,"\nPero hay otros jugadores más
+Züge erahnen?",,"\nTamen, estas aliaj ludantoj pli
+potenca ol vi, kaj kiu povas scii
+iliajn sekvajn agojn?","\nPero hay otros jugadores más
 fuertes que tú y ¿Quién puede
 saber sus próximos movimientos?",,"\nMutta on muita pelaajia, jotka ovat sinua
 mahtavampia, ja kuka voi tietää heidän
@@ -6736,7 +6917,25 @@ sie ausreichen werden. Im
 Grunde genommen muss es doch
 einfach ausreichen, oder nicht?
 
-Oder nicht?",,,"Pasando una mano temblorosa por
+Oder nicht?",,"Viŝante tran via sanganta vizaĝo per
+tremanta mano, vi penas klarigi vian
+menson por tio, kiu situas antaŭe...
+
+...kaj forgesi tion, kiu situas malantaŭe.
+
+Malproksime, la rigidaj muregoj de
+grandega kastel-komplekso ŝajnas
+traŝiri la ĉielon supran, kaj la odoraĉo
+de putraĵo blovas de la malrespektitaj
+tomboj de nenombritaj mortintaj.
+
+Zorge nombrante viajn malmultajn
+restantajn artefaktojn, vi penas
+recertiĝi, ke ĝi estos sufiĉa. Finfine,
+ĝi sendube estas sufiĉa, ĉu ne?
+
+
+Ĉu ne?","Pasando una mano temblorosa por
 tu cara sangrante, intentas 
 aclarar tu mente para lo que
 se avecina...
@@ -6971,7 +7170,25 @@ mentarische Einblicke in die
 eigentliche Zitadelle, aber was
 man sehen kann, spricht in
 zischendem Flüstern von
-Kälte und lauerndem Tod ...",,,"Seguramente las almas de los
+Kälte und lauerndem Tod ...",,"Sendube la animoj de la damnitaj
+loĝas en ĉi tiu mondo, ĉar nenio
+bela aŭ bono povus vivi longe ĉi tie.
+
+Tamen, tio, kiu okazis antaŭe estas nur
+pala ombro de tio, kiu nun baras vian
+vojon — La Citadelo Ombra mem.
+
+La malafabla dikeco de la katedralo
+kaŝas ĉiajn krom fragmentajn videtojn
+de la citadelo mem, sed tio, kiu estas
+videbla, parolas per siblaj murmuroj
+de malvarma malrapida morto...
+
+
+
+
+
+...por la bonsortaj.","Seguramente las almas de los
 condenados habitan este mundo,
 porque nada bueno o justo podría
 sobrevivir aquí por mucho tiempo.
@@ -7202,7 +7419,17 @@ ist, ein Gefühl, von verborgenen Augen
 beobachtet zu werden...
 
 ... Augen, die eine boshafte Absicht
-verbergen...",,,"Una vez más te encuentras en el
+verbergen...",,"Denove vi troviĝas en la grandega
+halo de la ĥaos-sfero, kvazaŭ neniom
+da tempo pasis, ekde kiam vi lastfoje
+movis inter ĉi tiuj ombroj.
+
+Tamen, io estas timige nekutima.
+Silento tie, kie estis mallaŭtaj
+flustroj, sento, ke mi estas
+observata de kaŝitaj okuloj...
+
+...Okuloj, kioj ŝildas malican celon.","Una vez más te encuentras en el
 gran salón de la esfera del caos,
 como si no hubiera pasado el
 tiempo desde la última vez que
@@ -7362,7 +7589,22 @@ bleiben und das Versprechen
 nicht eingelöst werden.
 
 Andererseits bist du noch nie vor einer
-Herausforderung zurückgewichen...",,,"Una vez tomaste la esfera
+Herausforderung zurückgewichen...",,"Unufoje vi premis la ĥaos-sferon —
+tenis ĝin per tremantaj manoj.
+Nun viaj manoj tremas kun io plia
+ol avaro, kaj timo miksiĝas kun la
+sopiro por potenco.
+
+Se eĉ la potenco de la sfero ne
+sufiĉas por protekti vin kontraŭ
+la fortoj de malhelo, eble bonas
+lasi ĝin nepalpita, ĝian promeson
+neveriga.
+
+
+
+Sed tiam, vi neniam estis iu,
+kiu cedus defion...","Una vez tomaste la esfera
 del caos, con manos
 temblorosas. Ahora tus manos
 tiemblan con algo más que
@@ -7506,7 +7748,7 @@ fugir de um desafio...",,,"Когда-то Вы уже владели сферо
 "
 "\n...and other players await.
 
-",TXT_HEXDD_WIN3MSG,,,,\n...a ostatní hráči už čekají.,\n...und andere Spieler warten.,,,\n...y otros jugadores esperan.,,\n...ja muut pelaajat odottavat.,\n...Et d'autres joueurs attendent.,,\n...e altri giocatori aspettano.,"\n...更なる挑戦者を待ち構えながら。
+",TXT_HEXDD_WIN3MSG,,,,\n...a ostatní hráči už čekají.,\n...und andere Spieler warten.,,\n...kaj aliaj ludantoj atendas.,\n...y otros jugadores esperan.,,\n...ja muut pelaajat odottavat.,\n...Et d'autres joueurs attendent.,,\n...e altri giocatori aspettano.,"\n...更なる挑戦者を待ち構えながら。
 
 ",\n...그리고 다른 도전자들이 기다리고 있다.,\n...en andere spelers wachten op je.,\n...a inni gracze czekają.,\n...e os outros jogadores aguardam.,,,"\n...В то время как другие игроки будут
 ждать своего часа, чтобы совершить
@@ -7529,7 +7771,7 @@ You have to find another switch...,TXT_ACS_MAP05_9_YOUHA,,,,Musíš najít dalš
 Stones grind on the Seven Portals,TXT_ACS_MAP05_10_STONE,,,,Kameny dřou u Sedmera portálů.,Steine schleifen bei den Sieben Portalen,,Ŝtonoj grincas ĉe la Sep Portaloj.,Las piedras giran en los Siete Portales,,Kiviä vierii seitsemän portaalin luona,Des pierres grincent dans les Sept Portails.,,Le pietre si sono frantumate nei Sette Portali,漆之門 の石壁が砕かれた,일곱 차원문에서 바위 부딪히는 소리가 들려왔다,Stenen slijpen op de Zeven Portalen,Kamienie przy Siedmiu Portalach zgrzytają,As pedras giram nos Sete Portais,,,каменная преграда отступила,Камени се мељу на Седам портала
 One sixth of the puzzle has been solved,TXT_ACS_MAP08_6_ONESI,,,,Jedna šestina rébusu byla vyřešena,Ein Sechstel des Rätsels wurde gelöst,,Unu sesono de la puzlo estas solvita,Un sexto del acertijo se ha resuelto,,Kuudennes pulmasta on ratkaistu,Un sixième du puzzle à été résolu,A feladványok egyhatoda meg lett fejtve,Un sesto del puzzle è stato risolto,六種のパズルの一つが解かれた,수수께끼의 6분의 1이 풀렸다,Een zesde van de puzzel is opgelost,Jedna szósta zagadki rozwiązana,Um sexto do quebra-cabeça foi resolvido,,,Одна шестая головоломки разгадана,Једна шестина загонетке је решена
 on the Shadow Wood,TXT_ACS_MAP08_7_ONTHE,,,,v Temném hvozdu.,Im Schattenwald,,en la Ombro-arbareto.,En el Bosque de Sombras,,Varjosalossa,dans le Bois des Ombres.,A Sötét Erdőben,Nel Bosco d'Ombra,陰影樹 に少し影響を与えた,... 그림자 숲에서,op het Schaduwbos,w Lesie Cieni,na Floresta das Sombras,,,в Лесу теней,у Шуми сена
-The door is barred from the inside,TXT_ACS_MAP08_10_THEDO,,,,Dveře jsou zatarasené zevnitř.,Die Tür ist von innen verriegelt,,La pordo estas barita de la interno.,La puerta está atrancada desde el interior,,Ovi on teljetty sisältä,Cette porte est bloquée de l'intérieur.,Az ajtó el van reteszelve belülről,La porta è sbarrata da dentro,この扉は内側から塞がれている,이 문은 안에 빗장이 걸려있다,De deur is van binnenuit geblokkeerd.,Drzwi są zabarykadowane od środka,A porta está barrada por dentro,,Ușa e blocată dinăuntru,Дверь заблокирована изнутри,Врата су закључана изнутра
+The door is barred from the inside,TXT_ACS_MAP08_10_THEDO,,,,Dveře jsou zatarasené zevnitř.,Die Tür ist von innen verriegelt,,La pordo estas barita interne.,La puerta está atrancada desde el interior,,Ovi on teljetty sisältä,Cette porte est bloquée de l'intérieur.,Az ajtó el van reteszelve belülről,La porta è sbarrata da dentro,この扉は内側から塞がれている,이 문은 안에 빗장이 걸려있다,De deur is van binnenuit geblokkeerd.,Drzwi są zabarykadowane od środka,A porta está barrada por dentro,,Ușa e blocată dinăuntru,Дверь заблокирована изнутри,Врата су закључана изнутра
 You hear a door open in the distance,TXT_ACS_MAP08_11_YOUHE,,,,Slyšíš v dálce otevírající se dveře.,"Du hörst, wie sich in der Ferne eine Tür öffnet",,Vi aŭdas pordon malfermiĝantan malproksime.,Escuchas que una puerta se abre a la distancia,,Kuulet oven avautuvan etäällä,Vous entendez une porte s'ouvrir au loin.,Hallod ahogy ajtó nyílik a távolban,Senti una porta aprirsi a distanza,遠くから扉が開く音が聞こえる,멀리서 문이 열리는 소리가 들린다,In de verte hoor je een deur openstaan.,Słyszysz odgłos otwierających się w oddali drzwi,Você ouve de longe uma porta se abrindo,,,Слышен звук открывающейся двери,Чује се отварање врата из даљине
 One sixth of the puzzle has been solved,TXT_ACS_MAP09_6_ONESI,,,,Jedna šestina rébusu byla vyřešena,Ein Sechstel des Rätsels wurde gelöst,,Unu sesono de la puzlo estas solvita,Un sexto del acertijo se ha resuelto,,Kuudennes pulmasta on ratkaistu,Un sixième du puzzle à été résolu,A feladványok egyhatoda meg lett fejtve,Un sesto del puzzle è stato risolto,六種のパズルの一つが解かれた,수수께끼의 6분의 1이 풀렸다,Een zesde van de puzzel is opgelost,Jedna szósta zagadki rozwiązana,Um sexto do quebra-cabeça foi resolvido,,,Одна шестая головоломки разгадана,Једна шестина загонетке је решена
 on the Shadow Wood,TXT_ACS_MAP09_7_ONTHE,,,,v Temném hvozdu.,Im Schattenwald,,en la Ombro-arbareto.,En el Bosque de Sombras,,Varjosalossa,dans le Bois des Ombres.,A Sötét Erdőben,Nel Bosco d'Ombra,陰影樹 に少し影響を与えた,... 그림자 숲에서,op het Schaduwbos,w Lesie Cieni,na Floresta das Sombras,,,в Лесу теней,у Шуми сена
@@ -7542,12 +7784,12 @@ A door opened on the Forsaken Outpost,TXT_ACS_MAP11_7_ADOOR,,,,Dveře se otevře
 This door won't open yet,TXT_ACS_MAP12_9_THISD,,,,Tyto dveře se ještě neotevřou.,Die Tür öffnet sich noch nicht,,Ĉi pordo ne jam malfermiĝos.,Esta puerta no se abrirá todavía,,Tämä ovi ei aukea vielä,Cette porte ne s'ouvre pas pour l'instant.,Ez az ajtó még nem fog kitárulni.,Questa porta non è aperta ancora,扉はまだ開かない,이 문은 아직 열 수 없다,Deze deur gaat nog niet open.,Te drzwi jeszcze się nie otwierają,Esta porta não se abrirá ainda,,Ușa n-o să se deschidă încă,Сейчас эта дверь закрыта,Ова врата још се не отварају
 "My servants can smell your blood, human",TXT_ACS_MAP13_11_MYSER,,,,"Mí služebníci cítí tvou krev, člověče.","Meine Diener riechen dein Blut, Menschling",,"Miajn servantoj povas flari vian sangon, homo.","Mis sirvientes pueden oler tú sangre, humano",,"Palvelijani voivat haistaa veresi, ihminen","Mes servants peuvent sentir votre sang, humain.","Szolgáim érzik a véred szagát, ember","I miei servi possono annusare il tuo sangue, umano",我が下僕が貴様の血を嗅ぎ付けた様だぞ、小童,"내 노예는 너의 피 냄새를 맏고 따라온다, 인간.","Mijn bedienden kunnen jouw bloed ruiken, mens",Moje sługi czują twą krew śmiertelniku,"Meus servos sentem o cheiro do seu sangue, human@[ao_ptb]",,,"Мои прислужники чуют твою кровь, человек","Моје слуге миришу твоју крв, смртниче"
 A door opened in the Gibbet,TXT_ACS_MAP21_0_ADOOR,,,,Dveře se otevřely na Šibenici.,Eine Tür in der Richtstätte wurde geöffnet,,Pordo malfermiĝis ĉe la Pendigilo.,Una puerta se abrió en la horca,,Ovi avautui hirsipuulla,Une porte s'est ouverte dans le gibet.,,Una porta è stata aperta nella Forca,晒し台 への扉が開いた,교수대에서 문이 열렸다,Een deur geopend in de Gibbet,Drzwi przy Szubienicy otworzyły się,Uma porta se abriu na Forca,,,Проход будет открыт возле виселицы,Врата су се отворили у вешалима
-The door is barred from the inside,TXT_ACS_MAP21_2_THEDO,,,,Dveře jsou zatarasené zevnitř.,Die Tür ist von innen verriegelt,,La pordo estas barita de la interno.,La puerta está atrancada desde el interior,,Ovi on teljetty sisältä,Cette porte est bloquée de l'intérieur.,,La porta è sbarrata da dentro,この扉は内側から塞がれている,이 문은 안에 빗장이 걸려있다,De deur is van binnenuit geblokkeerd.,Drzwi są zabarykadowane od środka,A porta está barrada por dentro,,Ușa e blocată dinăuntru,Дверь заблокирована изнутри,Врата су закључана изнутра
-A platform has lowered in the tower,TXT_ACS_MAP22_3_APLAT,,,,Plošina ve věži sjela dolů.,Im Turm hat sich eine Plattform gesenkt,,Plataĵo malleviĝis en la turo.,Una plataforma ha bajado en la torre,,Lava on laskeutunut tornissa,Une plateforme est descendue dans la tour.,,Una piattaforma si è abbassata nella torre,塔内の昇降機が下りた,성 안에서 보행판이 내려왔다,Een platform is in de toren neergelaten in de toren,Platforma w wieży obniżyła się,Uma plataforma desceu na torre,,,Площадка опустилась в центральной башне,A platform has lowered in the tower
+The door is barred from the inside,TXT_ACS_MAP21_2_THEDO,,,,Dveře jsou zatarasené zevnitř.,Die Tür ist von innen verriegelt,,La pordo estas barita interne.,La puerta está atrancada desde el interior,,Ovi on teljetty sisältä,Cette porte est bloquée de l'intérieur.,,La porta è sbarrata da dentro,この扉は内側から塞がれている,이 문은 안에 빗장이 걸려있다,De deur is van binnenuit geblokkeerd.,Drzwi są zabarykadowane od środka,A porta está barrada por dentro,,Ușa e blocată dinăuntru,Дверь заблокирована изнутри,Врата су закључана изнутра
+A platform has lowered in the tower,TXT_ACS_MAP22_3_APLAT,,,,Plošina ve věži sjela dolů.,Im Turm hat sich eine Plattform gesenkt,,Plataĵo malleviĝis en la turo.,Una plataforma ha bajado en la torre,,Lava on laskeutunut tornissa,Une plateforme est descendue dans la tour.,,Una piattaforma si è abbassata nella torre,塔内の昇降機が下りた,성 안에서 보행판이 내려왔다,Een platform is in de toren neergelaten in de toren,Platforma w wieży obniżyła się,Uma plataforma desceu na torre,,,Площадка опустилась в центральной башне,Спустио се платформ у централној кули
 "You have played this game too long, mortal...",TXT_ACS_MAP22_27_YOUHA,,,,"Tuhle partii jsi už hrál@[ao_cs] moc dlouho, smrtelníče,","Du spielst schon zu lange, Sterblicher...",,"Ludis ĉi ludon vi tro longe, mortemul'...","Has jugado este juego demasiado tiempo, mortal...",,"Olet pelannut tätä peliä liian pitkään, kuolevainen...","Vous avez joué à ce jeu trop longtemps, mortel..","Túl sokat játszadoztál, halandó...","Ha giocato a questo gioco troppo a lungo, mortale...",遊びはここまでだ、小僧,"네 놈은 오랫동안 놀았도다, 필멸자여...","Je hebt dit spel te lang gespeeld, sterfelijke...",Już za długo grasz w tą grę śmiertelniku...,"Você jogou este jogo por tempo demais, mortal...",,,"Ты слишком заигрался, смертный...","Заиграо си се, смртниче..."
 I think I shall remove you from the board,TXT_ACS_MAP22_29_ITHIN,,,,"myslím, že bych tě měl odstranit ze šachovnice.",Ich denke ich sollte dich vom Brett entfernen,,"Mi kredas, ke mi vin forigos el la tabul'.",Creo que te retiraré del tablero,,Ajattelenpa poistaa sinut pelilaudalta,Je pense qu'il est l'heure de vous retirer de l'échiquier.,"Azt hiszem le kell, hogy üsselek a tábláról",Penso che ti rimuoverò dal tavolo da gioco,盤上から貴様を排除する,이 몸이 너를 말 치우듯이 제거하겠다.,Ik denk dat ik u van het bord zal verwijderen,"Myślę, że usunę cię z planszy",Acho que irei removê-l@[ao_ptb] do tabuleiro,,,Пришло время завершить твою партию,Мислим да би требао да те уклоним са листе
 You hear a door open upstairs,TXT_ACS_MAP23_10_YOUHE,,,,Z patra slyšíš otevírající se dveře.,"Du hörst, wie sich oben eine Tür öffnet",,Vi aŭdas pordon malfermiĝantan superŝtupare.,Escuchas una puerta que se abre arriba,,Kuulet oven avautuvat yläkerrassa,Vous entendez une porte s'ouvrir à l'étage.,Hallod ahogy ajtó nyílik az emeleten,Senti una porta aprirsi a distanza,上層階の扉が開いた,윗층에서 문이 열리는 소리가 들린다,Je hoort een deur boven opengaan,Słyszysz odgłos otwierających się na górze drzwi,Você ouve uma porta se abrir lá em cima,,Auzi cum se deschide o ușă sus,Из северного зала доносится звук,Чује се отварање врата на горњем спрату
-"Worship me, and I may yet be merciful",TXT_ACS_MAP27_8_WORSH,,,,"Uctívej mě a ještě možná budu milosrdný,",Verehre mich und ich könnte gnädig sein,,"Kultu min, tiam mi ankoraŭ eble kompatos.","Adórame, y aun puedo ser misericordioso",,"Palvo minua, ja saatan vielä olla armahtavainen","Prosternez vous devant moi, et je pourrai considérer de vous épargner.","Hódolj be, és talán kegyelmes leszek","Venerami, e potrei essere ancora misericordioso",我を崇めろ、慈悲を残している内に,"이 몸에게 경배하라, 그럼 자비를 베풀 것이다.","Aanbid me, en ik mag dan nog genadig zijn","Wielb mnie, a może będę miłosierny","Venere-me, e eu poderei ser piedoso",,,"Преклонись предо мной, и, может быть, я буду милосерден","Обожавај ме, и можда ћу бити милостив"
+"Worship me, and I may yet be merciful",TXT_ACS_MAP27_8_WORSH,,,,"Uctívej mě a ještě možná budu milosrdný,",Verehre mich und ich könnte gnädig sein,,"Kultu min, tiam mi ankoraŭ eble kompatos.","Adórame, y aun puedo ser misericordioso",,"Palvo minua, ja saatan vielä olla armahtavainen","Prosternez vous devant moi, et je pourrai considérer de vous épargner.","Hódolj be, és talán kegyelmes leszek","Venerami, e potrei essere ancora misericordioso",我を崇めろ、慈悲を残している内に,"이 몸에게 경배하라, 그럼 자비를 베풀 것이다.","Aanbid me, en ik mag dan nog genadig zijn","Wielb mnie, a może będę miłosierny","Venere-me, e eu poderei ser piedoso",,,"Преклонись предо мной, и, может быть, я буду милосерден","Преклони се преда мноме, и можда ћу бити милостив"
 "Then again, maybe not",TXT_ACS_MAP27_10_THENA,,,,"na druhou stranu, možná ne.","Andererseits, vielleicht aber auch nicht",,"Tamen, eble ne.","Aunque, tal vez no",,"Mutta toisaalta, ehken sittenkään",Quoi que cela soit peu probable.,"Aztán megint, talán nem","Poi di nuovo, forse no",まあ、有り得ないな,허나... 그러지는 않겠지.,"Maar nogmaals, misschien niet","Z drugiej strony, może nie...","Pensando melhor, talvez não",,,"А может быть, и нет",А можда и нећу
 One ninth of the puzzle has been solved,TXT_ACS_MAP28_6_ONENI,,,,Jedna devítina rébusu byla vyřešena,Ein Neuntel des Rätsels wurde gelöst,,Unu naŭono de la puzlo estas solvita,Un noveno del acertijo se ha resuelto,,Yhdeksäsosa pulmasta on ratkaistu,Un neuvième du puzzle à été résolu,A rejtvény egy kilencede meg lett fejtve.,Un nono del puzzle è stato risolto,九種のパズルの一つが解かれた,수수께끼의 9분의 1이 풀렸다,Een negende van de puzzel is opgelost.,Jedna dziewiąta zagadki rozwiązana,Um nono do quebra-cabeça foi resolvido,,,Одна девятая головоломки разгадана,Једна деветина загонетке је решена
 On the Monastery,TXT_ACS_MAP28_7_ONTHE,,,,v Klášteře.,Im Kloster,,en la Monaĥejo.,En el Monasterio,,luostarissa,dans le monastère.,A Monostorban,Nel Monastero,修道院 にわずかに影響を与えた,... 헤러시아크의 신학교에서,Op het klooster,w Klasztorze,No Mosteiro,,,в Семинарии Ересиарха,у манастиру
@@ -7555,11 +7797,11 @@ One ninth of the puzzle has been solved,TXT_ACS_MAP30_6_ONENI,,,,Jedna devítina
 On the Monastery,TXT_ACS_MAP30_7_ONTHE,,,,v Klášteře.,Im Kloster,,en la Monaĥejo.,En el Monasterio,,luostarissa,dans le monastère.,,Nel Monastero,修道院 にわずかに影響を与えた,... 헤러시아크의 신학교에서,Op het klooster,w Klasztorze,No Mosteiro,,,в Семинарии Ересиарха,у манастиру
 One ninth of the puzzle has been solved,TXT_ACS_MAP34_1_ONENI,,,,Jedna devítina rébusu byla vyřešena,Ein Neuntel des Rätsels wurde gelöst,,Unu naŭono de la puzlo estas solvita,Un noveno del acertijo se ha resuelto,,Yhdeksäsosa pulmasta on ratkaistu,Un neuvième du puzzle à été résolu,Egy kilencede a rejtvénynek kész.,Un nono del puzzle è stato risolto,九種のパズルの一つが解かれた,수수께끼의 9분의 1이 풀렸다,Een negende van de puzzel is opgelost.,Jedna dziewiąta zagadki rozwiązana,Um nono do quebra-cabeça foi resolvido,,,Одна девятая головоломки разгадана,Једна деветина загонетке је решена
 On the Monastery,TXT_ACS_MAP34_2_ONTHE,,,,v Klášteře.,Im Kloster,,en la Monaĥejo.,En el Monasterio,,luostarissa,dans le monastère.,,Nel Monastero,修道院 にわずかに影響を与えた,... 헤러시아크의 신학교에서,Op het klooster,w Klasztorze,No Mosteiro,,,в Семинарии Ересиарха,у манастиру
-The portal has been sealed,TXT_ACS_MAP35_0_THEPO,,,,Portál byl zapečeťen.,Das Portal wurde versiegelt,,La portalo estas obturita,El portal se ha sellado,,Portaali on sinetöity,Le portail est scellé.,Az átjáró bezárult.,Il portale è stato sigillato,ポータルは封印された,차원문은 봉인되었다,Het portaal is verzegeld,Portal został zapieczętowany,O portal foi selado,,,Врата закрылись,Портал је затворен
+The portal has been sealed,TXT_ACS_MAP35_0_THEPO,,,,Portál byl zapečeťen.,Das Portal wurde versiegelt,,La portalo estas obturita.,El portal se ha sellado,,Portaali on sinetöity,Le portail est scellé.,Az átjáró bezárult.,Il portale è stato sigillato,ポータルは封印された,차원문은 봉인되었다,Het portaal is verzegeld,Portal został zapieczętowany,O portal foi selado,,,Врата закрылись,Портал је затворен
 Choose your fate,TXT_ACS_MAP35_1_CHOOS,,,,Vyber si svůj osud.,Wähle dein Schicksal,,Elektu vian fatalon.,Escoge tu destino,Escoge tú destino,Valitse kohtalosi,Choisissez votre sort.,Dönts sorsod felöl,Scegli la tua sorte,運命を撰べ,그대의 운명을 정해라,Kies uw lot,Wybierz swoje przeznaczenie,Escolha o seu destino,,,Сделай свой выбор,Изабери своју судбину
-The door is barred from the inside,TXT_ACS_MAP35_3_THEDO,,,,Dveře jsou zatarasené zevnitř.,Die Tür ist von innen verriegelt,,La pordo estas barita de la interno.,La puerta está atrancada desde el interior,,Ovi on teljetty sisältä,Cette porte est bloquée de l'intérieur.,Az ajtót belülről torlaszolták el.,La porta è sbarrata da dentro,この扉は内側から塞がれている,이 문은 안에 빗장이 걸려있다,De deur is van binnenuit geblokkeerd.,Drzwi są zabarykadowane od środka,A porta está barrada por dentro,,,Дверь заблокирована изнутри,Врата су закључана изнутра
+The door is barred from the inside,TXT_ACS_MAP35_3_THEDO,,,,Dveře jsou zatarasené zevnitř.,Die Tür ist von innen verriegelt,,La pordo estas barita interne.,La puerta está atrancada desde el interior,,Ovi on teljetty sisältä,Cette porte est bloquée de l'intérieur.,Az ajtót belülről torlaszolták el.,La porta è sbarrata da dentro,この扉は内側から塞がれている,이 문은 안에 빗장이 걸려있다,De deur is van binnenuit geblokkeerd.,Drzwi są zabarykadowane od środka,A porta está barrada por dentro,,,Дверь заблокирована изнутри,Врата су закључана изнутра
 Are you strong enough,TXT_ACS_MAP35_12_AREYO,,,,Jsi dost siln@[adj_cs],Bist du stark genug,,Ĉu vi estas sufiĉe forta,Eres lo suficientemente fuerte,,Olet riittävän vahva,Etes vous suffisamment fort,Elég erős vagy,Sei forte abbastanza,お前がどれだけ強かろうと,네 놈은 주인들을 대면할 힘이...,Ben je sterk genoeg,Czy jesteś wystarczająco silny,Você é forte o suficiente,,,"Достаточно ли ты силён,",Да ли си довољно снажан
-To face your own masters?,TXT_ACS_MAP35_14_TOFAC,,,,čelit svým vlastním pánům?,Dich deinen eigenen Meistern zu stellen?,,por stari kontraŭ viaj propraj mastroj?,¿Para enfrentarte a tus maestros?,,kohtaamaan omat mestarisi?,pour faire face à vos maîtres?,Hogy saját mestereiddel nézz szembe?,Per affrontare i tuoi stessi maestri?,お前の師に立ち向かえるのか?,진심으로 있는 것인가?,Om je eigen meesters onder ogen te komen?,By stawić czoła swoim mistrzom?,Para enfrentar os seus próprios mestres?,,,чтобы сразиться со своими наставниками?,да се суочиш са својим мајсторима?
+To face your own masters?,TXT_ACS_MAP35_14_TOFAC,,,,čelit svým vlastním pánům?,Dich deinen eigenen Meistern zu stellen?,,por stari kontraŭ viaj propraj mastroj?,¿Para enfrentarte a tus maestros?,,kohtaamaan omat mestarisi?,pour faire face à vos maîtres?,Hogy saját mestereiddel nézz szembe?,Per affrontare i tuoi stessi maestri?,お前の師に立ち向かえるのか?,진심으로 있는 것인가?,Om je eigen meesters onder ogen te komen?,By stawić czoła swoim mistrzom?,Para enfrentar os seus próprios mestres?,,,чтобы сразиться со своими наставниками?,да се суочиш са својим господарима?
 ,,Hexen: Deathkings script texts,,,,,,,,,,,,,,,,,,,,,
 You dare battle in the ready room?,TXT_ACS_MAP33_6_YOUDA,,,,Ty si dovoluješ rvát se v přípravné místnosti?,Du wagst es im Bereitschaftsraum zu kämpfen?,,Vi aŭdacas batali en la pretĉambro?,¿Te atreves a luchar en la sala de preparación?,,Kuinka kehtaat taistella valmistautumishuoneessa?,Vous osez faire escarmouche dans la salle de préparation?,,Hai il coraggio di combattere nella sala di aspetto?,挑戦する準備は整ったか?,감히 준비의 방에서 전투를 벌이다니...,Durf jij te vechten in de readyroom?,Śmiesz walczyć w pokoju przygotowań?,Como ousa batalhar na sala de espera?,,,Ты посмел сражаться в комнате ожидания?,Усуђујеш се борити у припремној соби?
 "For that, you shall die!",TXT_ACS_MAP33_7_FORTH,,,,Pro to zemřeš!,Dafür sollst du sterben!,,"Pro tio, vi mortos!","Por eso, ¡Deberás morir!",,Siitä hyvästä kuolet!,"Pour cette insulte, vous trépasserez!",Ezért meghalsz!,"Per quello, morirai!",ならば、死へ進め!,죽어서 값을 치러라!,Daarvoor zal je sterven!,Umrzesz za to!,"Por causa disso, deverá morrer!",,,Так умри же!,За то ћеш умрети!
@@ -7595,12 +7837,12 @@ One third of the puzzle is solved,TXT_ACS_MAP51_8_ONETH,,,,Jedna třetina rébus
 Two thirds of the puzzle is solved,TXT_ACS_MAP51_9_TWOTH,,,,Dvě třetiny rébusu jsou vyřešeny.,Zwei Drittel des Rätsels sind gelöst,,Du trionoj de la puzlo estas solvita.,Dos tercios del acertijo se han resuelto,,Kaksi kolmannesta pulmasta on ratkaistu,deux tiers du puzzle ont été résolus,A rejtvény kétharmada megoldva,Due terzi del puzzle è stato risolto,パズルの 三分の二 が解かれた,수수께끼의 3분의 2가 풀렸다,Tweederde van de puzzel is opgelost,Dwie trzecie zagadki rozwiązane,Dois terços do quebra-cabeça foi resolvido,,,Две трети головоломки разгаданы,Две трећине загонетке су решене
 The crypt is open,TXT_ACS_MAP51_10_THECR,,,,Krypta je otevřena.,Die Gruft ist offen,,La kripto estas malfermita.,La cripta ahora está abierta,,Krypta on auki,La crypte est ouverte,A kripta nyitva,La cripta è aperta,地下聖堂 が開いた,지하 묘실의 입구가 열렸다.,De crypte is open,Krypta jest otwarta,A cripta está aberta,,,Склеп открыт,Гробница је отворена
 Beware the spider's tomb,TXT_ACS_MAP51_11_BEWAR,,,,Vyvaruj se pavoučí hrobky.,Hüte dich vor dem Grab der Spinne,,Singardu en la tombo de la araneo.,Cuidado con la tumba de la araña,,Varo hämähäkin hautaa,Attention à la tombe de l'araignée.,,Attento alla tomba del ragno,スパイダーの墓,거미의 무덤을 조심하라,Pas op voor het graf van de spin,Strzeż się grobowca pająków,Cuidado com a tumba da aranha,,,Опасайся гробницы паука,Чувај се паукове гробнице
-You hear a platform rise outside,TXT_ACS_MAP51_13_YOUHE,,,,Slyšíš zvenku zvedající se platformu.,"Du hörst, wie sich draußen eine Plattform erhebt",,Vi aŭdas plataĵon leviĝantan ekstere,Escuchas una plataforma erguirse afuera,,Kuulet lavan kohoavan ulkopuolella,Vous entendez une platforme s'élever dehors,Egy emelvényt hallasz emelkedni odakinn,Senti una piattaforma alzarsi a distanza,外で昇降機の音が聞こえる,밖에서 보행판이 올라오는 소리가 들려왔다,Je hoort een platform buiten opstijgen,Słyszysz odgłos unoszącej się na zewnątrz platformy,Você ouve uma plataforma subir lá fora,,,"Снаружи слышен звук
+You hear a platform rise outside,TXT_ACS_MAP51_13_YOUHE,,,,Slyšíš zvenku zvedající se platformu.,"Du hörst, wie sich draußen eine Plattform erhebt",,Vi aŭdas plataĵon leviĝantan ekstere.,Escuchas una plataforma erguirse afuera,,Kuulet lavan kohoavan ulkopuolella,Vous entendez une platforme s'élever dehors,Egy emelvényt hallasz emelkedni odakinn,Senti una piattaforma alzarsi a distanza,外で昇降機の音が聞こえる,밖에서 보행판이 올라오는 소리가 들려왔다,Je hoort een platform buiten opstijgen,Słyszysz odgłos unoszącej się na zewnątrz platformy,Você ouve uma plataforma subir lá fora,,,"Снаружи слышен звук
 поднимающегося камня",Чујете како се платформа диже споља
 Do you feel lucky?,TXT_ACS_MAP51_14_DOYOU,,,,"Zdá se ti, že máš štěstí?",Denkst du das heute dein Glückstag ist?,,Ĉu vi sentas vin bonŝanca?,¿Te sientes afortunado?,,Tunnetko olosi onnekkaaksi?,Vous pensez être chanceux?,Szerencsésnek érzed magad?,Ti senti fortunato?,運が良かったと思うか?,"그대는 운수가 좋은가, 아닌가?",Heb je geluk?,Masz szczęście?,Está se sentindo com sorte?,,,Чувствуешь ли ты себя везучим?,Да ли се осећаш срећним?
 You guessed wrong!,TXT_ACS_MAP51_15_YOUGU,,,,To máš smůlu!,Du hast falsch geraten!,,Vi divenis malĝuste!,¡Adivinaste incorrectamente!,,Arvasi väärin!,Et bien non!,Hát rosszul érzed!,Non hai indovinato!,それは違うな!,잘못된 판단이다!,Je hebt het verkeerd geraden!,Źle zgadłeś!,Adivinhou errado!,,,Неправильное предположение!,Погодио си погрешно!
 Good guess,TXT_ACS_MAP51_16_GOODG,,,,Dobré zdání.,Gut geraten,,Bona diveno.,¡Buena elección!,,Hyvä arvaus,Vous avez deviné!,Jól sejtetted,Hai indovinato,良い推測だ,옳은 판단이다,Goede gok,Dobrze zgadłeś,Certa resposta,,,Правильное предположение,Добар погодак
-Can you do all the scripting for my level?,TXT_ACS_MAP51_17_CANYO,,,,Můžeš všechno skriptování udělat za mě?,Kannst du die Skripte für all meine Level schreiben?,,Ĉu vi povas fari ĉiom da la skriptoj por mia nivelo?,¿Podrías hacer todo el script para mi nivel?,,Voitko tehdä kaikki tasoni skriptaukset?,Vous pouvez faire tout le script de mon niveau?,Meg tudnád csinálni az egészt scriptelést a pályámhoz?,Puoi fare tutto lo scripting per il mio livello?,この階層を全て書き換える事は可能かな?,어쩔 수 없이 살아간다. 태어났기 때문에...,Kun je al het scripten doen voor mijn niveau?,Czy możesz zrobić cały skrypt do mojego poziomu?,Poderia fazer todo o scripting da minha fase?,,,Можешь написать за меня все скрипты?,Можеш ли да урадиш све сценарије за мој ниво?
+Can you do all the scripting for my level?,TXT_ACS_MAP51_17_CANYO,,,,Můžeš všechno skriptování udělat za mě?,Kannst du die Skripte für all meine Level schreiben?,,Ĉu vi povas fari ĉiom da la skriptoj por mia nivelo?,¿Podrías hacer todo el script para mi nivel?,,Voitko tehdä kaikki tasoni skriptaukset?,Vous pouvez faire tout le script de mon niveau?,Meg tudnád csinálni az egészt scriptelést a pályámhoz?,Puoi fare tutto lo scripting per il mio livello?,この階層を全て書き換える事は可能かな?,어쩔 수 없이 살아간다. 태어났기 때문에...,Kun je al het scripten doen voor mijn niveau?,Czy możesz zrobić cały skrypt do mojego poziomu?,Poderia fazer todo o scripting da minha fase?,,,Можешь написать за меня все скрипты?,Можеш ли да напишеш све скриптове за мој ниво?
 Don't touch my gloppy,TXT_ACS_MAP51_18_DONTT,,,,Nesahej mi na slimáka!,Berühr mein Ding nicht!,,Ne tuŝas mian gloppy-on.,No toques mi gloppy,,Älä koske mönjääni,Ne touche pas mon gloppy,,Non toccare la mia caramella,汚らしい手で触れるな,"에틴을 쳐죽인 것까지 신경 쓰다간, 걸을 수도 없을걸.",Raak mijn gloppy niet aan,Nie ruszaj moich słodyczy,Não toca no meu docinho!,,,Не трогай мою вкусняшку,Не дирај мој слаткиш
 Vorpal ?!?!?!,TXT_ACS_MAP51_19_VORPA,,,,Šaršoun?!?!?!,Tödlich ?!?!?!,,Vorpal ?!?!?!,¡¿¡¿¡¿ Vorpal ?!?!?!,,Tappava ?!?!?!,,,,ボーパル ?!?!?!,드래곤 슬레이어 인가?!,,Śmiercionośny ?!?!?!,,,,Остренько ?!?!?!,Вајтолни мач ?!?!?!
 "Gimme some sugar, baby",TXT_ACS_MAP51_20_GIMME,,,,"Dej mi trochu cukru, zlato.","Gib mir etwas Zucker, Baby",,"Donas al mi iom da sukeron, bebo.","Dame un poco de azúcar, baby","Dame algo de azúcar, bebe","Anna vähän sokeria, beibi",,,,砂糖が欲しいかい、ベイビー,등짝을 보자!...,"Geef me wat suiker, schatje.",Daj mi torchę cukru skarbie,"Me dá um pouco de açúcar, baby",,,"Подай-ка мне сахар, детка","Дај ми мало шећера, бебо"
@@ -8186,7 +8428,7 @@ I'll take my chances.,TXT_RPLY0_SCRIPT04_D22740_ILLTA,,,,Já to zkusím.,Ich ris
 持っていたものだ。
 バチッ!と一瞬で黒焦げになっちまったよ。",좋습니다. 이 신분증은 조심하지도 못하고 냉각 회로로 떨어진 한 불쌍한 녀석에게서 훔쳐온 겁니다. “뿌직”! 완전히 터졌죠.,"Oké, ik heb een I.D. gestolen van het lijk van een dwaas die in de koelvloeistofput van de reactor is gevallen. --Blat-- onmiddellijk frituren.","Dobra, ukradłem identyfikator ze zwłok pewnego durnia, który wpadł do chłodnicy reaktora. --puf-- i się usmażył.",Beleza. Eu roubei uma identificação do cadáver de algum otário que caiu no poço de refrigeração do reator. Pluft! Frito na hora. ,,,"Очень хорошо. Я украл удостоверение с трупа одного идиота, который упал прямо в котёл реактора. «Шмяк!» Моментальное прожаривание до костей.",
 What should I do once I'm in?,TXT_RPLY0_SCRIPT04_D24256_WHATS,,,,Co mám udělat uvnitř?,"Was soll ich machen, wenn ich drin bin?",,,¿Qué debo hacer una vez dentro?,,,Qu'est ce que je fais une fois que je suis rentré?,,,中に入ったらどうすればいい?,그곳으로 들어간 후엔 뭘 해야 하죠?,Wat moet ik doen als ik eenmaal binnen ben?,Co mam zrobić jak wejdę?,O que devo fazer depois de entrar?,,,И что дальше?,
-"Tell whoever asks that you're the replacement worker for Mr. Crispy. It's just dumb enough to work. Oh, and you might want to check out the storeroom that's right above us.",TXT_DLG_SCRIPT04_D25772_TELLW,,,,"Řekni komukoliv, kdo se zeptá, že jsi náhrada za pana Křupavého. Je to dost pitomé na to, aby to fungovalo. Jo, a možná bys mohl mít zájem podívat se do skladu, který je přímo nad námi.","Sage jedem, der dich fragt, dass du der Ersatz für Mister Crispy bist. Es is idiotisch genug, um zu funktionieren. Oh, du solltest auch mal einen Blick in den Lagerraum auf der oberen Etage werfen.",,,"Dile a quien pregunte que eres el sustituto del Sr. Crujiente. Es suficientemente estúpido para que funcione. Oh, y puede que quieras comprobar el cuarto de alacenamiento justo sobre nosotros.",,,"Expliquez à qui veut l'entrendre que vous remplacez Mr. Frite. C'et suffisamment stupide pour marcher. Oh, et pensez à fouiller la salle de stockage au dessus de nous.",,,"誰かに聞かれたら、クリスピーの代わりに来た
+"Tell whoever asks that you're the replacement worker for Mr. Crispy. It's just dumb enough to work. Oh, and you might want to check out the storeroom that's right above us.",TXT_DLG_SCRIPT04_D25772_TELLW,,,,"Řekni komukoliv, kdo se zeptá, že jsi náhrada za pana Pečínku. Je to dost pitomé na to, aby to fungovalo. Jo, a možná bys mohl mít zájem podívat se do skladu, který je přímo nad námi.","Sage jedem, der dich fragt, dass du der Ersatz für Mister Crispy bist. Es ist idiotisch genug, um zu funktionieren. Oh, du solltest auch mal einen Blick in den Lagerraum auf der oberen Etage werfen.",,,"Dile a quien pregunte que eres el sustituto del Sr. Crujiente. Es suficientemente estúpido para que funcione. Oh, y puede que quieras comprobar el cuarto de alacenamiento justo sobre nosotros.",,,"Expliquez à qui veut l'entrendre que vous remplacez Mr. Frite. C'et suffisamment stupide pour marcher. Oh, et pensez à fouiller la salle de stockage au dessus de nous.",,,"誰かに聞かれたら、クリスピーの代わりに来た
 と言え。皆疑うことなく信じるだろうさ。
 あと、上の階にある倉庫も行けるなら
 見てみた方がいいぞ。","누군가가 물어보면 통구이 씨의 후임으로 들어왔다고 하시면 됩니다. 별로 어려운 일은 아닐 거에요. 아, 그리고 우리 바로 위에 있는 창고도 한번 확인해보세요.
@@ -8207,7 +8449,7 @@ Are you deaf? I just told you how busy I am. Get back to work.,TXT_DLG_SCRIPT04_
 Who are you? Only clearance level two personnel are permitted in this area.,TXT_DLG_SCRIPT04_D34868_WHOAR,,,,Kdo jsi? Pouze pracovníci druhé úrovně sem mají povolen přístup.,Wer bist du? Nur Personal mit Zugangsstufe 2 hst hier Zutritt.,,,¿Quién eres? Solo el personal con permiso de nivel dos puede estar aquí.,,,Qui êtes vous? Seuls les personnes avec un niveau d'autorisation deux peuvent accéder à cette zone.,,,"誰だ? レベル2のクリアランスを持たない者は
 ここに来てはいけないが。",넌 누구지? 이곳은 2급 인원만이 출입할 수 있다.,Wie ben jij? Alleen ontruimingsniveau twee personeel is toegestaan in dit gebied.,Kim jesteś? Tylko personel posiadający zezwolenie poziomu drugiego może tu przebywać.,Quem é você? Só funcionários com permissão nível 2 podem entrar nesta área.,,,Ты кто такой? Только персоналу второго уровня допуска разрешено находиться в этой зоне.,
 I'm the replacement worker.,TXT_RPLY0_SCRIPT04_D34868_IMTHE,,,,Jsem náhradník.,Ich bin der Ersatzarbeiter.,,,Soy el sustituto.,,,Je suis le remplaçant.,,,代替要員だ。,후임 근무자로 왔습니다.,Ik ben de vervanger.,Jestem tu na zastępstwo.,Eu sou o operário substituto.,,,Я замещаю рабочего.,
-"About time you showed up. Go talk with Ketrick in the core. Oh, and take this key card. Don't want you getting shot on your first day, huh?",TXT_DLG_SCRIPT04_D36384_ABOUT,,,,"Už bylo na čase, aby ses objevil. Jdi si promluvit s Ketrickem v jádře. A vezmi si tuhle kartu. Nechtěl by ses nechat zastřelit hned svůj první den, ne?","Wird auch Zeit, dass du hier erscheinst. Rede mit Ketrick im Reaktorkern, Und nimm diesen Schlüssel. Du willst ja wohl nicht gleich am ersten Tag erschossen werden, oder?",,,"Ya era hora. Ve a hablar con Ketrick en el núcleo. Oh, y toma esta tarjeta llave. No querrás que te peguen un tiro en tu primer día, ¿eh?",,,"Ah. Enfin. Il vous en a fallu, du temps! Allez parler avec Ketrick dans la section du cœur. Oh, et prenez ce passe. Vous ne voulez pas vous faire tirer dessus lors de votre premier jour, non?",,,"そろそろ来ると思っていたよ。コアにいる
+"About time you showed up. Go talk with Ketrick in the core. Oh, and take this key card. Don't want you getting shot on your first day, huh?",TXT_DLG_SCRIPT04_D36384_ABOUT,,,,"Už bylo na čase, aby ses objevil. Jdi si promluvit s Ketrickem v jádře. A vezmi si tuhle kartu. Přece by ses nechtěl nechat zastřelit hned svůj první den, ne?","Wird auch Zeit, dass du hier erscheinst. Rede mit Ketrick im Reaktorkern, Und nimm diesen Schlüssel. Du willst ja wohl nicht gleich am ersten Tag erschossen werden, oder?",,,"Ya era hora. Ve a hablar con Ketrick en el núcleo. Oh, y toma esta tarjeta llave. No querrás que te peguen un tiro en tu primer día, ¿eh?",,,"Ah. Enfin. Il vous en a fallu, du temps! Allez parler avec Ketrick dans la section du cœur. Oh, et prenez ce passe. Vous ne voulez pas vous faire tirer dessus lors de votre premier jour, non?",,,"そろそろ来ると思っていたよ。コアにいる
 ケトリックに話しかけてくれ。
 あとこのキーカードを受け取ってくれ。
 初日で撃たれたくないならな。","마침 잘 와주었군. 중심부에 있는 케트릭에게 가서 얘기하라. 아, 그리고 여기 키카드를 받아라. 첫날부터 총에 맞고 싶지는 않겠지, 응?","Het werd tijd dat je kwam opdagen. Ga praten met Ketrick in de kern. Oh, en neem deze sleutelkaart. Wil je niet dat je op je eerste dag wordt neergeschoten, huh?","W końcu jesteś. Idź, porozmawiaj z Ketrickiem przy rdzeniu. Oh, weź tą kartę-klucz. Nie chcesz chyba być zastrzelony podczas pierwszego dnia w pracy, co?","Já era hora de você aparecer. Vá falar com o Ketrick lá no núcleo. Ah, e leve este cartão de acesso. Você não vai querer levar um tiro no primeiro dia, hein?",,,"Как раз вовремя. Иди поговори с Кетриком возле ядра реактора. О, и возьми эту карточку. Мы ведь не хотим, чтобы тебя подстрелили в первый же рабочий день?",
@@ -9604,9 +9846,9 @@ One piece constitutes awesome power. Possession of all five pieces would be deva
 Remember: kill with stealth instead of force. You won't set off the alarms.,TXT_SUB_LOG6,STRIFE1.WAD: MAP02,,,Pamatuj: Zabíjej potichu. Nespustíš poplach.,Denk daran: Töte lautlos und du wirst den Alarm nicht auslösen.,,,"Recuerda: mata con sigilo, no con fuerza, y no activarás las alarmas.",,,"Souviens-toi: Tue avec discrétion, pas avec force, et tu n'activeras pas les alarmes.",,,覚えておいて:静かに殺す時はナイフか毒矢だ。警報を鳴らすと厄介なことになる。,기억해: 소음 없이 조용히 죽여. 그럼 경보를 울리지 않을 테니까.,Onthoud: dood met heimelijke in plaats van met geweld. Je laat de alarmen niet afgaan.,,Lembre-se: mate com cautela ao invés de força. Assim você não ativará os alarmes.,,,"Запомни: убивай бесшумно, не лезь на рожон, и ты не поднимешь тревогу.",
 "All I know about the governor is that he's playing both sides to the middle. Here's his so-called ""mansion.""",TXT_SUB_LOG7,STRIFE1.WAD: MAP02,,,"O guvernérovi vím jen to, že sympatizuje s oběma stranami. Tady je jeho rádoby „sídlo“.","Vom Gouverneur weiß ich nur, dass er beide Seiten gegeneinander ausspielt. Hier ist seine sogenannte „Villa.“",,,"Todo lo que sé del gobernador es que juega entre ambos bandos. Aquí está su supesta ""mansión"".",,,"Tout ce que je sais au sujet du gouverneur est qu'il est un agent double de chaque côté. Voilà son soi-disant ""manoir"".",,,"私が知事について知っていることは、町の中央で双方を遊ばせてる様だ。
 ソイツがここいらを'マンション'と呼んでいる。",내가 알기로는 모렐 총독은 두 세력을 가지고 노는 걸 좋아한대. 여기는 그의 '저택'이라는 곳이야.,"Het enige wat ik van de gouverneur weet is dat hij beide kanten van de gouverneur naar het midden speelt. Hier is zijn zogenaamde ""herenhuis"".",,"Tudo o que eu sei sobre o governador é que ele está jogando entre dois lados. Aqui fica a sua suposta ""mansão"".",,,"Я знаю о губернаторе только то, что он пытается подыграть обеим сторонам, оставаясь посередине. Вот его так называемый «особняк».",
-Ugh. The dregs of humanity have certainly found a home.,TXT_SUB_LOG8,,,,Fuj. Spodina lidstva si rozhodně našla domov.,Ugh. Der Bodensatz der Menschheit hat definitiv ein Zuhause gefunden.,,,Ugh. La basura humana ciertamente ha encontrado un hogar.,,,"Eugh, les loques de l'humanité ont trouvé leur maison, on dirait.",,,,"으윽, 우리 중 나쁜 놈들만 보금자리를 구한 것 같네.",Ugh. De bezinksels van de mensheid hebben zeker een thuis gevonden.,,Urgh. A escória da humanidade certamente encontraram um lar.,,,Фу. Самое место для отбросов человечества.,
+Ugh. The dregs of humanity have certainly found a home.,TXT_SUB_LOG8,,,,Fuj. Spodina lidstva si rozhodně našla domov.,Ugh. Der Bodensatz der Menschheit hat definitiv ein Zuhause gefunden.,,,Ugh. La basura humana ciertamente ha encontrado un hogar.,,,"Eugh, les loques de l'humanité ont trouvé leur maison, on dirait.",,,,"으윽, 우리 중 나쁜 놈들만 보금자리를 구한 것 같네.",Ugh. De bezinksels van de mensheid hebben zeker een thuis gevonden.,,Urgh. A escória da humanidade certamente encontrou um lar.,,,Фу. Самое место для отбросов человечества.,
 Calling Mourel sleazy is paying him a compliment. He's mongrel turd on a stick.,TXT_SUB_LOG9,STRIFE1.WAD: MAP02,,,"Nazývat Mourela slizákem by mu lichotilo, svinský parchant jeden podělaný.","Mourel als 'verschlagen' zu bezeichnen wäre, ihm ein Kompliment zu machen. Er ist ein Haufen Hundescheiße.",,,Llamar a Mourel sucio es un halago. Es mierda de perro callejero en un palo.,,,Appeler Mourel un rat serait être gentil. Il est une sacrée brochette de merde.,,,"モーレルにとって汚職議員は誉め言葉だ。
-ソイツはクソを漏らした'駄犬'でしかないからな。",모렐에게 행실이 지저분하다고 말하는 건 칭찬에 불과해. 저놈은 이기적인 똥개새끼라고.,Mourel slordig noemen is een compliment voor hem. Hij is een bastaard op een stokje.,,Chamar o Mourel de picareta é um elogio. Ele é um verdadeiro abostado.,,,"Назвать Моурела подлым, значит сделать ему комплимент. Кусок дерьма на палочке...",
+ソイツはクソを漏らした'駄犬'でしかないからな。",모렐에게 행실이 지저분하다고 말하는 건 칭찬에 불과해. 저놈은 이기적인 똥개새끼라고.,Mourel slordig noemen is een compliment voor hem. Hij is een bastaard op een stokje.,,Chamar o Mourel de picareta é elogio. Ele é um total desgraçado de merda.,,,"Назвать Моурела подлым, значит сделать ему комплимент. Кусок дерьма на палочке...",
 We need to speak with someone who knows the old town and where this coupling is. Command says: find MacGuffin. ,TXT_SUB_LOG10,STRIFE1.WAD: MAP02,,,"Musíme si promluvit s někým, kdo zná staré město a kde se tahle spojka nalézá. Vedení říká najít MacGuffina.","Wir müssen mit jemandem reden, der die alte Stadt kennt und weiß, wo diese Anzapfung it. Die Kommandozentrale sagt, finde MacGuffin.",,,Necesitamos hablar con alguien que conozca el viejo pueblo y donde se encuentra el acoplamiento. El Comando dice: encuentra a MacGuffin.,,,On doit parler à quelqu'un qui connaît la vieille ville et où se trouve le coupleur. Le commandement me dit qu'il faut trouver MacGuffin.,,,"我々は何処にあるかについてはオールドタウンに知っている者がいる。
 指令が言うには マクガフィンに会え。",동력선의 위치를 알 수 있을 만한 토박이 주민과 이야기해봐. 본부가 말하길: 맥거핀을 찾으래.,We moeten met iemand spreken die de oude stad kent en waar deze koppeling is. Het commando zegt: zoek MacGuffin.,,Precisamos falar com alguém que conheça a velha cidade e onde fica essa conexão. O comando diz: encontre MacGuffin.,,,"Нам нужен кто-то, кто знает старый город и может подсказать, где эта муфта. В штабе говорят, что тебе поможет МакГаффин.",
 "He's in what's politely called the ""bum hole"". Take the walkway by the sewage plant and head down the stairs.",TXT_SUB_LOG11,STRIFE1.WAD: MAP02,,,"Najdeš ho na místě, kterému zdvořile říkají „zadnice“. Jdi přes chodník u čističky a sejdi schody.","Er ist, was höflich gesagt, das „Pennerloch“ genannt wird. Gehe zum Weg zur Kläranlage und von dort die Treppe herunter.",,,"Está en lo que educadamente se llama el ""hoyo vagabundo"". Toma la pasarela junto a la planta de aguas residuales y baja por las escaleras.",,,"Il se trouve dans ce qu'on appelle poliment le ""trou à rats"", suis la coursive près de la centrale de traitement des égouts et descend les escaliers.",,,"彼は行儀よく'バムホール'と呼ばれる場所に居る。

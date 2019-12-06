@@ -64,6 +64,7 @@ EXTERN_CVAR (Color, am_cdwallcolor)
 EXTERN_CVAR (Bool, wi_percents)
 EXTERN_CVAR (Int, gl_texture_hqresizemode)
 EXTERN_CVAR (Int, gl_texture_hqresizemult)
+EXTERN_CVAR (Int, vid_preferbackend)
 
 FGameConfigFile::FGameConfigFile ()
 {
@@ -507,6 +508,16 @@ void FGameConfigFile::DoGlobalSetup ()
 				{
 					UCVarValue v = var->GetGenericRep(CVAR_Int);
 					if (v.Int == 3) var->SetGenericRep(newvalue, CVAR_Int);
+				}
+			}
+			if (last < 219)
+			{
+				// migrate vid_enablevulkan to vid_preferbackend
+				auto var = FindCVar("vid_enablevulkan", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Int);
+					vid_preferbackend = v.Int;
 				}
 			}
 		}

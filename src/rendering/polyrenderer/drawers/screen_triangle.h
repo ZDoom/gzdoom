@@ -114,4 +114,18 @@ namespace TriScreenDrawerModes
 	struct TestSpanOpt1 { static const int Flags = 1; };
 	struct TestSpanOpt2 { static const int Flags = 2; };
 	struct TestSpanOpt3 { static const int Flags = 3; };
+
+	enum SWBlendColor
+	{
+		SWBLEND_Sub = 1,
+		SWBLEND_RevSub = 2,
+		SWBLEND_AlphaTest = 4
+	};
+
+	struct BlendColorOpt_Add { static const int Flags = 0; };
+	struct BlendColorOpt_Sub { static const int Flags = 1; };
+	struct BlendColorOpt_RevSub { static const int Flags = 2; };
+	struct BlendColorOpt_AlphaTest_Add { static const int Flags = 4; };
+	struct BlendColorOpt_AlphaTest_Sub { static const int Flags = 5; };
+	struct BlendColorOpt_AlphaTest_RevSub { static const int Flags = 6; };
 }

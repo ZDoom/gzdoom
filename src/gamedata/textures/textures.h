@@ -294,9 +294,11 @@ class FTexture
 	friend class FMaterial;
 	friend class OpenGLRenderer::FGLRenderState;	// For now this needs access to some fields in ApplyMaterial. This should be rerouted through the Material class
 	friend class VkRenderState;
+	friend class PolyRenderState;
 	friend struct FTexCoordInfo;
 	friend class OpenGLRenderer::FHardwareTexture;
 	friend class VkHardwareTexture;
+	friend class PolyHardwareTexture;
 	friend class FMultiPatchTexture;
 	friend class FSkyBox;
 	friend class FBrightmapTexture;

@@ -94,7 +94,7 @@
 EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
-EXTERN_CVAR(Int,  vid_enablevulkan)
+EXTERN_CVAR(Int,  vid_preferbackend)
 EXTERN_CVAR(Bool, vk_debug)
 
 CVAR(Bool, mvk_debug, false, 0)
@@ -348,7 +348,7 @@ class CocoaVideo : public IVideo
 public:
 	CocoaVideo()
 	{
-		ms_isVulkanEnabled = vid_enablevulkan == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
+		ms_isVulkanEnabled = vid_preferbackend == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
 	}
 
 	~CocoaVideo()
@@ -955,3 +955,20 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 	return result == VK_SUCCESS;
 }
 #endif
+
+void I_PolyPresentInit()
+{
+}
+
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
+{
+	return nullptr;
+}
+
+void I_PolyPresentUnlock(int x, int y, int w, int h)
+{
+}
+
+void I_PolyPresentDeinit()
+{
+}

@@ -462,7 +462,8 @@ set( PLAT_WIN32_SOURCES
 	win32/gl_sysfb.cpp
 	win32/base_sysfb.cpp
 	win32/win32basevideo.cpp
-	win32/win32glvideo.cpp)
+	win32/win32glvideo.cpp
+	win32/win32polyvideo.cpp)
 	
 if (HAVE_VULKAN)
 	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} win32/win32vulkanvideo.cpp )
@@ -634,7 +635,7 @@ file( GLOB HEADER_FILES
 	rendering/polyrenderer/*.h
 	rendering/polyrenderer/math/*.h
 	rendering/polyrenderer/drawers/*.h
-	rendering/polyrenderer/scene/*.h
+	rendering/polyrenderer/backend/*.h
 	rendering/hwrenderer/data/*.h
 	rendering/hwrenderer/dynlights/*.h
 	rendering/hwrenderer/models/*.h
@@ -706,24 +707,7 @@ set ( SWRENDER_SOURCES
 )
 
 set( POLYRENDER_SOURCES
-	rendering/polyrenderer/poly_renderer.cpp
-	rendering/polyrenderer/poly_renderthread.cpp
-	rendering/polyrenderer/scene/poly_scene.cpp
-	rendering/polyrenderer/scene/poly_portal.cpp
-	rendering/polyrenderer/scene/poly_cull.cpp
-	rendering/polyrenderer/scene/poly_decal.cpp
-	rendering/polyrenderer/scene/poly_particle.cpp
-	rendering/polyrenderer/scene/poly_plane.cpp
-	rendering/polyrenderer/scene/poly_playersprite.cpp
-	rendering/polyrenderer/scene/poly_wall.cpp
-	rendering/polyrenderer/scene/poly_wallsprite.cpp
-	rendering/polyrenderer/scene/poly_sprite.cpp
-	rendering/polyrenderer/scene/poly_model.cpp
-	rendering/polyrenderer/scene/poly_sky.cpp
-	rendering/polyrenderer/scene/poly_light.cpp
-	rendering/polyrenderer/drawers/poly_buffer.cpp
 	rendering/polyrenderer/drawers/poly_triangle.cpp
-	rendering/polyrenderer/drawers/poly_draw_args.cpp
 	rendering/polyrenderer/drawers/screen_triangle.cpp
 	rendering/polyrenderer/math/gpu_types.cpp
 )
@@ -821,6 +805,14 @@ set (VULKAN_SOURCES
 if (HAVE_VULKAN)
 	set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${VULKAN_SOURCES})
 endif()
+
+set (POLYBACKEND_SOURCES
+	rendering/polyrenderer/backend/poly_framebuffer.cpp
+	rendering/polyrenderer/backend/poly_buffers.cpp
+	rendering/polyrenderer/backend/poly_hwtexture.cpp
+	rendering/polyrenderer/backend/poly_renderstate.cpp
+)
+set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${POLYBACKEND_SOURCES})
 
 set (PCH_SOURCES
 	am_map.cpp
@@ -1397,7 +1389,7 @@ source_group("Rendering\\Software Renderer\\Viewport" REGULAR_EXPRESSION "^${CMA
 source_group("Rendering\\Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/.+")
 source_group("Rendering\\Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/math/.+")
 source_group("Rendering\\Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/drawers/.+")
-source_group("Rendering\\Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/scene/.+")
+source_group("Rendering\\Poly Renderer\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/backend/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
 source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)

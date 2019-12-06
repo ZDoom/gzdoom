@@ -108,11 +108,25 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
 
-CUSTOM_CVAR(Int, vid_enablevulkan, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// [SP] This may seem pointless - but I don't want to implement live switching just
 	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
 	// do it right without memory leaks
+
+	switch(self)
+	{
+	case 2:
+		Printf("Selecting SoftPoly backend...\n");
+		break;
+#ifdef HAVE_VULKAN
+	case 1:
+		Printf("Selecting Vulkan backend...\n");
+		break;
+#endif
+	default:
+		Printf("Selecting OpenGL backend...\n");
+	}
 
 	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
 }
@@ -202,7 +216,7 @@ DCanvas::~DCanvas ()
 //
 //==========================================================================
 
-void DCanvas::Resize(int width, int height)
+void DCanvas::Resize(int width, int height, bool optimizepitch)
 {
 	Width = width;
 	Height = height;
@@ -213,7 +227,7 @@ void DCanvas::Resize(int width, int height)
 	// longer than the width. The values used here are all based on
 	// empirical evidence.
 	
-	if (width <= 640)
+	if (width <= 640 || !optimizepitch)
 	{
 		// For low resolutions, just keep the pitch the same as the width.
 		// Some speedup can be seen using the technique below, but the speedup

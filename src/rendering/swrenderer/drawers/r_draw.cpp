@@ -52,6 +52,7 @@
 #include "r_thread.h"
 #include "swrenderer/scene/r_light.h"
 #include "playsim/a_dynlight.h"
+#include "polyrenderer/drawers/poly_triangle.h"
 
 CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, r_fuzzscale, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -471,9 +472,9 @@ namespace swrenderer
 		}
 		count = args.Count();
 
-		auto zbuffer = PolyZBuffer::Instance();
-		int pitch = PolyStencilBuffer::Instance()->Width();
-		float* values = zbuffer->Values() + y * pitch + x;
+		auto zbuffer = PolyTriangleThreadData::Get(thread)->depthstencil;
+		int pitch = zbuffer->Width();
+		float* values = zbuffer->DepthValues() + y * pitch + x;
 		int cnt = count;
 
 		values = thread->dest_for_thread(y, pitch, values);
@@ -583,9 +584,9 @@ namespace swrenderer
 
 		void Execute(DrawerThread *thread) override
 		{
-			auto zbuffer = PolyZBuffer::Instance();
-			int pitch = PolyStencilBuffer::Instance()->Width();
-			float *values = zbuffer->Values() + y * pitch + x;
+			auto zbuffer = PolyTriangleThreadData::Get(thread)->depthstencil;
+			int pitch = zbuffer->Width();
+			float *values = zbuffer->DepthValues() + y * pitch + x;
 			int cnt = count;
 
 			values = thread->dest_for_thread(y, pitch, values);
@@ -625,9 +626,9 @@ namespace swrenderer
 			if (thread->skipped_by_thread(y))
 				return;
 
-			auto zbuffer = PolyZBuffer::Instance();
-			int pitch = PolyStencilBuffer::Instance()->Width();
-			float *values = zbuffer->Values() + y * pitch;
+			auto zbuffer = PolyTriangleThreadData::Get(thread)->depthstencil;
+			int pitch = zbuffer->Width();
+			float *values = zbuffer->DepthValues() + y * pitch;
 			int end = x2;
 
 			if (idepth1 == idepth2)

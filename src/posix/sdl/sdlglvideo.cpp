@@ -57,6 +57,8 @@
 #include "rendering/vulkan/system/vk_framebuffer.h"
 #endif
 
+#include "rendering/polyrenderer/backend/poly_framebuffer.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -73,7 +75,7 @@ EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
-EXTERN_CVAR (Int, vid_enablevulkan)
+EXTERN_CVAR (Int, vid_preferbackend)
 EXTERN_CVAR (Bool, cl_capfps)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -113,6 +115,7 @@ namespace Priv
 
 	SDL_Window *window;
 	bool vulkanEnabled;
+	bool softpolyEnabled;
 	bool fullscreenSwitch;
 
 	void CreateWindow(uint32_t extraFlags)
@@ -230,6 +233,101 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 }
 #endif
 
+namespace
+{
+	SDL_Surface* polysurface = nullptr;
+}
+
+void I_PolyPresentInit()
+{
+	assert(Priv::softpolyEnabled);
+	assert(Priv::window != nullptr);
+}
+
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
+{
+	if (!polysurface || polysurface->w != w || polysurface->h != h)
+	{
+		if (polysurface)
+		{
+			SDL_FreeSurface(polysurface);
+			polysurface = nullptr;
+		}
+		polysurface = SDL_CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
+		SDL_SetSurfaceBlendMode(polysurface, SDL_BLENDMODE_NONE);
+	}
+
+	SDL_LockSurface(polysurface);
+	pitch = polysurface->pitch;
+	return (uint8_t*)polysurface->pixels;
+}
+
+void I_PolyPresentUnlock(int x, int y, int width, int height)
+{
+	SDL_UnlockSurface(polysurface);
+	
+	SDL_Surface* windowsurface = SDL_GetWindowSurface(Priv::window);
+	int ClientWidth = windowsurface->w;
+	int ClientHeight = windowsurface->h;
+
+	SDL_Rect clearrects[4];
+	int count = 0;
+	if (y > 0)
+	{
+		clearrects[count].x = 0;
+		clearrects[count].y = 0;
+		clearrects[count].w = ClientWidth;
+		clearrects[count].h = y;
+		count++;
+	}
+	if (y + height < ClientHeight)
+	{
+		clearrects[count].x = 0;
+		clearrects[count].y = y + height;
+		clearrects[count].w = ClientWidth;
+		clearrects[count].h = ClientHeight - clearrects[count].y;
+		count++;
+	}
+	if (x > 0)
+	{
+		clearrects[count].x = 0;
+		clearrects[count].y = y;
+		clearrects[count].w = x;
+		clearrects[count].h = height;
+		count++;
+	}
+	if (x + width < ClientWidth)
+	{
+		clearrects[count].x = x + width;
+		clearrects[count].y = y;
+		clearrects[count].w = ClientWidth - clearrects[count].x;
+		clearrects[count].h = height;
+		count++;
+	}
+
+	if (count > 0)
+		SDL_FillRects(windowsurface, clearrects, count, SDL_MapRGBA(windowsurface->format, 0, 0, 0, 255));
+
+	SDL_Rect dstrect;
+	dstrect.x = x;
+	dstrect.y = y;
+	dstrect.w = width;
+	dstrect.h = height;
+	SDL_BlitScaled(polysurface, nullptr, windowsurface, &dstrect);
+	
+	SDL_UpdateWindowSurface(Priv::window);
+}
+
+void I_PolyPresentDeinit()
+{
+	if (polysurface)
+	{
+		SDL_FreeSurface(polysurface);
+		polysurface = nullptr;
+	}
+}
+
+
 
 SDLVideo::SDLVideo ()
 {
@@ -246,8 +344,9 @@ SDLVideo::SDLVideo ()
 	}
 
 #ifdef HAVE_VULKAN
-	Priv::vulkanEnabled = vid_enablevulkan == 1
+	Priv::vulkanEnabled = vid_preferbackend == 1
 		&& Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
+	Priv::softpolyEnabled = vid_preferbackend == 2;
 
 	if (Priv::vulkanEnabled)
 	{
@@ -257,6 +356,10 @@ SDLVideo::SDLVideo ()
 		{
 			Priv::vulkanEnabled = false;
 		}
+	}
+	else if (Priv::softpolyEnabled)
+	{
+		Priv::CreateWindow(SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL);
 	}
 #endif
 }
@@ -294,6 +397,11 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 	}
 #endif
 
+	if (Priv::softpolyEnabled)
+	{
+		fb = new PolyFrameBuffer(nullptr, fullscreen);
+	}
+
 	if (fb == nullptr)
 	{
 		fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
@@ -325,6 +433,11 @@ int SystemBaseFrameBuffer::GetClientWidth()
 {
 	int width = 0;
 
+	if (Priv::softpolyEnabled)
+	{
+		return SDL_GetWindowSurface(Priv::window)->w;
+	}
+	
 #ifdef HAVE_VULKAN
 	assert(Priv::vulkanEnabled);
 	Priv::Vulkan_GetDrawableSize(Priv::window, &width, nullptr);
@@ -336,6 +449,11 @@ int SystemBaseFrameBuffer::GetClientWidth()
 int SystemBaseFrameBuffer::GetClientHeight()
 {
 	int height = 0;
+	
+	if (Priv::softpolyEnabled)
+	{
+		return SDL_GetWindowSurface(Priv::window)->h;
+	}
 
 #ifdef HAVE_VULKAN
 	assert(Priv::vulkanEnabled);

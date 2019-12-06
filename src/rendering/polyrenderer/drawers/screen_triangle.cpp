@@ -64,7 +64,7 @@ static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 	float stepW = args->gradientX.W;
 	float* w = thread->scanline.W;
 
-	int ssecount = ((x1 - x0) & 3);
+	int ssecount = ((x1 - x0) & ~3);
 	int sseend = x0 + ssecount;
 
 	__m128 mstepW = _mm_set1_ps(stepW * 4.0f);
@@ -72,7 +72,10 @@ static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 
 	for (int x = x0; x < sseend; x += 4)
 	{
-		_mm_storeu_ps(w + x, _mm_rcp_ps(mposW));
+		// One Newton-Raphson iteration for 1/posW
+		__m128 res = _mm_rcp_ps(mposW);
+		__m128 muls = _mm_mul_ps(mposW, _mm_mul_ps(res, res));
+		_mm_storeu_ps(w + x, _mm_sub_ps(_mm_add_ps(res, res), muls));
 		mposW = _mm_add_ps(mposW, mstepW);
 	}
 
@@ -160,7 +163,7 @@ static void WriteVarying(float pos, float step, int x0, int x1, const float* w, 
 #else
 static void WriteVarying(float pos, float step, int x0, int x1, const float* w, float* varying)
 {
-	int ssecount = ((x1 - x0) & 3);
+	int ssecount = ((x1 - x0) & ~3);
 	int sseend = x0 + ssecount;
 
 	__m128 mstep = _mm_set1_ps(step * 4.0f);
@@ -181,13 +184,61 @@ static void WriteVarying(float pos, float step, int x0, int x1, const float* w, 
 }
 #endif
 
+#ifdef NO_SSE
+static void WriteVaryingWrap(float pos, float step, int x0, int x1, const float* w, uint16_t* varying)
+{
+	for (int x = x0; x < x1; x++)
+	{
+		float value = pos * w[x];
+		value = value - std::floor(value);
+		varying[x] = static_cast<uint32_t>(static_cast<int32_t>(value * static_cast<float>(0x1000'0000)) << 4) >> 16;
+		pos += step;
+	}
+}
+#else
+static void WriteVaryingWrap(float pos, float step, int x0, int x1, const float* w, uint16_t* varying)
+{
+	int ssecount = ((x1 - x0) & ~3);
+	int sseend = x0 + ssecount;
+
+	__m128 mstep = _mm_set1_ps(step * 4.0f);
+	__m128 mpos = _mm_setr_ps(pos, pos + step, pos + step + step, pos + step + step + step);
+
+	for (int x = x0; x < sseend; x += 4)
+	{
+		__m128 value = _mm_mul_ps(mpos, _mm_loadu_ps(w + x));
+		__m128 f = value;
+		__m128 t = _mm_cvtepi32_ps(_mm_cvttps_epi32(f));
+		__m128 r = _mm_sub_ps(t, _mm_and_ps(_mm_cmplt_ps(f, t), _mm_set1_ps(1.0f)));
+		value = _mm_sub_ps(f, r);
+
+		__m128i ivalue = _mm_srli_epi32(_mm_slli_epi32(_mm_cvttps_epi32(_mm_mul_ps(value, _mm_set1_ps(static_cast<float>(0x1000'0000)))), 4), 17);
+		_mm_storel_epi64((__m128i*)(varying + x), _mm_slli_epi16(_mm_packs_epi32(ivalue, ivalue), 1));
+		mpos = _mm_add_ps(mpos, mstep);
+	}
+
+	pos += ssecount * step;
+	for (int x = sseend; x < x1; x++)
+	{
+		float value = pos * w[x];
+		__m128 f = _mm_set_ss(value);
+		__m128 t = _mm_cvtepi32_ps(_mm_cvttps_epi32(f));
+		__m128 r = _mm_sub_ss(t, _mm_and_ps(_mm_cmplt_ps(f, t), _mm_set_ss(1.0f)));
+		value = _mm_cvtss_f32(_mm_sub_ss(f, r));
+
+		varying[x] = static_cast<uint32_t>(static_cast<int32_t>(value * static_cast<float>(0x1000'0000)) << 4) >> 16;
+		pos += step;
+	}
+}
+#endif
+
 static void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	float startX = x0 + (0.5f - args->v1->x);
 	float startY = y + (0.5f - args->v1->y);
 
-	WriteVarying(args->v1->u * args->v1->w + args->gradientX.U * startX + args->gradientY.U * startY, args->gradientX.U, x0, x1, thread->scanline.W, thread->scanline.U);
-	WriteVarying(args->v1->v * args->v1->w + args->gradientX.V * startX + args->gradientY.V * startY, args->gradientX.V, x0, x1, thread->scanline.W, thread->scanline.V);
+	WriteVaryingWrap(args->v1->u * args->v1->w + args->gradientX.U * startX + args->gradientY.U * startY, args->gradientX.U, x0, x1, thread->scanline.W, thread->scanline.U);
+	WriteVaryingWrap(args->v1->v * args->v1->w + args->gradientX.V * startX + args->gradientY.V * startY, args->gradientX.V, x0, x1, thread->scanline.W, thread->scanline.V);
 	WriteVarying(args->v1->worldX * args->v1->w + args->gradientX.WorldX * startX + args->gradientY.WorldX * startY, args->gradientX.WorldX, x0, x1, thread->scanline.W, thread->scanline.WorldX);
 	WriteVarying(args->v1->worldY * args->v1->w + args->gradientX.WorldY * startX + args->gradientY.WorldY * startY, args->gradientX.WorldY, x0, x1, thread->scanline.W, thread->scanline.WorldY);
 	WriteVarying(args->v1->worldZ * args->v1->w + args->gradientX.WorldZ * startX + args->gradientY.WorldZ * startY, args->gradientX.WorldZ, x0, x1, thread->scanline.W, thread->scanline.WorldZ);
@@ -338,25 +389,10 @@ static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
-#ifdef NO_SSE
-static float wrap(float value)
+static uint32_t SampleTexture(uint32_t u, uint32_t v, const void* texPixels, int texWidth, int texHeight, bool texBgra)
 {
-	return value - std::floor(value);
-}
-#else
-static float wrap(float value)
-{
-	__m128 f = _mm_set_ss(value);
-	__m128 t = _mm_cvtepi32_ps(_mm_cvttps_epi32(f));
-	__m128 r = _mm_sub_ps(t, _mm_and_ps(_mm_cmplt_ps(f, t), _mm_set_ss(1.0f)));
-	return _mm_cvtss_f32(_mm_sub_ss(f, r));
-}
-#endif
-
-static uint32_t sampleTexture(float u, float v, const void* texPixels, int texWidth, int texHeight, bool texBgra)
-{
-	int texelX = MIN(static_cast<int>(wrap(u) * texWidth), texWidth - 1);
-	int texelY = MIN(static_cast<int>(wrap(v) * texHeight), texHeight - 1);
+	int texelX = (u * texWidth) >> 16;
+	int texelY = (v * texHeight) >> 16;
 	int texelOffset = texelX * texHeight + texelY;
 	if (texBgra)
 	{
@@ -374,8 +410,8 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	auto constants = thread->PushConstants;
 	auto& streamdata = thread->mainVertexShader.Data;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	float* u = thread->scanline.U;
-	float* v = thread->scanline.V;
+	uint16_t* u = thread->scanline.U;
+	uint16_t* v = thread->scanline.V;
 	
 	if (thread->SpecialEffect == EFF_FOGBOUNDARY) // fogboundary.fp
 	{
@@ -407,8 +443,8 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		frag_a += frag_a >> 7; // 255 -> 256
 		for (int x = x0; x < x1; x++)
 		{
-			uint32_t t1 = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
-			uint32_t t2 = sampleTexture(u[x], 1.0f - v[x], tex2Pixels, tex2Width, tex2Height, tex2Bgra);
+			uint32_t t1 = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+			uint32_t t2 = SampleTexture(u[x], 0xffff - v[x], tex2Pixels, tex2Width, tex2Height, tex2Bgra);
 
 			uint32_t r = (frag_r * RPART(t1)) >> 8;
 			uint32_t g = (frag_g * GPART(t1)) >> 8;
@@ -438,7 +474,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 
 		for (int x = x0; x < x1; x++)
 		{
-			fragcolor[x] = lut[RPART(sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra))] | 0xff000000;
+			fragcolor[x] = lut[RPART(SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra))] | 0xff000000;
 		}
 	}
 	else if (thread->EffectState == SHADER_NoTexture) // func_notexture
@@ -480,35 +516,35 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		case TM_FOGLAYER:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+				uint32_t texel = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = texel;
 			}
 			break;
 		case TM_STENCIL:	// TM_STENCIL
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+				uint32_t texel = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = texel | 0x00ffffff;
 			}
 			break;
 		case TM_OPAQUE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+				uint32_t texel = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = texel | 0xff000000;
 			}
 			break;
 		case TM_INVERSE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+				uint32_t texel = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = MAKEARGB(APART(texel), 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
 			}
 			break;
 		case TM_ALPHATEXTURE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+				uint32_t texel = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				uint32_t gray = (RPART(texel) * 77 + GPART(texel) * 143 + BPART(texel) * 37) >> 8;
 				uint32_t alpha = APART(texel);
 				alpha += alpha >> 7;
@@ -521,7 +557,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 			for (int x = x0; x < x1; x++)
 			{
 				if (v[x] >= 0.0 && v[x] <= 1.0)
-					fragcolor[x] = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+					fragcolor[x] = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				else
 					fragcolor[x] = 0;
 			}
@@ -529,7 +565,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		case TM_INVERTOPAQUE:
 			for (int x = x0; x < x1; x++)
 			{
-				uint32_t texel = sampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+				uint32_t texel = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 				fragcolor[x] = MAKEARGB(0xff, 0xff - RPART(texel), 0xff - BPART(texel), 0xff - GPART(texel));
 			}
 		}

@@ -89,6 +89,23 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
+CUSTOM_CVAR (Int, polysdl_acceleration, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self == 0)
+		Printf("Disabling softpoly acceleration!...\n");
+	else if (self == 1)
+		Printf("Selecting OpenGL acceleration...\n");
+	else if (self == 2)
+		Printf("Selecting Vulkan acceleration...\n");
+	else
+	{
+		Printf("Incorrect value selected! Selecting OpenGL acceleration...\n");
+		self = 1;
+	}
+
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
 CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -359,7 +376,14 @@ SDLVideo::SDLVideo ()
 	}
 	else if (Priv::softpolyEnabled)
 	{
-		Priv::CreateWindow(SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL);
+		uint32_t win_flags = SDL_WINDOW_HIDDEN;
+		if (polysdl_acceleration == 1)
+			win_flags |= SDL_WINDOW_OPENGL;
+#if 0 // this currently does not work - it crashes
+		else if (polysdl_acceleration == 2)
+			win_flags |= SDL_WINDOW_VULKAN;
+#endif
+		Priv::CreateWindow(win_flags);
 	}
 #endif
 }

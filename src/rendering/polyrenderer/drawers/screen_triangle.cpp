@@ -640,7 +640,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 
 			if (streamdata.uObjectColor2.a == 0.0f)
 			{
-				if (streamdata.uObjectColor.r != 0.0f || streamdata.uObjectColor.g != 0.0f || streamdata.uObjectColor.b != 0.0f)
+				if (streamdata.uObjectColor.r != 1.0f || streamdata.uObjectColor.g != 1.0f || streamdata.uObjectColor.b != 1.0f)
 				{
 					uint32_t r = (int)(streamdata.uObjectColor.r * 256.0f);
 					uint32_t g = (int)(streamdata.uObjectColor.g * 256.0f);
@@ -661,8 +661,8 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 				float t = thread->mainVertexShader.gradientdist.Z;
 				float inv_t = 1.0f - t;
 				uint32_t r = (int)((streamdata.uObjectColor.r * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
-				uint32_t g = (int)((streamdata.uObjectColor.g * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
-				uint32_t b = (int)((streamdata.uObjectColor.b * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
+				uint32_t g = (int)((streamdata.uObjectColor.g * inv_t + streamdata.uObjectColor2.g * t) * 256.0f);
+				uint32_t b = (int)((streamdata.uObjectColor.b * inv_t + streamdata.uObjectColor2.b * t) * 256.0f);
 				for (int x = x0; x < x1; x++)
 				{
 					uint32_t texel = fragcolor[x];

@@ -256,7 +256,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 
 	PushConstants = &constants;
 
-	/*int numLights = 0;
+	numPolyLights = 0;
 	if (constants.uLightIndex >= 0)
 	{
 		const FVector4 &lightRange = lights[constants.uLightIndex];
@@ -268,7 +268,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 			int modulatedEnd = static_cast<int>(lightRange.Y) + start;
 			for (int i = modulatedStart; i < modulatedEnd; i += 4)
 			{
-				if (numLights == maxPolyLights)
+				if (numPolyLights == maxPolyLights)
 					break;
 
 				auto &lightpos = lights[i];
@@ -279,7 +279,7 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 				uint32_t g = (int)clamp(lightcolor.Y * 255.0f, 0.0f, 255.0f);
 				uint32_t b = (int)clamp(lightcolor.Z * 255.0f, 0.0f, 255.0f);
 
-				auto& polylight = polyLights[numLights++];
+				auto& polylight = polyLights[numPolyLights++];
 				polylight.x = lightpos.X;
 				polylight.y = lightpos.Y;
 				polylight.z = lightpos.Z;
@@ -290,7 +290,6 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 			}
 		}
 	}
-	drawargs.SetLights(polyLights, numLights);*/
 }
 
 void PolyTriangleThreadData::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)

@@ -88,6 +88,145 @@ static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 }
 #endif
 
+static void WriteDynLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+{
+	int num_lights = thread->numPolyLights;
+	PolyLight* lights = thread->polyLights;
+
+	float worldnormalX = thread->mainVertexShader.vWorldNormal.X;
+	float worldnormalY = thread->mainVertexShader.vWorldNormal.Y;
+	float worldnormalZ = thread->mainVertexShader.vWorldNormal.Z;
+
+	uint32_t* dynlights = thread->scanline.dynlights;
+	float* worldposX = thread->scanline.WorldX;
+	float* worldposY = thread->scanline.WorldY;
+	float* worldposZ = thread->scanline.WorldZ;
+
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~3);
+	sseend = x0 + ssecount;
+
+	__m128 mworldnormalX = _mm_set1_ps(worldnormalX);
+	__m128 mworldnormalY = _mm_set1_ps(worldnormalY);
+	__m128 mworldnormalZ = _mm_set1_ps(worldnormalZ);
+
+	for (int x = x0; x < sseend; x += 4)
+	{
+		__m128i litlo = _mm_setzero_si128();
+		//__m128i litlo = _mm_shuffle_epi32(_mm_unpacklo_epi8(_mm_cvtsi32_si128(dynlightcolor), _mm_setzero_si128()), _MM_SHUFFLE(1, 0, 1, 0));
+		__m128i lithi = litlo;
+
+		for (int i = 0; i < num_lights; i++)
+		{
+			__m128 lightposX = _mm_set1_ps(lights[i].x);
+			__m128 lightposY = _mm_set1_ps(lights[i].y);
+			__m128 lightposZ = _mm_set1_ps(lights[i].z);
+			__m128 light_radius = _mm_set1_ps(lights[i].radius);
+			__m128i light_color = _mm_shuffle_epi32(_mm_unpacklo_epi8(_mm_cvtsi32_si128(lights[i].color), _mm_setzero_si128()), _MM_SHUFFLE(1, 0, 1, 0));
+
+			__m128 is_attenuated = _mm_cmplt_ps(light_radius, _mm_setzero_ps());
+			light_radius = _mm_andnot_ps(_mm_set1_ps(-0.0f), light_radius); // clear sign bit
+
+			// L = light-pos
+			// dist = sqrt(dot(L, L))
+			// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+			__m128 Lx = _mm_sub_ps(lightposX, _mm_loadu_ps(&worldposX[x]));
+			__m128 Ly = _mm_sub_ps(lightposY, _mm_loadu_ps(&worldposY[x]));
+			__m128 Lz = _mm_sub_ps(lightposZ, _mm_loadu_ps(&worldposZ[x]));
+			__m128 dist2 = _mm_add_ps(_mm_mul_ps(Lx, Lx), _mm_add_ps(_mm_mul_ps(Ly, Ly), _mm_mul_ps(Lz, Lz)));
+			__m128 rcp_dist = _mm_rsqrt_ps(dist2);
+			__m128 dist = _mm_mul_ps(dist2, rcp_dist);
+			__m128 distance_attenuation = _mm_sub_ps(_mm_set1_ps(256.0f), _mm_min_ps(_mm_mul_ps(dist, light_radius), _mm_set1_ps(256.0f)));
+
+			// The simple light type
+			__m128 simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = max(dot(N,normalize(L)),0) * attenuation
+			Lx = _mm_mul_ps(Lx, rcp_dist);
+			Ly = _mm_mul_ps(Ly, rcp_dist);
+			Lz = _mm_mul_ps(Lz, rcp_dist);
+			__m128 dotNL = _mm_add_ps(_mm_add_ps(_mm_mul_ps(mworldnormalX, Lx), _mm_mul_ps(mworldnormalY, Ly)), _mm_mul_ps(mworldnormalZ, Lz));
+			__m128 point_attenuation = _mm_mul_ps(_mm_max_ps(dotNL, _mm_setzero_ps()), distance_attenuation);
+
+			__m128i attenuation = _mm_cvtps_epi32(_mm_or_ps(_mm_and_ps(is_attenuated, point_attenuation), _mm_andnot_ps(is_attenuated, simple_attenuation)));
+
+			attenuation = _mm_shufflehi_epi16(_mm_shufflelo_epi16(attenuation, _MM_SHUFFLE(2, 2, 0, 0)), _MM_SHUFFLE(2, 2, 0, 0));
+			__m128i attenlo = _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(1, 1, 0, 0));
+			__m128i attenhi = _mm_shuffle_epi32(attenuation, _MM_SHUFFLE(3, 3, 2, 2));
+
+			litlo = _mm_add_epi16(litlo, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenlo), 8));
+			lithi = _mm_add_epi16(lithi, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenhi), 8));
+		}
+
+		_mm_storeu_si128((__m128i*)&dynlights[x], _mm_packus_epi16(litlo, lithi));
+	}
+#endif
+
+	for (int x = x0; x < x1; x++)
+	{
+		uint32_t lit_r = 0;
+		uint32_t lit_g = 0;
+		uint32_t lit_b = 0;
+
+		for (int i = 0; i < num_lights; i++)
+		{
+			float lightposX = lights[i].x;
+			float lightposY = lights[i].y;
+			float lightposZ = lights[i].z;
+			float light_radius = lights[i].radius;
+			uint32_t light_color = lights[i].color;
+
+			bool is_attenuated = light_radius < 0.0f;
+			if (is_attenuated)
+				light_radius = -light_radius;
+
+			// L = light-pos
+			// dist = sqrt(dot(L, L))
+			// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+			float Lx = lightposX - worldposX[x];
+			float Ly = lightposY - worldposY[x];
+			float Lz = lightposZ - worldposZ[x];
+			float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
+#ifdef NO_SSE
+			//float rcp_dist = 1.0f / sqrt(dist2);
+			float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
+			float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
+#endif
+			float dist = dist2 * rcp_dist;
+			float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+
+			// The simple light type
+			float simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = max(dot(N,normalize(L)),0) * attenuation
+			Lx *= rcp_dist;
+			Ly *= rcp_dist;
+			Lz *= rcp_dist;
+			float dotNL = worldnormalX * Lx + worldnormalY * Ly + worldnormalZ * Lz;
+			float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
+
+			uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
+
+			lit_r += (RPART(light_color) * attenuation) >> 8;
+			lit_g += (GPART(light_color) * attenuation) >> 8;
+			lit_b += (BPART(light_color) * attenuation) >> 8;
+		}
+
+		lit_r = MIN<uint32_t>(lit_r, 255);
+		lit_g = MIN<uint32_t>(lit_g, 255);
+		lit_b = MIN<uint32_t>(lit_b, 255);
+		dynlights[x] = MAKEARGB(255, lit_r, lit_g, lit_b);
+
+		// Palette version:
+		// dynlights[x] = RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
+	}
+}
+
 static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	float startX = x0 + (0.5f - args->v1->x);
@@ -713,21 +852,57 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		}
 	}
 
-	if (constants->uLightLevel >= 0.0f)
+	if (constants->uLightLevel >= 0.0f && thread->numPolyLights > 0)
+	{
+		uint16_t* lightarray = thread->scanline.lightarray;
+		uint32_t* dynlights = thread->scanline.dynlights;
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t fg = fragcolor[x];
+			int lightshade = lightarray[x];
+			uint32_t dynlight = dynlights[x];
+
+			uint32_t a = APART(fg);
+			uint32_t r = MIN((RPART(fg) * (lightshade + RPART(dynlight))) >> 8, (uint32_t)255);
+			uint32_t g = MIN((GPART(fg) * (lightshade + GPART(dynlight))) >> 8, (uint32_t)255);
+			uint32_t b = MIN((BPART(fg) * (lightshade + BPART(dynlight))) >> 8, (uint32_t)255);
+
+			fragcolor[x] = MAKEARGB(a, r, g, b);
+		}
+	}
+	else if (constants->uLightLevel >= 0.0f)
 	{
 		uint16_t* lightarray = thread->scanline.lightarray;
 		for (int x = x0; x < x1; x++)
 		{
 			uint32_t fg = fragcolor[x];
 			int lightshade = lightarray[x];
-			fragcolor[x] = MAKEARGB(
-				APART(fg),
-				(RPART(fg) * lightshade) >> 8,
-				(GPART(fg) * lightshade) >> 8,
-				(BPART(fg) * lightshade) >> 8);
+
+			uint32_t a = APART(fg);
+			uint32_t r = (RPART(fg) * lightshade) >> 8;
+			uint32_t g = (GPART(fg) * lightshade) >> 8;
+			uint32_t b = (BPART(fg) * lightshade) >> 8;
+
+			fragcolor[x] = MAKEARGB(a, r, g, b);
 		}
 
 		// To do: apply fog
+	}
+	else if (thread->numPolyLights > 0)
+	{
+		uint32_t* dynlights = thread->scanline.dynlights;
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t fg = fragcolor[x];
+			uint32_t dynlight = dynlights[x];
+
+			uint32_t a = APART(fg);
+			uint32_t r = MIN((RPART(fg) * RPART(dynlight)) >> 8, (uint32_t)255);
+			uint32_t g = MIN((GPART(fg) * GPART(dynlight)) >> 8, (uint32_t)255);
+			uint32_t b = MIN((BPART(fg) * BPART(dynlight)) >> 8, (uint32_t)255);
+
+			fragcolor[x] = MAKEARGB(a, r, g, b);
+		}
 	}
 }
 
@@ -737,6 +912,9 @@ static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 
 	if (thread->PushConstants->uLightLevel >= 0.0f)
 		WriteLightArray(y, x0, x1, args, thread);
+
+	if (thread->numPolyLights > 0)
+		WriteDynLightArray(y, x0, x1, args, thread);
 
 	RunShader(x0, x1, thread);
 

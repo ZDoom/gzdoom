@@ -115,6 +115,13 @@ public:
 	virtual void Load(PolyTriangleThreadData *thread, const void *vertices, int index) = 0;
 };
 
+struct PolyLight
+{
+	uint32_t color;
+	float x, y, z;
+	float radius;
+};
+
 class PolyTriangleThreadData
 {
 public:
@@ -196,7 +203,7 @@ public:
 		float WorldZ[MAXWIDTH];
 		uint32_t FragColor[MAXWIDTH];
 		uint16_t lightarray[MAXWIDTH];
-		//uint32_t dynlights[MAXWIDTH];
+		uint32_t dynlights[MAXWIDTH];
 	} scanline;
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
@@ -230,15 +237,9 @@ public:
 	const unsigned int *elements = nullptr;
 	const FVector4 *lights = nullptr;
 
-	/*struct PolyLight
-	{
-		uint32_t color;
-		float x, y, z;
-		float radius;
-	};
-
 	enum { maxPolyLights = 16 };
-	PolyLight polyLights[maxPolyLights];*/
+	PolyLight polyLights[maxPolyLights];
+	int numPolyLights = 0;
 
 	PolyMainVertexShader mainVertexShader;
 

@@ -885,9 +885,12 @@ void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 			{
 				if (LumpInfo[i].lump->dwName == MAKE_ID('M', 'N', 'T', 'R'))
 				{
-					if (LumpInfo[i].lump->Name[4] >= 'F' && LumpInfo[i].lump->Name[4] <= 'K')
+					for (size_t fi : {4, 6})
 					{
-						LumpInfo[i].lump->Name[4] += 'U' - 'F';
+						if (LumpInfo[i].lump->Name[fi] >= 'F' && LumpInfo[i].lump->Name[fi] <= 'K')
+						{
+							LumpInfo[i].lump->Name[fi] += 'U' - 'F';
+						}
 					}
 				}
 			}

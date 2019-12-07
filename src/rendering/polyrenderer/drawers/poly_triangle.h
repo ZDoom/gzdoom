@@ -29,6 +29,7 @@
 #include "polyrenderer/drawers/poly_vertex_shader.h"
 
 class DCanvas;
+class RenderMemory;
 class PolyDrawerCommand;
 class PolyInputAssembly;
 class PolyDepthStencil;
@@ -43,36 +44,41 @@ enum class PolyDrawMode
 	TriangleStrip
 };
 
-class PolyTriangleDrawer
+class PolyCommandBuffer
 {
 public:
-	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthStencil);
-	static void SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input);
-	static void SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices);
-	static void SetIndexBuffer(const DrawerCommandQueuePtr &queue, const void *elements);
-	static void SetLightBuffer(const DrawerCommandQueuePtr& queue, const void *lights);
-	static void SetViewpointUniforms(const DrawerCommandQueuePtr &queue, const HWViewpointUniforms *uniforms);
-	static void SetDepthClamp(const DrawerCommandQueuePtr &queue, bool on);
-	static void SetDepthMask(const DrawerCommandQueuePtr &queue, bool on);
-	static void SetDepthFunc(const DrawerCommandQueuePtr &queue, int func);
-	static void SetDepthRange(const DrawerCommandQueuePtr &queue, float min, float max);
-	static void SetDepthBias(const DrawerCommandQueuePtr &queue, float depthBiasConstantFactor, float depthBiasSlopeFactor);
-	static void SetColorMask(const DrawerCommandQueuePtr &queue, bool r, bool g, bool b, bool a);
-	static void SetStencil(const DrawerCommandQueuePtr &queue, int stencilRef, int op);
-	static void SetCulling(const DrawerCommandQueuePtr &queue, int mode);
-	static void EnableClipDistance(const DrawerCommandQueuePtr &queue, int num, bool state);
-	static void EnableStencil(const DrawerCommandQueuePtr &queue, bool on);
-	static void SetScissor(const DrawerCommandQueuePtr &queue, int x, int y, int w, int h);
-	static void EnableDepthTest(const DrawerCommandQueuePtr &queue, bool on);
-	static void SetRenderStyle(const DrawerCommandQueuePtr &queue, FRenderStyle style);
-	static void SetTexture(const DrawerCommandQueuePtr &queue, int unit, void *pixels, int width, int height, bool bgra);
-	static void SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest);
-	static void PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants);
-	static void PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
-	static void ClearDepth(const DrawerCommandQueuePtr &queue, float value);
-	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
-	static void Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
-	static void DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
+	PolyCommandBuffer(RenderMemory* frameMemory);
+
+	void SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthStencil);
+	void SetInputAssembly(PolyInputAssembly *input);
+	void SetVertexBuffer(const void *vertices);
+	void SetIndexBuffer(const void *elements);
+	void SetLightBuffer(const void *lights);
+	void SetViewpointUniforms(const HWViewpointUniforms *uniforms);
+	void SetDepthClamp(bool on);
+	void SetDepthMask(bool on);
+	void SetDepthFunc(int func);
+	void SetDepthRange(float min, float max);
+	void SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor);
+	void SetColorMask(bool r, bool g, bool b, bool a);
+	void SetStencil(int stencilRef, int op);
+	void SetCulling(int mode);
+	void EnableStencil(bool on);
+	void SetScissor(int x, int y, int w, int h);
+	void EnableDepthTest(bool on);
+	void SetRenderStyle(FRenderStyle style);
+	void SetTexture(int unit, void *pixels, int width, int height, bool bgra);
+	void SetShader(int specialEffect, int effectState, bool alphaTest);
+	void PushStreamData(const StreamData &data, const PolyPushConstants &constants);
+	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
+	void ClearDepth(float value);
+	void ClearStencil(uint8_t value);
+	void Draw(int index, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void DrawIndexed(int index, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void Submit();
+
+private:
+	std::shared_ptr<DrawerCommandQueue> mQueue;
 };
 
 class PolyDepthStencil
@@ -150,7 +156,6 @@ public:
 	void SetColorMask(bool r, bool g, bool b, bool a);
 	void SetStencil(int stencilRef, int op);
 	void SetCulling(int mode);
-	void EnableClipDistance(int num, bool state);
 	void EnableStencil(bool on);
 	void SetScissor(int x, int y, int w, int h);
 	void EnableDepthTest(bool on);
@@ -377,17 +382,6 @@ public:
 
 private:
 	int mode;
-};
-
-class PolyEnableClipDistanceCommand : public PolyDrawerCommand
-{
-public:
-	PolyEnableClipDistanceCommand(int num, bool state) : num(num), state(state) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->EnableClipDistance(num, state); }
-
-private:
-	int num;
-	bool state;
 };
 
 class PolyEnableStencilCommand : public PolyDrawerCommand

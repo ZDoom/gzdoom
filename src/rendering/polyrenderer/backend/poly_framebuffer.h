@@ -19,7 +19,7 @@ public:
 	PolyRenderState *GetRenderState() { return mRenderState.get(); }
 	DCanvas *GetCanvas() override { return mCanvas.get(); }
 	PolyDepthStencil *GetDepthStencil() { return mDepthStencil.get(); }
-	const DrawerCommandQueuePtr &GetDrawCommands();
+	PolyCommandBuffer *GetDrawCommands();
 	void FlushDrawCommands();
 
 	unsigned int GetLightBufferBlockSize() const;
@@ -81,7 +81,7 @@ private:
 	std::unique_ptr<PolyRenderState> mRenderState;
 	std::unique_ptr<DCanvas> mCanvas;
 	std::unique_ptr<PolyDepthStencil> mDepthStencil;
-	std::shared_ptr<DrawerCommandQueue> mDrawCommands;
+	std::unique_ptr<PolyCommandBuffer> mDrawCommands;
 	RenderMemory mFrameMemory;
 
 	bool cur_vsync = false;

@@ -39,17 +39,12 @@
 #include "screen_triangle.h"
 #include "x86.h"
 
-void PolyTriangleDrawer::ClearDepth(const DrawerCommandQueuePtr &queue, float value)
+PolyCommandBuffer::PolyCommandBuffer(RenderMemory* frameMemory)
 {
-	queue->Push<PolyClearDepthCommand>(value);
+	mQueue = std::make_shared<DrawerCommandQueue>(frameMemory);
 }
 
-void PolyTriangleDrawer::ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value)
-{
-	queue->Push<PolyClearStencilCommand>(value);
-}
-
-void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthstencil)
+void PolyCommandBuffer::SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthstencil)
 {
 	uint8_t *dest = (uint8_t*)canvas->GetPixels();
 	int dest_width = canvas->GetWidth();
@@ -57,127 +52,137 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	int dest_pitch = canvas->GetPitch();
 	bool dest_bgra = canvas->IsBgra();
 
-	queue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil);
+	mQueue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil);
 }
 
-void PolyTriangleDrawer::SetInputAssembly(const DrawerCommandQueuePtr &queue, PolyInputAssembly *input)
+void PolyCommandBuffer::SetInputAssembly(PolyInputAssembly *input)
 {
-	queue->Push<PolySetInputAssemblyCommand>(input);
+	mQueue->Push<PolySetInputAssemblyCommand>(input);
 }
 
-void PolyTriangleDrawer::SetVertexBuffer(const DrawerCommandQueuePtr &queue, const void *vertices)
+void PolyCommandBuffer::SetVertexBuffer(const void *vertices)
 {
-	queue->Push<PolySetVertexBufferCommand>(vertices);
+	mQueue->Push<PolySetVertexBufferCommand>(vertices);
 }
 
-void PolyTriangleDrawer::SetIndexBuffer(const DrawerCommandQueuePtr &queue, const void *elements)
+void PolyCommandBuffer::SetIndexBuffer(const void *elements)
 {
-	queue->Push<PolySetIndexBufferCommand>(elements);
+	mQueue->Push<PolySetIndexBufferCommand>(elements);
 }
 
-void PolyTriangleDrawer::SetLightBuffer(const DrawerCommandQueuePtr& queue, const void *lights)
+void PolyCommandBuffer::SetLightBuffer(const void *lights)
 {
-	queue->Push<PolySetLightBufferCommand>(lights);
+	mQueue->Push<PolySetLightBufferCommand>(lights);
 }
 
-void PolyTriangleDrawer::SetDepthClamp(const DrawerCommandQueuePtr &queue, bool on)
+void PolyCommandBuffer::SetDepthClamp(bool on)
 {
-	queue->Push<PolySetDepthClampCommand>(on);
+	mQueue->Push<PolySetDepthClampCommand>(on);
 }
 
-void PolyTriangleDrawer::SetDepthMask(const DrawerCommandQueuePtr &queue, bool on)
+void PolyCommandBuffer::SetDepthMask(bool on)
 {
-	queue->Push<PolySetDepthMaskCommand>(on);
+	mQueue->Push<PolySetDepthMaskCommand>(on);
 }
 
-void PolyTriangleDrawer::SetDepthFunc(const DrawerCommandQueuePtr &queue, int func)
+void PolyCommandBuffer::SetDepthFunc(int func)
 {
-	queue->Push<PolySetDepthFuncCommand>(func);
+	mQueue->Push<PolySetDepthFuncCommand>(func);
 }
 
-void PolyTriangleDrawer::SetDepthRange(const DrawerCommandQueuePtr &queue, float min, float max)
+void PolyCommandBuffer::SetDepthRange(float min, float max)
 {
-	queue->Push<PolySetDepthRangeCommand>(min, max);
+	mQueue->Push<PolySetDepthRangeCommand>(min, max);
 }
 
-void PolyTriangleDrawer::SetDepthBias(const DrawerCommandQueuePtr &queue, float depthBiasConstantFactor, float depthBiasSlopeFactor)
+void PolyCommandBuffer::SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor)
 {
-	queue->Push<PolySetDepthBiasCommand>(depthBiasConstantFactor, depthBiasSlopeFactor);
+	mQueue->Push<PolySetDepthBiasCommand>(depthBiasConstantFactor, depthBiasSlopeFactor);
 }
 
-void PolyTriangleDrawer::SetColorMask(const DrawerCommandQueuePtr &queue, bool r, bool g, bool b, bool a)
+void PolyCommandBuffer::SetColorMask(bool r, bool g, bool b, bool a)
 {
-	queue->Push<PolySetColorMaskCommand>(r, g, b, a);
+	mQueue->Push<PolySetColorMaskCommand>(r, g, b, a);
 }
 
-void PolyTriangleDrawer::SetStencil(const DrawerCommandQueuePtr &queue, int stencilRef, int op)
+void PolyCommandBuffer::SetStencil(int stencilRef, int op)
 {
-	queue->Push<PolySetStencilCommand>(stencilRef, op);
+	mQueue->Push<PolySetStencilCommand>(stencilRef, op);
 }
 
-void PolyTriangleDrawer::SetCulling(const DrawerCommandQueuePtr &queue, int mode)
+void PolyCommandBuffer::SetCulling(int mode)
 {
-	queue->Push<PolySetCullingCommand>(mode);
+	mQueue->Push<PolySetCullingCommand>(mode);
 }
 
-void PolyTriangleDrawer::EnableClipDistance(const DrawerCommandQueuePtr &queue, int num, bool state)
+void PolyCommandBuffer::EnableStencil(bool on)
 {
-	queue->Push<PolyEnableClipDistanceCommand>(num, state);
+	mQueue->Push<PolyEnableStencilCommand>(on);
 }
 
-void PolyTriangleDrawer::EnableStencil(const DrawerCommandQueuePtr &queue, bool on)
+void PolyCommandBuffer::SetScissor(int x, int y, int w, int h)
 {
-	queue->Push<PolyEnableStencilCommand>(on);
+	mQueue->Push<PolySetScissorCommand>(x, y, w, h);
 }
 
-void PolyTriangleDrawer::SetScissor(const DrawerCommandQueuePtr &queue, int x, int y, int w, int h)
+void PolyCommandBuffer::EnableDepthTest(bool on)
 {
-	queue->Push<PolySetScissorCommand>(x, y, w, h);
+	mQueue->Push<PolyEnableDepthTestCommand>(on);
 }
 
-void PolyTriangleDrawer::EnableDepthTest(const DrawerCommandQueuePtr &queue, bool on)
+void PolyCommandBuffer::SetRenderStyle(FRenderStyle style)
 {
-	queue->Push<PolyEnableDepthTestCommand>(on);
+	mQueue->Push<PolySetRenderStyleCommand>(style);
 }
 
-void PolyTriangleDrawer::SetRenderStyle(const DrawerCommandQueuePtr &queue, FRenderStyle style)
+void PolyCommandBuffer::SetTexture(int unit, void *pixels, int width, int height, bool bgra)
 {
-	queue->Push<PolySetRenderStyleCommand>(style);
+	mQueue->Push<PolySetTextureCommand>(unit, pixels, width, height, bgra);
 }
 
-void PolyTriangleDrawer::SetTexture(const DrawerCommandQueuePtr &queue, int unit, void *pixels, int width, int height, bool bgra)
+void PolyCommandBuffer::SetShader(int specialEffect, int effectState, bool alphaTest)
 {
-	queue->Push<PolySetTextureCommand>(unit, pixels, width, height, bgra);
+	mQueue->Push<PolySetShaderCommand>(specialEffect, effectState, alphaTest);
 }
 
-void PolyTriangleDrawer::SetShader(const DrawerCommandQueuePtr &queue, int specialEffect, int effectState, bool alphaTest)
+void PolyCommandBuffer::PushStreamData(const StreamData &data, const PolyPushConstants &constants)
 {
-	queue->Push<PolySetShaderCommand>(specialEffect, effectState, alphaTest);
+	mQueue->Push<PolyPushStreamDataCommand>(data, constants);
 }
 
-void PolyTriangleDrawer::PushStreamData(const DrawerCommandQueuePtr &queue, const StreamData &data, const PolyPushConstants &constants)
+void PolyCommandBuffer::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
 {
-	queue->Push<PolyPushStreamDataCommand>(data, constants);
+	mQueue->Push<PolyPushMatricesCommand>(modelMatrix, normalModelMatrix, textureMatrix);
 }
 
-void PolyTriangleDrawer::PushMatrices(const DrawerCommandQueuePtr &queue, const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
+void PolyCommandBuffer::SetViewpointUniforms(const HWViewpointUniforms *uniforms)
 {
-	queue->Push<PolyPushMatricesCommand>(modelMatrix, normalModelMatrix, textureMatrix);
+	mQueue->Push<PolySetViewpointUniformsCommand>(uniforms);
 }
 
-void PolyTriangleDrawer::SetViewpointUniforms(const DrawerCommandQueuePtr &queue, const HWViewpointUniforms *uniforms)
+void PolyCommandBuffer::ClearDepth(float value)
 {
-	queue->Push<PolySetViewpointUniformsCommand>(uniforms);
+	mQueue->Push<PolyClearDepthCommand>(value);
 }
 
-void PolyTriangleDrawer::Draw(const DrawerCommandQueuePtr &queue, int index, int vcount, PolyDrawMode mode)
+void PolyCommandBuffer::ClearStencil(uint8_t value)
 {
-	queue->Push<PolyDrawCommand>(index, vcount, mode);
+	mQueue->Push<PolyClearStencilCommand>(value);
 }
 
-void PolyTriangleDrawer::DrawIndexed(const DrawerCommandQueuePtr &queue, int index, int count, PolyDrawMode mode)
+void PolyCommandBuffer::Draw(int index, int vcount, PolyDrawMode mode)
 {
-	queue->Push<PolyDrawIndexedCommand>(index, count, mode);
+	mQueue->Push<PolyDrawCommand>(index, vcount, mode);
+}
+
+void PolyCommandBuffer::DrawIndexed(int index, int count, PolyDrawMode mode)
+{
+	mQueue->Push<PolyDrawIndexedCommand>(index, count, mode);
+}
+
+void PolyCommandBuffer::Submit()
+{
+	DrawerThreads::Execute(mQueue);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -370,10 +375,6 @@ void PolyTriangleThreadData::SetCulling(int mode)
 {
 	SetTwoSided(mode == Cull_None);
 	SetCullCCW(mode == Cull_CCW);
-}
-
-void PolyTriangleThreadData::EnableClipDistance(int num, bool state)
-{
 }
 
 void PolyTriangleThreadData::EnableStencil(bool on)

@@ -39,51 +39,61 @@ void PolyRenderState::ClearScreen()
 
 void PolyRenderState::Draw(int dt, int index, int count, bool apply)
 {
-	if (apply)
+	if (apply || mNeedApply)
 		Apply();
 
-	PolyTriangleDrawer::Draw(GetPolyFrameBuffer()->GetDrawCommands(), index, count, dtToDrawMode[dt]);
+	mDrawCommands->Draw(index, count, dtToDrawMode[dt]);
 }
 
 void PolyRenderState::DrawIndexed(int dt, int index, int count, bool apply)
 {
-	if (apply)
+	if (apply || mNeedApply)
 		Apply();
 
-	PolyTriangleDrawer::DrawIndexed(GetPolyFrameBuffer()->GetDrawCommands(), index, count, dtToDrawMode[dt]);
+	mDrawCommands->DrawIndexed(index, count, dtToDrawMode[dt]);
 }
 
 bool PolyRenderState::SetDepthClamp(bool on)
 {
 	bool lastValue = mDepthClamp;
 	mDepthClamp = on;
-	PolyTriangleDrawer::SetDepthClamp(GetPolyFrameBuffer()->GetDrawCommands(), on);
+	mNeedApply = true;
 	return lastValue;
 }
 
 void PolyRenderState::SetDepthMask(bool on)
 {
-	PolyTriangleDrawer::SetDepthMask(GetPolyFrameBuffer()->GetDrawCommands(), on);
+	mDepthMask = on;
+	mNeedApply = true;
 }
 
 void PolyRenderState::SetDepthFunc(int func)
 {
-	PolyTriangleDrawer::SetDepthFunc(GetPolyFrameBuffer()->GetDrawCommands(), func);
+	mDepthFunc = func;
+	mNeedApply = true;
 }
 
 void PolyRenderState::SetDepthRange(float min, float max)
 {
-	PolyTriangleDrawer::SetDepthRange(GetPolyFrameBuffer()->GetDrawCommands(), min, max);
+	mDepthRangeMin = min;
+	mDepthRangeMax = max;
+	mNeedApply = true;
 }
 
 void PolyRenderState::SetColorMask(bool r, bool g, bool b, bool a)
 {
-	PolyTriangleDrawer::SetColorMask(GetPolyFrameBuffer()->GetDrawCommands(), r, g, b, a);
+	mColorMask[0] = r;
+	mColorMask[1] = g;
+	mColorMask[2] = b;
+	mColorMask[3] = a;
+	mNeedApply = true;
 }
 
 void PolyRenderState::SetStencil(int offs, int op, int flags)
 {
-	PolyTriangleDrawer::SetStencil(GetPolyFrameBuffer()->GetDrawCommands(), screen->stencilValue + offs, op);
+	mStencilValue = screen->stencilValue + offs;
+	mStencilOp = op;
+	mNeedApply = true;
 
 	if (flags != -1)
 	{
@@ -95,32 +105,35 @@ void PolyRenderState::SetStencil(int offs, int op, int flags)
 
 void PolyRenderState::SetCulling(int mode)
 {
-	PolyTriangleDrawer::SetCulling(GetPolyFrameBuffer()->GetDrawCommands(), mode);
+	mCulling = mode;
+	mNeedApply = true;
 }
 
 void PolyRenderState::EnableClipDistance(int num, bool state)
 {
-	PolyTriangleDrawer::EnableClipDistance(GetPolyFrameBuffer()->GetDrawCommands(), num, state);
 }
 
 void PolyRenderState::Clear(int targets)
 {
+	if (mNeedApply)
+		Apply();
+
 	//if (targets & CT_Color)
-	//	PolyTriangleDrawer::ClearColor(GetPolyFrameBuffer()->GetDrawCommands());
+	//	mDrawCommands->ClearColor();
 	if (targets & CT_Depth)
-		PolyTriangleDrawer::ClearDepth(GetPolyFrameBuffer()->GetDrawCommands(), 65535.0f);
+		mDrawCommands->ClearDepth(65535.0f);
 	if (targets & CT_Stencil)
-		PolyTriangleDrawer::ClearStencil(GetPolyFrameBuffer()->GetDrawCommands(), 0);
+		mDrawCommands->ClearStencil(0);
 }
 
 void PolyRenderState::EnableStencil(bool on)
 {
-	PolyTriangleDrawer::EnableStencil(GetPolyFrameBuffer()->GetDrawCommands(), on);
+	mStencilEnabled = on;
+	mNeedApply = true;
 }
 
 void PolyRenderState::SetScissor(int x, int y, int w, int h)
 {
-	auto fb = GetPolyFrameBuffer();
 	if (w < 0)
 	{
 		x = 0;
@@ -128,7 +141,11 @@ void PolyRenderState::SetScissor(int x, int y, int w, int h)
 		w = mRenderTarget.Canvas->GetWidth();
 		h = mRenderTarget.Canvas->GetHeight();
 	}
-	PolyTriangleDrawer::SetScissor(fb->GetDrawCommands(), x, mRenderTarget.Canvas->GetHeight() - y - h, w, h);
+	mScissor.x = x;
+	mScissor.y = mRenderTarget.Canvas->GetHeight() - y - h;
+	mScissor.width = w;
+	mScissor.height = h;
+	mNeedApply = true;
 }
 
 void PolyRenderState::SetViewport(int x, int y, int w, int h)
@@ -141,12 +158,17 @@ void PolyRenderState::SetViewport(int x, int y, int w, int h)
 		w = mRenderTarget.Canvas->GetWidth();
 		h = mRenderTarget.Canvas->GetHeight();
 	}
-	PolyTriangleDrawer::SetViewport(fb->GetDrawCommands(), x, mRenderTarget.Canvas->GetHeight() - y - h, w, h, mRenderTarget.Canvas, mRenderTarget.DepthStencil);
+	mViewport.x = x;
+	mViewport.y = mRenderTarget.Canvas->GetHeight() - y - h;
+	mViewport.width = w;
+	mViewport.height = h;
+	mNeedApply = true;
 }
 
 void PolyRenderState::EnableDepthTest(bool on)
 {
-	PolyTriangleDrawer::EnableDepthTest(GetPolyFrameBuffer()->GetDrawCommands(), on);
+	mDepthTest = on;
+	mNeedApply = true;
 }
 
 void PolyRenderState::EnableMultisampling(bool on)
@@ -161,10 +183,38 @@ void PolyRenderState::EnableDrawBuffers(int count)
 {
 }
 
+void PolyRenderState::EndRenderPass()
+{
+	mDrawCommands = nullptr;
+	mNeedApply = true;
+	mFirstMatrixApply = true;
+}
+
 void PolyRenderState::Apply()
 {
 	drawcalls.Clock();
-	auto fb = GetPolyFrameBuffer();
+
+	if (!mDrawCommands)
+	{
+		mDrawCommands = GetPolyFrameBuffer()->GetDrawCommands();
+	}
+
+	if (mNeedApply)
+	{
+		mDrawCommands->SetViewport(mViewport.x, mViewport.y, mViewport.width, mViewport.height, mRenderTarget.Canvas, mRenderTarget.DepthStencil);
+		mDrawCommands->SetScissor(mScissor.x, mScissor.y, mScissor.width, mScissor.height);
+		mDrawCommands->SetViewpointUniforms(mViewpointUniforms);
+		mDrawCommands->EnableDepthTest(mDepthTest);
+		mDrawCommands->SetDepthClamp(mDepthClamp);
+		mDrawCommands->SetDepthMask(mDepthMask);
+		mDrawCommands->SetDepthFunc(mDepthFunc);
+		mDrawCommands->SetDepthRange(mDepthRangeMin, mDepthRangeMax);
+		mDrawCommands->EnableStencil(mStencilEnabled);
+		mDrawCommands->SetStencil(mStencilValue, mStencilOp);
+		mDrawCommands->SetCulling(mCulling);
+		mDrawCommands->SetColorMask(mColorMask[0], mColorMask[1], mColorMask[2], mColorMask[3]);
+		mNeedApply = false;
+	}
 
 	int fogset = 0;
 	if (mFogEnabled)
@@ -185,19 +235,19 @@ void PolyRenderState::Apply()
 
 	ApplyMaterial();
 
-	if (mVertexBuffer) PolyTriangleDrawer::SetVertexBuffer(fb->GetDrawCommands(), mVertexBuffer->Memory());
-	if (mIndexBuffer) PolyTriangleDrawer::SetIndexBuffer(fb->GetDrawCommands(), mIndexBuffer->Memory());
-	PolyTriangleDrawer::SetInputAssembly(fb->GetDrawCommands(), static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
-	PolyTriangleDrawer::SetRenderStyle(fb->GetDrawCommands(), mRenderStyle);
+	if (mVertexBuffer) mDrawCommands->SetVertexBuffer(mVertexBuffer->Memory());
+	if (mIndexBuffer) mDrawCommands->SetIndexBuffer(mIndexBuffer->Memory());
+	mDrawCommands->SetInputAssembly(static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
+	mDrawCommands->SetRenderStyle(mRenderStyle);
 
 	if (mSpecialEffect > EFF_NONE)
 	{
-		PolyTriangleDrawer::SetShader(fb->GetDrawCommands(), mSpecialEffect, 0, false);
+		mDrawCommands->SetShader(mSpecialEffect, 0, false);
 	}
 	else
 	{
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
-		PolyTriangleDrawer::SetShader(fb->GetDrawCommands(), EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f);
+		mDrawCommands->SetShader(EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f);
 	}
 
 	PolyPushConstants constants;
@@ -211,12 +261,12 @@ void PolyRenderState::Apply()
 	constants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 	constants.uLightIndex = mLightIndex;
 
-	PolyTriangleDrawer::PushStreamData(fb->GetDrawCommands(), mStreamData, constants);
+	mDrawCommands->PushStreamData(mStreamData, constants);
 	ApplyMatrices();
 
 	if (mBias.mChanged)
 	{
-		PolyTriangleDrawer::SetDepthBias(fb->GetDrawCommands(), mBias.mUnits, mBias.mFactor);
+		mDrawCommands->SetDepthBias(mBias.mUnits, mBias.mFactor);
 		mBias.mChanged = false;
 	}
 
@@ -233,7 +283,7 @@ void PolyRenderState::ApplyMaterial()
 		if (base)
 		{
 			DCanvas *texcanvas = base->GetImage(mMaterial);
-			PolyTriangleDrawer::SetTexture(GetPolyFrameBuffer()->GetDrawCommands(), 0, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
+			mDrawCommands->SetTexture(0, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
 
 			int numLayers = mMaterial.mMaterial->GetLayers();
 			for (int i = 1; i < numLayers; i++)
@@ -242,7 +292,7 @@ void PolyRenderState::ApplyMaterial()
 				auto systex = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(i, 0, &layer));
 
 				texcanvas = systex->GetImage(layer, 0, mMaterial.mMaterial->isExpanded() ? CTF_Expand : 0);
-				PolyTriangleDrawer::SetTexture(GetPolyFrameBuffer()->GetDrawCommands(), i, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
+				mDrawCommands->SetTexture(i, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
 			}
 		}
 
@@ -294,7 +344,7 @@ void PolyRenderState::ApplyMatrices()
 	if (modified)
 	{
 		mFirstMatrixApply = false;
-		PolyTriangleDrawer::PushMatrices(GetPolyFrameBuffer()->GetDrawCommands(), mMatrices.ModelMatrix, mMatrices.NormalModelMatrix, mMatrices.TextureMatrix);
+		mDrawCommands->PushMatrices(mMatrices.ModelMatrix, mMatrices.NormalModelMatrix, mMatrices.TextureMatrix);
 	}
 }
 
@@ -302,7 +352,6 @@ void PolyRenderState::SetRenderTarget(DCanvas *canvas, PolyDepthStencil *depthSt
 {
 	mRenderTarget.Canvas = canvas;
 	mRenderTarget.DepthStencil = depthStencil;
-	PolyTriangleDrawer::SetViewport(GetPolyFrameBuffer()->GetDrawCommands(), 0, 0, canvas->GetWidth(), canvas->GetHeight(), canvas, depthStencil);
 }
 
 void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t length)
@@ -310,7 +359,7 @@ void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t len
 	if (buffer->bindingpoint == VIEWPOINT_BINDINGPOINT)
 	{
 		mViewpointUniforms = reinterpret_cast<HWViewpointUniforms*>(static_cast<uint8_t*>(buffer->Memory()) + offset);
-		PolyTriangleDrawer::SetViewpointUniforms(GetPolyFrameBuffer()->GetDrawCommands(), mViewpointUniforms);
+		mNeedApply = true;
 	}
 }
 

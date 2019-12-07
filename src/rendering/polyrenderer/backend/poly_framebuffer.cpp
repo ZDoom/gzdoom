@@ -90,8 +90,6 @@ void PolyFrameBuffer::InitializeState()
 	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
 
-	PolyTriangleDrawer::SetLightBuffer(GetDrawCommands(), mLightBuffer->Memory());
-
 	CheckCanvas();
 }
 
@@ -110,18 +108,22 @@ void PolyFrameBuffer::CheckCanvas()
 	}
 }
 
-const DrawerCommandQueuePtr &PolyFrameBuffer::GetDrawCommands()
+PolyCommandBuffer *PolyFrameBuffer::GetDrawCommands()
 {
 	if (!mDrawCommands)
-		mDrawCommands = std::make_shared<DrawerCommandQueue>(&mFrameMemory);
-	return mDrawCommands;
+	{
+		mDrawCommands.reset(new PolyCommandBuffer(&mFrameMemory));
+		mDrawCommands->SetLightBuffer(mLightBuffer->Memory());
+	}
+	return mDrawCommands.get();
 }
 
 void PolyFrameBuffer::FlushDrawCommands()
 {
+	mRenderState->EndRenderPass();
 	if (mDrawCommands)
 	{
-		DrawerThreads::Execute(mDrawCommands);
+		mDrawCommands->Submit();
 		mDrawCommands.reset();
 	}
 }

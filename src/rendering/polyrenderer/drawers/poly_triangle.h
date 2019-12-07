@@ -65,7 +65,6 @@ public:
 	void SetCulling(int mode);
 	void EnableStencil(bool on);
 	void SetScissor(int x, int y, int w, int h);
-	void EnableDepthTest(bool on);
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(int unit, void *pixels, int width, int height, bool bgra);
 	void SetShader(int specialEffect, int effectState, bool alphaTest);
@@ -158,7 +157,6 @@ public:
 	void SetCulling(int mode);
 	void EnableStencil(bool on);
 	void SetScissor(int x, int y, int w, int h);
-	void EnableDepthTest(bool on);
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(int unit, const void *pixels, int width, int height, bool bgra);
 	void SetShader(int specialEffect, int effectState, bool alphaTest);
@@ -405,16 +403,6 @@ private:
 	int y;
 	int w;
 	int h;
-};
-
-class PolyEnableDepthTestCommand : public PolyDrawerCommand
-{
-public:
-	PolyEnableDepthTestCommand(bool on) : on(on) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->EnableDepthTest(on); }
-
-private:
-	bool on;
 };
 
 class PolySetRenderStyleCommand : public PolyDrawerCommand

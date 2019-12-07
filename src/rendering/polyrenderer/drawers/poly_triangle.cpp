@@ -125,11 +125,6 @@ void PolyCommandBuffer::SetScissor(int x, int y, int w, int h)
 	mQueue->Push<PolySetScissorCommand>(x, y, w, h);
 }
 
-void PolyCommandBuffer::EnableDepthTest(bool on)
-{
-	mQueue->Push<PolyEnableDepthTestCommand>(on);
-}
-
 void PolyCommandBuffer::SetRenderStyle(FRenderStyle style)
 {
 	mQueue->Push<PolySetRenderStyleCommand>(style);
@@ -324,7 +319,7 @@ void PolyTriangleThreadData::SetDepthFunc(int func)
 	{
 		DepthTest = true;
 	}
-	else if (func == DF_Always)
+	else // if (func == DF_Always)
 	{
 		DepthTest = false;
 	}
@@ -380,12 +375,7 @@ void PolyTriangleThreadData::SetCulling(int mode)
 void PolyTriangleThreadData::EnableStencil(bool on)
 {
 	StencilTest = on;
-	WriteStencil = on && StencilTestValue != StencilWriteValue;
-}
-
-void PolyTriangleThreadData::EnableDepthTest(bool on)
-{
-	DepthTest = on;
+	WriteStencil = on && (StencilTestValue != StencilWriteValue);
 }
 
 void PolyTriangleThreadData::SetRenderStyle(FRenderStyle style)

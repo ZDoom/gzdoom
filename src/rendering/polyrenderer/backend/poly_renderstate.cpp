@@ -204,13 +204,12 @@ void PolyRenderState::Apply()
 		mDrawCommands->SetViewport(mViewport.x, mViewport.y, mViewport.width, mViewport.height, mRenderTarget.Canvas, mRenderTarget.DepthStencil);
 		mDrawCommands->SetScissor(mScissor.x, mScissor.y, mScissor.width, mScissor.height);
 		mDrawCommands->SetViewpointUniforms(mViewpointUniforms);
-		mDrawCommands->EnableDepthTest(mDepthTest);
 		mDrawCommands->SetDepthClamp(mDepthClamp);
-		mDrawCommands->SetDepthMask(mDepthMask);
-		mDrawCommands->SetDepthFunc(mDepthFunc);
+		mDrawCommands->SetDepthMask(mDepthTest && mDepthMask);
+		mDrawCommands->SetDepthFunc(mDepthTest ? mDepthFunc : DF_Always);
 		mDrawCommands->SetDepthRange(mDepthRangeMin, mDepthRangeMax);
-		mDrawCommands->EnableStencil(mStencilEnabled);
 		mDrawCommands->SetStencil(mStencilValue, mStencilOp);
+		mDrawCommands->EnableStencil(mStencilEnabled);
 		mDrawCommands->SetCulling(mCulling);
 		mDrawCommands->SetColorMask(mColorMask[0], mColorMask[1], mColorMask[2], mColorMask[3]);
 		mNeedApply = false;

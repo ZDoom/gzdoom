@@ -376,7 +376,7 @@ static void WriteVaryingColor(float pos, float step, int x0, int x1, const float
 {
 	for (int x = x0; x < x1; x++)
 	{
-		varying[x] = (int)(pos * w[x] * 255.0f);
+		varying[x] = clamp(static_cast<int>(pos * w[x] * 255.0f), 0, 255);
 		pos += step;
 	}
 }
@@ -401,7 +401,7 @@ static void WriteVaryingColor(float pos, float step, int x0, int x1, const float
 	pos += ssecount * step;
 	for (int x = sseend; x < x1; x++)
 	{
-		varying[x] = (int)(pos * w[x] * 255.0f);
+		varying[x] = clamp(static_cast<int>(pos * w[x] * 255.0f), 0, 255);
 		pos += step;
 	}
 }

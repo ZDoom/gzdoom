@@ -414,8 +414,6 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 
 	elements += index;
 
-	TriDrawTriangleArgs args;
-
 	ShadedTriVertex vertbuffer[3];
 	ShadedTriVertex *vert[3] = { &vertbuffer[0], &vertbuffer[1], &vertbuffer[2] };
 	if (drawmode == PolyDrawMode::Triangles)
@@ -424,7 +422,7 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 		{
 			for (int j = 0; j < 3; j++)
 				*vert[j] = ShadeVertex(*(elements++));
-			DrawShadedTriangle(vert, ccw, &args);
+			DrawShadedTriangle(vert, ccw);
 		}
 	}
 	else if (drawmode == PolyDrawMode::TriangleFan)
@@ -434,7 +432,7 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 		for (int i = 2; i < vcount; i++)
 		{
 			*vert[2] = ShadeVertex(*(elements++));
-			DrawShadedTriangle(vert, ccw, &args);
+			DrawShadedTriangle(vert, ccw);
 			std::swap(vert[1], vert[2]);
 		}
 	}
@@ -446,7 +444,7 @@ void PolyTriangleThreadData::DrawIndexed(int index, int vcount, PolyDrawMode dra
 		for (int i = 2; i < vcount; i++)
 		{
 			*vert[2] = ShadeVertex(*(elements++));
-			DrawShadedTriangle(vert, toggleccw, &args);
+			DrawShadedTriangle(vert, toggleccw);
 			ShadedTriVertex *vtmp = vert[0];
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -478,8 +476,6 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 	if (vcount < 3)
 		return;
 
-	TriDrawTriangleArgs args;
-
 	int vinput = index;
 
 	ShadedTriVertex vertbuffer[3];
@@ -490,7 +486,7 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 		{
 			for (int j = 0; j < 3; j++)
 				*vert[j] = ShadeVertex(vinput++);
-			DrawShadedTriangle(vert, ccw, &args);
+			DrawShadedTriangle(vert, ccw);
 		}
 	}
 	else if (drawmode == PolyDrawMode::TriangleFan)
@@ -500,7 +496,7 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 		for (int i = 2; i < vcount; i++)
 		{
 			*vert[2] = ShadeVertex(vinput++);
-			DrawShadedTriangle(vert, ccw, &args);
+			DrawShadedTriangle(vert, ccw);
 			std::swap(vert[1], vert[2]);
 		}
 	}
@@ -512,7 +508,7 @@ void PolyTriangleThreadData::Draw(int index, int vcount, PolyDrawMode drawmode)
 		for (int i = 2; i < vcount; i++)
 		{
 			*vert[2] = ShadeVertex(vinput++);
-			DrawShadedTriangle(vert, toggleccw, &args);
+			DrawShadedTriangle(vert, toggleccw);
 			ShadedTriVertex *vtmp = vert[0];
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -623,11 +619,6 @@ void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
 			v.y += vert[w]->gl_Position.Y * weight;
 			v.z += vert[w]->gl_Position.Z * weight;
 			v.w += vert[w]->gl_Position.W * weight;
-			v.u += vert[w]->vTexCoord.X * weight;
-			v.v += vert[w]->vTexCoord.Y * weight;
-			v.worldX += vert[w]->pixelpos.X * weight;
-			v.worldY += vert[w]->pixelpos.Y * weight;
-			v.worldZ += vert[w]->pixelpos.Z * weight;
 		}
 
 		// Calculate normalized device coordinates:
@@ -641,7 +632,11 @@ void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
 		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
 	}
 
-	uint32_t color = vert[0]->vColor;
+	uint32_t vColorA = (int)(vert[0]->vColor.W * 255.0f + 0.5f);
+	uint32_t vColorR = (int)(vert[0]->vColor.X * 255.0f + 0.5f);
+	uint32_t vColorG = (int)(vert[0]->vColor.Y * 255.0f + 0.5f);
+	uint32_t vColorB = (int)(vert[0]->vColor.Z * 255.0f + 0.5f);
+	uint32_t color = MAKEARGB(vColorA, vColorR, vColorG, vColorB);
 
 	// Slow and naive implementation. Hopefully fast enough..
 
@@ -679,7 +674,7 @@ void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
 	}
 }
 
-void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* vert, bool ccw, TriDrawTriangleArgs *args)
+void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* vert, bool ccw)
 {
 	// Reject triangle if degenerate
 	if (IsDegenerate(vert))
@@ -706,6 +701,11 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 			v.worldX += vert[w]->pixelpos.X * weight;
 			v.worldY += vert[w]->pixelpos.Y * weight;
 			v.worldZ += vert[w]->pixelpos.Z * weight;
+			v.a += vert[w]->vColor.W * weight;
+			v.r += vert[w]->vColor.X * weight;
+			v.g += vert[w]->vColor.Y * weight;
+			v.b += vert[w]->vColor.Z * weight;
+			v.gradientdistZ += vert[w]->gradientdist.Z * weight;
 		}
 	}
 
@@ -759,27 +759,14 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 	}
 #endif
 
-#if 0
-	// Keep varyings in -128 to 128 range if possible
-	// But don't do this for the skycap mode since the V texture coordinate is used for blending
-	if (numclipvert > 0 && drawargs.BlendMode() != TriBlendMode::Skycap)
-	{
-		float newOriginU = floorf(clippedvert[0].u * 0.1f) * 10.0f;
-		float newOriginV = floorf(clippedvert[0].v * 0.1f) * 10.0f;
-		for (int i = 0; i < numclipvert; i++)
-		{
-			clippedvert[i].u -= newOriginU;
-			clippedvert[i].v -= newOriginV;
-		}
-	}
-#endif
+	TriDrawTriangleArgs args;
 
 	if (twosided && numclipvert > 2)
 	{
-		args->v1 = &clippedvert[0];
-		args->v2 = &clippedvert[1];
-		args->v3 = &clippedvert[2];
-		ccw = !IsFrontfacing(args);
+		args.v1 = &clippedvert[0];
+		args.v2 = &clippedvert[1];
+		args.v3 = &clippedvert[2];
+		ccw = !IsFrontfacing(&args);
 	}
 
 	// Draw screen triangles
@@ -787,12 +774,12 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 	{
 		for (int i = numclipvert - 1; i > 1; i--)
 		{
-			args->v1 = &clippedvert[numclipvert - 1];
-			args->v2 = &clippedvert[i - 1];
-			args->v3 = &clippedvert[i - 2];
-			if (IsFrontfacing(args) == ccw && args->CalculateGradients())
+			args.v1 = &clippedvert[numclipvert - 1];
+			args.v2 = &clippedvert[i - 1];
+			args.v3 = &clippedvert[i - 2];
+			if (IsFrontfacing(&args) == ccw && args.CalculateGradients())
 			{
-				ScreenTriangle::Draw(args, this);
+				ScreenTriangle::Draw(&args, this);
 			}
 		}
 	}
@@ -800,12 +787,12 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 	{
 		for (int i = 2; i < numclipvert; i++)
 		{
-			args->v1 = &clippedvert[0];
-			args->v2 = &clippedvert[i - 1];
-			args->v3 = &clippedvert[i];
-			if (IsFrontfacing(args) != ccw && args->CalculateGradients())
+			args.v1 = &clippedvert[0];
+			args.v2 = &clippedvert[i - 1];
+			args.v3 = &clippedvert[i];
+			if (IsFrontfacing(&args) != ccw && args.CalculateGradients())
 			{
-				ScreenTriangle::Draw(args, this);
+				ScreenTriangle::Draw(&args, this);
 			}
 		}
 	}

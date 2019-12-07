@@ -196,11 +196,18 @@ public:
 	struct Scanline
 	{
 		float W[MAXWIDTH];
+		float WeightV1[MAXWIDTH];
+		float WeightV2[MAXWIDTH];
 		uint16_t U[MAXWIDTH];
 		uint16_t V[MAXWIDTH];
 		float WorldX[MAXWIDTH];
 		float WorldY[MAXWIDTH];
 		float WorldZ[MAXWIDTH];
+		uint8_t vColorA[MAXWIDTH];
+		uint8_t vColorR[MAXWIDTH];
+		uint8_t vColorG[MAXWIDTH];
+		uint8_t vColorB[MAXWIDTH];
+		float GradientdistZ[MAXWIDTH];
 		uint32_t FragColor[MAXWIDTH];
 		uint16_t lightarray[MAXWIDTH];
 		uint32_t dynlights[MAXWIDTH];
@@ -263,7 +270,7 @@ private:
 	ShadedTriVertex ShadeVertex(int index);
 	void DrawShadedPoint(const ShadedTriVertex *const* vertex);
 	void DrawShadedLine(const ShadedTriVertex *const* vertices);
-	void DrawShadedTriangle(const ShadedTriVertex *const* vertices, bool ccw, TriDrawTriangleArgs *args);
+	void DrawShadedTriangle(const ShadedTriVertex *const* vertices, bool ccw);
 	static bool IsDegenerate(const ShadedTriVertex *const* vertices);
 	static bool IsFrontfacing(TriDrawTriangleArgs *args);
 

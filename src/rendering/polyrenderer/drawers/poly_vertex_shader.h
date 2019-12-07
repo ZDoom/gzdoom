@@ -15,8 +15,11 @@ public:
 	Vec4f gl_Position;
 	float gl_ClipDistance[5];
 	Vec4f vTexCoord;
-	uint32_t vColor;
+	Vec4f vColor;
 	Vec4f pixelpos;
+	//Vec3f glowdist;
+	Vec3f gradientdist;
+	//Vec4f vEyeNormal;
 	Vec4f vWorldNormal;
 };
 
@@ -26,15 +29,10 @@ public:
 	// Input
 	Vec4f aPosition;
 	Vec2f aTexCoord;
-	uint32_t aColor;
+	Vec4f aColor;
 	Vec4f aVertex2;
 	Vec4f aNormal;
 	Vec4f aNormal2;
-
-	// Output
-	Vec3f glowdist;
-	Vec3f gradientdist;
-	Vec4f vEyeNormal;
 
 	// Defines
 	bool SIMPLE = false;
@@ -70,14 +68,14 @@ public:
 			pixelpos.Z = worldcoord.Z;
 			pixelpos.W = -eyeCoordPos.Z / eyeCoordPos.W;
 
-			if (Data.uGlowTopColor.W > 0 || Data.uGlowBottomColor.W > 0)
+			/*if (Data.uGlowTopColor.W > 0 || Data.uGlowBottomColor.W > 0)
 			{
 				float topatpoint = (Data.uGlowTopPlane.W + Data.uGlowTopPlane.X * worldcoord.X + Data.uGlowTopPlane.Y * worldcoord.Z) * Data.uGlowTopPlane.Z;
 				float bottomatpoint = (Data.uGlowBottomPlane.W + Data.uGlowBottomPlane.X * worldcoord.X + Data.uGlowBottomPlane.Y * worldcoord.Z) * Data.uGlowBottomPlane.Z;
 				glowdist.X = topatpoint - worldcoord.Y;
 				glowdist.Y = worldcoord.Y - bottomatpoint;
 				glowdist.Z = clamp(glowdist.X / (topatpoint - bottomatpoint), 0.0f, 1.0f);
-			}
+			}*/
 
 			if (Data.uObjectColor2.a != 0)
 			{
@@ -95,7 +93,7 @@ public:
 			}
 
 			vWorldNormal = mul(NormalModelMatrix, Vec4f(normalize(mix3(aNormal, aNormal2, Data.uInterpolationFactor)), 1.0f));
-			vEyeNormal = mul(Viewpoint->mNormalViewMatrix, vWorldNormal);
+			//vEyeNormal = mul(Viewpoint->mNormalViewMatrix, vWorldNormal);
 		}
 
 		if (!SPHEREMAP)

@@ -371,6 +371,42 @@ static void WriteVaryingWrap(float pos, float step, int x0, int x1, const float*
 }
 #endif
 
+#ifdef NO_SSE
+static void WriteVaryingColor(float pos, float step, int x0, int x1, const float* w, uint8_t* varying)
+{
+	for (int x = x0; x < x1; x++)
+	{
+		varying[x] = (int)(pos * w[x] * 255.0f);
+		pos += step;
+	}
+}
+#else
+static void WriteVaryingColor(float pos, float step, int x0, int x1, const float* w, uint8_t* varying)
+{
+	int ssecount = ((x1 - x0) & ~3);
+	int sseend = x0 + ssecount;
+
+	__m128 mstep = _mm_set1_ps(step * 4.0f);
+	__m128 mpos = _mm_setr_ps(pos, pos + step, pos + step + step, pos + step + step + step);
+
+	for (int x = x0; x < sseend; x += 4)
+	{
+		__m128i value = _mm_cvttps_epi32(_mm_mul_ps(_mm_mul_ps(mpos, _mm_loadu_ps(w + x)), _mm_set1_ps(255.0f)));
+		value = _mm_packs_epi32(value, value);
+		value = _mm_packus_epi16(value, value);
+		*(uint32_t*)(varying + x) = _mm_cvtsi128_si32(value);
+		mpos = _mm_add_ps(mpos, mstep);
+	}
+
+	pos += ssecount * step;
+	for (int x = sseend; x < x1; x++)
+	{
+		varying[x] = (int)(pos * w[x] * 255.0f);
+		pos += step;
+	}
+}
+#endif
+
 static void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	float startX = x0 + (0.5f - args->v1->x);
@@ -381,6 +417,11 @@ static void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args
 	WriteVarying(args->v1->worldX * args->v1->w + args->gradientX.WorldX * startX + args->gradientY.WorldX * startY, args->gradientX.WorldX, x0, x1, thread->scanline.W, thread->scanline.WorldX);
 	WriteVarying(args->v1->worldY * args->v1->w + args->gradientX.WorldY * startX + args->gradientY.WorldY * startY, args->gradientX.WorldY, x0, x1, thread->scanline.W, thread->scanline.WorldY);
 	WriteVarying(args->v1->worldZ * args->v1->w + args->gradientX.WorldZ * startX + args->gradientY.WorldZ * startY, args->gradientX.WorldZ, x0, x1, thread->scanline.W, thread->scanline.WorldZ);
+	WriteVarying(args->v1->gradientdistZ * args->v1->w + args->gradientX.GradientdistZ * startX + args->gradientY.GradientdistZ * startY, args->gradientX.GradientdistZ, x0, x1, thread->scanline.W, thread->scanline.GradientdistZ);
+	WriteVaryingColor(args->v1->a * args->v1->w + args->gradientX.A * startX + args->gradientY.A * startY, args->gradientX.A, x0, x1, thread->scanline.W, thread->scanline.vColorA);
+	WriteVaryingColor(args->v1->r * args->v1->w + args->gradientX.R * startX + args->gradientY.R * startY, args->gradientX.R, x0, x1, thread->scanline.W, thread->scanline.vColorR);
+	WriteVaryingColor(args->v1->g * args->v1->w + args->gradientX.G * startX + args->gradientY.G * startY, args->gradientX.G, x0, x1, thread->scanline.W, thread->scanline.vColorG);
+	WriteVaryingColor(args->v1->b * args->v1->w + args->gradientX.B * startX + args->gradientY.B * startY, args->gradientX.B, x0, x1, thread->scanline.W, thread->scanline.vColorB);
 }
 
 static const int shiftTable[] = {
@@ -621,17 +662,17 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		const void* tex2Pixels = thread->textures[1].pixels;
 		bool tex2Bgra = thread->textures[1].bgra;
 
-		uint32_t frag = thread->mainVertexShader.vColor;
-		uint32_t frag_r = RPART(frag);
-		uint32_t frag_g = GPART(frag);
-		uint32_t frag_b = BPART(frag);
-		uint32_t frag_a = APART(frag);
-		frag_r += frag_r >> 7; // 255 -> 256
-		frag_g += frag_g >> 7; // 255 -> 256
-		frag_b += frag_b >> 7; // 255 -> 256
-		frag_a += frag_a >> 7; // 255 -> 256
 		for (int x = x0; x < x1; x++)
 		{
+			uint32_t frag_r = thread->scanline.vColorR[x];
+			uint32_t frag_g = thread->scanline.vColorG[x];
+			uint32_t frag_b = thread->scanline.vColorB[x];
+			uint32_t frag_a = thread->scanline.vColorA[x];
+			frag_r += frag_r >> 7; // 255 -> 256
+			frag_g += frag_g >> 7; // 255 -> 256
+			frag_b += frag_b >> 7; // 255 -> 256
+			frag_a += frag_a >> 7; // 255 -> 256
+
 			uint32_t t1 = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
 			uint32_t t2 = SampleTexture(u[x], 0xffff - v[x], tex2Pixels, tex2Width, tex2Height, tex2Bgra);
 
@@ -797,13 +838,15 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 			}
 			else
 			{
-				float t = thread->mainVertexShader.gradientdist.Z;
-				float inv_t = 1.0f - t;
-				uint32_t r = (int)((streamdata.uObjectColor.r * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
-				uint32_t g = (int)((streamdata.uObjectColor.g * inv_t + streamdata.uObjectColor2.g * t) * 256.0f);
-				uint32_t b = (int)((streamdata.uObjectColor.b * inv_t + streamdata.uObjectColor2.b * t) * 256.0f);
+				float* gradientdistZ = thread->scanline.GradientdistZ;
 				for (int x = x0; x < x1; x++)
 				{
+					float t = gradientdistZ[x];
+					float inv_t = 1.0f - t;
+					uint32_t r = (int)((streamdata.uObjectColor.r * inv_t + streamdata.uObjectColor2.r * t) * 256.0f);
+					uint32_t g = (int)((streamdata.uObjectColor.g * inv_t + streamdata.uObjectColor2.g * t) * 256.0f);
+					uint32_t b = (int)((streamdata.uObjectColor.b * inv_t + streamdata.uObjectColor2.b * t) * 256.0f);
+
 					uint32_t texel = fragcolor[x];
 					fragcolor[x] = MAKEARGB(
 						APART(texel),
@@ -831,25 +874,24 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		}
 	}
 
-	if (thread->mainVertexShader.vColor != 0xffffffff)
+	for (int x = x0; x < x1; x++)
 	{
-		uint32_t a = APART(thread->mainVertexShader.vColor);
-		uint32_t r = RPART(thread->mainVertexShader.vColor);
-		uint32_t g = GPART(thread->mainVertexShader.vColor);
-		uint32_t b = BPART(thread->mainVertexShader.vColor);
+		uint32_t r = thread->scanline.vColorR[x];
+		uint32_t g = thread->scanline.vColorG[x];
+		uint32_t b = thread->scanline.vColorB[x];
+		uint32_t a = thread->scanline.vColorA[x];
+
 		a += a >> 7;
 		r += r >> 7;
 		g += g >> 7;
 		b += b >> 7;
-		for (int x = x0; x < x1; x++)
-		{
-			uint32_t texel = fragcolor[x];
-			fragcolor[x] = MAKEARGB(
-				(APART(texel) * a + 127) >> 8,
-				(RPART(texel) * r + 127) >> 8,
-				(GPART(texel) * g + 127) >> 8,
-				(BPART(texel) * b + 127) >> 8);
-		}
+
+		uint32_t texel = fragcolor[x];
+		fragcolor[x] = MAKEARGB(
+			(APART(texel) * a + 127) >> 8,
+			(RPART(texel) * r + 127) >> 8,
+			(GPART(texel) * g + 127) >> 8,
+			(BPART(texel) * b + 127) >> 8);
 	}
 
 	if (constants->uLightLevel >= 0.0f && thread->numPolyLights > 0)

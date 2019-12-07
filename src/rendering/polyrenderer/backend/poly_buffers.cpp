@@ -98,20 +98,17 @@ void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *v
 	if ((UseVertexData & 1) == 0)
 	{
 		const auto &c = thread->mainVertexShader.Data.uVertexColor;
-		thread->mainVertexShader.aColor = MAKEARGB(
-			static_cast<uint32_t>(c.W * 255.0f + 0.5f),
-			static_cast<uint32_t>(c.X * 255.0f + 0.5f),
-			static_cast<uint32_t>(c.Y * 255.0f + 0.5f),
-			static_cast<uint32_t>(c.Z * 255.0f + 0.5f)
-		);
+		thread->mainVertexShader.aColor.X = c.X;
+		thread->mainVertexShader.aColor.Y = c.Y;
+		thread->mainVertexShader.aColor.Z = c.Z;
+		thread->mainVertexShader.aColor.W = c.W;
 	}
 	else
 	{
-		uint32_t r = attrColor[0];
-		uint32_t g = attrColor[1];
-		uint32_t b = attrColor[2];
-		uint32_t a = attrColor[3];
-		thread->mainVertexShader.aColor = MAKEARGB(a, r, g, b);
+		thread->mainVertexShader.aColor.X = attrColor[0] * (1.0f / 255.0f);
+		thread->mainVertexShader.aColor.Y = attrColor[1] * (1.0f / 255.0f);
+		thread->mainVertexShader.aColor.Z = attrColor[2] * (1.0f / 255.0f);
+		thread->mainVertexShader.aColor.W = attrColor[3] * (1.0f / 255.0f);
 	}
 
 	if ((UseVertexData & 2) == 0)

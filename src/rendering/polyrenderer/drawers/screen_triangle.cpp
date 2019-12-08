@@ -1386,7 +1386,7 @@ static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 			if (xstart < x0)
 			{
 				if (thread->WriteColor)
-					thread->WriteColorFunc(y, x0, x1, thread);
+					thread->WriteColorFunc(y, xstart, x0, thread);
 				if (thread->WriteDepth)
 					WriteDepth(y, xstart, x0, thread);
 				if (thread->WriteStencil)

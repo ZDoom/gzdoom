@@ -615,7 +615,26 @@ static void BlendColorAdd_Src_InvSrc(int y, int x0, int x1, PolyTriangleThreadDa
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
 
-	for (int x = x0; x < x1; x++)
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~1);
+	sseend = x0 + ssecount;
+	for (int x = x0; x < sseend; x += 2)
+	{
+		__m128i dst = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)&line[x]), _mm_setzero_si128());
+		__m128i src = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)&fragcolor[x]), _mm_setzero_si128());
+
+		__m128i srcscale = _mm_shufflehi_epi16(_mm_shufflelo_epi16(src, _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3));
+		srcscale = _mm_add_epi16(srcscale, _mm_srli_epi16(srcscale, 7));
+		__m128i dstscale = _mm_sub_epi16(_mm_set1_epi16(256), srcscale);
+
+		__m128i out = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_mullo_epi16(src, srcscale), _mm_mullo_epi16(dst, dstscale)), _mm_set1_epi16(127)), 8);
+		_mm_storel_epi64((__m128i*)&line[x], _mm_packus_epi16(out, out));
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		uint32_t dst = line[x];
 		uint32_t src = fragcolor[x];
@@ -637,7 +656,27 @@ static void BlendColorAdd_SrcCol_InvSrcCol(int y, int x0, int x1, PolyTriangleTh
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	for (int x = x0; x < x1; x++)
+
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~1);
+	sseend = x0 + ssecount;
+	for (int x = x0; x < sseend; x += 2)
+	{
+		__m128i dst = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & line[x]), _mm_setzero_si128());
+		__m128i src = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & fragcolor[x]), _mm_setzero_si128());
+
+		__m128i srcscale = src;
+		srcscale = _mm_add_epi16(srcscale, _mm_srli_epi16(srcscale, 7));
+		__m128i dstscale = _mm_sub_epi16(_mm_set1_epi16(256), srcscale);
+
+		__m128i out = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_mullo_epi16(src, srcscale), _mm_mullo_epi16(dst, dstscale)), _mm_set1_epi16(127)), 8);
+		_mm_storel_epi64((__m128i*) & line[x], _mm_packus_epi16(out, out));
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		uint32_t dst = line[x];
 		uint32_t src = fragcolor[x];
@@ -668,7 +707,26 @@ static void BlendColorAdd_Src_One(int y, int x0, int x1, PolyTriangleThreadData*
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	for (int x = x0; x < x1; x++)
+
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~1);
+	sseend = x0 + ssecount;
+	for (int x = x0; x < sseend; x += 2)
+	{
+		__m128i dst = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & line[x]), _mm_setzero_si128());
+		__m128i src = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & fragcolor[x]), _mm_setzero_si128());
+
+		__m128i srcscale = _mm_shufflehi_epi16(_mm_shufflelo_epi16(src, _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3));
+		srcscale = _mm_add_epi16(srcscale, _mm_srli_epi16(srcscale, 7));
+
+		__m128i out = _mm_add_epi16(_mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(src, srcscale), _mm_set1_epi16(127)), 8), dst);
+		_mm_storel_epi64((__m128i*) & line[x], _mm_packus_epi16(out, out));
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		uint32_t dst = line[x];
 		uint32_t src = fragcolor[x];
@@ -689,7 +747,26 @@ static void BlendColorAdd_SrcCol_One(int y, int x0, int x1, PolyTriangleThreadDa
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	for (int x = x0; x < x1; x++)
+
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~1);
+	sseend = x0 + ssecount;
+	for (int x = x0; x < sseend; x += 2)
+	{
+		__m128i dst = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & line[x]), _mm_setzero_si128());
+		__m128i src = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & fragcolor[x]), _mm_setzero_si128());
+
+		__m128i srcscale = src;
+		srcscale = _mm_add_epi16(srcscale, _mm_srli_epi16(srcscale, 7));
+
+		__m128i out = _mm_add_epi16(_mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(src, srcscale), _mm_set1_epi16(127)), 8), dst);
+		_mm_storel_epi64((__m128i*) & line[x], _mm_packus_epi16(out, out));
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		uint32_t dst = line[x];
 		uint32_t src = fragcolor[x];
@@ -716,7 +793,26 @@ static void BlendColorAdd_DstCol_Zero(int y, int x0, int x1, PolyTriangleThreadD
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	for (int x = x0; x < x1; x++)
+
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~1);
+	sseend = x0 + ssecount;
+	for (int x = x0; x < sseend; x += 2)
+	{
+		__m128i dst = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & line[x]), _mm_setzero_si128());
+		__m128i src = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & fragcolor[x]), _mm_setzero_si128());
+
+		__m128i srcscale = dst;
+		srcscale = _mm_add_epi16(srcscale, _mm_srli_epi16(srcscale, 7));
+
+		__m128i out = _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(src, srcscale), _mm_set1_epi16(127)), 8);
+		_mm_storel_epi64((__m128i*) & line[x], _mm_packus_epi16(out, out));
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		uint32_t dst = line[x];
 		uint32_t src = fragcolor[x];
@@ -743,7 +839,26 @@ static void BlendColorAdd_InvDstCol_Zero(int y, int x0, int x1, PolyTriangleThre
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	for (int x = x0; x < x1; x++)
+
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~1);
+	sseend = x0 + ssecount;
+	for (int x = x0; x < sseend; x += 2)
+	{
+		__m128i dst = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & line[x]), _mm_setzero_si128());
+		__m128i src = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & fragcolor[x]), _mm_setzero_si128());
+
+		__m128i srcscale = _mm_sub_epi16(_mm_set1_epi16(255), dst);
+		srcscale = _mm_add_epi16(srcscale, _mm_srli_epi16(srcscale, 7));
+
+		__m128i out = _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(src, srcscale), _mm_set1_epi16(127)), 8);
+		_mm_storel_epi64((__m128i*) & line[x], _mm_packus_epi16(out, out));
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		uint32_t dst = line[x];
 		uint32_t src = fragcolor[x];
@@ -770,7 +885,26 @@ static void BlendColorRevSub_Src_One(int y, int x0, int x1, PolyTriangleThreadDa
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	for (int x = x0; x < x1; x++)
+
+	int sseend = x0;
+
+#ifndef NO_SSE
+	int ssecount = ((x1 - x0) & ~1);
+	sseend = x0 + ssecount;
+	for (int x = x0; x < sseend; x += 2)
+	{
+		__m128i dst = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & line[x]), _mm_setzero_si128());
+		__m128i src = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*) & fragcolor[x]), _mm_setzero_si128());
+
+		__m128i srcscale = _mm_shufflehi_epi16(_mm_shufflelo_epi16(src, _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3));
+		srcscale = _mm_add_epi16(srcscale, _mm_srli_epi16(srcscale, 7));
+
+		__m128i out = _mm_sub_epi16(dst, _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(src, srcscale), _mm_set1_epi16(127)), 8));
+		_mm_storel_epi64((__m128i*) & line[x], _mm_packus_epi16(out, out));
+	}
+#endif
+
+	for (int x = sseend; x < x1; x++)
 	{
 		uint32_t dst = line[x];
 		uint32_t src = fragcolor[x];

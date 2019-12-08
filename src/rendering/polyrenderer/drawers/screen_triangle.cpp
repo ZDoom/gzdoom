@@ -923,52 +923,57 @@ static void BlendColorRevSub_Src_One(int y, int x0, int x1, PolyTriangleThreadDa
 
 static void SelectWriteColorFunc(PolyTriangleThreadData* thread)
 {
-	void(*writecolorfunc)(int y, int x0, int x1, PolyTriangleThreadData * thread);
-
 	FRenderStyle style = thread->RenderStyle;
-	if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
+	if (style.BlendOp == STYLEOP_Add)
 	{
-		writecolorfunc = &BlendColorOpaque;
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_InvSrc)
-	{
-		writecolorfunc = &BlendColorAdd_Src_InvSrc;
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_InvSrcCol)
-	{
-		writecolorfunc = &BlendColorAdd_SrcCol_InvSrcCol;
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_One)
-	{
-		writecolorfunc = &BlendColorAdd_Src_One;
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_One)
-	{
-		writecolorfunc = &BlendColorAdd_SrcCol_One;
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_DstCol && style.DestAlpha == STYLEALPHA_Zero)
-	{
-		writecolorfunc = &BlendColorAdd_DstCol_Zero;
-	}
-	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_InvDstCol && style.DestAlpha == STYLEALPHA_Zero)
-	{
-		writecolorfunc = &BlendColorAdd_InvDstCol_Zero;
-	}
-	else if (style.BlendOp == STYLEOP_RevSub && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_One)
-	{
-		writecolorfunc = &BlendColorRevSub_Src_One;
-	}
-	else
-	{
-		switch (style.BlendOp)
+		if (style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
 		{
-		default:
-		case STYLEOP_Add: writecolorfunc = &BlendColor<BlendColorOpt_Add>; break;
-		case STYLEOP_Sub: writecolorfunc = &BlendColor<BlendColorOpt_Sub>; break;
-		case STYLEOP_RevSub: writecolorfunc = &BlendColor<BlendColorOpt_RevSub>; break;
+			thread->WriteColorFunc = &BlendColorOpaque;
+		}
+		else if (style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_InvSrc)
+		{
+			thread->WriteColorFunc = &BlendColorAdd_Src_InvSrc;
+		}
+		else if (style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_InvSrcCol)
+		{
+			thread->WriteColorFunc = &BlendColorAdd_SrcCol_InvSrcCol;
+		}
+		else if (style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_One)
+		{
+			thread->WriteColorFunc = &BlendColorAdd_Src_One;
+		}
+		else if (style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_One)
+		{
+			thread->WriteColorFunc = &BlendColorAdd_SrcCol_One;
+		}
+		else if (style.SrcAlpha == STYLEALPHA_DstCol && style.DestAlpha == STYLEALPHA_Zero)
+		{
+			thread->WriteColorFunc = &BlendColorAdd_DstCol_Zero;
+		}
+		else if (style.SrcAlpha == STYLEALPHA_InvDstCol && style.DestAlpha == STYLEALPHA_Zero)
+		{
+			thread->WriteColorFunc = &BlendColorAdd_InvDstCol_Zero;
+		}
+		else
+		{
+			thread->WriteColorFunc = &BlendColor<BlendColorOpt_Add>;
 		}
 	}
-	thread->WriteColorFunc = writecolorfunc;
+	else if (style.BlendOp == STYLEOP_Sub)
+	{
+		thread->WriteColorFunc = &BlendColor<BlendColorOpt_Sub>;
+	}
+	else // if (style.BlendOp == STYLEOP_RevSub)
+	{
+		if (style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_One)
+		{
+			thread->WriteColorFunc = &BlendColorRevSub_Src_One;
+		}
+		else
+		{
+			thread->WriteColorFunc = &BlendColor<BlendColorOpt_RevSub>;
+		}
+	}
 }
 
 static void WriteDepth(int y, int x0, int x1, PolyTriangleThreadData* thread)

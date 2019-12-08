@@ -51,7 +51,7 @@ static void CastN2S(FString *a, int b) { FName name = FName(ENamedName(b)); *a =
 static int CastS2Co(FString *b) { return V_GetColor(nullptr, *b); }
 static void CastCo2S(FString *a, int b) { PalEntry c(b); a->Format("%02x %02x %02x", c.r, c.g, c.b); }
 static int CastS2So(FString *b) { return FSoundID(*b); }
-static void CastSo2S(FString *a, int b) { *a = S_sfx[b].name; }
+static void CastSo2S(FString* a, int b) { *a = S_GetSoundName(b); }
 static void CastSID2S(FString *a, unsigned int b) { *a = (b >= sprites.Size()) ? "TNT1" : sprites[b].name; }
 static void CastTID2S(FString *a, int b) { auto tex = TexMan.GetTexture(*(FTextureID*)&b); *a = (tex == nullptr) ? "(null)" : tex->GetName().GetChars(); }
 

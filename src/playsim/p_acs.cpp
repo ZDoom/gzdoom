@@ -4387,11 +4387,11 @@ int DLevelScript::GetActorProperty (int tid, int property)
 								return 0;
 							}
 
-	case APROP_SeeSound:	return GlobalACSStrings.AddString(actor->SeeSound);
-	case APROP_AttackSound:	return GlobalACSStrings.AddString(actor->AttackSound);
-	case APROP_PainSound:	return GlobalACSStrings.AddString(actor->PainSound);
-	case APROP_DeathSound:	return GlobalACSStrings.AddString(actor->DeathSound);
-	case APROP_ActiveSound:	return GlobalACSStrings.AddString(actor->ActiveSound);
+	case APROP_SeeSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->SeeSound));
+	case APROP_AttackSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->AttackSound));
+	case APROP_PainSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->PainSound));
+	case APROP_DeathSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->DeathSound));
+	case APROP_ActiveSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->ActiveSound));
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies());
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag());
 	case APROP_StencilColor:return actor->fillcolor;
@@ -4464,11 +4464,11 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 
 		// Strings are covered by GetActorProperty, but they're fairly
 		// heavy-duty, so make the check here.
-		case APROP_SeeSound:	string = actor->SeeSound; break;
-		case APROP_AttackSound:	string = actor->AttackSound; break;
-		case APROP_PainSound:	string = actor->PainSound; break;
-		case APROP_DeathSound:	string = actor->DeathSound; break;
-		case APROP_ActiveSound:	string = actor->ActiveSound; break; 
+		case APROP_SeeSound:	string = S_GetSoundName(actor->SeeSound); break;
+		case APROP_AttackSound:	string = S_GetSoundName(actor->AttackSound); break;
+		case APROP_PainSound:	string = S_GetSoundName(actor->PainSound); break;
+		case APROP_DeathSound:	string = S_GetSoundName(actor->DeathSound); break;
+		case APROP_ActiveSound:	string = S_GetSoundName(actor->ActiveSound); break; 
 		case APROP_Species:		string = actor->GetSpecies(); break;
 		case APROP_NameTag:		string = actor->GetTag(); break;
 		case APROP_DamageType:	string = actor->DamageType; break;
@@ -5265,7 +5265,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 				}
 				else if (rettype == TypeSound)
 				{
-					retval = GlobalACSStrings.AddString(FSoundID(retval));
+					retval = GlobalACSStrings.AddString(S_GetSoundName(FSoundID(retval)));
 				}
 			}
 			else if (rettype == TypeFloat64)
@@ -5953,7 +5953,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 				if (args[0] == 0)
 				{
-					S_ChangeSoundVolume(activator, chan, volume);
+					S_ChangeActorSoundVolume(activator, chan, volume);
 				}
 				else
 				{
@@ -5962,7 +5962,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 					while ((spot = it.Next()) != NULL)
 					{
-						S_ChangeSoundVolume(spot, chan, volume);
+						S_ChangeActorSoundVolume(spot, chan, volume);
 					}
 				}
 			}

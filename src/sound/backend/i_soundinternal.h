@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-#include "doomtype.h"
 #include "vectors.h"
 #include "tarray.h"
 #include "zmusic/sounddecoder.h"
@@ -77,6 +76,7 @@ struct SoundListener
 	bool underwater;
 	bool valid;
 	ReverbContainer *Environment;
+	void* ListenerObject;
 };
 
 // Default rolloff information.
@@ -118,6 +118,7 @@ struct FISoundChannel
 void FindLoopTags(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
 
 class SoundStream;
+
 
 
 

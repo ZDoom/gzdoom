@@ -1663,7 +1663,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 		if (!arc.w->inObject() || def == nullptr || sid != *def)
 		{
 			arc.WriteKey(key);
-			const char *sn = (const char*)sid;
+			const char *sn = S_GetSoundName(sid);
 			if (sn != nullptr) arc.w->String(sn);
 			else arc.w->Null();
 		}

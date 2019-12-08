@@ -1837,7 +1837,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_So2S:
 		ASSERTS(a); ASSERTD(b);
-		reg.s[a] = S_sfx[reg.d[b]].name;
+		reg.s[a] = S_GetSoundName(reg.d[b]);
 		break;
 
 	case CAST_SID2S:

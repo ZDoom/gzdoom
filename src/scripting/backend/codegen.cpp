@@ -1243,7 +1243,7 @@ FxExpression *FxStringCast::Resolve(FCompileContext &ctx)
 		if (basex->isConstant())
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-			FxExpression *x = new FxConstant(S_sfx[constval.GetInt()].name, ScriptPosition);
+			FxExpression *x = new FxConstant(S_GetSoundName(constval.GetInt()), ScriptPosition);
 			delete this;
 			return x;
 		}

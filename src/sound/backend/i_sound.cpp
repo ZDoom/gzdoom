@@ -47,7 +47,6 @@
 #include "v_text.h"
 #include "c_cvars.h"
 #include "stats.h"
-#include "s_music.h"
 #include "zmusic/zmusic.h"
 
 
@@ -259,20 +258,12 @@ void I_InitSound ()
 		return;
 	}
 
-#ifndef NO_OPENAL
-	// Simplify transition to OpenAL backend
-	if (stricmp(snd_backend, "fmod") == 0)
-	{
-		Printf (TEXTCOLOR_ORANGE "FMOD Ex sound system was removed, switching to OpenAL\n");
-		snd_backend = "openal";
-	}
-#endif // NO_OPENAL
-
+	// Keep it simple: let everything except "null" init the sound.
 	if (stricmp(snd_backend, "null") == 0)
 	{
 		GSnd = new NullSoundRenderer;
 	}
-	else if(stricmp(snd_backend, "openal") == 0)
+	else
 	{
 		#ifndef NO_OPENAL
 			if (IsOpenALPresent())
@@ -280,11 +271,6 @@ void I_InitSound ()
 				GSnd = new OpenALSoundRenderer;
 			}
 		#endif
-	}
-	else
-	{
-		Printf (TEXTCOLOR_RED"%s: Unknown sound system specified\n", *snd_backend);
-		snd_backend = "null";
 	}
 	if (!GSnd || !GSnd->IsValid ())
 	{

@@ -40,6 +40,7 @@
 
 #include "c_dispatch.h"
 #include "c_cvars.h"
+#include "doomtype.h"
 
 // MACROS ------------------------------------------------------------------
 

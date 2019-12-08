@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-#include "doomtype.h"
 #include "vectors.h"
 #include "tarray.h"
 #include "zmusic/sounddecoder.h"

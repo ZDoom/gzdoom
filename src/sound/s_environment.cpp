@@ -32,20 +32,10 @@
 **
 */
 
-#include "doomtype.h"
-#include "s_sound.h"
+#include "s_soundinternal.h"
 #include "sc_man.h"
-#include "cmdlib.h"
 #include "templates.h"
-#include "w_wad.h"
-#include "i_system.h"
 #include "m_misc.h"
-
-#include "c_cvars.h"
-#include "c_dispatch.h"
-#include "vm.h"
-#include "dobject.h"
-#include "menu/menu.h"
 
 
 FReverbField ReverbFields[] =
@@ -526,7 +516,7 @@ void S_ReadReverbDef (FScanner &sc)
 
 	while (sc.GetString ())
 	{
-		name = copystring (sc.String);
+		name = strdup (sc.String);
 		sc.MustGetNumber ();
 		id1 = sc.Number;
 		sc.MustGetNumber ();
@@ -627,7 +617,7 @@ void S_UnloadReverbDef ()
 		if (!probe->Builtin)
 		{
 			if (pNext != NULL) *pNext = probe->Next;
-			delete[] const_cast<char *>(probe->Name);
+			free(const_cast<char *>(probe->Name));
 			delete probe;
 		}
 		else

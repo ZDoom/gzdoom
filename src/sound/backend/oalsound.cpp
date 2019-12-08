@@ -35,16 +35,17 @@
 #include <functional>
 #include <chrono>
 
-#include "doomstat.h"
+#include "c_cvars.h"
 #include "templates.h"
 #include "oalsound.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "i_module.h"
 #include "cmdlib.h"
-#include "menu/menu.h"
+#include "m_fixed.h"
 #include "zmusic/sounddecoder.h"
 #include "filereadermusicinterface.h"
+
 
 const char *GetSampleTypeName(SampleType type);
 const char *GetChannelConfigName(ChannelConfig chan);
@@ -95,58 +96,6 @@ bool IsOpenALPresent()
 }
 
 
-
-void I_BuildALDeviceList(FOptionValues *opt)
-{
-	opt->mValues.Resize(1);
-	opt->mValues[0].TextValue = "Default";
-	opt->mValues[0].Text = "Default";
-
-#ifndef NO_OPENAL
-	if (IsOpenALPresent())
-	{
-		const ALCchar *names = (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") ?
-			alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER) :
-			alcGetString(NULL, ALC_DEVICE_SPECIFIER));
-		if (!names)
-			Printf("Failed to get device list: %s\n", alcGetString(NULL, alcGetError(NULL)));
-		else while (*names)
-		{
-			unsigned int i = opt->mValues.Reserve(1);
-			opt->mValues[i].TextValue = names;
-			opt->mValues[i].Text = names;
-
-			names += strlen(names) + 1;
-		}
-	}
-#endif
-}
-
-void I_BuildALResamplersList(FOptionValues *opt)
-{
-	opt->mValues.Resize(1);
-	opt->mValues[0].TextValue = "Default";
-	opt->mValues[0].Text = "Default";
-
-#ifndef NO_OPENAL
-	if (!IsOpenALPresent())
-		return;
-	if (!alcGetCurrentContext() || !alIsExtensionPresent("AL_SOFT_source_resampler"))
-		return;
-
-	LPALGETSTRINGISOFT alGetStringiSOFT = reinterpret_cast<LPALGETSTRINGISOFT>(alGetProcAddress("alGetStringiSOFT"));
-	ALint num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
-
-	unsigned int idx = opt->mValues.Reserve(num_resamplers);
-	for(ALint i = 0;i < num_resamplers;++i)
-	{
-		const ALchar *name = alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i);
-		opt->mValues[idx].TextValue = name;
-		opt->mValues[idx].Text = name;
-		++idx;
-	}
-#endif
-}
 
 
 ReverbContainer *ForcedEnvironment;
@@ -2358,5 +2307,61 @@ FSoundChan *OpenALSoundRenderer::FindLowestChannel()
 	}
 	return lowest;
 }
+
+
+#include "menu/menu.h"
+
+void I_BuildALDeviceList(FOptionValues* opt)
+{
+	opt->mValues.Resize(1);
+	opt->mValues[0].TextValue = "Default";
+	opt->mValues[0].Text = "Default";
+
+#ifndef NO_OPENAL
+	if (IsOpenALPresent())
+	{
+		const ALCchar* names = (alcIsExtensionPresent(NULL, "ALC_ENUMERATE_ALL_EXT") ?
+			alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER) :
+			alcGetString(NULL, ALC_DEVICE_SPECIFIER));
+		if (!names)
+			Printf("Failed to get device list: %s\n", alcGetString(NULL, alcGetError(NULL)));
+		else while (*names)
+		{
+			unsigned int i = opt->mValues.Reserve(1);
+			opt->mValues[i].TextValue = names;
+			opt->mValues[i].Text = names;
+
+			names += strlen(names) + 1;
+		}
+	}
+#endif
+}
+
+void I_BuildALResamplersList(FOptionValues* opt)
+{
+	opt->mValues.Resize(1);
+	opt->mValues[0].TextValue = "Default";
+	opt->mValues[0].Text = "Default";
+
+#ifndef NO_OPENAL
+	if (!IsOpenALPresent())
+		return;
+	if (!alcGetCurrentContext() || !alIsExtensionPresent("AL_SOFT_source_resampler"))
+		return;
+
+	LPALGETSTRINGISOFT alGetStringiSOFT = reinterpret_cast<LPALGETSTRINGISOFT>(alGetProcAddress("alGetStringiSOFT"));
+	ALint num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
+
+	unsigned int idx = opt->mValues.Reserve(num_resamplers);
+	for (ALint i = 0; i < num_resamplers; ++i)
+	{
+		const ALchar* name = alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i);
+		opt->mValues[idx].TextValue = name;
+		opt->mValues[idx].Text = name;
+		++idx;
+	}
+#endif
+}
+
 
 #endif // NO_OPENAL

@@ -88,7 +88,7 @@ static void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 }
 #endif
 
-static void WriteDynLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
+static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 {
 	int num_lights = thread->numPolyLights;
 	PolyLight* lights = thread->polyLights;
@@ -1088,24 +1088,12 @@ static void ApplyVertexColor(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
-static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
+static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
 {
-	if (thread->SpecialEffect == EFF_FOGBOUNDARY) // fogboundary.fp
-	{
-		EffectFogBoundary(x0, x1, thread);
-		return;
-	}
-	else if (thread->SpecialEffect == EFF_BURN) // burn.fp
-	{
-		EffectBurn(x0, x1, thread);
-		return;
-	}
-	else if (thread->SpecialEffect == EFF_STENCIL) // stencil.fp
-	{
-		EffectStencil(x0, x1, thread);
-		return;
-	}
-	else if (thread->EffectState == SHADER_Paletted) // func_paletted
+	if (thread->numPolyLights > 0)
+		WriteDynLightArray(x0, x1, thread);
+
+	if (thread->EffectState == SHADER_Paletted) // func_paletted
 	{
 		FuncPaletted(x0, x1, thread);
 	}
@@ -1219,6 +1207,30 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
+static void SelectFragmentShader(PolyTriangleThreadData* thread)
+{
+	void (*fragshader)(int x0, int x1, PolyTriangleThreadData * thread);
+
+	if (thread->SpecialEffect == EFF_FOGBOUNDARY) // fogboundary.fp
+	{
+		fragshader = &EffectFogBoundary;
+	}
+	else if (thread->SpecialEffect == EFF_BURN) // burn.fp
+	{
+		fragshader = &EffectBurn;
+	}
+	else if (thread->SpecialEffect == EFF_STENCIL) // stencil.fp
+	{
+		fragshader = &EffectStencil;
+	}
+	else
+	{
+		fragshader = &MainFP;
+	}
+
+	thread->FragmentShader = fragshader;
+}
+
 static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
 	WriteVaryings(y, x0, x1, args, thread);
@@ -1226,10 +1238,7 @@ static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 	if (thread->PushConstants->uLightLevel >= 0.0f)
 		WriteLightArray(y, x0, x1, args, thread);
 
-	if (thread->numPolyLights > 0)
-		WriteDynLightArray(y, x0, x1, args, thread);
-
-	RunShader(x0, x1, thread);
+	thread->FragmentShader(x0, x1, thread);
 
 	if (thread->WriteColor)
 		thread->WriteColorFunc(y, x0, x1, thread);
@@ -1362,6 +1371,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs* args, PolyTriangleThreadDat
 	if (topY >= bottomY)
 		return;
 
+	SelectFragmentShader(thread);
 	SelectWriteColorFunc(thread);
 
 	void(*testfunc)(int y, int x0, int x1, const TriDrawTriangleArgs * args, PolyTriangleThreadData * thread);

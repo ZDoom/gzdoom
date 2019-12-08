@@ -435,7 +435,7 @@ static const int shiftTable[] = {
 	24, 16, 8, 0 // STYLEALPHA_InvDstCol
 };
 
-#ifdef NO_SSE
+#if 1 //#ifndef USE_AVX2
 template<typename OptT>
 static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {

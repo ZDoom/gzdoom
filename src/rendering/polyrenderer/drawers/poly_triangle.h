@@ -199,8 +199,6 @@ public:
 	struct Scanline
 	{
 		float W[MAXWIDTH];
-		float WeightV1[MAXWIDTH];
-		float WeightV2[MAXWIDTH];
 		uint16_t U[MAXWIDTH];
 		uint16_t V[MAXWIDTH];
 		float WorldX[MAXWIDTH];

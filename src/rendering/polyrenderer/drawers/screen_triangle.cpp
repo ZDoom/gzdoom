@@ -482,8 +482,8 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 			int32_t dst = (dstinput >> shiftdst[i]) & 0xff;
 
 			// Inverse if needed
-			src = invsrc ? 0xff - src : src;
-			dst = invdst ? 0xff - dst : dst;
+			if (invsrc) src = 0xff - src;
+			if (invdst) dst = 0xff - dst;
 
 			// Rescale 0-255 to 0-256
 			src = src + (src >> 7);
@@ -559,8 +559,8 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 		__m128i dst = _mm_and_si128(_mm_srlv_epi32(dstinput, shiftdst), _mm_set1_epi32(0xff));
 
 		// Inverse if needed
-		src = invsrc ? _mm_sub_epi32(_mm_set1_epi32(0xff), src) : src;
-		dst = invdst ? _mm_sub_epi32(_mm_set1_epi32(0xff), dst) : dst;
+		if (invsrc) src = _mm_sub_epi32(_mm_set1_epi32(0xff), src);
+		if (invdst) dst = _mm_sub_epi32(_mm_set1_epi32(0xff), dst);
 
 		// Rescale 0-255 to 0-256
 		src = _mm_add_epi32(src, _mm_srli_epi32(src, 7));

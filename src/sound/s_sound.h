@@ -38,10 +38,6 @@ struct FLevelLocals;
 
 #include "s_soundinternal.h"
 
-// Information about one playing sound.
-struct sector_t;
-struct FPolyObj;
-
 // Per level startup code.
 // Kills playing sounds at start of level and starts new music.
 //
@@ -52,58 +48,16 @@ void S_PrecacheLevel (FLevelLocals *l);
 
 // Start sound for thing at <ent>
 void S_Sound (int channel, FSoundID sfxid, float volume, float attenuation);
-void S_Sound (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation);
-void S_SoundMinMaxDist (AActor *ent, int channel, FSoundID sfxid, float volume, float mindist, float maxdist);
-void S_Sound (const FPolyObj *poly, int channel, FSoundID sfxid, float volume, float attenuation);
-void S_Sound (const sector_t *sec, int channel, FSoundID sfxid, float volume, float attenuation);
-void S_Sound(FLevelLocals *Level, const DVector3 &pos, int channel, FSoundID sfxid, float volume, float attenuation);
 
 void S_SoundPitch (int channel, FSoundID sfxid, float volume, float attenuation, float pitch);
-void S_SoundPitchActor (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation, float pitch);
-
-// [Nash] Used by ACS and DECORATE
-void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local);
-void S_PlaySoundPitch(AActor *a, int chan, FSoundID sid, float vol, float atten, bool local, float pitch);
 
 struct FSoundLoadBuffer;
 int S_PickReplacement (int refid);
 void S_CacheRandomSound (sfxinfo_t *sfx);
 
-// Stops a sound emanating from one of an emitter's channels.
-void S_StopSound (AActor *ent, int channel);
-void S_StopSound (const sector_t *sec, int channel);
-void S_StopSound (const FPolyObj *poly, int channel);
-
-// Stops an origin-less sound from playing from this channel.
-void S_StopSound (int channel);
-
 // Stop sound for all channels
 void S_StopAllChannels (void);
-
-// Is the sound playing on one of the emitter's channels?
-bool S_GetSoundPlayingInfo (const AActor *actor, int sound_id);
-bool S_GetSoundPlayingInfo (const sector_t *sector, int sound_id);
-bool S_GetSoundPlayingInfo (const FPolyObj *poly, int sound_id);
-
-bool S_IsActorPlayingSomething (AActor *actor, int channel, int sound_id);
-
-// Change a playing sound's volume
-void S_ChangeSoundVolume(AActor *actor, int channel, double volume);
-
-// Change a playing sound's pitch
-void S_ChangeSoundPitch(AActor *actor, int channel, double pitch);
 void S_SetPitch(FSoundChan *chan, float dpitch);
-
-// Moves all sounds from one mobj to another
-void S_RelinkSound (AActor *from, AActor *to);
-
-// Stores/retrieves playing channel information in an archive.
-void S_SerializeSounds(FSerializer &arc);
-
-//
-// Updates music & sounds
-//
-void S_UpdateSounds (AActor *listener);
 
 void S_RestoreEvictedChannels();
 
@@ -130,10 +84,11 @@ void S_ShrinkPlayerSoundLists ();
 void S_UnloadSound (sfxinfo_t *sfx);
 sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
-void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch);
 
 // [RH] Prints sound debug info to the screen.
 //		Modelled after Hexen's noise cheat.
 void S_NoiseDebug ();
+
+#include "s_doomsound.h"
 
 #endif

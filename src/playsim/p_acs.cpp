@@ -5953,7 +5953,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 				if (args[0] == 0)
 				{
-					S_ChangeSoundVolume(activator, chan, volume);
+					S_ChangeActorSoundVolume(activator, chan, volume);
 				}
 				else
 				{
@@ -5962,7 +5962,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 					while ((spot = it.Next()) != NULL)
 					{
-						S_ChangeSoundVolume(spot, chan, volume);
+						S_ChangeActorSoundVolume(spot, chan, volume);
 					}
 				}
 			}

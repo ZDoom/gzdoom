@@ -77,6 +77,7 @@ struct SoundListener
 	bool underwater;
 	bool valid;
 	ReverbContainer *Environment;
+	void* ListenerObject;
 };
 
 // Default rolloff information.

@@ -140,8 +140,6 @@ extern FRolloffInfo S_Rolloff;
 extern TArray<uint8_t> S_SoundCurve;
 
 
-typedef FVector3(*GetSourceOrigin)(const float *listenerpos, const void *source);
-
 class AActor;
 struct sector_t;
 struct FPolyObj;
@@ -160,14 +158,7 @@ struct FSoundChan : public FISoundChannel
 	float		LimitRange;
 	union
 	{
-		AActor			*Actor;		// Used for position and velocity.
-		const sector_t	*Sector;	// Sector for area sounds.
-		const FPolyObj	*Poly;		// Polyobject sound source.
-		struct
-		{
-			void *Source;
-			GetSourceOrigin getOrigin;
-		};
+		const void *Source;
 		float Point[3];	// Sound is not attached to any source.
 	};
 };
@@ -249,10 +240,40 @@ enum
 // Checks if a copy of this sound is already playing.
 bool S_CheckSingular (int sound_id);
 
+enum // This cannot be remain as this, but for now it has to suffice.
+{
+	SOURCE_None,		// Sound is always on top of the listener.
+	SOURCE_Actor,		// Sound is coming from an actor.
+	SOURCE_Sector,		// Sound is coming from a sector.
+	SOURCE_Polyobj,		// Sound is coming from a polyobject.
+	SOURCE_Unattached,	// Sound is not attached to any particular emitter.
+};
+
+
+//
+// Updates music & sounds
+//
+void S_UpdateSounds (int time);
+
+FSoundChan* S_StartSound(int sourcetype, const void* source,
+	const FVector3* pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo* rolloff = nullptr, float spitch = 0.0f);
+
+// Stops an origin-less sound from playing from this channel.
+void S_StopSound(int channel);
+void S_StopSound(int sourcetype, const void* actor, int channel);
+
+void S_RelinkSound(int sourcetype, const void* from, const void* to, const FVector3* optpos);
+void S_ChangeSoundVolume(int sourcetype, const void *source, int channel, double dvolume);
+void S_ChangeSoundPitch(int sourcetype, const void *source, int channel, double pitch);
+bool S_IsSourcePlayingSomething (int sourcetype, const void *actor, int channel, int sound_id);
+
 // Stop and resume music, during game PAUSE.
 void S_PauseSound (bool notmusic, bool notsfx);
 void S_ResumeSound (bool notsfx);
 void S_SetSoundPaused (int state);
+bool S_GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id);
+void S_UnloadAllSounds();
+void S_Reset();
 
 extern ReverbContainer *Environments;
 extern ReverbContainer *DefaultEnvironments[26];
@@ -263,6 +284,4 @@ void S_SetEnvironment (const ReverbContainer *settings);
 ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);
 void S_AddEnvironment (ReverbContainer *settings);
-void S_UnloadAllSounds();
-void S_SoundReset();
 	

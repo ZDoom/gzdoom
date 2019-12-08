@@ -86,15 +86,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#ifdef NeXT
-// NeXT doesn't need a binary flag in open call
-#define O_BINARY 0
-#endif
-
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
 #define NORM_PITCH				128
 #define NORM_PRIORITY			64
 #define NORM_SEP				0

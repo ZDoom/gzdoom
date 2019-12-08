@@ -623,7 +623,7 @@ static uint32_t SampleTexture(uint32_t u, uint32_t v, const void* texPixels, int
 {
 	int texelX = (u * texWidth) >> 16;
 	int texelY = (v * texHeight) >> 16;
-	int texelOffset = texelX * texHeight + texelY;
+	int texelOffset = texelX + texelY * texWidth;
 	if (texBgra)
 	{
 		return static_cast<const uint32_t*>(texPixels)[texelOffset];
@@ -648,6 +648,10 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		/*float fogdist = pixelpos.w;
 		float fogfactor = exp2(uFogDensity * fogdist);
 		FragColor = vec4(uFogColor.rgb, 1.0 - fogfactor);*/
+		for (int x = x0; x < x1; x++)
+		{
+			fragcolor[x] = 0;
+		}
 		return;
 	}
 	else if (thread->SpecialEffect == EFF_BURN) // burn.fp

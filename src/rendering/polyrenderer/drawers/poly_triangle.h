@@ -49,7 +49,7 @@ class PolyCommandBuffer
 public:
 	PolyCommandBuffer(RenderMemory* frameMemory);
 
-	void SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthStencil);
+	void SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthStencil, bool topdown);
 	void SetInputAssembly(PolyInputAssembly *input);
 	void SetVertexBuffer(const void *vertices);
 	void SetIndexBuffer(const void *elements);
@@ -137,7 +137,7 @@ public:
 
 	void ClearDepth(float value);
 	void ClearStencil(uint8_t value);
-	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil *depthstencil);
+	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil *depthstencil, bool topdown);
 
 	void SetCullCCW(bool value) { ccw = value; }
 	void SetTwoSided(bool value) { twosided = value; }
@@ -224,6 +224,7 @@ public:
 	bool dest_bgra = false;
 	uint8_t *dest = nullptr;
 	PolyDepthStencil *depthstencil = nullptr;
+	bool topdown = true;
 
 	float depthbias = 0.0f;
 
@@ -504,9 +505,9 @@ private:
 class PolySetViewportCommand : public PolyDrawerCommand
 {
 public:
-	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil *depthstencil)
-		: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra), depthstencil(depthstencil) { }
-	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil); }
+	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil *depthstencil, bool topdown)
+		: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra), depthstencil(depthstencil), topdown(topdown) { }
+	void Execute(DrawerThread *thread) override { PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil, topdown); }
 
 private:
 	int x;
@@ -519,6 +520,7 @@ private:
 	int dest_pitch;
 	bool dest_bgra;
 	PolyDepthStencil *depthstencil;
+	bool topdown;
 };
 
 class PolySetViewpointUniformsCommand : public PolyDrawerCommand

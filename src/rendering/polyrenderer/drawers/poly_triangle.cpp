@@ -44,7 +44,7 @@ PolyCommandBuffer::PolyCommandBuffer(RenderMemory* frameMemory)
 	mQueue = std::make_shared<DrawerCommandQueue>(frameMemory);
 }
 
-void PolyCommandBuffer::SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthstencil)
+void PolyCommandBuffer::SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthstencil, bool topdown)
 {
 	uint8_t *dest = (uint8_t*)canvas->GetPixels();
 	int dest_width = canvas->GetWidth();
@@ -52,7 +52,7 @@ void PolyCommandBuffer::SetViewport(int x, int y, int width, int height, DCanvas
 	int dest_pitch = canvas->GetPitch();
 	bool dest_bgra = canvas->IsBgra();
 
-	mQueue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil);
+	mQueue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil, topdown);
 }
 
 void PolyCommandBuffer::SetInputAssembly(PolyInputAssembly *input)
@@ -217,7 +217,7 @@ void PolyTriangleThreadData::ClearStencil(uint8_t value)
 	}
 }
 
-void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra, PolyDepthStencil *new_depthstencil)
+void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra, PolyDepthStencil *new_depthstencil, bool new_topdown)
 {
 	viewport_x = x;
 	viewport_y = y;
@@ -229,6 +229,7 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	dest_pitch = new_dest_pitch;
 	dest_bgra = new_dest_bgra;
 	depthstencil = new_depthstencil;
+	topdown = new_topdown;
 	UpdateClip();
 }
 
@@ -620,7 +621,10 @@ void PolyTriangleThreadData::DrawShadedLine(const ShadedTriVertex *const* vert)
 
 		// Apply viewport scale to get screen coordinates:
 		v.x = viewport_x + viewport_width * (1.0f + v.x) * 0.5f;
-		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
+		if (topdown)
+			v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
+		else
+			v.y = viewport_y + viewport_height * (1.0f + v.y) * 0.5f;
 	}
 
 	uint32_t vColorA = (int)(vert[0]->vColor.W * 255.0f + 0.5f);
@@ -714,8 +718,11 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 
 		// Apply viewport scale to get screen coordinates:
 		v.x = viewport_x + viewport_width * (1.0f + v.x) * 0.5f;
-		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
-	}
+		if (topdown)
+			v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
+		else
+			v.y = viewport_y + viewport_height * (1.0f + v.y) * 0.5f;
+		}
 #else
 	// Map to 2D viewport:
 	__m128 mviewport_x = _mm_set1_ps((float)viewport_x);
@@ -740,7 +747,10 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 
 		// Apply viewport scale to get screen coordinates:
 		vx = _mm_add_ps(mviewport_x, _mm_mul_ps(mviewport_halfwidth, _mm_add_ps(mone, vx)));
-		vy = _mm_add_ps(mviewport_y, _mm_mul_ps(mviewport_halfheight, _mm_sub_ps(mone, vy)));
+		if (topdown)
+			vy = _mm_add_ps(mviewport_y, _mm_mul_ps(mviewport_halfheight, _mm_sub_ps(mone, vy)));
+		else
+			vy = _mm_add_ps(mviewport_y, _mm_mul_ps(mviewport_halfheight, _mm_add_ps(mone, vy)));
 
 		_MM_TRANSPOSE4_PS(vx, vy, vz, vw);
 		_mm_storeu_ps(&clippedvert[j].x, vx);
@@ -749,6 +759,8 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *const* ve
 		_mm_storeu_ps(&clippedvert[j + 3].x, vw);
 	}
 #endif
+
+	if (!topdown) ccw = !ccw;
 
 	TriDrawTriangleArgs args;
 

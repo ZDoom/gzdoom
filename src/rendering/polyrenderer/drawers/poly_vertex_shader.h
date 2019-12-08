@@ -134,8 +134,6 @@ public:
 			gl_ClipDistance[3] = 1.0f;
 			gl_ClipDistance[4] = 1.0f;
 		}
-
-		std::swap(vTexCoord.X, vTexCoord.Y); // textures are transposed because the software renderer did them this way
 	}
 
 private:

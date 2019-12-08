@@ -40,7 +40,7 @@ public:
 	void EnableLineSmooth(bool on) override;
 	void EnableDrawBuffers(int count) override;
 
-	void SetRenderTarget(DCanvas *canvas, PolyDepthStencil *depthStencil);
+	void SetRenderTarget(DCanvas *canvas, PolyDepthStencil *depthStencil, bool topdown);
 	void Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t length);
 	PolyVertexInputAssembly *GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
 	void EndRenderPass();
@@ -69,6 +69,7 @@ private:
 	{
 		DCanvas *Canvas = nullptr;
 		PolyDepthStencil *DepthStencil = nullptr;
+		bool TopDown = true;
 	} mRenderTarget;
 
 	struct Rect

@@ -201,7 +201,7 @@ void PolyRenderState::Apply()
 
 	if (mNeedApply)
 	{
-		mDrawCommands->SetViewport(mViewport.x, mViewport.y, mViewport.width, mViewport.height, mRenderTarget.Canvas, mRenderTarget.DepthStencil);
+		mDrawCommands->SetViewport(mViewport.x, mViewport.y, mViewport.width, mViewport.height, mRenderTarget.Canvas, mRenderTarget.DepthStencil, mRenderTarget.TopDown);
 		mDrawCommands->SetScissor(mScissor.x, mScissor.y, mScissor.width, mScissor.height);
 		mDrawCommands->SetViewpointUniforms(mViewpointUniforms);
 		mDrawCommands->SetDepthClamp(mDepthClamp);
@@ -282,7 +282,7 @@ void PolyRenderState::ApplyMaterial()
 		if (base)
 		{
 			DCanvas *texcanvas = base->GetImage(mMaterial);
-			mDrawCommands->SetTexture(0, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
+			mDrawCommands->SetTexture(0, texcanvas->GetPixels(), texcanvas->GetWidth(), texcanvas->GetHeight(), texcanvas->IsBgra());
 
 			int numLayers = mMaterial.mMaterial->GetLayers();
 			for (int i = 1; i < numLayers; i++)
@@ -291,7 +291,7 @@ void PolyRenderState::ApplyMaterial()
 				auto systex = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(i, 0, &layer));
 
 				texcanvas = systex->GetImage(layer, 0, mMaterial.mMaterial->isExpanded() ? CTF_Expand : 0);
-				mDrawCommands->SetTexture(i, texcanvas->GetPixels(), texcanvas->GetHeight(), texcanvas->GetWidth(), texcanvas->IsBgra());
+				mDrawCommands->SetTexture(i, texcanvas->GetPixels(), texcanvas->GetWidth(), texcanvas->GetHeight(), texcanvas->IsBgra());
 			}
 		}
 
@@ -347,10 +347,11 @@ void PolyRenderState::ApplyMatrices()
 	}
 }
 
-void PolyRenderState::SetRenderTarget(DCanvas *canvas, PolyDepthStencil *depthStencil)
+void PolyRenderState::SetRenderTarget(DCanvas *canvas, PolyDepthStencil *depthStencil, bool topdown)
 {
 	mRenderTarget.Canvas = canvas;
 	mRenderTarget.DepthStencil = depthStencil;
+	mRenderTarget.TopDown = topdown;
 }
 
 void PolyRenderState::Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t length)

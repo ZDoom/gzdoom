@@ -386,3 +386,13 @@ public:
 
 
 extern SoundEngine* soundEngine;
+
+struct FReverbField
+{
+	int Min, Max;
+	float REVERB_PROPERTIES::* Float;
+	int REVERB_PROPERTIES::* Int;
+	unsigned int Flag;
+};
+
+

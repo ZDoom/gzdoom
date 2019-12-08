@@ -272,6 +272,8 @@ public:
 	uint8_t StencilTestValue = 0;
 	uint8_t StencilWriteValue = 0;
 
+	void (*WriteColorFunc)(int y, int x0, int x1, PolyTriangleThreadData* thread) = nullptr;
+
 private:
 	ShadedTriVertex ShadeVertex(int index);
 	void DrawShadedPoint(const ShadedTriVertex *const* vertex);

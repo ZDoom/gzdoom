@@ -214,6 +214,7 @@ public:
 		uint32_t FragColor[MAXWIDTH];
 		uint16_t lightarray[MAXWIDTH];
 		uint32_t dynlights[MAXWIDTH];
+		uint8_t discard[MAXWIDTH];
 	} scanline;
 
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
@@ -242,6 +243,7 @@ public:
 	int SpecialEffect = EFF_NONE;
 	int EffectState = 0;
 	bool AlphaTest = false;
+	uint32_t AlphaThreshold = 0x7f000000;
 	const PolyPushConstants* PushConstants = nullptr;
 
 	const void *vertices = nullptr;

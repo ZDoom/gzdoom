@@ -257,6 +257,8 @@ void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPu
 
 	PushConstants = &constants;
 
+	AlphaThreshold = clamp((int)(PushConstants->uAlphaThreshold * 255.0f + 0.5f), 0, 255) << 24;
+
 	numPolyLights = 0;
 	if (constants.uLightIndex >= 0)
 	{

@@ -451,6 +451,7 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	uint32_t* dest = (uint32_t*)thread->dest;
 	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
+	uint8_t* discard = thread->scanline.discard;
 
 	for (int x = x0; x < x1; x++)
 	{
@@ -458,7 +459,7 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 
 		if (OptT::Flags & SWBLEND_AlphaTest)
 		{
-			if (fragcolor[x] <= 0x7f000000)
+			if (discard[x])
 				continue;
 		}
 
@@ -540,9 +541,10 @@ static void WriteColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 		}
 		else
 		{
+			uint8_t* discard = thread->scanline.discard;
 			for (int x = x0; x < x1; x++)
 			{
-				if (fragcolor[x] > 0x7f000000)
+				if (!discard[x])
 					line[x] = fragcolor[x];
 			}
 		}
@@ -587,10 +589,11 @@ static void WriteDepth(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	}
 	else
 	{
+		uint8_t* discard = thread->scanline.discard;
 		uint32_t* fragcolor = thread->scanline.FragColor;
 		for (int x = x0; x < x1; x++)
 		{
-			if (fragcolor[x] > 0x7f000000)
+			if (!discard[x])
 				line[x] = w[x];
 		}
 	}
@@ -610,10 +613,11 @@ static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	}
 	else
 	{
+		uint8_t* discard = thread->scanline.discard;
 		uint32_t* fragcolor = thread->scanline.FragColor;
 		for (int x = x0; x < x1; x++)
 		{
-			if (fragcolor[x] > 0x7f000000)
+			if (!discard[x])
 				line[x] = value;
 		}
 	}
@@ -790,10 +794,9 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		case TM_CLAMPY:
 			for (int x = x0; x < x1; x++)
 			{
-				if (v[x] >= 0.0 && v[x] <= 1.0)
-					fragcolor[x] = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
-				else
-					fragcolor[x] = 0;
+				fragcolor[x] = SampleTexture(u[x], v[x], texPixels, texWidth, texHeight, texBgra);
+				if (v[x] < 0.0 || v[x] > 1.0)
+					fragcolor[x] &= 0x00ffffff;
 			}
 			break;
 		case TM_INVERTOPAQUE:
@@ -878,6 +881,8 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		}
 	}
 
+	uint32_t alphaThreshold = thread->AlphaThreshold;
+	uint8_t* discard = thread->scanline.discard;
 	for (int x = x0; x < x1; x++)
 	{
 		uint32_t r = thread->scanline.vColorR[x];
@@ -891,6 +896,7 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 		b += b >> 7;
 
 		uint32_t texel = fragcolor[x];
+		discard[x] = texel <= alphaThreshold;
 		fragcolor[x] = MAKEARGB(
 			(APART(texel) * a + 127) >> 8,
 			(RPART(texel) * r + 127) >> 8,

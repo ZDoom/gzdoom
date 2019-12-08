@@ -208,9 +208,7 @@ extern bool ParsingKeyConf, UnsafeExecutionContext;
 void ResetButtonTriggers ();	// Call ResetTriggers for all buttons
 void ResetButtonStates ();		// Same as above, but also clear bDown
 
-extern unsigned int MakeKey (const char *s);
-extern unsigned int MakeKey (const char *s, size_t len);
-extern unsigned int SuperFastHash (const char *data, size_t len);
+#include "superfasthash.h"
 
 void execLogfile(const char *fn, bool append = false);
 

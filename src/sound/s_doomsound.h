@@ -3,8 +3,22 @@
 // Information about one playing sound.
 struct sector_t;
 struct FPolyObj;
+struct FLevelLocals;
+
+void S_Init();
+void S_InitData();
+void S_Start();
+void S_Shutdown();
 
 void S_UpdateSounds(AActor* listenactor);
+void S_SetSoundPaused(int state);
+
+void S_PrecacheLevel(FLevelLocals* l);
+
+// Start sound for thing at <ent>
+void S_Sound(int channel, FSoundID sfxid, float volume, float attenuation);
+void S_SoundPitch(int channel, FSoundID sfxid, float volume, float attenuation, float pitch);
+
 
 void S_Sound (AActor *ent, int channel, FSoundID sfxid, float volume, float attenuation);
 void S_SoundMinMaxDist (AActor *ent, int channel, FSoundID sfxid, float volume, float mindist, float maxdist);
@@ -45,3 +59,31 @@ void S_SerializeSounds(FSerializer &arc);
 void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch);
 static void S_SetListener(AActor *listenactor);
 void S_SoundReset();
+void S_ResumeSound(bool state);
+void S_PauseSound(bool state1, bool state);
+void S_NoiseDebug();
+
+inline void S_StopSound(int chan)
+{
+	soundEngine->StopSound(chan);
+}
+
+inline void S_StopAllChannels()
+{
+	soundEngine->StopAllChannels();
+}
+
+inline const char* S_GetSoundName(FSoundID id)
+{
+	return soundEngine->GetSoundName(id);
+}
+
+inline int S_FindSound(const char* logicalname)
+{
+	return soundEngine->FindSound(logicalname);
+}
+
+inline int S_FindSoundByResID(int rid)
+{
+	return soundEngine->FindSoundByResID(rid);
+}

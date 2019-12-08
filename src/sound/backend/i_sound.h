@@ -174,11 +174,7 @@ extern bool nosfx;
 extern bool nosound;
 
 void I_InitSound ();
-
-void S_ChannelEnded(FISoundChannel *schan);
-void S_ChannelVirtualChanged(FISoundChannel *schan, bool is_virtual);
-float S_GetRolloff(FRolloffInfo *rolloff, float distance, bool logarithmic);
-FISoundChannel *S_GetChannel(void *syschan);
+void I_CloseSound();
 
 extern ReverbContainer *DefaultEnvironments[26];
 

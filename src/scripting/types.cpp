@@ -1184,7 +1184,7 @@ PSound::PSound()
 
 void PSound::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	const char *cptr = *(const FSoundID *)addr;
+	const char *cptr = S_GetSoundName(*(const FSoundID *)addr);
 	ar.StringPtr(key, cptr);
 }
 

@@ -35,8 +35,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "doomtype.h"
-
 #include "oalsound.h"
 
 #include "i_module.h"
@@ -51,6 +49,7 @@
 #include "stats.h"
 #include "s_music.h"
 #include "zmusic/zmusic.h"
+
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 EXTERN_CVAR (Float, snd_musicvolume)
@@ -300,8 +299,8 @@ void I_InitSound ()
 
 void I_CloseSound ()
 {
-	// Free all loaded samples
-	S_UnloadAllSounds();
+	// Free all loaded samples. Beware that the sound engine may already have been deleted.
+	if (soundEngine) soundEngine->UnloadAllSounds();
 
 	delete GSnd;
 	GSnd = NULL;

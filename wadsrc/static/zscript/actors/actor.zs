@@ -436,6 +436,8 @@ class Actor : Thinker native
 		MarkSound(BounceSound);
 		MarkSound(WallBounceSound);
 		MarkSound(CrushPainSound);
+		MarkSound(HowlSound);
+		MarkSound(MeleeSound);
 	}
 
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)

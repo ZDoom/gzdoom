@@ -1433,13 +1433,13 @@ void SN_MarkPrecacheSounds(int sequence, seqtype_t type)
 	{
 		FSoundSequence *seq = Sequences[sequence];
 
-		seq->StopSound.MarkUsed();
+		soundEngine->MarkUsed(seq->StopSound);
 		for (int i = 0; GetCommand(seq->Script[i]) != SS_CMD_END; ++i)
 		{
 			int cmd = GetCommand(seq->Script[i]);
 			if (cmd == SS_CMD_PLAY || cmd == SS_CMD_PLAYREPEAT || cmd == SS_CMD_PLAYLOOP)
 			{
-				FSoundID(GetData(seq->Script[i])).MarkUsed();
+				soundEngine->MarkUsed(GetData(seq->Script[i]));
 			}
 		}
 	}

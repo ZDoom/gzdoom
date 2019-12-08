@@ -435,6 +435,7 @@ static const int shiftTable[] = {
 	24, 16, 8, 0 // STYLEALPHA_InvDstCol
 };
 
+#ifdef NO_SSE
 template<typename OptT>
 static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
@@ -453,20 +454,25 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	uint32_t* fragcolor = thread->scanline.FragColor;
 	uint8_t* discard = thread->scanline.discard;
 
+	int srcSelect = style.SrcAlpha <= STYLEALPHA_One ? 0 : (style.SrcAlpha >= STYLEALPHA_DstCol ? 1 : 2);
+	int dstSelect = style.DestAlpha <= STYLEALPHA_One ? 0 : (style.DestAlpha >= STYLEALPHA_DstCol ? 1 : 2);
+
+	uint32_t inputs[3];
+	inputs[0] = 0;
+
 	for (int x = x0; x < x1; x++)
 	{
-		uint32_t fg = fragcolor[x];
-
 		if (OptT::Flags & SWBLEND_AlphaTest)
 		{
 			if (discard[x])
 				continue;
 		}
 
-		uint32_t bg = line[x];
+		inputs[1] = line[x];
+		inputs[2] = fragcolor[x];
 
-		int srcinput = style.SrcAlpha <= STYLEALPHA_One ? 0 : (style.SrcAlpha >= STYLEALPHA_DstCol ? bg : fg);
-		int dstinput = style.DestAlpha <= STYLEALPHA_One ? 0 : (style.DestAlpha >= STYLEALPHA_DstCol ? bg : fg);
+		uint32_t srcinput = inputs[srcSelect];
+		uint32_t dstinput = inputs[dstSelect];
 
 		uint32_t out[4];
 		for (int i = 0; i < 4; i++)
@@ -484,8 +490,8 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 			dst = dst + (dst >> 7);
 
 			// Multiply with input
-			src = src * ((fg >> (24 - (i << 3))) & 0xff);
-			dst = dst * ((bg >> (24 - (i << 3))) & 0xff);
+			src = src * ((inputs[2] >> (24 - (i << 3))) & 0xff);
+			dst = dst * ((inputs[1] >> (24 - (i << 3))) & 0xff);
 
 			// Apply blend operator
 			int32_t val;
@@ -507,6 +513,88 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 		line[x] = MAKEARGB(out[0], out[1], out[2], out[3]);
 	}
 }
+#else
+template<typename OptT>
+static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	using namespace TriScreenDrawerModes;
+
+	FRenderStyle style = thread->RenderStyle;
+
+	bool invsrc = style.SrcAlpha & 1;
+	bool invdst = style.DestAlpha & 1;
+
+	__m128i shiftsrc = _mm_loadu_si128((const __m128i*)(shiftTable + (style.SrcAlpha << 2)));
+	__m128i shiftdst = _mm_loadu_si128((const __m128i*)(shiftTable + (style.DestAlpha << 2)));
+
+	uint32_t* dest = (uint32_t*)thread->dest;
+	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	uint8_t* discard = thread->scanline.discard;
+
+	int srcSelect = style.SrcAlpha <= STYLEALPHA_One ? 0 : (style.SrcAlpha >= STYLEALPHA_DstCol ? 1 : 2);
+	int dstSelect = style.DestAlpha <= STYLEALPHA_One ? 0 : (style.DestAlpha >= STYLEALPHA_DstCol ? 1 : 2);
+
+	uint32_t inputs[3];
+	inputs[0] = 0;
+
+	__m128i shiftmul = _mm_set_epi32(24, 16, 8, 0);
+
+	for (int x = x0; x < x1; x++)
+	{
+		if (OptT::Flags & SWBLEND_AlphaTest)
+		{
+			if (discard[x])
+				continue;
+		}
+
+		inputs[1] = line[x];
+		inputs[2] = fragcolor[x];
+
+		__m128i srcinput = _mm_set1_epi32(inputs[srcSelect]);
+		__m128i dstinput = _mm_set1_epi32(inputs[dstSelect]);
+
+		// Grab component for scale factors
+		__m128i src = _mm_and_si128(_mm_srlv_epi32(srcinput, shiftsrc), _mm_set1_epi32(0xff));
+		__m128i dst = _mm_and_si128(_mm_srlv_epi32(dstinput, shiftdst), _mm_set1_epi32(0xff));
+
+		// Inverse if needed
+		src = invsrc ? _mm_sub_epi32(_mm_set1_epi32(0xff), src) : src;
+		dst = invdst ? _mm_sub_epi32(_mm_set1_epi32(0xff), dst) : dst;
+
+		// Rescale 0-255 to 0-256
+		src = _mm_add_epi32(src, _mm_srli_epi32(src, 7));
+		dst = _mm_add_epi32(dst, _mm_srli_epi32(dst, 7));
+
+		// Multiply with input
+		__m128i mulsrc = _mm_and_si128(_mm_srlv_epi32(_mm_set1_epi32(inputs[2]), shiftmul), _mm_set1_epi32(0xff));
+		__m128i muldst = _mm_and_si128(_mm_srlv_epi32(_mm_set1_epi32(inputs[1]), shiftmul), _mm_set1_epi32(0xff));
+		__m128i mulresult = _mm_mullo_epi16(_mm_packs_epi32(src, dst), _mm_packs_epi32(mulsrc, muldst));
+		src = _mm_unpacklo_epi16(mulresult, _mm_setzero_si128());
+		dst = _mm_unpackhi_epi16(mulresult, _mm_setzero_si128());
+
+		// Apply blend operator
+		__m128i val;
+		if (OptT::Flags & SWBLEND_Sub)
+		{
+			val = _mm_sub_epi32(src, dst);
+		}
+		else if (OptT::Flags & SWBLEND_RevSub)
+		{
+			val = _mm_sub_epi32(dst, src);
+		}
+		else
+		{
+			val = _mm_add_epi32(src, dst);
+		}
+
+		__m128i out = _mm_srli_epi32(_mm_add_epi32(val, _mm_set1_epi32(127)), 8);
+		out = _mm_packs_epi32(out, out);
+		out = _mm_packus_epi16(out, out);
+		line[x] = _mm_cvtsi128_si32(out);
+	}
+}
+#endif
 
 static void WriteColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
@@ -1006,7 +1094,6 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 	else // func_normal
 	{
 		auto constants = thread->PushConstants;
-		auto& streamdata = thread->mainVertexShader.Data;
 
 		switch (constants->uTextureMode)
 		{
@@ -1023,6 +1110,8 @@ static void RunShader(int x0, int x1, PolyTriangleThreadData* thread)
 
 		if (constants->uTextureMode != TM_FOGLAYER)
 		{
+			auto& streamdata = thread->mainVertexShader.Data;
+
 			if (streamdata.uAddColor.r != 0.0f || streamdata.uAddColor.g != 0.0f || streamdata.uAddColor.b != 0.0f)
 			{
 				FuncNormal_AddColor(x0, x1, thread);

@@ -439,8 +439,6 @@ static const int shiftTable[] = {
 template<typename OptT>
 static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
-	using namespace TriScreenDrawerModes;
-
 	FRenderStyle style = thread->RenderStyle;
 
 	bool invsrc = style.SrcAlpha & 1;
@@ -452,7 +450,6 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	uint32_t* dest = (uint32_t*)thread->dest;
 	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	uint8_t* discard = thread->scanline.discard;
 
 	int srcSelect = style.SrcAlpha <= STYLEALPHA_One ? 0 : (style.SrcAlpha >= STYLEALPHA_DstCol ? 1 : 2);
 	int dstSelect = style.DestAlpha <= STYLEALPHA_One ? 0 : (style.DestAlpha >= STYLEALPHA_DstCol ? 1 : 2);
@@ -462,12 +459,6 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 
 	for (int x = x0; x < x1; x++)
 	{
-		if (OptT::Flags & SWBLEND_AlphaTest)
-		{
-			if (discard[x])
-				continue;
-		}
-
 		inputs[1] = line[x];
 		inputs[2] = fragcolor[x];
 
@@ -517,8 +508,6 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 template<typename OptT>
 static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
-	using namespace TriScreenDrawerModes;
-
 	FRenderStyle style = thread->RenderStyle;
 
 	bool invsrc = style.SrcAlpha & 1;
@@ -530,7 +519,6 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	uint32_t* dest = (uint32_t*)thread->dest;
 	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	uint8_t* discard = thread->scanline.discard;
 
 	int srcSelect = style.SrcAlpha <= STYLEALPHA_One ? 0 : (style.SrcAlpha >= STYLEALPHA_DstCol ? 1 : 2);
 	int dstSelect = style.DestAlpha <= STYLEALPHA_One ? 0 : (style.DestAlpha >= STYLEALPHA_DstCol ? 1 : 2);
@@ -542,12 +530,6 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 
 	for (int x = x0; x < x1; x++)
 	{
-		if (OptT::Flags & SWBLEND_AlphaTest)
-		{
-			if (discard[x])
-				continue;
-		}
-
 		inputs[1] = line[x];
 		inputs[2] = fragcolor[x];
 
@@ -628,16 +610,180 @@ static void BlendColorOpaque(int y, int x0, int x1, PolyTriangleThreadData* thre
 }
 #endif
 
-static void BlendColorOpaqueAlphaTest(int y, int x0, int x1, PolyTriangleThreadData* thread)
+static void BlendColorAdd_Src_InvSrc(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
-	uint32_t* dest = (uint32_t*)thread->dest;
-	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
-	uint8_t* discard = thread->scanline.discard;
+
 	for (int x = x0; x < x1; x++)
 	{
-		if (!discard[x])
-			line[x] = fragcolor[x];
+		uint32_t dst = line[x];
+		uint32_t src = fragcolor[x];
+
+		uint32_t srcscale = APART(src);
+		srcscale += srcscale >> 7;
+		uint32_t dstscale = 256 - srcscale;
+
+		uint32_t a = ((APART(src) * srcscale + APART(dst) * dstscale) + 127) >> 8;
+		uint32_t r = ((RPART(src) * srcscale + RPART(dst) * dstscale) + 127) >> 8;
+		uint32_t g = ((GPART(src) * srcscale + GPART(dst) * dstscale) + 127) >> 8;
+		uint32_t b = ((BPART(src) * srcscale + BPART(dst) * dstscale) + 127) >> 8;
+
+		line[x] = MAKEARGB(a, r, g, b);
+	}
+}
+
+static void BlendColorAdd_SrcCol_InvSrcCol(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	for (int x = x0; x < x1; x++)
+	{
+		uint32_t dst = line[x];
+		uint32_t src = fragcolor[x];
+
+		uint32_t srcscale_a = APART(src);
+		uint32_t srcscale_r = RPART(src);
+		uint32_t srcscale_g = GPART(src);
+		uint32_t srcscale_b = BPART(src);
+		srcscale_a += srcscale_a >> 7;
+		srcscale_r += srcscale_r >> 7;
+		srcscale_g += srcscale_g >> 7;
+		srcscale_b += srcscale_b >> 7;
+		uint32_t dstscale_a = 256 - srcscale_a;
+		uint32_t dstscale_r = 256 - srcscale_r;
+		uint32_t dstscale_g = 256 - srcscale_g;
+		uint32_t dstscale_b = 256 - srcscale_b;
+
+		uint32_t a = ((APART(src) * srcscale_a + APART(dst) * dstscale_a) + 127) >> 8;
+		uint32_t r = ((RPART(src) * srcscale_r + RPART(dst) * dstscale_r) + 127) >> 8;
+		uint32_t g = ((GPART(src) * srcscale_g + GPART(dst) * dstscale_g) + 127) >> 8;
+		uint32_t b = ((BPART(src) * srcscale_b + BPART(dst) * dstscale_b) + 127) >> 8;
+
+		line[x] = MAKEARGB(a, r, g, b);
+	}
+}
+
+static void BlendColorAdd_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	for (int x = x0; x < x1; x++)
+	{
+		uint32_t dst = line[x];
+		uint32_t src = fragcolor[x];
+
+		uint32_t srcscale = APART(src);
+		srcscale += srcscale >> 7;
+
+		uint32_t a = MIN<int32_t>((((APART(src) * srcscale) + 127) >> 8) + APART(dst), 255);
+		uint32_t r = MIN<int32_t>((((RPART(src) * srcscale) + 127) >> 8) + RPART(dst), 255);
+		uint32_t g = MIN<int32_t>((((GPART(src) * srcscale) + 127) >> 8) + GPART(dst), 255);
+		uint32_t b = MIN<int32_t>((((BPART(src) * srcscale) + 127) >> 8) + BPART(dst), 255);
+
+		line[x] = MAKEARGB(a, r, g, b);
+	}
+}
+
+static void BlendColorAdd_SrcCol_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	for (int x = x0; x < x1; x++)
+	{
+		uint32_t dst = line[x];
+		uint32_t src = fragcolor[x];
+
+		uint32_t srcscale_a = APART(src);
+		uint32_t srcscale_r = RPART(src);
+		uint32_t srcscale_g = GPART(src);
+		uint32_t srcscale_b = BPART(src);
+		srcscale_a += srcscale_a >> 7;
+		srcscale_r += srcscale_r >> 7;
+		srcscale_g += srcscale_g >> 7;
+		srcscale_b += srcscale_b >> 7;
+
+		uint32_t a = MIN<int32_t>((((APART(src) * srcscale_a) + 127) >> 8) + APART(dst), 255);
+		uint32_t r = MIN<int32_t>((((RPART(src) * srcscale_r) + 127) >> 8) + RPART(dst), 255);
+		uint32_t g = MIN<int32_t>((((GPART(src) * srcscale_g) + 127) >> 8) + GPART(dst), 255);
+		uint32_t b = MIN<int32_t>((((BPART(src) * srcscale_b) + 127) >> 8) + BPART(dst), 255);
+
+		line[x] = MAKEARGB(a, r, g, b);
+	}
+}
+
+static void BlendColorAdd_DstCol_Zero(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	for (int x = x0; x < x1; x++)
+	{
+		uint32_t dst = line[x];
+		uint32_t src = fragcolor[x];
+
+		uint32_t srcscale_a = APART(dst);
+		uint32_t srcscale_r = RPART(dst);
+		uint32_t srcscale_g = GPART(dst);
+		uint32_t srcscale_b = BPART(dst);
+		srcscale_a += srcscale_a >> 7;
+		srcscale_r += srcscale_r >> 7;
+		srcscale_g += srcscale_g >> 7;
+		srcscale_b += srcscale_b >> 7;
+
+		uint32_t a = (((APART(src) * srcscale_a) + 127) >> 8);
+		uint32_t r = (((RPART(src) * srcscale_r) + 127) >> 8);
+		uint32_t g = (((GPART(src) * srcscale_g) + 127) >> 8);
+		uint32_t b = (((BPART(src) * srcscale_b) + 127) >> 8);
+
+		line[x] = MAKEARGB(a, r, g, b);
+	}
+}
+
+static void BlendColorAdd_InvDstCol_Zero(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	for (int x = x0; x < x1; x++)
+	{
+		uint32_t dst = line[x];
+		uint32_t src = fragcolor[x];
+
+		uint32_t srcscale_a = 255 - APART(dst);
+		uint32_t srcscale_r = 255 - RPART(dst);
+		uint32_t srcscale_g = 255 - GPART(dst);
+		uint32_t srcscale_b = 255 - BPART(dst);
+		srcscale_a += srcscale_a >> 7;
+		srcscale_r += srcscale_r >> 7;
+		srcscale_g += srcscale_g >> 7;
+		srcscale_b += srcscale_b >> 7;
+
+		uint32_t a = (((APART(src) * srcscale_a) + 127) >> 8);
+		uint32_t r = (((RPART(src) * srcscale_r) + 127) >> 8);
+		uint32_t g = (((GPART(src) * srcscale_g) + 127) >> 8);
+		uint32_t b = (((BPART(src) * srcscale_b) + 127) >> 8);
+
+		line[x] = MAKEARGB(a, r, g, b);
+	}
+}
+
+static void BlendColorRevSub_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	for (int x = x0; x < x1; x++)
+	{
+		uint32_t dst = line[x];
+		uint32_t src = fragcolor[x];
+
+		uint32_t srcscale = APART(src);
+		srcscale += srcscale >> 7;
+
+		uint32_t a = MAX<int32_t>(APART(dst) - (((APART(src) * srcscale) + 127) >> 8), 0);
+		uint32_t r = MAX<int32_t>(RPART(dst) - (((RPART(src) * srcscale) + 127) >> 8), 0);
+		uint32_t g = MAX<int32_t>(GPART(dst) - (((GPART(src) * srcscale) + 127) >> 8), 0);
+		uint32_t b = MAX<int32_t>(BPART(dst) - (((BPART(src) * srcscale) + 127) >> 8), 0);
+
+		line[x] = MAKEARGB(a, r, g, b);
 	}
 }
 
@@ -648,37 +794,44 @@ static void SelectWriteColorFunc(PolyTriangleThreadData* thread)
 	FRenderStyle style = thread->RenderStyle;
 	if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
 	{
-		if (!thread->AlphaTest)
-		{
-			writecolorfunc = &BlendColorOpaque;
-		}
-		else
-		{
-			writecolorfunc = &BlendColorOpaqueAlphaTest;
-		}
+		writecolorfunc = &BlendColorOpaque;
+	}
+	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_InvSrc)
+	{
+		writecolorfunc = &BlendColorAdd_Src_InvSrc;
+	}
+	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_InvSrcCol)
+	{
+		writecolorfunc = &BlendColorAdd_SrcCol_InvSrcCol;
+	}
+	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_One)
+	{
+		writecolorfunc = &BlendColorAdd_Src_One;
+	}
+	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_SrcCol && style.DestAlpha == STYLEALPHA_One)
+	{
+		writecolorfunc = &BlendColorAdd_SrcCol_One;
+	}
+	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_DstCol && style.DestAlpha == STYLEALPHA_Zero)
+	{
+		writecolorfunc = &BlendColorAdd_DstCol_Zero;
+	}
+	else if (style.BlendOp == STYLEOP_Add && style.SrcAlpha == STYLEALPHA_InvDstCol && style.DestAlpha == STYLEALPHA_Zero)
+	{
+		writecolorfunc = &BlendColorAdd_InvDstCol_Zero;
+	}
+	else if (style.BlendOp == STYLEOP_RevSub && style.SrcAlpha == STYLEALPHA_Src && style.DestAlpha == STYLEALPHA_One)
+	{
+		writecolorfunc = &BlendColorRevSub_Src_One;
 	}
 	else
 	{
-		using namespace TriScreenDrawerModes;
-		if (!thread->AlphaTest)
+		switch (style.BlendOp)
 		{
-			switch (style.BlendOp)
-			{
-			default:
-			case STYLEOP_Add: writecolorfunc = &BlendColor<BlendColorOpt_Add>; break;
-			case STYLEOP_Sub: writecolorfunc = &BlendColor<BlendColorOpt_Sub>; break;
-			case STYLEOP_RevSub: writecolorfunc = &BlendColor<BlendColorOpt_RevSub>; break;
-			}
-		}
-		else
-		{
-			switch (style.BlendOp)
-			{
-			default:
-			case STYLEOP_Add: writecolorfunc = BlendColor<BlendColorOpt_AlphaTest_Add>; break;
-			case STYLEOP_Sub: writecolorfunc = BlendColor<BlendColorOpt_AlphaTest_Sub>; break;
-			case STYLEOP_RevSub: writecolorfunc = BlendColor<BlendColorOpt_AlphaTest_RevSub>; break;
-			}
+		default:
+		case STYLEOP_Add: writecolorfunc = &BlendColor<BlendColorOpt_Add>; break;
+		case STYLEOP_Sub: writecolorfunc = &BlendColor<BlendColorOpt_Sub>; break;
+		case STYLEOP_RevSub: writecolorfunc = &BlendColor<BlendColorOpt_RevSub>; break;
 		}
 	}
 	thread->WriteColorFunc = writecolorfunc;
@@ -689,23 +842,9 @@ static void WriteDepth(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	size_t pitch = thread->depthstencil->Width();
 	float* line = thread->depthstencil->DepthValues() + pitch * y;
 	float* w = thread->scanline.W;
-
-	if (!thread->AlphaTest)
+	for (int x = x0; x < x1; x++)
 	{
-		for (int x = x0; x < x1; x++)
-		{
-			line[x] = w[x];
-		}
-	}
-	else
-	{
-		uint8_t* discard = thread->scanline.discard;
-		uint32_t* fragcolor = thread->scanline.FragColor;
-		for (int x = x0; x < x1; x++)
-		{
-			if (!discard[x])
-				line[x] = w[x];
-		}
+		line[x] = w[x];
 	}
 }
 
@@ -714,22 +853,9 @@ static void WriteStencil(int y, int x0, int x1, PolyTriangleThreadData* thread)
 	size_t pitch = thread->depthstencil->Width();
 	uint8_t* line = thread->depthstencil->StencilValues() + pitch * y;
 	uint8_t value = thread->StencilWriteValue;
-	if (!thread->AlphaTest)
+	for (int x = x0; x < x1; x++)
 	{
-		for (int x = x0; x < x1; x++)
-		{
-			line[x] = value;
-		}
-	}
-	else
-	{
-		uint8_t* discard = thread->scanline.discard;
-		uint32_t* fragcolor = thread->scanline.FragColor;
-		for (int x = x0; x < x1; x++)
-		{
-			if (!discard[x])
-				line[x] = value;
-		}
+		line[x] = value;
 	}
 }
 
@@ -1240,19 +1366,41 @@ static void DrawSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, Pol
 
 	thread->FragmentShader(x0, x1, thread);
 
-	if (thread->WriteColor)
-		thread->WriteColorFunc(y, x0, x1, thread);
-	if (thread->WriteDepth)
-		WriteDepth(y, x0, x1, thread);
-	if (thread->WriteStencil)
-		WriteStencil(y, x0, x1, thread);
+	if (!thread->AlphaTest)
+	{
+		if (thread->WriteColor)
+			thread->WriteColorFunc(y, x0, x1, thread);
+		if (thread->WriteDepth)
+			WriteDepth(y, x0, x1, thread);
+		if (thread->WriteStencil)
+			WriteStencil(y, x0, x1, thread);
+	}
+	else
+	{
+		uint8_t* discard = thread->scanline.discard;
+		while (x0 < x1)
+		{
+			int xstart = x0;
+			while (!discard[x0] && x0 < x1) x0++;
+
+			if (xstart < x0)
+			{
+				if (thread->WriteColor)
+					thread->WriteColorFunc(y, x0, x1, thread);
+				if (thread->WriteDepth)
+					WriteDepth(y, xstart, x0, thread);
+				if (thread->WriteStencil)
+					WriteStencil(y, xstart, x0, thread);
+			}
+
+			while (discard[x0] && x0 < x1) x0++;
+		}
+	}
 }
 
 template<typename OptT>
 static void TestSpan(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
-	using namespace TriScreenDrawerModes;
-
 	WriteW(y, x0, x1, args, thread);
 
 	if ((OptT::Flags & SWTRI_DepthTest) || (OptT::Flags & SWTRI_StencilTest))
@@ -1377,8 +1525,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs* args, PolyTriangleThreadDat
 	void(*testfunc)(int y, int x0, int x1, const TriDrawTriangleArgs * args, PolyTriangleThreadData * thread);
 
 	int opt = 0;
-	if (thread->DepthTest) opt |= TriScreenDrawerModes::SWTRI_DepthTest;
-	if (thread->StencilTest) opt |= TriScreenDrawerModes::SWTRI_StencilTest;
+	if (thread->DepthTest) opt |= SWTRI_DepthTest;
+	if (thread->StencilTest) opt |= SWTRI_StencilTest;
 	testfunc = ScreenTriangle::TestSpanOpts[opt];
 
 	topY += thread->skipped_by_thread(topY);
@@ -1445,8 +1593,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs* args, PolyTriangleThreadDat
 
 void(*ScreenTriangle::TestSpanOpts[])(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread) =
 {
-	&TestSpan<TriScreenDrawerModes::TestSpanOpt0>,
-	&TestSpan<TriScreenDrawerModes::TestSpanOpt1>,
-	&TestSpan<TriScreenDrawerModes::TestSpanOpt2>,
-	&TestSpan<TriScreenDrawerModes::TestSpanOpt3>
+	&TestSpan<TestSpanOpt0>,
+	&TestSpan<TestSpanOpt1>,
+	&TestSpan<TestSpanOpt2>,
+	&TestSpan<TestSpanOpt3>
 };

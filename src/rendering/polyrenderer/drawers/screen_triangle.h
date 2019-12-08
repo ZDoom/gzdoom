@@ -116,30 +116,23 @@ private:
 	static void(*TestSpanOpts[])(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread);
 };
 
-namespace TriScreenDrawerModes
+enum SWTestSpan
 {
-	enum SWTestSpan
-	{
-		SWTRI_DepthTest = 1,
-		SWTRI_StencilTest = 2
-	};
+	SWTRI_DepthTest = 1,
+	SWTRI_StencilTest = 2
+};
 
-	struct TestSpanOpt0 { static const int Flags = 0; };
-	struct TestSpanOpt1 { static const int Flags = 1; };
-	struct TestSpanOpt2 { static const int Flags = 2; };
-	struct TestSpanOpt3 { static const int Flags = 3; };
+struct TestSpanOpt0 { static const int Flags = 0; };
+struct TestSpanOpt1 { static const int Flags = 1; };
+struct TestSpanOpt2 { static const int Flags = 2; };
+struct TestSpanOpt3 { static const int Flags = 3; };
 
-	enum SWBlendColor
-	{
-		SWBLEND_Sub = 1,
-		SWBLEND_RevSub = 2,
-		SWBLEND_AlphaTest = 4
-	};
+enum SWBlendColor
+{
+	SWBLEND_Sub = 1,
+	SWBLEND_RevSub = 2
+};
 
-	struct BlendColorOpt_Add { static const int Flags = 0; };
-	struct BlendColorOpt_Sub { static const int Flags = 1; };
-	struct BlendColorOpt_RevSub { static const int Flags = 2; };
-	struct BlendColorOpt_AlphaTest_Add { static const int Flags = 4; };
-	struct BlendColorOpt_AlphaTest_Sub { static const int Flags = 5; };
-	struct BlendColorOpt_AlphaTest_RevSub { static const int Flags = 6; };
-}
+struct BlendColorOpt_Add { static const int Flags = 0; };
+struct BlendColorOpt_Sub { static const int Flags = 1; };
+struct BlendColorOpt_RevSub { static const int Flags = 2; };

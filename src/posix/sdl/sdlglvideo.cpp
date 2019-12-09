@@ -282,9 +282,10 @@ uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
 	{
 		polyvsync = vsync;
 
-		if ((polyrendertarget = SDL_CreateRenderer(Priv::window, -1, vsync ? SDL_RENDERER_PRESENTVSYNC : 0)) == nullptr)
+		polyrendertarget = SDL_CreateRenderer(Priv::window, -1, vsync ? SDL_RENDERER_PRESENTVSYNC : 0);
+		if (!polyrendertarget)
 		{
-			I_Error("Could not create render target for softpoly.");
+			I_FatalError("Could not create render target for softpoly: %s\n", SDL_GetError());
 		}
 
 		// Tell the user which render driver is being used, but don't repeat

@@ -42,6 +42,7 @@
 #include "v_video.h"
 #include "version.h"
 #include "c_console.h"
+#include "c_dispatch.h"
 #include "s_sound.h"
 
 #include "hardware.h"
@@ -89,26 +90,24 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
-CUSTOM_CVAR (Int, polysdl_acceleration, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self == 0)
-		Printf("Disabling softpoly acceleration!...\n");
-	else if (self == 1)
-		Printf("Selecting OpenGL acceleration...\n");
-	else if (self == 2)
-		Printf("Selecting Vulkan acceleration...\n");
-	else
-	{
-		Printf("Incorrect value selected! Selecting OpenGL acceleration...\n");
-		self = 1;
-	}
-
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
-
 CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR(String, vid_sdl_render_driver, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
+CCMD(vid_list_sdl_render_drivers)
+{
+	for (int i = 0; i < SDL_GetNumRenderDrivers(); ++i)
+	{
+		SDL_RendererInfo info;
+		if (SDL_GetRenderDriverInfo(i, &info) == 0)
+			Printf("%s\n", info.name);
+	}
+}
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -252,40 +251,88 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 
 namespace
 {
-	SDL_Surface* polysurface = nullptr;
+	SDL_Renderer* polyrendertarget = nullptr;
+	SDL_Texture* polytexture = nullptr;
+	int polytexturew = 0;
+	int polytextureh = 0;
+	bool polyvsync = false;
+	bool polyfirstinit = true;
 }
 
 void I_PolyPresentInit()
 {
 	assert(Priv::softpolyEnabled);
 	assert(Priv::window != nullptr);
+
+	if (strcmp(vid_sdl_render_driver, "") != 0)
+	{
+		SDL_SetHint(SDL_HINT_RENDER_DRIVER, vid_sdl_render_driver);
+	}
 }
 
 uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
 {
-	if (!polysurface || polysurface->w != w || polysurface->h != h)
+	// When vsync changes we need to reinitialize
+	if (polyrendertarget && polyvsync != vsync)
 	{
-		if (polysurface)
-		{
-			SDL_FreeSurface(polysurface);
-			polysurface = nullptr;
-		}
-		polysurface = SDL_CreateRGBSurface(0, w, h, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000);
-		SDL_SetSurfaceBlendMode(polysurface, SDL_BLENDMODE_NONE);
+		I_PolyPresentDeinit();
 	}
 
-	SDL_LockSurface(polysurface);
-	pitch = polysurface->pitch;
-	return (uint8_t*)polysurface->pixels;
+	if (!polyrendertarget)
+	{
+		polyvsync = vsync;
+
+		if ((polyrendertarget = SDL_CreateRenderer(Priv::window, -1, vsync ? SDL_RENDERER_PRESENTVSYNC : 0)) == nullptr)
+		{
+			I_Error("Could not create render target for softpoly.");
+		}
+
+		// Tell the user which render driver is being used, but don't repeat
+		// outselves if we're just changing vsync.
+		if (polyfirstinit)
+		{
+			polyfirstinit = false;
+
+			SDL_RendererInfo rendererInfo;
+			if (SDL_GetRendererInfo(polyrendertarget, &rendererInfo) == 0)
+			{
+				Printf("Using render driver %s\n", rendererInfo.name);
+			}
+			else
+			{
+				Printf("Failed to query render driver\n");
+			}
+		}
+
+		// Mask color
+		SDL_SetRenderDrawColor(polyrendertarget, 0, 0, 0, 255);
+	}
+
+	if (!polytexture || polytexturew != w || polytextureh != h)
+	{
+		if (polytexture)
+		{
+			SDL_DestroyTexture(polytexture);
+			polytexture = nullptr;
+			polytexturew = polytextureh = 0;
+		}
+		if ((polytexture = SDL_CreateTexture(polyrendertarget, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, w, h)) == nullptr)
+			I_Error("Failed to create %dx%d render target texture.", w, h);
+		polytexturew = w;
+		polytextureh = h;
+	}
+
+	uint8_t* pixels;
+	SDL_LockTexture(polytexture, nullptr, (void**)&pixels, &pitch);
+	return pixels;
 }
 
 void I_PolyPresentUnlock(int x, int y, int width, int height)
 {
-	SDL_UnlockSurface(polysurface);
-	
-	SDL_Surface* windowsurface = SDL_GetWindowSurface(Priv::window);
-	int ClientWidth = windowsurface->w;
-	int ClientHeight = windowsurface->h;
+	SDL_UnlockTexture(polytexture);
+
+	int ClientWidth, ClientHeight;
+	SDL_GetRendererOutputSize(polyrendertarget, &ClientWidth, &ClientHeight);
 
 	SDL_Rect clearrects[4];
 	int count = 0;
@@ -323,24 +370,30 @@ void I_PolyPresentUnlock(int x, int y, int width, int height)
 	}
 
 	if (count > 0)
-		SDL_FillRects(windowsurface, clearrects, count, SDL_MapRGBA(windowsurface->format, 0, 0, 0, 255));
+		SDL_RenderFillRects(polyrendertarget, clearrects, count);
 
 	SDL_Rect dstrect;
 	dstrect.x = x;
 	dstrect.y = y;
 	dstrect.w = width;
 	dstrect.h = height;
-	SDL_BlitScaled(polysurface, nullptr, windowsurface, &dstrect);
-	
-	SDL_UpdateWindowSurface(Priv::window);
+	SDL_RenderCopy(polyrendertarget, polytexture, nullptr, &dstrect);
+
+	SDL_RenderPresent(polyrendertarget);
 }
 
 void I_PolyPresentDeinit()
 {
-	if (polysurface)
+	if (polytexture)
 	{
-		SDL_FreeSurface(polysurface);
-		polysurface = nullptr;
+		SDL_DestroyTexture(polytexture);
+		polytexture = nullptr;
+	}
+
+	if (polyrendertarget)
+	{
+		SDL_DestroyRenderer(polyrendertarget);
+		polyrendertarget = nullptr;
 	}
 }
 
@@ -376,14 +429,7 @@ SDLVideo::SDLVideo ()
 	}
 	else if (Priv::softpolyEnabled)
 	{
-		uint32_t win_flags = SDL_WINDOW_HIDDEN;
-		if (polysdl_acceleration == 1)
-			win_flags |= SDL_WINDOW_OPENGL;
-#if 0 // this currently does not work - it crashes
-		else if (polysdl_acceleration == 2)
-			win_flags |= SDL_WINDOW_VULKAN;
-#endif
-		Priv::CreateWindow(win_flags);
+		Priv::CreateWindow(SDL_WINDOW_HIDDEN);
 	}
 #endif
 }

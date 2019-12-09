@@ -1697,6 +1697,12 @@ class LevelCompatibility : LevelPostProcessor
 					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
 				break;
 			}
+
+			case 'C4850382A78BF637AC9FC58153E03C87': // sapphire.wad map01
+			{
+				SetLineSpecial(11518, 9, 0, 0, 0, 0);
+				break;
+			}
 		}
 	}
 }

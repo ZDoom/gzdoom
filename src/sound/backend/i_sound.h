@@ -36,6 +36,7 @@
 #define __I_SOUND__
 
 #include "i_soundinternal.h"
+#include "utility/zstring.h"
 
 class FileReader;
 struct FSoundChan;

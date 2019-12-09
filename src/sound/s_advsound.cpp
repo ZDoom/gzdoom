@@ -741,10 +741,14 @@ void FPlayerSoundHashTable::MarkUsed()
 
 void S_ClearSoundData()
 {
-	soundEngine->StopAllChannels();
-	soundEngine->UnloadAllSounds();
-	auto &S_sfx = soundEngine->GetSounds();
-	S_sfx.Clear();
+	if (soundEngine)
+	{
+		soundEngine->StopAllChannels();
+		soundEngine->UnloadAllSounds();
+		soundEngine->GetSounds().Clear();
+		soundEngine->ClearRandoms();
+	}
+
 	Ambients.Clear();
 	while (MusicVolumes != NULL)
 	{
@@ -752,7 +756,6 @@ void S_ClearSoundData()
 		MusicVolumes = me->Next;
 		M_Free(me);
 	}
-	soundEngine->ClearRandoms();
 
 	NumPlayerReserves = 0;
 	PlayerClassesIsSorted = false;

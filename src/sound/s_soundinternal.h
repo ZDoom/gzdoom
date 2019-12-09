@@ -277,6 +277,7 @@ public:
 	//
 	void Init(TArray<uint8_t> &sndcurve);
 	void InitData();
+	void Clear();
 	void Shutdown();
 
 	void StopAllChannels(void);

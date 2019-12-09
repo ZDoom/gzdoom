@@ -742,12 +742,7 @@ void FPlayerSoundHashTable::MarkUsed()
 void S_ClearSoundData()
 {
 	if (soundEngine)
-	{
-		soundEngine->StopAllChannels();
-		soundEngine->UnloadAllSounds();
-		soundEngine->GetSounds().Clear();
-		soundEngine->ClearRandoms();
-	}
+		soundEngine->Clear();
 
 	Ambients.Clear();
 	while (MusicVolumes != NULL)

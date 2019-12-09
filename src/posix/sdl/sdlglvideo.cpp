@@ -506,7 +506,11 @@ int SystemBaseFrameBuffer::GetClientWidth()
 
 	if (Priv::softpolyEnabled)
 	{
-		return SDL_GetWindowSurface(Priv::window)->w;
+		if (polyrendertarget)
+			SDL_GetRendererOutputSize(polyrendertarget, &width, nullptr);
+		else
+			SDL_GetWindowSize(Priv::window, &width, nullptr);
+		return width;
 	}
 	
 #ifdef HAVE_VULKAN
@@ -523,7 +527,11 @@ int SystemBaseFrameBuffer::GetClientHeight()
 	
 	if (Priv::softpolyEnabled)
 	{
-		return SDL_GetWindowSurface(Priv::window)->h;
+		if (polyrendertarget)
+			SDL_GetRendererOutputSize(polyrendertarget, nullptr, &height);
+		else
+			SDL_GetWindowSize(Priv::window, nullptr, &height);
+		return height;
 	}
 
 #ifdef HAVE_VULKAN

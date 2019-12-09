@@ -94,9 +94,6 @@ void SoundEngine::Shutdown ()
 
 	StopAllChannels();
 
-	if (GSnd)
-		GSnd->UpdateSounds();
-
 	for (chan = FreeChannels; chan != NULL; chan = next)
 	{
 		next = chan->NextChan;

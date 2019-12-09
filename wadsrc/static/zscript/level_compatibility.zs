@@ -1484,15 +1484,25 @@ class LevelCompatibility : LevelPostProcessor
 				SetThingFlags(0, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
 				for(int i = 2; i < 452; i++)
 					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				//Awaken monsters with Thing_Hate, since NoiseAlert is unreliable
+				SetThingID(465, 9);
+				SetLineSpecial(1648, 177, 9);
+				for(int i = 1650; i <= 1653; i++)
+					SetLineSpecial(i, 177, 9);
+				SetLineSpecial(1655, 177, 9);
 				break;
 			}
 		
 			case 'FDFB3D209CC0F3706AAF3E51646003D5': // swan fox doom v2.4.wad map23
 			{
+				//Missing Teleport Destination on Easy/Normal difficulty
+				SetThingSkills(650, SKILLS_ALL);
 				//Fix the exit portal to allow walking into it instead of shooting it
 				SetLineSpecial(1970, Exit_Normal, 0);
 				SetLineActivation(1970, SPAC_Cross);
 				ClearLineSpecial(2010);
+				SetWallTexture(1966, Line.back, Side.mid, "TELR1");
+				OffsetSectorPlane(170, Sector.floor, -120);
 				break;
 			}
 

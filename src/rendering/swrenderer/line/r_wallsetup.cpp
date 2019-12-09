@@ -140,6 +140,12 @@ namespace swrenderer
 				t2 = (lineseg->v2->fY() - line->v1->fY()) / line->delta.Y;
 			}
 
+			if (line->sidedef[0] != lineseg->sidedef)
+			{
+				t1 = 1.0f - t1;
+				t2 = 1.0f - t2;
+			}
+
 			tx1 = t1 + tx1 * (t2 - t1);
 			tx2 = t1 + tx2 * (t2 - t1);
 		}

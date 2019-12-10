@@ -527,10 +527,27 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		{
 			if (chan->SourceType == type && chan->EntChannel == channel)
 			{
-				if (type != SOURCE_Unattached) chan->Source = source;
-				else
+				bool foundit;
+
+				switch (type)
 				{
-					chan->Point[0] == pt->X && chan->Point[2] == pt->Z && chan->Point[1] == pt->Y;
+				case SOURCE_Actor:
+				case SOURCE_Sector:
+				case SOURCE_Polyobj:
+					foundit = chan->Source == source;
+					break;
+				case SOURCE_Unattached:
+					foundit = chan->Point[0] == pt->X && chan->Point[2] == pt->Z && chan->Point[1] == pt->Y;
+					break;
+				default:
+					foundit = false;
+					break;
+				}
+
+				if (foundit)
+				{
+					StopChannel(chan);
+					break;
 				}
 			}
 		}

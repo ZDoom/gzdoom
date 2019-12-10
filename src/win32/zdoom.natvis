@@ -76,8 +76,9 @@
 </Type>
 
 <Type Name="FSoundID">
+	<DisplayString Condition="soundEngine == nullptr">&lt;No Sound Engine&gt;</DisplayString>
     <DisplayString Condition="ID == 0">&lt;None&gt;</DisplayString>
-    <DisplayString Condition="ID != 0">{S_sfx[ID].name}</DisplayString>
+    <DisplayString Condition="ID != 0">{soundEngine->S_sfx[ID].name}</DisplayString>
 </Type>
 
 </AutoVisualizer>

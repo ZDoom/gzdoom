@@ -521,7 +521,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	}
 
 	// If this actor is already playing something on the selected channel, stop it.
-	if (type != SOURCE_None && ((source == NULL && channel != CHAN_AUTO) || (source != NULL && IsChannelUsed(type, source, channel, &seen))))
+	if (!(chanflags & CHAN_OVERLAP) && type != SOURCE_None && ((source == NULL && channel != CHAN_AUTO) || (source != NULL && IsChannelUsed(type, source, channel, &seen))))
 	{
 		for (chan = Channels; chan != NULL; chan = chan->NextChan)
 		{

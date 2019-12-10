@@ -198,6 +198,7 @@ enum
 	CHAN_ABSTIME			= 1024,	// internal: Start time is absolute and does not depend on current time.
 	CHAN_VIRTUAL			= 2048,	// internal: Channel is currently virtual
 	CHAN_NOSTOP				= 4096,	// only for A_PlaySound. Does not start if channel is playing something.
+	CHAN_OVERLAP				= 8192, // [MK] Does not stop any sounds in the channel and instead plays over them.
 };
 
 // sound attenuation values

@@ -260,6 +260,11 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
 #endif
 	
+	if (!isatty(fileno(stdin)))
+	{
+		return defaultiwad;
+	}
+
 	printf ("Please select a game wad (or 0 to exit):\n");
 	for (i = 0; i < numwads; ++i)
 	{

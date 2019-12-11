@@ -901,6 +901,41 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 		Results->Distance = MaxDist;
 		Results->Fraction = 1.;
 	}
+
+	// [MK] set 3d floor on plane hits (if any)
+	// modders will need this to get accurate plane normals on slopes
+	if (Results->HitType == TRACE_HitFloor)
+	{
+		double secbottom = Results->Sector->floorplane.ZatPoint(Results->HitPos);
+		for (auto rover : Results->Sector->e->XFloor.ffloors)
+		{
+			if (!(rover->flags&FF_EXISTS))
+				continue;
+			double ff_top = rover->top.plane->ZatPoint(Results->HitPos);
+			if (fabs(ff_top-secbottom) < EQUAL_EPSILON)
+				continue;
+			if (fabs(ff_top-Results->HitPos.Z) > EQUAL_EPSILON)
+				continue;
+			Results->ffloor = rover;
+			break;
+		}
+	}
+	else if (Results->HitType == TRACE_HitCeiling)
+	{
+		double sectop = Results->Sector->ceilingplane.ZatPoint(Results->HitPos);
+		for (auto rover : Results->Sector->e->XFloor.ffloors)
+		{
+			if (!(rover->flags&FF_EXISTS))
+				continue;
+			double ff_bottom = rover->bottom.plane->ZatPoint(Results->HitPos);
+			if (fabs(ff_bottom-sectop) < EQUAL_EPSILON)
+				continue;
+			if (fabs(ff_bottom-Results->HitPos.Z) > EQUAL_EPSILON)
+				continue;
+			Results->ffloor = rover;
+			break;
+		}
+	}
 	return Results->HitType != TRACE_HitNone;
 }
 
@@ -1008,6 +1043,7 @@ DEFINE_FIELD_X(TraceResults, FTraceResults, Side)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Tier)
 DEFINE_FIELD_X(TraceResults, FTraceResults, unlinked)
 DEFINE_FIELD_X(TraceResults, FTraceResults, HitType)
+DEFINE_FIELD_X(TraceResults, FTraceResults, ffloor)
 DEFINE_FIELD_X(TraceResults, FTraceResults, CrossedWater)
 DEFINE_FIELD_X(TraceResults, FTraceResults, CrossedWaterPos)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Crossed3DWater)

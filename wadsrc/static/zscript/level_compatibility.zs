@@ -1,8 +1,6 @@
 
-class LevelCompatibility native play
+class LevelCompatibility : LevelPostProcessor
 {
-	native LevelLocals level;
-	
 	protected void Apply(Name checksum, String mapname)
 	{
 		switch (checksum)
@@ -628,6 +626,24 @@ class LevelCompatibility native play
 				break;
 			}
 			
+			case '6C620F43705BEC0ABBABBF46AC3E62D2': // Doom II MAP10
+			{
+				// Allow player to leave exit room
+				SetLineSpecial(786, Door_Raise, 0, 16, 150, 0);
+				SetLineActivation(786, SPAC_Use);
+				SetLineFlags(786, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '1AF4DEC2627360A55B3EB397BC15C39D': // Doom II MAP12
+			{
+				// Missing texture
+				SetWallTexture(648, Line.back, Side.bottom, "PIPES");
+				// Remove erroneous tag for teleporter at the south building
+				ClearSectorTags(149);
+				break;
+			}
+			
 			case 'FBA6547B9FD44E95671A923A066E516F': // Doom II MAP13
 			{
 				// Missing texture
@@ -671,6 +687,7 @@ class LevelCompatibility native play
 			
 			case '1A540BA717BF9EC85F8522594C352F2A': // Doom II, map15
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(147, 0);
 				// Missing textures
 				SetWallTexture(94, Line.back, Side.top, "METAL");
@@ -716,6 +733,9 @@ class LevelCompatibility native play
 				{
 					SetWallTextureID(286+i, Line.back, Side.bottom, STEP4);
 				}
+				// Southwest teleporter in the teleporter room now works on
+				// easier difficulties
+				SetThingSkills(112, 31);
 				break;
 			}
 			
@@ -724,6 +744,13 @@ class LevelCompatibility native play
 				// push ceiling down in glitchy sectors above the stair switches
 				OffsetSectorPlane(50, Sector.ceiling, -56);
 				OffsetSectorPlane(54, Sector.ceiling, -56);
+				break;
+			}
+			
+			case '4AA9B3CE449FB614497756E96509F096': // Doom II MAP22
+			{
+				// Only use switch once to raise sector to rocket launcher
+				SetLineFlags(120, 0, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 			
@@ -743,8 +770,17 @@ class LevelCompatibility native play
 			
 			case '110F84DE041052B59307FAF0293E6BC0': // Doom II, map27
 			{
+				// Remove unreachable secret
 				SetSectorSpecial(93, 0);
+				// Missing texture
 				SetWallTexture(582, Line.back, Side.top, "ZIMMER3");
+				// Make line near switch to level exit passable
+				SetLineFlags(342, 0, Line.ML_BLOCKING);
+				// Can leave Pain Elemental room if stuck
+				SetLineSpecial(580, Door_Open, 0, 16);
+				SetLineActivation(580, SPAC_Use);
+				SetLineSpecial(581, Door_Open, 0, 16);
+				SetLineActivation(581, SPAC_Use);
 				break;
 			}
 			
@@ -761,6 +797,12 @@ class LevelCompatibility native play
 				SetWallTexture(531, Line.back, Side.top, "WOOD8");
 				SetWallTexture(547, Line.back, Side.top, "WOOD8");
 				SetWallTexture(548, Line.back, Side.top, "WOOD8");
+				// Raise holes near level exit when walking over them
+				for(int i=0; i<12; i++)
+				{
+					SetLineSpecial(584+i, Floor_RaiseToNearest, 5, 8);
+					SetLineActivation(584+i, SPAC_Cross);
+				}
 				break;
 			}
 			
@@ -1311,80 +1353,366 @@ class LevelCompatibility native play
 			{
 				// Fix misplaced vertex
 				SetVertex(202, -2, -873);
+				break;
+			}
+			case 'E9EB4D16CA7E491E98D61615E4613E70': // sigil.wad e5m2
+			{
+				// Floating Skulls missing in lower difficulties
+				SetThingSkills(113, 31);
+				SetThingSkills(114, 31);
+				break;
+			}
+			case 'C43B99F34E5211F9AF24459842852B0D': // sigil.wad e5m4
+			{
+				// Fix missing texture on the Baron-invulnerability-secret platform
+				SetWallTexture(1926, Line.back, Side.bottom, "MARBLE3");
+				break;
+			}
+			case 'A7C4FC8CAEB3E375B7214E35C6298B03': // Illusions of Home e1m6
+			{
+				// Convert zero-tagged GR door into regular open-stay door to fix map
+				SetLineActivation(37, SPAC_Use);
+				SetLineSpecial(37, Door_Open, 0, 16);
+				SetLineActivation(203, SPAC_Use);
+				SetLineSpecial(203, Door_Open, 0, 16);
+				break;
+			}
+			case '5084755C29FB0A1912113E36F37C958A': // Illusions of Home e3m4
+			{
+				// Fix action of final switch
+				SetLineSpecial(765, Door_Open, 6, 16);
+				break;
+			}
+			case '0EF86635676FD512CE0E962040125553': // Illusions of Home e3m7
+			{
+				// Fix red key and missing texture in red key area
+				SetThingFlags(247, 2016);
+				SetThingSkills(247, 31);
+				SetWallTexture(608, Line.back, Side.bottom, "GRAY5");
+				break;
+			}
+
+			case '63BDD083A98A48C04B8CD58AA857F77D': // Scythe MAP22
+			{
+				// Wall behind start creates HOM in software renderer due to weird sector
+				OffsetSectorPlane(236, Sector.Floor, -40);
+			}
+
+			case '1C795660D2BA9FC93DA584C593FD1DA3': // Scythe 2 MAP17
+			{
+				// Texture displays incorrectly in hardware renderer
+				SetVertex(2687, -4540, -1083); //Fixes bug with minimal effect on geometry
+				break;
+			}
+			case '7483D7BDB8375358F12D146E1D63A85C': // Scythe 2 MAP24
+			{
+				// Missing texture
+				TextureID adel_q62 = TexMan.CheckForTexture("ADEL_Q62", TexMan.Type_Wall);
+				SetWallTextureID(7775, Line.front, Side.bottom, adel_q62);
+				break;
+			}
+
+			case '16E621E46F87418F6F8DB71D68433AE0': // Hell Revealed MAP23
+			{
+				// Arachnotrons near beginning sometimes don't spawn if imps block
+				// their one-time teleport. Make these teleports repeatable to ensure
+				// maxkills are always possible.
+				SetLineFlags(2036, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(2038, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(2039, Line.ML_REPEAT_SPECIAL);
+				SetLineFlags(2040, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+
+			case '0E379EEBEB189F294ED122BC60D10A68': // Hellbound MAP29
+			{
+				// Remove the cyberdemons stuck in the closet boxes that cannot teleport.
+				SetThingFlags(2970,0);
+				SetThingFlags(2969,0);
+				SetThingFlags(2968,0);
+				SetThingFlags(2169,0);
+				SetThingFlags(2168,0);
+				SetThingFlags(2167,0);
+				break;
+			}
+
+			case '66B931B03618EDE5C022A1EC87189158': // Restoring Deimos MAP03
+			{
+				// Missing teleport destination on easy skill
+				SetThingSkills(62, 31);
+				break;
+			}
+
+			case '6B9D31106CE290205A724FA61C165A80': // Restoring Deimos MAP07
+			{
+				// Missing map spots on easy skill
+				SetThingSkills(507, 31);
+				SetThingSkills(509, 31);
+				break;
+			}
+
+			case '17314071AB76F4789763428FA2E8DA4C': // Skulldash Expanded Edition MAP04
+			{
+				// Missing teleport destination on easy skill
+				SetThingSkills(164, 31);
+				break;
+			}
+			
+			case '1B27E04F707E7988800582F387F609CD': // One against hell (ONE1.wad)
+			{
+				//Turn map spots into teleport destinations so that teleports work
+				SetThingEdNum(19, 14);
+				SetThingEdNum(20, 14);
+				SetThingEdNum(22, 14);
+				SetThingEdNum(23, 14);
+				SetThingEdNum(34, 14);
+				SetThingEdNum(35, 14);
+				SetThingEdNum(36, 14);
+				SetThingEdNum(39, 14);
+				SetThingEdNum(40, 14);
+				SetThingEdNum(172, 14);
+				SetThingEdNum(173, 14);
+				SetThingEdNum(225, 14);
+				SetThingEdNum(226, 14);
+				SetThingEdNum(247, 14);
+				break;
+			}
+			
+			case '25E178C981BAC28BA586B3B0A2A0FD72': // swan fox doom v2.4.wad map13
+			{
+				//Actors with no game mode will now appear
+				SetThingFlags(0, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				for(int i = 2; i < 452; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				//Awaken monsters with Thing_Hate, since NoiseAlert is unreliable
+				SetThingID(465, 9);
+				SetLineSpecial(1648, 177, 9);
+				for(int i = 1650; i <= 1653; i++)
+					SetLineSpecial(i, 177, 9);
+				SetLineSpecial(1655, 177, 9);
+				break;
+			}
+		
+			case 'FDFB3D209CC0F3706AAF3E51646003D5': // swan fox doom v2.4.wad map23
+			{
+				//Missing Teleport Destination on Easy/Normal difficulty
+				SetThingSkills(650, SKILLS_ALL);
+				//Fix the exit portal to allow walking into it instead of shooting it
+				SetLineSpecial(1970, Exit_Normal, 0);
+				SetLineActivation(1970, SPAC_Cross);
+				ClearLineSpecial(2010);
+				SetWallTexture(1966, Line.back, Side.mid, "TELR1");
+				OffsetSectorPlane(170, Sector.floor, -120);
+				break;
+			}
+
+			case 'BC969ED0191CCD9B69B316864362B0D7': // swan fox doom v2.4.wad map24
+			{
+				//Actors with no game mode will now appear
+				for(int i = 1; i < 88; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				break;
+			}
+
+			case 'ED740248422026326650F6A4BC1C0A5A': // swan fox doom v2.4.wad map25
+			{
+				//Actors with no game mode will now appear
+				for(int i = 0; i < 8; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				for(int i = 9; i < 26; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				break;
+			}
+			
+			case '52F532F95E2D5862E56F7214FA5C5C59': // Toon Doom II (toon2b.wad) map10
+			{
+				//This lift needs to be repeatable to prevent trapping the player
+				SetLineSpecial(224, Plat_DownWaitUpStayLip, 5, 32, 105);
+				SetLineActivation(224, SPAC_Use);
+				SetLineFlags(224, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '3345D12AD97F20EDCA5E27BA4288F758': // Toon Doom II (toon2b.wad) map30
+			{
+				//These doors need to be repeatable to prevent trapping the player
+				SetLineSpecial(417, Door_Raise, 17, 16, 150);
+				SetLineActivation(417, SPAC_Use);
+				SetLineFlags(417, Line.ML_REPEAT_SPECIAL);
+				SetLineSpecial(425, Door_Raise, 15, 16, 150);
+				SetLineActivation(425, SPAC_Use);
+				SetLineFlags(425, Line.ML_REPEAT_SPECIAL);
+				SetLineSpecial(430, Door_Raise, 16, 16, 150);
+				SetLineActivation(430, SPAC_Use);
+				SetLineFlags(430, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case 'BA1288DF7A7AD637948825EA87E18728': // Valletta's Doom Nightmare (vltnight.wad) map02
+			{
+				//This door's backside had a backwards linedef so it wouldn't work
+				FlipLineCompletely(306);
+				//Set the exit to point to Position 0, since that's the only one on the next map
+				SetLineSpecial(564, Exit_Normal, 0);
+				break;
+			}
+			
+			case '9B966DA88265AC8972B7E15C86928AFB': // Clavicula Nox: Revised Edition map01
+			{
+				// All swimmable water in Clavicula Nox is Vavoom-style, and doesn't work.
+				// Change it to ZDoom-style and extend the control sector heights to fill.
+				// Lava also sometimes needs the damage effect added manually.
+				SetLineSpecial(698, 160, 4, 2, 0, 128);
+				OffsetSectorPlane(121, Sector.floor, -32);
+				break;
+			}
+			
+			case '9FD0C47C2E132F64B48CA5BFBDE47F1D': // clavnoxr map02
+			{
+				SetLineSpecial(953, 160, 12, 2, 0, 128);
+				OffsetSectorPlane(139, Sector.floor, -24);
+				SetLineSpecial(989, 160, 13, 2, 0, 128);
+				OffsetSectorPlane(143, Sector.floor, -24);
+				SetLineSpecial(1601, 160, 19, 2, 0, 128);
+				SetLineSpecial(1640, 160, 20, 2, 0, 128);
+				SetLineSpecial(1641, 160, 21, 2, 0, 128);
+				OffsetSectorPlane(236, Sector.floor, -96);
+				break;
+			}
+			
+			case '969B9691007490CF022B632B2729CA49': // clavnoxr map03
+			{
+				SetLineSpecial(96, 160, 1, 2, 0, 128);
+				OffsetSectorPlane(11, Sector.floor, -80);
+				SetLineSpecial(955, 160, 13, 2, 0, 128);
+				OffsetSectorPlane(173, Sector.floor, -16);
+				SetLineSpecial(1082, 160, 14, 2, 0, 128);
+				OffsetSectorPlane(195, Sector.floor, -16);
+				SetLineSpecial(1111, 160, 15, 2, 0, 128);
+				OffsetSectorPlane(203, Sector.floor, -16);
+				SetLineSpecial(1115, 160, 16, 2, 0, 128);
+				OffsetSectorPlane(204, Sector.floor, -16);
+				SetLineSpecial(1163, 160, 17, 2, 0, 128);
+				OffsetSectorPlane(216, Sector.floor, -56);
+				SetLineSpecial(1169, 160, 18, 2, 0, 128);
+				OffsetSectorPlane(217, Sector.floor, -16);
+				break;
+			}
+			
+			case '748EDAEB3990F13B22C13C593631B2E6': // clavnoxr map04
+			{
+				SetLineSpecial(859, 160, 22, 2, 0, 128);
+				SetLineSpecial(861, 160, 23, 2, 0, 128);
+				OffsetSectorPlane(172, Sector.floor, -168);
+				break;
+			}
+			
+			case 'A066B0B432FAE8ED20B83383F9E03E12': // clavnoxr map05
+			{
+				SetLineSpecial(1020, 160, 2, 2, 0, 128);
+				SetSectorSpecial(190, 69);
+				OffsetSectorPlane(190, Sector.floor, -24);
+				break;
+			}
+			
+			case '5F36D758ED26CAE907FA79902330877D': // clavnoxr map06
+			{
+				SetLineSpecial(1086, 160, 1, 2, 0, 128);
+				SetLineSpecial(60, 160, 4, 2, 0, 128);
+				SetLineSpecial(561, 160, 2, 2, 0, 128);
+				SetLineSpecial(280, 160, 3, 2, 0, 128);
+				SetLineSpecial(692, 160, 5, 2, 0, 128);
+				SetLineSpecial(1090, 160, 7, 2, 0, 128);
+				SetLineSpecial(1091, 160, 8, 2, 0, 128);
+				SetLineSpecial(1094, 160, 9, 2, 0, 128);
+				SetLineSpecial(1139, 160, 12, 2, 0, 128);
+				SetLineSpecial(1595, 160, 16, 2, 0, 128);
+				SetLineSpecial(1681, 160, 17, 2, 0, 128);
+				SetLineSpecial(1878, 160, 20, 2, 0, 128);
+				SetLineSpecial(1882, 160, 22, 2, 0, 128);
+				OffsetSectorPlane(8, Sector.floor, -64);
+				OffsetSectorPlane(34, Sector.floor, -24);
+				OffsetSectorPlane(64, Sector.floor, -16);
+				OffsetSectorPlane(102, Sector.floor, -16);
+				OffsetSectorPlane(170, Sector.floor, -64);
+				OffsetSectorPlane(171, Sector.floor, -64);
+				OffsetSectorPlane(178, Sector.floor, -16);
+				OffsetSectorPlane(236, Sector.floor, -16);
+				OffsetSectorPlane(250, Sector.floor, -16);
+				OffsetSectorPlane(283, Sector.floor, -64);
+				OffsetSectorPlane(284, Sector.floor, -56);
+				break;
+			}
+			
+			case 'B7E98C1EA1B38B707ADA8097C25CFA75': // clavnoxr map07
+			{
+				SetLineSpecial(1307, 160, 22, 2, 0, 128);
+				SetLineSpecial(1305, 160, 23, 2, 0, 128);
+				OffsetSectorPlane(218, Sector.floor, -64);
+				break;
+			}
+			
+			case '7DAB2E8BB5759D742211505A3E5054D1': // clavnoxr map08
+			{
+				SetLineSpecial(185, 160, 1, 2, 0, 128);
+				SetLineSpecial(735, 160, 13, 2, 0, 128);
+				OffsetSectorPlane(20, Sector.floor, -16);
+				SetSectorSpecial(20, 69);
+				OffsetSectorPlane(102, Sector.floor, -64);
+				break;
+			}
+			
+			case 'C17A9D1350399E251C70711EB22856AE': // clavnoxr map09
+			{
+				SetLineSpecial(63, 160, 1, 2, 0, 128);
+				SetLineSpecial(84, 160, 2, 2, 0, 128);
+				SetLineSpecial(208, 160, 4, 2, 0, 128);
+				SetLineSpecial(326, 160, 6, 2, 0, 128);
+				SetLineSpecial(433, 160, 10, 2, 0, 128);
+				OffsetSectorPlane(6, Sector.floor, -64);
+				OffsetSectorPlane(9, Sector.floor, -64);
+				OffsetSectorPlane(34, Sector.floor, -64);
+				OffsetSectorPlane(59, Sector.floor, -64);
+				SetSectorSpecial(75, 69);
+				OffsetSectorPlane(75, Sector.floor, -64);
+				break;
+			}
+			
+			case 'B6BB8A1792FE51C773E6770CD91DB618': // clavnoxr map11
+			{
+				SetLineSpecial(1235, 160, 23, 2, 0, 128);
+				SetLineSpecial(1238, 160, 24, 2, 0, 128);
+				OffsetSectorPlane(240, Sector.floor, -80);
+				break;
+			}
+			
+			case 'ADDF57B80E389F86D324571D43F3CAB7': // clavnoxr map12
+			{
+				SetLineSpecial(1619, 160, 19, 2, 0, 128);
+				SetLineSpecial(1658, 160, 20, 2, 0, 128);
+				SetLineSpecial(1659, 160, 21, 2, 0, 128);
+				OffsetSectorPlane(254, Sector.floor, -160);				
+				// Raising platforms in MAP12 didn't work, so this will redo them.
+				SetLineSpecial(1469, 160, 6, 1, 0, 255);
+				OffsetSectorPlane(65, Sector.floor, -8);
+				OffsetSectorPlane(65, Sector.ceiling, 8);
+				break;
+			}
+
+			case '75E2685CA8AB29108DBF1AC98C5450AC': // Ancient Beliefs (beliefs.wad) map01
+			{
+				//Actors with no game mode will now appear
+				SetThingFlags(0, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				for(int i = 2; i < 7; i++)
+					SetThingFlags(i, MTF_SINGLE|MTF_COOPERATIVE|MTF_DEATHMATCH);
+				break;
+			}
+
+			case 'C4850382A78BF637AC9FC58153E03C87': // sapphire.wad map01
+			{
+				SetLineSpecial(11518, 9, 0, 0, 0, 0);
+				break;
 			}
 		}
-	}
-
-	protected native void ClearSectorTags(int sector);
-	protected native void AddSectorTag(int sector, int tag);
-	protected native void ClearLineIDs(int line);
-	protected native void AddLineID(int line, int tag);
-	protected native void OffsetSectorPlane(int sector, int plane, double offset);
-	protected native void SetThingSkills(int thing, int skills);
-	protected native void SetThingXY(int thing, double x, double y);
-	protected native void SetThingZ(int thing, double z);
-	protected native void SetThingFlags(int thing, int flags);
-	protected native void SetVertex(uint vertex, double x, double y);
-	protected native void SetLineSectorRef(uint line, uint side, uint sector);
-	protected native Actor GetDefaultActor(Name actorclass);
-	
-	protected void SetWallTexture(int line, int side, int texpart, String texture)
-	{
-		SetWallTextureID(line, side, texpart, TexMan.CheckForTexture(texture, TexMan.Type_Wall));
-	}
-
-	protected void SetWallTextureID(int line, int side, int texpart, TextureID texture)
-	{
-		level.Lines[line].sidedef[side].SetTexture(texpart, texture);
-	}
-	
-	protected void SetLineFlags(int line, int setflags, int clearflags = 0)
-	{
-		level.Lines[line].flags = (level.Lines[line].flags & ~clearflags) | setflags;
-	}
-	
-	protected void SetLineActivation(int line, int acttype)
-	{
-		level.Lines[line].activation = acttype;
-	}
-	
-	protected void ClearLineSpecial(int line)
-	{
-		level.Lines[line].special = 0;
-	}
-	
-	protected void SetLineSpecial(int line, int special, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0)
-	{
-		level.Lines[line].special = special;
-		level.Lines[line].args[0] = arg1;
-		level.Lines[line].args[1] = arg2;
-		level.Lines[line].args[2] = arg3;
-		level.Lines[line].args[3] = arg4;
-		level.Lines[line].args[4] = arg5;
-	}
-	
-	protected void SetSectorSpecial(int sectornum, int special)
-	{
-		level.sectors[sectornum].special = special;
-	}
-
-	protected void SetSectorTextureID(int sectornum, int plane, TextureID texture)
-	{
-		level.sectors[sectornum].SetTexture(plane, texture);
-	}
-
-	protected void SetSectorTexture(int sectornum, int plane, String texture)
-	{
-		SetSectorTextureID(sectornum, plane, TexMan.CheckForTexture(texture, TexMan.Type_Flat));
-	}
-
-	protected void SetSectorLight(int sectornum, int newval)
-	{
-		level.sectors[sectornum].SetLightLevel(newval);
-	}
-
-	protected void SetWallYScale(int line, int side, int texpart, double scale)
-	{
-		level.lines[line].sidedef[side].SetTextureYScale(texpart, scale);
 	}
 }

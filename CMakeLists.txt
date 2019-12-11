@@ -143,6 +143,35 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif()
 
+# Fast math flags, required by some subprojects
+set( ZD_FASTMATH_FLAG "" )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
+elseif( MSVC )
+	set( ZD_FASTMATH_FLAG "/fp:fast" )
+endif()
+
+macro( use_fast_math )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
+endmacro()
+
+include( CheckFunctionExists )
+
+macro( require_stricmp )
+	CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
+	if( NOT STRICMP_EXISTS )
+		add_definitions( -Dstricmp=strcasecmp )
+	endif()
+endmacro()
+
+macro( require_strnicmp )
+	CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
+	if( NOT STRNICMP_EXISTS )
+		add_definitions( -Dstrnicmp=strncasecmp )
+	endif()
+endmacro()
+
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
@@ -305,14 +334,6 @@ if (HAVE_VULKAN)
 	add_subdirectory( libraries/glslang/OGLCompilersDLL )
 endif()
 
-# Fast math flags, required by some subprojects
-set( ZD_FASTMATH_FLAG "" )
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
-elseif( MSVC )
-	set( ZD_FASTMATH_FLAG "/fp:fast" )
-endif()
-
 if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
 	message( STATUS "Using system zlib, includes found at ${ZLIB_INCLUDE_DIR}" )
 else()
@@ -383,6 +404,13 @@ else()
 endif()
 
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/lzma/C" )
+set( ADL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/adlmidi" )
+set( OPN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/opnmidi" )
+set( TIMIDITYPP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/timidityplus" )
+set( TIMIDITY_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/timidity" )
+set( WILDMIDI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/wildmidi" )
+set( OPLSYNTH_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/oplsynth" )
+set( ZMUSIC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/zmusic" )
 
 if( NOT CMAKE_CROSSCOMPILING )
 	if( NOT CROSS_EXPORTS )
@@ -400,15 +428,26 @@ install(DIRECTORY docs/
 		DESTINATION ${INSTALL_DOCS_PATH}
 		COMPONENT "Documentation")
 
+option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
+option( DYN_OPENAL "Dynamically load OpenAL" ON )
+option( DYN_SNDFILE "Dynamically load libsndfile" ON )
+option( DYN_MPG123 "Dynamically load libmpg123" ON )
+
 add_subdirectory( libraries/lzma )
 add_subdirectory( tools )
 add_subdirectory( libraries/dumb )
 add_subdirectory( libraries/gdtoa )
+add_subdirectory( libraries/adlmidi )
+add_subdirectory( libraries/opnmidi )
+add_subdirectory( libraries/timidity )
+add_subdirectory( libraries/timidityplus )
+add_subdirectory( libraries/wildmidi )
+add_subdirectory( libraries/oplsynth )
+add_subdirectory( libraries/zmusic )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
 add_subdirectory( wadsrc_extra )
-add_subdirectory( wadsrc_hacxextra )
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )

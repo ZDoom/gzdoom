@@ -1,0 +1,300 @@
+default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cs,de,el,eo,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fi,fr,hu,it,jp,ko,nl,pl,pt,ptg,ro,ru,sr
+,,,,,,,,,,,,,,,,,,,,,,,
+Do you really think you can handle that?\n\npress 'Y' or 'N'...,NIGHTMARE,,,,"Opravdu si myslíš, že to zvládneš?
+
+Zmáčkni Y nebo N.","Bist du sicher, dass du das bewältigen kannst?
+
+Drücke Y oder N.",,,"¿Realmente crees que puedes con eso?
+
+Pulsa Y ó N...",,Uskotko todella pystyväsi tähän?\n\nPaina 'Y' tai 'N'...,Vous pensez sérieusement que vous pourrez tenir le coup?\n\nAppuyez sur Y ou N...,,"Pensi davvero di poterlo fare?
+
+premere 'Y' o 'N'","ホントウニ タイショデキルト
+オモッテイマスカ?
+
+'Y'カ'N'デ オウトウセヨ","정말 이 난이도를 버틸 자신이 있으십니까?
+
+Y키, 아니면 N키를 누르시오...","Denk je echt dat je dat aankunt? 
+
+Druk op 'Y' of 'N'...","Czy ty naprawdę myślisz, że temu podołasz?
+
+Wciśnij 'Y' lub 'N'...","Você acha que é capaz de aguentar?
+
+Aperte Y ou N...",,,"Уверены, что справитесь?\n\nНажмите «Y» или «N»...",
+Spot marked,AMSTR_MARKEDSPOT,,,,Bod označen,Punkt markiert,,,Punto marcado,,Paikka merkitty,Repère marqué.,Hely Megjelölve,Posizione segnata,スポットヲ マーク シタ,마커 표시함,Vlek gemarkeerd,Miejsce zaznaczone,Posição marcada,,,Отметка,Означено место
+Requires the GREEN keycard,PD_BLUEO,,,,Vyžaduje ZELENOU kartu,Benötigt die GRÜNE Schlüsselkarte,,Bezonas la VERDAN ŝlosilkarton,Requiere la tarjeta llave VERDE,,Tarvitsee VIHREÄN avainkortin,Carte VERTE demandée.,,Richiede la card d'accesso VERDE,グリーン キーカード ガ ヒツヨウダ,필요함: 초록색 키카드,Vereist de GROENE sleutelkaart,Wymaga ZIELONEJ karty,Você precisa do cartão de passe VERDE,,,Требуется ЗЕЛЁНАЯ ключ-карта,
+Requires the PURPLE keycard,PD_REDO,,,,Vyžaduje FIALOVOU kartu,Benötigt die VIOLETTE Schlüsselkarte,,Bezonas la PURPURAN ŝlosilkarton,Requiere la tarjeta llave VIOLETA,,Tarvitsee VIOLETIN avainkortin,Carte VIOLETTE demandée.,,Richiede la card d'accesso VIOLA,イエロー キーカード ガ ヒツヨウダ,필요함: 보라색 키카드,Vereist de PAARSE sleutelkaart,Wymaga FIOLETOWEJ karty,Você precisa do cartão de passe ROXO,,,Требуется ФИОЛЕТОВАЯ ключ-карта,
+Requires the YELLOW keycard,PD_YELLOWO,,,,Vyžaduje ŽLUTOU kartu,Benötigt die GELBE Schlüsselkarte,,Bezonas la FLAVAN ŝlosilkarton,Requiere la tarjeta llave AMARILLA,,Tarvitsee KELTAISEN avainkortin,Carte JAUNE demandée.,,Richiede la card d'accesso GIALLA,パープル キーカード ガ ヒツヨウダ,필요함: 노란색 키카드,Vereist de GELE sleutelkaart,Wymaga ŻÓŁTEJ karty,Você precisa do cartão de passe AMARELO,,,Требуется ЖЁЛТАЯ ключ-карта,
+Requires the GREEN key,PD_BLUEK,,,,Vyžaduje ZELENÝ klíč,Benötigt den GRÜNEN Schlüssel,,Bezonas la VERDAN ŝlosilon,Requiere la llave VERDE,,Tarvitsee VIHREÄN avaimen,Clé VERTE demandée.,,Richiede la chiave VERDE,グリーン キー ガ ヒツヨウダ,필요함: 초록색 열쇠,Vereist de GROENE sleutel,Wymaga ZIELONEGO klucza,Você precisa da chave VERDE,,,Требуется ЗЕЛЁНЫЙ ключ,
+Requires the YELLOW key,PD_YELLOWK,,,,Vyžaduje ŽLUTÝ klíč,Benötigt den GELBEN Schlüssel,,Bezonas la PURPURAN ŝlosilon,Requiere la llave AMARILLA,,Tarvitsee KELTAISEN avaimen,Clé JAUNE demandée.,,Richiede la chiave GIALLO,イエロー キー ガ ヒツヨウダ,필요함: 노란색 열쇠,Vereist de GEELE sleutel,Wymaga ŻÓŁTEGO klucza,Você precisa da chave AMARELA,,,Требуется ЖЁЛТЫЙ ключ,
+Requires the PURPLE key,PD_REDK,,,,Vyžaduje FIALOVÝ klíč,Benötigt den VIOLETTEN Schlüssel,,Bezonas la FLAVAN ŝlosilon,Requiere la llave VIOLETA,,Tarvitsee VIOLETIN avaimen,Clé VIOLETTE demandée.,,Richiede la chiave VIOLA,パープル キー ガ ヒツヨウダ,필요함: 보라색 열쇠,Vereist de PAARSE sleutel,Wymaga FIOLETOWEGO klucza,Você precisa da chave ROXA,,,Требуется ФИОЛЕТОВЫЙ ключ,
+Picked up armor.,GOTARMOR,,,Picked up armour.,Sebráno brnění.,Panzer genommen.,,Prenis kiraso.,Recogiste la armadura.,,Panssari poimittu.,Armure récupérée.,Felvettél egy páncélt.,Raccolto un'armatura.,アーマー ニュウシュ,획득: 전투복.,Je hebt een harnas opgehaald.,Podniesiono pancerz.,Pegou uma armadura.,,,Получена броня.,Покупили сте панцир.
+Picked up Combat Armor.,GOTMEGAARMOR,,,Picked up Combat Armour.,Sebráno bojové brnění.,Super-Panzer genommen.,,Prenis Batalkiraso,Recogiste la Armadura de Combate.,,Taistelupanssari poimittu.,Armure de combat récupérée.,,Raccolto Armatura da combattimento.,コンバット アーマー ニュウシュ,획득: 강화된 전투복.,Je hebt een gevechtsharnas opgehaald.,Podniesiono pancerz bojowy.,Pegou uma Armadura de Combate.,,,Получена боевая броня.,
+Superhealth,GOTMSPHERE,,,,Superzdraví,Super-Gesundheit,,Supersano,Supersalud,,Superterveys,Super-Santé,,Super salute,スーパー ヘルス,사용: 체력강화 버섯.,,Superzdrowie,Supersaúde,,,Суперздоровье,
+Obtained the GREEN keycard.,GOTBLUECARD,,,,Sebrána ZELENÁ karta.,GRÜNE Schlüsselkarte erhalten,,Akiris la VERDAN ŝlosilkarton.,Obtenida la tarjeta llave VERDE.,,VIHREÄ avainkortti poimittu.,Carte VERTE obtenue.,,Ottenuta la card d'accesso VERDE.,グリーン キーカード ニュウシュ,획득: 초록색 키카드.,GROENE sleutelkaart ontvangen,Zdobyto ZIELONĄ kartę.,Pegou o cartão de passe VERDE.,,,Получена ЗЕЛЁНАЯ ключ-карта.,
+Obtained the YELLOW keycard.,GOTYELWCARD,,,,Sebrána ŽLUTÁ karta.,GELBE Schlüsselkarte erhalten,,Akiris la FLAVAN ŝlosilkarton.,Obtenida la tarjeta llave AMARILLA.,,KELTAINEN avainkortti poimittu.,Carte JAUNE obtenue.,,Ottenuta la card d'accesso GIALLA.,イエロー キーカード ニュウシュ,획득: 노란색 키카드.,GELE sleutelkaart ontvangen,Zdobyto ŻÓŁTĄ kartę.,Pegou o cartão de passe AMARELO.,,,Получена ЖЁЛТАЯ ключ-карта.,
+Obtained the PURPLE keycard.,GOTREDCARD,,,,Sebrána FIALOVÁ karta.,VIOLETTE Schlüsselkarte erhalten,,Akiris la PURPURO ŝlosilkarton.,Obtenida la tarjeta llave VIOLETA.,,VIOLETTI avainkortti poimittu.,Carte VIOLETTE obtenue.,,Ottenuta la card d'accesso VIOLA.,パープル キーカード ニュウシュ,획득: 보라색 키카드.,PAARSE sleutelkaart ontvangen,Zdobyto FIOLETOWĄ kartę.,Pegou o cartão de passe ROXO.,,,Получена ФИОЛЕТОВАЯ ключ-карта.,
+Obtained the GREEN key.,GOTBLUESKUL,,,,Sebrán ZELENÝ klíč.,GRÜNEN Schlüssel erhalten,,Akiris la VERDAN ŝlosilon.,Obtenida la llave VERDE.,,VIHREÄ avain poimittu.,Clé VERTE obtenue.,,Ottenuta la chiave VERDE.,グリーン キー ニュウシュ,획득: 초록색 열쇠.,GROENE sleutel ontvangen,Zdobyto ZIELONY klucz.,Pegou a chave VERDE.,,,Получен ЗЕЛЁНЫЙ ключ.,
+Obtained the YELLOW key.,GOTYELWSKUL,,,,Sebrán ŽLUTÝ klíč.,GELBEN Schlüssel erhalten,,Akiris la FLAVAN ŝlosilon.,Obtenida la llave AMARILLA.,,KELTAINEN avain poimittu.,Clé JAUNE obtenue.,,Ottenuta la chiave GIALLA.,イエロー キー ニュウシュ,획득: 노란색 열쇠.,GELE sleutel ontvangen,Zdobyto ŻÓŁTY klucz.,Pegou a chave AMARELA.,,,Получен ЖЁЛТЫЙ ключ.,
+Obtained the PURPLE key.,GOTREDSKUL,,,,Sebrán FIALOVÝ klíč.,VIOLETTEN Schlüssel erhalten,,Akiris la PURPURO ŝlosilon.,Obtenida la llave VIOLETA.,,VIOLETTI avain poimittu.,Clé VIOLETTE obtenue.,,Ottenuta la chiave VIOLA.,パープル キー ニュウシュ,획득: 보라색 열쇠.,PAARSE sleutel ontvangen,Zdobyto FIOLETOWY klucz.,Pegou a chave ROXA.,,,Получен ФИОЛЕТОВЫЙ ключ.,
+Healing mushroom,GOTSTIM,,,,Léčivka,Heilpilz,,,Seta medicinal,,Lääkesieni,Champignon médicinal,,Funghi curativi,ヒーリング マッシュルーム,사용: 체력회복 버섯.,Genezende paddenstoel,Leczący grzyb,Cogumelo medicinal,,,Целебный гриб,
+Acquired: medical kit.,GOTMEDIKIT,,,,Získána lékárnička.,Erhalten: Medikit,,Akiris: medicinan kompleton.,Adquirido: kit medicinal.,,Saatu: lääkintälaukku.,Acquis: Kit médical.,,Acquisito: kit medico.,シュトク: メディカルキット,사용: 의료 키트.,Verworven: medische kit.,Zdobyto: apteczkę.,Pegou um kit médico.,,,Получена: Аптечка.,
+Acquired: medical kit that you REALLY need.,GOTMEDINEED,,,,"Získána lékárnička, kterou OPRAVDU potřebuješ.","Erhalten: Medikit, das du WIRKLICH brauchst",,"Akiris: medicinan kompleton, kion vi TRE bezonas.",Adquirido: kit medicinal que REALMENTE necesitabas.,,"Saatu: lääkintälaukku, jota TODELLA tarvitsit.",Acquis: Kit médical. Besoin critique.,,Acquisito: kit medico di cui VERAMENTE avete bisogno.,シュトク: キンキュウジタイヲ スクウ メディカルキット,사용: 당신을 살려줄 의료 키트.,Verworven: medische kit die je ECHT nodig heeft.,"Zdobyto: apteczkę, której NAPRAWDĘ potrzebujesz.",Pegou um kit médico que você REALMENTE precisa.,,,Получена: Аптечка (КРАЙНЕ необходимая).,
+Map,GOTMAP,,,,Mapa,Karte,,Mapo,Mapa,,Kartta,Carte,,Mappa,コノ クイキノ マップダ ,획득: 지도.,Kaart,Mapa,Mapa,,,Карта,
+Acquired: case of bullets.,GOTCLIPBOX,,,,Získána krabice nábojů.,Erhalten: Munitionskiste,,,Adquirido: Caja de balas.,Pegou uma caixa de balas.,Saatu: luotilaatikko.,Acquis: Boîte de balles.,,Acquisito: caso di proiettili.,シュトク: バレット ケース,획득: 회전포 탄약.,Verworven: geval van kogels.,Zdobyto: pudełko naboi.,,,,Получен: Ящик с пулями.,
+Acquired: Grenade.,GOTROCKET,,,,Ziskán granát.,Erhalten: Granate,,,Adquirido: Granada.,,Saatu: kranaatti.,Acquis: Grenade.,,Acquisito: Granata.,シュトク: グレネード,획득: 세열탄.,Verworven: Granaat.,Zdobyto: Granat.,Pegou uma granada.,,,Получена: Граната.,
+Acquired: Grenades.,GOTROCKBOX,,,,Ziskány granáty.,Erhalten: Granaten,,,Adquirido: Granadas.,,Saatu: kranaatteja.,Acquis: Grenades.,,Acquisito: Granate.,シュトク: グレネード セット,획득: 세열탄 여러 개.,Verworven: Granaten.,Zdobyto: Granaty.,Pegou granadas.,,,Получены: Гранаты.,
+Acquired: box of shotgun shells.,GOTSHELLBOX,,,,Získána krabice broků.,Erhalten: Schrotpatronen,,,Adquirido: Caja de cartuchos de escopeta.,,Saatu: laatikollinen haulikon patruunoita.,Acquis: Boîte de cartouches.,,Acquisito: scatola di cartucce per fucile.,シュトク: シェル ボックス,획득: 산탄총 탄약.,Verworven: doos met shotgun schelpen.,Zdobyto: pudełko loftek do strzelby.,Pegou uma caixa de cartuchos de espingarda.,,,Получена: Коробка патронов для дробовика.,
+Acquired: ammo backpack.,GOTBACKPACK,,,,Ziskán batoh s municí.,Erhalten: Munitionsrucksack,,,Adquirido: Mochila de municiones.,,Saatu: ammusreppu.,Acquis: Sac de munitions.,,Acquisito: zaino munizioni.,シュトク: バックパック,획득: 탄약 가방.,Verworven: munitie rugzak.,Zdobyto: plecak z amunicją.,Pegou uma mochila de munição.,,,Получен: Ранец для боеприпасов.,
+Acquired: Grenade.,GOTBFG9000,,,,Získán granát.,Erhalten: Granate,,,Adquirido: Granada.,,Saatu: kranaatti.,Acquis: Grenade.,,Acquisito: Granata.,シュトク: グレネード,획득: 세열탄.,Verworven: Granaat.,Zdobyto: Granat.,Pegou uma granada.,,,Получена: Граната.,
+Acquired: Minigun.,GOTCHAINGUN,,,,Získán kulomet.,Erhalten: Minigun,,,Adquirido: Miniarma.,,Saatu: minigun.,Acquis: Minigun.,,Acquisito: Minigun.,シュトク: ミニガン,획득: 회전포.,Verworven: Minigun.,Zdobyto: Minigun.,Pegou uma metralhadora giratória.,,,Получен: Миниган.,
+Acquired: Grenade launcher.,GOTLAUNCHER,,,,Získán granátomet.,Erhalten: Granatwerfer,,,Adquirido: Lanzagranadas.,,Saatu: kranaatinheitin.,Acquis: Lance-Grenades,,Acquisito: Lanciagranate.,シュトク: グレネードランチャー,획득: 세열탄 추진기.,Verworven: Granaatwerper.,Zdobyto: Wyrzutnię granatów.,Pegou um lança-granadas.,,,Получен: Гранатомёт.,
+Entropy thrower!,GOTPLASMA,,,,Vrhač entropie!,Entropiewerfer,,,¡Lanzador de Entropía!,,Entropianheitin!,Acquis: Lanceur d'Entropie!,,Lancia entropia!,エントロピースロワー!,획득: 엔트로피 방사기!,Entropiewerper!,Miotacz Entropii!,Lançador de entropia!,,,Энтропиемёт!,
+Acquired: Shotgun.,GOTSHOTGUN,,,,Získána brokovnice.,Erhalten: Schrotflinte,,,Adquirido: Escopeta.,,Saatu: haulikko.,Acquis: Fusil à pompe.,,Acquisito: Fucile.,シュトク: ショットガン,획득: 산탄총.,Verworven: Shotgun.,Zdobyto: Strzelbę.,Pegou uma espingarda.,,,Получен: Дробовик.,
+God Mode ON,STSTR_DQDON,,,,Nesmrtelnost ZAP,Gott-Modus AN,,,Modo Dios ACTIVADO,,Kuolemattomuustila PÄÄLLÄ,Mode invulnérable ON,,Modo Dio ATTIVADA,ゴッドモード オン,무적 치트: ON,God Modus AAN,Tryb Boga WŁĄCZONY,Modo Deus LIGADO,,,Режим Бога вкл.,
+God Mode OFF,STSTR_DQDOFF,,,,Nesmrtelnost VYP,Gott-Modus AUS,,,Modo Dios DESACTIVADO,,Kuolemattomuustila POIS PÄÄLTÄ,Mode invulnérable OFF,,Modo Dio DISATTIVADA,ゴッドモード オフ,무적 치트: OFF,God Modus UIT,Tryb Boga WYŁĄCZONY,Modo Deus DESLIGADO,,,Режим Бога откл.,
+All weapons/ ammo/ keys,STSTR_KFAADDED,,,,Všechny zbraně/munice/klíče,"Alle Waffen, Munition und Schlüssel",,,Todas las armas/municiones/llaves,,Kaikki aseet/ ammukset/ avaimet,Toutes les armes/munitions/clés,,Tutte le armi / munizioni / chiavi,スベテノ ブキ/カギ/ダンヤク,추가: 모든 무기/탄약/열쇠 치트,Alle wapens / munitie / sleutels,Wszystkie bronie/amunicja/klucze,Todas as armas/munição/chaves,,,Всё оружие/боеприпасы/ключи,
+All weapons and ammo,STSTR_FAADDED,,,,Všechny zbraně a munice,Alle Waffen und Munition,,,Todas las armas y municiones,,Kaikki aseet ja ammukset,Toutes les armes et munitions,,Tutte le armi e le munizioni,スベテノ ブキ/ダンヤク,추가: 모든 무기/탄약 치트,Alle wapens en munitie,Wszystkie bronie i amunicja,Todas as armas e munição completa,,,Всё оружие и боеприпасы,
+Abduction,TXT_HARMMAP01,,,,Únos,Entführung,,,Abducción,,Sieppaus,Enlèvement,,Il rapimento,アブダクション,유괴,Ontvoering,Porwanie,Abdução,,,Похищение,
+Harm's Way,TXT_HARMMAP02,,,,Nebezpečí,In Gefahr,,,En Peligro,,Vaara,Mise en Danger,,La via del danno,ハーム'ズ ウェイ,해함의 길,,Niebezpieczeństwo,No Caminho do Perigo,,,Опасный путь,
+Owt Mood,TXT_HARMMAP03,,,,Špatný pocit,Missstimmung,,,Buen humor,,Nollatunnelma,Scontento,,Scontento,ヤバイムード,이상한 분위기,,Paskudny Nastrój,Atrito,,,Нестроение,
+Megalapolis,TXT_HARMMAP04,,,,Megalopole,Megalopolis,,,Megalópolis,,Megalopoli,Mégalopole,,Megalapoli,メガラポリス,거대 도시,Megalopolis,Megalapolis,Megalópole,,,Мегалаполис,
+The Hospital,TXT_HARMMAP05,,,,Nemocnice,Das Hospital,,,El Hospital,,Sairaala,L'Hôpital,,L'ospedale,ホスピタル,병동,Het ziekenhuis,Szpital,O Hospital,,,Больница,
+The Weapons Factory,TXT_HARMMAP06,,,,Továrna na zbraně,Die Waffenfabrik,,,La Fábrica de Armas,,Asetehdas,L'Usine d'Armes,,La fabbrica di armi,ウェポンファクトリー,무기 공장,De Wapenfabriek,Fabryka Broni,A Fábrica de Armamento,,,Оружейный завод,
+The Underwater Lab,TXT_HARMMAP07,,,,Podvodní laboratoř,Das Unterwasserlabor,,,El Laboratorio Submarino,,Vedenalainen laboratorio,Le Laboratoire Sous-marin,,Il laboratorio subacqueo,アンダーウォーターラボ,해저 연구소,Het onderwaterlaboratorium,Podwodne Laboratorium,O Laboratório Submarino,,,Подводная лаборатория,
+Airstrip One,TXT_HARMMAP08,,,,Přistávací dráha jedna,Flugplatz Eins,,,Pista de Aterrizaje Uno,,Kiitorata Yksi,Piste D'Atterrisage Un,,Pista di atterraggio Uno,エアーシップ ワン,활주로 1호,Vliegveld Een,Lądowisko Numer Jeden,Base Aérea Um,,,Взлётная полоса №1,
+The Launch Base,TXT_HARMMAP09,,,,Vzletová základna,Die Startbasis,,,La Base de Despegue,,Laukaisutukikohta,La Base de Lancement,,La base di lancio,ランチャーベース,발진기지,De lanceerbasis,Baza Startowa,A Base de Lançamento,,,Пусковая площадка,
+The Radioactive Zone,TXT_HARMMAP10,,,,Radioaktivní zóna,Die radioaktive Zone,,,La Zona Radioactiva,,Radioaktiivinen vyöhyke,La Zone Radioactive,,La zona radioattiva,ラディオアクティブ ゾーン,방사능 처리소,De Radioactieve Zone,Radioaktywna Strefa,A Zona Radioativa,,,Заражённая зона,
+Echidna,TXT_HARMMAP11,,,,,,,,,,Nokkasiili,,,,エキドナ,에키드나,,,Equidna,,,Ехидна,
+"You feel sick to your stomach...
+Looking in the face of the mutant queen... 
+That thing... That used to be... 
+Your friend... Amira!
+
+Those monsters must have found a way to 
+mutate her and turn her into this
+hideous creature to bear their offspring.
+
+-sigh-
+
+You get yourself together... 
+They are going to pay for making you kill
+your friend...
+
+""Hell has no fury like a woman scorned!""
+
+     = T H E  E N D =",CLUSTEREXIT1,,,,"Zvedá se ti žaludek... když se díváš
+do obličeje mutantí královny...
+ta věc... která dřív byla...
+tvá kamarádka... Amira!
+
+Ta monstra musela najít způsob, jak
+ji zmutovat a přeměnit ji v tuto
+ohavnou kreaturu, nosící jejich potomky.
+
+Povzdechneš si.
+
+Dáš se zase dohromady...
+Však oni zaplatí za to, že tě donutili
+zabít svou přítelkyni...
+
+„Není běsu většího než hněv ženy zhrzené!“
+
+     = K O N E C =","Dir ist speiübel...
+Als du in das Gesicht der Mutanten-
+königin siehst... Das Ding... Das war mal...
+Deine Freundin... Amira!
+
+Diese Monster müssen einen Weg
+gefunden haben, sie zu mutieren und
+in diese widerliche Kreatur zu verwandeln.
+
+- seufz -
+
+Du reißt dich zusammen...
+Sie werden dafür bezahlen, was sie
+deiner Freundin angetan haben...
+
+""Die Hölle kennt den Zorn einer
+verhöhnten Frau nicht!""
+
+    = E N D E =",,,"Sientes que se te revuelve el estómago...
+Viendo el rostro de la reina mutante...
+Esa cosa... Que antes era...
+Tu amiga... ¡Amira!
+
+Esos monstruos han debido encontrar la
+forma de mutarla y convertirla en esta
+criatura horrible para parir a sus hijos.
+
+*suspiro*
+
+Consigues calmarte...
+Van a pagar por haberte obligado a matar
+a tu amiga...
+
+""¡No hay mayor furia en el Infierno que
+la de una mujer desdeñada!""
+
+    = F I N =",,"Vatsaasi vääntää...
+Katsot mutanttikuningattaren kasvoihin...
+Tuo olio... Se oli ennen...
+Ystäväsi... Amira!
+
+Noiden hirviöiden on täytynyt onnistua
+mutatoida ja muuttaa hänet täksi hirveäksi
+olennoksi kantamaan niiden jälkeläisiä.
+
+-huokaus-
+
+Kokoat itsesi...
+Ne saavat maksaa siitä hyvästä, että
+pakottivat sinut tappamaan ystäväsi...
+
+""Ei tunne helvetti petetyn naisen kiivautta!""
+
+	 = L O P P U =","La nausée vous envahit..
+En regardant le visage de la reine
+des mutants.. cette chose.. devait
+être.. votre amie.. Amira!
+
+Ces monstres ont trouvé un moyen
+de la faire muter en cette horrible
+créature destinée à les faire se
+reproduire.
+
+*soupir*
+
+Vous vous calmez..
+Il vont payer pour vous avoir fait
+tuer votre amie..
+
+""L'Enfer n'a pas de fureur qui 
+égale celle d'une femme dédaignée!""
+
+  = F I N =",,"Ti senti male allo stomaco...
+Guardando in faccia alla regina mutante... 
+Quella cosa... Quello era... 
+La tua amica... Amira!
+
+Quei mostri devono aver trovato il modo
+di mutarla e trasformarla in questa
+orrenda creatura per portare i loro figli.
+
+- sospiro -
+
+Ti riunisci... 
+Pagheranno per farti uccidere la tuo amica...
+
+""L'inferno non ha furia come una donna disprezzata!""
+
+    = L A  F I N E =
+        
+","貴方はミュータントの女王の顔を見た時
+気分が凄まじく悪くなった...
+その顔は... 見覚えがあった...
+私の親友... アミラ!
+
+モンスター達が彼女に突然変異を引き起こし、
+奴等を産ませ続ける恐ろしい方法を編み出したのだろう。
+
+深い溜め息を吐き、気を取り直す...
+親友を殺した代償を奴等に支払わせるために。
+
+""もうこの地獄に怒れた彼女を蔑むものはない!""
+    = T H E  E N D =","갑자기 당신의 속이 울렁거린다... 방금 해치운 돌연변이 여왕의 실체...
+그 괴물은 당신과 친하게 지낸 친구였던... 아미라였다! 그 괴물들이
+그녀를 후손을 낳을 생물로 개조시킨 방법을 알아낸 것 같다. 
+개조에 성공하긴 했지만 그녀는 당신의 손에 죽은 지 오래다.
+
+""하아아...""
+
+당신은 마음을 가다듬고 자신의 친구를 이렇게 만든 놈들에게
+복수하기 위해서 다음 길로 나선다...
+
+""고통받은 여자의 심정보다 더한 지옥은 없지! 그 녀석들, 가만 안 둬!""
+
+= 끝 =","Je voelt je ziek in je maag...
+Kijkend in het gezicht van de gemuteerde
+koningin... 
+Dat ding... Dat was vroeger... 
+Je vriendin... Amira!
+Die monsters moeten een manier hebben gevonden
+om haar te muteren en haar te veranderen
+in dit afschuwelijke wezen om hun
+nakomelingen te dragen.
+
+-zucht -
+
+Je komt jezelf bij elkaar... 
+Ze gaan boeten voor het feit dat ze je laten
+vermoorden door je vriend...
+""De hel heeft geen woede zoals een vrouw
+die wordt geminacht!""
+
+ = EINDE =","Czujesz się niedobrze...
+Patrząc na twarz królowej mutantów...
+Ale rzecz w tym, że... to była kiedyś...
+Twoja przyjaciółka... Amira!
+
+Te potwory znalazły sposób, aby ją
+zmutować i zamienić ją w tą ohydną
+poczwarę, by mogły się rozmnażać.
+
+Ehh...
+
+Bierzesz się w garść...
+Zapłacą za to, że musiałaś zabić
+swoją przyjaciółkę...
+
+""Nawet piekło nie może być tak wściekłe
+jak zlekceważnona kobieta!""
+
+     =K O N I E C=","Você sente vontade de vomitar...
+Vendo o rosto da rainha mutante...
+Essa coisa... Que costumava ser...
+Sua amiga... Amira!
+
+Aqueles monstros devem ter encontrado
+uma maneira de causar uma mutação nela
+e transformá-la nesta criatura horrível para
+fazerem ela carregar suas crias.
+
+-suspiro-
+
+Você se recompõe...
+Eles vão pagar caro por fazer você matar
+a sua própria amiga...
+
+""Não há no inferno ferocidade como a de 
+uma mulher desprezada!""
+
+     = F I M =",,,"Вы почувствовали тошноту,
+присмотревшись к лицу королевы
+мутантов.
+Эта тварь. Когда-то она была… вашей
+подругой Амирой!
+
+Эти монстры смогли изменить её. Они
+превратили её в эту отвратительную тварь,
+способную выносить их потомство.
+
+-вздох-
+
+Вы берёте себя в руки.
+Они заставили вас убить свою подругу, и
+они поплатятся за это!
+
+«Ад – ничто в сравнении с отвергнутой
+женщиной!»
+
+     = К О Н Е Ц =
+",
+,WI_FINISHED,This text is deliberately empty,,,,,,,,,,,,,,,,,,,,,
+Loading,WI_ENTERING,Yellow needs retranslation,,,Vstupujete do,Lade,,Eniras,Cargando,,Ladattavana,Chargement,Következik,Caricamento,ローディング,불러오는 중,Laden van,Ładowanie,Próxima fase,Próximo nível,,Загрузка уровня,
+Very Easy,SKILL_BABY,,,,Velmi snadné,Sehr einfach,,Tre Facila,Muy facil,,Erittäin helppo,Trés facile,,Molto facile,ベリーイージー,아주 쉬움,Zeer gemakkelijk,Bardzo Łatwy,Muito facil,,,Очень лёгкий,
+Easy,SKILL_EASY,,,,Snadný,Einfach,,Facila,Facil,,Helppo,Facile,,Facile,イージー,쉬움,Gemakkelijk,Łatwy,Fácil,,,Лёгкий,
+Medium,SKILL_NORMAL,,,,Střední,Mittel,,Meza,Medio,,Keskivaikea,Moyen,,Medio,ミディアム,중간,Middel,Średni,Médio,,,Средний,
+Hard,SKILL_HARD,,,,Obtížný,Schwer,,Malfacila,Difícil,,Vaikea,Difficile,,Difficile,ハード,어려움,Moeilijk,Trudny,Difícil,,,Тяжёлый,
+Very Hard,SKILL_NIGHTMARE,,,,Velmi obtížné,Sehr schwer,,Tre Malfacila,Muy difícil,,Erittäin vaikea,Très difficile,,Molto difficile,ベリーハード,아주 어려윰,Zeer moeilijk,Bardzo Trudny,Muito difícil,,,Очень тяжёлый,
+Thanks for playing,HARMQUITMSG,,,,Díky za hraní,Danke fürs Spielen,,Dankon pro ludado,Gracias por jugar,,Kiitos pelaamisesta,Merci d'avoir joué,,Grazie per aver giocato,プレイ シテクレテ カンシャスル,플레이 해주셔서 감사드립니다,Bedankt voor het spelen,Dziękuję za grę,Obrigado por jogar,,,"Спасибо, что сыграли в Harmony",
+Harmony,TXT_D2E1,,,,,,,Harmonio,,,Harmonia,,,,,,,,,,,,

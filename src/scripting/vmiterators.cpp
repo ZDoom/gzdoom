@@ -92,16 +92,18 @@ DEFINE_ACTION_FUNCTION_NATIVE(DThinkerIterator, Reinit, ReinitThinker)
 //
 //===========================================================================
 
-class DBlockLinesIterator : public DObject, public FMultiBlockLinesIterator
+class DBlockLinesIterator : public DObject
 {
 	DECLARE_ABSTRACT_CLASS(DBlockLinesIterator, DObject);
 	FPortalGroupArray check;
 
 public:
+	FMultiBlockLinesIterator iterator;
 	FMultiBlockLinesIterator::CheckResult cres;
 
+	
 	DBlockLinesIterator(AActor *actor, double checkradius)
-		: FMultiBlockLinesIterator(check, actor, checkradius)
+		: iterator(check, actor, checkradius)
 	{
 		cres.line = nullptr;
 		cres.Position.Zero();
@@ -109,7 +111,7 @@ public:
 	}
 
 	DBlockLinesIterator(double x, double y, double z, double height, double radius, sector_t *sec)
-		:FMultiBlockLinesIterator(check, currentVMLevel, x, y, z, height, radius, sec)
+		: iterator(check, currentVMLevel, x, y, z, height, radius, sec)
 	{
 		cres.line = nullptr;
 		cres.Position.Zero();
@@ -151,7 +153,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBlockLinesIterator, CreateFromPos, CreateBLIFromP
 
 static int BLINext(DBlockLinesIterator *self)
 {
-	return self->Next(&self->cres);
+	return self->iterator.Next(&self->cres);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBlockLinesIterator, Next, BLINext)

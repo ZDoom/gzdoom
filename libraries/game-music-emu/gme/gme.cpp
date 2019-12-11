@@ -103,10 +103,10 @@ BLARGG_EXPORT gme_type_t gme_identify_extension( const char* extension_ )
 	char const* end = strrchr( extension_, '.' );
 	if ( end )
 		extension_ = end + 1;
-	
+
 	char extension [6];
 	to_uppercase( extension_, sizeof extension, extension );
-	
+
 	for ( gme_type_t const* types = gme_type_list(); *types; types++ )
 		if ( !strcmp( extension, (*types)->extension_ ) )
 			return *types;
@@ -133,30 +133,30 @@ BLARGG_EXPORT gme_err_t gme_identify_file( const char* path, gme_type_t* type_ou
 		RETURN_ERR( in.read( header, sizeof header ) );
 		*type_out = gme_identify_extension( gme_identify_header( header ) );
 	}
-	return 0;   
+	return 0;
 }
 
 BLARGG_EXPORT gme_err_t gme_open_data( void const* data, long size, Music_Emu** out, int sample_rate )
 {
 	require( (data || !size) && out );
 	*out = 0;
-	
+
 	gme_type_t file_type = 0;
 	if ( size >= 4 )
 		file_type = gme_identify_extension( gme_identify_header( data ) );
 	if ( !file_type )
 		return gme_wrong_file_type;
-	
+
 	Music_Emu* emu = gme_new_emu( file_type, sample_rate );
 	CHECK_ALLOC( emu );
-	
+
 	gme_err_t err = gme_load_data( emu, data, size );
-	
+
 	if ( err )
 		delete emu;
 	else
 		*out = emu;
-	
+
 	return err;
 }
 
@@ -164,13 +164,13 @@ BLARGG_EXPORT gme_err_t gme_open_file( const char* path, Music_Emu** out, int sa
 {
 	require( path && out );
 	*out = 0;
-	
+
 	GME_FILE_READER in;
 	RETURN_ERR( in.open( path ) );
-	
+
 	char header [4];
 	int header_size = 0;
-	
+
 	gme_type_t file_type = gme_identify_extension( path );
 	if ( !file_type )
 	{
@@ -180,21 +180,31 @@ BLARGG_EXPORT gme_err_t gme_open_file( const char* path, Music_Emu** out, int sa
 	}
 	if ( !file_type )
 		return gme_wrong_file_type;
-	
+
 	Music_Emu* emu = gme_new_emu( file_type, sample_rate );
 	CHECK_ALLOC( emu );
-	
+
 	// optimization: avoids seeking/re-reading header
 	Remaining_Reader rem( header, header_size, &in );
 	gme_err_t err = emu->load( rem );
 	in.close();
-	
+
 	if ( err )
 		delete emu;
 	else
 		*out = emu;
-	
+
 	return err;
+}
+
+BLARGG_EXPORT void gme_set_autoload_playback_limit( Music_Emu *emu, int do_autoload_limit )
+{
+	emu->set_autoload_playback_limit( do_autoload_limit != 0 );
+}
+
+BLARGG_EXPORT int gme_autoload_playback_limit( Music_Emu *const emu )
+{
+	return emu->autoload_playback_limit();
 }
 
 // Used to implement gme_new_emu and gme_new_emu_multi_channel
@@ -204,7 +214,7 @@ Music_Emu* gme_internal_new_emu_( gme_type_t type, int rate, bool multi_channel 
 	{
 		if ( rate == gme_info_only )
 			return type->new_info();
-		
+
 		Music_Emu* me = type->new_emu();
 		if ( me )
 		{
@@ -224,7 +234,7 @@ Music_Emu* gme_internal_new_emu_( gme_type_t type, int rate, bool multi_channel 
 				if ( me->effects_buffer )
 					me->set_buffer( me->effects_buffer );
 			}
-			
+
 			if ( !(type->flags_ & 1) || me->effects_buffer )
 		#endif
 			{
@@ -276,30 +286,30 @@ BLARGG_EXPORT int gme_track_count( Music_Emu const* me ) { return me->track_coun
 struct gme_info_t_ : gme_info_t
 {
 	track_info_t info;
-	
+
 	BLARGG_DISABLE_NOTHROW
 };
 
 BLARGG_EXPORT gme_err_t gme_track_info( Music_Emu const* me, gme_info_t** out, int track )
 {
 	*out = NULL;
-	
+
 	gme_info_t_* info = BLARGG_NEW gme_info_t_;
 	CHECK_ALLOC( info );
-	
+
 	gme_err_t err = me->track_info( &info->info, track );
 	if ( err )
 	{
 		gme_free_info( info );
 		return err;
 	}
-	
+
 	#define COPY(name) info->name = info->info.name;
-	
+
 	COPY( length );
 	COPY( intro_length );
 	COPY( loop_length );
-	
+
 	info->i4  = -1;
 	info->i5  = -1;
 	info->i6  = -1;
@@ -312,7 +322,7 @@ BLARGG_EXPORT gme_err_t gme_track_info( Music_Emu const* me, gme_info_t** out, i
 	info->i13 = -1;
 	info->i14 = -1;
 	info->i15 = -1;
-	
+
 	info->s7  = "";
 	info->s8  = "";
 	info->s9  = "";
@@ -322,7 +332,7 @@ BLARGG_EXPORT gme_err_t gme_track_info( Music_Emu const* me, gme_info_t** out, i
 	info->s13 = "";
 	info->s14 = "";
 	info->s15 = "";
-	
+
 	COPY( system );
 	COPY( game );
 	COPY( song );
@@ -330,9 +340,9 @@ BLARGG_EXPORT gme_err_t gme_track_info( Music_Emu const* me, gme_info_t** out, i
 	COPY( copyright );
 	COPY( comment );
 	COPY( dumper );
-	
+
 	#undef COPY
-	
+
 	info->play_length = info->length;
 	if ( info->play_length <= 0 )
 	{
@@ -340,9 +350,9 @@ BLARGG_EXPORT gme_err_t gme_track_info( Music_Emu const* me, gme_info_t** out, i
 		if ( info->play_length <= 0 )
 			info->play_length = 150 * 1000; // 2.5 minutes
 	}
-	
+
 	*out = info;
-	
+
 	return 0;
 }
 

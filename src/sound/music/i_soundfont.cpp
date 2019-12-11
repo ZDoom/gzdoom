@@ -35,10 +35,19 @@
 #include <ctype.h>
 #include <assert.h>
 #include "i_soundfont.h"
+#include "i_soundinternal.h"
 #include "cmdlib.h"
 #include "i_system.h"
 #include "gameconfigfile.h"
+#include "filereadermusicinterface.h"
+#include "zmusic/zmusic.h"
 #include "resourcefiles/resourcefile.h"
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FSoundFontManager sfmanager;
 
@@ -96,6 +105,59 @@ int FSoundFontReader::pathcmp(const char *p1, const char *p2)
 {
 	return mCaseSensitivePaths? strcmp(p1, p2) : stricmp(p1, p2);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FileReader FSoundFontReader::Open(const char *name, std::string& filename)
+{
+	FileReader fr;
+	if (name == nullptr)
+	{
+		fr = OpenMainConfigFile();
+		filename = MainConfigFileName();
+	}
+	else
+	{
+		auto res = LookupFile(name);
+		fr = std::move(res.first);
+		filename = res.second;
+	}
+	return fr;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+MusicIO::FileInterface* FSoundFontReader::open_interface(const char* name)
+{
+	std::string filename;
+	
+	FileReader fr = Open(name, filename);
+	if (!fr.isOpen()) return nullptr;
+	auto fri = new FileReaderMusicInterface(fr);
+	fri->filename = std::move(filename);
+	return fri;
+}
+
+
+//==========================================================================
+//
+// The file interface for the backend
+//
+//==========================================================================
+
+struct MusicIO::FileInterface* FSoundFontReader::open_file(const char* name)
+{
+	return open_interface(name);
+}
+
 
 //==========================================================================
 //
@@ -217,11 +279,6 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	}
 }
 
-FPatchSetReader::FPatchSetReader()
-{
-	// This constructor is for reading DMXGUS
-	mAllowAbsolutePaths = true;
-}
 
 FileReader FPatchSetReader::OpenMainConfigFile()
 {

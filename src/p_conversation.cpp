@@ -70,6 +70,7 @@ static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
 static void TerminalResponse (const char *str);
 
+CVAR(Bool, dlg_vgafont, false, CVAR_ARCHIVE)
 
 //============================================================================
 //

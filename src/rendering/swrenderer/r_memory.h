@@ -29,8 +29,8 @@ private:
 		
 	struct MemoryBlock
 	{
-		MemoryBlock() : Data(new uint8_t[BlockSize]), Position(0) { }
-		~MemoryBlock() { delete[] Data; }
+		MemoryBlock();
+		~MemoryBlock();
 			
 		MemoryBlock(const MemoryBlock &) = delete;
 		MemoryBlock &operator=(const MemoryBlock &) = delete;

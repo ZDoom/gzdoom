@@ -68,7 +68,7 @@ static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int L
 		case METHOD_LZMA:
 		{
 			FileReader frz;
-			if (frz.OpenDecompressor(Reader, LumpSize, Method, false))
+			if (frz.OpenDecompressor(Reader, LumpSize, Method, false, [](const char* err) { I_Error("%s", err); }))
 			{
 				frz.Read(Cache, LumpSize);
 			}
@@ -363,6 +363,7 @@ bool FZipFile::Open(bool quiet)
 
 	if (!quiet && !batchrun) Printf(TEXTCOLOR_NORMAL ", %d lumps\n", NumLumps);
 	
+	GenerateHash();
 	PostProcessArchive(&Lumps[0], sizeof(FZipLump));
 	return true;
 }

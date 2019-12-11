@@ -12,6 +12,7 @@
 #include "files.h"
 #include "doomdef.h"
 #include "tarray.h"
+#include "zstring.h"
 
 class FResourceFile;
 struct FResourceLump;
@@ -117,6 +118,9 @@ public:
 	int GetIwadNum() { return IwadIndex; }
 	void SetIwadNum(int x) { IwadIndex = x; }
 
+	int GetMaxIwadNum() { return MaxIwadIndex; }
+	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
+
 	void InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps);
 	void AddFile (const char *filename, FileReader *wadinfo = NULL);
 	int CheckIfWadLoaded (const char *name);
@@ -208,7 +212,8 @@ protected:
 	uint32_t NumLumps = 0;					// Not necessarily the same as LumpInfo.Size()
 	uint32_t NumWads;
 
-	int IwadIndex;
+	int IwadIndex = -1;
+	int MaxIwadIndex = -1;
 
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing
 
@@ -217,6 +222,8 @@ private:
 	void RenameNerve();
 	void FixMacHexen();
 	void DeleteAll();
+	void MoveLumpsInFolder(const char *);
+
 	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };
 

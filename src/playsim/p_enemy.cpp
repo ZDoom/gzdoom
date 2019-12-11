@@ -2994,7 +2994,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	if (self->player && self->player->morphTics == 0)
 	{
 		const char *pain_amount;
-		FSoundID sfx_id;
+		FSoundID sfx_id = 0;
 
 		if (self->health < 25)
 			pain_amount = "*pain25";
@@ -3050,15 +3050,24 @@ int CheckBossDeath (AActor *actor)
 	auto iterator = actor->Level->GetThinkerIterator<AActor>();
 	AActor *other;
 
+	PClassActor *cls = actor->GetClass();
+	FName type = cls->GetReplacee(actor->Level)->TypeName;
+
 	while ( (other = iterator.Next ()) )
 	{
-		if (other != actor &&
-			(other->health > 0 || (other->flags & MF_ICECORPSE))
-			&& other->GetClass() == actor->GetClass())
+		if (other == actor)
+			continue;
+
+		PClassActor *ocls = other->GetClass();
+		FName otype = ocls->GetReplacee(other->Level)->TypeName;
+
+		if ((other->health > 0 || (other->flags & MF_ICECORPSE))
+			&& (ocls == cls || otype == type))
 		{ // Found a living boss
 		  // [RH] Frozen bosses don't count as dead until they shatter
 			return false;
 		}
+		
 	}
 	// The boss death is good
 	return true;

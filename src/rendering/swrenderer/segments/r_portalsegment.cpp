@@ -52,8 +52,8 @@ namespace swrenderer
 
 		ceilingclip = thread->FrameMemory->AllocMemory<short>(len);
 		floorclip = thread->FrameMemory->AllocMemory<short>(len);
-		memcpy(ceilingclip, topclip, len * sizeof(short));
-		memcpy(floorclip, bottomclip, len * sizeof(short));
+		memcpy(ceilingclip, topclip + x1, len * sizeof(short));
+		memcpy(floorclip, bottomclip + x1, len * sizeof(short));
 
 		for (int i = 0; i < x2 - x1; i++)
 		{

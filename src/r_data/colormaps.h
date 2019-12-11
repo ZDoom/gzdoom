@@ -5,7 +5,7 @@
 
 struct lightlist_t;
 
-void R_InitColormaps ();
+void R_InitColormaps (bool allowCustomColormap = false);
 void R_DeinitColormaps ();
 
 uint32_t R_ColormapNumForName(const char *name);	// killough 4/4/98

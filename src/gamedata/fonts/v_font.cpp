@@ -895,9 +895,76 @@ int getAlternative(int code)
 		case 0x21b:
 			return 0x163;
 
+			// Greek characters with equivalents in either Latin or Cyrillic. This is only suitable for uppercase fonts!
+		case 0x391:
+			return 'A';
+
+		case 0x392:
+			return 'B';
+
+		case 0x393:
+			return 0x413;
+
+		case 0x395:
+			return 'E';
+
+		case 0x396:
+			return 'Z';
+
+		case 0x397:
+			return 'H';
+
+		case 0x399:
+			return 'I';
+
+		case 0x39a:
+			return 'K';
+
+		case 0x39c:
+			return 'M';
+
+		case 0x39d:
+			return 'N';
+	
+		case 0x39f:
+			return 'O';
+
+		case 0x3a0:
+			return 0x41f;
+
+		case 0x3a1:
+			return 'P';
+
+		case 0x3a4:
+			return 'T';
+
+		case 0x3a5:
+			return 'Y';
+
+		case 0x3a6:
+			return 0x424;
+
+		case 0x3a7:
+			return 'X';
+
+		case 0x3aa:
+			return 0xcf;
+
+		case 0x3ab:
+			return 0x178;
+
+		case 0x3bf:
+			return 'o';
+
 		case 0x3c2:
 			return 0x3c3;	// Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
-			
+
+		case 0x3ca:
+			return 0xef;
+
+		case 0x3cc:
+			return 0xf3;
+
 			// Cyrillic characters with equivalents in the Latin alphabet.
 		case 0x400:
 			return 0xc8;
@@ -1542,8 +1609,6 @@ void V_InitFonts()
 				SmallFont = new FFont("SmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 				SmallFont->SetCursor('[');
 			}
-			OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-			OriginalSmallFont->SetCursor('[');
 		}
 		else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
 		{
@@ -1559,9 +1624,20 @@ void V_InitFonts()
 			{
 				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 			}
-			OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
 		}
 	}
+
+	// Create the original small font as a fallback for incomplete definitions.
+	if (Wads.CheckNumForName("FONTA_S") >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
+		OriginalSmallFont->SetCursor('[');
+	}
+	else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
+	{
+		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
+	}
+
 	if (SmallFont)
 	{
 		uint32_t colors[256] = {};
@@ -1583,10 +1659,16 @@ void V_InitFonts()
 
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
-		if (gameinfo.gametype & GAME_Raven)
+		if (Wads.CheckNumForName("FONTB_S") >= 0)
 		{
 			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}
+	}
+	
+	if (!BigFont)
+	{
+		// Load the generic fallback if no BigFont is found.
+		BigFont = V_GetFont("BigFont", "ZBIGFONT");
 	}
 
 	if (gameinfo.gametype & GAME_Raven)
@@ -1637,6 +1719,10 @@ void V_InitFonts()
 		I_FatalError("Console font not found.");
 	}
 	// SmallFont and SmallFont2 have no default provided by the engine. BigFont only has in non-Raven games.
+	if (OriginalSmallFont == nullptr)
+	{
+		OriginalSmallFont = ConFont;
+	}
 	if (SmallFont == nullptr)
 	{
 		SmallFont = OriginalSmallFont;
@@ -1661,5 +1747,35 @@ void V_ClearFonts()
 	}
 	FFont::FirstFont = nullptr;
 	AlternativeSmallFont = OriginalSmallFont = CurrentConsoleFont = NewSmallFont = NewConsoleFont = SmallFont = SmallFont2 = BigFont = ConFont = IntermissionFont = nullptr;
+}
+
+//==========================================================================
+//
+// CleanseString
+//
+// Does some mild sanity checking on a string: If it ends with an incomplete
+// color escape, the escape is removed.
+//
+//==========================================================================
+
+char* CleanseString(char* str)
+{
+	char* escape = strrchr(str, TEXTCOLOR_ESCAPE);
+	if (escape != NULL)
+	{
+		if (escape[1] == '\0')
+		{
+			*escape = '\0';
+		}
+		else if (escape[1] == '[')
+		{
+			char* close = strchr(escape + 2, ']');
+			if (close == NULL)
+			{
+				*escape = '\0';
+			}
+		}
+	}
+	return str;
 }
 

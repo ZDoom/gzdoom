@@ -7,6 +7,7 @@ struct DynArray_I8 native
 	
 	native void Copy(DynArray_I8 other);
 	native void Move(DynArray_I8 other);
+	native void Append (DynArray_I8 other);
 	native uint Find(int item) const;
 	native uint Push (int item);
 	native bool Pop ();
@@ -26,6 +27,7 @@ struct DynArray_I16 native
 
 	native void Copy(DynArray_I16 other);
 	native void Move(DynArray_I16 other);
+	native void Append (DynArray_I16 other);
 	native uint Find(int item) const;
 	native uint Push (int item);
 	native bool Pop ();
@@ -45,6 +47,7 @@ struct DynArray_I32 native
 
 	native void Copy(DynArray_I32 other);
 	native void Move(DynArray_I32 other);
+	native void Append (DynArray_I32 other);
 	native uint Find(int item) const;
 	native uint Push (int item);
 	native bool Pop ();
@@ -64,6 +67,7 @@ struct DynArray_F32 native
 	
 	native void Copy(DynArray_F32 other);
 	native void Move(DynArray_F32 other);
+	native void Append (DynArray_F32 other);
 	native uint Find(double item) const;
 	native uint Push (double item);
 	native bool Pop ();
@@ -83,6 +87,7 @@ struct DynArray_F64 native
 	
 	native void Copy(DynArray_F64 other);
 	native void Move(DynArray_F64 other);
+	native void Append (DynArray_F64 other);
 	native uint Find(double item) const;
 	native uint Push (double item);
 	native bool Pop ();
@@ -102,6 +107,7 @@ struct DynArray_Ptr native
 	
 	native void Copy(DynArray_Ptr other);
 	native void Move(DynArray_Ptr other);
+	native void Append (DynArray_Ptr other);
 	native uint Find(voidptr item) const;
 	native uint Push (voidptr item);
 	native bool Pop ();
@@ -121,6 +127,7 @@ struct DynArray_Obj native
 	
 	native void Copy(DynArray_Obj other);
 	native void Move(DynArray_Obj other);
+	native void Append (DynArray_Obj other);
 	native uint Find(Object item) const;
 	native uint Push (Object item);
 	native bool Pop ();
@@ -140,6 +147,7 @@ struct DynArray_String native
 
 	native void Copy(DynArray_String other);
 	native void Move(DynArray_String other);
+	native void Append (DynArray_String other);
 	native uint Find(String item) const;
 	native uint Push (String item);
 	native bool Pop ();

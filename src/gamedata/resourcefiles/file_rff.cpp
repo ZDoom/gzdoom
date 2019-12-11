@@ -36,6 +36,7 @@
 #include "resourcefile.h"
 #include "templates.h"
 #include "w_wad.h"
+#include "doomtype.h"
 
 //==========================================================================
 //
@@ -183,6 +184,7 @@ bool FRFFFile::Open(bool quiet)
 		}
 	}
 	delete[] lumps;
+	GenerateHash();
 	return true;
 }
 

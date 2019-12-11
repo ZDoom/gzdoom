@@ -119,6 +119,8 @@ int				MenuTime;
 
 extern PClass *DefaultListMenuClass;
 extern PClass *DefaultOptionMenuClass;
+extern bool hud_toggled;
+void D_ToggleHud();
 
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
@@ -350,6 +352,9 @@ bool DMenu::TranslateKeyboardEvents()
 
 void M_StartControlPanel (bool makeSound, bool scaleoverride)
 {
+	if (hud_toggled)
+		D_ToggleHud();
+	
 	// intro might call this repeatedly
 	if (CurrentMenu != nullptr)
 		return;
@@ -887,7 +892,7 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		screen->BlurScene(gameinfo.bluramount);
+		if (!CurrentMenu->DontBlur) screen->BlurScene(gameinfo.bluramount);
 		if (!CurrentMenu->DontDim)
 		{
 			M_Dim();
@@ -1197,6 +1202,7 @@ DEFINE_FIELD(DMenu, mParentMenu)
 DEFINE_FIELD(DMenu, mMouseCapture);
 DEFINE_FIELD(DMenu, mBackbuttonSelected);
 DEFINE_FIELD(DMenu, DontDim);
+DEFINE_FIELD(DMenu, DontBlur);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)

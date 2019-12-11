@@ -59,6 +59,7 @@
 #include "r_sky.h"
 #include "version.h"
 #include "fragglescript/t_script.h"
+#include "s_music.h"
 
 EXTERN_CVAR(Bool, save_formatted)
 

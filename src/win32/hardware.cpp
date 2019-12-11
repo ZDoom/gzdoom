@@ -43,15 +43,15 @@
 #include "m_argv.h"
 #include "version.h"
 #include "win32glvideo.h"
+#include "win32polyvideo.h"
 #ifdef HAVE_VULKAN
 #include "win32vulkanvideo.h"
 #endif
 #include "doomerrors.h"
 #include "i_system.h"
 #include "swrenderer/r_swrenderer.h"
-#include "atterm.h"
 
-EXTERN_CVAR(Int, vid_enablevulkan)
+EXTERN_CVAR(Int, vid_preferbackend)
 
 extern HWND Window;
 
@@ -129,8 +129,12 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
+	if (vid_preferbackend == 2)
+	{
+		Video = new Win32PolyVideo();
+	}
 #ifdef HAVE_VULKAN
-	if (vid_enablevulkan == 1)
+	else if (vid_preferbackend == 1)
 	{
 		// first try Vulkan, if that fails OpenGL
 		try
@@ -143,14 +147,17 @@ void I_InitGraphics ()
 			Video = new Win32GLVideo();
 		}
 	}
-	else
 #endif
+	else
 	{
 		Video = new Win32GLVideo();
 	}
 
 	if (Video == NULL)
+		Video = new Win32PolyVideo();
+
+	// we somehow STILL don't have a display!!
+	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
 	
-	atterm (I_ShutdownGraphics);
 }

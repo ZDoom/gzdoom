@@ -42,7 +42,7 @@ Mat4f Mat4f::Identity()
 	return m;
 }
 
-Mat4f Mat4f::FromValues(float *matrix)
+Mat4f Mat4f::FromValues(const float *matrix)
 {
 	Mat4f m;
 	memcpy(m.Matrix, matrix, sizeof(m.Matrix));

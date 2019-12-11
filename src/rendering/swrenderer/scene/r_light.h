@@ -86,6 +86,7 @@ namespace swrenderer
 		double FlatPlaneVis(int screenY, double planeheight, bool foggy, RenderViewport *viewport) const { return FlatPlaneGlobVis(foggy) / planeheight * fabs(viewport->CenterY - screenY); }
 
 		double SlopePlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : TiltVisibility; }
+		double SpriteGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
 
 		static fixed_t LightLevelToShade(int lightlevel, bool foggy, RenderViewport *viewport) { return LightLevelToShadeImpl(viewport, lightlevel + ActualExtraLight(foggy, viewport), foggy); }
 
@@ -93,7 +94,6 @@ namespace swrenderer
 
 	private:
 		double WallGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
-		double SpriteGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : WallVisibility; }
 		double FlatPlaneGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0f : FloorVisibility; }
 
 		static fixed_t LightLevelToShadeImpl(RenderViewport *viewport, int lightlevel, bool foggy);

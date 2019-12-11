@@ -352,14 +352,8 @@ inline double DEHToDouble(int acsval)
 
 static void PushTouchedActor(PClassActor *cls)
 {
-	for(unsigned i = 0; i < TouchedActors.Size(); i++)
-	{
-		if (TouchedActors[i] == cls)
-		{
-			return;
-		}
-	}
-	TouchedActors.Push(cls);
+	if (TouchedActors.Find(cls) == TouchedActors.Size())
+		TouchedActors.Push(cls);
 }
 
 
@@ -1013,7 +1007,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
-				FSoundID snd;
+				FSoundID snd = 0;
 				
 				if (val == 0 || val >= SoundMap.Size())
 				{
@@ -2451,12 +2445,12 @@ int D_LoadDehLumps(DehLumpSource source)
 	{
 		const int filenum = Wads.GetLumpFile(lumpnum);
 		
-		if (FromIWAD == source && filenum > Wads.GetIwadNum())
+		if (FromIWAD == source && filenum > Wads.GetMaxIwadNum())
 		{
 			// No more DEHACKED lumps in IWAD
 			break;
 		}
-		else if (FromPWADs == source && filenum <= Wads.GetIwadNum())
+		else if (FromPWADs == source && filenum <= Wads.GetMaxIwadNum())
 		{
 			// Skip DEHACKED lumps from IWAD
 			continue;
@@ -3012,6 +3006,13 @@ void FinishDehPatch ()
 	unsigned int touchedIndex;
 	unsigned int nameindex = 0;
 
+	// For compatibility all potentially altered actors now using A_SkullFly need to be set to the original slamming behavior.
+	// Since this flag does not affect anything else let's just set it for everything, it will just be ignored by non-charging things.
+	for (auto cls : InfoNames)
+	{
+		GetDefaultByType(cls)->flags8 |= MF8_RETARGETAFTERSLAM;
+	}
+
 	for (touchedIndex = 0; touchedIndex < TouchedActors.Size(); ++touchedIndex)
 	{
 		PClassActor *subclass;
@@ -3077,10 +3078,8 @@ void FinishDehPatch ()
 		}
 	}
 	// Now that all Dehacked patches have been processed, it's okay to free StateMap.
-	StateMap.Clear();
-	StateMap.ShrinkToFit();
-	TouchedActors.Clear();
-	TouchedActors.ShrinkToFit();
+	StateMap.Reset();
+	TouchedActors.Reset();
 	EnglishStrings.Clear();
 	GStrings.SetDehackedStrings(std::move(DehStrings));
 

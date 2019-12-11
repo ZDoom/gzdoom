@@ -34,6 +34,8 @@ EXTERN_CVAR(Int, r_multithreaded)
 
 class PolyTriangleThreadData;
 
+namespace swrenderer { class WallColumnDrawerArgs; }
+
 // Worker data for each thread executing drawer commands
 class DrawerThread
 {
@@ -61,6 +63,7 @@ public:
 	const uint8_t *tiltlighting[MAXWIDTH];
 
 	std::shared_ptr<PolyTriangleThreadData> poly;
+	std::shared_ptr<swrenderer::WallColumnDrawerArgs> columndrawer;
 
 	size_t debug_draw_pos = 0;
 

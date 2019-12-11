@@ -39,6 +39,7 @@
 #include "net.h"
 #include "netclient.h"
 #include "netserver.h"
+#include "netsingle.h"
 #include "cmdlib.h"
 #include "m_cheat.h"
 #include "p_local.h"
@@ -69,8 +70,6 @@
 
 std::unique_ptr<Network> network;
 std::unique_ptr<Network> netconnect;
-
-CVAR (Bool, cl_capfps, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CVAR(Bool, net_ticbalance, false, CVAR_SERVERINFO | CVAR_NOSAVE)
 CUSTOM_CVAR(Int, net_extratic, 0, CVAR_SERVERINFO | CVAR_NOSAVE)
@@ -356,4 +355,48 @@ CCMD(hostgame)
 	std::unique_ptr<NetServer> netgame(new NetServer());
 	network = std::move(netgame);
 	netgame->Init();
+}
+
+void Startup()
+{
+}
+
+void Net_ClearBuffers()
+{
+}
+
+bool D_CheckNetGame()
+{
+	if (!network)
+	{
+		network.reset(new NetSinglePlayer());
+		D_SetupUserInfo();
+
+		if (Args->CheckParm("-debugfile"))
+		{
+			char filename[20];
+			mysnprintf(filename, countof(filename), "debug%i.txt", consoleplayer);
+			Printf("debug output to: %s\n", filename);
+			debugfile = fopen(filename, "w");
+		}
+
+		if (netgame)
+		{
+			GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
+		}
+	}
+
+	return true;
+}
+
+void D_QuitNetGame()
+{
+}
+
+void NetUpdate()
+{
+}
+
+void CloseNetwork()
+{
 }

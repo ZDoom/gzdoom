@@ -206,6 +206,8 @@ bool MapLoader::LoadGLVertexes(FileReader &lump)
 	lump.Seek(0, FileReader::SeekSet);
 	auto glbuf = lump.Read();
 	auto gllen=lump.GetLength();
+	if (gllen < 4)
+		return false;
 	auto gldata = glbuf.Data();
 
 	if (*(int *)gldata == gNd5) 
@@ -279,28 +281,51 @@ bool MapLoader::LoadGLSegs(FileReader &lump)
 	lump.Seek(0, FileReader::SeekSet);
 	auto data = lump.Read();
 	int numsegs = (int)lump.GetLength();
+	if (numsegs < 4)
+		return false;
 	auto &segs = Level->segs;
+	const unsigned numverts = Level->vertexes.Size();
+	const unsigned numlines = Level->lines.Size(); 
 
 	if (!format5 && memcmp(data.Data(), "gNd3", 4))
 	{
 		numsegs/=sizeof(glseg_t);
-		Level->segs.Alloc(numsegs);
+		segs.Alloc(numsegs);
 		memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 		glseg_t * ml = (glseg_t*)data.Data();
 		for(i = 0; i < numsegs; i++)
 		{		
 			// check for gl-vertices
-			segs[i].v1 = &Level->vertexes[checkGLVertex(LittleShort(ml->v1))];
-			segs[i].v2 = &Level->vertexes[checkGLVertex(LittleShort(ml->v2))];
-			segs[i].PartnerSeg = ml->partner == 0xFFFF ? nullptr : &segs[LittleShort(ml->partner)];
+			const unsigned v1idx = checkGLVertex(LittleShort(ml->v1));
+			if (v1idx >= numverts) 
+				return false;
+			segs[i].v1 = &Level->vertexes[v1idx];
+
+			const unsigned v2idx = checkGLVertex(LittleShort(ml->v2));
+			if (v2idx >= numverts) 
+				return false;
+			segs[i].v2 = &Level->vertexes[v2idx];
+
+			const int partner = LittleShort(ml->partner);
+			if (partner == 0xFFFF)
+				segs[i].PartnerSeg = nullptr;
+			else if (partner >= numsegs) 
+				return false;
+			else 
+				segs[i].PartnerSeg = &segs[partner];
+
 			if(ml->linedef != 0xffff)
 			{
-				ldef = &Level->lines[LittleShort(ml->linedef)];
-				segs[i].linedef = ldef;
-	
+				const unsigned lineidx = LittleShort(ml->linedef);
+				if (lineidx >= numlines) 
+					return false;
+				ldef = &Level->lines[lineidx];
+				segs[i].linedef = ldef;	
 					
 				ml->side=LittleShort(ml->side);
+				if (ml->side > 1) 
+					return false;
 				segs[i].sidedef = ldef->sidedef[ml->side];
 				if (ldef->sidedef[ml->side] != nullptr)
 				{
@@ -336,25 +361,42 @@ bool MapLoader::LoadGLSegs(FileReader &lump)
 	{
 		if (!format5) numsegs-=4;
 		numsegs/=sizeof(glseg3_t);
-		Level->segs.Alloc(numsegs);
+		segs.Alloc(numsegs);
 		memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 		glseg3_t * ml = (glseg3_t*)(data.Data() + (format5? 0:4));
 		for(i = 0; i < numsegs; i++)
 		{							// check for gl-vertices
-			segs[i].v1 = &Level->vertexes[checkGLVertex3(LittleLong(ml->v1))];
-			segs[i].v2 = &Level->vertexes[checkGLVertex3(LittleLong(ml->v2))];
+			const unsigned v1idx = checkGLVertex3(LittleLong(ml->v1));
+			if (v1idx >= numverts)
+				return false;
+			segs[i].v1 = &Level->vertexes[v1idx];
+
+			const unsigned v2idx = checkGLVertex3(LittleLong(ml->v2));
+			if (v2idx >= numverts)
+				return false;
+			segs[i].v2 = &Level->vertexes[v2idx];
 
 			const uint32_t partner = LittleLong(ml->partner);
-			segs[i].PartnerSeg = UINT_MAX == partner ? nullptr : &segs[partner];
+			if (partner == UINT_MAX)
+				segs[i].PartnerSeg = nullptr;
+			else if (partner >= (uint32_t)numsegs) 
+				return false;
+			else 
+				segs[i].PartnerSeg = &segs[partner];
 	
 			if(ml->linedef != 0xffff) // skip minisegs 
 			{
-				ldef = &Level->lines[LittleLong(ml->linedef)];
+				const unsigned lineidx = LittleShort(ml->linedef);
+				if (lineidx >= numlines)
+					return false;
+				ldef = &Level->lines[lineidx];
 				segs[i].linedef = ldef;
 	
 					
 				ml->side=LittleShort(ml->side);
+				if (ml->side > 1)
+					return false;
 				segs[i].sidedef = ldef->sidedef[ml->side];
 				if (ldef->sidedef[ml->side] != nullptr)
 				{
@@ -400,8 +442,11 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 	int  i;
 
 	int numsubsectors = (int)lump.GetLength();
+	if (numsubsectors < 4)
+		return false;
 	lump.Seek(0, FileReader::SeekSet);
 	auto datab = lump.Read();
+	const unsigned numsegs = Level->segs.Size();
 	
 	if (numsubsectors == 0)
 	{
@@ -419,12 +464,15 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleShort(data[i].numsegs );
-			subsectors[i].firstline = &Level->segs[LittleShort(data[i].firstseg)];
-
 			if (subsectors[i].numlines == 0)
 			{
 				return false;
 			}
+
+			const unsigned firstseg = LittleShort(data[i].firstseg);
+			if (firstseg >= numsegs)
+				return false;
+			subsectors[i].firstline = &Level->segs[firstseg];
 		}
 	}
 	else
@@ -438,12 +486,15 @@ bool MapLoader::LoadGLSubsectors(FileReader &lump)
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleLong(data[i].numsegs );
-			subsectors[i].firstline = &Level->segs[LittleLong(data[i].firstseg)];
-
 			if (subsectors[i].numlines == 0)
 			{
 				return false;
 			}
+
+			const unsigned firstseg = LittleLong(data[i].firstseg);
+			if (firstseg >= numsegs)
+				return false;
+			subsectors[i].firstline = &Level->segs[firstseg];
 		}
 	}
 
@@ -774,7 +825,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		const int idcheck1b = MAKE_ID('X','G','L','N');
 		const int idcheck2b = MAKE_ID('X','G','L','2');
 		const int idcheck3b = MAKE_ID('X','G','L','3');
-		int id;
+		int id = 0;
 
 		auto &file = map->Reader(ML_GLZNODES);
 		file.Read (&id, 4);
@@ -1151,13 +1202,9 @@ UNSAFE_CCMD(clearnodecache)
 	FString path = M_GetCachePath(false);
 	path += "/";
 
-	try
+	if (!ScanDirectory(list, path))
 	{
-		ScanDirectory(list, path);
-	}
-	catch (CRecoverableError &err)
-	{
-		Printf("%s\n", err.GetMessage());
+		Printf("Unable to scan node cache directory %s\n", path.GetChars());
 		return;
 	}
 

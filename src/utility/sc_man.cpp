@@ -1120,7 +1120,7 @@ void FScanner::ScriptMessage (const char *message, ...)
 		va_end (arglist);
 	}
 
-	Printf (TEXTCOLOR_RED "Script error, \"%s\"" TEXTCOLOR_RED "line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
+	Printf (TEXTCOLOR_RED "Script error, \"%s\"" TEXTCOLOR_RED " line %d:\n" TEXTCOLOR_RED "%s\n", ScriptName.GetChars(),
 		AlreadyGot? AlreadyGotLine : Line, composed.GetChars());
 }
 
@@ -1148,11 +1148,6 @@ int FScriptPosition::WarnCounter;
 bool FScriptPosition::StrictErrors;	// makes all OPTERROR messages real errors.
 bool FScriptPosition::errorout;		// call I_Error instead of printing the error itself.
 
-FScriptPosition::FScriptPosition(const FScriptPosition &other)
-{
-	FileName = other.FileName;
-	ScriptLine = other.ScriptLine;
-}
 
 FScriptPosition::FScriptPosition(FString fname, int line)
 {
@@ -1164,13 +1159,6 @@ FScriptPosition::FScriptPosition(FScanner &sc)
 {
 	FileName = sc.ScriptName;
 	ScriptLine = sc.GetMessageLine();
-}
-
-FScriptPosition &FScriptPosition::operator=(const FScriptPosition &other)
-{
-	FileName = other.FileName;
-	ScriptLine = other.ScriptLine;
-	return *this;
 }
 
 FScriptPosition &FScriptPosition::operator=(FScanner &sc)
@@ -1257,6 +1245,40 @@ void FScriptPosition::Message (int severity, const char *message, ...) const
 	}
 	Printf (level, "%sScript %s, \"%s\" line %d:\n%s%s\n",
 		color, type, FileName.GetChars(), ScriptLine, color, composed.GetChars());
+}
+
+//==========================================================================
+//
+// ParseHex
+//
+//==========================================================================
+
+int ParseHex(const char* hex, FScriptPosition* sc)
+{
+	const char* str;
+	int num;
+
+	num = 0;
+	str = hex;
+
+	while (*str)
+	{
+		num <<= 4;
+		if (*str >= '0' && *str <= '9')
+			num += *str - '0';
+		else if (*str >= 'a' && *str <= 'f')
+			num += 10 + *str - 'a';
+		else if (*str >= 'A' && *str <= 'F')
+			num += 10 + *str - 'A';
+		else {
+			if (sc) sc->Message(MSG_WARNING, "Bad hex number: %s", hex);
+			else Printf("Bad hex number: %s\n", hex);
+			return 0;
+		}
+		str++;
+	}
+
+	return num;
 }
 
 

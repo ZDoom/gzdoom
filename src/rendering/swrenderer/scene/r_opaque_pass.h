@@ -35,10 +35,10 @@ namespace swrenderer
 	class RenderThread;
 	struct VisiblePlane;
 
-	// The 3072 below is just an arbitrary value picked to avoid
+	// The 32 below is just an arbitrary value picked to avoid
 	// drawing lines the player is too close to that would overflow
 	// the texture calculations.
-	#define TOO_CLOSE_Z (3072.0 / (1<<12))
+	#define TOO_CLOSE_Z (32.0 / (1 << 12))
 
 	enum class WaterFakeSide
 	{

@@ -31,7 +31,7 @@ namespace swrenderer
 	class RenderFogBoundary
 	{
 	public:
-		void Render(RenderThread *thread, int x1, int x2, const short *uclip, const short *dclip, const ProjectedWallLight &wallLight);
+		void Render(RenderThread *thread, int x1, int x2, const short* uclip, const short* dclip, const ProjectedWallLight &wallLight);
 
 	private:
 		void RenderSection(RenderThread *thread, int y, int y2, int x1);

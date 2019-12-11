@@ -64,12 +64,14 @@ public:
 	// Playsim events
 	virtual void ActorSpawned(AActor *actor) { }
 	virtual void ActorDestroyed(AActor *actor) { }
-
-	// Old init/deinit stuff
-	void Startup() { }
-	void Net_ClearBuffers() { }
-	void D_QuitNetGame() { }
 };
 
 extern std::unique_ptr<Network> network;
 extern std::unique_ptr<Network> netconnect;
+
+void Startup();
+void Net_ClearBuffers();
+bool D_CheckNetGame();
+void D_QuitNetGame();
+void NetUpdate();
+void CloseNetwork();

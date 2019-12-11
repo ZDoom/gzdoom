@@ -5,7 +5,7 @@
 #include "g_levellocals.h"
 #include "hw_drawstructs.h"
 #include "hw_drawlist.h"
-#include "r_data/matrix.h"
+#include "matrix.h"
 #include "hwrenderer/textures/hw_material.h"
 
 struct FColormap;

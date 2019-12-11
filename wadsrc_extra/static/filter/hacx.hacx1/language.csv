@@ -1,0 +1,1026 @@
+default,Identifier,Remarks,Filter,eng enc ena enz eni ens enj enb enl ent enw,cs,de,el,eo,es,esm esn esg esc esa esd esv eso esr ess esf esl esy esz esb ese esh esi esu,fi,fr,hu,it,jp,ko,nl,pl,pt,ptg,ro,ru,sr
+,,,,,,,,,,,,,,,,,,,,,,,
+These bugs too tough for ya?,QUITMSG1,,,,Jsou ty bugy na tebe moc tvrdé?,Sind diese Bugs zu viel für dich?,,,¿Son estos bichos demasiado duros para ti?,,Taitavat nämä ötökät olla liikaa sulle?,Ces bestioles sont trop fortes pour vous?,,Questi errori sono troppo difficili per te?,テメェにはあんなバグ 厳しかないだろ?,고작 버그들 상대하는 것도 버거운 건가?,Zijn deze bugs te hard voor je?,To robactwo jest za ciężkie dla ciebie?,"Tá achando difícil eliminar esses bichos, é?",,,Эти баги крутоваты для тебя?,
+Are you sure you want to\njack out of the action?,QUITMSG,,,,"Jsi si jistý, že se chceš
+zdáchnout z akce?","Bist du sicher, dass du den\nStecker ziehen willst?",,,¿Estás segur@[ao_esp] de que\nquieres desconectarte de la acción?,,Haluatko varmasti irrottaa\npiuhan toiminnasta?,Etes-vous sûr de vouloir\nvous déconnecter de l'action?,,Sei sicuro di voler uscire?,もしかして逃げ出そうとしてないよな?,"지금 종료하겠다고?
+
+진심이냐?",Weet je zeker dat je de actie wilt staken?,Na pewo chcesz wyjść w środku akcji?,Tem certeza que quer se desconectar de toda a ação? ,,,Ты правда хочешь улизнуть\nс поля боя?,
+Trying to quit? And you call yourself a hacker?,QUITMSG2,,,,Snažíš se skončit? To si říkáš hacker?,Du willst gehen? Bist du wirklich ein Hacker?,,,¿Intentando salir? ¿Y te haces llamar hacker?,,Yritätkö lopettaa? Ja sinäkö muka hakkeri?,On essaye de quitter?\nvous prétendez être un hacker?,,Stai cercando di smettere?\nE ti definisci un hacker?,終了させる? それでハッカー自称してたのか?,그만두려고? 해커라는 이름이 아깝군그래.,Proberen te stoppen? En je noemt jezelf een hacker?,Próbujesz wyjść? I nazywasz siebie hakerem?,Tá querendo sair? E você ainda se considera um hacker?,,,Хочешь убежать? А ещё зовёшь себя хакером!,
+Get back here before I send a virus up your tailpipe!,QUITMSG3,,,,"Vrať se, než ti do zadku pošlu virus!","Komm zurück, oder ich schick dir 'nen Virus!",,,¡Vuelve aquí antes de que te meta un virus de través!,,"Heti takaisin tänne, ennen kuin lähetän viruksen pitkin takaputkeasi!",Reviens ici avant que je t'envoie un virus là où ça fait mal!,,Torna indietro o ti\nmanderò un virus!,さっさと戻らねえと そのケツ穴にウィルスぶっこむぞ!,"돌아와, 네 전선에 바이러스 주입해버리기 전에!",Kom terug voordat ik een virus in je uitlaatpijp stuur!,Wróć tu zanim wyślę ci wirusa!,Volta aqui antes que eu te mande um vírus!,,,"Вернись, пока я не посадил вирус тебе на хвост!",
+Real hackers never jack out of the action.,QUITMSG4,,,,Skuteční hackeři nikdy neprchají z akce.,Echte Hacker geben nicht auf!,,,Los verdaderos hackers no se desconectan de la acción.,,Todelliset hakkerit eivät ikinä kytkeydy irti toiminnasta.,Un vrai hacker ne se déconnecte pas en pleine action.,,I veri hacker non si arrendono!,本物のハッカーなら頭を銃で撃ち抜くことはしない。,진정한 해커는 이렇게 포기하지 않는다고!,Echte hackers komen nooit uit de actie.,Prawdziwi hakerzy nigdy nie uciekają z akcji.,Hackers de verdade nunca vazam da ação!,,,Настоящие хакеры не пытаются улизнуть с поля боя.,
+C'mon! You haven't seen the best part yet!,QUITMSG5,,,,No tak! Ještě jsi neviděl to nejlepší!,Komm schon. Du hast das Beste noch gar nicht gesehen!,,,¡Venga! ¡Aún no has visto la mejor parte!,,Älä viitsi! Et ole edes vielä nähnyt parasta kohtaa!,"Allez, on arrive presque à la meilleure partie!",,"Andiamo, forza! Non hai ancora\nvisto la parte migliore!",おいおい! お楽しみはこれからだぜ!,이봐! 아직 재밌는 부분은 시작도 안 했다고!,Kom op! Je hebt het beste deel nog niet gezien!,No weź! Jeszcze nie widziałeś najlepszej części!,Qual é! Você nem viu a melhor parte ainda!,,,"Да ладно, ты ещё не видел самое крутое!",
+"Give up now, and cyberspace is toast!",QUITMSG6,,,,Vzdej se a s kyberprostorem je konec!,Wenn du jetzt aufgibst ist der Cyberspace am Ende.,,,¡Ríndete ahora y el ciberespacio está frito!,,Luovuta nyt ja kyberavaruus kärtsää!,"Abandonne, et le cyberespace est foutu!",,"Se ti arrendi ora,\nil cyberspazio è finito.",さっさと止めて、サイバースペースに乾杯だ!,포기하면 사이버 공간은 결국엔 사라질걸?,"Geef het nu op, en cyberspace is een toast!","Poddaj się, a cyberprzestrzeń zmieni się w tosta!","Se você desistir agora, o ciberespaço já era!",,,"Если ты сейчас сдашься, киберпространству конец!",
+"GENIE sends its best regards, scumbag!",QUITMSG7,,,,"GENIE posílá své pozdravy, hajzle!","GENIE sendet seine besten Grüße, Mistkerl!",,,"¡GENIE te envía saludos, desgraciado!",,"GENIE lähettää terveisensä, mäntti!","GENIE t'envoie ses salutations, salaud!",,"GENIE manda i suoi\nmigliori saluti, bastardo!",GENIEがベストの挨拶を送るぜ、カス野郎!,어이 등신! 지니에서 안부를 전해 달라더군.,"GENIE doet je de groeten, klootzak!","GENIE przysyła pozdrowienia, łajzo!","GENIE manda lembranças, seu lixo!",,,"Наилучшие пожелания от ДЖИННа, ублюдок!",
+"Hmm. So much for being a hero, Hacker.",QUITMSG8,,,,"Hmm. To by bylo pro hrdinství, Hackeře.","Hmm. So viel zum Thema ""Held"", Hacker.",,,"Hmm. Poco tienes de héroe, hacker.",,"Höh, se siitä sankarina olemisesta sitten, hakkeri.","Eh bien, on est pas vraiment un héros, hacker.",,"Hmm. Così tanto per essere un eroe, Hacker.",うーん。英雄とはこの程度だったのか、ハッカー。,영웅이 될 그릇은 아닌 거 같군. 안 그래? 해커 형씨.,"Hmm. Tot zover de held, Hacker.","Hmm. Tak wiele by być bohaterem, Hakerze.","Hmm. Não é tão herói assim, pelo visto.",,,"Хм-м. Вот тебе и герой, Хакер!",
+What? You'd rather go back to the pen?,QUITMSG9,,,,Co? Radši by ses vrátil do basy?,Was? Du willst in den Knast zurück?,,,¿Qué? ¿Prefieres volver al corral?,,Täh? Menisit mieluummin takaisin kynän ääreen?,Quoi? Tu préfère retourner dans ta cellule?,,Cosa? Vuoi tornare in prigione?,何? 今更ペンで計算するのか?,펜이나 끄적거리는 인생으로 돌아가겠다. 이건가?,Wat? Ga je liever terug naar de pen?,Co? Wolisz wrócić do więzienia?,O quê? Você prefere voltar pro xilindró?,,,Что? Ты хочешь вернуться в неволю?,
+Shoulda taken the blue pill.,QUITMSG10,,,,Měl sis vzít modrou pilulku.,Du hättest die blaue Pille nehmen sollen...,,,Deberías haber tomado la pastilla azul.,,Olis pitäny ottaa sininen pilleri.,T'aurais du prendre la pilule bleue.,,Avresti dovuto prendere la pillola blu ...,青いピルを採るべきではなかったな。,넌 파란 알약을 골랐어야 했어.,Je had de blauwe pil moeten nemen.,Trzeba było wziąć niebieską pigułkę.,Devia ter tomado a pílula azul.,,,Надо было принять синюю таблетку.,
+The name of the game ain't Twitch n' Run!,QUITMSG11,,,,V názvu hry není napsané „uteč“!,"Das Spiel heißt nicht ""wegrennen""!",,,¡El nombre del juego no es Tirar a Correr!,,Pelin nimi ei oo Paniikkipako!,"Le jeu s'appelle pas ""Panique et cours!""",,"Il gioco non significa ""scappare""!",ゲーム名は 萎え落ち小僧 じゃねえぞ!,"이봐, 이 게임은 때리고 도망가는 게임이 아니라고!",De naam van het spel is niet Twitch n' Run!,"Nazwą gry nie jest ""Drżyj i Uciekaj""!",O nome do jogo não é Trema nas Bases e Fuja!,,,Эта игра называется не «Дрожи и прячься»!,
+"No worries. Saving the world can wait, right?",QUITMSG12,,,,"Žádný problém. Záchrana světa může počkat, ne?","Also, die Welt zu retten kann warten, richtig?",,,"No te preocupes. Salvar el mundo puede esperar, ¿verdad?",,"Ei huolta; maailman pelastaminen voi odottaa, eikö niin?","Oh, pas de problème. Le monde peut attendre\nd'être sauvé, non?",,"Salvare il mondo può\naspettare, giusto?",気にはしない、世界を救うのは何時でも出来る、だろ?,걱정 말라고. 세상이 위험한데 급할 것 있나. 안 그래?,"Het redden van de wereld kan wachten, toch?","Bez obaw. Ratowanie świata może poczekać, prawda?","Sem problemas. O mundo pode esperar, não é mesmo?",,,"Не парься. Спасение мира подождёт, ведь так?",
+Guess it's time to make like the 'net and split!,QUITMSG13,,,,"Hádám, že je čas vypojit server!","Also ist es soweit, dass sich unsere Wege trennen.",,,¡Supongo que es hora de cortar con esta mala conexión!,,Kai sitten on aika katkaista palvelinyhteydet!,Ca doit être temps de partir comme une mauvaise connection!,,Quindi è il momento per i\nnostri modi di separarsi.,ネット切断している暇は無いだろ!,벌써 서버를 다운시키는 '척' 할 시간인가?,Denk dat het tijd is om het te maken als het 'net en splitsen!,"Wygląda na to, że trzeba się rozłączyć jak netsplit!","Acho que tá na hora de cair, que nem uma conexão ruim.",,,"Кажется, настало время устроить netsplit!",
+"Don't go off and forget about HacX, now!",QUITMSG14,,,,Ať tě nenapadne odejít a zapomenout na HacX!,Bitte vergesse HacX nicht!,,,¡Ahora no vayas y te olvides de Hacx!,,Älä nyt mene pois ja unohda HacX:ä!,Va pas oublier HacX maintenant!,,"Non andartene e dimenticati di HacX, ora!",HacXを忘れんじゃねえぞ、な!,부디 나가지 말고 HacX를 잊지 말아줘!,"Ga niet af en vergeet HacX niet, nu!","Nie wyłączaj i nie zapominaj o HacX, teraz!","Não vai se esquecer do HacX, hein!",,,"Только посмей уйти и забыть про HacX, ты!",
+%o deleted %hself from the universe.,OB_SUICIDE,,,,%o se smazal@[ao_cs] z vesmíru.,%o entfernte sich aus dem Universum.,,,%o se borró a si mism@[ao_esp] del universo.,,%o poisti itsensä maailmankaikkeudesta.,%o s'est effacé@[e_fr] de l'univers.,,%o si è cancellato dall'universo.,%o はこの宇宙から消滅した。,%o 은(는) 자기 자신의 존재를 소멸시켰다.,%o verwijderd zichzelf uit het universum.,%o usun@[irreg_2_pl] się ze świata.,%o se deletou deste universo.,,,%o стёр себя с лица Вселенной.,
+%o formed a crater the size of Kansas.,OB_FALLING,,,,%o utvořil@[ao_cs] kráter velikosti Kansasu.,%o wurde zu einem Krater in der Größe von Kansas.,,,%o formó un cráter del tamaño de Kansas.,,%o muodosti Kansasin kokoisen kraaterin.,%o a formé un cratère de la taille du Kansas.,,%o ha formato un cratere delle dimensioni del Kansas.,%o はカンザス州程のクレーターを生成した。,%o 은(는) 땅바닥에 캔자스만큼 커다란 구멍을 뚫었다.,%o vormde een krater ter grootte van Kansas.,%o utworzył@[ao_pl] krater wielkości Kansas.,%o abriu uma cratera do tamanho de Minas Gerais.,,,На месте падения %o образовался кратер размером с Канзас.,
+%o became a human pancake.,OB_CRUSH,,,,%o se změnil@[ao_cs] v lidskou palačinku.,%o wurde zu einem menschlichen Pfannkuchen.,,,%o se convirtió en un crepe humano.,,%o tuli ihmispannukakun muotoiseksi.,%o est devenu@[e_fr] une crêpe.,,%o è diventato un pancake umano.,%o は人肉パンケーキになった。,%o 은(는) 인간 빈대떡이 되었다.,%o werd een menselijke pannenkoek.,%o stał@[ao_pl] się ludzkim plackiem.,%o virou uma panqueca humana.,,,Игрока %o сплющило в лепешку.,
+%o tried to jack out.,OB_EXIT,,,,%o se pokusil@[ao_cs] prchnout.,%o hat sich ausgeloggt.,,,%o intentó desconectarse.,,%o yritti irrottaa piuhan.,%o a tenté de se déconnecter.,,%o è uscito.,%o は逃げ出そうとした。,%o 은(는) 로그아웃하려고 시도했다.,%o probeerde zich terug te trekken.,%o chciał@[ao_pl] się wydostać.,%o tentou se desconectar.,,,%o хотел улизнуть.,
+%o swam like a brick.,OB_WATER,,,,%o uměl@[ao_cs] plavat jako cihla.,%o schwamm wie ein Stein.,,,%o nadó como un ladrillo.,,%o ui kuin tiiliskivi.,%o nage comme une brique.,,%o nuotava come una pietra.,%o はカナヅチだった。,%o 은(는) 웹서핑을 못 하는 타입이었다.,%o zwom als een baksteen.,%o popłyn@[irreg_2_pl] jak cegła.,%o foi nadar como um tijolo.,,,%o поплыл как топор.,
+%o went nuclear.,OB_SLIME,,,,%o se rozpadl@[ao_cs] na atom.,%o wurde verstrahlt.,,,%o se volvió radioactiv@[ao_esp].,,%o kiinnostui ydinasioista.,%o s'est fait fissionner.,,%o è stato irradiato.,%o はニュークリアーと化した。,%o 은(는) 방사능 바람을 좀 쐬고 왔다.,%o werd nucleair.,%o został@[ao_pl] napromieniowan@[adj_pl].,%o ficou radioativ@[ao_ptb].,,,%o светится в темноте.,
+%o took a hot bath.,OB_LAVA,,,,%o si dal@[ao_cs] horkou koupel.,%o nahm ein heißes Bad.,,,%o tomó un baño caliente.,,%o otti kuuman kylvyn.,% o ha fatto un bagno caldo.,,%o ha fatto un bagno caldo.,%o は熱湯風呂に浸かった。,%o 은(는) 시원하게 용암 일광욕을 즐겼다.,%o nam een warm bad.,%o wzi@[irreg_2_pl] gorącą kąpiel.,%o tomou um banho bem quente.,,,%o принял@[ao_rus] горячую ванну.,
+%o overdosed on nitro glycerine.,OB_BARREL,,,,%o se předávkoval@[ao_cs] nitroglycerinem.,%o nahm eine Überdosis Nitroglyzerin.,,,%o tuvo una sobredosis de nitroglicerina.,,%o sai yliannostuksen nitroglyseriiniä.,%o a fait une overdose de nitroglycérine.,,%o ha assunto un sovradosaggio di nitroglicerina.,%o はニトロを過剰摂取した。,%o 은(는) 니트로글리세린을 훅 가게 흡입했다.,%o overdosering op nitroglycerine.,%o przedawkował@[ao_pl] nitroglicerynę.,%o overdosou em nitroglicerina.,,,%o перебрал@[ao_rus] нитроглицерина.,
+%o is flayed into tiny little pieces.,OB_SPLASH,,,,%o byl@[ao_cs] sedřen@[ao_cs] na kousíčky.,%o wurde zerkleinert.,,,%o es despellejad@[ao_esp] en trocitos pequeños.,,%o silpoutui riekaleiksi.,%o s'est fait éparpiller en petits morceaux.,,%o è stato schiacciato.,%o は細かい粒をぶち撒けられた。,%o 은(는) 작은 입자로 분해되었다.,%o wordt gevild in kleine stukjes.,%o został@[ao_pl] roztrzaskan@[adj_pl] na małe kawałeczki.,%o foi detonad@[ao_ptb] em vários pedacinhos.,,,Игрока %o разодрали на мелкие клочки.,
+%o wanted to see what %g looked like inside-out.,OB_R_SPLASH,,,,"%o chtěl@[ao_cs] vědět, jak vypadá zevnitř.",%o wollte @[pp_de] Innereien sehen.,,,%o quería ver que pinta tenía por dentro.,,%o halusi nähdä itsensä nurinperin.,%o voulait voir comment ses organes fonctionnent.,,%o voleva vedere le sue interiora.,%o は %g が裏返しになるのを望んだ。,%o 은(는) 인체의 신비를 감상했다.,%o wilde zien hoe %g er binnenstebuiten uitzag.,%o chciał@[ao_pl] zobaczyć jak %g wygląda od środka.,%o queria ver como são os orgãos internos de %g.,,,"%o хотел посмотреть, что у @[pron_rus] внутри.",
+%o wanted to see what %g looked like inside-out.,OB_ROCKET,,,,"%o chtěl@[ao_cs] vědět, jak vypadá zevnitř.",%o wollte @[pp_de] Innereien sehen.,,,%o quería ver que pinta tenía por dentro.,,%o halusi nähdä itsensä nurinperin.,%o voulait voir comment ses organes fonctionnent.,,%o voleva vedere le sue interiora.,%o は %g が裏返しになるのを望んだ。,%o 은(는) 퀀텀 여행을 즐겼다.,%o wilde zien hoe %g er binnenstebuiten uitzag.,%o chciał@[ao_pl] zobaczyć jak %g wygląda od środka.,%o queria ver como são os orgãos internos de %g.,,,"%o хотел посмотреть, что у @[pron_rus] внутри.",
+%o deleted %hself from the universe.,OB_KILLEDSELF,,,,%o se smazal@[ao_cs] z vesmíru.,%o entfernte sich aus dem Universum.,,,%o se borró a si mism@[ao_esp] del universo.,,%o poisti itsensä maailmankaikkeudesta.,%o s'est effacé@[e_fr] de l'univers.,,%o si è cancellato dall'universo.,%o はこの宇宙から消滅した。,%o 은(는) 자기 자신을 해킹했다.,%o schrapte zichzelf uit het universum.,%o usun@[irreg_2_pl] się ze świata.,%o se deletou deste universo.,,,%o стёр@[irreg_2_rus] себя с лица Вселенной.,
+%o is no longer the dominant species.,OB_THUG,,,,%o už není vládnoucím živočichem.,%o ist nicht länger die dominante Spezies.,,,%o ya no es la especie dominante.,,%o ei ole enää vallitsevaa lajia.,%o n'est plus l'espèce dominante.,,%o non è più la specie dominante.,%o はもはや優性種ではなくなった。,%o 은(는) 그들의 시다바리가 아니였다.,%o is niet langer de dominante soort.,%o nie jest już dominującym gatunkiem.,%o não é mais a espécie dominante.,,,%o больше не доминантная форма жизни.,
+%o plugged in to the wrong machine.,OB_ANDROID,,,,%o se zapojil@[ao_cs] ke špatnému stroji.,%o verband sich mit der falschen Maschine.,,,%o se enchufó en la máquina equivocada.,,%o kytkeytyi väärään koneeseen.,%o s'est branché@[e_fr] à la mauvaise machine.,,%o connesso alla macchina sbagliata.,%o は違うマシンに接続してしまった。,%o 은(는) 잘못된 기계를 작동시켰다.,%o aangesloten op de verkeerde machine.,%o podłączył@[ao_pl] się do złej maszyny.,%o se conectou na máquina errada.,,,Игрока %o подключили не к тому заряднику.,
+%o got %hself a monster of a cyber-jockey-derriere-kicking.,OB_MONSTRUCT,,,,%o dostal@[ao_cs] šíleně kybernakopáno.,%o bekam einen monströsen Cyber-Arschtritt verpasst.,,,%o se ganó la madre de todas las patadas en el culo.,,%o sai hirviömäisen kyberlöylytyksen.,%o s'est fait@[e_fr] botter le cul de manière monumentale.,,% o ho avuto un mostruoso calcio cibernetico mancato.,%o は己に サイバー-ジョッキー-デリエレ-キッキング を取り入れた。,%o 은(는) 저 괴물의 슈퍼-울트라-캡쑝-파워를 맛봤다.,%o kreeg een monsterlijke cybertrap in @[zijn_haar_nl] kont.,%o dostał@[ao_pl] cyber-kopa w dupę.,%o se ferrou cibernéticamente.,,,%o получил@[ao_rus] поджопника от кибер-диджея.,
+%o got ICEd.,OB_ICE,,,,%o byl@[ao_cs] zmražen@[ao_cs] ICEm.,%o wurde verEISt.,,,%o fue ICEad@[ao_esp].,,%o raukkaa nyt varmaankin kICEmittää.,%o s'est fait@[e_fr] ICEr.,,% o è stato ghiacciato.,%o は冷えた。,%o 은(는) 지독하게 물어뜯겼다.,%o was IJS'd.,%o został@[ao_pl] zamrożon@[adj_pl].,"%o foi peg@[ao_ptb] por um ICE. AI, SE ferrou!",,,%o вляпал@[refl_rus] в ЛЁД.,
+%o feels a little buzzed.,OB_BUZZER,,,,%o dostal@[ao_cs] malou pecku.,%o fühlt sich etwas gekitzelt.,,,%o se siente algo zumbad@[ao_esp].,,%o raukan päässä hieman surisee.,%o sent le buzz.,,%o si sente solleticato un po '.,%o は少し賑やかになった。,%o 은(는) 짜릿하게 찔렸다.,%o voelt een beetje gezoemd.,%o poczuł@[ao_pl] brzęczenie.,%o se sente meio chocad@[ao_ptb].,,,%o л@[irreg_3_rus] спать в компании вертолётиков.,
+%o uncovers a rather shocking development.,OB_STEALTH,,,,%o odhalil@[ao_cs] šokující informace.,%o machte eine schockierende Entdeckung.,,,%o descubre algo bastante chocante.,,%o raukalle paljastuu sangen sähköistävä uutinen.,%o a fait une découverte choquante.,,%o ha fatto una scoperta scioccante.,%o はかなり衝撃的な開発を発見した。,%o 은(는) 비밀리에 만들어진 병기를 발견했다.,%o ontdekt een nogal schokkende ontwikkeling.,%o odkrywa coś szokującego.,%o descobre uma revelação chocante.,,,%o встретил@[ao_rus] довольно серьёзный поворот событий.,
+%o was erased from cyberspace.,OB_DMAN,,,,%o byl@[ao_cs] vymazán@[ao_cs] z kyberprostoru.,%o wurde aus dem Cyberspace gelöscht.,,,%o fue borrad@[ao_esp] del ciberespacio.,,%o poistettiin kyberavaruudesta.,%o s'est fait@[e_fr] effacer du cyberespace.,,%o è stato eliminato dal cyberspazio.,%o はサイバースペースに消去された。,%o 은(는) 영구차단을 당했다.,%o werd gewist uit cyberspace.,%o został@[ao_pl] usunięt@[adj_pl] z cyber przestrzeni.,%o foi deletad@[ao_ptb] do ciberespaço.,,,Игрока %o удалили из киберпространства.,
+%o gave %hself a glass jaw.,OB_GLASS,,,,%o si přidělal@[ao_cs] skleněnou čelist.,%o bekam ein Glaskinn.,,,%o se estampó contra un cristal.,,%o antoi itsellensä lasileuan.,%o s'est fait@[e_fr] vitrifier la figure.,,%o ha un mento di vetro.,%o は自身にグラスジョーを取り付けた。,%o 은(는) 유리창을 깨고 등장하는 액션 배우가 아니였다.,%o gaf zichzelf een glazen kaak.,%o był@[ao_pl] zbyt delikatn@[adj_pl] ze szkłem.,%o tem um queixo de vidro.,,,У игрока %o оказалась стеклянная челюсть.,
+%o's life membership was terminated.,OB_MANIAC,,,,%o@[psn_cs] členství v klubu živých bylo přerušeno.,%os Mitgliedschaft im Leben wurde beendet.,,,%o tuvo su afiliación a la vida terminada.,,%o raukan elämänjäsenyys päätettiin.,L'abonnement à vie de %o est arrivé à sa fin.,,L'appartenenza di %o alla vita è finita.,%o のメンバーシップ生活は終幕した。,%o 의 계정은 영원히 삭제되었다.,%o's levenslange lidmaatschap werd beëindigd.,Członkowstwo %o w klubie żywych się skończyło.,%o não está mais afiliad@[ao_ptb] à vida.,,,Игрока %o исключили из клуба живых.,
+%o died in some random method I cannot fathom.,OB_MANIACHIT,,,,"%o umřel@[ao_cs] nějakým způsobem, který ani nemůžu pochopit.",%o starb auf eine unvorstellbare Art und Weise.,,,%o murió de alguna manera que no llego a comprender.,,"%o kuoli jollakin sattumanvaraisella tavalla, jota en voi käsittää.",%o est mort@[e_fr] d'une manière que je n'arrive même pas à décrire.,,%o è morto in un modo inimmaginabile.,%o は計算外の乱数で死んだ。,%o 은(는) 의미불명의 이유로 잠수를 타게 되었다.,%o stierf op een of andere willekeurige manier die ik me niet kan voorstellen.,"%o zgin@[irreg_2_pl] pod wpływem metody, której nie mogę pojąć.",%o morreu de algum método aleatório que nem consigo imaginar.,,,%o внезапно умер@[irreg_2_rus] по непостижимой для меня причине.,
+%o was fried by a femme fatale freak.,OB_TERMIN,,,,%o byl@[ao_cs] usmažen@[ao_cs] šílenou femme fatale.,%o wurde von einem Femme-Fatale Freak gebraten.,,,%o fue tostad@[ao_esp] por una femme fatale.,,%o joutui kohtalokkaan kimman kärtsäämäksi.,%o s'est fait@[e_fr] frire par une femme fatale.,,% o è stato fritto da una femme fatale.,%o はファム ファタル フリークに揚げられた。,%o 은(는) 미인계에 발을 들였다.,%o werd gebakken door een femme fatale freak.,%o został@[ao_pl] usmażon@[adj_pl] przez szaloną femme fatale.,%o foi fritad@[ao_ptb] por uma femme fatale psicótica.,,,Игрока %o поджарила чокнутая роковая женщина.,
+%o got a little close to the opposite sex.,OB_TERMINHIT,"This text is not gender neutral, obviously...",,,%o se moc přiblížil@[ao_cs] k opačnému pohlaví.,%o kam dem anderen Geschlecht zu nahe.,,,%o se acercó demasiado a la persona equivocada.,,%o meni hieman liian lähelle vastakkaista sukupuolta.,%o s'est trop rapproché@[e_fr] de la mauvaise personne.,,%o è arrivato troppo vicino all'altro sesso.,%o は少し異性に成り果てた。,%o 의 남자다운 자존심은 쪼그라들었다.,%o kwam een beetje in de buurt van het andere geslacht.,%o pod@[irreg_1_pl] zbyt blisko do płci pięknej.,%o se aproximou da pessoa errada. Ninguém sabe o quanto que está sofrendo.,,,%o почти сблизил@[refl_rus] с противоположным полом.,
+%o said goodbye to an old friend.,OB_REPLI,,,,%o řekl@[ao_cs] sbohem starému příteli.,%o verabschiedete sich von einem alten Freund.,,,%o se despidió de un viejo amigo.,,%o sanoi hyvästit vanhalle ystävälle.,%o dit au revoir à un vieil ami.,,%o ha detto addio a un vecchio amico.,%o は古い友人に別れを告げた。,%o 은(는) 오랜 친구와 작별인사를 했다.,%o nam afscheid van een oude vriendin.,%o pożegnał@[ao_pl] się ze starym znajomym.,%o disse adeus a um velho amigo.,,,%o распрощал@[refl_rus] со старым другом.,
+%o was stabbed in the back by an old friend.,OB_REPLIHIT,,,,%o byl@[ao_cs] bodnuta do zad starým přítelem.,%o wurde von einem alten Freund in den Rücken gestochen.,,,%o fue apuñalad@[ao_esp] en la espalda por un viejo amigo.,,%o joutui vanhan ystävän selkäänpuukottamaksi.,%o s'est fait@[e_fr] planter une lame dans le dos par un vieil ami.,,%o è stato pugnalato alla schiena da un vecchio amico.,%o は古い友人に背中を刺された。,%o 은(는) 오랜 친구에게 배신을 당했다.,%o werd in de rug gestoken door een oude vriend.,%o został@[ao_pl] dźgnięt@[adj_pl] w plecy przez starego znajomego.,%o foi apunhalad@[ao_ptb] pelas costas por um velho amigo.,,,%o получил@[ao_rus] нож в спину от старого друга.,
+%o was weeded out by natural selection.,OB_PHAGE,,,,%o byl@[ao_cs] vyčištěna přirozeným výběrem.,%o fiel der natürlichen Auslese zum Opfer.,,,%o fue eliminad@[ao_esp] por selección natural.,,%o joutui luonnonvalinnan kitkemäksi.,%o a été éliminé@[e_fr] par la sélection naturelle.,,%o cadde vittima della selezione naturale.,%o は自然淘汰によって除草された。,%o 은(는) 약육강식을 지금까진 모르고 있었다.,%o werd door natuurlijke selectie weggehaald.,%o został@[ao_pl] przesian@[adj_pl] przez naturalną selekcję.,%o foi eliminado por seleção natural.,,,%o был@[ao_rus] отсеян@[ao_rus] естественным отбором.,
+%o couldn't escape a thorny death.,OB_THORN,,,,%o nemohl@[ao_cs] utéct bodlavé smrti.,%o konnte einem dornigen Tod nicht entkommen.,,,%o no pudo escapar una muerte espinosa.,,%o ei kyennyt välttämään piikikästä kuolemaa.,%o n'a pu éviter une mort piquante.,,%o non poteva sfuggire a una morte spinosa.,%o は棘のある死から逃げられなかった。,%o 은(는) 따가운 죽음을 피할 수 없었다.,%o kon niet ontsnappen aan een netelige dood.,%o nie m@[irreg_4_pl] uciec przed cierniową śmiercią.,%o não conseguiu escapar de uma morte espinhosa.,,,Игрока %o поджидала смерть на его тернистом пути.,
+%o took a sumo punch to the groin.,OB_SUMATIC,,,,%o dostal@[ao_cs] sumo ránu pod pás.,%o bekam einen Sumo-Schlag an @[pp_de] empfindlichste Stelle.,,,%o recibió un puñetazo de sumo en la entrepierna.,,%o otti vastaan sumoiskun nivusiin.,%o s'est pris le poing d'un sumo dans l'entrejambe.,,%o ha ricevuto un soffio su un punto sensibile.,%o は股座にスモウ ハリテを食らった。,%o 은(는) 가랑이 사이에 정권을 찔렀다.,%o nam een sumo punch in de lies.,%o dostał@[ao_pl] cios sumo w pachwinę.,%o levou um golpe de sumô na virilha.,,,%o отхватил@[ao_rus] удар в пах от сумоиста.,
+%o didn't get %p three wishes.,OB_GENIE,,,,%o nedostal@[ao_cs] svá tři přání.,%o bekam @[pp_de] drei Wünsche nicht erfüllt.,,,%o no recibió sus tres deseos.,,%o ei saanut kolmea toivettaan.,%o n'a pas préparé ses trois vœux.,,%o non ha soddisfatto i suoi tre desideri.,%o は %p に三願を望まなかった。,%o 은(는) 세 가지 소원을 빌 수 없었다.,%o kreeg niet drie wensen.,%o nie dostał@[ao_pl] swoich trzech życzeń.,%o não concedeu três desejos a %p.,,,%o не загадает трёх желаний.,
+%o tried to pet a mine.,OB_MINE,,,,%o se pokusil@[ao_cs] pohladit minu.,"%o versuchte, eine Mine zu streicheln.",,,%o intentó acariciar una mina.,,%o yritti silittää miinaa.,%o a essayé de caresser une mine.,,%o ha provato ad accarezzare una mina.,%o は地雷を愛撫しようとした。,%o 은(는) 기뢰와 친구가 되고 싶었다.,%o probeerde een mijn te aaien.,%o próbował@[ao_pl] pogłaskać minę.,%o tentou fazer carinho na mina.,,,%o хотел@[ao_rus] погладить мину.,
+%o took %k's Bruce Lee fu-kick to the face.,OB_MPKICK,,,,%o dostal@[ao_cs] kopanec do obličeje od kung-fuistou %k.,%o bekam einen Bruce-Lee-Fußtritt ins Gesicht.,,,%o se comió una patada de kung-fu a lo Bruce Lee de %k.,,%k potkaisi %o raukkaa päin naamaa Bruce Leen kung fu-tyyliin.,%o s'est mangé@[e_fr] un coup de pied à la Bruce Lee de la part de %k.,,%o ha un calcio in faccia.,%o の顔に %k のブルースリーキックを当てた。,%o 은(는) %k 의 거침없는 하이킥을 받았다.,%o nam %k's Bruce Lee fu-kick in het gezicht.,%o dostał@[ao_pl] kopniakiem w stylu Bruce'a Lee od %k prosto w twarz.,%o tomou uma voadora de %k na cara.,,,"%o отхватил@[ao_rus] от игрока %k удар в лицо, достойный Брюса Ли.",
+%o fell apart via %k's shocking revelation.,OB_MPREZNATOR,,,,%o se rozpadl@[ao_cs] šokujícím odhalením hráče %k.,%o erhielt eine schockierende Enthüllung von %k.,,,%o cayó ante la revelación chocante de %k.,,%o romahti käyttäjän %k sähköistävästä ilmestyksestä.,%o a été témoin de la révélation choquante de %k.,,%o ricevette una scioccante rivelazione da %k.,%o は %k の衝撃的な啓示によりバラバラになった。,%o 은(는) %k 이(가) 선사한 전기 찜질을 맛봤다.,%o viel uit elkaar via %k's schokkende onthulling.,%o rozpadł@[ao_pl] się pod wpływem szokującego objawienia %k.,%o ficou arrasad@[ao_ptb] pela revelação chocante de %p.,,,%o шокирован@[ao_rus] откровениями %k.,
+%o took a double-dose of %k's punishment.,OB_MPXPISTOL,,,,%o dostal@[ao_cs] dvojitou dávku potrestání hráče %k.,%o bekam eine doppelte Dosis von %ks Bestrafung.,,,%o recibió una doble dosis del castigo de %k.,,%o otti tupla-annoksen käyttäjän %k kuritusta.,%o a mangé une double dose de la furie de %k.,,%o ha ottenuto una doppia dose della punizione di %k.,%o は %k の懲罰を二度受けた。,%o 은(는) %k 의 2총신 사격을 받았다.,%o nam een dubbele dosis van %k's straf.,%o dostał@[ao_pl] podwójną dawkę kary %k.,%o tomou uma dose dupla da punição de %k.,,,%o принял@[ao_rus] двойную дозу возмездия от %k.,
+%o was shut down by %k's shock-stick.,OB_MPTAZER,,,,%o byl@[ao_cs] vypnut@[ao_cs] šokádou hráče %k.,%o wurde von %ks Schockstab ausgeschaltet.,,,%o fue noquead@[ao_esp] por la vara eléctrica de %k.,,%o joutui käyttäjän %k sähkökepin sammuttamaksi.,%o s'est fait mettre K.O par le bâton électrique de %k.,,%o è stato spento dalla bacchetta di %k.,%o は %k のショックスティックでシャットダウンした。,%o 은(는) %k 의 무력행사에 아예 포기했다.,%o werd uitgeschakeld door %k's schokstick.,%o został@[ao_pl] wyłączon@[adj_pl] przez szokującą pałkę %k.,%o foi desligado pelo espeto chocante de %k.,,,%o выведен из строя электродубинкой %k.,
+%o got a face-full of %k's ice-cold wrath.,OB_MPCRYOGUN,,,,%o se zabořil@[ao_cs] do mrazivého hněvu hráče %k.,%o bekam eine Ladung von %ks eiskaltem Zorn ins Gesicht.,,,%o recibió la ira gélida de %k en toda la cara.,,%o sai saamansa täyteen käyttäjän %k jääkylmää vihaa.,%o s'est fait congeler la figure par la colère glaciale de %k.,,%o ha un carico di freddo gelido di %k in faccia.,%o は %k の冷めた表情で凍った。,%o 은(는) %k 덕분에 맛있게 냉동 보존되었다.,%o kreeg een gezicht vol met %k's ijskoude toorn.,%o dostał@[ao_pl] wielką dawkę mroźnego gniewu %k.,%o foi congelad@[ao_ptb] pelo tratamento frígido de %k. ,,,%o столкнулся с ледяной ненавистью %k.,
+"%o was drilled full of holes by %k, gangsta-style.",OB_MPUZI,,,,%o byl@[ao_cs] prostřílen@[ao_cs] skrz na skrz gangsterem %k.,%o wurde von %k im Gangsta-Stil perforiert.,,,"%o fue acribillad@[ao_esp] por %k, al estilo gangster.",,%k porasi %o raukan täyteen reikiä gangsta-tyyliin.,"%o s'est fait perforer dans tous les sens par %k, Gangsta style.",,%o è stato perforato da %k in stile gangsta.,%o はギャングの様な %k に蜂の巣にされた。,%o 은(는) %k 이(가) 선사한 갱스터 스타일 난사를 막지 못했다.,"%o werd vol gaten geboord met %k, in gangsta-stijl.",%o został@[ao_pl] podziurawion@[adj_pl] przez %k niczym gangster.,"%o foi levou pipoco de %k, gangsta style.",,,%o покрылся дырками после гангста-стрельбы игрока %k.,
+%o ate %k's photon bomb.,OB_MPZOOKA,,,,%o sežral@[ao_cs] fotonovou bombu hráče %k.,%o nahm %ks Photonenbombe.,,,%o se comió la bomba de fotones de %k.,,%o söi käyttäjän %k fotonipommin.,%o a bouffé la bombe photonique de %k.,,%o ha preso la bomba fotonica di %k.,%o は %k のフォトンボムを食らった。,%o 은(는) %k 의 광자탄을 봤는데도 피하지 못했다.,%o at %o %k's fotonbom.,%o zjadł@[ao_pl] fotonową bombę %k.,%o engoliu a bomba de fótons de %k.,,,%o съел@[ao_rus] фотонную бомбу %k.,
+%o was reduced to a neat pile of photons by %k.,OB_MPZ_SPLASH,,,,%o byl@[ao_cs] zredukován@[ao_cs] na hromádku fotonů hráčem %k.,%o wurde von %k zu einem Haufen Photonen verarbeitet.,,,%o fue reducid@[ao_esp] a una pila de fotones por %k.,,%k redusoi %o raukan sieväksi fotonipinoksi.,%o s'est fait@[e_fr] réduire en une jolie pile de photons par %k.,,%o è stato elaborato da %k in un mucchio di fotoni.,%o は %k によって蛍光灯にされた。,%o 은(는) %k 의 광자력을 탐냈다. 죽기 전까지는.,%o werd gereduceerd tot een nette stapel fotonen met %k.,%o został@[ao_pl] zredukowan@[adj_pl] do maleńkiej kupki fotonów przez %k.,%o foi reduzido à uma bela pilha de fótons por %k.,,,%o был@[ao_rus] разложен@[ao_rus] игроком %k в аккуратную кучку фотонов.,
+%o was reduced to antimatter by %k.,OB_MPANTIGUN,"Physically this is utter nonsense, of course.",,,%o byl@[ao_cs] zredukován@[ao_cs] na antihmotu hráčem %k.,%o wurde von %k zu Antimaterie reduziert.,,,%o fue reducid@[ao_esp] a antimateria por %k.,,%k redusoi %o raukan antimateriaksi..,%o s'est fait inverser les atomes par %k.,,%o è stato ridotto all'antimateria da %k,%o は %k のにより反物質に変換された。,%o 은(는) %k 의 반물질의 힘에 의해 소멸되었다.,%o werd gereduceerd tot antimaterie met %k.,%o został@[ao_pl] zredukowan@[adj_pl] do antymaterii przez %k.,%o foi transformado em antimatéria por %k.,,,%o был@[ao_rus] разложен@[ao_rus] игроком %k до антиматерии.,
+%o swallowed %k's nuke.,OB_MPNUKE,,,,%o spolkl@[ao_cs] atomovku hráče %k.,%o verschluckte sich an %ks Atomrakete.,,,%o se tragó la bomba atómica de %k.,,%o nieli käyttäjän %k ydinpommin.,%o s'est pris@[e_fr] la bombe thermonucléaire de %k dans la figure.,,%o soffocò sul missile nucleare di %k.,%o は %k の核を飲み干した。,%o 은(는) %k 덕분에 하늘을 뚫을 버섯구름이 되었다.,%o geslikt %o nuke %k's nuke.,%o połkn@[irreg_2_pl] atomówkę %k.,%o engoliu o míssil núclear de %k.,,,%o проглотил@[ao_rus] ядерный заряд %k.,
+%o went nuclear from %k's mass destruction spree.,OB_MPNUKESPLASH,,,,%o si zkrátil@[ao_cs] svůj poločas rozpadu při zabijačce hráče %k.,%o wurde von %ks Massenzerstörungsaktion verstrahlt.,,,%o se volvió radioactiv@[ao_esp] por la racha de destrucción masiva de %k.,,%o muuttui radioaktiiviseksi käyttäjän %k massatuhoputken takia.,%o s'est fait@[e_fr] irradier par la folie destructrice de %k.,,%o fu irradiato dall'azione di distruzione di massa di %k.,%o は %k の虐殺ごっこの犠牲者になった。,%o 은(는) %k 의 핵실험에 참여했다.,%o werd nucleair van de massavernietigingswoede van %k's massavernietigingswoede.,%o został@[ao_pl] napromieniowan@[adj_pl] przez masową destrukcję %k.,%o virou picadinho radioativo por causa da destruição em massa causada por %k.,,,%o светится в темноте от оружия массового поражения %k.,
+%o was turned inside-out by %k.,OB_MPTELEFRAG,,,,%o byl@[ao_cs] obrácen@[ao_cs] naruby hráčem %k.,%o wurde von %k zerfetzt.,,,%o fue puest@[ao_esp] del revés por %k.,,%k käänsi %o raukan nurinpäin.,%o s'est fait@[e_fr] inverser par %k.,,%o fu fatto a pezzi da %k,%o は %k に裏返しにされた。,%o 은(는) %k 에 의해 자신이 분해되는 꼴을 못 봤다.,%o werd binnenstebuiten gekeerd met %k.,%o został@[ao_pl] wywrócon@[adj_pl] na lewą stronę przez %k.,%o foi virad@[ao_ptb] ao avesso por %k.,,,Игрока %o вывернут наизнанку игроком %k.,
+%o's atomic structure was split apart.,OB_MONTELEFRAG,,,,Struktura atomů hráče %o se rozpadla.,%os Atomstruktur wurde vernichtet.,,,%o fue desintegrad@[ao_esp] al nivel atómico.,,%o raukan atomirakenne hajosi.,%o s'est fait@[e_fr] désassembler au niveau atomique.,,La struttura atomica di %o fu distrutta.,%o の原子構造は分解された。,%o 의 원자 마디마디가 흩어졌다.,De atoomstructuur van %o werd gesplitst.,Atomy %o zostały od siebie oddzielone.,A estrutura atômica de %o foi separada.,,,Атомная структура игрока %o разрушена.,
+%o spontaneously expired.,OB_DEFAULT,,,,%o samovolně vypršel@[ao_cs].,%o hörte spontan auf zu existieren.,,,%o tuvo una muerte espontánea.,,%o spontaanisti kupsahti.,%o a spontanément expiré.,,%o ha smesso spontaneamente di esistere.,%o の有効期限が自発的に切れた,%o 은(는) 파란만장하게 사라졌다.,%o is spontaan verlopen.,%o spontanicznie umarł@[ao_pl].,%o pereceu expontâneamente.,,,Время игрока %o неожиданно вышло.,
+You grab a NUKER! Suck on this!,GOTNUKER,,,,Sebral@[ao_cs] jsi ATOMOVKÁTOR! Pojď na to!,Ein NUKER! Verschluck dich daran.,,,¡Has pillado un NUKER! ¡Chupaos esa!,¡Has recogido un NUKER! ¡Chúpate esa!,%Kahmaiset YDÄRIN! Ime tätä!,Vous découvrez le NUKER! Ca va en chier!,,Prendi un NUKER! Succhia su questo!,NUEKR を奪った! 覚悟しろ!,누커 획득! 한바탕 쓸어볼까!,Je pakt een NUKER! Zuig hier maar aan!,Podniosłeś ATOMÓWKĘ! Ssijcie to!,Você pegou um NUKER! Chupa essa manga!,,,Заполучен ЯДЕРНЫЙ ГРАНАТОМЁТ! Отсосите!,
+You got an UZI!!,GOTUZI,,,,Získal@[ao_cs] jsi UZI!,UZI genommen!,,,¡¡Has obtenido una UZI!!,,Sait UZIn!!,Vous chopez un UZI!,,Hai un UZI !!,UZI をゲットした!!,우지 기관단총 획득!,Je hebt een UZI!!,Zdobyłeś UZI!!,Você pegou uma UZI!!,,,Заполучен УЗИ!,
+A HOIG Reznator - FRY some butt,GOTREZNATOR,,,,HOIG Reznátor - pár jich upeč,Ein HOIG Reznator.,,,Un Reznator HOIG. ¡Hora de freir traseros!,,HOIG-reznaattori - KÄRISTÄ takamuksia,"Un Reznator HOIG, allez frire du monde!",,Un Reignator HOIG - friggere un po 'di carne,HOIGレジネイター - ぶっ潰してやれ,HOIG 전자무력기 획득! 전기 통구이를 만들자고!,Een HOIG Reznator – FRY sommige kont,Reznator HOIG - skop trochę tyłków,Um Reznador HOIG - Hora de fritar,,,ХОЙГ Резнатор,
+You got a Photon 'Zooka!,GOTPHOTONZOOKA,,,,Sebral@[ao_cs] jsi Fotonovou bazuku!,Photonen-'zooka genommen!,,,¡Has obtenido un Bazooka de Fotones!,,Sait fotonisingon!,Vous récupérez un Bazooka Photonique!,,Hai un cannone Photon!,フォトン'ゾーカ をゲットした!,광자 바주카 획득!,Je hebt een Photon 'Zooka!,Zdobyłeś Fotonozukę!,Você pegou uma Bazuca de Fótons!,,,Заполучена Фотон-базука!,
+You carry a Big Stick!,GOTBIGSTICK,,,,Nosíš velkou bouchačku!,Du trägst einen langen Stock.,,,¡Llevas un Gran Palo!,,Kannat isoa keppiä!,Vous avez un gros bâton!,,Porti un grosso bastone!,ビッグスティック を手に取った!,반물질 봉 획득!,Je draagt een Big Stick!,Podnosisz Wielką Pałkę!,Você pegou um Grande Bastão!,,,Заполучена Длинная палка!,
+You got a Tazer!!,GOTTAZER,,,,Získal@[ao_cs] jsi tazer!,Tazer genommen!,,,¡¡Has obtenido un Taser!!,,Sait etälamauttimen!!,Vous trouvez un Taser!,,Hai un Taser !!,テイザー をゲットした!,테이져 획득!,Je hebt een Tazer!!,Zdobyłeś Tazer!!,Você pegou um Tazer!!,,,"Заполучен Тазер!
+",
+You grab a Cryogun! FREEZE!,GOTCRYOGUN,,,,Sebral@[ao_cs] jsi krypušku! ANI SE NEHNI!,Cryowaffe genommen! GEFRIER!,,,¡Has pillado un Criogenizador!! ¡Todos quietos!,¡Has recogido un Criogenizador!! ¡Quietos todos!,Kahmaiset kryopyssyn! PYSÄHDY!,Vous prenez un Cryogun! On s'arrête!,,Prendi un Cryogun! CONGELARE!,クライォガン を奪った! フリーズ!,크라이로건 획득! 그대로 멈춰라!,Je pakt een Cryogun! FREEZE!,Podniosłeś Zamrażarkę! STAĆ!,Você pegou uma Cryogun! FICA FRIO AÍ!,,,Заполучена Замораживающая пушка! НИ С МЕСТА!,
+You grab some rounds!,GOTROUNDS,,,,Sebral@[ao_cs] jsi nějaké náboje!,Munition genommen.,,,¡Has pillado unas balas!,¡Has recogido unas balas!,Kahmaiset patruunoita!,Vous prenez des balles!,,Prendi delle munizioni!,幾つかのラウンド を奪った!,권총 탄약을 주웠다!,Je pakt wat rondes!,Podniosłeś trochę naboi!,Você pegou munição!,,,Заполучена обойма патронов!,
+You grab a case of rounds!,GOTROUNDSCASE,,,,Sebral@[ao_cs] jsi krabici nábojů!,Munitionskiste genommen.,,,¡Has pillado una caja de balas!,¡Has recogido una caja de balas!,Kahmaiset patruunalaatikon!,Vous prenez une bôite de balles!,,Prendi un caso di munizioni!,ケースのラウンド を奪った!,권총 탄약 상자를 주웠다!,Je pakt een kist met rondes!,Podniosłeś skrzynkę naboi!,Você pegou uma caixa de munição!,,,Заполучена коробка патронов!,
+You grab a Torpedo!,GOTTORPEDO,"Was ""grap"" for some reason.",,,Sebral@[ao_cs] jsi torpédo!,Torpedo genommen.,,,¡Has pillado un torpedo!,¡Has recogido un torpedo!,Kahmaiset torpedon!,Vous prenez une torpille!,,Prendi un siluro!,トルペード を奪った!,광자탄을 주웠다!,Je pakt een Torpedo!,Podniosłeś Torpedę!,Você pegou um Torpedo!,,,Заполучена торпеда!,
+You grab a case of Torpedos!,GOTTORPEDOS,,,,Sebral@[ao_cs] jsi krabici torpéd!,Torpedokiste genommen.,,,¡Has pillado una caja de torpedos!,¡Has recogido una caja de torpedos!,Kahmaiset torpedolaatikon!,Vous prenez une bôite de torpilles!,,Prendi un caso di siluri!,トルペードのケース を奪った!,광자탄 무더기를 주웠다!,Je pakt een kist Torpedo's!,Podniosłeś skrzynkę Torped!,Você pegou uma caixa de Torpedos!,,,Заполучен ящик торпед!,
+You grab a molecule module!,GOTMOLECULES,,,,Sebral@[ao_cs] jsi molekulový modul!,Molekülmodul genommen,,,¡Has pillado un módulo molecular!,¡Has recogido un módulo molecular!,Kahmaiset molekyylimoduulin!,Vous prenez un module moléculaire!,,Prendi un modulo molecolare!,モーレキュールモヂュール を奪った!,분자 모듈을 주웠다!,Je pakt een molecuulmodule!,Podniosłeś molekularny moduł!,Você pegou um módulo molecular!,,,Заполучен молекулярный модуль!,
+You grab a tank full of molecules!,GOTMOLECULESTANK,,,,Sebral@[ao_cs] jsi sud plný molekul!,Tank mit Molekülmodulen genommen.,,,¡Has pillado un tanque lleno de moléculas!,¡Has recogido un tanque lleno de moléculas!,Kahmaiset tankin täynnä molekyylejä!,Vous prenez un réservoir de molécules!,,Prendi un serbatoio pieno di molecole!,タンク満タンのモーレキュール を奪った!,분자 탱크를 주웠다!,Je pakt een tank vol met moleculen!,Podniosłeś zbiornik pełen molekuł!,Você pegou um tanque cheio de moléculas!,,,Заполучен контейнер с молекулами!,
+You grab some Cartridges!,GOTCARTRIDGES,,,,Sebral@[ao_cs] jsi nějaké kazety!,Magazin genommen.,,,¡Has pillado unos cartuchos!,¡Has recogido unos cartuchos!,Kahmaiset kasetteja!,Vous prenez des cartouches!,,Prendi alcune cartucce!,残弾のカートリッジ を奪った!,카트리지 한 줌을 주웠다!,Je pakt een paar patronen!,Podniosłeś trochę pocisków!,Você pegou alguns Carregadores!,,,Заполучены картриджи!,
+You grab a case of Cartridges!,GOTCARTRIDGESCASE,,,,Sebral@[ao_cs] jsi krabici kazet!,Magazinkiste genommen.,,,¡Has pillado una caja de cartuchos!,¡Has recogido una caja de cartuchos!,Kahmaiset laatikollisen kasetteja!,Vous prenez une bôite de cartouches!,,Prendi un caso di cartucce!,カートリッジケース を奪った!,카트리지 박스를 주웠다!,Je pakt een kist patronen!,Podniosłeś skrzynkę pocisków!,Você pegou uma caixa de Carregadores!,,,Заполучен ящик картриджей!,
+You grab a Valise stuffed with goods!,GOTVALISE,,,,Sebral@[ao_cs] jsi kufr plný munice!,Munitionstasche genommen.,,,¡Has pillado una maleta llena de equipamiento!,¡Has recogido una maleta llena de equipamiento!,Kahmaiset laukullisen täynnä tavaraa!,Vous récupérez une valise pleine d'équipement!,,Prendi una Valigia piena di merci!,代物を詰めたバリス を奪った!,탄약이 든 서류 가방을 주웠다!,Je pakt een Valise gevuld met goederen!,Podniosłeś Walizkę z wieloma dobrami!,Você pegou uma Mala cheia de equipamento!,,,Заполучена полная сумка боеприпасов!,
+Force Field!,GOTFORCEFIELD,,,,Silové pole!,Kraftfeld!,,,¡Campo de fuerza!,,Voimakenttä!,Champ de force!,,Campo di forza!,フォースフィールド!,방어막!,Krachtveld!,Pole Siłowe!,Campo de Força!,,,Силовое поле!,
+007Microtel,GOTMICROTEL,,,,,,,,Microtel 007,,,007 Microtel,,,007マイクロテル,007마이크로텔 근력 향상 칩!,,,,,,Микрочип 007,
+You are EnK Blind!,GOTENKBLIND,,,,Jsi EnK-slep@[adj_cs]!,Du bist EnK-blind!,,,¡Tienes Ceguera EnK!,,Olet EnK-sokea!,Vous êtes aveugle à l'EnK!,,Sei EnK-cieco!,EnKブラインドみてえだ!,EnK 투명 위장 장치!,Jij bent EnK Blind!,Jesteś oślepiony przez EnK!,Você está vendado por EnK!,,,"У тебя EnK-видимость!
+",
+Vulcan rubber Boots!,GOTRUBBERBOOTS,,,,Gumové boty!,Gummistiefel!,,,¡Botas de goma vulcanizada!,,Vulkanoidut kumisaappaat!,Bottes en caoutchouc vulcanisé!,,Stivali di gomma vulcanica!,バルカンラバーブーツ!,벌컨 방화 부츠!,Vulcan rubber Laarzen!,Gumowe Buty Vulcan!,Botas Vulcanizadas!,,,Резиновые сапоги!,
+SI Array mapping!,GOTSIARRAY,,,,Mapa pole SI!,SI-Feld Karte!,,,¡Mapeado de Tabla SI!,,SI-kenttäkartta!,Carte du tableau SI!,,Mappatura di array SI!,SIアーレイ マッピング!,Si 어레이 지도!,,Mapa Pola SI!,Mapeamento por Campo de SI!,,,Составлена карта SI-массива!,
+Infrared Visor!,GOTINFRARED,,,,Infračervené brýle!,Infrarotbrille!,,,¡Visor infrarrojo!,,Infrapunavisiiri!,Viseur infrarouge!,,Visore a infrarossi!,赤外線バイザー!,적외선 바이져!,Infrarood vizier!,Wizjer na Podczerwień!,Visor Infravermelho!,,,Инфракрасный визор!,
+"Breathe deep, Inhaler!",GOTINHALER,,,,"Pořádně se nadechni, inhalátor!","Atme tief, Inhalierer!",,,"¡Un inhalador, inspira fuerte!",,"Hengitä syvään, inhalaattori!","Respire, inhaleur!",,"Respirare profondamente, inalatore!",深呼吸だ、インヘイラー!,각성제를 주웠다. 잘 들이마셔!,"Adem diep in, inhalator!",Weź głęboki wdech! Inhalator!,Inalador! Respira fundo!,,,Ингалятор! Вдыхай глубже!,
+A dose of Hydergine from a Hypo saves you!,GOTHYPONEED,,,,Jsi zachráněn@[ao_cs] dávkou Hyderginu z Hypa!,Eine Dosis Hydergine rettet dich!,,,¡Una dosis de Hydergina te salva la vida!,,Hyderginepiikkiannos pelastaa sinut!,Une bonne dose d'hydergine vous sauve la vie!,,Una dose di Hydergine di un Hypo ti salva!,ハイポで ヒデルギン をキメた!,하이포의 하이데르진이 당신을 살렸다!,Een dosis Hydergine van een Hypo redt je!,Dawka Hyderginy z Hypo ratuje cię!,Uma dose de hidergina do Hypo para te salvar!,,,Доза Редергина из шприца спасла тебя!,
+You grab a Hypo!,GOTHYPO,,,,Sebral@[ao_cs] jsi Hypo!,Hypo!,,,¡Has pillado una jeringa hipodérmica!,,Kahmaiset piikin!,Vous prenez une seringue!,,Prendi un Hypo!,ハイポ を奪った!,하이포를 주웠다!,Je pakt een Hypo!,Podniosłeś Hypo!,Você pegou um Hypo!,,,Заполучен шприц!,
+You found a KeyCard!,GOTKEYCARD,,,,Nalezl@[ao_cs] jsi přístupovou kartu!,Schlüsselkarte gefunden!,,,¡Has encontrado una Tarjeta Llave!,,Löysit avainkortin!,Vous trouvez une clé magnétique!,,Hai trovato una chiave magnetica!,キーカードを見つけた!,키 카드를 찾았다!,U heeft een sleutelkaart gevonden!,Znalazłeś Kartę Dostępu!,Você achou um Cartão de Passe!,,,Найдена ключ-карта!,
+You found a C-Key!,GOTCKEY,,,,Nalezl@[ao_cs] jsi kyberklíč!,C-Schlüssel gefunden!,,,¡Has encontrado una Llave-C!,,Löysit C-avaimen!,Vous trouvez une C-Clé!,,Hai trovato una chiave C!,C-keyを見つけた!,C-키를 찾았다!,Je hebt een C-sleutel gevonden!,Znalazłeś Klucz C!,Você achou uma Chave-C!,,,Найден C-образный ключ!,
+You found a Password!,GOTPASSWORD,,,,Nalezl@[ao_cs] jsi heslo!,Passwort gefunden!,,,¡Has encontrado una Contraseña!,,Löysit salasanan!,Vous trouvez un mot de passe!,,Hai trovato una parola d'ordine!,パスワードを見つけた!,암호를 찾았다!,U heeft een wachtwoord gevonden!,Znalazłeś Hasło!,Você achou uma Senha!,,,Найден пароль!,
+You found a blue Z-Key!,GOTBLUEZKEY,,,,Nalezl@[ao_cs] jsi modrý Z-klíč!,Blauen Z-Schlüssel gefunden!,,,¡Has encontrado una Llave-Z azul!,,Löysit sinisen Z-avaimen!,Vous trouvez une Z-Clé bleue!,,Hai trovato una chiave Z blu!,ブルー Z-Key を見つけた!,청색 Z-키를 찾았다!,Je hebt een blauwe Z-sleutel gevonden!,Znalazłeś niebieski Klucz Z!,Você achou uma Chave-Z azul!,,,Найден синий Z-образный ключ!,
+You found a yellow Z-Key!,GOTYELWZKEY,,,,Nalezl@[ao_cs] jsi žlutý Z-klíč!,Gelben Z-Schlüssel gefunden!,,,¡Has encontrado una Llave-Z amarilla!,,Löysit keltaisen Z-avaimen!,Vous trouvez une Z-Clé jaune!,,Hai trovato una chiave Z gialla!,イエローZ-Key を見つけた!,황색 Z-키를 찾았다!,Je hebt een gele Z-sleutel gevonden!,Znalazłeś żółty Klucz Z!,Você achou uma Chave-Z amarela!,,,Найден жёлтый Z-образный ключ!,
+You found a red Z-Key!,GOTREDZKEY,,,,Nalezl@[ao_cs] jsi červený Z-klíč!,Roten Z-Schlüssel gefunden!,,,¡Has encontrado una Llave-Z roja!,,Löysit punaisen Z-avaimen!,Vous trouvez une Z-Clé rouge!,,Hai trovato una chiave Z rossa!,レッド Z-Key を見つけた!,적색 Z-키를 찾았다!,Je hebt een rode Z-sleutel gevonden!,Znalazłeś czerwony Klucz Z!,Você achou uma Chave-Z vermelha!,,,Найден красный Z-образный ключ!,
+Body Armor!,GOTBODYARMOR,,,,Brnění!,Körperpanzerung!,,,¡Armadura!,,Suojavarustus!,Armure!,,Giubbotti antiproiettile!,ボディーアーマー!,강화복!,Kogelvrije vesten!,Pancerz!,Colete a Prova de Balas!,,,Бронежилет!,
+Centrophenoxine,GOTCENTROPHENOXINE,,,,Centrofenoxin,,,,¡Centrofenoxina!,,Sentrofenoksiinia,Centrophenoxine!,,,セントロフェノキシン!,메클로페녹세이트!,,Centrofenoxina,Centrofenoxina,,,Центрофеноксин,
+You grab a Kevlar vest!,GOTKEVLARVEST,,,,Sebral@[ao_cs] jsi kevlarovou vestu!,Kevlarweste!,,,¡Has pillado un traje de Kevlar!,¡Has recogido un traje de Kevlar!,Kahmaiset Kevlar-liivit!,Veste en Kevlar!,,Prendi una maglia di kevlar!,ケブラーベスト を奪った!,방탄복을 주웠다!,Pak een Kevlar vest!,Podniosłeś kamizelkę kuloodporną!,Você pegou um Colete de Kevlar!,,,Заполучен кевларовый жилет!,
+You grab Super Kevlar vest!,GOTSKEVLARVEST,,,,Sebral@[ao_cs] jsi superkevlarovou vestu!,Super-Kevlarweste!,,,¡Has pillado un supertraje de Kevlar!,¡Has recogido un supertraje de Kevlar!,Kahmaiset Superkevlar-liivit!,Super Veste en Kevlar!,,Prendi una maglia super kevlar!,スーパーケブラーベスト を奪った!,중 방탄복을 주웠다!,Je pakt een Super Kevlar vest!,Podniosłeś superkamizelkę kuloodporną!,Você pegou um Super Colete de Kevlar!,,,Заполучен усиленный кевларовый жилет!,
+You grab a MicroKit!,GOTMICROKIT,,,,Sebral@[ao_cs] jsi mikrosadu!,MicroKit genommen!,,,¡Has pillado un MicroKit!,¡Has recogido un MicroKit!,Kahmaiset Microkitin!,Microkit!,,Prendi un MicroKit!,マイクロキット を奪った!,마이크로킷을 주웠다!,Je pakt een MicroKit!,Podniosłeś MikroZestaw!,Você pegou um MicroKit!,,,Заполучена мини-аптечка!,
+You grab a Dampener!,GOTDAMPENER,,,,Sebral@[ao_cs] jsi tlumič!,Dämpfer genommen!,,,¡Has pillado un Amortiguador!,¡Has recogido un Amortiguador!,Kahmaiset vaimentimen!,Amortisseur!,,Prendi un antivento!,ダンプナー を奪った!,완충 장치를 주웠다!,Je pakt een Demper!,Podniosłeś Tłumik!,Você pegou um Amortecedor!,,,Заполучен глушитель!,
+You need a C-Key to access this item!,PD_CKEY,,,,K přístupu potřebuješ kyberklíč!,Du brauchst einen C-Schlüssel um das hier zu bedienen.,,,¡Necesitas una Llave-C para acceder a este objeto!,,Tarvitset C-avaimen saadaksesi pääsyn tähän kohteeseen!,Il vous faut une C-Clé pour accéder à cet objet!,,Hai bisogno di una chiave C per accedere a questo oggetto!,アクセスには C-key が必要だ!,C-키가 있어야 작동이 가능하다!,Je hebt een C-sleutel nodig om toegang te krijgen tot dit item!,Potrzebujesz Klucza C by uruchomić ten przedmiot.,Você precisa de uma Chave-C para acessar!,,,"Нет доступа, нужен C-образный ключ!",
+You need a KeyCard to access this item!,PD_KEYCARD,,,,K přístupu potřebuješ přístupovou kartu!,Du brauchst eine Schlüsselkarte um das hier zu bedienen.,,,¡Necesitas una Tarjeta Llave para acceder a este objeto!,,Tarvitset avainkortin saadaksesi pääsyn tähän kohteeseen!,Il vous faut une carte magnétique pour accéder à cet objet!,,Hai bisogno di una chiave magnetica per accedere a questo oggetto!,アクセスには キーカード が必要だ!,키 카드가 있어야 작동이 가능하다!,U heeft een sleutelkaart nodig om toegang te krijgen tot dit item!,Potrzebujesz Karty Dostępu by uruchomić ten przedmiot!,Você precisa de uma Chave de Passe para acessar!,,,"Нет доступа, нужен ключ-карта!",
+You need a Password to access this item!,PD_PASSWORD,,,,K přístupu potřebuješ heslo!,Du brauchst eine Passwort um das hier zu bedienen.,,,¡Necesitas una Contraseña para acceder a este objeto!,,Tarvitset salasanan saadaksesi pääsyn tähän kohteeseen!,Il vous faut un mot de passe pour accéder à cet objet!,,Hai bisogno di una parola d'ordine per accedere a questo oggetto!,アクセスには パスワード が必要だ!,암호를 입력해야 작동이 가능하다!,Je hebt een wachtwoord nodig om toegang te krijgen tot dit item!,Potrzebujesz Hasła by uruchomić ten przedmiot!,Você precisa de uma Senha para acessar!,,,"Нет доступа, нужен пароль!",
+You need a Blue Z-Key to make this work,PD_BLUEZKEY,,,,Tohle bude fungovat jen s modrým Z-klíčem.,Du brauchst einen blauen Z-Schlüssel um das hier zu bedienen.,,,¡Necesitas una Llave-Z azul para hacer funcionar esto!,,Tarvitset sinisen Z-avaimen saadaksesi tämän toimimaan!,Il vous faut une Z-Clé bleue pour faire fonctionner cela.,,Hai bisogno di una chiave Z blu per accedere a questo oggetto!,アクセスには ブルーZ-key が必要だ!,청색 Z-키가 있어야 작동이 가능하다!,Je hebt een blauwe Z-sleutel nodig om dit te laten werken.,Potrzebujesz Niebieskiego Klucza Z by zadziałało!,Você precisa de uma Chave-Z azul para fazer isto funcionar!,,,"Не работает, нужен синий Z-образный ключ!",
+You need a Red Z-Key to make this work!,PD_REDZKEY,,,,Tohle bude fungovat jen s červeným Z-klíčem.,Du brauchst einen roten Z-Schlüssel um das hier zu bedienen.,,,¡Necesitas una Llave-Z roja para hacer funcionar esto!,,Tarvitset punaisen Z-avaimen saadaksesi tämän toimimaan!,Il vous faut une Z-Clé rouge pour faire fonctionner cela.,,Hai bisogno di una chiave Z gialla per accedere a questo oggetto!,アクセスには レッドZ-key が必要だ!,적색 Z-키가 있어야 작동이 가능하다!,Je hebt een rode Z-sleutel nodig om dit te laten werken!,Potrzebujesz Czerwonego Klucza Z by zadziałało!,Você precisa de uma Chave-Z vermelha para fazer isto funcionar!,,,"Не работает, нужен красный Z-образный ключ!",
+You need a Yellow Z-Key to make this work!,PD_YELWZKEY,,,,Tohle bude fungovat jen se žlutým Z-klíčem.,Du brauchst einen gelben Z-Schlüssel um das hier zu bedienen.,,,¡Necesitas una Llave-Z amarilla para hacer funcionar esto!,,Tarvitset keltaisen Z-avaimen saadaksesi tämän toimimaan!,Il vous faut une Z-Clé jaune pour faire fonctionner cela.,,Hai bisogno di una chiave Z rossa per accedere a questo oggetto!,アクセスには イエローZ-key が必要だ!,황색 Z-키가 있어야 작동이 가능하다!,Je hebt een gele Z-sleutel nodig om dit te laten werken!,Potrzebujesz Żółtego Klucza Z by zadziałało!,Você precisa de uma Chave-Z amarela para fazer isto funcionar!,,,"Не работает, нужен жёлтый Z-образный ключ!",
+"Twenty mill in gold doesn't seem worth all
+this aggravation, does it, hacker? Makes
+the pen look like a freakin' picnic!
+
+Butt-ugly bio-mutations and your fellow
+Humans hung from a ceiling like
+food sacks.
+
+What the hell is this GENIE? Like no
+computer you've ever hacked!
+
+You better find the next terminal, slice
+a ride through c-space, dice some mutant
+butt, and get the hell out of Dodge!
+
+",X1TEXT,,,,"Dvacet miliónů ve zlatě nevypadá, že by
+stálo za všechnu tuhle otravu, co, hackeře?
+Basa teď vypadá jako krásný hotel!
+
+Ošklivé bio-mutace a tví lidští společníci
+visící ze stropu jako pytle masa.
+
+Co je sakra tenhle GENIE? Takový počítač
+jsi ještě nenaboural@[ao_cs]!
+
+Měl@[ao_cs] bys najít další terminál, projet
+se kyberprostorem, vysekat pár mutantům
+střeva a rychle z Dodge vypadnout!","Zwanzig Millionen in Gold sind nicht
+wirklich so viel wert, Hacker, nicht wahr?
+Das hier lässt den Knast wie ein
+Picknick erscheinen.
+
+Hässliche Bio-Mutationen und deine 
+menschlichen Artgenossen hängen von
+der Decke wir Futtersäcke.
+
+Was zur Hölle ist dieses GENIE? Das ist
+wie kein anderer Computer den du
+jemals gehackt hast.
+
+Du findest besser das nächste Terminal,
+erledigst einige Mutantenärsche und
+siehst zu, aus Dodge herauszukommen!",,,"Veinte millones en oro no parece que valgan
+la pena por todo este lío, ¿no crees, hacker?
+¡Hace que el corral parezca un picnic!
+
+Horripilantes biomutaciones y tus compañeros
+humanos cuelgan del techo como sacos.
+
+¿Qué demonios es GENIE? ¡No se parece a
+cualquier computadora que hayas hackeado!
+
+¡Más te vale encontrar la próxima terminal, dar
+un viaje por el ciberespacio, rebanar unos
+cuantos traseros mutantes, y pirarte de Dodge!","Veinte millones en oro no parece que valgan
+la pena por todo este lío, ¿no crees, hacker?
+¡Hace que el corral parezca un picnic!
+
+Horripilantes biomutaciones y tus compañeros
+humanos cuelgan del techo como sacos.
+
+¿Qué demonios es GENIE? ¡No se parece a
+cualquier computadora que hayas hackeado!
+
+¡Más te vale encontrar la próxima terminal, dar
+un viaje por el ciberespacio, rebanar unos
+cuantos traseros mutantes, y largarte de Dodge!","20 miltsiä kultaa ei taida olla kaiken tämän
+vaivan väärti, eihän, hakkeri? Saa kynän sen
+rinnalla tuntumaan perhanan piknikiltä!
+
+Karsean rumia biomutaatioita ja kanssa-
+ihmisiäsi roikkumassa katosta kuin mitkäkin
+ruokakassit.
+
+Mikä helvetti on tämä GENIE? Ei minkään
+ennen hakkeroimasi tietokoneen kaltainen!
+
+Parasta löytää seuraava pääte, napata kyyti
+c-avaruuden läpi, piestä vähän mutantteja
+ja häipyä hittoon Dodgesta!","Vingt Millions en or ne semblent
+plus valoir tout ces problèmes
+maintenant, Hacker? Tout ce bordel
+donne un air de pique-nique
+à la prison!
+
+De mutations hideuses et vos
+frèrs humains pendant du plafond
+comme des sacs de nourriture.
+
+C'est quoi comme foutoir, ce GENIE?
+Aucune ordinateur que vous avez
+piraté auparavant était comme ça!
+
+Il faut que vous trouvez le prochain
+terminal, traversez le cyberespace,
+découpez du mutant et barrez-vous
+d'ici!",,"Venti mulini d'oro non sembra valere tutto
+questo peggioramento, vero, hacker?
+Fa sembrare la penna come un
+cavolo di picnic!
+
+Le enormi bio-mutazioni e i tuoi
+compagni umani appesi a un soffitto
+come sacchi di cibo.
+
+Che diavolo è questo GENIE?
+Come nessun computer che
+tu abbia mai hackerato!
+
+Faresti meglio a trovare il terminale
+successivo, a fare un giro nel c-spazio,
+a tagliare a dadi qualche culo mutante,
+e ad uscire da Dodge!
+
+","20ミリの金塊にこの重大な事態の価値を見出せない、
+それとも、ハッカーの仕業か?
+幻覚のピクニックってワケでもねえ!
+グロいバイオミュータントと人間の仲間が食肉のように
+天井から吊るされている。
+
+GENIEとは一体何なんだ? 少なくともこれまで
+ハックしたことのないコンピューターだってことだ!
+
+次のターミナルを抜け、c-spaceに乗り込み、
+ミュータントのダニ共を切り裂いて、このふざけた
+場所から抜け出すんだ!","2000만 달러 보상금 가지고는 턱도 없을 정도의 개판이었어! 안 그런가,
+해커 양반? 펜이나 끄적거리는 게 이것보다는 훨씬 쉬울 테니 말이야.
+
+이 더럽게 못생긴 돌연변이들이며, 천장에 마늘꾸러미처럼 매달려있는
+사람들을 볼 일도 없고 말이야.
+
+그리고... 이 지니란 녀석은 도대체 뭐지? 네가 해킹했던 다른 컴퓨터들과는
+완전 차원이 다른 녀석이야. 어서 다른 단말기를 찾아서 C-Space를 타고
+접속하는 게 좋을 것 같아.
+
+돌연변이들을 몇 마리 썰어버리면서, 이곳을 빠져나가 는 것도 잊지 말고!","Twintig miljoen in goud lijkt al die verergering
+niet waard, of wel, hacker? Het laat de gevangenis
+eruit zien als een verdomde picknick!
+Lelijk bio-mutaties en je medemensen hingen
+als voedselzakken aan een plafond.
+
+Wat is dit GENIE in godsnaam? Als geen enkele
+computer die je ooit hebt gehackt!
+Je kunt maar beter de volgende terminal vinden,
+een ritje door de c-ruimte maken, een paar
+gemuteerde kontdobbelstenen dobbelen,
+en Dodge in hemelsnaam verlaten!","Dwadzieścia milionów w złocie nie jest warte
+tych kłopotów, prawda hakerze? Przy tym
+więzienie wygląda jak cholerny piknik!
+
+Ohydne bio-mutacje i inni ludzie zwisają
+z sufitu jak przekąski.
+
+Czym u diabła jest to GENIE? Nie jest jak inne
+komputery, które hakowałeś!
+
+Lepiej znajdź kolejny terminal, przeleć przez
+Przestrzeń C, skop trochę zmutowanych tyłków
+i wynoś się z tego piekielnego Uskoku!
+","Vinte milhões em ouro não parecem valer
+toda essa incomodação, não é mesmo, hacker?
+Faz tuda essa bagunça parecer um maldito piquenique!
+
+Biomutações horrorosas estão penduradas
+no teto junto com seres humanos como se
+fossem sacos de alimento.
+
+Que diabos é esse tal de GENIE? É como nenhum
+outro computador que você já tenha hackeado!
+
+É melhor achar o próximo terminal, pegar uma
+carona pelo ciberespaço, fazer picadinho de
+mutante e vazar deste lugar de uma vez!",,,"Стоят ли двадцать лимонов золотом таких
+трудностей, а, хакер? Теперь тебе тюрьма
+грёбаным санаторием покажется!
+
+Толстозадые биомутанты и такие же люди,
+как ты, лежат рядком, как мешки с едой.
+
+Что за хрень этот ДЖИНН? Он не похож ни
+на один из компьютеров, что ты уже
+взламывал!
+
+Найди терминал, прокатись по
+киберпространству, надери всем мутантам
+задницы и выберись из этой чёртовой
+передряги!
+
+",
+"Where are all the people?!
+
+Paris is a ghost town, unless you consider
+mutant bugs outstanding citizens.
+
+You've hit bloody resistance. Man, can
+these bugs fight! Lucky for you they're not
+the brightest porch lights on the block.
+
+But you've gotten some of the informatics
+the subcommittee wants. And it's nasty!
+
+Human neural fluids feed these bugs! No
+wonder the neighborhood's getting kind of
+sparse. Report to the subcommittee. And
+watch your back...
+",X2TEXT,,,,"Kde jsou všichni!?
+
+Z Paříže je město duchů, leda že bys
+zmutované bugy považoval@[ao_cs] za vzorné občany.
+
+Narazil@[ao_cs] jsi na tvrdý odpor. Sakra, tyhle
+bugy umí bojovat! Naštěstí ale nejsou
+zrovna nejchytřejší.
+
+Ale dostal@[ao_cs] jsi některé ty informace, který
+podvýbor chtěl. A je to pěkný hnus!
+
+Tyhle bugy se krmí lidským mozkovým mokem!
+Není divu, že je ve čtvrti nějak prázdno.
+Nahlaš se zpátky u výboru. A dávej pozor...","Wo sind all die Menschen!?
+
+Paris ist eine Geisterstadt, es sei denn,
+du zählst die Mutanten als Musterbürger.
+
+Du bist auf blutigen Widerstand getroffen.
+Mann können diese Viecher kämpfen.
+Glücklicherweise sind sie nicht die hellsten
+Leuchten.
+
+Aber du hast einige Informationen, die
+das Subkommitee haben will. Und es ist
+übel.
+
+Menschliche Nervenflüssigkeit ist was
+diese Viecher antreibt. Kein Wunder, dass
+die Nachbarschaft am Aussterben ist.
+Das musst du dem Subkommitee
+mitteilen. Und pass auf!",,,"¡¿Dónde está toda la gente?!
+
+Paris es una ciudad fantasma, a menos que
+consideres que los bichos mutantes sean
+unos buenos ciudadanos.
+
+Has encontrado resistencia sangrienta. Tío, ¡si
+que pelean estos bichos! Por suerte para ti no
+son los más brillantes del barrio.
+
+Pero has conseguido algunos materiales
+informáticos que el subcomité quiere.
+¡Y tienen mala pinta!
+
+¡Fluidos neuronales humanos alimentan a
+estos bichos! No es de extrañar que el
+vecindario esté algo despoblado. Personate
+ante el subcomité. Y vigila tus espaldas...","¡¿Dónde está toda la gente?!
+
+Paris es una ciudad fantasma, a menos que
+consideres que los bichos mutantes sean
+unos buenos ciudadanos.
+
+Has encontrado resistencia sangrienta. Tío, ¡si
+que pelean estos bichos! Por suerte para ti no
+son los más brillantes del barrio.
+
+Pero has conseguido algunos materiales
+informáticos que el subcomité quiere.
+¡Y tienen mala pinta!
+
+¡Fluidos neuronales humanos alimentan a
+estos bichos! No es de extrañar que el
+vecindario esté algo despoblado. Repórtate
+ante el subcomité. Y vigila tus espaldas...","Missä kaikki ovat?!
+
+Pariisi on aavekaupunki, ellei mutantti-
+öttiäisiä sitten lasketa mallikansalaisiksi.
+
+Olet iskenyt hitonmoiseen vastukseen. Vitsi
+nämä ötökät tappelevat! Onneksesi ne eivät
+ole korttelin kirkkaimpia ulkovaloja.
+
+Mutta olet saanut osan informatiikasta, jota
+alakomitea kaipaa, ja se on pahaa luettavaa!
+
+Ihmisen hermonesteet ruokkivat ötököitä! Ei
+ihme, että tienoo alkaa tuntua väljältä.
+Raportoi alakomitealle ja vahdi selustaasi...","Où se trouve trout le monde?
+Paris est une ville fantôme, sauf si
+vous considérez que les insectes
+mutants sont des citoyens.
+Vous avez rencontré une sacrée
+résistance, ces sales bestioles
+savent se battre! Heureusement,
+il ne sont pas les plus malins du
+coin..
+Vous avez récupéré une partie de
+l'informatique que le sous-comité
+demande. Ca a un sale air!
+Des fluides neuraux humains
+alimentent ces insectes! Pas
+de surprise que le coin est
+désert. Retournez au sous-comité
+et faites gaffe à vous!",,"Dove sono tutte le persone?! 
+Parigi è una città fantasma, a meno
+che non si consideri mutante
+bug cittadini eccezionali.
+
+Hai colpito resistenza sanguinosa.
+Amico, questi insetti possono combattere!
+Fortunatamente per voi non sono le
+luci dei portici più brillanti del blocco.
+
+Ma hai ottenuto un po' dell'informatica
+che il sottocomitato vuole. Ed è brutto! 
+
+I fluidi neurali umani alimentano
+questi insetti! Non c'è da stupirsi
+che il quartiere sia sempre più rado.
+Segnala al sottocomitato.
+
+E guardatevi le spalle ...
+","皆何処に行った?!
+
+パリはゴーストタウンと化した、突然変異したバグ共が
+未解決なまま自分以外の住民はいなくなった。
+
+マジな敵対にぶち当たった。野郎、こんなバグ共と戦えと!
+幸運なことに先行きの見えない事態ではない。
+だがここでインフォーマティクスとサブコミッティが
+望んでいた物を探し当てた。厄介なことにな!
+
+人の神経液をバグ共が餌にしている! 近くに転がっていた
+者が損壊していたのも納得がいく、サブコミッティに
+報告しなければ。背中に気をつけながらな...
+","여기 사람들은 도대체 어디로 간 거지?!
+
+프랑스 파리도 완전히 유령도시가 되어버렸군, 저 돌아다니는 돌연변이
+버그들이 시민은 아닐 테니까.
+
+방금 전투는 정말 위험했어. 빌어먹을 버그들 생각보다 잘 싸우더군.
+머리가 좋은 놈들은 아니라서 다행이야. 그래도 위원회 놈들이 원하는
+정보는 얻었으니 다행이야. 놈들 꽤 더러운 걸 숨기고 있더군.
+
+인간의 척수를 빨아먹는 버그들이라니! 이 주변 대가 허허벌판인 것도
+당연할 수밖에. 어서 위원회 놈들한테 보고하자고. 그리고 언제나
+등 뒤를 조심해.","Waar zijn alle mensen?! 
+Parijs is een spookstad, tenzij je mutanten
+als uitstekende burgers beschouwt.
+
+Je hebt bloedige weerstand geraakt. Man, kan
+deze beestjes vechten! Gelukkig voor jou
+zijn ze niet de helderste lichten op het blok.
+
+Maar je hebt een aantal van de informatica
+gekregen die de subcommissie wil. En het is
+vervelend! 
+Menselijke neurale vloeistoffen voeden deze
+beestjes! Geen wonder dat de buurt een
+beetje schaarser wordt. Rapporteer aan
+de subcommissie. En let op je rug...","Gdzie wszyscy ludzie?
+
+Paryż stał się miastem duchów, no chyba że
+uznasz zmutowane robale za jego mieszkańców.
+
+Napotkałeś cholerny opór. Kurde, te robale
+umieją przywalić! Na szczęście nie są
+najświetlejsze w tym lokalu.
+
+Ale zdobyłeś trochę informacji, które chciał
+podkomitet. I nie są dobre!
+
+Ludzkie płyny neuronowe są pokarmem dla
+tych robali! Nic dziwnego, że okolica jest
+spustoszona. Zgłoś się do podkomitetu.
+I uważaj na siebie...","Onde está todo mundo?
+
+Paris é uma cidade fantasma, a não ser que você
+considere os mutantes como cidadões especiais.
+
+Você enfrenta uma baita resistência. Cara, esses
+bichos sabem brigar! Sorte sua que eles não são
+as criaturas mais espertas do local.
+
+Mas você conseguiu pegar algumas informações
+que o subcomitê estava querendo. E a coisa é feia!
+
+Esses bichos se alimentam com fluídos neurais 
+humanos! Não é a toa que a vizinhança anda ficando
+meio vazia ultimamente. Entre em contato com 
+o subcomitê. E fique de olho...",,,"Где все люди?!
+
+Париж опустел, не считая уродливых
+багов, заменивших горожан.
+
+Ты столкнулся с ожесточённым
+сопротивлением. Чёрт, эти баги слетаются
+к тебе, как мухи на свет! К счастью, ты не
+самый яркий фонарь в этом городе.
+
+Но теперь в твоих руках кое-какая
+информация, которая нужна подкомитету.
+И это скверно!
+
+Эти баги подпитываются нервными
+импульсами людей! Понятно, почему
+вокруг не осталось никого живого.
+Передай эти сведения подкомитету.
+И будь осторожен...
+",
+"Civilization as you knew it is nada!
+
+No friends, no family. No more people.
+Not normal people, anyway.
+
+Only one thing left...GENIE!
+And if you have to go to the end of the
+universe you'll find its mutant butt!
+'cause now you're pissed!
+
+And the gold? Hell, this is for free.
+
+.....(to be continued).....
+",X3TEXT,,,,"Civilizace, tak jak ji známe, je pryč.
+Nada. Nilch.
+
+Bez přátel, bez rodiny. Bez lidí.
+Alespoň těch normálních.
+
+Jediná zbylá věc... GENIE!
+I kdybys musel@[ao_cs] jít až na konec vesmíru,
+najdeš jeho zmutovaný ksicht!
+Protože teď jsi fakt nasran@[adj_cs]!
+
+A to zlato? Sakra, tohle děláš zadarmo.
+
+.....(pokračování příště).....","Die Zivilisation, wie du sie kanntest,
+ist Nada. Keine Freunde, keine Familie.
+Keine Menschen mehr. Zumindest
+keine normalen.
+
+Nur eine Sache verbleibt: GENIE!
+Und wenn du ans Ende des Universum
+reisen müsstest, du wirst seinen
+Mutantenarsch finden, denn jetzt
+bist du sauer!
+
+Und das Gold? Das gibt's als Zugabe...
+
+... (Fortsetzung folgt) ...
+
+",,,"¡La civilización como la conoces ya no es nada!
+
+Sin amigos, ni familia. No más gente.
+No gente normal, de todos modos.
+
+Solo queda una cosa... ¡GENIE!
+¡Y si tienes que ir hasta el fin del universo
+encontrarás su trasero mutante!
+¡Porque ahora si que estás cabread@[ao_esp]!
+
+¿Y el oro? Para nada, esto es gratis.
+
+... (continuará) ...",,"Tuntemasi sivilisaatio on mennyttä!
+
+Ei ystäviä, ei perhettä, ei enää ihmisiä;
+tai ainakaan ei normaaleja ihmisiä.
+
+Vain yksi asia jäljellä... GENIE!
+Ja vaikka joutuisit menemään universumin
+ääriin, löydät sen mutanttipersauksen!
+Sillä nyt sinua ottaa päähän!
+
+Ja kulta? Hitto, teen tämän ilmaiseksi.
+
+.....(jatkuu).....","La société humaine a disparu!
+
+Plus d'amis, plus de famille, plus
+personne de normal, du moins.
+
+Une chose reste.. GENIE!
+Si il le faut, vous irez jusqu'au
+bout de l'univers pour lui botter
+le cul! Ca va en chier!
+
+Oh, et l'Or? Non, ça, c'est gratuit...
+
+... A suivre!",,"Civiltà come lo sapevi che è nada! 
+Nessun amico, nessuna famiglia.
+Niente più persone.
+Non persone normali, comunque.
+
+Solo una cosa è rimasta...GENIE!
+E se dovete andare alla fine
+dell'universo troverete il suo
+culo mutante!
+
+Perché ora sei incazzato!
+E l'oro? Diavolo, questo è gratis...
+","俺の知っている文明は崩壊した!
+
+友も。家族も。住民も。まともなヤツは何もかも
+消え失せた。
+
+だがまだ一つ残っている...GENIE!
+このまま銀河の終焉を迎えたらミュータントのクソになる!
+それだけは御免だ!
+
+それで金は? 有り得ん、これはフリーだ。
+
+...だがこれ以上続くことはない...","자네도 알다시피 이제 문명이란 건 존재하지 않아!
+
+친구들, 가족, 그리고 사람들도 다 사라졌지. 돌연변이들이 있긴 하지만.
+
+이제 유일하게 남은 건... 지니일 거야. 그 빌어먹을 녀석을 우주 끝까지
+쫓아가서 박살 내 버리자고! 자네를 화나게 한 값은 톡톡히 치르게 해줘야지?
+
+보상금? 이번엔 필요 없어, 이번 일은 공짜로 해줄 테니.
+
+...(다음에 계속)...","De beschaving zoals je die kende is nada! 
+
+Geen vrienden, geen familie. Geen mensen meer.
+In ieder geval geen normale mensen.
+Nog maar één ding over...GENIE!
+
+En als je naar het einde van het universum
+moet gaan, vind je de gemuteerde kont!
+want nu ben je boos!
+
+En het goud? Hel, dit is gratis.
+
+... (wordt vervolgd)...","Cywilizacja, którą znałeś zniknęła!
+
+Nie ma przyjaciół i rodziny. Już nie ma ludzi.
+Przynajmniej normalnych ludzi.
+
+Została tylko jedna rzecz...GENIE!
+I nawet jeśli musisz dotrzeć na sam kraniec
+świata, znajdziesz jego zmutowane dupsko!
+Ponieważ wiesz, że będziesz wkurzony!
+
+A złoto? Jest kurde za darmo.
+
+.....(ciąg dalszy nastąpi).....","A civilização como você conhecia já era!
+
+Sem amigos, sem família. Sem gente mais.
+Não gente normal, pelo menos.
+
+A única coisa que resta...é GENIE!
+E nem que você tenha que ir até o fim do 
+universo, você vai acabar encontrando a fuça 
+mutante dele! Pois agora você está furios@[ao_ptb] 
+pra caramba!
+
+E sobre o ouro? Que se dane, essa é por conta 
+da casa.
+
+....(continua)....",,,"Цивилизация, которую ты знал, исчезла!
+
+Ни друзей, ни родных. Не осталось никого.
+Нормальных людей – точно.
+
+Осталось только одно существо. ДЖИНН!
+Ты надерёшь зад этому уроду, даже если 
+придётся дойти до края Вселенной. Теперь
+это личное!
+
+Что насчёт золота? К чёрту, это не ради
+денег.
+
+.....(продолжение следует)..…
+",
+"You're alive!
+
+What are those odds, hacker?!
+'cause it's crawling with bugs.
+
+You can't reach the subcommittee, which
+means it's been compromised.
+
+
+You... are alone.",X5TEXT,,,,"Jsi naživu!
+
+Jaké byly naděje, hackeře!?
+Protože se to tu hemží bugy.
+
+Nemůžeš se dostat k podvýboru, což
+znamená, že byl kompromitován.
+
+
+Jsi... @[self_cs].","Du lebst!
+
+War waren die Chancen, Hacker?!
+
+Du kannst das Subkommitee nicht
+erreichen, was bedeutet, dass es 
+kompromittiert ist.
+
+Du... bist alleine.",,,"¡Estás viv@[ao_esp]!
+
+¡¿Que probabilidades había, hacker?!
+Porque esto está lleno de bichos.
+
+No puedes llegar al subcomité, lo que
+significa que ha sido comprometido.
+
+
+Tú... estás sol@[ao_esp].",,"Sinä olet elossa!
+
+Mitkä todennäköisyydet, hakkeri?!
+Sillä se kuhisee ötököitä.
+
+Et saa tavoitettua alakomiteaa, mikä
+tarkoittaa sitä, että se on murrettu.
+
+
+Sinä... olet yksin.","Vous êtes vivant!
+
+Quelle chance, Hacker! Avec toutes
+ces bestioles partout!
+
+Vous ne pouvez pas contacter le
+sous-comité. Cela signifie qu'il est
+compromis.
+
+Vous.. êtes seul.",,"Sei vivo!
+Quali sono queste probabilità, hacker?!
+Perché strisciano di insetti.
+Non puoi raggiungere il sottocomitato,
+Il che significa che è stato compromesso.
+Tu... sei solo.
+","俺は生きている!
+
+何か勝ち目はあるか、ハッカー?!
+バグ共がそこいらを蠢いている。
+サブコミッティに繋がらないのは、侵入されたと
+思っていいだろう。
+
+俺は...また一人だ。","아직도 살아있었네!
+
+귀신 곡할 노릇이야. 안 그래, 해커 친구? 버그 놈들이 그렇게나
+들끓어댔는데 말이지.
+
+위원회들도 더는 응답을 하지 않아, 아마 놈들도 다 당한 거겠지.
+
+그래... 자넨 이제 혼자야.","Je leeft nog!
+Wat zijn die kansen, hacker?!
+
+Je kunt het subcommissie niet bereiken,
+wat betekent dat het in gevaar is gebracht.
+
+Je... bent alleen.","Żyjesz!
+
+Co to za dziwo hakerze?!
+Ponieważ pełza wraz z robactwem.
+
+Nie możesz dotrzeć do podkomitetu, co
+oznacza, że musi być kompromis.
+
+Jesteś... sam.","Você sobreviveu!
+
+Quais são as chances, hacker?!
+Porque há criaturas por toda a parte.
+
+Você não consegue entrar em contato com 
+o subcomitê, o que significa que eles estão 
+em perigo.
+
+
+Você...está sozinh@[ao_ptb].",,,"Ты выжил!
+
+Какая теперь разница, Хакер? Это место
+просто кишит багами.
+
+Ты не можешь связаться с подкомитетом.
+Похоже, ваш канал связи раскрыт.
+
+
+Ты... остался один.
+",
+,,,,,,,,,,,,,,,,,,,,,,,
+GenEmp Corp.,TXT_HACXMAP01,,,,Sídlo GenEmp,,,,,,GenEmp-yhtiö,,,,GenEmpコーポ,ZONE 1: 진엠프 주식회사 본부,,,,,,Корпорация ГенИмп,
+Tunnel Town,TXT_HACXMAP02,,,,Tunelové město,Tunnelstadt,,,Pueblo Túnel,,Tunnelikaupunki,Ville Tunnel,,Città del tunnel,トンネル タウン,ZONE 2: 터널 도시,Tunnelstad,Miasto Tuneli,Cidade Túnel,,,Подземный город,
+Lava Annex,TXT_HACXMAP03,,,,Lávová přístavba,Lavaanbau,,,Anexo de Lava,,Laavalaajennus,Annexe de Lave,,Annesso di lava,ラバ アネックス,ZONE 3: 용암 속 건물,Lava Bijlage,Aneks Lawy,Anexo de Lava,,,Лавовая электростанция,
+Alcatraz,TXT_HACXMAP04,,,,,,,,,,,,,,アルカトラズ,ZONE 4: 알카트라즈,,,,,,Алькатрас,
+Cyber Circus,TXT_HACXMAP05,,,,Kybercirkus,Cyberzirkus,,,Circo Cibernético,,Kybersirkus,,,Circo Cyber,サイバーサークル,ZONE 5: 사이버 서커스,,Cyber Cyrk,Circo Cibernético,,,Кибер-Цирк,
+Digi-Ota,TXT_HACXMAP06,,,,,,,,,,,,,,デジ - オータ,ZONE 6: 디지-오타,,,,,,Диджитал-Ота,
+The Great Wall,TXT_HACXMAP07,,,,Velká zeď,Die große Mauer,,,La Gran Muralla,,Suuri muuri,La grande Muraille,,Il grande muro,ザ - グレート ウォール,ZONE 7: 만리장성,De grote muur,Wielka Ściana,A Grande Muralha,,,Великая стена,
+Garden of Delights,TXT_HACXMAP08,,,,Zahrada rozkoše,Lustgarten,,,Jardin de las Delicias,,Nautintojen puutarha,Jardin de Délices,,Giardino delle delizie,ガーデン オブ デライト,ZONE 8: 쾌락의 정원,Tuin van lekkernijen,Ogród Zachwytu,Jardim dos Prazeres,,,Сад наслаждений,
+Hidden Fortress,TXT_HACXMAP09,,,,Skrytá pevnost,Versteckte Festung,,,Fortaleza Oculta,,Salainen linnoitus,Forteresse Secrète,,Fortezza nascosta,ヒドゥン フォートレス,ZONE 9: 숨겨진 요새,Verborgen Vesting,Ukryta Forteca,Fortaleza Oculta,,,Скрытая крепость,
+Anarchist Dream,TXT_HACXMAP10,,,,Anarchistův sen,Anarchistentraum,,,Sueño Anarquista,,Anarkistin unelma,Rève d'Anarchiste,,Sogno anarchico,アナーキスト ドリーム,ZONE 10: 아나키스트의 꿈,Anarchistische droom,Sen Anarchisty,Sonho Anarquista,,,Анархистская утопия,
+Notus Us!,TXT_HACXMAP11,,,,,,,,¡Notus Us!,,Pane merkille mEIdät!,,,,ワレラノ ノータス,ZONE 11: 노터스 어스!,,,,,,Нас не забудут!,
+Gothik Gauntlet,TXT_HACXMAP12,,,,Gotický trest,,,,Guantelete Gótiko,,Goottinen kujanjuoksu,Gantelet Gothik,,,ゴシック ガントレット,ZONE 12: 고딕풍 결투장,,Gotycka Rękawica,Punição Gótika,,,Готическая перчатка,
+The Sewers,TXT_HACXMAP13,,,,Kanály,Die Kanäle,,,Las Alcantarillas,,Viemärit,Les Egouts,,Le fogne,ザ・サワー,ZONE 13: 하수 처리장,De Riolen,Ścieki,Os Esgotos,,,Канализация,
+Trode Wars,TXT_HACXMAP14,,,,Válka elektrod,Elektrodenkrieg,,,Guerra de Electrodos,,Trodisodat,Guerre des Trodes,,Guerra degli elettrodi,トレード ウォーズ,ZONE 14: 전격의 전쟁,Trode oorlogen,Wojna Elektrod,Guerra de Eletrodos,,,Торговые войны,
+Twilight of Enk's,TXT_HACXMAP15,,,,Soumrak EnKu,Zwielicht von EnK,,,Crepúsculo de los Enk,,EnKin illankoitto,Crépuscule des Enk's,,Crepuscolo di Enk,Enkタチ ノ トワイライト,ZONE 15: 전자황혼,Schemering van Enk's,Zmierzch Enk,Crepúsculo de Enk's,,,Сумерки EnK,
+Protean Cybex,TXT_HACXMAP16,,,,Proměnlivý Cybex,Proteanischer Cybex,,,Cybex Protéico,,Muuntuvainen Kybex,,,,プロテアン サイベックス,ZONE 16: 변화무쌍한 사이벡스,Proteanische Cybex,Zmienny Cybex,Cybex Proteano,,,Многоликий Сайбэкс,
+River of Blood,TXT_HACXMAP17,,,,Řeka krve,Blutfluss,,,Río de Sangre,,Verivirta,Rivière de Sang,,Fiume di sangue,リバー オブ ブラッド,ZONE 17: 학살의 강,Rivier van bloed,Rzeka Krwi,Rio de Sangue,,,Река крови,
+Bizarro,TXT_HACXMAP18,,,,Bizár,,,,,,,,,,ビザロ,ZONE 18: 요상한 곳,,,,,,Бизарро,
+The War Rooms,TXT_HACXMAP19,,,,Válečné kabinety,Kriegsräume,,,Las Salas de Guerra,,Sotahuoneet,La Salle des Commandes,,Le stanze della guerra,ザ・ウォー ルーム,ZONE 19: 전략 회의실,De oorlogskamers,Pokoje Wojny,As Salas de Comando,,,Генеральный штаб,
+Intruder Alert!,TXT_HACXMAP20,,,,"Pozor, vetřelec!",Eindringlingsalarm!,,,¡Alerta de Intruso!,,Murtohälytys!,"Alerte, Intrus!",,Allarme intruso!,シンニュウシャ アリ!,ZONE 20: 칩입자 경보!,Inbreker alarm!,Alarm Intruz!,Alerta de Intruso!,,,Тревога! Нарушитель!,
+Desiccant Room,TXT_HACXMAP31,,,,Sušící místnost,Trocknungsraum,,,Sala del Desecante,,Kuivatesali,Salle du Desiccant,,Stanza disseccante,ダスキン ルーム,ZONE 31: 건조한 곳,Drogende kamer,Śluza Osuszająca,Sala do Dessecante,,,Сушильная комната,
+"Now Arriving At...
+",STSTR_CLEV,,,,Příjezd do...,Angekommen bei...,,,Ahora llegando a...,,Seuraavana...,On arrive maintenant à:,,Arrivando a...,今到着した...,이동하는 중...,Nu we aankomen bij....,Wchodzisz do...,Agora chegando em ...,,,Переходим на...,
+...gonna fry your ass!,STSTR_CHOPPERS,"Printed when entering the idchoppers cheat, which gives the player a chainsaw",,,...ti upeče prdel!,...ich brate deinen Arsch!,,,... ¡voy a freirte el trasero!,,...kärtsää takalistosi!,...C'est l'heure de botter du cul!,,....ti friggerà il culo!,...ケツまくれ!,... 지져버리겠어!,...gaat je kont bakken!,...skopię ci dupę!,,,,...поджарит твою задницу!,
+"inVuln, Str, Inviso, Rad, Allmap, or Lite-amp?",STSTR_BEHOLD,"Hacx's content here was totally useless so it got removed. However, this string has to be defined and minimally altered so that the Dehacked replacement is not being triggered.",,,"nesmrt(V), Síla, nevId, Rad, mApa nebo světLo","inVuln, Str, Inviso, Rad, Allmap, oder Lite-amp",,"inVuln, Str, Inviso, Rad, Allmap, aŭ Lite-amp","inVuln, Str, Inviso, Rad, Allmap, o Lite-amp.",,"haavoittumattomuus (V), voima (S), näkymättömyys (I), koko kartta (A) tai valonvahvistus (L)?","in V ulnérable, S urpuissance, I nvisible, p R otection, c A rte, où L umière?","Sérthet (V), Berz (S), Láthat(i), Sugár(R), Térkép(A), vagy Fény Sisak(L)","inVuln, berSerk, Invisib, tuta anti-Rad, mAppa tutta, o amplif-Luce","V,I,S,R,A,Lのどれだ?","무적, 광전사, 투명, 보호복, 지도, 아니면 바이저?",,"niezniszczalność (V), siła (S), niewidzialność (I), kombinezon (R), mapa (A) lub gogle noktowizyjne (L)","inVuln., berSerk, Invisib., anti-Rad., mApa completo ou amplificação de Luz",,,"Бессм. (V), берс. (S), нев. (I), кос. (R), крт. (A), виз (L).","нерањ., снага, невидљ., радиј., мапа или ноћ. визор"
+Let's Get Serious!,STSTR_BEHOLDX,,,,Teď je to vážné!,Es wird ernst!,,,¡Vamos en Serio!,,Otetaanpa tosissaan!,Passons aux choses sérieuses!,,Prendiamoci sul serio!,マジになったぜ!,철들 때다!,Laten we serieus worden!,Bądźmy Poważni!,Vamos ficar sérios!,,,А теперь серьёзно!,
+Cyberslicer Mode ON,STSTR_NCON,,,,Režim kybersekače ZAP,Cyberschnetzelmodus AN,,,Modo Cibercorte ACTIVADO,,Kyberviipaloijatila PÄÄLLÄ,,,Modalità Cyberslicer ATTIVADA,サイバースライサーモード オン,전자마귀 모드 ON,Cyberslicer-modus AAN,Tryb Cybercięcia WŁĄCZONY,,,,Режим кибер-резака вкл.,
+Cyberslicer Mode OFF,STSTR_NCOFF,,,,Režim kybersekače VYP,Cyberschnetzelmodus AUS,,,Modo Cibercorte DESACTIVADO,,Kyberviipaloijatila POIS PÄÄLTÄ,,,Modalità Cyberslicer DISATTIVADA,サイバースライサーモード オフ,전자마귀 모드 OFF,Cyberslicer-modus UIT,Tryb Cybercięcia WYŁĄCZONY,,,,Режим кибер-резака откл.,
+Selection: Impossible ,STSTR_NOMUS,,,,Nemožný výběr,Falsche Auswahl,,Malebla Elekto,Selección impossible,,Valinta ei mahdollinen,Séléction Impossible!,Lehetetlen Kiválasztás,Selezione impossibile,選択: 不可能,선택 불가능,Selectie: Onmogelijk,Niemożliwy wybór,Seleção impossível,,,Выбор: Невозможен,НЕМОГУЋИ ИЗБОР
+"Pump Up The Volume
+",STSTR_MUS,Should probably not be translated...,,,Zesil to!,,,,,,Nuppi kaakkoon,,,,音量を上げろよ,볼륨을 올려라!,,,,,,Подкрутите громкость,
+INIT-Twitch n'Kill Mode,STSTR_KFAADDED,,,,Inicializuji režim Twitch and Kill,Initiiere Twitch'n Kill-Modus,,,INIT-Modo Tirar a Matar,,INIT-Nykäise ja nylje -tila,,,Iniziare Twitch n'Kill Mode,INIT-Twitch n'Killモード,때리고 죽이는 모드 ON,,Inicjacja Trybu Drżenia I Zabijania,,,,ИНИЦ: режим Кликай-И-Убивай,
+"So be it, Hacker.",STSTR_FAADDED,,,,"Budiž, Hackeře.","So sei es, Hacker.",,,"Que así sea, Hacker.",,"Olkoon niin, hakkeri.","Qu'il en soit ainsi, hacker.",,"Cosi' sia, Hacker.",好きにしろ、ハッカー。,"마음대로 해, 해커 양반.","Het zij zo, Hacker.","Niech tak będzie, Hakerze.","Assim seja, Hacker.",,,"Да будет так, Хакер.",
+Cyberpotence Mode ON,STSTR_DQDON,,,,Režim kybermoci ZAP,Cyberpotenzmodus AN,,,Modo Ciberpotencia ACTIVADO,,Kyberpotenssitila PÄÄLLÄ,,,Modo Cyberpotenza ATTIVADA,サイバーポテンスモード オン,전지전능 모드 ON,Cyberpotentiemodus AAN,Tryb Cyberpotencji WŁĄCZONY,Ciberpotência ATIVADO,,,Режим Кибер-улучшения вкл.,
+Cyberpotence Mode OFF,STSTR_DQDOFF,,,,Režim kybermoci VYP,Cyberpotenzmodus AUS,,,Modo Ciberpotencia DESACTIVADO,,Kyberpotenssitila POIS PÄÄLTÄ,,,Modo Cyberpotenza DISATTIVADA,サイバーポテンスモード オフ,전지전능 모드 OFF,Cyberpotentiemodus UIT,Tryb Cyberpotencji WYŁĄCZONY,Ciberpotência DESATIVADO,,,Режим Кибер-улучшения откл.,
+Tracking ON,AMSTR_FOLLOWON,,,,Sledování ZAP,Verfolgung AN,,,Seguimiento ACTIVADO,,Seuranta PÄÄLLÄ,,,Mappa scorribile DISATTIVATA,トラッキング オン,추적 모드 ON,Tracking AAN,Namierzanie WŁĄCZONE,Modo de seguimento ATIVADO,,,Сопровождение вкл.,
+Tracking OFF,AMSTR_FOLLOWOFF,,,,Sledování VYP,Verfolgung AUS,,,Seguimiento DESACTIVADO,,Seuranta POIS PÄÄLTÄ,,,Mappa scorribile ATTIVATA,トラッキング オフ,추적 모드 OFF,Tracking UIT,Namierzanie WYŁĄCZONE,Modo de seguimento DESATIVADO,,,Сопровождение откл.,
+- press Y to run away! -,DOSY,,,,- stiskni Y pro útěk! -,- drücke Y um wegzurennen -,,,- ¡pulsa Y para escapar! - ,,- Paina Y paetaksesi! -,-Appuie sur Y pour t'échapper!-,,- premere Y per scappare! -,-Y でトンズラだ!-,- 달아날려먼 Y 키를 눌러! -,- druk op Y om weg te lopen! -,- wciśnij Y by uciec! -,- Aperte Y para fugir! -,- Carrega Y para fugir! -,,"- нажми «Y», чтобы сбежать! -",
+"Are you insane or maladjusted?
+Well? Yes or No!",ENDGAME,,,,"Jsi blb@[adj_cs] nebo jen naveden@[adj_cs]?
+Tak? Jo nebo ne?","Bist du verrückt oder mies gelaunt?
+Also? Ja oer Nein?",,,"¿Estás loc@[ao_esp] o descolocad@[ao_esp]?
+¿Y bien? ¿Sí o No?",,"Oletko hullu tai häiriintynyt?
+No? Y tai N!",Vous êtes fou où malajusté? Eh bien? Oui où non?,,"Sei pazzo o disadattato?
+Allora? Sì o no!","お前はイカれた社会不適合者だろ?
+あぁ?イエスかノーか言え!","부적응은 안 하겠지? 그렇겠지?
+자신 있으면 선택해!","Ben je gek of onaangepast?
+Nou? Ja of Nee!","Oszalałeś czy się nie dostosowałeś?
+Więc? Tak czy Nie!","Você está louco ou desajustado?
+Bem? Sim ou não!",,,"Ты дурак или родом так?
+Отвечай! Да (Y) или нет (N)?",
+"Are you sure? You can't handle
+this skill, hacker!
+
+Press Y to die. 
+",NIGHTMARE,,,,"Jseš si jist@[adj_cs]? Takový
+skill nemáš, hackeře!","Bist du sicher? Du kannst das nicht bewältigen, Hacker!
+
+Drücke Y um zu sterben.",,,"¿Estás segur@[ao_esp]? ¡No puedes soportar esta dificultad, hacker!
+
+Pulsa Y para morir.",,"Oletko varma? Et pysty käsittelemään
+tätä taitotasoa, hakkeri!
+
+Paina Y kuollaksesi. 
+","Vous êtes sûr? Vous n'arriverez pas à tenir le coup, hacker! 
+
+Appuyez sur Y pour mourir.",,"Sei sicura? Non puoi gestire
+questa abilità, hacker!
+
+Premere Y per morire. ","本気か?
+アンタの手に負えないぞ、ハッカー!
+
+死にたきゃYを押せ。","그렇게 만만하다면 말리지는 않을게.
+어차피 너에겐 복잡할 테니까, 해커 양반.
+
+준비됐으면 Y 키를 눌러.","Weet u het zeker? Je kunt niet omgaan met
+deze vaardigheid, hacker!
+
+Druk op Y om te sterven.","Na pewno? Nie dasz
+sobie rady hakerze!
+
+Wciśnij Y by zginąć.","Tem certeza? Você não pode lidar
+essa habilidade, hacker!
+
+Aperte Y para morrer.","Tem certeza? Você não pode lidar
+essa habilidade, hacker!
+
+Carrega Y para morrer.",,"Ты уверен? С этим уровнем сложности ты не справишься, хакер!
+
+Нажми «Y», чтобы умереть.",
+"Quicksave over your data named
+
+'%s'?
+
+Press Y or N.",QSPROMPT,For most languages the original Doom text should suffice.,,,"Rychle uložit přes tvá data s názvem
+
+'%s'?
+
+Stiskni Y nebo N.","Überschreibe %s mit einem Schnellspeicherdatenstand?
+
+Drücke Y oder N.",,"Ĉu rapidkonservu super via konservo nomita
+
+'%s'?
+
+Premu Y-on aŭ N-on.","¿Deseas guardar sobre tu partida llamada
+
+'%s'?
+
+Presiona Y ó N.",,"Haluatko pikatallentaa pelin %s päälle?
+
+Paina Y tai N.","Sauvegarde rapide sur le fichier 
+
+'%s'?
+
+Appuyez sur Y ou N.","Gyorsmenteni akarsz az alábbi mentésed alatt
+
+'%s'?
+
+Nyomj Y-t vagy N-t.","Sovrascrivere il salvataggio
+
+'%s'?
+
+Premi Y oppure N.","この名称で上書きするのか?
+
+'%s'
+
+YかNで答えろ。","빠른 저장?
+
+'%s'
+
+Y키 또는 N키를 입력.","Snel opslaan over je spel genaamd
+
+'%s'?
+
+Druk op Y of N.","Szybko nadpisać grę
+
+„%s”?
+
+Wciśnij Y lub N.","Salvar sobre seu jogo chamado
+
+'%s'?
+
+Aperte Y ou N.","Gravar sobre o seu jogo chamado
+
+'%s'?
+
+Carrega Y ou N.",,"Перезаписать файл
+
+«%s»?
+
+Нажмите «Y» или «N».","Желите брзо чување за игру под именом
+
+„%s“?
+
+Притисните Y или N."
+"Do you want to quickload the data named
+
+'%s'?
+
+Press Y or N.",QLPROMPT,,,,"Přeješ si rychle načíst data s názvem
+
+'%s'?
+
+Stiskni Y nebo N.","Möchtest du den Datenstand %s schnellladen?
+
+Drücke Y oder N.",,"Ĉu vi volas rapidkonservi la konservo nomita
+
+'%s'?
+
+Premu Y-on aŭ N-on.","¿Quieres cargar la partida llamada
+
+'%s'?
+
+Presiona Y ó N.",,"Haluatko pikaladata pelin %s?
+
+Paina Y tai N.","Voulez-vous charger la sauvegarde
+
+'%s'?
+
+Appuyez sur Y ou N.","Gyorstölteni akarod ezt a mentést
+
+'%s'?
+
+Nyomj Y-t vagy N-t.","Vuoi fare un quickload della partita
+
+'%s'?
+
+Premi Y oppure N.","この名称をすぐロードするのか?
+
+'%s'
+
+YかNで答えろ。","빠른 불러오기?
+
+'%s'
+
+Y키 또는 N키를 입력.","Wil je het spel snel laden met de naam
+
+'%s'?
+
+Druk op Y of N.","Czy chcesz wczytać szybki zapis
+
+„%s”?
+
+Wciśnij Y lub N.","Deseja carregar o jogo chamado
+
+'%s'?
+
+Aperte Y ou N.","Deseja carregar o jogo chamado
+
+'%s'?
+
+Carrega Y ou N.",,"Загрузить файл
+
+«%s»?
+
+Нажмите «Y» или «N».","Желите брзо учитавање за игру под именом
+
+„%s“?
+
+Притисните Y или N."
+Thug,CC_THUG,,,,Pobuda,Scherge,,,Matón,,Roisto,Brute,,Tazza,チンピラ,서그,Schurk,Zbir,Rufião,,,Головорез,
+Android,CC_ANDROID,,,,,,,,Androide,,Androidi,Androïde,,,アンドロイド,안드로이드,Androïde,Android,Andróide,,,Андроид,
+ICE,CC_ICE,,,,,,,,,,,,,,アイス,아이스,,,,,,ЛЁД,
+Buzzer,CC_BUZZER,,,,Bzučák,Summer,,,Zumbador,,Surisija,,,Cicalino,ブザー,버저,Zoemer,Brzęczyk,Buzina,,,Летун,
+D-Man,CC_DMAN,,,,,,,,,,D-mies,,,,D-Man,디-맨,,,,,,Д-Мэн,
+Phage,CC_PHAGE,,,,Fág,,,,Fago,,Fagi,,,Fago,ファージ,페이지,Faag,Fag,Fago,,,Пожиратель,
+Monstruct,CC_MONSTRUCT,,,,Monstrukce,Monstrukt,,,,,Keinohirviö,,,Mostrutto,モンストラクト,몬스트럭트,Monstructie,Monstrukt,,,,Монструкт,
+Mecha Maniac,CC_MECH,,,,Mechamaniak,,,,Meca-Maníaco,,Mechamaanikko,Mécha-maniaque,,Mecha Maniaco,メカマニア,메카 메니악,Mecha Maniak,Mechaniczny Maniak,Meca-Maníaco,,,Механоман,
+Terminatrix,CC_TERMI,,,,,,,,,,,,,,ターミネイトリクス,터미네트릭스,,,,,,Терминатриса,
+Thorn Thing,CC_THORN,,,,Bodlák,Dornending,,,Cosa Espinosa,,Okaolio,Truc épineux,,,ソーンツィン,쏜 씽,Doornding,Cierniowe Coś,Coisa Espinhosa,,,Тернистая тварь,
+Majong 7,CC_MAJONG,,,,,,,,,,Mahjong 7,,,,マージャン 7,마작 7호,,,,,,Маджонг 7,
+Dan Evanger,CC_HERO,,,,,,,,,,,,,,ダン エブァンガー,댄 에반저,,,,,,Дэн Эвенджер,
+Please don't shoot!,SKILL_BABY,,,,"Nestřílej, prosím!",Bitte schieß nicht!,,,¡Por favor no dispares!,,"Pyydän, älä ammu!","Pitié, ne tirez pas!",,"Ti prego, non sparare!",撃たないでくれ!,쏘지 마세요!,"Niet schieten, alsjeblieft!",Proszę nie strzelaj!,"Por favor, não atire!",,,"Не стреляй, пожалуйста!",
+"Aargh, I need health!",SKILL_EASY,,,,Potřebuju zdraví!,Ich brauche Gesundheit!,,,"¡Aargh, necesito salud!",,"Aargh, tarvitsen terveyttä!","Aargh, des soins!",,"Aargh, ho bisogno di salute!",キメてくれ!,체력이 필요해!,"Aargh, ik heb gezondheid nodig!","Ałć, potrzebuję apteczki!","Aargh, preciso de saúde!",,,"А-а-ргх, аптечку!",
+Let's rip them apart!,SKILL_NORMAL,,,,Rozsekejme je na kusy!,Lass uns sie zerfetzen!,,,¡Rompámoslos en pedazos!,,Revitään ne kappaleiksi!,J'en fais de la bouillie!,,Facciamoli a pezzi!,ばらまいてやれ!,갈기갈기 찢어버려!,Laten we ze uit elkaar scheuren!,Czas ich rozerwać!,Vamos despedaçá-los!,,,Разорвём их на куски!,
+I am immortal!,SKILL_HARD,,,,Jsem nesmrtelný!,Ich bin unsterblich!,,,¡Soy inmortal!,,Olen kuolemation!,Je suis immortel!,,Sono immortale!,とっととくたばれ!,난 무적이다!,Ik ben onsterfelijk!,Jestem nieśmiertelny!,Eu sou imortal!,,,Я бессмертен!,
+Insanity!,SKILL_NIGHTMARE,,,,Šílenství!,Wahnsinn!,,,¡Locura!,,Mielettömyys!,Folie!,,Follia!,イカれてやがる!,코드명: 광기!,Waanzin!,Szaleństwo!,Insanidade!,,,Безумие!,

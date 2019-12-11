@@ -87,6 +87,7 @@ FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBa
 	m_Callback = callback;
 	Flags = 0;
 	Name = NULL;
+	inCallback = false;
 
 	if (var_name)
 	{
@@ -1533,9 +1534,17 @@ void C_SetCVarsToDefaults (void)
 	}
 }
 
+static int cvarcmp(const void* a, const void* b)
+{
+	FBaseCVar** A = (FBaseCVar**)a;
+	FBaseCVar** B = (FBaseCVar**)b;
+	return strcmp((*A)->GetName(), (*B)->GetName());
+}
+
 void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 {
 	FBaseCVar *cvar = CVars;
+	TArray<FBaseCVar*> cvarlist;
 
 	while (cvar)
 	{
@@ -1543,12 +1552,17 @@ void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_MOD|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE))
 			== filter)
 		{
-			const char *const value = (cvar->Flags & CVAR_ISDEFAULT)
-				? cvar->GetGenericRep(CVAR_String).String
-				: cvar->SafeValue.GetChars();
-			f->SetValueForKey(cvar->GetName(), value);
+			cvarlist.Push(cvar);
 		}
 		cvar = cvar->m_Next;
+	}
+	qsort(cvarlist.Data(), cvarlist.Size(), sizeof(FBaseCVar*), cvarcmp);
+	for (auto cvar : cvarlist)
+	{
+		const char* const value = (cvar->Flags & CVAR_ISDEFAULT)
+			? cvar->GetGenericRep(CVAR_String).String
+			: cvar->SafeValue.GetChars();
+		f->SetValueForKey(cvar->GetName(), value);
 	}
 }
 

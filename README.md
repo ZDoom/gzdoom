@@ -4,7 +4,7 @@
 
 ## GZDoom is a modder-friendly OpenGL source port based on the DOOM engine
 
-Copyright (c) 1998-2018 ZDoom + GZDoom teams, and contributors
+Copyright (c) 1998-2019 ZDoom + GZDoom teams, and contributors
 
 Doom Source (c) 1997 id Software, Raven Software, and contributors
 

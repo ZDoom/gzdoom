@@ -92,6 +92,7 @@
 #include "g_game.h"
 #include "v_video.h"
 #include "gstrings.h"
+#include "s_music.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -438,9 +439,11 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetLogText)
 	return 0;
 }
 
-void player_t::SetSubtitle(int num)
+void player_t::SetSubtitle(int num, FSoundID soundid)
 {
 	char lumpname[36];
+
+	if (gameinfo.flags & GI_SHAREWARE) return;	// Subtitles are only for the full game.
 
 	// Do we have a subtitle for this log entry's voice file?
 	mysnprintf(lumpname, countof(lumpname), "$TXT_SUB_LOG%d", num);
@@ -448,7 +451,8 @@ void player_t::SetSubtitle(int num)
 	if (text != nullptr)
 	{
 		SubtitleText = lumpname;
-		SubtitleCounter = 7 * TICRATE;
+		int sl = soundid == 0 ? 7000 : std::max<int>(7000, S_GetMSLength(soundid));
+		SubtitleCounter = sl * TICRATE / 1000;
 	}
 }
 
@@ -456,7 +460,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, SetSubtitleNumber)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);
 	PARAM_INT(log);
-	self->SetSubtitle(log);
+	PARAM_SOUND(soundid);
+	self->SetSubtitle(log, soundid);
 	return 0;
 }
 
@@ -837,7 +842,7 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 		int wadnorm = Wads.GetLumpFile(spritenorm);
 		int wadcrouch = Wads.GetLumpFile(spritenorm);
 
-		if (wadnorm > Wads.GetIwadNum() && wadcrouch <= Wads.GetIwadNum())
+		if (wadnorm > Wads.GetMaxIwadNum() && wadcrouch <= Wads.GetMaxIwadNum())
 		{
 			// Question: Add an option / disable crouching or do what?
 			return false;

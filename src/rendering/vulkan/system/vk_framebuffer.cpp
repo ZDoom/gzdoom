@@ -50,6 +50,7 @@
 #include "vk_buffers.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_renderpass.h"
+#include "vulkan/renderer/vk_streambuffer.h"
 #include "vulkan/renderer/vk_postprocess.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/shaders/vk_shader.h"
@@ -97,6 +98,8 @@ VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevi
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
+	vkDeviceWaitIdle(device->device); // make sure the GPU is no longer using any objects before RAII tears them down
+
 	// screen is already null at this point, but VkHardwareTexture::ResetAll needs it during clean up. Is there a better way we can do this?
 	auto tmp = screen;
 	screen = this;
@@ -106,8 +109,8 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	VKBuffer::ResetAll();
 	PPResource::ResetAll();
 
-	delete MatricesUBO;
-	delete StreamUBO;
+	delete MatrixBuffer;
+	delete StreamBuffer;
 	delete mVertexData;
 	delete mSkyData;
 	delete mViewpoints;
@@ -128,10 +131,11 @@ void VulkanFrameBuffer::InitializeState()
 		first = false;
 	}
 
+	// Use the same names here as OpenGL returns.
 	switch (device->PhysicalDevice.Properties.vendorID)
 	{
-	case 0x1002: vendorstring = "AMD";     break;
-	case 0x10DE: vendorstring = "NVIDIA";  break;
+	case 0x1002: vendorstring = "ATI Technologies Inc.";     break;
+	case 0x10DE: vendorstring = "NVIDIA Corporation";  break;
 	case 0x8086: vendorstring = "Intel";   break;
 	default:     vendorstring = "Unknown"; break;
 	}
@@ -158,10 +162,8 @@ void VulkanFrameBuffer::InitializeState()
 	CreateFanToTrisIndexBuffer();
 
 	// To do: move this to HW renderer interface maybe?
-	MatricesUBO = (VKDataBuffer*)CreateDataBuffer(-1, false, false);
-	StreamUBO = (VKDataBuffer*)CreateDataBuffer(-1, false, false);
-	MatricesUBO->SetData(UniformBufferAlignedSize<::MatricesUBO>() * 50000, nullptr, false);
-	StreamUBO->SetData(UniformBufferAlignedSize<::StreamUBO>() * 200, nullptr, false);
+	MatrixBuffer = new VkStreamBuffer(sizeof(MatricesUBO), 50000);
+	StreamBuffer = new VkStreamBuffer(sizeof(StreamUBO), 300);
 
 	mShaderManager.reset(new VkShaderManager(device));
 	mSamplerManager.reset(new VkSamplerManager(device));
@@ -249,6 +251,8 @@ void VulkanFrameBuffer::FlushCommands(VulkanCommandBuffer **commands, size_t cou
 
 void VulkanFrameBuffer::FlushCommands(bool finish, bool lastsubmit)
 {
+	mRenderState->EndRenderPass();
+
 	if (mDrawCommands || mTransferCommands)
 	{
 		VulkanCommandBuffer *commands[2];
@@ -622,9 +626,17 @@ uint32_t VulkanFrameBuffer::GetCaps()
 	return (uint32_t)FlagSet;
 }
 
+const char* VulkanFrameBuffer::DeviceName() const
+{
+	const auto &props = device->PhysicalDevice.Properties;
+	return props.deviceName;
+}
+
+
 void VulkanFrameBuffer::SetVSync(bool vsync)
 {
 	// This is handled in VulkanSwapChain::AcquireImage.
+	cur_vsync = vsync;
 }
 
 void VulkanFrameBuffer::CleanForRestart()
@@ -923,7 +935,7 @@ unsigned int VulkanFrameBuffer::GetLightBufferBlockSize() const
 
 void VulkanFrameBuffer::PrintStartupLog()
 {
-	const auto props = device->PhysicalDevice.Properties;
+	const auto &props = device->PhysicalDevice.Properties;
 
 	FString deviceType;
 	switch (props.deviceType)

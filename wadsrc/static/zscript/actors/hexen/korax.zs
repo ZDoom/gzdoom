@@ -363,11 +363,11 @@ class Korax : Actor
 
 		if (health <= (SpawnHealth() >> 1))
 		{
-			numcommands = 5;
+			numcommands = 4;
 		}
 		else
 		{
-			numcommands = 4;
+			numcommands = 3;
 		}
 
 		ACS_Execute(250 + (random[KoraxCommand](0, numcommands)), 0);

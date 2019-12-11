@@ -860,6 +860,8 @@ DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, current);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, next);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextname);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, thisname);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, nextauthor);
+DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, thisauthor);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName0);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, LName1);
 DEFINE_FIELD_X(WBStartStruct, wbstartstruct_t, maxkills);

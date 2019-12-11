@@ -173,13 +173,13 @@ void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flags, int 
 
 	ffloor->flags  = flags;
 	ffloor->master = master;
-	ffloor->alpha  = alpha;
+	ffloor->alpha  = clamp(alpha, 0, 255);
 	ffloor->top.vindex = ffloor->bottom.vindex = -1;
 
 	// The engine cannot handle sloped translucent floors. Sorry
 	if (ffloor->top.plane->isSlope() || ffloor->bottom.plane->isSlope())
 	{
-		ffloor->alpha = OPAQUE;
+		ffloor->alpha = 255;
 		ffloor->flags &= ~FF_ADDITIVETRANS;
 	}
 

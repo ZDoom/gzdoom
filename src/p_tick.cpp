@@ -93,7 +93,24 @@ void P_Ticker (void)
 
 	// run the tic
 	if (paused || P_CheckTickerPaused())
+	{
+		// This must run even when the game is paused to catch changes from netevents before the frame is rendered.
+		for (auto Level : AllLevels())
+		{
+			auto it = Level->GetThinkerIterator<AActor>();
+			AActor* ac;
+
+			while ((ac = it.Next()))
+			{
+				if (ac->flags8 & MF8_RECREATELIGHTS)
+				{
+					ac->flags8 &= ~MF8_RECREATELIGHTS;
+					ac->SetDynamicLights();
+				}
+			}
+		}
 		return;
+	}
 
 	DPSprite::NewTick();
 
@@ -134,7 +151,6 @@ void P_Ticker (void)
 	for (auto Level : AllLevels())
 	{
 		// todo: set up a sandbox for secondary levels here.
-
 		auto it = Level->GetThinkerIterator<AActor>();
 		AActor *ac;
 
@@ -142,6 +158,7 @@ void P_Ticker (void)
 		{
 			ac->ClearInterpolation();
 		}
+
 		P_ThinkParticles(Level);	// [RH] make the particles think
 
 		for (i = 0; i < MAXPLAYERS; i++)
@@ -157,13 +174,32 @@ void P_Ticker (void)
 		if (!Level->isFrozen())
 		{
 			P_UpdateSpecials(Level);
-			P_RunEffects(Level);	// [RH] Run particle effects
+		}
+		it = Level->GetThinkerIterator<AActor>();
+
+		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
+		while ((ac = it.Next()))
+		{
+			if (ac->flags8 & MF8_RECREATELIGHTS)
+			{
+				ac->flags8 &= ~MF8_RECREATELIGHTS;
+				ac->SetDynamicLights();
+			}
+			// This was merged from P_RunEffects to eliminate the costly duplicate ThinkerIterator loop.
+			if ((ac->effects || ac->fountaincolor) && !Level->isFrozen())
+			{
+				P_RunEffect(ac, ac->effects);
+			}
 		}
 
 		// for par times
 		Level->time++;
 		Level->maptime++;
 		Level->totaltime++;
+	}
+	if (players[consoleplayer].mo != NULL) {
+		if (players[consoleplayer].mo->Vel.Length() > primaryLevel->max_velocity) { primaryLevel->max_velocity = players[consoleplayer].mo->Vel.Length(); }
+		primaryLevel->avg_velocity += (players[consoleplayer].mo->Vel.Length() - primaryLevel->avg_velocity) / primaryLevel->maptime;
 	}
 	StatusBar->CallTick();		// Status bar should tick AFTER the thinkers to properly reflect the level's state at this time.
 }

@@ -79,6 +79,7 @@
 #include "swrenderer/r_swrenderer.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "xlat/xlat.h"
+#include "vm.h"
 
 enum
 {
@@ -728,13 +729,21 @@ bool MapLoader::LoadExtendedNodes (FileReader &dalump, uint32_t id)
 		if (compressed)
 		{
 			FileReader zip;
-			if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false))
+			try
 			{
-				LoadZNodes(zip, type);
+				if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false, [](const char* err) { I_Error("%s", err); }))
+				{
+					LoadZNodes(zip, type);
+				}
+				else
+				{
+					Printf("Error loading nodes: Corrupt data.\n");
+					return false;
+				}
 			}
-			else
+			catch (const CRecoverableError& err)
 			{
-				Printf("Error loading nodes: Corrupt data.\n");
+				Printf("Error loading nodes: %s.\n", err.what());
 				return false;
 			}
 		}
@@ -3049,7 +3058,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		ParseTextMap(map, missingtex);
 	}
 
-	SetCompatibilityParams(checksum);
+	CalcIndices();
+	PostProcessLevel(checksum);
 
 	LoopSidedefs(true);
 
@@ -3265,3 +3275,4 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	if (!Level->IsReentering())
 		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 }
+

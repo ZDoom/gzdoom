@@ -61,7 +61,6 @@
 #include "g_levellocals.h"
 #include "utf8.h"
 
-char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.
 
 //==========================================================================
@@ -298,15 +297,12 @@ struct FReader
 	rapidjson::Document mDoc;
 	TArray<DObject *> mDObjects;
 	rapidjson::Value *mKeyValue = nullptr;
-	int mPlayers[MAXPLAYERS];
 	bool mObjectsRead = false;
 
 	FReader(const char *buffer, size_t length)
 	{
-		rapidjson::Document doc;
 		mDoc.Parse(buffer, length);
 		mObjects.Push(FJSONObject(&mDoc));
-		memset(mPlayers, -1, sizeof(mPlayers));
 	}
 
 	rapidjson::Value *FindKey(const char *key)
@@ -1667,7 +1663,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 		if (!arc.w->inObject() || def == nullptr || sid != *def)
 		{
 			arc.WriteKey(key);
-			const char *sn = (const char*)sid;
+			const char *sn = S_GetSoundName(sid);
 			if (sn != nullptr) arc.w->String(sn);
 			else arc.w->Null();
 		}

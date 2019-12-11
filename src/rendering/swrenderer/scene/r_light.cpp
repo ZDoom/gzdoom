@@ -204,7 +204,10 @@ namespace swrenderer
 
 			int shade = LightVisibility::LightLevelToShade(lightlevel, foggy, thread->Viewport.get());
 			if (psprite)
+			{
+				visibility = 0;
 				shade -= 24 * FRACUNIT;
+			}
 
 			BaseColormap = basecolormap;
 			ColormapNum = GETPALOOKUP(visibility, shade);

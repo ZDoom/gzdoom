@@ -51,6 +51,7 @@
 #include "scriptutil.h"
 #include "vm.h"
 #include "a_lights.h"
+#include "s_music.h"
 
 static FRandom pr_script("FScript");
 
@@ -363,7 +364,7 @@ static FSoundID T_FindSound(const char * name)
 	}
 
 	int id = S_AddSound(name, buffer);
-	S_HashSounds();
+	soundEngine->HashSounds();
 	return FSoundID(id);
 }
 

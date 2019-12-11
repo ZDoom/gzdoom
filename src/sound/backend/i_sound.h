@@ -35,16 +35,11 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
-#include "doomtype.h"
 #include "i_soundinternal.h"
+#include "utility/zstring.h"
 
 class FileReader;
-
-enum ECodecType
-{
-	CODEC_Unknown,
-	CODEC_Vorbis,
-};
+struct FSoundChan;
 
 enum EStartSoundFlags
 {
@@ -55,10 +50,17 @@ enum EStartSoundFlags
 	SNDF_NOREVERB=16,
 };
 
+enum ECodecType
+{
+	CODEC_Unknown,
+	CODEC_Vorbis,
+};
+
+
 class SoundStream
 {
 public:
-	virtual ~SoundStream ();
+	virtual ~SoundStream () {}
 
 	enum
 	{	// For CreateStream
@@ -75,10 +77,7 @@ public:
 	virtual void Stop() = 0;
 	virtual void SetVolume(float volume) = 0;
 	virtual bool SetPaused(bool paused) = 0;
-	virtual unsigned int GetPosition() = 0;
 	virtual bool IsEnded() = 0;
-	virtual bool SetPosition(unsigned int pos);
-	virtual bool SetOrder(int order);
 	virtual FString GetStats();
 };
 
@@ -89,7 +88,7 @@ class MIDIDevice;
 
 struct FSoundLoadBuffer
 {
-	TArray<uint8_t> mBuffer;
+	std::vector<uint8_t> mBuffer;
 	uint32_t loop_start;
 	uint32_t loop_end;
 	ChannelConfig chans;
@@ -118,8 +117,7 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
-    virtual SoundStream *OpenStream (FileReader &reader, int flags) = 0;
-
+  
 	// Starts a sound.
 	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan) = 0;
 	virtual FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan) = 0;
@@ -129,6 +127,9 @@ public:
 
 	// Changes a channel's volume.
 	virtual void ChannelVolume (FISoundChannel *chan, float volume) = 0;
+
+	// Changes a channel's pitch.
+	virtual void ChannelPitch(FISoundChannel *chan, float volume) = 0;
 
 	// Marks a channel's start time without actually playing it.
 	virtual void MarkStartTime (FISoundChannel *chan) = 0;
@@ -167,8 +168,6 @@ public:
 	virtual short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
 
 	virtual void DrawWaveDebug(int mode);
-
-    static SoundDecoder *CreateDecoder(FileReader &reader);
 };
 
 extern SoundRenderer *GSnd;
@@ -176,12 +175,7 @@ extern bool nosfx;
 extern bool nosound;
 
 void I_InitSound ();
-void I_ShutdownSound ();
-
-void S_ChannelEnded(FISoundChannel *schan);
-void S_ChannelVirtualChanged(FISoundChannel *schan, bool is_virtual);
-float S_GetRolloff(FRolloffInfo *rolloff, float distance, bool logarithmic);
-FISoundChannel *S_GetChannel(void *syschan);
+void I_CloseSound();
 
 extern ReverbContainer *DefaultEnvironments[26];
 

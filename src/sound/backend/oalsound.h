@@ -135,7 +135,6 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata);
-	virtual SoundStream *OpenStream(FileReader &reader, int flags);
 
 	// Starts a sound.
 	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);
@@ -143,6 +142,9 @@ public:
 
 	// Changes a channel's volume.
 	virtual void ChannelVolume(FISoundChannel *chan, float volume);
+
+	// Changes a channel's pitch.
+	virtual void ChannelPitch(FISoundChannel *chan, float pitch);
 
 	// Stops a sound channel.
 	virtual void StopChannel(FISoundChannel *chan);

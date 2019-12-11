@@ -385,6 +385,7 @@ OptionMenu "OptionsMenu" protected
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
+	StaticText " "
 }
 
 //-------------------------------------------------------------------------------------------
@@ -884,6 +885,12 @@ OptionValue GPUSwitch
 	2.0, "$OPTVAL_INTEGRATED"
 }
 
+OptionValue PreferBackend
+{
+	0, "$OPTVAL_OPENGL"
+	1, "$OPTVAL_VULKAN"
+	2, "$OPTVAL_SOFTPOLY"
+}
 
 OptionMenu "TrueColorOptions" protected
 {
@@ -924,6 +931,9 @@ OptionMenu "VideoOptions" protected
 	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
 	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25, 2
 	StaticText " "
+	Option "$DSPLYMNU_CUSTOMINVERTMAP",			"cl_customizeinvulmap", "OnOff"
+	ColorPicker "$DSPLYMNU_CUSTOMINVERTC1",		"cl_custominvulmapcolor1"
+	ColorPicker "$DSPLYMNU_CUSTOMINVERTC2",		"cl_custominvulmapcolor2"
 	Option "$DSPLYMNU_WIPETYPE",				"wipetype", "Wipes"
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
@@ -947,6 +957,13 @@ OptionMenu "VideoOptions" protected
 // HUD menu
 //
 //-------------------------------------------------------------------------------------------
+
+OptionValue CrosshairHealthTypes
+{
+	0.0, "$TXT_NO"
+	1.0, "$OPTVAL_YES_STANDARD"
+	2.0, "$OPTVAL_YES_ENHANCED"
+}
 
 OptionValue DisplayTagsTypes
 {
@@ -1011,13 +1028,14 @@ OptionMenu "HUDOptions" protected
 	Submenu "$HUDMNU_MESSAGE", 				"MessageOptions"
 	Submenu "$HUDMNU_FLASH", 				"FlashOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 		"ScoreboardOptions"
+	Submenu "$HUDMNU_FONTOPTIONS",			"FontOptions"
 	StaticText " "
 	Option "$HUDMNU_CROSSHAIRON",			"crosshairon", "OnOff"
 	Option "$HUDMNU_CROSSHAIR",				"crosshair", "Crosshairs"
 	Option "$HUDMNU_FORCECROSSHAIR",		"crosshairforce", "OnOff"
 	Option "$HUDMNU_GROWCROSSHAIR",			"crosshairgrow", "OnOff"
 	ColorPicker "$HUDMNU_CROSSHAIRCOLOR", 	"crosshaircolor"
-	Option "$HUDMNU_CROSSHAIRHEALTH",		"crosshairhealth", "OnOff"
+	Option "$HUDMNU_CROSSHAIRHEALTH",		"crosshairhealth", "CrosshairHealthTypes"
 	Slider "$HUDMNU_CROSSHAIRSCALE",		"crosshairscale", 0.0, 2.0, 0.05, 2
 	StaticText " "
 	Option "$HUDMNU_NAMETAGS",				"displaynametags", "DisplayTagsTypes"
@@ -1178,10 +1196,13 @@ OptionMenu "MiscOptions" protected
 	}
 	Option "$MISCMNU_QUERYIWAD",				"queryiwad", "OnOff"
 	StaticText " "
+	Option "$MISCMNU_NOCHEATS",				"nocheats", "OnOff"
 	Option "$MISCMNU_ALLCHEATS",				"allcheats", "OnOff"
 	Option "$MISCMNU_ENABLEAUTOSAVES",			"disableautosave", "Autosave"
 	Option "$MISCMNU_SAVELOADCONFIRMATION",			"saveloadconfirmation", "OnOff"
 	Slider "$MISCMNU_AUTOSAVECOUNT",			"autosavecount", 1, 20, 1, 0
+	Option "$MISCMNU_QUICKSAVEROTATION",			"quicksaverotation", "OnOff"
+	Slider "$MISCMNU_QUICKSAVECOUNT",			"quicksaverotationcount", 1, 20, 1, 0
 	Option "$MISCMNU_DEHLOAD",					"dehload", "dehopt"
 	Option "$MISCMNU_ENABLESCRIPTSCREENSHOTS",		"enablescriptscreenshot", "OnOff"
 	Option "$MISCMNU_INTERSCROLL",				"nointerscrollabort", "OffOn"
@@ -1191,6 +1212,10 @@ OptionMenu "MiscOptions" protected
 	SafeCommand "$MISCMNU_CLEARNODECACHE",		"clearnodecache"
 	StaticText " "
 	Option "$OPTMNU_LANGUAGE", "language", "LanguageOptions"
+
+	StaticText " "
+	Option "$MISCMNU_QUICKEXIT",				"m_quickexit", "OnOff"
+
 	IfOption(Windows)
 	{
 		StaticText " "
@@ -1515,6 +1540,19 @@ OptionMenu ScoreboardOptions protected
 	Option "$SCRBRDMNU_HEADERCOLOR",		"sb_teamdeathmatch_headingcolor", "TextColors"
 }
 
+//-------------------------------------------------------------------------------------------
+//
+// Font options
+//
+//-------------------------------------------------------------------------------------------
+
+OptionMenu FontOptions protected
+{
+	Title "$HUDMNU_FONTOPTIONS"
+	Option "$FONTMNU_LOG",					"log_vgafont", "YesNo"
+	Option "$FONTMNU_DLG",					"dlg_vgafont", "YesNo"
+}
+
 /*=======================================
  *
  * Gameplay Options (dmflags) Menu
@@ -1793,34 +1831,6 @@ OptionValue BufferCounts
 	  12, "12"
 }
 
-
-OptionString SoundOutputsWindows
-{
-	"Default",		"$OPTVAL_DEFAULT"
-	"DirectSound",	"$OPTSTR_DIRECTSOUND"
-	"WASAPI",		"$OPTSTR_WASAPI"
-	"ASIO",			"$OPTSTR_ASIO"
-	"WaveOut",		"$OPTSTR_WAVEOUT"
-	"No sound",		"$OPTSTR_NOSOUND"
-}
-
-
-OptionString SoundOutputsUnix
-{
-	"Default",		"$OPTVAL_DEFAULT"
-	"OSS",			"$OPTSTR_OSS"
-	"ALSA",			"$OPTSTR_ALSA"
-	"SDL",			"$OPTSTR_SDL"
-	"ESD",			"$OPTSTR_ESD"
-	"PulseAudio",	"$OPTSTR_PULSEAUDIO"
-	"No sound",		"$OPTSTR_NOSOUND"
-}
-
-OptionString SoundOutputsMac
-{
-	"Core Audio",		"$OPTSTR_COREAUDIO"
-	"No sound",			"$OPTSTR_NOSOUND"
-}
 
 OptionString ALDevices
 {
@@ -2203,6 +2213,8 @@ OptionMenu VideoModeMenu protected
 {
 	Title "$VIDMNU_TITLE"
 
+	Option "$VIDMNU_PREFERBACKEND",		"vid_preferbackend", "PreferBackend"
+	StaticText " "
 	Option "$VIDMNU_RENDERMODE",		"vid_rendermode", "RenderMode"
 	Option "$VIDMNU_FULLSCREEN",		"fullscreen", "YesNo"
 
@@ -2617,83 +2629,83 @@ OptionMenu "ReverbEdit" protected
 	StaticTextSwitchable 	"", "", "EvironmentName", 1
 	StaticTextSwitchable 	"", "", "EvironmentID"
 	StaticText " "
-	Submenu "Select Environment", "ReverbSelect"
-	Option "Test Environment", "eaxedit_test", OnOff
+	Submenu "$REVMNU_SELECT", "ReverbSelect"
+	Option "$REVMNU_TEST", "eaxedit_test", OnOff
 	StaticText " "
-	Submenu "New Environment", "ReverbNew"
-	Submenu "Save Environments", "ReverbSave"
-	Submenu "Edit Environment", "ReverbSettings"
+	Submenu "$REVMNU_NEW", "ReverbNew"
+	Submenu "$REVMNU_SAVE", "ReverbSave"
+	Submenu "$REVMNU_EDIT", "ReverbSettings"
 }
 
 OptionMenu "ReverbSelect" protected
 {
 	Class "ReverbSelect"
-	Title "Select Environment"
+	Title "$REVMNU_SELECT"
 	// filled in by code
 }
 
 OptionMenu "ReverbSettings" protected
 {
-	Title "Edit Reverb Environment"
-  	SafeCommand "Revert settings", "revertenvironment"
+	Title "$REVMNU_EDIT"
+	SafeCommand "$REVMNU_REVERT", "revertenvironment"
 	StaticText " "
-	SliderReverbEditOption "Environment Size", 1, 100, 0.01, 3, 1
-    SliderReverbEditOption "Environment Diffusion", 0, 1, 0.01, 3, 2
-    SliderReverbEditOption "Room", -10000, 0, 1, 0, 3
-    SliderReverbEditOption "Room HF", -10000, 0, 1, 0, 4
-    SliderReverbEditOption "Room LF", -10000, 0, 1, 0, 5
-    SliderReverbEditOption "Decay Time", 1, 200, 0.01, 3, 6
-    SliderReverbEditOption "Decay HF Ratio", 1, 20, 0.01, 3, 7
-    SliderReverbEditOption "Decay LF Ratio", 1, 20, 0.01, 3, 8
-    SliderReverbEditOption "Reflections", -10000, 1000, 1, 0, 9
-    SliderReverbEditOption "Reflections Delay", 0, 0.3, 1, 3, 10
-    SliderReverbEditOption "Reflections Pan X", -2000, 2000, 1, 3, 11
-    SliderReverbEditOption "Reflections Pan Y", -2000, 2000, 1, 3, 12
-    SliderReverbEditOption "Reflections Pan Z", -2000, 2000, 1, 3, 13
-    SliderReverbEditOption "Reverb", -10000, 2000, 1, 0, 14
-    SliderReverbEditOption "Reverb Delay", 0, 0.1, 0.01, 3, 15
-    SliderReverbEditOption "Reverb Pan X", -2000, 2000, 1, 3, 16
-    SliderReverbEditOption "Reverb Pan Y", -2000, 2000, 1, 3, 17
-    SliderReverbEditOption "Reverb Pan Z", -2000, 2000, 1, 3, 18
-    SliderReverbEditOption "Echo Time", 0.075, 0.25, 0.005, 3, 19
-    SliderReverbEditOption "Echo Depth", 0, 1, 0.01, 3, 20
-    SliderReverbEditOption "Modulation Time", 0.04, 4, 0.01, 3, 21
-    SliderReverbEditOption "Modulation Depth",0, 1, 0.01, 3, 22
-    SliderReverbEditOption "Air Absorption HF", -100, 0, 0.01, 3, 23
-    SliderReverbEditOption "HF Reference", 10000, 200000, 1, 3, 24
-    SliderReverbEditOption "LF Reference",20, 10000, 0.1, 3, 25
-    SliderReverbEditOption "Room Rolloff Factor",0, 10, 0.01, 3, 26
-    SliderReverbEditOption "Diffusion",0, 100, 0.01, 3, 27
-    SliderReverbEditOption "Density",0, 100, 0.01, 3, 28
+	SliderReverbEditOption "$REVMNU_Environment_Size", 1, 100, 0.01, 3, 1
+	SliderReverbEditOption "$REVMNU_Environment_Diffusion", 0, 1, 0.01, 3, 2
+	SliderReverbEditOption "$REVMNU_Room", -10000, 0, 1, 0, 3
+	SliderReverbEditOption "$REVMNU_Room_HF", -10000, 0, 1, 0, 4
+	SliderReverbEditOption "$REVMNU_Room_LF", -10000, 0, 1, 0, 5
+	SliderReverbEditOption "$REVMNU_Decay_Time", 1, 200, 0.01, 3, 6
+	SliderReverbEditOption "$REVMNU_Decay_HF_Ratio", 1, 20, 0.01, 3, 7
+	SliderReverbEditOption "$REVMNU_Decay_LF_Ratio", 1, 20, 0.01, 3, 8
+	SliderReverbEditOption "$REVMNU_Reflections", -10000, 1000, 1, 0, 9
+	SliderReverbEditOption "$REVMNU_Reflections_Delay", 0, 0.3, 1, 3, 10
+	SliderReverbEditOption "$REVMNU_Reflections_Pan_X", -2000, 2000, 1, 3, 11
+	SliderReverbEditOption "$REVMNU_Reflections_Pan_Y", -2000, 2000, 1, 3, 12
+	SliderReverbEditOption "$REVMNU_Reflections_Pan_Z", -2000, 2000, 1, 3, 13
+	SliderReverbEditOption "$REVMNU_Reverb", -10000, 2000, 1, 0, 14
+	SliderReverbEditOption "$REVMNU_Reverb_Delay", 0, 0.1, 0.01, 3, 15
+	SliderReverbEditOption "$REVMNU_Reverb_Pan_X", -2000, 2000, 1, 3, 16
+	SliderReverbEditOption "$REVMNU_Reverb_Pan_Y", -2000, 2000, 1, 3, 17
+	SliderReverbEditOption "$REVMNU_Reverb_Pan_Z", -2000, 2000, 1, 3, 18
+	SliderReverbEditOption "$REVMNU_Echo_Time", 0.075, 0.25, 0.005, 3, 19
+	SliderReverbEditOption "$REVMNU_Echo_Depth", 0, 1, 0.01, 3, 20
+	SliderReverbEditOption "$REVMNU_Modulation_Time", 0.04, 4, 0.01, 3, 21
+	SliderReverbEditOption "$REVMNU_Modulation_Depth",0, 1, 0.01, 3, 22
+	SliderReverbEditOption "$REVMNU_Air_Absorption_HF", -100, 0, 0.01, 3, 23
+	SliderReverbEditOption "$REVMNU_HF_Reference", 10000, 200000, 1, 3, 24
+	SliderReverbEditOption "$REVMNU_LF_Reference",20, 10000, 0.1, 3, 25
+	SliderReverbEditOption "$REVMNU_Room_Rolloff_Factor",0, 10, 0.01, 3, 26
+	SliderReverbEditOption "$REVMNU_Diffusion",0, 100, 0.01, 3, 27
+	SliderReverbEditOption "$REVMNU_Density",0, 100, 0.01, 3, 28
 	StaticText " "
-    ReverbOption "Reflections Scale", 29, OnOff
-    ReverbOption "Reflections Delay Scale", 30, OnOff
-    ReverbOption "Decay Time Scale", 31, OnOff
-    ReverbOption "Decay HF Limit", 32, OnOff
-    ReverbOption "Reverb Scale", 33, OnOff
-    ReverbOption "Reverb Delay Scale", 34, OnOff
-    ReverbOption "Echo Time Scale", 35, OnOff
-    ReverbOption "Modulation Time Scale", 36, OnOff
+	ReverbOption "$REVMNU_Reflections_Scale", 29, OnOff
+	ReverbOption "$REVMNU_Reflections_Delay_Scale", 30, OnOff
+	ReverbOption "$REVMNU_Decay_Time_Scale", 31, OnOff
+	ReverbOption "$REVMNU_Decay_HF_Limit", 32, OnOff
+	ReverbOption "$REVMNU_Reverb_Scale", 33, OnOff
+	ReverbOption "$REVMNU_Reverb_Delay_Scale", 34, OnOff
+	ReverbOption "$REVMNU_Echo_Time_Scale", 35, OnOff
+	ReverbOption "$REVMNU_Modulation_Time_Scale", 36, OnOff
 }
 
 OptionMenu "ReverbNew" protected
 {
-	Title "New Reverb Environment"
-	ReverbSelect "Based on", "ReverbSelect"
-	TextField "Name", "reverbedit_name"
-	NumberField "ID #1", "reverbedit_id1", 0, 255
-	NumberField "ID #2", "reverbedit_id2", 0, 255
-	Command "Create", "createenvironment", 0, 1
+	Title "$REVMNU_NEW"
+	ReverbSelect "$REVMNU_Based_on", "ReverbSelect"
+	TextField "$REVMNU_Name", "reverbedit_name"
+	NumberField "$REVMNU_ID_1", "reverbedit_id1", 0, 255
+	NumberField "$REVMNU_ID_2", "reverbedit_id2", 0, 255
+	Command "$REVMNU_Create", "createenvironment", 0, 1
 }
 
 OptionMenu "ReverbSave" protected
 {
 	Class "ReverbSave"
-	Title "Save Reverb Environments"
-	Command "Save...", "savereverbs"
-	TextField "File name", "reverbsavename"
+	Title "$REVMNU_SAVE"
+	Command "$REVMNU_Save", "savereverbs"
+	TextField "$REVMNU_File_name", "reverbsavename"
 	StaticText ""
-	StaticText "Environments to save"
+	StaticText "$REVMNU_Environments_to_save"
 	// Rest is filled in by code.
 }
 
@@ -2712,13 +2724,17 @@ OptionString "LanguageOptions"
 	"de", "Deutsch (German)"
 	"es", "Español (España) (Castilian Spanish)"
 	"esm", "Español (Latino) (Latin American Spanish)"
+	"fi", "Suomi (Finnish)"
 	"fr", "Français (French)"
 	"it", "Italiano (Italian)"
-	"ko", "한국의 (Korean)"
+	"jp", "日本語 (Japanese)"
+	"ko", "한국어 (Korean)"
+	"nl", "Nederlands (Dutch)"
 	"pl", "Polski (Polish)"
 	"ptg", "Português (European Portuguese)"
 	"pt", "Português do Brasil (Brazilian Portuguese)"
 	"ru", "Русский (Russian)"
+	"sr", "Српски (Serbian)"
 }
 
 /*=======================================
@@ -2751,7 +2767,6 @@ OptionMenu "vkoptions"
 	StaticText "$VK_WARNING"
 	StaticText "$VK_RESTART"
 	StaticText ""
-	Option "$VKMNU_ENABLE",				"vid_enablevulkan", "OnOff"
 	TextField "$VKMNU_DEVICE",			vk_device
 	Option "$VKMNU_HDR",				"vk_hdr", "OnOff"
 }

@@ -71,10 +71,9 @@ void I_StartFrame (void);
 // Can call D_PostEvent.
 void I_StartTic (void);
 
-// Called by M_Responder when quit is selected.
-// Clean exit, displays sell blurb.
-void I_Quit (void);
-
+// Asynchronous interrupt functions should maintain private queues
+// that are read by the synchronous functions
+// to be converted into events.
 
 void I_Tactile (int on, int off, int total);
 

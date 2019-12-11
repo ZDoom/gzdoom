@@ -68,7 +68,7 @@ FSoftwareTexture::FSoftwareTexture(FTexture *tex)
 	auto info = tex->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
 	mPhysicalWidth = info.mWidth;
 	mPhysicalHeight = info.mHeight;
-	mPhysicalScale = mPhysicalWidth / tex->Width;
+	mPhysicalScale = tex->Width > 0? mPhysicalWidth / tex->Width : mPhysicalWidth;
 	CalcBitSize();
 }
 

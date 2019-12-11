@@ -45,7 +45,7 @@ struct CRestartException
 	char dummy;
 };
 
-void D_DoomMain (void);
+int D_DoomMain (void);
 
 
 void D_Display ();
@@ -107,6 +107,7 @@ struct FIWADInfo
 	EGameType gametype = GAME_Doom;		// which game are we playing?
 	int StartupType = FStartupInfo::DefaultStartup;		// alternate startup type
 	FString MapInfo;		// Base mapinfo to load
+	bool nokeyboardcheats = false;		// disable keyboard cheats
 	TArray<FString> Load;	// Wads to be loaded with this one.
 	TArray<FString> Lumps;	// Lump names for identification
 	TArray<FString> DeleteLumps;	// Lumps which must be deleted from the directory.
@@ -151,7 +152,7 @@ class FIWadManager
 	void AddIWADCandidates(const char *dir);
 	void ValidateIWADs();
 public:
-	FIWadManager(const char *fn);
+	FIWadManager(const char *fn, const char *fnopt);
 	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
 	const FString *GetAutoname(unsigned int num) const
 	{

@@ -3,8 +3,9 @@
 #include "vk_objects.h"
 #include "c_cvars.h"
 #include "version.h"
+#include "v_video.h"
+#include "vk_framebuffer.h"
 
-EXTERN_CVAR(Bool, vid_vsync);
 
 CVAR(Bool, vk_hdr, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -21,12 +22,13 @@ VulkanSwapChain::~VulkanSwapChain()
 
 uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *semaphore, VulkanFence *fence)
 {
-	if (lastSwapWidth != width || lastSwapHeight != height || lastVsync != vid_vsync || lastHdr != vk_hdr || !swapChain)
+	auto vsync = static_cast<VulkanFrameBuffer*>(screen)->cur_vsync;
+	if (lastSwapWidth != width || lastSwapHeight != height || lastVsync != vsync || lastHdr != vk_hdr || !swapChain)
 	{
 		Recreate();
 		lastSwapWidth = width;
 		lastSwapHeight = height;
-		lastVsync = vid_vsync;
+		lastVsync = vsync;
 		lastHdr = vk_hdr;
 	}
 
@@ -44,7 +46,7 @@ uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *s
 		{
 			break;
 		}
-		else if (result == VK_SUBOPTIMAL_KHR)
+		else if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_SURFACE_LOST_KHR)
 		{
 			// Force the recreate to happen next frame.
 			// The spec is not very clear about what happens to the semaphore or the acquired image if the swapchain is recreated before the image is released with a call to vkQueuePresentKHR.
@@ -69,10 +71,6 @@ uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *s
 		{
 			VulkanError("vkAcquireNextImageKHR failed: device lost");
 		}
-		else if (result == VK_ERROR_SURFACE_LOST_KHR)
-		{
-			VulkanError("vkAcquireNextImageKHR failed: surface lost");
-		}
 		else
 		{
 			VulkanError("vkAcquireNextImageKHR failed");
@@ -92,7 +90,7 @@ void VulkanSwapChain::QueuePresent(uint32_t imageIndex, VulkanSemaphore *semapho
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr;
 	VkResult result = vkQueuePresentKHR(device->presentQueue, &presentInfo);
-	if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
+	if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_ERROR_SURFACE_LOST_KHR)
 	{
 		lastSwapWidth = 0;
 		lastSwapHeight = 0;
@@ -107,10 +105,6 @@ void VulkanSwapChain::QueuePresent(uint32_t imageIndex, VulkanSemaphore *semapho
 	else if (result == VK_ERROR_DEVICE_LOST)
 	{
 		VulkanError("vkQueuePresentKHR failed: device lost");
-	}
-	else if (result == VK_ERROR_SURFACE_LOST_KHR)
-	{
-		VulkanError("vkQueuePresentKHR failed: surface lost");
 	}
 	else if (result != VK_SUCCESS)
 	{
@@ -279,7 +273,8 @@ void VulkanSwapChain::SelectPresentMode()
 		VulkanError("No surface present modes supported");
 
 	swapChainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-	if (vid_vsync)
+	auto vsync = static_cast<VulkanFrameBuffer*>(screen)->cur_vsync;
+	if (vsync)
 	{
 		bool supportsFifoRelaxed = std::find(presentModes.begin(), presentModes.end(), VK_PRESENT_MODE_FIFO_RELAXED_KHR) != presentModes.end();
 		if (supportsFifoRelaxed)

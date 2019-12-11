@@ -37,10 +37,12 @@ namespace swrenderer
 		RenderThread *Thread = nullptr;
 
 	private:
-		bool RenderWall(DrawSegment *ds, int x1, int x2, SpriteDrawerArgs &columndrawerargs, bool visible);
-		void ClipMidtex(int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
-		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2);
+		void RenderWall(DrawSegment *ds, int x1, int x2);
+		void Render3DFloorWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, double clipTop, double clipBottom, FSoftwareTexture *rw_pic);
+		void Render3DFloorWallRange(DrawSegment *ds, int x1, int x2);
+		void RenderFog(DrawSegment* ds, int x1, int x2);
+		void ClipMidtex(DrawSegment* ds, int x1, int x2);
+		void GetNoWrapMidTextureZ(DrawSegment* ds, FSoftwareTexture* tex, double& ceilZ, double& floorZ);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 
 		sector_t *frontsector = nullptr;
@@ -48,13 +50,6 @@ namespace swrenderer
 
 		seg_t *curline = nullptr;
 		Fake3DTranslucent m3DFloor;
-
-		FWallCoords WallC;
-		FWallTmapVals WallT;
-
-		ProjectedWallLight mLight;
-
-		fixed_t rw_offset = 0;
 
 		ProjectedWallLine wallupper;
 		ProjectedWallLine walllower;

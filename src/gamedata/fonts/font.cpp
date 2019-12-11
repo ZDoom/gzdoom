@@ -55,6 +55,7 @@
 #include "vm.h"
 #include "image.h"
 #include "utf8.h"
+#include "myiswalpha.h"
 #include "textures/formats/fontchars.h"
 #include "textures/formats/multipatchtexture.h"
 
@@ -233,7 +234,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					for (auto entry : array)
 					{
 						FTexture *tex = TexMan.GetTexture(entry, false);
-						if (tex && tex->SourceLump >= 0 && Wads.GetLumpFile(tex->SourceLump) <= Wads.GetIwadNum() && tex->UseType == ETextureType::MiscPatch)
+						if (tex && tex->SourceLump >= 0 && Wads.GetLumpFile(tex->SourceLump) <= Wads.GetMaxIwadNum() && tex->UseType == ETextureType::MiscPatch)
 						{
 							texs[i] = tex;
 						}
@@ -318,10 +319,13 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					}
 				}
 
-				pic->SetUseType(ETextureType::FontChar);
+				Chars[i].OriginalPic = new FImageTexture(pic->GetImage(), "");
+				Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
+				Chars[i].OriginalPic->CopySize(pic);
+				TexMan.AddTexture(Chars[i].OriginalPic);
+
 				if (!noTranslate)
 				{
-					Chars[i].OriginalPic = pic;
 					Chars[i].TranslatedPic = new FImageTexture(new FFontChar1(pic->GetImage()), "");
 					Chars[i].TranslatedPic->CopySize(pic);
 					Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
@@ -329,7 +333,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				}
 				else
 				{
-					Chars[i].TranslatedPic = pic;
+					Chars[i].TranslatedPic = Chars[i].OriginalPic;
 				}
 
 				Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
@@ -444,10 +448,13 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 
 			auto b = pic->Get8BitPixels(false);
 
-			Chars[i].OriginalPic = pic;
+			Chars[i].OriginalPic = new FImageTexture(pic->GetImage(), "");
+			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
+			Chars[i].OriginalPic->CopySize(pic);
 			Chars[i].TranslatedPic = new FImageTexture(new FFontChar1(pic->GetImage()), "");
 			Chars[i].TranslatedPic->CopySize(pic);
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
+			TexMan.AddTexture(Chars[i].OriginalPic);
 			TexMan.AddTexture(Chars[i].TranslatedPic);
 		}
 		Chars[i].XMove = width;
@@ -1052,7 +1059,7 @@ bool FFont::CanPrint(const uint8_t *string) const
 		else if (chr != '\n')
 		{
 			int cc = GetCharCode(chr, true);
-			if (chr != cc && iswalpha(chr) && cc != getAlternative(chr))
+			if (chr != cc && myiswalpha(chr) && cc != getAlternative(chr))
 			{
 				return false;
 			}
@@ -1105,6 +1112,53 @@ int FFont::StringWidth(const uint8_t *string) const
 	}
 
 	return MAX(maxw, w);
+}
+
+//==========================================================================
+//
+// Get the largest ascender in the first line of this text.
+//
+//==========================================================================
+
+int FFont::GetMaxAscender(const uint8_t* string) const
+{
+	int retval = 0;
+
+	while (*string)
+	{
+		auto chr = GetCharFromString(string);
+		if (chr == TEXTCOLOR_ESCAPE)
+		{
+			// We do not need to check for UTF-8 in here.
+			if (*string == '[')
+			{
+				while (*string != '\0' && *string != ']')
+				{
+					++string;
+				}
+			}
+			if (*string != '\0')
+			{
+				++string;
+			}
+			continue;
+		}
+		else if (chr == '\n')
+		{
+			break;
+		}
+		else
+		{
+			auto ctex = GetChar(chr, CR_UNTRANSLATED, nullptr);
+			if (ctex)
+			{
+				auto offs = int(ctex->GetScaledTopOffset(0));
+				if (offs > retval) retval = offs;
+			}
+		}
+	}
+
+	return retval;
 }
 
 //==========================================================================

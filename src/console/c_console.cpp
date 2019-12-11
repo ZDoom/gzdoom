@@ -64,6 +64,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "utf8.h"
+#include "s_music.h"
 
 
 #include "gi.h"
@@ -71,6 +72,9 @@
 #define LEFTMARGIN 8
 #define RIGHTMARGIN 8
 #define BOTTOMARGIN 12
+
+extern bool hud_toggled;
+void D_ToggleHud();
 
 
 CUSTOM_CVAR(Int, con_buffersize, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -581,11 +585,6 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 	setmsgcolor (PRINTLEVELS+1, self);
 }
 
-FFont * C_GetDefaultHUDFont()
-{
-	return generic_ui? NewSmallFont : SmallFont;
-}
-
 void C_InitConback()
 {
 	conback = TexMan.CheckForTexture ("CONBACK", ETextureType::MiscPatch);
@@ -778,6 +777,19 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		con_notifylines == 0)
 		return;
 
+	// [MK] allow the status bar to take over notify printing
+	if (StatusBar != nullptr)
+	{
+		IFVIRTUALPTR(StatusBar, DBaseStatusBar, ProcessNotify)
+		{
+			VMValue params[] = { (DObject*)StatusBar, printlevel, &source };
+			int rv;
+			VMReturn ret(&rv);
+			VMCall(func, params, countof(params), &ret, 1);
+			if (!!rv) return;
+		}
+	}
+
 	width = DisplayWidth / active_con_scaletext(generic_ui);
 
 	FFont *font = generic_ui ? NewSmallFont : AlternativeSmallFont;
@@ -908,7 +920,7 @@ int PrintString (int iprintlevel, const char *outline)
 	return 0;	// Don't waste time on calculating this if nothing at all was printed...
 }
 
-extern bool gameisdead;
+bool gameisdead;
 
 int VPrintf (int printlevel, const char *format, va_list parms)
 {
@@ -965,6 +977,12 @@ int DPrintf (int level, const char *format, ...)
 void C_FlushDisplay ()
 {
 	NotifyStrings.Clear();
+	if (StatusBar == nullptr) return;
+	IFVIRTUALPTR(StatusBar, DBaseStatusBar, FlushNotify)
+	{
+		VMValue params[] = { (DObject*)StatusBar };
+		VMCall(func, params, countof(params), nullptr, 1);
+	}
 }
 
 void C_AdjustBottom ()
@@ -1241,9 +1259,11 @@ void C_DrawConsole ()
 
 void C_FullConsole ()
 {
+	if (hud_toggled)
+		D_ToggleHud();
 	if (demoplayback)
 		G_CheckDemoStatus ();
-	network->D_QuitNetGame ();
+	D_QuitNetGame ();
 	advancedemo = false;
 	ConsoleState = c_down;
 	HistPos = NULL;
@@ -1254,6 +1274,7 @@ void C_FullConsole ()
 		gamestate = GS_FULLCONSOLE;
 		primaryLevel->Music = "";
 		S_Start ();
+		S_StartMusic();
 		P_FreeLevelData ();
 	}
 	else
@@ -1274,6 +1295,8 @@ void C_ToggleConsole ()
 		HistPos = NULL;
 		TabbedLast = false;
 		TabbedList = false;
+		if (hud_toggled)
+			D_ToggleHud();
 	}
 	else if (gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP)
 	{
@@ -1745,6 +1768,17 @@ void C_MidPrint (FFont *font, const char *msg, bool bold)
 	if (StatusBar == nullptr || screen == nullptr)
 		return;
 
+	// [MK] allow the status bar to take over MidPrint
+	IFVIRTUALPTR(StatusBar, DBaseStatusBar, ProcessMidPrint)
+	{
+		FString msgstr = msg;
+		VMValue params[] = { (DObject*)StatusBar, font, &msgstr, bold };
+		int rv;
+		VMReturn ret(&rv);
+		VMCall(func, params, countof(params), &ret, 1);
+		if (!!rv) return;
+	}
+
 	if (msg != nullptr)
 	{
 		auto color = (EColorRange)PrintColors[bold? PRINTLEVELS+1 : PRINTLEVELS];
@@ -1787,10 +1821,7 @@ struct TabData
 	{
 	}
 
-	TabData(const TabData &other)
-	: UseCount(other.UseCount), TabName(other.TabName)
-	{
-	}
+	TabData(const TabData &other) = default;
 };
 
 static TArray<TabData> TabCommands (TArray<TabData>::NoInit);

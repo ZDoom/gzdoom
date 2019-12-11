@@ -9,6 +9,7 @@ class VkSamplerManager;
 class VkShaderManager;
 class VkRenderPassManager;
 class VkRenderState;
+class VkStreamBuffer;
 class VKDataBuffer;
 class VkHardwareTexture;
 class VkRenderBuffers;
@@ -24,6 +25,7 @@ public:
 	VulkanDevice *device;
 	std::unique_ptr<VulkanSwapChain> swapChain;
 	uint32_t presentImageIndex = 0xffffffff;
+	bool cur_vsync;
 
 	VulkanCommandBuffer *GetTransferCommands();
 	VulkanCommandBuffer *GetDrawCommands();
@@ -38,13 +40,10 @@ public:
 
 	unsigned int GetLightBufferBlockSize() const;
 
-	template<typename T>
-	int UniformBufferAlignedSize() const { return (sizeof(T) + uniformblockalignment - 1) / uniformblockalignment * uniformblockalignment; }
-
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
-	VKDataBuffer *MatricesUBO = nullptr;
-	VKDataBuffer *StreamUBO = nullptr;
+	VkStreamBuffer *MatrixBuffer = nullptr;
+	VkStreamBuffer *StreamBuffer = nullptr;
 
 	VKDataBuffer *LightNodes = nullptr;
 	VKDataBuffer *LightLines = nullptr;
@@ -78,6 +77,8 @@ public:
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
+	const char* DeviceName() const override;
+	int Backend() override { return 1; }
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;

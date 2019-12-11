@@ -34,6 +34,7 @@
 #include "g_levellocals.h"
 #include "xlat/xlat.h"
 #include "maploader/maploader.h"
+#include "s_music.h"
 
 class FScriptLoader
 {

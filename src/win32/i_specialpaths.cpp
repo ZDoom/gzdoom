@@ -38,10 +38,9 @@
 #include <shlobj.h>
 
 #include "cmdlib.h"
+#include "doomtype.h"
 #include "m_misc.h"
 #include "version.h"	// for GAMENAME
-
-#include "optwin32.h"
 
 // Vanilla MinGW does not have folder ids
 #if defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR)

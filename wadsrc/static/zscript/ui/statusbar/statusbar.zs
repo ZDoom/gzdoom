@@ -320,6 +320,7 @@ class BaseStatusBar native ui
 
 	virtual void Init() 
 	{
+		SetSize(0, 320, 200);
 	}
 
 	native virtual void Tick ();
@@ -334,14 +335,21 @@ class BaseStatusBar native ui
 	virtual void NewGame () { if (CPlayer != null) AttachToPlayer(CPlayer); }
 	virtual void ShowPop (int popnum) { ShowLog = (popnum == POP_Log && !ShowLog); }
 	virtual bool MustDrawLog(int state) { return true; }
-	
+
+	// [MK] let the HUD handle notifications and centered print messages
+	virtual bool ProcessNotify(EPrintLevel printlevel, String outline) { return false; }
+	virtual void FlushNotify() {}
+	virtual bool ProcessMidPrint(Font fnt, String msg, bool bold) { return false; }
+	// [MK] let the HUD handle drawing the chat prompt
+	virtual bool DrawChat(String txt) { return false; }
+
 	native TextureID GetMugshot(int accuracy, int stateflags=MugShot.STANDARD, String default_face = "STF");
 	
 	// These functions are kept native solely for performance reasons. They get called repeatedly and can drag down performance easily if they get too slow.
 	native static TextureID, bool GetInventoryIcon(Inventory item, int flags);
 	native void DrawTexture(TextureID texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
 	native void DrawImage(String texture, Vector2 pos, int flags = 0, double Alpha = 1., Vector2 box = (-1, -1), Vector2 scale = (1, 1));
-	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4);
+	native void DrawString(HUDFont font, String string, Vector2 pos, int flags = 0, int translation = Font.CR_UNTRANSLATED, double Alpha = 1., int wrapwidth = -1, int linespacing = 4, Vector2 scale = (1, 1));
 	native double, double, double, double TransformRect(double x, double y, double w, double h, int flags = 0);
 	native void Fill(Color col, double x, double y, double w, double h, int flags = 0);
 	native static String FormatNumber(int number, int minsize = 0, int maxsize = 0, int format = 0, String prefix = "");
@@ -582,7 +590,7 @@ class BaseStatusBar native ui
 		}
 		//Hexen counts basic armor also so we should too.
 		let armor = BasicArmor(CPlayer.mo.FindInventory("BasicArmor"));
-		if(armor != NULL)
+		if(armor != NULL && armor.Amount > 0)
 		{
 			add += armor.SavePercent * 100;
 		}

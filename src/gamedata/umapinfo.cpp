@@ -82,10 +82,13 @@ static FString ParseMultiString(FScanner &scanner, int error)
 		}
 	}
 	
+	bool first = true;
+
 	do
 	{
 		scanner.MustGetToken(TK_StringConst);
-		if (build.Len() > 0) build += "\n";
+		if (first) first = false;
+		else build += "\n";
 		build += scanner.String;
 	} 
 	while (scanner.CheckToken(','));
@@ -224,10 +227,21 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 			// add the given episode
 			FEpisode epi;
 
-			epi.mEpisodeName = strbin1(split[1]);
+			if (split.Size() > 1)
+			{
+				epi.mEpisodeName = strbin1(split[1]);
+			}
+			if (split.Size() > 2 && split[2].IsNotEmpty())
+			{
+				split[2].ToLower();
+				epi.mShortcut = split[2][0];
+			}
+			else
+			{
+				epi.mShortcut = '\0';
+			}
 			epi.mEpisodeMap = mape->MapName;
 			epi.mPicName = split[0];
-			epi.mShortcut = split[2][0];
 			epi.mNoSkill = false;
 
 			unsigned i;

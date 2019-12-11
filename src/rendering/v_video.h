@@ -326,7 +326,7 @@ class DCanvas
 public:
 	DCanvas (int width, int height, bool bgra);
 	~DCanvas ();
-	void Resize(int width, int height);
+	void Resize(int width, int height, bool optimizepitch = true);
 
 	// Member variable access
 	inline uint8_t *GetPixels () const { return Pixels.Data(); }
@@ -394,6 +394,9 @@ public:
 	virtual ~DFrameBuffer();
 	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
 	virtual bool IsVulkan() { return false; }
+	virtual bool IsPoly() { return false; }
+
+	virtual DCanvas* GetCanvas() { return nullptr; }
 
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)
@@ -475,6 +478,8 @@ public:
 	// Report a game restart
 	void SetClearColor(int color);
 	virtual uint32_t GetCaps();
+	virtual int Backend() { return 0; }
+	virtual const char* DeviceName() const { return "Unknown"; }
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 
@@ -592,7 +597,8 @@ EXTERN_CVAR (Float, Gamma)
 
 
 // Allocates buffer screens, call before R_Init.
-void V_Init (bool restart);
+void V_InitScreenSize();
+void V_InitScreen();
 
 // Initializes graphics mode for the first time.
 void V_Init2 ();
@@ -660,9 +666,13 @@ public:
 		savedyfac = CleanYfac;
 		savedwidth = CleanWidth;
 		savedheight = CleanHeight;
-		V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
-		CleanWidth = screen->GetWidth() / CleanXfac;
-		CleanHeight = screen->GetHeight() / CleanYfac;
+
+		if (screen)
+		{
+			V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
+			CleanWidth = screen->GetWidth() / CleanXfac;
+			CleanHeight = screen->GetHeight() / CleanYfac;
+		}
 	}
 
 	~ScaleOverrider()

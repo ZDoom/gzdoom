@@ -70,6 +70,12 @@ enum
 	TELEFRAG_DAMAGE = 1000000
 };
 
+inline int Tics2Seconds(int tics)
+{
+	return tics / TICRATE;
+}
+
+
 
 typedef float skill_t;
 
@@ -332,6 +338,7 @@ enum : unsigned int
 	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
 	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
 	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
+	COMPATF2_SCRIPTWAIT		= 1 << 11,	// Use old scriptwait implementation where it doesn't wait on a non-running script.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -347,7 +354,7 @@ enum
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
 	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
-	BCOMPATF_CLIPMIDTEX		= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps)
+	BCOMPATF_CLIPMIDTEX			= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps, has no effect in the hardware renderer)
 };
 
 // phares 3/20/98:
@@ -364,11 +371,5 @@ enum
 
 
 #define BLINKTHRESHOLD (4*32)
-
-#ifndef __BIG_ENDIAN__
-#define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
-#else
-#define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
-#endif
 
 #endif	// __DOOMDEF_H__

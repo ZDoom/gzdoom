@@ -35,6 +35,7 @@
 
 #ifdef HAVE_VULKAN
 #define VK_USE_PLATFORM_MACOS_MVK
+#define VK_USE_PLATFORM_METAL_EXT
 #include "volk/volk.h"
 #endif
 
@@ -53,10 +54,10 @@
 #include "v_text.h"
 #include "version.h"
 #include "doomerrors.h"
-#include "atterm.h"
 
 #include "gl/system/gl_framebuffer.h"
 #include "vulkan/system/vk_framebuffer.h"
+#include "rendering/polyrenderer/backend/poly_framebuffer.h"
 
 
 @implementation NSWindow(ExitAppOnClose)
@@ -64,8 +65,8 @@
 - (void)exitAppOnClose
 {
 	NSButton* closeButton = [self standardWindowButton:NSWindowCloseButton];
-	[closeButton setAction:@selector(terminate:)];
-	[closeButton setTarget:NSApp];
+	[closeButton setAction:@selector(sendExitEvent:)];
+	[closeButton setTarget:[NSApp delegate]];
 }
 
 @end
@@ -91,11 +92,10 @@
 
 @end
 
-EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
-EXTERN_CVAR(Int,  vid_enablevulkan)
+EXTERN_CVAR(Int,  vid_preferbackend)
 EXTERN_CVAR(Bool, vk_debug)
 
 CVAR(Bool, mvk_debug, false, 0)
@@ -294,7 +294,13 @@ CocoaWindow* CreateWindow(const NSUInteger styleMask)
 	return window;
 }
 
-NSOpenGLPixelFormat* CreatePixelFormat()
+enum class OpenGLProfile
+{
+	Core,
+	Legacy
+};
+
+NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
 {
 	NSOpenGLPixelFormatAttribute attributes[16];
 	size_t i = 0;
@@ -306,9 +312,13 @@ NSOpenGLPixelFormat* CreatePixelFormat()
 	attributes[i++] = NSOpenGLPixelFormatAttribute(24);
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
-	attributes[i++] = NSOpenGLPFAOpenGLProfile;
-	attributes[i++] = NSOpenGLProfileVersion3_2Core;
-	
+
+	if (profile == OpenGLProfile::Core)
+	{
+		attributes[i++] = NSOpenGLPFAOpenGLProfile;
+		attributes[i++] = NSOpenGLProfileVersion3_2Core;
+	}
+
 	if (!vid_autoswitch)
 	{
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
@@ -316,12 +326,14 @@ NSOpenGLPixelFormat* CreatePixelFormat()
 
 	attributes[i] = NSOpenGLPixelFormatAttribute(0);
 
+	assert(i < sizeof attributes / sizeof attributes[0]);
+
 	return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
-void SetupOpenGLView(CocoaWindow* window)
+void SetupOpenGLView(CocoaWindow* const window, const OpenGLProfile profile)
 {
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(profile);
 
 	if (nil == pixelFormat)
 	{
@@ -349,7 +361,7 @@ class CocoaVideo : public IVideo
 public:
 	CocoaVideo()
 	{
-		ms_isVulkanEnabled = vid_enablevulkan == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
+		ms_isVulkanEnabled = vid_preferbackend == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
 	}
 
 	~CocoaVideo()
@@ -365,13 +377,12 @@ public:
 		assert(ms_window == nil);
 		ms_window = CreateWindow(STYLE_MASK_WINDOWED);
 
+		const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
 		SystemBaseFrameBuffer *fb = nullptr;
 
 #ifdef HAVE_VULKAN
 		if (ms_isVulkanEnabled)
 		{
-			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
-
 			NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
 			vulkanView.wantsLayer = YES;
 			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
@@ -418,13 +429,20 @@ public:
 			{
 				ms_isVulkanEnabled = false;
 
-				SetupOpenGLView(ms_window);
+				SetupOpenGLView(ms_window, OpenGLProfile::Core);
 			}
 		}
 		else
 #endif
+		if (vid_preferbackend == 2)
 		{
-			SetupOpenGLView(ms_window);
+			SetupOpenGLView(ms_window, OpenGLProfile::Legacy);
+
+			fb = new PolyFrameBuffer(nullptr, fullscreen);
+		}
+		else
+		{
+			SetupOpenGLView(ms_window, OpenGLProfile::Core);
 		}
 
 		if (fb == nullptr)
@@ -604,9 +622,17 @@ void SystemBaseFrameBuffer::SetWindowedMode()
 
 void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 {
-	assert(m_window.screen != nil);
-	assert(m_window.contentView.layer != nil);
-	[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
+	if ([m_window.contentView isKindOfClass:[OpenGLCocoaView class]])
+	{
+		NSOpenGLView* const glView = [m_window contentView];
+		[glView setWantsBestResolutionOpenGLSurface:hiDPI];
+	}
+	else
+    {
+		assert(m_window.screen != nil);
+		assert(m_window.contentView.layer != nil);
+		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
+	}
 
 	if (fullscreen)
 	{
@@ -751,7 +777,6 @@ void I_ShutdownGraphics()
 void I_InitGraphics()
 {
 	Video = new CocoaVideo;
-	atterm(I_ShutdownGraphics);
 }
 
 
@@ -867,12 +892,37 @@ void I_GetVulkanDrawableSize(int *width, int *height)
 
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 {
-	static const char* extensions[] =
+	static std::vector<const char*> extensions;
+
+	if (extensions.empty())
 	{
-		VK_KHR_SURFACE_EXTENSION_NAME,
-		VK_MVK_MACOS_SURFACE_EXTENSION_NAME
-	};
-	static const unsigned int extensionCount = static_cast<unsigned int>(sizeof extensions / sizeof extensions[0]);
+		uint32_t extensionPropertyCount = 0;
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionPropertyCount, nullptr);
+
+		std::vector<VkExtensionProperties> extensionProperties(extensionPropertyCount);
+		vkEnumerateInstanceExtensionProperties(nullptr, &extensionPropertyCount, extensionProperties.data());
+
+		static const char* const EXTENSION_NAMES[] =
+		{
+			VK_KHR_SURFACE_EXTENSION_NAME,        // KHR_surface, required
+			VK_EXT_METAL_SURFACE_EXTENSION_NAME,  // EXT_metal_surface, optional, preferred
+			VK_MVK_MACOS_SURFACE_EXTENSION_NAME,  // MVK_macos_surface, optional, deprecated
+		};
+
+		for (const VkExtensionProperties &currentProperties : extensionProperties)
+		{
+			for (const char *const extensionName : EXTENSION_NAMES)
+			{
+				if (strcmp(currentProperties.extensionName, extensionName) == 0)
+				{
+					extensions.push_back(extensionName);
+				}
+			}
+		}
+	}
+
+	static const unsigned int extensionCount = static_cast<unsigned int>(extensions.size());
+	assert(extensionCount >= 2); // KHR_surface + at least one of the platform surface extentions
 
 	if (count == nullptr && names == nullptr)
 	{
@@ -899,13 +949,124 @@ bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 {
+	NSView *const view = CocoaVideo::GetWindow().contentView;
+	CALayer *const layer = view.layer;
+
+	// Set magnification filter for swapchain image when it's copied to a physical display surface
+	// This is needed for gfx-portability because MoltenVK uses preferred nearest sampling by default
+	const char *const magFilterEnv = getenv("MVK_CONFIG_SWAPCHAIN_MAG_FILTER_USE_NEAREST");
+	const bool useNearestFilter = magFilterEnv == nullptr || strtol(magFilterEnv, nullptr, 0) != 0;
+	layer.magnificationFilter = useNearestFilter ? kCAFilterNearest : kCAFilterLinear;
+
+	if (vkCreateMetalSurfaceEXT)
+	{
+		// Preferred surface creation path
+		VkMetalSurfaceCreateInfoEXT surfaceCreateInfo;
+		surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT;
+		surfaceCreateInfo.pNext = nullptr;
+		surfaceCreateInfo.flags = 0;
+		surfaceCreateInfo.pLayer = static_cast<CAMetalLayer*>(layer);
+
+		const VkResult result = vkCreateMetalSurfaceEXT(instance, &surfaceCreateInfo, nullptr, surface);
+		return result == VK_SUCCESS;
+	}
+
+	// Deprecated surface creation path
 	VkMacOSSurfaceCreateInfoMVK windowCreateInfo;
 	windowCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
 	windowCreateInfo.pNext = nullptr;
 	windowCreateInfo.flags = 0;
-	windowCreateInfo.pView = [[CocoaVideo::GetWindow() contentView] layer];
+	windowCreateInfo.pView = view;
 
 	const VkResult result = vkCreateMacOSSurfaceMVK(instance, &windowCreateInfo, nullptr, surface);
 	return result == VK_SUCCESS;
 }
 #endif
+
+
+namespace
+{
+	TArray<uint8_t> polyPixelBuffer;
+	GLuint polyTexture;
+
+	int polyWidth = -1;
+	int polyHeight = -1;
+	int polyVSync = -1;
+}
+
+void I_PolyPresentInit()
+{
+	ogl_LoadFunctions();
+
+	glGenTextures(1, &polyTexture);
+	assert(polyTexture != 0);
+
+	glEnable(GL_TEXTURE_RECTANGLE_ARB);
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, polyTexture);
+
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
+{
+	static const int PIXEL_BYTES = 4;
+
+	if (polyPixelBuffer.Size() == 0 || w != polyWidth || h != polyHeight)
+	{
+		polyPixelBuffer.Resize(w * h * PIXEL_BYTES);
+
+		polyWidth = w;
+		polyHeight = h;
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0.0, w, h, 0.0, -1.0, 1.0);
+
+		glViewport(0, 0, w, h);
+	}
+
+	if (vsync != polyVSync)
+	{
+		const GLint value = vsync ? 1 : 0;
+
+		[[NSOpenGLContext currentContext] setValues:&value
+									   forParameter:NSOpenGLCPSwapInterval];
+	}
+
+	pitch = w * PIXEL_BYTES;
+
+	return &polyPixelBuffer[0];
+}
+
+void I_PolyPresentUnlock(int x, int y, int w, int h)
+{
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, &polyPixelBuffer[0]);
+
+	glBegin(GL_QUADS);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(0.0f, 0.0f);
+	glTexCoord2f(w, 0.0f);
+	glVertex2f(w, 0.0f);
+	glTexCoord2f(w, h);
+	glVertex2f(w, h);
+	glTexCoord2f(0.0f, h);
+	glVertex2f(0.0f, h);
+	glEnd();
+
+	glFlush();
+
+	[[NSOpenGLContext currentContext] flushBuffer];
+}
+
+void I_PolyPresentDeinit()
+{
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDeleteTextures(1, &polyTexture);
+}

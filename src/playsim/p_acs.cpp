@@ -69,12 +69,12 @@
 #include "p_effect.h"
 #include "r_utility.h"
 #include "a_morph.h"
-#include "i_music.h"
 #include "thingdef.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "types.h"
 #include "scriptutil.h"
+#include "s_music.h"
 
 	// P-codes for ACS scripts
 	enum
@@ -4387,11 +4387,11 @@ int DLevelScript::GetActorProperty (int tid, int property)
 								return 0;
 							}
 
-	case APROP_SeeSound:	return GlobalACSStrings.AddString(actor->SeeSound);
-	case APROP_AttackSound:	return GlobalACSStrings.AddString(actor->AttackSound);
-	case APROP_PainSound:	return GlobalACSStrings.AddString(actor->PainSound);
-	case APROP_DeathSound:	return GlobalACSStrings.AddString(actor->DeathSound);
-	case APROP_ActiveSound:	return GlobalACSStrings.AddString(actor->ActiveSound);
+	case APROP_SeeSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->SeeSound));
+	case APROP_AttackSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->AttackSound));
+	case APROP_PainSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->PainSound));
+	case APROP_DeathSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->DeathSound));
+	case APROP_ActiveSound:	return GlobalACSStrings.AddString(S_GetSoundName(actor->ActiveSound));
 	case APROP_Species:		return GlobalACSStrings.AddString(actor->GetSpecies());
 	case APROP_NameTag:		return GlobalACSStrings.AddString(actor->GetTag());
 	case APROP_StencilColor:return actor->fillcolor;
@@ -4464,11 +4464,11 @@ int DLevelScript::CheckActorProperty (int tid, int property, int value)
 
 		// Strings are covered by GetActorProperty, but they're fairly
 		// heavy-duty, so make the check here.
-		case APROP_SeeSound:	string = actor->SeeSound; break;
-		case APROP_AttackSound:	string = actor->AttackSound; break;
-		case APROP_PainSound:	string = actor->PainSound; break;
-		case APROP_DeathSound:	string = actor->DeathSound; break;
-		case APROP_ActiveSound:	string = actor->ActiveSound; break; 
+		case APROP_SeeSound:	string = S_GetSoundName(actor->SeeSound); break;
+		case APROP_AttackSound:	string = S_GetSoundName(actor->AttackSound); break;
+		case APROP_PainSound:	string = S_GetSoundName(actor->PainSound); break;
+		case APROP_DeathSound:	string = S_GetSoundName(actor->DeathSound); break;
+		case APROP_ActiveSound:	string = S_GetSoundName(actor->ActiveSound); break; 
 		case APROP_Species:		string = actor->GetSpecies(); break;
 		case APROP_NameTag:		string = actor->GetTag(); break;
 		case APROP_DamageType:	string = actor->DamageType; break;
@@ -5265,7 +5265,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 				}
 				else if (rettype == TypeSound)
 				{
-					retval = GlobalACSStrings.AddString(FSoundID(retval));
+					retval = GlobalACSStrings.AddString(S_GetSoundName(FSoundID(retval)));
 				}
 			}
 			else if (rettype == TypeFloat64)
@@ -5876,7 +5876,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_PlayActorSound:
 			// PlaySound(tid, "SoundName", channel, volume, looping, attenuation, local)
 			{
-				FSoundID sid;
+				FSoundID sid = 0;
 
 				if (funcIndex == ACSF_PlaySound)
 				{
@@ -5953,7 +5953,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 				if (args[0] == 0)
 				{
-					S_ChangeSoundVolume(activator, chan, volume);
+					S_ChangeActorSoundVolume(activator, chan, volume);
 				}
 				else
 				{
@@ -5962,7 +5962,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 
 					while ((spot = it.Next()) != NULL)
 					{
-						S_ChangeSoundVolume(spot, chan, volume);
+						S_ChangeActorSoundVolume(spot, chan, volume);
 					}
 				}
 			}
@@ -6690,7 +6690,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			int lineno = it.Next();
 			if (lineno < 0) return 0;
 			DVector2 delta = Level->lines[lineno].Delta();
-			double result = delta[funcIndex - ACSF_GetLineX] * ACSToDouble(args[1]);
+			double result = Level->lines[lineno].v1->fPos()[funcIndex - ACSF_GetLineX] + delta[funcIndex - ACSF_GetLineX] * ACSToDouble(args[1]);
 			if (args[2])
 			{
 				DVector2 normal = DVector2(delta.Y, -delta.X).Unit();
@@ -8307,9 +8307,21 @@ scriptwait:
 			break;
 
 		case PCD_SCRIPTWAITDIRECT:
-			statedata = uallong(pc[0]);
-			pc++;
-			goto scriptwait;
+			if (!(Level->i_compatflags2 & COMPATF2_SCRIPTWAIT))
+			{
+				statedata = uallong(pc[0]);
+				pc++;
+				goto scriptwait;
+			}
+			else
+			{
+				// Old implementation for compatibility with Daedalus MAP19
+				state = SCRIPT_ScriptWait;
+				statedata = uallong(pc[0]);
+				pc++;
+				PutLast();
+				break;
+			}
 
 		case PCD_SCRIPTWAITNAMED:
 			statedata = -FName(Level->Behaviors.LookupString(STACK(1)));

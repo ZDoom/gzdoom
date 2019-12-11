@@ -1420,7 +1420,7 @@ class CommandDrawNumber : public CommandDrawString
 						add = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
-					if(statusBar->armor != NULL)
+					if(statusBar->armor != nullptr && statusBar->armor->IntVar(NAME_Amount) > 0)
 					{
 						add += statusBar->armor->FloatVar(NAME_SavePercent) * 100;
 					}

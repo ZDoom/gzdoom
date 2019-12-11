@@ -323,7 +323,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		else
 		{
 			// only print an error if coming from a PWAD
-			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetIwadNum())
+			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetMaxIwadNum())
 				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
 			mText.Format("Unknown text lump '%s'", sc.String);
 		}
@@ -332,12 +332,18 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 	else if (sc.Compare("Text"))
 	{
 		sc.MustGetToken('=');
+		TArray<FString> lines;
 		do
 		{
 			sc.MustGetToken(TK_StringConst);
-			mText << sc.String << '\n';
+			lines.Push(sc.String);
 		}
 		while (sc.CheckToken(','));
+		if (lines.Size() == 1 && lines[0][0] == '$')
+			mText = lines[0];
+		else
+			for (const FString& line : lines)
+				mText << line << '\n';
 		return true;
 	}
 	else if (sc.Compare("TextColor"))

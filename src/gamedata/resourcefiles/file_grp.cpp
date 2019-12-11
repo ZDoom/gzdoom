@@ -35,6 +35,7 @@
 
 #include "resourcefile.h"
 #include "w_wad.h"
+#include "doomtype.h"
 
 //==========================================================================
 //
@@ -119,7 +120,7 @@ bool FGrpFile::Open(bool quiet)
 		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero);
 	}
 	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
-
+	GenerateHash();
 	delete[] fileinfo;
 	return true;
 }

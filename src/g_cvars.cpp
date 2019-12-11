@@ -56,6 +56,22 @@ CVAR(Bool, var_friction, true, CVAR_SERVERINFO);
 // Option Search
 CVAR(Bool, os_isanyof, true, CVAR_ARCHIVE);
 
+CUSTOM_CVAR (Int, turnspeedwalkfast, 640, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0) self = 1;
+}
+CUSTOM_CVAR (Int, turnspeedsprintfast, 1280, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0) self = 1;
+}
+CUSTOM_CVAR (Int, turnspeedwalkslow, 320, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0) self = 1;
+}
+CUSTOM_CVAR (Int, turnspeedsprintslow, 320, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0) self = 1;
+}
 
 
 

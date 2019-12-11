@@ -65,6 +65,7 @@ gameinfo
 	statscreen_finishedfont = "*SmallFont"
 	statscreen_enteringfont = "*SmallFont"
 	statscreen_contentfont = "*BigFont"
+	statscreen_authorFont = "*SmallFont"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"

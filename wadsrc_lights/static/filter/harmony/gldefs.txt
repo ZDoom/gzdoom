@@ -1,0 +1,268 @@
+flickerlight2 ZOMBIEATK
+{
+    color 1.0 0.8 0.2
+    size 72
+    secondarySize 84
+    interval 1
+    offset 0 40 0
+	attenuate 1
+}
+
+flickerlight ROCKET_X1
+{
+    color 1.0 0.7 0.5
+    size 96
+    secondarySize 108
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight ROCKET_X2
+{
+    color 0.5 0.3 0.2
+    size 120
+    secondarySize 132
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight ROCKET_X3
+{
+    color 0.3 0.1 0.1
+    size 144
+    secondarySize 156
+    chance 0.3
+	attenuate 1
+}
+
+// Tall tech lamp
+flickerlight Fire20C
+{
+	color 0.8 0.7 0.5
+	size 40
+	secondarySize 50
+	chance 0.5
+	offset 0 20 0
+	attenuate 1
+}
+
+flickerlight Fire20
+{
+	color 0.8 0.7 0.5
+	size 96
+	secondarySize 99
+	chance 0.5
+	offset 0 20 0
+	attenuate 1
+}
+
+flickerlight Fire30
+{
+	color 0.8 0.7 0.5
+	size 96
+	secondarySize 99
+	chance 0.5
+	offset 0 30 0
+	attenuate 1
+}
+
+flickerlight Fire40
+{
+	color 0.8 0.7 0.5
+	size 96
+	secondarySize 99
+	chance 0.5
+	offset 0 40 0
+	attenuate 1
+}
+
+pointlight Purple
+{
+	color 0.8 0.5 1.0
+	size 85
+	attenuate 1
+}
+
+flickerlight PURPLE_X1
+{
+	color 0.8 0.5 1.0
+	size 96
+	secondarySize 108
+	chance 0.3
+	attenuate 1
+}
+
+flickerlight PURPLE_X2
+{
+	color 0.4 0.25 0.5
+	size 120
+	secondarySize 132
+	chance 0.3
+	attenuate 1
+}
+
+flickerlight PURPLE_X3
+{
+	color 0.24 0.15 0.3
+	size 144
+	secondarySize 156
+	chance 0.3
+	attenuate 1
+}
+
+
+object HarmonyPlayer
+{
+	frame PLAYF { light ZOMBIEATK }
+}
+
+object Follower
+{
+	frame SPOSF { light ZOMBIEATK }
+}
+
+object FallingFollower
+{
+	frame SPOSF { light ZOMBIEATK }
+}
+
+object Soldier
+{
+	frame CPOSF { light ZOMBIEATK }
+}
+
+object Echida
+{
+	frame SPIDG { light ZOMBIEATK }
+}
+
+object WalkingPhage2
+{
+	frame SSWVG { light ZOMBIEATK }
+}
+
+object GuidedChaos
+{
+	frame FATB { light Purple }
+	frame FBXBA { light Purple_X1 }
+	frame FBXBB { light Purple_X2 }
+	frame FBXBC { light Purple_X3 }
+}
+
+object Mine
+{
+	frame MISLB { Light Rocket_X1 }
+	frame MISLC { Light Rocket_X1 }
+	frame MISLD { Light Rocket_X2 }
+	frame BAL2D { Light Rocket_X2 }
+	frame BAL2E { Light Rocket_X3 }
+}
+
+object SecurityBeams
+{
+	frame MISLA { light Purple }
+	frame PLSEA { light Purple_X1 }
+	frame PLSEB { light Purple_X1 }
+	frame PLSEC { light Purple_X2 }
+	frame PLSED { light Purple_X3 }
+}
+
+object RedBarrel
+{
+	frame MISLB { Light Rocket_X1 }
+	frame MISLC { Light Rocket_X1 }
+	frame MISLD { Light Rocket_X2 }
+	frame BAL2D { Light Rocket_X2 }
+	frame BAL2E { Light Rocket_X3 }
+}
+
+object GrenadeExplosion
+{
+	frame BAL2A { Light Rocket_X1 }
+	frame BAL2B { Light Rocket_X1 }
+	frame BAL2C { Light Rocket_X3 }
+}
+
+object Neutron
+{
+	frame PLSS { Light Purple }
+	frame MISLB { Light Rocket_X1 }
+	frame MISLC { Light Rocket_X1 }
+	frame MISLD { Light Rocket_X2 }
+	frame BAL2D { Light Rocket_X2 }
+	frame BAL2E { Light Rocket_X3 }
+}
+
+object HarmonyGrenade
+{
+	frame MISLA { light Purple }
+	frame PLSEA { light Purple_X1 }
+	frame PLSEB { light Purple_X1 }
+	frame PLSEC { light Purple_X2 }
+	frame PLSED { light Purple_X3 }
+}
+
+object TimeBomb
+{
+	frame PLSS { Light Purple }
+	frame MISLB { Light Rocket_X1 }
+	frame MISLC { Light Rocket_X1 }
+	frame MISLD { Light Rocket_X2 }
+	frame BAL2D { Light Rocket_X2 }
+	frame BAL2E { Light Rocket_X3 }
+}
+
+object PhageNeutron
+{
+ 	frame TROO { Light Purple	}
+	frame APBX { Light Purple_X1 }
+	frame APBX { Light Purple_X1 }
+	frame APBX { Light Purple_X2 }
+	frame APBX { Light Purple_X3 }
+}
+
+object LoopingExplosion
+{
+	frame MISLB { Light Rocket_X1 }
+	frame MISLC { Light Rocket_X1 }
+	frame MISLD { Light Rocket_X2 }
+	frame BAL2D { Light Rocket_X2 }
+	frame BAL2E { Light Rocket_X3 }
+}
+
+object Fire
+{
+	frame SMBT { Light Fire20 }
+}
+
+object FireBox
+{
+	frame SMRT { Light Fire40 }
+}
+
+object WhiteCandle
+{
+	frame CANDA { Light Fire20c }
+	frame CBRAA { Light Fire20c }
+}
+
+object WhiteCandle2
+{
+	frame CANDA { Light Fire20c }
+	frame CBRAA { Light Fire20c }
+}
+
+object HangingFire
+{
+	frame GOR1 { Light Fire30 }
+}
+
+object CrateExplosion
+{
+	frame MISLB { Light Rocket_X1 }
+	frame MISLC { Light Rocket_X1 }
+	frame MISLD { Light Rocket_X2 }
+	frame BAL2D { Light Rocket_X2 }
+	frame BAL2E { Light Rocket_X3 }
+}
+

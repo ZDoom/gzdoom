@@ -1,0 +1,197 @@
+
+gameinfo
+{
+	cursorpic = "cursor"
+	forcenogfxsubstitution = false
+	statscreen_finishedfont = "*SmallFont"
+	statscreen_enteringfont = "*SmallFont"
+	statscreen_contentfont = "*BigFont", "teal"
+	playerclasses = "HarmonyPlayer"
+	statusbarclass = "HarmonyStatusBar"
+	quitmessages = "$HARMQUITMSG"
+}
+
+defaultmap
+{
+	intermusic = "d_dm2ttl"
+}
+
+map map01 lookup "TXT_HARMMAP01"
+{
+   levelnum = 1
+   titlepatch = "CWILV00"
+   next = "map02"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 110
+   sucktime = 30
+   music = "d_runnin"
+   nocrouch
+   nojump
+}
+
+map map02 lookup "TXT_HARMMAP02"
+{
+   levelnum = 2
+   titlepatch = "CWILV01"
+   next = "map03"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 125
+   sucktime = 30
+   music = "d_stalks"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+
+map map03 lookup "TXT_HARMMAP03"
+{
+   levelnum = 3
+   titlepatch = "CWILV02"
+   next = "map04"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 345
+   sucktime = 30
+   music = "d_stalks"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+map map04 lookup "TXT_HARMMAP04"
+{
+   levelnum = 4
+   titlepatch = "CWILV03"
+   next = "map05"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 340
+   sucktime = 30
+   music = "d_runnin"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+map map05 lookup "TXT_HARMMAP05"
+{
+   levelnum = 5
+   titlepatch = "CWILV04"
+   next = "map06"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 145
+   sucktime = 30
+   music = "d_runnin"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+map map06 lookup "TXT_HARMMAP06"
+{
+   levelnum = 6
+   titlepatch = "CWILV05"
+   next = "map07"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 420
+   sucktime = 30
+   music = "d_dm2ttl"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+map map07 lookup "TXT_HARMMAP07"
+{
+   levelnum = 7
+   titlepatch = "CWILV06"
+   next = "map08"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 335
+   sucktime = 30
+   music = "d_dm2ttl"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+map map08 lookup "TXT_HARMMAP08"
+{
+   levelnum = 8
+   titlepatch = "CWILV07"
+   next = "map09"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 315
+   sucktime = 30
+   music = "d_runnin"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+map map09 lookup "TXT_HARMMAP09"
+{
+   levelnum = 9
+   titlepatch = "CWILV08"
+   next = "map10"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 335
+   sucktime = 30
+   music = "d_runnin"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+map map10 lookup "TXT_HARMMAP10"
+{
+   levelnum = 10
+   titlepatch = "CWILV09"
+   next = "map11"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 350
+   sucktime = 30
+   music = "d_stalks"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+}
+
+// After completing map11 the endsequence starts consisting of 
+// 1: score screen 2: story text 3: end picture with credits
+
+map map11 lookup "TXT_HARMMAP11"
+{
+   levelnum = 11
+   titlepatch = "CWILV10"
+   sky1 = "SKY1", 0
+   cluster = 1
+   par = 255
+   sucktime = 30
+   music = "d_stalks"
+   intermusic = "d_dm2ttl"
+   nocrouch
+   nojump
+   next = "endgame" 
+	{ 
+	   pic = "BOSSBACK" 
+	   music = "d_dm2ttl", 1 
+	}
+} 
+
+clusterdef 1 
+{ 
+	// exittext, background flat is DEM1_1 and music is titletrack
+	flat = DEM1_1 
+	music = "d_dm2ttl"
+	exittext = "CLUSTEREXIT"
+}

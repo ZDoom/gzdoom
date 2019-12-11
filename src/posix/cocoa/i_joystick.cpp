@@ -42,7 +42,6 @@
 #include "m_joy.h"
 #include "templates.h"
 #include "v_text.h"
-#include "atterm.h"
 
 
 EXTERN_CVAR(Bool, joy_axespolling)
@@ -1175,13 +1174,7 @@ void IOKitJoystickManager::OnDeviceRemoved(void* const refcon, io_service_t, con
 // ---------------------------------------------------------------------------
 
 
-void I_ShutdownJoysticks()
-{
-	// Needed in order to support existing interface
-	// Left empty intentionally
-}
-
-static void ShutdownJoysticks()
+void I_ShutdownInput()
 {
 	delete s_joystickManager;
 	s_joystickManager = NULL;
@@ -1198,7 +1191,6 @@ void I_GetJoysticks(TArray<IJoystickConfig*>& sticks)
 	if (NULL == s_joystickManager && !Args->CheckParm("-nojoy"))
 	{
 		s_joystickManager = new IOKitJoystickManager;
-		atterm(ShutdownJoysticks);
 	}
 
 	if (NULL != s_joystickManager)

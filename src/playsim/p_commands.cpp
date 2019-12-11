@@ -57,6 +57,7 @@
 #include "i_time.h"
 #include "vm.h"
 #include "sound/s_music.h"
+#include "actorinlines.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)

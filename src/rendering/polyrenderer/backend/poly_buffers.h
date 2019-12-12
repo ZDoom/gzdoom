@@ -37,7 +37,7 @@ private:
 	std::vector<uint32_t> mData;
 };
 
-class PolyVertexInputAssembly : public PolyInputAssembly
+class PolyVertexInputAssembly final : public PolyInputAssembly
 {
 public:
 	size_t mOffsets[VATTR_MAX] = {};

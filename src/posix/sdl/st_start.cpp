@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <termios.h>
+#include <functional>
 
 #include "st_start.h"
 #include "doomdef.h"

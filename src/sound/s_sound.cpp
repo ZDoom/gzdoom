@@ -346,6 +346,26 @@ bool SoundEngine::ValidatePosVel(const FSoundChan* const chan, const FVector3& p
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+int SoundEngine::ResolveSound(const void *, int, sfxinfo_t *sfx, float &attenuation)
+{
+	if (sfx->bRandomHeader)
+	{
+		// Random sounds attenuate based on the original (random) sound as well as the chosen one.
+		attenuation *= sfx->Attenuation;
+		return PickReplacement (sfx->index);
+	}
+	else
+	{
+		return sfx->link;
+	}
+}
+
+//==========================================================================
+//
 // S_StartSound
 //
 // 0 attenuation means full volume over whole primaryLevel->
@@ -402,35 +422,24 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	// Resolve player sounds, random sounds, and aliases
 	while (sfx->link != sfxinfo_t::NO_LINK)
 	{
-		if (sfx->bRandomHeader)
+		auto newid = ResolveSound(source, type, sfx, attenuation);
+		if (newid < 0) return nullptr;
+		auto newsfx = &S_sfx[newid];
+		if (newsfx != sfx)
 		{
-			// Random sounds attenuate based on the original (random) sound as well as the chosen one.
-			attenuation *= sfx->Attenuation;
-			sound_id = FSoundID(PickReplacement (sound_id));
-			if (near_limit < 0) 
+			if (near_limit < 0)
 			{
-				near_limit = S_sfx[sound_id].NearLimit;
-				limit_range = S_sfx[sound_id].LimitRange;
+				near_limit = newsfx->NearLimit;
+				limit_range = newsfx->LimitRange;
 			}
 			if (rolloff->MinDistance == 0)
 			{
-				rolloff = &S_sfx[sound_id].Rolloff;
+				rolloff = &newsfx->Rolloff;
 			}
+			sfx = newsfx;
 		}
-		else
-		{
-			sound_id = FSoundID(sfx->link);
-			if (near_limit < 0) 
-			{
-				near_limit = S_sfx[sound_id].NearLimit;
-				limit_range = S_sfx[sound_id].LimitRange;
-			}
-			if (rolloff->MinDistance == 0)
-			{
-				rolloff = &S_sfx[sound_id].Rolloff;
-			}
-		}
-		sfx = &S_sfx[sound_id];
+		else return nullptr; // nothing got replaced, prevent an endless loop,
+
 	}
 
 	// Attenuate the attenuation based on the sound.

@@ -88,7 +88,7 @@ class DoomSoundEngine : public SoundEngine
 	bool ValidatePosVel(int sourcetype, const void* source, const FVector3& pos, const FVector3& vel);
 	TArray<uint8_t> ReadSound(int lumpnum);
 	int PickReplacement(int refid);
-	int ResolveSound(const void *ent, int type, sfxinfo_t *sfx, float &attenuation);
+	FSoundID ResolveSound(const void *ent, int type, FSoundID soundid, float &attenuation) override;
 
 public:
 	DoomSoundEngine() = default;
@@ -305,16 +305,16 @@ DEFINE_ACTION_FUNCTION(DObject, S_Sound)
 //
 //==========================================================================
 
-int DoomSoundEngine::ResolveSound(const void * ent, int type, sfxinfo_t *sfx, float &attenuation)
+FSoundID DoomSoundEngine::ResolveSound(const void * ent, int type, FSoundID soundid, float &attenuation)
 {
-	if (isPlayerReserve(sfx->index))
+	if (isPlayerReserve(soundid))
 	{
 		AActor *src;
 		if (type != SOURCE_Actor) src = nullptr;
 		else src = (AActor*)ent;
-		return S_FindSkinnedSound(src, sfx->index);
+		return S_FindSkinnedSound(src, soundid);
 	}
-	return SoundEngine::ResolveSound(ent, type, sfx, attenuation);
+	return SoundEngine::ResolveSound(ent, type, soundid, attenuation);
 }
 
 //==========================================================================

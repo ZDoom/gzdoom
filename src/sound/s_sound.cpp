@@ -350,17 +350,19 @@ bool SoundEngine::ValidatePosVel(const FSoundChan* const chan, const FVector3& p
 //
 //==========================================================================
 
-int SoundEngine::ResolveSound(const void *, int, sfxinfo_t *sfx, float &attenuation)
+FSoundID SoundEngine::ResolveSound(const void *, int, FSoundID soundid, float &attenuation)
 {
-	if (sfx->bRandomHeader)
+	const sfxinfo_t &sfx = S_sfx[soundid];
+
+	if (sfx.bRandomHeader)
 	{
 		// Random sounds attenuate based on the original (random) sound as well as the chosen one.
-		attenuation *= sfx->Attenuation;
-		return PickReplacement (sfx->index);
+		attenuation *= sfx.Attenuation;
+		return PickReplacement (soundid);
 	}
 	else
 	{
-		return sfx->link;
+		return sfx.link;
 	}
 }
 
@@ -422,9 +424,9 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	// Resolve player sounds, random sounds, and aliases
 	while (sfx->link != sfxinfo_t::NO_LINK)
 	{
-		auto newid = ResolveSound(source, type, sfx, attenuation);
-		if (newid < 0) return nullptr;
-		auto newsfx = &S_sfx[newid];
+		sound_id = ResolveSound(source, type, sound_id, attenuation);
+		if (sound_id < 0) return nullptr;
+		auto newsfx = &S_sfx[sound_id];
 		if (newsfx != sfx)
 		{
 			if (near_limit < 0)

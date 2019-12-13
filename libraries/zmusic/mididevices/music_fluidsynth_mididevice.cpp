@@ -140,8 +140,12 @@ protected:
 #define FLUIDSYNTHLIB1	"libfluidsynth.1.dylib"
 #define FLUIDSYNTHLIB2	"libfluidsynth.2.dylib"
 #else // !__APPLE__
+#ifndef FLUIDSYNTHLIB1
 #define FLUIDSYNTHLIB1	"libfluidsynth.so.1"
+#endif
+#ifndef FLUIDSYNTHLIB2
 #define FLUIDSYNTHLIB2	"libfluidsynth.so.2"
+#endif
 #endif // __APPLE__
 #endif
 

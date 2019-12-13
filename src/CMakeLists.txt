@@ -411,8 +411,10 @@ endif()
 if( UNIX )
 	CHECK_LIBRARY_EXISTS( rt clock_gettime "" CLOCK_GETTIME_IN_RT )
 	if( NOT CLOCK_GETTIME_IN_RT )
-		CHECK_FUNCTION_EXISTS( clock_gettime CLOCK_GETTIME_EXISTS )
-		if( NOT CLOCK_GETTIME_EXISTS )
+		CHECK_CXX_SOURCE_COMPILES("#include <time.h>
+			int main() { timespec t; int r = clock_gettime(CLOCK_MONOTONIC, &t); }"
+			HAVE_CLOCK_GETTIME)
+		if( NOT HAVE_CLOCK_GETTIME )
 			message( STATUS "Could not find clock_gettime. Timing statistics will not be available." )
 			add_definitions( -DNO_CLOCK_GETTIME )
 		endif()

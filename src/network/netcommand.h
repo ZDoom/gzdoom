@@ -16,7 +16,8 @@ enum class NetPacketType
 	ConnectRequest,
 	ConnectResponse,
 	Disconnect,
-	Tic,
+	BeginTic,
+	EndTic,
 	SpawnActor,
 	DestroyActor
 };

@@ -79,13 +79,17 @@ void NetSinglePlayer::Update()
 {
 }
 
+void NetSinglePlayer::SendMessages()
+{
+}
+
 void NetSinglePlayer::BeginTic()
 {
-	gametic++;
 }
 
 void NetSinglePlayer::EndTic()
 {
+	gametic++;
 }
 
 int NetSinglePlayer::GetSendTick() const

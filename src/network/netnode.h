@@ -39,7 +39,8 @@ private:
 class NetNodeInput
 {
 public:
-	ByteInputStream ReadMessage();
+	bool IsMessageAvailable();
+	ByteInputStream ReadMessage(bool peek = false);
 	void ReceivedPacket(NetInputPacket& packet, NetNodeOutput& outputStream);
 
 private:
@@ -56,9 +57,12 @@ private:
 		uint16_t serial;
 	};
 
-	Packet* FindFirstPacket();
-	Packet* FindNextPacket(Packet *current);
+	Packet* FindFirstPacket() const;
+	Packet* FindNextPacket(Packet *current) const;
 	void RemovePacket(Packet* packet);
+
+	ByteInputStream mPeekMessage;
+	bool mMessagePeeked = false;
 
 	std::list<std::unique_ptr<Packet>> mPackets;
 	Packet* mCurrentPacket = nullptr;

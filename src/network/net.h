@@ -40,6 +40,12 @@ public:
 	// Check for incoming packets
 	virtual void Update() = 0;
 
+	// Tics to process now (on the client this depends based on whether we received anything from the server)
+	virtual bool TicAvailable(int count) { return count; }
+
+	// Send any outbound messages
+	virtual void SendMessages() = 0;
+
 	// Called when starting and ending a playsim tic
 	virtual void BeginTic() = 0;
 	virtual void EndTic() = 0;

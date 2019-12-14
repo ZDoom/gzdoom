@@ -64,8 +64,19 @@ bool NetNodeOutput::IsLessEqual(uint16_t serialA, uint16_t serialB)
 
 /////////////////////////////////////////////////////////////////////////////
 
-ByteInputStream NetNodeInput::ReadMessage()
+bool NetNodeInput::IsMessageAvailable()
 {
+	return !ReadMessage(true).IsAtEnd();
+}
+
+ByteInputStream NetNodeInput::ReadMessage(bool peek)
+{
+	if (mMessagePeeked)
+	{
+		mMessagePeeked = false;
+		return mPeekMessage;
+	}
+
 	while (true)
 	{
 		AdvanceToNextPacket();
@@ -78,7 +89,11 @@ ByteInputStream NetNodeInput::ReadMessage()
 		ByteInputStream body = mPacketStream.ReadSubstream(size);
 
 		if (SerialDiff(mLastSeenSerial, serial) > 0)
+		{
+			mPeekMessage = body;
+			mMessagePeeked = peek;
 			return body;
+		}
 	}
 	return {};
 }
@@ -107,7 +122,7 @@ void NetNodeInput::AdvanceToNextPacket()
 	}
 }
 
-NetNodeInput::Packet* NetNodeInput::FindFirstPacket()
+NetNodeInput::Packet* NetNodeInput::FindFirstPacket() const
 {
 	if (mPackets.empty()) return nullptr;
 
@@ -121,7 +136,7 @@ NetNodeInput::Packet* NetNodeInput::FindFirstPacket()
 	return first;
 }
 
-NetNodeInput::Packet* NetNodeInput::FindNextPacket(Packet* current)
+NetNodeInput::Packet* NetNodeInput::FindNextPacket(Packet* current) const
 {
 	Packet* nextPacket = nullptr;
 	int nextDelta = 0xffff;

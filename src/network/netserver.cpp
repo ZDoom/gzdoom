@@ -103,10 +103,13 @@ void NetServer::Update()
 				node.Status = NodeStatus::InPreGame;
 		}
 	}
+}
 
+void NetServer::BeginTic()
+{
 	for (int nodeIndex = 0; nodeIndex < MAXNETNODES; nodeIndex++)
 	{
-		NetNode &node = mNodes[nodeIndex];
+		NetNode& node = mNodes[nodeIndex];
 		while (node.Status != NodeStatus::Closed)
 		{
 			ByteInputStream message = node.Input.ReadMessage();
@@ -119,19 +122,11 @@ void NetServer::Update()
 			default: Close(node); break;
 			case NetPacketType::ConnectRequest: OnConnectRequest(node, message); break;
 			case NetPacketType::Disconnect: OnDisconnect(node, message); break;
-			case NetPacketType::Tic: OnTic(node, message); break;
+			case NetPacketType::BeginTic: OnBeginTic(node, message); break;
 			}
 		}
 	}
-}
 
-void NetServer::BeginTic()
-{
-	gametic++;
-}
-
-void NetServer::EndTic()
-{
 	for (int i = 0; i < MAXNETNODES; i++)
 	{
 		if (mNodes[i].Status == NodeStatus::InGame)
@@ -141,7 +136,7 @@ void NetServer::EndTic()
 				int player = mNodes[i].Player;
 
 				TThinkerIterator<AActor> it = primaryLevel->GetThinkerIterator<AActor>();
-				AActor *mo;
+				AActor* mo;
 				while (mo = it.Next())
 				{
 					if (mo != players[player].mo)
@@ -152,9 +147,28 @@ void NetServer::EndTic()
 				mNodes[i].FirstTic = false;
 			}
 
-			CmdTic(i);
+			CmdBeginTic(i);
 		}
+	}
+}
 
+void NetServer::EndTic()
+{
+	for (int i = 0; i < MAXNETNODES; i++)
+	{
+		if (mNodes[i].Status == NodeStatus::InGame)
+		{
+			CmdEndTic(i);
+		}
+	}
+
+	gametic++;
+}
+
+void NetServer::SendMessages()
+{
+	for (int i = 0; i < MAXNETNODES; i++)
+	{
 		mNodes[i].Output.Send(mComm.get(), i);
 	}
 }
@@ -258,7 +272,7 @@ void NetServer::OnDisconnect(NetNode &node, ByteInputStream &stream)
 	Close(node);
 }
 
-void NetServer::OnTic(NetNode &node, ByteInputStream &stream)
+void NetServer::OnBeginTic(NetNode &node, ByteInputStream &stream)
 {
 	if (node.Status != NodeStatus::InGame)
 		return;
@@ -279,13 +293,13 @@ void NetServer::CmdConnectResponse(int nodeIndex)
 	WriteCommand(nodeIndex, cmd);
 }
 
-void NetServer::CmdTic(int nodeIndex)
+void NetServer::CmdBeginTic(int nodeIndex)
 {
 	int player = mNodes[nodeIndex].Player;
 
-	NetCommand cmd(NetPacketType::Tic);
+	NetCommand cmd(NetPacketType::BeginTic);
 
-	cmd.AddByte(mCurrentInputTic[player]);
+	cmd.AddByte(mCurrentInputTic[player]++);
 
 	if (playeringame[player] && players[player].mo)
 	{
@@ -329,6 +343,12 @@ void NetServer::CmdTic(int nodeIndex)
 	cmd.AddShort(-1);
 
 	WriteCommand(nodeIndex, cmd, true);
+}
+
+void NetServer::CmdEndTic(int nodeIndex)
+{
+	NetCommand cmd(NetPacketType::EndTic);
+	WriteCommand(nodeIndex, cmd);
 }
 
 void NetServer::CmdSpawnActor(int nodeIndex, AActor *actor)

@@ -139,6 +139,11 @@ void NetClient::Update()
 	}
 }
 
+bool NetClient::TicAvailable(int count)
+{
+	return mInput.IsMessageAvailable();
+}
+
 void NetClient::BeginTic()
 {
 	// [BB] Don't check net packets while we are supposed to load a map.
@@ -157,19 +162,27 @@ void NetClient::BeginTic()
 		{
 		default: OnClose(); break;
 		case NetPacketType::Disconnect: OnDisconnect(); break;
-		case NetPacketType::Tic: OnTic(message); break;
+		case NetPacketType::BeginTic: OnBeginTic(message); break;
+		case NetPacketType::EndTic: OnEndTic(message); break;
 		case NetPacketType::SpawnActor: OnSpawnActor(message); break;
 		case NetPacketType::DestroyActor: OnDestroyActor(message); break;
 		}
+
+		if (type == NetPacketType::EndTic)
+			break; // End of packets for this tic
 	}
 
 	gametic = mReceiveTic;
-	mSendTic++;
 
 	mCurrentInput[consoleplayer] = mSentInput[gametic % BACKUPTICS];
 }
 
 void NetClient::EndTic()
+{
+	gametic++;
+}
+
+void NetClient::SendMessages()
 {
 	mOutput.Send(mComm.get(), mServerNode);
 }
@@ -191,14 +204,16 @@ ticcmd_t NetClient::GetSentInput(int tic) const
 
 void NetClient::WriteLocalInput(ticcmd_t ticcmd)
 {
-	mSentInput[(mSendTic - 1) % BACKUPTICS] = ticcmd;
-
 	if (mStatus == NodeStatus::InGame)
 	{
-		NetCommand cmd(NetPacketType::Tic);
+		mSentInput[mSendTic % BACKUPTICS] = ticcmd;
+
+		NetCommand cmd(NetPacketType::BeginTic);
 		cmd.AddByte(mSendTic);
 		cmd.AddBuffer(&ticcmd.ucmd, sizeof(usercmd_t));
 		cmd.WriteToNode(mOutput, true);
+
+		mSendTic++;
 	}
 }
 
@@ -288,7 +303,7 @@ void NetClient::OnDisconnect()
 	mStatus = NodeStatus::Closed;
 }
 
-void NetClient::OnTic(ByteInputStream &stream)
+void NetClient::OnBeginTic(ByteInputStream &stream)
 {
 	int inputtic = stream.ReadByte();
 	int delta = (mSendTic & 0xff) - inputtic;
@@ -297,6 +312,7 @@ void NetClient::OnTic(ByteInputStream &stream)
 	else if (delta > 0x7f)
 		delta -= 0x100;
 	mReceiveTic = std::max(mSendTic - delta, 0);
+	mSendTic = std::max(mReceiveTic, mSendTic);
 
 	DVector3 Pos, Vel;
 	float yaw, pitch;
@@ -345,6 +361,10 @@ void NetClient::OnTic(ByteInputStream &stream)
 			netactor->frame = frame;
 		}
 	}
+}
+
+void NetClient::OnEndTic(ByteInputStream& stream)
+{
 }
 
 void NetClient::OnSpawnActor(ByteInputStream &stream)

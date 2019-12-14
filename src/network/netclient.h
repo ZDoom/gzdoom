@@ -33,6 +33,9 @@ public:
 
 	void Update() override;
 
+	void SendMessages() override;
+
+	bool TicAvailable(int count);
 	void BeginTic() override;
 	void EndTic() override;
 
@@ -55,7 +58,8 @@ private:
 	void OnClose();
 	void OnConnectResponse(ByteInputStream &stream);
 	void OnDisconnect();
-	void OnTic(ByteInputStream &stream);
+	void OnBeginTic(ByteInputStream &stream);
+	void OnEndTic(ByteInputStream& stream);
 	void OnSpawnActor(ByteInputStream &stream);
 	void OnDestroyActor(ByteInputStream &stream);
 
@@ -67,7 +71,7 @@ private:
 	NodeStatus mStatus = NodeStatus::Closed;
 
 	int mReceiveTic = 0;
-	int mSendTic = 1;
+	int mSendTic = 0;
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
 	ticcmd_t mSentInput[BACKUPTICS];

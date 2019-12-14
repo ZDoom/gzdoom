@@ -55,6 +55,8 @@ public:
 
 	void Update() override;
 
+	void SendMessages() override;
+
 	void BeginTic() override;
 	void EndTic() override;
 
@@ -76,10 +78,11 @@ public:
 private:
 	void OnConnectRequest(NetNode &node, ByteInputStream &stream);
 	void OnDisconnect(NetNode &node, ByteInputStream &stream);
-	void OnTic(NetNode &node, ByteInputStream &packet);
+	void OnBeginTic(NetNode &node, ByteInputStream &packet);
 
 	void CmdConnectResponse(int nodeIndex);
-	void CmdTic(int nodeIndex);
+	void CmdBeginTic(int nodeIndex);
+	void CmdEndTic(int nodeIndex);
 	void CmdSpawnActor(int nodeIndex, AActor *actor);
 	void CmdDestroyActor(int nodeIndex, AActor *actor);
 

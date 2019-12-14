@@ -30,6 +30,8 @@ public:
 
 	void Update() override;
 
+	void SendMessages() override;
+
 	void BeginTic() override;
 	void EndTic() override;
 

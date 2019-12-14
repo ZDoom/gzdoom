@@ -1079,8 +1079,8 @@ void D_DoomLoop ()
 			{
 				I_StartTic ();
 				D_ProcessEvents ();
-				network->BeginTic();
 				network->WriteLocalInput(G_BuildTiccmd());
+				network->BeginTic();
 				if (advancedemo)
 					D_DoAdvanceDemo ();
 				C_Ticker ();
@@ -1089,6 +1089,7 @@ void D_DoomLoop ()
 				// [RH] Use the consoleplayer's camera to update sounds
 				S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 				network->EndTic();
+				network->SendMessages();
 				GC::CheckGC ();
 			}
 			else
@@ -1179,22 +1180,28 @@ void TryRunTics()
 	else
 		entertic = I_GetTime();
 
-	int counts = entertic - oldentertics;
+	int count = entertic - oldentertics;
 	oldentertics = entertic;
 
 	if (pauseext)
 		return;
 
-	if (counts > 0)
+	if (count > 0)
 	{
+		// For player prediction
+		for (int i = 0; i < count; i++)
+		{
+			I_StartTic(); // Worst named function ever. This updates joystick state for G_BuildTiccmd.
+			D_ProcessEvents();
+			network->WriteLocalInput(G_BuildTiccmd());
+		}
+
 		P_UnPredictPlayer();
-		while (counts--)
+		while (network->TicAvailable(count--))
 		{
 			TicStabilityBegin();
-			I_StartTic();
-			D_ProcessEvents();
+
 			network->BeginTic();
-			network->WriteLocalInput(G_BuildTiccmd());
 			if (advancedemo)
 				D_DoAdvanceDemo();
 			if (debugfile)
@@ -1202,12 +1209,13 @@ void TryRunTics()
 			C_Ticker();
 			M_Ticker();
 			G_Ticker();
-
 			network->EndTic();
+
 			TicStabilityEnd();
 		}
 		P_PredictPlayer(&players[consoleplayer]);
 		S_UpdateSounds(players[consoleplayer].camera);	// move positional sounds
+		network->SendMessages();
 	}
 	else
 	{

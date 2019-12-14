@@ -2845,8 +2845,10 @@ void G_EndNetGame()
 	netclient = false;
 	multiplayer = false;
 	multiplayernext = false;
+	playeringame[0] = true;
 	for (int i = 1; i < MAXPLAYERS; i++)
 		playeringame[i] = 0;
+	players[0].settings_controller = true;
 	consoleplayer = 0;
 	players[0].camera = NULL;
 	if (StatusBar != NULL)

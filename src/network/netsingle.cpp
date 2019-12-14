@@ -67,12 +67,6 @@
 
 NetSinglePlayer::NetSinglePlayer()
 {
-	netgame = false;
-	multiplayer = false;
-	multiplayernext = false;
-	consoleplayer = 0;
-	players[0].settings_controller = true;
-	playeringame[0] = true;
 }
 
 void NetSinglePlayer::Update()

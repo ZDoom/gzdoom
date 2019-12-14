@@ -1080,6 +1080,7 @@ void D_DoomLoop ()
 				I_StartTic ();
 				D_ProcessEvents ();
 				network->WriteLocalInput(G_BuildTiccmd());
+				LoopBackCommands();
 				network->BeginTic();
 				if (advancedemo)
 					D_DoAdvanceDemo ();
@@ -1201,6 +1202,7 @@ void TryRunTics()
 		{
 			TicStabilityBegin();
 
+			LoopBackCommands();
 			network->BeginTic();
 			if (advancedemo)
 				D_DoAdvanceDemo();

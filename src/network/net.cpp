@@ -367,23 +367,19 @@ void Net_ClearBuffers()
 
 bool D_CheckNetGame()
 {
-	if (!network)
+	network.reset(new NetSinglePlayer());
+
+	consoleplayer = 0;
+	players[0].settings_controller = true;
+	playeringame[0] = true;
+	D_SetupUserInfo();
+
+	if (Args->CheckParm("-debugfile"))
 	{
-		network.reset(new NetSinglePlayer());
-		D_SetupUserInfo();
-
-		if (Args->CheckParm("-debugfile"))
-		{
-			char filename[20];
-			mysnprintf(filename, countof(filename), "debug%i.txt", consoleplayer);
-			Printf("debug output to: %s\n", filename);
-			debugfile = fopen(filename, "w");
-		}
-
-		if (netgame)
-		{
-			GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
-		}
+		char filename[20];
+		mysnprintf(filename, countof(filename), "debug%i.txt", consoleplayer);
+		Printf("debug output to: %s\n", filename);
+		debugfile = fopen(filename, "w");
 	}
 
 	return true;
@@ -391,6 +387,11 @@ bool D_CheckNetGame()
 
 void D_QuitNetGame()
 {
+	if (debugfile)
+	{
+		fclose(debugfile);
+		debugfile = nullptr;
+	}
 }
 
 void NetUpdate()

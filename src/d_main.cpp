@@ -2220,11 +2220,24 @@ static void CheckCmdLine()
 	if (p && p < Args->NumArgs() - 1)
 	{
 		int ep, map;
+		bool mapnameliteral = false; // will later be set to true if mapname contains a non-numeric character
+		const char * mapname = Args->GetArg(p+1);
 
 		if (gameinfo.flags & GI_MAPxx)
 		{
 			ep = 1;
-			map = atoi (Args->GetArg(p+1));
+			int mapnamelen = strlen(mapname);
+			for (int i = 0; i < mapnamelen; i++)
+			{
+				// 0x30 is the 0 character in ASCII and 0x39 is the 9 character in ASCII
+				if (mapname[i] < 0x30 || mapname[i] > 0x39)
+				{
+					mapnameliteral = true;
+					break;
+				}
+			}
+
+			map = atoi (mapname);
 		}
 		else 
 		{
@@ -2237,7 +2250,15 @@ static void CheckCmdLine()
 			}
 		}
 
-		startmap = CalcMapName (ep, map);
+		if (mapnameliteral)
+		{
+			startmap = mapname; // will use the literal mapname, ex. CORAX03 if trying to warp to level 3 of SOTNR
+		}
+		else
+		{
+			startmap = CalcMapName (ep, map);
+		}
+
 		autostart = true;
 	}
 

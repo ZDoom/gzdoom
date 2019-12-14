@@ -183,10 +183,7 @@ include( TargetArch )
 target_architecture(ZDOOM_TARGET_ARCH)
 
 if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
-	# To make the game respecting OpenBSD's W^X policy by default
-	if(NOT CMAKE_PLATFORM_NAME MATCHES "OpenBSD")
-		set( HAVE_VM_JIT ON )
-	endif()
+	set( HAVE_VM_JIT ON )
 	option (HAVE_VULKAN "Enable Vulkan support" ON)
 endif()
 

@@ -194,7 +194,7 @@ bool FStringTable::readMacros(int lumpnum)
 bool FStringTable::ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer)
 {
 	if (buffer.Size() < 11) return false;
-	if (strnicmp(buffer.Data(), "default,", 8) && strnicmp(buffer.Data(), "identifier,", 11 ) return false;
+	if (strnicmp((const char*)buffer.Data(), "default,", 8) && strnicmp((const char*)buffer.Data(), "identifier,", 11 )) return false;
 	auto data = parseCSV(buffer);
 
 	int labelcol = -1;

@@ -3,7 +3,7 @@
 #include "i_net.h"
 #include "doomtype.h"
 
-int SerialDiff(uint16_t serialA, uint16_t serialB);
+static int SerialDiff(uint16_t serialA, uint16_t serialB);
 
 void NetNodeOutput::WriteMessage(const void* data, size_t size, bool unreliable)
 {

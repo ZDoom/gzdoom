@@ -12,7 +12,7 @@
 
 struct HWViewpointUniforms;
 
-class PolyRenderState : public FRenderState
+class PolyRenderState final : public FRenderState
 {
 public:
 	PolyRenderState();

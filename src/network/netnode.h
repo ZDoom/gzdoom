@@ -17,8 +17,6 @@ public:
 	void AckPacket(uint8_t headerFlags, uint16_t serial, uint16_t ack);
 	
 private:
-	static bool IsLessEqual(uint16_t serialA, uint16_t serialB);
-
 	struct Message
 	{
 		Message(const void* initdata, int size, uint16_t serial, bool unreliable) : data(new uint8_t[size]), size(size), serial(serial), unreliable(unreliable) { memcpy(data, initdata, size); }
@@ -45,7 +43,6 @@ public:
 
 private:
 	void AdvanceToNextPacket();
-	static int SerialDiff(uint16_t serialA, uint16_t serialB);
 
 	struct Packet
 	{

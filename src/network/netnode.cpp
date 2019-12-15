@@ -1,6 +1,9 @@
 
 #include "netnode.h"
 #include "i_net.h"
+#include "doomtype.h"
+
+int SerialDiff(uint16_t serialA, uint16_t serialB);
 
 void NetNodeOutput::WriteMessage(const void* data, size_t size, bool unreliable)
 {
@@ -11,6 +14,20 @@ void NetNodeOutput::Send(doomcom_t* comm, int nodeIndex)
 {
 	if (mMessages.empty())
 		return;
+
+	int totalSize = 0;
+	for (const auto& message : mMessages)
+	{
+		totalSize += 4 + message->size;
+	}
+
+	if (totalSize > MAX_MSGLEN)
+	{
+		Printf("Too much data in queue for node %d\n", nodeIndex);
+		mMessages.clear();
+		return;
+	}
+	// Printf("Total send size: %d\n", totalSize);
 
 	NetOutputPacket packet(nodeIndex);
 	packet.stream.WriteByte(mHeaderFlags);
@@ -42,24 +59,26 @@ void NetNodeOutput::Send(doomcom_t* comm, int nodeIndex)
 
 void NetNodeOutput::AckPacket(uint8_t headerFlags, uint16_t serial, uint16_t ack)
 {
-	mAck = ack;
-	mHeaderFlags |= 1;
+	// Printf("Ack received ack=%d, serial=%d, flags=%d\n", (int)ack, (int)serial, (int)headerFlags);
+
+	if (mHeaderFlags & 1)
+	{
+		if (SerialDiff(ack, mAck) < 0)
+			mAck = ack;
+	}
+	else
+	{
+		mAck = ack;
+		mHeaderFlags |= 1;
+	}
 
 	if (headerFlags & 1)
 	{
-		while (!mMessages.empty() && IsLessEqual(serial, mMessages.front()->serial))
+		while (!mMessages.empty() && SerialDiff(serial, mMessages.front()->serial) < 0)
 		{
 			mMessages.erase(mMessages.begin());
 		}
 	}
-}
-
-bool NetNodeOutput::IsLessEqual(uint16_t serialA, uint16_t serialB)
-{
-	if (serialA <= serialB)
-		return serialB - serialA < 0x7fff;
-	else
-		return serialA - serialB > 0x7fff;
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -189,7 +208,7 @@ void NetNodeInput::ReceivedPacket(NetInputPacket& packet, NetNodeOutput& outputS
 	mPackets.push_back(std::make_unique<Packet>(packet.stream.GetDataLeft(), packet.stream.BytesLeft(), serial));
 }
 
-int NetNodeInput::SerialDiff(uint16_t serialA, uint16_t serialB)
+static int SerialDiff(uint16_t serialA, uint16_t serialB)
 {
 	int delta = static_cast<int>(serialB) - static_cast<int>(serialA);
 	if (delta < -0x7fff)

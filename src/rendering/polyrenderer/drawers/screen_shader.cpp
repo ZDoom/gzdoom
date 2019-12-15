@@ -368,31 +368,7 @@ static void RunAlphaTest(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
-static void ApplyVertexColor(int x0, int x1, PolyTriangleThreadData* thread)
-{
-	uint32_t* fragcolor = thread->scanline.FragColor;
-	for (int x = x0; x < x1; x++)
-	{
-		uint32_t r = thread->scanline.vColorR[x];
-		uint32_t g = thread->scanline.vColorG[x];
-		uint32_t b = thread->scanline.vColorB[x];
-		uint32_t a = thread->scanline.vColorA[x];
-
-		a += a >> 7;
-		r += r >> 7;
-		g += g >> 7;
-		b += b >> 7;
-
-		uint32_t texel = fragcolor[x];
-		fragcolor[x] = MAKEARGB(
-			(APART(texel) * a + 127) >> 8,
-			(RPART(texel) * r + 127) >> 8,
-			(GPART(texel) * g + 127) >> 8,
-			(BPART(texel) * b + 127) >> 8);
-	}
-}
-
-static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
+static void ProcessMaterial(int x0, int x1, PolyTriangleThreadData* thread)
 {
 	if (thread->EffectState == SHADER_Paletted) // func_paletted
 	{
@@ -446,64 +422,150 @@ static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
 			}
 		}
 	}
+}
+
+static void GetLightColor(int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* fragcolor = thread->scanline.FragColor;
+	uint32_t* lightarray = thread->scanline.lightarray;
+
+	if (thread->PushConstants->uFogEnabled >= 0)
+	{
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t fg = fragcolor[x];
+			uint32_t lightshade = lightarray[x];
+
+			uint32_t mulA = APART(lightshade);
+			uint32_t mulR = RPART(lightshade);
+			uint32_t mulG = GPART(lightshade);
+			uint32_t mulB = BPART(lightshade);
+			mulA += mulA >> 7;
+			mulR += mulR >> 7;
+			mulG += mulG >> 7;
+			mulB += mulB >> 7;
+
+			uint32_t a = (APART(fg) * mulA + 127) >> 8;
+			uint32_t r = (RPART(fg) * mulR + 127) >> 8;
+			uint32_t g = (GPART(fg) * mulG + 127) >> 8;
+			uint32_t b = (BPART(fg) * mulB + 127) >> 8;
+
+			fragcolor[x] = MAKEARGB(a, r, g, b);
+		}
+	}
+	else
+	{
+		uint32_t fogR = (int)((thread->mainVertexShader.Data.uFogColor.r) * 255.0f);
+		uint32_t fogG = (int)((thread->mainVertexShader.Data.uFogColor.g) * 255.0f);
+		uint32_t fogB = (int)((thread->mainVertexShader.Data.uFogColor.b) * 255.0f);
+		float uFogDensity = thread->PushConstants->uFogDensity;
+		
+		float* w = thread->scanline.W;
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t fg = fragcolor[x];
+			uint32_t lightshade = lightarray[x];
+
+			uint32_t mulA = APART(lightshade);
+			uint32_t mulR = RPART(lightshade);
+			uint32_t mulG = GPART(lightshade);
+			uint32_t mulB = BPART(lightshade);
+			mulA += mulA >> 7;
+			mulR += mulR >> 7;
+			mulG += mulG >> 7;
+			mulB += mulB >> 7;
+
+			float fogdist = MAX(16.0f, w[x]);
+			float fogfactor = std::exp2(uFogDensity * fogdist);
+
+			uint32_t a = (APART(fg) * mulA + 127) >> 8;
+			uint32_t r = (RPART(fg) * mulR + 127) >> 8;
+			uint32_t g = (GPART(fg) * mulG + 127) >> 8;
+			uint32_t b = (BPART(fg) * mulB + 127) >> 8;
+
+			uint32_t t = (int)(fogfactor * 256.0f);
+			uint32_t inv_t = 256 - t;
+			r = (fogR * inv_t + r * t + 127) >> 8;
+			g = (fogG * inv_t + g * t + 127) >> 8;
+			b = (fogB * inv_t + b * t + 127) >> 8;
+
+			fragcolor[x] = MAKEARGB(a, r, g, b);
+		}
+	}
+}
+
+static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
+{
+	ProcessMaterial(x0, x1, thread);
 
 	if (thread->AlphaTest)
 		RunAlphaTest(x0, x1, thread);
 
-	ApplyVertexColor(x0, x1, thread);
-
 	auto constants = thread->PushConstants;
-	uint32_t* fragcolor = thread->scanline.FragColor;
-	if (constants->uLightLevel >= 0.0f && thread->numPolyLights > 0)
+	if (constants->uFogEnabled != -3)
 	{
-		uint16_t* lightarray = thread->scanline.lightarray;
-		uint32_t* dynlights = thread->scanline.dynlights;
-		for (int x = x0; x < x1; x++)
+		if (constants->uTextureMode != TM_FOGLAYER)
 		{
-			uint32_t fg = fragcolor[x];
-			int lightshade = lightarray[x];
-			uint32_t dynlight = dynlights[x];
-
-			uint32_t a = APART(fg);
-			uint32_t r = MIN((RPART(fg) * (lightshade + RPART(dynlight))) >> 8, (uint32_t)255);
-			uint32_t g = MIN((GPART(fg) * (lightshade + GPART(dynlight))) >> 8, (uint32_t)255);
-			uint32_t b = MIN((BPART(fg) * (lightshade + BPART(dynlight))) >> 8, (uint32_t)255);
-
-			fragcolor[x] = MAKEARGB(a, r, g, b);
+			GetLightColor(x0, x1, thread);
+		}
+		else
+		{
+			/*float fogdist = 0.0f;
+			float fogfactor = 0.0f;
+			if (constants->uFogEnabled != 0)
+			{
+				fogdist = MAX(16.0f, w[x]);
+				fogfactor = std::exp2(constants->uFogDensity * fogdist);
+			}
+			frag = vec4(uFogColor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * vColor.a);*/
 		}
 	}
-	else if (constants->uLightLevel >= 0.0f)
+	else // simple 2D (uses the fog color to add a color overlay)
 	{
-		uint16_t* lightarray = thread->scanline.lightarray;
-		for (int x = x0; x < x1; x++)
+		uint32_t fogR = (int)((thread->mainVertexShader.Data.uFogColor.r) * 255.0f);
+		uint32_t fogG = (int)((thread->mainVertexShader.Data.uFogColor.g) * 255.0f);
+		uint32_t fogB = (int)((thread->mainVertexShader.Data.uFogColor.b) * 255.0f);
+
+		auto vColorR = thread->scanline.vColorR;
+		auto vColorG = thread->scanline.vColorG;
+		auto vColorB = thread->scanline.vColorB;
+		auto vColorA = thread->scanline.vColorA;
+		uint32_t* fragcolor = thread->scanline.FragColor;
+
+		if (constants->uTextureMode == TM_FOGLAYER)
 		{
-			uint32_t fg = fragcolor[x];
-			int lightshade = lightarray[x];
-
-			uint32_t a = APART(fg);
-			uint32_t r = (RPART(fg) * lightshade) >> 8;
-			uint32_t g = (GPART(fg) * lightshade) >> 8;
-			uint32_t b = (BPART(fg) * lightshade) >> 8;
-
-			fragcolor[x] = MAKEARGB(a, r, g, b);
+			// float gray = grayscale(frag);
+			// vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;
+			// frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a);
+			// frag = frag * vColor;
+			// frag.rgb = frag.rgb + uFogColor.rgb;
 		}
-
-		// To do: apply fog
-	}
-	else if (thread->numPolyLights > 0)
-	{
-		uint32_t* dynlights = thread->scanline.dynlights;
-		for (int x = x0; x < x1; x++)
+		else
 		{
-			uint32_t fg = fragcolor[x];
-			uint32_t dynlight = dynlights[x];
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t a = vColorA[x];
+				uint32_t r = vColorR[x];
+				uint32_t g = vColorG[x];
+				uint32_t b = vColorB[x];
+				a += a >> 7;
+				r += r >> 7;
+				g += g >> 7;
+				b += b >> 7;
 
-			uint32_t a = APART(fg);
-			uint32_t r = MIN((RPART(fg) * RPART(dynlight)) >> 8, (uint32_t)255);
-			uint32_t g = MIN((GPART(fg) * GPART(dynlight)) >> 8, (uint32_t)255);
-			uint32_t b = MIN((BPART(fg) * BPART(dynlight)) >> 8, (uint32_t)255);
+				// frag = frag * vColor;
+				a = (APART(fragcolor[x]) * a + 127) >> 8;
+				r = (RPART(fragcolor[x]) * r + 127) >> 8;
+				g = (GPART(fragcolor[x]) * g + 127) >> 8;
+				b = (BPART(fragcolor[x]) * b + 127) >> 8;
 
-			fragcolor[x] = MAKEARGB(a, r, g, b);
+				// frag.rgb = frag.rgb + uFogColor.rgb;
+				r = MIN(r + fogR, (uint32_t)255);
+				g = MIN(g + fogG, (uint32_t)255);
+				b = MIN(b + fogB, (uint32_t)255);
+
+				fragcolor[x] = MAKEARGB(a, r, g, b);
+			}
 		}
 	}
 }

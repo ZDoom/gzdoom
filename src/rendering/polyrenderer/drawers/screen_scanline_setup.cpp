@@ -86,7 +86,7 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 	float worldnormalY = thread->mainVertexShader.vWorldNormal.Y;
 	float worldnormalZ = thread->mainVertexShader.vWorldNormal.Z;
 
-	uint32_t* dynlights = thread->scanline.dynlights;
+	uint32_t* lightarray = thread->scanline.lightarray;
 	float* worldposX = thread->scanline.WorldX;
 	float* worldposY = thread->scanline.WorldY;
 	float* worldposZ = thread->scanline.WorldZ;
@@ -103,9 +103,9 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 
 	for (int x = x0; x < sseend; x += 4)
 	{
-		__m128i litlo = _mm_setzero_si128();
-		//__m128i litlo = _mm_shuffle_epi32(_mm_unpacklo_epi8(_mm_cvtsi32_si128(dynlightcolor), _mm_setzero_si128()), _MM_SHUFFLE(1, 0, 1, 0));
-		__m128i lithi = litlo;
+		__m128i lit = _mm_loadu_si128((__m128i*)&lightarray[x]);
+		__m128i litlo = _mm_unpacklo_epi8(lit, _mm_setzero_si128());
+		__m128i lithi = _mm_unpackhi_epi8(lit, _mm_setzero_si128());
 
 		for (int i = 0; i < num_lights; i++)
 		{
@@ -150,15 +150,16 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 			lithi = _mm_add_epi16(lithi, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenhi), 8));
 		}
 
-		_mm_storeu_si128((__m128i*)&dynlights[x], _mm_packus_epi16(litlo, lithi));
+		_mm_storeu_si128((__m128i*)&lightarray[x], _mm_packus_epi16(litlo, lithi));
 	}
 #endif
 
-	for (int x = x0; x < x1; x++)
+	for (int x = sseend; x < x1; x++)
 	{
-		uint32_t lit_r = 0;
-		uint32_t lit_g = 0;
-		uint32_t lit_b = 0;
+		uint32_t lit_a = APART(lightarray[x]);
+		uint32_t lit_r = RPART(lightarray[x]);
+		uint32_t lit_g = GPART(lightarray[x]);
+		uint32_t lit_b = BPART(lightarray[x]);
 
 		for (int i = 0; i < num_lights; i++)
 		{
@@ -209,7 +210,7 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 		lit_r = MIN<uint32_t>(lit_r, 255);
 		lit_g = MIN<uint32_t>(lit_g, 255);
 		lit_b = MIN<uint32_t>(lit_b, 255);
-		dynlights[x] = MAKEARGB(255, lit_r, lit_g, lit_b);
+		lightarray[x] = MAKEARGB(lit_a, lit_r, lit_g, lit_b);
 
 		// Palette version:
 		// dynlights[x] = RGB256k.All[((lit_r >> 2) << 12) | ((lit_g >> 2) << 6) | (lit_b >> 2)];
@@ -218,64 +219,110 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 
 static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
-	float startX = x0 + (0.5f - args->v1->x);
-	float startY = y + (0.5f - args->v1->y);
-	float posW = args->v1->w + args->gradientX.W * startX + args->gradientY.W * startY;
-	float stepW = args->gradientX.W;
+	auto constants = thread->PushConstants;
 
-	float globVis = thread->mainVertexShader.Viewpoint->mGlobVis;
+	auto vColorR = thread->scanline.vColorR;
+	auto vColorG = thread->scanline.vColorG;
+	auto vColorB = thread->scanline.vColorB;
+	auto vColorA = thread->scanline.vColorA;
 
-	uint32_t light = (int)(thread->PushConstants->uLightLevel * 255.0f);
-	fixed_t shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
-	fixed_t lightpos = (fixed_t)(globVis * posW * (float)FRACUNIT);
-	fixed_t lightstep = (fixed_t)(globVis * stepW * (float)FRACUNIT);
-
-	fixed_t maxvis = 24 * FRACUNIT / 32;
-	fixed_t maxlight = 31 * FRACUNIT / 32;
-
-	uint16_t *lightarray = thread->scanline.lightarray;
-
-	fixed_t lightend = lightpos + lightstep * (x1 - x0);
-	if (lightpos < maxvis && shade >= lightpos && shade - lightpos <= maxlight &&
-		lightend < maxvis && shade >= lightend && shade - lightend <= maxlight)
+	if (thread->PushConstants->uLightLevel >= 0.0f)
 	{
-		//if (BitsPerPixel == 32)
+		float startX = x0 + (0.5f - args->v1->x);
+		float startY = y + (0.5f - args->v1->y);
+		float posW = args->v1->w + args->gradientX.W * startX + args->gradientY.W * startY;
+		float stepW = args->gradientX.W;
+
+		float globVis = thread->mainVertexShader.Viewpoint->mGlobVis;
+
+		uint32_t light = (int)(constants->uLightLevel * 255.0f);
+		fixed_t shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
+		fixed_t lightpos = (fixed_t)(globVis * posW * (float)FRACUNIT);
+		fixed_t lightstep = (fixed_t)(globVis * stepW * (float)FRACUNIT);
+
+		fixed_t maxvis = 24 * FRACUNIT / 32;
+		fixed_t maxlight = 31 * FRACUNIT / 32;
+
+		fixed_t lightend = lightpos + lightstep * (x1 - x0);
+		if (lightpos < maxvis && shade >= lightpos && shade - lightpos <= maxlight &&
+			lightend < maxvis && shade >= lightend && shade - lightend <= maxlight)
 		{
 			lightpos += FRACUNIT - shade;
+			uint32_t* lightarray = thread->scanline.lightarray;
 			for (int x = x0; x < x1; x++)
 			{
-				lightarray[x] = lightpos >> 8;
+				uint32_t l = MIN(lightpos >> 8, 256);
+
+				uint32_t r = vColorR[x];
+				uint32_t g = vColorG[x];
+				uint32_t b = vColorB[x];
+				uint32_t a = vColorA[x];
+
+				lightarray[x] = MAKEARGB(a, (r * l) >> 8, (g * l) >> 8, (b * l) >> 8);
 				lightpos += lightstep;
 			}
 		}
-		/*else
+		else
 		{
-			lightpos = shade - lightpos;
+			uint32_t* lightarray = thread->scanline.lightarray;
 			for (int x = x0; x < x1; x++)
 			{
-				lightarray[x] = (lightpos >> 3) & 0xffffff00;
-				lightpos -= lightstep;
+				uint32_t l = MIN((FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8, 256);
+				uint32_t r = vColorR[x];
+				uint32_t g = vColorG[x];
+				uint32_t b = vColorB[x];
+				uint32_t a = vColorA[x];
+
+				lightarray[x] = MAKEARGB(a, (r * l) >> 8, (g * l) >> 8, (b * l) >> 8);
+				lightpos += lightstep;
 			}
-		}*/
+		}
+	}
+	else if (constants->uFogEnabled > 0)
+	{
+		float uLightDist = constants->uLightDist;
+		float uLightFactor = constants->uLightFactor;
+		float* w = thread->scanline.W;
+		uint32_t* lightarray = thread->scanline.lightarray;
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t a = thread->scanline.vColorA[x];
+			uint32_t r = thread->scanline.vColorR[x];
+			uint32_t g = thread->scanline.vColorG[x];
+			uint32_t b = thread->scanline.vColorB[x];
+
+			float fogdist = MAX(16.0f, w[x]);
+			float fogfactor = std::exp2(constants->uFogDensity * fogdist);
+
+			// brightening around the player for light mode 2:
+			if (fogdist < uLightDist)
+			{
+				uint32_t l = (int)((uLightFactor - (fogdist / uLightDist) * (uLightFactor - 1.0)) * 256.0f);
+				r = (r * l) >> 8;
+				g = (g * l) >> 8;
+				b = (b * l) >> 8;
+			}
+
+			// apply light diminishing through fog equation: mix(vec3(0.0, 0.0, 0.0), lightshade.rgb, fogfactor)
+			uint32_t t = (int)(fogfactor * 256.0f);
+			r = (r * t) >> 8;
+			g = (g * t) >> 8;
+			b = (b * t) >> 8;
+
+			lightarray[x] = MAKEARGB(a, r, g, b);
+		}
 	}
 	else
 	{
-		//if (BitsPerPixel == 32)
+		uint32_t* lightarray = thread->scanline.lightarray;
+		for (int x = x0; x < x1; x++)
 		{
-			for (int x = x0; x < x1; x++)
-			{
-				lightarray[x] = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
-				lightpos += lightstep;
-			}
+			uint32_t a = thread->scanline.vColorA[x];
+			uint32_t r = thread->scanline.vColorR[x];
+			uint32_t g = thread->scanline.vColorG[x];
+			uint32_t b = thread->scanline.vColorB[x];
+			lightarray[x] = MAKEARGB(a, r, g, b);
 		}
-		/*else
-		{
-			for (int x = x0; x < x1; x++)
-			{
-				lightarray[x] = (clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight) >> 3) & 0xffffff00;
-				lightpos += lightstep;
-			}
-		}*/
 	}
 }
 
@@ -412,7 +459,7 @@ void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 	WriteVaryingColor(args->v1->g * args->v1->w + args->gradientX.G * startX + args->gradientY.G * startY, args->gradientX.G, x0, x1, thread->scanline.W, thread->scanline.vColorG);
 	WriteVaryingColor(args->v1->b * args->v1->w + args->gradientX.B * startX + args->gradientY.B * startY, args->gradientX.B, x0, x1, thread->scanline.W, thread->scanline.vColorB);
 
-	if (thread->PushConstants->uLightLevel >= 0.0f)
+	if (thread->PushConstants->uFogEnabled != -3 && thread->PushConstants->uTextureMode != TM_FOGLAYER)
 		WriteLightArray(y, x0, x1, args, thread);
 
 	if (thread->numPolyLights > 0)

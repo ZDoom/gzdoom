@@ -111,8 +111,7 @@ public:
 		uint8_t vColorB[MAXWIDTH];
 		float GradientdistZ[MAXWIDTH];
 		uint32_t FragColor[MAXWIDTH];
-		uint16_t lightarray[MAXWIDTH];
-		uint32_t dynlights[MAXWIDTH];
+		uint32_t lightarray[MAXWIDTH];
 		uint8_t discard[MAXWIDTH];
 	} scanline;
 

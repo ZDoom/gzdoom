@@ -35,7 +35,7 @@ static const int shiftTable[] = {
 
 #if 1 //#ifndef USE_AVX2
 template<typename OptT>
-static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	FRenderStyle style = thread->RenderStyle;
 
@@ -104,7 +104,7 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 }
 #else
 template<typename OptT>
-static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	FRenderStyle style = thread->RenderStyle;
 
@@ -177,7 +177,7 @@ static void BlendColor(int y, int x0, int x1, PolyTriangleThreadData* thread)
 #endif
 
 #ifdef NO_SSE
-static void BlendColorOpaque(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorOpaque(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* dest = (uint32_t*)thread->dest;
 	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
@@ -186,7 +186,7 @@ static void BlendColorOpaque(int y, int x0, int x1, PolyTriangleThreadData* thre
 	memcpy(line + x0, fragcolor + x0, (x1 - x0) * sizeof(uint32_t));
 }
 #else
-static void BlendColorOpaque(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorOpaque(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* dest = (uint32_t*)thread->dest;
 	uint32_t* line = dest + y * (ptrdiff_t)thread->dest_pitch;
@@ -208,7 +208,7 @@ static void BlendColorOpaque(int y, int x0, int x1, PolyTriangleThreadData* thre
 }
 #endif
 
-static void BlendColorAdd_Src_InvSrc(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorAdd_Src_InvSrc(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
@@ -250,7 +250,7 @@ static void BlendColorAdd_Src_InvSrc(int y, int x0, int x1, PolyTriangleThreadDa
 	}
 }
 
-static void BlendColorAdd_SrcCol_InvSrcCol(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorAdd_SrcCol_InvSrcCol(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
@@ -301,7 +301,7 @@ static void BlendColorAdd_SrcCol_InvSrcCol(int y, int x0, int x1, PolyTriangleTh
 	}
 }
 
-static void BlendColorAdd_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorAdd_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
@@ -341,7 +341,7 @@ static void BlendColorAdd_Src_One(int y, int x0, int x1, PolyTriangleThreadData*
 	}
 }
 
-static void BlendColorAdd_SrcCol_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorAdd_SrcCol_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
@@ -387,7 +387,7 @@ static void BlendColorAdd_SrcCol_One(int y, int x0, int x1, PolyTriangleThreadDa
 	}
 }
 
-static void BlendColorAdd_DstCol_Zero(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorAdd_DstCol_Zero(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
@@ -433,7 +433,7 @@ static void BlendColorAdd_DstCol_Zero(int y, int x0, int x1, PolyTriangleThreadD
 	}
 }
 
-static void BlendColorAdd_InvDstCol_Zero(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorAdd_InvDstCol_Zero(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;
@@ -479,7 +479,7 @@ static void BlendColorAdd_InvDstCol_Zero(int y, int x0, int x1, PolyTriangleThre
 	}
 }
 
-static void BlendColorRevSub_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
+void BlendColorRevSub_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thread)
 {
 	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
 	uint32_t* fragcolor = thread->scanline.FragColor;

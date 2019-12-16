@@ -126,13 +126,3 @@ struct TestSpanOpt0 { static const int Flags = 0; };
 struct TestSpanOpt1 { static const int Flags = 1; };
 struct TestSpanOpt2 { static const int Flags = 2; };
 struct TestSpanOpt3 { static const int Flags = 3; };
-
-enum SWBlendColor
-{
-	SWBLEND_Sub = 1,
-	SWBLEND_RevSub = 2
-};
-
-struct BlendColorOpt_Add { static const int Flags = 0; };
-struct BlendColorOpt_Sub { static const int Flags = 1; };
-struct BlendColorOpt_RevSub { static const int Flags = 2; };

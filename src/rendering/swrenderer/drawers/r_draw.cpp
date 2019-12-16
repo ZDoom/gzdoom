@@ -52,7 +52,7 @@
 #include "r_thread.h"
 #include "swrenderer/scene/r_light.h"
 #include "playsim/a_dynlight.h"
-#include "polyrenderer/drawers/poly_triangle.h"
+#include "polyrenderer/drawers/poly_thread.h"
 
 CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, r_fuzzscale, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);

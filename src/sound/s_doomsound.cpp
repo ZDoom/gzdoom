@@ -84,7 +84,8 @@ void S_AddLocalSndInfo(int lump);
 class DoomSoundEngine : public SoundEngine
 {
 	// client specific parts of the sound engine go in this class.
-	void CalcPosVel(int type, const void* source, const float pt[3], int channum, int chanflags, FVector3* pos, FVector3* vel) override;
+
+	void CalcPosVel(int type, const void* source, const float pt[3], int channum, int chanflags, FSoundID soundid, FVector3* pos, FVector3* vel) override;
 	bool ValidatePosVel(int sourcetype, const void* source, const FVector3& pos, const FVector3& vel);
 	TArray<uint8_t> ReadSound(int lumpnum);
 	int PickReplacement(int refid);
@@ -872,7 +873,7 @@ static void CalcPolyobjSoundOrg(const DVector3& listenpos, const FPolyObj* poly,
 //
 //=========================================================================
 
-void DoomSoundEngine::CalcPosVel(int type, const void* source, const float pt[3], int channum, int chanflags, FVector3* pos, FVector3* vel)
+void DoomSoundEngine::CalcPosVel(int type, const void* source, const float pt[3], int channum, int chanflags, FSoundID soundid, FVector3* pos, FVector3* vel)
 {
 	if (pos != nullptr)
 	{

@@ -55,6 +55,37 @@ struct sfxinfo_t
 	float		Attenuation;			// Multiplies the attenuation passed to S_Sound.
 
 	void		MarkUsed();				// Marks this sound as used.
+
+	void Clear()
+	{
+		data.Clear();
+		data3d.Clear();
+		lumpnum = -1;				// lump number of sfx
+		next = -1;
+		index = 0;			// [RH] For hashing
+		Volume = 1.f;
+		ResourceId = -1;
+		PitchMask = 0;
+		NearLimit = 4;				// 0 means unlimited
+		LimitRange = 256*256;
+
+		bRandomHeader = false;
+		bLoadRAW = false;
+		b16bit= false;
+		bUsed = false;
+		bSingular = false;
+
+		bTentative = true;
+
+		RawRate = 0;				// Sample rate to use when bLoadRAW is true
+
+		LoopStart = 0;				// -1 means no specific loop defined
+
+		link = NO_LINK;
+
+		Rolloff = {};
+		Attenuation = 1.f;
+	}
 };
 
 // Rolloff types
@@ -208,6 +239,7 @@ enum
 
 enum // This cannot be remain as this, but for now it has to suffice.
 {
+	SOURCE_Any = -1,	// Input for check functions meaning 'any source'
 	SOURCE_None,		// Sound is always on top of the listener.
 	SOURCE_Actor,		// Sound is coming from an actor.
 	SOURCE_Sector,		// Sound is coming from a sector.
@@ -253,7 +285,7 @@ private:
 
 	bool IsChannelUsed(int sourcetype, const void* actor, int channel, int* seen);
 	// This is the actual sound positioning logic which needs to be provided by the client.
-	virtual void CalcPosVel(int type, const void* source, const float pt[3], int channel, int chanflags, FVector3* pos, FVector3* vel) = 0;
+	virtual void CalcPosVel(int type, const void* source, const float pt[3], int channel, int chanflags, FSoundID chanSound, FVector3* pos, FVector3* vel) = 0;
 	// This can be overridden by the clent to provide some diagnostics. The default lets everything pass.
 	virtual bool ValidatePosVel(int sourcetype, const void* source, const FVector3& pos, const FVector3& vel) { return true; }
 
@@ -300,16 +332,17 @@ public:
 		const FVector3* pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo* rolloff = nullptr, float spitch = 0.0f);
 
 	// Stops an origin-less sound from playing from this channel.
-	void StopSound(int channel);
-	void StopSound(int sourcetype, const void* actor, int channel);
+	void StopSoundID(int sound_id);
+	void StopSound(int channel, int sound_id = -1);
+	void StopSound(int sourcetype, const void* actor, int channel, int sound_id = -1);
 
 	void RelinkSound(int sourcetype, const void* from, const void* to, const FVector3* optpos);
 	void ChangeSoundVolume(int sourcetype, const void* source, int channel, double dvolume);
-	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch);
+	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch, int sound_id = -1);
 	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, int sound_id);
 
 	// Stop and resume music, during game PAUSE.
-	bool GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id);
+	int GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id);
 	void UnloadAllSounds();
 	void Reset();
 	void MarkUsed(int num);
@@ -347,7 +380,7 @@ public:
 	}
 	const char *GetSoundName(FSoundID id)
 	{
-		return id == 0 ? "" : S_sfx[id].name;
+		return id == 0 ? "" : S_sfx[id].name.GetChars();
 	}
 	TArray<sfxinfo_t> &GetSounds()	//Thio should only be used for constructing the sound list or for diagnostics code prinring information about the sound list.
 	{
@@ -366,6 +399,20 @@ public:
 		S_rnd.Clear();
 	}
 
+	template<class func> bool EnumerateChannels(func callback)
+	{
+		for (FSoundChan* chan = Channels; chan; chan = chan->NextChan)
+		{
+			if (callback(chan)) return true;
+		}
+		return false;
+	}
+
+	void SetDefaultRolloff(FRolloffInfo* ro)
+	{
+		S_Rolloff = *ro;
+	}
+
 	void ChannelVirtualChanged(FISoundChannel* ichan, bool is_virtual);
 	FString ListSoundChannels();
 
@@ -378,7 +425,7 @@ public:
 	int FindSoundByResID(int rid);
 	int FindSoundNoHash(const char* logicalname);
 	int FindSoundByLump(int lump);
-	int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1);
+	int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
 	int FindSoundTentative(const char* name);
 	void CacheRandomSound(sfxinfo_t* sfx);
 	unsigned int GetMSLength(FSoundID sound);

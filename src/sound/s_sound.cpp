@@ -335,8 +335,7 @@ FString SoundEngine::ListSoundChannels()
 
 void SoundEngine::CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel)
 {
-	CalcPosVel(chan->SourceType, chan->Source, chan->Point,
-		chan->EntChannel, chan->ChanFlags, pos, vel);
+	CalcPosVel(chan->SourceType, chan->Source, chan->Point,	chan->EntChannel, chan->ChanFlags, chan->OrgID, pos, vel);
 }
 
 bool SoundEngine::ValidatePosVel(const FSoundChan* const chan, const FVector3& pos, const FVector3& vel)
@@ -400,7 +399,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	chanflags = channel & ~7;
 	channel &= 7;
 
-	CalcPosVel(type, source, &pt->X, channel, chanflags, &pos, &vel);
+	CalcPosVel(type, source, &pt->X, channel, chanflags, sound_id, &pos, &vel);
 
 	if (!ValidatePosVel(type, source, pos, vel))
 	{
@@ -913,13 +912,35 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 //
 //==========================================================================
 
-void SoundEngine::StopSound (int channel)
+void SoundEngine::StopSoundID(int sound_id)
+{
+	FSoundChan* chan = Channels;
+	while (chan != NULL)
+	{
+		FSoundChan* next = chan->NextChan;
+		if (sound_id == chan->OrgID)
+		{
+			StopChannel(chan);
+		}
+		chan = next;
+	}
+}
+
+//==========================================================================
+//
+// S_StopSound
+//
+// Stops an unpositioned sound from playing on a specific channel.
+//
+//==========================================================================
+
+void SoundEngine::StopSound (int channel, int sound_id)
 {
 	FSoundChan *chan = Channels;
 	while (chan != NULL)
 	{
 		FSoundChan *next = chan->NextChan;
-		if (chan->SourceType == SOURCE_None)
+		if ((chan->SourceType == SOURCE_None && (sound_id == -1 || sound_id == chan->OrgID)) && (channel == CHAN_AUTO || channel == chan->EntChannel))
 		{
 			StopChannel(chan);
 		}
@@ -935,7 +956,7 @@ void SoundEngine::StopSound (int channel)
 //
 //==========================================================================
 
-void SoundEngine::StopSound(int sourcetype, const void* actor, int channel)
+void SoundEngine::StopSound(int sourcetype, const void* actor, int channel, int sound_id)
 {
 	FSoundChan* chan = Channels;
 	while (chan != NULL)
@@ -943,7 +964,7 @@ void SoundEngine::StopSound(int sourcetype, const void* actor, int channel)
 		FSoundChan* next = chan->NextChan;
 		if (chan->SourceType == sourcetype &&
 			chan->Source == actor &&
-			(chan->EntChannel == channel || channel < 0))
+			(sound_id == -1? (chan->EntChannel == channel || channel < 0) : (chan->OrgID == sound_id)))
 		{
 			StopChannel(chan);
 		}
@@ -1047,13 +1068,13 @@ void SoundEngine::ChangeSoundVolume(int sourcetype, const void *source, int chan
 //
 //==========================================================================
 
-void SoundEngine::ChangeSoundPitch(int sourcetype, const void *source, int channel, double pitch)
+void SoundEngine::ChangeSoundPitch(int sourcetype, const void *source, int channel, double pitch, int sound_id)
 {
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
 		if (chan->SourceType == sourcetype &&
 			chan->Source == source &&
-			chan->EntChannel == channel)
+			(sound_id == -1? (chan->EntChannel == channel) : (chan->OrgID == sound_id)))
 		{
 			SetPitch(chan, (float)pitch);
 			return;
@@ -1076,21 +1097,22 @@ void SoundEngine::SetPitch(FSoundChan *chan, float pitch)
 // Is a sound being played by a specific emitter?
 //==========================================================================
 
-bool SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id)
+int SoundEngine::GetSoundPlayingInfo (int sourcetype, const void *source, int sound_id)
 {
+	int count = 0;
 	if (sound_id > 0)
 	{
 		for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 		{
-			if (chan->OrgID == sound_id &&
-				chan->SourceType == sourcetype &&
-				chan->Source == source)
+			if (chan->OrgID == sound_id && (sourcetype == SOURCE_Any ||
+				(chan->SourceType == sourcetype &&
+				chan->Source == source)))
 			{
-				return true;
+				count++;
 			}
 		}
 	}
-	return false;
+	return count;
 }
 
 //==========================================================================
@@ -1501,7 +1523,7 @@ int SoundEngine::FindSoundByLump(int lump)
 // Adds a new sound mapping to S_sfx.
 //==========================================================================
 
-int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid)
+int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid, int nearlimit)
 {
 	S_sfx.Reserve(1);
 	sfxinfo_t &newsfx = S_sfx.Last();
@@ -1515,7 +1537,7 @@ int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitc
 	newsfx.Volume = 1;
 	newsfx.Attenuation = 1;
 	newsfx.PitchMask = CurrentPitchMask;
-	newsfx.NearLimit = 2;
+	newsfx.NearLimit = nearlimit;
 	newsfx.LimitRange = 256 * 256;
 	newsfx.bRandomHeader = false;
 	newsfx.bPlayerReserve = false;

@@ -396,7 +396,6 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 	if (type == SOURCE_Unattached && pt == nullptr) type = SOURCE_None;
 
 	org_id = sound_id;
-	channel &= 7;
 
 	CalcPosVel(type, source, &pt->X, channel, chanflags, sound_id, &pos, &vel);
 

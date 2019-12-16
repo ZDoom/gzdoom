@@ -174,6 +174,29 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_BOOL(looping);
+	PARAM_FLOAT(attenuation);
+	PARAM_BOOL(local);
+	PARAM_FLOAT(pitch);
+	A_StartSound(self, soundid, channel, flags, volume, looping, attenuation, local, pitch);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSomething, S_IsActorPlayingSomething)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_SOUND(soundid);
+	ACTION_RETURN_BOOL(S_IsActorPlayingSomething(self, channel, soundid));
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
 {
 	PARAM_SELF_PROLOGUE(AActor);

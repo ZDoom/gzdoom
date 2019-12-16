@@ -170,7 +170,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mBackground = TexMan.CheckForTexture(texname, ETextureType::MiscPatch);
 		mFlatfill = desc->mFlatfill;
 	}
-	S_Sound (CHAN_VOICE | CHAN_UI, desc->mSound, 1.0f, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, desc->mSound, 1.0f, ATTN_NONE);
 	mOverlays.Resize(desc->mOverlays.Size());
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
@@ -500,7 +500,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	castattacking = false;
 	if (mDefaults->SeeSound)
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->SeeSound, 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI, mDefaults->SeeSound, 1, ATTN_NONE);
 	}
 }
 
@@ -526,11 +526,11 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 		if (mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
 			int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
-			if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
+			if (snd != 0) S_Sound (CHAN_VOICE, CHANF_UI, snd, 1, ATTN_NONE);
 		}
 		else if (mDefaults->DeathSound)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->DeathSound, 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE, CHANF_UI, mDefaults->DeathSound, 1, ATTN_NONE);
 		}
 	}
 	return true;
@@ -547,7 +547,7 @@ void DIntermissionScreenCast::PlayAttackSound()
 				(caststate == basestate + mCastSounds[i].mIndex))
 			{
 				S_StopAllChannels ();
-				S_Sound (CHAN_WEAPON | CHAN_UI, mCastSounds[i].mSound, 1, ATTN_NONE);
+				S_Sound (CHAN_WEAPON, CHANF_UI, mCastSounds[i].mSound, 1, ATTN_NONE);
 				return;
 			}
 		}

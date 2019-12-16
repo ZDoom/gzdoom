@@ -7,6 +7,32 @@
 #include "tarray.h"
 #include "zmusic/sounddecoder.h"
 #include "../../libraries/music_common/fileio.h"
+#include "tflags.h"
+
+enum EChanFlag
+{
+	// modifier flags
+	CHANF_LISTENERZ = 8,
+	CHANF_MAYBE_LOCAL = 16,
+	CHANF_UI = 32,	// Do not record sound in savegames.
+	CHANF_NOPAUSE = 64,	// Do not pause this sound in menus.
+	CHANF_AREA = 128,	// Sound plays from all around. Only valid with sector sounds.
+	CHANF_LOOP = 256,
+
+	CHANF_PICKUP = CHANF_MAYBE_LOCAL,
+
+	CHANF_IS3D = 1,		// internal: Sound is 3D.
+	CHANF_EVICTED = 2,		// internal: Sound was evicted.
+	CHANF_FORGETTABLE = 4,		// internal: Forget channel data when sound stops.
+	CHANF_JUSTSTARTED = 512,	// internal: Sound has not been updated yet.
+	CHANF_ABSTIME = 1024,	// internal: Start time is absolute and does not depend on current time.
+	CHANF_VIRTUAL = 2048,	// internal: Channel is currently virtual
+	CHANF_NOSTOP = 4096,	// only for A_PlaySound. Does not start if channel is playing something.
+	CHANF_OVERLAP = 8192, // [MK] Does not stop any sounds in the channel and instead plays over them.
+};
+
+typedef TFlags<EChanFlag> EChanFlags;
+DEFINE_TFLAGS_OPERATORS(EChanFlags)
 
 class FileReader;
 
@@ -111,7 +137,7 @@ struct FISoundChannel
 	float		DistanceScale;
 	float		DistanceSqr;
 	bool		ManualRolloff;
-	int			ChanFlags;
+	EChanFlags	ChanFlags;
 };
 
 

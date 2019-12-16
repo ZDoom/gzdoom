@@ -715,13 +715,13 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlaySoundEx)
 
 	if (!looping)
 	{
-		S_Sound (self, int(channel) - NAME_Auto, soundid, 1, attenuation);
+		S_Sound (self, int(channel) - NAME_Auto, 0, soundid, 1, attenuation);
 	}
 	else
 	{
 		if (!S_IsActorPlayingSomething (self, int(channel) - NAME_Auto, soundid))
 		{
-			S_Sound (self, (int(channel) - NAME_Auto) | CHAN_LOOP, soundid, 1, attenuation);
+			S_Sound (self, (int(channel) - NAME_Auto), CHANF_LOOP, soundid, 1, attenuation);
 		}
 	}
 	return 0;
@@ -791,7 +791,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BulletAttack)
 
 	DAngle slope = P_AimLineAttack (self, self->Angles.Yaw, MISSILERANGE);
 
-	S_Sound (self, CHAN_WEAPON, self->AttackSound, 1, ATTN_NORM);
+	S_Sound (self, CHAN_WEAPON, 0, self->AttackSound, 1, ATTN_NORM);
 	for (i = self->GetMissileDamage (0, 1); i > 0; --i)
     {
 		DAngle angle = self->Angles.Yaw + pr_cabullet.Random2() * (5.625 / 256.);
@@ -1075,7 +1075,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	if (self->CheckMeleeRange ())
 	{
 		if (meleesound)
-			S_Sound (self, CHAN_WEAPON, meleesound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
 			P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
@@ -1083,7 +1083,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomMeleeAttack)
 	else
 	{
 		if (misssound)
-			S_Sound (self, CHAN_WEAPON, misssound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_WEAPON, 0, misssound, 1, ATTN_NORM);
 	}
 	return 0;
 }
@@ -1112,7 +1112,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_CustomComboAttack)
 		if (damagetype == NAME_None)
 			damagetype = NAME_Melee;	// Melee is the default type
 		if (meleesound)
-			S_Sound (self, CHAN_WEAPON, meleesound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_WEAPON, 0, meleesound, 1, ATTN_NORM);
 		int newdam = P_DamageMobj (self->target, self, self, damage, damagetype);
 		if (bleed)
 			P_TraceBleed (newdam > 0 ? newdam : damage, self->target, self);
@@ -3419,7 +3419,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 	}
 
 	// And finally, let's play the sound
-	S_Sound (self, CHAN_WEAPON, sound, 1, ATTN_NORM);
+	S_Sound (self, CHAN_WEAPON, 0, sound, 1, ATTN_NORM);
 	return 0;
 }
 

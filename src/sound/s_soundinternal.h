@@ -194,42 +194,19 @@ struct FSoundChan : public FISoundChannel
 // CHAN_BODY is for generic body sounds
 // CHAN_PICKUP can optionally be set as a local sound only for "compatibility"
 
-enum
+enum EChannel
 {
-	CHAN_AUTO				= 0,
-	CHAN_WEAPON				= 1,
-	CHAN_VOICE				= 2,
-	CHAN_ITEM				= 3,
-	CHAN_BODY				= 4,
-	CHAN_5					= 5,
-	CHAN_6					= 6,
-	CHAN_7					= 7,
-
-	// Channel alias for sector sounds. These define how listener height is
-	// used when calculating 3D sound volume.
-	CHAN_FLOOR				= 1,	// Sound comes from the floor.
-	CHAN_CEILING			= 2,	// Sound comes from the ceiling.
-	CHAN_FULLHEIGHT			= 3,	// Sound comes entire height of the sector.
-	CHAN_INTERIOR			= 4,	// Sound comes height between floor and ceiling.
-
-	// modifier flags
-	CHAN_LISTENERZ			= 8,
-	CHAN_MAYBE_LOCAL		= 16,
-	CHAN_UI					= 32,	// Do not record sound in savegames.
-	CHAN_NOPAUSE			= 64,	// Do not pause this sound in menus.
-	CHAN_AREA				= 128,	// Sound plays from all around. Only valid with sector sounds.
-	CHAN_LOOP				= 256,
-
-	CHAN_PICKUP				= (CHAN_ITEM|CHAN_MAYBE_LOCAL),
-
-	CHAN_IS3D				= 1,		// internal: Sound is 3D.
-	CHAN_EVICTED			= 2,		// internal: Sound was evicted.
-	CHAN_FORGETTABLE		= 4,		// internal: Forget channel data when sound stops.
-	CHAN_JUSTSTARTED		= 512,	// internal: Sound has not been updated yet.
-	CHAN_ABSTIME			= 1024,	// internal: Start time is absolute and does not depend on current time.
-	CHAN_VIRTUAL			= 2048,	// internal: Channel is currently virtual
-	CHAN_NOSTOP				= 4096,	// only for A_PlaySound. Does not start if channel is playing something.
+	CHAN_AUTO = 0,
+	CHAN_WEAPON = 1,
+	CHAN_VOICE = 2,
+	CHAN_ITEM = 3,
+	CHAN_BODY = 4,
+	CHAN_5 = 5,
+	CHAN_6 = 6,
+	CHAN_7 = 7,
 };
+
+
 
 // sound attenuation values
 #define ATTN_NONE				0.f	// full volume the entire level
@@ -329,7 +306,7 @@ public:
 	void UpdateSounds(int time);
 
 	FSoundChan* StartSound(int sourcetype, const void* source,
-		const FVector3* pt, int channel, FSoundID sound_id, float volume, float attenuation, FRolloffInfo* rolloff = nullptr, float spitch = 0.0f);
+		const FVector3* pt, int channel, EChanFlags flags, FSoundID sound_id, float volume, float attenuation, FRolloffInfo* rolloff = nullptr, float spitch = 0.0f);
 
 	// Stops an origin-less sound from playing from this channel.
 	void StopSoundID(int sound_id);

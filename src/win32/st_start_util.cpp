@@ -511,7 +511,7 @@ void FHexenStartupScreen::Progress()
 				y = ST_PROGRESS_Y;
 				ST_Util_DrawBlock(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
 			}
-			S_Sound(CHAN_BODY, "StartupTick", 1, ATTN_NONE);
+			S_Sound(CHAN_BODY, 0, "StartupTick", 1, ATTN_NONE);
 		}
 	}
 	I_GetEvent();
@@ -539,7 +539,7 @@ void FHexenStartupScreen::NetProgress(int count)
 			y = ST_NETPROGRESS_Y;
 			ST_Util_DrawBlock(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
 		}
-		S_Sound(CHAN_BODY, "misc/netnotch", 1, ATTN_NONE);
+		S_Sound(CHAN_BODY, 0, "misc/netnotch", 1, ATTN_NONE);
 		I_GetEvent();
 	}
 }
@@ -554,7 +554,7 @@ void FHexenStartupScreen::NetProgress(int count)
 
 void FHexenStartupScreen::NetDone()
 {
-	S_Sound(CHAN_BODY, "PickupWeapon", 1, ATTN_NORM);
+	S_Sound(CHAN_BODY, 0, "PickupWeapon", 1, ATTN_NORM);
 	FGraphicalStartupScreen::NetDone();
 }
 

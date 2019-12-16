@@ -185,7 +185,7 @@ void DoVoiceAnnounce (const char *sound)
 	if (LastAnnounceTime == 0 || LastAnnounceTime <= primaryLevel->time-5)
 	{
 		LastAnnounceTime = primaryLevel->time;
-		S_Sound (CHAN_VOICE, sound, 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE, 0, sound, 1, ATTN_NONE);
 	}
 }
 

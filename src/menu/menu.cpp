@@ -373,7 +373,7 @@ void M_StartControlPanel (bool makeSound, bool scaleoverride)
 
 	if (makeSound)
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
@@ -1149,13 +1149,13 @@ EXTERN_CVAR (Int, screenblocks)
 CCMD (sizedown)
 {
 	screenblocks = screenblocks - 1;
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
 	screenblocks = screenblocks + 1;
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(menuconsole)

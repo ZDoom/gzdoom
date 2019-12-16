@@ -1415,7 +1415,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				}
 				if (P_GiveBody(source, draindmg))
 				{
-					S_Sound(source, CHAN_ITEM, "*drainhealth", 1, ATTN_NORM);
+					S_Sound(source, CHAN_ITEM, 0, "*drainhealth", 1, ATTN_NORM);
 				}
 			}
 		}

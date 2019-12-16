@@ -1214,7 +1214,7 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 10 * TICRATE/35;
 		pagename = "";	// PANEL0, but strife0.wad doesn't have it, so don't use it.
 		PageBlank = true;
-		S_Sound (CHAN_VOICE | CHAN_UI, "bishop/active", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, "bishop/active", 1, ATTN_NORM);
 		break;
 
 	case 2:
@@ -1226,7 +1226,7 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
 		subtitle = "TXT_SUB_INTRO1";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[0], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[0], 1, ATTN_NORM);
 		// The new Strife teaser has D_FMINTR.
 		// The full retail Strife has D_INTRO.
 		// And the old Strife teaser has both. (I do not know which one it actually uses, nor do I care.)
@@ -1237,35 +1237,35 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 9 * TICRATE;
 		pagename = "PANEL2";
 		subtitle = "TXT_SUB_INTRO2";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[1], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[1], 1, ATTN_NORM);
 		break;
 
 	case 5:
 		pagetic = 12 * TICRATE;
 		pagename = "PANEL3";
 		subtitle = "TXT_SUB_INTRO3";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[2], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[2], 1, ATTN_NORM);
 		break;
 
 	case 6:
 		pagetic = 11 * TICRATE;
 		pagename = "PANEL4";
 		subtitle = "TXT_SUB_INTRO4";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[3], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[3], 1, ATTN_NORM);
 		break;
 
 	case 7:
 		pagetic = 10 * TICRATE;
 		pagename = "PANEL5";
 		subtitle = "TXT_SUB_INTRO5";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[4], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[4], 1, ATTN_NORM);
 		break;
 
 	case 8:
 		pagetic = 16 * TICRATE;
 		pagename = "PANEL6";
 		subtitle = "TXT_SUB_INTRO6";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[5], 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[5], 1, ATTN_NORM);
 		break;
 
 	case 9:
@@ -2770,7 +2770,7 @@ static int D_DoomMain_Internal (void)
 
 			delete StartScreen;
 			StartScreen = NULL;
-			S_Sound (CHAN_BODY, "misc/startupdone", 1, ATTN_NONE);
+			S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
 
 			if (Args->CheckParm("-norun") || batchrun)
 			{

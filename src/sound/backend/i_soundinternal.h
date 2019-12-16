@@ -2,6 +2,7 @@
 #define __SNDINT_H
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "vectors.h"
 #include "tarray.h"

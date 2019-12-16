@@ -804,7 +804,7 @@ void SoundEngine::LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 	{
 		snd = GSnd->LoadSoundBuffered(pBuffer, true);
 	}
-	else
+	else if (sfx->lumpnum >= 0)
 	{
 		auto sfxdata = ReadSound(sfx->lumpnum);
 		int size = sfxdata.Size();

@@ -189,7 +189,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSomething, S_IsActorPlayingSomething)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);

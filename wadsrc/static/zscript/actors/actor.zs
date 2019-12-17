@@ -1062,7 +1062,7 @@ class Actor : Thinker native
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	deprecated("2.3") native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
 	deprecated("2.3") native void A_StopSoundEx(name slot);
-	native bool IsActorPlayingSomething(int channel, Sound snd = 0);
+	native clearscope bool IsActorPlayingSound(int channel, Sound snd = 0);
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	native action state A_Jump(int chance, statelabel label, ...);
 	native Actor A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);

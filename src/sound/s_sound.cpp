@@ -1155,9 +1155,9 @@ bool SoundEngine::IsSourcePlayingSomething (int sourcetype, const void *actor, i
 	{
 		if (chan->SourceType == sourcetype && chan->Source == actor)
 		{
-			if (channel == 0 || chan->EntChannel == channel)
+			if ((channel == 0 || chan->EntChannel == channel) && (sound_id <= 0 || chan->OrgID == sound_id))
 			{
-				return sound_id <= 0 || chan->OrgID == sound_id;
+				return true;
 			}
 		}
 	}

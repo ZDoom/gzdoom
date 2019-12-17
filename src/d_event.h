@@ -59,7 +59,6 @@ struct event_t
 enum gameaction_t : int
 {
 	ga_nothing,
-	ga_loadlevel, // not used.
 	ga_newgame,
 	ga_newgame2,
 	ga_recordgame,

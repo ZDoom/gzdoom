@@ -1101,9 +1101,8 @@ enum EGameState
 
 enum EGameAction
 {
-	ga_nothing,
-	ga_loadlevel,
-	ga_newgame,
+	ga_nothing = 0x00,
+	ga_newgame = 0x02,
 	ga_newgame2,
 	ga_recordgame,
 	ga_loadgame,

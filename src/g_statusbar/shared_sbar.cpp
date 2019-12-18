@@ -345,6 +345,7 @@ DBaseStatusBar::DBaseStatusBar ()
 	CPlayer = NULL;
 	ShowLog = false;
 	defaultScale = { (double)CleanXfac, (double)CleanYfac };
+	SetSize(0);
 
 	CreateAltHUD();
 }

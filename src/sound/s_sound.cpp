@@ -335,7 +335,7 @@ FString SoundEngine::ListSoundChannels()
 
 void SoundEngine::CalcPosVel(FSoundChan *chan, FVector3 *pos, FVector3 *vel)
 {
-	CalcPosVel(chan->SourceType, chan->Source, chan->Point,	chan->EntChannel, chan->ChanFlags, chan->OrgID, pos, vel);
+	CalcPosVel(chan->SourceType, chan->Source, chan->Point,	chan->EntChannel, chan->ChanFlags, chan->OrgID, pos, vel, chan);
 }
 
 bool SoundEngine::ValidatePosVel(const FSoundChan* const chan, const FVector3& pos, const FVector3& vel)
@@ -397,7 +397,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 
 	org_id = sound_id;
 
-	CalcPosVel(type, source, &pt->X, channel, chanflags, sound_id, &pos, &vel);
+	CalcPosVel(type, source, &pt->X, channel, chanflags, sound_id, &pos, &vel, nullptr);
 
 	if (!ValidatePosVel(type, source, pos, vel))
 	{
@@ -577,7 +577,7 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		if (chanflags & (CHANF_UI|CHANF_NOPAUSE)) startflags |= SNDF_NOPAUSE;
 		if (chanflags & CHANF_UI) startflags |= SNDF_NOREVERB;
 
-		if (attenuation > 0)
+		if (attenuation > 0 && type != SOURCE_None)
 		{
             LoadSound3D(sfx, &SoundBuffer);
             chan = (FSoundChan*)GSnd->StartSound3D (sfx->data3d, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL);
@@ -727,7 +727,8 @@ sfxinfo_t *SoundEngine::LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 		// then set this one up as a link, and don't load the sound again.
 		for (i = 0; i < S_sfx.Size(); i++)
 		{
-			if (S_sfx[i].data.isValid() && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum)
+			if (S_sfx[i].data.isValid() && S_sfx[i].link == sfxinfo_t::NO_LINK && S_sfx[i].lumpnum == sfx->lumpnum &&
+				(!sfx->bLoadRAW || (sfx->RawRate == S_sfx[i].RawRate)))	// Raw sounds with different sample rates may not share buffers, even if they use the same source data.
 			{
 				//DPrintf (DMSG_NOTIFY, "Linked %s to %s (%d)\n", sfx->name.GetChars(), S_sfx[i].name.GetChars(), i);
 				sfx->link = i;
@@ -1060,6 +1061,16 @@ void SoundEngine::ChangeSoundVolume(int sourcetype, const void *source, int chan
 	return;
 }
 
+void SoundEngine::SetVolume(FSoundChan* chan, float volume)
+{
+	if (volume < 0.0) volume = 0.0;
+	else if (volume > 1.0) volume = 1.0;
+
+	assert(chan != nullptr);
+	GSnd->ChannelVolume(chan, volume);
+	chan->Volume = volume;
+}
+
 //==========================================================================
 //
 // S_ChangeSoundPitch
@@ -1153,7 +1164,7 @@ bool SoundEngine::IsSourcePlayingSomething (int sourcetype, const void *actor, i
 {
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
-		if (chan->SourceType == sourcetype && chan->Source == actor)
+		if (chan->SourceType == sourcetype && (sourcetype == SOURCE_None || sourcetype == SOURCE_Unattached || chan->Source == actor))
 		{
 			if ((channel == 0 || chan->EntChannel == channel) && (sound_id <= 0 || chan->OrgID == sound_id))
 			{
@@ -1557,6 +1568,14 @@ int SoundEngine::AddSoundLump(const char* logicalname, int lump, int CurrentPitc
 	if (resid >= 0) ResIdMap[resid] = S_sfx.Size() - 1;
 	return (int)S_sfx.Size()-1;
 }
+
+int SoundEngine::AddSfx(sfxinfo_t &sfx)
+{
+	S_sfx.Push(sfx);
+	if (sfx.ResourceId >= 0) ResIdMap[sfx.ResourceId] = S_sfx.Size() - 1;
+	return (int)S_sfx.Size() - 1;
+}
+
 
 //==========================================================================
 //

@@ -22,6 +22,7 @@ enum EChanFlag
 
 	CHANF_PICKUP = CHANF_MAYBE_LOCAL,
 
+	CHANF_NONE = 0,
 	CHANF_IS3D = 1,		// internal: Sound is 3D.
 	CHANF_EVICTED = 2,		// internal: Sound was evicted.
 	CHANF_FORGETTABLE = 4,		// internal: Forget channel data when sound stops.

@@ -262,7 +262,7 @@ private:
 
 	bool IsChannelUsed(int sourcetype, const void* actor, int channel, int* seen);
 	// This is the actual sound positioning logic which needs to be provided by the client.
-	virtual void CalcPosVel(int type, const void* source, const float pt[3], int channel, int chanflags, FSoundID chanSound, FVector3* pos, FVector3* vel) = 0;
+	virtual void CalcPosVel(int type, const void* source, const float pt[3], int channel, int chanflags, FSoundID chanSound, FVector3* pos, FVector3* vel, FSoundChan *chan) = 0;
 	// This can be overridden by the clent to provide some diagnostics. The default lets everything pass.
 	virtual bool ValidatePosVel(int sourcetype, const void* source, const FVector3& pos, const FVector3& vel) { return true; }
 
@@ -293,6 +293,7 @@ public:
 
 	void StopAllChannels(void);
 	void SetPitch(FSoundChan* chan, float dpitch);
+	void SetVolume(FSoundChan* chan, float vol);
 
 	FSoundChan* GetChannel(void* syschan);
 	void RestoreEvictedChannels();
@@ -316,7 +317,7 @@ public:
 	void RelinkSound(int sourcetype, const void* from, const void* to, const FVector3* optpos);
 	void ChangeSoundVolume(int sourcetype, const void* source, int channel, double dvolume);
 	void ChangeSoundPitch(int sourcetype, const void* source, int channel, double pitch, int sound_id = -1);
-	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, int sound_id);
+	bool IsSourcePlayingSomething(int sourcetype, const void* actor, int channel, int sound_id = -1);
 
 	// Stop and resume music, during game PAUSE.
 	int GetSoundPlayingInfo(int sourcetype, const void* source, int sound_id);
@@ -375,12 +376,17 @@ public:
 	{
 		S_rnd.Clear();
 	}
+	bool isValidSoundId(int id)
+	{
+		return id > 0 && id < (int)S_sfx.Size() && !S_sfx[id].bTentative && S_sfx[id].lumpnum != sfx_empty;
+	}
 
 	template<class func> bool EnumerateChannels(func callback)
 	{
 		for (FSoundChan* chan = Channels; chan; chan = chan->NextChan)
 		{
-			if (callback(chan)) return true;
+			int res = callback(chan);
+			if (res) return res > 0;
 		}
 		return false;
 	}
@@ -403,6 +409,7 @@ public:
 	int FindSoundNoHash(const char* logicalname);
 	int FindSoundByLump(int lump);
 	int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2);
+	int AddSfx(sfxinfo_t &sfx);
 	int FindSoundTentative(const char* name);
 	void CacheRandomSound(sfxinfo_t* sfx);
 	unsigned int GetMSLength(FSoundID sound);

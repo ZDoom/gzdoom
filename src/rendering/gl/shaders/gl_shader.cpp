@@ -242,9 +242,16 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform vec4 uObjectColor2;\n";
 	i_data += "uniform vec4 uDynLightColor;\n";
 	i_data += "uniform vec4 uAddColor;\n";
+	i_data += "uniform vec4 uBlendColor;\n";
 	i_data += "uniform vec4 uFogColor;\n";
 	i_data += "uniform float uDesaturationFactor;\n";
 	i_data += "uniform float uInterpolationFactor;\n";
+
+	i_data += "uniform float uObjectDesaturationFactor;\n";
+	i_data += "uniform float uObjectColorizeFactor;\n";
+	i_data += "uniform int uObjectBlendMode;\n";
+	i_data += "uniform int uObjectInvertColor;\n";
+
 
 	// Glowing walls stuff
 	i_data += "uniform vec4 uGlowTopPlane;\n";
@@ -536,6 +543,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muAddColor.Init(hShader, "uAddColor");
+	muBlendColor.Init(hShader, "uBlendColor");
+	muObjectDesaturationFactor.Init(hShader, "uObjectDesaturationFactor");
+	muObjectColorizeFactor.Init(hShader, "uObjectColorizeFactor");
+	muObjectBlendMode.Init(hShader, "uObjectBlendMode");
+	muObjectInvertColor.Init(hShader, "uObjectInvertColor");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");

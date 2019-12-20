@@ -246,6 +246,7 @@ class FShader
 	FBufferedUniformPE muObjectColor;
 	FBufferedUniformPE muObjectColor2;
 	FBufferedUniformPE muAddColor;
+	FBufferedUniformPE muBlendColor;
 	FUniform4f muGlowBottomColor;
 	FUniform4f muGlowTopColor;
 	FUniform4f muGlowBottomPlane;
@@ -259,6 +260,11 @@ class FShader
 	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
 	
+	FBufferedUniform1f 	muObjectDesaturationFactor;
+	FBufferedUniform1f muObjectColorizeFactor;
+	FBufferedUniform1i muObjectBlendMode;
+	FBufferedUniform1i muObjectInvertColor;
+
 	int lights_index;
 	int modelmatrix_index;
 	int normalmodelmatrix_index;

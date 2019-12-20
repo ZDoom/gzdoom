@@ -158,11 +158,16 @@ struct StreamData
 	FVector4PalEntry uObjectColor2;
 	FVector4 uDynLightColor;
 	FVector4PalEntry uAddColor;
+	FVector4PalEntry uBlendColor;
 	FVector4PalEntry uFogColor;
 	float uDesaturationFactor;
 	float uInterpolationFactor;
 	float timer;
 	int useVertexData;
+	float uObjectDesaturationFactor;
+	float uObjectColorizeFactor;
+	int uObjectBlendMode;
+	int uObjectInvertColor;
 	FVector4 uVertexColor;
 	FVector4 uVertexNormal;
 
@@ -236,6 +241,11 @@ public:
 		mStreamData.uAddColor = 0;
 		mStreamData.uObjectColor = 0xffffffff;
 		mStreamData.uObjectColor2 = 0;
+		mStreamData.uBlendColor = 0;
+		mStreamData.uObjectDesaturationFactor = 0;
+		mStreamData.uObjectBlendMode = 0;
+		mStreamData.uObjectColorizeFactor = 1;
+		mStreamData.uObjectInvertColor = 0;
 		mSoftLight = 0;
 		mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 		mLightParms[3] = -1.f;
@@ -443,6 +453,31 @@ public:
 	void SetAddColor(PalEntry pe)
 	{
 		mStreamData.uAddColor = pe;
+	}
+
+	void SetBlendColor(PalEntry pe)
+	{
+		mStreamData.uBlendColor = pe;
+	}
+
+	void SetColorizeFactor(float f)
+	{
+		mStreamData.uObjectColorizeFactor = f;
+	}
+
+	void SetObjectDesaturateFactor(float f)
+	{
+		mStreamData.uObjectDesaturationFactor = f;
+	}
+
+	void SetObjectInvert(bool on)
+	{
+		mStreamData.uObjectInvertColor = on;
+	}
+
+	void SetObjectBlendMode(int b)
+	{
+		mStreamData.uObjectBlendMode = b;
 	}
 
 	void SetFog(PalEntry c, float d)

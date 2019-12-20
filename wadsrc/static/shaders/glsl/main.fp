@@ -54,12 +54,12 @@ float grayscale(vec4 color)
 //
 //===========================================================================
 
-vec4 desaturate(vec4 texel)
+vec4 dodesaturate(vec4 texel, float factor)
 {
-	if (uDesaturationFactor > 0.0)
+	if (factor != 0.0)
 	{
 		float gray = grayscale(texel);
-		return mix (texel, vec4(gray,gray,gray,texel.a), uDesaturationFactor);
+		return mix (texel, vec4(gray,gray,gray,texel.a), factor);
 	}
 	else
 	{
@@ -67,6 +67,28 @@ vec4 desaturate(vec4 texel)
 	}
 }
 
+//===========================================================================
+//
+// Desaturate a color
+//
+//===========================================================================
+
+vec4 desaturate(vec4 texel)
+{
+	return dodesaturate(texel, uDesaturationFactor);
+}
+
+//===========================================================================
+//
+// Texture tinting code originally from JFDuke.  
+//
+//===========================================================================
+
+const int Tex_Blend_Alpha = 1;
+const int Tex_Blend_Screen = 2;
+const int Tex_Blend_Overlay = 3;
+const int Tex_Blend_Hardlight = 4;
+ 
 //===========================================================================
 //
 // This function is common for all (non-special-effect) fragment shaders
@@ -116,11 +138,58 @@ vec4 getTexel(vec2 st)
 			return texel;
 
 	}
-
+	
+	// Step 1: desaturate according to the material's desaturation factor.
+	texel = dodesaturate(texel, uObjectDesaturationFactor);
+	
+	// Step 2: Invert if requested
+	if (uObjectInvertColor != 0)
+	{
+		texel.rgb = vec3(1.0 - texel.r, 1.0 - texel.g, 1.0 - texel.b);
+	}
+	
+	// Step 3: Apply additive color
 	texel.rgb += uAddColor.rgb;
+	
+	// Step 4: Colorization, including gradient if set.
+	if (uObjectColor2.a == 0.0) 
+		texel.rgb = clamp(texel.rgb * uObjectColor.rgb * uObjectColorizeFactor, 0.0, 1.0);
+	else 
+		texel.rgb *= clamp(texel.rgb * mix(uObjectColor.rgb, uObjectColor2.rgb, gradientdist.z) * uObjectColorizeFactor, 0.0, 1.0);
+	texel.a *= uObjectColor.a;	// note that the ObjectColor can have an alpha component.
+	
+	// Step 5: Apply a blend. This may just be a translucent overlay or one of the blend modes present in current Build engines.
+	if (uObjectBlendMode != 0)
+	{
+		vec3 tcol = texel.rgb * 255.0;	// * 255.0 to make it easier to reuse the integer math.
+		vec4 tint = uBlendColor * 255.0;
 
-	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
-	else texel *= mix(uObjectColor, uObjectColor2, gradientdist.z);
+		switch (uObjectBlendMode)
+		{
+			default:
+				tcol.b = tcol.b * (1.0 - uBlendColor.a) + tint.b * uBlendColor.a;
+				tcol.g = tcol.g * (1.0 - uBlendColor.a) + tint.g * uBlendColor.a;
+				tcol.r = tcol.r * (1.0 - uBlendColor.a) + tint.r * uBlendColor.a;
+				break;
+			// The following 3 are taken 1:1 from the Build engine
+			case Tex_Blend_Screen:
+				tcol.b = 255.0 - (((255.0 - tcol.b) * (255.0 - tint.r)) / 256.0);
+				tcol.g = 255.0 - (((255.0 - tcol.g) * (255.0 - tint.g)) / 256.0);
+				tcol.r = 255.0 - (((255.0 - tcol.r) * (255.0 - tint.b)) / 256.0);
+				break;
+			case Tex_Blend_Overlay:
+				tcol.b = tcol.b < 128.0? (tcol.b * tint.b) / 128.0 : 255.0 - (((255.0 - tcol.b) * (255.0 - tint.b)) / 128.0);
+				tcol.g = tcol.g < 128.0? (tcol.g * tint.g) / 128.0 : 255.0 - (((255.0 - tcol.g) * (255.0 - tint.g)) / 128.0);
+				tcol.r = tcol.r < 128.0? (tcol.r * tint.r) / 128.0 : 255.0 - (((255.0 - tcol.r) * (255.0 - tint.r)) / 128.0);
+				break;
+			case Tex_Blend_Hardlight:
+				tcol.b = tint.b < 128.0 ? (tcol.b * tint.b) / 128.0 : 255.0 - (((255.0 - tcol.b) * (255.0 - tint.b)) / 128.0);
+				tcol.g = tint.g < 128.0 ? (tcol.g * tint.g) / 128.0 : 255.0 - (((255.0 - tcol.g) * (255.0 - tint.g)) / 128.0);
+				tcol.r = tint.r < 128.0 ? (tcol.r * tint.r) / 128.0 : 255.0 - (((255.0 - tcol.r) * (255.0 - tint.r)) / 128.0);
+				break;
+		}
+		texel.rgb = tcol / 255.0;
+	}
 
 	return desaturate(texel);
 }

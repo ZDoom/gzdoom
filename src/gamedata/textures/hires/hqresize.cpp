@@ -411,8 +411,9 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 	int inWidth = texbuffer.mWidth;
 	int inHeight = texbuffer.mHeight;
 
-	// [BB] Don't resample if the width or height of the input texture is bigger than gl_texture_hqresize_maxinputsize.
-	if ((inWidth > gl_texture_hqresize_maxinputsize) || (inHeight > gl_texture_hqresize_maxinputsize))
+	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
+	const int maxInputSize = gl_texture_hqresize_maxinputsize;
+	if (inWidth * inHeight > maxInputSize * maxInputSize)
 		return;
 
 	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)

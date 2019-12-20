@@ -618,11 +618,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetFade, SetFade)
 	return 0;
 }
 
-static void SetSpecialColor(sector_t *self, int num, int color)
+static void SetSpecialColor(sector_t *self, int num, int color, double factor)
 {
 	if (num >= 0 && num < 5)
 	{
 		self->SetSpecialColor(num, color);
+		self->SetColorScaleFactor(num, factor);
 	}
 }
 
@@ -631,7 +632,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetSpecialColor, SetSpecialColor)
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	PARAM_INT(num);
 	PARAM_COLOR(color);
-	SetSpecialColor(self, num, color);
+	PARAM_FLOAT(factor)
+	SetSpecialColor(self, num, color, factor);
 	return 0;
 }
 
@@ -651,6 +653,45 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAdditiveColor, SetAdditiveColor)
 	SetAdditiveColor(self, pos, color);
 	return 0;
 }
+
+static void SetBlendColor(sector_t* self, int pos, int color, int mode)
+{
+	if (pos >= 0 && pos < 3)
+	{
+		self->SetBlendColor(pos, color);
+		self->SetBlendMode(pos, mode);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetBlendColor, SetBlendColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	PARAM_COLOR(color);
+	PARAM_INT(mode);
+	SetBlendColor(self, pos, color, mode);
+	return 0;
+}
+
+static void SetTextureDesaturation(sector_t* self, int pos, double factor, int invert)
+{
+	if (pos >= 0 && pos < 3)
+	{
+		self->SetDesaturationFactor(pos, factor);
+		self->SetInvertMode(pos, !!invert);
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetTextureDesaturation, SetTextureDesaturation)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	PARAM_FLOAT(factor);
+	PARAM_BOOL(invert);
+	SetTextureDesaturation(self, pos, factor, invert);
+	return 0;
+}
+
 
 static void SetFogDensity(sector_t *self, int dens)
 {
@@ -1680,11 +1721,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 ACTION_RETURN_POINTER(self->V2());
  }
 
- static void SetSideSpecialColor(side_t *self, int tier, int position, int color)
+ static void SetSideSpecialColor(side_t *self, int tier, int position, int color, double factor)
  {
 	 if (tier >= 0 && tier < 3 && position >= 0 && position < 2)
 	 {
 		 self->SetSpecialColor(tier, position, color);
+		 if (position == 0) self->SetColorScaleFactor(tier, factor);
 	 }
  }
 
@@ -1694,7 +1736,8 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 PARAM_INT(tier);
 	 PARAM_INT(position);
 	 PARAM_COLOR(color);
-	 SetSideSpecialColor(self, tier, position, color);
+	 PARAM_FLOAT(factor)
+	 SetSideSpecialColor(self, tier, position, color, factor);
 	 return 0;
  }
 
@@ -1731,6 +1774,45 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 SetSideAdditiveColor(self, tier, color);
 	 return 0;
  }
+
+ static void SetSideBlendColor(side_t* self, int tier, int color, int mode)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 self->SetBlendColor(tier, color);
+		 self->SetBlendMode(tier, mode);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetBlendColor, SetSideBlendColor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_COLOR(color);
+	 PARAM_INT(mode);
+	 SetSideBlendColor(self, tier, color, mode);
+	 return 0;
+ }
+
+ static void SetSideTextureDesaturation(side_t* self, int tier, double factor, int invert)
+ {
+	 if (tier >= 0 && tier < 3)
+	 {
+		 self->SetDesaturationFactor(tier, factor);
+		 self->SetInvertMode(tier, !!invert);
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetTextureDesaturation, SetSideTextureDesaturation)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(tier);
+	 PARAM_FLOAT(factor);
+	 PARAM_BOOL(invert);
+	 SetSideTextureDesaturation(self, tier, factor, invert);
+	 return 0;
+ }
+
 
  static void EnableSideAdditiveColor(side_t *self, int tier, bool enable)
  {

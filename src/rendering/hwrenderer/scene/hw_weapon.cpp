@@ -103,6 +103,11 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 	state.SetObjectColor(0xffffffff);
 	state.SetAddColor(0);
+	state.SetBlendColor(0);
+	state.SetObjectDesaturateFactor(0);
+	state.SetObjectBlendMode(0);
+	state.SetObjectInvert(false);
+	state.SetColorizeFactor(1);
 	state.SetDynLight(0, 0, 0);
 	state.EnableBrightmap(false);
 }

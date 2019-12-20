@@ -297,6 +297,11 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 	state.SetObjectColor(0xffffffff);
 	state.SetAddColor(0);
+	state.SetBlendColor(0);
+	state.SetObjectDesaturateFactor(0);
+	state.SetObjectBlendMode(0);
+	state.SetObjectInvert(false);
+	state.SetColorizeFactor(1);
 	state.EnableTexture(true);
 	state.SetDynLight(0, 0, 0);
 }

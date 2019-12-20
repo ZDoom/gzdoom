@@ -1379,14 +1379,77 @@ public:
 				sd->SetAdditiveColor(side_t::bottom, CheckInt(key));
 				break;
 
+			case NAME_colorblend_top:
+				sd->SetBlendColor(side_t::top, CheckInt(key));
+				break;
+
+			case NAME_colorblend_mid:
+				sd->SetBlendColor(side_t::mid, CheckInt(key));
+				break;
+
+			case NAME_colorblend_bottom:
+				sd->SetBlendColor(side_t::bottom, CheckInt(key));
+				break;
+
+			case NAME_desaturationfactor_top:
+				sd->SetDesaturationFactor(side_t::top, CheckFloat(key));
+				break;
+
+			case NAME_desaturationfactor_mid:
+				sd->SetDesaturationFactor(side_t::mid, CheckFloat(key));
+				break;
+
+			case NAME_desaturationfactor_bottom:
+				sd->SetDesaturationFactor(side_t::bottom, CheckFloat(key));
+				break;
+
+			case NAME_colorscalefactor_top:
+				sd->SetColorScaleFactor(side_t::top, CheckFloat(key));
+				break;
+
+			case NAME_colorscalefactor_mid:
+				sd->SetColorScaleFactor(side_t::mid, CheckFloat(key));
+				break;
+
+			case NAME_colorscalefactor_bottom:
+				sd->SetColorScaleFactor(side_t::bottom, CheckFloat(key));
+				break;
+
+			case NAME_blendmode_top:
+				sd->SetColorScaleFactor(side_t::top, CheckInt(key));
+				break;
+
+			case NAME_blendmode_mid:
+				sd->SetColorScaleFactor(side_t::mid, CheckInt(key));
+				break;
+
+			case NAME_blendmode_bottom:
+				sd->SetColorScaleFactor(side_t::bottom, CheckInt(key));
+				break;
+
+			case NAME_inverttexture_top:
+				sd->SetInvertMode(side_t::top, CheckBool(key));
+				break;
+
+			case NAME_inverttexture_mid:
+				sd->SetInvertMode(side_t::mid, CheckBool(key));
+				break;
+
+			case NAME_inverttexture_bottom:
+				sd->SetInvertMode(side_t::bottom, CheckBool(key));
+				break;
+
 			case NAME_useowncoloradd_top:
 				sd->textures[side_t::top].flags |= side_t::part::UseOwnAdditiveColor * CheckBool(key);
+				break;
 
 			case NAME_useowncoloradd_mid:
 				sd->textures[side_t::mid].flags |= side_t::part::UseOwnAdditiveColor * CheckBool(key);
+				break;
 
 			case NAME_useowncoloradd_bottom:
 				sd->textures[side_t::bottom].flags |= side_t::part::UseOwnAdditiveColor * CheckBool(key);
+				break;
 
 			default:
 				break;
@@ -1641,6 +1704,67 @@ public:
 				case NAME_ColorAdd_Sprites:
 					sec->AdditiveColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
 					break;
+
+				case NAME_colorblend_floor:
+					sec->SetBlendColor(sector_t::floor, CheckInt(key));
+					break;
+
+				case NAME_colorblend_ceiling:
+					sec->SetBlendColor(sector_t::ceiling, CheckInt(key));
+					break;
+
+				case NAME_colorblend_walls:
+					sec->SetBlendColor(sector_t::walltop, CheckInt(key));
+					break;
+
+				case NAME_desaturationfactor_floor:
+					sec->SetDesaturationFactor(sector_t::floor, CheckFloat(key));
+					break;
+
+				case NAME_desaturationfactor_ceiling:
+					sec->SetDesaturationFactor(sector_t::ceiling, CheckFloat(key));
+					break;
+
+				case NAME_desaturationfactor_walls:
+					sec->SetDesaturationFactor(sector_t::walltop, CheckFloat(key));
+					break;
+
+				case NAME_colorscalefactor_floor:
+					sec->SetColorScaleFactor(sector_t::floor, CheckFloat(key));
+					break;
+
+				case NAME_colorscalefactor_ceiling:
+					sec->SetColorScaleFactor(sector_t::ceiling, CheckFloat(key));
+					break;
+
+				case NAME_colorscalefactor_walls:
+					sec->SetColorScaleFactor(sector_t::walltop, CheckFloat(key));
+					break;
+
+				case NAME_blendmode_floor:
+					sec->SetColorScaleFactor(sector_t::floor, CheckInt(key));
+					break;
+
+				case NAME_blendmode_ceiling:
+					sec->SetColorScaleFactor(sector_t::ceiling, CheckInt(key));
+					break;
+
+				case NAME_blendmode_walls:
+					sec->SetColorScaleFactor(sector_t::walltop, CheckInt(key));
+					break;
+
+				case NAME_inverttexture_floor:
+					sec->SetInvertMode(sector_t::floor, CheckBool(key));
+					break;
+
+				case NAME_inverttexture_ceiling:
+					sec->SetInvertMode(sector_t::ceiling, CheckBool(key));
+					break;
+
+				case NAME_inverttexture_walls:
+					sec->SetInvertMode(sector_t::walltop, CheckBool(key));
+					break;
+
 
 				case NAME_Desaturation:
 					desaturation = int(255*CheckFloat(key) + FLT_EPSILON);	// FLT_EPSILON to avoid rounding errors with numbers slightly below a full integer.

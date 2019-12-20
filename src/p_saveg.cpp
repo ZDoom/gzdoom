@@ -114,6 +114,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, side_t::part &part, si
 			("color1", part.SpecialColors[0], def->SpecialColors[0])
 			("color2", part.SpecialColors[1], def->SpecialColors[1])
 			("addcolor", part.AdditiveColor, def->AdditiveColor)
+			("blendcolor", part.BlendColor, def->BlendColor)
+			("colorscalefactor", part.ColorScaleFactor, def->ColorScaleFactor)
+			("desaturationfactor", part.MaterialDesaturationFactor, def->MaterialDesaturationFactor)
 			.EndObject();
 	}
 	return arc;
@@ -296,6 +299,11 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			("colormap", p.Colormap, def->Colormap)
 			.Array("specialcolors", p.SpecialColors, def->SpecialColors, 5, true)
 			.Array("additivecolors", p.AdditiveColors, def->AdditiveColors, 5, true)
+			.Array("blendcolors", p.BlendColors, def->BlendColors, 3, true)
+			.Array("colorscalefactors", p.ColorScaleFactor, def->ColorScaleFactor, 3, true)
+			.Array("desaturationfactors", p.MaterialDesaturationFactor, def->MaterialDesaturationFactor, 3, true)
+			.Array("blendmodes", p.BlendModes, def->BlendModes, 3, true)
+			("invertmodes", p.InvertModes, def->InvertModes)
 			("gravity", p.gravity, def->gravity)
 			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
 			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])

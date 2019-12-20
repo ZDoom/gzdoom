@@ -247,6 +247,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	state.SetObjectDesaturateFactor(0);
 	state.SetObjectInvert(false);
 	state.SetObjectBlendMode(0);
+	state.SetColorizeFactor(1);
 }
 
 //==========================================================================

@@ -118,16 +118,14 @@ static const char *shaderBindings = R"(
 		vec4 uObjectColor2;
 		vec4 uDynLightColor;
 		vec4 uAddColor;
-		vec4 uBlendColor;
+		vec4 uTextureAddColor;
+		vec4 uTextureModulateColor;
+		vec4 uTextureBlendColor;
 		vec4 uFogColor;
 		float uDesaturationFactor;
 		float uInterpolationFactor;
 		float timer; // timer data for material shaders
 		int useVertexData;
-		float uObjectDesaturationFactor;
-		float uObjectColorizeFactor;
-		int uObjectBlendMode;
-		int uObjectInvertColor;
 		vec4 uVertexColor;
 		vec4 uVertexNormal;
 		

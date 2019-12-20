@@ -207,25 +207,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       useowncoloradd_top = <bool>;  // Controls where the advanced colorization properties are taken from.
       useowncoloradd_mid = <bool>;  // 0: From the containing sector, 1: from the given part of the linedef itself
       useowncoloradd_bottom = <bool>;  // Default for all 3 is 0.
-
-                                    // Note: All following properties are subject to the 'useowncoloradd' flag for the given wall tier.
       coloradd_top = <int>;         // Additive material color to apply to top section of sidedef. Default is black (0x000000)
       coloradd_mid = <int>;         // Additive material color to apply to middle section of sidedef. Default is black (0x000000)
       coloradd_bottom = <int>;      // Additive material color to apply to bottom section of sidedef. Default is black (0x000000)
-	  
-      colorblend_top = <int>        // Blended material color to apply to top section of sidedef. Default is black (0x000000) Only active if a blend mode is set to non-0.
-      colorblend_mid = <int>        // Blended material color to apply to middle section of sidedef. Default is black (0x000000) Only active if a blend mode is set to non-0.
-      colorblend_bottom = <int>     // Blended material color to apply to bottom section of sidedef. Default is black (0x000000) Only active if a blend mode is set to non-0.
-      blendmode_top = <int>	        // Controls how the blend is applied. 0: off; 1: Blend by alpha of the blend color.
-      blendmode_mid = <int>	        // 2, 3 and 4 are modes taken from Build engine games, called "Screen", "Overlay" and "Hardlight"
-      blendmode_bottom = <int>      // Default is 0 (off)
-      desaturationfactor_top = <float> // Desaturates the texture by the given amount. Default is 0, 1 is fully desaturated.
-      desaturationfactor_mid = <float> // Out-of-range values are explicitly supported. (e.g. negative factors will oversaturate the texture color.)
-      desaturationfactor_bottom = <float>
-      inverttexture_top = <bool>    // Inverts the texture color. Default is off. This operation occurs after desaturation but before other color manipulations.
-      inverttexture_mid = <bool>
-      inverttexture_bottom = <bool>
-	  
    }
 
    sector
@@ -303,19 +287,6 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       coloradd_ceiling = <int>;       // Additive material color applied to the sector ceiling. Default is black (0x000000)
       coloradd_sprites = <int>;       // Additive material color applied to sprites within the sector. Default is black (0x000000)
       coloradd_walls = <int>;         // Additive material color applied to walls within the sector. Default is black (0x000000)
-
-      colorblend_floor = <int>        // Blended material color to apply to the floor. Default is black (0x000000) Only active if a blend mode is set to non-0.
-      colorblend_ceiling = <int>      // Blended material color to apply to the ceiling. Default is black (0x000000) Only active if a blend mode is set to non-0.
-      colorblend_walls = <int>        // Blended material color to apply to walls. Default is black (0x000000) Only active if a blend mode is set to non-0.
-      blendmode_floor = <int>	      // Controls how the blend is applied. 0: off; 1: Blend by alpha of the blend color.
-      blendmode_ceiling = <int>	      // 2, 3 and 4 are modes taken from Build engine games, called "Screen", "Overlay" and "Hardlight"
-      blendmode_walls = <int>         // Default is 0 (off)
-      desaturationfactor_floor = <float> // Desaturates the texture by the given amount. Default is 0, 1 is fully desaturated.
-      desaturationfactor_ceiling = <float> // Out-of-range values are explicitly supported. (e.g. negative factors will oversaturate the texture color.)
-      desaturationfactor_walls = <float>
-      inverttexture_floor = <bool>    // Inverts the texture color. Default is off. This operation occurs after desaturation but before other color manipulations.
-      inverttexture_ceiling = <bool>
-      inverttexture_walls = <bool>
 
       portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>;       // ceiling portal disabled.
@@ -523,9 +494,6 @@ arg0str in dynamic lights.
 1.30 20.05.2018
 Added automapstyle and revealed linedef properties.
 Replaced tabs with spaces.
-
-1.31 20.12.2019
-Added more color manipulation options for sectors and linedefs
 
 ===============================================================================
 EOF

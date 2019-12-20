@@ -601,6 +601,24 @@ FSerializer &Serialize(FSerializer &arc, const char *key, secspecial_t &spec, se
 
 enum class EMoveResult { ok, crushed, pastdest };
 
+struct TextureManipulation
+{
+	enum
+	{
+		BlendNone = 0,
+		BlendAlpha = 1,
+		BlendScreen = 2,
+		BlendOverlay = 3,
+		BlendHardLight = 4,
+		BlendMask = 7,
+		InvertBit = 8
+	};
+	PalEntry AddColor;		// Alpha contains the blend flags
+	PalEntry ModulateColor;	// Alpha may contain a multiplier to get higher values than 1.0 without promoting this to 4 full floats.
+	PalEntry BlendColor;
+	float DesaturationFactor;
+};
+
 struct sector_t
 {
 
@@ -645,6 +663,7 @@ struct sector_t
 		PalEntry GlowColor;
 		float GlowHeight;
 		FTextureID Texture;
+		TextureManipulation TextureFx;
 	};
 
 
@@ -663,11 +682,6 @@ struct sector_t
 
 	PalEntry SpecialColors[5];				// Doom64 style colors
 	PalEntry AdditiveColors[5];
-	PalEntry BlendColors[3];
-	float ColorScaleFactor[3];
-	float MaterialDesaturationFactor[3];		// Unlike desaturated light this only affects the texture, nothing else.
-	uint8_t BlendModes[3];
-	uint8_t InvertModes;
 
 	FColormap Colormap;						// Sector's own color/fog info.
 
@@ -1050,36 +1064,51 @@ public:
 		AdditiveColors[slot] = rgb;
 	}
 
-	void SetBlendColor(int slot, PalEntry rgb)
+	// TextureFX parameters
+
+	void SetTextureFx(int slot, const TextureManipulation &tm)
 	{
-		BlendColors[slot] = rgb;
+		planes[slot].TextureFx = tm;	// this is for getting the data from a texture.
 	}
 
-	void SetColorScaleFactor(int slot, double fac)
+	void SetTextureModulateColor(int slot, PalEntry rgb)
 	{
-		ColorScaleFactor[slot] = (float)fac;
+		rgb.a = planes[slot].TextureFx.ModulateColor.a;
+		planes[slot].TextureFx.ModulateColor = rgb;
 	}
 
-	void SetDesaturationFactor(int slot, double fac)
+	void SetTextureModulateScaleFactor(int slot, int fac)
 	{
-		MaterialDesaturationFactor[slot] = (float)fac;
+		planes[slot].TextureFx.ModulateColor.a = (uint8_t)fac;
 	}
 
-	void SetBlendMode(int slot, int mode)
+	void SetTextureAdditiveColor(int slot, PalEntry rgb)
 	{
-		BlendModes[slot] = mode;
+		rgb.a = planes[slot].TextureFx.AddColor.a;
+		planes[slot].TextureFx.AddColor = rgb;
 	}
 
-	void SetInvertMode(int num, bool on)
+	void SetTextureBlendColor(int slot, PalEntry rgb)
 	{
-		if (on) InvertModes |= (1 << num);
-		else InvertModes &= ~(1 << num);
+		planes[slot].TextureFx.BlendColor = rgb;
 	}
 
-	bool InvertMode(int num) const
+	void SetTextureDesaturationFactor(int slot, double fac)
 	{
-		return !!(InvertModes & (1 << num));
+		planes[slot].TextureFx.DesaturationFactor = (float)fac;
 	}
+
+	void SetTextureBlendMode(int slot, int mode)
+	{
+		planes[slot].TextureFx.AddColor.a = (planes[slot].TextureFx.AddColor.a & ~TextureManipulation::BlendMask) | (mode & TextureManipulation::BlendMask);
+	}
+
+	void SetTextureInvert(int slot, bool on)
+	{
+		if (on) planes[slot].TextureFx.AddColor.a |= TextureManipulation::InvertBit;
+		else planes[slot].TextureFx.AddColor.a &= ~TextureManipulation::InvertBit;
+	}
+
 
 	inline bool PortalBlocksView(int plane);
 	inline bool PortalBlocksSight(int plane);
@@ -1190,21 +1219,17 @@ struct side_t
 			ClampGradient = 4,
 			UseOwnSpecialColors = 8,
 			UseOwnAdditiveColor = 16,
-			InvertedTexture = 32,
-			BlendBits = 64 + 128 + 256,	// 4 blend modes plus off value means 5 possible values, so 3 bits are needed.
 		};
 		double xOffset;
 		double yOffset;
 		double xScale;
 		double yScale;
 		TObjPtr<DInterpolation*> interpolation;
-		FTextureID texture;
 		int flags;
+		FTextureID texture;
+		TextureManipulation TextureFx;
 		PalEntry SpecialColors[2];
 		PalEntry AdditiveColor;
-		PalEntry BlendColor;
-		float ColorScaleFactor;
-		float MaterialDesaturationFactor;		// Unlike desaturated light this only affects the texture, nothing else.
 
 
 		void InitFrom(const part &other)
@@ -1377,30 +1402,42 @@ struct side_t
 		textures[which].AdditiveColor = rgb;
 	}
 
-	void SetBlendColor(int which, PalEntry rgb)
+	void SetTextureModulateColor(int slot, PalEntry rgb)
 	{
-		textures[which].BlendColor = rgb;
+		rgb.a = textures[slot].TextureFx.ModulateColor.a;
+		textures[slot].TextureFx.ModulateColor = rgb;
 	}
 
-	void SetDesaturationFactor(int which, double factor)
+	void SetTextureModulateScaleFactor(int slot, int fac)
 	{
-		textures[which].MaterialDesaturationFactor = (float)factor;
+		textures[slot].TextureFx.ModulateColor.a = (uint8_t)fac;
 	}
 
-	void SetColorScaleFactor(int which, double factor)
+	void SetTextureAdditiveColor(int slot, PalEntry rgb)
 	{
-		textures[which].ColorScaleFactor = (float)factor;
+		rgb.a = textures[slot].TextureFx.AddColor.a;
+		textures[slot].TextureFx.AddColor = rgb;
 	}
 
-	void SetBlendMode(int which, int mode)
+	void SetTextureBlendColor(int slot, PalEntry rgb)
 	{
-		textures[which].flags &= ~part::BlendBits;
-		textures[which].flags |= (mode << 6) & part::BlendBits;
+		textures[slot].TextureFx.BlendColor = rgb;
 	}
-	void SetInvertMode(int which, bool on)
+
+	void SetTextureDesaturationFactor(int slot, double fac)
 	{
-		if (on) textures[which].flags |= part::InvertedTexture;
-		else textures[which].flags &= ~part::InvertedTexture;
+		textures[slot].TextureFx.DesaturationFactor = (float)fac;
+	}
+
+	void SetTextureBlendMode(int slot, int mode)
+	{
+		textures[slot].TextureFx.AddColor.a = (textures[slot].TextureFx.AddColor.a & ~TextureManipulation::BlendMask) | (mode & TextureManipulation::BlendMask);
+	}
+
+	void SetTextureInvert(int slot, bool on)
+	{
+		if (on) textures[slot].TextureFx.AddColor.a |= TextureManipulation::InvertBit;
+		else textures[slot].TextureFx.AddColor.a &= ~TextureManipulation::InvertBit;
 	}
 
 	PalEntry GetAdditiveColor(int which, sector_t *frontsector) const
@@ -1414,62 +1451,6 @@ struct side_t
 		}
 	}
 
-	PalEntry GetBlendColor(int which, sector_t* frontsector) const
-	{
-		if (textures[which].flags & part::UseOwnAdditiveColor) {
-			return textures[which].BlendColor;
-		}
-		else
-		{
-			return frontsector->BlendColors[sector_t::walltop];
-		}
-	}
-
-	float GetDesaturationFactor(int which, sector_t* frontsector) const
-	{
-		if (textures[which].flags & part::UseOwnAdditiveColor) {
-			return textures[which].MaterialDesaturationFactor;
-		}
-		else
-		{
-			return frontsector->MaterialDesaturationFactor[sector_t::walltop];
-		}
-	}
-
-	float GetColorScaleFactor(int which, sector_t* frontsector) const
-	{
-		if (textures[which].flags & part::UseOwnAdditiveColor) {
-			return textures[which].ColorScaleFactor;
-		}
-		else
-		{
-			return frontsector->ColorScaleFactor[sector_t::walltop];
-		}
-	}
-
-	int GetBlendMode(int which, sector_t *frontsector) const
-	{
-		if (textures[which].flags & part::UseOwnAdditiveColor) 
-		{
-			return (textures[which].flags & part::BlendBits) >> 6;
-		}
-		else
-		{
-			return frontsector->BlendModes[sector_t::walltop];
-		}
-	}
-
-	bool GetInvertMode(int which, sector_t* frontsector) const
-	{
-		if (textures[which].flags & part::UseOwnAdditiveColor)
-		{
-			return !!(textures[which].flags & part::InvertedTexture);
-		}
-		else
-		{
-			return !!(frontsector->InvertModes & (1<<sector_t::walltop));
-		}
-	}
 
 	DInterpolation *SetInterpolation(int position);
 	void StopInterpolation(int position);

@@ -295,16 +295,13 @@ class HWFlat
 public:
 	sector_t * sector;
 	FSection *section;
-	float z; // the z position of the flat (only valid for non-sloped planes)
 	FMaterial *gltexture;
+	TextureManipulation* TextureFx;
 
+	float z; // the z position of the flat (only valid for non-sloped planes)
 	FColormap Colormap;	// light and fog
 	PalEntry FlatColor;
 	PalEntry AddColor;
-	PalEntry BlendColor;
-	float DesaturationFactor, ColorFactor;
-	int BlendMode;
-	bool Invert;
 	ERenderStyle renderstyle;
 
 	float alpha;

@@ -150,6 +150,26 @@ struct FVector4PalEntry
 		a = newvalue.a * normScale;
 		return *this;
 	}
+
+	FVector4PalEntry& SetIA(PalEntry newvalue)
+	{
+		const float normScale = 1.0f / 255.0f;
+		r = newvalue.r * normScale;
+		g = newvalue.g * normScale;
+		b = newvalue.b * normScale;
+		a = newvalue.a;
+		return *this;
+	}
+
+	FVector4PalEntry& SetFlt(float v1, float v2, float v3, float v4)	
+	{
+		r = v1;
+		g = v2;
+		b = v3;
+		a = v4;
+		return *this;
+	}
+
 };
 
 struct StreamData
@@ -158,16 +178,14 @@ struct StreamData
 	FVector4PalEntry uObjectColor2;
 	FVector4 uDynLightColor;
 	FVector4PalEntry uAddColor;
-	FVector4PalEntry uBlendColor;
+	FVector4PalEntry uTextureAddColor;
+	FVector4PalEntry uTextureModulateColor;
+	FVector4PalEntry uTextureBlendColor;
 	FVector4PalEntry uFogColor;
 	float uDesaturationFactor;
 	float uInterpolationFactor;
 	float timer;
 	int useVertexData;
-	float uObjectDesaturationFactor;
-	float uObjectColorizeFactor;
-	int uObjectBlendMode;
-	int uObjectInvertColor;
 	FVector4 uVertexColor;
 	FVector4 uVertexNormal;
 
@@ -241,11 +259,9 @@ public:
 		mStreamData.uAddColor = 0;
 		mStreamData.uObjectColor = 0xffffffff;
 		mStreamData.uObjectColor2 = 0;
-		mStreamData.uBlendColor = 0;
-		mStreamData.uObjectDesaturationFactor = 0;
-		mStreamData.uObjectBlendMode = 0;
-		mStreamData.uObjectColorizeFactor = 1;
-		mStreamData.uObjectInvertColor = 0;
+		mStreamData.uTextureBlendColor = 0;
+		mStreamData.uTextureAddColor = 0;
+		mStreamData.uTextureModulateColor = 0;
 		mSoftLight = 0;
 		mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 		mLightParms[3] = -1.f;
@@ -455,29 +471,20 @@ public:
 		mStreamData.uAddColor = pe;
 	}
 
-	void SetBlendColor(PalEntry pe)
+	void ApplyTextureManipulation(TextureManipulation* texfx)
 	{
-		mStreamData.uBlendColor = pe;
-	}
-
-	void SetColorizeFactor(float f)
-	{
-		mStreamData.uObjectColorizeFactor = f;
-	}
-
-	void SetObjectDesaturateFactor(float f)
-	{
-		mStreamData.uObjectDesaturationFactor = f;
-	}
-
-	void SetObjectInvert(bool on)
-	{
-		mStreamData.uObjectInvertColor = on;
-	}
-
-	void SetObjectBlendMode(int b)
-	{
-		mStreamData.uObjectBlendMode = b;
+		if (!texfx || texfx->AddColor.a == 0)
+		{
+			mStreamData.uTextureAddColor.a = 0;	// we only need to set the flags to 0
+		}
+		else
+		{
+			// set up the whole thing
+			mStreamData.uTextureAddColor.SetIA(texfx->AddColor);
+			auto pe = texfx->ModulateColor;
+			mStreamData.uTextureModulateColor.SetFlt(pe.r * pe.a / 255.f, pe.g * pe.a / 255.f, pe.b * pe.a / 255.f, texfx->DesaturationFactor);
+			mStreamData.uTextureBlendColor = texfx->BlendColor;
+		}
 	}
 
 	void SetFog(PalEntry c, float d)

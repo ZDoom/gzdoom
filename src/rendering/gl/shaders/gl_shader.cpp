@@ -543,11 +543,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muAddColor.Init(hShader, "uAddColor");
-	muBlendColor.Init(hShader, "uBlendColor");
-	muObjectDesaturationFactor.Init(hShader, "uObjectDesaturationFactor");
-	muObjectColorizeFactor.Init(hShader, "uObjectColorizeFactor");
-	muObjectBlendMode.Init(hShader, "uObjectBlendMode");
-	muObjectInvertColor.Init(hShader, "uObjectInvertColor");
+	muTextureAddColor.Init(hShader, "uTextureAddColor");
+	muTextureModulateColor.Init(hShader, "uTextureModulateColor");
+	muTextureBlendColor.Init(hShader, "uTextureBlendColor");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");

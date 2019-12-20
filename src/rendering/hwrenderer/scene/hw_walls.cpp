@@ -175,10 +175,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		state.SetObjectColor(color1);
 		state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
 		state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
-		state.SetBlendColor(side->GetBlendColor(tierndx, frontsector));
-		state.SetObjectBlendMode(side->GetBlendMode(tierndx, frontsector));
-		state.SetObjectDesaturateFactor(side->GetDesaturationFactor(tierndx, frontsector));
-		state.SetObjectInvert(side->GetInvertMode(tierndx, frontsector));
+		state.ApplyTextureManipulation(&side->textures[tierndx].TextureFx);
 
 		if (color1 != color2)
 		{
@@ -248,10 +245,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	state.SetTextureMode(tmode);
 	state.EnableGlow(false);
 	state.EnableGradient(false);
-	state.SetObjectDesaturateFactor(0);
-	state.SetObjectInvert(false);
-	state.SetObjectBlendMode(0);
-	state.SetColorizeFactor(1);
+	state.ApplyTextureManipulation(nullptr);
 }
 
 //==========================================================================

@@ -1,12 +1,4 @@
 
-enum BlendModes
-{
-	BLEND_Off = 0,
-	BLEND_Alpha,
-	BLEND_Screen,
-	BLEND_Overlay,
-	BLEND_Hardlight
-}
 struct SectorPortal native play
 {
 	enum EType
@@ -91,12 +83,10 @@ struct Side native play
 	native void SetTextureYScale(int which, double scale);
 	native double GetTextureYScale(int which);
 	native void MultiplyTextureYScale(int which, double delta);
-	native void SetSpecialColor(int tier, int position, Color scolor, double factor = 1.0);
+	native void SetSpecialColor(int tier, int position, Color scolor);
 	native Color GetAdditiveColor(int tier);
 	native void SetAdditiveColor(int tier, Color color);
 	native void EnableAdditiveColor(int tier, bool enable);
-	native void SetBlendColor(int tier, Color color, int mode);
-	native void SetTextureDesaturation(int tier, double factor, bool invert = false);
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 
@@ -477,10 +467,8 @@ struct Sector native play
 	native color GetGlowColor(int pos);
 	native void SetGlowHeight(int pos, double height);
 	native void SetGlowColor(int pos, color color);
-	native void SetSpecialColor(int pos, color color, float factor = 1.0);
+	native void SetSpecialColor(int pos, color color);
 	native void SetAdditiveColor(int pos, Color color);
-	native void SetBlendColor(int pos, Color color, int mode);
-	native void SetTextureDesaturation(int pos, double factor, bool invert = false);
 	
 	native TextureID GetTexture(int pos);
 	native void SetTexture(int pos, TextureID tex, bool floorclip = true);

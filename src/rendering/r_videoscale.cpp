@@ -72,7 +72,7 @@ namespace
 			if (sx <= 0. || sy <= 0.)
 				return 1.; // prevent x/0 error
 			// set absolute minimum scale to fill the entire screen but get as close to 640x400 as possible
-			float ssx = 640. / sx, ssy = 400. / sy;
+			float ssx = (float)(VID_MIN_WIDTH) / sx, ssy = (float)(VID_MIN_HEIGHT) / sy;
 			result = (ssx < ssy) ? ssy : ssx;
 			lastsx = sx;
 			lastsy = sy;

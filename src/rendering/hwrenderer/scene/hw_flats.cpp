@@ -308,6 +308,12 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	di->SetFog(state, lightlevel, rel, di->isFullbrightScene(), &Colormap, false);
 	state.SetObjectColor(FlatColor | 0xff000000);
 	state.SetAddColor(AddColor | 0xff000000);
+	state.SetBlendColor(BlendColor);
+	state.SetObjectBlendMode(BlendMode);
+	state.SetColorizeFactor(ColorFactor);
+	state.SetObjectDesaturateFactor(DesaturationFactor);
+	state.SetObjectInvert(Invert);
+
 
 	if (hacktype & SSRF_PLANEHACK)
 	{
@@ -334,7 +340,6 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 			flatvertices += 4;
 			flatprimitives++;
 		}
-		state.SetObjectColor(0xffffffff);
 	}
 	else
 	{
@@ -356,8 +361,8 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 			state.EnableTextureMatrix(false);
 		}
 		state.SetRenderStyle(DefaultRenderStyle());
-		state.SetObjectColor(0xffffffff);
 	}
+	state.SetObjectColor(0xffffffff);
 	state.SetAddColor(0);
 	state.SetBlendColor(0);
 	state.SetObjectDesaturateFactor(0);
@@ -454,12 +459,22 @@ void HWFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 		Colormap.LightColor = light->extra_colormap.FadeColor;
 		FlatColor = 0xffffffff;
 		AddColor = 0;
+		BlendColor = 0;
+		BlendMode = 0;
+		ColorFactor = 1.f;
+		DesaturationFactor = 0.f;
+		Invert = false;
 	}
 	else
 	{
 		Colormap.CopyFrom3DLight(light);
-		FlatColor = *plane.flatcolor;
-		// AddColor = sector->SpecialColors[sector_t::add];
+		FlatColor = plane.model->SpecialColors[plane.isceiling];
+		AddColor = plane.model->AdditiveColors[plane.isceiling];
+		BlendColor = plane.model->BlendColors[plane.isceiling];
+		BlendMode = plane.model->BlendModes[plane.isceiling];
+		ColorFactor = plane.model->ColorScaleFactor[plane.isceiling];
+		DesaturationFactor = plane.model->MaterialDesaturationFactor[plane.isceiling];
+		Invert = plane.model->InvertMode(plane.isceiling);
 	}
 
 
@@ -515,6 +530,12 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 		Colormap = frontsector->Colormap;
 		FlatColor = frontsector->SpecialColors[sector_t::floor];
 		AddColor = frontsector->AdditiveColors[sector_t::floor];
+		BlendColor = frontsector->BlendColors[sector_t::floor];
+		BlendMode = frontsector->BlendModes[sector_t::floor];
+		DesaturationFactor = frontsector->MaterialDesaturationFactor[sector_t::floor];
+		ColorFactor = frontsector->ColorScaleFactor[sector_t::floor];
+		Invert = frontsector->InvertMode(sector_t::floor);
+
 		port = frontsector->ValidatePortal(sector_t::floor);
 		if ((stack = (port != NULL)))
 		{
@@ -571,6 +592,11 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 		Colormap = frontsector->Colormap;
 		FlatColor = frontsector->SpecialColors[sector_t::ceiling];
 		AddColor = frontsector->AdditiveColors[sector_t::ceiling];
+		BlendColor = frontsector->BlendColors[sector_t::ceiling];
+		BlendMode = frontsector->BlendModes[sector_t::ceiling];
+		DesaturationFactor = frontsector->MaterialDesaturationFactor[sector_t::ceiling];
+		ColorFactor = frontsector->ColorScaleFactor[sector_t::ceiling];
+		Invert = frontsector->InvertMode(sector_t::ceiling);
 		port = frontsector->ValidatePortal(sector_t::ceiling);
 		if ((stack = (port != NULL)))
 		{

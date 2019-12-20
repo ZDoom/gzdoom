@@ -1503,6 +1503,7 @@ public:
 		sec->SetYScale(sector_t::ceiling, 1.);
 		sec->SetAlpha(sector_t::floor, 1.);
 		sec->SetAlpha(sector_t::ceiling, 1.);
+		sec->ColorScaleFactor[0] = sec->ColorScaleFactor[1] = sec->ColorScaleFactor[2] = 1.f;
 		sec->thinglist = nullptr;
 		sec->touching_thinglist = nullptr;		// phares 3/14/98
 		sec->sectorportal_thinglist = nullptr;

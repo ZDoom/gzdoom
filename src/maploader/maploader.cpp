@@ -1106,6 +1106,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->prevsec = -1;	// stair retriggering until build completes
 		memset(ss->SpecialColors, -1, sizeof(ss->SpecialColors));
 		memset(ss->AdditiveColors, 0, sizeof(ss->AdditiveColors));
+		ss->ColorScaleFactor[0] = ss->ColorScaleFactor[1] = ss->ColorScaleFactor[2] = 1.f;
 
 		ss->SetAlpha(sector_t::floor, 1.);
 		ss->SetAlpha(sector_t::ceiling, 1.);

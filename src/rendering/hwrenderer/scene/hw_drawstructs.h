@@ -301,6 +301,10 @@ public:
 	FColormap Colormap;	// light and fog
 	PalEntry FlatColor;
 	PalEntry AddColor;
+	PalEntry BlendColor;
+	float DesaturationFactor, ColorFactor;
+	int BlendMode;
+	bool Invert;
 	ERenderStyle renderstyle;
 
 	float alpha;

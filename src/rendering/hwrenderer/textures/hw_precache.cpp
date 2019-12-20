@@ -277,7 +277,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		delete renderer;
 
 		precache.Unclock();
-		Printf(DMSG_NOTIFY, "Textures precached in %.3f ms\n", precache.TimeMS());
+		DPrintf(DMSG_NOTIFY, "Textures precached in %.3f ms\n", precache.TimeMS());
 	}
 
 	delete[] spritehitlist;

@@ -142,7 +142,7 @@ static const char *shaderBindings = R"(
 	};
 
 	layout(set = 0, binding = 3, std140) uniform StreamUBO {
-		StreamData data[256];
+		StreamData data[MAX_STREAM_DATA];
 	};
 
 	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
@@ -198,6 +198,9 @@ static const char *shaderBindings = R"(
 	#define uObjectColor2 data[uDataIndex].uObjectColor2
 	#define uDynLightColor data[uDataIndex].uDynLightColor
 	#define uAddColor data[uDataIndex].uAddColor
+	#define uTextureBlendColor data[uDataIndex].uTextureBlendColor
+	#define uTextureModulateColor data[uDataIndex].uTextureModulateColor
+	#define uTextureAddColor data[uDataIndex].uTextureAddColor
 	#define uFogColor data[uDataIndex].uFogColor
 	#define uDesaturationFactor data[uDataIndex].uDesaturationFactor
 	#define uInterpolationFactor data[uDataIndex].uInterpolationFactor
@@ -233,7 +236,9 @@ static const char *shaderBindings = R"(
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)
 {
 	FString code = GetTargetGlslVersion();
-	code << defines << shaderBindings;
+	code << defines;
+	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	code << shaderBindings;
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	code << "#line 1\n";
 	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
@@ -246,7 +251,9 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
-	code << defines << shaderBindings;
+	code << defines;
+	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	code << shaderBindings;
 
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	if (!alphatest) code << "#define NO_ALPHATEST\n";

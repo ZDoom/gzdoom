@@ -250,12 +250,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform float uDesaturationFactor;\n";
 	i_data += "uniform float uInterpolationFactor;\n";
 
-	i_data += "uniform float uObjectDesaturationFactor;\n";
-	i_data += "uniform float uObjectColorizeFactor;\n";
-	i_data += "uniform int uObjectBlendMode;\n";
-	i_data += "uniform int uObjectInvertColor;\n";
-
-
 	// Glowing walls stuff
 	i_data += "uniform vec4 uGlowTopPlane;\n";
 	i_data += "uniform vec4 uGlowTopColor;\n";

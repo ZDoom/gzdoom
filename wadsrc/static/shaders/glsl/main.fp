@@ -110,7 +110,7 @@ const int Tex_Blend_Hardlight = 4;
 	texel.rgb = clamp(texel.rgb, 0.0, 1.0);
 	
 	// Step 5: Apply a blend. This may just be a translucent overlay or one of the blend modes present in current Build engines.
-	if (uObjectBlendMode != 0)
+	if ((blendflags & 7) != 0)
 	{
 		vec3 tcol = texel.rgb * 255.0;	// * 255.0 to make it easier to reuse the integer math.
 		vec4 tint = uTextureBlendColor * 255.0;

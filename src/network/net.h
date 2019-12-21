@@ -70,6 +70,9 @@ public:
 	// Playsim events
 	virtual void ActorSpawned(AActor *actor) { }
 	virtual void ActorDestroyed(AActor *actor) { }
+
+	// User info settings changed
+	virtual void UserInfoChanged(const char* name, const char* value) { }
 };
 
 extern std::unique_ptr<Network> network;

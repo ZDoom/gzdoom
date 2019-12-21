@@ -41,6 +41,7 @@
 #include "doomstat.h"
 #include "d_netinf.h"
 #include "playsim/p_commands.h"
+#include "network/net.h"
 #include "d_player.h"
 #include "c_dispatch.h"
 #include "r_state.h"
@@ -546,6 +547,8 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 
 	CmdWriteByte (DEM_UINFCHANGED);
 	CmdWriteString (foo);
+
+	network->UserInfoChanged(cvar->GetName(), escaped_val.GetChars());
 }
 
 static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, bool singlebit)

@@ -235,41 +235,14 @@ class FShader
 	unsigned int hFragProg;
 	FName mName;
 
-	FBufferedUniform1f muDesaturation;
-	FBufferedUniform1i muFogEnabled;
-	FBufferedUniform1i muTextureMode;
-	FBufferedUniform4f muLightParms;
-	FBufferedUniform2f muClipSplit;
-	FBufferedUniform1i muLightIndex;
-	FBufferedUniformPE muFogColor;
-	FBufferedUniform4f muDynLightColor;
-	FBufferedUniformPE muObjectColor;
-	FBufferedUniformPE muObjectColor2;
-	FBufferedUniformPE muAddColor;
-	FBufferedUniformPE muTextureBlendColor;
-	FBufferedUniformPE muTextureModulateColor;
-	FBufferedUniformPE muTextureAddColor;
-	FUniform4f muGlowBottomColor;
-	FUniform4f muGlowTopColor;
-	FUniform4f muGlowBottomPlane;
-	FUniform4f muGlowTopPlane;
-	FUniform4f muGradientBottomPlane;
-	FUniform4f muGradientTopPlane;
-	FUniform4f muSplitBottomPlane;
-	FUniform4f muSplitTopPlane;
-	FBufferedUniform1f muInterpolationFactor;
-	FBufferedUniform1f muAlphaThreshold;
-	FBufferedUniform2f muSpecularMaterial;
-	FBufferedUniform1f muTimer;
+	std::vector<int> UniformLastUpdates;
+	std::vector<GLuint> UniformLocations;
 
 	int lights_index;
 	int modelmatrix_index;
 	int normalmodelmatrix_index;
 	int texturematrix_index;
 
-	int currentglowstate = 0;
-	int currentgradientstate = 0;
-	int currentsplitstate = 0;
 	int currentcliplinestate = 0;
 	int currentfixedcolormap = 0;
 	bool currentTextureMatrixState = true;// by setting the matrix state to 'true' it is guaranteed to be set the first time the render state gets applied.

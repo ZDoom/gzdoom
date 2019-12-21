@@ -166,9 +166,9 @@ void VkRenderState::Apply(int dt)
 		mApplyCount = 0;
 	}
 
+	ApplyRenderPass(dt);
 	ApplyStreamData();
 	ApplyMatrices();
-	ApplyRenderPass(dt);
 	ApplyScissor();
 	ApplyViewport();
 	ApplyStencilRef();
@@ -219,7 +219,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
 		pipelineKey.SpecialEffect = EFF_NONE;
 		pipelineKey.EffectState = mTextureEnabled ? effectState : SHADER_NoTexture;
-		pipelineKey.AlphaTest = mAlphaThreshold >= 0.f;
+		pipelineKey.AlphaTest = GetUniform<float>(UniformName::uAlphaThreshold) >= 0.f;
 	}
 
 	// Is this the one we already have?
@@ -313,17 +313,17 @@ void VkRenderState::ApplyStreamData()
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
 
-	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
+	SetUniform(UniformName::useVertexData, passManager->GetVertexFormat(static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData);
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
-		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.);
+		SetUniform(UniformName::timer, static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.));
 	else
-		mStreamData.timer = 0.0f;
+		SetUniform(UniformName::timer, 0.0f);
 
-	if (!mStreamBufferWriter.Write(mStreamData))
+	if (!mStreamBufferWriter->Write(GetUniformData(UniformFamily::Normal)))
 	{
 		WaitForStreamBuffers();
-		mStreamBufferWriter.Write(mStreamData);
+		mStreamBufferWriter->Write(GetUniformData(UniformFamily::Normal));
 	}
 }
 
@@ -350,32 +350,25 @@ void VkRenderState::ApplyPushConstants()
 	if (mMaterial.mMaterial && mMaterial.mMaterial->tex && mMaterial.mMaterial->tex->isHardwareCanvas())
 		tempTM = TM_OPAQUE;
 
-	mPushConstants.uFogEnabled = fogset;
-	mPushConstants.uTextureMode = mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
-	mPushConstants.uLightDist = mLightParms[0];
-	mPushConstants.uLightFactor = mLightParms[1];
-	mPushConstants.uFogDensity = mLightParms[2];
-	mPushConstants.uLightLevel = mLightParms[3];
-	mPushConstants.uAlphaThreshold = mAlphaThreshold;
-	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
+	SetUniform(UniformName::uFogEnabled, fogset);
+	SetUniform(UniformName::uTextureMode, mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
-		mPushConstants.uSpecularMaterial = { mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel };
+		SetUniform(UniformName::uSpecularMaterial, FVector2{ mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel });
 
-	mPushConstants.uLightIndex = mLightIndex;
-	mPushConstants.uDataIndex = mStreamBufferWriter.DataIndex();
+	SetUniform(UniformName::uDataIndex, mStreamBufferWriter->DataIndex());
 
 	auto fb = GetVulkanFrameBuffer();
 	auto passManager = fb->GetRenderPassManager();
-	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, (uint32_t)sizeof(PushConstants), &mPushConstants);
+	mCommandBuffer->pushConstants(passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, GetUniformDataSize(UniformFamily::PushConstant), GetUniformData(UniformFamily::PushConstant));
 }
 
 void VkRenderState::ApplyMatrices()
 {
-	if (!mMatrixBufferWriter.Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled))
+	if (!mMatrixBufferWriter->Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled))
 	{
 		WaitForStreamBuffers();
-		mMatrixBufferWriter.Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled);
+		mMatrixBufferWriter->Write(mModelMatrix, mModelMatrixEnabled, mTextureMatrix, mTextureMatrixEnabled);
 	}
 }
 
@@ -419,8 +412,8 @@ void VkRenderState::ApplyMaterial()
 void VkRenderState::ApplyDynamicSet()
 {
 	auto fb = GetVulkanFrameBuffer();
-	uint32_t matrixOffset = mMatrixBufferWriter.Offset();
-	uint32_t streamDataOffset = mStreamBufferWriter.StreamDataOffset();
+	uint32_t matrixOffset = mMatrixBufferWriter->Offset();
+	uint32_t streamDataOffset = mStreamBufferWriter->StreamDataOffset();
 	if (mViewpointOffset != mLastViewpointOffset || matrixOffset != mLastMatricesOffset || streamDataOffset != mLastStreamDataOffset)
 	{
 		auto passManager = fb->GetRenderPassManager();
@@ -438,8 +431,8 @@ void VkRenderState::WaitForStreamBuffers()
 {
 	GetVulkanFrameBuffer()->WaitForCommands(false);
 	mApplyCount = 0;
-	mStreamBufferWriter.Reset();
-	mMatrixBufferWriter.Reset();
+	mStreamBufferWriter->Reset();
+	mMatrixBufferWriter->Reset();
 }
 
 void VkRenderState::Bind(int bindingpoint, uint32_t offset)
@@ -475,8 +468,8 @@ void VkRenderState::EndRenderPass()
 
 void VkRenderState::EndFrame()
 {
-	mMatrixBufferWriter.Reset();
-	mStreamBufferWriter.Reset();
+	mMatrixBufferWriter->Reset();
+	mStreamBufferWriter->Reset();
 }
 
 void VkRenderState::EnableDrawBuffers(int count)
@@ -548,6 +541,9 @@ void VkRenderState::BeginRenderPass(VulkanCommandBuffer *cmdbuffer)
 
 	mMaterial.mChanged = true;
 	mClearTargets = 0;
+
+	mStreamBufferWriter = fb->StreamBufferWriter;
+	mMatrixBufferWriter = fb->MatrixBufferWriter;
 }
 
 /////////////////////////////////////////////////////////////////////////////

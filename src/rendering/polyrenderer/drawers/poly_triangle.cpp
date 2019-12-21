@@ -299,12 +299,11 @@ private:
 class PolyPushStreamDataCommand : public PolyDrawerCommand
 {
 public:
-	PolyPushStreamDataCommand(const StreamData& data, const PolyPushConstants& constants) : data(data), constants(constants) { }
-	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->PushStreamData(data, constants); }
+	PolyPushStreamDataCommand(const PolyUniforms& data) : data(data) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->PushStreamData(data); }
 
 private:
-	StreamData data;
-	PolyPushConstants constants;
+	PolyUniforms data;
 };
 
 class PolyDrawCommand : public PolyDrawerCommand
@@ -434,9 +433,9 @@ void PolyCommandBuffer::SetShader(int specialEffect, int effectState, bool alpha
 	mQueue->Push<PolySetShaderCommand>(specialEffect, effectState, alphaTest);
 }
 
-void PolyCommandBuffer::PushStreamData(const StreamData &data, const PolyPushConstants &constants)
+void PolyCommandBuffer::PushStreamData(const PolyUniforms &data)
 {
-	mQueue->Push<PolyPushStreamDataCommand>(data, constants);
+	mQueue->Push<PolyPushStreamDataCommand>(data);
 }
 
 void PolyCommandBuffer::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)

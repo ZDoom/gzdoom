@@ -2,6 +2,9 @@
 #include "vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
+#include "rendering/vulkan/system/vk_framebuffer.h"
+#include "rendering/vulkan/renderer/vk_streambuffer.h"
+#include "rendering/vulkan/renderer/vk_renderstate.h"
 #include "w_wad.h"
 #include "doomerrors.h"
 #include <ShaderLang.h>
@@ -112,39 +115,6 @@ static const char *shaderBindings = R"(
 		mat4 TextureMatrix;
 	};
 
-	struct StreamData
-	{
-		vec4 uObjectColor;
-		vec4 uObjectColor2;
-		vec4 uDynLightColor;
-		vec4 uAddColor;
-		vec4 uTextureAddColor;
-		vec4 uTextureModulateColor;
-		vec4 uTextureBlendColor;
-		vec4 uFogColor;
-		float uDesaturationFactor;
-		float uInterpolationFactor;
-		float timer; // timer data for material shaders
-		int useVertexData;
-		vec4 uVertexColor;
-		vec4 uVertexNormal;
-		
-		vec4 uGlowTopPlane;
-		vec4 uGlowTopColor;
-		vec4 uGlowBottomPlane;
-		vec4 uGlowBottomColor;
-
-		vec4 uGradientTopPlane;
-		vec4 uGradientBottomPlane;
-
-		vec4 uSplitTopPlane;
-		vec4 uSplitBottomPlane;
-	};
-
-	layout(set = 0, binding = 3, std140) uniform StreamUBO {
-		StreamData data[MAX_STREAM_DATA];
-	};
-
 	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
 
 	// textures
@@ -154,30 +124,6 @@ static const char *shaderBindings = R"(
 	layout(set = 1, binding = 3) uniform sampler2D texture4;
 	layout(set = 1, binding = 4) uniform sampler2D texture5;
 	layout(set = 1, binding = 5) uniform sampler2D texture6;
-
-	// This must match the PushConstants struct
-	layout(push_constant) uniform PushConstants
-	{
-		int uTextureMode;
-		float uAlphaThreshold;
-		vec2 uClipSplit;
-
-		// Lighting + Fog
-		float uLightLevel;
-		float uFogDensity;
-		float uLightFactor;
-		float uLightDist;
-		int uFogEnabled;
-
-		// dynamic lights
-		int uLightIndex;
-
-		// Blinn glossiness and specular level
-		vec2 uSpecularMaterial;
-
-		int uDataIndex;
-		int padding1, padding2, padding3;
-	};
 
 	// material types
 	#if defined(SPECULAR)
@@ -193,29 +139,6 @@ static const char *shaderBindings = R"(
 	#else
 	#define brighttexture texture2
 	#endif
-
-	#define uObjectColor data[uDataIndex].uObjectColor
-	#define uObjectColor2 data[uDataIndex].uObjectColor2
-	#define uDynLightColor data[uDataIndex].uDynLightColor
-	#define uAddColor data[uDataIndex].uAddColor
-	#define uTextureBlendColor data[uDataIndex].uTextureBlendColor
-	#define uTextureModulateColor data[uDataIndex].uTextureModulateColor
-	#define uTextureAddColor data[uDataIndex].uTextureAddColor
-	#define uFogColor data[uDataIndex].uFogColor
-	#define uDesaturationFactor data[uDataIndex].uDesaturationFactor
-	#define uInterpolationFactor data[uDataIndex].uInterpolationFactor
-	#define timer data[uDataIndex].timer
-	#define useVertexData data[uDataIndex].useVertexData
-	#define uVertexColor data[uDataIndex].uVertexColor
-	#define uVertexNormal data[uDataIndex].uVertexNormal
-	#define uGlowTopPlane data[uDataIndex].uGlowTopPlane
-	#define uGlowTopColor data[uDataIndex].uGlowTopColor
-	#define uGlowBottomPlane data[uDataIndex].uGlowBottomPlane
-	#define uGlowBottomColor data[uDataIndex].uGlowBottomColor
-	#define uGradientTopPlane data[uDataIndex].uGradientTopPlane
-	#define uGradientBottomPlane data[uDataIndex].uGradientBottomPlane
-	#define uSplitTopPlane data[uDataIndex].uSplitTopPlane
-	#define uSplitBottomPlane data[uDataIndex].uSplitBottomPlane
 
 	#define SUPPORTS_SHADOWMAPS
 	#define VULKAN_COORDINATE_SYSTEM
@@ -233,13 +156,74 @@ static const char *shaderBindings = R"(
 	vec4 noise4(vec4) { return vec4(0); }
 )";
 
+static void AppendStructMembers(FString& code, UniformFamily family)
+{
+	int index = 0;
+	for (const auto& info : GetVulkanFrameBuffer()->GetRenderState()->GetUniformInfo())
+	{
+		if (info.Name.empty())
+			I_FatalError("Missing uniform declaration for index %d", index);
+		index++;
+
+		if (info.Family == family)
+		{
+			static const char* glsltype[] = { "int", "uint", "float", "vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4", "uvec2", "uvec3", "uvec4", "mat4" };
+			code.AppendFormat("\t%s %s;\n", glsltype[(int)info.Type], info.Name.c_str());
+		}
+	}
+}
+
+static void AppendStructDefines(FString& code, UniformFamily family)
+{
+	// Generate defines so the shader code can still access the uniforms as if they weren't part of the block:
+	for (const auto& info : GetVulkanFrameBuffer()->GetRenderState()->GetUniformInfo())
+	{
+		if (info.Family == family)
+		{
+			code.AppendFormat("#define %s data[uDataIndex].%s\n", info.Name.c_str(), info.Name.c_str());
+		}
+	}
+}
+
+static FString GetUniformBindings()
+{
+	FString code;
+
+	// Uniform struct:
+
+	code << "struct StreamData\n";
+	code << "{\n";
+	AppendStructMembers(code, UniformFamily::Normal);
+	code << "};\n\n";
+
+	// Generate uniform block that holds multiple uniform structs:
+
+	code << "layout(set = 0, binding = 3, std140) uniform StreamUBO {\n";
+	code.AppendFormat("\tStreamData data[%d];\n", GetVulkanFrameBuffer()->StreamBufferWriter->MaxStreamData());
+	code << "};\n\n";
+
+	AppendStructDefines(code, UniformFamily::Normal);
+
+	// Generate push constants struct:
+
+	code << "layout(push_constant) uniform PushConstants\n";
+	code << "{\n";
+	AppendStructMembers(code, UniformFamily::PushConstant);
+	code << "};\n\n";
+
+	return code;
+}
+
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)
 {
 	FString code = GetTargetGlslVersion();
+
 	code << defines;
-	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
-	code << shaderBindings;
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
+
+	code << shaderBindings;
+	code << GetUniformBindings().GetChars();
+
 	code << "#line 1\n";
 	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
 
@@ -251,13 +235,14 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
-	code << defines;
-	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
-	code << shaderBindings;
 
+	code << defines;
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	if (!alphatest) code << "#define NO_ALPHATEST\n";
 	if (gbufferpass) code << "#define GBUFFER_PASS\n";
+
+	code << shaderBindings;
+	code << GetUniformBindings().GetChars();
 
 	code << "\n#line 1\n";
 	code << LoadPrivateShaderLump(frag_lump).GetChars() << "\n";

@@ -7,6 +7,7 @@
 #include "hw_drawlist.h"
 #include "matrix.h"
 #include "hwrenderer/textures/hw_material.h"
+#include "hwrenderer/data/shaderuniforms.h"
 
 struct FColormap;
 class IVertexBuffer;
@@ -172,38 +173,217 @@ struct FVector4PalEntry
 
 };
 
-struct StreamData
+enum class UniformName
 {
-	FVector4PalEntry uObjectColor;
-	FVector4PalEntry uObjectColor2;
-	FVector4 uDynLightColor;
-	FVector4PalEntry uAddColor;
-	FVector4PalEntry uTextureAddColor;
-	FVector4PalEntry uTextureModulateColor;
-	FVector4PalEntry uTextureBlendColor;
-	FVector4PalEntry uFogColor;
-	float uDesaturationFactor;
-	float uInterpolationFactor;
-	float timer;
-	int useVertexData;
-	FVector4 uVertexColor;
-	FVector4 uVertexNormal;
+	uObjectColor,
+	uObjectColor2,
+	uDynLightColor,
+	uAddColor,
+	uTextureAddColor,
+	uTextureModulateColor,
+	uTextureBlendColor,
+	uFogColor,
+	uDesaturationFactor,
+	uInterpolationFactor,
+	timer,
+	useVertexData,
+	uVertexColor,
+	uVertexNormal,
 
-	FVector4 uGlowTopPlane;
-	FVector4 uGlowTopColor;
-	FVector4 uGlowBottomPlane;
-	FVector4 uGlowBottomColor;
+	uGlowTopPlane,
+	uGlowTopColor,
+	uGlowBottomPlane,
+	uGlowBottomColor,
 
-	FVector4 uGradientTopPlane;
-	FVector4 uGradientBottomPlane;
+	uGradientTopPlane,
+	uGradientBottomPlane,
 
-	FVector4 uSplitTopPlane;
-	FVector4 uSplitBottomPlane;
+	uSplitTopPlane,
+	uSplitBottomPlane,
+
+	uObjectBlendMode,
+	uObjectDesaturationFactor,
+	uObjectColorizeFactor,
+	uObjectInvertColor,
+
+	uTextureMode,
+	uAlphaThreshold,
+	uClipSplit,
+	uLightLevel,
+	uFogDensity,
+	uLightFactor,
+	uLightDist,
+	uFogEnabled,
+	uLightIndex,
+	uSpecularMaterial,
+	uDataIndex,
+	uPadding1,
+	uPadding2,
+	uPadding3
+};
+
+enum class UniformFamily
+{
+	Normal,
+	//Matrix,
+	PushConstant,
+	NumFamilies
 };
 
 class FRenderState
 {
 protected:
+	FRenderState()
+	{
+		// Important: the following declarations must be compatible with the GLSL std140 layout rules.
+		// DeclareUniform does not automatically insert padding to enforce this.
+
+		DeclareUniform(UniformName::uObjectColor, "uObjectColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uObjectColor2, "uObjectColor2", UniformType::Vec4);
+		DeclareUniform(UniformName::uDynLightColor, "uDynLightColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uAddColor, "uAddColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uTextureAddColor, "uTextureAddColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uTextureModulateColor, "uTextureModulateColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uTextureBlendColor, "uTextureBlendColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uFogColor, "uFogColor", UniformType::Vec4);
+
+		DeclareUniform(UniformName::uDesaturationFactor, "uDesaturationFactor", UniformType::Float);
+		DeclareUniform(UniformName::uInterpolationFactor, "uInterpolationFactor", UniformType::Float);
+		DeclareUniform(UniformName::timer, "timer", UniformType::Float);
+		DeclareUniform(UniformName::useVertexData, "useVertexData", UniformType::Int);
+
+		DeclareUniform(UniformName::uVertexColor, "uVertexColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uVertexNormal, "uVertexNormal", UniformType::Vec4);
+
+		DeclareUniform(UniformName::uGlowTopPlane, "uGlowTopPlane", UniformType::Vec4);
+		DeclareUniform(UniformName::uGlowTopColor, "uGlowTopColor", UniformType::Vec4);
+		DeclareUniform(UniformName::uGlowBottomPlane, "uGlowBottomPlane", UniformType::Vec4);
+		DeclareUniform(UniformName::uGlowBottomColor, "uGlowBottomColor", UniformType::Vec4);
+
+		DeclareUniform(UniformName::uGradientTopPlane, "uGradientTopPlane", UniformType::Vec4);
+		DeclareUniform(UniformName::uGradientBottomPlane, "uGradientBottomPlane", UniformType::Vec4);
+
+		DeclareUniform(UniformName::uSplitTopPlane, "uSplitTopPlane", UniformType::Vec4);
+		DeclareUniform(UniformName::uSplitBottomPlane, "uSplitBottomPlane", UniformType::Vec4);
+
+		DeclareUniform(UniformName::uObjectBlendMode, "uObjectBlendMode", UniformType::Float);
+		DeclareUniform(UniformName::uObjectInvertColor, "uObjectInvertColor", UniformType::Float);
+		DeclareUniform(UniformName::uObjectDesaturationFactor, "uObjectDesaturationFactor", UniformType::Float);
+		DeclareUniform(UniformName::uObjectColorizeFactor, "uObjectColorizeFactor", UniformType::Float);
+
+		DeclareUniform(UniformName::uTextureMode, "uTextureMode", UniformType::Int, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uAlphaThreshold, "uAlphaThreshold", UniformType::Float, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uClipSplit, "uClipSplit", UniformType::Vec2, UniformFamily::PushConstant);
+
+		DeclareUniform(UniformName::uLightLevel, "uLightLevel", UniformType::Float, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uFogDensity, "uFogDensity", UniformType::Float, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uLightFactor, "uLightFactor", UniformType::Float, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uLightDist, "uLightDist", UniformType::Float, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uFogEnabled, "uFogEnabled", UniformType::Int, UniformFamily::PushConstant);
+
+		DeclareUniform(UniformName::uLightIndex, "uLightIndex", UniformType::Int, UniformFamily::PushConstant);
+
+		DeclareUniform(UniformName::uSpecularMaterial, "uSpecularMaterial", UniformType::Vec2, UniformFamily::PushConstant);
+		
+		DeclareUniform(UniformName::uDataIndex, "uDataIndex", UniformType::Int, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uPadding1, "uPadding1", UniformType::Int, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uPadding2, "uPadding2", UniformType::Int, UniformFamily::PushConstant);
+		DeclareUniform(UniformName::uPadding3, "uPadding3", UniformType::Int, UniformFamily::PushConstant);
+	}
+
+	void DeclareUniform(UniformName nameIndex, const char* glslname, UniformType type, UniformFamily family = UniformFamily::Normal)
+	{
+		size_t index = (size_t)nameIndex;
+		if (mUniformInfo.size() <= index)
+			mUniformInfo.resize(index + 1);
+
+		auto& data = mUniformData[(int)family];
+
+		UniformInfo& info = mUniformInfo[index];
+		info.Name = glslname;
+		info.Type = type;
+		info.Family = family;
+		info.Offset = (int)data.size();
+
+		static const int bytesize[] = { 4, 4, 4, 8, 12, 16, 8, 12, 16, 8, 12, 16, 16 };
+		data.resize(data.size() + bytesize[(int)type]);
+	}
+
+	void SetUniform(UniformName nameIndex, const PalEntry& value)
+	{
+		SetUniform(nameIndex, FVector4(value.r * (1.0f / 255.0f), value.g * (1.0f / 255.0f), value.b * (1.0f / 255.0f), value.a * (1.0f / 255.0f)));
+	}
+
+	void SetUniform(UniformName nameIndex, double value)
+	{
+		SetUniform(nameIndex, (float)value);
+	}
+
+	void SetUniform(UniformName nameIndex, const DVector2& value)
+	{
+		SetUniform(nameIndex, FVector2((float)value.X, (float)value.Y));
+	}
+
+	void SetUniform(UniformName nameIndex, const DVector3& value)
+	{
+		SetUniform(nameIndex, FVector3((float)value.X, (float)value.Y, (float)value.Z));
+	}
+
+	void SetUniform(UniformName nameIndex, const DVector4& value)
+	{
+		SetUniform(nameIndex, FVector4((float)value.X, (float)value.Y, (float)value.Z, (float)value.W));
+	}
+
+	template<typename T>
+	void SetUniform(UniformName nameIndex, const T& value)
+	{
+		T* dest = (T*)GetUniformData(nameIndex);
+		if (*dest != value)
+		{
+			*dest = value;
+			mUniformInfo[(int)nameIndex].LastUpdate++;
+		}
+	}
+
+	void SetUniformAlpha(UniformName nameIndex, float alpha)
+	{
+		float* dest = (float*)GetUniformData(nameIndex);
+		if (dest[3] != alpha)
+		{
+			dest[3] = alpha;
+			mUniformInfo[(int)nameIndex].LastUpdate++;
+		}
+	}
+
+	void SetUniformIntegerAlpha(UniformName nameIndex, const PalEntry& value)
+	{
+		SetUniform(nameIndex, FVector4(value.r * (1.0f / 255.0f), value.g * (1.0f / 255.0f), value.b * (1.0f / 255.0f), (float)value.a));
+	}
+
+	template<typename T>
+	T GetUniform(UniformName nameIndex)
+	{
+		return *(T*)GetUniformData(nameIndex);
+	}
+
+	void* GetUniformData(UniformName nameIndex)
+	{
+		const auto& info = mUniformInfo[(int)nameIndex];
+		return mUniformData[(int)info.Family].data() + info.Offset;
+	}
+
+	struct UniformInfo
+	{
+		std::string Name;
+		UniformType Type = {};
+		UniformFamily Family = {};
+		int Offset = 0;
+		int LastUpdate = 0;
+	};
+
+	std::vector<UniformInfo> mUniformInfo;
+	std::vector<uint8_t> mUniformData[(int)UniformFamily::NumFamilies];
+
 	uint8_t mFogEnabled;
 	uint8_t mTextureEnabled:1;
 	uint8_t mGlowEnabled : 1;
@@ -213,16 +393,10 @@ protected:
 	uint8_t mTextureMatrixEnabled : 1;
 	uint8_t mSplitEnabled : 1;
 
-	int mLightIndex;
 	int mSpecialEffect;
 	int mTextureMode;
 	int mSoftLight;
-	float mLightParms[4];
 
-	float mAlphaThreshold;
-	float mClipSplit[2];
-
-	StreamData mStreamData = {};
 	PalEntry mFogColor;
 
 	FRenderStyle mRenderStyle;
@@ -243,31 +417,36 @@ public:
 	VSMatrix mTextureMatrix;
 
 public:
+	const std::vector<UniformInfo>& GetUniformInfo() const { return mUniformInfo; }
+	const void* GetUniformData(UniformFamily family) const { return mUniformData[(int)family].data(); }
+	uint32_t GetUniformDataSize(UniformFamily family) const { return (uint32_t)mUniformData[(int)family].size(); }
 
 	void Reset()
 	{
 		mTextureEnabled = true;
 		mGradientEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 		mFogColor = 0xffffffff;
-		mStreamData.uFogColor = mFogColor;
+		SetUniform(UniformName::uFogColor, mFogColor);
 		mTextureMode = -1;
-		mStreamData.uDesaturationFactor = 0.0f;
-		mAlphaThreshold = 0.5f;
+		SetUniform(UniformName::uDesaturationFactor, 0.0f);
+		SetUniform(UniformName::uAlphaThreshold, 0.5f);
 		mModelMatrixEnabled = false;
 		mTextureMatrixEnabled = false;
 		mSplitEnabled = false;
-		mStreamData.uAddColor = 0;
-		mStreamData.uObjectColor = 0xffffffff;
-		mStreamData.uObjectColor2 = 0;
-		mStreamData.uTextureBlendColor = 0;
-		mStreamData.uTextureAddColor = 0;
-		mStreamData.uTextureModulateColor = 0;
+		SetUniform(UniformName::uAddColor, 0);
+		SetUniform(UniformName::uObjectColor, 0xffffffff);
+		SetUniform(UniformName::uObjectColor2, 0);
+		SetUniform(UniformName::uTextureBlendColor, 0);
+		SetUniform(UniformName::uTextureAddColor, 0);
+		SetUniform(UniformName::uTextureModulateColor, 0);
 		mSoftLight = 0;
-		mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
-		mLightParms[3] = -1.f;
+		SetUniform(UniformName::uLightDist, 0.0f);
+		SetUniform(UniformName::uLightFactor, 0.0f);
+		SetUniform(UniformName::uFogDensity, 0.0f);
+		SetUniform(UniformName::uLightLevel, -1.f);
 		mSpecialEffect = EFF_NONE;
-		mLightIndex = -1;
-		mStreamData.uInterpolationFactor = 0;
+		SetUniform(UniformName::uLightIndex, -1);
+		SetUniform(UniformName::uInterpolationFactor, 0);
 		mRenderStyle = DefaultRenderStyle();
 		mMaterial.Reset();
 		mBias.Reset();
@@ -277,16 +456,16 @@ public:
 		mVertexOffsets[0] = mVertexOffsets[1] = 0;
 		mIndexBuffer = nullptr;
 
-		mStreamData.uVertexColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-		mStreamData.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uGlowTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uGlowBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uGradientTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uGradientBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-		mStreamData.uDynLightColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		SetUniform(UniformName::uVertexColor, FVector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+		SetUniform(UniformName::uGlowTopColor, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uGlowBottomColor, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uGlowTopPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uGlowBottomPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uGradientTopPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uGradientBottomPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uSplitTopPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uSplitBottomPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+		SetUniform(UniformName::uDynLightColor, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
@@ -295,38 +474,38 @@ public:
 
 	void SetNormal(FVector3 norm)
 	{
-		mStreamData.uVertexNormal = { norm.X, norm.Y, norm.Z, 0.f };
+		SetUniform(UniformName::uVertexNormal, FVector4{ norm.X, norm.Y, norm.Z, 0.f });
 	}
 
 	void SetNormal(float x, float y, float z)
 	{
-		mStreamData.uVertexNormal = { x, y, z, 0.f };
+		SetUniform(UniformName::uVertexNormal, FVector4{ x, y, z, 0.f });
 	}
 
 	void SetColor(float r, float g, float b, float a = 1.f, int desat = 0)
 	{
-		mStreamData.uVertexColor = { r, g, b, a };
-		mStreamData.uDesaturationFactor = desat * (1.0f / 255.0f);
+		SetUniform(UniformName::uVertexColor, FVector4{ r, g, b, a });
+		SetUniform(UniformName::uDesaturationFactor, desat * (1.0f / 255.0f));
 	}
 
 	void SetColor(PalEntry pe, int desat = 0)
 	{
 		const float scale = 1.0f / 255.0f;
-		mStreamData.uVertexColor = { pe.r * scale, pe.g * scale, pe.b * scale, pe.a * scale };
-		mStreamData.uDesaturationFactor = desat * (1.0f / 255.0f);
+		SetUniform(UniformName::uVertexColor, FVector4{ pe.r * scale, pe.g * scale, pe.b * scale, pe.a * scale });
+		SetUniform(UniformName::uDesaturationFactor, desat * (1.0f / 255.0f));
 	}
 
 	void SetColorAlpha(PalEntry pe, float alpha = 1.f, int desat = 0)
 	{
 		const float scale = 1.0f / 255.0f;
-		mStreamData.uVertexColor = { pe.r * scale, pe.g * scale, pe.b * scale, alpha };
-		mStreamData.uDesaturationFactor = desat * (1.0f / 255.0f);
+		SetUniform(UniformName::uVertexColor, FVector4{ pe.r * scale, pe.g * scale, pe.b * scale, alpha });
+		SetUniform(UniformName::uDesaturationFactor, desat * (1.0f / 255.0f));
 	}
 
 	void ResetColor()
 	{
-		mStreamData.uVertexColor = { 1.0f, 1.0f, 1.0f, 1.0f };
-		mStreamData.uDesaturationFactor = 0.0f;
+		SetUniform(UniformName::uVertexColor, FVector4{ 1.0f, 1.0f, 1.0f, 1.0f });
+		SetUniform(UniformName::uDesaturationFactor, 0.0f);
 	}
 
 	void SetTextureMode(int mode)
@@ -374,8 +553,8 @@ public:
 	{
 		if (mGlowEnabled && !on)
 		{
-			mStreamData.uGlowTopColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-			mStreamData.uGlowBottomColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+			SetUniform(UniformName::uGlowTopColor, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+			SetUniform(UniformName::uGlowBottomColor, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 		}
 		mGlowEnabled = on;
 	}
@@ -394,8 +573,8 @@ public:
 	{
 		if (mSplitEnabled && !on)
 		{
-			mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
-			mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
+			SetUniform(UniformName::uSplitTopPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
+			SetUniform(UniformName::uSplitBottomPlane, FVector4{ 0.0f, 0.0f, 0.0f, 0.0f });
 		}
 		mSplitEnabled = on;
 	}
@@ -412,78 +591,78 @@ public:
 
 	void SetGlowParams(float *t, float *b)
 	{
-		mStreamData.uGlowTopColor = { t[0], t[1], t[2], t[3] };
-		mStreamData.uGlowBottomColor = { b[0], b[1], b[2], b[3] };
+		SetUniform(UniformName::uGlowTopColor, FVector4{ t[0], t[1], t[2], t[3] });
+		SetUniform(UniformName::uGlowBottomColor, FVector4{ b[0], b[1], b[2], b[3] });
 	}
 
 	void SetSoftLightLevel(int llevel, int blendfactor = 0)
 	{
-		if (blendfactor == 0) mLightParms[3] = llevel / 255.f;
-		else mLightParms[3] = -1.f;
+		if (blendfactor == 0) SetUniform(UniformName::uLightLevel, llevel / 255.f);
+		else SetUniform(UniformName::uLightLevel, -1.f);
 	}
 
 	void SetNoSoftLightLevel()
 	{
-		 mLightParms[3] = -1.f;
+		SetUniform(UniformName::uLightLevel, -1.f);
 	}
 
 	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		auto &tn = top.Normal();
 		auto &bn = bottom.Normal();
-		mStreamData.uGlowTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
-		mStreamData.uGlowBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+		SetUniform(UniformName::uGlowTopPlane, FVector4{ (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() });
+		SetUniform(UniformName::uGlowBottomPlane, FVector4{ (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() });
 	}
 
 	void SetGradientPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		auto &tn = top.Normal();
 		auto &bn = bottom.Normal();
-		mStreamData.uGradientTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
-		mStreamData.uGradientBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+		SetUniform(UniformName::uGradientTopPlane, FVector4{ (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() });
+		SetUniform(UniformName::uGradientBottomPlane, FVector4{ (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() });
 	}
 
 	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
 	{
 		auto &tn = top.Normal();
 		auto &bn = bottom.Normal();
-		mStreamData.uSplitTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
-		mStreamData.uSplitBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+		SetUniform(UniformName::uSplitTopPlane, FVector4{ (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() });
+		SetUniform(UniformName::uSplitBottomPlane, FVector4{ (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() });
 	}
 
 	void SetDynLight(float r, float g, float b)
 	{
-		mStreamData.uDynLightColor = { r, g, b, 0.0f };
+		SetUniform(UniformName::uDynLightColor, FVector4{ r, g, b, 0.0f });
 	}
 
 	void SetObjectColor(PalEntry pe)
 	{
-		mStreamData.uObjectColor = pe;
+		SetUniform(UniformName::uObjectColor, pe);
 	}
 
 	void SetObjectColor2(PalEntry pe)
 	{
-		mStreamData.uObjectColor2 = pe;
+		SetUniform(UniformName::uObjectColor2, pe);
 	}
 
 	void SetAddColor(PalEntry pe)
 	{
-		mStreamData.uAddColor = pe;
+		SetUniform(UniformName::uAddColor, pe);
 	}
 
 	void ApplyTextureManipulation(TextureManipulation* texfx)
 	{
 		if (!texfx || texfx->AddColor.a == 0)
 		{
-			mStreamData.uTextureAddColor.a = 0;	// we only need to set the flags to 0
+			SetUniformAlpha(UniformName::uTextureAddColor, 0);	// we only need to set the flags to 0
 		}
 		else
 		{
 			// set up the whole thing
-			mStreamData.uTextureAddColor.SetIA(texfx->AddColor);
+			SetUniformIntegerAlpha(UniformName::uTextureAddColor, texfx->AddColor);
 			auto pe = texfx->ModulateColor;
-			mStreamData.uTextureModulateColor.SetFlt(pe.r * pe.a / 255.f, pe.g * pe.a / 255.f, pe.b * pe.a / 255.f, texfx->DesaturationFactor);
-			mStreamData.uTextureBlendColor = texfx->BlendColor;
+			SetUniform(UniformName::uTextureModulateColor, FVector4{ pe.r * pe.a / 255.f, pe.g * pe.a / 255.f, pe.b * pe.a / 255.f, texfx->DesaturationFactor });
+			SetUniform(UniformName::uTextureBlendColor, texfx->BlendColor);
 		}
 	}
 
@@ -491,14 +670,14 @@ public:
 	{
 		const float LOG2E = 1.442692f;	// = 1/log(2)
 		mFogColor = c;
-		mStreamData.uFogColor = mFogColor;
-		if (d >= 0.0f) mLightParms[2] = d * (-LOG2E / 64000.f);
+		SetUniform(UniformName::uFogColor, mFogColor);
+		if (d >= 0.0f) SetUniform(UniformName::uFogDensity, d * (-LOG2E / 64000.f));
 	}
 
 	void SetLightParms(float f, float d)
 	{
-		mLightParms[1] = f;
-		mLightParms[0] = d;
+		SetUniform(UniformName::uLightFactor, f);
+		SetUniform(UniformName::uLightDist, d);
 	}
 
 	PalEntry GetFogColor() const
@@ -508,8 +687,8 @@ public:
 
 	void AlphaFunc(int func, float thresh)
 	{
-		if (func == Alpha_Greater) mAlphaThreshold = thresh;
-		else mAlphaThreshold = thresh - 0.001f;
+		if (func == Alpha_Greater) SetUniform(UniformName::uAlphaThreshold, thresh);
+		else SetUniform(UniformName::uAlphaThreshold, thresh - 0.001f);
 	}
 
 	void SetPlaneTextureRotation(HWSectorPlane *plane, FMaterial *texture)
@@ -522,7 +701,7 @@ public:
 
 	void SetLightIndex(int index)
 	{
-		mLightIndex = index;
+		SetUniform(UniformName::uLightIndex, index);
 	}
 
 	void SetRenderStyle(FRenderStyle rs)
@@ -560,24 +739,22 @@ public:
 
 	void SetClipSplit(float bottom, float top)
 	{
-		mClipSplit[0] = bottom;
-		mClipSplit[1] = top;
+		SetUniform(UniformName::uClipSplit, FVector2(bottom, top));
 	}
 
 	void SetClipSplit(float *vals)
 	{
-		memcpy(mClipSplit, vals, 2 * sizeof(float));
+		SetUniform(UniformName::uClipSplit, FVector2(vals[0], vals[1]));
 	}
 
 	void GetClipSplit(float *out)
 	{
-		memcpy(out, mClipSplit, 2 * sizeof(float));
+		memcpy(out, GetUniformData(UniformName::uClipSplit), 2 * sizeof(float));
 	}
 
 	void ClearClipSplit()
 	{
-		mClipSplit[0] = -1000000.f;
-		mClipSplit[1] = 1000000.f;
+		SetUniform(UniformName::uClipSplit, FVector2(-1000000.f, 1000000.f));
 	}
 
 	void SetVertexBuffer(IVertexBuffer *vb, int offset0, int offset1)
@@ -602,12 +779,12 @@ public:
 
 	void SetInterpolationFactor(float fac)
 	{
-		mStreamData.uInterpolationFactor = fac;
+		SetUniform(UniformName::uInterpolationFactor, fac);
 	}
 
 	float GetInterpolationFactor()
 	{
-		return mStreamData.uInterpolationFactor;
+		return GetUniform<float>(UniformName::uInterpolationFactor);
 	}
 
 	void EnableDrawBufferAttachments(bool on) // Used by fog boundary drawer

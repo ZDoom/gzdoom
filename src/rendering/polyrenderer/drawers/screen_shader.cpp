@@ -46,7 +46,7 @@ static uint32_t SampleTexture(uint32_t u, uint32_t v, const void* texPixels, int
 
 static void EffectFogBoundary(int x0, int x1, PolyTriangleThreadData* thread)
 {
-	float uFogDensity = thread->PushConstants->uFogDensity;
+	float uFogDensity = thread->mainVertexShader.Data.uFogDensity;
 	uint32_t fogcolor = MAKEARGB(
 		0,
 		static_cast<int>(clamp(thread->mainVertexShader.Data.uFogColor.r, 0.0f, 1.0f) * 255.0f),
@@ -380,9 +380,9 @@ static void ProcessMaterial(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 	else // func_normal
 	{
-		auto constants = thread->PushConstants;
+		auto uniforms = &thread->mainVertexShader.Data;
 
-		switch (constants->uTextureMode)
+		switch (uniforms->uTextureMode)
 		{
 		default:
 		case TM_NORMAL:
@@ -395,7 +395,7 @@ static void ProcessMaterial(int x0, int x1, PolyTriangleThreadData* thread)
 		case TM_INVERTOPAQUE: FuncNormal_InvertOpaque(x0, x1, thread); break;
 		}
 
-		if (constants->uTextureMode != TM_FOGLAYER)
+		if (uniforms->uTextureMode != TM_FOGLAYER)
 		{
 			auto& streamdata = thread->mainVertexShader.Data;
 
@@ -429,7 +429,7 @@ static void GetLightColor(int x0, int x1, PolyTriangleThreadData* thread)
 	uint32_t* fragcolor = thread->scanline.FragColor;
 	uint32_t* lightarray = thread->scanline.lightarray;
 
-	if (thread->PushConstants->uFogEnabled >= 0)
+	if (thread->mainVertexShader.Data.uFogEnabled >= 0)
 	{
 		for (int x = x0; x < x1; x++)
 		{
@@ -458,7 +458,7 @@ static void GetLightColor(int x0, int x1, PolyTriangleThreadData* thread)
 		uint32_t fogR = (int)((thread->mainVertexShader.Data.uFogColor.r) * 255.0f);
 		uint32_t fogG = (int)((thread->mainVertexShader.Data.uFogColor.g) * 255.0f);
 		uint32_t fogB = (int)((thread->mainVertexShader.Data.uFogColor.b) * 255.0f);
-		float uFogDensity = thread->PushConstants->uFogDensity;
+		float uFogDensity = thread->mainVertexShader.Data.uFogDensity;
 		
 		float* w = thread->scanline.W;
 		for (int x = x0; x < x1; x++)
@@ -501,10 +501,10 @@ static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
 	if (thread->AlphaTest)
 		RunAlphaTest(x0, x1, thread);
 
-	auto constants = thread->PushConstants;
-	if (constants->uFogEnabled != -3)
+	auto uniforms = &thread->mainVertexShader.Data;
+	if (uniforms->uFogEnabled != -3)
 	{
-		if (constants->uTextureMode != TM_FOGLAYER)
+		if (uniforms->uTextureMode != TM_FOGLAYER)
 		{
 			GetLightColor(x0, x1, thread);
 		}
@@ -512,10 +512,10 @@ static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
 		{
 			/*float fogdist = 0.0f;
 			float fogfactor = 0.0f;
-			if (constants->uFogEnabled != 0)
+			if (uniforms->uFogEnabled != 0)
 			{
 				fogdist = MAX(16.0f, w[x]);
-				fogfactor = std::exp2(constants->uFogDensity * fogdist);
+				fogfactor = std::exp2(uniforms->uFogDensity * fogdist);
 			}
 			frag = vec4(uFogColor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * vColor.a);*/
 		}
@@ -532,7 +532,7 @@ static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
 		auto vColorA = thread->scanline.vColorA;
 		uint32_t* fragcolor = thread->scanline.FragColor;
 
-		if (constants->uTextureMode == TM_FOGLAYER)
+		if (uniforms->uTextureMode == TM_FOGLAYER)
 		{
 			// float gray = grayscale(frag);
 			// vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;

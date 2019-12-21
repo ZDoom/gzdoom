@@ -219,14 +219,14 @@ static void WriteDynLightArray(int x0, int x1, PolyTriangleThreadData* thread)
 
 static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)
 {
-	auto constants = thread->PushConstants;
+	auto uniforms = &thread->mainVertexShader.Data;
 
 	auto vColorR = thread->scanline.vColorR;
 	auto vColorG = thread->scanline.vColorG;
 	auto vColorB = thread->scanline.vColorB;
 	auto vColorA = thread->scanline.vColorA;
 
-	if (thread->PushConstants->uLightLevel >= 0.0f)
+	if (uniforms->uLightLevel >= 0.0f)
 	{
 		float startX = x0 + (0.5f - args->v1->x);
 		float startY = y + (0.5f - args->v1->y);
@@ -235,7 +235,7 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 
 		float globVis = thread->mainVertexShader.Viewpoint->mGlobVis;
 
-		uint32_t light = (int)(constants->uLightLevel * 255.0f);
+		uint32_t light = (int)(uniforms->uLightLevel * 255.0f);
 		fixed_t shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
 		fixed_t lightpos = (fixed_t)(globVis * posW * (float)FRACUNIT);
 		fixed_t lightstep = (fixed_t)(globVis * stepW * (float)FRACUNIT);
@@ -278,10 +278,10 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 			}
 		}
 	}
-	else if (constants->uFogEnabled > 0)
+	else if (uniforms->uFogEnabled > 0)
 	{
-		float uLightDist = constants->uLightDist;
-		float uLightFactor = constants->uLightFactor;
+		float uLightDist = uniforms->uLightDist;
+		float uLightFactor = uniforms->uLightFactor;
 		float* w = thread->scanline.W;
 		uint32_t* lightarray = thread->scanline.lightarray;
 		for (int x = x0; x < x1; x++)
@@ -292,7 +292,7 @@ static void WriteLightArray(int y, int x0, int x1, const TriDrawTriangleArgs* ar
 			uint32_t b = thread->scanline.vColorB[x];
 
 			float fogdist = MAX(16.0f, w[x]);
-			float fogfactor = std::exp2(constants->uFogDensity * fogdist);
+			float fogfactor = std::exp2(uniforms->uFogDensity * fogdist);
 
 			// brightening around the player for light mode 2:
 			if (fogdist < uLightDist)
@@ -459,7 +459,7 @@ void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 	WriteVaryingColor(args->v1->g * args->v1->w + args->gradientX.G * startX + args->gradientY.G * startY, args->gradientX.G, x0, x1, thread->scanline.W, thread->scanline.vColorG);
 	WriteVaryingColor(args->v1->b * args->v1->w + args->gradientX.B * startX + args->gradientY.B * startY, args->gradientX.B, x0, x1, thread->scanline.W, thread->scanline.vColorB);
 
-	if (thread->PushConstants->uFogEnabled != -3 && thread->PushConstants->uTextureMode != TM_FOGLAYER)
+	if (thread->mainVertexShader.Data.uFogEnabled != -3 && thread->mainVertexShader.Data.uTextureMode != TM_FOGLAYER)
 		WriteLightArray(y, x0, x1, args, thread);
 
 	if (thread->numPolyLights > 0)

@@ -142,7 +142,7 @@ VulkanPipelineLayout* VkRenderPassManager::GetPipelineLayout(int numLayers)
 	builder.addSetLayout(DynamicSetLayout.get());
 	if (numLayers != 0)
 		builder.addSetLayout(GetTextureSetLayout(numLayers));
-	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushConstants));
+	builder.addPushConstantRange(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, GetVulkanFrameBuffer()->GetRenderState()->GetUniformDataSize(UniformFamily::PushConstant));
 	layout = builder.create(GetVulkanFrameBuffer()->device);
 	layout->SetDebugName("VkRenderPassManager.PipelineLayout");
 	return layout.get();
@@ -178,8 +178,8 @@ void VkRenderPassManager::UpdateDynamicSet()
 	WriteDescriptors update;
 	update.addBuffer(DynamicSet.get(), 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->ViewpointUBO->mBuffer.get(), 0, sizeof(HWViewpointUniforms));
 	update.addBuffer(DynamicSet.get(), 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, fb->LightBufferSSO->mBuffer.get());
-	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(MatricesUBO));
-	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBuffer->UniformBuffer->mBuffer.get(), 0, sizeof(StreamUBO));
+	update.addBuffer(DynamicSet.get(), 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->MatrixBufferWriter->Buffer()->mBuffer.get(), 0, sizeof(MatricesUBO));
+	update.addBuffer(DynamicSet.get(), 3, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, fb->StreamBufferWriter->Buffer()->mBuffer.get(), 0, fb->StreamBufferWriter->BlockSize());
 	update.addCombinedImageSampler(DynamicSet.get(), 4, fb->GetBuffers()->Shadowmap.View.get(), fb->GetBuffers()->ShadowmapSampler.get(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	update.updateSets(fb->device);
 }

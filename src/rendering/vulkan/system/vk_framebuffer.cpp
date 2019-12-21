@@ -109,8 +109,8 @@ VulkanFrameBuffer::~VulkanFrameBuffer()
 	VKBuffer::ResetAll();
 	PPResource::ResetAll();
 
-	delete MatrixBuffer;
-	delete StreamBuffer;
+	delete MatrixBufferWriter;
+	delete StreamBufferWriter;
 	delete mVertexData;
 	delete mSkyData;
 	delete mViewpoints;
@@ -161,18 +161,18 @@ void VulkanFrameBuffer::InitializeState()
 
 	CreateFanToTrisIndexBuffer();
 
-	// To do: move this to HW renderer interface maybe?
-	MatrixBuffer = new VkStreamBuffer(sizeof(MatricesUBO), 50000);
-	StreamBuffer = new VkStreamBuffer(sizeof(StreamUBO), 300);
-
-	mShaderManager.reset(new VkShaderManager(device));
-	mSamplerManager.reset(new VkSamplerManager(device));
-	mRenderPassManager->Init();
 #ifdef __APPLE__
 	mRenderState.reset(new VkRenderStateMolten());
 #else
 	mRenderState.reset(new VkRenderState());
 #endif
+
+	StreamBufferWriter = new VkStreamBufferWriter();
+	MatrixBufferWriter = new VkMatrixBufferWriter();
+
+	mShaderManager.reset(new VkShaderManager(device));
+	mSamplerManager.reset(new VkSamplerManager(device));
+	mRenderPassManager->Init();
 
 	if (device->graphicsTimeQueries)
 	{

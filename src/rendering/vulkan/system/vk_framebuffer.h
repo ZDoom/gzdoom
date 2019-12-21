@@ -14,6 +14,8 @@ class VKDataBuffer;
 class VkHardwareTexture;
 class VkRenderBuffers;
 class VkPostprocess;
+class VkStreamBufferWriter;
+class VkMatrixBufferWriter;
 class SWSceneDrawer;
 
 class VulkanFrameBuffer : public SystemBaseFrameBuffer
@@ -42,8 +44,8 @@ public:
 
 	VKDataBuffer *ViewpointUBO = nullptr;
 	VKDataBuffer *LightBufferSSO = nullptr;
-	VkStreamBuffer *MatrixBuffer = nullptr;
-	VkStreamBuffer *StreamBuffer = nullptr;
+	VkStreamBufferWriter *StreamBufferWriter = nullptr;
+	VkMatrixBufferWriter *MatrixBufferWriter = nullptr;
 
 	VKDataBuffer *LightNodes = nullptr;
 	VKDataBuffer *LightLines = nullptr;

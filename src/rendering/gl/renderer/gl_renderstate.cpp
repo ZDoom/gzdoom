@@ -99,7 +99,7 @@ bool FGLRenderState::ApplyShader()
 	}
 	else
 	{
-		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, mAlphaThreshold >= 0.f, mPassType);
+		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, GetUniform<float>(UniformName::uAlphaThreshold) >= 0.f, mPassType);
 		activeShader->Bind();
 	}
 
@@ -121,50 +121,13 @@ bool FGLRenderState::ApplyShader()
 		}
 	}
 
-	glVertexAttrib4fv(VATTR_COLOR, &mStreamData.uVertexColor.X);
-	glVertexAttrib4fv(VATTR_NORMAL, &mStreamData.uVertexNormal.X);
+	glVertexAttrib4fv(VATTR_COLOR, (const float*)GetUniformData(UniformName::uVertexColor));
+	glVertexAttrib4fv(VATTR_NORMAL, (const float*)GetUniformData(UniformName::uVertexNormal));
 
-	activeShader->muDesaturation.Set(mStreamData.uDesaturationFactor);
-	activeShader->muFogEnabled.Set(fogset);
-	activeShader->muTextureMode.Set(mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
-	activeShader->muLightParms.Set(mLightParms);
-	activeShader->muFogColor.Set(mStreamData.uFogColor);
-	activeShader->muObjectColor.Set(mStreamData.uObjectColor);
-	activeShader->muDynLightColor.Set(&mStreamData.uDynLightColor.X);
-	activeShader->muInterpolationFactor.Set(mStreamData.uInterpolationFactor);
-	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
-	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
-	activeShader->muLightIndex.Set(-1);
-	activeShader->muClipSplit.Set(mClipSplit);
-	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
-	activeShader->muAddColor.Set(mStreamData.uAddColor);
-	activeShader->muTextureAddColor.Set(mStreamData.uTextureAddColor);
-	activeShader->muTextureModulateColor.Set(mStreamData.uTextureModulateColor);
-	activeShader->muTextureBlendColor.Set(mStreamData.uTextureBlendColor);
-
-	if (mGlowEnabled || activeShader->currentglowstate)
-	{
-		activeShader->muGlowTopColor.Set(&mStreamData.uGlowTopColor.X);
-		activeShader->muGlowBottomColor.Set(&mStreamData.uGlowBottomColor.X);
-		activeShader->muGlowTopPlane.Set(&mStreamData.uGlowTopPlane.X);
-		activeShader->muGlowBottomPlane.Set(&mStreamData.uGlowBottomPlane.X);
-		activeShader->currentglowstate = mGlowEnabled;
-	}
-
-	if (mGradientEnabled || activeShader->currentgradientstate)
-	{
-		activeShader->muObjectColor2.Set(mStreamData.uObjectColor2);
-		activeShader->muGradientTopPlane.Set(&mStreamData.uGradientTopPlane.X);
-		activeShader->muGradientBottomPlane.Set(&mStreamData.uGradientBottomPlane.X);
-		activeShader->currentgradientstate = mGradientEnabled;
-	}
-
-	if (mSplitEnabled || activeShader->currentsplitstate)
-	{
-		activeShader->muSplitTopPlane.Set(&mStreamData.uSplitTopPlane.X);
-		activeShader->muSplitBottomPlane.Set(&mStreamData.uSplitBottomPlane.X);
-		activeShader->currentsplitstate = mSplitEnabled;
-	}
+	SetUniform(UniformName::uFogEnabled, fogset);
+	SetUniform(UniformName::uTextureMode, mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
+	SetUniform(UniformName::timer, (double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
+	SetUniform(UniformName::uSpecularMaterial, FVector2{ mGlossiness, mSpecularLevel });
 
 	if (mTextureMatrixEnabled)
 	{
@@ -192,7 +155,7 @@ bool FGLRenderState::ApplyShader()
 		matrixToGL(identityMatrix, activeShader->normalmodelmatrix_index);
 	}
 
-	int index = mLightIndex;
+	int index = GetUniform<int>(UniformName::uLightIndex);
 	// Mess alert for crappy AncientGL!
 	if (!screen->mLights->GetBufferType() && index >= 0)
 	{
@@ -205,8 +168,41 @@ bool FGLRenderState::ApplyShader()
 			static_cast<GLDataBuffer*>(screen->mLights->GetBuffer())->BindRange(nullptr, start, size);
 		}
 	}
+	SetUniform(UniformName::uLightIndex, index);
 
-	activeShader->muLightIndex.Set(index);
+	// Apply uniforms:
+
+	GLuint* locations = activeShader->UniformLocations.data();
+	int* lastupdates = activeShader->UniformLastUpdates.data();
+
+	int count = (int)mUniformInfo.size();
+	for (int i = 0; i < count; i++)
+	{
+		if (lastupdates[i] != mUniformInfo.data()[i].LastUpdate)
+		{
+			const void* data = GetUniformData((UniformName)i);
+			GLuint location = locations[i];
+			switch (mUniformInfo[i].Type)
+			{
+			default:
+			case UniformType::Vec4: glUniform4fv(location, 1, (float*)data); break;
+			case UniformType::Float: glUniform1fv(location, 1, (float*)data); break;
+			case UniformType::Int: glUniform1iv(location, 1, (int*)data); break;
+			case UniformType::Mat4: glUniformMatrix4fv(location, 1, GL_FALSE, (float*)data); break;
+			case UniformType::UInt: glUniform1iv(location, 1, (int*)data); break;
+			case UniformType::Vec2: glUniform2fv(location, 1, (float*)data); break;
+			case UniformType::Vec3: glUniform3fv(location, 1, (float*)data); break;
+			case UniformType::IVec2: glUniform1iv(location, 1, (int*)data); break;
+			case UniformType::IVec3: glUniform1iv(location, 1, (int*)data); break;
+			case UniformType::IVec4: glUniform1iv(location, 1, (int*)data); break;
+			case UniformType::UVec2: glUniform1iv(location, 1, (int*)data); break;
+			case UniformType::UVec3: glUniform1iv(location, 1, (int*)data); break;
+			case UniformType::UVec4: glUniform1iv(location, 1, (int*)data); break;
+			}
+			lastupdates[i] = mUniformInfo[i].LastUpdate;
+		}
+	}
+
 	return true;
 }
 

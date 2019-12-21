@@ -33,7 +33,6 @@ class RenderMemory;
 class PolyDrawerCommand;
 class PolyInputAssembly;
 class PolyDepthStencil;
-struct PolyPushConstants;
 
 enum class PolyDrawMode
 {
@@ -68,7 +67,7 @@ public:
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(int unit, void *pixels, int width, int height, bool bgra);
 	void SetShader(int specialEffect, int effectState, bool alphaTest);
-	void PushStreamData(const StreamData &data, const PolyPushConstants &constants);
+	void PushStreamData(const PolyUniforms& data);
 	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
 	void ClearDepth(float value);
 	void ClearStencil(uint8_t value);
@@ -95,23 +94,6 @@ private:
 	int height;
 	std::vector<float> depthbuffer;
 	std::vector<uint8_t> stencilbuffer;
-};
-
-struct PolyPushConstants
-{
-	int uTextureMode;
-	float uAlphaThreshold;
-	Vec2f uClipSplit;
-
-	// Lighting + Fog
-	float uLightLevel;
-	float uFogDensity;
-	float uLightFactor;
-	float uLightDist;
-	int uFogEnabled;
-
-	// dynamic lights
-	int uLightIndex;
 };
 
 class PolyInputAssembly

@@ -64,7 +64,7 @@ public:
 
 	void UpdateClip();
 
-	void PushStreamData(const StreamData &data, const PolyPushConstants &constants);
+	void PushStreamData(const PolyUniforms &data);
 	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
 
 	void DrawIndexed(int index, int count, PolyDrawMode mode);
@@ -142,7 +142,6 @@ public:
 	int EffectState = 0;
 	bool AlphaTest = false;
 	uint32_t AlphaThreshold = 0x7f000000;
-	const PolyPushConstants* PushConstants = nullptr;
 
 	const void *vertices = nullptr;
 	const unsigned int *elements = nullptr;

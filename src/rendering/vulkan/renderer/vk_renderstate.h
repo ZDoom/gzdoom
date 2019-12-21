@@ -91,15 +91,13 @@ protected:
 	int mColorMask = 15;
 	int mCullMode = 0;
 
-	PushConstants mPushConstants = {};
-
 	uint32_t mLastViewpointOffset = 0xffffffff;
 	uint32_t mLastMatricesOffset = 0xffffffff;
 	uint32_t mLastStreamDataOffset = 0xffffffff;
 	uint32_t mViewpointOffset = 0;
 
-	VkStreamBufferWriter mStreamBufferWriter;
-	VkMatrixBufferWriter mMatrixBufferWriter;
+	VkStreamBufferWriter *mStreamBufferWriter = nullptr;
+	VkMatrixBufferWriter *mMatrixBufferWriter = nullptr;
 
 	int mLastVertexOffsets[2] = { 0, 0 };
 	IVertexBuffer *mLastVertexBuffer = nullptr;

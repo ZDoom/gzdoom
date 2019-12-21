@@ -232,49 +232,19 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			int uShadowmapFilter;
 		};
 	)";
-	
-	i_data += "uniform int uTextureMode;\n";
-	i_data += "uniform vec2 uClipSplit;\n";
-	i_data += "uniform float uAlphaThreshold;\n";
 
-	// colors
-	i_data += "uniform vec4 uObjectColor;\n";
-	i_data += "uniform vec4 uObjectColor2;\n";
-	i_data += "uniform vec4 uDynLightColor;\n";
-	i_data += "uniform vec4 uAddColor;\n";
-	i_data += "uniform vec4 uTextureBlendColor;\n";
-	i_data += "uniform vec4 uTextureModulateColor;\n";
-	i_data += "uniform vec4 uTextureAddColor;\n";
-	i_data += "uniform vec4 uBlendColor;\n";
-	i_data += "uniform vec4 uFogColor;\n";
-	i_data += "uniform float uDesaturationFactor;\n";
-	i_data += "uniform float uInterpolationFactor;\n";
+	// Generate uniform declarations:
 
-	// Glowing walls stuff
-	i_data += "uniform vec4 uGlowTopPlane;\n";
-	i_data += "uniform vec4 uGlowTopColor;\n";
-	i_data += "uniform vec4 uGlowBottomPlane;\n";
-	i_data += "uniform vec4 uGlowBottomColor;\n";
+	int index = 0;
+	for (const auto& info : gl_RenderState.GetUniformInfo())
+	{
+		if (info.Name.empty())
+			I_FatalError("Missing uniform declaration for index %d", index);
+		index++;
 
-	i_data += "uniform vec4 uGradientTopPlane;\n";
-	i_data += "uniform vec4 uGradientBottomPlane;\n";
-
-	i_data += "uniform vec4 uSplitTopPlane;\n";
-	i_data += "uniform vec4 uSplitBottomPlane;\n";
-
-	// Lighting + Fog
-	i_data += "uniform vec4 uLightAttr;\n";
-	i_data += "#define uLightLevel uLightAttr.a\n";
-	i_data += "#define uFogDensity uLightAttr.b\n";
-	i_data += "#define uLightFactor uLightAttr.g\n";
-	i_data += "#define uLightDist uLightAttr.r\n";
-	i_data += "uniform int uFogEnabled;\n";
-
-	// dynamic lights
-	i_data += "uniform int uLightIndex;\n";
-
-	// Blinn glossiness and specular level
-	i_data += "uniform vec2 uSpecularMaterial;\n";
+		static const char* glsltype[] = { "int", "uint", "float", "vec2", "vec3", "vec4", "ivec2", "ivec3", "ivec4", "uvec2", "uvec3", "uvec4", "mat4" };
+		i_data.AppendFormat("uniform %s %s;\n", glsltype[(int)info.Type], info.Name.c_str());
+	}
 
 	// matrices
 	i_data += "uniform mat4 ModelMatrix;\n";
@@ -302,9 +272,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform sampler2D texture4;\n";
 	i_data += "uniform sampler2D texture5;\n";
 	i_data += "uniform sampler2D texture6;\n";
-
-	// timer data
-	i_data += "uniform float timer;\n";
 
 	// material types
 	i_data += "#if defined(SPECULAR)\n";
@@ -518,32 +485,16 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		hFragProg = 0;
 	}
 
-	muDesaturation.Init(hShader, "uDesaturationFactor");
-	muFogEnabled.Init(hShader, "uFogEnabled");
-	muTextureMode.Init(hShader, "uTextureMode");
-	muLightParms.Init(hShader, "uLightAttr");
-	muClipSplit.Init(hShader, "uClipSplit");
-	muLightIndex.Init(hShader, "uLightIndex");
-	muFogColor.Init(hShader, "uFogColor");
-	muDynLightColor.Init(hShader, "uDynLightColor");
-	muObjectColor.Init(hShader, "uObjectColor");
-	muObjectColor2.Init(hShader, "uObjectColor2");
-	muGlowBottomColor.Init(hShader, "uGlowBottomColor");
-	muGlowTopColor.Init(hShader, "uGlowTopColor");
-	muGlowBottomPlane.Init(hShader, "uGlowBottomPlane");
-	muGlowTopPlane.Init(hShader, "uGlowTopPlane");
-	muGradientBottomPlane.Init(hShader, "uGradientBottomPlane");
-	muGradientTopPlane.Init(hShader, "uGradientTopPlane");
-	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
-	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
-	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
-	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
-	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
-	muAddColor.Init(hShader, "uAddColor");
-	muTextureAddColor.Init(hShader, "uTextureAddColor");
-	muTextureModulateColor.Init(hShader, "uTextureModulateColor");
-	muTextureBlendColor.Init(hShader, "uTextureBlendColor");
-	muTimer.Init(hShader, "timer");
+	const auto& uniformInfo = gl_RenderState.GetUniformInfo();
+	UniformLastUpdates.resize(uniformInfo.size());
+	UniformLocations.resize(uniformInfo.size(), (GLuint)-1);
+	int count = (int)uniformInfo.size();
+	for (int i = 0; i < count; i++)
+	{
+		const auto& name = uniformInfo[i].Name;
+		if (!name.empty())
+			UniformLocations[i] = glGetUniformLocation(hShader, name.c_str());
+	}
 
 	lights_index = glGetUniformLocation(hShader, "lights");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");

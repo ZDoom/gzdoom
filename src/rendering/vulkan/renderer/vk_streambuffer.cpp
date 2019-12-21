@@ -32,13 +32,22 @@ uint32_t VkStreamBuffer::NextStreamDataBlock()
 
 VkStreamBufferWriter::VkStreamBufferWriter()
 {
-	mBuffer = GetVulkanFrameBuffer()->StreamBuffer;
+	mStreamDataSize = GetVulkanFrameBuffer()->GetRenderState()->GetUniformDataSize(UniformFamily::Normal);
+	mMaxStreamData = 65536 / mStreamDataSize;
+	mBuffer = new VkStreamBuffer(mStreamDataSize * mMaxStreamData, 300);
+	mDataIndex = mMaxStreamData - 1;
+	mStreamDataOffset = 0;
 }
 
-bool VkStreamBufferWriter::Write(const StreamData& data)
+VkStreamBufferWriter::~VkStreamBufferWriter()
+{
+	delete mBuffer;
+}
+
+bool VkStreamBufferWriter::Write(const void* data)
 {
 	mDataIndex++;
-	if (mDataIndex == MAX_STREAM_DATA)
+	if (mDataIndex == mMaxStreamData)
 	{
 		mDataIndex = 0;
 		mStreamDataOffset = mBuffer->NextStreamDataBlock();
@@ -46,13 +55,13 @@ bool VkStreamBufferWriter::Write(const StreamData& data)
 			return false;
 	}
 	uint8_t* ptr = (uint8_t*)mBuffer->UniformBuffer->Memory();
-	memcpy(ptr + mStreamDataOffset + sizeof(StreamData) * mDataIndex, &data, sizeof(StreamData));
+	memcpy(ptr + mStreamDataOffset + mStreamDataSize * mDataIndex, data, mStreamDataSize);
 	return true;
 }
 
 void VkStreamBufferWriter::Reset()
 {
-	mDataIndex = MAX_STREAM_DATA - 1;
+	mDataIndex = mMaxStreamData - 1;
 	mStreamDataOffset = 0;
 	mBuffer->Reset();
 }
@@ -61,8 +70,14 @@ void VkStreamBufferWriter::Reset()
 
 VkMatrixBufferWriter::VkMatrixBufferWriter()
 {
-	mBuffer = GetVulkanFrameBuffer()->MatrixBuffer;
+	auto fb = GetVulkanFrameBuffer();
+	mBuffer = new VkStreamBuffer(sizeof(MatricesUBO), 50000);
 	mIdentityMatrix.loadIdentity();
+}
+
+VkMatrixBufferWriter::~VkMatrixBufferWriter()
+{
+	delete mBuffer;
 }
 
 template<typename T>

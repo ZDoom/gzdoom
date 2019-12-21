@@ -112,23 +112,21 @@ void PolyTriangleThreadData::UpdateClip()
 	clip.bottom = MIN(MIN(viewport_y + viewport_height, scissor.bottom), dest_height);
 }
 
-void PolyTriangleThreadData::PushStreamData(const StreamData &data, const PolyPushConstants &constants)
+void PolyTriangleThreadData::PushStreamData(const PolyUniforms &data)
 {
 	mainVertexShader.Data = data;
-	mainVertexShader.uClipSplit = constants.uClipSplit;
+	mainVertexShader.uClipSplit = data.uClipSplit;
 
-	PushConstants = &constants;
-
-	AlphaThreshold = clamp((int)(PushConstants->uAlphaThreshold * 255.0f + 0.5f), 0, 255) << 24;
+	AlphaThreshold = clamp((int)(data.uAlphaThreshold * 255.0f + 0.5f), 0, 255) << 24;
 
 	numPolyLights = 0;
-	if (constants.uLightIndex >= 0)
+	if (data.uLightIndex >= 0)
 	{
-		const FVector4 &lightRange = lights[constants.uLightIndex];
+		const FVector4 &lightRange = lights[data.uLightIndex];
 		static_assert(sizeof(FVector4) == 16, "sizeof(FVector4) is not 16 bytes");
 		if (lightRange.Y > lightRange.X)
 		{
-			int start = constants.uLightIndex + 1;
+			int start = data.uLightIndex + 1;
 			int modulatedStart = static_cast<int>(lightRange.X) + start;
 			int modulatedEnd = static_cast<int>(lightRange.Y) + start;
 			for (int i = modulatedStart; i < modulatedEnd; i += 4)

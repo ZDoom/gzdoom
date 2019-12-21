@@ -246,21 +246,33 @@ void PolyRenderState::Apply()
 	else
 	{
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
-		mDrawCommands->SetShader(EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f);
+		mDrawCommands->SetShader(EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, GetUniform<float>(UniformName::uAlphaThreshold) >= 0.f);
 	}
 
-	PolyPushConstants constants;
-	constants.uFogEnabled = fogset;
-	constants.uTextureMode = mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
-	constants.uLightDist = mLightParms[0];
-	constants.uLightFactor = mLightParms[1];
-	constants.uFogDensity = mLightParms[2];
-	constants.uLightLevel = mLightParms[3];
-	constants.uAlphaThreshold = mAlphaThreshold;
-	constants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
-	constants.uLightIndex = mLightIndex;
+	PolyUniforms uniforms;
+	uniforms.uFogEnabled = fogset;
+	uniforms.uTextureMode = mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
+	uniforms.uLightDist = GetUniform<float>(UniformName::uLightDist);
+	uniforms.uLightFactor = GetUniform<float>(UniformName::uLightFactor);
+	uniforms.uFogDensity = GetUniform<float>(UniformName::uFogDensity);
+	uniforms.uLightLevel = GetUniform<float>(UniformName::uLightLevel);
+	uniforms.uAlphaThreshold = GetUniform<float>(UniformName::uAlphaThreshold);
+	uniforms.uClipSplit = GetUniform<Vec2f>(UniformName::uClipSplit);
+	uniforms.uLightIndex = GetUniform<int>(UniformName::uLightIndex);
+	uniforms.uDesaturationFactor = GetUniform<float>(UniformName::uDesaturationFactor);
+	uniforms.uInterpolationFactor = GetUniform<float>(UniformName::uInterpolationFactor);
+	uniforms.uObjectColor = GetUniform<Color4f>(UniformName::uObjectColor);
+	uniforms.uObjectColor2 = GetUniform<Color4f>(UniformName::uObjectColor2);
+	uniforms.uGradientTopPlane = GetUniform<FVector4>(UniformName::uGradientTopPlane);
+	uniforms.uGradientBottomPlane = GetUniform<FVector4>(UniformName::uGradientBottomPlane);
+	uniforms.uSplitTopPlane = GetUniform<FVector4>(UniformName::uSplitTopPlane);
+	uniforms.uSplitBottomPlane = GetUniform<FVector4>(UniformName::uSplitBottomPlane);
+	uniforms.uVertexColor = GetUniform<FVector4>(UniformName::uVertexColor);
+	uniforms.uVertexNormal = GetUniform<FVector3>(UniformName::uVertexNormal);
+	uniforms.uAddColor = GetUniform<Color4f>(UniformName::uAddColor);
+	uniforms.uFogColor = GetUniform<Color4f>(UniformName::uFogColor);
 
-	mDrawCommands->PushStreamData(mStreamData, constants);
+	mDrawCommands->PushStreamData(uniforms);
 	ApplyMatrices();
 
 	if (mBias.mChanged)

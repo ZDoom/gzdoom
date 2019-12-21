@@ -18,36 +18,6 @@ struct MatricesUBO
 	VSMatrix TextureMatrix;
 };
 
-#define MAX_STREAM_DATA ((int)(65536 / sizeof(StreamData)))
-
-struct StreamUBO
-{
-	StreamData data[MAX_STREAM_DATA];
-};
-
-struct PushConstants
-{
-	int uTextureMode;
-	float uAlphaThreshold;
-	FVector2 uClipSplit;
-
-	// Lighting + Fog
-	float uLightLevel;
-	float uFogDensity;
-	float uLightFactor;
-	float uLightDist;
-	int uFogEnabled;
-
-	// dynamic lights
-	int uLightIndex;
-
-	// Blinn glossiness and specular level
-	FVector2 uSpecularMaterial;
-
-	int uDataIndex;
-	int padding1, padding2, padding3;
-};
-
 class VkShaderProgram
 {
 public:

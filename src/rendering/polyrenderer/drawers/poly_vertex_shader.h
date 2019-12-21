@@ -23,6 +23,39 @@ public:
 	Vec4f vWorldNormal;
 };
 
+struct Color4f { float r, g, b, a; };
+
+class PolyUniforms
+{
+public:
+	int uTextureMode;
+	float uAlphaThreshold;
+	Vec2f uClipSplit;
+
+	float uLightLevel;
+	float uFogDensity;
+	float uLightFactor;
+	float uLightDist;
+	int uFogEnabled;
+
+	int uLightIndex;
+
+	float uDesaturationFactor;
+	float uInterpolationFactor;
+	Color4f uObjectColor;
+	Color4f uObjectColor2;
+	FVector4 uGradientTopPlane;
+	FVector4 uGradientBottomPlane;
+	FVector4 uSplitTopPlane;
+	FVector4 uSplitBottomPlane;
+
+	FVector4 uVertexColor;
+	FVector3 uVertexNormal;
+
+	Color4f uFogColor;
+	Color4f uAddColor;
+};
+
 class PolyMainVertexShader : public ShadedTriVertex
 {
 public:
@@ -42,7 +75,7 @@ public:
 	VSMatrix ModelMatrix;
 	VSMatrix NormalModelMatrix;
 	VSMatrix TextureMatrix;
-	StreamData Data;
+	PolyUniforms Data;
 	Vec2f uClipSplit;
 	const HWViewpointUniforms *Viewpoint = nullptr;
 

@@ -611,12 +611,64 @@ struct TextureManipulation
 		BlendOverlay = 3,
 		BlendHardLight = 4,
 		BlendMask = 7,
-		InvertBit = 8
+		InvertBit = 8,
+		ActiveBit = 16,	// Must be set for the shader to do something
 	};
 	PalEntry AddColor;		// Alpha contains the blend flags
 	PalEntry ModulateColor;	// Alpha may contain a multiplier to get higher values than 1.0 without promoting this to 4 full floats.
 	PalEntry BlendColor;
 	float DesaturationFactor;
+
+	bool CheckIfEnabled()	// check if this manipulation is doing something. NoOps do not need to be preserved, unless they override older setttings.
+	{
+		if (AddColor != 0 ||	// this includes a check for the blend mode without which BlendColor is not active
+			ModulateColor != 0x01ffffff ||	// 1 in alpha must be the default for a no-op.
+			DesaturationFactor != 0)
+		{
+			AddColor.a |= ActiveBit; // mark as active for the shader's benefit.
+			return true;
+		}
+		return false;
+	}
+
+	void SetTextureModulateColor(int slot, PalEntry rgb)
+	{
+		rgb.a = ModulateColor.a;
+		ModulateColor = rgb;
+	}
+
+	void SetTextureModulateScaleFactor(int slot, int fac)
+	{
+		ModulateColor.a = (uint8_t)fac;
+	}
+
+	void SetTextureAdditiveColor(int slot, PalEntry rgb)
+	{
+		rgb.a = AddColor.a;
+		AddColor = rgb;
+	}
+
+	void SetTextureBlendColor(int slot, PalEntry rgb)
+	{
+		BlendColor = rgb;
+	}
+
+	void SetTextureDesaturationFactor(int slot, double fac)
+	{
+		DesaturationFactor = (float)fac;
+	}
+
+	void SetTextureBlendMode(int slot, int mode)
+	{
+		AddColor.a = (AddColor.a & ~TextureManipulation::BlendMask) | (mode & TextureManipulation::BlendMask);
+	}
+
+	void SetTextureInvert(bool on)
+	{
+		AddColor.a |= TextureManipulation::InvertBit;
+		AddColor.a &= ~TextureManipulation::InvertBit;
+	}
+
 };
 
 struct sector_t
@@ -1047,21 +1099,32 @@ public:
 		Flags &= ~SECF_SPECIALFLAGS;
 	}
 
+	void CheckExColorFlag();
+
+	void InitAllExcolors()
+	{
+		if (SpecialColors[sector_t::wallbottom] != 0xffffffff || SpecialColors[sector_t::walltop] != 0xffffffff || AdditiveColors[sector_t::walltop] != 0xffffffff) CheckExColorFlag();
+	}
+
 	void SetSpecialColor(int slot, int r, int g, int b)
 	{
 		SpecialColors[slot] = PalEntry(255, r, g, b);
+		if ((slot == sector_t::wallbottom || slot == sector_t::walltop) && SpecialColors[slot] != 0xffffffff) CheckExColorFlag();
 	}
 
 	void SetSpecialColor(int slot, PalEntry rgb)
 	{
 		rgb.a = 255;
 		SpecialColors[slot] = rgb;
+		if ((slot == sector_t::wallbottom || slot == sector_t::walltop) && rgb != 0xffffffff) CheckExColorFlag();
 	}
 
 	void SetAdditiveColor(int slot, PalEntry rgb)
 	{
 		rgb.a = 255;
 		AdditiveColors[slot] = rgb;
+		if ((slot == sector_t::walltop) && AdditiveColors[slot] != 0xffffffff) CheckExColorFlag(); // Wallbottom of this is not used.
+
 	}
 
 	// TextureFX parameters
@@ -1069,44 +1132,6 @@ public:
 	void SetTextureFx(int slot, const TextureManipulation &tm)
 	{
 		planes[slot].TextureFx = tm;	// this is for getting the data from a texture.
-	}
-
-	void SetTextureModulateColor(int slot, PalEntry rgb)
-	{
-		rgb.a = planes[slot].TextureFx.ModulateColor.a;
-		planes[slot].TextureFx.ModulateColor = rgb;
-	}
-
-	void SetTextureModulateScaleFactor(int slot, int fac)
-	{
-		planes[slot].TextureFx.ModulateColor.a = (uint8_t)fac;
-	}
-
-	void SetTextureAdditiveColor(int slot, PalEntry rgb)
-	{
-		rgb.a = planes[slot].TextureFx.AddColor.a;
-		planes[slot].TextureFx.AddColor = rgb;
-	}
-
-	void SetTextureBlendColor(int slot, PalEntry rgb)
-	{
-		planes[slot].TextureFx.BlendColor = rgb;
-	}
-
-	void SetTextureDesaturationFactor(int slot, double fac)
-	{
-		planes[slot].TextureFx.DesaturationFactor = (float)fac;
-	}
-
-	void SetTextureBlendMode(int slot, int mode)
-	{
-		planes[slot].TextureFx.AddColor.a = (planes[slot].TextureFx.AddColor.a & ~TextureManipulation::BlendMask) | (mode & TextureManipulation::BlendMask);
-	}
-
-	void SetTextureInvert(int slot, bool on)
-	{
-		if (on) planes[slot].TextureFx.AddColor.a |= TextureManipulation::InvertBit;
-		else planes[slot].TextureFx.AddColor.a &= ~TextureManipulation::InvertBit;
 	}
 
 
@@ -1194,6 +1219,7 @@ enum
 	WALLF_WRAP_MIDTEX	 = 32,	// Like the line counterpart, but only for this side.
 	WALLF_POLYOBJ		 = 64,	// This wall belongs to a polyobject.
 	WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
+	WALLF_EXTCOLOR		 = 256,	// enables the extended color options (flagged to allow the renderer to easily skip the relevant code)
 };
 
 struct side_t
@@ -1385,10 +1411,11 @@ struct side_t
 
 	void EnableAdditiveColor(int which, bool enable)
 	{
-		int flag = enable ? part::UseOwnAdditiveColor : 0;
+		const int flag = part::UseOwnAdditiveColor;
 		if (enable)
 		{
 			textures[which].flags |= flag;
+			Flags |= WALLF_EXTCOLOR;
 		}
 		else
 		{
@@ -1402,42 +1429,10 @@ struct side_t
 		textures[which].AdditiveColor = rgb;
 	}
 
-	void SetTextureModulateColor(int slot, PalEntry rgb)
+	void SetTextureFx(int slot, const TextureManipulation& tm)
 	{
-		rgb.a = textures[slot].TextureFx.ModulateColor.a;
-		textures[slot].TextureFx.ModulateColor = rgb;
-	}
-
-	void SetTextureModulateScaleFactor(int slot, int fac)
-	{
-		textures[slot].TextureFx.ModulateColor.a = (uint8_t)fac;
-	}
-
-	void SetTextureAdditiveColor(int slot, PalEntry rgb)
-	{
-		rgb.a = textures[slot].TextureFx.AddColor.a;
-		textures[slot].TextureFx.AddColor = rgb;
-	}
-
-	void SetTextureBlendColor(int slot, PalEntry rgb)
-	{
-		textures[slot].TextureFx.BlendColor = rgb;
-	}
-
-	void SetTextureDesaturationFactor(int slot, double fac)
-	{
-		textures[slot].TextureFx.DesaturationFactor = (float)fac;
-	}
-
-	void SetTextureBlendMode(int slot, int mode)
-	{
-		textures[slot].TextureFx.AddColor.a = (textures[slot].TextureFx.AddColor.a & ~TextureManipulation::BlendMask) | (mode & TextureManipulation::BlendMask);
-	}
-
-	void SetTextureInvert(int slot, bool on)
-	{
-		if (on) textures[slot].TextureFx.AddColor.a |= TextureManipulation::InvertBit;
-		else textures[slot].TextureFx.AddColor.a &= ~TextureManipulation::InvertBit;
+		textures[slot].TextureFx = tm;	// this is for getting the data from a texture.
+		if (tm.AddColor.a) Flags |= WALLF_EXTCOLOR;
 	}
 
 	PalEntry GetAdditiveColor(int which, sector_t *frontsector) const
@@ -1784,6 +1779,16 @@ inline void sector_t::SetFade(PalEntry pe) { ::SetFade(this, pe); }
 inline int sector_t::GetFloorLight() const { return ::GetFloorLight(this); }
 inline int sector_t::GetCeilingLight() const { return ::GetCeilingLight(this); }
 inline double sector_t::GetFriction(int plane, double *movefac) const { return ::GetFriction(this, plane, movefac); }
+
+inline void sector_t::CheckExColorFlag()
+{
+	for (auto ld : Lines)
+	{
+		if (ld->frontsector == this) ld->sidedef[0]->Flags |= WALLF_EXTCOLOR;
+		if (ld->backsector == this) ld->sidedef[1]->Flags |= WALLF_EXTCOLOR;
+	}
+}
+
 
 
 #endif

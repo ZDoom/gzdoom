@@ -168,38 +168,42 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	if (type != RENDERWALL_COLOR && seg->sidedef != nullptr)
 	{
 		auto side = seg->sidedef;
-		auto tierndx = renderwalltotier[type];
-		auto &tier = side->textures[tierndx];
-		PalEntry color1 = side->GetSpecialColor(tierndx, side_t::walltop, frontsector);
-		PalEntry color2 = side->GetSpecialColor(tierndx, side_t::wallbottom, frontsector);
-		state.SetObjectColor(color1);
-		state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
-		state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
-		state.ApplyTextureManipulation(&side->textures[tierndx].TextureFx);
-
-		if (color1 != color2)
+		if (seg->sidedef->Flags & WALLF_EXTCOLOR) // this block incurs a costly cache miss, so only process if needed.
 		{
-			// Do gradient setup only if there actually is a gradient.
 
-			state.EnableGradient(true);
-			if ((tier.flags & side_t::part::ClampGradient) && backsector)
+			auto tierndx = renderwalltotier[type];
+			auto& tier = side->textures[tierndx];
+			PalEntry color1 = side->GetSpecialColor(tierndx, side_t::walltop, frontsector);
+			PalEntry color2 = side->GetSpecialColor(tierndx, side_t::wallbottom, frontsector);
+			state.SetObjectColor(color1);
+			state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
+			state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
+			state.ApplyTextureManipulation(&tier.TextureFx);
+
+			if (color1 != color2)
 			{
-				if (tierndx == side_t::top)
+				// Do gradient setup only if there actually is a gradient.
+
+				state.EnableGradient(true);
+				if ((tier.flags & side_t::part::ClampGradient) && backsector)
 				{
-					state.SetGradientPlanes(frontsector->ceilingplane, backsector->ceilingplane);
+					if (tierndx == side_t::top)
+					{
+						state.SetGradientPlanes(frontsector->ceilingplane, backsector->ceilingplane);
+					}
+					else if (tierndx == side_t::mid)
+					{
+						state.SetGradientPlanes(backsector->ceilingplane, backsector->floorplane);
+					}
+					else // side_t::bottom:
+					{
+						state.SetGradientPlanes(backsector->floorplane, frontsector->floorplane);
+					}
 				}
-				else if (tierndx == side_t::mid)
+				else
 				{
-					state.SetGradientPlanes(backsector->ceilingplane, backsector->floorplane);
+					state.SetGradientPlanes(frontsector->ceilingplane, frontsector->floorplane);
 				}
-				else // side_t::bottom:
-				{
-					state.SetGradientPlanes(backsector->floorplane, frontsector->floorplane);
-				}
-			}
-			else
-			{
-				state.SetGradientPlanes(frontsector->ceilingplane, frontsector->floorplane);
 			}
 		}
 	}

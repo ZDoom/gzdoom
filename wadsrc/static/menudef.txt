@@ -2202,6 +2202,7 @@ OptionValue ScaleModes
 	3, "960x600"
 	4, "1280x800"
 	5, "$OPTVAL_CUSTOM"
+	6, "$OPTVAL_LOWEST"
 }
 OptionValue CropAspect
 {

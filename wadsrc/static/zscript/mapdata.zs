@@ -87,6 +87,7 @@ struct Side native play
 	native Color GetAdditiveColor(int tier);
 	native void SetAdditiveColor(int tier, Color color);
 	native void EnableAdditiveColor(int tier, bool enable);
+	native void SetColorization(int tier, Name cname);
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 
@@ -469,6 +470,7 @@ struct Sector native play
 	native void SetGlowColor(int pos, color color);
 	native void SetSpecialColor(int pos, color color);
 	native void SetAdditiveColor(int pos, Color color);
+	native void SetColorization(int tier, Name cname);
 	
 	native TextureID GetTexture(int pos);
 	native void SetTexture(int pos, TextureID tex, bool floorclip = true);

@@ -601,6 +601,7 @@ public:
 	void AddPatches (int lumpnum);
 	void AddHiresTextures (int wadnum);
 	void LoadTextureDefs(int wadnum, const char *lumpname, FMultipatchTextureBuilder &build);
+	void ParseColorization(FScanner& sc);
 	void ParseTextureDef(int remapLump, FMultipatchTextureBuilder &build);
 	void SortTexturesByType(int start, int end);
 	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
@@ -625,6 +626,12 @@ public:
 
 	FSwitchDef *FindSwitch (FTextureID texture);
 	FDoorAnimation *FindAnimatedDoor (FTextureID picnum);
+
+	TextureManipulation* GetTextureManipulation(FName name)
+	{
+		return tmanips.CheckKey(name);
+	}
+
 
 private:
 
@@ -683,6 +690,7 @@ private:
 
 	TArray<FSwitchDef *> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
+	TMap<FName, TextureManipulation> tmanips;
 
 public:
 	TArray<FAnimDef *> mAnimations;

@@ -652,6 +652,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAdditiveColor, SetAdditiveColor)
 	return 0;
 }
 
+static void SetColorization(sector_t* self, int pos, int cname)
+{
+	if (pos >= 0 && pos < 2)
+	{
+		self->SetTextureFx(pos, TexMan.GetTextureManipulation(ENamedName(cname)));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetColorization, SetColorization)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	PARAM_INT(color);
+	SetColorization(self, pos, color);
+	return 0;
+}
+
+
 static void SetFogDensity(sector_t *self, int dens)
 {
 	self->Colormap.FogDensity = dens;
@@ -1748,6 +1766,25 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 EnableSideAdditiveColor(self, tier, enable);
 	 return 0;
  }
+
+ static void SetWallColorization(side_t* self, int pos, int cname)
+ {
+	 if (pos >= 0 && pos < 2)
+	 {
+		 self->SetTextureFx(pos, TexMan.GetTextureManipulation(ENamedName(cname)));
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetColorization, SetWallColorization)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(color);
+	 SetWallColorization(self, pos, color);
+	 return 0;
+ }
+
+
 
  static int SideIndex(side_t *self)
  {

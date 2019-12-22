@@ -141,6 +141,7 @@ void FTextureManager::DeleteAll()
 	}
 	mAnimatedDoors.Clear();
 	BuildTileData.Clear();
+	tmanips.Clear();
 }
 
 //==========================================================================
@@ -688,6 +689,69 @@ void FTextureManager::AddHiresTextures (int wadnum)
 //
 //==========================================================================
 
+void FTextureManager::ParseColorization(FScanner& sc)
+{
+	TextureManipulation tm = {};
+	sc.MustGetString();
+	FName cname = sc.String;
+	sc.MustGetToken('{');
+	while (!sc.CheckToken('}'))
+	{
+		if (sc.Compare("desaturation"))
+		{
+			sc.MustGetFloat();
+			tm.DesaturationFactor = sc.Float;
+		}
+		else if (sc.Compare("AddColor"))
+		{
+			sc.MustGetString();
+			tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(NULL, sc) & 0xffffff);
+		}
+		else if (sc.Compare("ModulateColor"))
+		{
+			sc.MustGetString();
+			tm.ModulateColor = V_GetColor(NULL, sc) & 0xffffff;
+			if (sc.CheckToken(','))
+			{
+				sc.MustGetNumber();
+				tm.ModulateColor.a = sc.Number;
+			}
+		}
+		else if (sc.Compare("BlendColor"))
+		{
+			sc.MustGetString();
+			tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
+			sc.MustGetToken(',');
+			sc.MustGetString();
+			static const char* opts[] = {"none", "alpha", "screen", "overlay", "hardlight", nullptr};
+			tm.AddColor.a = (tm.AddColor.a & ~TextureManipulation::BlendMask) | sc.MustMatchString(opts);
+			if (sc.CheckToken(','))
+			{
+				sc.MustGetFloat();
+				tm.BlendColor.a = clamp(sc.Float, 0., 1.) * 255;
+			}
+		}
+		else if (sc.Compare("invert"))
+		{
+			tm.AddColor.a |= TextureManipulation::InvertBit;
+		}
+	}
+	if (tm.CheckIfEnabled())
+	{
+		tmanips.Insert(cname, tm);
+	}
+	else
+	{
+		tmanips.Remove(cname);
+	}
+
+}
+//==========================================================================
+//
+// Loads the HIRESTEX lumps
+//
+//==========================================================================
+
 void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname, FMultipatchTextureBuilder &build)
 {
 	int remapLump, lastLump;
@@ -824,19 +888,23 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 		}
 		else if (sc.Compare("sprite"))
 		{
-		build.ParseTexture(sc, ETextureType::Sprite);
+			build.ParseTexture(sc, ETextureType::Sprite);
 		}
 		else if (sc.Compare("walltexture"))
 		{
-		build.ParseTexture(sc, ETextureType::Wall);
+			build.ParseTexture(sc, ETextureType::Wall);
 		}
 		else if (sc.Compare("flat"))
 		{
-		build.ParseTexture(sc, ETextureType::Flat);
+			build.ParseTexture(sc, ETextureType::Flat);
 		}
 		else if (sc.Compare("graphic"))
 		{
-		build.ParseTexture(sc, ETextureType::MiscPatch);
+			build.ParseTexture(sc, ETextureType::MiscPatch);
+		}
+		else if (sc.Compare("colorization"))
+		{
+			ParseColorization(sc);
 		}
 		else if (sc.Compare("#include"))
 		{

@@ -671,6 +671,11 @@ xx(useowncoloradd_mid)
 xx(coloradd_mid)
 xx(useowncoloradd_bottom)
 xx(coloradd_bottom)
+xx(colorization_top)
+xx(colorization_mid)
+xx(colorization_bottom)
+xx(colorization_floor)
+xx(colorization_ceiling)
 
 xx(Renderstyle)
 

@@ -210,6 +210,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       coloradd_top = <int>;         // Additive material color to apply to top section of sidedef. Default is black (0x000000)
       coloradd_mid = <int>;         // Additive material color to apply to middle section of sidedef. Default is black (0x000000)
       coloradd_bottom = <int>;      // Additive material color to apply to bottom section of sidedef. Default is black (0x000000)
+      colorization_top = <int>;     // Sets a colorization record for the upper texture. Colorization records must be defined in TEXTURES.
+      colorization_mid = <int>;     // Sets a colorization record for the middle texture. Colorization records must be defined in TEXTURES.
+      colorization_bottom = <int>;  // Sets a colorization record for the lower texture. Colorization records must be defined in TEXTURES.
    }
 
    sector
@@ -287,6 +290,9 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       coloradd_ceiling = <int>;       // Additive material color applied to the sector ceiling. Default is black (0x000000)
       coloradd_sprites = <int>;       // Additive material color applied to sprites within the sector. Default is black (0x000000)
       coloradd_walls = <int>;         // Additive material color applied to walls within the sector. Default is black (0x000000)
+
+      colorization_floor = <int>;     // Sets a colorization record for the floor texture. Colorization records must be defined in TEXTURES.
+      colorization_ceiling = <int>;     // Sets a colorization record for the ceiling texture. Colorization records must be defined in TEXTURES.
 
       portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>;       // ceiling portal disabled.
@@ -494,6 +500,9 @@ arg0str in dynamic lights.
 1.30 20.05.2018
 Added automapstyle and revealed linedef properties.
 Replaced tabs with spaces.
+
+1.31 22.12.2019
+Coloriation options added
 
 ===============================================================================
 EOF

@@ -52,7 +52,7 @@ E4M9: Fear,HUSTR_E4M9,,,,E4M9: Strach,E4M9: Angst,E4Χ9: Τρόμος,E4M9: Timo
 ,,Doom 2,,,,,,,,,,,,,,,,,,,,,
 Level 1: Entryway,HUSTR_1,"Note that the ""LEVEL"" part of the string will be stripped so it shouldn't be translated",,,Level 1: Vchod,Level 1: Eingangshalle,Επίπεδο 1: Είσοδος,Nivelo 1: Enirvojo,Nivel 1: Entrada,,Taso 1: Eteiskäytävä,NIVEAU 1: Hall D'Entrée,Bejárat,Level 1: Ingresso,Level 1: 入口,레벨 1: 초입,Level 1: Ingang,Level 1: Wejście,Nível 1: Entrada,,Nivelul 1: Intrarea,Level 1: Вход,Level 1: Улаз
 Level 2: Underhalls,HUSTR_2,,,,Level 2: Podzemí,Level 2: Kellergewölbe,,Nivelo 2: Subtervojoj,Nivel 2: Salones subterráneos,,Taso 2: Maanalaiset käytävät,NIVEAU 2: Souterrains,Alagutak,Level 2: Sotterranei,Level 2: 下水道,레벨 2: 지하수로,Level 2: Onderhallen,Level 2: Podziemia,Nível 2: Subterrâneo,,Nivelul 2: Pasaje subterane,Level 2: Подземные ходы,Level 2: Подземни ходници
-Level 3: The Gantlet,HUSTR_3,“a form of punishment in which a person is forced to run between two lines of men facing each other and armed with clubs or whips to beat the victim”,,,Level 3: Trest,Level 3: Spießrutenlauf,,Nivelo 3: La Spaliroj de Doloro,Nivel 3: El Guantelete,,Taso 3: Kujanjuoksu,NIVEAU 3: Parcours du Combatant,Vesszőfutás,Level 3: Le fustigazioni,Level 3: ガントレット,레벨 3: 난관,Level 3: De gantlet,Level 3: Praszczęta,Nível 3: A Punição,,Nivelul 3: Stroiul,Level 3: Вызов брошен,Level 3: Казна
+Level 3: The Gantlet,HUSTR_3,“a form of punishment in which a person is forced to run between two lines of men facing each other and armed with clubs or whips to beat the victim”,,,Level 3: Trest,Level 3: Spießrutenlauf,,Nivelo 3: La Spaliroj de Doloro,Nivel 3: El Guantelete,,Taso 3: Kujanjuoksu,NIVEAU 3: Parcours du Combatant,Vesszőfutás,Level 3: Le fustigazioni,Level 3: ガントレット,레벨 3: 건틀릿,Level 3: De gantlet,Level 3: Praszczęta,Nível 3: A Punição,,Nivelul 3: Stroiul,Level 3: Вызов брошен,Level 3: Казна
 Level 4: The Focus,HUSTR_4,,,,Level 4: Ohnisko,Level 4: Der Fokus,,Nivelo 4: La Fokuso,Nivel 4: El Foco,,Taso 4: Polttopiste,NIVEAU 4: Le Focus,A középpont,Level 4: L'Epicentro,Level 4: フォーカス,레벨 4: 초점,Level 4: De focus,Level 4: Skupisko,Nível 4: O Foco,,Nivelul 4: Focarul,Level 4: Средоточие,Level 4: Средиште
 Level 5: The Waste Tunnels,HUSTR_5,,,,Level 5: Odpadní tunely,Level 5: Die Abfall-Tunnel,Επίπεδο 5: Οι Σήραγγες Αποβλήτων,Nivelo 5: La Elĵetaĵtuneloj,Nivel 5: Los Túneles de Desechos,,Taso 5: Jätetunnelit,NIVEAU 5: Les Egouts,Hulladékalagutak,Level 5: I Tunnel dei Rifiuti,Level 5: 廃棄トンネル,레벨 5: 하수도,Level 5: De afvaltunnels,Level 5: Kanały,Nível 5: Os Túneis de Resíduos,,Nivelul 5: Tuneluri pentru deșeuri,Level 5: Сточные туннели,Level 5: Отпадни тунели
 Level 6: The Crusher,HUSTR_6,,,,Level 6: Drtička,Level 6: Die Presse,Επίπεδο 6: Ο Συνθλιπτής,Nivelo 6: La Dispistilo,Nivel 6: La Trituradora,,Taso 6: Murskaaja,NIVEAU 6: Le Broyeur,A zúzda,Level 6: La Pressa,Level 6: クラッシャー,레벨 6: 분쇄기,Level 6: De maalmachine,Level 6: Zgniatarka,Nível 6: O Esmagador,,Nivelul 6: Zdrobitorul,Level 6: Пресс,Level 6: Разбијач
@@ -4232,8 +4232,8 @@ maw from the other side. Of course
 this means you may get stuck in a
 very unfriendly world, but no one
 ever said being a heretic was easy!",HE1TEXT,Heretic Ep.1,,,"Se smrtí železných kostějů a jejich
-nohsledů byly veškeré stopy nemrtvých
-na této pláni existence vymazány.
+nohsledů už není na této pláni existence
+po nemrtvých ani stopy.
 
 Ty příšery však musely odněkud
 přijít a ty máš to nutkavé tušení,
@@ -4487,7 +4487,7 @@ poroučí k zemi, ty cítíš ponuré
 uspokojení z jejich skonu.
 
 Brány, které střežili, se otevřely,
-odhaluvše snad cestu domů. Ale jakmile
+odhalivše snad cestu domů. Ale jakmile
 vkročíš dovnitř, naplní tvé uši
 jízlivý smích.
 
@@ -5652,7 +5652,7 @@ your every effort.",TXT_HEXEN_CLUS1MSG,,,,"Procháziv@[tgs_past_cs] sedmerem por
 strážily tuto říši, objevuješ
 široký pás nehostinné divočiny.
 Oheň, led i ocel sic tě zkoušely,
-alebrž ukrutnější výzvy stále čekají.
+ukrutnější výzvy však stále čekají.
 Ačkoliv nepoddajné houštiny lesa
 určitě skrývají zlostné oči, to,
 co leží dál, bude horší.
@@ -6188,7 +6188,7 @@ svatyně.
 Bradla ohromného hradu se tyčí nad tvou
 hlavou. Tiché věže a holé zdi obklopují
 osamocenou věž z černého kamene, stojící
-uprostřed hradu, vypadajíc jako přemítající
+uprostřed hradu, vypadající jako přemítající
 obr. Za zejícími okny tančí ohně a stíny a
 desítky zlověstných očí na tě zhoubně zírají.
 Někde tam uvnitř nepřátelé čekají.","Die mächtigsten Waffen und Artefakte

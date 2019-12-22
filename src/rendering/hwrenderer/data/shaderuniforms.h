@@ -28,7 +28,8 @@ enum class UniformType
 	UVec2,
 	UVec3,
 	UVec4,
-	Mat4
+	Mat4,
+	NumUniformTypes
 };
 
 class UniformFieldDesc

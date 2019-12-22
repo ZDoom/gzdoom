@@ -201,11 +201,6 @@ enum class UniformName
 	uSplitTopPlane,
 	uSplitBottomPlane,
 
-	uObjectBlendMode,
-	uObjectDesaturationFactor,
-	uObjectColorizeFactor,
-	uObjectInvertColor,
-
 	uTextureMode,
 	uAlphaThreshold,
 	uClipSplit,
@@ -266,11 +261,6 @@ protected:
 		DeclareUniform(UniformName::uSplitTopPlane, "uSplitTopPlane", UniformType::Vec4);
 		DeclareUniform(UniformName::uSplitBottomPlane, "uSplitBottomPlane", UniformType::Vec4);
 
-		DeclareUniform(UniformName::uObjectBlendMode, "uObjectBlendMode", UniformType::Float);
-		DeclareUniform(UniformName::uObjectInvertColor, "uObjectInvertColor", UniformType::Float);
-		DeclareUniform(UniformName::uObjectDesaturationFactor, "uObjectDesaturationFactor", UniformType::Float);
-		DeclareUniform(UniformName::uObjectColorizeFactor, "uObjectColorizeFactor", UniformType::Float);
-
 		DeclareUniform(UniformName::uTextureMode, "uTextureMode", UniformType::Int, UniformFamily::PushConstant);
 		DeclareUniform(UniformName::uAlphaThreshold, "uAlphaThreshold", UniformType::Float, UniformFamily::PushConstant);
 		DeclareUniform(UniformName::uClipSplit, "uClipSplit", UniformType::Vec2, UniformFamily::PushConstant);
@@ -289,6 +279,10 @@ protected:
 		DeclareUniform(UniformName::uPadding1, "uPadding1", UniformType::Int, UniformFamily::PushConstant);
 		DeclareUniform(UniformName::uPadding2, "uPadding2", UniformType::Int, UniformFamily::PushConstant);
 		DeclareUniform(UniformName::uPadding3, "uPadding3", UniformType::Int, UniformFamily::PushConstant);
+
+		int i = 0;
+		for (const auto& info : mUniformInfo)
+			mSortedUniformInfo[(int)info.Type].push_back(i++);
 	}
 
 	void DeclareUniform(UniformName nameIndex, const char* glslname, UniformType type, UniformFamily family = UniformFamily::Normal)
@@ -383,6 +377,9 @@ protected:
 
 	std::vector<UniformInfo> mUniformInfo;
 	std::vector<uint8_t> mUniformData[(int)UniformFamily::NumFamilies];
+
+	// For the OpenGL backend so that it doesn't have to do a switch between the uniform types
+	std::vector<int> mSortedUniformInfo[(int)UniformType::NumUniformTypes];
 
 	uint8_t mFogEnabled;
 	uint8_t mTextureEnabled:1;

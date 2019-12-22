@@ -172,36 +172,26 @@ bool FGLRenderState::ApplyShader()
 
 	// Apply uniforms:
 
+	UniformInfo* info = mUniformInfo.data();
 	GLuint* locations = activeShader->UniformLocations.data();
 	int* lastupdates = activeShader->UniformLastUpdates.data();
 
-	int count = (int)mUniformInfo.size();
-	for (int i = 0; i < count; i++)
-	{
-		if (lastupdates[i] != mUniformInfo.data()[i].LastUpdate)
-		{
-			const void* data = GetUniformData((UniformName)i);
-			GLuint location = locations[i];
-			switch (mUniformInfo[i].Type)
-			{
-			default:
-			case UniformType::Vec4: glUniform4fv(location, 1, (float*)data); break;
-			case UniformType::Float: glUniform1fv(location, 1, (float*)data); break;
-			case UniformType::Int: glUniform1iv(location, 1, (int*)data); break;
-			case UniformType::Mat4: glUniformMatrix4fv(location, 1, GL_FALSE, (float*)data); break;
-			case UniformType::UInt: glUniform1iv(location, 1, (int*)data); break;
-			case UniformType::Vec2: glUniform2fv(location, 1, (float*)data); break;
-			case UniformType::Vec3: glUniform3fv(location, 1, (float*)data); break;
-			case UniformType::IVec2: glUniform1iv(location, 1, (int*)data); break;
-			case UniformType::IVec3: glUniform1iv(location, 1, (int*)data); break;
-			case UniformType::IVec4: glUniform1iv(location, 1, (int*)data); break;
-			case UniformType::UVec2: glUniform1iv(location, 1, (int*)data); break;
-			case UniformType::UVec3: glUniform1iv(location, 1, (int*)data); break;
-			case UniformType::UVec4: glUniform1iv(location, 1, (int*)data); break;
-			}
-			lastupdates[i] = mUniformInfo[i].LastUpdate;
-		}
-	}
+	for (int i : mSortedUniformInfo[(int)UniformType::Vec4]) if (lastupdates[i] != info[i].LastUpdate) { glUniform4fv(locations[i], 1, (float*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::Vec2]) if (lastupdates[i] != info[i].LastUpdate) { glUniform2fv(locations[i], 1, (float*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::Float]) if (lastupdates[i] != info[i].LastUpdate) { glUniform1fv(locations[i], 1, (float*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::Int]) if (lastupdates[i] != info[i].LastUpdate) { glUniform1iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::Mat4]) if (lastupdates[i] != info[i].LastUpdate) { glUniformMatrix4fv(locations[i], 1, GL_FALSE, (float*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+
+	/*
+	for (int i : mSortedUniformInfo[(int)UniformType::Vec3]) if (lastupdates[i] != info[i].LastUpdate) { glUniform3fv(locations[i], 1, (float*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::IVec2]) if (lastupdates[i] != info[i].LastUpdate) { glUniform4iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::IVec3]) if (lastupdates[i] != info[i].LastUpdate) { glUniform4iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::IVec4]) if (lastupdates[i] != info[i].LastUpdate) { glUniform4iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::UInt]) if (lastupdates[i] != info[i].LastUpdate) { glUniform1iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::UVec2]) if (lastupdates[i] != info[i].LastUpdate) { glUniform4iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::UVec3]) if (lastupdates[i] != info[i].LastUpdate) { glUniform4iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	for (int i : mSortedUniformInfo[(int)UniformType::UVec4]) if (lastupdates[i] != info[i].LastUpdate) { glUniform4iv(locations[i], 1, (int*)GetUniformData((UniformName)i)); lastupdates[i] = info[i].LastUpdate; }
+	*/
 
 	return true;
 }

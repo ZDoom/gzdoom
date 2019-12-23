@@ -119,6 +119,8 @@ int				MenuTime;
 
 extern PClass *DefaultListMenuClass;
 extern PClass *DefaultOptionMenuClass;
+extern bool hud_toggled;
+void D_ToggleHud();
 
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
@@ -350,6 +352,9 @@ bool DMenu::TranslateKeyboardEvents()
 
 void M_StartControlPanel (bool makeSound, bool scaleoverride)
 {
+	if (hud_toggled)
+		D_ToggleHud();
+	
 	// intro might call this repeatedly
 	if (CurrentMenu != nullptr)
 		return;
@@ -368,7 +373,7 @@ void M_StartControlPanel (bool makeSound, bool scaleoverride)
 
 	if (makeSound)
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
@@ -1144,13 +1149,13 @@ EXTERN_CVAR (Int, screenblocks)
 CCMD (sizedown)
 {
 	screenblocks = screenblocks - 1;
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
 	screenblocks = screenblocks + 1;
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(menuconsole)

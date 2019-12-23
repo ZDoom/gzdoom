@@ -436,6 +436,8 @@ class Actor : Thinker native
 		MarkSound(BounceSound);
 		MarkSound(WallBounceSound);
 		MarkSound(CrushPainSound);
+		MarkSound(HowlSound);
+		MarkSound(MeleeSound);
 	}
 
 	bool IsPointerEqual(int ptr_select1, int ptr_select2)
@@ -1052,13 +1054,15 @@ class Actor : Thinker native
 
 	deprecated("2.3") native void A_BulletAttack();
 	native void A_WolfAttack(int flags = 0, sound whattoplay = "weapons/pistol", double snipe = 1.0, int maxdamage = 64, int blocksize = 128, int pointblank = 2, int longrange = 4, double runspeed = 160.0, class<Actor> pufftype = "BulletPuff");
-	native clearscope void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false, double pitch = 0.0);
+	/*deprecated("4.3")*/ native clearscope void A_PlaySound(sound whattoplay = "weapons/pistol", int slot = CHAN_BODY, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false, double pitch = 0.0);
+	native clearscope void A_StartSound(sound whattoplay, int slot, int flags = 0, double volume = 1.0, bool looping = false, double attenuation = ATTN_NORM, bool local = false, double pitch = 0.0);
 	native void A_SoundVolume(int slot, double volume);
 	native void A_SoundPitch(int slot, double pitch);
-	deprecated("2.3") void A_PlayWeaponSound(sound whattoplay) { A_PlaySound(whattoplay, CHAN_WEAPON); }
+	deprecated("2.3") void A_PlayWeaponSound(sound whattoplay) { A_StartSound(whattoplay, CHAN_WEAPON); }
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
 	deprecated("2.3") native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
 	deprecated("2.3") native void A_StopSoundEx(name slot);
+	native clearscope bool IsActorPlayingSound(int channel, Sound snd = 0);
 	native void A_SeekerMissile(int threshold, int turnmax, int flags = 0, int chance = 50, int distance = 10);
 	native action state A_Jump(int chance, statelabel label, ...);
 	native Actor A_SpawnProjectile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET);

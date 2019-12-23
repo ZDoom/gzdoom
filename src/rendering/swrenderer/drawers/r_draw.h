@@ -57,12 +57,12 @@ namespace swrenderer
 	public:
 		SWPixelFormatDrawers(DrawerCommandQueuePtr queue) : Queue(queue) { }
 		virtual ~SWPixelFormatDrawers() { }
-		virtual void DrawWallColumn(const WallDrawerArgs &args) = 0;
-		virtual void DrawWallMaskedColumn(const WallDrawerArgs &args) = 0;
-		virtual void DrawWallAddColumn(const WallDrawerArgs &args) = 0;
-		virtual void DrawWallAddClampColumn(const WallDrawerArgs &args) = 0;
-		virtual void DrawWallSubClampColumn(const WallDrawerArgs &args) = 0;
-		virtual void DrawWallRevSubClampColumn(const WallDrawerArgs &args) = 0;
+		virtual void DrawWall(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallMasked(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallAdd(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallAddClamp(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallSubClamp(const WallDrawerArgs &args) = 0;
+		virtual void DrawWallRevSubClamp(const WallDrawerArgs &args) = 0;
 		virtual void DrawSingleSkyColumn(const SkyDrawerArgs &args) = 0;
 		virtual void DrawDoubleSkyColumn(const SkyDrawerArgs &args) = 0;
 		virtual void DrawColumn(const SpriteDrawerArgs &args) = 0;
@@ -96,7 +96,6 @@ namespace swrenderer
 		virtual void DrawFogBoundaryLine(const SpanDrawerArgs &args) = 0;
 
 		void DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth);
-		void DrawDepthWallColumn(const WallDrawerArgs &args, float idepth);
 		void DrawDepthSpan(const SpanDrawerArgs &args, float idepth1, float idepth2);
 		
 		DrawerCommandQueuePtr Queue;

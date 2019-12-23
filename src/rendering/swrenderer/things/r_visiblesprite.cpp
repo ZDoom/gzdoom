@@ -59,7 +59,7 @@ namespace swrenderer
 			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
 			{
 				DrawSegment *ds = segmentlist->TranslucentSegment(index);
-				if (ds->SubsectorDepth >= SubsectorDepth && ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
+				if (ds->drawsegclip.SubsectorDepth >= SubsectorDepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
 				{
 					int r1 = MAX<int>(ds->x1, 0);
 					int r2 = MIN<int>(ds->x2, viewwidth - 1);
@@ -321,7 +321,7 @@ namespace swrenderer
 			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
 			{
 				DrawSegment *ds = segmentlist->TranslucentSegment(index);
-				if (ds->SubsectorDepth >= subsectordepth && ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
+				if (ds->drawsegclip.SubsectorDepth >= subsectordepth && ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
 				{
 					int r1 = MAX<int>(ds->x1, 0);
 					int r2 = MIN<int>(ds->x2, viewwidth - 1);
@@ -350,7 +350,7 @@ namespace swrenderer
 					(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
 					(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
 				{
-					if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
+					if (ds->drawsegclip.CurrentPortalUniq == renderportal->CurrentPortalUniq)
 					{
 						int r1 = MAX<int>(ds->x1, x1);
 						int r2 = MIN<int>(ds->x2, x2);
@@ -405,9 +405,7 @@ namespace swrenderer
 					DrawSegment *ds = segmentlist->Segment(index);
 
 					// determine if the drawseg obscures the sprite
-					if (ds->x1 >= x2 || ds->x2 <= x1 ||
-						(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == nullptr &&
-							!ds->bFogBoundary))
+					if (ds->x1 >= x2 || ds->x2 <= x1 || (!(ds->drawsegclip.silhouette & SIL_BOTH) && !ds->Has3DFloorWalls() && !ds->HasTranslucentMidTexture() && !ds->HasFogBoundary()))
 					{
 						// does not cover sprite
 						continue;
@@ -433,10 +431,10 @@ namespace swrenderer
 					// [RH] Optimized further (at least for VC++;
 					// other compilers should be at least as good as before)
 
-					if (ds->silhouette & SIL_BOTTOM) //bottom sil
+					if (ds->drawsegclip.silhouette & SIL_BOTTOM) //bottom sil
 					{
 						short *clip1 = clipbot + r1;
-						const short *clip2 = ds->sprbottomclip + r1 - ds->x1;
+						const short *clip2 = ds->drawsegclip.sprbottomclip + r1;
 						int i = r2 - r1;
 						do
 						{
@@ -447,10 +445,10 @@ namespace swrenderer
 						} while (--i);
 					}
 
-					if (ds->silhouette & SIL_TOP)   // top sil
+					if (ds->drawsegclip.silhouette & SIL_TOP)   // top sil
 					{
 						short *clip1 = cliptop + r1;
-						const short *clip2 = ds->sprtopclip + r1 - ds->x1;
+						const short *clip2 = ds->drawsegclip.sprtopclip + r1;
 						int i = r2 - r1;
 						do
 						{

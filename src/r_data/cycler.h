@@ -20,7 +20,10 @@ class FCycler
 	friend FSerializer &Serialize(FSerializer &arc, const char *key, FCycler &c, FCycler *def);
 
 public:
-   FCycler();
+	FCycler() = default;
+	FCycler(const FCycler &other) = default;
+	FCycler &operator=(const FCycler &other) = default;
+	
    void Update(double diff);
    void SetParams(double start, double end, double cycle, bool update = false);
    void ShouldCycle(bool sc) { m_shouldCycle = sc; }
@@ -28,8 +31,7 @@ public:
    double GetVal() { return m_current; }
 
    inline operator double () const { return m_current; }
-   
-protected:
+
    double m_start, m_end, m_current;
    double m_time, m_cycle;
    bool m_increment, m_shouldCycle;

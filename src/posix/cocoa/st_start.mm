@@ -39,6 +39,7 @@
 #include "doomtype.h"
 #include "st_console.h"
 #include "st_start.h"
+#include "doomerrors.h"
 
 
 FStartupScreen *StartScreen;
@@ -58,22 +59,6 @@ CUSTOM_CVAR(Int, showendoom, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 
 // ---------------------------------------------------------------------------
-
-
-class FBasicStartupScreen : public FStartupScreen
-{
-public:
-	FBasicStartupScreen(int maxProgress, bool showBar);
-	~FBasicStartupScreen();
-
-	virtual void Progress();
-
-	virtual void NetInit(const char* message, int playerCount);
-	virtual void NetProgress(int count);
-	virtual void NetMessage(const char *format, ...);
-	virtual void NetDone();
-	virtual bool NetLoop(bool (*timerCallback)(void*), void* userData);
-};
 
 
 FBasicStartupScreen::FBasicStartupScreen(int maxProgress, bool showBar)
@@ -187,8 +172,5 @@ FStartupScreen *FStartupScreen::CreateInstance(const int maxProgress)
 
 void ST_Endoom()
 {
-	extern void I_ShutdownJoysticks();
-	I_ShutdownJoysticks();
-
-	exit(0);
+	throw CExitEvent(0);
 }

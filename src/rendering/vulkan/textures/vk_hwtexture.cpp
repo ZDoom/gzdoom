@@ -69,6 +69,12 @@ void VkHardwareTexture::Reset()
 	{
 		ResetDescriptors();
 
+		if (mappedSWFB)
+		{
+			mImage.Image->Unmap();
+			mappedSWFB = nullptr;
+		}
+
 		auto &deleteList = fb->FrameDeleteList;
 		if (mImage.Image) deleteList.Images.push_back(std::move(mImage.Image));
 		if (mImage.View) deleteList.ImageViews.push_back(std::move(mImage.View));
@@ -348,12 +354,13 @@ void VkHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 
 uint8_t *VkHardwareTexture::MapBuffer()
 {
-	return (uint8_t*)mImage.Image->Map(0, mImage.Image->width * mImage.Image->height * mTexelsize);
+	if (!mappedSWFB)
+		mappedSWFB = (uint8_t*)mImage.Image->Map(0, mImage.Image->width * mImage.Image->height * mTexelsize);
+	return mappedSWFB;
 }
 
 unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
 {
-	mImage.Image->Unmap();
 	return 0;
 }
 

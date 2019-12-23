@@ -200,12 +200,15 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  useowncolors_bottom = <bool>; // Set to 1 to use the colors set in the sidedef. Default is using the colors from the owning sector.
 	  uppercolor_bottom = <int>;    // Material color of the top of the lower tier.
 	  lowercolor_bottom = <int>;    // Material color of the bottom of the lower tier. (Hardware rendering only.)
+      colorscalefactor_top = <float>  // scales the material color by the given factor.  Default is 1.
+      colorscalefactor_mid = <float>  // scales the material color by the given factor.  Default is 1.
+      colorscalefactor_bottom = <float>  // scales the material color by the given factor.  Default is 1.
 
-      useowncoloradd_top = <bool>;  // Whether or not to use the given additive color for the top section of the sidedef.
+      useowncoloradd_top = <bool>;  // Controls where the advanced colorization properties are taken from.
+      useowncoloradd_mid = <bool>;  // 0: From the containing sector, 1: from the given part of the linedef itself
+      useowncoloradd_bottom = <bool>;  // Default for all 3 is 0.
       coloradd_top = <int>;         // Additive material color to apply to top section of sidedef. Default is black (0x000000)
-      useowncoloradd_mid = <bool>;  // Whether or not to use the given additive color for the middle section of the sidedef.
       coloradd_mid = <int>;         // Additive material color to apply to middle section of sidedef. Default is black (0x000000)
-      useowncoloradd_bottom = <bool>;  // Whether or not to use the given additive color for the bottom section of the sidedef.
       coloradd_bottom = <int>;      // Additive material color to apply to bottom section of sidedef. Default is black (0x000000)
    }
 
@@ -283,7 +286,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       coloradd_floor = <int>;         // Additive material color applied to the sector floor. Default is black (0x000000)
       coloradd_ceiling = <int>;       // Additive material color applied to the sector ceiling. Default is black (0x000000)
       coloradd_sprites = <int>;       // Additive material color applied to sprites within the sector. Default is black (0x000000)
-      coloradd_walls = <int>;          // Additive material color applied to walls within the sector. Default is black (0x000000)
+      coloradd_walls = <int>;         // Additive material color applied to walls within the sector. Default is black (0x000000)
 
       portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>;       // ceiling portal disabled.

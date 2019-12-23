@@ -66,7 +66,6 @@
 
 #include "gameconfigfile.h"
 #include "gstrings.h"
-#include "atterm.h"
 
 FGameConfigFile *GameConfig;
 
@@ -271,7 +270,8 @@ bool M_SaveDefaults (const char *filename)
 	FString oldpath;
 	bool success;
 
-	if (filename != NULL)
+	if (GameConfig == nullptr) return true;
+	if (filename != nullptr)
 	{
 		oldpath = GameConfig->GetPathName();
 		GameConfig->ChangePathName (filename);
@@ -282,7 +282,7 @@ bool M_SaveDefaults (const char *filename)
 		GameConfig->ArchiveGameData (gameinfo.ConfigName);
 	}
 	success = GameConfig->WriteConfigFile ();
-	if (filename != NULL)
+	if (filename != nullptr)
 	{
 		GameConfig->ChangePathName (filename);
 	}
@@ -291,12 +291,13 @@ bool M_SaveDefaults (const char *filename)
 
 void M_SaveDefaultsFinal ()
 {
-	while (!M_SaveDefaults (NULL) && I_WriteIniFailed ())
+	if (GameConfig == nullptr) return;
+	while (!M_SaveDefaults (nullptr) && I_WriteIniFailed ())
 	{
 		/* Loop until the config saves or I_WriteIniFailed() returns false */
 	}
 	delete GameConfig;
-	GameConfig = NULL;
+	GameConfig = nullptr;
 }
 
 UNSAFE_CCMD (writeini)
@@ -320,7 +321,6 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
-	atterm (M_SaveDefaultsFinal);
 }
 
 
@@ -366,7 +366,8 @@ inline void putc(unsigned char chr, FileWriter *file)
 void WritePCXfile (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
-	uint8_t temprow[MAXWIDTH * 3];
+	TArray<uint8_t> temprow_storage(width * 3, true);
+	uint8_t *temprow = &temprow_storage[0];
 	const uint8_t *data;
 	int x, y;
 	int runlen;

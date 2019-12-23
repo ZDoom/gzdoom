@@ -363,7 +363,7 @@ CCMD (weapnext)
 	}
 	if (SendItemUse != players[consoleplayer].ReadyWeapon)
 	{
-		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+		S_Sound(CHAN_AUTO, 0, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -389,7 +389,7 @@ CCMD (weapprev)
 	}
 	if (SendItemUse != players[consoleplayer].ReadyWeapon)
 	{
-		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+		S_Sound(CHAN_AUTO, 0, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -2324,27 +2324,37 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 	G_WriteSnapshots (savegame_filenames, savegame_content);
 	
 
-	WriteZip(filename, savegame_filenames, savegame_content);
+	bool succeeded = false;
 
-	savegameManager.NotifyNewSave (filename, description, okForQuicksave, forceQuicksave);
+	if (WriteZip(filename, savegame_filenames, savegame_content))
+	{
+		// Check whether the file is ok by trying to open it.
+		FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
+		if (test != nullptr)
+		{
+			delete test;
+			succeeded = true;
+		}
+	}
+
+	if (succeeded)
+	{
+		savegameManager.NotifyNewSave(filename, description, okForQuicksave, forceQuicksave);
+		BackupSaveName = filename;
+
+		if (longsavemessages) Printf("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
+		else Printf("%s\n", GStrings("GGSAVED"));
+	}
+	else
+	{
+		Printf(PRINT_HIGH, "%s\n", GStrings("TXT_SAVEFAILED"));
+	}
+
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.
 	savegame_content[1].Clean();
 	savegame_content[2].Clean();
-
-	// Check whether the file is ok by trying to open it.
-	FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
-	if (test != nullptr)
-	{
-		delete test;
-		if (longsavemessages) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
-		else Printf ("%s\n", GStrings("GGSAVED"));
-	}
-	else Printf(PRINT_HIGH, "%s\n", GStrings("TXT_SAVEFAILED"));
-
-
-	BackupSaveName = filename;
 
 	// We don't need the snapshot any longer.
 	level.info->Snapshot.Clean();

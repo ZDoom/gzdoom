@@ -43,206 +43,249 @@ namespace swrenderer
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked)
+	void SpriteDrawerArgs::DrawMasked(RenderThread* thread, double topZ, double scale, bool flipX, bool flipY, const FWallCoords& WallC, const ProjectedWallLight& light, FSoftwareTexture* tex, const short* mfloorclip, const short* mceilingclip, FRenderStyle style)
 	{
-		if (x < thread->X1 || x >= thread->X2)
-			return;
-
-		col *= tex->GetPhysicalScale();
-		iscale *= tex->GetPhysicalScale();
-		spryscale /= tex->GetPhysicalScale();
-
 		auto viewport = thread->Viewport.get();
+		auto cameraLight = CameraLight::Instance();
 
-		// Handle the linear filtered version in a different function to reduce chances of merge conflicts from zdoom.
-		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input) // To do: add support to R_DrawColumnHoriz_rgba
+		bool calclighting = cameraLight->FixedLightLevel() < 0 && !cameraLight->FixedColormap() && !light.IsSpriteLight();
+
+		float wpos = 1.0f / WallC.sz1;
+		float wstepX = (1.0f / WallC.sz2 - wpos) / (WallC.sx2 - WallC.sx1);
+
+		float upos, ustepX;
+		if (flipX)
 		{
-			DrawMaskedColumnBgra(thread, x, iscale, tex, col, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, unmasked);
-			return;
+			upos = (1.0f - WallC.tx1) / WallC.sz1;
+			ustepX = ((1.0f - WallC.tx2) / WallC.sz2 - upos) / (WallC.sx2 - WallC.sx1);
 		}
+		else
+		{
+			upos = WallC.tx1 / WallC.sz1;
+			ustepX = (WallC.tx2 / WallC.sz2 - upos) / (WallC.sx2 - WallC.sx1);
+		}
+
+		float iscale = 1.0f / scale;
+		if (flipY)
+			iscale = -iscale;
+		float vstepY = iscale / WallC.sz1 / (viewport->InvZtoScale / WallC.sz1);
+
+		wpos += wstepX * 0.5f;
+		upos += ustepX * 0.5f;
+
+		int x1 = WallC.sx1;
+		int x2 = WallC.sx2;
+
+		float centerY = thread->Viewport->CenterY;
+		topZ -= thread->Viewport->viewpoint.Pos.Z;
+
+		if (flipY)
+			topZ -= tex->GetHeight() * scale;
+
+		int texwidth = tex->GetPhysicalWidth();
+		int texheight = tex->GetPhysicalHeight();
+
+		float lightpos = light.GetLightPos(x1);
+		float lightstep = light.GetLightStep();
 
 		dc_viewport = viewport;
-		dc_x = x;
-		dc_iscale = iscale;
-		dc_textureheight = tex->GetPhysicalHeight();
+		dc_textureheight = texheight;
 
-		const FSoftwareTextureSpan *span;
-		const uint8_t *column;
-		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input)
-			column = (const uint8_t *)tex->GetColumnBgra(col >> FRACBITS, &span);
-		else
-			column = tex->GetColumn(style, col >> FRACBITS, &span);
+		bool bgra = viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input;
 
-		FSoftwareTextureSpan unmaskedSpan[2];
-		if (unmasked)
+		for (int x = x1; x < x2; x++)
 		{
-			span = unmaskedSpan;
-			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = tex->GetPhysicalHeight();
-			unmaskedSpan[1].TopOffset = 0;
-			unmaskedSpan[1].Length = 0;
-		}
-
-		int pixelsize = viewport->RenderTarget->IsBgra() ? 4 : 1;
-
-		while (span->Length != 0)
-		{
-			const int length = span->Length;
-			const int top = span->TopOffset;
-
-			// calculate unclipped screen coordinates for post
-			dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
-			dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
-
-			if (sprflipvert)
+			if (calclighting)
 			{
-				swapvalues(dc_yl, dc_yh);
+				SetLight(lightpos, light.GetLightLevel(), light.GetFoggy(), thread->Viewport.get());
 			}
 
-			if (dc_yh >= mfloorclip[dc_x])
-			{
-				dc_yh = mfloorclip[dc_x] - 1;
-			}
-			if (dc_yl < mceilingclip[dc_x])
-			{
-				dc_yl = mceilingclip[dc_x];
-			}
+			float w = 1.0f / wpos;
+			float y1 = centerY - topZ * wpos * viewport->InvZtoScale;
+			float u = upos * w;
+			float scaleU = ustepX * w;
+			float scaleV = vstepY * w;
 
-			if (dc_yl <= dc_yh)
-			{
-				dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5 - sprtopscreen) / spryscale);
-				dc_source = column;
-				dc_source2 = nullptr;
-				SetDest(viewport, dc_x, dc_yl);
-				dc_count = dc_yh - dc_yl + 1;
+			uint32_t texelX = (uint32_t)(int64_t)((u - std::floor(u)) * 0x1'0000'0000LL);
+			uint32_t texelStepX = (uint32_t)(int64_t)(scaleU * 0x1'0000'0000LL);
+			uint32_t texelStepY = (uint32_t)(int64_t)(scaleV * 0x1'0000'0000LL);
 
-				fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
-				dc_texturefrac = MAX(dc_texturefrac, 0);
-				dc_texturefrac = MIN(dc_texturefrac, maxfrac);
-				if (dc_iscale > 0)
-					dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
-				else if (dc_iscale < 0)
-					dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+			DrawMaskedColumn(thread, x, y1, mceilingclip[x], mfloorclip[x], texelX, texelStepX, texelStepY, scaleV, flipY, tex, texwidth, texheight, bgra, style);
 
-				(thread->Drawers(dc_viewport)->*colfunc)(*this);
-			}
-			span++;
+			upos += ustepX;
+			wpos += wstepX;
+			lightpos += lightstep;
 		}
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumnBgra(RenderThread *thread, int x, fixed_t iscale, FSoftwareTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMasked2D(RenderThread* thread, double x0, double x1, double y0, double y1, FSoftwareTexture* tex, FRenderStyle style)
 	{
+		int sx0 = MAX((int)x0, 0);
+		int sx1 = MIN((int)x1, viewwidth);
+		int sy0 = MAX((int)y0, 0);
+		int sy1 = MIN((int)y1, viewheight);
+
+		if (sx0 >= sx1 || sy0 >= sy1)
+			return;
+
+		float ustepX = 1.0f / (x1 - x0);
+		float vstepY = 1.0f / (y1 - y0);
+		float upos = ustepX * (sx0 + 0.5f - x0);
+
+		uint32_t texelStepX = (uint32_t)(int64_t)(ustepX * 0x1'0000'0000LL);
+		uint32_t texelStepY = (uint32_t)(int64_t)(vstepY * 0x1'0000'0000LL);
+
+		bool bgra = thread->Viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input;
+		int texwidth = tex->GetPhysicalWidth();
+		int texheight = tex->GetPhysicalHeight();
+
 		dc_viewport = thread->Viewport.get();
-		dc_x = x;
-		dc_iscale = iscale;
+		dc_textureheight = texheight;
 
-		// Normalize to 0-1 range:
-		double uv_stepd = FIXED2DBL(dc_iscale);
-		double v_step = uv_stepd / tex->GetPhysicalHeight();
+		vstepY *= texheight;
 
-		// Convert to uint32_t:
-		dc_iscale = (uint32_t)(v_step * (1 << 30));
-
-		// Texture mipmap and filter selection:
-		fixed_t xoffset = col;
-
-		double xmagnitude = 1.0; // To do: pass this into R_DrawMaskedColumn
-		double ymagnitude = fabs(uv_stepd);
-		double magnitude = MAX(ymagnitude, xmagnitude);
-		double min_lod = -1000.0;
-		double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
-		bool magnifying = lod < 0.0f;
-
-		int mipmap_offset = 0;
-		int mip_width = tex->GetPhysicalWidth();
-		int mip_height = tex->GetPhysicalHeight();
-		uint32_t xpos = (uint32_t)((((uint64_t)xoffset) << FRACBITS) / mip_width);
-		if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
+		for (int x = sx0; x < sx1; x++)
 		{
-			int level = (int)lod;
-			while (level > 0 && mip_width > 1 && mip_height > 1)
-			{
-				mipmap_offset += mip_width * mip_height;
-				level--;
-				mip_width = MAX(mip_width >> 1, 1);
-				mip_height = MAX(mip_height >> 1, 1);
-			}
+			float u = upos;
+			uint32_t texelX = (uint32_t)(int64_t)((u - std::floor(u)) * 0x1'0000'0000LL);
+
+			DrawMaskedColumn(thread, x, sy0, sy0, sy1, texelX, texelStepX, texelStepY, vstepY, false, tex, texwidth, texheight, bgra, style);
+
+			upos += ustepX;
 		}
-		xoffset = (xpos >> FRACBITS) * mip_width;
+	}
 
-		const uint32_t *pixels = tex->GetPixelsBgra() + mipmap_offset;
-
-		bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
-		if (filter_nearest)
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread* thread, int x, int y1, int cliptop, int clipbottom, uint32_t texelX, uint32_t texelStepX, uint32_t texelStepY, float scaleV, bool flipY, FSoftwareTexture* tex, int texwidth, int texheight, bool bgra, FRenderStyle style)
+	{
+		const FSoftwareTextureSpan* span;
+		if (bgra)
 		{
-			xoffset = MAX(MIN(xoffset, (mip_width << FRACBITS) - 1), 0);
+			double xmagnitude = fabs(static_cast<int32_t>(texelStepX)* (1.0 / 0x1'0000'0000LL));
+			double ymagnitude = fabs(static_cast<int32_t>(texelStepY)* (1.0 / 0x1'0000'0000LL));
+			double magnitude = MAX(ymagnitude, xmagnitude);
+			double min_lod = -1000.0;
+			double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+			bool magnifying = lod < 0.0f;
 
-			int tx = xoffset >> FRACBITS;
-			dc_source = (uint8_t*)(pixels + tx * mip_height);
-			dc_source2 = nullptr;
-			dc_textureheight = mip_height;
-			dc_texturefracx = 0;
+			int mipmap_offset = 0;
+			int mip_width = texwidth;
+			int mip_height = texheight;
+			if (r_mipmap && tex->Mipmapped() && mip_width > 1 && mip_height > 1)
+			{
+				int level = (int)lod;
+				while (level > 0 && mip_width > 1 && mip_height > 1)
+				{
+					mipmap_offset += mip_width * mip_height;
+					level--;
+					mip_width = MAX(mip_width >> 1, 1);
+					mip_height = MAX(mip_height >> 1, 1);
+				}
+			}
+
+			const uint32_t* pixels = tex->GetPixelsBgra() + mipmap_offset;
+			fixed_t xoffset = (texelX >> 16)* mip_width;
+
+			bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+			if (filter_nearest)
+			{
+				xoffset = MAX(MIN(xoffset, (mip_width << FRACBITS) - 1), 0);
+
+				int tx = xoffset >> FRACBITS;
+				dc_source = (uint8_t*)(pixels + tx * mip_height);
+				dc_source2 = nullptr;
+				dc_textureheight = mip_height;
+				dc_texturefracx = 0;
+			}
+			else
+			{
+				xoffset = MAX(MIN(xoffset - (FRACUNIT / 2), (mip_width << FRACBITS) - 1), 0);
+
+				int tx0 = xoffset >> FRACBITS;
+				int tx1 = MIN(tx0 + 1, mip_width - 1);
+				dc_source = (uint8_t*)(pixels + tx0 * mip_height);
+				dc_source2 = (uint8_t*)(pixels + tx1 * mip_height);
+				dc_textureheight = mip_height;
+				dc_texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
+			}
+
+			int col = ((texelX >> 16)* texwidth) >> 16;
+			tex->GetColumnBgra(col, &span);
+
+			dc_iscale = (uint32_t)(int64_t)(scaleV / texheight * (1 << 30));
+			dc_x = x;
+
+			while (span->Length != 0)
+			{
+				const int length = span->Length;
+				const int top = span->TopOffset;
+
+				// calculate unclipped screen coordinates for post
+				dc_yl = (int)(y1 + top / scaleV + 0.5f);
+				dc_yh = (int)(y1 + (top + length) / scaleV + 0.5f);
+
+				if (flipY)
+					std::swap(dc_yl, dc_yh);
+
+				dc_yl = std::max(dc_yl, cliptop);
+				dc_yh = std::min(dc_yh, clipbottom);
+
+				if (dc_yl <= dc_yh)
+				{
+					double v = ((dc_yl + 0.5f - y1) * scaleV) / texheight;
+					dc_texturefrac = (uint32_t)(v * (1 << 30));
+
+					SetDest(dc_viewport, dc_x, dc_yl);
+					dc_count = dc_yh - dc_yl;
+					dc_yl--;
+
+					(thread->Drawers(dc_viewport)->*colfunc)(*this);
+				}
+				span++;
+			}
 		}
 		else
 		{
-			xoffset = MAX(MIN(xoffset - (FRACUNIT / 2), (mip_width << FRACBITS) - 1), 0);
+			int col = ((texelX >> 16)* texwidth) >> 16;
+			dc_source = tex->GetColumn(style, col, &span);
+			dc_source2 = nullptr;
 
-			int tx0 = xoffset >> FRACBITS;
-			int tx1 = MIN(tx0 + 1, mip_width - 1);
-			dc_source = (uint8_t*)(pixels + tx0 * mip_height);
-			dc_source2 = (uint8_t*)(pixels + tx1 * mip_height);
-			dc_textureheight = mip_height;
-			dc_texturefracx = (xoffset >> (FRACBITS - 4)) & 15;
-		}
+			dc_iscale = FLOAT2FIXED(scaleV);
+			dc_x = x;
 
-		// Grab the posts we need to draw
-		const FSoftwareTextureSpan *span;
-		tex->GetColumnBgra(col >> FRACBITS, &span);
-		FSoftwareTextureSpan unmaskedSpan[2];
-		if (unmasked)
-		{
-			span = unmaskedSpan;
-			unmaskedSpan[0].TopOffset = 0;
-			unmaskedSpan[0].Length = tex->GetPhysicalHeight();
-			unmaskedSpan[1].TopOffset = 0;
-			unmaskedSpan[1].Length = 0;
-		}
-
-		// Draw each span post
-		while (span->Length != 0)
-		{
-			const int length = span->Length;
-			const int top = span->TopOffset;
-
-			// calculate unclipped screen coordinates for post
-			dc_yl = (int)(sprtopscreen + spryscale * top + 0.5);
-			dc_yh = (int)(sprtopscreen + spryscale * (top + length) + 0.5) - 1;
-
-			if (sprflipvert)
+			while (span->Length != 0)
 			{
-				swapvalues(dc_yl, dc_yh);
-			}
+				const int length = span->Length;
+				const int top = span->TopOffset;
 
-			if (dc_yh >= mfloorclip[dc_x])
-			{
-				dc_yh = mfloorclip[dc_x] - 1;
-			}
-			if (dc_yl < mceilingclip[dc_x])
-			{
-				dc_yl = mceilingclip[dc_x];
-			}
+				// calculate unclipped screen coordinates for post
+				dc_yl = (int)(y1 + top / scaleV + 0.5f);
+				dc_yh = (int)(y1 + (top + length) / scaleV + 0.5f);
 
-			if (dc_yl <= dc_yh)
-			{
-				SetDest(dc_viewport, dc_x, dc_yl);
-				dc_count = dc_yh - dc_yl + 1;
+				if (flipY)
+					std::swap(dc_yl, dc_yh);
 
-				double v = ((dc_yl + 0.5 - sprtopscreen) / spryscale) / tex->GetPhysicalHeight();
-				dc_texturefrac = (uint32_t)(v * (1 << 30));
+				dc_yl = std::max(dc_yl, cliptop);
+				dc_yh = std::min(dc_yh, clipbottom);
 
-				(thread->Drawers(dc_viewport)->*colfunc)(*this);
+				if (dc_yl < dc_yh)
+				{
+					dc_texturefrac = FLOAT2FIXED((dc_yl + 0.5f - y1) * scaleV);
+					SetDest(thread->Viewport.get(), dc_x, dc_yl);
+					dc_count = dc_yh - dc_yl;
+					dc_yl--;
+
+					fixed_t maxfrac = ((top + length) << FRACBITS) - 1;
+					dc_texturefrac = MAX(dc_texturefrac, 0);
+					dc_texturefrac = MIN(dc_texturefrac, maxfrac);
+					if (dc_iscale > 0)
+						dc_count = MIN(dc_count, (maxfrac - dc_texturefrac + dc_iscale - 1) / dc_iscale);
+					else if (dc_iscale < 0)
+						dc_count = MIN(dc_count, (dc_texturefrac - dc_iscale) / (-dc_iscale));
+
+					(thread->Drawers(dc_viewport)->*colfunc)(*this);
+				}
+				span++;
 			}
-			span++;
 		}
 	}
 
@@ -502,35 +545,10 @@ namespace swrenderer
 		return SetStyle(viewport, style, FLOAT2FIXED(alpha), translation, color, light);
 	}
 
-	void SpriteDrawerArgs::FillColumn(RenderThread *thread)
-	{
-		thread->Drawers(dc_viewport)->FillColumn(*this);
-	}
-
 	void SpriteDrawerArgs::DrawVoxelBlocks(RenderThread *thread, const VoxelBlock *blocks, int blockcount)
 	{
 		SetDest(thread->Viewport.get(), 0, 0);
 		thread->Drawers(dc_viewport)->DrawVoxelBlocks(*this, blocks, blockcount);
-#if 0
-		if (dc_viewport->RenderTarget->IsBgra())
-		{
-			double v = vPos / (double)voxelsCount / FRACUNIT;
-			double vstep = vStep / (double)voxelsCount / FRACUNIT;
-			dc_texturefrac = (int)(v * (1 << 30));
-			dc_iscale = (int)(vstep * (1 << 30));
-		}
-		else
-		{
-			dc_texturefrac = vPos;
-			dc_iscale = vStep;
-		}
-
-		dc_texturefracx = 0;
-		dc_source = voxels;
-		dc_source2 = 0;
-		dc_textureheight = voxelsCount;
-		(thread->Drawers(dc_viewport)->*colfunc)(*this);
-#endif
 	}
 
 	void SpriteDrawerArgs::SetDest(RenderViewport *viewport, int x, int y)

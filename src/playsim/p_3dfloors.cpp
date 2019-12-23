@@ -126,14 +126,12 @@ void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flags, int 
 	{
 		ffloor->bottom.plane = &sec2->floorplane;
 		ffloor->bottom.texture = &sec2->planes[sector_t::floor].Texture;
-		ffloor->bottom.flatcolor = &sec2->SpecialColors[sector_t::floor];
 		ffloor->bottom.isceiling = sector_t::floor;
 	}
 	else 
 	{
 		ffloor->bottom.plane = &sec2->ceilingplane;
 		ffloor->bottom.texture = &sec2->planes[sector_t::ceiling].Texture;
-		ffloor->bottom.flatcolor = &sec2->SpecialColors[sector_t::ceiling];
 		ffloor->bottom.isceiling = sector_t::ceiling;
 	}
 	
@@ -141,7 +139,6 @@ void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flags, int 
 	{
 		ffloor->top.plane = &sec2->ceilingplane;
 		ffloor->top.texture = &sec2->planes[sector_t::ceiling].Texture;
-		ffloor->top.flatcolor = &sec2->SpecialColors[sector_t::ceiling];
 		ffloor->toplightlevel = &sec2->lightlevel;
 		ffloor->top.isceiling = sector_t::ceiling;
 	}
@@ -149,7 +146,6 @@ void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flags, int 
 	{
 		ffloor->top.plane = &sec->floorplane;
 		ffloor->top.texture = &sec2->planes[sector_t::floor].Texture;
-		ffloor->top.flatcolor = &sec2->SpecialColors[sector_t::floor];
 		ffloor->toplightlevel = &sec->lightlevel;
 		ffloor->top.isceiling = sector_t::floor;
 		ffloor->top.model = sec;

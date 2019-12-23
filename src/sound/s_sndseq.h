@@ -5,6 +5,15 @@
 #include "dobject.h"
 #include "s_sound.h"
 
+enum
+{
+	// Sound channel aliases for sound sequences.
+	CHAN_CEILING = CHAN_WEAPON,
+	CHAN_FLOOR = CHAN_VOICE,
+	CHAN_INTERIOR = CHAN_ITEM,
+	CHAN_FULLHEIGHT = CHAN_BODY,
+};
+
 typedef enum {
 	SEQ_PLATFORM,
 	SEQ_DOOR,

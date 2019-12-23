@@ -43,7 +43,6 @@
 #include "m_argv.h"
 #include "doomerrors.h"
 #include "swrenderer/r_swrenderer.h"
-#include "atterm.h"
 
 IVideo *Video;
 
@@ -83,6 +82,4 @@ void I_InitGraphics ()
 	
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
-
-	atterm (I_ShutdownGraphics);
 }

@@ -892,11 +892,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 	{
 		if (self->DeathSound != 0)
 		{
-			S_Sound (self, CHAN_VOICE, self->DeathSound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_VOICE, 0, self->DeathSound, 1, ATTN_NORM);
 		}
 		else
 		{
-			S_Sound (self, CHAN_VOICE, "*death", 1, ATTN_NORM);
+			S_Sound (self, CHAN_VOICE, 0, "*death", 1, ATTN_NORM);
 		}
 		return 0;
 	}
@@ -946,7 +946,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 			}
 		}
 	}
-	S_Sound (self, chan, sound, 1, ATTN_NORM);
+	S_Sound (self, chan, 0, sound, 1, ATTN_NORM);
 	return 0;
 }
 
@@ -1094,7 +1094,7 @@ void P_FallingDamage (AActor *actor)
 
 	if (actor->player)
 	{
-		S_Sound (actor, CHAN_AUTO, "*land", 1, ATTN_NORM);
+		S_Sound (actor, CHAN_AUTO, 0, "*land", 1, ATTN_NORM);
 		P_NoiseAlert (actor, actor, true);
 		if (damage >= TELEFRAG_DAMAGE && ((actor->player->cheats & (CF_GODMODE | CF_BUDDHA) ||
 			(actor->FindInventory(PClass::FindActor(NAME_PowerBuddha), true) != nullptr))))
@@ -1170,7 +1170,7 @@ void P_CheckEnvironment(player_t *player)
 		int id = S_FindSkinnedSound(player->mo, "*falling");
 		if (id != 0 && !S_IsActorPlayingSomething(player->mo, CHAN_VOICE, id))
 		{
-			S_Sound(player->mo, CHAN_VOICE, id, 1, ATTN_NORM);
+			S_Sound(player->mo, CHAN_VOICE, 0, id, 1, ATTN_NORM);
 		}
 	}
 }

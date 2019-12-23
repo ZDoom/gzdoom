@@ -592,15 +592,13 @@ void P_GiveSecret(FLevelLocals *Level, AActor *actor, bool printmessage, bool pl
 		{
 			if (printmessage)
 			{
-				if (!showsecretsector || sectornum < 0) C_MidPrint(nullptr, GStrings["SECRETMESSAGE"]);
-				else
+				C_MidPrint(nullptr, GStrings["SECRETMESSAGE"]);
+				if (showsecretsector && sectornum >= 0) 
 				{
-					FString s = GStrings["SECRETMESSAGE"];
-					s.AppendFormat(" (Sector %d)", sectornum);
-					C_MidPrint(nullptr, s);
+					Printf(PRINT_NONOTIFY, "Secret found in sector %d\n", sectornum);
 				}
 			}
-			if (playsound) S_Sound (CHAN_AUTO | CHAN_UI, "misc/secret", 1, ATTN_NORM);
+			if (playsound) S_Sound (CHAN_AUTO, CHANF_UI, "misc/secret", 1, ATTN_NORM);
 		}
 	}
 	Level->found_secrets++;
@@ -649,7 +647,7 @@ void P_PlayerOnSpecialFlat (player_t *player, int floorType)
 		}
 		if (damage > 0 && Terrains[floorType].Splash != -1)
 		{
-			S_Sound (player->mo, CHAN_AUTO,
+			S_Sound (player->mo, CHAN_AUTO, 0,
 				Splashes[Terrains[floorType].Splash].NormalSplashSound, 1,
 				ATTN_IDLE);
 		}

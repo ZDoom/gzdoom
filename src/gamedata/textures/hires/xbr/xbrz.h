@@ -22,6 +22,7 @@
 #include <limits>
 #include "xbrz_config.h"
 
+
 namespace xbrz
 {
 /*
@@ -50,7 +51,6 @@ const int SCALE_FACTOR_MAX = 6;
 
 /*
 -> map source (srcWidth * srcHeight) to target (scale * width x scale * height) image, optionally processing a half-open slice of rows [yFirst, yLast) only
--> support for source/target pitch in bytes!
 -> if your emulator changes only a few image slices during each cycle (e.g. DOSBox) then there's no need to run xBRZ on the complete image:
    Just make sure you enlarge the source image slice by 2 rows on top and 2 on bottom (this is the additional range the xBRZ algorithm is using during analysis)
    CAVEAT: If there are multiple changed slices, make sure they do not overlap after adding these additional rows in order to avoid a memory race condition

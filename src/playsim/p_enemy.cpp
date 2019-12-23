@@ -1848,11 +1848,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Look)
 	{
 		if (self->flags2 & MF2_BOSS)
 		{ // full volume
-			S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NONE);
+			S_Sound (self, CHAN_VOICE, 0, self->SeeSound, 1, ATTN_NONE);
 		}
 		else
 		{
-			S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_VOICE, 0, self->SeeSound, 1, ATTN_NORM);
 		}
 	}
 
@@ -2030,11 +2030,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 	{
 		if (flags & LOF_FULLVOLSEESOUND)
 		{ // full volume
-			S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NONE);
+			S_Sound (self, CHAN_VOICE, 0, self->SeeSound, 1, ATTN_NONE);
 		}
 		else
 		{
-			S_Sound (self, CHAN_VOICE, self->SeeSound, 1, ATTN_NORM);
+			S_Sound (self, CHAN_VOICE, 0, self->SeeSound, 1, ATTN_NORM);
 		}
 	}
 
@@ -2456,7 +2456,7 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		if (meleestate && actor->CheckMeleeRange ())
 		{
 			if (actor->AttackSound)
-				S_Sound (actor, CHAN_WEAPON, actor->AttackSound, 1, ATTN_NORM);
+				S_Sound (actor, CHAN_WEAPON, 0, actor->AttackSound, 1, ATTN_NORM);
 
 			actor->SetState (meleestate);
 			actor->flags &= ~MF_INCHASE;
@@ -2717,7 +2717,7 @@ bool P_CheckForResurrection(AActor *self, bool usevilestates)
 						self->SetState(archvile->FindState(NAME_Heal));
 					}
 				}
-				S_Sound(corpsehit, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
+				S_Sound(corpsehit, CHAN_BODY, 0, "vile/raise", 1, ATTN_IDLE);
 				info = corpsehit->GetDefault();
 
 				if (GetTranslationType(corpsehit->Translation) == TRANSLATION_Blood)
@@ -2994,7 +2994,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 	if (self->player && self->player->morphTics == 0)
 	{
 		const char *pain_amount;
-		FSoundID sfx_id;
+		FSoundID sfx_id = 0;
 
 		if (self->health < 25)
 			pain_amount = "*pain25";
@@ -3025,11 +3025,11 @@ DEFINE_ACTION_FUNCTION(AActor, A_Pain)
 			sfx_id = pain_amount;
 		}
 
-		S_Sound (self, CHAN_VOICE, sfx_id, 1, ATTN_NORM);
+		S_Sound (self, CHAN_VOICE, 0, sfx_id, 1, ATTN_NORM);
 	}
 	else if (self->PainSound)
 	{
-		S_Sound (self, CHAN_VOICE, self->PainSound, 1, ATTN_NORM);
+		S_Sound (self, CHAN_VOICE, 0, self->PainSound, 1, ATTN_NORM);
 	}
 	return 0;
 }
@@ -3050,15 +3050,24 @@ int CheckBossDeath (AActor *actor)
 	auto iterator = actor->Level->GetThinkerIterator<AActor>();
 	AActor *other;
 
+	PClassActor *cls = actor->GetClass();
+	FName type = cls->GetReplacee(actor->Level)->TypeName;
+
 	while ( (other = iterator.Next ()) )
 	{
-		if (other != actor &&
-			(other->health > 0 || (other->flags & MF_ICECORPSE))
-			&& other->GetClass() == actor->GetClass())
+		if (other == actor)
+			continue;
+
+		PClassActor *ocls = other->GetClass();
+		FName otype = ocls->GetReplacee(other->Level)->TypeName;
+
+		if ((other->health > 0 || (other->flags & MF_ICECORPSE))
+			&& (ocls == cls || otype == type))
 		{ // Found a living boss
 		  // [RH] Frozen bosses don't count as dead until they shatter
 			return false;
 		}
+		
 	}
 	// The boss death is good
 	return true;

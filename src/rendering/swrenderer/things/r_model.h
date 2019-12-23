@@ -53,6 +53,7 @@ namespace swrenderer
 		bool MirrorWorldToClip;
 	};
 
+#if 0
 	class SWModelRenderer : public FModelRenderer
 	{
 	public:
@@ -90,8 +91,6 @@ namespace swrenderer
 		Mat4f ObjectToWorld;
 		PolyClipPlane ClipTop, ClipBottom;
 		FTexture *SkinTexture = nullptr;
-		unsigned int *IndexBuffer = nullptr;
-		FModelVertex *VertexBuffer = nullptr;
 		float InterpolationFactor = 0.0;
 		Mat4f *WorldToClip = nullptr;
 		bool MirrorWorldToClip = false;
@@ -117,4 +116,5 @@ namespace swrenderer
 		TArray<FModelVertex> mVertexBuffer;
 		TArray<unsigned int> mIndexBuffer;
 	};
+#endif
 }

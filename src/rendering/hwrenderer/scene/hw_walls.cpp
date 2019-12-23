@@ -175,6 +175,8 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		state.SetObjectColor(color1);
 		state.SetObjectColor2((color1 != color2) ? color2 : PalEntry(0));
 		state.SetAddColor(side->GetAdditiveColor(tierndx, frontsector));
+		state.ApplyTextureManipulation(&side->textures[tierndx].TextureFx);
+
 		if (color1 != color2)
 		{
 			// Do gradient setup only if there actually is a gradient.
@@ -243,6 +245,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	state.SetTextureMode(tmode);
 	state.EnableGlow(false);
 	state.EnableGradient(false);
+	state.ApplyTextureManipulation(nullptr);
 }
 
 //==========================================================================

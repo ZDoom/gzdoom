@@ -86,41 +86,53 @@ SWSceneDrawer::~SWSceneDrawer()
 
 sector_t *SWSceneDrawer::RenderView(player_t *player)
 {
-	// Avoid using the pixel buffer from the last frame
-	FBTextureIndex = (FBTextureIndex + 1) % 2;
-	auto &fbtex = FBTexture[FBTextureIndex];
-
-	if (fbtex == nullptr || fbtex->GetSystemTexture() == nullptr ||
-		fbtex->GetDisplayWidth() != screen->GetWidth() || 
-		fbtex->GetDisplayHeight() != screen->GetHeight() || 
-		(V_IsTrueColor() ? 1:0) != fbtex->GetColorFormat())
+	if (!V_IsTrueColor() || !screen->IsPoly())
 	{
-		// This manually constructs its own material here.
-		fbtex.reset();
-		fbtex.reset(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
-		fbtex->GetSystemTexture()->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
-		auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
-		mat->AddTextureLayer(PaletteTexture);
+		// Avoid using the pixel buffer from the last frame
+		FBTextureIndex = (FBTextureIndex + 1) % 2;
+		auto &fbtex = FBTexture[FBTextureIndex];
 
-		Canvas.reset();
-		Canvas.reset(new DCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
+		if (fbtex == nullptr || fbtex->GetSystemTexture() == nullptr ||
+			fbtex->GetDisplayWidth() != screen->GetWidth() || 
+			fbtex->GetDisplayHeight() != screen->GetHeight() || 
+			(V_IsTrueColor() ? 1:0) != fbtex->GetColorFormat())
+		{
+			// This manually constructs its own material here.
+			fbtex.reset();
+			fbtex.reset(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
+			fbtex->GetSystemTexture()->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
+			auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
+			mat->AddTextureLayer(PaletteTexture);
+
+			Canvas.reset();
+			Canvas.reset(new DCanvas(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
+		}
+
+		IHardwareTexture *systemTexture = fbtex->GetSystemTexture();
+		auto buf = systemTexture->MapBuffer();
+		if (!buf) I_FatalError("Unable to map buffer for software rendering");
+		SWRenderer->RenderView(player, Canvas.get(), buf, systemTexture->GetBufferPitch());
+		systemTexture->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
+
+		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
+		screen->DrawTexture(fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
+		screen->Draw2D();
+		screen->Clear2D();
+		screen->PostProcessScene(CM_DEFAULT, [&]() {
+			SWRenderer->DrawRemainingPlayerSprites();
+			screen->Draw2D();
+			screen->Clear2D();
+		});
 	}
-
-	IHardwareTexture *systemTexture = fbtex->GetSystemTexture();
-	auto buf = systemTexture->MapBuffer();
-	if (!buf) I_FatalError("Unable to map buffer for software rendering");
-	SWRenderer->RenderView(player, Canvas.get(), buf, systemTexture->GetBufferPitch());
-	systemTexture->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
-
-	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
-	screen->DrawTexture(fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
-	screen->Draw2D();
-	screen->Clear2D();
-	screen->PostProcessScene(CM_DEFAULT, [&]() {
+	else
+	{
+		DCanvas *canvas = screen->GetCanvas();
+		SWRenderer->RenderView(player, canvas, canvas->GetPixels(), canvas->GetPitch());
+		// To do: apply swrenderer::CameraLight::Instance()->ShaderColormap();
 		SWRenderer->DrawRemainingPlayerSprites();
 		screen->Draw2D();
 		screen->Clear2D();
-	});
+	}
 
 	return r_viewpoint.sector;
 }

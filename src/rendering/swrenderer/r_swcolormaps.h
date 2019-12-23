@@ -30,6 +30,7 @@ extern FDynamicColormap FullNormalLight;
 extern bool NormalLightHasFixedLights;
 extern TArray<FSWColormap> SpecialSWColormaps;
 
+void DeinitSWColorMaps();
 void InitSWColorMaps();
 FDynamicColormap *GetSpecialLights (PalEntry lightcolor, PalEntry fadecolor, int desaturate);
 void SetDefaultColormap (const char *name);

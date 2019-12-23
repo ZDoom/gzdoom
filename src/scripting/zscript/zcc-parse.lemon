@@ -179,6 +179,7 @@ translation_unit(X) ::= translation_unit(X) EOF.
 translation_unit(X) ::= error.											{ X = NULL; }
 
 %type external_declaration {ZCC_TreeNode *}
+external_declaration(X) ::= mixin_definition(A).						{ X = A; /*X-overwrites-A*/ }
 external_declaration(X) ::= class_definition(A).						{ X = A; /*X-overwrites-A*/ }
 external_declaration(X) ::= struct_def(A).								{ X = A; /*X-overwrites-A*/ }
 external_declaration(X) ::= enum_def(A).								{ X = A; /*X-overwrites-A*/ }
@@ -312,6 +313,7 @@ class_body(X) ::= LBRACE class_innards(A) RBRACE.		{ X = A; /*X-overwrites-A*/ }
 class_innards(X) ::= .									{ X = NULL; }
 class_innards(X) ::= class_innards(X) class_member(B).	{ SAFE_APPEND(X,B); }
 
+%type mixin_statement{ZCC_MixinStmt *}
 %type property_def{ZCC_Property *}
 %type flag_def{ZCC_FlagDef *}
 %type struct_def{ZCC_Struct *}
@@ -320,6 +322,7 @@ class_innards(X) ::= class_innards(X) class_member(B).	{ SAFE_APPEND(X,B); }
 %type const_def {ZCC_ConstantDef *}
 
 class_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= mixin_statement(A).					{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= enum_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= struct_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= states_def(A).						{ X = A; /*X-overwrites-A*/ }
@@ -329,6 +332,14 @@ class_member(X) ::= property_def(A).					{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= flag_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
 
+
+/*----- Mixin statement -----*/
+mixin_statement(X) ::= MIXIN(T) IDENTIFIER(A) SEMICOLON.
+{
+	NEW_AST_NODE(MixinStmt,stmt,T);
+	stmt->MixinName = A.Name();
+	X = stmt;
+}
 
 /*----- Struct Definition -----*/
 /* Structs can define variables and enums. */
@@ -509,6 +520,51 @@ enumerator(X) ::= IDENTIFIER(A) EQ expr(B).			/* Expression must be constant. */
 	node->Symbol = NULL;
 	X = node;
 }
+
+/************ Mixin Definition ************/
+/* Can only occur at global scope. */
+
+%type mixin_definition{ZCC_MixinDef *}
+%type mixin_class_definition{ZCC_MixinDef *}
+
+mixin_definition(X) ::= mixin_class_definition(A).						{ X = A; /*X-overwrites-A*/ }
+
+/*------ Mixin Class Definition ------*/
+%type mixin_class_body{ZCC_TreeNode *}
+%type mixin_class_member{ZCC_TreeNode *}
+
+mixin_class_definition(X) ::= MIXIN(T) CLASS IDENTIFIER(A) LBRACE mixin_class_body(B) RBRACE.
+{
+	NEW_AST_NODE(MixinDef,def,T);
+	def->Body = B;
+	def->NodeName = A.Name();
+	def->MixinType = ZCC_Mixin_Class;
+	def->Symbol = nullptr;
+	X = def;
+}
+
+/*------ Mixin Class Body ------*/
+// Body is a list of:
+//  * variable definitions
+//  * function definitions
+//  * enum definitions
+//  * struct definitions
+//  * state definitions
+//  * constants
+//  * defaults
+
+mixin_class_body(X) ::= .											{ X = NULL; }
+mixin_class_body(X) ::= mixin_class_body(X) mixin_class_member(B).	{ SAFE_APPEND(X,B); }
+
+mixin_class_member(X) ::= declarator(A).						{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= enum_def(A).							{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= struct_def(A).						{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= states_def(A).						{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= default_def(A).						{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= const_def(A).							{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= property_def(A).						{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= flag_def(A).							{ X = A; /*X-overwrites-A*/ }
+mixin_class_member(X) ::= staticarray_statement(A).				{ X = A; /*X-overwrites-A*/ }
 
 /************ States ************/
 

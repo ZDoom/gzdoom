@@ -454,6 +454,7 @@ level_info_t *CheckLevelRedirect (level_info_t *info);
 
 FString CalcMapName (int episode, int level);
 
+void G_ClearMapinfo();
 void G_ParseMapInfo (FString basemapinfo);
 
 enum ESkillProperty

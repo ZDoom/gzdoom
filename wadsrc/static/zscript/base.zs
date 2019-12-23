@@ -444,7 +444,8 @@ class Object native
 	{
 		return level.PickPlayerStart(pnum, flags);
 	}
-	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
+	deprecated("4.3") native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
+	native static void S_StartSound (Sound sound_id, int flags, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
 	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
@@ -618,7 +619,7 @@ struct TraceResults native
 	native bool unlinked;		// passed through a portal without static offset.
 
 	native ETraceResult HitType;
-	// F3DFloor *ffloor;
+	native F3DFloor ffloor;
 
 	native Sector CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
 	native vector3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
@@ -835,10 +836,6 @@ struct State native
 	native bool InStateSequence(State base);
 }
 
-struct F3DFloor native
-{
-}
-
 struct Wads
 {
 	enum WadNamespace
@@ -877,6 +874,11 @@ struct Wads
 	native static int CheckNumForFullName(string name);
 	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
 	native static string ReadLump(int lump);
+
+	native static int GetNumLumps();
+	native static string GetLumpName(int lump);
+	native static string GetLumpFullName(int lump);
+	native static int GetLumpNamespace(int lump);
 }
 
 struct TerrainDef native
@@ -894,6 +896,7 @@ struct TerrainDef native
 	native Sound RightStepSound;
 	native bool IsLiquid;
 	native bool AllowProtection;
+	native bool DamageOnLand;
 	native double Friction;
 	native double MoveFactor;
 };

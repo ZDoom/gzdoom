@@ -111,7 +111,7 @@ void	P_BloodSplatter (const DVector3 &pos, AActor *originator, DAngle hitangle);
 void	P_BloodSplatter2 (const DVector3 &pos, AActor *originator, DAngle hitangle);
 void	P_RipperBlood (AActor *mo, AActor *bleeder);
 int		P_GetThingFloorType (AActor *thing);
-void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target, bool onsky = false);
+void	P_ExplodeMissile (AActor *missile, line_t *explodeline, AActor *target, bool onsky = false, FName damageType = NAME_None);
 
 AActor *P_OldSpawnMissile(AActor *source, AActor *owner, AActor *dest, PClassActor *type);
 AActor *P_SpawnMissile (AActor* source, AActor* dest, PClassActor *type, AActor* owner = NULL);

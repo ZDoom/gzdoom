@@ -142,21 +142,21 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeSoundPitch)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeActorSoundPitch)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);
 	PARAM_FLOAT(pitch);
-	S_ChangeSoundPitch(self, channel, pitch);
+	S_ChangeActorSoundPitch(self, channel, pitch);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeSoundVolume)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeActorSoundVolume)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);
 	PARAM_FLOAT(volume);
-	S_ChangeSoundVolume(self, channel, volume);
+	S_ChangeActorSoundVolume(self, channel, volume);
 	return 0;
 }
 
@@ -172,6 +172,29 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_FLOAT(pitch);
 	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_BOOL(looping);
+	PARAM_FLOAT(attenuation);
+	PARAM_BOOL(local);
+	PARAM_FLOAT(pitch);
+	A_StartSound(self, soundid, channel, flags, volume, looping, attenuation, local, pitch);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_SOUND(soundid);
+	ACTION_RETURN_BOOL(S_IsActorPlayingSomething(self, channel, soundid));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)

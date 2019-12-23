@@ -236,29 +236,7 @@ static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32_t* , uint3
 	return newBuffer;
 }
 
-static void normalNx ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight, int size )
-{
-	const int width = size * inWidth;
-	const int height = size * inHeight;
-
-	for ( int i = 0; i < inWidth; ++i )
-	{
-		for ( int j = 0; j < inHeight; ++j )
-		{
-			const uint32_t E = inputBuffer[ i     +inWidth*j    ];
-			for ( int k = 0; k < size; k++ )
-			{
-				for ( int l = 0; l < size; l++ )
-				{
-					outputBuffer[size*i+k + width*(size*j+l)] = E;
-				}
-			}
-		}
-	}
-}
-
-static unsigned char *normalNxHelper( void (normalNxFunction) ( uint32_t* , uint32_t* , int , int, int),
-							  const int N,
+static unsigned char *normalNx(const int N,
 							  unsigned char *inputBuffer,
 							  const int inWidth,
 							  const int inHeight,
@@ -269,7 +247,25 @@ static unsigned char *normalNxHelper( void (normalNxFunction) ( uint32_t* , uint
 	outHeight = N *inHeight;
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
 
-	normalNxFunction ( reinterpret_cast<uint32_t*> ( inputBuffer ), reinterpret_cast<uint32_t*> ( newBuffer ), inWidth, inHeight, N );
+	uint32_t *const inBuffer = reinterpret_cast<uint32_t *>(inputBuffer);
+	uint32_t *const outBuffer = reinterpret_cast<uint32_t *>(newBuffer);
+
+	for (int y = 0; y < inHeight; ++y)
+	{
+		const int inRowPos = inWidth * y;
+		const int outRowPos = outWidth * N * y;
+
+		for (int x = 0; x < inWidth; ++x)
+		{
+			std::fill_n(&outBuffer[outRowPos + N * x], N, inBuffer[inRowPos + x]);
+		}
+
+		for (int c = 1; c < N; ++c)
+		{
+			std::copy_n(&outBuffer[outRowPos], outWidth, &outBuffer[outRowPos + outWidth * c]);
+		}
+	}
+
 	delete[] inputBuffer;
 	return newBuffer;
 }
@@ -415,8 +411,9 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 	int inWidth = texbuffer.mWidth;
 	int inHeight = texbuffer.mHeight;
 
-	// [BB] Don't resample if the width or height of the input texture is bigger than gl_texture_hqresize_maxinputsize.
-	if ((inWidth > gl_texture_hqresize_maxinputsize) || (inHeight > gl_texture_hqresize_maxinputsize))
+	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
+	const int maxInputSize = gl_texture_hqresize_maxinputsize;
+	if (inWidth * inHeight > maxInputSize * maxInputSize)
 		return;
 
 	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
@@ -495,7 +492,7 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 		else if (type == 5)
 			texbuffer.mBuffer = xbrzHelper(xbrzOldScale, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
 		else if (type == 6)
-			texbuffer.mBuffer = normalNxHelper(&normalNx, mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
+			texbuffer.mBuffer = normalNx(mult, texbuffer.mBuffer, inWidth, inHeight, texbuffer.mWidth, texbuffer.mHeight);
 		else
 			return;
 	}

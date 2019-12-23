@@ -62,7 +62,6 @@
 
 CVAR(Bool, r_fogboundary, true, 0)
 CVAR(Bool, r_drawmirrors, true, 0)
-EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
@@ -88,7 +87,7 @@ namespace swrenderer
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 			return;
 
-		if (WallC.Init(Thread, pt1, pt2, 32.0 / (1 << 12)))
+		if (WallC.Init(Thread, pt1, pt2, line))
 			return;
 
 		RenderPortal *renderportal = Thread->Portal.get();
@@ -108,22 +107,6 @@ namespace swrenderer
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
 		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos))
 			return;
-
-		vertex_t *v1 = line->linedef->v1;
-		vertex_t *v2 = line->linedef->v2;
-
-		if ((v1 == line->v1 && v2 == line->v2) || (v2 == line->v1 && v1 == line->v2))
-		{ // The seg is the entire wall.
-			WallT.InitFromWallCoords(Thread, &WallC);
-		}
-		else
-		{ // The seg is only part of the wall.
-			if (line->linedef->sidedef[0] != line->sidedef)
-			{
-				swapvalues(v1, v2);
-			}
-			WallT.InitFromLine(Thread, v1->fPos() - Thread->Viewport->viewpoint.Pos, v2->fPos() - Thread->Viewport->viewpoint.Pos);
-		}
 
 		mFrontCeilingZ1 = mFrontSector->ceilingplane.ZatPoint(line->v1);
 		mFrontFloorZ1 = mFrontSector->floorplane.ZatPoint(line->v1);
@@ -301,14 +284,6 @@ namespace swrenderer
 	// A wall segment will be drawn between start and stop pixels (inclusive).
 	bool SWRenderLine::RenderWallSegment(int start, int stop)
 	{
-		int i;
-		bool maskedtexture = false;
-
-#ifdef RANGECHECK
-		if (start >= viewwidth || start >= stop)
-			I_Error("Bad R_StoreWallRange: %i to %i", start, stop);
-#endif
-
 		if (!rw_prepped)
 		{
 			rw_prepped = true;
@@ -327,41 +302,38 @@ namespace swrenderer
 		if (m3DFloor.type == Fake3DOpaque::Normal)
 			Thread->DrawSegments->Push(draw_segment);
 
-		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
+		draw_segment->drawsegclip.CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		draw_segment->WallC = WallC;
-		draw_segment->tmapvals = WallT;
 		draw_segment->x1 = start;
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;
-		draw_segment->SubsectorDepth = Thread->OpaquePass->GetSubsectorDepth(mSubsector->Index());
+		draw_segment->drawsegclip.SubsectorDepth = Thread->OpaquePass->GetSubsectorDepth(mSubsector->Index());
 
 		bool markportal = ShouldMarkPortal();
 
 		if (markportal)
 		{
-			draw_segment->silhouette = SIL_BOTH;
+			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
+			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, Thread->OpaquePass->floorclip);
+			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 		}
-		else if (mBackSector == NULL)
+		else if (!mBackSector)
 		{
-			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			fillshort(draw_segment->sprtopclip, stop - start, viewheight);
-			memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
-			draw_segment->silhouette = SIL_BOTH;
+			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, viewheight);
+			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, -1);
+			draw_segment->drawsegclip.silhouette = SIL_BOTH;
 		}
 		else
 		{
 			// two sided line
-			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 ||
-				mBackSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
+			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 || mBackSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
-				draw_segment->silhouette = SIL_BOTTOM;
+				draw_segment->drawsegclip.silhouette = SIL_BOTTOM;
 			}
 
-			if (mFrontCeilingZ1 < mBackCeilingZ1 || mFrontCeilingZ2 < mBackCeilingZ2 ||
-				mBackSector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
+			if (mFrontCeilingZ1 < mBackCeilingZ1 || mFrontCeilingZ2 < mBackCeilingZ2 || mBackSector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
-				draw_segment->silhouette |= SIL_TOP;
+				draw_segment->drawsegclip.silhouette |= SIL_TOP;
 			}
 
 			// killough 1/17/98: this test is required if the fix
@@ -372,118 +344,63 @@ namespace swrenderer
 			//
 			// killough 4/7/98: make doorclosed external variable
 
+			if (mDoorClosed || (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2))
 			{
-				if (mDoorClosed || (mBackCeilingZ1 <= mFrontFloorZ1 && mBackCeilingZ2 <= mFrontFloorZ2))
-				{
-					draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-					memset(draw_segment->sprbottomclip, -1, (stop - start) * sizeof(short));
-					draw_segment->silhouette |= SIL_BOTTOM;
-				}
-				if (mDoorClosed || (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2))
-				{						// killough 1/17/98, 2/8/98
-					draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-					fillshort(draw_segment->sprtopclip, stop - start, viewheight);
-					draw_segment->silhouette |= SIL_TOP;
-				}
+				draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, -1);
+				draw_segment->drawsegclip.silhouette |= SIL_BOTTOM;
+			}
+			if (mDoorClosed || (mBackFloorZ1 >= mFrontCeilingZ1 && mBackFloorZ2 >= mFrontCeilingZ2))
+			{
+				draw_segment->drawsegclip.SetTopClip(Thread, start, stop, viewheight);
+				draw_segment->drawsegclip.silhouette |= SIL_TOP;
 			}
 
 			if (m3DFloor.type == Fake3DOpaque::Normal)
 			{
-				if (r_3dfloors)
-				{
-					if (mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
-						for (i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
-							F3DFloor *rover = mBackSector->e->XFloor.ffloors[i];
-							if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
-								draw_segment->SetHas3DFloorBackSectorWalls();
-								break;
-							}
-						}
-					}
-					if (mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
-						for (i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
-							F3DFloor *rover = mFrontSector->e->XFloor.ffloors[i];
-							if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
-								draw_segment->SetHas3DFloorFrontSectorWalls();
-								break;
-							}
-						}
-					}
-				}
-
-				// allocate space for masked texture tables, if needed
-				// [RH] Don't just allocate the space; fill it in too.
-				if ((sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls() || IsFogBoundary(mFrontSector, mBackSector)) &&
-					(mCeilingClipped != ProjectedWallCull::OutsideBelow || !sidedef->GetTexture(side_t::top).isValid()) &&
+				if ((mCeilingClipped != ProjectedWallCull::OutsideBelow || !sidedef->GetTexture(side_t::top).isValid()) &&
 					(mFloorClipped != ProjectedWallCull::OutsideAbove || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 					(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
 				{
-					float *swal;
-					fixed_t *lwal;
-					int i;
-
-					maskedtexture = true;
-
-					// kg3D - backup for mid and fake walls
-					draw_segment->bkup = Thread->FrameMemory->AllocMemory<short>(stop - start);
-					memcpy(draw_segment->bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
-
-					draw_segment->bFogBoundary = IsFogBoundary(mFrontSector, mBackSector);
-					if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls())
+					if (r_3dfloors)
 					{
-						if (sidedef->GetTexture(side_t::mid).isValid())
-							draw_segment->SetHas3DFloorMidTexture();
-
-						draw_segment->maskedtexturecol = Thread->FrameMemory->AllocMemory<fixed_t>(stop - start);
-						draw_segment->swall = Thread->FrameMemory->AllocMemory<float>(stop - start);
-
-						lwal = draw_segment->maskedtexturecol;
-						swal = draw_segment->swall;
-						FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-						FSoftwareTexture *pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
-						double yscale = (pic ? pic->GetScale().Y : 1.0) * sidedef->GetTextureYScale(side_t::mid);
-						fixed_t xoffset = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
-
-						if (pic && pic->useWorldPanning(sidedef->GetLevel()))
-						{
-							xoffset = xs_RoundToInt(xoffset * lwallscale);
+						if (mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
+							for (int i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
+								F3DFloor* rover = mBackSector->e->XFloor.ffloors[i];
+								if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
+									draw_segment->SetHas3DFloorBackSectorWalls();
+									break;
+								}
+							}
 						}
-
-						for (i = start; i < stop; i++)
-						{
-							*lwal++ = walltexcoords.UPos[i] + xoffset;
-							*swal++ = walltexcoords.VStep[i];
-						}
-
-						double istart = draw_segment->swall[0] * yscale;
-						double iend = *(swal - 1) * yscale;
-#if 0
-						///This was for avoiding overflow when using fixed point. It might not be needed anymore.
-						const double mini = 3 / 65536.0;
-						if (istart < mini && istart >= 0) istart = mini;
-						if (istart > -mini && istart < 0) istart = -mini;
-						if (iend < mini && iend >= 0) iend = mini;
-						if (iend > -mini && iend < 0) iend = -mini;
-#endif
-						istart = 1 / istart;
-						iend = 1 / iend;
-						draw_segment->yscale = (float)yscale;
-						draw_segment->iscale = (float)istart;
-						if (stop - start > 1)
-						{
-							draw_segment->iscalestep = float((iend - istart) / (stop - start - 1));
-						}
-						else
-						{
-							draw_segment->iscalestep = 0;
+						if (mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
+							for (int i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
+								F3DFloor* rover = mFrontSector->e->XFloor.ffloors[i];
+								if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
+									draw_segment->SetHas3DFloorFrontSectorWalls();
+									break;
+								}
+							}
 						}
 					}
 
-					draw_segment->light = mLight.GetLightPos(start);
-					draw_segment->lightstep = mLight.GetLightStep();
+					if (IsFogBoundary(mFrontSector, mBackSector))
+						draw_segment->SetHasFogBoundary();
 
-					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
+					if (mLineSegment->linedef->alpha > 0.0f && sidedef->GetTexture(side_t::mid).isValid())
 					{
+						FTexture* tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
+						FSoftwareTexture* pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+						if (pic)
+						{
+							draw_segment->SetHasTranslucentMidTexture();
+							draw_segment->texcoords.ProjectTranslucent(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, pic);
+							draw_segment->drawsegclip.silhouette |= SIL_TOP | SIL_BOTTOM;
+						}
+					}
+
+					if (draw_segment->HasFogBoundary() || draw_segment->HasTranslucentMidTexture() || draw_segment->Has3DFloorWalls())
+					{
+						draw_segment->drawsegclip.SetBackupClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}
 				}
@@ -503,22 +420,16 @@ namespace swrenderer
 
 		MarkOpaquePassClip(start, stop);
 
-		// save sprite clipping info
-		if (((draw_segment->silhouette & SIL_TOP) || maskedtexture) && draw_segment->sprtopclip == nullptr)
+		bool needcliplists = draw_segment->HasFogBoundary() || draw_segment->HasTranslucentMidTexture() || draw_segment->Has3DFloorWalls();
+
+		if (((draw_segment->drawsegclip.silhouette & SIL_TOP) || needcliplists) && !draw_segment->drawsegclip.sprtopclip)
 		{
-			draw_segment->sprtopclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			memcpy(draw_segment->sprtopclip, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
+			draw_segment->drawsegclip.SetTopClip(Thread, start, stop, Thread->OpaquePass->ceilingclip);
 		}
 
-		if (((draw_segment->silhouette & SIL_BOTTOM) || maskedtexture) && draw_segment->sprbottomclip == nullptr)
+		if (((draw_segment->drawsegclip.silhouette & SIL_BOTTOM) || needcliplists) && !draw_segment->drawsegclip.sprbottomclip)
 		{
-			draw_segment->sprbottomclip = Thread->FrameMemory->AllocMemory<short>(stop - start);
-			memcpy(draw_segment->sprbottomclip, &Thread->OpaquePass->floorclip[start], sizeof(short)*(stop - start));
-		}
-
-		if (maskedtexture && mLineSegment->sidedef->GetTexture(side_t::mid).isValid())
-		{
-			draw_segment->silhouette |= SIL_TOP | SIL_BOTTOM;
+			draw_segment->drawsegclip.SetBottomClip(Thread, start, stop, Thread->OpaquePass->floorclip);
 		}
 
 		RenderMiddleTexture(start, stop);
@@ -529,12 +440,12 @@ namespace swrenderer
 		// [ZZ] Only if not an active mirror
 		if (!markportal)
 		{
-			RenderDecal::RenderDecals(Thread, mLineSegment->sidedef, draw_segment, mLineSegment, mLight, walltop.ScreenY, wallbottom.ScreenY, false);
+			RenderDecal::RenderDecals(Thread, draw_segment, mLineSegment, mFrontSector, walltop.ScreenY, wallbottom.ScreenY, false);
 		}
 
 		if (markportal)
 		{
-			Thread->Portal->AddLinePortal(mLineSegment->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
+			Thread->Portal->AddLinePortal(mLineSegment->linedef, draw_segment->x1, draw_segment->x2, draw_segment->drawsegclip.sprtopclip, draw_segment->drawsegclip.sprbottomclip);
 		}
 
 		return true;
@@ -720,9 +631,7 @@ namespace swrenderer
 		markfloor = ShouldMarkFloor();
 		markceiling = ShouldMarkCeiling();
 
-		SetTopTexture();
-		SetMiddleTexture();
-		SetBottomTexture();
+		SetTextures();
 
 		if (mBackSector && !(sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)))
 		{
@@ -746,215 +655,67 @@ namespace swrenderer
 				}
 			}
 		}
+	}
 
-		FTexture *ftex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-		FSoftwareTexture *midtex = ftex && ftex->isValid() ? ftex->GetSoftwareTexture() : nullptr;
+	void SWRenderLine::SetTextures()
+	{
+		mTopTexture = nullptr;
+		mMiddleTexture = nullptr;
+		mBottomTexture = nullptr;
 
-		bool segtextured = ftex != NULL || mTopPart.Texture != NULL || mBottomPart.Texture != NULL;
+		side_t* sidedef = mLineSegment->sidedef;
+		line_t* linedef = mLineSegment->linedef;
+		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
 
-		if (m3DFloor.type == Fake3DOpaque::Normal)
+		if (!mBackSector)
 		{
-			mLight.SetColormap(mFrontSector, mLineSegment);
+			SetMiddleTexture();
 		}
-
-		// calculate light table
-		if (segtextured || (mBackSector && IsFogBoundary(mFrontSector, mBackSector)))
+		else
 		{
-			lwallscale =
-				ftex ? ((midtex? midtex->GetScale().X : 1.0) * sidedef->GetTextureXScale(side_t::mid)) :
-				mTopPart.Texture ? (mTopPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::top)) :
-				mBottomPart.Texture ? (mBottomPart.Texture->GetScale().X * sidedef->GetTextureXScale(side_t::bottom)) :
-				1.;
-
-			walltexcoords.Project(Thread->Viewport.get(), sidedef->TexelLength * lwallscale, WallC.sx1, WallC.sx2, WallT);
-
-			mLight.SetLightLeft(Thread, WallC);
+			if (mFrontCeilingZ1 > mBackCeilingZ1 || mFrontCeilingZ2 > mBackCeilingZ2) SetTopTexture();
+			if (mFrontFloorZ1 < mBackFloorZ1 || mFrontFloorZ2 < mBackFloorZ2) SetBottomTexture();
 		}
 	}
 
 	void SWRenderLine::SetTopTexture()
 	{
-		mTopPart.Texture = nullptr;
-
-		if (!(mFrontCeilingZ1 > mBackCeilingZ1 || mFrontCeilingZ2 > mBackCeilingZ2)) return;
-
 		side_t *sidedef = mLineSegment->sidedef;
 		line_t *linedef = mLineSegment->linedef;
-		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
-		if (!mBackSector) return;
 		
 		// No top texture for skyhack lines
 		if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum && mBackSector->GetTexture(sector_t::ceiling) == skyflatnum) return;
 		
 		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::top), true);
-		mTopPart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
-		if (mTopPart.Texture == nullptr) return;
+		if (!tex || !tex->isValid()) return;
 
-		mTopPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::top));
-		double rowoffset = sidedef->GetTextureYOffset(side_t::top);
-		mTopPart.TextureScaleU = sidedef->GetTextureXScale(side_t::top);
-		mTopPart.TextureScaleV = sidedef->GetTextureYScale(side_t::top);
-		double yrepeat = mTopPart.Texture->GetScale().Y * mTopPart.TextureScaleV;
-		if (yrepeat >= 0)
-		{ // normal orientation
-			if (linedef->flags & ML_DONTPEGTOP)
-			{ // top of texture at top
-				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
-				if (rowoffset < 0 && mTopPart.Texture != NULL)
-				{
-					rowoffset += mTopPart.Texture->GetHeight();
-				}
-			}
-			else
-			{ // bottom of texture at bottom
-				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
-			}
-		}
-		else
-		{ // upside down
-			rowoffset = -rowoffset;
-			if (linedef->flags & ML_DONTPEGTOP)
-			{ // bottom of texture at top
-				mTopPart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mTopPart.Texture->GetHeight();
-			}
-			else
-			{ // top of texture at bottom
-				mTopPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
-			}
-		}
-		if (mTopPart.Texture->useWorldPanning(mLineSegment->GetLevel()))
-		{
-			mTopPart.TextureMid += rowoffset * yrepeat;
-		}
-		else
-		{
-			mTopPart.TextureMid += rowoffset;
-		}
+		mTopTexture = tex->GetSoftwareTexture();
 	}
 	
 	void SWRenderLine::SetMiddleTexture()
 	{
-		mMiddlePart.Texture = nullptr;
-		
 		side_t *sidedef = mLineSegment->sidedef;
 		line_t *linedef = mLineSegment->linedef;
-		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
-		if (mBackSector) return;
 		
 		// [RH] Horizon lines do not need to be textured
 		if (linedef->isVisualPortal()) return;
 		if (linedef->special == Line_Horizon) return;
 			
 		auto tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-		mMiddlePart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
-		if (mMiddlePart.Texture == nullptr) return;
-		mMiddlePart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::mid));
-		double rowoffset = sidedef->GetTextureYOffset(side_t::mid);
-		mMiddlePart.TextureScaleU = sidedef->GetTextureXScale(side_t::mid);
-		mMiddlePart.TextureScaleV = sidedef->GetTextureYScale(side_t::mid);
-		double yrepeat = mMiddlePart.Texture->GetScale().Y * mMiddlePart.TextureScaleV;
-		if (yrepeat >= 0)
-		{ // normal orientation
-			if (linedef->flags & ML_DONTPEGBOTTOM)
-			{ // bottom of texture at bottom
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
-			}
-			else
-			{ // top of texture at top
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
-				if (rowoffset < 0 && mMiddlePart.Texture != NULL)
-				{
-					rowoffset += mMiddlePart.Texture->GetHeight();
-				}
-			}
-		}
-		else
-		{ // upside down
-			rowoffset = -rowoffset;
-			if (linedef->flags & ML_DONTPEGBOTTOM)
-			{ // top of texture at bottom
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
-			}
-			else
-			{ // bottom of texture at top
-				mMiddlePart.TextureMid = (mFrontSector->GetPlaneTexZ(sector_t::ceiling) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mMiddlePart.Texture->GetHeight();
-			}
-		}
-		if (mMiddlePart.Texture->useWorldPanning(mLineSegment->GetLevel()))
-		{
-			mMiddlePart.TextureMid += rowoffset * yrepeat;
-		}
-		else
-		{
-			// rowoffset is added outside the multiply so that it positions the texture
-			// by texels instead of world units.
-			mMiddlePart.TextureMid += rowoffset;
-		}
+		if (!tex || !tex->isValid()) return;
+
+		mMiddleTexture = tex->GetSoftwareTexture();
 	}
 	
 	void SWRenderLine::SetBottomTexture()
 	{
-		mBottomPart.Texture = nullptr;
-		
-		if (!(mFrontFloorZ1 < mBackFloorZ1 || mFrontFloorZ2 < mBackFloorZ2)) return;
-		
 		side_t *sidedef = mLineSegment->sidedef;
 		line_t *linedef = mLineSegment->linedef;
-		if (sidedef == linedef->sidedef[0] && (linedef->special == Line_Mirror && r_drawmirrors)) return;
-		if (!mBackSector) return;
-		
-		double frontlowertop = mFrontSector->GetPlaneTexZ(sector_t::ceiling);
-		if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum && mBackSector->GetTexture(sector_t::ceiling) == skyflatnum)
-		{
-			// Putting sky ceilings on the front and back of a line alters the way unpegged
-			// positioning works.
-			frontlowertop = mBackSector->GetPlaneTexZ(sector_t::ceiling);
-		}
 		
 		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::bottom), true);
-		mBottomPart.Texture = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
-		if (!mBottomPart.Texture) return;
+		if (!tex || !tex->isValid()) return;
 
-		mBottomPart.TextureOffsetU = FLOAT2FIXED(sidedef->GetTextureXOffset(side_t::bottom));
-		double rowoffset = sidedef->GetTextureYOffset(side_t::bottom);
-		mBottomPart.TextureScaleU = sidedef->GetTextureXScale(side_t::bottom);
-		mBottomPart.TextureScaleV = sidedef->GetTextureYScale(side_t::bottom);
-		double yrepeat = mBottomPart.Texture->GetScale().Y * mBottomPart.TextureScaleV;
-		if (yrepeat >= 0)
-		{ // normal orientation
-			if (linedef->flags & ML_DONTPEGBOTTOM)
-			{ // bottom of texture at bottom
-				mBottomPart.TextureMid = (frontlowertop - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
-			}
-			else
-			{ // top of texture at top
-				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
-				if (rowoffset < 0 && mBottomPart.Texture != NULL)
-				{
-					rowoffset += mBottomPart.Texture->GetHeight();
-				}
-			}
-		}
-		else
-		{ // upside down
-			rowoffset = -rowoffset;
-			if (linedef->flags & ML_DONTPEGBOTTOM)
-			{ // top of texture at bottom
-				mBottomPart.TextureMid = (frontlowertop - Thread->Viewport->viewpoint.Pos.Z) * yrepeat;
-			}
-			else
-			{ // bottom of texture at top
-				mBottomPart.TextureMid = (mBackSector->GetPlaneTexZ(sector_t::floor) - Thread->Viewport->viewpoint.Pos.Z) * yrepeat + mBottomPart.Texture->GetHeight();
-			}
-		}
-		if (mBottomPart.Texture->useWorldPanning(mLineSegment->GetLevel()))
-		{
-			mBottomPart.TextureMid += rowoffset * yrepeat;
-		}
-		else
-		{
-			mBottomPart.TextureMid += rowoffset;
-		}
+		mBottomTexture = tex->GetSoftwareTexture();
 	}
 
 	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back) const
@@ -1072,14 +833,14 @@ namespace swrenderer
 		auto ceilingclip = Thread->OpaquePass->ceilingclip;
 		auto floorclip = Thread->OpaquePass->floorclip;
 
-		if (mMiddlePart.Texture) // one sided line
+		if (mMiddleTexture) // one sided line
 		{
 			fillshort(ceilingclip + x1, x2 - x1, viewheight);
 			fillshort(floorclip + x1, x2 - x1, 0xffff);
 		}
 		else
 		{ // two sided line
-			if (mTopPart.Texture != nullptr)
+			if (mTopTexture != nullptr)
 			{ // top wall
 				for (int x = x1; x < x2; ++x)
 				{
@@ -1092,7 +853,7 @@ namespace swrenderer
 				memcpy(ceilingclip + x1, walltop.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 
-			if (mBottomPart.Texture != nullptr)
+			if (mBottomTexture != nullptr)
 			{ // bottom wall
 				for (int x = x1; x < x2; ++x)
 				{
@@ -1109,227 +870,39 @@ namespace swrenderer
 
 	void SWRenderLine::RenderTopTexture(int x1, int x2)
 	{
-		if (mMiddlePart.Texture) return;
-		if (!mTopPart.Texture) return;
+		if (mMiddleTexture) return;
+		if (!mTopTexture) return;
 		if (!viewactive) return;
 
-		auto rw_pic = mTopPart.Texture;
-		double xscale = rw_pic->GetScale().X * mTopPart.TextureScaleU;
-		double yscale = rw_pic->GetScale().Y * mTopPart.TextureScaleV;
-		if (xscale != lwallscale)
-		{
-			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-			lwallscale = xscale;
-		}
-		fixed_t offset;
-		if (mTopPart.Texture->useWorldPanning(mLineSegment->GetLevel()))
-		{
-			offset = xs_RoundToInt(mTopPart.TextureOffsetU * xscale);
-		}
-		else
-		{
-			offset = mTopPart.TextureOffsetU;
-		}
-		if (xscale < 0)
-		{
-			offset = -offset;
-		}
+		ProjectedWallTexcoords texcoords;
+		texcoords.ProjectTop(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mTopTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallupper.ScreenY, mTopPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mBackCeilingZ1, mBackCeilingZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mTopTexture, x1, x2, walltop.ScreenY, wallupper.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
 	{
-		if (!mMiddlePart.Texture) return;
+		if (!mMiddleTexture) return;
 		if (!viewactive) return;
 
-		auto rw_pic = mMiddlePart.Texture;
-		double xscale = rw_pic->GetScale().X * mMiddlePart.TextureScaleU;
-		double yscale = rw_pic->GetScale().Y * mMiddlePart.TextureScaleV;
-		if (xscale != lwallscale)
-		{
-			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-			lwallscale = xscale;
-		}
-		fixed_t offset;
-		if (mMiddlePart.Texture->useWorldPanning(mLineSegment->GetLevel()))
-		{
-			offset = xs_RoundToInt(mMiddlePart.TextureOffsetU * xscale);
-		}
-		else
-		{
-			offset = mMiddlePart.TextureOffsetU;
-		}
-		if (xscale < 0)
-		{
-			offset = -offset;
-		}
+		ProjectedWallTexcoords texcoords;
+		texcoords.ProjectMid(Thread->Viewport.get(), mFrontSector, mLineSegment, WallC, mMiddleTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walltop.ScreenY, wallbottom.ScreenY, mMiddlePart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mFrontCeilingZ1, mFrontCeilingZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mMiddleTexture, x1, x2, walltop.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
 	{
-		if (mMiddlePart.Texture) return;
-		if (!mBottomPart.Texture) return;
+		if (mMiddleTexture) return;
+		if (!mBottomTexture) return;
 		if (!viewactive) return;
 
-		auto rw_pic = mBottomPart.Texture;
-		double xscale = rw_pic->GetScale().X * mBottomPart.TextureScaleU;
-		double yscale = rw_pic->GetScale().Y * mBottomPart.TextureScaleV;
-		if (xscale != lwallscale)
-		{
-			walltexcoords.ProjectPos(Thread->Viewport.get(), mLineSegment->sidedef->TexelLength*xscale, WallC.sx1, WallC.sx2, WallT);
-			lwallscale = xscale;
-		}
-		fixed_t offset;
-		if (mBottomPart.Texture->useWorldPanning(mLineSegment->GetLevel()))
-		{
-			offset = xs_RoundToInt(mBottomPart.TextureOffsetU * xscale);
-		}
-		else
-		{
-			offset = mBottomPart.TextureOffsetU;
-		}
-		if (xscale < 0)
-		{
-			offset = -offset;
-		}
+		ProjectedWallTexcoords texcoords;
+		texcoords.ProjectBottom(Thread->Viewport.get(), mFrontSector, mBackSector, mLineSegment, WallC, mBottomTexture);
 
 		RenderWallPart renderWallpart(Thread);
-		renderWallpart.Render(mFrontSector, mLineSegment, WallC, rw_pic, x1, x2, walllower.ScreenY, wallbottom.ScreenY, mBottomPart.TextureMid, walltexcoords.VStep, walltexcoords.UPos, yscale, MAX(mBackFloorZ1, mBackFloorZ2), MIN(mFrontFloorZ1, mFrontFloorZ2), false, false, OPAQUE, offset, mLight, GetLightList());
-	}
-
-	FLightNode *SWRenderLine::GetLightList()
-	{
-		CameraLight *cameraLight = CameraLight::Instance();
-		if ((cameraLight->FixedLightLevel() >= 0) || cameraLight->FixedColormap())
-			return nullptr; // [SP] Don't draw dynlights if invul/lightamp active
-		else if (mLineSegment && mLineSegment->sidedef)
-			return mLineSegment->sidedef->lighthead;
-		else
-			return nullptr;
-	}
-
-	////////////////////////////////////////////////////////////////////////////
-
-	// Transform and clip coordinates. Returns true if it was clipped away
-	bool FWallCoords::Init(RenderThread *thread, const DVector2 &pt1, const DVector2 &pt2, double too_close)
-	{
-		auto viewport = thread->Viewport.get();
-		RenderPortal *renderportal = thread->Portal.get();
-
-		tleft.X = float(pt1.X * viewport->viewpoint.Sin - pt1.Y * viewport->viewpoint.Cos);
-		tright.X = float(pt2.X * viewport->viewpoint.Sin - pt2.Y * viewport->viewpoint.Cos);
-
-		tleft.Y = float(pt1.X * viewport->viewpoint.TanCos + pt1.Y * viewport->viewpoint.TanSin);
-		tright.Y = float(pt2.X * viewport->viewpoint.TanCos + pt2.Y * viewport->viewpoint.TanSin);
-
-		if (renderportal->MirrorFlags & RF_XFLIP)
-		{
-			float t = -tleft.X;
-			tleft.X = -tright.X;
-			tright.X = t;
-			swapvalues(tleft.Y, tright.Y);
-		}
-
-		float fsx1, fsz1, fsx2, fsz2;
-
-		if (tleft.X >= -tleft.Y)
-		{
-			if (tleft.X > tleft.Y) return true;	// left edge is off the right side
-			if (tleft.Y == 0) return true;
-			fsx1 = viewport->CenterX + tleft.X * viewport->CenterX / tleft.Y;
-			fsz1 = tleft.Y;
-		}
-		else
-		{
-			if (tright.X < -tright.Y) return true;	// wall is off the left side
-			float den = tleft.X - tright.X - tright.Y + tleft.Y;
-			if (den == 0) return true;
-			fsx1 = 0;
-			fsz1 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X + tleft.Y) / den;
-		}
-
-		if (fsz1 < too_close)
-			return true;
-
-		if (tright.X <= tright.Y)
-		{
-			if (tright.X < -tright.Y) return true;	// right edge is off the left side
-			if (tright.Y == 0) return true;
-			fsx2 = viewport->CenterX + tright.X * viewport->CenterX / tright.Y;
-			fsz2 = tright.Y;
-		}
-		else
-		{
-			if (tleft.X > tleft.Y) return true;	// wall is off the right side
-			float den = tright.Y - tleft.Y - tright.X + tleft.X;
-			if (den == 0) return true;
-			fsx2 = viewwidth;
-			fsz2 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X - tleft.Y) / den;
-		}
-
-		if (fsz2 < too_close)
-			return true;
-
-		sx1 = xs_RoundToInt(fsx1);
-		sx2 = xs_RoundToInt(fsx2);
-
-		float delta = fsx2 - fsx1;
-		float t1 = (sx1 + 0.5f - fsx1) / delta;
-		float t2 = (sx2 + 0.5f - fsx1) / delta;
-		float invZ1 = 1.0f / fsz1;
-		float invZ2 = 1.0f / fsz2;
-		sz1 = 1.0f / (invZ1 * (1.0f - t1) + invZ2 * t1);
-		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
-
-		return sx2 <= sx1;
-	}
-
-	/////////////////////////////////////////////////////////////////////////
-
-	void FWallTmapVals::InitFromWallCoords(RenderThread *thread, const FWallCoords *wallc)
-	{
-		const FVector2 *left = &wallc->tleft;
-		const FVector2 *right = &wallc->tright;
-		
-		RenderPortal *renderportal = thread->Portal.get();
-
-		if (renderportal->MirrorFlags & RF_XFLIP)
-		{
-			swapvalues(left, right);
-		}
-		UoverZorg = left->X * thread->Viewport->CenterX;
-		UoverZstep = -left->Y;
-		InvZorg = (left->X - right->X) * thread->Viewport->CenterX;
-		InvZstep = right->Y - left->Y;
-	}
-
-	void FWallTmapVals::InitFromLine(RenderThread *thread, const DVector2 &left, const DVector2 &right)
-	{
-		// Coordinates should have already had viewx,viewy subtracted
-
-		auto viewport = thread->Viewport.get();
-
-		double fullx1 = left.X * viewport->viewpoint.Sin - left.Y * viewport->viewpoint.Cos;
-		double fullx2 = right.X * viewport->viewpoint.Sin - right.Y * viewport->viewpoint.Cos;
-		double fully1 = left.X * viewport->viewpoint.TanCos + left.Y * viewport->viewpoint.TanSin;
-		double fully2 = right.X * viewport->viewpoint.TanCos + right.Y * viewport->viewpoint.TanSin;
-		
-		RenderPortal *renderportal = thread->Portal.get();
-
-		if (renderportal->MirrorFlags & RF_XFLIP)
-		{
-			fullx1 = -fullx1;
-			fullx2 = -fullx2;
-		}
-
-		UoverZorg = float(fullx1 * viewport->CenterX);
-		UoverZstep = float(-fully1);
-		InvZorg = float((fullx1 - fullx2) * viewport->CenterX);
-		InvZstep = float(fully2 - fully1);
+		renderWallpart.Render(mFrontSector, mLineSegment, WallC, mBottomTexture, x1, x2, walllower.ScreenY, wallbottom.ScreenY, texcoords, false, false, OPAQUE);
 	}
 }

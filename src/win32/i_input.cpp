@@ -88,7 +88,6 @@
 #include "doomerrors.h"
 #include "i_system.h"
 #include "g_levellocals.h"
-#include "atterm.h"
 
 
 // Compensate for w32api's lack
@@ -423,8 +422,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_DESTROY:
 		SetPriorityClass (GetCurrentProcess(), NORMAL_PRIORITY_CLASS);
-		//PostQuitMessage (0);
-		exit (0);
+		PostQuitMessage (0);
 		break;
 
 	case WM_HOTKEY:
@@ -614,7 +612,6 @@ bool I_InitInput (void *hwnd)
 	HRESULT hr;
 
 	Printf ("I_InitInput\n");
-	atterm (I_ShutdownInput);
 
 	noidle = !!Args->CheckParm ("-noidle");
 	g_pdi = NULL;
@@ -740,7 +737,7 @@ void I_GetEvent ()
 	while (PeekMessage (&mess, NULL, 0, 0, PM_REMOVE))
 	{
 		if (mess.message == WM_QUIT)
-			exit (mess.wParam);
+			throw CExitEvent(mess.wParam);
 
 		if (GUICapture)
 		{

@@ -115,7 +115,7 @@ class Mat4f
 public:
 	static Mat4f Null();
 	static Mat4f Identity();
-	static Mat4f FromValues(float *matrix);
+	static Mat4f FromValues(const float *matrix);
 	static Mat4f Transpose(const Mat4f &matrix);
 	static Mat4f Translate(float x, float y, float z);
 	static Mat4f Scale(float x, float y, float z);

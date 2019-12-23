@@ -74,6 +74,7 @@ namespace swrenderer
 
 	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
+#if 0
 		SWModelRenderer renderer(thread, clip3DFloor, &WorldToClip, MirrorWorldToClip);
 
 		renderer.sector = actor->Sector;
@@ -83,10 +84,10 @@ namespace swrenderer
 			return;
 
 		bool foggy = false;
-		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+		int actualextralight = foggy ? 0 : thread->Viewport->viewpoint.extralight << 4;
 		bool fullbrightSprite = ((actor->renderflags & RF_FULLBRIGHT) || (actor->flags5 & MF5_BRIGHT));
 		renderer.lightlevel = fullbrightSprite ? 255 : actor->Sector->lightlevel + actualextralight;
-		renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
+		renderer.visibility = thread->Light->SpriteGlobVis(foggy);
 
 		renderer.fillcolor = actor->fillcolor;
 		renderer.Translation = actor->Translation;
@@ -94,6 +95,7 @@ namespace swrenderer
 		renderer.AddLights(actor);
 		renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
+#endif
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -116,6 +118,7 @@ namespace swrenderer
 
 	void RenderHUDModel(RenderThread *thread, DPSprite *psp, float ofsx, float ofsy)
 	{
+#if 0
 		SWModelRenderer renderer(thread, Fake3DTranslucent(), &thread->Viewport->WorldToClip, false);
 
 		AActor *playermo = players[consoleplayer].camera;
@@ -128,10 +131,10 @@ namespace swrenderer
 			return;
 
 		bool foggy = false;
-		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+		int actualextralight = foggy ? 0 : thread->Viewport->viewpoint.extralight << 4;
 		bool fullbrightSprite = isBright(psp);
 		renderer.lightlevel = fullbrightSprite ? 255 : playermo->Sector->lightlevel + actualextralight;
-		renderer.visibility = PolyRenderer::Instance()->Light.SpriteGlobVis(foggy);
+		renderer.visibility = thread->Light->SpriteGlobVis(foggy);
 
 		PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
 		ThingColor.a = 255;
@@ -141,13 +144,17 @@ namespace swrenderer
 
 		renderer.RenderHUDModel(psp, ofsx, ofsy);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
+#endif
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
 
+#if 0
 	SWModelRenderer::SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor, Mat4f *worldToClip, bool mirrorWorldToClip)
 		: Thread(thread), Clip3DFloor(clip3DFloor), WorldToClip(worldToClip), MirrorWorldToClip(mirrorWorldToClip)
 	{
+		static PolySWInputAssembly input;
+		PolyTriangleDrawer::SetInputAssembly(thread->DrawQueue, &input);
 	}
 
 	void SWModelRenderer::AddLights(AActor *actor)
@@ -354,7 +361,8 @@ namespace swrenderer
 	{
 		PolyDrawArgs args;
 		auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
-		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);		args.SetLights(Lights, NumLights);
+		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);
+		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);
@@ -364,14 +372,16 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		PolyTriangleDrawer::DrawArray(Thread->DrawQueue, args, VertexBuffer + start, count);
+		PolyTriangleDrawer::PushDrawArgs(Thread->DrawQueue, args);
+		PolyTriangleDrawer::Draw(Thread->DrawQueue, start, count);
 	}
 
 	void SWModelRenderer::DrawElements(int numIndices, size_t offset)
 	{
 		PolyDrawArgs args;
 		auto nc = !!(sector->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING);
-		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);		args.SetLights(Lights, NumLights);
+		args.SetLight(GetSpriteColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], nc), lightlevel, visibility, fullbrightSprite);
+		args.SetLights(Lights, NumLights);
 		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(RenderStyle, RenderAlpha, fillcolor, Translation, SkinTexture->GetSoftwareTexture(), fullbrightSprite);
 		args.SetDepthTest(true);
@@ -381,7 +391,8 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		PolyTriangleDrawer::DrawElements(Thread->DrawQueue, args, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
+		PolyTriangleDrawer::PushDrawArgs(Thread->DrawQueue, args);
+		PolyTriangleDrawer::DrawIndexed(Thread->DrawQueue, static_cast<int>(offset / sizeof(unsigned int)), numIndices);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -417,8 +428,13 @@ namespace swrenderer
 	void SWModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 	{
 		SWModelRenderer *swrenderer = (SWModelRenderer *)renderer;
-		swrenderer->VertexBuffer = mVertexBuffer.Size() ? &mVertexBuffer[0] : nullptr;
-		swrenderer->IndexBuffer = mIndexBuffer.Size() ? &mIndexBuffer[0] : nullptr;
+
+		if (mVertexBuffer.Size() > 0)
+			PolyTriangleDrawer::SetVertexBuffer(swrenderer->Thread->DrawQueue, &mVertexBuffer[0]);
+		if (mIndexBuffer.Size() > 0)
+			PolyTriangleDrawer::SetIndexBuffer(swrenderer->Thread->DrawQueue, &mIndexBuffer[0]);
+
 		PolyTriangleDrawer::SetModelVertexShader(swrenderer->Thread->DrawQueue, frame1, frame2, swrenderer->InterpolationFactor);
 	}
+#endif
 }

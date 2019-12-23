@@ -138,6 +138,9 @@ bool FGLRenderState::ApplyShader()
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 	activeShader->muAddColor.Set(mStreamData.uAddColor);
+	activeShader->muTextureAddColor.Set(mStreamData.uTextureAddColor);
+	activeShader->muTextureModulateColor.Set(mStreamData.uTextureModulateColor);
+	activeShader->muTextureBlendColor.Set(mStreamData.uTextureBlendColor);
 
 	if (mGlowEnabled || activeShader->currentglowstate)
 	{

@@ -352,7 +352,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOf
 
 	if (flags & MF_MISSILE)
 	{ // [RH] When missiles die, they just explode
-		P_ExplodeMissile (this, NULL, NULL);
+		P_ExplodeMissile (this, NULL, NULL, false, MeansOfDeath);
 		return;
 	}
 	// [RH] Set the target to the thing that killed it. Strife apparently does this.
@@ -1415,7 +1415,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				}
 				if (P_GiveBody(source, draindmg))
 				{
-					S_Sound(source, CHAN_ITEM, "*drainhealth", 1, ATTN_NORM);
+					S_Sound(source, CHAN_ITEM, 0, "*drainhealth", 1, ATTN_NORM);
 				}
 			}
 		}

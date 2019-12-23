@@ -51,15 +51,15 @@ static void CastN2S(FString *a, int b) { FName name = FName(ENamedName(b)); *a =
 static int CastS2Co(FString *b) { return V_GetColor(nullptr, *b); }
 static void CastCo2S(FString *a, int b) { PalEntry c(b); a->Format("%02x %02x %02x", c.r, c.g, c.b); }
 static int CastS2So(FString *b) { return FSoundID(*b); }
-static void CastSo2S(FString *a, int b) { *a = S_sfx[b].name; }
+static void CastSo2S(FString* a, int b) { *a = S_GetSoundName(b); }
 static void CastSID2S(FString *a, unsigned int b) { *a = (b >= sprites.Size()) ? "TNT1" : sprites[b].name; }
 static void CastTID2S(FString *a, int b) { auto tex = TexMan.GetTexture(*(FTextureID*)&b); *a = (tex == nullptr) ? "(null)" : tex->GetName().GetChars(); }
 
 void JitCompiler::EmitCAST()
 {
-	asmjit::x86::Gp tmp, resultD;
-	asmjit::x86::Xmm resultF;
-	asmjit::FuncCallNode *call = nullptr;
+	asmjit::X86Gp tmp, resultD;
+	asmjit::X86Xmm resultF;
+	asmjit::CCFuncCall *call = nullptr;
 
 	switch (C)
 	{
@@ -185,7 +185,7 @@ void JitCompiler::EmitCASTB()
 	if (C == CASTB_I)
 	{
 		cc.cmp(regD[B], (int)0);
-		cc.setne(regD[A].r8());
+		cc.setne(regD[A]);
 		cc.movzx(regD[A], regD[A].r8Lo()); // not sure if this is needed
 	}
 	else if (C == CASTB_F)
@@ -196,13 +196,13 @@ void JitCompiler::EmitCASTB()
 		cc.mov(one, 1);
 		cc.xor_(regD[A], regD[A]);
 		cc.ucomisd(regF[B], zero);
-		cc.setp(regD[A].r8());
+		cc.setp(regD[A]);
 		cc.cmovne(regD[A], one);
 	}
 	else if (C == CASTB_A)
 	{
 		cc.test(regA[B], regA[B]);
-		cc.setne(regD[A].r8());
+		cc.setne(regD[A]);
 		cc.movzx(regD[A], regD[A].r8Lo()); // not sure if this is needed
 	}
 	else
@@ -234,7 +234,7 @@ void JitCompiler::EmitDYNCAST_K()
 {
 	auto result = newResultIntPtr();
 	auto c = newTempIntPtr();
-	cc.mov(c, asmjit::imm(konsta[C].o));
+	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	auto call = CreateCall<DObject*, DObject*, PClass*>(DynCast);
 	call->setRet(0, result);
 	call->setArg(0, regA[B]);
@@ -262,7 +262,7 @@ void JitCompiler::EmitDYNCASTC_K()
 	using namespace asmjit;
 	auto result = newResultIntPtr();
 	auto c = newTempIntPtr();
-	cc.mov(c, asmjit::imm(konsta[C].o));
+	cc.mov(c, asmjit::imm_ptr(konsta[C].o));
 	typedef PClass*(*FuncPtr)(PClass*, PClass*);
 	auto call = CreateCall<PClass*, PClass*, PClass*>(DynCastC);
 	call->setRet(0, result);

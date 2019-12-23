@@ -3,14 +3,7 @@
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"
-
-enum
-{
-    SF_SF2 = 1,
-    SF_GUS = 2,
-    SF_WOPL = 4,
-    SF_WOPN = 8
-};
+#include "filereadermusicinterface.h"
 
 struct FSoundFontInfo
 {
@@ -26,7 +19,8 @@ struct FSoundFontInfo
 //
 //==========================================================================
 
-class FSoundFontReader
+class FSoundFontReader : public MusicIO::SoundFontReaderInterface
+// Yes, it's 3 copies of essentially the same interface, but since we want to keep the 3 renderers as isolated modules we have to pull in their own implementations here.
 {
 protected:
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
@@ -44,6 +38,11 @@ public:
     
     virtual ~FSoundFontReader() {}
     virtual FileReader OpenMainConfigFile() = 0;    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
+	virtual FString MainConfigFileName()
+	{
+		return basePath() + "timidity.cfg";
+	}
+
     virtual FileReader OpenFile(const char *name) = 0;
     std::pair<FileReader , FString> LookupFile(const char *name);
     void AddPath(const char *str);
@@ -51,6 +50,18 @@ public:
 	{
 		return "";	// archived patch sets do not use paths
 	}
+
+	virtual FileReader Open(const char* name, std::string &filename);
+
+	// Timidity++ interface
+	struct MusicIO::FileInterface* open_file(const char* name) override;
+	void add_search_path(const char* name) override
+	{
+		return AddPath(name);
+	}
+
+	MusicIO::FileInterface* open_interface(const char* name);
+
 };
 
 //==========================================================================
@@ -120,7 +131,7 @@ class FPatchSetReader : public FSoundFontReader
 	FString mFullPathToConfig;
 
 public:
-	FPatchSetReader();
+	FPatchSetReader(FileReader &reader);
 	FPatchSetReader(const char *filename);
 	virtual FileReader OpenMainConfigFile() override;
 	virtual FileReader OpenFile(const char *name) override;

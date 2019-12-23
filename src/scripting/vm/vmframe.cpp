@@ -715,6 +715,14 @@ void ThrowVMException(VMException *x)
 #endif
 
 
+void ClearGlobalVMStack()
+{
+	while (GlobalVMStack.PopFrame() != nullptr)
+	{
+	}
+}
+
+
 ADD_STAT(VM)
 {
 	double added = 0;

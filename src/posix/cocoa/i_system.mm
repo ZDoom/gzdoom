@@ -48,7 +48,6 @@
 #include "v_text.h"
 #include "x86.h"
 #include "cmdlib.h"
-#include "atterm.h"
 
 
 void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
@@ -88,84 +87,7 @@ void I_Init(void)
 	CheckCPUID(&CPU);
 	CalculateCPUSpeed();
 	DumpCPUInfo(&CPU);
-
-	atterm(I_ShutdownSound);
-	I_InitSound();
 }
-
-static int has_exited;
-
-void I_Quit()
-{
-	has_exited = 1; // Prevent infinitely recursive exits -- killough
-
-	if (demorecording)
-	{
-		G_CheckDemoStatus();
-	}
-
-	C_DeinitConsole();
-}
-
-
-extern FILE* Logfile;
-bool gameisdead;
-
-static void I_FatalError(const char* const error, va_list ap)
-{
-	static bool alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown) // ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-
-		char errortext[MAX_ERRORTEXT];
-		int index;
-		index = vsnprintf(errortext, MAX_ERRORTEXT, error, ap);
-
-		extern void Mac_I_FatalError(const char*);
-		Mac_I_FatalError(errortext);
-		
-		// Record error to log (if logging)
-		if (Logfile)
-		{
-			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush(Logfile);
-		}
-
-		fprintf(stderr, "%s\n", errortext);
-		exit(-1);
-	}
-
-	if (!has_exited) // If it hasn't exited yet, exit now -- killough
-	{
-		has_exited = 1; // Prevent infinitely recursive exits -- killough
-		exit(-1);
-	}
-}
-
-void I_FatalError(const char* const error, ...)
-{
-	va_list argptr;
-	va_start(argptr, error);
-	I_FatalError(error, argptr);
-	va_end(argptr);
-
-}
-
-void I_Error (const char *error, ...)
-{
-	va_list argptr;
-	char errortext[MAX_ERRORTEXT];
-
-	va_start(argptr, error);
-
-	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
-	va_end (argptr);
-	throw CRecoverableError(errortext);
-}
-
 
 void I_SetIWADInfo()
 {
@@ -221,6 +143,14 @@ void I_PrintStr(const char* const message)
 	fputs(copy, stdout);
 	delete[] copy;
 	fflush(stdout);
+}
+
+
+void Mac_I_FatalError(const char* const message);
+
+void I_ShowFatalError(const char *message)
+{
+	Mac_I_FatalError(message);
 }
 
 

@@ -298,7 +298,7 @@ namespace swrenderer
 			if ((siz2 - siz1) * ((x2 + x1) / 2 - ds->WallC.sx1) / (ds->WallC.sx2 - ds->WallC.sx1) + siz1 < idepth)
 			{
 				// [ZZ] only draw stuff that's inside the same portal as the particle, other portals will care for themselves
-				if (ds->CurrentPortalUniq == CurrentPortalUniq)
+				if (ds->drawsegclip.CurrentPortalUniq == CurrentPortalUniq)
 				{
 					RenderDrawSegment renderer(thread);
 					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2), clip3DFloor);

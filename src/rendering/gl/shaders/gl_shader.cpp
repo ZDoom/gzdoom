@@ -242,6 +242,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform vec4 uObjectColor2;\n";
 	i_data += "uniform vec4 uDynLightColor;\n";
 	i_data += "uniform vec4 uAddColor;\n";
+	i_data += "uniform vec4 uTextureBlendColor;\n";
+	i_data += "uniform vec4 uTextureModulateColor;\n";
+	i_data += "uniform vec4 uTextureAddColor;\n";
+	i_data += "uniform vec4 uBlendColor;\n";
 	i_data += "uniform vec4 uFogColor;\n";
 	i_data += "uniform float uDesaturationFactor;\n";
 	i_data += "uniform float uInterpolationFactor;\n";
@@ -536,6 +540,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muAddColor.Init(hShader, "uAddColor");
+	muTextureAddColor.Init(hShader, "uTextureAddColor");
+	muTextureModulateColor.Init(hShader, "uTextureModulateColor");
+	muTextureBlendColor.Init(hShader, "uTextureBlendColor");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");

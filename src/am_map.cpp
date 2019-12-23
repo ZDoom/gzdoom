@@ -124,6 +124,7 @@ struct islope_t
 //=============================================================================
 
 CVAR(Bool, am_textured, false, CVAR_ARCHIVE)
+CVAR(Bool, am_thingrenderstyles, true, CVAR_ARCHIVE)
 CVAR(Int, am_showsubsector, -1, 0);
 
 
@@ -2882,7 +2883,8 @@ void DAutomap::drawThings ()
 		t = sec.thinglist;
 		while (t)
 		{
-			if (am_cheat > 0 || !(t->flags6 & MF6_NOTONAUTOMAP))
+			if (am_cheat > 0 || !(t->flags6 & MF6_NOTONAUTOMAP)
+				|| (am_thingrenderstyles && !(t->renderflags & RF_INVISIBLE)))
 			{
 				DVector3 pos = t->PosRelative(MapPortalGroup);
 				p.x = pos.X;
@@ -2918,7 +2920,9 @@ void DAutomap::drawThings ()
 					const double spriteXScale = (t->Scale.X * (10. / 16.) * scale_mtof);
 					const double spriteYScale = (t->Scale.Y * (10. / 16.) * scale_mtof);
 
-					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
+					if (am_thingrenderstyles) DrawMarker(texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
+						spriteXScale, spriteYScale, t->Translation, t->Alpha, t->fillcolor, t->RenderStyle);
+					else DrawMarker(texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
 						spriteXScale, spriteYScale, t->Translation, 1., 0, LegacyRenderStyles[STYLE_Normal]);
 				}
 				else

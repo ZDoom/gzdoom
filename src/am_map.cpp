@@ -2919,7 +2919,7 @@ void DAutomap::drawThings ()
 					const double spriteYScale = (t->Scale.Y * (10. / 16.) * scale_mtof);
 
 					DrawMarker (texture, p.x, p.y, 0, !!(frame->Flip & (1 << rotation)),
-						spriteXScale, spriteYScale, t->Translation, 1., 0, LegacyRenderStyles[STYLE_Normal]);
+						spriteXScale, spriteYScale, t->Translation, t->Alpha, t->fillcolor, t->RenderStyle);
 				}
 				else
 				{

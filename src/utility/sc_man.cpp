@@ -31,29 +31,6 @@
 **
 */
 
-// This file contains some code by Raven Software, licensed under:
-
-//-----------------------------------------------------------------------------
-//
-// Copyright 1994-1996 Raven Software
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/
-//
-//-----------------------------------------------------------------------------
-//
-
-
 
 
 // HEADER FILES ------------------------------------------------------------
@@ -622,12 +599,14 @@ bool FScanner::GetToken ()
 				String[StringLen - 2] == 'u' || String[StringLen - 2] == 'U')
 			{
 				TokenType = TK_UIntConst;
-				Number = (int)strtoull(String, &stopper, 0);
+				BigNumber = (int64_t)strtoull(String, &stopper, 0);
+				Number = (int)clamp<int64_t>(BigNumber, 0, UINT_MAX);
 				Float = (unsigned)Number;
 			}
 			else
 			{
-				Number = (int)strtoll(String, &stopper, 0);
+				BigNumber = strtoll(String, &stopper, 0);
+				Number = (int)clamp<int64_t>(BigNumber, INT_MIN, INT_MAX);
 				Float = Number;
 			}
 		}
@@ -728,7 +707,8 @@ bool FScanner::GetNumber ()
 		}
 		else
 		{
-			Number = (int)strtoll (String, &stopper, 0);
+			BigNumber = strtoll(String, &stopper, 0);
+			Number = (int)clamp<int64_t>(BigNumber, INT_MIN, INT_MAX);
 			if (*stopper != 0)
 			{
 				ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", String);
@@ -779,11 +759,13 @@ bool FScanner::CheckNumber ()
 		}
 		else if (strcmp (String, "MAXINT") == 0)
 		{
+			BigNumber = INT64_MAX;
 			Number = INT_MAX;
 		}
 		else
 		{
-			Number = (int)strtoll (String, &stopper, 0);
+			BigNumber = strtoll (String, &stopper, 0);
+			Number = (int)clamp<int64_t>(BigNumber, INT_MIN, INT_MAX);
 			if (*stopper != 0)
 			{
 				UnGet();

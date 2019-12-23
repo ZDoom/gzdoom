@@ -700,7 +700,7 @@ void FTextureManager::ParseColorization(FScanner& sc)
 		if (sc.Compare("desaturation"))
 		{
 			sc.MustGetFloat();
-			tm.DesaturationFactor = sc.Float;
+			tm.DesaturationFactor = (float)sc.Float;
 		}
 		else if (sc.Compare("AddColor"))
 		{
@@ -728,7 +728,7 @@ void FTextureManager::ParseColorization(FScanner& sc)
 			if (sc.CheckToken(','))
 			{
 				sc.MustGetFloat();
-				tm.BlendColor.a = clamp(sc.Float, 0., 1.) * 255;
+				tm.BlendColor.a = (uint8_t)clamp(sc.Float, 0., 1.) * 255;
 			}
 		}
 		else if (sc.Compare("invert"))

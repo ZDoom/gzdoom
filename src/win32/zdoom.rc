@@ -10,18 +10,15 @@
 #include "afxres.h"
 #include "../version.h"
 #include "../gitinfo.h"
-
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -86,7 +83,7 @@ BEGIN
     "    BEGIN\r\n"
     "        VALUE ""Translation"", 0x409, 1200\r\n"
     "    END\r\n"
-    "END\r\n"
+    "END\r\0"
 END
 
 #endif    // APSTUDIO_INVOKED
@@ -101,13 +98,14 @@ END
 // remains consistent on all systems.
 IDI_ICON1               ICON                    "icon1.ico"
 
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_IWADDIALOG, DIALOG
     BEGIN
@@ -208,48 +206,27 @@ IDD_IWADDIALOG DIALOGEX 0, 0, 224, 249
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Welcome"
-#ifndef __MINGW32__
-LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
-FONT 8, "MS Shell Dlg"
-{
-   CONTROL 101, IDC_STATIC, STATIC, SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
-   CONTROL "Welcome to GZDoom!", IDC_STATIC, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 42, 8, 180, 8
-   CONTROL "<Version info>", IDC_WELCOME_VERSION, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 42, 18, 180, 8
-   CONTROL "IWAD selection", IDC_STATIC, BUTTON, BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 8, 32, 208, 117
-   CONTROL "Select which game file (IWAD) to run.", IDC_STATIC, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 12, 44, 190, 8
-   CONTROL "", IDC_IWADLIST, LISTBOX, LBS_NOTIFY | LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL | WS_TABSTOP, 12, 56, 200, 87
-   CONTROL "Video settings", IDC_STATIC, BUTTON, BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 8, 155, 109, 52
-   CONTROL "Fullscreen", IDC_WELCOME_FULLSCREEN, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 12, 170, 48, 10
-   CONTROL "Vulkan", IDC_WELCOME_VULKAN, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 12, 180, 48, 10
-   CONTROL "Resource settings", IDC_STATIC, BUTTON, BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 123, 155, 95, 52
-   CONTROL "Disable autoload", IDC_WELCOME_NOAUTOLOAD, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 130, 170, 65, 10
-   CONTROL "Load lights", IDC_WELCOME_LIGHTS, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 130, 180, 51, 10
-   CONTROL "Load brightmaps", IDC_WELCOME_BRIGHTMAPS, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 130, 190, 65, 10
-   CONTROL "Don't ask me this again", IDC_DONTASKIWAD, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 73, 211, 87, 10
-   CONTROL "Play GZDoom", IDOK, BUTTON, BS_DEFPUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 8, 228, 90, 14
-   CONTROL "Exit", IDCANCEL, BUTTON, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 166, 228, 50, 14
-}
-#else
-// [SP] Upstreamed from Zandronum
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    ICON            IDI_ICON1,IDC_STATIC,7,7,21,20
+    ICON            IDI_ICON1,IDC_STATIC,7,7,20,20
     LTEXT           "Welcome to GZDoom!",IDC_STATIC,42,8,180,8
     LTEXT           "<Version info>",IDC_WELCOME_VERSION,42,18,180,8
-    GROUPBOX        "IWAD selection",IDC_STATIC,8,32,208,102
+    GROUPBOX        "IWAD selection",IDC_STATIC,8,32,208,117
     LTEXT           "Select which game file (IWAD) to run.",IDC_STATIC,12,44,190,8
-    LISTBOX         IDC_IWADLIST,12,56,200,72,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Video settings",IDC_STATIC,8,138,208,28
-    CONTROL         "Fullscreen",IDC_WELCOME_FULLSCREEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,150,48,10
-    CONTROL         "Vulkan", IDC_WELCOME_VULKAN, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 124, 180, 48, 10
-    CONTROL         "Disable autoload",IDC_WELCOME_NOAUTOLOAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,39,65,10
-    CONTROL         "Lights.pk3",IDC_WELCOME_LIGHTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,46,182,51,10
-    CONTROL         "Brightmaps.pk3",IDC_WELCOME_BRIGHTMAPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,111,182,65,10
-    CONTROL         "Don't ask me this again",IDC_DONTASKIWAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,73,201,87,10
+    LISTBOX         IDC_IWADLIST,12,56,200,87,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Video settings",IDC_STATIC,8,155,109,52
+    CONTROL         "Fullscreen",IDC_WELCOME_FULLSCREEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,65,167,48,10
+    GROUPBOX        "Resource settings",IDC_STATIC,123,155,95,52
+    CONTROL         "Disable autoload",IDC_WELCOME_NOAUTOLOAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,170,65,10
+    CONTROL         "Load lights",IDC_WELCOME_LIGHTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,180,51,10
+    CONTROL         "Load brightmaps",IDC_WELCOME_BRIGHTMAPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,130,190,65,10
+    CONTROL         "Don't ask me this again",IDC_DONTASKIWAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,73,211,87,10
     DEFPUSHBUTTON   "Play GZDoom",IDOK,8,228,90,14
     PUSHBUTTON      "Exit",IDCANCEL,166,228,50,14
+    CONTROL         "OpenGL",IDC_WELCOME_VULKAN1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,13,167,41,10
+    CONTROL         "Vulkan",IDC_WELCOME_VULKAN2,"Button",BS_AUTORADIOBUTTON,13,177,37,10
+    CONTROL         "SoftPoly",IDC_WELCOME_VULKAN3,"Button",BS_AUTORADIOBUTTON,13,188,43,10
 END
-#endif
 
 IDD_EAXPROPERTYLIST DIALOGEX 0, 0, 265, 404
 STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VSCROLL
@@ -411,10 +388,10 @@ STYLE DS_SETFONT | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VISIBLE
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     EDITTEXT        IDC_CRASHINFO,7,126,377,90,ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL
-    CONTROL         "",IDC_PLEASETELLUS,"RichEdit20A",ES_MULTILINE | ES_READONLY,7,50,377,54,WS_EX_TRANSPARENT
+    CONTROL         "",IDC_PLEASETELLUS,"RichEdit20W",ES_MULTILINE | ES_READONLY,7,50,377,54,WS_EX_TRANSPARENT
     LTEXT           "(Optional) To help diagnose the cause of this error, please describe what you were doing when the error occured. If you were playing with custom wads, please also indicate where to obtain them:",IDC_STATIC,7,108,377,16,0,WS_EX_TRANSPARENT
-    CONTROL         131,IDC_DEADGUYVIEWER,"Static",SS_BITMAP,345,7,23,26
-    CONTROL         "",IDC_CRASHHEADER,"RichEdit20A",ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY,18,13,306,25,WS_EX_TRANSPARENT
+    CONTROL         IDB_BITMAP1,IDC_DEADGUYVIEWER,"Static",SS_BITMAP,345,7,23,26
+    CONTROL         "",IDC_CRASHHEADER,"RichEdit20W",ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY,18,13,306,25,WS_EX_TRANSPARENT
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,0,42,407,1
     GROUPBOX        "Summary",IDC_STATIC,7,223,377,34
     LTEXT           "Static",IDC_CRASHSUMMARY,14,233,363,20
@@ -428,7 +405,7 @@ BEGIN
     LTEXT           "The selected file contains this information:",IDC_STATIC,7,74,136,8
     RTEXT           "Static",IDC_CRASHFILESIZE,337,74,55,8
     LISTBOX         IDC_CRASHFILES,7,15,385,53,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "",IDC_CRASHFILECONTENTS,"RichEdit20A",ES_MULTILINE | ES_READONLY | WS_BORDER | WS_VSCROLL | WS_TABSTOP,7,83,385,174
+    CONTROL         "",IDC_CRASHFILECONTENTS,"RichEdit20W",ES_MULTILINE | ES_READONLY | WS_BORDER | WS_VSCROLL | WS_TABSTOP,7,83,385,174
 END
 
 IDD_ERRORPANE DIALOGEX 0, 0, 190, 28
@@ -456,7 +433,19 @@ END
 //
 
 IDB_DEADGUY             BITMAP                  "deadguy.bmp"
-#endif    // English (U.S.) resources
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_IWADDIALOG AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -510,6 +499,7 @@ BEGIN
         VALUE "Translation", 0x409, 1200
     END
 END
+
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
 

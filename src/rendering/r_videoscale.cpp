@@ -105,7 +105,10 @@ namespace
 		// minimum set in GZDoom 4.0.0, but only while those fonts are required.
 
 		static bool lastspecialUI = false;
-		bool specialUI = (generic_ui || !!log_vgafont || !!dlg_vgafont || menuactive == MENU_On || ConsoleState != c_up);
+		bool isInActualMenu = false;
+
+		bool specialUI = (generic_ui || !!log_vgafont || !!dlg_vgafont || ConsoleState != c_up || 
+			(menuactive == MENU_On && CurrentMenu && !CurrentMenu->IsKindOf("ConversationMenu")));
 
 		if (specialUI == lastspecialUI)
 			return;

@@ -68,6 +68,9 @@
 #include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, gl_light_sprites)
+EXTERN_CVAR(Int, gl_texture_hqresizemult)
+EXTERN_CVAR(Int, gl_texture_hqresizemode)
+EXTERN_CVAR(Int, gl_texture_hqresize_targets)
 
 namespace swrenderer
 {
@@ -130,7 +133,11 @@ namespace swrenderer
 		if (thing->renderflags & RF_SPRITEFLIP)
 			renderflags ^= RF_XFLIP;
 
-		double yscale = spriteScale.Y / tex->GetScale().Y;
+		double yscale;
+		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1 || !(gl_texture_hqresize_targets & 2))
+			yscale = spriteScale.Y / tex->GetScale().Y;
+		else
+			yscale = spriteScale.Y / tex->GetScale().Y / gl_texture_hqresizemult;
 
 		// store information in a vissprite
 		RenderSprite *vis = thread->FrameMemory->NewObject<RenderSprite>();

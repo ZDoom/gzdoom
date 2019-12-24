@@ -2198,6 +2198,7 @@ OptionValue ScaleModes
 {
 	0, "$OPTVAL_SCALENEAREST"
 	1, "$OPTVAL_SCALELINEAR"
+	7, "320x200"
 	2, "640x400"
 	3, "960x600"
 	4, "1280x800"

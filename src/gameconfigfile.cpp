@@ -503,11 +503,19 @@ void FGameConfigFile::DoGlobalSetup ()
 			{
 				auto var = FindCVar("vid_scalemode", NULL);
 				UCVarValue newvalue;
-				newvalue.Int = 2;
 				if (var != NULL)
 				{
 					UCVarValue v = var->GetGenericRep(CVAR_Int);
-					if (v.Int == 3) var->SetGenericRep(newvalue, CVAR_Int);
+					if (v.Int == 3) // 640x400
+					{
+						newvalue.Int = 2;
+						var->SetGenericRep(newvalue, CVAR_Int);
+					}
+					if (v.Int == 2) // 320x200
+					{
+						newvalue.Int = 7;
+						var->SetGenericRep(newvalue, CVAR_Int);
+					}
 				}
 			}
 			if (last < 219)

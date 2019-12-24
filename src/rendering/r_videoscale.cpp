@@ -27,11 +27,19 @@
 #include "v_video.h"
 #include "templates.h"
 
-#define NUMSCALEMODES 7
+#include "console/c_console.h"
+#include "menu/menu.h"
+
+#define NUMSCALEMODES 8
 
 extern bool setsizeneeded;
+extern bool generic_ui;
 
 EXTERN_CVAR(Int, vid_aspect)
+
+EXTERN_CVAR(Bool, log_vgafont)
+EXTERN_CVAR(Bool, dlg_vgafont)
+
 CUSTOM_CVAR(Int, vid_scale_customwidth, VID_MIN_WIDTH, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < VID_MIN_WIDTH)
@@ -52,6 +60,9 @@ CUSTOM_CVAR(Bool, vid_scale_customstretched, false, CVAR_ARCHIVE | CVAR_GLOBALCO
 
 namespace
 {
+	uint32_t min_width = VID_MIN_WIDTH;
+	uint32_t min_height = VID_MIN_HEIGHT;
+
 	struct v_ScaleTable
 	{
 		bool isValid;
@@ -72,7 +83,7 @@ namespace
 			if (sx <= 0. || sy <= 0.)
 				return 1.; // prevent x/0 error
 			// set absolute minimum scale to fill the entire screen but get as close to 640x400 as possible
-			float ssx = (float)(VID_MIN_WIDTH) / sx, ssy = (float)(VID_MIN_HEIGHT) / sy;
+			float ssx = (float)(min_width) / sx, ssy = (float)(min_height) / sy;
 			result = (ssx < ssy) ? ssy : ssx;
 			lastsx = sx;
 			lastsy = sy;
@@ -87,6 +98,32 @@ namespace
 	{
 		return (uint32_t)((float)inheight * v_MinimumToFill(inwidth, inheight));
 	}
+	inline void refresh_minimums()
+	{
+		// specialUI is tracking a state where high-res console fonts are actually required, and
+		// aren't actually rendered correctly in 320x200. this forces the game to revert to the 640x400
+		// minimum set in GZDoom 4.0.0, but only while those fonts are required.
+
+		static bool lastspecialUI = false;
+		bool specialUI = (generic_ui || !!log_vgafont || !!dlg_vgafont || menuactive == MENU_On || ConsoleState != c_up);
+
+		if (specialUI == lastspecialUI)
+			return;
+
+		lastspecialUI = specialUI;
+		setsizeneeded = true;
+
+		if (!specialUI)
+		{
+			min_width = VID_MIN_WIDTH;
+			min_height = VID_MIN_HEIGHT;
+		}
+		else
+		{
+			min_width = VID_MIN_UI_WIDTH;
+			min_height = VID_MIN_UI_HEIGHT;
+		}
+	}
 
 	v_ScaleTable vScaleTable[NUMSCALEMODES] =
 	{
@@ -98,6 +135,7 @@ namespace
 		{ true,			true,		[](uint32_t Width, uint32_t Height)->uint32_t { return 1280; },		           		[](uint32_t Width, uint32_t Height)->uint32_t { return 800; },	        			true,   	false   },	// 4  - 1280x800
 		{ true,			true,		[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customwidth; },		[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customheight; },	true,   	true    },	// 5  - Custom
 		{ true,			true,		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },	false,		false   },	// 6  - Minimum Scale to Fill Entire Screen
+		{ true,			false,		[](uint32_t Width, uint32_t Height)->uint32_t { return 320; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 200; },			        	true,   	false   },	// 7  - 320x200
 	};
 	bool isOutOfBounds(int x)
 	{
@@ -142,12 +180,13 @@ int ViewportScaledWidth(int width, int height)
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
+	refresh_minimums();
 	if (vid_cropaspect && height > 0)
 	{
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 	}
-	return (int)MAX((int32_t)VID_MIN_WIDTH, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width, height)));
+	return (int)MAX((int32_t)min_width, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledWidth(width, height)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -159,7 +198,7 @@ int ViewportScaledHeight(int width, int height)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 	}
-	return (int)MAX((int32_t)VID_MIN_HEIGHT, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(width, height)));
+	return (int)MAX((int32_t)min_height, (int32_t)(vid_scalefactor * vScaleTable[vid_scalemode].GetScaledHeight(width, height)));
 }
 
 bool ViewportIsScaled43()

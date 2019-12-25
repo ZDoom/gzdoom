@@ -380,7 +380,7 @@ void PolyFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	}
 	else if (drawmode == DM_PORTAL && ssao_portals_available > 0)
 	{
-		applySSAO = true;
+		applySSAO = (strcmp(di->mCurrentPortal->GetName(),"Skybox") || di->Level->flags3&LEVEL3_SKYBOXAO);
 		ssao_portals_available--;
 	}
 

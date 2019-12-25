@@ -110,6 +110,7 @@ extern uint8_t globalfreeze, globalchangefreeze;
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
 void G_VerifySkill();
+void I_UpdateWindowTitle();
 
 CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
@@ -1060,7 +1061,7 @@ void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool
 
 	C_FlushDisplay();
 	P_ResetSightCounters(true);
-
+	I_UpdateWindowTitle();
 }
 
 void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame)

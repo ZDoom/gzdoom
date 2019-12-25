@@ -41,6 +41,8 @@
 #include "v_font.h"
 #include "utf8.h"
 
+void I_UpdateWindowTitle();
+
 CVAR (Bool, cl_spreaddecals, true, CVAR_ARCHIVE)
 CVAR(Bool, var_pushers, true, CVAR_SERVERINFO);
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -201,4 +203,5 @@ CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOB
 		if (Level->info != nullptr) Level->LevelName = Level->info->LookupLevelName();
 	}
 	UpdateGenericUI(ui_generic);
+	I_UpdateWindowTitle();
 }

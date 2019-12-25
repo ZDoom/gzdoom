@@ -3098,7 +3098,7 @@ void I_UpdateWindowTitle()
 		if (level.LevelName && level.LevelName.GetChars()[0])
 		{
 			FString titlestr;
-			titlestr.Format("%s - %s", level.LevelName, DoomStartupInfo.Name.GetChars());
+			titlestr.Format("%s - %s", level.LevelName.GetChars(), DoomStartupInfo.Name.GetChars());
 			I_SetWindowTitle(titlestr.GetChars());
 			break;
 		}

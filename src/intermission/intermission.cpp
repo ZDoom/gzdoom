@@ -380,7 +380,7 @@ void DIntermissionScreenText::Drawer ()
 		// line feed characters.
 		int numrows;
 		auto font = generic_ui ? NewSmallFont : SmallFont;
-		auto fontscale = generic_ui ? MIN(screen->GetWidth()/640, screen->GetHeight()/400) : MIN(screen->GetWidth()/400, screen->GetHeight() / 250);
+		auto fontscale = MAX(generic_ui ? MIN(screen->GetWidth() / 640, screen->GetHeight() / 400) : MIN(screen->GetWidth() / 400, screen->GetHeight() / 250), 1);
 		int cleanwidth = screen->GetWidth() / fontscale;
 		int cleanheight = screen->GetHeight() / fontscale;
 		int refwidth = generic_ui ? 640 : 320;

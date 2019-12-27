@@ -10,25 +10,30 @@ git:
 
 matrix:
   include:
-    - os: osx
+    - name: "Xcode 8"
+      os: osx
       osx_image: xcode8
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
-    - os: osx
-      osx_image: xcode11.2
+    - name: "Xcode 11.3"
+      os: osx
+      osx_image: xcode11.3
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
-    - os: windows
+    - name: "Visual Studio 2017 32-bit"
+      os: windows
       env:
         - CMAKE_OPTIONS="-A Win32"
 
-    - os: windows
+    - name: "Visual Studio 2017 64-bit"
+      os: windows
       env:
         - CMAKE_OPTIONS="-A x64"
 
-    - os: linux
+    - name: "GCC 4.9"
+      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=4.9
@@ -40,7 +45,8 @@ matrix:
             - libsdl2-dev
             - libgtk2.0-dev
 
-    - os: linux
+    - name: "GCC 6"
+      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=6
@@ -54,7 +60,8 @@ matrix:
             - libsdl2-dev
             - libgtk2.0-dev
 
-    - os: linux
+    - name: "GCC 8"
+      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=8
@@ -68,7 +75,8 @@ matrix:
             - libsdl2-dev
             - libgtk-3-dev
 
-    - os: linux
+    - name: "GCC 9"
+      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=9
@@ -81,7 +89,8 @@ matrix:
             - g++-9
             - libsdl2-dev
 
-    - os: linux
+    - name: "Clang 3.6"
+      os: linux
       compiler: clang
       env:
         - CLANG_VERSION=3.6
@@ -93,17 +102,19 @@ matrix:
             - libsdl2-dev
             - libgtk2.0-dev
 
-    - os: linux
+    - name: "Clang 9"
+      os: linux
       compiler: clang
       env:
-        - CLANG_VERSION=8
+        - CLANG_VERSION=9
         - CMAKE_OPTIONS="-DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
       addons:
         apt:
           sources:
-            - llvm-toolchain-xenial-8
+            - sourceline: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main"
+              key_url: "https://apt.llvm.org/llvm-snapshot.gpg.key"
           packages:
-            - clang-8
+            - clang-9
             - libsdl2-dev
             - libgme-dev
             - libopenal-dev

@@ -533,6 +533,7 @@ enum EAngleFlags
 {
 	SPF_FORCECLAMP = 1,
 	SPF_INTERPOLATE = 2,
+	SPF_VIEW = 4,
 };
 
 // flags for A_CheckLOF

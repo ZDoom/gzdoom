@@ -366,7 +366,8 @@ void AActor::Serialize(FSerializer &arc)
 		A("spawntime", SpawnTime)
 		A("spawnorder", SpawnOrder)
 		A("friction", Friction)
-		A("userlights", UserLights);
+		A("userlights", UserLights)
+		A("viewangles", ViewAngles);
 }
 
 #undef A
@@ -3348,9 +3349,9 @@ DEFINE_ACTION_FUNCTION(AActor, SetShade)
 	return 0;
 }
 
-void AActor::SetPitch(DAngle p, bool interpolate, bool forceclamp)
+void AActor::SetPitch(DAngle p, int fflags)
 {
-	if (player != NULL || forceclamp)
+	if (player != NULL || fflags & SPF_FORCECLAMP)
 	{ // clamp the pitch we set
 		DAngle min, max;
 
@@ -3366,37 +3367,71 @@ void AActor::SetPitch(DAngle p, bool interpolate, bool forceclamp)
 		}
 		p = clamp(p, min, max);
 	}
-	if (p != Angles.Pitch)
+
+	bool view = (fflags & SPF_VIEW);
+	bool changed = false;
+	if (view)
+	{
+		if (p != ViewAngles.Pitch)
+		{
+			ViewAngles.Pitch = p;
+			changed = true;
+		}
+	}
+	else if (p != Angles.Pitch)
 	{
 		Angles.Pitch = p;
-		if (player != NULL && interpolate)
-		{
-			player->cheats |= CF_INTERPVIEW;
-		}
+		changed = true;
+	}
+	if (changed && player != nullptr && (fflags & SPF_INTERPOLATE))
+	{
+		player->cheats |= CF_INTERPVIEW;
 	}
 }
 
-void AActor::SetAngle(DAngle ang, bool interpolate)
+void AActor::SetAngle(DAngle ang, int fflags)
 {
-	if (ang != Angles.Yaw)
+	bool view = (fflags & SPF_VIEW);
+	bool changed = false;
+	if (view)
+	{
+		if (ang != ViewAngles.Yaw)
+		{
+			ViewAngles.Yaw = ang;
+			changed = true;
+		}
+	}
+	else if (ang != Angles.Yaw)
 	{
 		Angles.Yaw = ang;
-		if (player != NULL && interpolate)
-		{
-			player->cheats |= CF_INTERPVIEW;
-		}
+		changed = true;
+	}
+	if (changed && player != nullptr && (fflags & SPF_INTERPOLATE))
+	{
+		player->cheats |= CF_INTERPVIEW;
 	}
 }
 
-void AActor::SetRoll(DAngle r, bool interpolate)
+void AActor::SetRoll(DAngle r, int fflags)
 {
-	if (r != Angles.Roll)
+	bool view = (fflags & SPF_VIEW);
+	bool changed = false;
+	if (view)
+	{
+		if (r != ViewAngles.Roll)
+		{
+			ViewAngles.Roll = r;
+			changed = true;
+		}
+	}
+	else if (r != Angles.Roll)
 	{
 		Angles.Roll = r;
-		if (player != NULL && interpolate)
-		{
-			player->cheats |= CF_INTERPVIEW;
-		}
+		changed = true;
+	}
+	if (changed && player != nullptr && (fflags & SPF_INTERPOLATE))
+	{
+		player->cheats |= CF_INTERPVIEW;
 	}
 }
 

@@ -805,15 +805,15 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		viewpoint.showviewer = false;
 	}
 
-	if (viewpoint.camera->player != nullptr)
-	{
-		auto plr = viewpoint.camera->player;
-		int flags = plr->GetFlags();
+	// [MC] Apply the view angles first, which is the offsets. If the absolute isn't desired,
+	// add the standard angles on top of it.
+	viewpoint.Angles = viewpoint.camera->ViewAngles;
 
-		viewpoint.Angles.Yaw = ((flags & PPF_VIEWABSANGLE) ? 0. : viewpoint.camera->Angles.Yaw) + plr->viewangle;
-		viewpoint.Angles.Pitch = ((flags & PPF_VIEWABSPITCH) ? 0. : viewpoint.camera->Angles.Pitch) + plr->viewpitch;
-		viewpoint.Angles.Roll = ((flags & PPF_VIEWABSROLL) ? 0. : viewpoint.camera->Angles.Roll) + plr->viewroll;
+	if (!(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES))
+	{
+		viewpoint.Angles += viewpoint.camera->Angles;
 	}
+
 	iview->New.Angles = viewpoint.Angles;
 	if (viewpoint.camera->player != 0)
 	{

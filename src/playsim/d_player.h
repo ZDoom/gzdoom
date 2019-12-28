@@ -306,9 +306,6 @@ public:
 
 	float		DesiredFOV = 0;				// desired field of vision
 	float		FOV = 0;					// current field of vision
-	double		viewangle = 0;				// Angle offset (separate from actual angle)
-	double		viewpitch = 0;				// ^ for pitch
-	double		viewroll = 0;				// ...you get the point
 	double		viewz = 0;					// focal origin above r.z
 	double		viewheight = 0;				// base height above floor for viewz
 	double		deltaviewheight = 0;		// squat speed.
@@ -419,11 +416,6 @@ public:
 	double DefaultViewHeight() const
 	{
 		return mo->FloatVar(NAME_ViewHeight);
-	}
-
-	int GetFlags() const
-	{
-		return mo->IntVar(NAME_PlayerFlags);
 	}
 
 	void Uncrouch()

@@ -2792,12 +2792,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_MonsterRefire)
 // Set actor's angle (in degrees).
 //
 //===========================================================================
-enum
-{
-	SPF_FORCECLAMP = 1,	// players always clamp
-	SPF_INTERPOLATE = 2,
-};
-
 
 DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 {
@@ -2809,7 +2803,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetAngle)
 	AActor *ref = COPY_AAPTR(self, ptr);
 	if (ref != NULL)
 	{
-		ref->SetAngle(angle, !!(flags & SPF_INTERPOLATE));
+		ref->SetAngle(angle, flags);
 	}
 	return 0;
 }
@@ -2833,7 +2827,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetPitch)
 
 	if (ref != NULL)
 	{
-		ref->SetPitch(pitch, !!(flags & SPF_INTERPOLATE), !!(flags & SPF_FORCECLAMP));
+		ref->SetPitch(pitch, flags);
 	}
 	return 0;
 }
@@ -2856,7 +2850,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetRoll)
 
 	if (ref != NULL)
 	{
-		ref->SetRoll(roll, !!(flags & SPF_INTERPOLATE));
+		ref->SetRoll(roll, flags);
 	}
 	return 0;
 }

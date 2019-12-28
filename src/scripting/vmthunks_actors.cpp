@@ -1942,6 +1942,9 @@ DEFINE_FIELD(AActor, RenderRequired)
 DEFINE_FIELD(AActor, friendlyseeblocks)
 DEFINE_FIELD(AActor, SpawnTime)
 DEFINE_FIELD(AActor, InventoryID)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Yaw, viewangle)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Pitch, viewpitch)
+DEFINE_FIELD_NAMED(AActor, ViewAngles.Roll, viewroll)
 
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, thing);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, pos);

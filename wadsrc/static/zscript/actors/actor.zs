@@ -231,6 +231,7 @@ class Actor : Thinker native
 	native uint8 fountaincolor;
 	native double CameraHeight;	// Height of camera when used as such
 	native double CameraFOV;
+	native double ViewAngle, ViewPitch, ViewRoll;
 	native double RadiusDamageFactor;		// Radius damage factor
 	native double SelfDamageFactor;
 	native double StealthAlpha;
@@ -1121,6 +1122,9 @@ class Actor : Thinker native
 	native void A_SetAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
 	native void A_SetRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewAngle(double angle = 0, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewPitch(double pitch, int flags = 0, int ptr = AAPTR_DEFAULT);
+	native void A_SetViewRoll(double roll, int flags = 0, int ptr = AAPTR_DEFAULT);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVar(name varname, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserArray(name varname, int index, int value);
 	deprecated("2.3", "User variables are deprecated in ZScript. Actor variables are directly accessible") native void A_SetUserVarFloat(name varname, double value);

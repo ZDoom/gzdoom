@@ -804,7 +804,17 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		viewpoint.sector = viewpoint.camera->Sector;
 		viewpoint.showviewer = false;
 	}
-	iview->New.Angles = viewpoint.camera->Angles;
+
+	// [MC] Apply the view angles first, which is the offsets. If the absolute isn't desired,
+	// add the standard angles on top of it.
+	viewpoint.Angles = viewpoint.camera->ViewAngles;
+
+	if (!(viewpoint.camera->flags8 & MF8_ABSVIEWANGLES))
+	{
+		viewpoint.Angles += viewpoint.camera->Angles;
+	}
+
+	iview->New.Angles = viewpoint.Angles;
 	if (viewpoint.camera->player != 0)
 	{
 		player = viewpoint.camera->player;

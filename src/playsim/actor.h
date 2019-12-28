@@ -412,6 +412,7 @@ enum ActorFlag8
 	MF8_RETARGETAFTERSLAM	= 0x00000080,	// Forces jumping to the idle state after slamming into something
 	MF8_RECREATELIGHTS	= 0x00000100,	// Internal flag that signifies that the light attachments need to be recreated at the
 	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
+	MF8_ABSVIEWANGLES	= 0x00000400,	// [MC] By default view angle/pitch/roll is an offset. This will make it absolute instead.
 };
 
 // --- mobj.renderflags ---
@@ -845,9 +846,13 @@ public:
 	}
 
 	// These also set CF_INTERPVIEW for players.
-	void SetPitch(DAngle p, bool interpolate, bool forceclamp = false);
-	void SetAngle(DAngle ang, bool interpolate);
-	void SetRoll(DAngle roll, bool interpolate);
+	DAngle ClampPitch(DAngle p);
+	void SetPitch(DAngle p, int fflags);
+	void SetAngle(DAngle ang, int fflags);
+	void SetRoll(DAngle roll, int fflags);
+	void SetViewPitch(DAngle p, int fflags);
+	void SetViewAngle(DAngle ang, int fflags);
+	void SetViewRoll(DAngle roll, int fflags);
 
 	PClassActor *GetBloodType(int type = 0) const;
 
@@ -961,6 +966,7 @@ public:
 	DAngle			SpriteAngle;
 	DAngle			SpriteRotation;
 	DRotator		Angles;
+	DRotator		ViewAngles;			// Offsets for cameras
 	DVector2		Scale;				// Scaling values; 1 is normal size
 	double			Alpha;				// Since P_CheckSight makes an alpha check this can't be a float. It has to be a double.
 

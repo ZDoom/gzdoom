@@ -55,6 +55,7 @@
 #include "wi_stuff.h"
 #include "a_dynlight.h"
 #include "types.h"
+#include "utility/dictionary.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
@@ -840,6 +841,21 @@ void InitThingdef()
 	auto wbplayerstruct = NewStruct("WBPlayerStruct", nullptr, true);
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
+
+	auto dictionarystruct = NewStruct("Dictionary", nullptr, true);
+	dictionarystruct->Size = sizeof(Dictionary);
+	dictionarystruct->Align = alignof(Dictionary);
+	NewPointer(dictionarystruct, false)->InstallHandlers(
+		[](FSerializer &ar, const char *key, const void *addr)
+		{
+			ar(key, *(Dictionary **)addr);
+		},
+		[](FSerializer &ar, const char *key, void *addr)
+		{
+			Serialize<Dictionary>(ar, key, *(Dictionary **)addr, nullptr);
+			return true;
+		}
+	);
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 

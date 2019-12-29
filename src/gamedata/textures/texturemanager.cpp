@@ -692,12 +692,14 @@ void FTextureManager::AddHiresTextures (int wadnum)
 void FTextureManager::ParseColorization(FScanner& sc)
 {
 	TextureManipulation tm = {};
+	tm.ModulateColor = 0x01ffffff;
 	sc.MustGetString();
 	FName cname = sc.String;
 	sc.MustGetToken('{');
 	while (!sc.CheckToken('}'))
 	{
-		if (sc.Compare("desaturation"))
+		sc.MustGetString();
+		if (sc.Compare("DesaturationFactor"))
 		{
 			sc.MustGetFloat();
 			tm.DesaturationFactor = (float)sc.Float;
@@ -716,6 +718,7 @@ void FTextureManager::ParseColorization(FScanner& sc)
 				sc.MustGetNumber();
 				tm.ModulateColor.a = sc.Number;
 			}
+			else tm.ModulateColor.a = 1;
 		}
 		else if (sc.Compare("BlendColor"))
 		{
@@ -723,18 +726,20 @@ void FTextureManager::ParseColorization(FScanner& sc)
 			tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
 			sc.MustGetToken(',');
 			sc.MustGetString();
-			static const char* opts[] = {"none", "alpha", "screen", "overlay", "hardlight", nullptr};
+			static const char* opts[] = { "none", "alpha", "screen", "overlay", "hardlight", nullptr };
 			tm.AddColor.a = (tm.AddColor.a & ~TextureManipulation::BlendMask) | sc.MustMatchString(opts);
-			if (sc.CheckToken(','))
+			if (sc.Compare("alpha"))
 			{
+				sc.MustGetToken(',');
 				sc.MustGetFloat();
-				tm.BlendColor.a = (uint8_t)clamp(sc.Float, 0., 1.) * 255;
+				tm.BlendColor.a = (uint8_t)(clamp(sc.Float, 0., 1.) * 255);
 			}
 		}
 		else if (sc.Compare("invert"))
 		{
 			tm.AddColor.a |= TextureManipulation::InvertBit;
 		}
+		else sc.ScriptError("Unknown token '%s'", sc.String);
 	}
 	if (tm.CheckIfEnabled())
 	{

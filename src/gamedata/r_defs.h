@@ -1208,7 +1208,7 @@ struct side_t
 	uint32_t	LeftSide, RightSide;	// [RH] Group walls into loops
 	uint16_t	TexelLength;
 	int16_t		Light;
-	uint8_t		Flags;
+	uint16_t	Flags;
 	int			UDMFIndex;		// needed to access custom UDMF fields which are stored in loading order.
 	FLightNode * lighthead;		// all dynamic lights that may affect this wall
 	seg_t **segs;	// all segs belonging to this sidedef in ascending order. Used for precise rendering

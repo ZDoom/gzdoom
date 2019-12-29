@@ -2158,6 +2158,76 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 
 //==========================================================================
 //
+// Dictionary
+//
+//==========================================================================
+
+FString DictionaryToString(const Dictionary &dict)
+{
+	Dictionary::ConstPair *pair;
+	Dictionary::ConstIterator i { dict };
+
+	rapidjson::StringBuffer buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	writer.StartObject();
+
+	while (i.NextPair(pair))
+	{
+		writer.Key(pair->Key);
+		writer.String(pair->Value);
+	}
+
+	writer.EndObject();
+
+	FString contents { buffer.GetString(), buffer.GetSize() };
+	return contents;
+}
+
+Dictionary *DictionaryFromString(const FString &string)
+{
+	Dictionary *const dict = new Dictionary;
+
+	rapidjson::Document doc;
+	doc.Parse(string.GetChars(), string.Len());
+
+	if (doc.GetType() != rapidjson::Type::kObjectType)
+	{
+		I_Error("Dictionary is expected to be an object.");
+		return dict;
+	}
+
+	for (auto i = doc.MemberBegin(); i != doc.MemberEnd(); ++i)
+	{
+		if (i->value.GetType() != rapidjson::Type::kStringType)
+		{
+			I_Error("Dictionary value is expected to be a string.");
+			return dict;
+		}
+
+		dict->Insert(i->name.GetString(), i->value.GetString());
+	}
+
+	return dict;
+}
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, Dictionary *&dict, Dictionary **)
+{
+	if (arc.isWriting())
+	{
+		FString contents { DictionaryToString(*dict) };
+		return arc(key, contents);
+	}
+	else
+	{
+		FString contents;
+		arc(key, contents);
+		dict = DictionaryFromString(contents);
+		return arc;
+	}
+}
+
+//==========================================================================
+//
 // Handler to retrieve a numeric value of any kind.
 //
 //==========================================================================

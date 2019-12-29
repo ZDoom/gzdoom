@@ -7,6 +7,7 @@
 #include "r_defs.h"
 #include "resourcefiles/file_zip.h"
 #include "tflags.h"
+#include "utility/dictionary.h"
 
 extern bool save_full;
 
@@ -270,6 +271,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimat
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocals *&font, FLevelLocals **def);
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, Dictionary *&dict, Dictionary **def);
 
 FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
 template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
@@ -311,5 +313,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TFlags<T, TT> &flags, 
 	return Serialize(arc, key, flags.Value, def? &def->Value : nullptr);
 }
 
+FString DictionaryToString(const Dictionary &dict);
+Dictionary *DictionaryFromString(const FString &string);
 
 #endif

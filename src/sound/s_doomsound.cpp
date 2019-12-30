@@ -470,14 +470,14 @@ void A_StartSound(AActor *self, int soundid, int channel, int flags, double volu
 {
 	if (!looping)
 	{
-		if (!(flags & CHANF_NOSTOP) || !S_IsActorPlayingSomething(self, channel & 7, soundid))
+		if (!(flags & CHANF_NOSTOP) || !S_IsActorPlayingSomething(self, channel, soundid))
 		{
 			S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), soundid, (float)volume, (float)attenuation, local, (float)pitch);
 		}
 	}
 	else
 	{
-		if (!S_IsActorPlayingSomething(self, channel & 7, soundid))
+		if (!S_IsActorPlayingSomething(self, channel, soundid))
 		{
 			S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags) | CHANF_LOOP, soundid, (float)volume, (float)attenuation, local, (float)pitch);
 		}

@@ -20,8 +20,6 @@ enum EChanFlag
 	CHANF_AREA = 128,	// Sound plays from all around. Only valid with sector sounds.
 	CHANF_LOOP = 256,
 
-	CHANF_PICKUP = CHANF_MAYBE_LOCAL,
-
 	CHANF_NONE = 0,
 	CHANF_IS3D = 1,		// internal: Sound is 3D.
 	CHANF_EVICTED = 2,		// internal: Sound was evicted.

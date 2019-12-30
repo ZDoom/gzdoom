@@ -1046,6 +1046,7 @@ class Inventory : Actor
 	{
 		double atten;
 		int chan;
+		int flags = 0;
 
 		if (bNoAttenPickupSound)
 		{
@@ -1065,13 +1066,15 @@ class Inventory : Actor
 
 		if (toucher != NULL && toucher.CheckLocalView())
 		{
-			chan = CHAN_PICKUP|CHAN_NOPAUSE;
+			chan = CHAN_ITEM;
+			flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
 		}
 		else
 		{
-			chan = CHAN_PICKUP;
+			chan = CHAN_ITEM;
+			flags = CHANF_MAYBE_LOCAL;
 		}
-		toucher.A_PlaySound(PickupSound, chan, 1, false, atten);
+		toucher.A_StartSound(PickupSound, chan, flags, 1, false, atten);
 	}
 
 	//===========================================================================

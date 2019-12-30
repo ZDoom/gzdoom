@@ -418,9 +418,18 @@ enum ESoundFlags
 	CHAN_UI = 32,
 	CHAN_NOPAUSE = 64,
 	CHAN_LOOP = 256,
-	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL),
+	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL), // Do not use this with A_StartSound! It would not do what is expected.
 	CHAN_NOSTOP = 4096,
 	CHAN_OVERLAP = 8192,
+
+	// Same as above, with an F appended to allow better distinction of channel and channel flags.
+	CHANF_LISTENERZ = 8,
+	CHANF_MAYBE_LOCAL = 16,
+	CHANF_UI = 32,
+	CHANF_NOPAUSE = 64,
+	CHANF_LOOP = 256,
+	CHANF_NOSTOP = 4096,
+	CHANF_OVERLAP = 8192,
 
 };
 

@@ -68,3 +68,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, FromString, DictFromString)
 	PARAM_STRING(string);
 	ACTION_RETURN_POINTER(DictFromString(string));
 }
+
+static void DictRemove(Dictionary *dict, const FString &key)
+{
+	dict->Remove(key);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, Remove, DictRemove)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(Dictionary);
+	PARAM_STRING(key);
+	DictRemove(self, key);
+	return 0;
+}

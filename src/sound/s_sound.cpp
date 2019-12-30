@@ -542,7 +542,6 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 				if (foundit)
 				{
 					StopChannel(chan);
-					break;
 				}
 			}
 		}
@@ -1055,7 +1054,6 @@ void SoundEngine::ChangeSoundVolume(int sourcetype, const void *source, int chan
 		{
 			GSnd->ChannelVolume(chan, volume);
 			chan->Volume = volume;
-			return;
 		}
 	}
 	return;
@@ -1086,7 +1084,6 @@ void SoundEngine::ChangeSoundPitch(int sourcetype, const void *source, int chann
 			(sound_id == -1? (chan->EntChannel == channel) : (chan->OrgID == sound_id)))
 		{
 			SetPitch(chan, (float)pitch);
-			return;
 		}
 	}
 	return;

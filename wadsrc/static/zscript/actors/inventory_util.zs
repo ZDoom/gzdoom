@@ -504,6 +504,10 @@ extend class Actor
 		{
 			return false;
 		}
+		if (receiver == NULL)
+		{
+			return false;
+		}
 		if (!orresult)
 		{
 			receiver = receiver.GetPointer(setreceiver);

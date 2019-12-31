@@ -87,6 +87,7 @@ version "4.2"
 #include "zscript/actors/doom/weaponrlaunch.zs"
 #include "zscript/actors/doom/weaponplasma.zs"
 #include "zscript/actors/doom/weaponbfg.zs"
+#include "zscript/actors/doom/dehacked.zs"
 
 #include "zscript/actors/doom/deadthings.zs"
 #include "zscript/actors/doom/doomammo.zs"

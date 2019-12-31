@@ -26,6 +26,7 @@
 #include "c_cvars.h"
 #include "v_video.h"
 #include "templates.h"
+#include "r_videoscale.h"
 
 #include "console/c_console.h"
 #include "menu/menu.h"
@@ -52,7 +53,7 @@ CUSTOM_CVAR(Int, vid_scale_customheight, VID_MIN_HEIGHT, CVAR_ARCHIVE | CVAR_GLO
 		self = VID_MIN_HEIGHT;
 	setsizeneeded = true;
 }
-CVAR(Bool, vid_scale_customlinear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, vid_scale_linear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Float, vid_scale_custompixelaspect, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	setsizeneeded = true;
@@ -120,17 +121,17 @@ namespace
 	
 	// the odd formatting of this struct definition is meant to resemble a table header. set your tab stops to 4 when editing this file.
 	struct v_ScaleTable
-		{ bool isValid;		bool isLinear;	uint32_t(*GetScaledWidth)(uint32_t Width, uint32_t Height);								uint32_t(*GetScaledHeight)(uint32_t Width, uint32_t Height);						float pixelAspect;		bool isCustom;	};
+		{ bool isValid;		uint32_t(*GetScaledWidth)(uint32_t Width, uint32_t Height);								uint32_t(*GetScaledHeight)(uint32_t Width, uint32_t Height);						float pixelAspect;		bool isCustom;	};
 	v_ScaleTable vScaleTable[NUMSCALEMODES] =
 	{
-		{ true,				false,			[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },		        		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,	  				false   },	// 0  - Native
-		{ true,				true,			[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },			       		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,  					false   },	// 1  - Native (Linear)
-		{ true,				false,			[](uint32_t Width, uint32_t Height)->uint32_t { return 640; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 400; },			        	1.2f,   				false   },	// 2  - 640x400 (formerly 320x200)
-		{ true,				true,			[](uint32_t Width, uint32_t Height)->uint32_t { return 960; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 600; },				        1.2f,  				 	false   },	// 3  - 960x600 (formerly 640x400)
-		{ true,				true,			[](uint32_t Width, uint32_t Height)->uint32_t { return 1280; },		           		[](uint32_t Width, uint32_t Height)->uint32_t { return 800; },	        			1.2f,   				false   },	// 4  - 1280x800
-		{ true,				true,			[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customwidth; },		[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customheight; },	1.0f,   				true    },	// 5  - Custom
-		{ true,				true,			[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },	1.0f,					false   },	// 6  - Minimum Scale to Fill Entire Screen
-		{ true,				false,			[](uint32_t Width, uint32_t Height)->uint32_t { return 320; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 200; },			        	1.2f,   				false   },	// 7  - 320x200
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },		        		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,	  				false   },	// 0  - Native
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },			       		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,  					false   },	// 1  - Native (Linear)
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 640; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 400; },			        	1.2f,   				false   },	// 2  - 640x400 (formerly 320x200)
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 960; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 600; },				        1.2f,  				 	false   },	// 3  - 960x600 (formerly 640x400)
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 1280; },		           		[](uint32_t Width, uint32_t Height)->uint32_t { return 800; },	        			1.2f,   				false   },	// 4  - 1280x800
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customwidth; },		[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customheight; },	1.0f,   				true    },	// 5  - Custom
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },	1.0f,					false   },	// 6  - Minimum Scale to Fill Entire Screen
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 320; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 200; },			        	1.2f,   				false   },	// 7  - 320x200
 	};
 	bool isOutOfBounds(int x)
 	{
@@ -164,11 +165,12 @@ bool ViewportLinearScale()
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
-	// hack - use custom scaling if in "custom" mode
-	if (vScaleTable[vid_scalemode].isCustom)
-		return vid_scale_customlinear;
-	// vid_scalefactor > 1 == forced linear scale
-	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
+	// always use linear if supersampling
+	int x = screen->GetClientWidth(), y = screen->GetClientHeight();
+	if (ViewportScaledWidth(x,y) > x || ViewportScaledHeight(x,y) > y)
+		return true;
+	
+	return vid_scale_linear;
 }
 
 int ViewportScaledWidth(int width, int height)
@@ -252,7 +254,7 @@ CCMD (vid_setscale)
         vid_scale_customheight = atoi(argv[2]);
         if (argv.argc() > 3)
         {
-            vid_scale_customlinear = atob(argv[3]);
+            vid_scale_linear = atob(argv[3]);
             if (argv.argc() > 4)
             {
                 vid_scale_custompixelaspect = atof(argv[4]);
@@ -263,7 +265,7 @@ CCMD (vid_setscale)
     }
     else
     {
-        Printf("Usage: vid_setscale <x> <y> [bool linear] [bool long-pixel-shape]\nThis command will create a custom viewport scaling mode.\n");
+        Printf("Usage: vid_setscale <x> <y> [bool linear] [float pixel-shape]\nThis command will create a custom viewport scaling mode.\n");
     }
 }
 
@@ -277,7 +279,6 @@ CCMD (vid_scaletolowest)
 	case 1:		// Method 1: set a custom video scaling
 		vid_scalemode = 5;
 		vid_scalefactor = 1.0;
-		vid_scale_customlinear = 1;
 		vid_scale_custompixelaspect = 1.0;
 		vid_scale_customwidth = v_mfillX(screen->GetClientWidth(), screen->GetClientHeight());
 		vid_scale_customheight = v_mfillY(screen->GetClientWidth(), screen->GetClientHeight());

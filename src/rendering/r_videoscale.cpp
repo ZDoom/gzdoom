@@ -57,6 +57,8 @@ CVAR(Bool, vid_scale_linear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CUSTOM_CVAR(Float, vid_scale_custompixelaspect, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	setsizeneeded = true;
+	if (self < 0.2 || self > 5.0)
+		self = 1.0;
 }
 
 namespace

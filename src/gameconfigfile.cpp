@@ -66,6 +66,7 @@ EXTERN_CVAR (Int, gl_texture_hqresizemode)
 EXTERN_CVAR (Int, gl_texture_hqresizemult)
 EXTERN_CVAR (Int, vid_preferbackend)
 EXTERN_CVAR (Float, vid_scale_custompixelaspect)
+EXTERN_CVAR (Bool, vid_scale_linear)
 
 FGameConfigFile::FGameConfigFile ()
 {
@@ -514,7 +515,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					}
 					if (v.Int == 2) // 320x200
 					{
-						newvalue.Int = 7;
+						newvalue.Int = 6;
 						var->SetGenericRep(newvalue, CVAR_Int);
 					}
 				}
@@ -538,6 +539,25 @@ void FGameConfigFile::DoGlobalSetup ()
 						vid_scale_custompixelaspect = 1.2;
 					else
 						vid_scale_custompixelaspect = 1.0;
+				}
+				var = FindCVar("vid_scalemode", NULL);
+				UCVarValue newvalue;
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Int);
+					switch (v.Int)
+					{
+					case 1:
+						newvalue.Int = 0;
+						var->SetGenericRep(newvalue, CVAR_Int);
+					case 3:
+					case 4:
+						vid_scale_linear = true;
+						break;
+					default:
+						vid_scale_linear = false;
+						break;
+					}
 				}
 			}
 		}

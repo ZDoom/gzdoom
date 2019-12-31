@@ -125,12 +125,11 @@ namespace
 	v_ScaleTable vScaleTable[NUMSCALEMODES] =
 	{
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },		        		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,	  				false   },	// 0  - Native
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },			       		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,  					false   },	// 1  - Native (Linear)
+		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },	1.0f,					false   },	// 6  - Minimum Scale to Fill Entire Screen
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 640; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 400; },			        	1.2f,   				false   },	// 2  - 640x400 (formerly 320x200)
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 960; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 600; },				        1.2f,  				 	false   },	// 3  - 960x600 (formerly 640x400)
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 1280; },		           		[](uint32_t Width, uint32_t Height)->uint32_t { return 800; },	        			1.2f,   				false   },	// 4  - 1280x800
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customwidth; },		[](uint32_t Width, uint32_t Height)->uint32_t { return vid_scale_customheight; },	1.0f,   				true    },	// 5  - Custom
-		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },	1.0f,					false   },	// 6  - Minimum Scale to Fill Entire Screen
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return 320; },		            		[](uint32_t Width, uint32_t Height)->uint32_t { return 200; },			        	1.2f,   				false   },	// 7  - 320x200
 	};
 	bool isOutOfBounds(int x)
@@ -257,7 +256,7 @@ CCMD (vid_setscale)
             vid_scale_linear = atob(argv[3]);
             if (argv.argc() > 4)
             {
-                vid_scale_custompixelaspect = atof(argv[4]);
+                vid_scale_custompixelaspect = (float)atof(argv[4]);
             }
         }
         vid_scalemode = 5;
@@ -284,11 +283,11 @@ CCMD (vid_scaletolowest)
 		vid_scale_customheight = v_mfillY(screen->GetClientWidth(), screen->GetClientHeight());
 		break;
 	case 2:		// Method 2: use the actual downscaling mode directly
-		vid_scalemode = 6;
+		vid_scalemode = 1;
 		vid_scalefactor = 1.0;
 		break;
 	default:	// Default method: use vid_scalefactor to achieve the result on a default scaling mode
-		vid_scalemode = 1;
+		vid_scalemode = 0;
 		vid_scalefactor = v_MinimumToFill(screen->GetClientWidth(), screen->GetClientHeight());
 		break;
 	}

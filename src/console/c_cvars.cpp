@@ -1760,7 +1760,7 @@ void C_GrabCVarDefaults ()
 
 		sc.MustGetString();
 		if (!sc.Compare("version"))
-			sc.ScriptError("Must declare version for defcvars!");
+			sc.ScriptError("Must declare version for defcvars! (currently: %i)", gamelastrunversion);
 		sc.MustGetNumber();
 		lumpversion = sc.Number;
 		if (lumpversion > gamelastrunversion)

@@ -45,7 +45,7 @@ CVAR(Int, menu_resolution_custom_height, 480, 0)
 EXTERN_CVAR(Bool, fullscreen)
 EXTERN_CVAR(Bool, win_maximized)
 EXTERN_CVAR(Bool, vid_scale_customlinear)
-EXTERN_CVAR(Bool, vid_scale_customstretched)
+EXTERN_CVAR(Float, vid_scale_custompixelaspect)
 EXTERN_CVAR(Int, vid_scale_customwidth)
 EXTERN_CVAR(Int, vid_scale_customheight)
 EXTERN_CVAR(Int, vid_scalemode)
@@ -87,7 +87,7 @@ CCMD (menu_resolution_commit_changes)
 		vid_scalefactor = 1.;
 		vid_scale_customwidth = menu_resolution_custom_width;
 		vid_scale_customheight = menu_resolution_custom_height;
-		vid_scale_customstretched = false;
+		vid_scale_custompixelaspect = 1.0;
 	}
 }
 

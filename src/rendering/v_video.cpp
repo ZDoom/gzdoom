@@ -668,10 +668,6 @@ int ActiveFakeRatio(int width, int height)
 			fakeratio = 3;
 		}
 	}
-	else if (vid_aspect == 0 && ViewportIsScaled43())
-	{
-		fakeratio = 0;
-	}
 	return fakeratio;
 }
 
@@ -694,7 +690,7 @@ float ActiveRatio(int width, int height, float *trueratio)
 
 	if (trueratio)
 		*trueratio = ratio;
-	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : ratio;
+	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : (ratio / ViewportPixelAspect());
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)

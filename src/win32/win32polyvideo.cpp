@@ -6,6 +6,8 @@
 
 EXTERN_CVAR(Bool, vid_vsync)
 
+bool ViewportLinearScale();
+
 extern HWND Window;
 
 #include <d3d9.h>
@@ -168,7 +170,10 @@ void I_PolyPresentUnlock(int x, int y, int width, int height)
 		dstrect.top = y;
 		dstrect.right = x + width;
 		dstrect.bottom = y + height;
-		device->StretchRect(surface, &srcrect, backbuffer, &dstrect, D3DTEXF_LINEAR);
+		if (ViewportLinearScale())
+			device->StretchRect(surface, &srcrect, backbuffer, &dstrect, D3DTEXF_LINEAR);
+		else
+			device->StretchRect(surface, &srcrect, backbuffer, &dstrect, D3DTEXF_POINT);
 
 		result = device->EndScene();
 		if (SUCCEEDED(result))

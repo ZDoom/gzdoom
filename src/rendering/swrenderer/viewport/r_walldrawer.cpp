@@ -35,15 +35,23 @@ namespace swrenderer
 		(thread->Drawers(dc_viewport)->*wallfunc)(*this);
 	}
 
-	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap)
+	void WallDrawerArgs::SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap, bool dynlights)
 	{
 		if (alpha < OPAQUE || additive)
 		{
-			if (!additive)
+			if (!additive && !dynlights)
 			{
 				wallfunc = &SWPixelFormatDrawers::DrawWallAdd;
 				dc_srcblend = Col2RGB8[alpha >> 10];
 				dc_destblend = Col2RGB8[(OPAQUE - alpha) >> 10];
+				dc_srcalpha = alpha;
+				dc_destalpha = OPAQUE - alpha;
+			}
+			else if (!additive)
+			{
+				wallfunc = &SWPixelFormatDrawers::DrawWallAddClamp;
+				dc_srcblend = Col2RGB8_LessPrecision[alpha >> 10];
+				dc_destblend = Col2RGB8_LessPrecision[(OPAQUE - alpha) >> 10];
 				dc_srcalpha = alpha;
 				dc_destalpha = OPAQUE - alpha;
 			}

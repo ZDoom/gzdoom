@@ -15,7 +15,7 @@ namespace swrenderer
 	class WallDrawerArgs : public DrawerArgs
 	{
 	public:
-		void SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap);
+		void SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap, bool dynlights);
 		void SetDest(RenderViewport *viewport);
 		void DrawWall(RenderThread *thread);
 

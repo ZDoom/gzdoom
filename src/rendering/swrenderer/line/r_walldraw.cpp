@@ -130,11 +130,11 @@ namespace swrenderer
 		// Textures that aren't masked can use the faster opaque drawer
 		if (!pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
 		{
-			drawerargs.SetStyle(true, false, OPAQUE, mLight.GetBaseColormap());
+			drawerargs.SetStyle(true, false, OPAQUE, mLight.GetBaseColormap(), light_list);
 		}
 		else
 		{
-			drawerargs.SetStyle(mask, additive, alpha, mLight.GetBaseColormap());
+			drawerargs.SetStyle(mask, additive, alpha, mLight.GetBaseColormap(), light_list);
 		}
 
 		int count = x2 - x1;

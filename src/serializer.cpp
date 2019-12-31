@@ -2185,19 +2185,24 @@ FString DictionaryToString(const Dictionary &dict)
 
 Dictionary *DictionaryFromString(const FString &string)
 {
-	if (string.IsEmpty())
+	if (string.Compare("null") == 0)
 	{
 		return nullptr;
 	}
 
 	Dictionary *const dict = new Dictionary;
 
+	if (string.IsEmpty())
+	{
+		return dict;
+	}
+
 	rapidjson::Document doc;
 	doc.Parse(string.GetChars(), string.Len());
 
 	if (doc.GetType() != rapidjson::Type::kObjectType)
 	{
-		I_Error("Dictionary is expected to be an object.");
+		I_Error("Dictionary is expected to be a JSON object.");
 		return dict;
 	}
 
@@ -2205,7 +2210,7 @@ Dictionary *DictionaryFromString(const FString &string)
 	{
 		if (i->value.GetType() != rapidjson::Type::kStringType)
 		{
-			I_Error("Dictionary value is expected to be a string.");
+			I_Error("Dictionary value is expected to be a JSON string.");
 			return dict;
 		}
 
@@ -2219,7 +2224,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, Dictionary 
 {
 	if (arc.isWriting())
 	{
-		FString contents { dict ? DictionaryToString(*dict) : "" };
+		FString contents { dict ? DictionaryToString(*dict) : "null" };
 		return arc(key, contents);
 	}
 	else

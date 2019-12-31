@@ -536,9 +536,9 @@ void FGameConfigFile::DoGlobalSetup ()
 				{
 					UCVarValue v = var->GetGenericRep(CVAR_Bool);
 					if (v.Bool)
-						vid_scale_custompixelaspect = 1.2;
+						vid_scale_custompixelaspect = 1.2f;
 					else
-						vid_scale_custompixelaspect = 1.0;
+						vid_scale_custompixelaspect = 1.0f;
 				}
 				var = FindCVar("vid_scalemode", NULL);
 				UCVarValue newvalue;

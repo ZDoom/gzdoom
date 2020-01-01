@@ -3,118 +3,113 @@
 #include "mididefs.h"
 #include "../../music_common/fileio.h"
 
-namespace ZMusic	// Namespaced because these conflict with the same-named CVARs
-{
-
 enum EIntConfigKey
 {
-	adl_chips_count,
-	adl_emulator_id,
-	adl_run_at_pcm_rate,
-	adl_fullpan,
-	adl_bank,
-	adl_use_custom_bank,
-	adl_volume_model,
+	zmusic_adl_chips_count,
+	zmusic_adl_emulator_id,
+	zmusic_adl_run_at_pcm_rate,
+	zmusic_adl_fullpan,
+	zmusic_adl_bank,
+	zmusic_adl_use_custom_bank,
+	zmusic_adl_volume_model,
 
-	fluid_reverb,
-	fluid_chorus,
-	fluid_voices,
-	fluid_interp,
-	fluid_samplerate,
-	fluid_threads,
-	fluid_chorus_voices,
-	fluid_chorus_type,
+	zmusic_fluid_reverb,
+	zmusic_fluid_chorus,
+	zmusic_fluid_voices,
+	zmusic_fluid_interp,
+	zmusic_fluid_samplerate,
+	zmusic_fluid_threads,
+	zmusic_fluid_chorus_voices,
+	zmusic_fluid_chorus_type,
 
-	opl_numchips,
-	opl_core,
-	opl_fullpan,
+	zmusic_opl_numchips,
+	zmusic_opl_core,
+	zmusic_opl_fullpan,
 
-	opn_chips_count,
-	opn_emulator_id,
-	opn_run_at_pcm_rate,
-	opn_fullpan,
-	opn_use_custom_bank,
+	zmusic_opn_chips_count,
+	zmusic_opn_emulator_id,
+	zmusic_opn_run_at_pcm_rate,
+	zmusic_opn_fullpan,
+	zmusic_opn_use_custom_bank,
 
-	gus_dmxgus,
-	gus_midi_voices,
-	gus_memsize,
+	zmusic_gus_dmxgus,
+	zmusic_gus_midi_voices,
+	zmusic_gus_memsize,
 
-	timidity_modulation_wheel,
-	timidity_portamento,
-	timidity_reverb,
-	timidity_reverb_level,
-	timidity_chorus,
-	timidity_surround_chorus,
-	timidity_channel_pressure,
-	timidity_lpf_def,
-	timidity_temper_control,
-	timidity_modulation_envelope,
-	timidity_overlap_voice_allow,
-	timidity_drum_effect,
-	timidity_pan_delay,
-	timidity_key_adjust,
+	zmusic_timidity_modulation_wheel,
+	zmusic_timidity_portamento,
+	zmusic_timidity_reverb,
+	zmusic_timidity_reverb_level,
+	zmusic_timidity_chorus,
+	zmusic_timidity_surround_chorus,
+	zmusic_timidity_channel_pressure,
+	zmusic_timidity_lpf_def,
+	zmusic_timidity_temper_control,
+	zmusic_timidity_modulation_envelope,
+	zmusic_timidity_overlap_voice_allow,
+	zmusic_timidity_drum_effect,
+	zmusic_timidity_pan_delay,
+	zmusic_timidity_key_adjust,
 
-	wildmidi_reverb,
-	wildmidi_enhanced_resampling,
+	zmusic_wildmidi_reverb,
+	zmusic_wildmidi_enhanced_resampling,
 
-	snd_midiprecache,
+	zmusic_snd_midiprecache,
 
-	mod_samplerate,
-	mod_volramp,
-	mod_interp,
-	mod_autochip,
-	mod_autochip_size_force,
-	mod_autochip_size_scan,
-	mod_autochip_scan_threshold,
+	zmusic_mod_samplerate,
+	zmusic_mod_volramp,
+	zmusic_mod_interp,
+	zmusic_mod_autochip,
+	zmusic_mod_autochip_size_force,
+	zmusic_mod_autochip_size_scan,
+	zmusic_mod_autochip_scan_threshold,
 
-	snd_streambuffersize,
+	zmusic_snd_streambuffersize,
 	
-	snd_mididevice,
-	snd_outputrate,
+	zmusic_snd_mididevice,
+	zmusic_snd_outputrate,
 
-	NUM_INT_CONFIGS
+	NUM_ZMUSIC_INT_CONFIGS
 };
 
 enum EFloatConfigKey
 {
-	fluid_gain,
-	fluid_reverb_roomsize,
-	fluid_reverb_damping,
-	fluid_reverb_width,
-	fluid_reverb_level,
-	fluid_chorus_level,
-	fluid_chorus_speed,
-	fluid_chorus_depth,
+	zmusic_fluid_gain,
+	zmusic_fluid_reverb_roomsize,
+	zmusic_fluid_reverb_damping,
+	zmusic_fluid_reverb_width,
+	zmusic_fluid_reverb_level,
+	zmusic_fluid_chorus_level,
+	zmusic_fluid_chorus_speed,
+	zmusic_fluid_chorus_depth,
 
-	timidity_drum_power,
-	timidity_tempo_adjust,
-	min_sustain_time,
+	zmusic_timidity_drum_power,
+	zmusic_timidity_tempo_adjust,
+	zmusic_min_sustain_time,
 
-	gme_stereodepth,
-	mod_dumb_mastervolume,
+	zmusic_gme_stereodepth,
+	zmusic_mod_dumb_mastervolume,
 
-	snd_musicvolume,
-	relative_volume,
-	snd_mastervolume,
+	zmusic_snd_musicvolume,
+	zmusic_relative_volume,
+	zmusic_snd_mastervolume,
 
 	NUM_FLOAT_CONFIGS
 };
 
 enum EStringConfigKey
 {
-	adl_custom_bank,
-	fluid_lib,
-	fluid_patchset,
-	opn_custom_bank,
-	gus_config,
-	gus_patchdir,
-	timidity_config,
-	wildmidi_config,
+	zmusic_adl_custom_bank,
+	zmusic_fluid_lib,
+	zmusic_fluid_patchset,
+	zmusic_opn_custom_bank,
+	zmusic_gus_config,
+	zmusic_gus_patchdir,
+	zmusic_timidity_config,
+	zmusic_wildmidi_config,
 
 	NUM_STRING_CONFIGS
 };
-
-}
 
 struct Callbacks
 {
@@ -147,8 +142,10 @@ typedef struct { int zm1; } *ZMusic_MidiSource;
 typedef struct { int zm2; } *ZMusic_MusicStream;
 #endif
 
+#ifdef __cplusplus
 extern "C"
 {
+#endif
 	DLL_IMPORT const char* ZMusic_GetLastError();
 
 	// Sets callbacks for functionality that the client needs to provide.
@@ -181,22 +178,28 @@ extern "C"
 	DLL_IMPORT bool ZMusic_IsMIDI(ZMusic_MusicStream song);
 	DLL_IMPORT void ZMusic_VolumeChanged(ZMusic_MusicStream song);
 	DLL_IMPORT bool ZMusic_WriteSMF(ZMusic_MidiSource source, const char* fn, int looplimit);
-	SoundStreamInfo ZMusic_GetStreamInfo(ZMusic_MusicStream song);
-
+	DLL_IMPORT void ZMusic_GetStreamInfo(ZMusic_MusicStream song, SoundStreamInfo *info);
 	// Configuration interface. The return value specifies if a music restart is needed.
 	// RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.
+	DLL_IMPORT bool ChangeMusicSettingInt(EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue = nullptr);
+	DLL_IMPORT bool ChangeMusicSettingFloat(EFloatConfigKey key, ZMusic_MusicStream song, float value, float* pRealValue = nullptr);
+	DLL_IMPORT bool ChangeMusicSettingString(EStringConfigKey key, ZMusic_MusicStream song, const char* value);
+	DLL_IMPORT const char *ZMusic_GetStats(ZMusic_MusicStream song);
+
+#ifdef __cplusplus
 }
 
-class MusInfo;
-#if 0
-std::string ZMusic_GetStats(ZMusic_MusicStream song);
-bool ChangeMusicSetting(ZMusic::EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, ZMusic_MusicStream song, float value, float* pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EStringConfigKey key, ZMusic_MusicStream song, const char* value);
-#else
-// Cannot be done yet.
-std::string ZMusic_GetStats(MusInfo* song);
-bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo* song, int value, int* pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, MusInfo* song, float value, float* pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EStringConfigKey key, MusInfo* song, const char* value);
+inline bool ChangeMusicSetting(EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue = nullptr)
+{
+	return ChangeMusicSettingInt(key, song, value, pRealValue);
+}
+inline bool ChangeMusicSetting(EFloatConfigKey key, ZMusic_MusicStream song, float value, float* pRealValue = nullptr)
+{
+	return ChangeMusicSettingFloat(key, song, value, pRealValue);
+}
+inline bool ChangeMusicSetting(EStringConfigKey key, ZMusic_MusicStream song, const char* value)
+{
+	return ChangeMusicSettingString(key, song, value);
+}
+
 #endif

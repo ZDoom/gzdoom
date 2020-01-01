@@ -418,7 +418,7 @@ extern int MUSHeaderSearch(const uint8_t *head, int len);
 //
 //==========================================================================
 
-EMIDIType ZMusic_IdentifyMIDIType(uint32_t *id, int size)
+DLL_EXPORT EMIDIType ZMusic_IdentifyMIDIType(uint32_t *id, int size)
 {
 	// Check for MUS format
 	// Tolerate sloppy wads by searching up to 32 bytes for the header

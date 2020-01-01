@@ -342,7 +342,7 @@ ADD_STAT(music)
 {
 	if (mus_playing.handle != nullptr)
 	{
-		return FString(ZMusic_GetStats((MusInfo*)mus_playing.handle).c_str());
+		return ZMusic_GetStats(mus_playing.handle);
 	}
 	return "No song playing";
 }

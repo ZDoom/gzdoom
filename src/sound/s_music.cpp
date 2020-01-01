@@ -139,7 +139,8 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 void S_CreateStream()
 {
 	if (!mus_playing.handle) return;
-	auto fmt = ZMusic_GetStreamInfo(mus_playing.handle);
+	SoundStreamInfo fmt;
+	ZMusic_GetStreamInfo(mus_playing.handle, &fmt);
 	if (fmt.mBufferSize > 0)
 	{
 		int flags = fmt.mNumChannels < 0 ? 0 : SoundStream::Float;

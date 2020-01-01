@@ -205,6 +205,6 @@ CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CV
 		self = DEF_MIDIDEV;
 		return;
 	}
-	bool change = ChangeMusicSetting(ZMusic::snd_mididevice, nullptr, self);
+	bool change = ChangeMusicSetting(zmusic_snd_mididevice, nullptr, self);
 	if (change) S_MIDIDeviceChanged(self);
 }

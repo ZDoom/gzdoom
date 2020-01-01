@@ -148,7 +148,7 @@ static bool ungzip(uint8_t *data, int complen, std::vector<uint8_t> &newdata)
 //
 //==========================================================================
 
-MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args)
+DLL_EXPORT MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args)
 {
 	MusInfo *info = nullptr;
 	StreamSource *streamsource = nullptr;
@@ -403,11 +403,12 @@ DLL_EXPORT bool ZMusic_IsMIDI(MusInfo *song)
 	return song->IsMIDI();
 }
 
-SoundStreamInfo ZMusic_GetStreamInfo(MusInfo *song)
+DLL_EXPORT void ZMusic_GetStreamInfo(MusInfo *song, SoundStreamInfo *fmt)
 {
-	if (!song) return {};
+	if (!fmt) return;
+	if (!song) *fmt = {};
 	std::lock_guard<std::mutex> lock(song->CritSec);
-	return song->GetStreamInfo();
+	*fmt = song->GetStreamInfo();
 }
 
 DLL_EXPORT void ZMusic_Close(MusInfo *song)
@@ -423,14 +424,16 @@ DLL_EXPORT void ZMusic_VolumeChanged(MusInfo *song)
 	song->MusicVolumeChanged();
 }
 
-std::string ZMusic_GetStats(MusInfo *song)
+static std::string staticErrorMessage;
+
+DLL_EXPORT const char *ZMusic_GetStats(MusInfo *song)
 {
 	if (!song) return "";
 	std::lock_guard<std::mutex> lock(song->CritSec);
-	return song->GetStats();
+	staticErrorMessage = song->GetStats();
+	return staticErrorMessage.c_str();
 }
 
-static std::string staticErrorMessage;
 void SetError(const char* msg)
 {
 	staticErrorMessage = msg;

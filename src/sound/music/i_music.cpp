@@ -270,9 +270,12 @@ void I_InitMusic (void)
 
 	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
 
+// TODO: remove, move functionality to ZMusic_EnumerateMidiDevices
 #ifdef _WIN32
 	I_InitMusicWin32 ();
 #endif // _WIN32
+
+	ZMusic_EnumerateMidiDevices();
 	snd_mididevice.Callback();
 	
 	Callbacks callbacks;

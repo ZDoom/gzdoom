@@ -10,6 +10,11 @@ endif()
 
 include( CheckFunctionExists )
 
+find_package( ALSA )
+if (WIN32 OR ALSA_FOUND)
+    add_definitions( -DHAVE_SYSTEM_MIDI )
+endif()
+
 if( DYN_SNDFILE)
 	add_definitions( -DHAVE_SNDFILE -DDYN_SNDFILE )
 else()
@@ -44,12 +49,20 @@ endif()
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/../libraries/dumb/include" "${ZLIB_INCLUDE_DIR}" "${ADL_INCLUDE_DIR}" "${OPN_INCLUDE_DIR}" "${TIMIDITYPP_INCLUDE_DIR}" "${TIMIDITY_INCLUDE_DIR}" "${WILDMIDI_INCLUDE_DIR}" "${OPLSYNTH_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" )
 
 if (WIN32)
-set( PLAT_SOURCES
-	mididevices/music_win_mididevice.cpp
-	musicformats/win32/i_cd.cpp
-	musicformats/win32/helperthread.cpp
-	)
+    set( PLAT_SOURCES
+        mididevices/music_win_mididevice.cpp
+        musicformats/win32/i_cd.cpp
+        musicformats/win32/helperthread.cpp
+    )
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    if (ALSA_FOUND)
+        set( PLAT_SOURCES
+            mididevices/music_alsa_mididevice.cpp
+            mididevices/music_alsa_state.cpp
+        )
+    endif()
 endif()
+
 
 file( GLOB HEADER_FILES
 	zmusic/*.h
@@ -109,6 +122,11 @@ endif()
 if( NOT DYN_FLUIDSYNTH AND FLUIDSYNTH_FOUND )
 	include_directories( "${FLUIDSYNTH_INCLUDE_DIR}" )
 	target_link_libraries( zmusic ${FLUIDSYNTH_LIBRARIES} )
+endif()
+
+if(ALSA_FOUND)
+	include_directories( "${ALSA_INCLUDE_DIR}" )
+	target_link_libraries( zmusic ${ALSA_LIBRARIES} )
 endif()
 
 source_group("MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/mididevices/.+")

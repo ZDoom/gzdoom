@@ -154,3 +154,6 @@ MIDIDevice *CreateWildMIDIDevice(const char *Args, int samplerate);
 MIDIDevice* CreateWinMIDIDevice(int mididevice);
 #endif
 
+#ifdef __linux__
+MIDIDevice* CreateAlsaMIDIDevice(int mididevice);
+#endif

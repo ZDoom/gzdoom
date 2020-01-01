@@ -43,7 +43,7 @@ enum EMidiEvent : uint8_t
 enum EMidiDevice
 {
 	MDEV_DEFAULT = -1,
-	MDEV_MMAPI = 0,
+	MDEV_STANDARD = 0,
 	MDEV_OPL = 1,
 	MDEV_SNDSYS = 2,
 	MDEV_TIMIDITY = 3,

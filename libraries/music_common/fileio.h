@@ -224,8 +224,8 @@ struct VectorReader : public MemoryReader
 
 //==========================================================================
 //
-// The follpwing two functions are needed to allow using UTF-8 in the file interface.
-// fopen on Windows is only safe for ASCII,
+// The following two functions are needed to allow using UTF-8 in the file interface.
+// fopen on Windows is only safe for ASCII.
 //
 //==========================================================================
 
@@ -271,10 +271,12 @@ inline bool fileExists(const char *fn)
 
 class SoundFontReaderInterface
 {
-public:
+protected:
 	virtual ~SoundFontReaderInterface() {}
+public:
 	virtual struct FileInterface* open_file(const char* fn) = 0;
 	virtual void add_search_path(const char* path) = 0;
+	virtual void close() { delete this; }
 };
 
 

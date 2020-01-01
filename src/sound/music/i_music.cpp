@@ -39,6 +39,7 @@
 
 #include <zlib.h>
 
+#include "zmusic/zmusic.h"
 #include "m_argv.h"
 #include "w_wad.h"
 #include "c_dispatch.h"
@@ -52,7 +53,6 @@
 #include "i_soundfont.h"
 #include "s_music.h"
 #include "doomstat.h"
-#include "zmusic/zmusic.h"
 #include "streamsources/streamsource.h"
 #include "filereadermusicinterface.h"
 #include "../libraries/zmusic/midisources/midisource.h"
@@ -342,7 +342,7 @@ ADD_STAT(music)
 {
 	if (mus_playing.handle != nullptr)
 	{
-		return FString(ZMusic_GetStats(mus_playing.handle).c_str());
+		return FString(ZMusic_GetStats((MusInfo*)mus_playing.handle).c_str());
 	}
 	return "No song playing";
 }
@@ -353,7 +353,7 @@ ADD_STAT(music)
 //
 //==========================================================================
 
-static MIDISource *GetMIDISource(const char *fn)
+static ZMusic_MidiSource GetMIDISource(const char *fn)
 {
 	FString src = fn;
 	if (src.Compare("*") == 0) src = mus_playing.name;
@@ -375,7 +375,7 @@ static MIDISource *GetMIDISource(const char *fn)
 		Printf("Unable to read lump %s\n", src.GetChars());
 		return nullptr;
 	}
-	auto type = IdentifyMIDIType(id, 32);
+	auto type = ZMusic_IdentifyMIDIType(id, 32);
 	if (type == MIDI_NOTMIDI)
 	{
 		Printf("%s is not MIDI-based.\n", src.GetChars());
@@ -383,11 +383,11 @@ static MIDISource *GetMIDISource(const char *fn)
 	}
 
 	auto data = wlump.Read();
-	auto source = CreateMIDISource(data.Data(), data.Size(), type);
+	auto source = ZMusic_CreateMIDISource(data.Data(), data.Size(), type);
 
 	if (source == nullptr)
 	{
-		Printf("%s is not MIDI-based.\n", src.GetChars());
+		Printf("Unable to open %s: %s\n", src.GetChars(), ZMusic_GetLastError());
 		return nullptr;
 	}
 	return source;
@@ -431,13 +431,9 @@ UNSAFE_CCMD (writewave)
 		auto savedsong = mus_playing;
 		S_StopMusic(true);
 		if (dev == MDEV_DEFAULT && snd_mididevice >= 0) dev = MDEV_FLUIDSYNTH;	// The Windows system synth cannot dump a wave.
-		try
+		if (!ZMusic_MIDIDumpWave(source, dev, argv.argc() < 6 ? nullptr : argv[6], argv[2], argv.argc() < 4 ? 0 : (int)strtol(argv[3], nullptr, 10), argv.argc() < 5 ? 0 : (int)strtol(argv[4], nullptr, 10)))
 		{
-			MIDIDumpWave(source, dev, argv.argc() < 6 ? nullptr : argv[6], argv[2], argv.argc() < 4 ? 0 : (int)strtol(argv[3], nullptr, 10), argv.argc() < 5 ? 0 : (int)strtol(argv[4], nullptr, 10));
-		}
-		catch (const std::runtime_error& err)
-		{
-			Printf("MIDI dump failed: %s\n", err.what());
+			Printf("MIDI dump of %s failed: %s\n",argv[1], ZMusic_GetLastError());
 		}
 
 		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
@@ -467,23 +463,13 @@ UNSAFE_CCMD(writemidi)
 		return;
 	}
 	auto source = GetMIDISource(argv[1]);
-	if (source == nullptr) return;
-
-	std::vector<uint8_t> midi;
-	bool success;
-
-	source->CreateSMF(midi, 1);
-	auto f = FileWriter::Open(argv[2]);
-	if (f == nullptr)
+	if (source == nullptr)
 	{
-		Printf("Could not open %s.\n", argv[2]);
+		Printf("Unable to open %s: %s\n", argv[1], ZMusic_GetLastError());
 		return;
 	}
-	success = (f->Write(&midi[0], midi.size()) == midi.size());
-	delete f;
-
-	if (!success)
+	if (!ZMusic_WriteSMF(source, argv[1], 1))
 	{
-		Printf("Could not write to music file %s.\n", argv[2]);
+		Printf("Unable to write %s\n", argv[1]);
 	}
 }

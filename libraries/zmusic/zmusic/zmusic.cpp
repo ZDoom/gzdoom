@@ -38,7 +38,7 @@
 #include <string>
 #include <zlib.h>
 #include "m_swap.h"
-#include "zmusic.h"
+#include "zmusic_internal.h"
 #include "midiconfig.h"
 #include "musinfo.h"
 #include "streamsources/streamsource.h"
@@ -157,6 +157,7 @@ MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, co
 	
 	if(reader->read(id, 32) != 32 || reader->seek(-32, SEEK_CUR) != 0)
 	{
+		SetError("Unable to read header");
 		reader->close();
 		return nullptr;
 	}
@@ -190,16 +191,17 @@ MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, co
 			}
 		}
 		
-		EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
+		EMIDIType miditype = ZMusic_IdentifyMIDIType(id, sizeof(id));
 		if (miditype != MIDI_NOTMIDI)
 		{
 			std::vector<uint8_t> data(reader->filelength());
 			if (reader->read(data.data(), (long)data.size()) != (long)data.size())
 			{
+				SetError("Failed to read MIDI data");
 				reader->close();
 				return nullptr;
 			}
-			auto source = CreateMIDISource(data.data(), data.size(), miditype);
+			auto source = ZMusic_CreateMIDISource(data.data(), data.size(), miditype);
 			if (source == nullptr)
 			{
 				reader->close();
@@ -207,6 +209,7 @@ MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, co
 			}
 			if (!source->isValid())
 			{
+				SetError("Invalid data in MIDI file");
 				delete source;
 				return nullptr;
 			}
@@ -268,23 +271,26 @@ MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, co
 		{
 			// File could not be identified as music.
 			if (reader) reader->close();
+			SetError("Unable to identify as music");
 			return nullptr;
 		}
 		
 		if (info && !info->IsValid())
 		{
 			delete info;
+			SetError("Unable to identify as music");
 			info = nullptr;
 		}
+		if (reader) reader->close();
+		return info;
 	}
-	catch (...)
+	catch (const std::exception &ex)
 	{
 		// Make sure the reader is closed if this function abnormally terminates
 		if (reader) reader->close();
-		throw;
+		SetError(ex.what());
+		return nullptr;
 	}
-	if (reader) reader->close();
-	return info;
 }
 
 //==========================================================================
@@ -293,7 +299,7 @@ MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, co
 //
 //==========================================================================
 
-MusInfo *ZMusic_OpenCDSong (int track, int id)
+DLL_EXPORT MusInfo *ZMusic_OpenCDSong (int track, int id)
 {
 	MusInfo *info = CD_OpenSong (track, id);
 	
@@ -301,6 +307,7 @@ MusInfo *ZMusic_OpenCDSong (int track, int id)
 	{
 		delete info;
 		info = nullptr;
+		SetError("Unable to open CD Audio");
 	}
 	
 	return info;
@@ -312,7 +319,7 @@ MusInfo *ZMusic_OpenCDSong (int track, int id)
 //
 //==========================================================================
 
-bool ZMusic_FillStream(MusInfo* song, void* buff, int len)
+DLL_EXPORT bool ZMusic_FillStream(MusInfo* song, void* buff, int len)
 {
 	if (song == nullptr) return false;
 	std::lock_guard<std::mutex> lock(song->CritSec);
@@ -325,10 +332,19 @@ bool ZMusic_FillStream(MusInfo* song, void* buff, int len)
 //
 //==========================================================================
 
-void ZMusic_Start(MusInfo *song, int subsong, bool loop)
+DLL_EXPORT bool ZMusic_Start(MusInfo *song, int subsong, bool loop)
 {
-	if (!song) return;
-	song->Play(loop, subsong);
+	if (!song) return true;	// Starting a null song is not an error! It just won't play anything.
+	try
+	{
+		song->Play(loop, subsong);
+		return true;
+	}
+	catch (const std::exception & ex)
+	{
+		SetError(ex.what());
+		return false;
+	}
 }
 
 //==========================================================================
@@ -337,51 +353,51 @@ void ZMusic_Start(MusInfo *song, int subsong, bool loop)
 //
 //==========================================================================
 
-void ZMusic_Pause(MusInfo *song)
+DLL_EXPORT void ZMusic_Pause(MusInfo *song)
 {
 	if (!song) return;
 	song->Pause();
 }
 
-void ZMusic_Resume(MusInfo *song)
+DLL_EXPORT void ZMusic_Resume(MusInfo *song)
 {
 	if (!song) return;
 	song->Resume();
 }
 
-void ZMusic_Update(MusInfo *song)
+DLL_EXPORT void ZMusic_Update(MusInfo *song)
 {
 	if (!song) return;
 	song->Update();
 }
 
-bool ZMusic_IsPlaying(MusInfo *song)
+DLL_EXPORT bool ZMusic_IsPlaying(MusInfo *song)
 {
 	if (!song) return false;
 	return song->IsPlaying();
 }
 
-void ZMusic_Stop(MusInfo *song)
+DLL_EXPORT void ZMusic_Stop(MusInfo *song)
 {
 	if (!song) return;
 	std::lock_guard<std::mutex> lock(song->CritSec);
 	song->Stop();
 }
 
-bool ZMusic_SetSubsong(MusInfo *song, int subsong)
+DLL_EXPORT bool ZMusic_SetSubsong(MusInfo *song, int subsong)
 {
 	if (!song) return false;
 	std::lock_guard<std::mutex> lock(song->CritSec);
 	return song->SetSubsong(subsong);
 }
 
-bool ZMusic_IsLooping(MusInfo *song)
+DLL_EXPORT bool ZMusic_IsLooping(MusInfo *song)
 {
 	if (!song) return false;
 	return song->m_Looping;
 }
 
-bool ZMusic_IsMIDI(MusInfo *song)
+DLL_EXPORT bool ZMusic_IsMIDI(MusInfo *song)
 {
 	if (!song) return false;
 	return song->IsMIDI();
@@ -394,13 +410,13 @@ SoundStreamInfo ZMusic_GetStreamInfo(MusInfo *song)
 	return song->GetStreamInfo();
 }
 
-void ZMusic_Close(MusInfo *song)
+DLL_EXPORT void ZMusic_Close(MusInfo *song)
 {
 	if (!song) return;
 	delete song;
 }
 
-void ZMusic_VolumeChanged(MusInfo *song)
+DLL_EXPORT void ZMusic_VolumeChanged(MusInfo *song)
 {
 	if (!song) return;
 	std::lock_guard<std::mutex> lock(song->CritSec);
@@ -412,4 +428,29 @@ std::string ZMusic_GetStats(MusInfo *song)
 	if (!song) return "";
 	std::lock_guard<std::mutex> lock(song->CritSec);
 	return song->GetStats();
+}
+
+static std::string staticErrorMessage;
+void SetError(const char* msg)
+{
+	staticErrorMessage = msg;
+}
+
+DLL_EXPORT const char* ZMusic_GetLastError()
+{
+	return staticErrorMessage.c_str();
+}
+
+DLL_EXPORT bool ZMusic_WriteSMF(MIDISource* source, const char *fn, int looplimit)
+{
+	std::vector<uint8_t> midi;
+	bool success;
+
+	if (!source) return false;
+	source->CreateSMF(midi, 1);
+	auto f = MusicIO::utf8_fopen(fn, "wt");
+	if (f == nullptr) return false;
+	success = (fwrite(&midi[0], 1, midi.size(), f) == midi.size());
+	delete f;
+	return success;
 }

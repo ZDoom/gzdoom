@@ -37,7 +37,7 @@
 #include "oplsynth/oplio.h"
 #include "../../libraries/dumb/include/dumb.h"
 
-#include "zmusic.h"
+#include "zmusic_internal.h"
 #include "musinfo.h"
 #include "midiconfig.h"
 
@@ -54,25 +54,25 @@ struct Dummy
 MiscConfig miscConfig;
 Callbacks musicCallbacks;
 
-void ZMusic_SetCallbacks(const Callbacks* cb)
+DLL_EXPORT void ZMusic_SetCallbacks(const Callbacks* cb)
 {
 	dumb_decode_vorbis = cb->DumbVorbisDecode;
 	musicCallbacks = *cb;
 }
 
-void ZMusic_SetGenMidi(const uint8_t* data)
+DLL_EXPORT void ZMusic_SetGenMidi(const uint8_t* data)
 {
 	memcpy(oplConfig.OPLinstruments, data, 175 * 36);
 	oplConfig.genmidiset = true;
 }
 
-void ZMusic_SetWgOpn(const void* data, unsigned len)
+DLL_EXPORT void ZMusic_SetWgOpn(const void* data, unsigned len)
 {
 	opnConfig.default_bank.resize(len);
 	memcpy(opnConfig.default_bank.data(), data, len);
 }
 
-void ZMusic_SetDmxGus(const void* data, unsigned len)
+DLL_EXPORT void ZMusic_SetDmxGus(const void* data, unsigned len)
 {
 	gusConfig.dmxgus.resize(len);
 	memcpy(gusConfig.dmxgus.data(), data, len);

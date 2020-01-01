@@ -140,42 +140,63 @@ struct Callbacks
 
 };
 
-// Sets callbacks for functionality that the client needs to provide.
-void ZMusic_SetCallbacks(const Callbacks *callbacks);
-// Sets GenMidi data for OPL playback. If this isn't provided the OPL synth will not work.
-void ZMusic_SetGenMidi(const uint8_t* data);
-// Set default bank for OPN. Without this OPN only works with custom banks.
-void ZMusic_SetWgOpn(const void* data, unsigned len);
-// Set DMXGUS data for running the GUS synth in actual GUS mode.
-void ZMusic_SetDmxGus(const void* data, unsigned len);
 
-// These exports are needed by the MIDI dumpers which need to remain on the client side.
-class MIDISource;	// abstract for the client
+#ifndef ZMUSIC_INTERNAL
+#define DLL_IMPORT // _declspec(dllimport)
+typedef struct { int zm1; } *ZMusic_MidiSource;
+typedef struct { int zm2; } *ZMusic_MusicStream;
+#endif
+
+extern "C"
+{
+	DLL_IMPORT const char* ZMusic_GetLastError();
+
+	// Sets callbacks for functionality that the client needs to provide.
+	DLL_IMPORT void ZMusic_SetCallbacks(const Callbacks* callbacks);
+	// Sets GenMidi data for OPL playback. If this isn't provided the OPL synth will not work.
+	DLL_IMPORT void ZMusic_SetGenMidi(const uint8_t* data);
+	// Set default bank for OPN. Without this OPN only works with custom banks.
+	DLL_IMPORT void ZMusic_SetWgOpn(const void* data, unsigned len);
+	// Set DMXGUS data for running the GUS synth in actual GUS mode.
+	DLL_IMPORT void ZMusic_SetDmxGus(const void* data, unsigned len);
+
+	// These exports are needed by the MIDI dumpers which need to remain on the client side because the need access to the client's file system.
+	DLL_IMPORT EMIDIType ZMusic_IdentifyMIDIType(uint32_t* id, int size);
+	DLL_IMPORT ZMusic_MidiSource ZMusic_CreateMIDISource(const uint8_t* data, size_t length, EMIDIType miditype);
+	DLL_IMPORT bool ZMusic_MIDIDumpWave(ZMusic_MidiSource source, EMidiDevice devtype, const char* devarg, const char* outname, int subsong, int samplerate);
+
+	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSong(MusicIO::FileInterface* reader, EMidiDevice device, const char* Args);
+	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenCDSong(int track, int cdid = 0);
+
+	DLL_IMPORT bool ZMusic_FillStream(ZMusic_MusicStream stream, void* buff, int len);
+	DLL_IMPORT bool ZMusic_Start(ZMusic_MusicStream song, int subsong, bool loop);
+	DLL_IMPORT void ZMusic_Pause(ZMusic_MusicStream song);
+	DLL_IMPORT void ZMusic_Resume(ZMusic_MusicStream song);
+	DLL_IMPORT void ZMusic_Update(ZMusic_MusicStream song);
+	DLL_IMPORT bool ZMusic_IsPlaying(ZMusic_MusicStream song);
+	DLL_IMPORT void ZMusic_Stop(ZMusic_MusicStream song);
+	DLL_IMPORT void ZMusic_Close(ZMusic_MusicStream song);
+	DLL_IMPORT bool ZMusic_SetSubsong(ZMusic_MusicStream song, int subsong);
+	DLL_IMPORT bool ZMusic_IsLooping(ZMusic_MusicStream song);
+	DLL_IMPORT bool ZMusic_IsMIDI(ZMusic_MusicStream song);
+	DLL_IMPORT void ZMusic_VolumeChanged(ZMusic_MusicStream song);
+	DLL_IMPORT bool ZMusic_WriteSMF(ZMusic_MidiSource source, const char* fn, int looplimit);
+	SoundStreamInfo ZMusic_GetStreamInfo(ZMusic_MusicStream song);
+
+	// Configuration interface. The return value specifies if a music restart is needed.
+	// RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.
+}
+
 class MusInfo;
-EMIDIType IdentifyMIDIType(uint32_t *id, int size);
-MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype);
-void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char* devarg, const char* outname, int subsong, int samplerate);
-
-MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args);
-MusInfo *ZMusic_OpenCDSong (int track, int cdid = 0);
-
-bool ZMusic_FillStream(MusInfo* stream, void* buff, int len);
-void ZMusic_Start(MusInfo *song, int subsong, bool loop);
-void ZMusic_Pause(MusInfo *song);
-void ZMusic_Resume(MusInfo *song);
-void ZMusic_Update(MusInfo *song);
-bool ZMusic_IsPlaying(MusInfo *song);
-void ZMusic_Stop(MusInfo *song);
-void ZMusic_Close(MusInfo *song);
-bool ZMusic_SetSubsong(MusInfo *song, int subsong);
-bool ZMusic_IsLooping(MusInfo *song);
-bool ZMusic_IsMIDI(MusInfo *song);
-void ZMusic_VolumeChanged(MusInfo *song);
-SoundStreamInfo ZMusic_GetStreamInfo(MusInfo *song);
-std::string ZMusic_GetStats(MusInfo *song);
-
-// Configuration interface. The return value specifies if a music restart is needed.
-// RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.
-bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo *song, int value, int *pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, MusInfo* song, float value, float *pRealValue = nullptr);
-bool ChangeMusicSetting(ZMusic::EStringConfigKey key, MusInfo* song, const char *value);
+#if 0
+std::string ZMusic_GetStats(ZMusic_MusicStream song);
+bool ChangeMusicSetting(ZMusic::EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue = nullptr);
+bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, ZMusic_MusicStream song, float value, float* pRealValue = nullptr);
+bool ChangeMusicSetting(ZMusic::EStringConfigKey key, ZMusic_MusicStream song, const char* value);
+#else
+// Cannot be done yet.
+std::string ZMusic_GetStats(MusInfo* song);
+bool ChangeMusicSetting(ZMusic::EIntConfigKey key, MusInfo* song, int value, int* pRealValue = nullptr);
+bool ChangeMusicSetting(ZMusic::EFloatConfigKey key, MusInfo* song, float value, float* pRealValue = nullptr);
+bool ChangeMusicSetting(ZMusic::EStringConfigKey key, MusInfo* song, const char* value);
+#endif

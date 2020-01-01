@@ -37,6 +37,7 @@
 #include <string>
 #include <algorithm>
 #include <assert.h>
+#include "zmusic/zmusic_internal.h"
 #include "zmusic/musinfo.h"
 #include "mididevices/mididevice.h"
 #include "midisources/midisource.h"
@@ -1004,9 +1005,18 @@ MusInfo* CreateMIDIStreamer(MIDISource *source, EMidiDevice devtype, const char*
 	return me;
 }
 
-void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char *devarg, const char *outname, int subsong, int samplerate)
+DLL_EXPORT bool ZMusic_MIDIDumpWave(ZMusic_MidiSource source, EMidiDevice devtype, const char *devarg, const char *outname, int subsong, int samplerate)
 {
-	MIDIStreamer me(devtype, devarg);
-	me.SetMIDISource(source);
-	me.DumpWave(outname, subsong, samplerate);
+	try
+	{
+		MIDIStreamer me(devtype, devarg);
+		me.SetMIDISource(source);
+		me.DumpWave(outname, subsong, samplerate);
+		return true;
+	}
+	catch (const std::exception & ex)
+	{
+		SetError(ex.what());
+		return false;
+	}
 }

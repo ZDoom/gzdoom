@@ -57,7 +57,7 @@ void *safe_malloc(size_t count)
 	auto p = malloc(count);
 	if (!p)
 	{
-		std::terminate(); // we must abort, though...
+		abort(); // we must abort, though...
 	}
 	return p;
 #endif

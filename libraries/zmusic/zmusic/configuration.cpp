@@ -40,6 +40,7 @@
 #include "zmusic.h"
 #include "musinfo.h"
 #include "midiconfig.h"
+#include "mididevices/music_alsa_state.h"
 
 struct Dummy
 {
@@ -77,6 +78,38 @@ void ZMusic_SetDmxGus(const void* data, unsigned len)
 	gusConfig.dmxgus.resize(len);
 	memcpy(gusConfig.dmxgus.data(), data, len);
 }
+
+int ZMusic_EnumerateMidiDevices()
+{
+#ifdef HAVE_SYSTEM_MIDI
+	#ifdef __linux__
+		auto & sequencer = AlsaSequencer::Get();
+		return sequencer.EnumerateDevices();
+	#elif _WIN32
+		// TODO: move the weird stuff from music_midi_base.cpp here, or at least to this lib and call it here
+		return {};
+	#endif
+#else
+	return {};
+#endif
+}
+
+
+const std::vector<MidiOutDevice> &ZMusic_GetMidiDevices()
+{
+#ifdef HAVE_SYSTEM_MIDI
+	#ifdef __linux__
+		auto & sequencer = AlsaSequencer::Get();
+		return sequencer.GetDevices();
+	#elif _WIN32
+		// TODO: move the weird stuff from music_midi_base.cpp here, or at least to this lib and call it here
+		return {};
+	#endif
+#else
+	return {};
+#endif
+}
+
 
 template<class valtype>
 void ChangeAndReturn(valtype &variable, valtype value, valtype *realv)

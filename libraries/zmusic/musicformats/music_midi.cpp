@@ -41,6 +41,12 @@
 #include "mididevices/mididevice.h"
 #include "midisources/midisource.h"
 
+#ifdef HAVE_SYSTEM_MIDI
+#ifdef __linux__
+#include "mididevices/music_alsa_state.h"
+#endif
+#endif
+
 // MACROS ------------------------------------------------------------------
 
 enum
@@ -226,8 +232,8 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 	case -7:		return MDEV_ADL;
 	case -8:		return MDEV_OPN;
 	default:
-		#ifdef _WIN32
-					return MDEV_MMAPI;
+		#ifdef HAVE_SYSTEM_MIDI
+					return MDEV_STANDARD;
 		#else
 					return MDEV_SNDSYS;
 		#endif
@@ -268,13 +274,17 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 				dev = CreateOPNMIDIDevice(Args.c_str());
 				break;
 
-			case MDEV_MMAPI:
+			case MDEV_STANDARD:
 
+#ifdef HAVE_SYSTEM_MIDI
 #ifdef _WIN32
 				dev = CreateWinMIDIDevice(std::max(0, miscConfig.snd_mididevice));
+#elif __linux__
+                dev = CreateAlsaMIDIDevice(std::max(0, miscConfig.snd_mididevice));
+#endif
 				break;
 #endif
-				// Intentional fall-through for non-Windows systems.
+				// Intentional fall-through for systems without standard midi support
 
 #ifdef HAVE_FLUIDSYNTH
 			case MDEV_FLUIDSYNTH:
@@ -308,8 +318,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 			else if (!checked[MDEV_TIMIDITY]) devtype = MDEV_TIMIDITY;
 			else if (!checked[MDEV_WILDMIDI]) devtype = MDEV_WILDMIDI;
 			else if (!checked[MDEV_GUS]) devtype = MDEV_GUS;
-#ifdef _WIN32
-			else if (!checked[MDEV_MMAPI]) devtype = MDEV_MMAPI;
+#ifdef HAVE_SYSTEM_MIDI
+			else if (!checked[MDEV_STANDARD]) devtype = MDEV_STANDARD;
 #endif
 			else if (!checked[MDEV_OPL]) devtype = MDEV_OPL;
 
@@ -374,9 +384,9 @@ bool MIDIStreamer::DumpWave(const char *filename, int subsong, int samplerate)
 
 	assert(MIDI == NULL);
 	auto devtype = SelectMIDIDevice(DeviceType);
-	if (devtype == MDEV_MMAPI)
+	if (devtype == MDEV_STANDARD)
 	{
-		throw std::runtime_error("MMAPI device is not supported");
+		throw std::runtime_error("System MIDI device is not supported");
 	}
 	auto iMIDI = CreateMIDIDevice(devtype, samplerate);
 	auto writer = new MIDIWaveWriter(filename, static_cast<SoftSynthMIDIDevice*>(iMIDI));

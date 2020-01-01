@@ -2,6 +2,8 @@
 
 #include "mididefs.h"
 #include "../../music_common/fileio.h"
+#include <vector>
+#include <string>
 
 namespace ZMusic	// Namespaced because these conflict with the same-named CVARs
 {
@@ -148,6 +150,13 @@ void ZMusic_SetGenMidi(const uint8_t* data);
 void ZMusic_SetWgOpn(const void* data, unsigned len);
 // Set DMXGUS data for running the GUS synth in actual GUS mode.
 void ZMusic_SetDmxGus(const void* data, unsigned len);
+
+struct MidiOutDevice {
+	std::string Name;
+	int ID = -1;
+};
+int ZMusic_EnumerateMidiDevices();
+const std::vector<MidiOutDevice> &ZMusic_GetMidiDevices();
 
 // These exports are needed by the MIDI dumpers which need to remain on the client side.
 class MIDISource;	// abstract for the client

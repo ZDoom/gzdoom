@@ -509,7 +509,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else
 		{
-			auto mreader = new FileReaderMusicInterface(reader);
+			auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
 			mus_playing.handle = ZMusic_OpenSong(mreader, devp? (EMidiDevice)devp->device : MDEV_DEFAULT, devp? devp->args.GetChars() : "");
 			if (mus_playing.handle == nullptr)
 			{

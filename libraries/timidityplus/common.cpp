@@ -149,7 +149,7 @@ void skip(timidity_file *tf, size_t len)
 int tf_getc(timidity_file *tf)
 {
 	unsigned char c;
-	auto read = tf_read(&c, 1, 1, tf);
+	auto read = tf_read(&c, 1, tf);
 	return read == 0 ? EOF : c;
 }
 

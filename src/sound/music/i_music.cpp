@@ -180,9 +180,10 @@ static void wm_printfunc(const char* wmfmt, va_list args)
 }
 
 
-static std::string mus_NicePath(const char* str)
+static FString strv;
+static const char *mus_NicePath(const char* str)
 {
-	FString strv = NicePath(str);
+	strv = NicePath(str);
 	return strv.GetChars();
 }
 

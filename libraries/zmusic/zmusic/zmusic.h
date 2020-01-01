@@ -128,11 +128,17 @@ struct Callbacks
 	MusicIO::SoundFontReaderInterface *(*OpenSoundFont)(const char* name, int type) = nullptr;
 	
 	// Used to handle client-specific path macros. If not set, the path may not contain any special tokens that may need expansion.
-	std::string (*NicePath)(const char *path) = nullptr;
+	const char *(*NicePath)(const char* path) = nullptr;
+};
 
-	// For playing modules with compressed samples.
-	short* (*DumbVorbisDecode)(int outlen, const void* oggstream, int sizebytes);
-
+struct ZMusicCustomReader
+{
+	void* handle;
+	char* (*gets)(ZMusicCustomReader*handle, char* buff, int n);
+	long (*read)(ZMusicCustomReader* handle, void* buff, int32_t size);
+	long (*seek)(ZMusicCustomReader* handle, long offset, int whence);
+	long (*tell)(ZMusicCustomReader* handle);
+	void (*close)(ZMusicCustomReader* handle);
 };
 
 
@@ -162,7 +168,9 @@ extern "C"
 	DLL_IMPORT ZMusic_MidiSource ZMusic_CreateMIDISource(const uint8_t* data, size_t length, EMIDIType miditype);
 	DLL_IMPORT bool ZMusic_MIDIDumpWave(ZMusic_MidiSource source, EMidiDevice devtype, const char* devarg, const char* outname, int subsong, int samplerate);
 
-	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSong(MusicIO::FileInterface* reader, EMidiDevice device, const char* Args);
+	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSong(ZMusicCustomReader* reader, EMidiDevice device, const char* Args);
+	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSongFile(const char *filename, EMidiDevice device, const char* Args);
+	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSongMem(const void *mem, size_t size, EMidiDevice device, const char* Args);
 	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenCDSong(int track, int cdid = 0);
 
 	DLL_IMPORT bool ZMusic_FillStream(ZMusic_MusicStream stream, void* buff, int len);

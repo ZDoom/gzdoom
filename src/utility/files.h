@@ -154,6 +154,14 @@ public:
 		return *this;
 	}
 
+	// This is for wrapping the actual reader for custom access where a managed FileReader won't work. 
+	FileReaderInterface* GetInterface()
+	{
+		auto i = mReader;
+		mReader = nullptr;
+		return i;
+	}
+
 
 	~FileReader()
 	{

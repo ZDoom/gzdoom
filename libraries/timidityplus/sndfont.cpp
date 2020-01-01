@@ -550,7 +550,7 @@ Instrument *Instruments::load_from_file(SFInsts *rec, InstList *ip)
 		sample->data_alloced = 1;
 
 		tf_seek(rec->tf, sp->start, SEEK_SET);
-		tf_read(sample->data, sp->len, 1, rec->tf);
+		tf_read(sample->data, sp->len, rec->tf);
 
 #ifdef _BIG_ENDIAN_
 		tmp = (int16_t*)sample->data;

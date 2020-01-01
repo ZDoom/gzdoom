@@ -39,9 +39,9 @@ inline char* tf_gets(char* buff, int n, timidity_file* tf)
 	return tf->gets(buff, n);
 }
 
-inline long tf_read(void* buff, int32_t size, int32_t nitems, timidity_file* tf)
+inline long tf_read(void* buff, int32_t size, timidity_file* tf)
 {
-	return (long)tf->read(buff, size, nitems);
+	return (long)tf->read(buff, size);
 }
 
 inline long tf_seek(timidity_file* tf, long offset, int whence)

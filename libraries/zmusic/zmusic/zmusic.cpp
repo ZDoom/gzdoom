@@ -149,7 +149,7 @@ static bool ungzip(uint8_t *data, int complen, std::vector<uint8_t> &newdata)
 //
 //==========================================================================
 
-DLL_EXPORT MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args)
+static  MusInfo *ZMusic_OpenSongInternal (MusicIO::FileInterface *reader, EMidiDevice device, const char *Args)
 {
 	MusInfo *info = nullptr;
 	StreamSource *streamsource = nullptr;
@@ -293,6 +293,60 @@ DLL_EXPORT MusInfo *ZMusic_OpenSong (MusicIO::FileInterface *reader, EMidiDevice
 		return nullptr;
 	}
 }
+
+DLL_EXPORT ZMusic_MusicStream ZMusic_OpenSongFile(const char* filename, EMidiDevice device, const char* Args)
+{
+	auto f = MusicIO::utf8_fopen(filename, "rb");
+	if (!f)
+	{
+		SetError("File not found");
+		return nullptr;
+	}
+	auto fr = new MusicIO::StdioFileReader;
+	fr->f = f;
+	return ZMusic_OpenSongInternal(fr, device, Args);
+}
+
+DLL_EXPORT ZMusic_MusicStream ZMusic_OpenSongMem(const void* mem, size_t size, EMidiDevice device, const char* Args)
+{
+	if (!mem || !size)
+	{
+		SetError("Invalid data");
+		return nullptr;
+	}
+	// Data must be copied because it may be used as a streaming source and we cannot guarantee that the client memory stays valid. We also have no means to free it.
+	auto mr = new MusicIO::VectorReader((uint8_t*)mem, (long)size);
+	return ZMusic_OpenSongInternal(mr, device, Args);
+}
+
+struct CustomFileReader : public MusicIO::FileInterface
+{
+	ZMusicCustomReader* cr;
+
+	CustomFileReader(ZMusicCustomReader* zr) : cr(zr) {}
+	virtual char* gets(char* buff, int n) { return cr->gets(cr, buff, n); }
+	virtual long read(void* buff, int32_t size) { return cr->read(cr, buff, size);  }
+	virtual long seek(long offset, int whence) { return cr->seek(cr, offset, whence); }
+	virtual long tell() { return cr->tell(cr); }
+	virtual void close() 
+	{
+		cr->close(cr);
+		delete this;
+	}
+
+};
+
+DLL_EXPORT ZMusic_MusicStream ZMusic_OpenSong(ZMusicCustomReader* reader, EMidiDevice device, const char* Args)
+{
+	if (!reader)
+	{
+		SetError("No reader protocol specified");
+		return nullptr;
+	}
+	auto cr = new CustomFileReader(reader);	// Oh no! We just put another wrapper around the client's wrapper!
+	return ZMusic_OpenSongInternal(cr, device, Args);
+}
+
 
 //==========================================================================
 //

@@ -1769,8 +1769,8 @@ void C_GrabCVarDefaults ()
 		lumpversion = sc.Number;
 		if (lumpversion > gamelastrunversion)
 			sc.ScriptError("Unsupported version %i (%i supported)", lumpversion, gamelastrunversion);
-		if (lumpversion < 218)
-			sc.ScriptError("Version must be at least 218 (current version %i)", gamelastrunversion);
+		if (lumpversion < 219)
+			sc.ScriptError("Version must be at least 219 (current version %i)", gamelastrunversion);
 
 		FBaseCVar *var;
 

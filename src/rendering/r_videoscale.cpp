@@ -168,7 +168,10 @@ bool ViewportLinearScale()
 		vid_scalemode = 0;
 	// always use linear if supersampling
 	int x = screen->GetClientWidth(), y = screen->GetClientHeight();
-	if ((ViewportScaledWidth(x,y) > (x / ViewportPixelAspect())) || (ViewportScaledHeight(x,y) > (y * ViewportPixelAspect())))
+	float aspectmult = ViewportPixelAspect();
+	if (aspectmult > 1.f)
+		aspectmult = 1.f / aspectmult;
+	if ((ViewportScaledWidth(x,y) > (x * aspectmult)) || (ViewportScaledHeight(x,y) > (y * aspectmult)))
 		return true;
 	
 	return vid_scale_linear;

@@ -56,7 +56,6 @@ Callbacks musicCallbacks;
 
 DLL_EXPORT void ZMusic_SetCallbacks(const Callbacks* cb)
 {
-	dumb_decode_vorbis = cb->DumbVorbisDecode;
 	musicCallbacks = *cb;
 }
 

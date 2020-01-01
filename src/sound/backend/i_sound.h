@@ -165,7 +165,6 @@ public:
 	virtual void PrintStatus () = 0;
 	virtual void PrintDriversList () = 0;
 	virtual FString GatherStats ();
-	virtual short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
 
 	virtual void DrawWaveDebug(int mode);
 };

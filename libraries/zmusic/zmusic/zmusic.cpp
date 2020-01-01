@@ -65,6 +65,7 @@ const char *GME_CheckFormat(uint32_t header);
 MusInfo* CDDA_OpenSong(MusicIO::FileInterface* reader);
 MusInfo* CD_OpenSong(int track, int id);
 MusInfo* CreateMIDIStreamer(MIDISource *source, EMidiDevice devtype, const char* args);
+
 //==========================================================================
 //
 // ungzip

@@ -79,3 +79,39 @@ std::vector<uint8_t> SoundDecoder::readAll()
     output.resize(total);
     return output;
 }
+
+//==========================================================================
+//
+// other callbacks
+//
+//==========================================================================
+extern "C"
+short* dumb_decode_vorbis(int outlen, const void* oggstream, int sizebytes)
+{
+	short* samples = (short*)calloc(1, outlen);
+	ChannelConfig chans;
+	SampleType type;
+	int srate;
+
+	// The decoder will take ownership of the reader if it succeeds so this may not be a local variable.
+	MusicIO::MemoryReader* reader = new MusicIO::MemoryReader((const uint8_t*)oggstream, sizebytes);
+
+	SoundDecoder* decoder = SoundDecoder::CreateDecoder(reader);
+	if (!decoder)
+	{
+		reader->close();
+		return samples;
+	}
+
+	decoder->getInfo(&srate, &chans, &type);
+	if (chans != ChannelConfig_Mono || type != SampleType_Int16)
+	{
+		delete decoder;
+		return samples;
+	}
+
+	decoder->read((char*)samples, outlen);
+	delete decoder;
+	return samples;
+}
+

@@ -92,7 +92,7 @@ CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	else if (self > 1.f)
 		self = 1.f;
 
-	ChangeMusicSetting(ZMusic::snd_mastervolume, nullptr, self);
+	ChangeMusicSetting(zmusic_snd_mastervolume, nullptr, self);
 	snd_sfxvolume.Callback();
 	snd_musicvolume.Callback();
 }
@@ -323,36 +323,6 @@ SoundRenderer::~SoundRenderer ()
 FString SoundRenderer::GatherStats ()
 {
 	return "No stats for this sound renderer.";
-}
-
-short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
-{
-    short *samples = (short*)calloc(1, outlen);
-    ChannelConfig chans;
-    SampleType type;
-    int srate;
-
-	// The decoder will take ownership of the reader if it succeeds so this may not be a local variable.
-	MusicIO::MemoryReader *reader = new MusicIO::MemoryReader((const uint8_t*)coded, sizebytes);
-
-    SoundDecoder *decoder = SoundDecoder::CreateDecoder(reader);
-	if (!decoder)
-	{
-		reader->close();
-		return samples;
-	}
-
-    decoder->getInfo(&srate, &chans, &type);
-    if(chans != ChannelConfig_Mono || type != SampleType_Int16)
-    {
-        DPrintf(DMSG_WARNING, "Sample is not 16-bit mono\n");
-        delete decoder;
-        return samples;
-    }
-
-    decoder->read((char*)samples, outlen);
-    delete decoder;
-    return samples;
 }
 
 void SoundRenderer::DrawWaveDebug(int mode)

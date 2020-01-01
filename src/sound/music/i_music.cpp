@@ -123,7 +123,7 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else
 	{
 		// Set general music volume.
-		ChangeMusicSetting(ZMusic::snd_musicvolume, nullptr, self);
+		ChangeMusicSetting(zmusic_snd_musicvolume, nullptr, self);
 		if (GSnd != nullptr)
 		{
 			GSnd->SetMusicVolume(clamp<float>(self * relative_volume * snd_mastervolume, 0, 1));
@@ -179,16 +179,6 @@ static void wm_printfunc(const char* wmfmt, va_list args)
 	VPrintf(PRINT_HIGH, wmfmt, args);
 }
 
-//==========================================================================
-//
-// other callbacks
-//
-//==========================================================================
-
-static short* dumb_decode_vorbis_(int outlen, const void* oggstream, int sizebytes)
-{
-	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
-}
 
 static std::string mus_NicePath(const char* str)
 {
@@ -283,7 +273,6 @@ void I_InitMusic (void)
 	callbacks.NicePath = mus_NicePath;
 	callbacks.PathForSoundfont = mus_pathToSoundFont;
 	callbacks.OpenSoundFont = mus_openSoundFont;
-	callbacks.DumbVorbisDecode = dumb_decode_vorbis_;
 
 	ZMusic_SetCallbacks(&callbacks);
 	SetupGenMidi();
@@ -301,7 +290,7 @@ void I_InitMusic (void)
 void I_SetRelativeVolume(float vol)
 {
 	relative_volume = (float)vol;
-	ChangeMusicSetting(ZMusic::relative_volume, nullptr, (float)vol);
+	ChangeMusicSetting(zmusic_relative_volume, nullptr, (float)vol);
 	snd_musicvolume.Callback();
 }
 //==========================================================================

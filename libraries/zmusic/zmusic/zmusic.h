@@ -189,6 +189,13 @@ struct ZMusicCustomReader
 	void (*close)(struct ZMusicCustomReader* handle);
 };
 
+struct MidiOutDevice 
+{
+	char *Name;
+	int ID;
+	int Technology;
+};
+
 struct Callbacks
 {
 	// Callbacks the client can install to capture messages from the backends
@@ -288,7 +295,7 @@ extern "C"
 	DLL_IMPORT void FindLoopTags(const uint8_t* data, size_t size, uint32_t* start, bool* startass, uint32_t* end, bool* endass);
 	// The rest of the decoder interface is only useful for streaming music. 
 
-
+	DLL_IMPORT const MidiOutDevice *ZMusic_GetMidiDevices(int *pAmount);
 
 #ifdef __cplusplus
 }

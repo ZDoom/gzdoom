@@ -68,8 +68,6 @@ int		nomusic = 0;
 
 #ifdef _WIN32
 
-void I_InitMusicWin32();
-
 #include "musicformats/win32/i_cd.h"
 //==========================================================================
 //
@@ -274,12 +272,6 @@ void I_InitMusic (void)
 
 	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
 
-// TODO: remove, move functionality to ZMusic_EnumerateMidiDevices
-#ifdef _WIN32
-	I_InitMusicWin32 ();
-#endif // _WIN32
-
-	//ZMusic_EnumerateMidiDevices();
 	snd_mididevice.Callback();
 	
 	Callbacks callbacks{};

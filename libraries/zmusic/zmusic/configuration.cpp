@@ -31,6 +31,11 @@
 **---------------------------------------------------------------------------
 **
 */
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <mmsystem.h>
+#endif
 #include <algorithm>
 #include "timidity/timidity.h"
 #include "timiditypp/timidity.h"
@@ -140,22 +145,85 @@ int ZMusic_EnumerateMidiDevices()
 #endif
 }
 
-#if 0
-const std::vector<MidiOutDevice> &ZMusic_GetMidiDevices()
+
+struct MidiDeviceList
 {
+	std::vector<MidiOutDevice> devices;
+	~MidiDeviceList()
+	{
+		for (auto& device : devices)
+		{
+			free(device.Name);
+		}
+	}
+	void Build()
+	{
+#ifdef HAVE_OPN
+		devices.push_back({ strdup("libOPN"), -8, MIDIDEV_FMSYNTH });
+#endif
+#ifdef HAVE_ADL
+		devices.push_back({ strdup("libADL"), -7, MIDIDEV_FMSYNTH });
+#endif
+#ifdef HAVE_WILDMIDI
+		devices.push_back({ strdup("WildMidi"), -6, MIDIDEV_SWSYNTH });
+#endif
+#ifdef HAVE_FLUIDSYNTH
+		devices.push_back({ strdup("FluidSynth"), -5, MIDIDEV_SWSYNTH });
+#endif
+#ifdef HAVE_GUS
+		devices.push_back({ strdup("GUS Emulation"), -4, MIDIDEV_SWSYNTH });
+#endif
+#ifdef HAVE_OPL
+		devices.push_back({ strdup("OPL Synth Emulation"), -3, MIDIDEV_FMSYNTH });
+#endif
+#ifdef HAVE_TIMIDITY
+		devices.push_back({ strdup("TiMidity++"), -2, MIDIDEV_SWSYNTH });
+#endif
+
 #ifdef HAVE_SYSTEM_MIDI
-	#ifdef __linux__
-		auto & sequencer = AlsaSequencer::Get();
-		return sequencer.GetDevices();
-	#elif _WIN32
-		// TODO: move the weird stuff from music_midi_base.cpp here, or at least to this lib and call it here
-		return {};
-	#endif
-#else
-	return {};
+#ifdef __linux__
+		auto& sequencer = AlsaSequencer::Get();
+		auto& dev = sequencer.GetDevices();
+		for (auto& d : dev)
+		{
+			MidiOutDevice mdev = { strdup(d.Name.c_str()), d.ID, MIDIDEV_MAPPER };	// fixme: Correctly determine the type of the device.
+			devices.push_back(mdev);
+		}
+#elif _WIN32
+		UINT nummididevices = midiOutGetNumDevs();
+		for (uint32_t id = 0; id < nummididevices; ++id)
+		{
+			MIDIOUTCAPSW caps;
+			MMRESULT res;
+
+			res = midiOutGetDevCapsW(id, &caps, sizeof(caps));
+			if (res == MMSYSERR_NOERROR)
+			{
+				auto len = wcslen(caps.szPname);
+				int size_needed = WideCharToMultiByte(CP_UTF8, 0, caps.szPname, (int)len, nullptr, 0, nullptr, nullptr);
+				char* outbuf = (char*)malloc(size_needed + 1);
+				WideCharToMultiByte(CP_UTF8, 0, caps.szPname, (int)len, outbuf, size_needed, nullptr, nullptr);
+				outbuf[size_needed] = 0;
+
+				MidiOutDevice mdev = { outbuf, id, caps.wTechnology };
+				devices.push_back(mdev);
+			}
+		}
 #endif
+#endif
+	}
+
+};
+
+static MidiDeviceList devlist;
+
+DLL_EXPORT const MidiOutDevice* ZMusic_GetMidiDevices(int* pAmount)
+{
+	if (devlist.devices.size() == 0) devlist.Build();
+	if (pAmount) *pAmount = (int)devlist.devices.size();
+	return devlist.devices.data();
 }
-#endif
+
 
 
 template<class valtype>

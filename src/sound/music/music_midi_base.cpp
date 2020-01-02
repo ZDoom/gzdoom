@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2010 Randy Heit
+** Copyright 2005-2020 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -31,13 +32,6 @@
 **
 */
 
-#ifdef _WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-#endif
-
 #include "c_dispatch.h"
 
 #include "v_text.h"
@@ -48,54 +42,17 @@
 #define DEF_MIDIDEV -5
 
 EXTERN_CVAR(Int, snd_mididevice)
-static uint32_t	nummididevices;
 
-#define NUM_DEF_DEVICES 7
-
-static void AddDefaultMidiDevices(FOptionValues *opt)
+void I_BuildMIDIMenuList(FOptionValues* opt)
 {
-	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
-	pair[0].Text = "FluidSynth";
-	pair[0].Value = -5.0;
-	pair[1].Text = "TiMidity++";
-	pair[1].Value = -2.0;
-	pair[2].Text = "WildMidi";
-	pair[2].Value = -6.0;
-	pair[3].Text = "GUS";
-	pair[3].Value = -4.0;
-	pair[4].Text = "OPL Synth Emulation";
-	pair[4].Value = -3.0;
-	pair[5].Text = "libADL";
-	pair[5].Value = -7.0;
-	pair[6].Text = "libOPN";
-	pair[6].Value = -8.0;
+	int amount;
+	auto list = ZMusic_GetMidiDevices(&amount);
 
-}
-
-#ifdef _WIN32
-
-void I_InitMusicWin32 ()
-{
-	nummididevices = midiOutGetNumDevs ();
-}
-
-void I_BuildMIDIMenuList (FOptionValues *opt)
-{
-	AddDefaultMidiDevices(opt);
-
-	for (uint32_t id = 0; id < nummididevices; ++id)
+	for (int i = 0; i < amount; i++)
 	{
-		MIDIOUTCAPS caps;
-		MMRESULT res;
-
-		res = midiOutGetDevCaps (id, &caps, sizeof(caps));
-		assert(res == MMSYSERR_NOERROR);
-		if (res == MMSYSERR_NOERROR)
-		{
-			FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(1)];
-			pair->Text = caps.szPname;
-			pair->Value = (float)id;
-		}
+		FOptionValues::Pair* pair = &opt->mValues[opt->mValues.Reserve(1)];
+		pair->Text = list[i].Name;
+		pair->Value = (float)list[i].ID;
 	}
 }
 
@@ -116,112 +73,44 @@ static void PrintMidiDevice (int id, const char *name, uint16_t tech, uint32_t s
 	case MIDIDEV_WAVETABLE:		Printf ("WAVETABLE");		break;
 	case MIDIDEV_SWSYNTH:		Printf ("SWSYNTH");			break;
 	}
-	if (support & MIDICAPS_CACHE)
-	{
-		Printf (" CACHE");
-	}
-	if (support & MIDICAPS_LRVOLUME)
-	{
-		Printf (" LRVOLUME");
-	}
-	if (support & MIDICAPS_STREAM)
-	{
-		Printf (" STREAM");
-	}
-	if (support & MIDICAPS_VOLUME)
-	{
-		Printf (" VOLUME");
-	}
 	Printf (TEXTCOLOR_NORMAL "\n");
 }
 
 CCMD (snd_listmididevices)
 {
-	UINT id;
-	MIDIOUTCAPS caps;
-	MMRESULT res;
+	int amount;
+	auto list = ZMusic_GetMidiDevices(&amount);
 
-	PrintMidiDevice(-8, "libOPN", MIDIDEV_FMSYNTH, 0);
-	PrintMidiDevice(-7, "libADL", MIDIDEV_FMSYNTH, 0);
-	PrintMidiDevice (-6, "WildMidi", MIDIDEV_SWSYNTH, 0);
-	PrintMidiDevice (-5, "FluidSynth", MIDIDEV_SWSYNTH, 0);
-	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MIDIDEV_SWSYNTH, 0);
-	PrintMidiDevice (-3, "Emulated OPL FM Synth", MIDIDEV_FMSYNTH, 0);
-	PrintMidiDevice (-2, "TiMidity++", MIDIDEV_SWSYNTH, 0);
-	if (nummididevices != 0)
+	for (int i = 0; i < amount; i++)
 	{
-		for (id = 0; id < nummididevices; ++id)
-		{
-			FString text;
-			res = midiOutGetDevCaps (id, &caps, sizeof(caps));
-			if (res == MMSYSERR_NODRIVER)
-				text = "<Driver not installed>";
-			else if (res == MMSYSERR_NOMEM)
-				text = "<No memory for description>";
-			else if (res == MMSYSERR_NOERROR)
-				text = caps.szPname;
-			else
-				continue;
-
-			PrintMidiDevice (id, text, caps.wTechnology, caps.dwSupport);
-		}
+		PrintMidiDevice(list[i].ID, list[i].Name, list[i].Technology, 0);
 	}
 }
-#else // _WIN32
-
-void I_BuildMIDIMenuList (FOptionValues *opt)
-{
-	AddDefaultMidiDevices(opt);
-#if 0
-	auto devices = ZMusic_GetMidiDevices();
-
-	for (auto & device: devices)
-	{
-		FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(1)];
-		pair->Text = device.Name.c_str();
-		pair->Value = (float)device.ID;
-	}
-#endif
-}
-
-CCMD (snd_listmididevices)
-{
-	Printf("%s-8. libOPN\n", -8 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-7. libADL\n", -7 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-6. WildMidi\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-#if 0
-	auto devices = ZMusic_GetMidiDevices();
-
-	for (auto & device: devices)
-	{
-		Printf("%s%d. %s\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "", device.ID, device.Name.c_str());
-	}
-#endif
-}
-#endif
 
 
 CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
-	//auto devices = ZMusic_GetMidiDevices();
-	//if ((self >= (signed)devices.size()) || (self < -8))
-	if ((self >= (signed)nummididevices) || (self < -8))
+	int amount;
+	auto list = ZMusic_GetMidiDevices(&amount);
+
+	bool found = false;
+	// The list is not necessarily contiguous so we need to check each entry.
+	for (int i = 0; i < amount; i++)
+	{
+		if (self == list[i].ID)
+		{
+			found = true;
+			break;
+		}
+	}
+	if (!found)
 	{
 		// Don't do repeated message spam if there is no valid device.
-		if (self != 0)
+		if (self != 0 && self != -1)
 		{
 			Printf("ID out of range. Using default device.\n");
 		}
-		self = DEF_MIDIDEV;
-		return;
-	}
-	else if (self == -1)
-	{
-		self = DEF_MIDIDEV;
+		if (self != DEF_MIDIDEV) self = DEF_MIDIDEV;
 		return;
 	}
 	bool change = ChangeMusicSetting(zmusic_snd_mididevice, nullptr, self);

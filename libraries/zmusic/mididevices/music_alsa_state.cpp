@@ -130,21 +130,19 @@ int AlsaSequencer::EnumerateDevices() {
 			if (!filter(pinfo)) {
 				continue;
 			}
-			externalDevices.emplace_back();
 			internalDevices.emplace_back();
 
-			auto & item = externalDevices.back();
 			auto & itemInternal = internalDevices.back();
-			itemInternal.ID = item.ID = index++;
+			itemInternal.ID = index++;
 			const char *name = snd_seq_port_info_get_name(pinfo);
 			int portNumber = snd_seq_port_info_get_port(pinfo);
 			if(!name) {
 				std::ostringstream out;
 				out << "MIDI Port " << clientID << ":" << portNumber;
-				itemInternal.Name = item.Name = out.str();
+				itemInternal.Name = out.str();
 			}
 			else {
-				itemInternal.Name = item.Name = name;
+				itemInternal.Name = name;
 			}
 			itemInternal.ClientID = clientID;
 			itemInternal.PortNumber = portNumber;
@@ -157,10 +155,6 @@ int AlsaSequencer::EnumerateDevices() {
 const std::vector<MidiOutDeviceInternal> & AlsaSequencer::GetInternalDevices()
 {
 	return internalDevices;
-}
-
-const std::vector<MidiOutDevice> & AlsaSequencer::GetDevices() {
-	return externalDevices;
 }
 
 #endif

@@ -1,25 +1,34 @@
-// 
-//---------------------------------------------------------------------------
-//
-// Copyright(C) 2017 Magnus Norddahl
-// Copyright(C) 2018 Rachael Alexanderson
-// All rights reserved.
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/
-//
-//--------------------------------------------------------------------------
-//
+/*---------------------------------------------------------------------------
+**
+** Copyright(C) 2017 Magnus Norddahl
+** Copyright(C) 2017-2020 Rachael Alexanderson
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include <math.h>
 #include "c_dispatch.h"
@@ -31,7 +40,7 @@
 #include "console/c_console.h"
 #include "menu/menu.h"
 
-#define NUMSCALEMODES 8
+#define NUMSCALEMODES countof(vScaleTable)
 
 extern bool setsizeneeded;
 extern bool generic_ui;
@@ -124,7 +133,7 @@ namespace
 	// the odd formatting of this struct definition is meant to resemble a table header. set your tab stops to 4 when editing this file.
 	struct v_ScaleTable
 		{ bool isValid;		uint32_t(*GetScaledWidth)(uint32_t Width, uint32_t Height);								uint32_t(*GetScaledHeight)(uint32_t Width, uint32_t Height);						float pixelAspect;		bool isCustom;	};
-	v_ScaleTable vScaleTable[NUMSCALEMODES] =
+	v_ScaleTable vScaleTable[] =
 	{
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return Width; },		        		[](uint32_t Width, uint32_t Height)->uint32_t { return Height; },	        		1.0f,	  				false   },	// 0  - Native
 		{ true,				[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillX(Width, Height); },		[](uint32_t Width, uint32_t Height)->uint32_t { return v_mfillY(Width, Height); },	1.0f,					false   },	// 6  - Minimum Scale to Fill Entire Screen
@@ -168,7 +177,10 @@ bool ViewportLinearScale()
 		vid_scalemode = 0;
 	// always use linear if supersampling
 	int x = screen->GetClientWidth(), y = screen->GetClientHeight();
-	if (ViewportScaledWidth(x,y) > x || ViewportScaledHeight(x,y) > y)
+	float aspectmult = ViewportPixelAspect();
+	if (aspectmult > 1.f)
+		aspectmult = 1.f / aspectmult;
+	if ((ViewportScaledWidth(x,y) > (x * aspectmult)) || (ViewportScaledHeight(x,y) > (y * aspectmult)))
 		return true;
 	
 	return vid_scale_linear;

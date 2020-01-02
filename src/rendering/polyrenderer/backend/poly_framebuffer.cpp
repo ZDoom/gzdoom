@@ -167,6 +167,7 @@ void PolyFrameBuffer::Update()
 			DrawerThreads::WaitForWorkers();
 			I_PolyPresentUnlock(mOutputLetterbox.left, mOutputLetterbox.top, mOutputLetterbox.width, mOutputLetterbox.height);
 		}
+		FPSLimit();
 	}
 
 	DrawerThreads::WaitForWorkers();

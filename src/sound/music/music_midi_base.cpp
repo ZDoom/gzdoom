@@ -167,12 +167,21 @@ CCMD (snd_listmididevices)
 		}
 	}
 }
-
-#else
+#else // _WIN32
 
 void I_BuildMIDIMenuList (FOptionValues *opt)
 {
 	AddDefaultMidiDevices(opt);
+#if 0
+	auto devices = ZMusic_GetMidiDevices();
+
+	for (auto & device: devices)
+	{
+		FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(1)];
+		pair->Text = device.Name.c_str();
+		pair->Value = (float)device.ID;
+	}
+#endif
 }
 
 CCMD (snd_listmididevices)
@@ -184,12 +193,22 @@ CCMD (snd_listmididevices)
 	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+#if 0
+	auto devices = ZMusic_GetMidiDevices();
+
+	for (auto & device: devices)
+	{
+		Printf("%s%d. %s\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "", device.ID, device.Name.c_str());
+	}
+#endif
 }
 #endif
 
 
 CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
+	//auto devices = ZMusic_GetMidiDevices();
+	//if ((self >= (signed)devices.size()) || (self < -8))
 	if ((self >= (signed)nummididevices) || (self < -8))
 	{
 		// Don't do repeated message spam if there is no valid device.

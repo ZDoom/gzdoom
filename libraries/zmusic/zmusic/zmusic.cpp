@@ -214,10 +214,10 @@ static  MusInfo *ZMusic_OpenSongInternal (MusicIO::FileInterface *reader, EMidiD
 				delete source;
 				return nullptr;
 			}
-			
-#ifndef _WIN32
-			// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
-			if (device == MDEV_MMAPI)
+
+#ifndef HAVE_SYSTEM_MIDI
+			// some platforms don't support MDEV_STANDARD so map to MDEV_SNDSYS
+			if (device == MDEV_STANDARD)
 				device = MDEV_SNDSYS;
 #endif
 			

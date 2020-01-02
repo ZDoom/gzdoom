@@ -1,7 +1,9 @@
-/*---------------------------------------------------------------------------
+/*
+** Provides an implementation of an ALSA sequencer wrapper
 **
-** Copyright(C) 2017 Magnus Norddahl
-** Copyright(C) 2017-2020 Rachael Alexanderson
+**---------------------------------------------------------------------------
+** Copyright 2008-2010 Randy Heit
+** Copyright 2020 Petr Mrazek
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -30,11 +32,50 @@
 **
 */
 
-#ifndef __VIDEOSCALE_H__
-#define __VIDEOSCALE_H__
-EXTERN_CVAR (Int, vid_scalemode)
-bool ViewportLinearScale();
-int ViewportScaledWidth(int width, int height);
-int ViewportScaledHeight(int width, int height);
-float ViewportPixelAspect();
-#endif //__VIDEOSCALE_H__
+#pragma once
+
+#if defined __linux__ && defined HAVE_SYSTEM_MIDI
+
+#include "zmusic/zmusic.h"
+#include <vector>
+#include <string>
+typedef struct _snd_seq snd_seq_t;
+
+// FIXME: make not visible from outside
+struct MidiOutDeviceInternal {
+	std::string Name;
+	int ID = -1;
+	int ClientID = -1;
+	int PortNumber = -1;
+	unsigned int type = 0;
+};
+
+// NOTE: the sequencer state is shared between actually playing MIDI music and device enumeration, therefore we keep it around.
+class AlsaSequencer {
+private:
+	AlsaSequencer();
+	~AlsaSequencer();
+
+public:
+	static AlsaSequencer &Get();
+	bool Open();
+	void Close();
+	bool IsOpen() const {
+		return nullptr != handle;
+	}
+
+	int EnumerateDevices();
+	const std::vector<MidiOutDevice> &GetDevices();
+	const std::vector<MidiOutDeviceInternal> &GetInternalDevices();
+
+	snd_seq_t *handle = nullptr;
+
+	int OurId = -1;
+	int error = -1;
+
+private:
+	std::vector<MidiOutDeviceInternal> internalDevices;
+	std::vector<MidiOutDevice> externalDevices;
+};
+
+#endif

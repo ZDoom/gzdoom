@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <vector>
+#include <string>
 
 // These constants must match the corresponding values of the Windows headers
 // to avoid readjustment in the native Windows device's playback functions 
@@ -29,7 +31,7 @@ enum EMIDIType
 enum EMidiDevice
 {
 	MDEV_DEFAULT = -1,
-	MDEV_MMAPI = 0,
+	MDEV_STANDARD = 0,
 	MDEV_OPL = 1,
 	MDEV_SNDSYS = 2,
 	MDEV_TIMIDITY = 3,

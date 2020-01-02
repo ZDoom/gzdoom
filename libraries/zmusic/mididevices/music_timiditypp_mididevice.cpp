@@ -33,6 +33,9 @@
 */
 
 #include "mididevice.h"
+#include "zmusic/zmusic_internal.h"
+
+#ifdef HAVE_TIMIDITY
 
 #include "timiditypp/timidity.h"
 #include "timiditypp/instrum.h"
@@ -231,3 +234,9 @@ MIDIDevice *CreateTimidityPPMIDIDevice(const char *Args, int samplerate)
 	return new TimidityPPMIDIDevice(samplerate);
 }
 
+#else
+MIDIDevice* CreateTimidityPPMIDIDevice(const char* Args, int samplerate)
+{
+	throw std::runtime_error("Timidity++ device not supported in this configuration");
+}
+#endif

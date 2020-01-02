@@ -39,7 +39,6 @@
 
 #include "i_module.h"
 #include "cmdlib.h"
-#include "zmusic/sounddecoder.h"
 
 #include "c_dispatch.h"
 #include "i_music.h"

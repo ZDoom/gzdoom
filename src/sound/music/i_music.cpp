@@ -53,9 +53,7 @@
 #include "i_soundfont.h"
 #include "s_music.h"
 #include "doomstat.h"
-#include "streamsources/streamsource.h"
 #include "filereadermusicinterface.h"
-#include "../libraries/zmusic/midisources/midisource.h"
 
 
 

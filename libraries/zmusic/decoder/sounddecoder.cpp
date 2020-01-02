@@ -33,6 +33,7 @@
 */
 
 
+#include "zmusic/zmusic_internal.h"
 #include "sndfile_decoder.h"
 #include "mpg123_decoder.h"
 
@@ -115,3 +116,29 @@ short* dumb_decode_vorbis(int outlen, const void* oggstream, int sizebytes)
 	return samples;
 }
 
+DLL_EXPORT struct SoundDecoder* CreateDecoder(const uint8_t* data, size_t size, bool isstatic)
+{
+	MusicIO::FileInterface* reader;
+	if (isstatic) reader = new MusicIO::MemoryReader(data, (long)size);
+	else reader = new MusicIO::VectorReader(data, size);
+	auto res = SoundDecoder::CreateDecoder(reader);
+	if (!res) reader->close();
+	return res;
+}
+
+DLL_EXPORT void SoundDecoder_GetInfo(struct SoundDecoder* decoder, int* samplerate, ChannelConfig* chans, SampleType* type)
+{
+	if (decoder) decoder->getInfo(samplerate, chans, type);
+	else if (samplerate) *samplerate = 0;
+}
+
+DLL_EXPORT size_t SoundDecoder_Read(struct SoundDecoder* decoder, void* buffer, size_t length)
+{
+	if (decoder) return decoder->read((char*)buffer, length);
+	else return 0;
+}
+
+DLL_EXPORT void SoundDecoder_Close(struct SoundDecoder* decoder)
+{
+	if (decoder) delete decoder;
+}

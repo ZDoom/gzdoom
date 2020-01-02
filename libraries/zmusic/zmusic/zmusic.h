@@ -59,6 +59,17 @@ struct SoundStreamInfo
 	int mNumChannels;	// If mNumChannels is negative, 16 bit integer format is used instead of floating point.
 };
 
+enum SampleType
+{
+	SampleType_UInt8,
+	SampleType_Int16
+};
+enum ChannelConfig
+{
+	ChannelConfig_Mono,
+	ChannelConfig_Stereo
+};
+
 enum EIntConfigKey
 {
 	zmusic_adl_chips_count,
@@ -217,8 +228,10 @@ struct Callbacks
 
 #ifndef ZMUSIC_INTERNAL
 #define DLL_IMPORT // _declspec(dllimport)
+// Note that the internal 'class' definitions are not C compatible!
 typedef struct { int zm1; } *ZMusic_MidiSource;
 typedef struct { int zm2; } *ZMusic_MusicStream;
+struct SoundDecoder;
 #endif
 
 #ifdef __cplusplus
@@ -262,10 +275,20 @@ extern "C"
 	DLL_IMPORT void ZMusic_GetStreamInfo(ZMusic_MusicStream song, SoundStreamInfo *info);
 	// Configuration interface. The return value specifies if a music restart is needed.
 	// RealValue should be written back to the CVAR or whatever other method the client uses to store configuration state.
-	DLL_IMPORT bool ChangeMusicSettingInt(EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue = nullptr);
-	DLL_IMPORT bool ChangeMusicSettingFloat(EFloatConfigKey key, ZMusic_MusicStream song, float value, float* pRealValue = nullptr);
+	DLL_IMPORT bool ChangeMusicSettingInt(EIntConfigKey key, ZMusic_MusicStream song, int value, int* pRealValue);
+	DLL_IMPORT bool ChangeMusicSettingFloat(EFloatConfigKey key, ZMusic_MusicStream song, float value, float* pRealValue);
 	DLL_IMPORT bool ChangeMusicSettingString(EStringConfigKey key, ZMusic_MusicStream song, const char* value);
 	DLL_IMPORT const char *ZMusic_GetStats(ZMusic_MusicStream song);
+
+
+	DLL_IMPORT struct SoundDecoder* CreateDecoder(const uint8_t* data, size_t size, bool isstatic);
+	DLL_IMPORT void SoundDecoder_GetInfo(struct SoundDecoder* decoder, int* samplerate, ChannelConfig* chans, SampleType* type);
+	DLL_IMPORT size_t SoundDecoder_Read(struct SoundDecoder* decoder, void* buffer, size_t length);
+	DLL_IMPORT void SoundDecoder_Close(struct SoundDecoder* decoder);
+	DLL_IMPORT void FindLoopTags(const uint8_t* data, size_t size, uint32_t* start, bool* startass, uint32_t* end, bool* endass);
+	// The rest of the decoder interface is only useful for streaming music. 
+
+
 
 #ifdef __cplusplus
 }

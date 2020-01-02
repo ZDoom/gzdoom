@@ -35,8 +35,11 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
-
 #include "mididevice.h"
+#include "zmusic/zmusic_internal.h"
+
+#ifdef HAVE_GUS
+
 #include "timidity/timidity.h"
 #include "timidity/playmidi.h"
 #include "timidity/instrum.h"
@@ -294,10 +297,16 @@ bool GUS_SetupConfig(const char* args)
 	return true;
 }
 
-
-
-MIDIDevice *CreateTimidityMIDIDevice(const char *Args, int samplerate)
+#
+MIDIDevice* CreateTimidityMIDIDevice(const char* Args, int samplerate)
 {
 	GUS_SetupConfig(Args);
 	return new TimidityMIDIDevice(samplerate);
 }
+
+#else
+MIDIDevice* CreateTimidityMIDIDevice(const char* Args, int samplerate)
+{
+	throw std::runtime_error("GUS device not supported in this configuration");
+}
+#endif

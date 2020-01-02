@@ -338,6 +338,12 @@ void FindLoopTags(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, u
 		FindOggComments(fr, start, startass, end, endass);
 }
 
+DLL_EXPORT void FindLoopTags(const uint8_t* data, size_t size, uint32_t* start, bool* startass, uint32_t* end, bool* endass)
+{
+	MusicIO::FileInterface* reader = new MusicIO::MemoryReader(data, (long)size);
+	FindLoopTags(reader, start, startass, end, endass);
+	reader->close();
+}
 
 //==========================================================================
 //

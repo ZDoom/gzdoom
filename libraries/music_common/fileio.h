@@ -171,7 +171,7 @@ struct MemoryReader : public FileInterface
 		if (len < 0) len = 0;
 		memcpy(buff, mData + mPos, len);
 		mPos += len;
-		return len / size;
+		return len;
 	}
 	long seek(long offset, int whence) override
 	{
@@ -216,7 +216,7 @@ struct VectorReader : public MemoryReader
 		mLength = (long)mVector.size();
 		mPos = 0;
 	}
-	VectorReader(uint8_t* data, size_t size)
+	VectorReader(const uint8_t* data, size_t size)
 	{
 		mVector.resize(size);
 		memcpy(mVector.data(), data, size);

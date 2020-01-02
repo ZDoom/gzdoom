@@ -37,6 +37,7 @@
 #include <mutex>
 #include <stdio.h>
 #include <stdlib.h>
+#include "zmusic/zmusic_internal.h"
 #include "mididevice.h"
 #include "zmusic/mus2midi.h"
 
@@ -687,5 +688,12 @@ MIDIDevice *CreateFluidSynthMIDIDevice(int samplerate, const char *Args)
 	Fluid_SetupConfig(Args, fluid_patchset, true);
 	return new FluidSynthMIDIDevice(samplerate, fluid_patchset, musicCallbacks.Fluid_MessageFunc);
 }
+#else
+
+MIDIDevice* CreateFluidSynthMIDIDevice(int samplerate, const char* Args)
+{
+	throw std::runtime_error("FlidSynth device not supported in this configuration");
+}
+
 
 #endif // HAVE_FLUIDSYNTH

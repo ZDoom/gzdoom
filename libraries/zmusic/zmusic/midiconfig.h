@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "zmusic.h"
+#include "zmusic_internal.h"
 #include "../../libraries/music_common/fileio.h"
 
 // Note: Bools here are stored as ints to allow having a simpler interface.

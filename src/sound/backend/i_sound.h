@@ -35,8 +35,10 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
+#include <vector>
 #include "i_soundinternal.h"
 #include "utility/zstring.h"
+#include "zmusic/zmusic.h"
 
 class FileReader;
 struct FSoundChan;

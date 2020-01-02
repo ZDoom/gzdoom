@@ -35,6 +35,10 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "mididevice.h"
+#include "zmusic/zmusic_internal.h"
+
+#ifdef HAVE_WILDMIDI
+
 #include "wildmidi/wildmidi_lib.h"
 
 // MACROS ------------------------------------------------------------------
@@ -275,3 +279,9 @@ MIDIDevice *CreateWildMIDIDevice(const char *Args, int samplerate)
 	return new WildMIDIDevice(samplerate);
 }
 
+#else
+MIDIDevice* CreateWildMIDIDevice(const char* Args, int samplerate)
+{
+	throw std::runtime_error("WildMidi device not supported in this configuration");
+}
+#endif

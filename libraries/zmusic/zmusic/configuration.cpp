@@ -97,17 +97,13 @@ int ZMusic_EnumerateMidiDevices()
 
 const std::vector<MidiOutDevice> &ZMusic_GetMidiDevices()
 {
-#ifdef HAVE_SYSTEM_MIDI
-	#ifdef __linux__
-		auto & sequencer = AlsaSequencer::Get();
-		return sequencer.GetDevices();
-	#elif _WIN32
-		// TODO: move the weird stuff from music_midi_base.cpp here, or at least to this lib and call it here
-		return {};
-	#endif
-#else
-	return {};
-#endif
+#if defined HAVE_SYSTEM_MIDI && defined __linux__
+	auto &sequencer = AlsaSequencer::Get();
+	return sequencer.GetDevices();
+#else // !HAVE_SYSTEM_MIDI || !__linux__
+	static std::vector<MidiOutDevice> empty;
+	return empty;
+#endif // HAVE_SYSTEM_MIDI && __linux__
 }
 
 

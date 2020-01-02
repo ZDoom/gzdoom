@@ -193,9 +193,24 @@ static const char* mus_pathToSoundFont(const char* sfname, int type)
 	return info ? info->mFilename.GetChars() : nullptr;
 }
 
-static MusicIO::SoundFontReaderInterface* mus_openSoundFont(const char* sfname, int type)
+static void* mus_openSoundFont(const char* sfname, int type)
 {
 	return sfmanager.OpenSoundFont(sfname, type);
+}
+
+static ZMusicCustomReader* mus_sfopenfile(void* handle, const char* fn)
+{
+	return reinterpret_cast<FSoundFontReader*>(handle)->open_interface(fn);
+}
+
+static void mus_sfaddpath(void *handle, const char* path)
+{
+	reinterpret_cast<FSoundFontReader*>(handle)->AddPath(path);
+}
+
+static void mus_sfclose(void* handle)
+{
+	reinterpret_cast<FSoundFontReader*>(handle)->close();
 }
 
 
@@ -266,7 +281,7 @@ void I_InitMusic (void)
 #endif // _WIN32
 	snd_mididevice.Callback();
 	
-	Callbacks callbacks;
+	Callbacks callbacks{};
 
 	callbacks.Fluid_MessageFunc = Printf;
 	callbacks.GUS_MessageFunc = callbacks.Timidity_Messagefunc = tim_printfunc;
@@ -274,6 +289,9 @@ void I_InitMusic (void)
 	callbacks.NicePath = mus_NicePath;
 	callbacks.PathForSoundfont = mus_pathToSoundFont;
 	callbacks.OpenSoundFont = mus_openSoundFont;
+	callbacks.SF_OpenFile = mus_sfopenfile;
+	callbacks.SF_AddToSearchPath = mus_sfaddpath;
+	callbacks.SF_Close = mus_sfclose;
 
 	ZMusic_SetCallbacks(&callbacks);
 	SetupGenMidi();

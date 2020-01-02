@@ -54,9 +54,56 @@ struct Dummy
 MiscConfig miscConfig;
 Callbacks musicCallbacks;
 
+class SoundFontWrapperInterface : public MusicIO::SoundFontReaderInterface
+{
+	void* handle;
+
+public:
+	SoundFontWrapperInterface(void* h)
+	{
+		handle = h;
+	}
+
+	struct MusicIO::FileInterface* open_file(const char* fn) override
+	{
+		auto rd = musicCallbacks.SF_OpenFile(handle, fn);
+		if (rd)
+		{
+			auto fr = new CustomFileReader(rd);
+			if (fr) fr->filename = fn? fn : "timidity.cfg";
+			return fr;
+		}
+		else return nullptr;
+	}
+	void add_search_path(const char* path) override
+	{
+		musicCallbacks.SF_AddToSearchPath(handle, path);
+	}
+	void close() override
+	{
+		musicCallbacks.SF_Close(handle);
+		delete this;
+	}
+};
+
+namespace MusicIO {
+	SoundFontReaderInterface* ClientOpenSoundFont(const char* name, int type)
+	{
+		if (!musicCallbacks.OpenSoundFont) return nullptr;
+		auto iface = musicCallbacks.OpenSoundFont(name, type);
+		if (!iface) return nullptr;
+		return new SoundFontWrapperInterface(iface);
+	}
+}
+
+
 DLL_EXPORT void ZMusic_SetCallbacks(const Callbacks* cb)
 {
 	musicCallbacks = *cb;
+	// If not all these are set the sound font interface is not usable.
+	if (!cb->SF_AddToSearchPath || !cb->SF_OpenFile || !cb->SF_Close)
+		musicCallbacks.OpenSoundFont = nullptr;
+
 }
 
 DLL_EXPORT void ZMusic_SetGenMidi(const uint8_t* data)

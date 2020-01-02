@@ -1,7 +1,61 @@
 #pragma once
 
-#include "mididefs.h"
-#include "../../music_common/fileio.h"
+#include <stdlib.h>
+#include <stdint.h>
+
+// These constants must match the corresponding values of the Windows headers
+// to avoid readjustment in the native Windows device's playback functions 
+// and should not be changed.
+enum EMidiDeviceClass
+{
+	MIDIDEV_MIDIPORT = 1,
+	MIDIDEV_SYNTH,
+	MIDIDEV_SQSYNTH,
+	MIDIDEV_FMSYNTH,
+	MIDIDEV_MAPPER,
+	MIDIDEV_WAVETABLE,
+	MIDIDEV_SWSYNTH
+};
+
+enum EMIDIType
+{
+	MIDI_NOTMIDI,
+	MIDI_MIDI,
+	MIDI_HMI,
+	MIDI_XMI,
+	MIDI_MUS
+};
+
+enum EMidiDevice
+{
+	MDEV_DEFAULT = -1,
+	MDEV_MMAPI = 0,
+	MDEV_OPL = 1,
+	MDEV_SNDSYS = 2,
+	MDEV_TIMIDITY = 3,
+	MDEV_FLUIDSYNTH = 4,
+	MDEV_GUS = 5,
+	MDEV_WILDMIDI = 6,
+	MDEV_ADL = 7,
+	MDEV_OPN = 8,
+
+	MDEV_COUNT
+};
+
+enum ESoundFontTypes
+{
+	SF_SF2 = 1,
+	SF_GUS = 2,
+	SF_WOPL = 4,
+	SF_WOPN = 8
+};
+
+struct SoundStreamInfo
+{
+	int mBufferSize;	// If mBufferSize is 0, the song doesn't use streaming but plays through a different interface. 
+	int mSampleRate;
+	int mNumChannels;	// If mNumChannels is negative, 16 bit integer format is used instead of floating point.
+};
 
 enum EIntConfigKey
 {
@@ -111,34 +165,51 @@ enum EStringConfigKey
 	NUM_STRING_CONFIGS
 };
 
+
+struct ZMusicCustomReader
+{
+	void* handle;
+	char* (*gets)(struct ZMusicCustomReader* handle, char* buff, int n);
+	long (*read)(struct ZMusicCustomReader* handle, void* buff, int32_t size);
+	long (*seek)(struct ZMusicCustomReader* handle, long offset, int whence);
+	long (*tell)(struct ZMusicCustomReader* handle);
+	void (*close)(struct ZMusicCustomReader* handle);
+};
+
 struct Callbacks
 {
 	// Callbacks the client can install to capture messages from the backends
 	// or to provide sound font data.
 	
 	// The message callbacks are optional, without them the output goes to stdout.
-	void (*WildMidi_MessageFunc)(const char* wmfmt, va_list args) = nullptr;
-	void (*GUS_MessageFunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
-	void (*Timidity_Messagefunc)(int type, int verbosity_level, const char* fmt, ...) = nullptr;
-	int (*Fluid_MessageFunc)(const char *fmt, ...) = nullptr;
-	
-	// The sound font callbacks are for allowing the client to customize sound font management
-	// Without them only paths to real files can be used.
-	const char *(*PathForSoundfont)(const char *name, int type) = nullptr;
-	MusicIO::SoundFontReaderInterface *(*OpenSoundFont)(const char* name, int type) = nullptr;
-	
-	// Used to handle client-specific path macros. If not set, the path may not contain any special tokens that may need expansion.
-	const char *(*NicePath)(const char* path) = nullptr;
-};
+	void (*WildMidi_MessageFunc)(const char* wmfmt, va_list args);
+	void (*GUS_MessageFunc)(int type, int verbosity_level, const char* fmt, ...);
+	void (*Timidity_Messagefunc)(int type, int verbosity_level, const char* fmt, ...);
+	int (*Fluid_MessageFunc)(const char *fmt, ...);
 
-struct ZMusicCustomReader
-{
-	void* handle;
-	char* (*gets)(ZMusicCustomReader*handle, char* buff, int n);
-	long (*read)(ZMusicCustomReader* handle, void* buff, int32_t size);
-	long (*seek)(ZMusicCustomReader* handle, long offset, int whence);
-	long (*tell)(ZMusicCustomReader* handle);
-	void (*close)(ZMusicCustomReader* handle);
+	// Retrieves the path to a soundfont identified by an identifier. Only needed if the client virtualizes the sound font names
+	const char *(*PathForSoundfont)(const char *name, int type);
+
+	// The sound font callbacks are for allowing the client to customize sound font management and they are optional.
+	// They only need to be defined if the client virtualizes the sound font management and doesn't pass real paths to the music code.
+	// Without them only paths to real files can be used. If one of these gets set, all must be set.
+
+	// This opens a sound font. Must return a handle with which the sound font's content can be read.
+	void *(*OpenSoundFont)(const char* name, int type);
+
+	// Opens a file in the sound font. For GUS patch sets this will try to open each patch with this function.
+	// For other formats only the sound font's actual name can be requested.
+	// When passed NULL this must open the Timidity config file, if this is requested for an SF2 sound font it should be synthesized.
+	struct ZMusicCustomReader* (*SF_OpenFile)(void* handle, const char* fn);
+
+	//Adds a path to the list of directories in which files must be looked for.
+	void (*SF_AddToSearchPath)(void* handle, const char* path);
+
+	// Closes the sound font reader.
+	void (*SF_Close)(void* handle);
+
+	// Used to handle client-specific path macros. If not set, the path may not contain any special tokens that may need expansion.
+	const char *(*NicePath)(const char* path);
 };
 
 
@@ -168,7 +239,7 @@ extern "C"
 	DLL_IMPORT ZMusic_MidiSource ZMusic_CreateMIDISource(const uint8_t* data, size_t length, EMIDIType miditype);
 	DLL_IMPORT bool ZMusic_MIDIDumpWave(ZMusic_MidiSource source, EMidiDevice devtype, const char* devarg, const char* outname, int subsong, int samplerate);
 
-	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSong(ZMusicCustomReader* reader, EMidiDevice device, const char* Args);
+	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSong(struct ZMusicCustomReader* reader, EMidiDevice device, const char* Args);
 	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSongFile(const char *filename, EMidiDevice device, const char* Args);
 	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenSongMem(const void *mem, size_t size, EMidiDevice device, const char* Args);
 	DLL_IMPORT ZMusic_MusicStream ZMusic_OpenCDSong(int track, int cdid = 0);

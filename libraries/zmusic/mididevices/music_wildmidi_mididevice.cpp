@@ -244,12 +244,8 @@ bool WildMidi_SetupConfig(const char* args)
 	if (*args == 0) args = wildMidiConfig.config.c_str();
 	if (stricmp(wildMidiConfig.loadedConfig.c_str(), args) == 0) return false; // aleady loaded
 
-	MusicIO::SoundFontReaderInterface* reader = nullptr;
-	if (musicCallbacks.OpenSoundFont)
-	{
-		reader = musicCallbacks.OpenSoundFont(args, SF_GUS);
-	}
-	else if (MusicIO::fileExists(args))
+	MusicIO::SoundFontReaderInterface* reader = MusicIO::ClientOpenSoundFont(args, SF_GUS);
+	if (!reader && MusicIO::fileExists(args))
 	{
 		reader = new MusicIO::FileSystemSoundFontReader(args, true);
 	}

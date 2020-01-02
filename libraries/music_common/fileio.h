@@ -379,6 +379,7 @@ public:
 	}
 };
 
-
+MusicIO::SoundFontReaderInterface* ClientOpenSoundFont(const char* name, int type);
 
 } 
+

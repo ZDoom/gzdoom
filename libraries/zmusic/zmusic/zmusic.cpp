@@ -319,23 +319,6 @@ DLL_EXPORT ZMusic_MusicStream ZMusic_OpenSongMem(const void* mem, size_t size, E
 	return ZMusic_OpenSongInternal(mr, device, Args);
 }
 
-struct CustomFileReader : public MusicIO::FileInterface
-{
-	ZMusicCustomReader* cr;
-
-	CustomFileReader(ZMusicCustomReader* zr) : cr(zr) {}
-	virtual char* gets(char* buff, int n) { return cr->gets(cr, buff, n); }
-	virtual long read(void* buff, int32_t size) { return cr->read(cr, buff, size);  }
-	virtual long seek(long offset, int whence) { return cr->seek(cr, offset, whence); }
-	virtual long tell() { return cr->tell(cr); }
-	virtual void close() 
-	{
-		cr->close(cr);
-		delete this;
-	}
-
-};
-
 DLL_EXPORT ZMusic_MusicStream ZMusic_OpenSong(ZMusicCustomReader* reader, EMidiDevice device, const char* Args)
 {
 	if (!reader)

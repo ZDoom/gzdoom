@@ -31,7 +31,7 @@
 **
 */
 
-#include "zmusic/zmusic.h"
+#include "zmusic/zmusic_internal.h"
 #include "zmusic/musinfo.h"
 
 #ifdef _WIN32

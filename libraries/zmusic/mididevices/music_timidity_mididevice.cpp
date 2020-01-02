@@ -267,14 +267,20 @@ bool GUS_SetupConfig(const char* args)
 	if (*args == 0) args = gusConfig.gus_config.c_str();
 	if (stricmp(gusConfig.loadedConfig.c_str(), args) == 0) return false; // aleady loaded
 
-	MusicIO::SoundFontReaderInterface *reader = nullptr;
-	if (musicCallbacks.OpenSoundFont)
+	MusicIO::SoundFontReaderInterface* reader = MusicIO::ClientOpenSoundFont(args, SF_GUS | SF_SF2);
+	if (!reader && MusicIO::fileExists(args))
 	{
-		reader = musicCallbacks.OpenSoundFont(args, SF_GUS | SF_SF2);
-	}
-	else if (MusicIO::fileExists(args))
-	{
-		reader = new MusicIO::FileSystemSoundFontReader(args, true);
+		auto f = MusicIO::utf8_fopen(args, "rb");
+		if (f)
+		{
+			char test[12] = {};
+			fread(test, 1, 12, f);
+			fclose(f);
+			// If the passed file is an SF2 sound font we need to use the special reader that fakes a config for it.
+			if (memcmp(test, "RIFF", 4) == 0 && memcmp(test + 8, "sfbk", 4) == 0)
+				reader = new MusicIO::SF2Reader(args);
+		}
+		if (!reader) reader = new MusicIO::FileSystemSoundFontReader(args, true);
 	}
 
 	if (reader == nullptr)

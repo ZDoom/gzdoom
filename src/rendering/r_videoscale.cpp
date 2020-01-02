@@ -42,8 +42,7 @@
 
 #define NUMSCALEMODES countof(vScaleTable)
 
-extern bool setsizeneeded;
-extern bool generic_ui;
+extern bool setsizeneeded, multiplayer, generic_ui;
 
 EXTERN_CVAR(Int, vid_aspect)
 
@@ -109,7 +108,7 @@ namespace
 		static bool lastspecialUI = false;
 		bool isInActualMenu = false;
 
-		bool specialUI = (generic_ui || !!log_vgafont || !!dlg_vgafont || ConsoleState != c_up || 
+		bool specialUI = (generic_ui || !!log_vgafont || !!dlg_vgafont || ConsoleState != c_up || multiplayer ||
 			(menuactive == MENU_On && CurrentMenu && !CurrentMenu->IsKindOf("ConversationMenu")));
 
 		if (specialUI == lastspecialUI)

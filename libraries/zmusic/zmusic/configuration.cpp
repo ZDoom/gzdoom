@@ -183,7 +183,7 @@ struct MidiDeviceList
 #ifdef HAVE_SYSTEM_MIDI
 #ifdef __linux__
 		auto& sequencer = AlsaSequencer::Get();
-		auto& dev = sequencer.GetDevices();
+		auto& dev = sequencer.GetInternalDevices();
 		for (auto& d : dev)
 		{
 			MidiOutDevice mdev = { strdup(d.Name.c_str()), d.ID, MIDIDEV_MAPPER };	// fixme: Correctly determine the type of the device.

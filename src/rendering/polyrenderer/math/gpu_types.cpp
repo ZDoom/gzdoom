@@ -1,6 +1,6 @@
 /*
-**  Hardpoly renderer
-**  Copyright (c) 2016 Magnus Norddahl
+**  GPU math utility classes
+**  Copyright (c) 2016-2020 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied
 **  warranty.  In no event will the authors be held liable for any damages

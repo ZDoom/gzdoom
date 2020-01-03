@@ -183,6 +183,7 @@ struct MidiDeviceList
 #ifdef HAVE_SYSTEM_MIDI
 #ifdef __linux__
 		auto& sequencer = AlsaSequencer::Get();
+		sequencer.EnumerateDevices();
 		auto& dev = sequencer.GetInternalDevices();
 		for (auto& d : dev)
 		{

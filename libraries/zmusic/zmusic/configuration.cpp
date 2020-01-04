@@ -206,7 +206,7 @@ struct MidiDeviceList
 				WideCharToMultiByte(CP_UTF8, 0, caps.szPname, (int)len, outbuf, size_needed, nullptr, nullptr);
 				outbuf[size_needed] = 0;
 
-				MidiOutDevice mdev = { outbuf, id, caps.wTechnology };
+				MidiOutDevice mdev = { outbuf, (int)id, (int)caps.wTechnology };
 				devices.push_back(mdev);
 			}
 		}

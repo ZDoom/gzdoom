@@ -600,13 +600,13 @@ bool FScanner::GetToken ()
 			{
 				TokenType = TK_UIntConst;
 				BigNumber = (int64_t)strtoull(String, &stopper, 0);
-				Number = (int)clamp<int64_t>(BigNumber, 0, UINT_MAX);
+				Number = (int)BigNumber;// clamp<int64_t>(BigNumber, 0, UINT_MAX);
 				Float = (unsigned)Number;
 			}
 			else
 			{
 				BigNumber = strtoll(String, &stopper, 0);
-				Number = (int)clamp<int64_t>(BigNumber, INT_MIN, INT_MAX);
+				Number = (int)BigNumber;// clamp<int64_t>(BigNumber, 0, UINT_MAX);
 				Float = Number;
 			}
 		}
@@ -708,7 +708,7 @@ bool FScanner::GetNumber ()
 		else
 		{
 			BigNumber = strtoll(String, &stopper, 0);
-			Number = (int)clamp<int64_t>(BigNumber, INT_MIN, INT_MAX);
+			Number = (int)BigNumber;// clamp<int64_t>(BigNumber, 0, UINT_MAX);
 			if (*stopper != 0)
 			{
 				ScriptError ("SC_GetNumber: Bad numeric constant \"%s\".", String);
@@ -765,7 +765,7 @@ bool FScanner::CheckNumber ()
 		else
 		{
 			BigNumber = strtoll (String, &stopper, 0);
-			Number = (int)clamp<int64_t>(BigNumber, INT_MIN, INT_MAX);
+			Number = (int)BigNumber;// clamp<int64_t>(BigNumber, 0, UINT_MAX);
 			if (*stopper != 0)
 			{
 				UnGet();

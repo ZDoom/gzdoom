@@ -715,7 +715,7 @@ class StatusScreen abstract play version("2.5")
 
 	static void PlaySound(Sound snd)
 	{
-		S_StartSound(snd, CHAN_VOICE, CHANF_MAYBE_LOCAL, 1, ATTN_NONE);
+		S_StartSound(snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHANF_UI, 1, ATTN_NONE);
 	}
 	
 	

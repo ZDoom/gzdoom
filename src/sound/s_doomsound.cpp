@@ -450,7 +450,7 @@ void S_PlaySoundPitch(AActor *a, int chan, EChanFlags flags, FSoundID sid, float
 
 	if (!(flags & CHANF_LOCAL))
 	{
-		if (!(flags & (CHANF_NOSTOP) || !S_IsActorPlayingSomething(a, chan, sid)))
+		if (!(flags & CHANF_NOSTOP) || !S_IsActorPlayingSomething(a, chan, sid))
 		{
 			S_SoundPitchActor(a, chan, flags, sid, vol, atten, pitch);
 		}
@@ -459,7 +459,7 @@ void S_PlaySoundPitch(AActor *a, int chan, EChanFlags flags, FSoundID sid, float
 	{
 		if (a->CheckLocalView())
 		{
-			if (!(flags & (CHANF_NOSTOP) || !soundEngine->IsSourcePlayingSomething(SOURCE_None, nullptr, chan, sid)))
+			if (!(flags & CHANF_NOSTOP) || !soundEngine->IsSourcePlayingSomething(SOURCE_None, nullptr, chan, sid))
 			{
 				S_SoundPitch(chan, flags, sid, vol, ATTN_NONE, pitch);
 			}

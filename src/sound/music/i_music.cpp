@@ -169,6 +169,17 @@ static void tim_printfunc(int type, int verbosity_level, const char* fmt, ...)
 	}
 }
 
+static int alsa_printfunc(const char* fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	FString msg;
+	msg.VFormat(fmt, args);
+	va_end(args);
+
+	return Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
+}
+
 static void wm_printfunc(const char* wmfmt, va_list args)
 {
 	Printf(TEXTCOLOR_RED);
@@ -277,6 +288,7 @@ void I_InitMusic (void)
 	Callbacks callbacks{};
 
 	callbacks.Fluid_MessageFunc = Printf;
+	callbacks.Alsa_MessageFunc = alsa_printfunc;
 	callbacks.GUS_MessageFunc = callbacks.Timidity_Messagefunc = tim_printfunc;
 	callbacks.WildMidi_MessageFunc = wm_printfunc;
 	callbacks.NicePath = mus_NicePath;

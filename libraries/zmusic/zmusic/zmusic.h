@@ -206,6 +206,7 @@ struct Callbacks
 	void (*GUS_MessageFunc)(int type, int verbosity_level, const char* fmt, ...);
 	void (*Timidity_Messagefunc)(int type, int verbosity_level, const char* fmt, ...);
 	int (*Fluid_MessageFunc)(const char *fmt, ...);
+	int (*Alsa_MessageFunc)(const char *fmt, ...);
 
 	// Retrieves the path to a soundfont identified by an identifier. Only needed if the client virtualizes the sound font names
 	const char *(*PathForSoundfont)(const char *name, int type);

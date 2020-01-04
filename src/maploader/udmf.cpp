@@ -2312,11 +2312,6 @@ public:
 
 		// Create the real linedefs and decompress the sidedefs
 		ProcessLineDefs();
-		// enable the excolor flag on all sidedefs which need it for a gradient transfer from the sector.
-		for (auto& sec : Level->sectors)
-		{
-			sec.CheckExColorFlag();	
-		}
 	}
 };
 

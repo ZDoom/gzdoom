@@ -3245,6 +3245,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	{
 		if (sec.floorplane.isSlope()) sec.reflect[sector_t::floor] = 0;
 		if (sec.ceilingplane.isSlope()) sec.reflect[sector_t::ceiling] = 0;
+
+		sec.CheckExColorFlag();
 	}
 	for (auto &node : Level->nodes)
 	{

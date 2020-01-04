@@ -808,7 +808,7 @@ class PowerMask : PowerIronFeet
 		Super.DoEffect ();
 		if (!(Level.maptime & 0x3f))
 		{
-			Owner.A_PlaySound ("misc/mask", CHAN_AUTO);
+			Owner.A_StartSound ("misc/mask", CHAN_AUTO);
 		}
 	}
 	
@@ -1630,7 +1630,7 @@ class PowerDamage : Powerup
 
 		if (Owner != null)
 		{
-			Owner.A_PlaySound(SeeSound, CHAN_5, 1.0, false, ATTN_NONE);
+			Owner.A_StartSound(SeeSound, CHAN_5, CHANF_DEFAULT, 1.0, ATTN_NONE);
 		}
 	}
 
@@ -1645,7 +1645,7 @@ class PowerDamage : Powerup
 		Super.EndEffect();
 		if (Owner != null)
 		{
-			Owner.A_PlaySound(DeathSound, CHAN_5, 1.0, false, ATTN_NONE);
+			Owner.A_StartSound(DeathSound, CHAN_5, CHANF_DEFAULT, 1.0, ATTN_NONE);
 		}
 	}
 
@@ -1660,7 +1660,7 @@ class PowerDamage : Powerup
 		if (!passive && damage > 0)
 		{
 			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage * 4));
-			if (Owner != null && newdamage > damage) Owner.A_PlaySound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+			if (Owner != null && newdamage > damage) Owner.A_StartSound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
 		}
 	}
 }
@@ -1691,7 +1691,7 @@ class PowerProtection : Powerup
 		let o = Owner;	// copy to a local variable for quicker access.
 		if (o != null)
 		{
-			o.A_PlaySound(SeeSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+			o.A_StartSound(SeeSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
 
 			// Transfer various protection flags if owner does not already have them.
 			// If the owner already has the flag, clear it from the powerup.
@@ -1731,7 +1731,7 @@ class PowerProtection : Powerup
 		let o = Owner;	// copy to a local variable for quicker access.
 		if (o != null)
 		{
-			o.A_PlaySound(DeathSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+			o.A_StartSound(DeathSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
 			
 			o.bNoRadiusDmg &= !bNoRadiusDmg;
 			o.bDontMorph &= !bDontMorph;
@@ -1754,7 +1754,7 @@ class PowerProtection : Powerup
 		if (passive && damage > 0)
 		{
 			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
-			if (Owner != null && newdamage < damage) Owner.A_PlaySound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
+			if (Owner != null && newdamage < damage) Owner.A_StartSound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
 		}
 	}
 }
@@ -1795,7 +1795,7 @@ class PowerRegeneration : Powerup
 		{
 			if (Owner.GiveBody(int(Strength)))
 			{
-				Owner.A_PlaySound("*regenerate", CHAN_ITEM);
+				Owner.A_StartSound("*regenerate", CHAN_ITEM);
 			}
 		}
 	}

@@ -111,7 +111,7 @@ class Bat : Actor
 
 		if (random[BatMove]() < 15)
 		{
-			A_PlaySound ("BatScream", CHAN_VOICE, 1, false, ATTN_IDLE);
+			A_StartSound ("BatScream", CHAN_VOICE, CHANF_DEFAULT, 1, ATTN_IDLE);
 		}
 
 		// Handle Z movement

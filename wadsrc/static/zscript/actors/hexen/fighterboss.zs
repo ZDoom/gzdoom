@@ -59,7 +59,7 @@ class FighterBoss : Actor
 		PLAY X 1 A_FreezeDeathChunks;
 		Wait;
 	Burn:
-		FDTH A 5 Bright A_PlaySound("PlayerFighterBurnDeath");
+		FDTH A 5 Bright A_StartSound("PlayerFighterBurnDeath");
 		FDTH B 4 Bright;
 		FDTH G 5 Bright;
 		FDTH H 4 Bright A_Scream;
@@ -95,6 +95,6 @@ class FighterBoss : Actor
 		SpawnMissileAngle("FSwordMissile", Angle, 0);
 		SpawnMissileAngle("FSwordMissile", Angle - (45. / 8), 0);
 		SpawnMissileAngle("FSwordMissile", Angle - (45. / 4), 0);
-		A_PlaySound ("FighterSwordFire", CHAN_WEAPON);
+		A_StartSound ("FighterSwordFire", CHAN_WEAPON);
 	}
 }

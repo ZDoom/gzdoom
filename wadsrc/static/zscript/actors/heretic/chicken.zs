@@ -83,7 +83,7 @@ class Beak : Weapon
 		{
 			angle = t.angleFromSource;
 		}
-		A_PlaySound ("chicken/peck", CHAN_VOICE);
+		A_StartSound ("chicken/peck", CHAN_VOICE);
 		player.chickenPeck = 12;
 		player.GetPSprite(PSP_WEAPON).Tics -= random[BeakAtk](0,7);
 	}
@@ -131,7 +131,7 @@ class BeakPowered : Beak
 		{
 			angle = t.angleFromSource;
 		}
-		A_PlaySound ("chicken/peck", CHAN_VOICE);
+		A_StartSound ("chicken/peck", CHAN_VOICE);
 		player.chickenPeck = 12;
 		player.GetPSprite(PSP_WEAPON).Tics -= random[BeakAtk](0,3);
 	}
@@ -225,7 +225,7 @@ class ChickenPlayer : PlayerPawn
 		}
 		if (random[ChickenPlayerThink]() < 48)
 		{ // Just noise
-			A_PlaySound ("chicken/active", CHAN_VOICE);
+			A_StartSound ("chicken/active", CHAN_VOICE);
 		}
 	}
 

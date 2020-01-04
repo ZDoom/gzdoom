@@ -63,7 +63,7 @@ extend class StateProvider
 			if (!weap.DepleteAmmo (weap.bAltFire, true, 1))
 				return;
 
-			A_PlaySound ("weapons/chngun", CHAN_WEAPON);
+			A_StartSound ("weapons/chngun", CHAN_WEAPON);
 
 			State flash = weap.FindState('Flash');
 			if (flash != null)

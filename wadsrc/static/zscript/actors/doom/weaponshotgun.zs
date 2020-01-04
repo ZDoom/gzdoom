@@ -62,7 +62,7 @@ extend class StateProvider
 			return;
 		}
 
-		A_PlaySound ("weapons/shotgf", CHAN_WEAPON);
+		A_StartSound ("weapons/shotgf", CHAN_WEAPON);
 		Weapon weap = player.ReadyWeapon;
 		if (weap != null && invoker == weap && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
 		{

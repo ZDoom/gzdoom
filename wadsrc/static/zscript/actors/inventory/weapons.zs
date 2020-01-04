@@ -163,7 +163,7 @@ class Weapon : StateProvider
 	{
 		if (UpSound)
 		{
-			origin.A_PlaySound(UpSound, CHAN_WEAPON);
+			origin.A_StartSound(UpSound, CHAN_WEAPON);
 		}
 	}
 	
@@ -345,7 +345,7 @@ class Weapon : StateProvider
 		{
 			if (!weapon.bReadySndHalf || random[WpnReadySnd]() < 128)
 			{
-				pawn.A_PlaySound(weapon.ReadySound, CHAN_WEAPON);
+				pawn.A_StartSound(weapon.ReadySound, CHAN_WEAPON);
 			}
 		}
 

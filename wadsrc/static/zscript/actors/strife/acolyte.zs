@@ -104,7 +104,7 @@ class Acolyte : StrifeHumanoid
 				players[i].SetLogNumber (14);
 				players[i].SetSubtitleNumber (14, "svox/voc14");
 				A_StopSound (CHAN_VOICE);
-				A_PlaySound ("svox/voc14", CHAN_VOICE, 1, false, ATTN_NONE);
+				A_StartSound ("svox/voc14", CHAN_VOICE, CHANF_DEFAULT, 1., ATTN_NONE);
 			}
 		}
 	}

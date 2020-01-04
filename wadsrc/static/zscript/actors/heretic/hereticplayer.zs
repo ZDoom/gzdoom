@@ -68,13 +68,13 @@ class HereticPlayer : PlayerPawn
 		PLAY Y -1;
 		Stop;
 	Burn:
-		FDTH A 5 BRIGHT A_PlaySound("*burndeath");
+		FDTH A 5 BRIGHT A_StartSound("*burndeath");
 		FDTH B 4 BRIGHT;
 		FDTH C 5 BRIGHT;
 		FDTH D 4 BRIGHT A_PlayerScream;
 		FDTH E 5 BRIGHT;
 		FDTH F 4 BRIGHT;
-		FDTH G 5 BRIGHT A_PlaySound("*burndeath");
+		FDTH G 5 BRIGHT A_StartSound("*burndeath");
 		FDTH H 4 BRIGHT;
 		FDTH I 5 BRIGHT;
 		FDTH J 4 BRIGHT;

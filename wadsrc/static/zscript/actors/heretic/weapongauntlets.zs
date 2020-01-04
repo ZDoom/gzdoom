@@ -32,7 +32,7 @@ class Gauntlets : Weapon
 		GAUN A 1 A_Raise;
 		Loop;
 	Fire:
-		GAUN B 4 A_PlaySound("weapons/gauntletsuse", CHAN_WEAPON);
+		GAUN B 4 A_StartSound("weapons/gauntletsuse", CHAN_WEAPON);
 		GAUN C 4;
 	Hold:
 		GAUN DEF 4 BRIGHT A_GauntletAttack(0);
@@ -93,7 +93,7 @@ class Gauntlets : Weapon
 			{
 				player.extralight = !player.extralight;
 			}
-			A_PlaySound ("weapons/gauntletson", CHAN_AUTO);
+			A_StartSound ("weapons/gauntletson", CHAN_AUTO);
 			return;
 		}
 		int randVal = random[GauntletAtk]();
@@ -112,11 +112,11 @@ class Gauntlets : Weapon
 		if (power)
 		{
 			if (!t.linetarget.bDontDrain) GiveBody (actualdamage >> 1);
-			A_PlaySound ("weapons/gauntletspowhit", CHAN_AUTO);
+			A_StartSound ("weapons/gauntletspowhit", CHAN_AUTO);
 		}
 		else
 		{
-			A_PlaySound ("weapons/gauntletshit", CHAN_AUTO);
+			A_StartSound ("weapons/gauntletshit", CHAN_AUTO);
 		}
 		// turn to face target
 		ang = t.angleFromSource;
@@ -163,7 +163,7 @@ class GauntletsPowered : Gauntlets
 		GAUN G 1 A_Raise;
 		Loop;
 	Fire:
-		GAUN J 4 A_PlaySound("weapons/gauntletsuse", CHAN_WEAPON);
+		GAUN J 4 A_StartSound("weapons/gauntletsuse", CHAN_WEAPON);
 		GAUN K 4;
 	Hold:
 		GAUN LMN 4 BRIGHT A_GauntletAttack(1);

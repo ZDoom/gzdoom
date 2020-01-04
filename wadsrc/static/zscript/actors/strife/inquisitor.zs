@@ -80,7 +80,7 @@ class Inquisitor : Actor
 
 	void A_InquisitorWalk ()
 	{
-		A_PlaySound ("inquisitor/walk", CHAN_BODY);
+		A_StartSound ("inquisitor/walk", CHAN_BODY);
 		A_Chase ();
 	}
 
@@ -140,7 +140,7 @@ class Inquisitor : Actor
 		if (target == null)
 			return;
 
-		A_PlaySound ("inquisitor/jump", CHAN_ITEM, 1, true);
+		A_StartSound ("inquisitor/jump", CHAN_ITEM, 1, true);
 		AddZ(64);
 		A_FaceTarget ();
 		let localspeed = Speed * (2./3);
@@ -165,7 +165,7 @@ class Inquisitor : Actor
 			A_StopSound (CHAN_ITEM);
 			return;
 		}
-		A_PlaySound ("inquisitor/jump", CHAN_ITEM, 1, true);
+		A_StartSound ("inquisitor/jump", CHAN_ITEM, CHANF_LOOPING);
 	}
 
 	void A_TossArm ()

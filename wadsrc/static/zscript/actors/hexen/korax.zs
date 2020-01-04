@@ -114,7 +114,7 @@ class Korax : Actor
 	
 	void A_KoraxStep()
 	{ 
-		A_PlaySound("KoraxStep"); 
+		A_StartSound("KoraxStep"); 
 		A_Chase(); 
 	}	
 	
@@ -150,7 +150,7 @@ class Korax : Actor
 		}
 		else if (random[KoraxChase]() < 30)
 		{
-			A_PlaySound("KoraxActive", CHAN_VOICE, 1, false, ATTN_NONE);
+			A_StartSound("KoraxActive", CHAN_VOICE, CHANF_DEFAULT, 1., ATTN_NONE);
 		}
 
 		// Teleport away
@@ -260,10 +260,10 @@ class Korax : Actor
 		};
 		int type = random[KoraxMissile](0, 5);
 
-		A_PlaySound("KoraxAttack", CHAN_VOICE);
+		A_StartSound("KoraxAttack", CHAN_VOICE);
 
 		// Fire all 6 missiles at once
-		A_PlaySound(sounds[type], CHAN_WEAPON, 1, false, ATTN_NONE);
+		A_StartSound(sounds[type], CHAN_WEAPON, CHANF_DEFAULT, 1., ATTN_NONE);
 		class<Actor> info = choices[type];
 		for (int i = 0; i < 6; ++i)
 		{
@@ -354,7 +354,7 @@ class Korax : Actor
 	{
 		int numcommands;
 
-		A_PlaySound("KoraxCommand", CHAN_VOICE);
+		A_StartSound("KoraxCommand", CHAN_VOICE);
 
 		// Shoot stream of lightning to ceiling
 		double ang = angle - 90;
@@ -462,7 +462,7 @@ class KoraxSpirit : Actor
 	{
 		if (health-- <= 0)
 		{
-			A_PlaySound("SpiritDie", CHAN_VOICE);
+			A_StartSound("SpiritDie", CHAN_VOICE);
 			SetStateLabel ("Death");
 		}
 		else
@@ -477,7 +477,7 @@ class KoraxSpirit : Actor
 
 			if (random[KoraxRoam]() < 50)
 			{
-				A_PlaySound("SpiritActive", CHAN_VOICE, 1, false, ATTN_NONE);
+				A_StartSound("SpiritActive", CHAN_VOICE, CHANF_DEFAULT, 1., ATTN_NONE);
 			}
 		}
 	}

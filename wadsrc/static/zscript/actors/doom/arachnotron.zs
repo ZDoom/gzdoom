@@ -109,7 +109,7 @@ extend class Actor
 	
 	void A_BabyMetal()
 	{
-		A_PlaySound("baby/walk", CHAN_BODY, 1, false, ATTN_IDLE);
+		A_StartSound("baby/walk", CHAN_BODY, CHANF_DEFAULT, 1, ATTN_IDLE);
 		A_Chase();
 	}
 }

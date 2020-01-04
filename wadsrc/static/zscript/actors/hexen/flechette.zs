@@ -510,7 +510,7 @@ class PoisonCloud : Actor
 
 					// If successful, play the poison sound.
 					if (victim.player.PoisonPlayer (self, self.target, 50))
-						victim.A_PlaySound ("*poison", CHAN_VOICE);
+						victim.A_StartSound ("*poison", CHAN_VOICE);
 				}
 			}	
 			return -1;

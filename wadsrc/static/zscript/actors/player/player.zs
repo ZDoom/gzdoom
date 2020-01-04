@@ -1392,7 +1392,7 @@ class PlayerPawn : Actor
 				Vel.Z += jumpvelz;
 				bOnMobj = false;
 				player.jumpTics = -1;
-				if (!(player.cheats & CF_PREDICTING)) A_PlaySound("*jump", CHAN_BODY);
+				if (!(player.cheats & CF_PREDICTING)) A_StartSound("*jump", CHAN_BODY);
 			}
 		}
 	}
@@ -2421,7 +2421,7 @@ class PlayerPawn : Actor
 
 		if (playgasp && wasdrowning)
 		{
-			A_PlaySound("*gasp", CHAN_VOICE);
+			A_StartSound("*gasp", CHAN_VOICE);
 		}
 		if (Level.airsupply > 0 && AirCapacity > 0) player.air_finished = Level.maptime + int(Level.airsupply * AirCapacity);
 		else player.air_finished = int.max;

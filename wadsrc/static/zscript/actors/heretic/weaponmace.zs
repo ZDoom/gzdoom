@@ -68,7 +68,7 @@ class Mace : HereticWeapon
 				ball.AddZ(ball.Vel.Z);
 				ball.VelFromAngle();
 				ball.Vel += Vel.xy / 2;
-				ball.A_PlaySound ("weapons/maceshoot", CHAN_BODY);
+				ball.A_StartSound ("weapons/maceshoot", CHAN_BODY);
 				ball.CheckMissileSpawn (radius);
 			}
 		}
@@ -138,7 +138,7 @@ class MacePowered : Mace
 				mo.tracer = t.linetarget;
 			}
 		}
-		A_PlaySound ("weapons/maceshoot", CHAN_WEAPON);
+		A_StartSound ("weapons/maceshoot", CHAN_WEAPON);
 	}
 }
 
@@ -206,14 +206,14 @@ class MaceFX1 : Actor
 			Vel.Z *= 0.75;
 			bBounceOnFloors = bBounceOnCeilings = false;
 			SetState (SpawnState);
-			A_PlaySound ("weapons/macebounce", CHAN_BODY);
+			A_StartSound ("weapons/macebounce", CHAN_BODY);
 		}
 		else
 		{ // Explode
 			Vel = (0,0,0);
 			bNoGravity = true;
 			Gravity = 1;
-			A_PlaySound ("weapons/macehit", CHAN_BODY);
+			A_StartSound ("weapons/macehit", CHAN_BODY);
 		}
 	}
 }
@@ -445,14 +445,14 @@ class MaceFX4 : Actor
 					VelFromAngle();
 				}
 				SetState (SpawnState);
-				A_PlaySound ("weapons/macestop", CHAN_BODY);
+				A_StartSound ("weapons/macestop", CHAN_BODY);
 				return;
 			}
 		}
 		Vel = (0,0,0);
 		bNoGravity = true;
 		Gravity = 1;
-		A_PlaySound ("weapons/maceexplode", CHAN_BODY);
+		A_StartSound ("weapons/maceexplode", CHAN_BODY);
 	}
 }
 

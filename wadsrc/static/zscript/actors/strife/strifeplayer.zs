@@ -82,7 +82,7 @@ class StrifePlayer : PlayerPawn
 		BURN V -1;
 		Stop;
 	Disintegrate:
-		DISR A 5 A_PlaySound("misc/disruptordeath", CHAN_VOICE);
+		DISR A 5 A_StartSound("misc/disruptordeath", CHAN_VOICE);
 		DISR BC 5;
 		DISR D 5 A_NoBlocking;
 		DISR EF 5;
@@ -99,7 +99,7 @@ class StrifePlayer : PlayerPawn
 	
 	void A_ItBurnsItBurns()
 	{
-		A_PlaySound ("human/imonfire", CHAN_VOICE);
+		A_StartSound ("human/imonfire", CHAN_VOICE);
 
 		if (player != null && player.mo == self)
 		{

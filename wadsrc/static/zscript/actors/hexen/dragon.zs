@@ -112,12 +112,12 @@ class Dragon : Actor
 					int damage = random[DragonSeek](1, 8) * 10;
 					int newdam = targ.DamageMobj (self, self, damage, 'Melee');
 					targ.TraceBleed (newdam > 0 ? newdam : damage, self);
-					A_PlaySound (AttackSound, CHAN_WEAPON);
+					A_StartSound (AttackSound, CHAN_WEAPON);
 				}
 				else if (random[DragonSeek]() < 128 && CheckMissileRange())
 				{
 					SpawnMissile(targ, "DragonFireball");		
-					A_PlaySound (AttackSound, CHAN_WEAPON);
+					A_StartSound (AttackSound, CHAN_WEAPON);
 				}
 				target = oldTarget;
 			}
@@ -225,12 +225,12 @@ class Dragon : Actor
 				int damage = random[DragonFlight](1, 8) * 8;
 				int newdam = targ.DamageMobj (self, self, damage, 'Melee');
 				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
-				A_PlaySound (AttackSound, CHAN_WEAPON);
+				A_StartSound (AttackSound, CHAN_WEAPON);
 			}
 			else if (ang <= 20)
 			{
 				SetState (MissileState);
-				A_PlaySound (AttackSound, CHAN_WEAPON);
+				A_StartSound (AttackSound, CHAN_WEAPON);
 			}
 		}
 		else
@@ -250,7 +250,7 @@ class Dragon : Actor
 		A_DragonFlight();
 		if (random[DragonFlight]() < 240)
 		{
-			A_PlaySound ("DragonWingflap", CHAN_BODY);
+			A_StartSound ("DragonWingflap", CHAN_BODY);
 		}
 		else
 		{

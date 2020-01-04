@@ -94,7 +94,7 @@ extend class StateProvider
 			accurate = true;
 		}
 
-		A_PlaySound ("weapons/pistol", CHAN_WEAPON);
+		A_StartSound ("weapons/pistol", CHAN_WEAPON);
 		GunShot (accurate, "BulletPuff", BulletSlope ());
 	}
 }

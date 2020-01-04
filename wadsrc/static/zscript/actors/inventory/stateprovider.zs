@@ -107,7 +107,7 @@ class StateProvider : Inventory
 
 		if (weapon != NULL)
 		{
-			A_PlaySound(weapon.AttackSound, CHAN_WEAPON);
+			A_StartSound(weapon.AttackSound, CHAN_WEAPON);
 		}
 
 		if ((numbullets == 1 && !player.refire) || numbullets == 0)
@@ -283,7 +283,7 @@ class StateProvider : Inventory
 
 		if (!t.linetarget)
 		{
-			if (MissSound) A_PlaySound(MissSound, CHAN_WEAPON);
+			if (MissSound) A_StartSound(MissSound, CHAN_WEAPON);
 		}
 		else
 		{
@@ -319,8 +319,8 @@ class StateProvider : Inventory
 			}
 			if (weapon != NULL)
 			{
-				if (MeleeSound) A_PlaySound(MeleeSound, CHAN_WEAPON);
-				else			A_PlaySound(weapon.AttackSound, CHAN_WEAPON);
+				if (MeleeSound) A_StartSound(MeleeSound, CHAN_WEAPON);
+				else			A_StartSound(weapon.AttackSound, CHAN_WEAPON);
 			}
 
 			if (!(flags & CPF_NOTURN))

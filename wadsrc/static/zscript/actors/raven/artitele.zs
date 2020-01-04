@@ -49,7 +49,7 @@ class ArtiTeleport : Inventory
 		}
 		if (canlaugh)
 		{ // Full volume laugh
-			Owner.A_PlaySound ("*evillaugh", CHAN_VOICE, 1, false, ATTN_NONE);
+			Owner.A_StartSound ("*evillaugh", CHAN_VOICE, CHANF_DEFAULT, 1., ATTN_NONE);
 		}
 		return true;
 	}

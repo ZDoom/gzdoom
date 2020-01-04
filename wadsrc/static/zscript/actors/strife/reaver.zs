@@ -72,7 +72,7 @@ extend class Actor
 		if (target != null)
 		{
 			A_FaceTarget ();
-			A_PlaySound ("reaver/attack", CHAN_WEAPON);
+			A_StartSound ("reaver/attack", CHAN_WEAPON);
 			double bangle = Angle;
 			double pitch = AimLineAttack (bangle, MISSILERANGE);
 

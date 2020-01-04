@@ -80,7 +80,7 @@ class ThrustFloor : Actor
 	{
 		if (args[0] == 0)
 		{
-			A_PlaySound ("ThrustSpikeLower", CHAN_BODY);
+			A_StartSound ("ThrustSpikeLower", CHAN_BODY);
 			bInvisible = false;
 			if (args[1])
 				SetStateLabel("BloodThrustRaise");
@@ -93,7 +93,7 @@ class ThrustFloor : Actor
 	{
 		if (args[0] == 1)
 		{
-			A_PlaySound ("ThrustSpikeRaise", CHAN_BODY);
+			A_StartSound ("ThrustSpikeRaise", CHAN_BODY);
 			if (args[1])
 				SetStateLabel("BloodThrustLower");
 			else

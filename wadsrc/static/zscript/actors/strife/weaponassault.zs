@@ -52,7 +52,7 @@ extend class StateProvider
 			return;
 		}
 
-		A_PlaySound ("weapons/assaultgun", CHAN_WEAPON);
+		A_StartSound ("weapons/assaultgun", CHAN_WEAPON);
 
 		Weapon weapon = player.ReadyWeapon;
 		if (weapon != null)

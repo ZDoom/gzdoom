@@ -70,7 +70,7 @@ extend class StateProvider
 			return;
 		}
 
-		A_PlaySound ("weapons/sshotf", CHAN_WEAPON);
+		A_StartSound ("weapons/sshotf", CHAN_WEAPON);
 		Weapon weap = player.ReadyWeapon;
 		if (weap != null && invoker == weap && stateinfo != null && stateinfo.mStateType == STATE_Psprite)
 		{
@@ -101,17 +101,17 @@ extend class StateProvider
 
 	action void A_OpenShotgun2() 
 	{ 
-		A_PlaySound("weapons/sshoto", CHAN_WEAPON); 
+		A_StartSound("weapons/sshoto", CHAN_WEAPON); 
 	}
 	
 	action void A_LoadShotgun2() 
 	{ 
-		A_PlaySound("weapons/sshotl", CHAN_WEAPON); 
+		A_StartSound("weapons/sshotl", CHAN_WEAPON); 
 	}
 	
 	action void A_CloseShotgun2() 
 	{ 
-		A_PlaySound("weapons/sshotc", CHAN_WEAPON);
+		A_StartSound("weapons/sshotc", CHAN_WEAPON);
 		A_Refire();
 	}
 }

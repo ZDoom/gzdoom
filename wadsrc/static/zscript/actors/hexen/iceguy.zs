@@ -108,7 +108,7 @@ class IceGuy : Actor
 		}
 		SpawnMissileXYZ(Vec3Angle(radius / 2, angle + 90, 40.), target, "IceGuyFX");
 		SpawnMissileXYZ(Vec3Angle(radius / 2, angle - 90, 40.), target, "IceGuyFX");
-		A_PlaySound (AttackSound, CHAN_WEAPON);
+		A_StartSound (AttackSound, CHAN_WEAPON);
 	}
 }
 

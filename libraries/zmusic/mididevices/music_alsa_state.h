@@ -48,6 +48,7 @@ struct MidiOutDeviceInternal {
 	int ClientID = -1;
 	int PortNumber = -1;
 	unsigned int type = 0;
+	EMidiDeviceClass GetDeviceClass() const;
 };
 
 // NOTE: the sequencer state is shared between actually playing MIDI music and device enumeration, therefore we keep it around.

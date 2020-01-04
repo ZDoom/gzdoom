@@ -37,6 +37,18 @@
 #include <alsa/asoundlib.h>
 #include <sstream>
 
+EMidiDeviceClass MidiOutDeviceInternal::GetDeviceClass() const
+{
+	if (type & SND_SEQ_PORT_TYPE_SYNTH)
+		return MIDIDEV_FMSYNTH;
+	if (type & (SND_SEQ_PORT_TYPE_DIRECT_SAMPLE|SND_SEQ_PORT_TYPE_SAMPLE))
+		return MIDIDEV_SYNTH;
+	if (type & (SND_SEQ_PORT_TYPE_MIDI_GENERIC|SND_SEQ_PORT_TYPE_APPLICATION))
+		return MIDIDEV_MIDIPORT;
+	// assume FM synth otherwise
+	return MIDIDEV_FMSYNTH;
+}
+
 AlsaSequencer & AlsaSequencer::Get() {
 	static AlsaSequencer sequencer;
 	return sequencer;
@@ -51,7 +63,7 @@ AlsaSequencer::~AlsaSequencer() {
 }
 
 bool AlsaSequencer::Open() {
-	error = snd_seq_open(&handle, "default", SND_SEQ_OPEN_DUPLEX, 0);
+	error = snd_seq_open(&handle, "default", SND_SEQ_OPEN_OUTPUT, SND_SEQ_NONBLOCK);
 	if(error) {
 		return false;
 	}
@@ -95,7 +107,8 @@ bool filter(snd_seq_port_info_t *pinfo)
 	if((capability & writable) != writable) {
 		return false;
 	}
-	int type = snd_seq_port_info_get_type(pinfo);
+	// TODO: filter based on type here? maybe?
+	// int type = snd_seq_port_info_get_type(pinfo);
 	return true;
 }
 }

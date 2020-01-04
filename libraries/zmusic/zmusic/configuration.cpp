@@ -187,7 +187,7 @@ struct MidiDeviceList
 		auto& dev = sequencer.GetInternalDevices();
 		for (auto& d : dev)
 		{
-			MidiOutDevice mdev = { strdup(d.Name.c_str()), d.ID, MIDIDEV_MAPPER };	// fixme: Correctly determine the type of the device.
+			MidiOutDevice mdev = { strdup(d.Name.c_str()), d.ID, d.GetDeviceClass() };	// fixme: Correctly determine the type of the device.
 			devices.push_back(mdev);
 		}
 #elif _WIN32

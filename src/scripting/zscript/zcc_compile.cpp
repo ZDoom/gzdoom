@@ -388,22 +388,22 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 		ZCC_TreeNode *node = ast.TopNode;
 		PSymbolTreeNode *tnode;
 
-		// [pbeta] Mixins must be processed before everything else.
+		// [pbeta] Anything that must be processed before classes, structs, etc. should go here.
 		do
 		{
 			switch (node->NodeType)
 			{
+			// [pbeta] Mixins must be processed before everything else.
 			case AST_MixinDef:
 				if ((tnode = AddTreeNode(static_cast<ZCC_NamedNode *>(node)->NodeName, node, GlobalTreeNodes)))
 				{
-					switch (node->NodeType)
-					{
-					case AST_MixinDef:
-						ProcessMixin(static_cast<ZCC_MixinDef *>(node), tnode);
-						break;
-					}
+					ProcessMixin(static_cast<ZCC_MixinDef *>(node), tnode);
+					break;
 				}
 				break;
+
+			default:
+				break; // Shut GCC up.
 			}
 			node = node->SiblingNext;
 		} while (node != ast.TopNode);

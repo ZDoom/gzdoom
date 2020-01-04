@@ -29,8 +29,7 @@ void S_Sound(FLevelLocals *Level, const DVector3 &pos, int channel, EChanFlags f
 void S_SoundPitchActor (AActor *ent, int channel, EChanFlags flags, FSoundID sfxid, float volume, float attenuation, float pitch);
 
 // [Nash] Used by ACS and DECORATE
-void S_PlaySound(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol, float atten, bool local);
-void S_PlaySoundPitch(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol, float atten, bool local, float pitch);
+void S_PlaySound(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol, float atten);
 
 // Stops a sound emanating from one of an emitter's channels.
 void S_StopSound (AActor *ent, int channel);
@@ -57,7 +56,7 @@ void S_ChangeActorSoundPitch(AActor *actor, int channel, double pitch);
 void S_SerializeSounds(FSerializer &arc);
 
 void A_PlaySound(AActor *self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch);
-void A_StartSound(AActor* self, int soundid, int flags, int channel, double volume, int looping, double attenuation, int local, double pitch);
+void A_StartSound(AActor* self, int soundid, int channel, int flags, double volume, double attenuation,  double pitch);
 static void S_SetListener(AActor *listenactor);
 void S_SoundReset();
 void S_ResumeSound(bool state);

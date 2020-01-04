@@ -430,6 +430,10 @@ enum ESoundFlags
 	CHANF_LOOP = 256,
 	CHANF_NOSTOP = 4096,
 	CHANF_OVERLAP = 8192,
+	CHANF_LOCAL = 16384,
+
+
+	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
 
 };
 

@@ -181,11 +181,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
 	PARAM_INT(channel);
 	PARAM_INT(flags);
 	PARAM_FLOAT(volume);
-	PARAM_BOOL(looping);
 	PARAM_FLOAT(attenuation);
-	PARAM_BOOL(local);
 	PARAM_FLOAT(pitch);
-	A_StartSound(self, soundid, channel, flags, volume, looping, attenuation, local, pitch);
+	A_StartSound(self, soundid, channel, flags, volume, attenuation, pitch);
 	return 0;
 }
 

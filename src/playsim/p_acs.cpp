@@ -5911,14 +5911,9 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 						if (sid != 0)
 						{
 							// What a mess. I think it's a given that this was used with sound flags so it will forever be restricted to the original 8 channels.
-							if (!looping)
-							{
-								S_PlaySound(spot, chan&7, EChanFlags::FromInt(chan&~7), sid, vol, atten, !!local);
-							}
-							else if (!S_IsActorPlayingSomething(spot, chan & 7, sid))
-							{
-								S_PlaySound(spot, chan&7, EChanFlags::FromInt(chan & ~7)|CHANF_LOOP, sid, vol, atten, !!local);
-							}
+							if (local) chan |= CHANF_LOCAL;
+							if (looping) chan |= CHANF_LOOP | CHANF_NOSTOP;
+							S_PlaySound(spot, chan&7, EChanFlags::FromInt(chan&~7), sid, vol, atten);
 						}
 					}
 				}

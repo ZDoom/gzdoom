@@ -124,7 +124,7 @@ class Lightning : Actor
 			if ((!thing.player && !thing.bBoss) || !(Level.maptime & 1))
 			{
 				thing.DamageMobj(self, target, 3, 'Electric');
-				A_StartSound(AttackSound, CHAN_WEAPON, CHANF_NOSTOP, 1, false);
+				A_StartSound(AttackSound, CHAN_WEAPON, CHANF_NOSTOP, 1);
 				if (thing.bIsMonster && random[LightningHit]() < 64)
 				{
 					thing.Howl ();

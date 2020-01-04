@@ -1074,7 +1074,7 @@ class Inventory : Actor
 			chan = CHAN_ITEM;
 			flags = CHANF_MAYBE_LOCAL;
 		}
-		toucher.A_StartSound(PickupSound, chan, flags, 1, false, atten);
+		toucher.A_StartSound(PickupSound, chan, flags, 1, atten);
 	}
 
 	//===========================================================================

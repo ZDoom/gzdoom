@@ -443,50 +443,45 @@ void S_Sound (const sector_t *sec, int channel, EChanFlags flags, FSoundID sfxid
 //
 //==========================================================================
 
-void S_PlaySoundPitch(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol, float atten, bool local, float pitch)
+void S_PlaySoundPitch(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol, float atten, float pitch)
 {
 	if (a == nullptr || a->Sector->Flags & SECF_SILENT || a->Level != primaryLevel)
 		return;
 
-	if (!local)
+	if (!(flags & CHANF_LOCAL))
 	{
-		S_SoundPitchActor(a, chan, flags, sid, vol, atten, pitch);
+		if (!(flags & (CHANF_NOSTOP) || !S_IsActorPlayingSomething(a, chan, sid)))
+		{
+			S_SoundPitchActor(a, chan, flags, sid, vol, atten, pitch);
+		}
 	}
 	else
 	{
 		if (a->CheckLocalView())
 		{
-			S_SoundPitch(chan, flags, sid, vol, ATTN_NONE, pitch);
+			if (!(flags & (CHANF_NOSTOP) || !soundEngine->IsSourcePlayingSomething(SOURCE_None, nullptr, chan, sid)))
+			{
+				S_SoundPitch(chan, flags, sid, vol, ATTN_NONE, pitch);
+			}
 		}
 	}
 }
 
-void S_PlaySound(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol, float atten, bool local)
+void S_PlaySound(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol, float atten)
 {
-	S_PlaySoundPitch(a, chan, flags, sid, vol, atten, local, 0.f);
+	S_PlaySoundPitch(a, chan, flags, sid, vol, atten, 0.f);
 }
 
-void A_StartSound(AActor *self, int soundid, int channel, int flags, double volume, int looping, double attenuation, int local, double pitch)
+void A_StartSound(AActor *self, int soundid, int channel, int flags, double volume, double attenuation, double pitch)
 {
-	if (!looping)
-	{
-		if (!(flags & CHANF_NOSTOP) || !S_IsActorPlayingSomething(self, channel, soundid))
-		{
-			S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), soundid, (float)volume, (float)attenuation, local, (float)pitch);
-		}
-	}
-	else
-	{
-		if (!S_IsActorPlayingSomething(self, channel, soundid))
-		{
-			S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags) | CHANF_LOOP, soundid, (float)volume, (float)attenuation, local, (float)pitch);
-		}
-	}
+	S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), soundid, (float)volume, (float)attenuation, (float)pitch);
 }
 
 void A_PlaySound(AActor* self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch)
 {
-	A_StartSound(self, soundid, channel & 7, channel & ~7, volume, looping, attenuation, local, pitch);
+	if (looping) channel |= CHANF_LOOP | CHANF_NOSTOP;
+	if (local) channel |= CHANF_LOCAL;
+	A_StartSound(self, soundid, channel & 7, channel & ~7, volume, attenuation, pitch);
 }
 
 

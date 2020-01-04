@@ -39,6 +39,7 @@
 
 #include <zlib.h>
 
+#include "zmusic/zmusic.h"
 #include "m_argv.h"
 #include "w_wad.h"
 #include "c_dispatch.h"
@@ -52,10 +53,7 @@
 #include "i_soundfont.h"
 #include "s_music.h"
 #include "doomstat.h"
-#include "zmusic/zmusic.h"
-#include "streamsources/streamsource.h"
 #include "filereadermusicinterface.h"
-#include "../libraries/zmusic/midisources/midisource.h"
 
 
 
@@ -69,8 +67,6 @@ static bool ungzip(uint8_t *data, int size, std::vector<uint8_t> &newdata);
 int		nomusic = 0;
 
 #ifdef _WIN32
-
-void I_InitMusicWin32();
 
 #include "musicformats/win32/i_cd.h"
 //==========================================================================
@@ -123,7 +119,7 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else
 	{
 		// Set general music volume.
-		ChangeMusicSetting(ZMusic::snd_musicvolume, nullptr, self);
+		ChangeMusicSetting(zmusic_snd_musicvolume, nullptr, self);
 		if (GSnd != nullptr)
 		{
 			GSnd->SetMusicVolume(clamp<float>(self * relative_volume * snd_mastervolume, 0, 1));
@@ -179,20 +175,11 @@ static void wm_printfunc(const char* wmfmt, va_list args)
 	VPrintf(PRINT_HIGH, wmfmt, args);
 }
 
-//==========================================================================
-//
-// other callbacks
-//
-//==========================================================================
 
-static short* dumb_decode_vorbis_(int outlen, const void* oggstream, int sizebytes)
+static FString strv;
+static const char *mus_NicePath(const char* str)
 {
-	return GSnd->DecodeSample(outlen, oggstream, sizebytes, CODEC_Vorbis);
-}
-
-static std::string mus_NicePath(const char* str)
-{
-	FString strv = NicePath(str);
+	strv = NicePath(str);
 	return strv.GetChars();
 }
 
@@ -202,9 +189,24 @@ static const char* mus_pathToSoundFont(const char* sfname, int type)
 	return info ? info->mFilename.GetChars() : nullptr;
 }
 
-static MusicIO::SoundFontReaderInterface* mus_openSoundFont(const char* sfname, int type)
+static void* mus_openSoundFont(const char* sfname, int type)
 {
 	return sfmanager.OpenSoundFont(sfname, type);
+}
+
+static ZMusicCustomReader* mus_sfopenfile(void* handle, const char* fn)
+{
+	return reinterpret_cast<FSoundFontReader*>(handle)->open_interface(fn);
+}
+
+static void mus_sfaddpath(void *handle, const char* path)
+{
+	reinterpret_cast<FSoundFontReader*>(handle)->AddPath(path);
+}
+
+static void mus_sfclose(void* handle)
+{
+	reinterpret_cast<FSoundFontReader*>(handle)->close();
 }
 
 
@@ -270,15 +272,9 @@ void I_InitMusic (void)
 
 	nomusic = !!Args->CheckParm("-nomusic") || !!Args->CheckParm("-nosound");
 
-// TODO: remove, move functionality to ZMusic_EnumerateMidiDevices
-#ifdef _WIN32
-	I_InitMusicWin32 ();
-#endif // _WIN32
-
-	ZMusic_EnumerateMidiDevices();
 	snd_mididevice.Callback();
 	
-	Callbacks callbacks;
+	Callbacks callbacks{};
 
 	callbacks.Fluid_MessageFunc = Printf;
 	callbacks.GUS_MessageFunc = callbacks.Timidity_Messagefunc = tim_printfunc;
@@ -286,7 +282,9 @@ void I_InitMusic (void)
 	callbacks.NicePath = mus_NicePath;
 	callbacks.PathForSoundfont = mus_pathToSoundFont;
 	callbacks.OpenSoundFont = mus_openSoundFont;
-	callbacks.DumbVorbisDecode = dumb_decode_vorbis_;
+	callbacks.SF_OpenFile = mus_sfopenfile;
+	callbacks.SF_AddToSearchPath = mus_sfaddpath;
+	callbacks.SF_Close = mus_sfclose;
 
 	ZMusic_SetCallbacks(&callbacks);
 	SetupGenMidi();
@@ -304,7 +302,7 @@ void I_InitMusic (void)
 void I_SetRelativeVolume(float vol)
 {
 	relative_volume = (float)vol;
-	ChangeMusicSetting(ZMusic::relative_volume, nullptr, (float)vol);
+	ChangeMusicSetting(zmusic_relative_volume, nullptr, (float)vol);
 	snd_musicvolume.Callback();
 }
 //==========================================================================
@@ -345,7 +343,7 @@ ADD_STAT(music)
 {
 	if (mus_playing.handle != nullptr)
 	{
-		return FString(ZMusic_GetStats(mus_playing.handle).c_str());
+		return ZMusic_GetStats(mus_playing.handle);
 	}
 	return "No song playing";
 }
@@ -356,7 +354,7 @@ ADD_STAT(music)
 //
 //==========================================================================
 
-static MIDISource *GetMIDISource(const char *fn)
+static ZMusic_MidiSource GetMIDISource(const char *fn)
 {
 	FString src = fn;
 	if (src.Compare("*") == 0) src = mus_playing.name;
@@ -378,7 +376,7 @@ static MIDISource *GetMIDISource(const char *fn)
 		Printf("Unable to read lump %s\n", src.GetChars());
 		return nullptr;
 	}
-	auto type = IdentifyMIDIType(id, 32);
+	auto type = ZMusic_IdentifyMIDIType(id, 32);
 	if (type == MIDI_NOTMIDI)
 	{
 		Printf("%s is not MIDI-based.\n", src.GetChars());
@@ -386,11 +384,11 @@ static MIDISource *GetMIDISource(const char *fn)
 	}
 
 	auto data = wlump.Read();
-	auto source = CreateMIDISource(data.Data(), data.Size(), type);
+	auto source = ZMusic_CreateMIDISource(data.Data(), data.Size(), type);
 
 	if (source == nullptr)
 	{
-		Printf("%s is not MIDI-based.\n", src.GetChars());
+		Printf("Unable to open %s: %s\n", src.GetChars(), ZMusic_GetLastError());
 		return nullptr;
 	}
 	return source;
@@ -434,13 +432,9 @@ UNSAFE_CCMD (writewave)
 		auto savedsong = mus_playing;
 		S_StopMusic(true);
 		if (dev == MDEV_DEFAULT && snd_mididevice >= 0) dev = MDEV_FLUIDSYNTH;	// The Windows system synth cannot dump a wave.
-		try
+		if (!ZMusic_MIDIDumpWave(source, dev, argv.argc() < 6 ? nullptr : argv[6], argv[2], argv.argc() < 4 ? 0 : (int)strtol(argv[3], nullptr, 10), argv.argc() < 5 ? 0 : (int)strtol(argv[4], nullptr, 10)))
 		{
-			MIDIDumpWave(source, dev, argv.argc() < 6 ? nullptr : argv[6], argv[2], argv.argc() < 4 ? 0 : (int)strtol(argv[3], nullptr, 10), argv.argc() < 5 ? 0 : (int)strtol(argv[4], nullptr, 10));
-		}
-		catch (const std::runtime_error& err)
-		{
-			Printf("MIDI dump failed: %s\n", err.what());
+			Printf("MIDI dump of %s failed: %s\n",argv[1], ZMusic_GetLastError());
 		}
 
 		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
@@ -470,23 +464,13 @@ UNSAFE_CCMD(writemidi)
 		return;
 	}
 	auto source = GetMIDISource(argv[1]);
-	if (source == nullptr) return;
-
-	std::vector<uint8_t> midi;
-	bool success;
-
-	source->CreateSMF(midi, 1);
-	auto f = FileWriter::Open(argv[2]);
-	if (f == nullptr)
+	if (source == nullptr)
 	{
-		Printf("Could not open %s.\n", argv[2]);
+		Printf("Unable to open %s: %s\n", argv[1], ZMusic_GetLastError());
 		return;
 	}
-	success = (f->Write(&midi[0], midi.size()) == midi.size());
-	delete f;
-
-	if (!success)
+	if (!ZMusic_WriteSMF(source, argv[1], 1))
 	{
-		Printf("Could not write to music file %s.\n", argv[2]);
+		Printf("Unable to write %s\n", argv[1]);
 	}
 }

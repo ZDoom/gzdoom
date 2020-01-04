@@ -35,8 +35,10 @@
 #ifndef __I_SOUND__
 #define __I_SOUND__
 
+#include <vector>
 #include "i_soundinternal.h"
 #include "utility/zstring.h"
+#include "zmusic/zmusic.h"
 
 class FileReader;
 struct FSoundChan;
@@ -165,7 +167,6 @@ public:
 	virtual void PrintStatus () = 0;
 	virtual void PrintDriversList () = 0;
 	virtual FString GatherStats ();
-	virtual short *DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType type);
 
 	virtual void DrawWaveDebug(int mode);
 };

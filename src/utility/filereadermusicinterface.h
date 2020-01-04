@@ -1,39 +1,22 @@
 #pragma once
 
-#include "../libraries/music_common/fileio.h"
+#include "zmusic/zmusic.h"
 #include "files.h"
 
-struct FileReaderMusicInterface : public MusicIO::FileInterface
+
+inline ZMusicCustomReader *GetMusicReader(FileReader& fr)
 {
-	FileReader fr;
+	auto zcr = new ZMusicCustomReader;
 
-	FileReaderMusicInterface(FileReader& fr_in)
+	zcr->handle = fr.GetInterface();
+	zcr->gets = [](ZMusicCustomReader* zr, char* buff, int n) { return reinterpret_cast<FileReaderInterface*>(zr->handle)->Gets(buff, n); };
+	zcr->read = [](ZMusicCustomReader* zr, void* buff, int32_t size) { return reinterpret_cast<FileReaderInterface*>(zr->handle)->Read(buff, (long)size); };
+	zcr->seek = [](ZMusicCustomReader* zr, long offset, int whence) { return reinterpret_cast<FileReaderInterface*>(zr->handle)->Seek(offset, whence); };
+	zcr->tell = [](ZMusicCustomReader* zr) { return reinterpret_cast<FileReaderInterface*>(zr->handle)->Tell(); };
+	zcr->close = [](ZMusicCustomReader* zr)
 	{
-		fr = std::move(fr_in);
-	}
-	char* gets(char* buff, int n) override
-	{
-		if (!fr.isOpen()) return nullptr;
-		return fr.Gets(buff, n);
-	}
-	long read(void* buff, int32_t size, int32_t nitems) override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Read(buff, size * nitems) / size;
-	}
-	long seek(long offset, int whence) override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Seek(offset, (FileReader::ESeek)whence);
-	}
-	long tell() override
-	{
-		if (!fr.isOpen()) return 0;
-		return (long)fr.Tell();
-	}
-	FileReader& getReader()
-	{
-		return fr;
-	}
-};
-
+		delete reinterpret_cast<FileReaderInterface*>(zr->handle);
+		delete zr;
+	};
+	return zcr;
+}

@@ -135,27 +135,14 @@ FileReader FSoundFontReader::Open(const char *name, std::string& filename)
 //
 //==========================================================================
 
-MusicIO::FileInterface* FSoundFontReader::open_interface(const char* name)
+ZMusicCustomReader* FSoundFontReader::open_interface(const char* name)
 {
 	std::string filename;
 	
 	FileReader fr = Open(name, filename);
 	if (!fr.isOpen()) return nullptr;
-	auto fri = new FileReaderMusicInterface(fr);
-	fri->filename = std::move(filename);
+	auto fri = GetMusicReader(fr);
 	return fri;
-}
-
-
-//==========================================================================
-//
-// The file interface for the backend
-//
-//==========================================================================
-
-struct MusicIO::FileInterface* FSoundFontReader::open_file(const char* name)
-{
-	return open_interface(name);
 }
 
 

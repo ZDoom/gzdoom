@@ -802,9 +802,6 @@ DUH *make_duh(
 
 void DUMBEXPORT duh_set_length(DUH *duh, int32 length);
 
-extern short *(*dumb_decode_vorbis)(int outlen, const void *oggstream, int sizebytes);
-
-
 #ifdef __cplusplus
 	}
 #endif

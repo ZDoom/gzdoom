@@ -73,7 +73,7 @@ Instruments::~Instruments()
 	free_tone_bank();
 	free_instrument_map();
 
-	if (sfreader != nullptr) delete sfreader;
+	if (sfreader != nullptr) sfreader->close();
 }
 
 void Instruments::free_instrument(Instrument *ip)
@@ -545,21 +545,21 @@ void Instruments::apply_bank_parameter(Instrument *ip, ToneBankElement *tone)
 #define READ_CHAR(thing) { \
 		uint8_t tmpchar; \
 		\
-		if (tf_read(&tmpchar, 1, 1, tf) != 1) \
+		if (tf_read(&tmpchar, 1, tf) != 1) \
 			goto fail; \
 		thing = tmpchar; \
 }
 #define READ_SHORT(thing) { \
 		uint16_t tmpshort; \
 		\
-		if (tf_read(&tmpshort, 2, 1, tf) != 1) \
+		if (tf_read(&tmpshort, 2, tf) != 2) \
 			goto fail; \
 		thing = LE_SHORT(tmpshort); \
 }
 #define READ_LONG(thing) { \
 		int32_t tmplong; \
 		\
-		if (tf_read(&tmplong, 4, 1, tf) != 1) \
+		if (tf_read(&tmplong, 4, tf) != 4) \
 			goto fail; \
 		thing = LE_LONG(tmplong); \
 }
@@ -661,7 +661,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		skip(tf, 127);
 		tmp[0] = tf_getc(tf);
 	}
-	if ((tf_read(tmp + 1, 1, 238, tf) != 238)
+	if ((tf_read(tmp + 1, 238, tf) != 238)
 		|| (memcmp(tmp, "GF1PATCH110\0ID#000002", 22)
 			&& memcmp(tmp, "GF1PATCH100\0ID#000002", 22))) {
 		/* don't know what the differences are */
@@ -689,7 +689,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 	memset(ip->sample, 0, sizeof(Sample) * ip->samples);
 	for (i = 0; i < ip->samples; i++) {
 		skip(tf, 7);	/* Skip the wave name */
-		if (tf_read(&fractions, 1, 1, tf) != 1) {
+		if (tf_read(&fractions, 1, tf) != 1) {
 		fail:
 			printMessage(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d", i);
 			for (j = 0; j < i; j++)
@@ -738,7 +738,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		else
 			sp->panning = (uint8_t)(panning & 0x7f);
 		/* envelope, tremolo, and vibrato */
-		if (tf_read(tmp, 1, 18, tf) != 18)
+		if (tf_read(tmp, 18, tf) != 18)
 			goto fail;
 		if (!tmp[13] || !tmp[14]) {
 			sp->tremolo_sweep_increment = sp->tremolo_phase_increment = 0;
@@ -845,7 +845,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		/* Then read the sample data */
 		sp->data = (sample_t *)safe_malloc(sp->data_length + 4);
 		sp->data_alloced = 1;
-		if ((j = tf_read(sp->data, 1, sp->data_length, tf))	!= (int)sp->data_length) {
+		if ((j = tf_read(sp->data, sp->data_length, tf))	!= (int)sp->data_length) {
 			printMessage(CMSG_ERROR, VERB_NORMAL, "Too small this patch length: %d < %d", j, sp->data_length);
 			goto fail;
 		}

@@ -28,6 +28,7 @@
 #ifndef __S_MUSIC__
 #define __S_MUSIC__
 
+#include "zmusic/zmusic.h"
 #include "doomtype.h"
 #include "i_soundinternal.h"
 
@@ -78,11 +79,10 @@ typedef TMap<FName, MidiDeviceSetting> MidiDeviceMap;
 extern MusicAliasMap MusicAliases;
 extern MidiDeviceMap MidiDevices;
 
-class MusInfo;
 struct MusPlayingInfo
 {
 	FString name;
-	MusInfo* handle;
+	ZMusic_MusicStream handle;
 	int   baseorder;
 	bool  loop;
 	FString	 LastSong;			// last music that was played

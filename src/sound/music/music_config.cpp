@@ -48,18 +48,18 @@
 
 #define FORWARD_CVAR(key) \
 	decltype(*self) newval; \
-	auto ret = ChangeMusicSetting(ZMusic::key, mus_playing.handle, *self, &newval); \
+	auto ret = ChangeMusicSetting(zmusic_##key, mus_playing.handle, *self, &newval); \
 	self = (decltype(*self))newval; \
 	if (ret) S_MIDIDeviceChanged(-1);
 
 #define FORWARD_BOOL_CVAR(key) \
 	int newval; \
-	auto ret = ChangeMusicSetting(ZMusic::key, mus_playing.handle,*self, &newval); \
+	auto ret = ChangeMusicSetting(zmusic_##key, mus_playing.handle,*self, &newval); \
 	self = !!newval; \
 	if (ret) S_MIDIDeviceChanged(-1);
 
 #define FORWARD_STRING_CVAR(key) \
-	auto ret = ChangeMusicSetting(ZMusic::key, mus_playing.handle,*self); \
+	auto ret = ChangeMusicSetting(zmusic_##key, mus_playing.handle,*self); \
 	if (ret) S_MIDIDeviceChanged(-1); 
 
 

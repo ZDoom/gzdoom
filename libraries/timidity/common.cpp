@@ -34,6 +34,7 @@ namespace Timidity
 /* This'll allocate memory or die. */
 void *safe_malloc(size_t count)
 {
+#if 0
 	char buffer[80];
 	void *p;
 	if (count > (1 << 21))
@@ -51,6 +52,15 @@ void *safe_malloc(size_t count)
 		throw std::runtime_error(buffer);
 	}
 	return 0;	// Unreachable.
+#else
+	// No, we cannot throw exceptions here - this code can get called from real-time worker threads.
+	auto p = malloc(count);
+	if (!p)
+	{
+		abort(); // we must abort, though...
+	}
+	return p;
+#endif
 }
 
 

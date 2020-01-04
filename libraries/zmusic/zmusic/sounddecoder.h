@@ -1,18 +1,7 @@
 #pragma once
 
-#include "../../music_common/fileio.h"
+#include "zmusic_internal.h"
 #include <vector>
-
-enum SampleType
-{
-    SampleType_UInt8,
-    SampleType_Int16
-};
-enum ChannelConfig
-{
-    ChannelConfig_Mono,
-    ChannelConfig_Stereo
-};
 
 struct SoundDecoder
 {
@@ -37,4 +26,3 @@ protected:
     SoundDecoder(const SoundDecoder &rhs) = delete;
     SoundDecoder& operator=(const SoundDecoder &rhs) = delete;
 };
-

@@ -6,8 +6,6 @@
 
 #include "vectors.h"
 #include "tarray.h"
-#include "zmusic/sounddecoder.h"
-#include "../../libraries/music_common/fileio.h"
 #include "tflags.h"
 
 enum EChanFlag
@@ -139,9 +137,6 @@ struct FISoundChannel
 	bool		ManualRolloff;
 	EChanFlags	ChanFlags;
 };
-
-
-void FindLoopTags(MusicIO::FileInterface *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
 
 class SoundStream;
 

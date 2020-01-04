@@ -60,8 +60,7 @@ protected:
 	virtual ~FileInterface() {}
 public:
 	virtual char* gets(char* buff, int n) = 0;
-	virtual long read(void* buff, int32_t size, int32_t nitems) = 0;
-	long read(void* buff, int32_t size) { return read(buff, 1, size); }
+	virtual long read(void* buff, int32_t size) = 0;
 	virtual long seek(long offset, int whence) = 0;
 	virtual long tell() = 0;
 	virtual void close()
@@ -101,10 +100,10 @@ struct StdioFileReader : public FileInterface
 		if (!f) return nullptr;
 		return fgets(buff, n, f);
 	}
-	long read(void* buff, int32_t size, int32_t nitems) override
+	long read(void* buff, int32_t size) override
 	{
 		if (!f) return 0;
-		return (long)fread(buff, size, nitems, f);
+		return (long)fread(buff, 1, size, f);
 	}
 	long seek(long offset, int whence) override
 	{
@@ -165,14 +164,14 @@ struct MemoryReader : public FileInterface
 		*p++ = 0;
 		return strbuf;
 	}
-	long read(void* buff, int32_t size, int32_t nitems) override
+	long read(void* buff, int32_t size) override
 	{
-		long len = long(size) * nitems;
+		long len = long(size);
 		if (len > mLength - mPos) len = mLength - mPos;
 		if (len < 0) len = 0;
 		memcpy(buff, mData + mPos, len);
 		mPos += len;
-		return len / size;
+		return len;
 	}
 	long seek(long offset, int whence) override
 	{
@@ -217,15 +216,18 @@ struct VectorReader : public MemoryReader
 		mLength = (long)mVector.size();
 		mPos = 0;
 	}
-
-
+	VectorReader(const uint8_t* data, size_t size)
+	{
+		mVector.resize(size);
+		memcpy(mVector.data(), data, size);
+	}
 };
 
 
 //==========================================================================
 //
-// The follpwing two functions are needed to allow using UTF-8 in the file interface.
-// fopen on Windows is only safe for ASCII,
+// The following two functions are needed to allow using UTF-8 in the file interface.
+// fopen on Windows is only safe for ASCII.
 //
 //==========================================================================
 
@@ -271,10 +273,12 @@ inline bool fileExists(const char *fn)
 
 class SoundFontReaderInterface
 {
-public:
+protected:
 	virtual ~SoundFontReaderInterface() {}
+public:
 	virtual struct FileInterface* open_file(const char* fn) = 0;
 	virtual void add_search_path(const char* path) = 0;
+	virtual void close() { delete this; }
 };
 
 
@@ -375,6 +379,7 @@ public:
 	}
 };
 
-
+MusicIO::SoundFontReaderInterface* ClientOpenSoundFont(const char* name, int type);
 
 } 
+

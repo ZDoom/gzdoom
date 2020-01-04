@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <assert.h>
 
-short * (*dumb_decode_vorbis)(int outlen, const void *oggstream, int sizebytes);
+short * dumb_decode_vorbis(int outlen, const void *oggstream, int sizebytes);
 
 /** TODO:
 
@@ -830,7 +830,7 @@ static int it_xm_read_sample_data(IT_SAMPLE *sample, unsigned char roguebytes, D
 			sample->loop_start >>= 1;
 			sample->loop_end >>= 1;
 		}
-		output = dumb_decode_vorbis? dumb_decode_vorbis(outlen, (char *)sample->data + 4, datasizebytes - 4) : NULL;
+		output = dumb_decode_vorbis(outlen, (char *)sample->data + 4, datasizebytes - 4);
 		if (output != NULL)
 		{
 			free(sample->data);

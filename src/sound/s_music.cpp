@@ -139,7 +139,8 @@ static bool FillStream(SoundStream* stream, void* buff, int len, void* userdata)
 void S_CreateStream()
 {
 	if (!mus_playing.handle) return;
-	auto fmt = ZMusic_GetStreamInfo(mus_playing.handle);
+	SoundStreamInfo fmt;
+	ZMusic_GetStreamInfo(mus_playing.handle, &fmt);
 	if (fmt.mBufferSize > 0)
 	{
 		int flags = fmt.mNumChannels < 0 ? 0 : SoundStream::Float;
@@ -171,7 +172,7 @@ void S_StopStream()
 //
 //==========================================================================
 
-static void S_StartMusicPlaying(MusInfo* song, bool loop, float rel_vol, int subsong)
+static bool S_StartMusicPlaying(ZMusic_MusicStream song, bool loop, float rel_vol, int subsong)
 {
 	if (rel_vol > 0.f)
 	{
@@ -180,10 +181,14 @@ static void S_StartMusicPlaying(MusInfo* song, bool loop, float rel_vol, int sub
 		I_SetRelativeVolume(saved_relative_volume * factor);
 	}
 	ZMusic_Stop(song);
-	ZMusic_Start(song, subsong, loop);
+	if (!ZMusic_Start(song, subsong, loop))
+	{
+		return false;
+	}
 
 	// Notify the sound system of the changed relative volume
 	snd_musicvolume.Callback();
+	return true;
 }
 
 
@@ -418,15 +423,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else if (!ZMusic_IsPlaying(mus_playing.handle))
 		{
-			try
+			if (!ZMusic_Start(mus_playing.handle, looping, order))
 			{
-				ZMusic_Start(mus_playing.handle, looping, order);
-				S_CreateStream();
+				Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
 			}
-			catch (const std::runtime_error& err)
-			{
-				Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), err.what());
-			}
+			S_CreateStream();
 
 		}
 		return true;
@@ -444,12 +445,16 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		S_StopMusic (true);
 		mus_playing.handle = ZMusic_OpenCDSong (track, id);
+		if (mus_playing.handle == nullptr)
+		{
+			Printf("Unable to start CD Audio for track #%d, ID %d\n", track, id);
+		}
 	}
 	else
 	{
 		int lumpnum = -1;
 		int length = 0;
-		MusInfo *handle = nullptr;
+		ZMusic_MusicStream handle = nullptr;
 		MidiDeviceSetting *devp = MidiDevices.CheckKey(musicname);
 
 		// Strip off any leading file:// component.
@@ -504,14 +509,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else
 		{
-			try
+			auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
+			mus_playing.handle = ZMusic_OpenSong(mreader, devp? (EMidiDevice)devp->device : MDEV_DEFAULT, devp? devp->args.GetChars() : "");
+			if (mus_playing.handle == nullptr)
 			{
-				auto mreader = new FileReaderMusicInterface(reader);
-				mus_playing.handle = ZMusic_OpenSong(mreader, devp? (EMidiDevice)devp->device : MDEV_DEFAULT, devp? devp->args.GetChars() : "");
-			}
-			catch (const std::runtime_error& err)
-			{
-				Printf("Unable to load %s: %s\n", mus_playing.name.GetChars(), err.what());
+				Printf("Unable to load %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
 			}
 		}
 	}
@@ -523,16 +525,13 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 
 	if (mus_playing.handle != 0)
 	{ // play it
-		try
+		if (!S_StartMusicPlaying(mus_playing.handle, looping, S_GetMusicVolume(musicname), order))
 		{
-			S_StartMusicPlaying(mus_playing.handle, looping, S_GetMusicVolume(musicname), order);
-			S_CreateStream();
-			mus_playing.baseorder = order;
+			Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
+			return false;
 		}
-		catch (const std::runtime_error& err)
-		{
-			Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), err.what());
-		}
+		S_CreateStream();
+		mus_playing.baseorder = order;
 		return true;
 	}
 	return false;
@@ -575,7 +574,7 @@ void S_RestartMusic ()
 
 void S_MIDIDeviceChanged(int newdev)
 {
-	MusInfo* song = mus_playing.handle;
+	auto song = mus_playing.handle;
 	if (song != nullptr && ZMusic_IsMIDI(song) && ZMusic_IsPlaying(song))
 	{
 		// Reload the song to change the device

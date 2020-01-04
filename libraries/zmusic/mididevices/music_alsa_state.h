@@ -65,7 +65,6 @@ public:
 	}
 
 	int EnumerateDevices();
-	const std::vector<MidiOutDevice> &GetDevices();
 	const std::vector<MidiOutDeviceInternal> &GetInternalDevices();
 
 	snd_seq_t *handle = nullptr;
@@ -75,7 +74,6 @@ public:
 
 private:
 	std::vector<MidiOutDeviceInternal> internalDevices;
-	std::vector<MidiOutDevice> externalDevices;
 };
 
 #endif

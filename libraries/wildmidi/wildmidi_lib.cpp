@@ -1326,7 +1326,7 @@ void Instruments::load_patch(struct _mdi *mdi, unsigned short patchid)
 Instruments::~Instruments()
 {
 	FreePatches();
-	delete sfreader;
+	sfreader->close();
 }
 
 

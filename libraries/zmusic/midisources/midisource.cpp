@@ -33,7 +33,7 @@
  **
  */
 
-
+#include "zmusic/zmusic_internal.h"
 #include "midisource.h"
 
 
@@ -418,7 +418,7 @@ extern int MUSHeaderSearch(const uint8_t *head, int len);
 //
 //==========================================================================
 
-EMIDIType IdentifyMIDIType(uint32_t *id, int size)
+DLL_EXPORT EMIDIType ZMusic_IdentifyMIDIType(uint32_t *id, int size)
 {
 	// Check for MUS format
 	// Tolerate sloppy wads by searching up to 32 bytes for the header
@@ -467,23 +467,39 @@ EMIDIType IdentifyMIDIType(uint32_t *id, int size)
 //
 //==========================================================================
 
-MIDISource *CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype)
+DLL_EXPORT ZMusic_MidiSource ZMusic_CreateMIDISource(const uint8_t *data, size_t length, EMIDIType miditype)
 {
-	switch (miditype)
+	try
 	{
-	case MIDI_MUS:
-		return new MUSSong2(data, length);
+		MIDISource* source;
+		switch (miditype)
+		{
+		case MIDI_MUS:
+			source = new MUSSong2(data, length);
+			break;
 
-	case MIDI_MIDI:
-		return new MIDISong2(data, length);
+		case MIDI_MIDI:
+			source = new MIDISong2(data, length);
+			break;
 
-	case MIDI_HMI:
-		return new HMISong(data, length);
+		case MIDI_HMI:
+			source = new HMISong(data, length);
+			break;
 
-	case MIDI_XMI:
-		return new XMISong(data, length);
+		case MIDI_XMI:
+			source = new XMISong(data, length);
+			break;
 
-	default:
+		default:
+			SetError("Unable to identify MIDI data");
+			source = nullptr;
+			break;
+		}
+		return source;
+	}
+	catch (const std::exception & ex)
+	{
+		SetError(ex.what());
 		return nullptr;
 	}
 }

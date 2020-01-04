@@ -43,8 +43,6 @@
 #include "i_module.h"
 #include "cmdlib.h"
 #include "m_fixed.h"
-#include "zmusic/sounddecoder.h"
-#include "filereadermusicinterface.h"
 
 
 const char *GetSampleTypeName(SampleType type);
@@ -1099,18 +1097,14 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	/* Only downmix to mono if we can't spatialize multi-channel sounds. */
 	monoize = monoize && !AL.SOFT_source_spatialize;
 
-	auto mreader = new MusicIO::MemoryReader(sfxdata, length);
-	FindLoopTags(mreader, &loop_start, &startass, &loop_end, &endass);
-	mreader->seek(0, SEEK_SET);
-	std::unique_ptr<SoundDecoder> decoder(SoundDecoder::CreateDecoder(mreader));
+	FindLoopTags(sfxdata, length, &loop_start, &startass, &loop_end, &endass);
+	auto decoder = CreateDecoder(sfxdata, length, true);
 	if (!decoder)
 	{
-		delete mreader;
 		return std::make_pair(retval, true);
 	}
-	// the decode will take ownership of the reader here.
 
-	decoder->getInfo(&srate, &chans, &type);
+	SoundDecoder_GetInfo(decoder, &srate, &chans, &type);
 	int samplesize = 1;
 	if (chans == ChannelConfig_Mono || monoize)
 	{
@@ -1125,12 +1119,24 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 
 	if (format == AL_NONE)
 	{
+		SoundDecoder_Close(decoder);
 		Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
 			GetSampleTypeName(type));
 		return std::make_pair(retval, true);
 	}
 
-	auto data = decoder->readAll();
+	std::vector<uint8_t> data;
+	unsigned total = 0;
+	unsigned got;
+
+	data.resize(total + 32768);
+	while ((got = (unsigned)SoundDecoder_Read(decoder, (char*)&data[total], data.size() - total)) > 0)
+	{
+		total += got;
+		data.resize(total * 2);
+	}
+	data.resize(total);
+	SoundDecoder_Close(decoder);
 
 	if(chans != ChannelConfig_Mono && monoize)
 	{

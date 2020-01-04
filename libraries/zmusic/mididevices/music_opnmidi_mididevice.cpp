@@ -35,6 +35,9 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "mididevice.h"
+#include "zmusic/zmusic_internal.h"
+
+#ifdef HAVE_OPN
 #include "opnmidi.h"
 
 OpnConfig opnConfig;
@@ -245,4 +248,9 @@ MIDIDevice *CreateOPNMIDIDevice(const char *Args)
 	return new OPNMIDIDevice(bank);
 }
 
-
+#else
+MIDIDevice* CreateOPNMIDIDevice(const char* Args)
+{
+	throw std::runtime_error("OPN device not supported in this configuration");
+}
+#endif

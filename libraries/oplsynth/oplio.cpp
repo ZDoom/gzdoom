@@ -58,6 +58,18 @@ int OPLio::Init(int core, uint32_t numchips, bool stereo, bool initopl3)
 	uint32_t i;
 	IsOPL3 = (core == 1 || core == 2 || core == 3);
 
+	using CoreInit = OPLEmul* (*)(bool);
+	static CoreInit inits[] =
+	{
+		YM3812Create,
+		DBOPLCreate,
+		JavaOPLCreate,
+		NukedOPL3Create,
+	};
+
+	if (core < 0) core = 0;
+	if (core > 3) core = 3;
+
 	memset(chips, 0, sizeof(chips));
 	if (IsOPL3)
 	{
@@ -65,7 +77,7 @@ int OPLio::Init(int core, uint32_t numchips, bool stereo, bool initopl3)
 	}
 	for (i = 0; i < numchips; ++i)
 	{
-		OPLEmul *chip = IsOPL3 ? (core == 1 ? DBOPLCreate(stereo) : (core == 2 ? JavaOPLCreate(stereo) : NukedOPL3Create(stereo))) : YM3812Create(stereo);
+		OPLEmul* chip = inits[core](stereo);
 		if (chip == NULL)
 		{
 			break;

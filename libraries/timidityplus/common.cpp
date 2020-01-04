@@ -39,7 +39,7 @@ void *safe_malloc(size_t count)
 	auto p = malloc(count);
 	if (p == nullptr)
 	{
-		// I_FatalError("Out of memory");
+		abort();
 	}
 	return p;
 }
@@ -54,7 +54,7 @@ void *safe_realloc(void *ptr, size_t count)
 	auto p = realloc(ptr, count);
 	if (p == nullptr)
 	{
-		// I_FatalError("Out of memory");
+		abort();
 	}
 	return p;
 }
@@ -65,7 +65,7 @@ char *safe_strdup(const char *s)
 	auto p = strdup(s);
 	if (p == nullptr)
 	{
-		// I_FatalError("Out of memory");
+		abort();
 	}
 	return p;
 }
@@ -149,7 +149,7 @@ void skip(timidity_file *tf, size_t len)
 int tf_getc(timidity_file *tf)
 {
 	unsigned char c;
-	auto read = tf_read(&c, 1, 1, tf);
+	auto read = tf_read(&c, 1, tf);
 	return read == 0 ? EOF : c;
 }
 

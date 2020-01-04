@@ -204,20 +204,20 @@ int Instruments::get_next_importer(char *sample_file, int start, int count, Samp
 
 /* from instrum.c */
 #define READ_CHAR(thing) \
-      if (1 != tf_read(&tmpchar, 1, 1, tf)) goto fail; \
+      if (1 != tf_read(&tmpchar, 1, tf)) goto fail; \
       thing = tmpchar;
 
 #define READ_SHORT_LE(thing) \
-      if (1 != tf_read(&tmpshort, 2, 1, tf)) goto fail; \
+      if (2 != tf_read(&tmpshort, 2, tf)) goto fail; \
       thing = LE_SHORT(tmpshort);
 #define READ_LONG_LE(thing) \
-      if (1 != tf_read(&tmplong, 4, 1, tf)) goto fail; \
+      if (4 != tf_read(&tmplong, 4, tf)) goto fail; \
       thing = LE_LONG(tmplong);
 #define READ_SHORT_BE(thing) \
-      if (1 != tf_read(&tmpshort, 2, 1, tf)) goto fail; \
+      if (2 != tf_read(&tmpshort, 2, tf)) goto fail; \
       thing = BE_SHORT(tmpshort);
 #define READ_LONG_BE(thing) \
-      if (1 != tf_read(&tmplong, 4, 1, tf)) goto fail; \
+      if (4 != tf_read(&tmplong, 4, tf)) goto fail; \
       thing = BE_LONG(tmplong);
 
 const uint8_t		pan_mono[] = {64};	/* center */
@@ -280,7 +280,7 @@ int Instruments::import_wave_discriminant(char *sample_file)
 	
 	if ((tf = open_file(sample_file, sfreader)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(buf, 12, tf) != 12
 			|| memcmp(&buf[0], "RIFF", 4) != 0 || memcmp(&buf[8], "WAVE", 4) != 0)
 	{
 		tf_close(tf);
@@ -311,7 +311,7 @@ int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 	
 	if ((tf = open_file(sample_file, sfreader)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(buf, 12, tf) != 12
 			|| memcmp(&buf[0], "RIFF", 4) != 0 || memcmp(&buf[8], "WAVE", 4) != 0)
 	{
 		tf_close(tf);
@@ -321,7 +321,7 @@ int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 	state = chunk_flags = 0;
 	type_index = 4, type_size = 8;
 	for(;;) {
-		if (tf_read(&buf[type_index], type_size, 1, tf) != 1)
+		if (tf_read(&buf[type_index], type_size, tf) != type_size)
 			break;
 		chunk_size = LE_LONG(xbuf.i[2]);
 		if (memcmp(&buf[4 + 0], "fmt ", 4) == 0)
@@ -553,7 +553,7 @@ int Instruments::import_aiff_discriminant(char *sample_file)
 	
 	if ((tf = open_file(sample_file, sfreader)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(buf, 12, tf) != 12
 			|| memcmp(&buf[0], "FORM", 4) != 0 || memcmp(&buf[8], "AIF", 3) != 0
 			|| (buf[8 + 3] != 'F' && buf[8 + 3] != 'C'))
 	{
@@ -593,7 +593,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 	
 	if ((tf = open_file(sample_file, sfreader)) == NULL)
 		return 1;
-	if (tf_read(buf, 12, 1, tf) != 1
+	if (tf_read(buf, 12, tf) != 12
 			|| memcmp(&buf[0], "FORM", 4) != 0 || memcmp(&buf[8], "AIF", 3) != 0
 			|| (buf[8 + 3] != 'F' && buf[8 + 3] != 'C'))
 	{
@@ -608,7 +608,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 	sound.common = &common;
 	marker_data = NULL;
 	for(;;) {
-		if (tf_read(&buf[type_index], type_size, 1, tf) != 1)
+		if (tf_read(&buf[type_index], type_size, tf) != type_size)
 			break;
 		chunk_size = BE_LONG(xbuf.i[2]);
 		if (memcmp(&buf[4 + 0], "COMM", 4) == 0)
@@ -666,7 +666,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 		else if (inst->instname == NULL && memcmp(&buf[4 + 0], "NAME", 4) == 0)
 		{
 			inst->instname = (char*)malloc(chunk_size + 1);
-			if (tf_read(inst->instname, chunk_size, 1, tf) != 1)
+			if (tf_read(inst->instname, chunk_size, tf) != chunk_size)
 			{
 				chunk_flags |= AIFF_CHUNKFLAG_READERR;
 				break;
@@ -744,7 +744,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 	READ_SHORT_BE(comm->numChannels);
 	READ_LONG_BE(comm->numSampleFrames);
 	READ_SHORT_BE(comm->sampleSize);
-	if (tf_read(sampleRate, 10, 1, tf) != 1)
+	if (tf_read(sampleRate, 10, tf) != 10)
 		goto fail;
 	comm->sampleRate = ConvertFromIeeeExtended(sampleRate);
 	csize -= 8 + 10;
@@ -758,7 +758,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 			uint8_t		compressionNameLength;
 			
 			READ_CHAR(compressionNameLength);
-			if (tf_read(compressionName, compressionNameLength, 1, tf) != 1)
+			if (tf_read(compressionName, compressionNameLength, tf) != compressionNameLength)
 				goto fail;
 			compressionName[compressionNameLength] = '\0';
 			printMessage(CMSG_WARNING, VERB_VERBOSE, "AIFF-C unknown compression type: %s", compressionName);
@@ -924,7 +924,7 @@ static int AIFFGetMarkerPosition(int16_t id, const AIFFMarkerData *markers, uint
 
 #define WAVE_BUF_SIZE		(1 << 11)	/* should be power of 2 */
 #define READ_WAVE_SAMPLE(dest, b, s)	\
-				if (tf_read(dest, (b) * (s), 1, tf) != 1)	\
+				if (tf_read(dest, (b) * (s), tf) != (b) * (s))	\
 					goto fail
 #define READ_WAVE_FRAME(dest, b, f)	\
 				READ_WAVE_SAMPLE(dest, b, (f) * channels)

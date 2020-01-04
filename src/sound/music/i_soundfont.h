@@ -19,8 +19,7 @@ struct FSoundFontInfo
 //
 //==========================================================================
 
-class FSoundFontReader : public MusicIO::SoundFontReaderInterface
-// Yes, it's 3 copies of essentially the same interface, but since we want to keep the 3 renderers as isolated modules we have to pull in their own implementations here.
+class FSoundFontReader
 {
 protected:
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
@@ -52,15 +51,12 @@ public:
 	}
 
 	virtual FileReader Open(const char* name, std::string &filename);
+    virtual void close()
+    {
+        delete this;
+    }
 
-	// Timidity++ interface
-	struct MusicIO::FileInterface* open_file(const char* name) override;
-	void add_search_path(const char* name) override
-	{
-		return AddPath(name);
-	}
-
-	MusicIO::FileInterface* open_interface(const char* name);
+	ZMusicCustomReader* open_interface(const char* name);
 
 };
 

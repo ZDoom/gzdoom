@@ -36,7 +36,10 @@
 
 #include <stdlib.h>
 
+#include "zmusic/zmusic_internal.h"
 #include "mididevice.h"
+
+#ifdef HAVE_ADL
 #include "adlmidi.h"
 
 ADLConfig adlConfig;
@@ -267,4 +270,10 @@ MIDIDevice *CreateADLMIDIDevice(const char *Args)
 	return new ADLMIDIDevice(&config);
 }
 
+#else
+MIDIDevice* CreateADLMIDIDevice(const char* Args)
+{
+	throw std::runtime_error("ADL device not supported in this configuration");
+}
+#endif
 

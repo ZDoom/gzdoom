@@ -49,7 +49,6 @@
 #include "vm.h"
 #include "i_system.h"
 #include "s_music.h"
-#include "mididevices/mididevice.h"
 
 // MACROS ------------------------------------------------------------------
 

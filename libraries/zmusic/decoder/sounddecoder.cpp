@@ -33,6 +33,7 @@
 */
 
 
+#include "zmusic/zmusic_internal.h"
 #include "sndfile_decoder.h"
 #include "mpg123_decoder.h"
 
@@ -78,4 +79,66 @@ std::vector<uint8_t> SoundDecoder::readAll()
     }
     output.resize(total);
     return output;
+}
+
+//==========================================================================
+//
+// other callbacks
+//
+//==========================================================================
+extern "C"
+short* dumb_decode_vorbis(int outlen, const void* oggstream, int sizebytes)
+{
+	short* samples = (short*)calloc(1, outlen);
+	ChannelConfig chans;
+	SampleType type;
+	int srate;
+
+	// The decoder will take ownership of the reader if it succeeds so this may not be a local variable.
+	MusicIO::MemoryReader* reader = new MusicIO::MemoryReader((const uint8_t*)oggstream, sizebytes);
+
+	SoundDecoder* decoder = SoundDecoder::CreateDecoder(reader);
+	if (!decoder)
+	{
+		reader->close();
+		return samples;
+	}
+
+	decoder->getInfo(&srate, &chans, &type);
+	if (chans != ChannelConfig_Mono || type != SampleType_Int16)
+	{
+		delete decoder;
+		return samples;
+	}
+
+	decoder->read((char*)samples, outlen);
+	delete decoder;
+	return samples;
+}
+
+DLL_EXPORT struct SoundDecoder* CreateDecoder(const uint8_t* data, size_t size, bool isstatic)
+{
+	MusicIO::FileInterface* reader;
+	if (isstatic) reader = new MusicIO::MemoryReader(data, (long)size);
+	else reader = new MusicIO::VectorReader(data, size);
+	auto res = SoundDecoder::CreateDecoder(reader);
+	if (!res) reader->close();
+	return res;
+}
+
+DLL_EXPORT void SoundDecoder_GetInfo(struct SoundDecoder* decoder, int* samplerate, ChannelConfig* chans, SampleType* type)
+{
+	if (decoder) decoder->getInfo(samplerate, chans, type);
+	else if (samplerate) *samplerate = 0;
+}
+
+DLL_EXPORT size_t SoundDecoder_Read(struct SoundDecoder* decoder, void* buffer, size_t length)
+{
+	if (decoder) return decoder->read((char*)buffer, length);
+	else return 0;
+}
+
+DLL_EXPORT void SoundDecoder_Close(struct SoundDecoder* decoder)
+{
+	if (decoder) delete decoder;
 }

@@ -703,7 +703,7 @@ Instruments::~Instruments()
 			drumset[i] = NULL;
 		}
 	}
-	if (sfreader != nullptr) delete sfreader;
+	if (sfreader != nullptr) sfreader->close();
 	sfreader = nullptr;
 }
 

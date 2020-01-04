@@ -35,8 +35,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "zmusic/zmusic_internal.h"
 #include "mididevice.h"
 #include "zmusic/mus2midi.h"
+
+#ifdef HAVE_OPL
 #include "oplsynth/opl.h"
 #include "oplsynth/opl_mus_player.h"
 
@@ -324,3 +327,10 @@ MIDIDevice* CreateOplMIDIDevice(const char *Args)
 	if (Args != NULL && *Args >= '0' && *Args < '4') core = *Args - '0';
 	return new OPLMIDIDevice(core);
 }
+
+#else
+MIDIDevice* CreateOplMIDIDevice(const char* Args)
+{
+	throw std::runtime_error("OPL device not supported in this configuration");
+}
+#endif

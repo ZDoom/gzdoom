@@ -37,6 +37,7 @@
 #include <string>
 #include <algorithm>
 #include <assert.h>
+#include "zmusic/zmusic_internal.h"
 #include "zmusic/musinfo.h"
 #include "mididevices/mididevice.h"
 #include "midisources/midisource.h"
@@ -286,11 +287,9 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 #endif
 				// Intentional fall-through for systems without standard midi support
 
-#ifdef HAVE_FLUIDSYNTH
 			case MDEV_FLUIDSYNTH:
 				dev = CreateFluidSynthMIDIDevice(samplerate, Args.c_str());
 				break;
-#endif // HAVE_FLUIDSYNTH
 
 			case MDEV_OPL:
 				dev = CreateOplMIDIDevice(Args.c_str());
@@ -321,6 +320,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 #ifdef HAVE_SYSTEM_MIDI
 			else if (!checked[MDEV_STANDARD]) devtype = MDEV_STANDARD;
 #endif
+			else if (!checked[MDEV_ADL]) devtype = MDEV_ADL;
+			else if (!checked[MDEV_OPN]) devtype = MDEV_OPN;
 			else if (!checked[MDEV_OPL]) devtype = MDEV_OPL;
 
 			if (devtype == MDEV_DEFAULT)
@@ -333,13 +334,15 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 	if (selectedDevice != requestedDevice && (selectedDevice != lastSelectedDevice || requestedDevice != lastRequestedDevice))
 	{
 		static const char *devnames[] = {
-			"Windows Default",
+			"System Default",
 			"OPL",
 			"",
 			"Timidity++",
 			"FluidSynth",
 			"GUS",
-			"WildMidi"
+			"WildMidi",
+			"ADL",
+			"OPN",
 		};
 
 		lastRequestedDevice = requestedDevice;
@@ -1014,9 +1017,18 @@ MusInfo* CreateMIDIStreamer(MIDISource *source, EMidiDevice devtype, const char*
 	return me;
 }
 
-void MIDIDumpWave(MIDISource* source, EMidiDevice devtype, const char *devarg, const char *outname, int subsong, int samplerate)
+DLL_EXPORT bool ZMusic_MIDIDumpWave(ZMusic_MidiSource source, EMidiDevice devtype, const char *devarg, const char *outname, int subsong, int samplerate)
 {
-	MIDIStreamer me(devtype, devarg);
-	me.SetMIDISource(source);
-	me.DumpWave(outname, subsong, samplerate);
+	try
+	{
+		MIDIStreamer me(devtype, devarg);
+		me.SetMIDISource(source);
+		me.DumpWave(outname, subsong, samplerate);
+		return true;
+	}
+	catch (const std::exception & ex)
+	{
+		SetError(ex.what());
+		return false;
+	}
 }

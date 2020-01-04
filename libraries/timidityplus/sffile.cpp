@@ -66,7 +66,7 @@ namespace TimidityPlus
 
 static int READCHUNK(SFChunk *vp, timidity_file *tf)
 {
-	if (tf_read(vp, 8, 1, tf) != 1)
+	if (tf_read(vp, 8, tf) != 8)
 		return -1;
 	vp->size = LE_LONG(vp->size);
 	return 1;
@@ -74,7 +74,7 @@ static int READCHUNK(SFChunk *vp, timidity_file *tf)
 
 static int READDW(uint32_t *vp, timidity_file *tf)
 {
-	if (tf_read(vp, 4, 1, tf) != 1)
+	if (tf_read(vp, 4, tf) != 4)
 		return -1;
 	*vp = LE_LONG(*vp);
 	return 1;
@@ -82,7 +82,7 @@ static int READDW(uint32_t *vp, timidity_file *tf)
 
 static int READW(uint16_t *vp, timidity_file *tf)
 {
-	if (tf_read(vp, 2, 1, tf) != 1)
+	if (tf_read(vp, 2, tf) != 2)
 		return -1;
 	*vp = LE_SHORT(*vp);
 	return 1;
@@ -92,7 +92,7 @@ static int READSTR(char *str, timidity_file *tf)
 {
 	int n;
 
-	if (tf_read(str, 20, 1, tf) != 1)
+	if (tf_read(str, 20, tf) != 20)
 		return -1;
 	str[19] = '\0';
 	n = (int)strlen(str);
@@ -102,8 +102,8 @@ static int READSTR(char *str, timidity_file *tf)
 	return n;
 }
 
-#define READID(var,tf)	tf_read(var, 4, 1, tf)
-#define READB(var,tf)	tf_read(&var, 1, 1, tf)
+#define READID(var,tf)	tf_read(var, 4, tf)
+#define READB(var,tf)	tf_read(&var, 1, tf)
 #define SKIPB(tf)	skip(tf, 1)
 #define SKIPW(tf)	skip(tf, 2)
 #define SKIPDW(tf)	skip(tf, 4)
@@ -327,7 +327,7 @@ int Instruments::process_info(int size, SFInfo *sf, timidity_file *fd)
 		case INAM_ID:
 			/* name of the font */
 			sf->sf_name = (char*)safe_malloc(chunk.size + 1);
-			tf_read(sf->sf_name, 1, chunk.size, fd);
+			tf_read(sf->sf_name, chunk.size, fd);
 			sf->sf_name[chunk.size] = 0;
 			printMessage(CMSG_INFO, VERB_DEBUG,
 				"  name %s", sf->sf_name);

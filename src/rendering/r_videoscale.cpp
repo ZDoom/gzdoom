@@ -144,7 +144,7 @@ namespace
 	};
 	bool isOutOfBounds(int x)
 	{
-		return (x < 0 || x >= NUMSCALEMODES || vScaleTable[x].isValid == false);
+		return (x < 0 || x >= int(NUMSCALEMODES) || vScaleTable[x].isValid == false);
 	}
 }
 

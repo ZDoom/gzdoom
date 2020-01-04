@@ -277,7 +277,7 @@ void D_ToggleHud()
 	static int saved_screenblocks;
 	static bool saved_drawplayersprite, saved_showmessages;
 
-	if (hud_toggled = !hud_toggled)
+	if ((hud_toggled = !hud_toggled))
 	{
 		saved_screenblocks = screenblocks;
 		saved_drawplayersprite = r_drawplayersprites;

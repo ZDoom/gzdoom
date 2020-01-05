@@ -51,6 +51,7 @@
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
 void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
+void ParseColorization(FScanner& sc);
 
 TArray<UserShaderDesc> usershaders;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
@@ -194,6 +195,7 @@ static const char *CoreKeywords[]=
    "#include",
    "material",
    "lightsizefactor",
+   "colorization",
    nullptr
 };
 
@@ -218,6 +220,7 @@ enum
    TAG_INCLUDE,
    TAG_MATERIAL,
    TAG_LIGHTSIZEFACTOR,
+   TAG_COLORIZATION,
 };
 
 //==========================================================================
@@ -1648,6 +1651,68 @@ class GLDefsParser
 			}
 		}
 	}
+
+	void ParseColorization(FScanner& sc)
+	{
+		TextureManipulation tm = {};
+		tm.ModulateColor = 0x01ffffff;
+		sc.MustGetString();
+		FName cname = sc.String;
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
+		{
+			sc.MustGetString();
+			if (sc.Compare("DesaturationFactor"))
+			{
+				sc.MustGetFloat();
+				tm.DesaturationFactor = (float)sc.Float;
+			}
+			else if (sc.Compare("AddColor"))
+			{
+				sc.MustGetString();
+				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(NULL, sc) & 0xffffff);
+			}
+			else if (sc.Compare("ModulateColor"))
+			{
+				sc.MustGetString();
+				tm.ModulateColor = V_GetColor(NULL, sc) & 0xffffff;
+				if (sc.CheckToken(','))
+				{
+					sc.MustGetNumber();
+					tm.ModulateColor.a = sc.Number;
+				}
+				else tm.ModulateColor.a = 1;
+			}
+			else if (sc.Compare("BlendColor"))
+			{
+				sc.MustGetString();
+				tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
+				sc.MustGetToken(',');
+				sc.MustGetString();
+				static const char* opts[] = { "none", "alpha", "screen", "overlay", "hardlight", nullptr };
+				tm.AddColor.a = (tm.AddColor.a & ~TextureManipulation::BlendMask) | sc.MustMatchString(opts);
+				if (sc.Compare("alpha"))
+				{
+					sc.MustGetToken(',');
+					sc.MustGetFloat();
+					tm.BlendColor.a = (uint8_t)(clamp(sc.Float, 0., 1.) * 255);
+				}
+			}
+			else if (sc.Compare("invert"))
+			{
+				tm.AddColor.a |= TextureManipulation::InvertBit;
+			}
+			else sc.ScriptError("Unknown token '%s'", sc.String);
+		}
+		if (tm.CheckIfEnabled())
+		{
+			TexMan.InsertTextureManipulation(cname, tm);
+		}
+		else
+		{
+			TexMan.RemoveTextureManipulation(cname);
+		}
+	}
 	
 
 public:
@@ -1740,6 +1805,9 @@ public:
 					if (cls) GetDefaultByType(cls)->renderflags |= RF_NEVERFULLBRIGHT;
 					*/
 				}
+				break;
+			case TAG_COLORIZATION:
+				ParseColorization(sc);
 				break;
 			default:
 				sc.ScriptError("Error parsing defs.  Unknown tag: %s.\n", sc.String);

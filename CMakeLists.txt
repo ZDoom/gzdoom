@@ -288,6 +288,7 @@ else()
 
 
 	if( APPLE )
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
 		if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 			# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
 			# C++11 support using SDKs 10.7 and 10.8.

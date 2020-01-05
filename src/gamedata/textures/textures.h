@@ -631,7 +631,14 @@ public:
 	{
 		return tmanips.CheckKey(name);
 	}
-
+	void InsertTextureManipulation(FName cname, TextureManipulation tm)
+	{
+		tmanips.Insert(cname, tm);
+	}
+	void RemoveTextureManipulation(FName cname)
+	{
+		tmanips.Remove(cname);
+	}
 
 private:
 

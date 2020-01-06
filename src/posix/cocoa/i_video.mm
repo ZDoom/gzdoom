@@ -630,7 +630,7 @@ void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	else
     {
 		assert(m_window.screen != nil);
-		assert(m_window.contentView.layer != nil);
+		assert([m_window.contentView layer] != nil);
 		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
 	}
 

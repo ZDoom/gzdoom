@@ -2163,8 +2163,6 @@ OptionValue "RenderMode"
 {
 	0, "$OPTVAL_SWDOOM"
 	1, "$OPTVAL_SWDOOMTC"
-	2, "$OPTVAL_SWPOLY"
-	3, "$OPTVAL_SWPOLYTC"
 	4,  "$OPTVAL_HWPOLY"
 }
 

@@ -60,12 +60,13 @@ enum
 	CVAR_NOINITCALL		= 512,	// don't call callback at game start
 	CVAR_GLOBALCONFIG	= 1024,	// cvar is saved to global config section
 	CVAR_VIDEOCONFIG	= 2048, // cvar is saved to video config section (not implemented)
-	CVAR_NOSAVE			= 4096, // when used with CVAR_SERVERINFO, do not save var to savegame
+	CVAR_NOSAVE			= 4096, // when used with CVAR_SERVERINFO, do not save var to savegame and config.
 	CVAR_MOD			= 8192,	// cvar was defined by a mod
 	CVAR_IGNORE			= 16384,// do not send cvar across the network/inaccesible from ACS (dummy mod cvar)
 	CVAR_CHEAT			= 32768,// can be set only when sv_cheats is enabled
 	CVAR_UNSAFECONTEXT	= 65536,// cvar value came from unsafe context
-	CVAR_VIRTUAL		= 0x20000,	//do not invoke the callback recursively so it can be used to mirror an external variable.
+	CVAR_VIRTUAL		= 0x20000,	// do not invoke the callback recursively so it can be used to mirror an external variable.
+	CVAR_NOSAVEGAME		= 0x40000,	// do not save var to savegame.
 };
 
 union UCVarValue

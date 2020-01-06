@@ -1251,7 +1251,7 @@ FString C_GetMassCVarString (uint32_t filter, bool compact)
 	{
 		for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
 		{
-			if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE|CVAR_IGNORE)))
+			if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE|CVAR_IGNORE|CVAR_NOSAVEGAME)))
 			{
 				UCVarValue val = cvar->GetGenericRep(CVAR_String);
 				dump << '\\' << cvar->GetName() << '\\' << val.String;

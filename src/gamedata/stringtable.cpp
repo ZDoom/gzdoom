@@ -287,6 +287,7 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 		if (sc.Compare ("["))
 		{ // Process language identifiers
 			activeMaps.Clear();
+			hasDefaultEntry = false;
 			sc.MustGetString ();
 			do
 			{

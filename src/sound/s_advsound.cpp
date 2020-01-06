@@ -1212,7 +1212,7 @@ static void S_AddSNDINFO (int lump)
 				FName mapped = sc.String;
 
 				// only set the alias if the lump it maps to exists.
-				if (mapped == NAME_None || Wads.CheckNumForName(sc.String, ns_music) >= 0)
+				if (mapped == NAME_None || Wads.CheckNumForFullName(sc.String, true, ns_music) >= 0)
 				{
 					MusicAliases[alias] = mapped;
 				}

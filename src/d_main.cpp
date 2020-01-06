@@ -1479,7 +1479,7 @@ void ParseCVarInfo()
 				}
 				else if (stricmp(sc.String, "nosave") == 0)
 				{
-					cvarflags |= CVAR_NOSAVE;
+					cvarflags |= CVAR_NOSAVEGAME;
 				}
 				else
 				{

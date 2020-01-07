@@ -187,8 +187,15 @@ namespace
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-	[NSColor.blackColor setFill];
-	NSRectFill(dirtyRect);
+	if ([NSGraphicsContext currentContext])
+	{
+		[NSColor.blackColor setFill];
+		NSRectFill(dirtyRect);
+	}
+	else if (self.layer != nil)
+	{
+		self.layer.backgroundColor = CGColorGetConstantColor(kCGColorBlack);
+	}
 }
 
 - (void)resetCursorRects

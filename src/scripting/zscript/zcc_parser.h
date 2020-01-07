@@ -76,6 +76,7 @@ enum
 
 
 // Syntax tree structures.
+// [pbeta] Any changes to AST node structure or new node types require TreeNodeDeepCopy in zcc_parser.cpp to be updated!
 enum EZCCTreeNodeType
 {
 	AST_Identifier,
@@ -386,6 +387,8 @@ struct ZCC_ExprTypeRef : ZCC_Expression
 
 struct ZCC_ExprConstant : ZCC_Expression
 {
+	// [pbeta] The ZCC_ExprConstant case in TreeNodeDeepCopy in zcc_parser.cpp
+	// must be updated if this union is changed!
 	union
 	{
 		FString *StringVal;
@@ -610,5 +613,9 @@ struct ZCCParseState : public ZCC_AST
 
 	FScanner *sc;
 };
+
+const char *GetMixinTypeString(EZCCMixinType type);
+
+ZCC_TreeNode *TreeNodeDeepCopy(ZCC_AST *ast, ZCC_TreeNode *orig, bool copySiblings);
 
 #endif

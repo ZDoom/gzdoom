@@ -98,6 +98,31 @@ FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls
 	return static_cast<FxConstant*>(ex)->GetValue().GetString();
 }
 
+ZCC_MixinDef *ZCCCompiler::ResolveMixinStmt(ZCC_MixinStmt *mixinStmt, EZCCMixinType type)
+{
+	ZCC_MixinDef *mixinDef = nullptr;
+
+	for (auto mx : Mixins)
+	{
+		if (mx->mixin->NodeName == mixinStmt->MixinName)
+		{
+			if (mx->mixin->MixinType != type)
+			{
+				Error(mixinStmt, "Mixin %s is a %s mixin cannot be used here.", FName(mixinStmt->MixinName).GetChars(), GetMixinTypeString(type));
+			}
+
+			return mx->mixin;
+		}
+	}
+
+	if (mixinDef == nullptr)
+	{
+		Error(mixinStmt, "Mixin %s does not exist.", FName(mixinStmt->MixinName).GetChars());
+	}
+
+	return mixinDef;
+}
+
 
 //==========================================================================
 //
@@ -132,10 +157,82 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 	}
 
 	auto node = cnode->Body;
-	auto origNextNode = cnode->Body;
-	ZCC_MixinDef *mixinDef = nullptr;
 	PSymbolTreeNode *childnode;
 	ZCC_Enum *enumType = nullptr;
+
+	// [pbeta] Handle mixins here for the sake of simplifying things.
+	if (node != nullptr)
+	{
+		TArray<ZCC_MixinStmt *> mixinStmts;
+		mixinStmts.Clear();
+
+		// Gather all mixin statement nodes.
+		do
+		{
+			if (node->NodeType == AST_MixinStmt)
+			{
+				mixinStmts.Push(static_cast<ZCC_MixinStmt *>(node));
+			}
+
+			node = node->SiblingNext;
+		}
+		while (node != cnode->Body);
+
+		for (auto mixinStmt : mixinStmts)
+		{
+			ZCC_MixinDef *mixinDef = ResolveMixinStmt(mixinStmt, ZCC_Mixin_Class);
+
+			// Insert the mixin if there's a body. If not, just remove this node.
+			if (mixinDef->Body != nullptr)
+			{
+				auto newNode = TreeNodeDeepCopy(&AST, mixinDef->Body, true);
+
+				if (mixinStmt->SiblingNext != mixinStmt && mixinStmt->SiblingPrev != mixinStmt)
+				{
+					auto prevSibling = mixinStmt->SiblingPrev;
+					auto nextSibling = mixinStmt->SiblingNext;
+
+					auto newFirst = newNode;
+					auto newLast = newNode->SiblingPrev;
+
+					newFirst->SiblingPrev = prevSibling;
+					newLast->SiblingNext = nextSibling;
+
+					prevSibling->SiblingNext = newFirst;
+					nextSibling->SiblingPrev = newLast;
+				}
+
+				if (cnode->Body == mixinStmt)
+				{
+					cnode->Body = newNode;
+				}
+			}
+			else
+			{
+				if (mixinStmt->SiblingNext != mixinStmt && mixinStmt->SiblingPrev != mixinStmt)
+				{
+					auto prevSibling = mixinStmt->SiblingPrev;
+					auto nextSibling = mixinStmt->SiblingNext;
+
+					prevSibling->SiblingNext = nextSibling;
+					nextSibling->SiblingPrev = prevSibling;
+
+					if (cnode->Body == mixinStmt)
+					{
+						cnode->Body = nextSibling;
+					}
+				}
+				else if (cnode->Body == mixinStmt)
+				{
+					cnode->Body = nullptr;
+				}
+			}
+		}
+
+		mixinStmts.Clear();
+	}
+
+	node = cnode->Body;
 
 	// Need to check if the class actually has a body.
 	if (node != nullptr) do
@@ -143,37 +240,9 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 		switch (node->NodeType)
 		{
 		case AST_MixinStmt:
-		{
-			auto mixinStmt = static_cast<ZCC_MixinStmt *>(node);
-			for (auto mx : Mixins)
-			{
-				if (mx->mixin->NodeName == mixinStmt->MixinName)
-				{
-					if (mx->mixin->MixinType != ZCC_Mixin_Class)
-					{
-						Error(node, "Mixin %s is not a class mixin.", FName(mixinStmt->MixinName).GetChars());
-					}
-
-					mixinDef = mx->mixin;
-					break;
-				}
-			}
-
-			if (mixinDef == nullptr)
-			{
-				Error(node, "Mixin %s does not exist.", FName(mixinStmt->MixinName).GetChars());
-				break;
-			}
-
-			if (mixinDef->Body != nullptr)
-			{
-				origNextNode = node->SiblingNext;
-				node = mixinDef->Body;
-
-				continue;
-			}
-		}
-		break;
+			assert(0 && "Unhandled mixin statement in class parsing loop. If this has been reached, something is seriously wrong");
+			Error(node, "Internal mixin error.");
+			break;
 
 		case AST_Struct:
 		case AST_ConstantDef:
@@ -248,12 +317,6 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 		}
 
 		node = node->SiblingNext;
-
-		if (mixinDef != nullptr && node == mixinDef->Body)
-		{
-			node = origNextNode;
-			mixinDef = nullptr;
-		}
 	}
 	while (node != cnode->Body);
 }
@@ -286,12 +349,9 @@ void ZCCCompiler::ProcessMixin(ZCC_MixinDef *cnode, PSymbolTreeNode *treenode)
 			case AST_EnumTerminator:
 			case AST_States:
 			case AST_FuncDeclarator:
+			case AST_Default:
 			case AST_StaticArrayStatement:
 				break;
-
-			case AST_Default:
-				Error(node, "Default blocks currently disabled in mixins");
-				return;
 
 			default:
 				assert(0 && "Unhandled AST node type");

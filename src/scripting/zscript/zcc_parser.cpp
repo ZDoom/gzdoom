@@ -578,3 +578,803 @@ void AppendTreeNodeSibling(ZCC_TreeNode *thisnode, ZCC_TreeNode *sibling)
 		SiblingPrev = siblingend;
 		siblingend->SiblingNext = thisnode;
 }
+
+//**--------------------------------------------------------------------------
+
+const char *GetMixinTypeString(EZCCMixinType type) {
+	switch (type) {
+	case ZCC_Mixin_Class:
+		return "class";
+
+	default:
+		assert(0 && "Unhandled mixin type");
+		return "invalid type";
+	}
+}
+
+//**--------------------------------------------------------------------------
+
+ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool copySiblings, TMap<ZCC_TreeNode *, ZCC_TreeNode *> *copiedNodesList);
+void TreeNodeDeepCopy_Base(ZCC_AST *ast, ZCC_TreeNode *orig, ZCC_TreeNode *copy, bool copySiblings, TMap<ZCC_TreeNode *, ZCC_TreeNode *> *copiedNodesList)
+{
+	copy->SourceName = orig->SourceName;
+	copy->SourceLump = orig->SourceLump;
+	copy->SourceLoc = orig->SourceLoc;
+	copy->NodeType = orig->NodeType;
+
+	if (copySiblings)
+	{
+		auto node = orig->SiblingNext;
+		while (node != orig)
+		{
+			auto nextNode = TreeNodeDeepCopy_Internal(ast, node, false, copiedNodesList);
+			auto newLast = nextNode->SiblingPrev;
+
+			auto firstNode = copy;
+			auto lastNode = firstNode->SiblingPrev;
+
+			lastNode->SiblingNext = nextNode;
+			firstNode->SiblingPrev = newLast;
+
+			nextNode->SiblingPrev = lastNode;
+			newLast->SiblingNext = firstNode;
+
+			node = node->SiblingNext;
+		}
+	}
+}
+
+#define GetTreeNode(type) static_cast<ZCC_##type *>(ast->InitNode(sizeof(ZCC_##type), AST_##type, nullptr));
+#define TreeNodeDeepCopy_Start(type) \
+	auto copy = GetTreeNode(type); \
+	auto origCasted = static_cast<ZCC_##type *>(orig); \
+	ret = copy; \
+	copiedNodesList->Insert(orig, ret);
+
+ZCC_TreeNode *TreeNodeDeepCopy(ZCC_AST *ast, ZCC_TreeNode *orig, bool copySiblings)
+{
+	TMap<ZCC_TreeNode *, ZCC_TreeNode *> copiedNodesList;
+	copiedNodesList.Clear();
+
+	return TreeNodeDeepCopy_Internal(ast, orig, copySiblings, &copiedNodesList);
+}
+
+ZCC_TreeNode *TreeNodeDeepCopy_Internal(ZCC_AST *ast, ZCC_TreeNode *orig, bool copySiblings, TMap<ZCC_TreeNode *, ZCC_TreeNode *> *copiedNodesList)
+{
+	// [pbeta] This is a legitimate case as otherwise this function would need
+	// an excessive amount of "if" statements, so just return null.
+	if (orig == nullptr)
+	{
+		return nullptr;
+	}
+
+	// [pbeta] We need to keep and check a list of already copied nodes, because
+	// some are supposed to be the same, and it can cause infinite loops.
+	auto existingCopy = copiedNodesList->CheckKey(orig);
+	if (existingCopy != nullptr)
+	{
+		return *existingCopy;
+	}
+
+	ZCC_TreeNode *ret = nullptr;
+
+	switch (orig->NodeType)
+	{
+	case AST_Identifier:
+	{
+		TreeNodeDeepCopy_Start(Identifier);
+
+		// ZCC_Identifier
+		copy->Id = origCasted->Id;
+
+		break;
+	}
+
+	case AST_Struct:
+	{
+		TreeNodeDeepCopy_Start(Struct);
+
+		// ZCC_NamedNode
+		copy->NodeName = origCasted->NodeName;
+		copy->Symbol = origCasted->Symbol;
+		// ZCC_Struct
+		copy->Flags = origCasted->Flags;
+		copy->Body = TreeNodeDeepCopy_Internal(ast, origCasted->Body, true, copiedNodesList);
+		copy->Type = origCasted->Type;
+		copy->Version = origCasted->Version;
+
+		break;
+	}
+
+	case AST_Class:
+	{
+		TreeNodeDeepCopy_Start(Class);
+
+		// ZCC_NamedNode
+		copy->NodeName = origCasted->NodeName;
+		copy->Symbol = origCasted->Symbol;
+		// ZCC_Struct
+		copy->Flags = origCasted->Flags;
+		copy->Body = TreeNodeDeepCopy_Internal(ast, origCasted->Body, true, copiedNodesList);
+		copy->Type = origCasted->Type;
+		copy->Version = origCasted->Version;
+		// ZCC_Class
+		copy->ParentName = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->ParentName, true, copiedNodesList));
+		copy->Replaces = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Replaces, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_Enum:
+	{
+		TreeNodeDeepCopy_Start(Enum);
+
+		// ZCC_NamedNode
+		copy->NodeName = origCasted->NodeName;
+		copy->Symbol = origCasted->Symbol;
+		// ZCC_Enum
+		copy->EnumType = origCasted->EnumType;
+		copy->Elements = static_cast<ZCC_ConstantDef *>(TreeNodeDeepCopy_Internal(ast, origCasted->Elements, false, copiedNodesList));
+
+		break;
+	}
+
+	case AST_EnumTerminator:
+	{
+		TreeNodeDeepCopy_Start (EnumTerminator);
+		break;
+	}
+
+	case AST_States:
+	{
+		TreeNodeDeepCopy_Start(States);
+
+		// ZCC_States
+		copy->Body = static_cast<ZCC_StatePart *>(TreeNodeDeepCopy_Internal(ast, origCasted->Body, true, copiedNodesList));
+		copy->Flags = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Flags, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_StatePart:
+	{
+		TreeNodeDeepCopy_Start (StatePart);
+		break;
+	}
+
+	case AST_StateLabel:
+	{
+		TreeNodeDeepCopy_Start(StateLabel);
+
+		// ZCC_StateLabel
+		copy->Label = origCasted->Label;
+
+		break;
+	}
+
+	case AST_StateStop:
+	{
+		TreeNodeDeepCopy_Start (StateStop);
+		break;
+	}
+
+	case AST_StateWait:
+	{
+		TreeNodeDeepCopy_Start (StateWait);
+		break;
+	}
+
+	case AST_StateFail:
+	{
+		TreeNodeDeepCopy_Start (StateFail);
+		break;
+	}
+
+	case AST_StateLoop:
+	{
+		TreeNodeDeepCopy_Start (StateLoop);
+		break;
+	}
+
+	case AST_StateGoto:
+	{
+		TreeNodeDeepCopy_Start(StateGoto);
+
+		// ZCC_StateGoto
+		copy->Qualifier = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Qualifier, true, copiedNodesList));
+		copy->Label = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Label, true, copiedNodesList));
+		copy->Offset = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Offset, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_StateLine:
+	{
+		TreeNodeDeepCopy_Start(StateLine);
+
+		// ZCC_StateLine
+		copy->Sprite = origCasted->Sprite;
+
+		copy->bBright = origCasted->bBright;
+		copy->bFast = origCasted->bFast;
+		copy->bSlow = origCasted->bSlow;
+		copy->bNoDelay = origCasted->bNoDelay;
+		copy->bCanRaise = origCasted->bCanRaise;
+
+		copy->Frames = origCasted->Frames;
+		copy->Duration = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Duration, true, copiedNodesList));
+		copy->Offset = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Offset, true, copiedNodesList));
+		copy->Lights = static_cast<ZCC_ExprConstant *>(TreeNodeDeepCopy_Internal(ast, origCasted->Lights, true, copiedNodesList));
+		copy->Action = TreeNodeDeepCopy_Internal(ast, origCasted->Action, true, copiedNodesList);
+
+		break;
+	}
+
+	case AST_VarName:
+	{
+		TreeNodeDeepCopy_Start(VarName);
+
+		// ZCC_VarName
+		copy->Name = origCasted->Name;
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_VarInit:
+	{
+		TreeNodeDeepCopy_Start(VarInit);
+
+		// ZCC_VarName
+		copy->Name = origCasted->Name;
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+		// ZCC_VarInit
+		copy->Init = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Init, true, copiedNodesList));
+		copy->InitIsArray = origCasted->InitIsArray;
+
+		break;
+	}
+
+	case AST_Type:
+	{
+		TreeNodeDeepCopy_Start(Type);
+
+		// ZCC_Type
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_BasicType:
+	{
+		TreeNodeDeepCopy_Start(BasicType);
+
+		// ZCC_Type
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+		// ZCC_BasicType
+		copy->Type = origCasted->Type;
+		copy->UserType = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->UserType, true, copiedNodesList));
+		copy->isconst = origCasted->isconst;
+
+		break;
+	}
+
+	case AST_MapType:
+	{
+		TreeNodeDeepCopy_Start(MapType);
+
+		// ZCC_Type
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+		// ZCC_MapType
+		copy->KeyType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->KeyType, true, copiedNodesList));
+		copy->ValueType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->ValueType, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_DynArrayType:
+	{
+		TreeNodeDeepCopy_Start(DynArrayType);
+
+		// ZCC_Type
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+		// ZCC_DynArrayType
+		copy->ElementType = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->ElementType, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_ClassType:
+	{
+		TreeNodeDeepCopy_Start(ClassType);
+
+		// ZCC_Type
+		copy->ArraySize = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->ArraySize, true, copiedNodesList));
+		// ZCC_ClassType
+		copy->Restriction = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Restriction, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_Expression:
+	{
+		TreeNodeDeepCopy_Start(Expression);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+
+		break;
+	}
+
+	case AST_ExprID:
+	{
+		TreeNodeDeepCopy_Start(ExprID);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprID
+		copy->Identifier = origCasted->Identifier;
+
+		break;
+	}
+
+	case AST_ExprTypeRef:
+	{
+		TreeNodeDeepCopy_Start(ExprTypeRef);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprTypeRef
+		copy->RefType = origCasted->RefType;
+
+		break;
+	}
+
+	case AST_ExprConstant:
+	{
+		TreeNodeDeepCopy_Start(ExprConstant);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprConstant
+		// Currently handled: StringVal, IntVal and DoubleVal. (UIntVal appears to be completely unused.)
+		if (origCasted->Type == TypeString)
+		{
+			copy->StringVal = origCasted->StringVal;
+		}
+		else if (origCasted->Type == TypeFloat64 || origCasted->Type == TypeFloat32)
+		{
+			copy->DoubleVal = origCasted->DoubleVal;
+		}
+		else if (origCasted->Type == TypeName || origCasted->Type->isIntCompatible())
+		{
+			copy->IntVal = origCasted->IntVal;
+		}
+
+		break;
+	}
+
+	case AST_ExprFuncCall:
+	{
+		TreeNodeDeepCopy_Start(ExprFuncCall);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprFuncCall
+		copy->Function = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Function, true, copiedNodesList));
+		copy->Parameters = static_cast<ZCC_FuncParm *>(TreeNodeDeepCopy_Internal(ast, origCasted->Parameters, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_ExprMemberAccess:
+	{
+		TreeNodeDeepCopy_Start(ExprMemberAccess);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprMemberAccess
+		copy->Left = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Left, true, copiedNodesList));
+		copy->Right = origCasted->Right;
+
+		break;
+	}
+
+	case AST_ExprUnary:
+	{
+		TreeNodeDeepCopy_Start(ExprUnary);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprUnary
+		copy->Operand = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Operand, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_ExprBinary:
+	{
+		TreeNodeDeepCopy_Start(ExprBinary);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprBinary
+		copy->Left = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Left, true, copiedNodesList));
+		copy->Right = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Right, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_ExprTrinary:
+	{
+		TreeNodeDeepCopy_Start(ExprTrinary);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ExprTrinary
+		copy->Test = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Test, true, copiedNodesList));
+		copy->Left = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Left, true, copiedNodesList));
+		copy->Right = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Right, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_FuncParm:
+	{
+		TreeNodeDeepCopy_Start(FuncParm);
+
+		// ZCC_FuncParm
+		copy->Value = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Value, true, copiedNodesList));
+		copy->Label = origCasted->Label;
+
+		break;
+	}
+
+	case AST_Statement:
+	{
+		TreeNodeDeepCopy_Start (Statement);
+		break;
+	}
+
+	case AST_CompoundStmt:
+	{
+		TreeNodeDeepCopy_Start(CompoundStmt);
+
+		// ZCC_CompoundStmt
+		copy->Content = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->Content, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_ContinueStmt:
+	{
+		TreeNodeDeepCopy_Start (ContinueStmt);
+		break;
+	}
+
+	case AST_BreakStmt:
+	{
+		TreeNodeDeepCopy_Start (BreakStmt);
+		break;
+	}
+
+	case AST_ReturnStmt:
+	{
+		TreeNodeDeepCopy_Start(ReturnStmt);
+
+		// ZCC_ReturnStmt
+		copy->Values = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Values, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_ExpressionStmt:
+	{
+		TreeNodeDeepCopy_Start(ExpressionStmt);
+
+		// ZCC_ExpressionStmt
+		copy->Expression = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Expression, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_IterationStmt:
+	{
+		TreeNodeDeepCopy_Start(IterationStmt);
+
+		// ZCC_IterationStmt
+		copy->LoopCondition = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopCondition, true, copiedNodesList));
+		copy->LoopStatement = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopStatement, true, copiedNodesList));
+		copy->LoopBumper = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->LoopBumper, true, copiedNodesList));
+		copy->CheckAt = origCasted->CheckAt;
+
+		break;
+	}
+
+	case AST_IfStmt:
+	{
+		TreeNodeDeepCopy_Start(IfStmt);
+
+		// ZCC_IfStmt
+		copy->Condition = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Condition, true, copiedNodesList));
+		copy->TruePath = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->TruePath, true, copiedNodesList));
+		copy->FalsePath = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->FalsePath, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_SwitchStmt:
+	{
+		TreeNodeDeepCopy_Start(SwitchStmt);
+
+		// ZCC_SwitchStmt
+		copy->Condition = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Condition, true, copiedNodesList));
+		copy->Content = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->Content, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_CaseStmt:
+	{
+		TreeNodeDeepCopy_Start(CaseStmt);
+
+		// ZCC_CaseStmt
+		copy->Condition = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Condition, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_AssignStmt:
+	{
+		TreeNodeDeepCopy_Start(AssignStmt);
+
+		// ZCC_AssignStmt
+		copy->Dests = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Dests, true, copiedNodesList));
+		copy->Sources = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Sources, true, copiedNodesList));
+		copy->AssignOp = origCasted->AssignOp;
+
+		break;
+	}
+
+	case AST_LocalVarStmt:
+	{
+		TreeNodeDeepCopy_Start(LocalVarStmt);
+
+		// ZCC_LocalVarStmt
+		copy->Type = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		copy->Vars = static_cast<ZCC_VarInit *>(TreeNodeDeepCopy_Internal(ast, origCasted->Vars, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_FuncParamDecl:
+	{
+		TreeNodeDeepCopy_Start(FuncParamDecl);
+
+		// ZCC_FuncParamDecl
+		copy->Type = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		copy->Default = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Default, true, copiedNodesList));
+		copy->Name = origCasted->Name;
+		copy->Flags = origCasted->Flags;
+
+		break;
+	}
+
+	case AST_ConstantDef:
+	{
+		TreeNodeDeepCopy_Start(ConstantDef);
+
+		// ZCC_NamedNode
+		copy->NodeName = origCasted->NodeName;
+		copy->Symbol = origCasted->Symbol;
+		// ZCC_ConstantDef
+		copy->Value = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Value, true, copiedNodesList));
+		copy->Symbol = origCasted->Symbol;
+		if (copy->Symbol != nullptr)
+		{
+			copy->Type = static_cast<ZCC_Enum *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		}
+
+		break;
+	}
+
+	case AST_Declarator:
+	{
+		TreeNodeDeepCopy_Start(Declarator);
+
+		// ZCC_Declarator
+		copy->Type = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		copy->Flags = origCasted->Flags;
+		copy->Version = origCasted->Version;
+
+		break;
+	}
+
+	case AST_VarDeclarator:
+	{
+		TreeNodeDeepCopy_Start(VarDeclarator);
+
+		// ZCC_Declarator
+		copy->Type = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		copy->Flags = origCasted->Flags;
+		copy->Version = origCasted->Version;
+		// ZCC_VarDeclarator
+		copy->Names = static_cast<ZCC_VarName *>(TreeNodeDeepCopy_Internal(ast, origCasted->Names, true, copiedNodesList));
+		copy->DeprecationMessage = origCasted->DeprecationMessage;
+
+		break;
+	}
+
+	case AST_FuncDeclarator:
+	{
+		TreeNodeDeepCopy_Start(FuncDeclarator);
+
+		// ZCC_Declarator
+		copy->Type = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		copy->Flags = origCasted->Flags;
+		copy->Version = origCasted->Version;
+		// ZCC_FuncDeclarator
+		copy->Params = static_cast<ZCC_FuncParamDecl *>(TreeNodeDeepCopy_Internal(ast, origCasted->Params, true, copiedNodesList));
+		copy->Name = origCasted->Name;
+		copy->Body = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->Body, true, copiedNodesList));
+		copy->UseFlags = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->UseFlags, true, copiedNodesList));
+		copy->DeprecationMessage = origCasted->DeprecationMessage;
+
+		break;
+	}
+
+	case AST_Default:
+	{
+		TreeNodeDeepCopy_Start(Default);
+
+		// ZCC_CompoundStmt
+		copy->Content = static_cast<ZCC_Statement *>(TreeNodeDeepCopy_Internal(ast, origCasted->Content, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_FlagStmt:
+	{
+		TreeNodeDeepCopy_Start(FlagStmt);
+
+		// ZCC_FlagStmt
+		copy->name = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->name, true, copiedNodesList));
+		copy->set = origCasted->set;
+
+		break;
+	}
+
+	case AST_PropertyStmt:
+	{
+		TreeNodeDeepCopy_Start(PropertyStmt);
+
+		// ZCC_PropertyStmt
+		copy->Prop = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Prop, true, copiedNodesList));
+		copy->Values = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Values, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_VectorValue:
+	{
+		TreeNodeDeepCopy_Start(VectorValue);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_VectorValue
+		copy->X = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->X, true, copiedNodesList));
+		copy->Y = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Y, true, copiedNodesList));
+		copy->Z = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Z, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_DeclFlags:
+	{
+		TreeNodeDeepCopy_Start(DeclFlags);
+
+		// ZCC_DeclFlags
+		copy->Id = static_cast<ZCC_Identifier *>(TreeNodeDeepCopy_Internal(ast, origCasted->Id, true, copiedNodesList));
+		copy->DeprecationMessage = origCasted->DeprecationMessage;
+		copy->Version = origCasted->Version;
+		copy->Flags = origCasted->Flags;
+
+		break;
+	}
+		
+	case AST_ClassCast:
+	{
+		TreeNodeDeepCopy_Start(ClassCast);
+
+		// ZCC_Expression
+		copy->Operation = origCasted->Operation;
+		copy->Type = origCasted->Type;
+		// ZCC_ClassCast
+		copy->ClassName = origCasted->ClassName;
+		copy->Parameters = static_cast<ZCC_FuncParm *>(TreeNodeDeepCopy_Internal(ast, origCasted->Parameters, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_StaticArrayStatement:
+	{
+		TreeNodeDeepCopy_Start(StaticArrayStatement);
+
+		// ZCC_StaticArrayStatement
+		copy->Type = static_cast<ZCC_Type *>(TreeNodeDeepCopy_Internal(ast, origCasted->Type, true, copiedNodesList));
+		copy->Id = origCasted->Id;
+		copy->Values = static_cast<ZCC_Expression *>(TreeNodeDeepCopy_Internal(ast, origCasted->Values, true, copiedNodesList));
+
+		break;
+	}
+
+	case AST_Property:
+	{
+		TreeNodeDeepCopy_Start(Property);
+
+		// ZCC_NamedNode
+		copy->NodeName = origCasted->NodeName;
+		copy->Symbol = origCasted->Symbol;
+		// ZCC_Property
+		copy->Body = TreeNodeDeepCopy_Internal(ast, origCasted->Body, true, copiedNodesList);
+
+		break;
+	}
+
+	case AST_FlagDef:
+	{
+		TreeNodeDeepCopy_Start(FlagDef);
+
+		// ZCC_NamedNode
+		copy->NodeName = origCasted->NodeName;
+		copy->Symbol = origCasted->Symbol;
+		// ZCC_FlagDef
+		copy->RefName = origCasted->RefName;
+		copy->BitValue = origCasted->BitValue;
+
+		break;
+	}
+
+	case AST_MixinDef:
+	{
+		TreeNodeDeepCopy_Start(MixinDef);
+
+		// ZCC_NamedNode
+		copy->NodeName = origCasted->NodeName;
+		copy->Symbol = origCasted->Symbol;
+		// ZCC_MixinDef
+		copy->Body = TreeNodeDeepCopy_Internal(ast, origCasted->Body, true, copiedNodesList);
+		copy->MixinType = origCasted->MixinType;
+
+		break;
+	}
+
+	case AST_MixinStmt:
+	{
+		TreeNodeDeepCopy_Start(MixinStmt);
+
+		// ZCC_MixinStmt
+		copy->MixinName = origCasted->MixinName;
+
+		break;
+	}
+
+	default:
+		assert(0 && "Unimplemented node type");
+		break;
+	}
+
+	TreeNodeDeepCopy_Base(ast, orig, ret, copySiblings, copiedNodesList);
+
+	return ret;
+}

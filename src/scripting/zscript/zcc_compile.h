@@ -114,6 +114,7 @@ private:
 
 	int IntConstFromNode(ZCC_TreeNode *node, PContainerType *cls);
 	FString StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls);
+	ZCC_MixinDef *ResolveMixinStmt(ZCC_MixinStmt *mixinStmt, EZCCMixinType type);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
 	void ProcessMixin(ZCC_MixinDef *cnode, PSymbolTreeNode *treenode);

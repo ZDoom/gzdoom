@@ -70,36 +70,17 @@ if( WIN32 )
 	add_definitions( -D_WIN32 )
 
 
-	if( ( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" ) OR	# For VS 2015.
-		( MSVC15 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v141_xp" ) )		# For VS 2017.
+	if( MSVC )	# For VS 2017 and later.
 		# for modern Windows SDKs the DirectX headers should be available by default.
 		set( DX_dinput8_LIBRARY dinput8 )
 	else()
 
-		find_path( XINPUT_INCLUDE_DIR xinput.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT XINPUT_INCLUDE_DIR )
-			# Modern versions of the Windows SDK include xinput.h. Unfortunately,
-			# CMake cannot find this file via find_path, so we check for it using
-			# CHECK_INCLUDE_FILES. windows.h must be included before xinput.h.
-			CHECK_INCLUDE_FILES( "windows.h;xinput.h" XINPUT_H_FOUND )
-			if( NOT XINPUT_H_FOUND )
-				message( WARNING "Could not find xinput.h. XInput will be disabled." )
-				add_definitions( -DNO_XINPUT )
-			endif()
-		else()
-			include_directories( ${XINPUT_INCLUDE_DIR} )
-		endif()
-
 		find_library( DX_dinput8_LIBRARY dinput8
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Lib Lib/${XBITS} )
-		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-			find_library( DX_dxguid_LIBRARY dxguid
-				PATHS ENV DXSDK_DIR
-				PATH_SUFFIXES Lib Lib/${XBITS} )
-		endif()
+		find_library( DX_dxguid_LIBRARY dxguid
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Lib Lib/${XBITS} )
 
 		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
 		# CMake cannot find these libraries via find_library.
@@ -108,12 +89,10 @@ if( WIN32 )
 			set( DX_dinput8_LIBRARY dinput8 )
 		endif()
 
-		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-			# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
-			# were moved to dinput8.lib.
-			if( NOT DX_dxguid_LIBRARY )
-				message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
-			endif()
+		# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
+		# were moved to dinput8.lib.
+		if( NOT DX_dxguid_LIBRARY )
+			message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
 		endif()
 	endif()
 
@@ -140,6 +119,7 @@ if( WIN32 )
 		if( DX_dxguid_LIBRARY )
 			list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
 		endif()
+		list( APPEND ZDOOM_LIBS d3d9 )
 	endif()
 else()
 	if( APPLE )

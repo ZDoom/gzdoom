@@ -2238,6 +2238,7 @@ remove them if not needed.
    #define VMA_NULL   nullptr
 #endif
 
+#ifndef __MINGW32__
 #if defined(__APPLE__) || defined(__ANDROID__) || defined(__OpenBSD__) || (defined(__GLIBCXX__) && !defined(_GLIBCXX_HAVE_ALIGNED_ALLOC))
 #include <cstdlib>
 void *aligned_alloc(size_t alignment, size_t size)
@@ -2253,6 +2254,7 @@ void *aligned_alloc(size_t alignment, size_t size)
         return pointer;
     return VMA_NULL;
 }
+#endif
 #endif
 
 // Normal assert to check for programmer's errors, especially in Debug configuration.

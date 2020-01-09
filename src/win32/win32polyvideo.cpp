@@ -13,6 +13,10 @@ extern HWND Window;
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
 
+#ifndef D3DPRESENT_FORCEIMMEDIATE
+#define D3DPRESENT_FORCEIMMEDIATE	0x00000100L // MinGW
+#endif
+
 namespace
 {
 	int SrcWidth = 0;

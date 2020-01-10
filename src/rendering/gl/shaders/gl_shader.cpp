@@ -321,6 +321,16 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "#define brighttexture texture2\n";
 	i_data += "#endif\n";
 
+#ifdef __APPLE__
+	// The noise functions are completely broken in macOS OpenGL drivers
+	// Garbage values are returned, and their infrequent usage causes extreme slowdown
+	// Also, these functions must return zeroes since GLSL 4.4
+	i_data += "#define noise1(unused) 0.0\n";
+	i_data += "#define noise2(unused) vec2(0)\n";
+	i_data += "#define noise3(unused) vec3(0)\n";
+	i_data += "#define noise4(unused) vec4(0)\n";
+#endif // __APPLE__
+
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
 	FMemLump vp_data = Wads.ReadLump(vp_lump);

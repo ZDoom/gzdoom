@@ -1078,6 +1078,10 @@ public:
 				Flag(ld->flags, ML_NOSKYWALLS, key);
 				continue;
 
+			case NAME_DrawFullHeight:
+				Flag(ld->flags, ML_DRAWFULLHEIGHT, key);
+				continue;
+
 			case NAME_MoreIds:
 				// delay parsing of the tag string until parsing of the sector is complete
 				// This ensures that the ID is always the first tag in the list.

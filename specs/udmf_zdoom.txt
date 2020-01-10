@@ -141,6 +141,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                   // 13: Portal line.
       revealed = <bool>;          // true = line is initially visible on automap.
       noskywalls = <bool>;        // true = skies are not drawn above or below this line
+      drawfullheight = <bool>;    // true = draw the maximum height instead of the minimum height
 
       health = <int>;             // Amount of hitpoints for this line.
       healthgroup = <int>;        // ID of destructible object to synchronize hitpoints (optional, default is 0)

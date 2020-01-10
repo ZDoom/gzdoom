@@ -485,6 +485,7 @@ enum
 	SECMF_DRAWN				= 128,	// sector has been drawn at least once
 	SECMF_HIDDEN			= 256,	// Do not draw on textured automap
 	SECMF_OVERLAPPING		= 512,	// floor and ceiling overlap and require special renderer action.
+	SECMF_NOSKYWALLS		= 1024,	// Do not draw "sky walls"
 };
 
 enum

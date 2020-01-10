@@ -1074,6 +1074,10 @@ public:
 				ld->automapstyle = AutomapLineStyle(CheckInt(key));
 				continue;
 
+			case NAME_NoSkyWalls:
+				Flag(ld->flags, ML_NOSKYWALLS, key);
+				continue;
+
 			case NAME_MoreIds:
 				// delay parsing of the tag string until parsing of the sector is complete
 				// This ensures that the ID is always the first tag in the list.
@@ -1660,6 +1664,10 @@ public:
 
 				case NAME_ColorAdd_Sprites:
 					sec->AdditiveColors[sector_t::sprites] = CheckInt(key) | 0xff000000;
+					break;
+
+				case NAME_NoSkyWalls:
+					Flag(sec->MoreFlags, SECMF_NOSKYWALLS, key);
 					break;
 
 				case NAME_colorization_floor:

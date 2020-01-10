@@ -336,6 +336,23 @@ IWad
 
 IWad
 {
+	Name = "DOOM: Unity Edition"
+	Autoname = "doom.id.doom1.unity"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "doom1unity.wad", 2
+	Mapinfo = "mapinfo/ultdoom.txt"
+	Compatibility = "Shorttex"
+	MustContain = "E1M1","E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
+		          "E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
+		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1", "E4M2",
+		          "DMENUPIC"
+	BannerColors = "00 7c 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
+}
+
+IWad
+{
 	Name = "DOOM: Complete: WadSmoosh"
 	Autoname = "doom.id.doom2.wadsmoosh"
 	Game = "Doom"
@@ -434,6 +451,20 @@ IWad
 	IgnoreTitlePatches = 1
 }
 
+IWad
+{
+	Name = "DOOM 2: Unity Edition"
+	Autoname = "doom.id.doom2.unity"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "doom2unity.wad"
+	Mapinfo = "mapinfo/doom2unity.txt"
+	Compatibility = "Shorttex"
+	MustContain = "MAP01", "DMENUPIC"
+	BannerColors = "00 7c 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
+}
+
 // Doom 2 must be last to be checked because MAP01 is its only requirement
 IWad
 {
@@ -463,6 +494,8 @@ Names
 	"doom2bfg.wad"
 	"bfgdoom.wad"
 	"doombfg.wad"
+	"doom1unity.wad"
+	"doom2unity.wad"
 	"doom2f.wad"
 	"freedoom1.wad"
 	"freedoom2.wad"
@@ -503,7 +536,9 @@ Order	// Order in the IWAD selection box
 	"DOOM Registered"
 	"DOOM Shareware"
 	"DOOM 2: BFG Edition"
+	"DOOM 2: Unity Edition"
 	"DOOM: BFG Edition"
+	"DOOM: Unity Edition"
 	"Freedoom: Phase 1"
 	"Freedoom: Phase 2"
 	"FreeDM"

@@ -230,7 +230,7 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
-		if (bs->special == GLSector_NoSkyDraw || bs->MoreFlags & SECMF_NOSKYWALLS || seg->linedef->flags & ML_NOSKYWALLS) return;
+		if (bs->special == GLSector_NoSkyDraw || (bs->MoreFlags & SECMF_NOSKYWALLS) != 0 || (seg->linedef->flags & ML_NOSKYWALLS) != 0) return;
 		if (bs->GetTexture(sector_t::ceiling)==skyflatnum)
 		{
 			// if the back sector is closed the sky must be drawn!
@@ -324,7 +324,7 @@ void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
-		if (bs->special == GLSector_NoSkyDraw || bs->MoreFlags & SECMF_NOSKYWALLS || seg->linedef->flags & ML_NOSKYWALLS) return;
+		if (bs->special == GLSector_NoSkyDraw || (bs->MoreFlags & SECMF_NOSKYWALLS) != 0 || (seg->linedef->flags & ML_NOSKYWALLS) != 0) return;
 		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 		
 		// For lower skies the normal logic only applies to walls with no lower texture.

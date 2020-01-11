@@ -340,7 +340,7 @@ IWad
 	Autoname = "doom.id.doom1.unity"
 	Game = "Doom"
 	Config = "Doom"
-	IWADName = "doom1unity.wad", 2
+	IWADName = "doomunity.wad", 2
 	Mapinfo = "mapinfo/ultdoom.txt"
 	Compatibility = "Shorttex"
 	MustContain = "E1M1","E2M1","E2M2","E2M3","E2M4","E2M5","E2M6","E2M7","E2M8","E2M9",
@@ -410,6 +410,20 @@ IWad
 
 IWad
 {
+	Name = "Final Doom: TNT - Evilution: Unity Edition"
+	Autoname = "doom.id.doom2.tnt.unity"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "tnt.wad"
+	Mapinfo = "mapinfo/tnt.txt"
+	Compatibility = "Shorttex", "Stairs"
+	MustContain = "MAP01", "REDTNT2", "DMAPINFO"
+	BannerColors = "00 7c 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
+}
+
+IWad
+{
 	Name = "Final Doom: TNT - Evilution"
 	Autoname = "doom.id.doom2.tnt"
 	Game = "Doom"
@@ -419,6 +433,20 @@ IWad
 	Compatibility = "Shorttex", "Stairs"
 	MustContain = "MAP01", "REDTNT2"
 	BannerColors = "a8 00 00", "a8 a8 a8"
+	IgnoreTitlePatches = 1
+}
+
+IWad
+{
+	Name = "Final Doom: Plutonia Experiment: Unity Edition"
+	Autoname = "doom.id.doom2.plutonia.unity"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "plutonia.wad"
+	Mapinfo = "mapinfo/plutonia.txt"
+	Compatibility = "Shorttex"
+	MustContain = "MAP01", "CAMO1", "DMAPINFO"
+	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
 }
 
@@ -494,9 +522,11 @@ Names
 	"doom2bfg.wad"
 	"bfgdoom.wad"
 	"doombfg.wad"
-	"doom1unity.wad"
+	"doomunity.wad"
 	"doom2unity.wad"
 	"doom2f.wad"
+	"tntunity.wad"
+	"plutoniaunity.wad"
 	"freedoom1.wad"
 	"freedoom2.wad"
 	"freedoomu.wad"
@@ -536,9 +566,11 @@ Order	// Order in the IWAD selection box
 	"DOOM Registered"
 	"DOOM Shareware"
 	"DOOM 2: BFG Edition"
-	"DOOM 2: Unity Edition"
 	"DOOM: BFG Edition"
 	"DOOM: Unity Edition"
+	"DOOM 2: Unity Edition"
+	"Final Doom: Plutonia Experiment: Unity Edition"
+	"Final Doom: TNT - Evilution: Unity Edition"
 	"Freedoom: Phase 1"
 	"Freedoom: Phase 2"
 	"FreeDM"

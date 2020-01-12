@@ -252,14 +252,7 @@ int I_FindClose(void* const handle)
 int I_FindAttr(findstate_t* const fileinfo)
 {
 	dirent* const ent = fileinfo->namelist[fileinfo->current];
-	bool isdir;
-
-	if (DirEntryExists(ent->d_name, &isdir))
-	{
-		return isdir ? FA_DIREC : 0;
-	}
-
-	return 0;
+	return (ent->d_type & DT_DIR) ? FA_DIREC : 0;
 }
 
 

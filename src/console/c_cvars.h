@@ -37,6 +37,7 @@
 #include "zstring.h"
 #include "tarray.h"
 
+class FSerializer;
 /*
 ==========================================================
 
@@ -168,6 +169,7 @@ private:
 	static bool m_DoNoSet;
 
 	friend FString C_GetMassCVarString (uint32_t filter, bool compact);
+	friend void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter);
 	friend void C_ReadCVars (uint8_t **demo_p);
 	friend void C_BackupCVars (void);
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
@@ -190,6 +192,8 @@ void C_WriteCVars (uint8_t **demo_p, uint32_t filter, bool compact=false);
 
 // Read all cvars from *demo_p and set them appropriately.
 void C_ReadCVars (uint8_t **demo_p);
+
+void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter);
 
 // Backup demo cvars. Called before a demo starts playing to save all
 // cvars the demo might change.

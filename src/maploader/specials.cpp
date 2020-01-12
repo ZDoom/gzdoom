@@ -1325,11 +1325,18 @@ void MapLoader::SpawnScrollers()
 			// (same direction and speed as scrolling floors)
 		case Scroll_Texture_Model:
 		{
-			auto itr = Level->GetLineIdIterator(l->args[0]);
-			while ((s = itr.Next()) >= 0)
+			if (l->args[0] != 0)
 			{
-				if (s != (int)i)
-					Level->CreateThinker<DScroller>(dx, dy, &Level->lines[s], control, accel);
+				auto itr = Level->GetLineIdIterator(l->args[0]);
+				while ((s = itr.Next()) >= 0)
+				{
+					if (s != (int)i)
+						Level->CreateThinker<DScroller>(dx, dy, &Level->lines[s], control, accel);
+				}
+			}
+			else
+			{
+				Level->CreateThinker<DScroller>(dx, dy, l, control, accel);
 			}
 			break;
 		}

@@ -654,7 +654,7 @@ static void CreateTurnFunc(FunctionCallEmitter &emitters, int value1, int value2
 
 // misc1 = angle (in degrees) (arg +0)
 static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2)
-{ // A_FaceTarget
+{ // A_SetAngle
 	emitters.AddParameterFloatConst(value1);				// angle
 	emitters.AddParameterIntConst(0);						// flags
 	emitters.AddParameterIntConst(AAPTR_DEFAULT);			// ptr
@@ -679,6 +679,7 @@ static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int v
 	emitters.AddParameterIntConst(false);								// looping
 	emitters.AddParameterFloatConst(value2 ? ATTN_NONE : ATTN_NORM);	// attenuation
 	emitters.AddParameterIntConst(false);								// local
+	emitters.AddParameterFloatConst(0.0);								// pitch
 }
 
 // misc1 = state, misc2 = probability

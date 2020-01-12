@@ -152,7 +152,7 @@ namespace
 {
 	if (nil == m_title)
 	{
-		m_title = [NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
+		m_title = [NSString stringWithFormat:@"%s %s", GAMENAME, GetVersionString()];
 	}
 
 	[super setTitle:m_title];

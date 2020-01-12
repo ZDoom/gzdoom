@@ -117,7 +117,7 @@ void Linux_I_FatalError(const char* errortext)
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
 		FString cmd;
-		cmd << "kdialog --title \"" GAMESIG " " << GetVersionString()
+		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
 			<< "\" --msgbox \"" << errortext << "\"";
 		popen(cmd, "r");
 	}
@@ -130,7 +130,7 @@ void Linux_I_FatalError(const char* errortext)
 	else
 	{
 		FString title;
-		title << GAMESIG " " << GetVersionString();
+		title << GAMENAME " " << GetVersionString();
 
 		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, errortext, NULL) < 0)
 		{
@@ -200,7 +200,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	const char *str;
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
-		FString cmd("kdialog --title \"" GAMESIG " ");
+		FString cmd("kdialog --title \"" GAMENAME " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
 					" --menu \"" GAMENAME " found more than one IWAD\n"
 					"Select from the list below to determine which one to use:\"";

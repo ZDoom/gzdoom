@@ -101,7 +101,7 @@ FConsoleWindow::FConsoleWindow()
 	[m_scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 	[m_scrollView setDocumentView:m_textView];
 
-	NSString* const title = [NSString stringWithFormat:@"%s %s - Console", GAMESIG, GetVersionString()];
+	NSString* const title = [NSString stringWithFormat:@"%s %s - Console", GAMENAME, GetVersionString()];
 
 	[m_window initWithContentRect:initialRect
 						styleMask:NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask

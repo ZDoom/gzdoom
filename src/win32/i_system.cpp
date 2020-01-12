@@ -578,7 +578,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 			GetWindowTextW(hDlg, label, countof(label));
 			FString alabel(label);
-			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), alabel.GetChars());
+			newlabel.Format(GAMENAME " %s: %s", GetVersionString(), alabel.GetChars());
 			auto wlabel = newlabel.WideString();
 			SetWindowTextW(hDlg, wlabel.c_str());
 		}

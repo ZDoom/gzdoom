@@ -35,6 +35,7 @@
 #endif
 #endif
 #include "cmdlib.h"
+#include "i_system.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -192,10 +193,38 @@ bool DirEntryExists(const char *pathname, bool *isdir)
 #else
 	// Windows must use the wide version of stat to preserve non-standard paths.
 	auto wstr = WideString(pathname);
-	struct _stat64i32 info;
-	bool res = _wstat64i32(wstr.c_str(), &info) == 0;
+	struct _stat64 info;
+	bool res = _wstat64(wstr.c_str(), &info) == 0;
 #endif
 	if (isdir) *isdir = !!(info.st_mode & S_IFDIR);
+	return res;
+}
+
+//==========================================================================
+//
+// DirEntryExists
+//
+// Returns true if the given path exists, be it a directory or a file.
+//
+//==========================================================================
+
+bool GetFileInfo(const char* pathname, size_t *size, time_t *time)
+{
+	if (pathname == NULL || *pathname == 0)
+		return false;
+
+#ifndef _WIN32
+	struct stat info;
+	bool res = stat(pathname, &info) == 0;
+#else
+	// Windows must use the wide version of stat to preserve non-standard paths.
+	auto wstr = WideString(pathname);
+	struct _stat64 info;
+	bool res = _wstat64(wstr.c_str(), &info) == 0;
+#endif
+	if (!res || (info.st_mode & S_IFDIR)) return false;
+	if (size) *size = info.st_size;
+	if (time) *time = info.st_mtime;
 	return res;
 }
 
@@ -269,7 +298,7 @@ FString ExtractFileBase (const char *path, bool include_extension)
 			src--;
 
 		// Check for files with drive specification but no path
-#if defined(_WIN32) || defined(DOS)
+#if defined(_WIN32)
 		if (src == path && src[0] != 0)
 		{
 			if (src[1] == ':')
@@ -828,8 +857,6 @@ FString NicePath(const char *path)
 }
 
 
-#ifdef _WIN32
-
 //==========================================================================
 //
 // ScanDirectory
@@ -838,13 +865,13 @@ FString NicePath(const char *path)
 
 bool ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 {
-	struct _finddata_t fileinfo;
-	intptr_t handle;
+	findstate_t find;
 	FString dirmatch;
 
 	dirmatch << dirpath << "*";
 
-	if ((handle = _findfirst(dirmatch, &fileinfo)) == -1)
+	auto handle = I_FindFirst(dirmatch.GetChars(), &find);
+	if (handle == ((void*)(-1)))
 	{
 		return false;
 	}
@@ -852,25 +879,27 @@ bool ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 	{
 		do
 		{
-			if (fileinfo.attrib & _A_HIDDEN)
+			auto attr = I_FindAttr(&find);
+			if (attr & FA_HIDDEN)
 			{
 				// Skip hidden files and directories. (Prevents SVN bookkeeping
 				// info from being included.)
 				continue;
 			}
+			auto fn = I_FindName(&find);
 
-			if (fileinfo.attrib & _A_SUBDIR)
+			if (attr & FA_DIREC)
 			{
-				if (fileinfo.name[0] == '.' &&
-					(fileinfo.name[1] == '\0' ||
-					 (fileinfo.name[1] == '.' && fileinfo.name[2] == '\0')))
+				if (fn[0] == '.' &&
+					(fn[1] == '\0' ||
+					(fn[1] == '.' && fn[2] == '\0')))
 				{
 					// Do not record . and .. directories.
 					continue;
 				}
 
-				FFileList *fl = &list[list.Reserve(1)];
-				fl->Filename << dirpath << fileinfo.name;
+				FFileList* fl = &list[list.Reserve(1)];
+				fl->Filename << dirpath << fn;
 				fl->isDirectory = true;
 				FString newdir = fl->Filename;
 				newdir << "/";
@@ -878,106 +907,16 @@ bool ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 			}
 			else
 			{
-				FFileList *fl = &list[list.Reserve(1)];
-				fl->Filename << dirpath << fileinfo.name;
+				FFileList* fl = &list[list.Reserve(1)];
+				fl->Filename << dirpath << fn;
 				fl->isDirectory = false;
 			}
 		} 
-		while (_findnext(handle, &fileinfo) == 0);
-		_findclose(handle);
+		while (I_FindNext(handle, &find) == 0);
+		I_FindClose(handle);
 	}
 	return true;
 }
-
-#elif defined(__sun) || defined(__linux__)
-
-//==========================================================================
-//
-// ScanDirectory
-// Solaris version
-//
-// Given NULL-terminated array of directory paths, create trees for them.
-//
-//==========================================================================
-
-bool ScanDirectory(TArray<FFileList> &list, const char *dirpath)
-{
-	DIR *directory = opendir(dirpath);
-	if(directory == NULL)
-		return false;
-
-	struct dirent *file;
-	while((file = readdir(directory)) != NULL)
-	{
-		if(file->d_name[0] == '.') //File is hidden or ./.. directory so ignore it.
-			continue;
-
-		FFileList *fl = &list[list.Reserve(1)];
-		fl->Filename << dirpath << file->d_name;
-
-		fl->isDirectory = DirExists(fl->Filename);
-		if(fl->isDirectory)
-		{
-			FString newdir = fl->Filename;
-			newdir += "/";
-			ScanDirectory(list, newdir);
-			continue;
-		}
-	}
-
-	closedir(directory);
-	return true;
-}
-
-#else
-
-//==========================================================================
-//
-// ScanDirectory
-// 4.4BSD version
-//
-//==========================================================================
-
-bool ScanDirectory(TArray<FFileList> &list, const char *dirpath)
-{
-	char * const argv[] = {new char[strlen(dirpath)+1], NULL };
-	memcpy(argv[0], dirpath, strlen(dirpath)+1);
-	FTS *fts;
-	FTSENT *ent;
-
-	fts = fts_open(argv, FTS_LOGICAL, NULL);
-	if (fts == NULL)
-	{
-		delete[] argv[0];
-		return false;
-	}
-	while ((ent = fts_read(fts)) != NULL)
-	{
-		if (ent->fts_info == FTS_D && ent->fts_name[0] == '.')
-		{
-			// Skip hidden directories. (Prevents SVN bookkeeping
-			// info from being included.)
-			fts_set(fts, ent, FTS_SKIP);
-		}
-		if (ent->fts_info == FTS_D && ent->fts_level == 0)
-		{
-			FFileList *fl = &list[list.Reserve(1)];
-			fl->Filename = ent->fts_path;
-			fl->isDirectory = true;
-		}
-		if (ent->fts_info == FTS_F)
-		{
-			// We're only interested in remembering files.
-			FFileList *fl = &list[list.Reserve(1)];
-			fl->Filename = ent->fts_path;
-			fl->isDirectory = false;
-		}
-	}
-	fts_close(fts);
-	delete[] argv[0];
-	return true;
-}
-#endif
 
 
 //==========================================================================

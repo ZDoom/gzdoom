@@ -371,6 +371,8 @@ FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype)
 	if (ImageForLump[lumpnum] != nullptr) return ImageForLump[lumpnum];
 
 	auto data = Wads.OpenLumpReader(lumpnum);
+	if (!data.isOpen()) 
+		return nullptr;
 
 	for (size_t i = 0; i < countof(CreateInfo); i++)
 	{

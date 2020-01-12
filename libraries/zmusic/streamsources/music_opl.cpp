@@ -81,6 +81,7 @@ OPLMUSSong::OPLMUSSong(MusicIO::FileInterface* reader, OPLConfig* config)
 		delete Music;
 		throw std::runtime_error(error);
 	}
+	current_opl_core = config->core;
 }
 
 //==========================================================================

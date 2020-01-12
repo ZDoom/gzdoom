@@ -163,7 +163,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 				FString fn = FString(dirpath) + fi;
 				if (GetFileInfo(fn, &size, nullptr))
 				{
-					AddEntry(fn, size);
+					AddEntry(fn, (int)size);
 					count++;
 				}
 			}

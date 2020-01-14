@@ -191,7 +191,14 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 			Flags &= ~CVAR_UNSAFECONTEXT;
 			return;
 		}
-		D_SendServerInfoChange (this, value, type);
+		if (Flags & CVAR_NOSAVEGAME)
+		{
+			ForceSet (value, type);
+		}
+		else
+		{
+			D_SendServerInfoChange (this, value, type);
+		}
 	}
 	else
 	{

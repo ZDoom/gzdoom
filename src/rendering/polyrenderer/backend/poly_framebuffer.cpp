@@ -560,15 +560,24 @@ TArray<uint8_t> PolyFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 
-	IntRect box;
-	box.left = 0;
-	box.top = 0;
-	box.width = w;
-	box.height = h;
-	//mPostprocess->DrawPresentTexture(box, true, true);
-
 	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
-	//CopyScreenToBuffer(w, h, ScreenshotBuffer.Data());
+	const uint8_t* pixels = GetCanvas()->GetPixels();
+	int dindex = 0;
+
+	// Convert to RGB
+	for (int y = 0; y < h; y++)
+	{
+		int sindex = y * w * 4;
+
+		for (int x = 0; x < w; x++)
+		{
+			ScreenshotBuffer[dindex    ] = pixels[sindex + 2];
+			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
+			ScreenshotBuffer[dindex + 2] = pixels[sindex    ];
+			dindex += 3;
+			sindex += 4;
+		}
+	}
 
 	pitch = w * 3;
 	color_type = SS_RGB;

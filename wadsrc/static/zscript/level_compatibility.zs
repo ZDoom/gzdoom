@@ -319,6 +319,16 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case 'FB613B36589FFB09AA2C03633A7D13F4': // Plutonia 2 MAP20
+			{
+				// Remove the pain elementals stuck in the closet boxes that cannot teleport.
+				SetThingFlags(758,0);
+				SetThingFlags(759,0);
+				SetThingFlags(764,0);
+				SetThingFlags(765,0);
+				break;
+			}
+
 			case '4CB7AAC5C43CF32BDF05FD36481C1D9F': // Plutonia: Revisited map27
 			{
 				SetLineSpecial(1214, Plat_DownWaitUpStayLip, 20, 64, 150);

@@ -756,6 +756,11 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 		}
 	}
 
+	strncpy (subsection, "ConfigOnlyVariables", sublen);
+	SetSection (section, true);
+	ClearCurrentSection ();
+	C_ArchiveCVars (this, CVAR_ARCHIVE|CVAR_AUTO|CVAR_MOD|CVAR_CONFIG_ONLY);
+
 	strncpy (subsection, "UnknownConsoleVariables", sublen);
 	SetSection (section, true);
 	ClearCurrentSection ();

@@ -21,7 +21,7 @@ class os_AnyOrAllOption : OptionMenuItemOption
 	{
 		bool result = Super.MenuEvent(mkey, fromcontroller);
 
-		if (mKey == Menu.MKEY_Left || mKey == Menu.MKEY_Right)
+		if (mKey == Menu.MKEY_Left || mKey == Menu.MKEY_Right || mkey == Menu.MKEY_Enter)
 		{
 			mMenu.search();
 		}

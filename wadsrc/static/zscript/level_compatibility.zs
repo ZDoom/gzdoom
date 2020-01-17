@@ -1449,6 +1449,7 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				// Wall behind start creates HOM in software renderer due to weird sector
 				OffsetSectorPlane(236, Sector.Floor, -40);
+				break;
 			}
 
 			case '1C795660D2BA9FC93DA584C593FD1DA3': // Scythe 2 MAP17

@@ -2194,7 +2194,7 @@ OptionValue Ratios
 }
 OptionValue ScaleModes
 {
-	0, "$OPTVAL_SCALENEAREST"
+	0, "$OPTVAL_NORMAL"
 	6, "320x200"
 	2, "640x400"
 	3, "960x600"

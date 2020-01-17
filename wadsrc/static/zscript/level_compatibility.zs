@@ -346,6 +346,17 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '9191658A6705B131AB005948E2FDFCE1': // Plutonia 2 MAP24
+			{
+				// Fix improperly pegged blue door
+				for(int i = 957; i <= 958; i++)
+				{
+					SetLineFlags(i, 0, Line.ML_DONTPEGTOP);
+					level.lines[i].sidedef[0].SetTextureYOffset(Side.top,-24);
+				}
+				break;
+			}
+
 			case 'EF251B8F36DE709901B0D32A97F341D7': // Plutonia 2 MAP27
 			{
 				// Remove the monsters stuck in the closet boxes that cannot teleport.

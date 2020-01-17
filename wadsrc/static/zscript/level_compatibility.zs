@@ -319,6 +319,14 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '3B68019EE3154C284B90F0CAEDBD8D8A': // Plutonia 2 MAP05
+			{
+				// Missing texture
+				TextureID step1 = TexMan.CheckForTexture("STEP1", TexMan.Type_Wall);
+				SetWallTextureID(1525, Line.front, Side.bottom, step1);
+				break;
+			}
+
 			case 'FB613B36589FFB09AA2C03633A7D13F4': // Plutonia 2 MAP20
 			{
 				// Remove the pain elementals stuck in the closet boxes that cannot teleport.

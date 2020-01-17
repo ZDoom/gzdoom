@@ -329,6 +329,32 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case 'EF251B8F36DE709901B0D32A97F341D7': // Plutonia 2 MAP27
+			{
+				// Remove the monsters stuck in the closet boxes that cannot teleport.
+
+				// Top row, 2nd from left
+				SetThingFlags(156,0);
+				SetThingFlags(210,0);
+				SetThingFlags(211,0);
+
+				// 2nd row, 2nd-5th from left
+				for(int i = 242; i <= 249; i++)
+					SetThingFlags(i,0);
+
+				// 3rd row, rightmost box
+				SetThingFlags(260,0);
+				SetThingFlags(261,0);
+				SetThingFlags(266,0);
+				SetThingFlags(271,0);
+				SetThingFlags(272,0);
+				SetThingFlags(277,0);
+				SetThingFlags(278,0);
+				SetThingFlags(283,0);
+
+				break;
+			}
+
 			case '4CB7AAC5C43CF32BDF05FD36481C1D9F': // Plutonia: Revisited map27
 			{
 				SetLineSpecial(1214, Plat_DownWaitUpStayLip, 20, 64, 150);

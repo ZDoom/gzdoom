@@ -248,11 +248,12 @@ void PolyTriangleThreadData::SetRenderStyle(FRenderStyle style)
 	RenderStyle = style;
 }
 
-void PolyTriangleThreadData::SetShader(int specialEffect, int effectState, bool alphaTest)
+void PolyTriangleThreadData::SetShader(int specialEffect, int effectState, bool alphaTest, bool colormapShader)
 {
 	SpecialEffect = specialEffect;
 	EffectState = effectState;
 	AlphaTest = alphaTest;
+	ColormapShader = colormapShader;
 }
 
 void PolyTriangleThreadData::SetTexture(int unit, const void *pixels, int width, int height, bool bgra)

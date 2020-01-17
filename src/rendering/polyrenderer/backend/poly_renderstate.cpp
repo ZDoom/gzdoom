@@ -204,6 +204,12 @@ void PolyRenderState::EnableDrawBuffers(int count)
 {
 }
 
+void PolyRenderState::SetColormapShader(bool enable)
+{
+	mNeedApply = true;
+	mColormapShader = enable;
+}
+
 void PolyRenderState::EndRenderPass()
 {
 	mDrawCommands = nullptr;
@@ -260,14 +266,18 @@ void PolyRenderState::Apply()
 	mDrawCommands->SetInputAssembly(static_cast<PolyVertexBuffer*>(mVertexBuffer)->VertexFormat);
 	mDrawCommands->SetRenderStyle(mRenderStyle);
 
-	if (mSpecialEffect > EFF_NONE)
+	if (mColormapShader)
 	{
-		mDrawCommands->SetShader(mSpecialEffect, 0, false);
+		mDrawCommands->SetShader(EFF_NONE, 0, false, true);
+	}
+	else if (mSpecialEffect > EFF_NONE)
+	{
+		mDrawCommands->SetShader(mSpecialEffect, 0, false, false);
 	}
 	else
 	{
 		int effectState = mMaterial.mOverrideShader >= 0 ? mMaterial.mOverrideShader : (mMaterial.mMaterial ? mMaterial.mMaterial->GetShaderIndex() : 0);
-		mDrawCommands->SetShader(EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f);
+		mDrawCommands->SetShader(EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f, false);
 	}
 
 	PolyPushConstants constants;

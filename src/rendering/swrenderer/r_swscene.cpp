@@ -126,9 +126,16 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 	}
 	else
 	{
+		// With softpoly truecolor we render directly to the target framebuffer
+
 		DCanvas *canvas = screen->GetCanvas();
 		SWRenderer->RenderView(player, canvas, canvas->GetPixels(), canvas->GetPitch());
-		// To do: apply swrenderer::CameraLight::Instance()->ShaderColormap();
+
+		int cm = CM_DEFAULT;
+		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
+		if (map) cm = (int)(ptrdiff_t)(map - SpecialColormaps.Data()) + CM_FIRSTSPECIALCOLORMAP;
+		screen->PostProcessScene(cm, [&]() { });
+
 		SWRenderer->DrawRemainingPlayerSprites();
 		screen->Draw2D();
 		screen->Clear2D();

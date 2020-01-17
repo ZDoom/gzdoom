@@ -45,6 +45,8 @@ public:
 	PolyVertexInputAssembly *GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
 	void EndRenderPass();
 
+	void SetColormapShader(bool enable);
+
 private:
 	void Apply();
 	void ApplyMaterial();
@@ -92,6 +94,7 @@ private:
 	int mStencilOp = SOP_Keep;
 	int mCulling = Cull_None;
 	bool mColorMask[4] = { true, true, true, true };
+	bool mColormapShader = false;
 
 	PolyCommandBuffer* mDrawCommands = nullptr;
 };

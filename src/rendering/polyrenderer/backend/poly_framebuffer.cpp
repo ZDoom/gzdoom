@@ -85,6 +85,9 @@ PolyFrameBuffer::~PolyFrameBuffer()
 	PolyBuffer::ResetAll();
 	PPResource::ResetAll();
 
+	delete mScreenQuad.VertexBuffer;
+	delete mScreenQuad.IndexBuffer;
+
 	delete mVertexData;
 	delete mSkyData;
 	delete mViewpoints;
@@ -110,6 +113,21 @@ void PolyFrameBuffer::InitializeState()
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
+
+	static const FVertexBufferAttribute format[] =
+	{
+		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(ScreenQuadVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(ScreenQuadVertex, u) },
+		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(ScreenQuadVertex, color0) }
+	};
+
+	uint32_t indices[6] = { 0, 1, 2, 1, 3, 2 };
+
+	mScreenQuad.VertexBuffer = screen->CreateVertexBuffer();
+	mScreenQuad.VertexBuffer->SetFormat(1, 3, sizeof(ScreenQuadVertex), format);
+
+	mScreenQuad.IndexBuffer = screen->CreateIndexBuffer();
+	mScreenQuad.IndexBuffer->SetData(6 * sizeof(uint32_t), indices, false);
 
 	CheckCanvas();
 }
@@ -436,9 +454,54 @@ void PolyFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	di->RenderTranslucent(*GetRenderState());
 }
 
+static uint8_t ToIntColorComponent(float v)
+{
+	return clamp((int)(v * 255.0f + 0.5f), 0, 255);
+}
+
 void PolyFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	afterBloomDrawEndScene2D();
+
+	if (fixedcm >= CM_FIRSTSPECIALCOLORMAP && fixedcm < CM_MAXCOLORMAP)
+	{
+		FSpecialColormap* scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
+
+		mRenderState->SetViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+		screen->mViewpoints->Set2D(*mRenderState, screen->GetWidth(), screen->GetHeight());
+
+		ScreenQuadVertex vertices[4] =
+		{
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ (float)mScreenViewport.width, 0.0f, 1.0f, 0.0f },
+			{ 0.0f, (float)mScreenViewport.height, 0.0f, 1.0f },
+			{ (float)mScreenViewport.width, (float)mScreenViewport.height, 1.0f, 1.0f }
+		};
+		mScreenQuad.VertexBuffer->SetData(4 * sizeof(ScreenQuadVertex), vertices, false);
+
+		mRenderState->SetVertexBuffer(mScreenQuad.VertexBuffer, 0, 0);
+		mRenderState->SetIndexBuffer(mScreenQuad.IndexBuffer);
+
+		mRenderState->SetObjectColor(PalEntry(255, int(scm->ColorizeStart[0] * 127.5f), int(scm->ColorizeStart[1] * 127.5f), int(scm->ColorizeStart[2] * 127.5f)));
+		mRenderState->SetAddColor(PalEntry(255, int(scm->ColorizeEnd[0] * 127.5f), int(scm->ColorizeEnd[1] * 127.5f), int(scm->ColorizeEnd[2] * 127.5f)));
+
+		mRenderState->EnableDepthTest(false);
+		mRenderState->EnableMultisampling(false);
+		mRenderState->SetCulling(Cull_None);
+
+		mRenderState->SetScissor(-1, -1, -1, -1);
+		mRenderState->SetColor(1, 1, 1, 1);
+		mRenderState->AlphaFunc(Alpha_GEqual, 0.f);
+		mRenderState->EnableTexture(false);
+		mRenderState->SetColormapShader(true);
+		mRenderState->DrawIndexed(DT_Triangles, 0, 6);
+		mRenderState->SetColormapShader(false);
+		mRenderState->SetObjectColor(0xffffffff);
+		mRenderState->SetAddColor(0);
+		mRenderState->SetVertexBuffer(screen->mVertexData);
+		mRenderState->EnableTexture(true);
+		mRenderState->ResetColor();
+	}
 }
 
 uint32_t PolyFrameBuffer::GetCaps()

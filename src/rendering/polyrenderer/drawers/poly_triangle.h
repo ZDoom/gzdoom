@@ -67,7 +67,7 @@ public:
 	void SetScissor(int x, int y, int w, int h);
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(int unit, void *pixels, int width, int height, bool bgra);
-	void SetShader(int specialEffect, int effectState, bool alphaTest);
+	void SetShader(int specialEffect, int effectState, bool alphaTest, bool colormapShader);
 	void PushStreamData(const StreamData &data, const PolyPushConstants &constants);
 	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
 	void ClearDepth(float value);

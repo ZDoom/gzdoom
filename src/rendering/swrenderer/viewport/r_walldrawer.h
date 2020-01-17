@@ -15,7 +15,7 @@ namespace swrenderer
 	class WallDrawerArgs : public DrawerArgs
 	{
 	public:
-		void SetStyle(bool masked, bool additive, fixed_t alpha, FDynamicColormap *basecolormap, bool dynlights);
+		void SetStyle(bool masked, bool additive, fixed_t alpha, bool dynlights);
 		void SetDest(RenderViewport *viewport);
 		void DrawWall(RenderThread *thread);
 
@@ -35,7 +35,6 @@ namespace swrenderer
 
 		float lightpos;
 		float lightstep;
-		int mShade;
 
 		int texwidth;
 		int texheight;

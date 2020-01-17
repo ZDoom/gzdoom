@@ -337,6 +337,15 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case 'A3165C53F9BF0B7D80CDB14665A349EB': // Plutonia 2 MAP23
+			{
+				// Arch-vile in outdoor secret area sometimes don't spawn if revenants
+				// block its one-time teleport. Make this teleport repeatable to ensure
+				// maxkills are always possible.
+				SetLineFlags(756, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+
 			case 'EF251B8F36DE709901B0D32A97F341D7': // Plutonia 2 MAP27
 			{
 				// Remove the monsters stuck in the closet boxes that cannot teleport.

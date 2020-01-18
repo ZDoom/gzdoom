@@ -4,6 +4,7 @@ Gameinfo
 {
 	CheatKey = "maparrows/key.txt"
 	EasyKey = "maparrows/ravenkey.txt"
+	PrecacheSounds = "misc/secret", "misc/teleport", "misc/fallingsplat", "misc/ripslop"
 }
 
 DoomEdNums

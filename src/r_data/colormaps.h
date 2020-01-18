@@ -8,6 +8,8 @@ struct lightlist_t;
 void R_InitColormaps (bool allowCustomColormap = false);
 void R_DeinitColormaps ();
 
+void R_UpdateInvulnerabilityColormap ();
+
 uint32_t R_ColormapNumForName(const char *name);	// killough 4/4/98
 void R_SetDefaultColormap (const char *name);	// [RH] change normal fadetable
 uint32_t R_BlendForColormap (uint32_t map);			// [RH] return calculated blend for a colormap

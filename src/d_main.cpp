@@ -2773,7 +2773,7 @@ static int D_DoomMain_Internal (void)
 
 		// enable custom invulnerability map here
 		if (cl_customizeinvulmap)
-			R_InitColormaps(true);
+			R_UpdateInvulnerabilityColormap();
 
 		if (!restart)
 		{

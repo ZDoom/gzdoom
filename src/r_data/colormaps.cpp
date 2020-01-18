@@ -46,17 +46,17 @@
 
 CUSTOM_CVAR(Bool, cl_customizeinvulmap, false, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
-	R_InitColormaps(true);
+	R_UpdateInvulnerabilityColormap();
 }
 CUSTOM_CVAR(Color, cl_custominvulmapcolor1, 0x00001a, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	if (cl_customizeinvulmap)
-		R_InitColormaps(true);
+		R_UpdateInvulnerabilityColormap();
 }
 CUSTOM_CVAR(Color, cl_custominvulmapcolor2, 0xa6a67a, CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	if (cl_customizeinvulmap)
-		R_InitColormaps(true);
+		R_UpdateInvulnerabilityColormap();
 }
 
 
@@ -99,6 +99,8 @@ static void FreeSpecialLights();
 //
 //==========================================================================
 
+static void UpdateSpecialColormap(unsigned int index, float r1, float g1, float b1, float r2, float g2, float b2);
+
 int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2)
 {
 	// Clamp these in range for the hardware shader.
@@ -123,8 +125,15 @@ int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b
 		}
 	}
 
-	FSpecialColormap *cm = &SpecialColormaps[SpecialColormaps.Reserve(1)];
+	UpdateSpecialColormap(SpecialColormaps.Reserve(1), r1, g1, b1, r2, g2, b2);
+	return SpecialColormaps.Size() - 1;
+}
 
+static void UpdateSpecialColormap(unsigned int index, float r1, float g1, float b1, float r2, float g2, float b2)
+{
+	assert(index < SpecialColormaps.Size());
+
+	FSpecialColormap *cm = &SpecialColormaps[index];
 	cm->ColorizeStart[0] = float(r1);
 	cm->ColorizeStart[1] = float(g1);
 	cm->ColorizeStart[2] = float(b1);
@@ -159,7 +168,6 @@ int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b
 											MIN(255, int(g1 + i*g2)), 
 											MIN(255, int(b1 + i*b2)));
 	}
-	return SpecialColormaps.Size() - 1;
 }
 
 //==========================================================================
@@ -258,25 +266,6 @@ void R_InitColormaps (bool allowCustomColormap)
 		}
 	}
 
-	// some of us really don't like Doom's idea of an invulnerability sphere colormap
-	// this hack will override that
-	if (allowCustomColormap && cl_customizeinvulmap)
-	{
-		uint32_t color1 = cl_custominvulmapcolor1;
-		uint32_t color2 = cl_custominvulmapcolor2;
-		float r1 = (float)((color1 & 0xff0000) >> 16) / 128.f;
-		float g1 = (float)((color1 & 0x00ff00) >> 8) / 128.f;
-		float b1 = (float)((color1 & 0x0000ff) >> 0) / 128.f;
-		float r2 = (float)((color2 & 0xff0000) >> 16) / 128.f;
-		float g2 = (float)((color2 & 0x00ff00) >> 8) / 128.f;
-		float b2 = (float)((color2 & 0x0000ff) >> 0) / 128.f;
-		SpecialColormapParms[0] = {{r1, g1, b1}, {r2, g2, b2}};
-	}
-	else
-	{
-		SpecialColormapParms[0] = {{1.0, 1.0, 1.0}, {0.0, 0.0, 0.0}};
-	}
-
 	// build default special maps (e.g. invulnerability)
 
 	for (unsigned i = 0; i < countof(SpecialColormapParms); ++i)
@@ -339,5 +328,43 @@ uint32_t R_BlendForColormap (uint32_t map)
 {
 	return APART(map) ? map : 
 		map < fakecmaps.Size() ? uint32_t(fakecmaps[map].blend) : 0;
+}
+
+
+//==========================================================================
+//
+// R_UpdateInvulnerabilityColormap
+//
+//==========================================================================
+
+void R_UpdateInvulnerabilityColormap()
+{
+	float r1, g1, b1, r2, g2, b2;
+
+	// some of us really don't like Doom's idea of an invulnerability sphere colormap
+	// this hack will override that
+	if (cl_customizeinvulmap)
+	{
+		uint32_t color1 = cl_custominvulmapcolor1;
+		uint32_t color2 = cl_custominvulmapcolor2;
+		r1 = (float)((color1 & 0xff0000) >> 16) / 128.f;
+		g1 = (float)((color1 & 0x00ff00) >> 8) / 128.f;
+		b1 = (float)((color1 & 0x0000ff) >> 0) / 128.f;
+		r2 = (float)((color2 & 0xff0000) >> 16) / 128.f;
+		g2 = (float)((color2 & 0x00ff00) >> 8) / 128.f;
+		b2 = (float)((color2 & 0x0000ff) >> 0) / 128.f;
+	}
+	else
+	{
+		FSpecialColormapParameters &defaultColors = SpecialColormapParms[0];
+		r1 = defaultColors.Start[0];
+		g1 = defaultColors.Start[1];
+		b1 = defaultColors.Start[2];
+		r2 = defaultColors.End[0];
+		g2 = defaultColors.End[1];
+		b2 = defaultColors.End[2];
+	}
+
+	UpdateSpecialColormap(0, r1, g1, b1, r2, g2, b2);
 }
 

@@ -547,6 +547,10 @@ void BlendColorColormap(int y, int x0, int x1, PolyTriangleThreadData* thread)
 		g = (startG + ((gray * rangeG) >> 8)) << 1;
 		b = (startB + ((gray * rangeB) >> 8)) << 1;
 
+		r = MIN(r, (uint32_t)255);
+		g = MIN(g, (uint32_t)255);
+		b = MIN(b, (uint32_t)255);
+
 		line[x] = MAKEARGB(a, r, g, b);
 	}
 }

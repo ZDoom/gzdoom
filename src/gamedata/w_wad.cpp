@@ -926,7 +926,8 @@ void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 //
 // Renames map headers and map name pictures in nerve.wad so as to load it
 // alongside Doom II and offer both episodes without causing conflicts.
-// MD5 checksum for NERVE.WAD: 967d5ae23daf45196212ae1b605da3b0
+// MD5 checksum for NERVE.WAD: 967d5ae23daf45196212ae1b605da3b0 (3,819,855)
+// MD5 checksum for Unity version of NERVE.WAD: 4214c47651b63ee2257b1c2490a518c9 (3,821,966)
 //
 //==========================================================================
 void FWadCollection::RenameNerve ()
@@ -934,20 +935,30 @@ void FWadCollection::RenameNerve ()
 	if (gameinfo.gametype != GAME_Doom)
 		return;
 
+	const int numnerveversions = 2;
+
 	bool found = false;
 	uint8_t cksum[16];
-	static const uint8_t nerve[16] = { 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
-		0x62, 0x12, 0xae, 0x1b, 0x60, 0x5d, 0xa3, 0xb0 };
-	size_t nervesize = 3819855; // NERVE.WAD's file size
+	static const uint8_t nerve[numnerveversions][16] = {
+			{ 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
+				0x62, 0x12, 0xae, 0x1b, 0x60, 0x5d, 0xa3, 0xb0 },
+			{ 0x42, 0x14, 0xc4, 0x76, 0x51, 0xb6, 0x3e, 0xe2,
+				0x25, 0x7b, 0x1c, 0x24, 0x90, 0xa5, 0x18, 0xc9 }
+		};
+	size_t nervesize[numnerveversions] = { 3819855, 3821966 } ; // NERVE.WAD's file size
 	int w = GetIwadNum();
 	while (++w < GetNumWads())
 	{
 		auto fr = GetFileReader(w);
+		int isizecheck = -1;
 		if (fr == NULL)
 		{
 			continue;
 		}
-		if (fr->GetLength() != (long)nervesize)
+		for (int icheck = 0; icheck < numnerveversions; icheck++)
+			if (fr->GetLength() == (long)nervesize[icheck])
+				isizecheck = icheck;
+		if (isizecheck == -1)
 		{
 			// Skip MD5 computation when there is a
 			// cheaper way to know this is not the file
@@ -957,7 +968,7 @@ void FWadCollection::RenameNerve ()
 		MD5Context md5;
 		md5.Update(*fr, (unsigned)fr->GetLength());
 		md5.Final(cksum);
-		if (memcmp(nerve, cksum, 16) == 0)
+		if (memcmp(nerve[isizecheck], cksum, 16) == 0)
 		{
 			found = true;
 			break;

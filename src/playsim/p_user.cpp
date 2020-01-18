@@ -790,6 +790,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobSpeed)
 	ACTION_RETURN_FLOAT(self->userinfo.GetWBobSpeed());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetWBobFire)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_FLOAT(self->userinfo.GetWBobFire());
+}
+
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetMoveBob)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);

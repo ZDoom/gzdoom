@@ -64,25 +64,32 @@ namespace swrenderer
 		WorldToView = SoftwareWorldToView(viewpoint);
 
 		if (thread->Portal->MirrorFlags & RF_XFLIP)
-			WorldToView = Mat4f::Scale(-1.0f, 1.0f, 1.0f) * WorldToView;
+		{
+			WorldToView.scale(-1.0f, 1.0f, 1.0f);
+		}
 
 		ViewToClip = SoftwareViewToClip();
-		WorldToClip = ViewToClip * WorldToView;
+		WorldToClip.multMatrix(ViewToClip);
 	}
 
-	Mat4f RenderViewport::SoftwareWorldToView(const FRenderViewpoint &viewpoint)
+	VSMatrix RenderViewport::SoftwareWorldToView(const FRenderViewpoint &viewpoint)
 	{
-		Mat4f m = Mat4f::Null();
-		m.Matrix[0 + 0 * 4] = (float)viewpoint.Sin;
-		m.Matrix[0 + 1 * 4] = (float)-viewpoint.Cos;
-		m.Matrix[1 + 2 * 4] = 1.0f;
-		m.Matrix[2 + 0 * 4] = (float)-viewpoint.Cos;
-		m.Matrix[2 + 1 * 4] = (float)-viewpoint.Sin;
-		m.Matrix[3 + 3 * 4] = 1.0f;
-		return m * Mat4f::Translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
+		float m[16] = { 0.0f };
+		m[0 + 0 * 4] = (float)viewpoint.Sin;
+		m[0 + 1 * 4] = (float)-viewpoint.Cos;
+		m[1 + 2 * 4] = 1.0f;
+		m[2 + 0 * 4] = (float)-viewpoint.Cos;
+		m[2 + 1 * 4] = (float)-viewpoint.Sin;
+		m[3 + 3 * 4] = 1.0f;
+
+		VSMatrix matrix;
+		matrix.loadIdentity();
+		matrix.translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
+		matrix.multMatrix(m);
+		return matrix;
 	}
 
-	Mat4f RenderViewport::SoftwareViewToClip()
+	VSMatrix RenderViewport::SoftwareViewToClip()
 	{
 		float near = 5.0f;
 		float far = 65536.0f;
@@ -92,7 +99,27 @@ namespace swrenderer
 		width *= near;
 		height *= near;
 		offset *= near;
-		return Mat4f::Frustum(-width, width, -height + offset, height + offset, near, far, Handedness::Right, ClipZRange::NegativePositiveW);
+
+		float left = -width;
+		float right = width;
+		float bottom = -height + offset;
+		float top = height + offset;
+		float a = (right + left) / (right - left);
+		float b = (top + bottom) / (top - bottom);
+		float c = -(far + near) / (far - near);
+		float d = -(2.0f * far) / (far - near);
+		float m[16] = { 0.0f };
+		m[0 + 0 * 4] = 2.0f * near / (right - left);
+		m[1 + 1 * 4] = 2.0f * near / (top - bottom);
+		m[0 + 2 * 4] = a;
+		m[1 + 2 * 4] = b;
+		m[2 + 2 * 4] = c;
+		m[2 + 3 * 4] = d;
+		m[3 + 2 * 4] = -1;
+
+		VSMatrix matrix;
+		matrix.loadMatrix(m);
+		return matrix;
 	}
 
 	void RenderViewport::SetViewport(FLevelLocals *Level, RenderThread *thread, int fullWidth, int fullHeight, float trueratio)

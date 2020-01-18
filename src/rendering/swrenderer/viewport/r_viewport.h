@@ -7,7 +7,7 @@
 #include "r_defs.h"
 #include "r_utility.h"
 #include "actorinlines.h"
-#include "polyrenderer/math/gpu_types.h"
+#include "utility/matrix.h"
 
 #define MINZ double((2048*4) / double(1 << 20))
 
@@ -28,9 +28,9 @@ namespace swrenderer
 		
 		void SetupPolyViewport(RenderThread *thread);
 
-		Mat4f WorldToView;
-		Mat4f ViewToClip;
-		Mat4f WorldToClip;
+		VSMatrix WorldToView;
+		VSMatrix ViewToClip;
+		VSMatrix WorldToClip;
 
 		DCanvas *RenderTarget = nullptr;
 		bool RenderingToCanvas = false;
@@ -93,8 +93,8 @@ namespace swrenderer
 		void InitTextureMapping();
 		void SetupBuffer();
 
-		static Mat4f SoftwareWorldToView(const FRenderViewpoint &viewpoint);
+		static VSMatrix SoftwareWorldToView(const FRenderViewpoint &viewpoint);
 
-		Mat4f SoftwareViewToClip();
+		VSMatrix SoftwareViewToClip();
 	};
 }

@@ -136,7 +136,7 @@ void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *v
 	if ((UseVertexData & 2) == 0)
 	{
 		const auto &n = thread->mainVertexShader.Data.uVertexNormal;
-		thread->mainVertexShader.aNormal = Vec4f(n.X, n.Y, n.Z, 1.0);
+		thread->mainVertexShader.aNormal = FVector4(n.X, n.Y, n.Z, 1.0);
 		thread->mainVertexShader.aNormal2 = thread->mainVertexShader.aNormal;
 	}
 	else
@@ -149,8 +149,8 @@ void PolyVertexInputAssembly::Load(PolyTriangleThreadData *thread, const void *v
 		float x2 = ((n2 << 22) >> 22) / 512.0f;
 		float y2 = ((n2 << 12) >> 22) / 512.0f;
 		float z2 = ((n2 << 2) >> 22) / 512.0f;
-		thread->mainVertexShader.aNormal = Vec4f(x, y, z, 0.0f);
-		thread->mainVertexShader.aNormal2 = Vec4f(x2, y2, z2, 0.0f);
+		thread->mainVertexShader.aNormal = FVector4(x, y, z, 0.0f);
+		thread->mainVertexShader.aNormal2 = FVector4(x2, y2, z2, 0.0f);
 	}
 }
 

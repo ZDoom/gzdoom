@@ -49,7 +49,7 @@ namespace swrenderer
 		float x, y, z;
 		FSpriteModelFrame *smf;
 		AActor *actor;
-		Mat4f WorldToClip;
+		VSMatrix WorldToClip;
 		bool MirrorWorldToClip;
 	};
 

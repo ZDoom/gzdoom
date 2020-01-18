@@ -713,7 +713,6 @@ set( POLYRENDER_SOURCES
 	rendering/polyrenderer/drawers/screen_scanline_setup.cpp
 	rendering/polyrenderer/drawers/screen_shader.cpp
 	rendering/polyrenderer/drawers/screen_blend.cpp
-	rendering/polyrenderer/math/gpu_types.cpp
 )
 
 # These files will be flagged as "headers" so that they appear in project files

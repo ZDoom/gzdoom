@@ -25,7 +25,6 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "polyrenderer/drawers/screen_triangle.h"
-#include "polyrenderer/math/gpu_types.h"
 #include "polyrenderer/drawers/poly_vertex_shader.h"
 
 class DCanvas;
@@ -101,7 +100,7 @@ struct PolyPushConstants
 {
 	int uTextureMode;
 	float uAlphaThreshold;
-	Vec2f uClipSplit;
+	FVector2 uClipSplit;
 
 	// Lighting + Fog
 	float uLightLevel;

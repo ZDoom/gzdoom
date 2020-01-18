@@ -1046,6 +1046,7 @@ OptionMenu "HUDOptions" protected
 	Slider "$DSPLYMNU_MOVEBOB",				"movebob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_STILLBOB",			"stillbob", 0, 1.0, 0.05, 2
 	Slider "$DSPLYMNU_BOBSPEED",			"wbobspeed", 0, 2.0, 0.1
+	Slider "$DSPLYMNU_BOBFIRE",				"wbobfire", 0, 1.0, 0.1
 	StaticText " "
 	Slider "$DSPLYMNU_MENUDIM",					"dimamount", 0, 1.0, 0.05, 2
 	ColorPicker "$DSPLYMNU_DIMCOLOR",			"dimcolor"

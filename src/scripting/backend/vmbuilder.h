@@ -211,4 +211,26 @@ public:
 	}
 };
 
+class VMDisassemblyDumper
+{
+public:
+	enum FileOperationType
+	{
+		Overwrite,
+		Append
+	};
+
+	explicit VMDisassemblyDumper(const FileOperationType operation);
+	~VMDisassemblyDumper();
+
+	void Write(VMScriptFunction *sfunc, const FString &fname);
+	void Flush();
+
+private:
+	FILE *dump = nullptr;
+	FString namefilter;
+	int codesize = 0;
+	int datasize = 0;
+};
+
 #endif

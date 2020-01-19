@@ -739,7 +739,7 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int) =
 
 // Creates new functions for the given state so as to convert MBF-args (misc1 and misc2) into real args.
 
-void SetDehParams(FState *state, int codepointer)
+static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &disasmdump)
 {
 	static const uint8_t regts[] = { REGT_POINTER, REGT_POINTER, REGT_POINTER };
 	int value1 = state->GetMisc1();
@@ -795,15 +795,8 @@ void SetDehParams(FState *state, int codepointer)
 		state->SetAction(sfunc);
 		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
 
-		if (Args->CheckParm("-dumpdisasm"))
-		{
-			FILE *dump = fopen("disasm.txt", "a");
-			if (dump != nullptr)
-			{
-				DumpFunction(dump, sfunc, sfunc->PrintableName.GetChars(), (int)sfunc->PrintableName.Len());
-			}
-			fclose(dump);
-		}
+		disasmdump.Write(sfunc, sfunc->PrintableName);
+
 #ifdef HAVE_VM_JIT
 		if (Args->CheckParm("-dumpjit"))
 		{
@@ -2651,10 +2644,12 @@ static void UnloadDehSupp ()
 {
 	if (--DehUseCount <= 0)
 	{
+		VMDisassemblyDumper disasmdump(VMDisassemblyDumper::Append);
+
 		// Handle MBF params here, before the required arrays are cleared
 		for (unsigned int i=0; i < MBFParamStates.Size(); i++)
 		{
-			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer);
+			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump);
 		}
 		MBFParamStates.Clear();
 		MBFParamStates.ShrinkToFit();

@@ -6829,7 +6829,7 @@ FxExpression *FxCVar::Resolve(FCompileContext &ctx)
 
 ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit dest(build, ValueType->GetRegType());
+	ExpEmit dest(build, CVar->GetRealType() == CVAR_String ? REGT_STRING : ValueType->GetRegType());
 	ExpEmit addr(build, REGT_POINTER);
 	int nul = build->GetConstantInt(0);
 	switch (CVar->GetRealType())

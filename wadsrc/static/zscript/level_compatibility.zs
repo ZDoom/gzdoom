@@ -319,6 +319,70 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '3B68019EE3154C284B90F0CAEDBD8D8A': // Plutonia 2 MAP05
+			{
+				// Missing texture
+				TextureID step1 = TexMan.CheckForTexture("STEP1", TexMan.Type_Wall);
+				SetWallTextureID(1525, Line.front, Side.bottom, step1);
+				break;
+			}
+
+			case 'FB613B36589FFB09AA2C03633A7D13F4': // Plutonia 2 MAP20
+			{
+				// Remove the pain elementals stuck in the closet boxes that cannot teleport.
+				SetThingFlags(758,0);
+				SetThingFlags(759,0);
+				SetThingFlags(764,0);
+				SetThingFlags(765,0);
+				break;
+			}
+
+			case 'A3165C53F9BF0B7D80CDB14665A349EB': // Plutonia 2 MAP23
+			{
+				// Arch-vile in outdoor secret area sometimes don't spawn if revenants
+				// block its one-time teleport. Make this teleport repeatable to ensure
+				// maxkills are always possible.
+				SetLineFlags(756, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+
+			case '9191658A6705B131AB005948E2FDFCE1': // Plutonia 2 MAP24
+			{
+				// Fix improperly pegged blue door
+				for(int i = 957; i <= 958; i++)
+				{
+					SetLineFlags(i, 0, Line.ML_DONTPEGTOP);
+					level.lines[i].sidedef[0].SetTextureYOffset(Side.top,-24);
+				}
+				break;
+			}
+
+			case 'EF251B8F36DE709901B0D32A97F341D7': // Plutonia 2 MAP27
+			{
+				// Remove the monsters stuck in the closet boxes that cannot teleport.
+
+				// Top row, 2nd from left
+				SetThingFlags(156,0);
+				SetThingFlags(210,0);
+				SetThingFlags(211,0);
+
+				// 2nd row, 2nd-5th from left
+				for(int i = 242; i <= 249; i++)
+					SetThingFlags(i,0);
+
+				// 3rd row, rightmost box
+				SetThingFlags(260,0);
+				SetThingFlags(261,0);
+				SetThingFlags(266,0);
+				SetThingFlags(271,0);
+				SetThingFlags(272,0);
+				SetThingFlags(277,0);
+				SetThingFlags(278,0);
+				SetThingFlags(283,0);
+
+				break;
+			}
+
 			case '4CB7AAC5C43CF32BDF05FD36481C1D9F': // Plutonia: Revisited map27
 			{
 				SetLineSpecial(1214, Plat_DownWaitUpStayLip, 20, 64, 150);
@@ -1396,6 +1460,7 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				// Wall behind start creates HOM in software renderer due to weird sector
 				OffsetSectorPlane(236, Sector.Floor, -40);
+				break;
 			}
 
 			case '1C795660D2BA9FC93DA584C593FD1DA3': // Scythe 2 MAP17

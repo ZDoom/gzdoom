@@ -140,7 +140,7 @@ class Inquisitor : Actor
 		if (target == null)
 			return;
 
-		A_StartSound ("inquisitor/jump", CHAN_ITEM, 1, true);
+		A_StartSound ("inquisitor/jump", CHAN_ITEM, CHANF_LOOPING);
 		AddZ(64);
 		A_FaceTarget ();
 		let localspeed = Speed * (2./3);

@@ -470,7 +470,8 @@ if (HAVE_VULKAN)
 endif()
 	
 set( PLAT_POSIX_SOURCES
-	posix/i_steam.cpp )
+	posix/i_steam.cpp
+	posix/i_system_posix.cpp )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c
 	posix/sdl/hardware.cpp

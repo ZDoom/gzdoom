@@ -19,46 +19,17 @@
 //-----------------------------------------------------------------------------
 //
 
-#include "i_system.h"
-
-#include <dirent.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <fnmatch.h>
-#include <unistd.h>
-
-#include <stdarg.h>
 #include <fcntl.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <SDL.h>
 
-#include "doomerrors.h"
-
-#include "doomtype.h"
-#include "doomstat.h"
+#include "d_main.h"
+#include "i_system.h"
 #include "version.h"
-#include "doomdef.h"
-#include "cmdlib.h"
-#include "m_argv.h"
-#include "m_misc.h"
-#include "i_sound.h"
 #include "x86.h"
 
-#include "d_main.h"
-#include "d_net.h"
-#include "g_game.h"
-#include "c_dispatch.h"
-
-#include "gameconfigfile.h"
-
-extern "C"
-{
-	double		SecondsPerCycle = 1e-8;
-	double		CyclesPerSecond = 1e8;
-}
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();
@@ -70,38 +41,9 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 
 double PerfToSec, PerfToMillisec;
 
-void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
-{
-}
-
-ticcmd_t emptycmd;
-ticcmd_t *I_BaseTiccmd(void)
-{
-	return &emptycmd;
-}
-
-void I_BeginRead(void)
-{
-}
-
-void I_EndRead(void)
-{
-}
-
-
-//
-// I_Init
-//
-void I_Init (void)
-{
-	CheckCPUID (&CPU);
-	DumpCPUInfo (&CPU);
-}
-
 //
 // I_Error
 //
-extern FILE *Logfile;
 
 #ifdef __APPLE__
 void Mac_I_FatalError(const char* errortext);
@@ -150,11 +92,9 @@ void I_ShowFatalError(const char *message)
 #else
 	// ???
 #endif
-	
 }
 
-	
-void I_SetIWADInfo ()
+void CalculateCPUSpeed()
 {
 }
 
@@ -281,80 +221,6 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	return i-1;
 }
 
-bool I_WriteIniFailed ()
-{
-	printf ("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));
-	return false;
-	// return true to retry
-}
-
-static const char *pattern;
-
-#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED < 1080
-static int matchfile (struct dirent *ent)
-#else
-static int matchfile (const struct dirent *ent)
-#endif
-{
-	return fnmatch (pattern, ent->d_name, FNM_NOESCAPE) == 0;
-}
-
-void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
-{
-	FString dir;
-	
-	const char *slash = strrchr (filespec, '/');
-	if (slash)
-	{
-		pattern = slash+1;
-		dir = FString(filespec, slash-filespec+1);
-	}
-	else
-	{
-		pattern = filespec;
-		dir = ".";
-	}
-
-	fileinfo->current = 0;
-	fileinfo->count = scandir (dir.GetChars(), &fileinfo->namelist,
-							   matchfile, alphasort);
-	if (fileinfo->count > 0)
-	{
-		return fileinfo;
-	}
-	return (void*)-1;
-}
-
-int I_FindNext (void *handle, findstate_t *fileinfo)
-{
-	findstate_t *state = (findstate_t *)handle;
-	if (state->current < fileinfo->count)
-	{
-		return ++state->current < fileinfo->count ? 0 : -1;
-	}
-	return -1;
-}
-
-int I_FindClose (void *handle)
-{
-	findstate_t *state = (findstate_t *)handle;
-	if (handle != (void*)-1 && state->count > 0)
-	{
-		for(int i = 0;i < state->count;++i)
-			free (state->namelist[i]);
-		state->count = 0;
-		free (state->namelist);
-		state->namelist = NULL;
-	}
-	return 0;
-}
-
-int I_FindAttr(findstate_t* const fileinfo)
-{
-	dirent* const ent = fileinfo->namelist[fileinfo->current];
-	return (ent->d_type & DT_DIR) ? FA_DIREC : 0;
-}
-
 void I_PutInClipboard (const char *str)
 {
 	SDL_SetClipboardText(str);
@@ -392,10 +258,3 @@ unsigned int I_MakeRNGSeed()
 	}
 	return seed;
 }
-
-TArray<FString> I_GetGogPaths()
-{
-	// GOG's Doom games are Windows only at the moment
-	return TArray<FString>();
-}
-

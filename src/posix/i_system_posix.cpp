@@ -19,14 +19,13 @@
 //-----------------------------------------------------------------------------
 //
 
-#include <stdio.h>
-#include <errno.h>
 #include <fnmatch.h>
 
 #ifdef __APPLE__
 #include <AvailabilityMacros.h>
 #endif // __APPLE__
 
+#include "cmdlib.h"
 #include "d_protocol.h"
 #include "i_system.h"
 #include "gameconfigfile.h"
@@ -90,6 +89,7 @@ void *I_FindFirst(const char *const filespec, findstate_t *const fileinfo)
 	{
 		pattern = slash + 1;
 		dir = FString(filespec, slash - filespec + 1);
+		fileinfo->path = dir;
 	}
 	else
 	{
@@ -142,7 +142,15 @@ int I_FindClose(void *const handle)
 int I_FindAttr(findstate_t *const fileinfo)
 {
 	dirent *const ent = fileinfo->namelist[fileinfo->current];
-	return (ent->d_type & DT_DIR) ? FA_DIREC : 0;
+	const FString path = fileinfo->path + ent->d_name;
+	bool isdir;
+
+	if (DirEntryExists(path, &isdir))
+	{
+		return isdir ? FA_DIREC : 0;
+	}
+
+	return 0;
 }
 
 

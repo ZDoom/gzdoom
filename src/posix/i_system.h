@@ -111,9 +111,10 @@ bool I_SetCursor(FTexture *);
 struct findstate_t
 {
 private:
-    int count;
+	FString path;
     struct dirent **namelist;
     int current;
+    int count;
 
 	friend void *I_FindFirst(const char *filespec, findstate_t *fileinfo);
 	friend int I_FindNext(void *handle, findstate_t *fileinfo);

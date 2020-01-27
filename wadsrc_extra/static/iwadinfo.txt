@@ -525,6 +525,19 @@ IWad
 	DeleteLumps = "M_EPI1", "M_EPI2", "M_EPISOD"
 }
 
+IWad
+{
+	Name = "DOOM 2: L'Enfer sur Terre"
+	Autoname = "doom.id.doom2.commercial.french"
+	Game = "Doom"
+	Config = "Doom"
+	IWADName = "doom2f.wad", 1
+	Mapinfo = "mapinfo/doom2.txt"
+	Compatibility = "Shorttex"
+	MustContain = "MAP01", "WIOBJ"
+	BannerColors = "ff ff ff", "a8 00 00"
+}
+
 // Doom 2 must be last to be checked because MAP01 is its only requirement
 IWad
 {
@@ -545,6 +558,7 @@ Names
 {
 	"doom_complete.pk3"
 	"doom2.wad"
+	"doom2f.wad"
 	"plutonia.wad"
 	"tnt.wad"
 	"doomu.wad"
@@ -594,6 +608,7 @@ Order	// Order in the IWAD selection box
 {
 	"DOOM: Complete: WadSmoosh"
 	"DOOM 2: Hell on Earth"
+	"DOOM 2: L'Enfer sur Terre"
 	"Final Doom: Plutonia Experiment"
 	"Final Doom: TNT - Evilution"
 	"The Ultimate DOOM"

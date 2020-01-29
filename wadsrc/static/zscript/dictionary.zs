@@ -1,4 +1,11 @@
-struct Dictionary native
+/**
+ * Dictionary provides key-value storage.
+ *
+ * Both keys and values are strings.
+ *
+ * @note keys are case-sensitive.
+ */
+class Dictionary
 {
 	native static Dictionary Create();
 
@@ -23,7 +30,15 @@ struct Dictionary native
 	native String ToString() const;
 }
 
-struct DictionaryIterator native
+/**
+ * Provides iterating over a Dictionary.
+ *
+ * Order is not specified.
+ *
+ * DictionaryIterator is not serializable. To make DictionaryIterator a class
+ * member, use `transient` keyword.
+ */
+class DictionaryIterator
 {
 	native static DictionaryIterator Create(Dictionary dict);
 

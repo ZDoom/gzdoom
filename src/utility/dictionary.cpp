@@ -3,20 +3,87 @@
 #include "scripting/vm/vm.h"
 #include "serializer.h"
 
+#include <cassert>
+
+//=====================================================================================
+//
+// DObject implementations for Dictionary and DictionaryIterator
+//
+//=====================================================================================
+
+IMPLEMENT_CLASS(Dictionary, false, false);
+
+IMPLEMENT_CLASS(DictionaryIterator, false, true);
+
+IMPLEMENT_POINTERS_START(DictionaryIterator)
+IMPLEMENT_POINTER(Dict)
+IMPLEMENT_POINTERS_END
+
+//=====================================================================================
+//
+// Dictionary functions
+//
+//=====================================================================================
+
+void Dictionary::Serialize(FSerializer &arc)
+{
+	Super::Serialize(arc);
+
+	constexpr char key[] { "dictionary" };
+
+	if (arc.isWriting())
+	{
+		// Pass this instance to serializer.
+		Dictionary *pointerToThis = this;
+		arc(key, pointerToThis);
+	}
+	else
+	{
+		// Receive new Dictionary, copy contents, clean up.
+		Dictionary *pointerToDeserializedDictionary;
+		arc(key, pointerToDeserializedDictionary);
+		TransferFrom(*pointerToDeserializedDictionary);
+		delete pointerToDeserializedDictionary;
+	}
+}
+
+static Dictionary *DictCreate()
+{
+	Dictionary *dict { Create<Dictionary>() };
+
+	return dict;
+}
+
+static void DictInsert(Dictionary *dict, const FString &key, const FString &value)
+{
+	dict->Insert(key, value);
+}
+
+static void DictAt(const Dictionary *dict, const FString &key, FString *result)
+{
+	const FString *value = dict->CheckKey(key);
+	*result = value ? *value : "";
+}
+
+static void DictToString(const Dictionary *dict, FString *result)
+{
+	*result = DictionaryToString(*dict);
+}
+
+static void DictRemove(Dictionary *dict, const FString &key)
+{
+	dict->Remove(key);
+}
+
 //=====================================================================================
 //
 // Dictionary exports
 //
 //=====================================================================================
 
-DEFINE_ACTION_FUNCTION(_Dictionary, Create)
+DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, Create, DictCreate)
 {
-	ACTION_RETURN_POINTER(new Dictionary);
-}
-
-static void DictInsert(Dictionary *dict, const FString &key, const FString &value)
-{
-	dict->Insert(key, value);
+	ACTION_RETURN_POINTER(DictCreate());
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, Insert, DictInsert)
@@ -28,12 +95,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, Insert, DictInsert)
 	return 0;
 }
 
-static void DictAt(const Dictionary *dict, const FString &key, FString *result)
-{
-	const FString *value = dict->CheckKey(key);
-	*result = value ? *value : "";
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, At, DictAt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(Dictionary);
@@ -41,11 +102,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, At, DictAt)
 	FString result;
 	DictAt(self, key, &result);
 	ACTION_RETURN_STRING(result);
-}
-
-static void DictToString(const Dictionary *dict, FString *result)
-{
-	*result = DictionaryToString(*dict);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, ToString, DictToString)
@@ -56,21 +112,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, ToString, DictToString)
 	ACTION_RETURN_STRING(result);
 }
 
-static Dictionary *DictFromString(const FString& string)
-{
-	return DictionaryFromString(string);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, FromString, DictFromString)
+DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, FromString, DictionaryFromString)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(string);
-	ACTION_RETURN_POINTER(DictFromString(string));
-}
-
-static void DictRemove(Dictionary *dict, const FString &key)
-{
-	dict->Remove(key);
+	ACTION_RETURN_POINTER(DictionaryFromString(string));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, Remove, DictRemove)
@@ -83,20 +129,64 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Dictionary, Remove, DictRemove)
 
 //=====================================================================================
 //
-// DictionaryIterator exports
+// DictionaryIterator functions
 //
 //=====================================================================================
 
-DictionaryIterator::DictionaryIterator(const Dictionary &dict)
-	: Iterator(dict)
+DictionaryIterator::DictionaryIterator()
+	: Iterator(nullptr)
 	, Pair(nullptr)
+	, Dict(nullptr)
 {
 }
 
-static DictionaryIterator *DictIteratorCreate(const Dictionary *dict)
+void DictionaryIterator::Serialize(FSerializer &arc)
 {
-	return new DictionaryIterator(*dict);
+	if (arc.isWriting())
+	{
+		I_Error("Attempt to save pointer to unhandled type DictionaryIterator");
+	}
 }
+
+void DictionaryIterator::init(Dictionary *dict)
+{
+	Iterator = std::make_unique<Dictionary::ConstIterator>(*dict);
+	Dict = dict;
+
+	GC::WriteBarrier(this, Dict);
+}
+
+static DictionaryIterator *DictIteratorCreate(Dictionary *dict)
+{
+	DictionaryIterator *iterator = Create<DictionaryIterator>();
+	iterator->init(dict);
+
+	return iterator;
+}
+
+static int DictIteratorNext(DictionaryIterator *self)
+{
+	assert(self->Iterator != nullptr);
+
+	const bool hasNext { self->Iterator->NextPair(self->Pair) };
+	return hasNext;
+}
+
+static void DictIteratorKey(const DictionaryIterator *self, FString *result)
+{
+	*result = self->Pair ? self->Pair->Key : FString {};
+}
+
+static void DictIteratorValue(const DictionaryIterator *self, FString *result)
+{
+	*result = self->Pair ? self->Pair->Value : FString {};
+}
+
+//=====================================================================================
+//
+// DictionaryIterator exports
+//
+//=====================================================================================
 
 DEFINE_ACTION_FUNCTION_NATIVE(_DictionaryIterator, Create, DictIteratorCreate)
 {
@@ -105,20 +195,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(_DictionaryIterator, Create, DictIteratorCreate)
 	ACTION_RETURN_POINTER(DictIteratorCreate(dict));
 }
 
-static int DictIteratorNext(DictionaryIterator *self)
-{
-	return self->Iterator.NextPair(self->Pair);
-}
-
 DEFINE_ACTION_FUNCTION_NATIVE(_DictionaryIterator, Next, DictIteratorNext)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(DictionaryIterator);
 	ACTION_RETURN_BOOL(DictIteratorNext(self));
-}
-
-static void DictIteratorKey(const DictionaryIterator *self, FString *result)
-{
-	*result = self->Pair ? self->Pair->Key : FString {};
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_DictionaryIterator, Key, DictIteratorKey)
@@ -127,11 +207,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(_DictionaryIterator, Key, DictIteratorKey)
 	FString result;
 	DictIteratorKey(self, &result);
 	ACTION_RETURN_STRING(result);
-}
-
-static void DictIteratorValue(const DictionaryIterator *self, FString *result)
-{
-	*result = self->Pair ? self->Pair->Value : FString {};
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_DictionaryIterator, Value, DictIteratorValue)

@@ -843,21 +843,6 @@ void InitThingdef()
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
 
-	auto dictionarystruct = NewStruct("Dictionary", nullptr, true);
-	dictionarystruct->Size = sizeof(Dictionary);
-	dictionarystruct->Align = alignof(Dictionary);
-	NewPointer(dictionarystruct, false)->InstallHandlers(
-		[](FSerializer &ar, const char *key, const void *addr)
-		{
-			ar(key, *(Dictionary **)addr);
-		},
-		[](FSerializer &ar, const char *key, void *addr)
-		{
-			Serialize<Dictionary>(ar, key, *(Dictionary **)addr, nullptr);
-			return true;
-		}
-	);
-
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
 	while (*++probe != NULL)

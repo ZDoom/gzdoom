@@ -125,9 +125,9 @@ public:
 
 	virtual void SetSfxVolume(float volume);
 	virtual void SetMusicVolume(float volume);
-	virtual std::pair<SoundHandle, bool> LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *buffer);
-	virtual std::pair<SoundHandle,bool> LoadSoundBuffered(FSoundLoadBuffer *buffer,  bool monoize);
-	virtual std::pair<SoundHandle,bool> LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1, bool monoize = false);
+	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length, FSoundLoadBuffer *buffer);
+	virtual SoundHandle LoadSoundBuffered(FSoundLoadBuffer *buffer);
+	virtual SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1);
 	virtual void UnloadSound(SoundHandle sfx);
 	virtual unsigned int GetMSLength(SoundHandle sfx);
 	virtual unsigned int GetSampleLength(SoundHandle sfx);

@@ -107,7 +107,6 @@ public:
 	virtual bool IsNull() { return false; }
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
-    // Returns a pair containing a sound handle and a boolean indicating the sound can be used in 3D.
 	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length, FSoundLoadBuffer *pBuffer = nullptr) = 0;
 	SoundHandle LoadSoundVoc(uint8_t *sfxdata, int length);
 	virtual SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1) = 0;

@@ -945,6 +945,8 @@ struct StringStruct native
 	native void DeleteLastCharacter();
 	native int CodePointCount() const;
 	native int, int GetNextCodePoint(int position) const;
+
+	native static String MD5(String bytes);
 }
 
 class SectorEffect : Thinker native

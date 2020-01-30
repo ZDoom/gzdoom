@@ -293,3 +293,41 @@ CCMD (md5sum)
 		}
 	}
 }
+
+//==========================================================================
+//
+// MD5
+//
+// Expose the MD5 hashing to ZScript
+//
+//==========================================================================
+
+#include "vm.h"
+
+static void MD5String(const FString& str, FString* result)
+{
+	MD5Context md5;
+	char hash[16];
+
+	uint8_t* buf = (uint8_t*)M_Malloc(str.Len() * sizeof(uint8_t));
+	memcpy(buf, str.GetChars(), str.Len() * sizeof(uint8_t));
+
+	md5.Update(buf, (unsigned int)str.Len());
+	md5.Final(buf);
+
+	int offset = 0;
+	for (unsigned int j = 0; j < 16; ++j)
+	{
+		offset += snprintf(hash + offset, 16, "%02x", buf[j]);
+	}
+	*result = hash;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MD5, MD5String)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(str);
+	FString result;
+	MD5String(str, &result);
+	ACTION_RETURN_STRING(result);
+}

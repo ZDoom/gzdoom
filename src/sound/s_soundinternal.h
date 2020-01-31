@@ -248,7 +248,6 @@ protected:
 	TArray<FRandomSoundList> S_rnd;
 
 private:
-	void LoadSound3D(sfxinfo_t* sfx, FSoundLoadBuffer* pBuffer);
 	void LinkChannel(FSoundChan* chan, FSoundChan** head);
 	void UnlinkChannel(FSoundChan* chan);
 	void ReturnChannel(FSoundChan* chan);

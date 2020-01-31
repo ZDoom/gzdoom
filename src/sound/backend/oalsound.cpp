@@ -1134,60 +1134,6 @@ SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, FSoundL
 	return retval;
 }
 
-SoundHandle OpenALSoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *pBuffer)
-{
-	SoundHandle retval = { NULL };
-	ALenum format = AL_NONE;
-	int srate = pBuffer->srate;
-	auto type = pBuffer->type;
-	auto chans = pBuffer->chans;
-	uint32_t loop_start = pBuffer->loop_start, loop_end = pBuffer->loop_end;
-
-	if (chans == ChannelConfig_Mono)
-	{
-		if (type == SampleType_UInt8) format = AL_FORMAT_MONO8;
-		if (type == SampleType_Int16) format = AL_FORMAT_MONO16;
-	}
-	else if (chans == ChannelConfig_Stereo)
-	{
-		if (type == SampleType_UInt8) format = AL_FORMAT_STEREO8;
-		if (type == SampleType_Int16) format = AL_FORMAT_STEREO16;
-	}
-
-	if (format == AL_NONE)
-	{
-		Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
-			GetSampleTypeName(type));
-		return retval;
-	}
-
-	auto &data = pBuffer->mBuffer;
-
-	ALenum err;
-	ALuint buffer = 0;
-	alGenBuffers(1, &buffer);
-	alBufferData(buffer, format, &data[0], (ALsizei)data.size(), srate);
-	if ((err = getALError()) != AL_NO_ERROR)
-	{
-		Printf("Failed to buffer data: %s\n", alGetString(err));
-		alDeleteBuffers(1, &buffer);
-		getALError();
-		return retval;
-	}
-
-	// the loop points were already validated by the previous load.
-	if ((loop_start > 0 || loop_end > 0) && loop_end > loop_start && AL.SOFT_loop_points)
-	{
-		ALint loops[2] = { static_cast<ALint>(loop_start), static_cast<ALint>(loop_end) };
-		DPrintf(DMSG_NOTIFY, "Setting loop points %d -> %d\n", loops[0], loops[1]);
-		alBufferiv(buffer, AL_LOOP_POINTS_SOFT, loops);
-		// no console messages here, please!
-	}
-
-	retval.data = MAKE_PTRID(buffer);
-	return retval;
-}
-
 void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)
 {
 	if(!sfx.data)

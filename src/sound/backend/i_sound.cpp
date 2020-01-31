@@ -487,10 +487,3 @@ SoundHandle SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length)
 	if (data) delete[] data;
 	return retval;
 }
-
-SoundHandle SoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *buffer)
-{
-	SoundHandle retval = { NULL };
-	return retval;
-}
-

@@ -110,7 +110,6 @@ public:
 	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length, FSoundLoadBuffer *pBuffer = nullptr) = 0;
 	SoundHandle LoadSoundVoc(uint8_t *sfxdata, int length);
 	virtual SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1) = 0;
-	virtual SoundHandle LoadSoundBuffered(FSoundLoadBuffer *buffer);
 	virtual void UnloadSound (SoundHandle sfx) = 0;	// unloads a sound from memory
 	virtual unsigned int GetMSLength(SoundHandle sfx) = 0;	// Gets the length of a sound at its default frequency
 	virtual unsigned int GetSampleLength(SoundHandle sfx) = 0;	// Gets the length of a sound at its default frequency

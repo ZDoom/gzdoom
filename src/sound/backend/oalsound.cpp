@@ -1046,7 +1046,7 @@ SoundHandle OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, int length, int 
 	return retval;
 }
 
-SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, FSoundLoadBuffer *pBuffer)
+SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length)
 {
 	SoundHandle retval = { NULL };
 	ALenum format = AL_NONE;
@@ -1122,15 +1122,6 @@ SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, FSoundL
 	}
 
 	retval.data = MAKE_PTRID(buffer);
-	if (pBuffer != nullptr)
-	{
-		pBuffer->mBuffer = std::move(data);
-		pBuffer->loop_start = loop_start;
-		pBuffer->loop_end = loop_end;
-		pBuffer->chans = chans;
-		pBuffer->type = type;
-		pBuffer->srate = srate;
-	}
 	return retval;
 }
 

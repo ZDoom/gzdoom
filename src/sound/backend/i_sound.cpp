@@ -127,7 +127,7 @@ public:
 	void SetMusicVolume (float volume)
 	{
 	}
-	SoundHandle LoadSound(uint8_t *sfxdata, int length, FSoundLoadBuffer *pBuffer)
+	SoundHandle LoadSound(uint8_t *sfxdata, int length)
 	{
 		SoundHandle retval = { NULL };
 		return retval;

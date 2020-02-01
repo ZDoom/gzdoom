@@ -274,7 +274,7 @@ public:
 	void EvictAllChannels();
 
 	void StopChannel(FSoundChan* chan);
-	sfxinfo_t* LoadSound(sfxinfo_t* sfx, FSoundLoadBuffer* pBuffer);
+	sfxinfo_t* LoadSound(sfxinfo_t* sfx);
 
 	// Initializes sound stuff, including volume
 	// Sets channels, SFX and music volume,

@@ -88,16 +88,6 @@ typedef bool (*SoundStreamCallback)(SoundStream *stream, void *buff, int len, vo
 struct SoundDecoder;
 class MIDIDevice;
 
-struct FSoundLoadBuffer
-{
-	std::vector<uint8_t> mBuffer;
-	uint32_t loop_start;
-	uint32_t loop_end;
-	ChannelConfig chans;
-	SampleType type;
-	int srate;
-};
-
 class SoundRenderer
 {
 public:
@@ -107,7 +97,7 @@ public:
 	virtual bool IsNull() { return false; }
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
-	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length, FSoundLoadBuffer *pBuffer = nullptr) = 0;
+	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length) = 0;
 	SoundHandle LoadSoundVoc(uint8_t *sfxdata, int length);
 	virtual SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1) = 0;
 	virtual void UnloadSound (SoundHandle sfx) = 0;	// unloads a sound from memory

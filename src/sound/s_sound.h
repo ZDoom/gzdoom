@@ -44,8 +44,6 @@ struct FLevelLocals;
 
 // Called after a level is loaded. Ensures that most sounds are loaded.
 
-struct FSoundLoadBuffer;
-
 // [RH] S_sfx "maintenance" routines
 void S_ClearSoundData();
 void S_ParseSndInfo (bool redefine);

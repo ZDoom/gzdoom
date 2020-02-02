@@ -1,5 +1,6 @@
 language: cpp
 dist: xenial
+os: linux
 
 branches:
   except:
@@ -8,7 +9,7 @@ branches:
 git:
   depth: 10
 
-matrix:
+jobs:
   include:
     - name: "Xcode 8"
       os: osx
@@ -33,7 +34,6 @@ matrix:
         - CMAKE_OPTIONS="-A x64"
 
     - name: "GCC 4.9"
-      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=4.9
@@ -46,7 +46,6 @@ matrix:
             - libgtk2.0-dev
 
     - name: "GCC 6"
-      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=6
@@ -61,7 +60,6 @@ matrix:
             - libgtk2.0-dev
 
     - name: "GCC 8"
-      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=8
@@ -76,7 +74,6 @@ matrix:
             - libgtk-3-dev
 
     - name: "GCC 9"
-      os: linux
       compiler: gcc
       env:
         - GCC_VERSION=9
@@ -90,7 +87,6 @@ matrix:
             - libsdl2-dev
 
     - name: "Clang 3.6"
-      os: linux
       compiler: clang
       env:
         - CLANG_VERSION=3.6

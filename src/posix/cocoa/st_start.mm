@@ -66,7 +66,6 @@ FBasicStartupScreen::FBasicStartupScreen(int maxProgress, bool showBar)
 {
 	FConsoleWindow& consoleWindow = FConsoleWindow::GetInstance();
 	consoleWindow.SetProgressBar(true);
-	consoleWindow.SetTitleText();
 
 #if 0
 	// Testing code, please do not remove

@@ -41,6 +41,10 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 
 double PerfToSec, PerfToMillisec;
 
+void I_SetIWADInfo()
+{
+}
+
 //
 // I_Error
 //

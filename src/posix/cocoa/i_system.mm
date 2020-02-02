@@ -60,6 +60,12 @@ void CalculateCPUSpeed()
 }
 
 
+void I_SetIWADInfo()
+{
+	FConsoleWindow::GetInstance().SetTitleText();
+}
+
+
 void I_DebugPrint(const char *cp)
 {
 	NSLog(@"%s", cp);

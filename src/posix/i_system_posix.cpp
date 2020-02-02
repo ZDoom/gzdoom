@@ -56,11 +56,6 @@ void I_Init()
 }
 
 
-void I_SetIWADInfo()
-{
-}
-
-
 bool I_WriteIniFailed()
 {
 	printf("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));

@@ -507,6 +507,7 @@ IWad
 	MustContain = "MAP01", "DMENUPIC"
 	BannerColors = "00 7c 00", "a8 a8 a8"
 	IgnoreTitlePatches = 1
+	Load = "nerveunity.wad"
 }
 
 IWad
@@ -521,7 +522,7 @@ IWad
 	MustContain = "MAP01", "MAP33", "CWILV32"
 	BannerColors = "18 18 18", "a8 a8 a8"
 	IgnoreTitlePatches = 1
-	Load = "NERVE.WAD"
+	Load = "nerve.wad"
 	DeleteLumps = "M_EPI1", "M_EPI2", "M_EPISOD"
 }
 

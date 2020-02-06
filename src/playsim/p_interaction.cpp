@@ -1301,7 +1301,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				int newdam = damage;
 				if (damage > 0)
 				{
-					newdam = player->mo->AbsorbDamage(damage, mod);
+					newdam = player->mo->AbsorbDamage(damage, mod, inflictor, source, flags);
 				}
 				if (!telefragDamage || (player->mo->flags7 & MF7_LAXTELEFRAGDMG)) //rawdamage is never modified.
 				{
@@ -1371,7 +1371,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		if (!(flags & (DMG_NO_ARMOR|DMG_FORCED)) && target->Inventory != NULL && damage > 0)
 		{
 			int newdam = damage;
-			newdam = target->AbsorbDamage(damage, mod);
+			newdam = target->AbsorbDamage(damage, mod, inflictor, source, flags);
 			damage = newdam;
 			if (damage <= 0)
 			{

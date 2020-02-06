@@ -675,7 +675,7 @@ public:
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
 	bool AdjustReflectionAngle (AActor *thing, DAngle &angle);
-	int AbsorbDamage(int damage, FName dmgtype);
+	int AbsorbDamage(int damage, FName dmgtype, AActor *inflictor, AActor *source, int flags);
 	void AlterWeaponSprite(visstyle_t *vis);
 
 	// Returns true if this actor is within melee range of its target

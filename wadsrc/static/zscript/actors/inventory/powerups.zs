@@ -761,7 +761,7 @@ class PowerIronFeet : Powerup
 		Powerup.Color "00 ff 00", 0.125;
 	}
 	
-	override void AbsorbDamage (int damage, Name damageType, out int newdamage)
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
 	{
 		if (damageType == 'Drowning')
 		{
@@ -795,7 +795,7 @@ class PowerMask : PowerIronFeet
 		Inventory.Icon "I_MASK";
 	}
 	
-	override void AbsorbDamage (int damage, Name damageType, out int newdamage)
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
 	{
 		if (damageType == 'Fire' || damageType == 'Drowning')
 		{

@@ -1099,7 +1099,7 @@ class Inventory : Actor
 	//
 	//===========================================================================
 
-	virtual void AbsorbDamage (int damage, Name damageType, out int newdamage) {}
+	virtual void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor = null, Actor source = null, int flags = 0) {}
 	
 	//===========================================================================
 	//

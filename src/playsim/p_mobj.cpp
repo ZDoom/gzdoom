@@ -3231,14 +3231,14 @@ bool AActor::AdjustReflectionAngle (AActor *thing, DAngle &angle)
 	return false;
 }
 
-int AActor::AbsorbDamage(int damage, FName dmgtype)
+int AActor::AbsorbDamage(int damage, FName dmgtype, AActor *inflictor, AActor *source, int flags)
 {
 	for (AActor *item = Inventory; item != nullptr; item = item->Inventory)
 	{
 		IFVIRTUALPTRNAME(item, NAME_Inventory, AbsorbDamage)
 		{
-			VMValue params[4] = { item, damage, dmgtype.GetIndex(), &damage };
-			VMCall(func, params, 4, nullptr, 0);
+			VMValue params[7] = { item, damage, dmgtype.GetIndex(), &damage, inflictor, source, flags };
+			VMCall(func, params, 7, nullptr, 0);
 		}
 	}
 	return damage;

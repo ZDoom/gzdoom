@@ -141,7 +141,7 @@ class BasicArmor : Armor
 	//
 	//===========================================================================
 
-	override void AbsorbDamage (int damage, Name damageType, out int newdamage)
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
 	{
 		int saved;
 
@@ -552,7 +552,7 @@ class HexenArmor : Armor
 	//
 	//===========================================================================
 
-	override void AbsorbDamage (int damage, Name damageType, out int newdamage)
+	override void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor, Actor source, int flags)
 	{
 		if (!DamageTypeDefinition.IgnoreArmor(damageType))
 		{

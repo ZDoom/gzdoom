@@ -13,13 +13,19 @@
  *
  * It is derived from DObject to be a part of normal GC process.
  */
-class Dictionary final : public DObject, public TMap<FString, FString>
+class Dictionary final : public DObject
 {
 	DECLARE_CLASS(Dictionary, DObject)
 
 public:
 
+	using StringMap = TMap<FString, FString>;
+	using ConstIterator = StringMap::ConstIterator;
+	using ConstPair = StringMap::ConstPair;
+
 	void Serialize(FSerializer &arc) override;
+
+	StringMap Map;
 };
 
 /**
@@ -45,7 +51,7 @@ public:
 	 */
 	DictionaryIterator();
 
-    void Serialize(FSerializer &arc) override;
+	void Serialize(FSerializer &arc) override;
 
 	/**
 	 * @brief init function complements constructor.

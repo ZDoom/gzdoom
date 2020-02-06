@@ -42,7 +42,7 @@ void Dictionary::Serialize(FSerializer &arc)
 		// Receive new Dictionary, copy contents, clean up.
 		Dictionary *pointerToDeserializedDictionary;
 		arc(key, pointerToDeserializedDictionary);
-		TransferFrom(*pointerToDeserializedDictionary);
+		Map.TransferFrom(pointerToDeserializedDictionary->Map);
 		delete pointerToDeserializedDictionary;
 	}
 }
@@ -56,12 +56,12 @@ static Dictionary *DictCreate()
 
 static void DictInsert(Dictionary *dict, const FString &key, const FString &value)
 {
-	dict->Insert(key, value);
+	dict->Map.Insert(key, value);
 }
 
 static void DictAt(const Dictionary *dict, const FString &key, FString *result)
 {
-	const FString *value = dict->CheckKey(key);
+	const FString *value = dict->Map.CheckKey(key);
 	*result = value ? *value : "";
 }
 
@@ -72,7 +72,7 @@ static void DictToString(const Dictionary *dict, FString *result)
 
 static void DictRemove(Dictionary *dict, const FString &key)
 {
-	dict->Remove(key);
+	dict->Map.Remove(key);
 }
 
 //=====================================================================================
@@ -150,7 +150,7 @@ void DictionaryIterator::Serialize(FSerializer &arc)
 
 void DictionaryIterator::init(Dictionary *dict)
 {
-	Iterator = std::make_unique<Dictionary::ConstIterator>(*dict);
+	Iterator = std::make_unique<Dictionary::ConstIterator>(dict->Map);
 	Dict = dict;
 
 	GC::WriteBarrier(this, Dict);

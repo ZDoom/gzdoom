@@ -1769,7 +1769,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 
  static void SetWallColorization(side_t* self, int pos, int cname)
  {
-	 if (pos >= 0 && pos < 2)
+	 if (pos >= 0 && pos < 3)
 	 {
 		 self->SetTextureFx(pos, TexMan.GetTextureManipulation(ENamedName(cname)));
 	 }

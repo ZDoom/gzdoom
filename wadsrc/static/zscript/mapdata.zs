@@ -32,7 +32,7 @@ struct SectorPortal native play
 struct Vertex native play
 {
 	native readonly Vector2 p;
-	native int Index();
+	native clearscope int Index();
 }
 
 struct Side native play
@@ -94,7 +94,7 @@ struct Side native play
 	native clearscope Vertex V1();
 	native clearscope Vertex V2();
 
-	native int Index();
+	native clearscope int Index();
 	
 	int GetUDMFInt(Name nm)
 	{
@@ -175,7 +175,7 @@ struct Line native play
 	native bool isVisualPortal();
 	native Line getPortalDestination();
 	native int getPortalAlignment();
-	native int Index();
+	native clearscope int Index();
 	native bool Activate(Actor activator, int side, int type);
 	native bool RemoteActivate(Actor activator, int side, int type, Vector3 pos);
 	
@@ -412,7 +412,7 @@ struct Sector native play
 
 	native readonly int			sectornum;
 
-	native int Index();
+	native clearscope int Index();
 
 	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
 	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);

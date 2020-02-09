@@ -14,6 +14,12 @@ include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
 
+if( MSVC )
+	find_package( ZMusic )
+else()
+	find_package( ZMusic REQUIRED )
+endif()
+
 if( MSVC AND NOT ZMUSIC_FOUND )
 	# Use prebuilt library
 	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )

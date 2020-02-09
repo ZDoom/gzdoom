@@ -1054,7 +1054,7 @@ SoundHandle OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length)
 	SampleType type;
 	int srate;
 	uint32_t loop_start = 0, loop_end = ~0u;
-	bool startass = false, endass = false;
+	zmusic_bool startass = false, endass = false;
 
 	FindLoopTags(sfxdata, length, &loop_start, &startass, &loop_end, &endass);
 	auto decoder = CreateDecoder(sfxdata, length, true);

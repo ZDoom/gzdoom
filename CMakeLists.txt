@@ -194,13 +194,6 @@ endif()
 #	find_package( asmjit )
 #endif()
 
-# GME
-#find_path( GME_INCLUDE_DIR gme/gme.h )
-#find_library( GME_LIBRARIES gme )
-#mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
-#FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
-#	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
-#)
 
 if( MSVC )
 	# Eliminate unreferenced functions and data
@@ -324,8 +317,6 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
-option(FORCE_INTERNAL_GME "Use internal gme" ON)
-mark_as_advanced( FORCE_INTERNAL_GME )
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
@@ -392,26 +383,8 @@ else()
 	set( BZIP2_LIBRARY bz2 )
 endif()
 
-if( GME_FOUND AND NOT FORCE_INTERNAL_GME )
-	message( STATUS "Using system gme library, includes found at ${GME_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal gme library" )
-	# Use MAME as it's balanced emulator: well-accurate, but doesn't eats lot of CPU
-	# Nuked OPN2 is very accurate emulator, but it eats too much CPU for the workflow
-	set( GME_YM2612_EMU "MAME" )
-	add_subdirectory( libraries/game-music-emu )
-	set( GME_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/game-music-emu" )
-	set( GME_LIBRARIES gme )
-endif()
 
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/lzma/C" )
-set( ADL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/adlmidi" )
-set( OPN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/opnmidi" )
-set( TIMIDITYPP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/timidityplus" )
-set( TIMIDITY_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/timidity" )
-set( WILDMIDI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/wildmidi" )
-set( OPLSYNTH_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/oplsynth" )
-set( ZMUSIC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/zmusic" )
 
 if( NOT CMAKE_CROSSCOMPILING )
 	if( NOT CROSS_EXPORTS )
@@ -429,22 +402,11 @@ install(DIRECTORY docs/
 		DESTINATION ${INSTALL_DOCS_PATH}
 		COMPONENT "Documentation")
 
-option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
 option( DYN_OPENAL "Dynamically load OpenAL" ON )
-option( DYN_SNDFILE "Dynamically load libsndfile" ON )
-option( DYN_MPG123 "Dynamically load libmpg123" ON )
 
 add_subdirectory( libraries/lzma )
 add_subdirectory( tools )
-add_subdirectory( libraries/dumb )
 add_subdirectory( libraries/gdtoa )
-add_subdirectory( libraries/adlmidi )
-add_subdirectory( libraries/opnmidi )
-add_subdirectory( libraries/timidity )
-add_subdirectory( libraries/timidityplus )
-add_subdirectory( libraries/wildmidi )
-add_subdirectory( libraries/oplsynth )
-add_subdirectory( libraries/zmusic )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )

@@ -50,7 +50,7 @@
 #include "gstrings.h"
 #include "teaminfo.h"
 #include "r_data/sprites.h"
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 
 
 void ClearSaveGames();
@@ -1464,15 +1464,12 @@ static void InitMusicMenus()
 
 	if (menu != nullptr)
 	{
-		int adl_banks_count = adl_getBanksCount();
-		if (adl_banks_count > 0)
+		const char* const* adl_bank_names;
+		int adl_banks_count = ZMusic_GetADLBanks(&adl_bank_names);
+		for (int i=0; i < adl_banks_count; i++)
 		{
-			const char *const *adl_bank_names = adl_getBankNames();
-			for (int i=0; i < adl_banks_count; i++)
-			{
-				auto it = CreateOptionMenuItemCommand(adl_bank_names[i], FStringf("adl_bank %d", i), true);
-				static_cast<DOptionMenuDescriptor*>(*menu)->mItems.Push(it);
-			}
+			auto it = CreateOptionMenuItemCommand(adl_bank_names[i], FStringf("adl_bank %d", i), true);
+			static_cast<DOptionMenuDescriptor*>(*menu)->mItems.Push(it);
 		}
 	}
 }

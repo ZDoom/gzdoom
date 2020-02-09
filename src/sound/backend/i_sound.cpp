@@ -46,7 +46,7 @@
 #include "v_text.h"
 #include "c_cvars.h"
 #include "stats.h"
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 
 
 EXTERN_CVAR (Float, snd_sfxvolume)

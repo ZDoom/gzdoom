@@ -39,7 +39,7 @@
 
 #include <zlib.h>
 
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 #include "m_argv.h"
 #include "w_wad.h"
 #include "c_dispatch.h"
@@ -68,7 +68,6 @@ int		nomusic = 0;
 
 #ifdef _WIN32
 
-#include "musicformats/win32/i_cd.h"
 //==========================================================================
 //
 // CVAR: cd_drive
@@ -143,49 +142,25 @@ CUSTOM_CVAR (Float, snd_musicvolume, 0.5f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-static void tim_printfunc(int type, int verbosity_level, const char* fmt, ...)
+static void zmusic_printfunc(int severity, const char* msg)
 {
-	if (verbosity_level >= 3/*Timidity::VERB_DEBUG*/) return;	// Don't waste time on diagnostics.
-
-	va_list args;
-	va_start(args, fmt);
-	FString msg;
-	msg.VFormat(fmt, args);
-	va_end(args);
-
-	switch (type)
+	if (severity >= ZMUSIC_MSG_FATAL)
 	{
-	case 2:// Timidity::CMSG_ERROR:
-		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
-		break;
-
-	case 1://Timidity::CMSG_WARNING:
-		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
-		break;
-
-	case 0://Timidity::CMSG_INFO:
-		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
-		break;
+		I_FatalError("%s", msg);
+	}
+	else if (severity >= ZMUSIC_MSG_ERROR)
+	{
+		Printf(TEXTCOLOR_RED "%s\n", msg);
+	}
+	else if (severity >= ZMUSIC_MSG_WARNING)
+	{
+		Printf(TEXTCOLOR_YELLOW "%s\n", msg);
+	}
+	else if (severity >= ZMUSIC_MSG_NOTIFY)
+	{
+		DPrintf(DMSG_SPAMMY, "%s\n", msg);
 	}
 }
-
-static int alsa_printfunc(const char* fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	FString msg;
-	msg.VFormat(fmt, args);
-	va_end(args);
-
-	return Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
-}
-
-static void wm_printfunc(const char* wmfmt, va_list args)
-{
-	Printf(TEXTCOLOR_RED);
-	VPrintf(PRINT_HIGH, wmfmt, args);
-}
-
 
 static FString strv;
 static const char *mus_NicePath(const char* str)
@@ -285,12 +260,9 @@ void I_InitMusic (void)
 
 	snd_mididevice.Callback();
 	
-	Callbacks callbacks{};
+	ZMusicCallbacks callbacks{};
 
-	callbacks.Fluid_MessageFunc = Printf;
-	callbacks.Alsa_MessageFunc = alsa_printfunc;
-	callbacks.GUS_MessageFunc = callbacks.Timidity_Messagefunc = tim_printfunc;
-	callbacks.WildMidi_MessageFunc = wm_printfunc;
+	callbacks.MessageFunc = zmusic_printfunc;
 	callbacks.NicePath = mus_NicePath;
 	callbacks.PathForSoundfont = mus_pathToSoundFont;
 	callbacks.OpenSoundFont = mus_openSoundFont;

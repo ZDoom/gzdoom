@@ -38,7 +38,7 @@
 #include <string>
 #include "c_cvars.h"
 #include "s_music.h"
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 
 //==========================================================================
 //
@@ -377,9 +377,9 @@ CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 	FORWARD_CVAR(timidity_tempo_adjust);
 }
 
-CUSTOM_CVAR(Float, min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
+CUSTOM_CVAR(Float, timidity_min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
-	FORWARD_CVAR(min_sustain_time);
+	FORWARD_CVAR(timidity_min_sustain_time);
 }
 
 CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)

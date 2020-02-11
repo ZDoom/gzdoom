@@ -125,20 +125,39 @@ before_install:
   - $CC --version
   - $CXX --version
 
-script:
-  - echo ${TRAVIS_BUILD_DIR}
+before_script:
   - mkdir build
   - cd build
-  - >
-    cmake ${CMAKE_OPTIONS}       \
-      -DFORCE_INTERNAL_ZLIB=YES  \
-      -DFORCE_INTERNAL_JPEG=YES  \
-      -DFORCE_INTERNAL_BZIP2=YES \
-      -DFORCE_INTERNAL_GME=YES   \
-      -DPK3_QUIET_ZIPDIR=YES     \
+  - git clone https://github.com/coelckers/ZMusic.git
+  - cd ZMusic
+  - git checkout 1.0.0
+  - cd ..
+  - mkdir zmusic_build
+  - cd zmusic_build
+  - cmake ${CMAKE_OPTIONS} -DCMAKE_INSTALL_PREFIX=`pwd`/../zmusic_install ../ZMusic
+  - |
+    if [[ $TRAVIS_OS_NAME == 'windows' ]]; then
+      cmake --build . --target install --config Release -- -maxcpucount -verbosity:minimal
+    else
+      cmake --build . --target install -- --jobs=2 --keep-going
+    fi
+  - cd ..
+
+script:
+  - |
+    cmake ${CMAKE_OPTIONS}                     \
+      -DCMAKE_PREFIX_PATH=`pwd`/zmusic_install \
+      -DFORCE_INTERNAL_ZLIB=YES                \
+      -DFORCE_INTERNAL_JPEG=YES                \
+      -DFORCE_INTERNAL_BZIP2=YES               \
+      -DPK3_QUIET_ZIPDIR=YES                   \
       ..
-  - if [[ $TRAVIS_OS_NAME == 'windows' ]]; then cmake --build . --config Release -- -maxcpucount -verbosity:minimal; fi
-  - if [[ $TRAVIS_OS_NAME != 'windows' ]]; then cmake --build . -- --jobs=2 --keep-going; fi
+  - |
+    if [[ $TRAVIS_OS_NAME == 'windows' ]]; then
+      cmake --build . --config Release -- -maxcpucount -verbosity:minimal
+    else
+      cmake --build . -- --jobs=2 --keep-going
+    fi
 
 notifications:
   email: false

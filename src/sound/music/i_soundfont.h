@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"

@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <time.h>
 #include "zstring.h"
 
 #if !defined(GUID_DEFINED)

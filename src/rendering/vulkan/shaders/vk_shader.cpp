@@ -25,7 +25,7 @@
 #include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "w_wad.h"
 #include "doomerrors.h"
-#include <ShaderLang.h>
+#include <glslang/Public/ShaderLang.h>
 
 VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
 {

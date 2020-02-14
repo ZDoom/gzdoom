@@ -12,7 +12,6 @@ include( CheckCXXCompilerFlag )
 include( CheckIncludeFile )
 include( CheckIncludeFiles )
 include( CheckLibraryExists )
-include( FindPkgConfig )
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
@@ -432,11 +431,24 @@ add_custom_target( revision_check ALL
 
 # Libraries ZDoom needs
 
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" )
-if (HAVE_VULKAN)
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
-endif()
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" )
+set(ZDOOM_LIBS ${ZDOOM_LIBS}
+	"${ZLIB_LIBRARIES}"
+	"${JPEG_LIBRARIES}"
+	"${BZIP2_LIBRARIES}"
+	"${GME_LIBRARIES}"
+	"${GLSLANG_LIBRARIES}"
+	"${SPIRV_LIBRARIES}"
+	"${CMAKE_DL_LIBS}"
+)
+include_directories(
+	"${ZLIB_INCLUDE_DIR}"
+	"${BZIP2_INCLUDE_DIR}"
+	"${LZMA_INCLUDE_DIR}"
+	"${JPEG_INCLUDE_DIR}"
+	"${ZMUSIC_INCLUDE_DIR}"
+	"${GLSLANG_INCLUDEDIR}"
+	"${SPIRV_INCLUDEDIR}"
+)
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
@@ -1236,8 +1248,6 @@ include_directories( .
 	rendering
 	rendering/vulkan/thirdparty
 	../libraries/gdtoa
-	../libraries/glslang/glslang/Public
-	../libraries/glslang/spirv
 	${CMAKE_BINARY_DIR}/libraries/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 

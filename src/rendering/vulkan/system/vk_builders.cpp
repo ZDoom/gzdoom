@@ -23,8 +23,8 @@
 #include "vk_builders.h"
 #include "doomerrors.h"
 #include "r_data/renderstyle.h"
-#include <ShaderLang.h>
-#include <GlslangToSpv.h>
+#include <glslang/Public/ShaderLang.h>
+#include <SPIRV/GlslangToSpv.h>
 
 static const TBuiltInResource DefaultTBuiltInResource = {
 	/* .MaxLights = */ 32,

@@ -178,6 +178,10 @@ find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
 
+include( FindPkgConfig )
+pkg_check_modules( GLSLANG glslang )
+pkg_check_modules( SPIRV spirv )
+
 include( TargetArch )
 
 target_architecture(ZDOOM_TARGET_ARCH)
@@ -324,15 +328,29 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
+option(FORCE_INTERNAL_GLSLANG "Use internal glslang")
 option(FORCE_INTERNAL_GME "Use internal gme" ON)
 mark_as_advanced( FORCE_INTERNAL_GME )
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
 if (HAVE_VULKAN)
-	add_subdirectory( libraries/glslang/glslang)
-	add_subdirectory( libraries/glslang/spirv )
-	add_subdirectory( libraries/glslang/OGLCompilersDLL )
+	if ( GLSLANG_FOUND AND SPIRV_FOUND AND NOT FORCE_INTERNAL_GLSLANG )
+		message( STATUS "Using system glslang, includes found at ${GLSLANG_INCLUDEDIR}" )
+	else()
+		message( STATUS "Using internal glslang" )
+		add_subdirectory( libraries/glslang/glslang)
+		add_subdirectory( libraries/glslang/spirv )
+		add_subdirectory( libraries/glslang/OGLCompilersDLL )
+		set ( GLSLANG_INCLUDEDIR
+			${CMAKE_CURRENT_SOURCE_DIR}/libraries/glslang/
+		)
+		set( GLSLANG_LIBRARIES "glslang" "OGLCompiler" )
+		set( SPIRV_INCLUDEDIR
+			${CMAKE_CURRENT_SOURCE_DIR}/libraries/glslang/
+		)
+		set( SPIRV_LIBRARIES "SPIRV" )
+	endif()
 endif()
 
 if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )

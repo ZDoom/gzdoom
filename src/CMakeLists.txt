@@ -539,7 +539,7 @@ if( HAVE_MMX )
 			gamedata/textures/hires/hqnx_asm/hq2x_asm.cpp
 			gamedata/textures/hires/hqnx_asm/hq3x_asm.cpp
 			gamedata/textures/hires/hqnx_asm/hq4x_asm.cpp
-			gamedata/textures/hires/gl_hqresize.cpp
+			gamedata/textures/hires/hqresize.cpp
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )

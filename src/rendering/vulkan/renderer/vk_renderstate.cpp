@@ -228,7 +228,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.StencilPassOp = mStencilOp;
 	pipelineKey.ColorMask = mColorMask;
 	pipelineKey.CullMode = mCullMode;
-	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 0;
+	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 1; // Always force minimum 1 texture as the shader requires it
 	if (mSpecialEffect > EFF_NONE)
 	{
 		pipelineKey.SpecialEffect = mSpecialEffect;
@@ -423,16 +423,15 @@ void VkRenderState::ApplyVertexBuffers()
 
 void VkRenderState::ApplyMaterial()
 {
-	if (mMaterial.mChanged && mMaterial.mMaterial)
+	if (mMaterial.mChanged)
 	{
-		auto base = static_cast<VkHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation));
-		if (base)
-		{
-			auto fb = GetVulkanFrameBuffer();
-			auto passManager = fb->GetRenderPassManager();
-			mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, base->GetDescriptorSet(mMaterial));
-		}
+		auto fb = GetVulkanFrameBuffer();
+		auto passManager = fb->GetRenderPassManager();
 
+		VkHardwareTexture* base = mMaterial.mMaterial ? static_cast<VkHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation)) : nullptr;
+		VulkanDescriptorSet* descriptorset = base ? base->GetDescriptorSet(mMaterial) : passManager->GetNullTextureDescriptorSet();
+
+		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptorset);
 		mMaterial.mChanged = false;
 	}
 }

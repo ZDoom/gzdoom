@@ -249,6 +249,11 @@ void VulkanSwapChain::CreateViews()
 	}
 }
 
+bool VulkanSwapChain::IsHdrModeActive() const
+{
+	return swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT || swapChainFormat.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT;
+}
+
 void VulkanSwapChain::SelectFormat()
 {
 	std::vector<VkSurfaceFormatKHR> surfaceFormats = GetSurfaceFormats();
@@ -264,6 +269,16 @@ void VulkanSwapChain::SelectFormat()
 
 	if (vk_hdr)
 	{
+		for (const auto& format : surfaceFormats)
+		{
+			if (format.format == VK_FORMAT_R16G16B16A16_SFLOAT && format.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT)
+			{
+				swapChainFormat = format;
+				return;
+			}
+		}
+
+		// For older drivers that reported the wrong colorspace
 		for (const auto &format : surfaceFormats)
 		{
 			if (format.format == VK_FORMAT_R16G16B16A16_SFLOAT && format.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
@@ -310,33 +325,6 @@ void VulkanSwapChain::SelectPresentMode()
 		else if (supportsImmediate)
 			swapChainPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 	}
-}
-
-void VulkanSwapChain::SetHdrMetadata()
-{
-	if (swapChainFormat.colorSpace != VK_COLOR_SPACE_HDR10_ST2084_EXT)
-		return;
-
-	// Mastering display with HDR10_ST2084 color primaries and D65 white point,
-	// maximum luminance of 1000 nits and minimum luminance of 0.001 nits;
-	// content has maximum luminance of 2000 nits and maximum frame average light level (MaxFALL) of 500 nits.
-
-	VkHdrMetadataEXT metadata = {};
-	metadata.sType = VK_STRUCTURE_TYPE_HDR_METADATA_EXT;
-	metadata.displayPrimaryRed.x = 0.708f;
-	metadata.displayPrimaryRed.y = 0.292f;
-	metadata.displayPrimaryGreen.x = 0.170f;
-	metadata.displayPrimaryGreen.y = 0.797f;
-	metadata.displayPrimaryBlue.x = 0.131f;
-	metadata.displayPrimaryBlue.y = 0.046f;
-	metadata.whitePoint.x = 0.3127f;
-	metadata.whitePoint.y = 0.3290f;
-	metadata.maxLuminance = 1000.0f;
-	metadata.minLuminance = 0.001f;
-	metadata.maxContentLightLevel = 2000.0f;
-	metadata.maxFrameAverageLightLevel = 500.0f;
-
-	vkSetHdrMetadataEXT(device->device, 1, &swapChain, &metadata);
 }
 
 void VulkanSwapChain::GetImages()

@@ -220,7 +220,7 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 		uniforms.Offset = { 0.0f, 1.0f };
 	}
 
-	if (applyGamma && fb->swapChain->swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT && !screenshot)
+	if (applyGamma && fb->swapChain->IsHdrModeActive() && !screenshot)
 	{
 		uniforms.HdrMode = 1;
 	}

@@ -61,6 +61,15 @@
 
 namespace spv {
 
+typedef enum {
+    Spv_1_0 = (1 << 16),
+    Spv_1_1 = (1 << 16) | (1 << 8),
+    Spv_1_2 = (1 << 16) | (2 << 8),
+    Spv_1_3 = (1 << 16) | (3 << 8),
+    Spv_1_4 = (1 << 16) | (4 << 8),
+    Spv_1_5 = (1 << 16) | (5 << 8),
+} SpvVersion;
+
 class Builder {
 public:
     Builder(unsigned int spvVersion, unsigned int userNumber, SpvBuildLogger* logger);
@@ -97,6 +106,20 @@ public:
     void addModuleProcessed(const std::string& p) { moduleProcesses.push_back(p.c_str()); }
     void setEmitOpLines() { emitOpLines = true; }
     void addExtension(const char* ext) { extensions.insert(ext); }
+    void removeExtension(const char* ext)
+    {
+        extensions.erase(ext);
+    }
+    void addIncorporatedExtension(const char* ext, SpvVersion incorporatedVersion)
+    {
+        if (getSpvVersion() < static_cast<unsigned>(incorporatedVersion))
+            addExtension(ext);
+    }
+    void promoteIncorporatedExtension(const char* baseExt, const char* promoExt, SpvVersion incorporatedVersion)
+    {
+        removeExtension(baseExt);
+        addIncorporatedExtension(promoExt, incorporatedVersion);
+    }
     void addInclude(const std::string& name, const std::string& text)
     {
         spv::Id incId = getStringId(name);
@@ -155,6 +178,7 @@ public:
     Id makeImageType(Id sampledType, Dim, bool depth, bool arrayed, bool ms, unsigned sampled, ImageFormat format);
     Id makeSamplerType();
     Id makeSampledImageType(Id imageType);
+    Id makeCooperativeMatrixType(Id component, Id scope, Id rows, Id cols);
 
     // accelerationStructureNV type
     Id makeAccelerationStructureNVType();
@@ -178,6 +202,7 @@ public:
     bool isScalar(Id resultId)       const { return isScalarType(getTypeId(resultId)); }
     bool isVector(Id resultId)       const { return isVectorType(getTypeId(resultId)); }
     bool isMatrix(Id resultId)       const { return isMatrixType(getTypeId(resultId)); }
+    bool isCooperativeMatrix(Id resultId)const { return isCooperativeMatrixType(getTypeId(resultId)); }
     bool isAggregate(Id resultId)    const { return isAggregateType(getTypeId(resultId)); }
     bool isSampledImage(Id resultId) const { return isSampledImageType(getTypeId(resultId)); }
 
@@ -191,7 +216,12 @@ public:
     bool isMatrixType(Id typeId)       const { return getTypeClass(typeId) == OpTypeMatrix; }
     bool isStructType(Id typeId)       const { return getTypeClass(typeId) == OpTypeStruct; }
     bool isArrayType(Id typeId)        const { return getTypeClass(typeId) == OpTypeArray; }
-    bool isAggregateType(Id typeId)    const { return isArrayType(typeId) || isStructType(typeId); }
+#ifdef GLSLANG_WEB
+    bool isCooperativeMatrixType(Id typeId)const { return false; }
+#else
+    bool isCooperativeMatrixType(Id typeId)const { return getTypeClass(typeId) == OpTypeCooperativeMatrixNV; }
+#endif
+    bool isAggregateType(Id typeId)    const { return isArrayType(typeId) || isStructType(typeId) || isCooperativeMatrixType(typeId); }
     bool isImageType(Id typeId)        const { return getTypeClass(typeId) == OpTypeImage; }
     bool isSamplerType(Id typeId)      const { return getTypeClass(typeId) == OpTypeSampler; }
     bool isSampledImageType(Id typeId) const { return getTypeClass(typeId) == OpTypeSampledImage; }
@@ -297,7 +327,7 @@ public:
     void makeDiscard();
 
     // Create a global or function local or IO variable.
-    Id createVariable(StorageClass, Id type, const char* name = 0);
+    Id createVariable(StorageClass, Id type, const char* name = 0, Id initializer = NoResult);
 
     // Create an intermediate with an undefined value.
     Id createUndefined(Id type);
@@ -313,6 +343,9 @@ public:
 
     // Create an OpArrayLength instruction
     Id createArrayLength(Id base, unsigned int member);
+
+    // Create an OpCooperativeMatrixLengthNV instruction
+    Id createCooperativeMatrixLength(Id type);
 
     // Create an OpCompositeExtract instruction
     Id createCompositeExtract(Id composite, Id typeId, unsigned index);
@@ -402,7 +435,8 @@ public:
     };
 
     // Select the correct texture operation based on all inputs, and emit the correct instruction
-    Id createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather, bool noImplicit, const TextureParameters&);
+    Id createTextureCall(Decoration precision, Id resultType, bool sparse, bool fetch, bool proj, bool gather,
+        bool noImplicit, const TextureParameters&, ImageOperandsMask);
 
     // Emit the OpTextureQuery* instruction that was passed in.
     // Figure out the right return value and type, and return it.
@@ -493,7 +527,7 @@ public:
     // Add a branch to the continue_target of the current (innermost) loop.
     void createLoopContinue();
 
-    // Add an exit(e.g. "break") from the innermost loop that we're currently
+    // Add an exit (e.g. "break") from the innermost loop that we're currently
     // in.
     void createLoopExit();
 
@@ -542,6 +576,14 @@ public:
 
         // Accumulate whether anything in the chain of structures has coherent decorations.
         struct CoherentFlags {
+            CoherentFlags() { clear(); }
+#ifdef GLSLANG_WEB
+            void clear() { }
+            bool isVolatile() const { return false; }
+            CoherentFlags operator |=(const CoherentFlags &other) { return *this; }
+#else
+            bool isVolatile() const { return volatil; }
+
             unsigned coherent : 1;
             unsigned devicecoherent : 1;
             unsigned queuefamilycoherent : 1;
@@ -562,7 +604,6 @@ public:
                 isImage = 0;
             }
 
-            CoherentFlags() { clear(); }
             CoherentFlags operator |=(const CoherentFlags &other) {
                 coherent |= other.coherent;
                 devicecoherent |= other.devicecoherent;
@@ -574,6 +615,7 @@ public:
                 isImage |= other.isImage;
                 return *this;
             }
+#endif
         };
         CoherentFlags coherentFlags;
     };
@@ -641,22 +683,27 @@ public:
     // based on the type of the base and the chain of dereferences.
     Id accessChainGetInferredType();
 
-    // Add capabilities, extensions, remove unneeded decorations, etc., 
+    // Add capabilities, extensions, remove unneeded decorations, etc.,
     // based on the resulting SPIR-V.
     void postProcess();
 
+    // Prune unreachable blocks in the CFG and remove unneeded decorations.
+    void postProcessCFG();
+
+#ifndef GLSLANG_WEB
+    // Add capabilities, extensions based on instructions in the module.
+    void postProcessFeatures();
     // Hook to visit each instruction in a block in a function
     void postProcess(Instruction&);
-    // Hook to visit each instruction in a reachable block in a function.
-    void postProcessReachable(const Instruction&);
     // Hook to visit each non-32-bit sized float/int operation in a block.
     void postProcessType(const Instruction&, spv::Id typeId);
+#endif
 
     void dump(std::vector<unsigned int>&) const;
 
     void createBranch(Block* block);
     void createConditionalBranch(Id condition, Block* thenBlock, Block* elseBlock);
-    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control, unsigned int dependencyLength);
+    void createLoopMerge(Block* mergeBlock, Block* continueBlock, unsigned int control, const std::vector<unsigned int>& operands);
 
     // Sets to generate opcode for specialization constants.
     void setToSpecConstCodeGenMode() { generatingOpCodeForSpecConst = true; }
@@ -670,7 +717,7 @@ public:
     Id makeInt64Constant(Id typeId, unsigned long long value, bool specConstant);
     Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned value);
     Id findScalarConstant(Op typeClass, Op opcode, Id typeId, unsigned v1, unsigned v2);
-    Id findCompositeConstant(Op typeClass, const std::vector<Id>& comps);
+    Id findCompositeConstant(Op typeClass, Id typeId, const std::vector<Id>& comps);
     Id findStructConstant(Id typeId, const std::vector<Id>& comps);
     Id collapseAccessChain();
     void remapDynamicSwizzle();

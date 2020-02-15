@@ -100,8 +100,6 @@ FString ZCCCompiler::StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls
 
 ZCC_MixinDef *ZCCCompiler::ResolveMixinStmt(ZCC_MixinStmt *mixinStmt, EZCCMixinType type)
 {
-	ZCC_MixinDef *mixinDef = nullptr;
-
 	for (auto mx : Mixins)
 	{
 		if (mx->mixin->NodeName == mixinStmt->MixinName)
@@ -109,18 +107,16 @@ ZCC_MixinDef *ZCCCompiler::ResolveMixinStmt(ZCC_MixinStmt *mixinStmt, EZCCMixinT
 			if (mx->mixin->MixinType != type)
 			{
 				Error(mixinStmt, "Mixin %s is a %s mixin cannot be used here.", FName(mixinStmt->MixinName).GetChars(), GetMixinTypeString(type));
+				return nullptr;
 			}
 
 			return mx->mixin;
 		}
 	}
 
-	if (mixinDef == nullptr)
-	{
-		Error(mixinStmt, "Mixin %s does not exist.", FName(mixinStmt->MixinName).GetChars());
-	}
+	Error(mixinStmt, "Mixin %s does not exist.", FName(mixinStmt->MixinName).GetChars());
 
-	return mixinDef;
+	return nullptr;
 }
 
 
@@ -163,6 +159,7 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 	// [pbeta] Handle mixins here for the sake of simplifying things.
 	if (node != nullptr)
 	{
+		bool mixinError = false;
 		TArray<ZCC_MixinStmt *> mixinStmts;
 		mixinStmts.Clear();
 
@@ -181,6 +178,12 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 		for (auto mixinStmt : mixinStmts)
 		{
 			ZCC_MixinDef *mixinDef = ResolveMixinStmt(mixinStmt, ZCC_Mixin_Class);
+
+			if (mixinDef == nullptr)
+			{
+				mixinError = true;
+				continue;
+			}
 
 			// Insert the mixin if there's a body. If not, just remove this node.
 			if (mixinDef->Body != nullptr)
@@ -230,6 +233,11 @@ void ZCCCompiler::ProcessClass(ZCC_Class *cnode, PSymbolTreeNode *treenode)
 		}
 
 		mixinStmts.Clear();
+
+		if (mixinError)
+		{
+			return;
+		}
 	}
 
 	node = cnode->Body;

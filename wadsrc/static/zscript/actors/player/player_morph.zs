@@ -138,6 +138,11 @@ extend class PlayerPawn
 		}
 
 		let morphed = PlayerPawn(Spawn (spawntype, Pos, NO_REPLACE));
+
+		// Use GetClass in the event someone actually allows replacements.
+		PreMorph(morphed.GetClass());
+		morphed.PreMorph(GetClass());
+
 		EndAllPowerupEffects();
 		Substitute(morphed);
 		if ((style & MRF_TRANSFERTRANSLATION) && !morphed.bDontTranslate)
@@ -211,6 +216,8 @@ extend class PlayerPawn
 		morphed.ScoreIcon = ScoreIcon;	// [GRB]
 		if (eflash)	
 			eflash.target = morphed;
+		PostMorph(morphed.GetClass());
+		morphed.PostMorph(GetClass());
 		return true;
 	}
 	
@@ -249,6 +256,9 @@ extend class PlayerPawn
 			player.morphTics = 2*TICRATE;
 			return false;
 		}
+		PreUnmorph(altmo.GetClass());
+		altmo.PreUnmorph(GetClass());
+
 		// No longer using tracer as morph storage. That is what 'alternative' is for. 
 		// If the tracer has changed on the morph, change the original too.
 		altmo.target = target;
@@ -395,6 +405,8 @@ extend class PlayerPawn
 				beastweap.Destroy ();
 			}
 		}
+		PostUnmorph(altmo.GetClass());
+		altmo.PostUnmorph(GetClass());
 		Destroy ();
 		// Restore playerclass armor to its normal amount.
 		let hxarmor = HexenArmor(altmo.FindInventory('HexenArmor'));
@@ -544,6 +556,8 @@ class MorphedMonster : Actor
 			UnmorphTime = level.time + 5*TICRATE; // Next try in 5 seconds
 			return false;
 		}
+		PreUnmorph(unmorphed.GetClass());
+		unmorphed.PreUnmorph(GetClass());
 		unmorphed.Angle = Angle;
 		unmorphed.target = target;
 		unmorphed.bShadow = bShadow;
@@ -563,6 +577,8 @@ class MorphedMonster : Actor
 		unmorphed.args[4] = args[4];
 		unmorphed.CopyFriendliness (self, true);
 		unmorphed.bUnmorphed = false;
+		PostUnmorph(unmorphed.GetClass());
+		unmorphed.PostUnmorph(GetClass());
 		UnmorphedMe = NULL;
 		Substitute(unmorphed);
 		Destroy ();

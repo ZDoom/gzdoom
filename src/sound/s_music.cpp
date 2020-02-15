@@ -141,7 +141,7 @@ void S_CreateStream()
 	if (!mus_playing.handle) return;
 	SoundStreamInfo fmt;
 	ZMusic_GetStreamInfo(mus_playing.handle, &fmt);
-	if (fmt.mBufferSize > 0)
+	if (fmt.mBufferSize > 0) // if buffer size is 0 the library will play the song itself (e.g. Windows system synth.)
 	{
 		int flags = fmt.mNumChannels < 0 ? 0 : SoundStream::Float;
 		if (abs(fmt.mNumChannels) < 2) flags |= SoundStream::Mono;

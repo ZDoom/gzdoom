@@ -35,9 +35,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 
 #include "s_soundinternal.h"
 #include "m_swap.h"
@@ -818,6 +815,7 @@ bool SoundEngine::CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_
 	
 	for (chan = Channels, count = 0; chan != NULL && count < near_limit; chan = chan->NextChan)
 	{
+		if (chan->ChanFlags & CHANF_FORGETTABLE) continue;
 		if (!(chan->ChanFlags & CHANF_EVICTED) && &S_sfx[chan->SoundID] == sfx)
 		{
 			FVector3 chanorigin;
@@ -1359,7 +1357,7 @@ void SoundEngine::StopChannel(FSoundChan *chan)
 				chan->Source = NULL;
 			}
 		}
-		GSnd->StopChannel(chan);
+		if (GSnd) GSnd->StopChannel(chan);
 	}
 	else
 	{

@@ -56,7 +56,10 @@ enum
 	METHOD_PPMD = 98,
 	METHOD_LZSS = 1337,	// not used in Zips - this is for Console Doom compression
 	METHOD_ZLIB = 1338,	// Zlib stream with header, used by compressed nodes.
+	METHOD_TRANSFEROWNER = 0x8000,
 };
+
+class FileReader;
 
 class FileReaderInterface
 {
@@ -69,22 +72,6 @@ public:
 	virtual char *Gets(char *strbuf, int len) = 0;
 	virtual const char *GetBuffer() const { return nullptr; }
 	long GetLength () const { return Length; }
-};
-
-class DecompressorBase : public FileReaderInterface
-{
-	std::function<void(const char*)> ErrorCallback = nullptr;
-public:
-	// These do not work but need to be defined to satisfy the FileReaderInterface.
-	// They will just error out when called.
-	long Tell() const override;
-	long Seek(long offset, int origin) override;
-	char *Gets(char *strbuf, int len) override;
-	void DecompressionError(const char* error, ...) const;
-	void SetErrorCallback(const std::function<void(const char*)>& cb)
-	{
-		ErrorCallback = cb;
-	}
 };
 
 class MemoryReader : public FileReaderInterface
@@ -123,12 +110,13 @@ class FileReader
 	FileReader(const FileReader &r) = delete;
 	FileReader &operator=(const FileReader &r) = delete;
 
+public:
+
 	explicit FileReader(FileReaderInterface *r)
 	{
 		mReader = r;
 	}
 
-public:
 	enum ESeek
 	{
 		SeekSet = SEEK_SET,
@@ -217,6 +205,15 @@ public:
 		return buffer;
 	}
 
+	TArray<uint8_t> ReadPadded(int padding)
+	{
+		TArray<uint8_t> buffer(mReader->Length + padding, true);
+		Size length = mReader->Read(&buffer[0], mReader->Length);
+		if (length < mReader->Length) buffer.Clear();
+		else memset(buffer.Data() + mReader->Length, 0, padding);
+		return buffer;
+	}
+
 	char *Gets(char *strbuf, Size len)
 	{
 		return mReader->Gets(strbuf, (int)len);
@@ -260,6 +257,13 @@ public:
 		return LittleShort(v);
 	}
 
+	int16_t ReadInt16BE()
+	{
+		uint16_t v = 0;
+		Read(&v, 2);
+		return BigShort(v);
+	}
+
 	uint32_t ReadUInt32()
 	{
 		uint32_t v = 0;
@@ -290,6 +294,22 @@ public:
 
 
 	friend class FWadCollection;
+};
+
+class DecompressorBase : public FileReaderInterface
+{
+	std::function<void(const char*)> ErrorCallback = nullptr;
+public:
+	// These do not work but need to be defined to satisfy the FileReaderInterface.
+	// They will just error out when called.
+	long Tell() const override;
+	long Seek(long offset, int origin) override;
+	char *Gets(char *strbuf, int len) override;
+	void DecompressionError(const char* error, ...) const;
+	void SetErrorCallback(const std::function<void(const char*)>& cb)
+	{
+		ErrorCallback = cb;
+	}
 };
 
 

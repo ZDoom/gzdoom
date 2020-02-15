@@ -432,10 +432,10 @@ SDLVideo::SDLVideo ()
 	}
 #endif // !SDL2_STATIC_LIBRARY
 
+	Priv::softpolyEnabled = vid_preferbackend == 2;
 #ifdef HAVE_VULKAN
 	Priv::vulkanEnabled = vid_preferbackend == 1
 		&& Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
-	Priv::softpolyEnabled = vid_preferbackend == 2;
 
 	if (Priv::vulkanEnabled)
 	{
@@ -446,11 +446,11 @@ SDLVideo::SDLVideo ()
 			Priv::vulkanEnabled = false;
 		}
 	}
-	else if (Priv::softpolyEnabled)
+#endif
+	if (Priv::softpolyEnabled)
 	{
 		Priv::CreateWindow(SDL_WINDOW_HIDDEN);
 	}
-#endif
 }
 
 SDLVideo::~SDLVideo ()

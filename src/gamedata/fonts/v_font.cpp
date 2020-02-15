@@ -954,11 +954,9 @@ int getAlternative(int code)
 		case 0x3a7:
 			return 'X';
 
-		case 0x390:
 		case 0x3aa:
 			return 0xcf;
 
-		case 0x3b0:
 		case 0x3ab:
 			return 0x178;
 
@@ -971,11 +969,33 @@ int getAlternative(int code)
 		case 0x3c2:
 			return 0x3c3;	// Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
 
-		case 0x3ca:
-			return 0xef;
+			// For smallcaps fonts the small accented Greek characters remap to the unaccented versions.
+		case 0x390:
+			return 0x3ca;
+
+		case 0x3ac:
+			return 0x3b1;
+
+		case 0x3ad:
+			return 0x3b5;
+
+		case 0x3ae:
+			return 0x3b7;
+
+		case 0x3af:
+			return 0x3b9;
+
+		case 0x3b0:
+			return 0x3cb;
 
 		case 0x3cc:
-			return 0xf3;
+			return 0x3bf;
+
+		case 0x3cd:
+			return 0x3c5;
+
+		case 0x3ce:
+			return 0x3c9;
 
 			// Cyrillic characters with equivalents in the Latin alphabet.
 		case 0x400:

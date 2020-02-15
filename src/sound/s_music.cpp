@@ -57,7 +57,6 @@
 #include <stdlib.h>
 #ifdef _WIN32
 #include <io.h>
-#include "musicformats/win32/i_cd.h"
 #endif
 
 #include "i_system.h"
@@ -86,7 +85,7 @@
 #include "g_game.h"
 #include "s_music.h"
 #include "filereadermusicinterface.h"
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -412,7 +411,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	if (!mus_playing.name.IsEmpty() &&
 		mus_playing.handle != nullptr &&
 		stricmp (mus_playing.name, musicname) == 0 &&
-		ZMusic_IsLooping(mus_playing.handle) == looping)
+		ZMusic_IsLooping(mus_playing.handle) == zmusic_bool(looping))
 	{
 		if (order != mus_playing.baseorder)
 		{

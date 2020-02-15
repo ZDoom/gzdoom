@@ -1,6 +1,6 @@
 #pragma once
 
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 #include "files.h"
 
 

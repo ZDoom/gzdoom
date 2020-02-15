@@ -28,7 +28,7 @@
 #ifndef __S_MUSIC__
 #define __S_MUSIC__
 
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 #include "doomtype.h"
 #include "i_soundinternal.h"
 

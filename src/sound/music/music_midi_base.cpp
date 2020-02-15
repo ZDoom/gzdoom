@@ -36,7 +36,7 @@
 
 #include "v_text.h"
 #include "menu/menu.h"
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 #include "s_music.h"
 
 #define DEF_MIDIDEV -5

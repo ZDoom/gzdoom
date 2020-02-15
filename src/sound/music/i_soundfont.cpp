@@ -40,7 +40,7 @@
 #include "i_system.h"
 #include "gameconfigfile.h"
 #include "filereadermusicinterface.h"
-#include "zmusic/zmusic.h"
+#include <zmusic.h>
 #include "resourcefiles/resourcefile.h"
 #include "version.h"
 

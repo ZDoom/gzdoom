@@ -585,10 +585,9 @@ inline int HWDrawList::CompareSprites(SortNode * a,SortNode * b)
 	HWSprite * s1= sprites[drawitems[a->itemindex].index];
 	HWSprite * s2= sprites[drawitems[b->itemindex].index];
 
-	int res = s1->depth - s2->depth;
-
-	if (res != 0) return -res;
-	else return reverseSort? s2->index-s1->index : s1->index-s2->index;
+	if (s1->depth < s2->depth) return 1;
+	if (s1->depth > s2->depth) return -1;
+	return reverseSort? s2->index-s1->index : s1->index-s2->index;
 }
 
 //==========================================================================

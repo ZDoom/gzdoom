@@ -911,7 +911,7 @@ int getAlternative(int code)
 		case 0x3a7:	return 'X';
 		case 0x3aa:	return 0xcf;
 		case 0x3ab:	return 0x178;
-		case 0x3bf:	return 'o'; // the Omega is the only small Greek character that's easily mappable to a Latin equivalent. :(
+		case 0x3bf:	return 'o'; // the Omicron is the only small Greek character that's easily mappable to a Latin equivalent. :(
 		case 0x3c2:	return 0x3c3; // Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
 		case 0x390:	return 0x3ca; // For smallcaps fonts the small accented Greek characters remap to the unaccented versions.
 		case 0x3ac:	return 0x3b1;

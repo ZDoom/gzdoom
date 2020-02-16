@@ -908,6 +908,8 @@ int getAlternative(int code)
 			return 0x413;
 
 		case 0x388:
+			return 0x395;
+
 		case 0x395:
 			return 'E';
 
@@ -915,10 +917,14 @@ int getAlternative(int code)
 			return 'Z';
 
 		case 0x389:
+			return 0x397;
+
 		case 0x397:
 			return 'H';
 
 		case 0x38a:
+			return 0x399;
+
 		case 0x399:
 			return 'I';
 
@@ -932,6 +938,8 @@ int getAlternative(int code)
 			return 'N';
 	
 		case 0x38c:
+			return 0x39f;
+
 		case 0x39f:
 			return 'O';
 
@@ -945,6 +953,8 @@ int getAlternative(int code)
 			return 'T';
 
 		case 0x38e:
+			return 0x3a5;
+
 		case 0x3a5:
 			return 'Y';
 

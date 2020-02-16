@@ -1226,6 +1226,19 @@ FFont::FFont (int lump)
 
 void FFont::FixXMoves()
 {
+	if (FirstChar < 'a' && LastChar >= 'z')
+	{
+		MixedCase = true;
+		// First check if this is a mixed case font.
+		// For this the basic Latin small characters all need to be present.
+		for (int i = 'a'; i <= 'z'; i++)
+			if (Chars[i - FirstChar].OriginalPic == nullptr)
+			{
+				MixedCase = false;
+				break;
+			}
+	}
+
 	for (int i = 0; i <= LastChar - FirstChar; ++i)
 	{
 		if (Chars[i].XMove == INT_MIN)

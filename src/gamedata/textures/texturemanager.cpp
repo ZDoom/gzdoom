@@ -1186,7 +1186,7 @@ void FTextureManager::Init()
 	FTexture::InitGrayMap();
 
 	// Texture 0 is a dummy texture used to indicate "no texture"
-	auto nulltex = new FImageTexture(nullptr);
+	auto nulltex = new FImageTexture(nullptr, "");
 	nulltex->SetUseType(ETextureType::Null);
 	AddTexture (nulltex);
 	// some special textures used in the game.

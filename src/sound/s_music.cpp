@@ -310,28 +310,6 @@ void S_ActivatePlayList (bool goBack)
 
 //==========================================================================
 //
-// S_ChangeCDMusic
-//
-// Starts a CD track as music.
-//==========================================================================
-
-bool S_ChangeCDMusic (int track, unsigned int id, bool looping)
-{
-	char temp[32];
-
-	if (id != 0)
-	{
-		mysnprintf (temp, countof(temp), ",CD,%d,%x", track, id);
-	}
-	else
-	{
-		mysnprintf (temp, countof(temp), ",CD,%d", track);
-	}
-	return S_ChangeMusic (temp, 0, looping);
-}
-
-//==========================================================================
-//
 // S_StartMusic
 //
 // Starts some music with the given name.
@@ -434,20 +412,11 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 
 	if (strnicmp (musicname, ",CD,", 4) == 0)
 	{
-		int track = strtoul (musicname+4, nullptr, 0);
-		const char *more = strchr (musicname+4, ',');
-		unsigned int id = 0;
-
-		if (more != nullptr)
-		{
-			id = strtoul (more+1, nullptr, 16);
-		}
-		S_StopMusic (true);
-		mus_playing.handle = ZMusic_OpenCDSong (track, id);
-		if (mus_playing.handle == nullptr)
-		{
-			Printf("Unable to start CD Audio for track #%d, ID %d\n", track, id);
-		}
+		static bool warned = false;
+		if (!warned)
+			Printf(TEXTCOLOR_RED "CD Audio no longer supported\n");
+		warned = true;
+		return false;
 	}
 	else
 	{
@@ -745,84 +714,6 @@ CCMD (stopmus)
 	mus_playing.LastSong = "";	// forget the last played song so that it won't get restarted if some volume changes occur
 }
 
-//==========================================================================
-//
-// CCMD cd_play
-//
-// Plays a specified track, or the entire CD if no track is specified.
-//==========================================================================
-
-CCMD (cd_play)
-{
-	char musname[16];
-
-	if (argv.argc() == 1)
-	{
-		strcpy (musname, ",CD,");
-	}
-	else
-	{
-		mysnprintf (musname, countof(musname), ",CD,%d", atoi(argv[1]));
-	}
-	S_ChangeMusic (musname, 0, true);
-}
-
-#ifdef _WIN32
-//==========================================================================
-//
-// CCMD cd_stop
-//
-//==========================================================================
-
-CCMD (cd_stop)
-{
-	CD_Stop ();
-}
-
-//==========================================================================
-//
-// CCMD cd_eject
-//
-//==========================================================================
-
-CCMD (cd_eject)
-{
-	CD_Eject ();
-}
-
-//==========================================================================
-//
-// CCMD cd_close
-//
-//==========================================================================
-
-CCMD (cd_close)
-{
-	CD_UnEject ();
-}
-
-//==========================================================================
-//
-// CCMD cd_pause
-//
-//==========================================================================
-
-CCMD (cd_pause)
-{
-	CD_Pause ();
-}
-
-//==========================================================================
-//
-// CCMD cd_resume
-//
-//==========================================================================
-
-CCMD (cd_resume)
-{
-	CD_Resume ();
-}
-#endif
 //==========================================================================
 //
 // CCMD playlist

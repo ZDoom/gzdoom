@@ -47,9 +47,6 @@ bool S_StartMusic (const char *music_name);
 // Start music using <music_name>, and set whether looping
 bool S_ChangeMusic (const char *music_name, int order=0, bool looping=true, bool force=false);
 
-// Start playing a cd track as music
-bool S_ChangeCDMusic (int track, unsigned int id=0, bool looping=true);
-
 void S_RestartMusic ();
 void S_MIDIDeviceChanged(int newdev);
 

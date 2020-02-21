@@ -303,6 +303,68 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 //==========================================================================
 //
+// CalculateVerticesSimple
+//
+// [MC] Like CalcaulateVertices, but implying no wall, flat or roll sprites
+// are used - only standard sprites.
+//==========================================================================
+
+bool HWSprite::CalculateVerticesSimple(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
+{
+	const auto &HWAngles = di->Viewpoint.HWAngles;
+
+	// [BB] Billboard stuff
+	const bool drawWithXYBillboard = ((particle && gl_billboard_particles) || (!(actor && actor->renderflags & RF_FORCEYBILLBOARD)
+		&& (gl_billboard_mode == 1 || (actor && actor->renderflags & RF_FORCEXYBILLBOARD))));
+
+	const bool drawBillboardFacingCamera = gl_billboard_faces_camera;
+	
+	// [Nash] check for special sprite drawing modes
+	if (drawWithXYBillboard || drawBillboardFacingCamera)
+	{
+		// Compute center of sprite
+		float xcenter = (x1 + x2)*0.5;
+		float ycenter = (y1 + y2)*0.5;
+		float zcenter = (z1 + z2)*0.5;
+		Matrix3x4 mat;
+		mat.MakeIdentity();
+		mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
+
+		if (drawBillboardFacingCamera)
+		{
+			// [CMB] Rotate relative to camera XY position, not just camera direction,
+			// which is nicer in VR
+			float ang = (270. - HWAngles.Yaw.Degrees) + RAD2DEG(atan2(-(ycenter - vp->Y), xcenter - vp->X));
+			mat.Rotate(0, 1, 0, ang);
+		}
+
+		if (drawWithXYBillboard)
+		{
+			// Rotate the sprite about the vector starting at the center of the sprite
+			// triangle strip and with direction orthogonal to where the player is looking
+			// in the x/y plane.
+			float angleRad = (270. - HWAngles.Yaw).Radians();
+			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees);
+		}
+
+		mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
+		v[0] = mat * FVector3(x1, z1, y1);
+		v[1] = mat * FVector3(x2, z1, y2);
+		v[2] = mat * FVector3(x1, z2, y1);
+		v[3] = mat * FVector3(x2, z2, y2);
+	}
+	else // traditional "Y" billboard mode
+	{
+		v[0] = FVector3(x1, z1, y1);
+		v[1] = FVector3(x2, z1, y2);
+		v[2] = FVector3(x1, z2, y1);
+		v[3] = FVector3(x2, z2, y2);
+	}
+	return false;
+}
+
+//==========================================================================
+//
 // 
 //
 //==========================================================================
@@ -486,7 +548,19 @@ void HWSprite::CreateVertices(HWDrawInfo *di)
 	if (modelframe == nullptr)
 	{
 		FVector3 v[4];
-		polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
+
+		if (actor)
+		{
+			uint32_t spritetype = (actor->renderflags & RF_SPRITETYPEMASK);
+			if (spritetype == RF_FACESPRITE && !(actor->renderflags & RF_ROLLSPRITE))
+				polyoffset = CalculateVerticesSimple(di, v, &di->Viewpoint.Pos);
+			else
+				polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
+		}
+		else
+		{
+			polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
+		}
 		auto vert = screen->mVertexData->AllocVertices(4);
 		auto vp = vert.first;
 		vertexindex = vert.second;

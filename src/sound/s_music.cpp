@@ -400,7 +400,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		}
 		else if (!ZMusic_IsPlaying(mus_playing.handle))
 		{
-			if (!ZMusic_Start(mus_playing.handle, looping, order))
+			if (!ZMusic_Start(mus_playing.handle, order, looping))
 			{
 				Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
 			}

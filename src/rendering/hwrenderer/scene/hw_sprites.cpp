@@ -323,9 +323,9 @@ bool HWSprite::CalculateVerticesSimple(HWDrawInfo *di, FVector3 *v, DVector3 *vp
 	if (drawWithXYBillboard || drawBillboardFacingCamera)
 	{
 		// Compute center of sprite
-		float xcenter = (x1 + x2)*0.5;
-		float ycenter = (y1 + y2)*0.5;
-		float zcenter = (z1 + z2)*0.5;
+		const float xcenter = (x1 + x2)*0.5;
+		const float ycenter = (y1 + y2)*0.5;
+		const float zcenter = (z1 + z2)*0.5;
 		Matrix3x4 mat;
 		mat.MakeIdentity();
 		mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
@@ -549,18 +549,16 @@ void HWSprite::CreateVertices(HWDrawInfo *di)
 	{
 		FVector3 v[4];
 
-		if (actor)
+		// [MC] If it's an actor that has no special types (wall/flat) and no rolling sprites, do the simple one.
+		if (actor && 
+			(actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE &&
+			!(actor->renderflags & RF_ROLLSPRITE))
 		{
-			uint32_t spritetype = (actor->renderflags & RF_SPRITETYPEMASK);
-			if (spritetype == RF_FACESPRITE && !(actor->renderflags & RF_ROLLSPRITE))
-				polyoffset = CalculateVerticesSimple(di, v, &di->Viewpoint.Pos);
-			else
-				polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
+			polyoffset = CalculateVerticesSimple(di, v, &di->Viewpoint.Pos);
 		}
 		else
-		{
 			polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
-		}
+		
 		auto vert = screen->mVertexData->AllocVertices(4);
 		auto vp = vert.first;
 		vertexindex = vert.second;
@@ -723,6 +721,461 @@ void HWSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 	}
 }
 
+//==========================================================================
+//
+// ProcessSimple
+//
+// [MC] Reduced version of Process() that removes several chucks. This may
+// not seem much different but when running this code on many, MANY actors
+// at once, it becomes more notable.
+//==========================================================================
+
+void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t in_area, int thruportal)
+{
+	sector_t rs;
+	sector_t * rendersector;
+
+	if (thing == nullptr)
+		return;
+
+	// [ZZ] allow CustomSprite-style direct picnum specification
+	bool isPicnumOverride = thing->picnum.isValid();
+
+	// Don't waste time projecting sprites that are definitely not visible.
+	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()))
+	{
+		return;
+	}
+
+	const auto &vp = di->Viewpoint;
+	AActor *camera = vp.camera;
+
+	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
+	{
+		if (!(thing->flags & MF_STEALTH) || !di->isStealthVision() || thing == camera)
+			return;
+	}
+
+	// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,
+	// check renderhidden vs r_rendercaps, if anything matches we do support that feature and should hide it.
+	if ((!r_debug_disable_vis_filter && !!(thing->RenderRequired & ~r_renderercaps)) ||
+		(!!(thing->RenderHidden & r_renderercaps)))
+		return;
+
+	int spritenum = thing->sprite;
+	DVector2 sprscale = thing->Scale;
+	if (thing->player != nullptr)
+	{
+		P_CheckPlayerSprite(thing, spritenum, sprscale);
+	}
+
+	// [RH] Interpolate the sprite's position to make it look smooth
+	DVector3 thingpos = thing->InterpolatedPosition(vp.TicFrac);
+	if (thruportal == 1) thingpos += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+
+	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
+	if (thing == camera && !vp.showviewer)
+	{
+		DVector3 thingorigin = thing->Pos();
+		if (thruportal == 1) thingorigin += di->Level->Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+		if (fabs(thingorigin.X - vp.ActorPos.X) < 2 && fabs(thingorigin.Y - vp.ActorPos.Y) < 2) return;
+	}
+	// Thing is invisible if close to the camera.
+	if (thing->renderflags & RF_MAYBEINVISIBLE)
+	{
+		if (fabs(thingpos.X - vp.Pos.X) < 32 && fabs(thingpos.Y - vp.Pos.Y) < 32) return;
+	}
+
+	// Too close to the camera. This doesn't look good if it is a sprite.
+	if (fabs(thingpos.X - vp.Pos.X) < 2 && fabs(thingpos.Y - vp.Pos.Y) < 2)
+	{
+		if (vp.Pos.Z >= thingpos.Z - 2 && vp.Pos.Z <= thingpos.Z + thing->Height + 2)
+		{
+			// exclude vertically moving objects from this check.
+			if (!thing->Vel.isZero())
+			{
+				if (!FindModelFrame(thing->GetClass(), spritenum, thing->frame, false))
+				{
+					return;
+				}
+			}
+		}
+	}
+
+	// don't draw first frame of a player missile
+	if (thing->flags&MF_MISSILE)
+	{
+		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == vp.ViewActor && vp.ViewActor != nullptr)
+		{
+			double speed = thing->Vel.Length();
+			if (speed >= thing->target->radius / 2)
+			{
+				double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
+				if ((thingpos - vp.Pos).LengthSquared() < clipdist * clipdist) return;
+			}
+		}
+		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
+	}
+
+	if (thruportal != 2 && di->mClipPortal != nullptr)
+	{
+		int clipres = di->mClipPortal->ClipPoint(thingpos);
+		if (clipres == PClip_InFront) return;
+	}
+	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
+	if (thing->renderflags & RF_INTERPOLATEANGLES)
+		Angles = thing->InterpolatedAngles(vp.TicFrac);
+	else
+		Angles = thing->Angles;
+
+	FloatRect r;
+
+	if (sector->sectornum != thing->Sector->sectornum && !thruportal)
+	{
+		// This cannot create a copy in the fake sector cache because it'd interfere with the main thread, so provide a local buffer for the copy.
+		// Adding synchronization for this one case would cost more than it might save if the result here could be cached.
+		rendersector = hw_FakeFlat(thing->Sector, in_area, false, &rs);
+	}
+	else
+	{
+		rendersector = sector;
+	}
+	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
+	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
+
+	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
+	x = thingpos.X;
+	z = thingpos.Z;
+	y = thingpos.Y;
+	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
+
+	// [RH] Make floatbobbing a renderer-only effect.
+	if (thing->flags2 & MF2_FLOATBOB)
+	{
+		float fz = thing->GetBobOffset(vp.TicFrac);
+		z += fz;
+	}
+
+	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+	if (!modelframe)
+	{
+		bool mirror;
+		DAngle ang = (thingpos - vp.Pos).Angle();
+		FTextureID patch;
+		// [ZZ] add direct picnum override
+		if (isPicnumOverride)
+		{
+			// Animate picnum overrides.
+			auto tex = TexMan.GetTexture(thing->picnum, true);
+			if (tex == nullptr) return;
+			patch = tex->GetID();
+			mirror = false;
+		}
+		else
+		{
+			DAngle sprangle;
+			int rot;
+			if (!(thing->renderflags & RF_FLATSPRITE) || thing->flags7 & MF7_SPRITEANGLE)
+			{
+				sprangle = thing->GetSpriteAngle(ang, vp.TicFrac);
+				rot = -1;
+			}
+			else
+			{
+				// Flat sprites cannot rotate in a predictable manner.
+				sprangle = 0.;
+				rot = 0;
+			}
+			patch = sprites[spritenum].GetSpriteFrame(thing->frame, rot, sprangle, &mirror, !!(thing->renderflags & RF_SPRITEFLIP));
+		}
+
+		if (!patch.isValid()) return;
+		int type = thing->renderflags & RF_SPRITETYPEMASK;
+		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
+		if (!gltexture)
+			return;
+
+		vt = gltexture->GetSpriteVT();
+		vb = gltexture->GetSpriteVB();
+		if (thing->renderflags & RF_YFLIP) std::swap(vt, vb);
+
+		gltexture->GetSpriteRect(&r);
+
+		// [SP] SpriteFlip
+		if (thing->renderflags & RF_SPRITEFLIP)
+			thing->renderflags ^= RF_XFLIP;
+
+		if (mirror ^ !!(thing->renderflags & RF_XFLIP))
+		{
+			r.left = -r.width - r.left;	// mirror the sprite's x-offset
+			ul = gltexture->GetSpriteUL();
+			ur = gltexture->GetSpriteUR();
+		}
+		else
+		{
+			ul = gltexture->GetSpriteUR();
+			ur = gltexture->GetSpriteUL();
+		}
+
+		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
+			thing->renderflags ^= RF_XFLIP;
+
+		r.Scale(sprscale.X, sprscale.Y);
+
+		float rightfac = -r.left;
+		float leftfac = rightfac - r.width;
+		float bottomfac = -r.top;
+		float topfac = bottomfac - r.height;
+		z1 = z - r.top;
+		z2 = z1 - r.height;
+
+		float spriteheight = sprscale.Y * r.height;
+
+		// Tests show that this doesn't look good for many decorations and corpses
+		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
+		{
+			PerformSpriteClipAdjustment(thing, thingpos, spriteheight);
+		}
+
+		float viewvecX;
+		float viewvecY;
+		switch (spritetype)
+		{
+		case RF_FACESPRITE:
+			viewvecX = vp.ViewVector.X;
+			viewvecY = vp.ViewVector.Y;
+
+			x1 = x - viewvecY * leftfac;
+			x2 = x - viewvecY * rightfac;
+			y1 = y + viewvecX * leftfac;
+			y2 = y + viewvecX * rightfac;
+			break;
+
+		case RF_FLATSPRITE:
+		{
+			x1 = x + leftfac;
+			x2 = x + rightfac;
+			y1 = y - topfac;
+			y2 = y - bottomfac;
+		}
+		break;
+		case RF_WALLSPRITE:
+			viewvecX = Angles.Yaw.Cos();
+			viewvecY = Angles.Yaw.Sin();
+
+			x1 = x + viewvecY * leftfac;
+			x2 = x + viewvecY * rightfac;
+			y1 = y - viewvecX * leftfac;
+			y2 = y - viewvecX * rightfac;
+			break;
+		}
+	}
+	else
+	{
+		x1 = x2 = x;
+		y1 = y2 = y;
+		z1 = z2 = z;
+		gltexture = nullptr;
+	}
+
+	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
+
+	// light calculation
+
+	bool enhancedvision = false;
+
+	// allow disabling of the fullbright flag by a brightmap definition
+	// (e.g. to do the gun flashes of Doom's zombies correctly.
+	fullbright = (thing->flags5 & MF5_BRIGHT) ||
+		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->isFullbrightDisabled()));
+
+	lightlevel = fullbright ? 255 :
+		hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
+			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
+	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255);
+
+	lightlevel = rendersector->CheckSpriteGlow(lightlevel, thingpos);
+
+	ThingColor = (thing->RenderStyle.Flags & STYLEF_ColorIsFixed) ? thing->fillcolor : 0xffffff;
+	ThingColor.a = 255;
+	RenderStyle = thing->RenderStyle;
+
+	// colormap stuff is a little more complicated here...
+	if (di->isFullbrightScene())
+	{
+		enhancedvision = di->isStealthVision();
+
+		Colormap.Clear();
+
+		if (di->isNightvision())
+		{
+			if ((thing->IsKindOf(NAME_Inventory) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
+			{
+				RenderStyle.Flags |= STYLEF_InvertSource;
+			}
+		}
+	}
+	else
+	{
+		Colormap = rendersector->Colormap;
+		if (fullbright)
+		{
+			if (rendersector == &di->Level->sectors[rendersector->sectornum] || in_area != area_below)
+				// under water areas keep their color for fullbright objects
+			{
+				// Only make the light white but keep everything else (fog, desaturation and Boom colormap.)
+				Colormap.MakeWhite();
+			}
+			else
+			{
+				// Keep the color, but brighten things a bit so that a difference can be seen.
+				Colormap.LightColor.r = (3 * Colormap.LightColor.r + 0xff) / 4;
+				Colormap.LightColor.g = (3 * Colormap.LightColor.g + 0xff) / 4;
+				Colormap.LightColor.b = (3 * Colormap.LightColor.b + 0xff) / 4;
+			}
+		}
+		else if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+		{
+			Colormap.Decolorize();
+		}
+	}
+
+	translation = thing->Translation;
+
+	OverrideShader = -1;
+	trans = thing->Alpha;
+	hw_styleflags = STYLEHW_Normal;
+
+	if (RenderStyle.BlendOp >= STYLEOP_Fuzz && RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
+	{
+		RenderStyle.CheckFuzz();
+		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
+		{
+			if (gl_fuzztype != 0 && !(RenderStyle.Flags & STYLEF_InvertSource))
+			{
+				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+				OverrideShader = SHADER_NoTexture + gl_fuzztype;
+				trans = 0.99f;	// trans may not be 1 here
+				hw_styleflags = STYLEHW_NoAlphaTest;
+			}
+			else
+			{
+				// Without shaders only the standard effect is available.
+				RenderStyle.BlendOp = STYLEOP_Shadow;
+			}
+		}
+	}
+
+	if (RenderStyle.Flags & STYLEF_TransSoulsAlpha)
+	{
+		trans = transsouls;
+	}
+	else if (RenderStyle.Flags & STYLEF_Alpha1)
+	{
+		trans = 1.f;
+	}
+	if (r_UseVanillaTransparency)
+	{
+		// [SP] "canonical transparency" - with the flip of a CVar, disable transparency for Doom objects,
+		//   and disable 'additive' translucency for certain objects from other games.
+		if (thing->renderflags & RF_ZDOOMTRANS)
+		{
+			trans = 1.f;
+			RenderStyle.BlendOp = STYLEOP_Add;
+			RenderStyle.SrcAlpha = STYLEALPHA_One;
+			RenderStyle.DestAlpha = STYLEALPHA_Zero;
+		}
+	}
+	if (trans >= 1.f - FLT_EPSILON && RenderStyle.BlendOp != STYLEOP_Shadow && (
+		(RenderStyle.SrcAlpha == STYLEALPHA_One && RenderStyle.DestAlpha == STYLEALPHA_Zero) ||
+		(RenderStyle.SrcAlpha == STYLEALPHA_Src && RenderStyle.DestAlpha == STYLEALPHA_InvSrc)
+		))
+	{
+		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
+		trans = 1.f;
+
+		if (!gl_sprite_blend || modelframe || (thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) || gl_billboard_faces_camera)
+		{
+			RenderStyle.SrcAlpha = STYLEALPHA_One;
+			RenderStyle.DestAlpha = STYLEALPHA_Zero;
+			hw_styleflags = STYLEHW_Solid;
+		}
+		else
+		{
+			RenderStyle.SrcAlpha = STYLEALPHA_Src;
+			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
+		}
+	}
+	if ((gltexture && gltexture->tex->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && thing->RenderStyle != DefaultRenderStyle()))
+	{
+		if (hw_styleflags == STYLEHW_Solid)
+		{
+			RenderStyle.SrcAlpha = STYLEALPHA_Src;
+			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
+		}
+		hw_styleflags = STYLEHW_NoAlphaTest;
+	}
+
+	if (enhancedvision && gl_enhanced_nightvision)
+	{
+		if (RenderStyle.BlendOp == STYLEOP_Shadow)
+		{
+			// enhanced vision makes them more visible!
+			trans = 0.5f;
+			FRenderStyle rs = RenderStyle;
+			RenderStyle = STYLE_Translucent;
+			RenderStyle.Flags = rs.Flags;	// Flags must be preserved, at this point it can only be STYLEF_InvertSource
+		}
+		else if (thing->flags & MF_STEALTH)
+		{
+			// enhanced vision overcomes stealth!
+			if (trans < 0.5f) trans = 0.5f;
+		}
+	}
+
+	if (trans == 0.0f) return;
+
+	// end of light calculation
+
+	actor = thing;
+	index = thing->SpawnOrder;
+	particle = nullptr;
+
+	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)
+		&& (actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE
+		&& (gl_billboard_mode == 1 || actor->renderflags & RF_FORCEXYBILLBOARD));
+
+
+	// no light splitting when:
+	// 1. no lightlist
+	// 2. any fixed colormap
+	// 3. any bright object
+	// 4. any with render style shadow (which doesn't use the sector light)
+	// 5. anything with render style reverse subtract (light effect is not what would be desired here)
+	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright &&
+		RenderStyle.BlendOp != STYLEOP_Shadow && RenderStyle.BlendOp != STYLEOP_RevSub)
+	{
+		if (screen->hwcaps & RFL_NO_CLIP_PLANES)	// on old hardware we are rather limited...
+		{
+			lightlist = nullptr;
+			if (!drawWithXYBillboard && !modelframe)
+			{
+				SplitSprite(di, thing->Sector, hw_styleflags != STYLEHW_Solid);
+			}
+		}
+		else
+		{
+			lightlist = &thing->Sector->e->XFloor.lightlist;
+		}
+	}
+	else
+	{
+		lightlist = nullptr;
+	}
+
+	PutSprite(di, hw_styleflags != STYLEHW_Solid);
+	rendered_sprites++;
+}
 //==========================================================================
 //
 // 
@@ -1364,7 +1817,11 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 
 					HWSprite spr;
 					// This is called from the worker thread and must not alter the fake sector cache.
-					spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
+					uint32_t rf = th->renderflags;
+					if ((rf & RF_SPRITETYPEMASK) == RF_FACESPRITE && !(rf & (RF_MASKROTATION|RF_INTERPOLATEANGLES)))
+						spr.ProcessSimple(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
+					else
+						spr.Process(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

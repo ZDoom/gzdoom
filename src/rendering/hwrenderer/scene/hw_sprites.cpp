@@ -391,8 +391,8 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 
 		if (actor->renderflags & RF_ROLLCENTER)
 		{
-			float cx = (x1 + x2) * 0.5;
-			float cy = (y1 + y2) * 0.5;
+			const float cx = (x1 + x2) * 0.5;
+			const float cy = (y1 + y2) * 0.5;
 
 			mat.Translate(cx - x, 0, cy - y);
 			mat.Rotate(0, 1, 0, - Angles.Roll.Degrees);
@@ -433,12 +433,12 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 	if (drawWithXYBillboard || drawBillboardFacingCamera || drawRollSpriteActor || isFlatSprite)
 	{
 		// Compute center of sprite
-		float xcenter = (x1 + x2)*0.5;
-		float ycenter = (y1 + y2)*0.5;
-		float zcenter = (z1 + z2)*0.5;
-		float xx = -xcenter + x;
-		float zz = -zcenter + z;
-		float yy = -ycenter + y;
+		const float xcenter = (x1 + x2)*0.5;
+		const float ycenter = (y1 + y2)*0.5;
+		const float zcenter = (z1 + z2)*0.5;
+		const float xx = -xcenter + x;
+		const float zz = -zcenter + z;
+		const float yy = -ycenter + y;
 		Matrix3x4 mat;
 		mat.MakeIdentity();
 		mat.Translate(xcenter, zcenter, ycenter); // move to sprite center
@@ -448,18 +448,18 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		{
 			// [CMB] Rotate relative to camera XY position, not just camera direction,
 			// which is nicer in VR
-			float xrel = xcenter - vp->X;
-			float yrel = ycenter - vp->Y;
-			float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
-			float counterRotationDeg = 270. - HWAngles.Yaw.Degrees; // counteracts existing sprite rotation
-			float relAngleDeg = counterRotationDeg + absAngleDeg;
+			const float xrel = xcenter - vp->X;
+			const float yrel = ycenter - vp->Y;
+			const float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
+			const float counterRotationDeg = 270. - HWAngles.Yaw.Degrees; // counteracts existing sprite rotation
+			const float relAngleDeg = counterRotationDeg + absAngleDeg;
 
 			mat.Rotate(0, 1, 0, relAngleDeg);
 		}
 
 		// [fgsfds] calculate yaw vectors
 		float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
-		float angleRad = (270. - HWAngles.Yaw).Radians();
+		const float angleRad = (270. - HWAngles.Yaw).Radians();
 		if (actor)	rollDegrees = Angles.Roll.Degrees;
 		if (isFlatSprite)
 		{
@@ -1153,7 +1153,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 
     const auto &vp = di->Viewpoint;
-	AActor *camera = vp.camera;
+	const AActor *camera = vp.camera;
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
 	{
@@ -1212,10 +1212,10 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	{
 		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == vp.ViewActor && vp.ViewActor != nullptr)
 		{
-			double speed = thing->Vel.Length();
+			const double speed = thing->Vel.Length();
 			if (speed >= thing->target->radius / 2)
 			{
-				double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
+				const double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
 				if ((thingpos - vp.Pos).LengthSquared() < clipdist * clipdist) return;
 			}
 		}
@@ -1224,7 +1224,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	if (thruportal != 2 && di->mClipPortal != nullptr)
 	{
-		int clipres = di->mClipPortal->ClipPoint(thingpos);
+		const int clipres = di->mClipPortal->ClipPoint(thingpos);
 		if (clipres == PClip_InFront) return;
 	}
 	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
@@ -1248,7 +1248,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
 	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
 
-	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
+	const uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
 	z = thingpos.Z;
 	y = thingpos.Y;
@@ -1257,7 +1257,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
 	{
-		float fz = thing->GetBobOffset(vp.TicFrac);
+		const float fz = thing->GetBobOffset(vp.TicFrac);
 		z += fz;
 	}
 
@@ -1265,13 +1265,13 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (!modelframe)
 	{
 		bool mirror;
-		DAngle ang = (thingpos - vp.Pos).Angle();
+		const DAngle ang = (thingpos - vp.Pos).Angle();
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
 		{
 			// Animate picnum overrides.
-			auto tex = TexMan.GetTexture(thing->picnum, true);
+			const auto tex = TexMan.GetTexture(thing->picnum, true);
 			if (tex == nullptr) return;
 			patch =  tex->GetID();
 			mirror = false;
@@ -1280,7 +1280,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		{
 			DAngle sprangle;
 			int rot;
-			if (!(thing->renderflags & RF_FLATSPRITE) || thing->flags7 & MF7_SPRITEANGLE)
+			if (!(spritetype & RF_FLATSPRITE) || thing->flags7 & MF7_SPRITEANGLE)
 			{
 				sprangle = thing->GetSpriteAngle(ang, vp.TicFrac);
 				rot = -1;
@@ -1295,8 +1295,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		}
 
 		if (!patch.isValid()) return;
-		int type = thing->renderflags & RF_SPRITETYPEMASK;
-		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
+		
+		gltexture = FMaterial::ValidateTexture(patch, (spritetype == RF_FACESPRITE), false);
 		if (!gltexture)
 			return;
 
@@ -1327,23 +1327,22 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 		r.Scale(sprscale.X, sprscale.Y);
 
-		float rightfac = -r.left;
-		float leftfac = rightfac - r.width;
-		float bottomfac = -r.top;
-		float topfac = bottomfac - r.height;
+		const float rightfac = -r.left;
+		const float leftfac = rightfac - r.width;
+		const float bottomfac = -r.top;
+		const float topfac = bottomfac - r.height;
 		z1 = z - r.top;
 		z2 = z1 - r.height;
 
-		float spriteheight = sprscale.Y * r.height;
+		const float spriteheight = sprscale.Y * r.height;
 
 		// Tests show that this doesn't look good for many decorations and corpses
-		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
+		if (spriteheight > 0 && gl_spriteclip > 0 && spritetype == RF_FACESPRITE)
 		{
 			PerformSpriteClipAdjustment(thing, thingpos, spriteheight);
 		}
 
-		float viewvecX;
-		float viewvecY;
+		float viewvecX, viewvecY;
 		switch (spritetype)
 		{
 		case RF_FACESPRITE:
@@ -1527,7 +1526,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		{
 			// enhanced vision makes them more visible!
 			trans = 0.5f;
-			FRenderStyle rs = RenderStyle;
+			const FRenderStyle rs = RenderStyle;
 			RenderStyle = STYLE_Translucent;
 			RenderStyle.Flags = rs.Flags;	// Flags must be preserved, at this point it can only be STYLEF_InvertSource
 		}
@@ -1547,7 +1546,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	particle = nullptr;
 
 	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)
-		&& (actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE
+		&& spritetype == RF_FACESPRITE
 		&& (gl_billboard_mode == 1 || actor->renderflags & RF_FORCEXYBILLBOARD));
 
 

@@ -763,11 +763,6 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		}
 	}
 	
-	S_StopAllChannels();
-	for (auto Level : AllLevels())
-	{
-		SN_StopAllSequences(Level);
-	}
 	WI_Screen = cls->CreateNew();
 	ScaleOverrider s;
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)

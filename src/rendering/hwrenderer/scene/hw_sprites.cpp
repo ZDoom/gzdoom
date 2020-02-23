@@ -742,13 +742,13 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 	bool isPicnumOverride = thing->picnum.isValid();
 
 	// Don't waste time projecting sprites that are definitely not visible.
-	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer() || ((thing->renderflags & RF_MASKROTATION) && !thing->IsInsideVisibleAngles()))
+	if ((thing->sprite == 0 && !isPicnumOverride) || !thing->IsVisibleToPlayer())
 	{
 		return;
 	}
 
 	const auto &vp = di->Viewpoint;
-	AActor *camera = vp.camera;
+	const AActor *camera = vp.camera;
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
 	{
@@ -807,10 +807,10 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 	{
 		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == vp.ViewActor && vp.ViewActor != nullptr)
 		{
-			double speed = thing->Vel.Length();
+			const double speed = thing->Vel.Length();
 			if (speed >= thing->target->radius / 2)
 			{
-				double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
+				const double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
 				if ((thingpos - vp.Pos).LengthSquared() < clipdist * clipdist) return;
 			}
 		}
@@ -819,14 +819,10 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 
 	if (thruportal != 2 && di->mClipPortal != nullptr)
 	{
-		int clipres = di->mClipPortal->ClipPoint(thingpos);
+		const int clipres = di->mClipPortal->ClipPoint(thingpos);
 		if (clipres == PClip_InFront) return;
 	}
-	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
-	if (thing->renderflags & RF_INTERPOLATEANGLES)
-		Angles = thing->InterpolatedAngles(vp.TicFrac);
-	else
-		Angles = thing->Angles;
+	Angles = thing->Angles;
 
 	FloatRect r;
 
@@ -843,16 +839,14 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 	topclip = rendersector->PortalBlocksMovement(sector_t::ceiling) ? LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::ceiling);
 	bottomclip = rendersector->PortalBlocksMovement(sector_t::floor) ? -LARGE_VALUE : rendersector->GetPortalPlaneZ(sector_t::floor);
 
-	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 	x = thingpos.X;
-	z = thingpos.Z;
+	z = thingpos.Z - thing->Floorclip;
 	y = thingpos.Y;
-	if (spritetype == RF_FACESPRITE) z -= thing->Floorclip; // wall and flat sprites are to be considered di->Level-> geometry so this may not apply.
 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
 	{
-		float fz = thing->GetBobOffset(vp.TicFrac);
+		const float fz = thing->GetBobOffset(vp.TicFrac);
 		z += fz;
 	}
 
@@ -866,32 +860,20 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 		if (isPicnumOverride)
 		{
 			// Animate picnum overrides.
-			auto tex = TexMan.GetTexture(thing->picnum, true);
+			const auto tex = TexMan.GetTexture(thing->picnum, true);
 			if (tex == nullptr) return;
 			patch = tex->GetID();
 			mirror = false;
 		}
 		else
 		{
-			DAngle sprangle;
-			int rot;
-			if (!(thing->renderflags & RF_FLATSPRITE) || thing->flags7 & MF7_SPRITEANGLE)
-			{
-				sprangle = thing->GetSpriteAngle(ang, vp.TicFrac);
-				rot = -1;
-			}
-			else
-			{
-				// Flat sprites cannot rotate in a predictable manner.
-				sprangle = 0.;
-				rot = 0;
-			}
-			patch = sprites[spritenum].GetSpriteFrame(thing->frame, rot, sprangle, &mirror, !!(thing->renderflags & RF_SPRITEFLIP));
+			const DAngle sprangle = thing->GetSpriteAngle(ang, vp.TicFrac);
+			patch = sprites[spritenum].GetSpriteFrame(thing->frame, -1, sprangle, &mirror, !!(thing->renderflags & RF_SPRITEFLIP));
 		}
 
 		if (!patch.isValid()) return;
-		int type = thing->renderflags & RF_SPRITETYPEMASK;
-		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
+
+		gltexture = FMaterial::ValidateTexture(patch, true, false);
 		if (!gltexture)
 			return;
 
@@ -922,53 +904,25 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 
 		r.Scale(sprscale.X, sprscale.Y);
 
-		float rightfac = -r.left;
-		float leftfac = rightfac - r.width;
-		float bottomfac = -r.top;
-		float topfac = bottomfac - r.height;
+		const float rightfac = -r.left;
+		const float leftfac = rightfac - r.width;
+		const float bottomfac = -r.top;
+		const float topfac = bottomfac - r.height;
 		z1 = z - r.top;
 		z2 = z1 - r.height;
 
-		float spriteheight = sprscale.Y * r.height;
+		const float spriteheight = sprscale.Y * r.height;
 
 		// Tests show that this doesn't look good for many decorations and corpses
-		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
+		if (spriteheight > 0 && gl_spriteclip > 0)
 		{
 			PerformSpriteClipAdjustment(thing, thingpos, spriteheight);
 		}
 
-		float viewvecX;
-		float viewvecY;
-		switch (spritetype)
-		{
-		case RF_FACESPRITE:
-			viewvecX = vp.ViewVector.X;
-			viewvecY = vp.ViewVector.Y;
-
-			x1 = x - viewvecY * leftfac;
-			x2 = x - viewvecY * rightfac;
-			y1 = y + viewvecX * leftfac;
-			y2 = y + viewvecX * rightfac;
-			break;
-
-		case RF_FLATSPRITE:
-		{
-			x1 = x + leftfac;
-			x2 = x + rightfac;
-			y1 = y - topfac;
-			y2 = y - bottomfac;
-		}
-		break;
-		case RF_WALLSPRITE:
-			viewvecX = Angles.Yaw.Cos();
-			viewvecY = Angles.Yaw.Sin();
-
-			x1 = x + viewvecY * leftfac;
-			x2 = x + viewvecY * rightfac;
-			y1 = y - viewvecX * leftfac;
-			y2 = y - viewvecX * rightfac;
-			break;
-		}
+		x1 = x - vp.ViewVector.Y * leftfac;
+		x2 = x - vp.ViewVector.Y * rightfac;
+		y1 = y + vp.ViewVector.X * leftfac;
+		y2 = y + vp.ViewVector.X * rightfac;
 	}
 	else
 	{
@@ -1094,7 +1048,7 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 		// This is a non-translucent sprite (i.e. STYLE_Normal or equivalent)
 		trans = 1.f;
 
-		if (!gl_sprite_blend || modelframe || (thing->renderflags & (RF_FLATSPRITE | RF_WALLSPRITE)) || gl_billboard_faces_camera)
+		if (!gl_sprite_blend || modelframe || gl_billboard_faces_camera)
 		{
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;
@@ -1142,7 +1096,6 @@ void HWSprite::ProcessSimple(HWDrawInfo *di, AActor* thing, sector_t * sector, a
 	particle = nullptr;
 
 	const bool drawWithXYBillboard = (!(actor->renderflags & RF_FORCEYBILLBOARD)
-		&& (actor->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE
 		&& (gl_billboard_mode == 1 || actor->renderflags & RF_FORCEXYBILLBOARD));
 
 
@@ -1817,7 +1770,7 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 
 					HWSprite spr;
 					// This is called from the worker thread and must not alter the fake sector cache.
-					uint32_t rf = th->renderflags;
+					const uint32_t rf = th->renderflags;
 					if ((rf & RF_SPRITETYPEMASK) == RF_FACESPRITE && !(rf & (RF_MASKROTATION|RF_INTERPOLATEANGLES)))
 						spr.ProcessSimple(this, th, hw_FakeFlat(th->Sector, in_area, false, &fakesector), in_area, 2);
 					else

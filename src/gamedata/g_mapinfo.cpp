@@ -61,7 +61,7 @@ TArray<FEpisode> AllEpisodes;
 
 extern TMap<int, FString> HexenMusic;
 
-TArray<int> ParsedLumps(8, true);
+TArray<int> ParsedLumps(8);
 
 //==========================================================================
 //

@@ -482,7 +482,12 @@ void DoCreatePath(const char *fn)
 	if ('\0' != *path)
 	{
 		DoCreatePath(path);
+#ifdef _WIN32
+		auto wpath = WideString(path);
+		_wmkdir(wpath.c_str());
+#else
 		_mkdir(path);
+#endif
 	}
 }
 

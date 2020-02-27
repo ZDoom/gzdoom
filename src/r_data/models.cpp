@@ -67,9 +67,10 @@ void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteMod
 		translation = actor->Translation;
 
 	// y scale for a sprite means height, i.e. z in the world!
-	float scaleFactorX = actor->Scale.X * smf->xscale;
-	float scaleFactorY = actor->Scale.X * smf->yscale;
-	float scaleFactorZ = actor->Scale.Y * smf->zscale;
+	DVector2 spriteScale = actor->GetSpriteScale(ticFrac);
+	float scaleFactorX = spriteScale.X * smf->xscale;
+	float scaleFactorY = spriteScale.X * smf->yscale;
+	float scaleFactorZ = spriteScale.Y * smf->zscale;
 	float pitch = 0;
 	float roll = 0;
 	double rotateOffset = 0;

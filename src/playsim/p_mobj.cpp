@@ -4776,6 +4776,7 @@ void AActor::CallBeginPlay()
 void AActor::PostBeginPlay ()
 {
 	PrevAngles = Angles;
+	PrevScale = Scale;
 	flags7 |= MF7_HANDLENODELAY;
 	flags8 |= MF8_RECREATELIGHTS;
 }

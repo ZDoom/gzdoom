@@ -498,6 +498,18 @@ void S_StopSound (AActor *actor, int channel)
 	soundEngine->StopSound(SOURCE_Actor, actor, (compatflags & COMPATF_MAGICSILENCE) ? -1 : channel);
 }
 
+//==========================================================================
+//
+// S_StopAllActorSounds
+//
+// Stops all sounds on an actor.
+//
+//==========================================================================
+
+void S_StopAllActorSounds(AActor *actor)
+{
+	soundEngine->StopAllActorSounds(SOURCE_Actor, actor);
+}
 
 //==========================================================================
 //

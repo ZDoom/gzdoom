@@ -326,7 +326,7 @@ class Inventory : Actor
 		bIsMonster = false;
 		ChangeStatNum(STAT_INVENTORY);
 		// stop all sounds this item is playing.
-		for(int i = 1;i<=7;i++) A_StopSound(i);
+		A_StopAllSounds();
 		SetState (FindState("Held"));
 	}
 

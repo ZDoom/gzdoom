@@ -142,6 +142,14 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopAllSounds, S_StopAllActorSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+
+	S_StopAllActorSounds(self);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeActorSoundPitch)
 {
 	PARAM_SELF_PROLOGUE(AActor);

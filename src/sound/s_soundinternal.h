@@ -307,6 +307,7 @@ public:
 	void StopSoundID(int sound_id);
 	void StopSound(int channel, int sound_id = -1);
 	void StopSound(int sourcetype, const void* actor, int channel, int sound_id = -1);
+	void StopAllActorSounds(int sourcetype, const void* actor);
 
 	void RelinkSound(int sourcetype, const void* from, const void* to, const FVector3* optpos);
 	void ChangeSoundVolume(int sourcetype, const void* source, int channel, double dvolume);

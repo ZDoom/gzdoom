@@ -145,8 +145,16 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopAllSounds, S_StopAllActorSounds)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-
 	S_StopAllActorSounds(self);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSounds, S_StopActorSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(chanmin);
+	PARAM_INT(chanmax);
+	S_StopActorSounds(self, chanmin, chanmax);
 	return 0;
 }
 

@@ -929,6 +929,37 @@ void SoundEngine::StopAllActorSounds(int sourcetype, const void* actor)
 
 //==========================================================================
 //
+// S_StopActorSounds
+//
+// Stops all sounds on an actor within a given range.
+//
+//==========================================================================
+
+void SoundEngine::StopActorSounds(int sourcetype, const void* actor, int chanmin, int chanmax)
+{
+	if (chanmax < chanmin)
+	{
+		int temp = chanmax;
+		chanmax = chanmin;
+		chanmin = temp;
+	}
+
+	FSoundChan* chan = Channels;
+	while (chan != nullptr)
+	{
+		FSoundChan* next = chan->NextChan;
+		if (chan->SourceType == sourcetype &&
+			chan->Source == actor &&
+			chan->EntChannel >= chanmin && chan->EntChannel <= chanmax)
+		{
+			StopChannel(chan);
+		}
+		chan = next;
+	}
+}
+
+//==========================================================================
+//
 // S_StopAllChannels
 //
 //==========================================================================

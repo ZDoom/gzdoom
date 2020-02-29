@@ -513,6 +513,20 @@ void S_StopAllActorSounds(AActor *actor)
 
 //==========================================================================
 //
+// S_StopActorSounds
+//
+// Stops sounds on an actor in a range. 
+// Bear in mind, channels can be negative (-2 or lower).
+//
+//==========================================================================
+
+void S_StopActorSounds(AActor *actor, int chanmin, int chanmax)
+{
+	soundEngine->StopActorSounds(SOURCE_Actor, actor, chanmin, chanmax);
+}
+
+//==========================================================================
+//
 // S_StopSound
 //
 // Stops a sound from a single sector from playing on a specific channel.

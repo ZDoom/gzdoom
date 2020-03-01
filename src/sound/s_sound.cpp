@@ -912,14 +912,23 @@ void SoundEngine::StopSound(int sourcetype, const void* actor, int channel, int 
 //
 //==========================================================================
 
-void SoundEngine::StopAllActorSounds(int sourcetype, const void* actor)
+void SoundEngine::StopActorSounds(int sourcetype, const void* actor, int chanmin, int chanmax)
 {
+	const bool all = (chanmin == 0 && chanmax == 0);
+	if (!all && chanmax > chanmin)
+	{
+		const int temp = chanmax;
+		chanmax = chanmin;
+		chanmin = temp;
+	}
+
 	FSoundChan* chan = Channels;
 	while (chan != nullptr)
 	{
 		FSoundChan* next = chan->NextChan;
 		if (chan->SourceType == sourcetype &&
-			chan->Source == actor)
+			chan->Source == actor &&
+			(all || (chan->EntChannel >= chanmin && chan->EntChannel <= chanmax)))
 		{
 			StopChannel(chan);
 		}

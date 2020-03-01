@@ -1060,7 +1060,8 @@ class Actor : Thinker native
 	native void A_SoundPitch(int slot, double pitch);
 	deprecated("2.3") void A_PlayWeaponSound(sound whattoplay) { A_StartSound(whattoplay, CHAN_WEAPON); }
 	native void A_StopSound(int slot = CHAN_VOICE);	// Bad default but that's what is originally was...
-	native void A_StopAllSounds();
+	void A_StopAllSounds()	{	A_StopSounds(0,0);	}
+	native void A_StopSounds(int chanmin, int chanmax);
 	deprecated("2.3") native void A_PlaySoundEx(sound whattoplay, name slot, bool looping = false, int attenuation = 0);
 	deprecated("2.3") native void A_StopSoundEx(name slot);
 	native clearscope bool IsActorPlayingSound(int channel, Sound snd = 0);

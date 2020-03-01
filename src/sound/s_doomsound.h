@@ -35,7 +35,7 @@ void S_PlaySound(AActor *a, int chan, EChanFlags flags, FSoundID sid, float vol,
 void S_StopSound (AActor *ent, int channel);
 void S_StopSound (const sector_t *sec, int channel);
 void S_StopSound (const FPolyObj *poly, int channel);
-void S_StopAllActorSounds(AActor *actor);
+void S_StopActorSounds(AActor *actor, int chanmin, int chanmax);
 
 // Moves all sounds from one mobj to another
 void S_RelinkSound (AActor *from, AActor *to);

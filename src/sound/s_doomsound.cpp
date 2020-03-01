@@ -506,9 +506,9 @@ void S_StopSound (AActor *actor, int channel)
 //
 //==========================================================================
 
-void S_StopAllActorSounds(AActor *actor)
+void S_StopActorSounds(AActor *actor, int chanmin, int chanmax)
 {
-	soundEngine->StopAllActorSounds(SOURCE_Actor, actor);
+	soundEngine->StopActorSounds(SOURCE_Actor, actor, chanmin, chanmax);
 }
 
 //==========================================================================

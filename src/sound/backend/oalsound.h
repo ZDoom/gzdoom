@@ -136,8 +136,8 @@ public:
 	virtual SoundStream *CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata);
 
 	// Starts a sound.
-	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);
-	virtual FISoundChannel *StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan);
+	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime);
+	virtual FISoundChannel *StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan, float startTime);
 
 	// Changes a channel's volume.
 	virtual void ChannelVolume(FISoundChannel *chan, float volume);
@@ -166,7 +166,7 @@ public:
 	virtual void UpdateListener(SoundListener *);
 	virtual void UpdateSounds();
 
-	virtual void MarkStartTime(FISoundChannel*);
+	virtual void MarkStartTime(FISoundChannel*, float startTime);
 	virtual float GetAudibility(FISoundChannel*);
 
 

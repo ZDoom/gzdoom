@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "templates.h"
 #include "s_soundinternal.h"
 #include "m_swap.h"
 #include "superfasthash.h"
@@ -566,9 +567,13 @@ FSoundChan *SoundEngine::StartSound(int type, const void *source,
 		if (chanflags & (CHANF_UI|CHANF_NOPAUSE)) startflags |= SNDF_NOPAUSE;
 		if (chanflags & CHANF_UI) startflags |= SNDF_NOREVERB;
 
+		startTime = (startflags & SNDF_LOOP)
+			? fmod(startTime, (float)GSnd->GetMSLength(sfx->data) / 1000.f)
+			: clamp<float>(startTime, 0.f, (float)GSnd->GetMSLength(sfx->data) / 1000.f);
+
 		if (attenuation > 0 && type != SOURCE_None)
 		{
-            chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL, startTime);
+			chan = (FSoundChan*)GSnd->StartSound3D (sfx->data, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL, startTime);
 		}
 		else
 		{

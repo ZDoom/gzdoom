@@ -479,11 +479,11 @@ void A_StartSound(AActor *self, int soundid, int channel, int flags, double volu
 	S_PlaySoundPitch(self, channel, EChanFlags::FromInt(flags), soundid, (float)volume, (float)attenuation, (float)pitch, (float)startTime);
 }
 
-void A_PlaySound(AActor* self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch, double startTime)
+void A_PlaySound(AActor* self, int soundid, int channel, double volume, int looping, double attenuation, int local, double pitch)
 {
 	if (looping) channel |= CHANF_LOOP | CHANF_NOSTOP;
 	if (local) channel |= CHANF_LOCAL;
-	A_StartSound(self, soundid, channel & 7, channel & ~7, volume, attenuation, pitch, startTime);
+	A_StartSound(self, soundid, channel & 7, channel & ~7, volume, attenuation, pitch, 0.0f);
 }
 
 

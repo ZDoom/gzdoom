@@ -443,11 +443,11 @@ class CustomInventory : StateProvider
 	//---------------------------------------------------------------------------
 
 	// This is only here, because these functions were originally exported on Inventory, despite only working for weapons, so this is here to satisfy some potential old mods having called it through CustomInventory.
-	deprecated("2.3") action void A_GunFlash(statelabel flash = null, int flags = 0) {}
-	deprecated("2.3") action void A_Lower() {}
-	deprecated("2.3") action void A_Raise() {}
-	deprecated("2.3") action void A_CheckReload() {}
-	deprecated("3.7") action void A_WeaponReady(int flags = 0) {}	// this was somehow missed in 2.3 ...
+	deprecated("2.3", "must be called from Weapon") action void A_GunFlash(statelabel flash = null, int flags = 0) {}
+	deprecated("2.3", "must be called from Weapon") action void A_Lower() {}
+	deprecated("2.3", "must be called from Weapon") action void A_Raise() {}
+	deprecated("2.3", "must be called from Weapon") action void A_CheckReload() {}
+	deprecated("3.7", "must be called from Weapon") action void A_WeaponReady(int flags = 0) {}	// this was somehow missed in 2.3 ...
 	native bool CallStateChain (Actor actor, State state);
 		
 	//===========================================================================

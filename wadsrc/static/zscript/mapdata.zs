@@ -423,7 +423,7 @@ struct Sector native play
 	native int GetAttachedCount();
 
 	native void RemoveForceField();
-	deprecated("3.8") static clearscope Sector PointInSector(Vector2 pt)
+	deprecated("3.8", "Use Level.PointInSector instead") static clearscope Sector PointInSector(Vector2 pt)
 	{
 		return level.PointInSector(pt);
 	}
@@ -588,7 +588,7 @@ struct Sector native play
 
 class SectorTagIterator : Object native
 {
-	deprecated("3.8") static SectorTagIterator Create(int tag, line defline = null)
+	deprecated("3.8", "Use Level.CreateSectorTagIterator() instead") static SectorTagIterator Create(int tag, line defline = null)
 	{
 		return level.CreateSectorTagIterator(tag, defline);
 	}
@@ -598,7 +598,7 @@ class SectorTagIterator : Object native
 
 class LineIdIterator : Object native
 {
-	deprecated("3.8") static LineIdIterator Create(int tag)
+	deprecated("3.8", "Use Level.CreateLineIdIterator() instead") static LineIdIterator Create(int tag)
 	{
 		return level.CreateLineIdIterator(tag);
 	}

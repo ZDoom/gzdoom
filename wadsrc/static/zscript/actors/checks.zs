@@ -168,7 +168,7 @@ extend class Actor
 
 	private native bool CheckFlag(string flagname, int check_pointer = AAPTR_DEFAULT);
 
-	deprecated("2.3") action state A_CheckFlag(string flagname, statelabel label, int check_pointer = AAPTR_DEFAULT)
+	deprecated("2.3", "Use a combination of direct flag access and SetStateLabel()") action state A_CheckFlag(string flagname, statelabel label, int check_pointer = AAPTR_DEFAULT)
 	{
 		return CheckFlag(flagname, check_pointer)? ResolveState(label) : null;
 	}

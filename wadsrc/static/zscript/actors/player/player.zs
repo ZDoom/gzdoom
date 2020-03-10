@@ -2718,7 +2718,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
-	deprecated("3.7") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
+	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
 	{
 		if (mo != null)
 		{
@@ -2728,7 +2728,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	}
 	
 	// This somehow got its arguments mixed up. 'self' should have been the player to be unmorphed, not the activator
-	deprecated("3.7") bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
+	deprecated("3.7", "UndoPlayerMorph() should be used on a PlayerPawn object") bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
 	{
 		if (player.mo != null)
 		{
@@ -2737,7 +2737,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 		return false;
 	}
 
-	deprecated("3.7") void DropWeapon()
+	deprecated("3.7", "DropWeapon() should be used on a PlayerPawn object") void DropWeapon()
 	{
 		if (mo != null)
 		{
@@ -2745,7 +2745,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 		}
 	}
 
-	deprecated("3.7") void BringUpWeapon()
+	deprecated("3.7", "BringUpWeapon() should be used on a PlayerPawn object") void BringUpWeapon()
 	{
 		if (mo) mo.BringUpWeapon();
 	}

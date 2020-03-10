@@ -686,18 +686,18 @@ extend class Actor
 		}
 	}
 
-	deprecated("2.3") void A_MeleeAttack()
+	deprecated("2.3", "Use CustomMeleeAttack() instead") void A_MeleeAttack()
 	{
 		DoAttack(true, false, MeleeDamage, MeleeSound, NULL, 0);
 	}
 
-	deprecated("2.3") void A_MissileAttack()
+	deprecated("2.3", "Use A_SpawnProjectile() instead") void A_MissileAttack()
 	{
 		Class<Actor> MissileType = MissileName;
 		DoAttack(false, true, 0, 0, MissileType, MissileHeight);
 	}
 
-	deprecated("2.3") void A_ComboAttack()
+	deprecated("2.3", "Use A_BasicAttack() instead") void A_ComboAttack()
 	{
 		Class<Actor> MissileType = MissileName;
 		DoAttack(true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);

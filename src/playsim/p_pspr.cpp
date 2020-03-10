@@ -232,7 +232,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, FindPSprite)	// the underscore is needed to 
 void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending)
 {
 	if (player == nullptr) return;
-	player->GetPSprite(id)->SetState(state, pending);
+	auto psp = player->GetPSprite(id);
+	if (psp) psp->SetState(state, pending);
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, SetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
@@ -266,8 +267,8 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		newcaller = ReadyWeapon;
 	}
 
-	assert(newcaller != nullptr);
-
+	if (newcaller == nullptr) return nullptr; // Error case was not handled properly. This function cannot give a guarantee to always succeed!
+	
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
 	{

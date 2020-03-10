@@ -227,6 +227,7 @@ class Weapon : StateProvider
 			return;
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
+		if (!psp) return;
 		if (player.morphTics || player.cheats & CF_INSTANTWEAPSWITCH)
 		{
 			psp.y = WEAPONBOTTOM;
@@ -276,6 +277,7 @@ class Weapon : StateProvider
 			return;
 		}
 		let psp = player.GetPSprite(PSP_WEAPON);
+		if (!psp) return;
 		psp.y -= raisespeed;
 		if (psp.y > WEAPONTOP)
 		{ // Not raised all the way yet
@@ -341,7 +343,8 @@ class Weapon : StateProvider
 		}
 
 		// Play ready sound, if any.
-		if (weapon.ReadySound && player.GetPSprite(PSP_WEAPON).curState == weapon.FindState('Ready'))
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (weapon.ReadySound && psp && psp.curState == weapon.FindState('Ready'))
 		{
 			if (!weapon.bReadySndHalf || random[WpnReadySnd]() < 128)
 			{
@@ -361,8 +364,11 @@ class Weapon : StateProvider
 			// Prepare for bobbing action.
 			player.WeaponState |= WF_WEAPONBOBBING;
 			let pspr = player.GetPSprite(PSP_WEAPON);
-			pspr.x = 0;
-			pspr.y = WEAPONTOP;
+			if (pspr)
+			{
+				pspr.x = 0;
+				pspr.y = WEAPONTOP;
+			}
 		}
 	}
 
@@ -865,9 +871,12 @@ class Weapon : StateProvider
 		p.refire = 0;
 
 		let pspr = p.GetPSprite(PSP_WEAPON);
-		pspr.y = WEAPONBOTTOM;
-		pspr.ResetInterpolation();
-		pspr.SetState(GetUpState());
+		if (pspr)
+		{
+			pspr.y = WEAPONBOTTOM;
+			pspr.ResetInterpolation();
+			pspr.SetState(GetUpState());
+		}
 	}
 
 	//===========================================================================

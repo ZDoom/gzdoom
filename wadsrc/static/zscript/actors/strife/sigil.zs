@@ -202,7 +202,7 @@ class Sigil : Weapon
 			return;
 		}
 		PSprite pspr = player.GetPSprite(PSP_WEAPON);
-		pspr.SetState(pspr.CurState + invoker.health);
+		if (pspr) pspr.SetState(pspr.CurState + invoker.health);
 		invoker.downpieces = 0;
 	}
 
@@ -225,7 +225,7 @@ class Sigil : Weapon
 		PSprite pspr = player.GetPSprite(PSP_WEAPON);
 		int pieces = invoker.downpieces;
 		if (pieces < 1 || pieces > 5) pieces = invoker.health;
-		pspr.SetState(pspr.CurState + pieces);
+		if (pspr) pspr.SetState(pspr.CurState + pieces);
 	}
 
 	//============================================================================
@@ -243,7 +243,7 @@ class Sigil : Weapon
 			return;
 		}
 		PSprite pspr = player.GetPSprite(PSP_WEAPON);
-		pspr.SetState(pspr.CurState + (4 * invoker.health - 3));
+		if (pspr) pspr.SetState(pspr.CurState + (4 * invoker.health - 3));
 	}
 
 	//============================================================================

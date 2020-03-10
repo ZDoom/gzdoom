@@ -121,19 +121,22 @@ class StrifePlayer : PlayerPawn
 			State firehandslower = FindState("FireHandsLower");
 			State firehands = FindState("FireHands");
 
-			if (psp.CurState != null && firehandslower != null && firehands != null)
+			if (psp)
 			{
-				// Calculate state to go to.
-				int dist = firehands.DistanceTo(psp.curState);
-				if (dist > 0)
+				if (psp.CurState != null && firehandslower != null && firehands != null)
 				{
-					player.playerstate = PST_DEAD;
-					psp.SetState(firehandslower + dist);
-					return;
+					// Calculate state to go to.
+					int dist = firehands.DistanceTo(psp.curState);
+					if (dist > 0)
+					{
+						player.playerstate = PST_DEAD;
+						psp.SetState(firehandslower + dist);
+						return;
+					}
 				}
+				player.playerstate = PST_DEAD;
+				psp.SetState(null);
 			}
-			player.playerstate = PST_DEAD;
-			psp.SetState(null);
 		}
 	}
 
@@ -142,19 +145,20 @@ class StrifePlayer : PlayerPawn
 		if (player != null)
 		{
 			PSprite psp = player.GetPSprite(PSP_STRIFEHANDS);
-
-			if (psp.CurState == null)
+			if (psp)
 			{
-				psp.SetState(null);
-				return;
+				if (psp.CurState == null)
+				{
+					psp.SetState(null);
+					return;
+				}
+				
+				psp.y += 9;
+				if (psp.y > WEAPONBOTTOM*2)
+				{
+					psp.SetState(null);
+				}
 			}
-
-			psp.y += 9;
-			if (psp.y > WEAPONBOTTOM*2)
-			{
-				psp.SetState(null);
-			}
-
 			if (player.extralight > 0) player.extralight--;
 		}
 		return;

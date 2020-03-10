@@ -67,8 +67,12 @@ class Gauntlets : Weapon
 			if (!weapon.DepleteAmmo (weapon.bAltFire))
 				return;
 			
-			player.GetPSprite(PSP_WEAPON).x = ((random[GauntletAtk](0, 3)) - 2);
-			player.GetPSprite(PSP_WEAPON).y = WEAPONTOP + (random[GauntletAtk](0, 3));
+			let psp = player.GetPSprite(PSP_WEAPON);
+			if (psp)
+			{
+				psp.x = ((random[GauntletAtk](0, 3)) - 2);
+				psp.y = WEAPONTOP + (random[GauntletAtk](0, 3));
+			}
 		}
 		double ang = angle;
 		if (power)

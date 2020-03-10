@@ -57,7 +57,8 @@ extend class PlayerPawn
 
 		if (player.ReadyWeapon != null)
 		{
-			player.GetPSprite(PSP_WEAPON).y = WEAPONTOP;
+			let psp = player.GetPSprite(PSP_WEAPON);
+			if (psp) psp.y = WEAPONTOP;
 		}
 
 		if (morphweaponcls == null || !(morphweaponcls is 'Weapon'))

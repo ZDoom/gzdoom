@@ -1659,7 +1659,8 @@ class PlayerPawn : Actor
 		{
 			if (player.ReadyWeapon != null)
 			{
-				player.GetPSprite(PSP_WEAPON).y = WEAPONTOP;
+				let psp = player.GetPSprite(PSP_WEAPON);
+				if (psp) psp.y = WEAPONTOP;
 				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 			}
 			return;
@@ -1686,7 +1687,8 @@ class PlayerPawn : Actor
 			weapon.PlayUpSound(self);
 			player.refire = 0;
 
-			player.GetPSprite(PSP_WEAPON).y = player.cheats & CF_INSTANTWEAPSWITCH? WEAPONTOP : WEAPONBOTTOM;
+			let psp = player.GetPSprite(PSP_WEAPON);
+			if (psp) psp.y = player.cheats & CF_INSTANTWEAPSWITCH? WEAPONTOP : WEAPONBOTTOM;
 			// make sure that the previous weapon's flash state is terminated.
 			// When coming here from a weapon drop it may still be active.
 			player.SetPsprite(PSP_FLASH, null);

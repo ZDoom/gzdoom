@@ -56,7 +56,11 @@ class Beak : Weapon
 		{
 			return;
 		}
-		player.GetPSprite(PSP_WEAPON).y = WEAPONTOP;
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (psp)
+		{
+			psp.y = WEAPONTOP;
+		}
 		player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 	}
 
@@ -85,7 +89,11 @@ class Beak : Weapon
 		}
 		A_StartSound ("chicken/peck", CHAN_VOICE);
 		player.chickenPeck = 12;
-		player.GetPSprite(PSP_WEAPON).Tics -= random[BeakAtk](0,7);
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (psp)
+		{
+			psp.Tics -= random[BeakAtk](0,7);
+		}
 	}
 }
 
@@ -133,7 +141,11 @@ class BeakPowered : Beak
 		}
 		A_StartSound ("chicken/peck", CHAN_VOICE);
 		player.chickenPeck = 12;
-		player.GetPSprite(PSP_WEAPON).Tics -= random[BeakAtk](0,3);
+		let psp = player.GetPSprite(PSP_WEAPON);
+		if (psp)
+		{
+			psp.Tics -= random[BeakAtk](0,3);
+		}
 	}
 	
 }

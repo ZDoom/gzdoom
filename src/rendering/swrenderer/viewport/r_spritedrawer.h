@@ -33,7 +33,7 @@ namespace swrenderer
 		void SetSolidColor(int color) { dc_color = color; dc_color_bgra = GPalette.BaseColors[color]; }
 		void SetDynamicLight(uint32_t color) { dynlightcolor = color; }
 
-		void DrawMasked(RenderThread* thread, double topZ, double scale, bool flipX, bool flipY, const FWallCoords& WallC, const ProjectedWallLight& light, FSoftwareTexture* texture, const short* mfloorclip, const short* mceilingclip, FRenderStyle style);
+		void DrawMasked(RenderThread* thread, double topZ, double scale, bool flipX, bool flipY, const FWallCoords& WallC, int clipx1, int clipx2, const ProjectedWallLight& light, FSoftwareTexture* texture, const short* mfloorclip, const short* mceilingclip, FRenderStyle style);
 		void DrawMasked2D(RenderThread *thread, double x0, double x1, double y0, double y1, FSoftwareTexture* texture, FRenderStyle style);
 		void DrawVoxelBlocks(RenderThread *thread, const VoxelBlock *blocks, int blockcount);
 

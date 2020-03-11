@@ -199,6 +199,6 @@ namespace swrenderer
 		}
 
 		drawerargs.SetBaseColormap(spr->Light.BaseColormap);
-		drawerargs.DrawMasked(thread, spr->gzt, spr->yscale, spr->renderflags & RF_XFLIP, spr->renderflags & RF_YFLIP, spr->wallc, mlight, WallSpriteTile, floorclip, mceilingclip, spr->RenderStyle);
+		drawerargs.DrawMasked(thread, spr->gzt, spr->yscale, spr->renderflags & RF_XFLIP, spr->renderflags & RF_YFLIP, spr->wallc, x1, x2, mlight, WallSpriteTile, floorclip, mceilingclip, spr->RenderStyle);
 	}
 }

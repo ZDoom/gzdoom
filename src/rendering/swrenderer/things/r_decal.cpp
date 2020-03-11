@@ -218,14 +218,6 @@ namespace swrenderer
 			}
 		}
 
-		// Clip sprite to drawseg
-		x1 = MAX<int>(clipper->x1, x1);
-		x2 = MIN<int>(clipper->x2, x2);
-		if (x1 >= x2)
-		{
-			return;
-		}
-
 		// Prepare lighting
 		ProjectedWallLight light;
 		light.SetColormap(lightsector, curline);
@@ -250,7 +242,7 @@ namespace swrenderer
 			if (visible)
 			{
 				thread->PrepareTexture(WallSpriteTile, decal->RenderStyle);
-				drawerargs.DrawMasked(thread, zpos + WallSpriteTile->GetTopOffset(0) * decal->ScaleY, decal->ScaleY, decal->RenderFlags & RF_XFLIP, decal->RenderFlags & RF_YFLIP, WallC, light, WallSpriteTile, mfloorclip, mceilingclip, decal->RenderStyle);
+				drawerargs.DrawMasked(thread, zpos + WallSpriteTile->GetTopOffset(0) * decal->ScaleY, decal->ScaleY, decal->RenderFlags & RF_XFLIP, decal->RenderFlags & RF_YFLIP, WallC, clipper->x1, clipper->x2, light, WallSpriteTile, mfloorclip, mceilingclip, decal->RenderStyle);
 			}
 
 			// If this sprite is RF_CLIPFULL on a two-sided line, needrepeat will

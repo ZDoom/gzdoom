@@ -174,7 +174,7 @@ static void SetupGenMidi()
 	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
 	if (lump < 0)
 	{
-		Printf("No GENMIDI lump found. OPL playback not available.");
+		Printf("No GENMIDI lump found. OPL playback not available.\n");
 		return;
 	}
 	auto data = Wads.OpenLumpReader(lump);

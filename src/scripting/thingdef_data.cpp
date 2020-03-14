@@ -47,6 +47,7 @@
 #include "gstrings.h"
 #include "g_levellocals.h"
 #include "p_checkposition.h"
+#include "p_linetracedata.h"
 #include "v_font.h"
 #include "menu/menu.h"
 #include "teaminfo.h"
@@ -903,6 +904,9 @@ void InitThingdef()
 	frp->Size = sizeof(FRailParams);
 	frp->Align = alignof(FRailParams);
 
+	auto fltd = NewStruct("FLineTraceData", nullptr);
+	fltd->Size = sizeof(FLineTraceData);
+	fltd->Align = alignof(FLineTraceData);
 
 	FieldTable.Clear();
 	if (FieldTable.Size() == 0)

@@ -46,19 +46,19 @@ struct FLineTraceData
 		TRACE_HasHitSky
 	};
 
-	Actor HitActor;
-	Line HitLine;
-	Sector HitSector;
-	F3DFloor Hit3DFloor;
-	TextureID HitTexture;
-	Vector3 HitLocation;
-	Vector3 HitDir;
-	double Distance;
-	int NumPortals;
-	int LineSide;
-	int LinePart;
-	int SectorPlane;
-	int HitType;
+	native Actor HitActor;
+	native Line HitLine;
+	native Sector HitSector;
+	native F3DFloor Hit3DFloor;
+	native TextureID HitTexture;
+	native Vector3 HitLocation;
+	native Vector3 HitDir;
+	native double Distance;
+	native int NumPortals;
+	native int LineSide;
+	native int LinePart;
+	native int SectorPlane;
+	native int HitType;
 }
 
 struct LinkContext

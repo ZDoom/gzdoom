@@ -1559,9 +1559,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 					Error(field, "Cannot declare non-native global variables. Tried to declare %s", FName(name->Name).GetChars());
 				}
 
-				assert(f != nullptr);
-
-				if (field->Flags & (ZCC_Version | ZCC_Deprecated))
+				if ((field->Flags & (ZCC_Version | ZCC_Deprecated)) && f != nullptr)
 				{
 					f->mVersion = field->Version;
 

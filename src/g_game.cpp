@@ -313,6 +313,13 @@ CCMD (slot)
 				VMCall(func, param, 3, &ret, 1);
 			}
 		}
+
+		// [Nash] Option to display the name of the weapon being switched to.
+		if (SendItemUse != players[consoleplayer].ReadyWeapon && (displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
+		{
+			StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, SendItemUse->GetTag(),
+				1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('W', 'E', 'P', 'N'));
+		}
 	}
 }
 

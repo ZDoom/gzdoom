@@ -116,6 +116,7 @@ const char* GameInfoBorders[] =
 	NULL
 };
 
+
 #define GAMEINFOKEY_CSTRING(key, variable, length) \
 	else if(nextKey.CompareNoCase(variable) == 0) \
 	{ \
@@ -382,6 +383,7 @@ void FMapInfoParser::ParseGameInfo()
 			GAMEINFOKEY_DOUBLE(telefogheight, "telefogheight")
 			GAMEINFOKEY_DOUBLE(gibfactor, "gibfactor")
 			GAMEINFOKEY_INT(defKickback, "defKickback")
+			GAMEINFOKEY_INT(fullscreenautoaspect, "fullscreenautoaspect")
 			GAMEINFOKEY_STRING(SkyFlatName, "SkyFlatName")
 			GAMEINFOKEY_STRING(translator, "translator")
 			GAMEINFOKEY_COLOR(pickupcolor, "pickupcolor")

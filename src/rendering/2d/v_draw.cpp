@@ -375,8 +375,48 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 			break;
 
 		case DTA_Fullscreen:
+		case DTA_FullscreenEx:
+		{
+			double aspect;
+			double srcwidth = img->GetDisplayWidthDouble();
+			double srcheight = img->GetDisplayHeightDouble();
+			int autoaspect = parms->fsscalemode;
+			aspect = autoaspect == 0 || (srcwidth == 320 && srcheight == 200) || (srcwidth == 640 && srcheight == 200)? 1.333 : srcwidth / srcheight;
 			parms->x = parms->y = 0;
-			break;
+			parms->keepratio = true;
+			auto screenratio = ActiveRatio(GetWidth(), GetHeight());
+			if (autoaspect == 3)
+			{
+				if (screenratio >= aspect || aspect < 1.4) autoaspect = 1; // screen is wider than the image -> pillarbox it. 4:3 images must also be pillarboxes if the screen is taller than the image
+				else if (screenratio > 1.32) autoaspect = 2;				// on anything 4:3 and wider crop the sides of the image.
+				else
+				{
+					// special case: Crop image to 4:3 and then letterbox this. This avoids too much cropping on narrow windows.
+					double width4_3 = srcheight * (4. / 3.);
+					parms->destwidth = (double)GetWidth() * srcwidth / width4_3;
+					parms->destheight = GetHeight() * screenratio * (3. / 4.);	// use 4:3 for the image
+					parms->y = (GetHeight() - parms->destheight) / 2;
+					parms->x = -(srcwidth - width4_3) / 2;
+					return false; // Do not call VirtualToRealCoords for this!
+				}
+			}
+
+			if ((screenratio > aspect) ^ (autoaspect == 2))
+			{
+				// pillarboxed or vertically cropped (i.e. scale to height)
+				parms->destheight = GetHeight();
+				parms->destwidth =GetWidth() * aspect / screenratio;
+				parms->x = (GetWidth() - parms->destwidth) / 2;
+			}
+			else
+			{
+				// letterboxed or horizontally cropped (i.e. scale to width)
+				parms->destwidth = GetWidth();
+				parms->destheight = GetHeight() * screenratio / aspect;
+				parms->y = (GetHeight() - parms->destheight) / 2;
+			}
+			return false; // Do not call VirtualToRealCoords for this!
+		}
 
 		case DTA_HUDRules:
 		case DTA_HUDRulesC:
@@ -667,12 +707,28 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_Fullscreen:
+
 			boolval = ListGetInt(tags);
 			if (boolval)
 			{
 				assert(fortext == false);
 				if (img == NULL) return false;
 				parms->cleanmode = DTA_Fullscreen;
+				parms->fsscalemode = (uint8_t)gameinfo.fullscreenautoaspect;
+				parms->virtWidth = img->GetDisplayWidthDouble();
+				parms->virtHeight = img->GetDisplayHeightDouble();
+			}
+			break;
+
+		case DTA_FullscreenEx:
+
+			intval = ListGetInt(tags);
+			if (intval >= 0 && intval <= 3)
+			{
+				assert(fortext == false);
+				if (img == NULL) return false;
+				parms->cleanmode = DTA_Fullscreen;
+				parms->fsscalemode = (uint8_t)intval;
 				parms->virtWidth = img->GetDisplayWidthDouble();
 				parms->virtHeight = img->GetDisplayHeightDouble();
 			}

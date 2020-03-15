@@ -204,6 +204,7 @@ struct gameinfo_t
 	int berserkpic;
 	double normforwardmove[2];
 	double normsidemove[2];
+	int fullscreenautoaspect = 3;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

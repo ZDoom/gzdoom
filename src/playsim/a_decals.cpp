@@ -244,6 +244,17 @@ void DBaseDecal::SetShade (int r, int g, int b)
 
 //----------------------------------------------------------------------------
 //
+//
+//
+//----------------------------------------------------------------------------
+
+void DBaseDecal::SetTranslation(uint32_t trans)
+{
+	Translation = trans;
+}
+
+//----------------------------------------------------------------------------
+//
 // Returns the texture the decal stuck to.
 //
 //----------------------------------------------------------------------------
@@ -696,7 +707,7 @@ void DImpactDecal::Expired()
 //
 //----------------------------------------------------------------------------
 
-DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color)
+DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, uint32_t bloodTranslation)
 {
 	if (cl_maxdecals > 0)
 	{
@@ -704,7 +715,7 @@ DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name,
 
 		if (tpl != NULL && (tpl = tpl->GetDecal()) != NULL)
 		{
-			return StaticCreate (Level, tpl, pos, wall, ffloor, color);
+			return StaticCreate (Level, tpl, pos, wall, ffloor, color, bloodTranslation);
 		}
 	}
 	return NULL;
@@ -716,7 +727,7 @@ DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const char *name,
 //
 //----------------------------------------------------------------------------
 
-DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color)
+DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTemplate *tpl, const DVector3 &pos, side_t *wall, F3DFloor * ffloor, PalEntry color, uint32_t bloodTranslation)
 {
 	DImpactDecal *decal = NULL;
 	if (tpl != NULL && cl_maxdecals > 0 && !(wall->Flags & WALLF_NOAUTODECALS))
@@ -730,7 +741,10 @@ DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTempl
 			// apply the custom color as well.
 			if (tpl->ShadeColor != tpl_low->ShadeColor) lowercolor=0;
 			else lowercolor = color;
-			StaticCreate (Level, tpl_low, pos, wall, ffloor, lowercolor);
+
+			uint32_t lowerTrans = (bloodTranslation != 0 ? bloodTranslation : 0);
+
+			StaticCreate (Level, tpl_low, pos, wall, ffloor, lowercolor, lowerTrans);
 		}
 		decal = Level->CreateThinker<DImpactDecal>(pos.Z);
 		if (decal == NULL)
@@ -748,6 +762,12 @@ DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTempl
 		if (color != 0)
 		{
 			decal->SetShade (color.r, color.g, color.b);
+		}
+
+		// [Nash] For compatibility reasons, only do this if the 'Shaded' keyword is omitted from the base decal.
+		if (bloodTranslation != 0 && tpl->ShadeColor == 0)
+		{
+			decal->SetTranslation(bloodTranslation);
 		}
 
 		if (!cl_spreaddecals || !decal->PicNum.isValid())
@@ -782,6 +802,10 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 			decal->CheckMax();
 			tpl->ApplyToDecal (decal, wall);
 			decal->AlphaColor = AlphaColor;
+
+			// [Nash] For compatibility reasons, only do this if the 'Shaded' keyword is omitted from the base decal.
+			if (tpl->ShadeColor == 0) decal->SetTranslation(Translation);
+
 			decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
 								 (this->RenderFlags & ~RF_DECALMASK);
 		}

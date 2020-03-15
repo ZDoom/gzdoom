@@ -381,7 +381,7 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 			double srcwidth = img->GetDisplayWidthDouble();
 			double srcheight = img->GetDisplayHeightDouble();
 			int autoaspect = parms->fsscalemode;
-			aspect = autoaspect == 0 || (srcwidth == 320 && srcheight == 200) || (srcwidth == 640 && srcheight == 200)? 1.333 : srcwidth / srcheight;
+			aspect = autoaspect == 0 || (srcwidth == 320 && srcheight == 200) || (srcwidth == 640 && srcheight == 400)? 1.333 : srcwidth / srcheight;
 			parms->x = parms->y = 0;
 			parms->keepratio = true;
 			auto screenratio = ActiveRatio(GetWidth(), GetHeight());

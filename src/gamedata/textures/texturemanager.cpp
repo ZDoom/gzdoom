@@ -1549,7 +1549,7 @@ void FTextureManager::GenerateGlobalBrightmapFromColormap()
 	if (lump == -1) return;
 	FMemLump cmap = Wads.ReadLump(lump);
 	uint8_t palbuffer[768];
-	ReadPalette(Wads.CheckNumForName("PLAYPAL"), palbuffer);
+	ReadPalette(Wads.GetNumForName("PLAYPAL"), palbuffer);
 
 	const unsigned char *cmapdata = (const unsigned char *)cmap.GetMem();
 	const uint8_t *paldata = palbuffer;

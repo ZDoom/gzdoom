@@ -63,7 +63,7 @@ extern FPalette GPalette;
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 
-void ReadPalette(int lumpnum, uint8_t *buffer);
+int ReadPalette(int lumpnum, uint8_t *buffer);
 void InitPalette ();
 
 EXTERN_CVAR (Int, paletteflash)

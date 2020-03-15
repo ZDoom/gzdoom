@@ -1031,7 +1031,7 @@ void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
 {
 	uint8_t playpal[768];
 
-	ReadPalette(Wads.CheckNumForName("PLAYPAL"), playpal);
+	ReadPalette(Wads.GetNumForName("PLAYPAL"), playpal);
 	for (int i = 0; i < 256; ++i)
 	{
 		bitmap_info->bmiColors[i].rgbBlue = playpal[i * 3 + 2];

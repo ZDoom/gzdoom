@@ -48,6 +48,7 @@
 #include "st_stuff.h"
 #include "x86.h"
 #include "g_levellocals.h"
+#include "m_png.h"
 
 uint32_t Col2RGB8[65][256];
 uint32_t *Col2RGB8_LessPrecision[65];
@@ -277,20 +278,45 @@ static int sortforremap2 (const void *a, const void *b)
 	}
 }
 
-void ReadPalette(int lumpnum, uint8_t *buffer)
+int ReadPalette(int lumpnum, uint8_t *buffer)
 {
 	if (lumpnum < 0)
 	{
-		I_FatalError("Palette not found");
+		return 0;
 	}
 	FMemLump lump = Wads.ReadLump(lumpnum);
 	uint8_t *lumpmem = (uint8_t*)lump.GetMem();
 	memset(buffer, 0, 768);
-	if (memcmp(lumpmem, "JASC-PAL", 8))
+
+	FileReader fr;
+	fr.OpenMemory(lumpmem, lump.GetSize());
+	auto png = M_VerifyPNG(fr);
+	if (png)
 	{
-		memcpy(buffer, lumpmem, MIN<size_t>(768, lump.GetSize()));
+		uint32_t id, len;
+		fr.Seek(33, FileReader::SeekSet);
+		fr.Read(&len, 4);
+		fr.Read(&id, 4);
+		bool succeeded = false;
+		while (id != MAKE_ID('I', 'D', 'A', 'T') && id != MAKE_ID('I', 'E', 'N', 'D'))
+		{
+			len = BigLong((unsigned int)len);
+			if (id != MAKE_ID('P', 'L', 'T', 'E'))
+				fr.Seek(len, FileReader::SeekCur);
+			else
+			{
+				int PaletteSize = MIN<int>(len, 768);
+				fr.Read(buffer, PaletteSize);
+				return PaletteSize / 3;
+			}
+			fr.Seek(4, FileReader::SeekCur);	// Skip CRC
+			fr.Read(&len, 4);
+			id = MAKE_ID('I', 'E', 'N', 'D');
+			fr.Read(&id, 4);
+		}
+		I_Error("%s contains no palette", Wads.GetLumpFullName(lumpnum));
 	}
-	else
+	if (memcmp(lumpmem, "JASC-PAL", 8) == 0)
 	{
 		FScanner sc;
 		
@@ -308,6 +334,12 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 			}
 			buffer[i] = sc.Number;
 		}
+		return colors / 3;
+	}
+	else
+	{
+		memcpy(buffer, lumpmem, MIN<size_t>(768, lump.GetSize()));
+		return 256;
 	}
 }
 
@@ -371,7 +403,7 @@ void InitPalette ()
 {
 	uint8_t pal[768];
 	
-	ReadPalette(Wads.CheckNumForName("PLAYPAL"), pal);
+	ReadPalette(Wads.GetNumForName("PLAYPAL"), pal);
 
 	GPalette.SetPalette (pal);
 	GPalette.MakeGoodRemap ();

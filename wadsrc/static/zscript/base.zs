@@ -191,6 +191,8 @@ enum DrawTextureTags
 	DTA_Internal3,
 	DTA_Spacing,			// Strings only: Additional spacing between characters
 	DTA_Monospace,			// Strings only: Use a fixed distance between characters.
+
+	DTA_FullsceeenEx,		// advanced fullscreen control.
 };
 
 class Shape2DTransform : Object native

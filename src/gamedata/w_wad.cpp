@@ -500,7 +500,7 @@ int FWadCollection::GetNumForName (const char *name, int space)
 	i = CheckNumForName (name, space);
 
 	if (i == -1)
-		I_Error ("W_GetNumForName: %s not found!", name);
+		I_Error ("GetNumForName: %s not found!", name);
 
 	return i;
 }

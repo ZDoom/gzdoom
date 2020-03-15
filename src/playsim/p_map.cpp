@@ -4967,8 +4967,10 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 					bloodcolor.a = 1;
 				}
 
+				uint32_t bloodTrans = (bloodcolor != 0 ? actor->BloodTranslation : 0);
+
 				DImpactDecal::StaticCreate(actor->Level, bloodType, bleedtrace.HitPos,
-					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor);
+					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor, bloodTrans);
 			}
 		}
 	}

@@ -207,15 +207,8 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 {
 	if (!tex->isHardwareCanvas())
 	{
-		if (translation <= 0)
-		{
-			translation = -translation;
-		}
-		else
-		{
-			auto remap = TranslationToTable(translation);
-			translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-		}
+		auto remap = TranslationToTable(translation);
+		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
 
 		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
 		CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);

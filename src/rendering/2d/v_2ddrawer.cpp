@@ -393,12 +393,12 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	dg.mTexture = img;
 	if (img->isWarped()) dg.mFlags |= DTF_Wrap;
 
-	dg.mTranslation = 0;
+	dg.mTranslationId = 0;
 	SetStyle(img, parms, vertexcolor, dg);
 
-	if (!img->isHardwareCanvas() && parms.remap != nullptr && !parms.remap->Inactive)
+	if (!img->isHardwareCanvas() && parms.TranslationId != -1)
 	{
-		dg.mTranslation = parms.remap;
+		dg.mTranslationId = parms.TranslationId;
 	}
 	u1 = parms.srcx;
 	v1 = parms.srcy;
@@ -472,11 +472,11 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 	dg.mFlags |= DTF_Wrap;
 	dg.mTexture = img;
 
-	dg.mTranslation = 0;
+	dg.mTranslationId = 0;
 	SetStyle(img, parms, vertexcolor, dg);
 
-	if (!img->isHardwareCanvas() && parms.remap != nullptr && !parms.remap->Inactive)
-		dg.mTranslation = parms.remap;
+	if (!img->isHardwareCanvas() && parms.TranslationId != -1)
+		dg.mTranslationId = parms.TranslationId;
 
 	if (shape->dirty) {
 		if (shape->mVertices.Size() != shape->mTransformedVertices.Size())

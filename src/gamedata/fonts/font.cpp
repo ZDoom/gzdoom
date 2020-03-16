@@ -666,7 +666,7 @@ void FFont::SetDefaultTranslation(uint32_t *othercolors)
 			}
 		}
 	}
-	Ranges[CR_UNTRANSLATED] = remap;
+	Translations[CR_UNTRANSLATED] = remap.StoreTranslation(TRANSLATION_Font);
 	forceremap = true;
 }
 
@@ -769,7 +769,7 @@ int FFont::SimpleTranslation (uint32_t *colorsused, uint8_t *translation, uint8_
 //==========================================================================
 
 void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity,
-							   const void *ranges, int total_colors, const PalEntry *palette)
+							   const void *ranges, int total_colors, const PalEntry *palette, std::function<void(FRemapTable*)> post)
 {
 	int i, j;
 	const TranslationParm *parmstart = (const TranslationParm *)ranges;
@@ -777,32 +777,32 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 	FRemapTable remap(total_colors);
 
 	// Create different translations for different color ranges
-	Ranges.Clear();
+	Translations.Clear();
 	for (i = 0; i < NumTextColors; i++)
 	{
 		if (i == CR_UNTRANSLATED)
 		{
 			if (identity != nullptr)
 			{
-				memcpy (remap.Remap, identity, ActiveColors);
+				memcpy(remap.Remap, identity, ActiveColors);
 				if (palette != nullptr)
 				{
-					memcpy (remap.Palette, palette, ActiveColors*sizeof(PalEntry));
+					memcpy(remap.Palette, palette, ActiveColors * sizeof(PalEntry));
 				}
 				else
 				{
-					remap.Palette[0] = GPalette.BaseColors[identity[0]] & MAKEARGB(0,255,255,255);
+					remap.Palette[0] = GPalette.BaseColors[identity[0]] & MAKEARGB(0, 255, 255, 255);
 					for (j = 1; j < ActiveColors; ++j)
 					{
-						remap.Palette[j] = GPalette.BaseColors[identity[j]] | MAKEARGB(255,0,0,0);
+						remap.Palette[j] = GPalette.BaseColors[identity[j]] | MAKEARGB(255, 0, 0, 0);
 					}
 				}
+				Translations.Push(remap.StoreTranslation(TRANSLATION_Font));
 			}
 			else
 			{
-				remap = Ranges[0];
+				Translations.Push(Translations[0]);
 			}
-			Ranges.Push(remap);
 			continue;
 		}
 
@@ -836,7 +836,8 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 			remap.Remap[j] = ColorMatcher.Pick(r, g, b);
 			remap.Palette[j] = PalEntry(255,r,g,b);
 		}
-		Ranges.Push(remap);
+		if (post) post(&remap);
+		Translations.Push(remap.StoreTranslation(TRANSLATION_Font));
 
 		// Advance to the next color range.
 		while (parmstart[1].RangeStart > parmstart[0].RangeEnd)
@@ -853,7 +854,7 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 //
 //==========================================================================
 
-FRemapTable *FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
+int FFont::GetColorTranslation (EColorRange range, PalEntry *color) const
 {
 	if (noTranslate)
 	{
@@ -866,11 +867,11 @@ FRemapTable *FFont::GetColorTranslation (EColorRange range, PalEntry *color) con
 		if (color != nullptr) *color = retcolor;
 	}
 	if (ActiveColors == 0)
-		return nullptr;
+		return -1;
 	else if (range >= NumTextColors)
 		range = CR_UNTRANSLATED;
 	//if (range == CR_UNTRANSLATED && !translateUntranslated) return nullptr;
-	return &Ranges[range];
+	return Translations[range];
 }
 
 //==========================================================================

@@ -124,15 +124,8 @@ public:
 	
 	static int TranslationToIndex(int translation)
 	{
-		if (translation <= 0)
-		{
-			return -translation;
-		}
-		else
-		{
-			auto remap = TranslationToTable(translation);
-			return remap == nullptr ? 0 : remap->GetUniqueIndex();
-		}
+		auto remap = TranslationToTable(translation);
+		return remap == nullptr ? 0 : remap->GetUniqueIndex();
 	}
 
 	template<class T>

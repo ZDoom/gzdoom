@@ -167,15 +167,8 @@ void PolyHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 
 	if (!tex->isHardwareCanvas())
 	{
-		if (translation <= 0)
-		{
-			translation = -translation;
-		}
-		else
-		{
-			auto remap = TranslationToTable(translation);
-			translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-		}
+		auto remap = TranslationToTable(translation);
+		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
 
 		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
 		mCanvas->Resize(texbuffer.mWidth, texbuffer.mHeight, false);

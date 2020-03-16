@@ -284,7 +284,7 @@ struct DrawParms
 	double left;
 	float Alpha;
 	PalEntry fillcolor;
-	FRemapTable *remap;
+	int TranslationId;
 	PalEntry colorOverlay;
 	PalEntry color;
 	INTBOOL alphaChannel;

@@ -59,14 +59,14 @@ int ListGetInt(VMVa_List &tags);
 // Create a texture from a text in a given font.
 //
 //==========================================================================
-
+#if 0
 FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 {
 	int 		w;
 	const uint8_t *ch;
 	int 		cx;
 	int 		cy;
-	FRemapTable *range;
+	int			trans = -1;
 	int			kerning;
 	FTexture *pic;
 
@@ -122,7 +122,7 @@ FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 			EColorRange newcolor = V_ParseFontColor(ch, textcolor, textcolor);
 			if (newcolor != CR_UNDEFINED)
 			{
-				range = font->GetColorTranslation(newcolor);
+				trans = font->GetColorTranslation(newcolor);
 				textcolor = newcolor;
 			}
 			continue;
@@ -158,7 +158,7 @@ FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 	TexMan.AddTexture(tex);
 	return tex;
 }
-
+#endif
 
 
 //==========================================================================
@@ -193,7 +193,7 @@ void DFrameBuffer::DrawChar (FFont *font, int normalcolor, double x, double y, i
 			return;
 		}
 		PalEntry color = 0xffffffff;
-		parms.remap = redirected? nullptr : font->GetColorTranslation((EColorRange)normalcolor, &color);
+		parms.TranslationId = redirected? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		DrawTextureParms(pic, parms);
 	}
@@ -218,7 +218,7 @@ void DFrameBuffer::DrawChar(FFont *font, int normalcolor, double x, double y, in
 		bool res = ParseDrawTextureTags(pic, x, y, tag, args, &parms, false);
 		if (!res) return;
 		PalEntry color = 0xffffffff;
-		parms.remap = redirected ? nullptr : font->GetColorTranslation((EColorRange)normalcolor, &color);
+		parms.TranslationId = redirected ? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
 		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		DrawTextureParms(pic, parms);
 	}
@@ -261,7 +261,7 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 	double 		cx;
 	double 		cy;
 	int			boldcolor;
-	FRemapTable *range;
+	int			trans = -1;
 	int			kerning;
 	FTexture *pic;
 
@@ -274,7 +274,7 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 
 	PalEntry colorparm = parms.color;
 	PalEntry color = 0xffffffff;
-	range = font->GetColorTranslation((EColorRange)normalcolor, &color);
+	trans = font->GetColorTranslation((EColorRange)normalcolor, &color);
 	parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 
 	kerning = font->GetDefaultKerning();
@@ -301,7 +301,7 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 			EColorRange newcolor = V_ParseFontColor(ch, normalcolor, boldcolor);
 			if (newcolor != CR_UNDEFINED)
 			{
-				range = font->GetColorTranslation(newcolor, &color);
+				trans = font->GetColorTranslation(newcolor, &color);
 				parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 				currentcolor = newcolor;
 			}
@@ -318,7 +318,7 @@ void DFrameBuffer::DrawTextCommon(FFont *font, int normalcolor, double x, double
 		bool redirected = false;
 		if (NULL != (pic = font->GetChar(c, currentcolor, &w, &redirected)))
 		{
-			parms.remap = redirected? nullptr : range;
+			parms.TranslationId = redirected? -1 : trans;
 			SetTextureParms(&parms, pic, cx, cy);
 			if (parms.cellx)
 			{

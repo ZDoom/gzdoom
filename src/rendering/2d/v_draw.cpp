@@ -558,7 +558,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->destheight = INT_MAX;
 	parms->Alpha = 1.f;
 	parms->fillcolor = -1;
-	parms->remap = NULL;
+	parms->TranslationId = -1;
 	parms->colorOverlay = 0;
 	parms->alphaChannel = false;
 	parms->flipX = false;
@@ -756,7 +756,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			break;
 
 		case DTA_TranslationIndex:
-			parms->remap = TranslationToTable(ListGetInt(tags));
+			parms->TranslationId = ListGetInt(tags);
 			break;
 
 		case DTA_ColorOverlay:
@@ -970,11 +970,6 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 		tag = ListGetInt(tags);
 	}
 	ListEnd(tags);
-
-	if (parms->remap != nullptr && parms->remap->Inactive)
-	{ // If it's inactive, pretend we were passed NULL instead.
-		parms->remap = nullptr;
-	}
 
 	// intersect with the canvas's clipping rectangle.
 	if (clipwidth >= 0 && clipheight >= 0)

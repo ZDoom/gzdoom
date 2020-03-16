@@ -764,10 +764,11 @@ DImpactDecal *DImpactDecal::StaticCreate (FLevelLocals *Level, const FDecalTempl
 			decal->SetShade (color.r, color.g, color.b);
 		}
 
-		// [Nash] For compatibility reasons, only do this if the 'Shaded' keyword is omitted from the base decal.
-		if (bloodTranslation != 0 && tpl->ShadeColor == 0)
+		// [Nash] opaque blood
+		if (bloodTranslation != 0 && tpl->ShadeColor == 0 && tpl->opaqueBlood)
 		{
 			decal->SetTranslation(bloodTranslation);
+			decal->RenderStyle = STYLE_Normal;
 		}
 
 		if (!cl_spreaddecals || !decal->PicNum.isValid())
@@ -803,8 +804,12 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 			tpl->ApplyToDecal (decal, wall);
 			decal->AlphaColor = AlphaColor;
 
-			// [Nash] For compatibility reasons, only do this if the 'Shaded' keyword is omitted from the base decal.
-			if (tpl->ShadeColor == 0) decal->SetTranslation(Translation);
+			// [Nash] opaque blood
+			if (tpl->ShadeColor == 0 && tpl->opaqueBlood)
+			{
+				decal->SetTranslation(Translation);
+				decal->RenderStyle = STYLE_Normal;
+			}
 
 			decal->RenderFlags = (decal->RenderFlags & RF_DECALMASK) |
 								 (this->RenderFlags & ~RF_DECALMASK);

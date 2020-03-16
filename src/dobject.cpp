@@ -491,6 +491,9 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 	
 	if (old == nullptr) return;
 
+	// This is only allowed to replace players. For everything else the results are undefined.
+	if (!old->IsKindOf(NAME_PlayerPawn) || (notOld != nullptr && !notOld->IsKindOf(NAME_PlayerPawn))) return;
+
 	// Go through all objects.
 	i = 0;DObject *last=0;
 	for (probe = GC::Root; probe != NULL; probe = probe->ObjNext)

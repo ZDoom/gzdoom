@@ -1550,29 +1550,29 @@ void R_ParseTrnslate()
 			do
 			{
 				sc.MustGetToken(TK_StringConst);
-				try
+				int pallump = Wads.CheckNumForFullName(sc.String, true, ns_global);
+				if (pallump >= 0)	// 
 				{
-					int pallump = Wads.CheckNumForFullName(sc.String, true, ns_global);
-					if (pallump)	// 
+					int start = 0;
+					if (sc.CheckToken(','))
 					{
-						int start = 0;
-						if (sc.CheckToken(','))
-						{
-							sc.MustGetValue(false);
-							start = sc.Number;
-						}
-						uint8_t palette[768];
-						int numcolors = ReadPalette(pallump, palette);
-						NewTranslation.AddColors(start, numcolors, palette);
+						sc.MustGetValue(false);
+						start = sc.Number;
 					}
-					else
+					uint8_t palette[768];
+					int numcolors = ReadPalette(pallump, palette);
+					NewTranslation.AddColors(start, numcolors, palette);
+				}
+				else
+				{
+					try
 					{
 						NewTranslation.AddToTranslation(sc.String);
 					}
-				}
-				catch (CRecoverableError & err)
-				{
-					sc.ScriptMessage("Error in translation '%s':\n" TEXTCOLOR_YELLOW "%s\n", sc.String, err.GetMessage());
+					catch (CRecoverableError & err)
+					{
+						sc.ScriptMessage("Error in translation '%s':\n" TEXTCOLOR_YELLOW "%s\n", sc.String, err.GetMessage());
+					}
 				}
 			} while (sc.CheckToken(','));
 

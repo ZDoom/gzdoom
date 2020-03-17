@@ -599,7 +599,6 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			// placing the animations precisely where they belong on the base pic
 			animwidth = background->GetDisplayWidthDouble();
 			animheight = background->GetDisplayHeightDouble();
-			screen->FillBorder(NULL);
 			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
@@ -724,6 +723,7 @@ void WI_Drawer()
 		ScaleOverrider s;
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
+			screen->FillBorder(nullptr);
 			VMValue self = WI_Screen;
 			VMCall(func, &self, 1, nullptr, 0);
 			screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.

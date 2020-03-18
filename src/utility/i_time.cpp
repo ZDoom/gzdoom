@@ -36,10 +36,6 @@
 #include <chrono>
 #include <thread>
 #include "i_time.h"
-#include "doomdef.h"
-#include "c_cvars.h"
-#include "doomstat.h"
-#include "doomtype.h"
 
 //==========================================================================
 //
@@ -50,27 +46,9 @@
 static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
+int GameTicRate;
 
-static double TimeScale = 1.0;
-
-CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
-{
-	if (netgame)
-	{
-		Printf("Time scale cannot be changed in net games.\n");
-		self = 1.0f;
-	}
-	else if (self >= 0.05f)
-	{
-		I_FreezeTime(true);
-		TimeScale = self;
-		I_FreezeTime(false);
-	}
-	else
-	{
-		Printf("Time scale must be at least 0.05!\n");
-	}
-}
+double TimeScale = 1.0;
 
 static uint64_t GetClockTimeNS()
 {
@@ -90,12 +68,12 @@ static uint64_t NSToMS(uint64_t ns)
 
 static int NSToTic(uint64_t ns)
 {
-	return static_cast<int>(ns * TICRATE / 1'000'000'000);
+	return static_cast<int>(ns * GameTicRate / 1'000'000'000);
 }
 
 static uint64_t TicToNS(int tic)
 {
-	return static_cast<uint64_t>(tic) * 1'000'000'000 / TICRATE;
+	return static_cast<uint64_t>(tic) * 1'000'000'000 / GameTicRate;
 }
 
 void I_SetFrameTime()

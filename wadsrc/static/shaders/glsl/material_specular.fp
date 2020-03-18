@@ -36,7 +36,7 @@ vec2 lightAttenuation(int i, vec3 normal, vec3 viewdir, float lightcolorA)
 
 vec2 lightLevelContrastAttenuation(vec3 normal, vec3 viewdir)
 {
-	vec3 lightdir = vec3(0.55708601453, -0.7427813527, 0.37139067635);
+	vec3 lightdir = vec3(-0.55708601453, 0.7427813527, -0.37139067635);
 	float attenuation = clamp(dot(lightdir, normal), 0.0, 1.0);
 
 	float glossiness = uSpecularMaterial.x;

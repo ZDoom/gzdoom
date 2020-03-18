@@ -37,7 +37,7 @@ vec3 lightContribution(int i, vec3 normal)
 
 float lightLevelContrastAttenuation(vec3 normal)
 {
-	vec3 lightdir = vec3(0.55708601453, -0.7427813527, 0.37139067635);
+	vec3 lightdir = vec3(-0.55708601453, 0.7427813527, -0.37139067635);
 	return clamp(dot(lightdir, normal), 0.0, 1.0);
 }
 

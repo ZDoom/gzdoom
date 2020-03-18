@@ -94,6 +94,10 @@ public:
 	TIterator operator-(difference_type offset) const { return TIterator(m_ptr - offset); }
 	difference_type operator-(const TIterator &other) const { return m_ptr - other.m_ptr; }
 
+	// Random access operators
+	T& operator[](difference_type i) { return m_ptr[i]; }
+	const T& operator[](difference_type i) const { return m_ptr[i]; }
+
 	T &operator*() { return *m_ptr; }
 	const T &operator*() const { return *m_ptr; }
 	T* operator->() { return m_ptr; }

@@ -80,6 +80,36 @@ vec3 ProcessMaterialLight(Material material, vec3 ambientLight)
 
 	vec3 Lo = uDynLightColor.rgb;
 
+	if (N != vec3(0.0))
+	{
+		float lightLevelContrastStrength = 0.25;
+
+		vec3 L = vec3(0.55708601453, -0.7427813527, 0.37139067635);
+		float attenuation = clamp(dot(N, L), 0.0, 1.0);
+		if (attenuation > 0.0)
+		{
+			vec3 H = normalize(V + L);
+
+			vec3 radiance = ambientLight.rgb * attenuation * lightLevelContrastStrength;
+
+			// cook-torrance brdf
+			float NDF = DistributionGGX(N, H, roughness);
+			float G = GeometrySmith(N, V, L, roughness);
+			vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+
+			vec3 kS = F;
+			vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+
+			vec3 nominator = NDF * G * F;
+			float denominator = 4.0 * clamp(dot(N, V), 0.0, 1.0) * clamp(dot(N, L), 0.0, 1.0);
+			vec3 specular = nominator / max(denominator, 0.001);
+
+			Lo += (kD * albedo / PI + specular) * radiance;
+		}
+
+		ambientLight *= 1.0 - lightLevelContrastStrength;
+	}
+
 	if (uLightIndex >= 0)
 	{
 		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);

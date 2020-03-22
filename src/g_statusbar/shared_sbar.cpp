@@ -478,7 +478,7 @@ void DBaseStatusBar::SetScale ()
 		{ 
 			// Wider or equal than 4:3 
 			SBarTop = Scale(sby, h, VerticalResolution);
-			double width4_3 = w * (4 / 3) / aspect;
+			double width4_3 = w * 1.333 / aspect;
 			ST_X = int((w - width4_3) / 2);
 		}
 		else

@@ -199,6 +199,8 @@ struct StreamData
 
 	FVector4 uSplitTopPlane;
 	FVector4 uSplitBottomPlane;
+
+	FVector4 uLightLevelContrast;
 };
 
 class FRenderState
@@ -287,6 +289,8 @@ public:
 		mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mStreamData.uDynLightColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+		mStreamData.uLightLevelContrast = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
@@ -449,6 +453,11 @@ public:
 		auto &bn = bottom.Normal();
 		mStreamData.uSplitTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
 		mStreamData.uSplitBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	}
+
+	void SetLightLevelContrast(float x, float y, float z, float strength)
+	{
+		mStreamData.uLightLevelContrast = { x, y, z, strength };
 	}
 
 	void SetDynLight(float r, float g, float b)

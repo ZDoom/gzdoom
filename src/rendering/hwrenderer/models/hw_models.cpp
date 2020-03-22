@@ -44,6 +44,9 @@
 #include "hw_models.h"
 
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
+CVAR(Bool, gl_model_light_contrast, true, CVAR_ARCHIVE)
+
+static FVector4 ModelLightLevelContrast = { -0.55708601453f, 0.7427813527f, -0.37139067635f, 0.25f };
 
 VSMatrix FHWModelRenderer::GetViewToWorldMatrix()
 {
@@ -67,10 +70,16 @@ void FHWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 
 	state.mModelMatrix = objectToWorldMatrix;
 	state.EnableModelMatrix(true);
+
+	if (gl_model_light_contrast)
+		state.SetLightLevelContrast(ModelLightLevelContrast.X, ModelLightLevelContrast.Y, ModelLightLevelContrast.Z, ModelLightLevelContrast.W);
 }
 
 void FHWModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 {
+	if (gl_model_light_contrast)
+		state.SetLightLevelContrast(0.0f, 0.0f, 0.0f, 0.0f);
+
 	state.EnableModelMatrix(false);
 	state.SetDepthFunc(DF_Less);
 	if (!(actor->RenderStyle == DefaultRenderStyle()) && !(smf->flags & MDL_DONTCULLBACKFACES))
@@ -91,10 +100,16 @@ void FHWModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 
 	state.mModelMatrix = objectToWorldMatrix;
 	state.EnableModelMatrix(true);
+
+	if (gl_model_light_contrast)
+		state.SetLightLevelContrast(ModelLightLevelContrast.X, ModelLightLevelContrast.Y, ModelLightLevelContrast.Z, ModelLightLevelContrast.W);
 }
 
 void FHWModelRenderer::EndDrawHUDModel(AActor *actor)
 {
+	if (gl_model_light_contrast)
+		state.SetLightLevelContrast(0.0f, 0.0f, 0.0f, 0.0f);
+
 	state.EnableModelMatrix(false);
 
 	state.SetDepthFunc(DF_Less);

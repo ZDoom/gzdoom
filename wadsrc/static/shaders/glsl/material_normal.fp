@@ -37,7 +37,7 @@ vec3 lightContribution(int i, vec3 normal)
 
 float lightLevelContrastAttenuation(vec3 normal)
 {
-	vec3 lightdir = vec3(-0.55708601453, 0.7427813527, -0.37139067635);
+	vec3 lightdir = uLightLevelContrast.xyz;
 	return clamp(dot(lightdir, normal), 0.0, 1.0);
 }
 
@@ -46,9 +46,9 @@ vec3 ProcessMaterialLight(Material material, vec3 color)
 	vec4 dynlight = uDynLightColor;
 	vec3 normal = material.Normal;
 
-	if (normal != vec3(0.0))
+	if (uLightLevelContrast.w != 0 && normal != vec3(0.0))
 	{
-		float lightLevelContrastStrength = 0.25;
+		float lightLevelContrastStrength = uLightLevelContrast.w;
 		dynlight.rgb += color * lightLevelContrastAttenuation(normal) * lightLevelContrastStrength;
 		color *= 1.0 - lightLevelContrastStrength;
 	}

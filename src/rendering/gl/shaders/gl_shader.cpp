@@ -276,6 +276,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	// Blinn glossiness and specular level
 	i_data += "uniform vec2 uSpecularMaterial;\n";
 
+	// Light level weighted directional light
+	i_data += "uniform vec4 uLightLevelContrast;\n";
+
 	// matrices
 	i_data += "uniform mat4 ModelMatrix;\n";
 	i_data += "uniform mat4 NormalModelMatrix;\n";
@@ -554,6 +557,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muTextureModulateColor.Init(hShader, "uTextureModulateColor");
 	muTextureBlendColor.Init(hShader, "uTextureBlendColor");
 	muTimer.Init(hShader, "timer");
+	muLightLevelContrast.Init(hShader, "uLightLevelContrast");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");

@@ -80,11 +80,11 @@ vec3 ProcessMaterialLight(Material material, vec3 ambientLight)
 
 	vec3 Lo = uDynLightColor.rgb;
 
-	if (N != vec3(0.0))
+	if (uLightLevelContrast.w != 0.0 && N != vec3(0.0))
 	{
-		float lightLevelContrastStrength = 0.25;
+		float lightLevelContrastStrength = uLightLevelContrast.w;
 
-		vec3 L = vec3(-0.55708601453, 0.7427813527, -0.37139067635);
+		vec3 L = uLightLevelContrast.xyz;
 		float attenuation = clamp(dot(N, L), 0.0, 1.0);
 		if (attenuation > 0.0)
 		{

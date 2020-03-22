@@ -160,6 +160,8 @@ static const char *shaderBindings = R"(
 
 		vec4 uSplitTopPlane;
 		vec4 uSplitBottomPlane;
+
+		vec4 uLightLevelContrast;
 	};
 
 	layout(set = 0, binding = 3, std140) uniform StreamUBO {
@@ -237,6 +239,7 @@ static const char *shaderBindings = R"(
 	#define uGradientBottomPlane data[uDataIndex].uGradientBottomPlane
 	#define uSplitTopPlane data[uDataIndex].uSplitTopPlane
 	#define uSplitBottomPlane data[uDataIndex].uSplitBottomPlane
+	#define uLightLevelContrast data[uDataIndex].uLightLevelContrast
 
 	#define SUPPORTS_SHADOWMAPS
 	#define VULKAN_COORDINATE_SYSTEM

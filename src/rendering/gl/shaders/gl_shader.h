@@ -261,6 +261,7 @@ class FShader
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
+	FUniform4f muLightLevelContrast;
 
 	int lights_index;
 	int modelmatrix_index;

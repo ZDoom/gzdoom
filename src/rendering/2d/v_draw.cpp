@@ -1120,12 +1120,6 @@ void DFrameBuffer::FillBorder (FTexture *img)
 {
 	float myratio = ActiveRatio (Width, Height);
 
-    // if 21:9 AR, fill borders akin to 16:9, since all fullscreen
-    // images are being drawn to that scale.
-    if (myratio > 1.7f) {
-        myratio = 16 / 9.0f;
-    }
-
 	if (myratio >= 1.3f && myratio <= 1.4f)
 	{ // This is a 4:3 display, so no border to show
 		return;

@@ -1629,6 +1629,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_NoBlocking, A_Unblock)
 	return 0;
 }
 
+static void CopyBloodColor(AActor* self, AActor* other)
+{
+	if (self && other)
+	{
+		self->BloodColor = other->BloodColor;
+		self->BloodTranslation = other->BloodTranslation;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CopyBloodColor, CopyBloodColor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	CopyBloodColor(self, other);
+	return 0;
+}
+
 //=====================================================================================
 //
 // Inventory exports

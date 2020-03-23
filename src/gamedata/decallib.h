@@ -79,13 +79,12 @@ public:
 	FRenderStyle RenderStyle;
 	FTextureID PicNum;
 	uint16_t RenderFlags;
+	bool opaqueBlood;
 	double Alpha;				// same as actor->alpha
 	const FDecalAnimator *Animator;
 	const FDecalBase *LowerDecal;
 
 	enum { DECAL_RandomFlipX = 0x100, DECAL_RandomFlipY = 0x200 };
-
-	bool opaqueBlood;
 };
 
 class FDecalLib

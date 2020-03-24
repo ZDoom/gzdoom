@@ -280,6 +280,11 @@ void PolyRenderState::Apply()
 		mDrawCommands->SetShader(EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f, false);
 	}
 
+	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
+		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.);
+	else
+		mStreamData.timer = 0.0f;
+
 	PolyPushConstants constants;
 	constants.uFogEnabled = fogset;
 	constants.uTextureMode = mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;

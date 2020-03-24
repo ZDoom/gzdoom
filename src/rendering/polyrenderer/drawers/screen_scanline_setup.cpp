@@ -407,6 +407,33 @@ static void WriteVaryingWrap(float pos, float step, int x0, int x1, const float*
 }
 #endif
 
+static void WriteVaryingWarp1(float posU, float posV, float stepU, float stepV, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	float pi2 = 3.14159265358979323846f * 2.0f;
+	float timer = thread->mainVertexShader.Data.timer * 0.125f;
+
+	const float* w = thread->scanline.W;
+	uint16_t* scanlineU = thread->scanline.U;
+	uint16_t* scanlineV = thread->scanline.V;
+
+	for (int x = x0; x < x1; x++)
+	{
+		float u = posU * w[x];
+		float v = posV * w[x];
+
+		v += sin(pi2 * (u + timer)) * 0.1f;
+		u += sin(pi2 * (v + timer)) * 0.1f;
+
+		u = u - std::floor(u);
+		v = v - std::floor(v);
+		scanlineU[x] = static_cast<uint32_t>(static_cast<int32_t>(u * static_cast<float>(0x1000'0000)) << 4) >> 16;
+		scanlineV[x] = static_cast<uint32_t>(static_cast<int32_t>(v * static_cast<float>(0x1000'0000)) << 4) >> 16;
+
+		posU += stepU;
+		posV += stepV;
+	}
+}
+
 #ifdef NO_SSE
 static void WriteVaryingColor(float pos, float step, int x0, int x1, const float* w, uint8_t* varying)
 {
@@ -448,8 +475,21 @@ void WriteVaryings(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyT
 	float startX = x0 + (0.5f - args->v1->x);
 	float startY = y + (0.5f - args->v1->y);
 
-	WriteVaryingWrap(args->v1->u * args->v1->w + args->gradientX.U * startX + args->gradientY.U * startY, args->gradientX.U, x0, x1, thread->scanline.W, thread->scanline.U);
-	WriteVaryingWrap(args->v1->v * args->v1->w + args->gradientX.V * startX + args->gradientY.V * startY, args->gradientX.V, x0, x1, thread->scanline.W, thread->scanline.V);
+	if (thread->EffectState == SHADER_Warp1 || thread->EffectState == SHADER_Warp2)
+	{
+		WriteVaryingWarp1(
+			args->v1->u * args->v1->w + args->gradientX.U * startX + args->gradientY.U * startY,
+			args->v1->v * args->v1->w + args->gradientX.V * startX + args->gradientY.V * startY,
+			args->gradientX.U,
+			args->gradientX.V,
+			x0, x1,
+			thread);
+	}
+	else
+	{
+		WriteVaryingWrap(args->v1->u * args->v1->w + args->gradientX.U * startX + args->gradientY.U * startY, args->gradientX.U, x0, x1, thread->scanline.W, thread->scanline.U);
+		WriteVaryingWrap(args->v1->v * args->v1->w + args->gradientX.V * startX + args->gradientY.V * startY, args->gradientX.V, x0, x1, thread->scanline.W, thread->scanline.V);
+	}
 	WriteVarying(args->v1->worldX * args->v1->w + args->gradientX.WorldX * startX + args->gradientY.WorldX * startY, args->gradientX.WorldX, x0, x1, thread->scanline.W, thread->scanline.WorldX);
 	WriteVarying(args->v1->worldY * args->v1->w + args->gradientX.WorldY * startX + args->gradientY.WorldY * startY, args->gradientX.WorldY, x0, x1, thread->scanline.W, thread->scanline.WorldY);
 	WriteVarying(args->v1->worldZ * args->v1->w + args->gradientX.WorldZ * startX + args->gradientY.WorldZ * startY, args->gradientX.WorldZ, x0, x1, thread->scanline.W, thread->scanline.WorldZ);

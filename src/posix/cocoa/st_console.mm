@@ -37,7 +37,6 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
-#include "i_time.h"
 
 
 static NSColor* RGB(const uint8_t red, const uint8_t green, const uint8_t blue)
@@ -199,6 +198,7 @@ struct TimedUpdater
 {
 	explicit TimedUpdater(const Function& function)
 	{
+		extern uint64_t I_msTime();
 		const unsigned int currentTime = I_msTime();
 
 		if (currentTime - m_previousTime > interval)

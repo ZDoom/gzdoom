@@ -103,8 +103,6 @@ void I_DetectOS()
 	
 	if (10 == version.majorVersion) switch (version.minorVersion)
 	{
-		case  7: name = "Mac OS X Lion";         break;
-		case  8: name = "OS X Mountain Lion";    break;
 		case  9: name = "OS X Mavericks";        break;
 		case 10: name = "OS X Yosemite";         break;
 		case 11: name = "OS X El Capitan";       break;

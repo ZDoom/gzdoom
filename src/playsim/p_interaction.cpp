@@ -1031,8 +1031,8 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	}
 	FName MeansOfDeath = mod;
 
-	// Spectral targets only take damage from spectral projectiles.
-	if (target->flags4 & MF4_SPECTRAL && !telefragDamage)
+	// Spectral targets only take damage from spectral projectiles unless forced or telefragging.
+	if ((target->flags4 & MF4_SPECTRAL) && !(flags & DMG_FORCED) && !telefragDamage)
 	{
 		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
 		{

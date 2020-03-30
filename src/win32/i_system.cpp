@@ -204,24 +204,7 @@ void I_DetectOS(void)
 	{
 	case VER_PLATFORM_WIN32_NT:
 		osname = "NT";
-		if (info.dwMajorVersion == 5)
-		{
-			if (info.dwMinorVersion == 0)
-			{
-				osname = "2000";
-			}
-			if (info.dwMinorVersion == 1)
-			{
-				osname = "XP";
-				sys_ostype = 1; // legacy OS
-			}
-			else if (info.dwMinorVersion == 2)
-			{
-				osname = "Server 2003";
-				sys_ostype = 1; // legacy OS
-			}
-		}
-		else if (info.dwMajorVersion == 6)
+		if (info.dwMajorVersion == 6)
 		{
 			if (info.dwMinorVersion == 0)
 			{
@@ -248,12 +231,12 @@ void I_DetectOS(void)
 			}
 			else if (info.dwMinorVersion == 4)
 			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (beta)" : "Server 10 (beta)";
+				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (beta)" : "Server 2016 (beta)";
 			}
 		}
 		else if (info.dwMajorVersion == 10)
 		{
-			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 10 (or higher)";
+			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 2016 (or higher)";
 			sys_ostype = 3; // modern OS
 		}
 		break;

@@ -829,14 +829,14 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 //
 //----------------------------------------------------------------------------
 
-void SprayDecal(AActor *shooter, const char *name, double distance, double DirX, double DirY, double DirZ)
+void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 Dir)
 {
 	FTraceResults trace;
 	DVector3 vec;
 	//use new behavior only if directional vector not equal to zero vector
-	if (DirX != 0 || DirY != 0 || DirZ != 0)
+	if (!Dir.isZero() )
 	{
-		vec = DVector3(DirX, DirY, DirZ);
+		vec = Dir;
 	}
 	
 	else

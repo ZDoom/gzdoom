@@ -4920,7 +4920,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
 	PARAM_FLOAT(DirX);
 	PARAM_FLOAT(DirY);
 	PARAM_FLOAT(DirZ);
-	SprayDecal(self, name, dist, DirX, DirY, DirZ);
+	SprayDecal(self, name, dist, DVector3(DirX, DirY, DirZ) );
 	return 0;
 }
 

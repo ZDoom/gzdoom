@@ -177,9 +177,9 @@ else()
 
 	# Non-Windows version also needs SDL except native OS X backend
 	if( NOT APPLE OR NOT OSX_COCOA_BACKEND )
-		find_package( SDL2 REQUIRED )
-		include_directories( "${SDL2_INCLUDE_DIR}" )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARY}" )
+		find_package( SDL2 REQUIRED CONFIG )
+		include_directories( "${SDL2_INCLUDE_DIRS}" )
+		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SDL2_LIBRARIES}" )
 	endif()
 
 	find_path( FPU_CONTROL_DIR fpu_control.h )

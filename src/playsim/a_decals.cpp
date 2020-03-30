@@ -829,14 +829,23 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 //
 //----------------------------------------------------------------------------
 
-void SprayDecal(AActor *shooter, const char *name, double distance)
+void SprayDecal(AActor *shooter, const char *name, double distance, double DirX, double DirY, double DirZ)
 {
 	FTraceResults trace;
-
-	DAngle ang = shooter->Angles.Yaw;
-	DAngle pitch = shooter->Angles.Pitch;
-	double c = pitch.Cos();
-	DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
+	DVector3 vec;
+	//use new behavior only if directional vector not equal to zero vector
+	if (DirX != 0 || DirY != 0 || DirZ != 0)
+	{
+		vec = DVector3(DirX, DirY, DirZ);
+	}
+	
+	else
+	{
+		DAngle ang = shooter->Angles.Yaw;
+		DAngle pitch = shooter->Angles.Pitch;
+		double c = pitch.Cos();
+		vec = DVector3(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
+	}
 
 	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
 	{

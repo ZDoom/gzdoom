@@ -421,8 +421,8 @@ static void WriteVaryingWarp1(float posU, float posV, float stepU, float stepV, 
 		float u = posU * w[x];
 		float v = posV * w[x];
 
-		v += sin(pi2 * (u + timer)) * 0.1f;
-		u += sin(pi2 * (v + timer)) * 0.1f;
+		v += g_sin(pi2 * (u + timer)) * 0.1f;
+		u += g_sin(pi2 * (v + timer)) * 0.1f;
 
 		u = u - std::floor(u);
 		v = v - std::floor(v);
@@ -448,8 +448,8 @@ static void WriteVaryingWarp2(float posU, float posV, float stepU, float stepV, 
 		float u = posU * w[x];
 		float v = posV * w[x];
 
-		v += (0.5f + sin(pi2 * (v + timer * 0.61f + 900.f/8192.f)) + sin(pi2 * (u * 2.0f + timer * 0.36f + 300.0f/8192.0f))) * 0.025f;
-		u += (0.5f + sin(pi2 * (v + timer * 0.49f + 700.f/8192.f)) + sin(pi2 * (u * 2.0f + timer * 0.49f + 1200.0f/8192.0f))) * 0.025f;
+		v += (0.5f + g_sin(pi2 * (v + timer * 0.61f + 900.f/8192.f)) + g_sin(pi2 * (u * 2.0f + timer * 0.36f + 300.0f/8192.0f))) * 0.025f;
+		u += (0.5f + g_sin(pi2 * (v + timer * 0.49f + 700.f/8192.f)) + g_sin(pi2 * (u * 2.0f + timer * 0.49f + 1200.0f/8192.0f))) * 0.025f;
 
 		u = u - std::floor(u);
 		v = v - std::floor(v);

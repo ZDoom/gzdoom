@@ -133,11 +133,13 @@ namespace swrenderer
 		if (thing->renderflags & RF_SPRITEFLIP)
 			renderflags ^= RF_XFLIP;
 
-		double yscale;
+		double yscale, origyscale;
+		int resizeMult = gl_texture_hqresizemult;
+
+		origyscale = spriteScale.Y / tex->GetScale().Y;
 		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1 || !(gl_texture_hqresize_targets & 2))
-			yscale = spriteScale.Y / tex->GetScale().Y;
-		else
-			yscale = spriteScale.Y / tex->GetScale().Y / gl_texture_hqresizemult;
+			resizeMult = 1;
+		yscale = origyscale / resizeMult;
 
 		// store information in a vissprite
 		RenderSprite *vis = thread->FrameMemory->NewObject<RenderSprite>();
@@ -147,8 +149,8 @@ namespace swrenderer
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->yscale = float(viewport->InvZtoScale * yscale / wallc.sz1);
 		vis->idepth = float(1 / wallc.sz1);
-		vis->floorclip = thing->Floorclip / yscale;
-		vis->texturemid = tex->GetTopOffsetSW() - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip) / yscale;
+		vis->floorclip = thing->Floorclip / origyscale;
+		vis->texturemid = tex->GetTopOffsetSW() - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip / resizeMult) / yscale;
 		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
 		vis->x2 = wallc.sx2 > renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;
 		vis->heightsec = heightsec;

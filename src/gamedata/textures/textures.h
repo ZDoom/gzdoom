@@ -107,7 +107,6 @@ struct FloatRect
 
 enum ECreateTexBufferFlags
 {
-	CTF_CheckHires = 1,		// use external hires replacement if found
 	CTF_Expand = 2,			// create buffer with a one-pixel wide border
 	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
 	CTF_CheckOnly = 8,		// Only runs the code to get a content ID but does not create a texture. Can be used to access a caching system for the hardware textures.
@@ -385,8 +384,6 @@ protected:
 	FTexture *OffsetLess = nullptr;
 	// Paletted variant
 	FTexture *PalVersion = nullptr;
-	// External hires texture
-	FTexture *HiresTexture = nullptr;
 	// Material layers
 	FTexture *Brightmap = nullptr;
 	FTexture *Normal = nullptr;							// Normal map texture
@@ -504,8 +501,7 @@ public:
 private:
 	int CheckDDPK3();
 	int CheckExternalFile(bool & hascolorkey);
-	bool LoadHiresTexture(FTextureBuffer &texbuffer, bool checkonly);
-
+	
 	bool bSWSkyColorDone = false;
 	PalEntry FloorSkyColor;
 	PalEntry CeilingSkyColor;

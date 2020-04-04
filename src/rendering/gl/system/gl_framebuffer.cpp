@@ -312,8 +312,7 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	auto tex = mat->tex;
 	if (tex->isSWCanvas()) return;
 
-	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled()) ? CTF_CheckHires : 0;
+	int flags = mat->isExpanded() ? CTF_Expand : 0;
 	int numLayers = mat->GetLayers();
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
 

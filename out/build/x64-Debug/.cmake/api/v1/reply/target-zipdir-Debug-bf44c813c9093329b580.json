@@ -1,0 +1,142 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "tools/zipdir/zipdir.exe"
+		},
+		{
+			"path" : "tools/zipdir/zipdir.pdb"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"target_link_libraries",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"tools/zipdir/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 5,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 7,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 4,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG  "
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "bz2::@a9461d0589e71dec3106"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "lzma::@1c6fa9378a584ead2522"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "z::@bc4de14f7a3da448f3d1"
+		}
+	],
+	"id" : "zipdir::@4e3b9157d490e4153562",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "/DWIN32 /D_WINDOWS /W3 /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "/machine:x64 /debug /INCREMENTAL /subsystem:console",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "..\\..\\libraries\\zlib\\zd.lib ..\\..\\libraries\\bzip2\\bz2.lib ..\\..\\libraries\\lzma\\lzma.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib",
+				"role" : "libraries"
+			}
+		],
+		"language" : "C"
+	},
+	"name" : "zipdir",
+	"nameOnDisk" : "zipdir.exe",
+	"paths" : 
+	{
+		"build" : "tools/zipdir",
+		"source" : "tools/zipdir"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "tools/zipdir/zipdir.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

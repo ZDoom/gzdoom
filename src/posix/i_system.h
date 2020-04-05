@@ -45,16 +45,6 @@ struct WadStuff;
 #define SHARE_DIR "/usr/local/share/"
 #endif
 
-// Index values into the LanguageIDs array
-enum
-{
-	LANGIDX_UserPreferred,
-	LANGIDX_UserDefault,
-	LANGIDX_SysPreferred,
-	LANGIDX_SysDefault
-};
-extern uint32_t LanguageIDs[4];
-extern void SetLanguageIDs ();
 
 // Called by DoomMain.
 void I_Init (void);
@@ -91,20 +81,7 @@ void I_StartTic (void);
 // for normal input.
 ticcmd_t *I_BaseTiccmd (void);
 
-
-// Called by M_Responder when quit is selected.
-// Clean exit, displays sell blurb.
-void I_Quit (void);
-
-
 void I_Tactile (int on, int off, int total);
-
-void I_Error (const char *error, ...) GCCPRINTF(1,2);
-void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
-
-void addterm (void (*func)(void), const char *name);
-#define atterm(t) addterm (t, #t)
-void popterm ();
 
 void I_DebugPrint (const char *cp);
 
@@ -134,9 +111,10 @@ bool I_SetCursor(FTexture *);
 struct findstate_t
 {
 private:
-    int count;
+	FString path;
     struct dirent **namelist;
     int current;
+    int count;
 
 	friend void *I_FindFirst(const char *filespec, findstate_t *fileinfo);
 	friend int I_FindNext(void *handle, findstate_t *fileinfo);

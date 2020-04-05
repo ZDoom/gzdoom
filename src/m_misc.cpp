@@ -53,6 +53,7 @@
 
 #include "i_video.h"
 #include "v_video.h"
+#include "i_system.h"
 
 // Data.
 #include "m_misc.h"
@@ -64,6 +65,7 @@
 #include "gi.h"
 
 #include "gameconfigfile.h"
+#include "gstrings.h"
 
 FGameConfigFile *GameConfig;
 
@@ -268,7 +270,8 @@ bool M_SaveDefaults (const char *filename)
 	FString oldpath;
 	bool success;
 
-	if (filename != NULL)
+	if (GameConfig == nullptr) return true;
+	if (filename != nullptr)
 	{
 		oldpath = GameConfig->GetPathName();
 		GameConfig->ChangePathName (filename);
@@ -279,7 +282,7 @@ bool M_SaveDefaults (const char *filename)
 		GameConfig->ArchiveGameData (gameinfo.ConfigName);
 	}
 	success = GameConfig->WriteConfigFile ();
-	if (filename != NULL)
+	if (filename != nullptr)
 	{
 		GameConfig->ChangePathName (filename);
 	}
@@ -288,12 +291,13 @@ bool M_SaveDefaults (const char *filename)
 
 void M_SaveDefaultsFinal ()
 {
-	while (!M_SaveDefaults (NULL) && I_WriteIniFailed ())
+	if (GameConfig == nullptr) return;
+	while (!M_SaveDefaults (nullptr) && I_WriteIniFailed ())
 	{
 		/* Loop until the config saves or I_WriteIniFailed() returns false */
 	}
 	delete GameConfig;
-	GameConfig = NULL;
+	GameConfig = nullptr;
 }
 
 UNSAFE_CCMD (writeini)
@@ -317,7 +321,6 @@ void M_LoadDefaults ()
 {
 	GameConfig = new FGameConfigFile;
 	GameConfig->DoGlobalSetup ();
-	atterm (M_SaveDefaultsFinal);
 }
 
 
@@ -363,7 +366,8 @@ inline void putc(unsigned char chr, FileWriter *file)
 void WritePCXfile (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
 				   ESSType color_type, int width, int height, int pitch)
 {
-	uint8_t temprow[MAXWIDTH * 3];
+	TArray<uint8_t> temprow_storage(width * 3, true);
+	uint8_t *temprow = &temprow_storage[0];
 	const uint8_t *data;
 	int x, y;
 	int runlen;
@@ -510,7 +514,7 @@ void WritePNGfile (FileWriter *file, const uint8_t *buffer, const PalEntry *pale
 		!M_AppendPNGText (file, "Software", software) ||
 		!M_FinishPNG (file))
 	{
-		Printf ("Could not create screenshot.\n");
+		Printf ("%s\n", GStrings("TXT_SCREENSHOTERR"));
 	}
 }
 
@@ -611,12 +615,6 @@ void M_ScreenShot (const char *filename)
 	auto buffer = screen->GetScreenshotBuffer(pitch, color_type, gamma);
 	if (buffer.Size() > 0)
 	{
-		PalEntry palette[256];
-
-		if (color_type == SS_PAL)
-		{
-			screen->GetFlashedPalette(palette);
-		}
 		file = FileWriter::Open(autoname);
 		if (file == NULL)
 		{
@@ -625,12 +623,12 @@ void M_ScreenShot (const char *filename)
 		}
 		if (writepcx)
 		{
-			WritePCXfile(file, buffer.Data(), palette, color_type,
+			WritePCXfile(file, buffer.Data(), nullptr, color_type,
 				screen->GetWidth(), screen->GetHeight(), pitch);
 		}
 		else
 		{
-			WritePNGfile(file, buffer.Data(), palette, color_type,
+			WritePNGfile(file, buffer.Data(), nullptr, color_type,
 				screen->GetWidth(), screen->GetHeight(), pitch, gamma);
 		}
 		delete file;
@@ -659,32 +657,3 @@ UNSAFE_CCMD (screenshot)
 		G_ScreenShot (argv[1]);
 }
 
-//
-// M_ZlibError
-//
-FString M_ZLibError(int zerr)
-{
-	if (zerr >= 0)
-	{
-		return "OK";
-	}
-	else if (zerr < -6)
-	{
-		FString out;
-		out.Format("%d", zerr);
-		return out;
-	}
-	else
-	{
-		static const char *errs[6] =
-		{
-			"Errno",
-			"Stream Error",
-			"Data Error",
-			"Memory Error",
-			"Buffer Error",
-			"Version Error"
-		};
-		return errs[-zerr - 1];
-	}
-}

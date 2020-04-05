@@ -388,7 +388,7 @@ void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 					side + j * 3 + // Current surface and previous triangles
 					surfaces[i].vbStart; // Previous surfaces
 
-				OBJFaceSide &curSide = surfaces[i].tris[j].sides[side];
+				OBJFaceSide &curSide = surfaces[i].tris[j].sides[2 - side];
 
 				int vidx = curSide.vertref;
 				int uvidx = (curSide.uvref >= 0 && (unsigned int)curSide.uvref < uvs.Size()) ? curSide.uvref : 0;

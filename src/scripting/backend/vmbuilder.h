@@ -37,8 +37,16 @@ public:
 		void Return(int reg, int count);
 		bool Reuse(int regnum);
 
+		bool IsDirty(int reg) const
+		{
+			const int firstword = reg / 32;
+			const int firstbit = reg & 31;
+			return Dirty[firstword] & (1 << firstbit);
+		}
+
 	private:
 		VM_UWORD Used[256/32];		// Bitmap of used registers (bit set means reg is used)
+		VM_UWORD Dirty[256/32];
 		int MostUsed;
 
 		friend class VMFunctionBuilder;
@@ -201,6 +209,28 @@ public:
 	{
 		return numparams;
 	}
+};
+
+class VMDisassemblyDumper
+{
+public:
+	enum FileOperationType
+	{
+		Overwrite,
+		Append
+	};
+
+	explicit VMDisassemblyDumper(const FileOperationType operation);
+	~VMDisassemblyDumper();
+
+	void Write(VMScriptFunction *sfunc, const FString &fname);
+	void Flush();
+
+private:
+	FILE *dump = nullptr;
+	FString namefilter;
+	int codesize = 0;
+	int datasize = 0;
 };
 
 #endif

@@ -35,16 +35,14 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define DIRECTINPUT_VERSION 0x800
-#define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <dinput.h>
 
 #include "i_input.h"
 #include "d_event.h"
 #include "d_gui.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "hardware.h"
-#include "rawinput.h"
 #include "menu/menu.h"
 #include "events.h"
 
@@ -80,6 +78,15 @@ public:
 protected:
 	bool Grabbed;
 	POINT UngrabbedPointerPos;
+
+private:
+	void RegisterRawInput();
+	void UnregisterRawInput();
+	void CheckDelayedUnregister(RAWINPUT* raw);
+	void ReleaseLegacyInput();
+
+	bool mDelayUnregister = false;
+	int mButtonsDown = 0;
 };
 
 class FDInputMouse : public FMouse
@@ -284,7 +291,7 @@ static bool CaptureMode_InGame()
 //
 //==========================================================================
 
-void I_CheckNativeMouse(bool preferNative)
+void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 {
 	bool windowed = (screen == NULL) || !screen->IsFullscreen();
 	bool want_native;
@@ -311,7 +318,7 @@ void I_CheckNativeMouse(bool preferNative)
 		}
 	}
 
-	if (!want_native && E_CheckRequireMouse())
+	if (!want_native && eventhandlerresult)
 		want_native = true;
 
 	//Printf ("%d %d %d\n", wantNative, preferNative, NativeMouse);
@@ -547,21 +554,17 @@ bool FRawMouse::GetDevice()
 {
 	RAWINPUTDEVICE rid;
 
-	if (MyRegisterRawInputDevices == NULL)
-	{
-		return false;
-	}
 	rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
 	rid.usUsage = HID_GDP_MOUSE;
 	rid.dwFlags = 0;
 	rid.hwndTarget = Window;
-	if (!MyRegisterRawInputDevices(&rid, 1, sizeof(rid)))
+	if (!RegisterRawInputDevices(&rid, 1, sizeof(rid)))
 	{
 		return false;
 	}
 	rid.dwFlags = RIDEV_REMOVE;
 	rid.hwndTarget = NULL;	// Must be NULL for RIDEV_REMOVE.
-	MyRegisterRawInputDevices(&rid, 1, sizeof(rid));
+	RegisterRawInputDevices(&rid, 1, sizeof(rid));
 	return true;
 }
 
@@ -575,22 +578,21 @@ void FRawMouse::Grab()
 {
 	if (!Grabbed)
 	{
-		RAWINPUTDEVICE rid;
-
-		rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
-		rid.usUsage = HID_GDP_MOUSE;
-		rid.dwFlags = RIDEV_CAPTUREMOUSE | RIDEV_NOLEGACY;
-		rid.hwndTarget = Window;
-		if (MyRegisterRawInputDevices(&rid, 1, sizeof(rid)))
+		if (!mDelayUnregister)
 		{
-			GetCursorPos(&UngrabbedPointerPos);
-			Grabbed = true;
-			SetCursorState(false);
-			// By setting the cursor position, we force the pointer image
-			// to change right away instead of having it delayed until
-			// some time in the future.
-			CenterMouse(-1, -1, NULL, NULL);
+			ReleaseLegacyInput();
+			RegisterRawInput();
+			mButtonsDown = 0;
 		}
+		else
+		{
+			mDelayUnregister = false;
+		}
+
+		GetCursorPos(&UngrabbedPointerPos);
+		while (ShowCursor(FALSE) >= 0);
+		Grabbed = true;
+		SetCursorState(false);
 	}
 }
 
@@ -604,19 +606,104 @@ void FRawMouse::Ungrab()
 {
 	if (Grabbed)
 	{
-		RAWINPUTDEVICE rid;
-
-		rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
-		rid.usUsage = HID_GDP_MOUSE;
-		rid.dwFlags = RIDEV_REMOVE;
-		rid.hwndTarget = NULL;
-		if (MyRegisterRawInputDevices(&rid, 1, sizeof(rid)))
+		// This is to prevent WM_RBUTTONUP from falling through to the application under the cursor when we release capture.
+		if (mButtonsDown == 0)
 		{
-			Grabbed = false;
-			ClearButtonState();
+			UnregisterRawInput();
 		}
+		else
+		{
+			mDelayUnregister = true;
+		}
+
+		Grabbed = false;
+		ClearButtonState();
 		SetCursorState(true);
 		SetCursorPos(UngrabbedPointerPos.x, UngrabbedPointerPos.y);
+		while (ShowCursor(TRUE) < 0);
+	}
+}
+
+//==========================================================================
+//
+// FRawMouse :: RegisterRawInput
+//
+//==========================================================================
+
+void FRawMouse::RegisterRawInput()
+{
+	RAWINPUTDEVICE rid;
+	rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
+	rid.usUsage = HID_GDP_MOUSE;
+	rid.dwFlags = RIDEV_CAPTUREMOUSE | RIDEV_NOLEGACY | RIDEV_INPUTSINK;
+	rid.hwndTarget = Window;
+	RegisterRawInputDevices(&rid, 1, sizeof(rid));
+}
+
+//==========================================================================
+//
+// FRawMouse :: UnregisterRawInput
+//
+//==========================================================================
+
+void FRawMouse::UnregisterRawInput()
+{
+	RAWINPUTDEVICE rid;
+	rid.usUsagePage = HID_GENERIC_DESKTOP_PAGE;
+	rid.usUsage = HID_GDP_MOUSE;
+	rid.dwFlags = RIDEV_REMOVE;
+	rid.hwndTarget = NULL;
+	RegisterRawInputDevices(&rid, 1, sizeof(rid));
+}
+
+//==========================================================================
+//
+// FRawMouse :: ReleaseLegacyMouseDown
+//
+//==========================================================================
+
+void FRawMouse::ReleaseLegacyInput()
+{
+	// Send release of all pressed mouse buttons to the Windows legacy input system.
+	// If this isn't done the legacy input system may think the buttons are still down when we release the capture of input events.
+
+	const int vkeys[] = { VK_LBUTTON, VK_RBUTTON, VK_MBUTTON, VK_XBUTTON1, VK_XBUTTON2 };
+	const DWORD keyflags[] = { MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_XUP, MOUSEEVENTF_XUP };
+	const DWORD mousedata[] = { 0, 0, 0, XBUTTON1, XBUTTON2 };
+	std::vector<INPUT> inputs;
+	for (int i = 0; i < 5; i++)
+	{
+		bool keydown = GetKeyState(vkeys[i]) < 0;
+		if (keydown)
+		{
+			INPUT input = {};
+			input.type = INPUT_MOUSE;
+			input.mi.dwExtraInfo = GetMessageExtraInfo();
+			input.mi.dwFlags = keyflags[i];
+			input.mi.mouseData = mousedata[i];
+			inputs.push_back(input);
+		}
+	}
+	SendInput((UINT)inputs.size(), inputs.data(), sizeof(INPUT));
+}
+
+void FRawMouse::CheckDelayedUnregister(RAWINPUT* raw)
+{
+	// Track button state
+	for (DWORD i = 0; i < 5; i++)
+	{
+		DWORD down = 1 << (i * 2);
+		DWORD up = down << 1;
+		if (raw->data.mouse.usButtonFlags & down)
+			mButtonsDown |= (1 << i);
+		else if (raw->data.mouse.usButtonFlags & up)
+			mButtonsDown &= ~(1 << i);
+	}
+
+	if (mDelayUnregister && mButtonsDown == 0)
+	{
+		UnregisterRawInput();
+		mDelayUnregister = false;
 	}
 }
 
@@ -661,10 +748,7 @@ bool FRawMouse::ProcessRawInput(RAWINPUT *raw, int code)
 	int x = m_noprescale ? raw->data.mouse.lLastX : raw->data.mouse.lLastX << 2;
 	int y = -raw->data.mouse.lLastY;
 	PostMouseMove(x, y);
-	if (x | y)
-	{
-		CenterMouse(-1, -1, NULL, NULL);
-	}
+	CheckDelayedUnregister(raw);
 	return true;
 }
 
@@ -781,7 +865,7 @@ ufailit:
 		Device = NULL;
 		return false;
 	}
-	// Set cooperative level.
+
 	hr = Device->SetCooperativeLevel(Window, DISCL_EXCLUSIVE | DISCL_FOREGROUND);
 	if (FAILED(hr))
 	{
@@ -1186,18 +1270,6 @@ void I_StartupMouse ()
 
 	switch(in_mouse)
 	{
-	case 0:
-	default:
-		if (MyRegisterRawInputDevices != NULL)
-		{
-			new_mousemode = MM_RawInput;
-		}
-		else
-		{
-			new_mousemode = MM_DInput;
-		}
-		break;
-
 	case 1:
 		new_mousemode = MM_Win32;
 		break;
@@ -1206,6 +1278,7 @@ void I_StartupMouse ()
 		new_mousemode = MM_DInput;
 		break;
 
+	default:
 	case 3:
 		new_mousemode = MM_RawInput;
 		break;

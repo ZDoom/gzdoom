@@ -1,0 +1,764 @@
+// Bullet puff
+flickerlight BPUFF1
+{
+    color 0.5 0.5 0.0
+    size 9
+    secondarySize 12
+    chance 0.8
+	attenuate 1
+}
+
+flickerlight BPUFF2
+{
+    color 0.5 0.5 0.0
+    size 4
+    secondarySize 6
+    chance 0.8
+	attenuate 1
+}
+
+object BulletPuff
+{
+    frame PUFFA { light BPUFF1 }
+    frame PUFFB { light BPUFF2 }
+}
+
+
+// Doom Teleport fog
+flickerlight DTFOG1
+{
+    color 0.2 0.2 1.0
+    size 84
+    secondarySize 96
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight DTFOG2
+{
+    color 0.2 0.2 1.0
+    size 60
+    secondarySize 72
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight DTFOG3
+{
+    color 0.2 0.2 1.0
+    size 36
+    secondarySize 48
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight DTFOG4
+{
+    color 0.2 0.2 1.0
+    size 15
+    secondarySize 24
+    chance 0.4
+	attenuate 1
+}
+
+object TeleportFog
+{
+    frame TFOGA { light DTFOG1 }
+    frame TFOGB { light DTFOG2 }
+    frame TFOGC { light DTFOG2 }
+    frame TFOGD { light DTFOG2 }
+    frame TFOGE { light DTFOG3 }
+    frame TFOGF { light DTFOG4 }
+    frame TFOGI { light DTFOG4 }
+    frame TFOGJ { light DTFOG3 }
+}
+
+
+
+// Zombies
+flickerlight2 ZOMBIEATK
+{
+    color 1.0 0.8 0.2
+    size 72
+    secondarySize 84
+    interval 1
+    offset 0 40 0
+	attenuate 1
+}
+
+// Zombies
+flickerlight2 ANDYATTACK
+{
+    color 0.4 0.8 0.4
+    size 72
+    secondarySize 84
+    interval 1
+    offset 0 40 0
+	attenuate 1
+}
+
+// Thug ---------------------------------------------------------------------
+
+object HacxThug
+{
+    frame POSSF { light ZOMBIEATK }
+}
+
+// Android ------------------------------------------------------------------
+object HacxAndroid
+{
+    frame SPOSF { light ANDYATTACK }
+}
+
+// Player ------------------------------------------------------------------
+object HacxPlayer
+{
+    frame PLAYF { light ZOMBIEATK }
+}
+
+// Reznator -----------------------------------------------------------------
+
+flickerlight REZ_1
+{
+    color 0.4 0.4 0.8
+    size 64
+    secondarySize 66
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight REZ_2
+{
+    color 0.4 0.4 0.8
+    size 80
+    secondarySize 83
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight REZ_3
+{
+    color 0.3 0.3 0.6
+    size 80
+    secondarySize 83
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight REZ_4
+{
+    color 0.2 0.2 0.4
+    size 80
+    secondarySize 83
+    chance 0.4
+	attenuate 1
+}
+
+object ReznatorPuff
+{
+    frame RZAPA { light REZ_1 }
+    frame RZAPC { light REZ_2 }
+    frame RZAPE { light REZ_2 }
+    frame RZAPG { light REZ_3 }
+    frame RZAPH { light REZ_4 }
+}
+
+// Tazer --------------------------------------------------------------------
+
+flickerlight TAZ_1
+{
+    color 0.4 0.8 0.4
+    size 32
+    secondarySize 33
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight TAZ_2
+{
+    color 0.4 0.8 0.4
+    size 40
+    secondarySize 42
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight TAZ_3
+{
+    color 0.3 0.6 0.3
+    size 40
+    secondarySize 42
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight TAZ_4
+{
+    color 0.2 0.4 0.2
+    size 40
+    secondarySize 42
+    chance 0.4
+	attenuate 1
+}
+
+object TazerPuff
+{
+    frame TPUFA { light TAZ_1 }
+    frame TPUFB { light TAZ_2 }
+    frame TPUFC { light TAZ_2 }
+    frame TPUFD { light TAZ_3 }
+    frame TPUFE { light TAZ_4 }
+}
+
+// Cryogun ------------------------------------------------------------------
+
+object CryoPuff
+{
+    frame CPUFA { light REZ_1 }
+    frame CPUFB { light REZ_1 }
+    frame CPUFC { light REZ_2 }
+    frame CPUFD { light REZ_3 }
+    frame CPUFE { light REZ_4 }
+}
+
+// Photon 'Zooka ------------------------------------------------------------
+
+flickerlight ROCKET_X1
+{
+    color 0.5 1.0 0.5
+    size 96
+    secondarySize 108
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight ROCKET_X2
+{
+    color 0.2 0.5 0.2
+    size 120
+    secondarySize 132
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight ROCKET_X3
+{
+    color 0.1 0.25 0.1
+    size 144
+    secondarySize 156
+    chance 0.3
+	attenuate 1
+}
+
+object HacxPhoton
+{
+    frame BEXPA { light ROCKET_X2 }
+    frame BEXPB { light ROCKET_X2 }
+    frame BEXPC { light ROCKET_X1 }
+    frame BEXPD { light ROCKET_X2 }
+    frame BEXPE { light ROCKET_X3 }
+}
+
+// Anti-Gun -----------------------------------------------------------------
+
+pointlight PLASMABALL
+{
+    color 1.0 0.5 0.5
+    size 84
+	attenuate 1
+}
+
+flickerlight PLASMA_X1
+{
+    color 1.0 0.5 0.5
+    size 96
+    secondarySize 108
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight PLASMA_X2
+{
+    color 0.8 0.4 0.4
+    size 120
+    secondarySize 132
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight PLASMA_X3
+{
+    color 0.5 0.25 0.25
+    size 96
+    secondarySize 108
+    chance 0.4
+	attenuate 1
+}
+
+flickerlight PLASMA_X4
+{
+    color 0.2 0.1 0.1
+    size 12
+    secondarySize 24
+    chance 0.4
+	attenuate 1
+}
+
+object HacxMolecule
+{
+    frame PLSSA { light PLASMABALL }
+    frame PLSSB { light PLASMABALL }
+
+    frame PLSEA { light PLASMA_X1 }
+    frame PLSEB { light PLASMA_X2 }
+    frame PLSEC { light PLASMA_X2 }
+    frame PLSED { light PLASMA_X3 }
+    frame PLSEE { light PLASMA_X4 }
+}
+
+
+// Nuker --------------------------------------------------------------------
+
+flickerlight BFGBALL_X1
+{
+    color 1.0 0.8 0.4
+    size 120
+    secondarySize 132
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight BFGBALL_X2
+{
+    color 0.8 0.64 0.32
+    size 156
+    secondarySize 168
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight BFGBALL_X3
+{
+    color 0.7 0.56 0.28
+    size 180
+    secondarySize 192
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight BFGBALL_X4
+{
+    color 0.5 0.4 0.2
+    size 84
+    secondarySize 96
+    chance 0.3
+	attenuate 1
+	attenuate 1
+}
+
+flickerlight BFGBALL_X5
+{
+    color 0.3 0.2 0.1
+    size 72
+    secondarySize 84
+    chance 0.3
+	attenuate 1
+}
+
+object HacxNukeShot
+{
+    frame BFE1A { light BFGBALL_X1 }
+    frame BFE1B { light BFGBALL_X2 }
+    frame BFE1C { light BFGBALL_X3 }
+    frame BFE1D { light BFGBALL_X1 }
+    frame BFE1E { light BFGBALL_X4 }
+    frame BFE1F { light BFGBALL_X5 }
+}
+
+
+object BFGExtra
+{
+    frame BFE2A { light BFGBALL    }
+    frame BFE2B { light BFGBALL_X1 }
+    frame BFE2C { light BFGBALL_X4 }
+    frame BFE2D { light BFGBALL_X5 }
+}
+
+// Phage --------------------------------------------------------------------
+
+pointlight ARACHPLAS
+{
+    color 0.7 1.0 0.2
+    size 84
+	attenuate 1
+}
+
+flickerlight ARACHPLAS_X1
+{
+    color 0.56 0.8 0.16
+    size 108
+    secondarySize 120
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight ARACHPLAS_X2
+{
+    color 0.6 0.42 0.12
+    size 132
+    secondarySize 144
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight ARACHPLAS_X3
+{
+    color 0.4 0.28 0.1
+    size 72
+    secondarySize 48
+    chance 0.3
+	attenuate 1
+}
+
+flickerlight ARACHPLAS_X4
+{
+    color 0.2 0.14 0.05
+    size 36
+    secondarySize 24
+    chance 0.3
+	attenuate 1
+}
+
+object HacxPhageBall
+{
+    frame APLSA { light ARACHPLAS }
+    frame APLSB { light ARACHPLAS }
+
+    frame APBXA { light ARACHPLAS_X1 }
+    frame APBXB { light ARACHPLAS_X2 }
+    frame APBXC { light ARACHPLAS_X2 }
+    frame APBXD { light ARACHPLAS_X3 }
+    frame APBXE { light ARACHPLAS_X4 }
+}
+
+
+// Buzzer -------------------------------------------------------------------
+
+flickerlight BUZZ_X1
+{
+    color 0.6 0.6 0.2
+    size 64
+    secondarySize 70
+    chance 0.3
+	attenuate 1
+    offset 0 48 0
+}
+
+flickerlight BUZZ_X2
+{
+    color 0.8 0.5 0.2
+    size 80
+    secondarySize 87
+    chance 0.3
+	attenuate 1
+    offset 0 48 0
+}
+
+flickerlight BUZZ_X3
+{
+    color 0.9 0.3 0.2
+    size 80
+    secondarySize 90
+    chance 0.3
+	attenuate 1
+    offset 0 48 0
+}
+
+flickerlight BUZZ_X4
+{
+    color 0.4 0.2 0.2
+    size 64
+    secondarySize 70
+    chance 0.3
+	attenuate 1
+    offset 0 48 0
+}
+
+object HacxBuzzer
+{
+    frame SARGJ { light BUZZ_X1 }
+    frame SARGK { light BUZZ_X2 }
+    frame SARGL { light BUZZ_X3 }
+    frame SARGM { light BUZZ_X4 }
+}
+
+// Monstruct -------------------------------------------------------------------
+
+pointlight MSHOT
+{
+    color 0.5 1.0 0.5
+    size 84
+	attenuate 1
+}
+
+object HacxMonstructShot
+{
+    frame MANF { light MSHOT }
+    frame BEXPA { light ROCKET_X2 }
+    frame BEXPB { light ROCKET_X2 }
+    frame BEXPC { light ROCKET_X1 }
+    frame BEXPD { light ROCKET_X2 }
+    frame BEXPE { light ROCKET_X3 }
+}
+
+
+// Terminatrix --------------------------------------------------------------
+
+pulselight ARCHRES
+{
+    color 0.6 0.3 0.3
+    size 96
+    secondarySize 105
+    interval 0.5
+    offset 0 36 0
+	attenuate 1
+}
+
+object HacxTerminatrix
+{
+    frame VILE[ { light ARCHRES }
+    frame VILE\ { light ARCHRES }
+    frame VILE] { light ARCHRES }
+}
+
+object HacxTerminatrixBall
+{
+    frame FATBA { light ARACHPLAS }
+    frame FATBB { light ARACHPLAS }
+
+    frame APBXA { light ARACHPLAS_X1 }
+    frame APBXB { light ARACHPLAS_X2 }
+    frame APBXC { light ARACHPLAS_X2 }
+    frame APBXD { light ARACHPLAS_X3 }
+    frame APBXE { light ARACHPLAS_X4 }
+}
+
+
+// Thorn Thing --------------------------------------------------------------
+
+object HacxThornThingBall
+{
+    frame BAL7A { light PLASMABALL }
+    frame BAL7B { light PLASMABALL }
+
+    frame BAL7C { light ARACHPLAS_X1 }
+    frame BAL7D { light ARACHPLAS_X2 }
+    frame BAL7E { light ARACHPLAS_X3 }
+}
+
+// Centrophenoxine ---------------------------------------------------------
+
+pulselight SOULSPHERE
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    interval 2.0
+    offset 0 16 0
+	attenuate 1
+}
+
+object HacxCentrophenoxine
+{
+    frame SOUL { light SOULSPHERE }
+}
+
+// HacxLavaBall ------------------------------------------------------------
+
+flickerlight LAVA_X1
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    offset 0 8 0
+	attenuate 1
+	chance 0.5
+}
+
+flickerlight LAVA_X2
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    offset 0 33 0
+	attenuate 1
+	chance 0.5
+}
+flickerlight LAVA_X3
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    offset 0 89 0
+	attenuate 1
+	chance 0.5
+}
+flickerlight LAVA_X4
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    offset 0 111 0
+	attenuate 1
+	chance 0.5
+}
+flickerlight LAVA_X5
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    offset 0 91 0
+	attenuate 1
+	chance 0.5
+}
+flickerlight LAVA_X6
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    offset 0 59 0
+	attenuate 1
+	chance 0.5
+}
+flickerlight LAVA_X7
+{
+    color 1.0 0.7 0.2
+    size 60
+    secondarySize 63
+    offset 0 10 0
+	attenuate 1
+	chance 0.5
+}
+flickerlight LAVA_X8
+{
+    color 0.7 0.42 0.1
+    size 60
+    secondarySize 63
+    offset 0 8 0
+	attenuate 1
+	chance 0.5
+}
+
+object HacxLavaBall
+{
+    frame COL4A { light LAVA_X1 }
+    frame TBLUB { light LAVA_X2 }
+    frame TBLUC { light LAVA_X3 }
+    frame TBLUD { light LAVA_X4 }
+    frame FIREE { light LAVA_X5 }
+    frame FIREF { light LAVA_X6 }
+    frame FIREG { light LAVA_X7 }
+    frame FIREH { light LAVA_X8 }
+}
+
+object HacxLavaBall2
+{
+    frame COL4A { light LAVA_X1 }
+    frame TBLUB { light LAVA_X2 }
+    frame TBLUC { light LAVA_X3 }
+    frame TBLUD { light LAVA_X4 }
+    frame FIREE { light LAVA_X5 }
+    frame FIREF { light LAVA_X6 }
+    frame FIREG { light LAVA_X7 }
+    frame FIREH { light LAVA_X8 }
+}
+
+// Ceiling Light -----------------------------------------------------------
+
+pointlight LAMP
+{
+    color 0.7 0.7 0.7
+    size 64
+    offset 0 8 0
+	attenuate 1
+}
+
+object HacxCeilingLight
+{
+    frame TBLUA { light LAMP }
+}
+
+// Long Ceiling Lamp ------------------------------------------------------
+
+pointlight LLAMP
+{
+    color 0.7 0.7 0.7
+    size 64
+    offset 0 -28 0
+	attenuate 1
+}
+
+object HacxLongCeilingLamp
+{
+    frame TREDA { light LLAMP }
+}
+
+
+// Desk Lamp ---------------------------------------------------------------
+
+pointlight DLAMP
+{
+    color 0.7 0.7 0.7
+    size 32
+    offset 0 8 0
+	attenuate 1
+}
+
+object HacxDeskLamp
+{
+    frame SMBTA { light DLAMP }
+}
+
+// Hacx Wall Torch ---------------------------------------------------------
+
+flickerlight TORCH
+{
+    color 0.8 0.8 0.5
+    size 64
+    secondarySize 75
+    chance 0.4
+    offset 0 70 0
+	// not attenuated!
+}
+
+object HacxWallTorch
+{
+    frame SMGT { light TORCH }
+}
+
+// Floor Lamp --------------------------------------------------------------
+
+pointlight FLAMP
+{
+    color 0.7 0.7 0.7
+    size 32
+    offset 0 54 0
+	attenuate 1
+}
+
+object HacxFloorLamp
+{
+    frame SMRTA { light FLAMP }
+}
+
+// Nitro --------------------------------------------------------------
+
+object ExplosiveBarrel
+{
+    frame BFE1A { light BFGBALL_X1 }
+    frame BFE1B { light BFGBALL_X2 }
+    frame BFE1C { light BFGBALL_X3 }
+    frame BFE1D { light BFGBALL_X1 }
+    frame BFE1E { light BFGBALL_X4 }
+    frame BFE1F { light BFGBALL_X5 }
+}

@@ -20,15 +20,6 @@
 #define IDB_BITMAP1                     131
 #define IDB_DEADGUY                     131
 #define IDD_CRASHDETAILS                133
-#define IDI_BOING1                      137
-#define IDI_BOING2                      138
-#define IDI_BOING3                      139
-#define IDI_BOING4                      140
-#define IDI_BOING5                      141
-#define IDI_BOING6                      142
-#define IDI_BOING7                      143
-#define IDI_BOING8                      144
-#define IDD_BOING                       145
 #define IDD_CRASHOVERVIEW               147
 #define IDD_ERRORPANE                   148
 #define IDD_NETSTARTPANE                149
@@ -83,7 +74,6 @@
 #define IDC_BUTTON2                     1062
 #define IDC_CRASHDETAILS                1062
 #define IDC_DEADGUYVIEWER               1063
-#define IDC_BOING                       1065
 #define IDC_CRASHFILESIZE               1066
 #define IDC_BUTTON1                     1071
 #define IDC_BOINGSTATUS                 1072
@@ -99,10 +89,13 @@
 #define IDC_NETSTARTPROGRESS            1079
 #define IDC_NETSTARTMESSAGE             1080
 #define IDC_NETSTARTCOUNT               1081
-#define IDC_STATIC_TITLE				1082
-#define IDC_STATIC_STARTUP				1083
+#define IDC_STATIC_TITLE                1082
+#define IDC_STATIC_STARTUP              1083
 #define IDCE_ENVIRONMENTDIFFUSION       1085
+#define IDC_WELCOME_VULKAN2             1085
 #define IDCS_ENVIRONMENTDIFFUSION       1086
+#define IDC_RADIO3                      1086
+#define IDC_WELCOME_VULKAN3             1086
 #define IDCE_ROOM                       1087
 #define IDCS_ROOM                       1088
 #define IDCE_ROOMHF                     1089
@@ -153,25 +146,23 @@
 #define IDCS_ROOMROLLOFFFACTOR          1134
 #define IDCS_REFLECTIONSDELAY2          1135
 #define IDCE_MODULATIONTIME2            1135
+#define IDC_WELCOME_VERSION             4019
+#define IDC_WELCOME_OPENGL              4020
+#define IDC_WELCOME_SOFTWARE            4021
+#define IDC_WELCOME_FULLSCREEN          4022
+#define IDC_WELCOME_NOAUTOLOAD          4023
+#define IDC_WELCOME_LIGHTS              4024
+#define IDC_WELCOME_BRIGHTMAPS          4025
+#define IDC_WELCOME_VULKAN              4026
+#define IDC_WELCOME_VULKAN1             4026
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        151
+#define _APS_NEXT_RESOURCE_VALUE        152
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1084
+#define _APS_NEXT_CONTROL_VALUE         1087
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
-
-// [SP] Upstreamed from Zandronum
-#define IDC_WELCOME_VERSION				4019 // [RC] "Welcome" screen.
-#define IDC_WELCOME_OPENGL				4020
-#define IDC_WELCOME_SOFTWARE			4021
-#define IDC_WELCOME_FULLSCREEN			4022
-
-// [SP] This is our's.
-#define IDC_WELCOME_NOAUTOLOAD			4023
-#define IDC_WELCOME_LIGHTS              4024
-#define IDC_WELCOME_BRIGHTMAPS          4025

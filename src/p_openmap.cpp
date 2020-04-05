@@ -35,7 +35,7 @@
 */
 
 #include "p_setup.h"
-#include "i_system.h"
+
 #include "cmdlib.h"
 #include "w_wad.h"
 #include "md5.h"

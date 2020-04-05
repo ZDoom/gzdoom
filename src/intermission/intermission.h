@@ -7,6 +7,8 @@
 #include "textures/textures.h"
 #include "s_sound.h"
 #include "v_font.h"
+#include "g_game.h"
+#include "v_text.h"
 
 struct event_t;
 
@@ -74,6 +76,7 @@ struct FIntermissionAction
 	int mDuration;
 	FString mBackground;
 	FString mSound;
+	FString mSubtitle;
 	bool mFlatfill;
 	bool mMusicLooping;
 	TArray<FIntermissionPatch> mOverlays;
@@ -161,6 +164,7 @@ class DIntermissionScreen : public DObject
 protected:
 	int mDuration;
 	FTextureID mBackground;
+	FString mSubtitle;
 	bool mFlatfill;
 	TArray<FIIntermissionPatch> mOverlays;
 
@@ -206,13 +210,17 @@ class DIntermissionScreenText : public DIntermissionScreen
 {
 	DECLARE_CLASS (DIntermissionScreenText, DIntermissionScreen)
 
-	const char *mText;
+	FString mText;
 	int mTextSpeed;
 	int mTextX, mTextY;
 	int mTextCounter;
 	int mTextDelay;
 	int mTextLen;
 	EColorRange mTextColor;
+	bool usesDefault;
+	
+	void MeasureText(bool posisfixed);
+	FString RemoveLineFeeds(const char *text);
 
 public:
 

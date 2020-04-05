@@ -62,7 +62,6 @@ ClassReg DObject::RegistrationInfo =
 	&DObject::InPlaceConstructor,			// ConstructNative
 	nullptr,
 	sizeof(DObject),						// SizeOf
-	CLASSREG_PClass,						// MetaClassNum
 };
 _DECLARE_TI(DObject)
 
@@ -489,6 +488,11 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 	DObject *probe;
 	size_t changed = 0;
 	int i;
+	
+	if (old == nullptr) return;
+
+	// This is only allowed to replace players. For everything else the results are undefined.
+	if (!old->IsKindOf(NAME_PlayerPawn) || (notOld != nullptr && !notOld->IsKindOf(NAME_PlayerPawn))) return;
 
 	// Go through all objects.
 	i = 0;DObject *last=0;
@@ -504,7 +508,7 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 	{
 		if (playeringame[i])
 		{
-			APlayerPawn *replacement = static_cast<APlayerPawn *>(notOld);
+			AActor *replacement = notOld;
 			auto &p = players[i];
 			
 			if (p.mo == old)					p.mo = replacement, changed++;
@@ -516,8 +520,8 @@ void DObject::StaticPointerSubstitution (AActor *old, AActor *notOld)
 		}
 	}
 
-	// Go through sectors.
-	for (auto &sec : level.sectors)
+	// Go through sectors. Only the level this actor belongs to is relevant.
+	for (auto &sec : old->Level->sectors)
 	{
 		if (sec.SoundTarget == old) sec.SoundTarget = notOld;
 	}

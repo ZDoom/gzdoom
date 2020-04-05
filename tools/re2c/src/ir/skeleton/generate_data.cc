@@ -131,14 +131,14 @@ void Skeleton::emit_data (const char * fname)
 	if (!input)
 	{
 		error ("cannot open file: %s", input_name.c_str ());
-		exit (1);
+		exit(1);
 	}
 	const std::string keys_name = std::string (fname) + "." + name + ".keys";
 	FILE * keys = fopen (keys_name.c_str (), "wb");
 	if (!keys)
 	{
 		error ("cannot open file: %s", keys_name.c_str ());
-		exit (1);
+		exit(1);
 	}
 
 	generate_paths (input, keys);

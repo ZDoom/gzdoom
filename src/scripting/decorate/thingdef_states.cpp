@@ -44,6 +44,9 @@
 #include "p_local.h"
 #include "thingdef.h"
 #include "backend/codegen.h"
+#ifndef _MSC_VER
+#include "i_system.h"  // for strlwr()
+#endif // !_MSC_VER
 
 //==========================================================================
 //***

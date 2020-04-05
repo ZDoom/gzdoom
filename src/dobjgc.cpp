@@ -96,9 +96,6 @@
 #define DEFAULT_GCMUL		400 // GC runs 'quadruple the speed' of memory allocation
 
 // Number of sectors to mark for each step.
-#define SECTORSTEPSIZE	32
-#define POLYSTEPSIZE 120
-#define SIDEDEFSTEPSIZE 240
 
 #define GCSTEPSIZE		1024u
 #define GCSWEEPMAX		40
@@ -106,22 +103,6 @@
 #define GCFINALIZECOST	100
 
 // TYPES -------------------------------------------------------------------
-
-// This object is responsible for marking sectors during the propagate
-// stage. In case there are many, many sectors, it lets us break them
-// up instead of marking them all at once.
-class DSectorMarker : public DObject
-{
-	DECLARE_CLASS(DSectorMarker, DObject)
-public:
-	DSectorMarker() : SecNum(0),PolyNum(0),SideNum(0) {}
-	size_t PropagateMark();
-	int SecNum;
-	int PolyNum;
-	int SideNum;
-};
-
-IMPLEMENT_CLASS(DSectorMarker, false, false)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -153,8 +134,6 @@ size_t Dept;
 bool FinalGC;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static DSectorMarker *SectorMarker;
 
 // CODE --------------------------------------------------------------------
 
@@ -188,24 +167,6 @@ size_t PropagateMark()
 	Gray = obj->GCNext;
 	return !(obj->ObjectFlags & OF_EuthanizeMe) ? obj->PropagateMark() :
 		obj->GetClass()->Size;
-}
-
-//==========================================================================
-//
-// PropagateAll
-//
-// Empties the gray list by propagating every single object in it.
-//
-//==========================================================================
-
-static size_t PropagateAll()
-{
-	size_t m = 0;
-	while (Gray != NULL)
-	{
-		m += PropagateMark();
-	}
-	return m;
 }
 
 //==========================================================================
@@ -273,7 +234,7 @@ void Mark(DObject **obj)
 {
 	DObject *lobj = *obj;
 
-	assert(lobj == nullptr || !(lobj->ObjectFlags & OF_Released));
+	//assert(lobj == nullptr || !(lobj->ObjectFlags & OF_Released));
 	if (lobj != nullptr && !(lobj->ObjectFlags & OF_Released))
 	{
 		if (lobj->ObjectFlags & OF_EuthanizeMe)
@@ -321,10 +282,10 @@ static void MarkRoot()
 	Mark(StatusBar);
 	M_MarkMenus();
 	Mark(DIntermissionController::CurrentIntermission);
-	DThinker::MarkRoots();
-	Mark(E_FirstEventHandler);
-	Mark(E_LastEventHandler);
-	level.Mark();
+	Mark(staticEventManager.FirstEventHandler);
+	Mark(staticEventManager.LastEventHandler);
+	for (auto Level : AllLevels())
+		Level->Mark();
 
 	// Mark players.
 	for (i = 0; i < MAXPLAYERS; i++)
@@ -332,27 +293,12 @@ static void MarkRoot()
 		if (playeringame[i])
 			players[i].PropagateMark();
 	}
-	// Mark sound sequences.
-	DSeqNode::StaticMarkHead();
 	// Mark sectors.
-	if (SectorMarker == nullptr && level.sectors.Size() > 0)
+	
+	for (auto Level : AllLevels())
 	{
-		SectorMarker = Create<DSectorMarker>();
+		Level->Mark();
 	}
-	else if (level.sectors.Size() == 0)
-	{
-		SectorMarker = nullptr;
-	}
-	else
-	{
-		SectorMarker->SecNum = 0;
-	}
-	Mark(SectorMarker);
-	Mark(interpolator.Head);
-	// Mark bot stuff.
-	Mark(bglobal.firstthing);
-	Mark(bglobal.body1);
-	Mark(bglobal.body2);
 	// NextToThink must not be freed while thinkers are ticking.
 	Mark(NextToThink);
 	// Mark soft roots.
@@ -633,77 +579,6 @@ void DelSoftRoot(DObject *obj)
 	}
 }
 
-}
-
-//==========================================================================
-//
-// DSectorMarker :: PropagateMark
-//
-// Propagates marks across a few sectors and reinserts itself into the
-// gray list if it didn't do them all.
-//
-//==========================================================================
-
-size_t DSectorMarker::PropagateMark()
-{
-	int i;
-	int marked = 0;
-	bool moretodo = false;
-	int numsectors = level.sectors.Size();
-
-	for (i = 0; i < SECTORSTEPSIZE && SecNum + i < numsectors; ++i)
-	{
-		sector_t *sec = &level.sectors[SecNum + i];
-		GC::Mark(sec->SoundTarget);
-		GC::Mark(sec->SecActTarget);
-		GC::Mark(sec->floordata);
-		GC::Mark(sec->ceilingdata);
-		GC::Mark(sec->lightingdata);
-		for(int j=0;j<4;j++) GC::Mark(sec->interpolations[j]);
-	}
-	marked += i * sizeof(sector_t);
-	if (SecNum + i < numsectors)
-	{
-		SecNum += i;
-		moretodo = true;
-	}
-
-	if (!moretodo && polyobjs != NULL)
-	{
-		for (i = 0; i < POLYSTEPSIZE && PolyNum + i < po_NumPolyobjs; ++i)
-		{
-			GC::Mark(polyobjs[PolyNum + i].interpolation);
-		}
-		marked += i * sizeof(FPolyObj);
-		if (PolyNum + i < po_NumPolyobjs)
-		{
-			PolyNum += i;
-			moretodo = true;
-		}
-	}
-	if (!moretodo && level.sides.Size() > 0)
-	{
-		for (i = 0; i < SIDEDEFSTEPSIZE && SideNum + i < (int)level.sides.Size(); ++i)
-		{
-			side_t *side = &level.sides[SideNum + i];
-			for(int j=0;j<3;j++) GC::Mark(side->textures[j].interpolation);
-		}
-		marked += i * sizeof(side_t);
-		if (SideNum + i < (int)level.sides.Size())
-		{
-			SideNum += i;
-			moretodo = true;
-		}
-	}
-	// If there are more sectors to mark, put ourself back into the gray
-	// list.
-	if (moretodo)
-	{
-		Black2Gray();
-		GCNext = GC::Gray;
-		GC::Gray = this;
-	}
-	return marked;
 }
 
 //==========================================================================

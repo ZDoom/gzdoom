@@ -49,6 +49,7 @@
 #include "vm.h"
 #include "types.h"
 #include "scriptutil.h"
+#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -207,8 +208,6 @@ static int cregcmp (const void *a, const void *b) NO_SANITIZE
 
 void PClass::StaticInit ()
 {
-	atterm (StaticShutdown);
-
 	Namespaces.GlobalNamespace = Namespaces.NewNamespace(0);
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
@@ -562,12 +561,7 @@ void PClass::InitializeDefaults()
 		assert(Defaults == nullptr);
 		Defaults = (uint8_t *)M_Malloc(Size);
 
-		// run the constructor on the defaults to set the vtbl pointer which is needed to run class-aware functions on them.
-		// Temporarily setting bSerialOverride prevents linking into the thinker chains.
-		auto s = DThinker::bSerialOverride;
-		DThinker::bSerialOverride = true;
 		ConstructNative(Defaults);
-		DThinker::bSerialOverride = s;
 		// We must unlink the defaults from the class list because it's just a static block of data to the engine.
 		DObject *optr = (DObject*)Defaults;
 		GC::Root = optr->ObjNext;

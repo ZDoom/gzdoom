@@ -1,0 +1,98 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "tools/lemon/lemon.exe"
+		},
+		{
+			"path" : "tools/lemon/lemon.pdb"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable"
+		],
+		"files" : 
+		[
+			"tools/lemon/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 6,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG -D_DEBUG  "
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"id" : "lemon::@eb298f56fea3ca13aa50",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "/DWIN32 /D_WINDOWS /W3 /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG -D_DEBUG",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "/machine:x64 /debug /INCREMENTAL /subsystem:console",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib",
+				"role" : "libraries"
+			}
+		],
+		"language" : "C"
+	},
+	"name" : "lemon",
+	"nameOnDisk" : "lemon.exe",
+	"paths" : 
+	{
+		"build" : "tools/lemon",
+		"source" : "tools/lemon"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "tools/lemon/lemon.c",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

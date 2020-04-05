@@ -42,6 +42,7 @@
 #include "v_video.h"
 #include "version.h"
 #include "c_console.h"
+#include "c_dispatch.h"
 #include "s_sound.h"
 
 #include "hardware.h"
@@ -53,7 +54,20 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_shader.h"
 
+#ifdef HAVE_VULKAN
+#include "rendering/vulkan/system/vk_framebuffer.h"
+#endif
+
+#include "rendering/polyrenderer/backend/poly_framebuffer.h"
+
 // MACROS ------------------------------------------------------------------
+
+// Requires SDL 2.0.6 or newer
+//#define SDL2_STATIC_LIBRARY
+
+#if defined SDL2_STATIC_LIBRARY && defined HAVE_VULKAN
+#include <SDL_vulkan.h>
+#endif // SDL2_STATIC_LIBRARY && HAVE_VULKAN
 
 // TYPES -------------------------------------------------------------------
 
@@ -65,12 +79,11 @@
 
 extern IVideo *Video;
 
-EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
-EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
+EXTERN_CVAR (Int, vid_preferbackend)
 EXTERN_CVAR (Bool, cl_capfps)
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -88,121 +101,524 @@ CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+CUSTOM_CVAR(String, vid_sdl_render_driver, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
+CCMD(vid_list_sdl_render_drivers)
+{
+	for (int i = 0; i < SDL_GetNumRenderDrivers(); ++i)
+	{
+		SDL_RendererInfo info;
+		if (SDL_GetRenderDriverInfo(i, &info) == 0)
+			Printf("%s\n", info.name);
+	}
+}
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-class SDLGLVideo : public IVideo
+namespace Priv
+{
+#ifdef SDL2_STATIC_LIBRARY
+
+#define SDL2_OPTIONAL_FUNCTION(RESULT, NAME, ...) \
+	RESULT(*NAME)(__VA_ARGS__) = SDL_ ## NAME
+
+#else // !SDL2_STATIC_LIBRARY
+
+	FModule library("SDL2");
+
+#define SDL2_OPTIONAL_FUNCTION(RESULT, NAME, ...) \
+	static TOptProc<library, RESULT(*)(__VA_ARGS__)> NAME("SDL_" #NAME)
+
+#endif // SDL2_STATIC_LIBRARY
+
+	SDL2_OPTIONAL_FUNCTION(int,      GetWindowBordersSize,         SDL_Window *window, int *top, int *left, int *bottom, int *right);
+#ifdef HAVE_VULKAN
+	SDL2_OPTIONAL_FUNCTION(void,     Vulkan_GetDrawableSize,       SDL_Window *window, int *width, int *height);
+	SDL2_OPTIONAL_FUNCTION(SDL_bool, Vulkan_GetInstanceExtensions, SDL_Window *window, unsigned int *count, const char **names);
+	SDL2_OPTIONAL_FUNCTION(SDL_bool, Vulkan_CreateSurface,         SDL_Window *window, VkInstance instance, VkSurfaceKHR *surface);
+#endif
+
+#undef SDL2_OPTIONAL_FUNCTION
+
+	static const uint32_t VulkanWindowFlag = 0x1000'0000;
+
+	SDL_Window *window;
+	bool vulkanEnabled;
+	bool softpolyEnabled;
+	bool fullscreenSwitch;
+
+	void CreateWindow(uint32_t extraFlags)
+	{
+		assert(Priv::window == nullptr);
+
+		// Set default size
+		SDL_Rect bounds;
+		SDL_GetDisplayBounds(vid_adapter, &bounds);
+
+		if (win_w <= 0 || win_h <= 0)
+		{
+			win_w = bounds.w * 8 / 10;
+			win_h = bounds.h * 8 / 10;
+		}
+
+		FString caption;
+		caption.Format(GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
+
+		const uint32_t windowFlags = (win_maximized ? SDL_WINDOW_MAXIMIZED : 0) | SDL_WINDOW_RESIZABLE | extraFlags;
+		Priv::window = SDL_CreateWindow(caption,
+			(win_x <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_x,
+			(win_y <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_y,
+			win_w, win_h, windowFlags);
+
+		if (Priv::window != nullptr)
+		{
+			// Enforce minimum size limit
+			SDL_SetWindowMinimumSize(Priv::window, VID_MIN_WIDTH, VID_MIN_HEIGHT);
+		}
+	}
+
+	void DestroyWindow()
+	{
+		assert(Priv::window != nullptr);
+
+		SDL_DestroyWindow(Priv::window);
+		Priv::window = nullptr;
+	}
+
+	void SetupPixelFormat(int multisample, const int *glver)
+	{
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+		if (multisample > 0) {
+			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+			SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, multisample);
+		}
+		if (gl_debug)
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+
+		if (gl_es)
+		{
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+		}
+		else if (glver[0] > 2)
+		{
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, glver[0]);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glver[1]);
+		}
+		else
+		{
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+			SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+		}
+	}
+}
+
+class SDLVideo : public IVideo
 {
 public:
-	SDLGLVideo (int parm);
-	~SDLGLVideo ();
+	SDLVideo ();
+	~SDLVideo ();
 
 	DFrameBuffer *CreateFrameBuffer ();
 
-	void SetupPixelFormat(bool allowsoftware, int multisample, const int *glver);
+private:
+#ifdef HAVE_VULKAN
+	VulkanDevice *device = nullptr;
+#endif
 };
 
 // CODE --------------------------------------------------------------------
 
-SDLGLVideo::SDLGLVideo (int parm)
+#ifdef HAVE_VULKAN
+void I_GetVulkanDrawableSize(int *width, int *height)
 {
-    if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
-        fprintf( stderr, "Video initialization failed: %s\n",
-             SDL_GetError( ) );
-    }
+	assert(Priv::vulkanEnabled);
+	assert(Priv::window != nullptr);
+	assert(Priv::Vulkan_GetDrawableSize);
+	Priv::Vulkan_GetDrawableSize(Priv::window, width, height);
 }
 
-SDLGLVideo::~SDLGLVideo ()
+bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names)
 {
+	assert(Priv::vulkanEnabled);
+	assert(Priv::window != nullptr);
+	return Priv::Vulkan_GetInstanceExtensions(Priv::window, count, names) == SDL_TRUE;
 }
 
-DFrameBuffer *SDLGLVideo::CreateFrameBuffer ()
+bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 {
-	SystemGLFrameBuffer *fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+	assert(Priv::vulkanEnabled);
+	assert(Priv::window != nullptr);
+	return Priv::Vulkan_CreateSurface(Priv::window, instance, surface) == SDL_TRUE;
+}
+#endif
+
+namespace
+{
+	SDL_Renderer* polyrendertarget = nullptr;
+	SDL_Texture* polytexture = nullptr;
+	int polytexturew = 0;
+	int polytextureh = 0;
+	bool polyvsync = false;
+	bool polyfirstinit = true;
+}
+
+void I_PolyPresentInit()
+{
+	assert(Priv::softpolyEnabled);
+	assert(Priv::window != nullptr);
+
+	if (strcmp(vid_sdl_render_driver, "") != 0)
+	{
+		SDL_SetHint(SDL_HINT_RENDER_DRIVER, vid_sdl_render_driver);
+	}
+}
+
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
+{
+	// When vsync changes we need to reinitialize
+	if (polyrendertarget && polyvsync != vsync)
+	{
+		I_PolyPresentDeinit();
+	}
+
+	if (!polyrendertarget)
+	{
+		polyvsync = vsync;
+
+		polyrendertarget = SDL_CreateRenderer(Priv::window, -1, vsync ? SDL_RENDERER_PRESENTVSYNC : 0);
+		if (!polyrendertarget)
+		{
+			I_FatalError("Could not create render target for softpoly: %s\n", SDL_GetError());
+		}
+
+		// Tell the user which render driver is being used, but don't repeat
+		// outselves if we're just changing vsync.
+		if (polyfirstinit)
+		{
+			polyfirstinit = false;
+
+			SDL_RendererInfo rendererInfo;
+			if (SDL_GetRendererInfo(polyrendertarget, &rendererInfo) == 0)
+			{
+				Printf("Using render driver %s\n", rendererInfo.name);
+			}
+			else
+			{
+				Printf("Failed to query render driver\n");
+			}
+		}
+
+		// Mask color
+		SDL_SetRenderDrawColor(polyrendertarget, 0, 0, 0, 255);
+	}
+
+	if (!polytexture || polytexturew != w || polytextureh != h)
+	{
+		if (polytexture)
+		{
+			SDL_DestroyTexture(polytexture);
+			polytexture = nullptr;
+			polytexturew = polytextureh = 0;
+		}
+		if ((polytexture = SDL_CreateTexture(polyrendertarget, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, w, h)) == nullptr)
+			I_Error("Failed to create %dx%d render target texture.", w, h);
+		polytexturew = w;
+		polytextureh = h;
+	}
+
+	uint8_t* pixels;
+	SDL_LockTexture(polytexture, nullptr, (void**)&pixels, &pitch);
+	return pixels;
+}
+
+void I_PolyPresentUnlock(int x, int y, int width, int height)
+{
+	SDL_UnlockTexture(polytexture);
+
+	int ClientWidth, ClientHeight;
+	SDL_GetRendererOutputSize(polyrendertarget, &ClientWidth, &ClientHeight);
+
+	SDL_Rect clearrects[4];
+	int count = 0;
+	if (y > 0)
+	{
+		clearrects[count].x = 0;
+		clearrects[count].y = 0;
+		clearrects[count].w = ClientWidth;
+		clearrects[count].h = y;
+		count++;
+	}
+	if (y + height < ClientHeight)
+	{
+		clearrects[count].x = 0;
+		clearrects[count].y = y + height;
+		clearrects[count].w = ClientWidth;
+		clearrects[count].h = ClientHeight - clearrects[count].y;
+		count++;
+	}
+	if (x > 0)
+	{
+		clearrects[count].x = 0;
+		clearrects[count].y = y;
+		clearrects[count].w = x;
+		clearrects[count].h = height;
+		count++;
+	}
+	if (x + width < ClientWidth)
+	{
+		clearrects[count].x = x + width;
+		clearrects[count].y = y;
+		clearrects[count].w = ClientWidth - clearrects[count].x;
+		clearrects[count].h = height;
+		count++;
+	}
+
+	if (count > 0)
+		SDL_RenderFillRects(polyrendertarget, clearrects, count);
+
+	SDL_Rect dstrect;
+	dstrect.x = x;
+	dstrect.y = y;
+	dstrect.w = width;
+	dstrect.h = height;
+	SDL_RenderCopy(polyrendertarget, polytexture, nullptr, &dstrect);
+
+	SDL_RenderPresent(polyrendertarget);
+}
+
+void I_PolyPresentDeinit()
+{
+	if (polytexture)
+	{
+		SDL_DestroyTexture(polytexture);
+		polytexture = nullptr;
+	}
+
+	if (polyrendertarget)
+	{
+		SDL_DestroyRenderer(polyrendertarget);
+		polyrendertarget = nullptr;
+	}
+}
+
+
+
+SDLVideo::SDLVideo ()
+{
+	if (SDL_Init(SDL_INIT_VIDEO) < 0)
+	{
+		fprintf(stderr, "Video initialization failed: %s\n", SDL_GetError());
+		return;
+	}
+
+#ifndef SDL2_STATIC_LIBRARY
+	// Load optional SDL functions
+	if (!Priv::library.IsLoaded())
+	{
+		Priv::library.Load({ "libSDL2-2.0.so.0", "libSDL2-2.0.so", "libSDL2.so" });
+	}
+#endif // !SDL2_STATIC_LIBRARY
+
+	Priv::softpolyEnabled = vid_preferbackend == 2;
+#ifdef HAVE_VULKAN
+	Priv::vulkanEnabled = vid_preferbackend == 1
+		&& Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
+
+	if (Priv::vulkanEnabled)
+	{
+		Priv::CreateWindow(Priv::VulkanWindowFlag | SDL_WINDOW_HIDDEN);
+
+		if (Priv::window == nullptr)
+		{
+			Priv::vulkanEnabled = false;
+		}
+	}
+#endif
+	if (Priv::softpolyEnabled)
+	{
+		Priv::CreateWindow(SDL_WINDOW_HIDDEN);
+	}
+}
+
+SDLVideo::~SDLVideo ()
+{
+#ifdef HAVE_VULKAN
+	delete device;
+#endif
+}
+
+DFrameBuffer *SDLVideo::CreateFrameBuffer ()
+{
+	SystemBaseFrameBuffer *fb = nullptr;
+
+	// first try Vulkan, if that fails OpenGL
+#ifdef HAVE_VULKAN
+	if (Priv::vulkanEnabled)
+	{
+		try
+		{
+			assert(device == nullptr);
+			device = new VulkanDevice();
+			fb = new VulkanFrameBuffer(nullptr, fullscreen, device);
+		}
+		catch (CVulkanError const&)
+		{
+			if (Priv::window != nullptr)
+			{
+				Priv::DestroyWindow();
+			}
+
+			Priv::vulkanEnabled = false;
+		}
+	}
+#endif
+
+	if (Priv::softpolyEnabled)
+	{
+		fb = new PolyFrameBuffer(nullptr, fullscreen);
+	}
+
+	if (fb == nullptr)
+	{
+		fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+	}
 
 	return fb;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample, const int *glver)
-{
-	SDL_GL_SetAttribute( SDL_GL_RED_SIZE,  8 );
-	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE,  8 );
-	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE,  8 );
-	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE,  8 );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE,  24 );
-	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE,  8 );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER,  1 );
-	if (multisample > 0) {
-		SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 1 );
-		SDL_GL_SetAttribute( SDL_GL_MULTISAMPLESAMPLES, multisample );
-	}
-	if (gl_debug)
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
-		
-	if (gl_es)
-	{
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	}
-	else if (glver[0] > 2)
-	{
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, glver[0]);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glver[1]);
-	}
-	else
-	{
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-	}
 }
 
 
 IVideo *gl_CreateVideo()
 {
-	return new SDLGLVideo(0);
+	return new SDLVideo();
 }
 
 
-// FrameBuffer implementation -----------------------------------------------
+// FrameBuffer Implementation -----------------------------------------------
 
-FModule sdl_lib("SDL2");
-
-typedef int (*SDL_GetWindowBordersSizePtr)(SDL_Window *, int *, int *, int *, int *);
-static TOptProc<sdl_lib, SDL_GetWindowBordersSizePtr> SDL_GetWindowBordersSize_("SDL_GetWindowBordersSize");
-
-SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
-	: DFrameBuffer (vid_defwidth, vid_defheight)
+SystemBaseFrameBuffer::SystemBaseFrameBuffer (void *, bool fullscreen)
+: DFrameBuffer (vid_defwidth, vid_defheight)
 {
-	m_fsswitch = false;
-
-	// SDL_GetWindowBorderSize() is only available since 2.0.5, but because
-	// GZDoom supports platforms with older SDL2 versions, this function
-	// has to be dynamically loaded
-	if (!sdl_lib.IsLoaded())
+	if (Priv::window != nullptr)
 	{
-		sdl_lib.Load({ "libSDL2.so", "libSDL2-2.0.so" });
+		SDL_SetWindowFullscreen(Priv::window, fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+		SDL_ShowWindow(Priv::window);
+	}
+}
+
+int SystemBaseFrameBuffer::GetClientWidth()
+{
+	int width = 0;
+
+	if (Priv::softpolyEnabled)
+	{
+		if (polyrendertarget)
+			SDL_GetRendererOutputSize(polyrendertarget, &width, nullptr);
+		else
+			SDL_GetWindowSize(Priv::window, &width, nullptr);
+		return width;
+	}
+	
+#ifdef HAVE_VULKAN
+	assert(Priv::vulkanEnabled);
+	Priv::Vulkan_GetDrawableSize(Priv::window, &width, nullptr);
+#endif
+
+	return width;
+}
+
+int SystemBaseFrameBuffer::GetClientHeight()
+{
+	int height = 0;
+	
+	if (Priv::softpolyEnabled)
+	{
+		if (polyrendertarget)
+			SDL_GetRendererOutputSize(polyrendertarget, nullptr, &height);
+		else
+			SDL_GetWindowSize(Priv::window, nullptr, &height);
+		return height;
 	}
 
+#ifdef HAVE_VULKAN
+	assert(Priv::vulkanEnabled);
+	Priv::Vulkan_GetDrawableSize(Priv::window, nullptr, &height);
+#endif
+
+	return height;
+}
+
+bool SystemBaseFrameBuffer::IsFullscreen ()
+{
+	return (SDL_GetWindowFlags(Priv::window) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+}
+
+void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
+{
+	SDL_SetWindowFullscreen(Priv::window, yes ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+	if ( !yes )
+	{
+		if ( !Priv::fullscreenSwitch )
+		{
+			Priv::fullscreenSwitch = true;
+			fullscreen = false;
+		}
+		else
+		{
+			Priv::fullscreenSwitch = false;
+			SetWindowSize(win_w, win_h);
+		}
+	}
+}
+
+void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
+{
+	if (w < VID_MIN_WIDTH || h < VID_MIN_HEIGHT)
+	{
+		w = VID_MIN_WIDTH;
+		h = VID_MIN_HEIGHT;
+	}
+	win_w = w;
+	win_h = h;
+	if ( fullscreen )
+	{
+		fullscreen = false;
+	}
+	else
+	{
+		win_maximized = false;
+		SDL_SetWindowSize(Priv::window, w, h);
+		SDL_SetWindowPosition(Priv::window, SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter), SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter));
+		SetSize(GetClientWidth(), GetClientHeight());
+		int x, y;
+		SDL_GetWindowPosition(Priv::window, &x, &y);
+		win_x = x;
+		win_y = y;
+	}
+}
+
+
+SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen)
+: SystemBaseFrameBuffer(hMonitor, fullscreen)
+{
 	// NOTE: Core profiles were added with GL 3.2, so there's no sense trying
 	// to set core 3.1 or 3.0. We could try a forward-compatible context
 	// instead, but that would be too restrictive (w.r.t. shaders).
 	static const int glvers[][2] = {
-		{ 4, 5 }, { 4, 4 }, { 4, 3 }, { 4, 2 }, { 4, 1 }, { 4, 0 },
+		{ 4, 6 }, { 4, 5 }, { 4, 4 }, { 4, 3 }, { 4, 2 }, { 4, 1 }, { 4, 0 },
 		{ 3, 3 }, { 3, 2 }, { 2, 0 },
 		{ 0, 0 },
 	};
 	int glveridx = 0;
 	int i;
-
-	UpdatePending = false;
 
 	const char *version = Args->CheckValue("-glversion");
 	if (version != NULL)
@@ -223,82 +639,53 @@ SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 		}
 	}
 
-	FString caption;
-	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
-
 	for ( ; glvers[glveridx][0] > 0; ++glveridx)
 	{
-		static_cast<SDLGLVideo*>(Video)->SetupPixelFormat(false, 0, glvers[glveridx]);
+		Priv::SetupPixelFormat(0, glvers[glveridx]);
+		Priv::CreateWindow(SDL_WINDOW_OPENGL | (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
-		SDL_Rect bounds;
-		SDL_GetDisplayBounds(vid_adapter,&bounds);
-		// set default size
-		if ( win_w <= 0 || win_h <= 0 )
+		if (Priv::window == nullptr)
 		{
-			win_w = bounds.w * 8 / 10;
-			win_h = bounds.h * 8 / 10;
+			continue;
 		}
 
-		Screen = SDL_CreateWindow(caption,
-			(win_x <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_x,
-			(win_y <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_y,
-			win_w, win_h, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) | (win_maximized ? SDL_WINDOW_MAXIMIZED : 0) | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-		if (Screen != NULL)
+		GLContext = SDL_GL_CreateContext(Priv::window);
+		if (GLContext == nullptr)
 		{
-			// enforce minimum size limit
-			SDL_SetWindowMinimumSize(Screen, MIN_WIDTH, MIN_HEIGHT);
-
-			GLContext = SDL_GL_CreateContext(Screen);
-			if (GLContext != NULL)
-			{
-				m_supportsGamma = -1 != SDL_GetWindowGammaRamp(Screen,
-					 m_origGamma[0], m_origGamma[1], m_origGamma[2]
-				);
-
-				return;
-			}
-
-			SDL_DestroyWindow(Screen);
-			Screen = NULL;
+			Priv::DestroyWindow();
+		}
+		else
+		{
+			break;
 		}
 	}
 }
 
 SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 {
-	if (Screen)
+	if (Priv::window)
 	{
-		ResetGammaTable();
-
 		if (GLContext)
 		{
 			SDL_GL_DeleteContext(GLContext);
 		}
 
-		SDL_DestroyWindow(Screen);
+		Priv::DestroyWindow();
 	}
 }
 
-
-void SystemGLFrameBuffer::SetGammaTable(uint16_t *tbl)
+int SystemGLFrameBuffer::GetClientWidth()
 {
-	if (m_supportsGamma)
-	{
-		SDL_SetWindowGammaRamp(Screen, &tbl[0], &tbl[256], &tbl[512]);
-	}
+	int width = 0;
+	SDL_GL_GetDrawableSize(Priv::window, &width, nullptr);
+	return width;
 }
 
-void SystemGLFrameBuffer::ResetGammaTable()
+int SystemGLFrameBuffer::GetClientHeight()
 {
-	if (m_supportsGamma)
-	{
-		SDL_SetWindowGammaRamp(Screen, m_origGamma[0], m_origGamma[1], m_origGamma[2]);
-	}
-}
-
-bool SystemGLFrameBuffer::IsFullscreen ()
-{
-	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
+	int height = 0;
+	SDL_GL_GetDrawableSize(Priv::window, nullptr, &height);
+	return height;
 }
 
 void SystemGLFrameBuffer::SetVSync( bool vsync )
@@ -321,81 +708,9 @@ void SystemGLFrameBuffer::SetVSync( bool vsync )
 
 void SystemGLFrameBuffer::SwapBuffers()
 {
-#if !defined(__APPLE__) && !defined(__OpenBSD__)
-	if (vid_maxfps && !cl_capfps)
-	{
-		SEMAPHORE_WAIT(FPSLimitSemaphore)
-	}
-#endif
-
-	SDL_GL_SwapWindow (Screen);
+	SDL_GL_SwapWindow(Priv::window);
 }
 
-void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
-{
-	SDL_SetWindowFullscreen(Screen, yes ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-	if ( !yes )
-	{
-		if ( !m_fsswitch )
-		{
-			m_fsswitch = true;
-			fullscreen = false;
-		}
-		else
-		{
-			m_fsswitch = false;
-			SetWindowSize(win_w, win_h);
-		}
-	}
-}
-
-int SystemGLFrameBuffer::GetClientWidth()
-{
-	int width = 0;
-	SDL_GL_GetDrawableSize(Screen, &width, nullptr);
-	return width;
-}
-
-int SystemGLFrameBuffer::GetClientHeight()
-{
-	int height = 0;
-	SDL_GL_GetDrawableSize(Screen, nullptr, &height);
-	return height;
-}
-
-void SystemGLFrameBuffer::SetWindowSize(int w, int h)
-{
-	if (w < MIN_WIDTH || h < MIN_HEIGHT)
-	{
-		w = MIN_WIDTH;
-		h = MIN_HEIGHT;
-	}
-	win_w = w;
-	win_h = h;
-	if ( fullscreen )
-	{
-		fullscreen = false;
-	}
-	else
-	{
-		win_maximized = false;
-		SDL_SetWindowSize(Screen, w, h);
-		SDL_SetWindowPosition(Screen, SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter), SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter));
-		SetSize(GetClientWidth(), GetClientHeight());
-		int x, y;
-		SDL_GetWindowPosition(Screen, &x, &y);
-		win_x = x;
-		win_y = y;
-	}
-}
-
-void SystemGLFrameBuffer::GetWindowBordersSize(int &top, int &left)
-{
-	if (SDL_GetWindowBordersSize_)
-	{
-		SDL_GetWindowBordersSize_(Screen, &top, &left, nullptr, nullptr);
-	}
-}
 
 void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 {
@@ -414,17 +729,17 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 		break;
 
 	case SDL_WINDOWEVENT_MOVED:
-		if (!fullscreen)
+		if (!fullscreen && Priv::GetWindowBordersSize)
 		{
 			int top = 0, left = 0;
-			static_cast<SystemGLFrameBuffer *>(screen)->GetWindowBordersSize(top,left);
+			Priv::GetWindowBordersSize(Priv::window, &top, &left, nullptr, nullptr);
 			win_x = event.data1-left;
 			win_y = event.data2-top;
 		}
 		break;
 
 	case SDL_WINDOWEVENT_RESIZED:
-		if (!fullscreen && !(static_cast<SystemGLFrameBuffer *>(screen)->m_fsswitch))
+		if (!fullscreen && !Priv::fullscreenSwitch)
 		{
 			win_w = event.data1;
 			win_h = event.data2;
@@ -445,14 +760,15 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
-	auto window = static_cast<SystemGLFrameBuffer *>(screen)->GetSDLWindow();
 	if (caption)
-		SDL_SetWindowTitle(window, caption);
+	{
+		SDL_SetWindowTitle(Priv::window, caption);
+	}
 	else
 	{
 		FString default_caption;
-		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
-		SDL_SetWindowTitle(window, default_caption);
+		default_caption.Format(GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
+		SDL_SetWindowTitle(Priv::window, default_caption);
 	}
 }
 

@@ -89,6 +89,7 @@ void JitCompiler::EmitSS_R()
 
 void JitCompiler::EmitSO()
 {
+	EmitNullPointerThrow(A, X_WRITE_NIL);
 	cc.mov(asmjit::x86::ptr(regA[A], konstd[C]), regA[B]);
 
 	typedef void(*FuncPtr)(DObject*);
@@ -98,6 +99,7 @@ void JitCompiler::EmitSO()
 
 void JitCompiler::EmitSO_R()
 {
+	EmitNullPointerThrow(A, X_WRITE_NIL);
 	cc.mov(asmjit::x86::ptr(regA[A], regD[C]), regA[B]);
 
 	typedef void(*FuncPtr)(DObject*);
@@ -107,11 +109,13 @@ void JitCompiler::EmitSO_R()
 
 void JitCompiler::EmitSP()
 {
+	EmitNullPointerThrow(A, X_WRITE_NIL);
 	cc.mov(asmjit::x86::ptr(regA[A], konstd[C]), regA[B]);
 }
 
 void JitCompiler::EmitSP_R()
 {
+	EmitNullPointerThrow(A, X_WRITE_NIL);
 	cc.mov(asmjit::x86::ptr(regA[A], regD[C]), regA[B]);
 }
 

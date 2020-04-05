@@ -51,9 +51,12 @@
 #include "menu/menu.h"
 #include "vm.h"
 #include "events.h"
+#include "v_video.h"
+#include "i_system.h"
 #include "scripting/types.h"
 
 int DMenu::InMenu;
+static ScaleOverrider *CurrentScaleOverrider;
 //
 // Todo: Move these elsewhere
 //
@@ -62,7 +65,6 @@ CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
 CVAR (Int, m_showinputgrid, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
 
 CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -117,6 +119,8 @@ int				MenuTime;
 
 extern PClass *DefaultListMenuClass;
 extern PClass *DefaultOptionMenuClass;
+extern bool hud_toggled;
+void D_ToggleHud();
 
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
@@ -346,8 +350,11 @@ bool DMenu::TranslateKeyboardEvents()
 //
 //=============================================================================
 
-void M_StartControlPanel (bool makeSound)
+void M_StartControlPanel (bool makeSound, bool scaleoverride)
 {
+	if (hud_toggled)
+		D_ToggleHud();
+	
 	// intro might call this repeatedly
 	if (CurrentMenu != nullptr)
 		return;
@@ -366,10 +373,12 @@ void M_StartControlPanel (bool makeSound)
 
 	if (makeSound)
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI, "menu/activate", snd_menuvolume, ATTN_NONE);
 	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
+	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider;
+	else if (!scaleoverride && CurrentScaleOverrider) delete CurrentScaleOverrider;
 }
 
 //=============================================================================
@@ -403,11 +412,45 @@ DEFINE_ACTION_FUNCTION(DMenu, ActivateMenu)
 //
 //=============================================================================
 
+EXTERN_CVAR(Int, cl_gfxlocalization)
+
+
 void M_SetMenu(FName menu, int param)
 {
 	// some menus need some special treatment
 	switch (menu)
 	{
+	case NAME_Mainmenu:
+		if (gameinfo.gametype & GAME_DoomStrifeChex)	// Raven's games always used text based menus
+		{
+			if (gameinfo.forcetextinmenus)	// If text is forced, this overrides any check.
+			{
+				menu = NAME_MainmenuTextOnly;
+			}
+			else if (cl_gfxlocalization != 0 && !gameinfo.forcenogfxsubstitution)
+			{
+				// For these games we must check up-front if they get localized because in that case another template must be used.
+				DMenuDescriptor **desc = MenuDescriptors.CheckKey(NAME_Mainmenu);
+				if (desc != nullptr)
+				{
+					if ((*desc)->IsKindOf(RUNTIME_CLASS(DListMenuDescriptor)))
+					{
+						DListMenuDescriptor *ld = static_cast<DListMenuDescriptor*>(*desc);
+						if (ld->mFromEngine)
+						{
+							// This assumes that replacing one graphic will replace all of them.
+							// So this only checks the "New game" entry for localization capability.
+							FTextureID texid = TexMan.CheckForTexture("M_NGAME", ETextureType::MiscPatch);
+							if (!TexMan.OkForLocalization(texid, "$MNU_NEWGAME"))
+							{
+								menu = NAME_MainmenuTextOnly;
+							}
+						}
+					}
+				}
+			}
+		}
+		break;
 	case NAME_Episodemenu:
 		// sent from the player class menu
 		GameStartupInfo.Skill = -1;
@@ -415,6 +458,7 @@ void M_SetMenu(FName menu, int param)
 		GameStartupInfo.PlayerClass = 
 			param == -1000? nullptr :
 			param == -1? "Random" : GetPrintableDisplayName(PlayerClasses[param].Type).GetChars();
+		M_StartupEpisodeMenu(&GameStartupInfo);	// needs player class name from class menu (later)
 		break;
 
 	case NAME_Skillmenu:
@@ -478,6 +522,10 @@ void M_SetMenu(FName menu, int param)
 		void ActivateEndGameMenu();
 		ActivateEndGameMenu();
 		return;
+
+	case NAME_Playermenu:
+		menu = NAME_NewPlayerMenu;	// redirect the old player menu to the new one.
+		break;
 	}
 
 	// End of special checks
@@ -826,12 +874,6 @@ static void M_Dim()
 		amount = gameinfo.dimamount;
 	}
 
-	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
-	{ // On the Hexen title screen, the default dimming is not
-	  // enough to make the menus readable.
-		amount = MIN<float>(1.f, amount*2.f);
-	}
-
 	screen->Dim(dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
 }
 
@@ -850,7 +892,7 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		screen->BlurScene(gameinfo.bluramount);
+		if (!CurrentMenu->DontBlur) screen->BlurScene(gameinfo.bluramount);
 		if (!CurrentMenu->DontDim)
 		{
 			M_Dim();
@@ -875,6 +917,8 @@ void M_ClearMenus()
 		CurrentMenu = parent;
 	}
 	menuactive = MENU_Off;
+	if (CurrentScaleOverrider)  delete CurrentScaleOverrider;
+	CurrentScaleOverrider = nullptr;
 }
 
 //=============================================================================
@@ -1105,13 +1149,13 @@ EXTERN_CVAR (Int, screenblocks)
 CCMD (sizedown)
 {
 	screenblocks = screenblocks - 1;
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD (sizeup)
 {
 	screenblocks = screenblocks + 1;
-	S_Sound (CHAN_VOICE | CHAN_UI, "menu/change", snd_menuvolume, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, "menu/change", snd_menuvolume, ATTN_NONE);
 }
 
 CCMD(menuconsole)
@@ -1158,6 +1202,7 @@ DEFINE_FIELD(DMenu, mParentMenu)
 DEFINE_FIELD(DMenu, mMouseCapture);
 DEFINE_FIELD(DMenu, mBackbuttonSelected);
 DEFINE_FIELD(DMenu, DontDim);
+DEFINE_FIELD(DMenu, DontBlur);
 
 DEFINE_FIELD(DMenuDescriptor, mMenuName)
 DEFINE_FIELD(DMenuDescriptor, mNetgameMessage)
@@ -1194,6 +1239,7 @@ DEFINE_FIELD(DOptionMenuDescriptor, mScrollPos)
 DEFINE_FIELD(DOptionMenuDescriptor, mIndent)
 DEFINE_FIELD(DOptionMenuDescriptor, mPosition)
 DEFINE_FIELD(DOptionMenuDescriptor, mDontDim)
+DEFINE_FIELD(DOptionMenuDescriptor, mFont)
 
 DEFINE_FIELD(FOptionMenuSettings, mTitleColor)
 DEFINE_FIELD(FOptionMenuSettings, mFontColor)

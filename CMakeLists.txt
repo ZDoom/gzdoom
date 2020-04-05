@@ -13,21 +13,6 @@ endif()
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( FindPackageHandleStandardArgs )
 
-# Produce a warning if XP support will be missing when building a 32 bit target for MSVC.
-if( MSVC )
-	if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-
-		list( APPEND WINXP_TOOLSETS v140_xp v141_xp)
-		list( FIND WINXP_TOOLSETS "${CMAKE_GENERATOR_TOOLSET}" HAVE_WINXP_SUPPORT)
-
-		if( HAVE_WINXP_SUPPORT EQUAL -1 )
-			string( REPLACE ";" " or " WINXP_TOOLSETS_STR "${WINXP_TOOLSETS}" )
-			message( WARNING "This project supports Windows XP but you must set the optional toolset to ${WINXP_TOOLSETS_STR} manually to have it in your build!\n"
-				"Assign toolset's name to CMAKE_GENERATOR_TOOLSET variable or use -T <toolset> from the command prompt." )
-		endif()
-	endif()
-endif()
-
 # Support cross compiling
 option( FORCE_CROSSCOMPILE "Turn on cross compiling." NO )
 if( FORCE_CROSSCOMPILE )
@@ -158,19 +143,57 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif()
 
+# Fast math flags, required by some subprojects
+set( ZD_FASTMATH_FLAG "" )
+if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
+elseif( MSVC )
+	set( ZD_FASTMATH_FLAG "/fp:fast" )
+endif()
+
+macro( use_fast_math )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ZD_FASTMATH_FLAG}" )
+	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
+endmacro()
+
+include( CheckFunctionExists )
+
+macro( require_stricmp )
+	CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
+	if( NOT STRICMP_EXISTS )
+		add_definitions( -Dstricmp=strcasecmp )
+	endif()
+endmacro()
+
+macro( require_strnicmp )
+	CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
+	if( NOT STRNICMP_EXISTS )
+		add_definitions( -Dstrnicmp=strncasecmp )
+	endif()
+endmacro()
+
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
 find_package( JPEG )
 find_package( ZLIB )
-find_package( asmjit )
-# GME
-find_path( GME_INCLUDE_DIR gme/gme.h )
-find_library( GME_LIBRARIES gme )
-mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
-	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
-)
+
+include( TargetArch )
+
+target_architecture(ZDOOM_TARGET_ARCH)
+
+if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
+	set( HAVE_VM_JIT ON )
+	option (HAVE_VULKAN "Enable Vulkan support" ON)
+endif()
+
+# no, we're not using external asmjit for now, we made too many modifications to our's.
+# if the asmjit author uses our changes then we'll update this.
+
+#if( ${HAVE_VM_JIT} )
+#	find_package( asmjit )
+#endif()
+
 
 if( MSVC )
 	# Eliminate unreferenced functions and data
@@ -180,7 +203,11 @@ if( MSVC )
 	# String pooling
 	# Function-level linking
 	# Disable run-time type information
-	set( ALL_C_FLAGS "/GF /Gy /GR-" )
+	if ( HAVE_VULKAN )
+		set( ALL_C_FLAGS "/GF /Gy /GR- /permissive- /DHAVE_VULKAN" )
+	else()
+		set( ALL_C_FLAGS "/GF /Gy /GR- /permissive-" )
+	endif()
 
 	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall
 	#set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2") # This is already the default
@@ -214,14 +241,13 @@ if( MSVC )
 	set( DEB_C_FLAGS "/D _CRTDBG_MAP_ALLOC /MTd" )
 
 	# Disable warnings for unsecure CRT functions from VC8+
-	if( MSVC_VERSION GREATER 1399 )
-		set( ALL_C_FLAGS "${ALL_C_FLAGS} /wd4996" )
-	endif()
+	set( ALL_C_FLAGS "${ALL_C_FLAGS} /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600" )
 
 	# The CMake configurations set /GR and /MD by default, which conflict with our settings.
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE} )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_MINSIZEREL ${CMAKE_CXX_FLAGS_MINSIZEREL} )
 	string(REPLACE "/MD " " " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
+	string(REPLACE "/Ob1 " "/Ob2 " CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
 	string(REPLACE "/MDd " " " CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELEASE ${CMAKE_C_FLAGS_RELEASE} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL} )
@@ -230,12 +256,32 @@ if( MSVC )
 	string(REPLACE " /GR" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 else()
 	set( REL_LINKER_FLAGS "" )
-	set( ALL_C_FLAGS "-ffp-contract=off" )
+	if ( HAVE_VULKAN )
+		set( ALL_C_FLAGS "-ffp-contract=off -DHAVE_VULKAN" )
+	else()
+		set( ALL_C_FLAGS "-ffp-contract=off" )
+	endif()
+
+	if ( UNIX )
+		include(CheckSymbolExists)
+		check_symbol_exists( "fts_set" "fts.h" HAVE_FTS )
+		if ( NOT HAVE_FTS )
+			include ( FindPkgConfig )
+			pkg_check_modules( MUSL_FTS musl-fts )
+			if ( MUSL_FTS_FOUND )
+				set ( ALL_C_FLAGS "${ALL_C_FLAGS} ${MUSL_FTS_LDFLAGS}" )
+			else ( MUSL_FTS_FOUND )
+				message (ERROR "fts_* functions not found in the system" )
+			endif ( MUSL_FTS_FOUND )
+		endif ( NOT HAVE_FTS )
+	endif ( UNIX )
+
 	set( REL_C_FLAGS "" )
 	set( DEB_C_FLAGS "" )
 
 
 	if( APPLE )
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
 		if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 			# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
 			# C++11 support using SDKs 10.7 and 10.8.
@@ -271,15 +317,13 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
-option(FORCE_INTERNAL_GME "Use internal gme")
-option(FORCE_INTERNAL_ASMJIT "Use internal asmjit")
+option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
+mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
-# Fast math flags, required by some subprojects
-set( ZD_FASTMATH_FLAG "" )
-if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	set( ZD_FASTMATH_FLAG "-ffast-math -ffp-contract=fast" )
-elseif( MSVC )
-	set( ZD_FASTMATH_FLAG "/fp:fast" )
+if (HAVE_VULKAN)
+	add_subdirectory( libraries/glslang/glslang)
+	add_subdirectory( libraries/glslang/spirv )
+	add_subdirectory( libraries/glslang/OGLCompilersDLL )
 endif()
 
 if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
@@ -287,29 +331,44 @@ if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
 else()
 	message( STATUS "Using internal zlib" )
 	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing zlib alongside zdoom
-	add_subdirectory( zlib )
-	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/zlib )
+	add_subdirectory( libraries/zlib )
+	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries/zlib )
 	set( ZLIB_LIBRARIES z )
 	set( ZLIB_LIBRARY z )
 endif()
 
-if( ASMJIT_FOUND AND NOT FORCE_INTERNAL_ASMJIT )
-	message( STATUS "Using system asmjit, includes found at ${ASMJIT_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal asmjit" )
-	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing asmjit alongside zdoom
-	add_subdirectory( asmjit )
-	set( ASMJIT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/asmjit )
-	set( ASMJIT_LIBRARIES asmjit )
-	set( ASMJIT_LIBRARY asmjit )
+if( HAVE_VM_JIT AND UNIX )
+	check_symbol_exists( "backtrace" "execinfo.h" HAVE_BACKTRACE )
+	if( NOT HAVE_BACKTRACE )
+		set( CMAKE_REQUIRED_FLAGS "-lexecinfo" )
+		check_symbol_exists( "backtrace" "execinfo.h" HAVE_LIBEXECINFO )
+		if( HAVE_LIBEXECINFO )
+			set( ALL_C_FLAGS "${ALL_C_FLAGS} -lexecinfo" )
+		else( HAVE_LIBEXECINFO )
+			set( HAVE_VM_JIT NO )
+		endif( HAVE_LIBEXECINFO )
+	endif( NOT HAVE_BACKTRACE )
+endif( HAVE_VM_JIT AND UNIX )
+
+if( ${HAVE_VM_JIT} )
+	if( ASMJIT_FOUND AND NOT FORCE_INTERNAL_ASMJIT )
+		message( STATUS "Using system asmjit, includes found at ${ASMJIT_INCLUDE_DIR}" )
+	else()
+		message( STATUS "Using internal asmjit" )
+		set( SKIP_INSTALL_ALL TRUE ) # Avoid installing asmjit alongside zdoom
+		add_subdirectory( libraries/asmjit )
+		set( ASMJIT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries/asmjit )
+		set( ASMJIT_LIBRARIES asmjit )
+		set( ASMJIT_LIBRARY asmjit )
+	endif()
 endif()
 
 if( JPEG_FOUND AND NOT FORCE_INTERNAL_JPEG )
 	message( STATUS "Using system jpeg library, includes found at ${JPEG_INCLUDE_DIR}" )
 else()
 	message( STATUS "Using internal jpeg library" )
-	add_subdirectory( jpeg )
-	set( JPEG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jpeg )
+	add_subdirectory( libraries/jpeg )
+	set( JPEG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries/jpeg )
 	set( JPEG_LIBRARIES jpeg )
 	set( JPEG_LIBRARY jpeg )
 endif()
@@ -318,25 +377,14 @@ if( BZIP2_FOUND AND NOT FORCE_INTERNAL_BZIP2 )
 	message( STATUS "Using system bzip2 library, includes found at ${BZIP2_INCLUDE_DIR}" )
 else()
 	message( STATUS "Using internal bzip2 library" )
-	add_subdirectory( bzip2 )
-	set( BZIP2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bzip2" )
+	add_subdirectory( libraries/bzip2 )
+	set( BZIP2_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/bzip2" )
 	set( BZIP2_LIBRARIES bz2 )
 	set( BZIP2_LIBRARY bz2 )
 endif()
 
-if( GME_FOUND AND NOT FORCE_INTERNAL_GME )
-	message( STATUS "Using system gme library, includes found at ${GME_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal gme library" )
-	# Use MAME as it's balanced emulator: well-accurate, but doesn't eats lot of CPU
-	# Nuked OPN2 is very accurate emulator, but it eats too much CPU for the workflow
-	set( GME_YM2612_EMU "MAME" )
-	add_subdirectory( game-music-emu )
-	set( GME_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/game-music-emu" )
-	set( GME_LIBRARIES gme )
-endif()
 
-set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
+set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/lzma/C" )
 
 if( NOT CMAKE_CROSSCOMPILING )
 	if( NOT CROSS_EXPORTS )
@@ -354,10 +402,11 @@ install(DIRECTORY docs/
 		DESTINATION ${INSTALL_DOCS_PATH}
 		COMPONENT "Documentation")
 
-add_subdirectory( lzma )
+option( DYN_OPENAL "Dynamically load OpenAL" ON )
+
+add_subdirectory( libraries/lzma )
 add_subdirectory( tools )
-add_subdirectory( dumb )
-add_subdirectory( gdtoa )
+add_subdirectory( libraries/gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )

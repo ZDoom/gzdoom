@@ -31,12 +31,9 @@
 **
 */
 
-#ifndef NO_XINPUT
-
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <xinput.h>
 #include <limits.h>
@@ -832,13 +829,3 @@ void I_StartupXInput()
 	}
 }
 
-#else	// NO_XINPUT
-
-#include "i_input.h"
-
-void I_StartupXInput()
-{
-	JoyDevices[INPUT_XInput] = NULL;
-}
-
-#endif

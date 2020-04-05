@@ -1,0 +1,3996 @@
+{
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"add_pk3"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt",
+			"wadsrc/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 3,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 86,
+				"parent" : 1
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "zdoom::@145eef247bfb46b6828c"
+		},
+		{
+			"id" : "zipdir::@4e3b9157d490e4153562"
+		}
+	],
+	"id" : "gzdoom_pk3::@0fdc2bb3109a833e2bf8",
+	"name" : "gzdoom_pk3",
+	"paths" : 
+	{
+		"build" : "wadsrc",
+		"source" : "wadsrc"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				1,
+				2,
+				3,
+				4,
+				21,
+				22,
+				23,
+				24,
+				39,
+				120,
+				121,
+				122,
+				123,
+				124,
+				125,
+				126,
+				127,
+				128,
+				129,
+				130,
+				156,
+				157,
+				158,
+				159,
+				160,
+				161,
+				214,
+				215,
+				230,
+				231,
+				330,
+				331,
+				332,
+				333,
+				334,
+				336,
+				337,
+				338,
+				339,
+				340,
+				350,
+				351
+			]
+		},
+		{
+			"name" : "Source Files\\credits",
+			"sourceIndexes" : 
+			[
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\game-doomchex",
+			"sourceIndexes" : 
+			[
+				25,
+				26
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\game-heretic",
+			"sourceIndexes" : 
+			[
+				27,
+				28,
+				29,
+				30
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\game-hexen",
+			"sourceIndexes" : 
+			[
+				31,
+				32
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\game-strife\\acs",
+			"sourceIndexes" : 
+			[
+				33
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\game-strife",
+			"sourceIndexes" : 
+			[
+				34,
+				35,
+				36,
+				37
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\urbanbrawl",
+			"sourceIndexes" : 
+			[
+				38
+			]
+		},
+		{
+			"name" : "Source Files\\fonts\\consolefont",
+			"sourceIndexes" : 
+			[
+				40,
+				41,
+				42,
+				43,
+				44
+			]
+		},
+		{
+			"name" : "Source Files\\glstuff",
+			"sourceIndexes" : 
+			[
+				45,
+				46,
+				47,
+				48
+			]
+		},
+		{
+			"name" : "Source Files\\graphics",
+			"sourceIndexes" : 
+			[
+				49,
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58,
+				59,
+				60,
+				61,
+				62,
+				63,
+				64,
+				65,
+				66,
+				67,
+				68,
+				69,
+				70,
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77,
+				78,
+				79,
+				80,
+				81,
+				82,
+				83,
+				84,
+				85,
+				86,
+				87,
+				88,
+				89,
+				90,
+				91,
+				92,
+				93,
+				94,
+				95,
+				96,
+				97,
+				98,
+				99,
+				100,
+				101,
+				102,
+				103,
+				104,
+				105,
+				106,
+				107,
+				108,
+				109,
+				110,
+				111,
+				112,
+				113,
+				114,
+				115,
+				116,
+				117,
+				118,
+				119
+			]
+		},
+		{
+			"name" : "Source Files\\maparrows",
+			"sourceIndexes" : 
+			[
+				131,
+				132,
+				133,
+				134,
+				135
+			]
+		},
+		{
+			"name" : "Source Files\\mapinfo",
+			"sourceIndexes" : 
+			[
+				136,
+				137,
+				138,
+				139,
+				140,
+				141,
+				142,
+				143,
+				144,
+				145,
+				146,
+				147,
+				148,
+				149,
+				150,
+				151,
+				152,
+				153,
+				154,
+				155
+			]
+		},
+		{
+			"name" : "Source Files\\sbarinfo",
+			"sourceIndexes" : 
+			[
+				162,
+				163,
+				164
+			]
+		},
+		{
+			"name" : "Source Files\\shaders\\glsl",
+			"sourceIndexes" : 
+			[
+				165,
+				166,
+				167,
+				168,
+				169,
+				170,
+				171,
+				172,
+				173,
+				174,
+				175,
+				176,
+				177,
+				178,
+				179,
+				180,
+				181,
+				182,
+				183,
+				184,
+				185,
+				186,
+				187,
+				188,
+				189,
+				190,
+				191,
+				192,
+				193,
+				194,
+				195,
+				196,
+				197,
+				198,
+				199,
+				200,
+				201,
+				202,
+				203,
+				204,
+				205,
+				206,
+				207,
+				208,
+				209,
+				210,
+				211,
+				212,
+				213
+			]
+		},
+		{
+			"name" : "Source Files\\sounds",
+			"sourceIndexes" : 
+			[
+				216,
+				217,
+				218,
+				219,
+				220,
+				221,
+				222,
+				223,
+				224,
+				225,
+				226,
+				227,
+				228,
+				229
+			]
+		},
+		{
+			"name" : "Source Files\\sprites",
+			"sourceIndexes" : 
+			[
+				232,
+				233,
+				234,
+				235,
+				236,
+				237,
+				238,
+				239,
+				240,
+				241,
+				312,
+				313,
+				314,
+				315,
+				316,
+				317,
+				318,
+				319,
+				320,
+				321,
+				322,
+				323,
+				324,
+				325,
+				326,
+				327,
+				328,
+				329
+			]
+		},
+		{
+			"name" : "Source Files\\sprites\\dogs",
+			"sourceIndexes" : 
+			[
+				242,
+				243,
+				244,
+				245,
+				246,
+				247,
+				248,
+				249,
+				250,
+				251,
+				252,
+				253,
+				254,
+				255,
+				256,
+				257,
+				258,
+				259,
+				260,
+				261,
+				262,
+				263,
+				264,
+				265,
+				266,
+				267,
+				268,
+				269,
+				270,
+				271,
+				272,
+				273,
+				274,
+				275,
+				276,
+				277,
+				278,
+				279,
+				280,
+				281,
+				282,
+				283,
+				284,
+				285,
+				286,
+				287,
+				288,
+				289,
+				290,
+				291,
+				292,
+				293,
+				294,
+				295,
+				296,
+				297,
+				298,
+				299,
+				300,
+				301,
+				302,
+				303,
+				304,
+				305,
+				306,
+				307,
+				308,
+				309,
+				310,
+				311
+			]
+		},
+		{
+			"name" : "Source Files\\textures",
+			"sourceIndexes" : 
+			[
+				335
+			]
+		},
+		{
+			"name" : "Source Files\\xlat",
+			"sourceIndexes" : 
+			[
+				341,
+				342,
+				343,
+				344,
+				345,
+				346,
+				347,
+				348,
+				349
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors",
+			"sourceIndexes" : 
+			[
+				352,
+				353,
+				354,
+				355,
+				475,
+				485,
+				486
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\chex",
+			"sourceIndexes" : 
+			[
+				356,
+				357,
+				358,
+				359,
+				360,
+				361,
+				362
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\doom",
+			"sourceIndexes" : 
+			[
+				363,
+				364,
+				365,
+				366,
+				367,
+				368,
+				369,
+				370,
+				371,
+				372,
+				373,
+				374,
+				375,
+				376,
+				377,
+				378,
+				379,
+				380,
+				381,
+				382,
+				383,
+				384,
+				385,
+				386,
+				387,
+				388,
+				389,
+				390,
+				391,
+				392,
+				393,
+				394,
+				395,
+				396,
+				397,
+				398,
+				399
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\heretic",
+			"sourceIndexes" : 
+			[
+				400,
+				401,
+				402,
+				403,
+				404,
+				405,
+				406,
+				407,
+				408,
+				409,
+				410,
+				411,
+				412,
+				413,
+				414,
+				415,
+				416,
+				417,
+				418,
+				419,
+				420,
+				421,
+				422,
+				423,
+				424
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\hexen",
+			"sourceIndexes" : 
+			[
+				425,
+				426,
+				427,
+				428,
+				429,
+				430,
+				431,
+				432,
+				433,
+				434,
+				435,
+				436,
+				437,
+				438,
+				439,
+				440,
+				441,
+				442,
+				443,
+				444,
+				445,
+				446,
+				447,
+				448,
+				449,
+				450,
+				451,
+				452,
+				453,
+				454,
+				455,
+				456,
+				457,
+				458,
+				459,
+				460,
+				461,
+				462,
+				463,
+				464,
+				465,
+				466,
+				467,
+				468,
+				469,
+				470,
+				471,
+				472,
+				473,
+				474
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\inventory",
+			"sourceIndexes" : 
+			[
+				476,
+				477,
+				478,
+				479,
+				480,
+				481,
+				482,
+				483,
+				484
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\player",
+			"sourceIndexes" : 
+			[
+				487,
+				488,
+				489,
+				490
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\raven",
+			"sourceIndexes" : 
+			[
+				491,
+				492,
+				493,
+				494,
+				495,
+				496
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\shared",
+			"sourceIndexes" : 
+			[
+				497,
+				498,
+				499,
+				500,
+				501,
+				502,
+				503,
+				504,
+				505,
+				506,
+				507,
+				508,
+				509,
+				510,
+				511,
+				512,
+				513,
+				514,
+				515,
+				516,
+				517,
+				518,
+				519,
+				520,
+				521,
+				522,
+				523,
+				524
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\actors\\strife",
+			"sourceIndexes" : 
+			[
+				525,
+				526,
+				527,
+				528,
+				529,
+				530,
+				531,
+				532,
+				533,
+				534,
+				535,
+				536,
+				537,
+				538,
+				539,
+				540,
+				541,
+				542,
+				543,
+				544,
+				545,
+				546,
+				547,
+				548,
+				549,
+				550,
+				551,
+				552,
+				553,
+				554,
+				555,
+				556,
+				557,
+				558,
+				559,
+				560,
+				561,
+				562,
+				563,
+				564,
+				565,
+				566,
+				567,
+				568
+			]
+		},
+		{
+			"name" : "Source Files\\zscript",
+			"sourceIndexes" : 
+			[
+				569,
+				570,
+				571,
+				572,
+				573,
+				574,
+				575,
+				576,
+				577,
+				578,
+				580,
+				615
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\scriptutil",
+			"sourceIndexes" : 
+			[
+				579
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\ui\\menu",
+			"sourceIndexes" : 
+			[
+				581,
+				582,
+				583,
+				584,
+				585,
+				586,
+				587,
+				588,
+				589,
+				590,
+				591,
+				592,
+				593,
+				594,
+				595,
+				596,
+				597,
+				602
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\ui\\menu\\search",
+			"sourceIndexes" : 
+			[
+				598,
+				599,
+				600,
+				601
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\ui\\statscreen",
+			"sourceIndexes" : 
+			[
+				603,
+				604,
+				605,
+				606,
+				607
+			]
+		},
+		{
+			"name" : "Source Files\\zscript\\ui\\statusbar",
+			"sourceIndexes" : 
+			[
+				608,
+				609,
+				610,
+				611,
+				612,
+				613,
+				614
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				616,
+				617
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/wadsrc/CMakeFiles/gzdoom_pk3",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/althudcf.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/animdefs.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/botsupp.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/compatibility.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/b@ckdrop.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/crashlog.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/dbigfont.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/dog sprite.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/dsdgact.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/dsdgatk.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/dsdgdth.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/dsdgpain.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/dsdgsit.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/icebrk1a.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/icedth1.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/maparrows.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/newconsolefont.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/railgf1.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/rsmk.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/credits/sgrn.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/decaldef.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/defbinds.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/dehsupp.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/etc.h.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-doomchex/animated.lmp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-doomchex/sndinfo.txt",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-heretic/animated.lmp",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-heretic/defbinds.txt",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-heretic/sndinfo.txt",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-heretic/sndseq.txt",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-hexen/defbinds.txt",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-hexen/sndinfo.txt",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-strife/acs/strfhelp.o",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-strife/animated.lmp",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-strife/defbinds.txt",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-strife/loadacs.txt",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/game-strife/sndinfo.txt",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/filter/urbanbrawl/mapinfo.txt",
+			"sourceGroupIndex" : 8
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/fontdefs.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/fonts/consolefont/0000.png",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/fonts/consolefont/0100.png",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/fonts/consolefont/0390.png",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/fonts/consolefont/0400.png",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/fonts/consolefont/font.inf",
+			"sourceGroupIndex" : 9
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/glstuff/gllight.png",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/glstuff/glpart.png",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/glstuff/glpart2.png",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/glstuff/mirror.png",
+			"sourceGroupIndex" : 10
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/-badpatc.lmp",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/artibox.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/b@ckdrop.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bal7scr1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bal7scr2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bfglite1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bfglite2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bfgscrc1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bfgscrc2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/blast1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsmear1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsmear2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsplat1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsplat2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsplat3.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsplat4.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsplat5.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsplat6.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/bsplat7.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/cbalscr1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/cbalscr2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/cbowmark.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/chexcurs.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/chip1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/chip2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/chip3.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/chip4.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/chip5.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/clerface.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/cursor.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/doomcurs.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/fiteface.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/hamoback.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/herecurs.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/hexncurs.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/invgeml1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/invgeml2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/invgemr1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/invgemr2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/m_back_d.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/m_back_h.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/m_back_s.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/m_back_x.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/mageface.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/plasma1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/plasma2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/readyico.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/scorch1.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/selectbo.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/stfbany.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/stkeys6.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/stkeys7.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/stkeys8.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/stpbany.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/strfcurs.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/twirl.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/wislash.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairb1.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairb2.png",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairb3.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairb4.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairb5.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairb6.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairb7.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairs1.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairs2.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairs3.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairs4.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairs5.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairs6.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/graphics/xhairs7.imgz",
+			"sourceGroupIndex" : 11
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/in_epi1.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/in_epi2.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/in_epi3.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/in_htc1.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/in_htc2.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/in_htc3.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/indexfont",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/language.csv",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/language.def",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/lmacros.csv",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/lockdefs.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/maparrows/arrow.txt",
+			"sourceGroupIndex" : 12
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/maparrows/dagger.txt",
+			"sourceGroupIndex" : 12
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/maparrows/ddtarrow.txt",
+			"sourceGroupIndex" : 12
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/maparrows/key.txt",
+			"sourceGroupIndex" : 12
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/maparrows/ravenkey.txt",
+			"sourceGroupIndex" : 12
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/chex.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/common.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/conversationids.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doom1.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doom2.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doom2bfg.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doom2unity.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doom2xbox.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doomcommon.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doomitems.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/doomxbox.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/eternity.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/heretic.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/hexdd.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/hexen.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/mindefaults.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/plutonia.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/strife.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/tnt.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/mapinfo/ultdoom.txt",
+			"sourceGroupIndex" : 13
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/menudef.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/netnotch.dat",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/newconsolefont.hex",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/notch.dat",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/reverbs.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sbarinfo.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sbarinfo/doom.txt",
+			"sourceGroupIndex" : 14
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sbarinfo/heretic.txt",
+			"sourceGroupIndex" : 14
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sbarinfo/hexen.txt",
+			"sourceGroupIndex" : 14
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/bloomcombine.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/bloomextract.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/blur.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/burn.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/colormap.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/depthblur.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/exposureaverage.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/exposurecombine.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/exposureextract.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fogboundary.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_brightmap.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_defaultlight.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_defaultmat.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_normal.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_notexture.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_paletted.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_pbr.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_spec.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_warp1.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_warp2.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_warp3.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/func_wavex.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_jagged.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_noise.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_smooth.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_smoothnoise.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_smoothtranslucent.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_software.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_standard.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fuzz_swirly.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/fxaa.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/lensdistortion.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/lineardepth.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/main.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/main.vp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/material_nolight.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/material_normal.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/material_pbr.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/material_specular.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/present.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/present_checker3d.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/present_column3d.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/present_row3d.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/screenquad.vp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/shadowmap.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/ssao.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/ssaocombine.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/stencil.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/shaders/glsl/tonemap.fp",
+			"sourceGroupIndex" : 15
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sndinfo.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sndseq.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dsdgact.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dsdgatk.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dsdgdth.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dsdgpain.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dsdgsit.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dsempty.lmp",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dsquake.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/dssecret.flac",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/icebrk1a.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/icedth1.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/railgf1.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/spark1.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/spark2.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sounds/spark3.ogg",
+			"sourceGroupIndex" : 16
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/spaldoom.lmp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/spalhtic.lmp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/AFLYA0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/AFLYB0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/AFLYC0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/AFLYD0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/SGRNA1.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/SGRNA2A8.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/SGRNA3A7.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/SGRNA4A6.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/SGRNA5.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/amrka0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSA8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSB8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSC8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSD8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSE8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSF8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSG8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH1.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH2.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH3.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH4.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH5.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH6.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH7.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSH8.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSI0.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSJ0.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSK0.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSL0.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSM0.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/dogs/DOGSN0.png",
+			"sourceGroupIndex" : 18
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/iceca0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/icecb0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/icecc0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/icecd0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/pista0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/rsmka0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/rsmkb0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/rsmkc0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/rsmkd0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/rsmke0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/spkra0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/tlgla0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/tlglb0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/tlglc0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/tlgld0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/tlgle0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/tnt1a0.lmp",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/sprites/unkna0.png",
+			"sourceGroupIndex" : 17
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/strifehelp.acs",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/teaminfo.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/terrain.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/textcolors.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/textures.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/textures/-noflat-.png",
+			"sourceGroupIndex" : 19
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/things.h.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/vga-rom-font.16",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/x11r6rgb.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xg.wopn",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xhairs.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/base.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/defines.i",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/doom.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/doom_base.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/eternity.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/heretic.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/heretic_base.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/strife.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/xlat/strife_base.txt",
+			"sourceGroupIndex" : 20
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zbigfont.lmp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/actions.zs",
+			"sourceGroupIndex" : 21
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/actor.zs",
+			"sourceGroupIndex" : 21
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/attacks.zs",
+			"sourceGroupIndex" : 21
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/checks.zs",
+			"sourceGroupIndex" : 21
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/chex/chexammo.zs",
+			"sourceGroupIndex" : 22
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/chex/chexdecorations.zs",
+			"sourceGroupIndex" : 22
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/chex/chexitems.zs",
+			"sourceGroupIndex" : 22
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/chex/chexkeys.zs",
+			"sourceGroupIndex" : 22
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/chex/chexmonsters.zs",
+			"sourceGroupIndex" : 22
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/chex/chexplayer.zs",
+			"sourceGroupIndex" : 22
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/chex/chexweapons.zs",
+			"sourceGroupIndex" : 22
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/arachnotron.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/archvile.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/bossbrain.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/bruiser.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/cacodemon.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/cyberdemon.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/deadthings.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/dehacked.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/demon.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomammo.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomarmor.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomartifacts.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomdecorations.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomhealth.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomimp.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomkeys.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doommisc.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomplayer.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/doomweapons.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/fatso.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/keen.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/lostsoul.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/painelemental.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/possessed.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/revenant.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/scriptedmarine.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/spidermaster.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/stealthmonsters.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponbfg.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponchaingun.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponchainsaw.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponfist.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponpistol.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponplasma.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponrlaunch.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponshotgun.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/doom/weaponssg.zs",
+			"sourceGroupIndex" : 23
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/beast.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/chicken.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/clink.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/dsparil.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/hereticammo.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/hereticarmor.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/hereticartifacts.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/hereticdecorations.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/hereticimp.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/heretickeys.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/hereticmisc.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/hereticplayer.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/ironlich.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/knight.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/mummy.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/snake.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weaponblaster.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weaponcrossbow.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weapongauntlets.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weaponmace.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weaponphoenix.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weaponskullrod.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weaponstaff.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/weaponwand.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/heretic/wizard.zs",
+			"sourceGroupIndex" : 24
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/baseweapons.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/bats.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/bishop.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/blastradius.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/boostarmor.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/centaur.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/clericboss.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/clericflame.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/clericholy.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/clericmace.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/clericplayer.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/clericstaff.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/demons.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/dragon.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/ettin.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/fighteraxe.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/fighterboss.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/fighterfist.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/fighterhammer.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/fighterplayer.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/fighterquietus.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/firedemon.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/flame.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/flechette.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/flies.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/fog.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/healingradius.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/heresiarch.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/hexenarmor.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/hexendecorations.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/hexenkeys.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/hexenspecialdecs.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/iceguy.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/korax.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/mageboss.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/magecone.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/magelightning.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/mageplayer.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/magestaff.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/magewand.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/mana.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/pig.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/puzzleitems.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/scriptprojectiles.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/serpent.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/speedboots.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/spike.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/summon.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/teleportother.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/hexen/wraith.zs",
+			"sourceGroupIndex" : 25
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/interaction.zs",
+			"sourceGroupIndex" : 21
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/ammo.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/armor.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/health.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/inv_misc.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/inventory.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/powerups.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/stateprovider.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/weaponpiece.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory/weapons.zs",
+			"sourceGroupIndex" : 26
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/inventory_util.zs",
+			"sourceGroupIndex" : 21
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/morph.zs",
+			"sourceGroupIndex" : 21
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/player/player.zs",
+			"sourceGroupIndex" : 27
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/player/player_cheat.zs",
+			"sourceGroupIndex" : 27
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/player/player_inventory.zs",
+			"sourceGroupIndex" : 27
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/player/player_morph.zs",
+			"sourceGroupIndex" : 27
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/raven/artiegg.zs",
+			"sourceGroupIndex" : 28
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/raven/artitele.zs",
+			"sourceGroupIndex" : 28
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/raven/minotaur.zs",
+			"sourceGroupIndex" : 28
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/raven/ravenambient.zs",
+			"sourceGroupIndex" : 28
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/raven/ravenartifacts.zs",
+			"sourceGroupIndex" : 28
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/raven/ravenhealth.zs",
+			"sourceGroupIndex" : 28
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/blood.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/botstuff.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/bridge.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/camera.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/debris.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/decal.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/dog.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/dynlights.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/fastprojectile.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/fountain.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/hatetarget.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/ice.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/itemeffects.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/mapmarker.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/movingcamera.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/randomspawner.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/secrettrigger.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/sectoraction.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/setcolor.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/sharedmisc.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/skies.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/soundenvironment.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/soundsequence.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/spark.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/specialspot.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/splashes.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/teleport.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/shared/waterzone.zs",
+			"sourceGroupIndex" : 29
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/acolyte.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/alienspectres.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/beggars.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/coin.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/crusader.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/entityboss.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/inquisitor.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/klaxon.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/loremaster.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/macil.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/merchants.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/oracle.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/peasants.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/programmer.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/questitems.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/ratbuddy.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/reaver.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/rebels.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/sentinel.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/sigil.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/spectral.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/stalker.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifeammo.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifearmor.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifebishop.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifefunctions.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifehumanoid.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifeitems.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifekeys.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifeplayer.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifestuff.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/strifeweapons.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/svelights.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/svestuff.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/templar.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/thingstoblowup.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/weaponassault.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/weaponcrossbow.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/weapondagger.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/weaponflamer.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/weapongrenade.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/weaponmauler.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/weaponmissile.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/actors/strife/zombie.zs",
+			"sourceGroupIndex" : 30
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/base.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/compatibility.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/constants.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/destructible.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/dictionary.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/dynarrays.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/events.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/level_compatibility.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/level_postprocessor.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/mapdata.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/scriptutil/scriptutil.zs",
+			"sourceGroupIndex" : 32
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/sounddata.zs",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/colorpickermenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/conversationmenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/joystickmenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/listmenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/listmenuitems.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/loadsavemenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/menu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/menuitembase.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/messagebox.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/newplayermenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/optionmenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/optionmenuitems.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/playercontrols.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/playerdisplay.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/playermenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/readthis.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/reverbedit.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/search/anyoralloption.zs",
+			"sourceGroupIndex" : 34
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/search/menu.zs",
+			"sourceGroupIndex" : 34
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/search/query.zs",
+			"sourceGroupIndex" : 34
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/search/searchfield.zs",
+			"sourceGroupIndex" : 34
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/menu/textentermenu.zs",
+			"sourceGroupIndex" : 33
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statscreen/statscreen.zs",
+			"sourceGroupIndex" : 35
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statscreen/statscreen_coop.zs",
+			"sourceGroupIndex" : 35
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statscreen/statscreen_dm.zs",
+			"sourceGroupIndex" : 35
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statscreen/statscreen_sp.zs",
+			"sourceGroupIndex" : 35
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statscreen/types.zs",
+			"sourceGroupIndex" : 35
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statusbar/alt_hud.zs",
+			"sourceGroupIndex" : 36
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statusbar/doom_sbar.zs",
+			"sourceGroupIndex" : 36
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statusbar/heretic_sbar.zs",
+			"sourceGroupIndex" : 36
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statusbar/hexen_sbar.zs",
+			"sourceGroupIndex" : 36
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statusbar/sbarinfowrapper.zs",
+			"sourceGroupIndex" : 36
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statusbar/statusbar.zs",
+			"sourceGroupIndex" : 36
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/ui/statusbar/strife_sbar.zs",
+			"sourceGroupIndex" : 36
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc/static/zscript/zscript_license.txt",
+			"sourceGroupIndex" : 31
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/wadsrc/CMakeFiles/gzdoom_pk3.rule",
+			"sourceGroupIndex" : 37
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/gzdoom.pk3.rule",
+			"sourceGroupIndex" : 37
+		}
+	],
+	"type" : "UTILITY"
+}

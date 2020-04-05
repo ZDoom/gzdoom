@@ -42,6 +42,7 @@
 #include "doomdef.h"
 #include "i_system.h"
 #include "c_cvars.h"
+#include "doomerrors.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -70,11 +71,7 @@ class FTTYStartupScreen : public FStartupScreen
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void I_ShutdownJoysticks();
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void DeleteStartupScreen();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -105,25 +102,7 @@ static const char SpinnyProgressChars[4] = { '|', '/', '-', '\\' };
 
 FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 {
-	atterm(DeleteStartupScreen);
 	return new FTTYStartupScreen(max_progress);
-}
-
-//===========================================================================
-//
-// DeleteStartupScreen
-//
-// Makes sure the startup screen has been deleted before quitting.
-//
-//===========================================================================
-
-void DeleteStartupScreen()
-{
-	if (StartScreen != NULL)
-	{
-		delete StartScreen;
-		StartScreen = NULL;
-	}
 }
 
 //===========================================================================
@@ -348,6 +327,5 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 
 void ST_Endoom()
 {
-	I_ShutdownJoysticks();
-	exit(0);
+	throw CExitEvent(0);
 }

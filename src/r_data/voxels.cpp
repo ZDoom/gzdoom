@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <algorithm>
+#include <ctype.h>
 
 #include "m_swap.h"
 #include "m_argv.h"

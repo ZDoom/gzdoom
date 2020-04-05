@@ -1,0 +1,8120 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "gzdoom.exe"
+		},
+		{
+			"path" : "gzdoom.pdb"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"install",
+			"target_link_libraries",
+			"add_dependencies",
+			"include_directories",
+			"add_definitions"
+		],
+		"files" : 
+		[
+			"src/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1164,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1335,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 1214,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 1244,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 438,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 442,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 576,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1216,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 54,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 200,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 395,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 529,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 548,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 441,
+				"parent" : 0
+			},
+			{
+				"command" : 5,
+				"file" : 0,
+				"line" : 70,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/MP /DWIN32 /D_WINDOWS /W3  /EHsc /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG  "
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 9,
+					"define" : "ARCH_IA32"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "DYN_OPENAL"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_FILELENGTH=1"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_MMX=1"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_PARALLEL_FOR=1"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_VM_JIT"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "_WIN32"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/jpeg"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../bin/windows/zmusic/include"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/asmjit"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/src"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/."
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_statusbar"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/console"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/bots"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/mapthinkers"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/textures"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/fonts"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/2d"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/r_data"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/music"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/backend"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/xlat"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility/nodebuilder"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting/vm"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/vulkan/thirdparty"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/glslang/Public"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/spirv"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/win32"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/spirv/.."
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				502,
+				503,
+				504,
+				505,
+				506,
+				507,
+				508,
+				509,
+				510,
+				511,
+				512,
+				513,
+				514,
+				515,
+				516,
+				517,
+				518,
+				519,
+				520,
+				521,
+				523,
+				524,
+				525,
+				526,
+				915,
+				917,
+				918,
+				936,
+				937
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-DWIN32 -D_DEBUG  "
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 9,
+					"define" : "ARCH_IA32"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "DYN_OPENAL"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_FILELENGTH=1"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_MMX=1"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_PARALLEL_FOR=1"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_VM_JIT"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "_WIN32"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/jpeg"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../bin/windows/zmusic/include"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/asmjit"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/src"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/."
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_statusbar"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/console"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/bots"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/mapthinkers"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/textures"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/fonts"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/2d"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/r_data"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/music"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/backend"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/xlat"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility/nodebuilder"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting/vm"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/vulkan/thirdparty"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/glslang/Public"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/spirv"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/win32"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/spirv/.."
+				}
+			],
+			"language" : "RC",
+			"sourceIndexes" : 
+			[
+				522
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/MP /DWIN32 /D_WINDOWS /W3  /EHsc /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG  "
+				},
+				{
+					"fragment" : "/fp:fast"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 9,
+					"define" : "ARCH_IA32"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "DYN_OPENAL"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_FILELENGTH=1"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_MMX=1"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_PARALLEL_FOR=1"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_VM_JIT"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "_WIN32"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/jpeg"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../bin/windows/zmusic/include"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/asmjit"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/src"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/."
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_statusbar"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/console"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/bots"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/mapthinkers"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/textures"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/fonts"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/2d"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/r_data"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/music"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/backend"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/xlat"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility/nodebuilder"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting/vm"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/vulkan/thirdparty"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/glslang/Public"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/spirv"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/win32"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/spirv/.."
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				527,
+				528,
+				529,
+				530,
+				531,
+				532,
+				533,
+				534,
+				535,
+				536,
+				537,
+				539,
+				540,
+				541,
+				542,
+				543,
+				544,
+				545,
+				546,
+				547,
+				548,
+				549,
+				550,
+				551,
+				552,
+				553,
+				554,
+				555,
+				556,
+				557,
+				558,
+				559,
+				560,
+				561,
+				562,
+				563,
+				564,
+				565,
+				566,
+				567,
+				568,
+				569,
+				570,
+				571,
+				572,
+				573,
+				575,
+				576,
+				577,
+				578,
+				579
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG  "
+				},
+				{
+					"fragment" : "/fp:fast"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 9,
+					"define" : "ARCH_IA32"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "DYN_OPENAL"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_FILELENGTH=1"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_MMX=1"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_PARALLEL_FOR=1"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_VM_JIT"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "_WIN32"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/jpeg"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../bin/windows/zmusic/include"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/asmjit"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/src"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/."
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_statusbar"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/console"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/bots"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/mapthinkers"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/textures"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/fonts"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/2d"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/r_data"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/music"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/backend"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/xlat"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility/nodebuilder"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting/vm"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/vulkan/thirdparty"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/glslang/Public"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/spirv"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/win32"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/spirv/.."
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				538,
+				574
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/MP /DWIN32 /D_WINDOWS /W3  /EHsc /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG  "
+				},
+				{
+					"fragment" : "/Yu\"C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_pch.h\" /FI\"C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_pch.h\""
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 9,
+					"define" : "ARCH_IA32"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "DYN_OPENAL"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_FILELENGTH=1"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_MMX=1"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_PARALLEL_FOR=1"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_VM_JIT"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "_WIN32"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/jpeg"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../bin/windows/zmusic/include"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/asmjit"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/src"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/."
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_statusbar"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/console"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/bots"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/mapthinkers"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/textures"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/fonts"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/2d"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/r_data"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/music"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/backend"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/xlat"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility/nodebuilder"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting/vm"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/vulkan/thirdparty"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/glslang/Public"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/spirv"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/win32"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/spirv/.."
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				580,
+				581,
+				582,
+				583,
+				584,
+				585,
+				586,
+				587,
+				588,
+				589,
+				590,
+				591,
+				592,
+				593,
+				594,
+				595,
+				596,
+				597,
+				598,
+				599,
+				600,
+				601,
+				602,
+				603,
+				604,
+				605,
+				606,
+				607,
+				608,
+				609,
+				610,
+				611,
+				612,
+				613,
+				614,
+				615,
+				616,
+				617,
+				618,
+				619,
+				620,
+				621,
+				622,
+				623,
+				624,
+				625,
+				626,
+				627,
+				628,
+				629,
+				630,
+				631,
+				632,
+				633,
+				634,
+				635,
+				636,
+				637,
+				638,
+				639,
+				640,
+				641,
+				642,
+				643,
+				644,
+				645,
+				646,
+				647,
+				648,
+				649,
+				650,
+				651,
+				652,
+				653,
+				654,
+				655,
+				656,
+				657,
+				658,
+				659,
+				660,
+				661,
+				662,
+				663,
+				664,
+				665,
+				666,
+				667,
+				668,
+				669,
+				670,
+				671,
+				672,
+				673,
+				674,
+				675,
+				676,
+				677,
+				678,
+				679,
+				680,
+				681,
+				682,
+				683,
+				684,
+				685,
+				686,
+				687,
+				688,
+				689,
+				690,
+				691,
+				692,
+				693,
+				694,
+				695,
+				696,
+				697,
+				698,
+				699,
+				700,
+				701,
+				702,
+				703,
+				704,
+				705,
+				706,
+				707,
+				708,
+				709,
+				710,
+				711,
+				712,
+				713,
+				714,
+				715,
+				716,
+				717,
+				718,
+				719,
+				720,
+				721,
+				722,
+				723,
+				724,
+				725,
+				726,
+				727,
+				728,
+				729,
+				730,
+				731,
+				732,
+				733,
+				734,
+				735,
+				736,
+				737,
+				738,
+				739,
+				740,
+				741,
+				742,
+				743,
+				744,
+				745,
+				746,
+				747,
+				748,
+				749,
+				750,
+				751,
+				752,
+				753,
+				754,
+				755,
+				756,
+				757,
+				758,
+				759,
+				760,
+				761,
+				762,
+				763,
+				764,
+				765,
+				766,
+				767,
+				768,
+				769,
+				770,
+				771,
+				772,
+				773,
+				774,
+				775,
+				776,
+				777,
+				778,
+				779,
+				780,
+				781,
+				782,
+				783,
+				784,
+				785,
+				786,
+				787,
+				788,
+				789,
+				790,
+				791,
+				792,
+				793,
+				794,
+				795,
+				796,
+				797,
+				798,
+				799,
+				800,
+				801,
+				802,
+				803,
+				804,
+				805,
+				806,
+				807,
+				808,
+				809,
+				810,
+				811,
+				812,
+				813,
+				814,
+				815,
+				816,
+				817,
+				818,
+				819,
+				820,
+				821,
+				822,
+				823,
+				824,
+				825,
+				826,
+				827,
+				828,
+				829,
+				830,
+				831,
+				832,
+				833,
+				834,
+				835,
+				836,
+				837,
+				838,
+				839,
+				840,
+				841,
+				842,
+				843,
+				844,
+				845,
+				846,
+				847,
+				848,
+				849,
+				850,
+				851,
+				852,
+				853,
+				854,
+				855,
+				856,
+				857,
+				858,
+				859,
+				860,
+				861,
+				862,
+				863,
+				864,
+				865,
+				866,
+				867,
+				868,
+				869,
+				870,
+				871,
+				872,
+				873,
+				874,
+				875,
+				876,
+				877,
+				878,
+				879,
+				880,
+				881,
+				882,
+				883,
+				884,
+				885,
+				886,
+				887,
+				888,
+				889,
+				890,
+				891,
+				892,
+				893,
+				894,
+				895,
+				896,
+				897,
+				898,
+				899,
+				900,
+				901,
+				902,
+				903,
+				904,
+				905,
+				906,
+				907,
+				908,
+				909,
+				910,
+				911,
+				912,
+				913
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/MP /DWIN32 /D_WINDOWS /W3  /EHsc /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG  "
+				},
+				{
+					"fragment" : "/Yc\"C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_pch.h\""
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 9,
+					"define" : "ARCH_IA32"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "DYN_OPENAL"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_FILELENGTH=1"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_MMX=1"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_PARALLEL_FOR=1"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_VM_JIT"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "_WIN32"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/jpeg"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../bin/windows/zmusic/include"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/asmjit"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/src"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/."
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_statusbar"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/console"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/bots"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/mapthinkers"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/textures"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/fonts"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/2d"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/r_data"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/music"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/backend"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/xlat"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility/nodebuilder"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting/vm"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/vulkan/thirdparty"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/glslang/Public"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/spirv"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/win32"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/spirv/.."
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				914
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG  "
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 9,
+					"define" : "ARCH_IA32"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "DYN_OPENAL"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_FILELENGTH=1"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_MMX=1"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_PARALLEL_FOR=1"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_VM_JIT"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "_WIN32"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/zlib"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/bzip2"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/lzma/C"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/jpeg"
+				},
+				{
+					"backtrace" : 5,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../bin/windows/zmusic/include"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/asmjit"
+				},
+				{
+					"backtrace" : 7,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/src"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/."
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/g_statusbar"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/console"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/bots"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/playsim/mapthinkers"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/textures"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/gamedata/fonts"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/2d"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/r_data"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/music"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/sound/backend"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/xlat"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/utility/nodebuilder"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/scripting/vm"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/rendering/vulkan/thirdparty"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/glslang/Public"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/../libraries/glslang/spirv"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/libraries/gdtoa"
+				},
+				{
+					"backtrace" : 8,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/src/win32"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				},
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/spirv/.."
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				916,
+				919,
+				920,
+				921,
+				922,
+				923,
+				924,
+				925,
+				926,
+				927,
+				928,
+				929,
+				930,
+				931,
+				932,
+				933,
+				934,
+				935
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "gdtoa::@b9322ae524f0998d932c"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "revision_check::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "OGLCompiler::@be5ce1db179323e6489b"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "OSDependent::@0a72380bf0a8207701d7"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "SPIRV::@a405b3c36a6273687a56"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "glslang::@a9f8b9af1162e156b2be"
+		},
+		{
+			"id" : "lemon::@eb298f56fea3ca13aa50"
+		},
+		{
+			"id" : "re2c::@e8b3cbd14ff1bc9a69fe"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bz2::@a9461d0589e71dec3106"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "lzma::@1c6fa9378a584ead2522"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "jpeg::@31f1bb484d0f63e89b53"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "asmjit::@e74042b11eaeea54eba1"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "z::@bc4de14f7a3da448f3d1"
+		}
+	],
+	"id" : "zdoom::@145eef247bfb46b6828c",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 2,
+				"path" : "."
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/install/x64-Debug"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "/MP /DWIN32 /D_WINDOWS /W3  /EHsc /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600  /Zi /Ob0 /Od /RTC1 /D _CRTDBG_MAP_ALLOC /MTd -D_DEBUG",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "/machine:x64 /debug /INCREMENTAL /subsystem:windows /MANIFEST:NO",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-LIBPATH:C:\\Users\\Sahil\\DOCUME~1\\NEWFOL~3\\gzdoom\\src\\..\\bin\\windows\\zmusic\\64bit",
+				"role" : "libraryPath"
+			},
+			{
+				"fragment" : "opengl32.lib wsock32.lib winmm.lib dinput8.lib ole32.lib user32.lib gdi32.lib comctl32.lib comdlg32.lib ws2_32.lib setupapi.lib oleaut32.lib dbghelp.lib DelayImp.lib ..\\libraries\\zlib\\zd.lib ..\\libraries\\jpeg\\jpeg.lib ..\\libraries\\bzip2\\bz2.lib ..\\libraries\\glslang\\glslang\\glslang.lib ..\\libraries\\glslang\\spirv\\SPIRV.lib ..\\libraries\\glslang\\OGLCompilersDLL\\OGLCompiler.lib ..\\libraries\\asmjit\\asmjitd.lib ..\\libraries\\gdtoa\\gdtoa.lib ..\\libraries\\lzma\\lzma.lib zmusic.lib ..\\libraries\\glslang\\glslang\\glslang.lib ..\\libraries\\glslang\\OGLCompilersDLL\\OGLCompiler.lib ..\\libraries\\glslang\\glslang\\OSDependent\\Windows\\OSDependent.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "zdoom",
+	"nameOnDisk" : "gzdoom.exe",
+	"paths" : 
+	{
+		"build" : "src",
+		"source" : "src"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Header Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38,
+				39,
+				40,
+				41,
+				42,
+				43,
+				44,
+				45,
+				46,
+				47,
+				48,
+				49,
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58,
+				59,
+				60,
+				61,
+				62,
+				63,
+				64,
+				65,
+				66,
+				67,
+				68,
+				69,
+				70,
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77,
+				78,
+				79,
+				80,
+				81,
+				82,
+				83,
+				84,
+				85,
+				86,
+				87,
+				88,
+				89,
+				90,
+				91,
+				92,
+				93,
+				94,
+				95,
+				96,
+				97,
+				98,
+				99,
+				100,
+				101,
+				102,
+				103,
+				104,
+				105,
+				106,
+				107,
+				108,
+				109,
+				110,
+				111,
+				112,
+				113,
+				114,
+				115,
+				116,
+				117,
+				118,
+				119,
+				120,
+				121,
+				122,
+				123,
+				124,
+				125,
+				126,
+				127,
+				128,
+				129,
+				130,
+				131,
+				132,
+				133,
+				134,
+				135,
+				136,
+				137,
+				138,
+				139,
+				140,
+				141,
+				142,
+				143,
+				144,
+				145,
+				146,
+				147,
+				148,
+				149,
+				150,
+				151,
+				152,
+				153,
+				154,
+				156,
+				157,
+				158,
+				159,
+				160,
+				161,
+				162,
+				163,
+				164,
+				165,
+				166,
+				167,
+				168,
+				169,
+				170,
+				171,
+				172,
+				173,
+				174,
+				175,
+				176,
+				177,
+				178,
+				179,
+				180,
+				181,
+				182,
+				183,
+				184,
+				185,
+				186,
+				187,
+				188,
+				189,
+				190,
+				191,
+				192,
+				193,
+				194,
+				195,
+				196,
+				197,
+				198,
+				199,
+				200,
+				201,
+				202,
+				203,
+				204,
+				205,
+				206,
+				207,
+				208,
+				209,
+				210,
+				211,
+				212,
+				213,
+				214,
+				215,
+				216,
+				217,
+				218,
+				219,
+				220,
+				221,
+				222,
+				223,
+				224,
+				225,
+				226,
+				227,
+				228,
+				229,
+				230,
+				231,
+				232,
+				233,
+				234,
+				235,
+				236,
+				237,
+				238,
+				239,
+				240,
+				241,
+				242,
+				243,
+				244,
+				245,
+				246,
+				247,
+				248,
+				249,
+				250,
+				251,
+				252,
+				253,
+				254,
+				255,
+				256,
+				257,
+				258,
+				259,
+				260,
+				261,
+				262,
+				263,
+				264,
+				265,
+				266,
+				267,
+				268,
+				269,
+				270,
+				271,
+				272,
+				273,
+				274,
+				275,
+				276,
+				277,
+				278,
+				279,
+				280,
+				281,
+				282,
+				283,
+				284,
+				285,
+				286,
+				287,
+				288,
+				289,
+				290,
+				291,
+				292,
+				293,
+				294,
+				295,
+				296,
+				297,
+				298,
+				299,
+				300,
+				301,
+				302,
+				303,
+				304,
+				305,
+				306,
+				307,
+				308,
+				309,
+				310,
+				311,
+				312,
+				313,
+				314,
+				315,
+				316,
+				317,
+				318,
+				319,
+				320,
+				321,
+				322,
+				323,
+				324,
+				325,
+				326,
+				327,
+				328,
+				329,
+				330,
+				331,
+				332,
+				333,
+				334,
+				335,
+				336,
+				337,
+				338,
+				339,
+				340,
+				341,
+				342,
+				343,
+				344,
+				345,
+				346,
+				347,
+				348,
+				349,
+				350,
+				351,
+				352,
+				353,
+				354,
+				355,
+				356,
+				357,
+				358,
+				359,
+				360,
+				361,
+				362,
+				363,
+				364,
+				365,
+				366,
+				367,
+				368,
+				369,
+				370,
+				371,
+				372,
+				373,
+				374,
+				375,
+				376,
+				377,
+				378,
+				379,
+				380,
+				381,
+				382,
+				383,
+				384,
+				385,
+				386,
+				387,
+				388,
+				389,
+				390,
+				391,
+				392,
+				393,
+				394,
+				395,
+				396,
+				397,
+				398,
+				399,
+				400,
+				401,
+				402,
+				403,
+				405,
+				406,
+				407,
+				408,
+				409,
+				410,
+				411,
+				412,
+				413,
+				414,
+				415,
+				416,
+				417,
+				418
+			]
+		},
+		{
+			"name" : "Render Interface",
+			"sourceIndexes" : 
+			[
+				155
+			]
+		},
+		{
+			"name" : "Versioning",
+			"sourceIndexes" : 
+			[
+				404,
+				522
+			]
+		},
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				419,
+				420,
+				421,
+				422,
+				423,
+				424,
+				425,
+				426,
+				427,
+				428,
+				429,
+				430,
+				431,
+				433,
+				434,
+				435,
+				436,
+				437,
+				438,
+				439,
+				440,
+				441,
+				442,
+				443,
+				444,
+				445,
+				446,
+				447,
+				448,
+				449,
+				450,
+				451,
+				452,
+				453,
+				454,
+				455,
+				456,
+				457,
+				458,
+				459,
+				460,
+				461,
+				462,
+				463,
+				464,
+				465,
+				466,
+				467,
+				468,
+				469,
+				470,
+				471,
+				472,
+				473,
+				474,
+				475,
+				476,
+				477,
+				478,
+				479,
+				480,
+				481,
+				482,
+				483,
+				484,
+				485,
+				486,
+				487,
+				488,
+				489,
+				490,
+				491,
+				492,
+				493,
+				494,
+				502,
+				503,
+				504,
+				505,
+				506,
+				507,
+				508,
+				509,
+				510,
+				511,
+				512,
+				513,
+				514,
+				515,
+				516,
+				517,
+				518,
+				519,
+				520,
+				521,
+				523,
+				524,
+				525,
+				526,
+				527,
+				528,
+				529,
+				530,
+				531,
+				532,
+				533,
+				534,
+				535,
+				536,
+				537,
+				538,
+				539,
+				540,
+				541,
+				542,
+				543,
+				544,
+				545,
+				546,
+				547,
+				548,
+				549,
+				550,
+				551,
+				552,
+				553,
+				554,
+				555,
+				556,
+				557,
+				558,
+				559,
+				560,
+				561,
+				562,
+				563,
+				564,
+				565,
+				566,
+				567,
+				568,
+				569,
+				570,
+				571,
+				572,
+				573,
+				574,
+				575,
+				576,
+				577,
+				578,
+				579,
+				580,
+				581,
+				582,
+				583,
+				584,
+				585,
+				586,
+				587,
+				588,
+				589,
+				590,
+				591,
+				592,
+				593,
+				594,
+				595,
+				596,
+				597,
+				598,
+				599,
+				600,
+				601,
+				602,
+				603,
+				604,
+				605,
+				606,
+				607,
+				608,
+				609,
+				610,
+				611,
+				612,
+				613,
+				614,
+				615,
+				616,
+				617,
+				618,
+				619,
+				620,
+				621,
+				622,
+				623,
+				624,
+				625,
+				626,
+				627,
+				628,
+				629,
+				630,
+				631,
+				632,
+				633,
+				634,
+				635,
+				636,
+				637,
+				638,
+				639,
+				640,
+				641,
+				642,
+				643,
+				644,
+				645,
+				646,
+				647,
+				648,
+				649,
+				650,
+				651,
+				652,
+				653,
+				654,
+				655,
+				656,
+				657,
+				658,
+				659,
+				660,
+				661,
+				662,
+				663,
+				664,
+				665,
+				666,
+				667,
+				668,
+				669,
+				670,
+				671,
+				672,
+				673,
+				674,
+				675,
+				676,
+				677,
+				678,
+				679,
+				680,
+				681,
+				682,
+				683,
+				684,
+				685,
+				686,
+				687,
+				688,
+				689,
+				690,
+				691,
+				692,
+				693,
+				694,
+				695,
+				696,
+				697,
+				698,
+				699,
+				700,
+				701,
+				702,
+				703,
+				704,
+				705,
+				706,
+				707,
+				708,
+				709,
+				710,
+				711,
+				712,
+				713,
+				714,
+				715,
+				716,
+				717,
+				718,
+				719,
+				720,
+				721,
+				722,
+				723,
+				724,
+				725,
+				726,
+				727,
+				728,
+				729,
+				730,
+				731,
+				732,
+				733,
+				734,
+				735,
+				736,
+				737,
+				738,
+				739,
+				740,
+				741,
+				742,
+				743,
+				744,
+				745,
+				746,
+				747,
+				748,
+				749,
+				750,
+				751,
+				752,
+				753,
+				754,
+				755,
+				756,
+				757,
+				758,
+				759,
+				760,
+				761,
+				762,
+				763,
+				764,
+				765,
+				766,
+				767,
+				768,
+				769,
+				770,
+				771,
+				772,
+				773,
+				774,
+				775,
+				776,
+				777,
+				778,
+				779,
+				780,
+				781,
+				782,
+				783,
+				784,
+				785,
+				786,
+				787,
+				788,
+				789,
+				790,
+				791,
+				792,
+				793,
+				794,
+				795,
+				796,
+				797,
+				798,
+				799,
+				800,
+				801,
+				802,
+				803,
+				804,
+				805,
+				806,
+				807,
+				808,
+				809,
+				810,
+				811,
+				812,
+				813,
+				814,
+				815,
+				816,
+				817,
+				818,
+				819,
+				820,
+				821,
+				822,
+				823,
+				824,
+				825,
+				826,
+				827,
+				828,
+				829,
+				830,
+				831,
+				832,
+				833,
+				834,
+				835,
+				836,
+				837,
+				838,
+				839,
+				840,
+				841,
+				842,
+				843,
+				844,
+				845,
+				846,
+				847,
+				848,
+				849,
+				850,
+				851,
+				852,
+				853,
+				854,
+				855,
+				856,
+				857,
+				858,
+				859,
+				860,
+				861,
+				862,
+				863,
+				864,
+				865,
+				866,
+				867,
+				868,
+				869,
+				870,
+				871,
+				872,
+				873,
+				874,
+				875,
+				876,
+				877,
+				878,
+				879,
+				880,
+				881,
+				882,
+				883,
+				884,
+				885,
+				886,
+				887,
+				888,
+				889,
+				890,
+				891,
+				892,
+				893,
+				894,
+				895,
+				896,
+				897,
+				898,
+				899,
+				900,
+				901,
+				902,
+				903,
+				904,
+				905,
+				906,
+				907,
+				908,
+				909,
+				910,
+				911,
+				912,
+				913,
+				914,
+				915,
+				916,
+				917,
+				918,
+				919,
+				920,
+				921,
+				922,
+				923,
+				924,
+				925,
+				926,
+				927,
+				928,
+				929,
+				930,
+				931,
+				932,
+				933,
+				934,
+				935,
+				936,
+				937
+			]
+		},
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				432,
+				495,
+				498,
+				501
+			]
+		},
+		{
+			"name" : "Xlat",
+			"sourceIndexes" : 
+			[
+				496,
+				497
+			]
+		},
+		{
+			"name" : "Scripting\\ZScript frontend",
+			"sourceIndexes" : 
+			[
+				499,
+				500
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				938,
+				939,
+				940
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"path" : "src/am_map.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/announcer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/autosegs.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/console/c_bind.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/console/c_console.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/console/c_consolebuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/console/c_cvars.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/console/c_dispatch.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/console/c_functions.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/d_event.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/d_gui.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/d_main.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/d_net.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/d_netinf.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/d_protocol.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/dobject.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/dobjgc.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/dobjtype.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/doomdata.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/doomdef.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/doomstat.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/doomtype.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/events.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_cvars.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_game.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_hub.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_input.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_level.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_levellocals.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_pch.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_pch2.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_statusbar/sbar.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_statusbar/sbarinfo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gameconfigfile.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/a_keys.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/a_weapons.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/d_dehacked.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/decallib.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/fonts/fontinternals.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/fonts/myiswalpha.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/fonts/v_font.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/fonts/v_text.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/g_mapinfo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/gametype.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/gi.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/gstrings.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/info.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/p_blockmap.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/p_terrain.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/r_defs.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/resourcefiles/ancientzip.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/resourcefiles/file_zip.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/resourcefiles/resourcefile.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/stringtable.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/teaminfo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/bitmap.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/hqnx/common.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/hqnx/hqx.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/hqnx_asm/hqnx_asm.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/hqnx_asm/hqnx_asm_Image.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/xbr/xbrz.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/xbr/xbrz_config.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/xbr/xbrz_config_old.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/xbr/xbrz_old.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/hires/xbr/xbrz_tools.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/image.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/imagehelpers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/skyboxtexture.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/textures/textures.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/w_wad.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/w_zip.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/xlat/parsecontext.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/xlat/xlat.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gitinfo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/hu_stuff.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/i_net.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/intermission/intermission.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/m_cheat.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/m_joy.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/m_misc.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/maploader/maploader.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/maploader/udmf.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/menu/menu.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/p_conversation.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/p_saveg.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/p_setup.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/p_tick.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/a_dynlight.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/a_morph.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/a_pickups.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/a_sharedglobal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/a_specialspot.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/actionspecials.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/actor.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/actorinlines.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/actorptrselect.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/bots/b_bot.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/d_player.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/dthinker.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/fragglescript/t_fs.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/fragglescript/t_script.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_ceiling.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_decalfx.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_doors.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_floor.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_lightning.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_lights.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_lighttransfer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_pillar.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_plats.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_pusher.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/a_scroll.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/dsectoreffect.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/mapthinkers/p_spec_thinkers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_3dfloors.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_3dmidtex.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_acs.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_checkposition.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_destructible.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_effect.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_enemy.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_linetracedata.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_lnspec.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_local.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_maputl.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_pspr.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_spec.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_tags.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/p_trace.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/po_man.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/portal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/playsim/statnums.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/gl_sysfb.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/i_common.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/st_console.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/dikeys.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/hardware.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/i_system.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/gl_sysfb.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/colormaps.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/cycler.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/models/models.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/models/models_obj.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/models/models_ue1.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/models/tab_anorms.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/r_canvastexture.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/r_interpolate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/r_sections.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/r_translate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/r_vanillatrans.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/renderstyle.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/sprites.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/v_colortables.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/v_palette.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_data/voxels.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/r_state.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/2d/f_wipe.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/2d/v_2ddrawer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/renderer/gl_postprocessstate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/renderer/gl_renderbuffers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/renderer/gl_renderer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/renderer/gl_renderstate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/shaders/gl_shader.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/shaders/gl_shaderprogram.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/system/gl_buffers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/system/gl_debug.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/system/gl_framebuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/textures/gl_hwtexture.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl/textures/gl_samplers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl_load/gl_interface.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl_load/gl_load.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/gl_load/gl_system.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/data/buffers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/data/flatvertices.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/data/hw_vertexbuilder.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/data/hw_viewpointbuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/data/renderqueue.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/data/shaderuniforms.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_aabbtree.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_dynlightdata.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_lightbuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_shadowmap.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/models/hw_models.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/postprocessing/hw_postprocess.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/postprocessing/hw_postprocessshader.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_clipper.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_drawinfo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_drawlist.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_drawstructs.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_fakeflat.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_portal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_renderstate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_skydome.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_viewpointuniforms.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/scene/hw_weapon.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/textures/hw_ihwtexture.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/textures/hw_material.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/textures/hw_texcontainer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/utility/hw_clock.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/utility/hw_cvars.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/utility/hw_lighting.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/utility/hw_shaderpatcher.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/hwrenderer/utility/hw_vrmodes.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/i_video.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/backend/poly_buffers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/backend/poly_framebuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/backend/poly_hwtexture.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/backend/poly_renderstate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/poly_thread.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/poly_triangle.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/poly_vertex_shader.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_blend.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_scanline_setup.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_shader.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_triangle.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/r_sky.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/r_utility.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/r_videoscale.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_pal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_rgba.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_sky32.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_sky32_sse2.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_span32.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_span32_sse2.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_sprite32.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_sprite32_sse2.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_wall32.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_wall32_sse2.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_thread.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_farclip_line.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_fogboundary.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_line.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_renderdrawsegment.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_walldraw.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_wallsetup.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_flatplane.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_planerenderer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_skyplane.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_slopeplane.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_visibleplane.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_visibleplanelist.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_memory.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_renderer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_renderthread.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_swcolormaps.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_swrenderer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_swscene.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_3dfloors.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_light.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_opaque_pass.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_portal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_scene.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_translucent_pass.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/segments/r_clipsegment.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/segments/r_drawsegment.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/segments/r_portalsegment.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/textures/r_swtexture.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/textures/warpbuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_decal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_model.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_particle.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_playersprite.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_sprite.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_visiblesprite.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_visiblespritelist.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_voxel.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_wallsprite.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_drawerargs.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_skydrawer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_spandrawer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_spritedrawer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_viewport.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_walldrawer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/v_video.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/renderer/vk_postprocess.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/renderer/vk_renderbuffers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/renderer/vk_renderpass.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/renderer/vk_renderstate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/renderer/vk_streambuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/shaders/vk_shader.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/system/vk_buffers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/system/vk_builders.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/system/vk_device.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/system/vk_framebuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/system/vk_objects.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/system/vk_swapchain.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/textures/vk_hwtexture.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/textures/vk_imagetransition.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/vulkan/textures/vk_samplers.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/backend/codegen.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/backend/scopebarrier.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/backend/vmbuilder.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/symbols.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/thingdef.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/types.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/vm/jit.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/vm/jitintern.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/vm/vm.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/vm/vmexec.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/vm/vmintern.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/vm/vmops.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/zscript/zcc_compile.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/zscript/zcc_exprlist.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/zscript/zcc_parser.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scriptutil.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/serializer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/backend/efx.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/backend/i_sound.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/backend/i_soundinternal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/backend/oalload.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/backend/oalsound.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/music/i_music.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/music/i_soundfont.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/s_doomsound.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/s_music.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/s_sndseq.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/s_sound.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/s_soundinternal.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/thirdparty/al.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/thirdparty/alc.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/sound/thirdparty/alext.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/st_start.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/st_stuff.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/basictypes.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/cmdlib.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/colormatcher.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/configfile.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/ctpl.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/dictionary.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/doomerrors.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/filereadermusicinterface.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/files.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/i_module.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/i_time.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/lists.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_alloc.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_argv.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_bbox.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_crc32.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_fixed.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_png.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_random.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/m_swap.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/math/cmath.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/math/mconf.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/matrix.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/md5.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/memarena.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/name.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/namedef.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/palentry.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/palette.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/parallel_for.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/allocators.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/document.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/encodedstream.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/encodings.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/filereadstream.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/filewritestream.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/fwd.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/istreamwrapper.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/memorybuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/memorystream.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/ostreamwrapper.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/pointer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/prettywriter.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/rapidjson.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/reader.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/schema.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/stream.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/stringbuffer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/rapidjson/writer.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/s_playlist.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sc_man.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sc_man_tokens.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-alti.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params11213.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params1279.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params132049.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params19937.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params216091.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params2281.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params4253.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params44497.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params607.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-params86243.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT-sse2.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sfmt/SFMT.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/stats.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/strnatcmp.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/superfasthash.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/tarray.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/templates.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/tflags.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/utf8.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/v_collection.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/vectors.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/weightedlist.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/x86.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/xs_Float.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/zstring.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/version.h",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/wi_stuff.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/afxres.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/base_sysfb.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/gl_sysfb.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/hardware.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/i_input.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/i_system.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/resource.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/wglext.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/win32basevideo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/win32glvideo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/win32polyvideo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/win32vulkanvideo.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/winres.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/i_steam.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/i_system_posix.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/crashcatcher.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/hardware.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/i_gui.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/i_input.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/i_joystick.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/i_main.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/i_system.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/sdlglvideo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/sdl/st_start.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/osx/iwadpicker_cocoa.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/osx/i_specialpaths.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/osx/zdoom.icns",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/i_input.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/i_joystick.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/i_main.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/i_system.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/i_video.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/st_console.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/cocoa/st_start.mm",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/unix/i_specialpaths.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/posix/unix/gtk_dialogs.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_swcolormaps.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_swrenderer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_memory.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/r_renderthread.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_pal.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_draw_rgba.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/drawers/r_thread.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_3dfloors.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_light.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_opaque_pass.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_portal.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_scene.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/scene/r_translucent_pass.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_drawerargs.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_skydrawer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_spandrawer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_spritedrawer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_viewport.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/viewport/r_walldrawer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_line.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_farclip_line.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_walldraw.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_wallsetup.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_fogboundary.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/line/r_renderdrawsegment.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/segments/r_clipsegment.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/segments/r_drawsegment.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/segments/r_portalsegment.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_visiblesprite.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_visiblespritelist.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_voxel.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_particle.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_playersprite.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_sprite.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_wallsprite.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_decal.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/things/r_model.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_visibleplane.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_visibleplanelist.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_skyplane.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_planerenderer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_flatplane.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/swrenderer/plane/r_slopeplane.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/poly_triangle.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/poly_thread.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_triangle.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_scanline_setup.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_shader.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/rendering/polyrenderer/drawers/screen_blend.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/sc_man_scanner.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/utility/sc_man_scanner.re",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/g_statusbar/sbarinfo_commands.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/gamedata/xlat/xlat_parser.y",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/xlat_parser.c",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/xlat_parser.h",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/scripting/zscript/zcc-parse.lemon",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/zcc-parse.c",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 1,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/zcc-parse.h",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 1,
+			"path" : "src/win32/zdoom.natvis",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/__autostart.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/hardware.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_crash.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_input.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_keyboard.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_mouse.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_dijoy.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_rawps2.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_xinput.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_main.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_system.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/i_specialpaths.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/st_start.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/st_start_util.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/gl_sysfb.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/base_sysfb.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/win32basevideo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/win32glvideo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/win32polyvideo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/win32/win32vulkanvideo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "src/win32/zdoom.rc",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/gamedata/textures/hires/hqnx_asm/hq2x_asm.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/gamedata/textures/hires/hqnx_asm/hq3x_asm.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/gamedata/textures/hires/hqnx_asm/hq4x_asm.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/gamedata/textures/hires/hqnx_asm/hqnx_asm_Image.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/swrenderer/r_all.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/swrenderer/r_swscene.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/polyrenderer/poly_all.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/sound/music/music_midi_base.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/sound/backend/oalsound.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/gamedata/textures/hires/hqnx/init.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/gamedata/textures/hires/hqnx/hq2x.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/gamedata/textures/hires/hqnx/hq3x.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/gamedata/textures/hires/hqnx/hq4x.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/gamedata/textures/hires/xbr/xbrz.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/gamedata/textures/hires/xbr/xbrz_old.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 3,
+			"path" : "src/rendering/gl_load/gl_load.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_dynlightdata.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_bsp.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_fakeflat.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_decal.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_drawinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_drawlist.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_clipper.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_flats.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_portal.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_renderhacks.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_sky.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_skyportal.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_sprites.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_spritelight.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_walls.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_walls_vertex.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/hwrenderer/scene/hw_weapon.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/r_data/models/models.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/utility/matrix.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/system/vk_device.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/system/vk_swapchain.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/system/vk_builders.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/system/vk_framebuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/system/vk_buffers.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/renderer/vk_renderstate.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/renderer/vk_renderpass.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/renderer/vk_streambuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/renderer/vk_postprocess.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/renderer/vk_renderbuffers.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/shaders/vk_shader.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/textures/vk_samplers.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/textures/vk_hwtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/textures/vk_imagetransition.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 3,
+			"path" : "src/rendering/vulkan/thirdparty/volk/volk.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/polyrenderer/backend/poly_framebuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/polyrenderer/backend/poly_buffers.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/polyrenderer/backend/poly_hwtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 2,
+			"path" : "src/rendering/polyrenderer/backend/poly_renderstate.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/am_map.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/bots/b_bot.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/bots/b_func.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/bots/b_game.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/bots/b_move.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/bots/b_think.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/bbannouncer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_bind.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_cmds.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_console.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_consolebuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_cvars.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_dispatch.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_expr.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/console/c_functions.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/ct_chat.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/d_iwad.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/d_main.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/d_anonstats.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/d_net.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/d_netinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/d_protocol.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/dobject.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/dobjgc.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/dobjtype.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/doomstat.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_cvars.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_dumpinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_game.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_hub.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_level.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gameconfigfile.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gitinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/hu_scores.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/i_net.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/m_cheat.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/m_joy.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/m_misc.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_acs.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_actionfunctions.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/p_conversation.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_destructible.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_effect.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_enemy.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_interaction.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_lnspec.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_map.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_maputl.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_mobj.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/p_openmap.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_pspr.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/p_saveg.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/p_setup.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_spec.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/p_states.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_things.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/p_tick.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_user.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/r_utility.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/r_sky.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/r_videoscale.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/s_advsound.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/s_environment.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/s_reverbedit.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/s_sndseq.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/s_doomsound.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/s_sound.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/s_music.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/serializer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scriptutil.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/st_stuff.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/v_framebuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/v_palette.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/v_video.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/wi_stuff.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/a_keys.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/a_weapons.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/decallib.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/g_mapinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/g_skill.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/gi.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/stringtable.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/umapinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/w_wad.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/d_dehacked.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/g_doomedmap.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/info.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/keysections.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/p_terrain.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/statistics.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/teaminfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_decalfx.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_doors.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_lightning.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_quake.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_ceiling.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_floor.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_lights.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_lighttransfer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_pillar.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_plats.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_pusher.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/a_scroll.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/mapthinkers/dsectoreffect.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/a_pickups.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/a_action.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/a_decals.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/a_dynlight.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/a_flashfader.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/a_morph.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/a_specialspot.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_secnodes.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_sectors.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_sight.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_switch.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_tags.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_teleport.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/actorptrselect.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/dthinker.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_3dfloors.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_3dmidtex.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_linkedsectors.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/p_trace.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/po_man.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/portal.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_statusbar/hudmessages.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_statusbar/shared_hud.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_statusbar/sbarinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_statusbar/sbar_mugshot.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/g_statusbar/shared_sbar.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/2d/f_wipe.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/2d/v_2ddrawer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/2d/v_drawtext.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/2d/v_blend.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/2d/v_draw.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/renderer/gl_renderer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/renderer/gl_renderstate.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/renderer/gl_renderbuffers.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/renderer/gl_postprocess.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/renderer/gl_postprocessstate.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/renderer/gl_stereo3d.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/renderer/gl_scene.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/shaders/gl_shader.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/shaders/gl_shaderprogram.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl_load/gl_interface.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/system/gl_framebuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/system/gl_debug.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/system/gl_buffers.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/textures/gl_hwtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/gl/textures/gl_samplers.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/data/hw_vertexbuilder.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/data/flatvertices.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/data/hw_viewpointbuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_aabbtree.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_shadowmap.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/dynlights/hw_lightbuffer.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/models/hw_models.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/scene/hw_skydome.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/scene/hw_drawlistadd.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/scene/hw_renderstate.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/postprocessing/hw_postprocess.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/textures/hw_material.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/textures/hw_precache.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/utility/hw_clock.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/utility/hw_cvars.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/utility/hw_draw2d.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/utility/hw_lighting.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/utility/hw_shaderpatcher.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/hwrenderer/utility/hw_vrmodes.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/edata.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/specials.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/maploader.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/slopes.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/glnodes.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/udmf.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/usdf.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/strifedialogue.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/polyobjects.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/renderinfo.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/compatibility.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/maploader/postprocessor.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/joystickmenu.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/loadsavemenu.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/menu.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/menudef.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/messagebox.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/optionmenu.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/playermenu.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/menu/resolutionmenu.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/ancientzip.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_7z.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_grp.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_lump.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_rff.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_wad.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_zip.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_pak.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/file_directory.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/resourcefiles/resourcefile.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/animations.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/anim_switches.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/bitmap.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/texture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/image.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/imagetexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/texturemanager.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/multipatchtexturebuilder.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/skyboxtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/automaptexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/brightmaptexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/buildtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/canvastexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/ddstexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/flattexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/fontchars.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/imgztexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/jpegtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/md5check.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/multipatchtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/patchtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/pcxtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/pngtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/rawpagetexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/emptytexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/shadertexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/tgatexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/formats/stbtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/hires/hqresize.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/textures/hires/hirestex.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/fonts/singlelumpfont.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/fonts/singlepicfont.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/fonts/specialfont.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/fonts/font.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/fonts/hexfont.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/fonts/v_font.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/fonts/v_text.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/p_xlat.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/xlat/parse_xlat.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/gamedata/xlat/parsecontext.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_func.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_load.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_oper.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_parse.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_prepro.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_script.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_spec.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_variable.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/playsim/fragglescript/t_cmd.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/intermission/intermission.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/intermission/intermission_parse.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/colormaps.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/cycler.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/gldefs.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/a_dynlightdata.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/r_translate.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/sprites.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/portalgroups.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/voxels.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/renderstyle.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/r_canvastexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/r_interpolate.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/r_vanillatrans.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/r_sections.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/models/models_md3.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/models/models_md2.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/models/models_voxel.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/models/models_ue1.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/r_data/models/models_obj.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/symbols.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vmiterators.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vmthunks.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vmthunks_actors.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/types.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/thingdef.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/thingdef_data.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/thingdef_properties.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/backend/codegen.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/backend/scopebarrier.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/backend/dynarrays.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/backend/vmbuilder.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/backend/vmdisasm.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/decorate/olddecorations.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/decorate/thingdef_exp.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/decorate/thingdef_parse.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/decorate/thingdef_states.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/vmexec.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/vmframe.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/zscript/ast.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/zscript/zcc_compile.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/zscript/zcc_parser.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/sfmt/SFMT.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/music/i_music.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/music/i_soundfont.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/backend/i_sound.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/sound/music/music_config.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/swrenderer/textures/r_swtexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/swrenderer/textures/warptexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/rendering/swrenderer/textures/swcanvastexture.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/events.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/i_module.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/palette.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/files.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/files_decompress.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/m_png.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/m_random.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/memarena.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/md5.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/nodebuilder/nodebuild.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/nodebuilder/nodebuild_classify_nosse2.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/nodebuilder/nodebuild_events.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/nodebuilder/nodebuild_extract.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/nodebuilder/nodebuild_gl.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/nodebuilder/nodebuild_utility.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/sc_man.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/stats.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/cmdlib.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/configfile.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/i_time.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/m_alloc.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/m_argv.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/m_bbox.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/name.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/s_playlist.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/v_collection.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/utf8.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/utility/zstrformat.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit_runtime.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit_call.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit_flow.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit_load.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit_math.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit_move.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 4,
+			"path" : "src/scripting/vm/jit_store.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 5,
+			"path" : "out/build/x64-Debug/src/g_pch.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/utility/x86.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/strnatcmp.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/utility/zstring.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/utility/dictionary.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/asin.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/atan.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/const.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/cosh.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/exp.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/isnan.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/log.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/log10.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/mtherr.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/polevl.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/pow.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/powi.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/sin.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/sinh.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/sqrt.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/tan.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 6,
+			"path" : "src/utility/math/tanh.c",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/utility/math/fastsin.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/zzautozend.cpp",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/sc_man_scanner.h.rule",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/xlat_parser.c.rule",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/src/zcc-parse.c.rule",
+			"sourceGroupIndex" : 7
+		}
+	],
+	"type" : "EXECUTABLE"
+}

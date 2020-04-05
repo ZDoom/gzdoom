@@ -34,17 +34,6 @@
 struct ticcmd_t;
 struct WadStuff;
 
-// Index values into the LanguageIDs array
-enum
-{
-	LANGIDX_UserPreferred,
-	LANGIDX_UserDefault,
-	LANGIDX_SysPreferred,
-	LANGIDX_SysDefault
-};
-extern uint32_t LanguageIDs[4];
-extern void SetLanguageIDs ();
-
 // [RH] Detects the OS the game is running under.
 void I_DetectOS (void);
 
@@ -91,12 +80,6 @@ void I_Quit (void);
 
 void I_Tactile (int on, int off, int total);
 
-void I_Error (const char *error, ...) GCCPRINTF(1,2);
-void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
-
-void atterm (void (*func)(void));
-void popterm ();
-
 // Set the mouse cursor. The texture must be 32x32.
 class FTexture;
 bool I_SetCursor(FTexture *cursor);
@@ -140,7 +123,7 @@ typedef long WLONG_PTR;
 #endif
 
 // Wrapper for GetLongPathName
-FString I_GetLongPathName(FString shortpath);
+FString I_GetLongPathName(const FString &shortpath);
 
 // Directory searching routines
 
@@ -155,12 +138,17 @@ FString I_GetLongPathName(FString shortpath);
 struct findstate_t
 {
 private:
-	uint32_t Attribs;
-	uint32_t Times[3*2];
-	uint32_t Size[2];
-	uint32_t Reserved[2];
-	char Name[MAX_PATH];
-	char AltName[14];
+	struct WinData
+	{
+		uint32_t Attribs;
+		uint32_t Times[3 * 2];
+		uint32_t Size[2];
+		uint32_t Reserved[2];
+		wchar_t Name[MAX_PATH];
+		wchar_t AltName[14];
+	};
+	WinData FindData;
+	FString UTF8Name;
 
 	friend void *I_FindFirst(const char *filespec, findstate_t *fileinfo);
 	friend int I_FindNext(void *handle, findstate_t *fileinfo);
@@ -172,13 +160,10 @@ void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
 int I_FindNext (void *handle, findstate_t *fileinfo);
 int I_FindClose (void *handle);
 
-inline const char *I_FindName(findstate_t *fileinfo)
-{
-	return fileinfo->Name;
-}
+const char *I_FindName(findstate_t *fileinfo);
 inline int I_FindAttr(findstate_t *fileinfo)
 {
-	return fileinfo->Attribs;
+	return fileinfo->FindData.Attribs;
 }
 
 #define FA_RDONLY	0x00000001

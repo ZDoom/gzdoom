@@ -53,7 +53,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 extern TDeletingArray<FVoxel *> Voxels;
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
-DeletingModelArray Models;
+TDeletingArray<FModel*> Models;
 
 void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
 {
@@ -167,20 +167,20 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
 	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor() : 1.f) / level.info->pixelstretch;
+	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level) : 1.f) / actor->Level->info->pixelstretch;
 	objectToWorldMatrix.scale(1, stretch, 1);
 
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
 	BeginDrawModel(actor, smf, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
+	RenderFrameModels(actor->Level, smf, actor->state, actor->tics, actor->GetClass(), translation);
 	EndDrawModel(actor, smf);
 }
 
 void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 {
 	AActor * playermo = players[consoleplayer].camera;
-	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
+	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
 
 	// [BB] No model found for this sprite, so we can't render anything.
 	if (smf == nullptr)
@@ -211,11 +211,11 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 	float orientation = smf->xscale * smf->yscale * smf->zscale;
 
 	BeginDrawHUDModel(playermo, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
+	RenderFrameModels(playermo->Level, smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), psp->Flags & PSPF_PLAYERTRANSLATED ? psp->Owner->mo->Translation : 0);
 	EndDrawHUDModel(playermo);
 }
 
-void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
+void FModelRenderer::RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
@@ -229,7 +229,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
 			float ticFraction = 0.;
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if (ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN))
+			if (ConsoleState == c_up && menuactive != MENU_On && !Level->isFrozen())
 			{
 				ticFraction = I_GetTimeFrac();
 			}
@@ -251,13 +251,13 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 						inter /= 2.;
 						inter += 0.5;
 					}
-					if ((curState->sprite == nextState->sprite) && (curState->Frame == nextState->Frame))
+					if (nextState && ((curState->sprite == nextState->sprite) && (curState->Frame == nextState->Frame)))
 					{
 						inter /= 2.;
 						nextState = nextState->GetNextState();
 					}
 				}
-				if (inter != 0.0)
+				if (nextState && inter != 0.0)
 					smfNext = FindModelFrame(ti, nextState->sprite, nextState->Frame, false);
 			}
 		}
@@ -314,14 +314,8 @@ void FModel::DestroyVertexBuffer()
 }
 
 static TArray<FSpriteModelFrame> SpriteModelFrames;
-static int * SpriteModelHash;
+static TArray<int> SpriteModelHash;
 //TArray<FStateModelFrame> StateModelFrames;
-
-static void DeleteModelHash()
-{
-	if (SpriteModelHash != nullptr) delete [] SpriteModelHash;
-	SpriteModelHash = nullptr;
-}
 
 //===========================================================================
 //
@@ -489,13 +483,9 @@ static void ParseModelDefLump(int Lump);
 
 void InitModels()
 {
-	for (unsigned i = 0; i < Models.Size(); i++)
-	{
-		delete Models[i];
-	}
-	Models.Clear();
+	Models.DeleteAndClear();
 	SpriteModelFrames.Clear();
-	DeleteModelHash();
+	SpriteModelHash.Clear();
 
 	// First, create models for each voxel
 	for (unsigned i = 0; i < Voxels.Size(); i++)
@@ -548,9 +538,8 @@ void InitModels()
 	}
 
 	// create a hash table for quick access
-	SpriteModelHash = new int[SpriteModelFrames.Size ()];
-	atterm(DeleteModelHash);
-	memset(SpriteModelHash, 0xff, SpriteModelFrames.Size () * sizeof(int));
+	SpriteModelHash.Resize(SpriteModelFrames.Size ());
+	memset(SpriteModelHash.Data(), 0xff, SpriteModelFrames.Size () * sizeof(int));
 
 	for (unsigned int i = 0; i < SpriteModelFrames.Size (); i++)
 	{
@@ -933,11 +922,10 @@ bool IsHUDModelForPlayerAvailable (player_t * player)
 
 	DPSprite *psp = player->FindPSprite(PSP_WEAPON);
 
-	if (psp == nullptr || psp->GetState() == nullptr)
+	if (psp == nullptr)
 		return false;
 
-	FState* state = psp->GetState();
-	FSpriteModelFrame *smf = FindModelFrame(player->ReadyWeapon->GetClass(), state->sprite, state->GetFrame(), false);
+	FSpriteModelFrame *smf = FindModelFrame(player->ReadyWeapon->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
 	return ( smf != nullptr );
 }
 

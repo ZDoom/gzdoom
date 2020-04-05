@@ -1,0 +1,331 @@
+//Mapinfo for HacX
+defaultmap
+{
+	nojump 
+	nocrouch 
+}
+
+gameinfo
+{
+	cursorpic = "cursor"
+	forcenogfxsubstitution = false
+	statscreen_finishedfont = "*BigFont"
+	statscreen_enteringfont = "*BigFont"
+	statscreen_contentfont = "*BigFont"
+}
+
+// Edited MAPINFO for localization:
+// Literal map names have been replaced with labels.
+map MAP01 lookup "TXT_HACXMAP01"
+{
+	titlepatch = CWILV00
+	next = MAP02
+	secretnext = MAP02
+	sky1 = SKY1, 0
+	cluster = 1
+	par = 30
+	music = D_HACX01
+}
+
+map MAP02 lookup "TXT_HACXMAP02"
+{
+	titlepatch = CWILV01
+	next = MAP03
+	secretnext = MAP03
+	sky1 = SKY1, 0
+	cluster = 1
+	par = 90
+	music = D_HACX02
+}
+
+map MAP03 lookup "TXT_HACXMAP03"
+{
+	titlepatch = CWILV02
+	next = MAP04
+	secretnext = MAP04
+	sky1 = SKY1, 0
+	cluster = 1
+	par = 120
+	music = D_HACX03
+}
+
+map MAP04 lookup "TXT_HACXMAP04"
+{
+	titlepatch = CWILV03
+	next = MAP05
+	secretnext = MAP05
+	sky1 = SKY1, 0
+	cluster = 1
+	par = 120
+	music = D_HACX04
+}
+
+map MAP05 lookup "TXT_HACXMAP05"
+{
+	titlepatch = CWILV04
+	next = MAP06
+	secretnext = MAP06
+	sky1 = SKY3, 0
+	cluster = 1
+	par = 90
+	music = D_HACX05
+}
+
+map MAP06 lookup "TXT_HACXMAP06"
+{
+	titlepatch = CWILV05
+	next = MAP07
+	secretnext = MAP07
+	sky1 = SKY1, 0
+	cluster = 1
+	par = 150
+	music = D_HACX06
+}
+
+map MAP07 lookup "TXT_HACXMAP07"
+{
+	titlepatch = CWILV06
+	next = MAP08
+	secretnext = MAP08
+	sky1 = SKY1, 0
+	cluster = 2
+	par = 120
+	music = D_HACX07
+}
+
+map MAP08 lookup "TXT_HACXMAP08"
+{
+	titlepatch = CWILV07
+	next = MAP09
+	secretnext = MAP09
+	sky1 = SKY1, 0
+	cluster = 2
+	par = 120
+	sucktime = 1
+	music = D_HACX08
+}
+
+map MAP09 lookup "TXT_HACXMAP09"
+{
+	titlepatch = CWILV08
+	next = MAP10
+	secretnext = MAP10
+	sky1 = SKY1, 0
+	cluster = 2
+	par = 270
+	music = D_HACX09
+}
+
+map MAP10 lookup "TXT_HACXMAP10"
+{
+	titlepatch = CWILV09
+	next = MAP11
+	secretnext = MAP11
+	sky1 = SKY3, 0
+	cluster = 2
+	par = 90
+	music = D_HACX10
+}
+
+map MAP11 lookup "TXT_HACXMAP11"
+{
+	titlepatch = CWILV10
+	next = MAP12
+	secretnext = MAP12
+	sky1 = SKY2, 0
+	cluster = 2
+	par = 210
+	music = D_HACX11
+}
+
+map MAP12 lookup "TXT_HACXMAP12"
+{
+	titlepatch = CWILV11
+	next = MAP13
+	secretnext = MAP13
+	sky1 = SKY2, 0
+	cluster = 3
+	par = 150
+	music = D_HACX12
+}
+
+map MAP13 lookup "TXT_HACXMAP13"
+{
+	titlepatch = CWILV12
+	next = MAP14
+	secretnext = MAP14
+	sky1 = SKY2, 0
+	cluster = 3
+	par = 150
+	music = D_HACX13
+}
+
+map MAP14 lookup "TXT_HACXMAP14"
+{
+	titlepatch = CWILV13
+	next = MAP15
+	secretnext = MAP15
+	sky1 = SKY2, 0
+	cluster = 3
+	par = 150
+	music = D_HACX14
+}
+
+map MAP15 lookup "TXT_HACXMAP15"
+{
+	titlepatch = CWILV14
+	next = MAP16
+	secretnext = MAP31
+	sky1 = SKY3, 0
+	cluster = 3
+	par = 210
+	music = D_HACX15
+}
+
+map MAP16 lookup "TXT_HACXMAP16"
+{
+	titlepatch = CWILV15
+	next = MAP17
+	secretnext = MAP17
+	sky1 = SKY1, 0
+	cluster = 3
+	par = 150
+	music = D_HACX16
+}
+
+map MAP17 lookup "TXT_HACXMAP17"
+{
+	titlepatch = CWILV16
+	next = MAP18
+	secretnext = MAP18
+	sky1 = SKY1, 0
+	cluster = 3
+	par = 420
+	music = D_HACX17
+}
+
+map MAP18 lookup "TXT_HACXMAP18"
+{
+	titlepatch = CWILV17
+	next = MAP19
+	secretnext = MAP19
+	sky1 = SKY1, 0
+	cluster = 3
+	par = 150
+	music = D_HACX18
+}
+
+map MAP19 lookup "TXT_HACXMAP19"
+{
+	titlepatch = CWILV18
+	next = MAP20
+	secretnext = MAP20
+	sky1 = SKY1, 0
+	cluster = 3
+	par = 210
+	music = D_HACX19
+}
+
+map MAP20 lookup "TXT_HACXMAP20"
+{
+	titlepatch = CWILV19
+	next = EndGame1
+	secretnext = EndGame1
+	sky1 = SKY3, 0
+	cluster = 3
+	par = 150
+	music = D_HACX20
+}
+
+map MAP31 lookup "TXT_HACXMAP31"
+{
+	titlepatch = CWILV30
+	next = MAP16
+	secretnext = MAP16
+	sky1 = SKY3, 0
+	cluster = 5
+	par = 120
+	music = D_HACX31
+}
+
+// Edited cast call to only show the monsters actually present
+Intermission Doom2Cast
+{
+	Cast
+	{
+		CastClass = "HacxThug"
+		CastName = "$CC_THUG"
+		AttackSound = "Missile", 1, "grunt/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxAndroid"
+		CastName = "$CC_ANDROID"
+		AttackSound = "Missile", 1, "shotguy/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxICE"
+		CastName = "$CC_ICE"
+		AttackSound = "Missile", 2, "imp/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxBuzzer"
+		CastName = "$CC_BUZZER"
+		AttackSound = "Melee", 1, "demon/melee"
+	}
+	Cast
+	{
+		CastClass = "HacxDMan"
+		CastName = "$CC_DMAN"
+		AttackSound = "Missile", 1, "skull/melee"
+	}
+	Cast
+	{
+		CastClass = "HacxPhage"
+		CastName = "$CC_PHAGE"
+		AttackSound = "Missile", 1, "fatso/attack"
+		AttackSound = "Missile", 4, "fatso/attack"
+		AttackSound = "Missile", 7, "fatso/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxMonstruct"
+		CastName = "$CC_MONSTRUCT"
+		AttackSound = "Missile", 1, "chainguy/attack"
+		AttackSound = "Missile", 2, "chainguy/attack"
+		AttackSound = "Missile", 3, "chainguy/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxMechaManiac"
+		CastName = "$CC_MECH"
+		AttackSound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxTerminatrix"
+		CastName = "$CC_TERMI"
+		AttackSound = "Missile", 1, "baron/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxThornThing"
+		CastName = "$CC_THORN"
+		AttackSound = "Missile", 1, "baby/attack"
+	}
+	Cast
+	{
+		CastClass = "HacxMajong7"
+		CastName = "$CC_MAJONG"
+		AttackSound = "Missile", 2, "skull/melee"
+	}
+	Cast
+	{
+		CastClass = "HacxPlayer"
+		CastName = "$CC_HERO"
+		AttackSound = "Missile", 0, "weapons/sshotf"
+	}
+	Link = Doom2Cast
+}

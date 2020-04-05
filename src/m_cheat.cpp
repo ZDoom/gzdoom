@@ -54,6 +54,8 @@
 #include "g_levellocals.h"
 #include "vm.h"
 
+uint8_t globalfreeze, globalchangefreeze;	// user's freeze state.
+
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
 // later calls us.
@@ -62,7 +64,7 @@ void cht_DoMDK(player_t *player, const char *mod)
 {
 	if (player->mo == NULL)
 	{
-		Printf("What do you want to kill outside of a game?\n");
+		Printf("%s\n", GStrings("TXT_WHAT_KILL"));
 	}
 	else if (!deathmatch)
 	{
@@ -92,7 +94,6 @@ void cht_DoCheat (player_t *player, int cheat)
 	AActor *item;
 	FString smsg;
 	const char *msg = "";
-	char msgbuild[32];
 	int i;
 
 	// No cheating when not having a pawn attached.
@@ -202,25 +203,25 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_NOTARGET:
 		player->cheats ^= CF_NOTARGET;
 		if (player->cheats & CF_NOTARGET)
-			msg = "notarget ON";
+			msg = GStrings("TXT_NOTARGET_ON");
 		else
-			msg = "notarget OFF";
+			msg = GStrings("TXT_NOTARGET_OFF");
 		break;
 
 	case CHT_ANUBIS:
 		player->cheats ^= CF_FRIGHTENING;
 		if (player->cheats & CF_FRIGHTENING)
-			msg = "\"Quake with fear!\"";
+			msg = GStrings("TXT_ANUBIS_ON");
 		else
-			msg = "No more ogre armor";
+			msg = GStrings("TXT_ANUBIS_OFF");
 		break;
 
 	case CHT_CHASECAM:
 		player->cheats ^= CF_CHASECAM;
 		if (player->cheats & CF_CHASECAM)
-			msg = "chasecam ON";
+			msg = GStrings("TXT_CHASECAM_ON");
 		else
-			msg = "chasecam OFF";
+			msg = GStrings("TXT_CHASECAM_OFF");
 		R_ResetViewInterpolation ();
 		break;
 
@@ -287,7 +288,10 @@ void cht_DoCheat (player_t *player, int cheat)
 
 		if (i == 4)
 		{
-			level.flags2 ^= LEVEL2_ALLMAP;
+			for (auto Level : AllLevels())
+			{
+				Level->flags2 ^= LEVEL2_ALLMAP;
+			}
 		}
 		else if (player->mo != NULL && player->health >= 0)
 		{
@@ -319,12 +323,20 @@ void cht_DoCheat (player_t *player, int cheat)
 	case CHT_MASSACRE:
 	case CHT_MASSACRE2:
 		{
-			int killcount = P_Massacre (cheat == CHT_MASSACRE2);
+			int killcount = primaryLevel->Massacre (cheat == CHT_MASSACRE2);
 			// killough 3/22/98: make more intelligent about plural
-			// Ty 03/27/98 - string(s) *not* externalized
-			mysnprintf (msgbuild, countof(msgbuild), "%d %s%s Killed", killcount,
-				cheat==CHT_MASSACRE2 ? "Baddie" : "Monster", killcount==1 ? "" : "s");
-			msg = msgbuild;
+			if (killcount == 1)
+			{
+				msg = GStrings(cheat == CHT_MASSACRE? "TXT_MONSTER_KILLED" : "TXT_BADDIE_KILLED");
+			}
+			else
+			{
+				// Note: Do not use the language string directly as a format template!
+				smsg = GStrings(cheat == CHT_MASSACRE? "TXT_MONSTERS_KILLED" : "TXT_BADDIES_KILLED");
+				FStringf countstr("%d", killcount);
+				smsg.Substitute("%d", countstr);
+				msg = smsg.GetChars();
+			}
 		}
 		break;
 
@@ -347,64 +359,64 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			if (player->mo->IsKindOf("PlayerChunk"))
 			{
-				Printf("Unable to resurrect. Player is no longer connected to its body.\n");
+				Printf("%s\n", GStrings("TXT_NO_RESURRECT"));
+				return;
 			}
 			else
 			{
 				player->Resurrect();
-
 			}
 		}
 		break;
 
 	case CHT_GIMMIEA:
 		cht_Give (player, "ArtiInvulnerability");
-		msg = "Valador's Ring of Invunerability";
+		msg = GStrings("TAG_ARTIINVULNERABILITY");
 		break;
 
 	case CHT_GIMMIEB:
 		cht_Give (player, "ArtiInvisibility");
-		msg = "Shadowsphere";
+		msg = GStrings("TAG_ARTIINVISIBILITY");
 		break;
 
 	case CHT_GIMMIEC:
 		cht_Give (player, "ArtiHealth");
-		msg = "Quartz Flask";
+		msg = GStrings("TAG_ARTIHEALTH");
 		break;
 
 	case CHT_GIMMIED:
 		cht_Give (player, "ArtiSuperHealth");
-		msg = "Mystic Urn";
+		msg = GStrings("TAG_ARTISUPERHEALTH");
 		break;
 
 	case CHT_GIMMIEE:
 		cht_Give (player, "ArtiTomeOfPower");
-		msg = "Tyketto's Tome of Power";
+		msg = GStrings("TAG_ARTITOMEOFPOWER");
 		break;
 
 	case CHT_GIMMIEF:
 		cht_Give (player, "ArtiTorch");
-		msg = "Torch";
+		msg = GStrings("TAG_ARTITORCH");
 		break;
 
 	case CHT_GIMMIEG:
 		cht_Give (player, "ArtiTimeBomb");
-		msg = "Delmintalintar's Time Bomb of the Ancients";
+		msg = GStrings("TAG_ARTIFIREBOMB");
 		break;
 
 	case CHT_GIMMIEH:
 		cht_Give (player, "ArtiEgg");
-		msg = "Torpol's Morph Ovum";
+		msg = GStrings("TAG_ARTIEGG");
 		break;
 
 	case CHT_GIMMIEI:
 		cht_Give (player, "ArtiFly");
-		msg = "Inhilicon's Wings of Wrath";
+		msg = GStrings("TAG_ARTIFLY");
 		break;
 
 	case CHT_GIMMIEJ:
 		cht_Give (player, "ArtiTeleport");
-		msg = "Darchala's Chaos Device";
+		msg = GStrings("TAG_ARTITELEPORT");
 		break;
 
 	case CHT_GIMMIEZ:
@@ -412,7 +424,7 @@ void cht_DoCheat (player_t *player, int cheat)
 		{
 			cht_Give (player, "artifacts");
 		}
-		msg = "All artifacts!";
+		msg = GStrings("TAG_ALL_ARTIFACTS");
 		break;
 
 	case CHT_TAKEWEAPS:
@@ -439,9 +451,10 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MDK:
-		if (player->mo == NULL)
+		if (player->mo == nullptr)
 		{
-			Printf ("What do you want to kill outside of a game?\n");
+			Printf ("%s\n", GStrings("TXT_WHAT_KILL"));
+			return;
 		}
 		else if (!deathmatch)
 		{
@@ -507,12 +520,12 @@ void cht_DoCheat (player_t *player, int cheat)
 
 	case CHT_CLEARFROZENPROPS:
 		player->cheats &= ~(CF_FROZEN|CF_TOTALLYFROZEN);
-		msg = "Frozen player properties turned off";
+		msg = GStrings("TXT_NOT_FROZEN");
 		break;
 
 	case CHT_FREEZE:
-		bglobal.changefreeze ^= 1;
-		if (bglobal.freeze ^ bglobal.changefreeze)
+		globalchangefreeze ^= 1;
+		if (globalfreeze ^ globalchangefreeze)
 		{
 			msg = GStrings("TXT_FREEZEON");
 		}
@@ -523,20 +536,24 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 	}
 
-	if (!*msg)              // [SO] Don't print blank lines!
+	if (!msg || !*msg)              // [SO] Don't print blank lines!
 		return;
 
 	if (player == &players[consoleplayer])
 		Printf ("%s\n", msg);
 	else if (cheat != CHT_CHASECAM)
-		Printf ("%s cheats: %s\n", player->userinfo.GetName(), msg);
+	{
+		FString message = GStrings("TXT_X_CHEATS");
+		message.Substitute("%s", player->userinfo.GetName());
+		Printf("%s: %s\n", message.GetChars(), msg);
+	}
 }
 
 FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 {
 	if (player->mo == nullptr)	return "";
 
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatMorph)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatMorph)
 	{
 		FString message;
 		VMReturn msgret(&message);
@@ -550,7 +567,7 @@ FString cht_Morph(player_t *player, PClassActor *morphclass, bool quickundo)
 void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeInv)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTakeInv)
 	{
 		FString message = string;
 		VMValue params[] = { player->mo, &message, amount, beyond };
@@ -561,7 +578,7 @@ void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
 void cht_Give (player_t *player, const char *name, int amount)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatGive)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatGive)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
@@ -572,7 +589,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 void cht_Take (player_t *player, const char *name, int amount)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTake)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTake)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
@@ -583,7 +600,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 void cht_Takeweaps(player_t *player)
 {
 	if (!player->mo) return;
-	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTakeWeaps)
+	IFVIRTUALPTRNAME(player->mo, NAME_PlayerPawn, CheatTakeWeaps)
 	{
 		VMValue params[3] = { player->mo };
 		VMCall(func, params, 1, nullptr, 0);
@@ -595,8 +612,9 @@ class DSuicider : public DThinker
 	DECLARE_CLASS(DSuicider, DThinker)
 	HAS_OBJECT_POINTERS;
 public:
-	TObjPtr<APlayerPawn*> Pawn;
+	TObjPtr<AActor*> Pawn;
 
+	void Construct() {}
 	void Tick()
 	{
 		Pawn->flags |= MF_SHOOTABLE;
@@ -636,7 +654,7 @@ void cht_Suicide (player_t *plyr)
 	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		DSuicider *suicide = Create<DSuicider>();
+		DSuicider *suicide = plyr->mo->Level->CreateThinker<DSuicider>();
 		suicide->Pawn = plyr->mo;
 		GC::WriteBarrier(suicide, suicide->Pawn);
 	}
@@ -644,7 +662,7 @@ void cht_Suicide (player_t *plyr)
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheatSuicide)
 {
-	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_SELF_PROLOGUE(AActor);
 	cht_Suicide(self->player);
 	return 0;
 }

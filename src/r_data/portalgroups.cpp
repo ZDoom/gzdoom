@@ -282,7 +282,7 @@ struct FCoverageBuilder
 //
 //==========================================================================
 
-void BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement)
+void BuildPortalCoverage(FLevelLocals *Level, FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement)
 {
 	TArray<FCoverageVertex> shape;
 	double centerx=0, centery=0;
@@ -298,7 +298,7 @@ void BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, cons
 	build.center.x = xs_CRoundToInt(centerx / subsector->numlines);
 	build.center.y = xs_CRoundToInt(centery / subsector->numlines);
 
-	build.CollectNode(level.HeadNode(), shape);
+	build.CollectNode(Level->HeadNode(), shape);
 	coverage->subsectors = new uint32_t[build.collect.Size()]; 
 	coverage->sscount = build.collect.Size();
 	memcpy(coverage->subsectors, &build.collect[0], build.collect.Size() * sizeof(uint32_t));
@@ -310,9 +310,9 @@ void BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, cons
 //
 //==========================================================================
 
-static void CollectPortalSectors(FPortalMap &collection)
+static void CollectPortalSectors(FLevelLocals *Level, FPortalMap &collection)
 {
-	for (auto &sec : level.sectors)
+	for (auto &sec : Level->sectors)
 	{
 		for (int j = 0; j < 2; j++)
 		{
@@ -337,12 +337,12 @@ static void CollectPortalSectors(FPortalMap &collection)
 //
 //==========================================================================
 
-static void GroupSectorPortals()
+static void GroupSectorPortals(FLevelLocals *Level)
 {
 	FPortalMap collection;
 
-	CollectPortalSectors(collection);
-	level.portalGroups.Clear();
+	CollectPortalSectors(Level, collection);
+	Level->portalGroups.Clear();
 
 	FPortalMap::Iterator it(collection);
 	FPortalMap::Pair *pair;
@@ -363,7 +363,7 @@ static void GroupSectorPortals()
 				FSectorPortalGroup *portal = new FSectorPortalGroup;
 				portal->mDisplacement = pair->Key.mDisplacement;
 				portal->plane = (i == 1 ? sector_t::floor : sector_t::ceiling);	/**/
-				level.portalGroups.Push(portal);
+				Level->portalGroups.Push(portal);
 				for (unsigned j = 0; j < pair->Value.Size(); j++)
 				{
 					sector_t *sec = pair->Value[j].mSub;
@@ -373,7 +373,7 @@ static void GroupSectorPortals()
 						for (int k = 0; k < sec->subsectorcount; k++)
 						{
 							subsector_t *sub = sec->subsectors[k];
-							BuildPortalCoverage(&sub->portalcoverage[plane], sub, pair->Key.mDisplacement);
+							BuildPortalCoverage(Level, &sub->portalcoverage[plane], sub, pair->Key.mDisplacement);
 						}
 						sec->portals[plane] = portal;
 					}
@@ -390,29 +390,29 @@ static void GroupSectorPortals()
 //
 //==========================================================================
 
-static void GroupLinePortals()
+static void GroupLinePortals(FLevelLocals *Level)
 {
-	level.linePortalSpans.Clear();
+	Level->linePortalSpans.Clear();
 	TArray<int> tempindex;
 
-	tempindex.Reserve(level.linePortals.Size());
-	memset(&tempindex[0], -1, level.linePortals.Size() * sizeof(int));
+	tempindex.Reserve(Level->linePortals.Size());
+	memset(&tempindex[0], -1, Level->linePortals.Size() * sizeof(int));
 
-	for (unsigned i = 0; i < level.linePortals.Size(); i++)
+	for (unsigned i = 0; i < Level->linePortals.Size(); i++)
 	{
-		auto port = level.linePortals[i];
+		auto port = Level->linePortals[i];
 		bool gotsome;
 
 		if (tempindex[i] == -1)
 		{
-			tempindex[i] = level.linePortalSpans.Size();
-			line_t *pSrcLine = level.linePortals[i].mOrigin;
-			line_t *pLine = level.linePortals[i].mDestination;
-			FLinePortalSpan &glport = level.linePortalSpans[level.linePortalSpans.Reserve(1)];
-			glport.lines.Push(&level.linePortals[i]);
+			tempindex[i] = Level->linePortalSpans.Size();
+			line_t *pSrcLine = Level->linePortals[i].mOrigin;
+			line_t *pLine = Level->linePortals[i].mDestination;
+			FLinePortalSpan &glport = Level->linePortalSpans[Level->linePortalSpans.Reserve(1)];
+			glport.lines.Push(&Level->linePortals[i]);
 
 			// We cannot do this grouping for non-linked portals because they can be changed at run time.
-			if (level.linePortals[i].mType == PORTT_LINKED && pLine != nullptr)
+			if (Level->linePortals[i].mType == PORTT_LINKED && pLine != nullptr)
 			{
 				glport.v1 = pLine->v1;
 				glport.v2 = pLine->v2;
@@ -420,12 +420,12 @@ static void GroupLinePortals()
 				{
 					// now collect all other colinear lines connected to this one. We run this loop as long as it still finds a match
 					gotsome = false;
-					for (unsigned j = 0; j < level.linePortals.Size(); j++)
+					for (unsigned j = 0; j < Level->linePortals.Size(); j++)
 					{
 						if (tempindex[j] == -1)
 						{
-							line_t *pSrcLine2 = level.linePortals[j].mOrigin;
-							line_t *pLine2 = level.linePortals[j].mDestination;
+							line_t *pSrcLine2 = Level->linePortals[j].mOrigin;
+							line_t *pLine2 = Level->linePortals[j].mDestination;
 							// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical portals aren't found here.)
 							unsigned srcang = pSrcLine->Delta().Angle().BAMs();
 							unsigned dstang = pLine->Delta().Angle().BAMs();
@@ -442,7 +442,7 @@ static void GroupLinePortals()
 									tempindex[j] = tempindex[i];
 									if (pLine->v1 == pLine2->v2) glport.v1 = pLine2->v1;
 									else glport.v2 = pLine2->v2;
-									glport.lines.Push(&level.linePortals[j]);
+									glport.lines.Push(&Level->linePortals[j]);
 								}
 							}
 						}
@@ -453,52 +453,16 @@ static void GroupLinePortals()
 	}
 
 	// Final assignment can only be done when all allocations are finished. Otherwise the array may be moved.
-	for (unsigned i = 0; i < level.linePortals.Size(); i++)
+	for (unsigned i = 0; i < Level->linePortals.Size(); i++)
 	{
-		level.linePortals[i].mGroup = &level.linePortalSpans[tempindex[i]];
+		Level->linePortals[i].mGroup = &Level->linePortalSpans[tempindex[i]];
 	}
 }
 
-void InitPortalGroups()
+void InitPortalGroups(FLevelLocals *Level)
 {
-	if (level.nodes.Size() > 0)
-		GroupSectorPortals();
-	GroupLinePortals();
+	if (Level->nodes.Size() > 0)
+		GroupSectorPortals(Level);
+	GroupLinePortals(Level);
 }
 
-CCMD(dumpportals)
-{
-	for(unsigned i=0;i<level.portalGroups.Size(); i++)
-	{
-		auto p = level.portalGroups[i];
-		double xdisp = p->mDisplacement.X;
-		double ydisp = p->mDisplacement.Y;
-		Printf(PRINT_LOG, "Portal #%d, %s, displacement = (%f,%f)\n", i, p->plane==0? "floor":"ceiling",
-			xdisp, ydisp);
-		Printf(PRINT_LOG, "Coverage:\n");
-		for(auto &sub : level.subsectors)
-		{
-			auto port = sub.render_sector->GetPortalGroup(p->plane);
-			if (port == p)
-			{
-				Printf(PRINT_LOG, "\tSubsector %d (%d):\n\t\t", sub.Index(), sub.render_sector->sectornum);
-				for(unsigned k = 0;k< sub.numlines; k++)
-				{
-					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub.firstline[k].v1->fX() + xdisp, sub.firstline[k].v1->fY() + ydisp);
-				}
-				Printf(PRINT_LOG, "\n\t\tCovered by subsectors:\n");
-				FPortalCoverage *cov = &sub.portalcoverage[p->plane];
-				for(int l = 0;l< cov->sscount; l++)
-				{
-					subsector_t *csub = &level.subsectors[cov->subsectors[l]];
-					Printf(PRINT_LOG, "\t\t\t%5d (%4d): ", cov->subsectors[l], csub->render_sector->sectornum);
-					for(unsigned m = 0;m< csub->numlines; m++)
-					{
-						Printf(PRINT_LOG, "(%.3f,%.3f), ",	csub->firstline[m].v1->fX(), csub->firstline[m].v1->fY());
-					}
-					Printf(PRINT_LOG, "\n");
-				}
-			}
-		}
-	}
-}

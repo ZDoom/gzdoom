@@ -47,6 +47,9 @@
 #include "doomstat.h"
 #include "gi.h"
 #include "d_main.h"
+#if !defined _MSC_VER && !defined __APPLE__
+#include "i_system.h"  // for SHARE_DIR
+#endif // !_MSC_VER && !__APPLE__
 
 EXTERN_CVAR (Bool, con_centernotify)
 EXTERN_CVAR (Int, msg0color)
@@ -58,10 +61,12 @@ EXTERN_CVAR (Bool, snd_pitched)
 EXTERN_CVAR (Color, am_wallcolor)
 EXTERN_CVAR (Color, am_fdwallcolor)
 EXTERN_CVAR (Color, am_cdwallcolor)
-EXTERN_CVAR (Float, spc_amp)
 EXTERN_CVAR (Bool, wi_percents)
 EXTERN_CVAR (Int, gl_texture_hqresizemode)
 EXTERN_CVAR (Int, gl_texture_hqresizemult)
+EXTERN_CVAR (Int, vid_preferbackend)
+EXTERN_CVAR (Float, vid_scale_custompixelaspect)
+EXTERN_CVAR (Bool, vid_scale_linear)
 
 FGameConfigFile::FGameConfigFile ()
 {
@@ -72,7 +77,7 @@ FGameConfigFile::FGameConfigFile ()
 
 	FString pathname;
 
-	OkayToWrite = false;	// Do not allow saving of the config before DoGameSetup()
+	OkayToWrite = false;	// Do not allow saving of the config before DoKeySetup()
 	bModSetup = false;
 	pathname = GetConfigPath (true);
 	ChangePathName (pathname);
@@ -207,13 +212,23 @@ void FGameConfigFile::DoAutoloadSetup (FIWadManager *iwad_man)
 		RenameSection("Freedoom2.Autoload", "doom.freedoom.phase2.Autoload");
 		RenameSection("Freedoom1.Autoload", "doom.freedoom.phase1.Autoload");
 		RenameSection("Freedoom.Autoload", "doom.freedoom.Autoload");
-		RenameSection("DoomBFG.Autoload", "doom.doom1.bfg.Autoload");
-		RenameSection("DoomU.Autoload", "doom.doom1.ultimate.Autoload");
-		RenameSection("Doom1.Autoload", "doom.doom1.registered.Autoload");
-		RenameSection("TNT.Autoload", "doom.doom2.tnt.Autoload");
-		RenameSection("Plutonia.Autoload", "doom.doom2.plutonia.Autoload");
-		RenameSection("Doom2BFG.Autoload", "doom.doom2.bfg.Autoload");
-		RenameSection("Doom2.Autoload", "doom.doom2.commercial.Autoload");
+		RenameSection("DoomBFG.Autoload", "doom.id.doom1.bfg.Autoload");
+		RenameSection("DoomU.Autoload", "doom.id.doom1.ultimate.Autoload");
+		RenameSection("Doom1.Autoload", "doom.id.doom1.registered.Autoload");
+		RenameSection("TNT.Autoload", "doom.id.doom2.tnt.Autoload");
+		RenameSection("Plutonia.Autoload", "doom.id.doom2.plutonia.Autoload");
+		RenameSection("Doom2BFG.Autoload", "doom.id.doom2.bfg.Autoload");
+		RenameSection("Doom2.Autoload", "doom.id.doom2.commercial.Autoload");
+	}
+	else if (last < 218)
+	{
+		RenameSection("doom.doom1.bfg.Autoload", "doom.id.doom1.bfg.Autoload");
+		RenameSection("doom.doom1.ultimate.Autoload", "doom.id.doom1.ultimate.Autoload");
+		RenameSection("doom.doom1.registered.Autoload", "doom.id.doom1.registered.Autoload");
+		RenameSection("doom.doom2.tnt.Autoload", "doom.id.doom2.tnt.Autoload");
+		RenameSection("doom.doom2.plutonia.Autoload", "doom.id.doom2.plutonia.Autoload");
+		RenameSection("doom.doom2.bfg.Autoload", "doom.id.doom2.bfg.Autoload");
+		RenameSection("doom.doom2.commercial.Autoload", "doom.id.doom2.commercial.Autoload");
 	}
 	const FString *pAuto;
 	for (int num = 0; (pAuto = iwad_man->GetAutoname(num)) != NULL; num++)
@@ -311,6 +326,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					vsync->ResetToDefault ();
 				}
 			}
+			/* spc_amp no longer exists
 			if (last < 206)
 			{ // spc_amp is now a float, not an int.
 				if (spc_amp > 16)
@@ -318,6 +334,7 @@ void FGameConfigFile::DoGlobalSetup ()
 					spc_amp = spc_amp / 16.f;
 				}
 			}
+			*/
 			if (last < 207)
 			{ // Now that snd_midiprecache works again, you probably don't want it on.
 				FBaseCVar *precache = FindCVar ("snd_midiprecache", NULL);
@@ -484,6 +501,65 @@ void FGameConfigFile::DoGlobalSetup ()
 					}
 				}
 			}
+			if (last < 217)
+			{
+				auto var = FindCVar("vid_scalemode", NULL);
+				UCVarValue newvalue;
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Int);
+					if (v.Int == 3) // 640x400
+					{
+						newvalue.Int = 2;
+						var->SetGenericRep(newvalue, CVAR_Int);
+					}
+					if (v.Int == 2) // 320x200
+					{
+						newvalue.Int = 6;
+						var->SetGenericRep(newvalue, CVAR_Int);
+					}
+				}
+			}
+			if (last < 219)
+			{
+				// 2019-12-06 - polybackend merge
+				// migrate vid_enablevulkan to vid_preferbackend
+				auto var = FindCVar("vid_enablevulkan", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Int);
+					vid_preferbackend = v.Int;
+				}
+				// 2019-12-31 - r_videoscale.cpp changes
+				var = FindCVar("vid_scale_customstretched", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Bool);
+					if (v.Bool)
+						vid_scale_custompixelaspect = 1.2f;
+					else
+						vid_scale_custompixelaspect = 1.0f;
+				}
+				var = FindCVar("vid_scalemode", NULL);
+				UCVarValue newvalue;
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Int);
+					switch (v.Int)
+					{
+					case 1:
+						newvalue.Int = 0;
+						var->SetGenericRep(newvalue, CVAR_Int);
+					case 3:
+					case 4:
+						vid_scale_linear = true;
+						break;
+					default:
+						vid_scale_linear = false;
+						break;
+					}
+				}
+			}
 		}
 	}
 }
@@ -498,6 +574,12 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 	section[countof(section) - 1] = '\0';
 	
 	strncpy (subsection, "UnknownConsoleVariables", sublen);
+	if (SetSection (section))
+	{
+		ReadCVars (0);
+	}
+
+	strncpy (subsection, "ConfigOnlyVariables", sublen);
 	if (SetSection (section))
 	{
 		ReadCVars (0);
@@ -545,7 +627,6 @@ void FGameConfigFile::DoGameSetup (const char *gamename)
 			}
 		}
 	}
-	OkayToWrite = true;
 }
 
 // Moved from DoGameSetup so that it can happen after wads are loaded
@@ -579,6 +660,7 @@ void FGameConfigFile::DoKeySetup(const char *gamename)
 			}
 		}
 	}
+	OkayToWrite = true;
 }
 
 // Like DoGameSetup(), but for mod-specific cvars.
@@ -594,6 +676,11 @@ void FGameConfigFile::DoModSetup(const char *gamename)
 	if (SetSection (section))
 	{
 		ReadCVars (CVAR_MOD|CVAR_SERVERINFO|CVAR_IGNORE);
+	}
+	mysnprintf(section, countof(section), "%s.ConfigOnlyVariables.Mod", gamename);
+	if (SetSection (section))
+	{
+		ReadCVars (CVAR_MOD|CVAR_CONFIG_ONLY|CVAR_IGNORE);
 	}
 	// Signal that these sections should be rewritten when saving the config.
 	bModSetup = true;
@@ -678,6 +765,19 @@ void FGameConfigFile::ArchiveGameData (const char *gamename)
 			ClearCurrentSection ();
 			C_ArchiveCVars (this, CVAR_MOD|CVAR_ARCHIVE|CVAR_AUTO|CVAR_SERVERINFO);
 		}
+	}
+
+	strncpy (subsection, "ConfigOnlyVariables", sublen);
+	SetSection (section, true);
+	ClearCurrentSection ();
+	C_ArchiveCVars (this, CVAR_ARCHIVE|CVAR_AUTO|CVAR_CONFIG_ONLY);
+
+	if (bModSetup)
+	{
+		strncpy (subsection, "ConfigOnlyVariables.Mod", sublen);
+		SetSection (section, true);
+		ClearCurrentSection ();
+		C_ArchiveCVars (this, CVAR_ARCHIVE|CVAR_AUTO|CVAR_MOD|CVAR_CONFIG_ONLY);
 	}
 
 	strncpy (subsection, "UnknownConsoleVariables", sublen);

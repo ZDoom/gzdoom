@@ -64,13 +64,16 @@
 #include "p_acs.h"
 #include "p_effect.h"
 #include "m_joy.h"
-#include "r_renderer.h"
 #include "r_utility.h"
 #include "a_morph.h"
 #include "p_spec.h"
 #include "serializer.h"
 #include "vm.h"
 #include "dobjgc.h"
+#include "gi.h"
+#include "a_dynlight.h"
+#include "i_system.h"
+#include "p_conversation.h"
 
 #include "g_hub.h"
 #include "g_levellocals.h"
@@ -91,8 +94,9 @@ void	G_DoPlayDemo (void);
 void	G_DoCompleted (void);
 void	G_DoVictory (void);
 void	G_DoWorldDone (void);
-void	G_DoSaveGame (bool okForQuicksave, FString filename, const char *description);
+void	G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, const char *description);
 void	G_DoAutoSave ();
+void	G_DoQuickSave ();
 
 void STAT_Serialize(FSerializer &file);
 bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompressedBuffer> &content);
@@ -105,6 +109,7 @@ CVAR (Bool, storesavepic, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, longsavemessages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, save_dir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (Bool, cl_waitforsave, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR (Bool, enablescriptscreenshot, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR (Float, con_midtime);
 
 //==========================================================================
@@ -171,9 +176,7 @@ uint8_t*			zdembodyend;			// end of ZDEM BODY chunk
 bool 			singledemo; 			// quit after playing a demo from cmdline 
  
 bool 			precache = true;		// if true, load all graphics at start 
- 
-wbstartstruct_t wminfo; 				// parms for world map / intermission 
- 
+  
 short			consistancy[MAXPLAYERS][BACKUPTICS];
  
  
@@ -181,11 +184,13 @@ short			consistancy[MAXPLAYERS][BACKUPTICS];
  
 #define TURBOTHRESHOLD	12800
 
-float	 		normforwardmove[2] = {0x19, 0x32};		// [RH] For setting turbo from console
-float	 		normsidemove[2] = {0x18, 0x28};			// [RH] Ditto
+EXTERN_CVAR (Int, turnspeedwalkfast)
+EXTERN_CVAR (Int, turnspeedsprintfast)
+EXTERN_CVAR (Int, turnspeedwalkslow)
+EXTERN_CVAR (Int, turnspeedsprintslow)
 
 int				forwardmove[2], sidemove[2];
-int		 		angleturn[4] = {640, 1280, 320, 320};		// + slow turn
+FIntCVar		*angleturn[4] = {&turnspeedwalkfast, &turnspeedsprintfast, &turnspeedwalkslow, &turnspeedsprintslow};
 int				flyspeed[2] = {1*256, 3*256};
 int				lookspeed[2] = {450, 512};
 
@@ -193,7 +198,7 @@ int				lookspeed[2] = {450, 512};
 
 CVAR (Bool,		cl_run,			false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always run?
 CVAR (Bool,		invertmouse,	false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Invert mouse look down/up?
-CVAR (Bool,		freelook,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always mlook?
+CVAR (Bool,		freelook,		true,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always mlook?
 CVAR (Bool,		lookstrafe,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always strafe with mouse?
 CVAR (Float,	m_pitch,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Mouse speeds
 CVAR (Float,	m_yaw,			1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
@@ -219,12 +224,20 @@ bool SendLand;
 const AActor *SendItemUse, *SendItemDrop;
 int SendItemDropAmount;
 
+extern uint8_t globalfreeze;
+
 EXTERN_CVAR (Int, team)
 
 CVAR (Bool, teamplay, false, CVAR_SERVERINFO)
 
+// Workaround for x64 code generation bug in MSVC 2015 
+// Optimized targets contain illegal instructions in the function below
+#if defined _M_X64 && _MSC_VER < 1910
+#pragma optimize("", off)
+#endif // _M_X64 && _MSC_VER < 1910
+
 // [RH] Allow turbo setting anytime during game
-CUSTOM_CVAR (Float, turbo, 100.f, 0)
+CUSTOM_CVAR (Float, turbo, 100.f, CVAR_NOINITCALL)
 {
 	if (self < 10.f)
 	{
@@ -238,19 +251,27 @@ CUSTOM_CVAR (Float, turbo, 100.f, 0)
 	{
 		double scale = self * 0.01;
 
-		forwardmove[0] = (int)(normforwardmove[0]*scale);
-		forwardmove[1] = (int)(normforwardmove[1]*scale);
-		sidemove[0] = (int)(normsidemove[0]*scale);
-		sidemove[1] = (int)(normsidemove[1]*scale);
+		forwardmove[0] = (int)(gameinfo.normforwardmove[0]*scale);
+		forwardmove[1] = (int)(gameinfo.normforwardmove[1]*scale);
+		sidemove[0] = (int)(gameinfo.normsidemove[0]*scale);
+		sidemove[1] = (int)(gameinfo.normsidemove[1]*scale);
 	}
 }
+
+#if defined _M_X64 && _MSC_VER < 1910
+#pragma optimize("", on)
+#endif // _M_X64 && _MSC_VER < 1910
 
 CCMD (turnspeeds)
 {
 	if (argv.argc() == 1)
 	{
-		Printf ("Current turn speeds: %d %d %d %d\n", angleturn[0],
-			angleturn[1], angleturn[2], angleturn[3]);
+		Printf ("Current turn speeds:\n"
+				TEXTCOLOR_BLUE " turnspeedwalkfast: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedsprintfast: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedwalkslow: " TEXTCOLOR_GREEN " %d\n"
+				TEXTCOLOR_BLUE " turnspeedsprintslow: " TEXTCOLOR_GREEN " %d\n", *turnspeedwalkfast,
+			*turnspeedsprintfast, *turnspeedwalkslow, *turnspeedsprintslow);
 	}
 	else
 	{
@@ -258,19 +279,19 @@ CCMD (turnspeeds)
 
 		for (i = 1; i <= 4 && i < argv.argc(); ++i)
 		{
-			angleturn[i-1] = atoi (argv[i]);
+			*angleturn[i-1] = atoi (argv[i]);
 		}
 		if (i <= 2)
 		{
-			angleturn[1] = angleturn[0] * 2;
+			*angleturn[1] = *angleturn[0] * 2;
 		}
 		if (i <= 3)
 		{
-			angleturn[2] = angleturn[0] / 2;
+			*angleturn[2] = *angleturn[0] / 2;
 		}
 		if (i <= 4)
 		{
-			angleturn[3] = angleturn[2];
+			*angleturn[3] = *angleturn[2];
 		}
 	}
 }
@@ -285,12 +306,20 @@ CCMD (slot)
 		if (slot < NUM_WEAPON_SLOTS && mo)
 		{
 			// Needs to be redone
-			IFVIRTUALPTR(mo, APlayerPawn, PickWeapon)
+			IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickWeapon)
 			{
 				VMValue param[] = { mo, slot, !(dmflags2 & DF2_DONTCHECKAMMO) };
 				VMReturn ret((void**)&SendItemUse);
 				VMCall(func, param, 3, &ret, 1);
 			}
+		}
+
+		// [Nash] Option to display the name of the weapon being switched to.
+		if (players[consoleplayer].playerstate != PST_LIVE) return;
+		if (SendItemUse != players[consoleplayer].ReadyWeapon && (displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
+		{
+			StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, SendItemUse->GetTag(),
+				1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('W', 'E', 'P', 'N'));
 		}
 	}
 }
@@ -326,7 +355,7 @@ CCMD (weapnext)
 	if (mo)
 	{
 		// Needs to be redone
-		IFVIRTUALPTR(mo, APlayerPawn, PickNextWeapon)
+		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickNextWeapon)
 		{
 			VMValue param[] = { mo };
 			VMReturn ret((void**)&SendItemUse);
@@ -335,14 +364,15 @@ CCMD (weapnext)
 	}
 
 	// [BC] Option to display the name of the weapon being cycled to.
+	if (players[consoleplayer].playerstate != PST_LIVE) return;
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
-		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, SendItemUse->GetTag(),
+		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, SendItemUse->GetTag(),
 			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
 	if (SendItemUse != players[consoleplayer].ReadyWeapon)
 	{
-		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+		S_Sound(CHAN_AUTO, 0, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -352,7 +382,7 @@ CCMD (weapprev)
 	if (mo)
 	{
 		// Needs to be redone
-		IFVIRTUALPTR(mo, APlayerPawn, PickPrevWeapon)
+		IFVIRTUALPTRNAME(mo, NAME_PlayerPawn, PickPrevWeapon)
 		{
 			VMValue param[] = { mo };
 			VMReturn ret((void**)&SendItemUse);
@@ -361,14 +391,15 @@ CCMD (weapprev)
 	}
 
 	// [BC] Option to display the name of the weapon being cycled to.
+	if (players[consoleplayer].playerstate != PST_LIVE) return;
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
-		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, SendItemUse->GetTag(),
+		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, SendItemUse->GetTag(),
 			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
 	}
 	if (SendItemUse != players[consoleplayer].ReadyWeapon)
 	{
-		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+		S_Sound(CHAN_AUTO, 0, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -376,7 +407,7 @@ static void DisplayNameTag(AActor *actor)
 {
 	auto tag = actor->GetTag();
 	if ((displaynametags & 1) && StatusBar && SmallFont)
-		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, tag,
+		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, tag,
 			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S', 'I', 'N', 'V'));
 
 }
@@ -421,14 +452,14 @@ CCMD (invuse)
 {
 	if (players[consoleplayer].inventorytics == 0)
 	{
-		if (players[consoleplayer].mo) SendItemUse = players[consoleplayer].mo->InvSel;
+		if (players[consoleplayer].mo) SendItemUse = players[consoleplayer].mo->PointerVar<AActor>(NAME_InvSel);
 	}
 	players[consoleplayer].inventorytics = 0;
 }
 
 CCMD(invquery)
 {
-	AActor *inv = players[consoleplayer].mo->InvSel;
+	AActor *inv = players[consoleplayer].mo->PointerVar<AActor>(NAME_InvSel);
 	if (inv != NULL)
 	{
 		Printf(PRINT_HIGH, "%s (%dx)\n", inv->GetTag(), inv->IntVar(NAME_Amount));
@@ -447,7 +478,7 @@ CCMD (invdrop)
 {
 	if (players[consoleplayer].mo)
 	{
-		SendItemDrop = players[consoleplayer].mo->InvSel;
+		SendItemDrop = players[consoleplayer].mo->PointerVar<AActor>(NAME_InvSel);
 		SendItemDropAmount = -1;
 	}
 }
@@ -467,40 +498,17 @@ CCMD (drop)
 	}
 }
 
-PClassActor *GetFlechetteType(AActor *other);
-
 CCMD (useflechette)
-{ // Select from one of arti_poisonbag1-3, whichever the player has
-	static const ENamedName bagnames[3] =
+{ 
+	if (who == nullptr) return;
+	IFVIRTUALPTRNAME(who, NAME_PlayerPawn, GetFlechetteItem)
 	{
-		NAME_ArtiPoisonBag3,	// use type 3 first because that's the default when the player has none specified.
-		NAME_ArtiPoisonBag1,
-		NAME_ArtiPoisonBag2
-	};
+		VMValue params[] = { who };
+		AActor *cls;
+		VMReturn ret((void**)&cls);
+		VMCall(func, params, 1, &ret, 1);
 
-	if (who == NULL)
-		return;
-
-	PClassActor *type = who->FlechetteType;
-	if (type != NULL)
-	{
-		AActor *item;
-		if ( (item = who->FindInventory (type) ))
-		{
-			SendItemUse = item;
-			return;
-		}
-	}
-
-	// The default flechette could not be found, or the player had no default. Try all 3 types then.
-	for (int j = 0; j < 3; ++j)
-	{
-		AActor *item;
-		if ( (item = who->FindInventory (bagnames[j])) )
-		{
-			SendItemUse = item;
-			break;
-		}
+		if (cls != nullptr) SendItemUse = cls;
 	}
 }
 
@@ -511,7 +519,7 @@ CCMD (select)
 		auto item = who->FindInventory(argv[1]);
 		if (item != NULL)
 		{
-			who->InvSel = item;
+			who->PointerVar<AActor>(NAME_InvSel) = item;
 		}
 	}
 	who->player->inventorytics = 5*TICRATE;
@@ -580,11 +588,11 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		
 		if (Button_Right.bDown)
 		{
-			G_AddViewAngle (angleturn[tspeed]);
+			G_AddViewAngle (*angleturn[tspeed]);
 		}
 		if (Button_Left.bDown)
 		{
-			G_AddViewAngle (-angleturn[tspeed]);
+			G_AddViewAngle (-*angleturn[tspeed]);
 		}
 	}
 
@@ -767,10 +775,15 @@ static int LookAdjust(int look)
 	if (players[consoleplayer].playerstate != PST_DEAD &&		// No adjustment while dead.
 		players[consoleplayer].ReadyWeapon != NULL)			// No adjustment if no weapon.
 	{
-		auto scale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
-		if (scale > 0)		// No adjustment if it is non-positive.
+		auto FOVScale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_FOVScale);
+		auto LookScale = players[consoleplayer].ReadyWeapon->FloatVar(NAME_LookScale);
+		if (FOVScale > 0)		// No adjustment if it is non-positive.
 		{
-			look = int(look * scale);
+			look = int(look * FOVScale);
+		}
+		if (LookScale > 0)		// No adjustment if it is non-positive.
+		{
+			look = int(look * LookScale);
 		}
 	}
 	return look;
@@ -783,7 +796,7 @@ void G_AddViewPitch (int look, bool mouse)
 		return;
 	}
 	look = LookAdjust(look);
-	if (!level.IsFreelookAllowed())
+	if (!primaryLevel->IsFreelookAllowed())
 	{
 		LocalViewPitch = 0;
 	}
@@ -969,7 +982,7 @@ bool G_Responder (event_t *ev)
 	{
 		if (ST_Responder (ev))
 			return true;		// status window ate it
-		if (!viewactive && AM_Responder (ev, false))
+		if (!viewactive && primaryLevel->automap->Responder (ev, false))
 			return true;		// automap ate it
 	}
 	else if (gamestate == GS_FINALE)
@@ -999,8 +1012,8 @@ bool G_Responder (event_t *ev)
 	// [RH] If the view is active, give the automap a chance at
 	// the events *last* so that any bound keys get precedence.
 
-	if (gamestate == GS_LEVEL && viewactive)
-		return AM_Responder (ev, true);
+	if (gamestate == GS_LEVEL && viewactive && primaryLevel->automap)
+		return primaryLevel->automap->Responder (ev, true);
 
 	return (ev->type == EV_KeyDown ||
 			ev->type == EV_Mouse);
@@ -1028,16 +1041,15 @@ void G_Ticker ()
 			}
 			if (players[i].playerstate == PST_REBORN || players[i].playerstate == PST_ENTER)
 			{
-				G_DoReborn(i, false);
+				primaryLevel->DoReborn(i, false);
 			}
 		}
 	}
 
 	if (ToggleFullscreen)
 	{
-		static char toggle_fullscreen[] = "toggle fullscreen";
 		ToggleFullscreen = false;
-		AddCommandString (toggle_fullscreen);
+		AddCommandString ("toggle fullscreen");
 	}
 
 	// do things to change the game state
@@ -1051,9 +1063,6 @@ void G_Ticker ()
 		}
 		switch (gameaction)
 		{
-		case ga_loadlevel:
-			G_DoLoadLevel (-1, false, false);
-			break;
 		case ga_recordgame:
 			G_CheckDemoStatus();
 			G_RecordDemo(newdemoname);
@@ -1068,7 +1077,7 @@ void G_Ticker ()
 			G_DoLoadGame ();
 			break;
 		case ga_savegame:
-			G_DoSaveGame (true, savegamefile, savedescription);
+			G_DoSaveGame (true, false, savegamefile, savedescription);
 			gameaction = ga_nothing;
 			savegamefile = "";
 			savedescription = "";
@@ -1105,6 +1114,11 @@ void G_Ticker ()
 			AM_ToggleMap ();
 			gameaction = ga_nothing;
 			break;
+		case ga_resumeconversation:
+			P_ResumeConversation ();
+			gameaction = ga_nothing;
+			break;
+		default:
 		case ga_nothing:
 			break;
 		}
@@ -1127,7 +1141,7 @@ void G_Ticker ()
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
-	bglobal.Main ();
+	primaryLevel->BotInfo.Main (primaryLevel);
 
 	for (i = 0; i < MAXPLAYERS; i++)
 	{
@@ -1186,14 +1200,15 @@ void G_Ticker ()
 	}
 
 	// [ZZ] also tick the UI part of the events
-	E_UiTick();
+	primaryLevel->localEventManager->UiTick();
+	C_RunDelayedCommands();
 
 	// do main actions
 	switch (gamestate)
 	{
 	case GS_LEVEL:
 		P_Ticker ();
-		AM_Ticker ();
+		primaryLevel->automap->Ticker ();
 		break;
 
 	case GS_TITLELEVEL:
@@ -1225,7 +1240,7 @@ void G_Ticker ()
 	}
 
 	// [MK] Additional ticker for UI events right after all others
-	E_PostUiTick();
+	primaryLevel->localEventManager->PostUiTick();
 }
 
 
@@ -1255,7 +1270,7 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 // Called after a player dies
 // almost everything is cleared and initialized
 //
-void G_PlayerReborn (int player)
+void FLevelLocals::PlayerReborn (int player)
 {
 	player_t*	p;
 	int 		frags[MAXPLAYERS];
@@ -1266,7 +1281,7 @@ void G_PlayerReborn (int player)
 	int			chasecam;
 	uint8_t		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
-	APlayerPawn *actor;
+	AActor *actor;
 	PClassActor *cls;
 	FString		log;
 	DBot		*Bot;		//Added by MC:
@@ -1313,7 +1328,12 @@ void G_PlayerReborn (int player)
 	if (gamestate != GS_TITLELEVEL)
 	{
 		// [GRB] Give inventory specified in DECORATE
-		actor->GiveDefaultInventory ();
+
+		IFVIRTUALPTRNAME(actor, NAME_PlayerPawn, GiveDefaultInventory)
+		{
+			VMValue params[1] = { actor };
+			VMCall(func, params, 1, nullptr, 0);
+		}
 		p->ReadyWeapon = p->PendingWeapon;
 	}
 
@@ -1334,7 +1354,7 @@ void G_PlayerReborn (int player)
 // because something is occupying it 
 //
 
-bool G_CheckSpot (int playernum, FPlayerStart *mthing)
+bool FLevelLocals::CheckSpot (int playernum, FPlayerStart *mthing)
 {
 	DVector3 spot;
 	double oldz;
@@ -1344,11 +1364,11 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 
 	spot = mthing->pos;
 
-	if (!(level.flags & LEVEL_USEPLAYERSTARTZ))
+	if (!(flags & LEVEL_USEPLAYERSTARTZ))
 	{
 		spot.Z = 0;
 	}
-	spot.Z += P_PointInSector (spot)->floorplane.ZatPoint (spot);
+	spot.Z += PointInSector (spot)->floorplane.ZatPoint (spot);
 
 	if (!players[playernum].mo)
 	{ // first spawn of level, before corpses
@@ -1386,7 +1406,7 @@ bool G_CheckSpot (int playernum, FPlayerStart *mthing)
 //
 
 // [RH] Returns the distance of the closest player to the given mapthing
-static double PlayersRangeFromSpot (FPlayerStart *spot)
+double FLevelLocals::PlayersRangeFromSpot (FPlayerStart *spot)
 {
 	double closest = INT_MAX;
 	double distance;
@@ -1407,7 +1427,7 @@ static double PlayersRangeFromSpot (FPlayerStart *spot)
 }
 
 // [RH] Select the deathmatch spawn spot farthest from everyone.
-static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
+FPlayerStart *FLevelLocals::SelectFarthestDeathmatchSpot (size_t selections)
 {
 	double bestdistance = 0;
 	FPlayerStart *bestspot = NULL;
@@ -1415,12 +1435,12 @@ static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 
 	for (i = 0; i < selections; i++)
 	{
-		double distance = PlayersRangeFromSpot (&level.deathmatchstarts[i]);
+		double distance = PlayersRangeFromSpot (&deathmatchstarts[i]);
 
 		if (distance > bestdistance)
 		{
 			bestdistance = distance;
-			bestspot = &level.deathmatchstarts[i];
+			bestspot = &deathmatchstarts[i];
 		}
 	}
 
@@ -1428,27 +1448,27 @@ static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 }
 
 // [RH] Select a deathmatch spawn spot at random (original mechanism)
-static FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
+FPlayerStart *FLevelLocals::SelectRandomDeathmatchSpot (int playernum, unsigned int selections)
 {
 	unsigned int i, j;
 
 	for (j = 0; j < 20; j++)
 	{
 		i = pr_dmspawn() % selections;
-		if (G_CheckSpot (playernum, &level.deathmatchstarts[i]) )
+		if (CheckSpot (playernum, &deathmatchstarts[i]) )
 		{
-			return &level.deathmatchstarts[i];
+			return &deathmatchstarts[i];
 		}
 	}
 
 	// [RH] return a spot anyway, since we allow telefragging when a player spawns
-	return &level.deathmatchstarts[i];
+	return &deathmatchstarts[i];
 }
 
-DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
+DEFINE_ACTION_FUNCTION(FLevelLocals, PickDeathmatchStart)
 {
-	PARAM_PROLOGUE;
-	unsigned int selections = level.deathmatchstarts.Size();
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	unsigned int selections = self->deathmatchstarts.Size();
 	DVector3 pos;
 	int angle;
 	if (selections == 0)
@@ -1459,8 +1479,8 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 	else
 	{
 		unsigned int i = pr_dmspawn() % selections;
-		angle = level.deathmatchstarts[i].angle;
-		pos = level.deathmatchstarts[i].pos;
+		angle = self->deathmatchstarts[i].angle;
+		pos = self->deathmatchstarts[i].pos;
 	}
 
 	if (numret > 1)
@@ -1475,12 +1495,12 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 	return numret;
 }
 
-void G_DeathMatchSpawnPlayer (int playernum)
+void FLevelLocals::DeathMatchSpawnPlayer (int playernum)
 {
 	unsigned int selections;
 	FPlayerStart *spot;
 
-	selections = level.deathmatchstarts.Size ();
+	selections = deathmatchstarts.Size ();
 	// [RH] We can get by with just 1 deathmatch start
 	if (selections < 1)
 		I_Error ("No deathmatch starts");
@@ -1497,22 +1517,22 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	{ // No good spot, so the player will probably get stuck.
 	  // We were probably using select farthest above, and all
 	  // the spots were taken.
-		spot = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
-		if (!G_CheckSpot(playernum, spot))
+		spot = PickPlayerStart(playernum, PPS_FORCERANDOM);
+		if (!CheckSpot(playernum, spot))
 		{ // This map doesn't have enough coop spots for this player
 		  // to use one.
 			spot = SelectRandomDeathmatchSpot(playernum, selections);
 			if (spot == NULL)
 			{ // We have a player 1 start, right?
-				spot = &level.playerstarts[0];
+				spot = &playerstarts[0];
 				if (spot->type == 0)
 				{ // Fine, whatever.
-					spot = &level.deathmatchstarts[0];
+					spot = &deathmatchstarts[0];
 				}
 			}
 		}
 	}
-	AActor *mo = P_SpawnPlayer(spot, playernum);
+	AActor *mo = SpawnPlayer(spot, playernum);
 	if (mo != NULL) P_PlayerStartStomp(mo);
 }
 
@@ -1520,15 +1540,15 @@ void G_DeathMatchSpawnPlayer (int playernum)
 //
 // G_PickPlayerStart
 //
-FPlayerStart *G_PickPlayerStart(int playernum, int flags)
+FPlayerStart *FLevelLocals::PickPlayerStart(int playernum, int flags)
 {
-	if (level.AllPlayerStarts.Size() == 0) // No starts to pick
+	if (AllPlayerStarts.Size() == 0) // No starts to pick
 	{
 		return NULL;
 	}
 
-	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM) ||
-		level.playerstarts[playernum].type == 0)
+	if ((flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM) ||
+		playerstarts[playernum].type == 0)
 	{
 		if (!(flags & PPS_NOBLOCKINGCHECK))
 		{
@@ -1536,11 +1556,11 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 			unsigned int i;
 
 			// Find all unblocked player starts.
-			for (i = 0; i < level.AllPlayerStarts.Size(); ++i)
+			for (i = 0; i < AllPlayerStarts.Size(); ++i)
 			{
-				if (G_CheckSpot(playernum, &level.AllPlayerStarts[i]))
+				if (CheckSpot(playernum, &AllPlayerStarts[i]))
 				{
-					good_starts.Push(&level.AllPlayerStarts[i]);
+					good_starts.Push(&AllPlayerStarts[i]);
 				}
 			}
 			if (good_starts.Size() > 0)
@@ -1549,17 +1569,17 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 			}
 		}
 		// Pick a spot at random, whether it's open or not.
-		return &level.AllPlayerStarts[pr_pspawn(level.AllPlayerStarts.Size())];
+		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
 	}
-	return &level.playerstarts[playernum];
+	return &playerstarts[playernum];
 }
 
-DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
+DEFINE_ACTION_FUNCTION(FLevelLocals, PickPlayerStart)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(playernum);
 	PARAM_INT(flags);
-	auto ps = G_PickPlayerStart(playernum, flags);
+	auto ps = self->PickPlayerStart(playernum, flags);
 	if (numret > 1)
 	{
 		ret[1].SetInt(ps? ps->angle : 0);
@@ -1575,23 +1595,24 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
 //
 // G_QueueBody
 //
-static void G_QueueBody (AActor *body)
+void FLevelLocals::QueueBody (AActor *body)
 {
 	// flush an old corpse if needed
-	int modslot = level.bodyqueslot%level.BODYQUESIZE;
-	level.bodyqueslot = modslot + 1;
+	int modslot = bodyqueslot % BODYQUESIZE;
+	bodyqueslot = modslot + 1;
 
-	if (level.bodyqueslot >= level.BODYQUESIZE && level.bodyque[modslot] != NULL)
+	if (bodyqueslot >= BODYQUESIZE && bodyque[modslot] != NULL)
 	{
-		level.bodyque[modslot]->Destroy ();
+		bodyque[modslot]->Destroy ();
 	}
-	level.bodyque[modslot] = body;
+	bodyque[modslot] = body;
 
 	// Copy the player's translation, so that if they change their color later, only
 	// their current body will change and not all their old corpses.
 	if (GetTranslationType(body->Translation) == TRANSLATION_Players ||
 		GetTranslationType(body->Translation) == TRANSLATION_PlayersExtra)
 	{
+		// This needs to be able to handle multiple levels, in case a level with dead players is used as a secondary one later.
 		*translationtables[TRANSLATION_PlayerCorpses][modslot] = *TranslationToTable(body->Translation);
 		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
 		translationtables[TRANSLATION_PlayerCorpses][modslot]->UpdateNative();
@@ -1615,9 +1636,9 @@ static void G_QueueBody (AActor *body)
 // G_DoReborn
 //
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
-void G_DoReborn (int playernum, bool freshbot)
+void FLevelLocals::DoReborn (int playernum, bool freshbot)
 {
-	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn &&
+	if (!multiplayer && !(flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn &&
 		!G_SkillProperty(SKILLP_PlayerRespawn))
 	{
 		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
@@ -1629,9 +1650,8 @@ void G_DoReborn (int playernum, bool freshbot)
 		{ // Reload the level from scratch
 			bool indemo = demoplayback;
 			BackupSaveName = "";
-			G_InitNew (level.MapName, false);
+			G_InitNew (MapName, false);
 			demoplayback = indemo;
-//			gameaction = ga_loadlevel;
 		}
 	}
 	else
@@ -1642,28 +1662,28 @@ void G_DoReborn (int playernum, bool freshbot)
 		// first disassociate the corpse
 		if (players[playernum].mo)
 		{
-			G_QueueBody (players[playernum].mo);
+			QueueBody (players[playernum].mo);
 			players[playernum].mo->player = NULL;
 		}
 
 		// spawn at random spot if in deathmatch
-		if ((deathmatch || isUnfriendly) && (level.deathmatchstarts.Size () > 0))
+		if ((deathmatch || isUnfriendly) && (deathmatchstarts.Size () > 0))
 		{
-			G_DeathMatchSpawnPlayer (playernum);
+			DeathMatchSpawnPlayer (playernum);
 			return;
 		}
 
-		if (!(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) &&
-			level.playerstarts[playernum].type != 0 &&
-			G_CheckSpot (playernum, &level.playerstarts[playernum]))
+		if (!(flags2 & LEVEL2_RANDOMPLAYERSTARTS) &&
+			playerstarts[playernum].type != 0 &&
+			CheckSpot (playernum, &playerstarts[playernum]))
 		{
-			AActor *mo = P_SpawnPlayer(&level.playerstarts[playernum], playernum);
+			AActor *mo = SpawnPlayer(&playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 		else
 		{ // try to spawn at any random player's spot
-			FPlayerStart *start = G_PickPlayerStart(playernum, PPS_FORCERANDOM);
-			AActor *mo = P_SpawnPlayer(start, playernum);
+			FPlayerStart *start = PickPlayerStart(playernum, PPS_FORCERANDOM);
+			AActor *mo = SpawnPlayer(start, playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 	}
@@ -1676,16 +1696,9 @@ void G_DoPlayerPop(int playernum)
 {
 	playeringame[playernum] = false;
 
-	if (deathmatch)
-	{
-		Printf("%s left the game with %d frags\n",
-			players[playernum].userinfo.GetName(),
-			players[playernum].fragcount);
-	}
-	else
-	{
-		Printf("%s left the game\n", players[playernum].userinfo.GetName());
-	}
+	FString message = GStrings(deathmatch? "TXT_LEFTWITHFRAGS" : "TXT_LEFTTHEGAME");
+	message.Substitute("%s", players[playernum].userinfo.GetName());
+	message.Substitute("%d", FStringf("%d", players[playernum].fragcount));
 
 	// [RH] Revert each player to their own view if spying through the player who left
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
@@ -1701,29 +1714,30 @@ void G_DoPlayerPop(int playernum)
 	}
 
 	// [RH] Make the player disappear
-	FBehavior::StaticStopMyScripts(players[playernum].mo);
+	auto mo = players[playernum].mo;
+	mo->Level->Behaviors.StopMyScripts(mo);
 	// [ZZ] fire player disconnect hook
-	E_PlayerDisconnected(playernum);
+	mo->Level->localEventManager->PlayerDisconnected(playernum);
 	// [RH] Let the scripts know the player left
-	FBehavior::StaticStartTypedScripts(SCRIPT_Disconnect, players[playernum].mo, true, playernum, true);
-	if (players[playernum].mo != NULL)
+	mo->Level->Behaviors.StartTypedScripts(SCRIPT_Disconnect, mo, true, playernum, true);
+	if (mo != NULL)
 	{
-		P_DisconnectEffect(players[playernum].mo);
-		players[playernum].mo->player = NULL;
-		players[playernum].mo->Destroy();
+		P_DisconnectEffect(mo);
+		mo->player = NULL;
+		mo->Destroy();
 		if (!(players[playernum].mo->ObjectFlags & OF_EuthanizeMe))
 		{ // We just destroyed a morphed player, so now the original player
 			// has taken their place. Destroy that one too.
 			players[playernum].mo->Destroy();
 		}
-		players[playernum].mo = NULL;
-		players[playernum].camera = NULL;
+		players[playernum].mo = nullptr;
+		players[playernum].camera = nullptr;
 	}
 
 	players[playernum].DestroyPSprites();
 }
 
-void G_ScreenShot (char *filename)
+void G_ScreenShot (const char *filename)
 {
 	shotfile = filename;
 	gameaction = ga_screenshot;
@@ -1756,7 +1770,7 @@ static bool CheckSingleWad (const char *name, bool &printRequires, bool printwar
 		{
 			if (!printRequires)
 			{
-				Printf ("This savegame needs these wads:\n%s", name);
+				Printf ("%s:\n%s", GStrings("TXT_SAVEGAMENEEDS"), name);
 			}
 			else
 			{
@@ -1792,6 +1806,12 @@ bool G_CheckSaveGameWads (FSerializer &arc, bool printwarn)
 	return true;
 }
 
+static void LoadGameError(const char *label, const char *append = "")
+{
+	FString message = GStrings(label);
+	message.Substitute("%s", savename);
+	Printf ("%s %s\n", message.GetChars(), append);
+}
 
 void G_DoLoadGame ()
 {
@@ -1807,23 +1827,23 @@ void G_DoLoadGame ()
 	std::unique_ptr<FResourceFile> resfile(FResourceFile::OpenResourceFile(savename.GetChars(), true, true));
 	if (resfile == nullptr)
 	{
-		Printf ("Could not read savegame '%s'\n", savename.GetChars());
+		LoadGameError("TXT_COULDNOTREAD");
 		return;
 	}
 	FResourceLump *info = resfile->FindLump("info.json");
 	if (info == nullptr)
 	{
-		Printf("'%s' is not a valid savegame: Missing 'info.json'.\n", savename.GetChars());
+		LoadGameError("TXT_NOINFOJSON");
 		return;
 	}
 
 	SaveVersion = 0;
 
 	void *data = info->CacheLump();
-	FSerializer arc;
+	FSerializer arc(nullptr);
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
-		Printf("Failed to access savegame info\n");
+		LoadGameError("TXT_FAILEDTOREADSG");
 		return;
 	}
 
@@ -1841,27 +1861,30 @@ void G_DoLoadGame ()
 		// have this information.
 		if (engine.IsEmpty())
 		{
-			Printf("Savegame is from an incompatible version\n");
+			LoadGameError("TXT_INCOMPATIBLESG");
 		}
 		else
 		{
-			Printf("Savegame is from another ZDoom-based engine: %s\n", engine.GetChars());
+			LoadGameError("TXT_IOTHERENGINESG", engine.GetChars());
 		}
 		return;
 	}
 
 	if (SaveVersion < MINSAVEVER || SaveVersion > SAVEVER)
 	{
-		Printf("Savegame is from an incompatible version");
+		FString message;
 		if (SaveVersion < MINSAVEVER)
 		{
-			Printf(": %d (%d is the oldest supported)", SaveVersion, MINSAVEVER);
+			message = GStrings("TXT_TOOOLDSG");
+			message.Substitute("%e", FStringf("%d", MINSAVEVER));
 		}
 		else
 		{
-			Printf(": %d (%d is the highest supported)", SaveVersion, SAVEVER);
+			message = GStrings("TXT_TOONEWSG");
+			message.Substitute("%e", FStringf("%d", SAVEVER));
 		}
-		Printf("\n");
+		message.Substitute("%d", FStringf("%d", SaveVersion));
+		LoadGameError(message);
 		return;
 	}
 
@@ -1872,7 +1895,7 @@ void G_DoLoadGame ()
 
 	if (map.IsEmpty())
 	{
-		Printf("Savegame is missing the current map\n");
+		LoadGameError("TXT_NOMAPSG");
 		return;
 	}
 
@@ -1888,14 +1911,14 @@ void G_DoLoadGame ()
 	info = resfile->FindLump("globals.json");
 	if (info == nullptr)
 	{
-		Printf("'%s' is not a valid savegame: Missing 'globals.json'.\n", savename.GetChars());
+		LoadGameError("TXT_NOGLOBALSJSON");
 		return;
 	}
 
 	data = info->CacheLump();
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
-		Printf("Failed to access savegame info\n");
+		LoadGameError("TXT_SGINFOERR");
 		return;
 	}
 
@@ -1903,7 +1926,7 @@ void G_DoLoadGame ()
 	// Read intermission data for hubs
 	G_SerializeHub(arc);
 
-	bglobal.RemoveAllBots(true);
+	primaryLevel->BotInfo.RemoveAllBots(primaryLevel, true);
 
 	FString cvar;
 	arc("importantcvars", cvar);
@@ -1912,11 +1935,16 @@ void G_DoLoadGame ()
 		uint8_t *vars_p = (uint8_t *)cvar.GetChars();
 		C_ReadCVars(&vars_p);
 	}
+	else
+	{
+		C_SerializeCVars(arc, "servercvars", CVAR_SERVERINFO);
+	}
 
 	uint32_t time[2] = { 1,0 };
 
 	arc("ticrate", time[0])
-		("leveltime", time[1]);
+		("leveltime", time[1])
+		("globalfreeze", globalfreeze);
 	// dearchive all the modifications
 	level.time = Scale(time[1], TICRATE, time[0]);
 
@@ -1960,20 +1988,19 @@ void G_SaveGame (const char *filename, const char *description)
 {
 	if (sendsave || gameaction == ga_savegame)
 	{
-		Printf ("A game save is still pending.\n");
-		return;
+		Printf ("%s\n", GStrings("TXT_SAVEPENDING"));
 	}
     else if (!usergame)
 	{
-        Printf ("not in a saveable game\n");
+		Printf ("%s\n", GStrings("TXT_NOTSAVEABLE"));
     }
     else if (gamestate != GS_LEVEL)
 	{
-        Printf ("not in a level\n");
+		Printf ("%s\n", GStrings("TXT_NOTINLEVEL"));
     }
     else if (players[consoleplayer].health <= 0 && !multiplayer)
     {
-        Printf ("player is dead in a single-player game\n");
+		Printf ("%s\n", GStrings("TXT_SPPLAYERDEAD"));
     }
 	else
 	{
@@ -2023,8 +2050,14 @@ CUSTOM_CVAR (Int, autosavecount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (self < 0)
 		self = 0;
 }
-
-extern void P_CalcHeight (player_t *);
+CVAR (Int, quicksavenum, -1, CVAR_NOSET|CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+static int lastquicksave = -1;
+CVAR (Bool, quicksaverotation, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, quicksaverotationcount, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (self < 1)
+		self = 1;
+}
 
 void G_DoAutoSave ()
 {
@@ -2045,19 +2078,48 @@ void G_DoAutoSave ()
 
 	file = G_BuildSaveName ("auto", nextautosave);
 
-	if (!(level.flags2 & LEVEL2_NOAUTOSAVEHINT))
+	// The hint flag is only relevant on the primary level.
+	if (!(primaryLevel->flags2 & LEVEL2_NOAUTOSAVEHINT))
 	{
 		nextautosave = (nextautosave + 1) % count;
 	}
 	else
 	{
 		// This flag can only be used once per level
-		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
+		primaryLevel->flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
 	}
 
 	readableTime = myasctime ();
-	description.Format("Autosave %.12s", readableTime + 4);
-	G_DoSaveGame (false, file, description);
+	description.Format("Autosave %s", readableTime);
+	G_DoSaveGame (false, false, file, description);
+}
+
+void G_DoQuickSave ()
+{
+	FString description;
+	FString file;
+	// Keeps a rotating set of quicksaves
+	UCVarValue num;
+	const char *readableTime;
+	int count = quicksaverotationcount != 0 ? quicksaverotationcount : 1;
+	
+	if (quicksavenum < 0) 
+	{
+		lastquicksave = 0;
+	}
+	else
+	{
+		lastquicksave = (quicksavenum + 1) % count;
+	}
+
+	num.Int = lastquicksave;
+	quicksavenum.ForceSet (num, CVAR_Int);
+
+	file = G_BuildSaveName ("quick", lastquicksave);
+
+	readableTime = myasctime ();
+	description.Format("Quicksave %s", readableTime);
+	G_DoSaveGame (true, true, file, description);
 }
 
 
@@ -2070,37 +2132,81 @@ static void PutSaveWads (FSerializer &arc)
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	if (Wads.GetLumpFile (level.lumpnum) > Wads.GetIwadNum())
+	if (Wads.GetLumpFile (primaryLevel->lumpnum) > Wads.GetIwadNum())
 	{
-		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
+		name = Wads.GetWadName (Wads.GetLumpFile (primaryLevel->lumpnum));
 		arc.AddString("Map WAD", name);
 	}
 }
 
 static void PutSaveComment (FSerializer &arc)
 {
-	const char *readableTime;
 	int levelTime;
 
-	// Get the current date and time
-	readableTime = myasctime ();
-
-	FString comment;
-	comment.Format("%.10s%.5s%.9s", readableTime, &readableTime[19], &readableTime[10]);
+	FString comment = myasctime();
 
 	arc.AddString("Creation Time", comment);
 
 	// Get level name
-	//strcpy (comment, level.level_name);
-	comment.Format("%s - %s\n", level.MapName.GetChars(), level.LevelName.GetChars());
+	comment.Format("%s - %s\n", primaryLevel->MapName.GetChars(), primaryLevel->LevelName.GetChars());
 
 	// Append elapsed time
-	levelTime = level.time / TICRATE;
-	comment.AppendFormat("time: %02d:%02d:%02d",
-		levelTime/3600, (levelTime%3600)/60, levelTime%60);
+	const char *const time = GStrings("SAVECOMMENT_TIME");
+	levelTime = primaryLevel->time / TICRATE;
+	comment.AppendFormat("%s: %02d:%02d:%02d", time, levelTime/3600, (levelTime%3600)/60, levelTime%60);
 
 	// Write out the comment
 	arc.AddString("Comment", comment);
+}
+
+void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown)
+{
+	PalEntry palette[256];
+	PalEntry modulateColor;
+	auto blend = screen->CalcBlend(viewsector, &modulateColor);
+	int pixelsize = 1;
+	// Apply the screen blend, because the renderer does not provide this.
+	if (ssformat == SS_RGB)
+	{
+		int numbytes = width * height * 3;
+		pixelsize = 3;
+		if (modulateColor != 0xffffffff)
+		{
+			float r = modulateColor.r / 255.f;
+			float g = modulateColor.g / 255.f;
+			float b = modulateColor.b / 255.f;
+			for (int i = 0; i < numbytes; i += 3)
+			{
+				scr[i] = uint8_t(scr[i] * r);
+				scr[i + 1] = uint8_t(scr[i + 1] * g);
+				scr[i + 2] = uint8_t(scr[i + 2] * b);
+			}
+		}
+		float iblendfac = 1.f - blend.W;
+		blend.X *= blend.W;
+		blend.Y *= blend.W;
+		blend.Z *= blend.W;
+		for (int i = 0; i < numbytes; i += 3)
+		{
+			scr[i] = uint8_t(scr[i] * iblendfac + blend.X);
+			scr[i + 1] = uint8_t(scr[i + 1] * iblendfac + blend.Y);
+			scr[i + 2] = uint8_t(scr[i + 2] * iblendfac + blend.Z);
+		}
+	}
+	else
+	{
+		// Apply the screen blend to the palette. The colormap related parts get skipped here because these are already part of the image.
+		DoBlending(GPalette.BaseColors, palette, 256, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z), uint8_t(blend.W*255));
+	}
+
+	int pitch = width * pixelsize;
+	if (upsidedown)
+	{
+		scr += ((height - 1) * width * pixelsize);
+		pitch *= -1;
+	}
+
+	M_CreatePNG(file, scr, ssformat == SS_PAL? palette : nullptr, ssformat, width, height, pitch, Gamma);
 }
 
 static void PutSavePic (FileWriter *file, int width, int height)
@@ -2111,11 +2217,14 @@ static void PutSavePic (FileWriter *file, int width, int height)
 	}
 	else
 	{
-		screen->WriteSavePic(&players[consoleplayer], file, width, height);
+		D_Render([&]()
+			{
+				screen->WriteSavePic(&players[consoleplayer], file, width, height);
+			}, false);
 	}
 }
 
-void G_DoSaveGame (bool okForQuicksave, FString filename, const char *description)
+void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, const char *description)
 {
 	TArray<FCompressedBuffer> savegame_content;
 	TArray<FString> savegame_filenames;
@@ -2124,7 +2233,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	// Do not even try, if we're not in a level. (Can happen after
 	// a demo finishes playback.)
-	if (level.lines.Size() == 0 || level.sectors.Size() == 0 || gamestate != GS_LEVEL)
+	if (primaryLevel->lines.Size() == 0 || primaryLevel->sectors.Size() == 0 || gamestate != GS_LEVEL)
 	{
 		return;
 	}
@@ -2140,7 +2249,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	insave = true;
 	try
 	{
-		G_SnapshotLevel();
+		level.SnapshotLevel();
 	}
 	catch(CRecoverableError &err)
 	{
@@ -2163,8 +2272,8 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	}
 
 	BufferWriter savepic;
-	FSerializer savegameinfo;		// this is for displayable info about the savegame
-	FSerializer savegameglobals;	// and this for non-level related info that must be saved.
+	FSerializer savegameinfo(nullptr);		// this is for displayable info about the savegame
+	FSerializer savegameglobals(nullptr);	// and this for non-level related info that must be saved.
 
 	savegameinfo.OpenWriter(true);
 	savegameglobals.OpenWriter(save_formatted);
@@ -2175,7 +2284,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	// put some basic info into the PNG so that this isn't lost when the image gets extracted.
 	M_AppendPNGText(&savepic, "Software", buf);
 	M_AppendPNGText(&savepic, "Title", description);
-	M_AppendPNGText(&savepic, "Current Map", level.MapName);
+	M_AppendPNGText(&savepic, "Current Map", primaryLevel->MapName);
 	M_FinishPNG(&savepic);
 
 	int ver = SAVEVER;
@@ -2183,7 +2292,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		.AddString("Engine", GAMESIG)
 		("Save Version", ver)
 		.AddString("Title", description)
-		.AddString("Current Map", level.MapName);
+		.AddString("Current Map", primaryLevel->MapName);
 
 
 	PutSaveWads (savegameinfo);
@@ -2191,11 +2300,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	// Intermission stats for hubs
 	G_SerializeHub(savegameglobals);
-
-	{
-		FString vars = C_GetMassCVarString(CVAR_SERVERINFO);
-		savegameglobals.AddString("importantcvars", vars.GetChars());
-	}
+	C_SerializeCVars(savegameglobals, "servercvars", CVAR_SERVERINFO);
 
 	if (level.time != 0 || level.maptime != 0)
 	{
@@ -2229,27 +2334,37 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	G_WriteSnapshots (savegame_filenames, savegame_content);
 	
 
-	WriteZip(filename, savegame_filenames, savegame_content);
+	bool succeeded = false;
 
-	savegameManager.NotifyNewSave (filename, description, okForQuicksave);
+	if (WriteZip(filename, savegame_filenames, savegame_content))
+	{
+		// Check whether the file is ok by trying to open it.
+		FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
+		if (test != nullptr)
+		{
+			delete test;
+			succeeded = true;
+		}
+	}
+
+	if (succeeded)
+	{
+		savegameManager.NotifyNewSave(filename, description, okForQuicksave, forceQuicksave);
+		BackupSaveName = filename;
+
+		if (longsavemessages) Printf("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
+		else Printf("%s\n", GStrings("GGSAVED"));
+	}
+	else
+	{
+		Printf(PRINT_HIGH, "%s\n", GStrings("TXT_SAVEFAILED"));
+	}
+
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.
 	savegame_content[1].Clean();
 	savegame_content[2].Clean();
-
-	// Check whether the file is ok by trying to open it.
-	FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
-	if (test != nullptr)
-	{
-		delete test;
-		if (longsavemessages) Printf ("%s (%s)\n", GStrings("GGSAVED"), filename.GetChars());
-		else Printf ("%s\n", GStrings("GGSAVED"));
-	}
-	else Printf(PRINT_HIGH, "Save failed\n");
-
-
-	BackupSaveName = filename;
 
 	// We don't need the snapshot any longer.
 	level.info->Snapshot.Clean();
@@ -2393,7 +2508,7 @@ void G_BeginRecording (const char *startmap)
 
 	if (startmap == NULL)
 	{
-		startmap = level.MapName;
+		startmap = primaryLevel->MapName;
 	}
 	demo_p = demobuffer;
 
@@ -2682,7 +2797,7 @@ void G_DoPlayDemo (void)
 	}
 	demo_p = demobuffer;
 
-	Printf ("Playing demo %s\n", defdemoname.GetChars());
+	if (singledemo) Printf ("Playing demo %s\n", defdemoname.GetChars());
 
 	C_BackupCVars ();		// [RH] Save cvars that might be affected by demo
 
@@ -2699,7 +2814,7 @@ void G_DoPlayDemo (void)
 		}
 		else
 		{
-			Printf (PRINT_BOLD, "%s", eek);
+			//Printf (PRINT_BOLD, "%s", eek);
 			gameaction = ga_nothing;
 		}
 	}
@@ -2718,7 +2833,7 @@ void G_DoPlayDemo (void)
 		{
 			G_InitNew (mapname, false);
 		}
-		else if (level.sectors.Size() == 0)
+		else if (primaryLevel->sectors.Size() == 0)
 		{
 			I_Error("Cannot play demo without its savegame\n");
 		}
@@ -2783,7 +2898,7 @@ bool G_CheckDemoStatus (void)
 		for (int i = 1; i < MAXPLAYERS; i++)
 			playeringame[i] = 0;
 		consoleplayer = 0;
-		players[0].camera = NULL;
+		players[0].camera = nullptr;
 		if (StatusBar != NULL)
 		{
 			StatusBar->AttachToPlayer (&players[0]);
@@ -2868,17 +2983,37 @@ bool G_CheckDemoStatus (void)
 	return false; 
 }
 
-void G_StartSlideshow(FName whichone)
+void G_StartSlideshow(FLevelLocals *Level, FName whichone)
 {
 	gameaction = ga_slideshow;
-	SelectedSlideshow = whichone == NAME_None ? level.info->slideshow : whichone;
+	SelectedSlideshow = whichone == NAME_None ? Level->info->slideshow : whichone;
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_NAME(whichone);
-	G_StartSlideshow(whichone);
+	G_StartSlideshow(self, whichone);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeScreenShot)
+{
+	if (enablescriptscreenshot)
+	{
+		G_ScreenShot("");
+	}
+	return 0;
+}
+
+void G_MakeAutoSave()
+{
+	gameaction = ga_autosave;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, MakeAutoSave)
+{
+	G_MakeAutoSave();
 	return 0;
 }
 
@@ -2889,12 +3024,13 @@ DEFINE_GLOBAL_NAMED(Skins, PlayerSkins)
 DEFINE_GLOBAL(consoleplayer)
 DEFINE_GLOBAL_NAMED(PClass::AllClasses, AllClasses)
 DEFINE_GLOBAL_NAMED(PClassActor::AllActorClasses, AllActorClasses)
+DEFINE_GLOBAL_NAMED(primaryLevel, Level)
 DEFINE_GLOBAL(validcount)
 DEFINE_GLOBAL(multiplayer)
 DEFINE_GLOBAL(gameaction)
 DEFINE_GLOBAL(gamestate)
 DEFINE_GLOBAL(skyflatnum)
-DEFINE_GLOBAL_NAMED(bglobal.freeze, globalfreeze)
+DEFINE_GLOBAL(globalfreeze)
 DEFINE_GLOBAL(gametic)
 DEFINE_GLOBAL(demoplayback)
 DEFINE_GLOBAL(automapactive);

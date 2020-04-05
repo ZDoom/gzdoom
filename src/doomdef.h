@@ -70,32 +70,11 @@ enum
 	TELEFRAG_DAMAGE = 1000000
 };
 
-
-// The current state of the game: whether we are
-// playing, gazing at the intermission screen,
-// the game final animation, or a demo. 
-enum gamestate_t : int
+inline int Tics2Seconds(int tics)
 {
-	GS_LEVEL,
-	GS_INTERMISSION,
-	GS_FINALE,
-	GS_DEMOSCREEN,
-	GS_FULLCONSOLE,		// [RH]	Fullscreen console
-	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
-	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
-	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
+	return tics / TICRATE;
+}
 
-	GS_FORCEWIPE = -1,
-	GS_FORCEWIPEFADE = -2,
-	GS_FORCEWIPEBURN = -3,
-	GS_FORCEWIPEMELT = -4
-};
-
-extern	gamestate_t 	gamestate;
-
-// wipegamestate can be set to -1
-//	to force a wipe on the next draw
-extern gamestate_t wipegamestate;
 
 
 typedef float skill_t;
@@ -355,6 +334,11 @@ enum : unsigned int
 	COMPATF2_MULTIEXIT		= 1 << 4,	// Level exit can be triggered multiple times (required by Daedalus's travel tubes, thanks to a faulty script)
 	COMPATF2_TELEPORT		= 1 << 5,	// Don't let indirect teleports trigger sector actions
 	COMPATF2_PUSHWINDOW		= 1 << 6,	// Disable the window check in CheckForPushSpecial()
+	COMPATF2_CHECKSWITCHRANGE = 1 << 7,	// Enable buggy CheckSwitchRange behavior
+	COMPATF2_EXPLODE1		= 1 << 8,	// No vertical explosion thrust
+	COMPATF2_EXPLODE2		= 1 << 9,	// Use original explosion code throughout.
+	COMPATF2_RAILING		= 1 << 10,	// Bugged Strife railings.
+	COMPATF2_SCRIPTWAIT		= 1 << 11,	// Use old scriptwait implementation where it doesn't wait on a non-running script.
 };
 
 // Emulate old bugs for select maps. These are not exposed by a cvar
@@ -370,7 +354,7 @@ enum
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
 	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
-	BCOMPATF_CLIPMIDTEX		= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps)
+	BCOMPATF_CLIPMIDTEX			= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps, has no effect in the hardware renderer)
 };
 
 // phares 3/20/98:
@@ -387,11 +371,5 @@ enum
 
 
 #define BLINKTHRESHOLD (4*32)
-
-#ifndef __BIG_ENDIAN__
-#define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
-#else
-#define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
-#endif
 
 #endif	// __DOOMDEF_H__

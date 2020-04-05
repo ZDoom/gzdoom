@@ -37,8 +37,10 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "actorinlines.h"
+#include "g_game.h"
 
 extern gamestate_t wipegamestate;
+extern uint8_t globalfreeze, globalchangefreeze;
 
 //==========================================================================
 //
@@ -62,7 +64,8 @@ bool P_CheckTickerPaused ()
 		 && players[consoleplayer].viewz != NO_VALUE
 		 && wipegamestate == gamestate)
 	{
-		S_PauseSound (!(level.flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
+		// Only the current UI level's settings are relevant for sound.
+		S_PauseSound (!(primaryLevel->flags2 & LEVEL2_PAUSE_MUSIC_IN_MENUS), false);
 		return true;
 	}
 	return false;
@@ -75,7 +78,10 @@ void P_Ticker (void)
 {
 	int i;
 
-	interpolator.UpdateInterpolations ();
+	for (auto Level : AllLevels())
+	{
+		Level->interpolator.UpdateInterpolations();
+	}
 	r_NoInterpolate = true;
 
 	if (!demoplayback)
@@ -87,17 +93,39 @@ void P_Ticker (void)
 
 	// run the tic
 	if (paused || P_CheckTickerPaused())
+	{
+		// This must run even when the game is paused to catch changes from netevents before the frame is rendered.
+		for (auto Level : AllLevels())
+		{
+			auto it = Level->GetThinkerIterator<AActor>();
+			AActor* ac;
+
+			while ((ac = it.Next()))
+			{
+				if (ac->flags8 & MF8_RECREATELIGHTS)
+				{
+					ac->flags8 &= ~MF8_RECREATELIGHTS;
+					ac->SetDynamicLights();
+				}
+			}
+		}
 		return;
+	}
 
 	DPSprite::NewTick();
 
 	// [RH] Frozen mode is only changed every 4 tics, to make it work with A_Tracer().
-	if ((level.time & 3) == 0)
+	// This may not be perfect but it is not really relevant for sublevels that tracer homing behavior is preserved.
+	if ((primaryLevel->maptime & 3) == 0)
 	{
-		if (bglobal.changefreeze)
+		if (globalchangefreeze)
 		{
-			bglobal.freeze ^= 1;
-			bglobal.changefreeze = 0;
+			globalfreeze ^= 1;
+			globalchangefreeze = 0;
+			for (auto Level : AllLevels())
+			{
+				Level->frozenstate = (Level->frozenstate & ~2) | (2 * globalfreeze);
+			}
 		}
 	}
 
@@ -116,40 +144,62 @@ void P_Ticker (void)
 	P_ResetSightCounters (false);
 	R_ClearInterpolationPath();
 
-	// Reset all actor interpolations for all actors before the current thinking turn so that indirect actor movement gets properly interpolated.
-	TThinkerIterator<AActor> it;
-	AActor *ac;
-
-	while ((ac = it.Next()))
-	{
-		ac->ClearInterpolation();
-	}
-
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;
 
-	P_ThinkParticles();	// [RH] make the particles think
-
-	for (i = 0; i<MAXPLAYERS; i++)
-		if (playeringame[i] &&
-			/*Added by MC: Freeze mode.*/!(bglobal.freeze && players[i].Bot != NULL))
-			P_PlayerThink (&players[i]);
-
-	// [ZZ] call the WorldTick hook
-	E_WorldTick();
-	StatusBar->CallTick ();		// [RH] moved this here
-	level.Tick ();			// [RH] let the level tick
-	DThinker::RunThinkers ();
-
-	//if added by MC: Freeze mode.
-	if (!bglobal.freeze && !(level.flags2 & LEVEL2_FROZEN))
+	// Reset all actor interpolations on all levels before the current thinking turn so that indirect actor movement gets properly interpolated.
+	for (auto Level : AllLevels())
 	{
-		P_UpdateSpecials ();
-		P_RunEffects ();	// [RH] Run particle effects
-	}
+		// todo: set up a sandbox for secondary levels here.
+		auto it = Level->GetThinkerIterator<AActor>();
+		AActor *ac;
 
-	// for par times
-	level.time++;
-	level.maptime++;
-	level.totaltime++;
+		while ((ac = it.Next()))
+		{
+			ac->ClearInterpolation();
+		}
+
+		P_ThinkParticles(Level);	// [RH] make the particles think
+
+		for (i = 0; i < MAXPLAYERS; i++)
+			if (Level->PlayerInGame(i))
+				P_PlayerThink(Level->Players[i]);
+
+		// [ZZ] call the WorldTick hook
+		Level->localEventManager->WorldTick();
+		Level->Tick();			// [RH] let the level tick
+		Level->Thinkers.RunThinkers(Level);
+
+		//if added by MC: Freeze mode.
+		if (!Level->isFrozen())
+		{
+			P_UpdateSpecials(Level);
+		}
+		it = Level->GetThinkerIterator<AActor>();
+
+		// Set dynamic lights at the end of the tick, so that this catches all changes being made through the last frame.
+		while ((ac = it.Next()))
+		{
+			if (ac->flags8 & MF8_RECREATELIGHTS)
+			{
+				ac->flags8 &= ~MF8_RECREATELIGHTS;
+				ac->SetDynamicLights();
+			}
+			// This was merged from P_RunEffects to eliminate the costly duplicate ThinkerIterator loop.
+			if ((ac->effects || ac->fountaincolor) && !Level->isFrozen())
+			{
+				P_RunEffect(ac, ac->effects);
+			}
+		}
+
+		// for par times
+		Level->time++;
+		Level->maptime++;
+		Level->totaltime++;
+	}
+	if (players[consoleplayer].mo != NULL) {
+		if (players[consoleplayer].mo->Vel.Length() > primaryLevel->max_velocity) { primaryLevel->max_velocity = players[consoleplayer].mo->Vel.Length(); }
+		primaryLevel->avg_velocity += (players[consoleplayer].mo->Vel.Length() - primaryLevel->avg_velocity) / primaryLevel->maptime;
+	}
+	StatusBar->CallTick();		// Status bar should tick AFTER the thinkers to properly reflect the level's state at this time.
 }

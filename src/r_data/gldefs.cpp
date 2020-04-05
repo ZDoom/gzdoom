@@ -33,7 +33,7 @@
 **
 */
 #include <ctype.h>
-#include "i_system.h"
+
 #include "sc_man.h"
 #include "templates.h"
 #include "w_wad.h"
@@ -43,6 +43,7 @@
 #include "v_text.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "v_video.h"
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include "hwrenderer/textures/hw_material.h"
@@ -50,9 +51,11 @@
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
 void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
+void ParseColorization(FScanner& sc);
 
 TArray<UserShaderDesc> usershaders;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
+extern int AttenuationIsSet;
 
 
 //-----------------------------------------------------------------------------
@@ -138,6 +141,7 @@ static const char *LightTags[]=
    "attenuate",
    "dontlightactors",
    "spot",
+   "noshadowmap",
    nullptr
 };
 
@@ -160,7 +164,8 @@ enum {
    LIGHTTAG_DONTLIGHTSELF,
    LIGHTTAG_ATTENUATE,
    LIGHTTAG_DONTLIGHTACTORS,
-   LIGHTTAG_SPOT
+   LIGHTTAG_SPOT,
+   LIGHTTAG_NOSHADOWMAP,
 };
 
 //==========================================================================
@@ -190,6 +195,7 @@ static const char *CoreKeywords[]=
    "#include",
    "material",
    "lightsizefactor",
+   "colorization",
    nullptr
 };
 
@@ -214,6 +220,7 @@ enum
    TAG_INCLUDE,
    TAG_MATERIAL,
    TAG_LIGHTSIZEFACTOR,
+   TAG_COLORIZATION,
 };
 
 //==========================================================================
@@ -444,8 +451,11 @@ class GLDefsParser
 				case LIGHTTAG_ADDITIVE:
 					defaults->SetAdditive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -537,8 +547,11 @@ class GLDefsParser
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -633,8 +646,11 @@ class GLDefsParser
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -728,8 +744,11 @@ class GLDefsParser
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -815,13 +834,16 @@ class GLDefsParser
 					break;
 				case LIGHTTAG_SCALE:
 					floatVal = ParseFloat(sc);
-					defaults->SetArg(LIGHT_SCALE, clamp((int)(floatVal * 255), 1, 1024));
+					defaults->SetArg(LIGHT_INTENSITY, clamp((int)(floatVal * 255), 1, 1024));
 					break;
 				case LIGHTTAG_SUBTRACTIVE:
 					defaults->SetSubtractive(ParseInt(sc) != 0);
 					break;
-				case LIGHTTAG_HALO:
-					defaults->SetHalo(ParseInt(sc) != 0);
+				case LIGHTTAG_HALO:	// old development garbage
+					ParseInt(sc);
+					break;
+				case LIGHTTAG_NOSHADOWMAP:
+					defaults->SetNoShadowmap(ParseInt(sc) != 0);
 					break;
 				case LIGHTTAG_DONTLIGHTSELF:
 					defaults->SetDontLightSelf(ParseInt(sc) != 0);
@@ -1133,7 +1155,7 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetIwadNum()) useme = true;
+				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
 				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
 			}
 			if (!useme) return;
@@ -1191,6 +1213,11 @@ class GLDefsParser
 		FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
 		FTexture *tex = TexMan.GetTexture(no);
 
+		if (tex == nullptr)
+		{
+			sc.ScriptMessage("Material definition refers nonexistent texture '%s'\n", sc.String);
+		}
+
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{
@@ -1247,26 +1274,29 @@ class GLDefsParser
 					}
 				}
 				sc.MustGetString();
-				bool okay = false;
-				for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+				if (tex)
 				{
-					if (!tex->CustomShaderTextures[i])
+					bool okay = false;
+					for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
 					{
-						tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 						if (!tex->CustomShaderTextures[i])
 						{
-							sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex ? tex->Name.GetChars() : "(null)");
-						}
+							tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+							if (!tex->CustomShaderTextures[i])
+							{
+								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex->Name.GetChars());
+							}
 
-						texNameList.Push(textureName);
-						texNameIndex.Push(i);
-						okay = true;
-						break;
+							texNameList.Push(textureName);
+							texNameIndex.Push(i);
+							okay = true;
+							break;
+						}
 					}
-				}
-				if (!okay)
-				{
-					sc.ScriptError("Error: out of texture units in texture '%s'", tex ? tex->Name.GetChars() : "(null)");
+					if (!okay)
+					{
+						sc.ScriptError("Error: out of texture units in texture '%s'", tex->Name.GetChars());
+					}
 				}
 			}
 			else if (sc.Compare("define"))
@@ -1309,7 +1339,7 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetIwadNum()) useme = true;
+				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
 				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
 			}
 			if (!useme) return;
@@ -1621,6 +1651,68 @@ class GLDefsParser
 			}
 		}
 	}
+
+	void ParseColorization(FScanner& sc)
+	{
+		TextureManipulation tm = {};
+		tm.ModulateColor = 0x01ffffff;
+		sc.MustGetString();
+		FName cname = sc.String;
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
+		{
+			sc.MustGetString();
+			if (sc.Compare("DesaturationFactor"))
+			{
+				sc.MustGetFloat();
+				tm.DesaturationFactor = (float)sc.Float;
+			}
+			else if (sc.Compare("AddColor"))
+			{
+				sc.MustGetString();
+				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(NULL, sc) & 0xffffff);
+			}
+			else if (sc.Compare("ModulateColor"))
+			{
+				sc.MustGetString();
+				tm.ModulateColor = V_GetColor(NULL, sc) & 0xffffff;
+				if (sc.CheckToken(','))
+				{
+					sc.MustGetNumber();
+					tm.ModulateColor.a = sc.Number;
+				}
+				else tm.ModulateColor.a = 1;
+			}
+			else if (sc.Compare("BlendColor"))
+			{
+				sc.MustGetString();
+				tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
+				sc.MustGetToken(',');
+				sc.MustGetString();
+				static const char* opts[] = { "none", "alpha", "screen", "overlay", "hardlight", nullptr };
+				tm.AddColor.a = (tm.AddColor.a & ~TextureManipulation::BlendMask) | sc.MustMatchString(opts);
+				if (sc.Compare("alpha"))
+				{
+					sc.MustGetToken(',');
+					sc.MustGetFloat();
+					tm.BlendColor.a = (uint8_t)(clamp(sc.Float, 0., 1.) * 255);
+				}
+			}
+			else if (sc.Compare("invert"))
+			{
+				tm.AddColor.a |= TextureManipulation::InvertBit;
+			}
+			else sc.ScriptError("Unknown token '%s'", sc.String);
+		}
+		if (tm.CheckIfEnabled())
+		{
+			TexMan.InsertTextureManipulation(cname, tm);
+		}
+		else
+		{
+			TexMan.RemoveTextureManipulation(cname);
+		}
+	}
 	
 
 public:
@@ -1714,6 +1806,9 @@ public:
 					*/
 				}
 				break;
+			case TAG_COLORIZATION:
+				ParseColorization(sc);
+				break;
 			default:
 				sc.ScriptError("Error parsing defs.  Unknown tag: %s.\n", sc.String);
 				break;
@@ -1760,6 +1855,7 @@ void ParseGLDefs()
 	const char *defsLump = NULL;
 
 	LightDefaults.DeleteAndClear();
+	AttenuationIsSet = -1;
 	//gl_DestroyUserShaders(); function says 'todo'
 	switch (gameinfo.gametype)
 	{

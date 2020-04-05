@@ -55,8 +55,6 @@
 
 CVAR(Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-EXTERN_CVAR(Bool, vr_enable_quadbuffered)
-
 //==========================================================================
 //
 // 
@@ -92,7 +90,7 @@ static BOOL CALLBACK GetDisplayDeviceNameMonitorEnumProc(HMONITOR hMonitor, HDC,
 
 	// This assumes the monitors are returned by EnumDisplayMonitors in the
 	// order they're found in the Direct3D9 adapters list. Fingers crossed...
-	if (state->curIdx == vid_adapter)
+	if (state->curIdx == vid_adapter || state->hFoundMonitor == nullptr)
 	{
 		state->hFoundMonitor = hMonitor;
 
@@ -121,18 +119,18 @@ void Win32BaseVideo::GetDisplayDeviceName()
 	MonitorEnumState mes;
 
 	mes.curIdx = 1;
-	mes.hFoundMonitor = 0;
+	mes.hFoundMonitor = nullptr;
 
 	// Could also use EnumDisplayDevices, I guess. That might work.
 	if (EnumDisplayMonitors(0, 0, &GetDisplayDeviceNameMonitorEnumProc, LPARAM(&mes)))
 	{
 		if (mes.hFoundMonitor)
 		{
-			MONITORINFOEX mi;
+			MONITORINFOEXA mi;
 
 			mi.cbSize = sizeof mi;
 
-			if (GetMonitorInfo(mes.hFoundMonitor, &mi))
+			if (GetMonitorInfoA(mes.hFoundMonitor, &mi))
 			{
 				strcpy(m_DisplayDeviceBuffer, mi.szDevice);
 				m_DisplayDeviceName = m_DisplayDeviceBuffer;
@@ -159,14 +157,14 @@ static BOOL CALLBACK DumpAdaptersMonitorEnumProc(HMONITOR hMonitor, HDC, LPRECT,
 {
 	DumpAdaptersState *state = reinterpret_cast<DumpAdaptersState *>(dwData);
 
-	MONITORINFOEX mi;
+	MONITORINFOEXA mi;
 	mi.cbSize = sizeof mi;
 
 	char moreinfo[64] = "";
 
 	bool active = true;
 
-	if (GetMonitorInfo(hMonitor, &mi))
+	if (GetMonitorInfoA(hMonitor, &mi))
 	{
 		bool primary = !!(mi.dwFlags & MONITORINFOF_PRIMARY);
 

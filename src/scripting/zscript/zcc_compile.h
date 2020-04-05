@@ -71,6 +71,23 @@ struct ZCC_ClassWork : public ZCC_StructWork
 	}
 };
 
+struct ZCC_MixinWork
+{
+	PSymbolTable TreeNodes;
+	ZCC_MixinDef *mixin;
+	PSymbolTreeNode *node;
+
+	ZCC_MixinWork()
+	{
+	}
+
+	ZCC_MixinWork(ZCC_MixinDef *m, PSymbolTreeNode *n)
+	{
+		mixin = m;
+		node = n;
+	}
+};
+
 struct ZCC_PropertyWork
 {
 	ZCC_Property *prop;
@@ -97,8 +114,10 @@ private:
 
 	int IntConstFromNode(ZCC_TreeNode *node, PContainerType *cls);
 	FString StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls);
+	ZCC_MixinDef *ResolveMixinStmt(ZCC_MixinStmt *mixinStmt, EZCCMixinType type);
 	void ProcessClass(ZCC_Class *node, PSymbolTreeNode *tnode);
 	void ProcessStruct(ZCC_Struct *node, PSymbolTreeNode *tnode, ZCC_Class *outer);
+	void ProcessMixin(ZCC_MixinDef *cnode, PSymbolTreeNode *treenode);
 	void CreateStructTypes();
 	void CreateClassTypes();
 	void CopyConstants(TArray<ZCC_ConstantWork> &dest, TArray<ZCC_ConstantDef*> &Constants, PContainerType *cls, PSymbolTable *ot);
@@ -114,7 +133,7 @@ private:
 	bool CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &FlagDefs, FName prefix);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
-	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls);
+	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls, bool *nosize);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym, bool nativetype);
 
 	void InitDefaults();
@@ -131,6 +150,7 @@ private:
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;
 	TArray<ZCC_ClassWork *> Classes;
+	TArray<ZCC_MixinWork *> Mixins;
 	TArray<ZCC_PropertyWork *> Properties;
 	VersionInfo mVersion;
 
@@ -146,7 +166,7 @@ private:
 	void MessageV(ZCC_TreeNode *node, const char *txtcolor, const char *msg, va_list argptr);
 
 	FxExpression *ConvertAST(PContainerType *cclass, ZCC_TreeNode *ast);
-	FxExpression *ConvertNode(ZCC_TreeNode *node);
+	FxExpression *ConvertNode(ZCC_TreeNode *node, bool substitute= false);
 	FxExpression *ConvertImplicitScopeNode(ZCC_TreeNode *node, ZCC_Statement *nested);
 	FArgumentList &ConvertNodeList(FArgumentList &, ZCC_TreeNode *head);
 

@@ -142,12 +142,30 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeSoundVolume)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSounds, S_StopActorSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(chanmin);
+	PARAM_INT(chanmax);
+	S_StopActorSounds(self, chanmin, chanmax);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeActorSoundPitch)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_FLOAT(pitch);
+	S_ChangeActorSoundPitch(self, channel, pitch);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeActorSoundVolume)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);
 	PARAM_FLOAT(volume);
-	S_ChangeSoundVolume(self, channel, volume);
+	S_ChangeActorSoundVolume(self, channel, volume);
 	return 0;
 }
 
@@ -160,8 +178,31 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_BOOL(looping);
 	PARAM_FLOAT(attenuation);
 	PARAM_BOOL(local);
-	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local);
+	PARAM_FLOAT(pitch);
+	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_FLOAT(attenuation);
+	PARAM_FLOAT(pitch);
+	PARAM_FLOAT(startTime);
+	A_StartSound(self, soundid, channel, flags, volume, attenuation, pitch, startTime);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_SOUND(soundid);
+	ACTION_RETURN_BOOL(S_IsActorPlayingSomething(self, channel, soundid));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
@@ -512,7 +553,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2OffsetZ, Vec2OffsetZ)
 
 static void Vec2Offset(AActor *self, double x, double y, bool absolute, DVector2 *result)
 {
-	*result = self->Vec2OffsetZ(x, y, absolute);
+	*result = self->Vec2Offset(x, y, absolute);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, Vec2Offset, Vec2Offset)
@@ -566,7 +607,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, RestoreDamage, RestoreDamage)
 
 static int PlayerNumber(AActor *self)
 {
-	return self->player ? int(self->player - players) : 0;
+	return self->player ? self->Level->PlayerNum(self->player) : 0;
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, PlayerNumber, PlayerNumber)
@@ -799,9 +840,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, ClearCounters, ClearCounters)
 	return 0;
 }
 
-static int GetModifiedDamage(AActor *self, int type, int damage, bool passive)
+static int GetModifiedDamage(AActor *self, int type, int damage, bool passive, AActor *inflictor, AActor *source, int flags)
 {
-	return self->GetModifiedDamage(ENamedName(type), damage, passive);
+	return self->GetModifiedDamage(ENamedName(type), damage, passive, inflictor, source, flags);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetModifiedDamage, GetModifiedDamage)
@@ -810,7 +851,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetModifiedDamage, GetModifiedDamage)
 	PARAM_NAME(type);
 	PARAM_INT(damage);
 	PARAM_BOOL(passive);
-	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive));
+	PARAM_OBJECT(inflictor, AActor);
+	PARAM_OBJECT(source, AActor);
+	PARAM_INT(flags);
+	ACTION_RETURN_INT(self->GetModifiedDamage(type, damage, passive, inflictor, source, flags));
 }
 
 static int ApplyDamageFactor(AActor *self, int type, int damage)
@@ -893,31 +937,34 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetFloorTerrain, GetFloorTerrain)
 	ACTION_RETURN_POINTER(GetFloorTerrain(self));
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, FindUniqueTid, P_FindUniqueTID)
+static int P_FindUniqueTID(FLevelLocals *Level, int start, int limit)
 {
-	PARAM_PROLOGUE;
+	return Level->FindUniqueTID(start, limit);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, FindUniqueTid, P_FindUniqueTID)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
 	PARAM_INT(start);
 	PARAM_INT(limit);
-	ACTION_RETURN_INT(P_FindUniqueTID(start, limit));
+	ACTION_RETURN_INT(P_FindUniqueTID(self, start, limit));
 }
 
 static void RemoveFromHash(AActor *self)
 {
-	self->RemoveFromHash();
+	self->SetTID(0);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, RemoveFromHash, RemoveFromHash)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	self->RemoveFromHash();
+	RemoveFromHash(self);
 	return 0;
 }
 
 static void ChangeTid(AActor *self, int tid)
 {
-	self->RemoveFromHash();
-	self->tid = tid;
-	self->AddToHash();
+	self->SetTID(tid);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, ChangeTid, ChangeTid)
@@ -1227,31 +1274,31 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpriteIndex, ZS_GetSpriteIndex)
 
 static PClassActor *ZS_GetReplacement(PClassActor *c)
 {
-	return c->GetReplacement();
+	return c->GetReplacement(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacement, ZS_GetReplacement)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacement());
+	ACTION_RETURN_POINTER(ZS_GetReplacement(c));
 }
 
 static PClassActor *ZS_GetReplacee(PClassActor *c)
 {
-	return c->GetReplacee();
+	return c->GetReplacee(currentVMLevel);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetReplacee, ZS_GetReplacee)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(c, PClassActor);
-	ACTION_RETURN_POINTER(c->GetReplacee());
+	ACTION_RETURN_POINTER(ZS_GetReplacee(c));
 }
 
 static void DrawSplash(AActor *self, int count, double angle, int kind)
 {
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
@@ -1260,7 +1307,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, DrawSplash, DrawSplash)
 	PARAM_INT(count);
 	PARAM_FLOAT(angle);
 	PARAM_INT(kind);
-	P_DrawSplash(count, self->Pos(), angle, kind);
+	P_DrawSplash(self->Level, count, self->Pos(), angle, kind);
 	return 0;
 }
 
@@ -1325,7 +1372,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckSight, P_CheckSight)
 
 static void GiveSecret(AActor *self, bool printmessage, bool playsound)
 {
-	P_GiveSecret(self, printmessage, playsound, -1);
+	P_GiveSecret(self->Level, self, printmessage, playsound, -1);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
@@ -1333,7 +1380,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, GiveSecret, GiveSecret)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(printmessage);
 	PARAM_BOOL(playsound);
-	P_GiveSecret(self, printmessage, playsound, -1);
+	GiveSecret(self, printmessage, playsound);
 	return 0;
 }
 
@@ -1582,6 +1629,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_NoBlocking, A_Unblock)
 	return 0;
 }
 
+static void CopyBloodColor(AActor* self, AActor* other)
+{
+	if (self && other)
+	{
+		self->BloodColor = other->BloodColor;
+		self->BloodTranslation = other->BloodTranslation;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CopyBloodColor, CopyBloodColor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	CopyBloodColor(self, other);
+	return 0;
+}
+
 //=====================================================================================
 //
 // Inventory exports
@@ -1649,6 +1713,46 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckFor3DCeilingHit, CheckFor3DCeilingHit
 
 
 
+static int isFrozen(AActor *self)
+{
+	return self->isFrozen();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, isFrozen, isFrozen)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	ACTION_RETURN_BOOL(isFrozen(self));
+}
+
+
+//===========================================================================
+//
+// PlayerPawn functions
+//
+//===========================================================================
+
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, MarkPlayerSounds, S_MarkPlayerSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	S_MarkPlayerSounds(self);
+	return 0;
+}
+
+static void GetPrintableDisplayNameJit(PClassActor *cls, FString *result)
+{
+	*result = cls->GetDisplayName();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(APlayerPawn, GetPrintableDisplayName, GetPrintableDisplayNameJit)
+{
+	PARAM_PROLOGUE;
+	PARAM_CLASS(type, AActor);
+	ACTION_RETURN_STRING(type->GetDisplayName());
+}
+
+
+
+DEFINE_FIELD(DThinker, Level)
 DEFINE_FIELD(AActor, snext)
 DEFINE_FIELD(AActor, player)
 DEFINE_FIELD_NAMED(AActor, __Pos, pos)
@@ -1870,6 +1974,7 @@ DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitDir);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);

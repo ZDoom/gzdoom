@@ -36,6 +36,7 @@
 #include "r_state.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "serializer.h"
 
 
 //==========================================================================
@@ -46,7 +47,7 @@
 
 inline PClassActor * GetRealType(PClassActor * ti)
 {
-	PClassActor *rep = ti->GetReplacement(false);
+	PClassActor *rep = ti->GetReplacement(nullptr, false);
 	if (rep != ti && rep != NULL && rep->IsDescendantOf(NAME_DehackedPickup))
 	{
 		return rep;
@@ -55,6 +56,7 @@ inline PClassActor * GetRealType(PClassActor * ti)
 }
 
 TDeletingArray<FLightDefaults *> LightDefaults;
+int AttenuationIsSet = -1;
 
 //-----------------------------------------------------------------------------
 //
@@ -62,55 +64,107 @@ TDeletingArray<FLightDefaults *> LightDefaults;
 //
 //-----------------------------------------------------------------------------
 
-FLightDefaults::FLightDefaults(FName name, ELightType type)
+FSerializer &Serialize(FSerializer &arc, const char *key, FLightDefaults &value, FLightDefaults *def)
 {
-	m_Name = name;
-	m_type = type;
+	if (arc.BeginObject(key))
+	{
+		arc("name", value.m_Name)
+			.Array("args", value.m_Args, 5)
+			("param", value.m_Param)
+			("pos", value.m_Pos)
+			("type", value.m_type)
+			("attenuate", value.m_attenuate)
+			("flags", value.m_lightFlags)
+			("swapped", value.m_swapped)
+			("spot", value.m_spot)
+			("explicitpitch", value.m_explicitPitch)
+			("spotinner", value.m_spotInnerAngle)
+			("spotouter", value.m_spotOuterAngle)
+			("pitch", value.m_pitch)
+		.EndObject();
+	}
+	return arc;
 }
 
-void FLightDefaults::ApplyProperties(ADynamicLight * light) const
+FSerializer &Serialize(FSerializer &arc, const char *key, TDeletingArray<FLightDefaults *> &value, TDeletingArray<FLightDefaults *> *def)
+{
+	if (arc.isWriting())
+	{
+		if (value.Size() == 0) return arc;	// do not save empty arrays
+	}
+	bool res = arc.BeginArray(key);
+	if (arc.isReading())
+	{
+		if (!res)
+		{
+			value.Clear();
+			return arc;
+		}
+		value.Resize(arc.ArraySize());
+		for (auto &entry : value) entry = new FLightDefaults(NAME_None);
+	}
+	for (unsigned i = 0; i < value.Size(); i++)
+	{
+		Serialize(arc, nullptr, *value[i], nullptr);
+	}
+	arc.EndArray();
+	return arc;
+}
+
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FLightDefaults::ApplyProperties(FDynamicLight * light) const
 {
 	auto oldtype = light->lighttype;
 
+	light->m_active = true;
 	light->lighttype = m_type;
 	light->specialf1 = m_Param;
-	light->SetOffset(m_Pos);
-	light->halo = m_halo;
-	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a]), 0, 255);
-	light->args[LIGHT_INTENSITY] = m_Args[LIGHT_INTENSITY];
-	light->args[LIGHT_SECONDARY_INTENSITY] = m_Args[LIGHT_SECONDARY_INTENSITY];
-	light->lightflags &= ~(LF_ADDITIVE | LF_SUBTRACTIVE | LF_DONTLIGHTSELF);
-	if (m_subtractive) light->lightflags |= LF_SUBTRACTIVE;
-	if (m_additive) light->lightflags |= LF_ADDITIVE;
-	if (m_dontlightself) light->lightflags |= LF_DONTLIGHTSELF;
-	if (m_dontlightactors) light->lightflags |= LF_DONTLIGHTACTORS;
-	if (m_spot)
-		light->lightflags |= LF_SPOT;
-	light->SpotInnerAngle = m_spotInnerAngle;
-	light->SpotOuterAngle = m_spotOuterAngle;
+	light->pArgs = m_Args;
+	light->pLightFlags = &m_lightFlags;
+	if (m_lightFlags & LF_SPOT)
+	{
+		light->pSpotInnerAngle = &m_spotInnerAngle;
+		light->pSpotOuterAngle = &m_spotOuterAngle;
+		if (m_explicitPitch) light->pPitch = &m_pitch;
+		else light->pPitch = &light->target->Angles.Pitch;
+	}
 	light->m_tickCount = 0;
 	if (m_type == PulseLight)
 	{
 		float pulseTime = float(m_Param / TICRATE);
 
-		light->m_lastUpdate = level.maptime;
-		if (m_swapped) light->m_cycler.SetParams(float(light->args[LIGHT_SECONDARY_INTENSITY]), float(light->args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
-		else light->m_cycler.SetParams(float(light->args[LIGHT_INTENSITY]), float(light->args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
+		light->m_lastUpdate = light->Level->maptime;
+		if (m_swapped) light->m_cycler.SetParams(float(m_Args[LIGHT_SECONDARY_INTENSITY]), float(m_Args[LIGHT_INTENSITY]), pulseTime, oldtype == PulseLight);
+		else light->m_cycler.SetParams(float(m_Args[LIGHT_INTENSITY]), float(m_Args[LIGHT_SECONDARY_INTENSITY]), pulseTime, oldtype == PulseLight);
 		light->m_cycler.ShouldCycle(true);
 		light->m_cycler.SetCycleType(CYCLE_Sin);
 		light->m_currentRadius = (float)light->m_cycler.GetVal();
 		if (light->m_currentRadius <= 0) light->m_currentRadius = 1;
 		light->swapped = m_swapped;
 	}
+	light->SetOffset(m_Pos);	// this must be the last thing to do.
+}
 
-	switch (m_attenuate)
+void FLightDefaults::SetAttenuationForLevel(bool yes)
+{
+	if (AttenuationIsSet != int(yes))
 	{
-		case 0: light->lightflags &= ~LF_ATTENUATE; break;
-		case 1: light->lightflags |= LF_ATTENUATE; break;
-		default: if (level.flags3 & LEVEL3_ATTENUATE)  light->lightflags |= LF_ATTENUATE; else light->lightflags &= ~LF_ATTENUATE; break;
+		for (auto ldef : LightDefaults)
+		{
+			if (ldef->m_attenuate == -1)
+			{
+				if (yes)  ldef->m_lightFlags |= LF_ATTENUATE; else ldef->m_lightFlags &= ~LF_ATTENUATE;
+			}
+		}
+		AttenuationIsSet = yes;
 	}
-	}
-
+}
 
 //==========================================================================
 //

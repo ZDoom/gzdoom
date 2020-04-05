@@ -1,0 +1,244 @@
+The system is: Windows - 10.0.18363 - AMD64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/HostX64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.24.28316 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCCompilerId.c
+Microsoft (R) Incremental Linker Version 14.24.28316.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCCompilerId.exe 
+CMakeCCompilerId.obj 
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.exe"
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "CMakeCCompilerId.obj"
+
+The C compiler identification is MSVC, found in "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/3.15.19101501-MSVC_2/CompilerIdC/CMakeCCompilerId.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.24.28314/bin/HostX64/x64/cl.exe 
+Build flags: 
+Id flags:  
+
+The output was:
+0
+Microsoft (R) C/C++ Optimizing Compiler Version 19.24.28316 for x64
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+CMakeCXXCompilerId.cpp
+Microsoft (R) Incremental Linker Version 14.24.28316.0
+Copyright (C) Microsoft Corporation.  All rights reserved.
+
+/out:CMakeCXXCompilerId.exe 
+CMakeCXXCompilerId.obj 
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.exe"
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "CMakeCXXCompilerId.obj"
+
+The CXX compiler identification is MSVC, found in "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/3.15.19101501-MSVC_2/CompilerIdCXX/CMakeCXXCompilerId.exe"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_cc3a7 && [1/2] Building C object CMakeFiles\cmTC_cc3a7.dir\testCCompiler.c.obj
+[2/2] Linking C executable cmTC_cc3a7.exe
+
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_0149d && [1/2] Building C object CMakeFiles\cmTC_0149d.dir\CMakeCCompilerABI.c.obj
+[2/2] Linking C executable cmTC_0149d.exe
+
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_ba9aa && [1/2] Building CXX object CMakeFiles\cmTC_ba9aa.dir\testCXXCompiler.cxx.obj
+[2/2] Linking CXX executable cmTC_ba9aa.exe
+
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_1b0c7 && [1/2] Building CXX object CMakeFiles\cmTC_1b0c7.dir\CMakeCXXCompilerABI.cpp.obj
+[2/2] Linking CXX executable cmTC_1b0c7.exe
+
+
+
+Determining if the include file sys/types.h exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_42886 && [1/2] Building C object CMakeFiles\cmTC_42886.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_42886.exe
+
+
+
+Determining if the include file stdint.h exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_55d77 && [1/2] Building C object CMakeFiles\cmTC_55d77.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_55d77.exe
+
+
+
+Determining if the include file stddef.h exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_9e429 && [1/2] Building C object CMakeFiles\cmTC_9e429.dir\CheckIncludeFile.c.obj
+[2/2] Linking C executable cmTC_9e429.exe
+
+
+
+Determining if the function strdup exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_c51c7 && [1/2] Building C object CMakeFiles\cmTC_c51c7.dir\CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_c51c7.exe
+
+
+
+Determining size of 0i8 passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_ab711 && [1/2] Building C object CMakeFiles\cmTC_ab711.dir\SIZEOF_0I8.c.obj
+[2/2] Linking C executable cmTC_ab711.exe
+
+
+
+Determining size of 0l passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_ac3b2 && [1/2] Building C object CMakeFiles\cmTC_ac3b2.dir\SIZEOF_0L.c.obj
+[2/2] Linking C executable cmTC_ac3b2.exe
+
+
+
+Determining size of 0ll passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_82bbc && [1/2] Building C object CMakeFiles\cmTC_82bbc.dir\SIZEOF_0LL.c.obj
+[2/2] Linking C executable cmTC_82bbc.exe
+
+
+
+Determining size of char passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_d8526 && [1/2] Building C object CMakeFiles\cmTC_d8526.dir\SIZEOF_CHAR.c.obj
+[2/2] Linking C executable cmTC_d8526.exe
+
+
+
+Determining size of short passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_4e1dd && [1/2] Building C object CMakeFiles\cmTC_4e1dd.dir\SIZEOF_SHORT.c.obj
+[2/2] Linking C executable cmTC_4e1dd.exe
+
+
+
+Determining size of int passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_f5468 && [1/2] Building C object CMakeFiles\cmTC_f5468.dir\SIZEOF_INT.c.obj
+[2/2] Linking C executable cmTC_f5468.exe
+
+
+
+Determining size of long passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_21b39 && [1/2] Building C object CMakeFiles\cmTC_21b39.dir\SIZEOF_LONG.c.obj
+[2/2] Linking C executable cmTC_21b39.exe
+
+
+
+Determining size of long long passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_78ad8 && [1/2] Building C object CMakeFiles\cmTC_78ad8.dir\SIZEOF_LONG_LONG.c.obj
+[2/2] Linking C executable cmTC_78ad8.exe
+
+
+
+Determining size of void * passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_8e38a && [1/2] Building C object CMakeFiles\cmTC_8e38a.dir\SIZEOF_VOID_P.c.obj
+[2/2] Linking C executable cmTC_8e38a.exe
+
+
+
+Determining size of __int64 passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_eb917 && [1/2] Building C object CMakeFiles\cmTC_eb917.dir\SIZEOF___INT_64.c.obj
+[2/2] Linking C executable cmTC_eb917.exe
+
+
+
+Performing C++ SOURCE FILE Test HAVE_PARALLEL_FOR succeeded with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_a0726 && [1/2] Building CXX object CMakeFiles\cmTC_a0726.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_a0726.exe
+
+
+Source file was:
+#include <ppl.h>
+	int main() { concurrency::parallel_for(0, 1, 1, [](int) { } ); }
+Performing C++ SOURCE FILE Test HAVE_THREAD_LOCAL succeeded with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_792ad && [1/2] Building CXX object CMakeFiles\cmTC_792ad.dir\src.cxx.obj
+[2/2] Linking CXX executable cmTC_792ad.exe
+
+
+Source file was:
+thread_local int i; int main() { i = 0; }
+Determining if the function filelength exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_48efd && [1/2] Building C object CMakeFiles\cmTC_48efd.dir\CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_48efd.exe
+
+
+
+Determining if the function strupr exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_db9f5 && [1/2] Building C object CMakeFiles\cmTC_db9f5.dir\CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_db9f5.exe
+
+
+
+Determining if the function stricmp exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_7a0ac && [1/2] Building C object CMakeFiles\cmTC_7a0ac.dir\CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_7a0ac.exe
+
+
+
+Determining if the function strnicmp exists passed with the following output:
+Change Dir: C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug/CMakeFiles/CMakeTmp
+
+Run Build Command(s):C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe cmTC_b8fb8 && [1/2] Building C object CMakeFiles\cmTC_b8fb8.dir\CheckFunctionExists.c.obj
+[2/2] Linking C executable cmTC_b8fb8.exe
+
+
+

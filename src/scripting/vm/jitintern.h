@@ -1,6 +1,6 @@
 
 #include "jit.h"
-#include "i_system.h"
+
 #include "types.h"
 #include "stats.h"
 
@@ -135,8 +135,23 @@ private:
 				cc.movsd(epsilonXmm, epsilon);
 				cc.ucomisd(epsilonXmm, tmp);
 
-				if (check) cc.ja(fail);
-				else       cc.jna(fail);
+				if (check)
+				{
+					cc.jp(success);
+					if (i == (N - 1))
+					{
+						cc.ja(fail);
+					}
+					else
+					{
+						cc.jna(success);
+					}
+				}
+				else
+				{
+					cc.jp(fail);
+					cc.jna(fail);
+				}
 			}
 		}
 	}

@@ -1,0 +1,540 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19
+					],
+					"hasInstallRule" : true,
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"projectIndex" : 0,
+					"source" : "."
+				},
+				{
+					"build" : "libraries/glslang/glslang",
+					"childIndexes" : 
+					[
+						2
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libraries/glslang/glslang",
+					"targetIndexes" : 
+					[
+						8
+					]
+				},
+				{
+					"build" : "libraries/glslang/glslang/OSDependent/Windows",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.12"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 0,
+					"source" : "libraries/glslang/glslang/OSDependent/Windows",
+					"targetIndexes" : 
+					[
+						1
+					]
+				},
+				{
+					"build" : "libraries/glslang/spirv",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libraries/glslang/spirv",
+					"targetIndexes" : 
+					[
+						2
+					]
+				},
+				{
+					"build" : "libraries/glslang/OGLCompilersDLL",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.12"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libraries/glslang/OGLCompilersDLL",
+					"targetIndexes" : 
+					[
+						0
+					]
+				},
+				{
+					"build" : "libraries/zlib",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 1,
+					"source" : "libraries/zlib",
+					"targetIndexes" : 
+					[
+						16
+					]
+				},
+				{
+					"build" : "libraries/asmjit",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 2,
+					"source" : "libraries/asmjit",
+					"targetIndexes" : 
+					[
+						3
+					]
+				},
+				{
+					"build" : "libraries/jpeg",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libraries/jpeg",
+					"targetIndexes" : 
+					[
+						10
+					]
+				},
+				{
+					"build" : "libraries/bzip2",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libraries/bzip2",
+					"targetIndexes" : 
+					[
+						5
+					]
+				},
+				{
+					"build" : "libraries/lzma",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libraries/lzma",
+					"targetIndexes" : 
+					[
+						13
+					]
+				},
+				{
+					"build" : "tools",
+					"childIndexes" : 
+					[
+						11,
+						12,
+						13
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "tools"
+				},
+				{
+					"build" : "tools/re2c",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 10,
+					"projectIndex" : 0,
+					"source" : "tools/re2c",
+					"targetIndexes" : 
+					[
+						14
+					]
+				},
+				{
+					"build" : "tools/lemon",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 10,
+					"projectIndex" : 0,
+					"source" : "tools/lemon",
+					"targetIndexes" : 
+					[
+						11
+					]
+				},
+				{
+					"build" : "tools/zipdir",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 10,
+					"projectIndex" : 0,
+					"source" : "tools/zipdir",
+					"targetIndexes" : 
+					[
+						18
+					]
+				},
+				{
+					"build" : "libraries/gdtoa",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "libraries/gdtoa",
+					"targetIndexes" : 
+					[
+						7
+					]
+				},
+				{
+					"build" : "wadsrc",
+					"hasInstallRule" : true,
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "wadsrc",
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"build" : "wadsrc_bm",
+					"hasInstallRule" : true,
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.4"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "wadsrc_bm",
+					"targetIndexes" : 
+					[
+						4
+					]
+				},
+				{
+					"build" : "wadsrc_lights",
+					"hasInstallRule" : true,
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.4"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "wadsrc_lights",
+					"targetIndexes" : 
+					[
+						12
+					]
+				},
+				{
+					"build" : "wadsrc_extra",
+					"hasInstallRule" : true,
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "wadsrc_extra",
+					"targetIndexes" : 
+					[
+						6
+					]
+				},
+				{
+					"build" : "src",
+					"hasInstallRule" : true,
+					"minimumCMakeVersion" : 
+					{
+						"string" : "2.8.7"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "src",
+					"targetIndexes" : 
+					[
+						15,
+						17
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1,
+						2
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19
+					],
+					"name" : "GZDoom",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						17,
+						18
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						5
+					],
+					"name" : "zlib",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						16
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						6
+					],
+					"name" : "asmjit",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 4,
+					"id" : "OGLCompiler::@be5ce1db179323e6489b",
+					"jsonFile" : "target-OGLCompiler-Debug-01563034ea9bb89d5627.json",
+					"name" : "OGLCompiler",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "OSDependent::@0a72380bf0a8207701d7",
+					"jsonFile" : "target-OSDependent-Debug-74fc29055f9d968ef406.json",
+					"name" : "OSDependent",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "SPIRV::@a405b3c36a6273687a56",
+					"jsonFile" : "target-SPIRV-Debug-b7c2e7756bb54ef531e1.json",
+					"name" : "SPIRV",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "asmjit::@e74042b11eaeea54eba1",
+					"jsonFile" : "target-asmjit-Debug-899893c4271ee521c8d0.json",
+					"name" : "asmjit",
+					"projectIndex" : 2
+				},
+				{
+					"directoryIndex" : 16,
+					"id" : "brightmaps_pk3::@7128bec4994b8c3ef0d8",
+					"jsonFile" : "target-brightmaps_pk3-Debug-6c583cdb7f7f1d75d1d2.json",
+					"name" : "brightmaps_pk3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "bz2::@a9461d0589e71dec3106",
+					"jsonFile" : "target-bz2-Debug-1a7331bc1fc4258034c9.json",
+					"name" : "bz2",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 18,
+					"id" : "game_support_pk3::@40667f75ec2138c2d9e3",
+					"jsonFile" : "target-game_support_pk3-Debug-42187d6091c3ead30390.json",
+					"name" : "game_support_pk3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 14,
+					"id" : "gdtoa::@b9322ae524f0998d932c",
+					"jsonFile" : "target-gdtoa-Debug-5cfe3f0ae00c1d8ddcd0.json",
+					"name" : "gdtoa",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "glslang::@a9f8b9af1162e156b2be",
+					"jsonFile" : "target-glslang-Debug-ba5d8f7038ca44e79563.json",
+					"name" : "glslang",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 15,
+					"id" : "gzdoom_pk3::@0fdc2bb3109a833e2bf8",
+					"jsonFile" : "target-gzdoom_pk3-Debug-63f50299393d29130f38.json",
+					"name" : "gzdoom_pk3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 7,
+					"id" : "jpeg::@31f1bb484d0f63e89b53",
+					"jsonFile" : "target-jpeg-Debug-0dda8c84d5b199b6247a.json",
+					"name" : "jpeg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 12,
+					"id" : "lemon::@eb298f56fea3ca13aa50",
+					"jsonFile" : "target-lemon-Debug-dfaff286f079e9269d61.json",
+					"name" : "lemon",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 17,
+					"id" : "lights_pk3::@8921d263e48f80792692",
+					"jsonFile" : "target-lights_pk3-Debug-dcb5d03976f0bffb16d1.json",
+					"name" : "lights_pk3",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 9,
+					"id" : "lzma::@1c6fa9378a584ead2522",
+					"jsonFile" : "target-lzma-Debug-94f2e0d6e6d2269142a2.json",
+					"name" : "lzma",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 11,
+					"id" : "re2c::@e8b3cbd14ff1bc9a69fe",
+					"jsonFile" : "target-re2c-Debug-e1f76b692639aeba4ac8.json",
+					"name" : "re2c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 19,
+					"id" : "revision_check::@145eef247bfb46b6828c",
+					"jsonFile" : "target-revision_check-Debug-ad7f107b913f8194bd7e.json",
+					"name" : "revision_check",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "z::@bc4de14f7a3da448f3d1",
+					"jsonFile" : "target-z-Debug-8825a2217abde8fa15d9.json",
+					"name" : "z",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 19,
+					"id" : "zdoom::@145eef247bfb46b6828c",
+					"jsonFile" : "target-zdoom-Debug-86f0f61b87730b5011d2.json",
+					"name" : "zdoom",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 13,
+					"id" : "zipdir::@4e3b9157d490e4153562",
+					"jsonFile" : "target-zipdir-Debug-bf44c813c9093329b580.json",
+					"name" : "zipdir",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/out/build/x64-Debug",
+		"source" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 0
+	}
+}

@@ -1,0 +1,7 @@
+#include "../swrenderer/textures/r_swtexture.h"
+#include "drawers/poly_triangle.cpp"
+#include "drawers/poly_thread.cpp"
+#include "drawers/screen_triangle.cpp"
+#include "drawers/screen_scanline_setup.cpp"
+#include "drawers/screen_shader.cpp"
+#include "drawers/screen_blend.cpp"

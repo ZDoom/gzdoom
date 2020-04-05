@@ -301,6 +301,8 @@ enum EFxType
 	EFX_ColorLiteral,
 	EFX_GetDefaultByType,
 	EFX_FontCast,
+	EFX_LocalArrayDeclaration,
+	EFX_OutVarDereference,
 	EFX_COUNT
 };
 
@@ -1806,6 +1808,7 @@ class FxCompoundStatement : public FxSequence
 	friend class FxLocalVariableDeclaration;
 	friend class FxStaticArray;
 	friend class FxMultiAssign;
+	friend class FxLocalArrayDeclaration;
 
 public:
 	FxCompoundStatement(const FScriptPosition &pos) : FxSequence(pos) {}
@@ -2104,7 +2107,7 @@ public:
 		: FxExpression(EFX_Nop, p)
 	{
 		isresolved = true;
-		ValueType = TypeError;
+		ValueType = TypeVoid;
 	}
 	ExpEmit Emit(VMFunctionBuilder *build)
 	{
@@ -2123,11 +2126,19 @@ class FxLocalVariableDeclaration : public FxExpression
 	friend class FxCompoundStatement;
 	friend class FxLocalVariable;
 	friend class FxStaticArrayVariable;
+	friend class FxLocalArrayDeclaration;
+	friend class FxStructMember;
 
 	FName Name;
 	FxExpression *Init;
 	int VarFlags;
 	int RegCount;
+
+protected:
+	FxExpression *clearExpr;
+
+	void ClearDynamicArray(VMFunctionBuilder *build);
+
 public:
 	int StackOffset = -1;
 	int RegNum = -1;
@@ -2179,6 +2190,47 @@ public:
 		delete this;
 		return nullptr;
 	}
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxLocalArrayDeclaration : public FxLocalVariableDeclaration
+{
+	PType *ElementType;
+	FArgumentList values;
+
+public:
+
+	FxLocalArrayDeclaration(PType *type, FName name, FArgumentList &args, int varflags, const FScriptPosition &pos);
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FxOutVarDereference : public FxExpression
+{
+	FxExpression *Self;
+	PType *SelfType;
+	bool AddressWritable;
+
+public:
+	FxOutVarDereference(FxExpression *self, const FScriptPosition &p)
+		: FxExpression(EFX_OutVarDereference, p), Self (self)
+	{
+	}
+	~FxOutVarDereference();
+	FxExpression *Resolve(FCompileContext &);
+	bool RequestAddress(FCompileContext &ctx, bool *writable);
+	ExpEmit Emit(VMFunctionBuilder *build);
 };
 
 #endif

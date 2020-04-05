@@ -1,0 +1,96 @@
+{
+	"archive" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "/machine:x64",
+				"role" : "flags"
+			}
+		]
+	},
+	"artifacts" : 
+	[
+		{
+			"path" : "libraries/glslang/glslang/OSDependent/Windows/OSDependent.lib"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library"
+		],
+		"files" : 
+		[
+			"libraries/glslang/glslang/OSDependent/Windows/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 3,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/DWIN32 /D_WINDOWS /W3  /EHsc /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600 /fp:fast  /O2 /Ob2 /DNDEBUG /MTd /Oy /Oi /GS-  "
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"folder" : 
+	{
+		"name" : "glslang"
+	},
+	"id" : "OSDependent::@0a72380bf0a8207701d7",
+	"name" : "OSDependent",
+	"nameOnDisk" : "OSDependent.lib",
+	"paths" : 
+	{
+		"build" : "libraries/glslang/glslang/OSDependent/Windows",
+		"source" : "libraries/glslang/glslang/OSDependent/Windows"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/OSDependent/Windows/ossource.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/OSDependent/osinclude.h",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

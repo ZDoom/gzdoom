@@ -36,8 +36,8 @@ gameinfo
 	weaponslot = 5, "ZorchPropulsor"
 	weaponslot = 6, "PhasingZorcher"
 	weaponslot = 7, "LAZDevice"
-	dimcolor = "ff d7 00"
-	dimamount = 0.2
+	dimcolor = "1a 30 00"
+	dimamount = 0.5
 	bluramount = 0.0
 	menuslidercolor = "Orange"
 	definventorymaxamount = 25
@@ -64,13 +64,17 @@ gameinfo
 	textscreeny = 10
 	defaultendsequence = "Inter_Pic1"
 	maparrow = "maparrows/arrow.txt", "maparrows/ddtarrow.txt"
-	statscreen_mapnamefont = "BigFont"
-	statscreen_finishedpatch = "WIF"
-	statscreen_enteringpatch = "WIENTER"
+	statscreen_mapnamefont = "*BigFont"
+	statscreen_finishedfont = "*BigFont"
+	statscreen_enteringfont = "*BigFont"
+	statscreen_contentfont = "*BigFont"
+	statscreen_authorFont = "*SmallFont", "gray"
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "DoomStatusScreen"
 	messageboxclass = "MessageBoxMenu"
+	normforwardmove = 0x19, 0x32
+	normsidemove = 0x18, 0x28
 }
 
 DoomEdNums
@@ -187,7 +191,7 @@ clearepisodes
 episode e1m1
 {
 	picname = "M_EPI1"
-	name = "Chex Quest"
+	name = "$TXT_CHEX_EP"
 	key = "k"
 }
 
@@ -254,6 +258,7 @@ map E1M5 lookup "CHUSTR_E1M5"
 	cluster = 1
 	par = 165
 	music = "$MUSIC_E1M5"
+	needclustertext
 }
 
 // Clusters (correspond with same-numbered episode)

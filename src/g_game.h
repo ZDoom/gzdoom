@@ -32,15 +32,40 @@ struct event_t;
 
 #include "dobjgc.h"
 
+// The current state of the game: whether we are
+// playing, gazing at the intermission screen,
+// the game final animation, or a demo. 
+enum gamestate_t : int
+{
+	GS_LEVEL,
+	GS_INTERMISSION,
+	GS_FINALE,
+	GS_DEMOSCREEN,
+	GS_FULLCONSOLE,		// [RH]	Fullscreen console
+	GS_HIDECONSOLE,		// [RH] The menu just did something that should hide fs console
+	GS_STARTUP,			// [RH] Console is fullscreen, and game is just starting
+	GS_TITLELEVEL,		// [RH] A combination of GS_LEVEL and GS_DEMOSCREEN
+
+	GS_FORCEWIPE = -1,
+	GS_FORCEWIPEFADE = -2,
+	GS_FORCEWIPEBURN = -3,
+	GS_FORCEWIPEMELT = -4
+};
+
+extern	gamestate_t 	gamestate;
+
+// wipegamestate can be set to -1
+//	to force a wipe on the next draw
+extern gamestate_t wipegamestate;
+
+
 
 class AActor;
+struct FLevelLocals;
 
 //
 // GAME
 //
-void G_DeathMatchSpawnPlayer (int playernum);
-
-struct FPlayerStart *G_PickPlayerStart (int playernum, int flags = 0);
 enum
 {
 	PPS_FORCERANDOM			= 1,
@@ -57,6 +82,8 @@ void G_DoLoadGame (void);
 
 // Called by M_Responder.
 void G_SaveGame (const char *filename, const char *description);
+// Called by messagebox
+void G_DoQuickSave ();
 
 // Only called by startup code.
 void G_RecordDemo (const char* name);
@@ -67,13 +94,11 @@ void G_PlayDemo (char* name);
 void G_TimeDemo (const char* name);
 bool G_CheckDemoStatus (void);
 
-void G_WorldDone (void);
-
 void G_Ticker (void);
 bool G_Responder (event_t*	ev);
 
-void G_ScreenShot (char *filename);
-void G_StartSlideshow(FName whichone);
+void G_ScreenShot (const char* filename);
+void G_StartSlideshow(FLevelLocals *Level, FName whichone);
 
 FString G_BuildSaveName (const char *prefix, int slot);
 
@@ -89,7 +114,6 @@ enum EFinishLevelType
 
 void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags);
 
-void G_DoReborn (int playernum, bool freshbot);
 void G_DoPlayerPop(int playernum);
 
 // Adds pitch to consoleplayer's viewpitch and clamps it

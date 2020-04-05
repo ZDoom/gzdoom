@@ -1,5 +1,5 @@
 
-in vec2 TexCoord;
+layout(location=0) in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
 // A node in an AABB binary tree with lines stored in the leaf nodes
@@ -20,17 +20,17 @@ struct GPULine
 	vec2 delta;     // Line end position - line start position
 };
 
-layout(std430, binding = 2) buffer LightNodes
+layout(std430, binding = 4) buffer LightNodes
 {
 	GPUNode nodes[];
 };
 
-layout(std430, binding = 3) buffer LightLines
+layout(std430, binding = 5) buffer LightLines
 {
 	GPULine lines[];
 };
 
-layout(std430, binding = 4) buffer LightList
+layout(std430, binding = 6) buffer LightList
 {
 	vec4 lights[];
 };
@@ -109,9 +109,9 @@ float rayTest(vec2 ray_start, vec2 ray_end)
 	// Walk the AABB binary tree searching for nodes touching the ray line segment's AABB box.
 	// When it reaches a leaf node, use a line segment intersection test to see if we got a hit.
 
-	int stack[16];
+	int stack[32];
 	int stack_pos = 1;
-	stack[0] = nodes.length() - 1;
+	stack[0] = NodesCount - 1;
 	while (stack_pos > 0)
 	{
 		int node_index = stack[stack_pos - 1];
@@ -125,7 +125,7 @@ float rayTest(vec2 ray_start, vec2 ray_end)
 			t = min(intersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), t);
 			stack_pos--;
 		}
-		else if (stack_pos == 16)
+		else if (stack_pos == 32)
 		{
 			stack_pos--; // stack overflow
 		}

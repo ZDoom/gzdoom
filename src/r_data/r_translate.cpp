@@ -772,6 +772,35 @@ bool FRemapTable::AddToTranslation(const char *range)
 
 //----------------------------------------------------------------------------
 //
+// Adds raw colors to a given translation
+//
+//----------------------------------------------------------------------------
+
+bool FRemapTable::AddColors(int start, int count, const uint8_t*colors)
+{
+	int end = start + count;
+	if (IndexOutOfRange(start, end))
+	{
+		return false;
+	}
+
+	for (int i = start; i < end; ++i)
+	{
+		auto br = colors[0];
+		auto bg = colors[1];
+		auto bb = colors[2];
+		colors += 3;
+
+		int j = GPalette.Remap[i];
+		Palette[j] = PalEntry(j == 0 ? 0 : 255, br, bg, bb);
+		Remap[j] = ColorMatcher.Pick(Palette[j]);
+	}
+	return true;
+
+}
+
+//----------------------------------------------------------------------------
+//
 // Stores a copy of this translation in the DECORATE translation table
 //
 //----------------------------------------------------------------------------
@@ -919,7 +948,7 @@ void R_InitTranslationTables ()
 
 	// Each player corpse has its own translation so they won't change
 	// color if the player who created them changes theirs.
-	for (i = 0; i < level.BODYQUESIZE; ++i)
+	for (i = 0; i < FLevelLocals::BODYQUESIZE; ++i)
 	{
 		PushIdentityTable(TRANSLATION_PlayerCorpses);
 	}
@@ -1191,7 +1220,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		table->Palette[i].a = 255;
 	}
 
-	// [GRB] Don't translate skins with color range 0-0 (APlayerPawn default)
+	// [GRB] Don't translate skins with color range 0-0 (PlayerPawn default)
 	if (start == 0 && end == 0)
 	{
 		table->Inactive = true;
@@ -1521,16 +1550,30 @@ void R_ParseTrnslate()
 			do
 			{
 				sc.MustGetToken(TK_StringConst);
-
-				try
+				int pallump = Wads.CheckNumForFullName(sc.String, true, ns_global);
+				if (pallump >= 0)	// 
 				{
-					NewTranslation.AddToTranslation(sc.String);
+					int start = 0;
+					if (sc.CheckToken(','))
+					{
+						sc.MustGetValue(false);
+						start = sc.Number;
+					}
+					uint8_t palette[768];
+					int numcolors = ReadPalette(pallump, palette);
+					NewTranslation.AddColors(start, numcolors, palette);
 				}
-				catch (CRecoverableError &err)
+				else
 				{
-					sc.ScriptMessage("Error in translation '%s':\n" TEXTCOLOR_YELLOW "%s\n", sc.String, err.GetMessage());
+					try
+					{
+						NewTranslation.AddToTranslation(sc.String);
+					}
+					catch (CRecoverableError & err)
+					{
+						sc.ScriptMessage("Error in translation '%s':\n" TEXTCOLOR_YELLOW "%s\n", sc.String, err.GetMessage());
+					}
 				}
-
 			} while (sc.CheckToken(','));
 
 			int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);

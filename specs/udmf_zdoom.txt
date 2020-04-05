@@ -27,8 +27,8 @@ II. Implementation Semantics
 II.A : Storage and Retrieval of Data
 ------------------------------------
 
-Any TEXTMAP lump in the described namespaces must be encoded in ISO 8859-1 which
-as of this writing is the only character encoding supported by ZDoom.
+Any TEXTMAP lump in the described namespaces must be encoded in either ISO 8859-1, Windows-1252 or UTF-8
+with UTF-8 being the recommended encoding.
 
 -----------------------------------
 II.B : Storage Within Archive Files
@@ -140,6 +140,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
                                   // 12: Unexplored secret wall.
                                   // 13: Portal line.
       revealed = <bool>;          // true = line is initially visible on automap.
+      noskywalls = <bool>;        // true = skies are not drawn above or below this line
+      drawfullheight = <bool>;    // true = draw the maximum height instead of the minimum height
 
       health = <int>;             // Amount of hitpoints for this line.
       healthgroup = <int>;        // ID of destructible object to synchronize hitpoints (optional, default is 0)
@@ -200,6 +202,19 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 	  useowncolors_bottom = <bool>; // Set to 1 to use the colors set in the sidedef. Default is using the colors from the owning sector.
 	  uppercolor_bottom = <int>;    // Material color of the top of the lower tier.
 	  lowercolor_bottom = <int>;    // Material color of the bottom of the lower tier. (Hardware rendering only.)
+      colorscalefactor_top = <float>  // scales the material color by the given factor.  Default is 1.
+      colorscalefactor_mid = <float>  // scales the material color by the given factor.  Default is 1.
+      colorscalefactor_bottom = <float>  // scales the material color by the given factor.  Default is 1.
+
+      useowncoloradd_top = <bool>;  // Controls where the advanced colorization properties are taken from.
+      useowncoloradd_mid = <bool>;  // 0: From the containing sector, 1: from the given part of the linedef itself
+      useowncoloradd_bottom = <bool>;  // Default for all 3 is 0.
+      coloradd_top = <int>;         // Additive material color to apply to top section of sidedef. Default is black (0x000000)
+      coloradd_mid = <int>;         // Additive material color to apply to middle section of sidedef. Default is black (0x000000)
+      coloradd_bottom = <int>;      // Additive material color to apply to bottom section of sidedef. Default is black (0x000000)
+      colorization_top = <int>;     // Sets a colorization record for the upper texture. Colorization records must be defined in TEXTURES.
+      colorization_mid = <int>;     // Sets a colorization record for the middle texture. Colorization records must be defined in TEXTURES.
+      colorization_bottom = <int>;  // Sets a colorization record for the lower texture. Colorization records must be defined in TEXTURES.
    }
 
    sector
@@ -217,16 +232,16 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       ceilingplane_a = <float>;       // Define the plane equation for the sector's ceiling. Default is a horizontal plane at 'heightceiling'.
       ceilingplane_b = <float>;       // 'heightceiling' will still be used to calculate texture alignment.
       ceilingplane_c = <float>;       // The plane equation will only be used if all 4 values are given.
-      ceilingplane_d = <float>;
+      ceilingplane_d = <float>;       // The plane is defined as a*x + b*y + c*z + d = 0 with the normal vector pointing downward.
       floorplane_a = <float>;         // Define the plane equation for the sector's floor. Default is a horizontal plane at 'heightfloor'.
       floorplane_b = <float>;         // 'heightfloor' will still be used to calculate texture alignment.
       floorplane_c = <float>;         // The plane equation will only be used if all 4 values are given.
-      floorplane_d = <float>;
+      floorplane_d = <float>;         // The plane is defined as a*x + b*y + c*z + d = 0 with the normal vector pointing upward.
       lightfloor = <integer>;         // The floor's light level. Default is 0.
       lightceiling = <integer>;       // The ceiling's light level. Default is 0.
-      lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is 
+      lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is
                                       // relative to the owning sector's light level.
-      lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is 
+      lightceilingabsolute = <bool>;  // true = 'lightceiling' is an absolute value. Default is
                                       // relative to the owning sector's light level.
       alphafloor = <float>;           // translucency of floor plane (only has meaning with Sector_SetPortal) Default is 1.0.
       alphaceiling = <float>;         // translucency of ceiling plane (only has meaning with Sector_SetPortal) Default is 1.0.
@@ -273,6 +288,15 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
       color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
 
+      coloradd_floor = <int>;         // Additive material color applied to the sector floor. Default is black (0x000000)
+      coloradd_ceiling = <int>;       // Additive material color applied to the sector ceiling. Default is black (0x000000)
+      coloradd_sprites = <int>;       // Additive material color applied to sprites within the sector. Default is black (0x000000)
+      coloradd_walls = <int>;         // Additive material color applied to walls within the sector. Default is black (0x000000)
+
+      colorization_floor = <int>;     // Sets a colorization record for the floor texture. Colorization records must be defined in TEXTURES.
+      colorization_ceiling = <int>;     // Sets a colorization record for the ceiling texture. Colorization records must be defined in TEXTURES.
+
+      noskywalls = <bool>;            // If true, do not draw skybox walls above/below this sector
 
       portal_ceil_blocksound = <bool>;     // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>;       // ceiling portal disabled.
@@ -480,6 +504,9 @@ arg0str in dynamic lights.
 1.30 20.05.2018
 Added automapstyle and revealed linedef properties.
 Replaced tabs with spaces.
+
+1.31 22.12.2019
+Coloriation options added
 
 ===============================================================================
 EOF

@@ -98,6 +98,7 @@ extern int SinglePlayerClass[/*MAXPLAYERS*/];
 // -------------------------
 // Internal parameters for sound rendering.
 
+EXTERN_CVAR (Float, snd_mastervolume)	// maximum master volume
 EXTERN_CVAR (Float, snd_sfxvolume)		// maximum volume for sound
 EXTERN_CVAR (Float, snd_musicvolume)	// maximum volume for music
 
@@ -248,9 +249,11 @@ EXTERN_CVAR (Int, dmflags2);	// [BC]
 
 EXTERN_CVAR (Int, compatflags);
 EXTERN_CVAR (Int, compatflags2);
-extern int i_compatflags, i_compatflags2, ii_compatflags, ii_compatflags2, ib_compatflags;
 
 // Filters from AddAutoloadFiles(). Used to filter files from archives.
 extern FString LumpFilterIWAD;
+
+// These control whether certain items use generic text output instead of game-specific one.
+extern bool generic_ui;
 
 #endif

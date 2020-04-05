@@ -241,7 +241,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 				applyscale = false;
 			}
 			if(type == PLAYERICON)
-				texture = TexMan.GetTexture(statusBar->CPlayer->mo->ScoreIcon, true);
+				texture = TexMan.ByIndex(statusBar->CPlayer->mo->IntVar(NAME_ScoreIcon), true);
 			else if(type == AMMO1)
 			{
 				auto ammo = statusBar->ammo1;
@@ -293,8 +293,8 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			}
 			else if(type == INVENTORYICON)
 				texture = TexMan.GetTexture(sprite, true);
-			else if(type == SELECTEDINVENTORYICON && statusBar->CPlayer->mo->InvSel != NULL)
-				texture = TexMan.GetTexture(statusBar->CPlayer->mo->InvSel->TextureIDVar(NAME_Icon), true);
+			else if(type == SELECTEDINVENTORYICON && statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) != NULL)
+				texture = TexMan.GetTexture(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->TextureIDVar(NAME_Icon), true);
 			else if(image >= 0)
 				texture = statusBar->Images[image];
 			
@@ -850,26 +850,26 @@ class CommandDrawString : public SBarInfoCommand
 			switch(strValue)
 			{
 				case LEVELNAME:
-					if(level.lumpnum != cache)
+					if(primaryLevel->lumpnum != cache)
 					{
-						cache = level.lumpnum;
-						str = level.LevelName;
+						cache = primaryLevel->lumpnum;
+						str = primaryLevel->LevelName;
 						RealignString();
 					}
 					break;
 				case LEVELLUMP:
-					if(level.lumpnum != cache)
+					if(primaryLevel->lumpnum != cache)
 					{
-						cache = level.lumpnum;
-						str = level.MapName;
+						cache = primaryLevel->lumpnum;
+						str = primaryLevel->MapName;
 						str.ToUpper();
 						RealignString();
 					}
 					break;
 				case SKILLNAME:
-					if(level.lumpnum != cache) // Can only change skill between level.
+					if(primaryLevel->lumpnum != cache) // Can only change skill between primaryLevel->
 					{
-						cache = level.lumpnum;
+						cache = primaryLevel->lumpnum;
 						str = G_SkillName();
 						RealignString();
 					}
@@ -892,7 +892,7 @@ class CommandDrawString : public SBarInfoCommand
 					SetStringToTag(statusBar->CPlayer->ReadyWeapon);
 					break;
 				case INVENTORYTAG:
-					SetStringToTag(statusBar->CPlayer->mo->InvSel);
+					SetStringToTag(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel));
 					break;
 				case PLAYERNAME:
 					// Can't think of a good way to detect changes to this, so
@@ -904,7 +904,7 @@ class CommandDrawString : public SBarInfoCommand
 					if(ACS_GlobalVars[valueArgument] != cache)
 					{
 						cache = ACS_GlobalVars[valueArgument];
-						str = FBehavior::StaticLookupString(ACS_GlobalVars[valueArgument]);
+						str = primaryLevel->Behaviors.LookupString(ACS_GlobalVars[valueArgument]);
 						RealignString();
 					}
 					break;
@@ -912,18 +912,18 @@ class CommandDrawString : public SBarInfoCommand
 					if(ACS_GlobalArrays[valueArgument][consoleplayer] != cache)
 					{
 						cache = ACS_GlobalArrays[valueArgument][consoleplayer];
-						str = FBehavior::StaticLookupString(ACS_GlobalArrays[valueArgument][consoleplayer]);
+						str = primaryLevel->Behaviors.LookupString(ACS_GlobalArrays[valueArgument][consoleplayer]);
 						RealignString();
 					}
 					break;
 				case TIME:
 				{
-					int sec = Tics2Seconds(level.time); 
+					int sec = Tics2Seconds(primaryLevel->time); 
 					str.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
 					break;
 				}
 				case LOGTEXT:
-					str = statusBar->CPlayer->LogText;
+					str = GStrings(statusBar->CPlayer->LogText);
 					break;
 				default:
 					break;
@@ -1025,7 +1025,7 @@ class CommandDrawNumber : public CommandDrawString
 			usePrefix(false), interpolationSpeed(0), drawValue(0), length(3),
 			lowValue(-1), lowTranslation(CR_UNTRANSLATED), highValue(-1),
 			highTranslation(CR_UNTRANSLATED), value(CONSTANT),
-			inventoryItem(NULL), cvarName(nullptr)
+			inventoryItem(NULL)
 		{
 		}
 
@@ -1389,25 +1389,25 @@ class CommandDrawNumber : public CommandDrawString
 					num = statusBar->CPlayer->fragcount;
 					break;
 				case KILLS:
-					num = level.killed_monsters;
+					num = primaryLevel->killed_monsters;
 					break;
 				case MONSTERS:
-					num = level.total_monsters;
+					num = primaryLevel->total_monsters;
 					break;
 				case ITEMS:
-					num = level.found_items;
+					num = primaryLevel->found_items;
 					break;
 				case TOTALITEMS:
-					num = level.total_items;
+					num = primaryLevel->total_items;
 					break;
 				case SECRETS:
-					num = level.found_secrets;
+					num = primaryLevel->found_secrets;
 					break;
 				case SCORE:
 					num = statusBar->CPlayer->mo->Score;
 					break;
 				case TOTALSECRETS:
-					num = level.total_secrets;
+					num = primaryLevel->total_secrets;
 					break;
 				case ARMORCLASS:
 				case SAVEPERCENT:
@@ -1420,7 +1420,7 @@ class CommandDrawNumber : public CommandDrawString
 						add = Slots[0] + Slots[1] + Slots[2] + Slots[3] + Slots[4];
 					}
 					//Hexen counts basic armor also so we should too.
-					if(statusBar->armor != NULL)
+					if(statusBar->armor != nullptr && statusBar->armor->IntVar(NAME_Amount) > 0)
 					{
 						add += statusBar->armor->FloatVar(NAME_SavePercent) * 100;
 					}
@@ -1459,14 +1459,14 @@ class CommandDrawNumber : public CommandDrawString
 				case AIRTIME:
 				{
 					if(statusBar->CPlayer->mo->waterlevel < 3)
-						num = level.airsupply/TICRATE;
+						num = primaryLevel->airsupply/TICRATE;
 					else
-						num = clamp<int>((statusBar->CPlayer->air_finished - level.time + (TICRATE-1))/TICRATE, 0, INT_MAX);
+						num = clamp<int>((statusBar->CPlayer->air_finished - primaryLevel->maptime + (TICRATE-1))/TICRATE, 0, INT_MAX);
 					break;
 				}
 				case SELECTEDINVENTORY:
-					if(statusBar->CPlayer->mo->InvSel != NULL)
-						num = statusBar->CPlayer->mo->InvSel->IntVar(NAME_Amount);
+					if(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) != NULL)
+						num = statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->IntVar(NAME_Amount);
 					break;
 				case ACCURACY:
 					num = statusBar->CPlayer->mo->accuracy;
@@ -1484,7 +1484,7 @@ class CommandDrawNumber : public CommandDrawString
 					break;
 				case INTCVAR:
 				{
-					FBaseCVar *CVar = GetCVar(statusBar->CPlayer->mo, cvarName);
+					FBaseCVar *CVar = GetCVar(int(statusBar->CPlayer - players), cvarName);
 					if (CVar != nullptr)
 					{
 						ECVarType cvartype = CVar->GetRealType();
@@ -1502,7 +1502,7 @@ class CommandDrawNumber : public CommandDrawString
 				}
 				default: break;
 			}
-			if(interpolationSpeed != 0 && (!hudChanged || level.time == 1))
+			if(interpolationSpeed != 0 && (!hudChanged || primaryLevel->time == 1))
 			{
 				if(num < drawValue)
 					drawValue -= clamp<int>((drawValue - num) >> 2, 1, interpolationSpeed);
@@ -1691,7 +1691,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 			if(alternateOnEmpty)
 				SBarInfoCommandFlowControl::Draw(block, statusBar);
 
-			if(statusBar->CPlayer->mo->InvSel != NULL && !(level.flags & LEVEL_NOINVENTORYBAR))
+			if(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) != NULL && !(primaryLevel->flags & LEVEL_NOINVENTORYBAR))
 			{
 				if(artiflash && statusBar->wrapper->artiflashTick)
 				{
@@ -1708,7 +1708,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 					}
 					CommandDrawImage::Draw(block, statusBar);
 				}
-				if(alwaysShowCounter || statusBar->CPlayer->mo->InvSel->IntVar(NAME_Amount) != 1)
+				if(alwaysShowCounter || statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->IntVar(NAME_Amount) != 1)
 					CommandDrawNumber::Draw(block, statusBar);
 			}
 		}
@@ -1791,7 +1791,7 @@ class CommandDrawSelectedInventory : public CommandDrawImage, private CommandDra
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->mo->InvSel == NULL || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
+			SetTruth(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) == NULL || (primaryLevel->flags & LEVEL_NOINVENTORYBAR), block, statusBar);
 
 			CommandDrawImage::Tick(block, statusBar, hudChanged);
 			CommandDrawNumber::Tick(block, statusBar, hudChanged);
@@ -1910,7 +1910,7 @@ class CommandInventoryBarNotVisible : public SBarInfoCommandFlowControl
 		{
 			SBarInfoCommandFlowControl::Tick(block, statusBar, hudChanged);
 
-			SetTruth(statusBar->CPlayer->inventorytics <= 0 || (level.flags & LEVEL_NOINVENTORYBAR), block, statusBar);
+			SetTruth(statusBar->CPlayer->inventorytics <= 0 || (primaryLevel->flags & LEVEL_NOINVENTORYBAR), block, statusBar);
 		}
 };
 
@@ -2119,11 +2119,12 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		
 			AActor *item;
 			unsigned int i = 0;
+			auto &InvFirst = statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvFirst);
 			// If the player has no artifacts, don't draw the bar
-			statusBar->CPlayer->mo->InvFirst = statusBar->wrapper->ValidateInvFirst(size);
-			if(statusBar->CPlayer->mo->InvFirst != NULL || alwaysShow)
+			InvFirst = statusBar->wrapper->ValidateInvFirst(size);
+			if (InvFirst != nullptr || alwaysShow)
 			{
-				for(item = statusBar->CPlayer->mo->InvFirst, i = 0; item != NULL && i < size; item = NextInv(item), ++i)
+				for(item = InvFirst, i = 0; item != NULL && i < size; item = NextInv(item), ++i)
 				{
 					SBarInfoCoordinate rx = x + (!vertical ? i*spacing : 0);
 					SBarInfoCoordinate ry = y + (vertical ? i*spacing : 0);
@@ -2132,7 +2133,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		
 					if(style != STYLE_Strife) //Strife draws the cursor before the icons
 						statusBar->DrawGraphic(TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
-					if(item == statusBar->CPlayer->mo->InvSel)
+					if(item == statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel))
 					{
 						if(style == STYLE_Heretic)
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry+29, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
@@ -2157,7 +2158,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 					statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], x + (!vertical ? (i*spacing) : 0), y + (vertical ? (i*spacing) : 0), block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 				// Is there something to the left?
-				if (!noArrows && PrevInv(statusBar->CPlayer->mo->InvFirst))
+				if (!noArrows && InvFirst && PrevInv(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvFirst)))
 				{
 					int offset = (style != STYLE_Strife ? (style != STYLE_HexenStrict ? -12 : -10) : 14);
 					int yOffset = style != STYLE_HexenStrict ? 0 : -1;
@@ -2726,16 +2727,16 @@ class CommandDrawBar : public SBarInfoCommand
 					max = fraglimit;
 					break;
 				case KILLS:
-					value = level.killed_monsters;
-					max = level.total_monsters;
+					value = primaryLevel->killed_monsters;
+					max = primaryLevel->total_monsters;
 					break;
 				case ITEMS:
-					value = level.found_items;
-					max = level.total_items;
+					value = primaryLevel->found_items;
+					max = primaryLevel->total_items;
 					break;
 				case SECRETS:
-					value = level.found_secrets;
-					max = level.total_secrets;
+					value = primaryLevel->found_secrets;
+					max = primaryLevel->total_secrets;
 					break;
 				case INVENTORY:
 				{
@@ -2750,8 +2751,8 @@ class CommandDrawBar : public SBarInfoCommand
 					break;
 				}
 				case AIRTIME:
-					value = clamp<int>(statusBar->CPlayer->air_finished - level.time, 0, INT_MAX);
-					max = level.airsupply;
+					value = clamp<int>(statusBar->CPlayer->air_finished - primaryLevel->maptime, 0, INT_MAX);
+					max = primaryLevel->airsupply;
 					break;
 				case POWERUPTIME:
 				{
@@ -2797,7 +2798,7 @@ class CommandDrawBar : public SBarInfoCommand
 			}
 			else
 				value = 0;
-			if(interpolationSpeed != 0 && (!hudChanged || level.time == 1))
+			if(interpolationSpeed != 0 && (!hudChanged || primaryLevel->time == 1))
 			{
 				// [BL] Since we used a percentage (in order to get the most fluid animation)
 				//      we need to establish a cut off point so the last pixel won't hang as the animation slows
@@ -3191,7 +3192,7 @@ class CommandDrawGem : public SBarInfoCommand
 		
 			goalValue = reverse ? 100 - goalValue : goalValue;
 		
-			if(interpolationSpeed != 0 && (!hudChanged || level.time == 1)) // At the start force an animation
+			if(interpolationSpeed != 0 && (!hudChanged || primaryLevel->time == 1)) // At the start force an animation
 			{
 				if(goalValue < drawValue)
 					drawValue -= clamp<int>((drawValue - goalValue) >> 2, 1, interpolationSpeed);
@@ -3201,7 +3202,7 @@ class CommandDrawGem : public SBarInfoCommand
 			else
 				drawValue = goalValue;
 		
-			if(wiggle && level.time & 1)
+			if(wiggle && primaryLevel->time & 1)
 				chainWiggle = pr_chainwiggle() & 1;
 		}
 	protected:
@@ -3533,7 +3534,7 @@ class CommandIfCVarInt : public SBarInfoNegatableFlowControl
 			SBarInfoNegatableFlowControl::Tick(block, statusBar, hudChanged);
 
 			bool result = false;
-			cvar = GetCVar(statusBar->CPlayer->mo, cvarname);
+			cvar = GetCVar(int(statusBar->CPlayer - players), cvarname);
 
 			if (cvar != nullptr)
 			{

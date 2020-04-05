@@ -34,7 +34,7 @@ struct BoundingRect
 	void setEmpty()
 	{
 		left = top = FLT_MAX;
-		bottom = right = FLT_MIN;
+		bottom = right = -FLT_MAX;
 	}
 
 	bool contains(const BoundingRect & other) const
@@ -103,6 +103,11 @@ struct FSectionLine
 
 struct FSection
 {
+	enum
+	{
+		DONTRENDERCEILING  = 1,
+		DONTRENDERFLOOR = 2
+	};
 	// tbd: Do we need a list of subsectors here? Ideally the subsectors should not be used anywhere anymore except for finding out where a location is.
 	TArrayView<FSectionLine> segments;
 	TArrayView<side_t *>	 sides;				// contains all sidedefs, including the internal ones that do not make up the outer shape.
@@ -115,6 +120,7 @@ struct FSection
 	int						 validcount;
 	short					 mapsection;
 	char					 hacked;			// 1: is part of a render hack
+	char					 flags;
 };
 
 class FSectionContainer
@@ -160,7 +166,7 @@ public:
 	}
 };
 
-
-void CreateSections(FSectionContainer &container);
+struct FLevelLocals;
+void CreateSections(FLevelLocals *l);
 
 #endif

@@ -35,7 +35,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <mmsystem.h>
 #include <objbase.h>
@@ -67,16 +66,17 @@
 #include "i_input.h"
 #include "w_wad.h"
 #include "cmdlib.h"
-#include "doomstat.h"
+#include "g_game.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "s_sound.h"
 #include "vm.h"
+#include "i_system.h"
+#include "gstrings.h"
+#include "s_music.h"
 
 #include "stats.h"
 #include "st_start.h"
-
-#include "optwin32.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -87,18 +87,15 @@
 #define X64 ""
 #endif
 
-// The maximum number of functions that can be registered with atterm.
-#define MAX_TERMS	64
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
-void CreateCrashLog (char *custominfo, DWORD customsize, HWND richedit);
+void CreateCrashLog (const char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
-extern uint8_t *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
 void I_FlushBufferedConsoleStuff();
+void DestroyCustomCursor();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -107,7 +104,6 @@ void I_FlushBufferedConsoleStuff();
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern EXCEPTION_POINTERS CrashPointers;
-extern BITMAPINFO *StartupBitmap;
 extern UINT TimerPeriod;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -139,94 +135,18 @@ FModule Kernel32Module{"Kernel32"};
 FModule Shell32Module{"Shell32"};
 FModule User32Module{"User32"};
 
-namespace OptWin32 {
-#define DYN_WIN32_SYM(x) decltype(x) x{#x}
-
-DYN_WIN32_SYM(SHGetFolderPathA);
-DYN_WIN32_SYM(SHGetKnownFolderPath);
-DYN_WIN32_SYM(GetLongPathNameA);
-DYN_WIN32_SYM(GetMonitorInfoA);
-
-#undef DYN_WIN32_SYM
-} // namespace OptWin32
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char WinClassName[] = GAMENAME "MainWindow";
+static const WCHAR WinClassName[] = WGAMENAME "MainWindow";
 static HMODULE hwtsapi32;		// handle to wtsapi32.dll
-static void (*TermFuncs[MAX_TERMS])(void);
-static int NumTerms;
 
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
-// atterm
-//
-// Our own atexit because atexit can be problematic under Linux, though I
-// forget the circumstances that cause trouble.
-//
-//==========================================================================
-
-void atterm (void (*func)(void))
-{
-	// Make sure this function wasn't already registered.
-	for (int i = 0; i < NumTerms; ++i)
-	{
-		if (TermFuncs[i] == func)
-		{
-			return;
-		}
-	}
-	if (NumTerms == MAX_TERMS)
-	{
-		func ();
-		I_FatalError ("Too many exit functions registered.\nIncrease MAX_TERMS in i_main.cpp");
-	}
-	TermFuncs[NumTerms++] = func;
-}
-
-//==========================================================================
-//
-// popterm
-//
-// Removes the most recently register atterm function.
-//
-//==========================================================================
-
-void popterm ()
-{
-	if (NumTerms)
-		NumTerms--;
-}
-
-//==========================================================================
-//
-// call_terms
-//
-//==========================================================================
-
-static void call_terms (void)
-{
-	while (NumTerms > 0)
-	{
-		TermFuncs[--NumTerms]();
-	}
-}
-
-#ifdef _MSC_VER
-static int NewFailure (size_t size)
-{
-	I_FatalError ("Failed to allocate %d bytes from process heap", size);
-	return 0;
-}
-#endif
-
-//==========================================================================
-//
 // UnCOM
 //
-// Called by atterm if CoInitialize() succeeded.
+// Called by atexit if CoInitialize() succeeded.
 //
 //==========================================================================
 
@@ -239,7 +159,7 @@ static void UnCOM (void)
 //
 // UnWTS
 //
-// Called by atterm if RegisterSessionNotification() succeeded.
+// Called by atexit if RegisterSessionNotification() succeeded.
 //
 //==========================================================================
 
@@ -421,7 +341,6 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	HBRUSH hbr;
 	HGDIOBJ oldfont;
 	RECT rect;
-	int titlelen;
 	SIZE size;
 	LOGFONT lf;
 	TEXTMETRIC tm;
@@ -439,7 +358,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		lf.lfCharSet = ANSI_CHARSET;
 		lf.lfWeight = FW_BOLD;
 		lf.lfPitchAndFamily = VARIABLE_PITCH | FF_ROMAN;
-		strcpy (lf.lfFaceName, "Trebuchet MS");
+		wcscpy (lf.lfFaceName, L"Trebuchet MS");
 		GameTitleFont = CreateFontIndirect (&lf);
 
 		oldfont = SelectObject (hdc, GetStockObject (DEFAULT_GUI_FONT));
@@ -458,7 +377,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		SelectObject (hdc, oldfont);
 
 		// Create log read-only edit control
-		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "RichEdit20W", NULL,
+		view = CreateWindowExW (WS_EX_NOPARENTNOTIFY, L"RichEdit20W", nullptr,
 			WS_CHILD | WS_VISIBLE | WS_VSCROLL |
 			ES_LEFT | ES_MULTILINE | WS_CLIPSIBLINGS,
 			0, 0, 0, 0,
@@ -488,8 +407,8 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		ConWindow = view;
 		ReleaseDC (hWnd, hdc);
 
-		view = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, hWnd, NULL, inst, NULL);
-		if (view == NULL)
+		view = CreateWindowExW (WS_EX_NOPARENTNOTIFY, L"STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, hWnd, nullptr, inst, nullptr);
+		if (view == nullptr)
 		{
 			return -1;
 		}
@@ -525,14 +444,14 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Calculate width of the title string.
 			SetTextAlign (drawitem->hDC, TA_TOP);
 			oldfont = SelectObject (drawitem->hDC, GameTitleFont != NULL ? GameTitleFont : (HFONT)GetStockObject (DEFAULT_GUI_FONT));
-			titlelen = (int)DoomStartupInfo.Name.Len();
-			GetTextExtentPoint32 (drawitem->hDC, DoomStartupInfo.Name, titlelen, &size);
+			auto widename = DoomStartupInfo.Name.WideString();
+			GetTextExtentPoint32W (drawitem->hDC, widename.c_str(), (int)widename.length(), &size);
 
 			// Draw the title.
 			c = (const PalEntry *)&DoomStartupInfo.FgColor;
 			SetTextColor (drawitem->hDC, RGB(c->r,c->g,c->b));
 			SetBkMode (drawitem->hDC, TRANSPARENT);
-			TextOut (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, DoomStartupInfo.Name, titlelen);
+			TextOutW (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, widename.c_str(), (int)widename.length());
 			SelectObject (drawitem->hDC, oldfont);
 			return TRUE;
 		}
@@ -548,18 +467,18 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				// so flip it vertically while drawing it.
 				StretchDIBits (drawitem->hDC, rect.left, rect.bottom - 1, rect.right - rect.left, rect.top - rect.bottom,
 					0, 0, StartupBitmap->bmiHeader.biWidth, StartupBitmap->bmiHeader.biHeight,
-					ST_Util_BitsForBitmap(StartupBitmap), StartupBitmap, DIB_RGB_COLORS, SRCCOPY);
+					ST_Util_BitsForBitmap(StartupBitmap), reinterpret_cast<const BITMAPINFO*>(StartupBitmap), DIB_RGB_COLORS, SRCCOPY);
 
 				// If the title banner is gone, then this is an ENDOOM screen, so draw a short prompt
 				// where the command prompt would have been in DOS.
 				if (GameTitleWindow == NULL)
 				{
-					static const char QuitText[] = "Press any key or click anywhere in the window to quit.";
+					auto quitmsg = WideString(GStrings("TXT_QUITENDOOM"));
 
 					SetTextColor (drawitem->hDC, RGB(240,240,240));
 					SetBkMode (drawitem->hDC, TRANSPARENT);
 					oldfont = SelectObject (drawitem->hDC, (HFONT)GetStockObject (DEFAULT_GUI_FONT));
-					TextOut (drawitem->hDC, 3, drawitem->rcItem.bottom - DefaultGUIFontHeight - 3, QuitText, countof(QuitText)-1);
+					TextOutW (drawitem->hDC, 3, drawitem->rcItem.bottom - DefaultGUIFontHeight - 3, quitmsg.c_str(), (int)quitmsg.length());
 					SelectObject (drawitem->hDC, oldfont);
 				}
 				return TRUE;
@@ -695,11 +614,7 @@ void RestoreConView()
 	ShowWindow (GameTitleWindow, SW_SHOW);
 	I_ShutdownInput ();		// Make sure the mouse pointer is available.
 	// Make sure the progress bar isn't visible.
-	if (StartScreen != NULL)
-	{
-		delete StartScreen;
-		StartScreen = NULL;
-	}
+	DeleteStartupScreen();
 }
 
 //==========================================================================
@@ -713,12 +628,13 @@ void RestoreConView()
 
 void ShowErrorPane(const char *text)
 {
-	if (Window == NULL || ConWindow == NULL)
+	auto widetext = WideString(text);
+	if (Window == nullptr || ConWindow == nullptr)
 	{
 		if (text != NULL)
 		{
-			MessageBox (Window, text,
-				GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+			MessageBoxW (Window, widetext.c_str(),
+				WGAMENAME " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
 		}
 		return;
 	}
@@ -729,10 +645,10 @@ void ShowErrorPane(const char *text)
 	}
 	if (text != NULL)
 	{
-		char caption[100];
-		mysnprintf(caption, countof(caption), "Fatal Error - " GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
-		SetWindowText (Window, caption);
-		ErrorIcon = CreateWindowEx (WS_EX_NOPARENTNOTIFY, "STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
+		FStringf caption("Fatal Error - " GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		auto wcaption = caption.WideString();
+		SetWindowTextW (Window, wcaption.c_str());
+		ErrorIcon = CreateWindowExW (WS_EX_NOPARENTNOTIFY, L"STATIC", NULL, WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | SS_OWNERDRAW, 0, 0, 0, 0, Window, NULL, g_hInst, NULL);
 		if (ErrorIcon != NULL)
 		{
 			SetWindowLong (ErrorIcon, GWL_ID, IDC_ICONPIC);
@@ -767,21 +683,21 @@ void ShowErrorPane(const char *text)
 		paraformat.dwMask = PFM_STARTINDENT | PFM_OFFSETINDENT | PFM_RIGHTINDENT;
 		paraformat.dxStartIndent = paraformat.dxOffset = paraformat.dxRightIndent = 120;
 		SendMessage (ConWindow, EM_SETPARAFORMAT, 0, (LPARAM)&paraformat);
-		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"\n");
+		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)L"\n");
 
 		// Find out where the error lines start for the error icon display control.
 		SendMessage (ConWindow, EM_EXGETSEL, 0, (LPARAM)&end);
 		ErrorIconChar = end.cpMax;
 
 		// Now start adding the actual error message.
-		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)"Execution could not continue.\n\n");
+		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)L"Execution could not continue.\n\n");
 
 		// Restore old charformat but with light yellow text.
 		oldformat.crTextColor = RGB(255,255,170);
 		SendMessage (ConWindow, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&oldformat);
 
 		// Add the error text.
-		SendMessage (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)text);
+		SendMessageW (ConWindow, EM_REPLACESEL, FALSE, (LPARAM)widetext.c_str());
 
 		// Make sure the error text is not scrolled below the window.
 		SendMessage (ConWindow, EM_LINESCROLL, 0, SendMessage (ConWindow, EM_GETLINECOUNT, 0, 0));
@@ -797,8 +713,7 @@ void ShowErrorPane(const char *text)
 	{
 		if (bRet == -1)
 		{
-			MessageBox (Window, text,
-				GAMESIG " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
+			MessageBoxW (Window, widetext.c_str(), WGAMENAME " Fatal Error", MB_OK|MB_ICONSTOP|MB_TASKMODAL);
 			return;
 		}
 		else if (!IsDialogMessage (ErrorPane, &msg))
@@ -816,226 +731,236 @@ void PeekThreadedErrorPane()
 	PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE);
 }
 
+static void UnTbp()
+{
+	timeEndPeriod(TimerPeriod);
+}
+
 //==========================================================================
 //
 // DoMain
 //
 //==========================================================================
 
-void DoMain (HINSTANCE hInstance)
+int DoMain (HINSTANCE hInstance)
 {
 	LONG WinWidth, WinHeight;
 	int height, width, x, y;
 	RECT cRect;
 	TIMECAPS tc;
 	DEVMODE displaysettings;
-
-	try
+	
+	// Do not use the multibyte __argv here because we want UTF-8 arguments
+	// and those can only be done by converting the Unicode variants.
+	Args = new FArgs();
+	auto argc = __argc;
+	auto wargv = __wargv;
+	for (int i = 0; i < argc; i++)
 	{
-#ifdef _MSC_VER
-		_set_new_handler (NewFailure);
-#endif
-
-		Args = new FArgs(__argc, __argv);
-
-		// Load Win32 modules
-		Kernel32Module.Load({"kernel32.dll"});
-		Shell32Module.Load({"shell32.dll"});
-		User32Module.Load({"user32.dll"});
-
-		// Under XP, get our session ID so we can know when the user changes/locks sessions.
-		// Since we need to remain binary compatible with older versions of Windows, we
-		// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
-		HMODULE kernel = GetModuleHandle ("kernel32.dll");
-
-		if (Args->CheckParm("-stdout"))
-		{
-			// As a GUI application, we don't normally get a console when we start.
-			// If we were run from the shell and are on XP+, we can attach to its
-			// console. Otherwise, we can create a new one. If we already have a
-			// stdout handle, then we have been redirected and should just use that
-			// handle instead of creating a console window.
-
-			StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-			if (StdOut != NULL)
-			{
-				// It seems that running from a shell always creates a std output
-				// for us, even if it doesn't go anywhere. (Running from Explorer
-				// does not.) If we can get file information for this handle, it's
-				// a file or pipe, so use it. Otherwise, pretend it wasn't there
-				// and find a console to use instead.
-				BY_HANDLE_FILE_INFORMATION info;
-				if (!GetFileInformationByHandle(StdOut, &info))
-				{
-					StdOut = NULL;
-				}
-			}
-			if (StdOut == NULL)
-			{
-				// AttachConsole was introduced with Windows XP. (OTOH, since we
-				// have to share the console with the shell, I'm not sure if it's
-				// a good idea to actually attach to it.)
-				typedef BOOL (WINAPI *ac)(DWORD);
-				ac attach_console = kernel != NULL ? (ac)GetProcAddress(kernel, "AttachConsole") : NULL;
-				if (attach_console != NULL && attach_console(ATTACH_PARENT_PROCESS))
-				{
-					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-					DWORD foo; WriteFile(StdOut, "\n", 1, &foo, NULL);
-					AttachedStdOut = true;
-				}
-				if (StdOut == NULL && AllocConsole())
-				{
-					StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-				}
-				FancyStdOut = true;
-			}
-		}
-
-		// Set the timer to be as accurate as possible
-		if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
-			TimerPeriod = 1;	// Assume minimum resolution of 1 ms
-		else
-			TimerPeriod = tc.wPeriodMin;
-
-		timeBeginPeriod (TimerPeriod);
-
-		/*
-		killough 1/98:
-
-		This fixes some problems with exit handling
-		during abnormal situations.
-
-		The old code called I_Quit() to end program,
-		while now I_Quit() is installed as an exit
-		handler and exit() is called to exit, either
-		normally or abnormally.
-		*/
-
-		atexit (call_terms);
-
-		atterm (I_Quit);
-
-		// Figure out what directory the program resides in.
-		char progbuff[1024];
-		if (GetModuleFileName(nullptr, progbuff, sizeof progbuff) == 0)
-		{
-			I_FatalError("Could not determine program location.");
-		}
-		progbuff[1023] = '\0';
-
-		char *program = progbuff;
-		progdir = program;
-		program = progdir.LockBuffer();
-		if (char *lastsep = strrchr(program, '\\'))
-		{
-			lastsep[1] = '\0';
-		}
-		FixPathSeperator(program);
-		progdir.Truncate((long)strlen(program));
-		progdir.UnlockBuffer();
-
-		HDC screenDC = GetDC(0);
-		int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
-		ReleaseDC(0, screenDC);
-		width = (512 * dpi + 96 / 2) / 96;
-		height = (384 * dpi + 96 / 2) / 96;
-
-		// Many Windows structures that specify their size do so with the first
-		// element. DEVMODE is not one of those structures.
-		memset (&displaysettings, 0, sizeof(displaysettings));
-		displaysettings.dmSize = sizeof(displaysettings);
-		EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
-		x = (displaysettings.dmPelsWidth - width) / 2;
-		y = (displaysettings.dmPelsHeight - height) / 2;
-
-		if (Args->CheckParm ("-0"))
-		{
-			x = y = 0;
-		}
-
-		WNDCLASS WndClass;
-		WndClass.style			= 0;
-		WndClass.lpfnWndProc	= LConProc;
-		WndClass.cbClsExtra		= 0;
-		WndClass.cbWndExtra		= 0;
-		WndClass.hInstance		= hInstance;
-		WndClass.hIcon			= LoadIcon (hInstance, MAKEINTRESOURCE(IDI_ICON1));
-		WndClass.hCursor		= LoadCursor (NULL, IDC_ARROW);
-		WndClass.hbrBackground	= NULL;
-		WndClass.lpszMenuName	= NULL;
-		WndClass.lpszClassName	= (LPCTSTR)WinClassName;
-		
-		/* register this new class with Windows */
-		if (!RegisterClass((LPWNDCLASS)&WndClass))
-			I_FatalError ("Could not register window class");
-		
-		/* create window */
-		char caption[100];
-		mysnprintf(caption, countof(caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
-		Window = CreateWindowEx(
-				WS_EX_APPWINDOW,
-				(LPCTSTR)WinClassName,
-				(LPCTSTR)caption,
-				WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
-				x, y, width, height,
-				(HWND)   NULL,
-				(HMENU)  NULL,
-						hInstance,
-				NULL);
-
-		if (!Window)
-			I_FatalError ("Could not open window");
-
-		if (kernel != NULL)
-		{
-			typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
-			pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
-			if (pidsid != 0)
-			{
-				if (!pidsid (GetCurrentProcessId(), &SessionID))
-				{
-					SessionID = 0;
-				}
-				hwtsapi32 = LoadLibraryA ("wtsapi32.dll");
-				if (hwtsapi32 != 0)
-				{
-					FARPROC reg = GetProcAddress (hwtsapi32, "WTSRegisterSessionNotification");
-					if (reg == 0 || !((BOOL(WINAPI *)(HWND, DWORD))reg) (Window, NOTIFY_FOR_THIS_SESSION))
-					{
-						FreeLibrary (hwtsapi32);
-						hwtsapi32 = 0;
-					}
-					else
-					{
-						atterm (UnWTS);
-					}
-				}
-			}
-		}
-
-		GetClientRect (Window, &cRect);
-
-		WinWidth = cRect.right;
-		WinHeight = cRect.bottom;
-
-		CoInitialize (NULL);
-		atterm (UnCOM);
-
-		C_InitConsole (((WinWidth / 8) + 2) * 8, (WinHeight / 12) * 8, false);
-
-		I_DetectOS ();
-		D_DoomMain ();
+		Args->AppendArg(FString(wargv[i]));
 	}
-	catch (class CNoRunExit &)
+	
+	// Load Win32 modules
+	Kernel32Module.Load({"kernel32.dll"});
+	Shell32Module.Load({"shell32.dll"});
+	User32Module.Load({"user32.dll"});
+	
+	// Under XP, get our session ID so we can know when the user changes/locks sessions.
+	// Since we need to remain binary compatible with older versions of Windows, we
+	// need to extract the ProcessIdToSessionId function from kernel32.dll manually.
+	HMODULE kernel = GetModuleHandleA ("kernel32.dll");
+	
+	if (Args->CheckParm("-stdout"))
 	{
-		I_ShutdownGraphics();
+		// As a GUI application, we don't normally get a console when we start.
+		// If we were run from the shell and are on XP+, we can attach to its
+		// console. Otherwise, we can create a new one. If we already have a
+		// stdout handle, then we have been redirected and should just use that
+		// handle instead of creating a console window.
+		
+		StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		if (StdOut != NULL)
+		{
+			// It seems that running from a shell always creates a std output
+			// for us, even if it doesn't go anywhere. (Running from Explorer
+			// does not.) If we can get file information for this handle, it's
+			// a file or pipe, so use it. Otherwise, pretend it wasn't there
+			// and find a console to use instead.
+			BY_HANDLE_FILE_INFORMATION info;
+			if (!GetFileInformationByHandle(StdOut, &info))
+			{
+				StdOut = NULL;
+			}
+		}
+		if (StdOut == NULL)
+		{
+			if (AttachConsole(ATTACH_PARENT_PROCESS))
+			{
+				StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+				DWORD foo; WriteFile(StdOut, "\n", 1, &foo, NULL);
+				AttachedStdOut = true;
+			}
+			if (StdOut == NULL && AllocConsole())
+			{
+				StdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+			}
+			
+			// These two functions do not exist in Windows XP.
+			BOOL (WINAPI* p_GetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+			BOOL (WINAPI* p_SetCurrentConsoleFontEx)(HANDLE hConsoleOutput, BOOL bMaximumWindow, PCONSOLE_FONT_INFOEX lpConsoleCurrentFontEx);
+			
+			p_SetCurrentConsoleFontEx = (decltype(p_SetCurrentConsoleFontEx))GetProcAddress(kernel, "SetCurrentConsoleFontEx");
+			p_GetCurrentConsoleFontEx = (decltype(p_GetCurrentConsoleFontEx))GetProcAddress(kernel, "GetCurrentConsoleFontEx");
+			if (p_SetCurrentConsoleFontEx && p_GetCurrentConsoleFontEx)
+			{
+				CONSOLE_FONT_INFOEX cfi;
+				cfi.cbSize = sizeof(cfi);
+				
+				if (p_GetCurrentConsoleFontEx(StdOut, false, &cfi))
+				{
+					if (*cfi.FaceName == 0)	// If the face name is empty, the default (useless) raster font is actoive.
+					{
+						//cfi.dwFontSize = { 8, 14 };
+						wcscpy(cfi.FaceName, L"Lucida Console");
+						cfi.FontFamily = FF_DONTCARE;
+						p_SetCurrentConsoleFontEx(StdOut, false, &cfi);
+					}
+				}
+			}
+			FancyStdOut = true;
+		}
+	}
+	
+	// Set the timer to be as accurate as possible
+	if (timeGetDevCaps (&tc, sizeof(tc)) != TIMERR_NOERROR)
+		TimerPeriod = 1;	// Assume minimum resolution of 1 ms
+	else
+		TimerPeriod = tc.wPeriodMin;
+	
+	timeBeginPeriod (TimerPeriod);
+	atexit(UnTbp);
+	
+	// Figure out what directory the program resides in.
+	WCHAR progbuff[1024];
+	if (GetModuleFileNameW(nullptr, progbuff, sizeof progbuff) == 0)
+	{
+		MessageBoxA(nullptr, "Fatal", "Could not determine program location.", MB_ICONEXCLAMATION|MB_OK);
+		exit(-1);
+	}
+	
+	progbuff[1023] = '\0';
+	if (auto lastsep = wcsrchr(progbuff, '\\'))
+	{
+		lastsep[1] = '\0';
+	}
+	
+	progdir = progbuff;
+	FixPathSeperator(progdir);
+	
+	HDC screenDC = GetDC(0);
+	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
+	ReleaseDC(0, screenDC);
+	width = (512 * dpi + 96 / 2) / 96;
+	height = (384 * dpi + 96 / 2) / 96;
+	
+	// Many Windows structures that specify their size do so with the first
+	// element. DEVMODE is not one of those structures.
+	memset (&displaysettings, 0, sizeof(displaysettings));
+	displaysettings.dmSize = sizeof(displaysettings);
+	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+	x = (displaysettings.dmPelsWidth - width) / 2;
+	y = (displaysettings.dmPelsHeight - height) / 2;
+	
+	if (Args->CheckParm ("-0"))
+	{
+		x = y = 0;
+	}
+	
+	WNDCLASS WndClass;
+	WndClass.style			= 0;
+	WndClass.lpfnWndProc	= LConProc;
+	WndClass.cbClsExtra		= 0;
+	WndClass.cbWndExtra		= 0;
+	WndClass.hInstance		= hInstance;
+	WndClass.hIcon			= LoadIcon (hInstance, MAKEINTRESOURCE(IDI_ICON1));
+	WndClass.hCursor		= LoadCursor (NULL, IDC_ARROW);
+	WndClass.hbrBackground	= NULL;
+	WndClass.lpszMenuName	= NULL;
+	WndClass.lpszClassName	= WinClassName;
+	
+	/* register this new class with Windows */
+	if (!RegisterClass((LPWNDCLASS)&WndClass))
+	{
+		MessageBoxA(nullptr, "Could not register window class", "Fatal", MB_ICONEXCLAMATION|MB_OK);
+		exit(-1);
+	}
+	
+	/* create window */
+	FStringf caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+	std::wstring wcaption = caption.WideString();
+	Window = CreateWindowExW(
+							 WS_EX_APPWINDOW,
+							 WinClassName,
+							 wcaption.c_str(),
+							 WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_CLIPCHILDREN,
+							 x, y, width, height,
+							 (HWND)   NULL,
+							 (HMENU)  NULL,
+							 hInstance,
+							 NULL);
+	
+	if (!Window)
+	{
+		MessageBoxA(nullptr, "Unable to create main window", "Fatal", MB_ICONEXCLAMATION|MB_OK);
+		exit(-1);
+	}
+	
+	if (kernel != NULL)
+	{
+		typedef BOOL (WINAPI *pts)(DWORD, DWORD *);
+		pts pidsid = (pts)GetProcAddress (kernel, "ProcessIdToSessionId");
+		if (pidsid != 0)
+		{
+			if (!pidsid (GetCurrentProcessId(), &SessionID))
+			{
+				SessionID = 0;
+			}
+			hwtsapi32 = LoadLibraryA ("wtsapi32.dll");
+			if (hwtsapi32 != 0)
+			{
+				FARPROC reg = GetProcAddress (hwtsapi32, "WTSRegisterSessionNotification");
+				if (reg == 0 || !((BOOL(WINAPI *)(HWND, DWORD))reg) (Window, NOTIFY_FOR_THIS_SESSION))
+				{
+					FreeLibrary (hwtsapi32);
+					hwtsapi32 = 0;
+				}
+				else
+				{
+					atexit (UnWTS);
+				}
+			}
+		}
+	}
+	
+	GetClientRect (Window, &cRect);
+	
+	WinWidth = cRect.right;
+	WinHeight = cRect.bottom;
+	
+	CoInitialize (NULL);
+	atexit (UnCOM);
+	
+	int ret = D_DoomMain ();
+	DestroyCustomCursor();
+	if (ret == 1337) // special exit code for 'norun'.
+	{
 		if (!batchrun)
 		{
 			if (FancyStdOut && !AttachedStdOut)
 			{ // Outputting to a new console window: Wait for a keypress before quitting.
 				DWORD bytes;
 				HANDLE stdinput = GetStdHandle(STD_INPUT_HANDLE);
-
+				
 				ShowWindow(Window, SW_HIDE);
 				WriteFile(StdOut, "Press any key to exit...", 24, &bytes, NULL);
 				FlushConsoleInputBuffer(stdinput);
@@ -1047,32 +972,29 @@ void DoMain (HINSTANCE hInstance)
 				ShowErrorPane(NULL);
 			}
 		}
-		exit(0);
 	}
-	catch (std::exception &error)
-	{
-		I_ShutdownGraphics ();
-		RestoreConView ();
-		S_StopMusic(true);
-		I_FlushBufferedConsoleStuff();
-		auto msg = error.what();
-		if (strcmp(msg, "NoRunExit"))
-		{
-			if (CVMAbortException::stacktrace.IsNotEmpty())
-			{
-				Printf("%s", CVMAbortException::stacktrace.GetChars());
-			}
+	return ret;
+}
 
-			if (!batchrun)
-			{
-				ShowErrorPane(msg);
-			}
-			else
-			{
-				Printf("%s\n", msg);
-			}
-		}
-		exit (-1);
+void I_ShowFatalError(const char *msg)
+{
+	I_ShutdownGraphics ();
+	RestoreConView ();
+	S_StopMusic(true);
+	I_FlushBufferedConsoleStuff();
+
+	if (CVMAbortException::stacktrace.IsNotEmpty())
+	{
+		Printf("%s", CVMAbortException::stacktrace.GetChars());
+	}
+	
+	if (!batchrun)
+	{
+		ShowErrorPane(msg);
+	}
+	else
+	{
+		Printf("%s\n", msg);
 	}
 }
 
@@ -1091,7 +1013,8 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	int i;
 
 	buffer += mysnprintf (buffer, buffend - buffer, GAMENAME " version %s (%s)", GetVersionString(), GetGitHash());
-	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", GetCommandLine());
+	FString cmdline(GetCommandLineW());
+	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", cmdline.GetChars() );
 
 	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
 	{
@@ -1104,7 +1027,7 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	}
 	else
 	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", level.MapName.GetChars());
+		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", primaryLevel->MapName.GetChars());
 
 		if (!viewactive)
 		{
@@ -1185,7 +1108,7 @@ void CALLBACK ExitFatally (ULONG_PTR dummy)
 	I_ShutdownGraphics ();
 	RestoreConView ();
 	DisplayCrashLog ();
-	exit (-1);
+	exit(-1);
 }
 
 //==========================================================================
@@ -1259,54 +1182,61 @@ static void infiniterecursion(int foo)
 }
 #endif
 
+// Setting this to 'true' allows getting the standard notification for a crash
+// which offers the very important feature to open a debugger and see the crash in context right away.
+CUSTOM_CVAR(Bool, disablecrashlog, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	SetUnhandledExceptionFilter(!*self ? CatchAllExceptions : nullptr);
+}
+
 //==========================================================================
 //
 // WinMain
 //
 //==========================================================================
 
-int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int nCmdShow)
+int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE nothing, LPWSTR cmdline, int nCmdShow)
 {
 	g_hInst = hInstance;
 
 	InitCommonControls ();			// Load some needed controls and be pretty under XP
 
 	// We need to load riched20.dll so that we can create the control.
-	if (NULL == LoadLibrary ("riched20.dll"))
+	if (NULL == LoadLibraryA ("riched20.dll"))
 	{
 		// This should only happen on basic Windows 95 installations, but since we
 		// don't support Windows 95, we have no obligation to provide assistance in
 		// getting it installed.
 		MessageBoxA(NULL, "Could not load riched20.dll", GAMENAME " Error", MB_OK | MB_ICONSTOP);
-		exit(0);
+		return 0;
 	}
 
 #if !defined(__GNUC__) && defined(_DEBUG)
-	if (__argc == 2 && strcmp (__argv[1], "TestCrash") == 0)
+	if (__argc == 2 && __wargv != nullptr && wcscmp (__wargv[1], L"TestCrash") == 0)
 	{
 		__try
 		{
 			*(int *)0 = 0;
 		}
 		__except(CrashPointers = *GetExceptionInformation(),
-			CreateCrashLog (__argv[1], 9, NULL), EXCEPTION_EXECUTE_HANDLER)
+			CreateCrashLog ("TestCrash", 9, NULL), EXCEPTION_EXECUTE_HANDLER)
 		{
 		}
 		DisplayCrashLog ();
-		exit (0);
+		return 0;
 	}
-	if (__argc == 2 && strcmp (__argv[1], "TestStackCrash") == 0)
+	if (__argc == 2 && __wargv != nullptr && wcscmp (__wargv[1], L"TestStackCrash") == 0)
 	{
 		__try
 		{
 			infiniterecursion(1);
 		}
 		__except(CrashPointers = *GetExceptionInformation(),
-			CreateCrashLog (__argv[1], 14, NULL), EXCEPTION_EXECUTE_HANDLER)
+			CreateCrashLog ("TestStackCrash", 14, NULL), EXCEPTION_EXECUTE_HANDLER)
 		{
 		}
 		DisplayCrashLog ();
-		exit (0);
+		return 0;
 	}
 #endif
 
@@ -1343,25 +1273,28 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	_CrtSetDbgFlag (_CrtSetDbgFlag(0) | _CRTDBG_LEAK_CHECK_DF);
 
 	// Use this to break at a specific allocation number.
-	//_crtBreakAlloc = 177312;
+	//_crtBreakAlloc = 227524;
 #endif
 
-	DoMain (hInstance);
+	int ret = DoMain (hInstance);
 
 	CloseHandle (MainThread);
 	MainThread = INVALID_HANDLE_VALUE;
-	return 0;
+	return ret;
 }
 
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
-	if (caption)
-		SetWindowText(Window, (LPCTSTR)caption);
+	std::wstring widecaption;
+	if (!caption)
+	{
+		FStringf default_caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		widecaption = default_caption.WideString();
+	}
 	else
 	{
-		char default_caption[100];
-		mysnprintf(default_caption, countof(default_caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
-		SetWindowText(Window, default_caption);
+		widecaption = WideString(caption);
 	}
+	SetWindowText(Window, widecaption.c_str());
 }

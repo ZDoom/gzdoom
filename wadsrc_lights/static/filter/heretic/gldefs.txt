@@ -1391,7 +1391,7 @@ object MinotaurFX3
 flickerlight SERPENTBALL
 {
     color 1.0 0.95 0.5
-    size 588
+    size 88
     secondarySize 96
     chance 0.5
 	attenuate 1

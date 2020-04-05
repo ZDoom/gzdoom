@@ -76,6 +76,7 @@ public:
 	PType *Type;
 	uint32_t Flags;
 	int BitValue;
+	FString DeprecationMessage;
 protected:
 	PField();
 };
@@ -170,6 +171,7 @@ public:
 		uint32_t Flags;
 		int UseFlags;
 		PContainerType *SelfClass;
+		FString DeprecationMessage;
 	};
 	TArray<Variant> Variants;
 	PContainerType *OwningClass = nullptr;

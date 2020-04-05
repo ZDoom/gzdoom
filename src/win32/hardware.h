@@ -37,8 +37,4 @@
 #include "i_video.h"
 #include "v_video.h"
 
-void I_SetFPSLimit(int limit);
-void I_FPSLimit();
-
-
 #endif	// __HARDWARE_H__

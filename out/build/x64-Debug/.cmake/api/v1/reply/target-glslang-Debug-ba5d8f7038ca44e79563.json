@@ -1,0 +1,562 @@
+{
+	"archive" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "/machine:x64",
+				"role" : "flags"
+			}
+		]
+	},
+	"artifacts" : 
+	[
+		{
+			"path" : "libraries/glslang/glslang/glslang.lib"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"libraries/glslang/glslang/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 123,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 126,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 127,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "/DWIN32 /D_WINDOWS /W3  /EHsc /GF /Gy /GR- /permissive- /DHAVE_VULKAN /wd4996 /DUNICODE /D_UNICODE /D_WIN32_WINNT=0x0600 /fp:fast  /O2 /Ob2 /DNDEBUG /MTd /Oy /Oi /GS-  "
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 3,
+					"path" : "C:/Users/Sahil/Documents/New folder (3)/gzdoom/libraries/glslang/glslang/.."
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "OGLCompiler::@be5ce1db179323e6489b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "OSDependent::@0a72380bf0a8207701d7"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "glslang"
+	},
+	"id" : "glslang::@a9f8b9af1162e156b2be",
+	"name" : "glslang",
+	"nameOnDisk" : "glslang.lib",
+	"paths" : 
+	{
+		"build" : "libraries/glslang/glslang",
+		"source" : "libraries/glslang/glslang"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "MachineIndependent",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				27,
+				43,
+				44,
+				45,
+				46,
+				47,
+				48,
+				49,
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58
+			]
+		},
+		{
+			"name" : "MachineIndependent\\Preprocessor",
+			"sourceIndexes" : 
+			[
+				22,
+				23,
+				24,
+				25,
+				26,
+				59,
+				60
+			]
+		},
+		{
+			"name" : "GenericCodeGen",
+			"sourceIndexes" : 
+			[
+				28,
+				29
+			]
+		},
+		{
+			"name" : "Public",
+			"sourceIndexes" : 
+			[
+				30
+			]
+		},
+		{
+			"name" : "Include",
+			"sourceIndexes" : 
+			[
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38,
+				39,
+				40,
+				41,
+				42
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/glslang.y",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/glslang_tab.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/attribute.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Constant.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/iomapper.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/InfoSink.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Initialize.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/IntermTraverse.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Intermediate.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/ParseContextBase.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/ParseHelper.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/PoolAlloc.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/RemoveTree.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Scan.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/ShaderLang.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/SymbolTable.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Versions.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/intermOut.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/limits.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/linkValidate.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/parseConst.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/reflection.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/preprocessor/Pp.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/preprocessor/PpAtom.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/preprocessor/PpContext.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/preprocessor/PpScanner.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/preprocessor/PpTokens.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/MachineIndependent/propagateNoContraction.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/GenericCodeGen/CodeGen.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "libraries/glslang/glslang/GenericCodeGen/Link.cpp",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Public/ShaderLang.h",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/arrays.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/BaseTypes.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/Common.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/ConstantUnion.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/InfoSink.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/InitializeGlobals.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/intermediate.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/PoolAlloc.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/ResourceLimits.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/revision.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/ShHandle.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/Include/Types.h",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/attribute.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/glslang_tab.cpp.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/gl_types.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Initialize.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/iomapper.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/LiveTraverser.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/localintermediate.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/ParseHelper.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/reflection.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/RemoveTree.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Scan.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/ScanContext.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/SymbolTable.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/Versions.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/parseVersions.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/propagateNoContraction.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/preprocessor/PpContext.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "libraries/glslang/glslang/MachineIndependent/preprocessor/PpTokens.h",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

@@ -985,6 +985,7 @@ void JitCompiler::EmitFLOP()
 		case FLOP_COSH:		func = g_cosh; break;
 		case FLOP_SINH:		func = g_sinh; break;
 		case FLOP_TANH:		func = g_tanh; break;
+		case FLOP_ROUND:	func = round; break;
 		}
 
 		auto result = newResultXmmSd();

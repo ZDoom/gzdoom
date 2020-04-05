@@ -151,9 +151,12 @@ enum ELineFlags : unsigned
 	ML_MAPPED					= 0x00000100,	// set if already drawn in automap
 	ML_REPEAT_SPECIAL			= 0x00000200,	// special is repeatable
 
+	// 0x400, 0x800 and 0x1000 are ML_SPAC_MASK, they can be used for internal things but not for real map flags.
 	ML_ADDTRANS					= 0x00000400,	// additive translucency (can only be set internally)
+	ML_COMPATSIDE				= 0x00000800,	// for compatible PointOnLineSide checks. Using the global compatibility check would be a bit expensive for this check.
 
 	// Extended flags
+	ML_NOSKYWALLS				= 0x00001000,	// Don't draw sky above or below walls
 	ML_MONSTERSCANACTIVATE		= 0x00002000,	// [RH] Monsters (as well as players) can activate the line
 	ML_BLOCK_PLAYERS			= 0x00004000,
 	ML_BLOCKEVERYTHING			= 0x00008000,	// [RH] Line blocks everything
@@ -171,7 +174,7 @@ enum ELineFlags : unsigned
 	ML_BLOCKHITSCAN				= 0x08000000,	// blocks hitscan attacks
 	ML_3DMIDTEX_IMPASS			= 0x10000000,	// [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
 	ML_REVEALED					= 0x20000000,	// set if revealed in automap
-
+	ML_DRAWFULLHEIGHT			= 0x40000000,	// Draw the full height of the upper/lower sections
 	ML_PORTALCONNECT			= 0x80000000,	// for internal use only: This line connects to a sector with a linked portal (used to speed up sight checks.)
 };
 
@@ -439,7 +442,7 @@ struct FPlayerStart
 	DVector3 pos;
 	int16_t angle, type;
 
-	FPlayerStart() { }
+	FPlayerStart() = default;
 	FPlayerStart(const FMapThing *mthing, int pnum)
 	: pos(mthing->pos),
 	  angle(mthing->angle),

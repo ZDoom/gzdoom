@@ -34,10 +34,14 @@
 */
 
 
+#include <ctype.h>
 #include "intermission/intermission.h"
 #include "g_level.h"
 #include "w_wad.h"
-
+#include "c_dispatch.h"
+#include "gstrings.h"
+#include "gi.h"
+	
 
 static void ReplaceIntermission(FName intname,FIntermissionDescriptor *desc)
 {
@@ -144,6 +148,13 @@ bool FIntermissionAction::ParseKey(FScanner &sc)
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_StringConst);
 		mSound = sc.String;
+		return true;
+	}
+	else if (sc.Compare("Subtitle"))
+	{
+		sc.MustGetToken('=');
+		sc.MustGetToken(TK_StringConst);
+		mSubtitle = sc.String;
 		return true;
 	}
 	else if (sc.Compare("Draw"))
@@ -291,14 +302,28 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_StringConst);
 		int lump = Wads.CheckNumForFullName(sc.String, true);
+		bool done = false;
 		if (lump > 0)
 		{
-			mText = Wads.ReadLump(lump).GetString();
+			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
+			int fileno = Wads.GetLumpFile(lump);
+			auto fn = Wads.GetWadName(fileno);
+			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
+			{
+				FStringf key("TXT_%.5s_%s", fn, sc.String);
+				if (GStrings.exists(key))
+				{
+					mText = "$" + key;
+					done = true;
+				}
+			}
+			if (!done)
+				mText = Wads.ReadLump(lump).GetString();
 		}
 		else
 		{
 			// only print an error if coming from a PWAD
-			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetIwadNum())
+			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetMaxIwadNum())
 				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
 			mText.Format("Unknown text lump '%s'", sc.String);
 		}
@@ -307,12 +332,18 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 	else if (sc.Compare("Text"))
 	{
 		sc.MustGetToken('=');
+		TArray<FString> lines;
 		do
 		{
 			sc.MustGetToken(TK_StringConst);
-			mText << sc.String << '\n';
+			lines.Push(sc.String);
 		}
 		while (sc.CheckToken(','));
+		if (lines.Size() == 1 && lines[0][0] == '$')
+			mText = lines[0];
+		else
+			for (const FString& line : lines)
+				mText << line << '\n';
 		return true;
 	}
 	else if (sc.Compare("TextColor"))
@@ -888,4 +919,38 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 			F_StartIntermission(*pdesc, false, ending? FSTATE_EndingGame : FSTATE_ChangingLevel);
 		}
 	}
+}
+
+
+CCMD(testfinale)
+{
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: testfinale stringlabel [langId]\n");
+		return;
+	}
+	const char *text;
+
+	if (argv.argc() == 2)
+	{
+		text = GStrings.GetString(argv[1], nullptr);
+	}
+	else
+	{
+		auto len = strlen(argv[2]);
+		if (len < 2 || len > 3)
+		{
+			Printf("Language ID must be 2 or 3 characters\n");
+			return;
+		}
+		auto id = MAKE_ID(tolower(argv[2][0]), tolower(argv[2][1]), tolower(argv[2][2]), 0);
+		text = GStrings.GetLanguageString(argv[1], id);
+	}
+	if (text == nullptr)
+	{
+		Printf("Text does not exist\n");
+		return;
+	}
+
+	F_StartFinale(gameinfo.finaleMusic, gameinfo.finaleOrder, -1, 0, gameinfo.FinaleFlat, text, false, false, true, true);
 }

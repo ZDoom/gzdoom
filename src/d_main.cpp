@@ -89,10 +89,8 @@
 #include "d_event.h"
 #include "d_netinf.h"
 #include "m_cheat.h"
-#include "compatibility.h"
 #include "m_joy.h"
 #include "po_man.h"
-#include "r_renderer.h"
 #include "p_local.h"
 #include "autosegs.h"
 #include "fragglescript/t_fs.h"
@@ -100,12 +98,18 @@
 #include "events.h"
 #include "vm.h"
 #include "types.h"
+#include "i_system.h"
+#include "g_cvars.h"
 #include "r_data/r_vanillatrans.h"
+#include "s_music.h"
+#include "swrenderer/r_swcolormaps.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
+EXTERN_CVAR(Bool, cl_customizeinvulmap)
 void DrawHUD();
 void D_DoAnonStats();
+void I_DetectOS();
 
 
 // MACROS ------------------------------------------------------------------
@@ -120,17 +124,28 @@ extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 void DeinitMenus();
+void CloseNetwork();
+void P_Shutdown();
+void M_SaveDefaultsFinal();
+void R_Shutdown();
+void I_ShutdownInput();
+
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void D_CheckNetGame ();
+bool D_CheckNetGame ();
 void D_ProcessEvents ();
 void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
 void ParseGLDefs();
+void DrawFullscreenSubtitle(const char *text);
+void D_Cleanup();
+void FreeSBarInfoScript();
+void I_UpdateWindowTitle();
+void C_GrabCVarDefaults ();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -148,7 +163,8 @@ EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, sv_cheats)
 EXTERN_CVAR (Bool, sv_unlimited_pickup)
-EXTERN_CVAR (Bool, I_FriendlyWindowTitle)
+EXTERN_CVAR (Bool, r_drawplayersprites)
+EXTERN_CVAR (Bool, show_messages)
 
 extern bool setmodeneeded;
 extern bool gameisdead;
@@ -156,6 +172,26 @@ extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
+
+
+CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
+{
+	if (netgame)
+	{
+		Printf("Time scale cannot be changed in net games.\n");
+		self = 1.0f;
+	}
+	else if (self >= 0.05f)
+	{
+		I_FreezeTime(true);
+		TimeScale = self;
+		I_FreezeTime(false);
+	}
+	else
+	{
+		Printf("Time scale must be at least 0.05!\n");
+	}
+}
 
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -171,7 +207,7 @@ CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 			if (playeringame[i] && self <= D_GetFragCount(&players[i]))
 			{
 				Printf ("%s\n", GStrings("TXT_FRAGLIMIT"));
-				G_ExitLevel (0, false);
+				primaryLevel->ExitLevel (0, false);
 				break;
 			}
 		}
@@ -206,6 +242,7 @@ CVAR (Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLO
 CVAR (Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, r_debug_disable_vis_filter, false, 0)
 
+bool hud_toggled = false;
 bool wantToRestart;
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
 TArray<FString> allwads;
@@ -226,6 +263,7 @@ gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FTexture *Advisory;
 FTextureID Page;
+const char *Subtitle;
 bool nospriterename;
 FStartupInfo DoomStartupInfo;
 FString lastIWAD;
@@ -245,6 +283,42 @@ static int demosequence;
 static int pagetic;
 
 // CODE --------------------------------------------------------------------
+
+//==========================================================================
+//
+// D_ToggleHud
+//
+// Turns off 2D drawing temporarily.
+//
+//==========================================================================
+
+void D_ToggleHud()
+{
+	static int saved_screenblocks;
+	static bool saved_drawplayersprite, saved_showmessages;
+
+	if ((hud_toggled = !hud_toggled))
+	{
+		saved_screenblocks = screenblocks;
+		saved_drawplayersprite = r_drawplayersprites;
+		saved_showmessages = show_messages;
+		screenblocks = 12;
+		r_drawplayersprites = false;
+		show_messages = false;
+		C_HideConsole();
+		M_ClearMenus();
+	}
+	else
+	{
+		screenblocks = saved_screenblocks;
+		r_drawplayersprites = saved_drawplayersprite;
+		show_messages = saved_showmessages;
+	}
+}
+CCMD(togglehud)
+{
+	D_ToggleHud();
+}
 
 //==========================================================================
 //
@@ -272,7 +346,7 @@ void D_ProcessEvents (void)
 		if (M_Responder (ev))
 			continue;				// menu ate the event
 		// check events
-		if (ev->type != EV_Mouse && E_Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
+		if (ev->type != EV_Mouse && primaryLevel->localEventManager->Responder(ev)) // [ZZ] ZScript ate the event // update 07.03.17: mouse events are handled directly
 			continue;
 		G_Responder (ev);
 	}
@@ -294,7 +368,7 @@ void D_PostEvent (const event_t *ev)
 		return;
 	}
 	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_Responder(ev) && !paused)
+	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !primaryLevel->localEventManager->Responder(ev) && !paused)
 	{
 		if (Button_Mlook.bDown || freelook)
 		{
@@ -354,16 +428,44 @@ void D_RemoveNextCharEvent()
 
 //==========================================================================
 //
+// Render wrapper.
+// This function contains all the needed setup and cleanup for starting a render job.
+//
+//==========================================================================
+
+void D_Render(std::function<void()> action, bool interpolate)
+{
+	for (auto Level : AllLevels())
+	{
+		// Check for the presence of dynamic lights at the start of the frame once.
+		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		{
+			Level->HasDynamicLights = !!Level->lights;
+		}
+		else Level->HasDynamicLights = false;	// lights are off so effectively we have none.
+		if (interpolate) Level->interpolator.DoInterpolations(I_GetTimeFrac());
+		P_FindParticleSubsectors(Level);
+		PO_LinkToSubsectors(Level);
+	}
+	action();
+
+	if (interpolate) for (auto Level : AllLevels())
+	{
+		Level->interpolator.RestoreInterpolations();
+	}
+}
+
+//==========================================================================
+//
 // CVAR dmflags
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	// In case DF_NO_FREELOOK was changed, reinitialize the sky
 	// map. (If no freelook, then no need to stretch the sky.)
-	if (sky1texture.isValid())
-		R_InitSkyMap ();
+	R_InitSkyMap ();
 
 	if (self & DF_NO_FREELOOK)
 	{
@@ -434,7 +536,7 @@ CVAR (Mask, sv_freelook,		dmflags, DF_NO_FREELOOK|DF_YES_FREELOOK);
 //
 //==========================================================================
 
-CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, dmflags2, 0, CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
 	// Stop the automap if we aren't allowed to use it.
 	if ((self & DF2_NO_AUTOMAP) && automapactive)
@@ -503,36 +605,23 @@ CVAR (Flag, sv_respawnsuper,		dmflags2, DF2_RESPAWN_SUPER);
 //
 //==========================================================================
 
-int i_compatflags, i_compatflags2;	// internal compatflags composed from the compatflags CVAR and MAPINFO settings
-int ii_compatflags, ii_compatflags2, ib_compatflags;
-
 EXTERN_CVAR(Int, compatmode)
 
-static int GetCompatibility(int mask)
+CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
-	if (level.info == NULL) return mask;
-	else return (mask & ~level.info->compatmask) | (level.info->compatflags & level.info->compatmask);
-}
-
-static int GetCompatibility2(int mask)
-{
-	return (level.info == NULL) ? mask
-		: (mask & ~level.info->compatmask2) | (level.info->compatflags2 & level.info->compatmask2);
-}
-
-CUSTOM_CVAR (Int, compatflags, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
-{
-	int old = i_compatflags;
-	i_compatflags = GetCompatibility(self) | ii_compatflags;
-	if ((old ^ i_compatflags) & COMPATF_POLYOBJ)
+	for (auto Level : AllLevels())
 	{
-		FPolyObj::ClearAllSubsectorLinks();
+		Level->ApplyCompatibility();
 	}
 }
 
-CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO)
+CUSTOM_CVAR (Int, compatflags2, 0, CVAR_ARCHIVE|CVAR_SERVERINFO | CVAR_NOINITCALL)
 {
-	i_compatflags2 = GetCompatibility2(self) | ii_compatflags2;
+	for (auto Level : AllLevels())
+	{
+		Level->ApplyCompatibility2();
+		Level->SetCompatLineOnSide(true);
+	}
 }
 
 CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -547,38 +636,40 @@ CUSTOM_CVAR(Int, compatmode, 0, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		break;
 
 	case 1:	// Doom2.exe compatible with a few relaxed settings
-		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
-			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_DEHHEALTH|COMPATF_CROSSDROPOFF|
-			COMPATF_LIGHT|COMPATF_MASKEDMIDTEX;
-		w= COMPATF2_FLOORMOVE;
+		v = COMPATF_SHORTTEX | COMPATF_STAIRINDEX | COMPATF_USEBLOCKING | COMPATF_NODOORLIGHT | COMPATF_SPRITESORT |
+			COMPATF_TRACE | COMPATF_MISSILECLIP | COMPATF_SOUNDTARGET | COMPATF_DEHHEALTH | COMPATF_CROSSDROPOFF |
+			COMPATF_LIGHT | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_FLOORMOVE | COMPATF2_EXPLODE1;
 		break;
 
 	case 2:	// same as 1 but stricter (NO_PASSMOBJ and INVISIBILITY are also set)
-		v = COMPATF_SHORTTEX|COMPATF_STAIRINDEX|COMPATF_USEBLOCKING|COMPATF_NODOORLIGHT|COMPATF_SPRITESORT|
-			COMPATF_TRACE|COMPATF_MISSILECLIP|COMPATF_SOUNDTARGET|COMPATF_NO_PASSMOBJ|COMPATF_LIMITPAIN|
-			COMPATF_DEHHEALTH|COMPATF_INVISIBILITY|COMPATF_CROSSDROPOFF|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|
-			COMPATF_WALLRUN|COMPATF_NOTOSSDROPS|COMPATF_LIGHT|COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_BADANGLES|COMPATF2_FLOORMOVE|COMPATF2_POINTONLINE;
+		v = COMPATF_SHORTTEX | COMPATF_STAIRINDEX | COMPATF_USEBLOCKING | COMPATF_NODOORLIGHT | COMPATF_SPRITESORT |
+			COMPATF_TRACE | COMPATF_MISSILECLIP | COMPATF_SOUNDTARGET | COMPATF_NO_PASSMOBJ | COMPATF_LIMITPAIN |
+			COMPATF_DEHHEALTH | COMPATF_INVISIBILITY | COMPATF_CROSSDROPOFF | COMPATF_CORPSEGIBS | COMPATF_HITSCAN |
+			COMPATF_WALLRUN | COMPATF_NOTOSSDROPS | COMPATF_LIGHT | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_BADANGLES | COMPATF2_FLOORMOVE | COMPATF2_POINTONLINE | COMPATF2_EXPLODE2;
 		break;
 
 	case 3: // Boom compat mode
 		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_EXPLODE1;
 		break;
 
 	case 4: // Old ZDoom compat mode
 		v = COMPATF_SOUNDTARGET | COMPATF_LIGHT;
-		w = COMPATF2_MULTIEXIT | COMPATF2_TELEPORT | COMPATF2_PUSHWINDOW;
+		w = COMPATF2_MULTIEXIT | COMPATF2_TELEPORT | COMPATF2_PUSHWINDOW | COMPATF2_CHECKSWITCHRANGE;
 		break;
 
 	case 5: // MBF compat mode
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_MUSHROOM|
-			COMPATF_MBFMONSTERMOVE|COMPATF_NOBLOCKFRIENDS|COMPATF_MASKEDMIDTEX;
+		v = COMPATF_TRACE | COMPATF_SOUNDTARGET | COMPATF_BOOMSCROLL | COMPATF_MISSILECLIP | COMPATF_MUSHROOM |
+			COMPATF_MBFMONSTERMOVE | COMPATF_NOBLOCKFRIENDS | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_EXPLODE1;
 		break;
 
 	case 6:	// Boom with some added settings to reenable some 'broken' behavior
-		v = COMPATF_TRACE|COMPATF_SOUNDTARGET|COMPATF_BOOMSCROLL|COMPATF_MISSILECLIP|COMPATF_NO_PASSMOBJ|
-			COMPATF_INVISIBILITY|COMPATF_CORPSEGIBS|COMPATF_HITSCAN|COMPATF_WALLRUN|COMPATF_NOTOSSDROPS|COMPATF_MASKEDMIDTEX;
-		w = COMPATF2_POINTONLINE;
+		v = COMPATF_TRACE | COMPATF_SOUNDTARGET | COMPATF_BOOMSCROLL | COMPATF_MISSILECLIP | COMPATF_NO_PASSMOBJ |
+			COMPATF_INVISIBILITY | COMPATF_CORPSEGIBS | COMPATF_HITSCAN | COMPATF_WALLRUN | COMPATF_NOTOSSDROPS | COMPATF_MASKEDMIDTEX;
+		w = COMPATF2_POINTONLINE | COMPATF2_EXPLODE2;
 		break;
 
 	}
@@ -625,6 +716,10 @@ CVAR (Flag, compat_pointonline,			compatflags2, COMPATF2_POINTONLINE);
 CVAR (Flag, compat_multiexit,			compatflags2, COMPATF2_MULTIEXIT);
 CVAR (Flag, compat_teleport,			compatflags2, COMPATF2_TELEPORT);
 CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
+CVAR (Flag, compat_checkswitchrange,	compatflags2, COMPATF2_CHECKSWITCHRANGE);
+CVAR (Flag, compat_explode1,			compatflags2, COMPATF2_EXPLODE1);
+CVAR (Flag, compat_explode2,			compatflags2, COMPATF2_EXPLODE2);
+CVAR (Flag, compat_railing,				compatflags2, COMPATF2_RAILING);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -708,27 +803,33 @@ void D_Display ()
 		wipegamestate = gamestate;
 	}
 	// No wipes when in a stereo3D VR mode
-	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL && (vr_mode == 0 || vid_rendermode != 4))
-	{ // save the current screen if about to wipe
-		wipe = screen->WipeStartScreen ();
-		switch (wipegamestate)
+	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
+	{
+		if (vr_mode == 0 || vid_rendermode != 4)
 		{
-		default:
-			wipe_type = wipetype;
-			break;
+			// save the current screen if about to wipe
+			wipe = screen->WipeStartScreen ();
 
-		case GS_FORCEWIPEFADE:
-			wipe_type = wipe_Fade;
-			break;
+			switch (wipegamestate)
+			{
+			default:
+				wipe_type = wipetype;
+				break;
 
-		case GS_FORCEWIPEBURN:
-			wipe_type =wipe_Burn;
-			break;
+			case GS_FORCEWIPEFADE:
+				wipe_type = wipe_Fade;
+				break;
 
-		case GS_FORCEWIPEMELT:
-			wipe_type = wipe_Melt;
-			break;
+			case GS_FORCEWIPEBURN:
+				wipe_type = wipe_Burn;
+				break;
+
+			case GS_FORCEWIPEMELT:
+				wipe_type = wipe_Melt;
+				break;
+			}
 		}
+
 		wipegamestate = gamestate;
 	}
 	else
@@ -747,56 +848,55 @@ void D_Display ()
 		//E_RenderFrame();
 		//
 		
-		// Check for the presence of dynamic lights at the start of the frame once.
-		if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
+		D_Render([&]()
 		{
-			TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-			level.HasDynamicLights = !!it.Next();
-		}
-		else level.HasDynamicLights = false;	// lights are off so effectively we have none.
-		
-		viewsec = screen->RenderView(&players[consoleplayer]);
+			viewsec = screen->RenderView(&players[consoleplayer]);
+		}, true);
+
 		screen->Begin2D();
-		screen->DrawBlend(viewsec);
-		if (automapactive)
+		if (!hud_toggled)
 		{
-			AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());
-		}
-		if (!automapactive || viewactive)
-		{
-			screen->RefreshViewBorder ();
-		}
-		
-		// for timing the statusbar code.
-		//cycle_t stb;
-		//stb.Reset();
-		//stb.Clock();
-		if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
-		{
-			StatusBar->DrawBottomStuff (HUD_AltHud);
-			if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
-			if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
+			screen->DrawBlend(viewsec);
+			if (automapactive)
 			{
-				StatusBar->DrawCrosshair();
+				primaryLevel->automap->Drawer ((hud_althud && viewheight == SCREENHEIGHT) ? viewheight : StatusBar->GetTopOfStatusbar());
 			}
-			StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
-			StatusBar->DrawTopStuff (HUD_AltHud);
+		
+			// for timing the statusbar code.
+			//cycle_t stb;
+			//stb.Reset();
+			//stb.Clock();
+			if (!automapactive || viewactive)
+			{
+				StatusBar->RefreshViewBorder ();
+			}
+			if (hud_althud && viewheight == SCREENHEIGHT && screenblocks > 10)
+			{
+				StatusBar->DrawBottomStuff (HUD_AltHud);
+				if (DrawFSHUD || automapactive) StatusBar->DrawAltHUD();
+				if (players[consoleplayer].camera && players[consoleplayer].camera->player && !automapactive)
+				{
+					StatusBar->DrawCrosshair();
+				}
+				StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
+				StatusBar->DrawTopStuff (HUD_AltHud);
+			}
+			else if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
+			{
+				EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
+				StatusBar->DrawBottomStuff (state);
+				StatusBar->CallDraw (state, vp.TicFrac);
+				StatusBar->DrawTopStuff (state);
+			}
+			else
+			{
+				StatusBar->DrawBottomStuff (HUD_StatusBar);
+				StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
+				StatusBar->DrawTopStuff (HUD_StatusBar);
+			}
+			//stb.Unclock();
+			//Printf("Stbar = %f\n", stb.TimeMS());
 		}
-		else if (viewheight == SCREENHEIGHT && viewactive && screenblocks > 10)
-		{
-			EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
-			StatusBar->DrawBottomStuff (state);
-			StatusBar->CallDraw (state, vp.TicFrac);
-			StatusBar->DrawTopStuff (state);
-		}
-		else
-		{
-			StatusBar->DrawBottomStuff (HUD_StatusBar);
-			StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
-			StatusBar->DrawTopStuff (HUD_StatusBar);
-		}
-		//stb.Unclock();
-		//Printf("Stbar = %f\n", stb.TimeMS());
 	}
 	else
 	{
@@ -826,49 +926,53 @@ void D_Display ()
 				break;
 		}
 	}
-	CT_Drawer ();
-
-	// draw pause pic
-	if ((paused || pauseext) && menuactive == MENU_Off)
+	if (!hud_toggled)
 	{
-		FTexture *tex;
-		int x;
-		FString pstring = "By ";
+		CT_Drawer ();
 
-		tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
-		x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
-			tex->GetDisplayLeftOffset() * CleanXfac;
-		screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
-		if (paused && multiplayer)
+		// draw pause pic
+		if ((paused || pauseext) && menuactive == MENU_Off)
 		{
-			pstring += players[paused - 1].userinfo.GetName();
-			screen->DrawText(SmallFont, CR_RED,
-				(screen->GetWidth() - SmallFont->StringWidth(pstring)*CleanXfac) / 2,
-				(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+			FTexture *tex;
+			int x;
+
+			tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
+			x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
+				tex->GetDisplayLeftOffset() * CleanXfac;
+			screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+			if (paused && multiplayer)
+			{
+				FFont *font = generic_ui? NewSmallFont : SmallFont;
+				FString pstring = GStrings("TXT_BY");
+				pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
+				screen->DrawText(font, CR_RED,
+					(screen->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
+					(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
+			}
+		}
+
+		// [RH] Draw icon, if any
+		if (D_DrawIcon)
+		{
+			FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, ETextureType::MiscPatch);
+
+			D_DrawIcon = NULL;
+			if (picnum.isValid())
+			{
+				FTexture *tex = TexMan.GetTexture(picnum);
+				screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
+					DTA_320x200, true, TAG_DONE);
+			}
+			NoWipe = 10;
+		}
+
+		if (snd_drawoutput)
+		{
+			GSnd->DrawWaveDebug(snd_drawoutput);
 		}
 	}
 
-	// [RH] Draw icon, if any
-	if (D_DrawIcon)
-	{
-		FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, ETextureType::MiscPatch);
-
-		D_DrawIcon = NULL;
-		if (picnum.isValid())
-		{
-			FTexture *tex = TexMan.GetTexture(picnum);
-			screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
-				DTA_320x200, true, TAG_DONE);
-		}
-		NoWipe = 10;
-	}
-
-	if (snd_drawoutput)
-	{
-		GSnd->DrawWaveDebug(snd_drawoutput);
-	}
-
-	if (!wipe || NoWipe < 0 || wipe_type == wipe_None)
+	if (!wipe || NoWipe < 0 || wipe_type == wipe_None || hud_toggled)
 	{
 		if (wipe != nullptr) delete wipe;
 		wipe = nullptr;
@@ -877,7 +981,8 @@ void D_Display ()
 		// draw ZScript UI stuff
 		C_DrawConsole ();	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
-		FStat::PrintStat ();
+		if (!hud_toggled)
+			FStat::PrintStat ();
 		screen->End2DAndUpdate ();
 	}
 	else
@@ -930,7 +1035,7 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	savegamerestore = false;
-	bglobal.RemoveAllBots (true);
+	primaryLevel->BotInfo.RemoveAllBots (primaryLevel, true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
@@ -947,6 +1052,7 @@ void D_ErrorCleanup ()
 	}
 	if (gamestate == GS_INTERMISSION) gamestate = GS_DEMOSCREEN;
 	insave = false;
+	ClearGlobalVMStack();
 }
 
 //==========================================================================
@@ -965,6 +1071,7 @@ void D_DoomLoop ()
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
 	Page.SetInvalid();
+	Subtitle = nullptr;
 	Advisory = nullptr;
 
 	vid_cursor.Callback();
@@ -1006,6 +1113,7 @@ void D_DoomLoop ()
 			// Update display, next frame, with current state.
 			I_StartTic ();
 			D_Display ();
+			S_UpdateMusic();
 			if (wantToRestart)
 			{
 				wantToRestart = false;
@@ -1058,14 +1166,11 @@ void D_PageDrawer (void)
 			DTA_BilinearFilter, true,
 			TAG_DONE);
 	}
-	else
+	if (Subtitle != nullptr)
 	{
-		if (!PageBlank)
-		{
-			screen->DrawText (SmallFont, CR_WHITE, 0, 0, "Page graphic goes here", TAG_DONE);
-		}
+		DrawFullscreenSubtitle(GStrings[Subtitle]);
 	}
-	if (Advisory != NULL)
+	if (Advisory != nullptr)
 	{
 		screen->DrawTexture (Advisory, 4, 160, DTA_320x200, true, TAG_DONE);
 	}
@@ -1101,7 +1206,8 @@ void D_DoStrifeAdvanceDemo ()
 		"svox/voc91", "svox/voc92", "svox/voc93", "svox/voc94", "svox/voc95", "svox/voc96"
 	};
 	const char *const *voices = gameinfo.flags & GI_SHAREWARE ? teaserVoices : fullVoices;
-	const char *pagename = NULL;
+	const char *pagename = nullptr;
+	const char *subtitle = nullptr;
 
 	gamestate = GS_DEMOSCREEN;
 	PageBlank = false;
@@ -1129,7 +1235,7 @@ void D_DoStrifeAdvanceDemo ()
 		pagetic = 10 * TICRATE/35;
 		pagename = "";	// PANEL0, but strife0.wad doesn't have it, so don't use it.
 		PageBlank = true;
-		S_Sound (CHAN_VOICE | CHAN_UI, "bishop/active", 1, ATTN_NORM);
+		S_Sound (CHAN_VOICE, CHANF_UI, "bishop/active", 1, ATTN_NORM);
 		break;
 
 	case 2:
@@ -1140,7 +1246,8 @@ void D_DoStrifeAdvanceDemo ()
 	case 3:
 		pagetic = 7 * TICRATE;
 		pagename = "PANEL1";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[0], 1, ATTN_NORM);
+		subtitle = "TXT_SUB_INTRO1";
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[0], 1, ATTN_NORM);
 		// The new Strife teaser has D_FMINTR.
 		// The full retail Strife has D_INTRO.
 		// And the old Strife teaser has both. (I do not know which one it actually uses, nor do I care.)
@@ -1150,31 +1257,36 @@ void D_DoStrifeAdvanceDemo ()
 	case 4:
 		pagetic = 9 * TICRATE;
 		pagename = "PANEL2";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[1], 1, ATTN_NORM);
+		subtitle = "TXT_SUB_INTRO2";
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[1], 1, ATTN_NORM);
 		break;
 
 	case 5:
 		pagetic = 12 * TICRATE;
 		pagename = "PANEL3";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[2], 1, ATTN_NORM);
+		subtitle = "TXT_SUB_INTRO3";
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[2], 1, ATTN_NORM);
 		break;
 
 	case 6:
 		pagetic = 11 * TICRATE;
 		pagename = "PANEL4";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[3], 1, ATTN_NORM);
+		subtitle = "TXT_SUB_INTRO4";
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[3], 1, ATTN_NORM);
 		break;
 
 	case 7:
 		pagetic = 10 * TICRATE;
 		pagename = "PANEL5";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[4], 1, ATTN_NORM);
+		subtitle = "TXT_SUB_INTRO5";
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[4], 1, ATTN_NORM);
 		break;
 
 	case 8:
 		pagetic = 16 * TICRATE;
 		pagename = "PANEL6";
-		S_Sound (CHAN_VOICE | CHAN_UI, voices[5], 1, ATTN_NORM);
+		subtitle = "TXT_SUB_INTRO6";
+		S_Sound (CHAN_VOICE, CHANF_UI, voices[5], 1, ATTN_NORM);
 		break;
 
 	case 9:
@@ -1194,7 +1306,15 @@ void D_DoStrifeAdvanceDemo ()
 	if (demosequence == 9 && !(gameinfo.flags & GI_SHAREWARE))
 		demosequence = 10;
 
-	if (pagename != nullptr) Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
+	if (pagename != nullptr)
+	{
+		Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
+		Subtitle = subtitle;
+	}
+	else
+	{
+		Subtitle = nullptr;
+	}
 }
 
 //==========================================================================
@@ -1217,7 +1337,6 @@ void D_DoAdvanceDemo (void)
 		return;
 	}
 
-	V_SetBlend (0,0,0,0);
 	players[consoleplayer].playerstate = PST_LIVE;	// not reborn
 	usergame = false;				// no save / end game here
 	paused = 0;
@@ -1263,6 +1382,7 @@ void D_DoAdvanceDemo (void)
 			}
 			else
 			{
+				singledemo = false;
 				G_DeferedPlayDemo (demoname);
 				demosequence = 2;
 				break;
@@ -1377,17 +1497,32 @@ void ParseCVarInfo()
 				{
 					cvarflags |= CVAR_LATCH;
 				}
+				else if (stricmp(sc.String, "nosave") == 0)
+				{
+					cvarflags |= CVAR_CONFIG_ONLY;
+				}
 				else
 				{
 					sc.ScriptError("Unknown cvar attribute '%s'", sc.String);
 				}
 				sc.MustGetAnyToken();
 			}
+
+			// Possibility of defining a cvar as 'server nosave' or 'user nosave' is kept for
+			// compatibility reasons.
+			if (cvarflags & CVAR_CONFIG_ONLY)
+			{
+				cvarflags &= ~CVAR_SERVERINFO;
+				cvarflags &= ~CVAR_USERINFO;
+			}
+
 			// Do some sanity checks.
-			if ((cvarflags & (CVAR_SERVERINFO|CVAR_USERINFO)) == 0 ||
+			// No need to check server-nosave and user-nosave combinations because they
+			// are made impossible right above.
+			if ((cvarflags & (CVAR_SERVERINFO|CVAR_USERINFO|CVAR_CONFIG_ONLY)) == 0 ||
 				(cvarflags & (CVAR_SERVERINFO|CVAR_USERINFO)) == (CVAR_SERVERINFO|CVAR_USERINFO))
 			{
-				sc.ScriptError("One of 'server' or 'user' must be specified");
+				sc.ScriptError("One of 'server', 'user', or 'nosave' must be specified");
 			}
 			// The next token must be the cvar type.
 			if (sc.TokenType == TK_Bool)
@@ -1943,23 +2078,6 @@ static void SetMapxxFlag()
 
 //==========================================================================
 //
-// FinalGC
-//
-// If this doesn't free everything, the debug CRT will let us know.
-//
-//==========================================================================
-
-static void FinalGC()
-{
-	delete Args;
-	Args = nullptr;
-	GC::FinalGC = true;
-	GC::FullGC();
-	GC::DelSoftRootHead();	// the soft root head will not be collected by a GC so we have to do it explicitly
-}
-
-//==========================================================================
-//
 // Initialize
 //
 //==========================================================================
@@ -1986,8 +2104,6 @@ static void D_DoomInit()
 	// Check response files before coalescing file parameters.
 	M_FindResponseFile ();
 
-	atterm(FinalGC);
-
 	// Combine different file parameters with their pre-switch bits.
 	Args->CollectFiles("-deh", ".deh");
 	Args->CollectFiles("-bex", ".bex");
@@ -1996,8 +2112,6 @@ static void D_DoomInit()
 	Args->CollectFiles("-file", NULL);	// anything left goes after -file
 
 	gamestate = GS_STARTUP;
-
-	SetLanguageIDs ();
 
 	const char *v = Args->CheckValue("-rngseed");
 	if (v)
@@ -2226,6 +2340,68 @@ static void CheckCmdLine()
 	}
 }
 
+//==========================================================================
+//
+// I_Error
+//
+// Throw an error that will send us to the console if we are far enough
+// along in the startup process.
+//
+//==========================================================================
+
+void I_Error(const char *error, ...)
+{
+	va_list argptr;
+	char errortext[MAX_ERRORTEXT];
+
+	va_start(argptr, error);
+	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	va_end(argptr);
+	I_DebugPrint(errortext);
+
+	throw CRecoverableError(errortext);
+}
+
+//==========================================================================
+//
+// I_FatalError
+//
+// Throw an error that will end the game.
+//
+//==========================================================================
+extern FILE *Logfile;
+
+void I_FatalError(const char *error, ...)
+{
+	static bool alreadyThrown = false;
+	gameisdead = true;
+
+	if (!alreadyThrown)		// ignore all but the first message -- killough
+	{
+		alreadyThrown = true;
+		char errortext[MAX_ERRORTEXT];
+		va_list argptr;
+		va_start(argptr, error);
+		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+		va_end(argptr);
+		I_DebugPrint(errortext);
+
+		// Record error to log (if logging)
+		if (Logfile)
+		{
+			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
+			fflush(Logfile);
+		}
+
+		throw CFatalError(errortext);
+	}
+	std::terminate(); // recursive I_FatalErrors must immediately terminate.
+}
+
+static void NewFailure ()
+{
+    I_FatalError ("Failed to allocate memory from system heap");
+}
 
 //==========================================================================
 //
@@ -2233,7 +2409,7 @@ static void CheckCmdLine()
 //
 //==========================================================================
 
-void D_DoomMain (void)
+static int D_DoomMain_Internal (void)
 {
 	int p;
 	const char *v;
@@ -2242,7 +2418,12 @@ void D_DoomMain (void)
 	FString *args;
 	int argcount;	
 	FIWadManager *iwad_man;
+	
+	std::set_new_handler(NewFailure);
 	const char *batchout = Args->CheckValue("-errorlog");
+	
+	C_InitConsole(80*8, 25*8, false);
+	I_DetectOS();
 
 	// +logfile gets checked too late to catch the full startup log in the logfile so do some extra check for it here.
 	FString logfile = Args->TakeValue("+logfile");
@@ -2300,7 +2481,7 @@ void D_DoomMain (void)
 
 	FString optionalwad = BaseFileSearch(OPTIONALWAD, NULL, true);
 
-	iwad_man = new FIWadManager(basewad);
+	iwad_man = new FIWadManager(basewad, optionalwad);
 
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
@@ -2330,11 +2511,13 @@ void D_DoomMain (void)
 
 		if (iwad_man == NULL)
 		{
-			iwad_man = new FIWadManager(basewad);
+			iwad_man = new FIWadManager(basewad, optionalwad);
 		}
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad, optionalwad);
+		if (!iwad_info) return 0;	// user exited the selection popup via cancel button.
 		gameinfo.gametype = iwad_info->gametype;
 		gameinfo.flags = iwad_info->flags;
+		gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
 		gameinfo.ConfigName = iwad_info->Configname;
 		lastIWAD = iwad;
 
@@ -2379,10 +2562,12 @@ void D_DoomMain (void)
 		}
 
 		if (!batchrun) Printf ("W_Init: Init WADfiles.\n");
-		Wads.InitMultipleFiles (allwads);
+		Wads.InitMultipleFiles (allwads, iwad_info->DeleteLumps);
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();
+
+		C_GrabCVarDefaults(); //parse DEFCVARS
 
 		GameConfig->DoKeySetup(gameinfo.ConfigName);
 
@@ -2398,7 +2583,7 @@ void D_DoomMain (void)
 		}
 
 		// [RH] Initialize localizable strings.
-		GStrings.LoadStrings (false);
+		GStrings.LoadStrings ();
 
 		V_InitFontColors ();
 
@@ -2413,8 +2598,26 @@ void D_DoomMain (void)
 			I_Init ();
 		}
 
+		// [RH] Initialize palette management
+		InitPalette ();
+		
 		if (!batchrun) Printf ("V_Init: allocate screen.\n");
-		V_Init (!!restart);
+		if (!restart)
+		{
+			V_InitScreenSize();
+		}
+		
+		if (!restart)
+		{
+			// This allocates a dummy framebuffer as a stand-in until V_Init2 is called.
+			V_InitScreen ();
+		}
+		
+		if (restart)
+		{
+			// Update screen palette when restarting
+			screen->UpdatePalette();
+		}
 
 		// Base systems have been inited; enable cvar callbacks
 		FBaseCVar::EnableCallbacks ();
@@ -2431,8 +2634,6 @@ void D_DoomMain (void)
 		{
 			StartScreen = new FStartupScreen(0);
 		}
-
-		ParseCompatibility();
 
 		CheckCmdLine();
 
@@ -2528,14 +2729,14 @@ void D_DoomMain (void)
 		PClassActor::StaticSetActorNums();
 
 		//Added by MC:
-		bglobal.getspawned.Clear();
+		primaryLevel->BotInfo.getspawned.Clear();
 		argcount = Args->CheckParmList("-bots", &args);
 		for (p = 0; p < argcount; ++p)
 		{
-			bglobal.getspawned.Push(args[p]);
+			primaryLevel->BotInfo.getspawned.Push(args[p]);
 		}
-		bglobal.spawn_tries = 0;
-		bglobal.wanted_botnum = bglobal.getspawned.Size();
+		primaryLevel->BotInfo.spawn_tries = 0;
+		primaryLevel->BotInfo.wanted_botnum = primaryLevel->BotInfo.getspawned.Size();
 
 		if (!batchrun) Printf ("P_Init: Init Playloop state.\n");
 		StartScreen->LoadingStatus ("Init game engine", 0x3f);
@@ -2555,7 +2756,8 @@ void D_DoomMain (void)
 			};
 			for (p = 0; p < 5; ++p)
 			{
-				const char *str = GStrings[startupString[p]];
+				// At this point we cannot use the player's gender info yet so force 'male' here.
+				const char *str = GStrings.GetString(startupString[p], nullptr, 0);
 				if (str != NULL && str[0] != '\0')
 				{
 					Printf("%s\n", str);
@@ -2567,7 +2769,10 @@ void D_DoomMain (void)
 		{
 			if (!batchrun) Printf ("D_CheckNetGame: Checking network game status.\n");
 			StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
-			D_CheckNetGame ();
+			if (!D_CheckNetGame ())
+			{
+				return 0;
+			}
 		}
 
 		// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now
@@ -2583,8 +2788,12 @@ void D_DoomMain (void)
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;
 		Net_NewMakeTic ();
-		DThinker::RunThinkers ();
+		C_RunDelayedCommands();
 		gamestate = GS_STARTUP;
+
+		// enable custom invulnerability map here
+		if (cl_customizeinvulmap)
+			R_UpdateInvulnerabilityColormap();
 
 		if (!restart)
 		{
@@ -2599,15 +2808,16 @@ void D_DoomMain (void)
 
 			delete StartScreen;
 			StartScreen = NULL;
-			S_Sound (CHAN_BODY, "misc/startupdone", 1, ATTN_NONE);
+			S_Sound (CHAN_BODY, 0, "misc/startupdone", 1, ATTN_NONE);
 
 			if (Args->CheckParm("-norun") || batchrun)
 			{
-				throw CNoRunExit();
+				return 1337; // special exit
 			}
 
 			V_Init2();
 			UpdateJoystickMenu(NULL);
+			UpdateVRModes();
 
 			v = Args->CheckValue ("-loadgame");
 			if (v)
@@ -2650,8 +2860,8 @@ void D_DoomMain (void)
 							G_InitNew(startmap, false);
 							if (StoredWarp.IsNotEmpty())
 							{
-								AddCommandString(StoredWarp.LockBuffer());
-								StoredWarp = NULL;
+								AddCommandString(StoredWarp);
+								StoredWarp = "";
 							}
 						}
 						else
@@ -2663,15 +2873,11 @@ void D_DoomMain (void)
 					{
 						G_BeginRecording(NULL);
 					}
-
-					atterm(D_QuitNetGame);		// killough
 				}
 			}
 		}
 		else
 		{
-			// let the renderer reinitialize some stuff if needed
-			screen->InitPalette();
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
 			D_StartTitle ();				// start up intro loop
@@ -2680,77 +2886,129 @@ void D_DoomMain (void)
 
 		D_DoAnonStats();
 
-		if (I_FriendlyWindowTitle)
-			I_SetWindowTitle(DoomStartupInfo.Name.GetChars());
+		I_UpdateWindowTitle();
 
 		D_DoomLoop ();		// this only returns if a 'restart' CCMD is given.
 		// 
 		// Clean up after a restart
 		//
 
-		// Music and sound should be stopped first
-		S_StopMusic(true);
-		S_StopAllChannels ();
-
-		M_ClearMenus();					// close menu if open
-		F_EndFinale();					// If an intermission is active, end it now
-		AM_ClearColorsets();
-
-		// clean up game state
-		ST_Clear();
-		D_ErrorCleanup ();
-		DThinker::DestroyThinkersInList(STAT_STATIC);
-		E_Shutdown(false);
-		P_FreeLevelData();
-		P_FreeExtraLevelData();
-
-		M_SaveDefaults(NULL);			// save config before the restart
-
-		// delete all data that cannot be left until reinitialization
-		screen->CleanForRestart();
-		V_ClearFonts();					// must clear global font pointers
-		ColorSets.Clear();
-		PainFlashes.Clear();
-		R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
-		gameinfo.~gameinfo_t();
-		new (&gameinfo) gameinfo_t;		// Reset gameinfo
-		S_Shutdown();					// free all channels and delete playlist
-		C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
-		DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
-		FS_Close();						// destroy the global FraggleScript.
-		DeinitMenus();
-		LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
-
-		// delete DoomStartupInfo data
-		DoomStartupInfo.Name = "";
-		DoomStartupInfo.BkColor = DoomStartupInfo.FgColor = DoomStartupInfo.Type = 0;
-		DoomStartupInfo.LoadLights = DoomStartupInfo.LoadBrightmaps = -1;
-
-		GC::FullGC();					// clean up before taking down the object list.
-
-		// Delete the reference to the VM functions here which were deleted and will be recreated after the restart.
-		FAutoSegIterator probe(ARegHead, ARegTail);
-		while (*++probe != NULL)
-		{
-			AFuncDesc *afunc = (AFuncDesc *)*probe;
-			*(afunc->VMPointer) = NULL;
-		}
-
-		GC::DelSoftRootHead();
-
-		PClass::StaticShutdown();
-
-		GC::FullGC();					// perform one final garbage collection after shutdown
-
-		assert(GC::Root == nullptr);
-
-		restart++;
-		PClass::bShutdown = false;
-		PClass::bVMOperational = false;
+		D_Cleanup();
 
 		gamestate = GS_STARTUP;
 	}
 	while (1);
+}
+
+int D_DoomMain()
+{
+	int ret = 0;
+	GameTicRate = TICRATE;
+	try
+	{
+		ret = D_DoomMain_Internal();
+	}
+	catch (const CExitEvent &exit)	// This is a regular exit initiated from deeply nested code.
+	{
+		ret = exit.Reason();
+	}
+	catch (const std::exception &error)
+	{
+		I_ShowFatalError(error.what());
+		ret = -1;
+	}
+	// Unless something really bad happened, the game should only exit through this single point in the code.
+	// No more 'exit', please.
+	// Todo: Move all engine cleanup here instead of using exit handlers and replace the scattered 'exit' calls with a special exception.
+	D_Cleanup();
+	CloseNetwork();
+	GC::FinalGC = true;
+	GC::FullGC();
+	GC::DelSoftRootHead();	// the soft root head will not be collected by a GC so we have to do it explicitly
+	C_DeinitConsole();
+	R_DeinitColormaps();
+	R_Shutdown();
+	I_ShutdownGraphics();
+	I_ShutdownInput();
+	M_SaveDefaultsFinal();
+	DeleteStartupScreen();
+	delete Args;
+	Args = nullptr;
+	return ret;
+}
+
+//==========================================================================
+//
+// clean up the resources
+//
+//==========================================================================
+
+void D_Cleanup()
+{
+	if (demorecording)
+	{
+		G_CheckDemoStatus();
+	}
+
+	// Music and sound should be stopped first
+	S_StopMusic(true);
+	S_ClearSoundData();
+	S_UnloadReverbDef();
+	G_ClearMapinfo();
+
+	M_ClearMenus();					// close menu if open
+	F_EndFinale();					// If an intermission is active, end it now
+	AM_ClearColorsets();
+	DeinitSWColorMaps();
+	FreeSBarInfoScript();
+	
+	// clean up game state
+	ST_Clear();
+	D_ErrorCleanup ();
+	P_Shutdown();
+	
+	M_SaveDefaults(NULL);			// save config before the restart
+	
+	// delete all data that cannot be left until reinitialization
+	if (screen) screen->CleanForRestart();
+	V_ClearFonts();					// must clear global font pointers
+	ColorSets.Clear();
+	PainFlashes.Clear();
+	R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
+	gameinfo.~gameinfo_t();
+	new (&gameinfo) gameinfo_t;		// Reset gameinfo
+	S_Shutdown();					// free all channels and delete playlist
+	C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
+	DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
+	DeinitMenus();
+	LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
+	
+	// delete DoomStartupInfo data
+	DoomStartupInfo.Name = "";
+	DoomStartupInfo.BkColor = DoomStartupInfo.FgColor = DoomStartupInfo.Type = 0;
+	DoomStartupInfo.LoadLights = DoomStartupInfo.LoadBrightmaps = -1;
+	
+	GC::FullGC();					// clean up before taking down the object list.
+	
+	// Delete the reference to the VM functions here which were deleted and will be recreated after the restart.
+	FAutoSegIterator probe(ARegHead, ARegTail);
+	while (*++probe != NULL)
+	{
+		AFuncDesc *afunc = (AFuncDesc *)*probe;
+		*(afunc->VMPointer) = NULL;
+	}
+	
+	GC::DelSoftRootHead();
+	
+	PClass::StaticShutdown();
+	
+	GC::FullGC();					// perform one final garbage collection after shutdown
+	
+	assert(GC::Root == nullptr);
+	
+	restart++;
+	PClass::bShutdown = false;
+	PClass::bVMOperational = false;
 }
 
 //==========================================================================
@@ -2832,6 +3090,24 @@ void FStartupScreen::AppendStatusLine(const char *status)
 {
 }
 
+//===========================================================================
+//
+// DeleteStartupScreen
+//
+// Makes sure the startup screen has been deleted before quitting.
+//
+//===========================================================================
+
+void DeleteStartupScreen()
+{
+	if (StartScreen != nullptr)
+	{
+		delete StartScreen;
+		StartScreen = nullptr;
+	}
+}
+
+
 
 void FStartupScreen::Progress(void) {}
 void FStartupScreen::NetInit(char const *,int) {}
@@ -2848,11 +3124,27 @@ DEFINE_FIELD_X(InputEventData, event_t, data3)
 DEFINE_FIELD_X(InputEventData, event_t, x)
 DEFINE_FIELD_X(InputEventData, event_t, y)
 
-
-CUSTOM_CVAR(Bool, I_FriendlyWindowTitle, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, I_FriendlyWindowTitle, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
-	if (self)
+	I_UpdateWindowTitle();
+}
+
+void I_UpdateWindowTitle()
+{
+	switch (I_FriendlyWindowTitle)
+	{
+	case 1:
+		if (level.LevelName && level.LevelName.GetChars()[0])
+		{
+			FString titlestr;
+			titlestr.Format("%s - %s", level.LevelName.GetChars(), DoomStartupInfo.Name.GetChars());
+			I_SetWindowTitle(titlestr.GetChars());
+			break;
+		}
+	case 2:
 		I_SetWindowTitle(DoomStartupInfo.Name.GetChars());
-	else
+		break;
+	default:
 		I_SetWindowTitle(NULL);
+	}
 }

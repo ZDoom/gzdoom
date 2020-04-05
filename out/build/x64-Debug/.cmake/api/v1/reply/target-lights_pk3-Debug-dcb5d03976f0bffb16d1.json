@@ -1,0 +1,174 @@
+{
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"add_pk3"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt",
+			"wadsrc_lights/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 3,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 86,
+				"parent" : 1
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "zdoom::@145eef247bfb46b6828c"
+		},
+		{
+			"id" : "zipdir::@4e3b9157d490e4153562"
+		}
+	],
+	"id" : "lights_pk3::@8921d263e48f80792692",
+	"name" : "lights_pk3",
+	"paths" : 
+	{
+		"build" : "wadsrc_lights",
+		"source" : "wadsrc_lights"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\doom.freedoom",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\doom.id",
+			"sourceIndexes" : 
+			[
+				2
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\hacx.hacx1",
+			"sourceIndexes" : 
+			[
+				3
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\harmony",
+			"sourceIndexes" : 
+			[
+				4
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\heretic",
+			"sourceIndexes" : 
+			[
+				5
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\hexen",
+			"sourceIndexes" : 
+			[
+				6
+			]
+		},
+		{
+			"name" : "Source Files\\filter\\strife",
+			"sourceIndexes" : 
+			[
+				7
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				8,
+				9
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/wadsrc_lights/CMakeFiles/lights_pk3",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc_lights/static/filter/doom.freedoom/gldefs.txt",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc_lights/static/filter/doom.id/gldefs.txt",
+			"sourceGroupIndex" : 2
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc_lights/static/filter/hacx.hacx1/gldefs.txt",
+			"sourceGroupIndex" : 3
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc_lights/static/filter/harmony/gldefs.txt",
+			"sourceGroupIndex" : 4
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc_lights/static/filter/heretic/gldefs.txt",
+			"sourceGroupIndex" : 5
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc_lights/static/filter/hexen/gldefs.txt",
+			"sourceGroupIndex" : 6
+		},
+		{
+			"backtrace" : 2,
+			"path" : "wadsrc_lights/static/filter/strife/gldefs.txt",
+			"sourceGroupIndex" : 7
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/wadsrc_lights/CMakeFiles/lights_pk3.rule",
+			"sourceGroupIndex" : 8
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "out/build/x64-Debug/lights.pk3.rule",
+			"sourceGroupIndex" : 8
+		}
+	],
+	"type" : "UTILITY"
+}

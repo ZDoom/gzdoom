@@ -69,6 +69,8 @@
 #include "resource.h"
 #include "x86.h"
 #include "stats.h"
+#include "v_text.h"
+#include "utf8.h"
 
 #include "d_main.h"
 #include "d_net.h"
@@ -80,9 +82,8 @@
 #include "v_font.h"
 #include "g_level.h"
 #include "doomstat.h"
+#include "i_system.h"
 #include "textures/bitmap.h"
-
-#include "optwin32.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -101,6 +102,8 @@ extern void LayoutMainWindow(HWND hWnd, HWND pane);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+void DestroyCustomCursor();
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void CalculateCPUSpeed();
@@ -108,16 +111,15 @@ static void CalculateCPUSpeed();
 static HCURSOR CreateCompatibleCursor(FBitmap &cursorpic, int leftofs, int topofs);
 static HCURSOR CreateAlphaCursor(FBitmap &cursorpic, int leftofs, int topofs);
 static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP color_mask);
-static void DestroyCustomCursor();
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-EXTERN_CVAR(String, language);
 EXTERN_CVAR (Bool, queryiwad);
 // Used on welcome/IWAD screen.
 EXTERN_CVAR (Bool, disableautoload)
 EXTERN_CVAR (Bool, autoloadlights)
 EXTERN_CVAR (Bool, autoloadbrightmaps)
+EXTERN_CVAR (Int, vid_preferbackend)
 
 extern HWND Window, ConWindow, GameTitleWindow;
 extern HANDLE StdOut;
@@ -133,17 +135,14 @@ CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR (Bool, con_debugoutput, false, 0);
 
 double PerfToSec, PerfToMillisec;
-uint32_t LanguageIDs[4];
 
 UINT TimerPeriod;
 
-bool gameisdead;
 int sys_ostype = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static ticcmd_t emptycmd;
-static bool HasExited;
 
 static WadStuff *WadList;
 static int NumWads;
@@ -205,24 +204,7 @@ void I_DetectOS(void)
 	{
 	case VER_PLATFORM_WIN32_NT:
 		osname = "NT";
-		if (info.dwMajorVersion == 5)
-		{
-			if (info.dwMinorVersion == 0)
-			{
-				osname = "2000";
-			}
-			if (info.dwMinorVersion == 1)
-			{
-				osname = "XP";
-				sys_ostype = 1; // legacy OS
-			}
-			else if (info.dwMinorVersion == 2)
-			{
-				osname = "Server 2003";
-				sys_ostype = 1; // legacy OS
-			}
-		}
-		else if (info.dwMajorVersion == 6)
+		if (info.dwMajorVersion == 6)
 		{
 			if (info.dwMinorVersion == 0)
 			{
@@ -249,12 +231,12 @@ void I_DetectOS(void)
 			}
 			else if (info.dwMinorVersion == 4)
 			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (beta)" : "Server 10 (beta)";
+				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (beta)" : "Server 2016 (beta)";
 			}
 		}
 		else if (info.dwMajorVersion == 10)
 		{
-			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 10 (or higher)";
+			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 2016 (or higher)";
 			sys_ostype = 3; // modern OS
 		}
 		break;
@@ -268,65 +250,6 @@ void I_DetectOS(void)
 			osname,
 			info.dwMajorVersion, info.dwMinorVersion,
 			info.dwBuildNumber, info.szCSDVersion);
-}
-
-//==========================================================================
-//
-// SubsetLanguageIDs
-//
-// Helper function for SetLanguageIDs.
-//
-//==========================================================================
-
-static void SubsetLanguageIDs(LCID id, LCTYPE type, int idx)
-{
-	char buf[8];
-	LCID langid;
-	char *idp;
-
-	if (!GetLocaleInfo(id, type, buf, 8))
-		return;
-	langid = MAKELCID(strtoul(buf, NULL, 16), SORT_DEFAULT);
-	if (!GetLocaleInfo(langid, LOCALE_SABBREVLANGNAME, buf, 8))
-		return;
-	idp = (char *)(&LanguageIDs[idx]);
-	memset (idp, 0, 4);
-	idp[0] = tolower(buf[0]);
-	idp[1] = tolower(buf[1]);
-	idp[2] = tolower(buf[2]);
-	idp[3] = 0;
-}
-
-//==========================================================================
-//
-// SetLanguageIDs
-//
-//==========================================================================
-
-void SetLanguageIDs()
-{
-	size_t langlen = strlen(language);
-
-	if (langlen < 2 || langlen > 3)
-	{
-		memset(LanguageIDs, 0, sizeof(LanguageIDs));
-		SubsetLanguageIDs(LOCALE_USER_DEFAULT, LOCALE_ILANGUAGE, 0);
-		SubsetLanguageIDs(LOCALE_USER_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 1);
-		SubsetLanguageIDs(LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, 2);
-		SubsetLanguageIDs(LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTLANGUAGE, 3);
-	}
-	else
-	{
-		uint32_t lang = 0;
-
-		((uint8_t *)&lang)[0] = (language)[0];
-		((uint8_t *)&lang)[1] = (language)[1];
-		((uint8_t *)&lang)[2] = (language)[2];
-		LanguageIDs[0] = lang;
-		LanguageIDs[1] = lang;
-		LanguageIDs[2] = lang;
-		LanguageIDs[3] = lang;
-	}
 }
 
 //==========================================================================
@@ -396,161 +319,8 @@ void I_Init()
 	CheckCPUID(&CPU);
 	CalculateCPUSpeed();
 	DumpCPUInfo(&CPU);
-
-	atterm (I_ShutdownSound);
-	I_InitSound ();
 }
 
-//==========================================================================
-//
-// I_Quit
-//
-//==========================================================================
-
-void I_Quit()
-{
-	HasExited = true;		/* Prevent infinitely recursive exits -- killough */
-
-	timeEndPeriod(TimerPeriod);
-
-	if (demorecording)
-	{
-		G_CheckDemoStatus();
-	}
-
-	C_DeinitConsole();
-}
-
-
-//==========================================================================
-//
-// I_FatalError
-//
-// Throw an error that will end the game.
-//
-//==========================================================================
-
-void I_FatalError(const char *error, ...)
-{
-	static BOOL alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown)		// ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-		char errortext[MAX_ERRORTEXT];
-		va_list argptr;
-		va_start(argptr, error);
-		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
-		va_end(argptr);
-		OutputDebugString(errortext);
-
-		// Record error to log (if logging)
-		if (Logfile)
-		{
-			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush(Logfile);
-		}
-
-		throw CFatalError(errortext);
-	}
-
-	if (!HasExited)		// If it hasn't exited yet, exit now -- killough
-	{
-		HasExited = 1;	// Prevent infinitely recursive exits -- killough
-		exit(-1);
-	}
-}
-
-//==========================================================================
-//
-// I_Error
-//
-// Throw an error that will send us to the console if we are far enough
-// along in the startup process.
-//
-//==========================================================================
-
-void I_Error(const char *error, ...)
-{
-	va_list argptr;
-	char errortext[MAX_ERRORTEXT];
-
-	va_start(argptr, error);
-	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
-	va_end(argptr);
-	OutputDebugString(errortext);
-
-	throw CRecoverableError(errortext);
-}
-
-//==========================================================================
-//
-// ToEditControl
-//
-// Converts string to Unicode and inserts it into the control.
-//
-//==========================================================================
-
-void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
-{
-	// Let's just do this ourself. It's not hard, and we can compensate for
-	// special console characters at the same time.
-#if 0
-	MultiByteToWideChar(1252 /* Western */, 0, buf, bpos, wbuf, countof(wbuf));
-	wbuf[bpos] = 0;
-#else
-	static wchar_t notlatin1[32] =		// code points 0x80-0x9F
-	{
-		0x20AC,		// Euro sign
-		0x0081,		// Undefined
-		0x201A,		// Single low-9 quotation mark
-		0x0192,		// Latin small letter f with hook
-		0x201E,		// Double low-9 quotation mark
-		0x2026,		// Horizontal ellipsis
-		0x2020,		// Dagger
-		0x2021,		// Double dagger
-		0x02C6,		// Modifier letter circumflex accent
-		0x2030,		// Per mille sign
-		0x0160,		// Latin capital letter S with caron
-		0x2039,		// Single left-pointing angle quotation mark
-		0x0152,		// Latin capital ligature OE
-		0x008D,		// Undefined
-		0x017D,		// Latin capital letter Z with caron
-		0x008F,		// Undefined
-		0x0090,		// Undefined
-		0x2018,		// Left single quotation mark
-		0x2019,		// Right single quotation mark
-		0x201C,		// Left double quotation mark
-		0x201D,		// Right double quotation mark
-		0x2022,		// Bullet
-		0x2013,		// En dash
-		0x2014,		// Em dash
-		0x02DC,		// Small tilde
-		0x2122,		// Trade mark sign
-		0x0161,		// Latin small letter s with caron
-		0x203A,		// Single right-pointing angle quotation mark
-		0x0153,		// Latin small ligature oe
-		0x009D,		// Undefined
-		0x017E,		// Latin small letter z with caron
-		0x0178		// Latin capital letter Y with diaeresis
-	};
-	for (int i = 0; i <= bpos; ++i)
-	{
-		wchar_t code = (uint8_t)buf[i];
-		if (code >= 0x1D && code <= 0x1F)
-		{ // The bar characters, most commonly used to indicate map changes
-			code = 0x2550;	// Box Drawings Double Horizontal
-		}
-		else if (code >= 0x80 && code <= 0x9F)
-		{
-			code = notlatin1[code - 0x80];
-		}
-		wbuf[i] = code;
-	}
-#endif
-	SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf); 
-}
 
 //==========================================================================
 //
@@ -561,13 +331,12 @@ void ToEditControl(HWND edit, const char *buf, wchar_t *wbuf, int bpos)
 //
 //==========================================================================
 
-static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
+static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 {
-	if (edit == NULL && StdOut == NULL)
+	if (edit == nullptr && StdOut == nullptr && !con_debugoutput)
 		return;
 
-	char buf[256];
-	wchar_t wbuf[countof(buf)];
+	wchar_t wbuf[256];
 	int bpos = 0;
 	CHARRANGE selection;
 	CHARRANGE endselection;
@@ -589,32 +358,53 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 		lines_before = (LONG)SendMessage(edit, EM_GETLINECOUNT, 0, 0);
 	}
 
-	while (*cp != 0)
+	const uint8_t *cptr = (const uint8_t*)cpt;
+
+	auto outputIt = [&]()
 	{
-		// 28 is the escape code for a color change.
-		if ((*cp == 28 && bpos != 0) || bpos == 255)
+		wbuf[bpos] = 0;
+		if (edit != nullptr)
 		{
-			buf[bpos] = 0;
-			if (edit != NULL)
-			{
-				ToEditControl(edit, buf, wbuf, bpos);
-			}
-			if (StdOut != NULL)
-			{
-				DWORD bytes_written;
-				WriteFile(StdOut, buf, bpos, &bytes_written, NULL);
-			}
-			bpos = 0;
+			SendMessageW(edit, EM_REPLACESEL, FALSE, (LPARAM)wbuf);
 		}
-		if (*cp != 28)
+		if (con_debugoutput)
 		{
-			buf[bpos++] = *cp++;
+			OutputDebugStringW(wbuf);
+		}
+		if (StdOut != nullptr)
+		{
+			// Convert back to UTF-8.
+			DWORD bytes_written;
+			if (!FancyStdOut)
+			{
+				FString conout(wbuf);
+				WriteFile(StdOut, conout.GetChars(), (DWORD)conout.Len(), &bytes_written, NULL);
+			}
+			else
+			{
+				WriteConsoleW(StdOut, wbuf, bpos, &bytes_written, nullptr);
+			}
+		}
+		bpos = 0;
+	};
+
+	while (int chr = GetCharFromString(cptr))
+	{
+		if ((chr == TEXTCOLOR_ESCAPE && bpos != 0) || bpos == 255)
+		{
+			outputIt();
+		}
+		if (chr != TEXTCOLOR_ESCAPE)
+		{
+			if (chr >= 0x1D && chr <= 0x1F)
+			{ // The bar characters, most commonly used to indicate map changes
+				chr = 0x2550;	// Box Drawings Double Horizontal
+			}
+			wbuf[bpos++] = chr;
 		}
 		else
 		{
-			const uint8_t *color_id = (const uint8_t *)cp + 1;
-			EColorRange range = V_ParseFontColor(color_id, CR_UNTRANSLATED, CR_YELLOW);
-			cp = (const char *)color_id;
+			EColorRange range = V_ParseFontColor(cptr, CR_UNTRANSLATED, CR_YELLOW);
 
 			if (range != CR_UNDEFINED)
 			{
@@ -661,16 +451,7 @@ static void DoPrintStr(const char *cp, HWND edit, HANDLE StdOut)
 	}
 	if (bpos != 0)
 	{
-		buf[bpos] = 0;
-		if (edit != NULL)
-		{
-			ToEditControl(edit, buf, wbuf, bpos);
-		}
-		if (StdOut != NULL)
-		{
-			DWORD bytes_written;
-			WriteFile(StdOut, buf, bpos, &bytes_written, NULL);
-		}
+		outputIt();
 	}
 
 	if (edit != NULL)
@@ -701,35 +482,15 @@ static TArray<FString> bufferedConsoleStuff;
 
 void I_DebugPrint(const char *cp)
 {
-	OutputDebugStringA(cp);
+	if (IsDebuggerPresent())
+	{
+		auto wstr = WideString(cp);
+		OutputDebugStringW(wstr.c_str());
+	}
 }
 
 void I_PrintStr(const char *cp)
 {
-	if (con_debugoutput)
-	{
-		// Strip out any color escape sequences before writing to debug output
-		TArray<char> copy(strlen(cp) + 1, true);
-		const char * srcp = cp;
-		char * dstp = copy.Data();
-
-		while (*srcp != 0)
-		{
-			if (*srcp!=0x1c && *srcp!=0x1d && *srcp!=0x1e && *srcp!=0x1f)
-			{
-				*dstp++=*srcp++;
-			}
-			else
-			{
-				if (srcp[1]!=0) srcp+=2;
-				else break;
-			}
-		}
-		*dstp=0;
-
-		OutputDebugStringA(copy.Data());
-	}
-
 	if (ConWindowHidden)
 	{
 		bufferedConsoleStuff.Push(cp);
@@ -767,7 +528,7 @@ static void SetQueryIWad(HWND dialog)
 
 	if (!query && queryiwad)
 	{
-		MessageBox(dialog,
+		MessageBoxA(dialog,
 			"You have chosen not to show this dialog box in the future.\n"
 			"If you wish to see it again, hold down SHIFT while starting " GAMENAME ".",
 			"Don't ask me this again",
@@ -795,12 +556,14 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 	case WM_INITDIALOG:
 		// Add our program name to the window title
 		{
-			TCHAR label[256];
+			WCHAR label[256];
 			FString newlabel;
 
-			GetWindowText(hDlg, label, countof(label));
-			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), label);
-			SetWindowText(hDlg, newlabel.GetChars());
+			GetWindowTextW(hDlg, label, countof(label));
+			FString alabel(label);
+			newlabel.Format(GAMENAME " %s: %s", GetVersionString(), alabel.GetChars());
+			auto wlabel = newlabel.WideString();
+			SetWindowTextW(hDlg, wlabel.c_str());
 		}
 
 		// [SP] Upstreamed from Zandronum
@@ -809,6 +572,19 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		// Check the current video settings.
 		//SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
 		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
+		switch (vid_preferbackend)
+		{
+		case 1:
+			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN2, BM_SETCHECK, BST_CHECKED, 0 );
+			break;
+		case 2:
+			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN3, BM_SETCHECK, BST_CHECKED, 0 );
+			break;
+		default:
+			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN1, BM_SETCHECK, BST_CHECKED, 0 );
+			break;
+		}
+
 
 		// [SP] This is our's
 		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, disableautoload ? BST_CHECKED : BST_UNCHECKED, 0 );
@@ -817,20 +593,20 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 		// Set up our version string.
 		sprintf(szString, "Version %s.", GetVersionString());
-		SetDlgItemText (hDlg, IDC_WELCOME_VERSION, szString);
+		SetDlgItemTextA (hDlg, IDC_WELCOME_VERSION, szString);
 
 		// Populate the list with all the IWADs found
 		ctrl = GetDlgItem(hDlg, IDC_IWADLIST);
 		for (i = 0; i < NumWads; i++)
 		{
-			FString work;
 			const char *filepart = strrchr(WadList[i].Path, '/');
 			if (filepart == NULL)
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
-			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)work.GetChars());
+			FStringf work("%s (%s)", WadList[i].Name.GetChars(), filepart);
+			std::wstring wide = work.WideString();
+			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)wide.c_str());
 			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
 		}
 		SendMessage(ctrl, LB_SETCURSEL, DefaultWad, 0);
@@ -854,6 +630,12 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 			SetQueryIWad(hDlg);
 			// [SP] Upstreamed from Zandronum
 			fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN3, BM_GETCHECK, 0, 0) == BST_CHECKED)
+				vid_preferbackend = 2;
+			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
+				vid_preferbackend = 1;
+			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN1, BM_GETCHECK, 0, 0) == BST_CHECKED)
+				vid_preferbackend = 0;
 
 			// [SP] This is our's.
 			disableautoload = SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
@@ -939,7 +721,6 @@ bool I_SetCursor(FTexture *cursorpic)
 		// Replace the existing cursor with the new one.
 		DestroyCustomCursor();
 		CustomCursor = cursor;
-		atterm(DestroyCustomCursor);
 	}
 	else
 	{
@@ -1142,7 +923,7 @@ static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP 
 //
 //==========================================================================
 
-static void DestroyCustomCursor()
+void DestroyCustomCursor()
 {
 	if (CustomCursor != NULL)
 	{
@@ -1176,7 +957,7 @@ bool I_WriteIniFailed()
 	);
 	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
 	LocalFree (lpMsgBuf);
-	return MessageBox(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
+	return MessageBoxA(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
 }
 
 //==========================================================================
@@ -1187,9 +968,13 @@ bool I_WriteIniFailed()
 //
 //==========================================================================
 
+
 void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
 {
-	return FindFirstFileA(filespec, (LPWIN32_FIND_DATAA)fileinfo);
+	static_assert(sizeof(WIN32_FIND_DATAW) == sizeof(fileinfo->FindData), "Findata size mismatch");
+	auto widespec = WideString(filespec);
+	fileinfo->UTF8Name = "";
+	return FindFirstFileW(widespec.c_str(), (LPWIN32_FIND_DATAW)&fileinfo->FindData);
 }
 
 //==========================================================================
@@ -1202,7 +987,8 @@ void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
 
 int I_FindNext(void *handle, findstate_t *fileinfo)
 {
-	return !FindNextFileA((HANDLE)handle, (LPWIN32_FIND_DATAA)fileinfo);
+	fileinfo->UTF8Name = "";
+	return !FindNextFileW((HANDLE)handle, (LPWIN32_FIND_DATAW)&fileinfo->FindData);
 }
 
 //==========================================================================
@@ -1220,32 +1006,43 @@ int I_FindClose(void *handle)
 
 //==========================================================================
 //
+// I_FindName
+//
+// Returns the name for an entry
+//
+//==========================================================================
+
+const char *I_FindName(findstate_t *fileinfo)
+{
+	if (fileinfo->UTF8Name.IsEmpty()) fileinfo->UTF8Name = fileinfo->FindData.Name;
+	return fileinfo->UTF8Name.GetChars();
+}
+
+//==========================================================================
+//
 // QueryPathKey
 //
 // Returns the value of a registry key into the output variable value.
 //
 //==========================================================================
 
-static bool QueryPathKey(HKEY key, const char *keypath, const char *valname, FString &value)
+static bool QueryPathKey(HKEY key, const wchar_t *keypath, const wchar_t *valname, FString &value)
 {
 	HKEY pathkey;
 	DWORD pathtype;
 	DWORD pathlen;
 	LONG res;
 
+	value = "";
 	if(ERROR_SUCCESS == RegOpenKeyEx(key, keypath, 0, KEY_QUERY_VALUE, &pathkey))
 	{
 		if (ERROR_SUCCESS == RegQueryValueEx(pathkey, valname, 0, &pathtype, NULL, &pathlen) &&
 			pathtype == REG_SZ && pathlen != 0)
 		{
 			// Don't include terminating null in count
-			char *chars = value.LockNewBuffer(pathlen - 1);
-			res = RegQueryValueEx(pathkey, valname, 0, NULL, (LPBYTE)chars, &pathlen);
-			value.UnlockBuffer();
-			if (res != ERROR_SUCCESS)
-			{
-				value = "";
-			}
+			TArray<wchar_t> chars(pathlen + 1, true);
+			res = RegQueryValueEx(pathkey, valname, 0, NULL, (LPBYTE)chars.Data(), &pathlen);
+			if (res == ERROR_SUCCESS) value = FString(chars.Data());
 		}
 		RegCloseKey(pathkey);
 	}
@@ -1267,35 +1064,35 @@ TArray<FString> I_GetGogPaths()
 {
 	TArray<FString> result;
 	FString path;
-	FString gamepath;
+	std::wstring gamepath;
 
 #ifdef _WIN64
-	FString gogregistrypath = "Software\\Wow6432Node\\GOG.com\\Games";
+	std::wstring gogregistrypath = L"Software\\Wow6432Node\\GOG.com\\Games";
 #else
 	// If a 32-bit ZDoom runs on a 64-bit Windows, this will be transparently and
 	// automatically redirected to the Wow6432Node address instead, so this address
 	// should be safe to use in all cases.
-	FString gogregistrypath = "Software\\GOG.com\\Games";
+	std::wstring gogregistrypath = L"Software\\GOG.com\\Games";
 #endif
 
 	// Look for Ultimate Doom
-	gamepath = gogregistrypath + "\\1435827232";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1435827232";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path);	// directly in install folder
 	}
 
 	// Look for Doom II
-	gamepath = gogregistrypath + "\\1435848814";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1435848814";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path + "/doom2");	// in a subdirectory
 		// If direct support for the Master Levels is ever added, they are in path + /master/wads
 	}
 
 	// Look for Final Doom
-	gamepath = gogregistrypath + "\\1435848742";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1435848742";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		// in subdirectories
 		result.Push(path + "/TNT");
@@ -1303,15 +1100,15 @@ TArray<FString> I_GetGogPaths()
 	}
 
 	// Look for Doom 3: BFG Edition
-	gamepath = gogregistrypath + "\\1135892318";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1135892318";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path + "/base/wads");	// in a subdirectory
 	}
 
 	// Look for Strife: Veteran Edition
-	gamepath = gogregistrypath + "\\1432899949";
-	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	gamepath = gogregistrypath + L"\\1432899949";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.c_str(), L"Path", path))
 	{
 		result.Push(path);	// directly in install folder
 	}
@@ -1345,9 +1142,9 @@ TArray<FString> I_GetSteamPath()
 
 	FString path;
 
-	if (!QueryPathKey(HKEY_CURRENT_USER, "Software\\Valve\\Steam", "SteamPath", path))
+	if (!QueryPathKey(HKEY_CURRENT_USER, L"Software\\Valve\\Steam", L"SteamPath", path))
 	{
-		if (!QueryPathKey(HKEY_LOCAL_MACHINE, "Software\\Valve\\Steam", "InstallPath", path))
+		if (!QueryPathKey(HKEY_LOCAL_MACHINE, L"Software\\Valve\\Steam", L"InstallPath", path))
 			return result;
 	}
 	path += "/SteamApps/common/";
@@ -1374,7 +1171,7 @@ unsigned int I_MakeRNGSeed()
 
 	// If RtlGenRandom is available, use that to avoid increasing the
 	// working set by pulling in all of the crytographic API.
-	HMODULE advapi = GetModuleHandle("advapi32.dll");
+	HMODULE advapi = GetModuleHandleA("advapi32.dll");
 	if (advapi != NULL)
 	{
 		BOOLEAN (APIENTRY *RtlGenRandom)(void *, ULONG) =
@@ -1413,28 +1210,21 @@ unsigned int I_MakeRNGSeed()
 //
 //==========================================================================
 
-FString I_GetLongPathName(FString shortpath)
+FString I_GetLongPathName(const FString &shortpath)
 {
-	using OptWin32::GetLongPathNameA;
-
-	// Doesn't exist on NT4
-	if (!GetLongPathNameA)
-		return shortpath;
-
-	DWORD buffsize = GetLongPathNameA(shortpath.GetChars(), NULL, 0);
+	std::wstring wshortpath = shortpath.WideString();
+	DWORD buffsize = GetLongPathNameW(wshortpath.c_str(), nullptr, 0);
 	if (buffsize == 0)
 	{ // nothing to change (it doesn't exist, maybe?)
 		return shortpath;
 	}
-	TCHAR *buff = new TCHAR[buffsize];
-	DWORD buffsize2 = GetLongPathNameA(shortpath.GetChars(), buff, buffsize);
+	TArray<WCHAR> buff(buffsize, true);
+	DWORD buffsize2 = GetLongPathNameW(wshortpath.c_str(), buff.Data(), buffsize);
 	if (buffsize2 >= buffsize)
 	{ // Failure! Just return the short path
-		delete[] buff;
 		return shortpath;
 	}
-	FString longpath(buff, buffsize2);
-	delete[] buff;
+	FString longpath(buff.Data());
 	return longpath;
 }
 
@@ -1449,10 +1239,10 @@ FString I_GetLongPathName(FString shortpath)
 //
 //==========================================================================
 
-int _stat64i32(const char *path, struct _stat64i32 *buffer)
+int _wstat64i32(const wchar_t *path, struct _stat64i32 *buffer)
 {
 	WIN32_FILE_ATTRIBUTE_DATA data;
-	if(!GetFileAttributesEx(path, GetFileExInfoStandard, &data))
+	if(!GetFileAttributesExW(path, GetFileExInfoStandard, &data))
 		return -1;
 
 	buffer->st_ino = 0;

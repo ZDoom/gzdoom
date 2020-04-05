@@ -367,6 +367,7 @@ void VMFunctionBuilder::ParamChange(int delta)
 VMFunctionBuilder::RegAvailability::RegAvailability()
 {
 	memset(Used, 0, sizeof(Used));
+	memset(Dirty, 0, sizeof(Dirty));
 	MostUsed = 0;
 }
 
@@ -493,16 +494,19 @@ void VMFunctionBuilder::RegAvailability::Return(int reg, int count)
 		// because for that case it pushes the self pointer a second time without reallocating, so it gets freed twice.
 		//assert((Used[firstword] & mask) == mask);
 		Used[firstword] &= ~mask;
+		Dirty[firstword] |= mask;
 	}
 	else
 	{ // Range is in two words.
 		partialmask = mask << firstbit;
 		assert((Used[firstword] & partialmask) == partialmask);
 		Used[firstword] &= ~partialmask;
+		Dirty[firstword] |= partialmask;
 
 		partialmask = mask >> (32 - firstbit);
 		assert((Used[firstword + 1] & partialmask) == partialmask);
 		Used[firstword + 1] &= ~partialmask;
+		Dirty[firstword + 1] |= partialmask;
 	}
 }
 
@@ -805,11 +809,7 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo
 
 void FFunctionBuildList::Build()
 {
-	int codesize = 0;
-	int datasize = 0;
-	FILE *dump = nullptr;
-
-	if (Args->CheckParm("-dumpdisasm")) dump = fopen("disasm.txt", "w");
+	VMDisassemblyDumper disasmdump(VMDisassemblyDumper::Overwrite);
 
 	for (auto &item : mItems)
 	{
@@ -880,18 +880,24 @@ void FFunctionBuildList::Build()
 				sfunc->NumArgs = 0;
 				// NumArgs for the VMFunction must be the amount of stack elements, which can differ from the amount of logical function arguments if vectors are in the list.
 				// For the VM a vector is 2 or 3 args, depending on size.
-				for (auto s : item.Func->Variants[0].Proto->ArgumentTypes)
+				auto funcVariant = item.Func->Variants[0];
+				for (unsigned int i = 0; i < funcVariant.Proto->ArgumentTypes.Size(); i++)
 				{
-					sfunc->NumArgs += s->GetRegCount();
+					auto argType = funcVariant.Proto->ArgumentTypes[i];
+					auto argFlags = funcVariant.ArgFlags[i];
+					if (argFlags & VARF_Out)
+					{
+						auto argPointer = NewPointer(argType);
+						sfunc->NumArgs += argPointer->GetRegCount();
+					}
+					else
+					{
+						sfunc->NumArgs += argType->GetRegCount();
+					}
 				}
 
-				if (dump != nullptr)
-				{
-					DumpFunction(dump, sfunc, item.PrintableName.GetChars(), (int)item.PrintableName.Len());
-					codesize += sfunc->CodeSize;
-					datasize += sfunc->LineInfoCount * sizeof(FStatementInfo) + sfunc->ExtraSpace + sfunc->NumKonstD * sizeof(int) +
-						sfunc->NumKonstA * sizeof(void*) + sfunc->NumKonstF * sizeof(double) + sfunc->NumKonstS * sizeof(FString);
-				}
+				disasmdump.Write(sfunc, item.PrintableName);
+
 				sfunc->Unsafe = ctx.Unsafe;
 			}
 			catch (CRecoverableError &err)
@@ -901,15 +907,7 @@ void FFunctionBuildList::Build()
 			}
 		}
 		delete item.Code;
-		if (dump != nullptr)
-		{
-			fflush(dump);
-		}
-	}
-	if (dump != nullptr)
-	{
-		fprintf(dump, "\n*************************************************************************\n%i code bytes\n%i data bytes", codesize * 4, datasize);
-		fclose(dump);
+		disasmdump.Flush();
 	}
 	VMFunction::CreateRegUseInfo();
 	FScriptPosition::StrictErrors = false;
@@ -922,6 +920,7 @@ void FFunctionBuildList::Build()
 
 void FFunctionBuildList::DumpJit()
 {
+#ifdef HAVE_VM_JIT
 	FILE *dump = fopen("dumpjit.txt", "w");
 	if (dump == nullptr)
 		return;
@@ -932,6 +931,7 @@ void FFunctionBuildList::DumpJit()
 	}
 
 	fclose(dump);
+#endif // HAVE_VM_JIT
 }
 
 
@@ -974,7 +974,7 @@ void FunctionCallEmitter::AddParameter(ExpEmit &emit, bool reference)
 	}
 	emitters.push_back([=](VMFunctionBuilder *build) ->int
 	{
-		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF), emit.RegNum);
+		build->Emit(OP_PARAM, emit.RegType + (reference * REGT_ADDROF) + (emit.Konst * REGT_KONST), emit.RegNum);
 		auto op = emit;
 		op.Free(build);
 		return emit.RegCount;
@@ -1105,3 +1105,50 @@ ExpEmit FunctionCallEmitter::EmitCall(VMFunctionBuilder *build, TArray<ExpEmit> 
 	return retreg;
 }
 
+
+VMDisassemblyDumper::VMDisassemblyDumper(const FileOperationType operation)
+{
+	static const char *const DUMP_ARG_NAME = "-dumpdisasm";
+
+	if (Args->CheckParm(DUMP_ARG_NAME))
+	{
+		dump = fopen("disasm.txt", operation == Overwrite ? "w" : "a");
+		namefilter = Args->CheckValue(DUMP_ARG_NAME);
+		namefilter.ToLower();
+	}
+}
+
+VMDisassemblyDumper::~VMDisassemblyDumper()
+{
+	if (dump != nullptr)
+	{
+		fprintf(dump, "\n*************************************************************************\n%i code bytes\n%i data bytes\n", codesize * 4, datasize);
+		fclose(dump);
+	}
+}
+
+void VMDisassemblyDumper::Write(VMScriptFunction *sfunc, const FString &fname)
+{
+	if (dump != nullptr)
+	{
+		if (namefilter.Len() > 0 && fname.MakeLower().IndexOf(namefilter) == -1)
+		{
+			return;
+		}
+
+		assert(sfunc != nullptr);
+
+		DumpFunction(dump, sfunc, fname, (int)fname.Len());
+		codesize += sfunc->CodeSize;
+		datasize += sfunc->LineInfoCount * sizeof(FStatementInfo) + sfunc->ExtraSpace + sfunc->NumKonstD * sizeof(int) +
+			sfunc->NumKonstA * sizeof(void*) + sfunc->NumKonstF * sizeof(double) + sfunc->NumKonstS * sizeof(FString);
+	}
+}
+
+void VMDisassemblyDumper::Flush()
+{
+	if (dump != nullptr)
+	{
+		fflush(dump);
+	}
+}

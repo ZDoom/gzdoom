@@ -56,14 +56,6 @@ extern HWND			Window;
 
 PFNWGLSWAPINTERVALEXTPROC myWglSwapIntervalExtProc;
 
-// For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
-// Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
-// but makes it possible for subsequent "vr_mode 7" to invoke quad-buffered stereo
-CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
-}
-
 //==========================================================================
 //
 // Windows framebuffer
@@ -111,7 +103,6 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen) : Syst
 		}
 	}
 	ReleaseDC(Window, hDC);
-    enable_quadbuffered = vr_enable_quadbuffered;
 }
 
 //==========================================================================
@@ -132,8 +123,6 @@ void SystemGLFrameBuffer::SetVSync (bool vsync)
 
 void SystemGLFrameBuffer::SwapBuffers()
 {
-	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
-	I_FPSLimit();
 	::SwapBuffers(static_cast<Win32GLVideo *>(Video)->m_hDC);
 }
 

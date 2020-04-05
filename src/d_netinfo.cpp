@@ -49,6 +49,7 @@
 #include "cmdlib.h"
 #include "serializer.h"
 #include "vm.h"
+#include "gstrings.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -136,14 +137,13 @@ FString D_UnescapeUserInfo (const char *str, size_t len)
 
 int D_GenderToInt (const char *gender)
 {
-	if (gender[0] == 'f')
-		return GENDER_FEMALE;
-	else if (gender[0] == 'm')
-		return GENDER_MALE;
-	else if (gender[0] == 'n')
-		return GENDER_NEUTER;
-	else
-		return GENDER_OBJECT;
+	if (!stricmp(gender, "female")) return GENDER_FEMALE;
+	if (!stricmp(gender, "neutral")) return GENDER_NEUTER;
+	if (!stricmp(gender, "neuter")) return GENDER_NEUTER;
+	if (!stricmp(gender, "other")) return GENDER_OBJECT;
+	if (!stricmp(gender, "object")) return GENDER_OBJECT;
+	if (!stricmp(gender, "cyborg")) return GENDER_OBJECT;
+	return GENDER_MALE;
 }
 
 int D_PlayerClassToInt (const char *classname)
@@ -314,7 +314,7 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	if ((dmflags2 & DF2_NO_TEAM_SWITCH) && (alwaysapplydmflags || deathmatch) && TeamLibrary.IsValidTeam (info->GetTeam()))
 	{
-		Printf ("Team changing has been disabled!\n");
+		Printf ("%s\n", GStrings("TXT_NO_TEAM_CHANGE"));
 		return;
 	}
 
@@ -329,10 +329,18 @@ static void UpdateTeam (int pnum, int team, bool update)
 
 	if (update && oldteam != team)
 	{
+		FString message;
 		if (TeamLibrary.IsValidTeam (team))
-			Printf ("%s joined the %s team\n", info->GetName(), Teams[team].GetName ());
+		{
+			message = GStrings("TXT_JOINED_TEAM");
+			message.Substitute("%t", Teams[team].GetName());
+		}
 		else
-			Printf ("%s is now a loner\n", info->GetName());
+		{
+			message = GStrings("TXT_LONER");
+		}
+		message.Substitute("%s", info->GetName());
+		Printf("%s\n", message.GetChars());
 	}
 	// Let the player take on the team's color
 	R_BuildPlayerTranslation (pnum);
@@ -477,12 +485,6 @@ int userinfo_t::GenderChanged(const char *gendername)
 int userinfo_t::PlayerClassChanged(const char *classname)
 {
 	int classnum = D_PlayerClassToInt(classname);
-	*static_cast<FIntCVar *>((*this)[NAME_PlayerClass]) = classnum;
-	return classnum;
-}
-
-int userinfo_t::PlayerClassNumChanged(int classnum)
-{
 	*static_cast<FIntCVar *>((*this)[NAME_PlayerClass]) = classnum;
 	return classnum;
 }
@@ -728,8 +730,8 @@ void D_WriteUserInfoStrings (int pnum, uint8_t **stream, bool compact)
 		case NAME_Gender:
 			*stream += sprintf(*((char **)stream), "\\%s",
 				*static_cast<FIntCVar *>(pair->Value) == GENDER_FEMALE ? "female" :
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_MALE ? "male" :
-				*static_cast<FIntCVar *>(pair->Value) == GENDER_NEUTER ? "neutral" : "other");
+				*static_cast<FIntCVar *>(pair->Value) == GENDER_NEUTER ? "neutral" :
+				*static_cast<FIntCVar *>(pair->Value) == GENDER_OBJECT ? "other" : "male");
 			break;
 
 		case NAME_PlayerClass:
@@ -933,7 +935,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 	const char *str;
 
 	info.Reset();
-	skin = NULL;
+	skin = "";
 	if (arc.BeginObject("userinfo"))
 	{
 		while ((key = arc.GetKey()))

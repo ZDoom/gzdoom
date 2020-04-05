@@ -39,8 +39,6 @@
 #include "m_alloc.h"
 #include "imagehelpers.h"
 
-EXTERN_CVAR(Bool, gl_texture_usehires)
-
 
 FSoftwareTexture *FTexture::GetSoftwareTexture()
 {

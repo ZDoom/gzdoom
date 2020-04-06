@@ -3973,9 +3973,7 @@ void AActor::Tick ()
 						// to be in line with the case when an actor's side is hit.
 						if (!res && (flags & MF_MISSILE))
 						{
-							FCheckPosition tm;
-							tm.thing = this;
-							P_DoMissileDamage(tm, onmo);
+							P_DoMissileDamage(this, onmo);
 							P_ExplodeMissile(this, nullptr, onmo);
 						}
 					}

@@ -1232,6 +1232,60 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 
 //==========================================================================
 //
+// P_DoMissileDamage
+// Handle damaging/poisoning enemies from missiles.
+// thing is the target to be dealt damage to.
+// tm.thing is the actor dealing the damage.
+//
+//==========================================================================
+
+void P_DoMissileDamage(FCheckPosition& tm, AActor* thing)
+{
+	// Do poisoning (if using new style poison)
+	if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
+	{
+		P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod, tm.thing->PoisonDamageType);
+	}
+
+	// Do damage
+	int damage = tm.thing->GetMissileDamage((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
+	if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN) || (tm.thing->flags7 & MF7_CAUSEPAIN))
+	{
+		int newdam = P_DamageMobj(thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
+		if (damage > 0)
+		{
+			if ((tm.thing->flags5 & MF5_BLOODSPLATTER) &&
+				!(thing->flags & MF_NOBLOOD) &&
+				!(thing->flags2 & MF2_REFLECTIVE) &&
+				!(thing->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)) &&
+				!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
+				(pr_checkthing() < 192))
+			{
+				P_BloodSplatter(tm.thing->Pos(), thing, tm.thing->AngleTo(thing));
+			}
+			if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
+			{
+				P_TraceBleed(newdam > 0 ? newdam : damage, thing, tm.thing);
+			}
+		}
+	}
+	else
+	{
+		P_GiveBody(thing, -damage);
+	}
+}
+DEFINE_ACTION_FUNCTION(AActor, DoMissileDamage)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT_NOT_NULL(target, AActor);
+	PARAM_OBJECT_NOT_NULL(inflictor, AActor);
+	FCheckPosition tm;
+	tm.thing = inflictor;
+	P_DoMissileDamage(tm, target);
+	return 0;
+}
+//==========================================================================
+//
 // PIT_CheckThing
 //
 //==========================================================================
@@ -1555,38 +1609,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			}
 		}
 
-		// Do poisoning (if using new style poison)
-		if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
-		{
-			P_PoisonMobj(thing, tm.thing, tm.thing->target, tm.thing->PoisonDamage, tm.thing->PoisonDuration, tm.thing->PoisonPeriod, tm.thing->PoisonDamageType);
-		}
-
-		// Do damage
-		damage = tm.thing->GetMissileDamage((tm.thing->flags4 & MF4_STRIFEDAMAGE) ? 3 : 7, 1);
-		if ((damage > 0) || (tm.thing->flags6 & MF6_FORCEPAIN) || (tm.thing->flags7 & MF7_CAUSEPAIN))
-		{
-			int newdam = P_DamageMobj(thing, tm.thing, tm.thing->target, damage, tm.thing->DamageType);
-			if (damage > 0)
-			{
-				if ((tm.thing->flags5 & MF5_BLOODSPLATTER) &&
-					!(thing->flags & MF_NOBLOOD) &&
-					!(thing->flags2 & MF2_REFLECTIVE) &&
-					!(thing->flags2 & (MF2_INVULNERABLE | MF2_DORMANT)) &&
-					!(tm.thing->flags3 & MF3_BLOODLESSIMPACT) &&
-					(pr_checkthing() < 192))
-				{
-					P_BloodSplatter(tm.thing->Pos(), thing, tm.thing->AngleTo(thing));
-				}
-				if (!(tm.thing->flags3 & MF3_BLOODLESSIMPACT))
-				{
-					P_TraceBleed(newdam > 0 ? newdam : damage, thing, tm.thing);
-				}
-			}
-		}
-		else
-		{
-			P_GiveBody(thing, -damage);
-		}
+		P_DoMissileDamage(tm, thing);
 
 		if ((thing->flags7 & MF7_THRUREFLECT) && (thing->flags2 & MF2_REFLECTIVE) && (tm.thing->flags & MF_MISSILE))
 		{

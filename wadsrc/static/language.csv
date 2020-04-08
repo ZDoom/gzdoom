@@ -3353,6 +3353,7 @@ Doom (strict),OPTVAL_DOOMSTRICT,,,,Doom (striktní),Doom (strikt),,Doom (severa)
 Boom,OPTVAL_BOOM,,,,,,,,,,,,,,,붐,,,,,,,
 Boom (strict),OPTVAL_BOOMSTRICT,,,,Boom (striktní),Boom (strikt),,Boom (severa),Boom (estricto),,Boom (tiukka),,,Boom (rigoroso),Boom(厳密),붐 (엄격하게),Boom (streng),Boom (ścisły),Boom (estritamente),Boom (estrito),,Boom (строгий),Boom (строг)
 MBF,OPTVAL_MBF,,,,,,,,,,,,,,,마린의 절친한 친구,,,,,,,
+MBF (strict),OPTVAL_MBFSTRICT,,,,,,,,,,,,,,,,,,,,,,
 ZDoom 2.0.63,OPTVAL_ZDOOM2063,,,,,,,,,,,,,,,Z둠 2.0.63,,,,,,,
 4000 Hz,OPTVAL_4000HZ,,,,,,,,,,,,,,,,,,,,,4000 Гц,
 8000 Hz,OPTVAL_8000HZ,,,,,,,,,,,,,,,,,,,,,8000 Гц,

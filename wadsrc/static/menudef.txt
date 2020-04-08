@@ -2535,6 +2535,7 @@ OptionMenu "GLTextureGLOptions" protected
 	Title "$GLTEXMNU_TITLE"
 	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
+	Option "$GLTEXMNU_ENABLEHIRES",		gl_texture_usehires,			"YesNo"
 
 	ifOption(MMX)
 	{

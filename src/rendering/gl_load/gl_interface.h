@@ -1,8 +1,6 @@
 #ifndef R_RENDER
 #define R_RENDER
 
-#include "basics.h"
-
 struct RenderContext
 {
 	unsigned int flags;

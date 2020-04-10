@@ -25,9 +25,9 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "v_video.h"
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"

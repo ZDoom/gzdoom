@@ -20,8 +20,8 @@
 */
 
 #include "templates.h"
-#include "gl_load/gl_system.h"
-#include "gl_load/gl_interface.h"
+#include "gl_system.h"
+#include "gl_interface.h"
 #include "gl/renderer/gl_postprocessstate.h"
 
 namespace OpenGLRenderer

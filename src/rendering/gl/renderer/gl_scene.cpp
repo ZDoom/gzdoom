@@ -25,7 +25,7 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "gi.h"
 #include "m_png.h"
 #include "doomstat.h"
@@ -46,7 +46,7 @@
 #include "hwrenderer/data/flatvertices.h"
 
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_debug.h"
 #include "hwrenderer/utility/hw_cvars.h"

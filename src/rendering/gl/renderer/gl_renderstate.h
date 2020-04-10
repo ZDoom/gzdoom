@@ -24,7 +24,7 @@
 #define __GL_RENDERSTATE_H
 
 #include <string.h>
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "matrix.h"
 #include "hwrenderer/scene//hw_drawstructs.h"
 #include "hwrenderer/scene//hw_renderstate.h"

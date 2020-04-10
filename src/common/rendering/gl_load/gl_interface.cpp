@@ -32,7 +32,7 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "engineerrors.h"
 #include "tarray.h"
 #include "basics.h"
@@ -40,7 +40,7 @@
 #include "version.h"
 #include "v_video.h"
 #include "printf.h"
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 
 static TArray<FString>  m_Extensions;
 RenderContext gl;

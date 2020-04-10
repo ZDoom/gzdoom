@@ -26,14 +26,14 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "templates.h"
 #include "c_cvars.h"
 #include "doomtype.h"
 #include "r_data/colormaps.h"
 #include "hw_material.h"
 
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"

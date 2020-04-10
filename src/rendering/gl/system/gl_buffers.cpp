@@ -24,7 +24,7 @@
 **
 **/
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "gl_buffers.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "v_video.h"

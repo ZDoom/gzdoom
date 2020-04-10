@@ -47,7 +47,7 @@
 
 #include "hardware.h"
 #include "gl_sysfb.h"
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "r_defs.h"
 
 #include "gl/renderer/gl_renderer.h"

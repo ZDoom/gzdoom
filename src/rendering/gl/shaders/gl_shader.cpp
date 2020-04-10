@@ -26,7 +26,7 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "c_cvars.h"
 #include "v_video.h"
 #include "filesystem.h"
@@ -39,7 +39,7 @@
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "matrix.h"
 #include "gl/renderer/gl_renderer.h"

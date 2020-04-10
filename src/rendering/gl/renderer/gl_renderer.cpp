@@ -25,7 +25,7 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "files.h"
 #include "v_video.h"
 #include "m_png.h"
@@ -40,7 +40,7 @@
 #include "swrenderer/r_swscene.h"
 #include "hwrenderer/utility/hw_clock.h"
 
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"

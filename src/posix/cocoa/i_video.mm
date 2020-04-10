@@ -31,7 +31,7 @@
  **
  */
 
-#include "gl_load/gl_load.h"
+#include "gl_load.h"
 
 #ifdef HAVE_VULKAN
 #define VK_USE_PLATFORM_MACOS_MVK

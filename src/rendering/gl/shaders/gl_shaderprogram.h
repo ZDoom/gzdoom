@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "gl_shader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 

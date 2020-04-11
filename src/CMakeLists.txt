@@ -1131,7 +1131,7 @@ set (PCH_SOURCES
 	common/utility/files_decompress.cpp
 	utility/m_png.cpp
 	utility/m_random.cpp
-	utility/memarena.cpp
+	common/utility/memarena.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp
@@ -1142,11 +1142,11 @@ set (PCH_SOURCES
 	utility/stats.cpp
 	common/utility/cmdlib.cpp
 	common/utility/configfile.cpp
-	utility/i_time.cpp
-	utility/m_argv.cpp
+	common/utility/i_time.cpp
+	common/utility/m_argv.cpp
 	utility/m_bbox.cpp
 	utility/name.cpp
-	utility/s_playlist.cpp
+	common/utility/s_playlist.cpp
 	utility/v_collection.cpp
 	common/utility/zstrformat.cpp
 	common/thirdparty/md5.cpp

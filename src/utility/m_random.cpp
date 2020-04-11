@@ -148,7 +148,6 @@ FRandom::FRandom ()
 {
 #ifndef NDEBUG
 	Name = NULL;
-	initialized = false;
 #endif
 	Next = RNGList;
 	RNGList = this;
@@ -167,7 +166,6 @@ FRandom::FRandom (const char *name)
 {
 	NameCRC = CalcCRC32 ((const uint8_t *)name, (unsigned int)strlen (name));
 #ifndef NDEBUG
-	initialized = false;
 	Name = name;
 	// A CRC of 0 is reserved for nameless RNGs that don't get stored
 	// in savegames. The chance is very low that you would get a CRC of 0,
@@ -258,8 +256,7 @@ void FRandom::Init(uint32_t seed)
 	// [RH] Use the RNG's name's CRC to modify the original seed.
 	// This way, new RNGs can be added later, and it doesn't matter
 	// which order they get initialized in.
-	uint32_t seeds[2] = { NameCRC, seed };
-	InitByArray(seeds, 2);
+	SFMTObj::Init(NameCRC, seed);
 }
 
 //==========================================================================

@@ -12,7 +12,7 @@
 */
 #include <string.h>
 #include <assert.h>
-#include "m_random.h"
+#include "SFMT/SFMTObj.h"
 #include "SFMT-params.h"
 
 #if defined(__BIG_ENDIAN__) && !defined(__amd64) && !defined(BIG_ENDIAN64)
@@ -201,7 +201,7 @@ inline static void do_recursion(w128_t *r, w128_t *a, w128_t *b, w128_t *c,
 * This function fills the internal state array with pseudorandom
 * integers.
 */
-void FRandom::GenRandAll()
+void SFMTObj::GenRandAll()
 {
 	int i;
 	w128_t *r1, *r2;
@@ -227,7 +227,7 @@ void FRandom::GenRandAll()
 * @param array an 128-bit array to be filled by pseudorandom numbers.  
 * @param size number of 128-bit pseudorandom numbers to be generated.
 */
-void FRandom::GenRandArray(w128_t *array, int size)
+void SFMTObj::GenRandArray(w128_t *array, int size)
 {
 	int i, j;
 	w128_t *r1, *r2;
@@ -301,7 +301,7 @@ static uint32_t func2(uint32_t x)
 /**
 * This function certificate the period of 2^{MEXP}
 */
-void FRandom::PeriodCertification()
+void SFMTObj::PeriodCertification()
 {
 	int inner = 0;
 	int i, j;
@@ -337,7 +337,7 @@ PUBLIC FUNCTIONS
 * fill_array32() function.
 * @return minimum size of array used for FillArray32() function.
 */
-int FRandom::GetMinArraySize32()
+int SFMTObj::GetMinArraySize32()
 {
 	return SFMT::N32;
 }
@@ -347,7 +347,7 @@ int FRandom::GetMinArraySize32()
 * fill_array64() function.
 * @return minimum size of array used for FillArray64() function.
 */
-int FRandom::GetMinArraySize64()
+int SFMTObj::GetMinArraySize64()
 {
 	return SFMT::N64;
 }
@@ -358,7 +358,7 @@ int FRandom::GetMinArraySize64()
 * init_gen_rand or init_by_array must be called before this function.
 * @return 32-bit pseudorandom number
 */
-unsigned int FRandom::GenRand32()
+unsigned int SFMTObj::GenRand32()
 {
 	uint32_t r;
 
@@ -379,7 +379,7 @@ unsigned int FRandom::GenRand32()
 * unless an initialization is again executed. 
 * @return 64-bit pseudorandom number
 */
-uint64_t FRandom::GenRand64()
+uint64_t SFMTObj::GenRand64()
 {
 #if defined(BIG_ENDIAN64) && !defined(ONLY64)
 	uint32_t r1, r2;
@@ -433,7 +433,7 @@ uint64_t FRandom::GenRand64()
 * memory. Mac OSX doesn't have these functions, but \b malloc of OSX
 * returns the pointer to the aligned memory block.
 */
-void FRandom::FillArray32(uint32_t *array, int size)
+void SFMTObj::FillArray32(uint32_t *array, int size)
 {
 	assert(initialized);
 	assert(idx == SFMT::N32);
@@ -470,7 +470,7 @@ void FRandom::FillArray32(uint32_t *array, int size)
 * memory. Mac OSX doesn't have these functions, but \b malloc of OSX
 * returns the pointer to the aligned memory block.
 */
-void FRandom::FillArray64(uint64_t *array, int size)
+void SFMTObj::FillArray64(uint64_t *array, int size)
 {
 	assert(initialized);
 	assert(idx == SFMT::N32);
@@ -491,7 +491,7 @@ void FRandom::FillArray64(uint64_t *array, int size)
 *
 * @param seed a 32-bit integer used as the seed.
 */
-void FRandom::InitGenRand(uint32_t seed)
+void SFMTObj::InitGenRand(uint32_t seed)
 {
 	int i;
 
@@ -515,7 +515,7 @@ void FRandom::InitGenRand(uint32_t seed)
 * @param init_key the array of 32-bit integers, used as a seed.
 * @param key_length the length of init_key.
 */
-void FRandom::InitByArray(uint32_t *init_key, int key_length)
+void SFMTObj::InitByArray(uint32_t *init_key, int key_length)
 {
 	int i, j, count;
 	uint32_t r;

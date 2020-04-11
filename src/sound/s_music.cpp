@@ -730,13 +730,10 @@ UNSAFE_CCMD (playlist)
 	}
 	else
 	{
-		if (PlayList.GetNumSongs() > 0)
+		if (!PlayList.ChangeList(argv[1]))
 		{
-			PlayList.ChangeList (argv[1]);
-		}
-		else
-		{
-			PlayList.ChangeList(argv[1]);
+			Printf("Could not open " TEXTCOLOR_BOLD "%s" TEXTCOLOR_NORMAL ": %s\n", argv[1], strerror(errno));
+			return;
 		}
 		if (PlayList.GetNumSongs () > 0)
 		{

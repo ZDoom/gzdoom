@@ -37,11 +37,11 @@
 
 #include <stdio.h>
 #include "basics.h"
-#include "sfmt/SFMT.h"
+#include "SFMT/SFMTObj.h"
 
 class FSerializer;
 
-class FRandom
+class FRandom : public SFMTObj
 {
 public:
 	FRandom ();
@@ -87,16 +87,6 @@ public:
 	}
 
 	void Init(uint32_t seed);
-
-	// SFMT interface
-	unsigned int GenRand32();
-	uint64_t GenRand64();
-	void FillArray32(uint32_t *array, int size);
-	void FillArray64(uint64_t *array, int size);
-	void InitGenRand(uint32_t seed);
-	void InitByArray(uint32_t *init_key, int key_length);
-	int GetMinArraySize32();
-	int GetMinArraySize64();
 
 	/* These real versions are due to Isaku Wada */
 	/** generates a random number on [0,1]-real-interval */
@@ -190,29 +180,6 @@ private:
 	uint32_t NameCRC;
 
 	static FRandom *RNGList;
-
-	/*-------------------------------------------
-	  SFMT internal state, index counter and flag 
-	  -------------------------------------------*/
-
-	void GenRandAll();
-	void GenRandArray(w128_t *array, int size);
-	void PeriodCertification();
-
-	/** the 128-bit internal state array */
-	union
-	{
-		w128_t w128[SFMT::N];
-		unsigned int u[SFMT::N32];
-		uint64_t u64[SFMT::N64];
-	} sfmt;
-	/** index counter to the 32-bit internal state array */
-	int idx;
-	/** a flag: it is 0 if and only if the internal state is not yet
-	 * initialized. */
-#ifndef NDEBUG
-	bool initialized;
-#endif
 };
 
 extern uint32_t rngseed;			// The starting seed (not part of state)

@@ -160,7 +160,7 @@ void FMemArena::FreeAllBlocks()
 //
 //==========================================================================
 
-void FMemArena::DumpInfo()
+FString FMemArena::DumpInfo()
 {
 	size_t allocated = 0;
 	size_t used = 0;
@@ -169,7 +169,7 @@ void FMemArena::DumpInfo()
 		allocated += BlockSize;
 		used += BlockSize - ((char*)block->Limit - (char*)block->Avail);
 	}
-	Printf("%zu bytes allocated, %zu bytes in use\n", allocated, used);
+	return FStringf("%zu bytes allocated, %zu bytes in use\n", allocated, used);
 }
 
 //==========================================================================

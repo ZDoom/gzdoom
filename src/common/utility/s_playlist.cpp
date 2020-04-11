@@ -54,14 +54,12 @@ bool FPlayList::ChangeList (const char *path)
 	bool pls;
 	int i;
 
-	Songs.Clear();
-	Position = 0;
-
 	if (!fr.OpenFile(path))
 	{
-		Printf ("Could not open " TEXTCOLOR_BOLD "%s" TEXTCOLOR_NORMAL ": %s\n", path, strerror(errno));
 		return false;
 	}
+	Songs.Clear();
+	Position = 0;
 
 	first = true;
 	pls = false;
@@ -176,7 +174,6 @@ int FPlayList::SetPosition (int position)
 	{
 		Position = position;
 	}
-	DPrintf (DMSG_NOTIFY, "Playlist position set to %d\n", Position);
 	return Position;
 }
 
@@ -191,7 +188,6 @@ int FPlayList::Advance ()
 	{
 		Position = 0;
 	}
-	DPrintf (DMSG_NOTIFY, "Playlist advanced to song %d\n", Position);
 	return Position;
 }
 
@@ -201,7 +197,6 @@ int FPlayList::Backup ()
 	{
 		Position = Songs.Size() - 1;
 	}
-	DPrintf (DMSG_NOTIFY, "Playlist backed up to song %d\n", Position);
 	return Position;
 }
 

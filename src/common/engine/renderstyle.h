@@ -109,6 +109,8 @@ enum ERenderAlpha
 	STYLEALPHA_InvSrcCol,	// Blend factor is 1.0 - color (HWR only)
 	STYLEALPHA_DstCol,		// Blend factor is dest. color (HWR only)
 	STYLEALPHA_InvDstCol,	// Blend factor is 1.0 - dest. color (HWR only)
+	STYLEALPHA_Dst,			// Blend factor is dest. alpha
+	STYLEALPHA_InvDst,		// Blend factor is 1.0 - dest. alpha
 	STYLEALPHA_MAX
 };
 

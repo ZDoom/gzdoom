@@ -51,11 +51,6 @@
 #include "c_buttons.h"
 #include "findfile.h"
 
-// Todo: Get rid of
-#include "d_net.h"
-#include "d_main.h"
-
-
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -176,7 +171,6 @@ FString StoredWarp;
 
 FConsoleCommand* Commands[FConsoleCommand::HASH_SIZE];
 
-CVAR (Bool, lookspring, true, CVAR_ARCHIVE);	// Generate centerview when -mlook encountered?
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -242,22 +236,18 @@ void C_DoCommand (const char *cmd, int keynum)
 	// Check if this is an action
 	if (*beg == '+' || *beg == '-')
 	{
-		FButtonStatus *button;
-
-		button = FindButton (MakeKey (beg + 1, end - beg - 1));
-		if (button != NULL)
+		auto button = buttonMap.FindButton(beg + 1, int(end - beg - 1));
+		if (button != nullptr)
 		{
 			if (*beg == '+')
 			{
 				button->PressKey (keynum);
+				if (button->PressHandler) button->PressHandler();
 			}
 			else
 			{
 				button->ReleaseKey (keynum);
-				if (button == &Button_Mlook && lookspring)
-				{
-					Net_WriteByte (DEM_CENTERVIEW);
-				}
+				if (button->ReleaseHandler) button->ReleaseHandler();
 			}
 			return;
 		}
@@ -468,14 +458,6 @@ FConsoleCommand* FConsoleCommand::FindByName (const char* name)
 FConsoleCommand::FConsoleCommand (const char *name, CCmdRun runFunc)
 	: m_RunFunc (runFunc)
 {
-	static bool firstTime = true;
-
-	if (firstTime)
-	{
-		firstTime = false;
-		AddButtonTabCommands();
-	}
-
 	int ag = strcmp (name, "kill");
 	if (ag == 0)
 		ag=0;
@@ -848,14 +830,12 @@ CCMD (alias)
 	}
 }
 
-int ListActionCommands(const char* pattern);
-
 CCMD (cmdlist)
 {
 	int count;
 	const char *filter = (argv.argc() == 1 ? NULL : argv[1]);
 
-	count = ListActionCommands (filter);
+	count = buttonMap.ListActionCommands (filter);
 	count += DumpHash (Commands, false, filter);
 	Printf ("%d commands\n", count);
 }

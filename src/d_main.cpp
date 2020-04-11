@@ -105,6 +105,7 @@
 #include "findfile.h"
 #include "md5.h"
 #include "c_buttons.h"
+#include "d_buttons.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
@@ -423,7 +424,7 @@ void D_PostEvent (const event_t *ev)
 	events[eventhead] = *ev;
 	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !primaryLevel->localEventManager->Responder(ev) && !paused)
 	{
-		if (Button_Mlook.bDown || freelook)
+		if (buttonMap.ButtonDown(Button_Mlook) || freelook)
 		{
 			int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
 			if (invertmouse)
@@ -431,7 +432,7 @@ void D_PostEvent (const event_t *ev)
 			G_AddViewPitch (look, true);
 			events[eventhead].y = 0;
 		}
-		if (!Button_Strafe.bDown && !lookstrafe)
+		if (!buttonMap.ButtonDown(Button_Strafe) && !lookstrafe)
 		{
 			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0), true);
 			events[eventhead].x = 0;
@@ -2502,6 +2503,50 @@ static void FindStrifeTeaserVoices(FileSystem& fileSystem)
 }
 
 
+static const char *DoomButtons[] =
+{
+	"am_panleft",
+	"user2" ,
+	"jump" ,
+	"right" ,
+	"zoom" ,
+	"back" ,
+	"am_zoomin",
+	"reload" ,
+	"lookdown" ,
+	"am_zoomout",
+	"user4" ,
+	"attack" ,
+	"user1" ,
+	"klook" ,
+	"forward" ,
+	"movedown" ,
+	"altattack" ,
+	"moveleft" ,
+	"moveright" ,
+	"am_panright",
+	"am_panup" ,
+	"mlook" ,
+	"crouch" ,
+	"left" ,
+	"lookup" ,
+	"user3" ,
+	"strafe" ,
+	"am_pandown",
+	"showscores" ,
+	"speed" ,
+	"use" ,
+	"moveup" };
+
+CVAR(Bool, lookspring, true, CVAR_ARCHIVE);	// Generate centerview when -mlook encountered?
+
+void Mlook_ReleaseHandler()
+{
+	if (lookspring)
+	{
+		Net_WriteByte(DEM_CENTERVIEW);
+	}
+}
 
 //==========================================================================
 //
@@ -2518,6 +2563,14 @@ static int D_DoomMain_Internal (void)
 	FString *args;
 	int argcount;	
 	FIWadManager *iwad_man;
+
+	// Set up the button list. Mlook and Klook need a bit of extra treatment.
+	buttonMap.SetButtons(DoomButtons, countof(DoomButtons));
+	buttonMap.GetButton(Button_Mlook)->ReleaseHandler = Mlook_ReleaseHandler;
+	buttonMap.GetButton(Button_Mlook)->bReleaseLock = true;
+	buttonMap.GetButton(Button_Klook)->bReleaseLock = true;
+
+	// button != &Button_Mlook && button != &Button_Klook)
 	
 	std::set_new_handler(NewFailure);
 	const char *batchout = Args->CheckValue("-errorlog");
@@ -3067,7 +3120,6 @@ int D_DoomMain()
 	}
 	// Unless something really bad happened, the game should only exit through this single point in the code.
 	// No more 'exit', please.
-	// Todo: Move all engine cleanup here instead of using exit handlers and replace the scattered 'exit' calls with a special exception.
 	D_Cleanup();
 	CloseNetwork();
 	GC::FinalGC = true;

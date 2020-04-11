@@ -43,6 +43,7 @@
 #include "gstrings.h"
 #include "vm.h"
 #include "c_buttons.h"
+#include "d_buttons.h"
 
 enum
 {
@@ -237,7 +238,7 @@ void CT_Drawer (void)
 	FFont *displayfont = NewConsoleFont;
 
 	if (players[consoleplayer].camera != NULL &&
-		(Button_ShowScores.bDown ||
+		(buttonMap.ButtonDown(Button_ShowScores) ||
 		 players[consoleplayer].camera->health <= 0 ||
 		 SB_ForceActive) &&
 		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.

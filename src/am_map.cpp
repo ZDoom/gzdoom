@@ -66,6 +66,7 @@
 #include "actorinlines.h"
 #include "earcut.hpp"
 #include "c_buttons.h"
+#include "d_buttons.h"
 
 
 //=============================================================================
@@ -1430,7 +1431,7 @@ bool DAutomap::Responder (event_t *ev, bool last)
 		{
 			// check for am_pan* and ignore in follow mode
 			const char *defbind = AutomapBindings.GetBind(ev->data1);
-			if (!strnicmp(defbind, "+am_pan", 7)) return false;
+			if (defbind && !strnicmp(defbind, "+am_pan", 7)) return false;
 		}
 
 		bool res = C_DoKey(ev, &AutomapBindings, nullptr);
@@ -1439,7 +1440,7 @@ bool DAutomap::Responder (event_t *ev, bool last)
 			// If this is a release event we also need to check if it released a button in the main Bindings
 			// so that that button does not get stuck.
 			const char *defbind = Bindings.GetBind(ev->data1);
-			return (defbind[0] != '+'); // Let G_Responder handle button releases
+			return (!defbind || defbind[0] != '+'); // Let G_Responder handle button releases
 		}
 		return res;
 	}
@@ -1465,11 +1466,11 @@ void DAutomap::changeWindowScale ()
 	{
 		mtof_zoommul = M_ZOOMOUT / -am_zoomdir;
 	}
-	else if (Button_AM_ZoomIn.bDown)
+	else if (buttonMap.ButtonDown(Button_AM_ZoomIn))
 	{
 		mtof_zoommul = M_ZOOMIN;
 	}
-	else if (Button_AM_ZoomOut.bDown)
+	else if (buttonMap.ButtonDown(Button_AM_ZoomOut))
 	{
 		mtof_zoommul = M_ZOOMOUT;
 	}
@@ -1546,14 +1547,14 @@ void DAutomap::Ticker ()
 	else
 	{
 		m_paninc.x = m_paninc.y = 0;
-		if (Button_AM_PanLeft.bDown) m_paninc.x -= FTOM(F_PANINC);
-		if (Button_AM_PanRight.bDown) m_paninc.x += FTOM(F_PANINC);
-		if (Button_AM_PanUp.bDown) m_paninc.y += FTOM(F_PANINC);
-		if (Button_AM_PanDown.bDown) m_paninc.y -= FTOM(F_PANINC);
+		if (buttonMap.ButtonDown(Button_AM_PanLeft)) m_paninc.x -= FTOM(F_PANINC);
+		if (buttonMap.ButtonDown(Button_AM_PanRight)) m_paninc.x += FTOM(F_PANINC);
+		if (buttonMap.ButtonDown(Button_AM_PanUp)) m_paninc.y += FTOM(F_PANINC);
+		if (buttonMap.ButtonDown(Button_AM_PanDown)) m_paninc.y -= FTOM(F_PANINC);
 	}
 
 	// Change the zoom if necessary
-	if (Button_AM_ZoomIn.bDown || Button_AM_ZoomOut.bDown || am_zoomdir != 0)
+	if (buttonMap.ButtonDown(Button_AM_ZoomIn) || buttonMap.ButtonDown(Button_AM_ZoomOut) || am_zoomdir != 0)
 		changeWindowScale();
 
 	// Change x,y location
@@ -3338,12 +3339,12 @@ void AM_ToggleMap()
 	if (!automapactive)
 	{
 		// Reset AM buttons
-		Button_AM_PanLeft.Reset();
-		Button_AM_PanRight.Reset();
-		Button_AM_PanUp.Reset();
-		Button_AM_PanDown.Reset();
-		Button_AM_ZoomIn.Reset();
-		Button_AM_ZoomOut.Reset();
+		buttonMap.ClearButton(Button_AM_PanLeft);
+		buttonMap.ClearButton(Button_AM_PanRight);
+		buttonMap.ClearButton(Button_AM_PanUp);
+		buttonMap.ClearButton(Button_AM_PanDown);
+		buttonMap.ClearButton(Button_AM_ZoomIn);
+		buttonMap.ClearButton(Button_AM_ZoomOut);
 
 		primaryLevel->automap->startDisplay();
 		automapactive = true;

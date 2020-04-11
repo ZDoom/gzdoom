@@ -191,7 +191,6 @@ const char *I_FindName(findstate_t *fileinfo)
 
 #endif
 
-
 //==========================================================================
 //
 // D_AddFile
@@ -360,7 +359,6 @@ void D_AddDirectory(TArray<FString>& wadfiles, const char* dir, const char *file
 		chdir(curdir);
 	}
 }
-
 
 //==========================================================================
 //

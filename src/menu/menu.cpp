@@ -360,7 +360,7 @@ void M_StartControlPanel (bool makeSound, bool scaleoverride)
 	if (CurrentMenu != nullptr)
 		return;
 
-	ResetButtonStates ();
+	buttonMap.ResetButtonStates ();
 	for (int i = 0; i < NUM_MKEYS; ++i)
 	{
 		MenuButtons[i].ReleaseKey(0);

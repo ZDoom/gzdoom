@@ -1,15 +1,21 @@
 #pragma once
 
+#include <stdint.h>
+#include "tarray.h"
+#include "name.h"
+
 // Actions
 struct FButtonStatus
 {
 	enum { MAX_KEYS = 6 };	// Maximum number of keys that can press this button
 
 	uint16_t Keys[MAX_KEYS];
-	uint8_t bDown;				// Button is down right now
-	uint8_t bWentDown;			// Button went down this tic
-	uint8_t bWentUp;			// Button went up this tic
-	uint8_t padTo16Bytes;
+	bool bDown;				// Button is down right now
+	bool bWentDown;			// Button went down this tic
+	bool bWentUp;			// Button went up this tic
+	bool bReleaseLock;		// Lock ReleaseKey call in ResetButtonStates
+	void (*PressHandler)();		// for optional game-side customization
+	void (*ReleaseHandler)();
 
 	bool PressKey (int keynum);		// Returns true if this key caused the button to be pressed.
 	bool ReleaseKey (int keynum);	// Returns true if this key is no longer pressed.
@@ -17,27 +23,59 @@ struct FButtonStatus
 	void Reset () { bDown = bWentDown = bWentUp = false; }
 };
 
-struct FActionMap
+class ButtonMap
 {
-	FButtonStatus* Button;
-	unsigned int	Key;	// value from passing Name to MakeKey()
-	char			Name[12];
+
+	TArray<FButtonStatus> Buttons;
+	TArray<FString> NumToName;		// The internal name of the button
+	TMap<FName, int> NameToNum;
+
+public:
+	void SetButtons(const char** names, int count);
+
+	int NumButtons() const
+	{
+		return Buttons.Size();
+	}
+
+	int FindButtonIndex(const char* func, int funclen = -1) const;
+
+	FButtonStatus* FindButton(const char* func, int funclen = -1)
+	{
+		int index = FindButtonIndex(func, funclen);
+		return index > -1 ? &Buttons[index] : nullptr;
+	}
+
+	FButtonStatus* GetButton(int index)
+	{
+		return &Buttons[index];
+	}
+
+	void ResetButtonTriggers();	// Call ResetTriggers for all buttons
+	void ResetButtonStates();		// Same as above, but also clear bDown
+	int ListActionCommands(const char* pattern);
+	void AddButtonTabCommands();
+
+
+	bool ButtonDown(int x) const
+	{
+		return Buttons[x].bDown;
+	}
+
+	bool ButtonPressed(int x) const
+	{
+		return Buttons[x].bWentDown;
+	}
+
+	bool ButtonReleased(int x) const
+	{
+		return Buttons[x].bWentUp;
+	}
+
+	void ClearButton(int x)
+	{
+		Buttons[x].Reset();
+	}
 };
 
-
-extern FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
-	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
-	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
-	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
-	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch,
-	Button_Zoom, Button_Reload,
-	Button_User1, Button_User2, Button_User3, Button_User4,
-	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
-	Button_AM_ZoomIn, Button_AM_ZoomOut;
-extern bool ParsingKeyConf, UnsafeExecutionContext;
-
-void ResetButtonTriggers ();	// Call ResetTriggers for all buttons
-void ResetButtonStates ();		// Same as above, but also clear bDown
-FButtonStatus *FindButton (unsigned int key);
-void AddButtonTabCommands();
-extern FActionMap ActionMaps[];
+extern ButtonMap buttonMap;

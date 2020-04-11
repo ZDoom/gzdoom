@@ -32,21 +32,24 @@
 **
 */
 
-#include "doomtype.h"
-#include "doomdef.h"
-#include "c_dispatch.h"
+#include <stdint.h>
+
+#include "cmdlib.h"
+#include "keydef.h"
+#include "c_commandline.h"
 #include "c_bind.h"
-#include "g_level.h"
-#include "hu_stuff.h"
+#include "c_dispatch.h"
 #include "configfile.h"
-#include "d_event.h"
 #include "filesystem.h"
 #include "templates.h"
-#include "dobject.h"
-#include "vm.h"
 #include "i_time.h"
-#include "menu/menu.h"
-#include "v_text.h"
+#include "printf.h"
+#include "sc_man.h"
+#include "c_cvars.h"
+
+#include "d_event.h"
+
+#include "hu_stuff.h"	// for chatmodeon
 
 const char *KeyNames[NUM_KEYS] =
 {
@@ -705,9 +708,17 @@ void ReadBindings(int lump, bool override)
 //
 //=============================================================================
 
-void C_BindDefaults ()
+void C_SetDefaultKeys(const char* baseconfig)
 {
-	int lump, lastlump = 0;
+	auto lump = fileSystem.CheckNumForFullName("engine/commonbinds.txt");
+	if (lump >= 0) ReadBindings(lump, true);
+	int lastlump = 0;
+
+	while ((lump = fileSystem.FindLumpFullName(baseconfig, &lastlump)) != -1)
+	{
+		if (fileSystem.GetFileContainer(lump) > 0) break;
+		ReadBindings(lump, true);
+	}
 
 	while ((lump = fileSystem.FindLump("DEFBINDS", &lastlump)) != -1)
 	{
@@ -715,15 +726,41 @@ void C_BindDefaults ()
 	}
 }
 
-CCMD(binddefaults)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+CVAR(Int, cl_defaultconfiguration, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+
+void C_BindDefaults()
 {
-	C_BindDefaults ();
+	C_SetDefaultKeys(cl_defaultconfiguration == 1 ? "engine/origbinds.txt" : cl_defaultconfiguration == 2 ? "engine/leftbinds.txt" : "engine/defbinds.txt");
 }
 
-void C_SetDefaultBindings ()
+CCMD(controlpreset)
 {
-	C_UnbindAll ();
-	C_BindDefaults ();
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: Controlpreset {0,1,2}\n");
+		return;
+	}
+	int v = atoi(argv[1]);
+	if (v < 0 || v > 2) return;
+	cl_defaultconfiguration = v;
+	C_BindDefaults();
+}
+
+CCMD(binddefaults)
+{
+	C_BindDefaults();
+}
+
+void C_SetDefaultBindings()
+{
+	C_UnbindAll();
+	C_BindDefaults();
 }
 
 //=============================================================================
@@ -781,13 +818,13 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 		dclick = false;
 	}
 
+	if (ev->type == EV_KeyUp && binding[0] != '+')
+	{
+		return false;
+	}
+
 	if (!binding.IsEmpty() && (chatmodeon == 0 || ev->data1 < 256))
 	{
-		if (ev->type == EV_KeyUp && binding[0] != '+')
-		{
-			return false;
-		}
-
 		char *copy = binding.LockBuffer();
 
 		if (ev->type == EV_KeyUp)

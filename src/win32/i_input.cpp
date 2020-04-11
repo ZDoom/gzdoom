@@ -782,7 +782,7 @@ void I_GetEvent ()
 void I_StartTic ()
 {
 	BlockMouseMove--;
-	ResetButtonTriggers ();
+	buttonMap.ResetButtonTriggers ();
 	I_CheckGUICapture ();
 	EventHandlerResultForNativeMouse = primaryLevel->localEventManager->CheckRequireMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);

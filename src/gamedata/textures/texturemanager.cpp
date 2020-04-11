@@ -111,35 +111,6 @@ void FTextureManager::DeleteAll()
 	memset (HashFirst, -1, sizeof(HashFirst));
 	DefaultTexture.SetInvalid();
 
-	for (unsigned i = 0; i < mAnimations.Size(); i++)
-	{
-		if (mAnimations[i] != NULL)
-		{
-			M_Free (mAnimations[i]);
-			mAnimations[i] = NULL;
-		}
-	}
-	mAnimations.Clear();
-
-	for (unsigned i = 0; i < mSwitchDefs.Size(); i++)
-	{
-		if (mSwitchDefs[i] != NULL)
-		{
-			M_Free (mSwitchDefs[i]);
-			mSwitchDefs[i] = NULL;
-		}
-	}
-	mSwitchDefs.Clear();
-
-	for (unsigned i = 0; i < mAnimatedDoors.Size(); i++)
-	{
-		if (mAnimatedDoors[i].TextureFrames != NULL)
-		{
-			delete[] mAnimatedDoors[i].TextureFrames;
-			mAnimatedDoors[i].TextureFrames = NULL;
-		}
-	}
-	mAnimatedDoors.Clear();
 	BuildTileData.Clear();
 	tmanips.Clear();
 }
@@ -668,7 +639,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 
 							// Replace the entire texture and adjust the scaling and offset factors.
 							newtex->bWorldPanning = true;
-							newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
+							newtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
 							newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
 							newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
 							newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
@@ -765,7 +736,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 						{
 							// Replace the entire texture and adjust the scaling and offset factors.
 							newtex->bWorldPanning = true;
-							newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
+							newtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
 							newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
 							newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
 							newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
@@ -805,7 +776,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 					{
 						// Replace the entire texture and adjust the scaling and offset factors.
 						newtex->bWorldPanning = true;
-						newtex->SetScaledSize(width, height);
+						newtex->SetDisplaySize(width, height);
 
 						FTextureID oldtex = TexMan.CheckForTexture(src, ETextureType::MiscPatch);
 						if (oldtex.isValid()) 
@@ -1241,10 +1212,6 @@ void FTextureManager::Init()
 		}
 	}
 
-	InitAnimated();
-	InitAnimDefs();
-	FixAnimations();
-	InitSwitchList();
 	InitPalettedVersions();
 	AdjustSpriteOffsets();
 	// Add auto materials to each texture after everything has been set up.
@@ -1532,6 +1499,29 @@ void FTextureManager::SpriteAdjustChanged()
 		}
 	}
 }
+
+
+//==========================================================================
+//
+// FTextureAnimator :: SetTranslation
+//
+// Sets animation translation for a texture
+//
+//==========================================================================
+
+void FTextureManager::SetTranslation(FTextureID fromtexnum, FTextureID totexnum)
+{
+	if ((size_t)fromtexnum.texnum < Translation.Size())
+	{
+		if ((size_t)totexnum.texnum >= Textures.Size())
+		{
+			totexnum.texnum = fromtexnum.texnum;
+		}
+		Translation[fromtexnum.texnum] = totexnum.texnum;
+	}
+}
+
+
 
 //==========================================================================
 //

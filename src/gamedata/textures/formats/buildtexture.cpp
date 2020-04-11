@@ -43,6 +43,7 @@
 #include "textures/textures.h"
 #include "resourcefile.h"
 #include "image.h"
+#include "animations.h"
 
 
 //==========================================================================
@@ -234,7 +235,7 @@ void AddTiles(const FString& pathprefix, const void* tiles, int translation)
 			speed = (anm >> 24) & 15;
 			speed = MAX(1, (1 << speed) * 1000 / 120);	// Convert from 120 Hz to 1000 Hz.
 
-			TexMan.AddSimpleAnim(texnum, picanm[pic] & 63, type, speed);
+			TexAnim.AddSimpleAnim(texnum, picanm[pic] & 63, type, speed);
 		}
 
 		// Blood's rotation types:

@@ -107,6 +107,7 @@
 #include "c_buttons.h"
 #include "d_buttons.h"
 #include "i_interface.h"
+#include "animations.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
@@ -900,7 +901,7 @@ void D_Display ()
 	}
 	
 	screen->FrameTime = I_msTimeFS();
-	TexMan.UpdateAnimations(screen->FrameTime);
+	TexAnim.UpdateAnimations(screen->FrameTime);
 	R_UpdateSky(screen->FrameTime);
 	screen->BeginFrame();
 	screen->ClearClipRect();
@@ -2945,6 +2946,7 @@ static int D_DoomMain_Internal (void)
 
 		if (!batchrun) Printf ("Texman.Init: Init texture manager.\n");
 		TexMan.Init();
+		TexAnim.Init();
 		C_InitConback();
 
 		StartScreen->Progress();
@@ -3273,6 +3275,7 @@ void D_Cleanup()
 	DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
 	DeinitMenus();
 	LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
+	TexAnim.DeleteAll();
 	
 	// delete DoomStartupInfo data
 	DoomStartupInfo.Name = "";

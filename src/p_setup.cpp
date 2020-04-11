@@ -76,6 +76,7 @@
 #include "v_video.h"
 #include "fragglescript/t_script.h"
 #include "s_music.h"
+#include "animations.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
@@ -98,7 +99,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 
 	const auto addAnimations = [hitlist, bitmask](const FTextureID texid)
 	{
-		for (auto anim : TexMan.mAnimations)
+		for (auto anim : TexAnim.GetAnimations())
 		{
 			if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
 			{
@@ -112,7 +113,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 
 	addAnimations(texid);
 
-	auto switchdef = TexMan.FindSwitch(texid);
+	auto switchdef = TexAnim.FindSwitch(texid);
 	if (switchdef)
 	{
 		const FSwitchDef *const pair = switchdef->PairDef;
@@ -136,7 +137,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 		}
 	}
 
-	auto adoor = TexMan.FindAnimatedDoor(texid);
+	auto adoor = TexAnim.FindAnimatedDoor(texid);
 	if (adoor)
 	{
 		for (int i = 0; i < adoor->NumTextureFrames; i++)

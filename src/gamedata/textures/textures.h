@@ -140,56 +140,6 @@ public:
 // [RH] Expanded to work with a Hexen ANIMDEFS lump
 //
 
-struct FAnimDef
-{
-	FTextureID 	BasePic;
-	uint16_t	NumFrames;
-	uint16_t	CurFrame;
-	uint8_t	AnimType;
-	bool	bDiscrete;			// taken out of AnimType to have better control
-	uint64_t	SwitchTime;			// Time to advance to next frame
-	struct FAnimFrame
-	{
-		uint32_t	SpeedMin;		// Speeds are in ms, not tics
-		uint32_t	SpeedRange;
-		FTextureID	FramePic;
-	} Frames[1];
-	enum
-	{
-		ANIM_Forward,
-		ANIM_Backward,
-		ANIM_OscillateUp,
-		ANIM_OscillateDown,
-		ANIM_Random
-	};
-
-	void SetSwitchTime (uint64_t mstime);
-};
-
-struct FSwitchDef
-{
-	FTextureID PreTexture;		// texture to switch from
-	FSwitchDef *PairDef;		// switch def to use to return to PreTexture
-	uint16_t NumFrames;		// # of animation frames
-	bool QuestPanel;	// Special texture for Strife mission
-	int Sound;			// sound to play at start of animation. Changed to int to avoiud having to include s_sound here.
-	struct frame		// Array of times followed by array of textures
-	{					//   actual length of each array is <NumFrames>
-		uint16_t TimeMin;
-		uint16_t TimeRnd;
-		FTextureID Texture;
-	} frames[1];
-};
-
-struct FDoorAnimation
-{
-	FTextureID BaseTexture;
-	FTextureID *TextureFrames;
-	int NumTextureFrames;
-	FName OpenSound;
-	FName CloseSound;
-};
-
 // All FTextures present their data to the world in 8-bit format, but if
 // the source data is something else, this is it.
 enum FTextureFormat : uint32_t
@@ -321,9 +271,12 @@ public:
 	bool isSprite() const { return UseType == ETextureType::Sprite || UseType == ETextureType::SkinSprite || UseType == ETextureType::Decal; }
 	
 	const FString &GetName() const { return Name; }
+	void SetNoDecals(bool on) { bNoDecals = on;  }
+	void SetWarpStyle(int style) { bWarped = style; }
 	bool allowNoDecals() const { return bNoDecals; }
 	bool isScaled() const { return Scale.X != 1 || Scale.Y != 1; }
 	bool isMasked() const { return bMasked; }
+	void SetSkyOffset(int offs) { SkyOffset = offs; }
 	int GetSkyOffset() const { return SkyOffset; }
 	FTextureID GetID() const { return id; }
 	PalEntry GetSkyCapColor(bool bottom);
@@ -339,6 +292,12 @@ public:
 	void SetUseType(ETextureType type) { UseType = type; }
 	int GetSourceLump() const { return SourceLump;  }
 	ETextureType GetUseType() const { return UseType; }
+	void SetSpeed(float fac) { shaderspeed = fac; }
+	void SetWorldPanning(bool on) { bWorldPanning = on; }
+	void SetDisplaySize(int fitwidth, int fitheight);
+	void SetFrontSkyLayer(bool on = true) { bNoRemap0 = on; }
+	bool IsFrontSkyLayer() { return bNoRemap0; }
+
 
 	void CopySize(FTexture* BaseTexture)
 	{
@@ -436,8 +395,6 @@ protected:
 		Height = h;
 	}
 
-	void SetSpeed(float fac) { shaderspeed = fac; }
-
 	int GetScaledWidth () { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
 	int GetScaledHeight () { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
 	double GetScaledWidthDouble () { return Width / Scale.X; }
@@ -461,11 +418,8 @@ protected:
 
 	virtual void ResolvePatches() {}
 
-	void SetFrontSkyLayer();
-
 	static void InitGrayMap();
 
-	void SetScaledSize(int fitwidth, int fitheight);
 	void SetScale(const DVector2 &scale)
 	{
 		Scale = scale;
@@ -600,11 +554,7 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
-	void UpdateAnimations (uint64_t mstime);
 	int GuesstimateNumTextures ();
-
-	FSwitchDef *FindSwitch (FTextureID texture);
-	FDoorAnimation *FindAnimatedDoor (FTextureID picnum);
 
 	TextureManipulation* GetTextureManipulation(FName name)
 	{
@@ -629,14 +579,7 @@ private:
 	// Build tiles
 	//int CountBuildTiles ();
 
-	// Animation stuff
-	FAnimDef *AddAnim (FAnimDef *anim);
-	void FixAnimations ();
-	void InitAnimated ();
-	void InitAnimDefs ();
 public:
-	FAnimDef *AddSimpleAnim (FTextureID picnum, int animcount, uint32_t speedmin, uint32_t speedrange=0);
-	FAnimDef *AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
 
 	TArray<uint8_t>& GetNewBuildTileData()
 	{
@@ -644,26 +587,14 @@ public:
 		return BuildTileData.Last();
 	}
 
+	FTexture* Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
+	void SetTranslation(FTextureID fromtexnum, FTextureID totexnum);
+
 private:
-	void ParseAnim (FScanner &sc, ETextureType usetype);
-	FAnimDef *ParseRangeAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing);
-	void ParsePicAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
-	void ParseWarp(FScanner &sc);
-	void ParseCameraTexture(FScanner &sc);
-	FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, ETextureType usetype, bool allowMissing);
-	void ParseTime (FScanner &sc, uint32_t &min, uint32_t &max);
-	FTexture *Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
-	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);
-	void ParseAnimatedDoor(FScanner &sc);
 
 	void InitPalettedVersions();
 	
 	// Switches
-
-	void InitSwitchList ();
-	void ProcessSwitchDef (FScanner &sc);
-	FSwitchDef *ParseSwitchDef (FScanner &sc, bool ignoreBad);
-	void AddSwitchPair (FSwitchDef *def1, FSwitchDef *def2);
 
 	struct TextureHash
 	{
@@ -674,18 +605,15 @@ private:
 	enum { HASH_END = -1, HASH_SIZE = 1027 };
 	TArray<TextureHash> Textures;
 	TMap<uint64_t, int> LocalizedTextures;
-	TArray<int> Translation;
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;
 	TArray<int> FirstTextureForFile;
 	TArray<TArray<uint8_t> > BuildTileData;
+	TArray<int> Translation;
 
-	TArray<FSwitchDef *> mSwitchDefs;
-	TArray<FDoorAnimation> mAnimatedDoors;
 	TMap<FName, TextureManipulation> tmanips;
 
 public:
-	TArray<FAnimDef *> mAnimations;
 
 	short sintable[2048];	// for texture warping
 	enum

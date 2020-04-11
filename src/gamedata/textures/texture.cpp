@@ -188,17 +188,6 @@ FTexture::~FTexture ()
 	}
 }
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void FTexture::SetFrontSkyLayer ()
-{
-	bNoRemap0 = true;
-}
-
 //===========================================================================
 //
 // FTexture::GetBgraBitmap
@@ -248,7 +237,7 @@ FTexture *FTexture::GetRawTexture()
 	return OffsetLess;
 }
 
-void FTexture::SetScaledSize(int fitwidth, int fitheight)
+void FTexture::SetDisplaySize(int fitwidth, int fitheight)
 {
 	Scale.X = double(Width) / fitwidth;
 	Scale.Y =double(Height) / fitheight;

@@ -91,6 +91,7 @@ class DoomSoundEngine : public SoundEngine
 	{
 		auto ndx = SoundEngine::AddSoundLump(logicalname, lump, CurrentPitchMask, resid, nearlimit);
 		S_sfx[ndx].UserData.Resize(1);
+		S_sfx[ndx].UserData[0] = 0;
 		return ndx;
 	}
 	bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel) override

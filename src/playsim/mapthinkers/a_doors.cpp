@@ -38,6 +38,7 @@
 #include "d_player.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
+#include "animations.h"
 
 //============================================================================
 //
@@ -780,7 +781,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 		// Do not attempt to close the door if it already is
 		else if (type == DAnimatedDoor::adClose)
 			return false;
-		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
+		FDoorAnimation *anim = TexAnim.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
 			CreateThinker<DAnimatedDoor>(sec, line, speed, delay, anim, type);
@@ -816,7 +817,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 			{
 				continue;
 			}
-			FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
+			FDoorAnimation *anim = TexAnim.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 			if (anim != NULL)
 			{
 				rtn = true;

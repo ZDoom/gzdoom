@@ -54,7 +54,7 @@
 #include "v_video.h"
 #include "i_system.h"
 #include "c_buttons.h"
-#include "scripting/types.h"
+#include "types.h"
 #include "texturemanager.h"
 
 int DMenu::InMenu;

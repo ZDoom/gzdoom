@@ -1673,7 +1673,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 		if (!arc.w->inObject() || def == nullptr || sid != *def)
 		{
 			arc.WriteKey(key);
-			const char *sn = S_GetSoundName(sid);
+			const char *sn = soundEngine->GetSoundName(sid);
 			if (sn != nullptr) arc.w->String(sn);
 			else arc.w->Null();
 		}
@@ -2088,7 +2088,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr
 //
 // This is a bit of a cheat because it never actually writes out the pointer.
 // The rules for levels are that they must be self-contained.
-// No level and no pbject that is part of a level may reference a different one.
+// No level and no object that is part of a level may reference a different one.
 //
 // When writing, this merely checks if the rules are obeyed and if not errors out.
 // When reading, it assumes that the object was properly written and restores

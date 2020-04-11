@@ -37,6 +37,7 @@
 
 #include "hw_clipper.h"
 #include "g_levellocals.h"
+#include "basics.h"
 
 unsigned Clipper::starttime;
 

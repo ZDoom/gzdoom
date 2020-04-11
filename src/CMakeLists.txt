@@ -612,19 +612,23 @@ file( GLOB HEADER_FILES
 	common/utility/*.h
 	common/engine/*.h
 	common/fonts/*.h
+	common/objects/*.h
 	common/filesystem/*.h
 	common/textures/hires/hqnx/*.h
 	common/textures/hires/hqnx_asm/*.h
 	common/textures/hires/xbr/*.h
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
-	common/thirdparty/math./*h
+	common/thirdparty/math/*h
+	common/scripting/core/*h
+	common/scripting/vm/*h
+	common/scripting/jit/*h
+	common/scripting/interface/*.h
 	utility/*.h
 	scripting/*.h
 	scripting/backend/*.h
 	scripting/decorate/*.h
 	scripting/zscript/*.h
-	scripting/vm/*.h
 	sound/midisources/*.h
 	rendering/*.h
 	rendering/2d/*.h
@@ -739,14 +743,14 @@ set( NOT_COMPILED_SOURCE_FILES
 )
 
 set( VM_JIT_SOURCES
-	scripting/vm/jit.cpp
-	scripting/vm/jit_runtime.cpp
-	scripting/vm/jit_call.cpp
-	scripting/vm/jit_flow.cpp
-	scripting/vm/jit_load.cpp
-	scripting/vm/jit_math.cpp
-	scripting/vm/jit_move.cpp
-	scripting/vm/jit_store.cpp
+	common/scripting/jit/jit.cpp
+	common/scripting/jit/jit_runtime.cpp
+	common/scripting/jit/jit_call.cpp
+	common/scripting/jit/jit_flow.cpp
+	common/scripting/jit/jit_load.cpp
+	common/scripting/jit/jit_math.cpp
+	common/scripting/jit/jit_move.cpp
+	common/scripting/jit/jit_store.cpp
 )
 
 # This is disabled for now because I cannot find a way to give the .pch file a different name.
@@ -838,9 +842,6 @@ set (PCH_SOURCES
 	d_net.cpp
 	d_netinfo.cpp
 	d_protocol.cpp
-	dobject.cpp
-	dobjgc.cpp
-	dobjtype.cpp
 	doomstat.cpp
 	g_cvars.cpp
 	g_dumpinfo.cpp
@@ -1037,25 +1038,19 @@ set (PCH_SOURCES
 	r_data/models/models_ue1.cpp
 	r_data/models/models_obj.cpp
 	scripting/dictionary.cpp
-	scripting/symbols.cpp
 	scripting/vmiterators.cpp
 	scripting/vmthunks.cpp
 	scripting/vmthunks_actors.cpp
-	scripting/types.cpp
 	scripting/thingdef.cpp
 	scripting/thingdef_data.cpp
 	scripting/thingdef_properties.cpp
 	scripting/backend/codegen.cpp
-	scripting/backend/scopebarrier.cpp
 	scripting/backend/dynarrays.cpp
 	scripting/backend/vmbuilder.cpp
-	scripting/backend/vmdisasm.cpp
 	scripting/decorate/olddecorations.cpp
 	scripting/decorate/thingdef_exp.cpp
 	scripting/decorate/thingdef_parse.cpp
 	scripting/decorate/thingdef_states.cpp
-	scripting/vm/vmexec.cpp
-	scripting/vm/vmframe.cpp
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
@@ -1152,6 +1147,16 @@ set (PCH_SOURCES
 	common/engine/i_interface.cpp
 	common/engine/renderstyle.cpp
 	common/engine/v_colortables.cpp
+	common/objects/dobject.cpp
+	common/objects/dobjgc.cpp
+	common/objects/dobjtype.cpp
+	common/scripting/core/symbols.cpp
+	common/scripting/core/types.cpp
+	common/scripting/core/scopebarrier.cpp
+	common/scripting/core/vmdisasm.cpp
+	common/scripting/vm/vmexec.cpp
+	common/scripting/vm/vmframe.cpp
+	common/scripting/interface/stringformat.cpp
 	
 	utility/m_random.cpp
 	utility/nodebuilder/nodebuild.cpp
@@ -1181,7 +1186,7 @@ endif()
 add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${HEADER_FILES}
 	${NOT_COMPILED_SOURCE_FILES}
-	__autostart.cpp
+	common/objects/__autostart.cpp
 	${SYSTEM_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
@@ -1207,7 +1212,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	common/thirdparty/math/tan.c
 	common/thirdparty/math/tanh.c
 	common/thirdparty/math/fastsin.cpp
-	zzautozend.cpp
+	common/objects/zzautozend.cpp
 )
 
 set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
@@ -1241,6 +1246,10 @@ include_directories( .
 	common/console
 	common/engine
 	common/fonts
+	common/objects
+	common/scripting/vm
+	common/scripting/jit
+	common/scripting/core
 	g_statusbar
 	console
 	playsim
@@ -1258,7 +1267,6 @@ include_directories( .
 	utility
 	utility/nodebuilder
 	scripting
-	scripting/vm
 	rendering
 	rendering/vulkan/thirdparty
 	../libraries/gdtoa
@@ -1427,7 +1435,6 @@ source_group("Platforms\\Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURC
 source_group("Scripting\\Decorate frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/decorate/.+")
 source_group("Scripting\\ZScript frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/zscript/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.c ${CMAKE_CURRENT_BINARY_DIR}/zcc-parse.h)
 source_group("Scripting\\Compiler backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/backend/.+")
-source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/vm/.+")
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
 source_group("Common" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/.+")
 source_group("Common\\Audio" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/.+")

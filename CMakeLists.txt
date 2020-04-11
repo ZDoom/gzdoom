@@ -194,7 +194,6 @@ endif()
 #	find_package( asmjit )
 #endif()
 
-
 if( MSVC )
 	# Eliminate unreferenced functions and data
 	# Perform identical COMDAT folding
@@ -213,20 +212,6 @@ if( MSVC )
 	#set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2") # This is already the default
 
 
-#	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
-#		# SSE2 option (to allow x87 in 32 bit and disallow extended feature sets which have not yet been checked for precision)
-#		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")
-#		if (ZDOOM_USE_SSE2)
-#			set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-#		else ()
-#			if (MSVC_VERSION GREATER 1699)
-#				# On Visual C++ 2012 and later SSE2 is the default, so we need to switch it off explicitly
-#				set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:IA32")
-#			endif ()
-#		endif ()
-#	else()
-#		set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-#	endif()
 
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
 	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
@@ -330,7 +315,7 @@ if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
 	message( STATUS "Using system zlib, includes found at ${ZLIB_INCLUDE_DIR}" )
 else()
 	message( STATUS "Using internal zlib" )
-	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing zlib alongside zdoom
+	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing zlib
 	add_subdirectory( libraries/zlib )
 	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries/zlib )
 	set( ZLIB_LIBRARIES z )

@@ -1837,12 +1837,12 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_So2S:
 		ASSERTS(a); ASSERTD(b);
-		reg.s[a] = S_GetSoundName(reg.d[b]);
+		reg.s[a] = soundEngine->GetSoundName(reg.d[b]);
 		break;
 
 	case CAST_SID2S:
 		ASSERTS(a); ASSERTD(b);
-		reg.s[a] = unsigned(reg.d[b]) >= sprites.Size() ? "TNT1" : sprites[reg.d[b]].name;
+		VM_CastSpriteIDToString(&reg.s[a], reg.d[b]);
 		break;
 
 	case CAST_TID2S:

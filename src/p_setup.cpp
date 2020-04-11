@@ -67,7 +67,7 @@
 #include "p_destructible.h"
 #include "types.h"
 #include "i_time.h"
-#include "scripting/vm/vm.h"
+#include "vm.h"
 #include "a_specialspot.h"
 #include "maploader/maploader.h"
 #include "p_acs.h"

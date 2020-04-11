@@ -43,7 +43,7 @@
 #include "engineerrors.h"
 #include "memarena.h"
 #include "name.h"
-#include "scripting/backend/scopebarrier.h"
+#include "scopebarrier.h"
 
 class DObject;
 union VMOP;
@@ -55,6 +55,8 @@ extern FMemArena ClassDataAllocator;
 #define MAX_TRY_DEPTH	8	// Maximum number of nested TRYs in a single function
 
 void JitRelease();
+
+extern void (*VM_CastSpriteIDToString)(FString* a, unsigned int b);
 
 
 typedef unsigned char		VM_UBYTE;

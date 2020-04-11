@@ -52,45 +52,4 @@ enum class ELightMode : int8_t
 	DoomSoftware = 16
 };
 
-// always use our own definition for consistency.
-#ifdef M_PI
-#undef M_PI
-#endif
-
-const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
-
-inline float DEG2RAD(float deg)
-{
-	return deg * float(M_PI / 180.0);
-}
-
-inline double DEG2RAD(double deg)
-{
-	return deg * (M_PI / 180.0);
-}
-
-inline float RAD2DEG(float deg)
-{
-	return deg * float(180. / M_PI);
-}
-
-
-// Auto-registration sections for GCC.
-// Apparently, you cannot do string concatenation inside section attributes.
-#ifdef __MACH__
-#define SECTION_AREG "__DATA,areg"
-#define SECTION_CREG "__DATA,creg"
-#define SECTION_FREG "__DATA,freg"
-#define SECTION_GREG "__DATA,greg"
-#define SECTION_MREG "__DATA,mreg"
-#define SECTION_YREG "__DATA,yreg"
-#else
-#define SECTION_AREG "areg"
-#define SECTION_CREG "creg"
-#define SECTION_FREG "freg"
-#define SECTION_GREG "greg"
-#define SECTION_MREG "mreg"
-#define SECTION_YREG "yreg"
-#endif
-
 #endif

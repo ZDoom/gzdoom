@@ -293,12 +293,7 @@ static void MarkRoot()
 		if (playeringame[i])
 			players[i].PropagateMark();
 	}
-	// Mark sectors.
 	
-	for (auto Level : AllLevels())
-	{
-		Level->Mark();
-	}
 	// NextToThink must not be freed while thinkers are ticking.
 	Mark(NextToThink);
 	// Mark soft roots.

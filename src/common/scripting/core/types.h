@@ -2,7 +2,7 @@
 
 #include "dobject.h"
 #include "serializer.h"
-#include "scripting/backend/scopebarrier.h"
+#include "scopebarrier.h"
 
 // Variable/parameter/field flags -------------------------------------------
 

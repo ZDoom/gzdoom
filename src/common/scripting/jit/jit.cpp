@@ -1,6 +1,7 @@
 
 #include "jit.h"
 #include "jitintern.h"
+#include "printf.h"
 
 extern PString *TypeString;
 extern PStruct *TypeVector2;

@@ -2743,6 +2743,10 @@ int PalCheck(int tex)
 	return tex;
 }
 
+static void Doom_CastSpriteIDToString(FString* a, unsigned int b) 
+{ 
+	*a = (b >= sprites.Size()) ? "TNT1" : sprites[b].name; 
+}
 
 //==========================================================================
 //
@@ -2759,6 +2763,8 @@ static int D_DoomMain_Internal (void)
 	FString *args;
 	int argcount;	
 	FIWadManager *iwad_man;
+
+	VM_CastSpriteIDToString = Doom_CastSpriteIDToString;
 
 	// Set up the button list. Mlook and Klook need a bit of extra treatment.
 	buttonMap.SetButtons(DoomButtons, countof(DoomButtons));

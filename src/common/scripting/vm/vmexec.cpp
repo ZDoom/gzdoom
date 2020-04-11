@@ -32,16 +32,22 @@
 */
 
 #include <math.h>
-#include <v_video.h>
-#include <s_sound.h>
-#include "r_state.h"
+#include <assert.h>
+#include "v_video.h"
+#include "s_soundinternal.h"
+#include "basics.h"
+//#include "r_state.h"
 #include "stats.h"
 #include "vmintern.h"
 #include "types.h"
+#include "basics.h"
 #include "texturemanager.h"
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];
+
+// THe sprite ID to string cast is game specific so let's do it with a callback to remove the dependency and allow easier reuse.
+void (*VM_CastSpriteIDToString)(FString* a, unsigned int b) = [](FString* a, unsigned int b) { a->Format("%d", b); };
 
 // intentionally implemented in a different source file to prevent inlining.
 #if 0

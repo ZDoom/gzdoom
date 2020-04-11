@@ -56,7 +56,7 @@ static void *AllocJitMemory(size_t size)
 	}
 	else
 	{
-		const size_t bytesToAllocate = MAX(size_t(1024 * 1024), size);
+		const size_t bytesToAllocate = std::max(size_t(1024 * 1024), size);
 		size_t allocatedSize = 0;
 		void *p = OSUtils::allocVirtualMemory(bytesToAllocate, &allocatedSize, OSUtils::kVMWritable | OSUtils::kVMExecutable);
 		if (!p)

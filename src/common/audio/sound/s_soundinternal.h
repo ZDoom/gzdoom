@@ -91,8 +91,8 @@ enum
 	ROLLOFF_Custom		// Lookup volume from SNDCURVE
 };
 
-int S_FindSound(const char *logicalname);
-int S_FindSoundByResID(int snd_id);
+inline int S_FindSoundByResID(int ndx);
+inline int S_FindSound(const char* name);
 
 // An index into the S_sfx[] array.
 class FSoundID
@@ -429,3 +429,12 @@ struct FReverbField
 };
 
 
+inline int S_FindSoundByResID(int ndx)
+{
+	return soundEngine->FindSoundByResID(ndx);
+}
+
+inline int S_FindSound(const char* name)
+{
+	return soundEngine->FindSound(name);
+}

@@ -1,6 +1,6 @@
 #include "dictionary.h"
 
-#include "scripting/vm/vm.h"
+#include "vm.h"
 #include "serializer.h"
 
 #include <cassert>

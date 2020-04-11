@@ -42,6 +42,7 @@
 #include "r_data/models/models.h"
 #include "vectors.h"
 #include "texturemanager.h"
+#include "basics.h"
 
 #include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/scene/hw_drawstructs.h"

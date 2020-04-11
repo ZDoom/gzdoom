@@ -36,7 +36,7 @@
 #include "codegen.h"
 #include "m_argv.h"
 #include "c_cvars.h"
-#include "scripting/vm/jit.h"
+#include "jit.h"
 
 EXTERN_CVAR(Bool, strictdecorate);
 

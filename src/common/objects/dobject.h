@@ -36,9 +36,11 @@
 
 #include <stdlib.h>
 #include <type_traits>
-#include "doomtype.h"
 #include "m_alloc.h"
 #include "vectors.h"
+#include "name.h"
+#include "palentry.h"
+#include "textureid.h"
 
 class PClass;
 class PType;

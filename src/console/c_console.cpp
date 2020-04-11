@@ -718,6 +718,7 @@ void C_DeinitConsole ()
 	// Make sure all tab commands are cleared before the memory for
 	// their names is deallocated.
 	C_ClearTabCommands ();
+	C_ClearDynCCmds();
 
 	// Free AddToConsole()'s work buffer
 	if (work != NULL)
@@ -1316,22 +1317,6 @@ void C_HideConsole ()
 	}
 }
 
-DEFINE_ACTION_FUNCTION(_Console, HideConsole)
-{
-	C_HideConsole();
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(_Console, Printf)
-{
-	PARAM_PROLOGUE;
-	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
-
-	FString s = FStringFormat(VM_ARGS_NAMES);
-	Printf("%s\n", s.GetChars());
-	return 0;
-}
-
 static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 {
 	int data1 = ev->data1;
@@ -1791,18 +1776,6 @@ void C_MidPrint (FFont *font, const char *msg, bool bold)
 	{
 		StatusBar->DetachMessage (MAKE_ID('C','N','T','R'));
 	}
-}
-
-DEFINE_ACTION_FUNCTION(_Console, MidPrint)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER(fnt, FFont);
-	PARAM_STRING(text);
-	PARAM_BOOL(bold);
-
-	const char *txt = text[0] == '$'? GStrings(&text[1]) : text.GetChars();
-	C_MidPrint(fnt, txt, bold);
-	return 0;
 }
 
 /****** Tab completion code ******/

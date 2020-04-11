@@ -3406,6 +3406,33 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(_Console, MidPrint)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_STRING(text);
+	PARAM_BOOL(bold);
+
+	const char* txt = text[0] == '$' ? GStrings(&text[1]) : text.GetChars();
+	C_MidPrint(fnt, txt, bold);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Console, HideConsole)
+{
+	C_HideConsole();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Console, Printf)
+{
+	PARAM_PROLOGUE;
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
+	FString s = FStringFormat(VM_ARGS_NAMES);
+	Printf("%s\n", s.GetChars());
+	return 0;
+}
 
 
 

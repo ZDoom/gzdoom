@@ -34,13 +34,16 @@
 #ifndef __C_BINDINGS_H__
 #define __C_BINDINGS_H__
 
-#include "doomdef.h"
+#include "keydef.h"
+#include "zstring.h"
+#include "tarray.h"
 
 struct event_t;
 class FConfigFile;
 class FCommandLine;
 
 void C_NameKeys (char *str, int first, int second);
+FString C_NameKeys (int *keys, int count, bool colors = false);
 
 class FKeyBindings
 {
@@ -92,7 +95,6 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds);
 // Stuff used by the customize controls menu
 void C_SetDefaultBindings ();
 void C_UnbindAll ();
-void C_NameKeys(char* str, int first, int second);
 
 extern const char *KeyNames[];
 

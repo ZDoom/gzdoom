@@ -44,8 +44,18 @@
 
 
 #include <stdlib.h>
-#include "doomdef.h"
-#include "doomtype.h"
+#include "basics.h"
+#include "zstring.h"
+#include "tarray.h"
+#include "name.h"
+
+
+struct StringtableCallbacks
+{
+	// These two functions would create a dependency on the game code so they are installed as callbacks.
+	bool (*ValidFilter)(const char* str);
+	int (*GetPlayerGender)();
+};
 
 struct TableElement
 {
@@ -74,19 +84,19 @@ public:
 	{
 		default_table = MAKE_ID('*', '*', 0, 0),
 		global_table = MAKE_ID('*', 0, 0, 0),
-		dehacked_table = MAKE_ID('*', '*', '*', 0)
+		override_table = MAKE_ID('*', '*', '*', 0)
 	};
 
 	using LangMap = TMap<uint32_t, StringMap>;
 	using StringMacroMap = TMap<FName, StringMacro>;
 
-	void LoadStrings ();
-	void UpdateLanguage();
+	void LoadStrings(const char *language);
+	void UpdateLanguage(const char* language);
 	StringMap GetDefaultStrings() { return allStrings[default_table]; }	// Dehacked needs these for comparison
-	void SetDehackedStrings(StringMap && map)
+	void SetOverrideStrings(StringMap && map)
 	{
-		allStrings.Insert(dehacked_table, map);
-		UpdateLanguage();
+		allStrings.Insert(override_table, map);
+		UpdateLanguage(nullptr);
 	}
 	
 	const char *GetLanguageString(const char *name, uint32_t langtable, int gender = -1) const;
@@ -98,12 +108,15 @@ public:
 		return GetString(name, nullptr);
 	}
 	bool exists(const char *name);
+	void SetCallbacks(StringtableCallbacks* cb) { callbacks = cb; }
 
 private:
 
+	FString activeLanguage;
 	StringMacroMap allMacros;
 	LangMap allStrings;
 	TArray<std::pair<uint32_t, StringMap*>> currentLanguageSet;
+	StringtableCallbacks* callbacks = nullptr;
 
 	void LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer);
 	TArray<TArray<FString>> parseCSV(const TArray<uint8_t> &buffer);
@@ -116,6 +129,23 @@ private:
 	void DeleteForLabel(int lumpnum, FName label);
 
 	static size_t ProcessEscapes (char *str);
+public:
+	static FString MakeMacro(const char *str)
+	{
+		if (*str == '$') return str;
+		return FString("$") + str;
+	}
+	
+	static FString MakeMacro(const char *str, size_t len)
+	{
+		if (*str == '$') return FString(str, len);
+		return "$" + FString(str, len);
+	}
+
+	const char* localize(const char* str)
+	{
+		return *str == '$' ? operator()(str + 1) : str;
+	}
 };
 
 #endif //__STRINGTABLE_H__

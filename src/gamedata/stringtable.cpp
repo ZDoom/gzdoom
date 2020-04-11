@@ -37,14 +37,11 @@
 #include "stringtable.h"
 #include "cmdlib.h"
 #include "filesystem.h"
-#include "i_system.h"
 #include "sc_man.h"
 #include "c_dispatch.h"
 #include "v_text.h"
-#include "gi.h"
-#include "d_player.h"
-
-EXTERN_CVAR(String, language)
+#include "c_cvars.h"
+#include "printf.h"
 
 //==========================================================================
 //
@@ -52,7 +49,7 @@ EXTERN_CVAR(String, language)
 //
 //==========================================================================
 
-void FStringTable::LoadStrings ()
+void FStringTable::LoadStrings (const char *language)
 {
 	int lastlump, lump;
 
@@ -70,7 +67,7 @@ void FStringTable::LoadStrings ()
 		if (!ParseLanguageCSV(lump, lumpdata))
  			LoadLanguage (lump, lumpdata);
 	}
-	UpdateLanguage();
+	UpdateLanguage(language);
 	allMacros.Clear();
 }
 
@@ -172,7 +169,7 @@ bool FStringTable::readMacros(int lumpnum)
 		auto language = data[i][1];
 		if (macroname.IsEmpty() || language.IsEmpty()) continue;
 		FStringf combined_name("%s/%s", language.GetChars(), macroname.GetChars());
-		FName name = combined_name;
+		FName name = combined_name.GetChars();
 
 		StringMacro macro;
 
@@ -240,12 +237,26 @@ bool FStringTable::ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer)
 			if (filtercol > -1)
 			{
 				auto filterstr = row[filtercol];
-				auto filter = filterstr.Split(" ", FString::TOK_SKIPEMPTY);
-				if (filter.Size() > 0 && filter.FindEx([](const auto &str) { return str.CompareNoCase(GameNames[gameinfo.gametype]) == 0; }) == filter.Size())
-					continue;
+				if (filterstr.IsNotEmpty())
+				{
+					bool ok = false;
+					if (callbacks && callbacks->ValidFilter)
+					{
+						auto filter = filterstr.Split(" ", FString::TOK_SKIPEMPTY);
+						for (auto& entry : filter)
+						{
+							if (callbacks->ValidFilter(entry))
+							{
+								ok = true;
+								break;
+							}
+						}
+					}
+					if (!ok) continue;
+				}
 			}
 
-			FName strName = row[labelcol];
+			FName strName = row[labelcol].GetChars();
 			if (hasDefaultEntry)
 			{
 				DeleteForLabel(lumpnum, strName);
@@ -348,14 +359,7 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 				sc.MustGetStringName("ifgame");
 				sc.MustGetStringName("(");
 				sc.MustGetString();
-				if (sc.Compare("strifeteaser"))
-				{
-					skip |= (gameinfo.gametype != GAME_Strife) || !(gameinfo.flags & GI_SHAREWARE);
-				}
-				else
-				{
-					skip |= !sc.Compare(GameTypeName());
-				}
+				skip |= (!callbacks || !callbacks->ValidFilter || !callbacks->ValidFilter(sc.String));
 				sc.MustGetStringName(")");
 				sc.MustGetString();
 
@@ -445,11 +449,11 @@ void FStringTable::InsertString(int lumpnum, int langid, FName label, const FStr
 		FString macroname(te.strings[0].GetChars() + index + 2, endindex - index - 2);
 		FStringf lookupstr("%s/%s", strlangid, macroname.GetChars());
 		FStringf replacee("@[%s]", macroname.GetChars());
-		FName lookupname(lookupstr, true);
+		FName lookupname(lookupstr.GetChars(), true);
 		auto replace = allMacros.CheckKey(lookupname);
 		for (int i = 0; i < 4; i++)
 		{
-			const char *replacement = replace && replace->Replacements[i] ? replace->Replacements[i] : "";
+			const char *replacement = replace && replace->Replacements[i] ? replace->Replacements[i].GetChars() : "";
 			te.strings[i].Substitute(replacee, replacement);
 		}
 	}
@@ -462,8 +466,10 @@ void FStringTable::InsertString(int lumpnum, int langid, FName label, const FStr
 //
 //==========================================================================
 
-void FStringTable::UpdateLanguage()
+void FStringTable::UpdateLanguage(const char *language)
 {
+	if (language) activeLanguage = language;
+	else language = activeLanguage.GetChars();
 	size_t langlen = strlen(language);
 
 	int LanguageID = (langlen < 2 || langlen > 3) ?
@@ -479,7 +485,7 @@ void FStringTable::UpdateLanguage()
 			currentLanguageSet.Push(std::make_pair(lang_id, list));
 	};
 
-	checkone(dehacked_table);
+	checkone(override_table);
 	checkone(global_table);
 	checkone(LanguageID);
 	checkone(LanguageID & MAKE_ID(0xff, 0xff, 0, 0));
@@ -534,7 +540,7 @@ bool FStringTable::exists(const char *name)
 	FName nm(name, true);
 	if (nm != NAME_None)
 	{
-		uint32_t defaultStrings[] = { default_table, global_table, dehacked_table };
+		uint32_t defaultStrings[] = { default_table, global_table, override_table };
 
 		for (auto mapid : defaultStrings)
 		{
@@ -561,7 +567,7 @@ const char *FStringTable::GetString(const char *name, uint32_t *langtable, int g
 	{
 		return nullptr;
 	}
-	if (gender == -1) gender = players[consoleplayer].userinfo.GetGender();
+	if (gender == -1 && callbacks && callbacks->GetPlayerGender) gender = callbacks->GetPlayerGender();
 	if (gender < 0 || gender > 3) gender = 0;
 	FName nm(name, true);
 	if (nm != NAME_None)
@@ -591,7 +597,7 @@ const char *FStringTable::GetLanguageString(const char *name, uint32_t langtable
 	{
 		return nullptr;
 	}
-	if (gender == -1) gender = players[consoleplayer].userinfo.GetGender();
+	if (gender == -1 && callbacks && callbacks->GetPlayerGender) gender = callbacks->GetPlayerGender();
 	if (gender < 0 || gender > 3) gender = 0;
 	FName nm(name, true);
 	if (nm != NAME_None)
@@ -657,3 +663,5 @@ const char *StringMap::MatchString (const char *string) const
 	}
 	return nullptr;
 }
+
+FStringTable GStrings;

@@ -35,7 +35,6 @@
 int SaveVersion;
 
 // Localizable strings
-FStringTable	GStrings;
 
 // Game speed
 EGameSpeed		GameSpeed = SPEED_Normal;

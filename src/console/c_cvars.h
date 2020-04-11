@@ -33,7 +33,6 @@
 
 #ifndef __C_CVARS_H__
 #define __C_CVARS_H__
-
 #include "zstring.h"
 #include "tarray.h"
 
@@ -78,7 +77,13 @@ union UCVarValue
 	bool Bool;
 	int Int;
 	float Float;
-	const char *String;
+	const char* String;
+
+	UCVarValue() = default;
+	UCVarValue(bool v) { Bool = v; }
+	UCVarValue(int v) { Int = v; }
+	UCVarValue(float v) { Float = v; }
+	UCVarValue(const char * v) { String = v; }
 };
 
 enum ECVarType
@@ -97,10 +102,24 @@ class FConfigFile;
 
 class FxCVar;
 
+class FBaseCVar;
+
+// These are calls into the game code. Having these hard coded in the CVAR implementation has always been the biggest blocker
+// for reusing the CVAR module outside of ZDoom. So now they get called through this struct for easier reusability.
+struct ConsoleCallbacks
+{
+	void (*UserInfoChanged)(FBaseCVar*);
+	void (*SendServerInfoChange)(FBaseCVar* cvar, UCVarValue value, ECVarType type);
+	void (*SendServerFlagChange)(FBaseCVar* cvar, int bitnum, bool set, bool silent);
+	FBaseCVar* (*GetUserCVar)(int playernum, const char* cvarname);
+	bool (*MustLatch)();
+
+};
+
 class FBaseCVar
 {
 public:
-	FBaseCVar (const char *name, uint32_t flags, void (*callback)(FBaseCVar &));
+	FBaseCVar (const char *name, uint32_t flags, void (*callback)(FBaseCVar &), const char *descr);
 	virtual ~FBaseCVar ();
 
 	inline void Callback () 
@@ -113,7 +132,7 @@ public:
 		}
 	}
 
-	inline const char *GetName () const { return Name; }
+	inline const char *GetName () const { return VarName.GetChars(); }
 	inline uint32_t GetFlags () const { return Flags; }
 	inline FBaseCVar *GetNext() const { return m_Next; }
 
@@ -123,6 +142,14 @@ public:
 	void ResetToDefault ();
 	void SetArchiveBit () { Flags |= CVAR_ARCHIVE; }
 	void MarkUnsafe();
+	void MarkSafe() { Flags &= ~CVAR_UNSAFECONTEXT; }
+
+	int ToInt()
+	{
+		ECVarType vt;
+		auto val = GetFavoriteRep(&vt);
+		return ToInt(val, vt);
+	}
 
 	virtual ECVarType GetRealType () const = 0;
 
@@ -143,6 +170,8 @@ public:
 	static void ResetColors ();		// recalc color cvars' indices after screen change
 
 	static void ListVars (const char *filter, bool plain);
+	
+	const char *GetDescription() const { return Description; };
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;
@@ -156,10 +185,11 @@ protected:
 	static UCVarValue FromFloat (float value, ECVarType type);
 	static UCVarValue FromString (const char *value, ECVarType type);
 
-	char *Name;
+	FString VarName;
 	FString SafeValue;
+	FString Description;
 	uint32_t Flags;
-	bool inCallback;
+	bool inCallback = false;
 
 private:
 	FBaseCVar (const FBaseCVar &var) = delete;
@@ -171,6 +201,7 @@ private:
 	static bool m_UseCallback;
 	static bool m_DoNoSet;
 
+	// These need to go away!
 	friend FString C_GetMassCVarString (uint32_t filter, bool compact);
 	friend void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter);
 	friend void C_ReadCVars (uint8_t **demo_p);
@@ -197,6 +228,7 @@ void C_WriteCVars (uint8_t **demo_p, uint32_t filter, bool compact=false);
 void C_ReadCVars (uint8_t **demo_p);
 
 void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter);
+void C_InstallHandlers(ConsoleCallbacks* cb);
 
 // Backup demo cvars. Called before a demo starts playing to save all
 // cvars the demo might change.
@@ -208,7 +240,6 @@ FBaseCVar *FindCVarSub (const char *var_name, int namelen);
 
 // Used for ACS and DECORATE.
 FBaseCVar *GetCVar(int playernum, const char *cvarname);
-FBaseCVar *GetUserCVar(int playernum, const char *cvarname);
 
 // Create a new cvar with the specified name and type
 FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, uint32_t flags);
@@ -233,7 +264,7 @@ class FBoolCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FBoolCVar (const char *name, bool def, uint32_t flags, void (*callback)(FBoolCVar &)=NULL);
+	FBoolCVar (const char *name, bool def, uint32_t flags, void (*callback)(FBoolCVar &)=NULL, const char* descr = nullptr);
 
 	virtual ECVarType GetRealType () const;
 
@@ -259,7 +290,7 @@ class FIntCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FIntCVar (const char *name, int def, uint32_t flags, void (*callback)(FIntCVar &)=NULL);
+	FIntCVar (const char *name, int def, uint32_t flags, void (*callback)(FIntCVar &)=NULL, const char* descr = nullptr);
 
 	virtual ECVarType GetRealType () const;
 
@@ -287,15 +318,15 @@ class FFloatCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FFloatCVar (const char *name, float def, uint32_t flags, void (*callback)(FFloatCVar &)=NULL);
+	FFloatCVar (const char *name, float def, uint32_t flags, void (*callback)(FFloatCVar &)=NULL, const char* descr = nullptr);
 
-	virtual ECVarType GetRealType () const;
+	virtual ECVarType GetRealType () const override;
 
-	virtual UCVarValue GetGenericRep (ECVarType type) const;
-	virtual UCVarValue GetFavoriteRep (ECVarType *type) const;
-	virtual UCVarValue GetGenericRepDefault (ECVarType type) const;
-	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const;
-	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type);
+	virtual UCVarValue GetGenericRep (ECVarType type) const override ;
+	virtual UCVarValue GetFavoriteRep (ECVarType *type) const override;
+	virtual UCVarValue GetGenericRepDefault (ECVarType type) const override;
+	virtual UCVarValue GetFavoriteRepDefault (ECVarType *type) const override;
+	virtual void SetGenericRepDefault (UCVarValue value, ECVarType type) override;
 	const char *GetHumanString(int precision) const override;
 
 	float operator= (float floatval)
@@ -304,7 +335,7 @@ public:
 	inline float operator *() const { return Value; }
 
 protected:
-	virtual void DoSet (UCVarValue value, ECVarType type);
+	virtual void DoSet (UCVarValue value, ECVarType type) override;
 
 	float Value;
 	float DefaultValue;
@@ -314,7 +345,7 @@ class FStringCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FStringCVar (const char *name, const char *def, uint32_t flags, void (*callback)(FStringCVar &)=NULL);
+	FStringCVar (const char *name, const char *def, uint32_t flags, void (*callback)(FStringCVar &)=NULL, const char* descr = nullptr);
 	~FStringCVar ();
 
 	virtual ECVarType GetRealType () const;
@@ -327,21 +358,21 @@ public:
 
 	const char *operator= (const char *stringrep)
 		{ UCVarValue val; val.String = const_cast<char *>(stringrep); SetGenericRep (val, CVAR_String); return stringrep; }
-	inline operator const char * () const { return Value; }
-	inline const char *operator *() const { return Value; }
+	inline operator const char * () const { return mValue; }
+	inline const char *operator *() const { return mValue; }
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);
 
-	char *Value;
-	char *DefaultValue;
+	FString mValue;
+	FString mDefaultValue;
 };
 
 class FColorCVar : public FIntCVar
 {
 	friend class FxCVar;
 public:
-	FColorCVar (const char *name, int def, uint32_t flags, void (*callback)(FColorCVar &)=NULL);
+	FColorCVar (const char *name, int def, uint32_t flags, void (*callback)(FColorCVar &)=NULL, const char* descr = nullptr);
 
 	virtual ECVarType GetRealType () const;
 
@@ -351,22 +382,19 @@ public:
 
 	inline operator uint32_t () const { return Value; }
 	inline uint32_t operator *() const { return Value; }
-	inline int GetIndex () const { return Index; }
 
 protected:
 	virtual void DoSet (UCVarValue value, ECVarType type);
 	
 	static UCVarValue FromInt2 (int value, ECVarType type);
 	static int ToInt2 (UCVarValue value, ECVarType type);
-
-	int Index;
 };
 
 class FFlagCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FFlagCVar (const char *name, FIntCVar &realvar, uint32_t bitval);
+	FFlagCVar (const char *name, FIntCVar &realvar, uint32_t bitval, const char* descr = nullptr);
 
 	virtual ECVarType GetRealType () const;
 
@@ -395,7 +423,7 @@ class FMaskCVar : public FBaseCVar
 {
 	friend class FxCVar;
 public:
-	FMaskCVar (const char *name, FIntCVar &realvar, uint32_t bitval);
+	FMaskCVar (const char *name, FIntCVar &realvar, uint32_t bitval, const char* descr = nullptr);
 
 	virtual ECVarType GetRealType () const;
 
@@ -447,6 +475,20 @@ void C_ForgetCVars (void);
 	F##type##CVar name (#name, def, flags);
 
 #define EXTERN_CVAR(type,name) extern F##type##CVar name;
+
+#define CUSTOM_CVARD(type,name,def,flags,descr) \
+	static void cvarfunc_##name(F##type##CVar &); \
+	F##type##CVar name (#name, def, flags, cvarfunc_##name, descr); \
+	static void cvarfunc_##name(F##type##CVar &self)
+
+#define CVARD(type,name,def,flags, descr) \
+	F##type##CVar name (#name, def, flags, nullptr, descr);
+
+#define CVARD_NAMED(type,name,varname,def,flags, descr) \
+F##type##CVar varname (#name, def, flags, nullptr, descr);
+
+#define CVAR_UNAMED(type,varname) \
+F##type##CVar varname (nullptr, 0, 0, nullptr, nullptr);
 
 extern FBaseCVar *CVars;
 

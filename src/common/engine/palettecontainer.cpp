@@ -34,12 +34,13 @@
 
 #include "palutil.h"
 #include "sc_man.h"
-#include "v_palette.h"
 #include "m_crc32.h"
 #include "printf.h"
 #include "colormatcher.h"
 #include "templates.h"
 #include "palettecontainer.h"
+
+#include "v_palette.h"
 
 
 //----------------------------------------------------------------------------

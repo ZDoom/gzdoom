@@ -5807,14 +5807,14 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 		case ACSF_GetUserCVar:
 			if (argCount == 2)
 			{
-				return DoGetCVar(GetUserCVar(args[0], Level->Behaviors.LookupString(args[1])), false);
+				return DoGetCVar(G_GetUserCVar(args[0], Level->Behaviors.LookupString(args[1])), false);
 			}
 			break;
 
 		case ACSF_GetUserCVarString:
 			if (argCount == 2)
 			{
-				return DoGetCVar(GetUserCVar(args[0], Level->Behaviors.LookupString(args[1])), true);
+				return DoGetCVar(G_GetUserCVar(args[0], Level->Behaviors.LookupString(args[1])), true);
 			}
 			break;
 

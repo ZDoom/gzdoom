@@ -260,7 +260,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 
 	case 3:		// Paletted
 		PaletteMap = (uint8_t*)ImageArena.Alloc(PaletteSize);
-		GPalette.MakeRemap (p.palette, PaletteMap, trans, PaletteSize);
+		MakeRemap ((uint32_t*)GPalette.BaseColors, p.palette, PaletteMap, trans, PaletteSize);
 		for (i = 0; i < PaletteSize; ++i)
 		{
 			if (trans[i] == 0)

@@ -388,7 +388,7 @@ void FBitmap::CopyPixelDataRGB(int originx, int originy, const uint8_t *patch, i
 
 template<class TDest, class TBlend> 
 void iCopyPaletted(uint8_t *buffer, const uint8_t * patch, int srcwidth, int srcheight, int Pitch,
-					int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
+					int step_x, int step_y, int rotate, const PalEntry * palette, FCopyInfo *inf)
 {
 	int x,y,pos;
 
@@ -412,7 +412,7 @@ void iCopyPaletted(uint8_t *buffer, const uint8_t * patch, int srcwidth, int src
 }
 
 typedef void (*CopyPalettedFunc)(uint8_t *buffer, const uint8_t * patch, int srcwidth, int srcheight, int Pitch,
-					int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf);
+					int step_x, int step_y, int rotate, const PalEntry * palette, FCopyInfo *inf);
 
 
 static const CopyPalettedFunc copypalettedfuncs[]=
@@ -435,7 +435,7 @@ static const CopyPalettedFunc copypalettedfuncs[]=
 //
 //===========================================================================
 void FBitmap::CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight, 
-										int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf)
+										int step_x, int step_y, int rotate, const PalEntry * palette, FCopyInfo *inf)
 {
 	if (ClipCopyPixelRect(&ClipRect, originx, originy, patch, srcwidth, srcheight, step_x, step_y, rotate))
 	{

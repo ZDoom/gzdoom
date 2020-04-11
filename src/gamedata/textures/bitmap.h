@@ -234,7 +234,7 @@ public:
 								int srcheight, int step_x, int step_y, int rotate, int ct, FCopyInfo *inf = NULL,
 		/* for PNG tRNS */		int r=0, int g=0, int b=0);
 	void CopyPixelData(int originx, int originy, const uint8_t * patch, int srcwidth, int srcheight,
-								int step_x, int step_y, int rotate, PalEntry * palette, FCopyInfo *inf = NULL);
+								int step_x, int step_y, int rotate, const PalEntry * palette, FCopyInfo *inf = NULL);
 
 
 	void Blit(int originx, int originy, const FBitmap &src, int width, int height, int rotate = 0, FCopyInfo *inf = NULL)

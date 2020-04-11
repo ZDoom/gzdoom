@@ -538,6 +538,22 @@ static inline int joyint(double val)
 	}
 }
 
+FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname)
+{
+	if ((unsigned)playernum >= MAXPLAYERS || !playeringame[playernum])
+	{
+		return nullptr;
+	}
+	FBaseCVar** cvar_p = players[playernum].userinfo.CheckKey(FName(cvarname, true));
+	FBaseCVar* cvar;
+	if (cvar_p == nullptr || (cvar = *cvar_p) == nullptr || (cvar->GetFlags() & CVAR_IGNORE))
+	{
+		return nullptr;
+	}
+	return cvar;
+}
+
+
 //
 // G_BuildTiccmd
 // Builds a ticcmd from all of the available inputs
@@ -1813,6 +1829,48 @@ static void LoadGameError(const char *label, const char *append = "")
 	message.Substitute("%s", savename);
 	Printf ("%s %s\n", message.GetChars(), append);
 }
+
+void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter)
+{
+	FBaseCVar* cvar;
+	FString dump;
+
+	if (arc.BeginObject(label))
+	{
+		if (arc.isWriting())
+		{
+			for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
+			{
+				if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE | CVAR_IGNORE | CVAR_CONFIG_ONLY)))
+				{
+					UCVarValue val = cvar->GetGenericRep(CVAR_String);
+					char* c = const_cast<char*>(val.String);
+					arc(cvar->GetName(), c);
+				}
+			}
+		}
+		else
+		{
+			for (cvar = CVars; cvar != NULL; cvar = cvar->m_Next)
+			{
+				if ((cvar->Flags & filter) && !(cvar->Flags & (CVAR_NOSAVE | CVAR_IGNORE | CVAR_CONFIG_ONLY)))
+				{
+					UCVarValue val;
+					char* c = nullptr;
+					arc(cvar->GetName(), c);
+					if (c != nullptr)
+					{
+						val.String = c;
+						cvar->SetGenericRep(val, CVAR_String);
+						delete[] c;
+					}
+				}
+			}
+		}
+		arc.EndObject();
+	}
+}
+
 
 void G_DoLoadGame ()
 {

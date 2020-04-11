@@ -159,7 +159,7 @@ std2:
 		'class'						{ RET(TK_Class); }
 		'mixin'						{ RET(TK_Mixin); }
 		'enum'						{ RET(TK_Enum); }
-		'name'						{ RET(TK_Name); }
+		'name'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Name : TK_Identifier); }
 		'string'					{ RET(TK_String); }
 		'sound'						{ RET(TK_Sound); }
 		'state'						{ RET(TK_State); }

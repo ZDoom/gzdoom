@@ -315,6 +315,14 @@ void HSVtoRGB (float *r, float *g, float *b, float h, float s, float v)
 	}
 }
 
+struct RemappingWork
+{
+	uint32_t Color;
+	uint8_t Foreign;	// 0 = local palette, 1 = foreign palette
+	uint8_t PalEntry;	// Entry # in the palette
+	uint8_t Pad[2];
+};
+
 static int sortforremap(const void* a, const void* b)
 {
 	return (*(const uint32_t*)a & 0xFFFFFF) - (*(const uint32_t*)b & 0xFFFFFF);
@@ -335,14 +343,6 @@ static int sortforremap2(const void* a, const void* b)
 	}
 }
 
-
-struct RemappingWork
-{
-	uint32_t Color;
-	uint8_t Foreign;	// 0 = local palette, 1 = foreign palette
-	uint8_t PalEntry;	// Entry # in the palette
-	uint8_t Pad[2];
-};
 
 void MakeRemap(uint32_t* BaseColors, const uint32_t* colors, uint8_t* remap, const uint8_t* useful, int numcolors) 
 {

@@ -277,7 +277,8 @@ DehSpriteMappings[] =
 
 #define CHECKKEY(a,b)		if (!stricmp (Line1, (a))) (b) = atoi(Line2);
 
-static char *PatchFile, *PatchPt, *PatchName;
+static char* PatchFile, * PatchPt;
+FString PatchName;
 static int PatchSize;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
@@ -2341,7 +2342,8 @@ static int DoInclude (int dummy)
 {
 	char *data;
 	int savedversion, savepversion, savepatchsize;
-	char *savepatchfile, *savepatchpt, *savepatchname;
+	char* savepatchfile, * savepatchpt;
+	FString savepatchname;
 
 	if (including)
 	{
@@ -2490,7 +2492,7 @@ bool D_LoadDehLump(int lumpnum)
 
 	PatchSize = Wads.LumpLength(lumpnum);
 
-	PatchName = copystring(Wads.GetLumpFullPath(lumpnum));
+	PatchName = Wads.GetLumpFullPath(lumpnum);
 	PatchFile = new char[PatchSize + 1];
 	Wads.ReadLump(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
@@ -2508,7 +2510,7 @@ bool D_LoadDehFile(const char *patchfile)
 	{
 		PatchSize = (int)fr.GetLength();
 
-		PatchName = copystring(patchfile);
+		PatchName = patchfile;
 		PatchFile = new char[PatchSize + 1];
 		fr.Read(PatchFile, PatchSize);
 		fr.Close();
@@ -2538,7 +2540,7 @@ bool D_LoadDehFile(const char *patchfile)
 
 static bool DoDehPatch()
 {
-	if (!batchrun) Printf("Adding dehacked patch %s\n", PatchName);
+	if (!batchrun) Printf("Adding dehacked patch %s\n", PatchName.GetChars());
 
 	int cont;
 
@@ -2548,8 +2550,8 @@ static bool DoDehPatch()
 	{
 		if (PatchFile[25] < '3' && (PatchFile[25] < '2' || PatchFile[27] < '3'))
 		{
-			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchName);
-			delete[] PatchName;
+			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchName.GetChars());
+			PatchName = "";
 			delete[] PatchFile;
 			return false;
 		}
@@ -2567,8 +2569,8 @@ static bool DoDehPatch()
 		}
 		if (!cont || dversion == -1 || pversion == -1)
 		{
-			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", PatchName);
-			delete[] PatchName;
+			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", PatchName.GetChars());
+			PatchName = "";
 			delete[] PatchFile;
 			return false;
 		}
@@ -2608,7 +2610,7 @@ static bool DoDehPatch()
 	{
 		Printf ("Could not load DEH support data\n");
 		UnloadDehSupp ();
-		delete[] PatchName;
+		PatchName = "";
 		delete[] PatchFile;
 		return false;
 	}
@@ -2627,7 +2629,7 @@ static bool DoDehPatch()
 	} while (cont);
 
 	UnloadDehSupp ();
-	delete[] PatchName;
+	PatchName = "";
 	delete[] PatchFile;
 	if (!batchrun) Printf ("Patch installed\n");
 	return true;

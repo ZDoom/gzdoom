@@ -22,18 +22,6 @@
 
 // cmdlib.c (mostly borrowed from the Q2 source)
 
-#ifdef _WIN32
-#include <direct.h>
-#include <io.h>
-#else
-#include <dirent.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <pwd.h>
-#if !defined(__sun)
-#include <fts.h>
-#endif
-#endif
 #include "cmdlib.h"
 #include "i_system.h"
 

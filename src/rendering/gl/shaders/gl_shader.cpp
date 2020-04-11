@@ -30,7 +30,7 @@
 #include "c_cvars.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "cmdlib.h"
 #include "md5.h"
 #include "m_misc.h"

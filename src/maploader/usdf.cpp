@@ -36,7 +36,7 @@
 #include "p_lnspec.h"
 #include "p_conversation.h"
 #include "udmf.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "actor.h"
 #include "a_pickups.h"
 #include "w_wad.h"

@@ -2,7 +2,8 @@
 #define __M_FIXED__
 
 #include <stdlib.h>
-#include "doomtype.h"
+#include <stdint.h>
+#include "basics.h"
 
 
 // Modern compilers are smart enough to do these multiplications intelligently.

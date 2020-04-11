@@ -49,7 +49,7 @@
 #include "doomstat.h"
 #include "v_text.h"
 #include "m_argv.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "win32glvideo.h"
 
 extern HWND			Window;

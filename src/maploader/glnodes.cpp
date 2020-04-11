@@ -51,7 +51,7 @@
 #include "p_local.h"
 #include "nodebuild.h"
 #include "doomstat.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "p_setup.h"
 #include "version.h"
 #include "md5.h"

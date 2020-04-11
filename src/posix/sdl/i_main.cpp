@@ -41,7 +41,7 @@
 #include <sys/param.h>
 #include <locale.h>
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "m_argv.h"
 #include "d_main.h"
 #include "c_console.h"
@@ -53,7 +53,7 @@
 #include "r_utility.h"
 #include "doomstat.h"
 #include "vm.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "i_system.h"
 #include "g_game.h"
 

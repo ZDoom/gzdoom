@@ -61,7 +61,7 @@
 #include <wincrypt.h>
 
 #include "hardware.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "cmdlib.h"
 
 #include "version.h"
@@ -480,15 +480,6 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 }
 
 static TArray<FString> bufferedConsoleStuff;
-
-void I_DebugPrint(const char *cp)
-{
-	if (IsDebuggerPresent())
-	{
-		auto wstr = WideString(cp);
-		OutputDebugStringW(wstr.c_str());
-	}
-}
 
 void I_PrintStr(const char *cp)
 {

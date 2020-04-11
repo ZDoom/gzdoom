@@ -83,8 +83,6 @@ ticcmd_t *I_BaseTiccmd (void);
 
 void I_Tactile (int on, int off, int total);
 
-void I_DebugPrint (const char *cp);
-
 // Print a console string
 void I_PrintStr (const char *str);
 

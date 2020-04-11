@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include "templates.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "doomdata.h"

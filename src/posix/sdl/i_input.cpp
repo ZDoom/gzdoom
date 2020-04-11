@@ -47,7 +47,7 @@
 #include "g_game.h"
 #include "g_levellocals.h"
 #include "utf8.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 
 static void I_CheckGUICapture ();

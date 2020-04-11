@@ -45,7 +45,7 @@
 #include "gameconfigfile.h"
 #include "resourcefiles/resourcefile.h"
 #include "version.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "v_text.h"
 
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);

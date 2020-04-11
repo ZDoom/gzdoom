@@ -39,7 +39,7 @@
 #include "doomtype.h"
 #include "st_console.h"
 #include "st_start.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 
 FStartupScreen *StartScreen;

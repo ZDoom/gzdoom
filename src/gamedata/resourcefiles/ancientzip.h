@@ -1,5 +1,5 @@
 #include "files.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 class FZipExploder
 {

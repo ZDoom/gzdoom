@@ -87,8 +87,6 @@ bool I_SetCursor(FTexture *cursor);
 // Repaint the pre-game console
 void I_PaintConsole (void);
 
-void I_DebugPrint (const char *cp);
-
 // Print a console string
 void I_PrintStr (const char *cp);
 

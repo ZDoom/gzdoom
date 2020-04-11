@@ -58,14 +58,6 @@ typedef TMap<int, PClassActor *> FClassMap;
 extern bool batchrun;
 
 // Bounding box coordinate storage.
-enum
-{
-	BOXTOP,
-	BOXBOTTOM,
-	BOXLEFT,
-	BOXRIGHT
-};		// bbox coordinates
-
 #include "palentry.h"
 
 enum class ETextureType : uint8_t

@@ -34,6 +34,15 @@
 struct line_t;
 struct node_t;
 
+enum
+{
+	BOXTOP,
+	BOXBOTTOM,
+	BOXLEFT,
+	BOXRIGHT
+};		// bbox coordinates
+
+
 class FBoundingBox
 {
 public:

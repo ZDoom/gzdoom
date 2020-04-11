@@ -28,7 +28,7 @@
 #include "p_lnspec.h"
 #include "m_fixed.h"
 #include "actor.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 #ifdef _MSC_VER
 // This pragma saves 8kb of wasted code.
@@ -38,11 +38,11 @@
 class DFraggleThinker;
 
 
-class CFraggleScriptError : public CDoomError
+class CFraggleScriptError : public CEngineError
 {
 public:
-	CFraggleScriptError() : CDoomError() {}
-	CFraggleScriptError(const char *message) : CDoomError(message) {}
+	CFraggleScriptError() : CEngineError() {}
+	CFraggleScriptError(const char *message) : CEngineError(message) {}
 };
 
 

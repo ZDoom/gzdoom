@@ -45,7 +45,7 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "m_png.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "w_wad.h"
 #include "p_local.h"
 #include "p_setup.h"

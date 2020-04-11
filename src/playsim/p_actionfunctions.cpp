@@ -50,7 +50,7 @@
 #include "decallib.h"
 #include "p_local.h"
 #include "c_console.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "a_sharedglobal.h"
 #include "v_font.h"
 #include "doomstat.h"

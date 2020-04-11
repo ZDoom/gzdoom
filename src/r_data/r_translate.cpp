@@ -40,7 +40,7 @@
 #include "g_game.h"
 #include "d_netinf.h"
 #include "sc_man.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "w_wad.h"
 #include "serializer.h"
 #include "d_player.h"

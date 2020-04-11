@@ -85,7 +85,7 @@
 #include "v_text.h"
 #include "version.h"
 #include "events.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "i_system.h"
 #include "g_levellocals.h"
 

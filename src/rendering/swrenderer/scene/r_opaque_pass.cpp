@@ -34,7 +34,7 @@
 
 #include "m_bbox.h"
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "p_lnspec.h"
 #include "p_setup.h"
 

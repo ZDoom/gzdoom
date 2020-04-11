@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include "tarray.h"
 class DObject;
 class FSerializer;
 

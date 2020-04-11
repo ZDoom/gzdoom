@@ -44,7 +44,7 @@
 #include "p_acs.h"
 #include "announcer.h"
 #include "wi_stuff.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "gi.h"
 #include "p_conversation.h"
 #include "a_keys.h"

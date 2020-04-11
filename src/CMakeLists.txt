@@ -1121,7 +1121,10 @@ set (PCH_SOURCES
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
-	utility/i_module.cpp
+	common/utility/engineerrors.cpp
+	common/utility/i_module.cpp
+	common/utility/m_alloc.cpp
+	common/utility/utf8.cpp
 	utility/palette.cpp
 	utility/palettecontainer.cpp
 	utility/files.cpp
@@ -1140,13 +1143,11 @@ set (PCH_SOURCES
 	utility/cmdlib.cpp
 	utility/configfile.cpp
 	utility/i_time.cpp
-	utility/m_alloc.cpp
 	utility/m_argv.cpp
 	utility/m_bbox.cpp
 	utility/name.cpp
 	utility/s_playlist.cpp
 	utility/v_collection.cpp
-	utility/utf8.cpp
 	utility/zstrformat.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp

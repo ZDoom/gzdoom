@@ -38,7 +38,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "doomtype.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "sc_man.h"
 #include "w_wad.h"
 #include "cmdlib.h"

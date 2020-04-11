@@ -38,7 +38,7 @@
 #include "v_text.h"
 #include "w_wad.h"
 #include "gi.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 //==========================================================================
 //

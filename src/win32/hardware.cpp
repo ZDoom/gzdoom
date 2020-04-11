@@ -47,7 +47,7 @@
 #ifdef HAVE_VULKAN
 #include "win32vulkanvideo.h"
 #endif
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "i_system.h"
 #include "swrenderer/r_swrenderer.h"
 

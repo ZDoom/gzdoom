@@ -42,7 +42,7 @@
 #include <math.h>
 #include <assert.h>
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 #include "i_time.h"
 #include "d_gui.h"
@@ -166,7 +166,6 @@ EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, show_messages)
 
 extern bool setmodeneeded;
-extern bool gameisdead;
 extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
@@ -2345,64 +2344,6 @@ static void CheckCmdLine()
 	}
 }
 
-//==========================================================================
-//
-// I_Error
-//
-// Throw an error that will send us to the console if we are far enough
-// along in the startup process.
-//
-//==========================================================================
-
-void I_Error(const char *error, ...)
-{
-	va_list argptr;
-	char errortext[MAX_ERRORTEXT];
-
-	va_start(argptr, error);
-	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
-	va_end(argptr);
-	I_DebugPrint(errortext);
-
-	throw CRecoverableError(errortext);
-}
-
-//==========================================================================
-//
-// I_FatalError
-//
-// Throw an error that will end the game.
-//
-//==========================================================================
-extern FILE *Logfile;
-
-void I_FatalError(const char *error, ...)
-{
-	static bool alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown)		// ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-		char errortext[MAX_ERRORTEXT];
-		va_list argptr;
-		va_start(argptr, error);
-		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
-		va_end(argptr);
-		I_DebugPrint(errortext);
-
-		// Record error to log (if logging)
-		if (Logfile)
-		{
-			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush(Logfile);
-		}
-
-		throw CFatalError(errortext);
-	}
-	std::terminate(); // recursive I_FatalErrors must immediately terminate.
-}
-
 static void NewFailure ()
 {
     I_FatalError ("Failed to allocate memory from system heap");
@@ -2905,6 +2846,8 @@ static int D_DoomMain_Internal (void)
 	}
 	while (1);
 }
+
+void I_ShowFatalError(const char* message);
 
 int D_DoomMain()
 {

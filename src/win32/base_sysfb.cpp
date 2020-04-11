@@ -49,7 +49,7 @@
 #include "doomstat.h"
 #include "v_text.h"
 #include "m_argv.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "base_sysfb.h"
 #include "win32basevideo.h"
 #include "c_dispatch.h"

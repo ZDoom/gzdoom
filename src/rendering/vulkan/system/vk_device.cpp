@@ -40,7 +40,7 @@
 #include "c_dispatch.h"
 #include "i_system.h"
 #include "version.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "gamedata/fonts/v_text.h"
 
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);

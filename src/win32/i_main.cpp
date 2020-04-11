@@ -55,7 +55,7 @@
 #endif
 #include "resource.h"
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "hardware.h"
 
 #include "m_argv.h"

@@ -57,7 +57,7 @@
 #include "c_dispatch.h"
 #include "decallib.h"
 #include "a_sharedglobal.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
 #include "thingdef.h"

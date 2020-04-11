@@ -32,7 +32,7 @@
 **
 */
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "textures.h"
 #include "image.h"
 #include "v_font.h"

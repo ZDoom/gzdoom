@@ -34,7 +34,7 @@
 
 #include "doomtype.h"
 #include "cmdlib.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "r_sky.h"
 #include "m_random.h"
 #include "d_player.h"

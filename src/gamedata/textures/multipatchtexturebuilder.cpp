@@ -53,7 +53,7 @@
 #include "imagehelpers.h"
 #include "image.h"
 #include "formats/multipatchtexture.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at

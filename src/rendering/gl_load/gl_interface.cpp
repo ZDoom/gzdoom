@@ -27,7 +27,7 @@
 */
 
 #include "gl_load/gl_system.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "tarray.h"
 #include "doomtype.h"
 #include "m_argv.h"

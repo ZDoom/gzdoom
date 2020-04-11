@@ -1,6 +1,6 @@
 /*
-** lists.h
-** Essentially, Amiga Exec lists and nodes
+** doomerrors.h
+** Contains error classes that can be thrown around
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2006 Randy Heit
@@ -32,115 +32,85 @@
 **
 */
 
-#ifndef __LISTS_H__
-#define __LISTS_H__
+#ifndef __ERRORS_H__
+#define __ERRORS_H__
 
-struct Node
+#include <string.h>
+#include <stdio.h>
+#include <exception>
+#include <stdexcept>
+#include "basics.h"
+
+#define MAX_ERRORTEXT	1024
+
+class CEngineError : public std::exception
 {
-	Node *Succ, *Pred;
-
-	void Insert (Node *putAfter)
+public:
+	CEngineError ()
 	{
-		Succ = putAfter->Succ;
-		Pred = putAfter;
-		putAfter->Succ = this;
-		Succ->Pred = this;
+		m_Message[0] = '\0';
+	}
+	CEngineError (const char *message)
+	{
+		SetMessage (message);
+	}
+	void SetMessage (const char *message)
+	{
+		strncpy (m_Message, message, MAX_ERRORTEXT-1);
+		m_Message[MAX_ERRORTEXT-1] = '\0';
+	}
+	void AppendMessage(const char *message)
+	{
+		size_t len = strlen(m_Message);
+		strncpy(m_Message + len, message, MAX_ERRORTEXT - 1 - len);
+		m_Message[MAX_ERRORTEXT - 1] = '\0';
+	}
+	const char *GetMessage (void) const
+	{
+		if (m_Message[0] != '\0')
+			return (const char *)m_Message;
+		else
+			return NULL;
+	}
+	char const *what() const noexcept override
+	{
+		return m_Message;
 	}
 
-	void InsertBefore (Node *putBefore)
-	{
-		Succ = putBefore;
-		Pred = putBefore->Pred;
-		putBefore->Pred = this;
-		Pred->Succ = this;
-	}
 
-	void Remove ()
-	{
-		Pred->Succ = Succ;
-		Succ->Pred = Pred;
-	}
+protected:
+	char m_Message[MAX_ERRORTEXT];
 };
 
-struct List
+
+class CRecoverableError : public CEngineError
 {
-	Node *Head;
-	const Node *const Tail;
-	Node *TailPred;
-
-	List () : Head ((Node *)&Tail), Tail (NULL), TailPred ((Node *)&Head)
-	{
-	}
-
-	bool IsEmpty () const
-	{
-		return TailPred == (Node *)this;
-	}
-
-	void MakeEmpty ()
-	{
-		Head = (Node *)&Tail;
-		TailPred = (Node *)&Head;
-	}
-
-	void AddHead (Node *node)
-	{
-		node->Succ = Head;
-		node->Pred = (Node *)&Head;
-		Head->Pred = node;
-		Head = node;
-	}
-
-	void AddTail (Node *node)
-	{
-		node->Pred = TailPred;
-		node->Succ = (Node *)&Tail;
-		TailPred->Succ = node;
-		TailPred = node;
-	}
-	
-	Node *RemHead ()
-	{
-		Node *node = Head;
-		if (node->Succ == NULL)
-		{
-			return NULL;
-		}
-		Head = node->Succ;
-		Head->Pred = (Node *)&Head;
-		return node;
-	}
-
-	Node *RemHeadQ ()	// Only use if list is definitely not empty
-	{
-		Node *node = Head;
-		Head = node->Succ;
-		Head->Pred = (Node *)&Head;
-		return node;
-	}
-
-	Node *RemTail ()
-	{
-		Node *node = TailPred;
-		if (node->Pred == NULL)
-		{
-			return NULL;
-		}
-		TailPred = node->Pred;
-		TailPred->Succ = (Node *)&Tail;
-		return node;
-	}
-
-	Node *RemTailQ ()	// Only use if list is definitely not empty
-	{
-		Node *node = TailPred;
-		TailPred = node->Pred;
-		TailPred->Succ = (Node *)&Tail;
-		return node;
-	}
-
-private:
-	List &operator= (const List&) { return *this; }
+public:
+	CRecoverableError() : CEngineError() {}
+	CRecoverableError(const char *message) : CEngineError(message) {}
 };
 
-#endif //__LISTS_H__
+class CFatalError : public CEngineError
+{
+public:
+	CFatalError() : CEngineError() {}
+	CFatalError(const char *message) : CEngineError(message) {}
+};
+
+class CExitEvent : public std::exception
+{
+	int m_reason;
+public:
+	CExitEvent(int reason) { m_reason = reason; }
+	char const *what() const noexcept override
+	{
+		return "The game wants to exit";
+	}
+	int Reason() const { return m_reason; }
+};
+
+void I_ShowFatalError(const char *message);
+void I_Error (const char *error, ...) GCCPRINTF(1,2);
+void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
+
+#endif //__ERRORS_H__

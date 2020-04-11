@@ -68,7 +68,7 @@
 #include "v_text.h"
 #include "p_setup.h"
 #include "gi.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "types.h"
 #include "w_wad.h"
 #include "p_conversation.h"

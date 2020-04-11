@@ -40,7 +40,7 @@
 #include "s_sound.h"
 #include "d_event.h"
 #include "m_random.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "doomstat.h"
 #include "wi_stuff.h"
 #include "w_wad.h"

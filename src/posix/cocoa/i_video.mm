@@ -53,7 +53,7 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 #include "gl/system/gl_framebuffer.h"
 #include "vulkan/system/vk_framebuffer.h"

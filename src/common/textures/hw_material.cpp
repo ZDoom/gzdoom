@@ -28,6 +28,8 @@
 #include "texturemanager.h"
 #include "c_cvars.h"
 
+IHardwareTexture* CreateHardwareTexture();
+
 //===========================================================================
 //
 // Constructor

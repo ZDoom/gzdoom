@@ -62,6 +62,7 @@
 
 #include "hardware.h"
 #include "doomerrors.h"
+#include "cmdlib.h"
 
 #include "version.h"
 #include "m_misc.h"

@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "cmdlib.h"
 
 typedef uint32_t				BITFIELD;
 typedef int						INTBOOL;
@@ -36,12 +37,6 @@ typedef uint32_t			angle_t;
 #define GCCFORMAT(a)
 #define GCCNOWARN
 #endif
-
-template <typename T, size_t N>
-char(&_ArraySizeHelper(T(&array)[N]))[N];
-
-#define countof( array ) (sizeof( _ArraySizeHelper( array ) ))
-
 
 #ifndef MAKE_ID
 #ifndef __BIG_ENDIAN__

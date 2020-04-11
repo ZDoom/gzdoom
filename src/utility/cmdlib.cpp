@@ -1,26 +1,38 @@
-//-----------------------------------------------------------------------------
-//
-// Copyright 1996 id Software
-// Copyright 1999-2016 Randy Heit
-// Copyright 2002-2016 Christoph Oelckers
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/
-//
-//-----------------------------------------------------------------------------
-//
+/*
+** cmdlib.cpp
+** Misc utilities (mostly file handling stuff)
+**
+**---------------------------------------------------------------------------
+** Copyright 1999-2016 Randy Heit
+** Copyright 2019 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
-// cmdlib.c (mostly borrowed from the Q2 source)
 
 #include "cmdlib.h"
 #include "i_system.h"
@@ -53,7 +65,7 @@ static inline bool IsSeperator (int c)
 {
 	if (c == '/')
 		return true;
-#ifdef WIN32
+#ifdef _WIN32
 	if (c == '\\' || c == ':')
 		return true;
 #endif
@@ -311,6 +323,33 @@ FString ExtractFileBase (const char *path, bool include_extension)
 	return FString();
 }
 
+//==========================================================================
+//
+// StripExtension
+//
+// Returns the path with the extension removed
+//
+//==========================================================================
+
+FString StripExtension(const char* path)
+{
+	const char* src;
+	if (*path == 0) return "";
+
+	src = path + strlen(path) - 1;
+
+	//
+	// back up until a . and abort on a \
+	//
+	while (src != path && !IsSeperator(*(src - 1)))
+	{
+		if (*src == '.') return FString(path, src - path);
+		src--;
+	}
+
+	return path;
+
+}
 
 //==========================================================================
 //
@@ -928,9 +967,45 @@ bool IsAbsPath(const char *name)
     return 0;
 }
 
+//==========================================================================
 //
-// M_ZlibError
 //
+//
+//==========================================================================
+
+void NormalizeFileName(FString& str)
+{
+	FixPathSeperator(str);
+	auto splits = str.Split("/");
+	for (unsigned i = 1; i < splits.Size(); i++)
+	{
+		if (splits[i].Compare(".") == 0)
+		{
+			splits.Delete(i);
+			i--;
+		}
+
+		if (splits[i].Compare("..") == 0 && splits[i - 1].Compare("..") != 0)
+		{
+			splits.Delete(i);
+			splits.Delete(i - 1);
+			i -= 2;
+			if (i < 1) i = 1;
+		}
+	}
+	str = splits[0];
+	for (unsigned i = 1; i < splits.Size(); i++)
+	{
+		str << "/" << splits[i];
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FString M_ZLibError(int zerr)
 {
 	if (zerr >= 0)

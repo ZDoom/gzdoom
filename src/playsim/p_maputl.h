@@ -6,6 +6,7 @@
 #include "doomstat.h"
 #include "doomdata.h"
 #include "m_bbox.h"
+#include "cmdlib.h"
 
 extern int validcount;
 struct FBlockNode;

@@ -40,6 +40,7 @@
 #include "resource.h"
 
 #include "st_start.h"
+#include "cmdlib.h"
 #include "templates.h"
 #include "i_system.h"
 #include "i_input.h"

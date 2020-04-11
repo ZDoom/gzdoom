@@ -41,6 +41,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "doomtype.h"
+#include "cmdlib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -82,7 +83,7 @@ bool IsFloat (const char *str);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static FProduction *ParseExpression (FCommandLine &argv, int &parsept);
-static const char *IsNum (const char *str);
+static const char *CIsNum (const char *str);
 static FStringProd *NewStringProd (const char *str);
 static FStringProd *NewStringProd (size_t len);
 static FDoubleProd *NewDoubleProd (double val);
@@ -257,13 +258,13 @@ bool IsFloat (const char *str)
 	}
 	else
 	{
-		pt = IsNum (str);
+		pt = CIsNum (str);
 		if (pt == NULL)
 			return false;
 	}
 	if (*pt == '.')
 	{
-		pt = IsNum (pt+1);
+		pt = CIsNum (pt+1);
 		if (pt == NULL)
 			return false;
 	}
@@ -272,7 +273,7 @@ bool IsFloat (const char *str)
 		pt++;
 		if (*pt == '+' || *pt == '-')
 			pt++;
-		pt = IsNum (pt);
+		pt = CIsNum (pt);
 	}
 	return pt != NULL && *pt == 0;
 }
@@ -283,7 +284,7 @@ bool IsFloat (const char *str)
 //
 //==========================================================================
 
-static const char *IsNum (const char *str)
+static const char *CIsNum (const char *str)
 {
 	const char *start = str;
 

@@ -24,6 +24,10 @@ typedef struct _GUID
 } GUID;
 #endif
 
+template <typename T, size_t N>
+char(&_ArraySizeHelper(T(&array)[N]))[N];
+
+#define countof( array ) (sizeof( _ArraySizeHelper( array ) )) 
 
 // the dec offsetof macro doesnt work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
@@ -39,9 +43,11 @@ void	FixPathSeperator (char *path);
 static void	inline FixPathSeperator (FString &path) { path.ReplaceChars('\\', '/'); }
 
 void 	DefaultExtension (FString &path, const char *extension);
+void NormalizeFileName(FString &str);
 
 FString	ExtractFilePath (const char *path);
 FString	ExtractFileBase (const char *path, bool keep_extension=false);
+FString StripExtension(const char* path);
 
 struct FScriptPosition;
 bool	IsNum (const char *str);		// [RH] added
@@ -71,8 +77,11 @@ struct FFileList
 
 bool ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 bool IsAbsPath(const char*);
-
 FString M_ZLibError(int zerrnum);
 
+inline int32_t Scale(int32_t a, int32_t b, int32_t c)
+{
+	return (int32_t)(((int64_t)a * b) / c);
+}
 
 #endif

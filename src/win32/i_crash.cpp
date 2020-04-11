@@ -59,6 +59,7 @@
 #include "resource.h"
 #include "version.h"
 #include "m_swap.h"
+#include "cmdlib.h"
 
 #include <time.h>
 #include <zlib.h>

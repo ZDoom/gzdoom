@@ -4,53 +4,6 @@
 #include <stdlib.h>
 #include "doomtype.h"
 
-// Unfortunately, the Scale function still gets badly handled on 32 bit x86 platforms so it's the last remaining piece of inline assembly 
-
-// GCC inlines
-#if defined(__GNUC__) && defined(__i386__) && !defined(__clang__) && !defined(__PIC__)
-#ifndef alloca
-// MinGW does not seem to come with alloca defined.
-#define alloca __builtin_alloca
-#endif
-
-static inline int32_t Scale(int32_t a, int32_t b, int32_t c)
-{
-	int32_t result, dummy;
-
-	asm volatile
-		("imull %3\n\t"
-			"idivl %4"
-			: "=a,a,a,a,a,a" (result),
-			"=&d,&d,&d,&d,d,d" (dummy)
-			: "a,a,a,a,a,a" (a),
-			"m,r,m,r,d,d" (b),
-			"r,r,m,m,r,m" (c)
-			: "cc"
-			);
-
-	return result;
-}
-
-// MSVC inlines
-#elif defined(_MSC_VER) && defined(_M_IX86)
-#pragma warning (disable: 4035)
-
-__forceinline int32_t Scale(int32_t a, int32_t b, int32_t c)
-{
-	__asm mov eax, a
-	__asm imul b
-	__asm idiv c
-}
-
-#pragma warning (default: 4035)
-#else
-
-static __forceinline int32_t Scale(int32_t a, int32_t b, int32_t c)
-{
-	return (int32_t)(((int64_t)a*b) / c);
-}
-
-#endif
 
 // Modern compilers are smart enough to do these multiplications intelligently.
 __forceinline int32_t MulScale14(int32_t a, int32_t b) { return (int32_t)(((int64_t)a * b) >> 14); } // only used by R_DrawVoxel

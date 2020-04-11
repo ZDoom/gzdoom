@@ -32,6 +32,7 @@
 #include "doomdata.h"
 #include "r_defs.h"
 #include "nodebuild.h"
+#include "cmdlib.h"
 
 
 struct MapData

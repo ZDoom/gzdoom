@@ -207,24 +207,17 @@ endif()
 
 # Decide on SSE setup
 
-set( SSE_MATTERS NO )
-
-# with global use of SSE 2 we do not need special handling for selected files
-if (NOT ZDOOM_USE_SSE2)
-	# SSE only matters on 32-bit targets. We check compiler flags to know if we can do it.
-	if( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
+# SSE only matters on 32-bit targets. We check compiler flags to know if we can do it.
+if( CMAKE_SIZEOF_VOID_P MATCHES "4" AND NOT CMAKE_OSX_ARCHITECTURES MATCHES ppc )
 		CHECK_CXX_COMPILER_FLAG( "-msse2 -mfpmath=sse" CAN_DO_MFPMATH )
 		CHECK_CXX_COMPILER_FLAG( -arch:SSE2 CAN_DO_ARCHSSE2 )
 		if( CAN_DO_MFPMATH )
 			set( SSE1_ENABLE "-msse -mfpmath=sse" )
 			set( SSE2_ENABLE "-msse2 -mfpmath=sse" )
-			set( SSE_MATTERS YES )
 		elseif( CAN_DO_ARCHSSE2 )
 			set( SSE1_ENABLE -arch:SSE )
 			set( SSE2_ENABLE -arch:SSE2 )
-			set( SSE_MATTERS YES )
 		endif()
-	endif()
 endif()
 
 if( X64 )
@@ -1051,6 +1044,7 @@ set (PCH_SOURCES
 	scripting/decorate/thingdef_states.cpp
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
+	scripting/zscript/zcc_compile_doom.cpp
 	scripting/zscript/zcc_parser.cpp
 	rendering/swrenderer/textures/r_swtexture.cpp
 	rendering/swrenderer/textures/warptexture.cpp
@@ -1254,6 +1248,7 @@ include_directories( .
 	common/scripting/jit
 	common/scripting/core
 	common/scripting/interface
+	common/scripting/frontend
 	common/scripting/backend
 	g_statusbar
 	console
@@ -1272,6 +1267,7 @@ include_directories( .
 	utility
 	utility/nodebuilder
 	scripting
+	scripting/zscript
 	rendering
 	rendering/vulkan/thirdparty
 	../libraries/gdtoa
@@ -1453,6 +1449,8 @@ source_group("Common\\Objects" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/
 source_group("Common\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/fonts/.+")
 source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")
 source_group("Common\\Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/.+")
+source_group("Common\\Scripting\\Interface" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/interface/.+")
+source_group("Common\\Scripting\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/backend/.+")
 source_group("Common\\Scripting\\Core" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/core/.+")
 source_group("Common\\Scripting\\JIT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/jit/.+")
 source_group("Common\\Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/vm/.+")

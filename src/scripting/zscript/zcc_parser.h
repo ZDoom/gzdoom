@@ -618,4 +618,7 @@ const char *GetMixinTypeString(EZCCMixinType type);
 
 ZCC_TreeNode *TreeNodeDeepCopy(ZCC_AST *ast, ZCC_TreeNode *orig, bool copySiblings);
 
+// Main entry point for the parser. Returns some data needed by the compiler.
+PNamespace* ParseOneScript(const int baselump, ZCCParseState& state);
+
 #endif

@@ -191,10 +191,6 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PContainerType *cls, const char * string);
-FieldDesc *FindField(PContainerType *cls, const char * string);
-
-
 FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, PNamespace *resolvenspc = nullptr);
 void ParseStates(FScanner &sc, PClassActor *actor, AActor *defaults, Baggage &bag);
 void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression *> &out_params,

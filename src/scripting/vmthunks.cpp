@@ -1606,24 +1606,6 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 	return 0;
 }
 
-//=====================================================================================
-//
-// textures
-//
-//=====================================================================================
-
-void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
-
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
-{
-	PARAM_PROLOGUE;
-	PARAM_OBJECT(viewpoint, AActor);
-	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
-	PARAM_FLOAT(fov);
-	SetCameraToTexture(viewpoint, texturename, fov);
-	return 0;
-}
-
 static int CheckForTexture(const FString& name, int type, int flags)
 {
 	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();

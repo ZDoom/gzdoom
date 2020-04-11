@@ -106,11 +106,14 @@ class ZCCCompiler
 {
 public:
 	ZCCCompiler(ZCC_AST &tree, DObject *outer, PSymbolTable &symbols, PNamespace *outnamespace, int lumpnum, const VersionInfo & ver);
-	~ZCCCompiler();
-	int Compile();
+	virtual ~ZCCCompiler();
+	virtual int Compile();
 
-private:
+protected:
 	const char * GetStringConst(FxExpression *ex, FCompileContext &ctx);
+	virtual int CheckActionKeyword(ZCC_FuncDeclarator* f, uint32_t &varflags, int useflags, ZCC_StructWork *c) { return -1; } // stock implementation does not support this.
+	virtual bool PrepareMetaData(PClass *type) { return false; }
+	virtual void SetImplicitArgs(TArray<PType*>* args, TArray<uint32_t>* argflags, TArray<FName>* argnames, PContainerType* cls, uint32_t funcflags, int useflags);
 
 	int IntConstFromNode(ZCC_TreeNode *node, PContainerType *cls);
 	FString StringConstFromNode(ZCC_TreeNode *node, PContainerType *cls);

@@ -350,16 +350,20 @@ parse_end:
 
 //**--------------------------------------------------------------------------
 
-static void DoParse(int lumpnum)
+PNamespace *ParseOneScript(const int baselump, ZCCParseState &state)
 {
 	FScanner sc;
 	void *parser;
 	ZCCToken value;
-	auto baselump = lumpnum;
+	int lumpnum = baselump;
 	auto fileno = fileSystem.GetFileContainer(lumpnum);
 
+	if (TokenMap.CountUsed() == 0)
+	{
+		InitTokenMap();
+	}
+
 	parser = ZCCParseAlloc(malloc);
-	ZCCParseState state;
 
 #ifndef NDEBUG
 	FILE *f = nullptr;
@@ -471,37 +475,8 @@ static void DoParse(int lumpnum)
 		}
 	}
 
-	PSymbolTable symtable;
 	auto newns = fileSystem.GetFileContainer(baselump) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(fileSystem.GetFileContainer(baselump));
-	ZCCCompiler cc(state, NULL, symtable, newns, baselump, state.ParseVersion);
-	cc.Compile();
-
-	if (FScriptPosition::ErrorCounter > 0)
-	{
-		// Abort if the compiler produced any errors. Also do not compile further lumps, because they very likely miss some stuff.
-		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(baselump).GetChars());
-	}
-	else if (FScriptPosition::WarnCounter > 0)
-	{
-		// If we got warnings, but no errors, print the information but continue.
-		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(baselump).GetChars());
-	}
-
-}
-
-void ParseScripts()
-{
-	if (TokenMap.CountUsed() == 0)
-	{
-		InitTokenMap();
-	}
-	int lump, lastlump = 0;
-	FScriptPosition::ResetErrorCounter();
-
-	while ((lump = fileSystem.FindLump("ZSCRIPT", &lastlump)) != -1)
-	{
-		DoParse(lump);
-	}
+	return newns;
 }
 
 static FString ZCCTokenName(int terminal)

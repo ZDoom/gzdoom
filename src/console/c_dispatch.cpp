@@ -123,7 +123,7 @@ public:
 		if (Text.IsNotEmpty() && Command != nullptr)
 		{
 			FCommandLine args(Text);
-			Command->Run(args, players[consoleplayer].mo, 0);
+			Command->Run(args, 0);
 		}
 		return true;
 	}
@@ -298,7 +298,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			)
 		{
 			FCommandLine args (beg);
-			com->Run (args, players[consoleplayer].mo, keynum);
+			com->Run (args, keynum);
 		}
 		else
 		{
@@ -525,12 +525,12 @@ FConsoleCommand::~FConsoleCommand ()
 	delete[] m_Name;
 }
 
-void FConsoleCommand::Run (FCommandLine &argv, void *who, int key)
+void FConsoleCommand::Run(FCommandLine &argv, int key)
 {
-	m_RunFunc (argv, who, key);
+	m_RunFunc (argv, key);
 }
 
-void FUnsafeConsoleCommand::Run (FCommandLine &args, void *instigator, int key)
+void FUnsafeConsoleCommand::Run(FCommandLine &args, int key)
 {
 	if (UnsafeExecutionContext)
 	{
@@ -538,7 +538,7 @@ void FUnsafeConsoleCommand::Run (FCommandLine &args, void *instigator, int key)
 		return;
 	}
 
-	FConsoleCommand::Run (args, instigator, key);
+	FConsoleCommand::Run (args, key);
 }
 
 FConsoleAlias::FConsoleAlias (const char *name, const char *command, bool noSave)
@@ -948,7 +948,7 @@ bool FConsoleAlias::IsAlias ()
 	return true;
 }
 
-void FConsoleAlias::Run (FCommandLine &args, void *who, int key)
+void FConsoleAlias::Run (FCommandLine &args, int key)
 {
 	if (bRunning)
 	{
@@ -1011,10 +1011,10 @@ void FConsoleAlias::SafeDelete ()
 	}
 }
 
-void FUnsafeConsoleAlias::Run (FCommandLine &args, void *instigator, int key)
+void FUnsafeConsoleAlias::Run (FCommandLine &args, int key)
 {
 	UnsafeExecutionScope scope;
-	FConsoleAlias::Run(args, instigator, key);
+	FConsoleAlias::Run(args, key);
 }
 
 void FExecList::AddCommand(const char *cmd, const char *file)

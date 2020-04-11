@@ -86,7 +86,7 @@ void C_ClearAliases ();
 FString BuildString (int argc, FString *argv);
 
 class AActor;
-typedef void (*CCmdRun) (FCommandLine &argv, void *instigator, int key);
+typedef void (*CCmdRun) (FCommandLine &argv, int key);
 
 class FConsoleCommand
 {
@@ -96,7 +96,7 @@ public:
 	virtual bool IsAlias ();
 	void PrintCommand();
 
-	virtual void Run (FCommandLine &args, void *instigator, int key);
+	virtual void Run (FCommandLine &args, int key);
 	static FConsoleCommand* FindByName (const char* name);
 
 	FConsoleCommand *m_Next, **m_Prev;
@@ -113,9 +113,9 @@ protected:
 };
 
 #define CCMD(n) \
-	void Cmd_##n (FCommandLine &, void *, int key); \
+	void Cmd_##n (FCommandLine &, int key); \
 	FConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
-	void Cmd_##n (FCommandLine &argv, void *who, int key)
+	void Cmd_##n (FCommandLine &argv, int key)
 
 class FUnsafeConsoleCommand : public FConsoleCommand
 {
@@ -125,13 +125,13 @@ public:
 	{
 	}
 
-	virtual void Run (FCommandLine &args, void *instigator, int key) override;
+	virtual void Run (FCommandLine &args, int key) override;
 };
 
 #define UNSAFE_CCMD(n) \
-	static void Cmd_##n (FCommandLine &, void *, int key); \
+	static void Cmd_##n (FCommandLine &, int key); \
 	static FUnsafeConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
-	void Cmd_##n (FCommandLine &argv, void *who, int key)
+	void Cmd_##n (FCommandLine &argv, int key)
 
 const int KEY_DBLCLICKED = 0x8000;
 
@@ -140,7 +140,7 @@ class FConsoleAlias : public FConsoleCommand
 public:
 	FConsoleAlias (const char *name, const char *command, bool noSave);
 	~FConsoleAlias ();
-	void Run (FCommandLine &args, void *instigator, int key);
+	void Run (FCommandLine &args, int key);
 	bool IsAlias ();
 	void PrintAlias ();
 	void Archive (FConfigFile *f);
@@ -161,7 +161,7 @@ public:
 	{
 	}
 
-	virtual void Run (FCommandLine &args, void *instigator, int key) override;
+	virtual void Run (FCommandLine &args, int key) override;
 };
 
 

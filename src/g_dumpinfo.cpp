@@ -121,7 +121,7 @@ CCMD (countdecals)
 
 CCMD (spray)
 {
-	if (who == NULL || argv.argc() < 2)
+	if (players[consoleplayer].mo == NULL || argv.argc() < 2)
 	{
 		Printf ("Usage: spray <decal>\n");
 		return;

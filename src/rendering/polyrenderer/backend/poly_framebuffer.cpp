@@ -27,7 +27,7 @@
 #include "actor.h"
 #include "i_time.h"
 #include "g_game.h"
-#include "gamedata/fonts/v_text.h"
+#include "v_text.h"
 
 #include "rendering/i_video.h"
 

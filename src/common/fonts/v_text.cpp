@@ -38,10 +38,9 @@
 #include <wctype.h>
 
 #include "v_text.h"
+#include "v_font.h"
 #include "utf8.h"
 
-
-#include "v_video.h"
 #include "filesystem.h"
 
 #include "gstrings.h"

@@ -51,6 +51,7 @@
 // Wrappers to keep the definitions of these classes out of here.
 void DeleteMaterial(FMaterial* mat);
 void DeleteSoftwareTexture(FSoftwareTexture *swtex);
+IHardwareTexture* CreateHardwareTexture();
 
 
 FTexture *CreateBrightmapTexture(FImageSource*);
@@ -845,4 +846,22 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forcewo
 	mWidth = tex->GetTexelWidth();
 }
 
+
+//==========================================================================
+//
+// this must be copied back to textures.cpp later.
+//
+//==========================================================================
+
+FWrapperTexture::FWrapperTexture(int w, int h, int bits)
+{
+	Width = w;
+	Height = h;
+	Format = bits;
+	UseType = ETextureType::SWCanvas;
+	bNoCompress = true;
+	auto hwtex = CreateHardwareTexture();
+	// todo: Initialize here.
+	SystemTextures.AddHardwareTexture(0, false, hwtex);
+}
 

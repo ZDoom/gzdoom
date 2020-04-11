@@ -22,14 +22,14 @@
 
 #include "filesystem.h"
 #include "m_png.h"
-#include "sbar.h"
-#include "stats.h"
-#include "r_utility.h"
 #include "c_dispatch.h"
-#include "v_video.h"
 #include "hw_ihwtexture.h"
 #include "hw_material.h"
 #include "texturemanager.h"
+#include "c_cvars.h"
+
+EXTERN_CVAR(Bool, gl_texture_usehires)
+IHardwareTexture* CreateHardwareTexture();
 
 //===========================================================================
 //
@@ -302,35 +302,12 @@ IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
 		IHardwareTexture *hwtex = layer->SystemTextures.GetHardwareTexture(translation, mExpanded);
 		if (hwtex == nullptr) 
 		{
-			hwtex = screen->CreateHardwareTexture();
+			hwtex = CreateHardwareTexture();
 			layer->SystemTextures.AddHardwareTexture(translation, mExpanded, hwtex);
  		}
 		return hwtex;
 	}
 	return nullptr;
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-void FMaterial::Precache()
-{
-	screen->PrecacheMaterial(this, 0);
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-void FMaterial::PrecacheList(SpriteHits &translations)
-{
-	tex->SystemTextures.CleanUnused(translations, mExpanded);
-	SpriteHits::Iterator it(translations);
-	SpriteHits::Pair *pair;
-	while(it.NextPair(pair)) screen->PrecacheMaterial(this, pair->Key);
 }
 
 //===========================================================================
@@ -399,6 +376,12 @@ FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translat
 }
 
 
+void DeleteMaterial(FMaterial* mat)
+{
+	delete mat;
+}
+
+
 //-----------------------------------------------------------------------------
 //
 // Make sprite offset adjustment user-configurable per renderer.
@@ -424,27 +407,4 @@ CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		}
 
 	}
-}
-
-//==========================================================================
-//
-// this must be copied back to textures.cpp later.
-//
-//==========================================================================
-
-FWrapperTexture::FWrapperTexture(int w, int h, int bits)
-{
-	Width = w;
-	Height = h;
-	Format = bits;
-	UseType = ETextureType::SWCanvas;
-	bNoCompress = true;
-	auto hwtex = screen->CreateHardwareTexture();
-	// todo: Initialize here.
-	SystemTextures.AddHardwareTexture(0, false, hwtex);
-}
-
-void DeleteMaterial(FMaterial* mat)
-{
-	delete mat;
 }

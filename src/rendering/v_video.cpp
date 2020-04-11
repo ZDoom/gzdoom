@@ -567,3 +567,9 @@ DEFINE_GLOBAL(CleanYfac_1)
 DEFINE_GLOBAL(CleanWidth_1)
 DEFINE_GLOBAL(CleanHeight_1)
 DEFINE_GLOBAL(generic_ui)
+
+IHardwareTexture* CreateHardwareTexture()
+{
+	return screen->CreateHardwareTexture();
+}
+

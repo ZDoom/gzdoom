@@ -973,7 +973,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/postprocessing/hw_postprocess.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
-	rendering/hwrenderer/textures/hw_material.cpp
 	rendering/hwrenderer/textures/hw_precache.cpp
 	rendering/hwrenderer/utility/hw_clock.cpp
 	rendering/hwrenderer/utility/hw_cvars.cpp
@@ -1080,6 +1079,7 @@ set (PCH_SOURCES
 	common/audio/music/music_config.cpp
 	common/thirdparty/sfmt/SFMT.cpp
 	common/textures/hw_ihwtexture.cpp
+	common/textures/hw_material.cpp
 	common/textures/bitmap.cpp
 	common/textures/m_png.cpp
 	common/textures/texture.cpp

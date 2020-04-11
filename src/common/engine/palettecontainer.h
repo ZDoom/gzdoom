@@ -71,10 +71,15 @@ class PaletteContainer
 {
 public:
 	PalEntry	BaseColors[256];	// non-gamma corrected palette
+	PalEntry	RawColors[256];		// colors as read from the game data without the transparancy remap applied
 	uint8_t		Remap[256];			// remap original palette indices to in-game indices
 
 	uint8_t		WhiteIndex;			// white in original palette index
 	uint8_t		BlackIndex;			// black in original palette index
+
+	bool HasGlobalBrightmap;
+	FRemapTable GlobalBrightmap;
+
 private:
 	FMemArena remapArena;
 	TArray<FRemapTable*> uniqueRemaps;
@@ -90,6 +95,7 @@ public:
 	void CopyTranslation(int dest, int src);
 	int StoreTranslation(int slot, FRemapTable* remap);
 	FRemapTable* TranslationToTable(int translation);
+	void GenerateGlobalBrightmapFromColormap(const uint8_t* cmapdata, int numlevels);
 
 	void PushIdentityTable(int slot)
 	{

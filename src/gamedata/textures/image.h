@@ -2,12 +2,21 @@
 
 #include <stdint.h>
 #include "tarray.h"
-#include "textures.h"
 #include "textures/bitmap.h"
 #include "memarena.h"
 
 class FImageSource;
 using PrecacheInfo = TMap<int, std::pair<int, int>>;
+
+// Doom patch format header
+struct patch_t
+{
+	int16_t			width;			// bounding box size 
+	int16_t			height;
+	int16_t			leftoffset; 	// pixels to the left of origin 
+	int16_t			topoffset;		// pixels below the origin 
+	uint32_t 		columnofs[1];	// only [width] used
+};
 
 struct PalettedPixels
 {
@@ -80,7 +89,7 @@ public:
 	FBitmap GetCachedBitmap(PalEntry *remap, int conversion, int *trans = nullptr);
 
 	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
-	static FImageSource * GetImage(int lumpnum, ETextureType usetype);
+	static FImageSource * GetImage(int lumpnum, bool checkflat);
 
 
 
@@ -137,26 +146,6 @@ public:
 	static void RegisterForPrecache(FImageSource *img);
 };
 
-//==========================================================================
-//
-// a TGA texture
-//
-//==========================================================================
+class FTexture;
 
-class FImageTexture : public FTexture
-{
-	FImageSource *mImage;
-public:
-	FImageTexture (FImageSource *image, const char *name = nullptr);
-	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
-
-	void SetImage(FImageSource *img)	// This is only for the multipatch texture builder!
-	{
-		mImage = img;
-	}
-
-	FImageSource *GetImage() const override { return mImage; }
-	FBitmap GetBgraBitmap(PalEntry *p, int *trans) override;
-
-};
-
+FTexture* CreateImageTexture(FImageSource* img) noexcept;

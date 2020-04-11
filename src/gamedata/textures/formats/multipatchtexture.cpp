@@ -34,25 +34,11 @@
 */
 
 #include <ctype.h>
-#include "doomtype.h"
 #include "files.h"
 #include "filesystem.h"
-
-#include "gi.h"
-#include "st_start.h"
-#include "sc_man.h"
-#include "templates.h"
-#include "r_data/r_translate.h"
-#include "bitmap.h"
-#include "colormatcher.h"
-#include "v_palette.h"
-#include "v_video.h"
-#include "v_text.h"
-#include "cmdlib.h"
-#include "imagehelpers.h"
 #include "image.h"
 #include "multipatchtexture.h"
-
+#include "imagehelpers.h"
 
 //==========================================================================
 //

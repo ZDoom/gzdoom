@@ -158,6 +158,18 @@ void InitPalette ()
 
 	GPalette.Init(NUM_TRANSLATION_TABLES);
 	GPalette.SetPalette (pal, 0);
+
+	int lump = fileSystem.CheckNumForName("COLORMAP");
+	if (lump == -1) lump = fileSystem.CheckNumForName("COLORMAP", ns_colormaps);
+	if (lump != -1)
+	{
+		FileData cmap = fileSystem.ReadFile(lump);
+		uint8_t palbuffer[768];
+		ReadPalette(fileSystem.GetNumForName("PLAYPAL"), palbuffer);
+		const unsigned char* cmapdata = (const unsigned char*)cmap.GetMem();
+		GPalette.GenerateGlobalBrightmapFromColormap(cmapdata, 32);
+	}
+
 	MakeGoodRemap ((uint32_t*)GPalette.BaseColors, GPalette.Remap);
 	ColorMatcher.SetPalette ((uint32_t *)GPalette.BaseColors);
 

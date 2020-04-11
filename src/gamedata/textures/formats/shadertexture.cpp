@@ -34,8 +34,6 @@
 **
 */
 
-#include "doomtype.h"
-#include "d_player.h"
 #include "menu/menu.h"
 #include "filesystem.h"
 #include "bitmap.h"

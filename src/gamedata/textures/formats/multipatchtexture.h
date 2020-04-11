@@ -1,5 +1,7 @@
 #pragma once
 #include "sc_man.h"
+#include "palettecontainer.h"
+#include "textures.h"
 
 //==========================================================================
 //

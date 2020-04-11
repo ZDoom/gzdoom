@@ -35,7 +35,6 @@
 **
 */
 
-#include "doomtype.h"
 #include "files.h"
 #include "filesystem.h"
 #include "textures/textures.h"

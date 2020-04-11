@@ -33,12 +33,9 @@
 **
 */
 
-#include "doomtype.h"
 #include "filesystem.h"
-
-#include "r_data/r_translate.h"
+#include "palettecontainer.h"
 #include "bitmap.h"
-#include "v_video.h"
 #include "image.h"
 
 class FBrightmapTexture : public FImageSource
@@ -70,11 +67,11 @@ FBrightmapTexture::FBrightmapTexture (FImageSource *source)
 
 int FBrightmapTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	SourcePic->CopyTranslatedPixels(bmp, TexMan.GlobalBrightmap.Palette);
+	SourcePic->CopyTranslatedPixels(bmp, GPalette.GlobalBrightmap.Palette);
 	return 0;
 }
 
 FTexture *CreateBrightmapTexture(FImageSource *tex)
 {
-	return new FImageTexture(new FBrightmapTexture(tex));
+	return CreateImageTexture(new FBrightmapTexture(tex));
 }

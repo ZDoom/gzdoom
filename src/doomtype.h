@@ -75,6 +75,7 @@ public:
 	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
 	FTextureID operator +(int offset) throw();
 	int GetIndex() const { return texnum; }	// Use this only if you absolutely need the index!
+	void SetIndex(int index) { texnum = index; }	// Use this only if you absolutely need the index!
 
 											// The switch list needs these to sort the switches by texture index
 	int operator -(FTextureID other) const { return texnum - other.texnum; }

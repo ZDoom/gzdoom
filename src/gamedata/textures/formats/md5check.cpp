@@ -37,7 +37,7 @@
 #include <stdint.h>
 #include "files.h"
 #include "md5.h"
-#include "doomtype.h"
+#include "printf.h"
 
 struct MD5Check
 {

@@ -323,7 +323,7 @@ typedef FImageSource * (*CreateFunc)(FileReader & file, int lumpnum);
 struct TexCreateInfo
 {
 	CreateFunc TryCreate;
-	ETextureType usetype;
+	bool checkflat;
 };
 
 FImageSource *IMGZImage_TryCreate(FileReader &, int lumpnum);
@@ -342,21 +342,21 @@ FImageSource *AutomapImage_TryCreate(FileReader &, int lumpnum);
 
 // Examines the lump contents to decide what type of texture to create,
 // and creates the texture.
-FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype)
+FImageSource * FImageSource::GetImage(int lumpnum, bool isflat)
 {
 	static TexCreateInfo CreateInfo[] = {
-		{ IMGZImage_TryCreate,			ETextureType::Any },
-		{ PNGImage_TryCreate,			ETextureType::Any },
-		{ JPEGImage_TryCreate,			ETextureType::Any },
-		{ DDSImage_TryCreate,			ETextureType::Any },
-		{ PCXImage_TryCreate,			ETextureType::Any },
-		{ StbImage_TryCreate,			ETextureType::Any },
-		{ TGAImage_TryCreate,			ETextureType::Any },
-		{ RawPageImage_TryCreate,		ETextureType::MiscPatch },
-		{ FlatImage_TryCreate,			ETextureType::Flat },
-		{ PatchImage_TryCreate,			ETextureType::Any },
-		{ EmptyImage_TryCreate,			ETextureType::Any },
-		{ AutomapImage_TryCreate,		ETextureType::MiscPatch },
+		{ IMGZImage_TryCreate,			false },
+		{ PNGImage_TryCreate,			false },
+		{ JPEGImage_TryCreate,			false },
+		{ DDSImage_TryCreate,			false },
+		{ PCXImage_TryCreate,			false },
+		{ StbImage_TryCreate,			false },
+		{ TGAImage_TryCreate,			false },
+		{ RawPageImage_TryCreate,		false },
+		{ FlatImage_TryCreate,			true },	// flat detection is not reliable, so only consider this for real flats.
+		{ PatchImage_TryCreate,			false },
+		{ EmptyImage_TryCreate,			false },
+		{ AutomapImage_TryCreate,		false },
 	};
 
 	if (lumpnum == -1) return nullptr;
@@ -377,7 +377,7 @@ FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype)
 
 	for (size_t i = 0; i < countof(CreateInfo); i++)
 	{
-		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == ETextureType::Any))
+		if (!CreateInfo[i].checkflat || isflat)
 		{
 			auto image = CreateInfo[i].TryCreate(data, lumpnum);
 			if (image != nullptr)

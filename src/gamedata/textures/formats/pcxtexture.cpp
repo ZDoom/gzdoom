@@ -34,11 +34,9 @@
 **
 */
 
-#include "doomtype.h"
 #include "files.h"
 #include "filesystem.h"
 #include "bitmap.h"
-#include "v_video.h"
 #include "imagehelpers.h"
 #include "image.h"
 

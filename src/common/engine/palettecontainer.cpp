@@ -53,6 +53,7 @@ FColorMatcher ColorMatcher;
 void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
 {
 	Clear();
+	HasGlobalBrightmap = false;
 	// Make sure that index 0 is always the identity translation.
 	FRemapTable remap;
 	remap.MakeIdentity();
@@ -64,16 +65,17 @@ void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
 
 void PaletteContainer::SetPalette(const uint8_t* colors, int transparent_index)
 {
+	// Initialize all tables to the original palette.
 	// At this point we do not care about the transparent index yet.
 	for (int i = 0; i < 256; i++, colors += 3)
 	{
-		BaseColors[i] = PalEntry(255, colors[0], colors[1], colors[2]);
+		uniqueRemaps[0]->Palette[i] = BaseColors[i] = RawColors[i] = PalEntry(255, colors[0], colors[1], colors[2]);
 		Remap[i] = i;
 	}
 
-
 	uniqueRemaps[0]->MakeIdentity();	// update the identity remap.
 
+	// If the palette already has a transparent index, clear that color now
 	if (transparent_index >= 0 && transparent_index <= 255)
 	{
 		BaseColors[transparent_index] = 0;
@@ -86,8 +88,8 @@ void PaletteContainer::SetPalette(const uint8_t* colors, int transparent_index)
 	// Find white and black from the original palette so that they can be
 	// used to make an educated guess of the translucency % for a 
 	// translucency map.
-	WhiteIndex = BestColor((uint32_t*)BaseColors, 255, 255, 255, 0, 255);
-	BlackIndex = BestColor((uint32_t*)BaseColors, 0, 0, 0, 0, 255);
+	WhiteIndex = BestColor((uint32_t*)RawColors, 255, 255, 255, 0, 255);
+	BlackIndex = BestColor((uint32_t*)RawColors, 0, 0, 0, 0, 255);
 }
 
 
@@ -240,6 +242,41 @@ int PaletteContainer::StoreTranslation(int slot, FRemapTable *remap)
 	}
 	return AddTranslation(slot, remap);
 }
+
+//===========================================================================
+// 
+// Examines the colormap to see if some of the colors have to be
+// considered fullbright all the time.
+//
+//===========================================================================
+
+void PaletteContainer::GenerateGlobalBrightmapFromColormap(const uint8_t *cmapdata, int numlevels)
+{
+	GlobalBrightmap.MakeIdentity();
+	memset(GlobalBrightmap.Remap, WhiteIndex, 256);
+	for (int i = 0; i < 256; i++) GlobalBrightmap.Palette[i] = PalEntry(255, 255, 255, 255);
+	for (int j = 0; j < numlevels; j++)
+	{
+		for (int i = 0; i < 256; i++)
+		{
+			// the palette comparison should be for ==0 but that gives false positives with Heretic
+			// and Hexen.
+			uint8_t mappedcolor = cmapdata[i];	// consider colormaps which already remap the base level.
+			if (cmapdata[i + j * 256] != mappedcolor || (RawColors[mappedcolor].r < 10 && RawColors[mappedcolor].g < 10 && RawColors[mappedcolor].b < 10))
+			{
+				GlobalBrightmap.Remap[i] = BlackIndex;
+				GlobalBrightmap.Palette[i] = PalEntry(255, 0, 0, 0);
+			}
+		}
+	}
+	for (int i = 0; i < 256; i++)
+	{
+		HasGlobalBrightmap |= GlobalBrightmap.Remap[i] == WhiteIndex;
+		if (GlobalBrightmap.Remap[i] == WhiteIndex) DPrintf(DMSG_NOTIFY, "Marked color %d as fullbright\n", i);
+	}
+}
+
+
 
 //----------------------------------------------------------------------------
 //

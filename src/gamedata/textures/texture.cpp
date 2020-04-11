@@ -94,7 +94,7 @@ FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType u
 {
 	if (lumpnum == -1) return nullptr;
 
-	auto image = FImageSource::GetImage(lumpnum, usetype);
+	auto image = FImageSource::GetImage(lumpnum, usetype == ETextureType::Flat);
 	if (image != nullptr)
 	{
 		FTexture *tex = new FImageTexture(image);
@@ -415,7 +415,7 @@ void FTexture::CreateDefaultBrightmap()
 	if (!bBrightmapChecked)
 	{
 		// Check for brightmaps
-		if (GetImage() && GetImage()->UseGamePalette() && TexMan.HasGlobalBrightmap &&
+		if (GetImage() && GetImage()->UseGamePalette() && GPalette.HasGlobalBrightmap &&
 			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
 			Brightmap == NULL && bWarped == 0)
 		{
@@ -426,7 +426,7 @@ void FTexture::CreateDefaultBrightmap()
 			int size = GetTexelWidth() * GetTexelHeight();
 			for (int i = 0; i<size; i++)
 			{
-				if (TexMan.GlobalBrightmap.Remap[texbuf[i]] == white)
+				if (GPalette.GlobalBrightmap.Remap[texbuf[i]] == white)
 				{
 					// Create a brightmap
 					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", Name.GetChars());
@@ -438,12 +438,12 @@ void FTexture::CreateDefaultBrightmap()
 			}
 			// No bright pixels found
 			DPrintf(DMSG_SPAMMY, "No bright pixels found in texture '%s'\n", Name.GetChars());
-			bBrightmapChecked = 1;
+			bBrightmapChecked = true;
 		}
 		else
 		{
 			// does not have one so set the flag to 'done'
-			bBrightmapChecked = 1;
+			bBrightmapChecked = true;
 		}
 	}
 }

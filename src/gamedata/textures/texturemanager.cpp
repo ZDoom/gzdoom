@@ -1176,11 +1176,11 @@ void FTextureManager::AddLocalizedVariants()
 //
 //==========================================================================
 FTexture *CreateShaderTexture(bool, bool);
+void InitBuildTiles();
 
 void FTextureManager::Init()
 {
 	DeleteAll();
-	GenerateGlobalBrightmapFromColormap();
 	SpriteFrames.Clear();
 	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 	FTexture::InitGrayMap();
@@ -1532,55 +1532,6 @@ void FTextureManager::SpriteAdjustChanged()
 		}
 	}
 }
-
-//===========================================================================
-// 
-// Examines the colormap to see if some of the colors have to be
-// considered fullbright all the time.
-//
-//===========================================================================
-
-void FTextureManager::GenerateGlobalBrightmapFromColormap()
-{
-	fileSystem.CheckNumForFullName("textures/tgapal", false, 0, true);
-	HasGlobalBrightmap = false;
-	int lump = fileSystem.CheckNumForName("COLORMAP");
-	if (lump == -1) lump = fileSystem.CheckNumForName("COLORMAP", ns_colormaps);
-	if (lump == -1) return;
-	FileData cmap = fileSystem.ReadFile(lump);
-	uint8_t palbuffer[768];
-	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), palbuffer);
-
-	const unsigned char *cmapdata = (const unsigned char *)cmap.GetMem();
-	const uint8_t *paldata = palbuffer;
-
-	const int black = 0;
-	const int white = ColorMatcher.Pick(255, 255, 255);
-
-
-	GlobalBrightmap.MakeIdentity();
-	memset(GlobalBrightmap.Remap, white, 256);
-	for (int i = 0; i<256; i++) GlobalBrightmap.Palette[i] = PalEntry(255, 255, 255, 255);
-	for (int j = 0; j<32; j++)
-	{
-		for (int i = 0; i<256; i++)
-		{
-			// the palette comparison should be for ==0 but that gives false positives with Heretic
-			// and Hexen.
-			if (cmapdata[i + j * 256] != i || (paldata[3 * i]<10 && paldata[3 * i + 1]<10 && paldata[3 * i + 2]<10))
-			{
-				GlobalBrightmap.Remap[i] = black;
-				GlobalBrightmap.Palette[i] = PalEntry(255, 0, 0, 0);
-			}
-		}
-	}
-	for (int i = 0; i<256; i++)
-	{
-		HasGlobalBrightmap |= GlobalBrightmap.Remap[i] == white;
-		if (GlobalBrightmap.Remap[i] == white) DPrintf(DMSG_NOTIFY, "Marked color %d as fullbright\n", i);
-	}
-}
-
 
 //==========================================================================
 //

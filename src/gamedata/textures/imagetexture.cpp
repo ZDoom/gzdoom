@@ -40,6 +40,7 @@
 #include "bitmap.h"
 #include "v_video.h"
 #include "image.h"
+#include "textures.h"
 
 
 //==========================================================================
@@ -48,7 +49,7 @@
 //
 //==========================================================================
 
-FImageTexture::FImageTexture(FImageSource *img, const char *name)
+FImageTexture::FImageTexture(FImageSource *img, const char *name) noexcept
 : FTexture(name, img? img->LumpNum() : 0)
 {
 	mImage = img;
@@ -89,24 +90,9 @@ TArray<uint8_t> FImageTexture::Get8BitPixels(bool alpha)
 	return mImage->GetPalettedPixels(alpha? alpha : bNoRemap0 ? FImageSource::noremap0 : FImageSource::normal);
 }	
 
-//==========================================================================
-//
-// FMultiPatchTexture :: GetRawTexture
-//
-// Doom ignored all compositing of mid-sided textures on two-sided lines.
-// Since these textures had to be single-patch in Doom, that essentially
-// means it ignores their Y offsets.
-//
-// If this texture is composed of only one patch, return that patch.
-// Otherwise, return this texture, since Doom wouldn't have been able to
-// draw it anyway.
-//
-//==========================================================================
 
-/* todo: this needs to be reimplemented without assuming that the underlying patch will be usable as-is.
-FTexture *FMultiPatchTexture::GetRawTexture()
+FTexture* CreateImageTexture(FImageSource* img) noexcept
 {
-	return NumParts == 1 && UseType == ETextureType::Wall && bMultiPatch == 1 && Scale == Parts->Texture->Scale ? Parts->Texture : this;
+	return new FImageTexture(img);
 }
-*/
 

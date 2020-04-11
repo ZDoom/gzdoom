@@ -33,10 +33,8 @@
 **
 */
 
-#include "doomtype.h"
 #include "files.h"
 #include "filesystem.h"
-#include "gi.h"
 #include "bitmap.h"
 #include "textures/textures.h"
 #include "imagehelpers.h"
@@ -159,7 +157,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
 	FString Name;
 	fileSystem.GetFileShortName(Name, lumpnum);
-	if (Name.CompareNoCase("E2END") == 0 && gameinfo.gametype == GAME_Heretic)
+	if (Name.CompareNoCase("E2END") == 0)
 	{
 		mPaletteLump = fileSystem.CheckNumForName("E2PAL");
 		if (fileSystem.FileLength(mPaletteLump) < 768) mPaletteLump = -1;

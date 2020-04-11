@@ -34,7 +34,6 @@
 **
 */
 
-#include "doomtype.h"
 #include "files.h"
 #include "filesystem.h"
 #include "templates.h"
@@ -42,7 +41,6 @@
 #include "colormatcher.h"
 #include "bitmap.h"
 #include "textures/textures.h"
-#include "r_data/sprites.h"
 #include "resourcefile.h"
 #include "image.h"
 
@@ -99,113 +97,6 @@ int FBuildTexture::CopyPixels(FBitmap *bmp, int conversion)
 	bmp->CopyPixelData(0, 0, RawPixels, Width, Height, Height, 1, 0, Remap);
 	return -1;
 
-}
-
-//===========================================================================
-//
-// AddTiles
-//
-// Adds all the tiles in an artfile to the texture manager.
-//
-//===========================================================================
-
-void FTextureManager::AddTiles (const FString &pathprefix, const void *tiles, int translation)
-{
-
-//	int numtiles = LittleLong(((uint32_t *)tiles)[1]);	// This value is not reliable
-	int tilestart = LittleLong(((uint32_t *)tiles)[2]);
-	int tileend = LittleLong(((uint32_t *)tiles)[3]);
-	const uint16_t *tilesizx = &((const uint16_t *)tiles)[8];
-	const uint16_t *tilesizy = &tilesizx[tileend - tilestart + 1];
-	const uint32_t *picanm = (const uint32_t *)&tilesizy[tileend - tilestart + 1];
-	const uint8_t *tiledata = (const uint8_t *)&picanm[tileend - tilestart + 1];
-
-	for (int i = tilestart; i <= tileend; ++i)
-	{
-		int pic = i - tilestart;
-		int width = LittleShort(tilesizx[pic]);
-		int height = LittleShort(tilesizy[pic]);
-		uint32_t anm = LittleLong(picanm[pic]);
-		int xoffs = (int8_t)((anm >> 8) & 255) + width/2;
-		int yoffs = (int8_t)((anm >> 16) & 255) + height/2;
-		int size = width*height;
-		FTextureID texnum;
-		FTexture *tex;
-
-		if (width <= 0 || height <= 0) continue;
-
-		tex = new FImageTexture(new FBuildTexture (pathprefix, i, tiledata, translation, width, height, xoffs, yoffs));
-		texnum = AddTexture (tex);
-		tiledata += size;
-		tex->Name.Format("%sBTIL%04d", pathprefix.GetChars(), i);
-		tex->UseType = ETextureType::Override;
-
-
-		// reactivate only if the texture counter works here.
-		//StartScreen->Progress();
-
-		if ((picanm[pic] & 63) && (picanm[pic] & 192))
-		{
-			int type, speed;
-
-			switch (picanm[pic] & 192)
-			{
-			case 64:	type = 2;	break;
-			case 128:	type = 0;	break;
-			case 192:	type = 1;	break;
-			default:    type = 0;   break;  // Won't happen, but GCC bugs me if I don't put this here.
-			}
-
-			speed = (anm >> 24) & 15;
-			speed = MAX (1, (1 << speed) * 1000 / 120);	// Convert from 120 Hz to 1000 Hz.
-
-			AddSimpleAnim (texnum, picanm[pic] & 63, type, speed);
-		}
-
-		// Blood's rotation types:
-		// 0 - Single
-		// 1 - 5 Full
-		// 2 - 8 Full
-		// 3 - Bounce (looks no different from Single; seems to signal bouncy sprites)
-		// 4 - 5 Half (not used in game)
-		// 5 - 3 Flat (not used in game)
-		// 6 - Voxel
-		// 7 - Spin Voxel
-
-		int rotType = (anm >> 28) & 7;
-		if (rotType == 1)
-		{
-			spriteframe_t rot;
-			rot.Texture[0] =
-			rot.Texture[1] = texnum;
-			for (int j = 1; j < 4; ++j)
-			{
-				rot.Texture[j*2] =
-				rot.Texture[j*2+1] =
-				rot.Texture[16-j*2] =
-				rot.Texture[17-j*2] = texnum.GetIndex() + j;
-			}
-			rot.Texture[8] =
-			rot.Texture[9] = texnum.GetIndex() + 4;
-			rot.Flip = 0x00FC;
-			rot.Voxel = NULL;
-			tex->Rotations = SpriteFrames.Push (rot);
-		}
-		else if (rotType == 2)
-		{
-			spriteframe_t rot;
-			rot.Texture[0] =
-			rot.Texture[1] = texnum;
-			for (int j = 1; j < 8; ++j)
-			{
-				rot.Texture[16-j*2] =
-				rot.Texture[17-j*2] = texnum.GetIndex() + j;
-			}
-			rot.Flip = 0;
-			rot.Voxel = NULL;
-			tex->Rotations = SpriteFrames.Push (rot);
-		}
-	}
 }
 
 //===========================================================================
@@ -284,6 +175,114 @@ static int BuildPaletteTranslation(int lump)
 }
 
 
+#include "r_data/sprites.h"
+//===========================================================================
+//
+// AddTiles
+//
+// Adds all the tiles in an artfile to the texture manager.
+//
+//===========================================================================
+
+void AddTiles(const FString& pathprefix, const void* tiles, int translation)
+{
+
+	//	int numtiles = LittleLong(((uint32_t *)tiles)[1]);	// This value is not reliable
+	int tilestart = LittleLong(((uint32_t*)tiles)[2]);
+	int tileend = LittleLong(((uint32_t*)tiles)[3]);
+	const uint16_t* tilesizx = &((const uint16_t*)tiles)[8];
+	const uint16_t* tilesizy = &tilesizx[tileend - tilestart + 1];
+	const uint32_t* picanm = (const uint32_t*)&tilesizy[tileend - tilestart + 1];
+	const uint8_t* tiledata = (const uint8_t*)&picanm[tileend - tilestart + 1];
+
+	for (int i = tilestart; i <= tileend; ++i)
+	{
+		int pic = i - tilestart;
+		int width = LittleShort(tilesizx[pic]);
+		int height = LittleShort(tilesizy[pic]);
+		uint32_t anm = LittleLong(picanm[pic]);
+		int xoffs = (int8_t)((anm >> 8) & 255) + width / 2;
+		int yoffs = (int8_t)((anm >> 16) & 255) + height / 2;
+		int size = width * height;
+		FTextureID texnum;
+		FTexture* tex;
+
+		if (width <= 0 || height <= 0) continue;
+
+		FStringf name("%sBTIL%04d", pathprefix.GetChars(), i);
+		tex = new FImageTexture(new FBuildTexture(pathprefix, i, tiledata, translation, width, height, xoffs, yoffs), name);
+		texnum = TexMan.AddTexture(tex);
+		tiledata += size;
+		tex->SetUseType(ETextureType::Override);
+
+
+		// reactivate only if the texture counter works here.
+		//StartScreen->Progress();
+
+		if ((picanm[pic] & 63) && (picanm[pic] & 192))
+		{
+			int type, speed;
+
+			switch (picanm[pic] & 192)
+			{
+			case 64:	type = 2;	break;
+			case 128:	type = 0;	break;
+			case 192:	type = 1;	break;
+			default:    type = 0;   break;  // Won't happen, but GCC bugs me if I don't put this here.
+			}
+
+			speed = (anm >> 24) & 15;
+			speed = MAX(1, (1 << speed) * 1000 / 120);	// Convert from 120 Hz to 1000 Hz.
+
+			TexMan.AddSimpleAnim(texnum, picanm[pic] & 63, type, speed);
+		}
+
+		// Blood's rotation types:
+		// 0 - Single
+		// 1 - 5 Full
+		// 2 - 8 Full
+		// 3 - Bounce (looks no different from Single; seems to signal bouncy sprites)
+		// 4 - 5 Half (not used in game)
+		// 5 - 3 Flat (not used in game)
+		// 6 - Voxel
+		// 7 - Spin Voxel
+
+		int rotType = (anm >> 28) & 7;
+		if (rotType == 1)
+		{
+			spriteframe_t rot;
+			rot.Texture[0] =
+				rot.Texture[1] = texnum;
+			for (int j = 1; j < 4; ++j)
+			{
+				rot.Texture[j * 2].SetIndex(texnum.GetIndex() + j);
+				rot.Texture[j * 2 + 1].SetIndex(texnum.GetIndex() + j);
+				rot.Texture[16 - j * 2].SetIndex(texnum.GetIndex() + j);
+				rot.Texture[17 - j * 2].SetIndex(texnum.GetIndex() + j);
+			}
+			rot.Texture[8].SetIndex(texnum.GetIndex());
+			rot.Texture[9].SetIndex(texnum.GetIndex());
+			rot.Flip = 0x00FC;
+			rot.Voxel = NULL;
+			tex->SetRotations(SpriteFrames.Push(rot));
+		}
+		else if (rotType == 2)
+		{
+			spriteframe_t rot;
+			rot.Texture[0] =
+				rot.Texture[1] = texnum;
+			for (int j = 1; j < 8; ++j)
+			{
+				rot.Texture[16 - j * 2].SetIndex(texnum.GetIndex() + j);
+				rot.Texture[17 - j * 2].SetIndex(texnum.GetIndex() + j);
+			}
+			rot.Flip = 0;
+			rot.Voxel = NULL;
+			tex->SetRotations(SpriteFrames.Push(rot));
+		}
+	}
+}
+
 //===========================================================================
 //
 // R_CountBuildTiles
@@ -293,7 +292,7 @@ static int BuildPaletteTranslation(int lump)
 //
 //===========================================================================
 
-void FTextureManager::InitBuildTiles()
+void InitBuildTiles()
 {
 	int lumpnum;
 	int numtiles;
@@ -312,7 +311,7 @@ void FTextureManager::InitBuildTiles()
 	int numlumps = fileSystem.GetNumEntries();
 	for (int i = 0; i < numlumps; i++)
 	{
-		const char *name = fileSystem.GetFileFullName(i);
+		const char* name = fileSystem.GetFileFullName(i);
 		if (fileSystem.CheckNumForFullName(name) != i) continue;	// This palette is hidden by a later one. Do not process
 		FString base = ExtractFileBase(name, true);
 		base.ToLower();
@@ -328,14 +327,13 @@ void FTextureManager::InitBuildTiles()
 				// only read from the same source as the palette.
 				// The entire format here is just too volatile to allow liberal mixing.
 				// An .ART set must be treated as one unit.
-				lumpnum = fileSystem.CheckNumForFullName(artpath, fileSystem.GetFileContainer(i));	
+				lumpnum = fileSystem.CheckNumForFullName(artpath, fileSystem.GetFileContainer(i));
 				if (lumpnum < 0)
 				{
 					break;
 				}
 
-				BuildTileData.Reserve(1);
-				auto &artdata = BuildTileData.Last();
+				auto& artdata = TexMan.GetNewBuildTileData();
 				artdata.Resize(fileSystem.FileLength(lumpnum));
 				fileSystem.ReadFile(lumpnum, &artdata[0]);
 

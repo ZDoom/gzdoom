@@ -190,20 +190,6 @@ struct FDoorAnimation
 	FName CloseSound;
 };
 
-// Patches.
-// A patch holds one or more columns.
-// Patches are used for sprites and all masked pictures, and we compose
-// textures from the TEXTURE1/2 lists of patches.
-struct patch_t
-{ 
-	int16_t			width;			// bounding box size 
-	int16_t			height; 
-	int16_t			leftoffset; 	// pixels to the left of origin 
-	int16_t			topoffset;		// pixels below the origin 
-	uint32_t 			columnofs[];	// only [width] used
-	// the [0] is &columnofs[width] 
-};
-
 // All FTextures present their data to the world in 8-bit format, but if
 // the source data is something else, this is it.
 enum FTextureFormat : uint32_t
@@ -309,10 +295,10 @@ public:
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
 
 	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
-	int GetDisplayWidth() { return GetScaledWidth(); }
-	int GetDisplayHeight() { return GetScaledHeight(); }
-	double GetDisplayWidthDouble() { return GetScaledWidthDouble(); }
-	double GetDisplayHeightDouble() { return GetScaledHeightDouble(); }
+	int GetDisplayWidth() { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
+	int GetDisplayHeight() { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
+	double GetDisplayWidthDouble() { return Width / Scale.X; }
+	double GetDisplayHeightDouble() { return Height / Scale.Y; }
 	int GetDisplayLeftOffset() { return GetScaledLeftOffset(0); }
 	int GetDisplayTopOffset() { return GetScaledTopOffset(0); }
 	double GetDisplayLeftOffsetDouble() { return GetScaledLeftOffsetDouble(0); }
@@ -641,17 +627,24 @@ private:
 	void AdjustSpriteOffsets();
 
 	// Build tiles
-	void AddTiles (const FString &pathprefix, const void *, int translation);
 	//int CountBuildTiles ();
-	void InitBuildTiles ();
 
 	// Animation stuff
 	FAnimDef *AddAnim (FAnimDef *anim);
 	void FixAnimations ();
 	void InitAnimated ();
 	void InitAnimDefs ();
+public:
 	FAnimDef *AddSimpleAnim (FTextureID picnum, int animcount, uint32_t speedmin, uint32_t speedrange=0);
 	FAnimDef *AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
+
+	TArray<uint8_t>& GetNewBuildTileData()
+	{
+		BuildTileData.Reserve(1);
+		return BuildTileData.Last();
+	}
+
+private:
 	void ParseAnim (FScanner &sc, ETextureType usetype);
 	FAnimDef *ParseRangeAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing);
 	void ParsePicAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
@@ -664,8 +657,7 @@ private:
 	void ParseAnimatedDoor(FScanner &sc);
 
 	void InitPalettedVersions();
-	void GenerateGlobalBrightmapFromColormap();
-
+	
 	// Switches
 
 	void InitSwitchList ();
@@ -695,8 +687,6 @@ private:
 public:
 	TArray<FAnimDef *> mAnimations;
 
-	bool HasGlobalBrightmap;
-	FRemapTable GlobalBrightmap;
 	short sintable[2048];	// for texture warping
 	enum
 	{
@@ -760,6 +750,24 @@ public:
 		return Format;
 	}
 };
+
+class FImageTexture : public FTexture
+{
+	FImageSource* mImage;
+public:
+	FImageTexture(FImageSource* image, const char* name = nullptr) noexcept;
+	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
+
+	void SetImage(FImageSource* img)	// This is only for the multipatch texture builder!
+	{
+		mImage = img;
+	}
+
+	FImageSource* GetImage() const override { return mImage; }
+	FBitmap GetBgraBitmap(PalEntry* p, int* trans) override;
+
+};
+
 
 extern FTextureManager TexMan;
 

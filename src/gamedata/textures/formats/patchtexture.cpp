@@ -33,11 +33,8 @@
 **
 */
 
-#include "doomtype.h"
 #include "files.h"
 #include "filesystem.h"
-#include "v_palette.h"
-#include "v_video.h"
 #include "bitmap.h"
 #include "image.h"
 #include "imagehelpers.h"
@@ -63,7 +60,7 @@ class FPatchTexture : public FImageSource
 	bool badflag = false;
 	bool isalpha = false;
 public:
-	FPatchTexture (int lumpnum, patch_t *header, bool isalphatex);
+	FPatchTexture (int lumpnum, int w, int h, int lo, int to, bool isalphatex);
 	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
 	int CopyPixels(FBitmap *bmp, int conversion) override;
 	void DetectBadPatches();
@@ -127,16 +124,15 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 
 FImageSource *PatchImage_TryCreate(FileReader & file, int lumpnum)
 {
-	patch_t header;
 	bool isalpha;
 
 	if (!CheckIfPatch(file, isalpha)) return NULL;
 	file.Seek(0, FileReader::SeekSet);
-	header.width = file.ReadUInt16();
-	header.height = file.ReadUInt16();
-	header.leftoffset = file.ReadInt16();
-	header.topoffset = file.ReadInt16();
-	return new FPatchTexture(lumpnum, &header, isalpha);
+	int width = file.ReadUInt16();
+	int height = file.ReadUInt16();
+	int leftoffset = file.ReadInt16();
+	int topoffset = file.ReadInt16();
+	return new FPatchTexture(lumpnum, width, height, leftoffset, topoffset, isalpha);
 }
 
 //==========================================================================
@@ -145,15 +141,15 @@ FImageSource *PatchImage_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
+FPatchTexture::FPatchTexture (int lumpnum, int w, int h, int lo, int to, bool isalphatex)
 : FImageSource(lumpnum)
 {
 	bUseGamePalette = !isalphatex;
 	isalpha = isalphatex;
-	Width = header->width;
-	Height = header->height;
-	LeftOffset = header->leftoffset;
-	TopOffset = header->topoffset;
+	Width = w;
+	Height = h;
+	LeftOffset = lo;
+	TopOffset = to;
 	DetectBadPatches();
 }
 

@@ -49,6 +49,7 @@
 #include "am_map.h"
 #include "v_video.h"
 #include "gi.h"
+#include "utf8.h"
 #include "fontinternals.h"
 #include "intermission/intermission.h"
 

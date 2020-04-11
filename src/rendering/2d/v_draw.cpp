@@ -168,6 +168,21 @@ void DFrameBuffer::DrawTexture (FTexture *img, double x, double y, int tags_firs
 	DrawTextureParms(img, parms);
 }
 
+void DrawTexture(F2DDrawer *drawer, FTexture* img, double x, double y, int tags_first, ...)
+{
+	Va_List tags;
+	va_start(tags.list, tags_first);
+	DrawParms parms;
+
+	bool res = screen->ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, false);
+	va_end(tags.list);
+	if (!res)
+	{
+		return;
+	}
+	screen->DrawTextureParms(img, parms);
+}
+
 //==========================================================================
 //
 // ZScript texture drawing function

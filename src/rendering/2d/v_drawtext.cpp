@@ -199,6 +199,36 @@ void DFrameBuffer::DrawChar (FFont *font, int normalcolor, double x, double y, i
 	}
 }
 
+void DrawChar(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...)
+{
+	if (font == NULL)
+		return;
+
+	if (normalcolor >= NumTextColors)
+		normalcolor = CR_UNTRANSLATED;
+
+	FTexture* pic;
+	int dummy;
+	bool redirected;
+
+	if (NULL != (pic = font->GetChar(character, normalcolor, &dummy, &redirected)))
+	{
+		DrawParms parms;
+		Va_List tags;
+		va_start(tags.list, tag_first);
+		bool res = screen->ParseDrawTextureTags(pic, x, y, tag_first, tags, &parms, false);
+		va_end(tags.list);
+		if (!res)
+		{
+			return;
+		}
+		PalEntry color = 0xffffffff;
+		parms.TranslationId = redirected ? -1 : font->GetColorTranslation((EColorRange)normalcolor, &color);
+		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
+		screen->DrawTextureParms(pic, parms);
+	}
+}
+
 void DFrameBuffer::DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args)
 {
 	if (font == NULL)
@@ -364,6 +394,26 @@ void DFrameBuffer::DrawText(FFont *font, int normalcolor, double x, double y, co
 	}
 	DrawTextCommon(font, normalcolor, x, y, (const uint8_t*)string, parms);
 }
+
+// For now the 'drawer' parameter is a placeholder - this should be the way to handle it later to allow different drawers.
+void DrawText(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...)
+{
+	Va_List tags;
+	DrawParms parms;
+
+	if (font == NULL || string == NULL)
+		return;
+
+	va_start(tags.list, tag_first);
+	bool res = screen->ParseDrawTextureTags(nullptr, 0, 0, tag_first, tags, &parms, true);
+	va_end(tags.list);
+	if (!res)
+	{
+		return;
+	}
+	screen->DrawTextCommon(font, normalcolor, x, y, (const uint8_t*)string, parms);
+}
+
 
 void DFrameBuffer::DrawText(FFont *font, int normalcolor, double x, double y, const char32_t *string, int tag_first, ...)
 {

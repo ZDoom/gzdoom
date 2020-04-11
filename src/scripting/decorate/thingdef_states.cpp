@@ -43,7 +43,7 @@
 #include "p_lnspec.h"
 #include "p_local.h"
 #include "thingdef.h"
-#include "backend/codegen.h"
+#include "codegen.h"
 #include "backend/codegen_doom.h"
 #ifndef _MSC_VER
 #include "i_system.h"  // for strlwr()

@@ -48,6 +48,11 @@ public:
 	FRandom (const char *name);
 	~FRandom ();
 
+	int Seed() const
+	{
+		return sfmt.u[0] + idx;
+	}
+
 	// Returns a random number in the range [0,255]
 	int operator()()
 	{
@@ -163,7 +168,6 @@ public:
 
 	// Static interface
 	static void StaticClearRandom ();
-	static uint32_t StaticSumSeeds ();
 	static void StaticReadRNGState (FSerializer &arc);
 	static void StaticWriteRNGState (FSerializer &file);
 	static FRandom *StaticFindRNG(const char *name);

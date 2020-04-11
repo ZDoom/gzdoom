@@ -49,7 +49,7 @@
 #include "a_weapons.h"
 #include "p_conversation.h"
 #include "v_text.h"
-#include "backend/codegen.h"
+#include "codegen.h"
 #include "stats.h"
 #include "info.h"
 #include "thingdef.h"

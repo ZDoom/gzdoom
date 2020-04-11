@@ -43,7 +43,7 @@
 #include "a_pickups.h"
 #include "thingdef.h"
 #include "a_morph.h"
-#include "backend/codegen.h"
+#include "codegen.h"
 #include "backend/codegen_doom.h"
 #include "filesystem.h"
 #include "v_text.h"

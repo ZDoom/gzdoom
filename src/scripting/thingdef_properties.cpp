@@ -50,7 +50,7 @@
 #include "thingdef.h"
 #include "a_morph.h"
 #include "teaminfo.h"
-#include "backend/vmbuilder.h"
+#include "vmbuilder.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "types.h"

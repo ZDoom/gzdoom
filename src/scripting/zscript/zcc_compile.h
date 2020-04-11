@@ -2,7 +2,7 @@
 #define ZCC_COMPILE_H
 
 #include <memory>
-#include "backend/codegen.h"
+#include "codegen.h"
 
 struct Baggage;
 struct FPropertyInfo;

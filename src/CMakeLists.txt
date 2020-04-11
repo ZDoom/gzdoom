@@ -624,6 +624,7 @@ file( GLOB HEADER_FILES
 	common/scripting/vm/*h
 	common/scripting/jit/*h
 	common/scripting/interface/*.h
+	common/scripting/backend/*.h
 	utility/*.h
 	scripting/*.h
 	scripting/backend/*.h
@@ -1043,9 +1044,7 @@ set (PCH_SOURCES
 	scripting/thingdef.cpp
 	scripting/thingdef_data.cpp
 	scripting/thingdef_properties.cpp
-	scripting/backend/codegen.cpp
 	scripting/backend/codegen_doom.cpp
-	scripting/backend/vmbuilder.cpp
 	scripting/decorate/olddecorations.cpp
 	scripting/decorate/thingdef_exp.cpp
 	scripting/decorate/thingdef_parse.cpp
@@ -1147,6 +1146,7 @@ set (PCH_SOURCES
 	common/engine/renderstyle.cpp
 	common/engine/v_colortables.cpp
 	common/engine/serializer.cpp
+	common/engine/m_random.cpp
 	common/objects/dobject.cpp
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
@@ -1159,8 +1159,9 @@ set (PCH_SOURCES
 	common/scripting/vm/vmexec.cpp
 	common/scripting/vm/vmframe.cpp
 	common/scripting/interface/stringformat.cpp
+	common/scripting/backend/vmbuilder.cpp
+	common/scripting/backend/codegen.cpp
 	
-	utility/m_random.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp
@@ -1252,6 +1253,8 @@ include_directories( .
 	common/scripting/vm
 	common/scripting/jit
 	common/scripting/core
+	common/scripting/interface
+	common/scripting/backend
 	g_statusbar
 	console
 	playsim

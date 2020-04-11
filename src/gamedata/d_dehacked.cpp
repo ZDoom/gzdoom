@@ -62,7 +62,7 @@
 #include "serializer.h"
 #include "thingdef.h"
 #include "v_text.h"
-#include "backend/vmbuilder.h"
+#include "vmbuilder.h"
 #include "types.h"
 #include "m_argv.h"
 #include "actorptrselect.h"

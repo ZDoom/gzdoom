@@ -59,7 +59,6 @@
 
 #include <assert.h>
 
-#include "doomstat.h"
 #include "m_random.h"
 #include "serializer.h"
 #include "m_crc32.h"
@@ -80,11 +79,7 @@
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern FRandom pr_spawnmobj;
-extern FRandom pr_acs;
-extern FRandom pr_chase;
-extern FRandom pr_exrandom;
-extern FRandom pr_damagemobj;
+FRandom pr_exrandom("EX_Random");
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -258,25 +253,6 @@ void FRandom::Init(uint32_t seed)
 	// This way, new RNGs can be added later, and it doesn't matter
 	// which order they get initialized in.
 	SFMTObj::Init(NameCRC, seed);
-}
-
-//==========================================================================
-//
-// FRandom :: StaticSumSeeds
-//
-// This function produces a uint32_t that can be used to check the consistancy
-// of network games between different machines. Only a select few RNGs are
-// used for the sum, because not all RNGs are important to network sync.
-//
-//==========================================================================
-
-uint32_t FRandom::StaticSumSeeds ()
-{
-	return
-		pr_spawnmobj.sfmt.u[0] + pr_spawnmobj.idx +
-		pr_acs.sfmt.u[0] + pr_acs.idx +
-		pr_chase.sfmt.u[0] + pr_chase.idx +
-		pr_damagemobj.sfmt.u[0] + pr_damagemobj.idx;
 }
 
 //==========================================================================

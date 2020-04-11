@@ -41,7 +41,7 @@
 #include "p_lnspec.h"
 #include "decallib.h"
 #include "thingdef.h"
-#include "backend/codegen.h"
+#include "codegen.h"
 
 // TYPES -------------------------------------------------------------------
 

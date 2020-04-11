@@ -42,10 +42,10 @@
 #include "cmdlib.h"
 #include "a_pickups.h"
 #include "thingdef.h"
-#include "backend/codegen.h"
+#include "codegen.h"
 #include "backend/codegen_doom.h"
 
-FRandom pr_exrandom ("EX_Random");
+extern FRandom pr_exrandom;
 
 static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls);
 static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls);

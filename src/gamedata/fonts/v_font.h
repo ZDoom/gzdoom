@@ -39,8 +39,8 @@
 #include "vectors.h"
 
 class DCanvas;
-struct FRemapTable;
 class FTexture;
+struct FRemapTable;
 
 enum EColorRange : int
 {
@@ -98,7 +98,7 @@ public:
 
 	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
 	virtual int GetCharWidth (int code) const;
-	FRemapTable *GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
+	int GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
@@ -137,7 +137,7 @@ protected:
 	FFont (int lump);
 
 	void BuildTranslations (const double *luminosity, const uint8_t *identity,
-		const void *ranges, int total_colors, const PalEntry *palette);
+		const void *ranges, int total_colors, const PalEntry *palette, std::function<void(FRemapTable*)> post = nullptr);
 	void FixXMoves();
 
 	static int SimpleTranslation (uint32_t *colorsused, uint8_t *translation,
@@ -166,7 +166,7 @@ protected:
 	};
 	TArray<CharData> Chars;
 	int ActiveColors;
-	TArray<FRemapTable> Ranges;
+	TArray<int> Translations;
 	uint8_t PatchRemap[256];
 
 	int Lump;

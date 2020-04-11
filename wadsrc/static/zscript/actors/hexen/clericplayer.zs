@@ -79,7 +79,7 @@ class ClericPlayer : PlayerPawn
 		CLER \ 1 A_FreezeDeathChunks;
 		Wait;
 	Burn:
-		FDTH C 5 BRIGHT A_PlaySound("*burndeath");
+		FDTH C 5 BRIGHT A_StartSound("*burndeath");
 		FDTH D 4 BRIGHT;
 		FDTH G 5 BRIGHT;
 		FDTH H 4 BRIGHT A_PlayerScream;

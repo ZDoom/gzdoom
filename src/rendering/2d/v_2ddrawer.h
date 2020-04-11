@@ -109,7 +109,7 @@ public:
 		int mIndexCount;
 
 		FTexture *mTexture;
-		FRemapTable *mTranslation;
+		int mTranslationId;
 		PalEntry mSpecialColormap[2];
 		int mScissor[4];
 		int mDesaturate;
@@ -128,7 +128,7 @@ public:
 		{
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
-				mTranslation == other.mTranslation &&
+				mTranslationId == other.mTranslationId &&
 				mSpecialColormap[0].d == other.mSpecialColormap[0].d &&
 				mSpecialColormap[1].d == other.mSpecialColormap[1].d &&
 				!memcmp(mScissor, other.mScissor, sizeof(mScissor)) &&

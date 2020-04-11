@@ -51,6 +51,8 @@
 #include "r_draw_pal.h"
 #include "r_thread.h"
 #include "swrenderer/scene/r_light.h"
+#include "playsim/a_dynlight.h"
+#include "polyrenderer/drawers/poly_thread.h"
 
 CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, r_fuzzscale, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
@@ -216,34 +218,351 @@ namespace swrenderer
 		}
 	}
 
-	class DepthColumnCommand : public DrawerCommand
+	/////////////////////////////////////////////////////////////////////////
+
+	DrawWallCommand::DrawWallCommand(const WallDrawerArgs& args) : wallargs(args)
 	{
-	public:
-		DepthColumnCommand(const WallDrawerArgs &args, float idepth) : idepth(idepth)
+	}
+
+	void DrawWallCommand::Execute(DrawerThread* thread)
+	{
+		if (!thread->columndrawer)
+			thread->columndrawer = std::make_shared<WallColumnDrawerArgs>();
+
+		WallColumnDrawerArgs& drawerargs = *thread->columndrawer.get();
+		drawerargs.wallargs = &wallargs;
+
+		bool haslights = r_dynlights && wallargs.lightlist;
+		if (haslights)
 		{
-			auto rendertarget = args.Viewport()->RenderTarget;
-			if (rendertarget->IsBgra())
-			{
-				uint32_t *destorg = (uint32_t*)rendertarget->GetPixels();
-				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
-				uint32_t *dest = (uint32_t*)args.Dest();
-				int offset  = (int)(ptrdiff_t)(dest - destorg);
-				x = offset % rendertarget->GetPitch();
-				y = offset / rendertarget->GetPitch();
-			}
-			else
-			{
-				uint8_t *destorg = rendertarget->GetPixels();
-				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
-				uint8_t *dest = (uint8_t*)args.Dest();
-				int offset = (int)(ptrdiff_t)(dest - destorg);
-				x = offset % rendertarget->GetPitch();
-				y = offset / rendertarget->GetPitch();
-			}
-			count = args.Count();
+			float dx = wallargs.WallC.tright.X - wallargs.WallC.tleft.X;
+			float dy = wallargs.WallC.tright.Y - wallargs.WallC.tleft.Y;
+			float length = sqrt(dx * dx + dy * dy);
+			drawerargs.dc_normal.X = dy / length;
+			drawerargs.dc_normal.Y = -dx / length;
+			drawerargs.dc_normal.Z = 0.0f;
 		}
 
-		DepthColumnCommand(const SkyDrawerArgs &args, float idepth) : idepth(idepth)
+		drawerargs.SetTextureFracBits(wallargs.fracbits);
+
+		float curlight = wallargs.lightpos;
+		float lightstep = wallargs.lightstep;
+		int shade = wallargs.Shade();
+
+		if (wallargs.fixedlight)
+		{
+			curlight = wallargs.FixedLight();
+			lightstep = 0;
+		}
+
+		float upos = wallargs.texcoords.upos, ustepX = wallargs.texcoords.ustepX, ustepY = wallargs.texcoords.ustepY;
+		float vpos = wallargs.texcoords.vpos, vstepX = wallargs.texcoords.vstepX, vstepY = wallargs.texcoords.vstepY;
+		float wpos = wallargs.texcoords.wpos, wstepX = wallargs.texcoords.wstepX, wstepY = wallargs.texcoords.wstepY;
+		float startX = wallargs.texcoords.startX;
+
+		int x1 = wallargs.x1;
+		int x2 = wallargs.x2;
+
+		upos += ustepX * (x1 + 0.5f - startX);
+		vpos += vstepX * (x1 + 0.5f - startX);
+		wpos += wstepX * (x1 + 0.5f - startX);
+
+		float centerY = wallargs.CenterY;
+		centerY -= 0.5f;
+
+		auto uwal = wallargs.uwal;
+		auto dwal = wallargs.dwal;
+		for (int x = x1; x < x2; x++)
+		{
+			int y1 = uwal[x];
+			int y2 = dwal[x];
+			if (y2 > y1)
+			{
+				drawerargs.SetLight(curlight, shade);
+				if (haslights)
+					SetLights(drawerargs, x, y1);
+				else
+					drawerargs.dc_num_lights = 0;
+
+				float dy = (y1 - centerY);
+				float u = upos + ustepY * dy;
+				float v = vpos + vstepY * dy;
+				float w = wpos + wstepY * dy;
+				float scaleU = ustepX;
+				float scaleV = vstepY;
+				w = 1.0f / w;
+				u *= w;
+				v *= w;
+				scaleU *= w;
+				scaleV *= w;
+
+				uint32_t texelX = (uint32_t)(int64_t)((u - std::floor(u)) * 0x1'0000'0000LL);
+				uint32_t texelY = (uint32_t)(int64_t)((v - std::floor(v)) * 0x1'0000'0000LL);
+				uint32_t texelStepX = (uint32_t)(int64_t)(scaleU * 0x1'0000'0000LL);
+				uint32_t texelStepY = (uint32_t)(int64_t)(scaleV * 0x1'0000'0000LL);
+
+				if (wallargs.fracbits != 32)
+					DrawWallColumn8(thread, drawerargs, x, y1, y2, texelX, texelY, texelStepY);
+				else
+					DrawWallColumn32(thread, drawerargs, x, y1, y2, texelX, texelY, texelStepX, texelStepY);
+			}
+
+			upos += ustepX;
+			vpos += vstepX;
+			wpos += wstepX;
+			curlight += lightstep;
+		}
+
+		if (r_modelscene)
+		{
+			for (int x = x1; x < x2; x++)
+			{
+				int y1 = uwal[x];
+				int y2 = dwal[x];
+				if (y2 > y1)
+				{
+					int count = y2 - y1;
+
+					float w1 = 1.0f / wallargs.WallC.sz1;
+					float w2 = 1.0f / wallargs.WallC.sz2;
+					float t = (x - wallargs.WallC.sx1 + 0.5f) / (wallargs.WallC.sx2 - wallargs.WallC.sx1);
+					float wcol = w1 * (1.0f - t) + w2 * t;
+					float zcol = 1.0f / wcol;
+					float zbufferdepth = 1.0f / (zcol / wallargs.FocalTangent);
+
+					drawerargs.SetDest(x, y1);
+					drawerargs.SetCount(count);
+					DrawDepthColumn(thread, drawerargs, zbufferdepth);
+				}
+			}
+		}
+	}
+
+	void DrawWallCommand::DrawWallColumn32(DrawerThread* thread, WallColumnDrawerArgs& drawerargs, int x, int y1, int y2, uint32_t texelX, uint32_t texelY, uint32_t texelStepX, uint32_t texelStepY)
+	{
+		int texwidth = wallargs.texwidth;
+		int texheight = wallargs.texheight;
+
+		double xmagnitude = fabs(static_cast<int32_t>(texelStepX)* (1.0 / 0x1'0000'0000LL));
+		double ymagnitude = fabs(static_cast<int32_t>(texelStepY)* (1.0 / 0x1'0000'0000LL));
+		double magnitude = MAX(ymagnitude, xmagnitude);
+		double min_lod = -1000.0;
+		double lod = MAX(log2(magnitude) + r_lod_bias, min_lod);
+		bool magnifying = lod < 0.0f;
+
+		int mipmap_offset = 0;
+		int mip_width = texwidth;
+		int mip_height = texheight;
+		if (wallargs.mipmapped && mip_width > 1 && mip_height > 1)
+		{
+			int level = (int)lod;
+			while (level > 0 && mip_width > 1 && mip_height > 1)
+			{
+				mipmap_offset += mip_width * mip_height;
+				level--;
+				mip_width = MAX(mip_width >> 1, 1);
+				mip_height = MAX(mip_height >> 1, 1);
+			}
+		}
+
+		const uint32_t* pixels = static_cast<const uint32_t*>(wallargs.texpixels) + mipmap_offset;
+		fixed_t xxoffset = (texelX >> 16)* mip_width;
+
+		const uint8_t* source;
+		const uint8_t* source2;
+		uint32_t texturefracx;
+		bool filter_nearest = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
+		if (filter_nearest)
+		{
+			int tx = (xxoffset >> FRACBITS) % mip_width;
+			source = (uint8_t*)(pixels + tx * mip_height);
+			source2 = nullptr;
+			texturefracx = 0;
+		}
+		else
+		{
+			xxoffset -= FRACUNIT / 2;
+			int tx0 = (xxoffset >> FRACBITS) % mip_width;
+			if (tx0 < 0)
+				tx0 += mip_width;
+			int tx1 = (tx0 + 1) % mip_width;
+			source = (uint8_t*)(pixels + tx0 * mip_height);
+			source2 = (uint8_t*)(pixels + tx1 * mip_height);
+			texturefracx = (xxoffset >> (FRACBITS - 4)) & 15;
+		}
+
+		int count = y2 - y1;
+		drawerargs.SetDest(x, y1);
+		drawerargs.SetCount(count);
+		drawerargs.SetTexture(source, source2, mip_height);
+		drawerargs.SetTextureUPos(texturefracx);
+		drawerargs.SetTextureVPos(texelY);
+		drawerargs.SetTextureVStep(texelStepY);
+		DrawColumn(thread, drawerargs);
+	}
+
+	void DrawWallCommand::DrawWallColumn8(DrawerThread* thread, WallColumnDrawerArgs& drawerargs, int x, int y1, int y2, uint32_t texelX, uint32_t texelY, uint32_t texelStepY)
+	{
+		int texwidth = wallargs.texwidth;
+		int texheight = wallargs.texheight;
+		int fracbits = wallargs.fracbits;
+		uint32_t uv_max = texheight << fracbits;
+
+		const uint8_t* pixels = static_cast<const uint8_t*>(wallargs.texpixels) + (((texelX >> 16)* texwidth) >> 16)* texheight;
+
+		texelY = (static_cast<uint64_t>(texelY)* texheight) >> (32 - fracbits);
+		texelStepY = (static_cast<uint64_t>(texelStepY)* texheight) >> (32 - fracbits);
+
+		drawerargs.SetTexture(pixels, nullptr, texheight);
+		drawerargs.SetTextureVStep(texelStepY);
+
+		if (uv_max == 0 || texelStepY == 0) // power of two
+		{
+			int count = y2 - y1;
+
+			drawerargs.SetDest(x, y1);
+			drawerargs.SetCount(count);
+			drawerargs.SetTextureVPos(texelY);
+			DrawColumn(thread, drawerargs);
+		}
+		else
+		{
+			uint32_t left = y2 - y1;
+			int y = y1;
+			while (left > 0)
+			{
+				uint32_t available = uv_max - texelY;
+				uint32_t next_uv_wrap = available / texelStepY;
+				if (available % texelStepY != 0)
+					next_uv_wrap++;
+				uint32_t count = MIN(left, next_uv_wrap);
+
+				drawerargs.SetDest(x, y);
+				drawerargs.SetCount(count);
+				drawerargs.SetTextureVPos(texelY);
+				DrawColumn(thread, drawerargs);
+
+				y += count;
+				left -= count;
+				texelY += texelStepY * count;
+				if (texelY >= uv_max)
+					texelY -= uv_max;
+			}
+		}
+	}
+
+	void DrawWallCommand::DrawDepthColumn(DrawerThread* thread, const WallColumnDrawerArgs& args, float idepth)
+	{
+		int x, y, count;
+
+		auto rendertarget = args.Viewport()->RenderTarget;
+		if (rendertarget->IsBgra())
+		{
+			uint32_t* destorg = (uint32_t*)rendertarget->GetPixels();
+			destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
+			uint32_t* dest = (uint32_t*)args.Dest();
+			int offset = (int)(ptrdiff_t)(dest - destorg);
+			x = offset % rendertarget->GetPitch();
+			y = offset / rendertarget->GetPitch();
+		}
+		else
+		{
+			uint8_t* destorg = rendertarget->GetPixels();
+			destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
+			uint8_t* dest = (uint8_t*)args.Dest();
+			int offset = (int)(ptrdiff_t)(dest - destorg);
+			x = offset % rendertarget->GetPitch();
+			y = offset / rendertarget->GetPitch();
+		}
+		count = args.Count();
+
+		auto zbuffer = PolyTriangleThreadData::Get(thread)->depthstencil;
+		int pitch = zbuffer->Width();
+		float* values = zbuffer->DepthValues() + y * pitch + x;
+		int cnt = count;
+
+		values = thread->dest_for_thread(y, pitch, values);
+		cnt = thread->count_for_thread(y, cnt);
+		pitch *= thread->num_cores;
+
+		float depth = idepth;
+		for (int i = 0; i < cnt; i++)
+		{
+			*values = depth;
+			values += pitch;
+		}
+	}
+
+	void DrawWallCommand::SetLights(WallColumnDrawerArgs& drawerargs, int x, int y1)
+	{
+		bool mirror = !!(wallargs.PortalMirrorFlags & RF_XFLIP);
+		int tx = x;
+		if (mirror)
+			tx = viewwidth - tx - 1;
+
+		// Find column position in view space
+		float w1 = 1.0f / wallargs.WallC.sz1;
+		float w2 = 1.0f / wallargs.WallC.sz2;
+		float t = (x - wallargs.WallC.sx1 + 0.5f) / (wallargs.WallC.sx2 - wallargs.WallC.sx1);
+		float wcol = w1 * (1.0f - t) + w2 * t;
+		float zcol = 1.0f / wcol;
+
+		drawerargs.dc_viewpos.X = (float)((tx + 0.5 - wallargs.CenterX) / wallargs.CenterX * zcol);
+		drawerargs.dc_viewpos.Y = zcol;
+		drawerargs.dc_viewpos.Z = (float)((wallargs.CenterY - y1 - 0.5) / wallargs.InvZtoScale * zcol);
+		drawerargs.dc_viewpos_step.Z = (float)(-zcol / wallargs.InvZtoScale);
+
+		drawerargs.dc_num_lights = 0;
+
+		// Setup lights for column
+		FLightNode* cur_node = drawerargs.LightList();
+		while (cur_node)
+		{
+			if (cur_node->lightsource->IsActive())
+			{
+				double lightX = cur_node->lightsource->X() - wallargs.ViewpointPos.X;
+				double lightY = cur_node->lightsource->Y() - wallargs.ViewpointPos.Y;
+				double lightZ = cur_node->lightsource->Z() - wallargs.ViewpointPos.Z;
+
+				float lx = (float)(lightX * wallargs.Sin - lightY * wallargs.Cos) - drawerargs.dc_viewpos.X;
+				float ly = (float)(lightX * wallargs.TanCos + lightY * wallargs.TanSin) - drawerargs.dc_viewpos.Y;
+				float lz = (float)lightZ;
+
+				// Precalculate the constant part of the dot here so the drawer doesn't have to.
+				bool is_point_light = cur_node->lightsource->IsAttenuated();
+				float lconstant = lx * lx + ly * ly;
+				float nlconstant = is_point_light ? lx * drawerargs.dc_normal.X + ly * drawerargs.dc_normal.Y : 0.0f;
+
+				// Include light only if it touches this column
+				float radius = cur_node->lightsource->GetRadius();
+				if (radius * radius >= lconstant && nlconstant >= 0.0f)
+				{
+					uint32_t red = cur_node->lightsource->GetRed();
+					uint32_t green = cur_node->lightsource->GetGreen();
+					uint32_t blue = cur_node->lightsource->GetBlue();
+
+					auto& light = drawerargs.dc_lights[drawerargs.dc_num_lights++];
+					light.x = lconstant;
+					light.y = nlconstant;
+					light.z = lz;
+					light.radius = 256.0f / cur_node->lightsource->GetRadius();
+					light.color = (red << 16) | (green << 8) | blue;
+
+					if (drawerargs.dc_num_lights == WallColumnDrawerArgs::MAX_DRAWER_LIGHTS)
+						break;
+				}
+			}
+
+			cur_node = cur_node->nextLight;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+
+	class DepthSkyColumnCommand : public DrawerCommand
+	{
+	public:
+		DepthSkyColumnCommand(const SkyDrawerArgs &args, float idepth) : idepth(idepth)
 		{
 			auto rendertarget = args.Viewport()->RenderTarget;
 			if (rendertarget->IsBgra())
@@ -269,9 +588,9 @@ namespace swrenderer
 
 		void Execute(DrawerThread *thread) override
 		{
-			auto zbuffer = PolyZBuffer::Instance();
-			int pitch = PolyStencilBuffer::Instance()->Width();
-			float *values = zbuffer->Values() + y * pitch + x;
+			auto zbuffer = PolyTriangleThreadData::Get(thread)->depthstencil;
+			int pitch = zbuffer->Width();
+			float *values = zbuffer->DepthValues() + y * pitch + x;
 			int cnt = count;
 
 			values = thread->dest_for_thread(y, pitch, values);
@@ -311,9 +630,9 @@ namespace swrenderer
 			if (thread->skipped_by_thread(y))
 				return;
 
-			auto zbuffer = PolyZBuffer::Instance();
-			int pitch = PolyStencilBuffer::Instance()->Width();
-			float *values = zbuffer->Values() + y * pitch;
+			auto zbuffer = PolyTriangleThreadData::Get(thread)->depthstencil;
+			int pitch = zbuffer->Width();
+			float *values = zbuffer->DepthValues() + y * pitch;
 			int end = x2;
 
 			if (idepth1 == idepth2)
@@ -359,12 +678,7 @@ namespace swrenderer
 
 	void SWPixelFormatDrawers::DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth)
 	{
-		Queue->Push<DepthColumnCommand>(args, idepth);
-	}
-
-	void SWPixelFormatDrawers::DrawDepthWallColumn(const WallDrawerArgs &args, float idepth)
-	{
-		Queue->Push<DepthColumnCommand>(args, idepth);
+		Queue->Push<DepthSkyColumnCommand>(args, idepth);
 	}
 
 	void SWPixelFormatDrawers::DrawDepthSpan(const SpanDrawerArgs &args, float idepth1, float idepth2)

@@ -14,6 +14,25 @@ include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
 
+if( MSVC )
+	find_package( ZMusic )
+else()
+	find_package( ZMusic REQUIRED )
+endif()
+
+if( MSVC AND NOT ZMUSIC_FOUND )
+	# Use prebuilt library
+	set( ZMUSIC_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../bin/windows/zmusic" )
+	set( ZMUSIC_INCLUDE_DIR ${ZMUSIC_ROOT_PATH}/include )
+	set( ZMUSIC_LIBRARIES zmusic )
+	if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
+		link_directories( ${ZMUSIC_ROOT_PATH}/64bit )
+	else()
+		link_directories( ${ZMUSIC_ROOT_PATH}/32bit )
+	endif()
+	set( ZMUSIC_FOUND TRUE )
+endif()
+
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
 	# At least some versions of Xcode fail if you strip with the linker
@@ -22,11 +41,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set( NO_STRIP ON )
 	endif()
 endif()
-
-option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
-option( DYN_OPENAL "Dynamically load OpenAL" ON )
-option( DYN_SNDFILE "Dynamically load libsndfile" ON )
-option( DYN_MPG123 "Dynamically load libmpg123" ON )
 
 if( APPLE )
     option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
@@ -56,36 +70,17 @@ if( WIN32 )
 	add_definitions( -D_WIN32 )
 
 
-	if( ( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" ) OR	# For VS 2015.
-		( MSVC15 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v141_xp" ) )		# For VS 2017.
+	if( MSVC )	# For VS 2017 and later.
 		# for modern Windows SDKs the DirectX headers should be available by default.
 		set( DX_dinput8_LIBRARY dinput8 )
 	else()
 
-		find_path( XINPUT_INCLUDE_DIR xinput.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT XINPUT_INCLUDE_DIR )
-			# Modern versions of the Windows SDK include xinput.h. Unfortunately,
-			# CMake cannot find this file via find_path, so we check for it using
-			# CHECK_INCLUDE_FILES. windows.h must be included before xinput.h.
-			CHECK_INCLUDE_FILES( "windows.h;xinput.h" XINPUT_H_FOUND )
-			if( NOT XINPUT_H_FOUND )
-				message( WARNING "Could not find xinput.h. XInput will be disabled." )
-				add_definitions( -DNO_XINPUT )
-			endif()
-		else()
-			include_directories( ${XINPUT_INCLUDE_DIR} )
-		endif()
-
 		find_library( DX_dinput8_LIBRARY dinput8
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Lib Lib/${XBITS} )
-		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-			find_library( DX_dxguid_LIBRARY dxguid
-				PATHS ENV DXSDK_DIR
-				PATH_SUFFIXES Lib Lib/${XBITS} )
-		endif()
+		find_library( DX_dxguid_LIBRARY dxguid
+			PATHS ENV DXSDK_DIR
+			PATH_SUFFIXES Lib Lib/${XBITS} )
 
 		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
 		# CMake cannot find these libraries via find_library.
@@ -94,12 +89,10 @@ if( WIN32 )
 			set( DX_dinput8_LIBRARY dinput8 )
 		endif()
 
-		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-			# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
-			# were moved to dinput8.lib.
-			if( NOT DX_dxguid_LIBRARY )
-				message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
-			endif()
+		# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
+		# were moved to dinput8.lib.
+		if( NOT DX_dxguid_LIBRARY )
+			message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
 		endif()
 	endif()
 
@@ -126,6 +119,7 @@ if( WIN32 )
 		if( DX_dxguid_LIBRARY )
 			list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
 		endif()
+		list( APPEND ZDOOM_LIBS d3d9 )
 	endif()
 else()
 	if( APPLE )
@@ -209,26 +203,7 @@ endif()
 
 if( NO_OPENAL )
 	add_definitions( -DNO_OPENAL=1 )
-
-	set(MPG123_FOUND NO)
-	set(SNDFILE_FOUND NO)
-else()
-	# Search for libSndFile
-
-	if ( NOT DYN_SNDFILE )
-		find_package( SndFile )
-	endif()
-
-	# Search for libmpg123
-
-	if ( NOT DYN_MPG123 )
-		find_package( MPG123 )
-	endif()
 endif()
-
-# Search for FluidSynth
-
-find_package( FluidSynth )
 
 # Decide on SSE setup
 
@@ -353,7 +328,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	endif ()
 
 	if( NOT X64 AND NOT CAN_DO_MFPMATH )
-		set( CMAKE_C_FLAGS "-DNO_SSE ${CMAKE_CXX_FLAGS}" )
+		set( CMAKE_C_FLAGS "-DNO_SSE ${CMAKE_C_FLAGS}" )
 		set( CMAKE_CXX_FLAGS "-DNO_SSE ${CMAKE_CXX_FLAGS}" )
 	endif()
 
@@ -425,15 +400,8 @@ if( NOT STRUPR_EXISTS )
 	add_definitions( -DNEED_STRUPR=1 )
 endif()
 
-CHECK_FUNCTION_EXISTS( stricmp STRICMP_EXISTS )
-if( NOT STRICMP_EXISTS )
-	add_definitions( -Dstricmp=strcasecmp )
-endif()
-
-CHECK_FUNCTION_EXISTS( strnicmp STRNICMP_EXISTS )
-if( NOT STRNICMP_EXISTS )
-	add_definitions( -Dstrnicmp=strncasecmp )
-endif()
+require_stricmp()
+require_strnicmp()
 
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
@@ -457,18 +425,17 @@ endif()
 # Update gitinfo.h
 
 add_custom_target( revision_check ALL
-	COMMAND updaterevision src/gitinfo.h
+	COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_SOURCE_DIR}/tools/updaterevision/UpdateRevision.cmake" src/gitinfo.h
 	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	DEPENDS updaterevision )
+)
 
 # Libraries ZDoom needs
 
-message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${CMAKE_DL_LIBS}" )
 if (HAVE_VULKAN)
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} "glslang" "SPIRV" "OGLCompiler")
 endif()
-include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
+include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${ZMUSIC_INCLUDE_DIR}" )
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
@@ -476,27 +443,9 @@ if( ${HAVE_VM_JIT} )
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ASMJIT_LIBRARIES}")
 endif()
 
-if( SNDFILE_FOUND )
-    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${SNDFILE_LIBRARIES}" )
-    include_directories( "${SNDFILE_INCLUDE_DIRS}" )
-endif()
-if( MPG123_FOUND )
-    set( ZDOOM_LIBS ${ZDOOM_LIBS} "${MPG123_LIBRARIES}" )
-    include_directories( "${MPG123_INCLUDE_DIR}" )
-endif()
-if( NOT DYN_FLUIDSYNTH )
-	if( FLUIDSYNTH_FOUND )
-		set( ZDOOM_LIBS ${ZDOOM_LIBS} "${FLUIDSYNTH_LIBRARIES}" )
-		include_directories( "${FLUIDSYNTH_INCLUDE_DIR}" )
-	endif()
-endif()
-
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
-	sound/mididevices/music_win_mididevice.cpp
 	win32/hardware.cpp
-	win32/helperthread.cpp
-	win32/i_cd.cpp
 	win32/i_crash.cpp
 	win32/i_input.cpp
 	win32/i_keyboard.cpp
@@ -508,18 +457,20 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp
+	win32/st_start_util.cpp
 	win32/gl_sysfb.cpp
 	win32/base_sysfb.cpp
 	win32/win32basevideo.cpp
-	win32/win32glvideo.cpp)
+	win32/win32glvideo.cpp
+	win32/win32polyvideo.cpp)
 	
 if (HAVE_VULKAN)
 	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} win32/win32vulkanvideo.cpp )
 endif()
 	
 set( PLAT_POSIX_SOURCES
-	posix/i_cd.cpp
-	posix/i_steam.cpp )
+	posix/i_steam.cpp
+	posix/i_system_posix.cpp )
 set( PLAT_SDL_SOURCES
 	posix/sdl/crashcatcher.c
 	posix/sdl/hardware.cpp
@@ -541,7 +492,6 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/i_input.mm
 	posix/cocoa/i_joystick.cpp
 	posix/cocoa/i_main.mm
-	posix/cocoa/i_main_except.cpp
 	posix/cocoa/i_system.mm
 	posix/cocoa/i_video.mm
 	posix/cocoa/st_console.mm
@@ -589,7 +539,7 @@ if( HAVE_MMX )
 			gamedata/textures/hires/hqnx_asm/hq2x_asm.cpp
 			gamedata/textures/hires/hqnx_asm/hq3x_asm.cpp
 			gamedata/textures/hires/hqnx_asm/hq4x_asm.cpp
-			gamedata/textures/hires/gl_hqresize.cpp
+			gamedata/textures/hires/hqresize.cpp
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
@@ -625,36 +575,11 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-if( DYN_SNDFILE)
-	add_definitions( -DHAVE_SNDFILE -DDYN_SNDFILE )
-elseif( SNDFILE_FOUND )
-	add_definitions( -DHAVE_SNDFILE )
-endif()
-
-if( DYN_MPG123)
-	add_definitions( -DHAVE_MPG123 -DDYN_MPG123 )
-elseif( MPG123_FOUND )
-	add_definitions( -DHAVE_MPG123 )
-endif()
-
-if( DYN_FLUIDSYNTH )
-	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
-elseif( FLUIDSYNTH_FOUND )
-	add_definitions( -DHAVE_FLUIDSYNTH )
-endif()
-
 option( SEND_ANON_STATS "Enable sending of anonymous hardware statistics" ON )
 
 if( NOT SEND_ANON_STATS )
 	add_definitions( -DNO_SEND_STATS )
 endif()
-
-# Disable ADLMIDI's and OPNMIDI's MIDI Sequencer
-add_definitions(-DADLMIDI_DISABLE_MIDI_SEQUENCER)
-add_definitions(-DOPNMIDI_DISABLE_MIDI_SEQUENCER)
-
-# Disable OPNMIDI's experimental yet emulator (using of it has some issues and missing notes in playback)
-add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
@@ -677,12 +602,8 @@ file( GLOB HEADER_FILES
 	maploader/*.h
 	menu/*.h
 	sound/*.h
-	sound/adlmidi/*.h*
 	sound/backend/*.h*
 	sound/music/*.h*
-	sound/opnmidi/*.h*
-	sound/oplsynth/*.h
-	sound/oplsynth/dosbox/*.h
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
@@ -699,12 +620,7 @@ file( GLOB HEADER_FILES
 	scripting/zscript/*.h
 	scripting/vm/*.h
 	sound/midisources/*.h
-	sound/oplsynth/*.h
-	sound/oplsynth/dosbox/*.h
 	sound/thirdparty/*.h
-	sound/timidity/*.h
-	sound/timiditypp/*.h
-	sound/wildmidi/*.h
 	rendering/*.h
 	rendering/2d/*.h
 	rendering/swrenderer/*.h
@@ -719,7 +635,7 @@ file( GLOB HEADER_FILES
 	rendering/polyrenderer/*.h
 	rendering/polyrenderer/math/*.h
 	rendering/polyrenderer/drawers/*.h
-	rendering/polyrenderer/scene/*.h
+	rendering/polyrenderer/backend/*.h
 	rendering/hwrenderer/data/*.h
 	rendering/hwrenderer/dynlights/*.h
 	rendering/hwrenderer/models/*.h
@@ -791,26 +707,12 @@ set ( SWRENDER_SOURCES
 )
 
 set( POLYRENDER_SOURCES
-	rendering/polyrenderer/poly_renderer.cpp
-	rendering/polyrenderer/poly_renderthread.cpp
-	rendering/polyrenderer/scene/poly_scene.cpp
-	rendering/polyrenderer/scene/poly_portal.cpp
-	rendering/polyrenderer/scene/poly_cull.cpp
-	rendering/polyrenderer/scene/poly_decal.cpp
-	rendering/polyrenderer/scene/poly_particle.cpp
-	rendering/polyrenderer/scene/poly_plane.cpp
-	rendering/polyrenderer/scene/poly_playersprite.cpp
-	rendering/polyrenderer/scene/poly_wall.cpp
-	rendering/polyrenderer/scene/poly_wallsprite.cpp
-	rendering/polyrenderer/scene/poly_sprite.cpp
-	rendering/polyrenderer/scene/poly_model.cpp
-	rendering/polyrenderer/scene/poly_sky.cpp
-	rendering/polyrenderer/scene/poly_light.cpp
-	rendering/polyrenderer/drawers/poly_buffer.cpp
 	rendering/polyrenderer/drawers/poly_triangle.cpp
-	rendering/polyrenderer/drawers/poly_draw_args.cpp
+	rendering/polyrenderer/drawers/poly_thread.cpp
 	rendering/polyrenderer/drawers/screen_triangle.cpp
-	rendering/polyrenderer/math/gpu_types.cpp
+	rendering/polyrenderer/drawers/screen_scanline_setup.cpp
+	rendering/polyrenderer/drawers/screen_shader.cpp
+	rendering/polyrenderer/drawers/screen_blend.cpp
 )
 
 # These files will be flagged as "headers" so that they appear in project files
@@ -828,6 +730,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	scripting/zscript/zcc-parse.lemon
 	zcc-parse.c
 	zcc-parse.h
+	win32/zdoom.natvis
 )
 
 set( VM_JIT_SOURCES
@@ -850,13 +753,8 @@ set( FASTMATH_SOURCES
 	rendering/swrenderer/r_all.cpp
 	rendering/swrenderer/r_swscene.cpp
 	rendering/polyrenderer/poly_all.cpp
-	sound/oplsynth/opl_mus_player.cpp
-	sound/backend/mpg123_decoder.cpp
 	sound/music/music_midi_base.cpp
 	sound/backend/oalsound.cpp
-	sound/backend/sndfile_decoder.cpp
-	sound/timiditypp/fft4g.cpp
-	sound/timiditypp/reverb.cpp
 	gamedata/textures/hires/hqnx/init.cpp
 	gamedata/textures/hires/hqnx/hq2x.cpp
 	gamedata/textures/hires/hqnx/hq3x.cpp
@@ -885,31 +783,7 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_weapon.cpp
 	r_data/models/models.cpp
 	utility/matrix.cpp
-	sound/adlmidi/adldata.cpp
-	sound/adlmidi/adlmidi.cpp
-	sound/adlmidi/adlmidi_load.cpp
-	sound/adlmidi/adlmidi_midiplay.cpp
-	sound/adlmidi/adlmidi_opl3.cpp
-	sound/adlmidi/adlmidi_private.cpp
-	sound/adlmidi/chips/dosbox/dbopl.cpp
-	sound/adlmidi/chips/dosbox_opl3.cpp
-	sound/adlmidi/chips/nuked/nukedopl3_174.c
-	sound/adlmidi/chips/nuked/nukedopl3.c
-	sound/adlmidi/chips/nuked_opl3.cpp
-	sound/adlmidi/chips/nuked_opl3_v174.cpp
-	sound/adlmidi/wopl/wopl_file.c
-	sound/opnmidi/chips/gens_opn2.cpp
-	sound/opnmidi/chips/gens/Ym2612_Emu.cpp
-	sound/opnmidi/chips/mame/mame_ym2612fm.c
-	sound/opnmidi/chips/mame_opn2.cpp
-	sound/opnmidi/chips/nuked_opn2.cpp
-	sound/opnmidi/chips/nuked/ym3438.c
-	sound/opnmidi/opnmidi.cpp
-	sound/opnmidi/opnmidi_load.cpp
-	sound/opnmidi/opnmidi_midiplay.cpp
-	sound/opnmidi/opnmidi_opn2.cpp
-	sound/opnmidi/opnmidi_private.cpp
-	sound/opnmidi/wopn/wopn_file.c)
+)
 	
 #Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
 set (VULKAN_SOURCES
@@ -934,6 +808,14 @@ set (VULKAN_SOURCES
 if (HAVE_VULKAN)
 	set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${VULKAN_SOURCES})
 endif()
+
+set (POLYBACKEND_SOURCES
+	rendering/polyrenderer/backend/poly_framebuffer.cpp
+	rendering/polyrenderer/backend/poly_buffers.cpp
+	rendering/polyrenderer/backend/poly_hwtexture.cpp
+	rendering/polyrenderer/backend/poly_renderstate.cpp
+)
+set (FASTMATH_SOURCES ${FASTMATH_SOURCES} ${POLYBACKEND_SOURCES})
 
 set (PCH_SOURCES
 	am_map.cpp
@@ -999,7 +881,9 @@ set (PCH_SOURCES
 	rendering/r_videoscale.cpp
 	sound/s_advsound.cpp
 	sound/s_environment.cpp
+	sound/s_reverbedit.cpp
 	sound/s_sndseq.cpp
+	sound/s_doomsound.cpp
 	sound/s_sound.cpp
 	sound/s_music.cpp
 	serializer.cpp
@@ -1116,6 +1000,7 @@ set (PCH_SOURCES
 	maploader/polyobjects.cpp
 	maploader/renderinfo.cpp
 	maploader/compatibility.cpp
+	maploader/postprocessor.cpp
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
@@ -1161,8 +1046,8 @@ set (PCH_SOURCES
 	gamedata/textures/formats/emptytexture.cpp
 	gamedata/textures/formats/shadertexture.cpp
 	gamedata/textures/formats/tgatexture.cpp
+	gamedata/textures/formats/stbtexture.cpp
 	gamedata/textures/hires/hqresize.cpp
-	gamedata/textures/hires/hirestex.cpp
 	gamedata/fonts/singlelumpfont.cpp
 	gamedata/fonts/singlepicfont.cpp
 	gamedata/fonts/specialfont.cpp
@@ -1228,71 +1113,12 @@ set (PCH_SOURCES
 	sound/music/i_music.cpp
 	sound/music/i_soundfont.cpp
 	sound/backend/i_sound.cpp
-	sound/mididevices/music_adlmidi_mididevice.cpp
-	sound/mididevices/music_opldumper_mididevice.cpp
-	sound/mididevices/music_opl_mididevice.cpp
-	sound/mididevices/music_opnmidi_mididevice.cpp
-	sound/mididevices/music_timiditypp_mididevice.cpp
-	sound/mididevices/music_fluidsynth_mididevice.cpp
-	sound/mididevices/music_softsynth_mididevice.cpp
-	sound/mididevices/music_timidity_mididevice.cpp
-	sound/mididevices/music_wildmidi_mididevice.cpp
-	sound/mididevices/music_wavewriter_mididevice.cpp
-	sound/midisources/midisource.cpp
-	sound/midisources/midisource_mus.cpp
-	sound/midisources/midisource_smf.cpp
-	sound/midisources/midisource_hmi.cpp
-	sound/midisources/midisource_xmi.cpp
-	sound/musicformats/music_cd.cpp
-	sound/musicformats/music_dumb.cpp
-	sound/musicformats/music_gme.cpp
-	sound/musicformats/music_libsndfile.cpp
-	sound/musicformats/music_midistream.cpp
-	sound/musicformats/music_opl.cpp
-	sound/musicformats/music_stream.cpp
-	sound/oplsynth/fmopl.cpp
-	sound/oplsynth/musicblock.cpp
-	sound/oplsynth/oplio.cpp
-	sound/oplsynth/dosbox/opl.cpp
-	sound/oplsynth/OPL3.cpp
-	sound/oplsynth/nukedopl3.cpp
-	sound/timidity/common.cpp
-	sound/timidity/instrum.cpp
-	sound/timidity/instrum_dls.cpp
-	sound/timidity/instrum_font.cpp
-	sound/timidity/instrum_sf2.cpp
-	sound/timidity/mix.cpp
-	sound/timidity/playmidi.cpp
-	sound/timidity/resample.cpp
-	sound/timidity/timidity.cpp
-	sound/timiditypp/common.cpp
-	sound/timiditypp/configfile.cpp
-	sound/timiditypp/effect.cpp
-	sound/timiditypp/filter.cpp
-	sound/timiditypp/freq.cpp
-	sound/timiditypp/instrum.cpp
-	sound/timiditypp/mblock.cpp
-	sound/timiditypp/mix.cpp
-	sound/timiditypp/playmidi.cpp
-	sound/timiditypp/quantity.cpp
-	sound/timiditypp/readmidic.cpp
-	sound/timiditypp/recache.cpp
-	sound/timiditypp/resample.cpp
-	sound/timiditypp/sbkconv.cpp
-	sound/timiditypp/sffile.cpp
-	sound/timiditypp/sfitem.cpp
-	sound/timiditypp/smplfile.cpp
-	sound/timiditypp/sndfont.cpp
-	sound/timiditypp/tables.cpp
-	sound/wildmidi/file_io.cpp
-	sound/wildmidi/gus_pat.cpp
-	sound/wildmidi/reverb.cpp
-	sound/wildmidi/wildmidi_lib.cpp
-	sound/wildmidi/wm_error.cpp
+	sound/music/music_config.cpp
 	rendering/swrenderer/textures/r_swtexture.cpp
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
+	utility/i_module.cpp
 	utility/palette.cpp
 	utility/files.cpp
 	utility/files_decompress.cpp
@@ -1308,10 +1134,8 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_utility.cpp
 	utility/sc_man.cpp
 	utility/stats.cpp
-	utility/atterm.cpp
 	utility/cmdlib.cpp
 	utility/configfile.cpp
-	utility/i_module.cpp
 	utility/i_time.cpp
 	utility/m_alloc.cpp
 	utility/m_argv.cpp
@@ -1346,6 +1170,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	utility/x86.cpp
 	utility/strnatcmp.c
 	utility/zstring.cpp
+	utility/dictionary.cpp
 	utility/math/asin.c
 	utility/math/atan.c
 	utility/math/const.c
@@ -1385,7 +1210,7 @@ if( UNIX )
 	endif()
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma ${ZMUSIC_LIBRARIES} )
 
 include_directories( .
 	g_statusbar
@@ -1402,9 +1227,6 @@ include_directories( .
 	sound
 	sound/music
 	sound/backend
-	sound/oplsynth
-	sound/timidity
-	sound/wildmidi
 	xlat
 	utility
 	utility/nodebuilder
@@ -1413,7 +1235,6 @@ include_directories( .
 	rendering
 	rendering/vulkan/thirdparty
 	../libraries/gdtoa
-	../libraries/dumb/include
 	../libraries/glslang/glslang/Public
 	../libraries/glslang/spirv
 	${CMAKE_BINARY_DIR}/libraries/gdtoa
@@ -1479,11 +1300,12 @@ endif()
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for these files.
 	if( SSE_MATTERS )
-		set_source_files_properties(
+		set_property( SOURCE
 			rendering/polyrenderer/poly_all.cpp
 			rendering/swrenderer/r_all.cpp
+			utility/palette.cpp
 			utility/x86.cpp
-			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
+			APPEND_STRING PROPERTY COMPILE_FLAGS " -msse2 -mmmx" )
 	endif()
 endif()
 
@@ -1496,7 +1318,8 @@ if( APPLE )
 
 	set_target_properties(zdoom PROPERTIES
 		LINK_FLAGS "${LINK_FRAMEWORKS}"
-		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
+		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist"
+		XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "" )
 
 	# Dymanic libraries like libvulkan.dylib or libMoltenVK.dylib will be loaded by dlopen()
 	# if placed in the directory with the main executable
@@ -1514,15 +1337,6 @@ install(TARGETS zdoom
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
 source_group("Audio Files\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/backend/.+")
-source_group("Audio Files\\ADL MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/adlmidi/.+")
-source_group("Audio Files\\OPN MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/opnmidi/.+")
-source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")
-source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cpp sound/oplsynth/dosbox/opl.h)
-source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timidity/.+")
-source_group("Audio Files\\Timiditypp" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timiditypp/.+")
-source_group("Audio Files\\WildMidi" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/wildmidi/.+")
-source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/mididevices/.+")
-source_group("Audio Files\\MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/midisources/.+")
 source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")
 source_group("Audio Files\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/thirdparty/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
@@ -1582,7 +1396,7 @@ source_group("Rendering\\Software Renderer\\Viewport" REGULAR_EXPRESSION "^${CMA
 source_group("Rendering\\Poly Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/.+")
 source_group("Rendering\\Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/math/.+")
 source_group("Rendering\\Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/drawers/.+")
-source_group("Rendering\\Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/scene/.+")
+source_group("Rendering\\Poly Renderer\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/backend/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
 source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)

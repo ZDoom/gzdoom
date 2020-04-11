@@ -70,11 +70,11 @@ class Knight : Actor
 			int damage = random[KnightAttack](1, 8) * 3;
 			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
 			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
-			A_PlaySound ("hknight/melee", CHAN_BODY);
+			A_StartSound ("hknight/melee", CHAN_BODY);
 			return;
 		}
 		// Throw axe
-		A_PlaySound (AttackSound, CHAN_BODY);
+		A_StartSound (AttackSound, CHAN_BODY);
 		if (self.bShadow || random[KnightAttack]() < 40)
 		{ // Red axe
 			SpawnMissileZ (pos.Z + 36, targ, "RedAxe");
@@ -123,7 +123,7 @@ class KnightAxe : Actor
 	States
 	{
 	Spawn:
-		SPAX A 3 BRIGHT A_PlaySound("hknight/axewhoosh");
+		SPAX A 3 BRIGHT A_StartSound("hknight/axewhoosh");
 		SPAX BC 3 BRIGHT;
 		Loop;
 	Death:

@@ -169,7 +169,7 @@ class CWeapWraithverge : ClericWeapon
 		}
 
 		invoker.CHolyCount = 3;
-		A_PlaySound ("HolySymbolFire", CHAN_WEAPON);
+		A_StartSound ("HolySymbolFire", CHAN_WEAPON);
 	}
 
 	//============================================================================
@@ -373,7 +373,7 @@ class HolySpirit : Actor
 				if (random[SpiritSlam]() < 128)
 				{
 					Spawn("HolyPuff", Pos, ALLOW_REPLACE);
-					A_PlaySound("SpiritAttack", CHAN_WEAPON);
+					A_StartSound("SpiritAttack", CHAN_WEAPON);
 					if (thing.bIsMonster && random[SpiritSlam]() < 128)
 					{
 						thing.Howl();
@@ -525,7 +525,7 @@ class HolySpirit : Actor
 		A_CHolySeek();
 		if (random[HolyScream]() < 20)
 		{
-			A_PlaySound ("SpiritActive", CHAN_VOICE);
+			A_StartSound ("SpiritActive", CHAN_VOICE);
 		}
 		if (!tracer)
 		{

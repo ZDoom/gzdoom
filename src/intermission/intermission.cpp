@@ -129,17 +129,14 @@ void DrawFullscreenSubtitle(const char *text)
 
 void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 {
-	if (desc->mCdTrack == 0 || !S_ChangeCDMusic (desc->mCdTrack, desc->mCdId))
+	if (desc->mMusic.IsEmpty())
 	{
-		if (desc->mMusic.IsEmpty())
-		{
-			// only start the default music if this is the first action in an intermission
-			if (first) S_ChangeMusic (gameinfo.finaleMusic, gameinfo.finaleOrder, desc->mMusicLooping);
-		}
-		else
-		{
-			S_ChangeMusic (desc->mMusic, desc->mMusicOrder, desc->mMusicLooping);
-		}
+		// only start the default music if this is the first action in an intermission
+		if (first) S_ChangeMusic (gameinfo.finaleMusic, gameinfo.finaleOrder, desc->mMusicLooping);
+	}
+	else
+	{
+		S_ChangeMusic (desc->mMusic, desc->mMusicOrder, desc->mMusicLooping);
 	}
 	mDuration = desc->mDuration;
 
@@ -170,7 +167,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mBackground = TexMan.CheckForTexture(texname, ETextureType::MiscPatch);
 		mFlatfill = desc->mFlatfill;
 	}
-	S_Sound (CHAN_VOICE | CHAN_UI, desc->mSound, 1.0f, ATTN_NONE);
+	S_Sound (CHAN_VOICE, CHANF_UI, desc->mSound, 1.0f, ATTN_NONE);
 	mOverlays.Resize(desc->mOverlays.Size());
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
@@ -234,7 +231,6 @@ void DIntermissionScreen::Drawer ()
 		if (CheckOverlay(i))
 			screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
-	if (!mFlatfill) screen->FillBorder (NULL);
 	if (mSubtitle)
 	{
 		const char *sub = mSubtitle.GetChars();
@@ -296,7 +292,6 @@ void DIntermissionScreenFader::Drawer ()
 			if (CheckOverlay(i))
 				screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 		}
-		screen->FillBorder (NULL);
 	}
 }
 
@@ -373,14 +368,13 @@ void DIntermissionScreenText::Drawer ()
 		int w;
 		size_t count;
 		int c;
-		const FRemapTable *range;
 		const uint8_t *ch = (const uint8_t*)mText.GetChars();
 
 		// Count number of rows in this text. Since it does not word-wrap, we just count
 		// line feed characters.
 		int numrows;
 		auto font = generic_ui ? NewSmallFont : SmallFont;
-		auto fontscale = generic_ui ? MIN(screen->GetWidth()/640, screen->GetHeight()/400) : MIN(screen->GetWidth()/400, screen->GetHeight() / 250);
+		auto fontscale = MAX(generic_ui ? MIN(screen->GetWidth() / 640, screen->GetHeight() / 400) : MIN(screen->GetWidth() / 400, screen->GetHeight() / 250), 1);
 		int cleanwidth = screen->GetWidth() / fontscale;
 		int cleanheight = screen->GetHeight() / fontscale;
 		int refwidth = generic_ui ? 640 : 320;
@@ -427,7 +421,6 @@ void DIntermissionScreenText::Drawer ()
 
 		// draw some of the text onto the screen
 		count = (mTicker - mTextDelay) / mTextSpeed;
-		range = font->GetColorTranslation (mTextColor);
 
 		for ( ; count > 0 ; count-- )
 		{
@@ -500,7 +493,7 @@ void DIntermissionScreenCast::Init(FIntermissionAction *desc, bool first)
 	castattacking = false;
 	if (mDefaults->SeeSound)
 	{
-		S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->SeeSound, 1, ATTN_NONE);
+		S_Sound (CHAN_VOICE, CHANF_UI, mDefaults->SeeSound, 1, ATTN_NONE);
 	}
 }
 
@@ -526,11 +519,11 @@ int DIntermissionScreenCast::Responder (event_t *ev)
 		if (mClass->IsDescendantOf(NAME_PlayerPawn))
 		{
 			int snd = S_FindSkinnedSound(players[consoleplayer].mo, "*death");
-			if (snd != 0) S_Sound (CHAN_VOICE | CHAN_UI, snd, 1, ATTN_NONE);
+			if (snd != 0) S_Sound (CHAN_VOICE, CHANF_UI, snd, 1, ATTN_NONE);
 		}
 		else if (mDefaults->DeathSound)
 		{
-			S_Sound (CHAN_VOICE | CHAN_UI, mDefaults->DeathSound, 1, ATTN_NONE);
+			S_Sound (CHAN_VOICE, CHANF_UI, mDefaults->DeathSound, 1, ATTN_NONE);
 		}
 	}
 	return true;
@@ -547,7 +540,7 @@ void DIntermissionScreenCast::PlayAttackSound()
 				(caststate == basestate + mCastSounds[i].mIndex))
 			{
 				S_StopAllChannels ();
-				S_Sound (CHAN_WEAPON | CHAN_UI, mCastSounds[i].mSound, 1, ATTN_NONE);
+				S_Sound (CHAN_WEAPON, CHANF_UI, mCastSounds[i].mSound, 1, ATTN_NONE);
 				return;
 			}
 		}
@@ -761,7 +754,6 @@ void DIntermissionScreenScroller::Drawer ()
 			DTA_Masked, false,
 			TAG_DONE);
 
-		screen->FillBorder (NULL);
 		mBackground = mSecondPic;
 	}
 	else 
@@ -926,6 +918,7 @@ void DIntermissionController::Drawer ()
 {
 	if (mScreen != NULL)
 	{
+		screen->FillBorder(nullptr);
 		mScreen->Drawer();
 	}
 }

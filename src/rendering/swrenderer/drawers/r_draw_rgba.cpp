@@ -80,32 +80,32 @@ CVAR(Float, r_lod_bias, -1.5, 0); // To do: add CVAR_ARCHIVE | CVAR_GLOBALCONFIG
 
 namespace swrenderer
 {
-	void SWTruecolorDrawers::DrawWallColumn(const WallDrawerArgs &args)
+	void SWTruecolorDrawers::DrawWall(const WallDrawerArgs &args)
 	{
 		Queue->Push<DrawWall32Command>(args);
 	}
 	
-	void SWTruecolorDrawers::DrawWallMaskedColumn(const WallDrawerArgs &args)
+	void SWTruecolorDrawers::DrawWallMasked(const WallDrawerArgs &args)
 	{
 		Queue->Push<DrawWallMasked32Command>(args);
 	}
 	
-	void SWTruecolorDrawers::DrawWallAddColumn(const WallDrawerArgs &args)
+	void SWTruecolorDrawers::DrawWallAdd(const WallDrawerArgs &args)
 	{
 		Queue->Push<DrawWallAddClamp32Command>(args);
 	}
 	
-	void SWTruecolorDrawers::DrawWallAddClampColumn(const WallDrawerArgs &args)
+	void SWTruecolorDrawers::DrawWallAddClamp(const WallDrawerArgs &args)
 	{
 		Queue->Push<DrawWallAddClamp32Command>(args);
 	}
 	
-	void SWTruecolorDrawers::DrawWallSubClampColumn(const WallDrawerArgs &args)
+	void SWTruecolorDrawers::DrawWallSubClamp(const WallDrawerArgs &args)
 	{
 		Queue->Push<DrawWallSubClamp32Command>(args);
 	}
 	
-	void SWTruecolorDrawers::DrawWallRevSubClampColumn(const WallDrawerArgs &args)
+	void SWTruecolorDrawers::DrawWallRevSubClamp(const WallDrawerArgs &args)
 	{
 		Queue->Push<DrawWallRevSubClamp32Command>(args);
 	}

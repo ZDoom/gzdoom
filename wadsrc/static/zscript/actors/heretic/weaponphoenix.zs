@@ -161,7 +161,7 @@ class PhoenixRodPowered : PhoenixRod
 		}
 		if (!player.refire)
 		{
-			A_PlaySound("weapons/phoenixpowshoot", CHAN_WEAPON, 1, true);
+			A_StartSound("weapons/phoenixpowshoot", CHAN_WEAPON, CHANF_LOOPING);
 		}	
 	}
 

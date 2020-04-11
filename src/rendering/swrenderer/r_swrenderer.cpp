@@ -48,7 +48,6 @@
 #include "textures/textures.h"
 #include "r_data/voxels.h"
 #include "drawers/r_draw_rgba.h"
-#include "polyrenderer/poly_renderer.h"
 #include "p_setup.h"
 #include "g_levellocals.h"
 #include "image.h"
@@ -185,22 +184,11 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 
 void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *videobuffer, int bufferpitch)
 {
-	if (V_IsPolyRenderer())
-	{
-		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderView(player, target, videobuffer, bufferpitch);
-		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
-	}
-	else
-	{
-		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
-		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.RenderView(player, target, videobuffer, bufferpitch);
-		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
-		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
-	}
+	mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
+	mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
+	mScene.RenderView(player, target, videobuffer, bufferpitch);
+	r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
+	r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 
 	r_viewpoint.ViewLevel->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
 	{
@@ -215,43 +203,22 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	DCanvas pic(width, height, false);
 
 	// Take a snapshot of the player's view
-	if (V_IsPolyRenderer())
-	{
-		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, &pic, 0, 0, width, height, true);
-		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
-	}
-	else
-	{
-		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
-		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.RenderViewToCanvas(player->mo, &pic, 0, 0, width, height);
-		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
-		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
-	}
+	mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
+	mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
+	mScene.RenderViewToCanvas(player->mo, &pic, 0, 0, width, height);
+	r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
+	r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
+
 	DoWriteSavePic(file, SS_PAL, pic.GetPixels(), width, height, r_viewpoint.sector, false);
 }
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()
 {
-	if (!V_IsPolyRenderer())
-	{
-		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
-		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.MainThread()->PlayerSprites->RenderRemaining();
-		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
-		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
-	}
-	else
-	{
-		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
-		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderRemainingPlayerSprites();
-		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
-		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
-	}
+	mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
+	mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
+	mScene.MainThread()->PlayerSprites->RenderRemaining();
+	r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
+	r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 }
 
 void FSoftwareRenderer::SetClearColor(int color)
@@ -261,9 +228,9 @@ void FSoftwareRenderer::SetClearColor(int color)
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewpoint, double fov)
 {
-	auto renderTarget = V_IsPolyRenderer() ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
-	auto &cameraViewpoint = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
-	auto &cameraViewwindow = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
+	auto renderTarget = mScene.MainThread()->Viewport->RenderTarget;
+	auto &cameraViewpoint = mScene.MainThread()->Viewport->viewpoint;
+	auto &cameraViewwindow = mScene.MainThread()->Viewport->viewwindow;
 
 	// Grab global state shared with rest of zdoom
 	cameraViewpoint = r_viewpoint;
@@ -280,10 +247,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewp
 	DAngle savedfov = cameraViewpoint.FieldOfView;
 	R_SetFOV (cameraViewpoint, fov);
 
-	if (V_IsPolyRenderer())
-		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), camtex->bFirstUpdate);
-	else
-		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), camtex->bFirstUpdate);
+	mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), camtex->bFirstUpdate);
 
 	R_SetFOV (cameraViewpoint, savedfov);
 

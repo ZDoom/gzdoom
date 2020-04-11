@@ -88,7 +88,7 @@ extend class StateProvider
 			{
 				player.extralight = !player.extralight;
 			}
-			A_PlaySound (fullsound, CHAN_WEAPON);
+			A_StartSound (fullsound, CHAN_WEAPON);
 			return;
 		}
 
@@ -138,7 +138,7 @@ extend class StateProvider
 			}
 		}
 
-		A_PlaySound (hitsound, CHAN_WEAPON);
+		A_StartSound (hitsound, CHAN_WEAPON);
 			
 		// turn to face target
 		if (!(flags & SF_NOTURN))

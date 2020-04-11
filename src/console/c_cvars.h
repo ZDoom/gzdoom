@@ -37,6 +37,7 @@
 #include "zstring.h"
 #include "tarray.h"
 
+class FSerializer;
 /*
 ==========================================================
 
@@ -47,24 +48,29 @@ CVARS (console variables)
 
 enum
 {
-	CVAR_ARCHIVE		= 1,	// set to cause it to be saved to config
-	CVAR_USERINFO		= 2,	// added to userinfo  when changed
-	CVAR_SERVERINFO		= 4,	// added to serverinfo when changed
-	CVAR_NOSET			= 8,	// don't allow change from console at all,
-								// but can be set from the command line
-	CVAR_LATCH			= 16,	// save changes until server restart
-	CVAR_UNSETTABLE		= 32,	// can unset this var from console
-	CVAR_DEMOSAVE		= 64,	// save the value of this cvar in a demo
-	CVAR_ISDEFAULT		= 128,	// is cvar unchanged since creation?
-	CVAR_AUTO			= 256,	// allocated; needs to be freed when destroyed
-	CVAR_NOINITCALL		= 512,	// don't call callback at game start
-	CVAR_GLOBALCONFIG	= 1024,	// cvar is saved to global config section
-	CVAR_VIDEOCONFIG	= 2048, // cvar is saved to video config section (not implemented)
-	CVAR_NOSAVE			= 4096, // when used with CVAR_SERVERINFO, do not save var to savegame
-	CVAR_MOD			= 8192,	// cvar was defined by a mod
-	CVAR_IGNORE			= 16384,// do not send cvar across the network/inaccesible from ACS (dummy mod cvar)
-	CVAR_CHEAT			= 32768,// can be set only when sv_cheats is enabled
-	CVAR_UNSAFECONTEXT	= 65536,// cvar value came from unsafe context
+	CVAR_ARCHIVE       = 1,       // set to cause it to be saved to config.
+	CVAR_USERINFO      = 1 <<  1, // added to userinfo  when changed.
+	CVAR_SERVERINFO    = 1 <<  2, // added to serverinfo when changed.
+	CVAR_NOSET         = 1 <<  3, // don't allow change from console at all,
+	                              // but can be set from the command line.
+	CVAR_LATCH         = 1 <<  4, // save changes until server restart.
+	CVAR_UNSETTABLE    = 1 <<  5, // can unset this var from console.
+	CVAR_DEMOSAVE      = 1 <<  6, // save the value of this cvar in a demo.
+	CVAR_ISDEFAULT     = 1 <<  7, // is cvar unchanged since creation?
+	CVAR_AUTO          = 1 <<  8, // allocated; needs to be freed when destroyed.
+	CVAR_NOINITCALL    = 1 <<  9, // don't call callback at game start.
+	CVAR_GLOBALCONFIG  = 1 << 10, // cvar is saved to global config section.
+	CVAR_VIDEOCONFIG   = 1 << 11, // cvar is saved to video config section (not implemented).
+	CVAR_NOSAVE        = 1 << 12, // when used with CVAR_SERVERINFO, do not save var to savegame
+	                              // and config.
+	CVAR_MOD           = 1 << 13, // cvar was defined by a mod.
+	CVAR_IGNORE        = 1 << 14, // do not send cvar across the network/inaccesible from ACS
+	                              // (dummy mod cvar).
+	CVAR_CHEAT         = 1 << 15, // can be set only when sv_cheats is enabled.
+	CVAR_UNSAFECONTEXT = 1 << 16, // cvar value came from unsafe context.
+	CVAR_VIRTUAL       = 1 << 17, // do not invoke the callback recursively so it can be used to
+	                              // mirror an external variable.
+	CVAR_CONFIG_ONLY   = 1 << 18, // do not save var to savegame and do not send it across network.
 };
 
 union UCVarValue
@@ -97,7 +103,15 @@ public:
 	FBaseCVar (const char *name, uint32_t flags, void (*callback)(FBaseCVar &));
 	virtual ~FBaseCVar ();
 
-	inline void Callback () { if (m_Callback) m_Callback (*this); }
+	inline void Callback () 
+	{ 
+		if (m_Callback && !inCallback)
+		{
+			inCallback = !!(Flags & CVAR_VIRTUAL);	// Virtual CVARs never invoke the callback recursively, giving it a chance to manipulate the value without side effects.
+			m_Callback(*this);
+			inCallback = false;
+		}
+	}
 
 	inline const char *GetName () const { return Name; }
 	inline uint32_t GetFlags () const { return Flags; }
@@ -145,6 +159,7 @@ protected:
 	char *Name;
 	FString SafeValue;
 	uint32_t Flags;
+	bool inCallback;
 
 private:
 	FBaseCVar (const FBaseCVar &var) = delete;
@@ -157,6 +172,7 @@ private:
 	static bool m_DoNoSet;
 
 	friend FString C_GetMassCVarString (uint32_t filter, bool compact);
+	friend void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter);
 	friend void C_ReadCVars (uint8_t **demo_p);
 	friend void C_BackupCVars (void);
 	friend FBaseCVar *FindCVar (const char *var_name, FBaseCVar **prev);
@@ -179,6 +195,8 @@ void C_WriteCVars (uint8_t **demo_p, uint32_t filter, bool compact=false);
 
 // Read all cvars from *demo_p and set them appropriately.
 void C_ReadCVars (uint8_t **demo_p);
+
+void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter);
 
 // Backup demo cvars. Called before a demo starts playing to save all
 // cvars the demo might change.

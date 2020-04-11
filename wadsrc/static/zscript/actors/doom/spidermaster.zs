@@ -87,7 +87,7 @@ extend class Actor
 
 	void A_Metal()
 	{
-		A_PlaySound("spider/walk", CHAN_BODY, 1, false, ATTN_IDLE);
+		A_StartSound("spider/walk", CHAN_BODY, CHANF_DEFAULT, 1, ATTN_IDLE);
 		A_Chase();
 	}
 }

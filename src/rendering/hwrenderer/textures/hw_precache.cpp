@@ -222,6 +222,10 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 
 	if (gl_precache)
 	{
+		cycle_t precache;
+		precache.Reset();
+		precache.Clock();
+
 		FImageSource::BeginPrecaching();
 
 		// cache all used textures
@@ -271,6 +275,9 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 				Models[i]->BuildVertexBuffer(renderer);
 		}
 		delete renderer;
+
+		precache.Unclock();
+		DPrintf(DMSG_NOTIFY, "Textures precached in %.3f ms\n", precache.TimeMS());
 	}
 
 	delete[] spritehitlist;

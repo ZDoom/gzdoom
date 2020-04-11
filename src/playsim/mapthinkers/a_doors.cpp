@@ -437,7 +437,7 @@ bool FLevelLocals::EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		// if the wrong side of door is pushed, give oof sound
 		if (line->sidedef[1] == NULL)			// killough
 		{
-			S_Sound (thing, CHAN_VOICE, "*usefail", 1, ATTN_NORM);
+			S_Sound (thing, CHAN_VOICE, 0, "*usefail", 1, ATTN_NORM);
 			return false;
 		}
 

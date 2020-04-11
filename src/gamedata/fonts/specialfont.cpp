@@ -160,7 +160,7 @@ void FSpecialFont::LoadTranslations()
 	uint8_t identity[256];
 	TArray<double> Luminosity;
 	int TotalColors;
-	int i, j;
+	int i;
 
 	for (i = 0; i < count; i++)
 	{
@@ -199,22 +199,20 @@ void FSpecialFont::LoadTranslations()
 			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
-	BuildTranslations (Luminosity.Data(), identity, &TranslationParms[0][0], TotalColors, nullptr);
-
-	// add the untranslated colors to the Ranges tables
-	if (ActiveColors < TotalColors)
-	{
-		for (i = 0; i < NumTextColors; i++)
+	BuildTranslations(Luminosity.Data(), identity, &TranslationParms[0][0], TotalColors, nullptr, [=](FRemapTable* remap)
 		{
-			FRemapTable *remap = &Ranges[i];
-			for (j = ActiveColors; j < TotalColors; ++j)
+			// add the untranslated colors to the Ranges tables
+			if (ActiveColors < TotalColors)
 			{
-				remap->Remap[j] = identity[j];
-				remap->Palette[j] = GPalette.BaseColors[identity[j]];
-				remap->Palette[j].a = 0xff;
+				for (int j = ActiveColors; j < TotalColors; ++j)
+				{
+					remap->Remap[j] = identity[j];
+					remap->Palette[j] = GPalette.BaseColors[identity[j]];
+					remap->Palette[j].a = 0xff;
+				}
 			}
-		}
-	}
+		});
+
 	ActiveColors = TotalColors;
 }
 

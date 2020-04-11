@@ -758,7 +758,7 @@ uint32_t CalcSum(Byte *row, int len)
 //==========================================================================
 
 #if USE_FILTER_HEURISTIC
-static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int width)
+static int SelectFilter(Byte **row, Byte *prior, int width)
 {
 	// As it turns out, it seems no filtering is the best for Doom screenshots,
 	// no matter what the heuristic might determine.
@@ -893,12 +893,27 @@ static int SelectFilter(Byte row[5][1 + MAXWIDTH*3], Byte prior[MAXWIDTH*3], int
 
 bool M_SaveBitmap(const uint8_t *from, ESSType color_type, int width, int height, int pitch, FileWriter *file)
 {
+	TArray<Byte> temprow_storage;
+
 #if USE_FILTER_HEURISTIC
-	Byte prior[MAXWIDTH*3];
-	Byte temprow[5][1 + MAXWIDTH*3];
+	static const unsigned temprow_count = 5;
+
+	TArray<Byte> prior_storage(width * 3, true);
+	Byte *prior = &prior_storage[0];
 #else
-	Byte temprow[1][1 + MAXWIDTH*3];
+	static const unsigned temprow_count = 1;
 #endif
+
+	const unsigned temprow_size = 1 + width * 3;
+	temprow_storage.Resize(temprow_size * temprow_count);
+
+	Byte* temprow[temprow_count];
+
+	for (unsigned i = 0; i < temprow_count; ++i)
+	{
+		temprow[i] = &temprow_storage[temprow_size * i];
+	}
+
 	Byte buffer[PNG_WRITE_SIZE];
 	z_stream stream;
 	int err;

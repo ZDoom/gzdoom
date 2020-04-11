@@ -124,7 +124,7 @@ class LittleFly : Actor
 		Vel.Z = zrand / 512.;
 		if (random[Fly]() < 40)
 		{
-			A_PlaySound(ActiveSound, CHAN_VOICE, 0.5f, false, ATTN_STATIC);
+			A_StartSound(ActiveSound, CHAN_VOICE, CHANF_DEFAULT, 0.5f, ATTN_STATIC);
 		}
 	}
 }

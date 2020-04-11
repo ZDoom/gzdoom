@@ -1,10 +1,32 @@
+/*
+**  Vulkan backend
+**  Copyright (c) 2016-2020 Magnus Norddahl
+**
+**  This software is provided 'as-is', without any express or implied
+**  warranty.  In no event will the authors be held liable for any damages
+**  arising from the use of this software.
+**
+**  Permission is granted to anyone to use this software for any purpose,
+**  including commercial applications, and to alter it and redistribute it
+**  freely, subject to the following restrictions:
+**
+**  1. The origin of this software must not be misrepresented; you must not
+**     claim that you wrote the original software. If you use this software
+**     in a product, an acknowledgment in the product documentation would be
+**     appreciated but is not required.
+**  2. Altered source versions must be plainly marked as such, and must not be
+**     misrepresented as being the original software.
+**  3. This notice may not be removed or altered from any source distribution.
+**
+*/
 
 #include "vk_swapchain.h"
 #include "vk_objects.h"
 #include "c_cvars.h"
 #include "version.h"
+#include "v_video.h"
+#include "vk_framebuffer.h"
 
-EXTERN_CVAR(Bool, vid_vsync);
 
 CVAR(Bool, vk_hdr, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -21,12 +43,13 @@ VulkanSwapChain::~VulkanSwapChain()
 
 uint32_t VulkanSwapChain::AcquireImage(int width, int height, VulkanSemaphore *semaphore, VulkanFence *fence)
 {
-	if (lastSwapWidth != width || lastSwapHeight != height || lastVsync != vid_vsync || lastHdr != vk_hdr || !swapChain)
+	auto vsync = static_cast<VulkanFrameBuffer*>(screen)->cur_vsync;
+	if (lastSwapWidth != width || lastSwapHeight != height || lastVsync != vsync || lastHdr != vk_hdr || !swapChain)
 	{
 		Recreate();
 		lastSwapWidth = width;
 		lastSwapHeight = height;
-		lastVsync = vid_vsync;
+		lastVsync = vsync;
 		lastHdr = vk_hdr;
 	}
 
@@ -226,6 +249,11 @@ void VulkanSwapChain::CreateViews()
 	}
 }
 
+bool VulkanSwapChain::IsHdrModeActive() const
+{
+	return swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT || swapChainFormat.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT;
+}
+
 void VulkanSwapChain::SelectFormat()
 {
 	std::vector<VkSurfaceFormatKHR> surfaceFormats = GetSurfaceFormats();
@@ -241,6 +269,16 @@ void VulkanSwapChain::SelectFormat()
 
 	if (vk_hdr)
 	{
+		for (const auto& format : surfaceFormats)
+		{
+			if (format.format == VK_FORMAT_R16G16B16A16_SFLOAT && format.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT)
+			{
+				swapChainFormat = format;
+				return;
+			}
+		}
+
+		// For older drivers that reported the wrong colorspace
 		for (const auto &format : surfaceFormats)
 		{
 			if (format.format == VK_FORMAT_R16G16B16A16_SFLOAT && format.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
@@ -271,7 +309,8 @@ void VulkanSwapChain::SelectPresentMode()
 		VulkanError("No surface present modes supported");
 
 	swapChainPresentMode = VK_PRESENT_MODE_FIFO_KHR;
-	if (vid_vsync)
+	auto vsync = static_cast<VulkanFrameBuffer*>(screen)->cur_vsync;
+	if (vsync)
 	{
 		bool supportsFifoRelaxed = std::find(presentModes.begin(), presentModes.end(), VK_PRESENT_MODE_FIFO_RELAXED_KHR) != presentModes.end();
 		if (supportsFifoRelaxed)
@@ -286,33 +325,6 @@ void VulkanSwapChain::SelectPresentMode()
 		else if (supportsImmediate)
 			swapChainPresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 	}
-}
-
-void VulkanSwapChain::SetHdrMetadata()
-{
-	if (swapChainFormat.colorSpace != VK_COLOR_SPACE_HDR10_ST2084_EXT)
-		return;
-
-	// Mastering display with HDR10_ST2084 color primaries and D65 white point,
-	// maximum luminance of 1000 nits and minimum luminance of 0.001 nits;
-	// content has maximum luminance of 2000 nits and maximum frame average light level (MaxFALL) of 500 nits.
-
-	VkHdrMetadataEXT metadata = {};
-	metadata.sType = VK_STRUCTURE_TYPE_HDR_METADATA_EXT;
-	metadata.displayPrimaryRed.x = 0.708f;
-	metadata.displayPrimaryRed.y = 0.292f;
-	metadata.displayPrimaryGreen.x = 0.170f;
-	metadata.displayPrimaryGreen.y = 0.797f;
-	metadata.displayPrimaryBlue.x = 0.131f;
-	metadata.displayPrimaryBlue.y = 0.046f;
-	metadata.whitePoint.x = 0.3127f;
-	metadata.whitePoint.y = 0.3290f;
-	metadata.maxLuminance = 1000.0f;
-	metadata.minLuminance = 0.001f;
-	metadata.maxContentLightLevel = 2000.0f;
-	metadata.maxFrameAverageLightLevel = 500.0f;
-
-	vkSetHdrMetadataEXT(device->device, 1, &swapChain, &metadata);
 }
 
 void VulkanSwapChain::GetImages()

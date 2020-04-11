@@ -38,7 +38,7 @@ class FWeapFist : FighterWeapon
 		FPCH E 1 Offset (35, 70);
 		FPCH E 1 Offset (45, 80);
 		FPCH E 1 Offset (55, 90);
-		FPCH E 1 Offset (65, 90);
+		FPCH E 1 Offset (65, 100);
 		FPCH E 10 Offset (0, 150);
 		Goto Ready;
 	}
@@ -109,7 +109,7 @@ class FWeapFist : FighterWeapon
 				{
 					weaponspecial = 0;
 					player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.FindState("Fire2"));
-					A_PlaySound ("*fistgrunt", CHAN_VOICE);
+					A_StartSound ("*fistgrunt", CHAN_VOICE);
 				}
 				return;
 			}

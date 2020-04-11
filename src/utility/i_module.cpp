@@ -40,6 +40,7 @@
 #include <dlfcn.h>
 #endif
 
+
 #ifndef _WIN32
 #define LoadLibraryA(x) dlopen((x), RTLD_LAZY)
 #define GetProcAddress(a,b) dlsym((a),(b))
@@ -97,4 +98,11 @@ bool FModule::Open(const char* lib)
 void *FModule::GetSym(const char* name)
 {
 	return (void *)GetProcAddress((HMODULE)handle, name);
+}
+
+std::string module_progdir(".");	// current program directory used to look up dynamic libraries. Default to something harmless in case the user didn't set it.
+
+void FModule_SetProgDir(const char* progdir)
+{
+	module_progdir = progdir;
 }

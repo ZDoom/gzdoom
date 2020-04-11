@@ -1,0 +1,46 @@
+// MAPINFO for Doom 2: 2019 Edition
+include "mapinfo/doom2.txt"
+
+gameinfo
+{
+	titlepage = "DMENUPIC"
+}
+
+clearepisodes
+episode map01
+{
+	name = "Hell On Earth"
+	picname = "M_EPI1"
+	key = "h"
+}
+
+episode level01
+{
+	name = "$TXT_D2E2"
+	key = "n"
+	optional
+}
+
+// Wolfenstein 3D censorship
+map MAP31 lookup "HUSTR_31B"
+{
+	titlepatch = "CWILV30"
+	next = "MAP16"
+	secretnext = "MAP32"
+	sky1 = "SKY3"
+	cluster = 9
+	par = 120
+	music = "$MUSIC_EVIL"
+	needclustertext
+}
+
+map MAP32 lookup "HUSTR_32B"
+{
+	titlepatch = "CWILV31"
+	next = "MAP16"
+	secretnext = "MAP16"
+	sky1 = "SKY3"
+	cluster = 10
+	par = 30
+	music = "$MUSIC_ULTIMA"
+}

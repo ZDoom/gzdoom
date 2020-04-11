@@ -193,7 +193,8 @@ bool FStringTable::readMacros(int lumpnum)
 
 bool FStringTable::ParseLanguageCSV(int lumpnum, const TArray<uint8_t> &buffer)
 {
-	if (memcmp(buffer.Data(), "default,", 8)) return false;
+	if (buffer.Size() < 11) return false;
+	if (strnicmp((const char*)buffer.Data(), "default,", 8) && strnicmp((const char*)buffer.Data(), "identifier,", 11 )) return false;
 	auto data = parseCSV(buffer);
 
 	int labelcol = -1;
@@ -286,6 +287,7 @@ void FStringTable::LoadLanguage (int lumpnum, const TArray<uint8_t> &buffer)
 		if (sc.Compare ("["))
 		{ // Process language identifiers
 			activeMaps.Clear();
+			hasDefaultEntry = false;
 			sc.MustGetString ();
 			do
 			{

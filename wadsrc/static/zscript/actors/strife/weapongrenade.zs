@@ -76,7 +76,7 @@ class StrifeGrenadeLauncher : StrifeWeapon
 
 			if (grenade.SeeSound != 0)
 			{
-				grenade.A_PlaySound (grenade.SeeSound, CHAN_VOICE);
+				grenade.A_StartSound (grenade.SeeSound, CHAN_VOICE);
 			}
 
 			grenade.Vel.Z = (-clamp(tan(Pitch), -5, 5)) * grenade.Speed + 8;
@@ -269,7 +269,7 @@ class PhosphorousFire : Actor
 		Vel.Z -= 8;
 		Vel.X += (random2[PHBurn] (3));
 		Vel.Y += (random2[PHBurn] (3));
-		A_PlaySound ("world/largefire", CHAN_VOICE);
+		A_StartSound ("world/largefire", CHAN_VOICE);
 
 		// Only the main fire spawns more.
 		if (!bDropped)

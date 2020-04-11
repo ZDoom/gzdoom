@@ -334,7 +334,6 @@ void ST_CreateStatusBar(bool bTitleLevel)
 // Constructor
 //
 //---------------------------------------------------------------------------
-
 DBaseStatusBar::DBaseStatusBar ()
 {
 	CompleteBorder = false;
@@ -346,21 +345,9 @@ DBaseStatusBar::DBaseStatusBar ()
 	CPlayer = NULL;
 	ShowLog = false;
 	defaultScale = { (double)CleanXfac, (double)CleanYfac };
+	SetSize(0);
 
-	// Create the AltHud object. Todo: Make class type configurable.
-	FName classname = "AltHud";
-	auto cls = PClass::FindClass(classname);
-	if (cls)
-	{
-		AltHud = cls->CreateNew();
-
-		VMFunction * func = PClass::FindFunction(classname, "Init"); 
-		if (func != nullptr)
-		{
-			VMValue params[] = { AltHud };
-			VMCall(func, params, countof(params), nullptr, 0);
-		}
-	}
+	CreateAltHUD();
 }
 
 static void ValidateResolution(int &hres, int &vres)
@@ -1675,27 +1662,29 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 //
 //============================================================================
 
-void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY)
+void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, EMonospacing monospacing, int shadowX, int shadowY, double scaleX, double scaleY)
 {
 	bool monospaced = monospacing != EMonospacing::Off;
+	double dx = 0;
 
 	switch (flags & DI_TEXT_ALIGN)
 	{
 	default:
 		break;
 	case DI_TEXT_ALIGN_RIGHT:
-		if (!monospaced)
-			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount()));
-		else //monospaced, so just multiply the character size
-			x -= static_cast<int> ((spacing) * cstring.CharacterCount());
+		dx = monospaced
+			? static_cast<int> ((spacing)*cstring.CharacterCount()) //monospaced, so just multiply the character size
+			: static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount()));
 		break;
 	case DI_TEXT_ALIGN_CENTER:
-		if (!monospaced)
-			x -= static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount())) / 2;
-		else //monospaced, so just multiply the character size
-			x -= static_cast<int> ((spacing)* cstring.CharacterCount()) / 2;
+		dx = monospaced
+			? static_cast<int> ((spacing)*cstring.CharacterCount()) / 2 //monospaced, so just multiply the character size
+			: static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount())) / 2;
 		break;
 	}
+
+	// Take text scale into account
+	x -= dx * scaleX;
 
 	const uint8_t* str = (const uint8_t*)cstring.GetChars();
 	const EColorRange boldTranslation = EColorRange(translation ? translation - 1 : NumTextColors - 1);
@@ -1781,6 +1770,11 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 			rx += orgx;
 			ry += orgy;
 		}
+
+		// Apply text scale
+		rw *= scaleX;
+		rh *= scaleY;
+
 		// This is not really such a great way to draw shadows because they can overlap with previously drawn characters.
 		// This may have to be changed to draw the shadow text up front separately.
 		if ((shadowX != 0 || shadowY != 0) && !(flags & DI_NOSHADOW))
@@ -1798,14 +1792,16 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 			DTA_Alpha, Alpha,
 			TAG_DONE);
 
-		if (!monospaced)
-			x += width + spacing - (c->GetDisplayLeftOffsetDouble() + 1);
-		else
-			x += spacing;
+		dx = monospaced 
+			? spacing
+			: width + spacing - (c->GetDisplayLeftOffsetDouble() + 1);
+
+		// Take text scale into account
+		x += dx * scaleX;
 	}
 }
 
-void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing)
+void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY)
 {
 	if (font == nullptr) ThrowAbortException(X_READ_NIL, nullptr);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
@@ -1821,16 +1817,16 @@ void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string
 
 	if (wrapwidth > 0)
 	{
-		auto brk = V_BreakLines(font->mFont, wrapwidth, string, true);
+		auto brk = V_BreakLines(font->mFont, int(wrapwidth * scaleX), string, true);
 		for (auto &line : brk)
 		{
-			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY);
-			y += font->mFont->GetHeight() + linespacing;
+			self->DrawString(font->mFont, line.Text, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY);
+			y += (font->mFont->GetHeight() + linespacing) * scaleY;
 		}
 	}
 	else
 	{
-		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY);
+		self->DrawString(font->mFont, string, x, y, flags, alpha, trans, font->mSpacing, font->mMonospacing, font->mShadowX, font->mShadowY, scaleX, scaleY);
 	}
 }
 

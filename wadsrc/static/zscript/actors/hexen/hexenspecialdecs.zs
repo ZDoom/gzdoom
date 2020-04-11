@@ -128,7 +128,7 @@ class Pottery1 : Actor
 				mo.Vel.Z = random[Pottery](5, 12) * 0.75;
 			}
 		}
-		mo.A_PlaySound ("PotteryExplode", CHAN_BODY);
+		mo.A_StartSound ("PotteryExplode", CHAN_BODY);
 		// Spawn an item?
 		Class<Actor> type = GetSpawnableType(args[0]);
 		if (type != null)
@@ -415,7 +415,7 @@ class ZCorpseSitting : Actor
 			mo.Vel.Y = random2[CorpseExplode]() / 64.;
 			mo.Vel.Z = random[CorpseExplode](5, 12) * 0.75;
 		}
-		A_PlaySound (DeathSound, CHAN_BODY);
+		A_StartSound (DeathSound, CHAN_BODY);
 		Destroy ();
 	}
 }
@@ -581,7 +581,7 @@ class ZTwinedTorch : SwitchableDecoration
 	States
 	{
 	Active:
-		TWTR A 0 Bright A_PlaySound("Ignite");
+		TWTR A 0 Bright A_StartSound("Ignite");
 	Spawn:
 		TWTR ABCDEFGH 4 Bright;
 		Loop;
@@ -615,7 +615,7 @@ class ZWallTorch : SwitchableDecoration
 	States
 	{
 	Active:
-		WLTR A 0 Bright A_PlaySound("Ignite");
+		WLTR A 0 Bright A_StartSound("Ignite");
 	Spawn:
 		WLTR ABCDEFGH 5 Bright;
 		Loop;
@@ -703,7 +703,7 @@ class ZFireBull : SwitchableDecoration
 	States
 	{
 	Active:
-		FBUL I 4 Bright A_PlaySound("Ignite");
+		FBUL I 4 Bright A_StartSound("Ignite");
 		FBUL J 4 Bright;
 	Spawn:
 		FBUL ABCDEFG 4 Bright;
@@ -781,7 +781,7 @@ class ZSuitOfArmor : Actor
 				Spawn (type, Pos, ALLOW_REPLACE);
 			}
 		}
-		A_PlaySound (DeathSound, CHAN_BODY);
+		A_StartSound (DeathSound, CHAN_BODY);
 		Destroy ();
 	}
 }
@@ -962,7 +962,7 @@ class ZCauldron : SwitchableDecoration
 	States
 	{
 	Active:
-		CDRN B 0 Bright A_PlaySound("Ignite");
+		CDRN B 0 Bright A_StartSound("Ignite");
 	Spawn:
 		CDRN BCDEFGH 4 Bright;
 		Loop;

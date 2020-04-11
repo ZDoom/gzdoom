@@ -154,7 +154,7 @@ class FireDemon : Actor
 	{
 		if (target == null)	return;
 		Actor mo = SpawnMissile (target, "FireDemonMissile");
-		if (mo) A_PlaySound ("FireDemonAttack", CHAN_BODY);
+		if (mo) A_StartSound ("FireDemonAttack", CHAN_BODY);
 	}
 
 	//============================================================================

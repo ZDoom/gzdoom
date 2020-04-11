@@ -61,7 +61,6 @@
 #include "g_levellocals.h"
 #include "utf8.h"
 
-char nulspace[1024 * 1024 * 4];
 bool save_full = false;	// for testing. Should be removed afterward.
 
 //==========================================================================
@@ -298,15 +297,12 @@ struct FReader
 	rapidjson::Document mDoc;
 	TArray<DObject *> mDObjects;
 	rapidjson::Value *mKeyValue = nullptr;
-	int mPlayers[MAXPLAYERS];
 	bool mObjectsRead = false;
 
 	FReader(const char *buffer, size_t length)
 	{
-		rapidjson::Document doc;
 		mDoc.Parse(buffer, length);
 		mObjects.Push(FJSONObject(&mDoc));
-		memset(mPlayers, -1, sizeof(mPlayers));
 	}
 
 	rapidjson::Value *FindKey(const char *key)
@@ -1667,7 +1663,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 		if (!arc.w->inObject() || def == nullptr || sid != *def)
 		{
 			arc.WriteKey(key);
-			const char *sn = (const char*)sid;
+			const char *sn = S_GetSoundName(sid);
 			if (sn != nullptr) arc.w->String(sn);
 			else arc.w->Null();
 		}
@@ -2158,6 +2154,86 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 		return arc;
 	}
 
+}
+
+//==========================================================================
+//
+// Dictionary
+//
+//==========================================================================
+
+FString DictionaryToString(const Dictionary &dict)
+{
+	Dictionary::ConstPair *pair;
+	Dictionary::ConstIterator i { dict.Map };
+
+	rapidjson::StringBuffer buffer;
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	writer.StartObject();
+
+	while (i.NextPair(pair))
+	{
+		writer.Key(pair->Key);
+		writer.String(pair->Value);
+	}
+
+	writer.EndObject();
+
+	FString contents { buffer.GetString(), buffer.GetSize() };
+	return contents;
+}
+
+Dictionary *DictionaryFromString(const FString &string)
+{
+	if (string.Compare("null") == 0)
+	{
+		return nullptr;
+	}
+
+	Dictionary *const dict = Create<Dictionary>();
+
+	if (string.IsEmpty())
+	{
+		return dict;
+	}
+
+	rapidjson::Document doc;
+	doc.Parse(string.GetChars(), string.Len());
+
+	if (doc.GetType() != rapidjson::Type::kObjectType)
+	{
+		I_Error("Dictionary is expected to be a JSON object.");
+		return dict;
+	}
+
+	for (auto i = doc.MemberBegin(); i != doc.MemberEnd(); ++i)
+	{
+		if (i->value.GetType() != rapidjson::Type::kStringType)
+		{
+			I_Error("Dictionary value is expected to be a JSON string.");
+			return dict;
+		}
+
+		dict->Map.Insert(i->name.GetString(), i->value.GetString());
+	}
+
+	return dict;
+}
+
+template<> FSerializer &Serialize(FSerializer &arc, const char *key, Dictionary *&dict, Dictionary **)
+{
+	if (arc.isWriting())
+	{
+		FString contents { dict ? DictionaryToString(*dict) : "null" };
+		return arc(key, contents);
+	}
+	else
+	{
+		FString contents;
+		arc(key, contents);
+		dict = DictionaryFromString(contents);
+		return arc;
+	}
 }
 
 //==========================================================================

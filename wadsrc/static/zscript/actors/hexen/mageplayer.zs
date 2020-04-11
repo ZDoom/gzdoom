@@ -81,7 +81,7 @@ class MagePlayer : PlayerPawn
 		MAGE Y 1 A_FreezeDeathChunks;
 		Wait;
 	Burn:
-		FDTH E 5 BRIGHT A_PlaySound("*burndeath");
+		FDTH E 5 BRIGHT A_StartSound("*burndeath");
 		FDTH F 4 BRIGHT;
 		FDTH G 5 BRIGHT;
 		FDTH H 4 BRIGHT A_PlayerScream;

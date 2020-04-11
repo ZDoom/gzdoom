@@ -256,7 +256,8 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		NoInterpolateView = false;
 
 		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
-		gl_RenderState.CheckTimer(player->camera->Level->ShaderStartTime);
+		if (player->camera)
+			gl_RenderState.CheckTimer(player->camera->Level->ShaderStartTime);
 		// prepare all camera textures that have been used in the last frame.
 		// This must be done for all levels, not just the primary one!
 		for (auto Level : AllLevels())

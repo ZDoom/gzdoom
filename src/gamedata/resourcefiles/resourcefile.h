@@ -74,7 +74,7 @@ struct FResourceLump
 	int ReleaseCache();
 
 protected:
-	virtual int FillCache() = 0;
+	virtual int FillCache() { return -1; }
 
 };
 
@@ -85,11 +85,13 @@ public:
 	FString FileName;
 protected:
 	uint32_t NumLumps;
+	FString Hash;
 
 	FResourceFile(const char *filename);
 	FResourceFile(const char *filename, FileReader &r);
 
 	// for archives that can contain directories
+	void GenerateHash();
 	void PostProcessArchive(void *lumps, size_t lumpsize);
 
 private:
@@ -112,6 +114,8 @@ public:
 	uint32_t LumpCount() const { return NumLumps; }
 	uint32_t GetFirstLump() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
+	const FString &GetHash() const { return Hash; }
+
 
 	virtual void FindStrifeTeaserVoices ();
 	virtual bool Open(bool quiet) = 0;

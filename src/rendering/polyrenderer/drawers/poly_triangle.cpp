@@ -35,705 +35,442 @@
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "poly_triangle.h"
-#include "polyrenderer/poly_renderer.h"
+#include "poly_thread.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
 #include "x86.h"
 
-static bool isBgraRenderTarget = false;
+/////////////////////////////////////////////////////////////////////////////
 
-void PolyTriangleDrawer::ResizeBuffers(DCanvas *canvas)
+class PolyDrawerCommand : public DrawerCommand
 {
-	PolyStencilBuffer::Instance()->Resize(canvas->GetWidth(), canvas->GetHeight());
-	PolyZBuffer::Instance()->Resize(canvas->GetPitch(), canvas->GetHeight());
+public:
+};
+
+class PolySetDepthClampCommand : public PolyDrawerCommand
+{
+public:
+	PolySetDepthClampCommand(bool on) : on(on) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetDepthClamp(on); }
+
+private:
+	bool on;
+};
+
+class PolySetDepthMaskCommand : public PolyDrawerCommand
+{
+public:
+	PolySetDepthMaskCommand(bool on) : on(on) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetDepthMask(on); }
+
+private:
+	bool on;
+};
+
+class PolySetDepthFuncCommand : public PolyDrawerCommand
+{
+public:
+	PolySetDepthFuncCommand(int func) : func(func) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetDepthFunc(func); }
+
+private:
+	int func;
+};
+
+class PolySetDepthRangeCommand : public PolyDrawerCommand
+{
+public:
+	PolySetDepthRangeCommand(float min, float max) : min(min), max(max) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetDepthRange(min, max); }
+
+private:
+	float min;
+	float max;
+};
+
+class PolySetDepthBiasCommand : public PolyDrawerCommand
+{
+public:
+	PolySetDepthBiasCommand(float depthBiasConstantFactor, float depthBiasSlopeFactor) : depthBiasConstantFactor(depthBiasConstantFactor), depthBiasSlopeFactor(depthBiasSlopeFactor) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetDepthBias(depthBiasConstantFactor, depthBiasSlopeFactor); }
+
+private:
+	float depthBiasConstantFactor;
+	float depthBiasSlopeFactor;
+};
+
+class PolySetColorMaskCommand : public PolyDrawerCommand
+{
+public:
+	PolySetColorMaskCommand(bool r, bool g, bool b, bool a) : r(r), g(g), b(b), a(a) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetColorMask(r, g, b, a); }
+
+private:
+	bool r;
+	bool g;
+	bool b;
+	bool a;
+};
+
+class PolySetStencilCommand : public PolyDrawerCommand
+{
+public:
+	PolySetStencilCommand(int stencilRef, int op) : stencilRef(stencilRef), op(op) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetStencil(stencilRef, op); }
+
+private:
+	int stencilRef;
+	int op;
+};
+
+class PolySetCullingCommand : public PolyDrawerCommand
+{
+public:
+	PolySetCullingCommand(int mode) : mode(mode) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetCulling(mode); }
+
+private:
+	int mode;
+};
+
+class PolyEnableStencilCommand : public PolyDrawerCommand
+{
+public:
+	PolyEnableStencilCommand(bool on) : on(on) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->EnableStencil(on); }
+
+private:
+	bool on;
+};
+
+class PolySetScissorCommand : public PolyDrawerCommand
+{
+public:
+	PolySetScissorCommand(int x, int y, int w, int h) : x(x), y(y), w(w), h(h) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetScissor(x, y, w, h); }
+
+private:
+	int x;
+	int y;
+	int w;
+	int h;
+};
+
+class PolySetRenderStyleCommand : public PolyDrawerCommand
+{
+public:
+	PolySetRenderStyleCommand(FRenderStyle style) : style(style) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetRenderStyle(style); }
+
+private:
+	FRenderStyle style;
+};
+
+class PolySetTextureCommand : public PolyDrawerCommand
+{
+public:
+	PolySetTextureCommand(int unit, void* pixels, int width, int height, bool bgra) : unit(unit), pixels(pixels), width(width), height(height), bgra(bgra) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetTexture(unit, pixels, width, height, bgra); }
+
+private:
+	int unit;
+	void* pixels;
+	int width;
+	int height;
+	bool bgra;
+};
+
+class PolySetShaderCommand : public PolyDrawerCommand
+{
+public:
+	PolySetShaderCommand(int specialEffect, int effectState, bool alphaTest, bool colormapShader) : specialEffect(specialEffect), effectState(effectState), alphaTest(alphaTest), colormapShader(colormapShader) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetShader(specialEffect, effectState, alphaTest, colormapShader); }
+
+private:
+	int specialEffect;
+	int effectState;
+	bool alphaTest;
+	bool colormapShader;
+};
+
+class PolySetVertexBufferCommand : public PolyDrawerCommand
+{
+public:
+	PolySetVertexBufferCommand(const void* vertices) : vertices(vertices) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetVertexBuffer(vertices); }
+
+private:
+	const void* vertices;
+};
+
+class PolySetIndexBufferCommand : public PolyDrawerCommand
+{
+public:
+	PolySetIndexBufferCommand(const void* indices) : indices(indices) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetIndexBuffer(indices); }
+
+private:
+	const void* indices;
+};
+
+class PolySetLightBufferCommand : public PolyDrawerCommand
+{
+public:
+	PolySetLightBufferCommand(const void* lights) : lights(lights) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetLightBuffer(lights); }
+
+private:
+	const void* lights;
+};
+
+class PolySetInputAssemblyCommand : public PolyDrawerCommand
+{
+public:
+	PolySetInputAssemblyCommand(PolyInputAssembly* input) : input(input) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetInputAssembly(input); }
+
+private:
+	PolyInputAssembly* input;
+};
+
+class PolyClearDepthCommand : public PolyDrawerCommand
+{
+public:
+	PolyClearDepthCommand(float value) : value(value) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->ClearDepth(value); }
+
+private:
+	float value;
+};
+
+class PolyClearStencilCommand : public PolyDrawerCommand
+{
+public:
+	PolyClearStencilCommand(uint8_t value) : value(value) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->ClearStencil(value); }
+
+private:
+	uint8_t value;
+};
+
+class PolySetViewportCommand : public PolyDrawerCommand
+{
+public:
+	PolySetViewportCommand(int x, int y, int width, int height, uint8_t* dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, PolyDepthStencil* depthstencil, bool topdown)
+		: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra), depthstencil(depthstencil), topdown(topdown) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil, topdown); }
+
+private:
+	int x;
+	int y;
+	int width;
+	int height;
+	uint8_t* dest;
+	int dest_width;
+	int dest_height;
+	int dest_pitch;
+	bool dest_bgra;
+	PolyDepthStencil* depthstencil;
+	bool topdown;
+};
+
+class PolySetViewpointUniformsCommand : public PolyDrawerCommand
+{
+public:
+	PolySetViewpointUniformsCommand(const HWViewpointUniforms* uniforms) : uniforms(uniforms) {}
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetViewpointUniforms(uniforms); }
+
+private:
+	const HWViewpointUniforms* uniforms;
+};
+
+class PolyPushMatricesCommand : public PolyDrawerCommand
+{
+public:
+	PolyPushMatricesCommand(const VSMatrix& modelMatrix, const VSMatrix& normalModelMatrix, const VSMatrix& textureMatrix)
+		: modelMatrix(modelMatrix), normalModelMatrix(normalModelMatrix), textureMatrix(textureMatrix) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->PushMatrices(modelMatrix, normalModelMatrix, textureMatrix); }
+
+private:
+	VSMatrix modelMatrix;
+	VSMatrix normalModelMatrix;
+	VSMatrix textureMatrix;
+};
+
+class PolyPushStreamDataCommand : public PolyDrawerCommand
+{
+public:
+	PolyPushStreamDataCommand(const StreamData& data, const PolyPushConstants& constants) : data(data), constants(constants) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->PushStreamData(data, constants); }
+
+private:
+	StreamData data;
+	PolyPushConstants constants;
+};
+
+class PolyDrawCommand : public PolyDrawerCommand
+{
+public:
+	PolyDrawCommand(int index, int count, PolyDrawMode mode) : index(index), count(count), mode(mode) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->Draw(index, count, mode); }
+
+private:
+	int index;
+	int count;
+	PolyDrawMode mode;
+};
+
+class PolyDrawIndexedCommand : public PolyDrawerCommand
+{
+public:
+	PolyDrawIndexedCommand(int index, int count, PolyDrawMode mode) : index(index), count(count), mode(mode) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->DrawIndexed(index, count, mode); }
+
+private:
+	int index;
+	int count;
+	PolyDrawMode mode;
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyCommandBuffer::PolyCommandBuffer(RenderMemory* frameMemory)
+{
+	mQueue = std::make_shared<DrawerCommandQueue>(frameMemory);
 }
 
-bool PolyTriangleDrawer::IsBgra()
-{
-	return isBgraRenderTarget;
-}
-
-void PolyTriangleDrawer::ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value)
-{
-	queue->Push<PolyClearStencilCommand>(value);
-}
-
-void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas)
+void PolyCommandBuffer::SetViewport(int x, int y, int width, int height, DCanvas *canvas, PolyDepthStencil *depthstencil, bool topdown)
 {
 	uint8_t *dest = (uint8_t*)canvas->GetPixels();
 	int dest_width = canvas->GetWidth();
 	int dest_height = canvas->GetHeight();
 	int dest_pitch = canvas->GetPitch();
 	bool dest_bgra = canvas->IsBgra();
-	isBgraRenderTarget = dest_bgra;
 
-	int offsetx = clamp(x, 0, dest_width);
-	int pixelsize = dest_bgra ? 4 : 1;
-
-	int viewport_x = x - offsetx;
-	int viewport_y = y;
-	int viewport_width = width;
-	int viewport_height = height;
-
-	dest += offsetx * pixelsize;
-	dest_width = clamp(viewport_x + viewport_width, 0, dest_width - offsetx);
-	dest_height = clamp(viewport_y + viewport_height, 0, dest_height);
-
-	queue->Push<PolySetViewportCommand>(viewport_x, viewport_y, viewport_width, viewport_height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
+	mQueue->Push<PolySetViewportCommand>(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra, depthstencil, topdown);
 }
 
-void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld)
+void PolyCommandBuffer::SetInputAssembly(PolyInputAssembly *input)
 {
-	queue->Push<PolySetTransformCommand>(objectToClip, objectToWorld);
+	mQueue->Push<PolySetInputAssemblyCommand>(input);
 }
 
-void PolyTriangleDrawer::SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw)
+void PolyCommandBuffer::SetVertexBuffer(const void *vertices)
 {
-	queue->Push<PolySetCullCCWCommand>(ccw);
+	mQueue->Push<PolySetVertexBufferCommand>(vertices);
 }
 
-void PolyTriangleDrawer::SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided)
+void PolyCommandBuffer::SetIndexBuffer(const void *elements)
 {
-	queue->Push<PolySetTwoSidedCommand>(twosided);
+	mQueue->Push<PolySetIndexBufferCommand>(elements);
 }
 
-void PolyTriangleDrawer::SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable)
+void PolyCommandBuffer::SetLightBuffer(const void *lights)
 {
-	queue->Push<PolySetWeaponSceneCommand>(enable);
+	mQueue->Push<PolySetLightBufferCommand>(lights);
 }
 
-void PolyTriangleDrawer::SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor)
+void PolyCommandBuffer::SetDepthClamp(bool on)
 {
-	queue->Push<PolySetModelVertexShaderCommand>(frame1, frame2, interpolationFactor);
+	mQueue->Push<PolySetDepthClampCommand>(on);
 }
 
-void PolyTriangleDrawer::DrawArray(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode)
+void PolyCommandBuffer::SetDepthMask(bool on)
 {
-	queue->Push<DrawPolyTrianglesCommand>(args, vertices, nullptr, vcount, mode);
+	mQueue->Push<PolySetDepthMaskCommand>(on);
 }
 
-void PolyTriangleDrawer::DrawElements(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode)
+void PolyCommandBuffer::SetDepthFunc(int func)
 {
-	queue->Push<DrawPolyTrianglesCommand>(args, vertices, elements, count, mode);
+	mQueue->Push<PolySetDepthFuncCommand>(func);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-void PolyTriangleThreadData::ClearStencil(uint8_t value)
+void PolyCommandBuffer::SetDepthRange(float min, float max)
 {
-	auto buffer = PolyStencilBuffer::Instance();
-	int width = buffer->Width();
-	int height = buffer->Height();
-	uint8_t *data = buffer->Values();
-
-	int skip = skipped_by_thread(0);
-	int count = count_for_thread(0, height);
-
-	data += skip * width;
-	for (int i = 0; i < count; i++)
-	{
-		memset(data, value, width);
-		data += num_cores * width;
-	}
+	mQueue->Push<PolySetDepthRangeCommand>(min, max);
 }
 
-void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra)
+void PolyCommandBuffer::SetDepthBias(float depthBiasConstantFactor, float depthBiasSlopeFactor)
 {
-	viewport_x = x;
-	viewport_y = y;
-	viewport_width = width;
-	viewport_height = height;
-	dest = new_dest;
-	dest_width = new_dest_width;
-	dest_height = new_dest_height;
-	dest_pitch = new_dest_pitch;
-	dest_bgra = new_dest_bgra;
-	ccw = true;
-	weaponScene = false;
+	mQueue->Push<PolySetDepthBiasCommand>(depthBiasConstantFactor, depthBiasSlopeFactor);
 }
 
-void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Mat4f *newObjectToWorld)
+void PolyCommandBuffer::SetColorMask(bool r, bool g, bool b, bool a)
 {
-	objectToClip = newObjectToClip;
-	objectToWorld = newObjectToWorld;
+	mQueue->Push<PolySetColorMaskCommand>(r, g, b, a);
 }
 
-void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs, const void *vertices, const unsigned int *elements, int vcount, PolyDrawMode drawmode)
+void PolyCommandBuffer::SetStencil(int stencilRef, int op)
 {
-	if (vcount < 3)
-		return;
-
-	TriDrawTriangleArgs args;
-	args.uniforms = &drawargs;
-
-	ShadedTriVertex vert[3];
-	if (drawmode == PolyDrawMode::Triangles)
-	{
-		for (int i = 0; i < vcount / 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-				vert[j] = ShadeVertex(drawargs, vertices, *(elements++));
-			DrawShadedTriangle(vert, ccw, &args);
-		}
-	}
-	else if (drawmode == PolyDrawMode::TriangleFan)
-	{
-		vert[0] = ShadeVertex(drawargs, vertices, *(elements++));
-		vert[1] = ShadeVertex(drawargs, vertices, *(elements++));
-		for (int i = 2; i < vcount; i++)
-		{
-			vert[2] = ShadeVertex(drawargs, vertices, *(elements++));
-			DrawShadedTriangle(vert, ccw, &args);
-			vert[1] = vert[2];
-		}
-	}
-	else // TriangleDrawMode::TriangleStrip
-	{
-		bool toggleccw = ccw;
-		vert[0] = ShadeVertex(drawargs, vertices, *(elements++));
-		vert[1] = ShadeVertex(drawargs, vertices, *(elements++));
-		for (int i = 2; i < vcount; i++)
-		{
-			vert[2] = ShadeVertex(drawargs, vertices, *(elements++));
-			DrawShadedTriangle(vert, toggleccw, &args);
-			vert[0] = vert[1];
-			vert[1] = vert[2];
-			toggleccw = !toggleccw;
-		}
-	}
+	mQueue->Push<PolySetStencilCommand>(stencilRef, op);
 }
 
-void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void *vertices, int vcount, PolyDrawMode drawmode)
+void PolyCommandBuffer::SetCulling(int mode)
 {
-	if (vcount < 3)
-		return;
-
-	TriDrawTriangleArgs args;
-	args.uniforms = &drawargs;
-
-	int vinput = 0;
-
-	ShadedTriVertex vert[3];
-	if (drawmode == PolyDrawMode::Triangles)
-	{
-		for (int i = 0; i < vcount / 3; i++)
-		{
-			for (int j = 0; j < 3; j++)
-				vert[j] = ShadeVertex(drawargs, vertices, vinput++);
-			DrawShadedTriangle(vert, ccw, &args);
-		}
-	}
-	else if (drawmode == PolyDrawMode::TriangleFan)
-	{
-		vert[0] = ShadeVertex(drawargs, vertices, vinput++);
-		vert[1] = ShadeVertex(drawargs, vertices, vinput++);
-		for (int i = 2; i < vcount; i++)
-		{
-			vert[2] = ShadeVertex(drawargs, vertices, vinput++);
-			DrawShadedTriangle(vert, ccw, &args);
-			vert[1] = vert[2];
-		}
-	}
-	else // TriangleDrawMode::TriangleStrip
-	{
-		bool toggleccw = ccw;
-		vert[0] = ShadeVertex(drawargs, vertices, vinput++);
-		vert[1] = ShadeVertex(drawargs, vertices, vinput++);
-		for (int i = 2; i < vcount; i++)
-		{
-			vert[2] = ShadeVertex(drawargs, vertices, vinput++);
-			DrawShadedTriangle(vert, toggleccw, &args);
-			vert[0] = vert[1];
-			vert[1] = vert[2];
-			toggleccw = !toggleccw;
-		}
-	}
+	mQueue->Push<PolySetCullingCommand>(mode);
 }
 
-ShadedTriVertex PolyTriangleThreadData::ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index)
+void PolyCommandBuffer::EnableStencil(bool on)
 {
-	ShadedTriVertex sv;
-	Vec4f objpos;
-
-	if (modelFrame1 == -1)
-	{
-		const TriVertex &v = static_cast<const TriVertex*>(vertices)[index];
-		objpos = Vec4f(v.x, v.y, v.z, v.w);
-		sv.u = v.u;
-		sv.v = v.v;
-	}
-	else if (modelFrame1 == modelFrame2 || modelInterpolationFactor == 0.f)
-	{
-		const FModelVertex &v = static_cast<const FModelVertex*>(vertices)[modelFrame1 + index];
-		objpos = Vec4f(v.x, v.y, v.z, 1.0f);
-		sv.u = v.u;
-		sv.v = v.v;
-	}
-	else
-	{
-		const FModelVertex &v1 = static_cast<const FModelVertex*>(vertices)[modelFrame1 + index];
-		const FModelVertex &v2 = static_cast<const FModelVertex*>(vertices)[modelFrame2 + index];
-
-		float frac = modelInterpolationFactor;
-		float inv_frac = 1.0f - frac;
-
-		objpos = Vec4f(v1.x * inv_frac + v2.x * frac, v1.y * inv_frac + v2.y * frac, v1.z * inv_frac + v2.z * frac, 1.0f);
-		sv.u = v1.u;
-		sv.v = v1.v;
-	}
-
-	// Apply transform to get clip coordinates:
-	Vec4f clippos = (*objectToClip) * objpos;
-
-	sv.x = clippos.X;
-	sv.y = clippos.Y;
-	sv.z = clippos.Z;
-	sv.w = clippos.W;
-
-	if (!objectToWorld) // Identity matrix
-	{
-		sv.worldX = objpos.X;
-		sv.worldY = objpos.Y;
-		sv.worldZ = objpos.Z;
-	}
-	else
-	{
-		Vec4f worldpos = (*objectToWorld) * objpos;
-		sv.worldX = worldpos.X;
-		sv.worldY = worldpos.Y;
-		sv.worldZ = worldpos.Z;
-	}
-
-	// Calculate gl_ClipDistance[i]
-	for (int i = 0; i < 3; i++)
-	{
-		const auto &clipPlane = drawargs.ClipPlane(i);
-		sv.clipDistance[i] = objpos.X * clipPlane.A + objpos.Y * clipPlane.B + objpos.Z * clipPlane.C + objpos.W * clipPlane.D;
-	}
-
-	return sv;
+	mQueue->Push<PolyEnableStencilCommand>(on);
 }
 
-bool PolyTriangleThreadData::IsDegenerate(const ShadedTriVertex *vert)
+void PolyCommandBuffer::SetScissor(int x, int y, int w, int h)
 {
-	// A degenerate triangle has a zero cross product for two of its sides.
-	float ax = vert[1].x - vert[0].x;
-	float ay = vert[1].y - vert[0].y;
-	float az = vert[1].w - vert[0].w;
-	float bx = vert[2].x - vert[0].x;
-	float by = vert[2].y - vert[0].y;
-	float bz = vert[2].w - vert[0].w;
-	float crossx = ay * bz - az * by;
-	float crossy = az * bx - ax * bz;
-	float crossz = ax * by - ay * bx;
-	float crosslengthsqr = crossx * crossx + crossy * crossy + crossz * crossz;
-	return crosslengthsqr <= 1.e-6f;
+	mQueue->Push<PolySetScissorCommand>(x, y, w, h);
 }
 
-bool PolyTriangleThreadData::IsFrontfacing(TriDrawTriangleArgs *args)
+void PolyCommandBuffer::SetRenderStyle(FRenderStyle style)
 {
-	float a =
-		args->v1->x * args->v2->y - args->v2->x * args->v1->y +
-		args->v2->x * args->v3->y - args->v3->x * args->v2->y +
-		args->v3->x * args->v1->y - args->v1->x * args->v3->y;
-	return a <= 0.0f;
+	mQueue->Push<PolySetRenderStyleCommand>(style);
 }
 
-void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args)
+void PolyCommandBuffer::SetTexture(int unit, void *pixels, int width, int height, bool bgra)
 {
-	// Reject triangle if degenerate
-	if (IsDegenerate(vert))
-		return;
-
-	// Cull, clip and generate additional vertices as needed
-	ShadedTriVertex clippedvert[max_additional_vertices];
-	int numclipvert = ClipEdge(vert, clippedvert);
-
-#ifdef NO_SSE
-	// Map to 2D viewport:
-	for (int j = 0; j < numclipvert; j++)
-	{
-		auto &v = clippedvert[j];
-
-		// Calculate normalized device coordinates:
-		v.w = 1.0f / v.w;
-		v.x *= v.w;
-		v.y *= v.w;
-		v.z *= v.w;
-
-		// Apply viewport scale to get screen coordinates:
-		v.x = viewport_x + viewport_width * (1.0f + v.x) * 0.5f;
-		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
-	}
-#else
-	// Map to 2D viewport:
-	__m128 mviewport_x = _mm_set1_ps((float)viewport_x);
-	__m128 mviewport_y = _mm_set1_ps((float)viewport_y);
-	__m128 mviewport_halfwidth = _mm_set1_ps(viewport_width * 0.5f);
-	__m128 mviewport_halfheight = _mm_set1_ps(viewport_height * 0.5f);
-	__m128 mone = _mm_set1_ps(1.0f);
-	int sse_length = (numclipvert + 3) / 4 * 4;
-	for (int j = 0; j < sse_length; j += 4)
-	{
-		__m128 vx = _mm_loadu_ps(&clippedvert[j].x);
-		__m128 vy = _mm_loadu_ps(&clippedvert[j + 1].x);
-		__m128 vz = _mm_loadu_ps(&clippedvert[j + 2].x);
-		__m128 vw = _mm_loadu_ps(&clippedvert[j + 3].x);
-		_MM_TRANSPOSE4_PS(vx, vy, vz, vw);
-
-		// Calculate normalized device coordinates:
-		vw = _mm_div_ps(mone, vw);
-		vx = _mm_mul_ps(vx, vw);
-		vy = _mm_mul_ps(vy, vw);
-		vz = _mm_mul_ps(vz, vw);
-
-		// Apply viewport scale to get screen coordinates:
-		vx = _mm_add_ps(mviewport_x, _mm_mul_ps(mviewport_halfwidth, _mm_add_ps(mone, vx)));
-		vy = _mm_add_ps(mviewport_y, _mm_mul_ps(mviewport_halfheight, _mm_sub_ps(mone, vy)));
-
-		_MM_TRANSPOSE4_PS(vx, vy, vz, vw);
-		_mm_storeu_ps(&clippedvert[j].x, vx);
-		_mm_storeu_ps(&clippedvert[j + 1].x, vy);
-		_mm_storeu_ps(&clippedvert[j + 2].x, vz);
-		_mm_storeu_ps(&clippedvert[j + 3].x, vw);
-	}
-#endif
-
-	// Keep varyings in -128 to 128 range if possible
-	// But don't do this for the skycap mode since the V texture coordinate is used for blending
-	if (numclipvert > 0 && args->uniforms->BlendMode() != TriBlendMode::Skycap)
-	{
-		float newOriginU = floorf(clippedvert[0].u * 0.1f) * 10.0f;
-		float newOriginV = floorf(clippedvert[0].v * 0.1f) * 10.0f;
-		for (int i = 0; i < numclipvert; i++)
-		{
-			clippedvert[i].u -= newOriginU;
-			clippedvert[i].v -= newOriginV;
-		}
-	}
-
-	if (twosided && numclipvert > 2)
-	{
-		args->v1 = &clippedvert[0];
-		args->v2 = &clippedvert[1];
-		args->v3 = &clippedvert[2];
-		ccw = !IsFrontfacing(args);
-	}
-
-	// Draw screen triangles
-	if (ccw)
-	{
-		for (int i = numclipvert - 1; i > 1; i--)
-		{
-			args->v1 = &clippedvert[numclipvert - 1];
-			args->v2 = &clippedvert[i - 1];
-			args->v3 = &clippedvert[i - 2];
-			if (IsFrontfacing(args) == ccw && args->CalculateGradients())
-			{
-				ScreenTriangle::Draw(args, this);
-			}
-		}
-	}
-	else
-	{
-		for (int i = 2; i < numclipvert; i++)
-		{
-			args->v1 = &clippedvert[0];
-			args->v2 = &clippedvert[i - 1];
-			args->v3 = &clippedvert[i];
-			if (IsFrontfacing(args) != ccw && args->CalculateGradients())
-			{
-				ScreenTriangle::Draw(args, this);
-			}
-		}
-	}
+	mQueue->Push<PolySetTextureCommand>(unit, pixels, width, height, bgra);
 }
 
-int PolyTriangleThreadData::ClipEdge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert)
+void PolyCommandBuffer::SetShader(int specialEffect, int effectState, bool alphaTest, bool colormapShader)
 {
-	// Clip and cull so that the following is true for all vertices:
-	// -v.w <= v.x <= v.w
-	// -v.w <= v.y <= v.w
-	// -v.w <= v.z <= v.w
-	
-	// halfspace clip distances
-	static const int numclipdistances = 9;
-#ifdef NO_SSE
-	float clipdistance[numclipdistances * 3];
-	bool needsclipping = false;
-	float *clipd = clipdistance;
-	for (int i = 0; i < 3; i++)
-	{
-		const auto &v = verts[i];
-		clipd[0] = v.x + v.w;
-		clipd[1] = v.w - v.x;
-		clipd[2] = v.y + v.w;
-		clipd[3] = v.w - v.y;
-		clipd[4] = v.z + v.w;
-		clipd[5] = v.w - v.z;
-		clipd[6] = v.clipDistance[0];
-		clipd[7] = v.clipDistance[1];
-		clipd[8] = v.clipDistance[2];
-		for (int j = 0; j < 9; j++)
-			needsclipping = needsclipping || clipd[i];
-		clipd += numclipdistances;
-	}
-
-	// If all halfspace clip distances are positive then the entire triangle is visible. Skip the expensive clipping step.
-	if (!needsclipping)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			memcpy(clippedvert + i, &verts[i], sizeof(ShadedTriVertex));
-		}
-		return 3;
-	}
-#else
-	__m128 mx = _mm_loadu_ps(&verts[0].x);
-	__m128 my = _mm_loadu_ps(&verts[1].x);
-	__m128 mz = _mm_loadu_ps(&verts[2].x);
-	__m128 mw = _mm_setzero_ps();
-	_MM_TRANSPOSE4_PS(mx, my, mz, mw);
-	__m128 clipd0 = _mm_add_ps(mx, mw);
-	__m128 clipd1 = _mm_sub_ps(mw, mx);
-	__m128 clipd2 = _mm_add_ps(my, mw);
-	__m128 clipd3 = _mm_sub_ps(mw, my);
-	__m128 clipd4 = _mm_add_ps(mz, mw);
-	__m128 clipd5 = _mm_sub_ps(mw, mz);
-	__m128 clipd6 = _mm_setr_ps(verts[0].clipDistance[0], verts[1].clipDistance[0], verts[2].clipDistance[0], 0.0f);
-	__m128 clipd7 = _mm_setr_ps(verts[0].clipDistance[1], verts[1].clipDistance[1], verts[2].clipDistance[1], 0.0f);
-	__m128 clipd8 = _mm_setr_ps(verts[0].clipDistance[2], verts[1].clipDistance[2], verts[2].clipDistance[2], 0.0f);
-	__m128 mneedsclipping = _mm_cmplt_ps(clipd0, _mm_setzero_ps());
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd1, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd2, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd3, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd4, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd5, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd6, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd7, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd8, _mm_setzero_ps()));
-	if (_mm_movemask_ps(mneedsclipping) == 0)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			memcpy(clippedvert + i, &verts[i], sizeof(ShadedTriVertex));
-		}
-		return 3;
-	}
-	float clipdistance[numclipdistances * 4];
-	_mm_storeu_ps(clipdistance, clipd0);
-	_mm_storeu_ps(clipdistance + 4, clipd1);
-	_mm_storeu_ps(clipdistance + 8, clipd2);
-	_mm_storeu_ps(clipdistance + 12, clipd3);
-	_mm_storeu_ps(clipdistance + 16, clipd4);
-	_mm_storeu_ps(clipdistance + 20, clipd5);
-	_mm_storeu_ps(clipdistance + 24, clipd6);
-	_mm_storeu_ps(clipdistance + 28, clipd7);
-	_mm_storeu_ps(clipdistance + 32, clipd8);
-#endif
-
-	// use barycentric weights while clipping vertices
-	float weights[max_additional_vertices * 3 * 2];
-	for (int i = 0; i < 3; i++)
-	{
-		weights[i * 3 + 0] = 0.0f;
-		weights[i * 3 + 1] = 0.0f;
-		weights[i * 3 + 2] = 0.0f;
-		weights[i * 3 + i] = 1.0f;
-	}
-
-	// Clip against each halfspace
-	float *input = weights;
-	float *output = weights + max_additional_vertices * 3;
-	int inputverts = 3;
-	for (int p = 0; p < numclipdistances; p++)
-	{
-		// Clip each edge
-		int outputverts = 0;
-		for (int i = 0; i < inputverts; i++)
-		{
-			int j = (i + 1) % inputverts;
-#ifdef NO_SSE
-			float clipdistance1 =
-				clipdistance[0 * numclipdistances + p] * input[i * 3 + 0] +
-				clipdistance[1 * numclipdistances + p] * input[i * 3 + 1] +
-				clipdistance[2 * numclipdistances + p] * input[i * 3 + 2];
-
-			float clipdistance2 =
-				clipdistance[0 * numclipdistances + p] * input[j * 3 + 0] +
-				clipdistance[1 * numclipdistances + p] * input[j * 3 + 1] +
-				clipdistance[2 * numclipdistances + p] * input[j * 3 + 2];
-#else
-			float clipdistance1 =
-				clipdistance[0 + p * 4] * input[i * 3 + 0] +
-				clipdistance[1 + p * 4] * input[i * 3 + 1] +
-				clipdistance[2 + p * 4] * input[i * 3 + 2];
-
-			float clipdistance2 =
-				clipdistance[0 + p * 4] * input[j * 3 + 0] +
-				clipdistance[1 + p * 4] * input[j * 3 + 1] +
-				clipdistance[2 + p * 4] * input[j * 3 + 2];
-#endif
-
-			// Clip halfspace
-			if ((clipdistance1 >= 0.0f || clipdistance2 >= 0.0f) && outputverts + 1 < max_additional_vertices)
-			{
-				float t1 = (clipdistance1 < 0.0f) ? MAX(-clipdistance1 / (clipdistance2 - clipdistance1), 0.0f) : 0.0f;
-				float t2 = (clipdistance2 < 0.0f) ? MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), 1.0f) : 1.0f;
-
-				// add t1 vertex
-				for (int k = 0; k < 3; k++)
-					output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t1) + input[j * 3 + k] * t1;
-				outputverts++;
-			
-				if (t2 != 1.0f && t2 > t1)
-				{
-					// add t2 vertex
-					for (int k = 0; k < 3; k++)
-						output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t2) + input[j * 3 + k] * t2;
-					outputverts++;
-				}
-			}
-		}
-		std::swap(input, output);
-		inputverts = outputverts;
-		if (inputverts == 0)
-			break;
-	}
-	
-	// Convert barycentric weights to actual vertices
-	for (int i = 0; i < inputverts; i++)
-	{
-		auto &v = clippedvert[i];
-		memset(&v, 0, sizeof(ShadedTriVertex));
-		for (int w = 0; w < 3; w++)
-		{
-			float weight = input[i * 3 + w];
-			v.x += verts[w].x * weight;
-			v.y += verts[w].y * weight;
-			v.z += verts[w].z * weight;
-			v.w += verts[w].w * weight;
-			v.u += verts[w].u * weight;
-			v.v += verts[w].v * weight;
-			v.worldX += verts[w].worldX * weight;
-			v.worldY += verts[w].worldY * weight;
-			v.worldZ += verts[w].worldZ * weight;
-		}
-	}
-	return inputverts;
+	mQueue->Push<PolySetShaderCommand>(specialEffect, effectState, alphaTest, colormapShader);
 }
 
-PolyTriangleThreadData *PolyTriangleThreadData::Get(DrawerThread *thread)
+void PolyCommandBuffer::PushStreamData(const StreamData &data, const PolyPushConstants &constants)
 {
-	if (!thread->poly)
-		thread->poly = std::make_shared<PolyTriangleThreadData>(thread->core, thread->num_cores, thread->numa_node, thread->num_numa_nodes, thread->numa_start_y, thread->numa_end_y);
-	return thread->poly.get();
+	mQueue->Push<PolyPushStreamDataCommand>(data, constants);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetTransformCommand::PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld) : objectToClip(objectToClip), objectToWorld(objectToWorld)
+void PolyCommandBuffer::PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix)
 {
+	mQueue->Push<PolyPushMatricesCommand>(modelMatrix, normalModelMatrix, textureMatrix);
 }
 
-void PolySetTransformCommand::Execute(DrawerThread *thread)
+void PolyCommandBuffer::SetViewpointUniforms(const HWViewpointUniforms *uniforms)
 {
-	PolyTriangleThreadData::Get(thread)->SetTransform(objectToClip, objectToWorld);
+	mQueue->Push<PolySetViewpointUniformsCommand>(uniforms);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetCullCCWCommand::PolySetCullCCWCommand(bool ccw) : ccw(ccw)
+void PolyCommandBuffer::ClearDepth(float value)
 {
+	mQueue->Push<PolyClearDepthCommand>(value);
 }
 
-void PolySetCullCCWCommand::Execute(DrawerThread *thread)
+void PolyCommandBuffer::ClearStencil(uint8_t value)
 {
-	PolyTriangleThreadData::Get(thread)->SetCullCCW(ccw);
+	mQueue->Push<PolyClearStencilCommand>(value);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetTwoSidedCommand::PolySetTwoSidedCommand(bool twosided) : twosided(twosided)
+void PolyCommandBuffer::Draw(int index, int vcount, PolyDrawMode mode)
 {
+	mQueue->Push<PolyDrawCommand>(index, vcount, mode);
 }
 
-void PolySetTwoSidedCommand::Execute(DrawerThread *thread)
+void PolyCommandBuffer::DrawIndexed(int index, int count, PolyDrawMode mode)
 {
-	PolyTriangleThreadData::Get(thread)->SetTwoSided(twosided);
+	mQueue->Push<PolyDrawIndexedCommand>(index, count, mode);
 }
 
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetWeaponSceneCommand::PolySetWeaponSceneCommand(bool value) : value(value)
+void PolyCommandBuffer::Submit()
 {
-}
-
-void PolySetWeaponSceneCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetWeaponScene(value);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetModelVertexShaderCommand::PolySetModelVertexShaderCommand(int frame1, int frame2, float interpolationFactor) : frame1(frame1), frame2(frame2), interpolationFactor(interpolationFactor)
-{
-}
-
-void PolySetModelVertexShaderCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetModelVertexShader(frame1, frame2, interpolationFactor);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolyClearStencilCommand::PolyClearStencilCommand(uint8_t value) : value(value)
-{
-}
-
-void PolyClearStencilCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->ClearStencil(value);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-PolySetViewportCommand::PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra)
-	: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra)
-{
-}
-
-void PolySetViewportCommand::Execute(DrawerThread *thread)
-{
-	PolyTriangleThreadData::Get(thread)->SetViewport(x, y, width, height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode) : args(args), vertices(vertices), elements(elements), count(count), mode(mode)
-{
-}
-
-void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
-{
-	if (!elements)
-		PolyTriangleThreadData::Get(thread)->DrawArray(args, vertices, count, mode);
-	else
-		PolyTriangleThreadData::Get(thread)->DrawElements(args, vertices, elements, count, mode);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-void DrawRectCommand::Execute(DrawerThread *thread)
-{
-	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
-	const void *destOrg = renderTarget->GetPixels();
-	int destWidth = renderTarget->GetWidth();
-	int destHeight = renderTarget->GetHeight();
-	int destPitch = renderTarget->GetPitch();
-	int blendmode = (int)args.BlendMode();
-	if (renderTarget->IsBgra())
-		ScreenTriangle::RectDrawers32[blendmode](destOrg, destWidth, destHeight, destPitch, &args, PolyTriangleThreadData::Get(thread));
-	else
-		ScreenTriangle::RectDrawers8[blendmode](destOrg, destWidth, destHeight, destPitch, &args, PolyTriangleThreadData::Get(thread));
+	DrawerThreads::Execute(mQueue);
 }

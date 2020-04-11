@@ -35,10 +35,20 @@
 #include <ctype.h>
 #include <assert.h>
 #include "i_soundfont.h"
+#include "i_soundinternal.h"
 #include "cmdlib.h"
 #include "i_system.h"
 #include "gameconfigfile.h"
+#include "filereadermusicinterface.h"
+#include <zmusic.h>
 #include "resourcefiles/resourcefile.h"
+#include "version.h"
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 FSoundFontManager sfmanager;
 
@@ -96,6 +106,46 @@ int FSoundFontReader::pathcmp(const char *p1, const char *p2)
 {
 	return mCaseSensitivePaths? strcmp(p1, p2) : stricmp(p1, p2);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FileReader FSoundFontReader::Open(const char *name, std::string& filename)
+{
+	FileReader fr;
+	if (name == nullptr)
+	{
+		fr = OpenMainConfigFile();
+		filename = MainConfigFileName();
+	}
+	else
+	{
+		auto res = LookupFile(name);
+		fr = std::move(res.first);
+		filename = res.second;
+	}
+	return fr;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+ZMusicCustomReader* FSoundFontReader::open_interface(const char* name)
+{
+	std::string filename;
+	
+	FileReader fr = Open(name, filename);
+	if (!fr.isOpen()) return nullptr;
+	auto fri = GetMusicReader(fr);
+	return fri;
+}
+
 
 //==========================================================================
 //
@@ -217,11 +267,6 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	}
 }
 
-FPatchSetReader::FPatchSetReader()
-{
-	// This constructor is for reading DMXGUS
-	mAllowAbsolutePaths = true;
-}
 
 FileReader FPatchSetReader::OpenMainConfigFile()
 {
@@ -380,7 +425,7 @@ void FSoundFontManager::CollectSoundfonts()
 
 	if (soundfonts.Size() == 0)
 	{
-		ProcessOneFile(NicePath("$PROGDIR/soundfonts/gzdoom.sf2"));
+		ProcessOneFile(NicePath("$PROGDIR/soundfonts/" GAMENAMELOWERCASE ".sf2"));
 	}
 }
 

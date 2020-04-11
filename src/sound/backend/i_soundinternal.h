@@ -2,10 +2,36 @@
 #define __SNDINT_H
 
 #include <stdio.h>
+#include <stdint.h>
 
-#include "doomtype.h"
 #include "vectors.h"
 #include "tarray.h"
+#include "tflags.h"
+
+enum EChanFlag
+{
+	// modifier flags
+	CHANF_LISTENERZ = 8,
+	CHANF_MAYBE_LOCAL = 16,
+	CHANF_UI = 32,	// Do not record sound in savegames.
+	CHANF_NOPAUSE = 64,	// Do not pause this sound in menus.
+	CHANF_AREA = 128,	// Sound plays from all around. Only valid with sector sounds.
+	CHANF_LOOP = 256,
+
+	CHANF_NONE = 0,
+	CHANF_IS3D = 1,		// internal: Sound is 3D.
+	CHANF_EVICTED = 2,		// internal: Sound was evicted.
+	CHANF_FORGETTABLE = 4,		// internal: Forget channel data when sound stops.
+	CHANF_JUSTSTARTED = 512,	// internal: Sound has not been updated yet.
+	CHANF_ABSTIME = 1024,	// internal: Start time is absolute and does not depend on current time.
+	CHANF_VIRTUAL = 2048,	// internal: Channel is currently virtual
+	CHANF_NOSTOP = 4096,	// only for A_PlaySound. Does not start if channel is playing something.
+	CHANF_OVERLAP = 8192, // [MK] Does not stop any sounds in the channel and instead plays over them.
+	CHANF_LOCAL = 16384,	// only plays locally for the calling actor
+};
+
+typedef TFlags<EChanFlag> EChanFlags;
+DEFINE_TFLAGS_OPERATORS(EChanFlags)
 
 class FileReader;
 
@@ -75,6 +101,7 @@ struct SoundListener
 	bool underwater;
 	bool valid;
 	ReverbContainer *Environment;
+	void* ListenerObject;
 };
 
 // Default rolloff information.
@@ -109,74 +136,11 @@ struct FISoundChannel
 	float		DistanceScale;
 	float		DistanceSqr;
 	bool		ManualRolloff;
-	int			ChanFlags;
+	EChanFlags	ChanFlags;
 };
 
+class SoundStream;
 
-void FindLoopTags(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
-
-
-enum SampleType
-{
-    SampleType_UInt8,
-    SampleType_Int16
-};
-enum ChannelConfig
-{
-    ChannelConfig_Mono,
-    ChannelConfig_Stereo
-};
-
-const char *GetSampleTypeName(enum SampleType type);
-const char *GetChannelConfigName(enum ChannelConfig chan);
-
-struct SoundDecoder
-{
-    virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type) = 0;
-
-    virtual size_t read(char *buffer, size_t bytes) = 0;
-    virtual TArray<uint8_t> readAll();
-    virtual bool seek(size_t ms_offset, bool ms, bool mayrestart) = 0;
-    virtual size_t getSampleOffset() = 0;
-    virtual size_t getSampleLength() { return 0; }
-
-    SoundDecoder() { }
-    virtual ~SoundDecoder() { }
-
-protected:
-    virtual bool open(FileReader &reader) = 0;
-    friend class SoundRenderer;
-
-private:
-    // Make non-copyable
-    SoundDecoder(const SoundDecoder &rhs);
-    SoundDecoder& operator=(const SoundDecoder &rhs);
-};
-
-enum EMidiDevice
-{
-	MDEV_DEFAULT = -1,
-	MDEV_MMAPI = 0,
-	MDEV_OPL = 1,
-	MDEV_SNDSYS = 2,
-	MDEV_TIMIDITY = 3,
-	MDEV_FLUIDSYNTH = 4,
-	MDEV_GUS = 5,
-	MDEV_WILDMIDI = 6,
-	MDEV_ADL = 7,
-	MDEV_OPN = 8,
-
-	MDEV_COUNT
-};
-
-class MusInfo;
-struct MusPlayingInfo
-{
-	FString name;
-	MusInfo *handle;
-	int   baseorder;
-	bool  loop;
-};
 
 
 

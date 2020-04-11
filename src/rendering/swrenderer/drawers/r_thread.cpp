@@ -33,6 +33,7 @@
 #include "r_thread.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
+#include "polyrenderer/drawers/poly_triangle.h"
 #include <chrono>
 
 #ifdef WIN32

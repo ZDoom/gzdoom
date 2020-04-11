@@ -111,6 +111,7 @@ struct gameinfo_t
 	FString ConfigName;
 
 	FString TitlePage;
+	bool nokeyboardcheats;
 	bool drawreadthis;
 	bool noloopfinalemusic;
 	bool intermissioncounter;
@@ -157,6 +158,7 @@ struct gameinfo_t
 	FString statusbar;
 	int statusbarfile = -1;
 	FName statusbarclass;
+	FName althudclass;
 	int statusbarclassfile = -1;
 	FName MessageBoxClass;
 	FName backpacktype;
@@ -202,6 +204,7 @@ struct gameinfo_t
 	int berserkpic;
 	double normforwardmove[2];
 	double normsidemove[2];
+	int fullscreenautoaspect = 0;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

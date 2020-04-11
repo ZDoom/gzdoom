@@ -27,7 +27,7 @@ class TeleportFog : Actor
 	override void PostBeginPlay ()
 	{
 		Super.PostBeginPlay ();
-		A_PlaySound ("misc/teleport", CHAN_BODY);
+		A_StartSound ("misc/teleport", CHAN_BODY);
 		switch (gameinfo.gametype)
 		{
 		case GAME_Hexen:

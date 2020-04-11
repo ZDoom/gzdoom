@@ -150,7 +150,7 @@ class FWeapQuietus : FighterWeapon
 		SpawnPlayerMissile ("FSwordMissile", Angle          ,0, 0,   0);
 		SpawnPlayerMissile ("FSwordMissile", Angle - (45./8),0, 0,   5);
 		SpawnPlayerMissile ("FSwordMissile", Angle - (45./4),0, 0,  10);
-		A_PlaySound ("FighterSwordFire", CHAN_WEAPON);
+		A_StartSound ("FighterSwordFire", CHAN_WEAPON);
 	}
 
 	

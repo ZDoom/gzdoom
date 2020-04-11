@@ -107,7 +107,6 @@ struct FloatRect
 
 enum ECreateTexBufferFlags
 {
-	CTF_CheckHires = 1,		// use external hires replacement if found
 	CTF_Expand = 2,			// create buffer with a one-pixel wide border
 	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
 	CTF_CheckOnly = 8,		// Only runs the code to get a content ID but does not create a texture. Can be used to access a caching system for the hardware textures.
@@ -294,9 +293,11 @@ class FTexture
 	friend class FMaterial;
 	friend class OpenGLRenderer::FGLRenderState;	// For now this needs access to some fields in ApplyMaterial. This should be rerouted through the Material class
 	friend class VkRenderState;
+	friend class PolyRenderState;
 	friend struct FTexCoordInfo;
 	friend class OpenGLRenderer::FHardwareTexture;
 	friend class VkHardwareTexture;
+	friend class PolyHardwareTexture;
 	friend class FMultiPatchTexture;
 	friend class FSkyBox;
 	friend class FBrightmapTexture;
@@ -383,8 +384,6 @@ protected:
 	FTexture *OffsetLess = nullptr;
 	// Paletted variant
 	FTexture *PalVersion = nullptr;
-	// External hires texture
-	FTexture *HiresTexture = nullptr;
 	// Material layers
 	FTexture *Brightmap = nullptr;
 	FTexture *Normal = nullptr;							// Normal map texture
@@ -502,8 +501,7 @@ public:
 private:
 	int CheckDDPK3();
 	int CheckExternalFile(bool & hascolorkey);
-	bool LoadHiresTexture(FTextureBuffer &texbuffer, bool checkonly);
-
+	
 	bool bSWSkyColorDone = false;
 	PalEntry FloorSkyColor;
 	PalEntry CeilingSkyColor;
@@ -599,6 +597,7 @@ public:
 	void AddPatches (int lumpnum);
 	void AddHiresTextures (int wadnum);
 	void LoadTextureDefs(int wadnum, const char *lumpname, FMultipatchTextureBuilder &build);
+	void ParseColorization(FScanner& sc);
 	void ParseTextureDef(int remapLump, FMultipatchTextureBuilder &build);
 	void SortTexturesByType(int start, int end);
 	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
@@ -623,6 +622,19 @@ public:
 
 	FSwitchDef *FindSwitch (FTextureID texture);
 	FDoorAnimation *FindAnimatedDoor (FTextureID picnum);
+
+	TextureManipulation* GetTextureManipulation(FName name)
+	{
+		return tmanips.CheckKey(name);
+	}
+	void InsertTextureManipulation(FName cname, TextureManipulation tm)
+	{
+		tmanips.Insert(cname, tm);
+	}
+	void RemoveTextureManipulation(FName cname)
+	{
+		tmanips.Remove(cname);
+	}
 
 private:
 
@@ -681,6 +693,7 @@ private:
 
 	TArray<FSwitchDef *> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
+	TMap<FName, TextureManipulation> tmanips;
 
 public:
 	TArray<FAnimDef *> mAnimations;

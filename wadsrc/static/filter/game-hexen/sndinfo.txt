@@ -169,6 +169,7 @@ $alias menu/clear		PlatformStop
 // Hexen does not have ripslop sound like Heretic
 misc/ripslop			dsempty
 misc/netnotch			blddrp1
+misc/secret			dssecret
 
 $alias				intermission/cooptotal		*death
 $alias				intermission/nextstage		DoorCloseLight

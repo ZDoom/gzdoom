@@ -880,132 +880,61 @@ int getAlternative(int code)
 		default:
 			return code;
 			
-		case 0x17f:		// The 'long s' can be safely remapped to the regular variant, not that this gets used in any real text...
-			return 's';
-			
-		case 0x218:		// Romanian S with comma below may get remapped to S with cedilla.
-			return 0x15e;
-			
-		case 0x219:
-			return 0x15f;
-			
-		case 0x21a:		// Romanian T with comma below may get remapped to T with cedilla.
-			return 0x162;
-			
-		case 0x21b:
-			return 0x163;
-
-			// Greek characters with equivalents in either Latin or Cyrillic. This is only suitable for uppercase fonts!
-		case 0x391:
-			return 'A';
-
-		case 0x392:
-			return 'B';
-
-		case 0x393:
-			return 0x413;
-
-		case 0x395:
-			return 'E';
-
-		case 0x396:
-			return 'Z';
-
-		case 0x397:
-			return 'H';
-
-		case 0x399:
-			return 'I';
-
-		case 0x39a:
-			return 'K';
-
-		case 0x39c:
-			return 'M';
-
-		case 0x39d:
-			return 'N';
-	
-		case 0x39f:
-			return 'O';
-
-		case 0x3a0:
-			return 0x41f;
-
-		case 0x3a1:
-			return 'P';
-
-		case 0x3a4:
-			return 'T';
-
-		case 0x3a5:
-			return 'Y';
-
-		case 0x3a6:
-			return 0x424;
-
-		case 0x3a7:
-			return 'X';
-
-		case 0x3aa:
-			return 0xcf;
-
-		case 0x3ab:
-			return 0x178;
-
-		case 0x3bf:
-			return 'o';
-
-		case 0x3c2:
-			return 0x3c3;	// Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
-
-		case 0x3ca:
-			return 0xef;
-
-		case 0x3cc:
-			return 0xf3;
-
-			// Cyrillic characters with equivalents in the Latin alphabet.
-		case 0x400:
-			return 0xc8;
-			
-		case 0x401:
-			return 0xcb;
-			
-		case 0x405:
-			return 'S';
-			
-		case 0x406:
-			return 'I';
-			
-		case 0x407:
-			return 0xcf;
-			
-		case 0x408:
-			return 'J';
-			
-		case 0x450:
-			return 0xe8;
-			
-		case 0x451:
-			return 0xeb;
-			
-		case 0x455:
-			return 's';
-			
-		case 0x456:
-			return 'i';
-			
-		case 0x457:
-			return 0xef;
-			
-		case 0x458:
-			return 'j';
-			
+		case 0x17f:	return 's';	// The 'long s' can be safely remapped to the regular variant, not that this gets used in any real text...
+		case 0x218:	return 0x15e; // Romanian S with comma below may get remapped to S with cedilla.
+		case 0x219:	return 0x15f;
+		case 0x21a:	return 0x162; // Romanian T with comma below may get remapped to T with cedilla.
+		case 0x21b:	return 0x163;
+		case 0x386:	return 0x391; // Greek characters with accents must map to their base form due to the "no accents in allcaps " rule.
+		case 0x388:	return 0x395;
+		case 0x389:	return 0x397;
+		case 0x38a: return 0x399;
+		case 0x38c:	return 0x39f;
+		case 0x3a0:	return 0x41f;
+		case 0x38e:	return 0x3a5;
+		case 0x38f:	return 0x3a9;
+		case 0x391: return 'A';// Greek characters with equivalents in either Latin or Cyrillic. This is only suitable for uppercase fonts!
+		case 0x392:	return 'B';
+		case 0x393:	return 0x413;
+		case 0x395:	return 'E';
+		case 0x396: return 'Z';
+		case 0x397:	return 'H';
+		case 0x399:	return 'I';
+		case 0x39a:	return 'K';
+		case 0x39c:	return 'M';
+		case 0x39d:	return 'N';
+		case 0x39f:	return 'O';
+		case 0x3a1:	return 'P';
+		case 0x3a4:	return 'T';
+		case 0x3a5:	return 'Y';
+		case 0x3a6:	return 0x424;
+		case 0x3a7:	return 'X';
+		case 0x3aa:	return 0xcf;
+		case 0x3ab:	return 0x178;
+		case 0x3bf:	return 'o'; // the Omicron is the only small Greek character that's easily mappable to a Latin equivalent. :(
+		case 0x3c2:	return 0x3c3; // Lowercase Sigma character in Greek, which changes depending on its positioning in a word; if the font is uppercase only or features a smallcaps style, the second variant of the letter will remain unused
+		case 0x390:	return 0x3ca; // For smallcaps fonts the small accented Greek characters remap to the unaccented versions.
+		case 0x3ac:	return 0x3b1;
+		case 0x3ad:	return 0x3b5;
+		case 0x3ae:	return 0x3b7;
+		case 0x3af:	return 0x3b9;
+		case 0x3b0:	return 0x3cb;
+		case 0x3cc:	return 0x3bf;
+		case 0x3cd:	return 0x3c5;
+		case 0x3ce:	return 0x3c9;
+		case 0x400:	return 0xc8; // Cyrillic characters with equivalents in the Latin alphabet.
+		case 0x401:	return 0xcb;
+		case 0x405:	return 'S';
+		case 0x406:	return 'I';
+		case 0x407: return 0xcf;
+		case 0x408:	return 'J';
+		case 0x450: return 0xe8;
+		case 0x451:	return 0xeb;
+		case 0x455:	return 's';
+		case 0x456:	return 'i';
+		case 0x457:	return 0xef;
+		case 0x458:	return 'j';
 	}
-	
-	// skip the rest of Latin characters because none of them are relevant for modern languages, except Vietnamese which cannot be represented with the tiny bitmap fonts anyway.
-	
 	return code;
 }
 
@@ -1719,6 +1648,10 @@ void V_InitFonts()
 		I_FatalError("Console font not found.");
 	}
 	// SmallFont and SmallFont2 have no default provided by the engine. BigFont only has in non-Raven games.
+	if (OriginalSmallFont == nullptr)
+	{
+		OriginalSmallFont = ConFont;
+	}
 	if (SmallFont == nullptr)
 	{
 		SmallFont = OriginalSmallFont;

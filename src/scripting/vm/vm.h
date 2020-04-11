@@ -110,6 +110,8 @@ public:
 void ThrowAbortException(EVMAbortException reason, const char *moreinfo, ...);
 void ThrowAbortException(VMScriptFunction *sfunc, VMOP *line, EVMAbortException reason, const char *moreinfo, ...);
 
+void ClearGlobalVMStack();
+
 struct VMReturn
 {
 	void *Location;

@@ -2,12 +2,12 @@
 
 extend class Object
 {
-	deprecated("2.4") static int GameType()
+	deprecated("2.4", "Use gameinfo.gametype instead") static int GameType()
 	{ 
 		return gameinfo.gametype; 
 	}
 	
-	deprecated("2.4") static void C_MidPrint(string fontname, string textlabel, bool bold = false)
+	deprecated("2.4", "Use Console.MidPrint() instead") static void C_MidPrint(string fontname, string textlabel, bool bold = false)
 	{
 		let f = Font.GetFont(fontname);
 		if (f == null) return;
@@ -27,7 +27,7 @@ extend class Actor
 	//
 	//==========================================================================
 
-	deprecated("3.7") bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false)
+	deprecated("3.7", "Use GetClass(), type cast, or 'is' operator instead") bool CheckClass(class<Actor> checkclass, int ptr_select = AAPTR_DEFAULT, bool match_superclass = false)
 	{
 		let check = GetPointer(ptr_select);
 		if (check == null || checkclass == null)
@@ -52,7 +52,7 @@ extend class Actor
 	// deprecated because it requires AAPTR to work.
 	//
 	//==========================================================================
-	deprecated("3.7") double GetDistance(bool checkz, int ptr = AAPTR_TARGET) const
+	deprecated("3.7", "Use Actor.Distance2D() or Actor.Distance3D() instead") double GetDistance(bool checkz, int ptr = AAPTR_TARGET) const
 	{
 		let target = GetPointer(ptr);
 
@@ -81,7 +81,7 @@ extend class Actor
 	//
 	//==========================================================================
 
-	deprecated("3.7") double GetAngle(int flags, int ptr = AAPTR_TARGET)
+	deprecated("3.7", "Use Actor.AngleTo() instead") double GetAngle(int flags, int ptr = AAPTR_TARGET)
 	{
 		let target = GetPointer(ptr);
 
@@ -107,7 +107,7 @@ extend class Actor
 	//
 	//==========================================================================
 	
-	deprecated("3.7") double GetSpriteAngle(int ptr = AAPTR_DEFAULT)
+	deprecated("3.7", "Use Actor.SpriteAngle instead") double GetSpriteAngle(int ptr = AAPTR_DEFAULT)
 	{
 		let target = GetPointer(ptr);
 		return target? target.SpriteAngle : 0;
@@ -122,13 +122,13 @@ extend class Actor
 	//
 	//==========================================================================
 
-	deprecated("3.7") double GetSpriteRotation(int ptr = AAPTR_DEFAULT)
+	deprecated("3.7", "Use Actor.SpriteRotation instead") double GetSpriteRotation(int ptr = AAPTR_DEFAULT)
 	{
 		let target = GetPointer(ptr);
 		return target? target.SpriteRotation : 0;
 	}
 
-	deprecated("2.3") void A_CustomMissile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET)
+	deprecated("2.3", "Use A_SpawnProjectile() instead") void A_CustomMissile(class<Actor> missiletype, double spawnheight = 32, double spawnofs_xy = 0, double angle = 0, int flags = 0, double pitch = 0, int ptr = AAPTR_TARGET)
 	{
 		A_SpawnProjectile(missiletype, spawnheight, spawnofs_xy, angle, flags|CMF_BADPITCH, pitch, ptr);
 	}
@@ -136,7 +136,7 @@ extend class Actor
 
 extend class StateProvider
 {
-	deprecated("2.3") action void A_FireCustomMissile(class<Actor> missiletype, double angle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0)
+	deprecated("2.3", "Use A_FireProjectile() instead") action void A_FireCustomMissile(class<Actor> missiletype, double angle = 0, bool useammo = true, double spawnofs_xy = 0, double spawnheight = 0, int flags = 0, double pitch = 0)
 	{
 		A_FireProjectile(missiletype, angle, useammo, spawnofs_xy, spawnheight, flags, -pitch);
 	}

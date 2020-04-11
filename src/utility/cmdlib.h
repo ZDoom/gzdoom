@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <stdarg.h>
+#include <time.h>
 #include "zstring.h"
 
 #if !defined(GUID_DEFINED)
@@ -30,6 +31,7 @@ typedef struct _GUID
 bool FileExists (const char *filename);
 bool DirExists(const char *filename);
 bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
+bool GetFileInfo(const char* pathname, size_t* size, time_t* time);
 
 extern	FString progdir;
 

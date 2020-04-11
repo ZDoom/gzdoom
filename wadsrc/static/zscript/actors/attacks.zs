@@ -67,7 +67,7 @@ extend class Actor
 			if (!(flags & CBAF_NOPITCH)) bslope = AimLineAttack (bangle, MISSILERANGE);
 			if (pufftype == null) pufftype = 'BulletPuff';
 
-			A_PlaySound(AttackSound, CHAN_WEAPON);
+			A_StartSound(AttackSound, CHAN_WEAPON);
 			for (i = 0; i < numbullets; i++)
 			{
 				double pangle = bangle;
@@ -162,7 +162,7 @@ extend class Actor
 				looker.target = target;
 				if (looker.SeeSound)
 				{
-					looker.A_PlaySound(looker.SeeSound, CHAN_VOICE);
+					looker.A_StartSound(looker.SeeSound, CHAN_VOICE);
 				}
 				looker.SetState(looker.SeeState);
 				looker.bInCombat = true;
@@ -662,7 +662,7 @@ extend class Actor
 		if (domelee && MeleeDamage>0 && CheckMeleeRange ())
 		{
 			int damage = random[CustomMelee](1, 8) * MeleeDamage;
-			if (MeleeSound) A_PlaySound (MeleeSound, CHAN_WEAPON);
+			if (MeleeSound) A_StartSound (MeleeSound, CHAN_WEAPON);
 			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
 			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 		}
@@ -686,18 +686,18 @@ extend class Actor
 		}
 	}
 
-	deprecated("2.3") void A_MeleeAttack()
+	deprecated("2.3", "Use CustomMeleeAttack() instead") void A_MeleeAttack()
 	{
 		DoAttack(true, false, MeleeDamage, MeleeSound, NULL, 0);
 	}
 
-	deprecated("2.3") void A_MissileAttack()
+	deprecated("2.3", "Use A_SpawnProjectile() instead") void A_MissileAttack()
 	{
 		Class<Actor> MissileType = MissileName;
 		DoAttack(false, true, 0, 0, MissileType, MissileHeight);
 	}
 
-	deprecated("2.3") void A_ComboAttack()
+	deprecated("2.3", "Use A_BasicAttack() instead") void A_ComboAttack()
 	{
 		Class<Actor> MissileType = MissileName;
 		DoAttack(true, true, MeleeDamage, MeleeSound, MissileType, MissileHeight);

@@ -64,14 +64,14 @@ class PunchDagger : StrifeWeapon
 		// turn to face target
 		if (t.linetarget)
 		{
-			A_PlaySound (t.linetarget.bNoBlood ? sound("misc/metalhit") : sound("misc/meathit"), CHAN_WEAPON);
+			A_StartSound (t.linetarget.bNoBlood ? sound("misc/metalhit") : sound("misc/meathit"), CHAN_WEAPON);
 			angle = t.angleFromSource;
 			bJustAttacked = true;
 			t.linetarget.DaggerAlert (self);
 		}
 		else
 		{
-			A_PlaySound ("misc/swish", CHAN_WEAPON);
+			A_StartSound ("misc/swish", CHAN_WEAPON);
 		}
 	}
 }	

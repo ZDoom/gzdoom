@@ -23,12 +23,18 @@ protected:
 	const char *CheckString(const char *key);
 
 	template<typename T>
-	void Flag(T &value, int mask, const char *key)
+	bool Flag(T &value, int mask, const char *key)
 	{
 		if (CheckBool(key))
+		{
 			value |= mask;
+			return true;
+		}
 		else
+		{
 			value &= ~mask;
+			return false;
+		}
 	}
 
 };

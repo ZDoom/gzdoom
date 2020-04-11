@@ -52,7 +52,6 @@
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
-EXTERN_CVAR(Bool, gl_texture_usehires)
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
@@ -312,8 +311,7 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	auto tex = mat->tex;
 	if (tex->isSWCanvas()) return;
 
-	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled()) ? CTF_CheckHires : 0;
+	int flags = mat->isExpanded() ? CTF_Expand : 0;
 	int numLayers = mat->GetLayers();
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
 

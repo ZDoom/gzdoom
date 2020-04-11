@@ -118,7 +118,7 @@ public:
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
-		S_Sound(m_Actor, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
+		S_Sound(m_Actor, CHAN_BODY, EChanFlags::FromInt(loop), id, clamp(m_Volume, 0.f, 1.f), m_Atten);
 	}
 	bool IsPlaying()
 	{
@@ -146,7 +146,7 @@ public:
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
-		S_Sound (m_Poly, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
+		S_Sound (m_Poly, CHAN_BODY, EChanFlags::FromInt(loop), id, clamp(m_Volume, 0.f, 1.f), m_Atten);
 	}
 	bool IsPlaying()
 	{
@@ -174,8 +174,8 @@ public:
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
-		Channel = (Channel & 7) | CHAN_AREA | loop;
-		S_Sound(m_Sector, Channel, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
+		// The Channel here may have CHANF_LOOP encoded into it.
+		S_Sound(m_Sector, Channel & 7, CHANF_AREA | EChanFlags::FromInt(loop| (Channel & ~7)), id, clamp(m_Volume, 0.f, 1.f), m_Atten);
 	}
 	bool IsPlaying()
 	{
@@ -308,7 +308,7 @@ void DSeqNode::Serialize(FSerializer &arc)
 	unsigned int i;
 	FName seqName = NAME_None;
 	int delayTics = 0;
-	FSoundID id;
+	FSoundID id = 0;
 	float volume;
 	float atten = ATTN_NORM;
 	int seqnum;
@@ -797,7 +797,7 @@ static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, c
 }
 
 DSeqNode::DSeqNode (FLevelLocals *l, int sequence, int modenum)
-: m_ModeNum(modenum), m_SequenceChoices(0)
+: m_CurrentSoundID(0), m_ModeNum(modenum), m_SequenceChoices(0)
 {
 	Level = l;
 	ActivateSequence (sequence);
@@ -1162,7 +1162,7 @@ bool SN_IsMakingLoopingSound (sector_t *sector)
 		DSeqNode *next = node->NextSequence();
 		if (node->Source() == (void *)sector)
 		{
-			return !!(static_cast<DSeqSectorNode *>(node)->Channel & CHAN_LOOP);
+			return !!(static_cast<DSeqSectorNode *>(node)->Channel & CHANF_LOOP);
 		}
 		node = next;
 	}
@@ -1222,7 +1222,7 @@ void DSeqNode::Tick ()
 			{
 				// Does not advance sequencePtr, so it will repeat as necessary.
 				m_CurrentSoundID = FSoundID(GetData(*m_SequencePtr));
-				MakeSound (CHAN_LOOP, m_CurrentSoundID);
+				MakeSound (CHANF_LOOP, m_CurrentSoundID);
 			}
 			return;
 
@@ -1433,13 +1433,13 @@ void SN_MarkPrecacheSounds(int sequence, seqtype_t type)
 	{
 		FSoundSequence *seq = Sequences[sequence];
 
-		seq->StopSound.MarkUsed();
+		soundEngine->MarkUsed(seq->StopSound);
 		for (int i = 0; GetCommand(seq->Script[i]) != SS_CMD_END; ++i)
 		{
 			int cmd = GetCommand(seq->Script[i]);
 			if (cmd == SS_CMD_PLAY || cmd == SS_CMD_PLAYREPEAT || cmd == SS_CMD_PLAYLOOP)
 			{
-				FSoundID(GetData(seq->Script[i])).MarkUsed();
+				soundEngine->MarkUsed(GetData(seq->Script[i]));
 			}
 		}
 	}

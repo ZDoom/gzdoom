@@ -470,7 +470,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser, int flags)
 	if (!P_CanResurrect(raiser, thing))
 		return false;
 
-	S_Sound (thing, CHAN_BODY, "vile/raise", 1, ATTN_IDLE);
+	S_Sound (thing, CHAN_BODY, 0, "vile/raise", 1, ATTN_IDLE);
 
 	thing->Revive();
 

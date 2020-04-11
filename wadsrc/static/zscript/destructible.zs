@@ -1,6 +1,6 @@
 struct HealthGroup native play
 {
-    deprecated("3.8") static clearscope HealthGroup Find(int id)
+    deprecated("3.8", "Use Level.FindHealthGroup() instead") static clearscope HealthGroup Find(int id)
 	{
 		return level.FindHealthGroup(id);
 	}

@@ -79,6 +79,7 @@
 #include "swrenderer/r_swrenderer.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "xlat/xlat.h"
+#include "vm.h"
 
 enum
 {
@@ -3053,7 +3054,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 		ParseTextMap(map, missingtex);
 	}
 
-	SetCompatibilityParams(checksum);
+	CalcIndices();
+	PostProcessLevel(checksum);
 
 	LoopSidedefs(true);
 
@@ -3243,6 +3245,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	{
 		if (sec.floorplane.isSlope()) sec.reflect[sector_t::floor] = 0;
 		if (sec.ceilingplane.isSlope()) sec.reflect[sector_t::ceiling] = 0;
+
+		sec.CheckExColorFlag();
 	}
 	for (auto &node : Level->nodes)
 	{
@@ -3269,3 +3273,4 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	if (!Level->IsReentering())
 		Level->FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 }
+

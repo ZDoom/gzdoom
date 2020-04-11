@@ -142,21 +142,30 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeSoundPitch)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSounds, S_StopActorSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(chanmin);
+	PARAM_INT(chanmax);
+	S_StopActorSounds(self, chanmin, chanmax);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeActorSoundPitch)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);
 	PARAM_FLOAT(pitch);
-	S_ChangeSoundPitch(self, channel, pitch);
+	S_ChangeActorSoundPitch(self, channel, pitch);
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeSoundVolume)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundVolume, S_ChangeActorSoundVolume)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_INT(channel);
 	PARAM_FLOAT(volume);
-	S_ChangeSoundVolume(self, channel, volume);
+	S_ChangeActorSoundVolume(self, channel, volume);
 	return 0;
 }
 
@@ -172,6 +181,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_FLOAT(pitch);
 	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_FLOAT(attenuation);
+	PARAM_FLOAT(pitch);
+	PARAM_FLOAT(startTime);
+	A_StartSound(self, soundid, channel, flags, volume, attenuation, pitch, startTime);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_SOUND(soundid);
+	ACTION_RETURN_BOOL(S_IsActorPlayingSomething(self, channel, soundid));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
@@ -1598,6 +1629,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_NoBlocking, A_Unblock)
 	return 0;
 }
 
+static void CopyBloodColor(AActor* self, AActor* other)
+{
+	if (self && other)
+	{
+		self->BloodColor = other->BloodColor;
+		self->BloodTranslation = other->BloodTranslation;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CopyBloodColor, CopyBloodColor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	CopyBloodColor(self, other);
+	return 0;
+}
+
 //=====================================================================================
 //
 // Inventory exports
@@ -1926,6 +1974,7 @@ DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitDir);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);

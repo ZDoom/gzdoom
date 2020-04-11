@@ -114,7 +114,7 @@ class LoreShot : Actor
 
 	void A_LoremasterChain ()
 	{
-		A_PlaySound ("loremaster/active", CHAN_BODY);
+		A_StartSound ("loremaster/active", CHAN_BODY);
 		Spawn("LoreShot2", Pos, ALLOW_REPLACE);
 		Spawn("LoreShot2", Vec3Offset(-Vel.x/2., -Vel.y/2., -Vel.z/2.), ALLOW_REPLACE);
 		Spawn("LoreShot2", Vec3Offset(-Vel.x, -Vel.y, -Vel.z), ALLOW_REPLACE);

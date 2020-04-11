@@ -46,7 +46,6 @@
 #include "a_weapons.h"
 #include "d_player.h"
 #include "p_setup.h"
-#include "i_music.h"
 #include "am_map.h"
 #include "v_video.h"
 #include "gi.h"
@@ -652,6 +651,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAdditiveColor, SetAdditiveColor)
 	SetAdditiveColor(self, pos, color);
 	return 0;
 }
+
+static void SetColorization(sector_t* self, int pos, int cname)
+{
+	if (pos >= 0 && pos < 2)
+	{
+		self->SetTextureFx(pos, TexMan.GetTextureManipulation(ENamedName(cname)));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetColorization, SetColorization)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	PARAM_INT(color);
+	SetColorization(self, pos, color);
+	return 0;
+}
+
 
 static void SetFogDensity(sector_t *self, int dens)
 {
@@ -1340,6 +1357,72 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 return 0;
  }
 
+ static F3DFloor* Get3DFloor(sector_t *self, unsigned int index)
+ {
+ 	 if (index >= self->e->XFloor.ffloors.Size())
+ 	 	return nullptr;
+	 return self->e->XFloor.ffloors[index];
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Get3DFloor, Get3DFloor)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(index);
+	 ACTION_RETURN_POINTER(Get3DFloor(self,index));
+ }
+
+ static int Get3DFloorCount(sector_t *self)
+ {
+	 return self->e->XFloor.ffloors.Size();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, Get3DFloorCount, Get3DFloorCount)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_INT(self->e->XFloor.ffloors.Size());
+ }
+
+ static sector_t* GetAttached(sector_t *self, unsigned int index)
+ {
+ 	 if (index >= self->e->XFloor.attached.Size())
+ 	 	return nullptr;
+	 return self->e->XFloor.attached[index];
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAttached, GetAttached)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 PARAM_INT(index);
+	 ACTION_RETURN_POINTER(GetAttached(self,index));
+ }
+
+ static int GetAttachedCount(sector_t *self)
+ {
+	 return self->e->XFloor.attached.Size();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, GetAttachedCount, GetAttachedCount)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	 ACTION_RETURN_INT(self->e->XFloor.attached.Size());
+ }
+
+ static int Get3DFloorTexture(F3DFloor *self, int pos)
+ {
+ 	 if ( pos )
+ 		 return self->bottom.texture->GetIndex();
+ 	 return self->top.texture->GetIndex();
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_F3DFloor, GetTexture, Get3DFloorTexture)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(F3DFloor);
+	 PARAM_INT(pos);
+	 if ( pos )
+		 ACTION_RETURN_INT(self->bottom.texture->GetIndex());
+	 ACTION_RETURN_INT(self->top.texture->GetIndex());
+ }
+
  //===========================================================================
  //
  //  line_t exports
@@ -1683,6 +1766,25 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 EnableSideAdditiveColor(self, tier, enable);
 	 return 0;
  }
+
+ static void SetWallColorization(side_t* self, int pos, int cname)
+ {
+	 if (pos >= 0 && pos < 3)
+	 {
+		 self->SetTextureFx(pos, TexMan.GetTextureManipulation(ENamedName(cname)));
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetColorization, SetWallColorization)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(color);
+	 SetWallColorization(self, pos, color);
+	 return 0;
+ }
+
+
 
  static int SideIndex(side_t *self)
  {
@@ -2476,7 +2578,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawImage, SBar_DrawImage)
 	return 0;
 }
 
-void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing);
+void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY);
 
 DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawString, SBar_DrawString)
 {
@@ -2490,7 +2592,9 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawString, SBar_DrawString)
 	PARAM_FLOAT(alpha);
 	PARAM_INT(wrapwidth);
 	PARAM_INT(linespacing);
-	SBar_DrawString(self, font, string, x, y, flags, trans, alpha, wrapwidth, linespacing);
+	PARAM_FLOAT(scaleX);
+	PARAM_FLOAT(scaleY);
+	SBar_DrawString(self, font, string, x, y, flags, trans, alpha, wrapwidth, linespacing, scaleX, scaleY);
 	return 0;
 }
 
@@ -3084,6 +3188,7 @@ DEFINE_FIELD(FLevelLocals, fogdensity)
 DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, MusicVolume)
 DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags, compatflags)
@@ -3182,6 +3287,14 @@ DEFINE_FIELD_X(Side, side_t, Flags)
 DEFINE_FIELD_X(Secplane, secplane_t, normal)
 DEFINE_FIELD_X(Secplane, secplane_t, D)
 DEFINE_FIELD_X(Secplane, secplane_t, negiC)
+
+DEFINE_FIELD_NAMED_X(F3DFloor, F3DFloor, bottom.plane, bottom);
+DEFINE_FIELD_NAMED_X(F3DFloor, F3DFloor, top.plane, top);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, flags);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, master);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, model);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, target);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, alpha);
 
 DEFINE_FIELD_X(Vertex, vertex_t, p)
 

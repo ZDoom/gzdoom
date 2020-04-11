@@ -417,7 +417,7 @@ public:
 				}
 			}
 		}
-		Ranges[CR_UNTRANSLATED] = remap;
+		Translations[CR_UNTRANSLATED] = remap.StoreTranslation(TRANSLATION_Font);
 		forceremap = true;
 
 	}

@@ -34,6 +34,7 @@
 #pragma once
 
 #include <assert.h>
+#include <string>
 #include <initializer_list>
 
 /* FModule Run Time Library Loader
@@ -227,3 +228,6 @@ public:
 	operator Proto() const { return Sym; }
 	explicit operator bool() const { return Sym != nullptr; }
 };
+
+void FModule_SetProgDir(const char* progdir);
+extern std::string module_progdir;

@@ -39,7 +39,6 @@ class FileReader;
 class FPlayList
 {
 public:
-	FPlayList (const char *path);
 	~FPlayList ();
 
 	bool ChangeList (const char *path);
@@ -51,11 +50,16 @@ public:
 	int Backup ();
 	void Shuffle ();
 	const char *GetSong (int position) const;
+	void Clear()
+	{
+		Songs.Clear();
+		Position = 0;
+	}
 
 private:
 	static FString NextLine (FileReader &file);
 
-	unsigned int Position;
+	unsigned int Position = 0;
 	TArray<FString> Songs;
 };
 

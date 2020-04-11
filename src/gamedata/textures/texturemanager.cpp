@@ -141,6 +141,7 @@ void FTextureManager::DeleteAll()
 	}
 	mAnimatedDoors.Clear();
 	BuildTileData.Clear();
+	tmanips.Clear();
 }
 
 //==========================================================================
@@ -824,19 +825,19 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 		}
 		else if (sc.Compare("sprite"))
 		{
-		build.ParseTexture(sc, ETextureType::Sprite);
+			build.ParseTexture(sc, ETextureType::Sprite);
 		}
 		else if (sc.Compare("walltexture"))
 		{
-		build.ParseTexture(sc, ETextureType::Wall);
+			build.ParseTexture(sc, ETextureType::Wall);
 		}
 		else if (sc.Compare("flat"))
 		{
-		build.ParseTexture(sc, ETextureType::Flat);
+			build.ParseTexture(sc, ETextureType::Flat);
 		}
 		else if (sc.Compare("graphic"))
 		{
-		build.ParseTexture(sc, ETextureType::MiscPatch);
+			build.ParseTexture(sc, ETextureType::MiscPatch);
 		}
 		else if (sc.Compare("#include"))
 		{
@@ -1185,7 +1186,7 @@ void FTextureManager::Init()
 	FTexture::InitGrayMap();
 
 	// Texture 0 is a dummy texture used to indicate "no texture"
-	auto nulltex = new FImageTexture(nullptr);
+	auto nulltex = new FImageTexture(nullptr, "");
 	nulltex->SetUseType(ETextureType::Null);
 	AddTexture (nulltex);
 	// some special textures used in the game.
@@ -1548,7 +1549,7 @@ void FTextureManager::GenerateGlobalBrightmapFromColormap()
 	if (lump == -1) return;
 	FMemLump cmap = Wads.ReadLump(lump);
 	uint8_t palbuffer[768];
-	ReadPalette(Wads.CheckNumForName("PLAYPAL"), palbuffer);
+	ReadPalette(Wads.GetNumForName("PLAYPAL"), palbuffer);
 
 	const unsigned char *cmapdata = (const unsigned char *)cmap.GetMem();
 	const uint8_t *paldata = palbuffer;

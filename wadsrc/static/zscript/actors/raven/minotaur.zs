@@ -173,7 +173,7 @@ class Minotaur : Actor
 		{
 			return;
 		}
-		A_PlaySound ("minotaur/melee", CHAN_WEAPON);
+		A_StartSound ("minotaur/melee", CHAN_WEAPON);
 		if (CheckMeleeRange())
 		{
 			PlayerInfo player = targ.player;
@@ -205,7 +205,7 @@ class Minotaur : Actor
 		}
 		if (!friendly)
 		{
-			A_PlaySound ("minotaur/sight", CHAN_WEAPON);
+			A_StartSound ("minotaur/sight", CHAN_WEAPON);
 		}
 		double dist = Distance2D(target);
 		if (target.pos.z + target.height > pos.z
@@ -293,7 +293,7 @@ class Minotaur : Actor
 		{
 			return;
 		}
-		A_PlaySound ("minotaur/attack2", CHAN_WEAPON);
+		A_StartSound ("minotaur/attack2", CHAN_WEAPON);
 		if (CheckMeleeRange())
 		{
 			int damage = random[MinotaurAtk2](1, 8) * (friendly ? 3 : 5);
@@ -333,7 +333,7 @@ class Minotaur : Actor
 		{
 			return;
 		}
-		A_PlaySound ("minotaur/attack3", CHAN_VOICE);
+		A_StartSound ("minotaur/attack3", CHAN_VOICE);
 		if (CheckMeleeRange())
 		{
 			PlayerInfo player = targ.player;
@@ -350,14 +350,14 @@ class Minotaur : Actor
 			if (Floorclip > 0 && (Level.compatflags & COMPAT_MINOTAUR))
 			{
 				// only play the sound. 
-				A_PlaySound ("minotaur/fx2hit", CHAN_WEAPON);
+				A_StartSound ("minotaur/fx2hit", CHAN_WEAPON);
 			}
 			else
 			{
 				Actor mo = SpawnMissile (target, "MinotaurFX2");
 				if (mo != null)
 				{
-					mo.A_PlaySound ("minotaur/attack1", CHAN_WEAPON);
+					mo.A_StartSound ("minotaur/attack1", CHAN_WEAPON);
 				}
 			}
 		}
@@ -540,7 +540,7 @@ class Minotaur : Actor
 		{
 			if (AttackSound)
 			{
-				A_PlaySound (AttackSound, CHAN_WEAPON);
+				A_StartSound (AttackSound, CHAN_WEAPON);
 			}
 			SetState (MeleeState);
 			return;

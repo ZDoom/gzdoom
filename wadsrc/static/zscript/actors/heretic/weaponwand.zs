@@ -66,7 +66,7 @@ class GoldWand : HereticWeapon
 			ang += Random2[FireGoldWand]() * (5.625 / 256);
 		}
 		LineAttack(ang, PLAYERMISSILERANGE, pitch, damage, 'Hitscan', "GoldWandPuff1");
-		A_PlaySound("weapons/wandhit", CHAN_WEAPON);
+		A_StartSound("weapons/wandhit", CHAN_WEAPON);
 	}
 	
 }
@@ -123,7 +123,7 @@ class GoldWandPowered : GoldWand
 			LineAttack (ang, PLAYERMISSILERANGE, pitch, damage, 'Hitscan', "GoldWandPuff2");
 			ang += ((45. / 8) * 2) / 4;
 		}
-		A_PlaySound("weapons/wandhit", CHAN_WEAPON);
+		A_StartSound("weapons/wandhit", CHAN_WEAPON);
 	}
 
 	

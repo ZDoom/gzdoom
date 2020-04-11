@@ -38,9 +38,9 @@ class FWeapAxe : FighterWeapon
 		FAXE C 3 Offset (15, 32);
 		FAXE D 2 Offset (15, 32);
 		FAXE D 1 Offset (-5, 70) A_FAxeAttack;
+	EndAttack:
 		FAXE D 2 Offset (-25, 90);
 		FAXE E 1 Offset (15, 32);
-	EndAttack:
 		FAXE E 2 Offset (10, 54);
 		FAXE E 7 Offset (10, 150);
 		FAXE A 1 Offset (0, 60) A_ReFire;

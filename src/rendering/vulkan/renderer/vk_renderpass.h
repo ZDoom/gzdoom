@@ -93,6 +93,8 @@ public:
 	std::unique_ptr<VulkanDescriptorSet> AllocateTextureDescriptorSet(int numLayers);
 	VulkanPipelineLayout* GetPipelineLayout(int numLayers);
 
+	VulkanDescriptorSet* GetNullTextureDescriptorSet();
+
 	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
 	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;
 
@@ -102,6 +104,7 @@ private:
 	void CreateDynamicSetLayout();
 	void CreateDescriptorPool();
 	void CreateDynamicSet();
+	void CreateNullTexture();
 
 	VulkanDescriptorSetLayout *GetTextureSetLayout(int numLayers);
 
@@ -112,4 +115,8 @@ private:
 	std::vector<std::unique_ptr<VulkanDescriptorSetLayout>> TextureSetLayouts;
 	std::vector<std::unique_ptr<VulkanPipelineLayout>> PipelineLayouts;
 	std::vector<VkVertexFormat> VertexFormats;
+
+	std::unique_ptr<VulkanImage> NullTexture;
+	std::unique_ptr<VulkanImageView> NullTextureView;
+	std::unique_ptr<VulkanDescriptorSet> NullTextureDescriptorSet;
 };

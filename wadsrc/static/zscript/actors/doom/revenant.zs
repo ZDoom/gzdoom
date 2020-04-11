@@ -150,7 +150,7 @@ extend class Actor
 	{
 		if (target == null) return;
 		A_FaceTarget();
-		A_PlaySound("skeleton/swing", CHAN_WEAPON);
+		A_StartSound("skeleton/swing", CHAN_WEAPON);
 	}
 
 	void A_SkelFist()
@@ -162,7 +162,7 @@ extend class Actor
 		if (CheckMeleeRange ())
 		{
 			int damage = random[SkelFist](1, 10) * 6;
-			A_PlaySound("skeleton/melee", CHAN_WEAPON);
+			A_StartSound("skeleton/melee", CHAN_WEAPON);
 			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
 			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 		}

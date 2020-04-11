@@ -446,6 +446,25 @@ bool EventManager::Responder(const event_t* ev)
 {
 	bool uiProcessorsFound = false;
 
+	// FIRST, check if there are UI processors
+	// if there are, block mouse input
+	for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
+	{
+		if (handler->IsUiProcessor)
+		{
+			uiProcessorsFound = true;
+			break;
+		}
+	}
+
+	// if this was an input mouse event (occasionally happens) we need to block it without showing it to the modder.
+	bool isUiMouseEvent = (ev->type == EV_GUI_Event && ev->subtype >= EV_GUI_FirstMouseEvent && ev->subtype <= EV_GUI_LastMouseEvent);
+	bool isInputMouseEvent = (ev->type == EV_Mouse) || // input mouse movement
+		((ev->type == EV_KeyDown || ev->type == EV_KeyUp) && ev->data1 >= KEY_MOUSE1 && ev->data1 <= KEY_MOUSE8); // or input mouse click
+
+	if (isInputMouseEvent && uiProcessorsFound)
+		return true; // block event from propagating
+
 	if (ev->type == EV_GUI_Event)
 	{
 		// iterate handlers back to front by order, and give them this event.
@@ -453,7 +472,8 @@ bool EventManager::Responder(const event_t* ev)
 		{
 			if (handler->IsUiProcessor)
 			{
-				uiProcessorsFound = true;
+				if (isUiMouseEvent && !handler->RequireMouse)
+					continue; // don't provide mouse event if not requested
 				if (handler->UiProcess(ev))
 					return true; // event was processed
 			}
@@ -464,15 +484,16 @@ bool EventManager::Responder(const event_t* ev)
 		// not sure if we want to handle device changes, but whatevs.
 		for (DStaticEventHandler* handler = LastEventHandler; handler; handler = handler->prev)
 		{
+			// do not process input events for UI
 			if (handler->IsUiProcessor)
-				uiProcessorsFound = true;
+				continue;
 			if (handler->InputProcess(ev))
 				return true; // event was processed
 		}
 	}
 	if (ShouldCallStatic(false)) uiProcessorsFound = staticEventManager.Responder(ev);
 
-	return (uiProcessorsFound && (ev->type == EV_Mouse)); // mouse events are eaten by the event system if there are any uiprocessors.
+	return false;
 }
 
 void EventManager::Console(int player, FString name, int arg1, int arg2, int arg3, bool manual)
@@ -1243,7 +1264,8 @@ void DStaticEventHandler::NewGame()
 //
 void DStaticEventHandler::OnDestroy()
 {
-	owner->UnregisterHandler(this);
+	if (owner)
+		owner->UnregisterHandler(this);
 	Super::OnDestroy();
 }
 

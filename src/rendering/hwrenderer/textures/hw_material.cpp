@@ -29,8 +29,6 @@
 #include "hw_ihwtexture.h"
 #include "hw_material.h"
 
-EXTERN_CVAR(Bool, gl_texture_usehires)
-
 //===========================================================================
 // 
 //	Quick'n dirty image rescaling.

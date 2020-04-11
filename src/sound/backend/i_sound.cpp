@@ -35,12 +35,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "doomtype.h"
-
 #include "oalsound.h"
 
-#include "mpg123_decoder.h"
-#include "sndfile_decoder.h"
+#include "i_module.h"
+#include "cmdlib.h"
 
 #include "c_dispatch.h"
 #include "i_music.h"
@@ -48,7 +46,8 @@
 #include "v_text.h"
 #include "c_cvars.h"
 #include "stats.h"
-#include "s_music.h"
+#include <zmusic.h>
+
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 EXTERN_CVAR (Float, snd_musicvolume)
@@ -85,12 +84,14 @@ void I_CloseSound ();
 // Maximum volume of all audio
 //==========================================================================
 
-CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.f)
 		self = 0.f;
 	else if (self > 1.f)
 		self = 1.f;
+
+	ChangeMusicSetting(zmusic_snd_mastervolume, nullptr, self);
 	snd_sfxvolume.Callback();
 	snd_musicvolume.Callback();
 }
@@ -126,15 +127,15 @@ public:
 	void SetMusicVolume (float volume)
 	{
 	}
-	std::pair<SoundHandle,bool> LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *pBuffer)
+	SoundHandle LoadSound(uint8_t *sfxdata, int length)
 	{
 		SoundHandle retval = { NULL };
-		return std::make_pair(retval, true);
+		return retval;
 	}
-	std::pair<SoundHandle,bool> LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend, bool monoize)
+	SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend)
 	{
 		SoundHandle retval = { NULL };
-        return std::make_pair(retval, true);
+        return retval;
 	}
 	void UnloadSound (SoundHandle sfx)
 	{
@@ -168,23 +169,19 @@ public:
 	{
 		return NULL;
 	}
-	SoundStream *OpenStream (FileReader &reader, int flags)
-	{
-		return NULL;
-	}
 
 	// Starts a sound.
-	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan)
+	FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime)
 	{
 		return NULL;
 	}
-	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan)
+	FISoundChannel *StartSound3D (SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan, float startTime)
 	{
 		return NULL;
 	}
 
 	// Marks a channel's start time without actually playing it.
-	void MarkStartTime (FISoundChannel *chan)
+	void MarkStartTime (FISoundChannel *chan, float startTime)
 	{
 	}
 
@@ -247,6 +244,7 @@ public:
 
 void I_InitSound ()
 {
+	FModule_SetProgDir(progdir);
 	/* Get command line options: */
 	nosound = !!Args->CheckParm ("-nosound");
 	nosfx = !!Args->CheckParm ("-nosfx");
@@ -259,20 +257,12 @@ void I_InitSound ()
 		return;
 	}
 
-#ifndef NO_OPENAL
-	// Simplify transition to OpenAL backend
-	if (stricmp(snd_backend, "fmod") == 0)
-	{
-		Printf (TEXTCOLOR_ORANGE "FMOD Ex sound system was removed, switching to OpenAL\n");
-		snd_backend = "openal";
-	}
-#endif // NO_OPENAL
-
+	// Keep it simple: let everything except "null" init the sound.
 	if (stricmp(snd_backend, "null") == 0)
 	{
 		GSnd = new NullSoundRenderer;
 	}
-	else if(stricmp(snd_backend, "openal") == 0)
+	else
 	{
 		#ifndef NO_OPENAL
 			if (IsOpenALPresent())
@@ -280,11 +270,6 @@ void I_InitSound ()
 				GSnd = new OpenALSoundRenderer;
 			}
 		#endif
-	}
-	else
-	{
-		Printf (TEXTCOLOR_RED"%s: Unknown sound system specified\n", *snd_backend);
-		snd_backend = "null";
 	}
 	if (!GSnd || !GSnd->IsValid ())
 	{
@@ -299,24 +284,14 @@ void I_InitSound ()
 
 void I_CloseSound ()
 {
-	// Free all loaded samples
-	S_UnloadAllSounds();
+	// Free all loaded samples. Beware that the sound engine may already have been deleted.
+	if (soundEngine) soundEngine->UnloadAllSounds();
 
 	delete GSnd;
 	GSnd = NULL;
 }
 
-void I_ShutdownSound()
-{
-	I_ShutdownMusic(true);
-	if (GSnd != NULL)
-	{
-		S_StopAllChannels();
-		I_CloseSound();
-	}
-}
-
-const char *GetSampleTypeName(enum SampleType type)
+const char *GetSampleTypeName(SampleType type)
 {
     switch(type)
     {
@@ -326,7 +301,7 @@ const char *GetSampleTypeName(enum SampleType type)
     return "(invalid sample type)";
 }
 
-const char *GetChannelConfigName(enum ChannelConfig chan)
+const char *GetChannelConfigName(ChannelConfig chan)
 {
     switch(chan)
     {
@@ -349,48 +324,8 @@ FString SoundRenderer::GatherStats ()
 	return "No stats for this sound renderer.";
 }
 
-short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
-{
-	FileReader reader;
-    short *samples = (short*)calloc(1, outlen);
-    ChannelConfig chans;
-    SampleType type;
-    int srate;
-
-	reader.OpenMemory(coded, sizebytes);
-
-    SoundDecoder *decoder = CreateDecoder(reader);
-    if(!decoder) return samples;
-
-    decoder->getInfo(&srate, &chans, &type);
-    if(chans != ChannelConfig_Mono || type != SampleType_Int16)
-    {
-        DPrintf(DMSG_WARNING, "Sample is not 16-bit mono\n");
-        delete decoder;
-        return samples;
-    }
-
-    decoder->read((char*)samples, outlen);
-    delete decoder;
-    return samples;
-}
-
 void SoundRenderer::DrawWaveDebug(int mode)
 {
-}
-
-SoundStream::~SoundStream ()
-{
-}
-
-bool SoundStream::SetPosition(unsigned int pos)
-{
-	return false;
-}
-
-bool SoundStream::SetOrder(int order)
-{
-	return false;
 }
 
 FString SoundStream::GetStats()
@@ -404,7 +339,7 @@ FString SoundStream::GetStats()
 //
 //==========================================================================
 
-std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length, bool monoize)
+SoundHandle SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length)
 {
 	uint8_t * data = NULL;
 	int len, frequency, channels, bits, loopstart, loopend;
@@ -435,7 +370,7 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int le
 			switch (blocktype)
 			{
 			case 1: // Sound data
-				if (noextra && (codec == -1 || codec == sfxdata[i+1]))
+				if (/*noextra &*/ (codec == -1 || codec == sfxdata[i + 1])) // NAM contains a VOC where a valid data block follows an extra block.
 				{
 					frequency = 1000000/(256 - sfxdata[i]);
 					channels = 1;
@@ -443,10 +378,11 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int le
 					if (codec == 0)
 						bits = 8;
 					else if (codec == 4)
-						bits = -16;
+						bits = 16;
 					else okay = false;
 					len += blocksize - 2;
 				}
+				else okay = false;
 				break;
 			case 2: // Sound data continuation
 				if (codec == -1)
@@ -494,7 +430,7 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int le
 					if (codec == 0)
 						bits = 8;
 					else if (codec == 4)
-						bits = -16;
+						bits = 16;
 					else okay = false;
 					len += blocksize - 12;
 				} else okay = false;
@@ -548,57 +484,7 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int le
 		}
 
 	} while (false);
-	std::pair<SoundHandle,bool> retval = LoadSoundRaw(data, len, frequency, channels, bits, loopstart, loopend, monoize);
+	SoundHandle retval = LoadSoundRaw(data, len, frequency, channels, bits, loopstart, loopend);
 	if (data) delete[] data;
 	return retval;
-}
-
-std::pair<SoundHandle, bool> SoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *buffer, bool monoize)
-{
-	SoundHandle retval = { NULL };
-	return std::make_pair(retval, true);
-}
-
-SoundDecoder *SoundRenderer::CreateDecoder(FileReader &reader)
-{
-    SoundDecoder *decoder = NULL;
-    auto pos = reader.Tell();
-
-#ifdef HAVE_SNDFILE
-		decoder = new SndFileDecoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader.Seek(pos, FileReader::SeekSet);
-
-		delete decoder;
-		decoder = NULL;
-#endif
-#ifdef HAVE_MPG123
-		decoder = new MPG123Decoder;
-		if (decoder->open(reader))
-			return decoder;
-		reader.Seek(pos, FileReader::SeekSet);
-
-		delete decoder;
-		decoder = NULL;
-#endif
-    return decoder;
-}
-
-
-// Default readAll implementation, for decoders that can't do anything better
-TArray<uint8_t> SoundDecoder::readAll()
-{
-    TArray<uint8_t> output;
-    unsigned total = 0;
-    unsigned got;
-
-    output.Resize(total+32768);
-    while((got=(unsigned)read((char*)&output[total], output.Size()-total)) > 0)
-    {
-        total += got;
-        output.Resize(total*2);
-    }
-    output.Resize(total);
-    return output;
 }

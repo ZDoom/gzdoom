@@ -69,7 +69,6 @@
 #include "version.h"
 #include "g_levellocals.h"
 #include "am_map.h"
-#include "atterm.h"
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
@@ -98,6 +97,10 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	{
 		self = 4;
 	}
+	else if (self == 2 || self == 3)
+	{
+		self = self - 2; // softpoly to software
+	}
 
 	if (usergame)
 	{
@@ -109,11 +112,25 @@ CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
 
-CUSTOM_CVAR(Int, vid_enablevulkan, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// [SP] This may seem pointless - but I don't want to implement live switching just
 	// yet - I'm pretty sure it's going to require a lot of reinits and destructions to
 	// do it right without memory leaks
+
+	switch(self)
+	{
+	case 2:
+		Printf("Selecting SoftPoly backend...\n");
+		break;
+#ifdef HAVE_VULKAN
+	case 1:
+		Printf("Selecting Vulkan backend...\n");
+		break;
+#endif
+	default:
+		Printf("Selecting OpenGL backend...\n");
+	}
 
 	Printf("Changing the video backend requires a restart for " GAMENAME ".\n");
 }
@@ -152,14 +169,6 @@ int DisplayWidth, DisplayHeight;
 
 FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
 
-uint32_t Col2RGB8[65][256];
-uint32_t *Col2RGB8_LessPrecision[65];
-uint32_t Col2RGB8_Inverse[65][256];
-ColorTable32k RGB32k;
-ColorTable256k RGB256k;
-
-
-static uint32_t Col2RGB8_2[63][256];
 
 // [RH] The framebuffer is no longer a mere byte array.
 // There's also only one, not four.
@@ -211,7 +220,7 @@ DCanvas::~DCanvas ()
 //
 //==========================================================================
 
-void DCanvas::Resize(int width, int height)
+void DCanvas::Resize(int width, int height, bool optimizepitch)
 {
 	Width = width;
 	Height = height;
@@ -222,7 +231,7 @@ void DCanvas::Resize(int width, int height)
 	// longer than the width. The values used here are all based on
 	// empirical evidence.
 	
-	if (width <= 640)
+	if (width <= 640 || !optimizepitch)
 	{
 		// For low resolutions, just keep the pitch the same as the width.
 		// Some speedup can be seen using the technique below, but the speedup
@@ -482,61 +491,6 @@ int V_GetColor(const uint32_t *palette, FScanner &sc)
 	return V_GetColor(palette, sc.String, &scc);
 }
 
-//==========================================================================
-//
-// BuildTransTable
-//
-// Build the tables necessary for blending
-//
-//==========================================================================
-
-static void BuildTransTable (const PalEntry *palette)
-{
-	int r, g, b;
-
-	// create the RGB555 lookup table
-	for (r = 0; r < 32; r++)
-		for (g = 0; g < 32; g++)
-			for (b = 0; b < 32; b++)
-				RGB32k.RGB[r][g][b] = ColorMatcher.Pick ((r<<3)|(r>>2), (g<<3)|(g>>2), (b<<3)|(b>>2));
-	// create the RGB666 lookup table
-	for (r = 0; r < 64; r++)
-		for (g = 0; g < 64; g++)
-			for (b = 0; b < 64; b++)
-				RGB256k.RGB[r][g][b] = ColorMatcher.Pick ((r<<2)|(r>>4), (g<<2)|(g>>4), (b<<2)|(b>>4));
-
-	int x, y;
-
-	// create the swizzled palette
-	for (x = 0; x < 65; x++)
-		for (y = 0; y < 256; y++)
-			Col2RGB8[x][y] = (((palette[y].r*x)>>4)<<20) |
-							  ((palette[y].g*x)>>4) |
-							 (((palette[y].b*x)>>4)<<10);
-
-	// create the swizzled palette with the lsb of red and blue forced to 0
-	// (for green, a 1 is okay since it never gets added into)
-	for (x = 1; x < 64; x++)
-	{
-		Col2RGB8_LessPrecision[x] = Col2RGB8_2[x-1];
-		for (y = 0; y < 256; y++)
-		{
-			Col2RGB8_2[x-1][y] = Col2RGB8[x][y] & 0x3feffbff;
-		}
-	}
-	Col2RGB8_LessPrecision[0] = Col2RGB8[0];
-	Col2RGB8_LessPrecision[64] = Col2RGB8[64];
-
-	// create the inverse swizzled palette
-	for (x = 0; x < 65; x++)
-		for (y = 0; y < 256; y++)
-		{
-			Col2RGB8_Inverse[x][y] = (((((255-palette[y].r)*x)>>4)<<20) |
-									  (((255-palette[y].g)*x)>>4) |
-									  ((((255-palette[y].b)*x)>>4)<<10)) & 0x3feffbff;
-		}
-}
-
 CCMD(clean)
 {
 	Printf ("CleanXfac: %d\nCleanYfac: %d\n", CleanXfac, CleanYfac);
@@ -621,55 +575,43 @@ bool IVideo::SetResolution ()
 // V_Init
 //
 
-void V_Init (bool restart) 
+void V_InitScreenSize ()
 { 
 	const char *i;
 	int width, height, bits;
-
-	atterm (V_Shutdown);
-
-	// [RH] Initialize palette management
-	InitPalette ();
-
-	if (!restart)
+	
+	width = height = bits = 0;
+	
+	if ( (i = Args->CheckValue ("-width")) )
+		width = atoi (i);
+	
+	if ( (i = Args->CheckValue ("-height")) )
+		height = atoi (i);
+	
+	if (width == 0)
 	{
-		width = height = bits = 0;
-
-		if ( (i = Args->CheckValue ("-width")) )
-			width = atoi (i);
-
-		if ( (i = Args->CheckValue ("-height")) )
-			height = atoi (i);
-
-		if (width == 0)
+		if (height == 0)
 		{
-			if (height == 0)
-			{
-				width = vid_defwidth;
-				height = vid_defheight;
-			}
-			else
-			{
-				width = (height * 8) / 6;
-			}
+			width = vid_defwidth;
+			height = vid_defheight;
 		}
-		else if (height == 0)
+		else
 		{
-			height = (width * 6) / 8;
+			width = (height * 8) / 6;
 		}
-		// Remember the passed arguments for the next time the game starts up windowed.
-		vid_defwidth = width;
-		vid_defheight = height;
-
-		screen = new DDummyFrameBuffer (width, height);
 	}
-	// Update screen palette when restarting
-	else
+	else if (height == 0)
 	{
-		screen->UpdatePalette();
+		height = (width * 6) / 8;
 	}
+	// Remember the passed arguments for the next time the game starts up windowed.
+	vid_defwidth = width;
+	vid_defheight = height;
+}
 
-	BuildTransTable (GPalette.BaseColors);
+void V_InitScreen()
+{
+	screen = new DDummyFrameBuffer (vid_defwidth, vid_defheight);
 }
 
 void V_Init2()
@@ -697,21 +639,11 @@ void V_Init2()
 	menu_resolution_custom_width = SCREENWIDTH;
 	menu_resolution_custom_height = SCREENHEIGHT;
 
+	screen->SetVSync(vid_vsync);
 	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	setsizeneeded = true;
-}
-
-void V_Shutdown()
-{
-	if (screen)
-	{
-		DFrameBuffer *s = screen;
-		screen = NULL;
-		delete s;
-	}
-	V_ClearFonts();
 }
 
 CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
@@ -740,10 +672,6 @@ int ActiveFakeRatio(int width, int height)
 			fakeratio = 3;
 		}
 	}
-	else if (vid_aspect == 0 && ViewportIsScaled43())
-	{
-		fakeratio = 0;
-	}
 	return fakeratio;
 }
 
@@ -766,57 +694,12 @@ float ActiveRatio(int width, int height, float *trueratio)
 
 	if (trueratio)
 		*trueratio = ratio;
-	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : ratio;
+	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : (ratio / ViewportPixelAspect());
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)
 {
 	ACTION_RETURN_FLOAT(ActiveRatio(screen->GetWidth(), screen->GetHeight(), nullptr));
-}
-
-// Tries to guess the physical dimensions of the screen based on the
-// screen's pixel dimensions. Can return:
-// 0: 4:3
-// 1: 16:9
-// 2: 16:10
-// 3: 17:10
-// 4: 5:4
-// 5: 17:10 (redundant, never returned)
-// 6: 21:9
-int CheckRatio (int width, int height, int *trueratio)
-{
-	float aspect = width / (float)height;
-
-	static std::pair<float, int> ratioTypes[] =
-	{
-		{ 21 / 9.0f , 6 },
-		{ 16 / 9.0f , 1 },
-		{ 17 / 10.0f , 3 },
-		{ 16 / 10.0f , 2 },
-		{ 4 / 3.0f , 0 },
-		{ 5 / 4.0f , 4 },
-		{ 0.0f, 0 }
-	};
-
-	int ratio = ratioTypes[0].second;
-	float distance = fabs(ratioTypes[0].first - aspect);
-	for (int i = 1; ratioTypes[i].first != 0.0f; i++)
-	{
-		float d = fabs(ratioTypes[i].first - aspect);
-		if (d < distance)
-		{
-			ratio = ratioTypes[i].second;
-			distance = d;
-		}
-	}
-
-	int fakeratio = ActiveFakeRatio(width, height);
-	if (fakeratio == -1)
-		fakeratio = ratio;
-
-	if (trueratio)
-		*trueratio = ratio;
-	return fakeratio;
 }
 
 int AspectBaseWidth(float aspect)
@@ -851,32 +734,6 @@ int AspectMultiplier(float aspect)
 bool AspectTallerThanWide(float aspect)
 {
 	return aspect < 1.333f;
-}
-
-void ScaleWithAspect (int &w, int &h, int Width, int Height)
-{
-	int resRatio = CheckRatio (Width, Height);
-	int screenRatio;
-	CheckRatio (w, h, &screenRatio);
-	if (resRatio == screenRatio)
-		return;
-
-	double yratio;
-	switch(resRatio)
-	{
-		case 0: yratio = 4./3.; break;
-		case 1: yratio = 16./9.; break;
-		case 2: yratio = 16./10.; break;
-		case 3: yratio = 17./10.; break;
-		case 4: yratio = 5./4.; break;
-		case 6: yratio = 21./9.; break;
-		default: return;
-	}
-	double y = w/yratio;
-	if (y > h)
-		w = static_cast<int>(h * yratio);
-	else
-		h = static_cast<int>(y);
 }
 
 CCMD(vid_setsize)

@@ -34,7 +34,6 @@
 #ifndef __V_TEXT_H__
 #define __V_TEXT_H__
 
-#include "doomtype.h"
 #include "v_font.h"
 
 struct FBrokenLines

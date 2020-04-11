@@ -80,7 +80,7 @@ Class ArtiTomeOfPower : PowerupGiver
 			}
 			else
 			{ // Succeeded
-				Owner.A_PlaySound ("*evillaugh", CHAN_VOICE);
+				Owner.A_StartSound ("*evillaugh", CHAN_VOICE);
 			}
 			return true;
 		}

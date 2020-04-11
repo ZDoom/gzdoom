@@ -62,7 +62,7 @@ class CWeapFlame : ClericWeapon
 				return;
 		}
 		SpawnPlayerMissile ("CFlameMissile");
-		A_PlaySound ("ClericFlameFire", CHAN_WEAPON);
+		A_StartSound ("ClericFlameFire", CHAN_WEAPON);
 	}
 }
 
@@ -278,7 +278,7 @@ class CFlameMissile : FastProjectile
 		bInvisible = false;
 		bMissile = false;
 		Vel = (0,0,0);
-		A_PlaySound ("ClericFlameExplode", CHAN_BODY);
+		A_StartSound ("ClericFlameExplode", CHAN_BODY);
 	}
 
 	//============================================================================
@@ -290,7 +290,7 @@ class CFlameMissile : FastProjectile
 	void A_CFlameMissile()
 	{
 		bInvisible = false;
-		A_PlaySound ("ClericFlameExplode", CHAN_BODY);
+		A_StartSound ("ClericFlameExplode", CHAN_BODY);
 		if (BlockingMobj && BlockingMobj.bShootable)
 		{ // Hit something, so spawn the flame circle around the thing
 			double dist = BlockingMobj.radius + 18;

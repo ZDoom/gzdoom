@@ -125,9 +125,8 @@ public:
 
 	virtual void SetSfxVolume(float volume);
 	virtual void SetMusicVolume(float volume);
-	virtual std::pair<SoundHandle, bool> LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *buffer);
-	virtual std::pair<SoundHandle,bool> LoadSoundBuffered(FSoundLoadBuffer *buffer,  bool monoize);
-	virtual std::pair<SoundHandle,bool> LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1, bool monoize = false);
+	virtual SoundHandle LoadSound(uint8_t *sfxdata, int length);
+	virtual SoundHandle LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1);
 	virtual void UnloadSound(SoundHandle sfx);
 	virtual unsigned int GetMSLength(SoundHandle sfx);
 	virtual unsigned int GetSampleLength(SoundHandle sfx);
@@ -135,11 +134,10 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata);
-	virtual SoundStream *OpenStream(FileReader &reader, int flags);
 
 	// Starts a sound.
-	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);
-	virtual FISoundChannel *StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan);
+	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan, float startTime);
+	virtual FISoundChannel *StartSound3D(SoundHandle sfx, SoundListener *listener, float vol, FRolloffInfo *rolloff, float distscale, int pitch, int priority, const FVector3 &pos, const FVector3 &vel, int channum, int chanflags, FISoundChannel *reuse_chan, float startTime);
 
 	// Changes a channel's volume.
 	virtual void ChannelVolume(FISoundChannel *chan, float volume);
@@ -168,7 +166,7 @@ public:
 	virtual void UpdateListener(SoundListener *);
 	virtual void UpdateSounds();
 
-	virtual void MarkStartTime(FISoundChannel*);
+	virtual void MarkStartTime(FISoundChannel*, float startTime);
 	virtual float GetAudibility(FISoundChannel*);
 
 
@@ -246,10 +244,8 @@ private:
     void RemoveStream(OpenALSoundStream *stream);
 
 	void LoadReverb(const ReverbContainer *env);
-	void FreeSource(ALuint source);
 	void PurgeStoppedSources();
 	static FSoundChan *FindLowestChannel();
-	void ForceStopChannel(FISoundChannel *chan);
 
     std::thread StreamThread;
     std::mutex StreamLock;
@@ -269,10 +265,6 @@ private:
 	TArray<ALuint> PausableSfx;
 	TArray<ALuint> ReverbSfx;
 	TArray<ALuint> SfxGroup;
-
-	int UpdateTimeMS;
-	using SourceTimeMap = std::unordered_map<ALuint,int64_t>;
-	SourceTimeMap FadingSources;
 
 	const ReverbContainer *PrevEnvironment;
 

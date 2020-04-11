@@ -355,7 +355,8 @@ int DInterpolation::DelRef(bool force)
 
 void DInterpolation::UnlinkFromMap()
 {
-	Level->interpolator.RemoveInterpolation(this);
+	if (Level)
+		Level->interpolator.RemoveInterpolation(this);
 	refcount = 0;
 }
 

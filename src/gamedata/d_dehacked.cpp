@@ -654,7 +654,7 @@ static void CreateTurnFunc(FunctionCallEmitter &emitters, int value1, int value2
 
 // misc1 = angle (in degrees) (arg +0)
 static void CreateFaceFunc(FunctionCallEmitter &emitters, int value1, int value2)
-{ // A_FaceTarget
+{ // A_SetAngle
 	emitters.AddParameterFloatConst(value1);				// angle
 	emitters.AddParameterIntConst(0);						// flags
 	emitters.AddParameterIntConst(AAPTR_DEFAULT);			// ptr
@@ -679,6 +679,7 @@ static void CreatePlaySoundFunc(FunctionCallEmitter &emitters, int value1, int v
 	emitters.AddParameterIntConst(false);								// looping
 	emitters.AddParameterFloatConst(value2 ? ATTN_NONE : ATTN_NORM);	// attenuation
 	emitters.AddParameterIntConst(false);								// local
+	emitters.AddParameterFloatConst(0.0);								// pitch
 }
 
 // misc1 = state, misc2 = probability
@@ -738,7 +739,7 @@ static void (*MBFCodePointerFactories[])(FunctionCallEmitter&, int, int) =
 
 // Creates new functions for the given state so as to convert MBF-args (misc1 and misc2) into real args.
 
-void SetDehParams(FState *state, int codepointer)
+static void SetDehParams(FState *state, int codepointer, VMDisassemblyDumper &disasmdump)
 {
 	static const uint8_t regts[] = { REGT_POINTER, REGT_POINTER, REGT_POINTER };
 	int value1 = state->GetMisc1();
@@ -794,15 +795,8 @@ void SetDehParams(FState *state, int codepointer)
 		state->SetAction(sfunc);
 		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
 
-		if (Args->CheckParm("-dumpdisasm"))
-		{
-			FILE *dump = fopen("disasm.txt", "a");
-			if (dump != nullptr)
-			{
-				DumpFunction(dump, sfunc, sfunc->PrintableName.GetChars(), (int)sfunc->PrintableName.Len());
-			}
-			fclose(dump);
-		}
+		disasmdump.Write(sfunc, sfunc->PrintableName);
+
 #ifdef HAVE_VM_JIT
 		if (Args->CheckParm("-dumpjit"))
 		{
@@ -1007,7 +1001,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1 + linelen - 6, " sound") == 0)
 			{
-				FSoundID snd;
+				FSoundID snd = 0;
 				
 				if (val == 0 || val >= SoundMap.Size())
 				{
@@ -2650,10 +2644,12 @@ static void UnloadDehSupp ()
 {
 	if (--DehUseCount <= 0)
 	{
+		VMDisassemblyDumper disasmdump(VMDisassemblyDumper::Append);
+
 		// Handle MBF params here, before the required arrays are cleared
 		for (unsigned int i=0; i < MBFParamStates.Size(); i++)
 		{
-			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer);
+			SetDehParams(MBFParamStates[i].state, MBFParamStates[i].pointer, disasmdump);
 		}
 		MBFParamStates.Clear();
 		MBFParamStates.ShrinkToFit();

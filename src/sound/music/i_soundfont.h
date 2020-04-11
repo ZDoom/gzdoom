@@ -1,16 +1,10 @@
 #pragma once
 
+#include <string>
 #include "doomtype.h"
 #include "w_wad.h"
 #include "files.h"
-
-enum
-{
-    SF_SF2 = 1,
-    SF_GUS = 2,
-    SF_WOPL = 4,
-    SF_WOPN = 8
-};
+#include "filereadermusicinterface.h"
 
 struct FSoundFontInfo
 {
@@ -44,6 +38,11 @@ public:
     
     virtual ~FSoundFontReader() {}
     virtual FileReader OpenMainConfigFile() = 0;    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
+	virtual FString MainConfigFileName()
+	{
+		return basePath() + "timidity.cfg";
+	}
+
     virtual FileReader OpenFile(const char *name) = 0;
     std::pair<FileReader , FString> LookupFile(const char *name);
     void AddPath(const char *str);
@@ -51,6 +50,15 @@ public:
 	{
 		return "";	// archived patch sets do not use paths
 	}
+
+	virtual FileReader Open(const char* name, std::string &filename);
+    virtual void close()
+    {
+        delete this;
+    }
+
+	ZMusicCustomReader* open_interface(const char* name);
+
 };
 
 //==========================================================================
@@ -120,7 +128,7 @@ class FPatchSetReader : public FSoundFontReader
 	FString mFullPathToConfig;
 
 public:
-	FPatchSetReader();
+	FPatchSetReader(FileReader &reader);
 	FPatchSetReader(const char *filename);
 	virtual FileReader OpenMainConfigFile() override;
 	virtual FileReader OpenFile(const char *name) override;

@@ -76,6 +76,7 @@ enum
 
 
 // Syntax tree structures.
+// [pbeta] Any changes to AST node structure or new node types require TreeNodeDeepCopy in zcc_parser.cpp to be updated!
 enum EZCCTreeNodeType
 {
 	AST_Identifier,
@@ -135,6 +136,8 @@ enum EZCCTreeNodeType
 	AST_StaticArrayStatement,
 	AST_Property,
 	AST_FlagDef,
+	AST_MixinDef,
+	AST_MixinStmt,
 
 	NUM_AST_NODE_TYPES
 };
@@ -166,6 +169,13 @@ enum EZCCBuiltinType
 	ZCC_Let,
 
 	ZCC_NUM_BUILT_IN_TYPES
+};
+
+enum EZCCMixinType
+{
+	ZCC_Mixin_Class,
+
+	ZCC_NUM_MIXIN_TYPES
 };
 
 enum EZCCExprType
@@ -239,6 +249,13 @@ struct ZCC_Class : ZCC_Struct
 	ZCC_Identifier *Replaces;
 
 	PClass *CType() { return static_cast<PClassType *>(Type)->Descriptor; }
+};
+
+struct ZCC_MixinDef : ZCC_NamedNode
+{
+	ZCC_TreeNode *Body;
+
+	EZCCMixinType MixinType;
 };
 
 struct ZCC_Enum : ZCC_NamedNode
@@ -370,6 +387,8 @@ struct ZCC_ExprTypeRef : ZCC_Expression
 
 struct ZCC_ExprConstant : ZCC_Expression
 {
+	// [pbeta] The ZCC_ExprConstant case in TreeNodeDeepCopy in zcc_parser.cpp
+	// must be updated if this union is changed!
 	union
 	{
 		FString *StringVal;
@@ -568,6 +587,11 @@ struct ZCC_FlagStmt : ZCC_Statement
 	bool set;
 };
 
+struct ZCC_MixinStmt : ZCC_Statement
+{
+	ENamedName MixinName;
+};
+
 FString ZCC_PrintAST(ZCC_TreeNode *root);
 
 
@@ -589,5 +613,9 @@ struct ZCCParseState : public ZCC_AST
 
 	FScanner *sc;
 };
+
+const char *GetMixinTypeString(EZCCMixinType type);
+
+ZCC_TreeNode *TreeNodeDeepCopy(ZCC_AST *ast, ZCC_TreeNode *orig, bool copySiblings);
 
 #endif

@@ -1,5 +1,6 @@
 language: cpp
 dist: xenial
+os: linux
 
 branches:
   except:
@@ -8,27 +9,31 @@ branches:
 git:
   depth: 10
 
-matrix:
+jobs:
   include:
-    - os: osx
+    - name: "Xcode 8"
+      os: osx
       osx_image: xcode8
       env:
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_SYSROOT=macosx10.12"
 
-    - os: osx
-      osx_image: xcode10.3
+    - name: "Xcode 11.3"
+      os: osx
+      osx_image: xcode11.3
       env:
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release"
 
-    - os: windows
+    - name: "Visual Studio 2017 32-bit"
+      os: windows
       env:
         - CMAKE_OPTIONS="-A Win32"
 
-    - os: windows
+    - name: "Visual Studio 2017 64-bit"
+      os: windows
       env:
         - CMAKE_OPTIONS="-A x64"
 
-    - os: linux
+    - name: "GCC 4.9"
       compiler: gcc
       env:
         - GCC_VERSION=4.9
@@ -40,19 +45,7 @@ matrix:
             - libsdl2-dev
             - libgtk2.0-dev
 
-    - os: linux
-      compiler: gcc
-      env:
-        - GCC_VERSION=5
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
-      addons:
-        apt:
-          packages:
-            - g++-5
-            - libsdl2-dev
-            - libgtk-3-dev
-
-    - os: linux
+    - name: "GCC 6"
       compiler: gcc
       env:
         - GCC_VERSION=6
@@ -66,21 +59,7 @@ matrix:
             - libsdl2-dev
             - libgtk2.0-dev
 
-    - os: linux
-      compiler: gcc
-      env:
-        - GCC_VERSION=7
-        - CMAKE_OPTIONS="-DCMAKE_CXX_FLAGS=-Wno-implicit-fallthrough"
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-7
-            - libsdl2-dev
-            - libgtk-3-dev
-
-    - os: linux
+    - name: "GCC 8"
       compiler: gcc
       env:
         - GCC_VERSION=8
@@ -94,7 +73,7 @@ matrix:
             - libsdl2-dev
             - libgtk-3-dev
 
-    - os: linux
+    - name: "GCC 9"
       compiler: gcc
       env:
         - GCC_VERSION=9
@@ -107,18 +86,31 @@ matrix:
             - g++-9
             - libsdl2-dev
 
-    - os: linux
+    - name: "Clang 3.6"
       compiler: clang
       env:
-        - CLANG_VERSION=8
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
+        - CLANG_VERSION=3.6
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+      addons:
+        apt:
+          packages:
+            - clang-3.6
+            - libsdl2-dev
+            - libgtk2.0-dev
+
+    - name: "Clang 9"
+      os: linux
+      compiler: clang
+      env:
+        - CLANG_VERSION=9
+        - CMAKE_OPTIONS="-DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-8
+            - sourceline: "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main"
+              key_url: "https://apt.llvm.org/llvm-snapshot.gpg.key"
           packages:
-            - clang-8
+            - clang-9
             - libsdl2-dev
             - libgme-dev
             - libopenal-dev
@@ -133,20 +125,39 @@ before_install:
   - $CC --version
   - $CXX --version
 
-script:
-  - echo ${TRAVIS_BUILD_DIR}
+before_script:
   - mkdir build
   - cd build
-  - >
-    cmake ${CMAKE_OPTIONS}       \
-      -DFORCE_INTERNAL_ZLIB=YES  \
-      -DFORCE_INTERNAL_JPEG=YES  \
-      -DFORCE_INTERNAL_BZIP2=YES \
-      -DFORCE_INTERNAL_GME=YES   \
-      -DPK3_QUIET_ZIPDIR=YES     \
+  - git clone https://github.com/coelckers/ZMusic.git
+  - cd ZMusic
+  - git checkout 1.0.0
+  - cd ..
+  - mkdir zmusic_build
+  - cd zmusic_build
+  - cmake ${CMAKE_OPTIONS} -DCMAKE_INSTALL_PREFIX=`pwd`/../zmusic_install ../ZMusic
+  - |
+    if [[ $TRAVIS_OS_NAME == 'windows' ]]; then
+      cmake --build . --target install --config Release -- -maxcpucount -verbosity:minimal
+    else
+      cmake --build . --target install -- --jobs=2 --keep-going
+    fi
+  - cd ..
+
+script:
+  - |
+    cmake ${CMAKE_OPTIONS}                     \
+      -DCMAKE_PREFIX_PATH=`pwd`/zmusic_install \
+      -DFORCE_INTERNAL_ZLIB=YES                \
+      -DFORCE_INTERNAL_JPEG=YES                \
+      -DFORCE_INTERNAL_BZIP2=YES               \
+      -DPK3_QUIET_ZIPDIR=YES                   \
       ..
-  - if [[ $TRAVIS_OS_NAME == 'windows' ]]; then cmake --build . --config Release -- -maxcpucount -verbosity:minimal; fi
-  - if [[ $TRAVIS_OS_NAME != 'windows' ]]; then cmake --build . -- --jobs=2 --keep-going; fi
+  - |
+    if [[ $TRAVIS_OS_NAME == 'windows' ]]; then
+      cmake --build . --config Release -- -maxcpucount -verbosity:minimal
+    else
+      cmake --build . -- --jobs=2 --keep-going
+    fi
 
 notifications:
   email: false

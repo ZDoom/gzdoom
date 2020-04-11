@@ -37,7 +37,6 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
-#include "i_time.h"
 
 
 static NSColor* RGB(const uint8_t red, const uint8_t green, const uint8_t blue)
@@ -101,7 +100,7 @@ FConsoleWindow::FConsoleWindow()
 	[m_scrollView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 	[m_scrollView setDocumentView:m_textView];
 
-	NSString* const title = [NSString stringWithFormat:@"%s %s - Console", GAMESIG, GetVersionString()];
+	NSString* const title = [NSString stringWithFormat:@"%s %s - Console", GAMENAME, GetVersionString()];
 
 	[m_window initWithContentRect:initialRect
 						styleMask:NSTitledWindowMask | NSClosableWindowMask | NSResizableWindowMask
@@ -172,7 +171,7 @@ void FConsoleWindow::ShowFatalError(const char* const message)
 	[quitButton setTitle:@"Quit"];
 	[quitButton setKeyEquivalent:@"\r"];
 	[quitButton setTarget:NSApp];
-	[quitButton setAction:@selector(terminate:)];
+	[quitButton setAction:@selector(stopModal)];
 
 	NSView* quitPanel = [[NSView alloc] initWithFrame:NSMakeRect(0.0f, 0.0f, textViewWidth, 32.0f)];
 	[quitPanel setAutoresizingMask:NSViewWidthSizable];
@@ -199,6 +198,7 @@ struct TimedUpdater
 {
 	explicit TimedUpdater(const Function& function)
 	{
+		extern uint64_t I_msTime();
 		const unsigned int currentTime = I_msTime();
 
 		if (currentTime - m_previousTime > interval)
@@ -461,8 +461,8 @@ void FConsoleWindow::NetInit(const char* const message, const int playerCount)
 		[m_netAbortButton setBezelStyle:NSRoundedBezelStyle];
 		[m_netAbortButton setTitle:@"Cancel"];
 		[m_netAbortButton setKeyEquivalent:@"\r"];
-		[m_netAbortButton setTarget:NSApp];
-		[m_netAbortButton setAction:@selector(terminate:)];
+		[m_netAbortButton setTarget:[NSApp delegate]];
+		[m_netAbortButton setAction:@selector(sendExitEvent:)];
 
 		// Panel for controls above
 		m_netView = [[NSView alloc] initWithFrame:NSMakeRect(0.0f, 0.0f, 512.0f, NET_VIEW_HEIGHT)];

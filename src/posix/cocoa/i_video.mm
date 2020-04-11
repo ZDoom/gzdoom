@@ -54,10 +54,10 @@
 #include "v_text.h"
 #include "version.h"
 #include "doomerrors.h"
-#include "atterm.h"
 
 #include "gl/system/gl_framebuffer.h"
 #include "vulkan/system/vk_framebuffer.h"
+#include "rendering/polyrenderer/backend/poly_framebuffer.h"
 
 
 @implementation NSWindow(ExitAppOnClose)
@@ -65,8 +65,8 @@
 - (void)exitAppOnClose
 {
 	NSButton* closeButton = [self standardWindowButton:NSWindowCloseButton];
-	[closeButton setAction:@selector(terminate:)];
-	[closeButton setTarget:NSApp];
+	[closeButton setAction:@selector(sendExitEvent:)];
+	[closeButton setTarget:[NSApp delegate]];
 }
 
 @end
@@ -92,11 +92,10 @@
 
 @end
 
-EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
-EXTERN_CVAR(Int,  vid_enablevulkan)
+EXTERN_CVAR(Int,  vid_preferbackend)
 EXTERN_CVAR(Bool, vk_debug)
 
 CVAR(Bool, mvk_debug, false, 0)
@@ -153,7 +152,7 @@ namespace
 {
 	if (nil == m_title)
 	{
-		m_title = [NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
+		m_title = [NSString stringWithFormat:@"%s %s", GAMENAME, GetVersionString()];
 	}
 
 	[super setTitle:m_title];
@@ -188,8 +187,15 @@ namespace
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-	[NSColor.blackColor setFill];
-	NSRectFill(dirtyRect);
+	if ([NSGraphicsContext currentContext])
+	{
+		[NSColor.blackColor setFill];
+		NSRectFill(dirtyRect);
+	}
+	else if (self.layer != nil)
+	{
+		self.layer.backgroundColor = CGColorGetConstantColor(kCGColorBlack);
+	}
 }
 
 - (void)resetCursorRects
@@ -295,7 +301,13 @@ CocoaWindow* CreateWindow(const NSUInteger styleMask)
 	return window;
 }
 
-NSOpenGLPixelFormat* CreatePixelFormat()
+enum class OpenGLProfile
+{
+	Core,
+	Legacy
+};
+
+NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
 {
 	NSOpenGLPixelFormatAttribute attributes[16];
 	size_t i = 0;
@@ -307,9 +319,13 @@ NSOpenGLPixelFormat* CreatePixelFormat()
 	attributes[i++] = NSOpenGLPixelFormatAttribute(24);
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
-	attributes[i++] = NSOpenGLPFAOpenGLProfile;
-	attributes[i++] = NSOpenGLProfileVersion3_2Core;
-	
+
+	if (profile == OpenGLProfile::Core)
+	{
+		attributes[i++] = NSOpenGLPFAOpenGLProfile;
+		attributes[i++] = NSOpenGLProfileVersion3_2Core;
+	}
+
 	if (!vid_autoswitch)
 	{
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
@@ -317,12 +333,14 @@ NSOpenGLPixelFormat* CreatePixelFormat()
 
 	attributes[i] = NSOpenGLPixelFormatAttribute(0);
 
+	assert(i < sizeof attributes / sizeof attributes[0]);
+
 	return [[NSOpenGLPixelFormat alloc] initWithAttributes:attributes];
 }
 
-void SetupOpenGLView(CocoaWindow* window)
+void SetupOpenGLView(CocoaWindow* const window, const OpenGLProfile profile)
 {
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(profile);
 
 	if (nil == pixelFormat)
 	{
@@ -350,7 +368,7 @@ class CocoaVideo : public IVideo
 public:
 	CocoaVideo()
 	{
-		ms_isVulkanEnabled = vid_enablevulkan == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
+		ms_isVulkanEnabled = vid_preferbackend == 1 && NSAppKitVersionNumber >= 1404; // NSAppKitVersionNumber10_11
 	}
 
 	~CocoaVideo()
@@ -366,13 +384,12 @@ public:
 		assert(ms_window == nil);
 		ms_window = CreateWindow(STYLE_MASK_WINDOWED);
 
+		const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
 		SystemBaseFrameBuffer *fb = nullptr;
 
 #ifdef HAVE_VULKAN
 		if (ms_isVulkanEnabled)
 		{
-			const NSRect contentRect = [ms_window contentRectForFrameRect:[ms_window frame]];
-
 			NSView* vulkanView = [[VulkanCocoaView alloc] initWithFrame:contentRect];
 			vulkanView.wantsLayer = YES;
 			vulkanView.layer.backgroundColor = NSColor.blackColor.CGColor;
@@ -419,13 +436,20 @@ public:
 			{
 				ms_isVulkanEnabled = false;
 
-				SetupOpenGLView(ms_window);
+				SetupOpenGLView(ms_window, OpenGLProfile::Core);
 			}
 		}
 		else
 #endif
+		if (vid_preferbackend == 2)
 		{
-			SetupOpenGLView(ms_window);
+			SetupOpenGLView(ms_window, OpenGLProfile::Legacy);
+
+			fb = new PolyFrameBuffer(nullptr, fullscreen);
+		}
+		else
+		{
+			SetupOpenGLView(ms_window, OpenGLProfile::Core);
 		}
 
 		if (fb == nullptr)
@@ -605,9 +629,17 @@ void SystemBaseFrameBuffer::SetWindowedMode()
 
 void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 {
-	assert(m_window.screen != nil);
-	assert(m_window.contentView.layer != nil);
-	[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
+	if ([m_window.contentView isKindOfClass:[OpenGLCocoaView class]])
+	{
+		NSOpenGLView* const glView = [m_window contentView];
+		[glView setWantsBestResolutionOpenGLSurface:hiDPI];
+	}
+	else
+    {
+		assert(m_window.screen != nil);
+		assert([m_window.contentView layer] != nil);
+		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
+	}
 
 	if (fullscreen)
 	{
@@ -752,7 +784,6 @@ void I_ShutdownGraphics()
 void I_InitGraphics()
 {
 	Video = new CocoaVideo;
-	atterm(I_ShutdownGraphics);
 }
 
 
@@ -958,3 +989,91 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 	return result == VK_SUCCESS;
 }
 #endif
+
+
+namespace
+{
+	TArray<uint8_t> polyPixelBuffer;
+	GLuint polyTexture;
+
+	int polyWidth = -1;
+	int polyHeight = -1;
+	int polyVSync = -1;
+}
+
+void I_PolyPresentInit()
+{
+	ogl_LoadFunctions();
+
+	glGenTextures(1, &polyTexture);
+	assert(polyTexture != 0);
+
+	glEnable(GL_TEXTURE_RECTANGLE_ARB);
+	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, polyTexture);
+
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+uint8_t *I_PolyPresentLock(int w, int h, bool vsync, int &pitch)
+{
+	static const int PIXEL_BYTES = 4;
+
+	if (polyPixelBuffer.Size() == 0 || w != polyWidth || h != polyHeight)
+	{
+		polyPixelBuffer.Resize(w * h * PIXEL_BYTES);
+
+		polyWidth = w;
+		polyHeight = h;
+
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glOrtho(0.0, w, h, 0.0, -1.0, 1.0);
+
+		glViewport(0, 0, w, h);
+	}
+
+	if (vsync != polyVSync)
+	{
+		const GLint value = vsync ? 1 : 0;
+
+		[[NSOpenGLContext currentContext] setValues:&value
+									   forParameter:NSOpenGLCPSwapInterval];
+	}
+
+	pitch = w * PIXEL_BYTES;
+
+	return &polyPixelBuffer[0];
+}
+
+void I_PolyPresentUnlock(int x, int y, int w, int h)
+{
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, w, h, 0, GL_BGRA, GL_UNSIGNED_BYTE, &polyPixelBuffer[0]);
+
+	glBegin(GL_QUADS);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(0.0f, 0.0f);
+	glTexCoord2f(w, 0.0f);
+	glVertex2f(w, 0.0f);
+	glTexCoord2f(w, h);
+	glVertex2f(w, h);
+	glTexCoord2f(0.0f, h);
+	glVertex2f(0.0f, h);
+	glEnd();
+
+	glFlush();
+
+	[[NSOpenGLContext currentContext] flushBuffer];
+}
+
+void I_PolyPresentDeinit()
+{
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDeleteTextures(1, &polyTexture);
+}

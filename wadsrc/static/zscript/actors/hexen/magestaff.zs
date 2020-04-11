@@ -200,7 +200,7 @@ class MWeapBloodscourge : MageWeapon
 		MStaffSpawn (angle, t.linetarget);
 		MStaffSpawn (angle-5, t.linetarget);
 		MStaffSpawn (angle+5, t.linetarget);
-		A_PlaySound ("MageStaffFire", CHAN_WEAPON);
+		A_StartSound ("MageStaffFire", CHAN_WEAPON);
 		invoker.MStaffCount = 3;
 	}
 

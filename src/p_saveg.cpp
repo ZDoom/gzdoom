@@ -95,6 +95,31 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *
 //
 //==========================================================================
 
+FSerializer& Serialize(FSerializer& arc, const char* key, TextureManipulation& part, TextureManipulation *def)
+{
+	if (arc.canSkip() && def != nullptr && !memcmp(&part, def, sizeof(part)))
+	{
+		return arc;
+	}
+
+	if (arc.BeginObject(key))
+	{
+		arc("addcolor", part.AddColor, def->AddColor)
+			("yoffset", part.ModulateColor, def->ModulateColor)
+			("xscale", part.BlendColor, def->BlendColor)
+			("yscale", part.DesaturationFactor, def->DesaturationFactor)
+			.EndObject();
+	}
+	return arc;
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FSerializer &Serialize(FSerializer &arc, const char *key, side_t::part &part, side_t::part *def)
 {
 	if (arc.canSkip() && def != nullptr && !memcmp(&part, def, sizeof(part)))
@@ -114,6 +139,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, side_t::part &part, si
 			("color1", part.SpecialColors[0], def->SpecialColors[0])
 			("color2", part.SpecialColors[1], def->SpecialColors[1])
 			("addcolor", part.AdditiveColor, def->AdditiveColor)
+			("texturefx", part.TextureFx, def->TextureFx)
 			.EndObject();
 	}
 	return arc;
@@ -212,6 +238,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t::splane &p, s
 			("alpha", p.alpha, def->alpha)
 			("glowcolor", p.GlowColor, def->GlowColor)
 			("glowheight", p.GlowHeight, def->GlowHeight)
+			("texturefx", p.TextureFx, def->TextureFx)
 			.EndObject();
 	}
 	return arc;

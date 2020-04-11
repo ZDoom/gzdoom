@@ -242,6 +242,10 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform vec4 uObjectColor2;\n";
 	i_data += "uniform vec4 uDynLightColor;\n";
 	i_data += "uniform vec4 uAddColor;\n";
+	i_data += "uniform vec4 uTextureBlendColor;\n";
+	i_data += "uniform vec4 uTextureModulateColor;\n";
+	i_data += "uniform vec4 uTextureAddColor;\n";
+	i_data += "uniform vec4 uBlendColor;\n";
 	i_data += "uniform vec4 uFogColor;\n";
 	i_data += "uniform float uDesaturationFactor;\n";
 	i_data += "uniform float uInterpolationFactor;\n";
@@ -317,6 +321,16 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "#define brighttexture texture2\n";
 	i_data += "#endif\n";
 
+#ifdef __APPLE__
+	// The noise functions are completely broken in macOS OpenGL drivers
+	// Garbage values are returned, and their infrequent usage causes extreme slowdown
+	// Also, these functions must return zeroes since GLSL 4.4
+	i_data += "#define noise1(unused) 0.0\n";
+	i_data += "#define noise2(unused) vec2(0)\n";
+	i_data += "#define noise3(unused) vec3(0)\n";
+	i_data += "#define noise4(unused) vec4(0)\n";
+#endif // __APPLE__
+
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
 	FMemLump vp_data = Wads.ReadLump(vp_lump);
@@ -378,7 +392,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 				// this looks like an old custom hardware shader.
 
 				// add ProcessMaterial function that calls the older ProcessTexel function
-				int pl_lump = Wads.CheckNumForFullName("shaders/glsl/func_defaultmat.fp");
+				int pl_lump = Wads.CheckNumForFullName("shaders/glsl/func_defaultmat.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat.fp");
 				FMemLump pl_data = Wads.ReadLump(pl_lump);
 				fp_comb << "\n" << pl_data.GetString().GetChars();
@@ -404,7 +418,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 			if (pp_data.GetString().IndexOf("ProcessLight") < 0)
 			{
-				int pl_lump = Wads.CheckNumForFullName("shaders/glsl/func_defaultlight.fp");
+				int pl_lump = Wads.CheckNumForFullName("shaders/glsl/func_defaultlight.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultlight.fp");
 				FMemLump pl_data = Wads.ReadLump(pl_lump);
 				fp_comb << "\n" << pl_data.GetString().GetChars();
@@ -419,7 +433,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	if (light_fragprog)
 	{
-		int pp_lump = Wads.CheckNumForFullName(light_fragprog);
+		int pp_lump = Wads.CheckNumForFullName(light_fragprog, 0);
 		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog);
 		FMemLump pp_data = Wads.ReadLump(pp_lump);
 		fp_comb << pp_data.GetString().GetChars() << "\n";
@@ -536,6 +550,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muAddColor.Init(hShader, "uAddColor");
+	muTextureAddColor.Init(hShader, "uTextureAddColor");
+	muTextureModulateColor.Init(hShader, "uTextureModulateColor");
+	muTextureBlendColor.Init(hShader, "uTextureBlendColor");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");

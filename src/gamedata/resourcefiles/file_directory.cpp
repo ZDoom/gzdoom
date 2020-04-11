@@ -35,15 +35,11 @@
 
 
 #include <sys/stat.h>
-#ifdef _WIN32
-#include <io.h>
-#else
-#include <fts.h>
-#endif
 
 #include "resourcefile.h"
 #include "cmdlib.h"
 #include "doomtype.h"
+#include "i_system.h"
 
 
 
@@ -71,12 +67,13 @@ struct FDirectoryLump : public FResourceLump
 class FDirectory : public FResourceFile
 {
 	TArray<FDirectoryLump> Lumps;
+	const bool nosubdir;
 
 	int AddDirectory(const char *dirpath);
 	void AddEntry(const char *fullpath, int size);
 
 public:
-	FDirectory(const char * dirname);
+	FDirectory(const char * dirname, bool nosubdirflag = false);
 	bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
@@ -89,8 +86,8 @@ public:
 //
 //==========================================================================
 
-FDirectory::FDirectory(const char * directory)
-: FResourceFile(NULL)
+FDirectory::FDirectory(const char * directory, bool nosubdirflag)
+: FResourceFile(NULL), nosubdir(nosubdirflag)
 {
 	FString dirname;
 
@@ -100,16 +97,15 @@ FDirectory::FDirectory(const char * directory)
 		// Todo for Linux: Resolve the path before using it
 	#endif
 	dirname = directory;
-	#ifdef _WIN32
-		free((void *)directory);
-	#endif
-	FixPathSeperator(dirname);
+#ifdef _WIN32
+	free((void *)directory);
+#endif
+	dirname.Substitute("\\", "/");
 	if (dirname[dirname.Len()-1] != '/') dirname += '/';
 	FileName = dirname;
 }
 
 
-#ifdef _WIN32
 //==========================================================================
 //
 // Windows version
@@ -118,15 +114,15 @@ FDirectory::FDirectory(const char * directory)
 
 int FDirectory::AddDirectory(const char *dirpath)
 {
-	struct _finddata_t fileinfo;
-	intptr_t handle;
-	FString dirmatch;
+	void * handle;
 	int count = 0;
 
-	dirmatch = dirpath;
+	FString dirmatch = dirpath;
+	findstate_t find;
 	dirmatch += '*';
 	
-	if ((handle = _findfirst(dirmatch, &fileinfo)) == -1)
+	handle = I_FindFirst(dirmatch.GetChars(), &find);
+	if (handle == ((void *)(-1)))
 	{
 		Printf("Could not scan '%s': %s\n", dirpath, strerror(errno));
 	}
@@ -134,112 +130,49 @@ int FDirectory::AddDirectory(const char *dirpath)
 	{
 		do
 		{
-			if (fileinfo.attrib & _A_HIDDEN)
+			// I_FindName only returns the file's name and not its full path
+			auto attr = I_FindAttr(&find);
+			if (attr & FA_HIDDEN)
 			{
 				// Skip hidden files and directories. (Prevents SVN bookkeeping
 				// info from being included.)
 				continue;
 			}
-			if (fileinfo.attrib & _A_SUBDIR)
+			FString fi = I_FindName(&find);
+			if (attr &  FA_DIREC)
 			{
-
-				if (fileinfo.name[0] == '.' &&
-					(fileinfo.name[1] == '\0' ||
-					 (fileinfo.name[1] == '.' && fileinfo.name[2] == '\0')))
+				if (nosubdir || (fi[0] == '.' &&
+								 (fi[1] == '\0' ||
+								  (fi[1] == '.' && fi[2] == '\0'))))
 				{
 					// Do not record . and .. directories.
 					continue;
 				}
 				FString newdir = dirpath;
-				newdir << fileinfo.name << '/';
+				newdir << fi << '/';
 				count += AddDirectory(newdir);
 			}
 			else
 			{
-				if (strstr(fileinfo.name, ".orig") || strstr(fileinfo.name, ".bak"))
+				if (strstr(fi, ".orig") || strstr(fi, ".bak"))
 				{
-					// We shouldn't add backup files to the lump directory
+					// We shouldn't add backup files to the file system
 					continue;
 				}
-
-				AddEntry(FString(dirpath) + fileinfo.name, fileinfo.size);
-				count++;
+				size_t size = 0;
+				FString fn = FString(dirpath) + fi;
+				if (GetFileInfo(fn, &size, nullptr))
+				{
+					AddEntry(fn, (int)size);
+					count++;
+				}
 			}
-		} while (_findnext(handle, &fileinfo) == 0);
-		_findclose(handle);
+
+		} while (I_FindNext (handle, &find) == 0);
+		I_FindClose (handle);
 	}
 	return count;
 }
-
-#else
-
-//==========================================================================
-//
-// add_dirs
-// 4.4BSD version
-//
-//==========================================================================
-
-int FDirectory::AddDirectory(const char *dirpath)
-{
-	char *argv [2] = { NULL, NULL };
-	argv[0] = new char[strlen(dirpath)+1];
-	strcpy(argv[0], dirpath);
-	FTS *fts;
-	FTSENT *ent;
-	int count = 0;
-
-	fts = fts_open(argv, FTS_LOGICAL, NULL);
-	if (fts == NULL)
-	{
-		Printf("Failed to start directory traversal: %s\n", strerror(errno));
-		return 0;
-	}
-
-	const size_t namepos = strlen(FileName);
-	FString pathfix;
-
-	while ((ent = fts_read(fts)) != NULL)
-	{
-		if (ent->fts_info == FTS_D && ent->fts_name[0] == '.')
-		{
-			// Skip hidden directories. (Prevents SVN bookkeeping
-			// info from being included.)
-			fts_set(fts, ent, FTS_SKIP);
-		}
-		if (ent->fts_info == FTS_D && ent->fts_level == 0)
-		{
-			continue;
-		}
-		if (ent->fts_info != FTS_F)
-		{
-			// We're only interested in remembering files.
-			continue;
-		}
-
-		// Some implementations add an extra separator between
-		// root of the hierarchy and entity's path.
-		// It needs to be removed in order to resolve
-		// lumps' relative paths properly.
-		const char* path = ent->fts_path;
-
-		if ('/' == path[namepos])
-		{
-			pathfix = FString(path, namepos);
-			pathfix.AppendCStrPart(&path[namepos + 1], ent->fts_pathlen - namepos - 1);
-
-			path = pathfix.GetChars();
-		}
-
-		AddEntry(path, ent->fts_statp->st_size);
-		count++;
-	}
-	fts_close(fts);
-	delete[] argv[0];
-	return count;
-}
-#endif
-
 
 //==========================================================================
 //

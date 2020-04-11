@@ -198,7 +198,7 @@ int				lookspeed[2] = {450, 512};
 
 CVAR (Bool,		cl_run,			false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always run?
 CVAR (Bool,		invertmouse,	false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Invert mouse look down/up?
-CVAR (Bool,		freelook,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always mlook?
+CVAR (Bool,		freelook,		true,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always mlook?
 CVAR (Bool,		lookstrafe,		false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Always strafe with mouse?
 CVAR (Float,	m_pitch,		1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)		// Mouse speeds
 CVAR (Float,	m_yaw,			1.f,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
@@ -313,6 +313,14 @@ CCMD (slot)
 				VMCall(func, param, 3, &ret, 1);
 			}
 		}
+
+		// [Nash] Option to display the name of the weapon being switched to.
+		if (players[consoleplayer].playerstate != PST_LIVE) return;
+		if (SendItemUse != players[consoleplayer].ReadyWeapon && (displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
+		{
+			StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, SendItemUse->GetTag(),
+				1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('W', 'E', 'P', 'N'));
+		}
 	}
 }
 
@@ -356,6 +364,7 @@ CCMD (weapnext)
 	}
 
 	// [BC] Option to display the name of the weapon being cycled to.
+	if (players[consoleplayer].playerstate != PST_LIVE) return;
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
 		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, SendItemUse->GetTag(),
@@ -363,7 +372,7 @@ CCMD (weapnext)
 	}
 	if (SendItemUse != players[consoleplayer].ReadyWeapon)
 	{
-		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+		S_Sound(CHAN_AUTO, 0, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -382,6 +391,7 @@ CCMD (weapprev)
 	}
 
 	// [BC] Option to display the name of the weapon being cycled to.
+	if (players[consoleplayer].playerstate != PST_LIVE) return;
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
 		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(nullptr, SendItemUse->GetTag(),
@@ -389,7 +399,7 @@ CCMD (weapprev)
 	}
 	if (SendItemUse != players[consoleplayer].ReadyWeapon)
 	{
-		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
+		S_Sound(CHAN_AUTO, 0, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -1925,6 +1935,10 @@ void G_DoLoadGame ()
 		uint8_t *vars_p = (uint8_t *)cvar.GetChars();
 		C_ReadCVars(&vars_p);
 	}
+	else
+	{
+		C_SerializeCVars(arc, "servercvars", CVAR_SERVERINFO);
+	}
 
 	uint32_t time[2] = { 1,0 };
 
@@ -2286,11 +2300,7 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 
 	// Intermission stats for hubs
 	G_SerializeHub(savegameglobals);
-
-	{
-		FString vars = C_GetMassCVarString(CVAR_SERVERINFO);
-		savegameglobals.AddString("importantcvars", vars.GetChars());
-	}
+	C_SerializeCVars(savegameglobals, "servercvars", CVAR_SERVERINFO);
 
 	if (level.time != 0 || level.maptime != 0)
 	{

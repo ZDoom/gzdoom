@@ -72,13 +72,13 @@ class Snout : Weapon
 		double ang = angle;
 		double slope = AimLineAttack(ang, DEFMELEERANGE);
 		Actor puff = LineAttack(ang, DEFMELEERANGE, slope, damage, 'Melee', "SnoutPuff", true, t);
-		A_PlaySound("PigActive", CHAN_VOICE);
+		A_StartSound("PigActive", CHAN_VOICE);
 		if(t.linetarget)
 		{
 			AdjustPlayerAngle(t);
 			if(puff != null)
 			{ // Bit something
-				A_PlaySound("PigAttack", CHAN_VOICE);
+				A_StartSound("PigAttack", CHAN_VOICE);
 			}
 		}
 	}
@@ -155,12 +155,12 @@ class PigPlayer : PlayerPawn
 			{
 				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.FindState('Grunt'));
 			}
-			A_PlaySound ("PigActive1", CHAN_VOICE); // snort
+			A_StartSound ("PigActive1", CHAN_VOICE); // snort
 			return;
 		}
 		if (random[PigPlayerThink]() < 48)
 		{
-			A_PlaySound ("PigActive", CHAN_VOICE); // snort
+			A_StartSound ("PigActive", CHAN_VOICE); // snort
 		}
 	}
 

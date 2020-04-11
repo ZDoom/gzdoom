@@ -63,7 +63,6 @@ CVAR(Int, vid_showpalette, 0, 0)
 EXTERN_CVAR(Bool, ticker)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
-EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Int, vid_maxfps)
 EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, screenblocks)
@@ -353,16 +352,8 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	int screenWidth = GetWidth();
 	int screenHeight = GetHeight();
 	float scaleX, scaleY;
-	if (ViewportIsScaled43())
-	{
-		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (screenHeight * 1.2f));
-		scaleY = scaleX * 1.2f;
-	}
-	else
-	{
-		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (float)screenHeight);
-		scaleY = scaleX;
-	}
+	scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / ((float)screenHeight * ViewportPixelAspect()));
+	scaleY = scaleX * ViewportPixelAspect();
 	mOutputLetterbox.width = (int)round(screenWidth * scaleX);
 	mOutputLetterbox.height = (int)round(screenHeight * scaleY);
 	mOutputLetterbox.left = (clientWidth - mOutputLetterbox.width) / 2;
@@ -383,7 +374,7 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	// Scale viewports to fit letterbox
 	bool notScaled = ((mScreenViewport.width == ViewportScaledWidth(mScreenViewport.width, mScreenViewport.height)) &&
 		(mScreenViewport.width == ViewportScaledHeight(mScreenViewport.width, mScreenViewport.height)) &&
-		!ViewportIsScaled43());
+		(ViewportPixelAspect() == 1.0));
 	if (gl_scale_viewport && !IsFullscreen() && notScaled)
 	{
 		mScreenViewport.width = mOutputLetterbox.width;

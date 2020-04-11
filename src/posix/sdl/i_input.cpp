@@ -47,6 +47,7 @@
 #include "g_game.h"
 #include "g_levellocals.h"
 #include "utf8.h"
+#include "doomerrors.h"
 
 
 static void I_CheckGUICapture ();
@@ -297,7 +298,7 @@ void MessagePump (const SDL_Event &sev)
 	switch (sev.type)
 	{
 	case SDL_QUIT:
-		exit (0);
+		throw CExitEvent(0);
 
 	case SDL_WINDOWEVENT:
 		extern void ProcessSDLWindowEvent(const SDL_WindowEvent &);

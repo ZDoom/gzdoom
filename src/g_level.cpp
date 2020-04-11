@@ -110,6 +110,7 @@ extern uint8_t globalfreeze, globalchangefreeze;
 #define PCLS_ID			MAKE_ID('p','c','L','s')
 
 void G_VerifySkill();
+void I_UpdateWindowTitle();
 
 CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
@@ -811,6 +812,12 @@ void G_DoCompleted (void)
 	// Close the conversation menu if open.
 	P_FreeStrifeConversations ();
 
+	S_StopAllChannels();
+	for (auto Level : AllLevels())
+	{
+		SN_StopAllSequences(Level);
+	}
+
 	if (primaryLevel->DoCompleted(nextlevel, staticWmInfo))
 	{
 		gamestate = GS_INTERMISSION;
@@ -1060,7 +1067,7 @@ void G_DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool
 
 	C_FlushDisplay();
 	P_ResetSightCounters(true);
-
+	I_UpdateWindowTitle();
 }
 
 void FLevelLocals::DoLoadLevel(const FString &nextmapname, int position, bool autosave, bool newGame)
@@ -2225,7 +2232,6 @@ int IsPointInMap(FLevelLocals *Level, double x, double y, double z)
 
 void FLevelLocals::SetMusic()
 {
-	if (cdtrack == 0 || !S_ChangeCDMusic(cdtrack, cdid))
-		S_ChangeMusic(Music, musicorder);
+	S_ChangeMusic(Music, musicorder);
 }
 

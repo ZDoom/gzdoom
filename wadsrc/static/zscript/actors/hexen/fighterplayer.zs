@@ -78,7 +78,7 @@ class FighterPlayer : PlayerPawn
 		PLAY X 1 A_FreezeDeathChunks;
 		Wait;
 	Burn:
-		FDTH A 5 BRIGHT A_PlaySound("*burndeath");
+		FDTH A 5 BRIGHT A_StartSound("*burndeath");
 		FDTH B 4 BRIGHT;
 		FDTH G 5 BRIGHT;
 		FDTH H 4 BRIGHT A_PlayerScream;

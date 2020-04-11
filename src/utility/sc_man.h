@@ -87,6 +87,7 @@ public:
 	int StringLen;
 	int TokenType;
 	int Number;
+	int64_t BigNumber;
 	double Float;
 	int Line;
 	bool End;
@@ -172,10 +173,10 @@ struct FScriptPosition
 		FileName = NAME_None;
 		ScriptLine=0;
 	}
-	FScriptPosition(const FScriptPosition &other);
+	FScriptPosition(const FScriptPosition &other) = default;
 	FScriptPosition(FString fname, int line);
 	FScriptPosition(FScanner &sc);
-	FScriptPosition &operator=(const FScriptPosition &other);
+	FScriptPosition &operator=(const FScriptPosition &other) = default;
 	FScriptPosition &operator=(FScanner &sc);
 	void Message(int severity, const char *message,...) const GCCPRINTF(3,4);
 	static void ResetErrorCounter()

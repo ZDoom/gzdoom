@@ -25,6 +25,7 @@ public:
 	VulkanDevice *device;
 	std::unique_ptr<VulkanSwapChain> swapChain;
 	uint32_t presentImageIndex = 0xffffffff;
+	bool cur_vsync;
 
 	VulkanCommandBuffer *GetTransferCommands();
 	VulkanCommandBuffer *GetDrawCommands();

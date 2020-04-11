@@ -143,12 +143,12 @@ extend class Actor
 
 	void A_BrainAwake()
 	{
-		A_PlaySound("brain/sight", CHAN_VOICE, 1, false, ATTN_NONE);
+		A_StartSound("brain/sight", CHAN_VOICE, CHANF_DEFAULT, 1, ATTN_NONE);
 	}
 	
 	void A_BrainPain()
 	{
-		A_PlaySound("brain/pain", CHAN_VOICE, 1, false, ATTN_NONE);
+		A_StartSound("brain/pain", CHAN_VOICE, CHANF_DEFAULT, 1, ATTN_NONE);
 	}
 
 	private static void BrainishExplosion(vector3 pos)
@@ -174,7 +174,7 @@ extend class Actor
 			// (1 / 512.) is actually what the original value of 128 did, even though it probably meant 128 map units.
 			BrainishExplosion(Vec2OffsetZ(x, -320, (1 / 512.) + random[BrainExplode](0, 255) * 2));
 		}
-		A_PlaySound("brain/death", CHAN_VOICE, 1, false, ATTN_NONE);
+		A_StartSound("brain/death", CHAN_VOICE, CHANF_DEFAULT, 1., ATTN_NONE);
 	}
 	
 	void A_BrainExplode()
@@ -267,12 +267,12 @@ extend class Actor
 
 			if (!isdefault)
 			{
-				A_PlaySound(self.AttackSound, CHAN_WEAPON, 1., false, ATTN_NONE);
+				A_StartSound(self.AttackSound, CHAN_WEAPON, CHANF_DEFAULT, 1., ATTN_NONE);
 			}
 			else
 			{
 				// compatibility fallback
-				A_PlaySound("brain/spit", CHAN_WEAPON, 1., false, ATTN_NONE);
+				A_StartSound("brain/spit", CHAN_WEAPON, CHANF_DEFAULT, 1., ATTN_NONE);
 			}
 		}
 	}
@@ -306,7 +306,7 @@ extend class Actor
 		if (spawntype)
 		{
 			fog = Spawn (spawntype, targ.pos, ALLOW_REPLACE);
-			if (fog) A_PlaySound(snd, CHAN_BODY);
+			if (fog) A_StartSound(snd, CHAN_BODY);
 		}
 
 		class<Actor> SpawnName = null;
@@ -428,7 +428,7 @@ extend class Actor
 		void A_SpawnSound()
 	{
 		// travelling cube sound
-		A_PlaySound("brain/cube", CHAN_BODY);
+		A_StartSound("brain/cube", CHAN_BODY);
 		SpawnFly("SpawnFire", "brain/spawn");
 	}
 }

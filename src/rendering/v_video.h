@@ -46,8 +46,11 @@
 #include "v_2ddrawer.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 
-static const int VID_MIN_WIDTH = 640;
-static const int VID_MIN_HEIGHT = 400;
+static const int VID_MIN_WIDTH = 320;
+static const int VID_MIN_HEIGHT = 200;
+
+static const int VID_MIN_UI_WIDTH = 640;
+static const int VID_MIN_UI_HEIGHT = 400;
 
 struct sector_t;
 class FTexture;
@@ -237,6 +240,8 @@ enum
 	DTA_Burn,				// activates the burn shader for this element
 	DTA_Spacing,			// Strings only: Additional spacing between characters
 	DTA_Monospace,			// Fonts only: Use a fixed distance between characters.
+
+	DTA_FullscreenEx,
 };
 
 enum EMonospacing : int
@@ -279,7 +284,7 @@ struct DrawParms
 	double left;
 	float Alpha;
 	PalEntry fillcolor;
-	FRemapTable *remap;
+	int TranslationId;
 	PalEntry colorOverlay;
 	PalEntry color;
 	INTBOOL alphaChannel;
@@ -300,9 +305,10 @@ struct DrawParms
 	int maxstrlen;
 	bool fortext;
 	bool virtBottom;
+	bool burn;
+	uint8_t fsscalemode;
 	double srcx, srcy;
 	double srcwidth, srcheight;
-	bool burn;
 };
 
 struct Va_List
@@ -326,7 +332,7 @@ class DCanvas
 public:
 	DCanvas (int width, int height, bool bgra);
 	~DCanvas ();
-	void Resize(int width, int height);
+	void Resize(int width, int height, bool optimizepitch = true);
 
 	// Member variable access
 	inline uint8_t *GetPixels () const { return Pixels.Data(); }
@@ -394,6 +400,9 @@ public:
 	virtual ~DFrameBuffer();
 	virtual void InitializeState() = 0;	// For stuff that needs 'screen' set.
 	virtual bool IsVulkan() { return false; }
+	virtual bool IsPoly() { return false; }
+
+	virtual DCanvas* GetCanvas() { return nullptr; }
 
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)
@@ -594,7 +603,8 @@ EXTERN_CVAR (Float, Gamma)
 
 
 // Allocates buffer screens, call before R_Init.
-void V_Init (bool restart);
+void V_InitScreenSize();
+void V_InitScreen();
 
 // Initializes graphics mode for the first time.
 void V_Init2 ();
@@ -614,8 +624,6 @@ FString V_GetColorStringByName (const char *name, FScriptPosition *sc = nullptr)
 int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc = nullptr);
 int V_GetColor(const uint32_t *palette, FScanner &sc);
 
-int CheckRatio (int width, int height, int *trueratio=NULL);
-static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }
 inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }
 
 float ActiveRatio (int width, int height, float *trueratio = NULL);
@@ -626,7 +634,6 @@ int AspectBaseHeight(float aspect);
 double AspectPspriteOffset(float aspect);
 int AspectMultiplier(float aspect);
 bool AspectTallerThanWide(float aspect);
-void ScaleWithAspect(int &w, int &h, int Width, int Height);
 
 int GetUIScale(int altval);
 int GetConScale(int altval);
@@ -662,9 +669,13 @@ public:
 		savedyfac = CleanYfac;
 		savedwidth = CleanWidth;
 		savedheight = CleanHeight;
-		V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
-		CleanWidth = screen->GetWidth() / CleanXfac;
-		CleanHeight = screen->GetHeight() / CleanYfac;
+
+		if (screen)
+		{
+			V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
+			CleanWidth = screen->GetWidth() / CleanXfac;
+			CleanHeight = screen->GetHeight() / CleanYfac;
+		}
 	}
 
 	~ScaleOverrider()

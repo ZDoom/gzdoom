@@ -84,12 +84,12 @@ class DynamicLight : Actor
 	override void BeginPlay()
 	{
 		ChangeStatNum(STAT_DLIGHT);
-		AttachLight();
 	}
 
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
+		AttachLight();
 		
 		if (!(SpawnFlags & MTF_DORMANT))
 		{

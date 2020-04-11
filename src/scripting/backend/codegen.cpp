@@ -86,6 +86,7 @@ static const FLOP FxFlops[] =
 	{ NAME_Round,	FLOP_ROUND,		[](double v) { return round(v);  } },
 };
 
+static bool AreCompatiblePointerTypes(PType* dest, PType* source, bool forcompare = false);
 
 //==========================================================================
 //
@@ -143,9 +144,12 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	// A prototype that defines fewer return types can be compatible with
 	// one that defines more if the shorter one matches the initial types
 	// for the longer one.
+	bool swapped = false;
+
 	if (ReturnProto->ReturnTypes.Size() < proto->ReturnTypes.Size())
 	{ // Make proto the shorter one to avoid code duplication below.
 		swapvalues(proto, ReturnProto);
+		swapped = true;
 	}
 	// If one prototype returns nothing, they both must.
 	if (proto->ReturnTypes.Size() == 0)
@@ -159,9 +163,13 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 	{
 		for (unsigned i = 0; i < proto->ReturnTypes.Size(); i++)
 		{
-			if (ReturnProto->ReturnTypes[i] != proto->ReturnTypes[i])
+			PType* expected = ReturnProto->ReturnTypes[i];
+			PType* actual = proto->ReturnTypes[i];
+			if (swapped) swapvalues(expected, actual);
+
+			if (expected != actual && !AreCompatiblePointerTypes(expected, actual))
 			{ // Incompatible
-				Printf("Return type %s mismatch with %s\n", ReturnProto->ReturnTypes[i]->DescriptiveName(), proto->ReturnTypes[i]->DescriptiveName());
+				Printf("Return type %s mismatch with %s\n", expected->DescriptiveName(), actual->DescriptiveName());
 				fail = true;
 				break;
 			}
@@ -274,7 +282,7 @@ static PFunction *FindBuiltinFunction(FName funcname)
 //
 //==========================================================================
 
-static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare = false)
+static bool AreCompatiblePointerTypes(PType *dest, PType *source, bool forcompare)
 {
 	if (dest->isPointer() && source->isPointer())
 	{
@@ -1235,7 +1243,7 @@ FxExpression *FxStringCast::Resolve(FCompileContext &ctx)
 		if (basex->isConstant())
 		{
 			ExpVal constval = static_cast<FxConstant *>(basex)->GetValue();
-			FxExpression *x = new FxConstant(S_sfx[constval.GetInt()].name, ScriptPosition);
+			FxExpression *x = new FxConstant(S_GetSoundName(constval.GetInt()), ScriptPosition);
 			delete this;
 			return x;
 		}
@@ -6821,7 +6829,7 @@ FxExpression *FxCVar::Resolve(FCompileContext &ctx)
 
 ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 {
-	ExpEmit dest(build, ValueType->GetRegType());
+	ExpEmit dest(build, CVar->GetRealType() == CVAR_String ? REGT_STRING : ValueType->GetRegType());
 	ExpEmit addr(build, REGT_POINTER);
 	int nul = build->GetConstantInt(0);
 	switch (CVar->GetRealType())
@@ -7129,7 +7137,15 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 		{
 			// since this is a vector, all potential things that may get here are single float or an xy-vector.
 			auto locvar = static_cast<FxLocalVariable *>(classx);
-			locvar->RegOffset = int(membervar->Offset / 8);
+			if (!(locvar->Variable->VarFlags & VARF_Out))
+			{
+				locvar->RegOffset = int(membervar->Offset / 8);
+			}
+			else
+			{
+				locvar->RegOffset = int(membervar->Offset);
+			}
+			
 			locvar->ValueType = membervar->Type;
 			classx = nullptr;
 			delete this;
@@ -7289,6 +7305,16 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 	SAFE_RESOLVE(Array,ctx);
 	SAFE_RESOLVE(index,ctx);
 
+	if (Array->ValueType->isRealPointer())
+	{
+		auto pointedType = Array->ValueType->toPointer()->PointedType;
+		if (pointedType && pointedType->isDynArray())
+		{
+			Array = new FxOutVarDereference(Array, Array->ScriptPosition);
+			SAFE_RESOLVE(Array, ctx);
+		}
+	}
+
 	if (index->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 	{
 		// DECORATE allows floats here so cast them to int.
@@ -7346,7 +7372,7 @@ FxExpression *FxArrayElement::Resolve(FCompileContext &ctx)
 			auto parentfield = static_cast<FxMemberBase *>(Array)->membervar;
 			SizeAddr = parentfield->Offset + sizeof(void*);
 		}
-		else if (Array->ExprType == EFX_ArrayElement)
+		else if (Array->ExprType == EFX_ArrayElement || Array->ExprType == EFX_OutVarDereference)
 		{
 			SizeAddr = ~0u;
 		}
@@ -7450,7 +7476,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 
 		arrayvar.Free(build);
 	}
-	else if (Array->ExprType == EFX_ArrayElement && Array->isStaticArray())
+	else if ((Array->ExprType == EFX_ArrayElement || Array->ExprType == EFX_OutVarDereference) && Array->isStaticArray())
 	{
 		bound = ExpEmit(build, REGT_INT);
 		build->Emit(OP_LW, bound.RegNum, arrayvar.RegNum, build->GetConstantInt(myoffsetof(FArray, Count)));
@@ -8140,6 +8166,16 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 		}
 	}
 
+	if (Self->ValueType->isRealPointer())
+	{
+		auto pointedType = Self->ValueType->toPointer()->PointedType;
+		if (pointedType && pointedType->isDynArray())
+		{
+			Self = new FxOutVarDereference(Self, Self->ScriptPosition);
+			SAFE_RESOLVE(Self, ctx);
+		}
+	}
+
 	if (Self->ExprType == EFX_Super)
 	{
 		if (ctx.Function == nullptr)
@@ -8264,6 +8300,17 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					delete this;
 					return nullptr;
 				}
+
+				if (a->ValueType->isRealPointer())
+				{
+					auto pointedType = a->ValueType->toPointer()->PointedType;
+					if (pointedType && pointedType->isDynArray())
+					{
+						a = new FxOutVarDereference(a, a->ScriptPosition);
+						SAFE_RESOLVE(a, ctx);
+					}
+				}
+
 				if (isDynArrayObj && ((MethodName == NAME_Push && idx == 0) || (MethodName == NAME_Insert && idx == 1)))
 				{
 					// Null pointers are always valid.
@@ -9030,6 +9077,17 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				bool writable;
 				ArgList[i] = ArgList[i]->Resolve(ctx);	// must be resolved before the address is requested.
+
+				if (ArgList[i]->ValueType->isRealPointer())
+				{
+					auto pointedType = ArgList[i]->ValueType->toPointer()->PointedType;
+					if (pointedType && pointedType->isDynArray())
+					{
+						ArgList[i] = new FxOutVarDereference(ArgList[i], ArgList[i]->ScriptPosition);
+						SAFE_RESOLVE(ArgList[i], ctx);
+					}
+				}
+
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
 					if (type == ArgList[i]->ValueType && type->isRealPointer() && type->toPointer()->PointedType->isStruct())
@@ -9039,6 +9097,14 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 					else
 					{
 						ArgList[i]->RequestAddress(ctx, &writable);
+
+						if ((flag & VARF_Out) && !writable)
+						{
+							ScriptPosition.Message(MSG_ERROR, "Argument must be a modifiable value");
+							delete this;
+							return nullptr;
+						}
+
 						if (flag & VARF_Ref)ArgList[i]->ValueType = NewPointer(ArgList[i]->ValueType);
 					}
 
@@ -10212,6 +10278,7 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 {
 	ExpEmit v;
 	size_t jumpspot = ~0u;
+	bool whenTrueReturns = false;
 
 	TArray<size_t> yes, no;
 	Condition->EmitCompare(build, WhenTrue == nullptr, yes, no);
@@ -10219,13 +10286,14 @@ ExpEmit FxIfStatement::Emit(VMFunctionBuilder *build)
 	if (WhenTrue != nullptr)
 	{
 		build->BackpatchListToHere(yes);
+		whenTrueReturns = WhenTrue->CheckReturn();
 		WhenTrue->EmitStatement(build);
 	}
 	if (WhenFalse != nullptr)
 	{
 		if (WhenTrue != nullptr)
 		{
-			if (!WhenTrue->CheckReturn()) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
+			if (!whenTrueReturns) jumpspot = build->Emit(OP_JMP, 0);	// no need to emit a jump if the block returns.
 			build->BackpatchListToHere(no);
 		}
 		WhenFalse->EmitStatement(build);
@@ -10650,27 +10718,44 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 
 	PPrototype *retproto;
 
-	if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() == 0 && ctx.ReturnProto->ReturnTypes.Size() != Args.Size())
+	const bool hasProto = ctx.ReturnProto != nullptr;
+	const unsigned protoRetCount = hasProto ? ctx.ReturnProto->ReturnTypes.Size() : 0;
+	const unsigned retCount = Args.Size();
+	int mismatchSeverity = -1;
+
+	if (hasProto)
 	{
-		int severity = ctx.Version >= MakeVersion(3, 7) ? MSG_ERROR : MSG_WARNING;
-		ScriptPosition.Message(severity, "Incorrect number of return values. Got %u, but expected %u", Args.Size(), ctx.ReturnProto->ReturnTypes.Size());
-		if (severity == MSG_ERROR)
+		if (protoRetCount == 0 && retCount == 1)
+		{
+			// Handle the case with void function returning something, but only for one value
+			// It was accepted in previous versions, do not abort with fatal error when compiling old scripts
+			mismatchSeverity = ctx.Version >= MakeVersion(3, 7) ? MSG_ERROR : MSG_WARNING;
+		}
+		else if (protoRetCount < retCount)
+		{
+			mismatchSeverity = MSG_ERROR;
+		}
+	}
+
+	if (mismatchSeverity != -1)
+	{
+		ScriptPosition.Message(mismatchSeverity, "Incorrect number of return values. Got %u, but expected %u", Args.Size(), ctx.ReturnProto->ReturnTypes.Size());
+		if (mismatchSeverity == MSG_ERROR)
 		{
 			delete this;
 			return nullptr;
 		}
-		// For older script versions this must fall through.
 	}
-	
-	if (Args.Size() == 0)
+
+	if (retCount == 0)
 	{
 		TArray<PType *> none(0);
 		retproto = NewPrototype(none, none);
 	}
-	else if (Args.Size() == 1)
+	else if (retCount == 1)
 	{
 		// If we already know the real return type we need at least try to cast the value to its proper type (unless in an anonymous function.)
-		if (ctx.ReturnProto != nullptr && ctx.ReturnProto->ReturnTypes.Size() > 0 && ctx.Function->SymbolName != NAME_None)
+		if (hasProto && protoRetCount > 0 && ctx.Function->SymbolName != NAME_None)
 		{
 			Args[0] = new FxTypeCast(Args[0], ctx.ReturnProto->ReturnTypes[0], false, false);
 			Args[0] = Args[0]->Resolve(ctx);
@@ -10680,7 +10765,7 @@ FxExpression *FxReturnStatement::Resolve(FCompileContext &ctx)
 	}
 	else
 	{
-		for (unsigned i = 0; i < Args.Size(); i++)
+		for (unsigned i = 0; i < retCount; i++)
 		{
 			Args[i] = new FxTypeCast(Args[i], ctx.ReturnProto->ReturnTypes[i], false, false);
 			Args[i] = Args[i]->Resolve(ctx);
@@ -11272,6 +11357,7 @@ FxLocalVariableDeclaration::FxLocalVariableDeclaration(PType *type, FName name, 
 	Name = name;
 	RegCount = type == TypeVector2 ? 2 : type == TypeVector3 ? 3 : 1;
 	Init = initval;
+	clearExpr = nullptr;
 }
 
 FxLocalVariableDeclaration::~FxLocalVariableDeclaration()
@@ -11282,6 +11368,7 @@ FxLocalVariableDeclaration::~FxLocalVariableDeclaration()
 FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
+
 	if (ctx.Block == nullptr)
 	{
 		ScriptPosition.Message(MSG_ERROR, "Variable declaration outside compound statement");
@@ -11338,6 +11425,15 @@ FxExpression *FxLocalVariableDeclaration::Resolve(FCompileContext &ctx)
 			}
 		}
 	}
+
+	if (IsDynamicArray())
+	{
+		auto stackVar = new FxStackVariable(ValueType, StackOffset, ScriptPosition);
+		FArgumentList argsList;
+		clearExpr = new FxMemberFunctionCall(stackVar, "Clear", argsList, ScriptPosition);
+		SAFE_RESOLVE(clearExpr, ctx);
+	}
+
 	ctx.Block->LocalVars.Push(this);
 	return this;
 }
@@ -11476,6 +11572,10 @@ ExpEmit FxLocalVariableDeclaration::Emit(VMFunctionBuilder *build)
 			}
 			if (pstr->mDestructor != nullptr) build->ConstructedStructs.Push(this);
 		}
+		else if (ValueType->isDynArray())
+		{
+			ClearDynamicArray(build);
+		}
 	}
 	return ExpEmit();
 }
@@ -11507,6 +11607,11 @@ void FxLocalVariableDeclaration::Release(VMFunctionBuilder *build)
 	// For that all local stack variables need to live for the entire execution of a function.
 }
 
+void FxLocalVariableDeclaration::ClearDynamicArray(VMFunctionBuilder *build)
+{
+	assert(clearExpr != nullptr);
+	clearExpr->Emit(build);
+}
 
 FxStaticArray::FxStaticArray(PType *type, FName name, FArgumentList &args, const FScriptPosition &pos)
 	: FxLocalVariableDeclaration(NewArray(type, args.Size()), name, nullptr, VARF_Static|VARF_ReadOnly, pos)
@@ -11591,7 +11696,6 @@ FxLocalArrayDeclaration::FxLocalArrayDeclaration(PType *type, FName name, FArgum
 {
 	ExprType = EFX_LocalArrayDeclaration;
 	values = std::move(args);
-	clearExpr = nullptr;
 }
 
 FxExpression *FxLocalArrayDeclaration::Resolve(FCompileContext &ctx)
@@ -11606,16 +11710,6 @@ FxExpression *FxLocalArrayDeclaration::Resolve(FCompileContext &ctx)
 	auto stackVar = new FxStackVariable(ValueType, StackOffset, ScriptPosition);
 	auto elementType = (static_cast<PArray *> (ValueType))->ElementType;
 	auto elementCount = (static_cast<PArray *> (ValueType))->ElementCount;
-
-	// We HAVE to clear dynamic arrays before initializing them
-	if (IsDynamicArray())
-	{
-		FArgumentList argsList;
-		argsList.Clear();
-
-		clearExpr = new FxMemberFunctionCall(stackVar, "Clear", argsList, (const FScriptPosition) ScriptPosition);
-		SAFE_RESOLVE(clearExpr, ctx);
-	}
 
 	if (values.Size() > elementCount)
 	{
@@ -11673,9 +11767,11 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 {
 	assert(!(VarFlags & VARF_Out));	// 'out' variables should never be initialized, they can only exist as function parameters.
 
-	if (IsDynamicArray() && clearExpr != nullptr)
+	const bool isDynamicArray = IsDynamicArray();
+
+	if (isDynamicArray)
 	{
-		clearExpr->Emit(build);
+		ClearDynamicArray(build);
 	}
 
 	auto elementSizeConst = build->GetConstantInt(static_cast<PArray *>(ValueType)->ElementSize);
@@ -11686,7 +11782,7 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 	{
 		ExpEmit emitval = v->Emit(build);
 
-		if (IsDynamicArray())
+		if (isDynamicArray)
 		{
 			continue;
 		}
@@ -11757,4 +11853,76 @@ ExpEmit FxLocalArrayDeclaration::Emit(VMFunctionBuilder *build)
 	build->Registers[REGT_INT].Return(arrOffsetReg, 1);
 
 	return ExpEmit();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FxOutVarDereference::~FxOutVarDereference()
+{
+	SAFE_DELETE(Self);
+}
+
+bool FxOutVarDereference::RequestAddress(FCompileContext &ctx, bool *writable)
+{
+	if (writable != nullptr) *writable = AddressWritable;
+	return true;
+}
+
+FxExpression *FxOutVarDereference::Resolve(FCompileContext &ctx)
+{
+	CHECKRESOLVED();
+
+	SAFE_RESOLVE(Self, ctx);
+
+	assert(Self->ValueType->isPointer()); // 'Self' must be a pointer.
+
+	Self->RequestAddress(ctx, &AddressWritable);
+	SelfType = Self->ValueType->toPointer()->PointedType;
+	ValueType = SelfType;
+
+	if (SelfType->GetRegType() == REGT_NIL && !SelfType->isRealPointer() && !SelfType->isDynArray())
+	{
+		ScriptPosition.Message(MSG_ERROR, "Cannot dereference pointer");
+		delete this;
+		return nullptr;
+	}
+
+	return this;
+}
+
+ExpEmit FxOutVarDereference::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit selfEmit = Self->Emit(build);
+	assert(selfEmit.RegType == REGT_POINTER);
+	assert(SelfType->GetRegCount() == 1 && selfEmit.RegCount == 1);
+
+	int regType = 0;
+	int loadOp = 0;
+
+	if (SelfType->GetRegType() != REGT_NIL)
+	{
+		regType = SelfType->GetRegType();
+		loadOp = SelfType->GetLoadOp ();
+	}
+	else if (SelfType->isRealPointer())
+	{
+		regType = REGT_POINTER;
+		loadOp = OP_LP;
+	}
+	else if (SelfType->isDynArray())
+	{
+		regType = REGT_POINTER;
+		loadOp = OP_MOVEA;
+	}
+
+	ExpEmit out = ExpEmit(build, regType);
+
+	build->Emit(loadOp, out.RegNum, selfEmit.RegNum, 0);
+	selfEmit.Free(build);
+
+	return out;
 }

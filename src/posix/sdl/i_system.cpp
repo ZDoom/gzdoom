@@ -19,110 +19,35 @@
 //-----------------------------------------------------------------------------
 //
 
-#include "i_system.h"
-
-#include <dirent.h>
-#include <sys/wait.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <fnmatch.h>
-#include <unistd.h>
-
-#include <stdarg.h>
 #include <fcntl.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <SDL.h>
 
-#include "doomerrors.h"
-
-#include "doomtype.h"
-#include "doomstat.h"
+#include "d_main.h"
+#include "i_system.h"
 #include "version.h"
-#include "doomdef.h"
-#include "cmdlib.h"
-#include "m_argv.h"
-#include "m_misc.h"
-#include "i_sound.h"
 #include "x86.h"
 
-#include "d_main.h"
-#include "d_net.h"
-#include "g_game.h"
-#include "c_dispatch.h"
-#include "atterm.h"
-
-#include "gameconfigfile.h"
-
-extern "C"
-{
-	double		SecondsPerCycle = 1e-8;
-	double		CyclesPerSecond = 1e8;
-}
 
 #ifndef NO_GTK
 bool I_GtkAvailable ();
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
-void I_FatalError_Gtk(const char* errortext);
+void I_ShowFatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
 
 double PerfToSec, PerfToMillisec;
-	
-void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
+
+void I_SetIWADInfo()
 {
 }
-
-ticcmd_t emptycmd;
-ticcmd_t *I_BaseTiccmd(void)
-{
-	return &emptycmd;
-}
-
-void I_BeginRead(void)
-{
-}
-
-void I_EndRead(void)
-{
-}
-
-
-//
-// I_Init
-//
-void I_Init (void)
-{
-	CheckCPUID (&CPU);
-	DumpCPUInfo (&CPU);
-
-	atterm (I_ShutdownSound);
-	I_InitSound ();
-}
-
-//
-// I_Quit
-//
-static int has_exited;
-
-void I_Quit (void)
-{
-	has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
-
-	if (demorecording)
-		G_CheckDemoStatus();
-
-	C_DeinitConsole();
-}
-
 
 //
 // I_Error
 //
-extern FILE *Logfile;
-bool gameisdead;
 
 #ifdef __APPLE__
 void Mac_I_FatalError(const char* errortext);
@@ -138,87 +63,42 @@ void Linux_I_FatalError(const char* errortext)
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
 		FString cmd;
-		cmd << "kdialog --title \"" GAMESIG " ";
-		cmd << GetVersionString() << ": No IWAD found\" ";
-		cmd << "--msgbox \"" << errortext << "\"";
+		cmd << "kdialog --title \"" GAMENAME " " << GetVersionString()
+			<< "\" --msgbox \"" << errortext << "\"";
 		popen(cmd, "r");
 	}
 #ifndef NO_GTK
 	else if (I_GtkAvailable())
 	{
-		I_FatalError_Gtk(errortext);
+		I_ShowFatalError_Gtk(errortext);
 	}
 #endif
 	else
 	{
-		FString message;
-		message << GAMESIG " ";
-		message << GetVersionString() << ": No IWAD found";
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, message, errortext, NULL);
-	}
-}
-#endif
+		FString title;
+		title << GAMENAME " " << GetVersionString();
 
-void I_FatalError (const char *error, va_list ap)
-{
-	static bool alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown)		// ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-		char errortext[MAX_ERRORTEXT];
-		int index;
-		index = vsnprintf (errortext, MAX_ERRORTEXT, error, ap);
-
-#ifdef __APPLE__
-		Mac_I_FatalError(errortext);
-#endif // __APPLE__		
-
-#ifdef __linux__
-		Linux_I_FatalError(errortext);
-#endif
-		
-		// Record error to log (if logging)
-		if (Logfile)
+		if (SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, title, errortext, NULL) < 0)
 		{
-			fprintf (Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush (Logfile);
+			printf("\n%s\n", errortext);
 		}
-//		throw CFatalError (errortext);
-		fprintf (stderr, "%s\n", errortext);
-		exit (-1);
-	}
-
-	if (!has_exited)	// If it hasn't exited yet, exit now -- killough
-	{
-		has_exited = 1;	// Prevent infinitely recursive exits -- killough
-		exit(-1);
 	}
 }
+#endif
 
-void I_FatalError(const char* const error, ...)
+
+void I_ShowFatalError(const char *message)
 {
-	va_list argptr;
-	va_start(argptr, error);
-	I_FatalError(error, argptr);
-	va_end(argptr);
-
+#ifdef __APPLE__
+	Mac_I_FatalError(message);
+#elif defined __linux__
+	Linux_I_FatalError(message);
+#else
+	// ???
+#endif
 }
 
-void I_Error (const char *error, ...)
-{
-	va_list argptr;
-	char errortext[MAX_ERRORTEXT];
-
-	va_start(argptr, error);
-
-	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
-	va_end (argptr);
-	throw CRecoverableError(errortext);
-}
-
-void I_SetIWADInfo ()
+void CalculateCPUSpeed()
 {
 }
 
@@ -264,7 +144,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	const char *str;
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
-		FString cmd("kdialog --title \"" GAMESIG " ");
+		FString cmd("kdialog --title \"" GAMENAME " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
 					" --menu \"" GAMENAME " found more than one IWAD\n"
 					"Select from the list below to determine which one to use:\"";
@@ -324,6 +204,11 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	return I_PickIWad_Cocoa (wads, numwads, showwin, defaultiwad);
 #endif
 	
+	if (!isatty(fileno(stdin)))
+	{
+		return defaultiwad;
+	}
+
 	printf ("Please select a game wad (or 0 to exit):\n");
 	for (i = 0; i < numwads; ++i)
 	{
@@ -338,87 +223,6 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	if (scanf ("%d", &i) != 1 || i > numwads)
 		return -1;
 	return i-1;
-}
-
-bool I_WriteIniFailed ()
-{
-	printf ("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));
-	return false;
-	// return true to retry
-}
-
-static const char *pattern;
-
-#if defined(__APPLE__) && MAC_OS_X_VERSION_MAX_ALLOWED < 1080
-static int matchfile (struct dirent *ent)
-#else
-static int matchfile (const struct dirent *ent)
-#endif
-{
-	return fnmatch (pattern, ent->d_name, FNM_NOESCAPE) == 0;
-}
-
-void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
-{
-	FString dir;
-	
-	const char *slash = strrchr (filespec, '/');
-	if (slash)
-	{
-		pattern = slash+1;
-		dir = FString(filespec, slash-filespec+1);
-	}
-	else
-	{
-		pattern = filespec;
-		dir = ".";
-	}
-
-	fileinfo->current = 0;
-	fileinfo->count = scandir (dir.GetChars(), &fileinfo->namelist,
-							   matchfile, alphasort);
-	if (fileinfo->count > 0)
-	{
-		return fileinfo;
-	}
-	return (void*)-1;
-}
-
-int I_FindNext (void *handle, findstate_t *fileinfo)
-{
-	findstate_t *state = (findstate_t *)handle;
-	if (state->current < fileinfo->count)
-	{
-		return ++state->current < fileinfo->count ? 0 : -1;
-	}
-	return -1;
-}
-
-int I_FindClose (void *handle)
-{
-	findstate_t *state = (findstate_t *)handle;
-	if (handle != (void*)-1 && state->count > 0)
-	{
-		for(int i = 0;i < state->count;++i)
-			free (state->namelist[i]);
-		state->count = 0;
-		free (state->namelist);
-		state->namelist = NULL;
-	}
-	return 0;
-}
-
-int I_FindAttr(findstate_t* const fileinfo)
-{
-	dirent* const ent = fileinfo->namelist[fileinfo->current];
-	bool isdir;
-
-	if (DirEntryExists(ent->d_name, &isdir))
-	{
-		return isdir ? FA_DIREC : 0;
-	}
-
-	return 0;
 }
 
 void I_PutInClipboard (const char *str)
@@ -458,10 +262,3 @@ unsigned int I_MakeRNGSeed()
 	}
 	return seed;
 }
-
-TArray<FString> I_GetGogPaths()
-{
-	// GOG's Doom games are Windows only at the moment
-	return TArray<FString>();
-}
-

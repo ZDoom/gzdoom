@@ -1,7 +1,29 @@
+/*
+**  Vulkan backend
+**  Copyright (c) 2016-2020 Magnus Norddahl
+**
+**  This software is provided 'as-is', without any express or implied
+**  warranty.  In no event will the authors be held liable for any damages
+**  arising from the use of this software.
+**
+**  Permission is granted to anyone to use this software for any purpose,
+**  including commercial applications, and to alter it and redistribute it
+**  freely, subject to the following restrictions:
+**
+**  1. The origin of this software must not be misrepresented; you must not
+**     claim that you wrote the original software. If you use this software
+**     in a product, an acknowledgment in the product documentation would be
+**     appreciated but is not required.
+**  2. Altered source versions must be plainly marked as such, and must not be
+**     misrepresented as being the original software.
+**  3. This notice may not be removed or altered from any source distribution.
+**
+*/
 
 #include "vk_renderpass.h"
 #include "vk_renderbuffers.h"
 #include "vk_renderstate.h"
+#include "vulkan/textures/vk_samplers.h"
 #include "vulkan/shaders/vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
@@ -24,6 +46,7 @@ void VkRenderPassManager::Init()
 	CreateDynamicSetLayout();
 	CreateDescriptorPool();
 	CreateDynamicSet();
+	CreateNullTexture();
 }
 
 void VkRenderPassManager::RenderBuffersReset()
@@ -42,6 +65,7 @@ void VkRenderPassManager::TextureSetPoolReset()
 			deleteList.DescriptorPools.push_back(std::move(desc));
 		}
 	}
+	NullTextureDescriptorSet.reset();
 	TextureDescriptorPools.clear();
 	TextureDescriptorSetsLeft = 0;
 	TextureDescriptorsLeft = 0;
@@ -164,6 +188,42 @@ void VkRenderPassManager::CreateDynamicSet()
 	DynamicSet = DynamicDescriptorPool->allocate(DynamicSetLayout.get());
 	if (!DynamicSet)
 		I_FatalError("CreateDynamicSet failed.\n");
+}
+
+void VkRenderPassManager::CreateNullTexture()
+{
+	auto fb = GetVulkanFrameBuffer();
+
+	ImageBuilder imgbuilder;
+	imgbuilder.setFormat(VK_FORMAT_R8G8B8A8_UNORM);
+	imgbuilder.setSize(1, 1);
+	imgbuilder.setUsage(VK_IMAGE_USAGE_SAMPLED_BIT);
+	NullTexture = imgbuilder.create(fb->device);
+	NullTexture->SetDebugName("VkRenderPassManager.NullTexture");
+
+	ImageViewBuilder viewbuilder;
+	viewbuilder.setImage(NullTexture.get(), VK_FORMAT_R8G8B8A8_UNORM);
+	NullTextureView = viewbuilder.create(fb->device);
+	NullTextureView->SetDebugName("VkRenderPassManager.NullTextureView");
+
+	PipelineBarrier barrier;
+	barrier.addImage(NullTexture.get(), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 0, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+	barrier.execute(fb->GetTransferCommands(), VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+}
+
+VulkanDescriptorSet* VkRenderPassManager::GetNullTextureDescriptorSet()
+{
+	if (!NullTextureDescriptorSet)
+	{
+		NullTextureDescriptorSet = AllocateTextureDescriptorSet(1);
+
+		auto fb = GetVulkanFrameBuffer();
+		WriteDescriptors update;
+		update.addCombinedImageSampler(NullTextureDescriptorSet.get(), 0, NullTextureView.get(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		update.updateSets(fb->device);
+	}
+
+	return NullTextureDescriptorSet.get();
 }
 
 void VkRenderPassManager::UpdateDynamicSet()

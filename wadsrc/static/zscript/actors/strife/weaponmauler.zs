@@ -58,7 +58,7 @@ class Mauler : StrifeWeapon
 			return;
 		}
 
-		A_PlaySound ("weapons/mauler1", CHAN_WEAPON);
+		A_StartSound ("weapons/mauler1", CHAN_WEAPON);
 		Weapon weap = player.ReadyWeapon;
 		if (weap != null)
 		{
@@ -132,13 +132,16 @@ class Mauler2 : Mauler
 
 	action void A_FireMauler2Pre ()
 	{
-		A_PlaySound ("weapons/mauler2charge", CHAN_WEAPON);
+		A_StartSound ("weapons/mauler2charge", CHAN_WEAPON);
 
 		if (player != null)
 		{
 			PSprite psp = player.GetPSprite(PSP_WEAPON);
-			psp.x += Random2[Mauler2]() / 64.;
-			psp.y += Random2[Mauler2]() / 64.;
+			if (psp)
+			{
+				psp.x += Random2[Mauler2]() / 64.;
+				psp.y += Random2[Mauler2]() / 64.;
+			}
 		}
 	}
 

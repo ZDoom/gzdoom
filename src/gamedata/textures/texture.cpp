@@ -691,11 +691,6 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 	int isTransparent = -1;
 	bool checkonly = !!(flags & CTF_CheckOnly);
 
-	if (flags & CTF_CheckHires)
-	{
-		// No image means that this cannot be checked,
-		if (GetImage() && LoadHiresTexture(result, checkonly)) return result;
-	}
 	int exx = !!(flags & CTF_Expand);
 
 	W = GetWidth() + 2 * exx;

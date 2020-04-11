@@ -317,15 +317,8 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 {
 	int usebright = false;
 
-	if (translation <= 0)
-	{
-		translation = -translation;
-	}
-	else
-	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-	}
+	auto remap = TranslationToTable(translation);
+	translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
 
 	bool needmipmap = (clampmode <= CLAMP_XY);
 

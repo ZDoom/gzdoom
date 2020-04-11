@@ -34,7 +34,9 @@
 #ifndef __C_DISPATCH_H__
 #define __C_DISPATCH_H__
 
-#include "doomtype.h"
+#include <stdint.h>
+#include "tarray.h"
+#include "zstring.h"
 
 class FConfigFile;
 
@@ -63,7 +65,7 @@ struct FExecList
 	TArray<FString> Commands;
 	TArray<FString> Pullins;
 
-	void AddCommand(const char *cmd, const char *file = NULL);
+	void AddCommand(const char *cmd, const char *file = nullptr);
 	void ExecCommands() const;
 	void AddPullins(TArray<FString> &wads) const;
 };
@@ -107,7 +109,7 @@ public:
 	FConsoleCommand (const char *name, CCmdRun RunFunc);
 	virtual ~FConsoleCommand ();
 	virtual bool IsAlias ();
-	void PrintCommand () { Printf ("%s\n", m_Name); }
+	void PrintCommand();
 
 	virtual void Run (FCommandLine &args, AActor *instigator, int key);
 	static FConsoleCommand* FindByName (const char* name);
@@ -208,9 +210,7 @@ extern bool ParsingKeyConf, UnsafeExecutionContext;
 void ResetButtonTriggers ();	// Call ResetTriggers for all buttons
 void ResetButtonStates ();		// Same as above, but also clear bDown
 
-extern unsigned int MakeKey (const char *s);
-extern unsigned int MakeKey (const char *s, size_t len);
-extern unsigned int SuperFastHash (const char *data, size_t len);
+#include "superfasthash.h"
 
 void execLogfile(const char *fn, bool append = false);
 

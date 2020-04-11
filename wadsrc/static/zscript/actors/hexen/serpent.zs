@@ -40,7 +40,7 @@ class Serpent : Actor
 	Dive:
 		SSDV ABC 4;
 		SSDV D 4 A_UnSetShootable;
-		SSDV E 3 A_PlaySound("SerpentActive", CHAN_BODY);
+		SSDV E 3 A_StartSound("SerpentActive", CHAN_BODY);
 		SSDV F 3;
 		SSDV GH 4;
 		SSDV I 3;
@@ -48,7 +48,7 @@ class Serpent : Actor
 		Goto See;
 	Melee:
 		SSPT A 1 A_UnHideThing;
-		SSPT A 1 A_PlaySound("SerpentBirth", CHAN_BODY);
+		SSPT A 1 A_StartSound("SerpentBirth", CHAN_BODY);
 		SSPT B 3 A_SetShootable;
 		SSPT C 3;
 		SSPT D 4 A_SerpentCheckForAttack;
@@ -173,7 +173,7 @@ class Serpent : Actor
 			else
 			{	
 				SetStateLabel("Hump");
-				A_PlaySound ("SerpentActive", CHAN_BODY);
+				A_StartSound ("SerpentActive", CHAN_BODY);
 			}
 		}
 	}
@@ -251,7 +251,7 @@ class Serpent : Actor
 			int damage = random[SerpentAttack](1, 8) * 5;
 			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
 			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
-			A_PlaySound ("SerpentMeleeHit", CHAN_BODY);
+			A_StartSound ("SerpentMeleeHit", CHAN_BODY);
 		}
 		if (random[SerpentAttack]() < 96)
 		{
@@ -371,7 +371,7 @@ class SerpentFX : Actor
 	{
 	Spawn:
 		SSFX A 0;
-		SSFX A 3 Bright A_PlaySound("SerpentFXContinuous", CHAN_BODY, 1.0, 1);
+		SSFX A 3 Bright A_StartSound("SerpentFXContinuous", CHAN_BODY, CHANF_LOOPING);
 		SSFX BAB 3 Bright;
 		Goto Spawn+1;
 	Death:

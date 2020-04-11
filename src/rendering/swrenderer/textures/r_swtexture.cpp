@@ -39,8 +39,6 @@
 #include "m_alloc.h"
 #include "imagehelpers.h"
 
-EXTERN_CVAR(Bool, gl_texture_usehires)
-
 
 FSoftwareTexture *FTexture::GetSoftwareTexture()
 {
@@ -64,11 +62,11 @@ FSoftwareTexture::FSoftwareTexture(FTexture *tex)
 	mTexture = tex;
 	mSource = tex;
 
-	mBufferFlags = (gl_texture_usehires && !tex->isScaled() && tex->GetImage() && !tex->isSprite() ) ? CTF_CheckHires|CTF_ProcessData : CTF_ProcessData;
+	mBufferFlags = CTF_ProcessData;
 	auto info = tex->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
 	mPhysicalWidth = info.mWidth;
 	mPhysicalHeight = info.mHeight;
-	mPhysicalScale = mPhysicalWidth / tex->Width;
+	mPhysicalScale = tex->Width > 0? mPhysicalWidth / tex->Width : mPhysicalWidth;
 	CalcBitSize();
 }
 

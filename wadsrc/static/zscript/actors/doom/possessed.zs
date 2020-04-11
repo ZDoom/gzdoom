@@ -271,7 +271,7 @@ extend class Actor
 			A_FaceTarget();
 			double ang = angle;
 			double slope = AimLineAttack(ang, MISSILERANGE);
-			A_PlaySound("grunt/attack", CHAN_WEAPON);
+			A_StartSound("grunt/attack", CHAN_WEAPON);
 			ang  += Random2[PosAttack]() * (22.5/256);
 			int damage = Random[PosAttack](1, 5) * 3;
 			LineAttack(ang, MISSILERANGE, slope, damage, "Hitscan", "Bulletpuff");
@@ -300,7 +300,7 @@ extend class Actor
 	{
 		if (target)
 		{
-			A_PlaySound(AttackSound, CHAN_WEAPON);
+			A_StartSound(AttackSound, CHAN_WEAPON);
 			A_SPosAttackInternal();
 		}
 	}
@@ -310,7 +310,7 @@ extend class Actor
 	{
 		if (target)
 		{
-			A_PlaySound("shotguy/attack", CHAN_WEAPON);
+			A_StartSound("shotguy/attack", CHAN_WEAPON);
 			A_SPosAttackInternal();
 		}
 	}
@@ -320,7 +320,7 @@ extend class Actor
 		if (target)
 		{
 			if (bStealth) visdir = 1;
-			A_PlaySound(AttackSound, CHAN_WEAPON);
+			A_StartSound(AttackSound, CHAN_WEAPON);
 			A_FaceTarget();
 			double slope = AimLineAttack(angle, MISSILERANGE);
 			double ang = angle + Random2[CPosAttack]() * (22.5/256);

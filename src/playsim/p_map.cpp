@@ -1324,8 +1324,14 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 			(thing->flags5 & MF5_DONTRIP) ||
 			((tm.thing->flags6 & MF6_NOBOSSRIP) && (thing->flags2 & MF2_BOSS)))
 		{
+			if (thing->flags & MF_SPECIAL)
+			{
+				// Vanilla condition, i.e. without equality, for item pickups
+				if ((tm.thing->Z() > topz) || (tm.thing->Top() < thing->Z()))
+					return true;
+			}
 			// Some things prefer not to overlap each other, if possible (Q: Is this even needed anymore? It was just for dealing with some deficiencies in the code below in Heretic.)
-			if (!(tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP))
+			else if (!(tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP))
 			{
 				if ((tm.thing->Z() >= topz) || (tm.thing->Top() <= thing->Z()))
 					return true;
@@ -1520,7 +1526,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 					{ // Ok to spawn blood
 						P_RipperBlood(tm.thing, thing);
 					}
-					S_Sound(tm.thing, CHAN_BODY, "misc/ripslop", 1, ATTN_IDLE);
+					S_Sound(tm.thing, CHAN_BODY, 0, "misc/ripslop", 1, ATTN_IDLE);
 
 					// Do poisoning (if using new style poison)
 					if (tm.thing->PoisonDamage > 0 && tm.thing->PoisonDuration != INT_MIN)
@@ -2835,7 +2841,7 @@ void FSlide::HitSlideLine(line_t* ld)
 			tmmove.Y /= 2; // absorb half the velocity
 			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 			{
-				S_Sound(slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!//   ^
+				S_Sound(slidemo, CHAN_VOICE, 0, "*grunt", 1, ATTN_IDLE); // oooff!//   ^
 			}
 		}																		//   |
 		else																	// phares
@@ -2851,7 +2857,7 @@ void FSlide::HitSlideLine(line_t* ld)
 			tmmove.Y = -tmmove.Y / 2;
 			if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 			{
-				S_Sound(slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
+				S_Sound(slidemo, CHAN_VOICE, 0, "*grunt", 1, ATTN_IDLE); // oooff!
 			}
 		}
 		else
@@ -2883,7 +2889,7 @@ void FSlide::HitSlideLine(line_t* ld)
 		movelen /= 2; // absorb
 		if (slidemo->player && slidemo->health > 0 && !(slidemo->player->cheats & CF_PREDICTING))
 		{
-			S_Sound(slidemo, CHAN_VOICE, "*grunt", 1, ATTN_IDLE); // oooff!
+			S_Sound(slidemo, CHAN_VOICE, 0, "*grunt", 1, ATTN_IDLE); // oooff!
 		}
 		tmmove = moveangle.ToVector(movelen);
 	}	
@@ -4511,7 +4517,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{ // hit nothing
 		if (!nointeract && puffDefaults && puffDefaults->ActiveSound)
 		{ // Play miss sound
-			S_Sound(t1, CHAN_WEAPON, puffDefaults->ActiveSound, 1, ATTN_NORM);
+			S_Sound(t1, CHAN_WEAPON, 0, puffDefaults->ActiveSound, 1, ATTN_NORM);
 		}
 
 		// [MC] LAF_NOINTERACT guarantees puff spawning and returns it directly to the calling function.
@@ -4803,7 +4809,7 @@ int P_LineTrace(AActor *t1, DAngle angle, double distance,
 	if ( flags & TRF_NOSKY ) tflags |= TRACE_NoSky;
 
 	// Do trace
-	bool ret = Trace(startpos, t1->Sector, direction, distance, aflags, lflags, t1, trace, tflags, CheckLineTrace, &TData);
+	bool ret = Trace(startpos, t1->Level->PointInSector(startpos), direction, distance, aflags, lflags, t1, trace, tflags, CheckLineTrace, &TData);
 	if ( outdata )
 	{
 		memset(outdata,0,sizeof(*outdata));
@@ -4961,8 +4967,10 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 					bloodcolor.a = 1;
 				}
 
+				uint32_t bloodTrans = (bloodcolor != 0 ? actor->BloodTranslation : 0);
+
 				DImpactDecal::StaticCreate(actor->Level, bloodType, bleedtrace.HitPos,
-					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor);
+					bleedtrace.Line->sidedef[bleedtrace.Side], bleedtrace.ffloor, bloodcolor, bloodTrans);
 			}
 		}
 	}
@@ -5083,12 +5091,6 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 		return TRACE_Stop;
 	}
 
-	// Invulnerable things completely block the shot
-	if (data->StopAtInvul && res.Actor->flags2 & MF2_INVULNERABLE)
-	{
-		return TRACE_Stop;
-	}
-
 	// Skip actors if the puff has:
 	// 1. THRUACTORS (This one did NOT include a check for spectral)
 	// 2. MTHRUSPECIES on puff and the shooter has same species as the hit actor
@@ -5101,6 +5103,12 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 		(data->ThruGhosts && res.Actor->flags3 & MF3_GHOST))
 	{
 		return TRACE_Skip;
+	}
+
+	// Invulnerable things completely block the shot
+	if (data->StopAtInvul && res.Actor->flags2 & MF2_INVULNERABLE)
+	{
+		return TRACE_Stop;
 	}
 
 	// Save this thing for damaging later, and continue the trace
@@ -5121,7 +5129,8 @@ static ETraceStatus ProcessRailHit(FTraceResults &res, void *userdata)
 	{
 		data->count++;
 	}
-	return (data->StopAtOne || (data->limit && (data->count >= data->limit))) ? TRACE_Stop : TRACE_Continue;
+	return (data->StopAtOne || (data->limit && (data->count >= data->limit)) || (res.Actor->flags8 & MF8_STOPRAILS)) 
+			? TRACE_Stop : TRACE_Continue;
 }
 
 //==========================================================================
@@ -5460,7 +5469,7 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 
 				if (usething->player)
 				{
-					S_Sound(usething, CHAN_VOICE, "*usefail", 1, ATTN_IDLE);
+					S_Sound(usething, CHAN_VOICE, 0, "*usefail", 1, ATTN_IDLE);
 				}
 				return true;		// can't use through a wall
 			}
@@ -5577,7 +5586,7 @@ void P_UseLines(player_t *player)
 		if ((!sec->SecActTarget || !sec->TriggerSectorActions(player->mo, spac)) &&
 			P_NoWayTraverse(player->mo, start, end))
 		{
-			S_Sound(player->mo, CHAN_VOICE, "*usefail", 1, ATTN_IDLE);
+			S_Sound(player->mo, CHAN_VOICE, 0, "*usefail", 1, ATTN_IDLE);
 		}
 	}
 }
@@ -5855,6 +5864,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 
 	P_GeometryRadiusAttack(bombspot, bombsource, bombdamage, bombdistance, bombmod, fulldamagedistance);
 
+	TArray<AActor*> targets;
 	int count = 0;
 	while ((it.Next(&cres)))
 	{
@@ -5885,6 +5895,11 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 			)
 			)	continue;
 
+		targets.Push(thing);
+	}
+
+	for (AActor *thing : targets)
+	{
 		// Barrels always use the original code, since this makes
 		// them far too "active." BossBrains also use the old code
 		// because some user levels require they have a height of 16,
@@ -6221,7 +6236,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 			}
 			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))
 			{
-				S_Sound(thing, CHAN_VOICE, thing->CrushPainSound, 1.f, ATTN_NORM);
+				S_Sound(thing, CHAN_VOICE, 0, thing->CrushPainSound, 1.f, ATTN_NORM);
 			}
 		}
 	}

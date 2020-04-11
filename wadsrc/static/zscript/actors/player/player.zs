@@ -1392,7 +1392,7 @@ class PlayerPawn : Actor
 				Vel.Z += jumpvelz;
 				bOnMobj = false;
 				player.jumpTics = -1;
-				if (!(player.cheats & CF_PREDICTING)) A_PlaySound("*jump", CHAN_BODY);
+				if (!(player.cheats & CF_PREDICTING)) A_StartSound("*jump", CHAN_BODY);
 			}
 		}
 	}
@@ -1659,7 +1659,8 @@ class PlayerPawn : Actor
 		{
 			if (player.ReadyWeapon != null)
 			{
-				player.GetPSprite(PSP_WEAPON).y = WEAPONTOP;
+				let psp = player.GetPSprite(PSP_WEAPON);
+				if (psp) psp.y = WEAPONTOP;
 				player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.GetReadyState());
 			}
 			return;
@@ -1686,7 +1687,8 @@ class PlayerPawn : Actor
 			weapon.PlayUpSound(self);
 			player.refire = 0;
 
-			player.GetPSprite(PSP_WEAPON).y = player.cheats & CF_INSTANTWEAPSWITCH? WEAPONTOP : WEAPONBOTTOM;
+			let psp = player.GetPSprite(PSP_WEAPON);
+			if (psp) psp.y = player.cheats & CF_INSTANTWEAPSWITCH? WEAPONTOP : WEAPONBOTTOM;
 			// make sure that the previous weapon's flash state is terminated.
 			// When coming here from a weapon drop it may still be active.
 			player.SetPsprite(PSP_FLASH, null);
@@ -2421,7 +2423,7 @@ class PlayerPawn : Actor
 
 		if (playgasp && wasdrowning)
 		{
-			A_PlaySound("*gasp", CHAN_VOICE);
+			A_StartSound("*gasp", CHAN_VOICE);
 		}
 		if (Level.airsupply > 0 && AirCapacity > 0) player.air_finished = Level.maptime + int(Level.airsupply * AirCapacity);
 		else player.air_finished = int.max;
@@ -2543,7 +2545,8 @@ class PSprite : Object native play
 	native bool bCVarFast;
 	native bool bFlip;	
 	native bool bMirror;
-	
+	native bool bPlayerTranslated;
+
 	native void SetState(State newstate, bool pending = false);
 
 	//------------------------------------------------------------------------
@@ -2715,7 +2718,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	// The actual implementation is on PlayerPawn where it can be overridden. Use that directly in the future.
-	deprecated("3.7") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
+	deprecated("3.7", "MorphPlayer() should be used on a PlayerPawn object") bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null)
 	{
 		if (mo != null)
 		{
@@ -2725,7 +2728,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 	}
 	
 	// This somehow got its arguments mixed up. 'self' should have been the player to be unmorphed, not the activator
-	deprecated("3.7") bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
+	deprecated("3.7", "UndoPlayerMorph() should be used on a PlayerPawn object") bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false)
 	{
 		if (player.mo != null)
 		{
@@ -2734,7 +2737,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 		return false;
 	}
 
-	deprecated("3.7") void DropWeapon()
+	deprecated("3.7", "DropWeapon() should be used on a PlayerPawn object") void DropWeapon()
 	{
 		if (mo != null)
 		{
@@ -2742,7 +2745,7 @@ struct PlayerInfo native play	// self is what internally is known as player_t
 		}
 	}
 
-	deprecated("3.7") void BringUpWeapon()
+	deprecated("3.7", "BringUpWeapon() should be used on a PlayerPawn object") void BringUpWeapon()
 	{
 		if (mo) mo.BringUpWeapon();
 	}

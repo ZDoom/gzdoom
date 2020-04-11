@@ -731,7 +731,7 @@ void R_InitSkins (void)
 					}
 					else
 					{
-						int sndref = S_FindSoundNoHash (key);
+						int sndref = soundEngine->FindSoundNoHash (key);
 						if (sndref != 0)
 						{
 							S_AddPlayerSound (Skins[i].Name, Skins[i].gender, sndref, lump, true);
@@ -911,7 +911,7 @@ void R_InitSkins (void)
 
 	if (Skins.Size() > PlayerClasses.Size ())
 	{ // The sound table may have changed, so rehash it.
-		S_HashSounds ();
+		soundEngine->HashSounds ();
 		S_ShrinkPlayerSoundLists ();
 	}
 }

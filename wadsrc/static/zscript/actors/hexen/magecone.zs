@@ -66,7 +66,7 @@ class MWeapFrost : MageWeapon
 			if (!weapon.DepleteAmmo (weapon.bAltFire))
 				return;
 		}
-		A_PlaySound ("MageShardsFire", CHAN_WEAPON);
+		A_StartSound ("MageShardsFire", CHAN_WEAPON);
 
 		int damage = random[MageCone](90, 105);
 		for (int i = 0; i < 16; i++)

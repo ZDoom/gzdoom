@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "swrenderer/drawers/r_draw_pal.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/viewport/r_walldrawer.h"
 
@@ -46,15 +47,12 @@ namespace swrenderer
 	}
 
 	template<typename BlendT>
-	class DrawWall32T : public DrawerCommand
+	class DrawWall32T : public DrawWallCommand
 	{
-	protected:
-		WallDrawerArgs args;
-
 	public:
-		DrawWall32T(const WallDrawerArgs &drawerargs) : args(drawerargs) { }
+		DrawWall32T(const WallDrawerArgs &drawerargs) : DrawWallCommand(drawerargs) { }
 
-		void Execute(DrawerThread *thread) override
+		void DrawColumn(DrawerThread *thread, const WallColumnDrawerArgs& args) override
 		{
 			using namespace DrawWall32TModes;
 
@@ -64,21 +62,21 @@ namespace swrenderer
 			if (shade_constants.simple_shade)
 			{
 				if (is_nearest_filter)
-					Loop<SimpleShade, NearestFilter>(thread, shade_constants);
+					Loop<SimpleShade, NearestFilter>(thread, args, shade_constants);
 				else
-					Loop<SimpleShade, LinearFilter>(thread, shade_constants);
+					Loop<SimpleShade, LinearFilter>(thread, args, shade_constants);
 			}
 			else
 			{
 				if (is_nearest_filter)
-					Loop<AdvancedShade, NearestFilter>(thread, shade_constants);
+					Loop<AdvancedShade, NearestFilter>(thread, args, shade_constants);
 				else
-					Loop<AdvancedShade, LinearFilter>(thread, shade_constants);
+					Loop<AdvancedShade, LinearFilter>(thread, args, shade_constants);
 			}
 		}
 
 		template<typename ShadeModeT, typename FilterModeT>
-		FORCEINLINE void VECTORCALL Loop(DrawerThread *thread, ShadeConstants shade_constants)
+		FORCEINLINE void VECTORCALL Loop(DrawerThread *thread, const WallColumnDrawerArgs& args, ShadeConstants shade_constants)
 		{
 			using namespace DrawWall32TModes;
 

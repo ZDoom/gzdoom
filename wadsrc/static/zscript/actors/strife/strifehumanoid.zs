@@ -13,7 +13,7 @@ class StrifeHumanoid : Actor
 	States
 	{
 	Burn:
-		BURN A 3 Bright Light("PhFire_FX1") A_PlaySound("human/imonfire", CHAN_VOICE);
+		BURN A 3 Bright Light("PhFire_FX1") A_StartSound("human/imonfire", CHAN_VOICE);
 		BURN B 3 Bright Light("PhFire_FX2") A_DropFire;
 		BURN C 3 Bright Light("PhFire_FX3") A_Wander;
 		BURN D 3 Bright Light("PhFire_FX4") A_NoBlocking;
@@ -39,7 +39,7 @@ class StrifeHumanoid : Actor
 		BURN V -1;
 		Stop;
 	Disintegrate:
-		DISR A 5 A_PlaySound("misc/disruptordeath", CHAN_VOICE);
+		DISR A 5 A_StartSound("misc/disruptordeath", CHAN_VOICE);
 		DISR BC 5;
 		DISR D 5 A_NoBlocking;
 		DISR EF 5;

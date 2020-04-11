@@ -68,7 +68,6 @@ struct F3DFloor
 		secplane_t *	plane;
 		const FTextureID *	texture;
 		sector_t *		model;
-		PalEntry *		flatcolor;
 		int				isceiling;
 		int				vindex;
 		bool			copied;

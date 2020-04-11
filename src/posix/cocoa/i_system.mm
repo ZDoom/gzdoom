@@ -33,40 +33,16 @@
 
 #include "i_common.h"
 
-#include <fnmatch.h>
 #include <sys/sysctl.h>
 
-#include "d_protocol.h"
-#include "doomdef.h"
-#include "doomerrors.h"
-#include "doomstat.h"
-#include "g_game.h"
-#include "gameconfigfile.h"
-#include "i_sound.h"
 #include "i_system.h"
 #include "st_console.h"
 #include "v_text.h"
-#include "x86.h"
-#include "cmdlib.h"
-#include "atterm.h"
-
-
-void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
-{
-}
-
-
-ticcmd_t* I_BaseTiccmd()
-{
-	static ticcmd_t emptycmd;
-	return &emptycmd;
-}
-
 
 
 double PerfToSec, PerfToMillisec;
 
-static void CalculateCPUSpeed()
+void CalculateCPUSpeed()
 {
 	long long frequency;
 	size_t size = sizeof frequency;
@@ -83,92 +59,10 @@ static void CalculateCPUSpeed()
 	}
 }
 
-void I_Init(void)
-{
-	CheckCPUID(&CPU);
-	CalculateCPUSpeed();
-	DumpCPUInfo(&CPU);
-
-	atterm(I_ShutdownSound);
-	I_InitSound();
-}
-
-static int has_exited;
-
-void I_Quit()
-{
-	has_exited = 1; // Prevent infinitely recursive exits -- killough
-
-	if (demorecording)
-	{
-		G_CheckDemoStatus();
-	}
-
-	C_DeinitConsole();
-}
-
-
-extern FILE* Logfile;
-bool gameisdead;
-
-static void I_FatalError(const char* const error, va_list ap)
-{
-	static bool alreadyThrown = false;
-	gameisdead = true;
-
-	if (!alreadyThrown) // ignore all but the first message -- killough
-	{
-		alreadyThrown = true;
-
-		char errortext[MAX_ERRORTEXT];
-		int index;
-		index = vsnprintf(errortext, MAX_ERRORTEXT, error, ap);
-
-		extern void Mac_I_FatalError(const char*);
-		Mac_I_FatalError(errortext);
-		
-		// Record error to log (if logging)
-		if (Logfile)
-		{
-			fprintf(Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
-			fflush(Logfile);
-		}
-
-		fprintf(stderr, "%s\n", errortext);
-		exit(-1);
-	}
-
-	if (!has_exited) // If it hasn't exited yet, exit now -- killough
-	{
-		has_exited = 1; // Prevent infinitely recursive exits -- killough
-		exit(-1);
-	}
-}
-
-void I_FatalError(const char* const error, ...)
-{
-	va_list argptr;
-	va_start(argptr, error);
-	I_FatalError(error, argptr);
-	va_end(argptr);
-
-}
-
-void I_Error (const char *error, ...)
-{
-	va_list argptr;
-	char errortext[MAX_ERRORTEXT];
-
-	va_start(argptr, error);
-
-	myvsnprintf (errortext, MAX_ERRORTEXT, error, argptr);
-	va_end (argptr);
-	throw CRecoverableError(errortext);
-}
-
 
 void I_SetIWADInfo()
 {
+	FConsoleWindow::GetInstance().SetTitleText();
 }
 
 
@@ -224,6 +118,14 @@ void I_PrintStr(const char* const message)
 }
 
 
+void Mac_I_FatalError(const char* const message);
+
+void I_ShowFatalError(const char *message)
+{
+	Mac_I_FatalError(message);
+}
+
+
 int I_PickIWad(WadStuff* const wads, const int numwads, const bool showwin, const int defaultiwad)
 {
 	if (!showwin)
@@ -239,97 +141,6 @@ int I_PickIWad(WadStuff* const wads, const int numwads, const bool showwin, cons
 	I_SetMainWindowVisible(true);
 
 	return result;
-}
-
-
-bool I_WriteIniFailed()
-{
-	printf("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));
-	return false; // return true to retry
-}
-
-
-static const char *pattern;
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1080
-static int matchfile(struct dirent *ent)
-#else
-static int matchfile(const struct dirent *ent)
-#endif
-{
-	return fnmatch(pattern, ent->d_name, FNM_NOESCAPE) == 0;
-}
-
-void* I_FindFirst(const char* const filespec, findstate_t* const fileinfo)
-{
-	FString dir;
-	
-	const char* const slash = strrchr(filespec, '/');
-
-	if (slash)
-	{
-		pattern = slash+1;
-		dir = FString(filespec, slash - filespec + 1);
-	}
-	else
-	{
-		pattern = filespec;
-		dir = ".";
-	}
-
-	fileinfo->current = 0;
-	fileinfo->count = scandir(dir.GetChars(), &fileinfo->namelist, matchfile, alphasort);
-
-	if (fileinfo->count > 0)
-	{
-		return fileinfo;
-	}
-
-	return (void*)-1;
-}
-
-int I_FindNext(void* const handle, findstate_t* const fileinfo)
-{
-	findstate_t* const state = static_cast<findstate_t*>(handle);
-
-	if (state->current < fileinfo->count)
-	{
-		return ++state->current < fileinfo->count ? 0 : -1;
-	}
-
-	return -1;
-}
-
-int I_FindClose(void* const handle)
-{
-	findstate_t* const state = static_cast<findstate_t*>(handle);
-
-	if (handle != (void*)-1 && state->count > 0)
-	{
-		for (int i = 0; i < state->count; ++i)
-		{
-			free(state->namelist[i]);
-		}
-
-		free(state->namelist);
-		state->namelist = NULL;
-		state->count = 0;
-	}
-
-	return 0;
-}
-
-int I_FindAttr(findstate_t* const fileinfo)
-{
-	dirent* const ent = fileinfo->namelist[fileinfo->current];
-	bool isdir;
-
-	if (DirEntryExists(ent->d_name, &isdir))
-	{
-		return isdir ? FA_DIREC : 0;
-	}
-
-	return 0;
 }
 
 
@@ -364,11 +175,3 @@ unsigned int I_MakeRNGSeed()
 {
 	return static_cast<unsigned int>(arc4random());
 }
-
-
-TArray<FString> I_GetGogPaths()
-{
-	// GOG's Doom games are Windows only at the moment
-	return TArray<FString>();
-}
-

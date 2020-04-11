@@ -2173,7 +2173,7 @@ FUNC(LS_UsePuzzleItem)
 	}
 
 	// [RH] Say "hmm" if you don't have the puzzle item
-	S_Sound (it, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
+	S_Sound (it, CHAN_VOICE, 0, "*puzzfail", 1, ATTN_IDLE);
 	return false;
 }
 
@@ -3197,7 +3197,7 @@ FUNC(LS_SendToCommunicator)
 		{
 			S_StopSound (CHAN_VOICE);
 			it->player->SetSubtitle(arg0, name);
-			S_Sound (CHAN_VOICE, name, 1, ATTN_NORM);
+			S_Sound (CHAN_VOICE, 0, name, 1, ATTN_NORM);
 
 			// Get the message from the LANGUAGE lump.
 			FString msg;

@@ -2302,3 +2302,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &value, N
 	}
 	return arc;
 }
+
+#include "renderstyle.h"
+FSerializer& Serialize(FSerializer& arc, const char* key, FRenderStyle& style, FRenderStyle* def)
+{
+	return arc.Array(key, &style.BlendOp, def ? &def->BlendOp : nullptr, 4);
+}

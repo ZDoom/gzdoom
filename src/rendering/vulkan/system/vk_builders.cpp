@@ -22,7 +22,7 @@
 
 #include "vk_builders.h"
 #include "engineerrors.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 #include <ShaderLang.h>
 #include <GlslangToSpv.h>
 

@@ -41,9 +41,9 @@
 #include "doomdef.h"
 #include "m_png.h"
 #include "dobject.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 #include "c_cvars.h"
-#include "r_data/v_colortables.h"
+#include "v_colortables.h"
 #include "v_2ddrawer.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 

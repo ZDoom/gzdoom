@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include "palentry.h"
+
 // extracted from v_video.h because this caused circular dependencies between v_video.h and textures.h
 
 // Translucency tables
@@ -50,3 +53,5 @@ extern uint32_t Col2RGB8_Inverse[65][256];
 //		------10000000001000000000100000	= 0x40100400 >> 5
 //		--11111-----11111-----11111-----	= 0x40100400 - (0x40100400 >> 5) aka "white"
 //		--111111111111111111111111111111	= 0x3FFFFFFF
+
+void BuildTransTable (const PalEntry *palette);

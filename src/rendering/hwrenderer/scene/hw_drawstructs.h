@@ -5,7 +5,7 @@
 //
 //==========================================================================
 #include "r_defs.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 #include "textures/textures.h"
 #include "r_data/colormaps.h"
 

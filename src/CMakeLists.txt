@@ -1060,7 +1060,6 @@ set (PCH_SOURCES
 	r_data/sprites.cpp
 	r_data/portalgroups.cpp
 	r_data/voxels.cpp
-	r_data/renderstyle.cpp
 	r_data/r_canvastexture.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_vanillatrans.cpp
@@ -1149,6 +1148,8 @@ set (PCH_SOURCES
 	common/engine/palettecontainer.cpp
 	common/engine/stringtable.cpp
 	common/engine/i_interface.cpp
+	common/engine/renderstyle.cpp
+	common/engine/v_colortables.cpp
 	
 	utility/m_random.cpp
 	utility/nodebuilder/nodebuild.cpp

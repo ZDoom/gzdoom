@@ -38,16 +38,10 @@
 #include "basics.h"
 #include "vectors.h"
 #include "colormatcher.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 #include "textureid.h"
 #include <vector>
 #include "hwrenderer/textures/hw_texcontainer.h"
-
-/*
-#include "v_palette.h"
-#include "r_data/v_colortables.h"
-#include "r_data/r_translate.h"
-*/
 
 // 15 because 0th texture is our texture
 #define MAX_CUSTOM_HW_SHADER_TEXTURES 15

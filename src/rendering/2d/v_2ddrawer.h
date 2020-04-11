@@ -4,7 +4,7 @@
 #include "tarray.h"
 #include "textures.h"
 #include "v_palette.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 #include "r_data/colormaps.h"
 
 struct DrawParms;

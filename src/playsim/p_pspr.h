@@ -30,7 +30,7 @@
 #ifndef __P_PSPR_H__
 #define __P_PSPR_H__
 
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 
 // Basic data types.
 // Needs fixed point, and BAM angles.

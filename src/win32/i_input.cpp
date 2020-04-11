@@ -89,6 +89,7 @@
 #include "i_system.h"
 #include "g_levellocals.h"
 
+int32_t refreshfreq = -1;
 
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
@@ -359,6 +360,22 @@ bool CallHook(FInputDevice *device, HWND hWnd, UINT message, WPARAM wParam, LPAR
 	return device->WndProcHook(hWnd, message, wParam, lParam, result);
 }
 
+void GetRefreshRate(HWND hWnd)
+{
+	HMONITOR moni = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFOEXA moninf;
+	moninf.cbSize = sizeof(moninf);
+	if (GetMonitorInfoA(moni, (LPMONITORINFO)&moninf))
+	{
+		DEVMODEA dm;
+		dm.dmSize = sizeof(DEVMODEA);
+		if (EnumDisplaySettingsA(moninf.szDevice, ENUM_CURRENT_SETTINGS, &dm))
+		{
+			refreshfreq = dm.dmDisplayFrequency;
+		}
+	}
+}
+
 LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result;
@@ -488,6 +505,8 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_DISPLAYCHANGE:
+		GetRefreshRate(hWnd);
+		// fall through
 	case WM_STYLECHANGED:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 
@@ -581,7 +600,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 #ifdef _DEBUG
 			char foo[256];
-			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", lParam, wParam);
+			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", (long)lParam, (int)wParam);
 			OutputDebugStringA (foo);
 #endif
 		}

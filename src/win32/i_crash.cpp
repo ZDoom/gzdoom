@@ -55,10 +55,14 @@
 #include <uxtheme.h>
 #include <shellapi.h>
 
-#include "doomtype.h"
+#include <stdint.h>
+#include <stdio.h>
 #include "resource.h"
 #include "version.h"
 #include "m_swap.h"
+#include "basics.h"
+#include "zstring.h"
+#include "printf.h"
 #include "cmdlib.h"
 
 #include <time.h>
@@ -801,8 +805,8 @@ static void AddToolHelp (HANDLE file)
 	pCreateToolhelp32Snapshot = (CREATESNAPSHOT)GetProcAddress (kernel, "CreateToolhelp32Snapshot");
 	pThread32First = (THREADWALK)GetProcAddress (kernel, "Thread32First");
 	pThread32Next = (THREADWALK)GetProcAddress (kernel, "Thread32Next");
-	pModule32First = (MODULEWALK)GetProcAddress (kernel, "Module32First");
-	pModule32Next = (MODULEWALK)GetProcAddress (kernel, "Module32Next");
+	pModule32First = (MODULEWALK)GetProcAddress (kernel, "Module32FirstW");
+	pModule32Next = (MODULEWALK)GetProcAddress (kernel, "Module32NextW");
 
 	if (!(pCreateToolhelp32Snapshot && pThread32First && pThread32Next &&
 		  pModule32First && pModule32Next))
@@ -847,12 +851,13 @@ static void AddToolHelp (HANDLE file)
 	{
 		do
 		{
+			auto amod = FString(module.szModule);
 			Writef (file, "%p - %p %c%s\r\n",
 				module.modBaseAddr, module.modBaseAddr + module.modBaseSize - 1,
 				module.modBaseAddr <= CrashPointers.ExceptionRecord->ExceptionAddress &&
 				module.modBaseAddr + module.modBaseSize > CrashPointers.ExceptionRecord->ExceptionAddress
 				? '*' : ' ',
-				module.szModule);
+				amod.GetChars());
 		} while (pModule32Next (snapshot, &module));
 	}
 

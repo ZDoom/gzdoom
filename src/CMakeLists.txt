@@ -1111,7 +1111,6 @@ set (PCH_SOURCES
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
-	common/thirdparty/sfmt/SFMT.cpp
 	sound/music/i_music.cpp
 	sound/music/i_soundfont.cpp
 	sound/backend/i_sound.cpp
@@ -1120,17 +1119,26 @@ set (PCH_SOURCES
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
+	utility/palettecontainer.cpp
+	common/thirdparty/sfmt/SFMT.cpp
 	common/utility/engineerrors.cpp
 	common/utility/i_module.cpp
 	common/utility/m_alloc.cpp
 	common/utility/utf8.cpp
 	common/utility/palette.cpp
-	utility/palettecontainer.cpp
 	common/utility/files.cpp
 	common/utility/files_decompress.cpp
+	common/utility/memarena.cpp
+	common/utility/cmdlib.cpp
+	common/utility/configfile.cpp
+	common/utility/i_time.cpp
+	common/utility/m_argv.cpp
+	common/utility/s_playlist.cpp
+	common/utility/zstrformat.cpp
+	common/thirdparty/md5.cpp
+ 	common/thirdparty/superfasthash.cpp
 	utility/m_png.cpp
 	utility/m_random.cpp
-	common/utility/memarena.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp
@@ -1139,17 +1147,9 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_utility.cpp
 	utility/sc_man.cpp
 	utility/stats.cpp
-	common/utility/cmdlib.cpp
-	common/utility/configfile.cpp
-	common/utility/i_time.cpp
-	common/utility/m_argv.cpp
 	utility/m_bbox.cpp
 	utility/name.cpp
-	common/utility/s_playlist.cpp
 	utility/v_collection.cpp
-	common/utility/zstrformat.cpp
-	common/thirdparty/md5.cpp
- 	common/thirdparty/superfasthash.cpp
 )
 
 if( ${HAVE_VM_JIT} )

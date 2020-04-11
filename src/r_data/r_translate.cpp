@@ -135,27 +135,6 @@ bool FUniquePalette::Update()
 /****************************************************/
 /****************************************************/
 
-FRemapTable::FRemapTable(int count)
-{
-	assert(count <= 256);
-	Inactive = false;
-	Alloc(count);
-
-	// Note that the tables are left uninitialized. It is assumed that
-	// the caller will do that next, if only by calling MakeIdentity().
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-FRemapTable::~FRemapTable()
-{
-	Free();
-}
-
 //----------------------------------------------------------------------------
 //
 //
@@ -171,78 +150,6 @@ int FRemapTable::GetUniqueIndex()
 		Native->Update();
 	}
 	return Native->GetIndex();
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-void FRemapTable::Alloc(int count)
-{
-	Remap = (uint8_t *)M_Malloc(count*sizeof(*Remap) + count*sizeof(*Palette));
-	assert (Remap != NULL);
-	Palette = (PalEntry *)(Remap + count*(sizeof(*Remap)));
-	Native = NULL;
-	NumEntries = count;
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-void FRemapTable::Free()
-{
-	KillNative();
-	if (Remap != NULL)
-	{
-		M_Free(Remap);
-		Remap = NULL;
-		Palette = NULL;
-		NumEntries = 0;
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-FRemapTable::FRemapTable(const FRemapTable &o)
-{
-	Remap = NULL;
-	Native = NULL;
-	NumEntries = 0;
-	operator= (o);
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-FRemapTable &FRemapTable::operator=(const FRemapTable &o)
-{
-	if (&o == this)
-	{
-		return *this;
-	}
-	if (o.NumEntries != NumEntries)
-	{
-		Free();
-	}
-	if (Remap == NULL)
-	{
-		Alloc(o.NumEntries);
-	}
-	Inactive = o.Inactive;
-	memcpy(Remap, o.Remap, NumEntries*sizeof(*Remap) + NumEntries*sizeof(*Palette));
-	return *this;
 }
 
 //----------------------------------------------------------------------------
@@ -271,14 +178,6 @@ void FRemapTable::Serialize(FSerializer &arc)
 	int n = NumEntries;
 
 	arc("numentries", NumEntries);
-	if (arc.isReading())
-	{
-		if (n != NumEntries)
-		{
-			Free();
-			Alloc(NumEntries);
-		}
-	}
 	arc.Array("remap", Remap, NumEntries);
 	arc.Array("palette", Palette, NumEntries);
 }

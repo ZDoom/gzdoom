@@ -61,11 +61,9 @@ public:
 
 struct FRemapTable
 {
-	FRemapTable(int count=256);
-	FRemapTable(const FRemapTable &o);
-	~FRemapTable();
+	FRemapTable(int count = 256) { NumEntries = count; }
+	FRemapTable(const FRemapTable& o) = default;
 
-	FRemapTable &operator= (const FRemapTable &o);
 	bool operator==(const FRemapTable &o);
 	void MakeIdentity();
 	void KillNative();
@@ -83,15 +81,14 @@ struct FRemapTable
 	int StoreTranslation(int slot);
 	int GetUniqueIndex();
 
-	uint8_t *Remap;				// For the software renderer
-	PalEntry *Palette;			// The ideal palette this maps to
+	uint8_t Remap[256];				// For the software renderer
+	PalEntry Palette[256];			// The ideal palette this maps to
 	FUniquePalette *Native;		// The index into the list of unique palettes (this is to avoid frequent texture recreation with changing ACS translations)
+	//int crc32;
 	int NumEntries;				// # of elements in this table (usually 256)
-	bool Inactive;				// This table is inactive and should be treated as if it was passed as NULL
+	bool Inactive = false;				// This table is inactive and should be treated as if it was passed as NULL
 
 private:
-	void Free();
-	void Alloc(int count);
 };
 
 // A class that initializes unusued pointers to NULL. This is used so that when

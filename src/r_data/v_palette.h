@@ -37,6 +37,7 @@
 #include "doomtype.h"
 #include "c_cvars.h"
 #include "palutil.h"
+#include "vectors.h"
 
 
 
@@ -56,8 +57,12 @@ enum PaletteFlashFlags
 };
 
 class player_t;
+struct sector_t;
 
 void V_AddBlend (float r, float g, float b, float a, float v_blend[4]);
 void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int maxpainblend);
+// Dim part of the canvas
+FVector4 V_CalcBlend(sector_t* viewsector, PalEntry* modulateColor);
+void V_DrawBlend(sector_t* viewsector);
 
 #endif //__V_PALETTE_H__

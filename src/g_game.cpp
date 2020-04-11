@@ -74,6 +74,7 @@
 #include "a_dynlight.h"
 #include "i_system.h"
 #include "p_conversation.h"
+#include "v_palette.h"
 
 #include "v_video.h"
 #include "g_hub.h"
@@ -2255,7 +2256,7 @@ void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width,
 {
 	PalEntry palette[256];
 	PalEntry modulateColor;
-	auto blend = screen->CalcBlend(viewsector, &modulateColor);
+	auto blend = V_CalcBlend(viewsector, &modulateColor);
 	int pixelsize = 1;
 	// Apply the screen blend, because the renderer does not provide this.
 	if (ssformat == SS_RGB)

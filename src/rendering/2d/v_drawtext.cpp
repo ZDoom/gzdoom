@@ -39,17 +39,9 @@
 
 #include "v_text.h"
 #include "utf8.h"
-
-
-#include "v_video.h"
-#include "filesystem.h"
-#include "image.h"
-#include "multipatchtexture.h"
-
+#include "v_draw.h"
 #include "gstrings.h"
 #include "vm.h"
-#include "serializer.h"
-
 
 int ListGetInt(VMVa_List &tags);
 

@@ -330,11 +330,6 @@ public:
 	virtual void Draw2D() {}
 	void Clear2D() { m2DDrawer.Clear(); }
 
-	// Dim part of the canvas
-	FVector4 CalcBlend(sector_t * viewsector, PalEntry *modulateColor);
-	void DrawBlend(sector_t * viewsector);
-
-
 	// Calculate gamma table
 	void CalcGamma(float gamma, uint8_t gammalookup[256]);
 

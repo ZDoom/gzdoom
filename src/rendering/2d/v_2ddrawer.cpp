@@ -1,38 +1,43 @@
-// 
-//---------------------------------------------------------------------------
-//
-// Copyright(C) 2016-2018 Christoph Oelckers
-// All rights reserved.
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/
-//
-//--------------------------------------------------------------------------
-//
 /*
 ** v_2ddrawer.h
 ** Device independent 2D draw list
 **
-**/
+**---------------------------------------------------------------------------
+** Copyright 2016-2020 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include <stdarg.h>
-#include "doomtype.h"
 #include "templates.h"
-#include "r_utility.h"
-#include "v_video.h"
-#include "g_levellocals.h"
 #include "vm.h"
-#include "c_buttons.h"
+#include "c_cvars.h"
+#include "v_draw.h"
+#include "fcolormap.h"
 
 F2DDrawer* twod;
 
@@ -538,26 +543,9 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 
 void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel,
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double fadelevel,
 		uint32_t *indices, size_t indexcount)
 {
-	// Use an equation similar to player sprites to determine shade
-
-	// Convert a light level into an unbounded colormap index (shade). 
-	// Why the +12? I wish I knew, but experimentation indicates it
-	// is necessary in order to best reproduce Doom's original lighting.
-	double fadelevel;
-
-	if (vid_rendermode != 4 || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
-	{
-		double map = (NUMCOLORMAPS * 2.) - ((lightlevel + 12) * (NUMCOLORMAPS / 128.));
-		fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);
-	}
-	else
-	{
-		// The hardware renderer's light modes 0, 1 and 4 use a linear light scale which must be used here as well. Otherwise the automap gets too dark.
-		fadelevel = 1. - clamp(lightlevel, 0, 255) / 255.f;
-	}
 
 	RenderCommand poly;
 

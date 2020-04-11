@@ -924,7 +924,7 @@ void D_Display ()
 		screen->Begin2D();
 		if (!hud_toggled)
 		{
-			screen->DrawBlend(viewsec);
+			V_DrawBlend(viewsec);
 			if (automapactive)
 			{
 				primaryLevel->automap->Drawer ((hud_althud && viewheight == SCREENHEIGHT) ? viewheight : StatusBar->GetTopOfStatusbar());

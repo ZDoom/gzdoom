@@ -2132,6 +2132,24 @@ void DAutomap::drawSubsectors()
 			}
 			else indices.clear();
 
+			// Use an equation similar to player sprites to determine shade
+
+			// Convert a light level into an unbounded colormap index (shade). 
+			// Why the +12? I wish I knew, but experimentation indicates it
+			// is necessary in order to best reproduce Doom's original lighting.
+			double fadelevel;
+
+			if (vid_rendermode != 4 || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
+			{
+				double map = (NUMCOLORMAPS * 2.) - ((floorlight + 12) * (NUMCOLORMAPS / 128.));
+				fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);
+			}
+			else
+			{
+				// The hardware renderer's light modes 0, 1 and 4 use a linear light scale which must be used here as well. Otherwise the automap gets too dark.
+				fadelevel = 1. - clamp(floorlight, 0, 255) / 255.f;
+			}
+
 			twod->AddPoly(TexMan.GetTexture(maptex, true),
 				&points[0], points.Size(),
 				originx, originy,
@@ -2140,7 +2158,7 @@ void DAutomap::drawSubsectors()
 				rotation,
 				colormap,
 				flatcolor,
-				floorlight,
+				fadelevel,
 				indices.data(), indices.size());
 		}
 	}

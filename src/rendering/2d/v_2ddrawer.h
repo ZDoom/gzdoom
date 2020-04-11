@@ -162,7 +162,7 @@ public:
 	void AddShape(FTexture *img, DShape2D *shape, DrawParms &parms);
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, uint32_t *indices, size_t indexcount);
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double lightlevel, uint32_t *indices, size_t indexcount);
 	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
 
 	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style);

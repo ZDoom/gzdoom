@@ -643,8 +643,7 @@ CCMD (error)
 {
 	if (argv.argc() > 1)
 	{
-		char *textcopy = copystring (argv[1]);
-		I_Error ("%s", textcopy);
+		I_Error ("%s", argv[1]);
 	}
 	else
 	{
@@ -656,8 +655,7 @@ UNSAFE_CCMD (error_fatal)
 {
 	if (argv.argc() > 1)
 	{
-		char *textcopy = copystring (argv[1]);
-		I_FatalError ("%s", textcopy);
+		I_FatalError ("%s", argv[1]);
 	}
 	else
 	{

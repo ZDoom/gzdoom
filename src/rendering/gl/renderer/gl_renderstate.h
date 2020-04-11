@@ -28,7 +28,7 @@
 #include "matrix.h"
 #include "hwrenderer/scene//hw_drawstructs.h"
 #include "hwrenderer/scene//hw_renderstate.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 #include "r_data/r_translate.h"

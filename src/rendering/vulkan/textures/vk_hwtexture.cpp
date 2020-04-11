@@ -23,7 +23,7 @@
 #include "templates.h"
 #include "c_cvars.h"
 #include "r_data/colormaps.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 #include "vulkan/system/vk_objects.h"

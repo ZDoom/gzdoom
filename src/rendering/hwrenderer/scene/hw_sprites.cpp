@@ -52,7 +52,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hw_renderstate.h"

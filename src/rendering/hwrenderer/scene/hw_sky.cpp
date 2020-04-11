@@ -32,7 +32,7 @@
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 

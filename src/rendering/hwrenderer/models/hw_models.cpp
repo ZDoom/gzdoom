@@ -35,7 +35,7 @@
 #include "g_levellocals.h"
 #include "i_time.h"
 #include "cmdlib.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_drawinfo.h"

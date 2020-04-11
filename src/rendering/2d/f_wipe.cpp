@@ -28,7 +28,7 @@
 #include "f_wipe.h"
 #include "templates.h"
 #include "textures/bitmap.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
 class FBurnTexture : public FTexture
 {
@@ -41,7 +41,7 @@ public:
 		Height = h;
 	}
 	
-	FBitmap GetBgraBitmap(PalEntry*, int *trans) override
+	FBitmap GetBgraBitmap(const PalEntry*, int *trans) override
 	{
 		FBitmap bmp;
 		bmp.Create(Width, Height);

@@ -175,7 +175,7 @@ FTexture::~FTexture ()
 //
 //===========================================================================
 
-FBitmap FTexture::GetBgraBitmap(PalEntry *remap, int *ptrans)
+FBitmap FTexture::GetBgraBitmap(const PalEntry *remap, int *ptrans)
 {
 	FBitmap bmp;
 	bmp.Create(Width, Height);

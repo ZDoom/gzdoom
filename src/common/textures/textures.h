@@ -312,7 +312,7 @@ public:
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
-	virtual FBitmap GetBgraBitmap(PalEntry *remap, int *trans = nullptr);
+	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans = nullptr);
 
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
@@ -514,7 +514,7 @@ public:
 	}
 
 	FImageSource* GetImage() const override { return mImage; }
-	FBitmap GetBgraBitmap(PalEntry* p, int* trans) override;
+	FBitmap GetBgraBitmap(const PalEntry* p, int* trans) override;
 
 };
 

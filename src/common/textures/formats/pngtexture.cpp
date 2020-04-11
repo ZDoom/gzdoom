@@ -573,7 +573,7 @@ class FPNGFileTexture : public FTexture
 {
 public:
 	FPNGFileTexture (FileReader &lump, int width, int height, uint8_t colortype);
-	virtual FBitmap GetBgraBitmap(PalEntry *remap, int *trans);
+	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans);
 
 protected:
 	
@@ -631,7 +631,7 @@ FPNGFileTexture::FPNGFileTexture (FileReader &lump, int width, int height, uint8
 //
 //===========================================================================
 
-FBitmap FPNGFileTexture::GetBgraBitmap(PalEntry *remap, int *trans)
+FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 {
 	FBitmap bmp;
 	// Parse pre-IDAT chunks. I skip the CRCs. Is that bad?

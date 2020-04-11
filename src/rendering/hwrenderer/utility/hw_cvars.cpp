@@ -25,7 +25,7 @@
 #include "c_dispatch.h"
 #include "v_video.h"
 #include "hw_cvars.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "menu/menu.h"
 #include "texturemanager.h"
 

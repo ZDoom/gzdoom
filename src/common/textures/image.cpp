@@ -182,7 +182,7 @@ int FImageSource::CopyPixels(FBitmap *bmp, int conversion)
 	return 0;
 }
 
-int FImageSource::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
+int FImageSource::CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap)
 {
 	auto ppix = CreatePalettedPixels(false);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, remap, nullptr);
@@ -195,7 +195,7 @@ int FImageSource::CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap)
 //
 //==========================================================================
 
-FBitmap FImageSource::GetCachedBitmap(PalEntry *remap, int conversion, int *ptrans)
+FBitmap FImageSource::GetCachedBitmap(const PalEntry *remap, int conversion, int *ptrans)
 {
 	FBitmap ret;
 	

@@ -53,7 +53,7 @@ protected:
 
 	virtual TArray<uint8_t> CreatePalettedPixels(int conversion);
 	virtual int CopyPixels(FBitmap *bmp, int conversion);			// This will always ignore 'luminance'.
-	int CopyTranslatedPixels(FBitmap *bmp, PalEntry *remap);
+	int CopyTranslatedPixels(FBitmap *bmp, const PalEntry *remap);
 
 
 public:
@@ -86,7 +86,7 @@ public:
 
 	
 	// Unlile for paletted images there is no variant here that returns a persistent bitmap, because all users have to process the returned image into another format.
-	FBitmap GetCachedBitmap(PalEntry *remap, int conversion, int *trans = nullptr);
+	FBitmap GetCachedBitmap(const PalEntry *remap, int conversion, int *trans = nullptr);
 
 	static void ClearImages() { ImageArena.FreeAll(); ImageForLump.Clear(); NextID = 0; }
 	static FImageSource * GetImage(int lumpnum, bool checkflat);

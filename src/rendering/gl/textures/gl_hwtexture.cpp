@@ -31,7 +31,7 @@
 #include "c_cvars.h"
 #include "doomtype.h"
 #include "r_data/colormaps.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"

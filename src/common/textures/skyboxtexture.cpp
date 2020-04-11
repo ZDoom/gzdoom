@@ -68,7 +68,7 @@ TArray<uint8_t> FSkyBox::Get8BitPixels(bool alphatex)
 //
 //-----------------------------------------------------------------------------
 
-FBitmap FSkyBox::GetBgraBitmap(PalEntry *p, int *trans)
+FBitmap FSkyBox::GetBgraBitmap(const PalEntry *p, int *trans)
 {
 	return previous->GetBgraBitmap(p, trans);
 }

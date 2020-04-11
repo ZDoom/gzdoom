@@ -73,7 +73,7 @@ FImageTexture::FImageTexture(FImageSource *img, const char *name) noexcept
 //
 //===========================================================================
 
-FBitmap FImageTexture::GetBgraBitmap(PalEntry *p, int *trans)
+FBitmap FImageTexture::GetBgraBitmap(const PalEntry *p, int *trans)
 {
 	return mImage->GetCachedBitmap(p, bNoRemap0? FImageSource::noremap0 : FImageSource::normal, trans);
 }	

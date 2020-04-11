@@ -32,7 +32,7 @@
 #include "actor.h"
 #include "r_data/models/models.h"
 #include "skyboxtexture.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "image.h"
 #include "v_video.h"
 #include "v_font.h"

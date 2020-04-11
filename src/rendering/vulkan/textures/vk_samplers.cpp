@@ -28,7 +28,7 @@
 #include "vulkan/system/vk_device.h"
 #include "vulkan/system/vk_builders.h"
 #include "vk_samplers.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
 struct VkTexFilter
 {

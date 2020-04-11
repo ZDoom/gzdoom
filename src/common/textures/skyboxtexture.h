@@ -18,7 +18,7 @@ public:
 
 	FSkyBox(const char *name);
 	TArray<uint8_t> Get8BitPixels(bool alphatex);
-	FBitmap GetBgraBitmap(PalEntry *, int *trans) override;
+	FBitmap GetBgraBitmap(const PalEntry *, int *trans) override;
 	FImageSource *GetImage() const override;
 
 

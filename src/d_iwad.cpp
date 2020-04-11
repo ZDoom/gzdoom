@@ -51,8 +51,6 @@
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
-const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinprogdir);
-
 //==========================================================================
 //
 // Parses IWAD definitions
@@ -725,11 +723,11 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
 	wadfiles.Clear();
-	D_AddFile (wadfiles, zdoom_wad);
+	D_AddFile (wadfiles, zdoom_wad, true, -1, GameConfig);
 
 	// [SP] Load non-free assets if available. This must be done before the IWAD.
 	int iwadnum;
-	if (D_AddFile(wadfiles, optional_wad))
+	if (D_AddFile(wadfiles, optional_wad, true, -1, GameConfig))
 		iwadnum = 2;
 	else
 		iwadnum = 1;
@@ -737,10 +735,10 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	fileSystem.SetIwadNum(iwadnum);
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{
-		D_AddFile (wadfiles, picks[pick].mRequiredPath);
+		D_AddFile (wadfiles, picks[pick].mRequiredPath, true, -1, GameConfig);
 		iwadnum++;
 	}
-	D_AddFile (wadfiles, picks[pick].mFullPath);
+	D_AddFile (wadfiles, picks[pick].mFullPath, true, -1, GameConfig);
 	fileSystem.SetMaxIwadNum(iwadnum);
 
 	auto info = mIWadInfos[picks[pick].mInfoIndex];
@@ -761,12 +759,12 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 				path = FString(picks[pick].mFullPath.GetChars(), lastslash + 1);
 			}
 			path += info.Load[i];
-			D_AddFile(wadfiles, path);
+			D_AddFile(wadfiles, path, true, -1, GameConfig);
 		}
 		else
 		{
-			auto wad = BaseFileSearch(info.Load[i].GetChars() + 1, NULL, true);
-			if (wad) D_AddFile(wadfiles, wad);
+			auto wad = BaseFileSearch(info.Load[i].GetChars() + 1, NULL, true, GameConfig);
+			if (wad) D_AddFile(wadfiles, wad, true, -1, GameConfig);
 		}
 
 	}

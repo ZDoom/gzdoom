@@ -140,7 +140,6 @@ bool D_CheckNetGame ();
 void D_ProcessEvents ();
 void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
-void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
 void ParseGLDefs();
 void DrawFullscreenSubtitle(const char *text);
@@ -151,7 +150,6 @@ void I_UpdateWindowTitle();
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void D_DoomLoop ();
-const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir=false);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1666,243 +1664,6 @@ void ParseCVarInfo()
 
 //==========================================================================
 //
-// D_AddFile
-//
-//==========================================================================
-
-bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check, int position)
-{
-	if (file == NULL || *file == '\0')
-	{
-		return false;
-	}
-
-	if (check && !DirEntryExists (file))
-	{
-		const char *f = BaseFileSearch (file, ".wad");
-		if (f == NULL)
-		{
-			Printf ("Can't find '%s'\n", file);
-			return false;
-		}
-		file = f;
-	}
-
-	FString f = file;
-	FixPathSeperator(f);
-	if (position == -1) wadfiles.Push(f);
-	else wadfiles.Insert(position, f);
-	return true;
-}
-
-//==========================================================================
-//
-// D_AddWildFile
-//
-//==========================================================================
-
-void D_AddWildFile (TArray<FString> &wadfiles, const char *value)
-{
-	if (value == NULL || *value == '\0')
-	{
-		return;
-	}
-	const char *wadfile = BaseFileSearch (value, ".wad");
-
-	if (wadfile != NULL)
-	{
-		D_AddFile (wadfiles, wadfile);
-	}
-	else
-	{ // Try pattern matching
-		findstate_t findstate;
-		char path[PATH_MAX];
-		char *sep;
-		void *handle = I_FindFirst (value, &findstate);
-
-		strcpy (path, value);
-		sep = strrchr (path, '/');
-		if (sep == NULL)
-		{
-			sep = strrchr (path, '\\');
-#ifdef _WIN32
-			if (sep == NULL && path[1] == ':')
-			{
-				sep = path + 1;
-			}
-#endif
-		}
-
-		if (handle != ((void *)-1))
-		{
-			do
-			{
-				if (!(I_FindAttr(&findstate) & FA_DIREC))
-				{
-					if (sep == NULL)
-					{
-						D_AddFile (wadfiles, I_FindName (&findstate));
-					}
-					else
-					{
-						strcpy (sep+1, I_FindName (&findstate));
-						D_AddFile (wadfiles, path);
-					}
-				}
-			} while (I_FindNext (handle, &findstate) == 0);
-		}
-		I_FindClose (handle);
-	}
-}
-
-//==========================================================================
-//
-// D_AddConfigWads
-//
-// Adds all files in the specified config file section.
-//
-//==========================================================================
-
-void D_AddConfigWads (TArray<FString> &wadfiles, const char *section)
-{
-	if (GameConfig->SetSection (section))
-	{
-		const char *key;
-		const char *value;
-		FConfigFile::Position pos;
-
-		while (GameConfig->NextInSection (key, value))
-		{
-			if (stricmp (key, "Path") == 0)
-			{
-				// D_AddWildFile resets GameConfig's position, so remember it
-				GameConfig->GetPosition (pos);
-				D_AddWildFile (wadfiles, ExpandEnvVars(value));
-				// Reset GameConfig's position to get next wad
-				GameConfig->SetPosition (pos);
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-// D_AddDirectory
-//
-// Add all .wad files in a directory. Does not descend into subdirectories.
-//
-//==========================================================================
-
-static void D_AddDirectory (TArray<FString> &wadfiles, const char *dir)
-{
-	char curdir[PATH_MAX];
-
-	if (getcwd (curdir, PATH_MAX))
-	{
-		char skindir[PATH_MAX];
-		findstate_t findstate;
-		void *handle;
-		size_t stuffstart;
-
-		stuffstart = strlen (dir);
-		memcpy (skindir, dir, stuffstart*sizeof(*dir));
-		skindir[stuffstart] = 0;
-
-		if (skindir[stuffstart-1] == '/')
-		{
-			skindir[--stuffstart] = 0;
-		}
-
-		if (!chdir (skindir))
-		{
-			skindir[stuffstart++] = '/';
-			if ((handle = I_FindFirst ("*.wad", &findstate)) != (void *)-1)
-			{
-				do
-				{
-					if (!(I_FindAttr (&findstate) & FA_DIREC))
-					{
-						strcpy (skindir + stuffstart, I_FindName (&findstate));
-						D_AddFile (wadfiles, skindir);
-					}
-				} while (I_FindNext (handle, &findstate) == 0);
-				I_FindClose (handle);
-			}
-		}
-		chdir (curdir);
-	}
-}
-
-
-//==========================================================================
-//
-// BaseFileSearch
-//
-// If a file does not exist at <file>, looks for it in the directories
-// specified in the config file. Returns the path to the file, if found,
-// or NULL if it could not be found.
-//
-//==========================================================================
-
-const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir)
-{
-	static char wad[PATH_MAX];
-
-	if (file == NULL || *file == '\0')
-	{
-		return NULL;
-	}
-	if (lookfirstinprogdir)
-	{
-		mysnprintf (wad, countof(wad), "%s%s%s", progdir.GetChars(), progdir.Back() == '/' ? "" : "/", file);
-		if (DirEntryExists (wad))
-		{
-			return wad;
-		}
-	}
-
-	if (DirEntryExists (file))
-	{
-		mysnprintf (wad, countof(wad), "%s", file);
-		return wad;
-	}
-
-	if (GameConfig != NULL && GameConfig->SetSection ("FileSearch.Directories"))
-	{
-		const char *key;
-		const char *value;
-
-		while (GameConfig->NextInSection (key, value))
-		{
-			if (stricmp (key, "Path") == 0)
-			{
-				FString dir;
-
-				dir = NicePath(value);
-				if (dir.IsNotEmpty())
-				{
-					mysnprintf (wad, countof(wad), "%s%s%s", dir.GetChars(), dir.Back() == '/' ? "" : "/", file);
-					if (DirEntryExists (wad))
-					{
-						return wad;
-					}
-				}
-			}
-		}
-	}
-
-	// Retry, this time with a default extension
-	if (ext != NULL)
-	{
-		FString tmp = file;
-		DefaultExtension (tmp, ext);
-		return BaseFileSearch (tmp, NULL);
-	}
-	return NULL;
-}
-
-//==========================================================================
-//
 // ConsiderPatches
 //
 // Tries to add any deh/bex patches from the command line.
@@ -1918,8 +1679,8 @@ bool ConsiderPatches (const char *arg)
 	argc = Args->CheckParmList(arg, &args);
 	for (i = 0; i < argc; ++i)
 	{
-		if ( (f = BaseFileSearch(args[i], ".deh")) ||
-			 (f = BaseFileSearch(args[i], ".bex")) )
+		if ( (f = BaseFileSearch(args[i], ".deh", false, GameConfig)) ||
+			 (f = BaseFileSearch(args[i], ".bex", false, GameConfig)) )
 		{
 			D_LoadDehFile(f);
 		}
@@ -1950,7 +1711,7 @@ static void GetCmdLineFiles(TArray<FString> &wadfiles)
 	argc = Args->CheckParmList("-file", &args);
 	for (i = 0; i < argc; ++i)
 	{
-		D_AddWildFile(wadfiles, args[i]);
+		D_AddWildFile(wadfiles, args[i], ".wad", GameConfig);
 	}
 }
 
@@ -2003,11 +1764,11 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 				}
 				if (!FileExists(checkpath))
 				{
-					pos += D_AddFile(pwads, sc.String, true, pos);
+					pos += D_AddFile(pwads, sc.String, true, pos, GameConfig);
 				}
 				else
 				{
-					pos += D_AddFile(pwads, checkpath, true, pos);
+					pos += D_AddFile(pwads, checkpath, true, pos, GameConfig);
 				}
 			}
 			while (sc.CheckToken(','));
@@ -2179,15 +1940,15 @@ static void AddAutoloadFiles(const char *autoname)
 	{
 		if (DoomStartupInfo.LoadLights == 1 || (DoomStartupInfo.LoadLights != 0 && autoloadlights))
 		{
-			const char *lightswad = BaseFileSearch ("lights.pk3", NULL);
+			const char *lightswad = BaseFileSearch ("lights.pk3", NULL, false, GameConfig);
 			if (lightswad)
-				D_AddFile (allwads, lightswad);
+				D_AddFile (allwads, lightswad, true, -1, GameConfig);
 		}
 		if (DoomStartupInfo.LoadBrightmaps == 1 || (DoomStartupInfo.LoadBrightmaps != 0 && autoloadbrightmaps))
 		{
-			const char *bmwad = BaseFileSearch ("brightmaps.pk3", NULL);
+			const char *bmwad = BaseFileSearch ("brightmaps.pk3", NULL, false, GameConfig);
 			if (bmwad)
-				D_AddFile (allwads, bmwad);
+				D_AddFile (allwads, bmwad, true, -1, GameConfig);
 		}
 	}
 
@@ -2200,9 +1961,9 @@ static void AddAutoloadFiles(const char *autoname)
 		// voices. I never got around to writing the utility to do it, though.
 		// And I probably never will now. But I know at least one person uses
 		// it for something else, so this gets to stay here.
-		const char *wad = BaseFileSearch ("zvox.wad", NULL);
+		const char *wad = BaseFileSearch ("zvox.wad", NULL, false, GameConfig);
 		if (wad)
-			D_AddFile (allwads, wad);
+			D_AddFile (allwads, wad, true, -1, GameConfig);
 	
 		// [RH] Add any .wad files in the skins directory
 #ifdef __unix__
@@ -2211,15 +1972,15 @@ static void AddAutoloadFiles(const char *autoname)
 		file = progdir;
 #endif
 		file += "skins";
-		D_AddDirectory (allwads, file);
+		D_AddDirectory (allwads, file, "*.wad", GameConfig);
 
 #ifdef __unix__
 		file = NicePath("$HOME/" GAME_DIR "/skins");
-		D_AddDirectory (allwads, file);
+		D_AddDirectory (allwads, file, "*.wad", GameConfig);
 #endif	
 
 		// Add common (global) wads
-		D_AddConfigWads (allwads, "Global.Autoload");
+		D_AddConfigFiles(allwads, "Global.Autoload", "*.wad", GameConfig);
 
 		long len;
 		int lastpos = -1;
@@ -2227,7 +1988,7 @@ static void AddAutoloadFiles(const char *autoname)
 		while ((len = LumpFilterIWAD.IndexOf('.', lastpos+1)) > 0)
 		{
 			file = LumpFilterIWAD.Left(len) + ".Autoload";
-			D_AddConfigWads(allwads, file);
+			D_AddConfigFiles(allwads, file, "*.wad", GameConfig);
 			lastpos = len;
 		}
 	}
@@ -2811,14 +2572,14 @@ static int D_DoomMain_Internal (void)
 
 	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
-	wad = BaseFileSearch (BASEWAD, NULL, true);
+	wad = BaseFileSearch (BASEWAD, NULL, true, GameConfig);
 	if (wad == NULL)
 	{
 		I_FatalError ("Cannot find " BASEWAD);
 	}
 	FString basewad = wad;
 
-	FString optionalwad = BaseFileSearch(OPTIONALWAD, NULL, true);
+	FString optionalwad = BaseFileSearch(OPTIONALWAD, NULL, true, GameConfig);
 
 	iwad_man = new FIWadManager(basewad, optionalwad);
 
@@ -2898,7 +2659,7 @@ static int D_DoomMain_Internal (void)
 		CopyFiles(allwads, pwads);
 		if (exec != NULL)
 		{
-			exec->AddPullins(allwads);
+			exec->AddPullins(allwads, GameConfig);
 		}
 
 		// Since this function will never leave we must delete this array here manually.

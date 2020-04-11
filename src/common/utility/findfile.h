@@ -4,6 +4,11 @@
 #include <stdint.h>
 #include "zstring.h"
 
+enum
+{
+	ZPATH_MAX = 260
+};
+
 #ifndef _WIN32
 
 #include <dirent.h>
@@ -54,7 +59,7 @@ private:
 		FileTime Times[3];
 		uint32_t Size[2];
 		uint32_t Reserved[2];
-		wchar_t Name[260];
+		wchar_t Name[ZPATH_MAX];
 		wchar_t AltName[14];
 	};
 	WinData FindData;
@@ -84,3 +89,11 @@ inline int I_FindAttr(findstate_t *fileinfo)
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
 int I_FindNext (void *handle, findstate_t *fileinfo);
 int I_FindClose (void *handle);
+
+class FConfigFile;
+
+bool D_AddFile(TArray<FString>& wadfiles, const char* file, bool check, int position, FConfigFile* config);
+void D_AddWildFile(TArray<FString>& wadfiles, const char* value, const char *extension, FConfigFile* config);
+void D_AddConfigFiles(TArray<FString>& wadfiles, const char* section, const char* extension, FConfigFile* config);
+void D_AddDirectory(TArray<FString>& wadfiles, const char* dir, const char *filespec, FConfigFile* config);
+const char* BaseFileSearch(const char* file, const char* ext, bool lookfirstinprogdir, FConfigFile* config);

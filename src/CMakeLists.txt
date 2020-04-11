@@ -610,9 +610,10 @@ file( GLOB HEADER_FILES
 	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
-	utility/rapidjson/*.h
+	common/thirdparty/*.h
+	common/thirdparty/rapidjson/*.h
+	common/thirdparty/math./*h
 	utility/sfmt/*.h
-	utility/math./*h
 	utility/*.h
 	scripting/*.h
 	scripting/backend/*.h
@@ -1127,8 +1128,6 @@ set (PCH_SOURCES
 	utility/m_png.cpp
 	utility/m_random.cpp
 	utility/memarena.cpp
-	utility/md5.cpp
-	utility/superfasthash.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp
@@ -1148,6 +1147,8 @@ set (PCH_SOURCES
 	utility/v_collection.cpp
 	utility/utf8.cpp
 	utility/zstrformat.cpp
+	common/thirdparty/md5.cpp
+ 	common/thirdparty/superfasthash.cpp
 )
 
 if( ${HAVE_VM_JIT} )
@@ -1171,26 +1172,26 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
 	utility/x86.cpp
-	utility/strnatcmp.c
+	common/thirdparty/strnatcmp.c
 	utility/zstring.cpp
-	utility/math/asin.c
-	utility/math/atan.c
-	utility/math/const.c
-	utility/math/cosh.c
-	utility/math/exp.c
-	utility/math/isnan.c
-	utility/math/log.c
-	utility/math/log10.c
-	utility/math/mtherr.c
-	utility/math/polevl.c
-	utility/math/pow.c
-	utility/math/powi.c
-	utility/math/sin.c
-	utility/math/sinh.c
-	utility/math/sqrt.c
-	utility/math/tan.c
-	utility/math/tanh.c
-	utility/math/fastsin.cpp
+	common/thirdparty/math/asin.c
+	common/thirdparty/math/atan.c
+	common/thirdparty/math/const.c
+	common/thirdparty/math/cosh.c
+	common/thirdparty/math/exp.c
+	common/thirdparty/math/isnan.c
+	common/thirdparty/math/log.c
+	common/thirdparty/math/log10.c
+	common/thirdparty/math/mtherr.c
+	common/thirdparty/math/polevl.c
+	common/thirdparty/math/pow.c
+	common/thirdparty/math/powi.c
+	common/thirdparty/math/sin.c
+	common/thirdparty/math/sinh.c
+	common/thirdparty/math/sqrt.c
+	common/thirdparty/math/tan.c
+	common/thirdparty/math/tanh.c
+	common/thirdparty/math/fastsin.cpp
 	zzautozend.cpp
 )
 
@@ -1215,6 +1216,7 @@ endif()
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma ${ZMUSIC_LIBRARIES} )
 
 include_directories( .
+	common/thirdparty
 	g_statusbar
 	console
 	playsim
@@ -1353,6 +1355,7 @@ source_group("Game Data\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Map Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/maploader/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/console/.+")
 source_group("Playsim" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/.+")
 source_group("Playsim\\Bots" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/bots/.+")
 source_group("Playsim\\FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/playsim/fragglescript/.+")
@@ -1413,10 +1416,12 @@ source_group("Scripting\\ZScript frontend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_
 source_group("Scripting\\Compiler backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/backend/.+")
 source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/vm/.+")
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
+source_group("Common" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/.+")
+source_group("Common\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/.+")
+source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/math/.+")
+source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")
 source_group("Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
 source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/nodebuilder/.+")
-source_group("Utility\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/math/.+")
-source_group("Utility\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/rapidjson/.+")
 source_group("Utility\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/sfmt/.+")
 source_group("Statusbar" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_statusbar/.+")
 source_group("Versioning" FILES version.h win32/zdoom.rc)

@@ -83,6 +83,21 @@ FWadCollection Wads;
 
 // CODE --------------------------------------------------------------------
 
+void md5Update(FileReader& file, MD5Context &md5, unsigned len)
+{
+	uint8_t readbuf[8192];
+	unsigned t;
+
+	while (len > 0)
+	{
+		t = std::min<unsigned>(len, sizeof(readbuf));
+		len -= t;
+		t = (long)file.Read(readbuf, t);
+		md5.Update(readbuf, t);
+	}
+}
+
+
 //==========================================================================
 //
 // uppercoppy
@@ -282,7 +297,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr)
 			{
 				MD5Context md5;
 				wadreader.Seek(0, FileReader::SeekSet);
-				md5.Update(wadreader, (unsigned)wadreader.GetLength());
+				md5Update(wadreader, md5, (unsigned)wadreader.GetLength());
 				md5.Final(cksum);
 
 				for (size_t j = 0; j < sizeof(cksum); ++j)
@@ -304,7 +319,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr)
 				{
 					MD5Context md5;
 					auto reader = lump->NewReader();
-					md5.Update(reader, lump->LumpSize);
+					md5Update(reader, md5, lump->LumpSize);
 					md5.Final(cksum);
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)
@@ -966,7 +981,7 @@ void FWadCollection::RenameNerve ()
 		}
 		fr->Seek(0, FileReader::SeekSet);
 		MD5Context md5;
-		md5.Update(*fr, (unsigned)fr->GetLength());
+		md5Update(*fr, md5, (unsigned)fr->GetLength());
 		md5.Final(cksum);
 		if (memcmp(nerve[isizecheck], cksum, 16) == 0)
 		{
@@ -1033,7 +1048,7 @@ void FWadCollection::FixMacHexen()
 	uint8_t checksum[16];
 	MD5Context md5;
 
-	md5.Update(*reader, (unsigned)iwadSize);
+	md5Update(*reader, md5, (unsigned)iwadSize);
 	md5.Final(checksum);
 
 	static const uint8_t HEXEN_DEMO_MD5[16] =

@@ -18,15 +18,12 @@
 #ifndef MD5_H
 #define MD5_H
 
-class FileReader;
-
 struct MD5Context
 {
 	MD5Context() { Init(); }
 
 	void Init();
 	void Update(const uint8_t *buf, unsigned len);
-	void Update(FileReader &file, unsigned len);
 	void Final(uint8_t digest[16]);
 
 private:

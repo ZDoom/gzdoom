@@ -35,6 +35,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -68,6 +69,7 @@
 #include "c_functions.h"
 #include "g_levellocals.h"
 #include "v_video.h"
+#include "md5.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -1302,4 +1304,46 @@ CCMD(r_showcaps)
 	PRINT_CAP("Uses Polygon rendering", RFF_POLYGONAL)
 	PRINT_CAP("Truecolor Enabled", RFF_TRUECOLOR)
 	PRINT_CAP("Voxels", RFF_VOXELS)
+}
+
+
+//==========================================================================
+//
+// CCMD md5sum
+//
+// Like the command-line tool, because I wanted to make sure I had it right.
+//
+//==========================================================================
+
+CCMD (md5sum)
+{
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: md5sum <file> ...\n");
+	}
+	for (int i = 1; i < argv.argc(); ++i)
+	{
+		FileReader fr;
+		if (!fr.OpenFile(argv[i]))
+		{
+			Printf("%s: %s\n", argv[i], strerror(errno));
+		}
+		else
+		{
+			MD5Context md5;
+			uint8_t readbuf[8192];
+			size_t len;
+
+			while ((len = fr.Read(readbuf, sizeof(readbuf))) > 0)
+			{
+				md5.Update(readbuf, (unsigned int)len);
+			}
+			md5.Final(readbuf);
+			for(int j = 0; j < 16; ++j)
+			{
+				Printf("%02x", readbuf[j]);
+			}
+			Printf(" *%s\n", argv[i]);
+		}
+	}
 }

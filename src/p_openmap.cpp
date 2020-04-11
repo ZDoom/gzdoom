@@ -41,6 +41,8 @@
 #include "md5.h"
 #include "g_levellocals.h"
 
+void md5Update(FileReader& file, MD5Context& md5, unsigned len);
+
 inline bool P_IsBuildMap(MapData *map)
 {
 	return false;
@@ -395,19 +397,19 @@ void MapData::GetChecksum(uint8_t cksum[16])
 
 	if (isText)
 	{
-		md5.Update(Reader(ML_TEXTMAP), Size(ML_TEXTMAP));
+		md5Update(Reader(ML_TEXTMAP), md5, Size(ML_TEXTMAP));
 	}
 	else
 	{
-		md5.Update(Reader(ML_LABEL), Size(ML_LABEL));
-		md5.Update(Reader(ML_THINGS), Size(ML_THINGS));
-		md5.Update(Reader(ML_LINEDEFS), Size(ML_LINEDEFS));
-		md5.Update(Reader(ML_SIDEDEFS), Size(ML_SIDEDEFS));
-		md5.Update(Reader(ML_SECTORS), Size(ML_SECTORS));
+		md5Update(Reader(ML_LABEL), md5, Size(ML_LABEL));
+		md5Update(Reader(ML_THINGS), md5, Size(ML_THINGS));
+		md5Update(Reader(ML_LINEDEFS), md5, Size(ML_LINEDEFS));
+		md5Update(Reader(ML_SIDEDEFS), md5, Size(ML_SIDEDEFS));
+		md5Update(Reader(ML_SECTORS), md5, Size(ML_SECTORS));
 	}
 	if (HasBehavior)
 	{
-		md5.Update(Reader(ML_BEHAVIOR), Size(ML_BEHAVIOR));
+		md5Update(Reader(ML_BEHAVIOR), md5, Size(ML_BEHAVIOR));
 	}
 	md5.Final(cksum);
 }

@@ -16,11 +16,9 @@
  */
 
 #include <string.h>		/* for memcpy() */
+#include <algorithm>
 
-#include "doomtype.h"
 #include "md5.h"
-#include "templates.h"
-#include "files.h"
 
 #ifdef __BIG_ENDIAN__
 void byteSwap(uint32_t *buf, unsigned words)
@@ -93,20 +91,6 @@ void MD5Context::Update(const uint8_t *buf, unsigned len)
 
 	/* Handle any remaining bytes of data. */
 	memcpy(in, buf, len);
-}
-
-void MD5Context::Update(FileReader &file, unsigned len)
-{
-	uint8_t readbuf[8192];
-	long t;
-
-	while (len > 0)
-	{
-		t = MIN<long>(len, sizeof(readbuf));
-		len -= t;
-		t = (long)file.Read(readbuf, t);
-		Update(readbuf, t);
-	}
 }
 
 /*
@@ -250,46 +234,3 @@ MD5Transform(uint32_t buf[4], const uint32_t in[16])
 
 #endif
 
-//==========================================================================
-//
-// CCMD md5sum
-//
-// Like the command-line tool, because I wanted to make sure I had it right.
-//
-//==========================================================================
-
-#include "c_dispatch.h"
-#include <errno.h>
-
-CCMD (md5sum)
-{
-	if (argv.argc() < 2)
-	{
-		Printf("Usage: md5sum <file> ...\n");
-	}
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		FileReader fr;
-		if (!fr.OpenFile(argv[i]))
-		{
-			Printf("%s: %s\n", argv[i], strerror(errno));
-		}
-		else
-		{
-			MD5Context md5;
-			uint8_t readbuf[8192];
-			size_t len;
-
-			while ((len = fr.Read(readbuf, sizeof(readbuf))) > 0)
-			{
-				md5.Update(readbuf, (unsigned int)len);
-			}
-			md5.Final(readbuf);
-			for(int j = 0; j < 16; ++j)
-			{
-				Printf("%02x", readbuf[j]);
-			}
-			Printf(" *%s\n", argv[i]);
-		}
-	}
-}

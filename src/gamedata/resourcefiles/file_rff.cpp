@@ -35,8 +35,7 @@
 
 #include "resourcefile.h"
 #include "templates.h"
-#include "w_wad.h"
-#include "doomtype.h"
+#include "printf.h"
 
 //==========================================================================
 //
@@ -151,7 +150,6 @@ bool FRFFFile::Open(bool quiet, LumpFilterInfo*)
 
 	Lumps = new FRFFLump[NumLumps];
 
-	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 	for (uint32_t i = 0; i < NumLumps; ++i)
 	{
 		Lumps[i].Position = LittleLong(lumps[i].FilePos);

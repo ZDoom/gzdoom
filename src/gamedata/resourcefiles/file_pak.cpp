@@ -33,8 +33,7 @@
 */
 
 #include "resourcefile.h"
-#include "w_wad.h"
-#include "doomtype.h"
+#include "printf.h"
 
 //==========================================================================
 //
@@ -102,8 +101,6 @@ bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
 	Reader.Read (fileinfo.Data(), NumLumps * sizeof(dpackfile_t));
 
 	Lumps.Resize(NumLumps);
-
-	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{

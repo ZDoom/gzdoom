@@ -119,7 +119,6 @@ bool FWHResFile::Open(bool quiet, LumpFilterInfo*)
 	NumLumps = i;
 	Lumps.Clamp(NumLumps);
 	Lumps.ShrinkToFit();
-	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	return true;
 }
 

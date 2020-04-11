@@ -34,8 +34,7 @@
 
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "w_wad.h"
-#include "doomtype.h"
+#include "printf.h"
 
 //==========================================================================
 //

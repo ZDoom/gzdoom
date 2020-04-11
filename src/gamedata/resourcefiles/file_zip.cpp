@@ -37,8 +37,7 @@
 #include "file_zip.h"
 #include "cmdlib.h"
 #include "templates.h"
-#include "v_text.h"
-#include "w_wad.h"
+#include "printf.h"
 #include "w_zip.h"
 
 #include "ancientzip.h"
@@ -338,8 +337,6 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 	NumLumps -= skipped;
 	free(directory);
 
-	if (!quiet && !batchrun) Printf(TEXTCOLOR_NORMAL ", %d lumps\n", NumLumps);
-	
 	GenerateHash();
 	PostProcessArchive(&Lumps[0], sizeof(FZipLump), filter);
 	return true;

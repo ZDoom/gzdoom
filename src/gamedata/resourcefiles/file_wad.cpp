@@ -37,7 +37,6 @@
 #include "resourcefile.h"
 #include "v_text.h"
 #include "w_wad.h"
-#include "gi.h"
 #include "engineerrors.h"
 
 //==========================================================================
@@ -176,7 +175,13 @@ bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 		char n[9];
 		uppercopy(n, fileinfo[i].Name);
 		n[8] = 0;
+		// This needs to be done differently. We cannot simply assume that all lumps where the first character's high bit is set are compressed without verification.
+		// This requires explicit toggling for precisely the files that need it.
+#if 0
 		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (n[0] & 0x80) == 0x80;
+#else
+		Lumps[i].Compressed = false;
+#endif
 		n[0] &= ~0x80;
 		Lumps[i].LumpNameSetup(n);
 
@@ -202,8 +207,6 @@ bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 
 	if (!quiet)	// don't bother with namespaces in quiet mode. We won't need them.
 	{
-		if (!batchrun) Printf(", %d lumps\n", NumLumps);
-
 		SetNamespace("S_START", "S_END", ns_sprites);
 		SetNamespace("F_START", "F_END", ns_flats, true);
 		SetNamespace("C_START", "C_END", ns_colormaps);

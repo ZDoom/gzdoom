@@ -37,10 +37,6 @@
 #include <zlib.h>
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "w_wad.h"
-#include "gi.h"
-#include "doomstat.h"
-#include "doomtype.h"
 #include "md5.h"
 
 

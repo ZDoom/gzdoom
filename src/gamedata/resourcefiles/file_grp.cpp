@@ -34,8 +34,7 @@
 */
 
 #include "resourcefile.h"
-#include "w_wad.h"
-#include "doomtype.h"
+#include "printf.h"
 
 //==========================================================================
 //
@@ -118,7 +117,6 @@ bool FGrpFile::Open(bool quiet, LumpFilterInfo*)
 		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
 		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero);
 	}
-	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 	GenerateHash();
 	delete[] fileinfo;
 	return true;

@@ -23,6 +23,18 @@ typedef int32_t							fixed_t;
 
 typedef uint32_t			angle_t;
 
+#if defined(__GNUC__)
+// With versions of GCC newer than 4.2, it appears it was determined that the
+// cost of an unaligned pointer on PPC was high enough to add padding to the
+// end of packed structs.  For whatever reason __packed__ and pragma pack are
+// handled differently in this regard. Note that this only needs to be applied
+// to types which are used in arrays or sizeof is needed. This also prevents
+// code from taking references to the struct members.
+#define FORCE_PACKED __attribute__((__packed__))
+#else
+#define FORCE_PACKED
+#endif
+
 
 #ifdef __GNUC__
 #define GCCPRINTF(stri,firstargi)		__attribute__((format(printf,stri,firstargi)))

@@ -38,7 +38,7 @@
 
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "doomtype.h"
+#include "printf.h"
 #include "findfile.h"
 
 
@@ -183,7 +183,6 @@ int FDirectory::AddDirectory(const char *dirpath)
 bool FDirectory::Open(bool quiet, LumpFilterInfo* filter)
 {
 	NumLumps = AddDirectory(FileName);
-	if (!quiet) Printf(", %d lumps\n", NumLumps);
 	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }

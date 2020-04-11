@@ -377,6 +377,8 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet
 
 	if (resfile != NULL)
 	{
+		if (!quiet && !batchrun) Printf(", %d lumps\n", resfile->LumpCount());
+
 		uint32_t lumpstart = LumpInfo.Size();
 
 		resfile->SetFirstLump(lumpstart);

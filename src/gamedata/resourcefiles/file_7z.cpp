@@ -39,8 +39,7 @@
 
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "v_text.h"
-#include "w_wad.h"
+#include "printf.h"
 
 
 
@@ -313,8 +312,6 @@ bool F7ZFile::Open(bool quiet, LumpFilterInfo *filter)
 			return false;
 		}
 	}
-
-	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 
 	GenerateHash();
 	PostProcessArchive(&Lumps[0], sizeof(F7ZLump), filter);

@@ -1,6 +1,8 @@
 #ifndef __W_ZIP
 #define __W_ZIP
 
+#include "basics.h"
+
 #pragma pack(1)
 // FZipCentralInfo
 struct FZipEndOfCentralDirectory

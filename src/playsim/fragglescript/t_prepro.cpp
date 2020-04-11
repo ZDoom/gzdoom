@@ -88,7 +88,7 @@ void DFsSection::Serialize(FSerializer &arc)
 
 char *DFsScript::SectionStart(const DFsSection *sec)
 {
-	return data + sec->start_index;
+	return Data.Data() + sec->start_index;
 }
 
 //==========================================================================
@@ -99,7 +99,7 @@ char *DFsScript::SectionStart(const DFsSection *sec)
 
 char *DFsScript::SectionEnd(const DFsSection *sec)
 {
-	return data + sec->end_index;
+	return Data.Data() + sec->end_index;
 }
 
 //==========================================================================
@@ -110,7 +110,7 @@ char *DFsScript::SectionEnd(const DFsSection *sec)
 
 char *DFsScript::SectionLoop(const DFsSection *sec)
 {
-	return data + sec->loop_index;
+	return Data.Data() + sec->loop_index;
 }
 
 //==========================================================================
@@ -335,8 +335,8 @@ char *DFsScript::ProcessFindChar(char *datap, char find)
 
 void DFsScript::DryRunScript(FLevelLocals *Level)
 {
-	char *end = data + len;
-	char *rover = data;
+	char *end = Data.Data() + len;
+	char *rover = Data.Data();
 	
 	// allocate space for the tokens
 	FParser parse(Level, this);
@@ -389,8 +389,8 @@ void DFsScript::DryRunScript(FLevelLocals *Level)
 
 void DFsScript::Preprocess(FLevelLocals *Level)
 {
-	len = (int)strlen(data);
-	ProcessFindChar(data, 0);  // fill in everything
+	len = (int)Data.Size() - 1;
+	ProcessFindChar(Data.Data(), 0);  // fill in everything
 	DryRunScript(Level);
 }
 

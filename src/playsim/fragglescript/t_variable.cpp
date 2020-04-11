@@ -428,7 +428,7 @@ void DFsScript::ClearVariables(bool complete)
 
 char *DFsScript::LabelValue(const svalue_t &v)
 {
-	if (v.type == svt_label) return data + v.value.i;
+	if (v.type == svt_label) return Data.Data() + v.value.i;
 	else return NULL;
 }
 

@@ -500,8 +500,6 @@ bool FCajunMaster::LoadBots ()
 		botinfo_t *newinfo = new botinfo_t;
 		bool gotclass = false;
 
-		memset (newinfo, 0, sizeof(*newinfo));
-
 		newinfo->Info = "\\autoaim\\0\\movebob\\.25";
 
 		for (;;)

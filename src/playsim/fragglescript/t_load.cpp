@@ -264,7 +264,8 @@ bool FScriptLoader::ParseInfo(MapData * map)
 		}
 
 		auto th = Level->CreateThinker<DFraggleThinker>();
-		th->LevelScript->data = copystring(scriptsrc.GetChars());
+		th->LevelScript->Data.Resize((unsigned)scriptsrc.Len() + 1);
+		memcpy(th->LevelScript->Data.Data(), scriptsrc.GetChars(), scriptsrc.Len() + 1);
 		Level->FraggleScriptThinker = th;
 
 		if (drownflag==-1) drownflag = (Level->maptype != MAPTYPE_DOOM || fsglobal);

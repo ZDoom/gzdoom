@@ -303,7 +303,7 @@ class DFsScript : public DObject
 public:
 	// script data
 
-	char *data;
+	TArray<char> Data;
 	int scriptnum;  // this script's number
 	int len;
 
@@ -335,7 +335,6 @@ public:
 	// true or false
 
 	DFsScript();
-	~DFsScript();
 	void OnDestroy() override;
 	void Serialize(FSerializer &ar);
 
@@ -354,7 +353,7 @@ public:
 	void ClearSections();
 	void ClearChildren();
 
-	int MakeIndex(const char *p) { return int(p-data); }
+	int MakeIndex(const char *p) { return int(p-Data.Data()); }
 
 	// preprocessor
 	int section_hash(const char *b) { return MakeIndex(b) % SECTIONSLOTS; }

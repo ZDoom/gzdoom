@@ -186,6 +186,7 @@ public:
 	int mErrors = 0;
 };
 
+FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, int64_t &value, int64_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, uint64_t &value, uint64_t *defval);

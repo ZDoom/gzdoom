@@ -237,20 +237,7 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 		if (i == 0)
 		{
 			// check for special names, if one of these gets found this must be treated as a normal zip.
-			bool isspecial = !name.Compare("flats/") ||
-				name.IndexOf("/") < 0 ||
-				!name.Compare("textures/") ||
-				!name.Compare("hires/") ||
-				!name.Compare("sprites/") ||
-				!name.Compare("voxels/") ||
-				!name.Compare("colormaps/") ||
-				!name.Compare("acs/") ||
-				!name.Compare("maps/") ||
-				!name.Compare("voices/") ||
-				!name.Compare("patches/") ||
-				!name.Compare("graphics/") ||
-				!name.Compare("sounds/") ||
-				!name.Compare("music/");
+			bool isspecial = name.IndexOf("/") < 0 || (filter && filter->reservedFolders.Find(name) < filter->reservedFolders.Size());
 			if (isspecial) break;
 			name0 = name;
 		}
@@ -261,22 +248,17 @@ bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 				name0 = "";
 				break;
 			}
-			else if (!foundspeciallump)
+			else if (!foundspeciallump && filter)
 			{
 				// at least one of the more common definition lumps must be present.
-				if (name.IndexOf(name0 + "mapinfo") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "zmapinfo") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "gameinfo") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "sndinfo") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "sbarinfo") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "menudef") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "gldefs") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "animdefs") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "decorate.") == 0) foundspeciallump = true;	// DECORATE is a common subdirectory name, so the check needs to be a bit different.
-				else if (name.Compare(name0 + "decorate") == 0) foundspeciallump = true;
-				else if (name.IndexOf(name0 + "zscript.") == 0) foundspeciallump = true;	// same here.
-				else if (name.Compare(name0 + "zscript") == 0) foundspeciallump = true;
-				else if (name.Compare(name0 + "maps/") == 0) foundspeciallump = true;
+				for (auto &p : filter->requiredPrefixes)
+				{ 
+					if (name.IndexOf(name0 + p) == 0)
+					{
+						foundspeciallump = true;
+						break;
+					}
+				}
 			}
 		}
 	}

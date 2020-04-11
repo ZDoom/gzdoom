@@ -9,6 +9,10 @@ struct LumpFilterInfo
 {
 	TArray<FString> gameTypeFilter;	// this can contain multiple entries
 	FString dotFilter;
+
+	// The following are for checking if the root directory of a zip can be removed.
+	TArray<FString> reservedFolders;
+	TArray<FString> requiredPrefixes;
 };
 
 class FResourceFile;

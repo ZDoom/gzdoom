@@ -2498,6 +2498,12 @@ static int D_DoomMain_Internal (void)
 		}
 		lfi.gameTypeFilter.Push(FStringf("game-%s", GameTypeName()));
 
+		static const char* folders[] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/" };
+		for (auto p : folders) lfi.reservedFolders.Push(p);
+
+		static const char* reserved[] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "maps/" };
+		for (auto p : reserved) lfi.requiredPrefixes.Push(p);
+
 		Wads.InitMultipleFiles (allwads, iwad_info->DeleteLumps, false, &lfi);
 		allwads.Clear();
 		allwads.ShrinkToFit();

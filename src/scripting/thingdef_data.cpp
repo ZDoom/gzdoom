@@ -757,6 +757,8 @@ void InitThingdef()
 		qsort(&properties[0], properties.Size(), sizeof(properties[0]), propcmp);
 	}
 
+	InitImports();
+
 	// Add the constructor and destructor to FCheckPosition.
 	auto fcp = NewStruct("FCheckPosition", nullptr);
 	fcp->mConstructor = *FindFunction(fcp, "_Constructor")->VMPointer;
@@ -774,8 +776,6 @@ void InitThingdef()
 	auto fltd = NewStruct("FLineTraceData", nullptr);
 	fltd->Size = sizeof(FLineTraceData);
 	fltd->Align = alignof(FLineTraceData);
-
-	InitImports();
 }
 
 void SynthesizeFlagFields()

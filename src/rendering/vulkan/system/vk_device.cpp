@@ -41,7 +41,7 @@
 #include "i_system.h"
 #include "version.h"
 #include "engineerrors.h"
-#include "gamedata/fonts/v_text.h"
+#include "v_text.h"
 
 bool I_GetVulkanPlatformExtensions(unsigned int *count, const char **names);
 bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface);

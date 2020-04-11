@@ -39,6 +39,7 @@
 #include "files.h"
 #include "filesystem.h"
 #include "printf.h"
+#include "templates.h"
 
 /****************************/
 /* Palette management stuff */
@@ -692,5 +693,132 @@ int V_GetColor(const uint32_t* palette, FScanner& sc)
 {
 	FScriptPosition scc = sc;
 	return V_GetColor(palette, sc.String, &scc);
+}
+
+//==========================================================================
+//
+// Special colormaps
+//
+//==========================================================================
+
+
+TArray<FSpecialColormap> SpecialColormaps;
+
+// These default tables are needed for texture composition.
+static FSpecialColormapParameters SpecialColormapParms[] =
+{
+	// Doom invulnerability is an inverted grayscale.
+	// Strife uses it when firing the Sigil
+	{ { 1, 1, 1 }, {    0,    0,   0 } },
+
+	// Heretic invulnerability is a golden shade.
+	{ { 0, 0, 0 }, {  1.5, 0.75,   0 }, },
+
+	// [BC] Build the Doomsphere colormap. It is red!
+	{ { 0, 0, 0 }, {  1.5,    0,   0 } },
+
+	// [BC] Build the Guardsphere colormap. It's a greenish-white kind of thing.
+	{ { 0, 0, 0 }, { 1.25,  1.5,   1 } },
+
+	// Build a blue colormap.
+	{ { 0, 0, 0 }, {    0,    0, 1.5 } },
+
+	// Repeated to get around the overridability of the other one
+	{ { 1, 1, 1 }, {    0,    0,   0 } },
+
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void UpdateSpecialColormap(PalEntry* BaseColors, unsigned int index, float r1, float g1, float b1, float r2, float g2, float b2)
+{
+	assert(index < SpecialColormaps.Size());
+
+	FSpecialColormap* cm = &SpecialColormaps[index];
+	cm->ColorizeStart[0] = float(r1);
+	cm->ColorizeStart[1] = float(g1);
+	cm->ColorizeStart[2] = float(b1);
+	cm->ColorizeEnd[0] = float(r2);
+	cm->ColorizeEnd[1] = float(g2);
+	cm->ColorizeEnd[2] = float(b2);
+
+	r2 -= r1;
+	g2 -= g1;
+	b2 -= b1;
+	r1 *= 255;
+	g1 *= 255;
+	b1 *= 255;
+
+	if (BaseColors)	// only create this table if needed
+	{
+		for (int c = 0; c < 256; c++)
+		{
+			double intensity = (BaseColors[c].r * 77 +
+				BaseColors[c].g * 143 +
+				BaseColors[c].b * 37) / 256.0;
+
+			PalEntry pe = PalEntry(std::min(255, int(r1 + intensity * r2)),
+				std::min(255, int(g1 + intensity * g2)),
+				std::min(255, int(b1 + intensity * b2)));
+
+			cm->Colormap[c] = BestColor((uint32_t*)BaseColors, pe.r, pe.g, pe.b);
+		}
+	}
+
+	// This table is used by the texture composition code
+	for (int i = 0; i < 256; i++)
+	{
+		cm->GrayscaleToColor[i] = PalEntry(std::min(255, int(r1 + i * r2)),
+			std::min(255, int(g1 + i * g2)),
+			std::min(255, int(b1 + i * b2)));
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int AddSpecialColormap(PalEntry *BaseColors, float r1, float g1, float b1, float r2, float g2, float b2)
+{
+	// Clamp these in range for the hardware shader.
+	r1 = clamp(r1, 0.0f, 2.0f);
+	g1 = clamp(g1, 0.0f, 2.0f);
+	b1 = clamp(b1, 0.0f, 2.0f);
+	r2 = clamp(r2, 0.0f, 2.0f);
+	g2 = clamp(g2, 0.0f, 2.0f);
+	b2 = clamp(b2, 0.0f, 2.0f);
+
+	for (unsigned i = 1; i < SpecialColormaps.Size(); i++)
+	{
+		// Avoid precision issues here when trying to find a proper match.
+		if (fabs(SpecialColormaps[i].ColorizeStart[0] - r1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeStart[1] - g1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeStart[2] - b1) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[0] - r2) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[1] - g2) < FLT_EPSILON &&
+			fabs(SpecialColormaps[i].ColorizeEnd[2] - b2) < FLT_EPSILON)
+		{
+			return i;	// The map already exists
+		}
+	}
+
+	UpdateSpecialColormap(BaseColors, SpecialColormaps.Reserve(1), r1, g1, b1, r2, g2, b2);
+	return SpecialColormaps.Size() - 1;
+}
+
+void InitSpecialColormaps(PalEntry *pe)
+{
+	for (unsigned i = 0; i < countof(SpecialColormapParms); ++i)
+	{
+		AddSpecialColormap(pe, SpecialColormapParms[i].Start[0], SpecialColormapParms[i].Start[1],
+			SpecialColormapParms[i].Start[2], SpecialColormapParms[i].End[0],
+			SpecialColormapParms[i].End[1], SpecialColormapParms[i].End[2]);
+	}
 }
 

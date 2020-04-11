@@ -62,113 +62,12 @@ CUSTOM_CVAR(Color, cl_custominvulmapcolor2, 0xa6a67a, CVAR_ARCHIVE|CVAR_NOINITCA
 
 TArray<FakeCmap> fakecmaps;
 
-TArray<FSpecialColormap> SpecialColormaps;
 uint8_t DesaturateColormap[31][256];
 
-struct FSpecialColormapParameters
-{
-	float Start[3], End[3];
-};
-
-static FSpecialColormapParameters SpecialColormapParms[] =
-{
-	// Doom invulnerability is an inverted grayscale.
-	// Strife uses it when firing the Sigil
-	{ { 1, 1, 1 }, {    0,    0,   0 } },
-
-	// Heretic invulnerability is a golden shade.
-	{ { 0, 0, 0 }, {  1.5, 0.75,   0 }, },
-
-	// [BC] Build the Doomsphere colormap. It is red!
-	{ { 0, 0, 0 }, {  1.5,    0,   0 } },
-
-	// [BC] Build the Guardsphere colormap. It's a greenish-white kind of thing.
-	{ { 0, 0, 0 }, { 1.25,  1.5,   1 } },
-
-	// Build a blue colormap.
-	{ { 0, 0, 0 }, {    0,    0, 1.5 } },
-};
 
 static void FreeSpecialLights();
 
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-static void UpdateSpecialColormap(unsigned int index, float r1, float g1, float b1, float r2, float g2, float b2);
-
-int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2)
-{
-	// Clamp these in range for the hardware shader.
-	r1 = clamp(r1, 0.0f, 2.0f);
-	g1 = clamp(g1, 0.0f, 2.0f);
-	b1 = clamp(b1, 0.0f, 2.0f);
-	r2 = clamp(r2, 0.0f, 2.0f);
-	g2 = clamp(g2, 0.0f, 2.0f);
-	b2 = clamp(b2, 0.0f, 2.0f);
-
-	for(unsigned i=0; i<SpecialColormaps.Size(); i++)
-	{
-		// Avoid precision issues here when trying to find a proper match.
-		if (fabs(SpecialColormaps[i].ColorizeStart[0]- r1) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeStart[1]- g1) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeStart[2]- b1) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeEnd[0]- r2) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeEnd[1]- g2) < FLT_EPSILON &&
-			fabs(SpecialColormaps[i].ColorizeEnd[2]- b2) < FLT_EPSILON)
-		{
-			return i;	// The map already exists
-		}
-	}
-
-	UpdateSpecialColormap(SpecialColormaps.Reserve(1), r1, g1, b1, r2, g2, b2);
-	return SpecialColormaps.Size() - 1;
-}
-
-static void UpdateSpecialColormap(unsigned int index, float r1, float g1, float b1, float r2, float g2, float b2)
-{
-	assert(index < SpecialColormaps.Size());
-
-	FSpecialColormap *cm = &SpecialColormaps[index];
-	cm->ColorizeStart[0] = float(r1);
-	cm->ColorizeStart[1] = float(g1);
-	cm->ColorizeStart[2] = float(b1);
-	cm->ColorizeEnd[0] = float(r2);
-	cm->ColorizeEnd[1] = float(g2);
-	cm->ColorizeEnd[2] = float(b2);
-
-	r2 -= r1;
-	g2 -= g1;
-	b2 -= b1;
-	r1 *= 255;
-	g1 *= 255;
-	b1 *= 255;
-
-	for (int c = 0; c < 256; c++)
-	{
-		double intensity = (GPalette.BaseColors[c].r * 77 +
-							GPalette.BaseColors[c].g * 143 +
-							GPalette.BaseColors[c].b * 37) / 256.0;
-
-		PalEntry pe = PalEntry(	MIN(255, int(r1 + intensity*r2)), 
-								MIN(255, int(g1 + intensity*g2)), 
-								MIN(255, int(b1 + intensity*b2)));
-
-		cm->Colormap[c] = ColorMatcher.Pick(pe);
-	}
-
-	// This table is used by the texture composition code
-	for(int i = 0;i < 256; i++)
-	{
-		cm->GrayscaleToColor[i] = PalEntry(	MIN(255, int(r1 + i*r2)), 
-											MIN(255, int(g1 + i*g2)), 
-											MIN(255, int(b1 + i*b2)));
-	}
-}
 
 //==========================================================================
 //
@@ -267,13 +166,9 @@ void R_InitColormaps (bool allowCustomColormap)
 	}
 
 	// build default special maps (e.g. invulnerability)
+	InitSpecialColormaps(GPalette.BaseColors);
+	R_UpdateInvulnerabilityColormap();
 
-	for (unsigned i = 0; i < countof(SpecialColormapParms); ++i)
-	{
-		AddSpecialColormap(SpecialColormapParms[i].Start[0], SpecialColormapParms[i].Start[1],
-			SpecialColormapParms[i].Start[2], SpecialColormapParms[i].End[0],
-			SpecialColormapParms[i].End[1], SpecialColormapParms[i].End[2]);
-	}
 	// desaturated colormaps. These are used for texture composition
 	for(int m = 0; m < 31; m++)
 	{
@@ -339,32 +234,24 @@ uint32_t R_BlendForColormap (uint32_t map)
 
 void R_UpdateInvulnerabilityColormap()
 {
-	float r1, g1, b1, r2, g2, b2;
-
 	// some of us really don't like Doom's idea of an invulnerability sphere colormap
 	// this hack will override that
 	if (cl_customizeinvulmap)
 	{
 		uint32_t color1 = cl_custominvulmapcolor1;
 		uint32_t color2 = cl_custominvulmapcolor2;
-		r1 = (float)((color1 & 0xff0000) >> 16) / 128.f;
-		g1 = (float)((color1 & 0x00ff00) >> 8) / 128.f;
-		b1 = (float)((color1 & 0x0000ff) >> 0) / 128.f;
-		r2 = (float)((color2 & 0xff0000) >> 16) / 128.f;
-		g2 = (float)((color2 & 0x00ff00) >> 8) / 128.f;
-		b2 = (float)((color2 & 0x0000ff) >> 0) / 128.f;
+		float r1 = (float)((color1 & 0xff0000) >> 16) / 128.f;
+		float g1 = (float)((color1 & 0x00ff00) >> 8) / 128.f;
+		float b1 = (float)((color1 & 0x0000ff) >> 0) / 128.f;
+		float r2 = (float)((color2 & 0xff0000) >> 16) / 128.f;
+		float g2 = (float)((color2 & 0x00ff00) >> 8) / 128.f;
+		float b2 = (float)((color2 & 0x0000ff) >> 0) / 128.f;
+		UpdateSpecialColormap(GPalette.BaseColors, 0, r1, g1, b1, r2, g2, b2);
 	}
 	else
 	{
-		FSpecialColormapParameters &defaultColors = SpecialColormapParms[0];
-		r1 = defaultColors.Start[0];
-		g1 = defaultColors.Start[1];
-		b1 = defaultColors.Start[2];
-		r2 = defaultColors.End[0];
-		g2 = defaultColors.End[1];
-		b2 = defaultColors.End[2];
+		SpecialColormaps[INVERSECOLORMAP] = SpecialColormaps[REALINVERSECOLORMAP];
 	}
 
-	UpdateSpecialColormap(0, r1, g1, b1, r2, g2, b2);
 }
 

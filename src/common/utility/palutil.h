@@ -29,3 +29,33 @@ FString V_GetColorStringByName(const char* name, FScriptPosition* sc = nullptr);
 // Tries to get color by name, then by string
 int V_GetColor(const uint32_t* palette, const char* str, FScriptPosition* sc = nullptr);
 int V_GetColor(const uint32_t* palette, FScanner& sc);
+
+enum
+{
+	NOFIXEDCOLORMAP = -1,
+	INVERSECOLORMAP,	// the inverse map is used explicitly in a few places.
+	GOLDCOLORMAP,
+	REDCOLORMAP,
+	GREENCOLORMAP,
+	BLUECOLORMAP,
+	REALINVERSECOLORMAP,
+};
+
+struct FSpecialColormapParameters
+{
+	float Start[3], End[3];
+};
+
+struct FSpecialColormap
+{
+	float ColorizeStart[3];
+	float ColorizeEnd[3];
+	uint8_t Colormap[256];
+	PalEntry GrayscaleToColor[256];
+};
+
+extern TArray<FSpecialColormap> SpecialColormaps;
+
+int AddSpecialColormap(PalEntry *pe, float r1, float g1, float b1, float r2, float g2, float b2);
+void InitSpecialColormaps(PalEntry* pe);
+void UpdateSpecialColormap(PalEntry* BaseColors, unsigned int index, float r1, float g1, float b1, float r2, float g2, float b2);

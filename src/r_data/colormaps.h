@@ -97,23 +97,6 @@ struct FColormapStyle
 	float FadeLevel;
 };
 
-enum
-{
-	NOFIXEDCOLORMAP = -1,
-	INVERSECOLORMAP,	// the inverse map is used explicitly in a few places.
-};
-
-
-struct FSpecialColormap
-{
-	float ColorizeStart[3];
-	float ColorizeEnd[3];
-	uint8_t Colormap[256];
-	PalEntry GrayscaleToColor[256];
-};
-
-extern TArray<FSpecialColormap> SpecialColormaps;
-
 // some utility functions to store special colormaps in powerup blends
 #define SPECIALCOLORMAP_MASK 0x00b60000
 
@@ -122,10 +105,6 @@ inline uint32_t MakeSpecialColormap(int index)
 	assert(index >= 0 && index < 65536);
 	return index | SPECIALCOLORMAP_MASK;
 }
-
-int AddSpecialColormap(float r1, float g1, float b1, float r2, float g2, float b2);
-
-
 
 extern uint8_t DesaturateColormap[31][256];
 

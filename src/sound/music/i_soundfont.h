@@ -2,7 +2,7 @@
 
 #include <string>
 #include "doomtype.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "files.h"
 #include "filereadermusicinterface.h"
 

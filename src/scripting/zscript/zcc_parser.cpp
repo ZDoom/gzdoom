@@ -33,7 +33,7 @@
 
 #include "dobject.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "m_argv.h"
 #include "v_text.h"

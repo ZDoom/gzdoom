@@ -36,7 +36,7 @@
 #include "engineerrors.h"
 #include "textures.h"
 #include "v_font.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 class FSinglePicFont : public FFont
 {

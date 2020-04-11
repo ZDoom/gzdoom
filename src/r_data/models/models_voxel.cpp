@@ -26,7 +26,7 @@
 **
 **/
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "colormatcher.h"
 #include "textures/bitmap.h"

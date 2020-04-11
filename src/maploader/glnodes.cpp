@@ -47,7 +47,7 @@
 #include "m_argv.h"
 #include "c_dispatch.h"
 #include "m_swap.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "nodebuild.h"
 #include "doomstat.h"

@@ -40,7 +40,7 @@
 #include "teaminfo.h"
 #include "v_font.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "vm.h"
 
 // MACROS ------------------------------------------------------------------

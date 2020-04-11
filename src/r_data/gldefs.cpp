@@ -36,7 +36,7 @@
 
 #include "sc_man.h"
 #include "templates.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "r_state.h"
 #include "stats.h"

@@ -24,7 +24,7 @@
 //
 
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "s_sound.h"
 #include "r_sky.h"

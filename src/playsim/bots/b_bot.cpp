@@ -47,7 +47,7 @@
 #include "d_net.h"
 #include "serializer.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "vm.h"
 #include "g_levellocals.h"
 

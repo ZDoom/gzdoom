@@ -41,7 +41,7 @@
 #include "p_terrain.h"
 #include "gi.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "sc_man.h"
 #include "p_local.h"
 #include "actor.h"

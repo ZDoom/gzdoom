@@ -24,7 +24,7 @@
 #include "templates.h"
 #include "doomdef.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "doomstat.h"
 #include "st_stuff.h"

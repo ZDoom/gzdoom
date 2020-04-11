@@ -37,7 +37,7 @@
 #include "doomtype.h"
 #include "d_player.h"
 #include "menu/menu.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"

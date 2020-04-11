@@ -51,7 +51,7 @@
 #include "g_level.h"
 #include "cmdlib.h"
 #include "gstrings.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "d_player.h"
 #include "r_state.h"
 #include "c_dispatch.h"

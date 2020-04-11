@@ -36,14 +36,14 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "colormatcher.h"
 #include "bitmap.h"
 #include "textures/textures.h"
 #include "r_data/sprites.h"
-#include "resourcefiles/resourcefile.h"
+#include "resourcefile.h"
 #include "image.h"
 
 

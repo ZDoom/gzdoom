@@ -44,7 +44,7 @@
 #include "m_swap.h"
 #include "v_font.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "cmdlib.h"
 #include "sc_man.h"

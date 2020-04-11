@@ -41,7 +41,7 @@
 
 #include <zmusic.h>
 #include "m_argv.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "c_dispatch.h"
 #include "templates.h"
 #include "stats.h"

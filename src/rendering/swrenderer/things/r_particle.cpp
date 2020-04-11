@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"

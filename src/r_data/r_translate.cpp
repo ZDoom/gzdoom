@@ -41,7 +41,7 @@
 #include "d_netinf.h"
 #include "sc_man.h"
 #include "engineerrors.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "serializer.h"
 #include "d_player.h"
 #include "r_data/sprites.h"

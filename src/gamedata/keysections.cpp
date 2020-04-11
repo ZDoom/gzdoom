@@ -39,7 +39,7 @@
 #include "c_bind.h"
 #include "c_dispatch.h"
 #include "gameconfigfile.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 TArray<FKeySection> KeySections;
 extern TArray<FString> KeyConfWeapons;

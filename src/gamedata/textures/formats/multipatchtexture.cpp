@@ -36,7 +36,7 @@
 #include <ctype.h>
 #include "doomtype.h"
 #include "files.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 #include "gi.h"
 #include "st_start.h"

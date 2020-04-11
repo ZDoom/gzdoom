@@ -45,7 +45,7 @@
 #include "p_lnspec.h"
 #include "codegen.h"
 #include "v_text.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomstat.h"
 #include "g_levellocals.h"
 #include "v_video.h"

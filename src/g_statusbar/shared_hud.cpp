@@ -35,7 +35,7 @@
 #include "doomdef.h"
 #include "v_video.h"
 #include "gi.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "a_keys.h"
 #include "sbar.h"
 #include "sc_man.h"

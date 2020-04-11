@@ -41,7 +41,7 @@ extern "C"
 
 #include "doomtype.h"
 #include "files.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "bitmap.h"
 #include "v_video.h"

@@ -29,7 +29,7 @@
 #include "files.h"
 #include "v_video.h"
 #include "m_png.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomstat.h"
 #include "i_time.h"
 #include "p_effect.h"

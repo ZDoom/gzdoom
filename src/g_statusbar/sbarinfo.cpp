@@ -38,7 +38,7 @@
 #include "v_font.h"
 #include "v_video.h"
 #include "sbar.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "d_player.h"
 #include "a_keys.h"
 #include "sbarinfo.h"

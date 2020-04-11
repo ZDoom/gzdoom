@@ -37,7 +37,7 @@
 #include "templates.h"
 #include "actor.h"
 #include "c_dispatch.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "i_sound.h"
 #include "d_netinf.h"

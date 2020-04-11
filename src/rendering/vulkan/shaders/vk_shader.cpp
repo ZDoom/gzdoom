@@ -23,7 +23,7 @@
 #include "vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "engineerrors.h"
 #include <ShaderLang.h>
 

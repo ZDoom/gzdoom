@@ -35,7 +35,7 @@
 #include "a_pickups.h"
 #include "thingdef.h"
 #include "c_console.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "zcc_parser.h"
 #include "zcc-parse.h"
 #include "zcc_compile.h"

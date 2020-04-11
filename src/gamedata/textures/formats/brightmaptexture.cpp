@@ -34,7 +34,7 @@
 */
 
 #include "doomtype.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 #include "r_data/r_translate.h"
 #include "bitmap.h"

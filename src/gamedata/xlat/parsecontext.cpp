@@ -35,7 +35,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "w_wad.h"
+#include "filesystem.h"
 #include "parsecontext.h"
 #include "p_lnspec.h"
 

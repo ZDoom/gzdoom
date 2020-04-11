@@ -34,7 +34,7 @@
 #include "st_stuff.h"
 #include "p_local.h"
 #include "p_lnspec.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "a_sharedglobal.h"
 #include "d_event.h"
 #include "gi.h"

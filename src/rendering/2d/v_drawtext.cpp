@@ -42,7 +42,7 @@
 
 
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "image.h"
 #include "textures/formats/multipatchtexture.h"
 

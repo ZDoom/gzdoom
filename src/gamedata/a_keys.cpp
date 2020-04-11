@@ -37,7 +37,7 @@
 #include "gstrings.h"
 #include "d_player.h"
 #include "c_console.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_font.h"
 #include "vm.h"
 

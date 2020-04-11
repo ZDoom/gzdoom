@@ -51,7 +51,7 @@
 #include "s_sndseq.h"
 #include "sbar.h"
 #include "a_sharedglobal.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_sky.h"
 #include "gstrings.h"
 #include "gi.h"

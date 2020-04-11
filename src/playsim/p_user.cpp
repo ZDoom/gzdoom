@@ -70,7 +70,7 @@
 #include "p_enemy.h"
 #include "a_sharedglobal.h"
 #include "a_keys.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "sbar.h"
 #include "intermission/intermission.h"

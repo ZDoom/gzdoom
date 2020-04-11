@@ -35,7 +35,7 @@
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "r_videoscale.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 EXTERN_CVAR(Int, gl_dither_bpc)
 

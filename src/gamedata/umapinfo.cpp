@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "r_defs.h"
 #include "p_setup.h"

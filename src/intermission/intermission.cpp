@@ -35,7 +35,7 @@
 #include "doomtype.h"
 #include "g_game.h"
 #include "d_event.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "v_video.h"
 #include "d_main.h"

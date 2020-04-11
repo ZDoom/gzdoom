@@ -34,7 +34,7 @@
 #include <float.h>
 
 #include "menu/menu.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "c_bind.h"
 #include "i_music.h"
 #include "gi.h"

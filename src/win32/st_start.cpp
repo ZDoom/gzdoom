@@ -46,7 +46,7 @@
 #include "i_input.h"
 #include "hardware.h"
 #include "gi.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "s_sound.h"
 #include "m_argv.h"
 #include "d_main.h"

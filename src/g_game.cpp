@@ -50,7 +50,7 @@
 #include "c_console.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h" 
 #include "gstrings.h"
 #include "r_sky.h"

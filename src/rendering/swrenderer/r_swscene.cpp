@@ -29,7 +29,7 @@
 #include "hwrenderer/textures/hw_material.h"
 #include "swrenderer/r_renderer.h"
 #include "r_swscene.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "d_player.h"
 #include "textures/bitmap.h"
 #include "swrenderer/scene/r_light.h"

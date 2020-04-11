@@ -37,7 +37,7 @@
 #include "v_video.h"
 #include "bitmap.h"
 #include "image.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "files.h"
 #include "cmdlib.h"
 

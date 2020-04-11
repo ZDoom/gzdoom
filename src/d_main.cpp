@@ -50,7 +50,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "gstrings.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "s_sound.h"
 #include "v_video.h"
 #include "intermission/intermission.h"

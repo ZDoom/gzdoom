@@ -39,7 +39,7 @@
 #include <float.h>
 
 #include "i_system.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "r_sky.h"
 #include "c_dispatch.h"

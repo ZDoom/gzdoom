@@ -34,7 +34,7 @@
 **
 */
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "m_argv.h"
 #include "sc_man.h"
 #include "g_level.h"

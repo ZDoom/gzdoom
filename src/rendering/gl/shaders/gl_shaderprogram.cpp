@@ -32,7 +32,7 @@
 #include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 namespace OpenGLRenderer
 {

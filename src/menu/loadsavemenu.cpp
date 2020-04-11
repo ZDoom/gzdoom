@@ -37,7 +37,7 @@
 #include "version.h"
 #include "g_game.h"
 #include "m_png.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "gstrings.h"
 #include "serializer.h"

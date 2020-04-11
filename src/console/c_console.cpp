@@ -50,7 +50,7 @@
 #include "v_palette.h"
 #include "v_video.h"
 #include "v_text.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "sbar.h"
 #include "s_sound.h"
 #include "doomstat.h"

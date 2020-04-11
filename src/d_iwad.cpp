@@ -37,7 +37,7 @@
 #include "cmdlib.h"
 #include "doomstat.h"
 #include "i_system.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "m_argv.h"
 #include "m_misc.h"
 #include "sc_man.h"

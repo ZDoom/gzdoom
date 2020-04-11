@@ -42,10 +42,9 @@
 
 #include "m_argv.h"
 #include "cmdlib.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "m_crc32.h"
 #include "printf.h"
-#include "resourcefiles/resourcefile.h"
 #include "md5.h"
 
 extern	FILE* hashfile;

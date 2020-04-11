@@ -39,7 +39,7 @@
 #include "m_random.h"
 #include "d_player.h"
 #include "p_spec.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "serializer.h"
 
 // MACROS ------------------------------------------------------------------

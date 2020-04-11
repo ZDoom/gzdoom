@@ -41,7 +41,7 @@
 /* includes ************************/
 
 #include "t_script.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 

@@ -64,7 +64,7 @@
 #include "c_console.h"
 #include "version.h"
 #include "i_input.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "g_game.h"
 #include "r_utility.h"

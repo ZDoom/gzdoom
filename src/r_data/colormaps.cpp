@@ -39,7 +39,7 @@
 #include <float.h>
 
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_sky.h"
 #include "colormaps.h"
 #include "templates.h"

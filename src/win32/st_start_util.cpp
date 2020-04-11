@@ -37,7 +37,7 @@
 #include <algorithm>
 #include "st_start.h"
 #include "m_alloc.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_palette.h"
 #include "s_sound.h"
 #include "s_music.h"

@@ -21,7 +21,7 @@
 //
 
 #include "doomtype.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "textures.h"
 #include "skyboxtexture.h"
 #include "bitmap.h"

@@ -46,7 +46,7 @@
 #include "g_game.h"
 #include "m_png.h"
 #include "engineerrors.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "p_setup.h"
 #include "s_sound.h"

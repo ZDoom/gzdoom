@@ -46,7 +46,7 @@
 #include "d_main.h"
 #include "c_console.h"
 #include "version.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "g_levellocals.h"
 #include "cmdlib.h"

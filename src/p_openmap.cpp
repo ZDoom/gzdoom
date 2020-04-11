@@ -37,7 +37,7 @@
 #include "p_setup.h"
 
 #include "cmdlib.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "md5.h"
 #include "g_levellocals.h"
 #include "cmdlib.h"

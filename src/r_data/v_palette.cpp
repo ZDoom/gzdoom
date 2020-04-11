@@ -42,7 +42,7 @@
 
 #include "templates.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "i_video.h"
 #include "c_dispatch.h"
 #include "st_stuff.h"

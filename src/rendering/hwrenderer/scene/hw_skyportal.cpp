@@ -22,7 +22,7 @@
 
 #include "doomtype.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_state.h"
 #include "r_utility.h"
 #include "g_levellocals.h"

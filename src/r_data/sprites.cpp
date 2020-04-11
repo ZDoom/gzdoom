@@ -22,7 +22,7 @@
 
 
 #include "doomtype.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 #include "s_sound.h"
 #include "d_player.h"

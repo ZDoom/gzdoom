@@ -39,7 +39,7 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "p_maputl.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "p_terrain.h"
 #include "d_player.h"

@@ -40,7 +40,7 @@
 #include "doomtype.h"
 #include "engineerrors.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "templates.h"
 #include "doomstat.h"

@@ -36,7 +36,7 @@
 #include "textures/textures.h"
 #include "s_sound.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "gi.h"

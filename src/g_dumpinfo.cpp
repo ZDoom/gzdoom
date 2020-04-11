@@ -39,7 +39,7 @@
 #include "a_sharedglobal.h"
 #include "d_net.h"
 #include "p_setup.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "c_functions.h"
 #include "gstrings.h"

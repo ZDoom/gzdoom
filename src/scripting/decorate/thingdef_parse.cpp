@@ -44,7 +44,7 @@
 #include "thingdef.h"
 #include "a_morph.h"
 #include "backend/codegen.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "m_argv.h"
 #include "v_video.h"

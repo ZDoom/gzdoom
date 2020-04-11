@@ -13,7 +13,7 @@
 #include "tarray.h"
 #include "cmdlib.h"
 #include "zstring.h"
-#include "resourcefiles/resourcefile.h"
+#include "resourcefile.h"
 
 class FResourceFile;
 struct FResourceLump;

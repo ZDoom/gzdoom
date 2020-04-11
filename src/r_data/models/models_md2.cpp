@@ -26,7 +26,7 @@
 **
 **/
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_data/models/models.h"
 
 #ifdef _MSC_VER

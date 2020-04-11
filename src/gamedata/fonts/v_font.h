@@ -35,7 +35,7 @@
 #define __V_FONT_H__
 
 #include "doomtype.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "vectors.h"
 
 class DCanvas;

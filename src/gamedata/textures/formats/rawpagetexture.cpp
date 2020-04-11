@@ -35,7 +35,7 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "bitmap.h"
 #include "textures/textures.h"

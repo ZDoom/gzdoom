@@ -36,7 +36,7 @@
 #include <assert.h>
 #include "templates.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "v_video.h"
 #include "p_lnspec.h"

@@ -42,7 +42,7 @@
 #include "g_level.h"
 #include "udmf.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_tags.h"
 #include "p_terrain.h"
 #include "p_spec.h"

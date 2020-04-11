@@ -40,7 +40,7 @@
 
 #include "gi.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
 #include "decallib.h"

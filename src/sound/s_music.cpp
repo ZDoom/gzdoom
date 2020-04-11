@@ -68,7 +68,7 @@
 #include "s_playlist.h"
 #include "c_dispatch.h"
 #include "m_random.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "doomstat.h"
 #include "cmdlib.h"

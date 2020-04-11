@@ -26,7 +26,7 @@
 **
 **/
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "m_crc32.h"

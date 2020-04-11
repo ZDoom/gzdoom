@@ -42,7 +42,7 @@
 
 
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 #include "gstrings.h"
 #include "vm.h"

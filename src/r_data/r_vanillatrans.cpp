@@ -38,7 +38,7 @@
 
 #include "templates.h"
 #include "c_cvars.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomtype.h"
 #ifdef _DEBUG
 #include "c_dispatch.h"

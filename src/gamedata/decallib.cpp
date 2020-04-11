@@ -34,7 +34,7 @@
 
 #include "decallib.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "cmdlib.h"
 #include "m_random.h"

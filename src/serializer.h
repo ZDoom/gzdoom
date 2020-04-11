@@ -5,7 +5,7 @@
 #include <type_traits>
 #include "tarray.h"
 #include "r_defs.h"
-#include "resourcefiles/file_zip.h"
+#include "file_zip.h"
 #include "tflags.h"
 #include "dictionary.h"
 

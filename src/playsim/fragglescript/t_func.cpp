@@ -40,7 +40,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "v_font.h"
 #include "serializer.h"

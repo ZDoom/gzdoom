@@ -53,7 +53,7 @@
 #include "v_text.h"
 #include "sc_man.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 
 #include "c_dispatch.h"
 #include "cmdlib.h"

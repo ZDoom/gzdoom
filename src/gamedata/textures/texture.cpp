@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 #include "files.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "templates.h"
 
 #include "r_data/r_translate.h"

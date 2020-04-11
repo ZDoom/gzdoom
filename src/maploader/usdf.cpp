@@ -39,7 +39,7 @@
 #include "engineerrors.h"
 #include "actor.h"
 #include "a_pickups.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
 #include "maploader.h"
 

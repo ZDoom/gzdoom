@@ -36,7 +36,7 @@
 #include <ctype.h>
 #include "resourcefile.h"
 #include "v_text.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "engineerrors.h"
 
 

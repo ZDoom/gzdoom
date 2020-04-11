@@ -41,7 +41,7 @@
 #include "gameconfigfile.h"
 #include "filereadermusicinterface.h"
 #include <zmusic.h>
-#include "resourcefiles/resourcefile.h"
+#include "resourcefile.h"
 #include "version.h"
 #include "findfile.h"
 

@@ -39,7 +39,7 @@
 
 #include "m_swap.h"
 #include "m_argv.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "sc_man.h"
 #include "s_sound.h"

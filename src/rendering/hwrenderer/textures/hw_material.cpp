@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "m_png.h"
 #include "sbar.h"
 #include "stats.h"

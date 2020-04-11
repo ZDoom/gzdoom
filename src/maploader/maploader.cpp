@@ -70,7 +70,7 @@
 #include "gi.h"
 #include "engineerrors.h"
 #include "types.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_conversation.h"
 #include "v_video.h"
 #include "i_time.h"

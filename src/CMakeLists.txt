@@ -611,6 +611,7 @@ file( GLOB HEADER_FILES
 	r_data/*.h
 	r_data/models/*.h
 	common/utility/*.h
+	common/filesystem/*.h
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
 	common/thirdparty/math./*h
@@ -902,7 +903,6 @@ set (PCH_SOURCES
 	gamedata/gi.cpp
 	gamedata/stringtable.cpp
 	gamedata/umapinfo.cpp
-	gamedata/w_wad.cpp
 	gamedata/d_dehacked.cpp
 	gamedata/g_doomedmap.cpp
 	gamedata/info.cpp
@@ -1010,17 +1010,6 @@ set (PCH_SOURCES
 	menu/optionmenu.cpp
 	menu/playermenu.cpp
 	menu/resolutionmenu.cpp
-	gamedata/resourcefiles/ancientzip.cpp
-	gamedata/resourcefiles/file_7z.cpp
-	gamedata/resourcefiles/file_grp.cpp
-	gamedata/resourcefiles/file_lump.cpp
-	gamedata/resourcefiles/file_rff.cpp
-	gamedata/resourcefiles/file_wad.cpp
-	gamedata/resourcefiles/file_zip.cpp
-	gamedata/resourcefiles/file_pak.cpp
-	gamedata/resourcefiles/file_whres.cpp
-	gamedata/resourcefiles/file_directory.cpp
-	gamedata/resourcefiles/resourcefile.cpp
 	gamedata/textures/animations.cpp
 	gamedata/textures/anim_switches.cpp
 	gamedata/textures/bitmap.cpp
@@ -1138,6 +1127,19 @@ set (PCH_SOURCES
 	common/utility/zstrformat.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp
+	common/filesystem/filesystem.cpp
+	common/filesystem/ancientzip.cpp
+	common/filesystem/file_7z.cpp
+	common/filesystem/file_grp.cpp
+	common/filesystem/file_lump.cpp
+	common/filesystem/file_rff.cpp
+	common/filesystem/file_wad.cpp
+	common/filesystem/file_zip.cpp
+	common/filesystem/file_pak.cpp
+	common/filesystem/file_whres.cpp
+	common/filesystem/file_directory.cpp
+	common/filesystem/resourcefile.cpp
+	
 	utility/m_png.cpp
 	utility/m_random.cpp
 	utility/nodebuilder/nodebuild.cpp
@@ -1220,6 +1222,7 @@ target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma ${ZMUSIC_LIBRARIES} )
 
 include_directories( .
 	common/thirdparty
+	common/filesystem
 	common/utility
 	g_statusbar
 	console
@@ -1348,7 +1351,6 @@ source_group("Audio Files\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_
 source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")
 source_group("Audio Files\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/thirdparty/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
-source_group("Game Data\\Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/resourcefiles/.+")
 source_group("Game Data\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/fonts/.+")
 source_group("Game Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/.+")
 source_group("Game Data\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/.+")
@@ -1422,6 +1424,7 @@ source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sc
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
 source_group("Common" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/.+")
 source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
+source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/filesystem/.+")
 source_group("Common\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/.+")
 source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/math/.+")
 source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")

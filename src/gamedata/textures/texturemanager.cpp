@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 #include "doomstat.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "templates.h"
 #include "i_system.h"
 #include "gstrings.h"

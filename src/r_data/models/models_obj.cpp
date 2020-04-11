@@ -19,7 +19,7 @@
 //
 //--------------------------------------------------------------------------
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_data/models/models_obj.h"
 
 /**

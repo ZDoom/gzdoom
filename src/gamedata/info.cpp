@@ -50,7 +50,7 @@
 #include "d_player.h"
 #include "events.h"
 #include "types.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
 
 extern void LoadActors ();

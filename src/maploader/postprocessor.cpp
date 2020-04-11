@@ -39,7 +39,7 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "p_tags.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "textures.h"
 #include "g_levellocals.h"
 #include "actor.h"

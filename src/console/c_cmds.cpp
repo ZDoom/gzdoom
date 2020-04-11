@@ -54,7 +54,7 @@
 #include "s_sound.h"
 #include "g_game.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "r_defs.h"
 #include "d_player.h"

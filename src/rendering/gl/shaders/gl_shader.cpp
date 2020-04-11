@@ -29,7 +29,7 @@
 #include "gl_load/gl_system.h"
 #include "c_cvars.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "engineerrors.h"
 #include "cmdlib.h"
 #include "md5.h"

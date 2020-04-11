@@ -46,7 +46,7 @@
 #include "r_data/r_interpolate.h"
 #include "r_state.h"
 #include "p_lnspec.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_terrain.h"
 #include "p_setup.h"
 #include "p_conversation.h"

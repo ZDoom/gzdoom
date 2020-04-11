@@ -41,7 +41,7 @@
 #include "c_dispatch.h"
 #include "c_console.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "s_sound.h"
 #include "gi.h"
 #include "doomstat.h"

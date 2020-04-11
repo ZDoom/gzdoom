@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "r_data/models/models.h"
 

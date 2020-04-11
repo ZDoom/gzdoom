@@ -11,6 +11,9 @@
 extern "C" int mysnprintf(char* buffer, size_t count, const char* format, ...) ATTRIBUTE((format(printf, 3, 4)));
 extern "C" int myvsnprintf(char* buffer, size_t count, const char* format, va_list argptr) ATTRIBUTE((format(printf, 3, 0)));
 
+#define TEXTCOLOR_ESCAPE		'\034'
+#define TEXTCOLOR_ESCAPESTR		"\034"
+
 #define TEXTCOLOR_BRICK			"\034A"
 #define TEXTCOLOR_TAN			"\034B"
 #define TEXTCOLOR_GRAY			"\034C"

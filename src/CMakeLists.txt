@@ -897,7 +897,6 @@ set (PCH_SOURCES
 	gamedata/g_mapinfo.cpp
 	gamedata/g_skill.cpp
 	gamedata/gi.cpp
-	gamedata/stringtable.cpp
 	gamedata/umapinfo.cpp
 	gamedata/d_dehacked.cpp
 	gamedata/g_doomedmap.cpp
@@ -1146,6 +1145,7 @@ set (PCH_SOURCES
 	common/filesystem/resourcefile.cpp
 	common/engine/sc_man.cpp
 	common/engine/palettecontainer.cpp
+	common/engine/stringtable.cpp
 	
 	utility/m_png.cpp
 	utility/m_random.cpp

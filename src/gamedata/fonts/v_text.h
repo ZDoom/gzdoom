@@ -43,10 +43,6 @@ struct FBrokenLines
 	FString		Text;
 };
 
-#define TEXTCOLOR_ESCAPE		'\034'
-#define TEXTCOLOR_ESCAPESTR		"\034"
-
-
 TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str, bool preservecolor = false);
 inline TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const char *str, bool preservecolor = false)
  { return V_BreakLines (font, maxwidth, (const uint8_t *)str, preservecolor); }

@@ -38,9 +38,6 @@
 #include "cmdlib.h"
 #include "filesystem.h"
 #include "sc_man.h"
-#include "c_dispatch.h"
-#include "v_text.h"
-#include "c_cvars.h"
 #include "printf.h"
 
 //==========================================================================

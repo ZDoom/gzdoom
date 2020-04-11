@@ -108,6 +108,7 @@ bool FPakFile::Open(bool quiet)
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		Lumps[i].LumpNameSetup(fileinfo[i].name);
+		Lumps[i].Flags = LUMPF_FULLPATH;
 		Lumps[i].Owner = this;
 		Lumps[i].Position = LittleLong(fileinfo[i].filepos);
 		Lumps[i].LumpSize = LittleLong(fileinfo[i].filelen);

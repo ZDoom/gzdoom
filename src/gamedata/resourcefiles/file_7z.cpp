@@ -292,7 +292,7 @@ bool F7ZFile::Open(bool quiet)
 		lump_p->LumpNameSetup(name);
 		lump_p->LumpSize = static_cast<int>(SzArEx_GetFileSize(archPtr, i));
 		lump_p->Owner = this;
-		lump_p->Flags = LUMPF_ZIPFILE|LUMPF_COMPRESSED;
+		lump_p->Flags = LUMPF_FULLPATH|LUMPF_COMPRESSED;
 		lump_p->Position = i;
 		lump_p->CheckEmbedded();
 		lump_p++;

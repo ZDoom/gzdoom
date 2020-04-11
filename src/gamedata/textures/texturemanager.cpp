@@ -963,7 +963,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 		if (ns == ns_global)
 		{
 			// In Zips all graphics must be in a separate namespace.
-			if (Wads.GetLumpFlags(i) & LUMPF_ZIPFILE) continue;
+			if (Wads.GetLumpFlags(i) & LUMPF_FULLPATH) continue;
 
 			// Ignore lumps with empty names.
 			if (Wads.CheckLumpName(i, "")) continue;

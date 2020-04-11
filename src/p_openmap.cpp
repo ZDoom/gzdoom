@@ -164,18 +164,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			// As such any special handling for other types of lumps is skipped.
 			map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
 			strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(lump_name), 8);
-			map->Encrypted = Wads.IsEncryptedFile(lump_name);
 			map->InWad = true;
-
-			if (map->Encrypted)
-			{ // If it's encrypted, then it's a Blood file, presumably a map.
-				if (!P_IsBuildMap(map))
-				{
-					delete map;
-					return NULL;
-				}
-				return map;
-			}
 
 			int index = 0;
 

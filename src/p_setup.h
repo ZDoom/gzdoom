@@ -65,7 +65,6 @@ private:
 	FileReader nofile;
 public:
 	bool HasBehavior = false;
-	bool Encrypted = false;
 	bool isText = false;
 	bool InWad = false;
 	int lumpnum = -1;

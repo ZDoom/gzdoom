@@ -8,6 +8,15 @@
 class FResourceFile;
 class FTexture;
 
+enum ELumpFlags
+{
+	LUMPF_MAYBEFLAT = 1,	// might be a flat outside F_START/END
+	LUMPF_FULLPATH = 2,		// contains a full path. This will trigger extended namespace checks when looking up short names.
+	LUMPF_EMBEDDED = 4,		// marks an embedded resource file for later processing.
+	LUMPF_SHORTNAME = 8,	// the stored name is a short extension-less name
+	LUMPF_COMPRESSED = 16,	// compressed or encrypted, i.e. cannot be read with the container file's reader.
+};
+
 // This holds a compresed Zip entry with all needed info to decompress it.
 struct FCompressedBuffer
 {

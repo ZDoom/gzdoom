@@ -467,7 +467,7 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 			// from a Zip return that. WADs don't know these namespaces and single lumps must
 			// work as well.
 			if (space > ns_specialzipdirectory && lump->Namespace == ns_global && 
-				!(lump->Flags & LUMPF_ZIPFILE)) break;
+				!(lump->Flags & LUMPF_FULLPATH)) break;
 		}
 		i = NextLumpIndex[i];
 	}
@@ -1539,7 +1539,7 @@ FileReader FWadCollection::OpenLumpReader(int lump)
 	auto rl = LumpInfo[lump].lump;
 	auto rd = rl->GetReader();
 
-	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !(rl->Flags & (LUMPF_BLOODCRYPT | LUMPF_COMPRESSED)))
+	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !(rl->Flags & LUMPF_COMPRESSED))
 	{
 		FileReader rdr;
 		rdr.OpenFilePart(*rd, rl->GetFileOffset(), rl->LumpSize);
@@ -1558,7 +1558,7 @@ FileReader FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
 	auto rl = LumpInfo[lump].lump;
 	auto rd = rl->GetReader();
 
-	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & (LUMPF_BLOODCRYPT|LUMPF_COMPRESSED)))
+	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & LUMPF_COMPRESSED))
 	{
 		int fileno = Wads.GetLumpFile(lump);
 		const char *filename = Wads.GetWadFullName(fileno);
@@ -1674,24 +1674,6 @@ const char *FWadCollection::GetWadFullName (int wadnum) const
 	}
 
 	return Files[wadnum]->FileName;
-}
-
-
-//==========================================================================
-//
-// IsEncryptedFile
-//
-// Returns true if the first 256 bytes of the lump are encrypted for Blood.
-//
-//==========================================================================
-
-bool FWadCollection::IsEncryptedFile(int lump) const
-{
-	if ((unsigned)lump >= (unsigned)NumLumps)
-	{
-		return false;
-	}
-	return !!(LumpInfo[lump].lump->Flags & LUMPF_BLOODCRYPT);
 }
 
 

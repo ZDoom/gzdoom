@@ -67,16 +67,6 @@ typedef enum {
 	ns_firstskin,
 } namespace_t;
 
-enum ELumpFlags
-{
-	LUMPF_MAYBEFLAT=1,		// might be a flat outside F_START/END
-	LUMPF_ZIPFILE=2,		// contains a full path
-	LUMPF_EMBEDDED=4,		// from an embedded WAD
-	LUMPF_BLOODCRYPT = 8,	// encrypted
-	LUMPF_COMPRESSED = 16,	// compressed
-	LUMPF_SEQUENTIAL = 32,	// compressed but a sequential reader can be retrieved.
-};
-
 
 // [RH] Copy an 8-char string and uppercase it.
 void uppercopy (char *to, const char *from);
@@ -186,8 +176,6 @@ public:
 	FResourceLump *GetLumpRecord(int lump) const;	// Returns the FResourceLump, in case the caller wants to have direct access to the lump cache.
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 	unsigned GetLumpsInFolder(const char *path, TArray<FolderEntry> &result, bool atomic) const;
-
-	bool IsEncryptedFile(int lump) const;
 
 	int GetNumLumps() const
 	{

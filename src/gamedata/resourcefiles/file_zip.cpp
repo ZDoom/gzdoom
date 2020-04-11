@@ -340,7 +340,7 @@ bool FZipFile::Open(bool quiet)
 		lump_p->LumpSize = LittleLong(zip_fh->UncompressedSize);
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.
-		lump_p->Flags = LUMPF_ZIPFILE;
+		lump_p->Flags = LUMPF_FULLPATH;
 		lump_p->NeedFileStart = true;
 		lump_p->Method = uint8_t(zip_fh->Method);
 		if (lump_p->Method != METHOD_STORED) lump_p->Flags |= LUMPF_COMPRESSED;

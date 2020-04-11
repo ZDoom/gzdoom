@@ -1121,6 +1121,7 @@ set (PCH_SOURCES
 	events.cpp
 	utility/i_module.cpp
 	utility/palette.cpp
+	utility/palettecontainer.cpp
 	utility/files.cpp
 	utility/files_decompress.cpp
 	utility/m_png.cpp

@@ -1179,10 +1179,10 @@ void FillBorder (F2DDrawer *drawer, FTexture *img)
 //
 //==========================================================================
 
-static void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor, int alpha)
+static void DrawLine(int x0, int y0, int x1, int y1, uint32_t realcolor, int alpha)
 {
 	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	twod->AddLine(x0, y0, x1, y1, palColor, realcolor, alpha);
+	twod->AddLine((float)x0, (float)y0, (float)x1, (float)y1, -1, -1, INT_MAX, INT_MAX, realcolor | MAKEARGB(255, 0, 0, 0), alpha);
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
@@ -1194,7 +1194,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
 	PARAM_INT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	DrawLine(x0, y0, x1, y1, -1, color | MAKEARGB(255, 0, 0, 0), alpha);
+	DrawLine(x0, y0, x1, y1, color, alpha);
 	return 0;
 }
 
@@ -1357,5 +1357,28 @@ void DrawBorder (F2DDrawer *drawer, FTextureID picnum, int x1, int y1, int x2, i
 	{
 		ClearRect(drawer, x1, y1, x2, y2, 0, 0);
 	}
+}
+
+//==========================================================================
+//
+// V_DrawFrame
+//
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+//
+//==========================================================================
+
+void DrawFrame(F2DDrawer* twod, PalEntry color, int left, int top, int width, int height, int thickness)
+{
+	// Sanity check for incomplete gameinfo
+	int offset = thickness == -1 ? twod->GetHeight() / 400 : thickness;
+	int right = left + width;
+	int bottom = top + height;
+
+	// Draw top and bottom sides.
+	twod->AddColorOnlyQuad(left, top - offset, width, offset, color);
+	twod->AddColorOnlyQuad(left - offset, top - offset, offset, height + 2 * offset, color);
+	twod->AddColorOnlyQuad(left, bottom, width, offset, color);
+	twod->AddColorOnlyQuad(right, top - offset, offset, height + 2 * offset, color);
 }
 

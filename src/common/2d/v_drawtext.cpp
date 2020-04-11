@@ -42,6 +42,7 @@
 #include "v_draw.h"
 #include "gstrings.h"
 #include "vm.h"
+#include "printf.h"
 
 int ListGetInt(VMVa_List &tags);
 

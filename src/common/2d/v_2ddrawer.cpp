@@ -217,6 +217,15 @@ void F2DDrawer::AddIndices(int firstvert, int count, ...)
 	}
 }
 
+void F2DDrawer::AddIndices(int firstvert, TArray<int> &v)
+{
+	int addr = mIndices.Reserve(v.Size());
+	for (unsigned i = 0; i < v.Size(); i++)
+	{
+		mIndices[addr + i] = firstvert + v[i];
+	}
+}
+
 //==========================================================================
 //
 // SetStyle
@@ -423,7 +432,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	// Note that this only works for unflipped full textures.
 	if (parms.windowleft > 0 || parms.windowright < parms.texwidth)
 	{
-		double wi = MIN(parms.windowright, parms.texwidth);
+		double wi = std::min(parms.windowright, parms.texwidth);
 		x += parms.windowleft * xscale;
 		w -= (parms.texwidth - wi + parms.windowleft) * xscale;
 
@@ -621,6 +630,53 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 //
 //==========================================================================
 
+void F2DDrawer::AddPoly(FTexture* img, FVector4* vt, size_t vtcount, unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
+{
+	RenderCommand dg = {};
+	int method = 0;
+
+	dg.mType = DrawTypeTriangles;
+	if (clipx1 > 0 || clipy1 > 0 || clipx2 < GetWidth() - 1 || clipy2 < GetHeight() - 1)
+	{
+		dg.mScissor[0] = clipx1;
+		dg.mScissor[1] = clipy1;
+		dg.mScissor[2] = clipx2 + 1;
+		dg.mScissor[3] = clipy2 + 1;
+		dg.mFlags |= DTF_Scissor;
+	}
+
+	dg.mTexture = img;
+	dg.mTranslationId = translation;
+	dg.mColor1 = color;
+	dg.mVertCount = (int)vtcount;
+	dg.mVertIndex = (int)mVertices.Reserve(vtcount);
+	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
+	dg.mIndexIndex = mIndices.Size();
+	dg.mFlags |= DTF_Wrap;
+	auto ptr = &mVertices[dg.mVertIndex];
+
+	for (size_t i=0;i<vtcount;i++)
+	{
+		ptr->Set(vt[i].X, vt[i].Y, 0.f, vt[i].Z, vt[i].W, color);
+		ptr++;
+	}
+
+	dg.mIndexIndex = mIndices.Size();
+	mIndices.Reserve(idxcount);
+	for (size_t i = 0; i < idxcount; i++)
+	{
+		mIndices[dg.mIndexIndex + i] = ind[i] + dg.mVertIndex;
+	}
+	dg.mIndexCount = (int)idxcount;
+	AddCommand(&dg);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
 {
 	float fU1, fU2, fV1, fV2;
@@ -688,19 +744,33 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, F
 	AddCommand(&dg);
 }
 
+void F2DDrawer::ClearScreen(PalEntry color)
+{
+	AddColorOnlyQuad(0, 0, GetWidth(), GetHeight(), color);
+}
+
 //==========================================================================
 //
 //
 //
 //==========================================================================
 
-void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color, uint8_t alpha)
+void F2DDrawer::AddLine(float x1, float y1, float x2, float y2, int clipx1, int clipy1, int clipx2, int clipy2, uint32_t color, uint8_t alpha)
 {
-	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
+	PalEntry p = (PalEntry)color;
 	p.a = alpha;
 
 	RenderCommand dg;
 
+	if (clipx1 > 0 || clipy1 > 0 || clipx2 < GetWidth()- 1 || clipy2 < GetHeight() - 1)
+	{
+		dg.mScissor[0] = clipx1;
+		dg.mScissor[1] = clipy1;
+		dg.mScissor[2] = clipx2 + 1;
+		dg.mScissor[3] = clipy2 + 1;
+		dg.mFlags |= DTF_Scissor;
+	}
+	
 	dg.mType = DrawTypeLines;
 	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
 	dg.mVertCount = 2;
@@ -757,9 +827,9 @@ void F2DDrawer::AddThickLine(int x1, int y1, int x2, int y2, double thickness, u
 //
 //==========================================================================
 
-void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32_t color)
+void F2DDrawer::AddPixel(int x1, int y1, uint32_t color)
 {
-	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
+	PalEntry p = (PalEntry)color;
 	p.a = 255;
 
 	RenderCommand dg;

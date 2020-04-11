@@ -1751,7 +1751,7 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 
 	if (clipMline (ml, &fl))
 	{
-		twod->AddLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, -1, color.RGB);
+		twod->AddLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, -1, -1, INT_MAX, INT_MAX, color.RGB);
 	}
 }
 
@@ -3166,7 +3166,7 @@ void DAutomap::drawAuthorMarkers ()
 
 void DAutomap::drawCrosshair (const AMColor &color)
 {
-	twod->AddPixel(f_w/2, (f_h+1)/2, -1, color.RGB);
+	twod->AddPixel(f_w/2, (f_h+1)/2, color.RGB);
 }
 
 //=============================================================================

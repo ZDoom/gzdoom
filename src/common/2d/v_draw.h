@@ -220,6 +220,7 @@ void FillBorder(F2DDrawer *drawer, FTexture* img);	// Fills the border around a 
 
 void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height);
 void DrawBorder(F2DDrawer* drawer, FTextureID, int x1, int y1, int x2, int y2);
+void DrawFrame(F2DDrawer* twod, PalEntry color, int left, int top, int width, int height, int thickness);
 
 // Set an area to a specified color
 void ClearRect(F2DDrawer* drawer, int left, int top, int right, int bottom, int palcolor, uint32_t color);
@@ -229,3 +230,5 @@ void VirtualToRealCoords(F2DDrawer* drawer, double& x, double& y, double& w, dou
 // Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
 void VirtualToRealCoordsInt(F2DDrawer* drawer, int& x, int& y, int& w, int& h, int vwidth, int vheight, bool vbottom = false, bool handleaspect = true);
 
+extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
+extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;

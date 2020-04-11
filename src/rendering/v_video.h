@@ -112,11 +112,6 @@ struct IntRect
 };
 
 
-
-
-
-extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
-extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
 extern int DisplayWidth, DisplayHeight;
 
 void V_UpdateModeSize (int width, int height);
@@ -386,6 +381,9 @@ struct FScriptPosition;
 
 inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }
 
+
+#include "v_draw.h"
+
 class ScaleOverrider
 {
 	int savedxfac, savedyfac, savedwidth, savedheight;
@@ -420,7 +418,5 @@ public:
 	}
 };
 
-
-#include "v_draw.h"
 
 #endif // __V_VIDEO_H__

@@ -423,7 +423,11 @@ protected:
 
 public:
 	FTextureBuffer CreateTexBuffer(int translation, int flags = 0);
-	virtual bool GetTranslucency();
+	virtual bool DetermineTranslucency();
+	bool GetTranslucency()
+	{
+		return bTranslucent != -1 ? bTranslucent : DetermineTranslucency();
+	}
 	FMaterial* GetMaterial(int num)
 	{
 		return Material[num];
@@ -515,6 +519,7 @@ public:
 
 	FImageSource* GetImage() const override { return mImage; }
 	FBitmap GetBgraBitmap(const PalEntry* p, int* trans) override;
+	bool DetermineTranslucency() override;
 
 };
 

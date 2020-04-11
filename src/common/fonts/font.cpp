@@ -68,7 +68,7 @@
 //
 //==========================================================================
 
-FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate, bool iwadonly, bool doomtemplate)
+FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate, bool iwadonly, bool doomtemplate, GlyphSet *baseGlyphs)
 {
 	int i;
 	FTextureID lump;
@@ -185,6 +185,22 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 	}
 	else
 	{
+		if (baseGlyphs)
+		{
+			// First insert everything from the given glyph set.
+			GlyphSet::Iterator it(*baseGlyphs);
+			GlyphSet::Pair* pair;
+			while (it.NextPair(pair))
+			{
+				if (pair->Value && pair->Value->GetTexelWidth() > 0 && pair->Value->GetTexelHeight() > 0)
+				{
+					auto position = pair->Key;
+					if (position < minchar) minchar = position;
+					if (position > maxchar) maxchar = position;
+					charMap.Insert(position, pair->Value);
+				}
+			}
+		}
 		if (nametemplate != nullptr)
 		{
 			if (!iwadonly)

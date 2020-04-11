@@ -88,6 +88,25 @@ TArray<uint8_t> FImageTexture::Get8BitPixels(bool alpha)
 	return mImage->GetPalettedPixels(alpha? alpha : bNoRemap0 ? FImageSource::noremap0 : FImageSource::normal);
 }	
 
+//===========================================================================
+//
+// use the already known state of the underlying image to save time.
+//
+//===========================================================================
+
+bool FImageTexture::DetermineTranslucency()
+{
+	if (mImage->bTranslucent != -1)
+	{
+		bTranslucent = mImage->bTranslucent;
+		return !!bTranslucent;
+	}
+	else
+	{
+		return FTexture::DetermineTranslucency();
+	}
+}
+
 
 FTexture* CreateImageTexture(FImageSource* img, const char *name) noexcept
 {

@@ -718,19 +718,16 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 //
 //===========================================================================
 
-bool FTexture::GetTranslucency()
+bool FTexture::DetermineTranslucency()
 {
-	if (bTranslucent == -1)
+	if (!bHasCanvas)
 	{
-		if (!bHasCanvas)
-		{
-			// This will calculate all we need, so just discard the result.
-			CreateTexBuffer(0);
-		}
-		else
-		{
-			bTranslucent = 0;
-		}
+		// This will calculate all we need, so just discard the result.
+		CreateTexBuffer(0);
+	}
+	else
+	{
+		bTranslucent = 0;
 	}
 	return !!bTranslucent;
 }

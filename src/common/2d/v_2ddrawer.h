@@ -2,6 +2,7 @@
 #define __2DDRAWER_H
 
 #include "tarray.h"
+#include "vectors.h"
 #include "textures.h"
 #include "renderstyle.h"
 #include "dobject.h"
@@ -52,6 +53,20 @@ public:
 	TArray<DVector2> mTransformedVertices;
 };
 
+struct F2DPolygons
+{
+	TArray<FVector4> vertices;
+	TArray<int>  indices;
+
+	unsigned AllocVertices(int num)
+	{
+		auto vindex = vertices.Reserve(num);
+		indices.Push(num);
+		return vindex;
+	}
+
+};
+
 class F2DDrawer
 {
 public:
@@ -61,6 +76,7 @@ public:
 		DrawTypeTriangles,
 		DrawTypeLines,
 		DrawTypePoints,
+		DrawTypeRotateSprite,
 	};
 
 	enum ETextureFlags : uint8_t
@@ -149,11 +165,11 @@ public:
 public:
 	int fullscreenautoaspect = 0;
 	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
-private:
-
 	
 	int AddCommand(const RenderCommand *data);
 	void AddIndices(int firstvert, int count, ...);
+private:
+	void AddIndices(int firstvert, TArray<int> &v);
 	bool SetStyle(FTexture *tex, DrawParms &parms, PalEntry &color0, RenderCommand &quad);
 	void SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcolor, PalEntry &overlaycolor);
 
@@ -163,17 +179,20 @@ public:
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double lightlevel, uint32_t *indices, size_t indexcount);
+	void AddPoly(FTexture* img, FVector4 *vt, size_t vtcount, unsigned int *ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2);
+	void FillPolygon(int* rx1, int* ry1, int* xb1, int32_t npoints, int picnum, int palette, int shade, int props, const FVector2& xtex, const FVector2& ytex, const FVector2& otex,
+		int clipx1, int clipy1, int clipx2, int clipy2);
 	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
 
-	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style);
-
+	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style = nullptr);
+	void ClearScreen(PalEntry color = 0xff000000);
 	void AddDim(PalEntry color, float damount, int x1, int y1, int w, int h);
 	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
 	
 		
-	void AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color, uint8_t alpha = 255);
+	void AddLine(float x1, float y1, float x2, float y2, int cx, int cy, int cx2, int cy2, uint32_t color, uint8_t alpha = 255);
 	void AddThickLine(int x1, int y1, int x2, int y2, double thickness, uint32_t color, uint8_t alpha = 255);
-	void AddPixel(int x1, int y1, int palcolor, uint32_t color);
+	void AddPixel(int x1, int y1, uint32_t color);
 
 	void Clear();
 	int GetWidth() const { return Width; }

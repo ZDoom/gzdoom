@@ -1,3 +1,4 @@
+#pragma once
 /*
 ** v_font.h
 **
@@ -31,8 +32,6 @@
 **
 */
 
-#ifndef __V_FONT_H__
-#define __V_FONT_H__
 
 #include "filesystem.h"
 #include "vectors.h"
@@ -78,6 +77,7 @@ enum EColorRange : int
 
 extern int NumTextColors;
 
+using GlyphSet = TMap<int, FTexture*>;
 
 class FFont
 {
@@ -94,7 +94,7 @@ public:
 		Custom
 	};
 
-	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false, bool doomtemplate = false);
+	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false, bool doomtemplate = false, GlyphSet *baseGlpyphs = nullptr);
 	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
@@ -194,4 +194,3 @@ void V_InitFontColors();
 char* CleanseString(char* str);
 
 
-#endif //__V_FONT_H__

@@ -470,6 +470,43 @@ void FCajunMaster::ForgetBots ()
 	botinfo = NULL;
 }
 
+#if defined _WIN32 || defined __APPLE__
+
+FString M_GetCajunPath(const char* botfilename)
+{
+	FString path;
+
+	path << progdir << "zcajun/" << botfilename;
+	if (!FileExists(path))
+	{
+		path = "";
+	}
+	return path;
+}
+
+#else
+
+FString M_GetCajunPath(const char* botfilename)
+{
+	FString path;
+
+	// Check first in $HOME/.config/zdoom/botfilename.
+	path = GetUserFile(botfilename);
+	if (!FileExists(path))
+	{
+		// Then check in SHARE_DIR/botfilename.
+		path = SHARE_DIR;
+		path << botfilename;
+		if (!FileExists(path))
+		{
+			path = "";
+		}
+	}
+	return path;
+}
+
+#endif
+
 bool FCajunMaster::LoadBots ()
 {
 	FScanner sc;

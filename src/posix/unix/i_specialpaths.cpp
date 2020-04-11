@@ -37,6 +37,7 @@
 #include <sys/types.h>
 #include "i_system.h"
 #include "cmdlib.h"
+#include "printf.h"
 #include "engineerrors.h"
 
 #include "version.h"	// for GAMENAME
@@ -154,33 +155,6 @@ FString M_GetAutoexecPath()
 
 //===========================================================================
 //
-// M_GetCajunPath														Unix
-//
-// Returns the location of the Cajun Bot definitions.
-//
-//===========================================================================
-
-FString M_GetCajunPath(const char *botfilename)
-{
-	FString path;
-
-	// Check first in $HOME/.config/zdoom/botfilename.
-	path = GetUserFile(botfilename);
-	if (!FileExists(path))
-	{
-		// Then check in SHARE_DIR/botfilename.
-		path = SHARE_DIR;
-		path << botfilename;
-		if (!FileExists(path))
-		{
-			path = "";
-		}
-	}
-	return path;
-}
-
-//===========================================================================
-//
 // M_GetConfigPath														Unix
 //
 // Returns the path to the config file. On Windows, this can vary for reading
@@ -217,7 +191,7 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	return NicePath("$HOME/" GAME_DIR);
+	return NicePath("$HOME/" GAME_DIR "/");
 }
 
 //===========================================================================
@@ -230,5 +204,37 @@ FString M_GetSavegamesPath()
 
 FString M_GetDocumentsPath()
 {
-	return NicePath("$HOME/" GAME_DIR);
+	return NicePath("$HOME/" GAME_DIR "/");
 }
+
+//===========================================================================
+//
+// M_GetDemoPath													Unix
+//
+// Returns the path to the default demo directory.
+//
+//===========================================================================
+
+FString M_GetDemoPath()
+{
+	return M_GetDocumentsPath() + "demo/";
+}
+
+//===========================================================================
+//
+// M_NormalizedPath
+//
+// Normalizes the given path and returns the result.
+//
+//===========================================================================
+
+FString M_GetNormalizedPath(const char* path)
+{
+	char *actualpath;
+	actualpath = realpath(path, NULL);
+	if (!actualpath) // error ?
+		return nullptr;
+	FString fullpath = actualpath;
+	return fullpath;
+}
+

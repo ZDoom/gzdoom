@@ -1362,7 +1362,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		temp = damage < 100 ? damage : 100;
 		if (player == target->Level->GetConsolePlayer() )
 		{
-			I_Tactile (40,10,40+temp*2);
+			//I_Tactile (40,10,40+temp*2);
 		}
 	}
 	else

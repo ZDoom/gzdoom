@@ -32,17 +32,6 @@
 #include "x86.h"
 
 
-void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
-{
-}
-
-static ticcmd_t emptycmd;
-
-ticcmd_t *I_BaseTiccmd()
-{
-	return &emptycmd;
-}
-
 bool I_WriteIniFailed()
 {
 	printf("The config file %s could not be saved:\n%s\n", GameConfig->GetPathName(), strerror(errno));

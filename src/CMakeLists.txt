@@ -1147,6 +1147,7 @@ set (PCH_SOURCES
 	common/engine/sc_man.cpp
 	common/engine/palettecontainer.cpp
 	common/engine/stringtable.cpp
+	common/engine/i_interface.cpp
 	
 	utility/m_random.cpp
 	utility/nodebuilder/nodebuild.cpp

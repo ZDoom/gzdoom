@@ -45,10 +45,10 @@
 #include "v_video.h"
 #include "i_input.h"
 #include "i_system.h"
-#include "doomstat.h"
 #include "v_text.h"
 #include "m_argv.h"
 #include "engineerrors.h"
+#include "printf.h"
 #include "win32basevideo.h"
 #include "cmdlib.h"
 

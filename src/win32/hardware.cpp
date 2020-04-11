@@ -39,9 +39,10 @@
 #include "hardware.h"
 #include "c_dispatch.h"
 #include "v_text.h"
-#include "doomstat.h"
+#include "basics.h"
 #include "m_argv.h"
 #include "version.h"
+#include "printf.h"
 #include "win32glvideo.h"
 #include "win32polyvideo.h"
 #ifdef HAVE_VULKAN
@@ -49,7 +50,6 @@
 #endif
 #include "engineerrors.h"
 #include "i_system.h"
-#include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR(Int, vid_preferbackend)
 

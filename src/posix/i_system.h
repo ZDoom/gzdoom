@@ -79,8 +79,6 @@ void I_StartTic (void);
 // for normal input.
 ticcmd_t *I_BaseTiccmd (void);
 
-void I_Tactile (int on, int off, int total);
-
 // Print a console string
 void I_PrintStr (const char *str);
 

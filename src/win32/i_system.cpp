@@ -141,42 +141,11 @@ int sys_ostype = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static ticcmd_t emptycmd;
-
 static WadStuff *WadList;
 static int NumWads;
 static int DefaultWad;
 
 static HCURSOR CustomCursor;
-
-//==========================================================================
-//
-// I_Tactile
-//
-// Doom calls it when you take damage, so presumably it could be converted
-// to something compatible with force feedback.
-//
-//==========================================================================
-
-void I_Tactile(int on, int off, int total)
-{
-  // UNUSED.
-  on = off = total = 0;
-}
-
-//==========================================================================
-//
-// I_BaseTiccmd
-//
-// Returns an empty ticcmd. I have no idea why this should be system-
-// specific.
-//
-//==========================================================================
-
-ticcmd_t *I_BaseTiccmd()
-{
-	return &emptycmd;
-}
 
 //==========================================================================
 //

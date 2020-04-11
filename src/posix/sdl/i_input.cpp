@@ -48,6 +48,7 @@
 #include "g_levellocals.h"
 #include "utf8.h"
 #include "engineerrors.h"
+#include "i_interface.h"
 
 
 static void I_CheckGUICapture ();
@@ -251,32 +252,13 @@ static void MouseRead ()
 	}
 }
 
-CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
-{
-	if (self < 0) self = 0;
-	else if (self > 2) self = 2;
-}
-
-static bool inGame()
-{
-	switch (mouse_capturemode)
-	{
-	default:
-	case 0:
-		return gamestate == GS_LEVEL;
-	case 1:
-		return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
-	case 2:
-		return true;
-	}
-}
-
 static void I_CheckNativeMouse ()
 {
 	bool focus = SDL_GetKeyboardFocus() != NULL;
 	bool fs = screen->IsFullscreen();
 	
-	bool wantNative = !focus || (!use_mouse || GUICapture || paused || demoplayback || !inGame());
+	bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
+	bool wantNative = !focus || (!use_mouse || GUICapture || paused || demoplayback || !captureModeInGame);
 
 	if (wantNative != NativeMouse)
 	{

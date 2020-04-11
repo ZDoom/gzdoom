@@ -557,6 +557,13 @@ FBaseCVar* G_GetUserCVar(int playernum, const char* cvarname)
 	return cvar;
 }
 
+static ticcmd_t emptycmd;
+
+ticcmd_t* G_BaseTiccmd()
+{
+	return &emptycmd;
+}
+
 
 //
 // G_BuildTiccmd
@@ -574,7 +581,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 
 	ticcmd_t	*base;
 
-	base = I_BaseTiccmd (); 			// empty, or external driver
+	base = G_BaseTiccmd (); 
 	*cmd = *base;
 
 	cmd->consistancy = consistancy[consoleplayer][(maketic/ticdup)%BACKUPTICS];

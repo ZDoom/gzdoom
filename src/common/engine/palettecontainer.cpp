@@ -71,6 +71,7 @@ void PaletteContainer::SetPalette(const uint8_t* colors, int transparent_index)
 		Remap[i] = i;
 	}
 
+
 	uniqueRemaps[0]->MakeIdentity();	// update the identity remap.
 
 	if (transparent_index >= 0 && transparent_index <= 255)

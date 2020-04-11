@@ -156,7 +156,8 @@ void InitPalette ()
 	
 	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), pal);
 
-	GPalette.SetPalette (pal);
+	GPalette.Init(NUM_TRANSLATION_TABLES);
+	GPalette.SetPalette (pal, 0);
 	MakeGoodRemap ((uint32_t*)GPalette.BaseColors, GPalette.Remap);
 	ColorMatcher.SetPalette ((uint32_t *)GPalette.BaseColors);
 

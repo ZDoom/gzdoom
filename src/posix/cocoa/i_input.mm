@@ -47,6 +47,7 @@
 #include "events.h"
 #include "g_game.h"
 #include "g_levellocals.h"
+#include "i_interface.h"
 
 
 EXTERN_CVAR(Int, m_use_mouse)
@@ -56,19 +57,6 @@ CVAR(Bool, m_noprescale, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_filter,     false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR(Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
-CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
-{
-	if (self < 0)
-	{
-		self = 0;
-	}
-	else if (self > 2)
-	{
-		self = 2;
-	}
-}
-
 
 extern int paused, chatmodeon;
 extern constate_e ConsoleState;
@@ -152,24 +140,6 @@ void CenterCursor()
 	SetCursorPosition(centerPoint);
 }
 
-bool IsInGame()
-{
-	switch (mouse_capturemode)
-	{
-		default:
-		case 0:
-			return gamestate == GS_LEVEL;
-
-		case 1:
-			return gamestate == GS_LEVEL
-				|| gamestate == GS_INTERMISSION
-				|| gamestate == GS_FINALE;
-
-		case 2:
-			return true;
-	}
-}
-
 void CheckNativeMouse()
 {
 	const bool windowed = (NULL == screen) || !screen->IsFullscreen();
@@ -187,8 +157,9 @@ void CheckNativeMouse()
 		}
 		else
 		{
+			bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
 			wantNative = (!m_use_mouse || MENU_WaitKey != menuactive)
-				&& (!IsInGame() || GUICapture || paused || demoplayback);
+				&& (!captureModeInGame || GUICapture || paused || demoplayback);
 		}
 	}
 	else

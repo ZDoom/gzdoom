@@ -57,3 +57,10 @@ typedef uint32_t			angle_t;
 using INTBOOL = int;
 using BITFIELD = uint32_t;
 #endif
+
+
+#if defined(_MSC_VER)
+#define NOVTABLE __declspec(novtable)
+#else
+#define NOVTABLE
+#endif

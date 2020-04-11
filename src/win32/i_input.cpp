@@ -68,14 +68,10 @@
 
 
 #include "c_dispatch.h"
-#include "doomdef.h"
-#include "doomstat.h"
 #include "m_argv.h"
 #include "i_input.h"
 #include "v_video.h"
 #include "i_sound.h"
-#include "g_game.h"
-#include "d_main.h"
 #include "d_gui.h"
 #include "c_console.h"
 #include "s_sound.h"
@@ -84,11 +80,12 @@
 #include "d_event.h"
 #include "v_text.h"
 #include "version.h"
-#include "events.h"
 #include "engineerrors.h"
 #include "i_system.h"
-#include "g_levellocals.h"
+#include "i_interface.h"
+#include "printf.h"
 #include "c_buttons.h"
+#include "cmdlib.h"
 
 int32_t refreshfreq = -1;
 
@@ -116,6 +113,7 @@ static HMODULE DInputDLL;
 bool GUICapture;
 extern FMouse *Mouse;
 extern FKeyboard *Keyboard;
+extern bool ToggleFullscreen;
 
 bool VidResizing;
 
@@ -136,8 +134,8 @@ static bool noidle = false;
 LPDIRECTINPUT8			g_pdi;
 LPDIRECTINPUT			g_pdi3;
 
-
 extern bool AppActive;
+
 int SessionState = 0;
 int BlockMouseMove; 
 
@@ -151,20 +149,7 @@ extern int chatmodeon;
 
 static void I_CheckGUICapture ()
 {
-	bool wantCapt;
-
-	if (menuactive == MENU_Off)
-	{
-		wantCapt = ConsoleState == c_down || ConsoleState == c_falling || chatmodeon;
-	}
-	else
-	{
-		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
-	}
-
-	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && primaryLevel->localEventManager->CheckUiProcessors())
-		wantCapt = true;
+	bool wantCapt = sysCallbacks && sysCallbacks->WantGuiCapture && sysCallbacks->WantGuiCapture();
 
 	if (wantCapt != GUICapture)
 	{
@@ -427,7 +412,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return result;
 	}
 
-	if ((gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL) && message == WM_LBUTTONDOWN)
+	if (message == WM_LBUTTONDOWN && sysCallbacks && sysCallbacks->WantLeftButton() && sysCallbacks->WantLeftButton())
 	{
 		if (GUIWndProcHook(hWnd, message, wParam, lParam, &result))
 		{
@@ -462,6 +447,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SETFOCUS:
+		GetRefreshRate(hWnd);
 		I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);	// This cannot call the event handler. Doing it from here is unsafe.
 		break;
 
@@ -539,7 +525,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), INGAME_PRIORITY_CLASS);
 		}
-		else if (!noidle && !netgame)
+		else if (!noidle && !(sysCallbacks && sysCallbacks->NetGame && sysCallbacks->NetGame()))
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
@@ -784,7 +770,7 @@ void I_StartTic ()
 	BlockMouseMove--;
 	buttonMap.ResetButtonTriggers ();
 	I_CheckGUICapture ();
-	EventHandlerResultForNativeMouse = primaryLevel->localEventManager->CheckRequireMouse();
+	EventHandlerResultForNativeMouse = sysCallbacks && sysCallbacks->WantNativeMouse && sysCallbacks->WantNativeMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
 }

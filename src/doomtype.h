@@ -33,13 +33,6 @@
 class PClassActor;
 typedef TMap<int, PClassActor *> FClassMap;
 
-
-#if defined(_MSC_VER)
-#define NOVTABLE __declspec(novtable)
-#else
-#define NOVTABLE
-#endif
-
 #include "basics.h"
 #include "printf.h"
 

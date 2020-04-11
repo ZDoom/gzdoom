@@ -50,48 +50,45 @@
 
 const char *KeyNames[NUM_KEYS] =
 {
-	// This array is dependant on the particular keyboard input
-	// codes generated in i_input.c. If they change there, they
-	// also need to change here. In this case, we use the
-	// DirectInput codes and assume a qwerty keyboard layout.
+	// We use the DirectInput codes and assume a qwerty keyboard layout.
 	// See <dinput.h> for the DIK_* codes
 
-	NULL,		"Escape",	"1",		"2",		"3",		"4",		"5",		"6",		//00
+	nullptr,	"Escape",	"1",		"2",		"3",		"4",		"5",		"6",		//00
 	"7",		"8",		"9",		"0",		"-",		"=",		"Backspace","Tab",		//08
 	"Q",		"W",		"E",		"R",		"T",		"Y",		"U",		"I",		//10
-	"O",		"P",		"[",		"]",		"Enter",	"Ctrl",		"A",		"S",		//18
+	"O",		"P",		"[",		"]",		"Enter",	"LCtrl",		"A",		"S",	//18
 	"D",		"F",		"G",		"H",		"J",		"K",		"L",		";",		//20
-	"'",		"`",		"Shift",	"\\",		"Z",		"X",		"C",		"V",		//28
+	"'",		"`",		"LShift",	"\\",		"Z",		"X",		"C",		"V",		//28
 	"B",		"N",		"M",		",",		".",		"/",		"RShift",	"KP*",		//30
-	"Alt",		"Space",	"CapsLock",	"F1",		"F2",		"F3",		"F4",		"F5",		//38
+	"LAlt",		"Space",	"CapsLock",	"F1",		"F2",		"F3",		"F4",		"F5",		//38
 	"F6",		"F7",		"F8",		"F9",		"F10",		"NumLock",	"Scroll",	"KP7",		//40
 	"KP8",		"KP9",		"KP-",		"KP4",		"KP5",		"KP6",		"KP+",		"KP1",		//48
-	"KP2",		"KP3",		"KP0",		"KP.",		NULL,		NULL,		"OEM102",	"F11",		//50
-	"F12",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//58
-	NULL,		NULL,		NULL,		NULL,		"F13",		"F14",		"F15",		"F16",		//60
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//68
-	"Kana",		NULL,		NULL,		"Abnt_C1",	NULL,		NULL,		NULL,		NULL,		//70
-	NULL,		"Convert",	NULL,		"NoConvert",NULL,		"Yen",		"Abnt_C2",	NULL,		//78
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//80
-	NULL,		NULL,		NULL,		NULL,		NULL,		"KP=",		NULL,		NULL,		//88
+	"KP2",		"KP3",		"KP0",		"KP.",		nullptr,	nullptr,	"OEM102",	"F11",		//50
+	"F12",		nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	//58
+	nullptr,	nullptr,	nullptr,	nullptr,	"F13",		"F14",		"F15",		"F16",		//60
+	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	//68
+	"Kana",		nullptr,	nullptr,	"Abnt_C1",	nullptr,	nullptr,	nullptr,	nullptr,	//70
+	nullptr,	"Convert",	nullptr,	"NoConvert",nullptr,	"Yen",		"Abnt_C2",	nullptr,	//78
+	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	//80
+	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	"KP=",		nullptr,	nullptr,	//88
 	"Circumflex","@",		":",		"_",		"Kanji",	"Stop",		"Ax",		"Unlabeled",//90
-	NULL,		"PrevTrack",NULL,		NULL,		"KP-Enter",	"RCtrl",	NULL,		NULL,		//98
-	"Mute",		"Calculator","Play",	NULL,		"Stop",		NULL,		NULL,		NULL,		//A0
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		"VolDown",	NULL,		//A8
-	"VolUp",	NULL,		"WebHome",	"KP,",		NULL,		"KP/",		NULL,		"SysRq",	//B0
-	"RAlt",		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//B8
-	NULL,		NULL,		NULL,		NULL,		NULL,		"Pause",	NULL,		"Home",		//C0
-	"UpArrow",	"PgUp",		NULL,		"LeftArrow",NULL,		"RightArrow",NULL,		"End",		//C8
-	"DownArrow","PgDn",		"Ins",		"Del",		NULL,		NULL,		NULL,		NULL,		//D0
+	nullptr,	"PrevTrack",nullptr,	nullptr,	"KP-Enter",	"RCtrl",	nullptr,	nullptr,	//98
+	"Mute",		"Calculator","Play",	nullptr,	"Stop",		nullptr,	nullptr,	nullptr,	//A0
+	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	"VolDown",	nullptr,	//A8
+	"VolUp",	nullptr,	"WebHome",	"KP,",		nullptr,	"KP/",		nullptr,	"SysRq",	//B0
+	"RAlt",		nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	//B8
+	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	"Pause",	nullptr,	"Home",		//C0
+	"UpArrow",	"PgUp",		nullptr,	"LeftArrow",nullptr,	"RightArrow",nullptr,	"End",		//C8
+	"DownArrow","PgDn",		"Ins",		"Del",		nullptr,	nullptr,	nullptr,	nullptr,	//D0
 #ifdef __APPLE__
-	NULL,		NULL,		NULL,		"Command",	NULL,		"Apps",		"Power",	"Sleep",	//D8
+	nullptr,	nullptr,	nullptr,	"Command",	nullptr,	"Apps",		"Power",	"Sleep",	//D8
 #else // !__APPLE__
-	NULL,		NULL,		NULL,		"LWin",		"RWin",		"Apps",		"Power",	"Sleep",	//D8
+	nullptr,	nullptr,	nullptr,	"LWin",		"RWin",		"Apps",		"Power",	"Sleep",	//D8
 #endif // __APPLE__
-	NULL,		NULL,		NULL,		"Wake",		NULL,		"Search",	"Favorites","Refresh",	//E0
-	"WebStop",	"WebForward","WebBack",	"MyComputer","Mail",	"MediaSelect",NULL,		NULL,		//E8
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//F0
-	NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		NULL,		//F8
+	nullptr,	nullptr,	nullptr,	"Wake",		nullptr,	"Search",	"Favorites","Refresh",	//E0
+	"WebStop",	"WebForward","WebBack",	"MyComputer","Mail",	"MediaSelect",nullptr,	nullptr,	//E8
+	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	//F0
+	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	nullptr,	//F8
 
 	// non-keyboard buttons that can be bound
 	"Mouse1",	"Mouse2",	"Mouse3",	"Mouse4",		// 8 mouse buttons
@@ -156,11 +153,8 @@ FKeyBindings Bindings;
 FKeyBindings DoubleBindings;
 FKeyBindings AutomapBindings;
 
-DEFINE_GLOBAL(Bindings)
-DEFINE_GLOBAL(AutomapBindings)
-
 static unsigned int DClickTime[NUM_KEYS];
-static uint8_t DClicked[(NUM_KEYS+7)/8];
+static FixedBitArray<NUM_KEYS> DClicked;
 
 //=============================================================================
 //
@@ -224,7 +218,7 @@ static int GetConfigKeyFromName (const char *key)
 //
 //=============================================================================
 
-static const char *KeyName (int key)
+const char *KeyName (int key)
 {
 	static char name[5];
 
@@ -264,29 +258,6 @@ static const char *ConfigKeyName(int keynum)
 //
 //=============================================================================
 
-DEFINE_ACTION_FUNCTION(FKeyBindings, SetBind)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
-	PARAM_INT(k);
-	PARAM_STRING(cmd);
-
-	// Only menus are allowed to change bindings.
-	if (DMenu::InMenu == 0)
-	{
-		I_FatalError("Attempt to change key bindings outside of menu code to '%s'", cmd.GetChars());
-	}
-
-
-	self->SetBind(k, cmd);
-	return 0;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
 void C_NameKeys (char *str, int first, int second)
 {
 	int c = 0;
@@ -311,14 +282,32 @@ void C_NameKeys (char *str, int first, int second)
 		*str = '\0';
 }
 
-DEFINE_ACTION_FUNCTION(FKeyBindings, NameKeys)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+FString C_NameKeys (int *keys, int count, bool colors)
 {
-	PARAM_PROLOGUE;
-	PARAM_INT(k1);
-	PARAM_INT(k2);
-	char buffer[120];
-	C_NameKeys(buffer, k1, k2);
-	ACTION_RETURN_STRING(buffer);
+	FString result;
+	for (int i = 0; i < count; i++)
+	{
+		int key = keys[i];
+		if (key == 0) continue;
+		for (int j = 0; j < i; j++)
+		{
+			if (key == keys[j])
+			{
+				key = 0;
+				break;
+			}
+		}
+		if (key == 0) continue;
+		if (result.IsNotEmpty()) result += colors? TEXTCOLOR_BLACK ", " TEXTCOLOR_NORMAL : ", ";
+		result += KeyName(key);
+	}
+	return result;
 }
 
 //=============================================================================
@@ -414,11 +403,11 @@ void FKeyBindings::PerformBind(FCommandLine &argv, const char *msg)
 //=============================================================================
 //
 // This function is first called for functions in custom key sections.
-// In this case, matchcmd is non-NULL, and only keys bound to that command
+// In this case, matchcmd is non-null, and only keys bound to that command
 // are stored. If a match is found, its binding is set to "\1".
 // After all custom key sections are saved, it is called one more for the
 // normal Bindings and DoubleBindings sections for this game. In this case
-// matchcmd is NULL and all keys will be stored. The config section was not
+// matchcmd is null and all keys will be stored. The config section was not
 // previously cleared, so all old bindings are still in place. If the binding
 // for a key is empty, the corresponding key in the config is removed as well.
 // If a binding is "\1", then the binding itself is cleared, but nothing
@@ -434,12 +423,12 @@ void FKeyBindings::ArchiveBindings(FConfigFile *f, const char *matchcmd)
 	{
 		if (Binds[i].IsEmpty())
 		{
-			if (matchcmd == NULL)
+			if (matchcmd == nullptr)
 			{
 				f->ClearKey(ConfigKeyName(i));
 			}
 		}
-		else if (matchcmd == NULL || stricmp(Binds[i], matchcmd) == 0)
+		else if (matchcmd == nullptr || stricmp(Binds[i], matchcmd) == 0)
 		{
 			if (Binds[i][0] == '\1')
 			{
@@ -447,7 +436,7 @@ void FKeyBindings::ArchiveBindings(FConfigFile *f, const char *matchcmd)
 				continue;
 			}
 			f->SetValueForKey(ConfigKeyName(i), Binds[i]);
-			if (matchcmd != NULL)
+			if (matchcmd != nullptr)
 			{ // If saving a specific command, set a marker so that
 			  // it does not get saved in the general binding list.
 				Binds[i] = "\1";
@@ -482,15 +471,26 @@ int FKeyBindings::GetKeysForCommand (const char *cmd, int *first, int *second)
 	return c;
 }
 
-DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+TArray<int> FKeyBindings::GetKeysForCommand (const char *cmd)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
-	PARAM_STRING(cmd);
-	int k1, k2;
-	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
-	if (numret > 0) ret[0].SetInt(k1);
-	if (numret > 1) ret[1].SetInt(k2);
-	return MIN(numret, 2);
+	int i = 0;
+	TArray<int> result;
+
+	while (i < NUM_KEYS)
+	{
+		if (stricmp (cmd, Binds[i]) == 0)
+		{
+			result.Push(i);
+		}
+		i++;
+	}
+	return result;
 }
 
 //=============================================================================
@@ -510,21 +510,6 @@ void FKeyBindings::UnbindACommand (const char *str)
 			Binds[i] = "";
 		}
 	}
-}
-
-DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
-	PARAM_STRING(cmd);
-
-	// Only menus are allowed to change bindings.
-	if (DMenu::InMenu == 0)
-	{
-		I_FatalError("Attempt to unbind key bindings for '%s' outside of menu code", cmd.GetChars());
-	}
-
-	self->UnbindACommand(cmd);
-	return 0;
 }
 
 //=============================================================================
@@ -652,20 +637,20 @@ CCMD (defaultbind)
 //
 //=============================================================================
 
-CCMD (rebind)
+CCMD(rebind)
 {
-	FKeyBindings *bindings;
+	FKeyBindings* bindings;
 
 	if (key == 0)
 	{
-		Printf ("Rebind cannot be used from the console\n");
+		Printf("Rebind cannot be used from the console\n");
 		return;
 	}
 
 	if (key & KEY_DBLCLICKED)
 	{
 		bindings = &DoubleBindings;
-		key &= KEY_DBLCLICKED-1;
+		key &= KEY_DBLCLICKED - 1;
 	}
 	else
 	{
@@ -684,38 +669,49 @@ CCMD (rebind)
 //
 //=============================================================================
 
+void ReadBindings(int lump, bool override)
+{
+	FScanner sc(lump);
+
+	while (sc.GetString())
+	{
+		FKeyBindings* dest = &Bindings;
+		int key;
+
+		// bind destination is optional and is the same as the console command
+		if (sc.Compare("bind"))
+		{
+			sc.MustGetString();
+		}
+		else if (sc.Compare("doublebind"))
+		{
+			dest = &DoubleBindings;
+			sc.MustGetString();
+		}
+		else if (sc.Compare("mapbind"))
+		{
+			dest = &AutomapBindings;
+			sc.MustGetString();
+		}
+		key = GetConfigKeyFromName(sc.String);
+		sc.MustGetString();
+		dest->SetBind(key, sc.String, override);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
 void C_BindDefaults ()
 {
 	int lump, lastlump = 0;
 
 	while ((lump = fileSystem.FindLump("DEFBINDS", &lastlump)) != -1)
 	{
-		FScanner sc(lump);
-
-		while (sc.GetString())
-		{
-			FKeyBindings *dest = &Bindings;
-			int key;
-
-			// bind destination is optional and is the same as the console command
-			if (sc.Compare("bind"))
-			{
-				sc.MustGetString();
-			}
-			else if (sc.Compare("doublebind"))
-			{
-				dest = &DoubleBindings;
-				sc.MustGetString();
-			}
-			else if (sc.Compare("mapbind"))
-			{
-				dest = &AutomapBindings;
-				sc.MustGetString();
-			}
-			key = GetConfigKeyFromName(sc.String);
-			sc.MustGetString();
-			dest->SetBind(key, sc.String);
-		}
+		ReadBindings(lump, false);
 	}
 }
 
@@ -740,8 +736,6 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 {
 	FString binding;
 	bool dclick;
-	int dclickspot;
-	uint8_t dclickmask;
 	unsigned int nowtime;
 
 	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
@@ -750,16 +744,14 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	if ((unsigned int)ev->data1 >= NUM_KEYS)
 		return false;
 
-	dclickspot = ev->data1 >> 3;
-	dclickmask = 1 << (ev->data1 & 7);
 	dclick = false;
 
 	nowtime = (unsigned)I_msTime();
-	if (doublebinds != NULL && int(DClickTime[ev->data1] - nowtime) > 0 && ev->type == EV_KeyDown)
+	if (doublebinds != nullptr && int(DClickTime[ev->data1] - nowtime) > 0 && ev->type == EV_KeyDown)
 	{
 		// Key pressed for a double click
 		binding = doublebinds->GetBinding(ev->data1);
-		DClicked[dclickspot] |= dclickmask;
+		DClicked.Set(ev->data1);
 		dclick = true;
 	}
 	else
@@ -769,10 +761,10 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 			binding = binds->GetBinding(ev->data1);
 			DClickTime[ev->data1] = nowtime + 571;
 		}
-		else if (doublebinds != NULL && DClicked[dclickspot] & dclickmask)
+		else if (doublebinds != nullptr && DClicked[ev->data1])
 		{ // Key released from a double click
 			binding = doublebinds->GetBinding(ev->data1);
-			DClicked[dclickspot] &= ~dclickmask;
+			DClicked.Clear(ev->data1);
 			DClickTime[ev->data1] = 0;
 			dclick = true;
 		}

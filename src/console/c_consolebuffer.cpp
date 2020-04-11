@@ -35,6 +35,7 @@
 
 #include "c_console.h"
 #include "c_consolebuffer.h"
+#include "printf.h"
 
 
 //==========================================================================

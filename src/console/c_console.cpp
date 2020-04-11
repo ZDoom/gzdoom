@@ -293,7 +293,7 @@ public:
 		{ // The cursor is in front of the visible part of the line
 			n = CursorPosCells;
 		}
-		StartPosCells = MAX(0, n);
+		StartPosCells = std::max(0, n);
 		bool overflow;
 		StartPos = CharsForCells(StartPosCells, &overflow);
 		if (overflow)
@@ -887,9 +887,14 @@ void WriteLineToLog(FILE *LogFile, const char *outline)
 	fflush(LogFile);
 }
 
+extern bool gameisdead;
 
 int PrintString (int iprintlevel, const char *outline)
 {
+	if (gameisdead)
+		return 0;
+
+	if (!conbuffer) return 0;	// when called too early
 	int printlevel = iprintlevel & PRINT_TYPES;
 	if (printlevel < msglevel || *outline == '\0')
 	{
@@ -920,13 +925,8 @@ int PrintString (int iprintlevel, const char *outline)
 	return 0;	// Don't waste time on calculating this if nothing at all was printed...
 }
 
-extern bool gameisdead;
-
 int VPrintf (int printlevel, const char *format, va_list parms)
 {
-	if (gameisdead)
-		return 0;
-
 	FString outline;
 	outline.VFormat (format, parms);
 	return PrintString (printlevel, outline.GetChars());
@@ -1425,7 +1425,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 			{ // Scroll console buffer down
 				if (ev->subtype == EV_GUI_WheelDown)
 				{
-					RowAdjust = MAX (0, RowAdjust - 3);
+					RowAdjust = std::max (0, RowAdjust - 3);
 				}
 				else
 				{
@@ -2030,7 +2030,7 @@ static bool C_TabCompleteList ()
 				}
 			}
 			nummatches++;
-			maxwidth = MAX (maxwidth, strlen (TabCommands[i].TabName.GetChars()));
+			maxwidth = std::max (maxwidth, strlen (TabCommands[i].TabName.GetChars()));
 		}
 	}
 	if (nummatches > 1)

@@ -54,6 +54,7 @@
 #include "intermission/intermission.h"
 #include "menu/menu.h"
 #include "c_cvars.h"
+#include "c_bind.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -3333,6 +3334,66 @@ DEFINE_ACTION_FUNCTION(_CVar, GetCVar)
 	ACTION_RETURN_POINTER(GetCVar(plyr ? int(plyr - players) : -1, name.GetChars()));
 }
 
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, SetBind)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_INT(k);
+	PARAM_STRING(cmd);
+
+	// Only menus are allowed to change bindings.
+	if (DMenu::InMenu == 0)
+	{
+		I_FatalError("Attempt to change key bindings outside of menu code to '%s'", cmd.GetChars());
+	}
+
+
+	self->SetBind(k, cmd);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, NameKeys)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(k1);
+	PARAM_INT(k2);
+	char buffer[120];
+	C_NameKeys(buffer, k1, k2);
+	ACTION_RETURN_STRING(buffer);
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_STRING(cmd);
+	int k1, k2;
+	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
+	if (numret > 0) ret[0].SetInt(k1);
+	if (numret > 1) ret[1].SetInt(k2);
+	return MIN(numret, 2);
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_STRING(cmd);
+
+	// Only menus are allowed to change bindings.
+	if (DMenu::InMenu == 0)
+	{
+		I_FatalError("Attempt to unbind key bindings for '%s' outside of menu code", cmd.GetChars());
+	}
+
+	self->UnbindACommand(cmd);
+	return 0;
+}
+
+
 
 
 
@@ -3515,3 +3576,6 @@ DEFINE_FIELD(DBaseStatusBar, itemflashFade);
 DEFINE_FIELD(DHUDFont, mFont);
 
 DEFINE_GLOBAL(StatusBar);
+
+DEFINE_GLOBAL(Bindings)
+DEFINE_GLOBAL(AutomapBindings)

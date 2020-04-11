@@ -31,6 +31,7 @@
 struct event_t;
 
 #include "dobjgc.h"
+#include "name.h"
 
 // The current state of the game: whether we are
 // playing, gazing at the intermission screen,

@@ -102,6 +102,7 @@
 #include "r_data/r_vanillatrans.h"
 #include "s_music.h"
 #include "swrenderer/r_swcolormaps.h"
+#include "findfile.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)

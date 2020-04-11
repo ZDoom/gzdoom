@@ -39,7 +39,7 @@
 #include "resourcefile.h"
 #include "cmdlib.h"
 #include "doomtype.h"
-#include "i_system.h"
+#include "findfile.h"
 
 
 

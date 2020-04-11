@@ -47,6 +47,7 @@
 #include "version.h"
 #include "engineerrors.h"
 #include "v_text.h"
+#include "findfile.h"
 
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);

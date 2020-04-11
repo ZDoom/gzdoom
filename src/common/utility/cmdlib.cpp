@@ -35,7 +35,7 @@
 
 
 #include "cmdlib.h"
-#include "i_system.h"
+#include "findfile.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

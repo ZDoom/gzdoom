@@ -104,38 +104,6 @@ bool I_WriteIniFailed ();
 class FTexture;
 bool I_SetCursor(FTexture *);
 
-// Directory searching routines
-
-struct findstate_t
-{
-private:
-	FString path;
-    struct dirent **namelist;
-    int current;
-    int count;
-
-	friend void *I_FindFirst(const char *filespec, findstate_t *fileinfo);
-	friend int I_FindNext(void *handle, findstate_t *fileinfo);
-	friend const char *I_FindName(findstate_t *fileinfo);
-	friend int I_FindAttr(findstate_t *fileinfo);
-	friend int I_FindClose(void *handle);
-};
-
-void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
-int I_FindNext (void *handle, findstate_t *fileinfo);
-int I_FindClose (void *handle);
-int I_FindAttr (findstate_t *fileinfo); 
-
-inline const char *I_FindName(findstate_t *fileinfo)
-{
-	return (fileinfo->namelist[fileinfo->current]->d_name);
-}
-
-#define FA_RDONLY	1
-#define FA_HIDDEN	2
-#define FA_SYSTEM	4
-#define FA_DIREC	8
-#define FA_ARCH		16
 
 static inline char *strlwr(char *str)
 {

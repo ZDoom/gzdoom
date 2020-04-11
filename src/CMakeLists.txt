@@ -1127,8 +1127,8 @@ set (PCH_SOURCES
 	common/utility/utf8.cpp
 	utility/palette.cpp
 	utility/palettecontainer.cpp
-	utility/files.cpp
-	utility/files_decompress.cpp
+	common/utility/files.cpp
+	common/utility/files_decompress.cpp
 	utility/m_png.cpp
 	utility/m_random.cpp
 	utility/memarena.cpp
@@ -1140,15 +1140,15 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_utility.cpp
 	utility/sc_man.cpp
 	utility/stats.cpp
-	utility/cmdlib.cpp
-	utility/configfile.cpp
+	common/utility/cmdlib.cpp
+	common/utility/configfile.cpp
 	utility/i_time.cpp
 	utility/m_argv.cpp
 	utility/m_bbox.cpp
 	utility/name.cpp
 	utility/s_playlist.cpp
 	utility/v_collection.cpp
-	utility/zstrformat.cpp
+	common/utility/zstrformat.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp
 )
@@ -1175,7 +1175,8 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${PCH_SOURCES}
 	utility/x86.cpp
 	common/thirdparty/strnatcmp.c
-	utility/zstring.cpp
+	common/utility/zstring.cpp
+	common/utility/findfile.cpp
 	common/thirdparty/math/asin.c
 	common/thirdparty/math/atan.c
 	common/thirdparty/math/const.c

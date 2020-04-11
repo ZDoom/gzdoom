@@ -43,6 +43,7 @@
 #include <zmusic.h>
 #include "resourcefiles/resourcefile.h"
 #include "version.h"
+#include "findfile.h"
 
 //==========================================================================
 //

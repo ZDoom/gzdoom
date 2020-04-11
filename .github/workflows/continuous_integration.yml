@@ -1,0 +1,120 @@
+name: Continuous Integration
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+        - {
+            name: "Visual Studio 64-bit",
+            os: windows-latest,
+            extra_options: "-A x64",
+            build_type: "Release"
+          }
+        - {
+            name: "Visual Studio 32-bit",
+            os: windows-latest,
+            extra_options: "-A Win32",
+            build_type: "Release"
+          }
+        - {
+            name: "macOS",
+            os: macos-latest,
+            extra_options: "-DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            deps_cmdline: "brew install fluidsynth mpg123 libsndfile",
+            build_type: "Release"
+          }
+        - {
+            name: "macOS",
+            os: macos-latest,
+            build_type: "Debug"
+          }
+        - {
+            name: "Linux GCC 7",
+            os: ubuntu-latest,
+            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7",
+            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk2.0-dev",
+            build_type: "RelWithDebInfo"
+          }
+        - {
+            name: "Linux GCC 9",
+            os: ubuntu-latest,
+            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-9",
+            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk-3-dev",
+            build_type: "RelWithDebInfo"
+          }
+        - {
+            name: "Linux Clang 6",
+            os: ubuntu-latest,
+            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-6.0 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-6.0",
+            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev",
+            build_type: "Debug"
+          }
+        - {
+            name: "Linux Clang 9",
+            os: ubuntu-latest,
+            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/clang-9 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-9 \
+                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
+            build_type: "Release"
+          }
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Install Dependencies
+      shell: bash
+      run: |
+        if [[ ! -z "${{ matrix.config.deps_cmdline }}" ]]; then
+          eval ${{ matrix.config.deps_cmdline }}
+        fi
+        # Build and install ZMusic
+        mkdir build
+        cd build
+        git clone https://github.com/coelckers/ZMusic.git
+        cd ZMusic
+        git checkout 1.1.0
+        cd ..
+        cmake -B zmusic_build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_INSTALL_PREFIX=`pwd`/zmusic_install ${{ matrix.config.extra_options }} ZMusic
+        cmake --build zmusic_build --target install --parallel 3
+
+    - name: Configure
+      shell: bash
+      run: |
+        cmake -B build -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} -DCMAKE_PREFIX_PATH=`pwd`/build/zmusic_install ${{ matrix.config.extra_options }} .
+
+    - name: Build
+      shell: bash
+      run: |
+        cmake --build build --config ${{ matrix.config.build_type }} --parallel 3
+
+    - name: Create Package
+      shell: bash
+      run: |
+        cd build
+        mkdir package
+        if [[ "${{ runner.os }}" == 'Windows' ]]; then
+          cp ${{ matrix.config.build_type }}/gzdoom.exe ${{ matrix.config.build_type }}/*.pk3 package
+        elif [[ "${{ runner.os }}" == 'macOS' ]]; then
+          cp -r gzdoom.app package
+        elif [[ "${{ runner.os }}" == 'Linux' ]]; then
+          cp gzdoom *.pk3 package
+        fi
+
+    - name: Upload Package
+      uses: actions/upload-artifact@v1
+      with:
+        path: build/package
+        name: ${{ matrix.config.name }}
+
+    - name: List Build Directory
+      if: always()
+      shell: bash
+      run: |
+        git status
+        ls -lR build

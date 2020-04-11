@@ -1067,7 +1067,7 @@ set (PCH_SOURCES
 	common/fonts/v_text.cpp	
 	common/textures/hw_ihwtexture.cpp
 	common/textures/hw_material.cpp
-	common/textures/bitmap.cpp
+	gamedata/textures/bitmap.cpp
 	common/textures/m_png.cpp
 	common/textures/texture.cpp
 	common/textures/image.cpp
@@ -1245,6 +1245,7 @@ include_directories( .
 	common/textures
 	common/textures/formats
 	common/textures/hires
+	common/textures
 	common/filesystem
 	common/utility
 	common/console

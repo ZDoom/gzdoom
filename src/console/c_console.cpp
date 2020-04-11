@@ -514,6 +514,7 @@ static int HistSize;
 struct FNotifyText
 {
 	int TimeOut;
+	int Ticker;
 	int PrintLevel;
 	FString Text;
 };
@@ -819,7 +820,8 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		FNotifyText newline;
 
 		newline.Text = line.Text;
-		newline.TimeOut = gametic + int(con_notifytime * TICRATE);
+		newline.TimeOut = int(con_notifytime * GameTicRate);
+		newline.Ticker = 0;
 		newline.PrintLevel = printlevel;
 		if (AddType == NEWLINE || Text.Size() == 0)
 		{
@@ -1057,12 +1059,19 @@ void FNotifyBuffer::Tick()
 	unsigned i;
 	for (i = 0; i < Text.Size(); ++i)
 	{
-		if (Text[i].TimeOut != 0 && Text[i].TimeOut > gametic)
+		Text[i].Ticker++;
+	}
+	
+	for (i = 0; i < Text.Size(); ++i)
+	{
+		if (Text[i].TimeOut != 0 && Text[i].TimeOut > Text[i].Ticker)
 			break;
 	}
 	if (i > 0)
 	{
 		Text.Delete(0, i);
+		FFont* font = generic_ui ? NewSmallFont : AlternativeSmallFont;
+		Top += font->GetHeight();
 	}
 }
 
@@ -1072,7 +1081,7 @@ void FNotifyBuffer::Draw()
 	int line, lineadv, color, j;
 	bool canskip;
 	
-	if (gamestate == GS_FULLCONSOLE || gamestate == GS_DEMOSCREEN/* || menuactive != MENU_Off*/)
+	if (gamestate == GS_FULLCONSOLE || gamestate == GS_DEMOSCREEN)
 		return;
 
 	FFont* font = generic_ui ? NewSmallFont : AlternativeSmallFont;
@@ -1089,7 +1098,7 @@ void FNotifyBuffer::Draw()
 		if (notify.TimeOut == 0)
 			continue;
 
-		j = notify.TimeOut - gametic;
+		j = notify.TimeOut - notify.Ticker;
 		if (j > 0)
 		{
 			if (!show_messages && notify.PrintLevel != 128)
@@ -1122,11 +1131,6 @@ void FNotifyBuffer::Draw()
 		}
 		else
 		{
-			if (canskip)
-			{
-				Top += lineadv;
-				line += lineadv;
-			}
 			notify.TimeOut = 0;
 		}
 	}

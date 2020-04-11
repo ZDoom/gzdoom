@@ -42,14 +42,14 @@
 
 #include "m_random.h"
 #include "sc_man.h"
-#include "s_sound.h"
-#include "actor.h"
+#include "s_soundinternal.h"
 #include "vmbuilder.h"
 #include "scopebarrier.h"
 #include "types.h"
 #include "vmintern.h"
 #include "c_cvars.h"
 
+struct FState; // needed for FxConstant. Maybe move the state constructor to a subclass later?
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;
 #define SAFE_DELETE(p) if (p!=NULL) { delete p; p=NULL; }
@@ -400,23 +400,6 @@ public:
 
 //==========================================================================
 //
-//	FxClassDefaults
-//
-//==========================================================================
-
-class FxClassDefaults : public FxExpression
-{
-	FxExpression *obj;
-
-public:
-	FxClassDefaults(FxExpression *, const FScriptPosition &);
-	~FxClassDefaults();
-	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-//==========================================================================
-//
 //	FxConstant
 //
 //==========================================================================
@@ -706,11 +689,10 @@ public:
 
 class FxTypeCast : public FxExpression
 {
+public:
 	FxExpression *basex;
 	bool NoWarn;
 	bool Explicit;
-
-public:
 
 	FxTypeCast(FxExpression *x, PType *type, bool nowarn, bool explicitly = false);
 	~FxTypeCast();
@@ -1539,11 +1521,11 @@ public:
 
 class FxFunctionCall : public FxExpression
 {
-	FName MethodName;
 	FRandom *RNG;
-	FArgumentList ArgList;
 
 public:
+	FName MethodName;
+	FArgumentList ArgList;
 
 	FxFunctionCall(FName methodname, FName rngname, FArgumentList &args, const FScriptPosition &pos);
 	~FxFunctionCall();
@@ -1570,26 +1552,6 @@ public:
 	FxExpression *Resolve(FCompileContext&);
 };
 
-
-//==========================================================================
-//
-//	FxActionSpecialCall
-//
-//==========================================================================
-
-class FxActionSpecialCall : public FxExpression
-{
-	int Special;
-	FxExpression *Self;
-	FArgumentList ArgList;
-
-public:
-
-	FxActionSpecialCall(FxExpression *self, int special, FArgumentList &args, const FScriptPosition &pos);
-	~FxActionSpecialCall();
-	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
 
 //==========================================================================
 //
@@ -1703,24 +1665,6 @@ public:
 
 //==========================================================================
 //
-//	FxGetDefaultByType
-//
-//==========================================================================
-
-class FxGetDefaultByType : public FxExpression
-{
-	FxExpression *Self;
-
-public:
-
-	FxGetDefaultByType(FxExpression *self);
-	~FxGetDefaultByType();
-	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-//==========================================================================
-//
 //	FxColorLiteral
 //
 //==========================================================================
@@ -1750,17 +1694,18 @@ class FxVMFunctionCall : public FxExpression
 	bool NoVirtual;
 	bool hasStringArgs = false;
 	FxExpression *Self;
-	PFunction *Function;
-	FArgumentList ArgList;
 	// for multi assignment
 	int AssignCount = 0;
 	TArray<ExpEmit> ReturnRegs;
 	PFunction *CallingFunction;
 
 	bool CheckAccessibility(const VersionInfo &ver);
-	bool UnravelVarArgAJump(FCompileContext&);
 
 public:
+
+	FArgumentList ArgList;
+	PFunction* Function;
+
 	FxVMFunctionCall(FxExpression *self, PFunction *func, FArgumentList &args, const FScriptPosition &pos, bool novirtual);
 	~FxVMFunctionCall();
 	FxExpression *Resolve(FCompileContext&);
@@ -2043,60 +1988,6 @@ public:
 
 //==========================================================================
 //
-// Only used to resolve the old jump by index feature of DECORATE
-//
-//==========================================================================
-
-class FxStateByIndex : public FxExpression
-{
-	unsigned index;
-
-public:
-
-	FxStateByIndex(int i, const FScriptPosition &pos) : FxExpression(EFX_StateByIndex, pos)
-	{
-		index = i;
-	}
-	FxExpression *Resolve(FCompileContext&);
-};
-
-//==========================================================================
-//
-// Same as above except for expressions which means it will have to be
-// evaluated at runtime
-//
-//==========================================================================
-
-class FxRuntimeStateIndex : public FxExpression
-{
-	FxExpression *Index;
-	int symlabel;
-
-public:
-	FxRuntimeStateIndex(FxExpression *index);
-	~FxRuntimeStateIndex();
-	FxExpression *Resolve(FCompileContext&);
-	ExpEmit Emit(VMFunctionBuilder *build);
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-class FxMultiNameState : public FxExpression
-{
-	PClassActor *scope;
-	TArray<FName> names;
-public:
-
-	FxMultiNameState(const char *statestring, const FScriptPosition &pos, PClassActor *checkclass = nullptr);
-	FxExpression *Resolve(FCompileContext&);
-};
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -2233,5 +2124,20 @@ public:
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };
+
+
+struct CompileEnvironment
+{
+	FxExpression* (*SpecialTypeCast)(FxTypeCast* func, FCompileContext& ctx);
+	bool (*CheckForCustomAddition)(FxAddSub* func, FCompileContext& ctx);
+	FxExpression* (*CheckSpecialIdentifier)(FxIdentifier* func, FCompileContext& ctx);
+	FxExpression* (*ResolveSpecialIdentifier)(FxIdentifier* func, FxExpression*& object, PContainerType* objtype, FCompileContext& ctx);
+	FxExpression* (*CheckSpecialMember)(FxStructMember* func, FCompileContext& ctx);
+	FxExpression* (*CheckCustomGlobalFunctions)(FxFunctionCall* func, FCompileContext& ctx);
+	bool (*ResolveSpecialFunction)(FxVMFunctionCall* func, FCompileContext& ctx);
+	FName CustomBuiltinNew;	//override the 'new' function if some classes need special treatment.
+};
+
+extern CompileEnvironment compileEnvironment;
 
 #endif

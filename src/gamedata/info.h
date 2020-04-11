@@ -74,14 +74,6 @@ enum EStateFlags
 	STF_DEHACKED = 64,	// Modified by Dehacked
 };
 
-enum EStateUseFlags
-{
-	SUF_ACTOR = 1,
-	SUF_OVERLAY = 2,
-	SUF_WEAPON = 4,
-	SUF_ITEM = 8,
-};
-
 enum EStateType : int // this must ensure proper alignment.
 {
 	STATE_Actor,

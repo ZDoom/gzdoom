@@ -44,6 +44,7 @@
 #include "thingdef.h"
 #include "a_morph.h"
 #include "backend/codegen.h"
+#include "backend/codegen_doom.h"
 #include "filesystem.h"
 #include "v_text.h"
 #include "m_argv.h"
@@ -53,7 +54,7 @@
 #endif // !_MSC_VER
 
 void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
-CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+EXTERN_CVAR(Bool, strictdecorate);
 
 
 //==========================================================================

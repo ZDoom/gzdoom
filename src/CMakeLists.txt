@@ -1044,6 +1044,7 @@ set (PCH_SOURCES
 	scripting/thingdef_data.cpp
 	scripting/thingdef_properties.cpp
 	scripting/backend/codegen.cpp
+	scripting/backend/codegen_doom.cpp
 	scripting/backend/vmbuilder.cpp
 	scripting/decorate/olddecorations.cpp
 	scripting/decorate/thingdef_exp.cpp

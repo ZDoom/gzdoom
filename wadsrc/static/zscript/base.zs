@@ -426,6 +426,7 @@ class Object native
 
 	// These must be defined in some class, so that the compiler can find them. Object is just fine, as long as they are private to external code.
 	private native static Object BuiltinNew(Class<Object> cls, int outerclass, int compatibility);
+	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
 	private native static int BuiltinRandom(voidptr rng, int min, int max);
 	private native static double BuiltinFRandom(voidptr rng, double min, double max);
 	private native static int BuiltinRandom2(voidptr rng, int mask);

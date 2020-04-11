@@ -406,6 +406,7 @@ void CheckDropItems(const PClassActor *const obj)
 void ParseScripts();
 void ParseAllDecorate();
 void SynthesizeFlagFields();
+void SetDoomCompileEnvironment();
 
 void LoadActors()
 {
@@ -414,6 +415,7 @@ void LoadActors()
 	timer.Reset(); timer.Clock();
 	FScriptPosition::ResetErrorCounter();
 
+	SetDoomCompileEnvironment();
 	InitThingdef();
 	FScriptPosition::StrictErrors = true;
 	ParseScripts();

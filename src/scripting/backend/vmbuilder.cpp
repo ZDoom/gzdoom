@@ -38,7 +38,7 @@
 #include "c_cvars.h"
 #include "jit.h"
 
-EXTERN_CVAR(Bool, strictdecorate);
+CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 struct VMRemap
 {

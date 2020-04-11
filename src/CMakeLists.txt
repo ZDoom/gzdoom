@@ -611,6 +611,7 @@ file( GLOB HEADER_FILES
 	r_data/*.h
 	r_data/models/*.h
 	common/utility/*.h
+	common/engine/*.h
 	common/filesystem/*.h
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
@@ -1125,6 +1126,7 @@ set (PCH_SOURCES
 	common/utility/m_argv.cpp
 	common/utility/s_playlist.cpp
 	common/utility/zstrformat.cpp
+	common/utility/name.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp
 	common/filesystem/filesystem.cpp
@@ -1151,7 +1153,6 @@ set (PCH_SOURCES
 	utility/sc_man.cpp
 	utility/stats.cpp
 	utility/m_bbox.cpp
-	utility/name.cpp
 	utility/v_collection.cpp
 )
 
@@ -1224,6 +1225,7 @@ include_directories( .
 	common/thirdparty
 	common/filesystem
 	common/utility
+	common/engine
 	g_statusbar
 	console
 	playsim

@@ -62,9 +62,6 @@ CUSTOM_CVAR(Color, cl_custominvulmapcolor2, 0xa6a67a, CVAR_ARCHIVE|CVAR_NOINITCA
 
 TArray<FakeCmap> fakecmaps;
 
-uint8_t DesaturateColormap[31][256];
-
-
 static void FreeSpecialLights();
 
 
@@ -168,23 +165,6 @@ void R_InitColormaps (bool allowCustomColormap)
 	// build default special maps (e.g. invulnerability)
 	InitSpecialColormaps(GPalette.BaseColors);
 	R_UpdateInvulnerabilityColormap();
-
-	// desaturated colormaps. These are used for texture composition
-	for(int m = 0; m < 31; m++)
-	{
-		uint8_t *shade = DesaturateColormap[m];
-		for (int c = 0; c < 256; c++)
-		{
-			int intensity = (GPalette.BaseColors[c].r * 77 +
-						GPalette.BaseColors[c].g * 143 +
-						GPalette.BaseColors[c].b * 37) / 256;
-
-			int r = (GPalette.BaseColors[c].r * (31-m) + intensity *m) / 31;
-			int g = (GPalette.BaseColors[c].g * (31-m) + intensity *m) / 31;
-			int b = (GPalette.BaseColors[c].b * (31-m) + intensity *m) / 31;
-			shade[c] = ColorMatcher.Pick(r, g, b);
-		}
-	}
 }
 
 //==========================================================================

@@ -9590,7 +9590,7 @@ scriptwait:
 		case PCD_ENDTRANSLATION:
 			if (translation != NULL)
 			{
-				palMgr.UpdateTranslation(TRANSLATION(TRANSLATION_LevelScripted, transi), translation);
+				GPalette.UpdateTranslation(TRANSLATION(TRANSLATION_LevelScripted, transi), translation);
 				delete translation;
 				translation = NULL;
 			}

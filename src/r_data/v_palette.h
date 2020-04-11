@@ -38,23 +38,7 @@
 #include "c_cvars.h"
 #include "palutil.h"
 
-struct FPalette
-{
-	FPalette ();
-	FPalette (const uint8_t *colors);
 
-	void SetPalette (const uint8_t *colors);
-
-	void MakeGoodRemap ();
-
-	PalEntry	BaseColors[256];	// non-gamma corrected palette
-	uint8_t		Remap[256];			// remap original palette indices to in-game indices
-
-	uint8_t		WhiteIndex;			// white in original palette index
-	uint8_t		BlackIndex;			// black in original palette index
-};
-
-extern FPalette GPalette;
 
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)

@@ -2872,7 +2872,7 @@ static int D_DoomMain_Internal (void)
 		C_InitConback();
 
 		StartScreen->Progress();
-		palMgr.Init(NUM_TRANSLATION_TABLES);
+		GPalette.Init(NUM_TRANSLATION_TABLES);
 		V_InitFonts();
 
 		// [CW] Parse any TEAMINFO lumps.

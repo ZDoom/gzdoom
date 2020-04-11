@@ -84,7 +84,7 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 TArray<uint8_t> FBuildTexture::CreatePalettedPixels(int conversion)
 {
 	TArray<uint8_t> Pixels(Width * Height, true);
-	FRemapTable *Remap = palMgr.GetTranslation(TRANSLATION_Standard, Translation);
+	FRemapTable *Remap = GPalette.GetTranslation(TRANSLATION_Standard, Translation);
 	for (int i = 0; i < Width*Height; i++)
 	{
 		auto c = RawPixels[i];
@@ -95,7 +95,7 @@ TArray<uint8_t> FBuildTexture::CreatePalettedPixels(int conversion)
 
 int FBuildTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	PalEntry *Remap = palMgr.GetTranslation(TRANSLATION_Standard, Translation)->Palette;
+	PalEntry *Remap = GPalette.GetTranslation(TRANSLATION_Standard, Translation)->Palette;
 	bmp->CopyPixelData(0, 0, RawPixels, Width, Height, Height, 1, 0, Remap);
 	return -1;
 
@@ -280,7 +280,7 @@ static int BuildPaletteTranslation(int lump)
 	opal.Remap[255] = 0;
 	// Store the remap table in the translation manager so that we do not need to keep track of it ourselves. 
 	// Slot 0 for internal translations is a convenient location because normally it only contains a small number of translations.
-	return GetTranslationIndex(palMgr.StoreTranslation(TRANSLATION_Standard, &opal));
+	return GetTranslationIndex(GPalette.StoreTranslation(TRANSLATION_Standard, &opal));
 }
 
 

@@ -122,7 +122,7 @@ public:
 
 	int CopyPixels(FBitmap *bmp, int conversion) override
 	{
-		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, palMgr.GetTranslation(TRANSLATION_Standard, STD_Gray)->Palette);
+		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, GPalette.GetTranslation(TRANSLATION_Standard, STD_Gray)->Palette);
 		return 0;
 	}
 

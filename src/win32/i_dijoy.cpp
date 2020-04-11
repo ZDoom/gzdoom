@@ -50,6 +50,8 @@
 #include "cmdlib.h"
 #include "v_text.h"
 #include "m_argv.h"
+#include "keydef.h"
+#include "printf.h"
 
 #define SAFE_RELEASE(x)		{ if (x != NULL) { x->Release(); x = NULL; } }
 

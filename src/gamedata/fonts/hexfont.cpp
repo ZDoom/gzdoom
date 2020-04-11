@@ -417,7 +417,7 @@ public:
 				}
 			}
 		}
-		Translations[CR_UNTRANSLATED] = palMgr.StoreTranslation(TRANSLATION_Font, &remap);
+		Translations[CR_UNTRANSLATED] = GPalette.StoreTranslation(TRANSLATION_Font, &remap);
 		forceremap = true;
 
 	}

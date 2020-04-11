@@ -106,9 +106,6 @@ inline uint32_t MakeSpecialColormap(int index)
 	return index | SPECIALCOLORMAP_MASK;
 }
 
-extern uint8_t DesaturateColormap[31][256];
-
-
 enum EColorManipulation
 {
 	CM_PLAIN2D = -2,			// regular 2D drawing.

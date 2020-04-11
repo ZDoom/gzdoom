@@ -132,7 +132,7 @@ void V_DrawPaletteTester(int paletteno)
 			PalEntry pe;
 			if (t > 1)
 			{
-				auto palette = palMgr.GetTranslation(TRANSLATION_Standard, t - 2)->Palette;
+				auto palette = GPalette.GetTranslation(TRANSLATION_Standard, t - 2)->Palette;
 				pe = palette[k];
 			}
 			else GPalette.BaseColors[k];

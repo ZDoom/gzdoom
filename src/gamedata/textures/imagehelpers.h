@@ -55,7 +55,7 @@ namespace ImageHelpers
 	{
 		if (wantluminance)
 		{
-			return palMgr.GetTranslation(TRANSLATION_Standard, srcisgrayscale ? STD_Gray : STD_Grayscale)->Remap;
+			return GPalette.GetTranslation(TRANSLATION_Standard, srcisgrayscale ? STD_Gray : STD_Grayscale)->Remap;
 		}
 		else
 		{

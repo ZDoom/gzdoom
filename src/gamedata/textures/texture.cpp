@@ -701,7 +701,7 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 		buffer = new unsigned char[W*(H + 1) * 4];
 		memset(buffer, 0, W * (H + 1) * 4);
 
-		auto remap = translation <= 0 ? nullptr : palMgr.TranslationToTable(translation);
+		auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
 		FBitmap bmp(buffer, W * 4, W, H);
 
 		int trans;

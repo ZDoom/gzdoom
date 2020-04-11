@@ -40,6 +40,7 @@
 #include "filesystem.h"
 #include "printf.h"
 #include "templates.h"
+#include "m_png.h"
 
 /****************************/
 /* Palette management stuff */
@@ -703,6 +704,7 @@ int V_GetColor(const uint32_t* palette, FScanner& sc)
 
 
 TArray<FSpecialColormap> SpecialColormaps;
+uint8_t DesaturateColormap[31][256];
 
 // These default tables are needed for texture composition.
 static FSpecialColormapParameters SpecialColormapParms[] =
@@ -819,6 +821,92 @@ void InitSpecialColormaps(PalEntry *pe)
 		AddSpecialColormap(pe, SpecialColormapParms[i].Start[0], SpecialColormapParms[i].Start[1],
 			SpecialColormapParms[i].Start[2], SpecialColormapParms[i].End[0],
 			SpecialColormapParms[i].End[1], SpecialColormapParms[i].End[2]);
+	}
+
+	// desaturated colormaps. These are used for texture composition
+	for (int m = 0; m < 31; m++)
+	{
+		uint8_t* shade = DesaturateColormap[m];
+		for (int c = 0; c < 256; c++)
+		{
+			int intensity = pe[c].Luminance();
+
+			int r = (pe[c].r * (31 - m) + intensity * m) / 31;
+			int g = (pe[c].g * (31 - m) + intensity * m) / 31;
+			int b = (pe[c].b * (31 - m) + intensity * m) / 31;
+			shade[c] = BestColor((uint32_t*)pe, r, g, b);
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int ReadPalette(int lumpnum, uint8_t* buffer)
+{
+	if (lumpnum < 0)
+	{
+		return 0;
+	}
+	FileData lump = fileSystem.ReadFile(lumpnum);
+	uint8_t* lumpmem = (uint8_t*)lump.GetMem();
+	memset(buffer, 0, 768);
+
+	FileReader fr;
+	fr.OpenMemory(lumpmem, lump.GetSize());
+	auto png = M_VerifyPNG(fr);
+	if (png)
+	{
+		uint32_t id, len;
+		fr.Seek(33, FileReader::SeekSet);
+		fr.Read(&len, 4);
+		fr.Read(&id, 4);
+		bool succeeded = false;
+		while (id != MAKE_ID('I', 'D', 'A', 'T') && id != MAKE_ID('I', 'E', 'N', 'D'))
+		{
+			len = BigLong((unsigned int)len);
+			if (id != MAKE_ID('P', 'L', 'T', 'E'))
+				fr.Seek(len, FileReader::SeekCur);
+			else
+			{
+				int PaletteSize = MIN<int>(len, 768);
+				fr.Read(buffer, PaletteSize);
+				return PaletteSize / 3;
+			}
+			fr.Seek(4, FileReader::SeekCur);	// Skip CRC
+			fr.Read(&len, 4);
+			id = MAKE_ID('I', 'E', 'N', 'D');
+			fr.Read(&id, 4);
+		}
+		I_Error("%s contains no palette", fileSystem.GetFileFullName(lumpnum));
+	}
+	if (memcmp(lumpmem, "JASC-PAL", 8) == 0)
+	{
+		FScanner sc;
+
+		sc.OpenMem(fileSystem.GetFileFullName(lumpnum), (char*)lumpmem, int(lump.GetSize()));
+		sc.MustGetString();
+		sc.MustGetNumber();	// version - ignore
+		sc.MustGetNumber();
+		int colors = MIN(256, sc.Number) * 3;
+		for (int i = 0; i < colors; i++)
+		{
+			sc.MustGetNumber();
+			if (sc.Number < 0 || sc.Number > 255)
+			{
+				sc.ScriptError("Color %d value out of range.", sc.Number);
+			}
+			buffer[i] = sc.Number;
+		}
+		return colors / 3;
+	}
+	else
+	{
+		memcpy(buffer, lumpmem, MIN<size_t>(768, lump.GetSize()));
+		return 256;
 	}
 }
 

@@ -43,6 +43,8 @@
 #include "v_palette.h"
 
 
+PaletteContainer GPalette;
+
 //----------------------------------------------------------------------------
 //
 //
@@ -59,6 +61,22 @@ void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
 	AddRemap(&remap);
 	TranslationTables.Resize(numslots);
 }
+
+void PaletteContainer::SetPalette(const uint8_t* colors)
+{
+	for (int i = 0; i < 256; i++, colors += 3)
+	{
+		BaseColors[i] = PalEntry(colors[0], colors[1], colors[2]);
+		Remap[i] = i;
+	}
+
+	// Find white and black from the original palette so that they can be
+	// used to make an educated guess of the translucency % for a BOOM
+	// translucency map.
+	WhiteIndex = BestColor((uint32_t*)BaseColors, 255, 255, 255, 0, 255);
+	BlackIndex = BestColor((uint32_t*)BaseColors, 0, 0, 0, 0, 255);
+}
+
 
 //----------------------------------------------------------------------------
 //
@@ -168,7 +186,7 @@ int PaletteContainer::StoreTranslation(int slot, FRemapTable *remap)
 	auto size = NumTranslations(slot);
 	for (i = 0; i < size; i++)
 	{
-		if (*remap == *palMgr.TranslationToTable(TRANSLATION(slot, i)))
+		if (*remap == *TranslationToTable(TRANSLATION(slot, i)))
 		{
 			// A duplicate of this translation already exists
 			return TRANSLATION(slot, i);

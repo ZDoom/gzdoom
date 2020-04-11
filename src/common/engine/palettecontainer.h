@@ -67,11 +67,19 @@ inline int GetTranslationIndex(uint32_t trans)
 
 class PaletteContainer
 {
+public:
+	PalEntry	BaseColors[256];	// non-gamma corrected palette
+	uint8_t		Remap[256];			// remap original palette indices to in-game indices
+
+	uint8_t		WhiteIndex;			// white in original palette index
+	uint8_t		BlackIndex;			// black in original palette index
+private:
 	FMemArena remapArena;
 	TArray<FRemapTable*> uniqueRemaps;
 	TArray<TAutoGrowArray<FRemapTablePtr, FRemapTable*>> TranslationTables;
 public:
 	void Init(int numslots);	// This cannot be a constructor!!!
+	void SetPalette(const uint8_t* colors);
 	void Clear();
 	FRemapTable* AddRemap(FRemapTable* remap);
 	void UpdateTranslation(int trans, FRemapTable* remap);
@@ -102,5 +110,5 @@ public:
 
 };
 
-extern PaletteContainer palMgr;
+extern PaletteContainer GPalette;
 

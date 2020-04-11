@@ -57,7 +57,6 @@ uint32_t Col2RGB8_2[63][256]; // this array's second dimension is called up by p
 ColorTable32k RGB32k;
 ColorTable256k RGB256k;
 
-FPalette GPalette;
 FColorMatcher ColorMatcher;
 
 /* Current color blending values */
@@ -96,99 +95,6 @@ CCMD (bumpgamma)
 	Printf ("Gamma correction level %g\n", *Gamma);
 }
 
-
-
-
-
-
-FPalette::FPalette ()
-{
-}
-
-FPalette::FPalette (const uint8_t *colors)
-{
-	SetPalette (colors);
-}
-
-void FPalette::SetPalette (const uint8_t *colors)
-{
-	for (int i = 0; i < 256; i++, colors += 3)
-	{
-		BaseColors[i] = PalEntry (colors[0], colors[1], colors[2]);
-		Remap[i] = i;
-	}
-
-	// Find white and black from the original palette so that they can be
-	// used to make an educated guess of the translucency % for a BOOM
-	// translucency map.
-	WhiteIndex = BestColor ((uint32_t *)BaseColors, 255, 255, 255, 0, 255);
-	BlackIndex = BestColor ((uint32_t *)BaseColors, 0, 0, 0, 0, 255);
-}
-
-int ReadPalette(int lumpnum, uint8_t *buffer)
-{
-	if (lumpnum < 0)
-	{
-		return 0;
-	}
-	FileData lump = fileSystem.ReadFile(lumpnum);
-	uint8_t *lumpmem = (uint8_t*)lump.GetMem();
-	memset(buffer, 0, 768);
-
-	FileReader fr;
-	fr.OpenMemory(lumpmem, lump.GetSize());
-	auto png = M_VerifyPNG(fr);
-	if (png)
-	{
-		uint32_t id, len;
-		fr.Seek(33, FileReader::SeekSet);
-		fr.Read(&len, 4);
-		fr.Read(&id, 4);
-		bool succeeded = false;
-		while (id != MAKE_ID('I', 'D', 'A', 'T') && id != MAKE_ID('I', 'E', 'N', 'D'))
-		{
-			len = BigLong((unsigned int)len);
-			if (id != MAKE_ID('P', 'L', 'T', 'E'))
-				fr.Seek(len, FileReader::SeekCur);
-			else
-			{
-				int PaletteSize = MIN<int>(len, 768);
-				fr.Read(buffer, PaletteSize);
-				return PaletteSize / 3;
-			}
-			fr.Seek(4, FileReader::SeekCur);	// Skip CRC
-			fr.Read(&len, 4);
-			id = MAKE_ID('I', 'E', 'N', 'D');
-			fr.Read(&id, 4);
-		}
-		I_Error("%s contains no palette", fileSystem.GetFileFullName(lumpnum));
-	}
-	if (memcmp(lumpmem, "JASC-PAL", 8) == 0)
-	{
-		FScanner sc;
-		
-		sc.OpenMem(fileSystem.GetFileFullName(lumpnum), (char*)lumpmem, int(lump.GetSize()));
-		sc.MustGetString();
-		sc.MustGetNumber();	// version - ignore
-		sc.MustGetNumber();	
-		int colors = MIN(256, sc.Number) * 3;
-		for (int i = 0; i < colors; i++)
-		{
-			sc.MustGetNumber();
-			if (sc.Number < 0 || sc.Number > 255)
-			{
-				sc.ScriptError("Color %d value out of range.", sc.Number);
-			}
-			buffer[i] = sc.Number;
-		}
-		return colors / 3;
-	}
-	else
-	{
-		memcpy(buffer, lumpmem, MIN<size_t>(768, lump.GetSize()));
-		return 256;
-	}
-}
 
 //==========================================================================
 //

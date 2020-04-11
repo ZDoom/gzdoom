@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
-#include "doomtype.h"
+#include "zstring.h"
+#include "tarray.h"
 #include "filesystem.h"
 #include "files.h"
 #include "filereadermusicinterface.h"

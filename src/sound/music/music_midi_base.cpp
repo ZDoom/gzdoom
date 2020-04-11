@@ -38,6 +38,8 @@
 #include "menu/menu.h"
 #include <zmusic.h>
 #include "s_music.h"
+#include "c_cvars.h"
+#include "printf.h"
 
 #define DEF_MIDIDEV -5
 

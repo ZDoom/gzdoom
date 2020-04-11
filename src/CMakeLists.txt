@@ -884,7 +884,6 @@ set (PCH_SOURCES
 	sound/s_sndseq.cpp
 	sound/s_doomsound.cpp
 	sound/s_sound.cpp
-	sound/s_music.cpp
 	serializer.cpp
 	scriptutil.cpp
 	st_stuff.cpp
@@ -1097,6 +1096,7 @@ set (PCH_SOURCES
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
+	sound/music/music.cpp
 	sound/music/i_music.cpp
 	sound/music/i_soundfont.cpp
 	sound/backend/i_sound.cpp

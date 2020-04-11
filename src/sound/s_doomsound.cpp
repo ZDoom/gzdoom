@@ -1412,7 +1412,6 @@ DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
 }
 
 
-
 CCMD (snd_status)
 {
 	GSnd->PrintStatus ();

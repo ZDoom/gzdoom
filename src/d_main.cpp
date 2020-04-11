@@ -148,6 +148,7 @@ void DrawFullscreenSubtitle(const char *text);
 void D_Cleanup();
 void FreeSBarInfoScript();
 void I_UpdateWindowTitle();
+void S_ParseMusInfo();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 

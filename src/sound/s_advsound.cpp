@@ -230,7 +230,7 @@ static const char *SICommandStrings[] =
 	NULL
 };
 
-static FMusicVolume *MusicVolumes;
+static FMusicVolume *MusicVolumes_;
 static TArray<FSavedPlayerSoundInfo> SavedPlayerSounds;
 
 static int NumPlayerReserves;
@@ -256,7 +256,7 @@ static uint8_t CurrentPitchMask;
 
 float S_GetMusicVolume (const char *music)
 {
-	FMusicVolume *musvol = MusicVolumes;
+	FMusicVolume *musvol = MusicVolumes_;
 
 	while (musvol != NULL)
 	{
@@ -744,10 +744,10 @@ void S_ClearSoundData()
 		soundEngine->Clear();
 
 	Ambients.Clear();
-	while (MusicVolumes != NULL)
+	while (MusicVolumes_ != NULL)
 	{
-		FMusicVolume *me = MusicVolumes;
-		MusicVolumes = me->Next;
+		FMusicVolume *me = MusicVolumes_;
+		MusicVolumes_ = me->Next;
 		M_Free(me);
 	}
 
@@ -1184,8 +1184,8 @@ static void S_AddSNDINFO (int lump)
 				FMusicVolume *mv = (FMusicVolume *)M_Malloc (sizeof(*mv) + musname.Len());
 				mv->Volume = (float)sc.Float;
 				strcpy (mv->MusicName, musname);
-				mv->Next = MusicVolumes;
-				MusicVolumes = mv;
+				mv->Next = MusicVolumes_;
+				MusicVolumes_ = mv;
 				}
 				break;
 

@@ -63,7 +63,7 @@
 	auto ret = ChangeMusicSetting(zmusic_##key, mus_playing.handle,*self); \
 	if (ret) S_MIDIDeviceChanged(-1); 
 
-
+#ifndef ZMUSIC_LITE
 CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_CVAR(adl_chips_count);
@@ -103,7 +103,7 @@ CUSTOM_CVAR(Int, adl_volume_model, 3/*ADLMIDI_VolumeModel_DMX*/, CVAR_ARCHIVE | 
 {
 	FORWARD_CVAR(adl_bank);
 }
-
+#endif
 //==========================================================================
 //
 // Fluidsynth MIDI device
@@ -223,6 +223,7 @@ CUSTOM_CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIR
 	FORWARD_BOOL_CVAR(opl_fullpan);
 }
 
+#ifndef ZMUSIC_LITE
 //==========================================================================
 //
 // OPN MIDI device
@@ -382,12 +383,13 @@ CUSTOM_CVAR(Float, timidity_min_sustain_time, 5000, CVAR_ARCHIVE | CVAR_GLOBALCO
 {
 	FORWARD_CVAR(timidity_min_sustain_time);
 }
+#endif
 
 CUSTOM_CVAR(String, timidity_config, GAMENAMELOWERCASE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_VIRTUAL)
 {
 	FORWARD_STRING_CVAR(timidity_config);
 }
-
+#ifndef ZMUSIC_LITE
 //==========================================================================
 //
 // WildMidi
@@ -408,7 +410,7 @@ CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBAL
 {
 	FORWARD_BOOL_CVAR(wildmidi_enhanced_resampling);
 }
-
+#endif
 
 //==========================================================================
 //

@@ -415,7 +415,14 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start();
-	S_StartMusic();
+	S_ResetMusic();
+
+	// Don't start the music if loading a savegame, because the music is stored there.
+	// Don't start the music if revisiting a level in a hub for the same reason.
+	if (!primaryLevel->IsReentering())
+	{
+		primaryLevel->SetMusic();
+	}
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);

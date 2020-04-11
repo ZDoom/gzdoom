@@ -1,29 +1,11 @@
-//-----------------------------------------------------------------------------
-//
-// Copyright 1993-1996 id Software
-// Copyright 1999-2016 Randy Heit
-// Copyright 2002-2016 Christoph Oelckers
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see http://www.gnu.org/licenses/
-//
-//-----------------------------------------------------------------------------
-//
-// DESCRIPTION:  none
-//
-//-----------------------------------------------------------------------------
-
-/* For code that originates from ZDoom the following applies:
+/*
+**
+** music.cpp
+**
+** music engine
+**
+** Copyright 1999-2016 Randy Heit
+** Copyright 2002-2016 Christoph Oelckers
 **
 **---------------------------------------------------------------------------
 **
@@ -104,10 +86,6 @@ static FPlayList PlayList;
 float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
 
-DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
-DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -257,13 +235,11 @@ void S_UpdateMusic ()
 
 //==========================================================================
 //
-// S_Start
+// Resets the music player if music playback was paused.
 //
-// Per level startup code. Kills playing sounds at start of level
-// and starts new music.
 //==========================================================================
 
-void S_StartMusic ()
+void S_ResetMusic ()
 {
 	// stop the old music if it has been paused.
 	// This ensures that the new music is started from the beginning
@@ -272,13 +248,6 @@ void S_StartMusic ()
 
 	// start new music for the level
 	MusicPaused = false;
-
-	// Don't start the music if loading a savegame, because the music is stored there.
-	// Don't start the music if revisiting a level in a hub for the same reason.
-	if (!primaryLevel->IsReentering())
-	{
-		primaryLevel->SetMusic();
-	}
 }
 
 
@@ -361,6 +330,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		mus_playing.LastSong = "";
 		return true;
 	}
+	if (*musicname == '/') musicname++;
 
 	FString DEH_Music;
 	if (musicname[0] == '$')
@@ -460,7 +430,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		// shutdown old music
 		S_StopMusic (true);
 
-		// Just record it if volume is 0
+		// Just record it if volume is 0 or music was disabled
 		if (snd_musicvolume <= 0)
 		{
 			mus_playing.loop = looping;
@@ -505,22 +475,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	return false;
 }
 
-DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
-{
-	PARAM_PROLOGUE;
-	PARAM_STRING(music);
-	PARAM_INT(order);
-	PARAM_BOOL(looping);
-	PARAM_BOOL(force);
-	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
-}
-
-
 //==========================================================================
 //
 // S_RestartMusic
 //
-// Must only be called from snd_reset in i_sound.cpp!
 //==========================================================================
 
 void S_RestartMusic ()
@@ -610,60 +568,6 @@ void S_StopMusic (bool force)
 			ZMusic_Close(h);
 		}
 		mus_playing.name = "";
-	}
-}
-
-//==========================================================================
-//
-// CCMD idmus
-//
-//==========================================================================
-
-CCMD (idmus)
-{
-	level_info_t *info;
-	FString map;
-	int l;
-
-	if (!nomusic)
-	{
-		if (argv.argc() > 1)
-		{
-			if (gameinfo.flags & GI_MAPxx)
-			{
-				l = atoi (argv[1]);
-			if (l <= 99)
-				{
-					map = CalcMapName (0, l);
-				}
-				else
-				{
-					Printf ("%s\n", GStrings("STSTR_NOMUS"));
-					return;
-				}
-			}
-			else
-			{
-				map = CalcMapName (argv[1][0] - '0', argv[1][1] - '0');
-			}
-
-			if ( (info = FindLevelInfo (map)) )
-			{
-				if (info->Music.IsNotEmpty())
-				{
-					S_ChangeMusic (info->Music, info->musicorder);
-					Printf ("%s\n", GStrings("STSTR_MUS"));
-				}
-			}
-			else
-			{
-				Printf ("%s\n", GStrings("STSTR_NOMUS"));
-			}
-		}
-	}
-	else
-	{
-		Printf("Music is disabled\n");
 	}
 }
 

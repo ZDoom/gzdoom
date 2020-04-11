@@ -65,6 +65,8 @@
 #include "v_video.h"
 #include "md5.h"
 #include "findfile.h"
+#include "i_music.h"
+#include "s_music.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -1083,4 +1085,58 @@ CCMD(r_showcaps)
 	PRINT_CAP("Voxels", RFF_VOXELS)
 }
 
+
+//==========================================================================
+//
+// CCMD idmus
+//
+//==========================================================================
+
+CCMD(idmus)
+{
+	level_info_t* info;
+	FString map;
+	int l;
+
+	if (!nomusic)
+	{
+		if (argv.argc() > 1)
+		{
+			if (gameinfo.flags & GI_MAPxx)
+			{
+				l = atoi(argv[1]);
+				if (l <= 99)
+				{
+					map = CalcMapName(0, l);
+				}
+				else
+				{
+					Printf("%s\n", GStrings("STSTR_NOMUS"));
+					return;
+				}
+			}
+			else
+			{
+				map = CalcMapName(argv[1][0] - '0', argv[1][1] - '0');
+			}
+
+			if ((info = FindLevelInfo(map)))
+			{
+				if (info->Music.IsNotEmpty())
+				{
+					S_ChangeMusic(info->Music, info->musicorder);
+					Printf("%s\n", GStrings("STSTR_MUS"));
+				}
+			}
+			else
+			{
+				Printf("%s\n", GStrings("STSTR_NOMUS"));
+			}
+		}
+	}
+	else
+	{
+		Printf("Music is disabled\n");
+	}
+}
 

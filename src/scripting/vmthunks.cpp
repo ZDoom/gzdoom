@@ -56,6 +56,7 @@
 #include "c_cvars.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
+#include "s_music.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -3435,6 +3436,16 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 }
 
 
+DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(music);
+	PARAM_INT(order);
+	PARAM_BOOL(looping);
+	PARAM_BOOL(force);
+	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
+}
+
 
 
 //==========================================================================
@@ -3619,3 +3630,8 @@ DEFINE_GLOBAL(StatusBar);
 
 DEFINE_GLOBAL(Bindings)
 DEFINE_GLOBAL(AutomapBindings)
+
+DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);

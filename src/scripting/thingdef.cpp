@@ -474,10 +474,11 @@ void LoadActors()
 		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
 	}
 	FScriptPosition::ResetErrorCounter();
-
-	for (int i = PClassActor::AllActorClasses.Size() - 1; i >= 0; i--)
+	// AllActorClasses hasn'T been set up yet.
+	for (int i = PClass::AllClasses.Size() - 1; i >= 0; i--)
 	{
-		auto ti = PClassActor::AllActorClasses[i];
+		auto ti = (PClassActor*)PClass::AllClasses[i];
+		if (!ti->IsDescendantOf(RUNTIME_CLASS(AActor))) continue;
 		if (ti->Size == TentativeClass)
 		{
 			if (ti->bOptional)

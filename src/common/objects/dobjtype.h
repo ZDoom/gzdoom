@@ -36,12 +36,11 @@ class PClass
 {
 protected:
 	void Derive(PClass *newclass, FName name);
-	void InitializeSpecials(void *addr, void *defaults, TArray<FTypeAndOffset> PClass::*Inits);
 	void SetSuper();
 public:
+	void InitializeSpecials(void* addr, void* defaults, TArray<FTypeAndOffset> PClass::* Inits);
 	void WriteAllFields(FSerializer &ar, const void *addr) const;
 	bool ReadAllFields(FSerializer &ar, void *addr) const;
-	void InitializeDefaults();
 	int FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc);
 	PSymbol *FindSymbol(FName symname, bool searchparents) const;
 	PField *AddField(FName name, PType *type, uint32_t flags);
@@ -77,7 +76,7 @@ public:
 	~PClass();
 	void InsertIntoHash(bool native);
 	DObject *CreateNew();
-	PClass *CreateDerivedClass(FName name, unsigned int size);
+	PClass *CreateDerivedClass(FName name, unsigned int size, bool *newlycreated = nullptr);
 
 	void InitializeActorInfo();
 	void BuildFlatPointers();

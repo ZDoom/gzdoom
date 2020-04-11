@@ -39,17 +39,12 @@
 
 #include "dobject.h"
 #include "serializer.h"
-#include "actor.h"
 #include "autosegs.h"
 #include "v_text.h"
-#include "a_pickups.h"
-#include "d_player.h"
-#include "fragglescript/t_fs.h"
-#include "a_keys.h"
+#include "c_cvars.h"
 #include "vm.h"
+#include "symbols.h"
 #include "types.h"
-#include "scriptutil.h"
-#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -217,13 +212,6 @@ void PClass::StaticInit ()
 		((ClassReg *)*probe)->RegisterClass ();
 	}
 	probe.Reset();
-	for(auto cls : AllClasses)
-	{
-		if (cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
-		{
-			PClassActor::AllActorClasses.Push(static_cast<PClassActor*>(cls));
-		}
-	}
 
 	// Keep built-in classes in consistant order. I did this before, though
 	// I'm not sure if this is really necessary to maintain any sort of sync.
@@ -255,7 +243,6 @@ void PClass::StaticShutdown ()
 	{
 		*p = nullptr;
 	}
-	ScriptUtil::Clear();
 	FunctionPtrList.Clear();
 	VMFunction::DeleteAll();
 
@@ -267,10 +254,6 @@ void PClass::StaticShutdown ()
 	// This flags DObject::Destroy not to call any scripted OnDestroy methods anymore.
 	bVMOperational = false;
 
-	for (auto &p : players)
-	{
-		p.PendingWeapon = nullptr;
-	}
 	Namespaces.ReleaseSymbols();
 
 	// This must be done in two steps because the native classes are not ordered by inheritance,
@@ -282,7 +265,6 @@ void PClass::StaticShutdown ()
 	TypeTable.Clear();
 	ClassDataAllocator.FreeAllBlocks();
 	AllClasses.Clear();
-	PClassActor::AllActorClasses.Clear();
 	ClassMap.Clear();
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
@@ -392,10 +374,6 @@ void PClass::InsertIntoHash (bool native)
 	else
 	{
 		ClassMap[TypeName] = this;
-	}
-	if (!native && IsDescendantOf(RUNTIME_CLASS(AActor)))
-	{
-		PClassActor::AllActorClasses.Push(static_cast<PClassActor*>(this));
 	}
 }
 
@@ -550,97 +528,13 @@ void PClass::Derive(PClass *newclass, FName name)
 
 //==========================================================================
 //
-// PClassActor :: InitializeNativeDefaults
-//
-//==========================================================================
-
-void PClass::InitializeDefaults()
-{
-	if (IsDescendantOf(RUNTIME_CLASS(AActor)))
-	{
-		assert(Defaults == nullptr);
-		Defaults = (uint8_t *)M_Malloc(Size);
-
-		ConstructNative(Defaults);
-		// We must unlink the defaults from the class list because it's just a static block of data to the engine.
-		DObject *optr = (DObject*)Defaults;
-		GC::Root = optr->ObjNext;
-		optr->ObjNext = nullptr;
-		optr->SetClass(this);
-
-		// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
-		if (ParentClass->Defaults != nullptr)
-		{
-			memcpy(Defaults + sizeof(DObject), ParentClass->Defaults + sizeof(DObject), ParentClass->Size - sizeof(DObject));
-			if (Size > ParentClass->Size)
-			{
-				memset(Defaults + ParentClass->Size, 0, Size - ParentClass->Size);
-			}
-		}
-		else
-		{
-			memset(Defaults + sizeof(DObject), 0, Size - sizeof(DObject));
-		}
-
-		assert(MetaSize >= ParentClass->MetaSize);
-		if (MetaSize != 0)
-		{
-			Meta = (uint8_t*)M_Malloc(MetaSize);
-
-			// Copy the defaults from the parent but leave the DObject part alone because it contains important data.
-			if (ParentClass->Meta != nullptr)
-			{
-				memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
-				if (MetaSize > ParentClass->MetaSize)
-				{
-					memset(Meta + ParentClass->MetaSize, 0, MetaSize - ParentClass->MetaSize);
-				}
-			}
-			else
-			{
-				memset(Meta, 0, MetaSize);
-			}
-
-			if (MetaSize > 0) memcpy(Meta, ParentClass->Meta, ParentClass->MetaSize);
-			else memset(Meta, 0, MetaSize);
-		}
-	}
-
-	if (VMType != nullptr)	// purely internal classes have no symbol table
-	{
-		if (bRuntimeClass)
-		{
-			// Copy parent values from the parent defaults.
-			assert(ParentClass != nullptr);
-			if (Defaults != nullptr) ParentClass->InitializeSpecials(Defaults, ParentClass->Defaults, &PClass::SpecialInits);
-			for (const PField *field : Fields)
-			{
-				if (!(field->Flags & VARF_Native) && !(field->Flags & VARF_Meta))
-				{
-					field->Type->SetDefaultValue(Defaults, unsigned(field->Offset), &SpecialInits);
-				}
-			}
-		}
-		if (Meta != nullptr) ParentClass->InitializeSpecials(Meta, ParentClass->Meta, &PClass::MetaInits);
-		for (const PField *field : Fields)
-		{
-			if (!(field->Flags & VARF_Native) && (field->Flags & VARF_Meta))
-			{
-				field->Type->SetDefaultValue(Meta, unsigned(field->Offset), &MetaInits);
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
 // PClass :: CreateDerivedClass
 //
 // Create a new class based on an existing class
 //
 //==========================================================================
 
-PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
+PClass *PClass::CreateDerivedClass(FName name, unsigned int size, bool *newlycreated)
 {
 	assert(size >= Size);
 	PClass *type;
@@ -648,6 +542,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 	const PClass *existclass = FindClass(name);
 
+	if (newlycreated) *newlycreated = false;
 	if (existclass != nullptr)
 	{
 		// This is a placeholder so fill it in
@@ -680,7 +575,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 	if (size != TentativeClass)
 	{
 		NewClassType(type);
-		type->InitializeDefaults();
+		if (newlycreated) *newlycreated = true;
 		type->Virtuals = Virtuals;
 	}
 	else

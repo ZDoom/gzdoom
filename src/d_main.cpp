@@ -110,6 +110,7 @@
 #include "animations.h"
 #include "texturemanager.h"
 #include "formats/multipatchtexture.h"
+#include "scriptutil.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
@@ -3443,6 +3444,12 @@ void D_Cleanup()
 	
 	GC::DelSoftRootHead();
 	
+	for (auto& p : players)
+	{
+		p.PendingWeapon = nullptr;
+	}
+	PClassActor::AllActorClasses.Clear();
+	ScriptUtil::Clear();
 	PClass::StaticShutdown();
 	
 	GC::FullGC();					// perform one final garbage collection after shutdown

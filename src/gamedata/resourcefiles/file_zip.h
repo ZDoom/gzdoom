@@ -3,11 +3,6 @@
 
 #include "resourcefile.h"
 
-enum
-{
-	LUMPFZIP_NEEDFILESTART = 128
-};
-
 //==========================================================================
 //
 // Zip Lump
@@ -18,6 +13,7 @@ struct FZipLump : public FResourceLump
 {
 	uint16_t	GPFlags;
 	uint8_t	Method;
+	bool	NeedFileStart;
 	int		CompressedSize;
 	int		Position;
 	unsigned CRC32;

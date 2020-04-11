@@ -340,7 +340,8 @@ bool FZipFile::Open(bool quiet)
 		lump_p->LumpSize = LittleLong(zip_fh->UncompressedSize);
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.
-		lump_p->Flags = LUMPF_ZIPFILE | LUMPFZIP_NEEDFILESTART;
+		lump_p->Flags = LUMPF_ZIPFILE;
+		lump_p->NeedFileStart = true;
 		lump_p->Method = uint8_t(zip_fh->Method);
 		if (lump_p->Method != METHOD_STORED) lump_p->Flags |= LUMPF_COMPRESSED;
 		lump_p->GPFlags = zip_fh->Flags;
@@ -382,7 +383,7 @@ FZipFile::~FZipFile()
 FCompressedBuffer FZipLump::GetRawData()
 {
 	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)CompressedSize, Method, GPFlags, CRC32, new char[CompressedSize] };
-	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
+	if (NeedFileStart) SetLumpAddress();
 	Owner->Reader.Seek(Position, FileReader::SeekSet);
 	Owner->Reader.Read(cbuf.mBuffer, CompressedSize);
 	return cbuf;
@@ -406,7 +407,7 @@ void FZipLump::SetLumpAddress()
 	Owner->Reader.Read(&localHeader, sizeof(localHeader));
 	skiplen = LittleShort(localHeader.NameLength) + LittleShort(localHeader.ExtraLength);
 	Position += sizeof(localHeader) + skiplen;
-	Flags &= ~LUMPFZIP_NEEDFILESTART;
+	NeedFileStart = false;
 }
 
 //==========================================================================
@@ -421,7 +422,7 @@ FileReader *FZipLump::GetReader()
 	// In that case always force caching of the lump
 	if (Method == METHOD_STORED)
 	{
-		if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
+		if (NeedFileStart) SetLumpAddress();
 		Owner->Reader.Seek(Position, FileReader::SeekSet);
 		return &Owner->Reader;
 	}
@@ -436,7 +437,7 @@ FileReader *FZipLump::GetReader()
 
 int FZipLump::FillCache()
 {
-	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
+	if (NeedFileStart) SetLumpAddress();
 	const char *buffer;
 
 	if (Method == METHOD_STORED && (buffer = Owner->Reader.GetBuffer()) != NULL)
@@ -463,7 +464,7 @@ int FZipLump::FillCache()
 int FZipLump::GetFileOffset()
 {
 	if (Method != METHOD_STORED) return -1;
-	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
+	if (NeedFileStart) SetLumpAddress();
 	return Position;
 }
 

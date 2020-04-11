@@ -165,6 +165,27 @@ FSerializer &FDoomSerializer::Sprite(const char *key, int32_t &spritenum, int32_
 	return *this;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FSerializer& FDoomSerializer::StatePointer(const char* key, void* ptraddr, bool *res)
+{
+	if (isWriting())
+	{
+		if (res) *res = true;
+		(*this)(key, *(FState**)ptraddr);
+	}
+	else
+	{
+		::Serialize(*this, key, *(FState**)ptraddr, nullptr, res);
+	}
+	return *this;
+}
+
+
 
 template<> FSerializer &Serialize(FSerializer &ar, const char *key, FPolyObj *&value, FPolyObj **defval)
 {

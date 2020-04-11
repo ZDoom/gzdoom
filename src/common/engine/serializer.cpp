@@ -447,6 +447,18 @@ FSerializer &FSerializer::Sprite(const char *key, int32_t &spritenum, int32_t *d
 
 //==========================================================================
 //
+// only here so that it can be virtually overridden. Without reference this cannot save anything.
+//
+//==========================================================================
+
+FSerializer& FSerializer::StatePointer(const char* key, void* ptraddr, bool *res)
+{
+	if (res) *res = false;
+	return *this;
+}
+
+//==========================================================================
+//
 //
 //
 //==========================================================================

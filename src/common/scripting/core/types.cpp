@@ -38,7 +38,6 @@
 #include "types.h"
 #include "printf.h"
 #include "textureid.h"
-#include "version.h"
 
 
 FTypeTable TypeTable;
@@ -1078,6 +1077,46 @@ bool PName::ReadValue(FSerializer &ar, const char *key, void *addr) const
 		return true;
 	}
 }
+
+/* PStatePointer **********************************************************/
+
+//==========================================================================
+//
+// PStatePointer Default Constructor
+//
+//==========================================================================
+
+PStatePointer::PStatePointer()
+{
+	mDescriptiveName = "Pointer<State>";
+	PointedType = NewStruct(NAME_State, nullptr, true);
+	IsConst = true;
+}
+
+//==========================================================================
+//
+// PStatePointer :: WriteValue
+//
+//==========================================================================
+
+void PStatePointer::WriteValue(FSerializer& ar, const char* key, const void* addr) const
+{
+	ar.StatePointer(key, const_cast<void*>(addr), nullptr);
+}
+
+//==========================================================================
+//
+// PStatePointer :: ReadValue
+//
+//==========================================================================
+
+bool PStatePointer::ReadValue(FSerializer& ar, const char* key, void* addr) const
+{
+	bool res = false;
+	ar.StatePointer(key, addr, &res);
+	return res;
+}
+
 
 /* PSpriteID ******************************************************************/
 
@@ -2522,54 +2561,5 @@ void FTypeTable::Clear()
 CCMD(typetable)
 {
 	DumpTypeTable();
-}
-
-// fixme: The VM depends on this but it's engine specific. Needs a better solution.
-
-/* PStatePointer **********************************************************/
-#ifdef GZDOOM
-#include "info.h"
-#include "serializer_doom.h"
-#endif
-
-//==========================================================================
-//
-// PStatePointer Default Constructor
-//
-//==========================================================================
-
-PStatePointer::PStatePointer()
-{
-	mDescriptiveName = "Pointer<State>";
-	PointedType = NewStruct(NAME_State, nullptr, true);
-	IsConst = true;
-}
-
-//==========================================================================
-//
-// PStatePointer :: WriteValue
-//
-//==========================================================================
-
-void PStatePointer::WriteValue(FSerializer& ar, const char* key, const void* addr) const
-{
-#ifdef GZDOOM
-	ar(key, *(FState**)addr);
-#endif
-}
-
-//==========================================================================
-//
-// PStatePointer :: ReadValue
-//
-//==========================================================================
-
-bool PStatePointer::ReadValue(FSerializer& ar, const char* key, void* addr) const
-{
-	bool res = false;
-#ifdef GZDOOM
-	::Serialize(ar, key, *(FState**)addr, nullptr, &res);
-#endif
-	return res;
 }
 

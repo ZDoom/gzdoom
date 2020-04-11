@@ -29,7 +29,8 @@ public:
 	{}
 
 	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def) override;
-	
+	FSerializer& StatePointer(const char* key, void* ptraddr, bool *res) override;
+
 };
 
 FSerializer &SerializeArgs(FSerializer &arc, const char *key, int *args, int *defargs, int special);

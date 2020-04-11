@@ -2979,7 +2979,6 @@ void D_Cleanup()
 	V_ClearFonts();					// must clear global font pointers
 	ColorSets.Clear();
 	PainFlashes.Clear();
-	R_DeinitTranslationTables();	// some tables are initialized from outside the translation code.
 	gameinfo.~gameinfo_t();
 	new (&gameinfo) gameinfo_t;		// Reset gameinfo
 	S_Shutdown();					// free all channels and delete playlist

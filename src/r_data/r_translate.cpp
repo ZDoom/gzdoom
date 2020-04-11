@@ -50,57 +50,103 @@
 #include "v_text.h"
 #include "m_crc32.h"
 #include "g_levellocals.h"
+#include "palutil.h"
 
 #include "gi.h"
 
-static FMemArena remapArena;
-static TAutoGrowArray<FRemapTablePtr, FRemapTable *> TranslationTables[NUM_TRANSLATION_TABLES];
+PaletteContainer palMgr;
 
-inline FRemapTable* AllocRemap(FRemapTable *remap)
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void PaletteContainer::Init()	// This cannot be a constructor!!!
 {
+	Clear();
+	// Make sure that index 0 is always the identity translation.
+	FRemapTable remap;
+	remap.MakeIdentity();
+	remap.Inactive = true;
+	AddRemap(&remap);
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void PaletteContainer::Clear()
+{
+	remapArena.FreeAllBlocks();
+	uniqueRemaps.Reset();
+	for (auto& slot : TranslationTables) slot.Reset();
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+FRemapTable* PaletteContainer::AddRemap(FRemapTable* remap)
+{
+	if (!remap) return uniqueRemaps[0];
+
+	remap->crc32 = CalcCRC32((uint8_t*)remap->Palette, sizeof(remap->Palette));
+
+	for (auto uremap : uniqueRemaps)
+	{
+		if (uremap->crc32 == remap->crc32 && uremap->NumEntries == remap->NumEntries && *uremap == *remap)
+			return uremap;
+	}
 	auto newremap = (FRemapTable*)remapArena.Alloc(sizeof(FRemapTable));
-	if (remap) *newremap = *remap;
-	else newremap->MakeIdentity();
+	*newremap = *remap;
+	auto index = uniqueRemaps.Push(newremap);
+	newremap->Index = index;
 	return newremap;
 }
 
-void UpdateTranslation(int trans, FRemapTable* remap)
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void PaletteContainer::UpdateTranslation(int trans, FRemapTable* remap)
 {
-	auto newremap = AllocRemap(remap);
+	auto newremap = AddRemap(remap);
 	TranslationTables[GetTranslationType(trans)].SetVal(GetTranslationIndex(trans), newremap);
-	remap->UpdateNative();
 }
 
-int AddTranslation(int slot, FRemapTable* remap, int count)
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+int PaletteContainer::AddTranslation(int slot, FRemapTable* remap, int count)
 {
 	uint32_t id;
 	for (int i = 0; i < count; i++)
 	{
-		auto newremap = AllocRemap(&remap[i]);
+		auto newremap = AddRemap(&remap[i]);
 		id = TranslationTables[slot].Push(newremap);
 	}
 	return TRANSLATION(slot, id);
 }
 
-FRemapTable* GetTranslation(int slot, int index)
-{
-	return TranslationTables[slot].GetVal(index);
-}
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
 
-void CopyTranslation(int dest, int src)
+void PaletteContainer::CopyTranslation(int dest, int src)
 {
-	*TranslationTables[GetTranslationType(dest)][GetTranslationType(src)] = *TranslationToTable(src);
-	TranslationTables[GetTranslationType(dest)][GetTranslationType(src)]->UpdateNative();
-}
-
-void ClearTranslationSlot(int slot)
-{
-	TranslationTables[slot].Clear();
-}
-
-unsigned NumTranslations(int slot)
-{
-	return TranslationTables[slot].Size();
+	TranslationTables[GetTranslationType(dest)][GetTranslationType(src)] = TranslationToTable(src);
 }
 
 //----------------------------------------------------------------------------
@@ -109,7 +155,7 @@ unsigned NumTranslations(int slot)
 //
 //----------------------------------------------------------------------------
 
-FRemapTable *TranslationToTable(int translation)
+FRemapTable *PaletteContainer::TranslationToTable(int translation)
 {
 	unsigned int type = GetTranslationType(translation);
 	unsigned int index = GetTranslationIndex(translation);
@@ -120,6 +166,34 @@ FRemapTable *TranslationToTable(int translation)
 	}
 	return GetTranslation(type, index);
 }
+
+//----------------------------------------------------------------------------
+//
+// Stores a copy of this translation in the DECORATE translation table
+//
+//----------------------------------------------------------------------------
+
+int PaletteContainer::StoreTranslation(int slot, FRemapTable *remap)
+{
+	unsigned int i;
+
+	auto size = NumTranslations(slot);
+	for (i = 0; i < size; i++)
+	{
+		if (*remap == *palMgr.TranslationToTable(TRANSLATION(slot, i)))
+		{
+			// A duplicate of this translation already exists
+			return TRANSLATION(slot, i);
+		}
+	}
+	if (size >= MAX_DECORATE_TRANSLATIONS)
+	{
+		I_Error("Too many DECORATE translations");
+	}
+	return AddTranslation(slot, remap);
+}
+
+
 
 
 const uint8_t IcePalette[16][3] =
@@ -166,58 +240,6 @@ static bool IndexOutOfRange(const int start1, const int end1, const int start2, 
 	return IndexOutOfRange(start2, end2) || outOfRange;
 }
 
-
-
-TArray<FUniquePalette::PalData> FUniquePalette::AllPalettes;
-
-//----------------------------------------------------------------------------
-//
-// Helper class to deal with frequently changing translations from ACS
-//
-//----------------------------------------------------------------------------
-
-bool FUniquePalette::Update()
-{
-	PalData pd;
-
-	memset(pd.pe, 0, sizeof(pd.pe));
-	memcpy(pd.pe, remap->Palette, remap->NumEntries * sizeof(*remap->Palette));
-	pd.crc32 = CalcCRC32((uint8_t*)pd.pe, sizeof(pd.pe));
-	for (unsigned int i = 0; i< AllPalettes.Size(); i++)
-	{
-		if (pd.crc32 == AllPalettes[i].crc32)
-		{
-			if (!memcmp(pd.pe, AllPalettes[i].pe, sizeof(pd.pe)))
-			{
-				Index = 1 + i;
-				return true;
-			}
-		}
-	}
-	Index = 1 + AllPalettes.Push(pd);
-	return true;
-}
-
-/****************************************************/
-/****************************************************/
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-int FRemapTable::GetUniqueIndex()
-{
-	if (Inactive) return 0;
-	if (Native == nullptr)
-	{
-		Native = new FUniquePalette(this);
-		Native->Update();
-	}
-	return Native->GetIndex();
-}
-
 //----------------------------------------------------------------------------
 //
 //
@@ -239,16 +261,14 @@ bool FRemapTable::operator==(const FRemapTable &o)
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::Serialize(FSerializer &arc)
+static void SerializeRemap(FSerializer &arc, FRemapTable &remap)
 {
-	int n = NumEntries;
-
-	arc("numentries", NumEntries);
-	arc.Array("remap", Remap, NumEntries);
-	arc.Array("palette", Palette, NumEntries);
+	arc("numentries", remap.NumEntries);
+	arc.Array("remap", remap.Remap, remap.NumEntries);
+	arc.Array("palette", remap.Palette, remap.NumEntries);
 }
 
-void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
+void StaticSerializeTranslations(FSerializer &arc)
 {
 	if (arc.BeginArray("translations"))
 	{
@@ -257,16 +277,16 @@ void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
 		int w;
 		if (arc.isWriting())
 		{
-			auto size = NumTranslations(TRANSLATION_LevelScripted);
+			auto size = palMgr.NumTranslations(TRANSLATION_LevelScripted);
 			for (unsigned int i = 0; i < size; ++i)
 			{
-				trans = TranslationToTable(TRANSLATION(TRANSLATION_LevelScripted, i));
+				trans = palMgr.TranslationToTable(TRANSLATION(TRANSLATION_LevelScripted, i));
 				if (trans != NULL && !trans->IsIdentity())
 				{
 					if (arc.BeginObject(nullptr))
 					{
 						arc("index", i);
-						trans->Serialize(arc);
+						SerializeRemap(arc, *trans);
 						arc.EndObject();
 					}
 				}
@@ -278,8 +298,8 @@ void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
 			{
 				arc("index", w);
 				FRemapTable remap;
-				remap.Serialize(arc);
-				UpdateTranslation(TRANSLATION(TRANSLATION_LevelScripted, w), &remap);
+				SerializeRemap(arc, remap);
+				palMgr.UpdateTranslation(TRANSLATION(TRANSLATION_LevelScripted, w), &remap);
 				arc.EndObject();
 			}
 		}
@@ -327,35 +347,6 @@ bool FRemapTable::IsIdentity() const
 		}
 	}
 	return true;
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-void FRemapTable::KillNative()
-{
-	if (Native != NULL)
-	{
-		delete Native;
-		Native = NULL;
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-void FRemapTable::UpdateNative()
-{
-	if (Native != NULL)
-	{
-		Native->Update();
-	}
 }
 
 //----------------------------------------------------------------------------
@@ -763,46 +754,6 @@ bool FRemapTable::AddColors(int start, int count, const uint8_t*colors)
 
 //----------------------------------------------------------------------------
 //
-// Stores a copy of this translation in the DECORATE translation table
-//
-//----------------------------------------------------------------------------
-
-int FRemapTable::StoreTranslation(int slot)
-{
-	unsigned int i;
-
-	auto size = NumTranslations(slot);
-	for (i = 0; i < size; i++)
-	{
-		if (*this == *TranslationToTable(TRANSLATION(slot, i)))
-		{
-			// A duplicate of this translation already exists
-			return TRANSLATION(slot, i);
-		}
-	}
-	if (size >= MAX_DECORATE_TRANSLATIONS)
-	{
-		I_Error("Too many DECORATE translations");
-	}
-	return AddTranslation(slot, this);
-}
-
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-static void PushIdentityTable(int slot)
-{
-	FRemapTable table;
-	table.MakeIdentity();
-	AddTranslation(slot, &table);
-}
-
-//----------------------------------------------------------------------------
-//
 //
 //
 //----------------------------------------------------------------------------
@@ -816,7 +767,7 @@ int CreateBloodTranslation(PalEntry color)
 	if (BloodTranslationColors.Size() == 0)
 	{
 		// Don't use the first slot.
-		PushIdentityTable(TRANSLATION_Blood);
+		palMgr.PushIdentityTable(TRANSLATION_Blood);
 		BloodTranslationColors.Push(0);
 	}
 
@@ -846,7 +797,7 @@ int CreateBloodTranslation(PalEntry color)
 		trans.Palette[i] = pe;
 		trans.Remap[i] = entry;
 	}
-	AddTranslation(TRANSLATION_Blood, &trans);
+	palMgr.AddTranslation(TRANSLATION_Blood, &trans);
 	return BloodTranslationColors.Push(color);
 }
 
@@ -868,12 +819,12 @@ void R_InitTranslationTables ()
 	// maps until then so they won't be invalid.
 	for (i = 0; i < MAXPLAYERS; ++i)
 	{
-		PushIdentityTable(TRANSLATION_Players);
-		PushIdentityTable(TRANSLATION_PlayersExtra);
-		PushIdentityTable(TRANSLATION_RainPillar);
+		palMgr.PushIdentityTable(TRANSLATION_Players);
+		palMgr.PushIdentityTable(TRANSLATION_PlayersExtra);
+		palMgr.PushIdentityTable(TRANSLATION_RainPillar);
 	}
 	// The menu player also gets a separate translation table
-	PushIdentityTable(TRANSLATION_Players);
+	palMgr.PushIdentityTable(TRANSLATION_Players);
 
 	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.
@@ -887,7 +838,7 @@ void R_InitTranslationTables ()
 	// color if the player who created them changes theirs.
 	for (i = 0; i < FLevelLocals::BODYQUESIZE; ++i)
 	{
-		PushIdentityTable(TRANSLATION_PlayerCorpses);
+		palMgr.PushIdentityTable(TRANSLATION_PlayerCorpses);
 	}
 
 	// Create the standard translation tables
@@ -1023,24 +974,8 @@ void R_InitTranslationTables ()
 		remap->Remap[i] = v;
 		remap->Palette[i] = PalEntry(255, v, v, v);
 	}
-	AddTranslation(TRANSLATION_Standard, stdremaps, 10);
+	palMgr.AddTranslation(TRANSLATION_Standard, stdremaps, 10);
 
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-void R_DeinitTranslationTables()
-{
-	for (int i = 0; i < NUM_TRANSLATION_TABLES; ++i)
-	{
-		ClearTranslationSlot(i);
-	}
-	BloodTranslationColors.Clear();
-	remapArena.FreeAllBlocks();
 }
 
 //----------------------------------------------------------------------------
@@ -1153,7 +1088,6 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	if (start == 0 && end == 0)
 	{
 		table->Inactive = true;
-		table->UpdateNative();
 		return;
 	}
 
@@ -1242,7 +1176,6 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 				SetRemap(alttable, i, r, g, b);
 				SetPillarRemap(pillartable, i, h, s, v);
 			}
-			alttable->UpdateNative();
 		}
 	}
 	else if (gameinfo.gametype == GAME_Hexen)
@@ -1300,10 +1233,8 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 				SetRemap(alttable, i, r, g, b);
 			}
 		}
-		alttable->UpdateNative();
 	}
-	table->UpdateNative();
-}
+ }
 
 //----------------------------------------------------------------------------
 //
@@ -1321,9 +1252,9 @@ void R_BuildPlayerTranslation (int player)
 	FRemapTable remaps[3];
 	R_CreatePlayerTranslation (h, s, v, colorset, &Skins[players[player].userinfo.GetSkin()], &remaps[0], &remaps[1], &remaps[2]);
 
-	UpdateTranslation(TRANSLATION(TRANSLATION_Players, player), &remaps[0]);
-	UpdateTranslation(TRANSLATION(TRANSLATION_PlayersExtra, player), &remaps[1]);
-	UpdateTranslation(TRANSLATION(TRANSLATION_RainPillar, player), &remaps[2]);
+	palMgr.UpdateTranslation(TRANSLATION(TRANSLATION_Players, player), &remaps[0]);
+	palMgr.UpdateTranslation(TRANSLATION(TRANSLATION_PlayersExtra, player), &remaps[1]);
+	palMgr.UpdateTranslation(TRANSLATION(TRANSLATION_RainPillar, player), &remaps[2]);
 }
 
 //----------------------------------------------------------------------------
@@ -1370,7 +1301,7 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 		FRemapTable remap;
 		R_GetPlayerTranslation(PlayerColor, GetColorSet(cls->Type, PlayerColorset),
 			&Skins[PlayerSkin], &remap);
-		UpdateTranslation(TRANSLATION(tgroup, tnum), &remap);
+		palMgr.UpdateTranslation(TRANSLATION(tgroup, tnum), &remap);
 	}
 	ACTION_RETURN_BOOL(true);
 }
@@ -1434,7 +1365,7 @@ DEFINE_ACTION_FUNCTION(_Translation, GetID)
 void R_ParseTrnslate()
 {
 	customTranslationMap.Clear();
-	ClearTranslationSlot(TRANSLATION_Custom);
+	palMgr.ClearTranslationSlot(TRANSLATION_Custom);
 
 	int lump;
 	int lastlump = 0;
@@ -1457,7 +1388,7 @@ void R_ParseTrnslate()
 					{
 						sc.ScriptError("Translation must be in the range [0,%d]", max);
 					}
-					NewTranslation = *TranslationToTable(TRANSLATION(TRANSLATION_Standard, sc.Number));
+					NewTranslation = *palMgr.TranslationToTable(TRANSLATION(TRANSLATION_Standard, sc.Number));
 				}
 				else if (sc.TokenType == TK_Identifier)
 				{
@@ -1466,7 +1397,7 @@ void R_ParseTrnslate()
 					{
 						sc.ScriptError("Base translation '%s' not found in '%s'", sc.String, newtrans.GetChars());
 					}
-					NewTranslation = *TranslationToTable(tnum);
+					NewTranslation = *palMgr.TranslationToTable(tnum);
 				}
 				else
 				{
@@ -1505,7 +1436,7 @@ void R_ParseTrnslate()
 				}
 			} while (sc.CheckToken(','));
 
-			int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);
+			int trans = palMgr.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
 			customTranslationMap[newtrans] = trans;
 		}
 	}
@@ -1532,7 +1463,7 @@ DEFINE_ACTION_FUNCTION(_Translation, AddTranslation)
 	{
 		NewTranslation.Remap[i] = ColorMatcher.Pick(self->colors[i]);
 	}
-	int trans = NewTranslation.StoreTranslation(TRANSLATION_Custom);
+	int trans = palMgr.StoreTranslation(TRANSLATION_Custom, &NewTranslation);
 	ACTION_RETURN_INT(trans);
 }
 

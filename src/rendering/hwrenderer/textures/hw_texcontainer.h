@@ -42,9 +42,11 @@ private:
 	TranslatedTexture hwDefTex[2];
 	TArray<TranslatedTexture> hwTex_Translated;
 	
-	TranslatedTexture * GetTexID(int translation, bool expanded)
+ 	TranslatedTexture * GetTexID(int translation, bool expanded)
 	{
-		translation = TranslationToIndex(translation);
+		auto remap = palMgr.TranslationToTable(translation);
+		translation = remap == nullptr ? 0 : remap->Index;
+
 		if (translation == 0)
 		{
 			return &hwDefTex[expanded];
@@ -122,12 +124,6 @@ public:
 		}
 	}
 	
-	static int TranslationToIndex(int translation)
-	{
-		auto remap = TranslationToTable(translation);
-		return remap == nullptr ? 0 : remap->GetUniqueIndex();
-	}
-
 	template<class T>
 	void Iterate(T callback)
 	{

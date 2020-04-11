@@ -756,7 +756,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 				}
 			}
 		}
-		defaults->Translation = CurrentTranslation.StoreTranslation (TRANSLATION_Decorate);
+		defaults->Translation = palMgr.StoreTranslation (TRANSLATION_Decorate, &CurrentTranslation);
 	}
 }
 

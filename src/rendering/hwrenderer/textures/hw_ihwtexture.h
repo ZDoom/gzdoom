@@ -21,7 +21,7 @@ public:
 
 	virtual void AllocateBuffer(int w, int h, int texelsize) = 0;
 	virtual uint8_t *MapBuffer() = 0;
-	virtual unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) = 0;
+	virtual unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name) = 0;
 
 	void Resize(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data);
 

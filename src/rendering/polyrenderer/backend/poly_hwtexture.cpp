@@ -130,7 +130,7 @@ uint8_t *PolyHardwareTexture::MapBuffer()
 	return mCanvas->GetPixels();
 }
 
-unsigned int PolyHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+unsigned int PolyHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
 	return 0;
 }
@@ -166,9 +166,6 @@ void PolyHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 
 	if (!tex->isHardwareCanvas())
 	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-
 		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
 		mCanvas->Resize(texbuffer.mWidth, texbuffer.mHeight, false);
 		memcpy(mCanvas->GetPixels(), texbuffer.mBuffer, texbuffer.mWidth * texbuffer.mHeight * 4);

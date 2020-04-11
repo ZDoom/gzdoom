@@ -1025,7 +1025,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);
-	FRemapTable::StaticSerializeTranslations(arc);
+	StaticSerializeTranslations(arc);
 	canvasTextureInfo.Serialize(arc);
 	SerializePlayers(arc, hubload);
 	SerializeSounds(arc);

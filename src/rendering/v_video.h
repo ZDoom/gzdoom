@@ -350,7 +350,6 @@ protected:
 	bool Bgra;
 };
 
-class FUniquePalette;
 class IHardwareTexture;
 class FTexture;
 

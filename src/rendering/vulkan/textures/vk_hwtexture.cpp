@@ -207,9 +207,6 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 {
 	if (!tex->isHardwareCanvas())
 	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-
 		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
 		CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);
 	}
@@ -348,7 +345,7 @@ uint8_t *VkHardwareTexture::MapBuffer()
 	return mappedSWFB;
 }
 
-unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
 	return 0;
 }

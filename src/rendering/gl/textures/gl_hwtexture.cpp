@@ -85,7 +85,7 @@ unsigned int FHardwareTexture::lastbound[FHardwareTexture::MAX_TEXTURES];
 //
 //===========================================================================
 
-unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
 	int rh,rw;
 	int texformat = GL_RGBA8;// TexFormat[gl_texture_format];
@@ -317,9 +317,6 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 {
 	int usebright = false;
 
-	auto remap = TranslationToTable(translation);
-	translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-
 	bool needmipmap = (clampmode <= CLAMP_XY);
 
 	// Bind it to the system.
@@ -343,7 +340,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 			w = tex->GetWidth();
 			h = tex->GetHeight();
 		}
-		if (!CreateTexture(texbuffer.mBuffer, w, h, texunit, needmipmap, translation, "FHardwareTexture.BindOrCreate"))
+		if (!CreateTexture(texbuffer.mBuffer, w, h, texunit, needmipmap, "FHardwareTexture.BindOrCreate"))
 		{
 			// could not create texture
 			return false;

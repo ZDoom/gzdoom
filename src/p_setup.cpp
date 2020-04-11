@@ -406,7 +406,7 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		Level->Players[i]->mo = nullptr;
 	}
-	ClearTranslationSlot(TRANSLATION_LevelScripted);
+	palMgr.ClearTranslationSlot(TRANSLATION_LevelScripted);
 
 
 	// Initial height of PointOfView will be set by player think.

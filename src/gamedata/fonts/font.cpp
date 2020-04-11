@@ -666,7 +666,7 @@ void FFont::SetDefaultTranslation(uint32_t *othercolors)
 			}
 		}
 	}
-	Translations[CR_UNTRANSLATED] = remap.StoreTranslation(TRANSLATION_Font);
+	Translations[CR_UNTRANSLATED] = palMgr.StoreTranslation(TRANSLATION_Font, &remap);
 	forceremap = true;
 }
 
@@ -797,7 +797,7 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 						remap.Palette[j] = GPalette.BaseColors[identity[j]] | MAKEARGB(255, 0, 0, 0);
 					}
 				}
-				Translations.Push(remap.StoreTranslation(TRANSLATION_Font));
+				Translations.Push(palMgr.StoreTranslation(TRANSLATION_Font, &remap));
 			}
 			else
 			{
@@ -837,7 +837,7 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 			remap.Palette[j] = PalEntry(255,r,g,b);
 		}
 		if (post) post(&remap);
-		Translations.Push(remap.StoreTranslation(TRANSLATION_Font));
+		Translations.Push(palMgr.StoreTranslation(TRANSLATION_Font, &remap));
 
 		// Advance to the next color range.
 		while (parmstart[1].RangeStart > parmstart[0].RangeEnd)

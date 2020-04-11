@@ -110,8 +110,8 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	while (it.NextPair(pair))
 	{
 		PClassActor *cls = pair->Key;
-		auto remap = TranslationToTable(GetDefaultByType(cls)->Translation);
-		int gltrans = remap == nullptr ? 0 : remap->GetUniqueIndex();
+		auto remap = palMgr.TranslationToTable(GetDefaultByType(cls)->Translation);
+		int gltrans = remap == nullptr ? 0 : remap->Index;
 
 		for (unsigned i = 0; i < cls->GetStateCount(); i++)
 		{

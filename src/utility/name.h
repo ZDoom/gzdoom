@@ -35,6 +35,7 @@
 #define NAME_H
 
 #include "tarray.h"
+#include "zstring.h"
 
 enum ENamedName
 {
@@ -52,19 +53,17 @@ public:
 	FName (const char *text) { Index = NameData.FindName (text, false); }
 	FName (const char *text, bool noCreate) { Index = NameData.FindName (text, noCreate); }
 	FName (const char *text, size_t textlen, bool noCreate) { Index = NameData.FindName (text, textlen, noCreate); }
-	FName (const FString &text);
-	FName (const FString &text, bool noCreate);
+	FName(const FString& text) { Index = NameData.FindName(text.GetChars(), text.Len(), false); }
+	FName(const FString& text, bool noCreate) { Index = NameData.FindName(text.GetChars(), text.Len(), noCreate); }
 	FName (const FName &other) = default;
 	FName (ENamedName index) { Index = index; }
  //   ~FName () {}	// Names can be added but never removed.
 
 	int GetIndex() const { return Index; }
-	operator int() const { return Index; }
 	const char *GetChars() const { return NameData.NameArray[Index].Text; }
-	operator const char *() const { return NameData.NameArray[Index].Text; }
 
 	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
-	FName &operator = (const FString &text);
+	FName& operator = (const FString& text) { Index = NameData.FindName(text.GetChars(), text.Len(), false); return *this; }
 	FName &operator = (const FName &other) = default;
 	FName &operator = (ENamedName index) { Index = index; return *this; }
 

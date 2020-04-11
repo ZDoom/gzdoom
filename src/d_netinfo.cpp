@@ -820,7 +820,7 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			}
 			
 			// A few of these need special handling.
-			switch (keyname)
+			switch (keyname.GetIndex())
 			{
 			case NAME_Gender:
 				info->GenderChanged(value);
@@ -904,7 +904,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 
 		while (it.NextPair(pair))
 		{
-			name = pair->Key;
+			name = pair->Key.GetChars();
 			name.ToLower();
 			switch (pair->Key.GetIndex())
 			{
@@ -945,7 +945,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 			FBaseCVar **cvar = info.CheckKey(name);
 			if (cvar != NULL && *cvar != NULL)
 			{
-				switch (name)
+				switch (name.GetIndex())
 				{
 				case NAME_Team:			info.TeamChanged(atoi(str)); break;
 				case NAME_Skin:			skin = str; break;	// Caller must call SkinChanged() once current calss is known

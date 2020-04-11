@@ -421,7 +421,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 			}
 			if (name != NAME_None)
 			{
-				levelinfo->NextMap.Format("enDSeQ%04x", int(name));
+				levelinfo->NextMap.Format("enDSeQ%04x", name.GetIndex());
 			}
 		}
 

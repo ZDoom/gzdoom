@@ -2421,7 +2421,7 @@ void FParser::SF_PlayerKeys(void)
 		if(t_argc == 2)
 		{
 			t_return.type = svt_int;
-			t_return.value.i = CheckInventory(Level->Players[playernum]->mo, keyname);
+			t_return.value.i = CheckInventory(Level->Players[playernum]->mo, keyname.GetChars());
 			return;
 		}
 		else

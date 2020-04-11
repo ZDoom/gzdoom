@@ -703,7 +703,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 
 FName CheckCastKludges(FName in)
 {
-	switch (in)
+	switch (in.GetIndex())
 	{
 	case NAME_Int:
 		return NAME___decorate_internal_int__;

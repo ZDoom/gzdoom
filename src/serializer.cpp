@@ -658,7 +658,7 @@ FSerializer &FSerializer::Args(const char *key, int *args, int *defargs, int spe
 					}
 					else if (i == 0 && aval.IsString())
 					{
-						args[i] = -FName(UnicodeToString(aval.GetString()));
+						args[i] = -FName(UnicodeToString(aval.GetString())).GetIndex();
 					}
 					else
 					{
@@ -710,7 +710,7 @@ FSerializer &FSerializer::ScriptNum(const char *key, int &num)
 			}
 			else if (val->IsString())
 			{
-				num = -FName(UnicodeToString(val->GetString()));
+				num = -FName(UnicodeToString(val->GetString())).GetIndex();
 			}
 			else
 			{
@@ -2159,7 +2159,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 	{
 		FName n = NAME_None;
 		arc(key, n);
-		font = n == NAME_None? nullptr : V_GetFont(n);
+		font = n == NAME_None? nullptr : V_GetFont(n.GetChars());
 		return arc;
 	}
 

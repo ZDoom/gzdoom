@@ -374,7 +374,7 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 			{
 				full_state_name = "pain.";
 			}
-			full_state_name += player->LastDamageType;
+			full_state_name += player->LastDamageType.GetChars();
 			if (SetState(full_state_name, false, true))
 			{
 				bDamageFaceActive = (CurrentState != NULL);
@@ -401,7 +401,7 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 				{
 					full_state_name = "pain.";
 				}
-				full_state_name += player->LastDamageType;
+				full_state_name += player->LastDamageType.GetChars();
 				if (SetState(full_state_name))
 				{
 					bOuchActive = use_ouch;
@@ -443,7 +443,7 @@ int FMugShot::UpdateState(player_t *player, StateFlags stateflags)
 		{
 			full_state_name = "xdeath.";
 		}
-		full_state_name += player->LastDamageType;
+		full_state_name += player->LastDamageType.GetChars();
 		SetState(full_state_name);
 		bNormal = true; //Allow the face to return to alive states when the player respawns.
 	}

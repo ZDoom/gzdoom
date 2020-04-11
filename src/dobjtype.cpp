@@ -195,7 +195,7 @@ static int cregcmp (const void *a, const void *b) NO_SANITIZE
 {
 	const PClass *class1 = *(const PClass **)a;
 	const PClass *class2 = *(const PClass **)b;
-	return strcmp(class1->TypeName, class2->TypeName);
+	return strcmp(class1->TypeName.GetChars(), class2->TypeName.GetChars());
 }
 
 //==========================================================================

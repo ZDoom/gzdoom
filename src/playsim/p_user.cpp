@@ -227,7 +227,7 @@ void SetupPlayerClasses ()
 	for (unsigned i = 0; i < gameinfo.PlayerClasses.Size(); i++)
 	{
 		PClassActor *cls = PClass::FindActor(gameinfo.PlayerClasses[i]);
-		if (ValidatePlayerClass(cls, gameinfo.PlayerClasses[i]))
+		if (ValidatePlayerClass(cls, gameinfo.PlayerClasses[i].GetChars()))
 		{
 			newclass.Flags = 0;
 			newclass.Type = cls;
@@ -912,27 +912,27 @@ DEFINE_ACTION_FUNCTION(AActor, A_PlayerScream)
 
 	if (!sound && self->special1<10)
 	{ // Wimpy death sound
-		sound = S_FindSkinnedSoundEx (self, "*wimpydeath", self->player->LastDamageType);
+		sound = S_FindSkinnedSoundEx (self, "*wimpydeath", self->player->LastDamageType.GetChars());
 	}
 	if (!sound && self->health <= -50)
 	{
 		if (self->health > -100)
 		{ // Crazy death sound
-			sound = S_FindSkinnedSoundEx (self, "*crazydeath", self->player->LastDamageType);
+			sound = S_FindSkinnedSoundEx (self, "*crazydeath", self->player->LastDamageType.GetChars());
 		}
 		if (!sound)
 		{ // Extreme death sound
-			sound = S_FindSkinnedSoundEx (self, "*xdeath", self->player->LastDamageType);
+			sound = S_FindSkinnedSoundEx (self, "*xdeath", self->player->LastDamageType.GetChars());
 			if (!sound)
 			{
-				sound = S_FindSkinnedSoundEx (self, "*gibbed", self->player->LastDamageType);
+				sound = S_FindSkinnedSoundEx (self, "*gibbed", self->player->LastDamageType.GetChars());
 				chan = CHAN_BODY;
 			}
 		}
 	}
 	if (!sound)
 	{ // Normal death sound
-		sound = S_FindSkinnedSoundEx (self, "*death", self->player->LastDamageType);
+		sound = S_FindSkinnedSoundEx (self, "*death", self->player->LastDamageType.GetChars());
 	}
 
 	if (chan != CHAN_VOICE)

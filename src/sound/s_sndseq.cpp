@@ -429,7 +429,7 @@ void DSeqNode::AddChoice (int seqnum, seqtype_t type)
 DEFINE_ACTION_FUNCTION(DSeqNode, AddChoice)
 {
 	PARAM_SELF_PROLOGUE(DSeqNode);
-	PARAM_NAME(seq);
+	PARAM_INT(seq);
 	PARAM_INT(mode);
 	self->AddChoice(seq, seqtype_t(mode));
 	return 0;
@@ -510,7 +510,7 @@ static void AssignHexenTranslations (void)
 	{
 		for (seq = 0; seq < Sequences.Size(); seq++)
 		{
-			if (Sequences[seq] != NULL && HexenSequences[i].Name == Sequences[seq]->SeqName)
+			if (Sequences[seq] != NULL && Sequences[seq]->SeqName == HexenSequences[i].Name)
 				break;
 		}
 		if (seq == Sequences.Size())
@@ -642,7 +642,7 @@ void S_ParseSndSeq (int levellump)
 					{
 						ScriptTemp.Push (sc.Number);
 						sc.MustGetString();
-						ScriptTemp.Push (FName(sc.String));
+						ScriptTemp.Push (FName(sc.String).GetIndex());
 					}
 					else
 					{

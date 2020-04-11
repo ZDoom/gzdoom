@@ -463,7 +463,7 @@ public:
 	FxConstant(FName val, const FScriptPosition &pos) : FxExpression(EFX_Constant, pos)
 	{
 		ValueType = value.Type = TypeName;
-		value.Int = val;
+		value.Int = val.GetIndex();
 		isresolved = true;
 	}
 

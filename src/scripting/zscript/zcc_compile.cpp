@@ -779,7 +779,7 @@ void ZCCCompiler::CreateClassTypes()
 				do
 				{
 					if (build.IsNotEmpty()) build += '.';
-					build += FName(p->Id);
+					build += FName(p->Id).GetChars();
 					p = static_cast<decltype(p)>(p->SiblingNext);
 				} while (p != ParentName);
 				Error(c->cls, "Qualified name '%s' for base class not supported in '%s'", build.GetChars(), FName(c->NodeName()).GetChars());
@@ -2391,13 +2391,13 @@ void ZCCCompiler::ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *pro
 		}
 
 		// a one-name property
-		propname = FName(namenode->Id);
+		propname = FName(namenode->Id).GetChars();
 
 	}
 	else if (namenode->SiblingNext->SiblingNext == namenode)
 	{
 		// a two-name property
-		propname << FName(namenode->Id) << "." << FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id);
+		propname << FName(namenode->Id).GetChars() << "." << FName(static_cast<ZCC_Identifier *>(namenode->SiblingNext)->Id).GetChars();
 	}
 	else
 	{
@@ -2541,7 +2541,7 @@ void ZCCCompiler::InitDefaults()
 
 				Baggage bag;
 			#ifdef _DEBUG
-				bag.ClassName = cls->TypeName;
+				bag.ClassName = cls->TypeName.GetChars();
 			#endif
 				bag.Version = mVersion;
 				bag.Namespace = OutNamespace;
@@ -3283,7 +3283,7 @@ void ZCCCompiler::CompileStates()
 				case AST_StateLabel:
 				{
 					auto sl = static_cast<ZCC_StateLabel *>(st);
-					statename = FName(sl->Label);
+					statename = FName(sl->Label).GetChars();
 					statedef.AddStateLabel(statename);
 					break;
 				}
@@ -3372,12 +3372,12 @@ void ZCCCompiler::CompileStates()
 					statename = "";
 					if (sg->Qualifier != nullptr)
 					{
-						statename << FName(sg->Qualifier->Id) << "::";
+						statename << FName(sg->Qualifier->Id).GetChars() << "::";
 					}
 					auto part = sg->Label;
 					do
 					{
-						statename << FName(part->Id) << '.';
+						statename << FName(part->Id).GetChars() << '.';
 						part = static_cast<decltype(part)>(part->SiblingNext);
 					} while (part != sg->Label);
 					statename.Truncate(statename.Len() - 1);	// remove the last '.' in the label name

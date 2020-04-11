@@ -46,7 +46,7 @@ static void CastV32S(FString *a, double b, double b1, double b2) { a->Format("(%
 static void CastP2S(FString *a, void *b) { if (b == nullptr) *a = "null"; else a->Format("%p", b); }
 static int CastS2I(FString *b) { return (int)b->ToLong(); }
 static double CastS2F(FString *b) { return b->ToDouble(); }
-static int CastS2N(FString *b) { return b->Len() == 0 ? FName(NAME_None) : FName(*b); }
+static int CastS2N(FString *b) { return b->Len() == 0 ? NAME_None : FName(*b).GetIndex(); }
 static void CastN2S(FString *a, int b) { FName name = FName(ENamedName(b)); *a = name.IsValidName() ? name.GetChars() : ""; }
 static int CastS2Co(FString *b) { return V_GetColor(nullptr, *b); }
 static void CastCo2S(FString *a, int b) { PalEntry c(b); a->Format("%02x %02x %02x", c.r, c.g, c.b); }

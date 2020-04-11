@@ -906,7 +906,7 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 DEFINE_PROPERTY(decal, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->DecalGenerator = (FDecalBase *)intptr_t(int(FName(str)));
+	defaults->DecalGenerator = (FDecalBase *)(intptr_t)FName(str).GetIndex();
 }
 
 //==========================================================================

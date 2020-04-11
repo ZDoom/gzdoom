@@ -708,7 +708,7 @@ static TMap<FName, int> customTranslationMap;
 
 int R_FindCustomTranslation(FName name)
 {
-	switch (name)
+	switch (name.GetIndex())
 	{
 	case NAME_Ice:
 		// Ice is a special case which will remain in its original slot.
@@ -738,7 +738,7 @@ int R_FindCustomTranslation(FName name)
 		return TRANSLATION(TRANSLATION_Players, name.GetIndex() - NAME_Player1);
 
 	}
-	int *t = customTranslationMap.CheckKey(FName(name, true));
+	int *t = customTranslationMap.CheckKey(name);
 	return (t != nullptr)? *t : -1;
 }
 

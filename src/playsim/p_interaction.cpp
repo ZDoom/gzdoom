@@ -220,7 +220,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	if (attacker == nullptr && obit.IsNotEmpty()) messagename = obit;
 	else
 	{
-		switch (mod)
+		switch (mod.GetIndex())
 		{
 		case NAME_Suicide:		messagename = "$OB_SUICIDE";	break;
 		case NAME_Falling:		messagename = "$OB_FALLING";	break;

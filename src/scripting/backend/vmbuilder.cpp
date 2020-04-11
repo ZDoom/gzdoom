@@ -872,7 +872,7 @@ void FFunctionBuildList::Build()
 			// Emit code
 			try
 			{
-				sfunc->SourceFileName = item.Code->ScriptPosition.FileName;	// remember the file name for printing error messages if something goes wrong in the VM.
+				sfunc->SourceFileName = item.Code->ScriptPosition.FileName.GetChars();	// remember the file name for printing error messages if something goes wrong in the VM.
 				buildit.BeginStatement(item.Code);
 				item.Code->Emit(&buildit);
 				buildit.EndStatement();

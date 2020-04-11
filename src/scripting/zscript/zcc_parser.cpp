@@ -297,12 +297,12 @@ static void ParseSingleFile(FScanner *pSC, const char *filename, int lump, void 
 
 		case TK_None:	// 'NONE' is a token for SBARINFO but not here.
 		case TK_Identifier:
-			value.Int = FName(sc.String);
+			value.Int = FName(sc.String).GetIndex();
 			tokentype = ZCC_IDENTIFIER;
 			break;
 
 		case TK_NonWhitespace:
-			value.Int = FName(sc.String);
+			value.Int = FName(sc.String).GetIndex();
 			tokentype = ZCC_NWS;
 			break;
 

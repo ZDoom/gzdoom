@@ -605,6 +605,11 @@ inline AActor *GetDefaultByName (const char *name)
 	return (AActor *)(PClass::FindClass(name)->Defaults);
 }
 
+inline AActor* GetDefaultByName(FName name)
+{
+	return (AActor*)(PClass::FindClass(name)->Defaults);
+}
+
 inline AActor *GetDefaultByType (const PClass *type)
 {
 	return (AActor *)(type->Defaults);

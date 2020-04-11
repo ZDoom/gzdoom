@@ -1993,7 +1993,7 @@ static void C_TabComplete (bool goForward)
 		else
 		{
 			CmdLineText.Truncate(TabStart);
-			CmdLineText << TabCommands[TabPos].TabName << ' ';
+			CmdLineText << TabCommands[TabPos].TabName.GetChars() << ' ';
 		}
 	}
 	CmdLine.SetString(CmdLineText);
@@ -2043,9 +2043,9 @@ static bool C_TabCompleteList ()
 			// [Dusk] Print console commands blue, CVars green, aliases red.
 			const char* colorcode = "";
 			FConsoleCommand* ccmd;
-			if (FindCVar (TabCommands[i].TabName, NULL))
+			if (FindCVar (TabCommands[i].TabName.GetChars(), NULL))
 				colorcode = TEXTCOLOR_GREEN;
-			else if ((ccmd = FConsoleCommand::FindByName (TabCommands[i].TabName)) != NULL)
+			else if ((ccmd = FConsoleCommand::FindByName (TabCommands[i].TabName.GetChars())) != NULL)
 			{
 				if (ccmd->IsAlias())
 					colorcode = TEXTCOLOR_RED;

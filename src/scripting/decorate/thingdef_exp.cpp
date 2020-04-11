@@ -486,7 +486,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		FName identifier = FName(sc.String);
 		PFunction *func;
 
-		switch (identifier)
+		switch (identifier.GetIndex())
 		{
 		case NAME_Random:
 		case NAME_FRandom:
@@ -519,7 +519,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		}
 		if (sc.CheckToken('('))
 		{
-			switch (identifier)
+			switch (identifier.GetIndex())
 			{
 			case NAME_Min:
 			case NAME_Max:

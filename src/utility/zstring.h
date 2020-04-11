@@ -39,7 +39,6 @@
 #include <stddef.h>
 #include <string>
 #include "tarray.h"
-#include "name.h"
 
 #ifdef __GNUC__
 #define PRINTFISH(x) __attribute__((format(printf, 2, x)))
@@ -195,14 +194,12 @@ public:
 	FString &operator += (const FString &tail);
 	FString &operator += (const char *tail);
 	FString &operator += (char tail);
-	FString &operator += (const FName &name) { return *this += name.GetChars(); }
 	FString &AppendCStrPart (const char *tail, size_t tailLen);
 	FString &CopyCStrPart(const char *tail, size_t tailLen);
 
 	FString &operator << (const FString &tail) { return *this += tail; }
 	FString &operator << (const char *tail) { return *this += tail; }
 	FString &operator << (char tail) { return *this += tail; }
-	FString &operator << (const FName &name) { return *this += name.GetChars(); }
 
 	const char &Front() const { assert(IsNotEmpty()); return Chars[0]; }
 	const char &Back() const { assert(IsNotEmpty()); return Chars[Len() - 1]; }
@@ -412,13 +409,6 @@ public:
 	bool operator <= (const char *) const = delete;
 	bool operator >= (const char *) const = delete;
 
-	bool operator == (FName) const = delete;
-	bool operator != (FName) const = delete;
-	bool operator <  (FName) const = delete;
-	bool operator >  (FName) const = delete;
-	bool operator <= (FName) const = delete;
-	bool operator >= (FName) const = delete;
-
 private:
 };
 
@@ -429,13 +419,6 @@ bool operator <  (const char *, const FString &) = delete;
 bool operator >  (const char *, const FString &) = delete;
 bool operator <= (const char *, const FString &) = delete;
 bool operator >= (const char *, const FString &) = delete;
-
-bool operator == (FName, const FString &) = delete;
-bool operator != (FName, const FString &) = delete;
-bool operator <  (FName, const FString &) = delete;
-bool operator >  (FName, const FString &) = delete;
-bool operator <= (FName, const FString &) = delete;
-bool operator >= (FName, const FString &) = delete;
 
 class FStringf : public FString
 {
@@ -476,12 +459,6 @@ namespace StringFormat
 };
 
 #undef PRINTFISH
-
-// FName inline implementations that take FString parameters
-
-inline FName::FName(const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); }
-inline FName::FName(const FString &text, bool noCreate) { Index = NameData.FindName (text.GetChars(), text.Len(), noCreate); }
-inline FName &FName::operator = (const FString &text) { Index = NameData.FindName (text.GetChars(), text.Len(), false); return *this; }
 
 // Hash FStrings on their contents. (used by TMap)
 #include "superfasthash.h"

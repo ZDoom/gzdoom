@@ -6164,7 +6164,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 	}
 
 	// and line specials
-	if (newex == nullptr && (num = P_FindLineSpecial(Identifier, nullptr, nullptr)))
+	if (newex == nullptr && (num = P_FindLineSpecial(Identifier.GetChars(), nullptr, nullptr)))
 	{
 		ScriptPosition.Message(MSG_DEBUGLOG, "Resolving name '%s' as line special %d\n", Identifier.GetChars(), num);
 		newex = new FxConstant(num, ScriptPosition);
@@ -6371,7 +6371,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 			// Thanks to the messed up search logic of the type system, which doesn't allow any search by type name for the basic types at all,
 			// we have to do this manually, though and check for all types that may have values attached explicitly. 
 			// (What's the point of attached fields to types if you cannot even search for the types...???)
-			switch (id)
+			switch (id.GetIndex())
 			{
 			default:
 				type = nullptr;
@@ -7674,7 +7674,7 @@ FxFunctionCall::FxFunctionCall(FName methodname, FName rngname, FArgumentList &a
 	ArgList = std::move(args);
 	if (rngname != NAME_None)
 	{
-		switch (MethodName)
+		switch (MethodName.GetIndex())
 		{
 		case NAME_Random:
 		case NAME_FRandom:
@@ -7870,7 +7870,7 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	// Note that for all builtins the used arguments have to be nulled in the ArgList so that they won't get deleted before they get used.
 	FxExpression *func = nullptr;
 
-	switch (MethodName)
+	switch (MethodName.GetIndex())
 	{
 	case NAME_Color:
 		if (ArgList.Size() == 3 || ArgList.Size() == 4)
@@ -8215,7 +8215,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 			// No need to create a dedicated node here, all builtins map directly to trivial operations.
 			Self->ValueType = TypeSInt32;	// all builtins treat the texture index as integer.
 			FxExpression *x;
-			switch (MethodName)
+			switch (MethodName.GetIndex())
 			{
 			case NAME_IsValid:
 				x = new FxCompareRel('>', Self, new FxConstant(0, ScriptPosition));
@@ -8741,7 +8741,7 @@ ExpEmit FxActionSpecialCall::Emit(VMFunctionBuilder *build)
 		{
 			assert(argex->ValueType == TypeName);
 			assert(argex->isConstant());
-			emitters.AddParameterIntConst(-static_cast<FxConstant *>(argex)->GetValue().GetName());
+			emitters.AddParameterIntConst(-static_cast<FxConstant *>(argex)->GetValue().GetName().GetIndex());
 		}
 		else
 		{
@@ -10195,7 +10195,7 @@ FxExpression *FxCaseStatement::Resolve(FCompileContext &ctx)
 		}
 		else
 		{
-			CaseValue = static_cast<FxConstant *>(Condition)->GetValue().GetName();
+			CaseValue = static_cast<FxConstant *>(Condition)->GetValue().GetName().GetIndex();
 		}
 	}
 	return this;
@@ -10999,7 +10999,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DObject, BuiltinNameToClass, NativeNameToClass)
 	PARAM_NAME(clsname);
 	PARAM_CLASS(desttype, DObject);
 
-	ACTION_RETURN_POINTER(NativeNameToClass(clsname, desttype));
+	ACTION_RETURN_POINTER(NativeNameToClass(clsname.GetIndex(), desttype));
 }
 
 ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)

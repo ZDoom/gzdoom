@@ -1605,11 +1605,11 @@ static void S_RestorePlayerSounds()
 		FSavedPlayerSoundInfo * spi = &SavedPlayerSounds[i];
 		if (spi->alias)
 		{
-			S_AddPlayerSoundExisting(spi->pclass, spi->gender, spi->refid, spi->lumpnum);
+			S_AddPlayerSoundExisting(spi->pclass.GetChars(), spi->gender, spi->refid, spi->lumpnum);
 		}
 		else
 		{
-			S_AddPlayerSound(spi->pclass, spi->gender, spi->refid, spi->lumpnum);
+			S_AddPlayerSound(spi->pclass.GetChars(), spi->gender, spi->refid, spi->lumpnum);
 		}
 	}
 }

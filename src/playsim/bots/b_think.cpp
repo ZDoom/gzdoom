@@ -387,8 +387,8 @@ void DBot::WhatToGet (AActor *item)
 	else if (item->GetClass()->TypeName == NAME_Megasphere || item->IsKindOf(NAME_Health))
 	{
 		// do the test with the health item that's actually given.
-		AActor* const testItem = NAME_Megasphere == item->GetClass()->TypeName
-			? GetDefaultByName("MegasphereHealth")
+		AActor* const testItem = item->GetClass()->TypeName == NAME_Megasphere
+			? GetDefaultByName(NAME_MegasphereHealth)
 			: item;
 		if (nullptr != testItem)
 		{

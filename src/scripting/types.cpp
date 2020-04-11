@@ -422,7 +422,7 @@ bool PContainerType::IsMatch(intptr_t id1, intptr_t id2) const
 void PContainerType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 {
 	id1 = (intptr_t)Outer;
-	id2 = TypeName;
+	id2 = TypeName.GetIndex();
 }
 
 /* PInt *******************************************************************/
@@ -1612,11 +1612,11 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 {
 	size_t bucket;
 	if (outer == nullptr) outer = Namespaces.GlobalNamespace;
-	PType *etype = TypeTable.FindType(NAME_Enum, (intptr_t)outer, (intptr_t)name, &bucket);
+	PType *etype = TypeTable.FindType(NAME_Enum, (intptr_t)outer, name.GetIndex(), &bucket);
 	if (etype == nullptr)
 	{
 		etype = new PEnum(name, outer);
-		TypeTable.AddType(etype, NAME_Enum, (intptr_t)outer, (intptr_t)name, bucket);
+		TypeTable.AddType(etype, NAME_Enum, (intptr_t)outer, name.GetIndex(), bucket);
 	}
 	return static_cast<PEnum *>(etype);
 }
@@ -2298,11 +2298,11 @@ PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
 {
 	size_t bucket;
 	if (outer == nullptr) outer = Namespaces.GlobalNamespace;
-	PType *stype = TypeTable.FindType(NAME_Struct, (intptr_t)outer, (intptr_t)name, &bucket);
+	PType *stype = TypeTable.FindType(NAME_Struct, (intptr_t)outer, name.GetIndex(), &bucket);
 	if (stype == nullptr)
 	{
 		stype = new PStruct(name, outer, native);
-		TypeTable.AddType(stype, NAME_Struct, (intptr_t)outer, (intptr_t)name, bucket);
+		TypeTable.AddType(stype, NAME_Struct, (intptr_t)outer, name.GetIndex(), bucket);
 	}
 	return static_cast<PStruct *>(stype);
 }
@@ -2425,11 +2425,11 @@ PField *PClassType::AddNativeField(FName name, PType *type, size_t address, uint
 PClassType *NewClassType(PClass *cls)
 {
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(NAME_Object, 0, (intptr_t)cls->TypeName, &bucket);
+	PType *ptype = TypeTable.FindType(NAME_Object, 0, cls->TypeName.GetIndex(), &bucket);
 	if (ptype == nullptr)
 	{
 		ptype = new PClassType(cls);
-		TypeTable.AddType(ptype, NAME_Object, 0, (intptr_t)cls->TypeName, bucket);
+		TypeTable.AddType(ptype, NAME_Object, 0, cls->TypeName.GetIndex(), bucket);
 	}
 	return static_cast<PClassType *>(ptype);
 }
@@ -2507,7 +2507,7 @@ void FTypeTable::AddType(PType *type, FName type_name)
 
 size_t FTypeTable::Hash(FName p1, intptr_t p2, intptr_t p3)
 {
-	size_t i1 = (size_t)p1;
+	size_t i1 = (size_t)p1.GetIndex();
 
 	// Swap the high and low halves of i1. The compiler should be smart enough
 	// to transform this into a ROR or ROL.

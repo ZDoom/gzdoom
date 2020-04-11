@@ -1014,7 +1014,7 @@ void R_InitSprites ()
 
 		Skins[i].Name = "Base";
 		auto face = basetype->NameVar(NAME_Face);
-		Skins[i].Face = face == NAME_None? FName("STF") : face;
+		Skins[i].Face = face == NAME_None? "STF" : face.GetChars();
 		Skins[i].range0start = basetype->IntVar(NAME_ColorRangeStart);
 		Skins[i].range0end = basetype->IntVar(NAME_ColorRangeEnd);
 		Skins[i].Scale = basetype->Scale;

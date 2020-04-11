@@ -536,7 +536,7 @@ void V_InitFontColors ()
 
 static int TranslationMapCompare (const void *a, const void *b)
 {
-	return int(((const TranslationMap *)a)->Name) - int(((const TranslationMap *)b)->Name);
+	return int(((const TranslationMap *)a)->Name.GetIndex()) - int(((const TranslationMap *)b)->Name.GetIndex());
 }
 
 //==========================================================================

@@ -369,7 +369,7 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingStringArgument)
 
 	const FName argument = thing < self->loader->MapThingsConverted.Size()
 		? self->loader->MapThingsConverted[thing].arg0str : NAME_None;
-	ACTION_RETURN_INT(argument);
+	ACTION_RETURN_INT(argument.GetIndex());
 }
 
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingArgument)

@@ -1409,7 +1409,7 @@ void D_DoAdvanceDemo (void)
 		gamestate = GS_DEMOSCREEN;
 		if (gameinfo.creditPages.Size() > 0)
 		{
-			pagename = gameinfo.creditPages[pagecount];
+			pagename = gameinfo.creditPages[pagecount].GetChars();
 			pagecount = (pagecount+1) % gameinfo.creditPages.Size();
 		}
 		demosequence = 1;

@@ -456,6 +456,6 @@ void FMapInfoParser::ParseGameInfo()
 const char *gameinfo_t::GetFinalePage(unsigned int num) const
 {
 	if (finalePages.Size() == 0) return "-NOFLAT-";
-	else if (num < 1 || num > finalePages.Size()) return finalePages[0];
-	else return finalePages[num-1];
+	else if (num < 1 || num > finalePages.Size()) return finalePages[0].GetChars();
+	else return finalePages[num-1].GetChars();
 }

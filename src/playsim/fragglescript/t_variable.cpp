@@ -102,7 +102,7 @@ const char *stringvalue(const svalue_t & v)
 		
 	case svt_mobj:
 		// return the class name
-		return (const char *)v.value.mobj->GetClass()->TypeName;
+		return (const char *)v.value.mobj->GetClass()->TypeName.GetChars();
 		
 	case svt_fixed:
 		{

@@ -122,6 +122,7 @@ xx(Sorcerer2)
 
 // Bots check this
 xx(Megasphere)
+xx(MegasphereHealth)
 
 // Standard player classes
 xx(DoomPlayer)

@@ -113,7 +113,7 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	bag.fromDecorate = true;
 	bag.Version = { 2, 0, 0 };
 #ifdef _DEBUG
-	bag.ClassName = type->TypeName;
+	bag.ClassName = type->TypeName.GetChars();
 #endif
 
 	sc.MustGetStringName("{");

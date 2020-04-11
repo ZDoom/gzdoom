@@ -42,6 +42,7 @@
 #include "cmdlib.h"
 #include "engineerrors.h"
 #include "memarena.h"
+#include "name.h"
 #include "scripting/backend/scopebarrier.h"
 
 class DObject;

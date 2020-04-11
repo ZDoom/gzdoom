@@ -1809,7 +1809,7 @@ static void DoCast(const VMRegisters &reg, const VMFrame *f, int a, int b, int c
 
 	case CAST_S2N:
 		ASSERTD(a); ASSERTS(b);
-		reg.d[a] = reg.s[b].Len() == 0? FName(NAME_None) : FName(reg.s[b]);
+		reg.d[a] = reg.s[b].Len() == 0? NAME_None : FName(reg.s[b]).GetIndex();
 		break;
 
 	case CAST_N2S:

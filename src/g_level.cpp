@@ -605,7 +605,7 @@ void FLevelLocals::ChangeLevel(const char *levelname, int position, int inflags,
 		}
 		else 
 		{
-			nextlevel.Format("enDSeQ%04x", int(gameinfo.DefaultEndSequence));
+			nextlevel.Format("enDSeQ%04x", gameinfo.DefaultEndSequence.GetIndex());
 		}
 	}
 	else if (strncmp(levelname, "enDSeQ", 6) != 0)

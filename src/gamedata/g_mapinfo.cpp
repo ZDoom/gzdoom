@@ -901,7 +901,7 @@ void FMapInfoParser::ParseNextMap(FString &mapname)
 		FName seq = CheckEndSequence();
 		if (seq != NAME_None)
 		{
-			mapname.Format("enDSeQ%04x", int(seq));
+			mapname.Format("enDSeQ%04x", seq.GetIndex());
 		}
 	}
 }
@@ -1925,7 +1925,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 		sc.MustGetString();
 		mapname = sc.String;
 	}
-	int levelindex = FindWadLevelInfo (mapname);
+	int levelindex = FindWadLevelInfo (mapname.GetChars());
 	if (levelindex == -1)
 	{
 		levelindex = wadlevelinfos.Reserve(1);
@@ -1951,7 +1951,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 
 	}
 
-	levelinfo->MapName = mapname;
+	levelinfo->MapName = mapname.GetChars();
 	levelinfo->MapName.ToUpper();
 	sc.MustGetString ();
 	if (sc.String[0] == '$')

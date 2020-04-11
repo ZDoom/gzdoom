@@ -146,7 +146,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DMenuDescriptor, GetDescriptor, GetMenuDescriptor)
 {
 	PARAM_PROLOGUE;
 	PARAM_NAME(name);
-	ACTION_RETURN_OBJECT(GetMenuDescriptor(name));
+	ACTION_RETURN_OBJECT(GetMenuDescriptor(name.GetIndex()));
 }
 
 size_t DListMenuDescriptor::PropagateMark()
@@ -418,7 +418,7 @@ EXTERN_CVAR(Int, cl_gfxlocalization)
 void M_SetMenu(FName menu, int param)
 {
 	// some menus need some special treatment
-	switch (menu)
+	switch (menu.GetIndex())
 	{
 	case NAME_Mainmenu:
 		if (gameinfo.gametype & GAME_DoomStrifeChex)	// Raven's games always used text based menus

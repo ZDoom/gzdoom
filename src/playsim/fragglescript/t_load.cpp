@@ -223,7 +223,7 @@ bool FScriptLoader::ParseInfo(MapData * map)
 		// Try a global FS lump
 		int lumpnum=fileSystem.CheckNumForName("FSGLOBAL");
 		if (lumpnum<0) return false;
-		lumpsize=fileSystem.LumpLength(lumpnum);
+		lumpsize=fileSystem.FileLength(lumpnum);
 		if (lumpsize==0) return false;
 		fsglobal=true;
 		lump=new char[lumpsize+3];

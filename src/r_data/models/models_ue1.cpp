@@ -62,7 +62,7 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 
 void FUE1Model::LoadGeometry()
 {
-	FMemLump lump, lump2;
+	FileData lump, lump2;
 	const char *buffer, *buffer2;
 	lump = fileSystem.ReadLump(mDataLump);
 	buffer = (char*)lump.GetMem();

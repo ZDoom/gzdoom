@@ -162,7 +162,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 	if (Name.CompareNoCase("E2END") == 0 && gameinfo.gametype == GAME_Heretic)
 	{
 		mPaletteLump = fileSystem.CheckNumForName("E2PAL");
-		if (fileSystem.LumpLength(mPaletteLump) < 768) mPaletteLump = -1;
+		if (fileSystem.FileLength(mPaletteLump) < 768) mPaletteLump = -1;
 	}
 	else bUseGamePalette = true;
 }
@@ -175,7 +175,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 
 TArray<uint8_t> FRawPageTexture::CreatePalettedPixels(int conversion)
 {
-	FMemLump lump = fileSystem.ReadLump (SourceLump);
+	FileData lump = fileSystem.ReadLump (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
@@ -207,8 +207,8 @@ int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion)
 	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion);
 	else
 	{
-		FMemLump lump = fileSystem.ReadLump(SourceLump);
-		FMemLump plump = fileSystem.ReadLump(mPaletteLump);
+		FileData lump = fileSystem.ReadLump(SourceLump);
+		FileData plump = fileSystem.ReadLump(mPaletteLump);
 		const uint8_t *source = (const uint8_t *)lump.GetMem();
 		const uint8_t *psource = (const uint8_t *)plump.GetMem();
 		PalEntry paldata[256];

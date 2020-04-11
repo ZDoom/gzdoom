@@ -685,19 +685,4 @@ int FExternalLump::FillCache()
 }
 
 
-bool FMemoryFile::Open(bool quiet, LumpFilterInfo*)
-{
-    FString name(ExtractFileBase(FileName));
-    FString fname(ExtractFileBase(FileName, true));
-    
-	Lumps.Resize(1);
-	Lumps[0].LumpNameSetup(fname);
-    Lumps[0].Owner = this;
-    Lumps[0].Position = 0;
-    Lumps[0].LumpSize = (int)Reader.GetLength();
-    Lumps[0].Flags = 0;
-    NumLumps = 1;
-    return true;
-}
-
 

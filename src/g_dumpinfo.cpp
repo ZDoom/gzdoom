@@ -156,7 +156,7 @@ CCMD (mapchecksum)
 		else
 		{
 			map->GetChecksum(cksum);
-			const char *wadname = fileSystem.GetWadName(fileSystem.GetLumpFile(map->lumpnum));
+			const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetLumpFile(map->lumpnum));
 			delete map;
 			for (size_t j = 0; j < sizeof(cksum); ++j)
 			{
@@ -367,7 +367,7 @@ CCMD(listmaps)
 		if (map != NULL)
 		{
 			Printf("%s: '%s' (%s)\n", info->MapName.GetChars(), info->LookupLevelName().GetChars(),
-				fileSystem.GetWadName(fileSystem.GetLumpFile(map->lumpnum)));
+				fileSystem.GetResourceFileName(fileSystem.GetLumpFile(map->lumpnum)));
 			delete map;
 		}
 	}

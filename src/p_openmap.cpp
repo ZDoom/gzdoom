@@ -40,8 +40,11 @@
 #include "w_wad.h"
 #include "md5.h"
 #include "g_levellocals.h"
+#include "cmdlib.h"
 
-void md5Update(FileReader& file, MD5Context& md5, unsigned len);
+#define IWAD_ID		MAKE_ID('I','W','A','D')
+#define PWAD_ID		MAKE_ID('P','W','A','D')
+
 
 inline bool P_IsBuildMap(MapData *map)
 {

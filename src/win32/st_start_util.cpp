@@ -413,9 +413,9 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 	int notch_lump = fileSystem.CheckNumForName("NOTCH");
 	hr = -1;
 
-	if (startup_lump < 0 || fileSystem.LumpLength(startup_lump) != 153648 || !ST_Util_CreateStartupWindow() ||
-		netnotch_lump < 0 || fileSystem.LumpLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
-		notch_lump < 0 || fileSystem.LumpLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
+	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 153648 || !ST_Util_CreateStartupWindow() ||
+		netnotch_lump < 0 || fileSystem.FileLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
+		notch_lump < 0 || fileSystem.FileLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
 	{
 		NetNotchBits = NotchBits = NULL;
 		return;
@@ -579,7 +579,7 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 	uint8_t* font;
 
 	hr = -1;
-	if (loading_lump < 0 || fileSystem.LumpLength(loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
+	if (loading_lump < 0 || fileSystem.FileLength(loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
 	{
 		return;
 	}
@@ -722,7 +722,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 		StartupPics[i] = NULL;
 	}
 
-	if (startup_lump < 0 || fileSystem.LumpLength(startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
+	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
 	{
 		return;
 	}
@@ -742,7 +742,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 		int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i]);
 		int lumplen;
 
-		if (lumpnum >= 0 && (lumplen = fileSystem.LumpLength(lumpnum)) == StrifeStartupPicSizes[i])
+		if (lumpnum >= 0 && (lumplen = fileSystem.FileLength(lumpnum)) == StrifeStartupPicSizes[i])
 		{
 			auto lumpr = fileSystem.OpenLumpReader(lumpnum);
 			StartupPics[i] = new uint8_t[lumplen];
@@ -1061,7 +1061,7 @@ uint8_t* ST_Util_LoadFont(const char* filename)
 	{ // font not found
 		return NULL;
 	}
-	lumplen = fileSystem.LumpLength(lumpnum);
+	lumplen = fileSystem.FileLength(lumpnum);
 	height = lumplen / 256;
 	if (height * 256 != lumplen)
 	{ // font is a bad size

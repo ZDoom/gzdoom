@@ -752,7 +752,7 @@ static int FindGLNodesInWAD(int labellump)
 			{
 				if (fileSystem.GetLumpFile(lump)==wadfile)
 				{
-					FMemLump mem = fileSystem.ReadLump(lump);
+					FileData mem = fileSystem.ReadLump(lump);
 					if (MatchHeader(fileSystem.GetLumpFullName(labellump), (const char *)mem.GetMem())) return lump;
 				}
 			}
@@ -858,7 +858,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		bool mapinwad = map->InWad;
 		FResourceFile * f_gwa = map->resource;
 
-		const char * name = fileSystem.GetWadFullName(lumpfile);
+		const char * name = fileSystem.GetResourceFileFullName(lumpfile);
 
 		if (mapinwad)
 		{

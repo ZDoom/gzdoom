@@ -84,4 +84,10 @@ inline int32_t Scale(int32_t a, int32_t b, int32_t c)
 	return (int32_t)(((int64_t)a * b) / c);
 }
 
+class FileReader;
+struct MD5Context;
+
+void md5Update(FileReader& file, MD5Context& md5, unsigned len);
+void uppercopy(char* to, const char* from);
+
 #endif

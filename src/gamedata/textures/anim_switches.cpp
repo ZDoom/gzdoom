@@ -64,7 +64,7 @@ void FTextureManager::InitSwitchList ()
 
 	if (lump != -1)
 	{
-		FMemLump lumpdata = fileSystem.ReadLump (lump);
+		FileData lumpdata = fileSystem.ReadLump (lump);
 		const char *alphSwitchList = (const char *)lumpdata.GetMem();
 		const char *list_p;
 		FSwitchDef *def1, *def2;

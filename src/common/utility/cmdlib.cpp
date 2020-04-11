@@ -36,6 +36,8 @@
 
 #include "cmdlib.h"
 #include "findfile.h"
+#include "files.h"
+#include "md5.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1032,3 +1034,36 @@ FString M_ZLibError(int zerr)
 		return errs[-zerr - 1];
 	}
 }
+
+void md5Update(FileReader& file, MD5Context& md5, unsigned len)
+{
+	uint8_t readbuf[8192];
+	unsigned t;
+
+	while (len > 0)
+	{
+		t = std::min<unsigned>(len, sizeof(readbuf));
+		len -= t;
+		t = (long)file.Read(readbuf, t);
+		md5.Update(readbuf, t);
+	}
+}
+
+
+//==========================================================================
+//
+// uppercoppy
+//
+// [RH] Copy up to 8 chars, upper-casing them in the process
+//==========================================================================
+
+void uppercopy(char* to, const char* from)
+{
+	int i;
+
+	for (i = 0; i < 8 && from[i]; i++)
+		to[i] = toupper(from[i]);
+	for (; i < 8; i++)
+		to[i] = 0;
+}
+

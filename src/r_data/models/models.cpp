@@ -407,8 +407,8 @@ static unsigned FindModel(const char * path, const char * modelfile)
 		if (!Models[i]->mFileName.CompareNoCase(fullname)) return i;
 	}
 
-	int len = fileSystem.LumpLength(lump);
-	FMemLump lumpd = fileSystem.ReadLump(lump);
+	int len = fileSystem.FileLength(lump);
+	FileData lumpd = fileSystem.ReadLump(lump);
 	char * buffer = (char*)lumpd.GetMem();
 
 	if ( (size_t)fullname.LastIndexOf("_d.3d") == fullname.Len()-5 )

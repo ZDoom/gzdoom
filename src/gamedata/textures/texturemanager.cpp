@@ -607,7 +607,7 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 			}
 			StartScreen->Progress();
 		}
-		else if (ns == ns_flats && fileSystem.GetLumpFlags(firsttx) & LUMPF_MAYBEFLAT)
+		else if (ns == ns_flats && fileSystem.GetFileFlags(firsttx) & LUMPF_MAYBEFLAT)
 		{
 			if (fileSystem.CheckNumForName (Name, ns) < firsttx)
 			{
@@ -963,7 +963,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 		if (ns == ns_global)
 		{
 			// In Zips all graphics must be in a separate namespace.
-			if (fileSystem.GetLumpFlags(i) & LUMPF_FULLPATH) continue;
+			if (fileSystem.GetFileFlags(i) & LUMPF_FULLPATH) continue;
 
 			// Ignore lumps with empty names.
 			if (fileSystem.CheckLumpName(i, "")) continue;
@@ -1366,7 +1366,7 @@ int FTextureManager::GuesstimateNumTextures ()
 			break;
 
 		default:
-			if (fileSystem.GetLumpFlags(i) & LUMPF_MAYBEFLAT) numtex++;
+			if (fileSystem.GetFileFlags(i) & LUMPF_MAYBEFLAT) numtex++;
 
 			break;
 		}
@@ -1547,7 +1547,7 @@ void FTextureManager::GenerateGlobalBrightmapFromColormap()
 	int lump = fileSystem.CheckNumForName("COLORMAP");
 	if (lump == -1) lump = fileSystem.CheckNumForName("COLORMAP", ns_colormaps);
 	if (lump == -1) return;
-	FMemLump cmap = fileSystem.ReadLump(lump);
+	FileData cmap = fileSystem.ReadLump(lump);
 	uint8_t palbuffer[768];
 	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), palbuffer);
 

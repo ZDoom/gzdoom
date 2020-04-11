@@ -12,6 +12,7 @@
 #include "files.h"
 #include "doomdef.h"
 #include "tarray.h"
+#include "cmdlib.h"
 #include "zstring.h"
 #include "resourcefiles/resourcefile.h"
 
@@ -19,43 +20,30 @@ class FResourceFile;
 struct FResourceLump;
 class FTexture;
 
-struct wadinfo_t
+union LumpShortName
 {
-	// Should be "IWAD" or "PWAD".
-	uint32_t		Magic;
-	uint32_t		NumLumps;
-	uint32_t		InfoTableOfs;
+	char		String[9];
+
+	uint32_t		dword;			// These are for accessing the first 4 or 8 chars of
+	uint64_t		qword;			// Name as a unit without breaking strict aliasing rules
 };
 
-struct wadlump_t
-{
-	uint32_t		FilePos;
-	uint32_t		Size;
-	char		Name[8];
-};
-
-#define IWAD_ID		MAKE_ID('I','W','A','D')
-#define PWAD_ID		MAKE_ID('P','W','A','D')
-
-
-// [RH] Copy an 8-char string and uppercase it.
-void uppercopy (char *to, const char *from);
 
 // A lump in memory.
-class FMemLump
+class FileData
 {
 public:
-	FMemLump ();
+	FileData ();
 
-	FMemLump (const FMemLump &copy);
-	FMemLump &operator= (const FMemLump &copy);
-	~FMemLump ();
+	FileData (const FileData &copy);
+	FileData &operator= (const FileData &copy);
+	~FileData ();
 	void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
 	size_t GetSize () { return Block.Len(); }
 	FString GetString () { return Block; }
 
 private:
-	FMemLump (const FString &source);
+	FileData (const FString &source);
 
 	FString Block;
 
@@ -82,12 +70,12 @@ public:
 	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
 
 	void InitSingleFile(const char *filename, bool quiet = false);
-	void InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps, bool quiet = false, LumpFilterInfo* filter = nullptr);
+	void InitMultipleFiles (TArray<FString> &filenames, bool quiet = false, LumpFilterInfo* filter = nullptr);
 	void AddFile (const char *filename, FileReader *wadinfo, bool quiet, LumpFilterInfo* filter);
-	int CheckIfWadLoaded (const char *name);
+	int CheckIfResourceFileLoaded (const char *name) noexcept;
 
-	const char *GetWadName (int wadnum) const;
-	const char *GetWadFullName (int wadnum) const;
+	const char *GetResourceFileName (int filenum) const noexcept;
+	const char *GetResourceFileFullName (int wadnum) const noexcept;
 
 	int GetFirstLump(int wadnum) const;
 	int GetLastLump(int wadnum) const;
@@ -109,6 +97,11 @@ public:
 	int CheckNumForFullName (const char *name, bool trynormal = false, int namespc = ns_global, bool ignoreext = false);
 	int CheckNumForFullName (const char *name, int wadfile);
 	int GetNumForFullName (const char *name);
+	int FindFile(const char* name)
+	{
+		return CheckNumForFullName(name);
+	}
+	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
 
 	inline int CheckNumForFullName(const FString &name, bool trynormal = false, int namespc = ns_global) { return CheckNumForFullName(name.GetChars(), trynormal, namespc); }
 	inline int CheckNumForFullName (const FString &name, int wadfile) { return CheckNumForFullName(name.GetChars(), wadfile); }
@@ -119,9 +112,9 @@ public:
 
 
 	void ReadLump (int lump, void *dest);
-	TArray<uint8_t> ReadLumpIntoArray(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FMemLump isn't writable!)
-	FMemLump ReadLump (int lump);
-	FMemLump ReadLump (const char *name) { return ReadLump (GetNumForName (name)); }
+	TArray<uint8_t> ReadLumpIntoArray(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FileData isn't writable!)
+	FileData ReadLump (int lump);
+	FileData ReadLump (const char *name) { return ReadLump (GetNumForName (name)); }
 
 	FileReader OpenLumpReader(int lump);		// opens a reader that redirects to the containing file's one.
 	FileReader ReopenLumpReader(int lump, bool alwayscache = false);		// opens an independent reader.
@@ -130,11 +123,16 @@ public:
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
 	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name
 
+	int FindFileWithExtensions(const char* name, const char* const* exts, int count);
+	int FindResource(int resid, const char* type, int filenum) const noexcept;
+	int GetResource(int resid, const char* type, int filenum) const;
+
+
 	static uint32_t LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
 
-	int LumpLength (int lump) const;
-	int GetLumpOffset (int lump);					// [RH] Returns offset of lump in the wadfile
-	int GetLumpFlags (int lump);					// Return the flags for this lump
+	int FileLength (int lump) const;
+	int GetFileOffset (int lump);					// [RH] Returns offset of lump in the wadfile
+	int GetFileFlags (int lump);					// Return the flags for this lump
 	void GetLumpName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
 	void GetLumpName (FString &to, int lump) const;
 	const char* GetLumpName(int lump) const;
@@ -149,7 +147,7 @@ public:
 
 	int GetNumLumps() const
 	{
-		return NumLumps;
+		return NumEntries;
 	}
 
 	int GetNumWads() const
@@ -157,14 +155,18 @@ public:
 		return Files.Size();
 	}
 
+	void AddLump(FResourceLump* lump);
 	int AddExternalFile(const char *filename);
+	int AddFromBuffer(const char* name, const char* type, char* data, int size, int id, int flags);
+	FileReader* GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
+	void InitHashChains();
 
 protected:
 
 	struct LumpRecord;
 
 	TArray<FResourceFile *> Files;
-	TArray<LumpRecord> LumpInfo;
+	TArray<LumpRecord> FileInfo;
 
 	TArray<uint32_t> Hashes;	// one allocation for all hash lists.
 	uint32_t *FirstLumpIndex;	// [RH] Hashing stuff moved out of lumpinfo structure
@@ -176,22 +178,19 @@ protected:
 	uint32_t *FirstLumpIndex_NoExt;	// The same information for fully qualified paths from .zips
 	uint32_t *NextLumpIndex_NoExt;
 
-	uint32_t NumLumps = 0;					// Not necessarily the same as LumpInfo.Size()
+	uint32_t* FirstLumpIndex_ResId;	// The same information for fully qualified paths from .zips
+	uint32_t* NextLumpIndex_ResId;
+
+	uint32_t NumEntries = 0;					// Not necessarily the same as FileInfo.Size()
 	uint32_t NumWads;
 
 	int IwadIndex = -1;
 	int MaxIwadIndex = -1;
 
-	void InitHashChains ();								// [RH] Set up the lumpinfo hashing
-
 private:
-	void RenameSprites(const TArray<FString> &deletelumps);
-	void RenameNerve();
-	void FixMacHexen();
 	void DeleteAll();
 	void MoveLumpsInFolder(const char *);
 
-	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };
 
 extern FileSystem fileSystem;

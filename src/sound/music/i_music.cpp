@@ -191,7 +191,7 @@ static void SetupWgOpn()
 	{
 		return;
 	}
-	FMemLump data = fileSystem.ReadLump(lump);
+	FileData data = fileSystem.ReadLump(lump);
 	ZMusic_SetWgOpn(data.GetMem(), (uint32_t)data.GetSize());
 }
 
@@ -202,7 +202,7 @@ static void SetupDMXGUS()
 	{
 		return;
 	}
-	FMemLump data = fileSystem.ReadLump(lump);
+	FileData data = fileSystem.ReadLump(lump);
 	ZMusic_SetDmxGus(data.GetMem(), (uint32_t)data.GetSize());
 }
 

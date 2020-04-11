@@ -333,11 +333,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	int vp_lump = fileSystem.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
-	FMemLump vp_data = fileSystem.ReadLump(vp_lump);
+	FileData vp_data = fileSystem.ReadLump(vp_lump);
 
 	int fp_lump = fileSystem.CheckNumForFullName(frag_prog_lump, 0);
 	if (fp_lump == -1) I_Error("Unable to load '%s'", frag_prog_lump);
-	FMemLump fp_data = fileSystem.ReadLump(fp_lump);
+	FileData fp_data = fileSystem.ReadLump(fp_lump);
 
 
 
@@ -385,7 +385,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		{
 			int pp_lump = fileSystem.CheckNumForFullName(proc_prog_lump);
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump);
-			FMemLump pp_data = fileSystem.ReadLump(pp_lump);
+			FileData pp_data = fileSystem.ReadLump(pp_lump);
 
 			if (pp_data.GetString().IndexOf("ProcessMaterial") < 0)
 			{
@@ -394,7 +394,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 				// add ProcessMaterial function that calls the older ProcessTexel function
 				int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultmat.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat.fp");
-				FMemLump pl_data = fileSystem.ReadLump(pl_lump);
+				FileData pl_data = fileSystem.ReadLump(pl_lump);
 				fp_comb << "\n" << pl_data.GetString().GetChars();
 
 				if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
@@ -420,7 +420,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			{
 				int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultlight.fp", 0);
 				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultlight.fp");
-				FMemLump pl_data = fileSystem.ReadLump(pl_lump);
+				FileData pl_data = fileSystem.ReadLump(pl_lump);
 				fp_comb << "\n" << pl_data.GetString().GetChars();
 			}
 		}
@@ -435,7 +435,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	{
 		int pp_lump = fileSystem.CheckNumForFullName(light_fragprog, 0);
 		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog);
-		FMemLump pp_data = fileSystem.ReadLump(pp_lump);
+		FileData pp_data = fileSystem.ReadLump(pp_lump);
 		fp_comb << pp_data.GetString().GetChars() << "\n";
 	}
 

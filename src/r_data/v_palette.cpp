@@ -284,7 +284,7 @@ int ReadPalette(int lumpnum, uint8_t *buffer)
 	{
 		return 0;
 	}
-	FMemLump lump = fileSystem.ReadLump(lumpnum);
+	FileData lump = fileSystem.ReadLump(lumpnum);
 	uint8_t *lumpmem = (uint8_t*)lump.GetMem();
 	memset(buffer, 0, 768);
 

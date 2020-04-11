@@ -155,10 +155,10 @@ bool MapLoader::LoadScriptFile (const char *name, bool include, int type)
 	FileReader lump = fileSystem.ReopenLumpReader (lumpnum);
 
 	auto fn = fileSystem.GetLumpFile(lumpnum);
-	auto wadname = fileSystem.GetWadName(fn);
+	auto wadname = fileSystem.GetResourceFileName(fn);
 	if (stricmp(wadname, "STRIFE0.WAD") && stricmp(wadname, "STRIFE1.WAD") && stricmp(wadname, "SVE.WAD")) name = nullptr;	// Only localize IWAD content.
 
-	bool res = LoadScriptFile(name, lumpnum, lump, fileSystem.LumpLength(lumpnum), include, type);
+	bool res = LoadScriptFile(name, lumpnum, lump, fileSystem.FileLength(lumpnum), include, type);
 	return res;
 }
 

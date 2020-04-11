@@ -459,7 +459,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 				wad = fileSystem.GetLumpFile(map->lumpnum);
 				delete map;
 			}
-			const char * name = fileSystem.GetWadName(wad);
+			const char * name = fileSystem.GetResourceFileName(wad);
 			FString section = ExtractFileBase(name) + "." + StartEpisode->mEpisodeMap;
 			section.ToUpper();
 

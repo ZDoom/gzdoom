@@ -526,7 +526,7 @@ int RunEndoom()
 	bool blinking = false, blinkstate = false;
 	int i;
 
-	if (endoom_lump < 0 || fileSystem.LumpLength (endoom_lump) != 4000)
+	if (endoom_lump < 0 || fileSystem.FileLength (endoom_lump) != 4000)
 	{
 		return 0;
 	}

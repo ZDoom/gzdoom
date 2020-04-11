@@ -848,7 +848,7 @@ CCMD (wdir)
 		Printf ("usage: wdir <wadfile>\n");
 		return;
 	}
-	int wadnum = fileSystem.CheckIfWadLoaded (argv[1]);
+	int wadnum = fileSystem.CheckIfResourceFileLoaded (argv[1]);
 	if (wadnum < 0)
 	{
 		Printf ("%s must be loaded to view its directory.\n", argv[1]);

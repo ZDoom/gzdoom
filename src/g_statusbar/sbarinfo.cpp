@@ -519,7 +519,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 					else if (fileSystem.GetLumpFile(baselump) > 0)
 					{
 						I_FatalError("File %s is overriding core lump sbarinfo/%s.txt.",
-							fileSystem.GetWadFullName(fileSystem.GetLumpFile(baselump)), sc.String);
+							fileSystem.GetResourceFileFullName(fileSystem.GetLumpFile(baselump)), sc.String);
 					}
 					ParseSBarInfo(baselump);
 				}

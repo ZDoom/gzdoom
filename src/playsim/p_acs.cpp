@@ -2224,7 +2224,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 	// 2. Corrupt modules won't be reported when a level is being loaded if this function quits before
 	//    adding it to the list.
 
-	if (fr == NULL) len = fileSystem.LumpLength (lumpnum);
+	if (fr == NULL) len = fileSystem.FileLength (lumpnum);
 
 
 
@@ -2318,7 +2318,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 		if ((Level->flags2 & LEVEL2_HEXENHACK) && gameinfo.gametype == GAME_Hexen && lumpnum == -1 && reallumpnum > 0)
 		{
 			int fileno = fileSystem.GetLumpFile(reallumpnum);
-			const char * filename = fileSystem.GetWadName(fileno);
+			const char * filename = fileSystem.GetResourceFileName(fileno);
 			if (!stricmp(filename, "HEXEN.WAD") || !stricmp(filename, "HEXDD.WAD"))
 			{
 				ShouldLocalize = true;

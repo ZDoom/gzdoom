@@ -270,11 +270,10 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
 	FileSystem check;
 	TArray<FString> fns;
-	TArray<FString> deletes;
 	fns.Push(firstfn);
 	if (optfn) fns.Push(optfn);
 
-	check.InitMultipleFiles(fns, deletes, true);
+	check.InitMultipleFiles(fns, true);
 	if (check.GetNumLumps() > 0)
 	{
 		int num = check.CheckNumForName("IWADINFO");

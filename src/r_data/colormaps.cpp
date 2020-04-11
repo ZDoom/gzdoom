@@ -242,7 +242,7 @@ void R_InitColormaps (bool allowCustomColormap)
 
 		for (unsigned j = 1; j < fakecmaps.Size(); j++)
 		{
-			if (fileSystem.LumpLength (fakecmaps[j].lump) >= 256)
+			if (fileSystem.FileLength (fakecmaps[j].lump) >= 256)
 			{
 				int k, r, g, b;
 				auto lump = fileSystem.OpenLumpReader (fakecmaps[j].lump);

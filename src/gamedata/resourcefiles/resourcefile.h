@@ -13,6 +13,7 @@ struct LumpFilterInfo
 	// The following are for checking if the root directory of a zip can be removed.
 	TArray<FString> reservedFolders;
 	TArray<FString> requiredPrefixes;
+	std::function<void()> postprocessFunc;
 };
 
 class FResourceFile;
@@ -86,11 +87,11 @@ struct FResourceLump
 	friend class FWadFile;	// this still needs direct access.
 
 	int				LumpSize;
+	int				RefCount;
 protected:
-	FString			FullName;		// only valid for files loaded from a non-wad archive
+	FString			FullName;
 public:
 	uint8_t			Flags;
-	int8_t			RefCount;
 	char *			Cache;
 	FResourceFile *	Owner;
 
@@ -199,18 +200,23 @@ struct FExternalLump : public FResourceLump
 
 };
 
-struct FMemoryFile : public FUncompressedFile
+struct FMemoryLump : public FResourceLump
 {
-	FMemoryFile(const char *_filename, const void *sdata, int length)
-		: FUncompressedFile(_filename)
+	FMemoryLump(const void* data, int length)
 	{
-		Reader.OpenMemoryArray(sdata, length);
+		RefCount = INT_MAX / 2;
+		LumpSize = length;
+		Cache = new char[length];
+		memcpy(Cache, data, length);
 	}
 
-    bool Open(bool quiet, LumpFilterInfo* filter);
-
-
+	virtual int FillCache() override
+	{
+		RefCount = INT_MAX / 2; // Make sure it never counts down to 0 by resetting it to something high each time it is used.
+		return 1;
+	}
 };
+
 
 
 

@@ -307,7 +307,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
 			int fileno = fileSystem.GetLumpFile(lump);
-			auto fn = fileSystem.GetWadName(fileno);
+			auto fn = fileSystem.GetResourceFileName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, sc.String);

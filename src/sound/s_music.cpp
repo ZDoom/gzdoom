@@ -441,7 +441,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			}
 			if (handle == nullptr)
 			{
-				if (fileSystem.LumpLength (lumpnum) == 0)
+				if (fileSystem.FileLength (lumpnum) == 0)
 				{
 					return false;
 				}

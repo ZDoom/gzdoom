@@ -1276,7 +1276,7 @@ void ParseDecorate (FScanner &sc, PNamespace *ns)
 				if (includefile != 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						fileSystem.GetWadFullName(includefile), sc.String);
+						fileSystem.GetResourceFileFullName(includefile), sc.String);
 				}
 			}
 			FScanner newscanner;

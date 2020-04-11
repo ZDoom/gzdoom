@@ -238,12 +238,12 @@ static int CountTiles (const void *tiles)
 
 static int BuildPaletteTranslation(int lump)
 {
-	if (fileSystem.LumpLength(lump) < 768)
+	if (fileSystem.FileLength(lump) < 768)
 	{
 		return false;
 	}
 
-	FMemLump data = fileSystem.ReadLump(lump);
+	FileData data = fileSystem.ReadLump(lump);
 	const uint8_t *ipal = (const uint8_t *)data.GetMem();
 	FRemapTable opal;
 
@@ -316,7 +316,7 @@ void FTextureManager::InitBuildTiles()
 		if (fileSystem.CheckNumForFullName(name) != i) continue;	// This palette is hidden by a later one. Do not process
 		FString base = ExtractFileBase(name, true);
 		base.ToLower();
-		if (base.Compare("palette.dat") == 0 && fileSystem.LumpLength(i) >= 768)	// must be a valid palette, i.e. at least 256 colors.
+		if (base.Compare("palette.dat") == 0 && fileSystem.FileLength(i) >= 768)	// must be a valid palette, i.e. at least 256 colors.
 		{
 			FString path = ExtractFilePath(name);
 			if (path.IsNotEmpty() && path.Back() != '/') path += '/';
@@ -336,7 +336,7 @@ void FTextureManager::InitBuildTiles()
 
 				BuildTileData.Reserve(1);
 				auto &artdata = BuildTileData.Last();
-				artdata.Resize(fileSystem.LumpLength(lumpnum));
+				artdata.Resize(fileSystem.FileLength(lumpnum));
 				fileSystem.ReadLump(lumpnum, &artdata[0]);
 
 				if ((numtiles = CountTiles(&artdata[0])) > 0)

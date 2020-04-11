@@ -949,7 +949,7 @@ CCMD (skins)
 
 static void R_CreateSkinTranslation (const char *palname)
 {
-	FMemLump lump = fileSystem.ReadLump (palname);
+	FileData lump = fileSystem.ReadLump (palname);
 	const uint8_t *otherPal = (uint8_t *)lump.GetMem();
  
 	for (int i = 0; i < 256; ++i)

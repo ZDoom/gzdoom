@@ -125,7 +125,7 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 
 	FontName = name;
 
-	FMemLump data1 = fileSystem.ReadLump (lump);
+	FileData data1 = fileSystem.ReadLump (lump);
 	const uint8_t *data = (const uint8_t *)data1.GetMem();
 
 	if (data[0] == 0xE1 && data[1] == 0xE6 && data[2] == 0xD5 && data[3] == 0x1A)
@@ -539,7 +539,7 @@ int FSingleLumpFont::BMFCompare(const void *a, const void *b)
 
 void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 {
-	FMemLump memLump = fileSystem.ReadLump(Lump);
+	FileData memLump = fileSystem.ReadLump(Lump);
 	const uint8_t* data = (const uint8_t*) memLump.GetMem();
 
 	uint8_t used[256], reverse[256];

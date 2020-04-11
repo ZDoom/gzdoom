@@ -490,7 +490,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 	bases = s;
 	basev = v;
 
-	if (colorset != NULL && colorset->Lump >= 0 && fileSystem.LumpLength(colorset->Lump) < 256)
+	if (colorset != NULL && colorset->Lump >= 0 && fileSystem.FileLength(colorset->Lump) < 256)
 	{ // Bad table length. Ignore it.
 		colorset = NULL;
 	}
@@ -511,7 +511,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		}
 		else
 		{
-			FMemLump translump = fileSystem.ReadLump(colorset->Lump);
+			FileData translump = fileSystem.ReadLump(colorset->Lump);
 			const uint8_t *trans = (const uint8_t *)translump.GetMem();
 			for (i = start; i <= end; ++i)
 			{

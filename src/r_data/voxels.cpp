@@ -178,7 +178,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 	int mip, maxmipsize;
 	int i, j, n;
 
-	FMemLump lump = fileSystem.ReadLump(lumpnum);	// FMemLump adds an extra 0 byte to the end.
+	FileData lump = fileSystem.ReadLump(lumpnum);	// FileData adds an extra 0 byte to the end.
 	uint8_t *rawvoxel = (uint8_t *)lump.GetMem();
 	int voxelsize = (int)(lump.GetSize()-1);
 

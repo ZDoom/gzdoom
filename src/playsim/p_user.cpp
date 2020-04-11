@@ -392,7 +392,7 @@ void player_t::SetLogNumber (int num)
 	if (lumpnum != -1)
 	{
 		auto fn = fileSystem.GetLumpFile(lumpnum);
-		auto wadname = fileSystem.GetWadName(fn);
+		auto wadname = fileSystem.GetResourceFileName(fn);
 		if (!stricmp(wadname, "STRIFE0.WAD") || !stricmp(wadname, "STRIFE1.WAD") || !stricmp(wadname, "SVE.WAD"))
 		{
 			// If this is an original IWAD text, try looking up its lower priority string version first.

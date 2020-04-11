@@ -380,7 +380,7 @@ normal:
 
 FString V_GetColorStringByName (const char *name, FScriptPosition *sc)
 {
-	FMemLump rgbNames;
+	FileData rgbNames;
 	char *rgbEnd;
 	char *rgb, *endp;
 	int rgblump;
@@ -399,7 +399,7 @@ FString V_GetColorStringByName (const char *name, FScriptPosition *sc)
 
 	rgbNames = fileSystem.ReadLump (rgblump);
 	rgb = (char *)rgbNames.GetMem();
-	rgbEnd = rgb + fileSystem.LumpLength (rgblump);
+	rgbEnd = rgb + fileSystem.FileLength (rgblump);
 	step = 0;
 	namelen = strlen (name);
 

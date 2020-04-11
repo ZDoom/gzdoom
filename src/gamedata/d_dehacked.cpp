@@ -2490,7 +2490,7 @@ bool D_LoadDehLump(int lumpnum)
 	auto ls = LumpFileNum;
 	LumpFileNum = fileSystem.GetLumpFile(lumpnum);
 
-	PatchSize = fileSystem.LumpLength(lumpnum);
+	PatchSize = fileSystem.FileLength(lumpnum);
 
 	PatchName = fileSystem.GetLumpFullPath(lumpnum);
 	PatchFile = new char[PatchSize + 1];

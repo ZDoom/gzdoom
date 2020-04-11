@@ -856,7 +856,7 @@ void FMapInfoParser::ParseCluster()
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
 			int fileno = fileSystem.GetLumpFile(lump);
-			auto fn = fileSystem.GetWadName(fileno);
+			auto fn = fileSystem.GetResourceFileName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText.GetChars());
@@ -1987,7 +1987,7 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 				{
 					// Try to localize Hexen's map names. This does not use the above feature to allow these names to be unique.
 					int fileno = fileSystem.GetLumpFile(sc.LumpNum);
-					auto fn = fileSystem.GetWadName(fileno);
+					auto fn = fileSystem.GetResourceFileName(fileno);
 					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
 						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
@@ -2217,7 +2217,7 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 				if (fileSystem.GetLumpFile(sc.LumpNum) == 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						fileSystem.GetWadFullName(fileSystem.GetLumpFile(inclump)), sc.String);
+						fileSystem.GetResourceFileFullName(fileSystem.GetLumpFile(inclump)), sc.String);
 				}
 			}
 			FScanner saved_sc = sc;
@@ -2410,7 +2410,7 @@ void G_ParseMapInfo (FString basemapinfo)
 		if (fileSystem.GetLumpFile(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 
-				fileSystem.GetWadFullName(fileSystem.GetLumpFile(baselump)), basemapinfo.GetChars());
+				fileSystem.GetResourceFileName(fileSystem.GetLumpFile(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}

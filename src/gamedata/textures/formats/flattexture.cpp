@@ -79,7 +79,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	int area;
 	int bits;
 
-	area = fileSystem.LumpLength (lumpnum);
+	area = fileSystem.FileLength (lumpnum);
 
 	switch (area)
 	{

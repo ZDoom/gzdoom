@@ -103,6 +103,7 @@
 #include "s_music.h"
 #include "swrenderer/r_swcolormaps.h"
 #include "findfile.h"
+#include "md5.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
@@ -2018,11 +2019,10 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 
 static FString CheckGameInfo(TArray<FString> & pwads)
 {
-	TArray<FString> deletes;
 	FileSystem check;
 
 	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
-	check.InitMultipleFiles(pwads, deletes, true);
+	check.InitMultipleFiles(pwads, true);
 	if (check.GetNumLumps() > 0)
 	{
 		int num = check.CheckNumForName("GAMEINFO");
@@ -2030,7 +2030,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 		{
 			// Found one!
 			auto data = check.ReadLumpIntoArray(num);
-			auto wadname = check.GetWadName(check.GetLumpFile(num));
+			auto wadname = check.GetResourceFileName(check.GetLumpFile(num));
 			return ParseGameInfo(pwads, wadname, (const char*)data.Data(), data.Size());
 		}
 	}
@@ -2321,6 +2321,336 @@ static void NewFailure ()
     I_FatalError ("Failed to allocate memory from system heap");
 }
 
+
+//==========================================================================
+//
+// RenameSprites
+//
+// Renames sprites in IWADs so that unique actors can have unique sprites,
+// making it possible to import any actor from any game into any other
+// game without jumping through hoops to resolve duplicate sprite names.
+// You just need to know what the sprite's new name is.
+//
+//==========================================================================
+
+static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletelumps)
+{
+	bool renameAll;
+	bool MNTRZfound = false;
+	const char* altbigfont = gameinfo.gametype == GAME_Strife ? "SBIGFONT" : (gameinfo.gametype & GAME_Raven) ? "HBIGFONT" : "DBIGFONT";
+
+	static const uint32_t HereticRenames[] =
+	{ MAKE_ID('H','E','A','D'), MAKE_ID('L','I','C','H'),		// Ironlich
+	};
+
+	static const uint32_t HexenRenames[] =
+	{ MAKE_ID('B','A','R','L'), MAKE_ID('Z','B','A','R'),		// ZBarrel
+	  MAKE_ID('A','R','M','1'), MAKE_ID('A','R','_','1'),		// MeshArmor
+	  MAKE_ID('A','R','M','2'), MAKE_ID('A','R','_','2'),		// FalconShield
+	  MAKE_ID('A','R','M','3'), MAKE_ID('A','R','_','3'),		// PlatinumHelm
+	  MAKE_ID('A','R','M','4'), MAKE_ID('A','R','_','4'),		// AmuletOfWarding
+	  MAKE_ID('S','U','I','T'), MAKE_ID('Z','S','U','I'),		// ZSuitOfArmor and ZArmorChunk
+	  MAKE_ID('T','R','E','1'), MAKE_ID('Z','T','R','E'),		// ZTree and ZTreeDead
+	  MAKE_ID('T','R','E','2'), MAKE_ID('T','R','E','S'),		// ZTreeSwamp150
+	  MAKE_ID('C','A','N','D'), MAKE_ID('B','C','A','N'),		// ZBlueCandle
+	  MAKE_ID('R','O','C','K'), MAKE_ID('R','O','K','K'),		// rocks and dirt in a_debris.cpp
+	  MAKE_ID('W','A','T','R'), MAKE_ID('H','W','A','T'),		// Strife also has WATR
+	  MAKE_ID('G','I','B','S'), MAKE_ID('P','O','L','5'),		// RealGibs
+	  MAKE_ID('E','G','G','M'), MAKE_ID('P','R','K','M'),		// PorkFX
+	  MAKE_ID('I','N','V','U'), MAKE_ID('D','E','F','N'),		// Icon of the Defender
+	};
+
+	static const uint32_t StrifeRenames[] =
+	{ MAKE_ID('M','I','S','L'), MAKE_ID('S','M','I','S'),		// lots of places
+	  MAKE_ID('A','R','M','1'), MAKE_ID('A','R','M','3'),		// MetalArmor
+	  MAKE_ID('A','R','M','2'), MAKE_ID('A','R','M','4'),		// LeatherArmor
+	  MAKE_ID('P','M','A','P'), MAKE_ID('S','M','A','P'),		// StrifeMap
+	  MAKE_ID('T','L','M','P'), MAKE_ID('T','E','C','H'),		// TechLampSilver and TechLampBrass
+	  MAKE_ID('T','R','E','1'), MAKE_ID('T','R','E','T'),		// TreeStub
+	  MAKE_ID('B','A','R','1'), MAKE_ID('B','A','R','C'),		// BarricadeColumn
+	  MAKE_ID('S','H','T','2'), MAKE_ID('M','P','U','F'),		// MaulerPuff
+	  MAKE_ID('B','A','R','L'), MAKE_ID('B','B','A','R'),		// StrifeBurningBarrel
+	  MAKE_ID('T','R','C','H'), MAKE_ID('T','R','H','L'),		// SmallTorchLit
+	  MAKE_ID('S','H','R','D'), MAKE_ID('S','H','A','R'),		// glass shards
+	  MAKE_ID('B','L','S','T'), MAKE_ID('M','A','U','L'),		// Mauler
+	  MAKE_ID('L','O','G','G'), MAKE_ID('L','O','G','W'),		// StickInWater
+	  MAKE_ID('V','A','S','E'), MAKE_ID('V','A','Z','E'),		// Pot and Pitcher
+	  MAKE_ID('C','N','D','L'), MAKE_ID('K','N','D','L'),		// Candle
+	  MAKE_ID('P','O','T','1'), MAKE_ID('M','P','O','T'),		// MetalPot
+	  MAKE_ID('S','P','I','D'), MAKE_ID('S','T','L','K'),		// Stalker
+	};
+
+	const uint32_t* renames;
+	int numrenames;
+
+	switch (gameinfo.gametype)
+	{
+	case GAME_Doom:
+	default:
+		// Doom's sprites don't get renamed.
+		renames = nullptr;
+		numrenames = 0;
+		break;
+
+	case GAME_Heretic:
+		renames = HereticRenames;
+		numrenames = sizeof(HereticRenames) / 8;
+		break;
+
+	case GAME_Hexen:
+		renames = HexenRenames;
+		numrenames = sizeof(HexenRenames) / 8;
+		break;
+
+	case GAME_Strife:
+		renames = StrifeRenames;
+		numrenames = sizeof(StrifeRenames) / 8;
+		break;
+	}
+
+	unsigned NumFiles = fileSystem.GetNumLumps();
+
+	for (uint32_t i = 0; i < NumFiles; i++)
+	{
+		// check for full Minotaur animations. If this is not found
+		// some frames need to be renamed.
+		if (fileSystem.GetLumpNamespace(i) == ns_sprites)
+		{
+			auto& shortName = fileSystem.GetShortName(i);
+			if (shortName.dword == MAKE_ID('M', 'N', 'T', 'R') && shortName.String[4] == 'Z')
+			{
+				MNTRZfound = true;
+				break;
+			}
+		}
+	}
+
+	renameAll = !!Args->CheckParm("-oldsprites") || nospriterename;
+
+	for (uint32_t i = 0; i < NumFiles; i++)
+	{
+		auto& shortName = fileSystem.GetShortName(i);
+		if (fileSystem.GetLumpNamespace(i) == ns_sprites)
+		{
+			// Only sprites in the IWAD normally get renamed
+			if (renameAll || fileSystem.GetLumpFile(i) == fileSystem.GetIwadNum())
+			{
+				for (int j = 0; j < numrenames; ++j)
+				{
+					if (shortName.dword == renames[j * 2])
+					{
+						shortName.dword = renames[j * 2 + 1];
+					}
+				}
+				if (gameinfo.gametype == GAME_Hexen)
+				{
+					if (fileSystem.CheckLumpName(i, "ARTIINVU"))
+					{
+						shortName.String[4] = 'D'; shortName.String[5] = 'E';
+						shortName.String[6] = 'F'; shortName.String[7] = 'N';
+					}
+				}
+			}
+
+			if (!MNTRZfound)
+			{
+				if (shortName.dword == MAKE_ID('M', 'N', 'T', 'R'))
+				{
+					for (size_t fi : {4, 6})
+					{
+						if (shortName.String[fi] >= 'F' && shortName.String[fi] <= 'K')
+						{
+							shortName.String[fi] += 'U' - 'F';
+						}
+					}
+				}
+			}
+
+			// When not playing Doom rename all BLOD sprites to BLUD so that
+			// the same blood states can be used everywhere
+			if (!(gameinfo.gametype & GAME_DoomChex))
+			{
+				if (shortName.dword == MAKE_ID('B', 'L', 'O', 'D'))
+				{
+					shortName.dword = MAKE_ID('B', 'L', 'U', 'D');
+				}
+			}
+		}
+		else if (fileSystem.GetLumpNamespace(i) == ns_global)
+		{
+			int fn = fileSystem.GetLumpFile(i);
+			if (fn >= fileSystem.GetIwadNum() && fn <= fileSystem.GetMaxIwadNum() && deletelumps.Find(shortName.String) < deletelumps.Size())
+			{
+				shortName.String[0] = 0;	// Lump must be deleted from directory.
+			}
+			// Rename the game specific big font lumps so that the font manager does not have to do problematic special checks for them.
+			else if (!strcmp(shortName.String, altbigfont))
+			{
+				strcpy(shortName.String, "BIGFONT");
+			}
+		}
+	}
+}
+
+//==========================================================================
+//
+// RenameNerve
+//
+// Renames map headers and map name pictures in nerve.wad so as to load it
+// alongside Doom II and offer both episodes without causing conflicts.
+// MD5 checksum for NERVE.WAD: 967d5ae23daf45196212ae1b605da3b0 (3,819,855)
+// MD5 checksum for Unity version of NERVE.WAD: 4214c47651b63ee2257b1c2490a518c9 (3,821,966)
+//
+//==========================================================================
+void RenameNerve(FileSystem& fileSystem)
+{
+	if (gameinfo.gametype != GAME_Doom)
+		return;
+
+	const int numnerveversions = 2;
+
+	bool found = false;
+	uint8_t cksum[16];
+	static const uint8_t nerve[numnerveversions][16] = {
+			{ 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
+				0x62, 0x12, 0xae, 0x1b, 0x60, 0x5d, 0xa3, 0xb0 },
+			{ 0x42, 0x14, 0xc4, 0x76, 0x51, 0xb6, 0x3e, 0xe2,
+				0x25, 0x7b, 0x1c, 0x24, 0x90, 0xa5, 0x18, 0xc9 }
+	};
+	size_t nervesize[numnerveversions] = { 3819855, 3821966 }; // NERVE.WAD's file size
+	int w = fileSystem.GetIwadNum();
+	while (++w < fileSystem.GetNumWads())
+	{
+		auto fr = fileSystem.GetFileReader(w);
+		int isizecheck = -1;
+		if (fr == NULL)
+		{
+			continue;
+		}
+		for (int icheck = 0; icheck < numnerveversions; icheck++)
+			if (fr->GetLength() == (long)nervesize[icheck])
+				isizecheck = icheck;
+		if (isizecheck == -1)
+		{
+			// Skip MD5 computation when there is a
+			// cheaper way to know this is not the file
+			continue;
+		}
+		fr->Seek(0, FileReader::SeekSet);
+		MD5Context md5;
+		md5Update(*fr, md5, (unsigned)fr->GetLength());
+		md5.Final(cksum);
+		if (memcmp(nerve[isizecheck], cksum, 16) == 0)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+		return;
+
+	for (int i = fileSystem.GetFirstLump(w); i <= fileSystem.GetLastLump(w); i++)
+	{
+		auto& shortName = fileSystem.GetShortName(i);
+		// Only rename the maps from NERVE.WAD
+		if (shortName.dword == MAKE_ID('C', 'W', 'I', 'L'))
+		{
+			shortName.String[0] = 'N';
+		}
+		else if (shortName.dword == MAKE_ID('M', 'A', 'P', '0'))
+		{
+			shortName.String[6] = shortName.String[4];
+			shortName.String[5] = '0';
+			shortName.String[4] = 'L';
+			shortName.dword = MAKE_ID('L', 'E', 'V', 'E');
+		}
+	}
+}
+
+//==========================================================================
+//
+// FixMacHexen
+//
+// Discard all extra lumps in Mac version of Hexen IWAD (demo or full)
+// to avoid any issues caused by names of these lumps, including:
+//  * Wrong height of small font
+//  * Broken life bar of mage class
+//
+//==========================================================================
+
+void FixMacHexen(FileSystem& fileSystem)
+{
+	if (GAME_Hexen != gameinfo.gametype)
+	{
+		return;
+	}
+
+	FileReader* reader = fileSystem.GetFileReader(fileSystem.GetIwadNum());
+	auto iwadSize = reader->GetLength();
+
+	static const long DEMO_SIZE = 13596228;
+	static const long BETA_SIZE = 13749984;
+	static const long FULL_SIZE = 21078584;
+
+	if (DEMO_SIZE != iwadSize
+		&& BETA_SIZE != iwadSize
+		&& FULL_SIZE != iwadSize)
+	{
+		return;
+	}
+
+	reader->Seek(0, FileReader::SeekSet);
+
+	uint8_t checksum[16];
+	MD5Context md5;
+
+	md5Update(*reader, md5, (unsigned)iwadSize);
+	md5.Final(checksum);
+
+	static const uint8_t HEXEN_DEMO_MD5[16] =
+	{
+		0x92, 0x5f, 0x9f, 0x50, 0x00, 0xe1, 0x7d, 0xc8,
+		0x4b, 0x0a, 0x6a, 0x3b, 0xed, 0x3a, 0x6f, 0x31
+	};
+
+	static const uint8_t HEXEN_BETA_MD5[16] =
+	{
+		0x2a, 0xf1, 0xb2, 0x7c, 0xd1, 0x1f, 0xb1, 0x59,
+		0xe6, 0x08, 0x47, 0x2a, 0x1b, 0x53, 0xe4, 0x0e
+	};
+
+	static const uint8_t HEXEN_FULL_MD5[16] =
+	{
+		0xb6, 0x81, 0x40, 0xa7, 0x96, 0xf6, 0xfd, 0x7f,
+		0x3a, 0x5d, 0x32, 0x26, 0xa3, 0x2b, 0x93, 0xbe
+	};
+
+	const bool isBeta = 0 == memcmp(HEXEN_BETA_MD5, checksum, sizeof checksum);
+
+	if (!isBeta
+		&& 0 != memcmp(HEXEN_DEMO_MD5, checksum, sizeof checksum)
+		&& 0 != memcmp(HEXEN_FULL_MD5, checksum, sizeof checksum))
+	{
+		return;
+	}
+
+	static const int EXTRA_LUMPS = 299;
+
+	// Hexen Beta is very similar to Demo but it has MAP41: Maze at the end of the WAD
+	// So keep this map if it's present but discard all extra lumps
+
+	const int lastLump = fileSystem.GetLastLump(fileSystem.GetIwadNum()) - (isBeta ? 12 : 0);
+	assert(fileSystem.GetFirstLump(fileSystem.GetIwadNum()) + 299 < lastLump);
+
+	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
+	{
+		auto& shortName = fileSystem.GetShortName(i);
+		shortName.String[0] = '\0';
+	}
+}
+
+
 //==========================================================================
 //
 // D_DoomMain
@@ -2504,7 +2834,14 @@ static int D_DoomMain_Internal (void)
 		static const char* reserved[] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "maps/" };
 		for (auto p : reserved) lfi.requiredPrefixes.Push(p);
 
-		fileSystem.InitMultipleFiles (allwads, iwad_info->DeleteLumps, false, &lfi);
+		lfi.postprocessFunc = [&]()
+		{
+			RenameNerve(fileSystem);
+			RenameSprites(fileSystem, iwad_info->DeleteLumps);
+			FixMacHexen(fileSystem);
+		};
+
+		fileSystem.InitMultipleFiles (allwads, false, &lfi);
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();

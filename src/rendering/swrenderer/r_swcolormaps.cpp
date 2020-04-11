@@ -424,7 +424,7 @@ static void InitBoomColormaps ()
 		remap[0] = 0;
 		for (j = 1; j < fakecmaps.Size(); j++)
 		{
-			if (fileSystem.LumpLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
+			if (fileSystem.FileLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
 			{
 				int k, r;
 				auto lump = fileSystem.OpenLumpReader (fakecmaps[j].lump);

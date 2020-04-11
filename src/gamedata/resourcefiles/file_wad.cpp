@@ -39,6 +39,22 @@
 #include "w_wad.h"
 #include "engineerrors.h"
 
+
+struct wadinfo_t
+{
+	// Should be "IWAD" or "PWAD".
+	uint32_t		Magic;
+	uint32_t		NumLumps;
+	uint32_t		InfoTableOfs;
+};
+
+struct wadlump_t
+{
+	uint32_t		FilePos;
+	uint32_t		Size;
+	char		Name[8];
+};
+
 //==========================================================================
 //
 // Wad Lump (with console doom LZSS support)

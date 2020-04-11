@@ -1765,7 +1765,7 @@ static bool CheckSingleWad (const char *name, bool &printRequires, bool printwar
 	{
 		return true;
 	}
-	if (fileSystem.CheckIfWadLoaded (name) < 0)
+	if (fileSystem.CheckIfResourceFileLoaded (name) < 0)
 	{
 		if (printwarn)
 		{
@@ -2129,13 +2129,13 @@ static void PutSaveWads (FSerializer &arc)
 	const char *name;
 
 	// Name of IWAD
-	name = fileSystem.GetWadName (fileSystem.GetIwadNum());
+	name = fileSystem.GetResourceFileName (fileSystem.GetIwadNum());
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
 	if (fileSystem.GetLumpFile (primaryLevel->lumpnum) > fileSystem.GetIwadNum())
 	{
-		name = fileSystem.GetWadName (fileSystem.GetLumpFile (primaryLevel->lumpnum));
+		name = fileSystem.GetResourceFileName (fileSystem.GetLumpFile (primaryLevel->lumpnum));
 		arc.AddString("Map WAD", name);
 	}
 }
@@ -2776,7 +2776,7 @@ void G_DoPlayDemo (void)
 	demolump = fileSystem.CheckNumForFullName (defdemoname, true);
 	if (demolump >= 0)
 	{
-		int demolen = fileSystem.LumpLength (demolump);
+		int demolen = fileSystem.FileLength (demolump);
 		demobuffer = (uint8_t *)M_Malloc(demolen);
 		fileSystem.ReadLump (demolump, demobuffer);
 	}

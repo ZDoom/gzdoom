@@ -1158,7 +1158,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 template<class nodetype, class subsectortype>
 bool MapLoader::LoadNodes (MapData * map)
 {
-	FMemLump	data;
+	FileData	data;
 	int 		j;
 	int 		k;
 	nodetype	*mn;
@@ -2151,7 +2151,7 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 				sd->SetTexture(side_t::mid, FNullTextureID());
 			}
 			else if ((lumpnum = fileSystem.CheckNumForName (msd->midtexture)) > 0 &&
-				fileSystem.LumpLength (lumpnum) == 65536)
+				fileSystem.FileLength (lumpnum) == 65536)
 			{
 				*alpha = (short)DetermineTranslucency (lumpnum);
 				sd->SetTexture(side_t::mid, FNullTextureID());

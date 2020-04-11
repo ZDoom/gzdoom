@@ -81,7 +81,7 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 : FImageSource(lumpnum)
 {
 	Width = 320;
-	Height = uint16_t(fileSystem.LumpLength(lumpnum) / 320);
+	Height = uint16_t(fileSystem.FileLength(lumpnum) / 320);
 	bUseGamePalette = true;
 }
 
@@ -94,7 +94,7 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 TArray<uint8_t> FAutomapTexture::CreatePalettedPixels(int conversion)
 {
 	int x, y;
-	FMemLump data = fileSystem.ReadLump (SourceLump);
+	FileData data = fileSystem.ReadLump (SourceLump);
 	const uint8_t *indata = (const uint8_t *)data.GetMem();
 
 	TArray<uint8_t> Pixels(Width * Height, true);

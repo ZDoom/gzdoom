@@ -2018,49 +2018,20 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 
 static FString CheckGameInfo(TArray<FString> & pwads)
 {
-	// scan the list of WADs backwards to find the last one that contains a GAMEINFO lump
-	for(int i=pwads.Size()-1; i>=0; i--)
+	TArray<FString> deletes;
+	FWadCollection check;
+
+	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
+	check.InitMultipleFiles(pwads, deletes, true);
+	if (check.GetNumLumps() > 0)
 	{
-		bool isdir = false;
-		FResourceFile *resfile;
-		const char *filename = pwads[i];
-
-		// Does this exist? If so, is it a directory?
-		if (!DirEntryExists(pwads[i], &isdir))
+		int num = check.CheckNumForName("GAMEINFO");
+		if (num >= 0)
 		{
-			Printf(TEXTCOLOR_RED "Could not stat %s\n", filename);
-			continue;
-		}
-
-		if (!isdir)
-		{
-			FileReader fr;
-			if (!fr.OpenFile(filename))
-			{ 
-				// Didn't find file
-				continue;
-			}
-			resfile = FResourceFile::OpenResourceFile(filename, fr, true);
-		}
-		else
-			resfile = FResourceFile::OpenDirectory(filename, true);
-
-		if (resfile != NULL)
-		{
-			uint32_t cnt = resfile->LumpCount();
-			for(int i=cnt-1; i>=0; i--)
-			{
-				FResourceLump *lmp = resfile->GetLump(i);
-
-				if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "GAMEINFO"))
-				{
-					// Found one!
-					FString iwad = ParseGameInfo(pwads, resfile->FileName, (const char*)lmp->CacheLump(), lmp->LumpSize);
-					delete resfile;
-					return iwad;
-				}
-			}
-			delete resfile;
+			// Found one!
+			auto data = check.ReadLumpIntoArray(num);
+			auto wadname = check.GetWadName(check.GetLumpFile(num));
+			return ParseGameInfo(pwads, wadname, (const char*)data.Data(), data.Size());
 		}
 	}
 	return "";

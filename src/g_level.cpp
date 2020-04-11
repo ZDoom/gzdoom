@@ -1802,11 +1802,12 @@ void G_ReadSnapshots(FResourceFile *resf)
 		FResourceLump * resl = resf->GetLump(j);
 		if (resl != nullptr)
 		{
-			auto ptr = strstr(resl->FullName, ".map.json");
+			auto name = resl->getName();
+			auto ptr = strstr(name, ".map.json");
 			if (ptr != nullptr)
 			{
-				ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-				FString mapname(resl->FullName.GetChars(), (size_t)maplen);
+				ptrdiff_t maplen = ptr - name;
+				FString mapname(name, (size_t)maplen);
 				i = FindLevelInfo(mapname);
 				if (i != nullptr)
 				{
@@ -1815,11 +1816,11 @@ void G_ReadSnapshots(FResourceFile *resf)
 			}
 			else
 			{
-				auto ptr = strstr(resl->FullName, ".mapd.json");
+				auto ptr = strstr(name, ".mapd.json");
 				if (ptr != nullptr)
 				{
-					ptrdiff_t maplen = ptr - resl->FullName.GetChars();
-					FString mapname(resl->FullName.GetChars(), (size_t)maplen);
+					ptrdiff_t maplen = ptr - name;
+					FString mapname(name, (size_t)maplen);
 					TheDefaultLevelInfo.Snapshot = resl->GetRawData();
 				}
 			}

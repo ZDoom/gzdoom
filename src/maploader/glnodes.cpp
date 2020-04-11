@@ -792,7 +792,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 	{
 		for(uint32_t i=0;i<numentries-4;i++)
 		{
-			if (!strnicmp(f->GetLump(i)->Name, glheader, 8))
+			if (!strnicmp(f->GetLump(i)->getName(), glheader, 8))
 			{
 				if (mustcheck)
 				{
@@ -899,7 +899,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				if (strnicmp(f_gwa->GetLump(li+i+1)->Name, check[i], 8))
+				if (strnicmp(f_gwa->GetLump(li+i+1)->getName(), check[i], 8))
 				{
 					result=false;
 					break;

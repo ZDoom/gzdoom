@@ -43,7 +43,6 @@
 #include "sc_man.h"
 #include "v_video.h"
 #include "gameconfigfile.h"
-#include "resourcefiles/resourcefile.h"
 #include "version.h"
 #include "engineerrors.h"
 #include "v_text.h"
@@ -267,28 +266,27 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 //
 //==========================================================================
 
-FIWadManager::FIWadManager(const char *fn, const char *optfn)
+FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
-	FResourceFile *resfile = FResourceFile::OpenResourceFile(optfn, true);
-	if (resfile != NULL)
-	{
-		uint32_t cnt = resfile->LumpCount();
-		for(int i=cnt-1; i>=0; i--)
-		{
-			FResourceLump *lmp = resfile->GetLump(i);
+	FWadCollection check;
+	TArray<FString> fns;
+	TArray<FString> deletes;
+	fns.Push(firstfn);
+	if (optfn) fns.Push(optfn);
 
-			if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "IWADINFO"))
-			{
-				// Found one!
-				ParseIWadInfo(resfile->FileName, (const char*)lmp->CacheLump(), lmp->LumpSize);
-				break;
-			}
-		}
-		delete resfile;
-		if (mIWadNames.Size() == 0 || mIWadInfos.Size() == 0)
+	check.InitMultipleFiles(fns, deletes, true);
+	if (check.GetNumLumps() > 0)
+	{
+		int num = check.CheckNumForName("IWADINFO");
+		if (num >= 0)
 		{
-			I_FatalError("No IWAD definitions found");
+			auto data = check.ReadLumpIntoArray(num);
+			ParseIWadInfo("IWADINFO", (const char*)data.Data(), data.Size());
 		}
+	}
+	if (mIWadNames.Size() == 0 || mIWadInfos.Size() == 0)
+	{
+		I_FatalError("No IWAD definitions found");
 	}
 }
 
@@ -302,7 +300,8 @@ FIWadManager::FIWadManager(const char *fn, const char *optfn)
 
 int FIWadManager::ScanIWAD (const char *iwad)
 {
-	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, true);
+	FWadCollection check;
+	check.InitSingleFile(iwad, true);
 
 	mLumpsFound.Resize(mIWadInfos.Size());
 
@@ -320,24 +319,20 @@ int FIWadManager::ScanIWAD (const char *iwad)
 		}
 	};
 
-	if (iwadfile != NULL)
+	if (check.GetNumLumps() > 0)
 	{
 		memset(&mLumpsFound[0], 0, mLumpsFound.Size() * sizeof(mLumpsFound[0]));
-		for(uint32_t ii = 0; ii < iwadfile->LumpCount(); ii++)
+		for(int ii = 0; ii < check.GetNumLumps(); ii++)
 		{
-			FResourceLump *lump = iwadfile->GetLump(ii);
 
-			CheckLumpName(lump->Name);
-			if (lump->FullName.IsNotEmpty())
+			CheckLumpName(check.GetLumpName(ii));
+			auto full = check.GetLumpFullName(ii, false);
+			if (full && strnicmp(full, "maps/", 5) == 0)
 			{
-				if (strnicmp(lump->FullName, "maps/", 5) == 0)
-				{
-					FString mapname(&lump->FullName[5], strcspn(&lump->FullName[5], "."));
-					CheckLumpName(mapname);
-				}
+				FString mapname(&full[5], strcspn(&full[5], "."));
+				CheckLumpName(mapname);
 			}
 		}
-		delete iwadfile;
 	}
 	for (unsigned i = 0; i< mIWadInfos.Size(); i++)
 	{
@@ -356,46 +351,37 @@ int FIWadManager::ScanIWAD (const char *iwad)
 //
 //==========================================================================
 
-int FIWadManager::CheckIWADInfo(const char *fn)
+int FIWadManager::CheckIWADInfo(const char* fn)
 {
-	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, true);
-	if (resfile != NULL)
+	FWadCollection check;
+
+	check.InitSingleFile(fn, true);
+	if (check.GetNumLumps() > 0)
 	{
-		uint32_t cnt = resfile->LumpCount();
-		for (int i = cnt - 1; i >= 0; i--)
+		int num = check.CheckNumForName("IWADINFO");
+		if (num >= 0)
 		{
-			FResourceLump *lmp = resfile->GetLump(i);
-
-			if (lmp->Namespace == ns_global && !stricmp(lmp->Name, "IWADINFO"))
+			try
 			{
-				// Found one!
-				try
-				{
-					FIWADInfo result;
-					ParseIWadInfo(resfile->FileName, (const char*)lmp->CacheLump(), lmp->LumpSize, &result);
-					delete resfile;
 
-					for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)
+				FIWADInfo result;
+				auto data = check.ReadLumpIntoArray(num);
+				ParseIWadInfo(fn, (const char*)data.Data(), data.Size(), &result);
+
+				for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)
+				{
+					if (mIWadInfos[i].Name == result.Name)
 					{
-						if (mIWadInfos[i].Name == result.Name)
-						{
-							return i;
-						}
+						return i;
 					}
-
-					mOrderNames.Push(result.Name);
-					return mIWadInfos.Push(result);
 				}
-				catch (CRecoverableError &err)
-				{
-					delete resfile;
-					Printf(TEXTCOLOR_RED "%s: %s\nFile has been removed from the list of IWADs\n", fn, err.GetMessage());
-					return -1;
-				}
-				break;
+			}
+			catch (CRecoverableError & err)
+			{
+				Printf(TEXTCOLOR_RED "%s: %s\nFile has been removed from the list of IWADs\n", fn, err.what());
+				return -1;
 			}
 		}
-		delete resfile;
 		Printf(TEXTCOLOR_RED "%s: Unable to find IWADINFO\nFile has been removed from the list of IWADs\n", fn);
 		return -1;
 	}

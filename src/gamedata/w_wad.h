@@ -121,8 +121,9 @@ public:
 	int GetMaxIwadNum() { return MaxIwadIndex; }
 	void SetMaxIwadNum(int x) { MaxIwadIndex = x; }
 
-	void InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps);
-	void AddFile (const char *filename, FileReader *wadinfo = NULL);
+	void InitSingleFile(const char *filename, bool quiet = false);
+	void InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps, bool quiet = false);
+	void AddFile (const char *filename, FileReader *wadinfo = NULL, bool quiet = false);
 	int CheckIfWadLoaded (const char *name);
 
 	const char *GetWadName (int wadnum) const;
@@ -176,7 +177,8 @@ public:
 	int GetLumpFlags (int lump);					// Return the flags for this lump
 	void GetLumpName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
 	void GetLumpName (FString &to, int lump) const;
-	const char *GetLumpFullName (int lump) const;	// [RH] Returns the lump's full name
+	const char* GetLumpName(int lump) const;
+	const char *GetLumpFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
 	FString GetLumpFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
@@ -187,8 +189,15 @@ public:
 
 	bool IsEncryptedFile(int lump) const;
 
-	int GetNumLumps () const;
-	int GetNumWads () const;
+	int GetNumLumps() const
+	{
+		return NumLumps;
+	}
+
+	int GetNumWads() const
+	{
+		return Files.Size();
+	}
 
 	int AddExternalFile(const char *filename);
 

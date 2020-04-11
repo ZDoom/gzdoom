@@ -349,12 +349,6 @@ bool FZipFile::Open(bool quiet)
 		lump_p->Position = LittleLong(zip_fh->LocalHeaderOffset);
 		lump_p->CheckEmbedded();
 
-		// Ignore some very specific names
-		if (0 == stricmp("dehacked.exe", name))
-		{
-			memset(lump_p->Name, 0, sizeof(lump_p->Name));
-		}
-
 		lump_p++;
 	}
 	// Resize the lump record array to its actual size

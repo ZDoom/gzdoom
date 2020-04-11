@@ -94,6 +94,12 @@ FResourceLump::~FResourceLump()
 
 void FResourceLump::LumpNameSetup(FString iname)
 {
+	// this causes interference with real Dehacked lumps.
+	if (!iname.CompareNoCase("dehacked.exe"))
+	{
+		iname = "";
+	}
+
 	long slash = iname.LastIndexOf('/');
 	FString base = (slash >= 0) ? iname.Mid(slash + 1) : iname;
 	auto dot = base.LastIndexOf('.');
@@ -350,8 +356,7 @@ int lumpcmp(const void * a, const void * b)
 {
 	FResourceLump * rec1 = (FResourceLump *)a;
 	FResourceLump * rec2 = (FResourceLump *)b;
-
-	return rec1->FullName.CompareNoCase(rec2->FullName);
+	return stricmp(rec1->getName(), rec2->getName());
 }
 
 //==========================================================================
@@ -768,15 +773,12 @@ bool FMemoryFile::Open(bool quiet)
     FString fname(ExtractFileBase(FileName, true));
     
 	Lumps.Resize(1);
-    uppercopy(Lumps[0].Name, name);
-    Lumps[0].Name[8] = 0;
-    Lumps[0].FullName = fname;
+	Lumps[0].LumpNameSetup(fname);
     Lumps[0].Owner = this;
     Lumps[0].Position = 0;
     Lumps[0].LumpSize = (int)Reader.GetLength();
     Lumps[0].Namespace = ns_global;
     Lumps[0].Flags = 0;
-    Lumps[0].FullName = "";
     NumLumps = 1;
     return true;
 }

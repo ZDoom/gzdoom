@@ -33,8 +33,10 @@ struct FCompressedBuffer
 struct FResourceLump
 {
 	friend class FResourceFile;
+	friend class FWadFile;	// this still needs direct access.
 
 	int				LumpSize;
+protected:
 	FString			FullName;		// only valid for files loaded from a non-wad archive
 	union
 	{
@@ -43,6 +45,7 @@ struct FResourceLump
 		uint32_t		dwName;			// These are for accessing the first 4 or 8 chars of
 		uint64_t		qwName;			// Name as a unit without breaking strict aliasing rules
 	};
+public:
 	uint8_t			Flags;
 	int8_t			RefCount;
 	char *			Cache;
@@ -70,6 +73,10 @@ struct FResourceLump
 
 	void *CacheLump();
 	int ReleaseCache();
+
+	const char* shortName() { return Name; }
+	const FString &longName() { return FullName; }
+	const char* getName() { return FullName.IsNotEmpty() ? FullName.GetChars() : Name; }
 
 protected:
 	virtual int FillCache() { return -1; }

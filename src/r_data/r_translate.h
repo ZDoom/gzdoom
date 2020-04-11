@@ -108,7 +108,6 @@ private:
 	FRemapTable *Ptr;
 };
 
-extern TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
 
 #define TRANSLATION_SHIFT 16
 #define TRANSLATION_MASK ((1<<TRANSLATION_SHIFT)-1)
@@ -128,6 +127,12 @@ inline int GetTranslationIndex(uint32_t trans)
 }
 // Retrieve the FRemapTable that an actor's translation value maps to.
 FRemapTable *TranslationToTable(int translation);
+void UpdateTranslation(int trans, FRemapTable* remap);
+int AddTranslation(int slot, FRemapTable* remap);
+FRemapTable* GetTranslation(int slot, int index);
+void CopyTranslation(int dest, int src);
+void ClearScriptedTranslations();
+
 
 #define MAX_ACS_TRANSLATIONS		65535
 #define MAX_DECORATE_TRANSLATIONS	65535

@@ -55,7 +55,7 @@ namespace ImageHelpers
 	{
 		if (wantluminance)
 		{
-			return translationtables[TRANSLATION_Standard][srcisgrayscale ? STD_Gray : STD_Grayscale]->Remap;
+			return GetTranslation(TRANSLATION_Standard, srcisgrayscale ? STD_Gray : STD_Grayscale)->Remap;
 		}
 		else
 		{

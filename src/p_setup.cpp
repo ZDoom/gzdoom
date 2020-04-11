@@ -406,17 +406,8 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		Level->Players[i]->mo = nullptr;
 	}
-	// [RH] Clear any scripted translation colors the previous level may have set.
-	for (i = 0; i < int(translationtables[TRANSLATION_LevelScripted].Size()); ++i)
-	{
-		FRemapTable *table = translationtables[TRANSLATION_LevelScripted][i];
-		if (table != nullptr)
-		{
-			delete table;
-			translationtables[TRANSLATION_LevelScripted][i] = nullptr;
-		}
-	}
-	translationtables[TRANSLATION_LevelScripted].Clear();
+	ClearScriptedTranslations();
+
 
 	// Initial height of PointOfView will be set by player think.
 	auto p = Level->GetConsolePlayer();

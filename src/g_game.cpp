@@ -1614,9 +1614,9 @@ void FLevelLocals::QueueBody (AActor *body)
 		GetTranslationType(body->Translation) == TRANSLATION_PlayersExtra)
 	{
 		// This needs to be able to handle multiple levels, in case a level with dead players is used as a secondary one later.
-		*translationtables[TRANSLATION_PlayerCorpses][modslot] = *TranslationToTable(body->Translation);
-		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses,modslot);
-		translationtables[TRANSLATION_PlayerCorpses][modslot]->UpdateNative();
+		CopyTranslation(TRANSLATION(TRANSLATION_PlayerCorpses, modslot), body->Translation);
+		body->Translation = TRANSLATION(TRANSLATION_PlayerCorpses, modslot);
+
 	}
 
 	const int skinidx = body->player->userinfo.GetSkin();

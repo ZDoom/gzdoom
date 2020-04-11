@@ -6771,6 +6771,7 @@ int DLevelScript::RunScript()
 	ScriptFunction *activeFunction = NULL;
 	FRemapTable *translation = 0;
 	int resultValue = 1;
+	int transi = -1;
 
 	if (InModuleScriptNumber >= 0)
 	{
@@ -9500,13 +9501,9 @@ scriptwait:
 				sp--;
 				if (i >= 1 && i <= MAX_ACS_TRANSLATIONS)
 				{
-					translation = translationtables[TRANSLATION_LevelScripted].GetVal(i - 1);
-					if (translation == NULL)
-					{
-						translation = new FRemapTable;
-						translationtables[TRANSLATION_LevelScripted].SetVal(i - 1, translation);
-					}
+					translation = new FRemapTable;
 					translation->MakeIdentity();
+					transi = i + 1;
 				}
 			}
 			break;
@@ -9593,7 +9590,7 @@ scriptwait:
 		case PCD_ENDTRANSLATION:
 			if (translation != NULL)
 			{
-				translation->UpdateNative();
+				UpdateTranslation(TRANSLATION(TRANSLATION_LevelScripted, transi), translation);
 				translation = NULL;
 			}
 			break;

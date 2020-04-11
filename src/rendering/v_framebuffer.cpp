@@ -129,8 +129,13 @@ void V_DrawPaletteTester(int paletteno)
 	{
 		for (int j = 0; j < 16; ++j)
 		{
-			int palindex = (t > 1) ? translationtables[TRANSLATION_Standard][t - 2]->Remap[k] : k;
-			PalEntry pe = GPalette.BaseColors[palindex];
+			PalEntry pe;
+			if (t > 1)
+			{
+				auto palette = GetTranslation(TRANSLATION_Standard, t - 2)->Palette;
+				pe = palette[k];
+			}
+			else GPalette.BaseColors[k];
 			k++;
 			screen->Dim(pe, 1.f, j*blocksize, i*blocksize, blocksize, blocksize);
 		}

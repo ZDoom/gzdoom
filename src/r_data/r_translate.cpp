@@ -53,7 +53,69 @@
 
 #include "gi.h"
 
-TAutoGrowArray<FRemapTablePtr, FRemapTable *> translationtables[NUM_TRANSLATION_TABLES];
+static TAutoGrowArray<FRemapTablePtr, FRemapTable *> TranslationTables[NUM_TRANSLATION_TABLES];
+
+void UpdateTranslation(int trans, FRemapTable* remap)
+{
+	TranslationTables[GetTranslationType(trans)].SetVal(GetTranslationIndex(trans), remap);
+	remap->UpdateNative();
+}
+
+int AddTranslation(int slot, FRemapTable* remap)
+{
+	auto i = TranslationTables[slot].Push(remap);
+	return TRANSLATION(slot, i);
+}
+
+FRemapTable* GetTranslation(int slot, int index)
+{
+	return TranslationTables[slot].GetVal(index);
+}
+
+void CopyTranslation(int dest, int src)
+{
+	*TranslationTables[GetTranslationType(dest)][GetTranslationType(src)] = *TranslationToTable(src);
+	TranslationTables[GetTranslationType(dest)][GetTranslationType(src)]->UpdateNative();
+}
+
+void ClearScriptedTranslations()
+{
+	// [RH] Clear any scripted translation colors the previous level may have set.
+	for (unsigned i = 0; i < TranslationTables[TRANSLATION_LevelScripted].Size(); ++i)
+	{
+		FRemapTable* table = TranslationTables[TRANSLATION_LevelScripted][i];
+		if (table != nullptr)
+		{
+			delete table;
+			TranslationTables[TRANSLATION_LevelScripted][i] = nullptr;
+		}
+	}
+	TranslationTables[TRANSLATION_LevelScripted].Clear();
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+FRemapTable *TranslationToTable(int translation)
+{
+	unsigned int type = GetTranslationType(translation);
+	unsigned int index = GetTranslationIndex(translation);
+	TAutoGrowArray<FRemapTablePtr, FRemapTable *> *slots;
+
+	if (type <= 0 || type >= NUM_TRANSLATION_TABLES)
+	{
+		return NULL;
+	}
+	slots = &TranslationTables[type];
+	if (index >= slots->Size())
+	{
+		return NULL;
+	}
+	return slots->operator[](index);
+}
 
 
 const uint8_t IcePalette[16][3] =
@@ -191,9 +253,9 @@ void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
 		int w;
 		if (arc.isWriting())
 		{
-			for (unsigned int i = 0; i < translationtables[TRANSLATION_LevelScripted].Size(); ++i)
+			for (unsigned int i = 0; i < TranslationTables[TRANSLATION_LevelScripted].Size(); ++i)
 			{
-				trans = translationtables[TRANSLATION_LevelScripted][i];
+				trans = TranslationTables[TRANSLATION_LevelScripted][i];
 				if (trans != NULL && !trans->IsIdentity())
 				{
 					if (arc.BeginObject(nullptr))
@@ -210,11 +272,11 @@ void FRemapTable::StaticSerializeTranslations(FSerializer &arc)
 			while (arc.BeginObject(nullptr))
 			{
 				arc("index", w);
-				trans = translationtables[TRANSLATION_LevelScripted].GetVal(w);
+				trans = TranslationTables[TRANSLATION_LevelScripted].GetVal(w);
 				if (trans == NULL)
 				{
 					trans = new FRemapTable;
-					translationtables[TRANSLATION_LevelScripted].SetVal(w, trans);
+					TranslationTables[TRANSLATION_LevelScripted].SetVal(w, trans);
 				}
 				trans->Serialize(arc);
 				arc.EndObject();
@@ -708,21 +770,21 @@ int FRemapTable::StoreTranslation(int slot)
 {
 	unsigned int i;
 
-	for (i = 0; i < translationtables[slot].Size(); i++)
+	for (i = 0; i < TranslationTables[slot].Size(); i++)
 	{
-		if (*this == *translationtables[slot][i])
+		if (*this == *TranslationTables[slot][i])
 		{
 			// A duplicate of this translation already exists
 			return TRANSLATION(slot, i);
 		}
 	}
-	if (translationtables[slot].Size() >= MAX_DECORATE_TRANSLATIONS)
+	if (TranslationTables[slot].Size() >= MAX_DECORATE_TRANSLATIONS)
 	{
 		I_Error("Too many DECORATE translations");
 	}
 	FRemapTable *newtrans = new FRemapTable;
 	*newtrans = *this;
-	i = translationtables[slot].Push(newtrans);
+	i = TranslationTables[slot].Push(newtrans);
 	return TRANSLATION(slot, i);
 }
 
@@ -742,7 +804,7 @@ int CreateBloodTranslation(PalEntry color)
 	if (BloodTranslationColors.Size() == 0)
 	{
 		// Don't use the first slot.
-		translationtables[TRANSLATION_Blood].Push(NULL);
+		TranslationTables[TRANSLATION_Blood].Push(NULL);
 		BloodTranslationColors.Push(0);
 	}
 
@@ -772,32 +834,8 @@ int CreateBloodTranslation(PalEntry color)
 		trans->Palette[i] = pe;
 		trans->Remap[i] = entry;
 	}
-	translationtables[TRANSLATION_Blood].Push(trans);
+	TranslationTables[TRANSLATION_Blood].Push(trans);
 	return BloodTranslationColors.Push(color);
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-FRemapTable *TranslationToTable(int translation)
-{
-	unsigned int type = GetTranslationType(translation);
-	unsigned int index = GetTranslationIndex(translation);
-	TAutoGrowArray<FRemapTablePtr, FRemapTable *> *slots;
-
-	if (type <= 0 || type >= NUM_TRANSLATION_TABLES)
-	{
-		return NULL;
-	}
-	slots = &translationtables[type];
-	if (index >= slots->Size())
-	{
-		return NULL;
-	}
-	return slots->operator[](index);
 }
 
 //----------------------------------------------------------------------------
@@ -810,7 +848,7 @@ static void PushIdentityTable(int slot)
 {
 	FRemapTable *table = new FRemapTable;
 	table->MakeIdentity();
-	translationtables[slot].Push(table);
+	TranslationTables[slot].Push(table);
 }
 
 //----------------------------------------------------------------------------
@@ -857,84 +895,84 @@ void R_InitTranslationTables ()
 	{
 		for (i = 0x70; i < 0x80; i++)
 		{ // map green ramp to gray, brown, red
-			translationtables[TRANSLATION_Standard][0]->Remap[i] = 0x60 + (i&0xf);
-			translationtables[TRANSLATION_Standard][1]->Remap[i] = 0x40 + (i&0xf);
-			translationtables[TRANSLATION_Standard][2]->Remap[i] = 0x20 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][0]->Remap[i] = 0x60 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][1]->Remap[i] = 0x40 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][2]->Remap[i] = 0x20 + (i&0xf);
 
-			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[0x60 + (i&0xf)] | MAKEARGB(255,0,0,0);
-			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[0x40 + (i&0xf)] | MAKEARGB(255,0,0,0);
-			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[0x20 + (i&0xf)] | MAKEARGB(255,0,0,0);
+			TranslationTables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[0x60 + (i&0xf)] | MAKEARGB(255,0,0,0);
+			TranslationTables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[0x40 + (i&0xf)] | MAKEARGB(255,0,0,0);
+			TranslationTables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[0x20 + (i&0xf)] | MAKEARGB(255,0,0,0);
 		}
 	}
 	else if (gameinfo.gametype == GAME_Heretic)
 	{
 		for (i = 225; i <= 240; i++)
 		{
-			translationtables[TRANSLATION_Standard][0]->Remap[i] = 114+(i-225); // yellow
-			translationtables[TRANSLATION_Standard][1]->Remap[i] = 145+(i-225); // red
-			translationtables[TRANSLATION_Standard][2]->Remap[i] = 190+(i-225); // blue
+			TranslationTables[TRANSLATION_Standard][0]->Remap[i] = 114+(i-225); // yellow
+			TranslationTables[TRANSLATION_Standard][1]->Remap[i] = 145+(i-225); // red
+			TranslationTables[TRANSLATION_Standard][2]->Remap[i] = 190+(i-225); // blue
 			
-			translationtables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[114+(i-225)] | MAKEARGB(255,0,0,0);
-			translationtables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[145+(i-225)] | MAKEARGB(255,0,0,0);
-			translationtables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[190+(i-225)] | MAKEARGB(255,0,0,0);
+			TranslationTables[TRANSLATION_Standard][0]->Palette[i] = GPalette.BaseColors[114+(i-225)] | MAKEARGB(255,0,0,0);
+			TranslationTables[TRANSLATION_Standard][1]->Palette[i] = GPalette.BaseColors[145+(i-225)] | MAKEARGB(255,0,0,0);
+			TranslationTables[TRANSLATION_Standard][2]->Palette[i] = GPalette.BaseColors[190+(i-225)] | MAKEARGB(255,0,0,0);
 		}
 	}
 	else if (gameinfo.gametype == GAME_Strife)
 	{
 		for (i = 0x20; i <= 0x3F; ++i)
 		{
-			translationtables[TRANSLATION_Standard][0]->Remap[i] = i - 0x20;
-			translationtables[TRANSLATION_Standard][1]->Remap[i] = i - 0x20;
-			translationtables[TRANSLATION_Standard][2]->Remap[i] = 0xD0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][3]->Remap[i] = 0xD0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][4]->Remap[i] = i - 0x20;
-			translationtables[TRANSLATION_Standard][5]->Remap[i] = i - 0x20;
-			translationtables[TRANSLATION_Standard][6]->Remap[i] = i - 0x20;
+			TranslationTables[TRANSLATION_Standard][0]->Remap[i] = i - 0x20;
+			TranslationTables[TRANSLATION_Standard][1]->Remap[i] = i - 0x20;
+			TranslationTables[TRANSLATION_Standard][2]->Remap[i] = 0xD0 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][3]->Remap[i] = 0xD0 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][4]->Remap[i] = i - 0x20;
+			TranslationTables[TRANSLATION_Standard][5]->Remap[i] = i - 0x20;
+			TranslationTables[TRANSLATION_Standard][6]->Remap[i] = i - 0x20;
 		}
 		for (i = 0x50; i <= 0x5F; ++i)
 		{
 			// Merchant hair
-			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0x80 + (i&0xf);
-			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x10 + (i&0xf);
-			translationtables[TRANSLATION_Standard][6]->Remap[i] = 0x40 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][4]->Remap[i] = 0x80 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][5]->Remap[i] = 0x10 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][6]->Remap[i] = 0x40 + (i&0xf);
 		}
 		for (i = 0x80; i <= 0x8F; ++i)
 		{
-			translationtables[TRANSLATION_Standard][0]->Remap[i] = 0x40 + (i&0xf); // red
-			translationtables[TRANSLATION_Standard][1]->Remap[i] = 0xB0 + (i&0xf); // rust
-			translationtables[TRANSLATION_Standard][2]->Remap[i] = 0x10 + (i&0xf); // gray
-			translationtables[TRANSLATION_Standard][3]->Remap[i] = 0x30 + (i&0xf); // dark green
-			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0x50 + (i&0xf); // gold
-			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x60 + (i&0xf); // bright green
-			translationtables[TRANSLATION_Standard][6]->Remap[i] = 0x90 + (i&0xf); // blue
+			TranslationTables[TRANSLATION_Standard][0]->Remap[i] = 0x40 + (i&0xf); // red
+			TranslationTables[TRANSLATION_Standard][1]->Remap[i] = 0xB0 + (i&0xf); // rust
+			TranslationTables[TRANSLATION_Standard][2]->Remap[i] = 0x10 + (i&0xf); // gray
+			TranslationTables[TRANSLATION_Standard][3]->Remap[i] = 0x30 + (i&0xf); // dark green
+			TranslationTables[TRANSLATION_Standard][4]->Remap[i] = 0x50 + (i&0xf); // gold
+			TranslationTables[TRANSLATION_Standard][5]->Remap[i] = 0x60 + (i&0xf); // bright green
+			TranslationTables[TRANSLATION_Standard][6]->Remap[i] = 0x90 + (i&0xf); // blue
 		}
 		for (i = 0xC0; i <= 0xCF; ++i)
 		{
-			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0xA0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x20 + (i&0xf);
-			translationtables[TRANSLATION_Standard][6]->Remap[i] = (i&0xf);
+			TranslationTables[TRANSLATION_Standard][4]->Remap[i] = 0xA0 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][5]->Remap[i] = 0x20 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][6]->Remap[i] = (i&0xf);
 		}
-		translationtables[TRANSLATION_Standard][6]->Remap[0xC0] = 1;
+		TranslationTables[TRANSLATION_Standard][6]->Remap[0xC0] = 1;
 		for (i = 0xD0; i <= 0xDF; ++i)
 		{
-			translationtables[TRANSLATION_Standard][4]->Remap[i] = 0xB0 + (i&0xf);
-			translationtables[TRANSLATION_Standard][5]->Remap[i] = 0x30 + (i&0xf);
-			translationtables[TRANSLATION_Standard][6]->Remap[i] = 0x10 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][4]->Remap[i] = 0xB0 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][5]->Remap[i] = 0x30 + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][6]->Remap[i] = 0x10 + (i&0xf);
 		}
 		for (i = 0xF1; i <= 0xF6; ++i)
 		{
-			translationtables[TRANSLATION_Standard][0]->Remap[i] = 0xDF + (i&0xf);
+			TranslationTables[TRANSLATION_Standard][0]->Remap[i] = 0xDF + (i&0xf);
 		}
 		for (i = 0xF7; i <= 0xFB; ++i)
 		{
-			translationtables[TRANSLATION_Standard][0]->Remap[i] = i - 6;
+			TranslationTables[TRANSLATION_Standard][0]->Remap[i] = i - 6;
 		}
 		for (i = 0; i < 7; ++i)
 		{
 			for (int j = 0x20; j <= 0xFB; ++j)
 			{
-				translationtables[TRANSLATION_Standard][i]->Palette[j] =
-					GPalette.BaseColors[translationtables[TRANSLATION_Standard][i]->Remap[j]] | MAKEARGB(255,0,0,0);
+				TranslationTables[TRANSLATION_Standard][i]->Palette[j] =
+					GPalette.BaseColors[TranslationTables[TRANSLATION_Standard][i]->Remap[j]] | MAKEARGB(255,0,0,0);
 			}
 		}
 	}
@@ -948,7 +986,7 @@ void R_InitTranslationTables ()
 	{
 		IcePaletteRemap[i] = ColorMatcher.Pick (IcePalette[i][0], IcePalette[i][1], IcePalette[i][2]);
 	}
-	FRemapTable *remap = translationtables[TRANSLATION_Standard][STD_Ice];
+	FRemapTable *remap = TranslationTables[TRANSLATION_Standard][STD_Ice];
 	remap->Remap[0] = 0;
 	remap->Palette[0] = 0;
 	for (i = 1; i < 256; ++i)
@@ -963,7 +1001,7 @@ void R_InitTranslationTables ()
 
 	// The alphatexture translation. This is just a standard index as gray mapping.
 	PushIdentityTable(TRANSLATION_Standard);
-	remap = translationtables[TRANSLATION_Standard][STD_Gray];
+	remap = TranslationTables[TRANSLATION_Standard][STD_Gray];
 	remap->Remap[0] = 0;
 	remap->Palette[0] = 0;
 	for (i = 1; i < 256; i++)
@@ -974,7 +1012,7 @@ void R_InitTranslationTables ()
 
 	// Palette to grayscale ramp. For internal use only, because the remap does not map to the palette.
 	PushIdentityTable(TRANSLATION_Standard);
-	remap = translationtables[TRANSLATION_Standard][STD_Grayscale];
+	remap = TranslationTables[TRANSLATION_Standard][STD_Grayscale];
 	remap->Remap[0] = 0;
 	remap->Palette[0] = 0;
 	for (i = 1; i < 256; i++)
@@ -1000,15 +1038,15 @@ void R_DeinitTranslationTables()
 {
 	for (int i = 0; i < NUM_TRANSLATION_TABLES; ++i)
 	{
-		for (unsigned int j = 0; j < translationtables[i].Size(); ++j)
+		for (unsigned int j = 0; j < TranslationTables[i].Size(); ++j)
 		{
-			if (translationtables[i][j] != NULL)
+			if (TranslationTables[i][j] != NULL)
 			{
-				delete translationtables[i][j];
-				translationtables[i][j] = NULL;
+				delete TranslationTables[i][j];
+				TranslationTables[i][j] = NULL;
 			}
 		}
-		translationtables[i].Clear();
+		TranslationTables[i].Clear();
 	}
 	BloodTranslationColors.Clear();
 }
@@ -1290,9 +1328,9 @@ void R_BuildPlayerTranslation (int player)
 
 	R_CreatePlayerTranslation (h, s, v, colorset,
 		&Skins[players[player].userinfo.GetSkin()],
-		translationtables[TRANSLATION_Players][player],
-		translationtables[TRANSLATION_PlayersExtra][player],
-		translationtables[TRANSLATION_RainPillar][player]
+		TranslationTables[TRANSLATION_Players][player],
+		TranslationTables[TRANSLATION_PlayersExtra][player],
+		TranslationTables[TRANSLATION_RainPillar][player]
 		);
 }
 
@@ -1325,7 +1363,7 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 	PARAM_UINT(pnum);
 	PARAM_POINTER(cls, FPlayerClass);
 
-	if (pnum >= MAXPLAYERS || tgroup >= NUM_TRANSLATION_TABLES || tnum >= translationtables[tgroup].Size())
+	if (pnum >= MAXPLAYERS || tgroup >= NUM_TRANSLATION_TABLES || tnum >= TranslationTables[tgroup].Size())
 	{
 		ACTION_RETURN_BOOL(false);
 	}
@@ -1338,7 +1376,7 @@ DEFINE_ACTION_FUNCTION(_Translation, SetPlayerTranslation)
 	{
 		PlayerSkin = R_FindSkin(Skins[PlayerSkin].Name, int(cls - &PlayerClasses[0]));
 		R_GetPlayerTranslation(PlayerColor, GetColorSet(cls->Type, PlayerColorset),
-			&Skins[PlayerSkin], translationtables[tgroup][tnum]);
+			&Skins[PlayerSkin], TranslationTables[tgroup][tnum]);
 	}
 	ACTION_RETURN_BOOL(true);
 }
@@ -1402,7 +1440,7 @@ DEFINE_ACTION_FUNCTION(_Translation, GetID)
 void R_ParseTrnslate()
 {
 	customTranslationMap.Clear();
-	translationtables[TRANSLATION_Custom].Clear();
+	TranslationTables[TRANSLATION_Custom].Clear();
 
 	int lump;
 	int lastlump = 0;
@@ -1425,7 +1463,7 @@ void R_ParseTrnslate()
 					{
 						sc.ScriptError("Translation must be in the range [0,%d]", max);
 					}
-					base = translationtables[TRANSLATION_Standard][sc.Number];
+					base = TranslationTables[TRANSLATION_Standard][sc.Number];
 				}
 				else if (sc.TokenType == TK_Identifier)
 				{
@@ -1434,7 +1472,7 @@ void R_ParseTrnslate()
 					{
 						sc.ScriptError("Base translation '%s' not found in '%s'", sc.String, newtrans.GetChars());
 					}
-					base = translationtables[GetTranslationType(tnum)][GetTranslationIndex(tnum)];
+					base = TranslationTables[GetTranslationType(tnum)][GetTranslationIndex(tnum)];
 				}
 				else
 				{

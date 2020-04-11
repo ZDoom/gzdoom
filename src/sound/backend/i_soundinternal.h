@@ -18,6 +18,8 @@ enum EChanFlag
 	CHANF_AREA = 128,	// Sound plays from all around. Only valid with sector sounds.
 	CHANF_LOOP = 256,
 
+	CHANF_PICKUP = CHANF_MAYBE_LOCAL,
+
 	CHANF_NONE = 0,
 	CHANF_IS3D = 1,		// internal: Sound is 3D.
 	CHANF_EVICTED = 2,		// internal: Sound was evicted.
@@ -28,6 +30,7 @@ enum EChanFlag
 	CHANF_NOSTOP = 4096,	// only for A_PlaySound. Does not start if channel is playing something.
 	CHANF_OVERLAP = 8192, // [MK] Does not stop any sounds in the channel and instead plays over them.
 	CHANF_LOCAL = 16384,	// only plays locally for the calling actor
+	CHANF_TRANSIENT = 32768,	// Do not record in savegames - used for sounds that get restarted outside the sound system (e.g. ambients in SW and Blood)
 };
 
 typedef TFlags<EChanFlag> EChanFlags;

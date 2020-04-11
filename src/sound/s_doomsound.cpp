@@ -70,11 +70,6 @@
 
 
 FBoolCVar noisedebug("noise", false, 0);	// [RH] Print sound debugging info?
-CUSTOM_CVAR(Int, snd_channels, 128, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// number of channels available
-{
-	if (self < 64) self = 64;
-}
-CVAR(Bool, snd_waterreverb, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 
 static FString LastLocalSndInfo;
@@ -218,6 +213,7 @@ void S_Init()
 	}
 
 	I_InitSound();
+	I_InitMusic();
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
 	int curvelump = fileSystem.CheckNumForName("SNDCURVE");
@@ -1524,13 +1520,6 @@ CCMD (snd_status)
 CCMD (snd_reset)
 {
 	S_SoundReset();
-}
-
-void S_SoundReset()
-{
-	S_StopMusic(true);
-	soundEngine->Reset();
-	S_RestartMusic();
 }
 
 CCMD (snd_listdrivers)

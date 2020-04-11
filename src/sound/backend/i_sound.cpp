@@ -50,7 +50,7 @@
 
 
 EXTERN_CVAR (Float, snd_sfxvolume)
-EXTERN_CVAR (Float, snd_musicvolume)
+EXTERN_CVAR(Float, snd_musicvolume)
 CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_buffersize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, snd_hrtf, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -84,7 +84,7 @@ void I_CloseSound ();
 // Maximum volume of all audio
 //==========================================================================
 
-CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, snd_mastervolume, 1.f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self < 0.f)
 		self = 0.f;
@@ -250,10 +250,9 @@ void I_InitSound ()
 	nosfx = !!Args->CheckParm ("-nosfx");
 
 	GSnd = NULL;
-	if (nosound || batchrun)
+	if (nosound)
 	{
 		GSnd = new NullSoundRenderer;
-		I_InitMusic ();
 		return;
 	}
 
@@ -277,7 +276,6 @@ void I_InitSound ()
 		GSnd = new NullSoundRenderer;
 		Printf (TEXTCOLOR_RED"Sound init failed. Using nosound.\n");
 	}
-	I_InitMusic ();
 	snd_sfxvolume.Callback ();
 }
 
@@ -372,9 +370,9 @@ SoundHandle SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int length)
 			case 1: // Sound data
 				if (/*noextra &*/ (codec == -1 || codec == sfxdata[i + 1])) // NAM contains a VOC where a valid data block follows an extra block.
 				{
-					frequency = 1000000/(256 - sfxdata[i]);
+					frequency = 1000000 / (256 - sfxdata[i]);
 					channels = 1;
-					codec = sfxdata[i+1];
+					codec = sfxdata[i + 1];
 					if (codec == 0)
 						bits = 8;
 					else if (codec == 4)

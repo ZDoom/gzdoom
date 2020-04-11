@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 #include "i_sound.h"
-#include "s_sound.h"
+#include "s_soundinternal.h"
 
 #ifndef NO_OPENAL
 

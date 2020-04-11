@@ -169,5 +169,6 @@ void I_CloseSound();
 extern ReverbContainer *DefaultEnvironments[26];
 
 bool IsOpenALPresent();
+void S_SoundReset();
 
 #endif

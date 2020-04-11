@@ -52,6 +52,11 @@ FModule OpenALModule{"OpenAL"};
 
 #include "oalload.h"
 
+CUSTOM_CVAR(Int, snd_channels, 128, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// number of channels available
+{
+	if (self < 64) self = 64;
+}
+CVAR(Bool, snd_waterreverb, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) 
 CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, snd_alresampler, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

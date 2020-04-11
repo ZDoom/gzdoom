@@ -2679,6 +2679,7 @@ static int D_DoomMain_Internal (void)
 	else if (batchout != NULL && *batchout != 0)
 	{
 		batchrun = true;
+		nosound = true;
 		execLogfile(batchout, true);
 		Printf("Command line: ");
 		for (int i = 0; i < Args->NumArgs(); i++)

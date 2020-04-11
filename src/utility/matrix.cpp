@@ -21,7 +21,7 @@ This is a simplified version of VSMatrix that has been adjusted for GZDoom's nee
 static inline FLOATTYPE 
 DegToRad(FLOATTYPE degrees) 
 { 
-	return (FLOATTYPE)(degrees * (M_PI / 180.0f));
+	return (FLOATTYPE)(degrees * (pi::pif() / 180.0f));
 };
 
 // sets the square matrix mat to the identity matrix,
@@ -243,7 +243,7 @@ VSMatrix::lookAt(FLOATTYPE xPos, FLOATTYPE yPos, FLOATTYPE zPos,
 void 
 VSMatrix::perspective(FLOATTYPE fov, FLOATTYPE ratio, FLOATTYPE nearp, FLOATTYPE farp)
 {
-	FLOATTYPE f = 1.0f / tan (fov * (M_PI / 360.0f));
+	FLOATTYPE f = 1.0f / tan (fov * (pi::pif() / 360.0f));
 
 	loadIdentity();
 	mMatrix[0] = f / ratio;
@@ -390,13 +390,6 @@ VSMatrix::length(const FLOATTYPE *a) {
 	return(sqrt(a[0] * a[0]  +  a[1] * a[1]  +  a[2] * a[2]));
 
 }
-
-
-static inline int 
-M3(int i, int j)
-{ 
-   return (i*3+j); 
-};
 
 
 

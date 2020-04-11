@@ -22,7 +22,6 @@
 
 #include <stdlib.h>
 #include "vectors.h"
-#include "doomtype.h"
 
 #ifdef USE_DOUBLE
 typedef double FLOATTYPE;
@@ -154,7 +153,7 @@ public:
 
 		FVector3 axis(ax, ay, az);
 		axis.MakeUnit();
-		double c = cos(angle * M_PI/180.), s = sin(angle * M_PI/180.), t = 1 - c;
+		double c = cos(angle * pi::pi()/180.), s = sin(angle * pi::pi()/180.), t = 1 - c;
 		double sx = s*axis.X, sy = s*axis.Y, sz = s*axis.Z;
 		double tx, ty, txx, tyy, u, v;
 

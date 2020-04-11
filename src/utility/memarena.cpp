@@ -37,9 +37,10 @@
 ** with destructors).
 */
 
-#include "doomtype.h"
+#include "basics.h"
 #include "memarena.h"
-#include "c_dispatch.h"
+#include "printf.h"
+#include "cmdlib.h"
 
 struct FMemArena::Block
 {

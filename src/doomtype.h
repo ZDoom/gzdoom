@@ -53,6 +53,7 @@ typedef TMap<int, PClassActor *> FClassMap;
 #endif
 
 #include "basics.h"
+#include "printf.h"
 
 extern bool batchrun;
 
@@ -64,42 +65,6 @@ enum
 	BOXLEFT,
 	BOXRIGHT
 };		// bbox coordinates
-
-
-// [RH] This gets used all over; define it here:
-int Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
-int Printf (const char *, ...) GCCPRINTF(1,2);
-
-// [RH] Same here:
-int DPrintf (int level, const char *, ...) GCCPRINTF(2,3);
-
-extern "C" int mysnprintf(char *buffer, size_t count, const char *format, ...) GCCPRINTF(3,4);
-extern "C" int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr) GCCFORMAT(3);
-
-
-// game print flags
-enum
-{
-	PRINT_LOW,		// pickup messages
-	PRINT_MEDIUM,	// death messages
-	PRINT_HIGH,		// critical messages
-	PRINT_CHAT,		// chat messages
-	PRINT_TEAMCHAT,	// chat messages from a teammate
-	PRINT_LOG,		// only to logfile
-	PRINT_BOLD = 200,				// What Printf_Bold used
-	PRINT_TYPES = 1023,		// Bitmask.
-	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
-	PRINT_NOLOG = 2048,		// Flag - do not print to log file
-};
-
-enum
-{
-	DMSG_OFF,		// no developer messages.
-	DMSG_ERROR,		// general notification messages
-	DMSG_WARNING,	// warnings
-	DMSG_NOTIFY,	// general notification messages
-	DMSG_SPAMMY,	// for those who want to see everything, regardless of its usefulness.
-};
 
 #include "palentry.h"
 

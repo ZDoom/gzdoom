@@ -52,7 +52,8 @@
 // make this a local inline function to avoid any dependencies on other headers and not pollute the global namespace
 namespace pi
 {
-	inline double pi() { return 3.14159265358979323846; }
+	inline constexpr double pi() { return 3.14159265358979323846; }
+	inline constexpr double pif() { return 3.14159265358979323846f; }
 }
 
 
@@ -1356,7 +1357,7 @@ struct TAngle
 
 	double Tan() const
 	{
-		return g_tan(Degrees * (pi::pi() / 180.));
+		return vec_t(g_tan(Radians()));
 	}
 
 	// This is for calculating vertical velocity. For high pitches the tangent will become too large to be useful.

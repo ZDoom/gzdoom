@@ -337,8 +337,8 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		}
 		else
 		{
-			w = tex->GetWidth();
-			h = tex->GetHeight();
+			w = tex->GetTexelWidth();
+			h = tex->GetTexelHeight();
 		}
 		if (!CreateTexture(texbuffer.mBuffer, w, h, texunit, needmipmap, "FHardwareTexture.BindOrCreate"))
 		{

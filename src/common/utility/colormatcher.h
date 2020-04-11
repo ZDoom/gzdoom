@@ -51,6 +51,7 @@ public:
 	FColorMatcher (const uint32_t *palette) { Pal = reinterpret_cast<const PalEntry*>(palette); }
 	FColorMatcher (const FColorMatcher &other) = default;
 
+	void SetPalette(PalEntry* palette) { Pal = palette; }
 	void SetPalette (const uint32_t *palette) { Pal = reinterpret_cast<const PalEntry*>(palette); }
 	uint8_t Pick (int r, int g, int b)
 	{

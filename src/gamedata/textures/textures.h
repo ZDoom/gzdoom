@@ -278,9 +278,6 @@ struct FTextureBuffer
 // Base texture class
 class FTexture
 {
-	// This is initialization code that is allowed to have full access.
-	friend void R_InitSpriteDefs ();
-	friend void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe);
 	friend class GLDefsParser;
 	friend class FMultipatchTextureBuilder;
 	
@@ -302,7 +299,6 @@ class FTexture
 	friend class FSkyBox;
 	friend class FBrightmapTexture;
 	friend class FFont;
-	friend class FSpecialFont;
 
 
 public:
@@ -322,6 +318,9 @@ public:
 	double GetDisplayLeftOffsetDouble() { return GetScaledLeftOffsetDouble(0); }
 	double GetDisplayTopOffsetDouble() { return GetScaledTopOffsetDouble(0); }
 	
+	int GetTexelWidth() { return Width; }
+	int GetTexelHeight() { return Height; }
+
 	
 	bool isValid() const { return UseType != ETextureType::Null; }
 	bool isSWCanvas() const { return UseType == ETextureType::SWCanvas; }
@@ -352,13 +351,25 @@ public:
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	void SetUseType(ETextureType type) { UseType = type; }
+	int GetSourceLump() const { return SourceLump;  }
 	ETextureType GetUseType() const { return UseType; }
+
+	void CopySize(FTexture* BaseTexture)
+	{
+		Width = BaseTexture->GetTexelWidth();
+		Height = BaseTexture->GetTexelHeight();
+		_TopOffset[0] = BaseTexture->_TopOffset[0];
+		_TopOffset[1] = BaseTexture->_TopOffset[1];
+		_LeftOffset[0] = BaseTexture->_LeftOffset[0];
+		_LeftOffset[1] = BaseTexture->_LeftOffset[1];
+		Scale = BaseTexture->Scale;
+	}
+
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
 	virtual FBitmap GetBgraBitmap(PalEntry *remap, int *trans = nullptr);
 
-public:
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
 
@@ -441,9 +452,6 @@ protected:
 
 	void SetSpeed(float fac) { shaderspeed = fac; }
 
-	int GetWidth () { return Width; }
-	int GetHeight () { return Height; }
-
 	int GetScaledWidth () { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
 	int GetScaledHeight () { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
 	double GetScaledWidthDouble () { return Width / Scale.X; }
@@ -470,17 +478,6 @@ protected:
 	void SetFrontSkyLayer();
 
 	static void InitGrayMap();
-
-	void CopySize(FTexture *BaseTexture)
-	{
-		Width = BaseTexture->GetWidth();
-		Height = BaseTexture->GetHeight();
-		_TopOffset[0] = BaseTexture->_TopOffset[0];
-		_TopOffset[1] = BaseTexture->_TopOffset[1];
-		_LeftOffset[0] = BaseTexture->_LeftOffset[0];
-		_LeftOffset[1] = BaseTexture->_LeftOffset[1];
-		Scale = BaseTexture->Scale;
-	}
 
 	void SetScaledSize(int fitwidth, int fitheight);
 	void SetScale(const DVector2 &scale)

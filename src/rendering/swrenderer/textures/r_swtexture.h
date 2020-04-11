@@ -58,8 +58,8 @@ public:
 	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
 	PalEntry GetSkyCapColor(bool bottom) const { return mTexture->GetSkyCapColor(bottom); }
 	
-	int GetWidth () { return mTexture->GetWidth(); }
-	int GetHeight () { return mTexture->GetHeight(); }
+	int GetWidth () { return mTexture->GetTexelWidth(); }
+	int GetHeight () { return mTexture->GetTexelHeight(); }
 	int GetWidthBits() { return WidthBits; }
 	int GetHeightBits() { return HeightBits; }
 

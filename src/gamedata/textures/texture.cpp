@@ -103,8 +103,8 @@ FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType u
 			tex->UseType = usetype;
 			if (usetype == ETextureType::Flat) 
 			{
-				int w = tex->GetWidth();
-				int h = tex->GetHeight();
+				int w = tex->GetTexelWidth();
+				int h = tex->GetTexelHeight();
 
 				// Auto-scale flats with dimensions 128x128 and 256x256.
 				// In hindsight, a bad idea, but RandomLag made it sound better than it really is.
@@ -333,11 +333,11 @@ int FTexture::CheckRealHeight()
 {
 	auto pixels = Get8BitPixels(false);
 	
-	for(int h = GetHeight()-1; h>= 0; h--)
+	for(int h = GetTexelHeight()-1; h>= 0; h--)
 	{
-		for(int w = 0; w < GetWidth(); w++)
+		for(int w = 0; w < GetTexelWidth(); w++)
 		{
-			if (pixels[h + w * GetHeight()] != 0)
+			if (pixels[h + w * GetTexelHeight()] != 0)
 			{
 				// Scale maxy before returning it
 				h = int((h * 2) / Scale.Y);
@@ -423,7 +423,7 @@ void FTexture::CreateDefaultBrightmap()
 			auto texbuf = Get8BitPixels(false);
 			const int white = ColorMatcher.Pick(255, 255, 255);
 
-			int size = GetWidth() * GetHeight();
+			int size = GetTexelWidth() * GetTexelHeight();
 			for (int i = 0; i<size; i++)
 			{
 				if (TexMan.GlobalBrightmap.Remap[texbuf[i]] == white)
@@ -693,8 +693,8 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 
 	int exx = !!(flags & CTF_Expand);
 
-	W = GetWidth() + 2 * exx;
-	H = GetHeight() + 2 * exx;
+	W = GetTexelWidth() + 2 * exx;
+	H = GetTexelHeight() + 2 * exx;
 
 	if (!checkonly)
 	{
@@ -885,7 +885,7 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forcewo
 	else
 	{
 		float scale_x = x * (float)tex->Scale.X;
-		mRenderWidth = xs_CeilToInt(tex->GetWidth() / scale_x);
+		mRenderWidth = xs_CeilToInt(tex->GetTexelWidth() / scale_x);
 		mScale.X = scale_x;
 		mTempScale.X = x;
 	}
@@ -899,7 +899,7 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forcewo
 	else
 	{
 		float scale_y = y * (float)tex->Scale.Y;
-		mRenderHeight = xs_CeilToInt(tex->GetHeight() / scale_y);
+		mRenderHeight = xs_CeilToInt(tex->GetTexelHeight() / scale_y);
 		mScale.Y = scale_y;
 		mTempScale.Y = y;
 	}
@@ -909,7 +909,7 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forcewo
 		mRenderHeight = -mRenderHeight;
 	}
 	mWorldPanning = tex->bWorldPanning || forceworldpanning;
-	mWidth = tex->GetWidth();
+	mWidth = tex->GetTexelWidth();
 }
 
 

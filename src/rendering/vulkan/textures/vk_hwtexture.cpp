@@ -179,8 +179,8 @@ VkTextureImage *VkHardwareTexture::GetDepthStencil(FTexture *tex)
 		auto fb = GetVulkanFrameBuffer();
 
 		VkFormat format = fb->GetBuffers()->SceneDepthStencilFormat;
-		int w = tex->GetWidth();
-		int h = tex->GetHeight();
+		int w = tex->GetTexelWidth();
+		int h = tex->GetTexelHeight();
 
 		ImageBuilder builder;
 		builder.setSize(w, h);
@@ -215,8 +215,8 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 		auto fb = GetVulkanFrameBuffer();
 
 		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-		int w = tex->GetWidth();
-		int h = tex->GetHeight();
+		int w = tex->GetTexelWidth();
+		int h = tex->GetTexelHeight();
 
 		ImageBuilder imgbuilder;
 		imgbuilder.setFormat(format);

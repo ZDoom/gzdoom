@@ -2032,52 +2032,6 @@ void MapLoader::LoopSidedefs (bool firstloop)
 //
 //===========================================================================
 
-int MapLoader::DetermineTranslucency (int lumpnum)
-{
-	auto tranmap = fileSystem.OpenFileReader (lumpnum);
-	uint8_t index;
-	PalEntry newcolor;
-	PalEntry newcolor2;
-
-	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, FileReader::SeekSet);
-	tranmap.Read (&index, 1);
-
-	newcolor = GPalette.BaseColors[GPalette.Remap[index]];
-
-	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, FileReader::SeekSet);
-	tranmap.Read (&index, 1);
-	newcolor2 = GPalette.BaseColors[GPalette.Remap[index]];
-	if (newcolor2.r == 255)	// if black on white results in white it's either
-							// fully transparent or additive
-	{
-		if (developer >= DMSG_NOTIFY)
-		{
-			char lumpname[9];
-			lumpname[8] = 0;
-			fileSystem.GetFileShortName (lumpname, lumpnum);
-			Printf ("%s appears to be additive translucency %d (%d%%)\n", lumpname, newcolor.r,
-				newcolor.r*100/255);
-		}
-		return -newcolor.r;
-	}
-
-	if (developer >= DMSG_NOTIFY)
-	{
-		char lumpname[9];
-		lumpname[8] = 0;
-		fileSystem.GetFileShortName (lumpname, lumpnum);
-		Printf ("%s appears to be translucency %d (%d%%)\n", lumpname, newcolor.r,
-			newcolor.r*100/255);
-	}
-	return newcolor.r;
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
 void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex)
 {
 	switch (special)
@@ -2153,7 +2107,18 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 			else if ((lumpnum = fileSystem.CheckNumForName (msd->midtexture)) > 0 &&
 				fileSystem.FileLength (lumpnum) == 65536)
 			{
-				*alpha = (short)DetermineTranslucency (lumpnum);
+				auto fr = fileSystem.OpenFileReader(lumpnum);
+				*alpha = (short)GPalette.DetermineTranslucency (fr);
+
+				if (developer >= DMSG_NOTIFY)
+				{
+					char lumpname[9];
+					lumpname[8] = 0;
+					fileSystem.GetFileShortName(lumpname, lumpnum);
+					if (*alpha < 0) Printf("%s appears to be additive translucency %d (%d%%)\n", lumpname, -*alpha, -*alpha * 100 / 255);
+					else Printf("%s appears to be translucency %d (%d%%)\n", lumpname, *alpha, *alpha * 100 / 255);
+				}
+
 				sd->SetTexture(side_t::mid, FNullTextureID());
 			}
 			else

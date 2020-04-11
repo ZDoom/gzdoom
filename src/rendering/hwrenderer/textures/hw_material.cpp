@@ -199,8 +199,8 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			}
 		}
 	}
-	mWidth = tx->GetWidth();
-	mHeight = tx->GetHeight();
+	mWidth = tx->GetTexelWidth();
+	mHeight = tx->GetTexelHeight();
 	mLeftOffset = tx->GetLeftOffset(0);	// These only get used by decals and decals should not use renderer-specific offsets.
 	mTopOffset = tx->GetTopOffset(0);
 	mRenderWidth = tx->GetScaledWidth();
@@ -473,8 +473,8 @@ again:
 					goto again;
 				}
 				if (tex->Brightmap != NULL &&
-					(tex->GetWidth() != tex->Brightmap->GetWidth() ||
-					tex->GetHeight() != tex->Brightmap->GetHeight())
+					(tex->GetTexelWidth() != tex->Brightmap->GetTexelWidth() ||
+					tex->GetTexelHeight() != tex->Brightmap->GetTexelHeight())
 					)
 				{
 					// do not expand if the brightmap's size differs.

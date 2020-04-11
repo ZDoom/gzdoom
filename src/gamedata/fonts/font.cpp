@@ -234,7 +234,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					for (auto entry : array)
 					{
 						FTexture *tex = TexMan.GetTexture(entry, false);
-						if (tex && tex->SourceLump >= 0 && fileSystem.GetFileContainer(tex->SourceLump) <= fileSystem.GetMaxIwadNum() && tex->UseType == ETextureType::MiscPatch)
+						if (tex && tex->GetSourceLump() >= 0 && fileSystem.GetFileContainer(tex->GetSourceLump()) <= fileSystem.GetMaxIwadNum() && tex->GetUseType() == ETextureType::MiscPatch)
 						{
 							texs[i] = tex;
 						}
@@ -389,8 +389,8 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 			if (lump.isValid())
 			{
 				auto tex = TexMan.GetTexture(lump);
-				int numtex_x = tex->GetWidth() / width;
-				int numtex_y = tex->GetHeight() / height;
+				int numtex_x = tex->GetTexelWidth() / width;
+				int numtex_y = tex->GetTexelHeight() / height;
 				int maxinsheet = int(position) + numtex_x * numtex_y - 1;
 				if (minchar > position) minchar = int(position);
 				if (maxchar < maxinsheet) maxchar = maxinsheet;

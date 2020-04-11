@@ -4,6 +4,8 @@
 #include "memarena.h"
 #include "palentry.h"
 
+class FileReader;
+
 struct FRemapTable
 {
 	FRemapTable(int count = 256) { NumEntries = count; }
@@ -18,7 +20,7 @@ struct FRemapTable
 	bool AddColourisation(int start, int end, int r, int g, int b);
 	bool AddTint(int start, int end, int r, int g, int b, int amount);
 	bool AddToTranslation(const char* range);
-	bool AddColors(int start, int count, const uint8_t*);
+	bool AddColors(int start, int count, const uint8_t*, int trans_color = 0);
 
 	uint8_t Remap[256];				// For the software renderer
 	PalEntry Palette[256];			// The ideal palette this maps to
@@ -79,8 +81,9 @@ private:
 	TArray<TAutoGrowArray<FRemapTablePtr, FRemapTable*>> TranslationTables;
 public:
 	void Init(int numslots);	// This cannot be a constructor!!!
-	void SetPalette(const uint8_t* colors);
+	void SetPalette(const uint8_t* colors, int transparent_index = -1);
 	void Clear();
+	int DetermineTranslucency(FileReader& file);
 	FRemapTable* AddRemap(FRemapTable* remap);
 	void UpdateTranslation(int trans, FRemapTable* remap);
 	int AddTranslation(int slot, FRemapTable* remap, int count = 1);

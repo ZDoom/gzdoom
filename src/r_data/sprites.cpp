@@ -286,7 +286,7 @@ void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe)
 		{
 			for (int rot = 0; rot < 16; ++rot)
 			{
-				TexMan.GetTexture(sprtemp[frame].Texture[rot])->Rotations = framestart + frame;
+				TexMan.GetTexture(sprtemp[frame].Texture[rot])->SetRotations(framestart + frame);
 			}
 		}
 	}
@@ -308,7 +308,7 @@ void R_InstallSprite (int num, spriteframewithrotate *sprtemp, int &maxframe)
 //	letter/number appended.
 // The rotation character can be 0 to signify no rotations.
 //
-#define TEX_DWNAME(tex) MAKE_ID(tex->Name[0], tex->Name[1], tex->Name[2], tex->Name[3])
+#define TEX_DWNAME(tex) MAKE_ID(tex->GetName()[0], tex->GetName()[1], tex->GetName()[2], tex->GetName()[3])
 
 void R_InitSpriteDefs () 
 {
@@ -333,7 +333,7 @@ void R_InitSpriteDefs ()
 	for (i = 0; i < smax; ++i)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
-		if (tex->UseType == ETextureType::Sprite && strlen(tex->Name) >= 6)
+		if (tex->GetUseType() == ETextureType::Sprite && strlen(tex->GetName()) >= 6)
 		{
 			size_t bucket = TEX_DWNAME(tex) % smax;
 			hashes[i].Next = hashes[bucket].Head;
@@ -417,10 +417,10 @@ void R_InitSpriteDefs ()
 			FTexture *tex = TexMan.GetTexture(hash);
 			if (TEX_DWNAME(tex) == intname)
 			{
-				bool res = R_InstallSpriteLump (FTextureID(hash), tex->Name[4] - 'A', tex->Name[5], false, sprtemp, maxframe);
+				bool res = R_InstallSpriteLump (FTextureID(hash), tex->GetName()[4] - 'A', tex->GetName()[5], false, sprtemp, maxframe);
 
-				if (tex->Name[6] && res)
-					R_InstallSpriteLump (FTextureID(hash), tex->Name[6] - 'A', tex->Name[7], true, sprtemp, maxframe);
+				if (tex->GetName()[6] && res)
+					R_InstallSpriteLump (FTextureID(hash), tex->GetName()[6] - 'A', tex->GetName()[7], true, sprtemp, maxframe);
 			}
 			hash = hashes[hash].Next;
 		}

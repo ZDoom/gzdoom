@@ -34,9 +34,9 @@
 **
 */
 
-#include "doomtype.h"
-#include "doomstat.h"
 #include "filesystem.h"
+#include "printf.h"
+#include "c_cvars.h"
 #include "templates.h"
 #include "gstrings.h"
 #include "textures.h"
@@ -44,6 +44,7 @@
 #include "c_dispatch.h"
 #include "sc_man.h"
 #include "image.h"
+#include "vectors.h"
 #include "formats/multipatchtexture.h"
 
 FTextureManager TexMan;
@@ -61,7 +62,7 @@ FTextureManager::FTextureManager ()
 
 	for (int i = 0; i < 2048; ++i)
 	{
-		sintable[i] = short(sin(i*(M_PI / 1024)) * 16384);
+		sintable[i] = short(sin(i*(pi::pi() / 1024)) * 16384);
 	}
 }
 

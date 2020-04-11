@@ -20,7 +20,6 @@
 //--------------------------------------------------------------------------
 //
 
-#include "doomtype.h"
 #include "filesystem.h"
 #include "textures.h"
 #include "skyboxtexture.h"

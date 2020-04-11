@@ -40,7 +40,6 @@
 #include "utf8.h"
 #include "sc_man.h"
 #include "texturemanager.h"
-#include "r_translate.h"
 
 #include "fontinternals.h"
 
@@ -329,7 +328,7 @@ public:
 		Next = FirstFont;
 		FirstFont = this;
 		FontHeight = 18;
-		SpaceWidth = 10;
+		SpaceWidth = 9;
 		GlobalKerning = -1;
 		translateUntranslated = true;
 
@@ -342,7 +341,7 @@ public:
 	//
 	//==========================================================================
 
-	void LoadTranslations()
+	void LoadTranslations() override
 	{
 		const int spacing = 9;
 		double luminosity[256];

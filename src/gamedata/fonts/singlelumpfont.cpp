@@ -374,7 +374,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		if (destSize < 0)
 		{
 			i += FirstChar;
-			I_FatalError ("Overflow decompressing char %d (%c) of %s", i, i, FontName.GetChars());
+			I_Error ("Overflow decompressing char %d (%c) of %s", i, i, FontName.GetChars());
 		}
 	}
 
@@ -434,7 +434,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 	}
 	if (LastChar < FirstChar)
 	{
-		I_FatalError("BMF font defines no characters");
+		I_Error("BMF font defines no characters");
 	}
 	count = LastChar - FirstChar + 1;
 	Chars.Resize(count);
@@ -624,7 +624,7 @@ void FSingleLumpFont::FixupPalette (uint8_t *identity, double *luminosity, const
 		int g = palette[1];
 		int b = palette[2];
 		double lum = r*0.299 + g*0.587 + b*0.114;
-		identity[i] = ColorMatcher.Pick (r, g, b);
+		identity[i] = ColorMatcher.Pick(r, g, b);
 		luminosity[i] = lum;
 		out_palette[i].r = r;
 		out_palette[i].g = g;

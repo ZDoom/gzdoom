@@ -40,28 +40,35 @@
 #include <math.h>
 
 #include "templates.h"
-#include "doomtype.h"
 #include "m_swap.h"
 #include "v_font.h"
-#include "v_video.h"
 #include "filesystem.h"
-#include "gi.h"
 #include "cmdlib.h"
 #include "sc_man.h"
-#include "hu_stuff.h"
 #include "gstrings.h"
-#include "v_text.h"
-#include "vm.h"
 #include "image.h"
 #include "utf8.h"
 #include "fontchars.h"
+#include "textures.h"
 #include "texturemanager.h"
+#include "printf.h"
+#include "palentry.h"
 
 #include "fontinternals.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_LOG_COLOR	PalEntry(223,223,223)
+
+//
+// Globally visible constants.
+//
+#define HU_FONTSTART	uint8_t('!')		// the first font characters
+#define HU_FONTEND		uint8_t('\377')	// the last font characters
+
+// Calculate # of glyphs in font.
+#define HU_FONTSIZE		(HU_FONTEND - HU_FONTSTART + 1)
+
 
 // TYPES -------------------------------------------------------------------
 
@@ -655,6 +662,9 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 //
 // V_InitFonts
 //
+// Fixme: This really needs to be a bit more flexible 
+// and less rigidly tied to the original game data.
+//
 //==========================================================================
 
 void V_InitFonts()
@@ -698,11 +708,11 @@ void V_InitFonts()
 			if (wadfile > fileSystem.GetIwadNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
-				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);
 			}
 			else
 			{
-				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
+				SmallFont = new FFont("SmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, false, true);
 			}
 		}
 	}
@@ -751,7 +761,7 @@ void V_InitFonts()
 		BigFont = V_GetFont("BigFont", "ZBIGFONT");
 	}
 
-	if (gameinfo.gametype & GAME_Raven)
+	if (fileSystem.CheckNumForName("FONTB_S") >= 0)
 	{
 		OriginalBigFont = new FFont("OriginalBigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
 	}
@@ -784,7 +794,7 @@ void V_InitFonts()
 	}
 	if (!(IntermissionFont = FFont::FindFont("IntermissionFont")))
 	{
-		if (gameinfo.gametype & GAME_DoomChex)
+		if (fileSystem.CheckNumForName("WINUM0") >= 0)
 		{
 			IntermissionFont = FFont::FindFont("IntermissionFont_Doom");
 		}

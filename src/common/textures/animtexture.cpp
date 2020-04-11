@@ -1,9 +1,8 @@
 /*
-** imagetexture.cpp
-** Texture class based on FImageSource
+** animtexture.cpp
 **
 **---------------------------------------------------------------------------
-** Copyright 2018 Christoph Oelckers
+** Copyright 2020 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -32,14 +31,8 @@
 **
 **
 */
-
-#include "files.h"
-#include "filesystem.h"
-#include "templates.h"
+#include "animtexture.h"
 #include "bitmap.h"
-#include "image.h"
-#include "textures.h"
-
 
 //==========================================================================
 //
@@ -47,50 +40,77 @@
 //
 //==========================================================================
 
-FImageTexture::FImageTexture(FImageSource *img, const char *name) noexcept
-: FTexture(name, img? img->LumpNum() : 0)
+void AnimTexture::SetFrameSize(int width, int height)
 {
-	mImage = img;
-	if (img != nullptr)
-	{
-		if (name == nullptr) fileSystem.GetFileShortName(Name, img->LumpNum());
-		Width = img->GetWidth();
-		Height = img->GetHeight();
+    FTexture::SetSize(width, height);
+	Image.Resize(width*height);
+}
 
-		auto offsets = img->GetOffsets();
-		_LeftOffset[1] = _LeftOffset[0] = offsets.first;
-		_TopOffset[1] = _TopOffset[0] = offsets.second;
-
-		bMasked = img->bMasked;
-		bTranslucent = img->bTranslucent;
-	}
+void AnimTexture::SetFrame(const uint8_t *palette, const void *data_)
+{
+	memcpy(Palette, palette, 768);
+	memcpy(Image.Data(), data_, Width * Height);
+    SystemTextures.Clean(true, true);
 }
 
 //===========================================================================
 //
-// 
+// FPNGTexture::CopyPixels
 //
 //===========================================================================
 
-FBitmap FImageTexture::GetBgraBitmap(const PalEntry *p, int *trans)
+FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
 {
-	return mImage->GetCachedBitmap(p, bNoRemap0? FImageSource::noremap0 : FImageSource::normal, trans);
-}	
+    FBitmap bmp;
 
-//===========================================================================
-//
-// 
-//
-//===========================================================================
+    bmp.Create(Width, Height);
 
-TArray<uint8_t> FImageTexture::Get8BitPixels(bool alpha)
-{
-	return mImage->GetPalettedPixels(alpha? alpha : bNoRemap0 ? FImageSource::noremap0 : FImageSource::normal);
-}	
-
-
-FTexture* CreateImageTexture(FImageSource* img, const char *name) noexcept
-{
-	return new FImageTexture(img, name);
+    auto spix = Image.Data();
+    auto dpix = bmp.GetPixels();
+    for (int i = 0; i < Width * Height; i++)
+    {
+        int p = i * 4;
+		int index = spix[i];
+        dpix[p + 0] = Palette[index*3+2];
+        dpix[p + 1] = Palette[index*3+1];
+        dpix[p + 2] = Palette[index*3];
+        dpix[p + 3] = 255;
+    }
+    return bmp;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+AnimTextures::AnimTextures()
+{
+	active = 1;
+	tex[0] = new AnimTexture;
+	tex[1] = new AnimTexture;
+}
+
+AnimTextures::~AnimTextures()
+{
+	delete tex[0];
+	delete tex[1];
+}
+
+void AnimTextures::SetSize(int width, int height)
+{
+	tex[0]->SetFrameSize(width, height);
+	tex[1]->SetFrameSize(width, height);
+}
+    
+void AnimTextures::SetFrame(const uint8_t *palette, const void* data)
+{
+	active ^= 1;
+	tex[active]->SetFrame(palette, data);
+}
+
+FTexture * AnimTextures::GetFrame()
+{
+	return tex[active];
+}

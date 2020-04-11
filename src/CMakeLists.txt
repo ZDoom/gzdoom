@@ -1088,10 +1088,10 @@ set (PCH_SOURCES
 	common/textures/texturemanager.cpp
 	common/textures/multipatchtexturebuilder.cpp
 	common/textures/skyboxtexture.cpp
+	common/textures/animtexture.cpp
 	common/textures/formats/automaptexture.cpp
 	common/textures/formats/brightmaptexture.cpp
 	common/textures/formats/buildtexture.cpp
-	common/textures/formats/canvastexture.cpp
 	common/textures/formats/ddstexture.cpp
 	common/textures/formats/flattexture.cpp
 	common/textures/formats/fontchars.cpp

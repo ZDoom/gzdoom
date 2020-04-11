@@ -34,9 +34,10 @@
 #ifndef __V_FONT_H__
 #define __V_FONT_H__
 
-#include "doomtype.h"
 #include "filesystem.h"
 #include "vectors.h"
+#include "palentry.h"
+#include "name.h"
 
 class DCanvas;
 class FTexture;
@@ -93,7 +94,7 @@ public:
 		Custom
 	};
 
-	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false);
+	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false, bool doomtemplate = false);
 	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;

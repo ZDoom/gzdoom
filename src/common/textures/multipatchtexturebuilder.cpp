@@ -35,8 +35,8 @@
 */
 
 #include <ctype.h>
-#include "doomtype.h"
 #include "files.h"
+#include "printf.h"
 #include "filesystem.h"
 #include "engineerrors.h"
 #include "bitmap.h"

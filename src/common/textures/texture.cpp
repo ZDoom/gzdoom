@@ -34,7 +34,7 @@
 **
 */
 
-#include "doomtype.h"
+#include "printf.h"
 #include "files.h"
 #include "filesystem.h"
 #include "templates.h"

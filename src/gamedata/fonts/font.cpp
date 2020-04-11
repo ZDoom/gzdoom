@@ -41,25 +41,20 @@
 #include <math.h>
 
 #include "templates.h"
-#include "doomtype.h"
 #include "m_swap.h"
 #include "v_font.h"
-#include "v_video.h"
+#include "printf.h"
+#include "textures.h"
 #include "filesystem.h"
-#include "gi.h"
 #include "cmdlib.h"
 #include "sc_man.h"
-#include "hu_stuff.h"
 #include "gstrings.h"
-#include "v_text.h"
-#include "vm.h"
 #include "image.h"
 #include "utf8.h"
 #include "myiswalpha.h"
 #include "fontchars.h"
 #include "multipatchtexture.h"
 #include "texturemanager.h"
-#include "r_translate.h"
 
 #include "fontinternals.h"
 
@@ -73,13 +68,12 @@
 //
 //==========================================================================
 
-FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate, bool iwadonly)
+FFont::FFont (const char *name, const char *nametemplate, const char *filetemplate, int lfirst, int lcount, int start, int fdlump, int spacewidth, bool notranslate, bool iwadonly, bool doomtemplate)
 {
 	int i;
 	FTextureID lump;
 	char buffer[12];
 	int maxyoffs;
-	bool doomtemplate = (nametemplate && (gameinfo.gametype & GAME_DoomChex)) ? strncmp (nametemplate, "STCFN", 5) == 0 : false;
 	DVector2 Scale = { 1, 1 };
 
 	noTranslate = notranslate;
@@ -207,8 +201,10 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					  // Because a lot of wads with their own font seem to foolishly
 					  // copy STCFN121 and make it a '|' themselves, wads must
 					  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-						if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
-							!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
+						FStringf c120("%s120", nametemplate);
+						FStringf c122("%s122", nametemplate);
+						if (!TexMan.CheckForTexture(c120, ETextureType::MiscPatch).isValid() ||
+							!TexMan.CheckForTexture(c122, ETextureType::MiscPatch).isValid())
 						{
 							// insert the incorrectly named '|' graphic in its correct position.
 							position = 124;
@@ -799,7 +795,7 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 						remap.Palette[j] = GPalette.BaseColors[identity[j]] | MAKEARGB(255, 0, 0, 0);
 					}
 				}
-				Translations.Push(GPalette.StoreTranslation(TRANSLATION_Font, &remap));
+				Translations.Push(GPalette.StoreTranslation(TRANSLATION_Internal, &remap));
 			}
 			else
 			{
@@ -839,7 +835,7 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 			remap.Palette[j] = PalEntry(255,r,g,b);
 		}
 		if (post) post(&remap);
-		Translations.Push(GPalette.StoreTranslation(TRANSLATION_Font, &remap));
+		Translations.Push(GPalette.StoreTranslation(TRANSLATION_Internal, &remap));
 
 		// Advance to the next color range.
 		while (parmstart[1].RangeStart > parmstart[0].RangeEnd)
@@ -1155,7 +1151,7 @@ int FFont::GetMaxAscender(const uint8_t* string) const
 			auto ctex = GetChar(chr, CR_UNTRANSLATED, nullptr);
 			if (ctex)
 			{
-				auto offs = int(ctex->GetScaledTopOffset(0));
+				auto offs = int(ctex->GetDisplayTopOffset());
 				if (offs > retval) retval = offs;
 			}
 		}
@@ -1271,7 +1267,7 @@ void FFont::FixXMoves()
 		}
 		if (Chars[i].OriginalPic)
 		{
-			int ofs = Chars[i].OriginalPic->GetScaledTopOffset(0);
+			int ofs = Chars[i].OriginalPic->GetDisplayTopOffset();
 			if (ofs > Displacement) Displacement = ofs;
 		}
 	}

@@ -34,9 +34,10 @@
 */
 
 #include "vmintern.h"
-#include "s_sound.h"
-#include "dthinker.h"
+#include "s_soundinternal.h"
 #include "types.h"
+#include "printf.h"
+#include "textureid.h"
 
 
 FTypeTable TypeTable;
@@ -1101,7 +1102,9 @@ PSpriteID::PSpriteID()
 void PSpriteID::WriteValue(FSerializer &ar, const char *key, const void *addr) const
 {
 	int32_t val = *(int*)addr;
+#ifdef GZDOOM
 	ar.Sprite(key, val, nullptr);
+#endif
 }
 
 //==========================================================================
@@ -1113,7 +1116,9 @@ void PSpriteID::WriteValue(FSerializer &ar, const char *key, const void *addr) c
 bool PSpriteID::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
 	int32_t val;
+#ifdef GZDOOM
 	ar.Sprite(key, val, nullptr);
+#endif
 	*(int*)addr = val;
 	return true;
 }
@@ -1184,7 +1189,7 @@ PSound::PSound()
 
 void PSound::WriteValue(FSerializer &ar, const char *key,const void *addr) const
 {
-	const char *cptr = S_GetSoundName(*(const FSoundID *)addr);
+	const char *cptr = soundEngine->GetSoundName(*(const FSoundID *)addr);
 	ar.StringPtr(key, cptr);
 }
 
@@ -1358,7 +1363,7 @@ PObjectPointer::PObjectPointer(PClass *cls, bool isconst)
 	loadOp = OP_LO;
 	Flags |= TYPE_ObjectPointer;
 	// Non-destroyed thinkers are always guaranteed to be linked into the thinker chain so we don't need the write barrier for them.
-	if (cls && !cls->IsDescendantOf(RUNTIME_CLASS(DThinker))) storeOp = OP_SO;
+	if (cls && !cls->IsDescendantOf(NAME_Thinker)) storeOp = OP_SO;
 }
 
 //==========================================================================
@@ -1458,7 +1463,9 @@ PStatePointer::PStatePointer()
 
 void PStatePointer::WriteValue(FSerializer &ar, const char *key, const void *addr) const
 {
+#ifdef GZDOOM
 	ar(key, *(FState **)addr);
+#endif
 }
 
 //==========================================================================
@@ -1470,7 +1477,9 @@ void PStatePointer::WriteValue(FSerializer &ar, const char *key, const void *add
 bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
 	bool res = false;
+#ifdef GZDOOM
 	::Serialize(ar, key, *(FState **)addr, nullptr, &res);
+#endif
 	return res;
 }
 
@@ -1700,7 +1709,7 @@ bool PArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 	{
 		bool readsomething = false;
 		unsigned count = ar.ArraySize();
-		unsigned loop = MIN(count, ElementCount);
+		unsigned loop = std::min(count, ElementCount);
 		uint8_t *addrb = (uint8_t *)addr;
 		for(unsigned i=0;i<loop;i++)
 		{

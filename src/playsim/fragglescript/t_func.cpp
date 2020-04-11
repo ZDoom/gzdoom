@@ -2523,7 +2523,7 @@ void FParser::SF_PlayerWeapon()
 				{
 					wp->Destroy();
 					// If the weapon is active pick a replacement. Legacy didn't do this!
-					if (Level->Players[playernum]->PendingWeapon==wp) Level->Players[playernum]->PendingWeapon=WP_NOCHANGE;
+					if (Level->Players[playernum]->PendingWeapon==wp) Level->Players[playernum]->PendingWeapon=(AActor*)WP_NOCHANGE;
 					if (Level->Players[playernum]->ReadyWeapon==wp)
 					{
 						Level->Players[playernum]->ReadyWeapon=nullptr;

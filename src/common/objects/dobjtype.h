@@ -17,14 +17,14 @@ class VMException : public DObject
 
 // An action function -------------------------------------------------------
 
-struct FState;
-struct StateCallData;
 class VMFrameStack;
 struct VMValue;
 struct VMReturn;
 class VMFunction;
 class PClassType;
 struct FNamespaceManager;
+class PSymbol;
+class PField;
 
 enum
 {

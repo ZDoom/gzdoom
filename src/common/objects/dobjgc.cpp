@@ -276,8 +276,6 @@ void MarkArray(DObject **obj, size_t count)
 
 static void MarkRoot()
 {
-	int i;
-
 	Gray = NULL;
 	Mark(StatusBar);
 	M_MarkMenus();
@@ -288,7 +286,7 @@ static void MarkRoot()
 		Level->Mark();
 
 	// Mark players.
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (int i = 0; i < MAXPLAYERS; i++)
 	{
 		if (playeringame[i])
 			players[i].PropagateMark();

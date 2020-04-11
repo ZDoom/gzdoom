@@ -996,7 +996,7 @@ void P_SetupPsprites(player_t *player, bool startweaponup)
 	player->DestroyPSprites();
 
 	// Spawn the ready weapon
-	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : WP_NOCHANGE;
+	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : (AActor*)WP_NOCHANGE;
 	P_BringUpWeapon (player);
 }
 

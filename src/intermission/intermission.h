@@ -11,6 +11,7 @@
 #include "v_text.h"
 
 struct event_t;
+struct FState;
 
 #define DECLARE_SUPER_CLASS(cls,parent) \
 private: \

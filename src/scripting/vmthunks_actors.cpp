@@ -1606,11 +1606,11 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_BossDeath, A_BossDeath)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, DObject::StaticPointerSubstitution)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, StaticPointerSubstitution)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(replace, AActor);
-	DObject::StaticPointerSubstitution(self, replace);
+	StaticPointerSubstitution(self, replace);
 	return 0;
 }
 

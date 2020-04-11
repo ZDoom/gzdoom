@@ -39,6 +39,7 @@
 #include "serializer.h"
 #include "types.h"
 #include "vm.h"
+#include "printf.h"
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

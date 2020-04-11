@@ -208,6 +208,11 @@ public:
 		return GC::ReadBarrier(pp);
 	}
 
+	T ForceGet() throw()	//for situations where the read barrier needs to be skipped.
+	{
+		return pp;
+	}
+
 	operator T() throw()
 	{
 		return GC::ReadBarrier(pp);

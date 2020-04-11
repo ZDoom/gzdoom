@@ -50,6 +50,7 @@ struct FActorInfo;
 class FIntCVar;
 class FStateDefinitions;
 class FInternalLightAssociation;
+struct FState;
 
 enum EStateDefineFlags
 {

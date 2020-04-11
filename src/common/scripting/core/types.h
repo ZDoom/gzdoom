@@ -2,6 +2,7 @@
 
 #include "dobject.h"
 #include "serializer.h"
+#include "symbols.h"
 #include "scopebarrier.h"
 
 // Variable/parameter/field flags -------------------------------------------

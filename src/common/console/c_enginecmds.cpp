@@ -32,6 +32,12 @@
 **
 */
 
+#ifndef _WIN32
+#include <unistd.h>
+#else
+#include <direct.h>
+#endif
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>

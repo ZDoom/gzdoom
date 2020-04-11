@@ -1106,6 +1106,7 @@ set (PCH_SOURCES
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
 	common/thirdparty/sfmt/SFMT.cpp
+	common/textures/m_png.cpp
 	common/console/c_commandline.cpp
 	common/console/c_buttons.cpp
 	common/console/c_bind.cpp
@@ -1147,7 +1148,6 @@ set (PCH_SOURCES
 	common/engine/palettecontainer.cpp
 	common/engine/stringtable.cpp
 	
-	utility/m_png.cpp
 	utility/m_random.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp

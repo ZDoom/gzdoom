@@ -34,7 +34,7 @@
 
 #include <string.h>
 #include "m_argv.h"
-#include "i_system.h"
+#include "zstring.h"
 
 //===========================================================================
 //
@@ -66,6 +66,17 @@ FArgs::FArgs(const FArgs &other)
 FArgs::FArgs(int argc, char **argv)
 {
 	SetArgs(argc, argv);
+}
+
+//===========================================================================
+//
+// FArgs Argv Constructor
+//
+//===========================================================================
+
+FArgs::FArgs(int argc, const char** argv)
+{
+	SetArgs(argc, const_cast<char **>(argv));	// Thanks, C++, for the inflexible const casting rules...
 }
 
 //===========================================================================
@@ -128,7 +139,22 @@ void FArgs::FlushArgs()
 //
 //===========================================================================
 
-int FArgs::CheckParm(const char *check, int start) const
+int stricmp(const char** check, const char* str)
+{
+	for (int i = 0; check[i]; i++)
+	{
+		if (!stricmp(check[i], str)) return 0;
+	}
+	return 1;	// we do not care about order here.
+}
+
+int FArgs::CheckParm(const char* check, int start) const
+{
+	const char* array[] = { check, nullptr };
+	return CheckParm(array, start);
+}
+
+int FArgs::CheckParm(const char** check, int start) const
 {
 	for (unsigned i = start; i < Argv.Size(); ++i)
 	{
@@ -155,9 +181,9 @@ int FArgs::CheckParmList(const char *check, FString **strings, int start) const
 
 	if (parmat == 0)
 	{
-		if (strings != NULL)
+		if (strings != nullptr)
 		{
-			*strings = NULL;
+			*strings = nullptr;
 		}
 		return 0;
 	}
@@ -168,7 +194,7 @@ int FArgs::CheckParmList(const char *check, FString **strings, int start) const
 			break;
 		}
 	}
-	if (strings != NULL)
+	if (strings != nullptr)
 	{
 		*strings = &Argv[parmat];
 	}
@@ -180,7 +206,7 @@ int FArgs::CheckParmList(const char *check, FString **strings, int start) const
 // FArgs :: CheckValue
 //
 // Like CheckParm, but it also checks that the parameter has a value after
-// it and returns that or NULL if not present.
+// it and returns that or nullptr if not present.
 //
 //===========================================================================
 
@@ -191,11 +217,11 @@ const char *FArgs::CheckValue(const char *check) const
 	if (i > 0 && i < (int)Argv.Size() - 1)
 	{
 		i++;
-		return Argv[i][0] != '+' && Argv[i][0] != '-' ? Argv[i].GetChars() : NULL;
+		return Argv[i][0] != '+' && Argv[i][0] != '-' ? Argv[i].GetChars() : nullptr;
 	}
 	else
 	{
-		return NULL;
+		return nullptr;
 	}
 }
 
@@ -258,7 +284,7 @@ void FArgs::RemoveArgs(const char *check)
 
 const char *FArgs::GetArg(int arg) const
 {
-	return ((unsigned)arg < Argv.Size()) ? Argv[arg].GetChars() : NULL;
+	return ((unsigned)arg < Argv.Size()) ? Argv[arg].GetChars() : nullptr;
 }
 
 //===========================================================================
@@ -271,7 +297,7 @@ const char *FArgs::GetArg(int arg) const
 
 FString *FArgs::GetArgList(int arg) const
 {
-	return ((unsigned)arg < Argv.Size()) ? &Argv[arg] : NULL;
+	return ((unsigned)arg < Argv.Size()) ? &Argv[arg] : nullptr;
 }
 
 //===========================================================================
@@ -338,16 +364,22 @@ void FArgs::RemoveArg(int argindex)
 //
 // Takes all arguments after any instance of -param and any arguments before
 // all switches that end in .extension and combines them into a single
-// -switch block at the end of the arguments. If extension is NULL, then
+// -switch block at the end of the arguments. If extension is nullptr, then
 // every parameter before the first switch is added after this -param.
 //
 //===========================================================================
 
-void FArgs::CollectFiles(const char *param, const char *extension)
+void FArgs::CollectFiles(const char* param, const char* extension)
+{
+	const char* array[] = { param, nullptr };
+	CollectFiles(param, array, extension);
+}
+
+void FArgs::CollectFiles(const char *finalname, const char **param, const char *extension)
 {
 	TArray<FString> work;
 	unsigned int i;
-	size_t extlen = extension == NULL ? 0 : strlen(extension);
+	size_t extlen = extension == nullptr ? 0 : strlen(extension);
 
 	// Step 1: Find suitable arguments before the first switch.
 	i = 1;
@@ -387,7 +419,7 @@ void FArgs::CollectFiles(const char *param, const char *extension)
 	}
 
 	// Optional: Replace short path names with long path names
-#ifdef _WIN32
+#if 0 //def _WIN32
 	for (i = 0; i < work.Size(); ++i)
 	{
 		work[i] = I_GetLongPathName(work[i]);
@@ -397,7 +429,7 @@ void FArgs::CollectFiles(const char *param, const char *extension)
 	// Step 3: Add work back to Argv, as long as it's non-empty.
 	if (work.Size() > 0)
 	{
-		Argv.Push(param);
+		Argv.Push(finalname);
 		AppendArgs(work.Size(), &work[0]);
 	}
 }

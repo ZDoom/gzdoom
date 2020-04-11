@@ -34,7 +34,7 @@
 #ifndef __M_ARGV_H__
 #define __M_ARGV_H__
 
-#include "dobject.h"
+#include "tarray.h"
 #include "zstring.h"
 
 //
@@ -43,23 +43,58 @@
 class FArgs
 {
 public:
+
+	typedef TIterator<FString>                  iterator;
+	typedef TIterator<const FString>            const_iterator;
+	typedef FString								value_type;
+
+	iterator begin()
+	{
+		return Argv.begin();
+	}
+	const_iterator begin() const
+	{
+		return Argv.begin();
+	}
+	const_iterator cbegin() const
+	{
+		return Argv.begin();
+	}
+
+	iterator end()
+	{
+		return Argv.end();
+	}
+	const_iterator end() const
+	{
+		return Argv.end();
+	}
+	const_iterator cend() const
+	{
+		return Argv.end();
+	}
+
 	FArgs();
 	FArgs(const FArgs &args);
 	FArgs(int argc, char **argv);
+	FArgs(int argc, const char** argv);
 	FArgs(int argc, FString *argv);
 
 	FArgs &operator=(const FArgs &other);
+	const FString& operator[](size_t index) { return Argv[index]; }
 
 	void AppendArg(FString arg);
 	void AppendArgs(int argc, const FString *argv);
 	void RemoveArg(int argindex);
 	void RemoveArgs(const char *check);
 	void SetArgs(int argc, char **argv);
+	void CollectFiles(const char *finalname, const char** param, const char* extension);
 	void CollectFiles(const char *param, const char *extension);
 	FArgs *GatherFiles(const char *param) const;
 	void SetArg(int argnum, const char *arg);
 
 	int CheckParm(const char *check, int start=1) const;	// Returns the position of the given parameter in the arg list (0 if not found).
+	int CheckParm(const char** check, int start = 1) const;	// Returns the position of the given parameter in the arg list (0 if not found). Allows checking for multiple switches
 	int CheckParmList(const char *check, FString **strings, int start=1) const;
 	const char *CheckValue(const char *check) const;
 	const char *GetArg(int arg) const;
@@ -67,6 +102,7 @@ public:
 	FString TakeValue(const char *check);
 	int NumArgs() const;
 	void FlushArgs();
+	TArray<FString>& Array() { return Argv; }
 
 private:
 	TArray<FString> Argv;

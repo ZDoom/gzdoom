@@ -52,7 +52,6 @@
 #include "i_sound.h"
 #include "i_soundfont.h"
 #include "s_music.h"
-#include "doomstat.h"
 #include "filereadermusicinterface.h"
 
 
@@ -163,7 +162,7 @@ static void mus_sfclose(void* handle)
 	reinterpret_cast<FSoundFontReader*>(handle)->close();
 }
 
-
+#ifndef ZMUSIC_LITE
 //==========================================================================
 //
 // Pass some basic working data to the music backend
@@ -210,7 +209,7 @@ static void SetupDMXGUS()
 	ZMusic_SetDmxGus(data.GetMem(), (uint32_t)data.GetSize());
 }
 
-
+#endif
 
 //==========================================================================
 //
@@ -239,9 +238,11 @@ void I_InitMusic(void)
 	callbacks.SF_Close = mus_sfclose;
 
 	ZMusic_SetCallbacks(&callbacks);
+#ifndef ZMUSIC_LITE
 	SetupGenMidi();
 	SetupDMXGUS();
 	SetupWgOpn();
+#endif
 }
 
 

@@ -37,41 +37,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef _WIN32
-#include <io.h>
-#endif
 
-#include "i_system.h"
+
 #include "i_sound.h"
 #include "i_music.h"
-
-#include "s_sound.h"
-#include "s_sndseq.h"
+#include "printf.h"
 #include "s_playlist.h"
 #include "c_dispatch.h"
-#include "m_random.h"
 #include "filesystem.h"
-#include "p_local.h"
-#include "doomstat.h"
 #include "cmdlib.h"
-#include "v_video.h"
-#include "v_text.h"
-#include "a_sharedglobal.h"
-#include "gstrings.h"
-#include "gi.h"
-#include "po_man.h"
-#include "serializer.h"
-#include "d_player.h"
-#include "g_levellocals.h"
-#include "vm.h"
-#include "g_game.h"
 #include "s_music.h"
 #include "filereadermusicinterface.h"
 #include <zmusic.h>
-
-// MACROS ------------------------------------------------------------------
-
-
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -86,6 +63,7 @@ MusPlayingInfo mus_playing;	// music currently being played
 static FPlayList PlayList;
 float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
+MusicVolumeMap MusicVolumes;
 
 static FileReader DefaultOpenMusic(const char* fn)
 {
@@ -381,7 +359,7 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	S_StopMusic(true);
 
 	// Just record it if volume is 0 or music was disabled
-	if (snd_musicvolume <= 0)
+	if (snd_musicvolume <= 0 || !mus_enabled)
 	{
 		mus_playing.loop = looping;
 		mus_playing.name = musicname;
@@ -412,7 +390,9 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 
 	if (mus_playing.handle != 0)
 	{ // play it
-		if (!S_StartMusicPlaying(mus_playing.handle, looping, S_GetMusicVolume(musicname), order))
+		auto volp = MusicVolumes.CheckKey(musicname);
+		float vol = volp ? *volp : 1.f;
+		if (!S_StartMusicPlaying(mus_playing.handle, looping, vol, order))
 		{
 			Printf("Unable to start %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
 			return false;
@@ -424,7 +404,6 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 	return false;
 }
 
-
 //==========================================================================
 //
 // S_RestartMusic
@@ -433,11 +412,16 @@ bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 
 void S_RestartMusic ()
 {
-	if (!mus_playing.LastSong.IsEmpty())
+	if (snd_musicvolume <= 0) return;
+	if (!mus_playing.LastSong.IsEmpty() && mus_enabled)
 	{
 		FString song = mus_playing.LastSong;
 		mus_playing.LastSong = "";
 		S_ChangeMusic (song, mus_playing.baseorder, mus_playing.loop, true);
+	}
+	else
+	{
+		S_StopMusic(true);
 	}
 }
 

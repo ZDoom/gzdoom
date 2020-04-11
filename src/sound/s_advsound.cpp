@@ -147,14 +147,6 @@ struct FBloodSFX
 	char	RawName[9];	// name of RAW resource
 };
 
-// music volume multipliers
-struct FMusicVolume
-{
-	FMusicVolume *Next;
-	float Volume;
-	char MusicName[1];
-};
-
 // This is used to recreate the skin sounds after reloading SNDINFO due to a changed local one.
 struct FSavedPlayerSoundInfo
 {
@@ -230,7 +222,6 @@ static const char *SICommandStrings[] =
 	NULL
 };
 
-static FMusicVolume *MusicVolumes_;
 static TArray<FSavedPlayerSoundInfo> SavedPlayerSounds;
 
 static int NumPlayerReserves;
@@ -246,28 +237,6 @@ static int DefPlayerClass;
 static uint8_t CurrentPitchMask;
 
 // CODE --------------------------------------------------------------------
-
-//==========================================================================
-//
-// S_GetMusicVolume
-//
-// Gets the relative volume for the given music track
-//==========================================================================
-
-float S_GetMusicVolume (const char *music)
-{
-	FMusicVolume *musvol = MusicVolumes_;
-
-	while (musvol != NULL)
-	{
-		if (!stricmp (music, musvol->MusicName))
-		{
-			return musvol->Volume;
-		}
-		musvol = musvol->Next;
-	}
-	return 1.f;
-}
 
 //==========================================================================
 //
@@ -744,12 +713,7 @@ void S_ClearSoundData()
 		soundEngine->Clear();
 
 	Ambients.Clear();
-	while (MusicVolumes_ != NULL)
-	{
-		FMusicVolume *me = MusicVolumes_;
-		MusicVolumes_ = me->Next;
-		M_Free(me);
-	}
+	MusicVolumes.Clear();
 
 	NumPlayerReserves = 0;
 	PlayerClassesIsSorted = false;
@@ -1179,13 +1143,9 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MusicVolume: {
 				sc.MustGetString();
-				FString musname (sc.String);
+				FName musname (sc.String);
 				sc.MustGetFloat();
-				FMusicVolume *mv = (FMusicVolume *)M_Malloc (sizeof(*mv) + musname.Len());
-				mv->Volume = (float)sc.Float;
-				strcpy (mv->MusicName, musname);
-				mv->Next = MusicVolumes_;
-				MusicVolumes_ = mv;
+				MusicVolumes[musname] = (float)sc.Float;
 				}
 				break;
 

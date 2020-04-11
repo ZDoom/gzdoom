@@ -38,7 +38,7 @@ struct WadStuff;
 void I_DetectOS (void);
 
 // Called by DoomMain.
-void I_Init (void);
+void CalculateCPUSpeed (void);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();

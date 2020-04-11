@@ -32,8 +32,8 @@
 **
 */
 
-#include "doomtype.h"
-#include "doomdef.h"
+#include <stdlib.h>
+#include <string.h>
 #include "x86.h"
 
 CPUInfo CPU;
@@ -200,7 +200,7 @@ haveid:
 #endif
 }
 
-void DumpCPUInfo(const CPUInfo *cpu)
+FString DumpCPUInfo(const CPUInfo *cpu)
 {
 	char cpustring[4*4*3+1];
 	
@@ -227,34 +227,36 @@ void DumpCPUInfo(const CPUInfo *cpu)
 	}
 	*t = '\0';
 
-	if (cpu->VendorID[0] && !batchrun)
+	FString out;
+	if (cpu->VendorID[0])
 	{
-		Printf("CPU Vendor ID: %s\n", cpu->VendorID);
+		out.Format("CPU Vendor ID: %s\n", cpu->VendorID);
 		if (cpustring[0])
 		{
-			Printf("  Name: %s\n", cpustring);
+			out.AppendFormat("  Name: %s\n", cpustring);
 		}
 		if (cpu->bIsAMD)
 		{
-			Printf("  Family %d (%d), Model %d, Stepping %d\n",
+			out.AppendFormat("  Family %d (%d), Model %d, Stepping %d\n",
 				cpu->Family, cpu->AMDFamily, cpu->AMDModel, cpu->AMDStepping);
 		}
 		else
 		{
-			Printf("  Family %d, Model %d, Stepping %d\n",
+			out.AppendFormat("  Family %d, Model %d, Stepping %d\n",
 				cpu->Family, cpu->Model, cpu->Stepping);
 		}
-		Printf("  Features:");
-		if (cpu->bSSE2)			Printf(" SSE2");
-		if (cpu->bSSE3)			Printf(" SSE3");
-		if (cpu->bSSSE3)		Printf(" SSSE3");
-		if (cpu->bSSE41)		Printf(" SSE4.1");
-		if (cpu->bSSE42)		Printf(" SSE4.2");
-		if (cpu->b3DNow)		Printf(" 3DNow!");
-		if (cpu->b3DNowPlus)	Printf(" 3DNow!+");
-		if (cpu->HyperThreading)	Printf(" HyperThreading");
-		Printf ("\n");
+		out.AppendFormat("  Features:");
+		if (cpu->bSSE2)			out += (" SSE2");
+		if (cpu->bSSE3)			out += (" SSE3");
+		if (cpu->bSSSE3)		out += (" SSSE3");
+		if (cpu->bSSE41)		out += (" SSE4.1");
+		if (cpu->bSSE42)		out += (" SSE4.2");
+		if (cpu->b3DNow)		out += (" 3DNow!");
+		if (cpu->b3DNowPlus)	out += (" 3DNow!+");
+		if (cpu->HyperThreading)	out += (" HyperThreading");
+		out += ("\n");
 	}
+	return out;
 }
 
 #endif

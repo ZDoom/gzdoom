@@ -614,7 +614,6 @@ file( GLOB HEADER_FILES
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
 	common/thirdparty/math./*h
-	utility/sfmt/*.h
 	utility/*.h
 	scripting/*.h
 	scripting/backend/*.h

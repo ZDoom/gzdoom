@@ -107,8 +107,6 @@ void DestroyCustomCursor();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void CalculateCPUSpeed();
-
 static HCURSOR CreateCompatibleCursor(FBitmap &cursorpic, int leftofs, int topofs);
 static HCURSOR CreateAlphaCursor(FBitmap &cursorpic, int leftofs, int topofs);
 static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP color_mask);
@@ -308,20 +306,6 @@ void CalculateCPUSpeed()
 
 	if (!batchrun) Printf ("CPU speed: %.0f MHz\n", 0.001 / PerfToMillisec);
 }
-
-//==========================================================================
-//
-// I_Init
-//
-//==========================================================================
-
-void I_Init()
-{
-	CheckCPUID(&CPU);
-	CalculateCPUSpeed();
-	DumpCPUInfo(&CPU);
-}
-
 
 //==========================================================================
 //

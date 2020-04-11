@@ -2542,7 +2542,10 @@ static int D_DoomMain_Internal (void)
 		if (!restart)
 		{
 			if (!batchrun) Printf ("I_Init: Setting up machine state.\n");
-			I_Init ();
+			CheckCPUID(&CPU);
+			CalculateCPUSpeed();
+			auto ci = DumpCPUInfo(&CPU);
+			Printf("%s", ci.GetChars());
 		}
 
 		// [RH] Initialize palette management

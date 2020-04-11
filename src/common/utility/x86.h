@@ -2,6 +2,7 @@
 #define X86_H
 
 #include "basics.h"
+#include "zstring.h"
 
 struct CPUInfo	// 92 bytes
 {
@@ -105,7 +106,7 @@ extern CPUInfo CPU;
 struct PalEntry;
 
 void CheckCPUID (CPUInfo *cpu);
-void DumpCPUInfo (const CPUInfo *cpu);
+FString DumpCPUInfo (const CPUInfo *cpu);
 
 #endif
 

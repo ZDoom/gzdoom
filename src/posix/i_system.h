@@ -45,9 +45,7 @@ struct WadStuff;
 #define SHARE_DIR "/usr/local/share/"
 #endif
 
-
-// Called by DoomMain.
-void I_Init (void);
+void CalculateCPUSpeed(void);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();

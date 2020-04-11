@@ -85,6 +85,20 @@ class DoomSoundEngine : public SoundEngine
 	TArray<uint8_t> ReadSound(int lumpnum);
 	int PickReplacement(int refid);
 	FSoundID ResolveSound(const void *ent, int type, FSoundID soundid, float &attenuation) override;
+	void CacheSound(sfxinfo_t* sfx) override;
+	void StopChannel(FSoundChan* chan) override;
+	int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2) override
+	{
+		auto ndx = SoundEngine::AddSoundLump(logicalname, lump, CurrentPitchMask, resid, nearlimit);
+		S_sfx[ndx].UserData.Resize(1);
+		return ndx;
+	}
+	bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel) override
+	{
+		if (sourcetype != SOURCE_Actor) actor = nullptr; //ZDoom did this.
+		return SoundEngine::CheckSoundLimit(sfx, pos, near_limit, limit_range, sourcetype, actor, channel);
+	}
+
 
 public:
 	DoomSoundEngine() = default;
@@ -422,9 +436,21 @@ DEFINE_ACTION_FUNCTION(DObject, S_StartSound)
 //
 //==========================================================================
 
+void DoomSoundEngine::CacheSound(sfxinfo_t* sfx)
+{
+	if (!(sfx->UserData[0] & SND_PlayerReserve)) SoundEngine::CacheSound(sfx);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FSoundID DoomSoundEngine::ResolveSound(const void * ent, int type, FSoundID soundid, float &attenuation)
 {
-	if (isPlayerReserve(soundid))
+	auto sfx = &S_sfx[soundid];
+	if (sfx->UserData[0] & SND_PlayerReserve)
 	{
 		AActor *src;
 		if (type != SOURCE_Actor) src = nullptr;
@@ -458,6 +484,21 @@ static bool VerifyActorSound(AActor* ent, FSoundID& sound_id, int& channel, ECha
 		channel = CHAN_WEAPON;
 	}
 	return true;
+}
+
+//==========================================================================
+//
+// Common checking code for the actor sound functions
+//
+//==========================================================================
+
+void DoomSoundEngine::StopChannel(FSoundChan* chan)
+{
+	if (chan && chan->SysChannel != NULL && !(chan->ChanFlags & CHANF_EVICTED) && chan->SourceType == SOURCE_Actor)
+	{
+		chan->Source = NULL;
+	}
+	SoundEngine::StopChannel(chan);
 }
 
 
@@ -1351,7 +1392,7 @@ void DoomSoundEngine::PrintSoundList()
 			}
 			Printf("}\n");
 		}
-		else if (sfx->bPlayerReserve)
+		else if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			Printf("%3d. %s <<player sound %d>>\n", i, sfx->name.GetChars(), sfx->link);
 		}

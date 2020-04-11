@@ -36,6 +36,7 @@
 #include "dobjgc.h"
 #include "r_data/r_translate.h"
 #include "texmanip.h"
+#include "fcolormap.h"
 
 // Some more or less basic data types
 // we depend on.
@@ -1660,12 +1661,12 @@ inline bool FBoundingBox::inRange(const line_t *ld) const
 }
 
 
-inline void FColormap::CopyFrom3DLight(lightlist_t *light)
+inline void CopyFrom3DLight(FColormap &cm, lightlist_t *light)
 {
-	CopyLight(light->extra_colormap);
+	cm.CopyLight(light->extra_colormap);
 	if (light->caster && (light->caster->flags&FF_FADEWALLS) && light->extra_colormap.FadeColor != 0)
 	{
-		CopyFog(light->extra_colormap);
+		cm.CopyFog(light->extra_colormap);
 	}
 }
 

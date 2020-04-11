@@ -83,7 +83,7 @@ void DrawFullscreenSubtitle(const char *text)
 	if (!text || !*text || !inter_subtitles) return;
 
 	// This uses the same scaling as regular HUD messages
-	auto scale = active_con_scaletext(generic_ui);
+	auto scale = active_con_scaletext(twod, generic_ui);
 	int hudwidth = SCREENWIDTH / scale;
 	int hudheight = SCREENHEIGHT / scale;
 	FFont *font = generic_ui? NewSmallFont : SmallFont;
@@ -109,13 +109,13 @@ void DrawFullscreenSubtitle(const char *text)
 		if (y < 0) y = 0;
 		w = 600;
 	}
-	screen->Dim(0, 0.5f, Scale(x, SCREENWIDTH, hudwidth), Scale(y, SCREENHEIGHT, hudheight),
+	Dim(twod, 0, 0.5f, Scale(x, SCREENWIDTH, hudwidth), Scale(y, SCREENHEIGHT, hudheight),
 		Scale(w, SCREENWIDTH, hudwidth), Scale(height, SCREENHEIGHT, hudheight));
 	x += 20;
 	y += 10;
 	for (const FBrokenLines &line : lines)
 	{
-		screen->DrawText(font, CR_UNTRANSLATED, x, y, line.Text,
+		DrawText(twod, font, CR_UNTRANSLATED, x, y, line.Text,
 			DTA_KeepRatio, true,
 			DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 		y += font->GetHeight();
@@ -216,21 +216,21 @@ void DIntermissionScreen::Drawer ()
 	{
 		if (!mFlatfill)
 		{
-			screen->DrawTexture (TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			DrawTexture(twod, TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
 		{
-			screen->FlatFill (0,0, SCREENWIDTH, SCREENHEIGHT, TexMan.GetTexture(mBackground));
+			twod->AddFlatFill(0,0, SCREENWIDTH, SCREENHEIGHT, TexMan.GetTexture(mBackground));
 		}
 	}
 	else
 	{
-		screen->Clear (0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+		ClearRect(twod, 0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 	}
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
 		if (CheckOverlay(i))
-			screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
+			DrawTexture(twod, TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, TAG_DONE);
 	}
 	if (mSubtitle)
 	{
@@ -287,11 +287,11 @@ void DIntermissionScreenFader::Drawer ()
 		if (mType == FADE_In) factor = 1.0 - factor;
 		int color = MAKEARGB(int(factor*255), 0,0,0);
 
-		screen->DrawTexture (TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
+		DrawTexture(twod, TexMan.GetTexture(mBackground), 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
 		for (unsigned i=0; i < mOverlays.Size(); i++)
 		{
 			if (CheckOverlay(i))
-				screen->DrawTexture (TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
+				DrawTexture(twod, TexMan.GetTexture(mOverlays[i].mPic), mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 		}
 	}
 }
@@ -441,7 +441,7 @@ void DIntermissionScreenText::Drawer ()
 			if (cx + w > SCREENWIDTH)
 				continue;
 
-			screen->DrawChar(font, mTextColor, cx/fontscale, cy/fontscale, c, DTA_KeepRatio, true, DTA_VirtualWidth, cleanwidth, DTA_VirtualHeight, cleanheight, TAG_DONE);
+			DrawChar(twod, font, mTextColor, cx/fontscale, cy/fontscale, c, DTA_KeepRatio, true, DTA_VirtualWidth, cleanwidth, DTA_VirtualHeight, cleanheight, TAG_DONE);
 			cx += w;
 		}
 	}
@@ -629,7 +629,7 @@ void DIntermissionScreenCast::Drawer ()
 	{
 		auto font = generic_ui ? NewSmallFont : SmallFont;
 		if (*name == '$') name = GStrings(name+1);
-		screen->DrawText (font, CR_UNTRANSLATED,
+		DrawText(twod, font, CR_UNTRANSLATED,
 			(SCREENWIDTH - font->StringWidth (name) * CleanXfac)/2,
 			(SCREENHEIGHT * 180) / 200,
 			name,
@@ -669,7 +669,7 @@ void DIntermissionScreenCast::Drawer ()
 		sprframe = &SpriteFrames[sprites[castsprite].spriteframes + caststate->GetFrame()];
 		pic = TexMan.GetTexture(sprframe->Texture[0], true);
 
-		screen->DrawTexture (pic, 160, 170,
+		DrawTexture(twod, pic, 160, 170,
 			DTA_320x200, true,
 			DTA_FlipX, sprframe->Flip & 1,
 			DTA_DestHeightF, pic->GetDisplayHeightDouble() * castscale.Y,
@@ -744,12 +744,12 @@ void DIntermissionScreenScroller::Drawer ()
 			break;
 		}
 
-		screen->DrawTexture (tex, xpos1, ypos1,
+		DrawTexture(twod, tex, xpos1, ypos1,
 			DTA_VirtualWidth, fwidth,
 			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
 			TAG_DONE);
-		screen->DrawTexture (tex2, xpos2, ypos2,
+		DrawTexture(twod, tex2, xpos2, ypos2,
 			DTA_VirtualWidth, fwidth,
 			DTA_VirtualHeight, fheight,
 			DTA_Masked, false,
@@ -919,7 +919,7 @@ void DIntermissionController::Drawer ()
 {
 	if (mScreen != NULL)
 	{
-		screen->FillBorder(nullptr);
+		FillBorder(twod, nullptr);
 		mScreen->Drawer();
 	}
 }

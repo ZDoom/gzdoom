@@ -94,9 +94,9 @@ void FStat::ToggleStat ()
 	m_Active = !m_Active;
 }
 
-void FStat::PrintStat ()
+void FStat::PrintStat (F2DDrawer *drawer)
 {
-	int textScale = active_con_scale();
+	int textScale = active_con_scale(drawer);
 
 	int fontheight = NewConsoleFont->GetHeight() + 1;
 	int y = screen->GetHeight() / textScale;
@@ -116,9 +116,9 @@ void FStat::PrintStat ()
 					// Count number of linefeeds but ignore terminating ones.
 					if (stattext[i] == '\n') y -= fontheight;
 				}
-				DrawText(twod, NewConsoleFont, CR_GREEN, 5 / textScale, y, stattext,
-					DTA_VirtualWidth, screen->GetWidth() / textScale,
-					DTA_VirtualHeight, screen->GetHeight() / textScale,
+				DrawText(drawer, NewConsoleFont, CR_GREEN, 5 / textScale, y, stattext,
+					DTA_VirtualWidth, twod->GetWidth() / textScale,
+					DTA_VirtualHeight, twod->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);
 				count++;
 			}

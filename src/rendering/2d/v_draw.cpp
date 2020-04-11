@@ -34,76 +34,130 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-
-#include "doomtype.h"
-#include "v_video.h"
-#include "r_defs.h"
-#include "r_utility.h"
-#include "doomstat.h"
-#include "gi.h"
-#include "g_level.h"
-#include "sbar.h"
-#include "d_player.h"
-
-#include "i_video.h"
-#include "g_levellocals.h"
+#include "v_draw.h"
 #include "vm.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "templates.h"
 #include "texturemanager.h"
+#include "r_videoscale.h"
+#include "c_cvars.h"
 
-CVAR(Float, underwater_fade_scalar, 1.0f, CVAR_ARCHIVE) // [Nash] user-settable underwater blend intensity
+EXTERN_CVAR(Int, vid_aspect)
+EXTERN_CVAR(Int, uiscale)
 
-CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
+// Helper for ActiveRatio and CheckRatio. Returns the forced ratio type, or -1 if none.
+int ActiveFakeRatio(int width, int height)
 {
-	if (self < 0)
+	int fakeratio = -1;
+	if ((vid_aspect >= 1) && (vid_aspect <= 6))
 	{
-		self = 0;
-		return;
+		// [SP] User wants to force aspect ratio; let them.
+		fakeratio = int(vid_aspect);
+		if (fakeratio == 3)
+		{
+			fakeratio = 0;
+		}
+		else if (fakeratio == 5)
+		{
+			fakeratio = 3;
+		}
 	}
-	if (StatusBar != NULL)
-	{
-		StatusBar->CallScreenSizeChanged();
-	}
-	setsizeneeded = true;
+	return fakeratio;
 }
 
-int GetUIScale(int altval)
+// Active screen ratio based on cvars and size
+float ActiveRatio(int width, int height, float* trueratio)
+{
+	static float forcedRatioTypes[] =
+	{
+		4 / 3.0f,
+		16 / 9.0f,
+		16 / 10.0f,
+		17 / 10.0f,
+		5 / 4.0f,
+		17 / 10.0f,
+		21 / 9.0f
+	};
+
+	float ratio = width / (float)height;
+	int fakeratio = ActiveFakeRatio(width, height);
+
+	if (trueratio)
+		*trueratio = ratio;
+	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : (ratio / ViewportPixelAspect());
+}
+
+
+bool AspectTallerThanWide(float aspect)
+{
+	return aspect < 1.333f;
+}
+
+int AspectBaseWidth(float aspect)
+{
+	return (int)round(240.0f * aspect * 3.0f);
+}
+
+int AspectBaseHeight(float aspect)
+{
+	if (!AspectTallerThanWide(aspect))
+		return (int)round(200.0f * (320.0f / (AspectBaseWidth(aspect) / 3.0f)) * 3.0f);
+	else
+		return (int)round((200.0f * (4.0f / 3.0f)) / aspect * 3.0f);
+}
+
+double AspectPspriteOffset(float aspect)
+{
+	if (!AspectTallerThanWide(aspect))
+		return 0.0;
+	else
+		return ((4.0 / 3.0) / aspect - 1.0) * 97.5;
+}
+
+int AspectMultiplier(float aspect)
+{
+	if (!AspectTallerThanWide(aspect))
+		return (int)round(320.0f / (AspectBaseWidth(aspect) / 3.0f) * 48.0f);
+	else
+		return (int)round(200.0f / (AspectBaseHeight(aspect) / 3.0f) * 48.0f);
+}
+
+int GetUIScale(F2DDrawer *drawer, int altval)
 {
 	int scaleval;
 	if (altval > 0) scaleval = altval;
 	else if (uiscale == 0)
 	{
 		// Default should try to scale to 640x400
-		int vscale = screen->GetHeight() / 400;
-		int hscale = screen->GetWidth() / 640;
+		int vscale = drawer->GetHeight() / 400;
+		int hscale = drawer->GetWidth() / 640;
 		scaleval = clamp(vscale, 1, hscale);
 	}
 	else scaleval = uiscale;
 
 	// block scales that result in something larger than the current screen.
-	int vmax = screen->GetHeight() / 200;
-	int hmax = screen->GetWidth() / 320;
+	int vmax = drawer->GetHeight() / 200;
+	int hmax = drawer->GetWidth() / 320;
 	int max = MAX(vmax, hmax);
 	return MAX(1,MIN(scaleval, max));
 }
 
 // The new console font is twice as high, so the scaling calculation must factor that in.
-int GetConScale(int altval)
+int GetConScale(F2DDrawer* drawer, int altval)
 {
 	int scaleval;
 	if (altval > 0) scaleval = (altval+1) / 2;
 	else if (uiscale == 0)
 	{
 		// Default should try to scale to 640x400
-		int vscale = screen->GetHeight() / 800;
-		int hscale = screen->GetWidth() / 1280;
+		int vscale = drawer->GetHeight() / 800;
+		int hscale = drawer->GetWidth() / 1280;
 		scaleval = clamp(vscale, 1, hscale);
 	}
 	else scaleval = (uiscale+1) / 2;
 
 	// block scales that result in something larger than the current screen.
-	int vmax = screen->GetHeight() / 400;
-	int hmax = screen->GetWidth() / 640;
+	int vmax = drawer->GetHeight() / 400;
+	int hmax = drawer->GetWidth() / 640;
 	int max = MAX(vmax, hmax);
 	return MAX(1, MIN(scaleval, max));
 }
@@ -122,51 +176,9 @@ int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 
 //==========================================================================
 //
-// ZScript wrappers for inlines
-//
-//==========================================================================
-
-DEFINE_ACTION_FUNCTION(_Screen, GetWidth)
-{
-	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(screen->GetWidth());
-}
-
-DEFINE_ACTION_FUNCTION(_Screen, GetHeight)
-{
-	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(screen->GetHeight());
-}
-
-DEFINE_ACTION_FUNCTION(_Screen, PaletteColor)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(index);
-	if (index < 0 || index > 255) index = 0;
-	else index = GPalette.BaseColors[index];
-	ACTION_RETURN_INT(index);
-}
-
-//==========================================================================
-//
 // Internal texture drawing function
 //
 //==========================================================================
-
-void DFrameBuffer::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
-{
-	Va_List tags;
-	va_start(tags.list, tags_first);
-	DrawParms parms;
-
-	bool res = ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, false);
-	va_end(tags.list);
-	if (!res)
-	{
-		return;
-	}
-	DrawTextureParms(img, parms);
-}
 
 void DrawTexture(F2DDrawer *drawer, FTexture* img, double x, double y, int tags_first, ...)
 {
@@ -174,13 +186,13 @@ void DrawTexture(F2DDrawer *drawer, FTexture* img, double x, double y, int tags_
 	va_start(tags.list, tags_first);
 	DrawParms parms;
 
-	bool res = screen->ParseDrawTextureTags(img, x, y, tags_first, tags, &parms, false);
+	bool res = ParseDrawTextureTags(drawer, img, x, y, tags_first, tags, &parms, false);
 	va_end(tags.list);
 	if (!res)
 	{
 		return;
 	}
-	screen->DrawTextureParms(img, parms);
+	drawer->AddTexture(img, parms);
 }
 
 //==========================================================================
@@ -191,13 +203,13 @@ void DrawTexture(F2DDrawer *drawer, FTexture* img, double x, double y, int tags_
 
 int ListGetInt(VMVa_List &tags);
 
-void DFrameBuffer::DrawTexture(FTexture *img, double x, double y, VMVa_List &args)
+static void DrawTexture(F2DDrawer *drawer, FTexture *img, double x, double y, VMVa_List &args)
 {
 	DrawParms parms;
 	uint32_t tag = ListGetInt(args);
-	bool res = ParseDrawTextureTags(img, x, y, tag, args, &parms, false);
+	bool res = ParseDrawTextureTags(drawer, img, x, y, tag, args, &parms, false);
 	if (!res) return;
-	DrawTextureParms(img, parms);
+	drawer->AddTexture(img, parms);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
@@ -210,23 +222,12 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
 
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
 	FTexture *tex = TexMan.ByIndex(texid, animate);
 	VMVa_List args = { param + 4, 0, numparam - 5, va_reginfo + 4 };
-	screen->DrawTexture(tex, x, y, args);
+	DrawTexture(twod, tex, x, y, args);
 	return 0;
-}
-
-//==========================================================================
-//
-// common drawing function
-//
-//==========================================================================
-
-void DFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
-{
-	m2DDrawer.AddTexture(img, parms);
 }
 
 //==========================================================================
@@ -235,26 +236,26 @@ void DFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawShape(FTexture *img, DShape2D *shape, int tags_first, ...)
+void DrawShape(F2DDrawer *drawer, FTexture *img, DShape2D *shape, int tags_first, ...)
 {
 	Va_List tags;
 	va_start(tags.list, tags_first);
 	DrawParms parms;
 
-	bool res = ParseDrawTextureTags(img, 0, 0, tags_first, tags, &parms, false);
+	bool res = ParseDrawTextureTags(drawer, img, 0, 0, tags_first, tags, &parms, false);
 	va_end(tags.list);
 	if (!res) return;
-	m2DDrawer.AddShape(img, shape, parms);
+	drawer->AddShape(img, shape, parms);
 }
 
-void DFrameBuffer::DrawShape(FTexture *img, DShape2D *shape, VMVa_List &args)
+void DrawShape(F2DDrawer *drawer, FTexture *img, DShape2D *shape, VMVa_List &args)
 {
 	DrawParms parms;
 	uint32_t tag = ListGetInt(args);
 
-	bool res = ParseDrawTextureTags(img, 0, 0, tag, args, &parms, false);
+	bool res = ParseDrawTextureTags(drawer, img, 0, 0, tag, args, &parms, false);
 	if (!res) return;
-	m2DDrawer.AddShape(img, shape, parms);
+	drawer->AddShape(img, shape, parms);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
@@ -266,12 +267,12 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
 
 	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
 
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
 	FTexture *tex = TexMan.ByIndex(texid, animate);
 	VMVa_List args = { param + 3, 0, numparam - 4, va_reginfo + 3 };
 
-	screen->DrawShape(tex, shape, args);
+	DrawShape(twod, tex, shape, args);
 	return 0;
 }
 
@@ -281,7 +282,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
 //
 //==========================================================================
 
-void DFrameBuffer::SetClipRect(int x, int y, int w, int h)
+void F2DDrawer::SetClipRect(int x, int y, int w, int h)
 {
 	clipleft = clamp(x, 0, GetWidth());
 	clipwidth = clamp(w, -1, GetWidth() - x);
@@ -296,18 +297,18 @@ DEFINE_ACTION_FUNCTION(_Screen, SetClipRect)
 	PARAM_INT(y);
 	PARAM_INT(w);
 	PARAM_INT(h);
-	screen->SetClipRect(x, y, w, h);
+	twod->SetClipRect(x, y, w, h);
 	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, ClearClipRect)
 {
 	PARAM_PROLOGUE;
-	screen->ClearClipRect();
+	twod->ClearClipRect();
 	return 0;
 }
 
-void DFrameBuffer::GetClipRect(int *x, int *y, int *w, int *h)
+void F2DDrawer::GetClipRect(int *x, int *y, int *w, int *h)
 {
 	if (x) *x = clipleft;
 	if (y) *y = cliptop;
@@ -319,21 +320,11 @@ DEFINE_ACTION_FUNCTION(_Screen, GetClipRect)
 {
 	PARAM_PROLOGUE;
 	int x, y, w, h;
-	screen->GetClipRect(&x, &y, &w, &h);
+	twod->GetClipRect(&x, &y, &w, &h);
 	if (numret > 0) ret[0].SetInt(x);
 	if (numret > 1) ret[1].SetInt(y);
 	if (numret > 2) ret[2].SetInt(w);
 	if (numret > 3) ret[3].SetInt(h);
-	return MIN(numret, 4);
-}
-
-DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
-{
-	PARAM_PROLOGUE;
-	if (numret > 0) ret[0].SetInt(viewwindowx);
-	if (numret > 1) ret[1].SetInt(viewwindowy);
-	if (numret > 2) ret[2].SetInt(viewwidth);
-	if (numret > 3) ret[3].SetInt(viewheight);
 	return MIN(numret, 4);
 }
 
@@ -343,8 +334,10 @@ DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
 //
 //==========================================================================
 
-bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double yy) const
+bool SetTextureParms(F2DDrawer * drawer, DrawParms *parms, FTexture *img, double xx, double yy)
 {
+	auto GetWidth = [=]() { return drawer->GetWidth(); };
+	auto GetHeight = [=]() {return drawer->GetHeight(); };
 	if (img != NULL)
 	{
 		parms->x = xx;
@@ -374,8 +367,8 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 			break;
 
 		case DTA_Clean:
-			parms->x = (parms->x - 160.0) * CleanXfac + (Width * 0.5);
-			parms->y = (parms->y - 100.0) * CleanYfac + (Height * 0.5);
+			parms->x = (parms->x - 160.0) * CleanXfac + (GetWidth() * 0.5);
+			parms->y = (parms->y - 100.0) * CleanYfac + (GetHeight() * 0.5);
 			parms->destwidth = parms->texwidth * CleanXfac;
 			parms->destheight = parms->texheight * CleanYfac;
 			break;
@@ -437,27 +430,27 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 		case DTA_HUDRules:
 		case DTA_HUDRulesC:
 		{
-			// Note that this has been deprecated because the HUD should be drawn by the status bar.
+			// Note that this has been deprecated and become non-functional. The HUD should be drawn by the status bar.
 			bool xright = parms->x < 0;
 			bool ybot = parms->y < 0;
-			DVector2 scale = StatusBar->GetHUDScale();
+			DVector2 scale = { 1., 1. };
 
 			parms->x *= scale.X;
 			if (parms->cleanmode == DTA_HUDRulesC)
-				parms->x += Width * 0.5;
+				parms->x += GetWidth() * 0.5;
 			else if (xright)
-				parms->x = Width + parms->x;
+				parms->x = GetWidth() + parms->x;
 			parms->y *= scale.Y;
 			if (ybot)
-				parms->y = Height + parms->y;
+				parms->y = GetHeight() + parms->y;
 			parms->destwidth = parms->texwidth * scale.X;
 			parms->destheight = parms->texheight * scale.Y;
 			break;
 		}
 		}
-		if (parms->virtWidth != Width || parms->virtHeight != Height)
+		if (parms->virtWidth != GetWidth() || parms->virtHeight != GetHeight())
 		{
-			VirtualToRealCoords(parms->x, parms->y, parms->destwidth, parms->destheight,
+			VirtualToRealCoords(drawer, parms->x, parms->y, parms->destwidth, parms->destheight,
 				parms->virtWidth, parms->virtHeight, parms->virtBottom, !parms->keepratio);
 		}
 	}
@@ -538,7 +531,7 @@ static inline FSpecialColormap * ListGetSpecialColormap(VMVa_List &tags)
 //==========================================================================
 
 template<class T>
-bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const
+bool ParseDrawTextureTags(F2DDrawer *drawer, FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext)
 {
 	INTBOOL boolval;
 	int intval;
@@ -564,10 +557,10 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->fortext = fortext;
 	parms->windowleft = 0;
 	parms->windowright = INT_MAX;
-	parms->dclip = this->GetHeight();
+	parms->dclip = drawer->GetHeight();
 	parms->uclip = 0;
 	parms->lclip = 0;
-	parms->rclip = this->GetWidth();
+	parms->rclip = drawer->GetWidth();
 	parms->left = INT_MAX;
 	parms->top = INT_MAX;
 	parms->destwidth = INT_MAX;
@@ -582,8 +575,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	parms->color = 0xffffffff;
 	//parms->shadowAlpha = 0;
 	parms->shadowColor = 0;
-	parms->virtWidth = this->GetWidth();
-	parms->virtHeight = this->GetHeight();
+	parms->virtWidth = drawer->GetWidth();
+	parms->virtHeight = drawer->GetHeight();
 	parms->keepratio = false;
 	parms->style.BlendOp = 255;		// Dummy "not set" value
 	parms->masked = true;
@@ -730,7 +723,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 				assert(fortext == false);
 				if (img == NULL) return false;
 				parms->cleanmode = DTA_Fullscreen;
-				parms->fsscalemode = (uint8_t)gameinfo.fullscreenautoaspect;
+				parms->fsscalemode = (uint8_t)twod->fullscreenautoaspect;
 				parms->virtWidth = img->GetDisplayWidthDouble();
 				parms->virtHeight = img->GetDisplayHeightDouble();
 			}
@@ -885,9 +878,9 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 
 		case DTA_ClipBottom:
 			parms->dclip = ListGetInt(tags);
-			if (parms->dclip > this->GetHeight())
+			if (parms->dclip > drawer->GetHeight())
 			{
-				parms->dclip = this->GetHeight();
+				parms->dclip = drawer->GetHeight();
 			}
 			break;
 
@@ -901,9 +894,9 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 
 		case DTA_ClipRight:
 			parms->rclip = ListGetInt(tags);
-			if (parms->rclip > this->GetWidth())
+			if (parms->rclip > drawer->GetWidth())
 			{
-				parms->rclip = this->GetWidth();
+				parms->rclip = drawer->GetWidth();
 			}
 			break;
 
@@ -987,6 +980,10 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 	}
 	ListEnd(tags);
 
+	auto clipleft = drawer->clipleft;
+	auto cliptop = drawer->cliptop;
+	auto clipwidth = drawer->clipwidth;
+	auto clipheight = drawer->clipheight;
 	// intersect with the canvas's clipping rectangle.
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
@@ -1003,7 +1000,7 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 
 	if (img != NULL)
 	{
-		SetTextureParms(parms, img, x, y);
+		SetTextureParms(drawer, parms, img, x, y);
 
 		if (parms->destwidth <= 0 || parms->destheight <= 0)
 		{
@@ -1041,8 +1038,8 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 }
 // explicitly instantiate both versions for v_text.cpp.
 
-template bool DFrameBuffer::ParseDrawTextureTags<Va_List>(FTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, bool fortext) const;
-template bool DFrameBuffer::ParseDrawTextureTags<VMVa_List>(FTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, bool fortext) const;
+template bool ParseDrawTextureTags<Va_List>(F2DDrawer* drawer, FTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, bool fortext);
+template bool ParseDrawTextureTags<VMVa_List>(F2DDrawer* drawer, FTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, bool fortext);
 
 //==========================================================================
 //
@@ -1050,9 +1047,11 @@ template bool DFrameBuffer::ParseDrawTextureTags<VMVa_List>(FTexture *img, doubl
 //
 //==========================================================================
 
-void DFrameBuffer::VirtualToRealCoords(double &x, double &y, double &w, double &h,
-	double vwidth, double vheight, bool vbottom, bool handleaspect) const
+void VirtualToRealCoords(F2DDrawer *drawer, double &x, double &y, double &w, double &h,
+	double vwidth, double vheight, bool vbottom, bool handleaspect) 
 {
+	auto Width = drawer->GetWidth();
+	auto Height = drawer->GetHeight();
 	float myratio = handleaspect ? ActiveRatio (Width, Height) : (4.0f / 3.0f);
 
     // if 21:9 AR, map to 16:9 for all callers.
@@ -1104,14 +1103,14 @@ DEFINE_ACTION_FUNCTION(_Screen, VirtualToRealCoords)
 	PARAM_FLOAT(vh);
 	PARAM_BOOL(vbottom);
 	PARAM_BOOL(handleaspect);
-	screen->VirtualToRealCoords(x, y, w, h, vw, vh, vbottom, handleaspect);
+	VirtualToRealCoords(twod, x, y, w, h, vw, vh, vbottom, handleaspect);
 	if (numret >= 1) ret[0].SetVector2(DVector2(x, y));
 	if (numret >= 2) ret[1].SetVector2(DVector2(w, h));
 	return MIN(numret, 2);
 }
 
-void DFrameBuffer::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
-	int vwidth, int vheight, bool vbottom, bool handleaspect) const
+void VirtualToRealCoordsInt(F2DDrawer *drawer, int &x, int &y, int &w, int &h,
+	int vwidth, int vheight, bool vbottom, bool handleaspect)
 {
 	double dx, dy, dw, dh;
 
@@ -1119,7 +1118,7 @@ void DFrameBuffer::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 	dy = y;
 	dw = w;
 	dh = h;
-	VirtualToRealCoords(dx, dy, dw, dh, vwidth, vheight, vbottom, handleaspect);
+	VirtualToRealCoords(drawer, dx, dy, dw, dh, vwidth, vheight, vbottom, handleaspect);
 	x = int(dx + 0.5);
 	y = int(dy + 0.5);
 	w = int(dx + dw + 0.5) - x;
@@ -1132,8 +1131,10 @@ void DFrameBuffer::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 //
 //==========================================================================
 
-void DFrameBuffer::FillBorder (FTexture *img)
+void FillBorder (F2DDrawer *drawer, FTexture *img)
 {
+	auto Width = drawer->GetWidth();
+	auto Height = drawer->GetHeight();
 	float myratio = ActiveRatio (Width, Height);
 
 	if (myratio >= 1.3f && myratio <= 1.4f)
@@ -1158,17 +1159,17 @@ void DFrameBuffer::FillBorder (FTexture *img)
 
 	if (img != NULL)
 	{
-		FlatFill (0, 0, Width, bordtop, img);									// Top
-		FlatFill (0, bordtop, bordleft, Height - bordbottom, img);				// Left
-		FlatFill (Width - bordright, bordtop, Width, Height - bordbottom, img);	// Right
-		FlatFill (0, Height - bordbottom, Width, Height, img);					// Bottom
+		drawer->AddFlatFill(0, 0, Width, bordtop, img);										// Top
+		drawer->AddFlatFill(0, bordtop, bordleft, Height - bordbottom, img);				// Left
+		drawer->AddFlatFill(Width - bordright, bordtop, Width, Height - bordbottom, img);	// Right
+		drawer->AddFlatFill(0, Height - bordbottom, Width, Height, img);					// Bottom
 	}
 	else
 	{
-		Clear (0, 0, Width, bordtop, GPalette.BlackIndex, 0);									// Top
-		Clear (0, bordtop, bordleft, Height - bordbottom, GPalette.BlackIndex, 0);				// Left
-		Clear (Width - bordright, bordtop, Width, Height - bordbottom, GPalette.BlackIndex, 0);	// Right
-		Clear (0, Height - bordbottom, Width, Height, GPalette.BlackIndex, 0);					// Bottom
+		ClearRect(drawer, 0, 0, Width, bordtop, GPalette.BlackIndex, 0);									// Top
+		ClearRect(drawer, 0, bordtop, bordleft, Height - bordbottom, GPalette.BlackIndex, 0);				// Left
+		ClearRect(drawer, Width - bordright, bordtop, Width, Height - bordbottom, GPalette.BlackIndex, 0);	// Right
+		ClearRect(drawer, 0, Height - bordbottom, Width, Height, GPalette.BlackIndex, 0);					// Bottom
 	}
 }
 
@@ -1178,12 +1179,13 @@ void DFrameBuffer::FillBorder (FTexture *img)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor, uint8_t alpha)
+static void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor, int alpha)
 {
-	m2DDrawer.AddLine(x0, y0, x1, y1, palColor, realcolor, alpha);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	twod->AddLine(x0, y0, x1, y1, palColor, realcolor, alpha);
 }
 
-DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
+DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawLine, DrawLine)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(x0);
@@ -1192,16 +1194,17 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
 	PARAM_INT(y1);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	screen->DrawLine(x0, y0, x1, y1, -1, color | MAKEARGB(255, 0, 0, 0), alpha);
+	DrawLine(x0, y0, x1, y1, -1, color | MAKEARGB(255, 0, 0, 0), alpha);
 	return 0;
 }
 
-void DFrameBuffer::DrawThickLine(int x0, int y0, int x1, int y1, double thickness, uint32_t realcolor, uint8_t alpha) {
-	m2DDrawer.AddThickLine(x0, y0, x1, y1, thickness, realcolor, alpha);
+static void DrawThickLine(int x0, int y0, int x1, int y1, double thickness, uint32_t realcolor, int alpha) 
+{
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	twod->AddThickLine(x0, y0, x1, y1, thickness, realcolor, alpha);
 }
 
-DEFINE_ACTION_FUNCTION(_Screen, DrawThickLine)
+DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawThickLine, DrawThickLine)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(x0);
@@ -1211,20 +1214,8 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawThickLine)
 	PARAM_FLOAT(thickness);
 	PARAM_INT(color);
 	PARAM_INT(alpha);
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	screen->DrawThickLine(x0, y0, x1, y1, thickness, color, alpha);
+	DrawThickLine(x0, y0, x1, y1, thickness, color, alpha);
 	return 0;
-}
-
-//==========================================================================
-//
-// Draw a single pixel
-//
-//==========================================================================
-
-void DFrameBuffer::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
-{
-	m2DDrawer.AddPixel(x, y, palColor, realcolor);
 }
 
 //==========================================================================
@@ -1235,8 +1226,13 @@ void DFrameBuffer::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
 //
 //==========================================================================
 
-void DFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void ClearRect(F2DDrawer *drawer, int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
+	auto clipleft = drawer->clipleft;
+	auto cliptop = drawer->cliptop;
+	auto clipwidth = drawer->clipwidth;
+	auto clipheight = drawer->clipheight;
+
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
 		int w = right - left;
@@ -1264,7 +1260,7 @@ void DFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor,
 	{
 		color = GPalette.BaseColors[palcolor] | 0xff000000;
 	}
-	m2DDrawer.AddColorOnlyQuad(left, top, right - left, bottom - top, color | 0xFF000000, nullptr);
+	drawer->AddColorOnlyQuad(left, top, right - left, bottom - top, color | 0xFF000000, nullptr);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, Clear)
@@ -1276,8 +1272,8 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 	PARAM_INT(y2);
 	PARAM_INT(color);
 	PARAM_INT(palcol);
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	screen->Clear(x1, y1, x2, y2, palcol, color);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	ClearRect(twod, x1, y1, x2, y2, palcol, color);
 	return 0;
 }
 
@@ -1289,7 +1285,7 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 //
 //==========================================================================
 
-void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style)
+void DoDim(F2DDrawer *drawer, PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style)
 {
 	if (amount <= 0)
 	{
@@ -1299,11 +1295,16 @@ void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, in
 	{
 		amount = 1;
 	}
-	m2DDrawer.AddColorOnlyQuad(x1, y1, w, h, (color.d & 0xffffff) | (int(amount * 255) << 24), style);
+	drawer->AddColorOnlyQuad(x1, y1, w, h, (color.d & 0xffffff) | (int(amount * 255) << 24), style);
 }
 
-void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle *style)
+void Dim(F2DDrawer *drawer, PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle *style)
 {
+	auto clipleft = drawer->clipleft;
+	auto cliptop = drawer->cliptop;
+	auto clipwidth = drawer->clipwidth;
+	auto clipheight = drawer->clipheight;
+
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
 		if (x1 < clipleft)
@@ -1322,7 +1323,7 @@ void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int
 		if (h > clipheight) h = clipheight;
 		if (h <= 0) return;
 	}
-	DoDim(color, damount, x1, y1, w, h, style);
+	DoDim(drawer, color, damount, x1, y1, w, h, style);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, Dim)
@@ -1334,96 +1335,11 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 	PARAM_INT(y1);
 	PARAM_INT(w);
 	PARAM_INT(h);
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	screen->Dim(color, float(amount), x1, y1, w, h);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	Dim(twod, color, float(amount), x1, y1, w, h);
 	return 0;
 }
 
-//==========================================================================
-//
-// DCanvas :: FillSimplePoly
-//
-// Fills a simple polygon with a texture. Here, "simple" means that a
-// horizontal scanline at any vertical position within the polygon will
-// not cross it more than twice.
-//
-// The originx, originy, scale, and rotation parameters specify
-// transformation of the filling texture, not of the points.
-//
-// The points must be specified in clockwise order.
-//
-//==========================================================================
-
-void DFrameBuffer::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
-	double originx, double originy, double scalex, double scaley, DAngle rotation,
-	const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip, uint32_t *indices, size_t indexcount)
-{
-	m2DDrawer.AddPoly(tex, points, npoints, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel, indices, indexcount);
-}
-
-//==========================================================================
-//
-// DCanvas :: FlatFill
-//
-// Fill an area with a texture. If local_origin is false, then the origin
-// used for the wrapping is (0,0). Otherwise, (left,right) is used.
-//
-//==========================================================================
-
-void DFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
-{
-	m2DDrawer.AddFlatFill(left, top, right, bottom, src, local_origin);
-}
-
-//==========================================================================
-//
-// V_DrawFrame
-//
-// Draw a frame around the specified area using the view border
-// frame graphics. The border is drawn outside the area, not in it.
-//
-//==========================================================================
-
-void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
-{
-	FTexture *p;
-	const gameborder_t *border = &gameinfo.Border;
-	// Sanity check for incomplete gameinfo
-	if (border == NULL)
-		return;
-	int offset = border->offset;
-	int right = left + width;
-	int bottom = top + height;
-
-	// Draw top and bottom sides.
-	p = TexMan.GetTextureByName(border->t);
-	FlatFill(left, top - p->GetDisplayHeight(), right, top, p, true);
-	p = TexMan.GetTextureByName(border->b);
-	FlatFill(left, bottom, right, bottom + p->GetDisplayHeight(), p, true);
-
-	// Draw left and right sides.
-	p = TexMan.GetTextureByName(border->l);
-	FlatFill(left - p->GetDisplayWidth(), top, left, bottom, p, true);
-	p = TexMan.GetTextureByName(border->r);
-	FlatFill(right, top, right + p->GetDisplayWidth(), bottom, p, true);
-
-	// Draw beveled corners.
-	DrawTexture (TexMan.GetTextureByName(border->tl), left-offset, top-offset, TAG_DONE);
-	DrawTexture (TexMan.GetTextureByName(border->tr), left+width, top-offset, TAG_DONE);
-	DrawTexture (TexMan.GetTextureByName(border->bl), left-offset, top+height, TAG_DONE);
-	DrawTexture (TexMan.GetTextureByName(border->br), left+width, top+height, TAG_DONE);
-}
-
-DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(x);
-	PARAM_INT(y);
-	PARAM_INT(w);
-	PARAM_INT(h);
-	screen->DrawFrame(x, y, w, h);
-	return 0;
-}
 
 //==========================================================================
 //
@@ -1431,178 +1347,15 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
 //
 //==========================================================================
 
-void DFrameBuffer::DrawBorder (FTextureID picnum, int x1, int y1, int x2, int y2)
+void DrawBorder (F2DDrawer *drawer, FTextureID picnum, int x1, int y1, int x2, int y2)
 {
 	if (picnum.isValid())
 	{
-		FlatFill (x1, y1, x2, y2, TexMan.GetTexture(picnum, false));
+		drawer->AddFlatFill (x1, y1, x2, y2, TexMan.GetTexture(picnum, false));
 	}
 	else
 	{
-		Clear (x1, y1, x2, y2, 0, 0);
+		ClearRect(drawer, x1, y1, x2, y2, 0, 0);
 	}
 }
-
-//==========================================================================
-//
-// Draws a blend over the entire view
-//
-//==========================================================================
-
-FVector4 DFrameBuffer::CalcBlend(sector_t * viewsector, PalEntry *modulateColor)
-{
-	float blend[4] = { 0,0,0,0 };
-	PalEntry blendv = 0;
-	float extra_red;
-	float extra_green;
-	float extra_blue;
-	player_t *player = nullptr;
-	bool fullbright = false;
-
-	if (modulateColor) *modulateColor = 0xffffffff;
-
-	if (players[consoleplayer].camera != nullptr)
-	{
-		player = players[consoleplayer].camera->player;
-		if (player)
-			fullbright = (player->fixedcolormap != NOFIXEDCOLORMAP || player->extralight == INT_MIN || player->fixedlightlevel != -1);
-	}
-
-	// don't draw sector based blends when any fullbright screen effect is active.
-	if (!fullbright)
-	{
-		const auto &vpp = r_viewpoint.Pos;
-		if (!viewsector->e->XFloor.ffloors.Size())
-		{
-			if (viewsector->GetHeightSec())
-			{
-				auto s = viewsector->heightsec;
-				blendv = s->floorplane.PointOnSide(vpp) < 0 ? s->bottommap : s->ceilingplane.PointOnSide(vpp) < 0 ? s->topmap : s->midmap;
-			}
-		}
-		else
-		{
-			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
-
-			for (unsigned int i = 0; i < lightlist.Size(); i++)
-			{
-				double lightbottom;
-				if (i < lightlist.Size() - 1)
-					lightbottom = lightlist[i + 1].plane.ZatPoint(vpp);
-				else
-					lightbottom = viewsector->floorplane.ZatPoint(vpp);
-
-				if (lightbottom < vpp.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
-				{
-					// 3d floor 'fog' is rendered as a blending value
-					blendv = lightlist[i].blend;
-					// If this is the same as the sector's it doesn't apply!
-					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
-					// a little hack to make this work for Legacy maps.
-					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
-					break;
-				}
-			}
-		}
-
-		if (blendv.a == 0 && V_IsTrueColor())	// The paletted software renderer uses the original colormap as this frame's palette, but in true color that isn't doable.
-		{
-			blendv = R_BlendForColormap(blendv);
-		}
-
-		if (blendv.a == 255)
-		{
-
-			extra_red = blendv.r / 255.0f;
-			extra_green = blendv.g / 255.0f;
-			extra_blue = blendv.b / 255.0f;
-
-			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
-
-			// black multiplicative blends are ignored
-			if (extra_red || extra_green || extra_blue)
-			{
-				if (modulateColor) *modulateColor = blendv;
-			}
-			blendv = 0;
-		}
-		else if (blendv.a)
-		{
-			// [Nash] allow user to set blend intensity
-			int cnt = blendv.a;
-			cnt = (int)(cnt * underwater_fade_scalar);
-
-			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
-		}
-	}
-	else if (player && player->fixedlightlevel != -1 && player->fixedcolormap == NOFIXEDCOLORMAP)
-	{
-		// Draw fixedlightlevel effects as a 2D overlay. The hardware renderer just processes such a scene fullbright without any lighting.
-		auto torchtype = PClass::FindActor(NAME_PowerTorch);
-		auto litetype = PClass::FindActor(NAME_PowerLightAmp);
-		PalEntry color = 0xffffffff;
-		for (AActor *in = player->mo->Inventory; in; in = in->Inventory)
-		{
-			// Need special handling for light amplifiers 
-			if (in->IsKindOf(torchtype))
-			{
-				// The software renderer already bakes the torch flickering into its output, so this must be omitted here.
-				float r = vid_rendermode < 4 ? 1.f : (0.8f + (7 - player->fixedlightlevel) / 70.0f);
-				if (r > 1.0f) r = 1.0f;
-				int rr = (int)(r * 255);
-				int b = rr;
-				if (gl_enhanced_nightvision) b = b * 3 / 4;
-				color = PalEntry(255, rr, rr, b);
-			}
-			else if (in->IsKindOf(litetype))
-			{
-				if (gl_enhanced_nightvision)
-				{
-					color = PalEntry(255, 104, 255, 104);
-				}
-			}
-		}
-		if (modulateColor)
-		{ 
-			*modulateColor = color;
-		}
-	}
-
-	if (player)
-	{
-		V_AddPlayerBlend(player, blend, 0.5, 175);
-	}
-
-	if (players[consoleplayer].camera != NULL)
-	{
-		// except for fadeto effects
-		player_t *player = (players[consoleplayer].camera->player != NULL) ? players[consoleplayer].camera->player : &players[consoleplayer];
-		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
-	}
-
-	const float br = clamp(blend[0] * 255.f, 0.f, 255.f);
-	const float bg = clamp(blend[1] * 255.f, 0.f, 255.f);
-	const float bb = clamp(blend[2] * 255.f, 0.f, 255.f);
-	return { br, bg, bb, blend[3] };
-}
-
-//==========================================================================
-//
-// Draws a blend over the entire view
-//
-//==========================================================================
-
-void DFrameBuffer::DrawBlend(sector_t * viewsector)
-{
-	PalEntry modulateColor;
-	auto blend = CalcBlend(viewsector, &modulateColor);
-	if (modulateColor != 0xffffffff)
-	{
-		Dim(modulateColor, 1, 0, 0, GetWidth(), GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
-	}
-
-	const PalEntry bcolor(255, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z));
-	Dim(bcolor, blend.W, 0, 0, GetWidth(), GetHeight());
-}
-
 

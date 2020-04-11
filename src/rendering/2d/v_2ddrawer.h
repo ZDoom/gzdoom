@@ -3,11 +3,11 @@
 
 #include "tarray.h"
 #include "textures.h"
-#include "v_palette.h"
 #include "renderstyle.h"
-#include "r_data/colormaps.h"
+#include "dobject.h"
 
 struct DrawParms;
+struct FColormap;
 
 class DShape2DTransform : public DObject
 {
@@ -144,6 +144,13 @@ public:
 	TArray<int> mIndices;
 	TArray<TwoDVertex> mVertices;
 	TArray<RenderCommand> mData;
+	int Width, Height;
+	bool isIn2D;
+public:
+	int fullscreenautoaspect = 0;
+	int cliptop = -1, clipleft = -1, clipwidth = -1, clipheight = -1;
+private:
+
 	
 	int AddCommand(const RenderCommand *data);
 	void AddIndices(int firstvert, int count, ...);
@@ -156,7 +163,7 @@ public:
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, uint32_t *indices, size_t indexcount);
-	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin);
+	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
 
 	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style);
 
@@ -169,14 +176,19 @@ public:
 	void AddPixel(int x1, int y1, int palcolor, uint32_t color);
 
 	void Clear();
+	int GetWidth() const { return Width; }
+	int GetHeight() const { return Height; }
+	void SetSize(int w, int h) { Width = w; Height = h; }
+	void Begin() { isIn2D = true; }
+	void End() { isIn2D = false; }
+	bool HasBegun2D() { return isIn2D; }
+
+	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
+	void SetClipRect(int x, int y, int w, int h);
+	void GetClipRect(int* x, int* y, int* w, int* h);
 
 	bool mIsFirstPass = true;
 };
 
-extern F2DDrawer* twod;
-void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...);
-void DrawText(F2DDrawer* twod, FFont* font, int normalcolor, double x, double y, const char32_t* string, int tag_first, ...);
-void DrawChar(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...);
-void DrawTexture(F2DDrawer* drawer, FTexture* img, double x, double y, int tags_first, ...);
 
 #endif

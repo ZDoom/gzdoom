@@ -106,7 +106,7 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				int thisll = lightlist[k].caster != nullptr ? hw_ClampLight(*lightlist[k].p_lightlevel) : lightlevel;
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
-				thiscm.CopyFrom3DLight(&lightlist[k]);
+				CopyFrom3DLight(thiscm, &lightlist[k]);
 				di->SetColor(state, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
 				if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
 				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);

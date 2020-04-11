@@ -245,7 +245,7 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 
 static void HU_DrawFontScaled(double x, double y, int color, const char *text)
 {
-	screen->DrawText(displayFont, color, x / FontScale, y / FontScale, text, DTA_VirtualWidth, screen->GetWidth() / FontScale, DTA_VirtualHeight, screen->GetHeight() / FontScale, TAG_END);
+	DrawText(twod, displayFont, color, x / FontScale, y / FontScale, text, DTA_VirtualWidth, screen->GetWidth() / FontScale, DTA_VirtualHeight, screen->GetHeight() / FontScale, TAG_END);
 }
 
 static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
@@ -324,7 +324,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 				char score[80];
 				mysnprintf (score, countof(score), "%d", Teams[i].m_iScore);
 
-				screen->DrawText (BigFont, Teams[i].GetTextColor(),
+				DrawText(twod, BigFont, Teams[i].GetTextColor(),
 					scorex - BigFont->StringWidth(score)*CleanXfac/2, y, score,
 					DTA_CleanNoMove, true, TAG_DONE);
 
@@ -412,7 +412,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 		// The teamplay mode uses colors to show teams, so we need some
 		// other way to do highlighting. And it may as well be used for
 		// all modes for the sake of consistancy.
-		screen->Dim(MAKERGB(200,245,255), 0.125f, col1 - 12*FontScale, y - 1, col5 + (maxnamewidth + 24)*FontScale, height + 2);
+		Dim(twod, MAKERGB(200,245,255), 0.125f, col1 - 12*FontScale, y - 1, col5 + (maxnamewidth + 24)*FontScale, height + 2);
 	}
 
 	col2 += col1;
@@ -430,7 +430,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	if (icon.isValid())
 	{
 		FTexture *pic = TexMan.GetTexture(icon);
-		screen->DrawTexture (pic, col3, y,
+		DrawTexture(twod, pic, col3, y,
 			DTA_CleanNoMove, true,
 			TAG_DONE);
 	}
@@ -451,7 +451,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	if (teamplay && Teams[player->userinfo.GetTeam()].GetLogo().IsNotEmpty ())
 	{
 		FTexture *pic = TexMan.GetTextureByName(Teams[player->userinfo.GetTeam()].GetLogo().GetChars ());
-		screen->DrawTexture (pic, col1 - (pic->GetDisplayWidth() + 2) * CleanXfac, y,
+		DrawTexture(twod, pic, col1 - (pic->GetDisplayWidth() + 2) * CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}
 }
@@ -472,7 +472,7 @@ void HU_DrawColorBar(int x, int y, int height, int playernum)
 	//float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
 	//if (!AspectTallerThanWide(aspect)) x += (screen->GetWidth() - AspectBaseWidth(aspect)) / 2;
 
-	screen->Clear (x, y, x + 24*FontScale, y + height, -1,
+	ClearRect(twod, x, y, x + 24*FontScale, y + height, -1,
 		MAKEARGB(255,clamp(int(r*255.f),0,255),
 					 clamp(int(g*255.f),0,255),
 					 clamp(int(b*255.f),0,255)));

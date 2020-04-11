@@ -100,10 +100,12 @@ DFrameBuffer::DFrameBuffer (int width, int height)
 {
 	SetSize(width, height);
 	mPortalState = new FPortalSceneState;
+	twod = &m2DDrawer;
 }
 
 DFrameBuffer::~DFrameBuffer()
 {
+	if (twod == &m2DDrawer) twod = nullptr;
 	delete mPortalState;
 }
 
@@ -137,7 +139,7 @@ void V_DrawPaletteTester(int paletteno)
 			}
 			else GPalette.BaseColors[k];
 			k++;
-			screen->Dim(pe, 1.f, j*blocksize, i*blocksize, blocksize, blocksize);
+			Dim(twod, pe, 1.f, j*blocksize, i*blocksize, blocksize, blocksize);
 		}
 	}
 }
@@ -163,12 +165,12 @@ void DFrameBuffer::DrawRateStuff ()
 			int chars;
 			int rate_x;
 
-			int textScale = active_con_scale();
+			int textScale = active_con_scale(twod);
 
 			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2llu ms (%3llu fps)", (unsigned long long)howlong, (unsigned long long)LastCount);
 			rate_x = Width / textScale - NewConsoleFont->StringWidth(&fpsbuff[0]);
-			Clear (rate_x * textScale, 0, Width, NewConsoleFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
-			DrawText (NewConsoleFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0],
+			ClearRect (twod, rate_x * textScale, 0, Width, NewConsoleFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
+			DrawText (twod, NewConsoleFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0],
 				DTA_VirtualWidth, screen->GetWidth() / textScale,
 				DTA_VirtualHeight, screen->GetHeight() / textScale,
 				DTA_KeepRatio, true, TAG_DONE);
@@ -195,8 +197,8 @@ void DFrameBuffer::DrawRateStuff ()
 		if (tics > 20) tics = 20;
 
 		int i;
-		for (i = 0; i < tics*2; i += 2)		Clear(i, Height-1, i+1, Height, 255, 0);
-		for ( ; i < 20*2; i += 2)			Clear(i, Height-1, i+1, Height, 0, 0);
+		for (i = 0; i < tics*2; i += 2)		ClearRect(twod, i, Height-1, i+1, Height, 255, 0);
+		for ( ; i < 20*2; i += 2)			ClearRect(twod, i, Height-1, i+1, Height, 0, 0);
 	}
 
 	// draws the palette for debugging
@@ -451,3 +453,41 @@ void DFrameBuffer::FPSLimit()
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
+{
+	PARAM_PROLOGUE;
+	if (numret > 0) ret[0].SetInt(viewwindowx);
+	if (numret > 1) ret[1].SetInt(viewwindowy);
+	if (numret > 2) ret[2].SetInt(viewwidth);
+	if (numret > 3) ret[3].SetInt(viewheight);
+	return MIN(numret, 4);
+}
+
+//==========================================================================
+//
+// ZScript wrappers for inlines
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_Screen, GetWidth)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(screen->GetWidth());
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, GetHeight)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(screen->GetHeight());
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, PaletteColor)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	if (index < 0 || index > 255) index = 0;
+	else index = GPalette.BaseColors[index];
+	ACTION_RETURN_INT(index);
+}
+

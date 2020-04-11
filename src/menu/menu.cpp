@@ -331,7 +331,7 @@ void DMenu::CallDrawer()
 	{
 		VMValue params[] = { (DObject*)this };
 		VMCall(func, params, 1, nullptr, 0);
-		screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
+		twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 	}
 }
 
@@ -878,7 +878,7 @@ static void M_Dim()
 		amount = gameinfo.dimamount;
 	}
 
-	screen->Dim(dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
+	Dim(twod, dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
 }
 
 

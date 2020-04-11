@@ -2395,7 +2395,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetTopOfStatusbar, GetTopOfStatusb
 
 void SBar_DrawTexture(DBaseStatusBar *self, int texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
 {
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
 }
 
@@ -2417,7 +2417,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawTexture, SBar_DrawTexture)
 
 void SBar_DrawImage(DBaseStatusBar *self, const FString &texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
 {
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 }
 
@@ -2484,7 +2484,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, TransformRect, SBar_TransformRect)
 
 static void SBar_Fill(DBaseStatusBar *self, int color, double x, double y, double w, double h, int flags)
 {
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->Fill(color, x, y, w, h, flags);
 }
 

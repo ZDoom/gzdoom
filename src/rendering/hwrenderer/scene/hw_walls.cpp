@@ -233,7 +233,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.FogDensity = Colormap.FogDensity;
-				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+				CopyFrom3DLight(thiscm, &(*lightlist)[i]);
 				di->SetColor(state, thisll, rel, false, thiscm, absalpha);
 				if (type != RENDERWALL_M2SNF) di->SetFog(state, thisll, rel, false, &thiscm, RenderStyle == STYLE_Add);
 				state.SetSplitPlanes((*lightlist)[i].plane, lowplane);
@@ -619,7 +619,7 @@ void HWWall::Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent
 	}
 	// relative light won't get changed here. It is constant across the entire wall.
 
-	Colormap.CopyFrom3DLight(lightlist);
+	CopyFrom3DLight(Colormap, lightlist);
 	PutWall(di, translucent);
 }
 

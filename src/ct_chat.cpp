@@ -235,6 +235,7 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
+	auto drawer = twod;
 	FFont *displayfont = NewConsoleFont;
 
 	if (players[consoleplayer].camera != NULL &&
@@ -266,7 +267,7 @@ void CT_Drawer (void)
 		y = (viewactive || gamestate != GS_LEVEL) ? -displayfont->GetHeight()-2 : -displayfont->GetHeight() - 22;
 
 		scalex = 1;
-		int scale = active_con_scaletext(true);
+		int scale = active_con_scaletext(drawer);
 		int screen_width = SCREENWIDTH / scale;
 		int screen_height= SCREENHEIGHT / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;
@@ -288,9 +289,9 @@ void CT_Drawer (void)
 		}
 		printstr += displayfont->GetCursor();
 
-		screen->DrawText (displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
+		DrawText(drawer, displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		screen->DrawText (displayfont, CR_GREY, promptwidth, y, printstr, 
+		DrawText(drawer, displayfont, CR_GREY, promptwidth, y, printstr,
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 	}
 }

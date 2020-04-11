@@ -1412,7 +1412,7 @@ void DAutomap::NewResolution()
 		minOutWindowScale();
 	else if (scale_mtof > max_scale_mtof)
 		maxOutWindowScale();
-	f_w = screen->GetWidth();
+	f_w = twod->GetWidth();
 	f_h = StatusBar->GetTopOfStatusbar();
 	activateNewScale();
 }
@@ -1584,7 +1584,7 @@ void DAutomap::clearFB (const AMColor &color)
 
 	if (!drawback)
 	{
-		screen->Clear (0, 0, f_w, f_h, -1, color.RGB);
+		ClearRect(twod, 0, 0, f_w, f_h, -1, color.RGB);
 	}
 	else
 	{
@@ -1600,7 +1600,7 @@ void DAutomap::clearFB (const AMColor &color)
 			{
 				for (x = int(mapxstart); x < f_w; x += pwidth)
 				{
-					screen->DrawTexture (backtex, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, TAG_DONE);
+					DrawTexture(twod, backtex, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, TAG_DONE);
 				}
 			}
 		}
@@ -1751,7 +1751,7 @@ void DAutomap::drawMline (mline_t *ml, const AMColor &color)
 
 	if (clipMline (ml, &fl))
 	{
-		screen->DrawLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, -1, color.RGB);
+		twod->AddLine (f_x + fl.a.x, f_y + fl.a.y, f_x + fl.b.x, f_y + fl.b.y, -1, color.RGB);
 	}
 }
 
@@ -2132,7 +2132,7 @@ void DAutomap::drawSubsectors()
 			}
 			else indices.clear();
 
-			screen->FillSimplePoly(TexMan.GetTexture(maptex, true),
+			twod->AddPoly(TexMan.GetTexture(maptex, true),
 				&points[0], points.Size(),
 				originx, originy,
 				scale / scalex,
@@ -2141,7 +2141,6 @@ void DAutomap::drawSubsectors()
 				colormap,
 				flatcolor,
 				floorlight,
-				f_y + f_h,
 				indices.data(), indices.size());
 		}
 	}
@@ -3017,7 +3016,7 @@ void DAutomap::DrawMarker (FTexture *tex, double x, double y, int yadjust,
 	{
 		rotatePoint (&x, &y);
 	}
-	screen->DrawTexture (tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
+	DrawTexture(twod, tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
 		DTA_DestWidthF, tex->GetDisplayWidthDouble() * CleanXfac * xscale,
 		DTA_DestHeightF, tex->GetDisplayHeightDouble() * CleanYfac * yscale,
 		DTA_ClipTop, f_y,
@@ -3069,7 +3068,7 @@ void DAutomap::drawMarks ()
 					rotatePoint (&x, &y);
 				}
 
-				screen->DrawText(font, am_markcolor, CXMTOF(x), CYMTOF(y), numstr, TAG_DONE);
+				DrawText(twod, font, am_markcolor, CXMTOF(x), CYMTOF(y), numstr, TAG_DONE);
 			}
 		}
 	}
@@ -3149,7 +3148,7 @@ void DAutomap::drawAuthorMarkers ()
 
 void DAutomap::drawCrosshair (const AMColor &color)
 {
-	screen->DrawPixel(f_w/2, (f_h+1)/2, -1, color.RGB);
+	twod->AddPixel(f_w/2, (f_h+1)/2, -1, color.RGB);
 }
 
 //=============================================================================
@@ -3181,7 +3180,7 @@ void DAutomap::Drawer (int bottom)
 		// [RH] Set f_? here now to handle automap overlaying
 		// and view size adjustments.
 		f_x = f_y = 0;
-		f_w = screen->GetWidth ();
+		f_w = twod->GetWidth ();
 		f_h = bottom;
 
 		clearFB(AMColors[AMColors.Background]);

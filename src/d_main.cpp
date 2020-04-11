@@ -111,6 +111,7 @@
 #include "texturemanager.h"
 #include "formats/multipatchtexture.h"
 #include "scriptutil.h"
+#include "v_palette.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
@@ -908,7 +909,7 @@ void D_Display ()
 	TexAnim.UpdateAnimations(screen->FrameTime);
 	R_UpdateSky(screen->FrameTime);
 	screen->BeginFrame();
-	screen->ClearClipRect();
+	twod->ClearClipRect();
 	if ((gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL) && gametic != 0)
 	{
 		// [ZZ] execute event hook that we just started the frame
@@ -1006,13 +1007,13 @@ void D_Display ()
 			tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
 			x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
 				tex->GetDisplayLeftOffset() * CleanXfac;
-			screen->DrawTexture (tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
+			DrawTexture(twod, tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 			if (paused && multiplayer)
 			{
 				FFont *font = generic_ui? NewSmallFont : SmallFont;
 				FString pstring = GStrings("TXT_BY");
 				pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
-				screen->DrawText(font, CR_RED,
+				DrawText(twod, font, CR_RED,
 					(screen->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
 					(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
 			}
@@ -1027,7 +1028,7 @@ void D_Display ()
 			if (picnum.isValid())
 			{
 				FTexture *tex = TexMan.GetTexture(picnum);
-				screen->DrawTexture (tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
+				DrawTexture(twod, tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
 					DTA_320x200, true, TAG_DONE);
 			}
 			NoWipe = 10;
@@ -1049,7 +1050,7 @@ void D_Display ()
 		C_DrawConsole ();	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
 		if (!hud_toggled)
-			FStat::PrintStat ();
+			FStat::PrintStat (twod);
 		screen->End2DAndUpdate ();
 	}
 	else
@@ -1224,10 +1225,10 @@ void D_PageTicker (void)
 
 void D_PageDrawer (void)
 {
-	screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+	ClearRect(twod, 0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 	if (Page.Exists())
 	{
-		screen->DrawTexture (TexMan.GetTexture(Page, true), 0, 0,
+		DrawTexture(twod, TexMan.GetTexture(Page, true), 0, 0,
 			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
@@ -1239,7 +1240,7 @@ void D_PageDrawer (void)
 	}
 	if (Advisory != nullptr)
 	{
-		screen->DrawTexture (Advisory, 4, 160, DTA_320x200, true, TAG_DONE);
+		DrawTexture(twod, Advisory, 4, 160, DTA_320x200, true, TAG_DONE);
 	}
 }
 
@@ -3259,6 +3260,7 @@ static int D_DoomMain_Internal (void)
 			}
 
 			V_Init2();
+			twod->fullscreenautoaspect = gameinfo.fullscreenautoaspect;
 			UpdateJoystickMenu(NULL);
 			UpdateVRModes();
 

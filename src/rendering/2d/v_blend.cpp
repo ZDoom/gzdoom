@@ -44,6 +44,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "v_palette.h"
 
 CVAR( Float, blood_fade_scalar, 1.0f, CVAR_ARCHIVE )	// [SP] Pulled from Skulltag - changed default from 0.5 to 1.0
 CVAR( Float, pickup_fade_scalar, 1.0f, CVAR_ARCHIVE )	// [SP] Uses same logic as blood_fade_scalar except for pickups

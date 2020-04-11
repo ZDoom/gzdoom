@@ -116,7 +116,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		systemTexture->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, "swbuffer");
 
 		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
-		screen->DrawTexture(fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
+		DrawTexture(twod, fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 		screen->Draw2D();
 		screen->Clear2D();
 		screen->PostProcessScene(CM_DEFAULT, [&]() {

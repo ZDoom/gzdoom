@@ -69,6 +69,11 @@
 #include "version.h"
 #include "g_levellocals.h"
 #include "am_map.h"
+#include "texturemanager.h"
+#include "hwrenderer/utility/hw_cvars.h"
+#include "v_palette.h"
+
+CVAR(Float, underwater_fade_scalar, 1.0f, CVAR_ARCHIVE) // [Nash] user-settable underwater blend intensity
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
@@ -136,6 +141,21 @@ CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 }
 
 CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
+
+CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (self < 0)
+	{
+		self = 0;
+		return;
+	}
+	if (StatusBar != NULL)
+	{
+		StatusBar->CallScreenSizeChanged();
+	}
+	setsizeneeded = true;
+}
+
 
 
 EXTERN_CVAR(Bool, r_blendmethod)
@@ -427,85 +447,9 @@ CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	}
 }
 
-// Helper for ActiveRatio and CheckRatio. Returns the forced ratio type, or -1 if none.
-int ActiveFakeRatio(int width, int height)
-{
-	int fakeratio = -1;
-	if ((vid_aspect >= 1) && (vid_aspect <= 6))
-	{
-		// [SP] User wants to force aspect ratio; let them.
-		fakeratio = int(vid_aspect);
-		if (fakeratio == 3)
-		{
-			fakeratio = 0;
-		}
-		else if (fakeratio == 5)
-		{
-			fakeratio = 3;
-		}
-	}
-	return fakeratio;
-}
-
-// Active screen ratio based on cvars and size
-float ActiveRatio(int width, int height, float *trueratio)
-{
-	static float forcedRatioTypes[] =
-	{
-		4 / 3.0f,
-		16 / 9.0f,
-		16 / 10.0f,
-		17 / 10.0f,
-		5 / 4.0f,
-		17 / 10.0f,
-		21 / 9.0f
-	};
-
-	float ratio = width / (float)height;
-	int fakeratio = ActiveFakeRatio(width, height);
-
-	if (trueratio)
-		*trueratio = ratio;
-	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : (ratio / ViewportPixelAspect());
-}
-
 DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)
 {
 	ACTION_RETURN_FLOAT(ActiveRatio(screen->GetWidth(), screen->GetHeight(), nullptr));
-}
-
-int AspectBaseWidth(float aspect)
-{
-	return (int)round(240.0f * aspect * 3.0f);
-}
-
-int AspectBaseHeight(float aspect)
-{
-	if (!AspectTallerThanWide(aspect))
-		return (int)round(200.0f * (320.0f / (AspectBaseWidth(aspect) / 3.0f)) * 3.0f);
-	else
-		return (int)round((200.0f * (4.0f / 3.0f)) / aspect * 3.0f);
-}
-
-double AspectPspriteOffset(float aspect)
-{
-	if (!AspectTallerThanWide(aspect))
-		return 0.0;
-	else
-		return ((4.0 / 3.0) / aspect - 1.0) * 97.5;
-}
-
-int AspectMultiplier(float aspect)
-{
-	if (!AspectTallerThanWide(aspect))
-		return (int)round(320.0f / (AspectBaseWidth(aspect) / 3.0f) * 48.0f);
-	else
-		return (int)round(200.0f / (AspectBaseHeight(aspect) / 3.0f) * 48.0f);
-}
-
-bool AspectTallerThanWide(float aspect)
-{
-	return aspect < 1.333f;
 }
 
 CCMD(vid_setsize)
@@ -570,3 +514,216 @@ IHardwareTexture* CreateHardwareTexture()
 	return screen->CreateHardwareTexture();
 }
 
+//==========================================================================
+//
+// Draws a blend over the entire view
+//
+//==========================================================================
+
+FVector4 DFrameBuffer::CalcBlend(sector_t* viewsector, PalEntry* modulateColor)
+{
+	float blend[4] = { 0,0,0,0 };
+	PalEntry blendv = 0;
+	float extra_red;
+	float extra_green;
+	float extra_blue;
+	player_t* player = nullptr;
+	bool fullbright = false;
+
+	if (modulateColor) *modulateColor = 0xffffffff;
+
+	if (players[consoleplayer].camera != nullptr)
+	{
+		player = players[consoleplayer].camera->player;
+		if (player)
+			fullbright = (player->fixedcolormap != NOFIXEDCOLORMAP || player->extralight == INT_MIN || player->fixedlightlevel != -1);
+	}
+
+	// don't draw sector based blends when any fullbright screen effect is active.
+	if (!fullbright)
+	{
+		const auto& vpp = r_viewpoint.Pos;
+		if (!viewsector->e->XFloor.ffloors.Size())
+		{
+			if (viewsector->GetHeightSec())
+			{
+				auto s = viewsector->heightsec;
+				blendv = s->floorplane.PointOnSide(vpp) < 0 ? s->bottommap : s->ceilingplane.PointOnSide(vpp) < 0 ? s->topmap : s->midmap;
+			}
+		}
+		else
+		{
+			TArray<lightlist_t>& lightlist = viewsector->e->XFloor.lightlist;
+
+			for (unsigned int i = 0; i < lightlist.Size(); i++)
+			{
+				double lightbottom;
+				if (i < lightlist.Size() - 1)
+					lightbottom = lightlist[i + 1].plane.ZatPoint(vpp);
+				else
+					lightbottom = viewsector->floorplane.ZatPoint(vpp);
+
+				if (lightbottom < vpp.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags & FF_FADEWALLS)))
+				{
+					// 3d floor 'fog' is rendered as a blending value
+					blendv = lightlist[i].blend;
+					// If this is the same as the sector's it doesn't apply!
+					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
+					// a little hack to make this work for Legacy maps.
+					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
+					break;
+				}
+			}
+		}
+
+		if (blendv.a == 0 && V_IsTrueColor())	// The paletted software renderer uses the original colormap as this frame's palette, but in true color that isn't doable.
+		{
+			blendv = R_BlendForColormap(blendv);
+		}
+
+		if (blendv.a == 255)
+		{
+
+			extra_red = blendv.r / 255.0f;
+			extra_green = blendv.g / 255.0f;
+			extra_blue = blendv.b / 255.0f;
+
+			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
+
+			// black multiplicative blends are ignored
+			if (extra_red || extra_green || extra_blue)
+			{
+				if (modulateColor) *modulateColor = blendv;
+			}
+			blendv = 0;
+		}
+		else if (blendv.a)
+		{
+			// [Nash] allow user to set blend intensity
+			int cnt = blendv.a;
+			cnt = (int)(cnt * underwater_fade_scalar);
+
+			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
+		}
+	}
+	else if (player && player->fixedlightlevel != -1 && player->fixedcolormap == NOFIXEDCOLORMAP)
+	{
+		// Draw fixedlightlevel effects as a 2D overlay. The hardware renderer just processes such a scene fullbright without any lighting.
+		auto torchtype = PClass::FindActor(NAME_PowerTorch);
+		auto litetype = PClass::FindActor(NAME_PowerLightAmp);
+		PalEntry color = 0xffffffff;
+		for (AActor* in = player->mo->Inventory; in; in = in->Inventory)
+		{
+			// Need special handling for light amplifiers 
+			if (in->IsKindOf(torchtype))
+			{
+				// The software renderer already bakes the torch flickering into its output, so this must be omitted here.
+				float r = vid_rendermode < 4 ? 1.f : (0.8f + (7 - player->fixedlightlevel) / 70.0f);
+				if (r > 1.0f) r = 1.0f;
+				int rr = (int)(r * 255);
+				int b = rr;
+				if (gl_enhanced_nightvision) b = b * 3 / 4;
+				color = PalEntry(255, rr, rr, b);
+			}
+			else if (in->IsKindOf(litetype))
+			{
+				if (gl_enhanced_nightvision)
+				{
+					color = PalEntry(255, 104, 255, 104);
+				}
+			}
+		}
+		if (modulateColor)
+		{
+			*modulateColor = color;
+		}
+	}
+
+	if (player)
+	{
+		V_AddPlayerBlend(player, blend, 0.5, 175);
+	}
+
+	if (players[consoleplayer].camera != NULL)
+	{
+		// except for fadeto effects
+		player_t* player = (players[consoleplayer].camera->player != NULL) ? players[consoleplayer].camera->player : &players[consoleplayer];
+		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
+	}
+
+	const float br = clamp(blend[0] * 255.f, 0.f, 255.f);
+	const float bg = clamp(blend[1] * 255.f, 0.f, 255.f);
+	const float bb = clamp(blend[2] * 255.f, 0.f, 255.f);
+	return { br, bg, bb, blend[3] };
+}
+
+//==========================================================================
+//
+// Draws a blend over the entire view
+//
+//==========================================================================
+
+void DFrameBuffer::DrawBlend(sector_t* viewsector)
+{
+	PalEntry modulateColor;
+	auto blend = CalcBlend(viewsector, &modulateColor);
+	if (modulateColor != 0xffffffff)
+	{
+		Dim(twod, modulateColor, 1, 0, 0, GetWidth(), GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+	}
+
+	const PalEntry bcolor(255, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z));
+	Dim(twod, bcolor, blend.W, 0, 0, GetWidth(), GetHeight());
+}
+
+
+//==========================================================================
+//
+// V_DrawFrame
+//
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+//
+//==========================================================================
+
+void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
+{
+	FTexture* p;
+	const gameborder_t* border = &gameinfo.Border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
+	int offset = border->offset;
+	int right = left + width;
+	int bottom = top + height;
+
+	// Draw top and bottom sides.
+	p = TexMan.GetTextureByName(border->t);
+	drawer->AddFlatFill(left, top - p->GetDisplayHeight(), right, top, p, true);
+	p = TexMan.GetTextureByName(border->b);
+	drawer->AddFlatFill(left, bottom, right, bottom + p->GetDisplayHeight(), p, true);
+
+	// Draw left and right sides.
+	p = TexMan.GetTextureByName(border->l);
+	drawer->AddFlatFill(left - p->GetDisplayWidth(), top, left, bottom, p, true);
+	p = TexMan.GetTextureByName(border->r);
+	drawer->AddFlatFill(right, top, right + p->GetDisplayWidth(), bottom, p, true);
+
+	// Draw beveled corners.
+	DrawTexture(drawer, TexMan.GetTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetTextureByName(border->tr), left + width, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetTextureByName(border->bl), left - offset, top + height, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetTextureByName(border->br), left + width, top + height, TAG_DONE);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	DrawFrame(twod, x, y, w, h);
+	return 0;
+}

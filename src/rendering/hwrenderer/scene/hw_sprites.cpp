@@ -225,7 +225,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 			FColormap thiscm;
 			thiscm.CopyFog(Colormap);
-			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+			CopyFrom3DLight(thiscm, &(*lightlist)[i]);
 			if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 			{
 				thiscm.Decolorize();

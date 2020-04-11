@@ -223,6 +223,7 @@ private:
 };
 
 
+class F2DDrawer;
 
 class FStat
 {
@@ -238,7 +239,7 @@ public:
 		return m_Active;
 	}
 
-	static void PrintStat ();
+	static void PrintStat (F2DDrawer *drawer);
 	static FStat *FindStat (const char *name);
 	static void ToggleStat (const char *name);
 	static void EnableStat(const char* name, bool on);

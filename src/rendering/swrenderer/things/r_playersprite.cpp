@@ -462,7 +462,7 @@ namespace swrenderer
 	{
 		for (const HWAccelPlayerSprite &sprite : AcceleratedSprites)
 		{
-			screen->DrawTexture(sprite.pic->GetTexture(),
+			DrawTexture(twod, sprite.pic->GetTexture(),
 				viewwindowx + sprite.x1,
 				viewwindowy + viewheight / 2 - sprite.texturemid * sprite.yscale - 0.5,
 				DTA_DestWidthF, FIXED2DBL(sprite.pic->GetWidth() * sprite.xscale),

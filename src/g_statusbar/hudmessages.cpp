@@ -303,7 +303,7 @@ void DHUDMessage::CalcClipCoords(int hudheight)
 	}
 	else
 	{
-		screen->VirtualToRealCoordsInt(x, y, w, h,
+		VirtualToRealCoordsInt(twod, x, y, w, h,
 			HUDWidth, hudheight, false, HandleAspect);
 		ClipLeft = x;
 		ClipTop = y;
@@ -328,7 +328,7 @@ void DHUDMessage::ResetText (const char *text)
 	}
 	else
 	{
-		width = SCREENWIDTH / active_con_scaletext();
+		width = SCREENWIDTH / active_con_scaletext(twod);
 	}
 
 	Lines = V_BreakLines (Font, NoWrap ? INT_MAX : width, (uint8_t *)text);
@@ -388,7 +388,7 @@ void DHUDMessage::Draw (int bottom, int visibility)
 	xscale = yscale = 1;
 	if (HUDWidth == 0)
 	{
-		int scale = active_con_scaletext();
+		int scale = active_con_scaletext(twod);
 		screen_width /= scale;
 		screen_height /= scale;
 		bottom /= scale;
@@ -492,8 +492,8 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 {
 	if (hudheight == 0)
 	{
-		int scale = active_con_scaletext();
-		screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+		int scale = active_con_scaletext(twod);
+		DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 			DTA_VirtualWidth, SCREENWIDTH / scale,
 			DTA_VirtualHeight, SCREENHEIGHT / scale,
 			DTA_Alpha, Alpha,
@@ -503,7 +503,7 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 	}
 	else
 	{
-		screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+		DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 			DTA_VirtualWidth, HUDWidth,
 			DTA_VirtualHeight, hudheight,
 			DTA_ClipLeft, ClipLeft,
@@ -585,8 +585,8 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 		float trans = float(Alpha * -(Tics - FadeOutTics) / FadeOutTics);
 		if (hudheight == 0)
 		{
-			int scale = active_con_scaletext();
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+			int scale = active_con_scaletext(twod);
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, SCREENWIDTH / scale,
 				DTA_VirtualHeight, SCREENHEIGHT / scale,
 				DTA_Alpha, trans,
@@ -596,7 +596,7 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 		}
 		else
 		{
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, HUDWidth,
 				DTA_VirtualHeight, hudheight,
 				DTA_ClipLeft, ClipLeft,
@@ -674,8 +674,8 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 		float trans = float(Alpha * Tics / FadeInTics);
 		if (hudheight == 0)
 		{
-			int scale = active_con_scaletext();
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+			int scale = active_con_scaletext(twod);
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, SCREENWIDTH / scale,
 				DTA_VirtualHeight, SCREENHEIGHT / scale,
 				DTA_Alpha, trans,
@@ -685,7 +685,7 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 		}
 		else
 		{
-			screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 				DTA_VirtualWidth, HUDWidth,
 				DTA_VirtualHeight, hudheight,
 				DTA_ClipLeft, ClipLeft,
@@ -858,8 +858,8 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 		{
 			if (hudheight == 0)
 			{
-				int scale = active_con_scaletext();
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+				int scale = active_con_scaletext(twod);
+				DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_VirtualWidth, SCREENWIDTH / scale,
 					DTA_VirtualHeight, SCREENHEIGHT / scale,
 					DTA_KeepRatio, true,
@@ -870,7 +870,7 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 			}
 			else
 			{
-				screen->DrawText (Font, TextColor, x, y, Lines[linenum].Text,
+				DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
 					DTA_VirtualWidth, HUDWidth,
 					DTA_VirtualHeight, hudheight,
 					DTA_ClipLeft, ClipLeft,

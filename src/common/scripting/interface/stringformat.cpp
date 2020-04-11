@@ -43,6 +43,7 @@
 #include "gstrings.h"
 #include "v_font.h"
 #include "types.h"
+#include "utf8.h"
 
 
 
@@ -276,3 +277,323 @@ DEFINE_ACTION_FUNCTION(FStringStruct, DeleteLastCharacter)
 	self->DeleteLastCharacter();
 	return 0;
 }
+
+//=====================================================================================
+//
+// FString exports
+//
+//=====================================================================================
+
+static void LocalizeString(const FString &label, bool prefixed, FString *result)
+{
+	if (!prefixed) *result = GStrings(label);
+	else if (label[0] != '$') *result = label;
+	else *result = GStrings(&label[1]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringTable, Localize, LocalizeString)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(label);
+	PARAM_BOOL(prefixed);
+	FString result;
+	LocalizeString(label, prefixed, &result);
+	ACTION_RETURN_STRING(result);
+}
+
+static void StringReplace(FString *self, const FString &s1, const FString &s2)
+{
+	self->Substitute(s1, s2);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Replace, StringReplace)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(s1);
+	PARAM_STRING(s2);
+	self->Substitute(s1, s2);
+	return 0;
+}
+
+static void StringMid(FString *self, unsigned pos, unsigned len, FString *result)
+{
+	*result = self->Mid(pos, len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Mid, StringMid)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(pos);
+	PARAM_UINT(len);
+	FString s = self->Mid(pos, len);
+	ACTION_RETURN_STRING(s);
+}
+
+static void StringLeft(FString *self, unsigned len, FString *result)
+{
+	*result = self->Left(len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Left, StringLeft)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(len);
+	FString s = self->Left(len);
+	ACTION_RETURN_STRING(s);
+}
+
+static void StringTruncate(FString *self, unsigned len)
+{
+	self->Truncate(len);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Truncate, StringTruncate)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(len);
+	self->Truncate(len);
+	return 0;
+}
+
+static void StringRemove(FString *self, unsigned index, unsigned remlen)
+{
+	self->Remove(index, remlen);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Remove, StringRemove)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(index);
+	PARAM_UINT(remlen);
+	self->Remove(index, remlen);
+	return 0;
+}
+
+static void StringCharAt(FString *self, int pos, FString *result)
+{
+	if ((unsigned)pos >= self->Len()) *result = "";
+	else *result = FString((*self)[pos]);
+}
+// CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharAt, StringCharAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	FString result;
+	StringCharAt(self, pos, &result);
+	ACTION_RETURN_STRING(result);
+}
+
+static int StringCharCodeAt(FString *self, int pos)
+{
+	if ((unsigned)pos >= self->Len()) return 0;
+	else return (*self)[pos];
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharCodeAt, StringCharCodeAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(StringCharCodeAt(self, pos));
+}
+
+static int StringByteAt(FString *self, int pos)
+{
+	if ((unsigned)pos >= self->Len()) return 0;
+	else return (uint8_t)((*self)[pos]);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ByteAt, StringByteAt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	ACTION_RETURN_INT(StringByteAt(self, pos));
+}
+
+static void StringFilter(FString *self, FString *result)
+{
+	*result = strbin1(*self);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Filter, StringFilter)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(strbin1(*self));
+}
+
+static int StringIndexOf(FString *self, const FString &substr, int startIndex)
+{
+	return self->IndexOf(substr, startIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IndexOf, StringIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(startIndex);
+	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
+}
+
+static int StringLastIndexOf(FString *self, const FString &substr, int endIndex)
+{
+	return self->LastIndexOfBroken(substr, endIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, LastIndexOf, StringLastIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
+}
+
+static int StringRightIndexOf(FString *self, const FString &substr, int endIndex)
+{
+	return self->LastIndexOf(substr, endIndex);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, RightIndexOf, StringRightIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
+}
+
+static void StringToUpper(FString *self)
+{
+	self->ToUpper();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToUpper, StringToUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToUpper();
+	return 0;
+}
+
+static void StringToLower(FString *self)
+{
+	self->ToLower();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToLower, StringToLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToLower();
+	return 0;
+}
+
+static void StringMakeUpper(FString *self, FString *out)
+{
+	*out = self->MakeUpper();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeUpper, StringMakeUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(self->MakeUpper());
+}
+
+static void StringMakeLower(FString *self, FString *out)
+{
+	*out = self->MakeLower();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeLower, StringMakeLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_STRING(self->MakeLower());
+}
+
+static int StringCharUpper(int ch)
+{
+	return ch >= 0 && ch < 65536 ? upperforlower[ch] : ch;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharUpper, StringCharUpper)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(ch);
+	ACTION_RETURN_INT(StringCharUpper(ch));
+}
+
+static int StringCharLower(int ch)
+{
+	return ch >= 0 && ch < 65536 ? lowerforupper[ch] : ch;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharLower, StringCharLower)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(ch);
+	ACTION_RETURN_INT(StringCharLower(ch));
+}
+
+
+static int StringToInt(FString *self, int base)
+{
+	return (int)self->ToLong(base);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToInt, StringToInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(base);
+	ACTION_RETURN_INT((int)self->ToLong(base));
+}
+
+static double StringToDbl(FString *self)
+{
+	return self->ToDouble();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToDouble, StringToDbl)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_FLOAT(self->ToDouble());
+}
+
+static void StringSplit(FString *self, TArray<FString> *tokens, const FString &delimiter, int keepEmpty)
+{
+	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Split, StringSplit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_POINTER(tokens, TArray<FString>);
+	PARAM_STRING(delimiter);
+	PARAM_INT(keepEmpty);
+	StringSplit(self, tokens, delimiter, keepEmpty);
+	return 0;
+}
+
+static int StringCodePointCount(FString *self)
+{
+	return (int)self->CharacterCount();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CodePointCount, StringCodePointCount)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_INT(StringCodePointCount(self));
+}
+
+static int StringNextCodePoint(FString *self, int inposition, int *position)
+{
+	int codepoint = self->GetNextCharacter(inposition);
+	if (position) *position = inposition;
+	return codepoint;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, GetNextCodePoint, StringNextCodePoint)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT(pos);
+	if (numret > 0) ret[0].SetInt(self->GetNextCharacter(pos));
+	if (numret > 1) ret[1].SetInt(pos);
+	return numret;
+}
+
+

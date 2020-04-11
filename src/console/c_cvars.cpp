@@ -42,8 +42,7 @@
 #include "c_cvars.h"
 #include "engineerrors.h"
 #include "printf.h"
-
-#include "v_video.h"	// for color lookup - move to utility code!!!
+#include "palutil.h"
 
 //#include "version.h"
 
@@ -820,12 +819,13 @@ int FColorCVar::ToInt2 (UCVarValue value, ECVarType type)
 
 	if (type == CVAR_String)
 	{
-		FString string;
+		FString string = V_GetColorStringByName(value.String);
 		// Only allow named colors after the screen exists (i.e. after
 		// we've got some lumps loaded, so X11R6RGB can be read). Since
 		// the only time this might be called before that is when loading
 		// zdoom.ini, this shouldn't be a problem.
-		if (screen && !(string = V_GetColorStringByName (value.String)).IsEmpty() )
+
+		if (string.IsNotEmpty())
 		{
 			ret = V_GetColorFromString (NULL, string);
 		}

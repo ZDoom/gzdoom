@@ -613,16 +613,6 @@ void V_Shutdown ();
 
 class FScanner;
 struct FScriptPosition;
-// Returns the closest color to the one desired. String
-// should be of the form "rr gg bb".
-int V_GetColorFromString (const uint32_t *palette, const char *colorstring, FScriptPosition *sc = nullptr);
-// Scans through the X11R6RGB lump for a matching color
-// and returns a color string suitable for V_GetColorFromString.
-FString V_GetColorStringByName (const char *name, FScriptPosition *sc = nullptr);
-
-// Tries to get color by name, then by string
-int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc = nullptr);
-int V_GetColor(const uint32_t *palette, FScanner &sc);
 
 inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }
 

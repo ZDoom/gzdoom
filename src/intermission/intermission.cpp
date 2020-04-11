@@ -52,6 +52,7 @@
 #include "utf8.h"
 #include "templates.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 FIntermissionDescriptorList IntermissionDescriptors;
 

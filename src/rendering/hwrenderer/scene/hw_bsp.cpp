@@ -33,6 +33,7 @@
 #include "po_man.h"
 #include "m_fixed.h"
 #include "ctpl.h"
+#include "texturemanager.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_drawstructs.h"

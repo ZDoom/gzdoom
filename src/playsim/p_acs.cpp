@@ -76,6 +76,7 @@
 #include "scriptutil.h"
 #include "s_music.h"
 #include "v_video.h"
+#include "texturemanager.h"
 
 	// P-codes for ACS scripts
 	enum

@@ -34,7 +34,6 @@
 **
 */
 
-#include "menu/menu.h"
 #include "filesystem.h"
 #include "bitmap.h"
 #include "imagehelpers.h"
@@ -132,6 +131,6 @@ private:
 FTexture *CreateShaderTexture(bool vertical, bool reverse)
 {
 	FStringf name("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
-	return new FImageTexture(new FBarShader(vertical, reverse), name.GetChars());
+	return CreateImageTexture(new FBarShader(vertical, reverse), name.GetChars());
 
 }

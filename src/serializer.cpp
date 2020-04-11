@@ -60,6 +60,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "utf8.h"
+#include "texturemanager.h"
 
 bool save_full = false;	// for testing. Should be removed afterward.
 

@@ -3,6 +3,8 @@
 #include "palettecontainer.h"
 #include "textureid.h"
 #include "vectors.h"
+#include "bitmap.h"
+#include "image.h"
 
 class FImageTexture;
 //==========================================================================
@@ -121,6 +123,8 @@ class FMultipatchTextureBuilder
 {
 	FTextureManager &TexMan;
 	TArray<BuildInfo> BuiltTextures;
+	void(*progressFunc)();
+	void(*checkForHacks)(BuildInfo&);
 
 	void MakeTexture(BuildInfo &buildinfo, ETextureType usetype);
 
@@ -128,11 +132,10 @@ class FMultipatchTextureBuilder
 	void AddTexturesLump(const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup, bool texture1);
 
 	void ParsePatch(FScanner &sc, BuildInfo &info, TexPart &part, TexInit &init);
-	void CheckForHacks(BuildInfo &buildinfo);
 	void ResolvePatches(BuildInfo &buildinfo);
 
 public:
-	FMultipatchTextureBuilder(FTextureManager &texMan) : TexMan(texMan)
+	FMultipatchTextureBuilder(FTextureManager &texMan, void(*progressFunc_)(), void(*checkForHacks_)(BuildInfo &)) : TexMan(texMan), progressFunc(progressFunc_), checkForHacks(checkForHacks_)
 	{
 	}
 

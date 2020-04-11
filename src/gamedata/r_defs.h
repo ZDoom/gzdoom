@@ -35,6 +35,7 @@
 #include "m_bbox.h"
 #include "dobjgc.h"
 #include "r_data/r_translate.h"
+#include "texmanip.h"
 
 // Some more or less basic data types
 // we depend on.

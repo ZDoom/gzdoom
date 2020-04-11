@@ -35,7 +35,6 @@
 */
 
 #include "c_cvars.h"
-#include "v_video.h"
 #include "hqnx/hqx.h"
 #ifdef HAVE_MMX
 #include "hqnx_asm/hqnx_asm.h"
@@ -43,7 +42,9 @@
 #include "xbr/xbrz.h"
 #include "xbr/xbrz_old.h"
 #include "parallel_for.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "textures.h"
+#include "texturemanager.h"
+#include "printf.h"
 
 EXTERN_CVAR(Int, gl_texture_hqresizemult)
 CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)

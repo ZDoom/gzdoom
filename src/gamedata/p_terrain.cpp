@@ -46,6 +46,7 @@
 #include "p_local.h"
 #include "actor.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -67,6 +67,7 @@
 #include "findfile.h"
 #include "i_music.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 extern FILE *Logfile;
 extern bool insave;

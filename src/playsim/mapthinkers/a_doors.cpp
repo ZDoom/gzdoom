@@ -39,6 +39,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "animations.h"
+#include "texturemanager.h"
 
 //============================================================================
 //

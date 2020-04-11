@@ -2,6 +2,7 @@
 
 #include "tarray.h"
 #include "hwrenderer/textures/hw_ihwtexture.h"
+#include "palettecontainer.h"
 
 struct FTextureBuffer;
 class IHardwareTexture;

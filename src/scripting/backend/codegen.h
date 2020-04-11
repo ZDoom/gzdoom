@@ -48,6 +48,7 @@
 #include "scopebarrier.h"
 #include "types.h"
 #include "vmintern.h"
+#include "c_cvars.h"
 
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;

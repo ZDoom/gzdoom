@@ -51,6 +51,7 @@
 #include "teaminfo.h"
 #include "r_data/sprites.h"
 #include <zmusic.h>
+#include "texturemanager.h"
 
 
 void ClearSaveGames();
@@ -66,6 +67,37 @@ PClass *DefaultOptionMenuClass;
 
 void I_BuildALDeviceList(FOptionValues *opt);
 void I_BuildALResamplersList(FOptionValues *opt);
+
+
+//==========================================================================
+//
+// Defines how graphics substitution is handled.
+// 0: Never replace a text-containing graphic with a font-based text.
+// 1: Always replace, regardless of any missing information. Useful for testing the substitution without providing full data.
+// 2: Only replace for non-default texts, i.e. if some language redefines the string's content, use it instead of the graphic. Never replace a localized graphic.
+// 3: Only replace if the string is not the default and the graphic comes from the IWAD. Never replace a localized graphic.
+// 4: Like 1, but lets localized graphics pass.
+//
+// The default is 3, which only replaces known content with non-default texts.
+//
+//==========================================================================
+
+CUSTOM_CVAR(Int, cl_gfxlocalization, 3, CVAR_ARCHIVE)
+{
+	if (self < 0 || self > 4) self = 0;
+}
+
+bool OkForLocalization(FTextureID texnum, const char* substitute)
+{
+	if (!texnum.isValid()) return false;
+
+	// First the unconditional settings, 0='never' and 1='always'.
+	if (cl_gfxlocalization == 1 || gameinfo.forcetextinmenus) return false;
+	if (cl_gfxlocalization == 0 || gameinfo.forcenogfxsubstitution) return true;
+	return TexMan.OkForLocalization(texnum, substitute, cl_gfxlocalization);
+}
+
+
 
 DEFINE_GLOBAL_NAMED(OptionSettings, OptionMenuSettings)
 
@@ -1141,7 +1173,7 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 					if (AllEpisodes[i].mPicName.IsNotEmpty())
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
-						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
+						if (AllEpisodes[i].mEpisodeName.IsEmpty() || OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
 							continue;	// We do not measure patch based entries. They are assumed to fit
 					}
 					const char *c = AllEpisodes[i].mEpisodeName;
@@ -1157,7 +1189,7 @@ void M_StartupEpisodeMenu(FGameStartup *gs)
 					if (AllEpisodes[i].mPicName.IsNotEmpty())
 					{
 						FTextureID tex = GetMenuTexture(AllEpisodes[i].mPicName);
-						if (AllEpisodes[i].mEpisodeName.IsEmpty() || TexMan.OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
+						if (AllEpisodes[i].mEpisodeName.IsEmpty() || OkForLocalization(tex, AllEpisodes[i].mEpisodeName))
 							it = CreateListMenuItemPatch(posx, posy, ld->mLinespacing, AllEpisodes[i].mShortcut, tex, NAME_Skillmenu, i);
 					}
 					if (it == nullptr)
@@ -1753,7 +1785,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				if (skill.PicName.Len() != 0 && pItemText == nullptr)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
-					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
+					if (skill.MenuName.IsEmpty() || OkForLocalization(tex, skill.MenuName))
 						continue;
 				}
 				const char *c = pItemText ? pItemText->GetChars() : skill.MenuName.GetChars();
@@ -1782,7 +1814,7 @@ void M_StartupSkillMenu(FGameStartup *gs)
 				if (skill.PicName.Len() != 0 && pItemText == nullptr)
 				{
 					FTextureID tex = GetMenuTexture(skill.PicName);
-					if (skill.MenuName.IsEmpty() || TexMan.OkForLocalization(tex, skill.MenuName))
+					if (skill.MenuName.IsEmpty() || OkForLocalization(tex, skill.MenuName))
 						li = CreateListMenuItemPatch(posx, y, ld->mLinespacing, skill.Shortcut, tex, action, SkillIndices[i]);
 				}
 				if (li == nullptr)

@@ -36,7 +36,9 @@
 #include "image.h"
 #include "v_video.h"
 #include "v_font.h"
+#include "texturemanager.h"
 
+EXTERN_CVAR(Bool, gl_precache)
 
 //==========================================================================
 //
@@ -238,14 +240,14 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 				{
 					if (tex->GetImage() && tex->SystemTextures.GetHardwareTexture(0, false) == nullptr)
 					{
-						FImageSource::RegisterForPrecache(tex->GetImage());
+						FImageSource::RegisterForPrecache(tex->GetImage(), V_IsTrueColor());
 					}
 				}
 
 				// Only register untranslated sprites. Translated ones are very unlikely to require data that can be reused.
 				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CheckKey(0))
 				{
-					FImageSource::RegisterForPrecache(tex->GetImage());
+					FImageSource::RegisterForPrecache(tex->GetImage(), V_IsTrueColor());
 				}
 			}
 		}

@@ -140,12 +140,12 @@ public:
 		return bUseGamePalette;
 	}
 
-	virtual void CollectForPrecache(PrecacheInfo &info, bool requiretruecolor = false);
+	virtual void CollectForPrecache(PrecacheInfo &info, bool requiretruecolor);
 	static void BeginPrecaching();
 	static void EndPrecaching();
-	static void RegisterForPrecache(FImageSource *img);
+	static void RegisterForPrecache(FImageSource *img, bool requiretruecolor);
 };
 
 class FTexture;
 
-FTexture* CreateImageTexture(FImageSource* img) noexcept;
+FTexture* CreateImageTexture(FImageSource* img, const char *name = nullptr) noexcept;

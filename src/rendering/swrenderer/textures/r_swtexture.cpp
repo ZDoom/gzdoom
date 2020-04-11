@@ -598,3 +598,8 @@ void FSoftwareTexture::FreeAllSpans()
 	}
 }
 
+void DeleteSoftwareTexture(FSoftwareTexture* swtex)
+{
+	delete swtex;
+}
+

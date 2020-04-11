@@ -58,6 +58,8 @@
 #include "myiswalpha.h"
 #include "textures/formats/fontchars.h"
 #include "textures/formats/multipatchtexture.h"
+#include "texturemanager.h"
+#include "r_translate.h"
 
 #include "fontinternals.h"
 

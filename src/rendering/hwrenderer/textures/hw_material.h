@@ -7,8 +7,6 @@
 
 #include "r_defs.h"
 
-EXTERN_CVAR(Bool, gl_precache)
-
 struct FRemapTable;
 class FTextureShader;
 class IHardwareTexture;

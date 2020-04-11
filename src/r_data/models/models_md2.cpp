@@ -28,6 +28,7 @@
 
 #include "filesystem.h"
 #include "r_data/models/models.h"
+#include "texturemanager.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data

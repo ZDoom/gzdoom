@@ -34,12 +34,12 @@
 **
 */
 
-#include "v_video.h"
 #include "bitmap.h"
 #include "image.h"
 #include "filesystem.h"
 #include "files.h"
 #include "cmdlib.h"
+#include "palettecontainer.h"
 
 FMemArena FImageSource::ImageArena(32768);
 TArray<FImageSource *>FImageSource::ImageForLump;
@@ -283,7 +283,7 @@ FBitmap FImageSource::GetCachedBitmap(PalEntry *remap, int conversion, int *ptra
 void FImageSource::CollectForPrecache(PrecacheInfo &info, bool requiretruecolor)
 {
 	auto val = info.CheckKey(ImageID);
-	bool tc = requiretruecolor || V_IsTrueColor();
+	bool tc = requiretruecolor;
 	if (val)
 	{
 		val->first += tc;
@@ -307,9 +307,9 @@ void FImageSource::EndPrecaching()
 	precacheDataRgba.Clear();
 }
 
-void FImageSource::RegisterForPrecache(FImageSource *img)
+void FImageSource::RegisterForPrecache(FImageSource *img, bool requiretruecolor)
 {
-	img->CollectForPrecache(precacheInfo);
+	img->CollectForPrecache(precacheInfo, requiretruecolor);
 }
 
 //==========================================================================

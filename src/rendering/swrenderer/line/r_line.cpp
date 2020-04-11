@@ -42,6 +42,7 @@
 #include "v_palette.h"
 #include "r_utility.h"
 #include "r_data/colormaps.h"
+#include "texturemanager.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"

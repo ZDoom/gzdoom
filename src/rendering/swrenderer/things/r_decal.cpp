@@ -41,6 +41,7 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
+#include "texturemanager.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_walldraw.h"
 #include "swrenderer/segments/r_drawsegment.h"

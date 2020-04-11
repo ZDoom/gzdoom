@@ -30,6 +30,7 @@
 #include "doomdata.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "texturemanager.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"

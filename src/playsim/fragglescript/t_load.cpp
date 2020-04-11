@@ -35,6 +35,7 @@
 #include "xlat/xlat.h"
 #include "maploader/maploader.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 class FScriptLoader
 {

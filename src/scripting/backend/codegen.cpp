@@ -50,6 +50,7 @@
 #include "g_levellocals.h"
 #include "v_video.h"
 #include "utf8.h"
+#include "texturemanager.h"
 
 extern FRandom pr_exrandom;
 FMemArena FxAlloc(65536);

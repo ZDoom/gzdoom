@@ -66,6 +66,7 @@
 #include "utf8.h"
 #include "s_music.h"
 #include "i_time.h"
+#include "texturemanager.h"
 
 
 #include "gi.h"

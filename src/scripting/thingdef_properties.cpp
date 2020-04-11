@@ -56,6 +56,7 @@
 #include "types.h"
 #include "a_dynlight.h"
 #include "v_video.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //

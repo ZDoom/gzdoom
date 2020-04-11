@@ -39,6 +39,8 @@
 #include "filesystem.h"
 #include "utf8.h"
 #include "sc_man.h"
+#include "texturemanager.h"
+#include "r_translate.h"
 
 #include "fontinternals.h"
 

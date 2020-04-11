@@ -43,6 +43,7 @@
 #include "v_text.h"
 #include "c_functions.h"
 #include "gstrings.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //

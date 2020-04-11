@@ -27,6 +27,7 @@
 #include "doomdata.h"
 #include "g_levellocals.h"
 #include "p_lnspec.h"
+#include "texturemanager.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"

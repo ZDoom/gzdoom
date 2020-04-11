@@ -39,6 +39,7 @@
 #include "sbar.h"
 #include "r_utility.h"
 #include "actorinlines.h"
+#include "texturemanager.h"
 
 #define ST_RAMPAGEDELAY 		(2*TICRATE)
 #define ST_MUCHPAIN 			20

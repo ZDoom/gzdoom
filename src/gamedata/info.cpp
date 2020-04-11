@@ -52,6 +52,7 @@
 #include "types.h"
 #include "filesystem.h"
 #include "g_levellocals.h"
+#include "texturemanager.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();

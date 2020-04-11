@@ -21,6 +21,7 @@
 
 #include "filesystem.h"
 #include "r_data/models/models_obj.h"
+#include "texturemanager.h"
 
 /**
  * Load an OBJ model

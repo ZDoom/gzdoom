@@ -108,6 +108,8 @@
 #include "d_buttons.h"
 #include "i_interface.h"
 #include "animations.h"
+#include "texturemanager.h"
+#include "formats/multipatchtexture.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
@@ -2626,6 +2628,121 @@ static bool System_CaptureModeInGame()
 }
 
 
+static void PatchTextures()
+{
+	// The Hexen scripts use BLANK as a blank texture, even though it's really not.
+	// I guess the Doom renderer must have clipped away the line at the bottom of
+	// the texture so it wasn't visible. Change its use type to a blank null texture to really make it blank.
+	if (gameinfo.gametype == GAME_Hexen)
+	{
+		FTextureID tex = TexMan.CheckForTexture("BLANK", ETextureType::Wall, false);
+		if (tex.Exists())
+		{
+			auto texture = TexMan.GetTexture(tex, false);
+			texture->SetUseType(ETextureType::Null);
+		}
+	}
+
+	// Hexen parallax skies use color 0 to indicate transparency on the front
+	// layer, so we must not remap color 0 on these textures. Unfortunately,
+	// the only way to identify these textures is to check the MAPINFO.
+	for (unsigned int i = 0; i < wadlevelinfos.Size(); ++i)
+	{
+		if (wadlevelinfos[i].flags & LEVEL_DOUBLESKY)
+		{
+			FTextureID picnum = TexMan.CheckForTexture(wadlevelinfos[i].SkyPic1, ETextureType::Wall, false);
+			if (picnum.isValid())
+			{
+				TexMan.GetTexture(picnum)->SetFrontSkyLayer();
+			}
+		}
+	}
+
+}
+
+//==========================================================================
+//
+// this gets called during texture creation to fix known problems
+//
+//==========================================================================
+
+static void CheckForHacks(BuildInfo& buildinfo)
+{
+	if (buildinfo.Parts.Size() == 0)
+	{
+		return;
+	}
+
+	// Heretic sky textures are marked as only 128 pixels tall,
+	// even though they are really 200 pixels tall.
+	if (gameinfo.gametype == GAME_Heretic &&
+		buildinfo.Name.Len() == 4 &&
+		buildinfo.Name[0] == 'S' &&
+		buildinfo.Name[1] == 'K' &&
+		buildinfo.Name[2] == 'Y' &&
+		buildinfo.Name[3] >= '1' &&
+		buildinfo.Name[3] <= '3' &&
+		buildinfo.Height == 128)
+	{
+		buildinfo.Height = 200;
+		buildinfo.tex->SetSize(buildinfo.tex->GetTexelWidth(), 200);
+		return;
+	}
+
+	// The Doom E1 sky has its patch's y offset at -8 instead of 0.
+	if (gameinfo.gametype == GAME_Doom &&
+		!(gameinfo.flags & GI_MAPxx) &&
+		buildinfo.Name.Len() == 4 &&
+		buildinfo.Parts.Size() == 1 &&
+		buildinfo.Height == 128 &&
+		buildinfo.Parts[0].OriginY == -8 &&
+		buildinfo.Name[0] == 'S' &&
+		buildinfo.Name[1] == 'K' &&
+		buildinfo.Name[2] == 'Y' &&
+		buildinfo.Name[3] == '1')
+	{
+		buildinfo.Parts[0].OriginY = 0;
+		return;
+	}
+
+	// BIGDOOR7 in Doom also has patches at y offset -4 instead of 0.
+	if (gameinfo.gametype == GAME_Doom &&
+		!(gameinfo.flags & GI_MAPxx) &&
+		buildinfo.Name.CompareNoCase("BIGDOOR7") == 0 &&
+		buildinfo.Parts.Size() == 2 &&
+		buildinfo.Height == 128 &&
+		buildinfo.Parts[0].OriginY == -4 &&
+		buildinfo.Parts[1].OriginY == -4)
+	{
+		buildinfo.Parts[0].OriginY = 0;
+		buildinfo.Parts[1].OriginY = 0;
+		return;
+	}
+}
+
+CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	// This is in case the sky texture has been substituted.
+	R_InitSkyMap();
+}
+
+//==========================================================================
+//
+// FTextureManager :: PalCheck taken out of the texture manager because it ties it to other subsystems
+// todo: move elsewhere
+//
+//==========================================================================
+
+int PalCheck(int tex)
+{
+	// In any true color mode this shouldn't do anything.
+	if (vid_nopalsubstitutions || V_IsTrueColor()) return tex;
+	FTexture *ftex = TexMan.ByIndex(tex);
+	if (ftex != nullptr && ftex->GetPalVersion() != nullptr) return ftex->GetPalVersion()->GetID().GetIndex();
+	return tex;
+}
+
+
 //==========================================================================
 //
 // D_DoomMain
@@ -2945,7 +3062,9 @@ static int D_DoomMain_Internal (void)
 		S_ParseMusInfo();
 
 		if (!batchrun) Printf ("Texman.Init: Init texture manager.\n");
-		TexMan.Init();
+		SpriteFrames.Clear();
+		TexMan.Init([]() { StartScreen->Progress(); }, CheckForHacks);
+		PatchTextures();
 		TexAnim.Init();
 		C_InitConback();
 

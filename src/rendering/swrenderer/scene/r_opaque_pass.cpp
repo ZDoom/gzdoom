@@ -37,6 +37,7 @@
 #include "engineerrors.h"
 #include "p_lnspec.h"
 #include "p_setup.h"
+#include "texturemanager.h"
 
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/plane/r_visibleplane.h"

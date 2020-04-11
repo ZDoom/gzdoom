@@ -37,6 +37,7 @@
 #include "textures.h"
 #include "v_font.h"
 #include "filesystem.h"
+#include "texturemanager.h"
 
 class FSinglePicFont : public FFont
 {

@@ -29,6 +29,7 @@
 #include "r_data/r_vanillatrans.h"
 #include "actorinlines.h"
 #include "i_time.h"
+#include "texturemanager.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_swcolormaps.h"
 #include "swrenderer/viewport/r_viewport.h"

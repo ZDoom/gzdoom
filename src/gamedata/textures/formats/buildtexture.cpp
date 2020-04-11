@@ -44,6 +44,8 @@
 #include "resourcefile.h"
 #include "image.h"
 #include "animations.h"
+#include "texturemanager.h"
+#include "r_translate.h"
 
 
 //==========================================================================

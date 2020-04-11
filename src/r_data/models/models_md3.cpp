@@ -23,6 +23,7 @@
 #include "filesystem.h"
 #include "cmdlib.h"
 #include "r_data/models/models.h"
+#include "texturemanager.h"
 
 #define MAX_QPATH 64
 

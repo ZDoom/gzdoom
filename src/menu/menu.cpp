@@ -55,6 +55,7 @@
 #include "i_system.h"
 #include "c_buttons.h"
 #include "scripting/types.h"
+#include "texturemanager.h"
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
@@ -126,6 +127,8 @@ void D_ToggleHud();
 
 #define KEY_REPEAT_DELAY	(TICRATE*5/12)
 #define KEY_REPEAT_RATE		(3)
+
+bool OkForLocalization(FTextureID texnum, const char* substitute);
 
 //============================================================================
 //
@@ -442,7 +445,7 @@ void M_SetMenu(FName menu, int param)
 							// This assumes that replacing one graphic will replace all of them.
 							// So this only checks the "New game" entry for localization capability.
 							FTextureID texid = TexMan.CheckForTexture("M_NGAME", ETextureType::MiscPatch);
-							if (!TexMan.OkForLocalization(texid, "$MNU_NEWGAME"))
+							if (!OkForLocalization(texid, "$MNU_NEWGAME"))
 							{
 								menu = NAME_MainmenuTextOnly;
 							}

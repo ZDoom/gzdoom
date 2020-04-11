@@ -56,6 +56,7 @@
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"
+#include "texturemanager.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/scene/r_portal.h"
 #include "swrenderer/scene/r_scene.h"

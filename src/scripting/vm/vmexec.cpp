@@ -38,6 +38,7 @@
 #include "stats.h"
 #include "vmintern.h"
 #include "types.h"
+#include "texturemanager.h"
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];

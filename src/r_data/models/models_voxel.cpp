@@ -33,6 +33,7 @@
 #include "g_levellocals.h"
 #include "models.h"
 #include "image.h"
+#include "texturemanager.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data

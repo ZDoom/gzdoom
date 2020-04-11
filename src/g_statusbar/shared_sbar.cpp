@@ -59,6 +59,7 @@
 #include "events.h"
 #include "g_game.h"
 #include "utf8.h"
+#include "texturemanager.h"
 
 #include "../version.h"
 

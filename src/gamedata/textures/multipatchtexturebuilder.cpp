@@ -38,22 +38,13 @@
 #include "doomtype.h"
 #include "files.h"
 #include "filesystem.h"
-
-#include "gi.h"
-#include "st_start.h"
-#include "sc_man.h"
-#include "templates.h"
-#include "r_data/r_translate.h"
+#include "engineerrors.h"
 #include "bitmap.h"
-#include "colormatcher.h"
-#include "v_palette.h"
-#include "v_video.h"
-#include "v_text.h"
-#include "cmdlib.h"
-#include "imagehelpers.h"
+#include "textures.h"
 #include "image.h"
 #include "formats/multipatchtexture.h"
-#include "engineerrors.h"
+#include "texturemanager.h"
+
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at
@@ -388,7 +379,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 		if (j + 1 == firstdup)
 		{
 			BuildTexture((const uint8_t *)maptex + offset, patchlookup.Data(), numpatches, isStrife, deflumpnum, (i == 1 && texture1) ? ETextureType::FirstDefined : ETextureType::Wall);
-			StartScreen->Progress();
+			progressFunc();
 		}
 	}
 }
@@ -774,66 +765,6 @@ void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType)
 
 //==========================================================================
 //
-// FMultiPatchTexture :: CheckForHacks
-//
-//==========================================================================
-
-void FMultipatchTextureBuilder::CheckForHacks(BuildInfo &buildinfo)
-{
-	if (buildinfo.Parts.Size() == 0)
-	{
-		return;
-	}
-
-	// Heretic sky textures are marked as only 128 pixels tall,
-	// even though they are really 200 pixels tall.
-	if (gameinfo.gametype == GAME_Heretic &&
-		buildinfo.Name.Len() == 4 &&
-		buildinfo.Name[0] == 'S' &&
-		buildinfo.Name[1] == 'K' &&
-		buildinfo.Name[2] == 'Y' &&
-		buildinfo.Name[3] >= '1' &&
-		buildinfo.Name[3] <= '3' &&
-		buildinfo.Height == 128)
-	{
-		buildinfo.Height = 200;
-		buildinfo.tex->SetSize(buildinfo.tex->Width, 200);
-		return;
-	}
-
-	// The Doom E1 sky has its patch's y offset at -8 instead of 0.
-	if (gameinfo.gametype == GAME_Doom &&
-		!(gameinfo.flags & GI_MAPxx) &&
-		buildinfo.Name.Len() == 4 &&
-		buildinfo.Parts.Size() == 1 &&
-		buildinfo.Height == 128 &&
-		buildinfo.Parts[0].OriginY == -8 &&
-		buildinfo.Name[0] == 'S' &&
-		buildinfo.Name[1] == 'K' &&
-		buildinfo.Name[2] == 'Y' &&
-		buildinfo.Name[3] == '1')
-	{
-		buildinfo.Parts[0].OriginY = 0;
-		return;
-	}
-
-	// BIGDOOR7 in Doom also has patches at y offset -4 instead of 0.
-	if (gameinfo.gametype == GAME_Doom &&
-		!(gameinfo.flags & GI_MAPxx) &&
-		buildinfo.Name.CompareNoCase("BIGDOOR7") == 0 &&
-		buildinfo.Parts.Size() == 2 &&
-		buildinfo.Height == 128 &&
-		buildinfo.Parts[0].OriginY == -4 &&
-		buildinfo.Parts[1].OriginY == -4)
-	{
-		buildinfo.Parts[0].OriginY = 0;
-		buildinfo.Parts[1].OriginY = 0;
-		return;
-	}
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -911,7 +842,7 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 		}
 	}
 
-	CheckForHacks(buildinfo);
+	checkForHacks(buildinfo);
 }
 
 void FMultipatchTextureBuilder::ResolveAllPatches()

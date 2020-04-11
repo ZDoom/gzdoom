@@ -49,6 +49,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "texturemanager.h"
 
 CVAR(Float, underwater_fade_scalar, 1.0f, CVAR_ARCHIVE) // [Nash] user-settable underwater blend intensity
 

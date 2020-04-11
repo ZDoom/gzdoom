@@ -36,7 +36,6 @@
 #include "files.h"
 #include "filesystem.h"
 #include "bitmap.h"
-#include "textures/textures.h"
 #include "imagehelpers.h"
 #include "image.h"
 

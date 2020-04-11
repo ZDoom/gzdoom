@@ -43,6 +43,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "actor.h"
+#include "texturemanager.h"
 
 
 //============================================================================

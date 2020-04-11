@@ -38,6 +38,7 @@
 #include "r_utility.h"
 #include "v_text.h"
 #include "g_levellocals.h"
+#include "texturemanager.h"
 
 //
 // sky mapping

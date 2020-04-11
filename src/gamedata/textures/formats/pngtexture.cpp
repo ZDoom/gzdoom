@@ -40,7 +40,7 @@
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"
-#include "textures.h"
+#include "printf.h"
 
 //==========================================================================
 //
@@ -557,6 +557,7 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion)
 }
 
 
+#include "textures.h"
 
 //==========================================================================
 //

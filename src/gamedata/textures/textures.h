@@ -35,15 +35,19 @@
 #ifndef __TEXTURES_H
 #define __TEXTURES_H
 
-#include "doomtype.h"
+#include "basics.h"
 #include "vectors.h"
-#include "v_palette.h"
-#include "r_data/v_colortables.h"
 #include "colormatcher.h"
 #include "r_data/renderstyle.h"
-#include "r_data/r_translate.h"
-#include "hwrenderer/textures/hw_texcontainer.h"
+#include "textureid.h"
 #include <vector>
+#include "hwrenderer/textures/hw_texcontainer.h"
+
+/*
+#include "v_palette.h"
+#include "r_data/v_colortables.h"
+#include "r_data/r_translate.h"
+*/
 
 // 15 because 0th texture is our texture
 #define MAX_CUSTOM_HW_SHADER_TEXTURES 15
@@ -134,14 +138,6 @@ public:
 	FNullTextureID() : FTextureID(0) {}
 };
 
-//
-// Animating textures and planes
-//
-// [RH] Expanded to work with a Hexen ANIMDEFS lump
-//
-
-// All FTextures present their data to the world in 8-bit format, but if
-// the source data is something else, this is it.
 enum FTextureFormat : uint32_t
 {
 	TEX_Pal,
@@ -256,6 +252,8 @@ public:
 	
 	int GetTexelWidth() { return Width; }
 	int GetTexelHeight() { return Height; }
+	int GetTexelLeftOffset(int adjusted) { return _LeftOffset[adjusted]; }
+	int GetTexelTopOffset(int adjusted) { return _TopOffset[adjusted]; }
 
 	
 	bool isValid() const { return UseType != ETextureType::Null; }
@@ -308,6 +306,13 @@ public:
 		_LeftOffset[0] = BaseTexture->_LeftOffset[0];
 		_LeftOffset[1] = BaseTexture->_LeftOffset[1];
 		Scale = BaseTexture->Scale;
+	}
+
+	// This is only used for the null texture and for Heretic's skies.
+	void SetSize(int w, int h)
+	{
+		Width = w;
+		Height = h;
 	}
 
 
@@ -388,13 +393,6 @@ protected:
 	float shaderspeed = 1.f;
 	int shaderindex = 0;
 
-	// This is only used for the null texture and for Heretic's skies.
-	void SetSize(int w, int h)
-	{
-		Width = w;
-		Height = h;
-	}
-
 	int GetScaledWidth () { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
 	int GetScaledHeight () { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
 	double GetScaledWidthDouble () { return Width / Scale.X; }
@@ -432,6 +430,14 @@ protected:
 public:
 	FTextureBuffer CreateTexBuffer(int translation, int flags = 0);
 	bool GetTranslucency();
+	FMaterial* GetMaterial(int num)
+	{
+		return Material[num];
+	}
+	FTexture* GetPalVersion()
+	{
+		return PalVersion;
+	}
 
 private:
 	int CheckDDPK3();
@@ -446,195 +452,17 @@ public:
 	void CheckTrans(unsigned char * buffer, int size, int trans);
 	bool ProcessData(unsigned char * buffer, int w, int h, bool ispatch);
 	int CheckRealHeight();
-	void SetSpriteAdjust();
 
 	friend class FTextureManager;
 };
 
 
-class FxAddSub;
-// Texture manager
-class FTextureManager
-{
-	friend class FxAddSub;	// needs access to do a bounds check on the texture ID.
-public:
-	FTextureManager ();
-	~FTextureManager ();
-	
-private:
-	int ResolveLocalizedTexture(int texnum);
-	int PalCheck(int tex);
-
-	FTexture *InternalGetTexture(int texnum, bool animate, bool localize, bool palettesubst)
-	{
-		if ((unsigned)texnum >= Textures.Size()) return nullptr;
-		if (animate) texnum = Translation[texnum];
-		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
-		if (palettesubst) texnum = PalCheck(texnum);
-		return Textures[texnum].Texture;
-	}
-public:
-	// This only gets used in UI code so we do not need PALVERS handling.
-	FTexture *GetTextureByName(const char *name, bool animate = false)
-	{
-		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
-		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
-	}
-	
-	FTexture *GetTexture(FTextureID texnum, bool animate = false)
-	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
-	}
-	
-	// This is the only access function that should be used inside the software renderer.
-	FTexture *GetPalettedTexture(FTextureID texnum, bool animate)
-	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true, true);
-	}
-	
-	FTexture *ByIndex(int i, bool animate = false)
-	{
-		return InternalGetTexture(i, animate, true, false);
-	}
-	
-	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
-	bool OkForLocalization(FTextureID texnum, const char *substitute);
-
-	void FlushAll();
-
-
-	enum
-	{
-		TEXMAN_TryAny = 1,
-		TEXMAN_Overridable = 2,
-		TEXMAN_ReturnFirst = 4,
-		TEXMAN_AllowSkins = 8,
-		TEXMAN_ShortNameOnly = 16,
-		TEXMAN_DontCreate = 32,
-		TEXMAN_Localize = 64
-	};
-
-	enum
-	{
-		HIT_Wall = 1,
-		HIT_Flat = 2,
-		HIT_Sky = 4,
-		HIT_Sprite = 8,
-
-		HIT_Columnmode = HIT_Wall|HIT_Sky|HIT_Sprite
-	};
-
-	FTextureID CheckForTexture (const char *name, ETextureType usetype, BITFIELD flags=TEXMAN_TryAny);
-	FTextureID GetTextureID (const char *name, ETextureType usetype, BITFIELD flags=0);
-	int ListTextures (const char *name, TArray<FTextureID> &list, bool listall = false);
-
-	void AddGroup(int wadnum, int ns, ETextureType usetype);
-	void AddPatches (int lumpnum);
-	void AddHiresTextures (int wadnum);
-	void LoadTextureDefs(int wadnum, const char *lumpname, FMultipatchTextureBuilder &build);
-	void ParseColorization(FScanner& sc);
-	void ParseTextureDef(int remapLump, FMultipatchTextureBuilder &build);
-	void SortTexturesByType(int start, int end);
-	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
-	void AddLocalizedVariants();
-
-	FTextureID CreateTexture (int lumpnum, ETextureType usetype=ETextureType::Any);	// Also calls AddTexture
-	FTextureID AddTexture (FTexture *texture);
-	FTextureID GetDefaultTexture() const { return DefaultTexture; }
-
-	void LoadTextureX(int wadnum, FMultipatchTextureBuilder &build);
-	void AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build);
-	void Init();
-	void DeleteAll();
-	void SpriteAdjustChanged();
-
-	void ReplaceTexture (FTextureID picnum, FTexture *newtexture, bool free);
-
-	int NumTextures () const { return (int)Textures.Size(); }
-
-	int GuesstimateNumTextures ();
-
-	TextureManipulation* GetTextureManipulation(FName name)
-	{
-		return tmanips.CheckKey(name);
-	}
-	void InsertTextureManipulation(FName cname, TextureManipulation tm)
-	{
-		tmanips.Insert(cname, tm);
-	}
-	void RemoveTextureManipulation(FName cname)
-	{
-		tmanips.Remove(cname);
-	}
-
-private:
-
-	// texture counting
-	int CountTexturesX ();
-	int CountLumpTextures (int lumpnum);
-	void AdjustSpriteOffsets();
-
-	// Build tiles
-	//int CountBuildTiles ();
-
-public:
-
-	TArray<uint8_t>& GetNewBuildTileData()
-	{
-		BuildTileData.Reserve(1);
-		return BuildTileData.Last();
-	}
-
-	FTexture* Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
-	void SetTranslation(FTextureID fromtexnum, FTextureID totexnum);
-
-private:
-
-	void InitPalettedVersions();
-	
-	// Switches
-
-	struct TextureHash
-	{
-		FTexture *Texture;
-		int HashNext;
-		bool HasLocalization;
-	};
-	enum { HASH_END = -1, HASH_SIZE = 1027 };
-	TArray<TextureHash> Textures;
-	TMap<uint64_t, int> LocalizedTextures;
-	int HashFirst[HASH_SIZE];
-	FTextureID DefaultTexture;
-	TArray<int> FirstTextureForFile;
-	TArray<TArray<uint8_t> > BuildTileData;
-	TArray<int> Translation;
-
-	TMap<FName, TextureManipulation> tmanips;
-
-public:
-
-	short sintable[2048];	// for texture warping
-	enum
-	{
-		SINMASK = 2047
-	};
-
-	FTextureID glLight;
-	FTextureID glPart2;
-	FTextureID glPart;
-	FTextureID mirrorTexture;
-
-};
-
-
 // A texture that can be drawn to.
-class DCanvas;
-class AActor;
 
 class FCanvasTexture : public FTexture
 {
 public:
-	FCanvasTexture(const char *name, int width, int height)
+	FCanvasTexture(const char* name, int width, int height)
 	{
 		Name = name;
 		Width = width;
@@ -659,6 +487,7 @@ public:
 
 	friend struct FCanvasTextureInfo;
 };
+
 
 // A wrapper around a hardware texture, to allow using it in the 2D drawing interface.
 class FWrapperTexture : public FTexture
@@ -694,9 +523,6 @@ public:
 
 };
 
-
-extern FTextureManager TexMan;
-
 struct FTexCoordInfo
 {
 	int mRenderWidth;
@@ -713,7 +539,6 @@ struct FTexCoordInfo
 	float TextureAdjustWidth() const;
 	void GetFromTexture(FTexture *tex, float x, float y, bool forceworldpanning);
 };
-
 
 
 #endif

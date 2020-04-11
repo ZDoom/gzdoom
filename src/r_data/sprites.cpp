@@ -33,6 +33,7 @@
 #include "r_data/sprites.h"
 #include "r_data/voxels.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 void InitModels();
 

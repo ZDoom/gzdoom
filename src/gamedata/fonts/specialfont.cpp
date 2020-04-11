@@ -37,6 +37,7 @@
 #include "textures.h"
 #include "image.h"
 #include "textures/formats/fontchars.h"
+#include "texturemanager.h"
 
 #include "fontinternals.h"
 

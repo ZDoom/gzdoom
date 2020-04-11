@@ -51,6 +51,7 @@
 #include "g_levellocals.h"
 #include "g_game.h"
 #include "sbar.h"
+#include "texturemanager.h"
 
 // MACROS ------------------------------------------------------------------
 

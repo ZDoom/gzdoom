@@ -35,6 +35,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "image.h"
 #include "engineerrors.h"
+#include "texturemanager.h"
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;

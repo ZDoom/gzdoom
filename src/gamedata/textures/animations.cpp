@@ -42,6 +42,7 @@
 #include "filesystem.h"
 #include "serializer.h"
 #include "animations.h"
+#include "texturemanager.h"
 
 // MACROS ------------------------------------------------------------------
 

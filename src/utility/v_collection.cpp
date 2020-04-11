@@ -36,6 +36,7 @@
 #include "v_font.h"
 #include "v_video.h"
 #include "filesystem.h"
+#include "texturemanager.h"
 
 FImageCollection::FImageCollection ()
 {

@@ -44,6 +44,7 @@
 #include "doomdata.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 EXTERN_CVAR (Bool, cl_spreaddecals)
 EXTERN_CVAR (Int, cl_maxdecals)

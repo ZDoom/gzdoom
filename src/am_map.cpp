@@ -67,6 +67,7 @@
 #include "earcut.hpp"
 #include "c_buttons.h"
 #include "d_buttons.h"
+#include "texturemanager.h"
 
 
 //=============================================================================

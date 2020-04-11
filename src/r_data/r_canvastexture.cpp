@@ -38,6 +38,7 @@
 #include "r_canvastexture.h"
 #include "g_levellocals.h"
 #include "serializer.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //

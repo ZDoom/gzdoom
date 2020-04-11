@@ -80,6 +80,7 @@
 #include "hwrenderer/data/flatvertices.h"
 #include "xlat/xlat.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 enum
 {

@@ -38,7 +38,6 @@
 #include "filesystem.h"
 #include "templates.h"
 #include "bitmap.h"
-#include "v_video.h"
 #include "image.h"
 #include "textures.h"
 
@@ -91,8 +90,8 @@ TArray<uint8_t> FImageTexture::Get8BitPixels(bool alpha)
 }	
 
 
-FTexture* CreateImageTexture(FImageSource* img) noexcept
+FTexture* CreateImageTexture(FImageSource* img, const char *name) noexcept
 {
-	return new FImageTexture(img);
+	return new FImageTexture(img, name);
 }
 

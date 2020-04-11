@@ -41,6 +41,7 @@
 #include "sc_man.h"
 #include "gi.h"
 #include "animations.h"
+#include "texturemanager.h"
 
 
 static int SortSwitchDefs (const void *a, const void *b)

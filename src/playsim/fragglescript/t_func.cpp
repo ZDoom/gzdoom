@@ -52,6 +52,7 @@
 #include "vm.h"
 #include "a_lights.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 static FRandom pr_script("FScript");
 

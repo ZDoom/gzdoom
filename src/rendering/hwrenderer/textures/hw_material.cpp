@@ -29,6 +29,7 @@
 #include "v_video.h"
 #include "hw_ihwtexture.h"
 #include "hw_material.h"
+#include "texturemanager.h"
 
 //===========================================================================
 // 
@@ -492,4 +493,55 @@ again:
 FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate, bool create)
 {
 	return ValidateTexture(TexMan.GetTexture(no, translate), expand, create);
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// Make sprite offset adjustment user-configurable per renderer.
+//
+//-----------------------------------------------------------------------------
+
+extern int r_spriteadjustSW, r_spriteadjustHW;
+
+CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	r_spriteadjustHW = !!(self & 2);
+	r_spriteadjustSW = !!(self & 1);
+	for (int i = 0; i < TexMan.NumTextures(); i++)
+	{
+		auto tex = TexMan.GetTexture(FSetTextureID(i));
+		if (tex->GetTexelLeftOffset(0) != tex->GetTexelLeftOffset(1) || tex->GetTexelTopOffset(0) != tex->GetTexelTopOffset(1))
+		{
+			for (int i = 0; i < 2; i++)
+			{
+				auto mat = tex->GetMaterial(i);
+				if (mat != nullptr) mat->SetSpriteRect();
+			}
+		}
+
+	}
+}
+
+//==========================================================================
+//
+// this must be copied back to textures.cpp later.
+//
+//==========================================================================
+
+FWrapperTexture::FWrapperTexture(int w, int h, int bits)
+{
+	Width = w;
+	Height = h;
+	Format = bits;
+	UseType = ETextureType::SWCanvas;
+	bNoCompress = true;
+	auto hwtex = screen->CreateHardwareTexture();
+	// todo: Initialize here.
+	SystemTextures.AddHardwareTexture(0, false, hwtex);
+}
+
+void DeleteMaterial(FMaterial* mat)
+{
+	delete mat;
 }

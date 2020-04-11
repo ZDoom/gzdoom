@@ -42,6 +42,7 @@
 #include "r_data/models/models_ue1.h"
 #include "r_data/models/models_obj.h"
 #include "i_time.h"
+#include "texturemanager.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data

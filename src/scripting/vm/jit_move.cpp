@@ -3,6 +3,7 @@
 #include "v_video.h"
 #include "s_sound.h"
 #include "r_state.h"
+#include "texturemanager.h"
 
 void JitCompiler::EmitMOVE()
 {

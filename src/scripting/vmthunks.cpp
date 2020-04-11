@@ -57,6 +57,7 @@
 #include "c_bind.h"
 #include "c_dispatch.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -1912,6 +1913,12 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 	return 0;
 }
 
+//=====================================================================================
+//
+// textures
+//
+//=====================================================================================
+
 void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
 
 DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
@@ -1923,6 +1930,177 @@ DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
 	SetCameraToTexture(viewpoint, texturename, fov);
 	return 0;
 }
+
+static int CheckForTexture(const FString& name, int type, int flags)
+{
+	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(type);
+	PARAM_INT(flags);
+	ACTION_RETURN_INT(CheckForTexture(name, type, flags));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetName)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan.ByIndex(texid);
+	FString retval;
+
+	if (tex != nullptr)
+	{
+		if (tex->GetName().IsNotEmpty()) retval = tex->GetName();
+		else
+		{
+			// Textures for full path names do not have their own name, they merely link to the source lump.
+			auto lump = tex->GetSourceLump();
+			if (fileSystem.GetLinkedTexture(lump) == tex)
+				retval = fileSystem.GetFileFullName(lump);
+		}
+	}
+	ACTION_RETURN_STRING(retval);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static int GetTextureSize(int texid, int* py)
+{
+	auto tex = TexMan.ByIndex(texid);
+	int x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetDisplayWidth();
+		y = tex->GetDisplayHeight();
+	}
+	else x = y = -1;
+	if (py) *py = y;
+	return x;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	int x, y;
+	x = GetTextureSize(texid, &y);
+	if (numret > 0) ret[0].SetInt(x);
+	if (numret > 1) ret[1].SetInt(y);
+	return MIN(numret, 2);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+static void GetScaledSize(int texid, DVector2* pvec)
+{
+	auto tex = TexMan.ByIndex(texid);
+	double x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetDisplayWidthDouble();
+		y = tex->GetDisplayHeightDouble();
+	}
+	else x = y = -1;
+	if (pvec)
+	{
+		pvec->X = x;
+		pvec->Y = y;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledSize, GetScaledSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	DVector2 vec;
+	GetScaledSize(texid, &vec);
+	ACTION_RETURN_VEC2(vec);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+static void GetScaledOffset(int texid, DVector2* pvec)
+{
+	auto tex = TexMan.ByIndex(texid);
+	double x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetDisplayLeftOffsetDouble();
+		y = tex->GetDisplayTopOffsetDouble();
+	}
+	else x = y = -1;
+	if (pvec)
+	{
+		pvec->X = x;
+		pvec->Y = y;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledOffset, GetScaledOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	DVector2 vec;
+	GetScaledOffset(texid, &vec);
+	ACTION_RETURN_VEC2(vec);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static int CheckRealHeight(int texid)
+{
+	auto tex = TexMan.ByIndex(texid);
+	if (tex != nullptr) return tex->CheckRealHeight();
+	else return -1;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckRealHeight, CheckRealHeight)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	ACTION_RETURN_INT(CheckRealHeight(texid));
+}
+
+bool OkForLocalization(FTextureID texnum, const char* substitute);
+
+static int OkForLocalization_(int index, const FString& substitute)
+{
+	return OkForLocalization(FSetTextureID(index), substitute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization_)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(name);
+	PARAM_STRING(subst)
+	ACTION_RETURN_INT(OkForLocalization_(name, subst));
+}
+
+
 
 
 //=====================================================================================
@@ -3445,7 +3623,6 @@ DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
 	PARAM_BOOL(force);
 	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
 }
-
 
 
 //==========================================================================

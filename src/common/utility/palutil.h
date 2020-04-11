@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "zstring.h"
 #include "palentry.h"
 
 struct FScriptPosition;

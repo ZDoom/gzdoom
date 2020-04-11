@@ -51,6 +51,7 @@
 #include "vm.h"
 #include "xlat/xlat.h"
 #include "maploader.h"
+#include "texturemanager.h"
 
 //===========================================================================
 //

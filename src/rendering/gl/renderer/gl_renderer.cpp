@@ -59,6 +59,7 @@
 #include "r_data/models/models.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/system/gl_buffers.h"
+#include "texturemanager.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)

@@ -91,6 +91,7 @@
 #include "i_time.h"
 #include "p_maputl.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl, FLevelLocals *Level);

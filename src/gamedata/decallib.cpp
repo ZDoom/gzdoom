@@ -47,6 +47,7 @@
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "a_decalfx.h"
+#include "texturemanager.h"
 
 FDecalLib DecalLibrary;
 

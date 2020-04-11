@@ -77,6 +77,7 @@
 #include "fragglescript/t_script.h"
 #include "s_music.h"
 #include "animations.h"
+#include "texturemanager.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 

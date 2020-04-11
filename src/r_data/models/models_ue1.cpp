@@ -23,6 +23,7 @@
 #include "filesystem.h"
 #include "cmdlib.h"
 #include "r_data/models/models_ue1.h"
+#include "texturemanager.h"
 
 float unpackuvert( uint32_t n, int c )
 {

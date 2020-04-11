@@ -25,6 +25,7 @@
 #include "textures.h"
 #include "skyboxtexture.h"
 #include "bitmap.h"
+#include "texturemanager.h"
 
 
 

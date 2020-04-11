@@ -52,6 +52,7 @@
 #include "g_levellocals.h"
 #include "image.h"
 #include "imagehelpers.h"
+#include "texturemanager.h"
 
 // [BB] Use ZDoom's freelook limit for the sotfware renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.
@@ -95,7 +96,7 @@ void FSoftwareRenderer::PreparePrecache(FTexture *ttex, int cache)
 		}
 		else if (cache != 0)
 		{
-			FImageSource::RegisterForPrecache(ttex->GetImage());
+			FImageSource::RegisterForPrecache(ttex->GetImage(), V_IsTrueColor());
 		}
 	}
 }

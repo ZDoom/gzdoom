@@ -35,6 +35,7 @@
 #include "cmdlib.h"
 #include "d_net.h"
 #include "g_level.h"
+#include "texturemanager.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "r_skyplane.h"
 #include "swrenderer/scene/r_3dfloors.h"

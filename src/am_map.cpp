@@ -65,6 +65,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "earcut.hpp"
+#include "c_buttons.h"
 
 
 //=============================================================================

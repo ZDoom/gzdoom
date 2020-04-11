@@ -81,6 +81,7 @@
 #include "p_conversation.h"
 #include "p_effect.h"
 #include "stringtable.h"
+#include "c_buttons.h"
 
 #include "gi.h"
 

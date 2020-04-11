@@ -104,6 +104,7 @@
 #include "swrenderer/r_swcolormaps.h"
 #include "findfile.h"
 #include "md5.h"
+#include "c_buttons.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)

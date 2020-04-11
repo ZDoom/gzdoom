@@ -32,6 +32,7 @@
 #include "v_video.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "c_buttons.h"
 
 EXTERN_CVAR(Float, transsouls)
 

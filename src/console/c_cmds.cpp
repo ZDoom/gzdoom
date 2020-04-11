@@ -360,7 +360,8 @@ CCMD (changemap)
 		return;
 	}
 
-	if (!players[who->player - players].settings_controller && netgame)
+	AActor* user = (AActor*)who;
+	if (!players[user->player - players].settings_controller && netgame)
 	{
 		Printf ("Only setting controllers can change the map.\n");
 		return;

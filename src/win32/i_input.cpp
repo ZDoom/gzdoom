@@ -88,6 +88,7 @@
 #include "engineerrors.h"
 #include "i_system.h"
 #include "g_levellocals.h"
+#include "c_buttons.h"
 
 int32_t refreshfreq = -1;
 

@@ -53,6 +53,8 @@ struct FExecList
 	void AddPullins(TArray<FString> &wads) const;
 };
 
+extern bool ParsingKeyConf, UnsafeExecutionContext;
+
 
 extern bool CheckCheatmode (bool printmsg = true);
 
@@ -84,7 +86,7 @@ void C_ClearAliases ();
 FString BuildString (int argc, FString *argv);
 
 class AActor;
-typedef void (*CCmdRun) (FCommandLine &argv, AActor *instigator, int key);
+typedef void (*CCmdRun) (FCommandLine &argv, void *instigator, int key);
 
 class FConsoleCommand
 {
@@ -94,7 +96,7 @@ public:
 	virtual bool IsAlias ();
 	void PrintCommand();
 
-	virtual void Run (FCommandLine &args, AActor *instigator, int key);
+	virtual void Run (FCommandLine &args, void *instigator, int key);
 	static FConsoleCommand* FindByName (const char* name);
 
 	FConsoleCommand *m_Next, **m_Prev;
@@ -111,9 +113,9 @@ protected:
 };
 
 #define CCMD(n) \
-	void Cmd_##n (FCommandLine &, AActor *, int key); \
+	void Cmd_##n (FCommandLine &, void *, int key); \
 	FConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
-	void Cmd_##n (FCommandLine &argv, AActor *who, int key)
+	void Cmd_##n (FCommandLine &argv, void *who, int key)
 
 class FUnsafeConsoleCommand : public FConsoleCommand
 {
@@ -123,13 +125,13 @@ public:
 	{
 	}
 
-	virtual void Run (FCommandLine &args, AActor *instigator, int key) override;
+	virtual void Run (FCommandLine &args, void *instigator, int key) override;
 };
 
 #define UNSAFE_CCMD(n) \
-	static void Cmd_##n (FCommandLine &, AActor *, int key); \
+	static void Cmd_##n (FCommandLine &, void *, int key); \
 	static FUnsafeConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
-	void Cmd_##n (FCommandLine &argv, AActor *who, int key)
+	void Cmd_##n (FCommandLine &argv, void *who, int key)
 
 const int KEY_DBLCLICKED = 0x8000;
 
@@ -138,7 +140,7 @@ class FConsoleAlias : public FConsoleCommand
 public:
 	FConsoleAlias (const char *name, const char *command, bool noSave);
 	~FConsoleAlias ();
-	void Run (FCommandLine &args, AActor *instigator, int key);
+	void Run (FCommandLine &args, void *instigator, int key);
 	bool IsAlias ();
 	void PrintAlias ();
 	void Archive (FConfigFile *f);
@@ -159,39 +161,9 @@ public:
 	{
 	}
 
-	virtual void Run (FCommandLine &args, AActor *instigator, int key) override;
+	virtual void Run (FCommandLine &args, void *instigator, int key) override;
 };
 
-// Actions
-struct FButtonStatus
-{
-	enum { MAX_KEYS = 6 };	// Maximum number of keys that can press this button
-
-	uint16_t Keys[MAX_KEYS];
-	uint8_t bDown;				// Button is down right now
-	uint8_t bWentDown;			// Button went down this tic
-	uint8_t bWentUp;			// Button went up this tic
-	uint8_t padTo16Bytes;
-
-	bool PressKey (int keynum);		// Returns true if this key caused the button to be pressed.
-	bool ReleaseKey (int keynum);	// Returns true if this key is no longer pressed.
-	void ResetTriggers () { bWentDown = bWentUp = false; }
-	void Reset () { bDown = bWentDown = bWentUp = false; }
-};
-
-extern FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
-	Button_Attack, Button_Speed, Button_MoveRight, Button_MoveLeft,
-	Button_Strafe, Button_LookDown, Button_LookUp, Button_Back,
-	Button_Forward, Button_Right, Button_Left, Button_MoveDown,
-	Button_MoveUp, Button_Jump, Button_ShowScores, Button_Crouch,
-	Button_Zoom, Button_Reload,
-	Button_User1, Button_User2, Button_User3, Button_User4,
-	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
-	Button_AM_ZoomIn, Button_AM_ZoomOut;
-extern bool ParsingKeyConf, UnsafeExecutionContext;
-
-void ResetButtonTriggers ();	// Call ResetTriggers for all buttons
-void ResetButtonStates ();		// Same as above, but also clear bDown
 
 #include "superfasthash.h"
 

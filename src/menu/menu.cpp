@@ -53,6 +53,7 @@
 #include "events.h"
 #include "v_video.h"
 #include "i_system.h"
+#include "c_buttons.h"
 #include "scripting/types.h"
 
 int DMenu::InMenu;

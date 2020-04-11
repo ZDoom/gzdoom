@@ -79,6 +79,7 @@
 #include "g_hub.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "c_buttons.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -471,7 +472,7 @@ CCMD (use)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemUse = who->FindInventory(argv[1]);
+		SendItemUse = ((AActor*)who)->FindInventory(argv[1]);
 	}
 }
 
@@ -494,7 +495,7 @@ CCMD (drop)
 {
 	if (argv.argc() > 1 && who != NULL)
 	{
-		SendItemDrop = who->FindInventory(argv[1]);
+		SendItemDrop = ((AActor*)who)->FindInventory(argv[1]);
 		SendItemDropAmount = argv.argc() > 2 ? atoi(argv[2]) : -1;
 	}
 }
@@ -502,7 +503,7 @@ CCMD (drop)
 CCMD (useflechette)
 { 
 	if (who == nullptr) return;
-	IFVIRTUALPTRNAME(who, NAME_PlayerPawn, GetFlechetteItem)
+	IFVIRTUALPTRNAME(((AActor*)who), NAME_PlayerPawn, GetFlechetteItem)
 	{
 		VMValue params[] = { who };
 		AActor *cls;
@@ -515,15 +516,16 @@ CCMD (useflechette)
 
 CCMD (select)
 {
+	auto user = ((AActor*)who);
 	if (argv.argc() > 1)
 	{
-		auto item = who->FindInventory(argv[1]);
+		auto item = user->FindInventory(argv[1]);
 		if (item != NULL)
 		{
-			who->PointerVar<AActor>(NAME_InvSel) = item;
+			user->PointerVar<AActor>(NAME_InvSel) = item;
 		}
 	}
-	who->player->inventorytics = 5*TICRATE;
+	user->player->inventorytics = 5*TICRATE;
 }
 
 static inline int joyint(double val)

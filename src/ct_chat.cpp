@@ -42,6 +42,7 @@
 #include "utf8.h"
 #include "gstrings.h"
 #include "vm.h"
+#include "c_buttons.h"
 
 enum
 {

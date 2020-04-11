@@ -1,5 +1,5 @@
 #pragma once
-#include "textures/textures.h"
+#include "textures.h"
 #include "v_video.h"
 #include "g_levellocals.h"
 

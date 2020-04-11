@@ -25,7 +25,7 @@
 **
 */
 
-#include "hwrenderer/textures/hw_ihwtexture.h"
+#include "hw_ihwtexture.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "swrenderer/r_renderer.h"
 #include "r_swscene.h"

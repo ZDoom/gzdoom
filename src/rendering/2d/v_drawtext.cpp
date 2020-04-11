@@ -44,7 +44,7 @@
 #include "v_video.h"
 #include "filesystem.h"
 #include "image.h"
-#include "textures/formats/multipatchtexture.h"
+#include "multipatchtexture.h"
 
 #include "gstrings.h"
 #include "vm.h"

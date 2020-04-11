@@ -40,7 +40,7 @@
 #include "cmdlib.h"
 #include "colormatcher.h"
 #include "bitmap.h"
-#include "textures/textures.h"
+#include "textures.h"
 #include "resourcefile.h"
 #include "image.h"
 #include "animations.h"

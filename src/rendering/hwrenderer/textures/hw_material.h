@@ -3,7 +3,7 @@
 #define __GL_MATERIAL_H
 
 #include "m_fixed.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 #include "r_defs.h"
 

@@ -8,7 +8,7 @@
 #define DIRECT_PALETTE -2
 
 #include "tarray.h"
-#include "hwrenderer/textures/hw_ihwtexture.h"
+#include "hw_ihwtexture.h"
 #include "volk/volk.h"
 #include "vk_imagetransition.h"
 

@@ -529,17 +529,17 @@ if( HAVE_MMX )
 	add_definitions( -DHAVE_MMX=1 )
 
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES}
-		gamedata/textures/hires/hqnx_asm/hq2x_asm.cpp
-		gamedata/textures/hires/hqnx_asm/hq3x_asm.cpp
-		gamedata/textures/hires/hqnx_asm/hq4x_asm.cpp
-		gamedata/textures/hires/hqnx_asm/hqnx_asm_Image.cpp)
+		common/textures/hires/hqnx_asm/hq2x_asm.cpp
+		common/textures/hires/hqnx_asm/hq3x_asm.cpp
+		common/textures/hires/hqnx_asm/hq4x_asm.cpp
+		common/textures/hires/hqnx_asm/hqnx_asm_Image.cpp)
 
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set_source_files_properties(
-			gamedata/textures/hires/hqnx_asm/hq2x_asm.cpp
-			gamedata/textures/hires/hqnx_asm/hq3x_asm.cpp
-			gamedata/textures/hires/hqnx_asm/hq4x_asm.cpp
-			gamedata/textures/hires/hqresize.cpp
+			common/textures/hires/hqnx_asm/hq2x_asm.cpp
+			common/textures/hires/hqnx_asm/hq3x_asm.cpp
+			common/textures/hires/hqnx_asm/hq4x_asm.cpp
+			common/textures/hires/hqresize.cpp
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
@@ -593,10 +593,6 @@ file( GLOB HEADER_FILES
 	gamedata/*.h
 	gamedata/resourcefiles/*.h
 	gamedata/fonts/*.h
-	gamedata/textures/*.h
-	gamedata/textures/hires/hqnx/*.h
-	gamedata/textures/hires/hqnx_asm/*.h
-	gamedata/textures/hires/xbr/*.h
 	gamedata/xlat/*.h
 	intermission/*.h
 	maploader/*.h
@@ -616,6 +612,9 @@ file( GLOB HEADER_FILES
 	common/utility/*.h
 	common/engine/*.h
 	common/filesystem/*.h
+	common/textures/hires/hqnx/*.h
+	common/textures/hires/hqnx_asm/*.h
+	common/textures/hires/xbr/*.h
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
 	common/thirdparty/math./*h
@@ -758,12 +757,12 @@ set( FASTMATH_SOURCES
 	rendering/swrenderer/r_all.cpp
 	rendering/swrenderer/r_swscene.cpp
 	rendering/polyrenderer/poly_all.cpp
-	gamedata/textures/hires/hqnx/init.cpp
-	gamedata/textures/hires/hqnx/hq2x.cpp
-	gamedata/textures/hires/hqnx/hq3x.cpp
-	gamedata/textures/hires/hqnx/hq4x.cpp
-	gamedata/textures/hires/xbr/xbrz.cpp
-	gamedata/textures/hires/xbr/xbrz_old.cpp
+	common/textures/hires/hqnx/init.cpp
+	common/textures/hires/hqnx/hq2x.cpp
+	common/textures/hires/hqnx/hq3x.cpp
+	common/textures/hires/hqnx/hq4x.cpp
+	common/textures/hires/xbr/xbrz.cpp
+	common/textures/hires/xbr/xbrz_old.cpp
 	rendering/gl_load/gl_load.c
 	rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
@@ -1004,34 +1003,7 @@ set (PCH_SOURCES
 	menu/resolutionmenu.cpp
 	gamedata/textures/animations.cpp
 	gamedata/textures/anim_switches.cpp
-	gamedata/textures/bitmap.cpp
-	gamedata/textures/texture.cpp
-	gamedata/textures/image.cpp
-	gamedata/textures/imagetexture.cpp
-	gamedata/textures/texturemanager.cpp
-	gamedata/textures/multipatchtexturebuilder.cpp
-	gamedata/textures/skyboxtexture.cpp
 	gamedata/textures/buildloader.cpp
-	gamedata/textures/formats/automaptexture.cpp
-	gamedata/textures/formats/brightmaptexture.cpp
-	gamedata/textures/formats/buildtexture.cpp
-	gamedata/textures/formats/canvastexture.cpp
-	gamedata/textures/formats/ddstexture.cpp
-	gamedata/textures/formats/flattexture.cpp
-	gamedata/textures/formats/fontchars.cpp
-	gamedata/textures/formats/imgztexture.cpp
-	gamedata/textures/formats/jpegtexture.cpp
-	gamedata/textures/formats/md5check.cpp
-	gamedata/textures/formats/multipatchtexture.cpp
-	gamedata/textures/formats/patchtexture.cpp
-	gamedata/textures/formats/pcxtexture.cpp
-	gamedata/textures/formats/pngtexture.cpp
-	gamedata/textures/formats/rawpagetexture.cpp
-	gamedata/textures/formats/emptytexture.cpp
-	gamedata/textures/formats/shadertexture.cpp
-	gamedata/textures/formats/tgatexture.cpp
-	gamedata/textures/formats/stbtexture.cpp
-	gamedata/textures/hires/hqresize.cpp
 	gamedata/fonts/singlelumpfont.cpp
 	gamedata/fonts/singlepicfont.cpp
 	gamedata/fonts/specialfont.cpp
@@ -1107,7 +1079,35 @@ set (PCH_SOURCES
 	common/audio/music/i_soundfont.cpp
 	common/audio/music/music_config.cpp
 	common/thirdparty/sfmt/SFMT.cpp
+	common/textures/hw_ihwtexture.cpp
+	common/textures/bitmap.cpp
 	common/textures/m_png.cpp
+	common/textures/texture.cpp
+	common/textures/image.cpp
+	common/textures/imagetexture.cpp
+	common/textures/texturemanager.cpp
+	common/textures/multipatchtexturebuilder.cpp
+	common/textures/skyboxtexture.cpp
+	common/textures/formats/automaptexture.cpp
+	common/textures/formats/brightmaptexture.cpp
+	common/textures/formats/buildtexture.cpp
+	common/textures/formats/canvastexture.cpp
+	common/textures/formats/ddstexture.cpp
+	common/textures/formats/flattexture.cpp
+	common/textures/formats/fontchars.cpp
+	common/textures/formats/imgztexture.cpp
+	common/textures/formats/jpegtexture.cpp
+	common/textures/formats/md5check.cpp
+	common/textures/formats/multipatchtexture.cpp
+	common/textures/formats/patchtexture.cpp
+	common/textures/formats/pcxtexture.cpp
+	common/textures/formats/pngtexture.cpp
+	common/textures/formats/rawpagetexture.cpp
+	common/textures/formats/emptytexture.cpp
+	common/textures/formats/shadertexture.cpp
+	common/textures/formats/tgatexture.cpp
+	common/textures/formats/stbtexture.cpp
+	common/textures/hires/hqresize.cpp
 	common/console/c_commandline.cpp
 	common/console/c_buttons.cpp
 	common/console/c_bind.cpp
@@ -1233,6 +1233,8 @@ include_directories( .
 	common/audio/sound
 	common/audio/music
 	common/thirdparty
+	common/textures/formats
+	common/textures/hires
 	common/filesystem
 	common/utility
 	common/console
@@ -1361,12 +1363,6 @@ install(TARGETS zdoom
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
 source_group("Game Data\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/fonts/.+")
-source_group("Game Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/.+")
-source_group("Game Data\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/.+")
-source_group("Game Data\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/hqnx/.+")
-source_group("Game Data\\Textures\\Hires\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/hqnx_asm/.+")
-source_group("Game Data\\Textures\\Hires\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/hires/xbr/.+")
-source_group("Game Data\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/formats/.+")
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Map Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/maploader/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
@@ -1440,6 +1436,11 @@ source_group("Common\\Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/
 source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/utility/.+")
 source_group("Common\\Engine" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/engine/.+")
 source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")
+source_group("Common\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/.+")
+source_group("Common\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/hqnx/.+")
+source_group("Common\\Textures\\Hires\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/hqnx_asm/.+")
+source_group("Common\\Textures\\Hires\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/xbr/.+")
+source_group("Common\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/formats/.+")
 source_group("Common\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/.+")
 source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/math/.+")
 source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")

@@ -4,7 +4,7 @@
 #include "doomdef.h"
 #include "dobject.h"
 #include "m_fixed.h"
-#include "textures/textures.h"
+#include "textures.h"
 #include "s_sound.h"
 #include "v_font.h"
 #include "g_game.h"

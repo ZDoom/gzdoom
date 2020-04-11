@@ -62,7 +62,7 @@
 #include "r_sky.h"
 #include "cmdlib.h"
 
-#include "textures/skyboxtexture.h"
+#include "skyboxtexture.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hw_skydome.h"
 #include "hw_renderstate.h"

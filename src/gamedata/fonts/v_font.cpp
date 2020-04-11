@@ -54,7 +54,7 @@
 #include "vm.h"
 #include "image.h"
 #include "utf8.h"
-#include "textures/formats/fontchars.h"
+#include "fontchars.h"
 #include "texturemanager.h"
 
 #include "fontinternals.h"

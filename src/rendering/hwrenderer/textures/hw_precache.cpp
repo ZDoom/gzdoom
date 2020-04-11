@@ -31,7 +31,7 @@
 #include "r_state.h"
 #include "actor.h"
 #include "r_data/models/models.h"
-#include "textures/skyboxtexture.h"
+#include "skyboxtexture.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "image.h"
 #include "v_video.h"

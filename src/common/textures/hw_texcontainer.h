@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tarray.h"
-#include "hwrenderer/textures/hw_ihwtexture.h"
+#include "hw_ihwtexture.h"
 #include "palettecontainer.h"
 
 struct FTextureBuffer;

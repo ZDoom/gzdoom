@@ -41,7 +41,7 @@
 #include "renderstyle.h"
 #include "textureid.h"
 #include <vector>
-#include "hwrenderer/textures/hw_texcontainer.h"
+#include "hw_texcontainer.h"
 
 // 15 because 0th texture is our texture
 #define MAX_CUSTOM_HW_SHADER_TEXTURES 15

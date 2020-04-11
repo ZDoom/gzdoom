@@ -29,7 +29,7 @@
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/scene/hw_renderstate.h"
-#include "textures/skyboxtexture.h"
+#include "skyboxtexture.h"
 
 
 

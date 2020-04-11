@@ -56,8 +56,8 @@
 #include "image.h"
 #include "utf8.h"
 #include "myiswalpha.h"
-#include "textures/formats/fontchars.h"
-#include "textures/formats/multipatchtexture.h"
+#include "fontchars.h"
+#include "multipatchtexture.h"
 #include "texturemanager.h"
 #include "r_translate.h"
 

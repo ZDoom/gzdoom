@@ -28,7 +28,7 @@
 #ifndef __R_SKY_H__
 #define __R_SKY_H__
 
-#include "textures/textures.h"
+#include "textures.h"
 
 struct FLevelLocals;
 

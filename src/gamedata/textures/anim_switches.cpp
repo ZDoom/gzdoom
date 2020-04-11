@@ -33,7 +33,7 @@
 */
 
 #include "templates.h"
-#include "textures/textures.h"
+#include "textures.h"
 #include "s_sound.h"
 #include "r_state.h"
 #include "filesystem.h"

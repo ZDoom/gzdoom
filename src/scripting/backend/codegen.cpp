@@ -7728,6 +7728,52 @@ static bool CheckArgSize(FName fname, FArgumentList &args, int min, int max, FSc
 
 //==========================================================================
 //
+// FindClassMemberFunction
+//
+// Looks for a name in a class's symbol table and outputs appropriate messages
+//
+//==========================================================================
+
+PFunction* FindClassMemberFunction(PContainerType* selfcls, PContainerType* funccls, FName name, FScriptPosition& sc, bool* error, const VersionInfo& version, bool nodeprecated)
+{
+	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
+	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;
+
+	PSymbolTable* symtable;
+	auto symbol = selfcls->Symbols.FindSymbolInTable(name, symtable);
+	auto funcsym = dyn_cast<PFunction>(symbol);
+
+	if (symbol != nullptr)
+	{
+		auto cls_ctx = PType::toClass(funccls);
+		auto cls_target = funcsym ? PType::toClass(funcsym->OwningClass) : nullptr;
+		if (funcsym == nullptr)
+		{
+			if (PClass::FindClass(name)) return nullptr;	// Special case when a class's member variable hides a global class name. This should still work.
+			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
+		}
+		else if ((funcsym->Variants[0].Flags & VARF_Private) && symtable != &funccls->Symbols)
+		{
+			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
+			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
+		}
+		else if ((funcsym->Variants[0].Flags & VARF_Protected) && symtable != &funccls->Symbols && (!cls_ctx || !cls_target || !cls_ctx->Descriptor->IsDescendantOf(cls_target->Descriptor)))
+		{
+			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
+		}
+		// ZScript will skip this because it prints its own message.
+		else if ((funcsym->Variants[0].Flags & VARF_Deprecated) && funcsym->mVersion <= version && !nodeprecated)
+		{
+			sc.Message(MSG_WARNING, "Call to deprecated function %s", symbol->SymbolName.GetChars());
+		}
+	}
+	// return nullptr if the name cannot be found in the symbol table so that the calling code can do other checks.
+	return funcsym;
+}
+
+
+//==========================================================================
+//
 //
 //
 //==========================================================================

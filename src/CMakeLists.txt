@@ -1044,7 +1044,6 @@ set (PCH_SOURCES
 	scripting/thingdef_data.cpp
 	scripting/thingdef_properties.cpp
 	scripting/backend/codegen.cpp
-	scripting/backend/dynarrays.cpp
 	scripting/backend/vmbuilder.cpp
 	scripting/decorate/olddecorations.cpp
 	scripting/decorate/thingdef_exp.cpp
@@ -1151,6 +1150,7 @@ set (PCH_SOURCES
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
 	common/scripting/core/dictionary.cpp
+	common/scripting/core/dynarrays.cpp
 	common/scripting/core/symbols.cpp
 	common/scripting/core/types.cpp
 	common/scripting/core/scopebarrier.cpp

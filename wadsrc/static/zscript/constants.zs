@@ -1047,7 +1047,6 @@ enum ETranslationTable
 	TRANSLATION_Blood,
 	TRANSLATION_RainPillar,
 	TRANSLATION_Custom,
-	TRANSLATION_Font,
 };
 
 enum EFindFloorCeiling

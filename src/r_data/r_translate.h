@@ -9,8 +9,7 @@ class FSerializer;
 
 enum
 {
-	TRANSLATION_Invalid,
-	TRANSLATION_Players,
+	TRANSLATION_Players = 1,
 	TRANSLATION_PlayersExtra,
 	TRANSLATION_Standard,
 	TRANSLATION_LevelScripted,
@@ -20,7 +19,6 @@ enum
 	TRANSLATION_Blood,
 	TRANSLATION_RainPillar,
 	TRANSLATION_Custom,
-	TRANSLATION_Font,
 
 	NUM_TRANSLATION_TABLES
 };

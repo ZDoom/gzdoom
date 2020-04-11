@@ -609,6 +609,8 @@ file( GLOB HEADER_FILES
 	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
+	common/audio/sound/thirdparty/*.h
+	common/audio/sound/*.h
 	common/audio/music/*.h*
 	common/console/*.h
 	common/utility/*.h
@@ -624,7 +626,6 @@ file( GLOB HEADER_FILES
 	scripting/zscript/*.h
 	scripting/vm/*.h
 	sound/midisources/*.h
-	sound/thirdparty/*.h
 	rendering/*.h
 	rendering/2d/*.h
 	rendering/swrenderer/*.h
@@ -757,7 +758,6 @@ set( FASTMATH_SOURCES
 	rendering/swrenderer/r_all.cpp
 	rendering/swrenderer/r_swscene.cpp
 	rendering/polyrenderer/poly_all.cpp
-	sound/backend/oalsound.cpp
 	gamedata/textures/hires/hqnx/init.cpp
 	gamedata/textures/hires/hqnx/hq2x.cpp
 	gamedata/textures/hires/hqnx/hq3x.cpp
@@ -878,11 +878,9 @@ set (PCH_SOURCES
 	rendering/r_sky.cpp
 	rendering/r_videoscale.cpp
 	sound/s_advsound.cpp
-	sound/s_environment.cpp
 	sound/s_reverbedit.cpp
 	sound/s_sndseq.cpp
 	sound/s_doomsound.cpp
-	sound/s_sound.cpp
 	serializer.cpp
 	scriptutil.cpp
 	st_stuff.cpp
@@ -1095,11 +1093,14 @@ set (PCH_SOURCES
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
-	sound/backend/i_sound.cpp
 	rendering/swrenderer/textures/r_swtexture.cpp
 	rendering/swrenderer/textures/warptexture.cpp
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
+	common/audio/sound/i_sound.cpp
+	common/audio/sound/oalsound.cpp
+	common/audio/sound/s_environment.cpp
+	common/audio/sound/s_sound.cpp
 	common/audio/music/music_midi_base.cpp
 	common/audio/music/music.cpp
 	common/audio/music/i_music.cpp
@@ -1227,6 +1228,7 @@ endif()
 target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma ${ZMUSIC_LIBRARIES} )
 
 include_directories( .
+	common/audio/sound
 	common/audio/music
 	common/thirdparty
 	common/filesystem
@@ -1355,8 +1357,6 @@ install(TARGETS zdoom
 		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
-source_group("Audio Files\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/backend/.+")
-source_group("Audio Files\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/thirdparty/.+")
 source_group("Game Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/.+")
 source_group("Game Data\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/fonts/.+")
 source_group("Game Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gamedata/textures/.+")
@@ -1431,6 +1431,8 @@ source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sc
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
 source_group("Common" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/.+")
 source_group("Common\\Audio" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/.+")
+source_group("Common\\Audio\\Sound" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/sound/.+")
+source_group("Common\\Audio\\Sound\\Third-party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/sound/thirdparty/.+")
 source_group("Common\\Audio\\Music" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/audio/music.+")
 source_group("Common\\Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/console/.+")
 source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/utility/.+")

@@ -157,7 +157,7 @@ void InitPalette ()
 	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), pal);
 
 	GPalette.Init(NUM_TRANSLATION_TABLES);
-	GPalette.SetPalette (pal, 0);
+	GPalette.SetPalette (pal, -1);
 
 	int lump = fileSystem.CheckNumForName("COLORMAP");
 	if (lump == -1) lump = fileSystem.CheckNumForName("COLORMAP", ns_colormaps);
@@ -178,6 +178,7 @@ void InitPalette ()
 		GPalette.Remap[0] = BestColor ((uint32_t *)GPalette.BaseColors,
 			GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 	}
+	GPalette.BaseColors[0] = 0;
 
 	// Colormaps have to be initialized before actors are loaded,
 	// otherwise Powerup.Colormap will not work.

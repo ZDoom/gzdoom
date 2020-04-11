@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "tarray.h"
+#include "textures.h"
 #include "textures/bitmap.h"
 #include "memarena.h"
 

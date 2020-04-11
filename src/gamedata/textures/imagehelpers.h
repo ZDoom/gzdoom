@@ -41,6 +41,7 @@
 #include "tarray.h"
 #include "colormatcher.h"
 #include "v_palette.h"
+#include "v_colortables.h"
 #include "textures/bitmap.h"
 #include "r_data/renderstyle.h"
 #include "r_data/r_translate.h"

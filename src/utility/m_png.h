@@ -34,9 +34,18 @@
 */
 
 #include <stdio.h>
-#include "doomtype.h"
-#include "v_video.h"
+#include "zstring.h"
 #include "files.h"
+#include "palentry.h"
+#include "basics.h"
+
+// Screenshot buffer image data types
+enum ESSType
+{
+	SS_PAL,
+	SS_RGB,
+	SS_BGRA
+};
 
 class FileWriter;
 // PNG Writing --------------------------------------------------------------

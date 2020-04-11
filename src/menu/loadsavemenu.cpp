@@ -43,6 +43,7 @@
 #include "serializer.h"
 #include "vm.h"
 #include "i_system.h"
+#include "v_video.h"
 
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24

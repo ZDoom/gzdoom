@@ -202,14 +202,6 @@ enum class ELightMode : int8_t
 	DoomSoftware = 16
 };
 
-// Screenshot buffer image data types
-enum ESSType
-{
-	SS_PAL,
-	SS_RGB,
-	SS_BGRA
-};
-
 // always use our own definition for consistency.
 #ifdef M_PI
 #undef M_PI

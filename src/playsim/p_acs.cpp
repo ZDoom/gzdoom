@@ -75,6 +75,7 @@
 #include "types.h"
 #include "scriptutil.h"
 #include "s_music.h"
+#include "v_video.h"
 
 	// P-codes for ACS scripts
 	enum

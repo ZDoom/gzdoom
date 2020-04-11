@@ -41,6 +41,7 @@
 #include "bitmap.h"
 #include "imagehelpers.h"
 #include "image.h"
+#include "textures.h"
 
 //==========================================================================
 //

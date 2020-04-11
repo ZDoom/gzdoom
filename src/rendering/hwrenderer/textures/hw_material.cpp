@@ -26,6 +26,7 @@
 #include "stats.h"
 #include "r_utility.h"
 #include "c_dispatch.h"
+#include "v_video.h"
 #include "hw_ihwtexture.h"
 #include "hw_material.h"
 

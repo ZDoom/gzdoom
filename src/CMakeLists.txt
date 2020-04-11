@@ -832,6 +832,7 @@ set (PCH_SOURCES
 	console/c_buttons.cpp
 	console/c_bind.cpp
 	console/c_cmds.cpp
+	console/c_enginecmds.cpp
 	console/c_console.cpp
 	console/c_consolebuffer.cpp
 	console/c_cvars.cpp

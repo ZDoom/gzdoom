@@ -40,8 +40,8 @@
 
 #include "c_dispatch.h"
 #include "c_cvars.h"
-#include "doomtype.h"
 #include "cmdlib.h"
+#include "printf.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -49,7 +49,7 @@
 
 #include "d_event.h"
 
-#include "hu_stuff.h"	// for chatmodeon
+extern int chatmodeon;
 
 const char *KeyNames[NUM_KEYS] =
 {

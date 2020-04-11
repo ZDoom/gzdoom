@@ -755,7 +755,7 @@ void IVideo::DumpAdapters ()
 	Printf("Multi-monitor support unavailable.\n");
 }
 
-CUSTOM_CVAR(Bool, fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR_NAMED(Bool, vid_fullscreen, fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	setmodeneeded = true;
 }

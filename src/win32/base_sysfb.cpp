@@ -251,7 +251,7 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 			KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
 		}
 
-		if (!fullscreen)
+		if (!vid_fullscreen)
 		{
 			ShowWindow(Window, SW_SHOWNORMAL);
 			SetWindowPos(Window, nullptr, winx, winy, winw, winh, SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -266,7 +266,7 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 			win_w = winw;
 			win_h = winh;
 			win_maximized = false;
-			fullscreen = false;
+			vid_fullscreen = false;
 		}
 	}
 }
@@ -335,7 +335,7 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen, bool initialcall)
 		// This doesn't restore the window size properly so we must force a set size the next tic.
 		if (m_Fullscreen)
 		{
-			::fullscreen = false;
+			::vid_fullscreen = false;
 		}
 
 	}

@@ -42,7 +42,7 @@
 CVAR(Int, menu_resolution_custom_width, 640, 0)
 CVAR(Int, menu_resolution_custom_height, 480, 0)
 
-EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Bool, vid_fullscreen)
 EXTERN_CVAR(Bool, win_maximized)
 EXTERN_CVAR(Float, vid_scale_custompixelaspect)
 EXTERN_CVAR(Int, vid_scale_customwidth)
@@ -66,7 +66,7 @@ CCMD (menu_resolution_set_custom)
 
 CCMD (menu_resolution_commit_changes)
 {
-	int do_fullscreen = fullscreen;
+	int do_fullscreen = vid_fullscreen;
 	if (argv.argc() > 1)
 	{
 		do_fullscreen = atoi(argv[1]);
@@ -81,7 +81,7 @@ CCMD (menu_resolution_commit_changes)
 	}
 	else
 	{
-		fullscreen = true;
+		vid_fullscreen = true;
 		vid_scalemode = 5;
 		vid_scalefactor = 1.;
 		vid_scale_customwidth = menu_resolution_custom_width;

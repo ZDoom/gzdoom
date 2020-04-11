@@ -97,7 +97,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer()
 {
 	SystemGLFrameBuffer *fb;
 
-	fb = new OpenGLRenderer::OpenGLFrameBuffer(m_hMonitor, fullscreen);
+	fb = new OpenGLRenderer::OpenGLFrameBuffer(m_hMonitor, vid_fullscreen);
 	return fb;
 }
 

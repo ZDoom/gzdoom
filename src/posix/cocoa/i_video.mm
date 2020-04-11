@@ -430,7 +430,7 @@ public:
 			try
 			{
 				m_vulkanDevice = new VulkanDevice();
-				fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
+				fb = new VulkanFrameBuffer(nullptr, vid_fullscreen, m_vulkanDevice);
 			}
 			catch (std::exception const&)
 			{
@@ -445,7 +445,7 @@ public:
 		{
 			SetupOpenGLView(ms_window, OpenGLProfile::Legacy);
 
-			fb = new PolyFrameBuffer(nullptr, fullscreen);
+			fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
 		}
 		else
 		{
@@ -454,18 +454,18 @@ public:
 
 		if (fb == nullptr)
 		{
-			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 		}
 
 		fb->SetWindow(ms_window);
-		fb->SetMode(fullscreen, vid_hidpi);
+		fb->SetMode(vid_fullscreen, vid_hidpi);
 		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
 
 		// This lame hack is a temporary workaround for strange performance issues
 		// with fullscreen window and Core Animation's Metal layer
 		// It is somehow related to initial window level and flags
 		// Toggling fullscreen -> window -> fullscreen mysteriously solves the problem
-		if (ms_isVulkanEnabled && fullscreen)
+		if (ms_isVulkanEnabled && vid_fullscreen)
 		{
 			fb->SetMode(false, vid_hidpi);
 			fb->SetMode(true, vid_hidpi);
@@ -542,10 +542,10 @@ void SystemBaseFrameBuffer::SetWindowSize(int width, int height)
 		return;
 	}
 
-	if (fullscreen)
+	if (vid_fullscreen)
 	{
 		// Enter windowed mode in order to calculate title bar height
-		fullscreen = false;
+		vid_fullscreen = false;
 		SetMode(false, m_hiDPI);
 	}
 

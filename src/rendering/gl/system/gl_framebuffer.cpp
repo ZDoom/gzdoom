@@ -435,7 +435,7 @@ TArray<uint8_t> OpenGLFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 
 	// Screenshot should not use gamma correction if it was already applied to rendered image
 	gamma = 1;
-	if (vid_hdr_active && fullscreen)
+	if (vid_hdr_active && vid_fullscreen)
 		gamma *= 2.2f;
 	return ScreenshotBuffer;
 }

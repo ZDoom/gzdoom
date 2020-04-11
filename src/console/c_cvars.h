@@ -438,6 +438,11 @@ void C_ForgetCVars (void);
 	F##type##CVar name (#name, def, flags, cvarfunc_##name); \
 	static void cvarfunc_##name(F##type##CVar &self)
 
+#define CUSTOM_CVAR_NAMED(type,name,cname,def,flags) \
+	static void cvarfunc_##name(F##type##CVar &); \
+	F##type##CVar name (#cname, def, flags, cvarfunc_##name); \
+	static void cvarfunc_##name(F##type##CVar &self)
+
 #define CVAR(type,name,def,flags) \
 	F##type##CVar name (#name, def, flags);
 

@@ -1,4 +1,4 @@
-#include "utility/dictionary.h"
+#include "dictionary.h"
 
 #include "scripting/vm/vm.h"
 #include "serializer.h"

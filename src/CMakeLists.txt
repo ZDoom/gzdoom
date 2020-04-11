@@ -1087,6 +1087,7 @@ set (PCH_SOURCES
 	r_data/models/models_voxel.cpp
 	r_data/models/models_ue1.cpp
 	r_data/models/models_obj.cpp
+	scripting/dictionary.cpp
 	scripting/symbols.cpp
 	scripting/vmiterators.cpp
 	scripting/vmthunks.cpp
@@ -1170,7 +1171,6 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	utility/x86.cpp
 	utility/strnatcmp.c
 	utility/zstring.cpp
-	utility/dictionary.cpp
 	utility/math/asin.c
 	utility/math/atan.c
 	utility/math/const.c

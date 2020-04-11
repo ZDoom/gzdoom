@@ -259,6 +259,7 @@ void ST_CreateStatusBar(bool bTitleLevel)
 		StatusBar->Destroy();
 		StatusBar = NULL;
 	}
+	GC::AddMarkerFunc([]() { GC::Mark(StatusBar); });
 
 	bool shouldWarn = true;
 

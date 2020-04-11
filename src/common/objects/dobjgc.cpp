@@ -58,21 +58,9 @@
 
 #include "dobject.h"
 #include "templates.h"
-#include "b_bot.h"
-#include "p_local.h"
-#include "g_game.h"
-#include "a_sharedglobal.h"
-#include "sbar.h"
 #include "c_dispatch.h"
-#include "s_sndseq.h"
-#include "r_data/r_interpolate.h"
-#include "doomstat.h"
-#include "po_man.h"
-#include "r_utility.h"
 #include "menu/menu.h"
-#include "intermission/intermission.h"
-#include "g_levellocals.h"
-#include "events.h"
+#include "stats.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -111,8 +99,6 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-extern DThinker *NextToThink;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -274,26 +260,19 @@ void MarkArray(DObject **obj, size_t count)
 //
 //==========================================================================
 
+TArray<GCMarkerFunc> markers;
+void AddMarkerFunc(GCMarkerFunc func)
+{
+	if (markers.Find(func) == markers.Size())
+		markers.Push(func);
+}
+
 static void MarkRoot()
 {
 	Gray = NULL;
-	Mark(StatusBar);
-	M_MarkMenus();
-	Mark(DIntermissionController::CurrentIntermission);
-	Mark(staticEventManager.FirstEventHandler);
-	Mark(staticEventManager.LastEventHandler);
-	for (auto Level : AllLevels())
-		Level->Mark();
 
-	// Mark players.
-	for (int i = 0; i < MAXPLAYERS; i++)
-	{
-		if (playeringame[i])
-			players[i].PropagateMark();
-	}
-	
-	// NextToThink must not be freed while thinkers are ticking.
-	Mark(NextToThink);
+	for (auto func : markers) func();
+
 	// Mark soft roots.
 	if (SoftRoots != NULL)
 	{

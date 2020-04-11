@@ -2748,6 +2748,27 @@ static void Doom_CastSpriteIDToString(FString* a, unsigned int b)
 	*a = (b >= sprites.Size()) ? "TNT1" : sprites[b].name; 
 }
 
+
+extern DThinker* NextToThink;
+
+static void GC_MarkGameRoots()
+{
+	GC::Mark(DIntermissionController::CurrentIntermission);
+	GC::Mark(staticEventManager.FirstEventHandler);
+	GC::Mark(staticEventManager.LastEventHandler);
+	for (auto Level : AllLevels())
+		Level->Mark();
+
+	// Mark players.
+	for (int i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i])
+			players[i].PropagateMark();
+	}
+
+	// NextToThink must not be freed while thinkers are ticking.
+	GC::Mark(NextToThink);
+}
 //==========================================================================
 //
 // D_DoomMain
@@ -2764,6 +2785,7 @@ static int D_DoomMain_Internal (void)
 	int argcount;	
 	FIWadManager *iwad_man;
 
+	GC::AddMarkerFunc(GC_MarkGameRoots);
 	VM_CastSpriteIDToString = Doom_CastSpriteIDToString;
 
 	// Set up the button list. Mlook and Klook need a bit of extra treatment.

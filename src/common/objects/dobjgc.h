@@ -154,6 +154,10 @@ namespace GC
 	{
 		MarkArray(&arr[0], arr.Size());
 	}
+
+	using GCMarkerFunc = void(*)();
+	void AddMarkerFunc(GCMarkerFunc func);
+
 }
 
 // A template class to help with handling read barriers. It does not

@@ -1115,7 +1115,7 @@ void PSpriteID::WriteValue(FSerializer &ar, const char *key, const void *addr) c
 
 bool PSpriteID::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
-	int32_t val;
+	int32_t val = 0;
 #ifdef GZDOOM
 	ar.Sprite(key, val, nullptr);
 #endif

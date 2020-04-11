@@ -952,6 +952,7 @@ void M_Init (void)
 	try
 	{
 		M_ParseMenuDefs();
+		GC::AddMarkerFunc(M_MarkMenus);
 	}
 	catch (CVMAbortException &err)
 	{

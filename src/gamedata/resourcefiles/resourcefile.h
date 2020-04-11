@@ -47,7 +47,6 @@ struct FResourceLump
 	int8_t			RefCount;
 	char *			Cache;
 	FResourceFile *	Owner;
-	FTexture *		LinkedTexture;
 	int				Namespace;
 
 	FResourceLump()
@@ -58,7 +57,6 @@ struct FResourceLump
 		RefCount = 0;
 		Namespace = 0;	// ns_global
 		*Name = 0;
-		LinkedTexture = NULL;
 	}
 
 	virtual ~FResourceLump();

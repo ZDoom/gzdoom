@@ -64,6 +64,7 @@ struct FWadCollection::LumpRecord
 {
 	int			wadnum;
 	FResourceLump *lump;
+	FTexture* linkedTexture;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -204,6 +205,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 	FWadCollection::LumpRecord *lumprec = &LumpInfo[LumpInfo.Reserve(1)];
 	lumprec->lump = lump;
 	lumprec->wadnum = -1;
+	lumprec->linkedTexture = nullptr;
 	return LumpInfo.Size()-1;	// later
 }
 
@@ -620,8 +622,7 @@ void FWadCollection::SetLinkedTexture(int lump, FTexture *tex)
 {
 	if ((size_t)lump < NumLumps)
 	{
-		FResourceLump *reslump = LumpInfo[lump].lump;
-		reslump->LinkedTexture = tex;
+		LumpInfo[lump].linkedTexture = tex;
 	}
 }
 
@@ -635,8 +636,7 @@ FTexture *FWadCollection::GetLinkedTexture(int lump)
 {
 	if ((size_t)lump < NumLumps)
 	{
-		FResourceLump *reslump = LumpInfo[lump].lump;
-		return reslump->LinkedTexture;
+		return LumpInfo[lump].linkedTexture;
 	}
 	return NULL;
 }

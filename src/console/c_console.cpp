@@ -221,13 +221,13 @@ public:
 		{
 			DrawChar(twod, CurrentConsoleFont, CR_ORANGE, x, y, '\x1c',
 				DTA_VirtualWidth, twod->GetWidth() / scale,
-				DTA_VirtualHeight, screen->GetHeight() / scale,
+				DTA_VirtualHeight, twod->GetHeight() / scale,
 				DTA_KeepRatio, true, TAG_DONE);
 
 			DrawText(twod, CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
 				&Text[StartPos],
 				DTA_VirtualWidth, twod->GetWidth() / scale,
-				DTA_VirtualHeight, screen->GetHeight() / scale,
+				DTA_VirtualHeight, twod->GetHeight() / scale,
 				DTA_KeepRatio, true, TAG_DONE);
 
 			if (cursor)
@@ -236,7 +236,7 @@ public:
 					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosCells - StartPosCells) * CurrentConsoleFont->GetCharWidth(0xb),
 					y, '\xb',
 					DTA_VirtualWidth, twod->GetWidth() / scale,
-					DTA_VirtualHeight, screen->GetHeight() / scale,
+					DTA_VirtualHeight, twod->GetHeight() / scale,
 					DTA_KeepRatio, true, TAG_DONE);
 			}
 		}
@@ -993,14 +993,14 @@ void C_FlushDisplay ()
 void C_AdjustBottom ()
 {
 	if (gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP)
-		ConBottom = SCREENHEIGHT;
-	else if (ConBottom > SCREENHEIGHT / 2 || ConsoleState == c_down)
-		ConBottom = SCREENHEIGHT / 2;
+		ConBottom = twod->GetHeight();
+	else if (ConBottom > twod->GetHeight() / 2 || ConsoleState == c_down)
+		ConBottom = twod->GetHeight() / 2;
 }
 
 void C_NewModeAdjust ()
 {
-	C_InitConsole (SCREENWIDTH, SCREENHEIGHT, true);
+	C_InitConsole (twod->GetWidth(), twod->GetHeight(), true);
 	C_FlushDisplay ();
 	C_AdjustBottom ();
 }
@@ -1023,16 +1023,16 @@ void C_Ticker()
 	{
 		if (ConsoleState == c_falling)
 		{
-			ConBottom += (consoletic - lasttic) * (SCREENHEIGHT * 2 / 25);
-			if (ConBottom >= SCREENHEIGHT / 2)
+			ConBottom += (consoletic - lasttic) * (twod->GetHeight() * 2 / 25);
+			if (ConBottom >= twod->GetHeight() / 2)
 			{
-				ConBottom = SCREENHEIGHT / 2;
+				ConBottom = twod->GetHeight() / 2;
 				ConsoleState = c_down;
 			}
 		}
 		else if (ConsoleState == c_rising)
 		{
-			ConBottom -= (consoletic - lasttic) * (SCREENHEIGHT * 2 / 25);
+			ConBottom -= (consoletic - lasttic) * (twod->GetHeight() * 2 / 25);
 			if (ConBottom <= 0)
 			{
 				ConsoleState = c_up;
@@ -1116,7 +1116,7 @@ void FNotifyBuffer::Draw()
 			if (!center)
 				DrawText(twod, font, color, 0, line, notify.Text,
 					DTA_VirtualWidth, twod->GetWidth() / scale,
-					DTA_VirtualHeight, screen->GetHeight() / scale,
+					DTA_VirtualHeight, twod->GetHeight() / scale,
 					DTA_KeepRatio, true,
 					DTA_Alpha, alpha, TAG_DONE);
 			else
@@ -1124,7 +1124,7 @@ void FNotifyBuffer::Draw()
 					font->StringWidth (notify.Text) * scale) / 2 / scale,
 					line, notify.Text,
 					DTA_VirtualWidth, twod->GetWidth() / scale,
-					DTA_VirtualHeight, screen->GetHeight() / scale,
+					DTA_VirtualHeight, twod->GetHeight() / scale,
 					DTA_KeepRatio, true,
 					DTA_Alpha, alpha, TAG_DONE);
 			line += lineadv;
@@ -1174,14 +1174,14 @@ void C_DrawConsole ()
 
 		visheight = ConBottom;
 
-		DrawTexture(twod, conpic, 0, visheight - screen->GetHeight(),
+		DrawTexture(twod, conpic, 0, visheight - twod->GetHeight(),
 			DTA_DestWidth, twod->GetWidth(),
-			DTA_DestHeight, screen->GetHeight(),
+			DTA_DestHeight, twod->GetHeight(),
 			DTA_ColorOverlay, conshade,
 			DTA_Alpha, (gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
 			DTA_Masked, false,
 			TAG_DONE);
-		if (conline && visheight < screen->GetHeight())
+		if (conline && visheight < twod->GetHeight())
 		{
 			ClearRect(twod, 0, visheight, twod->GetWidth(), visheight+1, 0, 0);
 		}
@@ -1189,17 +1189,17 @@ void C_DrawConsole ()
 		if (ConBottom >= 12)
 		{
 			if (textScale == 1)
-				DrawText(twod, CurrentConsoleFont, CR_ORANGE, SCREENWIDTH - 8 -
+				DrawText(twod, CurrentConsoleFont, CR_ORANGE, twod->GetWidth() - 8 -
 					CurrentConsoleFont->StringWidth (GetVersionString()),
 					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(), TAG_DONE);
 			else
-				DrawText(twod, CurrentConsoleFont, CR_ORANGE, SCREENWIDTH / textScale - 8 -
+				DrawText(twod, CurrentConsoleFont, CR_ORANGE, twod->GetWidth() / textScale - 8 -
 					CurrentConsoleFont->StringWidth(GetVersionString()),
 					ConBottom / textScale - CurrentConsoleFont->GetHeight() - 4,
 					GetVersionString(),
 					DTA_VirtualWidth, twod->GetWidth() / textScale,
-					DTA_VirtualHeight, screen->GetHeight() / textScale,
+					DTA_VirtualHeight, twod->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);
 
 		}
@@ -1231,7 +1231,7 @@ void C_DrawConsole ()
 			{
 				DrawText(twod, CurrentConsoleFont, CR_TAN, LEFTMARGIN, offset + lines * CurrentConsoleFont->GetHeight(), p->Text,
 					DTA_VirtualWidth, twod->GetWidth() / textScale,
-					DTA_VirtualHeight, screen->GetHeight() / textScale,
+					DTA_VirtualHeight, twod->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);
 			}
 		}
@@ -1257,7 +1257,7 @@ void C_DrawConsole ()
 				else
 					DrawChar(twod, CurrentConsoleFont, CR_GREEN, 0, bottomline, RowAdjust == conbuffer->GetFormattedLineCount() ? 12 : 10,
 						DTA_VirtualWidth, twod->GetWidth() / textScale,
-						DTA_VirtualHeight, screen->GetHeight() / textScale,
+						DTA_VirtualHeight, twod->GetHeight() / textScale,
 						DTA_KeepRatio, true, TAG_DONE);
 			}
 		}
@@ -1378,7 +1378,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_PGUP:
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer up one page
-				RowAdjust += (SCREENHEIGHT-4)/active_con_scale(twod) /
+				RowAdjust += (twod->GetHeight()-4)/active_con_scale(twod) /
 					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
 			}
 			else if (RowAdjust < conbuffer->GetFormattedLineCount())
@@ -1401,7 +1401,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		case GK_PGDN:
 			if (ev->data3 & (GKM_SHIFT|GKM_CTRL))
 			{ // Scroll console buffer down one page
-				const int scrollamt = (SCREENHEIGHT-4)/active_con_scale(twod) /
+				const int scrollamt = (twod->GetHeight()-4)/active_con_scale(twod) /
 					((gamestate == GS_FULLCONSOLE || gamestate == GS_STARTUP) ? CurrentConsoleFont->GetHeight() : CurrentConsoleFont->GetHeight()*2) - 3;
 				if (RowAdjust < scrollamt)
 				{

@@ -245,7 +245,7 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 
 static void HU_DrawFontScaled(double x, double y, int color, const char *text)
 {
-	DrawText(twod, displayFont, color, x / FontScale, y / FontScale, text, DTA_VirtualWidth, screen->GetWidth() / FontScale, DTA_VirtualHeight, screen->GetHeight() / FontScale, TAG_END);
+	DrawText(twod, displayFont, color, x / FontScale, y / FontScale, text, DTA_VirtualWidth, twod->GetWidth() / FontScale, DTA_VirtualHeight, twod->GetHeight() / FontScale, TAG_END);
 }
 
 static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYERS])
@@ -303,7 +303,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 			}
 		}
 
-		int scorexwidth = SCREENWIDTH / MAX(8, numTeams);
+		int scorexwidth = twod->GetWidth() / MAX(8, numTeams);
 		int numscores = 0;
 		int scorex;
 
@@ -315,7 +315,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 			}
 		}
 
-		scorex = (SCREENWIDTH - scorexwidth * (numscores - 1)) / 2;
+		scorex = (twod->GetWidth() - scorexwidth * (numscores - 1)) / 2;
 
 		for (i = 0; i < Teams.Size(); ++i)
 		{
@@ -344,7 +344,7 @@ static void HU_DoDrawScores (player_t *player, player_t *sortedplayers[MAXPLAYER
 	col3 = col2 + (displayFont->StringWidth(text_frags) + 16) * FontScale;
 	col4 = col3 + maxscorewidth * FontScale;
 	col5 = col4 + (maxnamewidth + 16) * FontScale;
-	x = (SCREENWIDTH >> 1) - (((displayFont->StringWidth(text_delay) * FontScale) + col5) >> 1);
+	x = (twod->GetWidth() >> 1) - (((displayFont->StringWidth(text_delay) * FontScale) + col5) >> 1);
 
 	//HU_DrawFontScaled(x, y, color, text_color);
 	HU_DrawFontScaled(x + col2, y, color, text_frags);
@@ -392,7 +392,7 @@ static void HU_DrawTimeRemaining (int y)
 		else
 			mysnprintf (str, countof(str), "Level ends in %d:%02d", minutes, seconds);
 
-		HU_DrawFontScaled(SCREENWIDTH / 2 - displayFont->StringWidth(str) / 2 * FontScale, y, CR_GRAY, str);
+		HU_DrawFontScaled(twod->GetWidth() / 2 - displayFont->StringWidth(str) / 2 * FontScale, y, CR_GRAY, str);
 	}
 }
 
@@ -468,9 +468,6 @@ void HU_DrawColorBar(int x, int y, int height, int playernum)
 
 	D_GetPlayerColor (playernum, &h, &s, &v, NULL);
 	HSVtoRGB (&r, &g, &b, h, s, v);
-
-	//float aspect = ActiveRatio(SCREENWIDTH, SCREENHEIGHT);
-	//if (!AspectTallerThanWide(aspect)) x += (screen->GetWidth() - AspectBaseWidth(aspect)) / 2;
 
 	ClearRect(twod, x, y, x + 24*FontScale, y + height, -1,
 		MAKEARGB(255,clamp(int(r*255.f),0,255),

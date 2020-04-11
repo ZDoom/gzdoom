@@ -1273,7 +1273,7 @@ void DoomSoundEngine::NoiseDebug()
 	for (chan = Channels; chan->NextChan != nullptr; chan = chan->NextChan)
 	{
 	}
-	while (y < SCREENHEIGHT - 16)
+	while (y < twod->GetHeight() - 16)
 	{
 		char temp[32];
 

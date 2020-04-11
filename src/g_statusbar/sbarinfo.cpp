@@ -965,11 +965,11 @@ void Popup::close()
 inline void adjustRelCenter(bool relX, bool relY, const double &x, const double &y, double &outX, double &outY, double ScaleX, double ScaleY)
 {
 	if(relX)
-		outX = x + (SCREENWIDTH/(ScaleX*2));
+		outX = x + (twod->GetWidth()/(ScaleX*2));
 	else
 		outX = x;
 	if(relY)
-		outY = y + (SCREENHEIGHT/(ScaleY*2));
+		outY = y + (twod->GetHeight()/(ScaleY*2));
 	else
 		outY = y;
 }
@@ -1294,9 +1294,9 @@ public:
 			h *= Scale.Y;
 
 			if(xright)
-				rx = SCREENWIDTH + rx;
+				rx = twod->GetWidth() + rx;
 			if(ybot)
-				ry = SCREENHEIGHT + ry;
+				ry = twod->GetHeight() + ry;
 
 			// Check for clipping
 			if(clip[0] != 0 || clip[1] != 0 || clip[2] != 0 || clip[3] != 0)
@@ -1442,9 +1442,9 @@ public:
 				rh *= Scale.Y;
 
 				if(xright)
-					rx = SCREENWIDTH + rx;
+					rx = twod->GetWidth() + rx;
 				if(ybot)
-					ry = SCREENHEIGHT + ry;
+					ry = twod->GetHeight() + ry;
 			}
 			if(drawshadow)
 			{

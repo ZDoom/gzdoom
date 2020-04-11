@@ -178,7 +178,7 @@ void ST_LoadCrosshair(bool alwaysload)
 	{
 		num = -num;
 	}
-	size = (SCREENWIDTH < 640) ? 'S' : 'B';
+	size = (twod->GetWidth() < 640) ? 'S' : 'B';
 
 	mysnprintf (name, countof(name), "XHAIR%c%d", size, num);
 	FTextureID texid = TexMan.CheckForTexture(name, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
@@ -430,7 +430,7 @@ void DBaseStatusBar::SetDrawSize(int reltop, int hres, int vres)
 	HorizontalResolution = hres;
 	VerticalResolution = vres;
 	int x, y;
-	ST_CalcCleanFacs(hres, vres, SCREENWIDTH, SCREENHEIGHT, &x, &y);
+	ST_CalcCleanFacs(hres, vres, twod->GetWidth(), twod->GetHeight(), &x, &y);
 	defaultScale = { (double)x, (double)y };
 
 	SetScale();	// recalculate positioning info.
@@ -471,8 +471,8 @@ void DBaseStatusBar::SetScale ()
 {
 	ValidateResolution(HorizontalResolution, VerticalResolution);
 
-	int w = SCREENWIDTH;
-	int h = SCREENHEIGHT;
+	int w = twod->GetWidth();
+	int h = twod->GetHeight();
 	if (st_scale < 0 || ForcedScale)
 	{
 		// This is the classic fullscreen scale with aspect ratio compensation.
@@ -593,7 +593,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	auto font = generic_ui ? NewSmallFont : SmallFont;
 	auto font2 = font;
 	auto vwidth = twod->GetWidth() / scale;
-	auto vheight = screen->GetHeight() / scale;
+	auto vheight = twod->GetHeight() / scale;
 	auto fheight = font->GetHeight();
 	FString textbuffer;
 	int sec;
@@ -680,7 +680,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	StatusbarToRealCoords(x, yy, w, h);
 
 	// Get the y coordinate for the first line of the map name text.
-	y = Scale(GetTopOfStatusbar() - int(h), vheight, screen->GetHeight()) - fheight * numlines;
+	y = Scale(GetTopOfStatusbar() - int(h), vheight, twod->GetHeight()) - fheight * numlines;
 
 	// Draw the texts centered above the status bar.
 	for (unsigned i = 0; i < numlines; i++)
@@ -978,40 +978,40 @@ void DBaseStatusBar::RefreshBackground () const
 {
 	int x, x2, y;
 
-	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
+	float ratio = ActiveRatio (twod->GetWidth(), twod->GetHeight());
 	x = ST_X;
 	y = SBarTop;
 	
-	if (x == 0 && y == SCREENHEIGHT) return;
+	if (x == 0 && y == twod->GetHeight()) return;
 
 	auto tex = GetBorderTexture(primaryLevel);
 
 	if(!CompleteBorder)
 	{
-		if(y < SCREENHEIGHT)
+		if(y < twod->GetHeight())
 		{
-			DrawBorder(twod, tex, x+1, y, SCREENWIDTH, y+1);
-			DrawBorder(twod, tex, x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
+			DrawBorder(twod, tex, x+1, y, twod->GetWidth(), y+1);
+			DrawBorder(twod, tex, x+1, twod->GetHeight()-1, twod->GetWidth(), twod->GetHeight());
 		}
 	}
 	else
 	{
-		x = SCREENWIDTH;
+		x = twod->GetWidth();
 	}
 
 	if (x > 0)
 	{
 		if(!CompleteBorder)
 		{
-			x2 = SCREENWIDTH - ST_X;
+			x2 = twod->GetWidth() - ST_X;
 		}
 		else
 		{
-			x2 = SCREENWIDTH;
+			x2 = twod->GetWidth();
 		}
 
-		DrawBorder(twod, tex, 0, y, x+1, SCREENHEIGHT);
-		DrawBorder(twod, tex, x2-1, y, SCREENWIDTH, SCREENHEIGHT);
+		DrawBorder(twod, tex, 0, y, x+1, twod->GetHeight());
+		DrawBorder(twod, tex, x2-1, y, twod->GetWidth(), twod->GetHeight());
 
 		if (setblocks >= 10)
 		{
@@ -1019,7 +1019,7 @@ void DBaseStatusBar::RefreshBackground () const
 			if (p != NULL)
 			{
 				twod->AddFlatFill(0, y, x, y + p->GetDisplayHeight(), p, true);
-				twod->AddFlatFill(x2, y, SCREENWIDTH, y + p->GetDisplayHeight(), p, true);
+				twod->AddFlatFill(x2, y, twod->GetWidth(), y + p->GetDisplayHeight(), p, true);
 			}
 		}
 	}
@@ -1058,7 +1058,7 @@ void DBaseStatusBar::DrawCrosshair ()
 
 	if (crosshairscale > 0.0f)
 	{
-		size = SCREENHEIGHT * crosshairscale / 200.;
+		size = twod->GetHeight() * crosshairscale / 200.;
 	}
 	else
 	{
@@ -1234,8 +1234,8 @@ void DBaseStatusBar::DrawLog ()
 	{
 		// This uses the same scaling as regular HUD messages
 		auto scale = active_con_scaletext(twod, generic_ui || log_vgafont);
-		hudwidth = SCREENWIDTH / scale;
-		hudheight = SCREENHEIGHT / scale;
+		hudwidth = twod->GetWidth() / scale;
+		hudheight = twod->GetHeight() / scale;
 		FFont *font = (generic_ui || log_vgafont)? NewSmallFont : SmallFont;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
@@ -1259,8 +1259,8 @@ void DBaseStatusBar::DrawLog ()
 			if (y<0) y=0;
 			w=600;
 		}
-		Dim(twod, 0, 0.5f, Scale(x, SCREENWIDTH, hudwidth), Scale(y, SCREENHEIGHT, hudheight), 
-							 Scale(w, SCREENWIDTH, hudwidth), Scale(height, SCREENHEIGHT, hudheight));
+		Dim(twod, 0, 0.5f, Scale(x, twod->GetWidth(), hudwidth), Scale(y, twod->GetHeight(), hudheight), 
+							 Scale(w, twod->GetWidth(), hudwidth), Scale(height, twod->GetHeight(), hudheight));
 		x+=20;
 		y+=10;
 		for (const FBrokenLines &line : lines)
@@ -1305,7 +1305,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 void DBaseStatusBar::DrawBottomStuff (EHudState state)
 {
 	primaryLevel->localEventManager->RenderUnderlay(state);
-	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : twod->GetHeight());
 }
 
 //---------------------------------------------------------------------------
@@ -1338,9 +1338,9 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 
 	if (automapactive && !viewactive)
 	{
-		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : twod->GetHeight());
 	}
-	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : twod->GetHeight());
 	primaryLevel->localEventManager->RenderOverlay(state);
 
 	DrawConsistancy ();
@@ -1629,8 +1629,8 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
-		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
 		// move stuff in the top right corner a bit down if the fps counter is on.
@@ -1712,8 +1712,8 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
-		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
 		// move stuff in the top right corner a bit down if the fps counter is on.
@@ -1873,8 +1873,8 @@ void DBaseStatusBar::TransformRect(double &x, double &y, double &w, double &h, i
 		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
-		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
 		// move stuff in the top right corner a bit down if the fps counter is on.

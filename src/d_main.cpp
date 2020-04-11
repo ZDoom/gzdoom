@@ -1014,7 +1014,7 @@ void D_Display ()
 				FString pstring = GStrings("TXT_BY");
 				pstring.Substitute("%s", players[paused - 1].userinfo.GetName());
 				DrawText(twod, font, CR_RED,
-					(screen->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
+					(twod->GetWidth() - font->StringWidth(pstring)*CleanXfac) / 2,
 					(tex->GetDisplayHeight() * CleanYfac) + 4, pstring, DTA_CleanNoMove, true, TAG_DONE);
 			}
 		}

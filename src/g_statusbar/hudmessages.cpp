@@ -298,8 +298,8 @@ void DHUDMessage::CalcClipCoords(int hudheight)
 	{ // No clipping rectangle set; use the full screen.
 		ClipLeft = 0;
 		ClipTop = 0;
-		ClipRight = screen->GetWidth();
-		ClipBot = screen->GetHeight();
+		ClipRight = twod->GetWidth();
+		ClipBot = twod->GetHeight();
 	}
 	else
 	{
@@ -328,7 +328,7 @@ void DHUDMessage::ResetText (const char *text)
 	}
 	else
 	{
-		width = SCREENWIDTH / active_con_scaletext(twod);
+		width = twod->GetWidth() / active_con_scaletext(twod);
 	}
 
 	Lines = V_BreakLines (Font, NoWrap ? INT_MAX : width, (uint8_t *)text);
@@ -383,8 +383,8 @@ void DHUDMessage::Draw (int bottom, int visibility)
 
 	DrawSetup ();
 
-	int screen_width = SCREENWIDTH;
-	int screen_height = SCREENHEIGHT;
+	int screen_width = twod->GetWidth();
+	int screen_height = twod->GetHeight();
 	xscale = yscale = 1;
 	if (HUDWidth == 0)
 	{
@@ -494,8 +494,8 @@ void DHUDMessage::DoDraw (int linenum, int x, int y, bool clean, int hudheight)
 	{
 		int scale = active_con_scaletext(twod);
 		DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
-			DTA_VirtualWidth, SCREENWIDTH / scale,
-			DTA_VirtualHeight, SCREENHEIGHT / scale,
+			DTA_VirtualWidth, twod->GetWidth() / scale,
+			DTA_VirtualHeight, twod->GetHeight() / scale,
 			DTA_Alpha, Alpha,
 			DTA_RenderStyle, Style,
 			DTA_KeepRatio, true,
@@ -587,8 +587,8 @@ void DHUDMessageFadeOut::DoDraw (int linenum, int x, int y, bool clean, int hudh
 		{
 			int scale = active_con_scaletext(twod);
 			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
-				DTA_VirtualWidth, SCREENWIDTH / scale,
-				DTA_VirtualHeight, SCREENHEIGHT / scale,
+				DTA_VirtualWidth, twod->GetWidth() / scale,
+				DTA_VirtualHeight, twod->GetHeight() / scale,
 				DTA_Alpha, trans,
 				DTA_RenderStyle, Style,
 				DTA_KeepRatio, true,
@@ -676,8 +676,8 @@ void DHUDMessageFadeInOut::DoDraw (int linenum, int x, int y, bool clean, int hu
 		{
 			int scale = active_con_scaletext(twod);
 			DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
-				DTA_VirtualWidth, SCREENWIDTH / scale,
-				DTA_VirtualHeight, SCREENHEIGHT / scale,
+				DTA_VirtualWidth, twod->GetWidth() / scale,
+				DTA_VirtualHeight, twod->GetHeight() / scale,
 				DTA_Alpha, trans,
 				DTA_RenderStyle, Style,
 				DTA_KeepRatio, true,
@@ -860,8 +860,8 @@ void DHUDMessageTypeOnFadeOut::DoDraw (int linenum, int x, int y, bool clean, in
 			{
 				int scale = active_con_scaletext(twod);
 				DrawText(twod, Font, TextColor, x, y, Lines[linenum].Text,
-					DTA_VirtualWidth, SCREENWIDTH / scale,
-					DTA_VirtualHeight, SCREENHEIGHT / scale,
+					DTA_VirtualWidth, twod->GetWidth() / scale,
+					DTA_VirtualHeight, twod->GetHeight() / scale,
 					DTA_KeepRatio, true,
 					DTA_TextLen, LineVisible,
 					DTA_Alpha, Alpha,

@@ -113,6 +113,7 @@ void DFrameBuffer::SetSize(int width, int height)
 {
 	Width = ViewportScaledWidth(width, height);
 	Height = ViewportScaledHeight(width, height);
+	m2DDrawer.SetSize(width, height);
 }
 
 //==========================================================================

@@ -268,11 +268,11 @@ void CT_Drawer (void)
 
 		scalex = 1;
 		int scale = active_con_scaletext(drawer);
-		int screen_width = SCREENWIDTH / scale;
-		int screen_height= SCREENHEIGHT / scale;
+		int screen_width = twod->GetWidth() / scale;
+		int screen_height= twod->GetHeight() / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;
 
-		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
+		y += ((twod->GetHeight() == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
 		promptwidth = displayfont->StringWidth (prompt) * scalex;
 		x = displayfont->GetCharWidth (displayfont->GetCursor()) * scalex * 2 + promptwidth;

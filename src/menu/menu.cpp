@@ -878,7 +878,7 @@ static void M_Dim()
 		amount = gameinfo.dimamount;
 	}
 
-	Dim(twod, dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
+	Dim(twod, dimmer, amount, 0, 0, twod->GetWidth(), twod->GetHeight());
 }
 
 

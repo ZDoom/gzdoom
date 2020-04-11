@@ -99,7 +99,7 @@ void FStat::PrintStat (F2DDrawer *drawer)
 	int textScale = active_con_scale(drawer);
 
 	int fontheight = NewConsoleFont->GetHeight() + 1;
-	int y = screen->GetHeight() / textScale;
+	int y = drawer->GetHeight() / textScale;
 	int count = 0;
 
 	for (FStat *stat = FirstStat; stat != NULL; stat = stat->m_Next)

@@ -1187,11 +1187,11 @@ void DAutomap::findMinMaxBoundaries ()
 void DAutomap::calcMinMaxMtoF()
 {
 	const double safe_frame = 1.0 - am_emptyspacemargin / 100.0;
-	double a = safe_frame * (SCREENWIDTH / max_w);
+	double a = safe_frame * (twod->GetWidth() / max_w);
 	double b = safe_frame * (StatusBar->GetTopOfStatusbar() / max_h);
 
 	min_scale_mtof = a < b ? a : b;
-	max_scale_mtof = SCREENHEIGHT / (2*PLAYERRADIUS);
+	max_scale_mtof = twod->GetHeight() / (2*PLAYERRADIUS);
 }
 
 //=============================================================================
@@ -1274,8 +1274,8 @@ void DAutomap::changeWindowLoc ()
 	incx = m_paninc.x;
 	incy = m_paninc.y;
 
-	oincx = incx = m_paninc.x * SCREENWIDTH / 320;
-	oincy = incy = m_paninc.y * SCREENHEIGHT / 200;
+	oincx = incx = m_paninc.x * twod->GetWidth() / 320;
+	oincy = incy = m_paninc.y * twod->GetHeight() / 200;
 	if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 	{
 		rotate(&incx, &incy, players[consoleplayer].camera->Angles.Yaw - 90.);
@@ -1305,8 +1305,8 @@ void DAutomap::startDisplay()
 	m_paninc.x = m_paninc.y = 0;
 	mtof_zoommul = 1.;
 
-	m_w = FTOM(SCREENWIDTH);
-	m_h = FTOM(SCREENHEIGHT);
+	m_w = FTOM(twod->GetWidth());
+	m_h = FTOM(twod->GetHeight());
 
 	// find player to center on initially
 	if (!playeringame[pnum = consoleplayer])

@@ -1972,7 +1972,7 @@ class CommandAspectRatio : public SBarInfoCommandFlowControl
 	private:
 		int FindRatio()
 		{
-			float aspect = ActiveRatio(screen->GetWidth(), screen->GetHeight());
+			float aspect = ActiveRatio(twod->GetWidth(), twod->GetHeight());
 
 			static std::pair<float, int> ratioTypes[] =
 			{

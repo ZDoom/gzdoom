@@ -1840,7 +1840,7 @@ void G_DoLoadGame ()
 
 	SaveVersion = 0;
 
-	void *data = info->CacheLump();
+	void *data = info->Lock();
 	FSerializer arc(nullptr);
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
@@ -1916,7 +1916,7 @@ void G_DoLoadGame ()
 		return;
 	}
 
-	data = info->CacheLump();
+	data = info->Lock();
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
 		LoadGameError("TXT_SGINFOERR");

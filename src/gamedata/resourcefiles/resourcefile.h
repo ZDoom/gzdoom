@@ -102,9 +102,11 @@ public:
 	void CheckEmbedded();
 	virtual FCompressedBuffer GetRawData();
 
-	void *CacheLump();
-	int ReleaseCache();
+	void *Lock(); // validates the cache and increases the refcount.
+	int Unlock(); // decreases the refcount and frees the buffer
 
+	unsigned Size() const{ return LumpSize; }
+	int LockCount() const { return RefCount; }
 	const char* getName() { return FullName.GetChars(); }
 
 protected:

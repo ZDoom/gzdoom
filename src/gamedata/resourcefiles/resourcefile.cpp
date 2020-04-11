@@ -58,13 +58,13 @@ public:
 	FLumpReader(FResourceLump *src)
 		: MemoryReader(NULL, src->LumpSize), source(src)
 	{
-		src->CacheLump();
+		src->Lock();
 		bufptr = src->Cache;
 	}
 
 	~FLumpReader()
 	{
-		source->ReleaseCache();
+		source->Unlock();
 	}
 };
 
@@ -163,9 +163,9 @@ void FResourceLump::CheckEmbedded()
 FCompressedBuffer FResourceLump::GetRawData()
 {
 	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)LumpSize, METHOD_STORED, 0, 0, new char[LumpSize] };
-	memcpy(cbuf.mBuffer, CacheLump(), LumpSize);
+	memcpy(cbuf.mBuffer, Lock(), LumpSize);
+	Unlock();
 	cbuf.mCRC32 = crc32(0, (uint8_t*)cbuf.mBuffer, LumpSize);
-	ReleaseCache();
 	return cbuf;
 }
 
@@ -198,7 +198,7 @@ FileReader FResourceLump::NewReader()
 //
 //==========================================================================
 
-void *FResourceLump::CacheLump()
+void *FResourceLump::Lock()
 {
 	if (Cache != NULL)
 	{
@@ -217,7 +217,7 @@ void *FResourceLump::CacheLump()
 //
 //==========================================================================
 
-int FResourceLump::ReleaseCache()
+int FResourceLump::Unlock()
 {
 	if (LumpSize > 0 && RefCount > 0)
 	{

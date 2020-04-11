@@ -170,7 +170,7 @@ void FSavegameManager::ReadSaveStrings()
 				// I_FindName only returns the file's name and not its full path
 				FString filepath = G_BuildSaveName(I_FindName(&c_file), -1);
 
-				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, true, true);
+				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(filepath, true, true));
 				if (savegame != nullptr)
 				{
 					bool oldVer = false;
@@ -179,10 +179,9 @@ void FSavegameManager::ReadSaveStrings()
 					if (info == nullptr)
 					{
 						// savegame info not found. This is not a savegame so leave it alone.
-						delete savegame;
 						continue;
 					}
-					void *data = info->CacheLump();
+					void *data = info->Lock();
 					FSerializer arc(nullptr);
 					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
@@ -197,7 +196,6 @@ void FSavegameManager::ReadSaveStrings()
 						{
 							// different engine or newer version:
 							// not our business. Leave it alone.
-							delete savegame;
 							continue;
 						}
 
@@ -213,7 +211,6 @@ void FSavegameManager::ReadSaveStrings()
 						else
 						{
 							// different game. Skip this.
-							delete savegame;
 							continue;
 						}
 
@@ -223,7 +220,6 @@ void FSavegameManager::ReadSaveStrings()
 						node->bMissingWads = missing;
 						node->SaveTitle = title;
 						InsertSaveNode(node);
-						delete savegame;
 					}
 
 				}
@@ -472,7 +468,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			// this should not happen because the file has already been verified.
 			return index;
 		}
-		void *data = info->CacheLump();
+		void *data = info->Lock();
 		FSerializer arc(nullptr);
 		if (arc.OpenReader((const char *)data, info->LumpSize))
 		{
@@ -494,10 +490,9 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 
 				picreader.OpenMemoryArray([=](TArray<uint8_t> &array)
 				{
-					auto cache = pic->CacheLump();
+					auto cache = pic->Lock();
 					array.Resize(pic->LumpSize);
 					memcpy(&array[0], cache, pic->LumpSize);
-					pic->ReleaseCache();
 					return true;
 				});
 				PNGHandle *png = M_VerifyPNG(picreader);

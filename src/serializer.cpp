@@ -950,7 +950,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 					{
 						Printf(TEXTCOLOR_RED "Unknown object class '%s' in savegame\n", clsname.GetChars());
 						founderrors = true;
-						r->mDObjects[i] = RUNTIME_CLASS(AActor)->CreateNew();	// make sure we got at least a valid pointer for the duration of the loading process.
+						r->mDObjects[i] = RUNTIME_CLASS(DObject)->CreateNew();	// make sure we got at least a valid pointer for the duration of the loading process.
 						r->mDObjects[i]->Destroy();								// but we do not want to keep this around, so destroy it right away.
 					}
 					else
@@ -1485,7 +1485,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			arc.WriteKey(key);
 			arc.w->StartArray();
 			arc.w->String(name);
-			arc.w->Int(static_cast<int>(pic->UseType));
+			int ut = static_cast<int>(pic->GetUseType());
+			arc.w->Int(ut);
 			arc.w->EndArray();
 		}
 	}

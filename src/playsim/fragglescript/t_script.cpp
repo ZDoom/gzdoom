@@ -38,6 +38,7 @@
 #include "p_spec.h"
 #include "c_dispatch.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 //==========================================================================

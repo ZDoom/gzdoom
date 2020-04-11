@@ -29,6 +29,7 @@
 #include "actor.h"
 #include "a_sharedglobal.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "d_player.h"
 #include "r_utility.h"
 #include "g_levellocals.h"

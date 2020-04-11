@@ -42,6 +42,7 @@
 #include "t_script.h"
 #include "a_pickups.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 

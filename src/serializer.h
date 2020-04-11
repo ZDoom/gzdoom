@@ -217,19 +217,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
 	return arc;
 }
 
-template<class T>
-FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<T> &value, TObjPtr<T> *)
-{
-	Serialize(arc, key, value.o, nullptr);
-	return arc; 
-}
-
-template<class T>
-FSerializer &Serialize(FSerializer &arc, const char *key, TObjPtr<T> &value, T *)
-{
-	Serialize(arc, key, value.o, nullptr);
-	return arc;
-}
 
 template<class T, class TT>
 FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, TArray<T, TT> *def)

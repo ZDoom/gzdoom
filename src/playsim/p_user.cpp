@@ -78,6 +78,7 @@
 #include "c_dispatch.h"
 #include "d_net.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "d_player.h"
 #include "r_utility.h"
 #include "p_blockmap.h"

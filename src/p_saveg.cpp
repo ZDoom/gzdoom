@@ -53,6 +53,7 @@
 #include "r_utility.h"
 #include "r_sky.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 #include "events.h"
 #include "p_destructible.h"

@@ -39,6 +39,7 @@
 #include "v_video.h"
 #include "cmdlib.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "doomstat.h"
 #include "vm.h"
 

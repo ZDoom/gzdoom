@@ -203,7 +203,7 @@ FRemapTable* PaletteContainer::AddRemap(FRemapTable* remap)
 
 	for (auto uremap : uniqueRemaps)
 	{
-		if (uremap->crc32 == remap->crc32 && uremap->NumEntries == remap->NumEntries && *uremap == *remap)
+		if (uremap->crc32 == remap->crc32 && uremap->NumEntries == remap->NumEntries && *uremap == *remap && remap->Inactive == uremap->Inactive)
 			return uremap;
 	}
 	auto newremap = (FRemapTable*)remapArena.Alloc(sizeof(FRemapTable));
@@ -250,7 +250,7 @@ int PaletteContainer::AddTranslation(int slot, FRemapTable* remap, int count)
 
 void PaletteContainer::CopyTranslation(int dest, int src)
 {
-	TranslationTables[GetTranslationType(dest)][GetTranslationType(src)] = TranslationToTable(src);
+	TranslationTables[GetTranslationType(dest)].SetVal(GetTranslationIndex(dest), TranslationToTable(src));
 }
 
 //----------------------------------------------------------------------------

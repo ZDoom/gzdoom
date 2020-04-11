@@ -167,9 +167,6 @@ public:
 
 int DisplayWidth, DisplayHeight;
 
-FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
-
-
 // [RH] The framebuffer is no longer a mere byte array.
 // There's also only one, not four.
 DFrameBuffer *screen;

@@ -637,6 +637,7 @@ void FFont::SetDefaultTranslation(uint32_t *othercolors)
 	FRemapTable remap(ActiveColors);
 	remap.Remap[0] = 0;
 	remap.Palette[0] = 0;
+	remap.ForFont = true;
 
 	for (unsigned l = 1; l < myluminosity.Size(); l++)
 	{
@@ -773,6 +774,7 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 	const TranslationParm *parmstart = (const TranslationParm *)ranges;
 
 	FRemapTable remap(total_colors);
+	remap.ForFont = true;
 
 	// Create different translations for different color ranges
 	Translations.Clear();
@@ -808,6 +810,7 @@ void FFont::BuildTranslations (const double *luminosity, const uint8_t *identity
 
 		remap.Remap[0] = 0;
 		remap.Palette[0] = 0;
+		remap.ForFont = true;
 
 		for (j = 1; j < ActiveColors; j++)
 		{

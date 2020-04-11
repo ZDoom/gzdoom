@@ -423,7 +423,7 @@ protected:
 
 public:
 	FTextureBuffer CreateTexBuffer(int translation, int flags = 0);
-	bool GetTranslucency();
+	virtual bool GetTranslucency();
 	FMaterial* GetMaterial(int num)
 	{
 		return Material[num];

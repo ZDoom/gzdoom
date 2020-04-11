@@ -79,13 +79,13 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static int TranslationMapCompare (const void *a, const void *b);
-void UpdateGenericUI(bool cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int PrintColors[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+FFont* SmallFont, * SmallFont2, * BigFont, * BigUpper, * ConFont, * IntermissionFont, * NewConsoleFont, * NewSmallFont, * CurrentConsoleFont, * OriginalSmallFont, * AlternativeSmallFont, * OriginalBigFont;
 
 FFont *FFont::FirstFont = nullptr;
 int NumTextColors;
@@ -826,7 +826,6 @@ void V_InitFonts()
 		BigFont = OriginalBigFont;
 	}
 	AlternativeSmallFont = OriginalSmallFont;
-	UpdateGenericUI(false);
 }
 
 void V_ClearFonts()

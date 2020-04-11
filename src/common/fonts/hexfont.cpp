@@ -391,6 +391,7 @@ public:
 		FRemapTable remap(ActiveColors);
 		remap.Remap[0] = 0;
 		remap.Palette[0] = 0;
+		remap.ForFont = true;
 
 		for (unsigned l = 1; l < 18; l++)
 		{

@@ -47,7 +47,7 @@ class FLumpFile : public FUncompressedFile
 {
 public:
 	FLumpFile(const char * filename, FileReader &file);
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 };
 
 
@@ -68,7 +68,7 @@ FLumpFile::FLumpFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FLumpFile::Open(bool quiet)
+bool FLumpFile::Open(bool quiet, LumpFilterInfo*)
 {
 	FString name(ExtractFileBase(FileName, true));
 
@@ -92,11 +92,11 @@ bool FLumpFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckLump(const char *filename, FileReader &file, bool quiet)
+FResourceFile *CheckLump(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	// always succeeds
 	FResourceFile *rf = new FLumpFile(filename, file);
-	if (rf->Open(quiet)) return rf;
+	if (rf->Open(quiet, filter)) return rf;
 	file = std::move(rf->Reader); // to avoid destruction of reader
 	delete rf;
 	return NULL;

@@ -66,7 +66,7 @@ class FPakFile : public FUncompressedFile
 {
 public:
 	FPakFile(const char * filename, FileReader &file);
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 };
 
 
@@ -89,7 +89,7 @@ FPakFile::FPakFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FPakFile::Open(bool quiet)
+bool FPakFile::Open(bool quiet, LumpFilterInfo* filter)
 {
 	dpackheader_t header;
 
@@ -115,6 +115,7 @@ bool FPakFile::Open(bool quiet)
 		Lumps[i].CheckEmbedded();
 	}
 	GenerateHash();
+	PostProcessArchive(&Lumps[0], sizeof(Lumps[0]), filter);
 	return true;
 }
 
@@ -125,7 +126,7 @@ bool FPakFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet)
+FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	char head[4];
 
@@ -137,7 +138,7 @@ FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet)
 		if (!memcmp(head, "PACK", 4))
 		{
 			FResourceFile *rf = new FPakFile(filename, file);
-			if (rf->Open(quiet)) return rf;
+			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

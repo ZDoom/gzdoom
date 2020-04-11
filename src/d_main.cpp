@@ -2480,7 +2480,25 @@ static int D_DoomMain_Internal (void)
 		}
 
 		if (!batchrun) Printf ("W_Init: Init WADfiles.\n");
-		Wads.InitMultipleFiles (allwads, iwad_info->DeleteLumps);
+
+		LumpFilterInfo lfi;
+		lfi.dotFilter = LumpFilterIWAD;
+
+		static const struct { int match; const char* name; } blanket[] =
+		{
+			{ GAME_Raven,			"game-Raven" },
+			{ GAME_DoomStrifeChex,	"game-DoomStrifeChex" },
+			{ GAME_DoomChex,		"game-DoomChex" },
+			{ GAME_Any, NULL }
+		};
+
+		for (auto& inf : blanket)
+		{
+			if (gameinfo.gametype & inf.match) lfi.gameTypeFilter.Push(inf.name);
+		}
+		lfi.gameTypeFilter.Push(FStringf("game-%s", GameTypeName()));
+
+		Wads.InitMultipleFiles (allwads, iwad_info->DeleteLumps, false, &lfi);
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();

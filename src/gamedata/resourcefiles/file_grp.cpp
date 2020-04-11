@@ -73,7 +73,7 @@ class FGrpFile : public FUncompressedFile
 {
 public:
 	FGrpFile(const char * filename, FileReader &file);
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 };
 
 
@@ -94,7 +94,7 @@ FGrpFile::FGrpFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FGrpFile::Open(bool quiet)
+bool FGrpFile::Open(bool quiet, LumpFilterInfo*)
 {
 	GrpInfo header;
 
@@ -131,7 +131,7 @@ bool FGrpFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckGRP(const char *filename, FileReader &file, bool quiet)
+FResourceFile *CheckGRP(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	char head[12];
 
@@ -143,7 +143,7 @@ FResourceFile *CheckGRP(const char *filename, FileReader &file, bool quiet)
 		if (!memcmp(head, "KenSilverman", 12))
 		{
 			FResourceFile *rf = new FGrpFile(filename, file);
-			if (rf->Open(quiet)) return rf;
+			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

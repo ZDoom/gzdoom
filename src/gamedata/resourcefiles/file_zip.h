@@ -41,7 +41,7 @@ class FZipFile : public FResourceFile
 public:
 	FZipFile(const char * filename, FileReader &file);
 	virtual ~FZipFile();
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 

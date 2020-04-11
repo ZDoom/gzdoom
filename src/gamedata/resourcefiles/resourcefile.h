@@ -5,6 +5,12 @@
 
 #include "files.h"
 
+struct LumpFilterInfo
+{
+	TArray<FString> gameTypeFilter;	// this can contain multiple entries
+	FString dotFilter;
+};
+
 class FResourceFile;
 class FTexture;
 
@@ -128,22 +134,21 @@ protected:
 
 	// for archives that can contain directories
 	void GenerateHash();
-	void PostProcessArchive(void *lumps, size_t lumpsize);
+	void PostProcessArchive(void *lumps, size_t lumpsize, LumpFilterInfo *filter);
 
 private:
 	uint32_t FirstLump;
 
 	int FilterLumps(FString filtername, void *lumps, size_t lumpsize, uint32_t max);
-	int FilterLumpsByGameType(int gametype, void *lumps, size_t lumpsize, uint32_t max);
+	int FilterLumpsByGameType(LumpFilterInfo *filter, void *lumps, size_t lumpsize, uint32_t max);
 	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, uint32_t max, uint32_t &start, uint32_t &end);
 	void JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max);
-	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool quiet, bool containeronly);
+	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool quiet, bool containeronly, LumpFilterInfo* filter);
 
 public:
-	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool quiet = false, bool containeronly = false);
-	static FResourceFile *OpenResourceFile(const char *filename, bool quiet = false, bool containeronly = false);
-	static FResourceFile *OpenResourceFileFromLump(int lumpnum, bool quiet = false, bool containeronly = false);
-	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false);
+	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool quiet = false, bool containeronly = false, LumpFilterInfo* filter = nullptr);
+	static FResourceFile *OpenResourceFile(const char *filename, bool quiet = false, bool containeronly = false, LumpFilterInfo* filter = nullptr);
+	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false, LumpFilterInfo* filter = nullptr);
 	virtual ~FResourceFile();
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
     FileReader *GetReader() { return Reader.isOpen()? &Reader : nullptr; }
@@ -153,7 +158,7 @@ public:
 	const FString &GetHash() const { return Hash; }
 
 
-	virtual bool Open(bool quiet) = 0;
+	virtual bool Open(bool quiet, LumpFilterInfo* filter) = 0;
 	virtual FResourceLump *GetLump(int no) = 0;
 	FResourceLump *FindLump(const char *name);
 };
@@ -198,7 +203,7 @@ struct FMemoryFile : public FUncompressedFile
 		Reader.OpenMemoryArray(sdata, length);
 	}
 
-    bool Open(bool quiet);
+    bool Open(bool quiet, LumpFilterInfo* filter);
 
 
 };

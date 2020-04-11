@@ -51,8 +51,8 @@
 
 struct FDirectoryLump : public FResourceLump
 {
-	virtual FileReader NewReader();
-	virtual int FillCache();
+	FileReader NewReader() override;
+	int FillCache() override;
 
 	FString mFullPath;
 };
@@ -74,7 +74,7 @@ class FDirectory : public FResourceFile
 
 public:
 	FDirectory(const char * dirname, bool nosubdirflag = false);
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
 
@@ -180,11 +180,11 @@ int FDirectory::AddDirectory(const char *dirpath)
 //
 //==========================================================================
 
-bool FDirectory::Open(bool quiet)
+bool FDirectory::Open(bool quiet, LumpFilterInfo* filter)
 {
 	NumLumps = AddDirectory(FileName);
 	if (!quiet) Printf(", %d lumps\n", NumLumps);
-	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump));
+	PostProcessArchive(&Lumps[0], sizeof(FDirectoryLump), filter);
 	return true;
 }
 
@@ -253,10 +253,10 @@ int FDirectoryLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckDir(const char *filename, bool quiet)
+FResourceFile *CheckDir(const char *filename, bool quiet, bool nosubdirflag, LumpFilterInfo* filter)
 {
-	FResourceFile *rf = new FDirectory(filename);
-	if (rf->Open(quiet)) return rf;
+	FResourceFile *rf = new FDirectory(filename, nosubdirflag);
+	if (rf->Open(quiet, filter)) return rf;
 	delete rf;
 	return NULL;
 }

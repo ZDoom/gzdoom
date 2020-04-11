@@ -116,7 +116,7 @@ class FWadFile : public FResourceFile
 public:
 	FWadFile(const char * filename, FileReader &file);
 	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 };
 
 
@@ -139,7 +139,7 @@ FWadFile::FWadFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FWadFile::Open(bool quiet)
+bool FWadFile::Open(bool quiet, LumpFilterInfo*)
 {
 	wadinfo_t header;
 	uint32_t InfoTableOfs;
@@ -442,7 +442,7 @@ void FWadFile::SkinHack ()
 //
 //==========================================================================
 
-FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet)
+FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	char head[4];
 
@@ -454,7 +454,7 @@ FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet)
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
 			FResourceFile *rf = new FWadFile(filename, file);
-			if (rf->Open(quiet)) return rf;
+			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

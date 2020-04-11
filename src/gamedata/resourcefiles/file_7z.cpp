@@ -190,7 +190,7 @@ class F7ZFile : public FResourceFile
 
 public:
 	F7ZFile(const char * filename, FileReader &filer);
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 	virtual ~F7ZFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 };
@@ -217,7 +217,7 @@ F7ZFile::F7ZFile(const char * filename, FileReader &filer)
 //
 //==========================================================================
 
-bool F7ZFile::Open(bool quiet)
+bool F7ZFile::Open(bool quiet, LumpFilterInfo *filter)
 {
 	Archive = new C7zArchive(Reader);
 	int skipped = 0;
@@ -317,7 +317,7 @@ bool F7ZFile::Open(bool quiet)
 	if (!quiet && !batchrun) Printf(", %d lumps\n", NumLumps);
 
 	GenerateHash();
-	PostProcessArchive(&Lumps[0], sizeof(F7ZLump));
+	PostProcessArchive(&Lumps[0], sizeof(F7ZLump), filter);
 	return true;
 }
 
@@ -359,7 +359,7 @@ int F7ZLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *Check7Z(const char *filename, FileReader &file, bool quiet)
+FResourceFile *Check7Z(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	char head[k7zSignatureSize];
 
@@ -371,7 +371,7 @@ FResourceFile *Check7Z(const char *filename, FileReader &file, bool quiet)
 		if (!memcmp(head, k7zSignature, k7zSignatureSize))
 		{
 			FResourceFile *rf = new F7ZFile(filename, file);
-			if (rf->Open(quiet)) return rf;
+			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

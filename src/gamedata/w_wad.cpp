@@ -263,7 +263,7 @@ void FWadCollection::InitSingleFile(const char* filename, bool quiet)
 	InitMultipleFiles(filenames, deletes, true);
 }
 
-void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps, bool quiet)
+void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps, bool quiet, LumpFilterInfo* filter)
 {
 	int numfiles;
 
@@ -274,7 +274,7 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray
 	for(unsigned i=0;i<filenames.Size(); i++)
 	{
 		int baselump = NumLumps;
-		AddFile (filenames[i], nullptr, quiet);
+		AddFile (filenames[i], nullptr, quiet, filter);
 		
 		if (i == (unsigned)MaxIwadIndex) MoveLumpsInFolder("after_iwad/");
 		FStringf path("filter/%s", Files.Last()->GetHash().GetChars());
@@ -331,7 +331,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 // [RH] Removed reload hack
 //==========================================================================
 
-void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet)
+void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet, LumpFilterInfo* filter)
 {
 	int startlump;
 	bool isdir = false;
@@ -371,9 +371,9 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet
 	FResourceFile *resfile;
 	
 	if (!isdir)
-		resfile = FResourceFile::OpenResourceFile(filename, wadreader, quiet);
+		resfile = FResourceFile::OpenResourceFile(filename, wadreader, quiet, false, filter);
 	else
-		resfile = FResourceFile::OpenDirectory(filename, quiet);
+		resfile = FResourceFile::OpenDirectory(filename, quiet, filter);
 
 	if (resfile != NULL)
 	{
@@ -397,7 +397,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet
 				FString path;
 				path.Format("%s:%s", filename, lump->getName());
 				auto embedded = lump->NewReader();
-				AddFile(path, &embedded);
+				AddFile(path, &embedded, quiet, filter);
 			}
 		}
 

@@ -68,7 +68,7 @@ class FWHResFile : public FUncompressedFile
 	FString basename;
 public:
 	FWHResFile(const char * filename, FileReader &file);
-	bool Open(bool quiet);
+	bool Open(bool quiet, LumpFilterInfo* filter);
 };
 
 
@@ -92,7 +92,7 @@ FWHResFile::FWHResFile(const char *filename, FileReader &file)
 //
 //==========================================================================
 
-bool FWHResFile::Open(bool quiet)
+bool FWHResFile::Open(bool quiet, LumpFilterInfo*)
 {
 	int directory[1024];
 	
@@ -130,7 +130,7 @@ bool FWHResFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckWHRes(const char *filename, FileReader &file, bool quiet)
+FResourceFile *CheckWHRes(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	if (file.GetLength() >= 8192) // needs to be at least 8192 to contain one file and the directory.
 	{
@@ -150,7 +150,7 @@ FResourceFile *CheckWHRes(const char *filename, FileReader &file, bool quiet)
 			checkpos += (length+4095) / 4096;
 		}
 		FResourceFile *rf = new FWHResFile(filename, file);
-		if (rf->Open(quiet)) return rf;
+		if (rf->Open(quiet, filter)) return rf;
 		file = std::move(rf->Reader); // to avoid destruction of reader
 		delete rf;
 	}

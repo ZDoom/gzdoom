@@ -171,7 +171,7 @@ FZipFile::FZipFile(const char * filename, FileReader &file)
 	Lumps = NULL;
 }
 
-bool FZipFile::Open(bool quiet)
+bool FZipFile::Open(bool quiet, LumpFilterInfo* filter)
 {
 	uint32_t centraldir = Zip_FindCentralDir(Reader);
 	FZipEndOfCentralDirectory info;
@@ -359,7 +359,7 @@ bool FZipFile::Open(bool quiet)
 	if (!quiet && !batchrun) Printf(TEXTCOLOR_NORMAL ", %d lumps\n", NumLumps);
 	
 	GenerateHash();
-	PostProcessArchive(&Lumps[0], sizeof(FZipLump));
+	PostProcessArchive(&Lumps[0], sizeof(FZipLump), filter);
 	return true;
 }
 
@@ -474,7 +474,7 @@ int FZipLump::GetFileOffset()
 //
 //==========================================================================
 
-FResourceFile *CheckZip(const char *filename, FileReader &file, bool quiet)
+FResourceFile *CheckZip(const char *filename, FileReader &file, bool quiet, LumpFilterInfo* filter)
 {
 	char head[4];
 
@@ -486,7 +486,7 @@ FResourceFile *CheckZip(const char *filename, FileReader &file, bool quiet)
 		if (!memcmp(head, "PK\x3\x4", 4))
 		{
 			FResourceFile *rf = new FZipFile(filename, file);
-			if (rf->Open(quiet)) return rf;
+			if (rf->Open(quiet, filter)) return rf;
 
 			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;

@@ -1037,7 +1037,6 @@ set (PCH_SOURCES
 	r_data/models/models_voxel.cpp
 	r_data/models/models_ue1.cpp
 	r_data/models/models_obj.cpp
-	scripting/dictionary.cpp
 	scripting/vmiterators.cpp
 	scripting/vmthunks.cpp
 	scripting/vmthunks_actors.cpp
@@ -1151,6 +1150,7 @@ set (PCH_SOURCES
 	common/objects/dobject.cpp
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
+	common/scripting/core/dictionary.cpp
 	common/scripting/core/symbols.cpp
 	common/scripting/core/types.cpp
 	common/scripting/core/scopebarrier.cpp

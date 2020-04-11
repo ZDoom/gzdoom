@@ -831,7 +831,7 @@ static void AM_ParseArrow(TArray<mline_t> &Arrow, const char *lumpname)
 {
 	const int R = int((8 * PLAYERRADIUS) / 7);
 	FScanner sc;
-	int lump = Wads.CheckNumForFullName(lumpname, true);
+	int lump = fileSystem.CheckNumForFullName(lumpname, true);
 	if (lump >= 0)
 	{
 		sc.OpenLumpNum(lump);

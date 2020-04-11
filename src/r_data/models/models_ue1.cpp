@@ -42,18 +42,18 @@ float unpackuvert( uint32_t n, int c )
 bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int length )
 {
 	int lumpnum2;
-	FString realfilename = Wads.GetLumpFullName(lumpnum);
+	FString realfilename = fileSystem.GetLumpFullName(lumpnum);
 	if ( (size_t)realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
 	{
 		realfilename.Substitute("_d.3d","_a.3d");
-		lumpnum2 = Wads.CheckNumForFullName(realfilename);
+		lumpnum2 = fileSystem.CheckNumForFullName(realfilename);
 		mDataLump = lumpnum;
 		mAnivLump = lumpnum2;
 	}
 	else
 	{
 		realfilename.Substitute("_a.3d","_d.3d");
-		lumpnum2 = Wads.CheckNumForFullName(realfilename);
+		lumpnum2 = fileSystem.CheckNumForFullName(realfilename);
 		mAnivLump = lumpnum;
 		mDataLump = lumpnum2;
 	}
@@ -64,9 +64,9 @@ void FUE1Model::LoadGeometry()
 {
 	FMemLump lump, lump2;
 	const char *buffer, *buffer2;
-	lump = Wads.ReadLump(mDataLump);
+	lump = fileSystem.ReadLump(mDataLump);
 	buffer = (char*)lump.GetMem();
-	lump2 = Wads.ReadLump(mAnivLump);
+	lump2 = fileSystem.ReadLump(mAnivLump);
 	buffer2 = (char*)lump2.GetMem();
 	// map structures
 	dhead = (d3dhead*)(buffer);

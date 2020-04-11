@@ -238,12 +238,12 @@ static int CountTiles (const void *tiles)
 
 static int BuildPaletteTranslation(int lump)
 {
-	if (Wads.LumpLength(lump) < 768)
+	if (fileSystem.LumpLength(lump) < 768)
 	{
 		return false;
 	}
 
-	FMemLump data = Wads.ReadLump(lump);
+	FMemLump data = fileSystem.ReadLump(lump);
 	const uint8_t *ipal = (const uint8_t *)data.GetMem();
 	FRemapTable opal;
 
@@ -309,14 +309,14 @@ void FTextureManager::InitBuildTiles()
 	// Unfortunately neither the palettes nor the .ART files contain any usable identifying marker
 	// so this can only go by the file names.
 
-	int numlumps = Wads.GetNumLumps();
+	int numlumps = fileSystem.GetNumLumps();
 	for (int i = 0; i < numlumps; i++)
 	{
-		const char *name = Wads.GetLumpFullName(i);
-		if (Wads.CheckNumForFullName(name) != i) continue;	// This palette is hidden by a later one. Do not process
+		const char *name = fileSystem.GetLumpFullName(i);
+		if (fileSystem.CheckNumForFullName(name) != i) continue;	// This palette is hidden by a later one. Do not process
 		FString base = ExtractFileBase(name, true);
 		base.ToLower();
-		if (base.Compare("palette.dat") == 0 && Wads.LumpLength(i) >= 768)	// must be a valid palette, i.e. at least 256 colors.
+		if (base.Compare("palette.dat") == 0 && fileSystem.LumpLength(i) >= 768)	// must be a valid palette, i.e. at least 256 colors.
 		{
 			FString path = ExtractFilePath(name);
 			if (path.IsNotEmpty() && path.Back() != '/') path += '/';
@@ -328,7 +328,7 @@ void FTextureManager::InitBuildTiles()
 				// only read from the same source as the palette.
 				// The entire format here is just too volatile to allow liberal mixing.
 				// An .ART set must be treated as one unit.
-				lumpnum = Wads.CheckNumForFullName(artpath, Wads.GetLumpFile(i));	
+				lumpnum = fileSystem.CheckNumForFullName(artpath, fileSystem.GetLumpFile(i));	
 				if (lumpnum < 0)
 				{
 					break;
@@ -336,8 +336,8 @@ void FTextureManager::InitBuildTiles()
 
 				BuildTileData.Reserve(1);
 				auto &artdata = BuildTileData.Last();
-				artdata.Resize(Wads.LumpLength(lumpnum));
-				Wads.ReadLump(lumpnum, &artdata[0]);
+				artdata.Resize(fileSystem.LumpLength(lumpnum));
+				fileSystem.ReadLump(lumpnum, &artdata[0]);
 
 				if ((numtiles = CountTiles(&artdata[0])) > 0)
 				{

@@ -422,7 +422,7 @@ void P_InitKeyMessages()
 	lastlump = 0;
 
 	ClearLocks();
-	while ((lump = Wads.FindLump ("LOCKDEFS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("LOCKDEFS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetString ())

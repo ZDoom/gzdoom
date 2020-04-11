@@ -293,7 +293,7 @@ public:
 	}
 
 
-	friend class FWadCollection;
+	friend class FileSystem;
 };
 
 class DecompressorBase : public FileReaderInterface

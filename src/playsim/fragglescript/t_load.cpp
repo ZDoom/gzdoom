@@ -221,13 +221,13 @@ bool FScriptLoader::ParseInfo(MapData * map)
 	if (lumpsize==0)
 	{
 		// Try a global FS lump
-		int lumpnum=Wads.CheckNumForName("FSGLOBAL");
+		int lumpnum=fileSystem.CheckNumForName("FSGLOBAL");
 		if (lumpnum<0) return false;
-		lumpsize=Wads.LumpLength(lumpnum);
+		lumpsize=fileSystem.LumpLength(lumpnum);
 		if (lumpsize==0) return false;
 		fsglobal=true;
 		lump=new char[lumpsize+3];
-		Wads.ReadLump(lumpnum,lump);
+		fileSystem.ReadLump(lumpnum,lump);
 	}
 	else
 	{

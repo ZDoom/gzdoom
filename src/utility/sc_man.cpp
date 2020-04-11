@@ -203,7 +203,7 @@ FScanner &FScanner::operator=(const FScanner &other)
 
 void FScanner::Open (const char *name)
 {
-	int lump = Wads.CheckNumForFullName(name, true);
+	int lump = fileSystem.CheckNumForFullName(name, true);
 	if (lump == -1)
 	{
 		I_Error("Could not find script lump '%s'\n", name);
@@ -279,10 +279,10 @@ void FScanner :: OpenLumpNum (int lump)
 {
 	Close ();
 	{
-		FMemLump mem = Wads.ReadLump(lump);
+		FMemLump mem = fileSystem.ReadLump(lump);
 		ScriptBuffer = mem.GetString();
 	}
-	ScriptName = Wads.GetLumpFullPath(lump);
+	ScriptName = fileSystem.GetLumpFullPath(lump);
 	LumpNum = lump;
 	PrepareScript ();
 }

@@ -1223,7 +1223,7 @@ void D_DoStrifeAdvanceDemo ()
 	case 0:
 		pagetic = 6 * TICRATE;
 		pagename = "TITLEPIC";
-		if (Wads.CheckNumForName ("d_logo", ns_music) < 0)
+		if (fileSystem.CheckNumForName ("d_logo", ns_music) < 0)
 		{ // strife0.wad does not have d_logo
 			S_StartMusic ("");
 		}
@@ -1379,7 +1379,7 @@ void D_DoAdvanceDemo (void)
 		{
 			democount++;
 			mysnprintf (demoname + 4, countof(demoname) - 4, "%d", democount);
-			if (Wads.CheckNumForName (demoname) < 0)
+			if (fileSystem.CheckNumForName (demoname) < 0)
 			{
 				demosequence = 0;
 				democount = 0;
@@ -1466,7 +1466,7 @@ void ParseCVarInfo()
 	int lump, lastlump = 0;
 	bool addedcvars = false;
 
-	while ((lump = Wads.FindLump("CVARINFO", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("CVARINFO", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		sc.SetCMode(true);
@@ -2019,7 +2019,7 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 static FString CheckGameInfo(TArray<FString> & pwads)
 {
 	TArray<FString> deletes;
-	FWadCollection check;
+	FileSystem check;
 
 	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
 	check.InitMultipleFiles(pwads, deletes, true);
@@ -2045,9 +2045,9 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 static void SetMapxxFlag()
 {
-	int lump_name = Wads.CheckNumForName("MAP01", ns_global, Wads.GetIwadNum());
-	int lump_wad = Wads.CheckNumForFullName("maps/map01.wad", Wads.GetIwadNum());
-	int lump_map = Wads.CheckNumForFullName("maps/map01.map", Wads.GetIwadNum());
+	int lump_name = fileSystem.CheckNumForName("MAP01", ns_global, fileSystem.GetIwadNum());
+	int lump_wad = fileSystem.CheckNumForFullName("maps/map01.wad", fileSystem.GetIwadNum());
+	int lump_map = fileSystem.CheckNumForFullName("maps/map01.map", fileSystem.GetIwadNum());
 
 	if (lump_name >= 0 || lump_wad >= 0 || lump_map >= 0) gameinfo.flags |= GI_MAPxx;
 }
@@ -2504,7 +2504,7 @@ static int D_DoomMain_Internal (void)
 		static const char* reserved[] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "maps/" };
 		for (auto p : reserved) lfi.requiredPrefixes.Push(p);
 
-		Wads.InitMultipleFiles (allwads, iwad_info->DeleteLumps, false, &lfi);
+		fileSystem.InitMultipleFiles (allwads, iwad_info->DeleteLumps, false, &lfi);
 		allwads.Clear();
 		allwads.ShrinkToFit();
 		SetMapxxFlag();

@@ -66,7 +66,7 @@ extern int AttenuationIsSet;
 
 static void ParseVavoomSkybox()
 {
-	int lump = Wads.CheckNumForName("SKYBOXES");
+	int lump = fileSystem.CheckNumForName("SKYBOXES");
 
 	if (lump < 0) return;
 
@@ -87,7 +87,7 @@ static void ParseVavoomSkybox()
 				sc.MustGetStringName("map");
 				sc.MustGetString();
 
-				maplump = Wads.CheckNumForFullName(sc.String, true);
+				maplump = fileSystem.CheckNumForFullName(sc.String, true);
 
 				FTexture *tex = TexMan.FindTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny);
 				if (tex == NULL)
@@ -1155,8 +1155,8 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
-				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
+				if (iwad && fileSystem.GetLumpFile(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (thiswad && fileSystem.GetLumpFile(lumpnum) == workingLump) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1339,8 +1339,8 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
-				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
+				if (iwad && fileSystem.GetLumpFile(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (thiswad && fileSystem.GetLumpFile(lumpnum) == workingLump) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1741,7 +1741,7 @@ public:
 				{
 					sc.MustGetString();
 					// This is not using sc.Open because it can print a more useful error message when done here
-					lump = Wads.CheckNumForFullName(sc.String, true);
+					lump = fileSystem.CheckNumForFullName(sc.String, true);
 					if (lump==-1)
 						sc.ScriptError("Lump '%s' not found", sc.String);
 
@@ -1835,7 +1835,7 @@ void LoadGLDefs(const char *defsLump)
 	static const char *gldefsnames[] = { "GLDEFS", defsLump, nullptr };
 
 	lastLump = 0;
-	while ((workingLump = Wads.FindLumpMulti(gldefsnames, &lastLump)) != -1)
+	while ((workingLump = fileSystem.FindLumpMulti(gldefsnames, &lastLump)) != -1)
 	{
 		GLDefsParser sc(workingLump, LightAssociations);
 		sc.DoParseDefs();

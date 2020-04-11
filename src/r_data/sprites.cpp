@@ -342,19 +342,19 @@ void R_InitSpriteDefs ()
 	}
 
 	// Repeat, for voxels
-	vmax = Wads.GetNumLumps();
+	vmax = fileSystem.GetNumLumps();
 	TArray<VHasher> vhashes(vmax, true);
 	memset(vhashes.Data(), -1, sizeof(VHasher)*vmax);
 	for (i = 0; i < vmax; ++i)
 	{
-		if (Wads.GetLumpNamespace(i) == ns_voxels)
+		if (fileSystem.GetLumpNamespace(i) == ns_voxels)
 		{
 			char name[9];
 			size_t namelen;
 			int spin;
 			int sign;
 
-			Wads.GetLumpName(name, i);
+			fileSystem.GetLumpName(name, i);
 			name[8] = 0;
 			namelen = strlen(name);
 			if (namelen < 4)
@@ -584,17 +584,17 @@ void R_InitSkins (void)
 		playersoundrefs[j] = skinsoundnames[j][1];
 	}
 
-	while ((base = Wads.FindLump ("S_SKIN", &lastlump, true)) != -1)
+	while ((base = fileSystem.FindLump ("S_SKIN", &lastlump, true)) != -1)
 	{
 		// The player sprite has 23 frames. This means that the S_SKIN
 		// marker needs a minimum of 23 lumps after it.
-		if (base >= Wads.GetNumLumps() - 23 || base == -1)
+		if (base >= fileSystem.GetNumLumps() - 23 || base == -1)
 			continue;
 
 		i++;
 		for (j = 0; j < NUMSKINSOUNDS; j++)
 			sndlumps[j] = -1;
-		Skins[i].namespc = Wads.GetLumpNamespace (base);
+		Skins[i].namespc = fileSystem.GetLumpNamespace (base);
 
 		FScanner sc(base);
 		intname = 0;
@@ -712,10 +712,10 @@ void R_InitSkins (void)
 			}
 			else if (key[0] == '*')
 			{ // Player sound replacment (ZDoom extension)
-				int lump = Wads.CheckNumForName (sc.String, Skins[i].namespc);
+				int lump = fileSystem.CheckNumForName (sc.String, Skins[i].namespc);
 				if (lump == -1)
 				{
-					lump = Wads.CheckNumForFullName (sc.String, true, ns_sounds);
+					lump = fileSystem.CheckNumForFullName (sc.String, true, ns_sounds);
 				}
 				if (lump != -1)
 				{
@@ -745,10 +745,10 @@ void R_InitSkins (void)
 				{
 					if (stricmp (key, skinsoundnames[j][0]) == 0)
 					{
-						sndlumps[j] = Wads.CheckNumForName (sc.String, Skins[i].namespc);
+						sndlumps[j] = fileSystem.CheckNumForName (sc.String, Skins[i].namespc);
 						if (sndlumps[j] == -1)
 						{ // Replacement not found, try finding it in the global namespace
-							sndlumps[j] = Wads.CheckNumForFullName (sc.String, true, ns_sounds);
+							sndlumps[j] = fileSystem.CheckNumForFullName (sc.String, true, ns_sounds);
 						}
 					}
 				}
@@ -811,11 +811,11 @@ void R_InitSkins (void)
 			if (intname == 0)
 			{
 				char name[9];
-				Wads.GetLumpName (name, base+1);
+				fileSystem.GetLumpName (name, base+1);
 				memcpy(&intname, name, 4);
 			}
 
-			int basens = Wads.GetLumpNamespace(base);
+			int basens = fileSystem.GetLumpNamespace(base);
 
 			for(int spr = 0; spr<2; spr++)
 			{
@@ -841,11 +841,11 @@ void R_InitSkins (void)
 					}
 				}
 
-				for (k = base + 1; Wads.GetLumpNamespace(k) == basens; k++)
+				for (k = base + 1; fileSystem.GetLumpNamespace(k) == basens; k++)
 				{
 					char lname[9];
 					uint32_t lnameint;
-					Wads.GetLumpName (lname, k);
+					fileSystem.GetLumpName (lname, k);
 					memcpy(&lnameint, lname, 4);
 					if (lnameint == intname)
 					{
@@ -864,7 +864,7 @@ void R_InitSkins (void)
 					break;
 				}
 
-				Wads.GetLumpName (temp.name, base+1);
+				fileSystem.GetLumpName (temp.name, base+1);
 				temp.name[4] = 0;
 				int sprno = (int)sprites.Push (temp);
 				if (spr==0)	Skins[i].sprite = sprno;
@@ -949,7 +949,7 @@ CCMD (skins)
 
 static void R_CreateSkinTranslation (const char *palname)
 {
-	FMemLump lump = Wads.ReadLump (palname);
+	FMemLump lump = fileSystem.ReadLump (palname);
 	const uint8_t *otherPal = (uint8_t *)lump.GetMem();
  
 	for (int i = 0; i < 256; ++i)
@@ -984,7 +984,7 @@ void R_InitSprites ()
 	// [RH] Count the number of skins.
 	numskins = PlayerClasses.Size ();
 	lastlump = 0;
-	while ((lump = Wads.FindLump ("S_SKIN", &lastlump, true)) != -1)
+	while ((lump = fileSystem.FindLump ("S_SKIN", &lastlump, true)) != -1)
 	{
 		numskins++;
 	}

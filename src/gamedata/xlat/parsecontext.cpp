@@ -314,7 +314,7 @@ void FParseContext::ParseLump(const char *lumpname)
 	const char *SavedSourceFile = SourceFile;
 	FParseToken token;
 
-	int lumpno = Wads.CheckNumForFullName(lumpname, true);
+	int lumpno = fileSystem.CheckNumForFullName(lumpname, true);
 
 	if (lumpno == -1) 
 	{
@@ -323,7 +323,7 @@ void FParseContext::ParseLump(const char *lumpname)
 	}
 
 	// Read the lump into a buffer and add a 0-terminator
-	auto lumpdata = Wads.ReadLumpIntoArray(lumpno, 1);
+	auto lumpdata = fileSystem.ReadLumpIntoArray(lumpno, 1);
 
 	SourceLine = 0;
 	SourceFile = lumpname;

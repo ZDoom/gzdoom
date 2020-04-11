@@ -60,11 +60,11 @@ static int SortSwitchDefs (const void *a, const void *b)
 void FTextureManager::InitSwitchList ()
 {
 	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
-	int lump = Wads.CheckNumForName ("SWITCHES");
+	int lump = fileSystem.CheckNumForName ("SWITCHES");
 
 	if (lump != -1)
 	{
-		FMemLump lumpdata = Wads.ReadLump (lump);
+		FMemLump lumpdata = fileSystem.ReadLump (lump);
 		const char *alphSwitchList = (const char *)lumpdata.GetMem();
 		const char *list_p;
 		FSwitchDef *def1, *def2;

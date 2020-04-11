@@ -1473,9 +1473,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			FTexture *pic = TexMan.GetTexture(chk);
 			const char *name;
 
-			if (Wads.GetLinkedTexture(pic->SourceLump) == pic)
+			if (fileSystem.GetLinkedTexture(pic->SourceLump) == pic)
 			{
-				name = Wads.GetLumpFullName(pic->SourceLump);
+				name = fileSystem.GetLumpFullName(pic->SourceLump);
 			}
 			else
 			{

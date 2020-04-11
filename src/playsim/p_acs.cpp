@@ -1920,12 +1920,12 @@ void FBehaviorContainer::LoadDefaultModules ()
 	// Scan each LOADACS lump and load the specified modules in order
 	int lump, lastlump = 0;
 
-	while ((lump = Wads.FindLump ("LOADACS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("LOADACS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetString())
 		{
-			int acslump = Wads.CheckNumForName (sc.String, ns_acslibrary);
+			int acslump = fileSystem.CheckNumForName (sc.String, ns_acslibrary);
 			if (acslump >= 0)
 			{
 				LoadModule (acslump);
@@ -1958,7 +1958,7 @@ FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len,
 	else
 	{
 		delete behavior;
-		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", Wads.GetLumpFullName(lumpnum));
+		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", fileSystem.GetLumpFullName(lumpnum));
 		return NULL;
 	}
 }
@@ -2224,7 +2224,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 	// 2. Corrupt modules won't be reported when a level is being loaded if this function quits before
 	//    adding it to the list.
 
-	if (fr == NULL) len = Wads.LumpLength (lumpnum);
+	if (fr == NULL) len = fileSystem.LumpLength (lumpnum);
 
 
 
@@ -2240,7 +2240,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 	object = new uint8_t[len];
 	if (fr == NULL)
 	{
-		Wads.ReadLump (lumpnum, object);
+		fileSystem.ReadLump (lumpnum, object);
 	}
 	else
 	{
@@ -2272,7 +2272,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 
 	if (fr == NULL)
 	{
-		Wads.GetLumpName (ModuleName, lumpnum);
+		fileSystem.GetLumpName (ModuleName, lumpnum);
 		ModuleName[8] = 0;
 	}
 	else
@@ -2317,8 +2317,8 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 		// If this is an original Hexen BEHAVIOR, set up some localization info for it. Original Hexen BEHAVIORs are always in the old format.
 		if ((Level->flags2 & LEVEL2_HEXENHACK) && gameinfo.gametype == GAME_Hexen && lumpnum == -1 && reallumpnum > 0)
 		{
-			int fileno = Wads.GetLumpFile(reallumpnum);
-			const char * filename = Wads.GetWadName(fileno);
+			int fileno = fileSystem.GetLumpFile(reallumpnum);
+			const char * filename = fileSystem.GetWadName(fileno);
 			if (!stricmp(filename, "HEXEN.WAD") || !stricmp(filename, "HEXDD.WAD"))
 			{
 				ShouldLocalize = true;
@@ -2563,7 +2563,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 				if (parse[i])
 				{
 					FBehavior *module = NULL;
-					int lump = Wads.CheckNumForName (&parse[i], ns_acslibrary);
+					int lump = fileSystem.CheckNumForName (&parse[i], ns_acslibrary);
 					if (lump < 0)
 					{
 						Printf (TEXTCOLOR_RED "Could not find ACS library %s.\n", &parse[i]);

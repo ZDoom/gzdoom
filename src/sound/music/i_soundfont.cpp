@@ -294,7 +294,7 @@ FileReader FPatchSetReader::OpenFile(const char *name)
 
 FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 {
-	mLumpIndex = Wads.CheckNumForFullName(filename);
+	mLumpIndex = fileSystem.CheckNumForFullName(filename);
 
 	mBasePath = filename;
 	FixPathSeperator(mBasePath);
@@ -304,7 +304,7 @@ FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 
 FileReader FLumpPatchSetReader::OpenMainConfigFile()
 {
-	return Wads.ReopenLumpReader(mLumpIndex);
+	return fileSystem.ReopenLumpReader(mLumpIndex);
 }
 
 FileReader FLumpPatchSetReader::OpenFile(const char *name)
@@ -312,9 +312,9 @@ FileReader FLumpPatchSetReader::OpenFile(const char *name)
 	FString path;
 	if (IsAbsPath(name)) return FileReader();	// no absolute paths in the lump directory.
 	path = mBasePath + name;
-	auto index = Wads.CheckNumForFullName(path);
+	auto index = fileSystem.CheckNumForFullName(path);
 	if (index < 0) return FileReader();
-	return Wads.ReopenLumpReader(index);
+	return fileSystem.ReopenLumpReader(index);
 }
 
 //==========================================================================
@@ -472,7 +472,7 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	if (name != nullptr)
 	{
 		const char *p = name + strlen(name) - 4;
-		if (p > name && !stricmp(p, ".cfg") && Wads.CheckNumForFullName(name) >= 0)
+		if (p > name && !stricmp(p, ".cfg") && fileSystem.CheckNumForFullName(name) >= 0)
 		{
 			return new FLumpPatchSetReader(name);
 		}

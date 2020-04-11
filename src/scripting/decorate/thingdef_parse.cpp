@@ -1113,7 +1113,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 	{
 		PClassActor *info = CreateNewActor(sc, typeName, parentName);
 		info->ActorInfo()->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
-		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
+		info->SourceLumpName = fileSystem.GetLumpFullPath(sc.LumpNum);
 
 		if (!info->SetReplacement(replaceName))
 		{
@@ -1270,13 +1270,13 @@ void ParseDecorate (FScanner &sc, PNamespace *ns)
 		{
 			sc.MustGetString();
 			// This check needs to remain overridable for testing purposes.
-			if (Wads.GetLumpFile(sc.LumpNum) == 0 && !Args->CheckParm("-allowdecoratecrossincludes"))
+			if (fileSystem.GetLumpFile(sc.LumpNum) == 0 && !Args->CheckParm("-allowdecoratecrossincludes"))
 			{
-				int includefile = Wads.GetLumpFile(Wads.CheckNumForFullName(sc.String, true));
+				int includefile = fileSystem.GetLumpFile(fileSystem.CheckNumForFullName(sc.String, true));
 				if (includefile != 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						Wads.GetWadFullName(includefile), sc.String);
+						fileSystem.GetWadFullName(includefile), sc.String);
 				}
 			}
 			FScanner newscanner;
@@ -1341,7 +1341,7 @@ void ParseAllDecorate()
 {
 	int lastlump = 0, lump;
 
-	while ((lump = Wads.FindLump("DECORATE", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("DECORATE", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		auto ns = Namespaces.NewNamespace(sc.LumpNum);

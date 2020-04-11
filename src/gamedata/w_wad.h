@@ -59,7 +59,7 @@ private:
 
 	FString Block;
 
-	friend class FWadCollection;
+	friend class FileSystem;
 };
 
 struct FolderEntry
@@ -68,11 +68,11 @@ struct FolderEntry
 	unsigned lumpnum;
 };
 
-class FWadCollection
+class FileSystem
 {
 public:
-	FWadCollection ();
-	~FWadCollection ();
+	FileSystem ();
+	~FileSystem ();
 
 	// The wadnum for the IWAD
 	int GetIwadNum() { return IwadIndex; }
@@ -194,6 +194,6 @@ private:
 	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };
 
-extern FWadCollection Wads;
+extern FileSystem fileSystem;
 
 #endif

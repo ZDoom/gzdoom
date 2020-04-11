@@ -895,8 +895,8 @@ bool FLevelLocals::DoCompleted (FString nextlevel, wbstartstruct_t &wminfo)
 				FTexture *tex = TexMan.GetTexture(*texids[i]);
 				if (tex != nullptr)
 				{
-					int filenum = Wads.GetLumpFile(tex->GetSourceLump());
-					if (filenum >= 0 && filenum <= Wads.GetMaxIwadNum())
+					int filenum = fileSystem.GetLumpFile(tex->GetSourceLump());
+					if (filenum >= 0 && filenum <= fileSystem.GetMaxIwadNum())
 					{
 						texids[i]->SetInvalid();
 					}

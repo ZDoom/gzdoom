@@ -851,12 +851,12 @@ void FMapInfoParser::ParseCluster()
 	// Remap Hexen's CLUS?MSG lumps to the string table, if applicable. The code here only checks what can actually be in an IWAD.
 	if (clusterinfo->flags & CLUSTER_EXITTEXTINLUMP)
 	{
-		int lump = Wads.CheckNumForFullName(clusterinfo->ExitText, true);
+		int lump = fileSystem.CheckNumForFullName(clusterinfo->ExitText, true);
 		if (lump > 0)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
-			int fileno = Wads.GetLumpFile(lump);
-			auto fn = Wads.GetWadName(fileno);
+			int fileno = fileSystem.GetLumpFile(lump);
+			auto fn = fileSystem.GetWadName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, clusterinfo->ExitText.GetChars());
@@ -1986,8 +1986,8 @@ level_info_t *FMapInfoParser::ParseMapHeader(level_info_t &defaultinfo)
 				if (HexenHack)
 				{
 					// Try to localize Hexen's map names. This does not use the above feature to allow these names to be unique.
-					int fileno = Wads.GetLumpFile(sc.LumpNum);
-					auto fn = Wads.GetWadName(fileno);
+					int fileno = fileSystem.GetLumpFile(sc.LumpNum);
+					auto fn = fileSystem.GetWadName(fileno);
 					if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 					{
 						FStringf key("TXT_%.5s_%s", fn, levelinfo->MapName.GetChars());
@@ -2206,18 +2206,18 @@ void FMapInfoParser::ParseMapInfo (int lump, level_info_t &gamedefaults, level_i
 		if (sc.Compare("include"))
 		{
 			sc.MustGetString();
-			int inclump = Wads.CheckNumForFullName(sc.String, true);
+			int inclump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (inclump < 0)
 			{
 				sc.ScriptError("include file '%s' not found", sc.String);
 			}
-			if (Wads.GetLumpFile(sc.LumpNum) != Wads.GetLumpFile(inclump))
+			if (fileSystem.GetLumpFile(sc.LumpNum) != fileSystem.GetLumpFile(inclump))
 			{
 				// Do not allow overriding includes from the default MAPINFO
-				if (Wads.GetLumpFile(sc.LumpNum) == 0)
+				if (fileSystem.GetLumpFile(sc.LumpNum) == 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						Wads.GetWadFullName(Wads.GetLumpFile(inclump)), sc.String);
+						fileSystem.GetWadFullName(fileSystem.GetLumpFile(inclump)), sc.String);
 				}
 			}
 			FScanner saved_sc = sc;
@@ -2406,11 +2406,11 @@ void G_ParseMapInfo (FString basemapinfo)
 	{
 		FMapInfoParser parse;
 		level_info_t defaultinfo;
-		int baselump = Wads.GetNumForFullName(basemapinfo);
-		if (Wads.GetLumpFile(baselump) > 0)
+		int baselump = fileSystem.GetNumForFullName(basemapinfo);
+		if (fileSystem.GetLumpFile(baselump) > 0)
 		{
 			I_FatalError("File %s is overriding core lump %s.", 
-				Wads.GetWadFullName(Wads.GetLumpFile(baselump)), basemapinfo.GetChars());
+				fileSystem.GetWadFullName(fileSystem.GetLumpFile(baselump)), basemapinfo.GetChars());
 		}
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}
@@ -2419,25 +2419,25 @@ void G_ParseMapInfo (FString basemapinfo)
 	int nindex;
 
 	// Parse any extra MAPINFOs.
-	while ((lump = Wads.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
+	while ((lump = fileSystem.FindLumpMulti (mapinfonames, &lastlump, false, &nindex)) != -1)
 	{
 		if (nindex == 0)
 		{
 			// If this lump is named MAPINFO we need to check if the same WAD contains a ZMAPINFO lump.
 			// If that exists we need to skip this one.
 
-			int wad = Wads.GetLumpFile(lump);
-			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int wad = fileSystem.GetLumpFile(lump);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
 
 			if (altlump >= 0) continue;
 		}
 		else if (nindex == 2)
 		{
 			// MAPINFO and ZMAPINFO will override UMAPINFO if in the same WAD.
-			int wad = Wads.GetLumpFile(lump);
-			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			int wad = fileSystem.GetLumpFile(lump);
+			int altlump = fileSystem.CheckNumForName("ZMAPINFO", ns_global, wad, true);
 			if (altlump >= 0) continue;
-			altlump = Wads.CheckNumForName("MAPINFO", ns_global, wad, true);
+			altlump = fileSystem.CheckNumForName("MAPINFO", ns_global, wad, true);
 			if (altlump >= 0) continue;
 		}
 		if (nindex != 2)

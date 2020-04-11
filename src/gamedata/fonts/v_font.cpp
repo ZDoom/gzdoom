@@ -110,20 +110,20 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		FStringf path("fonts/%s/", name);
 		
 		// Use a folder-based font only if it comes from a later file than the single lump version.
-		if (Wads.GetLumpsInFolder(path, folderdata, true))
+		if (fileSystem.GetLumpsInFolder(path, folderdata, true))
 		{
 			// This assumes that any custom font comes in one piece and not distributed across multiple resource files.
-			folderfile = Wads.GetLumpFile(folderdata[0].lumpnum);
+			folderfile = fileSystem.GetLumpFile(folderdata[0].lumpnum);
 		}
 
 
-		lump = Wads.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
+		lump = fileSystem.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
 		
-		if (lump != -1 && Wads.GetLumpFile(lump) >= folderfile)
+		if (lump != -1 && fileSystem.GetLumpFile(lump) >= folderfile)
 		{
 			uint32_t head;
 			{
-				auto lumpy = Wads.OpenLumpReader (lump);
+				auto lumpy = fileSystem.OpenLumpReader (lump);
 				lumpy.Read (&head, 4);
 			}
 			if ((head & MAKE_ID(255,255,255,0)) == MAKE_ID('F','O','N',0) ||
@@ -176,7 +176,7 @@ void V_InitCustomFonts()
 	int kerning;
 	char cursor = '_';
 
-	while ((llump = Wads.FindLump ("FONTDEFS", &lastlump)) != -1)
+	while ((llump = fileSystem.FindLump ("FONTDEFS", &lastlump)) != -1)
 	{
 		sc.OpenLumpNum(llump);
 		while (sc.GetString())
@@ -265,7 +265,7 @@ void V_InitCustomFonts()
 					{
 						*p = TexMan.GetTexture(texid);
 					}
-					else if (Wads.GetLumpFile(sc.LumpNum) >= Wads.GetIwadNum())
+					else if (fileSystem.GetLumpFile(sc.LumpNum) >= fileSystem.GetIwadNum())
 					{
 						// Print a message only if this isn't in zdoom.pk3
 						sc.ScriptMessage("%s: Unable to find texture in font definition for %s", sc.String, namebuffer.GetChars());
@@ -345,7 +345,7 @@ void V_InitFontColors ()
 	TranslationLookup.Clear();
 	TranslationColors.Clear();
 
-	while ((lump = Wads.FindLump ("TEXTCOLO", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("TEXTCOLO", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetString())
@@ -663,7 +663,7 @@ void V_InitFonts()
 	FFont *CreateHexLumpFont(const char *fontname, int lump);
 	FFont *CreateHexLumpFont2(const char *fontname, int lump);
 
-	auto lump = Wads.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
+	auto lump = fileSystem.CheckNumForFullName("newconsolefont.hex", 0);	// This is always loaded from gzdoom.pk3 to prevent overriding it with incomplete replacements.
 	if (lump == -1) I_FatalError("newconsolefont.hex not found");	// This font is needed - do not start up without it.
 	NewConsoleFont = CreateHexLumpFont("NewConsoleFont", lump);
 	NewSmallFont = CreateHexLumpFont2("NewSmallFont", lump);
@@ -672,12 +672,12 @@ void V_InitFonts()
 	// load the heads-up font
 	if (!(SmallFont = V_GetFont("SmallFont", "SMALLFNT")))
 	{
-		if (Wads.CheckNumForName("FONTA_S") >= 0)
+		if (fileSystem.CheckNumForName("FONTA_S") >= 0)
 		{
 			int wadfile = -1;
-			auto a = Wads.CheckNumForName("FONTA33", ns_graphics);
-			if (a != -1) wadfile = Wads.GetLumpFile(a);
-			if (wadfile > Wads.GetIwadNum())
+			auto a = fileSystem.CheckNumForName("FONTA33", ns_graphics);
+			if (a != -1) wadfile = fileSystem.GetLumpFile(a);
+			if (wadfile > fileSystem.GetIwadNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
 				SmallFont = new FFont("SmallFont", "FONTA%02u", nullptr, HU_FONTSTART, HU_FONTSIZE, 1, -1);
@@ -689,12 +689,12 @@ void V_InitFonts()
 				SmallFont->SetCursor('[');
 			}
 		}
-		else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
+		else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
 		{
 			int wadfile = -1;
-			auto a = Wads.CheckNumForName("STCFN065", ns_graphics);
-			if (a != -1) wadfile = Wads.GetLumpFile(a);
-			if (wadfile > Wads.GetIwadNum())
+			auto a = fileSystem.CheckNumForName("STCFN065", ns_graphics);
+			if (a != -1) wadfile = fileSystem.GetLumpFile(a);
+			if (wadfile > fileSystem.GetIwadNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
 				SmallFont = new FFont("SmallFont", "STCFN%.3d", nullptr, HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
@@ -707,12 +707,12 @@ void V_InitFonts()
 	}
 
 	// Create the original small font as a fallback for incomplete definitions.
-	if (Wads.CheckNumForName("FONTA_S") >= 0)
+	if (fileSystem.CheckNumForName("FONTA_S") >= 0)
 	{
 		OriginalSmallFont = new FFont("OriginalSmallFont", "FONTA%02u", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
 		OriginalSmallFont->SetCursor('[');
 	}
-	else if (Wads.CheckNumForName("STCFN033", ns_graphics) >= 0)
+	else if (fileSystem.CheckNumForName("STCFN033", ns_graphics) >= 0)
 	{
 		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
 	}
@@ -727,7 +727,7 @@ void V_InitFonts()
 
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
-		if (Wads.CheckNumForName("STBFN033", ns_graphics) >= 0)
+		if (fileSystem.CheckNumForName("STBFN033", ns_graphics) >= 0)
 		{
 			SmallFont2 = new FFont("SmallFont2", "STBFN%.3d", "defsmallfont2", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1);
 		}
@@ -738,7 +738,7 @@ void V_InitFonts()
 
 	if (!(BigFont = V_GetFont("BigFont")))
 	{
-		if (Wads.CheckNumForName("FONTB_S") >= 0)
+		if (fileSystem.CheckNumForName("FONTB_S") >= 0)
 		{
 			BigFont = new FFont("BigFont", "FONTB%02u", "defbigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1);
 		}

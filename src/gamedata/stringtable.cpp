@@ -57,15 +57,15 @@ void FStringTable::LoadStrings ()
 	int lastlump, lump;
 
 	lastlump = 0;
-	while ((lump = Wads.FindLump("LMACROS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("LMACROS", &lastlump)) != -1)
 	{
 		readMacros(lump);
 	}
 
 	lastlump = 0;
-	while ((lump = Wads.FindLump ("LANGUAGE", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("LANGUAGE", &lastlump)) != -1)
 	{
-		auto lumpdata = Wads.ReadLumpIntoArray(lump);
+		auto lumpdata = fileSystem.ReadLumpIntoArray(lump);
 
 		if (!ParseLanguageCSV(lump, lumpdata))
  			LoadLanguage (lump, lumpdata);
@@ -163,7 +163,7 @@ TArray<TArray<FString>> FStringTable::parseCSV(const TArray<uint8_t> &buffer)
 
 bool FStringTable::readMacros(int lumpnum)
 {
-	auto lumpdata = Wads.ReadLumpIntoArray(lumpnum);
+	auto lumpdata = fileSystem.ReadLumpIntoArray(lumpnum);
 	auto data = parseCSV(lumpdata);
 
 	for (unsigned i = 1; i < data.Size(); i++)
@@ -410,7 +410,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 {
 	decltype(allStrings)::Iterator it(allStrings);
 	decltype(allStrings)::Pair *pair;
-	auto filenum = Wads.GetLumpFile(lumpnum);
+	auto filenum = fileSystem.GetLumpFile(lumpnum);
 
 	while (it.NextPair(pair))
 	{
@@ -432,7 +432,7 @@ void FStringTable::DeleteForLabel(int lumpnum, FName label)
 void FStringTable::InsertString(int lumpnum, int langid, FName label, const FString &string)
 {
 	const char *strlangid = (const char *)&langid;
-	TableElement te = { Wads.GetLumpFile(lumpnum), { string, string, string, string } };
+	TableElement te = { fileSystem.GetLumpFile(lumpnum), { string, string, string, string } };
 	long index;
 	while ((index = te.strings[0].IndexOf("@[")) >= 0)
 	{

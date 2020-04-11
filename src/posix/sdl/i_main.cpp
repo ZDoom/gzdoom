@@ -115,7 +115,7 @@ static int DoomSpecificInfo (char *buffer, char *end)
 		}
 		p += snprintf(buffer + p, size - p, "\n");
 
-		for (i = 0; (arg = Wads.GetWadName(i)) != NULL; ++i)
+		for (i = 0; (arg = fileSystem.GetWadName(i)) != NULL; ++i)
 		{
 			p += snprintf(buffer + p, size - p, "\nWad %d: %s", i, arg);
 		}

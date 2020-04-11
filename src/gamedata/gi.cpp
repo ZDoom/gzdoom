@@ -171,7 +171,7 @@ const char* GameInfoBorders[] =
 	{ \
 		sc.MustGetToken(TK_StringConst); \
 		gameinfo.key = sc.String; \
-		gameinfo.stampvar = Wads.GetLumpFile(sc.LumpNum); \
+		gameinfo.stampvar = fileSystem.GetLumpFile(sc.LumpNum); \
 	}
 
 #define GAMEINFOKEY_INT(key, variable) \

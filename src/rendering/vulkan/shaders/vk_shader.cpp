@@ -345,16 +345,16 @@ FString VkShaderManager::GetTargetGlslVersion()
 
 FString VkShaderManager::LoadPublicShaderLump(const char *lumpname)
 {
-	int lump = Wads.CheckNumForFullName(lumpname);
+	int lump = fileSystem.CheckNumForFullName(lumpname);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	FMemLump data = Wads.ReadLump(lump);
+	FMemLump data = fileSystem.ReadLump(lump);
 	return data.GetString();
 }
 
 FString VkShaderManager::LoadPrivateShaderLump(const char *lumpname)
 {
-	int lump = Wads.CheckNumForFullName(lumpname, 0);
+	int lump = fileSystem.CheckNumForFullName(lumpname, 0);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	FMemLump data = Wads.ReadLump(lump);
+	FMemLump data = fileSystem.ReadLump(lump);
 	return data.GetString();
 }

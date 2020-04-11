@@ -110,7 +110,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 		FStringf path("fonts/%s/", filetemplate);
 		// If a name template is given, collect data from all resource files.
 		// For anything else, each folder is being treated as an atomic, self-contained unit and mixing from different glyph sets is blocked.
-		Wads.GetLumpsInFolder(path, folderdata, nametemplate == nullptr);
+		fileSystem.GetLumpsInFolder(path, folderdata, nametemplate == nullptr);
 		
 		//if (nametemplate == nullptr)
 		{
@@ -234,7 +234,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 					for (auto entry : array)
 					{
 						FTexture *tex = TexMan.GetTexture(entry, false);
-						if (tex && tex->SourceLump >= 0 && Wads.GetLumpFile(tex->SourceLump) <= Wads.GetMaxIwadNum() && tex->UseType == ETextureType::MiscPatch)
+						if (tex && tex->SourceLump >= 0 && fileSystem.GetLumpFile(tex->SourceLump) <= fileSystem.GetMaxIwadNum() && tex->UseType == ETextureType::MiscPatch)
 						{
 							texs[i] = tex;
 						}

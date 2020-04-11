@@ -517,7 +517,7 @@ int RunEndoom()
 		return 0;
 	}
 
-	int endoom_lump = Wads.CheckNumForFullName (gameinfo.Endoom, true);
+	int endoom_lump = fileSystem.CheckNumForFullName (gameinfo.Endoom, true);
 
 	uint8_t endoom_screen[4000];
 	uint8_t *font;
@@ -526,12 +526,12 @@ int RunEndoom()
 	bool blinking = false, blinkstate = false;
 	int i;
 
-	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
+	if (endoom_lump < 0 || fileSystem.LumpLength (endoom_lump) != 4000)
 	{
 		return 0;
 	}
 
-	if (Wads.GetLumpFile(endoom_lump) == Wads.GetMaxIwadNum() && showendoom == 2)
+	if (fileSystem.GetLumpFile(endoom_lump) == fileSystem.GetMaxIwadNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
 		return 0;
@@ -553,7 +553,7 @@ int RunEndoom()
 	RestoreConView ();
 	S_StopMusic(true);
 
-	Wads.ReadLump (endoom_lump, endoom_screen);
+	fileSystem.ReadLump (endoom_lump, endoom_screen);
 
 	// Draw the loading screen to a bitmap.
 	StartupBitmap = ST_Util_AllocTextBitmap (font);

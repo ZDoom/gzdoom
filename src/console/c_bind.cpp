@@ -688,7 +688,7 @@ void C_BindDefaults ()
 {
 	int lump, lastlump = 0;
 
-	while ((lump = Wads.FindLump("DEFBINDS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("DEFBINDS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 

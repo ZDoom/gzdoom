@@ -116,11 +116,11 @@ void S_Init()
 	I_InitSound();
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
-	int curvelump = Wads.CheckNumForName("SNDCURVE");
+	int curvelump = fileSystem.CheckNumForName("SNDCURVE");
 	TArray<uint8_t> curve;
 	if (curvelump >= 0)
 	{
-		curve = Wads.ReadLumpIntoArray(curvelump);
+		curve = fileSystem.ReadLumpIntoArray(curvelump);
 	}
 	soundEngine->Init(curve);
 }
@@ -196,7 +196,7 @@ void S_Start()
 			if (LocalSndInfo.IsNotEmpty())
 			{
 				// Now parse the local SNDINFO
-				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
+				int j = fileSystem.CheckNumForFullName(LocalSndInfo, true);
 				if (j >= 0) S_AddLocalSndInfo(j);
 			}
 
@@ -210,7 +210,7 @@ void S_Start()
 
 		if (parse_ss)
 		{
-			S_ParseSndSeq(LocalSndSeq.IsNotEmpty() ? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
+			S_ParseSndSeq(LocalSndSeq.IsNotEmpty() ? fileSystem.CheckNumForFullName(LocalSndSeq, true) : -1);
 		}
 
 		LastLocalSndInfo = LocalSndInfo;
@@ -1059,13 +1059,13 @@ bool DoomSoundEngine::ValidatePosVel(int sourcetype, const void* source, const F
 
 //==========================================================================
 //
-// This is to avoid hardscoding the dependency on Wads into the sound engine
+// This is to avoid hardscoding the dependency on the file system into the sound engine
 // 
 //==========================================================================
 
 TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 {
-	auto wlump = Wads.OpenLumpReader(lumpnum);
+	auto wlump = fileSystem.OpenLumpReader(lumpnum);
 	return wlump.Read();
 }
 
@@ -1139,7 +1139,7 @@ void DoomSoundEngine::NoiseDebug()
 		color = (chan->ChanFlags & CHANF_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		Wads.GetLumpName(temp, S_sfx[chan->SoundID].lumpnum);
+		fileSystem.GetLumpName(temp, S_sfx[chan->SoundID].lumpnum);
 		temp[8] = 0;
 		screen->DrawText(NewConsoleFont, color, 0, y, temp, TAG_DONE);
 
@@ -1257,7 +1257,7 @@ void DoomSoundEngine::PrintSoundList()
 		}
 		else if (S_sfx[i].lumpnum != -1)
 		{
-			Wads.GetLumpName(lumpname, sfx->lumpnum);
+			fileSystem.GetLumpName(lumpname, sfx->lumpnum);
 			Printf("%3d. %s (%s)\n", i, sfx->name.GetChars(), lumpname);
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)

@@ -374,7 +374,7 @@ void FDDSTexture::CalcBitShift (uint32_t mask, uint8_t *lshiftp, uint8_t *rshift
 
 TArray<uint8_t> FDDSTexture::CreatePalettedPixels(int conversion)
 {
-	auto lump = Wads.OpenLumpReader (SourceLump);
+	auto lump = fileSystem.OpenLumpReader (SourceLump);
 
 	TArray<uint8_t> Pixels(Width*Height, true);
 
@@ -783,7 +783,7 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 
 int FDDSTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	auto lump = Wads.OpenLumpReader (SourceLump);
+	auto lump = fileSystem.OpenLumpReader (SourceLump);
 
 	uint8_t *TexBuffer = bmp->GetPixels();
 

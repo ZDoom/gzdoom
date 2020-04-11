@@ -1125,7 +1125,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 			// Strife's teaser doesn't contain all the icon graphics of the full game.
 			if ((bag.Info->ActorInfo()->GameFilter == GAME_Any || bag.Info->ActorInfo()->GameFilter & gameinfo.gametype) &&
-				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
+				!(gameinfo.flags&GI_SHAREWARE) && fileSystem.GetLumpFile(bag.Lumpnum) != 0)
 			{
 				bag.ScriptPosition.Message(MSG_WARNING,
 					"Icon '%s' for '%s' not found\n", i, bag.Info->TypeName.GetChars());
@@ -1474,7 +1474,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 
 	FPlayerColorSet color;
 	color.Name = setname;
-	color.Lump = Wads.CheckNumForName(rangefile);
+	color.Lump = fileSystem.CheckNumForName(rangefile);
 	color.RepresentativeColor = representative_color;
 	color.NumExtraRanges = 0;
 

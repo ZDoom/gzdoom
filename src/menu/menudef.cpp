@@ -649,7 +649,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mWLeft = 0;
 	desc->mWRight = 0;
 	desc->mCenter = false;
-	desc->mFromEngine = Wads.GetLumpFile(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
+	desc->mFromEngine = fileSystem.GetLumpFile(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 
 	ParseListMenuBody(sc, desc);
 	ReplaceMenu(sc, desc);
@@ -1010,9 +1010,9 @@ void M_ParseMenuDefs()
 	DefaultListMenuSettings->Reset();
 	DefaultOptionMenuSettings->Reset();
 
-	int IWADMenu = Wads.CheckNumForName("MENUDEF", ns_global, Wads.GetIwadNum());
+	int IWADMenu = fileSystem.CheckNumForName("MENUDEF", ns_global, fileSystem.GetIwadNum());
 
-	while ((lump = Wads.FindLump ("MENUDEF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("MENUDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 
@@ -1376,7 +1376,7 @@ static void InitCrosshairsList()
 	pair->Value = 0;
 	pair->Text = "None";
 
-	while ((lump = Wads.FindLump("XHAIRS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("XHAIRS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetNumber())

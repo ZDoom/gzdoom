@@ -270,8 +270,8 @@ void ST_CreateStatusBar(bool bTitleLevel)
 		// The old rule of 'what came last wins' goes here, as well.
 		// If the most recent SBARINFO definition comes before a status bar class definition it will be picked,
 		// if the class is defined later, this will be picked. If both come from the same file, the class definition will win.
-		int sbarinfolump = Wads.CheckNumForName("SBARINFO");
-		int sbarinfofile = Wads.GetLumpFile(sbarinfolump);
+		int sbarinfolump = fileSystem.CheckNumForName("SBARINFO");
+		int sbarinfofile = fileSystem.GetLumpFile(sbarinfolump);
 		if (gameinfo.statusbarclassfile >= gameinfo.statusbarfile && gameinfo.statusbarclassfile >= sbarinfofile)
 		{
 			CreateGameInfoStatusBar(shouldWarn);

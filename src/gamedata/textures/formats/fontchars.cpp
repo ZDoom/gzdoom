@@ -124,7 +124,7 @@ void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
 
 TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 {
-	auto lump = Wads.OpenLumpReader (SourceLump);
+	auto lump = fileSystem.OpenLumpReader (SourceLump);
 	int destSize = Width * Height;
 	uint8_t max = 255;
 	bool rle = true;
@@ -233,7 +233,7 @@ TArray<uint8_t> FFontChar2::CreatePalettedPixels(int)
 	if (destSize < 0)
 	{
 		char name[9];
-		Wads.GetLumpName (name, SourceLump);
+		fileSystem.GetLumpName (name, SourceLump);
 		name[8] = 0;
 		I_FatalError ("The font %s is corrupt", name);
 	}

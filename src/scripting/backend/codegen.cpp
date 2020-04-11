@@ -187,7 +187,7 @@ bool FCompileContext::CheckWritable(int flags)
 {
 	if (!(flags & VARF_ReadOnly)) return false;
 	if (!(flags & VARF_InternalAccess)) return true;
-	return Wads.GetLumpFile(Lump) != 0;
+	return fileSystem.GetLumpFile(Lump) != 0;
 }
 
 FxLocalVariableDeclaration *FCompileContext::FindLocalVariable(FName name)
@@ -6141,7 +6141,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 					// even if it depends on some deprecated symbol. 
 					// The main motivation here is to keep the deprecated static functions accessing the global level variable as they were.
 					// Print these only if debug output is active and at the highest verbosity level.
-					const bool internal = (ctx.Function->Variants[0].Flags & VARF_Deprecated) && Wads.GetLumpFile(ctx.Lump) == 0;
+					const bool internal = (ctx.Function->Variants[0].Flags & VARF_Deprecated) && fileSystem.GetLumpFile(ctx.Lump) == 0;
 					const FString &deprecationMessage = vsym->DeprecationMessage;
 
 					ScriptPosition.Message(internal ? MSG_DEBUGMSG : MSG_WARNING, 

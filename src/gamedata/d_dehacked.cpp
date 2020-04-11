@@ -2426,7 +2426,7 @@ CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by 
 // checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
 static bool isDehFile(int lumpnum)
 {
-	const char* const fullName  = Wads.GetLumpFullName(lumpnum);
+	const char* const fullName  = fileSystem.GetLumpFullName(lumpnum);
 	const char* const extension = strrchr(fullName, '.');
 
 	return NULL != extension && strchr(fullName, '/') == NULL
@@ -2437,16 +2437,16 @@ int D_LoadDehLumps(DehLumpSource source)
 {
 	int lastlump = 0, lumpnum, count = 0;
 
-	while ((lumpnum = Wads.FindLump("DEHACKED", &lastlump)) >= 0)
+	while ((lumpnum = fileSystem.FindLump("DEHACKED", &lastlump)) >= 0)
 	{
-		const int filenum = Wads.GetLumpFile(lumpnum);
+		const int filenum = fileSystem.GetLumpFile(lumpnum);
 		
-		if (FromIWAD == source && filenum > Wads.GetMaxIwadNum())
+		if (FromIWAD == source && filenum > fileSystem.GetMaxIwadNum())
 		{
 			// No more DEHACKED lumps in IWAD
 			break;
 		}
-		else if (FromPWADs == source && filenum <= Wads.GetMaxIwadNum())
+		else if (FromPWADs == source && filenum <= fileSystem.GetMaxIwadNum())
 		{
 			// Skip DEHACKED lumps from IWAD
 			continue;
@@ -2461,7 +2461,7 @@ int D_LoadDehLumps(DehLumpSource source)
 
 		if (dehload == 1)	// load all .DEH lumps that are found.
 		{
-			for (lumpnum = 0, lastlump = Wads.GetNumLumps(); lumpnum < lastlump; ++lumpnum)
+			for (lumpnum = 0, lastlump = fileSystem.GetNumLumps(); lumpnum < lastlump; ++lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -2471,7 +2471,7 @@ int D_LoadDehLumps(DehLumpSource source)
 		}
 		else 	// only load the last .DEH lump that is found.
 		{
-			for (lumpnum = Wads.GetNumLumps()-1; lumpnum >=0; --lumpnum)
+			for (lumpnum = fileSystem.GetNumLumps()-1; lumpnum >=0; --lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -2488,13 +2488,13 @@ int D_LoadDehLumps(DehLumpSource source)
 bool D_LoadDehLump(int lumpnum)
 {
 	auto ls = LumpFileNum;
-	LumpFileNum = Wads.GetLumpFile(lumpnum);
+	LumpFileNum = fileSystem.GetLumpFile(lumpnum);
 
-	PatchSize = Wads.LumpLength(lumpnum);
+	PatchSize = fileSystem.LumpLength(lumpnum);
 
-	PatchName = Wads.GetLumpFullPath(lumpnum);
+	PatchName = fileSystem.GetLumpFullPath(lumpnum);
 	PatchFile = new char[PatchSize + 1];
-	Wads.ReadLump(lumpnum, PatchFile);
+	fileSystem.ReadLump(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
 	auto res = DoDehPatch();
 	LumpFileNum = ls;
@@ -2520,14 +2520,14 @@ bool D_LoadDehFile(const char *patchfile)
 	else
 	{
 		// Couldn't find it in the filesystem; try from a lump instead.
-		int lumpnum = Wads.CheckNumForFullName(patchfile, true);
+		int lumpnum = fileSystem.CheckNumForFullName(patchfile, true);
 		if (lumpnum < 0)
 		{
 			// Compatibility fallback. It's just here because
 			// some WAD may need it. Should be deleted if it can
 			// be confirmed that nothing uses this case.
 			FString filebase(ExtractFileBase(patchfile));
-			lumpnum = Wads.CheckNumForName(filebase);
+			lumpnum = fileSystem.CheckNumForName(filebase);
 		}
 		if (lumpnum >= 0)
 		{
@@ -2682,14 +2682,14 @@ static bool LoadDehSupp ()
 	{
 		// Make sure we only get the DEHSUPP lump from zdoom.pk3
 		// User modifications are not supported!
-		int lump = Wads.CheckNumForName("DEHSUPP");
+		int lump = fileSystem.CheckNumForName("DEHSUPP");
 
 		if (lump == -1)
 		{
 			return false;
 		}
 
-		if (Wads.GetLumpFile(lump) > 0)
+		if (fileSystem.GetLumpFile(lump) > 0)
 		{
 			Printf("Warning: DEHSUPP no longer supported. DEHACKED patch disabled.\n");
 			return false;

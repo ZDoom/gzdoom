@@ -185,7 +185,7 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 
 void FMD3Model::LoadGeometry()
 {
-	FMemLump lumpdata = Wads.ReadLump(mLumpNum);
+	FMemLump lumpdata = fileSystem.ReadLump(mLumpNum);
 	const char *buffer = (const char *)lumpdata.GetMem();
 	md3_header_t * hdr = (md3_header_t *)buffer;
 	md3_surface_t * surf = (md3_surface_t*)(buffer + LittleLong(hdr->Ofs_Surfaces));

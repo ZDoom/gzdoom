@@ -451,9 +451,9 @@ VkPPShader::VkPPShader(PPShader *shader)
 
 FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defines, int version)
 {
-	int lump = Wads.CheckNumForFullName(lumpName);
+	int lump = fileSystem.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName.GetChars());
-	FString code = Wads.ReadLump(lump).GetString().GetChars();
+	FString code = fileSystem.ReadLump(lump).GetString().GetChars();
 
 	FString patchedCode;
 	patchedCode.AppendFormat("#version %d\n", 450);

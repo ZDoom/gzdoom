@@ -316,7 +316,7 @@ static void LoadAltHudStuff()
 		break;
 	}
 
-	while ((lump = Wads.FindLump("ALTHUDCF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("ALTHUDCF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetString())

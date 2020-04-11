@@ -543,7 +543,7 @@ void S_ParseReverbDef ()
 {
 	int lump, lastlump = 0;
 
-	while ((lump = Wads.FindLump ("REVERBS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("REVERBS", &lastlump)) != -1)
 	{
 		FScanner sc;
 		sc.OpenLumpNum(lump);

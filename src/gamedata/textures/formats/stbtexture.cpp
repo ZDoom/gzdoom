@@ -160,7 +160,7 @@ TArray<uint8_t> FStbTexture::CreatePalettedPixels(int conversion)
 
 int FStbTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
-	auto lump = Wads.OpenLumpReader (SourceLump); 
+	auto lump = fileSystem.OpenLumpReader (SourceLump); 
 	int x, y, chan;
 	auto image = stbi_load_from_callbacks(&callbacks, &lump, &x, &y, &chan, STBI_rgb_alpha); 	
 	if (image)

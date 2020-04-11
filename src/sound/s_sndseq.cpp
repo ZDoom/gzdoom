@@ -581,7 +581,7 @@ void S_ParseSndSeq (int levellump)
 	memset (SeqTrans, -1, sizeof(SeqTrans));
 	lastlump = 0;
 
-	while (((lump = Wads.FindLump ("SNDSEQ", &lastlump)) != -1 || levellump != -1) && levellump != -2)
+	while (((lump = fileSystem.FindLump ("SNDSEQ", &lastlump)) != -1 || levellump != -1) && levellump != -2)
 	{
 		if (lump == -1)
 		{

@@ -253,7 +253,7 @@ void InitBotStuff()
 {
 	int lump;
 	int lastlump = 0;
-	while (-1 != (lump = Wads.FindLump("BOTSUPP", &lastlump)))
+	while (-1 != (lump = fileSystem.FindLump("BOTSUPP", &lastlump)))
 	{
 		FScanner sc(lump);
 		sc.SetCMode(true);

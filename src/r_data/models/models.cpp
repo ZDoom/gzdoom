@@ -325,7 +325,7 @@ static TArray<int> SpriteModelHash;
 
 static int FindGFXFile(FString & fn)
 {
-	int lump = Wads.CheckNumForFullName(fn);	// if we find something that matches the name plus the extension, return it and do not enter the substitution logic below.
+	int lump = fileSystem.CheckNumForFullName(fn);	// if we find something that matches the name plus the extension, return it and do not enter the substitution logic below.
 	if (lump != -1) return lump;
 
 	int best = -1;
@@ -337,7 +337,7 @@ static int FindGFXFile(FString & fn)
 
 	for (const char ** extp=extensions; *extp; extp++)
 	{
-		int lump = Wads.CheckNumForFullName(fn + *extp);
+		int lump = fileSystem.CheckNumForFullName(fn + *extp);
 		if (lump >= best)  best = lump;
 	}
 	return best;
@@ -357,7 +357,7 @@ FTextureID LoadSkin(const char * path, const char * fn)
 	buffer.Format("%s%s", path, fn);
 
 	int texlump = FindGFXFile(buffer);
-	const char * const texname = texlump < 0 ? fn : Wads.GetLumpFullName(texlump);
+	const char * const texname = texlump < 0 ? fn : fileSystem.GetLumpFullName(texlump);
 	return TexMan.CheckForTexture(texname, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 }
 
@@ -394,7 +394,7 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	FString fullname;
 
 	fullname.Format("%s%s", path, modelfile);
-	int lump = Wads.CheckNumForFullName(fullname);
+	int lump = fileSystem.CheckNumForFullName(fullname);
 
 	if (lump<0)
 	{
@@ -407,15 +407,15 @@ static unsigned FindModel(const char * path, const char * modelfile)
 		if (!Models[i]->mFileName.CompareNoCase(fullname)) return i;
 	}
 
-	int len = Wads.LumpLength(lump);
-	FMemLump lumpd = Wads.ReadLump(lump);
+	int len = fileSystem.LumpLength(lump);
+	FMemLump lumpd = fileSystem.ReadLump(lump);
 	char * buffer = (char*)lumpd.GetMem();
 
 	if ( (size_t)fullname.LastIndexOf("_d.3d") == fullname.Len()-5 )
 	{
 		FString anivfile = fullname.GetChars();
 		anivfile.Substitute("_d.3d","_a.3d");
-		if ( Wads.CheckNumForFullName(anivfile) > 0 )
+		if ( fileSystem.CheckNumForFullName(anivfile) > 0 )
 		{
 			model = new FUE1Model;
 		}
@@ -424,7 +424,7 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	{
 		FString datafile = fullname.GetChars();
 		datafile.Substitute("_a.3d","_d.3d");
-		if ( Wads.CheckNumForFullName(datafile) > 0 )
+		if ( fileSystem.CheckNumForFullName(datafile) > 0 )
 		{
 			model = new FUE1Model;
 		}
@@ -532,7 +532,7 @@ void InitModels()
 
 	int Lump;
 	int lastLump = 0;
-	while ((Lump = Wads.FindLump("MODELDEF", &lastLump)) != -1)
+	while ((Lump = fileSystem.FindLump("MODELDEF", &lastLump)) != -1)
 	{
 		ParseModelDefLump(Lump);
 	}
@@ -850,7 +850,7 @@ static void ParseModelDefLump(int Lump)
 		{
 			sc.MustGetString();
 			// This is not using sc.Open because it can print a more useful error message when done here
-			int includelump = Wads.CheckNumForFullName(sc.String, true);
+			int includelump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (includelump == -1)
 			{
 				if (strcmp(sc.String, "sentinel.modl") != 0) // Gene Tech mod has a broken #include statement

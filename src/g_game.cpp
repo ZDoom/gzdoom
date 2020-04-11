@@ -1765,7 +1765,7 @@ static bool CheckSingleWad (const char *name, bool &printRequires, bool printwar
 	{
 		return true;
 	}
-	if (Wads.CheckIfWadLoaded (name) < 0)
+	if (fileSystem.CheckIfWadLoaded (name) < 0)
 	{
 		if (printwarn)
 		{
@@ -2129,13 +2129,13 @@ static void PutSaveWads (FSerializer &arc)
 	const char *name;
 
 	// Name of IWAD
-	name = Wads.GetWadName (Wads.GetIwadNum());
+	name = fileSystem.GetWadName (fileSystem.GetIwadNum());
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	if (Wads.GetLumpFile (primaryLevel->lumpnum) > Wads.GetIwadNum())
+	if (fileSystem.GetLumpFile (primaryLevel->lumpnum) > fileSystem.GetIwadNum())
 	{
-		name = Wads.GetWadName (Wads.GetLumpFile (primaryLevel->lumpnum));
+		name = fileSystem.GetWadName (fileSystem.GetLumpFile (primaryLevel->lumpnum));
 		arc.AddString("Map WAD", name);
 	}
 }
@@ -2773,12 +2773,12 @@ void G_DoPlayDemo (void)
 	gameaction = ga_nothing;
 
 	// [RH] Allow for demos not loaded as lumps
-	demolump = Wads.CheckNumForFullName (defdemoname, true);
+	demolump = fileSystem.CheckNumForFullName (defdemoname, true);
 	if (demolump >= 0)
 	{
-		int demolen = Wads.LumpLength (demolump);
+		int demolen = fileSystem.LumpLength (demolump);
 		demobuffer = (uint8_t *)M_Malloc(demolen);
-		Wads.ReadLump (demolump, demobuffer);
+		fileSystem.ReadLump (demolump, demobuffer);
 	}
 	else
 	{

@@ -435,7 +435,7 @@ DEFINE_ACTION_FUNCTION(DObject,S_GetLength)
 
 int S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc)
 {
-	int lump = Wads.CheckNumForFullName (lumpname, true, ns_sounds);
+	int lump = fileSystem.CheckNumForFullName (lumpname, true, ns_sounds);
 	return S_AddSound (logicalname, lump);
 }
 
@@ -505,7 +505,7 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	
 	if (lumpname)
 	{
-		lump = Wads.CheckNumForFullName (lumpname, true, ns_sounds);
+		lump = fileSystem.CheckNumForFullName (lumpname, true, ns_sounds);
 	}
 
 	return S_AddPlayerSound (pclass, gender, refid, lump);
@@ -780,12 +780,12 @@ void S_ParseSndInfo (bool redefine)
 
 	CurrentPitchMask = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
-	for (lump = 0; lump < Wads.GetNumLumps(); ++lump)
+	for (lump = 0; lump < fileSystem.GetNumLumps(); ++lump)
 	{
-		switch (Wads.GetLumpNamespace (lump))
+		switch (fileSystem.GetLumpNamespace (lump))
 		{
 		case ns_global:
-			if (Wads.CheckLumpName (lump, "SNDINFO"))
+			if (fileSystem.CheckLumpName (lump, "SNDINFO"))
 			{
 				S_AddSNDINFO (lump);
 			}
@@ -801,7 +801,7 @@ void S_ParseSndInfo (bool redefine)
 
 	S_ShrinkPlayerSoundLists ();
 
-	sfx_empty = Wads.CheckNumForName ("dsempty", ns_sounds);
+	sfx_empty = fileSystem.CheckNumForName ("dsempty", ns_sounds);
 	S_CheckIntegrity();
 }
 
@@ -1191,12 +1191,12 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MusicAlias: {
 				sc.MustGetString();
-				int lump = Wads.CheckNumForName(sc.String, ns_music);
+				int lump = fileSystem.CheckNumForName(sc.String, ns_music);
 				if (lump >= 0)
 				{
 					// do not set the alias if a later WAD defines its own music of this name
-					int file = Wads.GetLumpFile(lump);
-					int sndifile = Wads.GetLumpFile(sc.LumpNum);
+					int file = fileSystem.GetLumpFile(lump);
+					int sndifile = fileSystem.GetLumpFile(sc.LumpNum);
 					if (file > sndifile)
 					{
 						sc.MustGetString();
@@ -1208,7 +1208,7 @@ static void S_AddSNDINFO (int lump)
 				FName mapped = sc.String;
 
 				// only set the alias if the lump it maps to exists.
-				if (mapped == NAME_None || Wads.CheckNumForFullName(sc.String, true, ns_music) >= 0)
+				if (mapped == NAME_None || fileSystem.CheckNumForFullName(sc.String, true, ns_music) >= 0)
 				{
 					MusicAliases[alias] = mapped;
 				}
@@ -1281,7 +1281,7 @@ static void S_AddSNDINFO (int lump)
 static void S_AddStrifeVoice (int lumpnum)
 {
 	char name[16] = "svox/";
-	Wads.GetLumpName (name+5, lumpnum);
+	fileSystem.GetLumpName (name+5, lumpnum);
 	S_AddSound (name, lumpnum);
 }
 
@@ -1995,7 +1995,7 @@ void S_ParseMusInfo()
 {
 	int lastlump = 0, lump;
 
-	while ((lump = Wads.FindLump ("MUSINFO", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("MUSINFO", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 

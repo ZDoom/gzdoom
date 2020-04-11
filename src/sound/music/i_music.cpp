@@ -171,13 +171,13 @@ static void SetupGenMidi()
 {
 	// The OPL renderer should not care about where this comes from.
 	// Note: No I_Error here - this needs to be consistent with the rest of the music code.
-	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
+	auto lump = fileSystem.CheckNumForName("GENMIDI", ns_global);
 	if (lump < 0)
 	{
 		Printf("No GENMIDI lump found. OPL playback not available.\n");
 		return;
 	}
-	auto data = Wads.OpenLumpReader(lump);
+	auto data = fileSystem.OpenLumpReader(lump);
 
 	auto genmidi = data.Read();
 	if (genmidi.Size() < 8 + 175 * 36 || memcmp(genmidi.Data(), "#OPL_II#", 8)) return;
@@ -186,23 +186,23 @@ static void SetupGenMidi()
 
 static void SetupWgOpn()
 {
-	int lump = Wads.CheckNumForFullName("xg.wopn");
+	int lump = fileSystem.CheckNumForFullName("xg.wopn");
 	if (lump < 0)
 	{
 		return;
 	}
-	FMemLump data = Wads.ReadLump(lump);
+	FMemLump data = fileSystem.ReadLump(lump);
 	ZMusic_SetWgOpn(data.GetMem(), (uint32_t)data.GetSize());
 }
 
 static void SetupDMXGUS()
 {
-	int lump = Wads.CheckNumForFullName("DMXGUS");
+	int lump = fileSystem.CheckNumForFullName("DMXGUS");
 	if (lump < 0)
 	{
 		return;
 	}
-	FMemLump data = Wads.ReadLump(lump);
+	FMemLump data = fileSystem.ReadLump(lump);
 	ZMusic_SetDmxGus(data.GetMem(), (uint32_t)data.GetSize());
 }
 
@@ -307,15 +307,15 @@ static ZMusic_MidiSource GetMIDISource(const char *fn)
 	FString src = fn;
 	if (src.Compare("*") == 0) src = mus_playing.name;
 
-	auto lump = Wads.CheckNumForName(src, ns_music);
-	if (lump < 0) lump = Wads.CheckNumForFullName(src);
+	auto lump = fileSystem.CheckNumForName(src, ns_music);
+	if (lump < 0) lump = fileSystem.CheckNumForFullName(src);
 	if (lump < 0)
 	{
 		Printf("Cannot find MIDI lump %s.\n", src.GetChars());
 		return nullptr;
 	}
 
-	auto wlump = Wads.OpenLumpReader(lump);
+	auto wlump = fileSystem.OpenLumpReader(lump);
 
 	uint32_t id[32 / 4];
 

@@ -134,16 +134,16 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		// Check for both *.wad and *.map in order to load Build maps
 		// as well. The higher one will take precedence.
 		// Names with more than 8 characters will only be checked as .wad and .map.
-		if (strlen(mapname) <= 8) lump_name = Wads.CheckNumForName(mapname);
+		if (strlen(mapname) <= 8) lump_name = fileSystem.CheckNumForName(mapname);
 		fmt.Format("maps/%s.wad", mapname);
-		lump_wad = Wads.CheckNumForFullName(fmt);
+		lump_wad = fileSystem.CheckNumForFullName(fmt);
 		fmt.Format("maps/%s.map", mapname);
-		lump_map = Wads.CheckNumForFullName(fmt);
+		lump_map = fileSystem.CheckNumForFullName(fmt);
 		
 		if (lump_name > lump_wad && lump_name > lump_map && lump_name != -1)
 		{
-			int lumpfile = Wads.GetLumpFile(lump_name);
-			int nextfile = Wads.GetLumpFile(lump_name+1);
+			int lumpfile = fileSystem.GetLumpFile(lump_name);
+			int nextfile = fileSystem.GetLumpFile(lump_name+1);
 
 			map->lumpnum = lump_name;
 
@@ -151,7 +151,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
+				map->MapLumps[0].Reader = fileSystem.ReopenLumpReader(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -162,19 +162,19 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
-			strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(lump_name), 8);
+			map->MapLumps[0].Reader = fileSystem.ReopenLumpReader(lump_name);
+			strncpy(map->MapLumps[0].Name, fileSystem.GetLumpFullName(lump_name), 8);
 			map->InWad = true;
 
 			int index = 0;
 
-			if (stricmp(Wads.GetLumpFullName(lump_name + 1), "TEXTMAP") != 0)
+			if (stricmp(fileSystem.GetLumpFullName(lump_name + 1), "TEXTMAP") != 0)
 			{
 				for(int i = 1;; i++)
 				{
 					// Since levels must be stored in WADs they can't really have full
 					// names and for any valid level lump this always returns the short name.
-					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
+					const char * lumpname = fileSystem.GetLumpFullName(lump_name + i);
 					try
 					{
 						index = GetMapIndex(mapname, index, lumpname, !justcheck);
@@ -194,17 +194,17 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 					// The next lump is not part of this map anymore
 					if (index < 0) break;
 
-					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
+					map->MapLumps[index].Reader = fileSystem.ReopenLumpReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
 			else
 			{
 				map->isText = true;
-				map->MapLumps[1].Reader = Wads.ReopenLumpReader(lump_name + 1);
+				map->MapLumps[1].Reader = fileSystem.ReopenLumpReader(lump_name + 1);
 				for(int i = 2;; i++)
 				{
-					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
+					const char * lumpname = fileSystem.GetLumpFullName(lump_name + i);
 
 					if (lumpname == NULL)
 					{
@@ -237,7 +237,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						break;
 					}
 					else continue;
-					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
+					map->MapLumps[index].Reader = fileSystem.ReopenLumpReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -255,8 +255,8 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				return NULL;
 			}
 			map->lumpnum = lump_wad;
-			auto reader = Wads.ReopenLumpReader(lump_wad);
-			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), reader, true);
+			auto reader = fileSystem.ReopenLumpReader(lump_wad);
+			map->resource = FResourceFile::OpenResourceFile(fileSystem.GetLumpFullName(lump_wad), reader, true);
 			wadReader = map->resource->GetReader();
 		}
 	}

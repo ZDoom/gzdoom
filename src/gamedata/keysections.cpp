@@ -160,10 +160,10 @@ void D_LoadWadSettings ()
 	KeySections.Clear();
 	KeyConfWeapons.Clear();
 
-	while ((lump = Wads.FindLump ("KEYCONF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("KEYCONF", &lastlump)) != -1)
 	{
-		FMemLump data = Wads.ReadLump (lump);
-		const char *eof = (char *)data.GetMem() + Wads.LumpLength (lump);
+		FMemLump data = fileSystem.ReadLump (lump);
+		const char *eof = (char *)data.GetMem() + fileSystem.LumpLength (lump);
 		const char *conf = (char *)data.GetMem();
 
 		while (conf < eof)

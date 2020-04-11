@@ -729,31 +729,31 @@ static bool MatchHeader(const char * label, const char * hdata)
 
 static int FindGLNodesInWAD(int labellump)
 {
-	int wadfile = Wads.GetLumpFile(labellump);
+	int wadfile = fileSystem.GetLumpFile(labellump);
 	FString glheader;
 
-	glheader.Format("GL_%s", Wads.GetLumpFullName(labellump));
+	glheader.Format("GL_%s", fileSystem.GetLumpFullName(labellump));
 	if (glheader.Len()<=8)
 	{
-		int gllabel = Wads.CheckNumForName(glheader, ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName(glheader, ns_global, wadfile);
 		if (gllabel >= 0) return gllabel;
 	}
 	else
 	{
 		// Before scanning the entire WAD directory let's check first whether
 		// it is necessary.
-		int gllabel = Wads.CheckNumForName("GL_LEVEL", ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", ns_global, wadfile);
 
 		if (gllabel >= 0)
 		{
 			int lastlump=0;
 			int lump;
-			while ((lump=Wads.FindLump("GL_LEVEL", &lastlump))>=0)
+			while ((lump=fileSystem.FindLump("GL_LEVEL", &lastlump))>=0)
 			{
-				if (Wads.GetLumpFile(lump)==wadfile)
+				if (fileSystem.GetLumpFile(lump)==wadfile)
 				{
-					FMemLump mem = Wads.ReadLump(lump);
-					if (MatchHeader(Wads.GetLumpFullName(labellump), (const char *)mem.GetMem())) return lump;
+					FMemLump mem = fileSystem.ReadLump(lump);
+					if (MatchHeader(fileSystem.GetLumpFullName(labellump), (const char *)mem.GetMem())) return lump;
 				}
 			}
 		}
@@ -854,11 +854,11 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		FileReader gwalumps[4];
 		char path[256];
 		int li;
-		int lumpfile = Wads.GetLumpFile(map->lumpnum);
+		int lumpfile = fileSystem.GetLumpFile(map->lumpnum);
 		bool mapinwad = map->InWad;
 		FResourceFile * f_gwa = map->resource;
 
-		const char * name = Wads.GetWadFullName(lumpfile);
+		const char * name = fileSystem.GetWadFullName(lumpfile);
 
 		if (mapinwad)
 		{
@@ -869,7 +869,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 				// GL nodes are loaded with a WAD
 				for(int i=0;i<4;i++)
 				{
-					gwalumps[i]=Wads.ReopenLumpReader(li+i+1);
+					gwalumps[i]=fileSystem.ReopenLumpReader(li+i+1);
 				}
 				return DoLoadGLNodes(gwalumps);
 			}
@@ -886,7 +886,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					f_gwa = FResourceFile::OpenResourceFile(path, true);
 					if (f_gwa==nullptr) return false;
 
-					strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(map->lumpnum), 8);
+					strncpy(map->MapLumps[0].Name, fileSystem.GetLumpFullName(map->lumpnum), 8);
 				}
 			}
 		}
@@ -1000,7 +1000,7 @@ typedef TArray<uint8_t> MemFile;
 static FString CreateCacheName(MapData *map, bool create)
 {
 	FString path = M_GetCachePath(create);
-	FString lumpname = Wads.GetLumpFullPath(map->lumpnum);
+	FString lumpname = fileSystem.GetLumpFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
 	if (create) CreatePath(path);

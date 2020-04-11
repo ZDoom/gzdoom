@@ -265,10 +265,10 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		if (strchr(name, '/'))
 		{
 			FTexture *const NO_TEXTURE = (FTexture*)-1;
-			int lump = Wads.CheckNumForFullName(name);
+			int lump = fileSystem.CheckNumForFullName(name);
 			if (lump >= 0)
 			{
-				FTexture *tex = Wads.GetLinkedTexture(lump);
+				FTexture *tex = fileSystem.GetLinkedTexture(lump);
 				if (tex == NO_TEXTURE) return FTextureID(-1);
 				if (tex != NULL) return tex->id;
 				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
@@ -276,13 +276,13 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 				if (tex != NULL)
 				{
 					tex->AddAutoMaterials();
-					Wads.SetLinkedTexture(lump, tex);
+					fileSystem.SetLinkedTexture(lump, tex);
 					return AddTexture(tex);
 				}
 				else
 				{
 					// mark this lump as having no valid texture so that we don't have to retry creating one later.
-					Wads.SetLinkedTexture(lump, NO_TEXTURE);
+					fileSystem.SetLinkedTexture(lump, NO_TEXTURE);
 				}
 			}
 		}
@@ -443,8 +443,8 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 	if (cl_gfxlocalization == 2) return false;
 	
 	// Mode 3 must also reject substitutions for non-IWAD content.
-	int file = Wads.GetLumpFile(Textures[texnum.GetIndex()].Texture->SourceLump);
-	if (file > Wads.GetMaxIwadNum()) return true;
+	int file = fileSystem.GetLumpFile(Textures[texnum.GetIndex()].Texture->SourceLump);
+	if (file > fileSystem.GetMaxIwadNum()) return true;
 
 	return false;
 }
@@ -509,13 +509,13 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 	if (lumpnum != -1)
 	{
 		FString str;
-		Wads.GetLumpName(str, lumpnum);
+		fileSystem.GetLumpName(str, lumpnum);
 		FTexture *out = FTexture::CreateTexture(str, lumpnum, usetype);
 
 		if (out != NULL) return AddTexture (out);
 		else
 		{
-			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", Wads.GetLumpFullPath(lumpnum).GetChars());
+			Printf (TEXTCOLOR_ORANGE "Invalid data encountered for texture %s\n", fileSystem.GetLumpFullPath(lumpnum).GetChars());
 			return FTextureID(-1);
 		}
 	}
@@ -586,8 +586,8 @@ bool FTextureManager::AreTexturesCompatible (FTextureID picnum1, FTextureID picn
 
 void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 {
-	int firsttx = Wads.GetFirstLump(wadnum);
-	int lasttx = Wads.GetLastLump(wadnum);
+	int firsttx = fileSystem.GetFirstLump(wadnum);
+	int lasttx = fileSystem.GetLastLump(wadnum);
 	FString Name;
 
 	// Go from first to last so that ANIMDEFS work as expected. However,
@@ -597,19 +597,19 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 
 	for (; firsttx <= lasttx; ++firsttx)
 	{
-		if (Wads.GetLumpNamespace(firsttx) == ns)
+		if (fileSystem.GetLumpNamespace(firsttx) == ns)
 		{
-			Wads.GetLumpName (Name, firsttx);
+			fileSystem.GetLumpName (Name, firsttx);
 
-			if (Wads.CheckNumForName (Name, ns) == firsttx)
+			if (fileSystem.CheckNumForName (Name, ns) == firsttx)
 			{
 				CreateTexture (firsttx, usetype);
 			}
 			StartScreen->Progress();
 		}
-		else if (ns == ns_flats && Wads.GetLumpFlags(firsttx) & LUMPF_MAYBEFLAT)
+		else if (ns == ns_flats && fileSystem.GetLumpFlags(firsttx) & LUMPF_MAYBEFLAT)
 		{
-			if (Wads.CheckNumForName (Name, ns) < firsttx)
+			if (fileSystem.CheckNumForName (Name, ns) < firsttx)
 			{
 				CreateTexture (firsttx, usetype);
 			}
@@ -626,8 +626,8 @@ void FTextureManager::AddGroup(int wadnum, int ns, ETextureType usetype)
 
 void FTextureManager::AddHiresTextures (int wadnum)
 {
-	int firsttx = Wads.GetFirstLump(wadnum);
-	int lasttx = Wads.GetLastLump(wadnum);
+	int firsttx = fileSystem.GetFirstLump(wadnum);
+	int lasttx = fileSystem.GetLastLump(wadnum);
 
 	FString Name;
 	TArray<FTextureID> tlist;
@@ -639,11 +639,11 @@ void FTextureManager::AddHiresTextures (int wadnum)
 
 	for (;firsttx <= lasttx; ++firsttx)
 	{
-		if (Wads.GetLumpNamespace(firsttx) == ns_hires)
+		if (fileSystem.GetLumpNamespace(firsttx) == ns_hires)
 		{
-			Wads.GetLumpName (Name, firsttx);
+			fileSystem.GetLumpName (Name, firsttx);
 
-			if (Wads.CheckNumForName (Name, ns_hires) == firsttx)
+			if (fileSystem.CheckNumForName (Name, ns_hires) == firsttx)
 			{
 				tlist.Clear();
 				int amount = ListTextures(Name, tlist);
@@ -695,9 +695,9 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname, FMultipa
 
 	lastLump = 0;
 
-	while ((remapLump = Wads.FindLump(lumpname, &lastLump)) != -1)
+	while ((remapLump = fileSystem.FindLump(lumpname, &lastLump)) != -1)
 	{
-		if (Wads.GetLumpFile(remapLump) == wadnum)
+		if (fileSystem.GetLumpFile(remapLump) == wadnum)
 		{
 			ParseTextureDef(remapLump, build);
 		}
@@ -732,8 +732,8 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			FName texname = sc.String;
 
 			sc.MustGetString();
-			int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
-			if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
+			int lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_patches);
+			if (lumpnum == -1) lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_graphics);
 
 			if (tlist.Size() == 0)
 			{
@@ -757,7 +757,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 					if (oldtex->UseType == type || type == ETextureType::Any ||
 						(mode == TEXMAN_Overridable && oldtex->UseType == ETextureType::Override) ||
 						(type == ETextureType::Sprite && oldtex->UseType == ETextureType::MiscPatch &&
-						(sl=oldtex->GetSourceLump()) >= 0 && Wads.GetLumpNamespace(sl) == ns_sprites)
+						(sl=oldtex->GetSourceLump()) >= 0 && fileSystem.GetLumpNamespace(sl) == ns_sprites)
 						)
 					{
 						FTexture * newtex = FTexture::CreateTexture ("", lumpnum, ETextureType::Any);
@@ -785,8 +785,8 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			{
 				FString src = base.Left(8);
 
-				int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
-				if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
+				int lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_patches);
+				if (lumpnum == -1) lumpnum = fileSystem.CheckNumForFullName(sc.String, true, ns_graphics);
 
 				sc.GetString();
 				bool is32bit = !!sc.Compare("force32bit");
@@ -844,7 +844,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 			sc.MustGetString();
 
 			// This is not using sc.Open because it can print a more useful error message when done here
-			int includelump = Wads.CheckNumForFullName(sc.String, true);
+			int includelump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (includelump == -1)
 			{
 				sc.ScriptError("Lump '%s' not found", sc.String);
@@ -869,7 +869,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 
 void FTextureManager::AddPatches (int lumpnum)
 {
-	auto file = Wads.ReopenLumpReader (lumpnum, true);
+	auto file = fileSystem.ReopenLumpReader (lumpnum, true);
 	uint32_t numpatches, i;
 	char name[9];
 
@@ -882,7 +882,7 @@ void FTextureManager::AddPatches (int lumpnum)
 
 		if (CheckForTexture (name, ETextureType::WallPatch, 0) == -1)
 		{
-			CreateTexture (Wads.CheckNumForName (name, ns_patches), ETextureType::WallPatch);
+			CreateTexture (fileSystem.CheckNumForName (name, ns_patches), ETextureType::WallPatch);
 		}
 		StartScreen->Progress();
 	}
@@ -901,7 +901,7 @@ void FTextureManager::LoadTextureX(int wadnum, FMultipatchTextureBuilder &build)
 {
 	// Use the most recent PNAMES for this WAD.
 	// Multiple PNAMES in a WAD will be ignored.
-	int pnames = Wads.CheckNumForName("PNAMES", ns_global, wadnum, false);
+	int pnames = fileSystem.CheckNumForName("PNAMES", ns_global, wadnum, false);
 
 	if (pnames < 0)
 	{
@@ -911,10 +911,10 @@ void FTextureManager::LoadTextureX(int wadnum, FMultipatchTextureBuilder &build)
 
 	// Only add the patches if the PNAMES come from the current file
 	// Otherwise they have already been processed.
-	if (Wads.GetLumpFile(pnames) == wadnum) TexMan.AddPatches (pnames);
+	if (fileSystem.GetLumpFile(pnames) == wadnum) TexMan.AddPatches (pnames);
 
-	int texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, wadnum);
-	int texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, wadnum);
+	int texlump1 = fileSystem.CheckNumForName ("TEXTURE1", ns_global, wadnum);
+	int texlump2 = fileSystem.CheckNumForName ("TEXTURE2", ns_global, wadnum);
 	build.AddTexturesLumps (texlump1, texlump2, pnames);
 }
 
@@ -927,8 +927,8 @@ void FTextureManager::LoadTextureX(int wadnum, FMultipatchTextureBuilder &build)
 void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &build)
 {
 	int firsttexture = Textures.Size();
-	int lumpcount = Wads.GetNumLumps();
-	bool iwad = wadnum >= Wads.GetIwadNum() && wadnum <= Wads.GetMaxIwadNum();
+	int lumpcount = fileSystem.GetNumLumps();
+	bool iwad = wadnum >= fileSystem.GetIwadNum() && wadnum <= fileSystem.GetMaxIwadNum();
 
 	FirstTextureForFile.Push(firsttexture);
 
@@ -949,41 +949,41 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 	AddGroup(wadnum, ns_newtextures, ETextureType::Override);
 
 	// Sixth step: Try to find any lump in the WAD that may be a texture and load as a TEX_MiscPatch
-	int firsttx = Wads.GetFirstLump(wadnum);
-	int lasttx = Wads.GetLastLump(wadnum);
+	int firsttx = fileSystem.GetFirstLump(wadnum);
+	int lasttx = fileSystem.GetLastLump(wadnum);
 
 	for (int i= firsttx; i <= lasttx; i++)
 	{
 		bool skin = false;
 		FString Name;
-		Wads.GetLumpName(Name, i);
+		fileSystem.GetLumpName(Name, i);
 
 		// Ignore anything not in the global namespace
-		int ns = Wads.GetLumpNamespace(i);
+		int ns = fileSystem.GetLumpNamespace(i);
 		if (ns == ns_global)
 		{
 			// In Zips all graphics must be in a separate namespace.
-			if (Wads.GetLumpFlags(i) & LUMPF_FULLPATH) continue;
+			if (fileSystem.GetLumpFlags(i) & LUMPF_FULLPATH) continue;
 
 			// Ignore lumps with empty names.
-			if (Wads.CheckLumpName(i, "")) continue;
+			if (fileSystem.CheckLumpName(i, "")) continue;
 
 			// Ignore anything belonging to a map
-			if (Wads.CheckLumpName(i, "THINGS")) continue;
-			if (Wads.CheckLumpName(i, "LINEDEFS")) continue;
-			if (Wads.CheckLumpName(i, "SIDEDEFS")) continue;
-			if (Wads.CheckLumpName(i, "VERTEXES")) continue;
-			if (Wads.CheckLumpName(i, "SEGS")) continue;
-			if (Wads.CheckLumpName(i, "SSECTORS")) continue;
-			if (Wads.CheckLumpName(i, "NODES")) continue;
-			if (Wads.CheckLumpName(i, "SECTORS")) continue;
-			if (Wads.CheckLumpName(i, "REJECT")) continue;
-			if (Wads.CheckLumpName(i, "BLOCKMAP")) continue;
-			if (Wads.CheckLumpName(i, "BEHAVIOR")) continue;
+			if (fileSystem.CheckLumpName(i, "THINGS")) continue;
+			if (fileSystem.CheckLumpName(i, "LINEDEFS")) continue;
+			if (fileSystem.CheckLumpName(i, "SIDEDEFS")) continue;
+			if (fileSystem.CheckLumpName(i, "VERTEXES")) continue;
+			if (fileSystem.CheckLumpName(i, "SEGS")) continue;
+			if (fileSystem.CheckLumpName(i, "SSECTORS")) continue;
+			if (fileSystem.CheckLumpName(i, "NODES")) continue;
+			if (fileSystem.CheckLumpName(i, "SECTORS")) continue;
+			if (fileSystem.CheckLumpName(i, "REJECT")) continue;
+			if (fileSystem.CheckLumpName(i, "BLOCKMAP")) continue;
+			if (fileSystem.CheckLumpName(i, "BEHAVIOR")) continue;
 
 			bool force = false;
 			// Don't bother looking at this lump if something later overrides it.
-			if (Wads.CheckNumForName(Name, ns_graphics) != i)
+			if (fileSystem.CheckNumForName(Name, ns_graphics) != i)
 			{
 				if (iwad)
 				{ 
@@ -999,7 +999,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 		}
 		else if (ns == ns_graphics)
 		{
-			if (Wads.CheckNumForName(Name, ns_graphics) != i)
+			if (fileSystem.CheckNumForName(Name, ns_graphics) != i)
 			{
 				if (iwad)
 				{
@@ -1012,7 +1012,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 		else if (ns >= ns_firstskin)
 		{
 			// Don't bother looking this lump if something later overrides it.
-			if (Wads.CheckNumForName(Name, ns) != i) continue;
+			if (fileSystem.CheckNumForName(Name, ns) != i) continue;
 			skin = true;
 		}
 		else continue;
@@ -1102,7 +1102,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 void FTextureManager::AddLocalizedVariants()
 {
 	TArray<FolderEntry> content;
-	Wads.GetLumpsInFolder("localized/textures/", content, false);
+	fileSystem.GetLumpsInFolder("localized/textures/", content, false);
 	for (auto &entry : content)
 	{
 		FString name = entry.name;
@@ -1195,7 +1195,7 @@ void FTextureManager::Init()
 	AddTexture(CreateShaderTexture(true, false));
 	AddTexture(CreateShaderTexture(true, true));
 
-	int wadcnt = Wads.GetNumWads();
+	int wadcnt = fileSystem.GetNumWads();
 
 	FMultipatchTextureBuilder build(*this);
 
@@ -1273,7 +1273,7 @@ void FTextureManager::InitPalettedVersions()
 {
 	int lump, lastlump = 0;
 
-	while ((lump = Wads.FindLump("PALVERS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("PALVERS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 
@@ -1351,9 +1351,9 @@ int FTextureManager::GuesstimateNumTextures ()
 {
 	int numtex = 0;
 	
-	for(int i = Wads.GetNumLumps()-1; i>=0; i--)
+	for(int i = fileSystem.GetNumLumps()-1; i>=0; i--)
 	{
-		int space = Wads.GetLumpNamespace(i);
+		int space = fileSystem.GetLumpNamespace(i);
 		switch(space)
 		{
 		case ns_flats:
@@ -1366,7 +1366,7 @@ int FTextureManager::GuesstimateNumTextures ()
 			break;
 
 		default:
-			if (Wads.GetLumpFlags(i) & LUMPF_MAYBEFLAT) numtex++;
+			if (fileSystem.GetLumpFlags(i) & LUMPF_MAYBEFLAT) numtex++;
 
 			break;
 		}
@@ -1388,25 +1388,25 @@ int FTextureManager::GuesstimateNumTextures ()
 int FTextureManager::CountTexturesX ()
 {
 	int count = 0;
-	int wadcount = Wads.GetNumWads();
+	int wadcount = fileSystem.GetNumWads();
 	for (int wadnum = 0; wadnum < wadcount; wadnum++)
 	{
 		// Use the most recent PNAMES for this WAD.
 		// Multiple PNAMES in a WAD will be ignored.
-		int pnames = Wads.CheckNumForName("PNAMES", ns_global, wadnum, false);
+		int pnames = fileSystem.CheckNumForName("PNAMES", ns_global, wadnum, false);
 
 		// should never happen except for zdoom.pk3
 		if (pnames < 0) continue;
 
 		// Only count the patches if the PNAMES come from the current file
 		// Otherwise they have already been counted.
-		if (Wads.GetLumpFile(pnames) == wadnum) 
+		if (fileSystem.GetLumpFile(pnames) == wadnum) 
 		{
 			count += CountLumpTextures (pnames);
 		}
 
-		int texlump1 = Wads.CheckNumForName ("TEXTURE1", ns_global, wadnum);
-		int texlump2 = Wads.CheckNumForName ("TEXTURE2", ns_global, wadnum);
+		int texlump1 = fileSystem.CheckNumForName ("TEXTURE1", ns_global, wadnum);
+		int texlump2 = fileSystem.CheckNumForName ("TEXTURE2", ns_global, wadnum);
 
 		count += CountLumpTextures (texlump1) - 1;
 		count += CountLumpTextures (texlump2) - 1;
@@ -1426,7 +1426,7 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 {
 	if (lumpnum >= 0)
 	{
-		auto file = Wads.OpenLumpReader (lumpnum); 
+		auto file = fileSystem.OpenLumpReader (lumpnum); 
 		uint32_t numtex = file.ReadUInt32();;
 
 		return int(numtex) >= 0 ? numtex : 0;
@@ -1446,18 +1446,18 @@ void FTextureManager::AdjustSpriteOffsets()
 	int sprid;
 	TMap<int, bool> donotprocess;
 
-	int numtex = Wads.GetNumLumps();
+	int numtex = fileSystem.GetNumLumps();
 
 	for (int i = 0; i < numtex; i++)
 	{
-		if (Wads.GetLumpFile(i) > Wads.GetMaxIwadNum()) break; // we are past the IWAD
-		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) >= Wads.GetIwadNum() && Wads.GetLumpFile(i) <= Wads.GetMaxIwadNum())
+		if (fileSystem.GetLumpFile(i) > fileSystem.GetMaxIwadNum()) break; // we are past the IWAD
+		if (fileSystem.GetLumpNamespace(i) == ns_sprites && fileSystem.GetLumpFile(i) >= fileSystem.GetIwadNum() && fileSystem.GetLumpFile(i) <= fileSystem.GetMaxIwadNum())
 		{
 			char str[9];
-			Wads.GetLumpName(str, i);
+			fileSystem.GetLumpName(str, i);
 			str[8] = 0;
 			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
-			if (texid.isValid() && Wads.GetLumpFile(GetTexture(texid)->SourceLump) > Wads.GetMaxIwadNum())
+			if (texid.isValid() && fileSystem.GetLumpFile(GetTexture(texid)->SourceLump) > fileSystem.GetMaxIwadNum())
 			{
 				// This texture has been replaced by some PWAD.
 				memcpy(&sprid, str, 4);
@@ -1466,12 +1466,12 @@ void FTextureManager::AdjustSpriteOffsets()
 		}
 	}
 
-	while ((lump = Wads.FindLump("SPROFS", &lastlump, false)) != -1)
+	while ((lump = fileSystem.FindLump("SPROFS", &lastlump, false)) != -1)
 	{
 		FScanner sc;
 		sc.OpenLumpNum(lump);
 		sc.SetCMode(true);
-		int ofslumpno = Wads.GetLumpFile(lump);
+		int ofslumpno = fileSystem.GetLumpFile(lump);
 		while (sc.GetString())
 		{
 			int x, y;
@@ -1496,12 +1496,12 @@ void FTextureManager::AdjustSpriteOffsets()
 
 				int lumpnum = tex->GetSourceLump();
 				// We only want to change texture offsets for sprites in the IWAD or the file this lump originated from.
-				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
+				if (lumpnum >= 0 && lumpnum < fileSystem.GetNumLumps())
 				{
-					int wadno = Wads.GetLumpFile(lumpnum);
-					if ((iwadonly && wadno >= Wads.GetIwadNum() && wadno <= Wads.GetMaxIwadNum()) || (!iwadonly && wadno == ofslumpno))
+					int wadno = fileSystem.GetLumpFile(lumpnum);
+					if ((iwadonly && wadno >= fileSystem.GetIwadNum() && wadno <= fileSystem.GetMaxIwadNum()) || (!iwadonly && wadno == ofslumpno))
 					{
-						if (wadno >= Wads.GetIwadNum() && wadno <= Wads.GetMaxIwadNum() && !forced && iwadonly)
+						if (wadno >= fileSystem.GetIwadNum() && wadno <= fileSystem.GetMaxIwadNum() && !forced && iwadonly)
 						{
 							memcpy(&sprid, &tex->Name[0], 4);
 							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.
@@ -1542,14 +1542,14 @@ void FTextureManager::SpriteAdjustChanged()
 
 void FTextureManager::GenerateGlobalBrightmapFromColormap()
 {
-	Wads.CheckNumForFullName("textures/tgapal", false, 0, true);
+	fileSystem.CheckNumForFullName("textures/tgapal", false, 0, true);
 	HasGlobalBrightmap = false;
-	int lump = Wads.CheckNumForName("COLORMAP");
-	if (lump == -1) lump = Wads.CheckNumForName("COLORMAP", ns_colormaps);
+	int lump = fileSystem.CheckNumForName("COLORMAP");
+	if (lump == -1) lump = fileSystem.CheckNumForName("COLORMAP", ns_colormaps);
 	if (lump == -1) return;
-	FMemLump cmap = Wads.ReadLump(lump);
+	FMemLump cmap = fileSystem.ReadLump(lump);
 	uint8_t palbuffer[768];
-	ReadPalette(Wads.GetNumForName("PLAYPAL"), palbuffer);
+	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), palbuffer);
 
 	const unsigned char *cmapdata = (const unsigned char *)cmap.GetMem();
 	const uint8_t *paldata = palbuffer;
@@ -1602,8 +1602,8 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 		{
 			// Textures for full path names do not have their own name, they merely link to the source lump.
 			auto lump = tex->GetSourceLump();
-			if (Wads.GetLinkedTexture(lump) == tex)
-				retval = Wads.GetLumpFullName(lump);
+			if (fileSystem.GetLinkedTexture(lump) == tex)
+				retval = fileSystem.GetLumpFullName(lump);
 		}
 	}
 	ACTION_RETURN_STRING(retval);

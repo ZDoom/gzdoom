@@ -1016,7 +1016,7 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	FString cmdline(GetCommandLineW());
 	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", cmdline.GetChars() );
 
-	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
+	for (i = 0; (arg = fileSystem.GetWadName (i)) != NULL; ++i)
 	{
 		buffer += mysnprintf (buffer, buffend - buffer, "\r\nWad %d: %s", i, arg);
 	}

@@ -178,7 +178,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 	int mip, maxmipsize;
 	int i, j, n;
 
-	FMemLump lump = Wads.ReadLump(lumpnum);	// FMemLump adds an extra 0 byte to the end.
+	FMemLump lump = fileSystem.ReadLump(lumpnum);	// FMemLump adds an extra 0 byte to the end.
 	uint8_t *rawvoxel = (uint8_t *)lump.GetMem();
 	int voxelsize = (int)(lump.GetSize()-1);
 
@@ -325,7 +325,7 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 	FVoxel *vox = R_LoadKVX(lumpnum);
 	if (vox == NULL)
 	{
-		Printf("%s is not a valid voxel file\n", Wads.GetLumpFullName(lumpnum));
+		Printf("%s is not a valid voxel file\n", fileSystem.GetLumpFullName(lumpnum));
 		return NULL;
 	}
 	else
@@ -644,7 +644,7 @@ void R_InitVoxels()
 {
 	int lump, lastlump = 0;
 	
-	while ((lump = Wads.FindLump("VOXELDEF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("VOXELDEF", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		TArray<uint32_t> vsprites;
@@ -657,7 +657,7 @@ void R_InitVoxels()
 
 			sc.SetCMode(true);
 			sc.MustGetToken(TK_StringConst);
-			voxelfile = Wads.CheckNumForFullName(sc.String, true, ns_voxels);
+			voxelfile = fileSystem.CheckNumForFullName(sc.String, true, ns_voxels);
 			if (voxelfile < 0)
 			{
 				sc.ScriptMessage("Voxel \"%s\" not found.\n", sc.String);

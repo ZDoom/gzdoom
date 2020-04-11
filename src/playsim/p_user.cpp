@@ -388,11 +388,11 @@ void player_t::SetLogNumber (int num)
 	}
 
 	mysnprintf (lumpname, countof(lumpname), "LOG%d", num);
-	lumpnum = Wads.CheckNumForName (lumpname);
+	lumpnum = fileSystem.CheckNumForName (lumpname);
 	if (lumpnum != -1)
 	{
-		auto fn = Wads.GetLumpFile(lumpnum);
-		auto wadname = Wads.GetWadName(fn);
+		auto fn = fileSystem.GetLumpFile(lumpnum);
+		auto wadname = fileSystem.GetWadName(fn);
 		if (!stricmp(wadname, "STRIFE0.WAD") || !stricmp(wadname, "STRIFE1.WAD") || !stricmp(wadname, "SVE.WAD"))
 		{
 			// If this is an original IWAD text, try looking up its lower priority string version first.
@@ -406,7 +406,7 @@ void player_t::SetLogNumber (int num)
 			}
 		}
 
-		auto lump = Wads.ReadLump(lumpnum);
+		auto lump = fileSystem.ReadLump(lumpnum);
 		SetLogText (lump.GetString());
 	}
 }
@@ -820,16 +820,16 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 		FString normspritename = sprites[self->SpawnState->sprite].name;
 		FString crouchspritename = sprites[crouchsprite].name;
 
-		int spritenorm = Wads.CheckNumForName(normspritename + "A1", ns_sprites);
+		int spritenorm = fileSystem.CheckNumForName(normspritename + "A1", ns_sprites);
 		if (spritenorm == -1)
 		{
-			spritenorm = Wads.CheckNumForName(normspritename + "A0", ns_sprites);
+			spritenorm = fileSystem.CheckNumForName(normspritename + "A0", ns_sprites);
 		}
 
-		int spritecrouch = Wads.CheckNumForName(crouchspritename + "A1", ns_sprites);
+		int spritecrouch = fileSystem.CheckNumForName(crouchspritename + "A1", ns_sprites);
 		if (spritecrouch == -1)
 		{
-			spritecrouch = Wads.CheckNumForName(crouchspritename + "A0", ns_sprites);
+			spritecrouch = fileSystem.CheckNumForName(crouchspritename + "A0", ns_sprites);
 		}
 
 		if (spritenorm == -1 || spritecrouch == -1)
@@ -838,10 +838,10 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 			return false;
 		}
 
-		int wadnorm = Wads.GetLumpFile(spritenorm);
-		int wadcrouch = Wads.GetLumpFile(spritenorm);
+		int wadnorm = fileSystem.GetLumpFile(spritenorm);
+		int wadcrouch = fileSystem.GetLumpFile(spritenorm);
 
-		if (wadnorm > Wads.GetMaxIwadNum() && wadcrouch <= Wads.GetMaxIwadNum())
+		if (wadnorm > fileSystem.GetMaxIwadNum() && wadcrouch <= fileSystem.GetMaxIwadNum())
 		{
 			// Question: Add an option / disable crouching or do what?
 			return false;

@@ -79,7 +79,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	int area;
 	int bits;
 
-	area = Wads.LumpLength (lumpnum);
+	area = fileSystem.LumpLength (lumpnum);
 
 	switch (area)
 	{
@@ -106,7 +106,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 
 TArray<uint8_t> FFlatTexture::CreatePalettedPixels(int conversion)
 {
-	auto lump = Wads.OpenLumpReader (SourceLump);
+	auto lump = fileSystem.OpenLumpReader (SourceLump);
 	TArray<uint8_t> Pixels(Width*Height, true);
 	auto numread = lump.Read (Pixels.Data(), Width*Height);
 	if (numread < Width*Height)

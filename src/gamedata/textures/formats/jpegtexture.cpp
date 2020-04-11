@@ -262,7 +262,7 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 
 TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 {
-	auto lump = Wads.OpenLumpReader (SourceLump);
+	auto lump = fileSystem.OpenLumpReader (SourceLump);
 	JSAMPLE *buff = NULL;
 
 	jpeg_decompress_struct cinfo;
@@ -286,7 +286,7 @@ TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetLumpFullPath(SourceLump).GetChars());
 		}
 		else
 		{
@@ -363,7 +363,7 @@ TArray<uint8_t> FJPEGTexture::CreatePalettedPixels(int conversion)
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetLumpFullPath(SourceLump).GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL)
@@ -386,7 +386,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	PalEntry pe[256];
 
-	auto lump = Wads.OpenLumpReader (SourceLump);
+	auto lump = fileSystem.OpenLumpReader (SourceLump);
 
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -406,7 +406,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", fileSystem.GetLumpFullPath(SourceLump).GetChars());
 		}
 		else
 		{
@@ -454,7 +454,7 @@ int FJPEGTexture::CopyPixels(FBitmap *bmp, int conversion)
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", fileSystem.GetLumpFullPath(SourceLump).GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	return 0;

@@ -283,7 +283,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 	}
 
 	{
-		auto pnames = Wads.OpenLumpReader(patcheslump);
+		auto pnames = fileSystem.OpenLumpReader(patcheslump);
 		numpatches = pnames.ReadUInt32();
 
 		// Check whether the amount of names reported is correct.
@@ -294,7 +294,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 		}
 
 		// Check whether the amount of names reported is correct.
-		int lumplength = Wads.LumpLength(patcheslump);
+		int lumplength = fileSystem.LumpLength(patcheslump);
 		if (numpatches > uint32_t((lumplength - 4) / 8))
 		{
 			Printf("PNAMES lump is shorter than required (%u entries reported but only %d bytes (%d entries) long\n",
@@ -406,13 +406,13 @@ void FMultipatchTextureBuilder::AddTexturesLumps(int lump1, int lump2, int patch
 
 	if (lump1 >= 0)
 	{
-		FMemLump texdir = Wads.ReadLump(lump1);
-		AddTexturesLump(texdir.GetMem(), Wads.LumpLength(lump1), lump1, patcheslump, firstdup, true);
+		FMemLump texdir = fileSystem.ReadLump(lump1);
+		AddTexturesLump(texdir.GetMem(), fileSystem.LumpLength(lump1), lump1, patcheslump, firstdup, true);
 	}
 	if (lump2 >= 0)
 	{
-		FMemLump texdir = Wads.ReadLump(lump2);
-		AddTexturesLump(texdir.GetMem(), Wads.LumpLength(lump2), lump2, patcheslump, firstdup, false);
+		FMemLump texdir = fileSystem.ReadLump(lump2);
+		AddTexturesLump(texdir.GetMem(), fileSystem.LumpLength(lump2), lump2, patcheslump, firstdup, false);
 	}
 }
 

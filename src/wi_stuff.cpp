@@ -369,7 +369,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	}
 	else
 	{
-		int lumpnum = Wads.CheckNumForFullName(lumpname + 1, true);
+		int lumpnum = fileSystem.CheckNumForFullName(lumpname + 1, true);
 		if (lumpnum >= 0)
 		{
 			FScanner sc(lumpnum);

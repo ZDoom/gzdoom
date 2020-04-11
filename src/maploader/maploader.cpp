@@ -2034,7 +2034,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 
 int MapLoader::DetermineTranslucency (int lumpnum)
 {
-	auto tranmap = Wads.OpenLumpReader (lumpnum);
+	auto tranmap = fileSystem.OpenLumpReader (lumpnum);
 	uint8_t index;
 	PalEntry newcolor;
 	PalEntry newcolor2;
@@ -2054,7 +2054,7 @@ int MapLoader::DetermineTranslucency (int lumpnum)
 		{
 			char lumpname[9];
 			lumpname[8] = 0;
-			Wads.GetLumpName (lumpname, lumpnum);
+			fileSystem.GetLumpName (lumpname, lumpnum);
 			Printf ("%s appears to be additive translucency %d (%d%%)\n", lumpname, newcolor.r,
 				newcolor.r*100/255);
 		}
@@ -2065,7 +2065,7 @@ int MapLoader::DetermineTranslucency (int lumpnum)
 	{
 		char lumpname[9];
 		lumpname[8] = 0;
-		Wads.GetLumpName (lumpname, lumpnum);
+		fileSystem.GetLumpName (lumpname, lumpnum);
 		Printf ("%s appears to be translucency %d (%d%%)\n", lumpname, newcolor.r,
 			newcolor.r*100/255);
 	}
@@ -2150,8 +2150,8 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 				// The translator set the alpha argument already; no reason to do it again.
 				sd->SetTexture(side_t::mid, FNullTextureID());
 			}
-			else if ((lumpnum = Wads.CheckNumForName (msd->midtexture)) > 0 &&
-				Wads.LumpLength (lumpnum) == 65536)
+			else if ((lumpnum = fileSystem.CheckNumForName (msd->midtexture)) > 0 &&
+				fileSystem.LumpLength (lumpnum) == 65536)
 			{
 				*alpha = (short)DetermineTranslucency (lumpnum);
 				sd->SetTexture(side_t::mid, FNullTextureID());

@@ -1796,10 +1796,10 @@ void C_GrabCVarDefaults ()
 	int lumpversion, gamelastrunversion;
 	gamelastrunversion = atoi(LASTRUNVERSION);
 
-	while ((lump = Wads.FindLump("DEFCVARS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("DEFCVARS", &lastlump)) != -1)
 	{
 		// don't parse from wads
-		if (lastlump > Wads.GetLastLump(Wads.GetMaxIwadNum()))
+		if (lastlump > fileSystem.GetLastLump(fileSystem.GetMaxIwadNum()))
 			I_FatalError("Cannot load DEFCVARS from a wadfile!\n");
 
 		FScanner sc(lump);

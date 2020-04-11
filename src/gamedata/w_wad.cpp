@@ -70,7 +70,7 @@ union LumpShortName
 };
 
 
-struct FWadCollection::LumpRecord
+struct FileSystem::LumpRecord
 {
 	FResourceLump *lump;
 	FTexture* linkedTexture;
@@ -94,7 +94,7 @@ struct FWadCollection::LumpRecord
 			Namespace = lump->GetNamespace();
 			resourceId = 0;
 
-			if (gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE && filenum == Wads.GetIwadNum())
+			if (gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE && filenum == fileSystem.GetIwadNum())
 			{
 				if (shortName.String[0] == 'V' &&
 					shortName.String[1] == 'O' &&
@@ -183,7 +183,7 @@ static void PrintLastError ();
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-FWadCollection Wads;
+FileSystem fileSystem;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -221,16 +221,16 @@ void uppercopy (char *to, const char *from)
 		to[i] = 0;
 }
 
-FWadCollection::FWadCollection ()
+FileSystem::FileSystem ()
 {
 }
 
-FWadCollection::~FWadCollection ()
+FileSystem::~FileSystem ()
 {
 	DeleteAll();
 }
 
-void FWadCollection::DeleteAll ()
+void FileSystem::DeleteAll ()
 {
 	LumpInfo.Clear();
 	NumLumps = 0;
@@ -255,7 +255,7 @@ void FWadCollection::DeleteAll ()
 //
 //==========================================================================
 
-void FWadCollection::InitSingleFile(const char* filename, bool quiet)
+void FileSystem::InitSingleFile(const char* filename, bool quiet)
 {
 	TArray<FString> filenames;
 	TArray<FString> deletes;
@@ -263,7 +263,7 @@ void FWadCollection::InitSingleFile(const char* filename, bool quiet)
 	InitMultipleFiles(filenames, deletes, true);
 }
 
-void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps, bool quiet, LumpFilterInfo* filter)
+void FileSystem::InitMultipleFiles (TArray<FString> &filenames, const TArray<FString> &deletelumps, bool quiet, LumpFilterInfo* filter)
 {
 	int numfiles;
 
@@ -312,11 +312,11 @@ void FWadCollection::InitMultipleFiles (TArray<FString> &filenames, const TArray
 //
 //-----------------------------------------------------------------------
 
-int FWadCollection::AddExternalFile(const char *filename)
+int FileSystem::AddExternalFile(const char *filename)
 {
 	FResourceLump *lump = new FExternalLump(filename);
 
-	FWadCollection::LumpRecord *lumprec = &LumpInfo[LumpInfo.Reserve(1)];
+	FileSystem::LumpRecord *lumprec = &LumpInfo[LumpInfo.Reserve(1)];
 	lumprec->SetFromLump(-1, lump);
 	return LumpInfo.Size()-1;	// later
 }
@@ -331,7 +331,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 // [RH] Removed reload hack
 //==========================================================================
 
-void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet, LumpFilterInfo* filter)
+void FileSystem::AddFile (const char *filename, FileReader *wadr, bool quiet, LumpFilterInfo* filter)
 {
 	int startlump;
 	bool isdir = false;
@@ -385,7 +385,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet
 		for (uint32_t i=0; i < resfile->LumpCount(); i++)
 		{
 			FResourceLump *lump = resfile->GetLump(i);
-			FWadCollection::LumpRecord *lump_p = &LumpInfo[LumpInfo.Reserve(1)];
+			FileSystem::LumpRecord *lump_p = &LumpInfo[LumpInfo.Reserve(1)];
 			lump_p->SetFromLump(Files.Size(), lump);
 		}
 
@@ -462,7 +462,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet
 //
 //==========================================================================
 
-int FWadCollection::CheckIfWadLoaded (const char *name)
+int FileSystem::CheckIfWadLoaded (const char *name)
 {
 	unsigned int i;
 
@@ -498,7 +498,7 @@ int FWadCollection::CheckIfWadLoaded (const char *name)
 DEFINE_ACTION_FUNCTION(_Wads, GetNumLumps)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(Wads.GetNumLumps());
+	ACTION_RETURN_INT(fileSystem.GetNumLumps());
 }
 
 //==========================================================================
@@ -512,7 +512,7 @@ DEFINE_ACTION_FUNCTION(_Wads, GetNumLumps)
 // and namespace parameter
 //==========================================================================
 
-int FWadCollection::CheckNumForName (const char *name, int space)
+int FileSystem::CheckNumForName (const char *name, int space)
 {
 	union
 	{
@@ -557,7 +557,7 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 	return i != NULL_INDEX ? i : -1;
 }
 
-int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bool exact)
+int FileSystem::CheckNumForName (const char *name, int space, int wadnum, bool exact)
 {
 	union
 	{
@@ -594,7 +594,7 @@ DEFINE_ACTION_FUNCTION(_Wads, CheckNumForName)
 	PARAM_INT(ns);
 	PARAM_INT(wadnum);
 	PARAM_BOOL(exact);
-	ACTION_RETURN_INT(Wads.CheckNumForName(name, ns, wadnum, exact));
+	ACTION_RETURN_INT(fileSystem.CheckNumForName(name, ns, wadnum, exact));
 }
 //==========================================================================
 //
@@ -604,7 +604,7 @@ DEFINE_ACTION_FUNCTION(_Wads, CheckNumForName)
 //
 //==========================================================================
 
-int FWadCollection::GetNumForName (const char *name, int space)
+int FileSystem::GetNumForName (const char *name, int space)
 {
 	int	i;
 
@@ -627,7 +627,7 @@ int FWadCollection::GetNumForName (const char *name, int space)
 //
 //==========================================================================
 
-int FWadCollection::CheckNumForFullName (const char *name, bool trynormal, int namespc, bool ignoreext)
+int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int namespc, bool ignoreext)
 {
 	uint32_t i;
 
@@ -663,10 +663,10 @@ DEFINE_ACTION_FUNCTION(_Wads, CheckNumForFullName)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(name);
-	ACTION_RETURN_INT(Wads.CheckNumForFullName(name));
+	ACTION_RETURN_INT(fileSystem.CheckNumForFullName(name));
 }
 
-int FWadCollection::CheckNumForFullName (const char *name, int wadnum)
+int FileSystem::CheckNumForFullName (const char *name, int wadnum)
 {
 	uint32_t i;
 
@@ -694,7 +694,7 @@ int FWadCollection::CheckNumForFullName (const char *name, int wadnum)
 //
 //==========================================================================
 
-int FWadCollection::GetNumForFullName (const char *name)
+int FileSystem::GetNumForFullName (const char *name)
 {
 	int	i;
 
@@ -712,7 +712,7 @@ int FWadCollection::GetNumForFullName (const char *name)
 //
 //==========================================================================
 
-void FWadCollection::SetLinkedTexture(int lump, FTexture *tex)
+void FileSystem::SetLinkedTexture(int lump, FTexture *tex)
 {
 	if ((size_t)lump < NumLumps)
 	{
@@ -726,7 +726,7 @@ void FWadCollection::SetLinkedTexture(int lump, FTexture *tex)
 //
 //==========================================================================
 
-FTexture *FWadCollection::GetLinkedTexture(int lump)
+FTexture *FileSystem::GetLinkedTexture(int lump)
 {
 	if ((size_t)lump < NumLumps)
 	{
@@ -743,7 +743,7 @@ FTexture *FWadCollection::GetLinkedTexture(int lump)
 //
 //==========================================================================
 
-int FWadCollection::LumpLength (int lump) const
+int FileSystem::LumpLength (int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 	{
@@ -762,7 +762,7 @@ int FWadCollection::LumpLength (int lump) const
 //
 //==========================================================================
 
-int FWadCollection::GetLumpOffset (int lump)
+int FileSystem::GetLumpOffset (int lump)
 {
 	if ((size_t)lump >= NumLumps)
 	{
@@ -778,7 +778,7 @@ int FWadCollection::GetLumpOffset (int lump)
 //
 //==========================================================================
 
-int FWadCollection::GetLumpFlags (int lump)
+int FileSystem::GetLumpFlags (int lump)
 {
 	if ((size_t)lump >= NumLumps)
 	{
@@ -800,7 +800,7 @@ int FWadCollection::GetLumpFlags (int lump)
 //
 //==========================================================================
 
-uint32_t FWadCollection::LumpNameHash (const char *s)
+uint32_t FileSystem::LumpNameHash (const char *s)
 {
 	const uint32_t *table = GetCRCTable ();;
 	uint32_t hash = 0xffffffff;
@@ -822,7 +822,7 @@ uint32_t FWadCollection::LumpNameHash (const char *s)
 //
 //==========================================================================
 
-void FWadCollection::InitHashChains (void)
+void FileSystem::InitHashChains (void)
 {
 	unsigned int i, j;
 
@@ -872,7 +872,7 @@ void FWadCollection::InitHashChains (void)
 //
 //==========================================================================
 
-void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
+void FileSystem::RenameSprites (const TArray<FString> &deletelumps)
 {
 	bool renameAll;
 	bool MNTRZfound = false;
@@ -1037,7 +1037,7 @@ void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 // MD5 checksum for Unity version of NERVE.WAD: 4214c47651b63ee2257b1c2490a518c9 (3,821,966)
 //
 //==========================================================================
-void FWadCollection::RenameNerve ()
+void FileSystem::RenameNerve ()
 {
 	if (gameinfo.gametype != GAME_Doom)
 		return;
@@ -1114,7 +1114,7 @@ void FWadCollection::RenameNerve ()
 //
 //==========================================================================
 
-void FWadCollection::FixMacHexen()
+void FileSystem::FixMacHexen()
 {
 	if (GAME_Hexen != gameinfo.gametype)
 	{
@@ -1199,7 +1199,7 @@ void FWadCollection::FixMacHexen()
 
 static FResourceLump placeholderLump;
 
-void FWadCollection::MoveLumpsInFolder(const char *path)
+void FileSystem::MoveLumpsInFolder(const char *path)
 {
 	auto len = strlen(path);
 	auto wadnum = LumpInfo.Last().wadnum;
@@ -1229,7 +1229,7 @@ void FWadCollection::MoveLumpsInFolder(const char *path)
 //
 //==========================================================================
 
-int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
+int FileSystem::FindLump (const char *name, int *lastlump, bool anyns)
 {
 	union
 	{
@@ -1263,8 +1263,8 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLump)
 	PARAM_STRING(name);
 	PARAM_INT(startlump);
 	PARAM_INT(ns);
-	const bool isLumpValid = startlump >= 0 && startlump < Wads.GetNumLumps();
-	ACTION_RETURN_INT(isLumpValid ? Wads.FindLump(name, &startlump, 0 != ns) : -1);
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumLumps();
+	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLump(name, &startlump, 0 != ns) : -1);
 }
 
 //==========================================================================
@@ -1276,7 +1276,7 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLump)
 //
 //==========================================================================
 
-int FWadCollection::FindLumpMulti (const char **names, int *lastlump, bool anyns, int *nameindex)
+int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, int *nameindex)
 {
 	LumpRecord *lump_p;
 
@@ -1311,7 +1311,7 @@ int FWadCollection::FindLumpMulti (const char **names, int *lastlump, bool anyns
 //
 //==========================================================================
 
-bool FWadCollection::CheckLumpName (int lump, const char *name)
+bool FileSystem::CheckLumpName (int lump, const char *name)
 {
 	if ((size_t)lump >= NumLumps)
 		return false;
@@ -1325,7 +1325,7 @@ bool FWadCollection::CheckLumpName (int lump, const char *name)
 //
 //==========================================================================
 
-void FWadCollection::GetLumpName (char *to, int lump) const
+void FileSystem::GetLumpName (char *to, int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 		*to = 0;
@@ -1333,7 +1333,7 @@ void FWadCollection::GetLumpName (char *to, int lump) const
 		uppercopy (to, LumpInfo[lump].shortName.String);
 }
 
-const char* FWadCollection::GetLumpName(int lump) const
+const char* FileSystem::GetLumpName(int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 		return nullptr;
@@ -1341,7 +1341,7 @@ const char* FWadCollection::GetLumpName(int lump) const
 		return LumpInfo[lump].shortName.String;
 }
 
-void FWadCollection::GetLumpName(FString &to, int lump) const
+void FileSystem::GetLumpName(FString &to, int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 		to = FString();
@@ -1356,19 +1356,19 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpName)
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
 	FString lumpname;
-	Wads.GetLumpName(lumpname, lump);
+	fileSystem.GetLumpName(lumpname, lump);
 	ACTION_RETURN_STRING(lumpname);
 }
 
 //==========================================================================
 //
-// FWadCollection :: GetLumpFullName
+// FileSystem :: GetLumpFullName
 //
 // Returns the lump's full name if it has one or its short name if not.
 //
 //==========================================================================
 
-const char *FWadCollection::GetLumpFullName (int lump, bool returnshort) const
+const char *FileSystem::GetLumpFullName (int lump, bool returnshort) const
 {
 	if ((size_t)lump >= NumLumps)
 		return NULL;
@@ -1383,18 +1383,18 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpFullName)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	ACTION_RETURN_STRING(Wads.GetLumpFullName(lump));
+	ACTION_RETURN_STRING(fileSystem.GetLumpFullName(lump));
 }
 
 //==========================================================================
 //
-// FWadCollection :: GetLumpFullPath
+// FileSystem :: GetLumpFullPath
 //
 // Returns the name of the lump's wad prefixed to the lump's full name.
 //
 //==========================================================================
 
-FString FWadCollection::GetLumpFullPath(int lump) const
+FString FileSystem::GetLumpFullPath(int lump) const
 {
 	FString foo;
 
@@ -1411,7 +1411,7 @@ FString FWadCollection::GetLumpFullPath(int lump) const
 //
 //==========================================================================
 
-int FWadCollection::GetLumpNamespace (int lump) const
+int FileSystem::GetLumpNamespace (int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 		return ns_global;
@@ -1423,12 +1423,12 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpNamespace)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	ACTION_RETURN_INT(Wads.GetLumpNamespace(lump));
+	ACTION_RETURN_INT(fileSystem.GetLumpNamespace(lump));
 }
 
 //==========================================================================
 //
-// FWadCollection :: GetLumpIndexNum
+// FileSystem :: GetLumpIndexNum
 //
 // Returns the index number for this lump. This is *not* the lump's position
 // in the lump directory, but rather a special value that RFF can associate
@@ -1436,7 +1436,7 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpNamespace)
 //
 //==========================================================================
 
-int FWadCollection::GetLumpIndexNum(int lump) const
+int FileSystem::GetLumpIndexNum(int lump) const
 {
 	if ((size_t)lump >= NumLumps)
 		return 0;
@@ -1450,7 +1450,7 @@ int FWadCollection::GetLumpIndexNum(int lump) const
 //
 //==========================================================================
 
-int FWadCollection::GetLumpFile (int lump) const
+int FileSystem::GetLumpFile (int lump) const
 {
 	if ((size_t)lump >= LumpInfo.Size())
 		return -1;
@@ -1463,7 +1463,7 @@ int FWadCollection::GetLumpFile (int lump) const
 //
 //==========================================================================
 
-FResourceLump *FWadCollection::GetLumpRecord(int lump) const
+FResourceLump *FileSystem::GetLumpRecord(int lump) const
 {
 	if ((size_t)lump >= LumpInfo.Size())
 		return nullptr;
@@ -1487,7 +1487,7 @@ static int folderentrycmp(const void *a, const void *b)
 	return strcmp(A->name, B->name);
 }
 
-unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
+unsigned FileSystem::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
 {
 	FString path = inpath;
 	FixPathSeperator(path);
@@ -1499,7 +1499,7 @@ unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry
 		if (LumpInfo[i].longName.IndexOf(path) == 0)
 		{
 			// Only if it hasn't been replaced.
-			if ((unsigned)Wads.CheckNumForFullName(LumpInfo[i].longName) == i)
+			if ((unsigned)fileSystem.CheckNumForFullName(LumpInfo[i].longName) == i)
 			{
 				result.Push({ LumpInfo[i].longName.GetChars(), i });
 			}
@@ -1513,13 +1513,13 @@ unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry
 			// Find the highest resource file having content in the given folder.
 			for (auto & entry : result)
 			{
-				int thisfile = Wads.GetLumpFile(entry.lumpnum);
+				int thisfile = fileSystem.GetLumpFile(entry.lumpnum);
 				if (thisfile > maxfile) maxfile = thisfile;
 			}
 			// Delete everything from older files.
 			for (int i = result.Size() - 1; i >= 0; i--)
 			{
-				if (Wads.GetLumpFile(result[i].lumpnum) != maxfile) result.Delete(i);
+				if (fileSystem.GetLumpFile(result[i].lumpnum) != maxfile) result.Delete(i);
 			}
 		}
 		qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);
@@ -1535,7 +1535,7 @@ unsigned FWadCollection::GetLumpsInFolder(const char *inpath, TArray<FolderEntry
 //
 //==========================================================================
 
-void FWadCollection::ReadLump (int lump, void *dest)
+void FileSystem::ReadLump (int lump, void *dest)
 {
 	auto lumpr = OpenLumpReader (lump);
 	auto size = lumpr.GetLength ();
@@ -1556,7 +1556,7 @@ void FWadCollection::ReadLump (int lump, void *dest)
 //
 //==========================================================================
 
-TArray<uint8_t> FWadCollection::ReadLumpIntoArray(int lump, int pad)
+TArray<uint8_t> FileSystem::ReadLumpIntoArray(int lump, int pad)
 {
 	auto lumpr = OpenLumpReader(lump);
 	auto size = lumpr.GetLength();
@@ -1580,7 +1580,7 @@ TArray<uint8_t> FWadCollection::ReadLumpIntoArray(int lump, int pad)
 //
 //==========================================================================
 
-FMemLump FWadCollection::ReadLump (int lump)
+FMemLump FileSystem::ReadLump (int lump)
 {
 	return FMemLump(FString(ELumpNum(lump)));
 }
@@ -1589,8 +1589,8 @@ DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	const bool isLumpValid = lump >= 0 && lump < Wads.GetNumLumps();
-	ACTION_RETURN_STRING(isLumpValid ? Wads.ReadLump(lump).GetString() : FString());
+	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetNumLumps();
+	ACTION_RETURN_STRING(isLumpValid ? fileSystem.ReadLump(lump).GetString() : FString());
 }
 
 //==========================================================================
@@ -1602,7 +1602,7 @@ DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 //==========================================================================
 
 
-FileReader FWadCollection::OpenLumpReader(int lump)
+FileReader FileSystem::OpenLumpReader(int lump)
 {
 	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
 	{
@@ -1621,7 +1621,7 @@ FileReader FWadCollection::OpenLumpReader(int lump)
 	return rl->NewReader();	// This always gets a reader to the cache
 }
 
-FileReader FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
+FileReader FileSystem::ReopenLumpReader(int lump, bool alwayscache)
 {
 	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
 	{
@@ -1633,8 +1633,8 @@ FileReader FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
 
 	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & LUMPF_COMPRESSED))
 	{
-		int fileno = Wads.GetLumpFile(lump);
-		const char *filename = Wads.GetWadFullName(fileno);
+		int fileno = fileSystem.GetLumpFile(lump);
+		const char *filename = fileSystem.GetWadFullName(fileno);
 		FileReader fr;
 		if (fr.OpenFile(filename, rl->GetFileOffset(), rl->LumpSize))
 		{
@@ -1653,7 +1653,7 @@ FileReader FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
 //
 //==========================================================================
 
-FileReader *FWadCollection::GetFileReader(int wadnum)
+FileReader *FileSystem::GetFileReader(int wadnum)
 {
 	if ((uint32_t)wadnum >= Files.Size())
 	{
@@ -1671,7 +1671,7 @@ FileReader *FWadCollection::GetFileReader(int wadnum)
 //
 //==========================================================================
 
-const char *FWadCollection::GetWadName (int wadnum) const
+const char *FileSystem::GetWadName (int wadnum) const
 {
 	const char *name, *slash;
 
@@ -1690,7 +1690,7 @@ const char *FWadCollection::GetWadName (int wadnum) const
 //
 //==========================================================================
 
-int FWadCollection::GetFirstLump (int wadnum) const
+int FileSystem::GetFirstLump (int wadnum) const
 {
 	if ((uint32_t)wadnum >= Files.Size())
 	{
@@ -1705,7 +1705,7 @@ int FWadCollection::GetFirstLump (int wadnum) const
 //
 //==========================================================================
 
-int FWadCollection::GetLastLump (int wadnum) const
+int FileSystem::GetLastLump (int wadnum) const
 {
 	if ((uint32_t)wadnum >= Files.Size())
 	{
@@ -1720,7 +1720,7 @@ int FWadCollection::GetLastLump (int wadnum) const
 //
 //==========================================================================
 
-int FWadCollection::GetLumpCount (int wadnum) const
+int FileSystem::GetLumpCount (int wadnum) const
 {
 	if ((uint32_t)wadnum >= Files.Size())
 	{
@@ -1739,7 +1739,7 @@ int FWadCollection::GetLumpCount (int wadnum) const
 //
 //==========================================================================
 
-const char *FWadCollection::GetWadFullName (int wadnum) const
+const char *FileSystem::GetWadFullName (int wadnum) const
 {
 	if ((unsigned int)wadnum >= Files.Size())
 	{
@@ -1778,7 +1778,7 @@ FMemLump::~FMemLump ()
 
 FString::FString (ELumpNum lumpnum)
 {
-	auto lumpr = Wads.OpenLumpReader ((int)lumpnum);
+	auto lumpr = fileSystem.OpenLumpReader ((int)lumpnum);
 	auto size = lumpr.GetLength ();
 	AllocBuffer (1 + size);
 	auto numread = lumpr.Read (&Chars[0], size);
@@ -1787,7 +1787,7 @@ FString::FString (ELumpNum lumpnum)
 	if (numread != size)
 	{
 		I_Error ("ConstructStringFromLump: Only read %ld of %ld bytes on lump %i (%s)\n",
-			numread, size, lumpnum, Wads.GetLumpFullName((int)lumpnum));
+			numread, size, lumpnum, fileSystem.GetLumpFullName((int)lumpnum));
 	}
 }
 
@@ -1850,7 +1850,7 @@ CCMD(lumpnum)
 {
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		Printf("%s: %d\n", argv[i], Wads.CheckNumForName(argv[i]));
+		Printf("%s: %d\n", argv[i], fileSystem.CheckNumForName(argv[i]));
 	}
 }
 
@@ -1864,7 +1864,7 @@ CCMD(lumpnumfull)
 {
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		Printf("%s: %d\n", argv[i], Wads.CheckNumForFullName(argv[i]));
+		Printf("%s: %d\n", argv[i], fileSystem.CheckNumForFullName(argv[i]));
 	}
 }
 #endif

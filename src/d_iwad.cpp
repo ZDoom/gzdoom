@@ -268,7 +268,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 
 FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
-	FWadCollection check;
+	FileSystem check;
 	TArray<FString> fns;
 	TArray<FString> deletes;
 	fns.Push(firstfn);
@@ -300,7 +300,7 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 
 int FIWadManager::ScanIWAD (const char *iwad)
 {
-	FWadCollection check;
+	FileSystem check;
 	check.InitSingleFile(iwad, true);
 
 	mLumpsFound.Resize(mIWadInfos.Size());
@@ -353,7 +353,7 @@ int FIWadManager::ScanIWAD (const char *iwad)
 
 int FIWadManager::CheckIWADInfo(const char* fn)
 {
-	FWadCollection check;
+	FileSystem check;
 
 	check.InitSingleFile(fn, true);
 	if (check.GetNumLumps() > 0)
@@ -735,14 +735,14 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	else
 		iwadnum = 1;
 
-	Wads.SetIwadNum(iwadnum);
+	fileSystem.SetIwadNum(iwadnum);
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{
 		D_AddFile (wadfiles, picks[pick].mRequiredPath);
 		iwadnum++;
 	}
 	D_AddFile (wadfiles, picks[pick].mFullPath);
-	Wads.SetMaxIwadNum(iwadnum);
+	fileSystem.SetMaxIwadNum(iwadnum);
 
 	auto info = mIWadInfos[picks[pick].mInfoIndex];
 	// Load additional resources from the same directory as the IWAD itself.

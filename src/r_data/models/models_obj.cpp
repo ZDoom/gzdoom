@@ -33,7 +33,7 @@
  */
 bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length)
 {
-	FString objName = Wads.GetLumpFullPath(lumpnum);
+	FString objName = fileSystem.GetLumpFullPath(lumpnum);
 	FString objBuf(buffer, length);
 
 	// Do some replacements before we parse the OBJ string

@@ -440,7 +440,7 @@ void SBarInfo::Load()
 {
 	if(gameinfo.statusbar.IsNotEmpty())
 	{
-		int lump = Wads.CheckNumForFullName(gameinfo.statusbar, true);
+		int lump = fileSystem.CheckNumForFullName(gameinfo.statusbar, true);
 		if(lump != -1)
 		{
 			if (!batchrun) Printf ("ParseSBarInfo: Loading default status bar definition.\n");
@@ -451,12 +451,12 @@ void SBarInfo::Load()
 		}
 	}
 
-	if(Wads.CheckNumForName("SBARINFO") != -1)
+	if(fileSystem.CheckNumForName("SBARINFO") != -1)
 	{
 		if (!batchrun) Printf ("ParseSBarInfo: Loading custom status bar definition.\n");
 		int lastlump, lump;
 		lastlump = 0;
-		while((lump = Wads.FindLump("SBARINFO", &lastlump)) != -1)
+		while((lump = fileSystem.FindLump("SBARINFO", &lastlump)) != -1)
 		{
 			if(SBarInfoScript[SCRIPT_CUSTOM] == NULL)
 				SBarInfoScript[SCRIPT_CUSTOM] = new SBarInfo(lump);
@@ -478,7 +478,7 @@ void SBarInfo::ParseSBarInfo(int lump)
 		if(sc.TokenType == TK_Include)
 		{
 			sc.MustGetToken(TK_StringConst);
-			int lump = Wads.CheckNumForFullName(sc.String, true);
+			int lump = fileSystem.CheckNumForFullName(sc.String, true);
 			if (lump == -1)
 				sc.ScriptError("Lump '%s' not found", sc.String);
 			ParseSBarInfo(lump);
@@ -493,15 +493,15 @@ void SBarInfo::ParseSBarInfo(int lump)
 					sc.MustGetToken(TK_Identifier);
 				if(sc.Compare("Doom"))
 				{
-					baselump = Wads.CheckNumForFullName("sbarinfo/doom.txt", true);
+					baselump = fileSystem.CheckNumForFullName("sbarinfo/doom.txt", true);
 				}
 				else if(sc.Compare("Heretic"))
 				{
-					baselump = Wads.CheckNumForFullName("sbarinfo/heretic.txt", true);
+					baselump = fileSystem.CheckNumForFullName("sbarinfo/heretic.txt", true);
 				}
 				else if(sc.Compare("Hexen"))
 				{
-					baselump = Wads.CheckNumForFullName("sbarinfo/hexen.txt", true);
+					baselump = fileSystem.CheckNumForFullName("sbarinfo/hexen.txt", true);
 				}
 				else if(sc.Compare("Strife"))
 					gameType = GAME_Strife;
@@ -516,10 +516,10 @@ void SBarInfo::ParseSBarInfo(int lump)
 					{
 						sc.ScriptError("Standard %s status bar not found.", sc.String);
 					}
-					else if (Wads.GetLumpFile(baselump) > 0)
+					else if (fileSystem.GetLumpFile(baselump) > 0)
 					{
 						I_FatalError("File %s is overriding core lump sbarinfo/%s.txt.",
-							Wads.GetWadFullName(Wads.GetLumpFile(baselump)), sc.String);
+							fileSystem.GetWadFullName(fileSystem.GetLumpFile(baselump)), sc.String);
 					}
 					ParseSBarInfo(baselump);
 				}

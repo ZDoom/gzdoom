@@ -434,18 +434,18 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		FileReader reader;
 		if (!FileExists (musicname))
 		{
-			if ((lumpnum = Wads.CheckNumForFullName (musicname, true, ns_music)) == -1)
+			if ((lumpnum = fileSystem.CheckNumForFullName (musicname, true, ns_music)) == -1)
 			{
 				Printf ("Music \"%s\" not found\n", musicname);
 				return false;
 			}
 			if (handle == nullptr)
 			{
-				if (Wads.LumpLength (lumpnum) == 0)
+				if (fileSystem.LumpLength (lumpnum) == 0)
 				{
 					return false;
 				}
-				reader = Wads.ReopenLumpReader(lumpnum);
+				reader = fileSystem.ReopenLumpReader(lumpnum);
 			}
 		}
 		else

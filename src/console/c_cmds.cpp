@@ -848,17 +848,17 @@ CCMD (wdir)
 		Printf ("usage: wdir <wadfile>\n");
 		return;
 	}
-	int wadnum = Wads.CheckIfWadLoaded (argv[1]);
+	int wadnum = fileSystem.CheckIfWadLoaded (argv[1]);
 	if (wadnum < 0)
 	{
 		Printf ("%s must be loaded to view its directory.\n", argv[1]);
 		return;
 	}
-	for (int i = 0; i < Wads.GetNumLumps(); ++i)
+	for (int i = 0; i < fileSystem.GetNumLumps(); ++i)
 	{
-		if (Wads.GetLumpFile(i) == wadnum)
+		if (fileSystem.GetLumpFile(i) == wadnum)
 		{
-			Printf ("%s\n", Wads.GetLumpFullName(i));
+			Printf ("%s\n", fileSystem.GetLumpFullName(i));
 		}
 	}
 }
@@ -1221,10 +1221,10 @@ CCMD(secret)
 	bool thislevel = !stricmp(mapname, primaryLevel->MapName);
 	bool foundsome = false;
 
-	int lumpno=Wads.CheckNumForName("SECRETS");
+	int lumpno=fileSystem.CheckNumForName("SECRETS");
 	if (lumpno < 0) return;
 
-	auto lump = Wads.OpenLumpReader(lumpno);
+	auto lump = fileSystem.OpenLumpReader(lumpno);
 	FString maphdr;
 	maphdr.Format("[%s]", mapname);
 

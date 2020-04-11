@@ -249,7 +249,7 @@ void P_InitTerrainTypes ()
 	MakeDefaultTerrain ();
 
 	lastlump = 0;
-	while (-1 != (lump = Wads.FindLump ("TERRAIN", &lastlump)) )
+	while (-1 != (lump = fileSystem.FindLump ("TERRAIN", &lastlump)) )
 	{
 		FScanner sc(lump);
 		ParseOuter (sc);

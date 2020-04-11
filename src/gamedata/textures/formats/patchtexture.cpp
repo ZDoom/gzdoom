@@ -170,10 +170,10 @@ TArray<uint8_t> FPatchTexture::CreatePalettedPixels(int conversion)
 	const column_t *maxcol;
 	int x;
 
-	FMemLump lump = Wads.ReadLump (SourceLump);
+	FMemLump lump = fileSystem.ReadLump (SourceLump);
 	const patch_t *patch = (const patch_t *)lump.GetMem();
 
-	maxcol = (const column_t *)((const uint8_t *)patch + Wads.LumpLength (SourceLump) - 3);
+	maxcol = (const column_t *)((const uint8_t *)patch + fileSystem.LumpLength (SourceLump) - 3);
 
 	remap = ImageHelpers::GetRemap(conversion == luminance, isalpha);
 	// Special case for skies
@@ -275,12 +275,12 @@ int FPatchTexture::CopyPixels(FBitmap *bmp, int conversion)
 void FPatchTexture::DetectBadPatches ()
 {
 	// The patch must look like it is large enough for the rules to apply to avoid using this on truly empty patches.
-	if (Wads.LumpLength(SourceLump) < Width * Height / 2) return;
+	if (fileSystem.LumpLength(SourceLump) < Width * Height / 2) return;
 
 	// Check if this patch is likely to be a problem.
 	// It must be 256 pixels tall, and all its columns must have exactly
 	// one post, where each post has a supposed length of 0.
-	FMemLump lump = Wads.ReadLump (SourceLump);
+	FMemLump lump = fileSystem.ReadLump (SourceLump);
 	const patch_t *realpatch = (patch_t *)lump.GetMem();
 	const uint32_t *cofs = realpatch->columnofs;
 	int x, x2 = LittleShort(realpatch->width);

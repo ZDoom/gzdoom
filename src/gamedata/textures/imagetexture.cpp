@@ -54,7 +54,7 @@ FImageTexture::FImageTexture(FImageSource *img, const char *name)
 	mImage = img;
 	if (img != nullptr)
 	{
-		if (name == nullptr) Wads.GetLumpName(Name, img->LumpNum());
+		if (name == nullptr) fileSystem.GetLumpName(Name, img->LumpNum());
 		Width = img->GetWidth();
 		Height = img->GetHeight();
 

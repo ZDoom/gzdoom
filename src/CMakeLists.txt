@@ -829,6 +829,7 @@ set (PCH_SOURCES
 	playsim/bots/b_move.cpp
 	playsim/bots/b_think.cpp
 	bbannouncer.cpp
+	console/c_cmds.cpp
 	console/c_console.cpp
 	console/c_functions.cpp
 	ct_chat.cpp
@@ -1108,7 +1109,6 @@ set (PCH_SOURCES
 	common/console/c_commandline.cpp
 	common/console/c_buttons.cpp
 	common/console/c_bind.cpp
-	common/console/c_cmds.cpp
 	common/console/c_enginecmds.cpp
 	common/console/c_consolebuffer.cpp
 	common/console/c_cvars.cpp

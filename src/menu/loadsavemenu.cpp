@@ -182,7 +182,7 @@ void FSavegameManager::ReadSaveStrings()
 						continue;
 					}
 					void *data = info->Lock();
-					FSerializer arc(nullptr);
+					FSerializer arc;
 					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
 						int savever = 0;
@@ -469,7 +469,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			return index;
 		}
 		void *data = info->Lock();
-		FSerializer arc(nullptr);
+		FSerializer arc;
 		if (arc.OpenReader((const char *)data, info->LumpSize))
 		{
 			FString comment;

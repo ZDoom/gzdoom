@@ -30,7 +30,8 @@
 #include "g_levellocals.h"
 #include "p_3dmidtex.h"
 #include "r_data/r_interpolate.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "doomstat.h"
 #include "vm.h"
 

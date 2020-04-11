@@ -64,6 +64,7 @@
 #include "serializer.h"
 #include "m_crc32.h"
 #include "c_dispatch.h"
+#include "printf.h"
 
 // MACROS ------------------------------------------------------------------
 

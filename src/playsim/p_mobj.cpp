@@ -88,7 +88,7 @@
 #include "po_man.h"
 #include "p_spec.h"
 #include "p_checkposition.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "r_utility.h"
 #include "thingdef.h"
 #include "d_player.h"
@@ -227,7 +227,6 @@ void AActor::Serialize(FSerializer &arc)
 		A("tics", tics)
 		A("state", state)
 		A("damage", DamageVal)
-		.Terrain("floorterrain", floorterrain, &def->floorterrain)
 		A("projectilekickback", projectileKickback)
 		A("flags", flags)
 		A("flags2", flags2)
@@ -261,7 +260,6 @@ void AActor::Serialize(FSerializer &arc)
 		A("floorclip", Floorclip)
 		A("tid", tid)
 		A("special", special)
-		.Args("args", args, def->args, special)
 		A("accuracy", accuracy)
 		A("stamina", stamina)
 		("goal", goal)
@@ -367,6 +365,10 @@ void AActor::Serialize(FSerializer &arc)
 		A("spawnorder", SpawnOrder)
 		A("friction", Friction)
 		A("userlights", UserLights);
+
+		SerializeTerrain(arc, "floorterrain", floorterrain, &def->floorterrain);
+		SerializeArgs(arc, "args", args, def->args, special);
+
 }
 
 #undef A

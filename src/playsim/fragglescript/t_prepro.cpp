@@ -43,6 +43,7 @@
 #include "t_script.h"
 #include "filesystem.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 

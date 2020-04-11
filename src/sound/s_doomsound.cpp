@@ -59,7 +59,7 @@
 #include "gstrings.h"
 #include "gi.h"
 #include "po_man.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "vm.h"

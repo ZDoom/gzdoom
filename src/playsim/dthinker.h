@@ -116,7 +116,7 @@ private:
 	friend struct FThinkerCollection;
 	friend class FThinkerIterator;
 	friend class DObject;
-	friend class FSerializer;
+	friend class FDoomSerializer;
 
 	DThinker *NextThinker = nullptr, *PrevThinker = nullptr;
 

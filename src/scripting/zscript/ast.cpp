@@ -36,6 +36,7 @@
 #include "types.h"
 #include "zcc_parser.h"
 #include "zcc-parse.h"
+#include "printf.h"
 
 class FLispString;
 extern void (* const TreeNodePrinter[NUM_AST_NODE_TYPES])(FLispString &, ZCC_TreeNode *);

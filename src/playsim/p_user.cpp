@@ -77,7 +77,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "d_net.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "serialize_obj.h"
 #include "d_player.h"
 #include "r_utility.h"

@@ -52,7 +52,7 @@
 #include "menu/menu.h"
 #include "teaminfo.h"
 #include "r_data/sprites.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "wi_stuff.h"
 #include "a_dynlight.h"
 #include "types.h"

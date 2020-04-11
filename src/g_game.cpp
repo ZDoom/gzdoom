@@ -67,7 +67,7 @@
 #include "r_utility.h"
 #include "a_morph.h"
 #include "p_spec.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "vm.h"
 #include "dobjgc.h"
 #include "gi.h"
@@ -1910,7 +1910,7 @@ void G_DoLoadGame ()
 	SaveVersion = 0;
 
 	void *data = info->Lock();
-	FSerializer arc(nullptr);
+	FSerializer arc;
 	if (!arc.OpenReader((const char *)data, info->LumpSize))
 	{
 		LoadGameError("TXT_FAILEDTOREADSG");
@@ -2342,8 +2342,8 @@ void G_DoSaveGame (bool okForQuicksave, bool forceQuicksave, FString filename, c
 	}
 
 	BufferWriter savepic;
-	FSerializer savegameinfo(nullptr);		// this is for displayable info about the savegame
-	FSerializer savegameglobals(nullptr);	// and this for non-level related info that must be saved.
+	FSerializer savegameinfo;		// this is for displayable info about the savegame
+	FSerializer savegameglobals;	// and this for non-level related info that must be saved.
 
 	savegameinfo.OpenWriter(true);
 	savegameglobals.OpenWriter(save_formatted);

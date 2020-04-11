@@ -4,28 +4,23 @@
 #include <stdint.h>
 #include <type_traits>
 #include "tarray.h"
-#include "r_defs.h"
 #include "file_zip.h"
 #include "tflags.h"
+#include "vectors.h"
+#include "palentry.h"
+#include "name.h"
 #include "dictionary.h"
 
 extern bool save_full;
 
-struct ticcmd_t;
-struct usercmd_t;
-
 struct FWriter;
 struct FReader;
 class PClass;
-class PClassActor;
-struct FStrifeDialogueNode;
 class FFont;
-struct FState;
-struct FDoorAnimation;
 class FSoundID;
-struct FPolyObj;
 union FRenderStyle;
-struct FInterpolator;
+class DObject;
+class FTextureID;
 
 inline bool nullcmp(const void *buffer, size_t length)
 {
@@ -67,22 +62,22 @@ class FSerializer
 public:
 	FWriter *w = nullptr;
 	FReader *r = nullptr;
-	FLevelLocals *Level;
+	bool soundNamesAreUnique = false; // While in GZDoom, sound names are unique, that isn't universally true - let the serializer handle both cases with a flag.
 
 	unsigned ArraySize();
 	void WriteKey(const char *key);
 	void WriteObjects();
 
+private:
+	virtual void CloseReaderCustom() {}
 public:
-
-	FSerializer(FLevelLocals *l) : Level(l)
-	{}
 
 	~FSerializer()
 	{
 		mErrors = 0;	// The destructor may not throw an exception so silence the error checker.
 		Close();
 	}
+	void SetUniqueSoundNames() { soundNamesAreUnique = true; }
 	bool OpenWriter(bool pretty = true);
 	bool OpenReader(const char *buffer, size_t length);
 	bool OpenReader(FCompressedBuffer *input);
@@ -96,9 +91,8 @@ public:
 	const char *GetKey();
 	const char *GetOutput(unsigned *len = nullptr);
 	FCompressedBuffer GetCompressedOutput();
-	FSerializer &Args(const char *key, int *args, int *defargs, int special);
-	FSerializer &Terrain(const char *key, int &terrain, int *def = nullptr);
-	FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
+	// The sprite serializer is a special case because it is needed by the VM to handle its 'spriteid' type.
+	virtual FSerializer &Sprite(const char *key, int32_t &spritenum, int32_t *def);
 	FSerializer &StringPtr(const char *key, const char *&charptr);	// This only retrieves the address but creates no permanent copy of the string unlike the regular char* serializer.
 	FSerializer &AddString(const char *key, const char *charptr);
 	const char *GetString(const char *key);
@@ -187,6 +181,7 @@ public:
 };
 
 FSerializer& Serialize(FSerializer& arc, const char* key, char& value, char* defval);
+
 FSerializer &Serialize(FSerializer &arc, const char *key, bool &value, bool *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, int64_t &value, int64_t *defval);
 FSerializer &Serialize(FSerializer &arc, const char *key, uint64_t &value, uint64_t *defval);
@@ -204,9 +199,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &sid, FString *def);
 FSerializer &Serialize(FSerializer &arc, const char *key, NumericValue &sid, NumericValue *def);
-FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &sid, ticcmd_t *def);
-FSerializer &Serialize(FSerializer &arc, const char *key, usercmd_t &cmd, usercmd_t *def);
-FSerializer &Serialize(FSerializer &arc, const char *key, FInterpolator &rs, FInterpolator *def);
 
 template<class T>
 FSerializer &Serialize(FSerializer &arc, const char *key, T *&value, T **)
@@ -243,30 +235,9 @@ FSerializer &Serialize(FSerializer &arc, const char *key, TArray<T, TT> &value, 
 	return arc;
 }
 
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, const sector_t *&value, const sector_t **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&clst, PClass **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FDoorAnimation *&pstr, FDoorAnimation **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&font, FFont **def);
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocals *&font, FLevelLocals **def);
+template<> FSerializer& Serialize(FSerializer& arc, const char* key, PClass*& clst, PClass** def);
+template<> FSerializer& Serialize(FSerializer& arc, const char* key, FFont*& font, FFont** def);
 template<> FSerializer &Serialize(FSerializer &arc, const char *key, Dictionary *&dict, Dictionary **def);
-
-FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode);
-template<> inline FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def)
-{
-	return Serialize(arc, key, state, def, nullptr);
-}
-
 
 inline FSerializer &Serialize(FSerializer &arc, const char *key, DVector3 &p, DVector3 *def)
 {
@@ -299,6 +270,41 @@ template<class T, class TT>
 FSerializer &Serialize(FSerializer &arc, const char *key, TFlags<T, TT> &flags, TFlags<T, TT> *def)
 {
 	return Serialize(arc, key, flags.Value, def? &def->Value : nullptr);
+}
+
+// Automatic save record registration
+
+struct SaveRecord
+{
+	const char* GameModule;
+	void (*Handler)(FSerializer& arc);
+
+	SaveRecord(const char* nm, void (*handler)(FSerializer& arc));
+};
+
+struct SaveRecords
+{
+	TArray<SaveRecord*> records;
+
+	void RunHandlers(const char* gameModule, FSerializer& arc)
+	{
+		for (auto record : records)
+		{
+			if (!strcmp(gameModule, record->GameModule))
+			{
+				record->Handler(arc);
+			}
+		}
+	}
+};
+
+extern SaveRecords saveRecords;
+
+inline SaveRecord::SaveRecord(const char* nm, void (*handler)(FSerializer& arc))
+{
+	GameModule = nm;
+	Handler = handler;
+	saveRecords.records.Push(this);
 }
 
 FString DictionaryToString(const Dictionary &dict);

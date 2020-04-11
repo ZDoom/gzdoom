@@ -64,6 +64,8 @@
 
 bool save_full = false;	// for testing. Should be removed afterward.
 
+#include "serializer_internal.h"
+
 //==========================================================================
 //
 // This will double-encode already existing UTF-8 content.
@@ -73,7 +75,7 @@ bool save_full = false;	// for testing. Should be removed afterward.
 //==========================================================================
 
 static TArray<char> out;
-static const char *StringToUnicode(const char *cc, int size = -1)
+const char *StringToUnicode(const char *cc, int size)
 {
 	int ch;
 	const uint8_t *c = (const uint8_t*)cc;
@@ -101,7 +103,7 @@ static const char *StringToUnicode(const char *cc, int size = -1)
 	return &out[0];
 }
 
-static const char *UnicodeToString(const char *cc)
+const char *UnicodeToString(const char *cc)
 {
 	out.Resize((unsigned)strlen(cc) + 1);
 	int ndx = 0;
@@ -116,225 +118,6 @@ static const char *UnicodeToString(const char *cc)
 	out[ndx] = 0;
 	return &out[0];
 }
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-struct FJSONObject
-{
-	rapidjson::Value *mObject;
-	rapidjson::Value::MemberIterator mIterator;
-	int mIndex;
-
-	FJSONObject(rapidjson::Value *v)
-	{
-		mObject = v;
-		if (v->IsObject()) mIterator = v->MemberBegin();
-		else if (v->IsArray())
-		{
-			mIndex = 0;
-		}
-	}
-};
-
-//==========================================================================
-//
-// some wrapper stuff to keep the RapidJSON dependencies out of the global headers.
-// FSerializer should not expose any of this.
-//
-//==========================================================================
-
-struct FWriter
-{
-	typedef rapidjson::Writer<rapidjson::StringBuffer, rapidjson::UTF8<> > Writer;
-	typedef rapidjson::PrettyWriter<rapidjson::StringBuffer, rapidjson::UTF8<> > PrettyWriter;
-
-	Writer *mWriter1;
-	PrettyWriter *mWriter2;
-	TArray<bool> mInObject;
-	rapidjson::StringBuffer mOutString;
-	TArray<DObject *> mDObjects;
-	TMap<DObject *, int> mObjectMap;
-	
-	FWriter(bool pretty)
-	{
-		if (!pretty)
-		{
-			mWriter1 = new Writer(mOutString);
-			mWriter2 = nullptr;
-		}
-		else
-		{
-			mWriter1 = nullptr;
-			mWriter2 = new PrettyWriter(mOutString);
-		}
-	}
-
-	~FWriter()
-	{
-		if (mWriter1) delete mWriter1;
-		if (mWriter2) delete mWriter2;
-	}
-
-
-	bool inObject() const
-	{
-		return mInObject.Size() > 0 && mInObject.Last();
-	}
-
-	void StartObject()
-	{
-		if (mWriter1) mWriter1->StartObject();
-		else if (mWriter2) mWriter2->StartObject();
-	}
-
-	void EndObject()
-	{
-		if (mWriter1) mWriter1->EndObject();
-		else if (mWriter2) mWriter2->EndObject();
-	}
-
-	void StartArray()
-	{
-		if (mWriter1) mWriter1->StartArray();
-		else if (mWriter2) mWriter2->StartArray();
-	}
-
-	void EndArray()
-	{
-		if (mWriter1) mWriter1->EndArray();
-		else if (mWriter2) mWriter2->EndArray();
-	}
-
-	void Key(const char *k)
-	{
-		if (mWriter1) mWriter1->Key(k);
-		else if (mWriter2) mWriter2->Key(k);
-	}
-
-	void Null()
-	{
-		if (mWriter1) mWriter1->Null();
-		else if (mWriter2) mWriter2->Null();
-	}
-
-	void StringU(const char *k, bool encode)
-	{
-		if (encode) k = StringToUnicode(k);
-		if (mWriter1) mWriter1->String(k);
-		else if (mWriter2) mWriter2->String(k);
-	}
-
-	void String(const char *k)
-	{
-		k = StringToUnicode(k);
-		if (mWriter1) mWriter1->String(k);
-		else if (mWriter2) mWriter2->String(k);
-	}
-
-	void String(const char *k, int size)
-	{
-		k = StringToUnicode(k, size);
-		if (mWriter1) mWriter1->String(k);
-		else if (mWriter2) mWriter2->String(k);
-	}
-
-	void Bool(bool k)
-	{
-		if (mWriter1) mWriter1->Bool(k);
-		else if (mWriter2) mWriter2->Bool(k);
-	}
-
-	void Int(int32_t k)
-	{
-		if (mWriter1) mWriter1->Int(k);
-		else if (mWriter2) mWriter2->Int(k);
-	}
-
-	void Int64(int64_t k)
-	{
-		if (mWriter1) mWriter1->Int64(k);
-		else if (mWriter2) mWriter2->Int64(k);
-	}
-
-	void Uint(uint32_t k)
-	{
-		if (mWriter1) mWriter1->Uint(k);
-		else if (mWriter2) mWriter2->Uint(k);
-	}
-
-	void Uint64(int64_t k)
-	{
-		if (mWriter1) mWriter1->Uint64(k);
-		else if (mWriter2) mWriter2->Uint64(k);
-	}
-
-	void Double(double k)
-	{
-		if (mWriter1)
-		{
-			mWriter1->Double(k);
-		}
-		else if (mWriter2)
-		{
-			mWriter2->Double(k);
-		}
-	}
-
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-struct FReader
-{
-	TArray<FJSONObject> mObjects;
-	rapidjson::Document mDoc;
-	TArray<DObject *> mDObjects;
-	rapidjson::Value *mKeyValue = nullptr;
-	bool mObjectsRead = false;
-
-	FReader(const char *buffer, size_t length)
-	{
-		mDoc.Parse(buffer, length);
-		mObjects.Push(FJSONObject(&mDoc));
-	}
-
-	rapidjson::Value *FindKey(const char *key)
-	{
-		FJSONObject &obj = mObjects.Last();
-		
-		if (obj.mObject->IsObject())
-		{
-			if (key == nullptr)
-			{
-				// we are performing an iteration of the object through GetKey.
-				auto p = mKeyValue;
-				mKeyValue = nullptr;
-				return p;
-			}
-			else
-			{
-				// Find the given key by name;
-				auto it = obj.mObject->FindMember(key);
-				if (it == obj.mObject->MemberEnd()) return nullptr;
-				return &it->value;
-			}
-		}
-		else if (obj.mObject->IsArray() && (unsigned)obj.mIndex < obj.mObject->Size())
-		{
-			return &(*obj.mObject)[obj.mIndex++];
-		}
-		return nullptr;
-	}
-};
-
 
 //==========================================================================
 //
@@ -409,20 +192,7 @@ void FSerializer::Close()
 	}
 	if (r != nullptr)
 	{
-		// we must explicitly delete all thinkers in the array which did not get linked into the thinker lists.
-		// Otherwise these objects may survive a level deletion and point to incorrect data.
-		for (auto obj : r->mDObjects)
-		{
-			auto think = dyn_cast<DThinker>(obj);
-			if (think != nullptr)
-			{
-				if (think->NextThinker == nullptr || think->PrevThinker == nullptr)
-				{
-					think->Destroy();
-				}
-			}
-		}
-
+		CloseReaderCustom();
 		delete r;
 		r = nullptr;
 	}
@@ -614,74 +384,6 @@ void FSerializer::EndArray()
 
 //==========================================================================
 //
-// Special handler for args (because ACS specials' arg0 needs special treatment.)
-//
-//==========================================================================
-
-FSerializer &FSerializer::Args(const char *key, int *args, int *defargs, int special)
-{
-	if (isWriting())
-	{
-		if (w->inObject() && defargs != nullptr && !memcmp(args, defargs, 5 * sizeof(int)))
-		{
-			return *this;
-		}
-
-		WriteKey(key);
-		w->StartArray();
-		for (int i = 0; i < 5; i++)
-		{
-			if (i == 0 && args[i] < 0 && P_IsACSSpecial(special))
-			{
-				w->String(FName(ENamedName(-args[i])).GetChars());
-			}
-			else
-			{
-				w->Int(args[i]);
-			}
-		}
-		w->EndArray();
-	}
-	else
-	{
-		auto val = r->FindKey(key);
-		if (val != nullptr)
-		{
-			if (val->IsArray())
-			{
-				unsigned int cnt = MIN<unsigned>(val->Size(), 5);
-				for (unsigned int i = 0; i < cnt; i++)
-				{
-					const rapidjson::Value &aval = (*val)[i];
-					if (aval.IsInt())
-					{
-						args[i] = aval.GetInt();
-					}
-					else if (i == 0 && aval.IsString())
-					{
-						args[i] = -FName(UnicodeToString(aval.GetString())).GetIndex();
-					}
-					else
-					{
-						assert(false && "Integer expected");
-						Printf(TEXTCOLOR_RED "Integer expected for '%s[%d]'\n", key, i);
-						mErrors++;
-					}
-				}
-			}
-			else
-			{
-				assert(false && "array expected");
-				Printf(TEXTCOLOR_RED "array expected for '%s'\n", key);
-				mErrors++;
-			}
-		}
-	}
-	return *this;
-}
-
-//==========================================================================
-//
 // Special handler for script numbers
 //
 //==========================================================================
@@ -726,28 +428,7 @@ FSerializer &FSerializer::ScriptNum(const char *key, int &num)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-FSerializer &FSerializer::Terrain(const char *key, int &terrain, int *def)
-{
-	if (isWriting() && def != nullptr && terrain == *def)
-	{
-		return *this;
-	}
-	FName terr = P_GetTerrainName(terrain);
-	Serialize(*this, key, terr, nullptr);
-	if (isReading())
-	{
-		terrain = P_FindTerrain(terr);
-	}
-	return *this;
-}
-
-//==========================================================================
-//
-//
+// this is merely a placeholder to satisfy the VM's spriteid type.
 //
 //==========================================================================
 
@@ -757,25 +438,14 @@ FSerializer &FSerializer::Sprite(const char *key, int32_t &spritenum, int32_t *d
 	{
 		if (w->inObject() && def != nullptr && *def == spritenum) return *this;
 		WriteKey(key);
-		w->String(sprites[spritenum].name, 4);
+		w->Int(spritenum);
 	}
 	else
 	{
 		auto val = r->FindKey(key);
-		if (val != nullptr)
+		if (val != nullptr && val->IsInt())
 		{
-			if (val->IsString())
-			{
-				uint32_t name = *reinterpret_cast<const uint32_t*>(UnicodeToString(val->GetString()));
-				for (auto hint = NumStdSprites; hint-- != 0; )
-				{
-					if (sprites[hint].dwName == name)
-					{
-						spritenum = hint;
-						break;
-					}
-				}
-			}
+			spritenum = val->GetInt();
 		}
 	}
 	return *this;
@@ -1384,72 +1054,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, float &value, float *d
 //
 //==========================================================================
 
-template<class T>
-FSerializer &SerializePointer(FSerializer &arc, const char *key, T *&value, T **defval, T *base)
-{
-	assert(base != nullptr);
-	if (arc.isReading() || !arc.w->inObject() || defval == nullptr || value != *defval)
-	{
-		int64_t vv = value == nullptr ? -1 : value - base;
-		Serialize(arc, key, vv, nullptr);
-		value = vv < 0 ? nullptr : base + vv;
-	}
-	return arc;
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FPolyObj *&value, FPolyObj **defval)
-{
-	if (arc.Level == nullptr) I_Error("Trying to serialize polyobject without a valid level");
-	return SerializePointer(arc, key, value, defval, arc.Level->Polyobjects.Data());
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, const FPolyObj *&value, const FPolyObj **defval)
-{
-	if (arc.Level == nullptr) I_Error("Trying to serialize polyobject without a valid level");
-	return SerializePointer<const FPolyObj>(arc, key, value, defval, arc.Level->Polyobjects.Data());
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, side_t *&value, side_t **defval)
-{
-	if (arc.Level == nullptr) I_Error("Trying to serialize SIDEDEF without a valid level");
-	return SerializePointer(arc, key, value, defval, &arc.Level->sides[0]);
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, sector_t *&value, sector_t **defval)
-{
-	if (arc.Level == nullptr) I_Error("Trying to serialize sector without a valid level");
-	return SerializePointer(arc, key, value, defval, &arc.Level->sectors[0]);
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, const sector_t *&value, const sector_t **defval)
-{
-	if (arc.Level == nullptr) I_Error("Trying to serialize sector without a valid level");
-	return SerializePointer<const sector_t>(arc, key, value, defval, &arc.Level->sectors[0]);
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, player_t *&value, player_t **defval)
-{
-	return SerializePointer(arc, key, value, defval, players);
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, line_t *&value, line_t **defval)
-{
-	if (arc.Level == nullptr) I_Error("Trying to serialize linedef without a valid level");
-	return SerializePointer(arc, key, value, defval, &arc.Level->lines[0]);
-}
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, vertex_t *&value, vertex_t **defval)
-{
-	if (arc.Level == nullptr) I_Error("Trying to serialize verte without a valid level");
-	return SerializePointer(arc, key, value, defval, &arc.Level->vertexes[0]);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTextureID *defval)
 {
 	if (arc.isWriting())
@@ -1669,7 +1273,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FName &value, FName *d
 
 FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundID *def)
 {
-	if (arc.isWriting())
+	if (!arc.soundNamesAreUnique)
+	{
+		//If sound name here is not reliable, we need to save by index instead.
+		int id = sid;
+		Serialize(arc, key, id, nullptr);
+		if (arc.isReading()) sid = FSoundID(id);
+	}
+	else if (arc.isWriting())
 	{
 		if (!arc.w->inObject() || def == nullptr || sid != *def)
 		{
@@ -1697,55 +1308,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FSoundID &sid, FSoundI
 			{
 				Printf(TEXTCOLOR_RED "string type expected for '%s'\n", key);
 				sid = 0;
-				arc.mErrors++;
-			}
-		}
-	}
-	return arc;
-
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClassActor *&clst, PClassActor **def)
-{
-	if (arc.isWriting())
-	{
-		if (!arc.w->inObject() || def == nullptr || clst != *def)
-		{
-			arc.WriteKey(key);
-			if (clst == nullptr)
-			{
-				arc.w->Null();
-			}
-			else
-			{
-				arc.w->String(clst->TypeName.GetChars());
-			}
-		}
-	}
-	else
-	{
-		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
-		{
-			assert(val->IsString() || val->IsNull());
-			if (val->IsString())
-			{
-				clst = PClass::FindActor(UnicodeToString(val->GetString()));
-			}
-			else if (val->IsNull())
-			{
-				clst = nullptr;
-			}
-			else
-			{
-				Printf(TEXTCOLOR_RED "string type expected for '%s'\n", key);
-				clst = nullptr;
 				arc.mErrors++;
 			}
 		}
@@ -1808,199 +1370,6 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, PClass *&cl
 //
 //==========================================================================
 
-FSerializer &Serialize(FSerializer &arc, const char *key, FState *&state, FState **def, bool *retcode)
-{
-	if (retcode) *retcode = false;
-	if (arc.isWriting())
-	{
-		if (!arc.w->inObject() || def == nullptr || state != *def)
-		{
-			if (retcode) *retcode = true;
-			arc.WriteKey(key);
-			if (state == nullptr)
-			{
-				arc.w->Null();
-			}
-			else
-			{
-				PClassActor *info = FState::StaticFindStateOwner(state);
-
-				if (info != NULL)
-				{
-					arc.w->StartArray();
-					arc.w->String(info->TypeName.GetChars());
-					arc.w->Uint((uint32_t)(state - info->GetStates()));
-					arc.w->EndArray();
-				}
-				else
-				{
-					arc.w->Null();
-				}
-			}
-		}
-	}
-	else
-	{
-		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
-		{
-			if (val->IsNull())
-			{
-				if (retcode) *retcode = true;
-				state = nullptr;
-			}
-			else if (val->IsArray())
-			{
-				if (retcode) *retcode = true;
-				const rapidjson::Value &cls = (*val)[0];
-				const rapidjson::Value &ndx = (*val)[1];
-
-				state = nullptr;
-				assert(cls.IsString() && ndx.IsUint());
-				if (cls.IsString() && ndx.IsUint())
-				{
-					PClassActor *clas = PClass::FindActor(UnicodeToString(cls.GetString()));
-					if (clas && ndx.GetUint() < (unsigned)clas->GetStateCount())
-					{
-						state = clas->GetStates() + ndx.GetUint();
-					}
-					else
-					{
-						// this can actually happen by changing the DECORATE so treat it as a warning, not an error.
-						state = nullptr;
-						Printf(TEXTCOLOR_ORANGE "Invalid state '%s+%d' for '%s'\n", cls.GetString(), ndx.GetInt(), key);
-					}
-				}
-				else
-				{
-					assert(false && "not a state");
-					Printf(TEXTCOLOR_RED "data does not represent a state for '%s'\n", key);
-					arc.mErrors++;
-				}
-			}
-			else if (!retcode)
-			{
-				assert(false && "not an array");
-				Printf(TEXTCOLOR_RED "array type expected for '%s'\n", key);
-				arc.mErrors++;
-			}
-		}
-	}
-	return arc;
-
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FStrifeDialogueNode *&node, FStrifeDialogueNode **def)
-{
-	if (arc.isWriting())
-	{
-		if (!arc.w->inObject() || def == nullptr || node != *def)
-		{
-			arc.WriteKey(key);
-			if (node == nullptr)
-			{
-				arc.w->Null();
-			}
-			else
-			{
-				arc.w->Uint(node->ThisNodeNum);
-			}
-		}
-	}
-	else
-	{
-		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
-		{
-			assert(val->IsUint() || val->IsNull());
-			if (val->IsNull())
-			{
-				node = nullptr;
-			}
-			else if (val->IsUint())
-			{
-				if (val->GetUint() >= arc.Level->StrifeDialogues.Size())
-				{
-					node = nullptr;
-				}
-				else
-				{
-					node = arc.Level->StrifeDialogues[val->GetUint()];
-				}
-			}
-			else
-			{
-				Printf(TEXTCOLOR_RED "integer expected for '%s'\n", key);
-				arc.mErrors++;
-				node = nullptr;
-			}
-		}
-	}
-	return arc;
-
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FString *&pstr, FString **def)
-{
-	if (arc.isWriting())
-	{
-		if (!arc.w->inObject() || def == nullptr || pstr != *def)
-		{
-			arc.WriteKey(key);
-			if (pstr == nullptr)
-			{
-				arc.w->Null();
-			}
-			else
-			{
-				arc.w->String(pstr->GetChars());
-			}
-		}
-	}
-	else
-	{
-		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
-		{
-			assert(val->IsNull() || val->IsString());
-			if (val->IsNull())
-			{
-				pstr = nullptr;
-			}
-			else if (val->IsString())
-			{
-				pstr = AActor::mStringPropertyData.Alloc(UnicodeToString(val->GetString()));
-			}
-			else
-			{
-				Printf(TEXTCOLOR_RED "string expected for '%s'\n", key);
-				pstr = nullptr;
-				arc.mErrors++;
-			}
-		}
-	}
-	return arc;
-
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString *def)
 {
 	if (arc.isWriting())
@@ -2035,113 +1404,6 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FString &pstr, FString
 	}
 	return arc;
 
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, char *&pstr, char **def)
-{
-	if (arc.isWriting())
-	{
-		if (!arc.w->inObject() || def == nullptr || strcmp(pstr, *def))
-		{
-			arc.WriteKey(key);
-			if (pstr == nullptr)
-			{
-				arc.w->Null();
-			}
-			else
-			{
-				arc.w->String(pstr);
-			}
-		}
-	}
-	else
-	{
-		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
-		{
-			assert(val->IsNull() || val->IsString());
-			if (val->IsNull())
-			{
-				pstr = nullptr;
-			}
-			else if (val->IsString())
-			{
-				pstr = copystring(UnicodeToString(val->GetString()));
-			}
-			else
-			{
-				Printf(TEXTCOLOR_RED "string expected for '%s'\n", key);
-				pstr = nullptr;
-				arc.mErrors++;
-			}
-		}
-	}
-	return arc;
-}
-
-//==========================================================================
-//
-// This is a bit of a cheat because it never actually writes out the pointer.
-// The rules for levels are that they must be self-contained.
-// No level and no object that is part of a level may reference a different one.
-//
-// When writing, this merely checks if the rules are obeyed and if not errors out.
-// When reading, it assumes that the object was properly written and restores
-// the reference from the owning level
-//
-// The only exception are null pointers which are allowed
-//
-//==========================================================================
-
-template<> FSerializer &Serialize(FSerializer &arc, const char *key, FLevelLocals *&lev, FLevelLocals **def)
-{
-	if (arc.isWriting())
-	{
-		if (!arc.w->inObject() || lev == nullptr)
-		{
-			arc.WriteKey(key);
-			if (lev == nullptr)
-			{
-				arc.w->Null();
-			}
-			else
-			{
-				// This MUST be the currently serialized level, anything else will error out here as a sanity check.
-				if (arc.Level == nullptr || lev != arc.Level)
-				{
-					I_Error("Attempt to serialize invalid level reference");
-				}
-				if (!arc.w->inObject())
-				{
-					arc.w->Bool(true);	// In the unlikely case this is used in an array, write a filler.
-				}
-			}
-		}
-	}
-	else
-	{
-		auto val = arc.r->FindKey(key);
-		if (val != nullptr)
-		{
-			assert(val->IsNull() || val->IsBool());
-			if (val->IsNull())
-			{
-				lev = nullptr;
-			}
-			else 
-			{
-				lev = arc.Level;
-			}
-		}
-		else lev = arc.Level;
-	}
-	return arc;
 }
 
 //==========================================================================
@@ -2309,3 +1571,5 @@ FSerializer& Serialize(FSerializer& arc, const char* key, FRenderStyle& style, F
 {
 	return arc.Array(key, &style.BlendOp, def ? &def->BlendOp : nullptr, 4);
 }
+
+SaveRecords saveRecords;

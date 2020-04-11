@@ -38,7 +38,7 @@
 #include "c_cvars.h"
 #include "v_video.h"
 #include "cmdlib.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "serialize_obj.h"
 #include "doomstat.h"
 #include "vm.h"

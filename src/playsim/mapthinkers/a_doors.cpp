@@ -34,7 +34,7 @@
 #include "r_state.h"
 #include "gi.h"
 #include "a_keys.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "d_player.h"
 #include "p_spec.h"
 #include "g_levellocals.h"

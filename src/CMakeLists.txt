@@ -883,6 +883,7 @@ set (PCH_SOURCES
 	sound/s_sndseq.cpp
 	sound/s_doomsound.cpp
 	serializer.cpp
+	serializer_doom.cpp
 	scriptutil.cpp
 	st_stuff.cpp
 	rendering/v_framebuffer.cpp

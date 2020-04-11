@@ -45,7 +45,7 @@
 #include "cmdlib.h"
 #include "teaminfo.h"
 #include "d_net.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "d_player.h"
 #include "filesystem.h"
 #include "vm.h"

@@ -40,7 +40,7 @@
 #include "gi.h"
 #include "p_setup.h"
 #include "c_bind.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "r_sky.h"
 #include "sbar.h"
 #include "d_player.h"

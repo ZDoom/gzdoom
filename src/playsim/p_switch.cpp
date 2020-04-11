@@ -41,7 +41,7 @@
 #include "m_random.h"
 #include "s_sound.h"
 #include "doomstat.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "textures.h"

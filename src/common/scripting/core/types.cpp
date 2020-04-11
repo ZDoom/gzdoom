@@ -38,6 +38,9 @@
 #include "types.h"
 #include "printf.h"
 #include "textureid.h"
+#include "version.h"
+#include "info.h"
+#include "serializer_doom.h"
 
 
 FTypeTable TypeTable;
@@ -1102,9 +1105,7 @@ PSpriteID::PSpriteID()
 void PSpriteID::WriteValue(FSerializer &ar, const char *key, const void *addr) const
 {
 	int32_t val = *(int*)addr;
-#ifdef GZDOOM
 	ar.Sprite(key, val, nullptr);
-#endif
 }
 
 //==========================================================================
@@ -1116,9 +1117,7 @@ void PSpriteID::WriteValue(FSerializer &ar, const char *key, const void *addr) c
 bool PSpriteID::ReadValue(FSerializer &ar, const char *key, void *addr) const
 {
 	int32_t val = 0;
-#ifdef GZDOOM
 	ar.Sprite(key, val, nullptr);
-#endif
 	*(int*)addr = val;
 	return true;
 }

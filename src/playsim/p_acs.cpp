@@ -62,7 +62,7 @@
 #include "p_setup.h"
 #include "po_man.h"
 #include "actorptrselect.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "decallib.h"
 #include "p_terrain.h"
 #include "version.h"
@@ -1873,7 +1873,6 @@ void DPlaneWatcher::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
 	arc("special", Special)
-		.Args("args", Args, nullptr, Special)
 		("sector", Sector)
 		("ceiling", bCeiling)
 		("watchd", WatchD)
@@ -1882,6 +1881,7 @@ void DPlaneWatcher::Serialize(FSerializer &arc)
 		("line", Line)
 		("lineside", LineSide);
 
+	SerializeArgs(arc, "args", Args, nullptr, Special);
 }
 
 void DPlaneWatcher::Tick ()

@@ -38,7 +38,8 @@
 #include "r_data/r_interpolate.h"
 #include "p_local.h"
 #include "po_man.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 //==========================================================================

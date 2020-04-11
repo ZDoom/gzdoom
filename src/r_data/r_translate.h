@@ -3,7 +3,7 @@
 
 #include "doomtype.h"
 #include "tarray.h"
-#include "palutil.h"
+#include "palettecontainer.h"
 
 class FSerializer;
 

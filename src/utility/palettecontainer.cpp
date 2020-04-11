@@ -39,6 +39,7 @@
 #include "printf.h"
 #include "colormatcher.h"
 #include "templates.h"
+#include "palettecontainer.h"
 
 
 //----------------------------------------------------------------------------

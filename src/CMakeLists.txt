@@ -1125,7 +1125,7 @@ set (PCH_SOURCES
 	common/utility/i_module.cpp
 	common/utility/m_alloc.cpp
 	common/utility/utf8.cpp
-	utility/palette.cpp
+	common/utility/palette.cpp
 	utility/palettecontainer.cpp
 	common/utility/files.cpp
 	common/utility/files_decompress.cpp
@@ -1173,7 +1173,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${SYSTEM_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
-	utility/x86.cpp
+	common/utility/x86.cpp
 	common/thirdparty/strnatcmp.c
 	common/utility/zstring.cpp
 	common/utility/findfile.cpp

@@ -44,7 +44,6 @@
 #include "printf.h"
 #include "palutil.h"
 
-//#include "version.h"
 
 struct FLatchedValue
 {

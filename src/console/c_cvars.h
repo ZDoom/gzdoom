@@ -36,7 +36,7 @@
 #include "zstring.h"
 #include "tarray.h"
 
-class FSerializer;
+class FSerializer; // this needs to go away.
 /*
 ==========================================================
 
@@ -227,7 +227,6 @@ void C_WriteCVars (uint8_t **demo_p, uint32_t filter, bool compact=false);
 // Read all cvars from *demo_p and set them appropriately.
 void C_ReadCVars (uint8_t **demo_p);
 
-void C_SerializeCVars(FSerializer& arc, const char* label, uint32_t filter);
 void C_InstallHandlers(ConsoleCallbacks* cb);
 
 // Backup demo cvars. Called before a demo starts playing to save all

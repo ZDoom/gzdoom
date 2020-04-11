@@ -36,28 +36,11 @@
 
 #include <stdint.h>
 #include "tarray.h"
+#include "c_commandline.h"
 #include "zstring.h"
 
 class FConfigFile;
 
-// Class that can parse command lines
-class FCommandLine
-{
-public:
-	FCommandLine (const char *commandline, bool no_escapes = false);
-	~FCommandLine ();
-	int argc ();
-	char *operator[] (int i);
-	const char *args () { return cmd; }
-	void Shift();
-
-private:
-	const char *cmd;
-	int _argc;
-	char **_argv;
-	long argsize;
-	bool noescapes;
-};
 
 // Contains the contents of an exec'ed file
 struct FExecList

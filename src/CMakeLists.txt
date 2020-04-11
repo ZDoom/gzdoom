@@ -828,6 +828,7 @@ set (PCH_SOURCES
 	playsim/bots/b_move.cpp
 	playsim/bots/b_think.cpp
 	bbannouncer.cpp
+	console/c_commandline.cpp
 	console/c_bind.cpp
 	console/c_cmds.cpp
 	console/c_console.cpp

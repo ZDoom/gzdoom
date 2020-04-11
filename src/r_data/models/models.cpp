@@ -357,7 +357,7 @@ FTextureID LoadSkin(const char * path, const char * fn)
 	buffer.Format("%s%s", path, fn);
 
 	int texlump = FindGFXFile(buffer);
-	const char * const texname = texlump < 0 ? fn : fileSystem.GetLumpFullName(texlump);
+	const char * const texname = texlump < 0 ? fn : fileSystem.GetFileFullName(texlump);
 	return TexMan.CheckForTexture(texname, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 }
 
@@ -408,7 +408,7 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	}
 
 	int len = fileSystem.FileLength(lump);
-	FileData lumpd = fileSystem.ReadLump(lump);
+	FileData lumpd = fileSystem.ReadFile(lump);
 	char * buffer = (char*)lumpd.GetMem();
 
 	if ( (size_t)fullname.LastIndexOf("_d.3d") == fullname.Len()-5 )

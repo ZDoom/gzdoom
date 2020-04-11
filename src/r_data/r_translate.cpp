@@ -511,7 +511,7 @@ static void R_CreatePlayerTranslation (float h, float s, float v, const FPlayerC
 		}
 		else
 		{
-			FileData translump = fileSystem.ReadLump(colorset->Lump);
+			FileData translump = fileSystem.ReadFile(colorset->Lump);
 			const uint8_t *trans = (const uint8_t *)translump.GetMem();
 			for (i = start; i <= end; ++i)
 			{

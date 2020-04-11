@@ -355,7 +355,7 @@ static void DoParse(int lumpnum)
 	void *parser;
 	ZCCToken value;
 	auto baselump = lumpnum;
-	auto fileno = fileSystem.GetLumpFile(lumpnum);
+	auto fileno = fileSystem.GetFileContainer(lumpnum);
 
 	parser = ZCCParseAlloc(malloc);
 	ZCCParseState state;
@@ -422,11 +422,11 @@ static void DoParse(int lumpnum)
 		}
 		else
 		{
-			auto fileno2 = fileSystem.GetLumpFile(lumpnum);
+			auto fileno2 = fileSystem.GetFileContainer(lumpnum);
 			if (fileno == 0 && fileno2 != 0)
 			{
 				I_FatalError("File %s is overriding core lump %s.",
-					fileSystem.GetResourceFileFullName(fileSystem.GetLumpFile(lumpnum)), Includes[i].GetChars());
+					fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(lumpnum)), Includes[i].GetChars());
 			}
 
 			ParseSingleFile(nullptr, nullptr, lumpnum, parser, state);
@@ -445,7 +445,7 @@ static void DoParse(int lumpnum)
 	// If the parser fails, there is no point starting the compiler, because it'd only flood the output with endless errors.
 	if (FScriptPosition::ErrorCounter > 0)
 	{
-		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, fileSystem.GetLumpFullPath(baselump).GetChars());
+		I_Error("%d errors while parsing %s", FScriptPosition::ErrorCounter, fileSystem.GetFileFullPath(baselump).GetChars());
 	}
 
 #ifndef NDEBUG
@@ -459,7 +459,7 @@ static void DoParse(int lumpnum)
 	if (Args->CheckParm("-dumpast"))
 	{
 		FString ast = ZCC_PrintAST(state.TopNode);
-		FString filename = fileSystem.GetLumpFullPath(baselump);
+		FString filename = fileSystem.GetFileFullPath(baselump);
 		filename.ReplaceChars(":\\/?|", '.');
 		filename << ".ast";
 		FileWriter *ff = FileWriter::Open(filename);
@@ -471,19 +471,19 @@ static void DoParse(int lumpnum)
 	}
 
 	PSymbolTable symtable;
-	auto newns = fileSystem.GetLumpFile(baselump) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(fileSystem.GetLumpFile(baselump));
+	auto newns = fileSystem.GetFileContainer(baselump) == 0 ? Namespaces.GlobalNamespace : Namespaces.NewNamespace(fileSystem.GetFileContainer(baselump));
 	ZCCCompiler cc(state, NULL, symtable, newns, baselump, state.ParseVersion);
 	cc.Compile();
 
 	if (FScriptPosition::ErrorCounter > 0)
 	{
 		// Abort if the compiler produced any errors. Also do not compile further lumps, because they very likely miss some stuff.
-		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, fileSystem.GetLumpFullPath(baselump).GetChars());
+		I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(baselump).GetChars());
 	}
 	else if (FScriptPosition::WarnCounter > 0)
 	{
 		// If we got warnings, but no errors, print the information but continue.
-		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, fileSystem.GetLumpFullPath(baselump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(baselump).GetChars());
 	}
 
 }

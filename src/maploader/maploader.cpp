@@ -2034,7 +2034,7 @@ void MapLoader::LoopSidedefs (bool firstloop)
 
 int MapLoader::DetermineTranslucency (int lumpnum)
 {
-	auto tranmap = fileSystem.OpenLumpReader (lumpnum);
+	auto tranmap = fileSystem.OpenFileReader (lumpnum);
 	uint8_t index;
 	PalEntry newcolor;
 	PalEntry newcolor2;
@@ -2054,7 +2054,7 @@ int MapLoader::DetermineTranslucency (int lumpnum)
 		{
 			char lumpname[9];
 			lumpname[8] = 0;
-			fileSystem.GetLumpName (lumpname, lumpnum);
+			fileSystem.GetFileShortName (lumpname, lumpnum);
 			Printf ("%s appears to be additive translucency %d (%d%%)\n", lumpname, newcolor.r,
 				newcolor.r*100/255);
 		}
@@ -2065,7 +2065,7 @@ int MapLoader::DetermineTranslucency (int lumpnum)
 	{
 		char lumpname[9];
 		lumpname[8] = 0;
-		fileSystem.GetLumpName (lumpname, lumpnum);
+		fileSystem.GetFileShortName (lumpname, lumpnum);
 		Printf ("%s appears to be translucency %d (%d%%)\n", lumpname, newcolor.r,
 			newcolor.r*100/255);
 	}

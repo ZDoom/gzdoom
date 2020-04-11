@@ -649,7 +649,7 @@ static void ParseListMenu(FScanner &sc)
 	desc->mWLeft = 0;
 	desc->mWRight = 0;
 	desc->mCenter = false;
-	desc->mFromEngine = fileSystem.GetLumpFile(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
+	desc->mFromEngine = fileSystem.GetFileContainer(sc.LumpNum) == 0;	// flags menu if the definition is from the IWAD.
 
 	ParseListMenuBody(sc, desc);
 	ReplaceMenu(sc, desc);

@@ -106,7 +106,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 
 TArray<uint8_t> FFlatTexture::CreatePalettedPixels(int conversion)
 {
-	auto lump = fileSystem.OpenLumpReader (SourceLump);
+	auto lump = fileSystem.OpenFileReader (SourceLump);
 	TArray<uint8_t> Pixels(Width*Height, true);
 	auto numread = lump.Read (Pixels.Data(), Width*Height);
 	if (numread < Width*Height)

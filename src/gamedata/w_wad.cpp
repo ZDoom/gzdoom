@@ -40,17 +40,15 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "doomtype.h"
 #include "m_argv.h"
 #include "cmdlib.h"
-#include "c_dispatch.h"
 #include "w_wad.h"
 #include "m_crc32.h"
-#include "v_text.h"
-#include "gi.h"
+#include "printf.h"
 #include "resourcefiles/resourcefile.h"
 #include "md5.h"
-#include "doomstat.h"
+
+extern	FILE* hashfile;
 
 // MACROS ------------------------------------------------------------------
 
@@ -63,14 +61,14 @@ struct FileSystem::LumpRecord
 	FTexture* linkedTexture;
 	LumpShortName shortName;
 	FString		longName;
-	int			wadnum;
+	int			rfnum;
 	int			Namespace;
 	int			resourceId;
 
 	void SetFromLump(int filenum, FResourceLump* lmp)
 	{
 		lump = lmp;
-		wadnum = filenum;
+		rfnum = filenum;
 		linkedTexture = nullptr;
 
 		if (lump->Flags & LUMPF_SHORTNAME)
@@ -80,27 +78,6 @@ struct FileSystem::LumpRecord
 			longName = "";
 			Namespace = lump->GetNamespace();
 			resourceId = 0;
-
-			if (gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE && filenum == fileSystem.GetIwadNum())
-			{
-				if (shortName.String[0] == 'V' &&
-					shortName.String[1] == 'O' &&
-					shortName.String[2] == 'C')
-				{
-					int j;
-
-					for (j = 3; j < 8; ++j)
-					{
-						if (shortName.String[j] != 0 && !isdigit(shortName.String[j]))
-							break;
-					}
-					if (j == 8)
-					{
-						Namespace = ns_strifevoices;
-					}
-				}
-			}
-
 		}
 		else if ((lump->Flags & LUMPF_EMBEDDED) || !lump->getName() || !*lump->getName())
 		{
@@ -189,7 +166,7 @@ void FileSystem::DeleteAll ()
 	// explicitly delete all manually added lumps.
 	for (auto &frec : FileInfo)
 	{
-		if (frec.wadnum == -1) delete frec.lump;
+		if (frec.rfnum == -1) delete frec.lump;
 	}
 	FileInfo.Clear();
 	for (int i = Files.Size() - 1; i >= 0; --i)
@@ -204,7 +181,7 @@ void FileSystem::DeleteAll ()
 // InitMultipleFiles
 //
 // Pass a null terminated list of files to use. All files are optional,
-// but at least one file must be found. Lump names can appear multiple
+// but at least one file must be found. File names can appear multiple
 // times. The name searcher looks backwards, so a later file can
 // override an earlier one.
 //
@@ -519,7 +496,7 @@ int FileSystem::CheckNumForName (const char *name, int space)
 	return i != NULL_INDEX ? i : -1;
 }
 
-int FileSystem::CheckNumForName (const char *name, int space, int wadnum, bool exact)
+int FileSystem::CheckNumForName (const char *name, int space, int rfnum, bool exact)
 {
 	union
 	{
@@ -528,7 +505,7 @@ int FileSystem::CheckNumForName (const char *name, int space, int wadnum, bool e
 	};
 	uint32_t i;
 
-	if (wadnum < 0)
+	if (rfnum < 0)
 	{
 		return CheckNumForName (name, space);
 	}
@@ -541,7 +518,7 @@ int FileSystem::CheckNumForName (const char *name, int space, int wadnum, bool e
 
 	while (i != NULL_INDEX &&
 		(FileInfo[i].shortName.qword != qname || FileInfo[i].Namespace != space ||
-		 (exact? (FileInfo[i].wadnum != wadnum) : (FileInfo[i].wadnum > wadnum)) ))
+		 (exact? (FileInfo[i].rfnum != rfnum) : (FileInfo[i].rfnum > rfnum)) ))
 	{
 		i = NextLumpIndex[i];
 	}
@@ -613,11 +590,11 @@ int FileSystem::CheckNumForFullName (const char *name, bool trynormal, int names
 	return -1;
 }
 
-int FileSystem::CheckNumForFullName (const char *name, int wadnum)
+int FileSystem::CheckNumForFullName (const char *name, int rfnum)
 {
 	uint32_t i;
 
-	if (wadnum < 0)
+	if (rfnum < 0)
 	{
 		return CheckNumForFullName (name);
 	}
@@ -625,7 +602,7 @@ int FileSystem::CheckNumForFullName (const char *name, int wadnum)
 	i = FirstLumpIndex_FullName[MakeKey (name) % NumEntries];
 
 	while (i != NULL_INDEX && 
-		(stricmp(name, FileInfo[i].longName) || FileInfo[i].wadnum != wadnum))
+		(stricmp(name, FileInfo[i].longName) || FileInfo[i].rfnum != rfnum))
 	{
 		i = NextLumpIndex_FullName[i];
 	}
@@ -707,15 +684,13 @@ int FileSystem::FindResource (int resid, const char *type, int filenum) const no
 	{
 		return -1;
 	}
-	FName lname(type, true);
-	if (lname == NAME_None) return -1;
 
 	uint32_t* fli = FirstLumpIndex_ResId;
 	uint32_t* nli = NextLumpIndex_ResId;
 
 	for (i = fli[resid % NumEntries]; i != NULL_INDEX; i = nli[i])
 	{
-		if (filenum > 0 && FileInfo[i].wadnum != filenum) continue;
+		if (filenum > 0 && FileInfo[i].rfnum != filenum) continue;
 		if (FileInfo[i].resourceId != resid) continue;
 		auto extp = strrchr(FileInfo[i].longName, '.');
 		if (!extp) continue;
@@ -940,20 +915,20 @@ static FResourceLump placeholderLump;
 void FileSystem::MoveLumpsInFolder(const char *path)
 {
 	auto len = strlen(path);
-	auto wadnum = FileInfo.Last().wadnum;
+	auto rfnum = FileInfo.Last().rfnum;
 	
 	unsigned i;
 	for (i = 0; i < FileInfo.Size(); i++)
 	{
 		auto& li = FileInfo[i];
-		if (li.wadnum >= GetIwadNum()) break;
+		if (li.rfnum >= GetIwadNum()) break;
 		if (li.longName.Left(len).CompareNoCase(path) == 0)
 		{
 			FileInfo.Push(li);
 			li.lump = &placeholderLump;			// Make the old entry point to something empty. We cannot delete the lump record here because it'd require adjustment of all indices in the list.
 			auto &ln = FileInfo.Last();
 			ln.lump->LumpNameSetup(ln.longName.Mid(len));
-			ln.SetFromLump(wadnum, ln.lump);
+			ln.SetFromLump(rfnum, ln.lump);
 		}
 	}
 }
@@ -1039,7 +1014,7 @@ int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, in
 //
 //==========================================================================
 
-bool FileSystem::CheckLumpName (int lump, const char *name)
+bool FileSystem::CheckFileName (int lump, const char *name)
 {
 	if ((size_t)lump >= NumEntries)
 		return false;
@@ -1049,11 +1024,11 @@ bool FileSystem::CheckLumpName (int lump, const char *name)
 
 //==========================================================================
 //
-// W_GetLumpName
+// GetLumpName
 //
 //==========================================================================
 
-void FileSystem::GetLumpName (char *to, int lump) const
+void FileSystem::GetFileShortName (char *to, int lump) const
 {
 	if ((size_t)lump >= NumEntries)
 		*to = 0;
@@ -1061,7 +1036,7 @@ void FileSystem::GetLumpName (char *to, int lump) const
 		uppercopy (to, FileInfo[lump].shortName.String);
 }
 
-const char* FileSystem::GetLumpName(int lump) const
+const char* FileSystem::GetFileShortName(int lump) const
 {
 	if ((size_t)lump >= NumEntries)
 		return nullptr;
@@ -1069,7 +1044,7 @@ const char* FileSystem::GetLumpName(int lump) const
 		return FileInfo[lump].shortName.String;
 }
 
-void FileSystem::GetLumpName(FString &to, int lump) const
+void FileSystem::GetFileShortName(FString &to, int lump) const
 {
 	if ((size_t)lump >= NumEntries)
 		to = FString();
@@ -1081,13 +1056,13 @@ void FileSystem::GetLumpName(FString &to, int lump) const
 
 //==========================================================================
 //
-// FileSystem :: GetLumpFullName
+// FileSystem :: GetFileFullName
 //
 // Returns the lump's full name if it has one or its short name if not.
 //
 //==========================================================================
 
-const char *FileSystem::GetLumpFullName (int lump, bool returnshort) const
+const char *FileSystem::GetFileFullName (int lump, bool returnshort) const
 {
 	if ((size_t)lump >= NumEntries)
 		return NULL;
@@ -1100,30 +1075,30 @@ const char *FileSystem::GetLumpFullName (int lump, bool returnshort) const
 
 //==========================================================================
 //
-// FileSystem :: GetLumpFullPath
+// FileSystem :: GetFileFullPath
 //
 // Returns the name of the lump's wad prefixed to the lump's full name.
 //
 //==========================================================================
 
-FString FileSystem::GetLumpFullPath(int lump) const
+FString FileSystem::GetFileFullPath(int lump) const
 {
 	FString foo;
 
 	if ((size_t) lump <  NumEntries)
 	{
-		foo << GetResourceFileName(FileInfo[lump].wadnum) << ':' << GetLumpFullName(lump);
+		foo << GetResourceFileName(FileInfo[lump].rfnum) << ':' << GetFileFullName(lump);
 	}
 	return foo;
 }
 
 //==========================================================================
 //
-// GetLumpNamespace
+// GetFileNamespace
 //
 //==========================================================================
 
-int FileSystem::GetLumpNamespace (int lump) const
+int FileSystem::GetFileNamespace (int lump) const
 {
 	if ((size_t)lump >= NumEntries)
 		return ns_global;
@@ -1131,9 +1106,14 @@ int FileSystem::GetLumpNamespace (int lump) const
 		return FileInfo[lump].Namespace;
 }
 
+void FileSystem::SetFileNamespace(int lump, int ns)
+{
+	if ((size_t)lump < NumEntries) FileInfo[lump].Namespace = ns;
+}
+
 //==========================================================================
 //
-// FileSystem :: GetLumpIndexNum
+// FileSystem :: GetResourceId
 //
 // Returns the index number for this lump. This is *not* the lump's position
 // in the lump directory, but rather a special value that RFF can associate
@@ -1141,43 +1121,51 @@ int FileSystem::GetLumpNamespace (int lump) const
 //
 //==========================================================================
 
-int FileSystem::GetLumpIndexNum(int lump) const
+int FileSystem::GetResourceId(int lump) const
 {
 	if ((size_t)lump >= NumEntries)
-		return 0;
+		return -1;
 	else
 		return FileInfo[lump].resourceId;
 }
 
 //==========================================================================
 //
-// W_GetLumpFile
+// GetResourceType
+//
+// is equivalent with the extension
 //
 //==========================================================================
 
-int FileSystem::GetLumpFile (int lump) const
+const char *FileSystem::GetResourceType(int lump) const
+{
+	if ((size_t)lump >= NumEntries)
+		return nullptr;
+	else
+	{
+		auto p = strrchr(FileInfo[lump].longName.GetChars(), '.');
+		if (!p) return "";	// has no extension
+		if (strchr(p, '/')) return "";	// the '.' is part of a directory.
+		return p + 1;
+	}
+}
+
+//==========================================================================
+//
+// GetFileContainer
+//
+//==========================================================================
+
+int FileSystem::GetFileContainer (int lump) const
 {
 	if ((size_t)lump >= FileInfo.Size())
 		return -1;
-	return FileInfo[lump].wadnum;
+	return FileInfo[lump].rfnum;
 }
 
 //==========================================================================
 //
-// W_GetLumpFile
-//
-//==========================================================================
-
-FResourceLump *FileSystem::GetLumpRecord(int lump) const
-{
-	if ((size_t)lump >= FileInfo.Size())
-		return nullptr;
-	return FileInfo[lump].lump;
-}
-
-//==========================================================================
-//
-// GetLumpsInFolder
+// GetFilesInFolder
 // 
 // Gets all lumps within a single folder in the hierarchy.
 // If 'atomic' is set, it treats folders as atomic, i.e. only the
@@ -1192,7 +1180,13 @@ static int folderentrycmp(const void *a, const void *b)
 	return strcmp(A->name, B->name);
 }
 
-unsigned FileSystem::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+unsigned FileSystem::GetFilesInFolder(const char *inpath, TArray<FolderEntry> &result, bool atomic) const
 {
 	FString path = inpath;
 	FixPathSeperator(path);
@@ -1218,13 +1212,13 @@ unsigned FileSystem::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &r
 			// Find the highest resource file having content in the given folder.
 			for (auto & entry : result)
 			{
-				int thisfile = fileSystem.GetLumpFile(entry.lumpnum);
+				int thisfile = fileSystem.GetFileContainer(entry.lumpnum);
 				if (thisfile > maxfile) maxfile = thisfile;
 			}
 			// Delete everything from older files.
 			for (int i = result.Size() - 1; i >= 0; i--)
 			{
-				if (fileSystem.GetLumpFile(result[i].lumpnum) != maxfile) result.Delete(i);
+				if (fileSystem.GetFileContainer(result[i].lumpnum) != maxfile) result.Delete(i);
 			}
 		}
 		qsort(result.Data(), result.Size(), sizeof(FolderEntry), folderentrycmp);
@@ -1234,76 +1228,79 @@ unsigned FileSystem::GetLumpsInFolder(const char *inpath, TArray<FolderEntry> &r
 
 //==========================================================================
 //
-// W_ReadLump
-//
-// Loads the lump into the given buffer, which must be >= W_LumpLength().
-//
-//==========================================================================
-
-void FileSystem::ReadLump (int lump, void *dest)
-{
-	auto lumpr = OpenLumpReader (lump);
-	auto size = lumpr.GetLength ();
-	auto numread = lumpr.Read (dest, size);
-
-	if (numread != size)
-	{
-		I_Error ("W_ReadLump: only read %ld of %ld on lump %i\n",
-			numread, size, lump);	
-	}
-}
-
-//==========================================================================
-//
-// W_ReadLump
+// GetFileData
 //
 // Loads the lump into a TArray and returns it.
 //
 //==========================================================================
 
-TArray<uint8_t> FileSystem::ReadLumpIntoArray(int lump, int pad)
+TArray<uint8_t> FileSystem::GetFileData(int lump, int pad)
 {
-	auto lumpr = OpenLumpReader(lump);
+	if ((size_t)lump >= FileInfo.Size())
+		return TArray<uint8_t>();
+
+	auto lumpr = OpenFileReader(lump);
 	auto size = lumpr.GetLength();
 	TArray<uint8_t> data(size + pad, true);
 	auto numread = lumpr.Read(data.Data(), size);
 
 	if (numread != size)
 	{
-		I_Error("W_ReadLump: only read %ld of %ld on lump %i\n",
+		I_Error("GetFileData: only read %ld of %ld on lump %i\n",
 			numread, size, lump);
 	}
 	if (pad > 0) memset(&data[size], 0, pad);
 	return data;
 }
+//==========================================================================
+//
+// W_ReadFile
+//
+// Loads the lump into the given buffer, which must be >= W_LumpLength().
+//
+//==========================================================================
+
+void FileSystem::ReadFile (int lump, void *dest)
+{
+	auto lumpr = OpenFileReader (lump);
+	auto size = lumpr.GetLength ();
+	auto numread = lumpr.Read (dest, size);
+
+	if (numread != size)
+	{
+		I_Error ("W_ReadFile: only read %ld of %ld on lump %i\n",
+			numread, size, lump);	
+	}
+}
+
 
 //==========================================================================
 //
-// ReadLump - variant 2
+// ReadFile - variant 2
 //
 // Loads the lump into a newly created buffer and returns it.
 //
 //==========================================================================
 
-FileData FileSystem::ReadLump (int lump)
+FileData FileSystem::ReadFile (int lump)
 {
 	return FileData(FString(ELumpNum(lump)));
 }
 
 //==========================================================================
 //
-// OpenLumpReader
+// OpenFileReader
 //
 // uses a more abstract interface to allow for easier low level optimization later
 //
 //==========================================================================
 
 
-FileReader FileSystem::OpenLumpReader(int lump)
+FileReader FileSystem::OpenFileReader(int lump)
 {
 	if ((unsigned)lump >= (unsigned)FileInfo.Size())
 	{
-		I_Error("W_OpenLumpNum: %u >= NumEntries", lump);
+		I_Error("OpenFileReader: %u >= NumEntries", lump);
 	}
 
 	auto rl = FileInfo[lump].lump;
@@ -1318,11 +1315,11 @@ FileReader FileSystem::OpenLumpReader(int lump)
 	return rl->NewReader();	// This always gets a reader to the cache
 }
 
-FileReader FileSystem::ReopenLumpReader(int lump, bool alwayscache)
+FileReader FileSystem::ReopenFileReader(int lump, bool alwayscache)
 {
 	if ((unsigned)lump >= (unsigned)FileInfo.Size())
 	{
-		I_Error("ReopenLumpReader: %u >= NumEntries", lump);
+		I_Error("ReopenFileReader: %u >= NumEntries", lump);
 	}
 
 	auto rl = FileInfo[lump].lump;
@@ -1330,7 +1327,7 @@ FileReader FileSystem::ReopenLumpReader(int lump, bool alwayscache)
 
 	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !alwayscache && !(rl->Flags & LUMPF_COMPRESSED))
 	{
-		int fileno = fileSystem.GetLumpFile(lump);
+		int fileno = fileSystem.GetFileContainer(lump);
 		const char *filename = fileSystem.GetResourceFileName(fileno);
 		FileReader fr;
 		if (fr.OpenFile(filename, rl->GetFileOffset(), rl->LumpSize))
@@ -1339,6 +1336,13 @@ FileReader FileSystem::ReopenLumpReader(int lump, bool alwayscache)
 		}
 	}
 	return rl->NewReader();	// This always gets a reader to the cache
+}
+
+FileReader FileSystem::OpenFileReader(const char* name)
+{
+	auto lump = CheckNumForFullName(name);
+	if (lump < 0) return FileReader();
+	else return OpenFileReader(lump);
 }
 
 //==========================================================================
@@ -1350,34 +1354,34 @@ FileReader FileSystem::ReopenLumpReader(int lump, bool alwayscache)
 //
 //==========================================================================
 
-FileReader *FileSystem::GetFileReader(int wadnum)
+FileReader *FileSystem::GetFileReader(int rfnum)
 {
-	if ((uint32_t)wadnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.Size())
 	{
 		return NULL;
 	}
 
-	return Files[wadnum]->GetReader();
+	return Files[rfnum]->GetReader();
 }
 
 //==========================================================================
 //
-// W_GetWadName
+// GetResourceFileName
 //
 // Returns the name of the given wad.
 //
 //==========================================================================
 
-const char *FileSystem::GetResourceFileName (int wadnum) const noexcept
+const char *FileSystem::GetResourceFileName (int rfnum) const noexcept
 {
 	const char *name, *slash;
 
-	if ((uint32_t)wadnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.Size())
 	{
 		return NULL;
 	}
 
-	name = Files[wadnum]->FileName;
+	name = Files[rfnum]->FileName;
 	slash = strrchr (name, '/');
 	return slash != NULL ? slash+1 : name;
 }
@@ -1387,14 +1391,14 @@ const char *FileSystem::GetResourceFileName (int wadnum) const noexcept
 //
 //==========================================================================
 
-int FileSystem::GetFirstLump (int wadnum) const
+int FileSystem::GetFirstEntry (int rfnum) const noexcept
 {
-	if ((uint32_t)wadnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.Size())
 	{
 		return 0;
 	}
 
-	return Files[wadnum]->GetFirstLump();
+	return Files[rfnum]->GetFirstEntry();
 }
 
 //==========================================================================
@@ -1402,14 +1406,14 @@ int FileSystem::GetFirstLump (int wadnum) const
 //
 //==========================================================================
 
-int FileSystem::GetLastLump (int wadnum) const
+int FileSystem::GetLastEntry (int rfnum) const noexcept
 {
-	if ((uint32_t)wadnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.Size())
 	{
 		return 0;
 	}
 
-	return Files[wadnum]->GetFirstLump() + Files[wadnum]->LumpCount() - 1;
+	return Files[rfnum]->GetFirstEntry() + Files[rfnum]->LumpCount() - 1;
 }
 
 //==========================================================================
@@ -1417,35 +1421,60 @@ int FileSystem::GetLastLump (int wadnum) const
 //
 //==========================================================================
 
-int FileSystem::GetLumpCount (int wadnum) const
+int FileSystem::GetEntryCount (int rfnum) const noexcept
 {
-	if ((uint32_t)wadnum >= Files.Size())
+	if ((uint32_t)rfnum >= Files.Size())
 	{
 		return 0;
 	}
 	
-	return Files[wadnum]->LumpCount();
+	return Files[rfnum]->LumpCount();
 }
 
 
 //==========================================================================
 //
-// W_GetWadFullName
+// GetResourceFileFullName
 //
 // Returns the name of the given wad, including any path
 //
 //==========================================================================
 
-const char *FileSystem::GetResourceFileFullName (int wadnum) const noexcept
+const char *FileSystem::GetResourceFileFullName (int rfnum) const noexcept
 {
-	if ((unsigned int)wadnum >= Files.Size())
+	if ((unsigned int)rfnum >= Files.Size())
 	{
 		return nullptr;
 	}
 
-	return Files[wadnum]->FileName;
+	return Files[rfnum]->FileName;
 }
 
+
+//==========================================================================
+//
+// Clones an existing resource with different properties
+//
+//==========================================================================
+
+bool FileSystem::CreatePathlessCopy(const char *name, int id, int /*flags*/)
+{
+	FString name2, type2, path;
+
+	// The old code said 'filename' and ignored the path, this looked like a bug.
+	auto lump = FindFile(name);
+	if (lump < 0) return false;		// Does not exist.
+
+	auto oldlump = FileInfo[lump];
+	int slash = oldlump.longName.LastIndexOf('/');
+	if (slash == -1) return true;	// already is pathless.
+
+	// just create a new reference to the original data with a different name.
+	oldlump.longName = oldlump.longName.Mid(slash + 1);
+	oldlump.resourceId = id;
+	FileInfo.Push(oldlump);
+	return true;
+}
 
 // FileData -----------------------------------------------------------------
 
@@ -1475,7 +1504,7 @@ FileData::~FileData ()
 
 FString::FString (ELumpNum lumpnum)
 {
-	auto lumpr = fileSystem.OpenLumpReader ((int)lumpnum);
+	auto lumpr = fileSystem.OpenFileReader ((int)lumpnum);
 	auto size = lumpr.GetLength ();
 	AllocBuffer (1 + size);
 	auto numread = lumpr.Read (&Chars[0], size);
@@ -1484,7 +1513,7 @@ FString::FString (ELumpNum lumpnum)
 	if (numread != size)
 	{
 		I_Error ("ConstructStringFromLump: Only read %ld of %ld bytes on lump %i (%s)\n",
-			numread, size, lumpnum, fileSystem.GetLumpFullName((int)lumpnum));
+			numread, size, lumpnum, fileSystem.GetFileFullName((int)lumpnum));
 	}
 }
 
@@ -1536,32 +1565,3 @@ static void PrintLastError ()
 }
 #endif
 
-#ifdef _DEBUG
-//==========================================================================
-//
-// CCMD LumpNum
-//
-//==========================================================================
-
-CCMD(lumpnum)
-{
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		Printf("%s: %d\n", argv[i], fileSystem.CheckNumForName(argv[i]));
-	}
-}
-
-//==========================================================================
-//
-// CCMD LumpNumFull
-//
-//==========================================================================
-
-CCMD(lumpnumfull)
-{
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		Printf("%s: %d\n", argv[i], fileSystem.CheckNumForFullName(argv[i]));
-	}
-}
-#endif

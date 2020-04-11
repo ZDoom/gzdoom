@@ -182,7 +182,7 @@ void FTextureManager::InitAnimated (void)
 	int lumpnum = fileSystem.CheckNumForName ("ANIMATED");
 	if (lumpnum != -1)
 	{
-		FileData animatedlump = fileSystem.ReadLump (lumpnum);
+		FileData animatedlump = fileSystem.ReadFile (lumpnum);
 		int animatedlen = fileSystem.FileLength(lumpnum);
 		const uint8_t *animdefs = (const uint8_t *)animatedlump.GetMem();
 		const uint8_t *anim_p;
@@ -241,8 +241,8 @@ void FTextureManager::InitAnimated (void)
 				if (debuganimated)
 				{
 					Printf("Defining animation '%s' (texture %d, lump %d, file %d) to '%s' (texture %d, lump %d, file %d)\n",
-						tex1->Name.GetChars(), pic1.GetIndex(), tex1->GetSourceLump(), fileSystem.GetLumpFile(tex1->GetSourceLump()),
-						tex2->Name.GetChars(), pic2.GetIndex(), tex2->GetSourceLump(), fileSystem.GetLumpFile(tex2->GetSourceLump()));
+						tex1->Name.GetChars(), pic1.GetIndex(), tex1->GetSourceLump(), fileSystem.GetFileContainer(tex1->GetSourceLump()),
+						tex2->Name.GetChars(), pic2.GetIndex(), tex2->GetSourceLump(), fileSystem.GetFileContainer(tex2->GetSourceLump()));
 				}
 
 				if (pic1 == pic2)

@@ -120,7 +120,7 @@ void S_Init()
 	TArray<uint8_t> curve;
 	if (curvelump >= 0)
 	{
-		curve = fileSystem.ReadLumpIntoArray(curvelump);
+		curve = fileSystem.GetFileData(curvelump);
 	}
 	soundEngine->Init(curve);
 }
@@ -1065,7 +1065,7 @@ bool DoomSoundEngine::ValidatePosVel(int sourcetype, const void* source, const F
 
 TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 {
-	auto wlump = fileSystem.OpenLumpReader(lumpnum);
+	auto wlump = fileSystem.OpenFileReader(lumpnum);
 	return wlump.Read();
 }
 
@@ -1139,7 +1139,7 @@ void DoomSoundEngine::NoiseDebug()
 		color = (chan->ChanFlags & CHANF_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		fileSystem.GetLumpName(temp, S_sfx[chan->SoundID].lumpnum);
+		fileSystem.GetFileShortName(temp, S_sfx[chan->SoundID].lumpnum);
 		temp[8] = 0;
 		screen->DrawText(NewConsoleFont, color, 0, y, temp, TAG_DONE);
 
@@ -1257,7 +1257,7 @@ void DoomSoundEngine::PrintSoundList()
 		}
 		else if (S_sfx[i].lumpnum != -1)
 		{
-			fileSystem.GetLumpName(lumpname, sfx->lumpnum);
+			fileSystem.GetFileShortName(lumpname, sfx->lumpnum);
 			Printf("%3d. %s (%s)\n", i, sfx->name.GetChars(), lumpname);
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)

@@ -352,7 +352,7 @@ TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 	PCXHeader header;
 	int bitcount;
 
-	auto lump = fileSystem.OpenLumpReader(SourceLump);
+	auto lump = fileSystem.OpenFileReader(SourceLump);
 
 	lump.Read(&header, sizeof(header));
 
@@ -441,7 +441,7 @@ int FPCXTexture::CopyPixels(FBitmap *bmp, int conversion)
 	int bitcount;
 	TArray<uint8_t> Pixels;
 
-	auto lump = fileSystem.OpenLumpReader(SourceLump);
+	auto lump = fileSystem.OpenFileReader(SourceLump);
 
 	lump.Read(&header, sizeof(header));
 

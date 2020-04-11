@@ -516,10 +516,10 @@ void SBarInfo::ParseSBarInfo(int lump)
 					{
 						sc.ScriptError("Standard %s status bar not found.", sc.String);
 					}
-					else if (fileSystem.GetLumpFile(baselump) > 0)
+					else if (fileSystem.GetFileContainer(baselump) > 0)
 					{
 						I_FatalError("File %s is overriding core lump sbarinfo/%s.txt.",
-							fileSystem.GetResourceFileFullName(fileSystem.GetLumpFile(baselump)), sc.String);
+							fileSystem.GetResourceFileFullName(fileSystem.GetFileContainer(baselump)), sc.String);
 					}
 					ParseSBarInfo(baselump);
 				}

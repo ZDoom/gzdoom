@@ -453,7 +453,7 @@ FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defin
 {
 	int lump = fileSystem.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName.GetChars());
-	FString code = fileSystem.ReadLump(lump).GetString().GetChars();
+	FString code = fileSystem.ReadFile(lump).GetString().GetChars();
 
 	FString patchedCode;
 	patchedCode.AppendFormat("#version %d\n", 450);

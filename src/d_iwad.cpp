@@ -274,12 +274,12 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 	if (optfn) fns.Push(optfn);
 
 	check.InitMultipleFiles(fns, true);
-	if (check.GetNumLumps() > 0)
+	if (check.GetNumEntries() > 0)
 	{
 		int num = check.CheckNumForName("IWADINFO");
 		if (num >= 0)
 		{
-			auto data = check.ReadLumpIntoArray(num);
+			auto data = check.GetFileData(num);
 			ParseIWadInfo("IWADINFO", (const char*)data.Data(), data.Size());
 		}
 	}
@@ -304,7 +304,7 @@ int FIWadManager::ScanIWAD (const char *iwad)
 
 	mLumpsFound.Resize(mIWadInfos.Size());
 
-	auto CheckLumpName = [=](const char *name)
+	auto CheckFileName = [=](const char *name)
 	{
 		for (unsigned i = 0; i< mIWadInfos.Size(); i++)
 		{
@@ -318,18 +318,18 @@ int FIWadManager::ScanIWAD (const char *iwad)
 		}
 	};
 
-	if (check.GetNumLumps() > 0)
+	if (check.GetNumEntries() > 0)
 	{
 		memset(&mLumpsFound[0], 0, mLumpsFound.Size() * sizeof(mLumpsFound[0]));
-		for(int ii = 0; ii < check.GetNumLumps(); ii++)
+		for(int ii = 0; ii < check.GetNumEntries(); ii++)
 		{
 
-			CheckLumpName(check.GetLumpName(ii));
-			auto full = check.GetLumpFullName(ii, false);
+			CheckFileName(check.GetFileShortName(ii));
+			auto full = check.GetFileFullName(ii, false);
 			if (full && strnicmp(full, "maps/", 5) == 0)
 			{
 				FString mapname(&full[5], strcspn(&full[5], "."));
-				CheckLumpName(mapname);
+				CheckFileName(mapname);
 			}
 		}
 	}
@@ -355,7 +355,7 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 	FileSystem check;
 
 	check.InitSingleFile(fn, true);
-	if (check.GetNumLumps() > 0)
+	if (check.GetNumEntries() > 0)
 	{
 		int num = check.CheckNumForName("IWADINFO");
 		if (num >= 0)
@@ -364,7 +364,7 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 			{
 
 				FIWADInfo result;
-				auto data = check.ReadLumpIntoArray(num);
+				auto data = check.GetFileData(num);
 				ParseIWadInfo(fn, (const char*)data.Data(), data.Size(), &result);
 
 				for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)

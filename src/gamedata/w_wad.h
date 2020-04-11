@@ -10,7 +10,6 @@
 #define __W_WAD__
 
 #include "files.h"
-#include "doomdef.h"
 #include "tarray.h"
 #include "cmdlib.h"
 #include "zstring.h"
@@ -77,9 +76,9 @@ public:
 	const char *GetResourceFileName (int filenum) const noexcept;
 	const char *GetResourceFileFullName (int wadnum) const noexcept;
 
-	int GetFirstLump(int wadnum) const;
-	int GetLastLump(int wadnum) const;
-    int GetLumpCount(int wadnum) const;
+	int GetFirstEntry(int wadnum) const noexcept;
+	int GetLastEntry(int wadnum) const noexcept;
+    int GetEntryCount(int wadnum) const noexcept;
 
 	int CheckNumForName (const char *name, int namespc);
 	int CheckNumForName (const char *name, int namespc, int wadfile, bool exact = true);
@@ -102,6 +101,7 @@ public:
 		return CheckNumForFullName(name);
 	}
 	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
+	bool CreatePathlessCopy(const char* name, int id, int flags);
 
 	inline int CheckNumForFullName(const FString &name, bool trynormal = false, int namespc = ns_global) { return CheckNumForFullName(name.GetChars(), trynormal, namespc); }
 	inline int CheckNumForFullName (const FString &name, int wadfile) { return CheckNumForFullName(name.GetChars(), wadfile); }
@@ -111,17 +111,18 @@ public:
 	FTexture *GetLinkedTexture(int lump);
 
 
-	void ReadLump (int lump, void *dest);
-	TArray<uint8_t> ReadLumpIntoArray(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FileData isn't writable!)
-	FileData ReadLump (int lump);
-	FileData ReadLump (const char *name) { return ReadLump (GetNumForName (name)); }
+	void ReadFile (int lump, void *dest);
+	TArray<uint8_t> GetFileData(int lump, int pad = 0);	// reads lump into a writable buffer and optionally adds some padding at the end. (FileData isn't writable!)
+	FileData ReadFile (int lump);
+	FileData ReadFile (const char *name) { return ReadFile (GetNumForName (name)); }
 
-	FileReader OpenLumpReader(int lump);		// opens a reader that redirects to the containing file's one.
-	FileReader ReopenLumpReader(int lump, bool alwayscache = false);		// opens an independent reader.
+	FileReader OpenFileReader(int lump);		// opens a reader that redirects to the containing file's one.
+	FileReader ReopenFileReader(int lump, bool alwayscache = false);		// opens an independent reader.
+	FileReader OpenFileReader(const char* name);
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
-	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name
+	bool CheckFileName (int lump, const char *name);	// [RH] True if lump's name == name
 
 	int FindFileWithExtensions(const char* name, const char* const* exts, int count);
 	int FindResource(int resid, const char* type, int filenum) const noexcept;
@@ -133,19 +134,20 @@ public:
 	int FileLength (int lump) const;
 	int GetFileOffset (int lump);					// [RH] Returns offset of lump in the wadfile
 	int GetFileFlags (int lump);					// Return the flags for this lump
-	void GetLumpName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
-	void GetLumpName (FString &to, int lump) const;
-	const char* GetLumpName(int lump) const;
-	const char *GetLumpFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
-	FString GetLumpFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
-	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
-	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
-	int GetLumpIndexNum (int lump) const;			// Returns the RFF index number for this lump
-	FResourceLump *GetLumpRecord(int lump) const;	// Returns the FResourceLump, in case the caller wants to have direct access to the lump cache.
-	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
-	unsigned GetLumpsInFolder(const char *path, TArray<FolderEntry> &result, bool atomic) const;
+	void GetFileShortName (char *to, int lump) const;	// [RH] Copies the lump name to to using uppercopy
+	void GetFileShortName (FString &to, int lump) const;
+	const char* GetFileShortName(int lump) const;
+	const char *GetFileFullName (int lump, bool returnshort = true) const;	// [RH] Returns the lump's full name
+	FString GetFileFullPath (int lump) const;		// [RH] Returns wad's name + lump's full name
+	int GetFileContainer (int lump) const;				// [RH] Returns wadnum for a specified lump
+	int GetFileNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
+	void SetFileNamespace(int lump, int ns);
+	int GetResourceId(int lump) const;				// Returns the RFF index number for this lump
+	const char* GetResourceType(int lump) const;
+	bool CheckFileName (int lump, const char *name) const;	// [RH] Returns true if the names match
+	unsigned GetFilesInFolder(const char *path, TArray<FolderEntry> &result, bool atomic) const;
 
-	int GetNumLumps() const
+	int GetNumEntries() const
 	{
 		return NumEntries;
 	}

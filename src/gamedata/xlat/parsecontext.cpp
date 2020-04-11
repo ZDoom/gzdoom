@@ -323,7 +323,7 @@ void FParseContext::ParseLump(const char *lumpname)
 	}
 
 	// Read the lump into a buffer and add a 0-terminator
-	auto lumpdata = fileSystem.ReadLumpIntoArray(lumpno, 1);
+	auto lumpdata = fileSystem.GetFileData(lumpno, 1);
 
 	SourceLine = 0;
 	SourceFile = lumpname;

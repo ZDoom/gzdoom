@@ -110,20 +110,20 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		FStringf path("fonts/%s/", name);
 		
 		// Use a folder-based font only if it comes from a later file than the single lump version.
-		if (fileSystem.GetLumpsInFolder(path, folderdata, true))
+		if (fileSystem.GetFilesInFolder(path, folderdata, true))
 		{
 			// This assumes that any custom font comes in one piece and not distributed across multiple resource files.
-			folderfile = fileSystem.GetLumpFile(folderdata[0].lumpnum);
+			folderfile = fileSystem.GetFileContainer(folderdata[0].lumpnum);
 		}
 
 
 		lump = fileSystem.CheckNumForFullName(fontlumpname? fontlumpname : name, true);
 		
-		if (lump != -1 && fileSystem.GetLumpFile(lump) >= folderfile)
+		if (lump != -1 && fileSystem.GetFileContainer(lump) >= folderfile)
 		{
 			uint32_t head;
 			{
-				auto lumpy = fileSystem.OpenLumpReader (lump);
+				auto lumpy = fileSystem.OpenFileReader (lump);
 				lumpy.Read (&head, 4);
 			}
 			if ((head & MAKE_ID(255,255,255,0)) == MAKE_ID('F','O','N',0) ||
@@ -265,7 +265,7 @@ void V_InitCustomFonts()
 					{
 						*p = TexMan.GetTexture(texid);
 					}
-					else if (fileSystem.GetLumpFile(sc.LumpNum) >= fileSystem.GetIwadNum())
+					else if (fileSystem.GetFileContainer(sc.LumpNum) >= fileSystem.GetIwadNum())
 					{
 						// Print a message only if this isn't in zdoom.pk3
 						sc.ScriptMessage("%s: Unable to find texture in font definition for %s", sc.String, namebuffer.GetChars());
@@ -676,7 +676,7 @@ void V_InitFonts()
 		{
 			int wadfile = -1;
 			auto a = fileSystem.CheckNumForName("FONTA33", ns_graphics);
-			if (a != -1) wadfile = fileSystem.GetLumpFile(a);
+			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
 			if (wadfile > fileSystem.GetIwadNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.
@@ -693,7 +693,7 @@ void V_InitFonts()
 		{
 			int wadfile = -1;
 			auto a = fileSystem.CheckNumForName("STCFN065", ns_graphics);
-			if (a != -1) wadfile = fileSystem.GetLumpFile(a);
+			if (a != -1) wadfile = fileSystem.GetFileContainer(a);
 			if (wadfile > fileSystem.GetIwadNum())
 			{
 				// The font has been replaced, so we need to create a copy of the original as well.

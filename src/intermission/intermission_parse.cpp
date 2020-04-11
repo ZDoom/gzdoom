@@ -306,7 +306,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		if (lump > 0)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
-			int fileno = fileSystem.GetLumpFile(lump);
+			int fileno = fileSystem.GetFileContainer(lump);
 			auto fn = fileSystem.GetResourceFileName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
@@ -318,12 +318,12 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 				}
 			}
 			if (!done)
-				mText = fileSystem.ReadLump(lump).GetString();
+				mText = fileSystem.ReadFile(lump).GetString();
 		}
 		else
 		{
 			// only print an error if coming from a PWAD
-			if (fileSystem.GetLumpFile(sc.LumpNum) > fileSystem.GetMaxIwadNum())
+			if (fileSystem.GetFileContainer(sc.LumpNum) > fileSystem.GetMaxIwadNum())
 				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
 			mText.Format("Unknown text lump '%s'", sc.String);
 		}
@@ -862,7 +862,7 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 			int lump = fileSystem.CheckNumForFullName(text, true);
 			if (lump > 0)
 			{
-				textscreen->mText = fileSystem.ReadLump(lump).GetString();
+				textscreen->mText = fileSystem.ReadFile(lump).GetString();
 			}
 			else
 			{

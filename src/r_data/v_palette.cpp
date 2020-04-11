@@ -284,7 +284,7 @@ int ReadPalette(int lumpnum, uint8_t *buffer)
 	{
 		return 0;
 	}
-	FileData lump = fileSystem.ReadLump(lumpnum);
+	FileData lump = fileSystem.ReadFile(lumpnum);
 	uint8_t *lumpmem = (uint8_t*)lump.GetMem();
 	memset(buffer, 0, 768);
 
@@ -314,13 +314,13 @@ int ReadPalette(int lumpnum, uint8_t *buffer)
 			id = MAKE_ID('I', 'E', 'N', 'D');
 			fr.Read(&id, 4);
 		}
-		I_Error("%s contains no palette", fileSystem.GetLumpFullName(lumpnum));
+		I_Error("%s contains no palette", fileSystem.GetFileFullName(lumpnum));
 	}
 	if (memcmp(lumpmem, "JASC-PAL", 8) == 0)
 	{
 		FScanner sc;
 		
-		sc.OpenMem(fileSystem.GetLumpFullName(lumpnum), (char*)lumpmem, int(lump.GetSize()));
+		sc.OpenMem(fileSystem.GetFileFullName(lumpnum), (char*)lumpmem, int(lump.GetSize()));
 		sc.MustGetString();
 		sc.MustGetNumber();	// version - ignore
 		sc.MustGetNumber();	

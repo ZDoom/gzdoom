@@ -2133,9 +2133,9 @@ static void PutSaveWads (FSerializer &arc)
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	if (fileSystem.GetLumpFile (primaryLevel->lumpnum) > fileSystem.GetIwadNum())
+	if (fileSystem.GetFileContainer (primaryLevel->lumpnum) > fileSystem.GetIwadNum())
 	{
-		name = fileSystem.GetResourceFileName (fileSystem.GetLumpFile (primaryLevel->lumpnum));
+		name = fileSystem.GetResourceFileName (fileSystem.GetFileContainer (primaryLevel->lumpnum));
 		arc.AddString("Map WAD", name);
 	}
 }
@@ -2778,7 +2778,7 @@ void G_DoPlayDemo (void)
 	{
 		int demolen = fileSystem.FileLength (demolump);
 		demobuffer = (uint8_t *)M_Malloc(demolen);
-		fileSystem.ReadLump (demolump, demobuffer);
+		fileSystem.ReadFile (demolump, demobuffer);
 	}
 	else
 	{

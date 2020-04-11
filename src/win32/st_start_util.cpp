@@ -422,9 +422,9 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 	}
 
 	NetNotchBits = new uint8_t[ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT];
-	fileSystem.ReadLump(netnotch_lump, NetNotchBits);
+	fileSystem.ReadFile(netnotch_lump, NetNotchBits);
 	NotchBits = new uint8_t[ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT];
-	fileSystem.ReadLump(notch_lump, NotchBits);
+	fileSystem.ReadFile(notch_lump, NotchBits);
 
 	uint8_t startup_screen[153648];
 	union
@@ -433,7 +433,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 		uint32_t	quad;
 	} c;
 
-	fileSystem.ReadLump(startup_lump, startup_screen);
+	fileSystem.ReadFile(startup_lump, startup_screen);
 
 	c.color.rgbReserved = 0;
 
@@ -590,7 +590,7 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 		return;
 	}
 
-	fileSystem.ReadLump(loading_lump, loading_screen);
+	fileSystem.ReadFile(loading_lump, loading_screen);
 
 	// Slap the Heretic minor version on the loading screen. Heretic
 	// did this inside the executable rather than coming with modified
@@ -732,7 +732,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 
 	// Fill bitmap with the startup image.
 	memset(ST_Util_BitsForBitmap(StartupBitmap), 0xF0, 64000);
-	auto lumpr = fileSystem.OpenLumpReader(startup_lump);
+	auto lumpr = fileSystem.OpenFileReader(startup_lump);
 	lumpr.Seek(57 * 320, FileReader::SeekSet);
 	lumpr.Read(ST_Util_BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
 
@@ -744,7 +744,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 
 		if (lumpnum >= 0 && (lumplen = fileSystem.FileLength(lumpnum)) == StrifeStartupPicSizes[i])
 		{
-			auto lumpr = fileSystem.OpenLumpReader(lumpnum);
+			auto lumpr = fileSystem.OpenFileReader(lumpnum);
 			StartupPics[i] = new uint8_t[lumplen];
 			lumpr.Read(StartupPics[i], lumplen);
 		}
@@ -1073,7 +1073,7 @@ uint8_t* ST_Util_LoadFont(const char* filename)
 	}
 	font = new uint8_t[lumplen + 1];
 	font[0] = height;	// Store font height in the first byte.
-	fileSystem.ReadLump(lumpnum, font + 1);
+	fileSystem.ReadFile(lumpnum, font + 1);
 	return font;
 }
 

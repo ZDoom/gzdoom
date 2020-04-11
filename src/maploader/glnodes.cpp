@@ -729,10 +729,10 @@ static bool MatchHeader(const char * label, const char * hdata)
 
 static int FindGLNodesInWAD(int labellump)
 {
-	int wadfile = fileSystem.GetLumpFile(labellump);
+	int wadfile = fileSystem.GetFileContainer(labellump);
 	FString glheader;
 
-	glheader.Format("GL_%s", fileSystem.GetLumpFullName(labellump));
+	glheader.Format("GL_%s", fileSystem.GetFileFullName(labellump));
 	if (glheader.Len()<=8)
 	{
 		int gllabel = fileSystem.CheckNumForName(glheader, ns_global, wadfile);
@@ -750,10 +750,10 @@ static int FindGLNodesInWAD(int labellump)
 			int lump;
 			while ((lump=fileSystem.FindLump("GL_LEVEL", &lastlump))>=0)
 			{
-				if (fileSystem.GetLumpFile(lump)==wadfile)
+				if (fileSystem.GetFileContainer(lump)==wadfile)
 				{
-					FileData mem = fileSystem.ReadLump(lump);
-					if (MatchHeader(fileSystem.GetLumpFullName(labellump), (const char *)mem.GetMem())) return lump;
+					FileData mem = fileSystem.ReadFile(lump);
+					if (MatchHeader(fileSystem.GetFileFullName(labellump), (const char *)mem.GetMem())) return lump;
 				}
 			}
 		}
@@ -854,7 +854,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		FileReader gwalumps[4];
 		char path[256];
 		int li;
-		int lumpfile = fileSystem.GetLumpFile(map->lumpnum);
+		int lumpfile = fileSystem.GetFileContainer(map->lumpnum);
 		bool mapinwad = map->InWad;
 		FResourceFile * f_gwa = map->resource;
 
@@ -869,7 +869,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 				// GL nodes are loaded with a WAD
 				for(int i=0;i<4;i++)
 				{
-					gwalumps[i]=fileSystem.ReopenLumpReader(li+i+1);
+					gwalumps[i]=fileSystem.ReopenFileReader(li+i+1);
 				}
 				return DoLoadGLNodes(gwalumps);
 			}
@@ -886,7 +886,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					f_gwa = FResourceFile::OpenResourceFile(path, true);
 					if (f_gwa==nullptr) return false;
 
-					strncpy(map->MapLumps[0].Name, fileSystem.GetLumpFullName(map->lumpnum), 8);
+					strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(map->lumpnum), 8);
 				}
 			}
 		}
@@ -1000,7 +1000,7 @@ typedef TArray<uint8_t> MemFile;
 static FString CreateCacheName(MapData *map, bool create)
 {
 	FString path = M_GetCachePath(create);
-	FString lumpname = fileSystem.GetLumpFullPath(map->lumpnum);
+	FString lumpname = fileSystem.GetFileFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
 	if (create) CreatePath(path);

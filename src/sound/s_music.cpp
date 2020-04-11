@@ -445,7 +445,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				{
 					return false;
 				}
-				reader = fileSystem.ReopenLumpReader(lumpnum);
+				reader = fileSystem.ReopenFileReader(lumpnum);
 			}
 		}
 		else

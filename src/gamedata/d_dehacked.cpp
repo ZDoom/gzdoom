@@ -2426,7 +2426,7 @@ CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by 
 // checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
 static bool isDehFile(int lumpnum)
 {
-	const char* const fullName  = fileSystem.GetLumpFullName(lumpnum);
+	const char* const fullName  = fileSystem.GetFileFullName(lumpnum);
 	const char* const extension = strrchr(fullName, '.');
 
 	return NULL != extension && strchr(fullName, '/') == NULL
@@ -2439,7 +2439,7 @@ int D_LoadDehLumps(DehLumpSource source)
 
 	while ((lumpnum = fileSystem.FindLump("DEHACKED", &lastlump)) >= 0)
 	{
-		const int filenum = fileSystem.GetLumpFile(lumpnum);
+		const int filenum = fileSystem.GetFileContainer(lumpnum);
 		
 		if (FromIWAD == source && filenum > fileSystem.GetMaxIwadNum())
 		{
@@ -2461,7 +2461,7 @@ int D_LoadDehLumps(DehLumpSource source)
 
 		if (dehload == 1)	// load all .DEH lumps that are found.
 		{
-			for (lumpnum = 0, lastlump = fileSystem.GetNumLumps(); lumpnum < lastlump; ++lumpnum)
+			for (lumpnum = 0, lastlump = fileSystem.GetNumEntries(); lumpnum < lastlump; ++lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -2471,7 +2471,7 @@ int D_LoadDehLumps(DehLumpSource source)
 		}
 		else 	// only load the last .DEH lump that is found.
 		{
-			for (lumpnum = fileSystem.GetNumLumps()-1; lumpnum >=0; --lumpnum)
+			for (lumpnum = fileSystem.GetNumEntries()-1; lumpnum >=0; --lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -2488,13 +2488,13 @@ int D_LoadDehLumps(DehLumpSource source)
 bool D_LoadDehLump(int lumpnum)
 {
 	auto ls = LumpFileNum;
-	LumpFileNum = fileSystem.GetLumpFile(lumpnum);
+	LumpFileNum = fileSystem.GetFileContainer(lumpnum);
 
 	PatchSize = fileSystem.FileLength(lumpnum);
 
-	PatchName = fileSystem.GetLumpFullPath(lumpnum);
+	PatchName = fileSystem.GetFileFullPath(lumpnum);
 	PatchFile = new char[PatchSize + 1];
-	fileSystem.ReadLump(lumpnum, PatchFile);
+	fileSystem.ReadFile(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
 	auto res = DoDehPatch();
 	LumpFileNum = ls;
@@ -2689,7 +2689,7 @@ static bool LoadDehSupp ()
 			return false;
 		}
 
-		if (fileSystem.GetLumpFile(lump) > 0)
+		if (fileSystem.GetFileContainer(lump) > 0)
 		{
 			Printf("Warning: DEHSUPP no longer supported. DEHACKED patch disabled.\n");
 			return false;

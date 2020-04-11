@@ -83,7 +83,7 @@ PalettedPixels FImageSource::GetCachedPalettedPixels(int conversion)
 	PalettedPixels ret;
 
 	FString name;
-	fileSystem.GetLumpName(name, SourceLump);
+	fileSystem.GetFileShortName(name, SourceLump);
 
 	std::pair<int, int> *info = nullptr;
 	auto imageID = ImageID;
@@ -201,7 +201,7 @@ FBitmap FImageSource::GetCachedBitmap(PalEntry *remap, int conversion, int *ptra
 	
 	FString name;
 	int trans = -1;
-	fileSystem.GetLumpName(name, SourceLump);
+	fileSystem.GetFileShortName(name, SourceLump);
 	
 	std::pair<int, int> *info = nullptr;
 	auto imageID = ImageID;
@@ -371,7 +371,7 @@ FImageSource * FImageSource::GetImage(int lumpnum, ETextureType usetype)
 	// An image for this lump already exists. We do not need another one.
 	if (ImageForLump[lumpnum] != nullptr) return ImageForLump[lumpnum];
 
-	auto data = fileSystem.OpenLumpReader(lumpnum);
+	auto data = fileSystem.OpenFileReader(lumpnum);
 	if (!data.isOpen()) 
 		return nullptr;
 

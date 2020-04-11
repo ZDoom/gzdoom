@@ -391,7 +391,7 @@ void player_t::SetLogNumber (int num)
 	lumpnum = fileSystem.CheckNumForName (lumpname);
 	if (lumpnum != -1)
 	{
-		auto fn = fileSystem.GetLumpFile(lumpnum);
+		auto fn = fileSystem.GetFileContainer(lumpnum);
 		auto wadname = fileSystem.GetResourceFileName(fn);
 		if (!stricmp(wadname, "STRIFE0.WAD") || !stricmp(wadname, "STRIFE1.WAD") || !stricmp(wadname, "SVE.WAD"))
 		{
@@ -406,7 +406,7 @@ void player_t::SetLogNumber (int num)
 			}
 		}
 
-		auto lump = fileSystem.ReadLump(lumpnum);
+		auto lump = fileSystem.ReadFile(lumpnum);
 		SetLogText (lump.GetString());
 	}
 }
@@ -838,8 +838,8 @@ static int SetupCrouchSprite(AActor *self, int crouchsprite)
 			return false;
 		}
 
-		int wadnorm = fileSystem.GetLumpFile(spritenorm);
-		int wadcrouch = fileSystem.GetLumpFile(spritenorm);
+		int wadnorm = fileSystem.GetFileContainer(spritenorm);
+		int wadcrouch = fileSystem.GetFileContainer(spritenorm);
 
 		if (wadnorm > fileSystem.GetMaxIwadNum() && wadcrouch <= fileSystem.GetMaxIwadNum())
 		{

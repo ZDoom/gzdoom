@@ -202,15 +202,15 @@ void R_InitColormaps (bool allowCustomColormap)
 	cm.blend = 0;
 	fakecmaps.Push(cm);
 
-	uint32_t NumLumps = fileSystem.GetNumLumps();
+	uint32_t NumLumps = fileSystem.GetNumEntries();
 
 	for (uint32_t i = 0; i < NumLumps; i++)
 	{
-		if (fileSystem.GetLumpNamespace(i) == ns_colormaps)
+		if (fileSystem.GetFileNamespace(i) == ns_colormaps)
 		{
 			char name[9];
 			name[8] = 0;
-			fileSystem.GetLumpName (name, i);
+			fileSystem.GetFileShortName (name, i);
 
 			if (fileSystem.CheckNumForName (name, ns_colormaps) == (int)i)
 			{
@@ -245,7 +245,7 @@ void R_InitColormaps (bool allowCustomColormap)
 			if (fileSystem.FileLength (fakecmaps[j].lump) >= 256)
 			{
 				int k, r, g, b;
-				auto lump = fileSystem.OpenLumpReader (fakecmaps[j].lump);
+				auto lump = fileSystem.OpenFileReader (fakecmaps[j].lump);
 				lump.Read(map, 256);
 				r = g = b = 0;
 

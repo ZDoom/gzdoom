@@ -194,12 +194,12 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, int width, int height,
 				ihoty = BigLong((int)hoty);
 				if (ihotx < -32768 || ihotx > 32767)
 				{
-					Printf ("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetLumpFullName (lumpnum), ihotx, ihotx);
+					Printf ("X-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName (lumpnum), ihotx, ihotx);
 					ihotx = 0;
 				}
 				if (ihoty < -32768 || ihoty > 32767)
 				{
-					Printf ("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetLumpFullName (lumpnum), ihoty, ihoty);
+					Printf ("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", fileSystem.GetFileFullName (lumpnum), ihoty, ihoty);
 					ihoty = 0;
 				}
 				LeftOffset = ihotx;
@@ -312,7 +312,7 @@ TArray<uint8_t> FPNGTexture::CreatePalettedPixels(int conversion)
 	FileReader *lump;
 	FileReader lfr;
 
-	lfr = fileSystem.OpenLumpReader(SourceLump);
+	lfr = fileSystem.OpenFileReader(SourceLump);
 	lump = &lfr;
 
 	TArray<uint8_t> Pixels(Width*Height, true);
@@ -457,7 +457,7 @@ int FPNGTexture::CopyPixels(FBitmap *bmp, int conversion)
 	FileReader *lump;
 	FileReader lfr;
 
-	lfr = fileSystem.OpenLumpReader(SourceLump);
+	lfr = fileSystem.OpenFileReader(SourceLump);
 	lump = &lfr;
 
 	lump->Seek(33, FileReader::SeekSet);

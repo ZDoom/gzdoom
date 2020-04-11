@@ -342,19 +342,19 @@ void R_InitSpriteDefs ()
 	}
 
 	// Repeat, for voxels
-	vmax = fileSystem.GetNumLumps();
+	vmax = fileSystem.GetNumEntries();
 	TArray<VHasher> vhashes(vmax, true);
 	memset(vhashes.Data(), -1, sizeof(VHasher)*vmax);
 	for (i = 0; i < vmax; ++i)
 	{
-		if (fileSystem.GetLumpNamespace(i) == ns_voxels)
+		if (fileSystem.GetFileNamespace(i) == ns_voxels)
 		{
 			char name[9];
 			size_t namelen;
 			int spin;
 			int sign;
 
-			fileSystem.GetLumpName(name, i);
+			fileSystem.GetFileShortName(name, i);
 			name[8] = 0;
 			namelen = strlen(name);
 			if (namelen < 4)
@@ -588,13 +588,13 @@ void R_InitSkins (void)
 	{
 		// The player sprite has 23 frames. This means that the S_SKIN
 		// marker needs a minimum of 23 lumps after it.
-		if (base >= fileSystem.GetNumLumps() - 23 || base == -1)
+		if (base >= fileSystem.GetNumEntries() - 23 || base == -1)
 			continue;
 
 		i++;
 		for (j = 0; j < NUMSKINSOUNDS; j++)
 			sndlumps[j] = -1;
-		Skins[i].namespc = fileSystem.GetLumpNamespace (base);
+		Skins[i].namespc = fileSystem.GetFileNamespace (base);
 
 		FScanner sc(base);
 		intname = 0;
@@ -811,11 +811,11 @@ void R_InitSkins (void)
 			if (intname == 0)
 			{
 				char name[9];
-				fileSystem.GetLumpName (name, base+1);
+				fileSystem.GetFileShortName (name, base+1);
 				memcpy(&intname, name, 4);
 			}
 
-			int basens = fileSystem.GetLumpNamespace(base);
+			int basens = fileSystem.GetFileNamespace(base);
 
 			for(int spr = 0; spr<2; spr++)
 			{
@@ -841,11 +841,11 @@ void R_InitSkins (void)
 					}
 				}
 
-				for (k = base + 1; fileSystem.GetLumpNamespace(k) == basens; k++)
+				for (k = base + 1; fileSystem.GetFileNamespace(k) == basens; k++)
 				{
 					char lname[9];
 					uint32_t lnameint;
-					fileSystem.GetLumpName (lname, k);
+					fileSystem.GetFileShortName (lname, k);
 					memcpy(&lnameint, lname, 4);
 					if (lnameint == intname)
 					{
@@ -864,7 +864,7 @@ void R_InitSkins (void)
 					break;
 				}
 
-				fileSystem.GetLumpName (temp.name, base+1);
+				fileSystem.GetFileShortName (temp.name, base+1);
 				temp.name[4] = 0;
 				int sprno = (int)sprites.Push (temp);
 				if (spr==0)	Skins[i].sprite = sprno;
@@ -949,7 +949,7 @@ CCMD (skins)
 
 static void R_CreateSkinTranslation (const char *palname)
 {
-	FileData lump = fileSystem.ReadLump (palname);
+	FileData lump = fileSystem.ReadFile (palname);
 	const uint8_t *otherPal = (uint8_t *)lump.GetMem();
  
 	for (int i = 0; i < 256; ++i)

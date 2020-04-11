@@ -43,8 +43,6 @@ typedef TMap<int, PClassActor *> FClassMap;
 #include "basics.h"
 #include "printf.h"
 
-extern bool batchrun;
-
 // Bounding box coordinate storage.
 #include "palentry.h"
 

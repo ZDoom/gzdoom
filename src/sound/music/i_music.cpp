@@ -177,7 +177,7 @@ static void SetupGenMidi()
 		Printf("No GENMIDI lump found. OPL playback not available.\n");
 		return;
 	}
-	auto data = fileSystem.OpenLumpReader(lump);
+	auto data = fileSystem.OpenFileReader(lump);
 
 	auto genmidi = data.Read();
 	if (genmidi.Size() < 8 + 175 * 36 || memcmp(genmidi.Data(), "#OPL_II#", 8)) return;
@@ -191,7 +191,7 @@ static void SetupWgOpn()
 	{
 		return;
 	}
-	FileData data = fileSystem.ReadLump(lump);
+	FileData data = fileSystem.ReadFile(lump);
 	ZMusic_SetWgOpn(data.GetMem(), (uint32_t)data.GetSize());
 }
 
@@ -202,7 +202,7 @@ static void SetupDMXGUS()
 	{
 		return;
 	}
-	FileData data = fileSystem.ReadLump(lump);
+	FileData data = fileSystem.ReadFile(lump);
 	ZMusic_SetDmxGus(data.GetMem(), (uint32_t)data.GetSize());
 }
 
@@ -315,7 +315,7 @@ static ZMusic_MidiSource GetMIDISource(const char *fn)
 		return nullptr;
 	}
 
-	auto wlump = fileSystem.OpenLumpReader(lump);
+	auto wlump = fileSystem.OpenFileReader(lump);
 
 	uint32_t id[32 / 4];
 

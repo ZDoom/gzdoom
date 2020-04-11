@@ -2023,14 +2023,14 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
 	check.InitMultipleFiles(pwads, true);
-	if (check.GetNumLumps() > 0)
+	if (check.GetNumEntries() > 0)
 	{
 		int num = check.CheckNumForName("GAMEINFO");
 		if (num >= 0)
 		{
 			// Found one!
-			auto data = check.ReadLumpIntoArray(num);
-			auto wadname = check.GetResourceFileName(check.GetLumpFile(num));
+			auto data = check.GetFileData(num);
+			auto wadname = check.GetResourceFileName(check.GetFileContainer(num));
 			return ParseGameInfo(pwads, wadname, (const char*)data.Data(), data.Size());
 		}
 	}
@@ -2408,13 +2408,13 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 		break;
 	}
 
-	unsigned NumFiles = fileSystem.GetNumLumps();
+	unsigned NumFiles = fileSystem.GetNumEntries();
 
 	for (uint32_t i = 0; i < NumFiles; i++)
 	{
 		// check for full Minotaur animations. If this is not found
 		// some frames need to be renamed.
-		if (fileSystem.GetLumpNamespace(i) == ns_sprites)
+		if (fileSystem.GetFileNamespace(i) == ns_sprites)
 		{
 			auto& shortName = fileSystem.GetShortName(i);
 			if (shortName.dword == MAKE_ID('M', 'N', 'T', 'R') && shortName.String[4] == 'Z')
@@ -2430,10 +2430,10 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 	for (uint32_t i = 0; i < NumFiles; i++)
 	{
 		auto& shortName = fileSystem.GetShortName(i);
-		if (fileSystem.GetLumpNamespace(i) == ns_sprites)
+		if (fileSystem.GetFileNamespace(i) == ns_sprites)
 		{
 			// Only sprites in the IWAD normally get renamed
-			if (renameAll || fileSystem.GetLumpFile(i) == fileSystem.GetIwadNum())
+			if (renameAll || fileSystem.GetFileContainer(i) == fileSystem.GetIwadNum())
 			{
 				for (int j = 0; j < numrenames; ++j)
 				{
@@ -2444,7 +2444,7 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 				}
 				if (gameinfo.gametype == GAME_Hexen)
 				{
-					if (fileSystem.CheckLumpName(i, "ARTIINVU"))
+					if (fileSystem.CheckFileName(i, "ARTIINVU"))
 					{
 						shortName.String[4] = 'D'; shortName.String[5] = 'E';
 						shortName.String[6] = 'F'; shortName.String[7] = 'N';
@@ -2476,9 +2476,9 @@ static void RenameSprites(FileSystem &fileSystem, const TArray<FString>& deletel
 				}
 			}
 		}
-		else if (fileSystem.GetLumpNamespace(i) == ns_global)
+		else if (fileSystem.GetFileNamespace(i) == ns_global)
 		{
-			int fn = fileSystem.GetLumpFile(i);
+			int fn = fileSystem.GetFileContainer(i);
 			if (fn >= fileSystem.GetIwadNum() && fn <= fileSystem.GetMaxIwadNum() && deletelumps.Find(shortName.String) < deletelumps.Size())
 			{
 				shortName.String[0] = 0;	// Lump must be deleted from directory.
@@ -2550,7 +2550,7 @@ void RenameNerve(FileSystem& fileSystem)
 	if (!found)
 		return;
 
-	for (int i = fileSystem.GetFirstLump(w); i <= fileSystem.GetLastLump(w); i++)
+	for (int i = fileSystem.GetFirstEntry(w); i <= fileSystem.GetLastEntry(w); i++)
 	{
 		auto& shortName = fileSystem.GetShortName(i);
 		// Only rename the maps from NERVE.WAD
@@ -2640,8 +2640,8 @@ void FixMacHexen(FileSystem& fileSystem)
 	// Hexen Beta is very similar to Demo but it has MAP41: Maze at the end of the WAD
 	// So keep this map if it's present but discard all extra lumps
 
-	const int lastLump = fileSystem.GetLastLump(fileSystem.GetIwadNum()) - (isBeta ? 12 : 0);
-	assert(fileSystem.GetFirstLump(fileSystem.GetIwadNum()) + 299 < lastLump);
+	const int lastLump = fileSystem.GetLastEntry(fileSystem.GetIwadNum()) - (isBeta ? 12 : 0);
+	assert(fileSystem.GetFirstEntry(fileSystem.GetIwadNum()) + 299 < lastLump);
 
 	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
 	{
@@ -2649,6 +2649,42 @@ void FixMacHexen(FileSystem& fileSystem)
 		shortName.String[0] = '\0';
 	}
 }
+
+static void FindStrifeTeaserVoices(FileSystem& fileSystem)
+{
+	if (gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
+	{
+		unsigned NumFiles = fileSystem.GetNumEntries();
+		for (uint32_t i = 0; i < NumFiles; i++)
+		{
+			auto& shortName = fileSystem.GetShortName(i);
+			if (fileSystem.GetFileNamespace(i) == ns_global)
+			{
+				// Only sprites in the IWAD normally get renamed
+				if (fileSystem.GetFileContainer(i) == fileSystem.GetIwadNum())
+				{
+					if (shortName.String[0] == 'V' &&
+						shortName.String[1] == 'O' &&
+						shortName.String[2] == 'C')
+					{
+						int j;
+
+						for (j = 3; j < 8; ++j)
+						{
+							if (shortName.String[j] != 0 && !isdigit(shortName.String[j]))
+								break;
+						}
+						if (j == 8)
+						{
+							fileSystem.SetFileNamespace(i, ns_strifevoices);
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 
 
 //==========================================================================
@@ -2839,6 +2875,7 @@ static int D_DoomMain_Internal (void)
 			RenameNerve(fileSystem);
 			RenameSprites(fileSystem, iwad_info->DeleteLumps);
 			FixMacHexen(fileSystem);
+			FindStrifeTeaserVoices(fileSystem);
 		};
 
 		fileSystem.InitMultipleFiles (allwads, false, &lfi);

@@ -531,7 +531,7 @@ int RunEndoom()
 		return 0;
 	}
 
-	if (fileSystem.GetLumpFile(endoom_lump) == fileSystem.GetMaxIwadNum() && showendoom == 2)
+	if (fileSystem.GetFileContainer(endoom_lump) == fileSystem.GetMaxIwadNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
 		return 0;
@@ -553,7 +553,7 @@ int RunEndoom()
 	RestoreConView ();
 	S_StopMusic(true);
 
-	fileSystem.ReadLump (endoom_lump, endoom_screen);
+	fileSystem.ReadFile (endoom_lump, endoom_screen);
 
 	// Draw the loading screen to a bitmap.
 	StartupBitmap = ST_Util_AllocTextBitmap (font);

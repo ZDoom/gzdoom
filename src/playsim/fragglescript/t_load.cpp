@@ -227,7 +227,7 @@ bool FScriptLoader::ParseInfo(MapData * map)
 		if (lumpsize==0) return false;
 		fsglobal=true;
 		lump=new char[lumpsize+3];
-		fileSystem.ReadLump(lumpnum,lump);
+		fileSystem.ReadFile(lumpnum,lump);
 	}
 	else
 	{

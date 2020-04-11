@@ -3153,10 +3153,10 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(_Wads, GetNumLumps)
+DEFINE_ACTION_FUNCTION(_Wads, GetNumEntries)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_INT(fileSystem.GetNumLumps());
+	ACTION_RETURN_INT(fileSystem.GetNumEntries());
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, CheckNumForName)
@@ -3182,7 +3182,7 @@ DEFINE_ACTION_FUNCTION(_Wads, FindLump)
 	PARAM_STRING(name);
 	PARAM_INT(startlump);
 	PARAM_INT(ns);
-	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumLumps();
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
 	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLump(name, &startlump, 0 != ns) : -1);
 }
 
@@ -3191,7 +3191,7 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpName)
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
 	FString lumpname;
-	fileSystem.GetLumpName(lumpname, lump);
+	fileSystem.GetFileShortName(lumpname, lump);
 	ACTION_RETURN_STRING(lumpname);
 }
 
@@ -3199,22 +3199,22 @@ DEFINE_ACTION_FUNCTION(_Wads, GetLumpFullName)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	ACTION_RETURN_STRING(fileSystem.GetLumpFullName(lump));
+	ACTION_RETURN_STRING(fileSystem.GetFileFullName(lump));
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, GetLumpNamespace)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	ACTION_RETURN_INT(fileSystem.GetLumpNamespace(lump));
+	ACTION_RETURN_INT(fileSystem.GetFileNamespace(lump));
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(lump);
-	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetNumLumps();
-	ACTION_RETURN_STRING(isLumpValid ? fileSystem.ReadLump(lump).GetString() : FString());
+	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetNumEntries();
+	ACTION_RETURN_STRING(isLumpValid ? fileSystem.ReadFile(lump).GetString() : FString());
 }
 
 

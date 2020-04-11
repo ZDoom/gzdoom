@@ -165,7 +165,7 @@ FTexture::FTexture (const char *name, int lumpnum)
 	}
 	else
 	{
-		fileSystem.GetLumpName (Name, lumpnum);
+		fileSystem.GetFileShortName (Name, lumpnum);
 	}
 }
 
@@ -394,7 +394,7 @@ void FTexture::AddAutoMaterials()
 			auto lump = fileSystem.CheckNumForFullName(lookup, false, ns_global, true);
 			if (lump != -1)
 			{
-				auto bmtex = TexMan.FindTexture(fileSystem.GetLumpFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				auto bmtex = TexMan.FindTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				if (bmtex != nullptr)
 				{
 					bmtex->bMasked = false;

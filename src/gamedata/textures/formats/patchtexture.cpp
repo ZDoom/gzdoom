@@ -170,7 +170,7 @@ TArray<uint8_t> FPatchTexture::CreatePalettedPixels(int conversion)
 	const column_t *maxcol;
 	int x;
 
-	FileData lump = fileSystem.ReadLump (SourceLump);
+	FileData lump = fileSystem.ReadFile (SourceLump);
 	const patch_t *patch = (const patch_t *)lump.GetMem();
 
 	maxcol = (const column_t *)((const uint8_t *)patch + fileSystem.FileLength (SourceLump) - 3);
@@ -280,7 +280,7 @@ void FPatchTexture::DetectBadPatches ()
 	// Check if this patch is likely to be a problem.
 	// It must be 256 pixels tall, and all its columns must have exactly
 	// one post, where each post has a supposed length of 0.
-	FileData lump = fileSystem.ReadLump (SourceLump);
+	FileData lump = fileSystem.ReadFile (SourceLump);
 	const patch_t *realpatch = (patch_t *)lump.GetMem();
 	const uint32_t *cofs = realpatch->columnofs;
 	int x, x2 = LittleShort(realpatch->width);

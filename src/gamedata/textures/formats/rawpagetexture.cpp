@@ -158,7 +158,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 
 	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
 	FString Name;
-	fileSystem.GetLumpName(Name, lumpnum);
+	fileSystem.GetFileShortName(Name, lumpnum);
 	if (Name.CompareNoCase("E2END") == 0 && gameinfo.gametype == GAME_Heretic)
 	{
 		mPaletteLump = fileSystem.CheckNumForName("E2PAL");
@@ -175,7 +175,7 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 
 TArray<uint8_t> FRawPageTexture::CreatePalettedPixels(int conversion)
 {
-	FileData lump = fileSystem.ReadLump (SourceLump);
+	FileData lump = fileSystem.ReadFile (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
@@ -207,8 +207,8 @@ int FRawPageTexture::CopyPixels(FBitmap *bmp, int conversion)
 	if (mPaletteLump < 0) return FImageSource::CopyPixels(bmp, conversion);
 	else
 	{
-		FileData lump = fileSystem.ReadLump(SourceLump);
-		FileData plump = fileSystem.ReadLump(mPaletteLump);
+		FileData lump = fileSystem.ReadFile(SourceLump);
+		FileData plump = fileSystem.ReadFile(mPaletteLump);
 		const uint8_t *source = (const uint8_t *)lump.GetMem();
 		const uint8_t *psource = (const uint8_t *)plump.GetMem();
 		PalEntry paldata[256];

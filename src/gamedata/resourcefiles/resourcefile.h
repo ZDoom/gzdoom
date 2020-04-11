@@ -158,7 +158,7 @@ public:
     // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
     FileReader *GetReader() { return Reader.isOpen()? &Reader : nullptr; }
 	uint32_t LumpCount() const { return NumLumps; }
-	uint32_t GetFirstLump() const { return FirstLump; }
+	uint32_t GetFirstEntry() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
 	const FString &GetHash() const { return Hash; }
 

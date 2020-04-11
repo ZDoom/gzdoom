@@ -1475,7 +1475,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 
 			if (fileSystem.GetLinkedTexture(pic->SourceLump) == pic)
 			{
-				name = fileSystem.GetLumpFullName(pic->SourceLump);
+				name = fileSystem.GetFileFullName(pic->SourceLump);
 			}
 			else
 			{

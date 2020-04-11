@@ -854,11 +854,11 @@ CCMD (wdir)
 		Printf ("%s must be loaded to view its directory.\n", argv[1]);
 		return;
 	}
-	for (int i = 0; i < fileSystem.GetNumLumps(); ++i)
+	for (int i = 0; i < fileSystem.GetNumEntries(); ++i)
 	{
-		if (fileSystem.GetLumpFile(i) == wadnum)
+		if (fileSystem.GetFileContainer(i) == wadnum)
 		{
-			Printf ("%s\n", fileSystem.GetLumpFullName(i));
+			Printf ("%s\n", fileSystem.GetFileFullName(i));
 		}
 	}
 }
@@ -1224,7 +1224,7 @@ CCMD(secret)
 	int lumpno=fileSystem.CheckNumForName("SECRETS");
 	if (lumpno < 0) return;
 
-	auto lump = fileSystem.OpenLumpReader(lumpno);
+	auto lump = fileSystem.OpenFileReader(lumpno);
 	FString maphdr;
 	maphdr.Format("[%s]", mapname);
 

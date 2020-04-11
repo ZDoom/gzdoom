@@ -387,7 +387,7 @@ FString V_GetColorStringByName (const char *name, FScriptPosition *sc)
 	int c[3], step;
 	size_t namelen;
 
-	if (fileSystem.GetNumLumps()==0) return FString();
+	if (fileSystem.GetNumEntries()==0) return FString();
 
 	rgblump = fileSystem.CheckNumForName ("X11R6RGB");
 	if (rgblump == -1)
@@ -397,7 +397,7 @@ FString V_GetColorStringByName (const char *name, FScriptPosition *sc)
 		return FString();
 	}
 
-	rgbNames = fileSystem.ReadLump (rgblump);
+	rgbNames = fileSystem.ReadFile (rgblump);
 	rgb = (char *)rgbNames.GetMem();
 	rgbEnd = rgb + fileSystem.FileLength (rgblump);
 	step = 0;

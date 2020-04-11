@@ -67,7 +67,7 @@ public:
 FImageSource *AutomapImage_TryCreate(FileReader &data, int lumpnum)
 {
 	if (data.GetLength() < 320) return nullptr;
-	if (!fileSystem.CheckLumpName(lumpnum, "AUTOPAGE")) return nullptr;
+	if (!fileSystem.CheckFileName(lumpnum, "AUTOPAGE")) return nullptr;
 	return new FAutomapTexture(lumpnum);
 }
 
@@ -94,7 +94,7 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 TArray<uint8_t> FAutomapTexture::CreatePalettedPixels(int conversion)
 {
 	int x, y;
-	FileData data = fileSystem.ReadLump (SourceLump);
+	FileData data = fileSystem.ReadFile (SourceLump);
 	const uint8_t *indata = (const uint8_t *)data.GetMem();
 
 	TArray<uint8_t> Pixels(Width * Height, true);

@@ -78,3 +78,6 @@ int Printf (const char *format, ...) ATTRIBUTE((format(printf,1,2)));
 int DPrintf (int level, const char *format, ...) ATTRIBUTE((format(printf,2,3)));
 
 void debugprintf(const char* f, ...);	// Prints to the debugger's log.
+
+// flag to silence non-error output
+extern bool batchrun;

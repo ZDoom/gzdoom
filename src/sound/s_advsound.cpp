@@ -780,12 +780,12 @@ void S_ParseSndInfo (bool redefine)
 
 	CurrentPitchMask = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
-	for (lump = 0; lump < fileSystem.GetNumLumps(); ++lump)
+	for (lump = 0; lump < fileSystem.GetNumEntries(); ++lump)
 	{
-		switch (fileSystem.GetLumpNamespace (lump))
+		switch (fileSystem.GetFileNamespace (lump))
 		{
 		case ns_global:
-			if (fileSystem.CheckLumpName (lump, "SNDINFO"))
+			if (fileSystem.CheckFileName (lump, "SNDINFO"))
 			{
 				S_AddSNDINFO (lump);
 			}
@@ -1195,8 +1195,8 @@ static void S_AddSNDINFO (int lump)
 				if (lump >= 0)
 				{
 					// do not set the alias if a later WAD defines its own music of this name
-					int file = fileSystem.GetLumpFile(lump);
-					int sndifile = fileSystem.GetLumpFile(sc.LumpNum);
+					int file = fileSystem.GetFileContainer(lump);
+					int sndifile = fileSystem.GetFileContainer(sc.LumpNum);
 					if (file > sndifile)
 					{
 						sc.MustGetString();
@@ -1281,7 +1281,7 @@ static void S_AddSNDINFO (int lump)
 static void S_AddStrifeVoice (int lumpnum)
 {
 	char name[16] = "svox/";
-	fileSystem.GetLumpName (name+5, lumpnum);
+	fileSystem.GetFileShortName (name+5, lumpnum);
 	S_AddSound (name, lumpnum);
 }
 

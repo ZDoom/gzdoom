@@ -366,7 +366,7 @@ void SetDefaultColormap (const char *name)
 		}
 		else
 		{
-			auto lumpr = fileSystem.OpenLumpReader (lump);
+			auto lumpr = fileSystem.OpenFileReader (lump);
 
 			// [RH] The colormap may not have been designed for the specific
 			// palette we are using, so remap it to match the current palette.
@@ -404,7 +404,7 @@ static void InitBoomColormaps ()
 	//		This is a really rough hack, but it's better than
 	//		not doing anything with them at all (right?)
 
-	uint32_t NumLumps = fileSystem.GetNumLumps();
+	uint32_t NumLumps = fileSystem.GetNumEntries();
 
 	realcolormaps.Maps = new uint8_t[256*NUMCOLORMAPS*fakecmaps.Size()];
 	SetDefaultColormap ("COLORMAP");
@@ -427,7 +427,7 @@ static void InitBoomColormaps ()
 			if (fileSystem.FileLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
 			{
 				int k, r;
-				auto lump = fileSystem.OpenLumpReader (fakecmaps[j].lump);
+				auto lump = fileSystem.OpenFileReader (fakecmaps[j].lump);
 				uint8_t *const map = realcolormaps.Maps + NUMCOLORMAPS*256*j;
 
 				for (k = 0; k < NUMCOLORMAPS; ++k)

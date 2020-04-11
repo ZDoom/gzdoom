@@ -687,7 +687,7 @@ void ZCCCompiler::CreateStructTypes()
 			syms = &OutNamespace->Symbols;
 		}
 
-		if (s->NodeName() == NAME__ && fileSystem.GetLumpFile(Lump) == 0)
+		if (s->NodeName() == NAME__ && fileSystem.GetFileContainer(Lump) == 0)
 		{
 			// This is just a container for syntactic purposes.
 			s->strct->Type = nullptr;
@@ -1406,7 +1406,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 			ZCC_Latent | ZCC_Final | ZCC_Action | ZCC_Static | ZCC_FuncConst | ZCC_Abstract | ZCC_Virtual | ZCC_Override | ZCC_Extension | ZCC_VirtualScope | ZCC_ClearScope;
 
 		// Some internal fields need to be set to clearscope.
-		if (fileSystem.GetLumpFile(Lump) == 0) notallowed &= ~ZCC_ClearScope;
+		if (fileSystem.GetFileContainer(Lump) == 0) notallowed &= ~ZCC_ClearScope;
 
 		if (field->Flags & notallowed)
 		{
@@ -1617,7 +1617,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 		TArray<PField *> fields;
 		ZCC_Identifier *id = (ZCC_Identifier *)p->Body;
 
-		if (FName(p->NodeName) == FName("prefix") && fileSystem.GetLumpFile(Lump) == 0)
+		if (FName(p->NodeName) == FName("prefix") && fileSystem.GetFileContainer(Lump) == 0)
 		{
 			// only for internal definitions: Allow setting a prefix. This is only for compatiblity with the old DECORATE property parser, but not for general use.
 			prefix = id->Id;
@@ -1672,7 +1672,7 @@ bool ZCCCompiler::CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &Propertie
 		PField *field;
 		FName referenced = FName(p->RefName);
 
-		if (FName(p->NodeName) == FName("prefix") && fileSystem.GetLumpFile(Lump) == 0)
+		if (FName(p->NodeName) == FName("prefix") && fileSystem.GetFileContainer(Lump) == 0)
 		{
 			// only for internal definitions: Allow setting a prefix. This is only for compatiblity with the old DECORATE property parser, but not for general use.
 			prefix = referenced;
@@ -1840,7 +1840,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		case ZCC_NativeType:
 
 			// Creating an instance of a native struct is only allowed for internal definitions of native variables.
-			if (fileSystem.GetLumpFile(Lump) != 0 || !formember)
+			if (fileSystem.GetFileContainer(Lump) != 0 || !formember)
 			{
 				Error(field, "%s: @ not allowed for user scripts", name.GetChars());
 			}
@@ -1896,7 +1896,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 		auto ftype = DetermineType(outertype, field, name, atype->ElementType, false, true);
 		if (ftype->GetRegType() == REGT_NIL || ftype->GetRegCount() > 1)
 		{
-			if (field->NodeType == AST_VarDeclarator && (static_cast<ZCC_VarDeclarator*>(field)->Flags & ZCC_Native) && fileSystem.GetLumpFile(Lump) == 0)
+			if (field->NodeType == AST_VarDeclarator && (static_cast<ZCC_VarDeclarator*>(field)->Flags & ZCC_Native) && fileSystem.GetFileContainer(Lump) == 0)
 			{
 				// the internal definitions may declare native arrays to complex types.
 				// As long as they can be mapped to a static array type the VM can handle them, in a limited but sufficient fashion.

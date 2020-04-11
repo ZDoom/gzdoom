@@ -456,7 +456,7 @@ void STAT_ChangeLevel(const char *newl, FLevelLocals *Level)
 			MapData * map = P_OpenMapData(StartEpisode->mEpisodeMap, false);
 			if (map != NULL)
 			{
-				wad = fileSystem.GetLumpFile(map->lumpnum);
+				wad = fileSystem.GetFileContainer(map->lumpnum);
 				delete map;
 			}
 			const char * name = fileSystem.GetResourceFileName(wad);

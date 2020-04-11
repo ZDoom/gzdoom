@@ -283,7 +283,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 	}
 
 	{
-		auto pnames = fileSystem.OpenLumpReader(patcheslump);
+		auto pnames = fileSystem.OpenFileReader(patcheslump);
 		numpatches = pnames.ReadUInt32();
 
 		// Check whether the amount of names reported is correct.
@@ -406,12 +406,12 @@ void FMultipatchTextureBuilder::AddTexturesLumps(int lump1, int lump2, int patch
 
 	if (lump1 >= 0)
 	{
-		FileData texdir = fileSystem.ReadLump(lump1);
+		FileData texdir = fileSystem.ReadFile(lump1);
 		AddTexturesLump(texdir.GetMem(), fileSystem.FileLength(lump1), lump1, patcheslump, firstdup, true);
 	}
 	if (lump2 >= 0)
 	{
-		FileData texdir = fileSystem.ReadLump(lump2);
+		FileData texdir = fileSystem.ReadFile(lump2);
 		AddTexturesLump(texdir.GetMem(), fileSystem.FileLength(lump2), lump2, patcheslump, firstdup, false);
 	}
 }

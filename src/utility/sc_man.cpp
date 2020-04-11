@@ -279,10 +279,10 @@ void FScanner :: OpenLumpNum (int lump)
 {
 	Close ();
 	{
-		FileData mem = fileSystem.ReadLump(lump);
+		FileData mem = fileSystem.ReadFile(lump);
 		ScriptBuffer = mem.GetString();
 	}
-	ScriptName = fileSystem.GetLumpFullPath(lump);
+	ScriptName = fileSystem.GetFileFullPath(lump);
 	LumpNum = lump;
 	PrepareScript ();
 }

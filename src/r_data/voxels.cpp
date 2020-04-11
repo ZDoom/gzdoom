@@ -178,7 +178,7 @@ FVoxel *R_LoadKVX(int lumpnum)
 	int mip, maxmipsize;
 	int i, j, n;
 
-	FileData lump = fileSystem.ReadLump(lumpnum);	// FileData adds an extra 0 byte to the end.
+	FileData lump = fileSystem.ReadFile(lumpnum);	// FileData adds an extra 0 byte to the end.
 	uint8_t *rawvoxel = (uint8_t *)lump.GetMem();
 	int voxelsize = (int)(lump.GetSize()-1);
 
@@ -325,7 +325,7 @@ FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin)
 	FVoxel *vox = R_LoadKVX(lumpnum);
 	if (vox == NULL)
 	{
-		Printf("%s is not a valid voxel file\n", fileSystem.GetLumpFullName(lumpnum));
+		Printf("%s is not a valid voxel file\n", fileSystem.GetFileFullName(lumpnum));
 		return NULL;
 	}
 	else

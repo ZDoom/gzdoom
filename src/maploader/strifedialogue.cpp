@@ -152,9 +152,9 @@ bool MapLoader::LoadScriptFile (const char *name, bool include, int type)
 
 		return false;
 	}
-	FileReader lump = fileSystem.ReopenLumpReader (lumpnum);
+	FileReader lump = fileSystem.ReopenFileReader (lumpnum);
 
-	auto fn = fileSystem.GetLumpFile(lumpnum);
+	auto fn = fileSystem.GetFileContainer(lumpnum);
 	auto wadname = fileSystem.GetResourceFileName(fn);
 	if (stricmp(wadname, "STRIFE0.WAD") && stricmp(wadname, "STRIFE1.WAD") && stricmp(wadname, "SVE.WAD")) name = nullptr;	// Only localize IWAD content.
 
@@ -177,7 +177,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 
 	if ((type == 1 && !isbinary) || (type == 2 && isbinary))
 	{
-		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetLumpFullName(lumpnum));
+		DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 		return false;
 	}
 
@@ -197,7 +197,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// is exactly 1516 bytes long.
 			if (numnodes % 1516 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetLumpFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1516;
@@ -207,7 +207,7 @@ bool MapLoader::LoadScriptFile(const char *name, int lumpnum, FileReader &lump, 
 			// And the teaser version has 1488-byte entries.
 			if (numnodes % 1488 != 0)
 			{
-				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetLumpFullName(lumpnum));
+				DPrintf(DMSG_ERROR, "Incorrect data format for conversation script in %s.\n", fileSystem.GetFileFullName(lumpnum));
 				return false;
 			}
 			numnodes /= 1488;

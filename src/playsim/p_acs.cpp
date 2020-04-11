@@ -1958,7 +1958,7 @@ FBehavior *FBehaviorContainer::LoadModule (int lumpnum, FileReader *fr, int len,
 	else
 	{
 		delete behavior;
-		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", fileSystem.GetLumpFullName(lumpnum));
+		Printf(TEXTCOLOR_RED "%s: invalid ACS module\n", fileSystem.GetFileFullName(lumpnum));
 		return NULL;
 	}
 }
@@ -2240,7 +2240,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 	object = new uint8_t[len];
 	if (fr == NULL)
 	{
-		fileSystem.ReadLump (lumpnum, object);
+		fileSystem.ReadFile (lumpnum, object);
 	}
 	else
 	{
@@ -2272,7 +2272,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 
 	if (fr == NULL)
 	{
-		fileSystem.GetLumpName (ModuleName, lumpnum);
+		fileSystem.GetFileShortName (ModuleName, lumpnum);
 		ModuleName[8] = 0;
 	}
 	else
@@ -2317,7 +2317,7 @@ bool FBehavior::Init(FLevelLocals *Level, int lumpnum, FileReader * fr, int len,
 		// If this is an original Hexen BEHAVIOR, set up some localization info for it. Original Hexen BEHAVIORs are always in the old format.
 		if ((Level->flags2 & LEVEL2_HEXENHACK) && gameinfo.gametype == GAME_Hexen && lumpnum == -1 && reallumpnum > 0)
 		{
-			int fileno = fileSystem.GetLumpFile(reallumpnum);
+			int fileno = fileSystem.GetFileContainer(reallumpnum);
 			const char * filename = fileSystem.GetResourceFileName(fileno);
 			if (!stricmp(filename, "HEXEN.WAD") || !stricmp(filename, "HEXDD.WAD"))
 			{

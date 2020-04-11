@@ -304,7 +304,7 @@ FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 
 FileReader FLumpPatchSetReader::OpenMainConfigFile()
 {
-	return fileSystem.ReopenLumpReader(mLumpIndex);
+	return fileSystem.ReopenFileReader(mLumpIndex);
 }
 
 FileReader FLumpPatchSetReader::OpenFile(const char *name)
@@ -314,7 +314,7 @@ FileReader FLumpPatchSetReader::OpenFile(const char *name)
 	path = mBasePath + name;
 	auto index = fileSystem.CheckNumForFullName(path);
 	if (index < 0) return FileReader();
-	return fileSystem.ReopenLumpReader(index);
+	return fileSystem.ReopenFileReader(index);
 }
 
 //==========================================================================

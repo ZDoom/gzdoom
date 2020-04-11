@@ -1011,6 +1011,7 @@ set (PCH_SOURCES
 	gamedata/textures/texturemanager.cpp
 	gamedata/textures/multipatchtexturebuilder.cpp
 	gamedata/textures/skyboxtexture.cpp
+	gamedata/textures/buildloader.cpp
 	gamedata/textures/formats/automaptexture.cpp
 	gamedata/textures/formats/brightmaptexture.cpp
 	gamedata/textures/formats/buildtexture.cpp

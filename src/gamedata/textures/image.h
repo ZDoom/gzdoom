@@ -146,6 +146,27 @@ public:
 	static void RegisterForPrecache(FImageSource *img, bool requiretruecolor);
 };
 
+
+//==========================================================================
+//
+// A texture defined in a Build TILESxxx.ART file
+//
+//==========================================================================
+struct FRemapTable;
+
+class FBuildTexture : public FImageSource
+{
+public:
+	FBuildTexture(const FString& pathprefix, int tilenum, const uint8_t* pixels, FRemapTable* translation, int width, int height, int left, int top);
+	TArray<uint8_t> CreatePalettedPixels(int conversion) override;
+	int CopyPixels(FBitmap* bmp, int conversion) override;
+
+protected:
+	const uint8_t* RawPixels;
+	FRemapTable* Translation;
+};
+
+
 class FTexture;
 
 FTexture* CreateImageTexture(FImageSource* img, const char *name = nullptr) noexcept;

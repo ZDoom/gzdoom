@@ -30,7 +30,7 @@
 #include "vulkan/system/vk_buffers.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
-#include "rendering/2d/v_2ddrawer.h"
+#include "v_2ddrawer.h"
 
 VkRenderPassManager::VkRenderPassManager()
 {

@@ -601,6 +601,7 @@ file( GLOB HEADER_FILES
 	common/audio/sound/thirdparty/*.h
 	common/audio/sound/*.h
 	common/audio/music/*.h*
+	common/2d/*.h
 	common/console/*.h
 	common/utility/*.h
 	common/engine/*.h
@@ -938,10 +939,7 @@ set (PCH_SOURCES
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
 	rendering/2d/f_wipe.cpp
-	rendering/2d/v_2ddrawer.cpp
-	rendering/2d/v_drawtext.cpp
 	rendering/2d/v_blend.cpp
-	rendering/2d/v_draw.cpp
 	rendering/gl/renderer/gl_renderer.cpp
 	rendering/gl/renderer/gl_renderstate.cpp
 	rendering/gl/renderer/gl_renderbuffers.cpp
@@ -1056,6 +1054,9 @@ set (PCH_SOURCES
 	common/audio/music/i_music.cpp
 	common/audio/music/i_soundfont.cpp
 	common/audio/music/music_config.cpp
+	common/2d/v_2ddrawer.cpp
+	common/2d/v_drawtext.cpp
+	common/2d/v_draw.cpp
 	common/thirdparty/sfmt/SFMT.cpp
 	common/fonts/singlelumpfont.cpp
 	common/fonts/singlepicfont.cpp
@@ -1238,6 +1239,7 @@ target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa lzma ${ZMUSIC_LIBRARIES} )
 include_directories( .
 	common/audio/sound
 	common/audio/music
+	common/2d
 	common/thirdparty
 	common/textures/formats
 	common/textures/hires
@@ -1448,6 +1450,7 @@ source_group("Common\\Audio\\Music" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_
 source_group("Common\\Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/console/.+")
 source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/utility/.+")
 source_group("Common\\Engine" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/engine/.+")
+source_group("Common\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/2d/.+")
 source_group("Common\\Objects" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/objects/.+")
 source_group("Common\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/fonts/.+")
 source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")

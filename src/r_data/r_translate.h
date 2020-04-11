@@ -83,7 +83,7 @@ struct FRemapTable
 
 	uint8_t Remap[256];				// For the software renderer
 	PalEntry Palette[256];			// The ideal palette this maps to
-	FUniquePalette *Native;		// The index into the list of unique palettes (this is to avoid frequent texture recreation with changing ACS translations)
+	FUniquePalette *Native = nullptr;		// The index into the list of unique palettes (this is to avoid frequent texture recreation with changing ACS translations)
 	//int crc32;
 	int NumEntries;				// # of elements in this table (usually 256)
 	bool Inactive = false;				// This table is inactive and should be treated as if it was passed as NULL

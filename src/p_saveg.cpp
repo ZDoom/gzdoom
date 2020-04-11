@@ -374,7 +374,7 @@ FSerializer &FLevelLocals::SerializeSubsectors(FSerializer &arc, const char *key
 	auto numsubsectors = subsectors.Size();
 	if (arc.isWriting())
 	{
-		TArray<char> encoded(1 + (numsubsectors + 5) / 6);
+		TArray<char> encoded(1 + (numsubsectors + 5) / 6, true);
 		int p = 0;
 		for (unsigned i = 0; i < numsubsectors; i += 6)
 		{

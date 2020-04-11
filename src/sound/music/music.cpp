@@ -72,6 +72,7 @@
 // MACROS ------------------------------------------------------------------
 
 
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern float S_GetMusicVolume (const char *music);
@@ -86,10 +87,25 @@ static FPlayList PlayList;
 float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
 
+static FileReader DefaultOpenMusic(const char* fn)
+{
+	// This is the minimum needed to make the music system functional.
+	FileReader fr;
+	fr.OpenFile(fn);
+	return fr;
+}
+static MusicCallbacks mus_cb = { nullptr, DefaultOpenMusic };
+
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+void S_SetMusicCallbacks(MusicCallbacks* cb)
+{
+	mus_cb = *cb;
+	if (mus_cb.OpenMusic == nullptr) mus_cb.OpenMusic = DefaultOpenMusic;	// without this we are dead in the water.
+}
 
 //==========================================================================
 //
@@ -293,33 +309,24 @@ bool S_StartMusic (const char *m_id)
 //
 // S_ChangeMusic
 //
-// Starts playing a music, possibly looping.
+// initiates playback of a song
 //
-// [RH] If music is a MOD, starts it at position order. If name is of the
-// format ",CD,<track>,[cd id]" song is a CD track, and if [cd id] is
-// specified, it will only be played if the specified CD is in a drive.
 //==========================================================================
 
-bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
+bool S_ChangeMusic(const char* musicname, int order, bool looping, bool force)
 {
 	if (nomusic) return false;	// skip the entire procedure if music is globally disabled.
+
 	if (!force && PlayList.GetNumSongs())
 	{ // Don't change if a playlist is active
 		return false;
 	}
-
-	// allow specifying "*" as a placeholder to play the level's default music.
-	if (musicname != nullptr && !strcmp(musicname, "*"))
+	// Do game specific lookup.
+	FString musicname_;
+	if (mus_cb.LookupFileName)
 	{
-		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
-		{
-			musicname = primaryLevel->Music;
-			order = primaryLevel->musicorder;
-		}
-		else
-		{
-			musicname = nullptr;
-		}
+		musicname_ = mus_cb.LookupFileName(musicname, order);
+		musicname = musicname_.GetChars();
 	}
 
 	if (musicname == nullptr || musicname[0] == 0)
@@ -330,35 +337,10 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		mus_playing.LastSong = "";
 		return true;
 	}
-	if (*musicname == '/') musicname++;
-
-	FString DEH_Music;
-	if (musicname[0] == '$')
-	{
-		// handle dehacked replacement.
-		// Any music name defined this way needs to be prefixed with 'D_' because
-		// Doom.exe does not contain the prefix so these strings don't either.
-		const char * mus_string = GStrings[musicname+1];
-		if (mus_string != nullptr)
-		{
-			DEH_Music << "D_" << mus_string;
-			musicname = DEH_Music;
-		}
-	}
-
-	FName *aliasp = MusicAliases.CheckKey(musicname);
-	if (aliasp != nullptr)
-	{
-		if (*aliasp == NAME_None)
-		{
-			return true;	// flagged to be ignored
-		}
-		musicname = aliasp->GetChars();
-	}
 
 	if (!mus_playing.name.IsEmpty() &&
 		mus_playing.handle != nullptr &&
-		stricmp (mus_playing.name, musicname) == 0 &&
+		stricmp(mus_playing.name, musicname) == 0 &&
 		ZMusic_IsLooping(mus_playing.handle) == zmusic_bool(looping))
 	{
 		if (order != mus_playing.baseorder)
@@ -380,79 +362,46 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		return true;
 	}
 
-	if (strnicmp (musicname, ",CD,", 4) == 0)
+	int lumpnum = -1;
+	int length = 0;
+	ZMusic_MusicStream handle = nullptr;
+	MidiDeviceSetting* devp = MidiDevices.CheckKey(musicname);
+
+	// Strip off any leading file:// component.
+	if (strncmp(musicname, "file://", 7) == 0)
 	{
-		static bool warned = false;
-		if (!warned)
-			Printf(TEXTCOLOR_RED "CD Audio no longer supported\n");
-		warned = true;
-		return false;
+		musicname += 7;
+	}
+
+	// opening the music must be done by the game because it's different depending on the game's file system use.
+	FileReader reader = mus_cb.OpenMusic(musicname);
+	if (!reader.isOpen()) return false;
+
+	// shutdown old music
+	S_StopMusic(true);
+
+	// Just record it if volume is 0 or music was disabled
+	if (snd_musicvolume <= 0)
+	{
+		mus_playing.loop = looping;
+		mus_playing.name = musicname;
+		mus_playing.baseorder = order;
+		mus_playing.LastSong = musicname;
+		return true;
+	}
+
+	// load & register it
+	if (handle != nullptr)
+	{
+		mus_playing.handle = handle;
 	}
 	else
 	{
-		int lumpnum = -1;
-		int length = 0;
-		ZMusic_MusicStream handle = nullptr;
-		MidiDeviceSetting *devp = MidiDevices.CheckKey(musicname);
-
-		// Strip off any leading file:// component.
-		if (strncmp(musicname, "file://", 7) == 0)
+		auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
+		mus_playing.handle = ZMusic_OpenSong(mreader, devp ? (EMidiDevice)devp->device : MDEV_DEFAULT, devp ? devp->args.GetChars() : "");
+		if (mus_playing.handle == nullptr)
 		{
-			musicname += 7;
-		}
-
-		FileReader reader;
-		if (!FileExists (musicname))
-		{
-			if ((lumpnum = fileSystem.CheckNumForFullName (musicname, true, ns_music)) == -1)
-			{
-				Printf ("Music \"%s\" not found\n", musicname);
-				return false;
-			}
-			if (handle == nullptr)
-			{
-				if (fileSystem.FileLength (lumpnum) == 0)
-				{
-					return false;
-				}
-				reader = fileSystem.ReopenFileReader(lumpnum);
-			}
-		}
-		else
-		{
-			// Load an external file.
-			if (!reader.OpenFile(musicname))
-			{
-				return false;
-			}
-		}
-
-		// shutdown old music
-		S_StopMusic (true);
-
-		// Just record it if volume is 0 or music was disabled
-		if (snd_musicvolume <= 0)
-		{
-			mus_playing.loop = looping;
-			mus_playing.name = musicname;
-			mus_playing.baseorder = order;
-			mus_playing.LastSong = musicname;
-			return true;
-		}
-
-		// load & register it
-		if (handle != nullptr)
-		{
-			mus_playing.handle = handle;
-		}
-		else
-		{
-			auto mreader = GetMusicReader(reader);	// this passes the file reader to the newly created wrapper.
-			mus_playing.handle = ZMusic_OpenSong(mreader, devp? (EMidiDevice)devp->device : MDEV_DEFAULT, devp? devp->args.GetChars() : "");
-			if (mus_playing.handle == nullptr)
-			{
-				Printf("Unable to load %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
-			}
+			Printf("Unable to load %s: %s\n", mus_playing.name.GetChars(), ZMusic_GetLastError());
 		}
 	}
 
@@ -474,6 +423,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 	}
 	return false;
 }
+
 
 //==========================================================================
 //

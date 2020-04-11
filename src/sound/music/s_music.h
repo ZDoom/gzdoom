@@ -7,6 +7,15 @@
 #include "name.h"
 #include <zmusic.h>
 
+class FileReader;
+
+struct MusicCallbacks
+{
+	FString(*LookupFileName)(const char* fn, int &order);
+	FileReader(*OpenMusic)(const char* fn);
+};
+void S_SetMusicCallbacks(MusicCallbacks* cb);
+
 void S_CreateStream();
 void S_PauseStream(bool pause);
 void S_StopStream();
@@ -22,6 +31,8 @@ void S_ResetMusic ();
 bool S_StartMusic (const char *music_name);
 
 // Start music using <music_name>, and set whether looping
+bool S_SetupMusic(const char* musicname, int order, bool looping, FileReader(*OpenMusic)(const char* filename));
+
 bool S_ChangeMusic (const char *music_name, int order=0, bool looping=true, bool force=false);
 
 void S_RestartMusic ();

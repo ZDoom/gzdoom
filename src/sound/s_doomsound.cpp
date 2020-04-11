@@ -99,6 +99,105 @@ public:
 
 //==========================================================================
 //
+// LookupMusic
+//
+// resolves aliases and special names
+//
+//==========================================================================
+
+static FString LookupMusic(const char* musicname, int& order)
+{
+	if (strnicmp(musicname, ",CD,", 4) == 0)
+	{
+		static bool warned = false;
+		if (!warned)
+			Printf(TEXTCOLOR_RED "CD Audio no longer supported\n");
+		warned = true;
+		return "";
+	}
+
+	// allow specifying "*" as a placeholder to play the level's default music.
+	if (musicname != nullptr && !strcmp(musicname, "*"))
+	{
+		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
+		{
+			musicname = primaryLevel->Music.GetChars();
+			order = primaryLevel->musicorder;
+		}
+		else
+		{
+			musicname = nullptr;
+		}
+	}
+
+	if (musicname == nullptr || musicname[0] == 0)
+	{
+		// got nothing, return nothing.
+		return "";
+	}
+	if (*musicname == '/') musicname++;
+
+	FString DEH_Music;
+	if (musicname[0] == '$')
+	{
+		// handle dehacked replacement.
+		// Any music name defined this way needs to be prefixed with 'D_' because
+		// Doom.exe does not contain the prefix so these strings don't either.
+		const char* mus_string = GStrings[musicname + 1];
+		if (mus_string != nullptr)
+		{
+			DEH_Music << "D_" << mus_string;
+			musicname = DEH_Music;
+		}
+	}
+
+	FName* aliasp = MusicAliases.CheckKey(musicname);
+	if (aliasp != nullptr)
+	{
+		if (*aliasp == NAME_None)
+		{
+			order = -1;
+			return "";	// flagged to be ignored
+		}
+		musicname = aliasp->GetChars();
+	}
+	return musicname;
+}
+
+//==========================================================================
+//
+// OpenMusic
+//
+// opens a FileReader for the music - used as a callback to keep
+// implementation details out of the core player.
+//
+//==========================================================================
+
+static FileReader OpenMusic(const char* musicname)
+{
+	FileReader reader;
+	if (!FileExists(musicname))
+	{
+		int lumpnum;
+		if ((lumpnum = fileSystem.CheckNumForFullName(musicname, true, ns_music)) == -1)
+		{
+			Printf("Music \"%s\" not found\n", musicname);
+		}
+		else if (fileSystem.FileLength(lumpnum) != 0)
+		{
+			reader = fileSystem.ReopenFileReader(lumpnum);
+		}
+	}
+	else
+	{
+		// Load an external file.
+		reader.OpenFile(musicname);
+	}
+	return reader;
+}
+
+//==========================================================================
+//
 // S_Init
 //
 // Initializes sound stuff, including volume. Sets channels, SFX and
@@ -107,6 +206,10 @@ public:
 
 void S_Init()
 {
+	// Hook up the music player with the engine specific customizations.
+	static MusicCallbacks cb = { LookupMusic, OpenMusic };
+	S_SetMusicCallbacks(&cb);
+
 	// Must be up before I_InitSound.
 	if (!soundEngine)
 	{
@@ -1438,3 +1541,5 @@ ADD_STAT (sound)
 {
 	return GSnd->GatherStats ();
 }
+
+

@@ -173,10 +173,10 @@ public:
 		SetVirtualSize(width, height);
 	}
 	// These methods should never be called.
-	void Update() { DBGBREAK; }
-	bool IsFullscreen() { DBGBREAK; return 0; }
-	int GetClientWidth() { DBGBREAK; return 0; }
-	int GetClientHeight() { DBGBREAK; return 0; }
+	void Update() override { DBGBREAK; }
+	bool IsFullscreen() override { DBGBREAK; return 0; }
+	int GetClientWidth() override { DBGBREAK; return 0; }
+	int GetClientHeight() override { DBGBREAK; return 0; }
 	void InitializeState() override {}
 
 	float Gamma;

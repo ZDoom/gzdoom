@@ -1112,7 +1112,7 @@ set (PCH_SOURCES
 	scripting/zscript/ast.cpp
 	scripting/zscript/zcc_compile.cpp
 	scripting/zscript/zcc_parser.cpp
-	utility/sfmt/SFMT.cpp
+	common/thirdparty/sfmt/SFMT.cpp
 	sound/music/i_music.cpp
 	sound/music/i_soundfont.cpp
 	sound/backend/i_sound.cpp
@@ -1425,9 +1425,9 @@ source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/
 source_group("Common\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/.+")
 source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/math/.+")
 source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")
+source_group("Common\\Third Party\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/sfmt/.+")
 source_group("Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
 source_group("Utility\\Node Builder" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/nodebuilder/.+")
-source_group("Utility\\SFMT" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/sfmt/.+")
 source_group("Statusbar" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_statusbar/.+")
 source_group("Versioning" FILES version.h win32/zdoom.rc)
 source_group("Xlat" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/xlat/.+" FILES ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h)

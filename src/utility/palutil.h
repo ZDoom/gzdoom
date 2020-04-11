@@ -72,33 +72,13 @@ inline int GetTranslationIndex(uint32_t trans)
 	return (trans & TRANSLATION_MASK);
 }
 
-// Fixme: This should avoid hard game content dependencies!
-enum
-{
-	TRANSLATION_Invalid,
-	TRANSLATION_Players,
-	TRANSLATION_PlayersExtra,
-	TRANSLATION_Standard,
-	TRANSLATION_LevelScripted,
-	TRANSLATION_Decals,
-	TRANSLATION_PlayerCorpses,
-	TRANSLATION_Decorate,
-	TRANSLATION_Blood,
-	TRANSLATION_RainPillar,
-	TRANSLATION_Custom,
-	TRANSLATION_Font,
-
-	NUM_TRANSLATION_TABLES
-};
-
-
 class PaletteContainer
 {
 	FMemArena remapArena;
 	TArray<FRemapTable*> uniqueRemaps;
-	TAutoGrowArray<FRemapTablePtr, FRemapTable*> TranslationTables[NUM_TRANSLATION_TABLES];
+	TArray<TAutoGrowArray<FRemapTablePtr, FRemapTable*>> TranslationTables;
 public:
-	void Init();	// This cannot be a constructor!!!
+	void Init(int numslots);	// This cannot be a constructor!!!
 	void Clear();
 	FRemapTable* AddRemap(FRemapTable* remap);
 	void UpdateTranslation(int trans, FRemapTable* remap);

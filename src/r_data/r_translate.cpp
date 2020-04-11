@@ -62,7 +62,7 @@ PaletteContainer palMgr;
 //
 //----------------------------------------------------------------------------
 
-void PaletteContainer::Init()	// This cannot be a constructor!!!
+void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
 {
 	Clear();
 	// Make sure that index 0 is always the identity translation.
@@ -70,6 +70,7 @@ void PaletteContainer::Init()	// This cannot be a constructor!!!
 	remap.MakeIdentity();
 	remap.Inactive = true;
 	AddRemap(&remap);
+	TranslationTables.Resize(numslots);
 }
 
 //----------------------------------------------------------------------------
@@ -82,7 +83,7 @@ void PaletteContainer::Clear()
 {
 	remapArena.FreeAllBlocks();
 	uniqueRemaps.Reset();
-	for (auto& slot : TranslationTables) slot.Reset();
+	TranslationTables.Reset();
 }
 
 //----------------------------------------------------------------------------
@@ -160,7 +161,7 @@ FRemapTable *PaletteContainer::TranslationToTable(int translation)
 	unsigned int type = GetTranslationType(translation);
 	unsigned int index = GetTranslationIndex(translation);
 
-	if (type <= 0 || type >= NUM_TRANSLATION_TABLES || index >= NumTranslations(type))
+	if (type <= 0 || type >= TranslationTables.Size() || index >= NumTranslations(type))
 	{
 		return NULL;
 	}

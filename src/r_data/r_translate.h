@@ -7,6 +7,25 @@
 
 class FSerializer;
 
+enum
+{
+	TRANSLATION_Invalid,
+	TRANSLATION_Players,
+	TRANSLATION_PlayersExtra,
+	TRANSLATION_Standard,
+	TRANSLATION_LevelScripted,
+	TRANSLATION_Decals,
+	TRANSLATION_PlayerCorpses,
+	TRANSLATION_Decorate,
+	TRANSLATION_Blood,
+	TRANSLATION_RainPillar,
+	TRANSLATION_Custom,
+	TRANSLATION_Font,
+
+	NUM_TRANSLATION_TABLES
+};
+
+
 enum EStandardTranslations
 {
 	STD_Ice = 7,

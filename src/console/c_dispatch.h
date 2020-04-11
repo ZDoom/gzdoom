@@ -35,6 +35,8 @@
 #define __C_DISPATCH_H__
 
 #include <stdint.h>
+#include <functional>
+#include "c_console.h"
 #include "tarray.h"
 #include "c_commandline.h"
 #include "zstring.h"
@@ -75,6 +77,7 @@ void C_DoCommand (const char *cmd, int keynum=0);
 FExecList *C_ParseExecFile(const char *file, FExecList *source);
 void C_SearchForPullins(FExecList *exec, const char *file, class FCommandLine &args);
 bool C_ExecFile(const char *file);
+void C_ClearDynCCmds();
 
 // Write out alias commands to a file for all current aliases.
 void C_ArchiveAliases (FConfigFile *f);
@@ -85,8 +88,7 @@ void C_ClearAliases ();
 // build a single string out of multiple strings
 FString BuildString (int argc, FString *argv);
 
-class AActor;
-typedef void (*CCmdRun) (FCommandLine &argv, int key);
+typedef std::function<void(FCommandLine & argv, int key)> CCmdRun;;
 
 class FConsoleCommand
 {
@@ -100,7 +102,7 @@ public:
 	static FConsoleCommand* FindByName (const char* name);
 
 	FConsoleCommand *m_Next, **m_Prev;
-	char *m_Name;
+	FString m_Name;
 
 	enum { HASH_SIZE = 251 };	// Is this prime?
 
@@ -164,9 +166,48 @@ public:
 	virtual void Run (FCommandLine &args, int key) override;
 };
 
+class UnsafeExecutionScope
+{
+	const bool wasEnabled;
 
-#include "superfasthash.h"
+public:
+	explicit UnsafeExecutionScope(const bool enable = true)
+		: wasEnabled(UnsafeExecutionContext)
+	{
+		UnsafeExecutionContext = enable;
+	}
+
+	~UnsafeExecutionScope()
+	{
+		UnsafeExecutionContext = wasEnabled;
+	}
+};
+
+
 
 void execLogfile(const char *fn, bool append = false);
+
+enum
+{
+	CCMD_OK = 0,
+	CCMD_SHOWHELP = 1
+};
+
+struct CCmdFuncParm
+{
+	int32_t numparms;
+	const char* name;
+	const char** parms;
+	const char* raw;
+};
+
+using CCmdFuncPtr = CCmdFuncParm const* const;
+
+// registers a function
+//   name = name of the function
+//   help = a short help string
+//   func = the entry point to the function
+int C_RegisterFunction(const char* name, const char* help, int (*func)(CCmdFuncPtr));
+
 
 #endif //__C_DISPATCH_H__

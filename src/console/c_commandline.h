@@ -33,13 +33,13 @@
 */
 
 class FConfigFile;
-struct osdfuncparm_t;
+struct CCmdFuncParm;
 
 
 // Class that can parse command lines
 class FCommandLine
 {
-	friend int OSD_RegisterFunction(const char* pszName, const char* pszDesc, int (*func)(osdfuncparm_t const* const));
+	friend int C_RegisterFunction(const char* name, const char* help, int (*func)(CCmdFuncParm const* const));
 public:
 	FCommandLine (const char *commandline, bool no_escapes = false);
 	~FCommandLine ();

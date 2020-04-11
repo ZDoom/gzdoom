@@ -58,24 +58,8 @@
 #include "c_buttons.h"
 
 // MACROS ------------------------------------------------------------------
+
 // TYPES -------------------------------------------------------------------
-
-class UnsafeExecutionScope
-{
-	const bool wasEnabled;
-
-public:
-	explicit UnsafeExecutionScope(const bool enable = true)
-		: wasEnabled(UnsafeExecutionContext)
-	{
-		UnsafeExecutionContext = enable;
-	}
-
-	~UnsafeExecutionScope()
-	{
-		UnsafeExecutionContext = wasEnabled;
-	}
-};
 
 class FDelayedCommand
 {
@@ -182,7 +166,6 @@ void C_ClearDelayedCommands()
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static long ParseCommandLine (const char *args, int *argc, char **argv, bool no_escapes);
 static FConsoleCommand *FindNameInHashTable (FConsoleCommand **table, const char *name, size_t namelen);
 static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *name, size_t namelen, FConsoleCommand **prev);
 
@@ -335,18 +318,6 @@ void C_DoCommand (const char *cmd, int keynum)
 			Printf ("Unknown command \"%.*s\"\n", (int)len, beg);
 		}
 	}
-}
-
-// This is only accessible to the special menu item to run CCMDs.
-DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
-{
-	if (CurrentMenu == nullptr) return 0;
-	PARAM_PROLOGUE;
-	PARAM_STRING(cmd);
-	PARAM_BOOL(unsafe);
-	UnsafeExecutionScope scope(unsafe);
-	C_DoCommand(cmd);
-	return 0;
 }
 
 void AddCommandString (const char *text, int keynum)
@@ -508,7 +479,7 @@ FConsoleCommand::FConsoleCommand (const char *name, CCmdRun runFunc)
 	int ag = strcmp (name, "kill");
 	if (ag == 0)
 		ag=0;
-	m_Name = copystring (name);
+	m_Name = name;
 
 	if (!AddToHash (Commands))
 		Printf ("Adding CCMD %s twice.\n", name);
@@ -522,7 +493,6 @@ FConsoleCommand::~FConsoleCommand ()
 	if (m_Next)
 		m_Next->m_Prev = m_Prev;
 	C_RemoveTabCommand (m_Name);
-	delete[] m_Name;
 }
 
 void FConsoleCommand::Run(FCommandLine &argv, int key)
@@ -620,7 +590,7 @@ FString BuildString (int argc, FString *argv)
 
 void FConsoleCommand::PrintCommand()
 {
-	Printf("%s\n", m_Name);
+	Printf("%s\n", m_Name.GetChars());
 }
 
 FString SubstituteAliasParams (FString &command, FCommandLine &args)
@@ -745,11 +715,11 @@ void FConsoleAlias::PrintAlias ()
 {
 	if (m_Command[0].IsNotEmpty())
 	{
-		Printf (TEXTCOLOR_YELLOW "%s : %s\n", m_Name, m_Command[0].GetChars());
+		Printf (TEXTCOLOR_YELLOW "%s : %s\n", m_Name.GetChars(), m_Command[0].GetChars());
 	}
 	if (m_Command[1].IsNotEmpty())
 	{
-		Printf (TEXTCOLOR_ORANGE "%s : %s\n", m_Name, m_Command[1].GetChars());
+		Printf (TEXTCOLOR_ORANGE "%s : %s\n", m_Name.GetChars(), m_Command[1].GetChars());
 	}
 }
 
@@ -846,7 +816,7 @@ CCMD (alias)
 				}
 				else
 				{
-					Printf ("%s is a normal command\n", alias->m_Name);
+					Printf ("%s is a normal command\n", alias->m_Name.GetChars());
 				}
 			}
 		}
@@ -862,7 +832,7 @@ CCMD (alias)
 				}
 				else
 				{
-					Printf ("%s is a normal command\n", alias->m_Name);
+					Printf ("%s is a normal command\n", alias->m_Name.GetChars());
 					alias = NULL;
 				}
 			}
@@ -952,7 +922,7 @@ void FConsoleAlias::Run (FCommandLine &args, int key)
 {
 	if (bRunning)
 	{
-		Printf ("Alias %s tried to recurse.\n", m_Name);
+		Printf ("Alias %s tried to recurse.\n", m_Name.GetChars());
 		return;
 	}
 
@@ -1158,6 +1128,37 @@ void C_SearchForPullins(FExecList *exec, const char *file, FCommandLine &argv)
 		}
 		exec->Pullins.Push(argv[i]);
 	}
+}
+
+static TArray<FConsoleCommand*> dynccmds; // This needs to be explicitly deleted before shutdown - the names in here may not be valid during the exit handler.
+//
+// C_RegisterFunction() -- dynamically register a CCMD.
+//
+int C_RegisterFunction(const char* pszName, const char* pszDesc, int (*func)(CCmdFuncPtr))
+{
+	FString nname = pszName;
+	auto callback = [nname, pszDesc, func](FCommandLine& args, int key)
+	{
+		if (args.argc() > 0) args.operator[](0);
+		CCmdFuncParm param = { args.argc() - 1, nname.GetChars(), (const char**)args._argv + 1, args.cmd };
+		if (func(&param) != CCMD_OK)
+		{
+			Printf("%s\n", pszDesc);
+		}
+	};
+	auto ccmd = new FConsoleCommand(pszName, callback);
+	dynccmds.Push(ccmd);
+	return 0;
+}
+
+
+void C_ClearDynCCmds()
+{
+	for (auto ccmd : dynccmds)
+	{
+		delete ccmd;
+	}
+	dynccmds.Clear();
 }
 
 CCMD (pullin)

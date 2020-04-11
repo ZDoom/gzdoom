@@ -55,6 +55,7 @@
 #include "menu/menu.h"
 #include "c_cvars.h"
 #include "c_bind.h"
+#include "c_dispatch.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -3390,6 +3391,18 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
 	}
 
 	self->UnbindACommand(cmd);
+	return 0;
+}
+
+// This is only accessible to the special menu item to run CCMDs.
+DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
+{
+	if (CurrentMenu == nullptr) return 0;
+	PARAM_PROLOGUE;
+	PARAM_STRING(cmd);
+	PARAM_BOOL(unsafe);
+	UnsafeExecutionScope scope(unsafe);
+	C_DoCommand(cmd);
 	return 0;
 }
 

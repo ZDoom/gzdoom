@@ -40,22 +40,20 @@
 #include <ctype.h>
 
 #include "templates.h"
-#include "doomtype.h"
 #include "cmdlib.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "m_argv.h"
-#include "g_game.h"
-#include "d_player.h"
+#include "gamestate.h"
 #include "configfile.h"
-#include "v_text.h"
+#include "printf.h"
+#include "c_cvars.h"
+#include "c_buttons.h"
+
+// Todo: Get rid of
 #include "d_net.h"
 #include "d_main.h"
-#include "serializer.h"
-#include "menu/menu.h"
-#include "vm.h"
-#include "g_levellocals.h"
-#include "c_buttons.h"
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -1089,7 +1087,7 @@ bool C_ExecFile (const char *file)
 		exec->ExecCommands();
 		if (exec->Pullins.Size() > 0)
 		{
-			Printf(TEXTCOLOR_BOLD "Notice: Pullin files were ignored.\n");
+			Printf(TEXTCOLOR_RED "Notice: Pullin files were ignored.\n");
 		}
 		delete exec;
 	}

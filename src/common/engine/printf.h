@@ -39,6 +39,12 @@ extern "C" int myvsnprintf(char* buffer, size_t count, const char* format, va_li
 #define TEXTCOLOR_SAPPHIRE		"\034Y"
 #define TEXTCOLOR_TEAL			"\034Z"
 
+#define TEXTCOLOR_NORMAL		"\034-"
+#define TEXTCOLOR_BOLD			"\034+"
+
+#define TEXTCOLOR_CHAT			"\034*"
+#define TEXTCOLOR_TEAMCHAT		"\034!"
+
 // game print flags
 enum
 {

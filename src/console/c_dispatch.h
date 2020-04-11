@@ -56,6 +56,7 @@ struct FExecList
 };
 
 extern bool ParsingKeyConf, UnsafeExecutionContext;
+extern	FString			StoredWarp;			// [RH] +warp at the command line
 
 
 extern bool CheckCheatmode (bool printmsg = true);

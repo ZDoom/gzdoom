@@ -46,11 +46,6 @@ struct FBrokenLines
 #define TEXTCOLOR_ESCAPE		'\034'
 #define TEXTCOLOR_ESCAPESTR		"\034"
 
-#define TEXTCOLOR_NORMAL		"\034-"
-#define TEXTCOLOR_BOLD			"\034+"
-
-#define TEXTCOLOR_CHAT			"\034*"
-#define TEXTCOLOR_TEAMCHAT		"\034!"
 
 TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const uint8_t *str, bool preservecolor = false);
 inline TArray<FBrokenLines> V_BreakLines (FFont *font, int maxwidth, const char *str, bool preservecolor = false)

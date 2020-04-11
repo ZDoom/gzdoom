@@ -201,6 +201,6 @@ TArray<uint8_t> FIMGZTexture::CreatePalettedPixels(int conversion)
 int FIMGZTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion);
-	else return CopyTranslatedPixels(bmp, GPalette.GetTranslation(TRANSLATION_Standard, STD_Grayscale)->Palette);
+	else return CopyTranslatedPixels(bmp, GPalette.GrayscaleMap.Palette);
 }
 

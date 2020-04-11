@@ -43,6 +43,7 @@
 
 PaletteContainer GPalette;
 FColorMatcher ColorMatcher;
+extern uint8_t IcePalette[16][3];
 
 //----------------------------------------------------------------------------
 //
@@ -90,6 +91,58 @@ void PaletteContainer::SetPalette(const uint8_t* colors, int transparent_index)
 	// translucency map.
 	WhiteIndex = BestColor((uint32_t*)RawColors, 255, 255, 255, 0, 255);
 	BlackIndex = BestColor((uint32_t*)RawColors, 0, 0, 0, 0, 255);
+
+	// The alphatexture translation. This is just a standard index as gray mapping and has no association with the palette.
+	auto remap = &GrayRamp;
+	remap->Remap[0] = 0;
+	remap->Palette[0] = 0;
+	for (int i = 1; i < 256; i++)
+	{
+		remap->Remap[i] = i;
+		remap->Palette[i] = PalEntry(255, i, i, i);
+	}
+
+	// Palette to grayscale ramp. For internal use only, because the remap does not map to the palette.
+	remap = &GrayscaleMap;
+	remap->Remap[0] = 0;
+	remap->Palette[0] = 0;
+	for (int i = 1; i < 256; i++)
+	{
+		int r = GPalette.BaseColors[i].r;
+		int g = GPalette.BaseColors[i].g;
+		int b = GPalette.BaseColors[i].b;
+		int v = (r * 77 + g * 143 + b * 37) >> 8;
+
+		remap->Remap[i] = v;
+		remap->Palette[i] = PalEntry(255, v, v, v);
+	}
+
+	for (int i = 0; i < 256; ++i)
+	{
+		GrayMap[i] = ColorMatcher.Pick(i, i, i);
+	}
+
+	// Create the ice translation table, based on Hexen's. Alas, the standard
+	// Doom palette has no good substitutes for these bluish-tinted grays, so
+	// they will just look gray unless you use a different PLAYPAL with Doom.
+
+	uint8_t IcePaletteRemap[16];
+	for (int i = 0; i < 16; ++i)
+	{
+		IcePaletteRemap[i] = ColorMatcher.Pick(IcePalette[i][0], IcePalette[i][1], IcePalette[i][2]);
+	}
+	remap = &IceMap;
+	remap->Remap[0] = 0;
+	remap->Palette[0] = 0;
+	for (int i = 1; i < 256; ++i)
+	{
+		int r = GPalette.BaseColors[i].r;
+		int g = GPalette.BaseColors[i].g;
+		int b = GPalette.BaseColors[i].b;
+		int v = (r * 77 + g * 143 + b * 37) >> 12;
+		remap->Remap[i] = IcePaletteRemap[v];
+		remap->Palette[i] = PalEntry(255, IcePalette[v][0], IcePalette[v][1], IcePalette[v][2]);
+	}
 }
 
 
@@ -275,8 +328,6 @@ void PaletteContainer::GenerateGlobalBrightmapFromColormap(const uint8_t *cmapda
 		if (GlobalBrightmap.Remap[i] == WhiteIndex) DPrintf(DMSG_NOTIFY, "Marked color %d as fullbright\n", i);
 	}
 }
-
-
 
 //----------------------------------------------------------------------------
 //
@@ -767,4 +818,5 @@ bool FRemapTable::AddColors(int start, int count, const uint8_t*colors, int tran
 	return true;
 
 }
+
 

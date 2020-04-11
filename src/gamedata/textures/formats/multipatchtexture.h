@@ -1,8 +1,10 @@
 #pragma once
 #include "sc_man.h"
 #include "palettecontainer.h"
-#include "textures.h"
+#include "textureid.h"
+#include "vectors.h"
 
+class FImageTexture;
 //==========================================================================
 //
 // TexPart is the data that will get passed to the final texture.

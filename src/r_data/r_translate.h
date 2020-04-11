@@ -29,8 +29,6 @@ enum
 enum EStandardTranslations
 {
 	STD_Ice = 7,
-	STD_Gray = 8,		// a 0-255 gray ramp
-	STD_Grayscale = 9,	// desaturated version of the palette.
 };
 
 #define MAX_ACS_TRANSLATIONS		65535
@@ -41,8 +39,6 @@ void R_InitTranslationTables (void);
 
 void R_BuildPlayerTranslation (int player);		// [RH] Actually create a player's translation table.
 void R_GetPlayerTranslation (int color, const struct FPlayerColorSet *colorset, class FPlayerSkin *skin, struct FRemapTable *table);
-
-extern const uint8_t IcePalette[16][3];
 
 int CreateBloodTranslation(PalEntry color);
 

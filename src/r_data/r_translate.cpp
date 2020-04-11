@@ -202,7 +202,7 @@ void R_InitTranslationTables ()
 
 	// The three standard translations from Doom or Heretic (seven for Strife),
 	// plus the generic ice translation.
-	FRemapTable stdremaps[10];
+	FRemapTable stdremaps[8];
 	for (i = 0; i < 8; ++i)
 	{
 		stdremaps[i].MakeIdentity();
@@ -302,53 +302,8 @@ void R_InitTranslationTables ()
 		}
 	}
 
-	// Create the ice translation table, based on Hexen's. Alas, the standard
-	// Doom palette has no good substitutes for these bluish-tinted grays, so
-	// they will just look gray unless you use a different PLAYPAL with Doom.
-
-	uint8_t IcePaletteRemap[16];
-	for (i = 0; i < 16; ++i)
-	{
-		IcePaletteRemap[i] = ColorMatcher.Pick (IcePalette[i][0], IcePalette[i][1], IcePalette[i][2]);
-	}
-	FRemapTable *remap = &stdremaps[STD_Ice];
-	remap->Remap[0] = 0;
-	remap->Palette[0] = 0;
-	for (i = 1; i < 256; ++i)
-	{
-		int r = GPalette.BaseColors[i].r;
-		int g = GPalette.BaseColors[i].g;
-		int b = GPalette.BaseColors[i].b;
-		int v = (r*77 + g*143 + b*37) >> 12;
-		remap->Remap[i] = IcePaletteRemap[v];
-		remap->Palette[i] = PalEntry(255, IcePalette[v][0], IcePalette[v][1], IcePalette[v][2]);
-	}
-
-	// The alphatexture translation. This is just a standard index as gray mapping.
-	remap = &stdremaps[STD_Gray];
-	remap->Remap[0] = 0;
-	remap->Palette[0] = 0;
-	for (i = 1; i < 256; i++)
-	{
-		remap->Remap[i] = i;
-		remap->Palette[i] = PalEntry(255, i, i, i);
-	}
-
-	// Palette to grayscale ramp. For internal use only, because the remap does not map to the palette.
-	remap = &stdremaps[STD_Grayscale];
-	remap->Remap[0] = 0;
-	remap->Palette[0] = 0;
-	for (i = 1; i < 256; i++)
-	{
-		int r = GPalette.BaseColors[i].r;
-		int g = GPalette.BaseColors[i].g;
-		int b = GPalette.BaseColors[i].b;
-		int v = (r * 77 + g * 143 + b * 37) >> 8;
-
-		remap->Remap[i] = v;
-		remap->Palette[i] = PalEntry(255, v, v, v);
-	}
-	GPalette.AddTranslation(TRANSLATION_Standard, stdremaps, 10);
+	stdremaps[7] = GPalette.IceMap; // this must also be inserted into the translation manager to be usable by sprites.
+	GPalette.AddTranslation(TRANSLATION_Standard, stdremaps, 8);
 
 }
 

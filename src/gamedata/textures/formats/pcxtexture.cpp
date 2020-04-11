@@ -366,8 +366,8 @@ TArray<uint8_t> FPCXTexture::CreatePalettedPixels(int conversion)
 			{
 			default:
 			case 1:
-				PaletteMap[0] = alphatex? 0 : ImageHelpers::GrayMap[0];
-				PaletteMap[1] = alphatex? 255 : ImageHelpers::GrayMap[255];
+				PaletteMap[0] = alphatex? 0 : GPalette.GrayMap[0];
+				PaletteMap[1] = alphatex? 255 : GPalette.GrayMap[255];
 				ReadPCX1bit (Pixels.Data(), lump, &header);
 				break;
 

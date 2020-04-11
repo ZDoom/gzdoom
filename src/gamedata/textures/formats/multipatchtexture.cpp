@@ -78,7 +78,7 @@ static uint8_t *GetBlendMap(PalEntry blend, uint8_t *blendwork)
 	switch (blend.a==0 ? int(blend) : -1)
 	{
 	case BLEND_ICEMAP:
-		return GPalette.TranslationToTable(TRANSLATION(TRANSLATION_Standard, 7))->Remap;
+		return GPalette.IceMap.Remap;
 
 	default:
 		if (blend >= BLEND_SPECIALCOLORMAP1 && blend < BLEND_SPECIALCOLORMAP1 + SpecialColormaps.Size())

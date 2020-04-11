@@ -79,6 +79,10 @@ public:
 
 	bool HasGlobalBrightmap;
 	FRemapTable GlobalBrightmap;
+	FRemapTable GrayRamp;
+	FRemapTable GrayscaleMap;
+	FRemapTable IceMap;				// This is used by the texture compositor so it must be globally accessible.
+	uint8_t GrayMap[256];
 
 private:
 	FMemArena remapArena;

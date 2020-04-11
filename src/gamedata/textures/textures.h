@@ -418,8 +418,6 @@ protected:
 
 	virtual void ResolvePatches() {}
 
-	static void InitGrayMap();
-
 	void SetScale(const DVector2 &scale)
 	{
 		Scale = scale;

@@ -1154,7 +1154,6 @@ void FTextureManager::Init()
 	DeleteAll();
 	SpriteFrames.Clear();
 	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
-	FTexture::InitGrayMap();
 
 	// Texture 0 is a dummy texture used to indicate "no texture"
 	auto nulltex = new FImageTexture(nullptr, "");

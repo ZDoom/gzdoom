@@ -112,7 +112,7 @@ public:
 			// even if it makes little sense.
 			for (int i = 0; i < 512; i++)
 			{
-				Pix[i] = ImageHelpers::GrayMap[Pixels[i]];
+				Pix[i] = GPalette.GrayMap[Pixels[i]];
 			}
 		}
 		return Pix;
@@ -120,7 +120,7 @@ public:
 
 	int CopyPixels(FBitmap *bmp, int conversion) override
 	{
-		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, GPalette.GetTranslation(TRANSLATION_Standard, STD_Gray)->Palette);
+		bmp->CopyPixelData(0, 0, Pixels, Width, Height, Height, 1, 0, GPalette.GrayRamp.Palette);
 		return 0;
 	}
 

@@ -259,7 +259,7 @@ TArray<uint8_t> FPatchTexture::CreatePalettedPixels(int conversion)
 int FPatchTexture::CopyPixels(FBitmap *bmp, int conversion)
 {
 	if (!isalpha) return FImageSource::CopyPixels(bmp, conversion);
-	else return CopyTranslatedPixels(bmp, GPalette.GetTranslation(TRANSLATION_Standard, STD_Grayscale)->Palette);
+	else return CopyTranslatedPixels(bmp, GPalette.GrayscaleMap.Palette);
 }
 
 //==========================================================================

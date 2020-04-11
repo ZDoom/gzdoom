@@ -40,26 +40,22 @@
 #include <stdint.h>
 #include "tarray.h"
 #include "colormatcher.h"
-#include "v_palette.h"
+#include "bitmap.h"
+#include "palettecontainer.h"
 #include "v_colortables.h"
-#include "textures/bitmap.h"
-#include "r_data/renderstyle.h"
-#include "r_data/r_translate.h"
 
 namespace ImageHelpers
 {
-	extern uint8_t GrayMap[256];
-
 	// Helpers for creating paletted images.
 	inline uint8_t *GetRemap(bool wantluminance, bool srcisgrayscale = false)
 	{
 		if (wantluminance)
 		{
-			return GPalette.GetTranslation(TRANSLATION_Standard, srcisgrayscale ? STD_Gray : STD_Grayscale)->Remap;
+			return srcisgrayscale ? GPalette.GrayRamp.Remap : GPalette.GrayscaleMap.Remap;
 		}
 		else
 		{
-			return srcisgrayscale ? GrayMap : GPalette.Remap;
+			return srcisgrayscale ? GPalette.GrayMap : GPalette.Remap;
 		}
 	}
 	

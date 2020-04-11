@@ -57,8 +57,6 @@ uint32_t Col2RGB8_2[63][256]; // this array's second dimension is called up by p
 ColorTable32k RGB32k;
 ColorTable256k RGB256k;
 
-FColorMatcher ColorMatcher;
-
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
 

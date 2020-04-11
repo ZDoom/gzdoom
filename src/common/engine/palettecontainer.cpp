@@ -40,10 +40,8 @@
 #include "templates.h"
 #include "palettecontainer.h"
 
-#include "v_palette.h"
-
-
 PaletteContainer GPalette;
+FColorMatcher ColorMatcher;
 
 //----------------------------------------------------------------------------
 //
@@ -227,6 +225,21 @@ static bool IndexOutOfRange(const int start1, const int end1, const int start2, 
 {
 	const bool outOfRange = IndexOutOfRange(start1, end1);
 	return IndexOutOfRange(start2, end2) || outOfRange;
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+bool FRemapTable::operator==(const FRemapTable& o)
+{
+	// Two translations are identical when they have the same amount of colors
+	// and the palette values for both are identical.
+	if (&o == this) return true;
+	if (o.NumEntries != NumEntries) return false;
+	return !memcmp(o.Palette, Palette, NumEntries * sizeof(*Palette));
 }
 
 //----------------------------------------------------------------------------

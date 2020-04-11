@@ -80,21 +80,6 @@ const uint8_t IcePalette[16][3] =
 //
 //----------------------------------------------------------------------------
 
-bool FRemapTable::operator==(const FRemapTable &o)
-{
-	// Two translations are identical when they have the same amount of colors
-	// and the palette values for both are identical.
-	if (&o == this) return true;
-	if (o.NumEntries != NumEntries) return false;
-	return !memcmp(o.Palette, Palette, NumEntries * sizeof(*Palette));
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
 static void SerializeRemap(FSerializer &arc, FRemapTable &remap)
 {
 	arc("numentries", remap.NumEntries);

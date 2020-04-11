@@ -1,13 +1,12 @@
+#pragma once
 //-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
-//	WAD I/O functions.
+//	File system  I/O functions.
 //
 //-----------------------------------------------------------------------------
 
 
-#ifndef __W_WAD__
-#define __W_WAD__
 
 #include "files.h"
 #include "tarray.h"
@@ -72,6 +71,7 @@ public:
 	void InitMultipleFiles (TArray<FString> &filenames, bool quiet = false, LumpFilterInfo* filter = nullptr);
 	void AddFile (const char *filename, FileReader *wadinfo, bool quiet, LumpFilterInfo* filter);
 	int CheckIfResourceFileLoaded (const char *name) noexcept;
+	void AddAdditionalFile(const char* filename, FileReader* wadinfo = NULL) {}
 
 	const char *GetResourceFileName (int filenum) const noexcept;
 	const char *GetResourceFileFullName (int wadnum) const noexcept;
@@ -100,7 +100,24 @@ public:
 	{
 		return CheckNumForFullName(name);
 	}
+
+	bool FileExists(const char* name)
+	{
+		return FindFile(name) >= 0;
+	}
+
+	bool FileExists(const FString& name)
+	{
+		return FindFile(name) >= 0;
+	}
+
+	bool FileExists(const std::string& name)
+	{
+		return FindFile(name.c_str()) >= 0;
+	}
+
 	LumpShortName& GetShortName(int i);	// may only be called before the hash chains are set up.
+	void RenameFile(int num, const char* fn);
 	bool CreatePathlessCopy(const char* name, int id, int flags);
 
 	inline int CheckNumForFullName(const FString &name, bool trynormal = false, int namespc = ns_global) { return CheckNumForFullName(name.GetChars(), trynormal, namespc); }
@@ -116,17 +133,25 @@ public:
 	FileData ReadFile (int lump);
 	FileData ReadFile (const char *name) { return ReadFile (GetNumForName (name)); }
 
+	inline TArray<uint8_t> LoadFile(const char* name, int padding = 0)
+	{
+		auto lump = FindFile(name);
+		if (lump < 0) return TArray<uint8_t>();
+		return GetFileData(lump, padding);
+	}
+
 	FileReader OpenFileReader(int lump);		// opens a reader that redirects to the containing file's one.
 	FileReader ReopenFileReader(int lump, bool alwayscache = false);		// opens an independent reader.
 	FileReader OpenFileReader(const char* name);
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
+	int FindLumpFullName(const char* name, int* lastlump, bool noext = false);
 	bool CheckFileName (int lump, const char *name);	// [RH] True if lump's name == name
 
 	int FindFileWithExtensions(const char* name, const char* const* exts, int count);
-	int FindResource(int resid, const char* type, int filenum) const noexcept;
-	int GetResource(int resid, const char* type, int filenum) const;
+	int FindResource(int resid, const char* type, int filenum = -1) const noexcept;
+	int GetResource(int resid, const char* type, int filenum = -1) const;
 
 
 	static uint32_t LumpNameHash (const char *name);		// [RH] Create hash key from an 8-char name
@@ -163,6 +188,19 @@ public:
 	FileReader* GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 	void InitHashChains();
 
+	// Blood stuff
+	FResourceLump* Lookup(const char* name, const char* type);
+	FResourceLump* Lookup(unsigned int id, const char* type);
+
+	FResourceLump* GetFileAt(int no);
+
+	const void* Lock(int lump);
+	void Unlock(int lump);
+	const void* Get(int lump);
+	static const void* Lock(FResourceLump* lump);
+	static void Unlock(FResourceLump* lump);
+	static const void* Load(FResourceLump* lump);;
+
 protected:
 
 	struct LumpRecord;
@@ -197,4 +235,3 @@ private:
 
 extern FileSystem fileSystem;
 
-#endif

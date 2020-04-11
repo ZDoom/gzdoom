@@ -679,7 +679,7 @@ int FileSystem::FindResource (int resid, const char *type, int filenum) const no
 {
 	uint32_t i;
 
-	if (type == NULL)
+	if (type == NULL || resid < 0)
 	{
 		return -1;
 	}
@@ -885,15 +885,22 @@ void FileSystem::InitHashChains (void)
 
 //==========================================================================
 //
-// may only be called before the hash chains are set up.
+// should only be called before the hash chains are set up.
+// If done later this needs rehashing.
 //
 //==========================================================================
 
 LumpShortName& FileSystem::GetShortName(int i)
 {
-	if (Hashes.Size()) I_FatalError("Attempt to modify file system");	// This may ONLY be called in the RenameSprites callback.
 	if ((unsigned)i >= NumEntries) I_Error("GetShortName: Invalid index");
 	return FileInfo[i].shortName;
+}
+
+void FileSystem::RenameFile(int num, const char* newfn)
+{
+	if ((unsigned)num >= NumEntries) I_Error("RenameFile: Invalid index");
+	FileInfo[num].longName = newfn;
+	// This does not alter the short name - call GetShortname to do that!
 }
 
 //==========================================================================
@@ -1002,6 +1009,58 @@ int FileSystem::FindLumpMulti (const char **names, int *lastlump, bool anyns, in
 		}
 		lump_p++;
 	}
+
+	*lastlump = NumEntries;
+	return -1;
+}
+
+//==========================================================================
+//
+// W_FindLump
+//
+// Find a named lump. Specifically allows duplicates for merging of e.g.
+// SNDINFO lumps.
+//
+//==========================================================================
+
+int FileSystem::FindLumpFullName(const char* name, int* lastlump, bool noext)
+{
+	assert(lastlump != NULL && *lastlump >= 0);
+	auto lump_p = &FileInfo[*lastlump];
+
+	if (!noext)
+	{
+		while (lump_p < &FileInfo[NumEntries])
+		{
+			if (!stricmp(name, lump_p->longName))
+			{
+				int lump = int(lump_p - &FileInfo[0]);
+				*lastlump = lump + 1;
+				return lump;
+			}
+			lump_p++;
+		}
+	}
+	else
+	{
+		auto len = strlen(name);
+		while (lump_p < &FileInfo[NumEntries])
+		{
+			auto res = strnicmp(name, lump_p->longName, len);
+			if (res == 0)
+			{
+				auto p = lump_p->longName.GetChars() + len;
+				if (*p == 0 || (*p == '.' && strpbrk(p + 1, "./") == 0))
+				{
+					int lump = int(lump_p - &FileInfo[0]);
+					*lastlump = lump + 1;
+					return lump;
+				}
+			}
+			lump_p++;
+		}
+	}
+
 
 	*lastlump = NumEntries;
 	return -1;
@@ -1563,4 +1622,86 @@ static void PrintLastError ()
 	Printf (TEXTCOLOR_RED "  %s\n", strerror(errno));
 }
 #endif
+
+//==========================================================================
+//
+// NBlood style lookup functions
+//
+//==========================================================================
+
+FResourceLump *FileSystem::Lookup(const char *name, const char *type)
+{
+	FStringf fname("%s.%s", name, type);
+	auto lump = FindFile(fname);
+	if (lump >= 0) return FileInfo[lump].lump;
+	else return nullptr;
+}
+
+FResourceLump *FileSystem::Lookup(unsigned int id, const char *type)
+{
+	auto lump = FindResource(id, type);
+	if (lump >= 0) return FileInfo[lump].lump;
+	else return nullptr;
+}
+FResourceLump* FileSystem::GetFileAt(int no)
+{
+	return FileInfo[no].lump;
+}
+
+//==========================================================================
+//
+// Stand-ins for Blood's resource class
+//
+//==========================================================================
+
+const void *FileSystem::Lock(int lump)
+{
+	if ((size_t)lump >= FileInfo.Size()) return nullptr;
+	auto lumpp = FileInfo[lump].lump;
+	return lumpp->Lock();
+}
+
+void FileSystem::Unlock(int lump)
+{
+	if ((size_t)lump >= FileInfo.Size()) return;
+	auto lumpp = FileInfo[lump].lump;
+	lumpp->Unlock();
+}
+
+const void *FileSystem::Get(int lump)
+{
+	if ((size_t)lump >= FileInfo.Size()) return nullptr;
+	auto lumpp = FileInfo[lump].lump;
+	auto p = lumpp->Lock();
+	lumpp->RefCount = INT_MAX/2; // lock forever.
+	return p;
+}
+
+//==========================================================================
+//
+// Stand-ins for Blood's resource class
+//
+//==========================================================================
+
+const void *FileSystem::Lock(FResourceLump *lump)
+{
+	if (lump) return lump->Lock();
+	else return nullptr;
+}
+
+void FileSystem::Unlock(FResourceLump *lump)
+{
+	if (lump) lump->Unlock();
+}
+
+const void *FileSystem::Load(FResourceLump *lump)
+{
+	if (lump)
+	{
+		auto p = lump->Lock();
+		lump->RefCount = INT_MAX/2; // lock forever.
+		return p;
+	}
+	else return nullptr;
+}
 

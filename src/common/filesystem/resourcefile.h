@@ -107,7 +107,7 @@ public:
 	virtual FileReader *GetReader();
 	virtual FileReader NewReader();
 	virtual int GetFileOffset() { return -1; }
-	virtual int GetIndexNum() const { return 0; }
+	virtual int GetIndexNum() const { return -1; }
 	virtual int GetNamespace() const { return 0; }
 	void LumpNameSetup(FString iname);
 	void CheckEmbedded();

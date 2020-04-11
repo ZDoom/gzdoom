@@ -27,7 +27,7 @@
 #include "m_random.h"
 #include "f_wipe.h"
 #include "templates.h"
-#include "textures/bitmap.h"
+#include "bitmap.h"
 #include "hw_material.h"
 
 class FBurnTexture : public FTexture

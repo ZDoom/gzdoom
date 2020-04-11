@@ -608,6 +608,7 @@ file( GLOB HEADER_FILES
 	common/fonts/*.h
 	common/objects/*.h
 	common/filesystem/*.h
+	common/textures/*.h
 	common/textures/hires/hqnx/*.h
 	common/textures/hires/hqnx_asm/*.h
 	common/textures/hires/xbr/*.h
@@ -1241,6 +1242,7 @@ include_directories( .
 	common/audio/music
 	common/2d
 	common/thirdparty
+	common/textures
 	common/textures/formats
 	common/textures/hires
 	common/filesystem

@@ -36,8 +36,9 @@
 #ifndef __BITMAP_H__
 #define __BITMAP_H__
 
-#include "doomtype.h"
+#include "basics.h"
 #include "templates.h"
+#include "palentry.h"
 
 struct FCopyInfo;
 

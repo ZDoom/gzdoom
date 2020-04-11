@@ -31,7 +31,7 @@
 #include "r_swscene.h"
 #include "filesystem.h"
 #include "d_player.h"
-#include "textures/bitmap.h"
+#include "bitmap.h"
 #include "swrenderer/scene/r_light.h"
 #include "image.h"
 #include "engineerrors.h"

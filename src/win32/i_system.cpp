@@ -84,7 +84,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "i_system.h"
-#include "textures/bitmap.h"
+#include "bitmap.h"
 
 // MACROS ------------------------------------------------------------------
 

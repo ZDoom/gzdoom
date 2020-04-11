@@ -29,7 +29,7 @@
 #include "filesystem.h"
 #include "g_level.h"
 #include "colormatcher.h"
-#include "textures/bitmap.h"
+#include "bitmap.h"
 #include "g_levellocals.h"
 #include "models.h"
 #include "image.h"

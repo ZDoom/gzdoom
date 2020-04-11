@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include "tarray.h"
-#include "textures/bitmap.h"
+#include "bitmap.h"
 #include "memarena.h"
 
 class FImageSource;

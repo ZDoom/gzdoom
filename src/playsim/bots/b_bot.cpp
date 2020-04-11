@@ -186,7 +186,7 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 		players[i].mo = nullptr;
 	}
 	botinfo_t *bot = botinfo;
-	while (bot && stricmp (players[i].userinfo.GetName(), bot->name))
+	while (bot && stricmp (players[i].userinfo.GetName(), bot->Name.GetChars()))
 		bot = bot->next;
 	if (bot)
 	{
@@ -237,7 +237,7 @@ CCMD (listbots)
 
 	while (thebot)
 	{
-		Printf ("%s%s\n", thebot->name, thebot->inuse == BOTINUSE_Yes ? " (active)" : "");
+		Printf ("%s%s\n", thebot->Name.GetChars(), thebot->inuse == BOTINUSE_Yes ? " (active)" : "");
 		thebot = thebot->next;
 		count++;
 	}

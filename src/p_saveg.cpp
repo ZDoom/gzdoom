@@ -847,7 +847,7 @@ void FLevelLocals::CopyPlayer(player_t *dst, player_t *src, const char *name)
 	if (dst->Bot != nullptr)
 	{
 		botinfo_t *thebot = BotInfo.botinfo;
-		while (thebot && stricmp(name, thebot->name))
+		while (thebot && thebot->Name.CompareNoCase(name))
 		{
 			thebot = thebot->next;
 		}

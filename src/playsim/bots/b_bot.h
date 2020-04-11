@@ -72,8 +72,8 @@ enum
 struct botinfo_t
 {
 	botinfo_t *next;
-	char *name;
-	char *info;
+	FString Name;
+	FString Info;
 	botskill_t skill;
 	int inuse;
 	int lastteam;

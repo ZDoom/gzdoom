@@ -1018,6 +1018,7 @@ set (PCH_SOURCES
 	gamedata/resourcefiles/file_wad.cpp
 	gamedata/resourcefiles/file_zip.cpp
 	gamedata/resourcefiles/file_pak.cpp
+	gamedata/resourcefiles/file_whres.cpp
 	gamedata/resourcefiles/file_directory.cpp
 	gamedata/resourcefiles/resourcefile.cpp
 	gamedata/textures/animations.cpp

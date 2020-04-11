@@ -143,7 +143,6 @@ xx(ArtiPoisonBag3)
 // Strife quests
 xx(QuestItem)
 xx(Sigil)
-xx(ScriptedMarine)
 xx(GiveSigilPiece)
 xx(SetWeapon)
 xx(SetSprite)
@@ -151,43 +150,9 @@ xx(SetSprite)
 // Armor
 xx(BasicArmor)
 
-// The Wings of Wrath
-xx(ArtiFly)
-
 // Doom ammo types
 xx(Clip)
-xx(Shell)
-xx(RocketAmmo)
-xx(Cell)
 
-// Hexen Mana
-xx(Mana1)
-xx(Mana2)
-
-// Hexen's fourth weapons
-xx(FWeapQuietus)
-xx(CWeapWraithverge)
-xx(MWeapBloodscourge)
-
-// Misc Hexen classes
-xx(LightningZap)
-
-// Ammo and weapon names for the Strife status bar
-xx(ClipOfBullets)
-xx(PoisonBolts)
-xx(ElectricBolts)
-xx(HEGrenadeRounds)
-xx(PhosphorusGrenadeRounds)
-xx(MiniMissiles)
-xx(EnergyPod)
-
-xx(StrifeCrossbow)
-xx(AssaultGun)
-xx(FlameThrower)
-xx(MiniMissileLauncher)
-xx(StrifeGrenadeLauncher)
-xx(Mauler)
-xx(BackpackItem)
 xx(PuzzleItem)
 xx(PuzzleItemNumber)
 xx(HealthPickup)
@@ -215,27 +180,12 @@ xx(StateProvider)
 xx(CallTryPickup)
 xx(QuestItem25)
 xx(QuestItem28)
-xx(QuestItem29)
 xx(PowerDoubleFiringSpeed)
 xx(PowerInfiniteAmmo)
 xx(PowerBuddha)
 
-xx(AcolyteBlue)
-xx(SpectralLightningV1)
-xx(SpectralLightningV2)
 xx(TeleportDest)
 xx(TeleportDest2)
-
-// Strife's spectres
-xx(AlienSpectre1)
-xx(AlienSpectre2)
-xx(AlienSpectre3)
-xx(AlienSpectre4)
-xx(AlienSpectre5)
-xx(Oracle)
-
-xx(Chicken)
-xx(Pig)
 
 // Standard animator names.
 xx(Spawn)
@@ -717,6 +667,7 @@ xx(Next)
 xx(Prev)
 xx(Children)
 xx(Owner)
+xx(FlameThrower)
 
 xx(HealthFloor)
 xx(HealthCeiling)
@@ -772,6 +723,27 @@ xx(Quitmenu)
 xx(Savemenu)
 xx(Playermenu)
 xx(EndGameMenu)
+xx(IngameMenu)
+xx(HelpMenu)
+xx(SoundMenu)
+xx(ConfirmPlayerReset)
+xx(HuntMenu)
+xx(WeaponMenu)
+xx(TargetMenu)
+xx(UsermapMenu)
+xx(EngineCredits)
+xx(EngineCredits2)
+xx(CreditsMenu)
+xx(MultiMenu)
+
+xx(CustomGameMenu)
+xx(CustomSubMenu1)
+xx(CustomSubMenu2)
+xx(CustomSubMenu3)
+xx(CustomSubMenu4)
+xx(CustomSubMenu5)
+xx(CustomSubMenu6)
+xx(CustomSubMenu7)
 
 xx(Playerbox)
 xx(Team)
@@ -1097,3 +1069,4 @@ xx(PlayerColors)
 xx(PlayerSkin)
 xx(NewPlayerMenu)
 xx(AltHud)
+

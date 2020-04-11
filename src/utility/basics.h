@@ -1,12 +1,8 @@
-#ifndef __BASICTYPES_H
-#define __BASICTYPES_H
+#ifndef __BASICS_H
+#define __BASICS_H
 
 #include <stddef.h>
 #include <stdint.h>
-#include "cmdlib.h"
-
-typedef uint32_t				BITFIELD;
-typedef int						INTBOOL;
 
 //
 // fixed point, 32bit as 16.16.
@@ -46,4 +42,6 @@ typedef uint32_t			angle_t;
 #endif
 #endif
 
+using INTBOOL = int;
+using BITFIELD = uint32_t;
 #endif

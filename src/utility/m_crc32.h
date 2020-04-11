@@ -33,7 +33,7 @@
 */
 
 #include <zlib.h>
-#include "basictypes.h"
+#include "basics.h"
 
 // zlib includes some CRC32 stuff, so just use that
 

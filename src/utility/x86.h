@@ -1,7 +1,7 @@
 #ifndef X86_H
 #define X86_H
 
-#include "basictypes.h"
+#include "basics.h"
 
 struct CPUInfo	// 92 bytes
 {

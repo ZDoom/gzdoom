@@ -28,6 +28,7 @@
 #include "tarray.h"
 #include "name.h"
 #include "zstring.h"
+#include "cmdlib.h"
 
 class PClassActor;
 typedef TMap<int, PClassActor *> FClassMap;
@@ -51,7 +52,7 @@ typedef TMap<int, PClassActor *> FClassMap;
 #define FORCE_PACKED
 #endif
 
-#include "basictypes.h"
+#include "basics.h"
 
 extern bool batchrun;
 

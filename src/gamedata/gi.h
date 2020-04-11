@@ -34,7 +34,7 @@
 #ifndef __GI_H__
 #define __GI_H__
 
-#include "basictypes.h"
+#include "basics.h"
 #include "zstring.h"
 
 // Flags are not user configurable and only depend on the standard IWADs

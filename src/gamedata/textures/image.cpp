@@ -39,6 +39,7 @@
 #include "image.h"
 #include "w_wad.h"
 #include "files.h"
+#include "cmdlib.h"
 
 FMemArena FImageSource::ImageArena(32768);
 TArray<FImageSource *>FImageSource::ImageForLump;

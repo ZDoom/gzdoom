@@ -76,8 +76,8 @@ public:
 protected:
 	virtual void WriteCommentHeader (FileWriter *file) const;
 
-	virtual char *ReadLine (char *string, int n, void *file) const;
-	bool ReadConfig (void *file);
+	uint8_t *ReadLine (TArray<uint8_t> &string, FileReader *file) const;
+	bool ReadConfig (FileReader *file);
 	static const char *GenerateEndTag(const char *value);
 	void RenameSection(const char *oldname, const char *newname) const;
 
@@ -103,7 +103,7 @@ private:
 		//char Name[1];	// + length of name
 	};
 
-	FConfigSection *Sections;
+	FConfigSection* Sections = nullptr;
 	FConfigSection **LastSectionPtr;
 	FConfigSection *CurrentSection;
 	FConfigEntry *CurrentEntry;
@@ -113,7 +113,7 @@ private:
 	FConfigEntry *FindEntry (FConfigSection *section, const char *key) const;
 	FConfigSection *NewConfigSection (const char *name);
 	FConfigEntry *NewConfigEntry (FConfigSection *section, const char *key, const char *value);
-	FConfigEntry *ReadMultiLineValue (void *file, FConfigSection *section, const char *key, const char *terminator);
+	FConfigEntry *ReadMultiLineValue (FileReader *file, FConfigSection *section, const char *key, const char *terminator);
 	void SetSectionNote (FConfigSection *section, const char *note);
 
 public:

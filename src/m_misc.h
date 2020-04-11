@@ -24,7 +24,7 @@
 #ifndef __M_MISC__
 #define __M_MISC__
 
-#include "basictypes.h"
+#include "basics.h"
 #include "zstring.h"
 
 class FConfigFile;

@@ -36,6 +36,7 @@
 #include "name.h"
 #include "c_dispatch.h"
 #include "c_console.h"
+#include "cmdlib.h"
 
 // MACROS ------------------------------------------------------------------
 

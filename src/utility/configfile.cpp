@@ -36,14 +36,10 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "doomtype.h"
 #include "configfile.h"
 #include "files.h"
-#include "m_random.h"
 
 #define READBUFFERSIZE	256
-
-static FRandom pr_endtag;
 
 //====================================================================
 //
@@ -621,15 +617,15 @@ void FConfigFile::LoadConfigFile ()
 //
 //====================================================================
 
-bool FConfigFile::ReadConfig (void *file)
+bool FConfigFile::ReadConfig (FileReader *file)
 {
-	uint8_t readbuf[READBUFFERSIZE];
+	TArray<uint8_t> readbuf;
 	FConfigSection *section = NULL;
 	ClearConfig ();
 
-	while (ReadLine ((char*)readbuf, READBUFFERSIZE, file) != NULL)
+	while (ReadLine (readbuf, file) != NULL)
 	{
-		uint8_t *start = readbuf;
+		uint8_t *start = readbuf.Data();
 		uint8_t *equalpt;
 		uint8_t *endpt;
 
@@ -643,25 +639,17 @@ bool FConfigFile::ReadConfig (void *file)
 		{
 			continue;
 		}
-		// Do not process tail of long line
-		const bool longline = (READBUFFERSIZE - 1) == strlen((char*)readbuf) && '\n' != readbuf[READBUFFERSIZE - 2];
-		if (longline)
+
+		// Remove white space at end of line
+		endpt = start + strlen ((char*)start) - 1;
+		while (endpt > start && *endpt <= ' ')
 		{
-			endpt = start + READBUFFERSIZE - 2;
+			endpt--;
 		}
-		else
-		{
-			// Remove white space at end of line
-			endpt = start + strlen ((char*)start) - 1;
-			while (endpt > start && *endpt <= ' ')
-			{
-				endpt--;
-			}
-			// Remove line feed '\n' character
-			endpt[1] = 0;
-			if (endpt <= start)
-				continue;	// Nothing here
-		}
+		// Remove line feed '\n' character
+		endpt[1] = 0;
+		if (endpt <= start)
+			continue;	// Nothing here
 
 		if (*start == '[')
 		{ // Section header
@@ -697,31 +685,6 @@ bool FConfigFile::ReadConfig (void *file)
 				{
 					ReadMultiLineValue (file, section, (char*)start, (char*)whiteprobe + 3);
 				}
-				else if (longline)
-				{
-					const FString key = (char*)start;
-					FString value = (char*)whiteprobe;
-					
-					while (ReadLine ((char*)readbuf, READBUFFERSIZE, file) != NULL)
-					{
-						const size_t endpos = (0 == readbuf[0]) ? 0 : (strlen((char*)readbuf) - 1);
-						const bool endofline = '\n' == readbuf[endpos];
-						
-						if (endofline)
-						{
-							readbuf[endpos] = 0;
-						}
-						
-						value += (char*)readbuf;
-						
-						if (endofline)
-						{
-							break;
-						}
-					}
-					
-					NewConfigEntry (section, key.GetChars(), value.GetChars());
-				}
 				else
 				{
 					NewConfigEntry (section, (char*)start, (char*)whiteprobe);
@@ -746,18 +709,18 @@ bool FConfigFile::ReadConfig (void *file)
 //
 //====================================================================
 
-FConfigFile::FConfigEntry *FConfigFile::ReadMultiLineValue(void *file, FConfigSection *section, const char *key, const char *endtag)
+FConfigFile::FConfigEntry *FConfigFile::ReadMultiLineValue(FileReader *file, FConfigSection *section, const char *key, const char *endtag)
 {
-	char readbuf[READBUFFERSIZE];
+	TArray<uint8_t> readbuf;
 	FString value;
 	size_t endlen = strlen(endtag);
 
 	// Keep on reading lines until we reach a line that matches >>>endtag
-	while (ReadLine(readbuf, READBUFFERSIZE, file) != NULL)
+	while (ReadLine(readbuf, file) != NULL)
 	{
 		// Does the start of this line match the endtag?
 		if (readbuf[0] == '>' && readbuf[1] == '>' && readbuf[2] == '>' &&
-			strncmp(readbuf + 3, endtag, endlen) == 0)
+			strncmp((char*)readbuf.Data() + 3, endtag, endlen) == 0)
 		{ // Is there nothing but line break characters after the match?
 			size_t i;
 			for (i = endlen + 3; readbuf[i] != '\0'; ++i)
@@ -785,9 +748,28 @@ FConfigFile::FConfigEntry *FConfigFile::ReadMultiLineValue(void *file, FConfigSe
 //
 //====================================================================
 
-char *FConfigFile::ReadLine (char *string, int n, void *file) const
+uint8_t *FConfigFile::ReadLine(TArray<uint8_t>& string, FileReader* file) const
 {
-	return ((FileReader *)file)->Gets (string, n);
+	uint8_t byte;
+	string.Clear();
+	while (file->Read(&byte, 1))
+	{
+		if (byte == 0)
+		{
+			break;
+		}
+		if (byte != '\r')
+		{
+			string.Push(byte);
+			if (byte == '\n')
+			{
+				break;
+			}
+		}
+	}
+	if (string.Size() == 0) return nullptr;
+	string.Push(0);
+	return string.Data();
 }
 
 //====================================================================
@@ -863,11 +845,10 @@ const char *FConfigFile::GenerateEndTag(const char *value)
 	// isn't in the value. We create the sequences by generating two
 	// 64-bit random numbers and Base64 encoding the first 15 bytes
 	// from them.
-	union { uint64_t rand_num[2]; uint8_t rand_bytes[16]; };
+	union { uint16_t rand_num[8]; uint8_t rand_bytes[16]; };
 	do
 	{
-		rand_num[0] = pr_endtag.GenRand64();
-		rand_num[1] = pr_endtag.GenRand64();
+		for (auto &r : rand_num) r = (uint16_t)rand();
 
 		for (int i = 0; i < 5; ++i)
 		{

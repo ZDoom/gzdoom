@@ -36,7 +36,7 @@
 #define __M_RANDOM__
 
 #include <stdio.h>
-#include "basictypes.h"
+#include "basics.h"
 #include "sfmt/SFMT.h"
 
 class FSerializer;

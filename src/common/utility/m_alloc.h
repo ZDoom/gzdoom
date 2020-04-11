@@ -38,10 +38,12 @@
 #include <string.h>
 
 #if defined(__APPLE__)
+#include <malloc/malloc.h>
 #define _msize(p)				malloc_size(p)
 #elif defined(__solaris__) || defined(__OpenBSD__)
 #define _msize(p)				(*((size_t*)(p)-1))
 #elif !defined(_WIN32)
+#include <malloc.h>
 #define _msize(p)				malloc_usable_size(p)	// from glibc/FreeBSD
 #endif
 

@@ -69,7 +69,7 @@ class USDFParser : public UDMFParserBase
 			PClassActor *cls = PClass::FindActor(CheckString(key));
 			if (cls == nullptr)
 			{
-				sc.ScriptMessage("Unknown actor class '%s'", key);
+				sc.ScriptMessage("Unknown actor class '%s'", key.GetChars());
 				return nullptr;
 			}
 			type = cls;

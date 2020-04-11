@@ -43,6 +43,11 @@
 #include <sys/stat.h>
 #include <time.h>
 
+#ifndef _WIN32
+#include <pwd.h>
+#include <unistd.h>
+#endif
+
 /*
 progdir will hold the path up to the game directory, including the slash
 

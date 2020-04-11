@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <type_traits>
 #include "doomtype.h"
-
+#include "m_alloc.h"
 #include "vectors.h"
 
 class PClass;

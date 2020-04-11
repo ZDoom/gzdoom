@@ -2061,6 +2061,7 @@ FSoundChan *OpenALSoundRenderer::FindLowestChannel()
 	return lowest;
 }
 
+#endif // NO_OPENAL
 
 #include "menu/menu.h"
 
@@ -2116,5 +2117,3 @@ void I_BuildALResamplersList(FOptionValues* opt)
 #endif
 }
 
-
-#endif // NO_OPENAL

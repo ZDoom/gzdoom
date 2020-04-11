@@ -3,6 +3,8 @@
 #ifndef __RESFILE_H
 #define __RESFILE_H
 
+#include <limits.h>
+
 #include "files.h"
 
 struct LumpFilterInfo

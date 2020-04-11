@@ -1131,6 +1131,7 @@ set (PCH_SOURCES
 	common/filesystem/file_whres.cpp
 	common/filesystem/file_directory.cpp
 	common/filesystem/resourcefile.cpp
+	common/engine/stats.cpp
 	common/engine/sc_man.cpp
 	common/engine/palettecontainer.cpp
 	common/engine/stringtable.cpp
@@ -1165,7 +1166,6 @@ set (PCH_SOURCES
 	utility/nodebuilder/nodebuild_extract.cpp
 	utility/nodebuilder/nodebuild_gl.cpp
 	utility/nodebuilder/nodebuild_utility.cpp
-	utility/stats.cpp
 	utility/m_bbox.cpp
 	utility/v_collection.cpp
 )

@@ -29,7 +29,7 @@
 #include "actor.h"
 #include "i_time.h"
 #include "g_game.h"
-#include "gamedata/fonts/v_text.h"
+#include "v_text.h"
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"

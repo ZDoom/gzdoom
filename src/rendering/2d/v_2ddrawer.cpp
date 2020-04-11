@@ -34,6 +34,8 @@
 #include "vm.h"
 #include "c_buttons.h"
 
+F2DDrawer* twod;
+
 EXTERN_CVAR(Float, transsouls)
 
 IMPLEMENT_CLASS(DShape2DTransform, false, false)

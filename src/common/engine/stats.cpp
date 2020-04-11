@@ -32,11 +32,13 @@
 **
 */
 
-#include "doomtype.h"
 #include "stats.h"
 #include "v_video.h"
 #include "v_text.h"
+#include "v_font.h"
+#include "c_console.h"
 #include "c_dispatch.h"
+#include "printf.h"
 
 FStat *FStat::FirstStat;
 
@@ -114,7 +116,7 @@ void FStat::PrintStat ()
 					// Count number of linefeeds but ignore terminating ones.
 					if (stattext[i] == '\n') y -= fontheight;
 				}
-				screen->DrawText(NewConsoleFont, CR_GREEN, 5 / textScale, y, stattext,
+				DrawText(twod, NewConsoleFont, CR_GREEN, 5 / textScale, y, stattext,
 					DTA_VirtualWidth, screen->GetWidth() / textScale,
 					DTA_VirtualHeight, screen->GetHeight() / textScale,
 					DTA_KeepRatio, true, TAG_DONE);

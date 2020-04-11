@@ -206,25 +206,25 @@ public:
 	{
 		if (scale == 1)
 		{
-			screen->DrawChar(CurrentConsoleFont, CR_ORANGE, x, y, '\x1c', TAG_DONE);
-			screen->DrawText(CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
+			DrawChar(twod, CurrentConsoleFont, CR_ORANGE, x, y, '\x1c', TAG_DONE);
+			DrawText(twod, CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
 				&Text[StartPos], TAG_DONE);
 
 			if (cursor)
 			{
-				screen->DrawChar(CurrentConsoleFont, CR_YELLOW,
+				DrawChar(twod, CurrentConsoleFont, CR_YELLOW,
 					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosCells - StartPosCells) * CurrentConsoleFont->GetCharWidth(0xb),
 					y, '\xb', TAG_DONE);
 			}
 		}
 		else
 		{
-			screen->DrawChar(CurrentConsoleFont, CR_ORANGE, x, y, '\x1c',
+			DrawChar(twod, CurrentConsoleFont, CR_ORANGE, x, y, '\x1c',
 				DTA_VirtualWidth, screen->GetWidth() / scale,
 				DTA_VirtualHeight, screen->GetHeight() / scale,
 				DTA_KeepRatio, true, TAG_DONE);
 
-			screen->DrawText(CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
+			DrawText(twod, CurrentConsoleFont, CR_ORANGE, x + CurrentConsoleFont->GetCharWidth(0x1c), y,
 				&Text[StartPos],
 				DTA_VirtualWidth, screen->GetWidth() / scale,
 				DTA_VirtualHeight, screen->GetHeight() / scale,
@@ -232,7 +232,7 @@ public:
 
 			if (cursor)
 			{
-				screen->DrawChar(CurrentConsoleFont, CR_YELLOW,
+				DrawChar(twod, CurrentConsoleFont, CR_YELLOW,
 					x + CurrentConsoleFont->GetCharWidth(0x1c) + (CursorPosCells - StartPosCells) * CurrentConsoleFont->GetCharWidth(0xb),
 					y, '\xb',
 					DTA_VirtualWidth, screen->GetWidth() / scale,

@@ -357,6 +357,7 @@ class FTexture;
 class DFrameBuffer
 {
 	friend void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...);
+	friend void DrawText(F2DDrawer* twod, FFont* font, int normalcolor, double x, double y, const char32_t* string, int tag_first, ...);
 	friend void DrawChar(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...);
 	friend void DrawTexture(F2DDrawer* drawer, FTexture* img, double x, double y, int tags_first, ...);
 protected:
@@ -680,9 +681,5 @@ public:
 	}
 };
 
-
-void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...);
-void DrawChar(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...);
-void DrawTexture(F2DDrawer* drawer, FTexture* img, double x, double y, int tags_first, ...);
 
 #endif // __V_VIDEO_H__

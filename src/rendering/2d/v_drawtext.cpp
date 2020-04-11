@@ -433,6 +433,25 @@ void DFrameBuffer::DrawText(FFont *font, int normalcolor, double x, double y, co
 	DrawTextCommon(font, normalcolor, x, y, string, parms);
 }
 
+void DrawText(F2DDrawer *twod, FFont* font, int normalcolor, double x, double y, const char32_t* string, int tag_first, ...)
+{
+	Va_List tags;
+	DrawParms parms;
+
+	if (font == NULL || string == NULL)
+		return;
+
+	va_start(tags.list, tag_first);
+	bool res = screen->ParseDrawTextureTags(nullptr, 0, 0, tag_first, tags, &parms, true);
+	va_end(tags.list);
+	if (!res)
+	{
+		return;
+	}
+	screen->DrawTextCommon(font, normalcolor, x, y, string, parms);
+}
+
+
 void DFrameBuffer::DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args)
 {
 	DrawParms parms;

@@ -9591,6 +9591,7 @@ scriptwait:
 			if (translation != NULL)
 			{
 				UpdateTranslation(TRANSLATION(TRANSLATION_LevelScripted, transi), translation);
+				delete translation;
 				translation = NULL;
 			}
 			break;

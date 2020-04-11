@@ -128,10 +128,10 @@ inline int GetTranslationIndex(uint32_t trans)
 // Retrieve the FRemapTable that an actor's translation value maps to.
 FRemapTable *TranslationToTable(int translation);
 void UpdateTranslation(int trans, FRemapTable* remap);
-int AddTranslation(int slot, FRemapTable* remap);
+int AddTranslation(int slot, FRemapTable* remap, int count = 1);
 FRemapTable* GetTranslation(int slot, int index);
 void CopyTranslation(int dest, int src);
-void ClearScriptedTranslations();
+void ClearTranslationSlot(int slot);
 
 
 #define MAX_ACS_TRANSLATIONS		65535

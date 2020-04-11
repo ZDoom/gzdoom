@@ -53,14 +53,15 @@ extern uint8_t IcePalette[16][3];
 
 void PaletteContainer::Init(int numslots)	// This cannot be a constructor!!!
 {
+	if (numslots < 1) numslots = 1;
 	Clear();
 	HasGlobalBrightmap = false;
 	// Make sure that index 0 is always the identity translation.
 	FRemapTable remap;
 	remap.MakeIdentity();
 	remap.Inactive = true;
-	AddRemap(&remap);
 	TranslationTables.Resize(numslots);
+	StoreTranslation(0, &remap);	// make sure that translation ID 0 is the identity.
 	ColorMatcher.SetPalette(BaseColors);
 }
 
@@ -263,7 +264,7 @@ FRemapTable *PaletteContainer::TranslationToTable(int translation)
 	unsigned int type = GetTranslationType(translation);
 	unsigned int index = GetTranslationIndex(translation);
 
-	if (type <= 0 || type >= TranslationTables.Size() || index >= NumTranslations(type))
+	if (type < 0 || type >= TranslationTables.Size() || index >= NumTranslations(type))
 	{
 		return uniqueRemaps[0]; // this is the identity table.
 	}

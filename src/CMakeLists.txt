@@ -611,6 +611,7 @@ file( GLOB HEADER_FILES
 	common/console/*.h
 	common/utility/*.h
 	common/engine/*.h
+	common/fonts/*.h
 	common/filesystem/*.h
 	common/textures/hires/hqnx/*.h
 	common/textures/hires/hqnx_asm/*.h
@@ -1003,12 +1004,6 @@ set (PCH_SOURCES
 	gamedata/textures/animations.cpp
 	gamedata/textures/anim_switches.cpp
 	gamedata/textures/buildloader.cpp
-	gamedata/fonts/singlelumpfont.cpp
-	gamedata/fonts/singlepicfont.cpp
-	gamedata/fonts/specialfont.cpp
-	gamedata/fonts/font.cpp
-	gamedata/fonts/hexfont.cpp
-	gamedata/fonts/v_font.cpp
 	gamedata/fonts/v_text.cpp	
 	gamedata/p_xlat.cpp
 	gamedata/xlat/parse_xlat.cpp
@@ -1078,6 +1073,12 @@ set (PCH_SOURCES
 	common/audio/music/i_soundfont.cpp
 	common/audio/music/music_config.cpp
 	common/thirdparty/sfmt/SFMT.cpp
+	common/fonts/singlelumpfont.cpp
+	common/fonts/singlepicfont.cpp
+	common/fonts/specialfont.cpp
+	common/fonts/font.cpp
+	common/fonts/hexfont.cpp
+	common/fonts/v_font.cpp
 	common/textures/hw_ihwtexture.cpp
 	common/textures/hw_material.cpp
 	common/textures/bitmap.cpp
@@ -1239,6 +1240,7 @@ include_directories( .
 	common/utility
 	common/console
 	common/engine
+	common/fonts
 	g_statusbar
 	console
 	playsim
@@ -1435,6 +1437,7 @@ source_group("Common\\Audio\\Music" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_
 source_group("Common\\Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/console/.+")
 source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/utility/.+")
 source_group("Common\\Engine" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/engine/.+")
+source_group("Common\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/fonts/.+")
 source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")
 source_group("Common\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/.+")
 source_group("Common\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/hqnx/.+")

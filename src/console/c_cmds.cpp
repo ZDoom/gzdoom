@@ -1141,3 +1141,44 @@ CCMD(idmus)
 	}
 }
 
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+CCMD(dumpactors)
+{
+	const char* const filters[32] =
+	{
+		"0:All", "1:Doom", "2:Heretic", "3:DoomHeretic", "4:Hexen", "5:DoomHexen", "6:Raven", "7:IdRaven",
+		"8:Strife", "9:DoomStrife", "10:HereticStrife", "11:DoomHereticStrife", "12:HexenStrife",
+		"13:DoomHexenStrife", "14:RavenStrife", "15:NotChex", "16:Chex", "17:DoomChex", "18:HereticChex",
+		"19:DoomHereticChex", "20:HexenChex", "21:DoomHexenChex", "22:RavenChex", "23:NotStrife", "24:StrifeChex",
+		"25:DoomStrifeChex", "26:HereticStrifeChex", "27:NotHexen",	"28:HexenStrifeChex", "29:NotHeretic",
+		"30:NotDoom", "31:All",
+	};
+	Printf("%u object class types total\nActor\tEd Num\tSpawnID\tFilter\tSource\n", PClass::AllClasses.Size());
+	for (unsigned int i = 0; i < PClass::AllClasses.Size(); i++)
+	{
+		PClass* cls = PClass::AllClasses[i];
+		PClassActor* acls = ValidateActor(cls);
+		if (acls != NULL)
+		{
+			auto ainfo = acls->ActorInfo();
+			Printf("%s\t%i\t%i\t%s\t%s\n",
+				acls->TypeName.GetChars(), ainfo->DoomEdNum,
+				ainfo->SpawnID, filters[ainfo->GameFilter & 31],
+				acls->SourceLumpName.GetChars());
+		}
+		else if (cls != NULL)
+		{
+			Printf("%s\tn/a\tn/a\tn/a\tEngine (not an actor type)\tSource: %s\n", cls->TypeName.GetChars(), cls->SourceLumpName.GetChars());
+		}
+		else
+		{
+			Printf("Type %i is not an object class\n", i);
+		}
+	}
+}

@@ -62,6 +62,7 @@ void InitThingdef();
 static TMap<FState *, FScriptPosition> StateSourceLines;
 static FScriptPosition unknownstatesource("unknown file", 0);
 
+EXTERN_CVAR(Bool, strictdecorate);
 
 //==========================================================================
 //
@@ -462,7 +463,7 @@ void LoadActors()
 	FScriptPosition::StrictErrors = true;
 	ParseScripts();
 
-	FScriptPosition::StrictErrors = false;
+	FScriptPosition::StrictErrors = strictdecorate;
 	ParseAllDecorate();
 	SynthesizeFlagFields();
 

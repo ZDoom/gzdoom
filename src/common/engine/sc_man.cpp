@@ -37,14 +37,17 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include "doomtype.h"
 #include "engineerrors.h"
 #include "sc_man.h"
-#include "filesystem.h"
 #include "cmdlib.h"
 #include "templates.h"
-#include "doomstat.h"
+#include "printf.h"
+#include "name.h"
 #include "v_text.h"
+#include "templates.h"
+#include "zstring.h"
+#include "name.h"
+#include "filesystem.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1127,6 +1130,7 @@ void FScanner::CheckOpen()
 //==========================================================================
 int FScriptPosition::ErrorCounter;
 int FScriptPosition::WarnCounter;
+int FScriptPosition::Developer;
 bool FScriptPosition::StrictErrors;	// makes all OPTERROR messages real errors.
 bool FScriptPosition::errorout;		// call I_Error instead of printing the error itself.
 
@@ -1156,19 +1160,17 @@ FScriptPosition &FScriptPosition::operator=(FScanner &sc)
 //
 //==========================================================================
 
-CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
-
 void FScriptPosition::Message (int severity, const char *message, ...) const
 {
 	FString composed;
 
-	if (severity == MSG_DEBUGLOG && developer < DMSG_NOTIFY) return;
-	if (severity == MSG_DEBUGERROR && developer < DMSG_ERROR) return;
-	if (severity == MSG_DEBUGWARN && developer < DMSG_WARNING) return;
-	if (severity == MSG_DEBUGMSG && developer < DMSG_NOTIFY) return;
+	if (severity == MSG_DEBUGLOG && Developer < DMSG_NOTIFY) return;
+	if (severity == MSG_DEBUGERROR && Developer < DMSG_ERROR) return;
+	if (severity == MSG_DEBUGWARN && Developer < DMSG_WARNING) return;
+	if (severity == MSG_DEBUGMSG && Developer < DMSG_NOTIFY) return;
 	if (severity == MSG_OPTERROR)
 	{
-		severity = StrictErrors || strictdecorate ? MSG_ERROR : MSG_WARNING;
+		severity = StrictErrors? MSG_ERROR : MSG_WARNING;
 	}
 	// This is mainly for catching the error with an exception handler.
 	if (severity == MSG_ERROR && errorout) severity = MSG_FATAL;

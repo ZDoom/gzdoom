@@ -53,7 +53,7 @@
 #endif // !_MSC_VER
 
 void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns);
-EXTERN_CVAR(Bool, strictdecorate);
+CVAR(Bool, strictdecorate, false, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 
 //==========================================================================

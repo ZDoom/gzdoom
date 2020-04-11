@@ -38,6 +38,8 @@
 #include "c_cvars.h"
 #include "scripting/vm/jit.h"
 
+EXTERN_CVAR(Bool, strictdecorate);
+
 struct VMRemap
 {
 	uint8_t altOp, kReg, kType;
@@ -832,7 +834,7 @@ void FFunctionBuildList::Build()
 			ctx.FunctionArgs.Push(local);
 		}
 
-		FScriptPosition::StrictErrors = !item.FromDecorate;
+		FScriptPosition::StrictErrors = !item.FromDecorate || strictdecorate;
 		item.Code = item.Code->Resolve(ctx);
 		// If we need extra space, load the frame pointer into a register so that we do not have to call the wasteful LFP instruction more than once.
 		if (item.Function->ExtraSpace > 0)
@@ -910,7 +912,7 @@ void FFunctionBuildList::Build()
 		disasmdump.Flush();
 	}
 	VMFunction::CreateRegUseInfo();
-	FScriptPosition::StrictErrors = false;
+	FScriptPosition::StrictErrors = strictdecorate;
 
 	if (FScriptPosition::ErrorCounter == 0 && Args->CheckParm("-dumpjit")) DumpJit();
 	mItems.Clear();

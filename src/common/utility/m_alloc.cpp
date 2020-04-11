@@ -44,7 +44,7 @@
 #include <malloc.h>
 #endif
 
-#include "printf.h"
+#include "engineerrors.h"
 #include "m_alloc.h"
 
 #ifndef _MSC_VER

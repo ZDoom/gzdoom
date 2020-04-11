@@ -1,6 +1,7 @@
 // Note: This must not be included by anything but dobject.h!
 #pragma once
 
+#include "sc_man.h"
 
 class VMFunction;
 class PType;

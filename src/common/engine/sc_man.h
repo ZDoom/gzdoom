@@ -1,7 +1,41 @@
 #ifndef __SC_MAN_H__
 #define __SC_MAN_H__
 
-#include "doomtype.h"
+#include "zstring.h"
+#include "name.h"
+#include "basics.h"
+
+struct VersionInfo
+{
+	uint16_t major;
+	uint16_t minor;
+	uint32_t revision;
+
+	bool operator <=(const VersionInfo& o) const
+	{
+		return o.major > this->major || (o.major == this->major && o.minor > this->minor) || (o.major == this->major && o.minor == this->minor && o.revision >= this->revision);
+	}
+	bool operator >=(const VersionInfo& o) const
+	{
+		return o.major < this->major || (o.major == this->major && o.minor < this->minor) || (o.major == this->major && o.minor == this->minor && o.revision <= this->revision);
+	}
+	bool operator > (const VersionInfo& o) const
+	{
+		return o.major < this->major || (o.major == this->major && o.minor < this->minor) || (o.major == this->major && o.minor == this->minor && o.revision < this->revision);
+	}
+	bool operator < (const VersionInfo& o) const
+	{
+		return o.major > this->major || (o.major == this->major && o.minor > this->minor) || (o.major == this->major && o.minor == this->minor && o.revision > this->revision);
+	}
+	void operator=(const char* string);
+};
+
+// Cannot be a constructor because Lemon would puke on it.
+inline VersionInfo MakeVersion(unsigned int ma, unsigned int mi, unsigned int re = 0)
+{
+	return{ (uint16_t)ma, (uint16_t)mi, (uint32_t)re };
+}
+
 
 class FScanner
 {
@@ -164,6 +198,7 @@ struct FScriptPosition
 	static int WarnCounter;
 	static int ErrorCounter;
 	static bool StrictErrors;
+	static int Developer;
 	static bool errorout;
 	FName FileName;
 	int ScriptLine;

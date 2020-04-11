@@ -51,7 +51,10 @@ CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
 
 // Show developer messages if true.
-CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	FScriptPosition::Developer = self;
+}
 
 // [RH] Feature control cvars
 CVAR(Bool, var_friction, true, CVAR_SERVERINFO);

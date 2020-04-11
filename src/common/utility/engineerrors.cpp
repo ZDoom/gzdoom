@@ -53,7 +53,6 @@ void I_DebugPrint(const char *cp)
 #endif
 
 #include "engineerrors.h"
-#include "printf.h"
 
 //==========================================================================
 //
@@ -70,7 +69,7 @@ void I_Error(const char *error, ...)
 	char errortext[MAX_ERRORTEXT];
 
 	va_start(argptr, error);
-	myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	vsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 	va_end(argptr);
 	I_DebugPrint(errortext);
 
@@ -97,7 +96,7 @@ void I_FatalError(const char *error, ...)
 		char errortext[MAX_ERRORTEXT];
 		va_list argptr;
 		va_start(argptr, error);
-		myvsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+		vsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
 		va_end(argptr);
 		I_DebugPrint(errortext);
 

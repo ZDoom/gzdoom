@@ -64,6 +64,7 @@ static FPlayList PlayList;
 float	relative_volume = 1.f;
 float	saved_relative_volume = 1.0f;	// this could be used to implement an ACS FadeMusic function
 MusicVolumeMap MusicVolumes;
+MidiDeviceMap MidiDevices;
 
 static FileReader DefaultOpenMusic(const char* fn)
 {

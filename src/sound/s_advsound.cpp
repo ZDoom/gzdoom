@@ -159,7 +159,6 @@ struct FSavedPlayerSoundInfo
 
 // This specifies whether Timidity or Windows playback is preferred for a certain song (only useful for Windows.)
 MusicAliasMap MusicAliases;
-MidiDeviceMap MidiDevices;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 

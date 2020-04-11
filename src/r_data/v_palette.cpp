@@ -63,9 +63,6 @@ FColorMatcher ColorMatcher;
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
 
-static int sortforremap (const void *a, const void *b);
-static int sortforremap2 (const void *a, const void *b);
-
 /**************************/
 /* Gamma correction stuff */
 /**************************/
@@ -126,156 +123,6 @@ void FPalette::SetPalette (const uint8_t *colors)
 	// translucency map.
 	WhiteIndex = BestColor ((uint32_t *)BaseColors, 255, 255, 255, 0, 255);
 	BlackIndex = BestColor ((uint32_t *)BaseColors, 0, 0, 0, 0, 255);
-}
-
-// In ZDoom's new texture system, color 0 is used as the transparent color.
-// But color 0 is also a valid color for Doom engine graphics. What to do?
-// Simple. The default palette for every game has at least one duplicate
-// color, so find a duplicate pair of palette entries, make one of them a
-// duplicate of color 0, and remap every graphic so that it uses that entry
-// instead of entry 0.
-void FPalette::MakeGoodRemap ()
-{
-	PalEntry color0 = BaseColors[0];
-	int i;
-
-	// First try for an exact match of color 0. Only Hexen does not have one.
-	for (i = 1; i < 256; ++i)
-	{
-		if (BaseColors[i] == color0)
-		{
-			Remap[0] = i;
-			break;
-		}
-	}
-
-	// If there is no duplicate of color 0, find the first set of duplicate
-	// colors and make one of them a duplicate of color 0. In Hexen's PLAYPAL
-	// colors 209 and 229 are the only duplicates, but we cannot assume
-	// anything because the player might be using a custom PLAYPAL where those
-	// entries are not duplicates.
-	if (Remap[0] == 0)
-	{
-		PalEntry sortcopy[256];
-
-		for (i = 0; i < 256; ++i)
-		{
-			sortcopy[i] = BaseColors[i] | (i << 24);
-		}
-		qsort (sortcopy, 256, 4, sortforremap);
-		for (i = 255; i > 0; --i)
-		{
-			if ((sortcopy[i] & 0xFFFFFF) == (sortcopy[i-1] & 0xFFFFFF))
-			{
-				int new0 = sortcopy[i].a;
-				int dup = sortcopy[i-1].a;
-				if (new0 > dup)
-				{
-					// Make the lower-numbered entry a copy of color 0. (Just because.)
-					std::swap (new0, dup);
-				}
-				Remap[0] = new0;
-				Remap[new0] = dup;
-				BaseColors[new0] = color0;
-				break;
-			}
-		}
-	}
-
-	// If there were no duplicates, InitPalette() will remap color 0 to the
-	// closest matching color. Hopefully nobody will use a palette where all
-	// 256 entries are different. :-)
-}
-
-static int sortforremap (const void *a, const void *b)
-{
-	return (*(const uint32_t *)a & 0xFFFFFF) - (*(const uint32_t *)b & 0xFFFFFF);
-}
-
-struct RemappingWork
-{
-	uint32_t Color;
-	uint8_t Foreign;	// 0 = local palette, 1 = foreign palette
-	uint8_t PalEntry;	// Entry # in the palette
-	uint8_t Pad[2];
-};
-
-void FPalette::MakeRemap (const uint32_t *colors, uint8_t *remap, const uint8_t *useful, int numcolors) const
-{
-	RemappingWork workspace[255+256];
-	int i, j, k;
-
-	// Fill in workspace with the colors from the passed palette and this palette.
-	// By sorting this array, we can quickly find exact matches so that we can
-	// minimize the time spent calling BestColor for near matches.
-
-	for (i = 1; i < 256; ++i)
-	{
-		workspace[i-1].Color = uint32_t(BaseColors[i]) & 0xFFFFFF;
-		workspace[i-1].Foreign = 0;
-		workspace[i-1].PalEntry = i;
-	}
-	for (i = k = 0, j = 255; i < numcolors; ++i)
-	{
-		if (useful == NULL || useful[i] != 0)
-		{
-			workspace[j].Color = colors[i] & 0xFFFFFF;
-			workspace[j].Foreign = 1;
-			workspace[j].PalEntry = i;
-			++j;
-			++k;
-		}
-		else
-		{
-			remap[i] = 0;
-		}
-	}
-	qsort (workspace, j, sizeof(RemappingWork), sortforremap2);
-
-	// Find exact matches
-	--j;
-	for (i = 0; i < j; ++i)
-	{
-		if (workspace[i].Foreign)
-		{
-			if (!workspace[i+1].Foreign && workspace[i].Color == workspace[i+1].Color)
-			{
-				remap[workspace[i].PalEntry] = workspace[i+1].PalEntry;
-				workspace[i].Foreign = 2;
-				++i;
-				--k;
-			}
-		}
-	}
-
-	// Find near matches
-	if (k > 0)
-	{
-		for (i = 0; i <= j; ++i)
-		{
-			if (workspace[i].Foreign == 1)
-			{
-				remap[workspace[i].PalEntry] = BestColor ((uint32_t *)BaseColors,
-					RPART(workspace[i].Color), GPART(workspace[i].Color), BPART(workspace[i].Color),
-					1, 255);
-			}
-		}
-	}
-}
-
-static int sortforremap2 (const void *a, const void *b)
-{
-	const RemappingWork *ap = (const RemappingWork *)a;
-	const RemappingWork *bp = (const RemappingWork *)b;
-
-	if (ap->Color == bp->Color)
-	{
-		return bp->Foreign - ap->Foreign;
-	}
-	else
-	{
-		return ap->Color - bp->Color;
-	}
 }
 
 int ReadPalette(int lumpnum, uint8_t *buffer)
@@ -406,7 +253,7 @@ void InitPalette ()
 	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), pal);
 
 	GPalette.SetPalette (pal);
-	GPalette.MakeGoodRemap ();
+	MakeGoodRemap ((uint32_t*)GPalette.BaseColors, GPalette.Remap);
 	ColorMatcher.SetPalette ((uint32_t *)GPalette.BaseColors);
 
 	if (GPalette.Remap[0] == 0)

@@ -52,10 +52,6 @@ struct FPalette
 
 	uint8_t		WhiteIndex;			// white in original palette index
 	uint8_t		BlackIndex;			// black in original palette index
-
-	// Given an array of colors, fills in remap with values to remap the
-	// passed array of colors to this palette.
-	void MakeRemap (const uint32_t *colors, uint8_t *remap, const uint8_t *useful, int numcolors) const;
 };
 
 extern FPalette GPalette;

@@ -267,3 +267,9 @@ struct FNamespaceManager
 
 extern FNamespaceManager Namespaces;
 void RemoveUnusedSymbols();
+
+struct AFuncDesc;
+struct FieldDesc;
+AFuncDesc *FindFunction(PContainerType *cls, const char * string);
+FieldDesc *FindField(PContainerType *cls, const char * string);
+void SetImplicitArgs(TArray<PType*>* args, TArray<uint32_t>* argflags, TArray<FName>* argnames, PContainerType* cls, uint32_t funcflags, int useflags);

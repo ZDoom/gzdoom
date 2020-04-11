@@ -42,9 +42,6 @@
 
 FSharedStringArena VMStringConstants;
 
-FieldDesc* FindField(PContainerType* cls, const char* string);
-AFuncDesc* FindFunction(PContainerType* cls, const char* string);
-
 
 int GetIntConst(FxExpression *ex, FCompileContext &ctx)
 {

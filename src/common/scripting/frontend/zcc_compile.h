@@ -131,25 +131,15 @@ protected:
 
 	void CompileAllFields();
 	bool CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *> &Fields, PClass *Outer, PSymbolTable *TreeNodes, bool forstruct, bool hasnativechildren = false);
-	void CompileAllProperties();
-	bool CompileProperties(PClass *type, TArray<ZCC_Property *> &Properties, FName prefix);
-	bool CompileFlagDefs(PClass *type, TArray<ZCC_FlagDef *> &FlagDefs, FName prefix);
 	FString FlagsToString(uint32_t flags);
 	PType *DetermineType(PType *outertype, ZCC_TreeNode *field, FName name, ZCC_Type *ztype, bool allowarraytypes, bool formember);
 	PType *ResolveArraySize(PType *baseType, ZCC_Expression *arraysize, PContainerType *cls, bool *nosize);
 	PType *ResolveUserType(ZCC_BasicType *type, PSymbolTable *sym, bool nativetype);
 
-	void InitDefaults();
-	void ProcessDefaultFlag(PClassActor *cls, ZCC_FlagStmt *flg);
-	void ProcessDefaultProperty(PClassActor *cls, ZCC_PropertyStmt *flg, Baggage &bag);
-	void DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *pex, AActor *defaults, Baggage &bag);
-	void DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *pex, AActor *defaults, Baggage &bag);
 	void CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool forclass);
 
 	void InitFunctions();
-	void CompileStates();
-	FxExpression *SetupActionFunction(PClass *cls, ZCC_TreeNode *sl, int stateflags);
-
+	
 	TArray<ZCC_ConstantDef *> Constants;
 	TArray<ZCC_StructWork *> Structs;
 	TArray<ZCC_ClassWork *> Classes;

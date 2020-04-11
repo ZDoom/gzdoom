@@ -34,6 +34,8 @@
 #ifndef NAME_H
 #define NAME_H
 
+#include "tarray.h"
+
 enum ENamedName
 {
 #define xx(n) NAME_##n,
@@ -122,4 +124,13 @@ protected:
 	static NameManager NameData;
 };
 
+
+template<> struct THashTraits<FName>
+{
+	hash_t Hash(FName key)
+	{
+		return key.GetIndex();
+	}
+	int Compare(FName left, FName right) { return left != right; }
+}; 
 #endif

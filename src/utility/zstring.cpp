@@ -38,9 +38,10 @@
 #include <new>		// for bad_alloc
 
 #include "zstring.h"
-#include "v_text.h"
 #include "utf8.h"
-#include "fontinternals.h"
+
+extern uint16_t lowerforupper[65536];
+extern uint16_t upperforlower[65536];
 
 FNullStringData FString::NullString =
 {

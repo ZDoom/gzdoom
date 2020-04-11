@@ -439,7 +439,7 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 				if (edit != NULL)
 				{
 					// GDI uses BGR colors, but color is RGB, so swap the R and the B.
-					swapvalues(color.r, color.b);
+					std::swap(color.r, color.b);
 					// Change the color.
 					format.cbSize = sizeof(format);
 					format.dwMask = CFM_COLOR;

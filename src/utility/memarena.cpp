@@ -41,6 +41,7 @@
 #include "memarena.h"
 #include "printf.h"
 #include "cmdlib.h"
+#include "m_alloc.h"
 
 struct FMemArena::Block
 {

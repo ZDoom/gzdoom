@@ -32,7 +32,7 @@
 **
 */
 
-#include "palette.h"
+#include "palutil.h"
 #include "palentry.h"
 
 /****************************/

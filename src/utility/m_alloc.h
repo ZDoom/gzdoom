@@ -35,6 +35,7 @@
 #define __M_ALLOC_H__
 
 #include <stdlib.h>
+#include <string.h>
 
 #if defined(__APPLE__)
 #define _msize(p)				malloc_size(p)
@@ -49,15 +50,31 @@
 // when they can't get the memory.
 
 #if defined(_DEBUG)
+#define M_Calloc(s,t)		M_Calloc_Dbg(s, t, __FILE__, __LINE__)
 #define M_Malloc(s)		M_Malloc_Dbg(s, __FILE__, __LINE__)
 #define M_Realloc(p,s)	M_Realloc_Dbg(p, s, __FILE__, __LINE__)
 
 void *M_Malloc_Dbg (size_t size, const char *file, int lineno);
 void *M_Realloc_Dbg (void *memblock, size_t size, const char *file, int lineno);
+inline void* M_Calloc_Dbg(size_t v1, size_t v2, const char* file, int lineno)
+{
+	auto p = M_Malloc_Dbg(v1 * v2, file, lineno);
+	memset(p, 0, v1 * v2);
+	return p;
+}
+
 #else
 void *M_Malloc (size_t size);
 void *M_Realloc (void *memblock, size_t size);
+inline void* M_Calloc(size_t v1, size_t v2)
+{
+	auto p = M_Malloc(v1 * v2);
+	memset(p, 0, v1 * v2);
+	return p;
+}
+
 #endif
+
 
 void M_Free (void *memblock);
 

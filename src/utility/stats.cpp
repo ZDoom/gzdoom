@@ -78,6 +78,15 @@ void FStat::ToggleStat (const char *name)
 		Printf ("Unknown stat: %s\n", name);
 }
 
+void FStat::EnableStat(const char* name, bool on)
+{
+	FStat* stat = FindStat(name);
+	if (stat)
+		stat->m_Active = on;
+	else
+		Printf("Unknown stat: %s\n", name);
+}
+
 void FStat::ToggleStat ()
 {
 	m_Active = !m_Active;
@@ -88,7 +97,7 @@ void FStat::PrintStat ()
 	int textScale = active_con_scale();
 
 	int fontheight = NewConsoleFont->GetHeight() + 1;
-	int y = SCREENHEIGHT / textScale;
+	int y = screen->GetHeight() / textScale;
 	int count = 0;
 
 	for (FStat *stat = FirstStat; stat != NULL; stat = stat->m_Next)

@@ -247,7 +247,7 @@ do_stop:
 				sc.MustGetStringName(")");
 				if (min > max)
 				{
-					swapvalues(min, max);
+					std::swap(min, max);
 				}
 				state.Tics = min;
 				state.TicRange = max - min;

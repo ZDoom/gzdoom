@@ -2251,13 +2251,13 @@ static int PatchText (int oldSize)
 					// This must be done because the map is scanned using a binary search.
 					while (i > 0 && strncmp (DehSpriteMappings[i-1].Sprite, newStr, 4) > 0)
 					{
-						swapvalues (DehSpriteMappings[i-1], DehSpriteMappings[i]);
+						std::swap (DehSpriteMappings[i-1], DehSpriteMappings[i]);
 						--i;
 					}
 					while ((size_t)i < countof(DehSpriteMappings)-1 &&
 						strncmp (DehSpriteMappings[i+1].Sprite, newStr, 4) < 0)
 					{
-						swapvalues (DehSpriteMappings[i+1], DehSpriteMappings[i]);
+						std::swap (DehSpriteMappings[i+1], DehSpriteMappings[i]);
 						++i;
 					}
 					break;

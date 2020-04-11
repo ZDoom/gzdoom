@@ -36,7 +36,7 @@
 
 #include "doomtype.h"
 #include "c_cvars.h"
-#include "palette.h"
+#include "palutil.h"
 
 struct FPalette
 {

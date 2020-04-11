@@ -34,9 +34,9 @@
 
 #include <string.h>
 #include "name.h"
-#include "c_dispatch.h"
-#include "c_console.h"
+#include "superfasthash.h"
 #include "cmdlib.h"
+#include "m_alloc.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -270,7 +270,7 @@ FName::NameManager::~NameManager()
 {
 	NameBlock *block, *next;
 
-	C_ClearTabCommands();
+	//C_ClearTabCommands();
 
 	for (block = Blocks; block != NULL; block = next)
 	{

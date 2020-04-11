@@ -399,7 +399,7 @@ namespace swrenderer
 			double t = -rx1;
 			rx1 = -rx2;
 			rx2 = t;
-			swapvalues(ry1, ry2);
+			std::swap(ry1, ry2);
 		}
 		
 		auto viewport = Thread->Viewport.get();

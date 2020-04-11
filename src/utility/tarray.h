@@ -257,14 +257,17 @@ public:
 		}
 		return true;
 	}
-	// Return a reference to an element
+	// Return a reference to an element.
+	// Note that the asserts must let the element after the end pass because this gets frequently used as a sentinel pointer.
 	T &operator[] (size_t index) const
 	{
+		assert(index <= Count);
 		return Array[index];
 	}
 	// Returns the value of an element
 	TT operator() (size_t index) const
 	{
+		assert(index <= Count);
 		return Array[index];
 	}
 	// Returns a reference to the last element
@@ -1419,9 +1422,15 @@ public:
 	{
 	}
 
-	BitArray(const BitArray & arr)
+	BitArray(unsigned elem)
+		: bytes((elem + 7) / 8, true)
 	{
-		bytes = arr.bytes;
+
+	}
+
+	BitArray(const BitArray & arr)
+		: bytes(arr.bytes)
+	{
 		size = arr.size;
 	}
 
@@ -1433,8 +1442,8 @@ public:
 	}
 
 	BitArray(BitArray && arr)
+		: bytes(std::move(arr.bytes))
 	{
-		bytes = std::move(arr.bytes);
 		size = arr.size;
 		arr.size = 0;
 	}
@@ -1452,9 +1461,10 @@ public:
 		return !!(bytes[index >> 3] & (1 << (index & 7)));
 	}
 
-	void Set(size_t index)
+	void Set(size_t index, bool set = true)
 	{
-		bytes[index >> 3] |= (1 << (index & 7));
+		if (!set) Clear(index);
+		else bytes[index >> 3] |= (1 << (index & 7));
 	}
 
 	void Clear(size_t index)
@@ -1473,6 +1483,51 @@ public:
 	}
 };
 
+
+template<int size>
+class FixedBitArray
+{
+	uint8_t bytes[(size + 7) / 8];
+
+public:
+
+	FixedBitArray() = default;
+	FixedBitArray(bool set)
+	{
+		memset(bytes, set ? -1 : 0, sizeof(bytes));
+	}
+
+	bool operator[](size_t index) const
+	{
+		return !!(bytes[index >> 3] & (1 << (index & 7)));
+	}
+
+	void Set(size_t index, bool set = true)
+	{
+		if (!set) Clear(index);
+		else bytes[index >> 3] |= (1 << (index & 7));
+	}
+
+	void Clear(size_t index)
+	{
+		bytes[index >> 3] &= ~(1 << (index & 7));
+	}
+
+	constexpr unsigned Size() const
+	{
+		return size;
+	}
+
+	void Zero()
+	{
+		memset(&bytes[0], 0, sizeof(bytes));
+	}
+
+	void SetAll(bool on)
+	{
+		memset(&bytes[0], on ? -1 : 0, sizeof(bytes));
+	}
+};
 
 // A wrapper to externally stored data.
 // I would have expected something for this in the stl, but std::span is only in C++20.

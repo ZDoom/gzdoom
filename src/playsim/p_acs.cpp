@@ -2838,7 +2838,7 @@ void FBehavior::LoadScriptsDirectory ()
 					// Make the closed version the first one.
 					if (Scripts[i+1].Type == SCRIPT_Closed)
 					{
-						swapvalues(Scripts[i], Scripts[i+1]);
+						std::swap(Scripts[i], Scripts[i+1]);
 					}
 				}
 			}
@@ -3585,7 +3585,7 @@ int DLevelScript::Random (int min, int max)
 {
 	if (max < min)
 	{
-		swapvalues (max, min);
+		std::swap (max, min);
 	}
 
 	return min + pr_acs(max - min + 1);
@@ -5149,7 +5149,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 		if ((activator == NULL) || (activator->TeleFogSourceType == activator->TeleFogDestType)) 
 			return 0; //Does nothing if they're the same.
 
-		swapvalues (activator->TeleFogSourceType, activator->TeleFogDestType);
+		std::swap (activator->TeleFogSourceType, activator->TeleFogDestType);
 		return 1;
 	}
 	else
@@ -5162,7 +5162,7 @@ int DLevelScript::SwapActorTeleFog(AActor *activator, int tid)
 			if (actor->TeleFogSourceType == actor->TeleFogDestType) 
 				continue; //They're the same. Save the effort.
 
-			swapvalues (actor->TeleFogSourceType, actor->TeleFogDestType);
+			std::swap (actor->TeleFogSourceType, actor->TeleFogDestType);
 			count++;
 		}
 	}
@@ -6956,7 +6956,7 @@ int DLevelScript::RunScript()
 			break;
 
 		case PCD_SWAP:
-			swapvalues(Stack[sp-2], Stack[sp-1]);
+			std::swap(Stack[sp-2], Stack[sp-1]);
 			break;
 
 		case PCD_LSPEC1:

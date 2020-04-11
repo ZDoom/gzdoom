@@ -268,7 +268,7 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 				max = sc.Number & 65535;
 				if (min > max)
 				{
-					swapvalues (min, max);
+					std::swap (min, max);
 				}
 				thisframe.TimeMin = min;
 				thisframe.TimeRnd = (max - min + 1);

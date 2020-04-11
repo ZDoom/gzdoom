@@ -1,6 +1,13 @@
 #pragma once
 
+#include <algorithm>
 #include <stdint.h>
+
+// Beware of windows.h :(
+#ifdef max
+#undef min
+#undef max
+#endif
 
 struct PalEntry
 {
@@ -32,6 +39,11 @@ struct PalEntry
 	int Luminance() const 
 	{
 		return (r * 77 + g * 143 + b * 37) >> 8;
+	}
+
+	int Amplitude() const
+	{
+		return std::max(r, std::max(g, b));
 	}
 
 	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
@@ -80,3 +92,9 @@ inline int Luminance(int r, int g, int b)
 	return (r * 77 + g * 143 + b * 37) >> 8;
 }
 
+#define APART(c)			(((c)>>24)&0xff)
+#define RPART(c)			(((c)>>16)&0xff)
+#define GPART(c)			(((c)>>8)&0xff)
+#define BPART(c)			((c)&0xff) 
+#define MAKERGB(r,g,b)		uint32_t(((r)<<16)|((g)<<8)|(b))
+#define MAKEARGB(a,r,g,b)	uint32_t(((a)<<24)|((r)<<16)|((g)<<8)|(b)) 

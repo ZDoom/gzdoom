@@ -1127,6 +1127,7 @@ set (PCH_SOURCES
 	utility/m_random.cpp
 	utility/memarena.cpp
 	utility/md5.cpp
+	utility/superfasthash.cpp
 	utility/nodebuilder/nodebuild.cpp
 	utility/nodebuilder/nodebuild_classify_nosse2.cpp
 	utility/nodebuilder/nodebuild_events.cpp

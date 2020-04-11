@@ -240,7 +240,7 @@ class SBarInfoCommandFlowControl : public SBarInfoCommand
 
 		void Negate()
 		{
-			swapvalues(commands[0], commands[1]);
+			std::swap(commands[0], commands[1]);
 		}
 
 	private:

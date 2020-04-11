@@ -148,7 +148,7 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 
 	if (ReturnProto->ReturnTypes.Size() < proto->ReturnTypes.Size())
 	{ // Make proto the shorter one to avoid code duplication below.
-		swapvalues(proto, ReturnProto);
+		std::swap(proto, ReturnProto);
 		swapped = true;
 	}
 	// If one prototype returns nothing, they both must.
@@ -165,7 +165,7 @@ void FCompileContext::CheckReturn(PPrototype *proto, FScriptPosition &pos)
 		{
 			PType* expected = ReturnProto->ReturnTypes[i];
 			PType* actual = proto->ReturnTypes[i];
-			if (swapped) swapvalues(expected, actual);
+			if (swapped) std::swap(expected, actual);
 
 			if (expected != actual && !AreCompatiblePointerTypes(expected, actual))
 			{ // Incompatible
@@ -2917,7 +2917,7 @@ ExpEmit FxAddSub::Emit(VMFunctionBuilder *build)
 		// Since addition is commutative, only the second operand may be a constant.
 		if (op1.Konst)
 		{
-			swapvalues(op1, op2);
+			std::swap(op1, op2);
 		}
 		assert(!op1.Konst);
 		op1.Free(build);
@@ -3156,7 +3156,7 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		assert(Operator != '%');
 		if (right->IsVector())
 		{
-			swapvalues(op1, op2);
+			std::swap(op1, op2);
 		}
 		int op;
 		if (op2.Konst)
@@ -3179,7 +3179,7 @@ ExpEmit FxMulDiv::Emit(VMFunctionBuilder *build)
 		// Multiplication is commutative, so only the second operand may be constant.
 		if (op1.Konst)
 		{
-			swapvalues(op1, op2);
+			std::swap(op1, op2);
 		}
 		assert(!op1.Konst);
 		op1.Free(build);
@@ -3811,7 +3811,7 @@ ExpEmit FxCompareEq::EmitCommon(VMFunctionBuilder *build, bool forcompare, bool 
 		// Only the second operand may be constant.
 		if (op1.Konst)
 		{
-			swapvalues(op1, op2);
+			std::swap(op1, op2);
 		}
 		assert(!op1.Konst);
 		assert(op1.RegCount >= 1 && op1.RegCount <= 3);
@@ -3934,7 +3934,7 @@ ExpEmit FxBitOp::Emit(VMFunctionBuilder *build)
 	op2 = right->Emit(build);
 	if (op1.Konst)
 	{
-		swapvalues(op1, op2);
+		std::swap(op1, op2);
 	}
 	assert(!op1.Konst);
 	rop = op2.RegNum;

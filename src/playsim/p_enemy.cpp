@@ -728,7 +728,7 @@ void P_DoNewChaseDir (AActor *actor, double deltax, double deltay)
 	{
 		if ((pr_newchasedir() > 200 || fabs(deltay) > fabs(deltax)))
 		{
-			swapvalues (d[0], d[1]);
+			std::swap (d[0], d[1]);
 		}
 
 		if (d[0] == turnaround)
@@ -1041,7 +1041,7 @@ void P_RandomChaseDir (AActor *actor)
 				// try other directions
 				if (pr_newchasedir() > 200 || fabs(delta.Y) > fabs(delta.X))
 				{
-					swapvalues (d[1], d[2]);
+					std::swap (d[1], d[2]);
 				}
 
 				if (d[1] == turnaround)

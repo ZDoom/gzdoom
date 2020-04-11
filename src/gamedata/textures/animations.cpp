@@ -254,7 +254,7 @@ void FTextureManager::InitAnimated (void)
 				// [RH] Allow for backward animations as well as forward.
 				else if (pic1 > pic2)
 				{
-					swapvalues (pic1, pic2);
+					std::swap (pic1, pic2);
 					animtype = FAnimDef::ANIM_Backward;
 				}
 
@@ -485,7 +485,7 @@ FAnimDef *FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, ETex
 	{
 		type = FAnimDef::ANIM_Backward;
 		Texture(framenum)->bNoDecals = Texture(picnum)->bNoDecals;
-		swapvalues (framenum, picnum);
+		std::swap (framenum, picnum);
 	}
 	FAnimDef *ani = AddSimpleAnim (picnum, framenum - picnum + 1, min, max - min);
 	if (ani != NULL) ani->AnimType = type;

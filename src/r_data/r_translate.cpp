@@ -413,8 +413,8 @@ bool FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 
 	if (start > end)
 	{
-		swapvalues (start, end);
-		swapvalues (pal1, pal2);
+		std::swap (start, end);
+		std::swap (pal1, pal2);
 	}
 	else if (start == end)
 	{
@@ -461,7 +461,7 @@ bool FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 
 	if (start > end)
 	{
-		swapvalues (start, end);
+		std::swap (start, end);
 		r = r2;
 		g = g2;
 		b = b2;
@@ -524,10 +524,10 @@ bool FRemapTable::AddDesaturation(int start, int end, double r1, double g1, doub
 
 	if (start > end)
 	{
-		swapvalues(start, end);
-		swapvalues(r1, r2);
-		swapvalues(g1, g2);
-		swapvalues(b1, b2);
+		std::swap(start, end);
+		std::swap(r1, r2);
+		std::swap(g1, g2);
+		std::swap(b1, b2);
 	}
 
 	r2 -= r1;

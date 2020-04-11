@@ -24,6 +24,7 @@ enum
 	PRINT_TYPES = 1023,		// Bitmask.
 	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
 	PRINT_NOLOG = 2048,		// Flag - do not print to log file
+	PRINT_NOTIFY = 4096,	// Flag - add to notify buffer
 };
 
 enum

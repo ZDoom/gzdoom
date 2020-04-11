@@ -32,7 +32,6 @@
 */
 
 #pragma once
-#include "doomtype.h"
 
 /*
  * TFlags

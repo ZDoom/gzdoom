@@ -1400,7 +1400,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	PROP_INT_PARM(end, 1);
 
 	if (start > end)
-		swapvalues (start, end);
+		std::swap (start, end);
 
 	defaults->IntVar(NAME_ColorRangeStart) = start;
 	defaults->IntVar(NAME_ColorRangeEnd) = end;

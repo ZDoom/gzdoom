@@ -241,6 +241,7 @@ public:
 	static void PrintStat ();
 	static FStat *FindStat (const char *name);
 	static void ToggleStat (const char *name);
+	static void EnableStat(const char* name, bool on);
 	static void DumpRegisteredStats ();
 
 private:

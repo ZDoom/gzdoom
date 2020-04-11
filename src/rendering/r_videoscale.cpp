@@ -37,7 +37,7 @@
 #include "templates.h"
 #include "r_videoscale.h"
 
-#include "console/c_console.h"
+#include "c_console.h"
 #include "menu/menu.h"
 
 #define NUMSCALEMODES countof(vScaleTable)

@@ -610,6 +610,7 @@ file( GLOB HEADER_FILES
 	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
+	common/console/*.h
 	common/utility/*.h
 	common/engine/*.h
 	common/filesystem/*.h
@@ -828,16 +829,7 @@ set (PCH_SOURCES
 	playsim/bots/b_move.cpp
 	playsim/bots/b_think.cpp
 	bbannouncer.cpp
-	console/c_commandline.cpp
-	console/c_buttons.cpp
-	console/c_bind.cpp
-	console/c_cmds.cpp
-	console/c_enginecmds.cpp
 	console/c_console.cpp
-	console/c_consolebuffer.cpp
-	console/c_cvars.cpp
-	console/c_dispatch.cpp
-	console/c_expr.cpp
 	console/c_functions.cpp
 	ct_chat.cpp
 	d_iwad.cpp
@@ -1114,6 +1106,15 @@ set (PCH_SOURCES
 	rendering/swrenderer/textures/swcanvastexture.cpp
 	events.cpp
 	common/thirdparty/sfmt/SFMT.cpp
+	common/console/c_commandline.cpp
+	common/console/c_buttons.cpp
+	common/console/c_bind.cpp
+	common/console/c_cmds.cpp
+	common/console/c_enginecmds.cpp
+	common/console/c_consolebuffer.cpp
+	common/console/c_cvars.cpp
+	common/console/c_dispatch.cpp
+	common/console/c_expr.cpp
 	common/utility/engineerrors.cpp
 	common/utility/i_module.cpp
 	common/utility/m_alloc.cpp
@@ -1228,6 +1229,7 @@ include_directories( .
 	common/thirdparty
 	common/filesystem
 	common/utility
+	common/console
 	common/engine
 	g_statusbar
 	console
@@ -1428,8 +1430,10 @@ source_group("Scripting\\Compiler backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_
 source_group("Scripting\\VM" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/vm/.+")
 source_group("Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/scripting/.+")
 source_group("Common" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/.+")
-source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/utility/.+")
-source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/filesystem/.+")
+source_group("Common\\Console" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/console/.+")
+source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/utility/.+")
+source_group("Common\\Engine" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/engine/.+")
+source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")
 source_group("Common\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/.+")
 source_group("Common\\Third Party\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/math/.+")
 source_group("Common\\Third Party\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/thirdparty/rapidjson/.+")

@@ -114,7 +114,6 @@ bool FGrpFile::Open(bool quiet)
 		Lumps[i].Position = Position;
 		Lumps[i].LumpSize = LittleLong(fileinfo[i].Size);
 		Position += fileinfo[i].Size;
-		Lumps[i].Namespace = ns_global;
 		Lumps[i].Flags = 0;
 		fileinfo[i].NameWithZero[12] = '\0';	// Be sure filename is null-terminated
 		Lumps[i].LumpNameSetup(fileinfo[i].NameWithZero);

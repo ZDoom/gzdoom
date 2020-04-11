@@ -51,6 +51,9 @@ class FWadFileLump : public FResourceLump
 public:
 	bool Compressed;
 	int	Position;
+	int Namespace;
+
+	int GetNamespace() const override { return Namespace; }
 
 	int GetFileOffset() { return Position; }
 	FileReader *GetReader()
@@ -104,7 +107,7 @@ public:
 
 class FWadFile : public FResourceFile
 {
-	FWadFileLump *Lumps;
+	TArray<FWadFileLump> Lumps;
 
 	bool IsMarker(int lump, const char *marker);
 	void SetNamespace(const char *startmarker, const char *endmarker, namespace_t space, bool flathack=false);
@@ -112,8 +115,6 @@ class FWadFile : public FResourceFile
 
 public:
 	FWadFile(const char * filename, FileReader &file);
-	~FWadFile();
-	void FindStrifeTeaserVoices ();
 	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
 	bool Open(bool quiet);
 };
@@ -130,12 +131,6 @@ public:
 FWadFile::FWadFile(const char *filename, FileReader &file) 
 	: FResourceFile(filename, file)
 {
-	Lumps = NULL;
-}
-
-FWadFile::~FWadFile()
-{
-	delete[] Lumps;
 }
 
 //==========================================================================
@@ -170,46 +165,45 @@ bool FWadFile::Open(bool quiet)
 		}
 	}
 
-	wadlump_t *fileinfo = new wadlump_t[NumLumps];
+	TArray<wadlump_t> fileinfo(NumLumps, true);
 	Reader.Seek (InfoTableOfs, FileReader::SeekSet);
-	Reader.Read (fileinfo, NumLumps * sizeof(wadlump_t));
+	Reader.Read (fileinfo.Data(), NumLumps * sizeof(wadlump_t));
 
-	Lumps = new FWadFileLump[NumLumps];
+	Lumps.Resize(NumLumps);
 
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
-		uppercopy (Lumps[i].Name, fileinfo[i].Name);
-		Lumps[i].Name[8] = 0;
-		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (Lumps[i].Name[0] & 0x80) == 0x80;
-		Lumps[i].Name[0] &= ~0x80;
+		char n[9];
+		uppercopy(n, fileinfo[i].Name);
+		n[8] = 0;
+		Lumps[i].Compressed = !(gameinfo.flags & GI_SHAREWARE) && (n[0] & 0x80) == 0x80;
+		n[0] &= ~0x80;
+		Lumps[i].LumpNameSetup(n);
 
 		Lumps[i].Owner = this;
 		Lumps[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
 		Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
 		Lumps[i].Namespace = ns_global;
 		Lumps[i].Flags = Lumps[i].Compressed ? LUMPF_COMPRESSED | LUMPF_SHORTNAME : LUMPF_SHORTNAME;
-		Lumps[i].FullName = "";
 		
 		// Check if the lump is within the WAD file and print a warning if not.
 		if (Lumps[i].Position + Lumps[i].LumpSize > wadSize || Lumps[i].Position < 0 || Lumps[i].LumpSize < 0)
 		{
 			if (Lumps[i].LumpSize != 0)
 			{
-				Printf(PRINT_HIGH, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName.GetChars(), Lumps[i].Name);
-				Lumps[i].Name[0] = 0;
+				Printf(PRINT_HIGH, "%s: Lump %s contains invalid positioning info and will be ignored\n", FileName.GetChars(), Lumps[i].getName());
+				Lumps[i].LumpNameSetup("");
 			}
 			Lumps[i].LumpSize = Lumps[i].Position = 0;
 		}
 	}
 
-	delete[] fileinfo;
 	GenerateHash(); // Do this before the lump processing below.
 
-	if (!quiet)
+	if (!quiet)	// don't bother with namespaces in quiet mode. We won't need them.
 	{
 		if (!batchrun) Printf(", %d lumps\n", NumLumps);
 
-		// don't bother with namespaces here. We won't need them.
 		SetNamespace("S_START", "S_END", ns_sprites);
 		SetNamespace("F_START", "F_END", ns_flats, true);
 		SetNamespace("C_START", "C_END", ns_colormaps);
@@ -233,10 +227,10 @@ bool FWadFile::Open(bool quiet)
 
 inline bool FWadFile::IsMarker(int lump, const char *marker)
 {
-	if (Lumps[lump].Name[0] == marker[0])
+	if (Lumps[lump].getName()[0] == marker[0])
 	{
-		return (!strcmp(Lumps[lump].Name, marker) ||
-			(marker[1] == '_' && !strcmp(Lumps[lump].Name+1, marker)));
+		return (!strcmp(Lumps[lump].getName(), marker) ||
+			(marker[1] == '_' && !strcmp(Lumps[lump].getName() +1, marker)));
 	}
 	else return false;
 }
@@ -301,7 +295,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				{
 					// We can't add this to the flats namespace but 
 					// it needs to be flagged for the texture manager.
-					DPrintf(DMSG_NOTIFY, "Marking %s as potential flat\n", Lumps[i].Name);
+					DPrintf(DMSG_NOTIFY, "Marking %s as potential flat\n", Lumps[i].getName());
 					Lumps[i].Flags |= LUMPF_MAYBEFLAT;
 				}
 			}
@@ -364,7 +358,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 				// ignore sprite lumps smaller than 8 bytes (the smallest possible)
 				// in size -- this was used by some dmadds wads
 				// as an 'empty' graphics resource
-				DPrintf(DMSG_WARNING, " Skipped empty sprite %s (lump %d)\n", Lumps[j].Name, j);
+				DPrintf(DMSG_WARNING, " Skipped empty sprite %s (lump %d)\n", Lumps[j].getName(), j);
 			}
 			else
 			{
@@ -390,6 +384,7 @@ void FWadFile::SetNamespace(const char *startmarker, const char *endmarker, name
 
 void FWadFile::SkinHack ()
 {
+	// this being static is not a problem. The only relevant thing is that each skin gets a different number.
 	static int namespc = ns_firstskin;
 	bool skinned = false;
 	bool hasmap = false;
@@ -399,14 +394,9 @@ void FWadFile::SkinHack ()
 	{
 		FResourceLump *lump = &Lumps[i];
 
-		if (lump->Name[0] == 'S' &&
-			lump->Name[1] == '_' &&
-			lump->Name[2] == 'S' &&
-			lump->Name[3] == 'K' &&
-			lump->Name[4] == 'I' &&
-			lump->Name[5] == 'N')
+		if (!strnicmp(lump->getName(), "S_SKIN", 6))
 		{ // Wad has at least one skin.
-			lump->Name[6] = lump->Name[7] = 0;
+			lump->LumpNameSetup("S_SKIN");
 			if (!skinned)
 			{
 				skinned = true;
@@ -419,18 +409,18 @@ void FWadFile::SkinHack ()
 				namespc++;
 			}
 		}
-		if ((lump->Name[0] == 'M' &&
-			 lump->Name[1] == 'A' &&
-			 lump->Name[2] == 'P' &&
-			 lump->Name[3] >= '0' && lump->Name[3] <= '9' &&
-			 lump->Name[4] >= '0' && lump->Name[4] <= '9' &&
-			 lump->Name[5] >= '\0')
+		if ((lump->getName()[0] == 'M' &&
+			 lump->getName()[1] == 'A' &&
+			 lump->getName()[2] == 'P' &&
+			 lump->getName()[3] >= '0' && lump->getName()[3] <= '9' &&
+			 lump->getName()[4] >= '0' && lump->getName()[4] <= '9' &&
+			 lump->getName()[5] >= '\0')
 			||
-			(lump->Name[0] == 'E' &&
-			 lump->Name[1] >= '0' && lump->Name[1] <= '9' &&
-			 lump->Name[2] == 'M' &&
-			 lump->Name[3] >= '0' && lump->Name[3] <= '9' &&
-			 lump->Name[4] >= '\0'))
+			(lump->getName()[0] == 'E' &&
+			 lump->getName()[1] >= '0' && lump->getName()[1] <= '9' &&
+			 lump->getName()[2] == 'M' &&
+			 lump->getName()[3] >= '0' && lump->getName()[3] <= '9' &&
+			 lump->getName()[4] >= '\0'))
 		{
 			hasmap = true;
 		}
@@ -442,39 +432,6 @@ void FWadFile::SkinHack ()
 			TEXTCOLOR_BLUE
 			"You should remove the skin from the wad to play these maps.\n",
 			FileName.GetChars());
-	}
-}
-
-
-//==========================================================================
-//
-// FindStrifeTeaserVoices
-//
-// Strife0.wad does not have the voices between V_START/V_END markers, so
-// figure out which lumps are voices based on their names.
-//
-//==========================================================================
-
-void FWadFile::FindStrifeTeaserVoices ()
-{
-	for (uint32_t i = 0; i <= NumLumps; ++i)
-	{
-		if (Lumps[i].Name[0] == 'V' &&
-			Lumps[i].Name[1] == 'O' &&
-			Lumps[i].Name[2] == 'C')
-		{
-			int j;
-
-			for (j = 3; j < 8; ++j)
-			{
-				if (Lumps[i].Name[j] != 0 && !isdigit(Lumps[i].Name[j]))
-					break;
-			}
-			if (j == 8)
-			{
-				Lumps[i].Namespace = ns_strifevoices;
-			}
-		}
 	}
 }
 

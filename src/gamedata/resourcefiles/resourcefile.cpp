@@ -100,52 +100,7 @@ void FResourceLump::LumpNameSetup(FString iname)
 		iname = "";
 	}
 
-	long slash = iname.LastIndexOf('/');
-	FString base = (slash >= 0) ? iname.Mid(slash + 1) : iname;
-	auto dot = base.LastIndexOf('.');
-	if (dot >= 0) base.Truncate(dot);
-	uppercopy(Name, base);
-	Name[8] = 0;
 	FullName = iname;
-
-	// Map some directories to WAD namespaces.
-	// Note that some of these namespaces don't exist in WADS.
-	// CheckNumForName will handle any request for these namespaces accordingly.
-	Namespace =	!strncmp(iname, "flats/", 6)		? ns_flats :
-				!strncmp(iname, "textures/", 9)		? ns_newtextures :
-				!strncmp(iname, "hires/", 6)		? ns_hires :
-				!strncmp(iname, "sprites/", 8)		? ns_sprites :
-				!strncmp(iname, "voxels/", 7)		? ns_voxels :
-				!strncmp(iname, "colormaps/", 10)	? ns_colormaps :
-				!strncmp(iname, "acs/", 4)			? ns_acslibrary :
-				!strncmp(iname, "voices/", 7)		? ns_strifevoices :
-				!strncmp(iname, "patches/", 8)		? ns_patches :
-				!strncmp(iname, "graphics/", 9)		? ns_graphics :
-				!strncmp(iname, "sounds/", 7)		? ns_sounds :
-				!strncmp(iname, "music/", 6)		? ns_music : 
-				!strchr(iname, '/')					? ns_global :
-				ns_hidden;
-	
-	// Anything that is not in one of these subdirectories or the main directory 
-	// should not be accessible through the standard WAD functions but only through 
-	// the ones which look for the full name.
-	if (Namespace == ns_hidden)
-	{
-		memset(Name, 0, 8);
-	}
-
-	// Since '\' can't be used as a file name's part inside a ZIP
-	// we have to work around this for sprites because it is a valid
-	// frame character.
-	else if (Namespace == ns_sprites || Namespace == ns_voxels || Namespace == ns_hires)
-	{
-		char *c;
-
-		while ((c = (char*)memchr(Name, '^', 8)))
-		{
-			*c = '\\';
-		}
-	}
 }
 
 //==========================================================================
@@ -177,9 +132,7 @@ void FResourceLump::CheckEmbedded()
 	const char *c = strstr(FullName, ".wad");
 	if (c && strlen(c) == 4 && (!strchr(FullName, '/') || IsWadInFolder(Owner, FullName)))
 	{
-		// Mark all embedded WADs
 		Flags |= LUMPF_EMBEDDED;
-		memset(Name, 0, 8);
 	}
 	/* later
 	else
@@ -381,7 +334,6 @@ void FResourceFile::GenerateHash()
 	for(uint32_t i = 0; i < NumLumps; i++)
 	{
 		auto lump = GetLump(i);
-		md5.Update((const uint8_t*)lump->Name, (unsigned)strlen(lump->Name) + 1); // +1 to hash the terminating 0 as well.
 		md5.Update((const uint8_t*)lump->FullName.GetChars(), (unsigned)lump->FullName.Len() + 1);
 		md5.Update((const uint8_t*)&lump->LumpSize, 4);
 	}
@@ -552,8 +504,6 @@ void FResourceFile::JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t m
 		{
 			FResourceLump *lump = (FResourceLump *)p;
 			lump->FullName = "";
-			lump->Name[0] = '\0';
-			lump->Namespace = ns_hidden;
 		}
 	}
 }
@@ -630,16 +580,6 @@ bool FResourceFile::FindPrefixRange(FString filter, void *lumps, size_t lumpsize
 	}
 	end = mid - (cmp != 0);
 	return true;
-}
-
-//==========================================================================
-//
-// Needs to be virtual in the base class. Implemented only for WADs
-//
-//==========================================================================
-
-void FResourceFile::FindStrifeTeaserVoices ()
-{
 }
 
 //==========================================================================
@@ -777,7 +717,6 @@ bool FMemoryFile::Open(bool quiet)
     Lumps[0].Owner = this;
     Lumps[0].Position = 0;
     Lumps[0].LumpSize = (int)Reader.GetLength();
-    Lumps[0].Namespace = ns_global;
     Lumps[0].Flags = 0;
     NumLumps = 1;
     return true;

@@ -13,6 +13,7 @@
 #include "doomdef.h"
 #include "tarray.h"
 #include "zstring.h"
+#include "resourcefiles/resourcefile.h"
 
 class FResourceFile;
 struct FResourceLump;
@@ -35,37 +36,6 @@ struct wadlump_t
 
 #define IWAD_ID		MAKE_ID('I','W','A','D')
 #define PWAD_ID		MAKE_ID('P','W','A','D')
-
-
-// [RH] Namespaces from BOOM.
-typedef enum {
-	ns_hidden = -1,
-
-	ns_global = 0,
-	ns_sprites,
-	ns_flats,
-	ns_colormaps,
-	ns_acslibrary,
-	ns_newtextures,
-	ns_bloodraw,
-	ns_bloodsfx,
-	ns_bloodmisc,
-	ns_strifevoices,
-	ns_hires,
-	ns_voxels,
-
-	// These namespaces are only used to mark lumps in special subdirectories
-	// so that their contents doesn't interfere with the global namespace.
-	// searching for data in these namespaces works differently for lumps coming
-	// from Zips or other files.
-	ns_specialzipdirectory,
-	ns_sounds,
-	ns_patches,
-	ns_graphics,
-	ns_music,
-
-	ns_firstskin,
-} namespace_t;
 
 
 // [RH] Copy an 8-char string and uppercase it.

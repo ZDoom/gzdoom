@@ -72,11 +72,104 @@ union LumpShortName
 
 struct FWadCollection::LumpRecord
 {
-	int			wadnum;
 	FResourceLump *lump;
 	FTexture* linkedTexture;
 	LumpShortName shortName;
-	FString longName;
+	FString		longName;
+	int			wadnum;
+	int			Namespace;
+	int			resourceId;
+
+	void SetFromLump(int filenum, FResourceLump* lmp)
+	{
+		lump = lmp;
+		wadnum = filenum;
+		linkedTexture = nullptr;
+
+		if (lump->Flags & LUMPF_SHORTNAME)
+		{
+			uppercopy(shortName.String, lump->getName());
+			shortName.String[8] = 0;
+			longName = "";
+			Namespace = lump->GetNamespace();
+			resourceId = 0;
+
+			if (gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE && filenum == Wads.GetIwadNum())
+			{
+				if (shortName.String[0] == 'V' &&
+					shortName.String[1] == 'O' &&
+					shortName.String[2] == 'C')
+				{
+					int j;
+
+					for (j = 3; j < 8; ++j)
+					{
+						if (shortName.String[j] != 0 && !isdigit(shortName.String[j]))
+							break;
+					}
+					if (j == 8)
+					{
+						Namespace = ns_strifevoices;
+					}
+				}
+			}
+
+		}
+		else if ((lump->Flags & LUMPF_EMBEDDED) || !lump->getName() || !*lump->getName())
+		{
+			shortName.qword = 0;
+			longName = "";
+			Namespace = ns_hidden;
+			resourceId = 0;
+		}
+		else
+		{
+			longName = lump->getName();
+			resourceId = lump->GetIndexNum();
+
+			// Map some directories to WAD namespaces.
+			// Note that some of these namespaces don't exist in WADS.
+			// CheckNumForName will handle any request for these namespaces accordingly.
+			Namespace = !strncmp(longName.GetChars(), "flats/", 6) ? ns_flats :
+				!strncmp(longName.GetChars(), "textures/", 9) ? ns_newtextures :
+				!strncmp(longName.GetChars(), "hires/", 6) ? ns_hires :
+				!strncmp(longName.GetChars(), "sprites/", 8) ? ns_sprites :
+				!strncmp(longName.GetChars(), "voxels/", 7) ? ns_voxels :
+				!strncmp(longName.GetChars(), "colormaps/", 10) ? ns_colormaps :
+				!strncmp(longName.GetChars(), "acs/", 4) ? ns_acslibrary :
+				!strncmp(longName.GetChars(), "voices/", 7) ? ns_strifevoices :
+				!strncmp(longName.GetChars(), "patches/", 8) ? ns_patches :
+				!strncmp(longName.GetChars(), "graphics/", 9) ? ns_graphics :
+				!strncmp(longName.GetChars(), "sounds/", 7) ? ns_sounds :
+				!strncmp(longName.GetChars(), "music/", 6) ? ns_music :
+				!strchr(longName.GetChars(), '/') ? ns_global :
+				ns_hidden;
+
+			if (Namespace == ns_hidden) shortName.qword = 0;
+			else
+			{
+				long slash = longName.LastIndexOf('/');
+				FString base = (slash >= 0) ? longName.Mid(slash + 1) : longName;
+				auto dot = base.LastIndexOf('.');
+				if (dot >= 0) base.Truncate(dot);
+				uppercopy(shortName.String, base);
+				shortName.String[8] = 0;
+
+				// Since '\' can't be used as a file name's part inside a ZIP
+				// we have to work around this for sprites because it is a valid
+				// frame character.
+				if (Namespace == ns_sprites || Namespace == ns_voxels || Namespace == ns_hires)
+				{
+					char* c;
+
+					while ((c = (char*)memchr(shortName.String, '^', 8)))
+					{
+						*c = '\\';
+					}
+				}
+			}
+		}
+	}
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -224,11 +317,7 @@ int FWadCollection::AddExternalFile(const char *filename)
 	FResourceLump *lump = new FExternalLump(filename);
 
 	FWadCollection::LumpRecord *lumprec = &LumpInfo[LumpInfo.Reserve(1)];
-	lumprec->lump = lump;
-	lumprec->wadnum = -1;
-	lumprec->linkedTexture = nullptr;
-	memcpy(lumprec->shortName.String, lump->shortName(), 9);
-	lumprec->longName = lump->longName();
+	lumprec->SetFromLump(-1, lump);
 	return LumpInfo.Size()-1;	// later
 }
 
@@ -295,18 +384,9 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr, bool quiet
 		{
 			FResourceLump *lump = resfile->GetLump(i);
 			FWadCollection::LumpRecord *lump_p = &LumpInfo[LumpInfo.Reserve(1)];
-
-			lump_p->lump = lump;
-			lump_p->wadnum = Files.Size();
-			lump_p->linkedTexture = nullptr;
-			memcpy(lump_p->shortName.String, lump->shortName(), 9);
-			lump_p->longName = lump->longName();
+			lump_p->SetFromLump(Files.Size(), lump);
 		}
 
-		if (static_cast<int>(Files.Size()) == GetIwadNum() && gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
-		{
-			resfile->FindStrifeTeaserVoices();
-		}
 		Files.Push(resfile);
 
 		for (uint32_t i=0; i < resfile->LumpCount(); i++)
@@ -459,15 +539,15 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 
 		if (LumpInfo[i].shortName.qword == qname)
 		{
-			FResourceLump* lump = LumpInfo[i].lump;
-			if (lump->Namespace == space) break;
+			auto &lump = LumpInfo[i];
+			if (lump.Namespace == space) break;
 			// If the lump is from one of the special namespaces exclusive to Zips
 			// the check has to be done differently:
 			// If we find a lump with this name in the global namespace that does not come
 			// from a Zip return that. WADs don't know these namespaces and single lumps must
 			// work as well.
-			if (space > ns_specialzipdirectory && lump->Namespace == ns_global && 
-				!(lump->Flags & LUMPF_FULLPATH)) break;
+			if (space > ns_specialzipdirectory && lump.Namespace == ns_global && 
+				!(lump.lump->Flags & LUMPF_FULLPATH)) break;
 		}
 		i = NextLumpIndex[i];
 	}
@@ -477,7 +557,6 @@ int FWadCollection::CheckNumForName (const char *name, int space)
 
 int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bool exact)
 {
-	FResourceLump *lump;
 	union
 	{
 		char uname[8];
@@ -497,8 +576,7 @@ int FWadCollection::CheckNumForName (const char *name, int space, int wadnum, bo
 	// also those in earlier WADs.
 
 	while (i != NULL_INDEX &&
-		(lump = LumpInfo[i].lump, LumpInfo[i].shortName.qword != qname ||
-		lump->Namespace != space ||
+		(LumpInfo[i].shortName.qword != qname || LumpInfo[i].Namespace != space ||
 		 (exact? (LumpInfo[i].wadnum != wadnum) : (LumpInfo[i].wadnum > wadnum)) ))
 	{
 		i = NextLumpIndex[i];
@@ -872,7 +950,7 @@ void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 	{
 		// check for full Minotaur animations. If this is not found
 		// some frames need to be renamed.
-		if (LumpInfo[i].lump->Namespace == ns_sprites)
+		if (LumpInfo[i].Namespace == ns_sprites)
 		{
 			if (LumpInfo[i].shortName.dword == MAKE_ID('M', 'N', 'T', 'R') && LumpInfo[i].shortName.String[4] == 'Z' )
 			{
@@ -886,7 +964,7 @@ void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 	
 	for (uint32_t i = 0; i < LumpInfo.Size(); i++)
 	{
-		if (LumpInfo[i].lump->Namespace == ns_sprites)
+		if (LumpInfo[i].Namespace == ns_sprites)
 		{
 			// Only sprites in the IWAD normally get renamed
 			if (renameAll || LumpInfo[i].wadnum == GetIwadNum())
@@ -932,7 +1010,7 @@ void FWadCollection::RenameSprites (const TArray<FString> &deletelumps)
 				}
 			}
 		}
-		else if (LumpInfo[i].lump->Namespace == ns_global)
+		else if (LumpInfo[i].Namespace == ns_global)
 		{
 			if (LumpInfo[i].wadnum >= GetIwadNum() && LumpInfo[i].wadnum <= GetMaxIwadNum() && deletelumps.Find(LumpInfo[i].shortName.String) < deletelumps.Size())
 			{
@@ -1134,11 +1212,8 @@ void FWadCollection::MoveLumpsInFolder(const char *path)
 			LumpInfo.Push(li);
 			li.lump = &placeholderLump;			// Make the old entry point to something empty. We cannot delete the lump record here because it'd require adjustment of all indices in the list.
 			auto &ln = LumpInfo.Last();
-			ln.wadnum = wadnum;					// pretend this is from the WAD this is injected into.
 			ln.lump->LumpNameSetup(ln.longName.Mid(len));
-			ln.linkedTexture = nullptr;
-			strcpy(ln.shortName.String, ln.lump->shortName());
-			ln.longName = ln.lump->longName();
+			ln.SetFromLump(wadnum, ln.lump);
 		}
 	}
 }
@@ -1167,9 +1242,7 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 	lump_p = &LumpInfo[*lastlump];
 	while (lump_p < &LumpInfo[NumLumps])
 	{
-		FResourceLump *lump = lump_p->lump;
-
-		if ((anyns || lump->Namespace == ns_global) && lump_p->shortName.qword == qname)
+		if ((anyns || lump_p->Namespace == ns_global) && lump_p->shortName.qword == qname)
 		{
 			int lump = int(lump_p - &LumpInfo[0]);
 			*lastlump = lump + 1;
@@ -1209,9 +1282,7 @@ int FWadCollection::FindLumpMulti (const char **names, int *lastlump, bool anyns
 	lump_p = &LumpInfo[*lastlump];
 	while (lump_p < &LumpInfo[NumLumps])
 	{
-		FResourceLump *lump = lump_p->lump;
-
-		if (anyns || lump->Namespace == ns_global)
+		if (anyns || lump_p->Namespace == ns_global)
 		{
 			
 			for(const char **name = names; *name != NULL; name++)
@@ -1343,7 +1414,7 @@ int FWadCollection::GetLumpNamespace (int lump) const
 	if ((size_t)lump >= NumLumps)
 		return ns_global;
 	else
-		return LumpInfo[lump].lump->Namespace;
+		return LumpInfo[lump].Namespace;
 }
 
 DEFINE_ACTION_FUNCTION(_Wads, GetLumpNamespace)
@@ -1368,7 +1439,7 @@ int FWadCollection::GetLumpIndexNum(int lump) const
 	if ((size_t)lump >= NumLumps)
 		return 0;
 	else
-		return LumpInfo[lump].lump->GetIndexNum();
+		return LumpInfo[lump].resourceId;
 }
 
 //==========================================================================

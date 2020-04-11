@@ -77,7 +77,6 @@ bool FLumpFile::Open(bool quiet)
 	Lumps[0].Owner = this;
 	Lumps[0].Position = 0;
 	Lumps[0].LumpSize = (int)Reader.GetLength();
-	Lumps[0].Namespace = ns_global;
 	Lumps[0].Flags = 0;
 	NumLumps = 1;
 	if (!quiet)

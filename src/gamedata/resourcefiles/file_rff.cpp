@@ -174,14 +174,6 @@ bool FRFFFile::Open(bool quiet)
 		name[len+3] = lumps[i].Extension[2];
 		name[len+4] = 0;
 		Lumps[i].LumpNameSetup(name);
-		if (name[len+1] == 'S' && name[len+2] == 'F' && name[len+3] == 'X')
-		{
-			Lumps[i].Namespace = ns_bloodsfx;
-		}
-		else if (name[len+1] == 'R' && name[len+2] == 'A' && name[len+3] == 'W')
-		{
-			Lumps[i].Namespace = ns_bloodraw;
-		}
 	}
 	delete[] lumps;
 	GenerateHash();

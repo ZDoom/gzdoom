@@ -791,10 +791,6 @@ void S_ParseSndInfo (bool redefine)
 			}
 			break;
 
-		case ns_bloodsfx:
-			S_AddBloodSFX (lump);
-			break;
-
 		case ns_strifevoices:
 			S_AddStrifeVoice (lump);
 			break;
@@ -1271,54 +1267,6 @@ static void S_AddSNDINFO (int lump)
 			sc.MustGetString ();
 			S_AddSound (name, sc.String, &sc);
 		}
-	}
-}
-
-//==========================================================================
-//
-// S_AddBloodSFX
-//
-// Registers a new sound with the name "<lumpname>.sfx"
-// Actual sound data is searched for in the ns_bloodraw namespace.
-//
-//==========================================================================
-
-static void S_AddBloodSFX (int lumpnum)
-{
-	FMemLump sfxlump = Wads.ReadLump(lumpnum);
-	const FBloodSFX *sfx = (FBloodSFX *)sfxlump.GetMem();
-	int rawlump = Wads.CheckNumForName(sfx->RawName, ns_bloodraw);
-	int sfxnum;
-
-	if (rawlump != -1)
-	{
-		auto &S_sfx = soundEngine->GetSounds();
-		const char *name = Wads.GetLumpFullName(lumpnum);
-		sfxnum = S_AddSound(name, rawlump);
-		if (sfx->Format < 5 || sfx->Format > 12)
-		{	// [0..4] + invalid formats
-			S_sfx[sfxnum].RawRate = 11025;
-		}
-		else if (sfx->Format < 9)
-		{	// [5..8]
-			S_sfx[sfxnum].RawRate = 22050;
-		}
-		else
-		{	// [9..12]
-			S_sfx[sfxnum].RawRate = 44100;
-		}
-		S_sfx[sfxnum].bLoadRAW = true;
-		S_sfx[sfxnum].LoopStart = LittleLong(sfx->LoopStart);
-		// Make an ambient sound out of it, whether it has a loop point
-		// defined or not. (Because none of the standard Blood ambient
-		// sounds are explicitly defined as looping.)
-		FAmbientSound *ambient = &Ambients[Wads.GetLumpIndexNum(lumpnum)];
-		ambient->type = CONTINUOUS;
-		ambient->periodmin = 0;
-		ambient->periodmax = 0;
-		ambient->volume = 1;
-		ambient->attenuation = 1;
-		ambient->sound = FSoundID(sfxnum);
 	}
 }
 

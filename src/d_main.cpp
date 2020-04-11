@@ -252,7 +252,6 @@ int NoWipe;				// [RH] Allow wipe? (Needs to be set each time)
 bool singletics = false;	// debug flag to cancel adaptiveness
 FString startmap;
 bool autostart;
-FString StoredWarp;
 bool advancedemo;
 FILE *debugfile;
 FILE *hashfile;

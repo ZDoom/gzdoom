@@ -65,6 +65,7 @@
 #include "vm.h"
 #include "utf8.h"
 #include "s_music.h"
+#include "i_time.h"
 
 
 #include "gi.h"
@@ -108,7 +109,7 @@ int			ConWidth;
 bool		vidactive = false;
 bool		cursoron = false;
 int			ConBottom, ConScroll, RowAdjust;
-int			CursorTicker;
+uint64_t	CursorTicker;
 constate_e	ConsoleState = c_up;
 
 
@@ -1036,12 +1037,6 @@ void C_Ticker()
 		}
 	}
 
-	if (--CursorTicker <= 0)
-	{
-		cursoron ^= 1;
-		CursorTicker = C_BLINKRATE;
-	}
-
 	lasttic = consoletic;
 	NotifyStrings.Tick();
 }
@@ -1239,6 +1234,12 @@ void C_DrawConsole ()
 		{
 			if (gamestate != GS_STARTUP)
 			{
+				auto now = I_msTime();
+				if (now > CursorTicker)
+				{
+					CursorTicker = now + 500;
+					cursoron = !cursoron;
+				}
 				CmdLine.Draw(left, bottomline, textScale, cursoron);
 			}
 			if (RowAdjust && ConBottom >= CurrentConsoleFont->GetHeight()*7/2)
@@ -1712,7 +1713,7 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 	buffer.AppendToYankBuffer = keepappending;
 
 	// Ensure that the cursor is always visible while typing
-	CursorTicker = C_BLINKRATE;
+	CursorTicker = I_msTime() + 500;
 	cursoron = 1;
 	return true;
 }

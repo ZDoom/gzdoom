@@ -171,6 +171,7 @@ static FConsoleCommand *ScanChainForName (FConsoleCommand *start, const char *na
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 bool ParsingKeyConf, UnsafeExecutionContext;
+FString StoredWarp;
 
 FConsoleCommand* Commands[FConsoleCommand::HASH_SIZE];
 
@@ -1087,7 +1088,7 @@ bool C_ExecFile (const char *file)
 		exec->ExecCommands();
 		if (exec->Pullins.Size() > 0)
 		{
-			Printf(TEXTCOLOR_RED "Notice: Pullin files were ignored.\n");
+			Printf(TEXTCOLOR_BOLD "Notice: Pullin files were ignored.\n");
 		}
 		delete exec;
 	}

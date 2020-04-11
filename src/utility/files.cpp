@@ -34,7 +34,8 @@
 */
 
 #include "files.h"
-#include "templates.h"
+#include "templates.h"	// just for 'clamp'
+#include "zstring.h"
 
 
 FILE *myfopen(const char *filename, const char *flags)
@@ -187,7 +188,7 @@ public:
 		return FilePos - StartPos;
 	}
 
-	virtual long Seek(long offset, int origin)
+	virtual long Seek(long offset, int origin) override
 	{
 		switch (origin)
 		{
@@ -212,7 +213,7 @@ public:
 		return -1;
 	}
 
-	virtual long Read(void *buffer, long len)
+	virtual long Read(void *buffer, long len) override
 	{
 		assert(len >= 0);
 		if (len <= 0) return 0;
@@ -225,7 +226,7 @@ public:
 		return len;
 	}
 
-	virtual char *Gets(char *strbuf, int len)
+	virtual char *Gets(char *strbuf, int len) override
 	{
 		if (len <= 0 || FilePos >= StartPos + Length) return NULL;
 		char *p = mReader->Gets(strbuf, len);

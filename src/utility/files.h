@@ -304,15 +304,18 @@ public:
 	// They will just error out when called.
 	long Tell() const override;
 	long Seek(long offset, int origin) override;
-	char *Gets(char *strbuf, int len) override;
+	char* Gets(char* strbuf, int len) override;
 	void DecompressionError(const char* error, ...) const;
 	void SetErrorCallback(const std::function<void(const char*)>& cb)
 	{
 		ErrorCallback = cb;
 	}
+	void SetOwnsReader();
+
+protected:
+	FileReader* File = nullptr;
+	FileReader OwnedFile;
 };
-
-
 
 
 class FileWriter
@@ -320,14 +323,14 @@ class FileWriter
 protected:
 	bool OpenDirect(const char *filename);
 
-	FileWriter()
-	{
-		File = NULL;
-	}
 public:
+	FileWriter(FILE *f = nullptr) // if passed, this writer will take over the file.
+	{
+		File = f;
+	}
 	virtual ~FileWriter()
 	{
-		if (File != NULL) fclose(File);
+		Close();
 	}
 
 	static FileWriter *Open(const char *filename);
@@ -336,6 +339,11 @@ public:
 	virtual long Tell();
 	virtual long Seek(long offset, int mode);
 	size_t Printf(const char *fmt, ...) GCCPRINTF(2,3);
+	virtual void Close()
+	{
+		if (File != NULL) fclose(File);
+		File = nullptr;
+	}
 
 protected:
 
@@ -354,6 +362,7 @@ public:
 	BufferWriter() {}
 	virtual size_t Write(const void *buffer, size_t len) override;
 	TArray<unsigned char> *GetBuffer() { return &mBuffer; }
+	TArray<unsigned char>&& TakeBuffer() { return std::move(mBuffer); }
 };
 
 

@@ -5,6 +5,8 @@
 #error You must #include "dobject.h" to get dobjtype.h
 #endif
 
+#include <limits.h>
+
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 
 #if 0

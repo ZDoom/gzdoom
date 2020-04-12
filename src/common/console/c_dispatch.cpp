@@ -486,7 +486,7 @@ void FUnsafeConsoleCommand::Run(FCommandLine &args, int key)
 {
 	if (UnsafeExecutionContext)
 	{
-		Printf(TEXTCOLOR_RED "Cannot execute unsafe command " TEXTCOLOR_GOLD "%s\n", m_Name);
+		Printf(TEXTCOLOR_RED "Cannot execute unsafe command " TEXTCOLOR_GOLD "%s\n", m_Name.GetChars());
 		return;
 	}
 

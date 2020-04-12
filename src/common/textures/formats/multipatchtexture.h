@@ -7,6 +7,8 @@
 #include "image.h"
 
 class FImageTexture;
+class FTextureManager;
+
 //==========================================================================
 //
 // TexPart is the data that will get passed to the final texture.

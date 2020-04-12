@@ -63,6 +63,7 @@
 #include "po_man.h"
 #include "actorptrselect.h"
 #include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "decallib.h"
 #include "p_terrain.h"
 #include "version.h"

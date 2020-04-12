@@ -89,6 +89,7 @@
 #include "p_spec.h"
 #include "p_checkposition.h"
 #include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "r_utility.h"
 #include "thingdef.h"
 #include "d_player.h"

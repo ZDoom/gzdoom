@@ -215,15 +215,23 @@ VulkanDescriptorSet* VkRenderPassManager::GetNullTextureDescriptorSet()
 {
 	if (!NullTextureDescriptorSet)
 	{
-		NullTextureDescriptorSet = AllocateTextureDescriptorSet(1);
+		NullTextureDescriptorSet = AllocateTextureDescriptorSet(SHADER_MIN_REQUIRED_TEXTURE_LAYERS);
 
 		auto fb = GetVulkanFrameBuffer();
 		WriteDescriptors update;
-		update.addCombinedImageSampler(NullTextureDescriptorSet.get(), 0, NullTextureView.get(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		for (int i = 0; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
+		{
+			update.addCombinedImageSampler(NullTextureDescriptorSet.get(), i, NullTextureView.get(), fb->GetSamplerManager()->Get(CLAMP_XY_NOMIP), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		}
 		update.updateSets(fb->device);
 	}
 
 	return NullTextureDescriptorSet.get();
+}
+
+VulkanImageView* VkRenderPassManager::GetNullTextureView()
+{
+	return NullTextureView.get();
 }
 
 void VkRenderPassManager::UpdateDynamicSet()

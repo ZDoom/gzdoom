@@ -94,6 +94,7 @@ public:
 	VulkanPipelineLayout* GetPipelineLayout(int numLayers);
 
 	VulkanDescriptorSet* GetNullTextureDescriptorSet();
+	VulkanImageView* GetNullTextureView();
 
 	std::unique_ptr<VulkanDescriptorSetLayout> DynamicSetLayout;
 	std::map<VkRenderPassKey, std::unique_ptr<VkRenderPassSetup>> RenderPassSetup;

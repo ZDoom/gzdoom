@@ -33,6 +33,7 @@
 #include "vulkan/renderer/vk_renderpass.h"
 #include "vulkan/renderer/vk_postprocess.h"
 #include "vulkan/renderer/vk_renderbuffers.h"
+#include "vulkan/shaders/vk_shader.h"
 #include "vk_hwtexture.h"
 
 VkHardwareTexture *VkHardwareTexture::First = nullptr;
@@ -144,7 +145,7 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 	int numLayers = mat->GetLayers();
 
 	auto fb = GetVulkanFrameBuffer();
-	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(numLayers);
+	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(std::max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
 
 	descriptor->SetDebugName("VkHardwareTexture.mDescriptorSets");
 
@@ -158,6 +159,13 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
 		update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0)->View.get(), sampler, systex->mImage.Layout);
 	}
+
+	auto dummyImage = fb->GetRenderPassManager()->GetNullTextureView();
+	for (int i = numLayers; i < SHADER_MIN_REQUIRED_TEXTURE_LAYERS; i++)
+	{
+		update.addCombinedImageSampler(descriptor.get(), i, dummyImage, sampler, mImage.Layout);
+	}
+
 	update.updateSets(fb->device);
 	mDescriptorSets.emplace_back(clampmode, flags, std::move(descriptor));
 	return mDescriptorSets.back().descriptor.get();

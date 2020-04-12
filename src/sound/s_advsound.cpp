@@ -950,7 +950,7 @@ static void S_AddSNDINFO (int lump)
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				targid = soundEngine->FindSoundNoHash (sc.String);
-				if (!S_sfx[targid].UserData[0] & SND_PlayerReserve)
+				if (!(S_sfx[targid].UserData[0] & SND_PlayerReserve))
 				{
 					sc.ScriptError ("%s is not a player sound", sc.String);
 				}
@@ -1261,7 +1261,7 @@ static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender
 	sc.MustGetString ();
 	refid = soundEngine->FindSoundNoHash (sc.String);
 	auto &S_sfx = soundEngine->GetSounds();
-	if (refid != 0 && !S_sfx[refid].UserData[0] & SND_PlayerReserve && !S_sfx[refid].bTentative)
+	if (refid != 0 && !(S_sfx[refid].UserData[0] & SND_PlayerReserve) && !S_sfx[refid].bTentative)
 	{
 		sc.ScriptError ("%s has already been used for a non-player sound.", sc.String);
 	}
@@ -1423,7 +1423,7 @@ int S_LookupPlayerSound (const char *pclass, int gender, const char *name)
 int S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
 {
 	auto &S_sfx = soundEngine->GetSounds();
-	if (!S_sfx[refid].UserData[0] & SND_PlayerReserve)
+	if (!(S_sfx[refid].UserData[0] & SND_PlayerReserve))
 	{ // Not a player sound, so just return this sound
 		return refid;
 	}

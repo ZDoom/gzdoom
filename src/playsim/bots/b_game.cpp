@@ -94,6 +94,10 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "vm.h"
 #include "g_levellocals.h"
 
+#if !defined _WIN32 && !defined __APPLE__
+#include "i_system.h"  // for SHARE_DIR
+#endif // !_WIN32 && !__APPLE__
+
 static FRandom pr_botspawn ("BotSpawn");
 
 cycle_t BotThinkCycles, BotSupportCycles;

@@ -113,6 +113,10 @@
 #include "scriptutil.h"
 #include "v_palette.h"
 
+#ifdef __unix__
+#include "i_system.h"  // for SHARE_DIR
+#endif // __unix__
+
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Bool, cl_customizeinvulmap)

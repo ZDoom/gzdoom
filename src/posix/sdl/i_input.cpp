@@ -40,6 +40,7 @@
 #include "d_main.h"
 #include "d_event.h"
 #include "d_gui.h"
+#include "c_buttons.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "dikeys.h"
@@ -191,7 +192,7 @@ static void I_CheckGUICapture ()
 	if (wantCapt != GUICapture)
 	{
 		GUICapture = wantCapt;
-		ResetButtonStates();
+		buttonMap.ResetButtonStates();
 	}
 }
 

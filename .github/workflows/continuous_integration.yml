@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   build:
-    name: ${{ matrix.config.name }}
+    name: ${{ matrix.config.name }} | ${{ matrix.config.build_type }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
@@ -15,6 +15,12 @@ jobs:
             os: windows-latest,
             extra_options: "-A x64",
             build_type: "Release"
+          }
+        - {
+            name: "Visual Studio 64-bit",
+            os: windows-latest,
+            extra_options: "-A x64",
+            build_type: "Debug"
           }
         - {
             name: "Visual Studio 32-bit",
@@ -35,6 +41,14 @@ jobs:
             build_type: "Debug"
           }
         - {
+            name: "Linux GCC 5",
+            os: ubuntu-latest,
+            extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-5 -DCMAKE_CXX_COMPILER=/usr/bin/g++-5 \
+                            -DDYN_FLUIDSYNTH=OFF -DDYN_OPENAL=OFF -DDYN_SNDFILE=OFF -DDYN_MPG123=OFF",
+            deps_cmdline: "sudo apt update && sudo apt install g++-5 libsdl2-dev libopenal-dev libfluidsynth-dev libmpg123-dev libsndfile1-dev",
+            build_type: "MinSizeRel"
+          }
+        - {
             name: "Linux GCC 7",
             os: ubuntu-latest,
             extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/bin/g++-7",
@@ -46,7 +60,7 @@ jobs:
             os: ubuntu-latest,
             extra_options: "-DCMAKE_C_COMPILER=/usr/bin/gcc-9 -DCMAKE_CXX_COMPILER=/usr/bin/g++-9",
             deps_cmdline: "sudo apt update && sudo apt install libsdl2-dev libgtk-3-dev",
-            build_type: "RelWithDebInfo"
+            build_type: "Debug"
           }
         - {
             name: "Linux Clang 6",
@@ -91,9 +105,11 @@ jobs:
     - name: Build
       shell: bash
       run: |
+        export MAKEFLAGS=--keep-going
         cmake --build build --config ${{ matrix.config.build_type }} --parallel 3
 
     - name: Create Package
+      if: runner.os == 'Windows'  # Remove to make packages of all targets
       shell: bash
       run: |
         cd build
@@ -107,10 +123,11 @@ jobs:
         fi
 
     - name: Upload Package
+      if: runner.os == 'Windows'  # Remove to store packages of all targets
       uses: actions/upload-artifact@v1
       with:
         path: build/package
-        name: ${{ matrix.config.name }}
+        name: ${{ matrix.config.name }} ${{ matrix.config.build_type }}
 
     - name: List Build Directory
       if: always()

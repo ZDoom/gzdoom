@@ -35,6 +35,7 @@
 
 #import <Carbon/Carbon.h>
 
+#include "c_buttons.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -90,7 +91,7 @@ void CheckGUICapture()
 	{
 		GUICapture = wantCapture;
 
-		ResetButtonStates();
+		buttonMap.ResetButtonStates();
 	}
 }
 

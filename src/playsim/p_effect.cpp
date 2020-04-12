@@ -695,7 +695,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			if (!p)
 				return;
 
-			int spiralduration = (duration == 0) ? 35 : duration;
+			int spiralduration = (duration == 0) ? TICRATE : duration;
 
 			p->alpha = 1.f;
 			p->ttl = spiralduration;

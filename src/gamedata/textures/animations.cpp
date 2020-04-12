@@ -297,7 +297,7 @@ void FTextureAnimator::InitAnimated (void)
 				}
 
 				// Speed is stored as tics, but we want ms so scale accordingly.
-				FAnimDef *adef = AddSimpleAnim (pic1, pic2 - pic1 + 1, Scale (animspeed, 1000, 35));
+				FAnimDef *adef = AddSimpleAnim (pic1, pic2 - pic1 + 1, Scale (animspeed, 1000, TICRATE));
 				if (adef != NULL) adef->AnimType = animtype;
 			}
 		}
@@ -601,14 +601,14 @@ void FTextureAnimator::ParseTime (FScanner &sc, uint32_t &min, uint32_t &max)
 	if (sc.Compare ("tics"))
 	{
 		sc.MustGetFloat ();
-		min = max = uint32_t(sc.Float * 1000 / 35);
+		min = max = uint32_t(sc.Float * 1000 / TICRATE);
 	}
 	else if (sc.Compare ("rand"))
 	{
 		sc.MustGetFloat ();
-		min = uint32_t(sc.Float * 1000 / 35);
+		min = uint32_t(sc.Float * 1000 / TICRATE);
 		sc.MustGetFloat ();
-		max = uint32_t(sc.Float * 1000 / 35);
+		max = uint32_t(sc.Float * 1000 / TICRATE);
 	}
 	else
 	{

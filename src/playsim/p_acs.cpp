@@ -6443,7 +6443,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		{
 			PalEntry color = args[0];
 			bool fullbright = argCount > 1 ? !!args[1] : false;
-			int lifetime = argCount > 2 ? args[2] : 35;
+			int lifetime = argCount > 2 ? args[2] : TICRATE;
 			double size = argCount > 3 ? args[3] : 1.;
 			int x = argCount > 4 ? args[4] : 0;
 			int y = argCount > 5 ? args[5] : 0;

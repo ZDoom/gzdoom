@@ -33,6 +33,7 @@
 */
 
 #include <stddef.h>
+#include <cmath>
 
 #include "templates.h"
 #include "doomdef.h"

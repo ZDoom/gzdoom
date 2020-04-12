@@ -40,6 +40,7 @@
 #ifndef VECTORS_H
 #define VECTORS_H
 
+#include <cstddef>
 #include <math.h>
 #include <float.h>
 #include <string.h>

@@ -543,6 +543,8 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 	material.Base = getTexel(texCoord.st); 
 	material.Normal = ApplyNormalMap(texCoord.st);
 
+// OpenGL doesn't care, but Vulkan pukes all over the place if these texture samplings are included in no-texture shaders, even though never called.
+#ifndef NO_LAYERS
 	if ((uTextureMode & TEXF_Brightmap) != 0)
 		material.Bright = texture(brighttexture, texCoord.st);
 		
@@ -554,6 +556,7 @@ void SetMaterialProps(inout Material material, vec2 texCoord)
 	
 	if ((uTextureMode & TEXF_Glowmap) != 0)
 		material.Glow = texture(glowtexture, texCoord.st);
+#endif
 }
 
 //===========================================================================

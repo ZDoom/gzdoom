@@ -228,7 +228,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.StencilPassOp = mStencilOp;
 	pipelineKey.ColorMask = mColorMask;
 	pipelineKey.CullMode = mCullMode;
-	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 1; // Always force minimum 1 texture as the shader requires it
+	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 4; // Always force minimum 1 texture as the shader requires it
 	if (mSpecialEffect > EFF_NONE)
 	{
 		pipelineKey.SpecialEffect = mSpecialEffect;
@@ -373,7 +373,7 @@ void VkRenderState::ApplyPushConstants()
 
 	mPushConstants.uFogEnabled = fogset;
 	int f = mTextureModeFlags;
-	if (!mBrightmapEnabled) f &= TEXF_Detailmap;
+	if (!mBrightmapEnabled)
 	mPushConstants.uTextureMode = (mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) | f;
 	mPushConstants.uLightDist = mLightParms[0];
 	mPushConstants.uLightFactor = mLightParms[1];

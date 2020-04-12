@@ -45,10 +45,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	{
 		mShaderIndex = SHADER_Paletted;
 	}
-	else if (tx->isWarped())
-	{
-		mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
-	}
 	else if (tx->isHardwareCanvas())
 	{
 		if (tx->shaderindex >= FIRST_USER_SHADER)
@@ -59,7 +55,11 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	}
 	else
 	{
-		if (tx->Normal && tx->Specular)
+		if (tx->isWarped())
+		{
+			mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
+		}
+		else if (tx->Normal && tx->Specular)
 		{
 			for (auto &texture : { tx->Normal, tx->Specular })
 			{
@@ -76,16 +76,34 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			mShaderIndex = SHADER_PBR;
 		}
 
+		// Note that these layers must present a valid texture even if not used, because empty TMUs in the shader are an undefined condition.
 		tx->CreateDefaultBrightmap();
 		if (tx->Brightmap)
 		{
 			mTextureLayers.Push(tx->Brightmap);
-			if (mShaderIndex == SHADER_Specular)
-				mShaderIndex = SHADER_SpecularBrightmap;
-			else if (mShaderIndex == SHADER_PBR)
-				mShaderIndex = SHADER_PBRBrightmap;
-			else
-				mShaderIndex = SHADER_Brightmap;
+			mLayerFlags |= TEXF_Brightmap;
+		}
+		else	
+		{ 
+			mTextureLayers.Push(TexMan.ByIndex(1));
+		}
+		if (tx->Detailmap)
+		{
+			mTextureLayers.Push(tx->Detailmap);
+			mLayerFlags |= TEXF_Detailmap;
+		}
+		else
+		{
+			mTextureLayers.Push(TexMan.ByIndex(1));
+		}
+		if (tx->Glowmap)
+		{
+			mTextureLayers.Push(tx->Glowmap);
+			mLayerFlags |= TEXF_Glowmap;
+		}
+		else
+		{
+			mTextureLayers.Push(TexMan.ByIndex(1));
 		}
 
 		if (tx->shaderindex >= FIRST_USER_SHADER)
@@ -347,7 +365,7 @@ again:
 		{
 			if (expand)
 			{
-				if (tex->isWarped() || tex->isHardwareCanvas() || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
+				if (tex->isWarped() || tex->isHardwareCanvas() || tex->shaderindex >= FIRST_USER_SHADER || tex->shaderindex == SHADER_Specular || tex->shaderindex == SHADER_PBR)
 				{
 					tex->bNoExpand = true;
 					goto again;

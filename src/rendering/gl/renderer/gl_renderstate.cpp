@@ -126,7 +126,10 @@ bool FGLRenderState::ApplyShader()
 
 	activeShader->muDesaturation.Set(mStreamData.uDesaturationFactor);
 	activeShader->muFogEnabled.Set(fogset);
-	activeShader->muTextureMode.Set(mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
+
+	int f = mTextureModeFlags;
+	if (!mBrightmapEnabled) f &= TEXF_Detailmap;
+	activeShader->muTextureMode.Set((mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) | f);
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mStreamData.uFogColor);
 	activeShader->muObjectColor.Set(mStreamData.uObjectColor);
@@ -141,6 +144,7 @@ bool FGLRenderState::ApplyShader()
 	activeShader->muTextureAddColor.Set(mStreamData.uTextureAddColor);
 	activeShader->muTextureModulateColor.Set(mStreamData.uTextureModulateColor);
 	activeShader->muTextureBlendColor.Set(mStreamData.uTextureBlendColor);
+	activeShader->muDetailParms.Set(&mStreamData.uDetailParms.X);
 
 	if (mGlowEnabled || activeShader->currentglowstate)
 	{
@@ -165,6 +169,7 @@ bool FGLRenderState::ApplyShader()
 		activeShader->muSplitBottomPlane.Set(&mStreamData.uSplitBottomPlane.X);
 		activeShader->currentsplitstate = mSplitEnabled;
 	}
+
 
 	if (mTextureMatrixEnabled)
 	{

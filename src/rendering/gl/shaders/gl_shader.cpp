@@ -262,6 +262,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform vec4 uSplitTopPlane;\n";
 	i_data += "uniform vec4 uSplitBottomPlane;\n";
 
+	i_data += "uniform vec4 uDetailParms;\n";
+
 	// Lighting + Fog
 	i_data += "uniform vec4 uLightAttr;\n";
 	i_data += "#define uLightLevel uLightAttr.a\n";
@@ -302,6 +304,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform sampler2D texture4;\n";
 	i_data += "uniform sampler2D texture5;\n";
 	i_data += "uniform sampler2D texture6;\n";
+	i_data += "uniform sampler2D texture7;\n";
+	i_data += "uniform sampler2D texture8;\n";
 
 	// timer data
 	i_data += "uniform float timer;\n";
@@ -311,14 +315,20 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "#define normaltexture texture2\n";
 	i_data += "#define speculartexture texture3\n";
 	i_data += "#define brighttexture texture4\n";
+	i_data += "#define detailtexture texture5\n";
+	i_data += "#define glowtexture texture6\n";
 	i_data += "#elif defined(PBR)\n";
 	i_data += "#define normaltexture texture2\n";
 	i_data += "#define metallictexture texture3\n";
 	i_data += "#define roughnesstexture texture4\n";
 	i_data += "#define aotexture texture5\n";
 	i_data += "#define brighttexture texture6\n";
+	i_data += "#define detailtexture texture7\n";
+	i_data += "#define glowtexture texture8\n";
 	i_data += "#else\n";
 	i_data += "#define brighttexture texture2\n";
+	i_data += "#define detailtexture texture3\n";
+	i_data += "#define glowtexture texture4\n";
 	i_data += "#endif\n";
 
 #ifdef __APPLE__
@@ -387,22 +397,31 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump);
 			FileData pp_data = fileSystem.ReadFile(pp_lump);
 
-			if (pp_data.GetString().IndexOf("ProcessMaterial") < 0)
+			if (pp_data.GetString().IndexOf("ProcessMaterial") < 0 && pp_data.GetString().IndexOf("SetupMaterial") < 0)
 			{
 				// this looks like an old custom hardware shader.
 
-				// add ProcessMaterial function that calls the older ProcessTexel function
-				int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultmat.fp", 0);
-				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat.fp");
-				FileData pl_data = fileSystem.ReadFile(pl_lump);
-				fp_comb << "\n" << pl_data.GetString().GetChars();
-
-				if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
+				if (pp_data.GetString().IndexOf("GetTexCoord") >= 0)
 				{
-					// this looks like an even older custom hardware shader.
-					// We need to replace the ProcessTexel call to make it work.
+					int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultmat2.fp", 0);
+					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat2.fp");
+					FileData pl_data = fileSystem.ReadFile(pl_lump);
+					fp_comb << "\n" << pl_data.GetString().GetChars();
+				}
+				else
+				{
+					int pl_lump = fileSystem.CheckNumForFullName("shaders/glsl/func_defaultmat.fp", 0);
+					if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat.fp");
+					FileData pl_data = fileSystem.ReadFile(pl_lump);
+					fp_comb << "\n" << pl_data.GetString().GetChars();
 
-					fp_comb.Substitute("material.Base = ProcessTexel();", "material.Base = Process(vec4(1.0));");
+					if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
+					{
+						// this looks like an even older custom hardware shader.
+						// We need to replace the ProcessTexel call to make it work.
+
+						fp_comb.Substitute("material.Base = ProcessTexel();", "material.Base = Process(vec4(1.0));");
+					}
 				}
 
 				if (pp_data.GetString().IndexOf("ProcessLight") >= 0)
@@ -423,6 +442,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 				FileData pl_data = fileSystem.ReadFile(pl_lump);
 				fp_comb << "\n" << pl_data.GetString().GetChars();
 			}
+
+			// ProcessMaterial must be considered broken because it requires the user to fill in data they possibly cannot know all about.
+			if (pp_data.GetString().IndexOf("ProcessMaterial") >= 0 && pp_data.GetString().IndexOf("SetupMaterial") < 0)
+			{
+				// This reactivates the old logic and disables all features that cannot be supported with that method.
+				fp_comb.Insert(0, "#define LEGACY_USER_SHADER\n");
+			}
+
 		}
 		else
 		{
@@ -546,6 +573,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muGradientTopPlane.Init(hShader, "uGradientTopPlane");
 	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
+	muDetailParms.Init(hShader, "uDetailParms");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");

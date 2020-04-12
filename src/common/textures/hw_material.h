@@ -30,6 +30,7 @@ class FMaterial
 {
 	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
+	int mLayerFlags = 0;
 
 	short mLeftOffset;
 	short mTopOffset;
@@ -52,6 +53,7 @@ public:
 	
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
+	int GetLayerFlags() const { return mLayerFlags; }
 	void SetSpriteRect();
 	int GetShaderIndex() const { return mShaderIndex; }
 	void AddTextureLayer(FTexture *tex)

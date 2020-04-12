@@ -1372,18 +1372,18 @@ class GLDefsParser
 			int firstUserTexture;
 			if (tex->Normal && tex->Specular)
 			{
-				usershader.shaderType = tex->Brightmap ? SHADER_SpecularBrightmap : SHADER_Specular;
-				firstUserTexture = tex->Brightmap ? 5 : 4;
+				usershader.shaderType = SHADER_Specular;
+				firstUserTexture = 7;
 			}
 			else if (tex->Normal && tex->Metallic && tex->Roughness && tex->AmbientOcclusion)
 			{
-				usershader.shaderType = tex->Brightmap ? SHADER_PBRBrightmap : SHADER_PBR;
-				firstUserTexture = tex->Brightmap ? 7 : 6;
+				usershader.shaderType = SHADER_PBR;
+				firstUserTexture = 9;
 			}
 			else
 			{
-				usershader.shaderType = tex->Brightmap ? SHADER_Brightmap : SHADER_Default;
-				firstUserTexture = tex->Brightmap ? 3 : 2;
+				usershader.shaderType = SHADER_Default;
+				firstUserTexture = 5;
 			}
 
 			for (unsigned int i = 0; i < texNameList.Size(); i++)
@@ -1537,14 +1537,16 @@ class GLDefsParser
 				else if (sc.Compare("material"))
 				{
 					sc.MustGetString();
-					MaterialShaderIndex typeIndex[6] = { SHADER_Default, SHADER_Brightmap, SHADER_Specular, SHADER_SpecularBrightmap, SHADER_PBR, SHADER_PBRBrightmap };
-					const char *typeName[6] = { "normal", "brightmap", "specular", "specularbrightmap", "pbr", "pbrbrightmap" };
+					static MaterialShaderIndex typeIndex[6] = { SHADER_Default, SHADER_Default, SHADER_Specular, SHADER_Specular, SHADER_PBR, SHADER_PBR };
+					static bool usesBrightmap[6] = { false, true, false, true, false, true };
+					static const char *typeName[6] = { "normal", "brightmap", "specular", "specularbrightmap", "pbr", "pbrbrightmap" };
 					bool found = false;
 					for (int i = 0; i < 6; i++)
 					{
 						if (sc.Compare(typeName[i]))
 						{
 							desc.shaderType = typeIndex[i];
+							if (usesBrightmap[i]) desc.shaderFlags |= SFlag_Brightmap;
 							found = true;
 							break;
 						}
@@ -1617,12 +1619,9 @@ class GLDefsParser
 			switch (desc.shaderType)
 			{
 			default:
-			case SHADER_Default: firstUserTexture = 2; break;
-			case SHADER_Brightmap: firstUserTexture = 3; break;
-			case SHADER_Specular: firstUserTexture = 4; break;
-			case SHADER_SpecularBrightmap: firstUserTexture = 5; break;
-			case SHADER_PBR: firstUserTexture = 6; break;
-			case SHADER_PBRBrightmap: firstUserTexture = 7; break;
+			case SHADER_Default: firstUserTexture = 5; break;
+			case SHADER_Specular: firstUserTexture = 7; break;
+			case SHADER_PBR: firstUserTexture = 9; break;
 			}
 
 			for (unsigned int i = 0; i < texNameList.Size(); i++)

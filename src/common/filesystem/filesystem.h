@@ -38,7 +38,7 @@ public:
 	~FileData ();
 	void *GetMem () { return Block.Len() == 0 ? NULL : (void *)Block.GetChars(); }
 	size_t GetSize () { return Block.Len(); }
-	FString GetString () { return Block; }
+	const FString &GetString () const { return Block; }
 
 private:
 	FileData (const FString &source);

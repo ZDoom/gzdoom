@@ -755,7 +755,7 @@ void F2DDrawer::ClearScreen(PalEntry color)
 //
 //==========================================================================
 
-void F2DDrawer::AddLine(float x1, float y1, float x2, float y2, int clipx1, int clipy1, int clipx2, int clipy2, uint32_t color, uint8_t alpha)
+void F2DDrawer::AddLine(double x1, double y1, double x2, double y2, int clipx1, int clipy1, int clipx2, int clipy2, uint32_t color, uint8_t alpha)
 {
 	PalEntry p = (PalEntry)color;
 	p.a = alpha;

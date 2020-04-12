@@ -199,6 +199,8 @@ struct StreamData
 
 	FVector4 uSplitTopPlane;
 	FVector4 uSplitBottomPlane;
+
+	FVector4 uDetailParms;
 };
 
 class FRenderState
@@ -208,14 +210,15 @@ protected:
 	uint8_t mTextureEnabled:1;
 	uint8_t mGlowEnabled : 1;
 	uint8_t mGradientEnabled : 1;
-	uint8_t mBrightmapEnabled : 1;
 	uint8_t mModelMatrixEnabled : 1;
 	uint8_t mTextureMatrixEnabled : 1;
 	uint8_t mSplitEnabled : 1;
+	uint8_t mBrightmapEnabled : 1;
 
 	int mLightIndex;
 	int mSpecialEffect;
 	int mTextureMode;
+	int mTextureModeFlags;
 	int mSoftLight;
 	float mLightParms[4];
 
@@ -247,10 +250,11 @@ public:
 	void Reset()
 	{
 		mTextureEnabled = true;
-		mGradientEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+		mBrightmapEnabled = mGradientEnabled = mFogEnabled = mGlowEnabled = false;
 		mFogColor = 0xffffffff;
 		mStreamData.uFogColor = mFogColor;
 		mTextureMode = -1;
+		mTextureModeFlags = 0;
 		mStreamData.uDesaturationFactor = 0.0f;
 		mAlphaThreshold = 0.5f;
 		mModelMatrixEnabled = false;
@@ -287,6 +291,7 @@ public:
 		mStreamData.uSplitTopPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mStreamData.uSplitBottomPlane = { 0.0f, 0.0f, 0.0f, 0.0f };
 		mStreamData.uDynLightColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+		mStreamData.uDetailParms = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		mModelMatrix.loadIdentity();
 		mTextureMatrix.loadIdentity();
@@ -338,15 +343,15 @@ public:
 	{
 		if (style.Flags & STYLEF_RedIsAlpha)
 		{
-			mTextureMode = TM_ALPHATEXTURE;
+			SetTextureMode(TM_ALPHATEXTURE);
 		}
 		else if (style.Flags & STYLEF_ColorIsFixed)
 		{
-			mTextureMode = TM_STENCIL;
+			SetTextureMode(TM_STENCIL);
 		}
 		else if (style.Flags & STYLEF_InvertSource)
 		{
-			mTextureMode = TM_INVERSE;
+			SetTextureMode(TM_INVERSE);
 		}
 	}
 
@@ -449,6 +454,11 @@ public:
 		auto &bn = bottom.Normal();
 		mStreamData.uSplitTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
 		mStreamData.uSplitBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	}
+
+	void SetDetailParms(float xscale, float yscale, float bias)
+	{
+		mStreamData.uDetailParms = { xscale, yscale, bias, 0 };
 	}
 
 	void SetDynLight(float r, float g, float b)
@@ -556,6 +566,7 @@ public:
 		mMaterial.mTranslation = translation;
 		mMaterial.mOverrideShader = overrideshader;
 		mMaterial.mChanged = true;
+		mTextureModeFlags = mat->GetLayerFlags();
 	}
 
 	void SetClipSplit(float bottom, float top)

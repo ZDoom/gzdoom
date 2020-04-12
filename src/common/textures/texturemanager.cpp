@@ -1083,6 +1083,7 @@ void FTextureManager::AddLocalizedVariants()
 //==========================================================================
 FTexture *CreateShaderTexture(bool, bool);
 void InitBuildTiles();
+FImageSource* CreateEmptyTexture();
 
 void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo&))
 {
@@ -1094,6 +1095,10 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	auto nulltex = new FImageTexture(nullptr, "");
 	nulltex->SetUseType(ETextureType::Null);
 	AddTexture (nulltex);
+	// This is for binding to unused texture units, because accessing an unbound texture unit is undefined. It's a one pixel empty texture.
+	auto emptytex = new FImageTexture(CreateEmptyTexture(), "");
+	emptytex->SetSize(1, 1);
+	AddTexture(emptytex);	
 	// some special textures used in the game.
 	AddTexture(CreateShaderTexture(false, false));
 	AddTexture(CreateShaderTexture(false, true));

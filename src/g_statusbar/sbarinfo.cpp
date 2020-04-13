@@ -1464,7 +1464,7 @@ public:
 				DTA_Alpha, Alpha,
 				TAG_DONE);
 			if (script->spacingCharacter == '\0')
-				ax += width + spacing - (c->GetDisplayLeftOffsetDouble() + 1);
+				ax += width + spacing - (c->GetDisplayLeftOffset() + 1);
 			else //width gets changed at the call to GetChar()
 				ax += font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing;
 		}

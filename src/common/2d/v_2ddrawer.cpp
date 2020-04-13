@@ -234,7 +234,7 @@ void F2DDrawer::AddIndices(int firstvert, TArray<int> &v)
 //
 //==========================================================================
 
-bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor, RenderCommand &quad)
+bool F2DDrawer::SetStyle(FGameTexture *tex, DrawParms &parms, PalEntry &vertexcolor, RenderCommand &quad)
 {
 	FRenderStyle style = parms.style;
 	float alpha;
@@ -390,7 +390,7 @@ void F2DDrawer::SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcol
 //
 //==========================================================================
 
-void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
+void F2DDrawer::AddTexture(FGameTexture* img, DrawParms& parms)
 {
 	if (parms.style.BlendOp == STYLEOP_None) return;	// not supposed to be drawn.
 
@@ -472,7 +472,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 //
 //==========================================================================
 
-void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
+void F2DDrawer::AddShape(FGameTexture* img, DShape2D* shape, DrawParms& parms)
 {
 	// [MK] bail out if vertex/coord array sizes are mismatched
 	if ( shape->mVertices.Size() != shape->mCoords.Size() )
@@ -550,12 +550,11 @@ void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
 //
 //==========================================================================
 
-void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
+void F2DDrawer::AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double fadelevel,
 		uint32_t *indices, size_t indexcount)
 {
-
 	RenderCommand poly;
 
 	poly.mType = DrawTypeTriangles;
@@ -630,7 +629,7 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 //
 //==========================================================================
 
-void F2DDrawer::AddPoly(FTexture* img, FVector4* vt, size_t vtcount, unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
+void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigned int* ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2)
 {
 	RenderCommand dg = {};
 	int method = 0;
@@ -677,7 +676,7 @@ void F2DDrawer::AddPoly(FTexture* img, FVector4* vt, size_t vtcount, unsigned in
 //
 //==========================================================================
 
-void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
+void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, bool local_origin)
 {
 	float fU1, fU2, fV1, fV2;
 
@@ -693,17 +692,17 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 	// scaling is not used here.
 	if (!local_origin)
 	{
-		fU1 = float(left) / src->GetDisplayWidth();
-		fV1 = float(top) / src->GetDisplayHeight();
-		fU2 = float(right) / src->GetDisplayWidth();
-		fV2 = float(bottom) / src->GetDisplayHeight();
+		fU1 = float(left) / (float)src->GetDisplayWidth();
+		fV1 = float(top) / (float)src->GetDisplayHeight();
+		fU2 = float(right) / (float)src->GetDisplayWidth();
+		fV2 = float(bottom) / (float)src->GetDisplayHeight();
 	}
 	else
 	{
 		fU1 = 0;
 		fV1 = 0;
-		fU2 = float(right - left) / src->GetDisplayWidth();
-		fV2 = float(bottom - top) / src->GetDisplayHeight();
+		fU2 = float(right - left) / (float)src->GetDisplayWidth();
+		fV2 = float(bottom - top) / (float)src->GetDisplayHeight();
 	}
 	dg.mVertIndex = (int)mVertices.Reserve(4);
 	auto ptr = &mVertices[dg.mVertIndex];

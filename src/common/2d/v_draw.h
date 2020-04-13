@@ -203,27 +203,21 @@ inline int active_con_scale(F2DDrawer *drawer)
 #endif
 
 template<class T>
-bool ParseDrawTextureTags(F2DDrawer *drawer, FTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, bool fortext);
+bool ParseDrawTextureTags(F2DDrawer *drawer, FGameTexture* img, double x, double y, uint32_t tag, T& tags, DrawParms* parms, bool fortext);
 
 template<class T>
 void DrawTextCommon(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double y, const T* string, DrawParms& parms);
-bool SetTextureParms(F2DDrawer *drawer, DrawParms* parms, FTexture* img, double x, double y);
+bool SetTextureParms(F2DDrawer *drawer, DrawParms* parms, FGameTexture* img, double x, double y);
 
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...);
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char32_t* string, int tag_first, ...);
 void DrawChar(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...);
 
-template <typename ...Params>
-void DrawTexture(F2DDrawer* drawer, FGameTexture* img, double x, double y, int tags_first, Params&&... params)
-{
-	void DrawTexture(F2DDrawer * drawer, FTexture * img, double x, double y, int tags_first, ...);
-
-	DrawTexture(drawer, img->GetTexture(), x, y, tags_first, std::forward<Params>(params)...);
-}
+void DrawTexture(F2DDrawer* drawer, FGameTexture* img, double x, double y, int tags_first, ...);
 
 void DoDim(F2DDrawer* drawer, PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);
 void Dim(F2DDrawer* drawer, PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle* style = nullptr);
-void FillBorder(F2DDrawer *drawer, FTexture* img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
+void FillBorder(F2DDrawer *drawer, FGameTexture* img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 
 void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height);
 void DrawBorder(F2DDrawer* drawer, FTextureID, int x1, int y1, int x2, int y2);

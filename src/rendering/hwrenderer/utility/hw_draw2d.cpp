@@ -164,7 +164,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 		if (cmd.mTexture != nullptr)
 		{
-			auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
+			auto mat = FMaterial::ValidateTexture(cmd.mTexture->GetTexture(), false);
 			if (mat == nullptr) continue;
 
 			state.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, cmd.mTranslationId, -1);

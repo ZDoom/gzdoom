@@ -53,7 +53,7 @@ int ListGetInt(VMVa_List &tags);
 //
 //==========================================================================
 #if 0
-FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
+FGameTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 {
 	int 		w;
 	const uint8_t *ch;
@@ -61,7 +61,7 @@ FTexture * BuildTextTexture(FFont *font, const char *string, int textcolor)
 	int 		cy;
 	int			trans = -1;
 	int			kerning;
-	FTexture *pic;
+	FGameTexture *pic;
 
 	kerning = font->GetDefaultKerning();
 
@@ -170,7 +170,7 @@ void DrawChar(F2DDrawer *drawer, FFont* font, int normalcolor, double x, double 
 	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
 
-	FTexture* pic;
+	FGameTexture* pic;
 	int dummy;
 	bool redirected;
 
@@ -200,7 +200,7 @@ void DrawChar(F2DDrawer *drawer,  FFont *font, int normalcolor, double x, double
 	if (normalcolor >= NumTextColors)
 		normalcolor = CR_UNTRANSLATED;
 
-	FTexture *pic;
+	FGameTexture *pic;
 	int dummy;
 	bool redirected;
 
@@ -256,7 +256,7 @@ void DrawTextCommon(F2DDrawer *drawer, FFont *font, int normalcolor, double x, d
 	int			boldcolor;
 	int			trans = -1;
 	int			kerning;
-	FTexture *pic;
+	FGameTexture *pic;
 
 	if (parms.celly == 0) parms.celly = font->GetHeight() + 1;
 	parms.celly *= parms.scaley;

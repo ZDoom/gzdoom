@@ -2150,7 +2150,7 @@ void DAutomap::drawSubsectors()
 				fadelevel = 1. - clamp(floorlight, 0, 255) / 255.f;
 			}
 
-			twod->AddPoly(TexMan.GetTexture(maptex, true),
+			twod->AddPoly(TexMan.GetGameTexture(maptex, true),
 				&points[0], points.Size(),
 				originx, originy,
 				scale / scalex,

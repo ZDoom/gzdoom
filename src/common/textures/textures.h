@@ -438,6 +438,7 @@ protected:
 
 	virtual void ResolvePatches() {}
 
+public:
 	void SetScale(const DVector2 &scale)
 	{
 		Scale = scale;
@@ -589,17 +590,24 @@ public:
 
 	bool isValid() { return wrapped.isValid(); }
 	bool isWarped() { return wrapped.isWarped(); }
+	bool isHardwareCanvas() const { return wrapped.isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
+	bool isSoftwareCanvas() const { return wrapped.isCanvas(); }
 	bool isMiscPatch() const { return wrapped.GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
 	bool useWorldPanning() { return wrapped.UseWorldPanning();  }
+	ETextureType GetUseType() const { return wrapped.GetUseType(); }
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }
 	int GetSkyOffset() const { return wrapped.GetSkyOffset(); }
 	FTextureID GetID() const { return wrapped.GetID(); }
 	ISoftwareTexture* GetSoftwareTexture() { return wrapped.GetSoftwareTexture(); }
 	void SetSoftwareTexture(ISoftwareTexture* swtex) { wrapped.SetSoftwareTextue(swtex); }
+	void SetScale(DVector2 vec) { wrapped.SetScale(vec); }
+
+	// These substitutions must be done on the material level because their sizes can differ. Substitution must happen before any coordinate calculations take place.
+	FGameTexture* GetPalVersion() { return reinterpret_cast<FGameTexture*>(wrapped.GetPalVersion()); }
+	FGameTexture* GetRawTexture() { return reinterpret_cast<FGameTexture*>(wrapped.GetRawTexture()); }
 
 	bool isUserContent() const;
-
 };
 
 

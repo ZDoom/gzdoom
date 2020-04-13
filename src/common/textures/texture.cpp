@@ -874,3 +874,4 @@ bool FGameTexture::isUserContent() const
 	int filenum = fileSystem.GetFileContainer(wrapped.GetSourceLump());
 	return (filenum > fileSystem.GetMaxIwadNum());
 }
+

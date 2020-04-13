@@ -597,8 +597,7 @@ FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex)
 	FSoftwareTexture* SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
 	if (!SoftwareTexture)
 	{
-		auto source = tex->GetTexture();
-		if (source->isCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
+		if (tex->isSoftwareCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
 		else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
 		else SoftwareTexture = new FSoftwareTexture(tex);
 		tex->SetSoftwareTexture(SoftwareTexture);
@@ -606,14 +605,30 @@ FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex)
 	return SoftwareTexture;
 }
 
+
+CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	// This is in case the sky texture has been substituted.
+	R_InitSkyMap();
+}
+
+static FGameTexture* PalCheck(FGameTexture* tex)
+{
+	// In any true color mode this shouldn't do anything.
+	if (vid_nopalsubstitutions || V_IsTrueColor() || tex == nullptr) return tex;
+	auto palvers = tex->GetPalVersion();
+	if (palvers) return palvers;
+	return tex;
+}
+
 FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat, bool allownull)
 {
-	auto tex = TexMan.GetPalettedTexture(texid, true);
+	auto tex = PalCheck(TexMan.GetGameTexture(texid, true));
 	if (checkcompat && tex && tex->isValid() && checkcompat->i_compatflags & COMPATF_MASKEDMIDTEX)
 	{
 		tex = tex->GetRawTexture();
 	}
-	FSoftwareTexture* pic = tex && (allownull || tex->isValid()) ? GetSoftwareTexture(reinterpret_cast<FGameTexture*>(tex)) : nullptr;
+	FSoftwareTexture* pic = tex && (allownull || tex->isValid()) ? GetSoftwareTexture(tex) : nullptr;
 	return pic;
 }
 

@@ -124,7 +124,7 @@ public:
 		int mIndexIndex;
 		int mIndexCount;
 
-		FTexture *mTexture;
+		FGameTexture *mTexture;
 		int mTranslationId;
 		PalEntry mSpecialColormap[2];
 		int mScissor[4];
@@ -170,24 +170,19 @@ public:
 	void AddIndices(int firstvert, int count, ...);
 private:
 	void AddIndices(int firstvert, TArray<int> &v);
-	bool SetStyle(FTexture *tex, DrawParms &parms, PalEntry &color0, RenderCommand &quad);
+	bool SetStyle(FGameTexture *tex, DrawParms &parms, PalEntry &color0, RenderCommand &quad);
 	void SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcolor, PalEntry &overlaycolor);
 
 public:
-	void AddTexture(FTexture *img, DrawParms &parms);
-	void AddShape(FTexture *img, DShape2D *shape, DrawParms &parms);
-	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
+	void AddTexture(FGameTexture* img, DrawParms& parms);
+	void AddShape(FGameTexture *img, DShape2D *shape, DrawParms &parms);
+	void AddPoly(FGameTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, double lightlevel, uint32_t *indices, size_t indexcount);
-	void AddPoly(FTexture* img, FVector4 *vt, size_t vtcount, unsigned int *ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2);
+	void AddPoly(FGameTexture* img, FVector4 *vt, size_t vtcount, unsigned int *ind, size_t idxcount, int translation, PalEntry color, FRenderStyle style, int clipx1, int clipy1, int clipx2, int clipy2);
 	void FillPolygon(int* rx1, int* ry1, int* xb1, int32_t npoints, int picnum, int palette, int shade, int props, const FVector2& xtex, const FVector2& ytex, const FVector2& otex,
 		int clipx1, int clipy1, int clipx2, int clipy2);
-	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
-	void AddFlatFill(int left, int top, int right, int bottom, FGameTexture* src, bool local_origin = false)
-	{
-		AddFlatFill(left, top, right, bottom, src->GetTexture(), local_origin);
-	}
-
+	void AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, bool local_origin = false);
 
 	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style = nullptr);
 	void ClearScreen(PalEntry color = 0xff000000);

@@ -24,12 +24,11 @@ public:
 private:
 	int ResolveLocalizedTexture(int texnum);
 
-	FTexture *InternalGetTexture(int texnum, bool animate, bool localize, bool palettesubst)
+	FTexture *InternalGetTexture(int texnum, bool animate, bool localize)
 	{
 		if ((unsigned)texnum >= Textures.Size()) return nullptr;
 		if (animate) texnum = Translation[texnum];
 		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
-		if (palettesubst) texnum = PalCheck(texnum);
 		return Textures[texnum].Texture;
 	}
 public:
@@ -37,7 +36,7 @@ public:
 	FTexture *GetTextureByName(const char *name, bool animate = false)
 	{
 		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
-		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
+		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
 
 	FGameTexture* GetGameTextureByName(const char *name, bool animate = false)
@@ -47,23 +46,17 @@ public:
 
 	FTexture *GetTexture(FTextureID texnum, bool animate = false)
 	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
+		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
 
 	FGameTexture* GetGameTexture(FTextureID texnum, bool animate = false)
 	{
 		return reinterpret_cast<FGameTexture*>(GetTexture(texnum, animate));
 	}
-
-	// This is the only access function that should be used inside the software renderer.
-	FTexture *GetPalettedTexture(FTextureID texnum, bool animate)
-	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true, true);
-	}
 	
 	FTexture *ByIndex(int i, bool animate = false)
 	{
-		return InternalGetTexture(i, animate, true, false);
+		return InternalGetTexture(i, animate, true);
 	}
 
 	FGameTexture* GameByIndex(int i, bool animate = false)

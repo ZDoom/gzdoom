@@ -220,7 +220,7 @@ void DIntermissionScreen::Drawer ()
 		}
 		else
 		{
-			twod->AddFlatFill(0,0, twod->GetWidth(), twod->GetHeight(), TexMan.GetTexture(mBackground));
+			twod->AddFlatFill(0,0, twod->GetWidth(), twod->GetHeight(), TexMan.GetGameTexture(mBackground));
 		}
 	}
 	else
@@ -365,7 +365,7 @@ void DIntermissionScreenText::Drawer ()
 	Super::Drawer();
 	if (mTicker >= mTextDelay)
 	{
-		FTexture *pic;
+		FGameTexture *pic;
 		int w;
 		size_t count;
 		int c;

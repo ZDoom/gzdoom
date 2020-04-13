@@ -25,7 +25,6 @@
 #include "swrenderer/viewport/r_walldrawer.h"
 #include "r_line.h"
 
-class FTexture;
 struct FLightNode;
 struct seg_t;
 struct FLightNode;

@@ -2724,27 +2724,11 @@ static void CheckForHacks(BuildInfo& buildinfo)
 	}
 }
 
-CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
-{
-	// This is in case the sky texture has been substituted.
-	R_InitSkyMap();
-}
-
 //==========================================================================
 //
-// FTextureManager :: PalCheck taken out of the texture manager because it ties it to other subsystems
-// todo: move elsewhere
+//
 //
 //==========================================================================
-
-int PalCheck(int tex)
-{
-	// In any true color mode this shouldn't do anything.
-	if (vid_nopalsubstitutions || V_IsTrueColor()) return tex;
-	FTexture *ftex = TexMan.ByIndex(tex);
-	if (ftex != nullptr && ftex->GetPalVersion() != nullptr) return ftex->GetPalVersion()->GetID().GetIndex();
-	return tex;
-}
 
 static void Doom_CastSpriteIDToString(FString* a, unsigned int b) 
 { 

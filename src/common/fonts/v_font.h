@@ -39,7 +39,7 @@
 #include "name.h"
 
 class DCanvas;
-class FTexture;
+class FGameTexture;
 struct FRemapTable;
 
 enum EColorRange : int
@@ -77,7 +77,7 @@ enum EColorRange : int
 
 extern int NumTextColors;
 
-using GlyphSet = TMap<int, FTexture*>;
+using GlyphSet = TMap<int, FGameTexture*>;
 
 class FFont
 {
@@ -97,7 +97,7 @@ public:
 	FFont (const char *fontname, const char *nametemplate, const char *filetemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false, bool iwadonly = false, bool doomtemplate = false, GlyphSet *baseGlpyphs = nullptr);
 	virtual ~FFont ();
 
-	virtual FTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
+	virtual FGameTexture *GetChar (int code, int translation, int *const width, bool *redirected = nullptr) const;
 	virtual int GetCharWidth (int code) const;
 	int GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }

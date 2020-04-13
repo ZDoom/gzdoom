@@ -988,7 +988,7 @@ class DAutomap :public DAutomapBase
 
 	void calcMinMaxMtoF();
 
-	void DrawMarker(FTexture *tex, double x, double y, int yadjust,
+	void DrawMarker(FGameTexture *tex, double x, double y, int yadjust,
 		INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle);
 
 	void rotatePoint(double *x, double *y);
@@ -1235,7 +1235,7 @@ void DAutomap::ScrollParchment (double dmapx, double dmapy)
 
 	if (mapback.isValid())
 	{
-		FTexture *backtex = TexMan.GetTexture(mapback);
+		auto backtex = TexMan.GetGameTexture(mapback);
 
 		if (backtex != nullptr)
 		{
@@ -1588,7 +1588,7 @@ void DAutomap::clearFB (const AMColor &color)
 	}
 	else
 	{
-		FTexture *backtex = TexMan.GetTexture(mapback);
+		auto backtex = TexMan.GetGameTexture(mapback);
 		if (backtex != nullptr)
 		{
 			int pwidth = backtex->GetDisplayWidth();
@@ -2908,7 +2908,7 @@ void DAutomap::drawThings ()
 
 				if (am_showthingsprites > 0 && t->sprite > 0)
 				{
-					FTexture *texture = nullptr;
+					FGameTexture *texture = nullptr;
 					spriteframe_t *frame;
 					int rotation = 0;
 
@@ -2928,7 +2928,7 @@ void DAutomap::drawThings ()
 						rotation = int((angle.Normalized360() * (16. / 360.)).Degrees);
 
 						const FTextureID textureID = frame->Texture[show > 2 ? rotation : 0];
-						texture = TexMan.GetTexture(textureID, true);
+						texture = TexMan.GetGameTexture(textureID, true);
 					}
 
 					if (texture == nullptr) goto drawTriangle;	// fall back to standard display if no sprite can be found.
@@ -3023,7 +3023,7 @@ void DAutomap::drawThings ()
 //
 //=============================================================================
 
-void DAutomap::DrawMarker (FTexture *tex, double x, double y, int yadjust,
+void DAutomap::DrawMarker (FGameTexture *tex, double x, double y, int yadjust,
 	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
 {
 	if (tex == nullptr || !tex->isValid())
@@ -3035,8 +3035,8 @@ void DAutomap::DrawMarker (FTexture *tex, double x, double y, int yadjust,
 		rotatePoint (&x, &y);
 	}
 	DrawTexture(twod, tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
-		DTA_DestWidthF, tex->GetDisplayWidthDouble() * CleanXfac * xscale,
-		DTA_DestHeightF, tex->GetDisplayHeightDouble() * CleanYfac * yscale,
+		DTA_DestWidth, tex->GetDisplayWidth() * CleanXfac * xscale,
+		DTA_DestHeight, tex->GetDisplayHeight() * CleanYfac * yscale,
 		DTA_ClipTop, f_y,
 		DTA_ClipBottom, f_y + f_h,
 		DTA_ClipLeft, f_x,
@@ -3072,7 +3072,7 @@ void DAutomap::drawMarks ()
 
 			if (font == nullptr)
 			{
-				DrawMarker(TexMan.GetTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
+				DrawMarker(TexMan.GetGameTexture(marknums[i], true), markpoints[i].x, markpoints[i].y, -3, 0,
 					1, 1, 0, 1, 0, LegacyRenderStyles[STYLE_Normal]);
 			}
 			else
@@ -3114,18 +3114,18 @@ void DAutomap::drawAuthorMarkers ()
 		}
 
 		FTextureID picnum;
-		FTexture *tex;
+		FGameTexture *tex;
 		uint16_t flip = 0;
 
 		if (mark->picnum.isValid())
 		{
-			tex = TexMan.GetTexture(mark->picnum, true);
+			tex = TexMan.GetGameTexture(mark->picnum, true);
 			if (tex->GetRotations() != 0xFFFF)
 			{
 				spriteframe_t *sprframe = &SpriteFrames[tex->GetRotations()];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan.GetTexture(picnum);
+				tex = TexMan.GetGameTexture(picnum);
 			}
 		}
 		else
@@ -3140,7 +3140,7 @@ void DAutomap::drawAuthorMarkers ()
 				spriteframe_t *sprframe = &SpriteFrames[sprdef->spriteframes + mark->frame];
 				picnum = sprframe->Texture[0];
 				flip = sprframe->Flip & 1;
-				tex = TexMan.GetTexture(picnum);
+				tex = TexMan.GetGameTexture(picnum);
 			}
 		}
 		auto it = Level->GetActorIterator(mark->args[0]);

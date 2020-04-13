@@ -559,6 +559,20 @@ struct FTexCoordInfo
 	void GetFromTexture(FTexture *tex, float x, float y, bool forceworldpanning);
 };
 
+// Refactoring helper to allow piece by piece adjustment of the API
+class FGameTexture
+{
+	FTexture wrapped;
+public:
+	FTexture* GetTexture() { return &wrapped; }
+
+	int GetDisplayWidth() /*const*/ { return wrapped.GetDisplayWidth(); }
+	int GetDisplayHeight() /*const*/ { return wrapped.GetDisplayHeight(); }
+
+	bool isValid() { return wrapped.isValid(); }
+	uint16_t GetRotations() { return wrapped.GetRotations(); }
+};
+
 
 #endif
 

@@ -44,7 +44,12 @@ public:
 	{
 		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
 	}
-	
+
+	FGameTexture* GetGameTexture(FTextureID texnum, bool animate = false)
+	{
+		return reinterpret_cast<FGameTexture*>(GetTexture(texnum, animate));
+	}
+
 	// This is the only access function that should be used inside the software renderer.
 	FTexture *GetPalettedTexture(FTextureID texnum, bool animate)
 	{

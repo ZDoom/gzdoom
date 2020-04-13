@@ -57,6 +57,7 @@ protected:
 
 
 public:
+	virtual bool SupportRemap0() { return false; }					// Unfortunate hackery that's needed for Hexen's skies.
 
 	void CopySize(FImageSource &other)
 	{

@@ -69,6 +69,27 @@ FMultiPatchTexture::FMultiPatchTexture(int w, int h, const TArray<TexPart> &part
 
 //==========================================================================
 //
+// sky remapping will only happen if
+// - the texture was defined through a TEXTUREx lump (this implies only trivial copies)
+// - all patches use the base palette.
+// - all patches are in a format that allows the remap.
+// All other cases would not be able to properly deal with this special case.
+// For textual definitions this hack isn't necessary.
+//
+//==========================================================================
+
+bool FMultiPatchTexture::SupportRemap0()
+{
+	if (bTextual || UseGamePalette()) return false;
+	for (int i = 0; i < NumParts; i++)
+	{
+		if (!Parts[i].Image->SupportRemap0()) return false;
+	}
+	return true;
+}
+
+//==========================================================================
+//
 // GetBlendMap
 //
 //==========================================================================
@@ -203,11 +224,6 @@ TArray<uint8_t> FMultiPatchTexture::CreatePalettedPixels(int conversion)
 	}
 	if (conversion == noremap0)
 	{
-		// sky remapping will only happen if
-		// - the texture was defined through a TEXTUREx lump (this implies only trivial copies)
-		// - all patches use the base palette.
-		// All other cases would not be able to properly deal with this special case.
-		// For textual definitions this hack isn't necessary.
 		if (bTextual || !UseGamePalette()) conversion = normal;
 	}
 

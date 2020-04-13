@@ -40,6 +40,7 @@ class FMultiPatchTexture : public FImageSource
 	friend class FTexture;
 public:
 	FMultiPatchTexture(int w, int h, const TArray<TexPart> &parts, bool complex, bool textual);
+	bool SupportRemap0() override;
 
 protected:
 	int NumParts;

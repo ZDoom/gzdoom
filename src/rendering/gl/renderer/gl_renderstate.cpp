@@ -128,7 +128,7 @@ bool FGLRenderState::ApplyShader()
 	activeShader->muFogEnabled.Set(fogset);
 
 	int f = mTextureModeFlags;
-	if (!mBrightmapEnabled) f &= TEXF_Detailmap;
+	if (!mBrightmapEnabled) f &= ~(TEXF_Brightmap | TEXF_Glowmap);
 	activeShader->muTextureMode.Set((mTextureMode == TM_NORMAL && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) | f);
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mStreamData.uFogColor);

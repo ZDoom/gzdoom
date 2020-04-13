@@ -374,7 +374,7 @@ void VkRenderState::ApplyPushConstants()
 
 	mPushConstants.uFogEnabled = fogset;
 	int f = mTextureModeFlags;
-	if (!mBrightmapEnabled)
+	if (!mBrightmapEnabled) f &= ~(TEXF_Brightmap|TEXF_Glowmap);
 	mPushConstants.uTextureMode = (mTextureMode == TM_NORMAL && tempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode) | f;
 	mPushConstants.uLightDist = mLightParms[0];
 	mPushConstants.uLightFactor = mLightParms[1];

@@ -389,8 +389,7 @@ namespace swrenderer
 
 					if (mLineSegment->linedef->alpha > 0.0f && sidedef->GetTexture(side_t::mid).isValid())
 					{
-						FTexture* tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-						FSoftwareTexture* pic = tex && tex->isValid() ? tex->GetSoftwareTexture() : nullptr;
+						auto pic =  GetPalettedSWTexture(sidedef->GetTexture(side_t::mid), true);
 						if (pic)
 						{
 							draw_segment->SetHasTranslucentMidTexture();
@@ -687,10 +686,9 @@ namespace swrenderer
 		// No top texture for skyhack lines
 		if (mFrontSector->GetTexture(sector_t::ceiling) == skyflatnum && mBackSector->GetTexture(sector_t::ceiling) == skyflatnum) return;
 		
-		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::top), true);
-		if (!tex || !tex->isValid()) return;
-
-		mTopTexture = tex->GetSoftwareTexture();
+		auto tex = GetPalettedSWTexture(sidedef->GetTexture(side_t::top), true);
+		if (!tex) return;
+		mTopTexture = tex;
 	}
 	
 	void SWRenderLine::SetMiddleTexture()
@@ -702,10 +700,9 @@ namespace swrenderer
 		if (linedef->isVisualPortal()) return;
 		if (linedef->special == Line_Horizon) return;
 			
-		auto tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::mid), true);
-		if (!tex || !tex->isValid()) return;
-
-		mMiddleTexture = tex->GetSoftwareTexture();
+		auto tex = GetPalettedSWTexture(sidedef->GetTexture(side_t::mid), true);
+		if (!tex) return;
+		mMiddleTexture = tex;
 	}
 	
 	void SWRenderLine::SetBottomTexture()
@@ -713,10 +710,9 @@ namespace swrenderer
 		side_t *sidedef = mLineSegment->sidedef;
 		line_t *linedef = mLineSegment->linedef;
 		
-		FTexture *tex = TexMan.GetPalettedTexture(sidedef->GetTexture(side_t::bottom), true);
-		if (!tex || !tex->isValid()) return;
-
-		mBottomTexture = tex->GetSoftwareTexture();
+		auto tex = GetPalettedSWTexture(sidedef->GetTexture(side_t::bottom), true);
+		if (!tex) return;
+		mBottomTexture = tex;
 	}
 
 	bool SWRenderLine::IsFogBoundary(sector_t *front, sector_t *back) const

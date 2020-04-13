@@ -38,18 +38,9 @@
 #include "bitmap.h"
 #include "m_alloc.h"
 #include "imagehelpers.h"
+#include "texturemanager.h"
 
 
-FSoftwareTexture *FTexture::GetSoftwareTexture()
-{
-	if (!SoftwareTexture)
-	{
-		if (bHasCanvas) SoftwareTexture = new FSWCanvasTexture(this);
-		else if (bWarped) SoftwareTexture = new FWarpTexture(this, bWarped);
-		else SoftwareTexture = new FSoftwareTexture(this);
-	}
-	return SoftwareTexture;
-}
 
 //==========================================================================
 //
@@ -57,16 +48,19 @@ FSoftwareTexture *FTexture::GetSoftwareTexture()
 //
 //==========================================================================
 
-FSoftwareTexture::FSoftwareTexture(FTexture *tex)
+FSoftwareTexture::FSoftwareTexture(FGameTexture *tex)
 {
 	mTexture = tex;
-	mSource = tex;
+	mSource = tex->GetTexture();
 
 	mBufferFlags = CTF_ProcessData;
-	auto info = tex->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
+	// calculate the real size after running the scaler.
+	auto info = mSource->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
 	mPhysicalWidth = info.mWidth;
 	mPhysicalHeight = info.mHeight;
-	mPhysicalScale = tex->Width > 0? mPhysicalWidth / tex->Width : mPhysicalWidth;
+	mPhysicalScale = tex->GetTexelWidth() > 0 ? mPhysicalWidth / tex->GetTexelWidth() : mPhysicalWidth;
+	Scale.X = (double)tex->GetTexelWidth() / tex->GetDisplayWidth();
+	Scale.Y = (double)tex->GetTexelHeight() / tex->GetDisplayHeight();
 	CalcBitSize();
 }
 
@@ -119,7 +113,7 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 		}
 		else
 		{
-			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
 			Pixels.Resize(GetPhysicalWidth()*GetPhysicalHeight());
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			if (!style)
@@ -159,12 +153,12 @@ const uint32_t *FSoftwareTexture::GetPixelsBgra()
 	{
 		if (mPhysicalScale == 1)
 		{
-			FBitmap bitmap = mTexture->GetBgraBitmap(nullptr);
+			FBitmap bitmap = mSource->GetBgraBitmap(nullptr);
 			GenerateBgraFromBitmap(bitmap);
 		}
 		else
 		{
-			auto tempbuffer = mTexture->CreateTexBuffer(0, mBufferFlags);
+			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
 			CreatePixelsBgraWithMipmaps();
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;
 			for (int y = 0; y < GetPhysicalHeight(); y++)
@@ -263,7 +257,7 @@ FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const T *pixels)
 {
 	FSoftwareTextureSpan **spans, *span;
 
-	if (!mTexture->isMasked())
+	if (!mSource->isMasked())
 	{ // Texture does not have holes, so it can use a simpler span structure
 		spans = (FSoftwareTextureSpan **)M_Malloc (sizeof(FSoftwareTextureSpan*)*GetPhysicalWidth() + sizeof(FSoftwareTextureSpan)*2);
 		span = (FSoftwareTextureSpan *)&spans[GetPhysicalWidth()];
@@ -598,8 +592,28 @@ void FSoftwareTexture::FreeAllSpans()
 	}
 }
 
-void DeleteSoftwareTexture(FSoftwareTexture* swtex)
+FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex)
 {
-	delete swtex;
+	FSoftwareTexture* SoftwareTexture = static_cast<FSoftwareTexture*>(tex->GetSoftwareTexture());
+	if (!SoftwareTexture)
+	{
+		auto source = tex->GetTexture();
+		if (source->isCanvas()) SoftwareTexture = new FSWCanvasTexture(tex);
+		else if (tex->isWarped()) SoftwareTexture = new FWarpTexture(tex, tex->isWarped());
+		else SoftwareTexture = new FSoftwareTexture(tex);
+		tex->SetSoftwareTexture(SoftwareTexture);
+	}
+	return SoftwareTexture;
+}
+
+FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat, bool allownull)
+{
+	auto tex = TexMan.GetPalettedTexture(texid, true);
+	if (checkcompat && tex && tex->isValid() && checkcompat->i_compatflags & COMPATF_MASKEDMIDTEX)
+	{
+		tex = tex->GetRawTexture();
+	}
+	FSoftwareTexture* pic = tex && (allownull || tex->isValid()) ? GetSoftwareTexture(reinterpret_cast<FGameTexture*>(tex)) : nullptr;
+	return pic;
 }
 

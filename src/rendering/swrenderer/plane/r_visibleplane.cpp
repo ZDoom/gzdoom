@@ -114,13 +114,7 @@ namespace swrenderer
 		}
 		else // regular flat
 		{
-			FTexture *ttex = TexMan.GetPalettedTexture(picnum, true);
-
-			if (!ttex->isValid())
-			{
-				return;
-			}
-			FSoftwareTexture *tex = ttex->GetSoftwareTexture();
+			auto tex = GetPalettedSWTexture(picnum, true);
 
 			if (!masked && !additive)
 			{ // If we're not supposed to see through this plane, draw it opaque.

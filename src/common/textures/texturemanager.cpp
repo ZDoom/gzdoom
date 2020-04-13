@@ -111,7 +111,6 @@ void FTextureManager::DeleteAll()
 // main reason to call this outside of the destruction code.
 //
 //==========================================================================
-void DeleteSoftwareTexture(FSoftwareTexture* swtex);
 
 void FTextureManager::FlushAll()
 {
@@ -120,7 +119,7 @@ void FTextureManager::FlushAll()
 		for (int j = 0; j < 2; j++)
 		{
 			Textures[i].Texture->CleanHardwareTextures(true, true);
-			DeleteSoftwareTexture(Textures[i].Texture->SoftwareTexture);
+			delete Textures[i].Texture->SoftwareTexture;
 			Textures[i].Texture->SoftwareTexture = nullptr;
 		}
 	}

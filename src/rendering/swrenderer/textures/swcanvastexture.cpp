@@ -64,7 +64,7 @@ FSWCanvasTexture::~FSWCanvasTexture()
 
 const uint8_t *FSWCanvasTexture::GetPixels(int style)
 {
-	static_cast<FCanvasTexture*>(mTexture)->NeedUpdate();
+	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (Canvas == nullptr)
 	{
 		MakeTexture();
@@ -81,7 +81,7 @@ const uint8_t *FSWCanvasTexture::GetPixels(int style)
 
 const uint32_t *FSWCanvasTexture::GetPixelsBgra()
 {
-	static_cast<FCanvasTexture*>(mTexture)->NeedUpdate();
+	static_cast<FCanvasTexture*>(mSource)->NeedUpdate();
 	if (CanvasBgra == nullptr)
 	{
 		MakeTextureBgra();
@@ -181,5 +181,5 @@ void FSWCanvasTexture::UpdatePixels(bool truecolor)
 		ImageHelpers::FlipNonSquareBlockRemap(Pixels.Data(), Canvas->GetPixels(), GetWidth(), GetHeight(), Canvas->GetPitch(), GPalette.Remap);
 	}
 
-	static_cast<FCanvasTexture*>(mTexture)->SetUpdated(false);
+	static_cast<FCanvasTexture*>(mSource)->SetUpdated(false);
 }

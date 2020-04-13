@@ -208,7 +208,7 @@ namespace swrenderer
 		spriteframe_t*		sprframe;
 		FTextureID			picnum;
 		uint16_t				flip;
-		FTexture*			tex;
+		FGameTexture*			tex;
 		bool				noaccel;
 		double				alpha = owner->Alpha;
 
@@ -228,7 +228,7 @@ namespace swrenderer
 
 		picnum = sprframe->Texture[0];
 		flip = sprframe->Flip & 1;
-		tex = TexMan.GetTexture(picnum);
+		tex = TexMan.GetGameTexture(picnum);
 
 		if (!tex->isValid())
 			return;
@@ -267,7 +267,7 @@ namespace swrenderer
 		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
 		double pspritexiscale = 1 / pspritexscale;
 
-		int tleft = tex->GetDisplayLeftOffset();
+		int tleft = tex->GetDisplayLeftOffset(0);
 		int twidth = tex->GetDisplayWidth();
 
 		// calculate edges of the shape
@@ -290,7 +290,7 @@ namespace swrenderer
 
 		vis.renderflags = owner->renderflags;
 
-		FSoftwareTexture *stex = tex->GetSoftwareTexture();
+		FSoftwareTexture* stex = GetSoftwareTexture(tex);
 		vis.texturemid = (BASEYCENTER - sy) * stex->GetScale().Y + stex->GetTopOffset(0);
 
 		// Force it to use software rendering when drawing to a canvas texture.

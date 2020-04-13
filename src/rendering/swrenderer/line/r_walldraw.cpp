@@ -130,7 +130,7 @@ namespace swrenderer
 		WallDrawerArgs drawerargs;
 
 		// Textures that aren't masked can use the faster opaque drawer
-		if (!pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
+		if (!pic->isMasked() && mask && alpha >= OPAQUE && !additive)
 		{
 			drawerargs.SetStyle(true, false, OPAQUE, light_list);
 		}

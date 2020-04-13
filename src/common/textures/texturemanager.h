@@ -60,7 +60,12 @@ public:
 	{
 		return InternalGetTexture(i, animate, true, false);
 	}
-	
+
+	FGameTexture* GameByIndex(int i, bool animate = false)
+	{
+		return reinterpret_cast<FGameTexture*>(ByIndex(i, animate));
+	}
+
 	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 	bool OkForLocalization(FTextureID texnum, const char *substitute, int locnum);
 

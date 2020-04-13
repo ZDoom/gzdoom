@@ -156,7 +156,12 @@ enum FTextureFormat : uint32_t
 	TEX_Count
 };
 
-class FSoftwareTexture;
+class ISoftwareTexture
+{
+public:
+	virtual ~ISoftwareTexture() = default;
+};
+
 class FGLRenderState;
 
 struct spriteframewithrotate;
@@ -226,7 +231,6 @@ class FTexture
 	friend FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTextureID *defval);
 
 	// For now only give access to classes which cannot be reworked yet. None of these should remain here when all is done.
-	friend class FSoftwareTexture;
 	friend class FWarpTexture;
 	friend class FMaterial;
 	friend class OpenGLRenderer::FGLRenderState;	// For now this needs access to some fields in ApplyMaterial. This should be rerouted through the Material class
@@ -275,6 +279,7 @@ public:
 	bool isMiscPatch() const { return UseType == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
 	int isWarped() const { return bWarped; }
 	int GetRotations() const { return Rotations; }
+	float GetShaderSpeed() const { return shaderspeed; }
 	void SetRotations(int rot) { Rotations = int16_t(rot); }
 	bool isSprite() const { return UseType == ETextureType::Sprite || UseType == ETextureType::SkinSprite || UseType == ETextureType::Decal; }
 	
@@ -301,6 +306,7 @@ public:
 	int GetSourceLump() const { return SourceLump;  }
 	ETextureType GetUseType() const { return UseType; }
 	void SetSpeed(float fac) { shaderspeed = fac; }
+	bool UseWorldPanning() const  { return bWorldPanning; }
 	void SetWorldPanning(bool on) { bWorldPanning = on; }
 	void SetDisplaySize(int fitwidth, int fitheight);
 	void SetFrontSkyLayer(bool on = true) { bNoRemap0 = on; }
@@ -334,7 +340,14 @@ public:
 	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
 
 	
-	FSoftwareTexture *GetSoftwareTexture();
+	ISoftwareTexture* GetSoftwareTexture()
+	{
+		return SoftwareTexture;
+	}
+	void SetSoftwareTextue(ISoftwareTexture* swtex)
+	{
+		SoftwareTexture = swtex;
+	}
 
 protected:
 
@@ -347,7 +360,7 @@ protected:
 public:
 	FHardwareTextureContainer SystemTextures;
 protected:
-	FSoftwareTexture *SoftwareTexture = nullptr;
+	ISoftwareTexture *SoftwareTexture = nullptr;
 
 	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
 
@@ -568,9 +581,23 @@ public:
 
 	int GetDisplayWidth() /*const*/ { return wrapped.GetDisplayWidth(); }
 	int GetDisplayHeight() /*const*/ { return wrapped.GetDisplayHeight(); }
+	int GetTexelWidth() /*const*/ { return wrapped.GetTexelWidth(); }
+	int GetTexelHeight() /*const*/ { return wrapped.GetTexelHeight(); }
+	int GetTexelLeftOffset(int adjusted) /*const*/ { return wrapped.GetTexelLeftOffset(adjusted); }
+	int GetTexelTopOffset(int adjusted) /*const*/ { return wrapped.GetTexelTopOffset(adjusted); }
+	double GetDisplayLeftOffset(int adjusted) /*const*/ { return wrapped.GetDisplayLeftOffsetDouble(adjusted); }
+	double GetDisplayTopOffset(int adjusted) /*const*/ { return wrapped.GetDisplayTopOffsetDouble(adjusted); }
 
 	bool isValid() { return wrapped.isValid(); }
-	uint16_t GetRotations() { return wrapped.GetRotations(); }
+	bool isWarped() { return wrapped.isWarped(); }
+	bool useWorldPanning() { return wrapped.UseWorldPanning();  }
+	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
+	uint16_t GetRotations() const { return wrapped.GetRotations(); }
+	int GetSkyOffset() const { return wrapped.GetSkyOffset(); }
+	FTextureID GetID() const { return wrapped.GetID(); }
+	ISoftwareTexture* GetSoftwareTexture() { return wrapped.GetSoftwareTexture(); }
+	void SetSoftwareTexture(ISoftwareTexture* swtex) { wrapped.SetSoftwareTextue(swtex); }
+
 };
 
 

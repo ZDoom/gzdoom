@@ -50,7 +50,6 @@
 
 // Wrappers to keep the definitions of these classes out of here.
 void DeleteMaterial(FMaterial* mat);
-void DeleteSoftwareTexture(FSoftwareTexture *swtex);
 IHardwareTexture* CreateHardwareTexture();
 
 
@@ -161,7 +160,7 @@ FTexture::~FTexture ()
 	}
 	if (SoftwareTexture != nullptr)
 	{
-		DeleteSoftwareTexture(SoftwareTexture);
+		delete SoftwareTexture;
 		SoftwareTexture = nullptr;
 	}
 }

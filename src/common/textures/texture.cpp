@@ -669,6 +669,7 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 		memset(buffer, 0, W * (H + 1) * 4);
 
 		auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
+		if (remap) translation = remap->Index;
 		FBitmap bmp(buffer, W * 4, W, H);
 
 		int trans;

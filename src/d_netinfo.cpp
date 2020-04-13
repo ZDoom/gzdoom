@@ -623,7 +623,7 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 
 EXTERN_CVAR (Float, sv_gravity)
 
-void D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
+bool D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
 {
 	if (gamestate != GS_STARTUP && !demoplayback)
 	{
@@ -631,43 +631,47 @@ void D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
 		{
 			Printf("Only setting controllers can change %s\n", cvar->GetName());
 			cvar->MarkSafe();
-			return;
+			return true;
 		}
-	}
-	size_t namelen;
+		size_t namelen;
 
-	namelen = strlen (cvar->GetName ());
+		namelen = strlen(cvar->GetName());
 
-	Net_WriteByte (DEM_SINFCHANGED);
-	Net_WriteByte ((uint8_t)(namelen | (type << 6)));
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), (int)namelen);
-	switch (type)
-	{
-	case CVAR_Bool:		Net_WriteByte (value.Bool);		break;
-	case CVAR_Int:		Net_WriteLong (value.Int);		break;
-	case CVAR_Float:	Net_WriteFloat (value.Float);	break;
-	case CVAR_String:	Net_WriteString (value.String);	break;
-	default: break; // Silence GCC
+		Net_WriteByte(DEM_SINFCHANGED);
+		Net_WriteByte((uint8_t)(namelen | (type << 6)));
+		Net_WriteBytes((uint8_t*)cvar->GetName(), (int)namelen);
+		switch (type)
+		{
+		case CVAR_Bool:		Net_WriteByte(value.Bool);		break;
+		case CVAR_Int:		Net_WriteLong(value.Int);		break;
+		case CVAR_Float:	Net_WriteFloat(value.Float);	break;
+		case CVAR_String:	Net_WriteString(value.String);	break;
+		default: break; // Silence GCC
+		}
+		return true;
 	}
+	return false;
 }
 
-void D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
+bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 {
 	if (gamestate != GS_STARTUP && !demoplayback)
 	{
 		if (netgame && !players[consoleplayer].settings_controller)
 		{
 			if (!silent) Printf("Only setting controllers can change %s\n", cvar->GetName());
-			return;
+			return true;
 		}
+
+		int namelen = (int)strlen(cvar->GetName());
+
+		Net_WriteByte(DEM_SINFCHANGEDXOR);
+		Net_WriteByte((uint8_t)namelen);
+		Net_WriteBytes((uint8_t*)cvar->GetName(), namelen);
+		Net_WriteByte(uint8_t(bitnum | (set << 5)));
+		return true;
 	}
-
-	int namelen = (int)strlen (cvar->GetName ());
-
-	Net_WriteByte (DEM_SINFCHANGEDXOR);
-	Net_WriteByte ((uint8_t)namelen);
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), namelen);
-	Net_WriteByte (uint8_t(bitnum | (set << 5)));
+	return false;
 }
 
 void D_DoServerInfoChange (uint8_t **stream, bool singlebit)

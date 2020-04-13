@@ -109,8 +109,8 @@ class FBaseCVar;
 struct ConsoleCallbacks
 {
 	void (*UserInfoChanged)(FBaseCVar*);
-	void (*SendServerInfoChange)(FBaseCVar* cvar, UCVarValue value, ECVarType type);
-	void (*SendServerFlagChange)(FBaseCVar* cvar, int bitnum, bool set, bool silent);
+	bool (*SendServerInfoChange)(FBaseCVar* cvar, UCVarValue value, ECVarType type);
+	bool (*SendServerFlagChange)(FBaseCVar* cvar, int bitnum, bool set, bool silent);
 	FBaseCVar* (*GetUserCVar)(int playernum, const char* cvarname);
 	bool (*MustLatch)();
 

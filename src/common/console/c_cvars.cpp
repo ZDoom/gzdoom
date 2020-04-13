@@ -172,7 +172,7 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 	{
 		return;
 	}
-	else if ((Flags & CVAR_LATCH) && callbacks && callbacks->MustLatch())
+	if ((Flags & CVAR_LATCH) && callbacks && callbacks->MustLatch())
 	{
 		FLatchedValue latch;
 
@@ -186,15 +186,13 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 		LatchedValues.Push (latch);
 
 		Flags &= ~CVAR_UNSAFECONTEXT;
+		return;
 	}
-	else if ((Flags & CVAR_SERVERINFO) && callbacks && callbacks->SendServerInfoChange)
+	if ((Flags & CVAR_SERVERINFO) && callbacks && callbacks->SendServerInfoChange)
 	{
-		callbacks->SendServerInfoChange (this, value, type);
+		if (callbacks->SendServerInfoChange(this, value, type)) return;
 	}
-	else
-	{
-		ForceSet (value, type);
-	}
+	ForceSet (value, type);
 }
 
 bool FBaseCVar::ToBool (UCVarValue value, ECVarType type)
@@ -969,17 +967,14 @@ void FFlagCVar::DoSet (UCVarValue value, ECVarType type)
 	// another flag might have made to the same cvar earlier in the script.
 	if (ValueVar.GetFlags() && callbacks && callbacks->SendServerFlagChange)
 	{
-		callbacks->SendServerFlagChange(&ValueVar, BitNum, newval, false);
+		if (callbacks->SendServerFlagChange(&ValueVar, BitNum, newval, false)) return;
 	}
+	int val = *ValueVar;
+	if (newval)
+		val |= BitVal;
 	else
-	{
-		int val = *ValueVar;
-		if (newval)
-			val |= BitVal;
-		else
-			val &= ~BitVal;
-		ValueVar = val;
-	}
+		val &= ~BitVal;
+	ValueVar = val;
 }
 
 //
@@ -1072,13 +1067,14 @@ void FMaskCVar::DoSet (UCVarValue value, ECVarType type)
 		{
 			if (BitVal & (1<<i))
 			{
-				callbacks->SendServerFlagChange (&ValueVar, i, !!(val & (1<<i)), silent);
+				if (!callbacks->SendServerFlagChange(&ValueVar, i, !!(val & (1 << i)), silent)) goto fallback; // the failure case here is either always or never.
 				silent = true; // only warn once if SendServerFlagChange needs to.
 			}
 		}
 	}
 	else
 	{
+	fallback:
 		int vval = *ValueVar;
 		vval &= ~BitVal;
 		vval |= val;

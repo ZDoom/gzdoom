@@ -119,8 +119,8 @@ bool M_ReadIDAT (FileReader &file, uint8_t *buffer, int width, int height, int p
 				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, unsigned int idatlen);
 
 
-class FTexture;
+class FGameTexture;
 
-FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename);
+FGameTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename);
 
 #endif

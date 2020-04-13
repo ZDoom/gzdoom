@@ -271,7 +271,7 @@ int eventhead;
 int eventtail;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
-FTexture *Advisory;
+FGameTexture *Advisory;
 FTextureID Page;
 const char *Subtitle;
 bool nospriterename;
@@ -1005,11 +1005,8 @@ void D_Display ()
 		// draw pause pic
 		if ((paused || pauseext) && menuactive == MENU_Off)
 		{
-			FTexture *tex;
-			int x;
-
-			tex = TexMan.GetTextureByName(gameinfo.PauseSign, true);
-			x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
+			auto tex = TexMan.GetGameTextureByName(gameinfo.PauseSign, true);
+			double x = (SCREENWIDTH - tex->GetDisplayWidth() * CleanXfac)/2 +
 				tex->GetDisplayLeftOffset() * CleanXfac;
 			DrawTexture(twod, tex, x, 4, DTA_CleanNoMove, true, TAG_DONE);
 			if (paused && multiplayer)
@@ -1031,7 +1028,7 @@ void D_Display ()
 			D_DrawIcon = NULL;
 			if (picnum.isValid())
 			{
-				FTexture *tex = TexMan.GetTexture(picnum);
+				auto tex = TexMan.GetGameTexture(picnum);
 				DrawTexture(twod, tex, 160 - tex->GetDisplayWidth()/2, 100 - tex->GetDisplayHeight()/2,
 					DTA_320x200, true, TAG_DONE);
 			}
@@ -1068,7 +1065,7 @@ void D_Display ()
 		screen->End2D();
 		auto wipend = screen->WipeEndScreen ();
 		auto wiper = Wiper::Create(wipe_type);
-		wiper->SetTextures(wipe, wipend);
+		wiper->SetTextures(reinterpret_cast<FGameTexture*>(wipe), reinterpret_cast<FGameTexture*>(wipend));
 
 		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation
@@ -1232,7 +1229,7 @@ void D_PageDrawer (void)
 	ClearRect(twod, 0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
 	if (Page.Exists())
 	{
-		DrawTexture(twod, TexMan.GetTexture(Page, true), 0, 0,
+		DrawTexture(twod, TexMan.GetGameTexture(Page, true), 0, 0,
 			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
@@ -1433,7 +1430,7 @@ void D_DoAdvanceDemo (void)
 	case 3:
 		if (gameinfo.advisoryTime)
 		{
-			Advisory = TexMan.GetTextureByName("ADVISOR");
+			Advisory = TexMan.GetGameTextureByName("ADVISOR");
 			demosequence = 1;
 			pagetic = (int)(gameinfo.advisoryTime * TICRATE);
 			break;

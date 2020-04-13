@@ -212,11 +212,12 @@ bool SetTextureParms(F2DDrawer *drawer, DrawParms* parms, FTexture* img, double 
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char* string, int tag_first, ...);
 void DrawText(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, const char32_t* string, int tag_first, ...);
 void DrawChar(F2DDrawer* drawer, FFont* font, int normalcolor, double x, double y, int character, int tag_first, ...);
-void DrawTexture(F2DDrawer* drawer, FTexture* img, double x, double y, int tags_first, ...);
 
 template <typename ...Params>
 void DrawTexture(F2DDrawer* drawer, FGameTexture* img, double x, double y, int tags_first, Params&&... params)
 {
+	void DrawTexture(F2DDrawer * drawer, FTexture * img, double x, double y, int tags_first, ...);
+
 	DrawTexture(drawer, img->GetTexture(), x, y, tags_first, std::forward<Params>(params)...);
 }
 

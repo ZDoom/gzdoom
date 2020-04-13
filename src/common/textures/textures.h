@@ -276,7 +276,6 @@ public:
 	bool isFullbrightDisabled() const { return bDisableFullbright; }
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isCanvas() const { return bHasCanvas; }
-	bool isMiscPatch() const { return UseType == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
 	int isWarped() const { return bWarped; }
 	int GetRotations() const { return Rotations; }
 	float GetShaderSpeed() const { return shaderspeed; }
@@ -590,6 +589,7 @@ public:
 
 	bool isValid() { return wrapped.isValid(); }
 	bool isWarped() { return wrapped.isWarped(); }
+	bool isMiscPatch() const { return wrapped.GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
 	bool useWorldPanning() { return wrapped.UseWorldPanning();  }
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }

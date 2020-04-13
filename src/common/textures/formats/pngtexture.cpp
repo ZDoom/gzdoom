@@ -589,7 +589,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
+FGameTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 {
 	if (M_FindPNGChunk(png, MAKE_ID('I','H','D','R')) == 0)
 	{
@@ -608,7 +608,7 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 	
 	// Reject anything that cannot be put into a savegame picture by GZDoom itself.
 	if (compression != 0 || filter != 0 || interlace > 0 || bitdepth != 8 || (colortype != 2 && colortype != 3)) return nullptr;
-	else return new FPNGFileTexture (png->File, width, height, colortype);
+	else return reinterpret_cast<FGameTexture*>(new FPNGFileTexture (png->File, width, height, colortype));
 }
 
 //==========================================================================

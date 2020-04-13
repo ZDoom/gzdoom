@@ -73,7 +73,7 @@ private:
 	int LastSaved = -1;
 	int LastAccessed = -1;
 	TArray<char> SavePicData;
-	FTexture *SavePic = nullptr;
+	FGameTexture *SavePic = nullptr;
 
 public:
 	int WindowSize = 0;

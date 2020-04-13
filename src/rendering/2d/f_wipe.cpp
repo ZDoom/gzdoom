@@ -168,7 +168,7 @@ class Wiper_Burn : public Wiper
 public:
 	~Wiper_Burn();
 	bool Run(int ticks) override;
-	void SetTextures(FTexture *startscreen, FTexture *endscreen) override;
+	void SetTextures(FGameTexture *startscreen, FGameTexture *endscreen) override;
 
 private:
 	static const int WIDTH = 64, HEIGHT = 64;
@@ -307,8 +307,8 @@ bool Wiper_Melt::Run(int ticks)
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
 				
-				int w = startScreen->GetDisplayWidth();
-				int h = startScreen->GetDisplayHeight();
+				int w = startScreen->GetTexelWidth();
+				int h = startScreen->GetTexelHeight();
 				dpt.x = i * w / WIDTH;
 				dpt.y = MAX(0, y[i] * h / HEIGHT);
 				rect.left = dpt.x;
@@ -331,12 +331,12 @@ bool Wiper_Melt::Run(int ticks)
 //
 //==========================================================================
 
-void Wiper_Burn::SetTextures(FTexture *startscreen, FTexture *endscreen)
+void Wiper_Burn::SetTextures(FGameTexture *startscreen, FGameTexture *endscreen)
 {
 	startScreen = startscreen;
 	endScreen = endscreen;
 	BurnTexture = new FBurnTexture(WIDTH, HEIGHT);
-	auto mat = FMaterial::ValidateTexture(endScreen, false);
+	auto mat = FMaterial::ValidateTexture(endScreen->GetTexture(), false);
 	mat->AddTextureLayer(BurnTexture);
 }
 
@@ -374,7 +374,7 @@ bool Wiper_Burn::Run(int ticks)
 	}
 
 	BurnTexture->CleanHardwareTextures(true, true);
-	endScreen->CleanHardwareTextures(false, false);
+	endScreen->GetTexture()->CleanHardwareTextures(false, false);
 
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();

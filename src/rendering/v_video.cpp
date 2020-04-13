@@ -522,7 +522,7 @@ IHardwareTexture* CreateHardwareTexture()
 
 void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
 {
-	FTexture* p;
+	FGameTexture* p;
 	const gameborder_t* border = &gameinfo.Border;
 	// Sanity check for incomplete gameinfo
 	if (border == NULL)
@@ -532,22 +532,22 @@ void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
 	int bottom = top + height;
 
 	// Draw top and bottom sides.
-	p = TexMan.GetTextureByName(border->t);
-	drawer->AddFlatFill(left, top - p->GetDisplayHeight(), right, top, p, true);
-	p = TexMan.GetTextureByName(border->b);
-	drawer->AddFlatFill(left, bottom, right, bottom + p->GetDisplayHeight(), p, true);
+	p = TexMan.GetGameTextureByName(border->t);
+	drawer->AddFlatFill(left, top - (int)p->GetDisplayHeight(), right, top, p, true);
+	p = TexMan.GetGameTextureByName(border->b);
+	drawer->AddFlatFill(left, bottom, right, bottom + (int)p->GetDisplayHeight(), p, true);
 
 	// Draw left and right sides.
-	p = TexMan.GetTextureByName(border->l);
-	drawer->AddFlatFill(left - p->GetDisplayWidth(), top, left, bottom, p, true);
-	p = TexMan.GetTextureByName(border->r);
-	drawer->AddFlatFill(right, top, right + p->GetDisplayWidth(), bottom, p, true);
+	p = TexMan.GetGameTextureByName(border->l);
+	drawer->AddFlatFill(left - (int)p->GetDisplayWidth(), top, left, bottom, p, true);
+	p = TexMan.GetGameTextureByName(border->r);
+	drawer->AddFlatFill(right, top, right + (int)p->GetDisplayWidth(), bottom, p, true);
 
 	// Draw beveled corners.
-	DrawTexture(drawer, TexMan.GetTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetTextureByName(border->tr), left + width, top - offset, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetTextureByName(border->bl), left - offset, top + height, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetTextureByName(border->br), left + width, top + height, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr), left + width, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl), left - offset, top + height, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->br), left + width, top + height, TAG_DONE);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)

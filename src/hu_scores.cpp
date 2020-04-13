@@ -429,7 +429,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	auto icon = FSetTextureID(player->mo->IntVar(NAME_ScoreIcon));
 	if (icon.isValid())
 	{
-		FTexture *pic = TexMan.GetTexture(icon);
+		auto pic = TexMan.GetGameTexture(icon);
 		DrawTexture(twod, pic, col3, y,
 			DTA_CleanNoMove, true,
 			TAG_DONE);
@@ -450,7 +450,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 
 	if (teamplay && Teams[player->userinfo.GetTeam()].GetLogo().IsNotEmpty ())
 	{
-		FTexture *pic = TexMan.GetTextureByName(Teams[player->userinfo.GetTeam()].GetLogo().GetChars ());
+		auto pic = TexMan.GetGameTextureByName(Teams[player->userinfo.GetTeam()].GetLogo().GetChars ());
 		DrawTexture(twod, pic, col1 - (pic->GetDisplayWidth() + 2) * CleanXfac, y,
 			DTA_CleanNoMove, true, TAG_DONE);
 	}

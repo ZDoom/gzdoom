@@ -138,7 +138,7 @@ class DInterBackground : public DObject
 		int 		period;	// period in tics between animations
 		yahpt_t 	loc;	// location of animation
 		int 		data;	// ALWAYS: n/a, RANDOM: period deviation (<256)
-		TArray<FTexture*>	frames;	// actual graphics for frames of animations
+		TArray<FGameTexture*>	frames;	// actual graphics for frames of animations
 
 									// following must be initialized to zero before use!
 		int 		nexttic;	// next value of bcnt (used in conjunction with period)
@@ -161,9 +161,9 @@ private:
 	TArray<lnode_t> lnodes;
 	TArray<in_anim_t> anims;
 	int				bcnt = 0;				// used for timing of background animation
-	TArray<FTexture *> yah; 		// You Are Here graphic
-	FTexture* 		splat = nullptr;		// splat
-	FTexture		*background = nullptr;
+	TArray<FGameTexture *> yah; 		// You Are Here graphic
+	FGameTexture* 	splat = nullptr;		// splat
+	FGameTexture	*background = nullptr;
 	wbstartstruct_t *wbs;
 	level_info_t	*exitlevel;
 	
@@ -208,15 +208,15 @@ private:
 	//
 	//====================================================================
 
-	void drawOnLnode(int   n, FTexture * c[], int numc)
+	void drawOnLnode(int   n, FGameTexture * c[], int numc)
 	{
 		int   i;
 		for (i = 0; i<numc; i++)
 		{
-			int            left;
-			int            top;
-			int            right;
-			int            bottom;
+			double            left;
+			double            top;
+			double            right;
+			double            bottom;
 
 
 			right = c[i]->GetDisplayWidth();
@@ -387,13 +387,13 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 
 				case 1:		// Splat
 					sc.MustGetString();
-					splat = TexMan.GetTextureByName(sc.String);
+					splat = TexMan.GetGameTextureByName(sc.String);
 					break;
 
 				case 2:		// Pointers
 					while (sc.GetString() && !sc.Crossed)
 					{
-						yah.Push(TexMan.GetTextureByName(sc.String));
+						yah.Push(TexMan.GetGameTextureByName(sc.String));
 					}
 					if (sc.Crossed)
 						sc.UnGet();
@@ -485,14 +485,14 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						if (!sc.CheckString("{"))
 						{
 							sc.MustGetString();
-							an.frames.Push(TexMan.GetTextureByName(sc.String));
+							an.frames.Push(TexMan.GetGameTextureByName(sc.String));
 						}
 						else
 						{
 							while (!sc.CheckString("}"))
 							{
 								sc.MustGetString();
-								an.frames.Push(TexMan.GetTextureByName(sc.String));
+								an.frames.Push(TexMan.GetGameTextureByName(sc.String));
 							}
 						}
 						an.ctr = -1;
@@ -507,7 +507,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 						an.loc.y = sc.Number;
 						sc.MustGetString();
 						an.frames.Reserve(1);	// allocate exactly one element
-						an.frames[0] = TexMan.GetTextureByName(sc.String);
+						an.frames[0] = TexMan.GetGameTextureByName(sc.String);
 						anims.Push(an);
 						break;
 
@@ -523,7 +523,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 			texture = TexMan.GetTextureID("INTERPIC", ETextureType::MiscPatch);
 		}
 	}
-	background = TexMan.GetTexture(texture);
+	background = TexMan.GetGameTexture(texture);
 	return noautostartmap;
 }
 
@@ -598,8 +598,8 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			// scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows
 			// placing the animations precisely where they belong on the base pic
-			animwidth = background->GetDisplayWidthDouble();
-			animheight = background->GetDisplayHeightDouble();
+			animwidth = background->GetDisplayWidth();
+			animheight = background->GetDisplayHeight();
 			DrawTexture(twod, background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else

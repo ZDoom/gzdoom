@@ -72,11 +72,11 @@ void FImageCollection::Uninit ()
 	ImageMap.Clear();
 }
 
-FTexture *FImageCollection::operator[] (int index) const
+FGameTexture *FImageCollection::operator[] (int index) const
 {
 	if ((unsigned int)index >= ImageMap.Size())
 	{
 		return NULL;
 	}
-	return ImageMap[index].Exists()? TexMan.GetPalettedTexture(ImageMap[index], true) : NULL;
+	return ImageMap[index].Exists()? TexMan.GetGameTexture(ImageMap[index], true) : NULL;
 }

@@ -1191,7 +1191,7 @@ public:
 	}
 
 	//draws an image with the specified flags
-	void DrawGraphic(FTexture* texture, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, double Alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0, bool alphaMap=false, int forceWidth=-1, int forceHeight=-1, const double *clip = nulclip, bool clearDontDraw=false) const
+	void DrawGraphic(FGameTexture* texture, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, double Alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0, bool alphaMap=false, int forceWidth=-1, int forceHeight=-1, const double *clip = nulclip, bool clearDontDraw=false) const
 	{
 		if (texture == NULL)
 			return;
@@ -1201,11 +1201,11 @@ public:
 
 		if((offsetflags & SBarInfoCommand::CENTER) == SBarInfoCommand::CENTER)
 		{
-			if (forceWidth < 0)	dx -= (texture->GetDisplayWidthDouble()/2.0)-texture->GetDisplayLeftOffsetDouble();
-			else	dx -= forceWidth*(0.5-(texture->GetDisplayLeftOffsetDouble()/texture->GetDisplayWidthDouble()));
+			if (forceWidth < 0)	dx -= (texture->GetDisplayWidth()/2.0)-texture->GetDisplayLeftOffset();
+			else	dx -= forceWidth*(0.5-(texture->GetDisplayLeftOffset()/texture->GetDisplayWidth()));
 			
-			if (forceHeight < 0)	dy -= (texture->GetDisplayHeightDouble()/2.0)-texture->GetDisplayTopOffsetDouble();
-			else	dy -= forceHeight*(0.5-(texture->GetDisplayTopOffsetDouble()/texture->GetDisplayHeightDouble()));
+			if (forceHeight < 0)	dy -= (texture->GetDisplayHeight()/2.0)-texture->GetDisplayTopOffset();
+			else	dy -= forceHeight*(0.5-(texture->GetDisplayTopOffset()/texture->GetDisplayHeight()));
 		}
 
 		dx += xOffset;
@@ -1214,12 +1214,12 @@ public:
 		if(!fullScreenOffsets)
 		{
 			double tmp = 0;
-			w = forceWidth < 0 ? texture->GetDisplayWidthDouble() : forceWidth;
-			h = forceHeight < 0 ? texture->GetDisplayHeightDouble() : forceHeight;
-			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetDisplayLeftOffsetDouble();
-			double dcy = clip[1] == 0 ? 0 : dy + clip[1] - texture->GetDisplayTopOffsetDouble();
-			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetDisplayLeftOffsetDouble();
-			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetDisplayTopOffsetDouble();
+			w = forceWidth < 0 ? texture->GetDisplayWidth() : forceWidth;
+			h = forceHeight < 0 ? texture->GetDisplayHeight() : forceHeight;
+			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetDisplayLeftOffset();
+			double dcy = clip[1] == 0 ? 0 : dy + clip[1] - texture->GetDisplayTopOffset();
+			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetDisplayLeftOffset();
+			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetDisplayTopOffset();
 
 			if(clip[0] != 0 || clip[1] != 0)
 			{
@@ -1283,8 +1283,8 @@ public:
 			bool xright = *x < 0 && !x.RelCenter();
 			bool ybot = *y < 0 && !y.RelCenter();
 
-			w = (forceWidth < 0 ? texture->GetDisplayWidthDouble() : forceWidth);
-			h = (forceHeight < 0 ? texture->GetDisplayHeightDouble() : forceHeight);
+			w = (forceWidth < 0 ? texture->GetDisplayWidth() : forceWidth);
+			h = (forceHeight < 0 ? texture->GetDisplayHeight() : forceHeight);
 			if(vid_fps && rx < 0 && ry >= 0)
 				ry += 10;
 
@@ -1301,10 +1301,10 @@ public:
 			// Check for clipping
 			if(clip[0] != 0 || clip[1] != 0 || clip[2] != 0 || clip[3] != 0)
 			{
-				rcx = clip[0] == 0 ? 0 : rx+((clip[0] - texture->GetDisplayLeftOffsetDouble())*Scale.X);
-				rcy = clip[1] == 0 ? 0 : ry+((clip[1] - texture->GetDisplayTopOffsetDouble())*Scale.Y);
-				rcr = clip[2] == 0 ? INT_MAX : rx+w-((clip[2] + texture->GetDisplayLeftOffsetDouble())*Scale.X);
-				rcb = clip[3] == 0 ? INT_MAX : ry+h-((clip[3] + texture->GetDisplayTopOffsetDouble())*Scale.Y);
+				rcx = clip[0] == 0 ? 0 : rx+((clip[0] - texture->GetDisplayLeftOffset())*Scale.X);
+				rcy = clip[1] == 0 ? 0 : ry+((clip[1] - texture->GetDisplayTopOffset())*Scale.Y);
+				rcr = clip[2] == 0 ? INT_MAX : rx+w-((clip[2] + texture->GetDisplayLeftOffset())*Scale.X);
+				rcb = clip[3] == 0 ? INT_MAX : ry+h-((clip[3] + texture->GetDisplayTopOffset())*Scale.Y);
 			}
 
 			if(clearDontDraw)
@@ -1393,7 +1393,7 @@ public:
 			else
 				width = font->GetCharWidth((unsigned char) script->spacingCharacter);
 			bool redirected = false;
-			FTexture* c = font->GetChar(ch, fontcolor, &width);
+			auto c = font->GetChar(ch, fontcolor, &width);
 			if(c == NULL) //missing character.
 			{
 				continue;
@@ -1405,8 +1405,8 @@ public:
 			double rx, ry, rw, rh;
 			rx = ax + xOffset;
 			ry = ay + yOffset;
-			rw = c->GetDisplayWidthDouble();
-			rh = c->GetDisplayHeightDouble();
+			rw = c->GetDisplayWidth();
+			rh = c->GetDisplayHeight();
 
 			if(script->spacingCharacter != '\0')
 			{

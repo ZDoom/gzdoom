@@ -37,7 +37,7 @@
 #include "doomtype.h"
 #include "r_defs.h"
 
-class FTexture;
+class FGameTexture;
 
 class FImageCollection
 {
@@ -49,7 +49,7 @@ public:
 	void Add(const char **patchnames, int numPatches, ETextureType namespc = ETextureType::Any);
 	void Uninit();
 
-	FTexture *operator[] (int index) const;
+	FGameTexture *operator[] (int index) const;
 
 protected:
 	TArray<FTextureID> ImageMap;

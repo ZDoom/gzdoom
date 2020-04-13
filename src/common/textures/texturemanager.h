@@ -39,7 +39,12 @@ public:
 		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
 		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
 	}
-	
+
+	FGameTexture* GetGameTextureByName(const char *name, bool animate = false)
+	{
+		return reinterpret_cast<FGameTexture*>(GetTextureByName(name, animate));
+	}
+
 	FTexture *GetTexture(FTextureID texnum, bool animate = false)
 	{
 		return InternalGetTexture(texnum.GetIndex(), animate, true, false);
@@ -67,6 +72,12 @@ public:
 	}
 
 	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
+
+	FGameTexture* FindGameTexture(const char* texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny)
+	{
+		return reinterpret_cast<FGameTexture*>(FindTexture(texname, usetype, flags));
+	}
+
 	bool OkForLocalization(FTextureID texnum, const char *substitute, int locnum);
 
 	void FlushAll();

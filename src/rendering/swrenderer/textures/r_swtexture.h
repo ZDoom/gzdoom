@@ -69,9 +69,9 @@ public:
 	int GetWidthBits() { return WidthBits; }
 	int GetHeightBits() { return HeightBits; }
 
-	int GetScaledWidth () { return mTexture->GetDisplayWidth(); }
-	int GetScaledHeight () { return mTexture->GetDisplayHeight(); }
-	
+	double GetScaledWidth () { return mTexture->GetDisplayWidth(); }
+	double GetScaledHeight () { return mTexture->GetDisplayHeight(); }
+
 	// Now with improved offset adjustment.
 	int GetLeftOffset(int adjusted) { return mTexture->GetTexelLeftOffset(adjusted); }
 	int GetTopOffset(int adjusted) { return mTexture->GetTexelTopOffset(adjusted); }

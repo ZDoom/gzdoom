@@ -1239,8 +1239,8 @@ void DAutomap::ScrollParchment (double dmapx, double dmapy)
 
 		if (backtex != nullptr)
 		{
-			int pwidth = backtex->GetDisplayWidth();
-			int pheight = backtex->GetDisplayHeight();
+			int pwidth = int(backtex->GetDisplayWidth() * CleanXfac);
+			int pheight = int(backtex->GetDisplayHeight() * CleanYfac);
 
 			while(mapxstart > 0)
 				mapxstart -= pwidth;
@@ -1591,8 +1591,8 @@ void DAutomap::clearFB (const AMColor &color)
 		auto backtex = TexMan.GetGameTexture(mapback);
 		if (backtex != nullptr)
 		{
-			int pwidth = backtex->GetDisplayWidth();
-			int pheight = backtex->GetDisplayHeight();
+			int pwidth = int(backtex->GetDisplayWidth() * CleanXfac);
+			int pheight = int(backtex->GetDisplayHeight() * CleanYfac);
 			int x, y;
 
 			//blit the automap background to the screen.
@@ -1600,7 +1600,7 @@ void DAutomap::clearFB (const AMColor &color)
 			{
 				for (x = int(mapxstart); x < f_w; x += pwidth)
 				{
-					DrawTexture(twod, backtex, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, TAG_DONE);
+					DrawTexture(twod, backtex, x, y, DTA_ClipBottom, f_h, DTA_TopOffset, 0, DTA_LeftOffset, 0, DTA_DestWidth, pwidth, DTA_DestHeight, pheight, TAG_DONE);
 				}
 			}
 		}

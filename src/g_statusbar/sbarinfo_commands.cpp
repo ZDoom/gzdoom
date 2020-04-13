@@ -69,8 +69,8 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			{
 				double scale1, scale2;
 				scale1 = scale2 = 1.0f;
-				double texwidth = (int) (texture->GetDisplayWidthDouble()*spawnScaleX);
-				double texheight = (int) (texture->GetDisplayHeightDouble()*spawnScaleY);
+				double texwidth = (int) (texture->GetDisplayWidth()*spawnScaleX);
+				double texheight = (int) (texture->GetDisplayHeight()*spawnScaleY);
 				
 				if (w != -1 && (w<texwidth || (flags & DI_FORCESCALE)))
 				{
@@ -93,8 +93,8 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			}
 			else if (applyscale)
 			{
-				w=(int) (texture->GetDisplayWidthDouble()*spawnScaleX);
-				h=(int) (texture->GetDisplayHeightDouble()*spawnScaleY);
+				w=(int) (texture->GetDisplayWidth()*spawnScaleX);
+				h=(int) (texture->GetDisplayHeight()*spawnScaleY);
 			}
 			statusBar->DrawGraphic(texture, imgx, imgy, block->XOffset(), block->YOffset(), frameAlpha, block->FullScreenOffsets(),
 				translatable, false, offset, false, w, h);
@@ -241,7 +241,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 				applyscale = false;
 			}
 			if(type == PLAYERICON)
-				texture = TexMan.ByIndex(statusBar->CPlayer->mo->IntVar(NAME_ScoreIcon), true);
+				texture = TexMan.GameByIndex(statusBar->CPlayer->mo->IntVar(NAME_ScoreIcon), true);
 			else if(type == AMMO1)
 			{
 				auto ammo = statusBar->ammo1;
@@ -270,7 +270,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			{
 				auto item = statusBar->CPlayer->mo->FindInventory(NAME_Sigil);
 				if (item != NULL)
-					texture = TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true);
+					texture = TexMan.GetGameTexture(item->TextureIDVar(NAME_Icon), true);
 			}
 			else if(type == HEXENARMOR_ARMOR || type == HEXENARMOR_SHIELD || type == HEXENARMOR_HELM || type == HEXENARMOR_AMULET)
 			{
@@ -292,9 +292,9 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 				}
 			}
 			else if(type == INVENTORYICON)
-				texture = TexMan.GetTexture(sprite, true);
+				texture = TexMan.GetGameTexture(sprite, true);
 			else if(type == SELECTEDINVENTORYICON && statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel) != NULL)
-				texture = TexMan.GetTexture(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->TextureIDVar(NAME_Icon), true);
+				texture = TexMan.GetGameTexture(statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel)->TextureIDVar(NAME_Icon), true);
 			else if(image >= 0)
 				texture = statusBar->Images[image];
 			
@@ -316,7 +316,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 				spawnScaleY = item->Scale.Y;
 			}
 			
-			texture = TexMan.GetTexture(icon, true);
+			texture = TexMan.GetGameTexture(icon, true);
 		}
 		
 		enum ImageType
@@ -353,7 +353,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 		SBarInfoCoordinate	imgy;
 		Offset				offset;
 
-		FTexture			*texture;
+		FGameTexture			*texture;
 		double					alpha;
 };
 
@@ -1618,7 +1618,7 @@ class CommandDrawMugShot : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			FTexture *face = statusBar->wrapper->mugshot.GetFace(statusBar->CPlayer, defaultFace, accuracy, stateFlags);
+			FGameTexture *face = statusBar->wrapper->mugshot.GetFace(statusBar->CPlayer, defaultFace, accuracy, stateFlags);
 			if (face != NULL)
 				statusBar->DrawGraphic(face, x, y, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 		}
@@ -2045,10 +2045,10 @@ class CommandDrawShader : public SBarInfoCommand
 			}
 			GetCoordinates(sc, fullScreenOffsets, x, y);
 			sc.MustGetToken(';');
-			shaders[0] = TexMan.FindTexture("BarShaderHF");
-			shaders[1] = TexMan.FindTexture("BarShaderHR");
-			shaders[2] = TexMan.FindTexture("BarShaderVF");
-			shaders[3] = TexMan.FindTexture("BarShaderVR");
+			shaders[0] = TexMan.FindGameTexture("BarShaderHF");
+			shaders[1] = TexMan.FindGameTexture("BarShaderHR");
+			shaders[2] = TexMan.FindGameTexture("BarShaderVF");
+			shaders[3] = TexMan.FindGameTexture("BarShaderVR");
 		}
 	protected:
 		bool				vertical;
@@ -2059,7 +2059,7 @@ class CommandDrawShader : public SBarInfoCommand
 		SBarInfoCoordinate	y;
 	private:
 
-		FTexture			*shaders[4];
+		FGameTexture			*shaders[4];
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2132,7 +2132,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 						statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgARTIBOX], rx, ry, block->XOffset(), block->YOffset(), bgalpha, block->FullScreenOffsets());
 		
 					if(style != STYLE_Strife) //Strife draws the cursor before the icons
-						statusBar->DrawGraphic(TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
+						statusBar->DrawGraphic(TexMan.GetGameTexture(item->TextureIDVar(NAME_Icon), true), rx - (style == STYLE_HexenStrict ? 2 : 0), ry - (style == STYLE_HexenStrict ? 1 : 0), block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
 					if(item == statusBar->CPlayer->mo->PointerVar<AActor>(NAME_InvSel))
 					{
 						if(style == STYLE_Heretic)
@@ -2147,7 +2147,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 							statusBar->DrawGraphic(statusBar->Images[statusBar->invBarOffset + imgSELECTBOX], rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 					}
 					if(style == STYLE_Strife)
-						statusBar->DrawGraphic(TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
+						statusBar->DrawGraphic(TexMan.GetGameTexture(item->TextureIDVar(NAME_Icon), true), rx, ry, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets(), false, item->IntVar(NAME_Amount) <= 0);
 					if(counters != NULL && (alwaysShowCounter || item->IntVar(NAME_Amount) != 1))
 					{
 						counters[i]->valueArgument = item->IntVar(NAME_Amount);
@@ -2255,7 +2255,7 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 		}
 		int GetCounterSpacing(const DSBarInfo *statusBar) const
 		{
-			FTexture *box = (style != STYLE_Strife)
+			FGameTexture *box = (style != STYLE_Strife)
 				? statusBar->Images[statusBar->invBarOffset + imgARTIBOX]
 				: statusBar->Images[statusBar->invBarOffset + imgCURSOR];
 			if (box == NULL)
@@ -2265,13 +2265,14 @@ class CommandDrawInventoryBar : public SBarInfoCommand
 			else
 			{
 				int spacing;
+				// Intentionally rounded down.
 				if (!vertical)
 				{
-					spacing = box->GetDisplayWidth();
+					spacing = (int)box->GetDisplayWidth();
 				}
 				else
 				{
-					spacing = box->GetDisplayHeight();
+					spacing = (int)box->GetDisplayHeight();
 				}
 				return spacing + ((style != STYLE_Strife) ? 1 : -1);
 			}
@@ -2368,24 +2369,25 @@ class CommandDrawKeyBar : public SBarInfoCommand
 				}
 				if(i >= keyOffset) //Should we start drawing?
 				{
+					auto tex = TexMan.GetGameTexture(item->TextureIDVar(NAME_Icon), true);
 					if(!vertical)
 					{
-						statusBar->DrawGraphic(TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true), x+slotOffset, y+rowOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						rowWidth = rowIconSize == -1 ? TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true)->GetDisplayHeight()+2 : rowIconSize;
+						statusBar->DrawGraphic(tex, x+slotOffset, y+rowOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						rowWidth = rowIconSize == -1 ? (int)tex->GetDisplayHeight()+2 : rowIconSize;
 					}
 					else
 					{
-						statusBar->DrawGraphic(TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true), x+rowOffset, y+slotOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
-						rowWidth = rowIconSize == -1 ? TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true)->GetDisplayWidth()+2 : rowIconSize;
+						statusBar->DrawGraphic(tex, x+rowOffset, y+slotOffset, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
+						rowWidth = rowIconSize == -1 ? (int)tex->GetDisplayWidth()+2 : rowIconSize;
 					}
 		
 					// If cmd.special is -1 then the slot size is auto detected
 					if(iconSize == -1)
 					{
 						if(!vertical)
-							slotOffset += (reverse ? -1 : 1) * (TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true)->GetDisplayWidth() + 2);
+							slotOffset += (reverse ? -1 : 1) * ((int)tex->GetDisplayWidth() + 2);
 						else
-							slotOffset += (reverse ? -1 : 1) * (TexMan.GetTexture(item->TextureIDVar(NAME_Icon), true)->GetDisplayHeight() + 2);
+							slotOffset += (reverse ? -1 : 1) * ((int)tex->GetDisplayHeight() + 2);
 					}
 					else
 						slotOffset += (reverse ? -iconSize : iconSize);
@@ -2491,8 +2493,8 @@ class CommandDrawBar : public SBarInfoCommand
 				return; //don't draw anything.
 			assert(statusBar->Images[foreground] != NULL);
 			
-			FTexture *fg = statusBar->Images[foreground];
-			FTexture *bg = (background != -1) ? statusBar->Images[background] : NULL;
+			FGameTexture *fg = statusBar->Images[foreground];
+			FGameTexture *bg = (background != -1) ? statusBar->Images[background] : NULL;
 
 			double value = drawValue;
 			if(border != 0)
@@ -2514,7 +2516,7 @@ class CommandDrawBar : public SBarInfoCommand
 			// {cx, cy, cr, cb}
 			double Clip[4] = {0, 0, 0, 0};
 		
-			int sizeOfImage = (horizontal ? fg->GetDisplayWidth()-border*2 : fg->GetDisplayHeight()-border*2);
+			double sizeOfImage = (horizontal ? fg->GetDisplayWidth()-border*2 : fg->GetDisplayHeight()-border*2);
 			Clip[(!horizontal)|((horizontal ? !reverse : reverse)<<1)] = sizeOfImage - sizeOfImage *value;
 			// Draw background
 			if(border != 0)
@@ -3108,15 +3110,15 @@ class CommandDrawGem : public SBarInfoCommand
 
 		void	Draw(const SBarInfoMainBlock *block, const DSBarInfo *statusBar)
 		{
-			FTexture *chainImg = statusBar->Images[chain];
-			FTexture *gemImg = statusBar->Images[gem];
+			FGameTexture *chainImg = statusBar->Images[chain];
+			FGameTexture *gemImg = statusBar->Images[gem];
 			if(chainImg == NULL)
 				return;
 		
 			SBarInfoCoordinate drawY = y;
 			if(wiggle && drawValue != goalValue) // Should only wiggle when the value doesn't equal what is being drawn.
 				drawY += chainWiggle;
-			int chainWidth = chainImg->GetDisplayWidth();
+			double chainWidth = chainImg->GetDisplayWidth();
 			int offset = (int) (((double) (chainWidth-leftPadding-rightPadding)/100)*drawValue);
 			statusBar->DrawGraphic(chainImg, x+(offset%chainSize), drawY, block->XOffset(), block->YOffset(), block->Alpha(), block->FullScreenOffsets());
 			if(gemImg != NULL)

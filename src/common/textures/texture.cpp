@@ -868,3 +868,9 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	SystemTextures.AddHardwareTexture(0, false, hwtex);
 }
 
+
+bool FGameTexture::isUserContent() const
+{
+	int filenum = fileSystem.GetFileContainer(wrapped.GetSourceLump());
+	return (filenum > fileSystem.GetMaxIwadNum());
+}

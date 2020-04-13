@@ -579,14 +579,14 @@ class FGameTexture
 public:
 	FTexture* GetTexture() { return &wrapped; }
 
-	int GetDisplayWidth() /*const*/ { return wrapped.GetDisplayWidth(); }
-	int GetDisplayHeight() /*const*/ { return wrapped.GetDisplayHeight(); }
+	double GetDisplayWidth() /*const*/ { return wrapped.GetDisplayWidthDouble(); }
+	double GetDisplayHeight() /*const*/ { return wrapped.GetDisplayHeightDouble(); }
 	int GetTexelWidth() /*const*/ { return wrapped.GetTexelWidth(); }
 	int GetTexelHeight() /*const*/ { return wrapped.GetTexelHeight(); }
-	int GetTexelLeftOffset(int adjusted) /*const*/ { return wrapped.GetTexelLeftOffset(adjusted); }
-	int GetTexelTopOffset(int adjusted) /*const*/ { return wrapped.GetTexelTopOffset(adjusted); }
-	double GetDisplayLeftOffset(int adjusted) /*const*/ { return wrapped.GetDisplayLeftOffsetDouble(adjusted); }
-	double GetDisplayTopOffset(int adjusted) /*const*/ { return wrapped.GetDisplayTopOffsetDouble(adjusted); }
+	int GetTexelLeftOffset(int adjusted = 0) /*const*/ { return wrapped.GetTexelLeftOffset(adjusted); }
+	int GetTexelTopOffset(int adjusted = 0) /*const*/ { return wrapped.GetTexelTopOffset(adjusted); }
+	double GetDisplayLeftOffset(int adjusted = 0) /*const*/ { return wrapped.GetDisplayLeftOffsetDouble(adjusted); }
+	double GetDisplayTopOffset(int adjusted = 0) /*const*/ { return wrapped.GetDisplayTopOffsetDouble(adjusted); }
 
 	bool isValid() { return wrapped.isValid(); }
 	bool isWarped() { return wrapped.isWarped(); }
@@ -597,6 +597,8 @@ public:
 	FTextureID GetID() const { return wrapped.GetID(); }
 	ISoftwareTexture* GetSoftwareTexture() { return wrapped.GetSoftwareTexture(); }
 	void SetSoftwareTexture(ISoftwareTexture* swtex) { wrapped.SetSoftwareTextue(swtex); }
+
+	bool isUserContent() const;
 
 };
 

@@ -105,8 +105,8 @@ namespace swrenderer
 		// but right now, I just want to get them drawing.
 		tz = (pos.X - thread->Viewport->viewpoint.Pos.X) * thread->Viewport->viewpoint.TanCos + (pos.Y - thread->Viewport->viewpoint.Pos.Y) * thread->Viewport->viewpoint.TanSin;
 
-		int scaled_to = pic->GetScaledTopOffsetSW();
-		int scaled_bo = scaled_to - pic->GetScaledHeight();
+		double scaled_to = pic->GetScaledTopOffsetSW();
+		double scaled_bo = scaled_to - pic->GetScaledHeight();
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;
 

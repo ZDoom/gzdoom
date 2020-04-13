@@ -308,18 +308,17 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture()
 
 void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	auto tex = mat->tex;
-	if (tex->isSWCanvas()) return;
+	if (mat->Source()->isSWCanvas()) return;
 
 	int flags = mat->isExpanded() ? CTF_Expand : 0;
 	int numLayers = mat->GetLayers();
-	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
+	FTexture* layer;
+	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation, &layer));
 
-	if (base->BindOrCreate(tex, 0, CLAMP_NONE, translation, flags))
+	if (base->BindOrCreate(layer, 0, CLAMP_NONE, translation, flags))
 	{
 		for (int i = 1; i < numLayers; i++)
 		{
-			FTexture *layer;
 			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, 0, &layer));
 			systex->BindOrCreate(layer, i, CLAMP_NONE, 0, mat->isExpanded() ? CTF_Expand : 0);
 		}

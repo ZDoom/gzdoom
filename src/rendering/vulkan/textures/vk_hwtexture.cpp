@@ -109,33 +109,21 @@ void VkHardwareTexture::ResetAllDescriptors()
 		fb->GetRenderPassManager()->TextureSetPoolReset();
 }
 
-void VkHardwareTexture::Precache(FMaterial *mat, int translation, int flags)
-{
-	int numLayers = mat->GetLayers();
-	GetImage(mat->tex, translation, flags);
-	for (int i = 1; i < numLayers; i++)
-	{
-		FTexture *layer;
-		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
-	}
-}
-
 VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &state)
 {
 	FMaterial *mat = state.mMaterial;
-	FTexture *tex = state.mMaterial->tex;
+	FTexture *base = state.mMaterial->Source();
 	int clampmode = state.mClampMode;
 	int translation = state.mTranslation;
 
-	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
-	if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
-	else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+	if (base->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
+	if (base->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
+	else if ((base->isWarped() || base->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = state.mMaterial->isExpanded() ? CTF_Expand : 0;
 
-	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+	if (base->isHardwareCanvas()) static_cast<FCanvasTexture*>(base)->NeedUpdate();
 
 	for (auto &set : mDescriptorSets)
 	{
@@ -152,7 +140,7 @@ VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &s
 	VulkanSampler *sampler = fb->GetSamplerManager()->Get(clampmode);
 
 	WriteDescriptors update;
-	update.addCombinedImageSampler(descriptor.get(), 0, GetImage(tex, translation, flags)->View.get(), sampler, mImage.Layout);
+	update.addCombinedImageSampler(descriptor.get(), 0, GetImage(mat->BaseLayer(), translation, flags)->View.get(), sampler, mImage.Layout);
 	for (int i = 1; i < numLayers; i++)
 	{
 		FTexture *layer;

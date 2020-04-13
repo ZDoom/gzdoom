@@ -30,6 +30,21 @@
 
 IHardwareTexture* CreateHardwareTexture();
 
+// We really do not need to create more than one hardware texture per image source.
+// However, the internal handling depends on FTexture for everything so this array maps each all textures sharing the same master texture that gets used in the layer array.
+static TMap<FImageSource*, FTexture*> imageToMasterTexture;
+
+static FTexture* GetMasterTexture(FTexture* tx)
+{
+	if (tx->GetUseType() == ETextureType::Null) return tx;	// Null textures never get redirected
+	auto img = tx->GetImage();
+	if (!img) return tx;	// this is not an image texture and represents itself.
+	auto find = imageToMasterTexture.CheckKey(img);
+	if (find) return *find;	// already got a master texture for this. Return it.
+	imageToMasterTexture.Insert(img, tx);
+	return tx;				// this is a newly added master texture.
+}
+
 //===========================================================================
 //
 // Constructor
@@ -39,7 +54,8 @@ IHardwareTexture* CreateHardwareTexture();
 FMaterial::FMaterial(FTexture * tx, bool expanded)
 {
 	mShaderIndex = SHADER_Default;
-	sourcetex = tex = tx;
+	sourcetex = tx;
+	imgtex = GetMasterTexture(tx);
 
 	if (tx->UseType == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(tx)->GetColorFormat() == 0)
 	{
@@ -63,7 +79,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Specular })
 			{
-				mTextureLayers.Push(texture);
+				mTextureLayers.Push(GetMasterTexture(texture));
 			}
 			mShaderIndex = SHADER_Specular;
 		}
@@ -71,7 +87,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 			{
-				mTextureLayers.Push(texture);
+				mTextureLayers.Push(GetMasterTexture(texture));
 			}
 			mShaderIndex = SHADER_PBR;
 		}
@@ -80,7 +96,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		tx->CreateDefaultBrightmap();
 		if (tx->Brightmap)
 		{
-			mTextureLayers.Push(tx->Brightmap);
+			mTextureLayers.Push(GetMasterTexture(tx->Brightmap));
 			mLayerFlags |= TEXF_Brightmap;
 		}
 		else	
@@ -89,7 +105,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		}
 		if (tx->Detailmap)
 		{
-			mTextureLayers.Push(tx->Detailmap);
+			mTextureLayers.Push(GetMasterTexture(tx->Detailmap));
 			mLayerFlags |= TEXF_Detailmap;
 		}
 		else
@@ -98,7 +114,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		}
 		if (tx->Glowmap)
 		{
-			mTextureLayers.Push(tx->Glowmap);
+			mTextureLayers.Push(GetMasterTexture(tx->Glowmap));
 			mLayerFlags |= TEXF_Glowmap;
 		}
 		else
@@ -114,7 +130,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 				for (auto &texture : tx->CustomShaderTextures)
 				{
 					if (texture == nullptr) continue;
-					mTextureLayers.Push(texture);
+					mTextureLayers.Push(GetMasterTexture(texture));
 				}
 				mShaderIndex = tx->shaderindex;
 			}
@@ -167,11 +183,11 @@ FMaterial::~FMaterial()
 
 void FMaterial::SetSpriteRect()
 {
-	auto leftOffset = tex->GetLeftOffsetHW();
-	auto topOffset = tex->GetTopOffsetHW();
+	auto leftOffset = sourcetex->GetLeftOffsetHW();
+	auto topOffset = sourcetex->GetTopOffsetHW();
 
-	float fxScale = (float)tex->Scale.X;
-	float fyScale = (float)tex->Scale.Y;
+	float fxScale = (float)sourcetex->Scale.X;
+	float fyScale = (float)sourcetex->Scale.Y;
 
 	// mSpriteRect is for positioning the sprite in the scene.
 	mSpriteRect.left = -leftOffset / fxScale;
@@ -311,7 +327,7 @@ outl:
 
 IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
 {
-	FTexture *layer = i == 0 ? tex : mTextureLayers[i - 1];
+	FTexture *layer = i == 0 ? imgtex : mTextureLayers[i - 1];
 	if (pLayer) *pLayer = layer;
 	
 	if (layer && layer->UseType!=ETextureType::Null)

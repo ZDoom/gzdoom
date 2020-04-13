@@ -292,9 +292,10 @@ void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FMaterial *tex, float x_off
 
 	float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
 	float yscale = 1.f;
+	auto texskyoffset = tex->Source()->GetSkyOffset() + skyoffset;
 	if (texh <= 128 && (di->Level->flags & LEVEL_FORCETILEDSKY))
 	{
-		modelMatrix.translate(0.f, (-40 + tex->tex->GetSkyOffset() + skyoffset)*skyoffsetfactor, 0.f);
+		modelMatrix.translate(0.f, (-40 + texskyoffset)*skyoffsetfactor, 0.f);
 		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
 		yscale = 240.f / texh;
 	}
@@ -312,12 +313,12 @@ void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FMaterial *tex, float x_off
 	}
 	else if (texh <= 240)
 	{
-		modelMatrix.translate(0.f, (200 - texh + tex->tex->GetSkyOffset() + skyoffset)*skyoffsetfactor, 0.f);
+		modelMatrix.translate(0.f, (200 - texh + texskyoffset)*skyoffsetfactor, 0.f);
 		modelMatrix.scale(1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
 	}
 	else
 	{
-		modelMatrix.translate(0.f, (-40 + tex->tex->GetSkyOffset() + skyoffset)*skyoffsetfactor, 0.f);
+		modelMatrix.translate(0.f, (-40 + texskyoffset)*skyoffsetfactor, 0.f);
 		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
 		yscale = 240.f / texh;
 	}

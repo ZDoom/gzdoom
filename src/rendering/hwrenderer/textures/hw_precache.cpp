@@ -62,7 +62,7 @@ static void PrecacheTexture(FTexture *tex, int cache)
 //===========================================================================
 static void PrecacheList(FMaterial *gltex, SpriteHits& translations)
 {
-	gltex->tex->SystemTextures.CleanUnused(translations, gltex->isExpanded());
+	gltex->BaseLayer()->SystemTextures.CleanUnused(translations, gltex->isExpanded());
 	SpriteHits::Iterator it(translations);
 	SpriteHits::Pair* pair;
 	while (it.NextPair(pair)) screen->PrecacheMaterial(gltex, pair->Key);
@@ -196,12 +196,15 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		FTexture *tex = TexMan.ByIndex(i);
 		if (tex != nullptr)
 		{
-			FMaterial *mat = FMaterial::ValidateTexture(tex, false, false);
-			if (mat != nullptr)
+			if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 			{
-				for (auto ftex : mat->GetLayerArray())
+				FMaterial* mat = FMaterial::ValidateTexture(tex, false, false);
+				if (mat != nullptr)
 				{
-					usedTextures.Insert(ftex, true);
+					for (auto ftex : mat->GetLayerArray())
+					{
+						usedTextures.Insert(ftex, true);
+					}
 				}
 			}
 			if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
@@ -226,11 +229,11 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		{
 			if (usedTextures.CheckKey(tex) == nullptr)
 			{
-				tex->SystemTextures.Clean(true, false);
+				tex->CleanHardwareTextures(true, false);
 			}
 			if (usedSprites.CheckKey(tex) == nullptr)
 			{
-				tex->SystemTextures.Clean(false, true);
+				tex->CleanHardwareTextures(false, true);
 			}
 		}
 	}

@@ -264,7 +264,7 @@ void HWWall::RenderTranslucentWall(HWDrawInfo *di, FRenderState &state)
 	state.SetRenderStyle(RenderStyle);
 	if (gltexture)
 	{
-		if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+		if (!gltexture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 		else state.AlphaFunc(Alpha_GEqual, 0.f);
 		RenderTexturedWall(di, state, HWWall::RWF_TEXTURED | HWWall::RWF_NOSPLIT);
 	}
@@ -442,7 +442,7 @@ const char HWWall::passflag[] = {
 //==========================================================================
 void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 {
-	if (gltexture && gltexture->tex->GetTranslucency() && passflag[type] == 2)
+	if (gltexture && gltexture->GetTranslucency() && passflag[type] == 2)
 	{
 		translucent = true;
 	}
@@ -1010,7 +1010,7 @@ bool HWWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	if (gltexture != NULL)
 	{
 		bool normalize = false;
-		if (gltexture->tex->isHardwareCanvas()) normalize = true;
+		if (gltexture->isHardwareCanvas()) normalize = true;
 		else if (flags & HWF_CLAMPY)
 		{
 			// for negative scales we can get negative coordinates here.
@@ -1039,7 +1039,7 @@ void HWWall::CheckTexturePosition(FTexCoordInfo *tci)
 {
 	float sub;
 
-	if (gltexture->tex->isHardwareCanvas()) return;
+	if (gltexture->isHardwareCanvas()) return;
 
 	// clamp texture coordinates to a reasonable range.
 	// Extremely large values can cause visual problems
@@ -1106,7 +1106,7 @@ void HWWall::CheckTexturePosition(FTexCoordInfo *tci)
 
 static void GetTexCoordInfo(FMaterial *tex, FTexCoordInfo *tci, side_t *side, int texpos)
 {
-	tci->GetFromTexture(tex->tex, (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos), !!(side->GetLevel()->flags3 & LEVEL3_FORCEWORLDPANNING));
+	tci->GetFromTexture(tex->Source(), (float)side->GetTextureXScale(texpos), (float)side->GetTextureYScale(texpos), !!(side->GetLevel()->flags3 & LEVEL3_FORCEWORLDPANNING));
 }
 
 //==========================================================================
@@ -1412,7 +1412,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		case 0:
 			RenderStyle=STYLE_Translucent;
 			alpha = seg->linedef->alpha;
-			translucent =alpha < 1. || (gltexture && gltexture->tex->GetTranslucency());
+			translucent =alpha < 1. || (gltexture && gltexture->GetTranslucency());
 			break;
 
 		case ML_ADDTRANS:
@@ -2209,7 +2209,7 @@ void HWWall::ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t * frontsec
 		{
 			FTexCoordInfo tci;
 			type = RENDERWALL_BOTTOM;
-			tci.GetFromTexture(gltexture->tex, 1, 1, false);
+			tci.GetFromTexture(gltexture->Source(), 1, 1, false);
 			SetWallCoordinates(seg, &tci, bfh, bfh, bfh, ffh, ffh, 0);
 			PutWall(di, false);
 		}

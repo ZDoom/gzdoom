@@ -960,7 +960,7 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	di->SetCameraPos(vp.Pos);
 
 
-	if (gltexture && gltexture->tex->isFullbright())
+	if (gltexture && gltexture->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
 		di->SetColor(state, 255, 0, false, origin->colormap, 1.f);

@@ -535,13 +535,19 @@ void PolyFrameBuffer::CleanForRestart()
 
 void PolyFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	auto tex = mat->tex;
-	if (tex->isSWCanvas()) return;
+	if (mat->Source()->isSWCanvas()) return;
 
 	int flags = mat->isExpanded() ? CTF_Expand : 0;
-	auto base = static_cast<PolyHardwareTexture*>(mat->GetLayer(0, translation));
+	FTexture* layer;
+	auto systex = static_cast<PolyHardwareTexture*>(mat->GetLayer(0, translation, &layer));
+	systex->GetImage(layer, translation, flags);
 
-	base->Precache(mat, translation, flags);
+	int numLayers = mat->GetLayers();
+	for (int i = 1; i < numLayers; i++)
+	{
+		auto systex = static_cast<PolyHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
+	}
 }
 
 IHardwareTexture *PolyFrameBuffer::CreateHardwareTexture()

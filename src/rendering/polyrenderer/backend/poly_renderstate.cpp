@@ -280,8 +280,8 @@ void PolyRenderState::Apply()
 		mDrawCommands->SetShader(EFF_NONE, mTextureEnabled ? effectState : SHADER_NoTexture, mAlphaThreshold >= 0.f, false);
 	}
 
-	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
-		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.);
+	if (mMaterial.mMaterial && mMaterial.mMaterial->Source())
+		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->shaderspeed / 1000.);
 	else
 		mStreamData.timer = 0.0f;
 
@@ -312,12 +312,13 @@ void PolyRenderState::ApplyMaterial()
 {
 	if (mMaterial.mChanged && mMaterial.mMaterial)
 	{
-		mTempTM = mMaterial.mMaterial->tex->isHardwareCanvas() ? TM_OPAQUE : TM_NORMAL;
+		mTempTM = mMaterial.mMaterial->isHardwareCanvas() ? TM_OPAQUE : TM_NORMAL;
 
-		auto base = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation));
+		FTexture* layer;
+		auto base = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation, &layer));
 		if (base)
 		{
-			DCanvas *texcanvas = base->GetImage(mMaterial);
+			DCanvas *texcanvas = base->GetImage(layer, mMaterial);
 			mDrawCommands->SetTexture(0, texcanvas->GetPixels(), texcanvas->GetWidth(), texcanvas->GetHeight(), texcanvas->IsBgra());
 
 			int numLayers = mMaterial.mMaterial->GetLayers();

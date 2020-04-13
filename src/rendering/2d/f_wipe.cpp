@@ -373,8 +373,8 @@ bool Wiper_Burn::Run(int ticks)
 		done = (Density < 0);
 	}
 
-	BurnTexture->SystemTextures.Clean(true, true);
-	endScreen->SystemTextures.Clean(false, false);
+	BurnTexture->CleanHardwareTextures(true, true);
+	endScreen->CleanHardwareTextures(false, false);
 
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();

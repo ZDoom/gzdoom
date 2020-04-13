@@ -119,7 +119,7 @@ void FTextureManager::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			Textures[i].Texture->SystemTextures.Clean(true, true);
+			Textures[i].Texture->CleanHardwareTextures(true, true);
 			DeleteSoftwareTexture(Textures[i].Texture->SoftwareTexture);
 			Textures[i].Texture->SoftwareTexture = nullptr;
 		}

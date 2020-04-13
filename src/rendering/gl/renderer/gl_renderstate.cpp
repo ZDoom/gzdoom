@@ -298,7 +298,7 @@ void FGLRenderState::Apply()
 
 void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader)
 {
-	if (mat->tex->isHardwareCanvas())
+	if (mat->isHardwareCanvas())
 	{
 		mTempTM = TM_OPAQUE;
 	}
@@ -306,11 +306,11 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	{
 		mTempTM = TM_NORMAL;
 	}
+	auto tex = mat->Source();
 	mEffectState = overrideshader >= 0 ? overrideshader : mat->GetShaderIndex();
-	mShaderTimer = mat->tex->shaderspeed;
-	SetSpecular(mat->tex->Glossiness, mat->tex->SpecularLevel);
+	mShaderTimer = tex->shaderspeed;
+	SetSpecular(tex->Glossiness, tex->SpecularLevel);
 
-	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
 	if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
 	else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;

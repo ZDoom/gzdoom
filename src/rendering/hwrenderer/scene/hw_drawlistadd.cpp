@@ -101,7 +101,7 @@ void HWDrawInfo::AddFlat(HWFlat *flat, bool fog)
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
 		list = (flat->renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
 	}
-	else if (flat->gltexture->tex->GetTranslucency())
+	else if (flat->gltexture->GetTranslucency())
 	{
 		if (flat->stack)
 		{

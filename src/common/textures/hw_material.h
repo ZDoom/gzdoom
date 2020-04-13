@@ -28,6 +28,7 @@ enum
 
 class FMaterial
 {
+	private:
 	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 	int mLayerFlags = 0;
@@ -48,14 +49,37 @@ class FMaterial
 	bool TrimBorders(uint16_t *rect);
 
 public:
-	FTexture *tex;
-	FTexture *sourcetex;	// in case of redirection this is different from tex.
-	
+	FTexture *sourcetex;	// the owning texture. 
+	FTexture* imgtex;		// the master texture for the backing image. Can be different from sourcetex and should not be in the layer array because that'd confuse the precacher.
+
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
 	int GetLayerFlags() const { return mLayerFlags; }
 	void SetSpriteRect();
 	int GetShaderIndex() const { return mShaderIndex; }
+
+	FTexture* Source() const
+	{
+		return sourcetex;
+	}
+	FTexture* BaseLayer() const
+	{
+		// Only for spftpoly!
+		return imgtex;
+	}
+	bool isFullbright() const
+	{
+		return sourcetex->isFullbright();
+	}
+	bool isHardwareCanvas() const
+	{
+		return sourcetex->isHardwareCanvas();
+	}
+	bool GetTranslucency()
+	{
+		// This queries the master texture to reduce recalculations.
+		return imgtex->GetTranslucency();
+	}
 	void AddTextureLayer(FTexture *tex)
 	{
 		ValidateTexture(tex, false);
@@ -77,7 +101,7 @@ public:
 	
 	bool hasCanvas()
 	{
-		return tex->isHardwareCanvas();
+		return sourcetex->isHardwareCanvas();
 	}
 
 	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr);

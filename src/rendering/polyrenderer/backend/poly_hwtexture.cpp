@@ -62,36 +62,15 @@ void PolyHardwareTexture::Reset()
 	}
 }
 
-void PolyHardwareTexture::Precache(FMaterial *mat, int translation, int flags)
+DCanvas *PolyHardwareTexture::GetImage(FTexture *baselayer, const FMaterialState &state)
 {
-	int numLayers = mat->GetLayers();
-	GetImage(mat->tex, translation, flags);
-	for (int i = 1; i < numLayers; i++)
-	{
-		FTexture *layer;
-		auto systex = static_cast<PolyHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
-	}
-}
-
-DCanvas *PolyHardwareTexture::GetImage(const FMaterialState &state)
-{
-	FTexture *tex = state.mMaterial->tex;
+	FTexture *tex = state.mMaterial->Source();
 	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
 
 	if (!mCanvas)
 	{
-		FMaterial *mat = state.mMaterial;
-		int clampmode = state.mClampMode;
-		int translation = state.mTranslation;
-
-		if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
-		if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
-		else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
-
 		int flags = state.mMaterial->isExpanded() ? CTF_Expand : 0;
-
-		return GetImage(tex, translation, flags);
+		return GetImage(baselayer, state.mTranslation, flags);
 	}
 
 	return mCanvas.get();

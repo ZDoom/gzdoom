@@ -248,6 +248,7 @@ public:
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void AddAutoMaterials();
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
+	void CleanHardwareTextures(bool cleannormal, bool cleanextended);
 
 	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
 	int GetDisplayWidth() { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }

@@ -94,7 +94,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		// Optionally use STYLE_ColorBlend in place of STYLE_Add for fullbright items.
 		if (RenderStyle == LegacyRenderStyles[STYLE_Add] && trans > 1.f - FLT_EPSILON &&
 			gl_usecolorblending && !di->isFullbrightScene() && actor &&
-			fullbright && gltexture && !gltexture->tex->GetTranslucency())
+			fullbright && gltexture && !gltexture->GetTranslucency())
 		{
 			RenderStyle = LegacyRenderStyles[STYLE_ColorAdd];
 		}
@@ -106,7 +106,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.AlphaFunc(Alpha_GEqual, 0.f);
 		}
-		else if (!gltexture || !gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+		else if (!gltexture || !gltexture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 		else state.AlphaFunc(Alpha_Greater, 0.f);
 
 		if (RenderStyle.BlendOp == STYLEOP_Shadow)
@@ -914,7 +914,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->isFullbrightDisabled()));
+		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->Source()->isFullbrightDisabled()));
 
 	lightlevel = fullbright ? 255 :
 		hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
@@ -1033,7 +1033,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
 	}
-	if ((gltexture && gltexture->tex->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && thing->RenderStyle != DefaultRenderStyle()))
+	if ((gltexture && gltexture->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && thing->RenderStyle != DefaultRenderStyle()))
 	{
 		if (hw_styleflags == STYLEHW_Solid)
 		{

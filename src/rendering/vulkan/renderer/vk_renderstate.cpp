@@ -337,8 +337,8 @@ void VkRenderState::ApplyStreamData()
 
 	mStreamData.useVertexData = passManager->GetVertexFormat(static_cast<VKVertexBuffer*>(mVertexBuffer)->VertexFormat)->UseVertexData;
 
-	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
-		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->tex->shaderspeed / 1000.);
+	if (mMaterial.mMaterial && mMaterial.mMaterial->Source())
+		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->shaderspeed / 1000.);
 	else
 		mStreamData.timer = 0.0f;
 
@@ -369,7 +369,7 @@ void VkRenderState::ApplyPushConstants()
 	}
 
 	int tempTM = TM_NORMAL;
-	if (mMaterial.mMaterial && mMaterial.mMaterial->tex && mMaterial.mMaterial->tex->isHardwareCanvas())
+	if (mMaterial.mMaterial && mMaterial.mMaterial->isHardwareCanvas())
 		tempTM = TM_OPAQUE;
 
 	mPushConstants.uFogEnabled = fogset;
@@ -383,8 +383,11 @@ void VkRenderState::ApplyPushConstants()
 	mPushConstants.uAlphaThreshold = mAlphaThreshold;
 	mPushConstants.uClipSplit = { mClipSplit[0], mClipSplit[1] };
 
-	if (mMaterial.mMaterial && mMaterial.mMaterial->tex)
-		mPushConstants.uSpecularMaterial = { mMaterial.mMaterial->tex->Glossiness, mMaterial.mMaterial->tex->SpecularLevel };
+	if (mMaterial.mMaterial)
+	{
+		auto source = mMaterial.mMaterial->Source();
+		mPushConstants.uSpecularMaterial = { source->Glossiness, source->SpecularLevel };
+	}
 
 	mPushConstants.uLightIndex = mLightIndex;
 	mPushConstants.uDataIndex = mStreamBufferWriter.DataIndex();

@@ -66,12 +66,13 @@ void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * te
 	// The caps only get drawn for the main layer but not for the overlay.
 	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != NULL)
 	{
-		PalEntry pe = tex->tex->GetSkyCapColor(false);
+		auto base = tex->Source();
+		PalEntry pe = base->GetSkyCapColor(false);
 		state.SetObjectColor(pe);
 		state.EnableTexture(false);
 		RenderRow(di, state, DT_TriangleFan, 0);
 
-		pe = tex->tex->GetSkyCapColor(true);
+		pe = base->GetSkyCapColor(true);
 		state.SetObjectColor(pe);
 		RenderRow(di, state, DT_TriangleFan, rc);
 		state.EnableTexture(true);
@@ -96,7 +97,7 @@ void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * te
 
 void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FMaterial * gltex, float x_offset, bool sky2)
 {
-	FSkyBox * sb = static_cast<FSkyBox*>(gltex->tex);
+	FSkyBox * sb = static_cast<FSkyBox*>(gltex->Source());
 	int faces;
 	FMaterial * tex;
 
@@ -181,7 +182,7 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	di->SetupView(state, 0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	state.SetVertexBuffer(vertexBuffer);
-	if (origin->texture[0] && origin->texture[0]->tex->isSkybox())
+	if (origin->texture[0] && origin->texture[0]->Source()->isSkybox())
 	{
 		RenderBox(di, state, origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
 	}

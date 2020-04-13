@@ -733,6 +733,12 @@ bool FTexture::DetermineTranslucency()
 	return !!bTranslucent;
 }
 
+
+void FTexture::CleanHardwareTextures(bool cleannormal, bool cleanexpanded)
+{
+	SystemTextures.Clean(cleannormal, cleanexpanded);
+}
+
 //===========================================================================
 // 
 // the default just returns an empty texture.

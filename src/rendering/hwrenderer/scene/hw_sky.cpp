@@ -61,8 +61,9 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 		}
 
 		FTextureID texno = s->GetTexture(pos);
-		texture[0] = FMaterial::ValidateTexture(texno, false, true);
-		if (!texture[0] || !texture[0]->tex->isValid()) goto normalsky;
+		FTexture* tex = TexMan.GetTexture(texno, true);
+		if (!tex || !tex->isValid()) goto normalsky;
+		texture[0] = FMaterial::ValidateTexture(tex, false);
 		skytexno1 = texno;
 		x_offset[0] = s->GetTextureXOffset(pos) * (360.f/65536.f);
 		y_offset = s->GetTextureYOffset(pos);

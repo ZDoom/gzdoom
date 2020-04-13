@@ -14,8 +14,8 @@ public:
 		MAX_TEXTURES = 16
 	};
 
-	IHardwareTexture() {}
-	virtual ~IHardwareTexture() {}
+	IHardwareTexture() = default;
+	virtual ~IHardwareTexture() = default;
 
 	virtual void DeleteDescriptors() { }
 

@@ -349,7 +349,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		}
 		else
 		{
-			if (!gltexture->tex->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
+			if (!gltexture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 			else state.AlphaFunc(Alpha_GEqual, 0.f);
 			state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
 			state.SetPlaneTextureRotation(&plane, gltexture);
@@ -407,7 +407,7 @@ void HWFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 	{
 		gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 		if (!gltexture) return;
-		if (gltexture->tex->isFullbright()) 
+		if (gltexture->isFullbright()) 
 		{
 			Colormap.MakeWhite();
 			lightlevel=255;

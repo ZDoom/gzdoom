@@ -648,14 +648,21 @@ void VulkanFrameBuffer::CleanForRestart()
 
 void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	auto tex = mat->tex;
-	if (tex->isSWCanvas()) return;
+	if (mat->Source()->isSWCanvas()) return;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = mat->isExpanded() ? CTF_Expand : 0;
-	auto base = static_cast<VkHardwareTexture*>(mat->GetLayer(0, translation));
+	FTexture* layer;
 
-	base->Precache(mat, translation, flags);
+	auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(0, translation, &layer));
+	systex->GetImage(layer, translation, mat->isExpanded() ? CTF_Expand : 0);
+
+	int numLayers = mat->GetLayers();
+	for (int i = 1; i < numLayers; i++)
+	{
+		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
+		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
+	}
 }
 
 IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()

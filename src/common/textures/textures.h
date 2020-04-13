@@ -241,8 +241,8 @@ public:
 	double GetDisplayHeightDouble() { return Height / Scale.Y; }
 	int GetDisplayLeftOffset() { return GetScaledLeftOffset(0); }
 	int GetDisplayTopOffset() { return GetScaledTopOffset(0); }
-	double GetDisplayLeftOffsetDouble() { return GetScaledLeftOffsetDouble(0); }
-	double GetDisplayTopOffsetDouble() { return GetScaledTopOffsetDouble(0); }
+	double GetDisplayLeftOffsetDouble(int adjusted = 0) { return _LeftOffset[adjusted] / Scale.X; }
+	double GetDisplayTopOffsetDouble(int adjusted = 0) { return _TopOffset[adjusted] / Scale.Y; }
 	
 	int GetTexelWidth() { return Width; }
 	int GetTexelHeight() { return Height; }
@@ -398,8 +398,6 @@ protected:
 	int GetTopOffset(int adjusted) { return _TopOffset[adjusted]; }
 	int GetScaledLeftOffset (int adjusted) { int foo = int((_LeftOffset[adjusted] * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
 	int GetScaledTopOffset (int adjusted) { int foo = int((_TopOffset[adjusted] * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
-	double GetScaledLeftOffsetDouble(int adjusted) { return _LeftOffset[adjusted] / Scale.X; }
-	double GetScaledTopOffsetDouble(int adjusted) { return _TopOffset[adjusted] / Scale.Y; }
 
 	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
 	// should use these, so that if changes are needed, this is the only place to edit.
@@ -508,6 +506,9 @@ public:
 class FImageTexture : public FTexture
 {
 	FImageSource* mImage;
+protected:
+	FImageTexture(const char *name) : FTexture(name) {}
+	void SetFromImage();
 public:
 	FImageTexture(FImageSource* image, const char* name = nullptr) noexcept;
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);

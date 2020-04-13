@@ -73,8 +73,6 @@ public:
 	int GetTopOffset(int adjusted) { return mTexture->GetTopOffset(adjusted); }
 	int GetScaledLeftOffset (int adjusted) { return mTexture->GetScaledLeftOffset(adjusted); }
 	int GetScaledTopOffset (int adjusted) { return mTexture->GetScaledTopOffset(adjusted); }
-	double GetScaledLeftOffsetDouble(int adjusted) { return mTexture->GetScaledLeftOffsetDouble(adjusted); }
-	double GetScaledTopOffsetDouble(int adjusted) { return mTexture->GetScaledTopOffsetDouble(adjusted); }
 	
 	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
 	// should use these, so that if changes are needed, this is the only place to edit.

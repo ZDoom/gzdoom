@@ -54,18 +54,23 @@ FImageTexture::FImageTexture(FImageSource *img, const char *name) noexcept
 	if (img != nullptr)
 	{
 		if (name == nullptr) fileSystem.GetFileShortName(Name, img->LumpNum());
-		Width = img->GetWidth();
-		Height = img->GetHeight();
-
-		auto offsets = img->GetOffsets();
-		_LeftOffset[1] = _LeftOffset[0] = offsets.first;
-		_TopOffset[1] = _TopOffset[0] = offsets.second;
-
-		bMasked = img->bMasked;
-		bTranslucent = img->bTranslucent;
+		SetFromImage();
 	}
 }
 
+void FImageTexture::SetFromImage()
+{
+	auto img = mImage;
+	Width = img->GetWidth();
+	Height = img->GetHeight();
+
+	auto offsets = img->GetOffsets();
+	_LeftOffset[1] = _LeftOffset[0] = offsets.first;
+	_TopOffset[1] = _TopOffset[0] = offsets.second;
+
+	bMasked = img->bMasked;
+	bTranslucent = img->bTranslucent;
+}
 //===========================================================================
 //
 // 

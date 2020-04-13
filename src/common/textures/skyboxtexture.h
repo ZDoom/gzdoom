@@ -8,7 +8,7 @@
 //
 //-----------------------------------------------------------------------------
 
-class FSkyBox : public FTexture
+class FSkyBox : public FImageTexture
 {
 public:
 
@@ -17,19 +17,7 @@ public:
 	bool fliptop;
 
 	FSkyBox(const char *name);
-	TArray<uint8_t> Get8BitPixels(bool alphatex);
-	FBitmap GetBgraBitmap(const PalEntry *, int *trans) override;
-	FImageSource *GetImage() const override;
-
-
-	void SetSize()
-	{
-		if (!previous && faces[0]) previous = faces[0];
-		if (previous)
-		{
-			CopySize(previous);
-		}
-	}
+	void SetSize();
 
 	bool Is3Face() const
 	{

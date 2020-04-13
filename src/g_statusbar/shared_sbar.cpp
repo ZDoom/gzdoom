@@ -1670,20 +1670,17 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 {
 	bool monospaced = monospacing != EMonospacing::Off;
 	double dx = 0;
+	int spacingparm = monospaced ? -spacing : spacing;
 
 	switch (flags & DI_TEXT_ALIGN)
 	{
 	default:
 		break;
 	case DI_TEXT_ALIGN_RIGHT:
-		dx = monospaced
-			? static_cast<int> ((spacing)*cstring.CharacterCount()) //monospaced, so just multiply the character size
-			: static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount()));
+		dx = font->StringWidth(cstring, spacingparm);
 		break;
 	case DI_TEXT_ALIGN_CENTER:
-		dx = monospaced
-			? static_cast<int> ((spacing)*cstring.CharacterCount()) / 2 //monospaced, so just multiply the character size
-			: static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount())) / 2;
+		dx = font->StringWidth(cstring, spacingparm) / 2;
 		break;
 	}
 

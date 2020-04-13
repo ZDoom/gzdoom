@@ -113,9 +113,9 @@ public:
 	static FFont *FindFont(FName fontname);
 
 	// Return width of string in pixels (unscaled)
-	int StringWidth (const uint8_t *str) const;
-	inline int StringWidth (const char *str) const { return StringWidth ((const uint8_t *)str); }
-	inline int StringWidth (const FString &str) const { return StringWidth ((const uint8_t *)str.GetChars()); }
+	int StringWidth (const uint8_t *str, int spacing = 0) const;
+	inline int StringWidth (const char *str, int spacing = 0) const { return StringWidth ((const uint8_t *)str, spacing); }
+	inline int StringWidth (const FString &str, int spacing = 0) const { return StringWidth ((const uint8_t *)str.GetChars(), spacing); }
 
 	// Checks if the font contains all characters to print this text.
 	bool CanPrint(const uint8_t *str) const;

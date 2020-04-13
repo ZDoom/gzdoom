@@ -4537,7 +4537,7 @@ void ConstructActor(AActor *actor, const DVector3 &pos, bool SpawningMapThing)
 			return;
 		}
 	}
-	if (Level->flags & LEVEL_NOALLIES && !actor->player)
+	if (Level->flags & LEVEL_NOALLIES && !actor->IsKindOf(NAME_PlayerPawn))
 	{
 		actor->flags &= ~MF_FRIENDLY;
 	}

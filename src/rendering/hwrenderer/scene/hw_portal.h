@@ -13,7 +13,7 @@ struct HWSkyInfo
 {
 	float x_offset[2];
 	float y_offset;		// doubleskies don't have a y-offset
-	FMaterial * texture[2];
+	FGameTexture * texture[2];
 	FTextureID skytexno1;
 	bool mirrored;
 	bool doublesky;
@@ -358,8 +358,8 @@ struct HWSkyPortal : public HWPortal
 	friend struct HWEEHorizonPortal;
 
 	void RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply = true);
-	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FMaterial * gltex, float x_offset, bool sky2);
-	void RenderDome(HWDrawInfo *di, FRenderState &state, FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode);
+	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FGameTexture * gltex, float x_offset, bool sky2);
+	void RenderDome(HWDrawInfo *di, FRenderState &state, FGameTexture * tex, float x_offset, float y_offset, bool mirror, int mode);
 
 protected:
 	virtual void DrawContents(HWDrawInfo *di, FRenderState &state);

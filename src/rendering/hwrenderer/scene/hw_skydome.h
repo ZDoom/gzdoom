@@ -4,7 +4,7 @@
 #include "matrix.h"
 #include "hwrenderer/data/buffers.h"
 
-class FMaterial;
+class FGameTexture;
 class FRenderState;
 class IVertexBuffer;
 struct HWSkyPortal;
@@ -70,7 +70,7 @@ public:
 
 	FSkyVertexBuffer();
 	~FSkyVertexBuffer();
-	void SetupMatrices(HWDrawInfo *di, FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
+	void SetupMatrices(HWDrawInfo *di, FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
 	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
 	{
 		return std::make_pair(mVertexBuffer, nullptr);

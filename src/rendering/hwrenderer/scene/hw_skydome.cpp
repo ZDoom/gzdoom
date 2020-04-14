@@ -282,17 +282,17 @@ void FSkyVertexBuffer::CreateDome()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
+void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
 {
-	int texw = tex->TextureWidth();
-	int texh = tex->TextureHeight();
+	int texw = tex->GetDisplayWidth();
+	int texh = tex->GetDisplayHeight();
 
 	modelMatrix.loadIdentity();
 	modelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
 
 	float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
 	float yscale = 1.f;
-	auto texskyoffset = tex->Source()->GetSkyOffset() + skyoffset;
+	auto texskyoffset = tex->GetSkyOffset() + skyoffset;
 	if (texh <= 128 && (di->Level->flags & LEVEL_FORCETILEDSKY))
 	{
 		modelMatrix.translate(0.f, (-40 + texskyoffset)*skyoffsetfactor, 0.f);

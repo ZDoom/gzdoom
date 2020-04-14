@@ -63,7 +63,7 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 		FTextureID texno = s->GetTexture(pos);
 		auto tex = TexMan.GetGameTexture(texno, true);
 		if (!tex || !tex->isValid()) goto normalsky;
-		texture[0] = FMaterial::ValidateTexture(tex->GetTexture(), false);
+		texture[0] = tex;
 		skytexno1 = texno;
 		x_offset[0] = s->GetTextureXOffset(pos) * (360.f/65536.f);
 		y_offset = s->GetTextureYOffset(pos);
@@ -76,7 +76,7 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 		{
 			auto tex1 = TexMan.GetGameTexture(di->Level->skytexture1, true);
 			if (tex1) tex1 = tex1->GetFrontSkyLayer();
-			texture[1] = FMaterial::ValidateTexture(tex1->GetTexture(), false);
+			texture[1] = tex1;
 			x_offset[1] = di->Level->hw_sky1pos;
 			doublesky = true;
 		}
@@ -84,14 +84,14 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 		if ((di->Level->flags&LEVEL_SWAPSKIES || (sky1 == PL_SKYFLAT) || (di->Level->flags&LEVEL_DOUBLESKY)) &&
 			di->Level->skytexture2 != di->Level->skytexture1)	// If both skies are equal use the scroll offset of the first!
 		{
-			texture[0] = FMaterial::ValidateTexture(di->Level->skytexture2, false, true);
+			texture[0] = TexMan.GetGameTexture(di->Level->skytexture2, true);
 			skytexno1 = di->Level->skytexture2;
 			sky2 = true;
 			x_offset[0] = di->Level->hw_sky2pos;
 		}
 		else if (!doublesky)
 		{
-			texture[0] = FMaterial::ValidateTexture(di->Level->skytexture1, false, true);
+			texture[0] = TexMan.GetGameTexture(di->Level->skytexture1, true);
 			skytexno1 = di->Level->skytexture1;
 			x_offset[0] = di->Level->hw_sky1pos;
 		}

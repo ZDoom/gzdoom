@@ -623,6 +623,35 @@ struct FTexCoordInfo
 	void GetFromTexture(FGameTexture* tex, float x, float y, bool forceworldpanning);
 };
 
+//-----------------------------------------------------------------------------
+//
+// Todo: Get rid of this
+// The faces can easily be stored in the material layer array
+//
+//-----------------------------------------------------------------------------
+
+class FSkyBox : public FImageTexture
+{
+public:
+
+	FTexture* previous;
+	FTexture* faces[6];
+	bool fliptop;
+
+	FSkyBox(const char* name);
+	void SetSize();
+
+	bool Is3Face() const
+	{
+		return faces[5] == nullptr;
+	}
+
+	bool IsFlipped() const
+	{
+		return fliptop;
+	}
+};
+
 // Refactoring helper to allow piece by piece adjustment of the API
 class FGameTexture
 {
@@ -714,10 +743,16 @@ public:
 	void SetSpriteRect() { wrapped.SetSpriteRect(); }
 	const SpritePositioningInfo& GetSpritePositioning(int which) { /* todo: keep two sets of positioning infd*/ if (wrapped.mTrimResult == -1) wrapped.SetupSpriteData(); return wrapped.spi; }
 	int GetAreas(FloatRect** pAreas) const { return wrapped.GetAreas(pAreas); }
+	PalEntry GetSkyCapColor(bool bottom) { return wrapped.GetSkyCapColor(bottom); }
 
 	bool GetTranslucency()
 	{
 		return wrapped.GetTranslucency();
+	}
+
+	FGameTexture *GetSkyFace(int num)
+	{
+		return reinterpret_cast<FGameTexture*>(isSkybox() ? static_cast<FSkyBox*>(&wrapped)->faces[num] : nullptr);
 	}
 
 };

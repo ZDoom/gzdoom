@@ -47,8 +47,6 @@
 
 void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 {
-	auto tex = gltexture;
-
 	// calculate dynamic light effect.
 	if (di->Level->HasDynamicLights && !di->isFullbrightScene() && gl_light_sprites)
 	{
@@ -68,7 +66,7 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 
 	state.SetTextureMode(decal->RenderStyle);
 	state.SetRenderStyle(decal->RenderStyle);
-	state.SetMaterial(tex, CLAMP_XY, decal->Translation, -1);
+	state.SetMaterial(texture, false, CLAMP_XY, decal->Translation, -1);
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold
@@ -313,8 +311,6 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	float vx = (glseg.x2 - glseg.x1) / linelength;
 	float vy = (glseg.y2 - glseg.y1) / linelength;
 	
-	FMaterial* tex = FMaterial::ValidateTexture(texture->GetTexture(), false);
-
 	DecalVertex dv[4];
 	enum
 	{
@@ -330,11 +326,12 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	
 	dv[UL].z = dv[UR].z = zpos;
 	dv[LL].z = dv[LR].z = dv[UL].z - decalheight;
-	dv[UL].v = dv[UR].v = tex->GetVT();
+	dv[UL].v = dv[UR].v = 0.f;
 	
-	dv[UL].u = dv[LL].u = tex->GetU(lefttex / decal->ScaleX);
-	dv[LR].u = dv[UR].u = tex->GetU(righttex / decal->ScaleX);
-	dv[LL].v = dv[LR].v = tex->GetVB();
+	float decalscale = float(decal->ScaleX * texture->GetDisplayWidth());
+	dv[UL].u = dv[LL].u = lefttex / decalscale;
+	dv[LR].u = dv[UR].u = righttex / decalscale;
+	dv[LL].v = dv[LR].v = 1.f;
 	
 	// now clip to the top plane
 	float vzt = (ztop[UL] - ztop[LL]) / linelength;
@@ -377,17 +374,15 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	
 	if (flipx)
 	{
-		float ur = tex->GetUR();
-		for (i = 0; i < 4; i++) dv[i].u = ur - dv[i].u;
+		for (i = 0; i < 4; i++) dv[i].u = 1.f - dv[i].u;
 	}
 	if (flipy)
 	{
-		float vb = tex->GetVB();
-		for (i = 0; i < 4; i++) dv[i].v = vb - dv[i].v;
+		for (i = 0; i < 4; i++) dv[i].v = 1.f - dv[i].v;
 	}
 
 	HWDecal *gldecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
-	gldecal->gltexture = tex;
+	gldecal->texture = texture;
 	gldecal->decal = decal;
 
 	if (decal->RenderFlags & RF_FULLBRIGHT)

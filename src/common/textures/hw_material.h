@@ -125,14 +125,6 @@ public:
 		return mTopOffset;
 	}
 
-	// Get right/bottom UV coordinates for patch drawing
-	float GetUL() const { return 0; }
-	float GetVT() const { return 0; }
-	float GetUR() const { return 1; }
-	float GetVB() const { return 1; }
-	float GetU(float upix) const { return upix/(float)mWidth; }
-	float GetV(float vpix) const { return vpix/(float)mHeight; }
-
 	static FMaterial *ValidateTexture(FTexture * tex, bool expand, bool create = true);
 	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans, bool create = true);
 	const TArray<FTexture*> &GetLayerArray() const

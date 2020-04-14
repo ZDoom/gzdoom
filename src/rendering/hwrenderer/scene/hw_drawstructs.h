@@ -401,7 +401,7 @@ struct DecalVertex
 
 struct HWDecal
 {
-	FMaterial *gltexture;
+	FGameTexture *texture;
 	TArray<lightlist_t> *lightlist;
 	DBaseDecal *decal;
 	DecalVertex dv[4];

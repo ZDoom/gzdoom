@@ -1081,16 +1081,17 @@ FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTe
 			}
 			FTextureID chk = value;
 			if (chk.GetIndex() >= TexMan.NumTextures()) chk.SetNull();
-			FTexture *pic = TexMan.GetTexture(chk);
+			auto pic = TexMan.GetGameTexture(chk);
 			const char *name;
+			auto lump = pic->GetSourceLump();
 
-			if (fileSystem.GetLinkedTexture(pic->SourceLump) == pic)
+			if (fileSystem.GetLinkedTexture(lump) == pic)
 			{
-				name = fileSystem.GetFileFullName(pic->SourceLump);
+				name = fileSystem.GetFileFullName(lump);
 			}
 			else
 			{
-				name = pic->Name;
+				name = pic->GetName();
 			}
 			arc.WriteKey(key);
 			arc.w->StartArray();

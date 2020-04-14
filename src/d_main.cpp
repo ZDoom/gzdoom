@@ -2642,7 +2642,7 @@ static void PatchTextures()
 		FTextureID tex = TexMan.CheckForTexture("BLANK", ETextureType::Wall, false);
 		if (tex.Exists())
 		{
-			auto texture = TexMan.GetTexture(tex, false);
+			auto texture = TexMan.GetGameTexture(tex, false);
 			texture->SetUseType(ETextureType::Null);
 		}
 	}

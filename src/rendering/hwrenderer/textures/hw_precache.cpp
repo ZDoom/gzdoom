@@ -103,10 +103,10 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		// HIT_Wall must be checked for MBF-style sky transfers. 
 		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
 		{
-			FTexture *tex = TexMan.ByIndex(i);
+			auto tex = TexMan.GameByIndex(i);
 			if (tex->isSkybox())
 			{
-				FSkyBox *sb = static_cast<FSkyBox*>(tex);
+				FSkyBox *sb = static_cast<FSkyBox*>(tex->GetTexture());
 				for (int i = 0; i<6; i++)
 				{
 					if (sb->faces[i])
@@ -193,12 +193,12 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	// prepare the textures for precaching. First collect all used layer textures so that we know which ones should not be deleted.
 	for (int i = cnt - 1; i >= 0; i--)
 	{
-		FTexture *tex = TexMan.ByIndex(i);
+		auto tex = TexMan.GameByIndex(i);
 		if (tex != nullptr)
 		{
 			if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 			{
-				FMaterial* mat = FMaterial::ValidateTexture(tex, false, false);
+				FMaterial* mat = FMaterial::ValidateTexture(tex->GetTexture(), false, false);
 				if (mat != nullptr)
 				{
 					for (auto ftex : mat->GetLayerArray())
@@ -209,7 +209,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 			}
 			if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
 			{
-				FMaterial *mat = FMaterial::ValidateTexture(tex, true, false);
+				FMaterial *mat = FMaterial::ValidateTexture(tex->GetTexture(), true, false);
 				if (mat != nullptr)
 				{
 					for (auto ftex : mat->GetLayerArray())
@@ -224,16 +224,16 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	// delete unused textures (i.e. those which didn't get referenced by any material in the cache list.
 	for (int i = cnt - 1; i >= 0; i--)
 	{
-		FTexture *tex = TexMan.ByIndex(i);
+		auto tex = TexMan.GameByIndex(i);
 		if (tex != nullptr && tex->GetUseType() != ETextureType::FontChar)
 		{
-			if (usedTextures.CheckKey(tex) == nullptr)
+			if (usedTextures.CheckKey(tex->GetTexture()) == nullptr)
 			{
-				tex->CleanHardwareTextures(true, false);
+				tex->GetTexture()->CleanHardwareTextures(true, false);
 			}
-			if (usedSprites.CheckKey(tex) == nullptr)
+			if (usedSprites.CheckKey(tex->GetTexture()) == nullptr)
 			{
-				tex->CleanHardwareTextures(false, true);
+				tex->GetTexture()->CleanHardwareTextures(false, true);
 			}
 		}
 	}
@@ -249,7 +249,8 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		// cache all used textures
 		for (int i = cnt - 1; i >= 0; i--)
 		{
-			FTexture *tex = TexMan.ByIndex(i);
+			auto gtex = TexMan.GameByIndex(i);
+			auto tex = gtex->GetTexture();
 			if (tex != nullptr && tex->GetImage() != nullptr)
 			{
 				if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
@@ -271,7 +272,8 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		// cache all used textures
 		for (int i = cnt - 1; i >= 0; i--)
 		{
-			FTexture *tex = TexMan.ByIndex(i);
+			auto gtex = TexMan.GameByIndex(i);
+			auto tex = gtex->GetTexture();
 			if (tex != nullptr)
 			{
 				PrecacheTexture(tex, texhitlist[i]);

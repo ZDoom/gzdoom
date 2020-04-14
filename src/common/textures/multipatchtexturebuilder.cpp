@@ -356,7 +356,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 			// It still needs to be created in case someone uses it by name.
 			offset = LittleLong(directory[1]);
 			const maptexture_t *tex = (const maptexture_t *)((const uint8_t *)maptex + offset);
-			FTexture *tex0 = TexMan.ByIndex(0);
+			auto tex0 = TexMan.GameByIndex(0);
 			tex0->SetSize(SAFESHORT(tex->width), SAFESHORT(tex->height));
 		}
 
@@ -373,7 +373,7 @@ void FMultipatchTextureBuilder::AddTexturesLump(const void *lumpdata, int lumpsi
 		int j;
 		for (j = (int)TexMan.NumTextures() - 1; j >= firstdup; --j)
 		{
-			if (strnicmp(TexMan.ByIndex(j)->GetName(), (const char *)maptex + offset, 8) == 0)
+			if (strnicmp(TexMan.GameByIndex(j)->GetName(), (const char *)maptex + offset, 8) == 0)
 				break;
 		}
 		if (j + 1 == firstdup)
@@ -780,7 +780,7 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 			TexMan.ListTextures(buildinfo.Inits[i].TexName, list, true);
 			for (int i = list.Size() - 1; i >= 0; i--)
 			{
-				if (list[i] != buildinfo.tex->id && !TexMan.GetTexture(list[i])->bMultiPatch)
+				if (list[i] != buildinfo.tex->id && !TexMan.GetGameTexture(list[i])->isMultiPatch() )
 				{
 					texno = list[i];
 					break;

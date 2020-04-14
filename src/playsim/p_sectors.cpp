@@ -513,7 +513,7 @@ double FindShortestTextureAround (sector_t *sec)
 			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::bottom), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.GameByIndex(0)->GetDisplayHeight();
 }
 
 //
@@ -538,7 +538,7 @@ double FindShortestUpperAround (sector_t *sec)
 			CheckShortestTex (sec->Level, check->sidedef[1]->GetTexture(side_t::top), minsize);
 		}
 	}
-	return minsize < FLT_MAX ? minsize : TexMan.ByIndex(0)->GetDisplayHeight();
+	return minsize < FLT_MAX ? minsize : TexMan.GameByIndex(0)->GetDisplayHeight();
 }
 
 //

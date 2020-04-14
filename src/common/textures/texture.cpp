@@ -148,8 +148,8 @@ FTexture::FTexture (const char *name, int lumpnum)
 
 FTexture::~FTexture ()
 {
-	FTexture *link = fileSystem.GetLinkedTexture(SourceLump);
-	if (link == this) fileSystem.SetLinkedTexture(SourceLump, nullptr);
+	FGameTexture *link = fileSystem.GetLinkedTexture(SourceLump);
+	if (link->GetTexture() == this) fileSystem.SetLinkedTexture(SourceLump, nullptr);
 	if (areas != nullptr) delete[] areas;
 	areas = nullptr;
 

@@ -220,20 +220,20 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		// Any graphic being placed in the zip's root directory can not be found by this.
 		if (strchr(name, '/'))
 		{
-			FTexture *const NO_TEXTURE = (FTexture*)-1;
+			FGameTexture *const NO_TEXTURE = (FGameTexture*)-1;
 			int lump = fileSystem.CheckNumForFullName(name);
 			if (lump >= 0)
 			{
-				FTexture *tex = fileSystem.GetLinkedTexture(lump);
+				FGameTexture *tex = fileSystem.GetLinkedTexture(lump);
 				if (tex == NO_TEXTURE) return FTextureID(-1);
-				if (tex != NULL) return tex->id;
+				if (tex != NULL) return tex->GetID();
 				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
-				tex = FTexture::CreateTexture("", lump, ETextureType::Override);
+				tex = reinterpret_cast<FGameTexture*>(FTexture::CreateTexture("", lump, ETextureType::Override));
 				if (tex != NULL)
 				{
 					tex->AddAutoMaterials();
 					fileSystem.SetLinkedTexture(lump, tex);
-					return AddTexture(tex);
+					return AddTexture(tex->GetTexture());
 				}
 				else
 				{

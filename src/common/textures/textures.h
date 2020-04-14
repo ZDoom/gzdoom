@@ -618,11 +618,13 @@ public:
 	bool isHardwareCanvas() const { return wrapped.isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return wrapped.isCanvas(); }
 	bool isMiscPatch() const { return wrapped.GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
+	bool isMultiPatch() const { return wrapped.bMultiPatch; }
 	bool isFullbrightDisabled() const { return wrapped.isFullbrightDisabled(); }
 	bool useWorldPanning() const { return wrapped.UseWorldPanning();  }
 	bool allowNoDecals() const { return wrapped.allowNoDecals(); }
 	void SetTranslucent(bool on) { wrapped.bTranslucent = on; }
 	ETextureType GetUseType() const { return wrapped.GetUseType(); }
+	void SetUseType(ETextureType type) { wrapped.SetUseType(type); }
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }
 	void SetRotations(int index) { wrapped.SetRotations(index); }
@@ -651,6 +653,10 @@ public:
 		}
 	}
 
+	void CopySize(FGameTexture* BaseTexture)
+	{
+		wrapped.CopySize(&BaseTexture->wrapped);
+	}
 
 	// These substitutions must be done on the material level because their sizes can differ. Substitution must happen before any coordinate calculations take place.
 	FGameTexture* GetPalVersion() { return reinterpret_cast<FGameTexture*>(wrapped.GetPalVersion()); }
@@ -669,6 +675,11 @@ public:
 	void SetGlowing(PalEntry color) { auto tex = GetTexture(); tex->bAutoGlowing = false;	tex->bGlowing = true; tex->GlowColor = color; }
 
 	bool isUserContent() const;
+	void AddAutoMaterials() { wrapped.AddAutoMaterials(); }
+	int CheckRealHeight() { return wrapped.CheckRealHeight(); }
+	bool isSkybox() const { return wrapped.isSkybox(); }
+	void SetSize(int x, int y) { wrapped.SetSize(x, y); }
+
 };
 
 

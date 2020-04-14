@@ -289,7 +289,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 		{
 			if (!seg->linedef->isVisualPortal())
 			{
-				FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
+				auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::mid), true);
 				if (!tex || !tex->isValid()) 
 				{
 					// nothing to do here!

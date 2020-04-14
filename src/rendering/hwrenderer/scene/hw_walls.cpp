@@ -1238,7 +1238,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Set up the top
 		//
 		//
-		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top), true);
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::top), true);
 		if (!tex || !tex->isValid())
 		{
 			if (front->GetTexture(sector_t::ceiling) == skyflatnum &&
@@ -1274,7 +1274,7 @@ void HWWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 		// Set up the bottom
 		//
 		//
-		tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+		tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 		if (!tex || !tex->isValid())
 		{
 			// texture is missing - use the lower plane
@@ -1543,7 +1543,7 @@ void HWWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 		if (rover->flags&FF_UPPERTEXTURE)
 		{
 			gltexture = FMaterial::ValidateTexture(seg->sidedef->GetTexture(side_t::top), false, true);
-			if (!gltexture) return;
+			if (!gltexture) return; 
 			GetTexCoordInfo(gltexture, &tci, seg->sidedef, side_t::top);
 		}
 		else if (rover->flags&FF_LOWERTEXTURE)
@@ -2073,14 +2073,14 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
 		bool drawfogboundary = !di->isFullbrightScene() && di->CheckFog(frontsector, backsec);
-		FTexture *tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::mid), true);
 		if (tex != NULL)
 		{
 			if (di->Level->i_compatflags & COMPATF_MASKEDMIDTEX)
 			{
 				tex = tex->GetRawTexture();
 			}
-			gltexture = FMaterial::ValidateTexture(tex, false);
+			gltexture = FMaterial::ValidateTexture(tex->GetTexture(), false);
 		}
 		else gltexture = NULL;
 

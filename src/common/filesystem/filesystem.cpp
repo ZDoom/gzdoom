@@ -57,7 +57,7 @@ extern	FILE* hashfile;
 struct FileSystem::LumpRecord
 {
 	FResourceLump *lump;
-	FTexture* linkedTexture;
+	FGameTexture* linkedTexture;
 	LumpShortName shortName;
 	FString		longName;
 	int			rfnum;
@@ -725,7 +725,7 @@ int FileSystem::GetResource (int resid, const char *type, int filenum) const
 //
 //==========================================================================
 
-void FileSystem::SetLinkedTexture(int lump, FTexture *tex)
+void FileSystem::SetLinkedTexture(int lump, FGameTexture *tex)
 {
 	if ((size_t)lump < NumEntries)
 	{
@@ -739,7 +739,7 @@ void FileSystem::SetLinkedTexture(int lump, FTexture *tex)
 //
 //==========================================================================
 
-FTexture *FileSystem::GetLinkedTexture(int lump)
+FGameTexture *FileSystem::GetLinkedTexture(int lump)
 {
 	if ((size_t)lump < NumEntries)
 	{

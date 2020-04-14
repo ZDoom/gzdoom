@@ -1000,14 +1000,15 @@ void PPCustomShaderInstance::SetTextures(PPRenderState *renderstate)
 	while (it.NextPair(pair))
 	{
 		FString name = pair->Value;
-		FTexture *tex = TexMan.GetTexture(TexMan.CheckForTexture(name, ETextureType::Any), true);
-		if (tex && tex->isValid())
+		auto gtex = TexMan.GetGameTexture(TexMan.CheckForTexture(name, ETextureType::Any), true);
+		if (gtex && gtex->isValid())
 		{
 			// Why does this completely circumvent the normal way of handling textures?
 			// This absolutely needs fixing because it will also circumvent any potential caching system that may get implemented.
 			//
 			// To do: fix the above problem by adding PPRenderState::SetInput(FTexture *tex)
 
+			auto tex = gtex->GetTexture();
 			auto &pptex = Textures[tex];
 			if (!pptex)
 			{

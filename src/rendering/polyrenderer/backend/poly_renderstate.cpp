@@ -312,7 +312,7 @@ void PolyRenderState::ApplyMaterial()
 {
 	if (mMaterial.mChanged && mMaterial.mMaterial)
 	{
-		mTempTM = mMaterial.mMaterial->isHardwareCanvas() ? TM_OPAQUE : TM_NORMAL;
+		mTempTM = mMaterial.mMaterial->Source()->isHardwareCanvas() ? TM_OPAQUE : TM_NORMAL;
 
 		FTexture* layer;
 		auto base = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation, &layer));

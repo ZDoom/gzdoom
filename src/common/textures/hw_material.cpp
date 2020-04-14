@@ -121,13 +121,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			}
 		}
 	}
-	mWidth = tx->GetTexelWidth();
-	mHeight = tx->GetTexelHeight();
-	mLeftOffset = tx->GetLeftOffset(0);	// These only get used by decals and decals should not use renderer-specific offsets.
-	mTopOffset = tx->GetTopOffset(0);
-	mRenderWidth = tx->GetScaledWidth();
-	mRenderHeight = tx->GetScaledHeight();
-
 	mExpanded = expanded;
 
 	mTextureLayers.ShrinkToFit();

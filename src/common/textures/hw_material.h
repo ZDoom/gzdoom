@@ -32,13 +32,6 @@ class FMaterial
 	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 	int mLayerFlags = 0;
-
-	short mLeftOffset;
-	short mTopOffset;
-	short mWidth;
-	short mHeight;
-	short mRenderWidth;
-	short mRenderHeight;
 	bool mExpanded;
 
 public:
@@ -48,7 +41,6 @@ public:
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
 	int GetLayerFlags() const { return mLayerFlags; }
-	void SetSpriteRect();
 	int GetShaderIndex() const { return mShaderIndex; }
 
 	FTexture* Source() const
@@ -60,27 +52,10 @@ public:
 		// Only for spftpoly!
 		return imgtex;
 	}
-	bool isFullbright() const
-	{
-		return sourcetex->isFullbright();
-	}
-	bool isHardwareCanvas() const
-	{
-		return sourcetex->isHardwareCanvas();
-	}
-	bool GetTranslucency()
-	{
-		// This queries the master texture to reduce recalculations.
-		return imgtex->GetTranslucency();
-	}
 	void AddTextureLayer(FTexture *tex)
 	{
 		ValidateTexture(tex, false);
 		mTextureLayers.Push(tex);
-	}
-	bool isMasked() const
-	{
-		return sourcetex->bMasked;
 	}
 	bool isExpanded() const
 	{
@@ -91,39 +66,9 @@ public:
 	{
 		return mTextureLayers.Size() + 1;
 	}
-	
-	bool hasCanvas()
-	{
-		return sourcetex->isHardwareCanvas();
-	}
 
 	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr);
 
-	// Patch drawing utilities
-
-	// This is scaled size in integer units as needed by walls and flats
-	int TextureHeight() const { return mRenderHeight; }
-	int TextureWidth() const { return mRenderWidth; }
-
-	int GetWidth() const
-	{
-		return mWidth;
-	}
-
-	int GetHeight() const
-	{
-		return mHeight;
-	}
-
-	int GetLeftOffset() const
-	{
-		return mLeftOffset;
-	}
-
-	int GetTopOffset() const
-	{
-		return mTopOffset;
-	}
 
 	static FMaterial *ValidateTexture(FTexture * tex, bool expand, bool create = true);
 	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans, bool create = true);

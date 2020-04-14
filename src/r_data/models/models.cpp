@@ -269,7 +269,7 @@ void FModelRenderer::RenderFrameModels(FLevelLocals *Level, const FSpriteModelFr
 		if (smf->modelIDs[i] != -1)
 		{
 			FModel * mdl = Models[smf->modelIDs[i]];
-			FTexture *tex = smf->skinIDs[i].isValid() ? TexMan.GetTexture(smf->skinIDs[i], true) : nullptr;
+			auto tex = smf->skinIDs[i].isValid() ? TexMan.GetGameTexture(smf->skinIDs[i], true) : nullptr;
 			mdl->BuildVertexBuffer(this);
 
 			mdl->PushSpriteMDLFrame(smf, i);

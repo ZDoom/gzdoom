@@ -601,6 +601,7 @@ public:
 	ETextureType GetUseType() const { return wrapped.GetUseType(); }
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }
+	void SetRotations(int index) { wrapped.SetRotations(index); }
 	int GetSkyOffset() const { return wrapped.GetSkyOffset(); }
 	FTextureID GetID() const { return wrapped.GetID(); }
 	ISoftwareTexture* GetSoftwareTexture() { return wrapped.GetSoftwareTexture(); }

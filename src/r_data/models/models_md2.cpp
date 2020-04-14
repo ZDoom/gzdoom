@@ -358,14 +358,14 @@ int FDMDModel::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FDMDModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	if (frameno >= info.numFrames || frameno2 >= info.numFrames) return;
 
 	if (!skin)
 	{
 		if (info.numSkins == 0 || !skins[0].isValid()) return;
-		skin = TexMan.GetTexture(skins[0], true);
+		skin = TexMan.GetGameTexture(skins[0], true);
 		if (!skin) return;
 	}
 

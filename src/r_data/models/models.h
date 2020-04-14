@@ -77,7 +77,7 @@ public:
 	virtual void EndDrawHUDModel(AActor *actor) = 0;
 
 	virtual void SetInterpolation(double interpolation) = 0;
-	virtual void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) = 0;
+	virtual void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) = 0;
 	virtual void DrawArrays(int start, int count) = 0;
 	virtual void DrawElements(int numIndices, size_t offset) = 0;
 
@@ -136,7 +136,7 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
-	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist) = 0;
 	virtual float getAspectFactor(FLevelLocals *) { return 1.f; }
@@ -263,7 +263,7 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0);
 	virtual void LoadGeometry();
 	virtual void AddSkins(uint8_t *hitlist);
 
@@ -349,7 +349,7 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0);
 	void LoadGeometry();
 	void BuildVertexBuffer(FModelRenderer *renderer);
 	virtual void AddSkins(uint8_t *hitlist);
@@ -404,7 +404,7 @@ public:
 	bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	void Initialize();
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0);
 	virtual void AddSkins(uint8_t *hitlist);
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer(FModelRenderer *renderer);

@@ -342,7 +342,7 @@ int FMD3Model::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FMD3Model::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	if ((unsigned)frameno >= Frames.Size() || (unsigned)frameno2 >= Frames.Size()) return;
 
@@ -353,16 +353,16 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 
 		// [BB] In case no skin is specified via MODELDEF, check if the MD3 has a skin for the current surface.
 		// Note: Each surface may have a different skin.
-		FTexture *surfaceSkin = skin;
+		FGameTexture *surfaceSkin = skin;
 		if (!surfaceSkin)
 		{
 			if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 			{
-				surfaceSkin = TexMan.GetTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i], true);
+				surfaceSkin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i], true);
 			}
 			else if (surf->numSkins > 0 && surf->Skins[0].isValid())
 			{
-				surfaceSkin = TexMan.GetTexture(surf->Skins[0], true);
+				surfaceSkin = TexMan.GetGameTexture(surf->Skins[0], true);
 			}
 
 			if (!surfaceSkin)

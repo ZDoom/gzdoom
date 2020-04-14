@@ -216,7 +216,7 @@ int FUE1Model::FindFrame( const char *name )
 	return -1;
 }
 
-void FUE1Model::RenderFrame( FModelRenderer *renderer, FTexture *skin, int frame, int frame2, double inter, int translation )
+void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int frame, int frame2, double inter, int translation )
 {
 	// the moment of magic
 	if ( (frame >= numFrames) || (frame2 >= numFrames) ) return;
@@ -232,11 +232,11 @@ void FUE1Model::RenderFrame( FModelRenderer *renderer, FTexture *skin, int frame
 			vofs += vsize;
 			continue;
 		}
-		FTexture *sskin = skin;
+		FGameTexture *sskin = skin;
 		if ( !sskin )
 		{
 			if ( curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][groups[i].texNum].isValid() )
-				sskin = TexMan.GetTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][groups[i].texNum], true);
+				sskin = TexMan.GetGameTexture(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][groups[i].texNum], true);
 			if ( !sskin )
 			{
 				vofs += vsize;

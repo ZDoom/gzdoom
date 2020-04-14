@@ -68,7 +68,7 @@ public:
 	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 	void EndDrawHUDModel(AActor *actor) override;
 	void SetInterpolation(double interpolation) override;
-	void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) override;
+	void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) override;
 	void DrawArrays(int start, int count) override;
 	void DrawElements(int numIndices, size_t offset) override;
 };

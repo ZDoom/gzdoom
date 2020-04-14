@@ -162,12 +162,9 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 		state.AlphaFunc(Alpha_GEqual, 0.f);
 
-		if (cmd.mTexture != nullptr)
+		if (cmd.mTexture != nullptr && cmd.mTexture->isValid())
 		{
-			auto mat = FMaterial::ValidateTexture(cmd.mTexture->GetTexture(), false);
-			if (mat == nullptr) continue;
-
-			state.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, cmd.mTranslationId, -1);
+			state.SetMaterial(cmd.mTexture, false, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, cmd.mTranslationId, -1);
 			state.EnableTexture(true);
 
 			// Canvas textures are stored upside down

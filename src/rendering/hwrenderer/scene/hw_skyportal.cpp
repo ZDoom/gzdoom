@@ -94,11 +94,9 @@ void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FGameTexture *
 //
 //-----------------------------------------------------------------------------
 
-void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FGameTexture * gltex, float x_offset, bool sky2)
+void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FGameTexture * tex, float x_offset, bool sky2)
 {
-	FSkyBox * sb = static_cast<FSkyBox*>(gltex->GetTexture());
 	int faces;
-	FMaterial * tex;
 
 	state.EnableModelMatrix(true);
 	state.mModelMatrix.loadIdentity();
@@ -108,46 +106,39 @@ void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texn
 	else
         state.mModelMatrix.rotate(-180.0f+x_offset, di->Level->info->skyrotatevector2.X, di->Level->info->skyrotatevector2.Z, di->Level->info->skyrotatevector2.Y);
 
-	if (sb->faces[5]) 
+	if (tex->GetSkyFace(5)) 
 	{
 		faces=4;
 
 		// north
-		tex = FMaterial::ValidateTexture(sb->faces[0], false);
-		state.SetMaterial(tex, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(0), false, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(0), 4);
 
 		// east
-		tex = FMaterial::ValidateTexture(sb->faces[1], false);
-		state.SetMaterial(tex, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(1), false, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(1), 4);
 
 		// south
-		tex = FMaterial::ValidateTexture(sb->faces[2], false);
-		state.SetMaterial(tex, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(2), false, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(2), 4);
 
 		// west
-		tex = FMaterial::ValidateTexture(sb->faces[3], false);
-		state.SetMaterial(tex, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(3), false, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(3), 4);
 	}
 	else 
 	{
 		faces=1;
-		tex = FMaterial::ValidateTexture(sb->faces[0], false);
-		state.SetMaterial(tex, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(0), false, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(-1), 10);
 	}
 
 	// top
-	tex = FMaterial::ValidateTexture(sb->faces[faces], false);
-	state.SetMaterial(tex, CLAMP_XY, 0, -1);
-	state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(sb->fliptop ? 6 : 5), 4);
+	state.SetMaterial(tex->GetSkyFace(faces), false, CLAMP_XY, 0, -1);
+	state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(tex->GetSkyFlip() ? 6 : 5), 4);
 
 	// bottom
-	tex = FMaterial::ValidateTexture(sb->faces[faces+1], false);
-	state.SetMaterial(tex, CLAMP_XY, 0, -1);
+	state.SetMaterial(tex->GetSkyFace(faces+1), false, CLAMP_XY, 0, -1);
 	state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(4), 4);
 
 	state.EnableModelMatrix(false);

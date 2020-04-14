@@ -750,10 +750,12 @@ public:
 		return wrapped.GetTranslucency();
 	}
 
+	// Since these properties will later piggyback on existing members of FGameTexture, the accessors need to be here. 
 	FGameTexture *GetSkyFace(int num)
 	{
 		return reinterpret_cast<FGameTexture*>(isSkybox() ? static_cast<FSkyBox*>(&wrapped)->faces[num] : nullptr);
 	}
+	bool GetSkyFlip() { return isSkybox() ? static_cast<FSkyBox*>(&wrapped)->fliptop : false; }
 
 };
 

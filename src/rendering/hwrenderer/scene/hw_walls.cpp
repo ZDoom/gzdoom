@@ -103,8 +103,8 @@ void HWWall::RenderMirrorSurface(HWDrawInfo *di, FRenderState &state)
 	state.SetRenderStyle(STYLE_Add);
 	state.AlphaFunc(Alpha_Greater, 0);
 
-	FMaterial * pat = FMaterial::ValidateTexture(TexMan.mirrorTexture, false, false);
-	state.SetMaterial(pat, CLAMP_NONE, 0, -1);
+	auto tex = TexMan.GetGameTexture(TexMan.mirrorTexture, false);
+	state.SetMaterial(tex, false, CLAMP_NONE, 0, -1);
 
 	flags &= ~HWWall::HWF_GLOW;
 	RenderWall(di, state, HWWall::RWF_BLANK);
@@ -156,8 +156,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		state.SetGlowParams(topglowcolor, bottomglowcolor);
 		state.SetGlowPlanes(frontsector->ceilingplane, frontsector->floorplane);
 	}
-	auto mat = FMaterial::ValidateTexture(texture->GetTexture(), false, true);
-	state.SetMaterial(mat, flags & 3, 0, -1);
+	state.SetMaterial(texture, false, flags & 3, 0, -1);
 
 	if (type == RENDERWALL_M2SNF)
 	{

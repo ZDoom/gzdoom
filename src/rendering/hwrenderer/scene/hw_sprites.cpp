@@ -94,7 +94,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		// Optionally use STYLE_ColorBlend in place of STYLE_Add for fullbright items.
 		if (RenderStyle == LegacyRenderStyles[STYLE_Add] && trans > 1.f - FLT_EPSILON &&
 			gl_usecolorblending && !di->isFullbrightScene() && actor &&
-			fullbright && gltexture && !gltexture->GetTranslucency())
+			fullbright && texture && !texture->GetTranslucency())
 		{
 			RenderStyle = LegacyRenderStyles[STYLE_ColorAdd];
 		}
@@ -106,7 +106,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			state.AlphaFunc(Alpha_GEqual, 0.f);
 		}
-		else if (!gltexture || !gltexture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
+		else if (!texture || !texture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_sprite_threshold);
 		else state.AlphaFunc(Alpha_Greater, 0.f);
 
 		if (RenderStyle.BlendOp == STYLEOP_Shadow)
@@ -197,7 +197,8 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		state.SetFog(0, 0);
 	}
 
-	if (gltexture) state.SetMaterial(gltexture, CLAMP_XY, translation, OverrideShader);
+	uint32_t spritetype = (actor->renderflags & RF_SPRITETYPEMASK);
+	if (texture) state.SetMaterial(texture, spritetype == RF_FACESPRITE, CLAMP_XY, translation, OverrideShader);
 	else if (!modelframe) state.EnableTexture(false);
 
 	//SetColor(lightlevel, rel, Colormap, trans);
@@ -818,7 +819,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		int type = thing->renderflags & RF_SPRITETYPEMASK;
 		auto tex = TexMan.GetGameTexture(patch, false);
 		if (!tex || !tex->isValid()) return;
-		auto& spi = tex->GetSpritePositioning();
+		auto& spi = tex->GetSpritePositioning(type == RF_FACESPRITE);
 
 		vt = spi.GetSpriteVT();
 		vb = spi.GetSpriteVB();
@@ -842,8 +843,8 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			ur = spi.GetSpriteUL();
 		}
 
-		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
-		if (!gltexture)
+		texture = TexMan.GetGameTexture(patch, false);
+		if (!texture || !texture->isValid())
 			return;
 
 		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
@@ -904,7 +905,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		x1 = x2 = x;
 		y1 = y2 = y;
 		z1 = z2 = z;
-		gltexture = nullptr;
+		texture = nullptr;
 	}
 
 	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
@@ -916,7 +917,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->Source()->isFullbrightDisabled()));
+		((thing->renderflags & RF_FULLBRIGHT) && (!texture || !texture->isFullbrightDisabled()));
 
 	lightlevel = fullbright ? 255 :
 		hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
@@ -1035,7 +1036,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
 	}
-	if ((gltexture && gltexture->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && thing->RenderStyle != DefaultRenderStyle()))
+	if ((texture && texture->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha) || (modelframe && thing->RenderStyle != DefaultRenderStyle()))
 	{
 		if (hw_styleflags == STYLEHW_Solid)
 		{
@@ -1163,7 +1164,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	ThingColor.a = 255;
 
 	modelframe=nullptr;
-	gltexture=nullptr;
+	texture=nullptr;
 	topclip = LARGE_VALUE;
 	bottomclip = -LARGE_VALUE;
 	index = 0;
@@ -1191,7 +1192,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 			ur = 1;
 			vt = 0;
 			vb = 1;
-			gltexture = FMaterial::ValidateTexture(lump, true, false);
+			texture = TexMan.GetGameTexture(lump, false);
 		}
 	}
 

@@ -94,9 +94,9 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	}
 	else
 	{
-		float thresh = (huds->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
+		float thresh = (huds->texture->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
 		state.AlphaFunc(Alpha_GEqual, thresh);
-		state.SetMaterial(huds->tex, CLAMP_XY_NOMIP, (huds->weapon->Flags & PSPF_PLAYERTRANSLATED) ? huds->owner->Translation : 0, huds->OverrideShader);
+		state.SetMaterial(huds->texture, true, CLAMP_XY_NOMIP, (huds->weapon->Flags & PSPF_PLAYERTRANSLATED) ? huds->owner->Translation : 0, huds->OverrideShader);
 		state.Draw(DT_TriangleStrip, huds->mx, 4);
 	}
 
@@ -419,7 +419,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 
 	auto tex = TexMan.GetGameTexture(lump, false);
 	if (!tex || !tex->isValid()) return false;
-	auto& spi = tex->GetSpritePositioning();
+	auto& spi = tex->GetSpritePositioning(1);
 
 	float vw = (float)viewwidth;
 	float vh = (float)viewheight;
@@ -473,10 +473,7 @@ bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy,
 	verts.first[2].Set(x2, y1, 0, u2, v1);
 	verts.first[3].Set(x2, y2, 0, u2, v2);
 
-	FMaterial* mat = FMaterial::ValidateTexture(lump, true, false);
-	if (!mat) return false;
-
-	this->tex = mat;
+	texture = tex;
 	return true;
 }
 

@@ -96,12 +96,12 @@ void HWDrawInfo::AddFlat(HWFlat *flat, bool fog)
 {
 	int list;
 
-	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
+	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->texture == nullptr)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
 		list = (flat->renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
 	}
-	else if (flat->gltexture->GetTranslucency())
+	else if (flat->texture->GetTranslucency())
 	{
 		if (flat->stack)
 		{
@@ -118,7 +118,7 @@ void HWDrawInfo::AddFlat(HWFlat *flat, bool fog)
 	}
 	else //if (flat->hacktype != SSRF_FLOODHACK) // The flood hack may later need different treatment but with the current setup can go into the existing render list.
 	{
-		bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
+		bool masked = flat->texture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
 		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
 	}
 	auto newflat = drawlists[list].NewFlat();

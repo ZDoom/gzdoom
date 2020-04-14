@@ -737,7 +737,7 @@ void HWDrawList::SortFlats()
 		{
 			HWFlat * w1 = flats[a.index];
 			HWFlat* w2 = flats[b.index];
-			return w1->gltexture < w2->gltexture;
+			return w1->texture < w2->texture;
 		});
 	}
 }

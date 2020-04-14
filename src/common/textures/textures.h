@@ -649,6 +649,8 @@ public:
 	bool isMiscPatch() const { return wrapped.GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
 	bool isMultiPatch() const { return wrapped.bMultiPatch; }
 	bool isFullbrightDisabled() const { return wrapped.isFullbrightDisabled(); }
+	bool isFullbright() const { return wrapped.isFullbright(); }
+	bool expandSprites() const { return wrapped.bExpandSprite; }
 	bool useWorldPanning() const { return wrapped.UseWorldPanning();  }
 	bool allowNoDecals() const { return wrapped.allowNoDecals(); }
 	void SetTranslucent(bool on) { wrapped.bTranslucent = on; }
@@ -710,7 +712,7 @@ public:
 	void SetSize(int x, int y) { wrapped.SetSize(x, y); }
 
 	void SetSpriteRect() { wrapped.SetSpriteRect(); }
-	const SpritePositioningInfo& GetSpritePositioning() { if (wrapped.mTrimResult == -1) wrapped.SetupSpriteData(); return wrapped.spi; }
+	const SpritePositioningInfo& GetSpritePositioning(int which) { /* todo: keep two sets of positioning infd*/ if (wrapped.mTrimResult == -1) wrapped.SetupSpriteData(); return wrapped.spi; }
 	int GetAreas(FloatRect** pAreas) const { return wrapped.GetAreas(pAreas); }
 
 	bool GetTranslucency()

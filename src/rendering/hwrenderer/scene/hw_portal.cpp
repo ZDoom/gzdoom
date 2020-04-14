@@ -36,6 +36,7 @@
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
+#include "texturemanager.h"
 
 EXTERN_CVAR(Int, r_mirror_recursions)
 EXTERN_CVAR(Bool, gl_portals)
@@ -947,12 +948,12 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 {
 	Clocker c(PortalAll);
 
-	FMaterial * gltexture;
 	HWSectorPlane * sp = &origin->plane;
 	auto &vp = di->Viewpoint;
 
-	gltexture = FMaterial::ValidateTexture(sp->texture, false, true);
-	if (!gltexture)
+	auto texture = TexMan.GetGameTexture(sp->texture, true);
+
+	if (!texture || !texture->isValid())
 	{
 		state.ClearScreen();
 		return;
@@ -960,7 +961,7 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	di->SetCameraPos(vp.Pos);
 
 
-	if (gltexture && gltexture->isFullbright())
+	if (texture->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
 		di->SetColor(state, 255, 0, false, origin->colormap, 1.f);
@@ -974,10 +975,10 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	}
 
 
-	state.SetMaterial(gltexture, CLAMP_NONE, 0, -1);
+	state.SetMaterial(texture, false, CLAMP_NONE, 0, -1);
 	state.SetObjectColor(origin->specialcolor);
 
-	state.SetPlaneTextureRotation(sp, gltexture);
+	state.SetPlaneTextureRotation(sp, texture);
 	state.AlphaFunc(Alpha_GEqual, 0.f);
 	state.SetRenderStyle(STYLE_Source);
 

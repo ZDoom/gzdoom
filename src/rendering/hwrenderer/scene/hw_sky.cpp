@@ -61,9 +61,9 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 		}
 
 		FTextureID texno = s->GetTexture(pos);
-		FTexture* tex = TexMan.GetTexture(texno, true);
+		auto tex = TexMan.GetGameTexture(texno, true);
 		if (!tex || !tex->isValid()) goto normalsky;
-		texture[0] = FMaterial::ValidateTexture(tex, false);
+		texture[0] = FMaterial::ValidateTexture(tex->GetTexture(), false);
 		skytexno1 = texno;
 		x_offset[0] = s->GetTextureXOffset(pos) * (360.f/65536.f);
 		y_offset = s->GetTextureYOffset(pos);
@@ -74,9 +74,9 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 	normalsky:
 		if (di->Level->flags&LEVEL_DOUBLESKY)
 		{
-			auto tex1 = TexMan.GetTexture(di->Level->skytexture1, true);
+			auto tex1 = TexMan.GetGameTexture(di->Level->skytexture1, true);
 			if (tex1) tex1 = tex1->GetFrontSkyLayer();
-			texture[1] = FMaterial::ValidateTexture(tex1, false);
+			texture[1] = FMaterial::ValidateTexture(tex1->GetTexture(), false);
 			x_offset[1] = di->Level->hw_sky1pos;
 			doublesky = true;
 		}
@@ -247,13 +247,13 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 			{
 				if (bs->GetPlaneTexZ(sector_t::floor)==fs->GetPlaneTexZ(sector_t::floor)+1.)
 				{
-					FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+					auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 					if (!tex || !tex->isValid()) return;
 
 					// very, very, very ugly special case (See Icarus MAP14)
 					// It is VERY important that this is only done for a floor height difference of 1
 					// or it will cause glitches elsewhere.
-					tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::mid), true);
+					tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::mid), true);
 					if (tex != NULL && !(seg->linedef->flags & ML_DONTPEGTOP) &&
 						seg->sidedef->GetTextureYOffset(side_t::mid) > 0)
 					{
@@ -269,7 +269,7 @@ void HWWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vert
 
 		ztop[0]=ztop[1]=32768.0f;
 
-		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::top), true);
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::top), true);
 		if (bs->GetTexture(sector_t::ceiling) != skyflatnum)
 
 		{
@@ -329,7 +329,7 @@ void HWWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
 		if (bs->special == GLSector_NoSkyDraw || (bs->MoreFlags & SECMF_NOSKYWALLS) != 0 || (seg->linedef->flags & ML_NOSKYWALLS) != 0) return;
-		FTexture * tex = TexMan.GetTexture(seg->sidedef->GetTexture(side_t::bottom), true);
+		auto tex = TexMan.GetGameTexture(seg->sidedef->GetTexture(side_t::bottom), true);
 		
 		// For lower skies the normal logic only applies to walls with no lower texture.
 		if (!tex->isValid())

@@ -225,6 +225,7 @@ struct FTextureBuffer
 // Base texture class
 class FTexture
 {
+	friend class FGameTexture;	// only for the porting work
 	friend class GLDefsParser;
 	friend class FMultipatchTextureBuilder;
 	
@@ -367,6 +368,7 @@ protected:
 	FTexture *OffsetLess = nullptr;
 	// Front sky layer variant where color 0 is transparent
 	FTexture* FrontSkyLayer = nullptr;
+	public:
 	// Paletted variant
 	FTexture *PalVersion = nullptr;
 	// Material layers
@@ -380,6 +382,8 @@ protected:
 	FTexture *AmbientOcclusion = nullptr;				// Ambient occlusion texture for PBR
 	
 	FTexture *CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES] = { nullptr }; // Custom texture maps for custom hardware shaders
+
+	protected:
 
 	FString Name;
 	ETextureType UseType;	// This texture's primary purpose
@@ -397,10 +401,12 @@ protected:
 	uint8_t bMultiPatch:2;		// This is a multipatch texture (we really could use real type info for textures...)
 	uint8_t bFullNameTexture : 1;
 	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
+	public:
 	uint8_t bGlowing : 1;						// Texture glow color
 	uint8_t bAutoGlowing : 1;					// Glow info is determined from texture image.
 	uint8_t bFullbright : 1;					// always draw fullbright
 	uint8_t bDisableFullbright : 1;				// This texture will not be displayed as fullbright sprite
+	protected:
 	uint8_t bSkybox : 1;						// is a cubic skybox
 	uint8_t bNoCompress : 1;
 	uint8_t bNoExpand : 1;
@@ -411,9 +417,10 @@ protected:
 	int16_t SkyOffset;
 	FloatRect *areas = nullptr;
 	int areacount = 0;
+	public:
 	int GlowHeight = 128;
 	PalEntry GlowColor = 0;
-	int HiresLump = -1;							// For external hires textures.
+	private:
 	float Glossiness = 10.f;
 	float SpecularLevel = 0.1f;
 	float shaderspeed = 1.f;
@@ -557,6 +564,19 @@ public:
 
 };
 
+struct MaterialLayers
+{
+	float Glossiness;
+	float SpecularLevel;
+	FGameTexture* Brightmap;
+	FGameTexture* Normal;
+	FGameTexture* Specular;
+	FGameTexture* Metallic;
+	FGameTexture* Roughness;
+	FGameTexture* AmbientOcclusion;
+	FGameTexture* CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES];
+};
+
 struct FTexCoordInfo
 {
 	int mRenderWidth;
@@ -581,6 +601,8 @@ class FGameTexture
 	FTexture wrapped;
 public:
 	FTexture* GetTexture() { return &wrapped; }
+	int GetSourceLump() const { return wrapped.GetSourceLump(); }
+	void SetBrightmap(FGameTexture* tex) { wrapped.Brightmap = tex->GetTexture(); }
 
 	double GetDisplayWidth() /*const*/ { return wrapped.GetDisplayWidthDouble(); }
 	double GetDisplayHeight() /*const*/ { return wrapped.GetDisplayHeightDouble(); }
@@ -596,8 +618,10 @@ public:
 	bool isHardwareCanvas() const { return wrapped.isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return wrapped.isCanvas(); }
 	bool isMiscPatch() const { return wrapped.GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
+	bool isFullbrightDisabled() const { return wrapped.isFullbrightDisabled(); }
 	bool useWorldPanning() const { return wrapped.UseWorldPanning();  }
 	bool allowNoDecals() const { return wrapped.allowNoDecals(); }
+	void SetTranslucent(bool on) { wrapped.bTranslucent = on; }
 	ETextureType GetUseType() const { return wrapped.GetUseType(); }
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }
@@ -608,6 +632,25 @@ public:
 	void SetSoftwareTexture(ISoftwareTexture* swtex) { wrapped.SetSoftwareTextue(swtex); }
 	void SetScale(DVector2 vec) { wrapped.SetScale(vec); }
 	const FString& GetName() const { return wrapped.GetName(); }
+	void SetShaderSpeed(float speed) { wrapped.shaderspeed = speed; }
+	void SetShaderIndex(int index) { wrapped.shaderindex = index; }
+	void SetShaderLayers(MaterialLayers& lay)
+	{
+		// Only update layers that have something defind.
+		if (lay.Glossiness > -1000) wrapped.Glossiness = lay.Glossiness;
+		if (lay.SpecularLevel > -1000) wrapped.SpecularLevel = lay.SpecularLevel;
+		if (lay.Brightmap) wrapped.Brightmap = lay.Brightmap->GetTexture();
+		if (lay.Normal) wrapped.Normal = lay.Normal->GetTexture();
+		if (lay.Specular) wrapped.Specular = lay.Specular->GetTexture();
+		if (lay.Metallic) wrapped.Metallic = lay.Metallic->GetTexture();
+		if (lay.Roughness) wrapped.Roughness = lay.Roughness->GetTexture();
+		if (lay.AmbientOcclusion) wrapped.AmbientOcclusion = lay.AmbientOcclusion->GetTexture();
+		for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+		{
+			if (lay.CustomShaderTextures[i]) wrapped.CustomShaderTextures[i] = lay.CustomShaderTextures[i]->GetTexture();
+		}
+	}
+
 
 	// These substitutions must be done on the material level because their sizes can differ. Substitution must happen before any coordinate calculations take place.
 	FGameTexture* GetPalVersion() { return reinterpret_cast<FGameTexture*>(wrapped.GetPalVersion()); }
@@ -619,6 +662,11 @@ public:
 	bool isGlowing() const { return wrapped.isGlowing(); }
 	bool isAutoGlowing() const { return wrapped.isAutoGlowing(); }
 	int GetGlowHeight() const { return wrapped.GetGlowHeight(); }
+	void SetAutoGlowing() { auto tex = GetTexture(); tex->bAutoGlowing = tex->bGlowing = tex->bFullbright = true; }
+	void SetGlowHeight(int v) { wrapped.GlowHeight = v; }
+	void SetFullbright() { wrapped.bFullbright = true;  }
+	void SetDisableFullbright(bool on) { wrapped.bDisableFullbright = on; }
+	void SetGlowing(PalEntry color) { auto tex = GetTexture(); tex->bAutoGlowing = false;	tex->bGlowing = true; tex->GlowColor = color; }
 
 	bool isUserContent() const;
 };

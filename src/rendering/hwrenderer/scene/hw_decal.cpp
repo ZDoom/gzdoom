@@ -209,7 +209,7 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	flipy = !!(decal->RenderFlags & RF_YFLIP);
 
 	
-	FTexture *texture = TexMan.GetTexture(decalTile);
+	auto texture = TexMan.GetGameTexture(decalTile);
 	if (texture == NULL) return;
 
 	
@@ -265,14 +265,13 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 				zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 			}
 	}
-	FMaterial *tex = FMaterial::ValidateTexture(texture, false);
 
 	// now clip the decal to the actual polygon
 
-	float decalwidth = tex->TextureWidth()  * decal->ScaleX;
-	float decalheight = tex->TextureHeight() * decal->ScaleY;
-	float decallefto = tex->GetLeftOffset() * decal->ScaleX;
-	float decaltopo = tex->GetTopOffset()  * decal->ScaleY;
+	float decalwidth = texture->GetDisplayWidth()  * decal->ScaleX;
+	float decalheight = texture->GetDisplayHeight() * decal->ScaleY;
+	float decallefto = texture->GetDisplayLeftOffset() * decal->ScaleX;
+	float decaltopo = texture->GetDisplayTopOffset()  * decal->ScaleY;
 	
 	float leftedge = glseg.fracleft * side->TexelLength;
 	float linelength = glseg.fracright * side->TexelLength - leftedge;
@@ -314,6 +313,8 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	float vx = (glseg.x2 - glseg.x1) / linelength;
 	float vy = (glseg.y2 - glseg.y1) / linelength;
 	
+	FMaterial* tex = FMaterial::ValidateTexture(texture->GetTexture(), false);
+
 	DecalVertex dv[4];
 	enum
 	{

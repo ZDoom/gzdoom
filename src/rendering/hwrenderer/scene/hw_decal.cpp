@@ -200,7 +200,7 @@ void HWWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 	
 	
 	if (decal->RenderFlags & RF_INVISIBLE) return;
-	if (type == RENDERWALL_FFBLOCK && gltexture->isMasked()) return;	// No decals on 3D floors with transparent textures.
+	if (type == RENDERWALL_FFBLOCK && texture->isMasked()) return;	// No decals on 3D floors with transparent textures.
 	if (seg == nullptr) return;
 	
 	

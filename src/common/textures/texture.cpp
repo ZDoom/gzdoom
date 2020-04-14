@@ -964,23 +964,23 @@ void FTexture::SetSpriteRect()
 		topOffset += 1;
 
 		// Reposition the sprite with the frame considered
-		spi.mSpriteRect.left = -leftOffset / fxScale;
-		spi.mSpriteRect.top = -topOffset / fyScale;
-		spi.mSpriteRect.width = spi.spriteWidth / fxScale;
-		spi.mSpriteRect.height = spi.spriteHeight / fyScale;
+		spi.mSpriteRect.left = -(float)leftOffset / fxScale;
+		spi.mSpriteRect.top = -(float)topOffset / fyScale;
+		spi.mSpriteRect.width = (float)spi.spriteWidth / fxScale;
+		spi.mSpriteRect.height = (float)spi.spriteHeight / fyScale;
 
 		if (mTrimResult > 0)
 		{
-			spi.mSpriteRect.left += spi.trim[0] / fxScale;
-			spi.mSpriteRect.top += spi.trim[1] / fyScale;
+			spi.mSpriteRect.left += (float)spi.trim[0] / fxScale;
+			spi.mSpriteRect.top += (float)spi.trim[1] / fyScale;
 
-			spi.mSpriteRect.width -= (oldwidth - spi.trim[2]) / fxScale;
-			spi.mSpriteRect.height -= (oldheight - spi.trim[3]) / fyScale;
+			spi.mSpriteRect.width -= float(oldwidth - spi.trim[2]) / fxScale;
+			spi.mSpriteRect.height -= float(oldheight - spi.trim[3]) / fyScale;
 
-			spi.mSpriteU[0] = spi.trim[0] / spi.spriteWidth;
-			spi.mSpriteV[0] = spi.trim[1] / spi.spriteHeight;
-			spi.mSpriteU[1] -= (oldwidth - spi.trim[0] - spi.trim[2]) / spi.spriteWidth;
-			spi.mSpriteV[1] -= (oldheight - spi.trim[1] - spi.trim[3]) / spi.spriteHeight;
+			spi.mSpriteU[0] = (float)spi.trim[0] / (float)spi.spriteWidth;
+			spi.mSpriteV[0] = (float)spi.trim[1] / (float)spi.spriteHeight;
+			spi.mSpriteU[1] -= float(oldwidth - spi.trim[0] - spi.trim[2]) / (float)spi.spriteWidth;
+			spi.mSpriteV[1] -= float(oldheight - spi.trim[1] - spi.trim[3]) / (float)spi.spriteHeight;
 		}
 	}
 }

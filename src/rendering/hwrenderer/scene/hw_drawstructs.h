@@ -151,7 +151,7 @@ public:
 	friend class HWPortal;
 
 	vertex_t * vertexes[2];				// required for polygon splitting
-	FMaterial *gltexture;
+	FGameTexture *texture;
 	TArray<lightlist_t> *lightlist;
 
 	HWSeg glseg;

@@ -722,7 +722,7 @@ void HWDrawList::SortWalls()
 			HWWall * w1 = walls[a.index];
 			HWWall * w2 = walls[b.index];
 
-			if (w1->gltexture != w2->gltexture) return w1->gltexture < w2->gltexture;
+			if (w1->texture != w2->texture) return w1->texture < w2->texture;
 			return (w1->flags & 3) < (w2->flags & 3);
 
 		});

@@ -643,6 +643,7 @@ public:
 
 	bool isValid() { return wrapped.isValid(); }
 	bool isWarped() { return wrapped.isWarped(); }
+	bool isMasked() { return wrapped.isMasked(); }
 	bool isHardwareCanvas() const { return wrapped.isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return wrapped.isCanvas(); }
 	bool isMiscPatch() const { return wrapped.GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
@@ -710,6 +711,12 @@ public:
 
 	void SetSpriteRect() { wrapped.SetSpriteRect(); }
 	const SpritePositioningInfo& GetSpritePositioning() { if (wrapped.mTrimResult == -1) wrapped.SetupSpriteData(); return wrapped.spi; }
+	int GetAreas(FloatRect** pAreas) const { return wrapped.GetAreas(pAreas); }
+
+	bool GetTranslucency()
+	{
+		return wrapped.GetTranslucency();
+	}
 
 };
 

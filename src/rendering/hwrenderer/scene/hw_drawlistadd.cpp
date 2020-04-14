@@ -44,7 +44,7 @@ void HWDrawInfo::AddWall(HWWall *wall)
 	}
 	else
 	{
-		bool masked = HWWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
+		bool masked = HWWall::passflag[wall->type] == 1 ? false : (wall->texture && wall->texture->isMasked());
 		int list;
 
 		if ((wall->flags & HWWall::HWF_SKYHACK && wall->type == RENDERWALL_M2S))

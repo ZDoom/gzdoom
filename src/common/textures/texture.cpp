@@ -47,6 +47,7 @@
 #include "image.h"
 #include "formats/multipatchtexture.h"
 #include "texturemanager.h"
+#include "c_cvars.h"
 
 // Wrappers to keep the definitions of these classes out of here.
 void DeleteMaterial(FMaterial* mat);
@@ -125,7 +126,6 @@ FTexture::FTexture (const char *name, int lumpnum)
 	bDisableFullbright = false;
 	bSkybox = false;
 	bNoCompress = false;
-	bNoExpand = false;
 	bTranslucent = -1;
 
 
@@ -462,6 +462,25 @@ void FTexture::GetGlowColor(float *data)
 }
 
 //===========================================================================
+//
+//
+//
+//===========================================================================
+
+int FTexture::GetAreas(FloatRect** pAreas) const
+{
+	if (shaderindex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
+	{
+		*pAreas = areas;
+		return areacount;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+//===========================================================================
 // 
 //	Finds gaps in the texture which can be skipped by the renderer
 //  This was mainly added to speed up one area in E4M6 of 007LTSD
@@ -777,6 +796,197 @@ TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 }
 
 //===========================================================================
+// 
+// Sets up the sprite positioning data for this texture
+//
+//===========================================================================
+
+void FTexture::SetupSpriteData()
+{
+	spi.mSpriteU[0] = spi.mSpriteV[0] = 0.f;
+	spi.mSpriteU[1] = spi.mSpriteV[1] = 1.f;
+	spi.spriteWidth = GetTexelWidth();
+	spi.spriteHeight = GetTexelHeight();
+
+	if (ShouldExpandSprite())
+	{
+		if (mTrimResult == -1)  mTrimResult = !!TrimBorders(spi.trim);	// get the trim size before adding the empty frame
+		spi.spriteWidth += 2;
+		spi.spriteHeight += 2;
+	}
+	else mTrimResult = 0;
+	SetSpriteRect();
+}
+
+//===========================================================================
+// 
+// Checks if a sprite may be expanded with an empty frame
+//
+//===========================================================================
+
+bool FTexture::ShouldExpandSprite()
+{
+	if (bExpandSprite != -1) return bExpandSprite;
+	if (isWarped() || isHardwareCanvas() || shaderindex != SHADER_Default)
+	{
+		bExpandSprite = false;
+		return false;
+	}
+	if (Brightmap != NULL && (GetTexelWidth() != Brightmap->GetTexelWidth() || GetTexelHeight() != Brightmap->GetTexelHeight()))
+	{
+		// do not expand if the brightmap's size differs.
+		bExpandSprite = false;
+		return false;
+	}
+	bExpandSprite = true;
+	return true;
+}
+
+//===========================================================================
+// 
+//  Finds empty space around the texture. 
+//  Used for sprites that got placed into a huge empty frame.
+//
+//===========================================================================
+
+bool FTexture::TrimBorders(uint16_t* rect)
+{
+
+	auto texbuffer = CreateTexBuffer(0);
+	int w = texbuffer.mWidth;
+	int h = texbuffer.mHeight;
+	auto Buffer = texbuffer.mBuffer;
+
+	if (texbuffer.mBuffer == nullptr)
+	{
+		return false;
+	}
+	if (w != Width || h != Height)
+	{
+		// external Hires replacements cannot be trimmed.
+		return false;
+	}
+
+	int size = w * h;
+	if (size == 1)
+	{
+		// nothing to be done here.
+		rect[0] = 0;
+		rect[1] = 0;
+		rect[2] = 1;
+		rect[3] = 1;
+		return true;
+	}
+	int first, last;
+
+	for (first = 0; first < size; first++)
+	{
+		if (Buffer[first * 4 + 3] != 0) break;
+	}
+	if (first >= size)
+	{
+		// completely empty
+		rect[0] = 0;
+		rect[1] = 0;
+		rect[2] = 1;
+		rect[3] = 1;
+		return true;
+	}
+
+	for (last = size - 1; last >= first; last--)
+	{
+		if (Buffer[last * 4 + 3] != 0) break;
+	}
+
+	rect[1] = first / w;
+	rect[3] = 1 + last / w - rect[1];
+
+	rect[0] = 0;
+	rect[2] = w;
+
+	unsigned char* bufferoff = Buffer + (rect[1] * w * 4);
+	h = rect[3];
+
+	for (int x = 0; x < w; x++)
+	{
+		for (int y = 0; y < h; y++)
+		{
+			if (bufferoff[(x + y * w) * 4 + 3] != 0) goto outl;
+		}
+		rect[0]++;
+	}
+outl:
+	rect[2] -= rect[0];
+
+	for (int x = w - 1; rect[2] > 1; x--)
+	{
+		for (int y = 0; y < h; y++)
+		{
+			if (bufferoff[(x + y * w) * 4 + 3] != 0)
+			{
+				return true;
+			}
+		}
+		rect[2]--;
+	}
+	return true;
+}
+
+//===========================================================================
+//
+// Set the sprite rectangle
+//
+//===========================================================================
+
+void FTexture::SetSpriteRect()
+{
+	auto leftOffset = GetLeftOffsetHW();
+	auto topOffset = GetTopOffsetHW();
+
+	float fxScale = (float)Scale.X;
+	float fyScale = (float)Scale.Y;
+
+	// mSpriteRect is for positioning the sprite in the scene.
+	spi.mSpriteRect.left = -leftOffset / fxScale;
+	spi.mSpriteRect.top = -topOffset / fyScale;
+	spi.mSpriteRect.width = spi.spriteWidth / fxScale;
+	spi.mSpriteRect.height = spi.spriteHeight / fyScale;
+
+	if (bExpandSprite)
+	{
+		// a little adjustment to make sprites look better with texture filtering:
+		// create a 1 pixel wide empty frame around them.
+
+		int oldwidth = spi.spriteWidth - 2;
+		int oldheight = spi.spriteHeight - 2;
+
+		leftOffset += 1;
+		topOffset += 1;
+
+		// Reposition the sprite with the frame considered
+		spi.mSpriteRect.left = -leftOffset / fxScale;
+		spi.mSpriteRect.top = -topOffset / fyScale;
+		spi.mSpriteRect.width = spi.spriteWidth / fxScale;
+		spi.mSpriteRect.height = spi.spriteHeight / fyScale;
+
+		if (mTrimResult > 0)
+		{
+			spi.mSpriteRect.left += spi.trim[0] / fxScale;
+			spi.mSpriteRect.top += spi.trim[1] / fyScale;
+
+			spi.mSpriteRect.width -= (oldwidth - spi.trim[2]) / fxScale;
+			spi.mSpriteRect.height -= (oldheight - spi.trim[3]) / fyScale;
+
+			spi.mSpriteU[0] = spi.trim[0] / spi.spriteWidth;
+			spi.mSpriteV[0] = spi.trim[1] / spi.spriteHeight;
+			spi.mSpriteU[1] -= (oldwidth - spi.trim[0] - spi.trim[2]) / spi.spriteWidth;
+			spi.mSpriteV[1] -= (oldheight - spi.trim[1] - spi.trim[3]) / spi.spriteHeight;
+		}
+	}
+}
+
+
+//===========================================================================
 //
 // Coordinate helper.
 // The only reason this is even needed is that many years ago someone
@@ -904,3 +1114,23 @@ bool FGameTexture::isUserContent() const
 	return (filenum > fileSystem.GetMaxIwadNum());
 }
 
+
+//-----------------------------------------------------------------------------
+//
+// Make sprite offset adjustment user-configurable per renderer.
+//
+//-----------------------------------------------------------------------------
+
+CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	r_spriteadjustHW = !!(self & 2);
+	r_spriteadjustSW = !!(self & 1);
+	for (int i = 0; i < TexMan.NumTextures(); i++)
+	{
+		auto tex = TexMan.GetGameTexture(FSetTextureID(i));
+		if (tex->GetTexelLeftOffset(0) != tex->GetTexelLeftOffset(1) || tex->GetTexelTopOffset(0) != tex->GetTexelTopOffset(1))
+		{
+			tex->SetSpriteRect();
+		}
+	}
+}

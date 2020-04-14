@@ -755,8 +755,6 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	else
 		Angles = thing->Angles;
 
-	FloatRect r;
-
 	if (sector->sectornum != thing->Sector->sectornum && !thruportal)
 	{
 		// This cannot create a copy in the fake sector cache because it'd interfere with the main thread, so provide a local buffer for the copy.
@@ -818,15 +816,15 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 		if (!patch.isValid()) return;
 		int type = thing->renderflags & RF_SPRITETYPEMASK;
-		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
-		if (!gltexture)
-			return;
+		auto tex = TexMan.GetGameTexture(patch, false);
+		if (!tex || !tex->isValid()) return;
+		auto& spi = tex->GetSpritePositioning();
 
-		vt = gltexture->GetSpriteVT();
-		vb = gltexture->GetSpriteVB();
+		vt = spi.GetSpriteVT();
+		vb = spi.GetSpriteVB();
 		if (thing->renderflags & RF_YFLIP) std::swap(vt, vb);
 
-		gltexture->GetSpriteRect(&r);
+		auto r = spi.GetSpriteRect();
 
 		// [SP] SpriteFlip
 		if (thing->renderflags & RF_SPRITEFLIP)
@@ -835,14 +833,18 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		if (mirror ^ !!(thing->renderflags & RF_XFLIP))
 		{
 			r.left = -r.width - r.left;	// mirror the sprite's x-offset
-			ul = gltexture->GetSpriteUL();
-			ur = gltexture->GetSpriteUR();
+			ul = spi.GetSpriteUL();
+			ur = spi.GetSpriteUR();
 		}
 		else
 		{
-			ul = gltexture->GetSpriteUR();
-			ur = gltexture->GetSpriteUL();
+			ul = spi.GetSpriteUR();
+			ur = spi.GetSpriteUL();
 		}
+
+		gltexture = FMaterial::ValidateTexture(patch, (type == RF_FACESPRITE), false);
+		if (!gltexture)
+			return;
 
 		if (thing->renderflags & RF_SPRITEFLIP) // [SP] Flip back
 			thing->renderflags ^= RF_XFLIP;
@@ -1182,15 +1184,14 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 
 		if (lump.isValid())
 		{
-			gltexture = FMaterial::ValidateTexture(lump, true, false);
 			translation = 0;
+			//auto tex = TexMan.GetGameTexture(lump, false);
 
-			ul = gltexture->GetUL();
-			ur = gltexture->GetUR();
-			vt = gltexture->GetVT();
-			vb = gltexture->GetVB();
-			FloatRect r;
-			gltexture->GetSpriteRect(&r);
+			ul = 0;
+			ur = 1;
+			vt = 0;
+			vb = 1;
+			gltexture = FMaterial::ValidateTexture(lump, true, false);
 		}
 	}
 

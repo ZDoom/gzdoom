@@ -222,6 +222,25 @@ struct FTextureBuffer
 
 };
 
+struct SpritePositioningInfo
+{
+	uint16_t trim[4];
+	int spriteWidth, spriteHeight;
+	float mSpriteU[2], mSpriteV[2];
+	FloatRect mSpriteRect;
+
+	float GetSpriteUL() const { return mSpriteU[0]; }
+	float GetSpriteVT() const { return mSpriteV[0]; }
+	float GetSpriteUR() const { return mSpriteU[1]; }
+	float GetSpriteVB() const { return mSpriteV[1]; }
+
+	const FloatRect &GetSpriteRect() const
+	{
+		return mSpriteRect;
+	}
+
+};
+
 // Base texture class
 class FTexture
 {
@@ -249,6 +268,10 @@ class FTexture
 
 
 public:
+
+	SpritePositioningInfo spi;
+	int8_t mTrimResult = -1;
+
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
@@ -331,6 +354,11 @@ public:
 		Height = h;
 	}
 
+	bool TrimBorders(uint16_t* rect);
+	void SetSpriteRect();
+	bool ShouldExpandSprite();
+	void SetupSpriteData();
+	int GetAreas(FloatRect** pAreas) const;
 
 	// Returns the whole texture, stored in column-major order
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
@@ -409,8 +437,8 @@ protected:
 	protected:
 	uint8_t bSkybox : 1;						// is a cubic skybox
 	uint8_t bNoCompress : 1;
-	uint8_t bNoExpand : 1;
 	int8_t bTranslucent : 2;
+	int8_t bExpandSprite = -1;
 	bool bHiresHasColorKey = false;				// Support for old color-keyed Doomsday textures
 
 	uint16_t Rotations;
@@ -507,7 +535,7 @@ public:
 		bMasked = false;
 		bHasCanvas = true;
 		bTranslucent = false;
-		bNoExpand = true;
+		bExpandSprite = false;
 		UseType = ETextureType::Wall;
 	}
 
@@ -679,6 +707,9 @@ public:
 	int CheckRealHeight() { return wrapped.CheckRealHeight(); }
 	bool isSkybox() const { return wrapped.isSkybox(); }
 	void SetSize(int x, int y) { wrapped.SetSize(x, y); }
+
+	void SetSpriteRect() { wrapped.SetSpriteRect(); }
+	const SpritePositioningInfo& GetSpritePositioning() { if (wrapped.mTrimResult == -1) wrapped.SetupSpriteData(); return wrapped.spi; }
 
 };
 

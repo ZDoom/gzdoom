@@ -193,4 +193,4 @@ public:
 };
 
 FSoftwareTexture* GetSoftwareTexture(FGameTexture* tex);
-FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat = nullptr, bool allownull = false);
+FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat = nullptr, bool allownull = false, bool frontsky = false);

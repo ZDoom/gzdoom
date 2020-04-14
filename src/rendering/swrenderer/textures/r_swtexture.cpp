@@ -621,14 +621,18 @@ static FGameTexture* PalCheck(FGameTexture* tex)
 	return tex;
 }
 
-FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat, bool allownull)
+FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat, bool allownull, bool frontsky)
 {
 	auto tex = PalCheck(TexMan.GetGameTexture(texid, true));
-	if (checkcompat && tex && tex->isValid() && checkcompat->i_compatflags & COMPATF_MASKEDMIDTEX)
+	if (tex == nullptr || (!allownull && !tex->isValid())) return nullptr;
+	if (frontsky)
+	{
+		tex = tex->GetFrontSkyLayer();
+	}
+	else if (checkcompat && checkcompat->i_compatflags & COMPATF_MASKEDMIDTEX)
 	{
 		tex = tex->GetRawTexture();
 	}
-	FSoftwareTexture* pic = tex && (allownull || tex->isValid()) ? GetSoftwareTexture(tex) : nullptr;
-	return pic;
+	return GetSoftwareTexture(tex);
 }
 

@@ -74,7 +74,9 @@ void HWSkyInfo::init(HWDrawInfo *di, int sky1, PalEntry FadeColor)
 	normalsky:
 		if (di->Level->flags&LEVEL_DOUBLESKY)
 		{
-			texture[1] = FMaterial::ValidateTexture(di->Level->skytexture1, false, true);
+			auto tex1 = TexMan.GetTexture(di->Level->skytexture1, true);
+			if (tex1) tex1 = tex1->GetFrontSkyLayer();
+			texture[1] = FMaterial::ValidateTexture(tex1, false);
 			x_offset[1] = di->Level->hw_sky1pos;
 			doublesky = true;
 		}

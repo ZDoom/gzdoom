@@ -333,7 +333,7 @@ void R_InitSpriteDefs ()
 	memset(hashes.Data(), -1, sizeof(Hasher)*smax);
 	for (i = 0; i < smax; ++i)
 	{
-		FTexture *tex = TexMan.ByIndex(i);
+		auto tex = TexMan.GameByIndex(i);
 		if (tex->GetUseType() == ETextureType::Sprite && strlen(tex->GetName()) >= 6)
 		{
 			size_t bucket = TEX_DWNAME(tex) % smax;
@@ -415,7 +415,7 @@ void R_InitSpriteDefs ()
 		int hash = hashes[intname % smax].Head;
 		while (hash != -1)
 		{
-			FTexture *tex = TexMan.GetTexture(hash);
+			auto tex = TexMan.GetGameTexture(hash);
 			if (TEX_DWNAME(tex) == intname)
 			{
 				bool res = R_InstallSpriteLump (FTextureID(hash), tex->GetName()[4] - 'A', tex->GetName()[5], false, sprtemp, maxframe);

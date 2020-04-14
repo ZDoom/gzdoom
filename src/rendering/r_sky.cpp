@@ -64,8 +64,7 @@ CVAR(Float, skyoffset, 0, 0)	// for testing
 
 void InitSkyMap(FLevelLocals *Level)
 {
-	int skyheight;
-	FTexture *skytex1, *skytex2;
+	FGameTexture *skytex1, *skytex2;
 
 	// Do not allow the null texture which has no bitmap and will crash.
 	if (Level->skytexture1.isNull())
@@ -77,11 +76,16 @@ void InitSkyMap(FLevelLocals *Level)
 		Level->skytexture2 = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
 
-	skytex1 = TexMan.GetTexture(Level->skytexture1, false);
-	skytex2 = TexMan.GetTexture(Level->skytexture2, false);
+	skytex1 = TexMan.GetGameTexture(Level->skytexture1, false);
+	skytex2 = TexMan.GetGameTexture(Level->skytexture2, false);
 
 	if (skytex1 == nullptr)
 		return;
+
+	if (Level->flags & LEVEL_DOUBLESKY)
+	{
+		skytex1 = skytex1->GetFrontSkyLayer();
+	}
 
 	if ((Level->flags & LEVEL_DOUBLESKY) && skytex1->GetDisplayHeight() != skytex2->GetDisplayHeight())
 	{
@@ -103,7 +107,7 @@ void InitSkyMap(FLevelLocals *Level)
 	//                  the screen when looking fully up.
 	//        h >  200: Unstretched, but the baseline is shifted down so that the top
 	//                  of the texture is at the top of the screen when looking fully up.
-	skyheight = skytex1->GetDisplayHeight();
+	auto skyheight = skytex1->GetDisplayHeight();
 
 	Level->skystretch = (r_skymode == 1
 		&& skyheight >= 128 && skyheight <= 256

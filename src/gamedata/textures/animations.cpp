@@ -772,17 +772,7 @@ void FTextureAnimator::FixAnimations ()
 	for (i = 0; i < mAnimations.Size(); ++i)
 	{
 		FAnimDef *anim = mAnimations[i];
-		if (anim->bDiscrete)
-		{
-			if (TexMan.Texture(anim->BasePic)->IsFrontSkyLayer())
-			{
-				for (j = 0; j < anim->NumFrames; ++j)
-				{
-					TexMan.Texture(anim->Frames[j].FramePic)->SetFrontSkyLayer ();
-				}
-			}
-		}
-		else
+		if (!anim->bDiscrete)
 		{
 			bool nodecals;
 			bool noremap = false;
@@ -793,15 +783,7 @@ void FTextureAnimator::FixAnimations ()
 			for (j = 0; j < anim->NumFrames; ++j)
 			{
 				FTexture *tex = TexMan.Texture(anim->BasePic + j);
-				noremap |= tex->IsFrontSkyLayer();
 				tex->SetNoDecals(nodecals);
-			}
-			if (noremap)
-			{
-				for (j = 0; j < anim->NumFrames; ++j)
-				{
-					TexMan.Texture(anim->BasePic + j)->SetFrontSkyLayer ();
-				}
 			}
 		}
 	}

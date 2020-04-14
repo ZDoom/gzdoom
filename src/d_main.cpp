@@ -2646,22 +2646,6 @@ static void PatchTextures()
 			texture->SetUseType(ETextureType::Null);
 		}
 	}
-
-	// Hexen parallax skies use color 0 to indicate transparency on the front
-	// layer, so we must not remap color 0 on these textures. Unfortunately,
-	// the only way to identify these textures is to check the MAPINFO.
-	for (unsigned int i = 0; i < wadlevelinfos.Size(); ++i)
-	{
-		if (wadlevelinfos[i].flags & LEVEL_DOUBLESKY)
-		{
-			FTextureID picnum = TexMan.CheckForTexture(wadlevelinfos[i].SkyPic1, ETextureType::Wall, false);
-			if (picnum.isValid())
-			{
-				TexMan.GetTexture(picnum)->SetFrontSkyLayer();
-			}
-		}
-	}
-
 }
 
 //==========================================================================

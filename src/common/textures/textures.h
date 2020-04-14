@@ -48,6 +48,7 @@
 
 typedef TMap<int, bool> SpriteHits;
 class FImageSource;
+class FGameTexture;
 
 enum MaterialShaderIndex
 {
@@ -263,7 +264,8 @@ public:
 	int GetDisplayTopOffset() { return GetScaledTopOffset(0); }
 	double GetDisplayLeftOffsetDouble(int adjusted = 0) { return _LeftOffset[adjusted] / Scale.X; }
 	double GetDisplayTopOffsetDouble(int adjusted = 0) { return _TopOffset[adjusted] / Scale.Y; }
-	
+	FTexture* GetFrontSkyLayer();
+
 	int GetTexelWidth() { return Width; }
 	int GetTexelHeight() { return Height; }
 	int GetTexelLeftOffset(int adjusted) { return _LeftOffset[adjusted]; }
@@ -308,8 +310,6 @@ public:
 	bool UseWorldPanning() const  { return bWorldPanning; }
 	void SetWorldPanning(bool on) { bWorldPanning = on; }
 	void SetDisplaySize(int fitwidth, int fitheight);
-	void SetFrontSkyLayer(bool on = true) { bNoRemap0 = on; }
-	bool IsFrontSkyLayer() { return bNoRemap0; }
 
 
 	void CopySize(FTexture* BaseTexture)
@@ -365,6 +365,8 @@ protected:
 
 	// Offset-less version for COMPATF_MASKEDMIDTEX
 	FTexture *OffsetLess = nullptr;
+	// Front sky layer variant where color 0 is transparent
+	FTexture* FrontSkyLayer = nullptr;
 	// Paletted variant
 	FTexture *PalVersion = nullptr;
 	// Material layers
@@ -570,6 +572,7 @@ struct FTexCoordInfo
 	float TextureOffset(float ofs) const;
 	float TextureAdjustWidth() const;
 	void GetFromTexture(FTexture *tex, float x, float y, bool forceworldpanning);
+	void GetFromTexture(FGameTexture* tex, float x, float y, bool forceworldpanning);
 };
 
 // Refactoring helper to allow piece by piece adjustment of the API
@@ -593,7 +596,8 @@ public:
 	bool isHardwareCanvas() const { return wrapped.isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return wrapped.isCanvas(); }
 	bool isMiscPatch() const { return wrapped.GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
-	bool useWorldPanning() { return wrapped.UseWorldPanning();  }
+	bool useWorldPanning() const { return wrapped.UseWorldPanning();  }
+	bool allowNoDecals() const { return wrapped.allowNoDecals(); }
 	ETextureType GetUseType() const { return wrapped.GetUseType(); }
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }
@@ -602,10 +606,18 @@ public:
 	ISoftwareTexture* GetSoftwareTexture() { return wrapped.GetSoftwareTexture(); }
 	void SetSoftwareTexture(ISoftwareTexture* swtex) { wrapped.SetSoftwareTextue(swtex); }
 	void SetScale(DVector2 vec) { wrapped.SetScale(vec); }
+	const FString& GetName() const { return wrapped.GetName(); }
 
 	// These substitutions must be done on the material level because their sizes can differ. Substitution must happen before any coordinate calculations take place.
 	FGameTexture* GetPalVersion() { return reinterpret_cast<FGameTexture*>(wrapped.GetPalVersion()); }
 	FGameTexture* GetRawTexture() { return reinterpret_cast<FGameTexture*>(wrapped.GetRawTexture()); }
+	FGameTexture* GetFrontSkyLayer() { return reinterpret_cast<FGameTexture*>(wrapped.GetFrontSkyLayer()); }
+
+	// Glowing is a pure material property that should not filter down to the actual texture objects.
+	void GetGlowColor(float* data) { wrapped.GetGlowColor(data); }
+	bool isGlowing() const { return wrapped.isGlowing(); }
+	bool isAutoGlowing() const { return wrapped.isAutoGlowing(); }
+	int GetGlowHeight() const { return wrapped.GetGlowHeight(); }
 
 	bool isUserContent() const;
 };

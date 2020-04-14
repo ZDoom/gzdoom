@@ -219,15 +219,15 @@ void HU_GetPlayerWidths(int &maxnamewidth, int &maxscorewidth, int &maxiconheigh
 			auto icon = FSetTextureID(players[i].mo->IntVar(NAME_ScoreIcon));
 			if (icon.isValid())
 			{
-				FTexture *pic = TexMan.GetTexture(icon);
-				width = pic->GetDisplayWidth() - pic->GetDisplayLeftOffset() + 2;
+				auto pic = TexMan.GetGameTexture(icon);
+				width = int(pic->GetDisplayWidth() - pic->GetDisplayLeftOffset() + 2.5);
 				if (width > maxscorewidth)
 				{
 					maxscorewidth = width;
 				}
 				// The icon's top offset does not count toward its height, because
 				// zdoom.pk3's standard Hexen class icons are designed that way.
-				int height = pic->GetDisplayHeight() - pic->GetDisplayTopOffset();
+				int height = int(pic->GetDisplayHeight() - pic->GetDisplayTopOffset() + 0.5);
 				if (height > maxiconheight)
 				{
 					maxiconheight = height;

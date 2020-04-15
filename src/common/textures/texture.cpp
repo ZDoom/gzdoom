@@ -217,32 +217,6 @@ FGameTexture *FGameTexture::GetRawTexture()
 	return tex->OffsetLess;
 }
 
-//==========================================================================
-//
-// Same shit for a different hack, this time Hexen's front sky layers.
-//
-//==========================================================================
-
-FGameTexture* FGameTexture::GetFrontSkyLayer()
-{
-	auto tex = GetTexture();
-	if (tex->FrontSkyLayer) return tex->FrontSkyLayer;
-	// Reject anything that cannot have been a front layer for the sky in Hexen.
-	auto image = tex->GetImage();
-	if (image == nullptr || !image->SupportRemap0() || GetUseType() != ETextureType::Wall || tex->Scale.X != 1 || tex->Scale.Y != 1 || useWorldPanning() || tex->_TopOffset[0] != 0 ||
-		image->GetWidth() != GetTexelWidth() || image->GetHeight() != GetTexelHeight())
-	{
-		tex->FrontSkyLayer = this;
-		return this;
-	}
-
-	tex->FrontSkyLayer = MakeGameTexture(new FImageTexture(image, ""));
-	TexMan.AddGameTexture(tex->FrontSkyLayer);
-	tex->FrontSkyLayer->GetTexture()->bNoRemap0 = true;
-	return tex->FrontSkyLayer;
-}
-
-
 void FTexture::SetDisplaySize(int fitwidth, int fitheight)
 {
 	Scale.X = double(Width) / fitwidth;

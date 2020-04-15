@@ -75,6 +75,7 @@ public:
 	bool OkForLocalization(FTextureID texnum, const char *substitute, int locnum);
 
 	void FlushAll();
+	FTextureID GetFrontSkyLayer(FTextureID);
 
 
 	enum
@@ -113,7 +114,7 @@ public:
 	void AddLocalizedVariants();
 
 	FTextureID CreateTexture (int lumpnum, ETextureType usetype=ETextureType::Any);	// Also calls AddTexture
-	FTextureID AddGameTexture(FGameTexture* texture);
+	FTextureID AddGameTexture(FGameTexture* texture, bool addtohash = true);
 	FTextureID GetDefaultTexture() const { return DefaultTexture; }
 
 	void LoadTextureX(int wadnum, FMultipatchTextureBuilder &build);
@@ -171,6 +172,7 @@ private:
 	{
 		FGameTexture* Texture;
 		int Paletted;	// redirection to paletted variant
+		int FrontSkyLayer;
 		int HashNext;
 		bool HasLocalization;
 	};

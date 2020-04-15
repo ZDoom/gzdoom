@@ -91,7 +91,7 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
-		auto tex = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::mid), true, curline->GetLevel());
+		auto tex = GetPalettedSWTexture(curline->sidedef->GetTexture(side_t::mid), true, !!(curline->GetLevel()->i_compatflags & COMPATF_MASKEDMIDTEX));
 		const short *mfloorclip = ds->drawsegclip.sprbottomclip;
 		const short *mceilingclip = ds->drawsegclip.sprtopclip;
 

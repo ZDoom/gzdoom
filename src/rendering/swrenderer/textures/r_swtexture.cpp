@@ -612,19 +612,12 @@ CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	R_InitSkyMap();
 }
 
-FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat, bool allownull, bool frontsky)
+FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, bool checkcompat, bool allownull)
 {
 	bool needpal = !vid_nopalsubstitutions && !V_IsTrueColor();
 	auto tex = TexMan.GetPalettedTexture(texid, true, needpal);
 	if (tex == nullptr || (!allownull && !tex->isValid())) return nullptr;
-	if (frontsky)
-	{
-		tex = tex->GetFrontSkyLayer();
-	}
-	else if (checkcompat && checkcompat->i_compatflags & COMPATF_MASKEDMIDTEX)
-	{
-		tex = tex->GetRawTexture();
-	}
+	if (checkcompat) tex = tex->GetRawTexture();
 	return GetSoftwareTexture(tex);
 }
 

@@ -719,7 +719,6 @@ public:
 
 	// These substitutions must be done on the material level because their sizes can differ. Substitution must happen before any coordinate calculations take place.
 	FGameTexture* GetRawTexture();
-	FGameTexture* GetFrontSkyLayer();
 
 	// Glowing is a pure material property that should not filter down to the actual texture objects.
 	void GetGlowColor(float* data) { wrapped.GetGlowColor(data); }

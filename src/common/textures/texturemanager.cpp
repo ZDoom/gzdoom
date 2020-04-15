@@ -375,7 +375,7 @@ bool FTextureManager::OkForLocalization(FTextureID texnum, const char *substitut
 //
 //==========================================================================
 
-FTextureID FTextureManager::AddGameTexture (FGameTexture *texture)
+FTextureID FTextureManager::AddGameTexture (FGameTexture *texture, bool addtohash)
 {
 	int bucket;
 	int hash;
@@ -385,7 +385,7 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture)
 	// Later textures take precedence over earlier ones
 
 	// Textures without name can't be looked for
-	if (texture->GetName().IsNotEmpty())
+	if (addtohash && texture->GetName().IsNotEmpty())
 	{
 		bucket = int(MakeKey (texture->GetName()) % HASH_SIZE);
 		hash = HashFirst[bucket];
@@ -396,7 +396,7 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture)
 		hash = -1;
 	}
 
-	TextureHash hasher = { texture, -1, hash };
+	TextureHash hasher = { texture, -1, -1, hash };
 	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
 	if (bucket >= 0) HashFirst[bucket] = trans;
@@ -1174,6 +1174,38 @@ void FTextureManager::InitPalettedVersions()
 			}
 		}
 	}
+}
+
+//==========================================================================
+//
+// Same shit for a different hack, this time Hexen's front sky layers.
+//
+//==========================================================================
+
+FTextureID FTextureManager::GetFrontSkyLayer(FTextureID texid)
+{
+	int texidx = texid.GetIndex();
+	if (texidx >= Textures.Size()) return texid;
+	if (Textures[texidx].FrontSkyLayer != -1) return FSetTextureID(Textures[texidx].FrontSkyLayer);
+
+	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
+	auto tex = Textures[texidx].Texture;
+	auto image = tex->GetTexture()->GetImage();
+	if (image == nullptr || !image->SupportRemap0() || tex->GetUseType() != ETextureType::Wall || tex->useWorldPanning() || tex->GetTexelTopOffset() != 0 ||
+		tex->GetTexelWidth() != tex->GetDisplayWidth() || tex->GetTexelHeight() != tex->GetDisplayHeight())
+	{
+		Textures[texidx].FrontSkyLayer = texidx;
+		return texid;
+	}
+
+	// Set this up so that it serializes to the same info as the base texture - this is needed to restore it on load.
+	auto FrontSkyLayer = MakeGameTexture(new FImageTexture(image, tex->GetName()));
+	FrontSkyLayer->SetUseType(tex->GetUseType());
+	FrontSkyLayer->GetTexture()->bNoRemap0 = true;
+	texid = TexMan.AddGameTexture(FrontSkyLayer);
+	Textures[texidx].FrontSkyLayer = texid.GetIndex();
+	Textures[texid.GetIndex()].FrontSkyLayer = texid.GetIndex();	// also let it refer to itself as its front sky layer, in case for repeated InitSkyMap calls.
+	return texid;
 }
 
 //==========================================================================

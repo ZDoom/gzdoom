@@ -71,7 +71,7 @@ namespace swrenderer
 		Thread = thread;
 		auto Level = Thread->Viewport->Level();
 
-		auto sskytex1 = GetPalettedSWTexture(Level->skytexture1, true, nullptr, true, !!(Level->flags & LEVEL_DOUBLESKY));
+		auto sskytex1 = GetPalettedSWTexture(Level->skytexture1, true, nullptr, true);
 		auto sskytex2 = GetPalettedSWTexture(Level->skytexture2, true, nullptr, true);
 
 		if (sskytex1 == nullptr)

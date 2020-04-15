@@ -55,7 +55,7 @@ public:
 		return mTextureLayers.Size() + 1;
 	}
 
-	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr);
+	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr) const;
 
 
 	static FMaterial *ValidateTexture(FGameTexture * tex, bool expand, bool create = true);

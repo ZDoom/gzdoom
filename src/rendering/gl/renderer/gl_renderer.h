@@ -101,7 +101,7 @@ public:
 	void EndOffscreen();
 	void UpdateShadowMap();
 
-	void BindToFrameBuffer(FMaterial *mat);
+	void BindToFrameBuffer(FTexture *mat);
 
 private:
 

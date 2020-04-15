@@ -396,7 +396,7 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture)
 		hash = -1;
 	}
 
-	TextureHash hasher = { reinterpret_cast<FGameTexture*>(texture), hash };
+	TextureHash hasher = { texture, hash };
 	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
 	if (bucket >= 0) HashFirst[bucket] = trans;
@@ -445,7 +445,7 @@ void FTextureManager::ReplaceTexture (FTextureID picnum, FGameTexture *newtextur
 
 	newtexture->GetTexture()->Name = oldtexture->GetName();
 	newtexture->SetUseType(oldtexture->GetUseType());
-	Textures[index].Texture = reinterpret_cast<FGameTexture*>(newtexture);
+	Textures[index].Texture = newtexture;
 	newtexture->GetTexture()->id = oldtexture->GetID();
 	oldtexture->GetTexture()->Name = "";
 	AddGameTexture(oldtexture);

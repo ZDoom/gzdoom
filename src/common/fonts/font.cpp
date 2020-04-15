@@ -425,8 +425,9 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						tex->bWorldPanning = true;
 						tex->bNoDecals = false;
 						tex->SourceLump = -1;	// We do not really care.
-						TexMan.AddGameTexture(MakeGameTexture(tex));
-						charMap.Insert(int(position) + x + y * numtex_x, reinterpret_cast<FGameTexture*>(tex));
+						auto gtex = MakeGameTexture(tex);
+						TexMan.AddGameTexture(gtex);
+						charMap.Insert(int(position) + x + y * numtex_x, gtex);
 					}
 				}
 			}
@@ -451,7 +452,7 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 		auto lump = charMap.CheckKey(FirstChar + i);
 		if (lump != nullptr)
 		{
-			FTexture *pic = (*lump)->GetTexture();
+			auto pic = (*lump)->GetTexture();
 
 			auto b = pic->Get8BitPixels(false);
 

@@ -146,21 +146,12 @@ FMaterial::~FMaterial()
 //
 //===========================================================================
 
-IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
+IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer) const
 {
 	FTexture *layer = i == 0 ? imgtex : mTextureLayers[i - 1];
 	if (pLayer) *pLayer = layer;
 	
-	if (layer && layer->UseType!=ETextureType::Null)
-	{
-		IHardwareTexture *hwtex = layer->SystemTextures.GetHardwareTexture(translation, mExpanded);
-		if (hwtex == nullptr) 
-		{
-			hwtex = CreateHardwareTexture();
-			layer->SystemTextures.AddHardwareTexture(translation, mExpanded, hwtex);
- 		}
-		return hwtex;
-	}
+	if (layer) return layer->GetHardwareTexture(translation, mExpanded);
 	return nullptr;
 }
 

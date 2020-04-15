@@ -295,19 +295,18 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 //
 //===========================================================================
 
-void FGLRenderer::BindToFrameBuffer(FMaterial *mat)
+void FGLRenderer::BindToFrameBuffer(FTexture *tex)
 {
-	FTexture* layer;
-	auto BaseLayer = static_cast<FHardwareTexture*>(mat->GetLayer(0, 0, &layer));
+	auto BaseLayer = static_cast<FHardwareTexture*>(tex->GetHardwareTexture(0, false));
 
 	if (BaseLayer == nullptr)
 	{
 		// must create the hardware texture first
-		BaseLayer->BindOrCreate(layer, 0, 0, 0, 0);
+		BaseLayer->BindOrCreate(tex, 0, 0, 0, 0);
 		FHardwareTexture::Unbind(0);
 		gl_RenderState.ClearLastMaterial();
 	}
-	BaseLayer->BindToFrameBuffer(mat->Source()->GetTexelWidth(), mat->Source()->GetTexelHeight());
+	BaseLayer->BindToFrameBuffer(tex->GetTexelWidth(), tex->GetTexelHeight());
 }
 
 //===========================================================================
@@ -319,12 +318,11 @@ void FGLRenderer::BindToFrameBuffer(FMaterial *mat)
 void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
-	FMaterial * gltex = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(tex), false);
 
 	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
 
 	StartOffscreen();
-	BindToFrameBuffer(gltex);
+	BindToFrameBuffer(tex);
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;

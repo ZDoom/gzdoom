@@ -39,7 +39,6 @@
 #include "name.h"
 
 class DCanvas;
-class FTexture;
 class FGameTexture;
 struct FRemapTable;
 

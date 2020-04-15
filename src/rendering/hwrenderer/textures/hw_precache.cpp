@@ -46,11 +46,11 @@ EXTERN_CVAR(Bool, gl_precache)
 //
 //==========================================================================
 
-static void PrecacheTexture(FTexture *tex, int cache)
+static void PrecacheTexture(FGameTexture *tex, int cache)
 {
 	if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 	{
-		FMaterial * gltex = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(tex), false);
+		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 		if (gltex) screen->PrecacheMaterial(gltex, 0);
 	}
 }
@@ -74,9 +74,9 @@ static void PrecacheList(FMaterial *gltex, SpriteHits& translations)
 //
 //==========================================================================
 
-static void PrecacheSprite(FTexture *tex, SpriteHits &hits)
+static void PrecacheSprite(FGameTexture *tex, SpriteHits &hits)
 {
-	FMaterial * gltex = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(tex), true);
+	FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
 	if (gltex) PrecacheList(gltex, hits);
 }
 
@@ -273,13 +273,12 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		for (int i = cnt - 1; i >= 0; i--)
 		{
 			auto gtex = TexMan.GameByIndex(i);
-			auto tex = gtex->GetTexture();
-			if (tex != nullptr)
+			if (gtex != nullptr)
 			{
-				PrecacheTexture(tex, texhitlist[i]);
+				PrecacheTexture(gtex, texhitlist[i]);
 				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
 				{
-					PrecacheSprite(tex, *spritehitlist[i]);
+					PrecacheSprite(gtex, *spritehitlist[i]);
 				}
 			}
 		}

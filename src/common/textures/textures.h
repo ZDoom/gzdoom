@@ -49,6 +49,7 @@
 typedef TMap<int, bool> SpriteHits;
 class FImageSource;
 class FGameTexture;
+class IHardwareTexture;
 
 enum MaterialShaderIndex
 {
@@ -257,6 +258,7 @@ public:
 	SpritePositioningInfo spi;
 	int8_t mTrimResult = -1;
 
+	IHardwareTexture* GetHardwareTexture(int translation, bool expanded);
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
@@ -757,7 +759,7 @@ public:
 	// Since these properties will later piggyback on existing members of FGameTexture, the accessors need to be here. 
 	FGameTexture *GetSkyFace(int num)
 	{
-		return reinterpret_cast<FGameTexture*>(isSkybox() ? static_cast<FSkyBox*>(&wrapped)->faces[num] : nullptr);
+		return (isSkybox() ? static_cast<FSkyBox*>(&wrapped)->faces[num] : nullptr);
 	}
 	bool GetSkyFlip() { return isSkybox() ? static_cast<FSkyBox*>(&wrapped)->fliptop : false; }
 

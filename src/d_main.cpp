@@ -805,7 +805,7 @@ CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 void D_Display ()
 {
-	FTexture *wipe = nullptr;
+	FGameTexture *wipe = nullptr;
 	int wipe_type;
 	sector_t *viewsec;
 
@@ -880,7 +880,7 @@ void D_Display ()
 		if (vr_mode == 0 || vid_rendermode != 4)
 		{
 			// save the current screen if about to wipe
-			wipe = screen->WipeStartScreen ();
+			wipe = MakeGameTexture(screen->WipeStartScreen ());
 
 			switch (wipegamestate)
 			{
@@ -1063,9 +1063,9 @@ void D_Display ()
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
 		screen->End2D();
-		auto wipend = screen->WipeEndScreen ();
+		auto wipend = MakeGameTexture(screen->WipeEndScreen ());
 		auto wiper = Wiper::Create(wipe_type);
-		wiper->SetTextures(reinterpret_cast<FGameTexture*>(wipe), reinterpret_cast<FGameTexture*>(wipend));
+		wiper->SetTextures(wipe, wipend);
 
 		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation

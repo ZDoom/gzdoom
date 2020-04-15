@@ -9,6 +9,7 @@
 
 class FxAddSub;
 struct BuildInfo;
+class FMultipatchTextureBuilder;
 int PalCheck(int tex);
 
 // Texture manager

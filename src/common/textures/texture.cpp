@@ -992,6 +992,27 @@ void FTexture::SetSpriteRect()
 
 //===========================================================================
 //
+// Create a hardware texture for this texture image.
+//
+//===========================================================================
+
+IHardwareTexture* FTexture::GetHardwareTexture(int translation, bool expanded)
+{
+	if (UseType != ETextureType::Null)
+	{
+		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, expanded);
+		if (hwtex == nullptr)
+		{
+			hwtex = CreateHardwareTexture();
+			SystemTextures.AddHardwareTexture(translation, expanded, hwtex);
+		}
+		return hwtex;
+	}
+	return nullptr;
+}
+
+//===========================================================================
+//
 // Coordinate helper.
 // The only reason this is even needed is that many years ago someone
 // was convinced that having per-texel panning on walls was a good idea.

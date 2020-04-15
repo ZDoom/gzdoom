@@ -119,6 +119,7 @@ FTexture::FTexture (const char *name, int lumpnum)
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bFullNameTexture(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
+	tempGameTexture = reinterpret_cast<FGameTexture*>(this);
 	bBrightmapChecked = false;
 	bGlowing = false;
 	bAutoGlowing = false;
@@ -385,11 +386,11 @@ void FTexture::AddAutoMaterials()
 			auto lump = fileSystem.CheckNumForFullName(lookup, false, ns_global, true);
 			if (lump != -1)
 			{
-				auto bmtex = TexMan.FindTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				if (bmtex != nullptr)
 				{
-					bmtex->bMasked = false;
-					this->*(layer.pointer) = bmtex;
+					bmtex->GetTexture()->bMasked = false;
+					this->*(layer.pointer) = bmtex->GetTexture();
 				}
 			}
 		}

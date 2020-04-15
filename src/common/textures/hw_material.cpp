@@ -79,6 +79,7 @@ FMaterial::FMaterial(FGameTexture * tx, bool expanded)
 
 		// Note that these layers must present a valid texture even if not used, because empty TMUs in the shader are an undefined condition.
 		imgtex->CreateDefaultBrightmap();
+		auto placeholder = TexMan.GameByIndex(1);
 		if (imgtex->Brightmap)
 		{
 			mTextureLayers.Push(imgtex->Brightmap);
@@ -86,7 +87,7 @@ FMaterial::FMaterial(FGameTexture * tx, bool expanded)
 		}
 		else	
 		{ 
-			mTextureLayers.Push(TexMan.ByIndex(1));
+			mTextureLayers.Push(placeholder->GetTexture());
 		}
 		if (imgtex->Detailmap)
 		{
@@ -95,7 +96,7 @@ FMaterial::FMaterial(FGameTexture * tx, bool expanded)
 		}
 		else
 		{
-			mTextureLayers.Push(TexMan.ByIndex(1));
+			mTextureLayers.Push(placeholder->GetTexture());
 		}
 		if (imgtex->Glowmap)
 		{
@@ -104,7 +105,7 @@ FMaterial::FMaterial(FGameTexture * tx, bool expanded)
 		}
 		else
 		{
-			mTextureLayers.Push(TexMan.ByIndex(1));
+			mTextureLayers.Push(placeholder->GetTexture());
 		}
 
 		if (imgtex->shaderindex >= FIRST_USER_SHADER)

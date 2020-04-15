@@ -90,13 +90,13 @@ static void ParseVavoomSkybox()
 
 				maplump = fileSystem.CheckNumForFullName(sc.String, true);
 
-				FTexture *tex = TexMan.FindTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny);
+				auto tex = TexMan.FindGameTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny);
 				if (tex == NULL)
 				{
 					sc.ScriptMessage("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->GetName().GetChars());
 					error = true;
 				}
-				sb->faces[facecount] = tex;
+				sb->faces[facecount] = tex->GetTexture();
 				sc.MustGetStringName("}");
 			}
 			facecount++;

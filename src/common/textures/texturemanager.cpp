@@ -332,10 +332,10 @@ FTextureID FTextureManager::GetTextureID (const char *name, ETextureType usetype
 //
 //==========================================================================
 
-FTexture *FTextureManager::FindTexture(const char *texname, ETextureType usetype, BITFIELD flags)
+FGameTexture *FTextureManager::FindGameTexture(const char *texname, ETextureType usetype, BITFIELD flags)
 {
 	FTextureID texnum = CheckForTexture (texname, usetype, flags);
-	return GetTexture(texnum.GetIndex());
+	return GetGameTexture(texnum.GetIndex());
 }
 
 //==========================================================================

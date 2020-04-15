@@ -24,52 +24,37 @@ public:
 private:
 	int ResolveLocalizedTexture(int texnum);
 
-	FTexture *InternalGetTexture(int texnum, bool animate, bool localize)
+	FGameTexture *InternalGetTexture(int texnum, bool animate, bool localize)
 	{
 		if ((unsigned)texnum >= Textures.Size()) return nullptr;
 		if (animate) texnum = Translation[texnum];
 		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
-		return Textures[texnum].Texture->GetTexture();
+		return Textures[texnum].Texture;
 	}
 public:
 	// This only gets used in UI code so we do not need PALVERS handling.
-	FTexture *GetTextureByName(const char *name, bool animate = false)
-	{
-		FTextureID texnum = GetTextureID (name, ETextureType::MiscPatch);
-		return InternalGetTexture(texnum.GetIndex(), animate, true);
-	}
-
 	FGameTexture* GetGameTextureByName(const char *name, bool animate = false)
 	{
-		return reinterpret_cast<FGameTexture*>(GetTextureByName(name, animate));
+		FTextureID texnum = GetTextureID(name, ETextureType::MiscPatch);
+		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
 
 	FTexture *GetTexture(FTextureID texnum, bool animate = false)
 	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true);
+		return InternalGetTexture(texnum.GetIndex(), animate, true)->GetTexture();
 	}
 
 	FGameTexture* GetGameTexture(FTextureID texnum, bool animate = false)
 	{
-		return reinterpret_cast<FGameTexture*>(GetTexture(texnum, animate));
+		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
 	
-	FTexture *ByIndex(int i, bool animate = false)
+	FGameTexture* GameByIndex(int i, bool animate = false)
 	{
 		return InternalGetTexture(i, animate, true);
 	}
 
-	FGameTexture* GameByIndex(int i, bool animate = false)
-	{
-		return reinterpret_cast<FGameTexture*>(ByIndex(i, animate));
-	}
-
-	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
-
-	FGameTexture* FindGameTexture(const char* texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny)
-	{
-		return reinterpret_cast<FGameTexture*>(FindTexture(texname, usetype, flags));
-	}
+	FGameTexture* FindGameTexture(const char* texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 
 	bool OkForLocalization(FTextureID texnum, const char *substitute, int locnum);
 

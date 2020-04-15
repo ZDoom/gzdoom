@@ -759,7 +759,7 @@ class Actor : Thinker native
 	native void GiveSecret(bool printmsg = true, bool playsound = true);
 	native clearscope double GetCameraHeight() const;
 	native clearscope double GetGravity() const;
-	native static void DoMissileDamage(Actor target, Actor inflictor);
+	native void DoMissileDamage(Actor target);
 
 	//==========================================================================
 	//

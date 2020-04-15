@@ -1276,10 +1276,9 @@ void P_DoMissileDamage(AActor* inflictor, AActor* target)
 }
 DEFINE_ACTION_FUNCTION(AActor, DoMissileDamage)
 {
-	PARAM_PROLOGUE;
+	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(target, AActor);
-	PARAM_OBJECT_NOT_NULL(inflictor, AActor);
-	P_DoMissileDamage(inflictor, target);
+	P_DoMissileDamage(self, target);
 	return 0;
 }
 //==========================================================================

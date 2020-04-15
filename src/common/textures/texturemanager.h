@@ -29,7 +29,7 @@ private:
 		if ((unsigned)texnum >= Textures.Size()) return nullptr;
 		if (animate) texnum = Translation[texnum];
 		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
-		return Textures[texnum].Texture;
+		return Textures[texnum].Texture->GetTexture();
 	}
 public:
 	// This only gets used in UI code so we do not need PALVERS handling.
@@ -157,8 +157,8 @@ public:
 		return BuildTileData.Last();
 	}
 
-	FTexture* Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
-	FGameTexture* GameTexture(FTextureID id) { return reinterpret_cast<FGameTexture*>(Textures[id.GetIndex()].Texture); }
+	FTexture* Texture(FTextureID id) { return Textures[id.GetIndex()].Texture->GetTexture(); }
+	FGameTexture* GameTexture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation(FTextureID fromtexnum, FTextureID totexnum);
 
 private:
@@ -169,7 +169,7 @@ private:
 
 	struct TextureHash
 	{
-		FTexture *Texture;
+		FGameTexture *Texture;
 		int HashNext;
 		bool HasLocalization;
 	};

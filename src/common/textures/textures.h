@@ -677,6 +677,7 @@ public:
 	bool isMultiPatch() const { return wrapped.bMultiPatch; }
 	bool isFullbrightDisabled() const { return wrapped.isFullbrightDisabled(); }
 	bool isFullbright() const { return wrapped.isFullbright(); }
+	bool isFullNameTexture() const { return wrapped.bFullNameTexture; }
 	bool expandSprites() const { return wrapped.bExpandSprite; }
 	bool useWorldPanning() const { return wrapped.UseWorldPanning();  }
 	void SetWorldPanning(bool on) { wrapped.SetWorldPanning(on); }

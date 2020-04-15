@@ -8,18 +8,6 @@
 struct FRemapTable;
 class IHardwareTexture;
 
-enum
-{
-	CLAMP_NONE = 0,
-	CLAMP_X = 1,
-	CLAMP_Y = 2,
-	CLAMP_XY = 3,
-	CLAMP_XY_NOMIP = 4,
-	CLAMP_NOFILTER = 5,
-	CLAMP_CAMTEX = 6,
-};
-
-
 //===========================================================================
 // 
 // this is the material class for OpenGL. 
@@ -35,15 +23,15 @@ class FMaterial
 	bool mExpanded;
 
 public:
-	FTexture *sourcetex;	// the owning texture. 
-	FTexture* imgtex;		// the master texture for the backing image. Can be different from sourcetex and should not be in the layer array because that'd confuse the precacher.
+	FGameTexture *sourcetex;	// the owning texture. 
+	FTexture* imgtex;			// the first layer's texture image - should be moved into the array
 
-	FMaterial(FTexture *tex, bool forceexpand);
+	FMaterial(FGameTexture *tex, bool forceexpand);
 	~FMaterial();
 	int GetLayerFlags() const { return mLayerFlags; }
 	int GetShaderIndex() const { return mShaderIndex; }
 
-	FTexture* Source() const
+	FGameTexture* Source() const
 	{
 		return sourcetex;
 	}
@@ -54,7 +42,7 @@ public:
 	}
 	void AddTextureLayer(FTexture *tex)
 	{
-		ValidateTexture(tex, false);
+		//ValidateTexture(tex, false);
 		mTextureLayers.Push(tex);
 	}
 	bool isExpanded() const
@@ -70,7 +58,7 @@ public:
 	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr);
 
 
-	static FMaterial *ValidateTexture(FTexture * tex, bool expand, bool create = true);
+	static FMaterial *ValidateTexture(FGameTexture * tex, bool expand, bool create = true);
 	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans, bool create = true);
 	const TArray<FTexture*> &GetLayerArray() const
 	{

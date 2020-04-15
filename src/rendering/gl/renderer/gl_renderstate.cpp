@@ -308,12 +308,11 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	}
 	auto tex = mat->Source();
 	mEffectState = overrideshader >= 0 ? overrideshader : mat->GetShaderIndex();
-	mShaderTimer = tex->shaderspeed;
-	SetSpecular(tex->Glossiness, tex->SpecularLevel);
+	mShaderTimer = tex->GetShaderSpeed();
+	SetSpecular(tex->GetGlossiness(), tex->GetSpecularLevel());
+	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex->GetTexture())->NeedUpdate();
 
-	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
-	if (tex->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
-	else if ((tex->isWarped() || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+	clampmode = tex->GetClampMode(clampmode);
 	
 	// avoid rebinding the same texture multiple times.
 	if (mat == lastMaterial && lastClamp == clampmode && translation == lastTranslation) return;
@@ -328,7 +327,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	int numLayers = mat->GetLayers();
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
 
-	if (base->BindOrCreate(tex, 0, clampmode, translation, flags))
+	if (base->BindOrCreate(tex->GetTexture(), 0, clampmode, translation, flags))
 	{
 		for (int i = 1; i<numLayers; i++)
 		{

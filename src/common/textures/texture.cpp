@@ -1050,7 +1050,7 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forcewo
 {
 	if (x == 1.f)
 	{
-		mRenderWidth = tex->GetScaledWidth();
+		mRenderWidth = tex->GetDisplayWidth();
 		mScale.X = (float)tex->Scale.X;
 		mTempScale.X = 1.f;
 	}
@@ -1064,7 +1064,7 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forcewo
 
 	if (y == 1.f)
 	{
-		mRenderHeight = tex->GetScaledHeight();
+		mRenderHeight = tex->GetDisplayHeight();
 		mScale.Y = (float)tex->Scale.Y;
 		mTempScale.Y = 1.f;
 	}

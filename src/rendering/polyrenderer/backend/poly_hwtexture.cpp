@@ -64,8 +64,7 @@ void PolyHardwareTexture::Reset()
 
 DCanvas *PolyHardwareTexture::GetImage(FTexture *baselayer, const FMaterialState &state)
 {
-	FTexture *tex = state.mMaterial->Source();
-	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+	FGameTexture *tex = state.mMaterial->Source();
 
 	if (!mCanvas)
 	{

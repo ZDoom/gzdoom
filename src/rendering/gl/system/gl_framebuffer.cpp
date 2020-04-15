@@ -308,7 +308,7 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture()
 
 void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	if (mat->Source()->isSWCanvas()) return;
+	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
 	int flags = mat->isExpanded() ? CTF_Expand : 0;
 	int numLayers = mat->GetLayers();

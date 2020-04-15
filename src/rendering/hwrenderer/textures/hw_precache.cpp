@@ -50,7 +50,7 @@ static void PrecacheTexture(FTexture *tex, int cache)
 {
 	if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 	{
-		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
+		FMaterial * gltex = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(tex), false);
 		if (gltex) screen->PrecacheMaterial(gltex, 0);
 	}
 }
@@ -76,7 +76,7 @@ static void PrecacheList(FMaterial *gltex, SpriteHits& translations)
 
 static void PrecacheSprite(FTexture *tex, SpriteHits &hits)
 {
-	FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
+	FMaterial * gltex = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(tex), true);
 	if (gltex) PrecacheList(gltex, hits);
 }
 
@@ -198,7 +198,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		{
 			if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 			{
-				FMaterial* mat = FMaterial::ValidateTexture(tex->GetTexture(), false, false);
+				FMaterial* mat = FMaterial::ValidateTexture(tex, false, false);
 				if (mat != nullptr)
 				{
 					for (auto ftex : mat->GetLayerArray())
@@ -209,7 +209,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 			}
 			if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
 			{
-				FMaterial *mat = FMaterial::ValidateTexture(tex->GetTexture(), true, false);
+				FMaterial *mat = FMaterial::ValidateTexture(tex, true, false);
 				if (mat != nullptr)
 				{
 					for (auto ftex : mat->GetLayerArray())

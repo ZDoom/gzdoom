@@ -516,7 +516,7 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
-	FMaterial *mat = FMaterial::ValidateTexture(tex, false);
+	FMaterial *mat = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(tex), false);
 	auto BaseLayer = static_cast<VkHardwareTexture*>(mat->GetLayer(0, 0));
 
 	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
@@ -647,7 +647,7 @@ void VulkanFrameBuffer::CleanForRestart()
 
 void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	if (mat->Source()->isSWCanvas()) return;
+	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = mat->isExpanded() ? CTF_Expand : 0;

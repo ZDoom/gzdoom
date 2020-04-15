@@ -102,7 +102,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 			fbtex.reset();
 			fbtex.reset(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
 			fbtex->GetSystemTexture()->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
-			auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
+			auto mat = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(fbtex.get()), false);
 			mat->AddTextureLayer(PaletteTexture);
 
 			Canvas.reset();

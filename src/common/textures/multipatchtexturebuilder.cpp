@@ -140,8 +140,7 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	FImageTexture *tex = new FImageTexture(nullptr, buildinfo.Name);
 	tex->SetUseType(usetype);
 	tex->bMultiPatch = true;
-	tex->Width = buildinfo.Width;
-	tex->Height = buildinfo.Height;
+	tex->SetSize(buildinfo.Width, buildinfo.Height);
 	tex->_LeftOffset[0] = buildinfo.LeftOffset[0];
 	tex->_LeftOffset[1] = buildinfo.LeftOffset[1];
 	tex->_TopOffset[0] = buildinfo.TopOffset[0];

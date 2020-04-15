@@ -281,7 +281,7 @@ void PolyRenderState::Apply()
 	}
 
 	if (mMaterial.mMaterial && mMaterial.mMaterial->Source())
-		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->shaderspeed / 1000.);
+		mStreamData.timer = static_cast<float>((double)(screen->FrameTime - firstFrame) * (double)mMaterial.mMaterial->Source()->GetShaderSpeed() / 1000.);
 	else
 		mStreamData.timer = 0.0f;
 

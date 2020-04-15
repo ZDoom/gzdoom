@@ -112,18 +112,14 @@ void VkHardwareTexture::ResetAllDescriptors()
 VulkanDescriptorSet *VkHardwareTexture::GetDescriptorSet(const FMaterialState &state)
 {
 	FMaterial *mat = state.mMaterial;
-	FTexture *base = state.mMaterial->Source();
+	auto base = state.mMaterial->Source();
 	int clampmode = state.mClampMode;
 	int translation = state.mTranslation;
 
-	if (base->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
-	if (base->isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
-	else if ((base->isWarped() || base->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+	clampmode = base->GetClampMode(clampmode);
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = state.mMaterial->isExpanded() ? CTF_Expand : 0;
-
-	if (base->isHardwareCanvas()) static_cast<FCanvasTexture*>(base)->NeedUpdate();
 
 	for (auto &set : mDescriptorSets)
 	{

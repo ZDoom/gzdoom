@@ -415,8 +415,6 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						FImageTexture *tex = new FImageTexture(image, "");
 						tex->SetUseType(ETextureType::FontChar);
 						tex->bMultiPatch = true;
-						tex->Width = width;
-						tex->Height = height;
 						tex->_LeftOffset[0] = 
 						tex->_LeftOffset[1] = 
 						tex->_TopOffset[0] = 

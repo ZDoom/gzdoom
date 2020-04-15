@@ -377,7 +377,7 @@ sector_t *PolyFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * ca
 void PolyFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
-	FMaterial *mat = FMaterial::ValidateTexture(tex, false);
+	FMaterial *mat = FMaterial::ValidateTexture(reinterpret_cast<FGameTexture*>(tex), false);
 	auto BaseLayer = static_cast<PolyHardwareTexture*>(mat->GetLayer(0, 0));
 
 	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
@@ -534,7 +534,7 @@ void PolyFrameBuffer::CleanForRestart()
 
 void PolyFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
-	if (mat->Source()->isSWCanvas()) return;
+	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
 	int flags = mat->isExpanded() ? CTF_Expand : 0;
 	FTexture* layer;

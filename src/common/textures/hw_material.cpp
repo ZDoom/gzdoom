@@ -36,21 +36,21 @@ IHardwareTexture* CreateHardwareTexture();
 //
 //===========================================================================
 
-FMaterial::FMaterial(FTexture * tx, bool expanded)
+FMaterial::FMaterial(FGameTexture * tx, bool expanded)
 {
 	mShaderIndex = SHADER_Default;
 	sourcetex = tx;
-	imgtex = tx;
+	imgtex = tx->GetTexture();
 
-	if (tx->UseType == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(tx)->GetColorFormat() == 0)
+	if (tx->GetUseType() == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(imgtex)->GetColorFormat() == 0)
 	{
 		mShaderIndex = SHADER_Paletted;
 	}
 	else if (tx->isHardwareCanvas())
 	{
-		if (tx->shaderindex >= FIRST_USER_SHADER)
+		if (tx->GetShaderIndex() >= FIRST_USER_SHADER)
 		{
-			mShaderIndex = tx->shaderindex;
+			mShaderIndex = tx->GetShaderIndex();
 		}
 		// no brightmap for cameratexture
 	}
@@ -60,17 +60,17 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		{
 			mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
 		}
-		else if (tx->Normal && tx->Specular)
+		else if (imgtex->Normal && imgtex->Specular)
 		{
-			for (auto &texture : { tx->Normal, tx->Specular })
+			for (auto &texture : { imgtex->Normal, imgtex->Specular })
 			{
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_Specular;
 		}
-		else if (tx->Normal && tx->Metallic && tx->Roughness && tx->AmbientOcclusion)
+		else if (imgtex->Normal && imgtex->Metallic && imgtex->Roughness && imgtex->AmbientOcclusion)
 		{
-			for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
+			for (auto &texture : { imgtex->Normal, imgtex->Metallic, imgtex->Roughness, imgtex->AmbientOcclusion })
 			{
 				mTextureLayers.Push(texture);
 			}
@@ -78,28 +78,28 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		}
 
 		// Note that these layers must present a valid texture even if not used, because empty TMUs in the shader are an undefined condition.
-		tx->CreateDefaultBrightmap();
-		if (tx->Brightmap)
+		imgtex->CreateDefaultBrightmap();
+		if (imgtex->Brightmap)
 		{
-			mTextureLayers.Push(tx->Brightmap);
+			mTextureLayers.Push(imgtex->Brightmap);
 			mLayerFlags |= TEXF_Brightmap;
 		}
 		else	
 		{ 
 			mTextureLayers.Push(TexMan.ByIndex(1));
 		}
-		if (tx->Detailmap)
+		if (imgtex->Detailmap)
 		{
-			mTextureLayers.Push(tx->Detailmap);
+			mTextureLayers.Push(imgtex->Detailmap);
 			mLayerFlags |= TEXF_Detailmap;
 		}
 		else
 		{
 			mTextureLayers.Push(TexMan.ByIndex(1));
 		}
-		if (tx->Glowmap)
+		if (imgtex->Glowmap)
 		{
-			mTextureLayers.Push(tx->Glowmap);
+			mTextureLayers.Push(imgtex->Glowmap);
 			mLayerFlags |= TEXF_Glowmap;
 		}
 		else
@@ -107,25 +107,25 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			mTextureLayers.Push(TexMan.ByIndex(1));
 		}
 
-		if (tx->shaderindex >= FIRST_USER_SHADER)
+		if (imgtex->shaderindex >= FIRST_USER_SHADER)
 		{
-			const UserShaderDesc &usershader = usershaders[tx->shaderindex - FIRST_USER_SHADER];
+			const UserShaderDesc &usershader = usershaders[imgtex->shaderindex - FIRST_USER_SHADER];
 			if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
 			{
-				for (auto &texture : tx->CustomShaderTextures)
+				for (auto &texture : imgtex->CustomShaderTextures)
 				{
 					if (texture == nullptr) continue;
 					mTextureLayers.Push(texture);
 				}
-				mShaderIndex = tx->shaderindex;
+				mShaderIndex = tx->GetShaderIndex();
 			}
 		}
 	}
 	mExpanded = expanded;
 
 	mTextureLayers.ShrinkToFit();
-	tx->Material[expanded] = this;
-	if (tx->isHardwareCanvas()) tx->bTranslucent = 0;
+	imgtex->Material[expanded] = this;
+	if (tx->isHardwareCanvas()) tx->SetTranslucent(false);
 }
 
 //===========================================================================
@@ -170,16 +170,17 @@ IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
 //
 //==========================================================================
 
-FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand, bool create)
+FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, bool expand, bool create)
 {
-	if (tex	&& tex->isValid())
+	if (gtex && gtex->isValid())
 	{
+		auto tex = gtex->GetTexture();
 		if (!tex->ShouldExpandSprite()) expand = false;
 
 		FMaterial *hwtex = tex->Material[expand];
 		if (hwtex == NULL && create)
 		{
-			hwtex = new FMaterial(tex, expand);
+			hwtex = new FMaterial(gtex, expand);
 		}
 		return hwtex;
 	}
@@ -188,7 +189,7 @@ FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand, bool create)
 
 FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate, bool create)
 {
-	return ValidateTexture(TexMan.GetTexture(no, translate), expand, create);
+	return ValidateTexture(TexMan.GetGameTexture(no, translate), expand, create);
 }
 
 

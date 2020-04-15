@@ -346,7 +346,6 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 			return false;
 		}
 	}
-	if (tex->isHardwareCanvas()) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
 	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
 	return true;
 }

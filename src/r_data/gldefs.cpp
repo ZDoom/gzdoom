@@ -991,8 +991,9 @@ class GLDefsParser
 
 		sc.MustGetString();
 
-		FSkyBox * sb = new FSkyBox(sc.String);
-		sb->Name.ToUpper();
+		FString s = sc.String;
+		s.ToUpper();
+		FSkyBox * sb = new FSkyBox(s);
 		if (sc.CheckString("fliptop"))
 		{
 			sb->fliptop = true;
@@ -1009,7 +1010,7 @@ class GLDefsParser
 		}
 		if (facecount != 3 && facecount != 6)
 		{
-			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->Name.GetChars());
+			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->GetName().GetChars());
 		}
 		sb->SetSize();
 		TexMan.AddTexture(sb);

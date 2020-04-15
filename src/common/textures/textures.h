@@ -245,25 +245,10 @@ struct SpritePositioningInfo
 class FTexture
 {
 	friend class FGameTexture;	// only for the porting work
-	friend class GLDefsParser;
-	friend class FMultipatchTextureBuilder;
-	
-	// The serializer also needs access to more specific info that shouldn't be accessible through the interface.
-	friend FSerializer &Serialize(FSerializer &arc, const char *key, FTextureID &value, FTextureID *defval);
-
-	// For now only give access to classes which cannot be reworked yet. None of these should remain here when all is done.
-	friend class FWarpTexture;
-	friend class FMaterial;
-	friend class OpenGLRenderer::FGLRenderState;	// For now this needs access to some fields in ApplyMaterial. This should be rerouted through the Material class
-	friend class VkRenderState;
-	friend class PolyRenderState;
+	friend class FTexture;
 	friend struct FTexCoordInfo;
-	friend class OpenGLRenderer::FHardwareTexture;
-	friend class VkHardwareTexture;
-	friend class PolyHardwareTexture;
-	friend class FMultiPatchTexture;
-	friend class FSkyBox;
-	friend class FBrightmapTexture;
+	friend class FMultipatchTextureBuilder;
+	friend class FMaterial;
 	friend class FFont;
 
 
@@ -623,6 +608,18 @@ struct FTexCoordInfo
 	void GetFromTexture(FGameTexture* tex, float x, float y, bool forceworldpanning);
 };
 
+enum
+{
+	CLAMP_NONE = 0,
+	CLAMP_X = 1,
+	CLAMP_Y = 2,
+	CLAMP_XY = 3,
+	CLAMP_XY_NOMIP = 4,
+	CLAMP_NOFILTER = 5,
+	CLAMP_CAMTEX = 6,
+};
+
+
 //-----------------------------------------------------------------------------
 //
 // Todo: Get rid of this
@@ -685,6 +682,7 @@ public:
 	void SetTranslucent(bool on) { wrapped.bTranslucent = on; }
 	ETextureType GetUseType() const { return wrapped.GetUseType(); }
 	void SetUseType(ETextureType type) { wrapped.SetUseType(type); }
+	int GetShaderIndex() const { return wrapped.shaderindex; }
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }
 	void SetRotations(int index) { wrapped.SetRotations(index); }
@@ -712,6 +710,8 @@ public:
 			if (lay.CustomShaderTextures[i]) wrapped.CustomShaderTextures[i] = lay.CustomShaderTextures[i]->GetTexture();
 		}
 	}
+	float GetGlossiness() const { return wrapped.Glossiness; }
+	float GetSpecularLevel() const { return wrapped.SpecularLevel; }
 
 	void CopySize(FGameTexture* BaseTexture)
 	{
@@ -757,6 +757,13 @@ public:
 	}
 	bool GetSkyFlip() { return isSkybox() ? static_cast<FSkyBox*>(&wrapped)->fliptop : false; }
 
+	int GetClampMode(int clampmode)
+	{
+		if (GetUseType() == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
+		else if (isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
+		else if ((isWarped() || wrapped.shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+		return clampmode;
+	}
 };
 
 

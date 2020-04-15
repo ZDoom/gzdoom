@@ -572,7 +572,7 @@ public:
 	void SetMaterial(FGameTexture* tex, bool expandmode, int clampmode, int translation, int overrideshader)
 	{
 		expandmode &= tex->expandSprites();
-		SetMaterial(FMaterial::ValidateTexture(tex->GetTexture(), expandmode), clampmode, translation, overrideshader);
+		SetMaterial(FMaterial::ValidateTexture(tex, expandmode), clampmode, translation, overrideshader);
 	}
 
 	void SetClipSplit(float bottom, float top)

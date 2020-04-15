@@ -235,15 +235,15 @@ CUSTOM_CVAR (String, vid_cursor, "None", CVAR_ARCHIVE | CVAR_NOINITCALL)
 
 	if (!stricmp(self, "None" ) && gameinfo.CursorPic.IsNotEmpty())
 	{
-		res = I_SetCursor(TexMan.GetTextureByName(gameinfo.CursorPic));
+		res = I_SetCursor(TexMan.GetGameTextureByName(gameinfo.CursorPic));
 	}
 	else
 	{
-		res = I_SetCursor(TexMan.GetTextureByName(self));
+		res = I_SetCursor(TexMan.GetGameTextureByName(self));
 	}
 	if (!res)
 	{
-		I_SetCursor(TexMan.GetTextureByName("cursor"));
+		I_SetCursor(TexMan.GetGameTextureByName("cursor"));
 	}
 }
 

@@ -97,8 +97,8 @@ TArray<FString> I_GetGogPaths();
 // The ini could not be saved at exit
 bool I_WriteIniFailed ();
 
-class FTexture;
-bool I_SetCursor(FTexture *);
+class FGameTexture;
+bool I_SetCursor(FGameTexture *);
 
 
 static inline char *strlwr(char *str)

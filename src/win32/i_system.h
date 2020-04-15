@@ -79,8 +79,8 @@ void I_Quit (void);
 
 
 // Set the mouse cursor. The texture must be 32x32.
-class FTexture;
-bool I_SetCursor(FTexture *cursor);
+class FGameTexture;
+bool I_SetCursor(FGameTexture *cursor);
 
 // Repaint the pre-game console
 void I_PaintConsole (void);

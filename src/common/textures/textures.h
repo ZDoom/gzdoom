@@ -668,7 +668,8 @@ public:
 	double GetDisplayTopOffset(int adjusted = 0) /*const*/ { return wrapped.GetDisplayTopOffsetDouble(adjusted); }
 
 	bool isValid() { return wrapped.isValid(); }
-	bool isWarped() { return wrapped.isWarped(); }
+	int isWarped() { return wrapped.isWarped(); }
+	void SetWarpStyle(int style) { wrapped.bWarped = style; }
 	bool isMasked() { return wrapped.isMasked(); }
 	bool isHardwareCanvas() const { return wrapped.isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return wrapped.isCanvas(); }
@@ -678,7 +679,9 @@ public:
 	bool isFullbright() const { return wrapped.isFullbright(); }
 	bool expandSprites() const { return wrapped.bExpandSprite; }
 	bool useWorldPanning() const { return wrapped.UseWorldPanning();  }
+	void SetWorldPanning(bool on) { wrapped.SetWorldPanning(on); }
 	bool allowNoDecals() const { return wrapped.allowNoDecals(); }
+	void SetNoDecals(bool on) { wrapped.bNoDecals = on; }
 	void SetTranslucent(bool on) { wrapped.bTranslucent = on; }
 	ETextureType GetUseType() const { return wrapped.GetUseType(); }
 	void SetUseType(ETextureType type) { wrapped.SetUseType(type); }
@@ -686,6 +689,7 @@ public:
 	float GetShaderSpeed() const { return wrapped.GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped.GetRotations(); }
 	void SetRotations(int index) { wrapped.SetRotations(index); }
+	void SetSkyOffset(int ofs) { wrapped.SetSkyOffset(ofs); }
 	int GetSkyOffset() const { return wrapped.GetSkyOffset(); }
 	FTextureID GetID() const { return wrapped.GetID(); }
 	ISoftwareTexture* GetSoftwareTexture() { return wrapped.GetSoftwareTexture(); }
@@ -739,6 +743,7 @@ public:
 	int CheckRealHeight() { return wrapped.CheckRealHeight(); }
 	bool isSkybox() const { return wrapped.isSkybox(); }
 	void SetSize(int x, int y) { wrapped.SetSize(x, y); }
+	void SetDisplaySize(float w, float h) { wrapped.SetSize((int)w, (int)h); }
 
 	void SetSpriteRect() { wrapped.SetSpriteRect(); }
 	const SpritePositioningInfo& GetSpritePositioning(int which) { /* todo: keep two sets of positioning infd*/ if (wrapped.mTrimResult == -1) wrapped.SetupSpriteData(); return wrapped.spi; }

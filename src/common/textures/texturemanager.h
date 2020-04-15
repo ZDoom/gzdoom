@@ -158,6 +158,7 @@ public:
 	}
 
 	FTexture* Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
+	FGameTexture* GameTexture(FTextureID id) { return reinterpret_cast<FGameTexture*>(Textures[id.GetIndex()].Texture); }
 	void SetTranslation(FTextureID fromtexnum, FTextureID totexnum);
 
 private:

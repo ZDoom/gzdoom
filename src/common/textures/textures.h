@@ -273,7 +273,6 @@ public:
 	int GetDisplayTopOffset() { return GetScaledTopOffset(0); }
 	double GetDisplayLeftOffsetDouble(int adjusted = 0) { return _LeftOffset[adjusted] / Scale.X; }
 	double GetDisplayTopOffsetDouble(int adjusted = 0) { return _TopOffset[adjusted] / Scale.Y; }
-	FTexture* GetFrontSkyLayer();
 
 	int GetTexelWidth() { return Width; }
 	int GetTexelHeight() { return Height; }
@@ -303,7 +302,6 @@ public:
 	int GetSkyOffset() const { return SkyOffset; }
 	FTextureID GetID() const { return id; }
 	PalEntry GetSkyCapColor(bool bottom);
-	FTexture *GetRawTexture();
 	virtual int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	void GetGlowColor(float *data);
 	bool isGlowing() const { return bGlowing; }
@@ -378,12 +376,12 @@ protected:
 	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
 
 	// Offset-less version for COMPATF_MASKEDMIDTEX
-	FTexture *OffsetLess = nullptr;
+	FGameTexture *OffsetLess = nullptr;
 	// Front sky layer variant where color 0 is transparent
-	FTexture* FrontSkyLayer = nullptr;
+	FGameTexture* FrontSkyLayer = nullptr;
 	public:
 	// Paletted variant
-	FTexture *PalVersion = nullptr;
+	FGameTexture *PalVersion = nullptr;
 	// Material layers
 	FTexture *Brightmap = nullptr;
 	FTexture* Detailmap = nullptr;
@@ -483,7 +481,7 @@ public:
 	{
 		return Material[num];
 	}
-	FTexture* GetPalVersion()
+	FGameTexture* GetPalVersion()
 	{
 		return PalVersion;
 	}
@@ -631,8 +629,8 @@ class FSkyBox : public FImageTexture
 {
 public:
 
-	FTexture* previous;
-	FTexture* faces[6];
+	FGameTexture* previous;
+	FGameTexture* faces[6];	// the faces need to be full materials as they can have all supported effects.
 	bool fliptop;
 
 	FSkyBox(const char* name);
@@ -724,9 +722,9 @@ public:
 	}
 
 	// These substitutions must be done on the material level because their sizes can differ. Substitution must happen before any coordinate calculations take place.
-	FGameTexture* GetPalVersion() { return reinterpret_cast<FGameTexture*>(wrapped.GetPalVersion()); }
-	FGameTexture* GetRawTexture() { return reinterpret_cast<FGameTexture*>(wrapped.GetRawTexture()); }
-	FGameTexture* GetFrontSkyLayer() { return reinterpret_cast<FGameTexture*>(wrapped.GetFrontSkyLayer()); }
+	FGameTexture* GetPalVersion() { return wrapped.GetPalVersion(); }
+	FGameTexture* GetRawTexture();
+	FGameTexture* GetFrontSkyLayer();
 
 	// Glowing is a pure material property that should not filter down to the actual texture objects.
 	void GetGlowColor(float* data) { wrapped.GetGlowColor(data); }

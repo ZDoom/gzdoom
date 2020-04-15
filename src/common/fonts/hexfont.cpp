@@ -289,10 +289,10 @@ public:
 			{
 				auto offset = hexdata.glyphmap[i];
 				int size = hexdata.glyphdata[offset] / 16;
-				Chars[i - FirstChar].TranslatedPic = new FImageTexture(new FHexFontChar (&hexdata.glyphdata[offset+1], size, size * 9, 16));
+				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar (&hexdata.glyphdata[offset+1], size, size * 9, 16)));
 				Chars[i - FirstChar].TranslatedPic->SetUseType(ETextureType::FontChar);
 				Chars[i - FirstChar].XMove = size * spacing;
-				TexMan.AddTexture(Chars[i - FirstChar].TranslatedPic);
+				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
 			}
 			else Chars[i - FirstChar].XMove = spacing;
 
@@ -362,10 +362,10 @@ public:
 			{
 				auto offset = hexdata.glyphmap[i];
 				int size = hexdata.glyphdata[offset] / 16;
-				Chars[i - FirstChar].TranslatedPic = new FImageTexture(new FHexFontChar2(&hexdata.glyphdata[offset + 1], size, 2 + size * 8, 18));
+				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar2(&hexdata.glyphdata[offset + 1], size, 2 + size * 8, 18)));
 				Chars[i - FirstChar].TranslatedPic->SetUseType(ETextureType::FontChar);
 				Chars[i - FirstChar].XMove = size * spacing;
-				TexMan.AddTexture(Chars[i - FirstChar].TranslatedPic);
+				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
 			}
 			else Chars[i - FirstChar].XMove = spacing;
 

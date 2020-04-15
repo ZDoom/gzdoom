@@ -57,7 +57,7 @@ void FCanvasTextureInfo::Add (AActor *viewpoint, FTextureID picnum, double fov)
 	{
 		return;
 	}
-	texture = static_cast<FCanvasTexture *>(TexMan.GetTexture(picnum));
+	texture = static_cast<FCanvasTexture *>(TexMan.GetGameTexture(picnum)->GetTexture());
 	if (!texture->bHasCanvas)
 	{
 		Printf ("%s is not a valid target for a camera\n", texture->Name.GetChars());
@@ -101,8 +101,8 @@ void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fo
 	if (textureid.isValid())
 	{
 		// Only proceed if the texture actually has a canvas.
-		FTexture *tex = TexMan.GetTexture(textureid);
-		if (tex && tex->isCanvas())
+		auto tex = TexMan.GetGameTexture(textureid);
+		if (tex && tex->isHardwareCanvas()) // Q: how to deal with the software renderer here?
 		{
 			viewpoint->Level->canvasTextureInfo.Add(viewpoint, textureid, fov);
 		}

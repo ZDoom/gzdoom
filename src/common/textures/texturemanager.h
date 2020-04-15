@@ -8,7 +8,6 @@
 #include "name.h"
 
 class FxAddSub;
-class FTexture;
 struct BuildInfo;
 int PalCheck(int tex);
 
@@ -37,11 +36,6 @@ public:
 	{
 		FTextureID texnum = GetTextureID(name, ETextureType::MiscPatch);
 		return InternalGetTexture(texnum.GetIndex(), animate, true);
-	}
-
-	FTexture *GetTexture(FTextureID texnum, bool animate = false)
-	{
-		return InternalGetTexture(texnum.GetIndex(), animate, true)->GetTexture();
 	}
 
 	FGameTexture* GetGameTexture(FTextureID texnum, bool animate = false)
@@ -97,7 +91,7 @@ public:
 	void AddLocalizedVariants();
 
 	FTextureID CreateTexture (int lumpnum, ETextureType usetype=ETextureType::Any);	// Also calls AddTexture
-	FTextureID AddTexture (FTexture *texture);
+	FTextureID AddGameTexture(FGameTexture* texture);
 	FTextureID GetDefaultTexture() const { return DefaultTexture; }
 
 	void LoadTextureX(int wadnum, FMultipatchTextureBuilder &build);
@@ -105,7 +99,7 @@ public:
 	void Init(void (*progressFunc_)(), void (*checkForHacks)(BuildInfo &));
 	void DeleteAll();
 
-	void ReplaceTexture (FTextureID picnum, FTexture *newtexture, bool free);
+	void ReplaceTexture (FTextureID picnum, FGameTexture *newtexture, bool free);
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
@@ -142,7 +136,6 @@ public:
 		return BuildTileData.Last();
 	}
 
-	FTexture* Texture(FTextureID id) { return Textures[id.GetIndex()].Texture->GetTexture(); }
 	FGameTexture* GameTexture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation(FTextureID fromtexnum, FTextureID totexnum);
 
@@ -184,3 +177,8 @@ public:
 };
 
 extern FTextureManager TexMan;
+
+inline FGameTexture* MakeGameTexture(FTexture* tex)
+{
+	return reinterpret_cast<FGameTexture*>(tex);
+}

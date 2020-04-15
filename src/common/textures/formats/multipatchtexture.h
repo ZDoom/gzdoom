@@ -38,9 +38,11 @@ struct TexPart
 class FMultiPatchTexture : public FImageSource
 {
 	friend class FTexture;
+	friend class FGameTexture;
 public:
 	FMultiPatchTexture(int w, int h, const TArray<TexPart> &parts, bool complex, bool textual);
 	bool SupportRemap0() override;
+	int GetNumParts() const { return NumParts; }
 
 protected:
 	int NumParts;

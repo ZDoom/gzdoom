@@ -75,10 +75,11 @@ SWSceneDrawer::SWSceneDrawer()
 	auto texid = TexMan.CheckForTexture("@@palette@@", ETextureType::Any);
 	if (!texid.Exists())
 	{
-		auto tex = new FImageTexture(new FSWPaletteTexture, "@@palette@@");
-		texid = TexMan.AddTexture(tex);
+		// We need to wrap this in a game texture object to have it managed by the texture manager, even though it will never be used as a material.
+		auto tex = MakeGameTexture(new FImageTexture(new FSWPaletteTexture, "@@palette@@"));
+		texid = TexMan.AddGameTexture(tex);
 	}
-	PaletteTexture = TexMan.GetTexture(texid);
+	PaletteTexture = TexMan.GetGameTexture(texid)->GetTexture();
 }
 
 SWSceneDrawer::~SWSceneDrawer()

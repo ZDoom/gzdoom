@@ -144,7 +144,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 		FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
 		if (picnum.isValid())
 		{
-			FTexture *tex = TexMan.GetTexture(picnum);
+			auto tex = TexMan.GetGameTexture(picnum);
 			if (tex && tex->GetSourceLump() >= folderfile)
 			{
 				FFont *CreateSinglePicFont(const char *name);
@@ -170,7 +170,7 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 void V_InitCustomFonts()
 {
 	FScanner sc;
-	FTexture *lumplist[256];
+	FGameTexture *lumplist[256];
 	bool notranslate[256];
 	bool donttranslate;
 	FString namebuffer, templatebuf;
@@ -266,12 +266,12 @@ void V_InitCustomFonts()
 				else
 				{
 					if (format == 1) goto wrong;
-					FTexture **p = &lumplist[*(unsigned char*)sc.String];
+					FGameTexture **p = &lumplist[*(unsigned char*)sc.String];
 					sc.MustGetString();
 					FTextureID texid = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
 					if (texid.Exists())
 					{
-						*p = TexMan.GetTexture(texid);
+						*p = TexMan.GetGameTexture(texid);
 					}
 					else if (fileSystem.GetFileContainer(sc.LumpNum) >= fileSystem.GetIwadNum())
 					{
@@ -307,7 +307,7 @@ void V_InitCustomFonts()
 				}
 				if (count > 0)
 				{
-					FFont *CreateSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
+					FFont *CreateSpecialFont (const char *name, int first, int count, FGameTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
 					FFont *fnt = CreateSpecialFont (namebuffer, first, count, &lumplist[first], notranslate, llump, donttranslate);
 					fnt->SetCursor(cursor);
 					fnt->SetKerning(kerning);

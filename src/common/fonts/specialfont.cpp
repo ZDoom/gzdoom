@@ -45,7 +45,7 @@
 class FSpecialFont : public FFont
 {
 public:
-	FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
+	FSpecialFont (const char *name, int first, int count, FGameTexture **lumplist, const bool *notranslate, int lump, bool donttranslate);
 
 	void LoadTranslations();
 
@@ -60,13 +60,13 @@ protected:
 //
 //==========================================================================
 
-FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) 
+FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) 
 	: FFont(lump)
 {
 	int i;
-	TArray<FTexture *> charlumps(count, true);
+	TArray<FGameTexture *> charlumps(count, true);
 	int maxyoffs;
-	FTexture *pic;
+	FGameTexture *pic;
 
 	memcpy(this->notranslate, notranslate, 256*sizeof(bool));
 
@@ -87,8 +87,8 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 		pic = charlumps[i] = lumplist[i];
 		if (pic != nullptr)
 		{
-			int height = pic->GetDisplayHeight();
-			int yoffs = pic->GetDisplayTopOffset();
+			int height = (int)pic->GetDisplayHeight();
+			int yoffs = (int)pic->GetDisplayTopOffset();
 
 			if (yoffs > maxyoffs)
 			{
@@ -104,20 +104,20 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 		if (charlumps[i] != nullptr)
 		{
 			auto pic = charlumps[i];
-			Chars[i].OriginalPic = new FImageTexture(pic->GetImage(), "");
+			Chars[i].OriginalPic = MakeGameTexture(new FImageTexture(pic->GetTexture()->GetImage(), ""));
 			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
 			Chars[i].OriginalPic->CopySize(pic);
-			TexMan.AddTexture(Chars[i].OriginalPic);
+			TexMan.AddGameTexture(Chars[i].OriginalPic);
 
 			if (!noTranslate)
 			{
-				Chars[i].TranslatedPic = new FImageTexture(new FFontChar1 (charlumps[i]->GetImage()), "");
+				Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1 (charlumps[i]->GetTexture()->GetImage()), ""));
 				Chars[i].TranslatedPic->CopySize(charlumps[i]);
 				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
-				TexMan.AddTexture(Chars[i].TranslatedPic);
+				TexMan.AddGameTexture(Chars[i].TranslatedPic);
 			}
 			else Chars[i].TranslatedPic = Chars[i].OriginalPic;
-			Chars[i].XMove = Chars[i].TranslatedPic->GetDisplayWidth();
+			Chars[i].XMove = (int)Chars[i].TranslatedPic->GetDisplayWidth();
 		}
 		else
 		{
@@ -167,7 +167,7 @@ void FSpecialFont::LoadTranslations()
 	{
 		if (Chars[i].TranslatedPic)
 		{
-			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage());
+			FFontChar1 *pic = static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetTexture()->GetImage());
 			if (pic)
 			{
 				pic->SetSourceRemap(nullptr); // Force the FFontChar1 to return the same pixels as the base texture
@@ -197,7 +197,7 @@ void FSpecialFont::LoadTranslations()
 	for (i = 0; i < count; i++)
 	{
 		if(Chars[i].TranslatedPic)
-			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
+			static_cast<FFontChar1 *>(Chars[i].TranslatedPic->GetTexture()->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
 	BuildTranslations(Luminosity.Data(), identity, &TranslationParms[0][0], TotalColors, nullptr, [=](FRemapTable* remap)
@@ -217,7 +217,7 @@ void FSpecialFont::LoadTranslations()
 	ActiveColors = TotalColors;
 }
 
-FFont *CreateSpecialFont (const char *name, int first, int count, FTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) 
+FFont *CreateSpecialFont (const char *name, int first, int count, FGameTexture **lumplist, const bool *notranslate, int lump, bool donttranslate) 
 {
 	return new FSpecialFont(name, first, count, lumplist, notranslate, lump, donttranslate);
 }

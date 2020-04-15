@@ -96,7 +96,7 @@ static void ParseVavoomSkybox()
 					sc.ScriptMessage("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->GetName().GetChars());
 					error = true;
 				}
-				sb->faces[facecount] = tex->GetTexture();
+				sb->faces[facecount] = tex;
 				sc.MustGetStringName("}");
 			}
 			facecount++;
@@ -108,7 +108,7 @@ static void ParseVavoomSkybox()
 		sb->SetSize();
 		if (!error)
 		{
-			TexMan.AddTexture(sb);
+			TexMan.AddGameTexture(MakeGameTexture(sb));
 		}
 	}
 }
@@ -1004,7 +1004,7 @@ class GLDefsParser
 			sc.MustGetString();
 			if (facecount<6) 
 			{
-				sb->faces[facecount] = TexMan.GetTexture(TexMan.GetTextureID(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable));
+				sb->faces[facecount] = TexMan.GetGameTexture(TexMan.GetTextureID(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_Overridable));
 			}
 			facecount++;
 		}
@@ -1013,7 +1013,7 @@ class GLDefsParser
 			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->GetName().GetChars());
 		}
 		sb->SetSize();
-		TexMan.AddTexture(sb);
+		TexMan.AddGameTexture(MakeGameTexture(sb));
 	}
 
 	//===========================================================================

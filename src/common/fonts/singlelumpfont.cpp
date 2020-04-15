@@ -167,10 +167,10 @@ FSingleLumpFont::FSingleLumpFont (const char *name, int lump) : FFont(lump)
 
 void FSingleLumpFont::CreateFontFromPic (FTextureID picnum)
 {
-	FTexture *pic = TexMan.GetTexture(picnum);
+	auto pic = TexMan.GetGameTexture(picnum);
 
-	FontHeight = pic->GetDisplayHeight ();
-	SpaceWidth = pic->GetDisplayWidth ();
+	FontHeight = (int)pic->GetDisplayHeight ();
+	SpaceWidth = (int)pic->GetDisplayWidth ();
 	GlobalKerning = 0;
 
 	FirstChar = LastChar = 'A';
@@ -222,7 +222,7 @@ void FSingleLumpFont::LoadTranslations()
 	for(unsigned int i = 0;i < count;++i)
 	{
 		if(Chars[i].TranslatedPic)
-			static_cast<FFontChar2*>(Chars[i].TranslatedPic->GetImage())->SetSourceRemap(PatchRemap);
+			static_cast<FFontChar2*>(Chars[i].TranslatedPic->GetTexture()->GetImage())->SetSourceRemap(PatchRemap);
 	}
 
 	BuildTranslations (luminosity, useidentity ? identity : nullptr, ranges, ActiveColors, usepalette ? local_palette : nullptr);
@@ -353,9 +353,9 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		}
 		else
 		{
-			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight));
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight)));
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
-			TexMan.AddTexture(Chars[i].TranslatedPic);
+			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 			do
 			{
 				int8_t code = *data_p++;
@@ -483,15 +483,15 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 		{ // Empty character: skip it.
 			continue;
 		}
-		auto tex = new FImageTexture(new FFontChar2(lump, int(chardata + chari + 6 - data),
+		auto tex = MakeGameTexture(new FImageTexture(new FFontChar2(lump, int(chardata + chari + 6 - data),
 			chardata[chari+1],	// width
 			chardata[chari+2],	// height
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
-		));
+		)));
 		tex->SetUseType(ETextureType::FontChar);
 		Chars[chardata[chari] - FirstChar].TranslatedPic = tex;
-		TexMan.AddTexture(tex);
+		TexMan.AddGameTexture(tex);
 	}
 
 	// If the font did not define a space character, determine a suitable space width now.
@@ -556,10 +556,10 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 
 		if(!Chars[i].TranslatedPic)
 		{
-			Chars[i].TranslatedPic = new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight));
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight)));
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 			Chars[i].XMove = SpaceWidth;
-			TexMan.AddTexture(Chars[i].TranslatedPic);
+			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 		}
 
 		// Advance to next char's data and count the used colors.

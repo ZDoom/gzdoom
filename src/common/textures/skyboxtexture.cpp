@@ -40,7 +40,7 @@ FSkyBox::FSkyBox(const char *name)
 	FTextureID texid = TexMan.CheckForTexture(name, ETextureType::Wall);
 	if (texid.isValid())
 	{
-		previous = TexMan.GetTexture(texid);
+		previous = TexMan.GetGameTexture(texid);
 	}
 	else previous = nullptr;
 	faces[0]=faces[1]=faces[2]=faces[3]=faces[4]=faces[5] = nullptr;
@@ -58,9 +58,9 @@ FSkyBox::FSkyBox(const char *name)
 void FSkyBox::SetSize()
 {
 	if (!previous && faces[0]) previous = faces[0];
-	if (previous && previous->GetImage())
+	if (previous && previous->GetTexture()->GetImage())
 	{
-		SetImage(previous->GetImage());
+		SetImage(previous->GetTexture()->GetImage());
 		SetFromImage();
 	}
 }

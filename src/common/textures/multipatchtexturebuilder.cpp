@@ -152,7 +152,7 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	tex->bNoDecals = buildinfo.bNoDecals;
 	tex->SourceLump = buildinfo.DefinitionLump;
 	buildinfo.tex = tex;
-	TexMan.AddTexture(tex);
+	TexMan.AddGameTexture(MakeGameTexture(tex));
 }
 
 //==========================================================================
@@ -808,18 +808,18 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 		}
 		else
 		{
-			FTexture *tex = TexMan.GetTexture(texno);
+			FGameTexture *tex = TexMan.GetGameTexture(texno);
 
 			if (tex != nullptr && tex->isValid())
 			{
 				//We cannot set the image source yet. First all textures need to be resolved.
-				buildinfo.Inits[i].Texture = tex;
-				buildinfo.tex->bComplex |= tex->bComplex;
-				buildinfo.bComplex |= tex->bComplex;
+				buildinfo.Inits[i].Texture = tex->GetTexture();
+				buildinfo.tex->bComplex |= tex->GetTexture()->bComplex; // this one's NOT a material property! It must remain on the texture image.
+				buildinfo.bComplex |= tex->GetTexture()->bComplex;
 				if (buildinfo.Inits[i].UseOffsets)
 				{
-					buildinfo.Parts[i].OriginX -= tex->GetLeftOffset(0);
-					buildinfo.Parts[i].OriginY -= tex->GetTopOffset(0);
+					buildinfo.Parts[i].OriginX -= tex->GetTexelLeftOffset(0);
+					buildinfo.Parts[i].OriginY -= tex->GetTexelTopOffset(0);
 				}
 			}
 			else

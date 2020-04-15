@@ -162,8 +162,8 @@ protected:
 	bool forceremap = false;
 	struct CharData
 	{
-		FTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
-		FTexture *OriginalPic = nullptr;	// Texture for use with CR_UNTRANSLATED or font colorization. 
+		FGameTexture *TranslatedPic = nullptr;	// Texture for use with font translations.
+		FGameTexture *OriginalPic = nullptr;	// Texture for use with CR_UNTRANSLATED or font colorization. 
 		int XMove = INT_MIN;
 	};
 	TArray<CharData> Chars;

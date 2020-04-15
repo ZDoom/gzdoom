@@ -119,7 +119,6 @@ FTexture::FTexture (const char *name, int lumpnum)
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bFullNameTexture(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
-	tempGameTexture = reinterpret_cast<FGameTexture*>(this);
 	bBrightmapChecked = false;
 	bGlowing = false;
 	bAutoGlowing = false;
@@ -188,14 +187,16 @@ FBitmap FTexture::GetBgraBitmap(const PalEntry *remap, int *ptrans)
 //
 //==========================================================================
 
-FTexture *FTexture::GetRawTexture()
+FGameTexture *FGameTexture::GetRawTexture()
 {
-	if (OffsetLess) return OffsetLess;
+	auto tex = GetTexture();
+	if (tex->OffsetLess) return tex->OffsetLess;
 	// Reject anything that cannot have been a single-patch multipatch texture in vanilla.
-	auto image = static_cast<FMultiPatchTexture *>(GetImage());
-	if (bMultiPatch != 1 || UseType != ETextureType::Wall || Scale.X != 1 || Scale.Y != 1 || bWorldPanning || image == nullptr || image->NumParts != 1 || _TopOffset[0] == 0)
+	auto image = static_cast<FMultiPatchTexture *>(tex->GetImage());
+	if (tex->bMultiPatch != 1 || GetUseType() != ETextureType::Wall || tex->Scale.X != 1 || tex->Scale.Y != 1 || 
+		useWorldPanning() || image == nullptr || image->GetNumParts() != 1 || tex->_TopOffset[0] == 0)
 	{
-		OffsetLess = this;
+		tex->OffsetLess = this;
 		return this;
 	}
 	// Set up a new texture that directly references the underlying patch.
@@ -203,16 +204,17 @@ FTexture *FTexture::GetRawTexture()
 	FImageSource *source = image->Parts[0].Image;
 
 	// Size must match for this to work as intended
-	if (source->GetWidth() != Width || source->GetHeight() != Height)
+	if (source->GetWidth() != GetTexelWidth() || source->GetHeight() != GetTexelHeight())
 	{
-		OffsetLess = this;
+		tex->OffsetLess = this;
 		return this;
 	}
 
 
-	OffsetLess = new FImageTexture(source, "");
-	TexMan.AddTexture(OffsetLess);
-	return OffsetLess;
+	tex->OffsetLess = MakeGameTexture(new FImageTexture(source, ""));
+	// todo: This must also copy all layers from the base texture.
+	TexMan.AddGameTexture(tex->OffsetLess);
+	return tex->OffsetLess;
 }
 
 //==========================================================================
@@ -221,22 +223,23 @@ FTexture *FTexture::GetRawTexture()
 //
 //==========================================================================
 
-FTexture* FTexture::GetFrontSkyLayer()
+FGameTexture* FGameTexture::GetFrontSkyLayer()
 {
-	if (FrontSkyLayer) return FrontSkyLayer;
+	auto tex = GetTexture();
+	if (tex->FrontSkyLayer) return tex->FrontSkyLayer;
 	// Reject anything that cannot have been a front layer for the sky in Hexen.
-	auto image = GetImage();
-	if (image == nullptr || !image->SupportRemap0() || UseType != ETextureType::Wall || Scale.X != 1 || Scale.Y != 1 || bWorldPanning || _TopOffset[0] != 0 ||
+	auto image = tex->GetImage();
+	if (image == nullptr || !image->SupportRemap0() || GetUseType() != ETextureType::Wall || tex->Scale.X != 1 || tex->Scale.Y != 1 || useWorldPanning() || tex->_TopOffset[0] != 0 ||
 		image->GetWidth() != GetTexelWidth() || image->GetHeight() != GetTexelHeight())
 	{
-		FrontSkyLayer = this;
+		tex->FrontSkyLayer = this;
 		return this;
 	}
 
-	FrontSkyLayer = new FImageTexture(image, "");
-	TexMan.AddTexture(FrontSkyLayer);
-	FrontSkyLayer->bNoRemap0 = true;
-	return FrontSkyLayer;
+	tex->FrontSkyLayer = MakeGameTexture(new FImageTexture(image, ""));
+	TexMan.AddGameTexture(tex->FrontSkyLayer);
+	tex->FrontSkyLayer->GetTexture()->bNoRemap0 = true;
+	return tex->FrontSkyLayer;
 }
 
 
@@ -424,7 +427,7 @@ void FTexture::CreateDefaultBrightmap()
 					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", Name.GetChars());
 					Brightmap = CreateBrightmapTexture(static_cast<FImageTexture*>(this)->GetImage());
 					bBrightmapChecked = true;
-					TexMan.AddTexture(Brightmap);
+					TexMan.AddGameTexture(MakeGameTexture(Brightmap));
 					return;
 				}
 			}

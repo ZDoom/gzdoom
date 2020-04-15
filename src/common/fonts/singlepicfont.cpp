@@ -72,11 +72,11 @@ FSinglePicFont::FSinglePicFont(const char *picname) :
 		I_FatalError ("%s is not a font or texture", picname);
 	}
 
-	FTexture *pic = TexMan.GetTexture(picnum);
+	auto pic = TexMan.GetGameTexture(picnum);
 
 	FontName = picname;
-	FontHeight = pic->GetDisplayHeight();
-	SpaceWidth = pic->GetDisplayWidth();
+	FontHeight = (int)pic->GetDisplayHeight();
+	SpaceWidth = (int)pic->GetDisplayWidth();
 	GlobalKerning = 0;
 	FirstChar = LastChar = 'A';
 	ActiveColors = 0;

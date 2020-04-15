@@ -382,8 +382,6 @@ protected:
 	// Front sky layer variant where color 0 is transparent
 	FGameTexture* FrontSkyLayer = nullptr;
 	public:
-	// Paletted variant
-	FGameTexture *PalVersion = nullptr;
 	// Material layers
 	FTexture *Brightmap = nullptr;
 	FTexture* Detailmap = nullptr;
@@ -482,10 +480,6 @@ public:
 	FMaterial* GetMaterial(int num)
 	{
 		return Material[num];
-	}
-	FGameTexture* GetPalVersion()
-	{
-		return PalVersion;
 	}
 
 private:
@@ -724,7 +718,6 @@ public:
 	}
 
 	// These substitutions must be done on the material level because their sizes can differ. Substitution must happen before any coordinate calculations take place.
-	FGameTexture* GetPalVersion() { return wrapped.GetPalVersion(); }
 	FGameTexture* GetRawTexture();
 	FGameTexture* GetFrontSkyLayer();
 

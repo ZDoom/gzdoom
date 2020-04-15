@@ -612,18 +612,10 @@ CUSTOM_CVAR(Bool, vid_nopalsubstitutions, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	R_InitSkyMap();
 }
 
-static FGameTexture* PalCheck(FGameTexture* tex)
-{
-	// In any true color mode this shouldn't do anything.
-	if (vid_nopalsubstitutions || V_IsTrueColor() || tex == nullptr) return tex;
-	auto palvers = tex->GetPalVersion();
-	if (palvers) return palvers;
-	return tex;
-}
-
 FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, FLevelLocals *checkcompat, bool allownull, bool frontsky)
 {
-	auto tex = PalCheck(TexMan.GetGameTexture(texid, true));
+	bool needpal = !vid_nopalsubstitutions && !V_IsTrueColor();
+	auto tex = TexMan.GetPalettedTexture(texid, true, needpal);
 	if (tex == nullptr || (!allownull && !tex->isValid())) return nullptr;
 	if (frontsky)
 	{

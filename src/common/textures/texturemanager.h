@@ -24,14 +24,27 @@ public:
 private:
 	int ResolveLocalizedTexture(int texnum);
 
-	FGameTexture *InternalGetTexture(int texnum, bool animate, bool localize)
+	int ResolveTextureIndex(int texnum, bool animate, bool localize)
 	{
-		if ((unsigned)texnum >= Textures.Size()) return nullptr;
+		if ((unsigned)texnum >= Textures.Size()) return -1;
 		if (animate) texnum = Translation[texnum];
 		if (localize && Textures[texnum].HasLocalization) texnum = ResolveLocalizedTexture(texnum);
+		return texnum;
+	}
+
+	FGameTexture *InternalGetTexture(int texnum, bool animate, bool localize)
+	{
+		texnum = ResolveTextureIndex(texnum, animate, localize);
+		if (texnum == -1) return nullptr;
 		return Textures[texnum].Texture;
 	}
+
 public:
+	FTextureID ResolveTextureIndex(FTextureID texid, bool animate, bool localize)
+	{
+		return FSetTextureID(ResolveTextureIndex(texid.GetIndex(), animate, localize));
+	}
+
 	// This only gets used in UI code so we do not need PALVERS handling.
 	FGameTexture* GetGameTextureByName(const char *name, bool animate = false)
 	{
@@ -44,6 +57,14 @@ public:
 		return InternalGetTexture(texnum.GetIndex(), animate, true);
 	}
 	
+	FGameTexture* GetPalettedTexture(FTextureID texnum, bool animate = false, bool allowsubstitute = true)
+	{
+		auto texid = ResolveTextureIndex(texnum.GetIndex(), animate, true);
+		if (texid == -1) return nullptr;
+		if (allowsubstitute && Textures[texid].Paletted > 0) texid = Textures[texid].Paletted;
+		return Textures[texid].Texture;
+	}
+
 	FGameTexture* GameByIndex(int i, bool animate = false)
 	{
 		return InternalGetTexture(i, animate, true);
@@ -148,7 +169,8 @@ private:
 
 	struct TextureHash
 	{
-		FGameTexture *Texture;
+		FGameTexture* Texture;
+		int Paletted;	// redirection to paletted variant
 		int HashNext;
 		bool HasLocalization;
 	};

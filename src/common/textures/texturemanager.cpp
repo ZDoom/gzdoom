@@ -396,7 +396,7 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture)
 		hash = -1;
 	}
 
-	TextureHash hasher = { texture, hash };
+	TextureHash hasher = { texture, -1, hash };
 	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
 	if (bucket >= 0) HashFirst[bucket] = trans;
@@ -1166,14 +1166,11 @@ void FTextureManager::InitPalettedVersions()
 			FTextureID pic2 = CheckForTexture(sc.String, ETextureType::Any);
 			if (!pic2.isValid())
 			{
-				sc.ScriptMessage("Unknown texture %s to use as replacement", sc.String);
+				sc.ScriptMessage("Unknown texture %s to use as paletted replacement", sc.String);
 			}
 			if (pic1.isValid() && pic2.isValid())
 			{
-				auto owner = GetGameTexture(pic1);
-				auto owned = GetGameTexture(pic2);
-
-				if (owner && owned) owner->GetTexture()->PalVersion = owned;
+				Textures[pic1.GetIndex()].Paletted = pic2.GetIndex();
 			}
 		}
 	}

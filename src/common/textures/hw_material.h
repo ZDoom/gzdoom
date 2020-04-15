@@ -59,7 +59,6 @@ public:
 
 
 	static FMaterial *ValidateTexture(FGameTexture * tex, bool expand, bool create = true);
-	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans, bool create = true);
 	const TArray<FTexture*> &GetLayerArray() const
 	{
 		return mTextureLayers;

@@ -179,12 +179,6 @@ FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, bool expand, bool cr
 	return NULL;
 }
 
-FMaterial * FMaterial::ValidateTexture(FTextureID no, bool expand, bool translate, bool create)
-{
-	return ValidateTexture(TexMan.GetGameTexture(no, translate), expand, create);
-}
-
-
 void DeleteMaterial(FMaterial* mat)
 {
 	delete mat;

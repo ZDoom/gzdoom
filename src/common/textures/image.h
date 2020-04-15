@@ -57,7 +57,8 @@ protected:
 
 
 public:
-	virtual bool SupportRemap0() { return false; }					// Unfortunate hackery that's needed for Hexen's skies.
+	virtual bool SupportRemap0() { return false; }		// Unfortunate hackery that's needed for Hexen's skies. Only the image can know about the needed parameters
+	virtual bool IsRawCompatible() { return true; }		// Same thing for mid texture compatibility handling. Can only be determined by looking at the composition data which is private to the image.
 
 	void CopySize(FImageSource &other)
 	{

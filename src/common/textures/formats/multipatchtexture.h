@@ -41,8 +41,18 @@ class FMultiPatchTexture : public FImageSource
 	friend class FGameTexture;
 public:
 	FMultiPatchTexture(int w, int h, const TArray<TexPart> &parts, bool complex, bool textual);
-	bool SupportRemap0() override;
 	int GetNumParts() const { return NumParts; }
+	// Query some needed info for texture hack support.
+	bool SupportRemap0() override;
+	bool IsRawCompatible() override 
+	{
+		return NumParts != 1 || Parts[0].OriginY == 0 || bTextual;
+	}
+	FImageSource* GetImageForPart(int num)
+	{
+		if (num >= 0 && num < NumParts) return Parts[num].Image;
+		return nullptr;
+	}
 
 protected:
 	int NumParts;

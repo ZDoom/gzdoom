@@ -396,7 +396,7 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture, bool addtohas
 		hash = -1;
 	}
 
-	TextureHash hasher = { texture, -1, -1, hash };
+	TextureHash hasher = { texture, -1, -1, -1, hash };
 	int trans = Textures.Push (hasher);
 	Translation.Push (trans);
 	if (bucket >= 0) HashFirst[bucket] = trans;
@@ -1178,6 +1178,50 @@ void FTextureManager::InitPalettedVersions()
 
 //==========================================================================
 //
+// 
+//
+//==========================================================================
+
+FTextureID FTextureManager::GetRawTexture(FTextureID texid)
+{
+	int texidx = texid.GetIndex();
+	if ((unsigned)texidx >= Textures.Size()) return texid;
+	if (Textures[texidx].FrontSkyLayer != -1) return FSetTextureID(Textures[texidx].FrontSkyLayer);
+
+	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
+	auto tex = Textures[texidx].Texture;
+	auto ttex = tex->GetTexture();
+	auto image = tex->GetTexture()->GetImage();
+	// Reject anything that cannot have been a single-patch multipatch texture in vanilla.
+	if (image == nullptr || image->IsRawCompatible() || tex->GetUseType() != ETextureType::Wall || tex->GetTexelWidth() != tex->GetDisplayWidth() ||
+		tex->GetTexelHeight() != tex->GetDisplayHeight())
+	{
+		Textures[texidx].RawTexture = texidx;
+		return texid;
+	}
+
+	// Let the hackery begin
+	auto mptimage = static_cast<FMultiPatchTexture*>(image);
+	auto source = mptimage->GetImageForPart(0);
+
+	// Size must match for this to work as intended
+	if (source->GetWidth() != tex->GetTexelWidth() || source->GetHeight() != tex->GetTexelHeight())
+	{
+		Textures[texidx].RawTexture = texidx;
+		return texid;
+	}
+
+	// Todo: later this can just link to the already existing texture for this source graphic, once it can be retrieved through the image's SourceLump index
+	auto RawTexture = MakeGameTexture(new FImageTexture(source, ""));
+	texid = TexMan.AddGameTexture(RawTexture);
+	Textures[texidx].RawTexture = texid.GetIndex();
+	Textures[texid.GetIndex()].RawTexture = texid.GetIndex();
+	return texid;
+}
+
+
+//==========================================================================
+//
 // Same shit for a different hack, this time Hexen's front sky layers.
 //
 //==========================================================================
@@ -1185,7 +1229,7 @@ void FTextureManager::InitPalettedVersions()
 FTextureID FTextureManager::GetFrontSkyLayer(FTextureID texid)
 {
 	int texidx = texid.GetIndex();
-	if (texidx >= Textures.Size()) return texid;
+	if ((unsigned)texidx >= Textures.Size()) return texid;
 	if (Textures[texidx].FrontSkyLayer != -1) return FSetTextureID(Textures[texidx].FrontSkyLayer);
 
 	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
@@ -1199,10 +1243,11 @@ FTextureID FTextureManager::GetFrontSkyLayer(FTextureID texid)
 	}
 
 	// Set this up so that it serializes to the same info as the base texture - this is needed to restore it on load.
+	// But do not link the new texture into the hash chain!
 	auto FrontSkyLayer = MakeGameTexture(new FImageTexture(image, tex->GetName()));
 	FrontSkyLayer->SetUseType(tex->GetUseType());
 	FrontSkyLayer->GetTexture()->bNoRemap0 = true;
-	texid = TexMan.AddGameTexture(FrontSkyLayer);
+	texid = TexMan.AddGameTexture(FrontSkyLayer, false);
 	Textures[texidx].FrontSkyLayer = texid.GetIndex();
 	Textures[texid.GetIndex()].FrontSkyLayer = texid.GetIndex();	// also let it refer to itself as its front sky layer, in case for repeated InitSkyMap calls.
 	return texid;
@@ -1442,4 +1487,10 @@ FTextureID FTextureID::operator +(int offset) throw()
 	if (!isValid()) return *this;
 	if (texnum + offset >= TexMan.NumTextures()) return FTextureID(-1);
 	return FTextureID(texnum + offset);
+}
+
+
+CCMD(texinfo)
+{
+	Printf("Sizeof texture = %d\n", sizeof(FTexture));
 }

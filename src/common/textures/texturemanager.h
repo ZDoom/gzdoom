@@ -76,6 +76,7 @@ public:
 
 	void FlushAll();
 	FTextureID GetFrontSkyLayer(FTextureID);
+	FTextureID GetRawTexture(FTextureID);
 
 
 	enum
@@ -171,8 +172,9 @@ private:
 	struct TextureHash
 	{
 		FGameTexture* Texture;
-		int Paletted;	// redirection to paletted variant
-		int FrontSkyLayer;
+		int Paletted;		// redirection to paletted variant
+		int FrontSkyLayer;	// and front sky layer,
+		int RawTexture;		
 		int HashNext;
 		bool HasLocalization;
 	};

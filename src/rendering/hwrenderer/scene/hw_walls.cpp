@@ -2078,7 +2078,9 @@ void HWWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		{
 			if (di->Level->i_compatflags & COMPATF_MASKEDMIDTEX)
 			{
-				tex = tex->GetRawTexture();
+				auto rawtexid = TexMan.GetRawTexture(tex->GetID());
+				auto rawtex = TexMan.GetGameTexture(rawtexid);
+				if (rawtex) tex = rawtex;
 			}
 			texture = tex;
 		}

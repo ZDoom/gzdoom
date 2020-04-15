@@ -181,42 +181,6 @@ FBitmap FTexture::GetBgraBitmap(const PalEntry *remap, int *ptrans)
 	return bmp;
 }
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-FGameTexture *FGameTexture::GetRawTexture()
-{
-	auto tex = GetTexture();
-	if (tex->OffsetLess) return tex->OffsetLess;
-	// Reject anything that cannot have been a single-patch multipatch texture in vanilla.
-	auto image = static_cast<FMultiPatchTexture *>(tex->GetImage());
-	if (tex->bMultiPatch != 1 || GetUseType() != ETextureType::Wall || tex->Scale.X != 1 || tex->Scale.Y != 1 || 
-		useWorldPanning() || image == nullptr || image->GetNumParts() != 1 || tex->_TopOffset[0] == 0)
-	{
-		tex->OffsetLess = this;
-		return this;
-	}
-	// Set up a new texture that directly references the underlying patch.
-	// From here we cannot retrieve the original texture made for it, so just create a new one.
-	FImageSource *source = image->Parts[0].Image;
-
-	// Size must match for this to work as intended
-	if (source->GetWidth() != GetTexelWidth() || source->GetHeight() != GetTexelHeight())
-	{
-		tex->OffsetLess = this;
-		return this;
-	}
-
-
-	tex->OffsetLess = MakeGameTexture(new FImageTexture(source, ""));
-	// todo: This must also copy all layers from the base texture.
-	TexMan.AddGameTexture(tex->OffsetLess);
-	return tex->OffsetLess;
-}
-
 void FTexture::SetDisplaySize(int fitwidth, int fitheight)
 {
 	Scale.X = double(Width) / fitwidth;

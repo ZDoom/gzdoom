@@ -617,7 +617,12 @@ FSoftwareTexture* GetPalettedSWTexture(FTextureID texid, bool animate, bool chec
 	bool needpal = !vid_nopalsubstitutions && !V_IsTrueColor();
 	auto tex = TexMan.GetPalettedTexture(texid, true, needpal);
 	if (tex == nullptr || (!allownull && !tex->isValid())) return nullptr;
-	if (checkcompat) tex = tex->GetRawTexture();
+	if (checkcompat)
+	{
+		auto rawtexid = TexMan.GetRawTexture(tex->GetID());
+		auto rawtex = TexMan.GetGameTexture(rawtexid);
+		if (rawtex) tex = rawtex;
+	}
 	return GetSoftwareTexture(tex);
 }
 

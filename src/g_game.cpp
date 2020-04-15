@@ -1707,7 +1707,18 @@ void FLevelLocals::DoReborn (int playernum, bool freshbot)
 	}
 	else
 	{
-		bool isUnfriendly = players[playernum].mo && !(players[playernum].mo->flags & MF_FRIENDLY);
+		bool isUnfriendly;
+		auto p = players[playernum].mo->player;
+		if (p->cls == NULL)
+		{
+			// this shouldn't ever happen! It's just a fall-through in case it does...
+			isUnfriendly = players[playernum].mo && !(players[playernum].mo->GetDefault()->flags & MF_FRIENDLY);
+		}
+		else
+		{
+			isUnfriendly = !(GetDefaultByType(p->cls)->flags & MF_FRIENDLY);
+		}
+
 
 		// respawn at the start
 		// first disassociate the corpse

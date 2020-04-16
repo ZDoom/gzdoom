@@ -103,7 +103,7 @@ void FTextureManager::DeleteAll()
 //==========================================================================
 //
 // Flushes all hardware dependent data.
-// Thia must not, under any circumstances, delete the wipe textures, because
+// This must not, under any circumstances, delete the wipe textures, because
 // all CCMDs triggering a flush can be executed while a wipe is in progress
 //
 // This now also deletes the software textures because having the software
@@ -118,7 +118,7 @@ void FTextureManager::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			Textures[i].Texture->GetTexture()->CleanHardwareTextures(true, true);
+			Textures[i].Texture->GetTexture()->CleanHardwareTextures(true);
 			delete Textures[i].Texture->GetTexture()->SoftwareTexture;
 			Textures[i].Texture->GetTexture()->SoftwareTexture = nullptr;
 		}

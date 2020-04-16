@@ -425,22 +425,6 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 	if (Scale.X >= 2 && Scale.Y >= 2)
 		return;
 
-	switch (UseType)
-	{
-	case ETextureType::Sprite:
-	case ETextureType::SkinSprite:
-		if (!(gl_texture_hqresize_targets & 2)) return;
-		break;
-
-	case ETextureType::FontChar:
-		if (!(gl_texture_hqresize_targets & 4)) return;
-		break;
-
-	default:
-		if (!(gl_texture_hqresize_targets & 1)) return;
-		break;
-	}
-
 	int type = gl_texture_hqresizemode;
 	int mult = gl_texture_hqresizemult;
 #ifdef HAVE_MMX

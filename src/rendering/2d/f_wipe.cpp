@@ -373,8 +373,8 @@ bool Wiper_Burn::Run(int ticks)
 		done = (Density < 0);
 	}
 
-	BurnTexture->CleanHardwareTextures(true, true);
-	endScreen->GetTexture()->CleanHardwareTextures(false, false);
+	BurnTexture->CleanHardwareTextures(true);
+	endScreen->GetTexture()->CleanHardwareTextures(false);	// this only cleans the descriptor sets for the Vulkan backend. Needs to be done better.
 
 	const uint8_t *src = BurnArray;
 	uint32_t *dest = (uint32_t *)BurnTexture->GetBuffer();

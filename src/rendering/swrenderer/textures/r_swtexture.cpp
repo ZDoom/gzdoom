@@ -57,7 +57,7 @@ FSoftwareTexture::FSoftwareTexture(FGameTexture *tex)
 	// calculate the real size after running the scaler.
 	auto info = mSource->CreateTexBuffer(0, CTF_CheckOnly| mBufferFlags);
 	mPhysicalWidth = info.mWidth;
-	mPhysicalHeight = info.mHeight;
+	mPhysicalHeight = info.mHeight; 
 	mPhysicalScale = tex->GetTexelWidth() > 0 ? mPhysicalWidth / tex->GetTexelWidth() : mPhysicalWidth;
 	Scale.X = (double)tex->GetTexelWidth() / tex->GetDisplayWidth();
 	Scale.Y = (double)tex->GetTexelHeight() / tex->GetDisplayHeight();

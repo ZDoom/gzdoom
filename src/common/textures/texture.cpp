@@ -49,6 +49,8 @@
 #include "texturemanager.h"
 #include "c_cvars.h"
 
+EXTERN_CVAR(Int, gl_texture_hqresize_targets)
+
 // Wrappers to keep the definitions of these classes out of here.
 void DeleteMaterial(FMaterial* mat);
 IHardwareTexture* CreateHardwareTexture();
@@ -686,10 +688,27 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 	result.mWidth = W;
 	result.mHeight = H;
 
+	bool upscale = true;
+	switch (UseType)
+	{
+	case ETextureType::Sprite:
+	case ETextureType::SkinSprite:
+		if (!(gl_texture_hqresize_targets & 2)) upscale = false;
+		break;
+
+	case ETextureType::FontChar:
+		if (!(gl_texture_hqresize_targets & 4)) upscale = false;
+		break;
+
+	default:
+		if (!(gl_texture_hqresize_targets & 1)) upscale = false;
+		break;
+	}
+
 	// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
 	if (GetImage() && flags & CTF_ProcessData) 
 	{
-		CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
+		if (upscale) CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
 		if (!checkonly) ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
 	}
 
@@ -717,9 +736,9 @@ bool FTexture::DetermineTranslucency()
 }
 
 
-void FTexture::CleanHardwareTextures(bool cleannormal, bool cleanexpanded)
+void FTexture::CleanHardwareTextures(bool reallyclean)
 {
-	SystemTextures.Clean(cleannormal, cleanexpanded);
+	SystemTextures.Clean(reallyclean, reallyclean);
 }
 
 //===========================================================================

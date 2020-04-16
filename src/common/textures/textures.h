@@ -632,9 +632,13 @@ public:
 class FGameTexture
 {
 	FTexture *wrapped;
+	int8_t shouldUpscaleFlag = -1;
 public:
 	FGameTexture(FTexture* wrap) : wrapped(wrap) {}
 	~FGameTexture();
+
+	void SetUpscaleFlag(int what) { shouldUpscaleFlag = what; }
+	int GetUpscaleFlag() { return shouldUpscaleFlag; }
 
 	FTexture* GetTexture() { return wrapped; }
 	int GetSourceLump() const { return wrapped->GetSourceLump(); }
@@ -755,7 +759,16 @@ inline FGameTexture* MakeGameTexture(FTexture* tex)
 	return new FGameTexture(tex);
 }
 
-bool shouldUpscale(FGameTexture* tex, ETextureType UseType);
+bool calcShouldUpscale(FGameTexture* tex, ETextureType UseType);
+inline bool shouldUpscale(FGameTexture* tex, ETextureType UseType)
+{
+	auto f = tex->GetUpscaleFlag();
+	// Cache this value in the texture to save time because it is very frequently polled.
+	if (f != -1) return f;
+	auto res = calcShouldUpscale(tex, UseType);
+	tex->SetUpscaleFlag(res);
+	return res;
+}
 
 #endif
 

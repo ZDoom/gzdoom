@@ -405,6 +405,7 @@ static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int 
 //  the upsampled buffer.
 //
 //===========================================================================
+
 void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly)
 {
 	// [BB] Make sure that inWidth and inHeight denote the size of
@@ -482,8 +483,17 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 	texbuffer.mContentId = contentId.id;
 }
 
-bool shouldUpscale(FGameTexture *tex, ETextureType UseType)
+//===========================================================================
+// 
+// This was pulled out of the above function to allow running these
+// checks before the texture is passed to the render state.
+//
+//===========================================================================
+
+bool calcShouldUpscale(FGameTexture *tex, ETextureType UseType)
 {
+	if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult == 1) return false;
+
 	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
 	const int maxInputSize = gl_texture_hqresize_maxinputsize;
 	if (tex->GetTexelWidth() * tex->GetTexelHeight() > maxInputSize * maxInputSize)

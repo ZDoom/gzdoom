@@ -148,8 +148,6 @@ FTexture::FTexture (const char *name, int lumpnum)
 
 FTexture::~FTexture ()
 {
-	FGameTexture *link = fileSystem.GetLinkedTexture(SourceLump);
-	if (link->GetTexture() == this) fileSystem.SetLinkedTexture(SourceLump, nullptr);
 	if (areas != nullptr) delete[] areas;
 	areas = nullptr;
 
@@ -1084,9 +1082,16 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 }
 
 
+FGameTexture::~FGameTexture()
+{
+	FGameTexture* link = fileSystem.GetLinkedTexture(GetSourceLump());
+	if (link == this) fileSystem.SetLinkedTexture(GetSourceLump(), nullptr);
+	delete wrapped;
+}
+
 bool FGameTexture::isUserContent() const
 {
-	int filenum = fileSystem.GetFileContainer(wrapped.GetSourceLump());
+	int filenum = fileSystem.GetFileContainer(wrapped->GetSourceLump());
 	return (filenum > fileSystem.GetMaxIwadNum());
 }
 

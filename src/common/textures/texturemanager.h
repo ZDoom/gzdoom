@@ -205,7 +205,3 @@ public:
 
 extern FTextureManager TexMan;
 
-inline FGameTexture* MakeGameTexture(FTexture* tex)
-{
-	return reinterpret_cast<FGameTexture*>(tex);
-}

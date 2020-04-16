@@ -252,7 +252,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 			{
 				if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 				{
-					int flags = shouldUpscale(gtex, ETextureType::Wall) ? CTF_Upscale : 0;
+					int flags = shouldUpscale(gtex, UF_Texture);
 					if (tex->GetImage() && tex->SystemTextures.GetHardwareTexture(0, flags) == nullptr)
 					{
 						FImageSource::RegisterForPrecache(tex->GetImage(), V_IsTrueColor());

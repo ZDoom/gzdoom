@@ -569,8 +569,9 @@ public:
 		mTextureModeFlags = mat->GetLayerFlags();
 	}
 
-	void SetMaterial(FGameTexture* tex, int scaleflags, int clampmode, int translation, int overrideshader)
+	void SetMaterial(FGameTexture* tex, EUpscaleFlags upscalemask, int scaleflags, int clampmode, int translation, int overrideshader)
 	{
+		if (shouldUpscale(tex, upscalemask)) scaleflags |= CTF_Upscale;
 		if (!tex->expandSprites()) scaleflags &= ~CTF_Expand;
 		SetMaterial(FMaterial::ValidateTexture(tex, scaleflags), clampmode, translation, overrideshader);
 	}

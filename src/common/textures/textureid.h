@@ -17,6 +17,7 @@ enum class ETextureType : uint8_t
 	SkinGraphic,
 	Null,
 	FirstDefined,
+	Special,
 	SWCanvas,
 };
 

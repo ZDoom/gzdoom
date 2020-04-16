@@ -108,7 +108,7 @@ static void ParseVavoomSkybox()
 		sb->SetSize();
 		if (!error)
 		{
-			TexMan.AddGameTexture(MakeGameTexture(sb));
+			TexMan.AddGameTexture(MakeGameTexture(sb, ETextureType::Override));
 		}
 	}
 }
@@ -1013,7 +1013,7 @@ class GLDefsParser
 			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->GetName().GetChars());
 		}
 		sb->SetSize();
-		TexMan.AddGameTexture(MakeGameTexture(sb));
+		TexMan.AddGameTexture(MakeGameTexture(sb, ETextureType::Override));
 	}
 
 	//===========================================================================

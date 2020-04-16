@@ -104,16 +104,14 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture
 		if (charlumps[i] != nullptr)
 		{
 			auto pic = charlumps[i];
-			Chars[i].OriginalPic = MakeGameTexture(new FImageTexture(pic->GetTexture()->GetImage(), ""));
-			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
+			Chars[i].OriginalPic = MakeGameTexture(pic->GetTexture(), ETextureType::FontChar);
 			Chars[i].OriginalPic->CopySize(pic);
 			TexMan.AddGameTexture(Chars[i].OriginalPic);
 
 			if (!noTranslate)
 			{
-				Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1 (charlumps[i]->GetTexture()->GetImage()), ""));
+				Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1 (charlumps[i]->GetTexture()->GetImage()), ""), ETextureType::FontChar);
 				Chars[i].TranslatedPic->CopySize(charlumps[i]);
-				Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 				TexMan.AddGameTexture(Chars[i].TranslatedPic);
 			}
 			else Chars[i].TranslatedPic = Chars[i].OriginalPic;

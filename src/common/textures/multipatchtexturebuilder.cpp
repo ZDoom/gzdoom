@@ -138,7 +138,6 @@ struct FPatchLookup
 void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType usetype)
 {
 	FImageTexture *tex = new FImageTexture(nullptr, buildinfo.Name);
-	tex->SetUseType(usetype);
 	tex->bMultiPatch = true;
 	tex->SetSize(buildinfo.Width, buildinfo.Height);
 	tex->_LeftOffset[0] = buildinfo.LeftOffset[0];
@@ -151,8 +150,9 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	tex->bWorldPanning = buildinfo.bWorldPanning;
 	tex->bNoDecals = buildinfo.bNoDecals;
 	tex->SourceLump = buildinfo.DefinitionLump;
-	buildinfo.tex = tex;
-	TexMan.AddGameTexture(MakeGameTexture(tex));
+	buildinfo.itex = tex;
+	buildinfo.texture = MakeGameTexture(tex, usetype);
+	TexMan.AddGameTexture(buildinfo.texture);
 }
 
 //==========================================================================
@@ -773,19 +773,19 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 	for (unsigned i = 0; i < buildinfo.Inits.Size(); i++)
 	{
 		FTextureID texno = TexMan.CheckForTexture(buildinfo.Inits[i].TexName, buildinfo.Inits[i].UseType);
-		if (texno == buildinfo.tex->id)	// we found ourselves. Try looking for another one with the same name which is not a multipatch texture itself.
+		if (texno == buildinfo.texture->GetID())	// we found ourselves. Try looking for another one with the same name which is not a multipatch texture itself.
 		{
 			TArray<FTextureID> list;
 			TexMan.ListTextures(buildinfo.Inits[i].TexName, list, true);
 			for (int i = list.Size() - 1; i >= 0; i--)
 			{
-				if (list[i] != buildinfo.tex->id && !TexMan.GetGameTexture(list[i])->isMultiPatch() )
+				if (list[i] != buildinfo.texture->GetID() && !TexMan.GetGameTexture(list[i])->isMultiPatch() )
 				{
 					texno = list[i];
 					break;
 				}
 			}
-			if (texno == buildinfo.tex->id)
+			if (texno == buildinfo.texture->GetID())
 			{
 				if (buildinfo.Inits[i].HasLine) buildinfo.Inits[i].sc.Message(MSG_WARNING, "Texture '%s' references itself as patch\n", buildinfo.Inits[i].TexName.GetChars());
 				else Printf(TEXTCOLOR_YELLOW  "Texture '%s' references itself as patch\n", buildinfo.Inits[i].TexName.GetChars());
@@ -814,7 +814,7 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 			{
 				//We cannot set the image source yet. First all textures need to be resolved.
 				buildinfo.Inits[i].Texture = tex->GetTexture();
-				buildinfo.tex->bComplex |= tex->GetTexture()->bComplex; // this one's NOT a material property! It must remain on the texture image.
+				buildinfo.itex->bComplex |= tex->GetTexture()->bComplex; // this one's NOT a material property! It must remain on the texture image.
 				buildinfo.bComplex |= tex->GetTexture()->bComplex;
 				if (buildinfo.Inits[i].UseOffsets)
 				{
@@ -898,14 +898,14 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 						buildinfo.Parts[0].Rotate == 0 &&
 						!buildinfo.bComplex)
 					{
-						buildinfo.tex->SetImage(buildinfo.Parts[0].Image);
+						buildinfo.itex->SetImage(buildinfo.Parts[0].Image);
 						done = true;
 					}
 				}
 				if (!done)
 				{
 					auto img = new FMultiPatchTexture(buildinfo.Width, buildinfo.Height, buildinfo.Parts, buildinfo.bComplex, buildinfo.textual);
-					buildinfo.tex->SetImage(img);
+					buildinfo.itex->SetImage(img);
 				}
 
 				BuiltTextures.Delete(i);
@@ -918,7 +918,7 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 			for (auto &b : BuiltTextures)
 			{
 				Printf("%s\n", b.Name.GetChars());
-				b.tex->SetUseType(ETextureType::Null);
+				b.texture->SetUseType(ETextureType::Null);
 			}
 			break;
 		}

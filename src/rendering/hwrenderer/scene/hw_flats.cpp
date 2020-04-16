@@ -204,8 +204,7 @@ void HWFlat::DrawSubsectors(HWDrawInfo *di, FRenderState &state)
 
 void HWFlat::DrawOtherPlanes(HWDrawInfo *di, FRenderState &state)
 {
-	int flags = shouldUpscale(texture, ETextureType::Flat) ? CTF_Upscale : 0;
-    state.SetMaterial(texture, flags, CLAMP_NONE, 0, -1);
+    state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
     
     // Draw the subsectors assigned to it due to missing textures
     auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
@@ -237,8 +236,7 @@ void HWFlat::DrawFloodPlanes(HWDrawInfo *di, FRenderState &state)
 	// This requires a stencil because the projected plane interferes with
 	// the depth buffer
 
-	int flags = shouldUpscale(texture, ETextureType::Flat) ? CTF_Upscale : 0;
-	state.SetMaterial(texture, flags, CLAMP_NONE, 0, -1);
+	state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
 
 	// Draw the subsectors assigned to it due to missing textures
 	auto pNode = (renderflags&SSRF_RENDERFLOOR) ?
@@ -324,17 +322,16 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 	}
 	else if (!translucent)
 	{
-		int flags = shouldUpscale(texture, ETextureType::Flat) ? CTF_Upscale : 0;
 		if (sector->special != GLSector_Skybox)
 		{
-			state.SetMaterial(texture, flags, CLAMP_NONE, 0, -1);
+			state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
 			state.SetPlaneTextureRotation(&plane, texture);
 			DrawSubsectors(di, state);
 			state.EnableTextureMatrix(false);
 		}
 		else if (!hacktype)
 		{
-			state.SetMaterial(texture, flags, CLAMP_XY, 0, -1);
+			state.SetMaterial(texture, UF_Texture, 0, CLAMP_XY, 0, -1);
 			state.SetLightIndex(dynlightindex);
 			state.Draw(DT_TriangleStrip,iboindex, 4);
 			flatvertices += 4;
@@ -355,8 +352,7 @@ void HWFlat::DrawFlat(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			if (!texture->GetTranslucency()) state.AlphaFunc(Alpha_GEqual, gl_mask_threshold);
 			else state.AlphaFunc(Alpha_GEqual, 0.f);
-			int flags = shouldUpscale(texture, ETextureType::Flat) ? CTF_Upscale : 0;
-			state.SetMaterial(texture, flags, CLAMP_NONE, 0, -1);
+			state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
 			state.SetPlaneTextureRotation(&plane, texture);
 			DrawSubsectors(di, state);
 			state.EnableTextureMatrix(false);

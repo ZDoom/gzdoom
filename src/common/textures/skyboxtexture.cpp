@@ -44,7 +44,6 @@ FSkyBox::FSkyBox(const char *name)
 	}
 	else previous = nullptr;
 	faces[0]=faces[1]=faces[2]=faces[3]=faces[4]=faces[5] = nullptr;
-	UseType = ETextureType::Override;
 	bSkybox = true;
 	fliptop = false;
 }

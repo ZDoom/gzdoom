@@ -109,7 +109,8 @@ struct BuildInfo
 	bool bNoDecals = false;
 	int LeftOffset[2] = {};
 	int TopOffset[2] = {};
-	FImageTexture *tex = nullptr;
+	FImageTexture* itex = nullptr;
+	FGameTexture *texture = nullptr;
 
 	void swap(BuildInfo &other)
 	{
@@ -128,7 +129,8 @@ struct BuildInfo
 		std::swap(LeftOffset[1], other.LeftOffset[1]);
 		std::swap(TopOffset[0], other.TopOffset[0]);
 		std::swap(TopOffset[1], other.TopOffset[1]);
-		std::swap(tex, other.tex);
+		std::swap(itex, other.itex);
+		std::swap(texture, other.texture);
 	}
 };
 

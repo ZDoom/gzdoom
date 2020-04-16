@@ -880,7 +880,7 @@ void D_Display ()
 		if (vr_mode == 0 || vid_rendermode != 4)
 		{
 			// save the current screen if about to wipe
-			wipe = MakeGameTexture(screen->WipeStartScreen ());
+			wipe = MakeGameTexture(screen->WipeStartScreen(), ETextureType::SWCanvas);
 
 			switch (wipegamestate)
 			{
@@ -1063,7 +1063,7 @@ void D_Display ()
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
 		screen->End2D();
-		auto wipend = MakeGameTexture(screen->WipeEndScreen ());
+		auto wipend = MakeGameTexture(screen->WipeEndScreen(), ETextureType::SWCanvas);
 		auto wiper = Wiper::Create(wipe_type);
 		wiper->SetTextures(wipe, wipend);
 
@@ -2673,7 +2673,7 @@ static void CheckForHacks(BuildInfo& buildinfo)
 		buildinfo.Height == 128)
 	{
 		buildinfo.Height = 200;
-		buildinfo.tex->SetSize(buildinfo.tex->GetTexelWidth(), 200);
+		buildinfo.texture->SetSize(buildinfo.texture->GetTexelWidth(), 200);
 		return;
 	}
 
@@ -3062,6 +3062,7 @@ static int D_DoomMain_Internal (void)
 		S_ParseMusInfo();
 
 		if (!batchrun) Printf ("Texman.Init: Init texture manager.\n");
+		UpdateUpscaleMask();
 		SpriteFrames.Clear();
 		TexMan.Init([]() { StartScreen->Progress(); }, CheckForHacks);
 		PatchTextures();

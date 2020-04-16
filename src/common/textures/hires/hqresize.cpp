@@ -46,6 +46,8 @@
 #include "texturemanager.h"
 #include "printf.h"
 
+int upscalemask;
+
 EXTERN_CVAR(Int, gl_texture_hqresizemult)
 CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -54,6 +56,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresizemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 	if ((gl_texture_hqresizemult > 4) && (self < 4) && (self > 0))
 		gl_texture_hqresizemult = 4;
 	TexMan.FlushAll();
+	UpdateUpscaleMask();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresizemult, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -63,6 +66,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresizemult, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | 
 	if ((self > 4) && (gl_texture_hqresizemode < 4) && (gl_texture_hqresizemode > 0))
 		self = 4;
 	TexMan.FlushAll();
+	UpdateUpscaleMask();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -74,6 +78,7 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOB
 CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	TexMan.FlushAll();
+	UpdateUpscaleMask();
 }
 
 CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);
@@ -95,6 +100,13 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_mt_height, 4, CVAR_ARCHIVE | CVAR_GLOBALCON
 }
 
 CVAR(Int, xbrz_colorformat, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+void UpdateUpscaleMask()
+{
+	if (!gl_texture_hqresizemode || gl_texture_hqresizemult == 1) upscalemask = 0;
+	else upscalemask = gl_texture_hqresize_targets;
+}
+
 
 static void xbrzApplyOptions()
 {
@@ -490,34 +502,20 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 //
 //===========================================================================
 
-bool calcShouldUpscale(FGameTexture *tex, ETextureType UseType)
+int calcShouldUpscale(FGameTexture *tex)
 {
-	if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult == 1) return false;
-
 	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
 	const int maxInputSize = gl_texture_hqresize_maxinputsize;
 	if (tex->GetTexelWidth() * tex->GetTexelHeight() > maxInputSize * maxInputSize)
-		return false;
+		return 0;
 
 	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
 	if (tex->isHardwareCanvas())
-		return false;
+		return 0;
 
 	// already scaled?
 	if (tex->GetDisplayWidth() >= 2* tex->GetTexelWidth() || tex->GetDisplayHeight() >= 2*tex->GetTexelHeight())
-		return false;
+		return 0;
 
-	switch (UseType)
-	{
-	case ETextureType::Sprite:
-	case ETextureType::SkinSprite:
-		return !!(gl_texture_hqresize_targets & 2);
-
-	case ETextureType::FontChar:
-		return !!(gl_texture_hqresize_targets & 4);
-
-	default:
-		return !!(gl_texture_hqresize_targets & 1);
-	}
-
+	return CTF_Upscale;
 }

@@ -975,8 +975,7 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	}
 
 
-	int flags = shouldUpscale(texture, ETextureType::Flat) ? CTF_Upscale : 0;
-	state.SetMaterial(texture, flags, CLAMP_NONE, 0, -1);
+	state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
 	state.SetObjectColor(origin->specialcolor);
 
 	state.SetPlaneTextureRotation(sp, texture);

@@ -250,7 +250,7 @@ public:
 	SpritePositioningInfo *spi = nullptr;
 
 	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
-	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
+	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType UseType);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void AddAutoMaterials();
@@ -273,8 +273,6 @@ public:
 	int GetTexelTopOffset(int adjusted) { return _TopOffset[adjusted]; }
 
 	
-	bool isValid() const { return UseType != ETextureType::Null; }
-	bool isSWCanvas() const { return UseType == ETextureType::SWCanvas; }
 	bool isSkybox() const { return bSkybox; }
 	bool isFullbrightDisabled() const { return bDisableFullbright; }
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
@@ -283,7 +281,6 @@ public:
 	int GetRotations() const { return Rotations; }
 	float GetShaderSpeed() const { return shaderspeed; }
 	void SetRotations(int rot) { Rotations = int16_t(rot); }
-	bool isSprite() const { return UseType == ETextureType::Sprite || UseType == ETextureType::SkinSprite || UseType == ETextureType::Decal; }
 	
 	const FString &GetName() const { return Name; }
 	void SetNoDecals(bool on) { bNoDecals = on;  }
@@ -301,11 +298,8 @@ public:
 	bool isAutoGlowing() const { return bAutoGlowing; }
 	int GetGlowHeight() const { return GlowHeight; }
 	bool isFullbright() const { return bFullbright; }
-	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
-	void SetUseType(ETextureType type) { UseType = type; }
 	int GetSourceLump() const { return SourceLump;  }
-	ETextureType GetUseType() const { return UseType; }
 	void SetSpeed(float fac) { shaderspeed = fac; }
 	bool UseWorldPanning() const  { return bWorldPanning; }
 	void SetWorldPanning(bool on) { bWorldPanning = on; }
@@ -382,7 +376,6 @@ protected:
 	protected:
 
 	FString Name;
-	ETextureType UseType;	// This texture's primary purpose
 
 	uint8_t bNoDecals:1;		// Decals should not stick to texture
 	uint8_t bNoRemap0:1;		// Do not remap color 0 (used by front layer of parallax skies)
@@ -500,7 +493,6 @@ public:
 		bHasCanvas = true;
 		bTranslucent = false;
 		bExpandSprite = false;
-		UseType = ETextureType::Wall;
 	}
 
 	void NeedUpdate() { bNeedsUpdate = true; }
@@ -632,11 +624,15 @@ public:
 class FGameTexture
 {
 	FTexture *wrapped;
-	int8_t shouldUpscaleFlag = -1;
+	int8_t shouldUpscaleFlag = 0;				// Without explicit setup, scaling is disabled for a texture.
+	ETextureType UseType = ETextureType::Wall;	// This texture's primary purpose
+
 public:
 	FGameTexture(FTexture* wrap) : wrapped(wrap) {}
 	~FGameTexture();
+	void CreateDefaultBrightmap();
 
+	ETextureType GetUseType() const { return UseType; }
 	void SetUpscaleFlag(int what) { shouldUpscaleFlag = what; }
 	int GetUpscaleFlag() { return shouldUpscaleFlag; }
 
@@ -653,13 +649,13 @@ public:
 	double GetDisplayLeftOffset(int adjusted = 0) /*const*/ { return wrapped->GetDisplayLeftOffsetDouble(adjusted); }
 	double GetDisplayTopOffset(int adjusted = 0) /*const*/ { return wrapped->GetDisplayTopOffsetDouble(adjusted); }
 
-	bool isValid() { return wrapped->isValid(); }
+	bool isValid() const { return UseType != ETextureType::Null; }
 	int isWarped() { return wrapped->isWarped(); }
 	void SetWarpStyle(int style) { wrapped->bWarped = style; }
 	bool isMasked() { return wrapped->isMasked(); }
 	bool isHardwareCanvas() const { return wrapped->isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return wrapped->isCanvas(); }
-	bool isMiscPatch() const { return wrapped->GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
+	bool isMiscPatch() const { return GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
 	bool isMultiPatch() const { return wrapped->bMultiPatch; }
 	bool isFullbrightDisabled() const { return wrapped->isFullbrightDisabled(); }
 	bool isFullbright() const { return wrapped->isFullbright(); }
@@ -670,8 +666,7 @@ public:
 	bool allowNoDecals() const { return wrapped->allowNoDecals(); }
 	void SetNoDecals(bool on) { wrapped->bNoDecals = on; }
 	void SetTranslucent(bool on) { wrapped->bTranslucent = on; }
-	ETextureType GetUseType() const { return wrapped->GetUseType(); }
-	void SetUseType(ETextureType type) { wrapped->SetUseType(type); }
+	void SetUseType(ETextureType type) { UseType = type; }
 	int GetShaderIndex() const { return wrapped->shaderindex; }
 	float GetShaderSpeed() const { return wrapped->GetShaderSpeed(); }
 	uint16_t GetRotations() const { return wrapped->GetRotations(); }
@@ -753,21 +748,31 @@ public:
 	}
 };
 
-inline FGameTexture* MakeGameTexture(FTexture* tex)
+inline FGameTexture* MakeGameTexture(FTexture* tex, ETextureType useType)
 {
 	if (!tex) return nullptr;
-	return new FGameTexture(tex);
+	auto t = new FGameTexture(tex);
+	t->SetUseType(useType);
+	return t;
 }
 
-bool calcShouldUpscale(FGameTexture* tex, ETextureType UseType);
-inline bool shouldUpscale(FGameTexture* tex, ETextureType UseType)
+enum EUpscaleFlags
 {
-	auto f = tex->GetUpscaleFlag();
-	// Cache this value in the texture to save time because it is very frequently polled.
-	if (f != -1) return f;
-	auto res = calcShouldUpscale(tex, UseType);
-	tex->SetUpscaleFlag(res);
-	return res;
+	UF_None = 0,
+	UF_Texture = 1,
+	UF_Sprite = 2,
+	UF_Font = 4
+};
+
+extern int upscalemask;
+void UpdateUpscaleMask();
+
+int calcShouldUpscale(FGameTexture* tex);
+inline int shouldUpscale(FGameTexture* tex, EUpscaleFlags UseType)
+{
+	// This only checks the global scale mask and the texture's validation for upscaling. Everything else has been done up front elsewhere.
+	if (!(upscalemask & UseType)) return 0;
+	return tex->GetUpscaleFlag();
 }
 
 #endif

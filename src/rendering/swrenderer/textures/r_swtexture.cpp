@@ -41,7 +41,21 @@
 #include "texturemanager.h"
 
 
+inline EUpscaleFlags scaleFlagFromUseType(ETextureType useType)
+{
+	switch (useType)
+	{
+	case ETextureType::Sprite:
+	case ETextureType::SkinSprite:
+		return UF_Sprite;
 
+	case ETextureType::FontChar:
+		return UF_Font;
+
+	default:
+		return UF_Texture;
+	}
+}
 //==========================================================================
 //
 //
@@ -55,7 +69,8 @@ FSoftwareTexture::FSoftwareTexture(FGameTexture *tex)
 
 	mBufferFlags = CTF_ProcessData;
 	auto f = mBufferFlags;
-	if (shouldUpscale(tex, tex->GetUseType())) f |= CTF_Upscale;
+
+	if (shouldUpscale(tex, scaleFlagFromUseType(tex->GetUseType()))) f |= CTF_Upscale;
 	// calculate the real size after running the scaler.
 	auto info = mSource->CreateTexBuffer(0, CTF_CheckOnly| f);
 	mPhysicalWidth = info.mWidth;
@@ -116,7 +131,7 @@ const uint8_t *FSoftwareTexture::GetPixels(int style)
 		else
 		{
 			auto f = mBufferFlags;
-			if (shouldUpscale(mTexture, mTexture->GetUseType())) f |= CTF_Upscale;
+			if (shouldUpscale(mTexture, scaleFlagFromUseType(mTexture->GetUseType()))) f |= CTF_Upscale;
 			auto tempbuffer = mSource->CreateTexBuffer(0, mBufferFlags);
 			Pixels.Resize(GetPhysicalWidth()*GetPhysicalHeight());
 			PalEntry *pe = (PalEntry*)tempbuffer.mBuffer;

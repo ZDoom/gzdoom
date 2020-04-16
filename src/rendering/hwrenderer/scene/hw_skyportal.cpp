@@ -52,10 +52,9 @@ void HWSkyPortal::RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim,
 
 void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FGameTexture * tex, float x_offset, float y_offset, bool mirror, int mode)
 {
-	int flags = shouldUpscale(tex, ETextureType::Wall) ? CTF_Upscale : 0;
 	if (tex)
 	{
-		state.SetMaterial(tex, flags, CLAMP_NONE, 0, -1);
+		state.SetMaterial(tex, UF_Texture, 0, CLAMP_NONE, 0, -1);
 		state.EnableModelMatrix(true);
 		state.EnableTextureMatrix(true);
 
@@ -107,41 +106,39 @@ void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texn
 	else
         state.mModelMatrix.rotate(-180.0f+x_offset, di->Level->info->skyrotatevector2.X, di->Level->info->skyrotatevector2.Z, di->Level->info->skyrotatevector2.Y);
 
-	// Only test the first face - the result here must be consistent - either all get scaled or none.
-	int flags = shouldUpscale(tex->GetSkyFace(0), ETextureType::Flat) ? CTF_Upscale : 0;
 	if (tex->GetSkyFace(5))
 	{
 		faces=4;
 
 		// north
-		state.SetMaterial(tex->GetSkyFace(0), flags, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(0), UF_Texture, 0, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(0), 4);
 
 		// east
-		state.SetMaterial(tex->GetSkyFace(1), flags, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(1), UF_Texture, 0, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(1), 4);
 
 		// south
-		state.SetMaterial(tex->GetSkyFace(2), flags, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(2), UF_Texture, 0, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(2), 4);
 
 		// west
-		state.SetMaterial(tex->GetSkyFace(3), flags, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(3), UF_Texture, 0, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(3), 4);
 	}
 	else 
 	{
 		faces=1;
-		state.SetMaterial(tex->GetSkyFace(0), flags, CLAMP_XY, 0, -1);
+		state.SetMaterial(tex->GetSkyFace(0), UF_Texture, 0, CLAMP_XY, 0, -1);
 		state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(-1), 10);
 	}
 
 	// top
-	state.SetMaterial(tex->GetSkyFace(faces), flags, CLAMP_XY, 0, -1);
+	state.SetMaterial(tex->GetSkyFace(faces), UF_Texture, 0, CLAMP_XY, 0, -1);
 	state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(tex->GetSkyFlip() ? 6 : 5), 4);
 
 	// bottom
-	state.SetMaterial(tex->GetSkyFace(faces+1), flags, CLAMP_XY, 0, -1);
+	state.SetMaterial(tex->GetSkyFace(faces+1), UF_Texture, 0, CLAMP_XY, 0, -1);
 	state.Draw(DT_TriangleStrip, vertexBuffer->FaceStart(4), 4);
 
 	state.EnableModelMatrix(false);

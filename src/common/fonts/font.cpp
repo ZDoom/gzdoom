@@ -327,17 +327,15 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 				}
 
 				auto orig = pic->GetTexture();
-				auto tex = MakeGameTexture(new FImageTexture(orig->GetImage(), "")); // todo - can reuse orig directly later.
-				tex->SetUseType(ETextureType::FontChar);
+				auto tex = MakeGameTexture(orig, ETextureType::FontChar); 
 				tex->CopySize(pic);
 				TexMan.AddGameTexture(tex);
 				Chars[i].OriginalPic = tex;
 
 				if (!noTranslate)
 				{
-					Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(orig->GetImage()), ""));
+					Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(orig->GetImage()), ""), ETextureType::FontChar);
 					Chars[i].TranslatedPic->CopySize(pic);
-					Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 					TexMan.AddGameTexture(Chars[i].TranslatedPic);
 				}
 				else
@@ -413,7 +411,6 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						part[0].Image = tex->GetTexture()->GetImage();
 						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
 						FImageTexture *tex = new FImageTexture(image, "");
-						tex->SetUseType(ETextureType::FontChar);
 						tex->bMultiPatch = true;
 						tex->_LeftOffset[0] = 
 						tex->_LeftOffset[1] = 
@@ -425,7 +422,7 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						tex->bWorldPanning = true;
 						tex->bNoDecals = false;
 						tex->SourceLump = -1;	// We do not really care.
-						auto gtex = MakeGameTexture(tex);
+						auto gtex = MakeGameTexture(tex, ETextureType::FontChar);
 						TexMan.AddGameTexture(gtex);
 						charMap.Insert(int(position) + x + y * numtex_x, gtex);
 					}
@@ -456,10 +453,10 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 
 			auto b = pic->Get8BitPixels(false);
 
-			Chars[i].OriginalPic = MakeGameTexture(new FImageTexture(pic->GetImage(), ""));
+			Chars[i].OriginalPic = MakeGameTexture(pic, ETextureType::FontChar);
 			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
 			Chars[i].OriginalPic->CopySize(*lump);
-			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(pic->GetImage()), ""));
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(pic->GetImage()), ""), ETextureType::FontChar);
 			Chars[i].TranslatedPic->CopySize(*lump);
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
 			TexMan.AddGameTexture(Chars[i].OriginalPic);

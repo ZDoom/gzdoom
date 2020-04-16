@@ -104,7 +104,7 @@ void HWWall::RenderMirrorSurface(HWDrawInfo *di, FRenderState &state)
 	state.AlphaFunc(Alpha_Greater, 0);
 
 	auto tex = TexMan.GetGameTexture(TexMan.mirrorTexture, false);
-	state.SetMaterial(tex, false, CLAMP_NONE, 0, -1);
+	state.SetMaterial(tex, UF_None, 0, CLAMP_NONE, 0, -1); // do not upscale the mirror texture.
 
 	flags &= ~HWWall::HWF_GLOW;
 	RenderWall(di, state, HWWall::RWF_BLANK);
@@ -156,8 +156,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		state.SetGlowParams(topglowcolor, bottomglowcolor);
 		state.SetGlowPlanes(frontsector->ceilingplane, frontsector->floorplane);
 	}
-	int uflags = shouldUpscale(texture, ETextureType::Flat) ? CTF_Upscale : 0;
-	state.SetMaterial(texture, uflags, flags & 3, 0, -1);
+	state.SetMaterial(texture, UF_Texture, 0, flags & 3, 0, -1);
 
 	if (type == RENDERWALL_M2SNF)
 	{

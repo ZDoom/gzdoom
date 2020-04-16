@@ -709,7 +709,7 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 	sc.MustGetNumber ();
 	height = sc.Number;
 	FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Flat, texflags);
-	FGameTexture *viewer = MakeGameTexture(new FCanvasTexture (picname, width, height));
+	FGameTexture *viewer = MakeGameTexture(new FCanvasTexture (picname, width, height), ETextureType::Wall);
 	if (picnum.Exists())
 	{
 		auto oldtex = TexMan.GameTexture(picnum);
@@ -723,7 +723,6 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 		fitwidth = width;
 		fitheight = height;
 		// [GRB] No need for oldtex
-		viewer->SetUseType(ETextureType::Wall);
 		TexMan.AddGameTexture (viewer);
 	}
 	if (sc.GetString())

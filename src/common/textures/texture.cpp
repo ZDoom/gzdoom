@@ -80,7 +80,7 @@ FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType u
 		FTexture *tex = new FImageTexture(image);
 		if (tex != nullptr) 
 		{
-			tex->UseType = usetype;
+			//tex->UseType = usetype;
 			if (usetype == ETextureType::Flat) 
 			{
 				int w = tex->GetTexelWidth();
@@ -117,7 +117,7 @@ FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType u
 FTexture::FTexture (const char *name, int lumpnum)
 	: 
   Scale(1,1), SourceLump(lumpnum),
-  UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
+  bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bFullNameTexture(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
@@ -343,17 +343,18 @@ void FTexture::AddAutoMaterials()
 // Checks if the texture has a default brightmap and creates it if so
 //
 //===========================================================================
-void FTexture::CreateDefaultBrightmap()
+void FGameTexture::CreateDefaultBrightmap()
 {
-	if (!bBrightmapChecked)
+	auto tex = GetTexture();
+	if (!tex->bBrightmapChecked)
 	{
 		// Check for brightmaps
-		if (GetImage() && GetImage()->UseGamePalette() && GPalette.HasGlobalBrightmap &&
-			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
-			Brightmap == NULL)
+		if (tex->GetImage() && tex->GetImage()->UseGamePalette() && GPalette.HasGlobalBrightmap &&
+			GetUseType() != ETextureType::Decal && GetUseType() != ETextureType::MiscPatch && GetUseType() != ETextureType::FontChar &&
+			tex->Brightmap == NULL)
 		{
 			// May have one - let's check when we use this texture
-			auto texbuf = Get8BitPixels(false);
+			auto texbuf = tex->Get8BitPixels(false);
 			const int white = ColorMatcher.Pick(255, 255, 255);
 
 			int size = GetTexelWidth() * GetTexelHeight();
@@ -362,21 +363,21 @@ void FTexture::CreateDefaultBrightmap()
 				if (GPalette.GlobalBrightmap.Remap[texbuf[i]] == white)
 				{
 					// Create a brightmap
-					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", Name.GetChars());
-					Brightmap = CreateBrightmapTexture(static_cast<FImageTexture*>(this)->GetImage());
-					bBrightmapChecked = true;
-					TexMan.AddGameTexture(MakeGameTexture(Brightmap));
+					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", GetName().GetChars());
+					tex->Brightmap = CreateBrightmapTexture(static_cast<FImageTexture*>(tex)->GetImage());
+					tex->bBrightmapChecked = true;
+					//TexMan.AddGameTexture(MakeGameTexture(tex->Brightmap));
 					return;
 				}
 			}
 			// No bright pixels found
-			DPrintf(DMSG_SPAMMY, "No bright pixels found in texture '%s'\n", Name.GetChars());
-			bBrightmapChecked = true;
+			DPrintf(DMSG_SPAMMY, "No bright pixels found in texture '%s'\n", GetName().GetChars());
+			tex->bBrightmapChecked = true;
 		}
 		else
 		{
 			// does not have one so set the flag to 'done'
-			bBrightmapChecked = true;
+			tex->bBrightmapChecked = true;
 		}
 	}
 }
@@ -440,7 +441,6 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 
 	// already done!
 	if (areacount) return false;
-	if (UseType == ETextureType::Flat) return false;	// flats don't have transparent parts
 	areacount = -1;	//whatever happens next, it shouldn't be done twice!
 
 							// large textures are excluded for performance reasons
@@ -949,7 +949,7 @@ void FTexture::SetSpriteRect()
 
 IHardwareTexture* FTexture::GetHardwareTexture(int translation, int scaleflags)
 {
-	if (UseType != ETextureType::Null)
+	//if (UseType != ETextureType::Null)
 	{
 		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, scaleflags);
 		if (hwtex == nullptr)
@@ -1076,7 +1076,6 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Width = w;
 	Height = h;
 	Format = bits;
-	UseType = ETextureType::SWCanvas;
 	bNoCompress = true;
 	auto hwtex = CreateHardwareTexture();
 	// todo: Initialize here.

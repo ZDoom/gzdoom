@@ -739,29 +739,6 @@ TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 
 //===========================================================================
 // 
-// Sets up the sprite positioning data for this texture
-//
-//===========================================================================
-
-void FTexture::SetupSpriteData()
-{
-	spi.mSpriteU[0] = spi.mSpriteV[0] = 0.f;
-	spi.mSpriteU[1] = spi.mSpriteV[1] = 1.f;
-	spi.spriteWidth = GetTexelWidth();
-	spi.spriteHeight = GetTexelHeight();
-
-	if (ShouldExpandSprite())
-	{
-		if (mTrimResult == -1)  mTrimResult = !!TrimBorders(spi.trim);	// get the trim size before adding the empty frame
-		spi.spriteWidth += 2;
-		spi.spriteHeight += 2;
-	}
-	else mTrimResult = 0;
-	SetSpriteRect();
-}
-
-//===========================================================================
-// 
 // Checks if a sprite may be expanded with an empty frame
 //
 //===========================================================================
@@ -875,54 +852,90 @@ outl:
 }
 
 //===========================================================================
+// 
+// Sets up the sprite positioning data for this texture
 //
-// Set the sprite rectangle
+//===========================================================================
+
+void FTexture::SetupSpriteData()
+{
+	// Since this is only needed for real sprites it gets allocated on demand.
+	// It also allocates from the image memory arena because it has the same lifetime and to reduce maintenance.
+	if (spi == nullptr) spi = (SpritePositioningInfo*)ImageArena.Alloc(2 * sizeof(SpritePositioningInfo));
+	for (int i = 0; i < 2; i++)
+	{
+		auto& spi = this->spi[i];
+		spi.mSpriteU[0] = spi.mSpriteV[0] = 0.f;
+		spi.mSpriteU[1] = spi.mSpriteV[1] = 1.f;
+		spi.spriteWidth = GetTexelWidth();
+		spi.spriteHeight = GetTexelHeight();
+
+		if (i == 1 && ShouldExpandSprite())
+		{
+			spi.mTrimResult = TrimBorders(spi.trim);	// get the trim size before adding the empty frame
+			spi.spriteWidth += 2;
+			spi.spriteHeight += 2;
+		}
+	}
+	SetSpriteRect();
+}
+
+//===========================================================================
+//
+// Set the sprite rectangle. This is separate because it may be called by a CVAR, too.
 //
 //===========================================================================
 
 void FTexture::SetSpriteRect()
 {
+
+	if (!spi) return;
 	auto leftOffset = GetLeftOffsetHW();
 	auto topOffset = GetTopOffsetHW();
 
 	float fxScale = (float)Scale.X;
 	float fyScale = (float)Scale.Y;
 
-	// mSpriteRect is for positioning the sprite in the scene.
-	spi.mSpriteRect.left = -leftOffset / fxScale;
-	spi.mSpriteRect.top = -topOffset / fyScale;
-	spi.mSpriteRect.width = spi.spriteWidth / fxScale;
-	spi.mSpriteRect.height = spi.spriteHeight / fyScale;
-
-	if (bExpandSprite)
+	for (int i = 0; i < 2; i++)
 	{
-		// a little adjustment to make sprites look better with texture filtering:
-		// create a 1 pixel wide empty frame around them.
+		auto& spi = this->spi[i];
 
-		int oldwidth = spi.spriteWidth - 2;
-		int oldheight = spi.spriteHeight - 2;
+		// mSpriteRect is for positioning the sprite in the scene.
+		spi.mSpriteRect.left = -leftOffset / fxScale;
+		spi.mSpriteRect.top = -topOffset / fyScale;
+		spi.mSpriteRect.width = spi.spriteWidth / fxScale;
+		spi.mSpriteRect.height = spi.spriteHeight / fyScale;
 
-		leftOffset += 1;
-		topOffset += 1;
-
-		// Reposition the sprite with the frame considered
-		spi.mSpriteRect.left = -(float)leftOffset / fxScale;
-		spi.mSpriteRect.top = -(float)topOffset / fyScale;
-		spi.mSpriteRect.width = (float)spi.spriteWidth / fxScale;
-		spi.mSpriteRect.height = (float)spi.spriteHeight / fyScale;
-
-		if (mTrimResult > 0)
+		if (i == 1 && ShouldExpandSprite())
 		{
-			spi.mSpriteRect.left += (float)spi.trim[0] / fxScale;
-			spi.mSpriteRect.top += (float)spi.trim[1] / fyScale;
+			// a little adjustment to make sprites look better with texture filtering:
+			// create a 1 pixel wide empty frame around them.
 
-			spi.mSpriteRect.width -= float(oldwidth - spi.trim[2]) / fxScale;
-			spi.mSpriteRect.height -= float(oldheight - spi.trim[3]) / fyScale;
+			int oldwidth = spi.spriteWidth - 2;
+			int oldheight = spi.spriteHeight - 2;
 
-			spi.mSpriteU[0] = (float)spi.trim[0] / (float)spi.spriteWidth;
-			spi.mSpriteV[0] = (float)spi.trim[1] / (float)spi.spriteHeight;
-			spi.mSpriteU[1] -= float(oldwidth - spi.trim[0] - spi.trim[2]) / (float)spi.spriteWidth;
-			spi.mSpriteV[1] -= float(oldheight - spi.trim[1] - spi.trim[3]) / (float)spi.spriteHeight;
+			leftOffset += 1;
+			topOffset += 1;
+
+			// Reposition the sprite with the frame considered
+			spi.mSpriteRect.left = -(float)leftOffset / fxScale;
+			spi.mSpriteRect.top = -(float)topOffset / fyScale;
+			spi.mSpriteRect.width = (float)spi.spriteWidth / fxScale;
+			spi.mSpriteRect.height = (float)spi.spriteHeight / fyScale;
+
+			if (spi.mTrimResult > 0)
+			{
+				spi.mSpriteRect.left += (float)spi.trim[0] / fxScale;
+				spi.mSpriteRect.top += (float)spi.trim[1] / fyScale;
+
+				spi.mSpriteRect.width -= float(oldwidth - spi.trim[2]) / fxScale;
+				spi.mSpriteRect.height -= float(oldheight - spi.trim[3]) / fyScale;
+
+				spi.mSpriteU[0] = (float)spi.trim[0] / (float)spi.spriteWidth;
+				spi.mSpriteV[0] = (float)spi.trim[1] / (float)spi.spriteHeight;
+				spi.mSpriteU[1] -= float(oldwidth - spi.trim[0] - spi.trim[2]) / (float)spi.spriteWidth;
+				spi.mSpriteV[1] -= float(oldheight - spi.trim[1] - spi.trim[3]) / (float)spi.spriteHeight;
+			}
 		}
 	}
 }

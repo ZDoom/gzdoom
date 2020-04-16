@@ -229,6 +229,7 @@ struct SpritePositioningInfo
 	int spriteWidth, spriteHeight;
 	float mSpriteU[2], mSpriteV[2];
 	FloatRect mSpriteRect;
+	uint8_t mTrimResult;
 
 	float GetSpriteUL() const { return mSpriteU[0]; }
 	float GetSpriteVT() const { return mSpriteV[0]; }
@@ -255,8 +256,7 @@ class FTexture
 
 public:
 
-	SpritePositioningInfo spi;
-	int8_t mTrimResult = -1;
+	SpritePositioningInfo *spi = nullptr;
 
 	IHardwareTexture* GetHardwareTexture(int translation, bool expanded);
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
@@ -375,12 +375,6 @@ public:
 protected:
 	ISoftwareTexture *SoftwareTexture = nullptr;
 
-	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
-
-	// Offset-less version for COMPATF_MASKEDMIDTEX
-	FGameTexture *OffsetLess = nullptr;
-	// Front sky layer variant where color 0 is transparent
-	FGameTexture* FrontSkyLayer = nullptr;
 	public:
 	// Material layers
 	FTexture *Brightmap = nullptr;
@@ -736,7 +730,7 @@ public:
 	void SetDisplaySize(float w, float h) { wrapped.SetSize((int)w, (int)h); }
 
 	void SetSpriteRect() { wrapped.SetSpriteRect(); }
-	const SpritePositioningInfo& GetSpritePositioning(int which) { /* todo: keep two sets of positioning infd*/ if (wrapped.mTrimResult == -1) wrapped.SetupSpriteData(); return wrapped.spi; }
+	const SpritePositioningInfo& GetSpritePositioning(int which) { if (wrapped.spi == nullptr) wrapped.SetupSpriteData(); return wrapped.spi[which]; }
 	int GetAreas(FloatRect** pAreas) const { return wrapped.GetAreas(pAreas); }
 	PalEntry GetSkyCapColor(bool bottom) { return wrapped.GetSkyCapColor(bottom); }
 

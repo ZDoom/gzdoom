@@ -41,7 +41,7 @@
 #include "cmdlib.h"
 #include "palettecontainer.h"
 
-FMemArena FImageSource::ImageArena(32768);
+FMemArena ImageArena(32768);
 TArray<FImageSource *>FImageSource::ImageForLump;
 int FImageSource::NextID;
 static PrecacheInfo precacheInfo;

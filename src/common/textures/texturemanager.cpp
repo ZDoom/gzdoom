@@ -1488,9 +1488,3 @@ FTextureID FTextureID::operator +(int offset) throw()
 	if (texnum + offset >= TexMan.NumTextures()) return FTextureID(-1);
 	return FTextureID(texnum + offset);
 }
-
-
-CCMD(texinfo)
-{
-	Printf("Sizeof texture = %d\n", sizeof(FTexture));
-}

@@ -7,6 +7,7 @@
 
 class FImageSource;
 using PrecacheInfo = TMap<int, std::pair<int, int>>;
+extern FMemArena ImageArena;
 
 // Doom patch format header
 struct patch_t
@@ -38,7 +39,6 @@ class FImageSource
 	friend class FBrightmapTexture;
 protected:
 
-	static FMemArena ImageArena;
 	static TArray<FImageSource *>ImageForLump;
 	static int NextID;
 

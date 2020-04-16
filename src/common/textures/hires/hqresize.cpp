@@ -409,21 +409,9 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 {
 	// [BB] Make sure that inWidth and inHeight denote the size of
 	// the returned buffer even if we don't upsample the input buffer.
+
 	int inWidth = texbuffer.mWidth;
 	int inHeight = texbuffer.mHeight;
-
-	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
-	const int maxInputSize = gl_texture_hqresize_maxinputsize;
-	if (inWidth * inHeight > maxInputSize * maxInputSize)
-		return;
-
-	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
-	if (bHasCanvas)
-		return;
-
-	// already scaled?
-	if (Scale.X >= 2 && Scale.Y >= 2)
-		return;
 
 	int type = gl_texture_hqresizemode;
 	int mult = gl_texture_hqresizemult;
@@ -492,4 +480,34 @@ void FTexture::CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasA
 	contentId.scaler = type;
 	contentId.scalefactor = mult;
 	texbuffer.mContentId = contentId.id;
+}
+
+bool shouldUpscale(FGameTexture *tex, ETextureType UseType)
+{
+	// [BB] Don't resample if width * height of the input texture is bigger than gl_texture_hqresize_maxinputsize squared.
+	const int maxInputSize = gl_texture_hqresize_maxinputsize;
+	if (tex->GetTexelWidth() * tex->GetTexelHeight() > maxInputSize * maxInputSize)
+		return false;
+
+	// [BB] Don't try to upsample textures based off FCanvasTexture. (This should never get here in the first place!)
+	if (tex->isHardwareCanvas())
+		return false;
+
+	// already scaled?
+	if (tex->GetDisplayWidth() >= 2* tex->GetTexelWidth() || tex->GetDisplayHeight() >= 2*tex->GetTexelHeight())
+		return false;
+
+	switch (UseType)
+	{
+	case ETextureType::Sprite:
+	case ETextureType::SkinSprite:
+		return !!(gl_texture_hqresize_targets & 2);
+
+	case ETextureType::FontChar:
+		return !!(gl_texture_hqresize_targets & 4);
+
+	default:
+		return !!(gl_texture_hqresize_targets & 1);
+	}
+
 }

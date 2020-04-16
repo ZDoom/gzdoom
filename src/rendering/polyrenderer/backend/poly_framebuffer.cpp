@@ -377,7 +377,7 @@ sector_t *PolyFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * ca
 void PolyFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
-	auto BaseLayer = static_cast<PolyHardwareTexture*>(tex->GetHardwareTexture(0, false));
+	auto BaseLayer = static_cast<PolyHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
 	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
 	DCanvas *image = BaseLayer->GetImage(tex, 0, 0);
@@ -535,7 +535,7 @@ void PolyFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
-	int flags = mat->isExpanded() ? CTF_Expand : 0;
+	int flags = mat->GetScaleFlags();
 	FTexture* layer;
 	auto systex = static_cast<PolyHardwareTexture*>(mat->GetLayer(0, translation, &layer));
 	systex->GetImage(layer, translation, flags);
@@ -544,7 +544,7 @@ void PolyFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	for (int i = 1; i < numLayers; i++)
 	{
 		auto systex = static_cast<PolyHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
+		systex->GetImage(layer, 0, flags);	// fixme: Upscale flags must be disabled for certain layers.
 	}
 }
 

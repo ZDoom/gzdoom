@@ -297,7 +297,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 void FGLRenderer::BindToFrameBuffer(FTexture *tex)
 {
-	auto BaseLayer = static_cast<FHardwareTexture*>(tex->GetHardwareTexture(0, false));
+	auto BaseLayer = static_cast<FHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
 	if (BaseLayer == nullptr)
 	{

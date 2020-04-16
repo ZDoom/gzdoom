@@ -688,27 +688,10 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 	result.mWidth = W;
 	result.mHeight = H;
 
-	bool upscale = true;
-	switch (UseType)
-	{
-	case ETextureType::Sprite:
-	case ETextureType::SkinSprite:
-		if (!(gl_texture_hqresize_targets & 2)) upscale = false;
-		break;
-
-	case ETextureType::FontChar:
-		if (!(gl_texture_hqresize_targets & 4)) upscale = false;
-		break;
-
-	default:
-		if (!(gl_texture_hqresize_targets & 1)) upscale = false;
-		break;
-	}
-
 	// Only do postprocessing for image-backed textures. (i.e. not for the burn texture which can also pass through here.)
 	if (GetImage() && flags & CTF_ProcessData) 
 	{
-		if (upscale) CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
+		if (flags & CTF_Upscale) CreateUpsampledTextureBuffer(result, !!isTransparent, checkonly);
 		if (!checkonly) ProcessData(result.mBuffer, result.mWidth, result.mHeight, false);
 	}
 
@@ -738,7 +721,7 @@ bool FTexture::DetermineTranslucency()
 
 void FTexture::CleanHardwareTextures(bool reallyclean)
 {
-	SystemTextures.Clean(reallyclean, reallyclean);
+	SystemTextures.Clean(reallyclean);
 }
 
 //===========================================================================
@@ -964,15 +947,15 @@ void FTexture::SetSpriteRect()
 //
 //===========================================================================
 
-IHardwareTexture* FTexture::GetHardwareTexture(int translation, bool expanded)
+IHardwareTexture* FTexture::GetHardwareTexture(int translation, int scaleflags)
 {
 	if (UseType != ETextureType::Null)
 	{
-		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, expanded);
+		IHardwareTexture* hwtex = SystemTextures.GetHardwareTexture(translation, scaleflags);
 		if (hwtex == nullptr)
 		{
 			hwtex = CreateHardwareTexture();
-			SystemTextures.AddHardwareTexture(translation, expanded, hwtex);
+			SystemTextures.AddHardwareTexture(translation, scaleflags, hwtex);
 		}
 		return hwtex;
 	}

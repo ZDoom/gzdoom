@@ -94,7 +94,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		FBTextureIndex = (FBTextureIndex + 1) % 2;
 		auto &fbtex = FBTexture[FBTextureIndex];
 
-		auto GetSystemTexture = [&]() { return fbtex->GetTexture()->SystemTextures.GetHardwareTexture(0, false); };
+		auto GetSystemTexture = [&]() { return fbtex->GetTexture()->SystemTextures.GetHardwareTexture(0, 0); };
 
 		if (fbtex == nullptr || GetSystemTexture() == nullptr ||
 			fbtex->GetTexelWidth() != screen->GetWidth() || 

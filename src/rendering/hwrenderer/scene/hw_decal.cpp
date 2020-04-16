@@ -66,7 +66,8 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 
 	state.SetTextureMode(decal->RenderStyle);
 	state.SetRenderStyle(decal->RenderStyle);
-	state.SetMaterial(texture, false, CLAMP_XY, decal->Translation, -1);
+	int flags = shouldUpscale(texture, ETextureType::Sprite) ? CTF_Upscale : 0;
+	state.SetMaterial(texture, flags, CLAMP_XY, decal->Translation, -1);
 
 
 	// If srcalpha is one it looks better with a higher alpha threshold

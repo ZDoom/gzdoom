@@ -327,7 +327,7 @@ void PolyRenderState::ApplyMaterial()
 				FTexture* layer;
 				auto systex = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(i, 0, &layer));
 
-				texcanvas = systex->GetImage(layer, 0, mMaterial.mMaterial->isExpanded() ? CTF_Expand : 0);
+				texcanvas = systex->GetImage(layer, 0, mMaterial.mMaterial->GetScaleFlags());
 				mDrawCommands->SetTexture(i, texcanvas->GetPixels(), texcanvas->GetWidth(), texcanvas->GetHeight(), texcanvas->IsBgra());
 			}
 		}

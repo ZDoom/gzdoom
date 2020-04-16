@@ -68,7 +68,7 @@ DCanvas *PolyHardwareTexture::GetImage(FTexture *baselayer, const FMaterialState
 
 	if (!mCanvas)
 	{
-		int flags = state.mMaterial->isExpanded() ? CTF_Expand : 0;
+		int flags = state.mMaterial->GetScaleFlags();
 		return GetImage(baselayer, state.mTranslation, flags);
 	}
 

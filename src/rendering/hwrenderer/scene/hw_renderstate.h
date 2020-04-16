@@ -569,10 +569,10 @@ public:
 		mTextureModeFlags = mat->GetLayerFlags();
 	}
 
-	void SetMaterial(FGameTexture* tex, bool expandmode, int clampmode, int translation, int overrideshader)
+	void SetMaterial(FGameTexture* tex, int scaleflags, int clampmode, int translation, int overrideshader)
 	{
-		expandmode &= tex->expandSprites();
-		SetMaterial(FMaterial::ValidateTexture(tex, expandmode), clampmode, translation, overrideshader);
+		if (!tex->expandSprites()) scaleflags &= ~CTF_Expand;
+		SetMaterial(FMaterial::ValidateTexture(tex, scaleflags), clampmode, translation, overrideshader);
 	}
 
 	void SetClipSplit(float bottom, float top)

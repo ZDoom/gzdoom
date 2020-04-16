@@ -156,7 +156,8 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 		state.SetGlowParams(topglowcolor, bottomglowcolor);
 		state.SetGlowPlanes(frontsector->ceilingplane, frontsector->floorplane);
 	}
-	state.SetMaterial(texture, false, flags & 3, 0, -1);
+	int uflags = shouldUpscale(texture, ETextureType::Flat) ? CTF_Upscale : 0;
+	state.SetMaterial(texture, uflags, flags & 3, 0, -1);
 
 	if (type == RENDERWALL_M2SNF)
 	{

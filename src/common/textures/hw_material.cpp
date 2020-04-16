@@ -36,7 +36,7 @@ IHardwareTexture* CreateHardwareTexture();
 //
 //===========================================================================
 
-FMaterial::FMaterial(FGameTexture * tx, bool expanded)
+FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 {
 	mShaderIndex = SHADER_Default;
 	sourcetex = tx;
@@ -122,10 +122,10 @@ FMaterial::FMaterial(FGameTexture * tx, bool expanded)
 			}
 		}
 	}
-	mExpanded = expanded;
+	mScaleFlags = scaleflags;
 
 	mTextureLayers.ShrinkToFit();
-	imgtex->Material[expanded] = this;
+	imgtex->Material[scaleflags] = this;
 	if (tx->isHardwareCanvas()) tx->SetTranslucent(false);
 }
 
@@ -151,7 +151,7 @@ IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
 	FTexture *layer = i == 0 ? imgtex : mTextureLayers[i - 1];
 	if (pLayer) *pLayer = layer;
 	
-	if (layer) return layer->GetHardwareTexture(translation, mExpanded);
+	if (layer) return layer->GetHardwareTexture(translation, mScaleFlags);
 	return nullptr;
 }
 
@@ -162,17 +162,17 @@ IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer)
 //
 //==========================================================================
 
-FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, bool expand, bool create)
+FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, int scaleflags, bool create)
 {
 	if (gtex && gtex->isValid())
 	{
 		auto tex = gtex->GetTexture();
-		if (!tex->ShouldExpandSprite()) expand = false;
+		if (!tex->ShouldExpandSprite()) scaleflags &= ~CTF_Expand;
 
-		FMaterial *hwtex = tex->Material[expand];
+		FMaterial *hwtex = tex->Material[scaleflags];
 		if (hwtex == NULL && create)
 		{
-			hwtex = new FMaterial(gtex, expand);
+			hwtex = new FMaterial(gtex, scaleflags);
 		}
 		return hwtex;
 	}

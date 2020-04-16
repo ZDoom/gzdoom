@@ -120,15 +120,6 @@ struct FloatRect
 	}
 };
 
-enum ECreateTexBufferFlags
-{
-	CTF_Expand = 2,			// create buffer with a one-pixel wide border
-	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
-	CTF_CheckOnly = 8,		// Only runs the code to get a content ID but does not create a texture. Can be used to access a caching system for the hardware textures.
-};
-
-
-
 class FBitmap;
 struct FRemapTable;
 struct FCopyInfo;
@@ -258,7 +249,7 @@ public:
 
 	SpritePositioningInfo *spi = nullptr;
 
-	IHardwareTexture* GetHardwareTexture(int translation, bool expanded);
+	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
@@ -369,7 +360,7 @@ protected:
 	int SourceLump;
 	FTextureID id;
 
-	FMaterial *Material[2] = { nullptr, nullptr };
+	FMaterial *Material[4] = {  };
 public:
 	FHardwareTextureContainer SystemTextures;
 protected:
@@ -534,7 +525,7 @@ public:
 	FWrapperTexture(int w, int h, int bits = 1);
 	IHardwareTexture *GetSystemTexture()
 	{
-		return SystemTextures.GetHardwareTexture(0, false);
+		return SystemTextures.GetHardwareTexture(0, 0);
 	}
 
 	int GetColorFormat() const
@@ -764,6 +755,7 @@ inline FGameTexture* MakeGameTexture(FTexture* tex)
 	return new FGameTexture(tex);
 }
 
+bool shouldUpscale(FGameTexture* tex, ETextureType UseType);
 
 #endif
 

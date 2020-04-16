@@ -515,7 +515,7 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 
 void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
-	auto BaseLayer = static_cast<VkHardwareTexture*>(tex->GetHardwareTexture(0, false));
+	auto BaseLayer = static_cast<VkHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
 	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
 	VkTextureImage *image = BaseLayer->GetImage(tex, 0, 0);
@@ -648,17 +648,17 @@ void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : 0;
+	int flags = mat->GetScaleFlags();
 	FTexture* layer;
 
 	auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(0, translation, &layer));
-	systex->GetImage(layer, translation, mat->isExpanded() ? CTF_Expand : 0);
+	systex->GetImage(layer, translation, flags);
 
 	int numLayers = mat->GetLayers();
 	for (int i = 1; i < numLayers; i++)
 	{
 		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-		systex->GetImage(layer, 0, mat->isExpanded() ? CTF_Expand : 0);
+		systex->GetImage(layer, 0, flags);	// fixme: Upscale flags must be disabled for certain layers.
 	}
 }
 

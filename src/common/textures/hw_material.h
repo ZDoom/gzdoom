@@ -20,16 +20,17 @@ class FMaterial
 	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 	int mLayerFlags = 0;
-	bool mExpanded;
+	int mScaleFlags;
 
 public:
 	FGameTexture *sourcetex;	// the owning texture. 
 	FTexture* imgtex;			// the first layer's texture image - should be moved into the array
 
-	FMaterial(FGameTexture *tex, bool forceexpand);
+	FMaterial(FGameTexture *tex, int scaleflags);
 	~FMaterial();
 	int GetLayerFlags() const { return mLayerFlags; }
 	int GetShaderIndex() const { return mShaderIndex; }
+	int GetScaleFlags() const { return mScaleFlags; }
 
 	FGameTexture* Source() const
 	{
@@ -45,10 +46,6 @@ public:
 		//ValidateTexture(tex, false);
 		mTextureLayers.Push(tex);
 	}
-	bool isExpanded() const
-	{
-		return mExpanded;
-	}
 
 	int GetLayers() const
 	{
@@ -58,7 +55,7 @@ public:
 	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr) const;
 
 
-	static FMaterial *ValidateTexture(FGameTexture * tex, bool expand, bool create = true);
+	static FMaterial *ValidateTexture(FGameTexture * tex, int scaleflags, bool create = true);
 	const TArray<FTexture*> &GetLayerArray() const
 	{
 		return mTextureLayers;

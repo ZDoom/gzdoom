@@ -42,6 +42,7 @@
 #include "textureid.h"
 #include <vector>
 #include "hw_texcontainer.h"
+#include "refcounted.h"
 
 // 15 because 0th texture is our texture
 #define MAX_CUSTOM_HW_SHADER_TEXTURES 15
@@ -235,7 +236,7 @@ struct SpritePositioningInfo
 };
 
 // Base texture class
-class FTexture
+class FTexture : public RefCountedBase
 {
 	friend class FGameTexture;	// only for the porting work
 	friend class FTexture;
@@ -253,9 +254,9 @@ public:
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType UseType);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
-	void AddAutoMaterials();
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
 	void CleanHardwareTextures(bool reallyclean);
+	void SetSpriteRect();
 
 	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
 	int GetDisplayWidth() { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
@@ -325,9 +326,6 @@ public:
 	}
 
 	bool TrimBorders(uint16_t* rect);
-	void SetSpriteRect();
-	bool ShouldExpandSprite();
-	void SetupSpriteData();
 	int GetAreas(FloatRect** pAreas) const;
 
 	// Returns the whole texture, stored in column-major order
@@ -359,19 +357,6 @@ public:
 	FHardwareTextureContainer SystemTextures;
 protected:
 	ISoftwareTexture *SoftwareTexture = nullptr;
-
-	public:
-	// Material layers
-	FTexture *Brightmap = nullptr;
-	FTexture* Detailmap = nullptr;
-	FTexture* Glowmap = nullptr;
-	FTexture *Normal = nullptr;							// Normal map texture
-	FTexture *Specular = nullptr;						// Specular light texture for the diffuse+normal+specular light model
-	FTexture *Metallic = nullptr;						// Metalness texture for the physically based rendering (PBR) light model
-	FTexture *Roughness = nullptr;						// Roughness texture for PBR
-	FTexture *AmbientOcclusion = nullptr;				// Ambient occlusion texture for PBR
-	
-	FTexture *CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES] = { nullptr }; // Custom texture maps for custom hardware shaders
 
 	protected:
 
@@ -623,127 +608,145 @@ public:
 // Refactoring helper to allow piece by piece adjustment of the API
 class FGameTexture
 {
-	FTexture *wrapped;
+	friend class FMaterial;
+
+	// Material layers
+	RefCountedPtr<FTexture> Base;
+	RefCountedPtr<FTexture> Brightmap;
+	RefCountedPtr<FTexture> Detailmap;
+	RefCountedPtr<FTexture> Glowmap;
+	RefCountedPtr<FTexture> Normal;							// Normal map texture
+	RefCountedPtr<FTexture> Specular;						// Specular light texture for the diffuse+normal+specular light model
+	RefCountedPtr<FTexture> Metallic;						// Metalness texture for the physically based rendering (PBR) light model
+	RefCountedPtr<FTexture> Roughness;						// Roughness texture for PBR
+	RefCountedPtr<FTexture> AmbientOcclusion;				// Ambient occlusion texture for PBR
+	RefCountedPtr<FTexture> CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES]; // Custom texture maps for custom hardware shaders
+
 	int8_t shouldUpscaleFlag = 0;				// Without explicit setup, scaling is disabled for a texture.
 	ETextureType UseType = ETextureType::Wall;	// This texture's primary purpose
 
 public:
-	FGameTexture(FTexture* wrap) : wrapped(wrap) {}
+	FGameTexture(FTexture* wrap) : Base(wrap) {}
 	~FGameTexture();
 	void CreateDefaultBrightmap();
+	void AddAutoMaterials();
+	bool ShouldExpandSprite();
+	void SetupSpriteData();
+	void SetSpriteRect();
 
 	ETextureType GetUseType() const { return UseType; }
 	void SetUpscaleFlag(int what) { shouldUpscaleFlag = what; }
 	int GetUpscaleFlag() { return shouldUpscaleFlag; }
 
-	FTexture* GetTexture() { return wrapped; }
-	int GetSourceLump() const { return wrapped->GetSourceLump(); }
-	void SetBrightmap(FGameTexture* tex) { wrapped->Brightmap = tex->GetTexture(); }
+	FTexture* GetTexture() { return Base.get(); }
+	int GetSourceLump() const { return Base->GetSourceLump(); }
+	void SetBrightmap(FGameTexture* tex) { Brightmap = tex->GetTexture(); }
 
-	double GetDisplayWidth() /*const*/ { return wrapped->GetDisplayWidthDouble(); }
-	double GetDisplayHeight() /*const*/ { return wrapped->GetDisplayHeightDouble(); }
-	int GetTexelWidth() /*const*/ { return wrapped->GetTexelWidth(); }
-	int GetTexelHeight() /*const*/ { return wrapped->GetTexelHeight(); }
-	int GetTexelLeftOffset(int adjusted = 0) /*const*/ { return wrapped->GetTexelLeftOffset(adjusted); }
-	int GetTexelTopOffset(int adjusted = 0) /*const*/ { return wrapped->GetTexelTopOffset(adjusted); }
-	double GetDisplayLeftOffset(int adjusted = 0) /*const*/ { return wrapped->GetDisplayLeftOffsetDouble(adjusted); }
-	double GetDisplayTopOffset(int adjusted = 0) /*const*/ { return wrapped->GetDisplayTopOffsetDouble(adjusted); }
+	double GetDisplayWidth() /*const*/ { return Base->GetDisplayWidthDouble(); }
+	double GetDisplayHeight() /*const*/ { return Base->GetDisplayHeightDouble(); }
+	int GetTexelWidth() /*const*/ { return Base->GetTexelWidth(); }
+	int GetTexelHeight() /*const*/ { return Base->GetTexelHeight(); }
+	int GetTexelLeftOffset(int adjusted = 0) /*const*/ { return Base->GetTexelLeftOffset(adjusted); }
+	int GetTexelTopOffset(int adjusted = 0) /*const*/ { return Base->GetTexelTopOffset(adjusted); }
+	double GetDisplayLeftOffset(int adjusted = 0) /*const*/ { return Base->GetDisplayLeftOffsetDouble(adjusted); }
+	double GetDisplayTopOffset(int adjusted = 0) /*const*/ { return Base->GetDisplayTopOffsetDouble(adjusted); }
+	// For the hardware renderer. The software renderer's have been offloaded to FSoftwareTexture
+	int GetLeftOffsetHW() { return GetTexelLeftOffset(r_spriteadjustHW); }
+	int GetTopOffsetHW() { return GetTexelTopOffset(r_spriteadjustHW); }
 
 	bool isValid() const { return UseType != ETextureType::Null; }
-	int isWarped() { return wrapped->isWarped(); }
-	void SetWarpStyle(int style) { wrapped->bWarped = style; }
-	bool isMasked() { return wrapped->isMasked(); }
-	bool isHardwareCanvas() const { return wrapped->isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
-	bool isSoftwareCanvas() const { return wrapped->isCanvas(); }
+	int isWarped() { return Base->isWarped(); }
+	void SetWarpStyle(int style) { Base->bWarped = style; }
+	bool isMasked() { return Base->isMasked(); }
+	bool isHardwareCanvas() const { return Base->isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
+	bool isSoftwareCanvas() const { return Base->isCanvas(); }
 	bool isMiscPatch() const { return GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
-	bool isMultiPatch() const { return wrapped->bMultiPatch; }
-	bool isFullbrightDisabled() const { return wrapped->isFullbrightDisabled(); }
-	bool isFullbright() const { return wrapped->isFullbright(); }
-	bool isFullNameTexture() const { return wrapped->bFullNameTexture; }
-	bool expandSprites() const { return wrapped->bExpandSprite; }
-	bool useWorldPanning() const { return wrapped->UseWorldPanning();  }
-	void SetWorldPanning(bool on) { wrapped->SetWorldPanning(on); }
-	bool allowNoDecals() const { return wrapped->allowNoDecals(); }
-	void SetNoDecals(bool on) { wrapped->bNoDecals = on; }
-	void SetTranslucent(bool on) { wrapped->bTranslucent = on; }
+	bool isMultiPatch() const { return Base->bMultiPatch; }
+	bool isFullbrightDisabled() const { return Base->isFullbrightDisabled(); }
+	bool isFullbright() const { return Base->isFullbright(); }
+	bool isFullNameTexture() const { return Base->bFullNameTexture; }
+	bool expandSprites() const { return Base->bExpandSprite; }
+	bool useWorldPanning() const { return Base->UseWorldPanning();  }
+	void SetWorldPanning(bool on) { Base->SetWorldPanning(on); }
+	bool allowNoDecals() const { return Base->allowNoDecals(); }
+	void SetNoDecals(bool on) { Base->bNoDecals = on; }
+	void SetTranslucent(bool on) { Base->bTranslucent = on; }
 	void SetUseType(ETextureType type) { UseType = type; }
-	int GetShaderIndex() const { return wrapped->shaderindex; }
-	float GetShaderSpeed() const { return wrapped->GetShaderSpeed(); }
-	uint16_t GetRotations() const { return wrapped->GetRotations(); }
-	void SetRotations(int index) { wrapped->SetRotations(index); }
-	void SetSkyOffset(int ofs) { wrapped->SetSkyOffset(ofs); }
-	int GetSkyOffset() const { return wrapped->GetSkyOffset(); }
-	FTextureID GetID() const { return wrapped->GetID(); }
-	ISoftwareTexture* GetSoftwareTexture() { return wrapped->GetSoftwareTexture(); }
-	void SetSoftwareTexture(ISoftwareTexture* swtex) { wrapped->SetSoftwareTextue(swtex); }
-	void SetScale(DVector2 vec) { wrapped->SetScale(vec); }
-	const FString& GetName() const { return wrapped->GetName(); }
-	void SetShaderSpeed(float speed) { wrapped->shaderspeed = speed; }
-	void SetShaderIndex(int index) { wrapped->shaderindex = index; }
+	int GetShaderIndex() const { return Base->shaderindex; }
+	float GetShaderSpeed() const { return Base->GetShaderSpeed(); }
+	uint16_t GetRotations() const { return Base->GetRotations(); }
+	void SetRotations(int index) { Base->SetRotations(index); }
+	void SetSkyOffset(int ofs) { Base->SetSkyOffset(ofs); }
+	int GetSkyOffset() const { return Base->GetSkyOffset(); }
+	FTextureID GetID() const { return Base->GetID(); }
+	ISoftwareTexture* GetSoftwareTexture() { return Base->GetSoftwareTexture(); }
+	void SetSoftwareTexture(ISoftwareTexture* swtex) { Base->SetSoftwareTextue(swtex); }
+	void SetScale(DVector2 vec) { Base->SetScale(vec); }
+	const FString& GetName() const { return Base->GetName(); }
+	void SetShaderSpeed(float speed) { Base->shaderspeed = speed; }
+	void SetShaderIndex(int index) { Base->shaderindex = index; }
 	void SetShaderLayers(MaterialLayers& lay)
 	{
 		// Only update layers that have something defind.
-		if (lay.Glossiness > -1000) wrapped->Glossiness = lay.Glossiness;
-		if (lay.SpecularLevel > -1000) wrapped->SpecularLevel = lay.SpecularLevel;
-		if (lay.Brightmap) wrapped->Brightmap = lay.Brightmap->GetTexture();
-		if (lay.Normal) wrapped->Normal = lay.Normal->GetTexture();
-		if (lay.Specular) wrapped->Specular = lay.Specular->GetTexture();
-		if (lay.Metallic) wrapped->Metallic = lay.Metallic->GetTexture();
-		if (lay.Roughness) wrapped->Roughness = lay.Roughness->GetTexture();
-		if (lay.AmbientOcclusion) wrapped->AmbientOcclusion = lay.AmbientOcclusion->GetTexture();
+		if (lay.Glossiness > -1000) Base->Glossiness = lay.Glossiness;
+		if (lay.SpecularLevel > -1000) Base->SpecularLevel = lay.SpecularLevel;
+		if (lay.Brightmap) Brightmap = lay.Brightmap->GetTexture();
+		if (lay.Normal) Normal = lay.Normal->GetTexture();
+		if (lay.Specular) Specular = lay.Specular->GetTexture();
+		if (lay.Metallic) Metallic = lay.Metallic->GetTexture();
+		if (lay.Roughness) Roughness = lay.Roughness->GetTexture();
+		if (lay.AmbientOcclusion) AmbientOcclusion = lay.AmbientOcclusion->GetTexture();
 		for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
 		{
-			if (lay.CustomShaderTextures[i]) wrapped->CustomShaderTextures[i] = lay.CustomShaderTextures[i]->GetTexture();
+			if (lay.CustomShaderTextures[i]) CustomShaderTextures[i] = lay.CustomShaderTextures[i]->GetTexture();
 		}
 	}
-	float GetGlossiness() const { return wrapped->Glossiness; }
-	float GetSpecularLevel() const { return wrapped->SpecularLevel; }
+	float GetGlossiness() const { return Base->Glossiness; }
+	float GetSpecularLevel() const { return Base->SpecularLevel; }
 
 	void CopySize(FGameTexture* BaseTexture)
 	{
-		wrapped->CopySize(BaseTexture->wrapped);
+		Base->CopySize(BaseTexture->Base.get());
 	}
 
 	// Glowing is a pure material property that should not filter down to the actual texture objects.
-	void GetGlowColor(float* data) { wrapped->GetGlowColor(data); }
-	bool isGlowing() const { return wrapped->isGlowing(); }
-	bool isAutoGlowing() const { return wrapped->isAutoGlowing(); }
-	int GetGlowHeight() const { return wrapped->GetGlowHeight(); }
+	void GetGlowColor(float* data) { Base->GetGlowColor(data); }
+	bool isGlowing() const { return Base->isGlowing(); }
+	bool isAutoGlowing() const { return Base->isAutoGlowing(); }
+	int GetGlowHeight() const { return Base->GetGlowHeight(); }
 	void SetAutoGlowing() { auto tex = GetTexture(); tex->bAutoGlowing = tex->bGlowing = tex->bFullbright = true; }
-	void SetGlowHeight(int v) { wrapped->GlowHeight = v; }
-	void SetFullbright() { wrapped->bFullbright = true;  }
-	void SetDisableFullbright(bool on) { wrapped->bDisableFullbright = on; }
+	void SetGlowHeight(int v) { Base->GlowHeight = v; }
+	void SetFullbright() { Base->bFullbright = true;  }
+	void SetDisableFullbright(bool on) { Base->bDisableFullbright = on; }
 	void SetGlowing(PalEntry color) { auto tex = GetTexture(); tex->bAutoGlowing = false;	tex->bGlowing = true; tex->GlowColor = color; }
 
 	bool isUserContent() const;
-	void AddAutoMaterials() { wrapped->AddAutoMaterials(); }
-	int CheckRealHeight() { return wrapped->CheckRealHeight(); }
-	bool isSkybox() const { return wrapped->isSkybox(); }
-	void SetSize(int x, int y) { wrapped->SetSize(x, y); }
-	void SetDisplaySize(float w, float h) { wrapped->SetSize((int)w, (int)h); }
+	int CheckRealHeight() { return Base->CheckRealHeight(); }
+	bool isSkybox() const { return Base->isSkybox(); }
+	void SetSize(int x, int y) { Base->SetSize(x, y); }
+	void SetDisplaySize(float w, float h) { Base->SetSize((int)w, (int)h); }
 
-	void SetSpriteRect() { wrapped->SetSpriteRect(); }
-	const SpritePositioningInfo& GetSpritePositioning(int which) { if (wrapped->spi == nullptr) wrapped->SetupSpriteData(); return wrapped->spi[which]; }
-	int GetAreas(FloatRect** pAreas) const { return wrapped->GetAreas(pAreas); }
-	PalEntry GetSkyCapColor(bool bottom) { return wrapped->GetSkyCapColor(bottom); }
+	const SpritePositioningInfo& GetSpritePositioning(int which) { if (Base->spi == nullptr) SetupSpriteData(); return Base->spi[which]; }
+	int GetAreas(FloatRect** pAreas) const { return Base->GetAreas(pAreas); }
+	PalEntry GetSkyCapColor(bool bottom) { return Base->GetSkyCapColor(bottom); }
 
 	bool GetTranslucency()
 	{
-		return wrapped->GetTranslucency();
+		return Base->GetTranslucency();
 	}
 
 	// Since these properties will later piggyback on existing members of FGameTexture, the accessors need to be here. 
 	FGameTexture *GetSkyFace(int num)
 	{
-		return (isSkybox() ? static_cast<FSkyBox*>(wrapped)->faces[num] : nullptr);
+		return (isSkybox() ? static_cast<FSkyBox*>(Base.get())->faces[num] : nullptr);
 	}
-	bool GetSkyFlip() { return isSkybox() ? static_cast<FSkyBox*>(wrapped)->fliptop : false; }
+	bool GetSkyFlip() { return isSkybox() ? static_cast<FSkyBox*>(Base.get())->fliptop : false; }
 
 	int GetClampMode(int clampmode)
 	{
 		if (GetUseType() == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
 		else if (isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
-		else if ((isWarped() || wrapped->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+		else if ((isWarped() || Base->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 		return clampmode;
 	}
 };

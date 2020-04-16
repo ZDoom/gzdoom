@@ -288,30 +288,30 @@ int FTexture::CheckRealHeight()
 //
 //==========================================================================
 
-void FTexture::AddAutoMaterials()
+void FGameTexture::AddAutoMaterials()
 {
 	struct AutoTextureSearchPath
 	{
 		const char *path;
-		FTexture *FTexture::*pointer;
+		RefCountedPtr<FTexture> FGameTexture::*pointer;
 	};
 
 	static AutoTextureSearchPath autosearchpaths[] =
 	{
-		{ "brightmaps/", &FTexture::Brightmap }, // For backwards compatibility, only for short names
-	{ "materials/brightmaps/", &FTexture::Brightmap },
-	{ "materials/normalmaps/", &FTexture::Normal },
-	{ "materials/specular/", &FTexture::Specular },
-	{ "materials/metallic/", &FTexture::Metallic },
-	{ "materials/roughness/", &FTexture::Roughness },
-	{ "materials/ao/", &FTexture::AmbientOcclusion }
+		{ "brightmaps/", &FGameTexture::Brightmap }, // For backwards compatibility, only for short names
+	{ "materials/brightmaps/", &FGameTexture::Brightmap },
+	{ "materials/normalmaps/", &FGameTexture::Normal },
+	{ "materials/specular/", &FGameTexture::Specular },
+	{ "materials/metallic/", &FGameTexture::Metallic },
+	{ "materials/roughness/", &FGameTexture::Roughness },
+	{ "materials/ao/", &FGameTexture::AmbientOcclusion }
 	};
 
 
-	int startindex = bFullNameTexture ? 1 : 0;
-	FString searchname = Name;
+	int startindex = Base->bFullNameTexture ? 1 : 0;
+	FString searchname = GetName();
 
-	if (bFullNameTexture)
+	if (Base->bFullNameTexture)
 	{
 		auto dot = searchname.LastIndexOf('.');
 		auto slash = searchname.LastIndexOf('/');
@@ -323,7 +323,7 @@ void FTexture::AddAutoMaterials()
 		auto &layer = autosearchpaths[i];
 		if (this->*(layer.pointer) == nullptr)	// only if no explicit assignment had been done.
 		{
-			FStringf lookup("%s%s%s", layer.path, bFullNameTexture ? "" : "auto/", searchname.GetChars());
+			FStringf lookup("%s%s%s", layer.path, Base->bFullNameTexture ? "" : "auto/", searchname.GetChars());
 			auto lump = fileSystem.CheckNumForFullName(lookup, false, ns_global, true);
 			if (lump != -1)
 			{
@@ -351,7 +351,7 @@ void FGameTexture::CreateDefaultBrightmap()
 		// Check for brightmaps
 		if (tex->GetImage() && tex->GetImage()->UseGamePalette() && GPalette.HasGlobalBrightmap &&
 			GetUseType() != ETextureType::Decal && GetUseType() != ETextureType::MiscPatch && GetUseType() != ETextureType::FontChar &&
-			tex->Brightmap == NULL)
+			Brightmap == nullptr)
 		{
 			// May have one - let's check when we use this texture
 			auto texbuf = tex->Get8BitPixels(false);
@@ -364,7 +364,7 @@ void FGameTexture::CreateDefaultBrightmap()
 				{
 					// Create a brightmap
 					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", GetName().GetChars());
-					tex->Brightmap = CreateBrightmapTexture(static_cast<FImageTexture*>(tex)->GetImage());
+					Brightmap = CreateBrightmapTexture(tex->GetImage());
 					tex->bBrightmapChecked = true;
 					//TexMan.AddGameTexture(MakeGameTexture(tex->Brightmap));
 					return;
@@ -743,21 +743,21 @@ TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 //
 //===========================================================================
 
-bool FTexture::ShouldExpandSprite()
+bool FGameTexture::ShouldExpandSprite()
 {
-	if (bExpandSprite != -1) return bExpandSprite;
-	if (isWarped() || isHardwareCanvas() || shaderindex != SHADER_Default)
+	if (Base->bExpandSprite != -1) return Base->bExpandSprite;
+	if (isWarped() || isHardwareCanvas() || GetShaderIndex() != SHADER_Default)
 	{
-		bExpandSprite = false;
+		Base->bExpandSprite = false;
 		return false;
 	}
 	if (Brightmap != NULL && (GetTexelWidth() != Brightmap->GetTexelWidth() || GetTexelHeight() != Brightmap->GetTexelHeight()))
 	{
 		// do not expand if the brightmap's size differs.
-		bExpandSprite = false;
+		Base->bExpandSprite = false;
 		return false;
 	}
-	bExpandSprite = true;
+	Base->bExpandSprite = true;
 	return true;
 }
 
@@ -857,14 +857,14 @@ outl:
 //
 //===========================================================================
 
-void FTexture::SetupSpriteData()
+void FGameTexture::SetupSpriteData()
 {
 	// Since this is only needed for real sprites it gets allocated on demand.
 	// It also allocates from the image memory arena because it has the same lifetime and to reduce maintenance.
-	if (spi == nullptr) spi = (SpritePositioningInfo*)ImageArena.Alloc(2 * sizeof(SpritePositioningInfo));
+	if (Base->spi == nullptr) Base->spi = (SpritePositioningInfo*)ImageArena.Alloc(2 * sizeof(SpritePositioningInfo));
 	for (int i = 0; i < 2; i++)
 	{
-		auto& spi = this->spi[i];
+		auto& spi = Base->spi[i];
 		spi.mSpriteU[0] = spi.mSpriteV[0] = 0.f;
 		spi.mSpriteU[1] = spi.mSpriteV[1] = 1.f;
 		spi.spriteWidth = GetTexelWidth();
@@ -872,7 +872,7 @@ void FTexture::SetupSpriteData()
 
 		if (i == 1 && ShouldExpandSprite())
 		{
-			spi.mTrimResult = TrimBorders(spi.trim);	// get the trim size before adding the empty frame
+			spi.mTrimResult = Base->TrimBorders(spi.trim);	// get the trim size before adding the empty frame
 			spi.spriteWidth += 2;
 			spi.spriteHeight += 2;
 		}
@@ -886,19 +886,19 @@ void FTexture::SetupSpriteData()
 //
 //===========================================================================
 
-void FTexture::SetSpriteRect()
+void FGameTexture::SetSpriteRect()
 {
 
-	if (!spi) return;
+	if (!Base->spi) return;
 	auto leftOffset = GetLeftOffsetHW();
 	auto topOffset = GetTopOffsetHW();
 
-	float fxScale = (float)Scale.X;
-	float fyScale = (float)Scale.Y;
+	float fxScale = (float)Base->Scale.X;
+	float fyScale = (float)Base->Scale.Y;
 
 	for (int i = 0; i < 2; i++)
 	{
-		auto& spi = this->spi[i];
+		auto& spi = Base->spi[i];
 
 		// mSpriteRect is for positioning the sprite in the scene.
 		spi.mSpriteRect.left = -leftOffset / fxScale;
@@ -1087,12 +1087,13 @@ FGameTexture::~FGameTexture()
 {
 	FGameTexture* link = fileSystem.GetLinkedTexture(GetSourceLump());
 	if (link == this) fileSystem.SetLinkedTexture(GetSourceLump(), nullptr);
-	delete wrapped;
+	auto str = GetName();
+	Printf("Deleting texture %s\n", str.GetChars());
 }
 
 bool FGameTexture::isUserContent() const
 {
-	int filenum = fileSystem.GetFileContainer(wrapped->GetSourceLump());
+	int filenum = fileSystem.GetFileContainer(Base->GetSourceLump());
 	return (filenum > fileSystem.GetMaxIwadNum());
 }
 

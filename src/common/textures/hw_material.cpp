@@ -60,17 +60,18 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			mShaderIndex = tx->isWarped(); // This picks SHADER_Warp1 or SHADER_Warp2
 		}
-		else if (imgtex->Normal && imgtex->Specular)
+		// Note that the material takes no ownership of the texture!
+		else if (tx->Normal.get() && tx->Specular.get())
 		{
-			for (auto &texture : { imgtex->Normal, imgtex->Specular })
+			for (auto &texture : { tx->Normal.get(), tx->Specular.get() })
 			{
 				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = SHADER_Specular;
 		}
-		else if (imgtex->Normal && imgtex->Metallic && imgtex->Roughness && imgtex->AmbientOcclusion)
+		else if (tx->Normal.get() && tx->Metallic.get() && tx->Roughness.get() && tx->AmbientOcclusion.get())
 		{
-			for (auto &texture : { imgtex->Normal, imgtex->Metallic, imgtex->Roughness, imgtex->AmbientOcclusion })
+			for (auto &texture : { tx->Normal.get(), tx->Metallic.get(), tx->Roughness.get(), tx->AmbientOcclusion.get() })
 			{
 				mTextureLayers.Push(texture);
 			}
@@ -80,27 +81,27 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		// Note that these layers must present a valid texture even if not used, because empty TMUs in the shader are an undefined condition.
 		tx->CreateDefaultBrightmap();
 		auto placeholder = TexMan.GameByIndex(1);
-		if (imgtex->Brightmap)
+		if (tx->Brightmap.get())
 		{
-			mTextureLayers.Push(imgtex->Brightmap);
+			mTextureLayers.Push(tx->Brightmap.get());
 			mLayerFlags |= TEXF_Brightmap;
 		}
 		else	
 		{ 
 			mTextureLayers.Push(placeholder->GetTexture());
 		}
-		if (imgtex->Detailmap)
+		if (tx->Detailmap.get())
 		{
-			mTextureLayers.Push(imgtex->Detailmap);
+			mTextureLayers.Push(tx->Detailmap.get());
 			mLayerFlags |= TEXF_Detailmap;
 		}
 		else
 		{
 			mTextureLayers.Push(placeholder->GetTexture());
 		}
-		if (imgtex->Glowmap)
+		if (tx->Glowmap.get())
 		{
-			mTextureLayers.Push(imgtex->Glowmap);
+			mTextureLayers.Push(tx->Glowmap.get());
 			mLayerFlags |= TEXF_Glowmap;
 		}
 		else
@@ -113,10 +114,10 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 			const UserShaderDesc &usershader = usershaders[imgtex->shaderindex - FIRST_USER_SHADER];
 			if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
 			{
-				for (auto &texture : imgtex->CustomShaderTextures)
+				for (auto &texture : tx->CustomShaderTextures)
 				{
 					if (texture == nullptr) continue;
-					mTextureLayers.Push(texture);
+					mTextureLayers.Push(texture.get());
 				}
 				mShaderIndex = tx->GetShaderIndex();
 			}
@@ -167,7 +168,7 @@ FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, int scaleflags, bool
 	if (gtex && gtex->isValid())
 	{
 		auto tex = gtex->GetTexture();
-		if (!tex->ShouldExpandSprite()) scaleflags &= ~CTF_Expand;
+		if (!gtex->ShouldExpandSprite()) scaleflags &= ~CTF_Expand;
 
 		FMaterial *hwtex = tex->Material[scaleflags];
 		if (hwtex == NULL && create)

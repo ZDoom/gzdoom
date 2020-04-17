@@ -517,7 +517,7 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 {
 	auto BaseLayer = static_cast<VkHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
-	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
+	float ratio = tex->aspectRatio;
 	VkTextureImage *image = BaseLayer->GetImage(tex, 0, 0);
 	VkTextureImage *depthStencil = BaseLayer->GetDepthStencil(tex);
 
@@ -531,8 +531,8 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
-	bounds.width = std::min(tex->GetTexelWidth(), image->Image->width);
-	bounds.height = std::min(tex->GetTexelHeight(), image->Image->height);
+	bounds.width = std::min(tex->GetWidth(), image->Image->width);
+	bounds.height = std::min(tex->GetHeight(), image->Image->height);
 
 	FRenderViewpoint texvp;
 	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);

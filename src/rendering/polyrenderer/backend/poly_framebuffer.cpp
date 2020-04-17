@@ -379,15 +379,15 @@ void PolyFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, 
 	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
 	auto BaseLayer = static_cast<PolyHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
-	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
+	float ratio = tex->aspectRatio;
 	DCanvas *image = BaseLayer->GetImage(tex, 0, 0);
 	PolyDepthStencil *depthStencil = BaseLayer->GetDepthStencil(tex);
 	mRenderState->SetRenderTarget(image, depthStencil, false);
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
-	bounds.width = std::min(tex->GetTexelWidth(), image->GetWidth());
-	bounds.height = std::min(tex->GetTexelHeight(), image->GetHeight());
+	bounds.width = std::min(tex->GetWidth(), image->GetWidth());
+	bounds.height = std::min(tex->GetHeight(), image->GetHeight());
 
 	FRenderViewpoint texvp;
 	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);

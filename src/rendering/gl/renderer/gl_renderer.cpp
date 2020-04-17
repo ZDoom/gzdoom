@@ -306,7 +306,7 @@ void FGLRenderer::BindToFrameBuffer(FTexture *tex)
 		FHardwareTexture::Unbind(0);
 		gl_RenderState.ClearLastMaterial();
 	}
-	BaseLayer->BindToFrameBuffer(tex->GetTexelWidth(), tex->GetTexelHeight());
+	BaseLayer->BindToFrameBuffer(tex->GetWidth(), tex->GetHeight());
 }
 
 //===========================================================================
@@ -319,15 +319,15 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 {
 	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
 
-	float ratio = (float)tex->GetDisplayWidthDouble() / (float)tex->GetDisplayHeightDouble();
+	float ratio = tex->aspectRatio;
 
 	StartOffscreen();
 	BindToFrameBuffer(tex);
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
-	bounds.width = FHardwareTexture::GetTexDimension(tex->GetTexelWidth());
-	bounds.height = FHardwareTexture::GetTexDimension(tex->GetTexelHeight());
+	bounds.width = FHardwareTexture::GetTexDimension(tex->GetWidth());
+	bounds.height = FHardwareTexture::GetTexDimension(tex->GetHeight());
 
 	FRenderViewpoint texvp;
 	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);

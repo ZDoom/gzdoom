@@ -84,8 +84,8 @@ PolyDepthStencil *PolyHardwareTexture::GetDepthStencil(FTexture *tex)
 {
 	if (!mDepthStencil)
 	{
-		int w = tex->GetTexelWidth();
-		int h = tex->GetTexelHeight();
+		int w = tex->GetWidth();
+		int h = tex->GetHeight();
 		mDepthStencil.reset(new PolyDepthStencil(w, h));
 	}
 	return mDepthStencil.get();
@@ -148,8 +148,8 @@ void PolyHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 	}
 	else
 	{
-		int w = tex->GetTexelWidth();
-		int h = tex->GetTexelHeight();
+		int w = tex->GetWidth();
+		int h = tex->GetHeight();
 		mCanvas->Resize(w, h, false);
 	}
 }

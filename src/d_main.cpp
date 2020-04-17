@@ -2670,10 +2670,13 @@ static void CheckForHacks(BuildInfo& buildinfo)
 		buildinfo.Name[2] == 'Y' &&
 		buildinfo.Name[3] >= '1' &&
 		buildinfo.Name[3] <= '3' &&
-		buildinfo.Height == 128)
-	{
-		buildinfo.Height = 200;
-		buildinfo.texture->SetSize(buildinfo.texture->GetTexelWidth(), 200);
+		buildinfo.Height == 128 &&
+		buildinfo.Parts.Size() == 1)
+	{ 
+		// This must alter the size of both the texture image and the game texture.
+		buildinfo.Height = buildinfo.Parts[0].Image->GetHeight();
+		buildinfo.texture->GetTexture()->SetSize(buildinfo.texture->GetTexelWidth(), buildinfo.Height);
+		buildinfo.texture->SetSize(buildinfo.texture->GetTexelWidth(), buildinfo.Height);
 		return;
 	}
 

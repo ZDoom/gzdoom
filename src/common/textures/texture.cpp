@@ -171,11 +171,11 @@ int FTexture::CheckRealHeight()
 {
 	auto pixels = Get8BitPixels(false);
 	
-	for(int h = GetTexelHeight()-1; h>= 0; h--)
+	for(int h = GetHeight()-1; h>= 0; h--)
 	{
-		for(int w = 0; w < GetTexelWidth(); w++)
+		for(int w = 0; w < GetWidth(); w++)
 		{
-			if (pixels[h + w * GetTexelHeight()] != 0)
+			if (pixels[h + w * GetHeight()] != 0)
 			{
 				// Scale maxy before returning it
 				h = int((h * 2) / Scale.Y);
@@ -262,7 +262,7 @@ void FGameTexture::CreateDefaultBrightmap()
 			auto texbuf = tex->Get8BitPixels(false);
 			const int white = ColorMatcher.Pick(255, 255, 255);
 
-			int size = GetTexelWidth() * GetTexelHeight();
+			int size = tex->GetWidth() * tex->GetHeight();
 			for (int i = 0; i<size; i++)
 			{
 				if (GPalette.GlobalBrightmap.Remap[texbuf[i]] == white)
@@ -550,8 +550,8 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 
 	int exx = !!(flags & CTF_Expand);
 
-	W = GetTexelWidth() + 2 * exx;
-	H = GetTexelHeight() + 2 * exx;
+	W = GetWidth() + 2 * exx;
+	H = GetHeight() + 2 * exx;
 
 	if (!checkonly)
 	{
@@ -656,7 +656,7 @@ bool FGameTexture::ShouldExpandSprite()
 		Base->bExpandSprite = false;
 		return false;
 	}
-	if (Brightmap != NULL && (GetTexelWidth() != Brightmap->GetTexelWidth() || GetTexelHeight() != Brightmap->GetTexelHeight()))
+	if (Brightmap != NULL && (Base->GetWidth() != Brightmap->GetWidth() || Base->GetHeight() != Brightmap->GetHeight()))
 	{
 		// do not expand if the brightmap's size differs.
 		Base->bExpandSprite = false;
@@ -927,17 +927,17 @@ float FTexCoordInfo::TextureAdjustWidth() const
 //
 //===========================================================================
 
-void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forceworldpanning)
+void FTexCoordInfo::GetFromTexture(FGameTexture *tex, float x, float y, bool forceworldpanning)
 {
 	if (x == 1.f)
 	{
-		mRenderWidth = tex->GetDisplayWidth();
-		mScale.X = (float)tex->Scale.X;
+		mRenderWidth = xs_RoundToInt(tex->GetDisplayWidth());
+		mScale.X = tex->GetScaleX();
 		mTempScale.X = 1.f;
 	}
 	else
 	{
-		float scale_x = x * (float)tex->Scale.X;
+		float scale_x = x * tex->GetScaleX();
 		mRenderWidth = xs_CeilToInt(tex->GetTexelWidth() / scale_x);
 		mScale.X = scale_x;
 		mTempScale.X = x;
@@ -945,30 +945,26 @@ void FTexCoordInfo::GetFromTexture(FTexture *tex, float x, float y, bool forcewo
 
 	if (y == 1.f)
 	{
-		mRenderHeight = tex->GetDisplayHeight();
-		mScale.Y = (float)tex->Scale.Y;
+		mRenderHeight = xs_RoundToInt(tex->GetDisplayHeight());
+		mScale.Y = tex->GetScaleY();
 		mTempScale.Y = 1.f;
 	}
 	else
 	{
-		float scale_y = y * (float)tex->Scale.Y;
+		float scale_y = y * tex->GetScaleY();
 		mRenderHeight = xs_CeilToInt(tex->GetTexelHeight() / scale_y);
 		mScale.Y = scale_y;
 		mTempScale.Y = y;
 	}
-	if (tex->bHasCanvas)
+	if (tex->isHardwareCanvas())
 	{
 		mScale.Y = -mScale.Y;
 		mRenderHeight = -mRenderHeight;
 	}
-	mWorldPanning = tex->bWorldPanning || forceworldpanning;
+	mWorldPanning = tex->useWorldPanning() || forceworldpanning;
 	mWidth = tex->GetTexelWidth();
 }
 
-void FTexCoordInfo::GetFromTexture(FGameTexture* tex, float x, float y, bool forceworldpanning)
-{
-	GetFromTexture(tex->GetTexture(), x, y, forceworldpanning);
-}
 
 //==========================================================================
 //

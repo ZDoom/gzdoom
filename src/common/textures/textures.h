@@ -256,17 +256,13 @@ public:
 	void CleanHardwareTextures(bool reallyclean);
 
 	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
-	int GetDisplayWidth() { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
-	int GetDisplayHeight() { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
-	double GetDisplayWidthDouble() { return Width / Scale.X; }
-	double GetDisplayHeightDouble() { return Height / Scale.Y; }
 	int GetDisplayLeftOffset() { return GetScaledLeftOffset(0); }
 	int GetDisplayTopOffset() { return GetScaledTopOffset(0); }
 	double GetDisplayLeftOffsetDouble(int adjusted = 0) { return _LeftOffset[adjusted] / Scale.X; }
 	double GetDisplayTopOffsetDouble(int adjusted = 0) { return _TopOffset[adjusted] / Scale.Y; }
 
-	int GetTexelWidth() { return Width; }
-	int GetTexelHeight() { return Height; }
+	int GetWidth() { return Width; }
+	int GetHeight() { return Height; }
 	int GetTexelLeftOffset(int adjusted) { return _LeftOffset[adjusted]; }
 	int GetTexelTopOffset(int adjusted) { return _TopOffset[adjusted]; }
 
@@ -304,8 +300,8 @@ public:
 
 	void CopySize(FTexture* BaseTexture)
 	{
-		Width = BaseTexture->GetTexelWidth();
-		Height = BaseTexture->GetTexelHeight();
+		Width = BaseTexture->GetWidth();
+		Height = BaseTexture->GetHeight();
 		_TopOffset[0] = BaseTexture->_TopOffset[0];
 		_TopOffset[1] = BaseTexture->_TopOffset[1];
 		_LeftOffset[0] = BaseTexture->_LeftOffset[0];
@@ -330,7 +326,6 @@ public:
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 
 protected:
-
 	DVector2 Scale;
 
 	int SourceLump;
@@ -447,6 +442,7 @@ public:
 		bHasCanvas = true;
 		bTranslucent = false;
 		bExpandSprite = false;
+		aspectRatio = (float)width / height;
 	}
 
 	void NeedUpdate() { bNeedsUpdate = true; }
@@ -458,6 +454,7 @@ protected:
 	bool bNeedsUpdate = true;
 public:
 	bool bFirstUpdate = true;
+	float aspectRatio;
 
 	friend struct FCanvasTextureInfo;
 };
@@ -529,7 +526,6 @@ struct FTexCoordInfo
 	float RowOffset(float ofs) const;
 	float TextureOffset(float ofs) const;
 	float TextureAdjustWidth() const;
-	void GetFromTexture(FTexture *tex, float x, float y, bool forceworldpanning);
 	void GetFromTexture(FGameTexture* tex, float x, float y, bool forceworldpanning);
 };
 
@@ -593,6 +589,10 @@ class FGameTexture
 
 	FTextureID id;
 
+	uint16_t TexelWidth, TexelHeight;
+	float DisplayWidth, DisplayHeight;
+	float ScaleX, ScaleY;
+
 	int8_t shouldUpscaleFlag = 0;				// Without explicit setup, scaling is disabled for a texture.
 	ETextureType UseType = ETextureType::Wall;	// This texture's primary purpose
 	SpritePositioningInfo* spi = nullptr;
@@ -604,10 +604,22 @@ public:
 	FGameTexture(FTexture* wrap) : Base(wrap) 
 	{
 		id.SetInvalid();
+		TexelWidth = Base->GetWidth();
+		DisplayWidth = (float)TexelWidth;
+		TexelHeight = Base->GetHeight();
+		DisplayHeight = (float)TexelHeight;
+		ScaleX = ScaleY = 1.f;
 	}
 	~FGameTexture();
 	FTextureID GetID() const { return id; }
 	void SetID(FTextureID newid) { id = newid; }	// should only be called by the texture manager
+
+	float GetScaleX() { return ScaleX; }
+	float GetScaleY() { return ScaleY; }
+	float GetDisplayWidth() const { return DisplayWidth; }
+	float GetDisplayHeight() const { return DisplayHeight; }
+	int GetTexelWidth() const { return TexelWidth; }
+	int GetTexelHeight() const { return TexelHeight; }
 
 	void CreateDefaultBrightmap();
 	void AddAutoMaterials();
@@ -623,10 +635,6 @@ public:
 	int GetSourceLump() const { return Base->GetSourceLump(); }
 	void SetBrightmap(FGameTexture* tex) { Brightmap = tex->GetTexture(); }
 
-	double GetDisplayWidth() /*const*/ { return Base->GetDisplayWidthDouble(); }
-	double GetDisplayHeight() /*const*/ { return Base->GetDisplayHeightDouble(); }
-	int GetTexelWidth() /*const*/ { return Base->GetTexelWidth(); }
-	int GetTexelHeight() /*const*/ { return Base->GetTexelHeight(); }
 	int GetTexelLeftOffset(int adjusted = 0) /*const*/ { return Base->GetTexelLeftOffset(adjusted); }
 	int GetTexelTopOffset(int adjusted = 0) /*const*/ { return Base->GetTexelTopOffset(adjusted); }
 	double GetDisplayLeftOffset(int adjusted = 0) /*const*/ { return Base->GetDisplayLeftOffsetDouble(adjusted); }
@@ -716,8 +724,19 @@ public:
 	bool isUserContent() const;
 	int CheckRealHeight() { return Base->CheckRealHeight(); }
 	bool isSkybox() const { return Base->isSkybox(); }
-	void SetSize(int x, int y) { Base->SetSize(x, y); }
-	void SetDisplaySize(float w, float h) { Base->SetSize((int)w, (int)h); }
+	void SetSize(int x, int y) 
+	{ 
+		TexelWidth = x; 
+		TexelHeight = y;
+		SetDisplaySize(float(x), float(y));
+	}
+	void SetDisplaySize(float w, float h) 
+	{ 
+		DisplayWidth = w;
+		DisplayHeight = h;
+		ScaleX = w / TexelWidth;
+		ScaleY = h / TexelHeight;
+	}
 
 	const SpritePositioningInfo& GetSpritePositioning(int which) { if (spi == nullptr) SetupSpriteData(); return spi[which]; }
 	int GetAreas(FloatRect** pAreas) const { return Base->GetAreas(pAreas); }

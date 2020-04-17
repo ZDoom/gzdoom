@@ -600,13 +600,14 @@ void FTextureManager::AddHiresTextures (int wadnum)
 							auto oldtex = Textures[tlist[i].GetIndex()].Texture;
 
 							// Replace the entire texture and adjust the scaling and offset factors.
-							newtex->bWorldPanning = true;
-							newtex->SetDisplaySize((int)oldtex->GetDisplayWidth(), (int)oldtex->GetDisplayHeight());
 							newtex->_LeftOffset[0] = int(oldtex->GetDisplayLeftOffset(0) * newtex->Scale.X);
 							newtex->_LeftOffset[1] = int(oldtex->GetDisplayLeftOffset(1) * newtex->Scale.X);
 							newtex->_TopOffset[0] = int(oldtex->GetDisplayTopOffset(0) * newtex->Scale.Y);
 							newtex->_TopOffset[1] = int(oldtex->GetDisplayTopOffset(1) * newtex->Scale.Y);
-							ReplaceTexture(tlist[i], MakeGameTexture(newtex, ETextureType::Override), true);
+							auto gtex = MakeGameTexture(newtex, ETextureType::Override);
+							gtex->SetWorldPanning(true);
+							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
+							ReplaceTexture(tlist[i], gtex, true);
 						}
 					}
 				}
@@ -697,13 +698,14 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 						if (newtex != NULL)
 						{
 							// Replace the entire texture and adjust the scaling and offset factors.
-							newtex->bWorldPanning = true;
-							newtex->SetDisplaySize((int)oldtex->GetDisplayWidth(), (int)oldtex->GetDisplayHeight());
 							newtex->_LeftOffset[0] = int(oldtex->GetDisplayLeftOffset(0) * newtex->Scale.X);
 							newtex->_LeftOffset[1] = int(oldtex->GetDisplayLeftOffset(1) * newtex->Scale.X);
 							newtex->_TopOffset[0] = int(oldtex->GetDisplayTopOffset(0) * newtex->Scale.Y);
 							newtex->_TopOffset[1] = int(oldtex->GetDisplayTopOffset(1) * newtex->Scale.Y);
-							ReplaceTexture(tlist[i], MakeGameTexture(newtex, ETextureType::Override), true);
+							auto gtex = MakeGameTexture(newtex, ETextureType::Override);
+							gtex->SetWorldPanning(true);
+							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
+							ReplaceTexture(tlist[i], gtex, true);
 						}
 					}
 				}
@@ -1216,10 +1218,10 @@ FTextureID FTextureManager::GetRawTexture(FTextureID texid)
 	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
 	auto tex = Textures[texidx].Texture;
 	auto ttex = tex->GetTexture();
-	auto image = tex->GetTexture()->GetImage();
+	auto image = ttex->GetImage();
 	// Reject anything that cannot have been a single-patch multipatch texture in vanilla.
-	if (image == nullptr || image->IsRawCompatible() || tex->GetUseType() != ETextureType::Wall || tex->GetTexelWidth() != tex->GetDisplayWidth() ||
-		tex->GetTexelHeight() != tex->GetDisplayHeight())
+	if (image == nullptr || image->IsRawCompatible() || tex->GetUseType() != ETextureType::Wall || ttex->GetWidth() != tex->GetDisplayWidth() ||
+		ttex->GetHeight() != tex->GetDisplayHeight())
 	{
 		Textures[texidx].RawTexture = texidx;
 		return texid;
@@ -1230,7 +1232,7 @@ FTextureID FTextureManager::GetRawTexture(FTextureID texid)
 	auto source = mptimage->GetImageForPart(0);
 
 	// Size must match for this to work as intended
-	if (source->GetWidth() != tex->GetTexelWidth() || source->GetHeight() != tex->GetTexelHeight())
+	if (source->GetWidth() != ttex->GetWidth() || source->GetHeight() != ttex->GetHeight())
 	{
 		Textures[texidx].RawTexture = texidx;
 		return texid;
@@ -1259,9 +1261,10 @@ FTextureID FTextureManager::GetFrontSkyLayer(FTextureID texid)
 
 	// Reject anything that cannot have been a front layer for the sky in original Hexen, i.e. it needs to be an unscaled wall texture only using Doom patches.
 	auto tex = Textures[texidx].Texture;
-	auto image = tex->GetTexture()->GetImage();
+	auto ttex = tex->GetTexture();
+	auto image = ttex->GetImage();
 	if (image == nullptr || !image->SupportRemap0() || tex->GetUseType() != ETextureType::Wall || tex->useWorldPanning() || tex->GetTexelTopOffset() != 0 ||
-		tex->GetTexelWidth() != tex->GetDisplayWidth() || tex->GetTexelHeight() != tex->GetDisplayHeight())
+		ttex->GetWidth() != tex->GetDisplayWidth() || ttex->GetHeight() != tex->GetDisplayHeight())
 	{
 		Textures[texidx].FrontSkyLayer = texidx;
 		return texid;

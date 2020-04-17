@@ -176,7 +176,7 @@ class FSWCanvasTexture : public FSoftwareTexture
 
 public:
 
-	FSWCanvasTexture(FGameTexture *source) : FSoftwareTexture(source) {}
+	FSWCanvasTexture(FGameTexture* source);
 	~FSWCanvasTexture();
 
 	// Returns the whole texture, stored in column-major order

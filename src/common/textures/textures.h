@@ -248,8 +248,6 @@ class FTexture : public RefCountedBase
 
 public:
 
-	SpritePositioningInfo *spi = nullptr;
-
 	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType UseType);
 	virtual ~FTexture ();
@@ -335,16 +333,6 @@ public:
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
 
-	
-	ISoftwareTexture* GetSoftwareTexture()
-	{
-		return SoftwareTexture;
-	}
-	void SetSoftwareTextue(ISoftwareTexture* swtex)
-	{
-		SoftwareTexture = swtex;
-	}
-
 protected:
 
 	DVector2 Scale;
@@ -352,11 +340,9 @@ protected:
 	int SourceLump;
 	FTextureID id;
 
-	FMaterial *Material[4] = {  };
 public:
 	FHardwareTextureContainer SystemTextures;
 protected:
-	ISoftwareTexture *SoftwareTexture = nullptr;
 
 	protected:
 
@@ -439,10 +425,6 @@ public:
 	bool GetTranslucency()
 	{
 		return bTranslucent != -1 ? bTranslucent : DetermineTranslucency();
-	}
-	FMaterial* GetMaterial(int num)
-	{
-		return Material[num];
 	}
 
 private:
@@ -610,7 +592,7 @@ class FGameTexture
 {
 	friend class FMaterial;
 
-	// Material layers
+	// Material layers. These are shared so reference counting is used.
 	RefCountedPtr<FTexture> Base;
 	RefCountedPtr<FTexture> Brightmap;
 	RefCountedPtr<FTexture> Detailmap;
@@ -624,6 +606,10 @@ class FGameTexture
 
 	int8_t shouldUpscaleFlag = 0;				// Without explicit setup, scaling is disabled for a texture.
 	ETextureType UseType = ETextureType::Wall;	// This texture's primary purpose
+	SpritePositioningInfo* spi = nullptr;
+
+	ISoftwareTexture* SoftwareTexture = nullptr;
+	FMaterial* Material[4] = {  };
 
 public:
 	FGameTexture(FTexture* wrap) : Base(wrap) {}
@@ -679,9 +665,22 @@ public:
 	void SetSkyOffset(int ofs) { Base->SetSkyOffset(ofs); }
 	int GetSkyOffset() const { return Base->GetSkyOffset(); }
 	FTextureID GetID() const { return Base->GetID(); }
-	ISoftwareTexture* GetSoftwareTexture() { return Base->GetSoftwareTexture(); }
-	void SetSoftwareTexture(ISoftwareTexture* swtex) { Base->SetSoftwareTextue(swtex); }
 	void SetScale(DVector2 vec) { Base->SetScale(vec); }
+
+	ISoftwareTexture* GetSoftwareTexture()
+	{
+		return SoftwareTexture;
+	}
+	void SetSoftwareTexture(ISoftwareTexture* swtex)
+	{
+		SoftwareTexture = swtex;
+	}
+
+	FMaterial* GetMaterial(int num)
+	{
+		return Material[num];
+	}
+
 	const FString& GetName() const { return Base->GetName(); }
 	void SetShaderSpeed(float speed) { Base->shaderspeed = speed; }
 	void SetShaderIndex(int index) { Base->shaderindex = index; }
@@ -726,7 +725,7 @@ public:
 	void SetSize(int x, int y) { Base->SetSize(x, y); }
 	void SetDisplaySize(float w, float h) { Base->SetSize((int)w, (int)h); }
 
-	const SpritePositioningInfo& GetSpritePositioning(int which) { if (Base->spi == nullptr) SetupSpriteData(); return Base->spi[which]; }
+	const SpritePositioningInfo& GetSpritePositioning(int which) { if (spi == nullptr) SetupSpriteData(); return spi[which]; }
 	int GetAreas(FloatRect** pAreas) const { return Base->GetAreas(pAreas); }
 	PalEntry GetSkyCapColor(bool bottom) { return Base->GetSkyCapColor(bottom); }
 

@@ -126,7 +126,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 	mScaleFlags = scaleflags;
 
 	mTextureLayers.ShrinkToFit();
-	imgtex->Material[scaleflags] = this;
+	tx->Material[scaleflags] = this;
 	if (tx->isHardwareCanvas()) tx->SetTranslucent(false);
 }
 
@@ -167,10 +167,9 @@ FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, int scaleflags, bool
 {
 	if (gtex && gtex->isValid())
 	{
-		auto tex = gtex->GetTexture();
 		if (!gtex->ShouldExpandSprite()) scaleflags &= ~CTF_Expand;
 
-		FMaterial *hwtex = tex->Material[scaleflags];
+		FMaterial *hwtex = gtex->Material[scaleflags];
 		if (hwtex == NULL && create)
 		{
 			hwtex = new FMaterial(gtex, scaleflags);

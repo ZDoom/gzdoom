@@ -39,6 +39,21 @@
 #include "m_alloc.h"
 #include "imagehelpers.h"
 
+static TMap<FCanvasTexture*, FSWCanvasTexture*> canvasMap;
+
+FSWCanvasTexture* GetSWCamTex(FCanvasTexture* camtex)
+{
+	auto p = canvasMap.CheckKey(camtex);
+	return p ? *p : nullptr;
+}
+
+FSWCanvasTexture::FSWCanvasTexture(FGameTexture* source) : FSoftwareTexture(source) 
+{
+	// The SW renderer needs to link the canvas textures, but let's do that outside the texture manager.
+	auto camtex = static_cast<FCanvasTexture*>(source->GetTexture());
+	canvasMap.Insert(camtex, this);
+}
+
 
 FSWCanvasTexture::~FSWCanvasTexture()
 {

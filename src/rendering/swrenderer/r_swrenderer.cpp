@@ -227,6 +227,8 @@ void FSoftwareRenderer::SetClearColor(int color)
 	mScene.SetClearColor(color);
 }
 
+FSWCanvasTexture* GetSWCamTex(FCanvasTexture* camtex);
+
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewpoint, double fov)
 {
 	auto renderTarget = mScene.MainThread()->Viewport->RenderTarget;
@@ -237,7 +239,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *camtex, AActor *viewp
 	cameraViewpoint = r_viewpoint;
 	cameraViewwindow = r_viewwindow;
 
-	auto tex = static_cast<FSWCanvasTexture*>(camtex->GetSoftwareTexture());
+	auto tex = GetSWCamTex(camtex);
 	
 	DCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 

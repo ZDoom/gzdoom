@@ -152,17 +152,6 @@ FTexture::~FTexture ()
 {
 	if (areas != nullptr) delete[] areas;
 	areas = nullptr;
-
-	for (int i = 0; i < 2; i++)
-	{
-		if (Material[i] != nullptr) DeleteMaterial(Material[i]);
-		Material[i] = nullptr;
-	}
-	if (SoftwareTexture != nullptr)
-	{
-		delete SoftwareTexture;
-		SoftwareTexture = nullptr;
-	}
 }
 
 //===========================================================================
@@ -861,10 +850,10 @@ void FGameTexture::SetupSpriteData()
 {
 	// Since this is only needed for real sprites it gets allocated on demand.
 	// It also allocates from the image memory arena because it has the same lifetime and to reduce maintenance.
-	if (Base->spi == nullptr) Base->spi = (SpritePositioningInfo*)ImageArena.Alloc(2 * sizeof(SpritePositioningInfo));
+	if (spi == nullptr) spi = (SpritePositioningInfo*)ImageArena.Alloc(2 * sizeof(SpritePositioningInfo));
 	for (int i = 0; i < 2; i++)
 	{
-		auto& spi = Base->spi[i];
+		auto& spi = this->spi[i];
 		spi.mSpriteU[0] = spi.mSpriteV[0] = 0.f;
 		spi.mSpriteU[1] = spi.mSpriteV[1] = 1.f;
 		spi.spriteWidth = GetTexelWidth();
@@ -889,7 +878,7 @@ void FGameTexture::SetupSpriteData()
 void FGameTexture::SetSpriteRect()
 {
 
-	if (!Base->spi) return;
+	if (!spi) return;
 	auto leftOffset = GetLeftOffsetHW();
 	auto topOffset = GetTopOffsetHW();
 
@@ -898,7 +887,7 @@ void FGameTexture::SetSpriteRect()
 
 	for (int i = 0; i < 2; i++)
 	{
-		auto& spi = Base->spi[i];
+		auto& spi = this->spi[i];
 
 		// mSpriteRect is for positioning the sprite in the scene.
 		spi.mSpriteRect.left = -leftOffset / fxScale;
@@ -1087,8 +1076,17 @@ FGameTexture::~FGameTexture()
 {
 	FGameTexture* link = fileSystem.GetLinkedTexture(GetSourceLump());
 	if (link == this) fileSystem.SetLinkedTexture(GetSourceLump(), nullptr);
-	auto str = GetName();
-	Printf("Deleting texture %s\n", str.GetChars());
+	if (SoftwareTexture != nullptr)
+	{
+		delete SoftwareTexture;
+		SoftwareTexture = nullptr;
+	}
+	for (auto &mat : Material)
+	{
+		if (mat != nullptr) DeleteMaterial(mat);
+		mat = nullptr;
+	}
+
 }
 
 bool FGameTexture::isUserContent() const

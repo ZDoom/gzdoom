@@ -1118,6 +1118,9 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	DeleteAll();
 	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 
+	auto nulltex = MakeGameTexture(new FImageTexture(CreateEmptyTexture(), ""), ETextureType::Null);
+	AddGameTexture(nulltex);
+
 	// This is for binding to unused texture units, because accessing an unbound texture unit is undefined. It's a one pixel empty texture.
 	auto emptytex = MakeGameTexture(new FImageTexture(CreateEmptyTexture(), ""), ETextureType::Override);
 	emptytex->SetSize(1, 1);

@@ -372,6 +372,9 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 						return i;
 					}
 				}
+
+				mOrderNames.Push(result.Name);
+				return mIWadInfos.Push(result);
 			}
 			catch (CRecoverableError & err)
 			{

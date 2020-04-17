@@ -70,36 +70,16 @@ int r_spriteadjustSW, r_spriteadjustHW;
 
 // Examines the lump contents to decide what type of texture to create,
 // and creates the texture.
-FTexture * FTexture::CreateTexture(const char *name, int lumpnum, ETextureType usetype)
+FTexture * FTexture::CreateTexture(const char *name, int lumpnum, bool allowflats)
 {
 	if (lumpnum == -1) return nullptr;
 
-	auto image = FImageSource::GetImage(lumpnum, usetype == ETextureType::Flat);
+	auto image = FImageSource::GetImage(lumpnum, allowflats);
 	if (image != nullptr)
 	{
 		FTexture *tex = new FImageTexture(image);
 		if (tex != nullptr) 
 		{
-			//tex->UseType = usetype;
-			if (usetype == ETextureType::Flat) 
-			{
-				int w = tex->GetTexelWidth();
-				int h = tex->GetTexelHeight();
-
-				// Auto-scale flats with dimensions 128x128 and 256x256.
-				// In hindsight, a bad idea, but RandomLag made it sound better than it really is.
-				// Now we're stuck with this stupid behaviour.
-				if (w==128 && h==128) 
-				{
-					tex->Scale.X = tex->Scale.Y = 2;
-					tex->bWorldPanning = true;
-				}
-				else if (w==256 && h==256) 
-				{
-					tex->Scale.X = tex->Scale.Y = 4;
-					tex->bWorldPanning = true;
-				}
-			}
 			tex->Name = name;
 			tex->Name.ToUpper();
 			return tex;
@@ -132,7 +112,6 @@ FTexture::FTexture (const char *name, int lumpnum)
 
 
 	_LeftOffset[0] = _LeftOffset[1] = _TopOffset[0] = _TopOffset[1] = 0;
-	id.SetInvalid();
 	if (name != NULL)
 	{
 		Name = name;

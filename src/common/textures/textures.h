@@ -249,12 +249,11 @@ class FTexture : public RefCountedBase
 public:
 
 	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
-	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType UseType);
+	static FTexture *CreateTexture(const char *name, int lumpnum, bool allowflats = false);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
 	void CleanHardwareTextures(bool reallyclean);
-	void SetSpriteRect();
 
 	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
 	int GetDisplayWidth() { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
@@ -289,7 +288,6 @@ public:
 	bool isMasked() const { return bMasked; }
 	void SetSkyOffset(int offs) { SkyOffset = offs; }
 	int GetSkyOffset() const { return SkyOffset; }
-	FTextureID GetID() const { return id; }
 	PalEntry GetSkyCapColor(bool bottom);
 	virtual int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	void GetGlowColor(float *data);
@@ -338,7 +336,6 @@ protected:
 	DVector2 Scale;
 
 	int SourceLump;
-	FTextureID id;
 
 public:
 	FHardwareTextureContainer SystemTextures;
@@ -604,6 +601,8 @@ class FGameTexture
 	RefCountedPtr<FTexture> AmbientOcclusion;				// Ambient occlusion texture for PBR
 	RefCountedPtr<FTexture> CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES]; // Custom texture maps for custom hardware shaders
 
+	FTextureID id;
+
 	int8_t shouldUpscaleFlag = 0;				// Without explicit setup, scaling is disabled for a texture.
 	ETextureType UseType = ETextureType::Wall;	// This texture's primary purpose
 	SpritePositioningInfo* spi = nullptr;
@@ -612,8 +611,14 @@ class FGameTexture
 	FMaterial* Material[4] = {  };
 
 public:
-	FGameTexture(FTexture* wrap) : Base(wrap) {}
+	FGameTexture(FTexture* wrap) : Base(wrap) 
+	{
+		id.SetInvalid();
+	}
 	~FGameTexture();
+	FTextureID GetID() const { return id; }
+	void SetID(FTextureID newid) { id = newid; }	// should only be called by the texture manager
+
 	void CreateDefaultBrightmap();
 	void AddAutoMaterials();
 	bool ShouldExpandSprite();
@@ -664,7 +669,6 @@ public:
 	void SetRotations(int index) { Base->SetRotations(index); }
 	void SetSkyOffset(int ofs) { Base->SetSkyOffset(ofs); }
 	int GetSkyOffset() const { return Base->GetSkyOffset(); }
-	FTextureID GetID() const { return Base->GetID(); }
 	void SetScale(DVector2 vec) { Base->SetScale(vec); }
 
 	ISoftwareTexture* GetSoftwareTexture()

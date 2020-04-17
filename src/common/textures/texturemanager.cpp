@@ -435,12 +435,12 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 				// Now we're stuck with this stupid behaviour.
 				if (w == 128 && h == 128)
 				{
-					out->SetScale(DVector2(2, 2));
+					out->SetScale(2, 2);
 					out->SetWorldPanning(true);
 				}
 				else if (w == 256 && h == 256)
 				{
-					out->SetScale(DVector2(4, 4));
+					out->SetScale(4, 4);
 					out->SetWorldPanning(true);
 				}
 			}
@@ -600,12 +600,10 @@ void FTextureManager::AddHiresTextures (int wadnum)
 							auto oldtex = Textures[tlist[i].GetIndex()].Texture;
 
 							// Replace the entire texture and adjust the scaling and offset factors.
-							newtex->_LeftOffset[0] = int(oldtex->GetDisplayLeftOffset(0) * newtex->Scale.X);
-							newtex->_LeftOffset[1] = int(oldtex->GetDisplayLeftOffset(1) * newtex->Scale.X);
-							newtex->_TopOffset[0] = int(oldtex->GetDisplayTopOffset(0) * newtex->Scale.Y);
-							newtex->_TopOffset[1] = int(oldtex->GetDisplayTopOffset(1) * newtex->Scale.Y);
 							auto gtex = MakeGameTexture(newtex, ETextureType::Override);
 							gtex->SetWorldPanning(true);
+							gtex->SetOffsets(0, xs_RoundToInt(oldtex->GetDisplayLeftOffset(0) * newtex->Scale.X), xs_RoundToInt(oldtex->GetDisplayTopOffset(0) * newtex->Scale.Y));
+							gtex->SetOffsets(1, xs_RoundToInt(oldtex->GetDisplayLeftOffset(1) * newtex->Scale.X), xs_RoundToInt(oldtex->GetDisplayTopOffset(1) * newtex->Scale.Y));
 							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
 							ReplaceTexture(tlist[i], gtex, true);
 						}
@@ -698,12 +696,10 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 						if (newtex != NULL)
 						{
 							// Replace the entire texture and adjust the scaling and offset factors.
-							newtex->_LeftOffset[0] = int(oldtex->GetDisplayLeftOffset(0) * newtex->Scale.X);
-							newtex->_LeftOffset[1] = int(oldtex->GetDisplayLeftOffset(1) * newtex->Scale.X);
-							newtex->_TopOffset[0] = int(oldtex->GetDisplayTopOffset(0) * newtex->Scale.Y);
-							newtex->_TopOffset[1] = int(oldtex->GetDisplayTopOffset(1) * newtex->Scale.Y);
 							auto gtex = MakeGameTexture(newtex, ETextureType::Override);
 							gtex->SetWorldPanning(true);
+							gtex->SetOffsets(0, xs_RoundToInt(oldtex->GetDisplayLeftOffset(0) * newtex->Scale.X), xs_RoundToInt(oldtex->GetDisplayTopOffset(0) * newtex->Scale.Y));
+							gtex->SetOffsets(1, xs_RoundToInt(oldtex->GetDisplayLeftOffset(1) * newtex->Scale.X), xs_RoundToInt(oldtex->GetDisplayTopOffset(1) * newtex->Scale.Y));
 							gtex->SetDisplaySize(oldtex->GetDisplayWidth(), oldtex->GetDisplayHeight());
 							ReplaceTexture(tlist[i], gtex, true);
 						}
@@ -1471,8 +1467,7 @@ void FTextureManager::AdjustSpriteOffsets()
 							memcpy(&sprid, tex->GetName().GetChars(), 4);
 							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.
 						}
-						tex->GetTexture()->_LeftOffset[1] = x;
-						tex->GetTexture()->_TopOffset[1] = y;
+						tex->SetOffsets(1, x, y);
 					}
 				}
 			}

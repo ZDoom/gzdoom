@@ -111,7 +111,6 @@ FTexture::FTexture (const char *name, int lumpnum)
 	bTranslucent = -1;
 
 
-	_LeftOffset[0] = _LeftOffset[1] = _TopOffset[0] = _TopOffset[1] = 0;
 	if (name != NULL)
 	{
 		Name = name;
@@ -795,11 +794,11 @@ void FGameTexture::SetSpriteRect()
 {
 
 	if (!spi) return;
-	auto leftOffset = GetLeftOffsetHW();
-	auto topOffset = GetTopOffsetHW();
+	auto leftOffset = GetTexelLeftOffset(r_spriteadjustHW);
+	auto topOffset = GetTexelTopOffset(r_spriteadjustHW);
 
-	float fxScale = (float)Base->Scale.X;
-	float fyScale = (float)Base->Scale.Y;
+	float fxScale = GetScaleX();
+	float fyScale = GetScaleY();
 
 	for (int i = 0; i < 2; i++)
 	{

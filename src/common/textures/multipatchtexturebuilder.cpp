@@ -140,18 +140,17 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	FImageTexture *tex = new FImageTexture(nullptr, buildinfo.Name);
 	tex->bMultiPatch = true;
 	tex->SetSize(buildinfo.Width, buildinfo.Height);
-	tex->_LeftOffset[0] = buildinfo.LeftOffset[0];
-	tex->_LeftOffset[1] = buildinfo.LeftOffset[1];
-	tex->_TopOffset[0] = buildinfo.TopOffset[0];
-	tex->_TopOffset[1] = buildinfo.TopOffset[1];
-	tex->Scale = buildinfo.Scale;
 	tex->bMasked = true;	// we do not really know yet.
 	tex->bTranslucent = -1;
-	tex->bWorldPanning = buildinfo.bWorldPanning;
 	tex->bNoDecals = buildinfo.bNoDecals;
 	tex->SourceLump = buildinfo.DefinitionLump;
 	buildinfo.itex = tex;
 	buildinfo.texture = MakeGameTexture(tex, usetype);
+	buildinfo.texture->SetOffsets(0, buildinfo.LeftOffset[0], buildinfo.TopOffset[0]);
+	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
+	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.X);
+	buildinfo.texture->SetWorldPanning(buildinfo.bWorldPanning);
+
 	TexMan.AddGameTexture(buildinfo.texture);
 }
 

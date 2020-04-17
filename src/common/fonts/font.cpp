@@ -290,7 +290,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 						if ((int)position < minchar) minchar = (int)position;
 						if ((int)position > maxchar) maxchar = (int)position;
 						auto tex = TexMan.GetGameTexture(lump);
-						tex->SetScale(Scale);
+						tex->SetScale((float)Scale.X, (float)Scale.Y);
 						charMap.Insert((int)position, tex);
 						Type = Folder;
 					}
@@ -412,17 +412,15 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
 						FImageTexture *tex = new FImageTexture(image, "");
 						tex->bMultiPatch = true;
-						tex->_LeftOffset[0] = 
-						tex->_LeftOffset[1] = 
-						tex->_TopOffset[0] = 
-						tex->_TopOffset[1] = 0;
-						tex->Scale = Scale;
 						tex->bMasked = true;
 						tex->bTranslucent = -1;
 						tex->bWorldPanning = true;
 						tex->bNoDecals = false;
 						tex->SourceLump = -1;	// We do not really care.
 						auto gtex = MakeGameTexture(tex, ETextureType::FontChar);
+						gtex->SetOffsets(0, 0, 0);
+						gtex->SetOffsets(1, 0, 0);
+						gtex->SetScale((float)Scale.X, (float)Scale.Y);
 						TexMan.AddGameTexture(gtex);
 						charMap.Insert(int(position) + x + y * numtex_x, gtex);
 					}

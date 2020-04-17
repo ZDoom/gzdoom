@@ -255,17 +255,8 @@ public:
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
 	void CleanHardwareTextures(bool reallyclean);
 
-	// These are mainly meant for 2D code which only needs logical information about the texture to position it properly.
-	int GetDisplayLeftOffset() { return GetScaledLeftOffset(0); }
-	int GetDisplayTopOffset() { return GetScaledTopOffset(0); }
-	double GetDisplayLeftOffsetDouble(int adjusted = 0) { return _LeftOffset[adjusted] / Scale.X; }
-	double GetDisplayTopOffsetDouble(int adjusted = 0) { return _TopOffset[adjusted] / Scale.Y; }
-
 	int GetWidth() { return Width; }
 	int GetHeight() { return Height; }
-	int GetTexelLeftOffset(int adjusted) { return _LeftOffset[adjusted]; }
-	int GetTexelTopOffset(int adjusted) { return _TopOffset[adjusted]; }
-
 	
 	bool isSkybox() const { return bSkybox; }
 	bool isFullbrightDisabled() const { return bDisableFullbright; }
@@ -302,10 +293,6 @@ public:
 	{
 		Width = BaseTexture->GetWidth();
 		Height = BaseTexture->GetHeight();
-		_TopOffset[0] = BaseTexture->_TopOffset[0];
-		_TopOffset[1] = BaseTexture->_TopOffset[1];
-		_LeftOffset[0] = BaseTexture->_LeftOffset[0];
-		_LeftOffset[1] = BaseTexture->_LeftOffset[1];
 		Scale = BaseTexture->Scale;
 	}
 
@@ -376,25 +363,6 @@ protected:
 	float shaderspeed = 1.f;
 	int shaderindex = 0;
 
-	int GetScaledWidth () { int foo = int((Width * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
-	int GetScaledHeight () { int foo = int((Height * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
-	double GetScaledWidthDouble () { return Width / Scale.X; }
-	double GetScaledHeightDouble () { return Height / Scale.Y; }
-	double GetScaleY() const { return Scale.Y; }
-
-	// Now with improved offset adjustment.
-	int GetLeftOffset(int adjusted) { return _LeftOffset[adjusted]; }
-	int GetTopOffset(int adjusted) { return _TopOffset[adjusted]; }
-	int GetScaledLeftOffset (int adjusted) { int foo = int((_LeftOffset[adjusted] * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
-	int GetScaledTopOffset (int adjusted) { int foo = int((_TopOffset[adjusted] * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
-
-	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
-	// should use these, so that if changes are needed, this is the only place to edit.
-
-	// For the hardware renderer. The software renderer's have been offloaded to FSoftwareTexture
-	int GetLeftOffsetHW() { return _LeftOffset[r_spriteadjustHW]; }
-	int GetTopOffsetHW() { return _TopOffset[r_spriteadjustHW]; }
-
 	virtual void ResolvePatches() {}
 
 public:
@@ -405,7 +373,6 @@ public:
 
 protected:
 	uint16_t Width, Height;
-	int16_t _LeftOffset[2], _TopOffset[2];
 
 	FTexture (const char *name = NULL, int lumpnum = -1);
 
@@ -590,6 +557,7 @@ class FGameTexture
 	FTextureID id;
 
 	uint16_t TexelWidth, TexelHeight;
+	int16_t LeftOffset[2], TopOffset[2];
 	float DisplayWidth, DisplayHeight;
 	float ScaleX, ScaleY;
 
@@ -635,13 +603,10 @@ public:
 	int GetSourceLump() const { return Base->GetSourceLump(); }
 	void SetBrightmap(FGameTexture* tex) { Brightmap = tex->GetTexture(); }
 
-	int GetTexelLeftOffset(int adjusted = 0) /*const*/ { return Base->GetTexelLeftOffset(adjusted); }
-	int GetTexelTopOffset(int adjusted = 0) /*const*/ { return Base->GetTexelTopOffset(adjusted); }
-	double GetDisplayLeftOffset(int adjusted = 0) /*const*/ { return Base->GetDisplayLeftOffsetDouble(adjusted); }
-	double GetDisplayTopOffset(int adjusted = 0) /*const*/ { return Base->GetDisplayTopOffsetDouble(adjusted); }
-	// For the hardware renderer. The software renderer's have been offloaded to FSoftwareTexture
-	int GetLeftOffsetHW() { return GetTexelLeftOffset(r_spriteadjustHW); }
-	int GetTopOffsetHW() { return GetTexelTopOffset(r_spriteadjustHW); }
+	int GetTexelLeftOffset(int adjusted = 0) const { return LeftOffset[adjusted]; }
+	int GetTexelTopOffset(int adjusted = 0) const { return TopOffset[adjusted]; }
+	float GetDisplayLeftOffset(int adjusted = 0) const { return LeftOffset[adjusted] / ScaleX; }
+	float GetDisplayTopOffset(int adjusted = 0) const { return TopOffset[adjusted] / ScaleY; }
 
 	bool isValid() const { return UseType != ETextureType::Null; }
 	int isWarped() { return Base->isWarped(); }
@@ -667,7 +632,6 @@ public:
 	void SetRotations(int index) { Base->SetRotations(index); }
 	void SetSkyOffset(int ofs) { Base->SetSkyOffset(ofs); }
 	int GetSkyOffset() const { return Base->GetSkyOffset(); }
-	void SetScale(DVector2 vec) { Base->SetScale(vec); }
 
 	ISoftwareTexture* GetSoftwareTexture()
 	{
@@ -736,6 +700,18 @@ public:
 		DisplayHeight = h;
 		ScaleX = w / TexelWidth;
 		ScaleY = h / TexelHeight;
+	}
+	void SetOffsets(int which, int x, int y)
+	{
+		LeftOffset[which] = x;
+		TopOffset[which] = y;
+	}
+	void SetScale(float x, float y) 
+	{
+		ScaleX = x;
+		ScaleY = y;
+		DisplayWidth = x * TexelWidth;
+		DisplayHeight = y * TexelHeight;
 	}
 
 	const SpritePositioningInfo& GetSpritePositioning(int which) { if (spi == nullptr) SetupSpriteData(); return spi[which]; }

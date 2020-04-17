@@ -64,10 +64,6 @@ void FImageTexture::SetFromImage()
 	Width = img->GetWidth();
 	Height = img->GetHeight();
 
-	auto offsets = img->GetOffsets();
-	_LeftOffset[1] = _LeftOffset[0] = offsets.first;
-	_TopOffset[1] = _TopOffset[0] = offsets.second;
-
 	bMasked = img->bMasked;
 	bTranslucent = img->bTranslucent;
 }

@@ -137,7 +137,7 @@ struct FPatchLookup
 
 void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType usetype)
 {
-	FImageTexture *tex = new FImageTexture(nullptr, buildinfo.Name);
+	FImageTexture *tex = new FImageTexture(nullptr);
 	tex->bMultiPatch = true;
 	tex->SetSize(buildinfo.Width, buildinfo.Height);
 	tex->bMasked = true;	// we do not really know yet.
@@ -145,7 +145,7 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	tex->bNoDecals = buildinfo.bNoDecals;
 	tex->SourceLump = buildinfo.DefinitionLump;
 	buildinfo.itex = tex;
-	buildinfo.texture = MakeGameTexture(tex, usetype);
+	buildinfo.texture = MakeGameTexture(tex, buildinfo.Name, usetype);
 	buildinfo.texture->SetOffsets(0, buildinfo.LeftOffset[0], buildinfo.TopOffset[0]);
 	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
 	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.X);

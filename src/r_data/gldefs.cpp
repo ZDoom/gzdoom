@@ -77,6 +77,7 @@ static void ParseVavoomSkybox()
 		int facecount=0;
 		int maplump = -1;
 		bool error = false;
+		FString s = sc.String;
 		FSkyBox * sb = new FSkyBox(sc.String);
 		sb->fliptop = true;
 		sc.MustGetStringName("{");
@@ -93,7 +94,7 @@ static void ParseVavoomSkybox()
 				auto tex = TexMan.FindGameTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny);
 				if (tex == NULL)
 				{
-					sc.ScriptMessage("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, sb->GetName().GetChars());
+					sc.ScriptMessage("Texture '%s' not found in Vavoom skybox '%s'\n", sc.String, s.GetChars());
 					error = true;
 				}
 				sb->faces[facecount] = tex;
@@ -103,12 +104,12 @@ static void ParseVavoomSkybox()
 		}
 		if (facecount != 6)
 		{
-			sc.ScriptError("%s: Skybox definition requires 6 faces", sb->GetName().GetChars());
+			sc.ScriptError("%s: Skybox definition requires 6 faces", s.GetChars());
 		}
 		sb->SetSize();
 		if (!error)
 		{
-			TexMan.AddGameTexture(MakeGameTexture(sb, ETextureType::Override));
+			TexMan.AddGameTexture(MakeGameTexture(sb, s, ETextureType::Override));
 		}
 	}
 }
@@ -992,7 +993,6 @@ class GLDefsParser
 		sc.MustGetString();
 
 		FString s = sc.String;
-		s.ToUpper();
 		FSkyBox * sb = new FSkyBox(s);
 		if (sc.CheckString("fliptop"))
 		{
@@ -1010,10 +1010,10 @@ class GLDefsParser
 		}
 		if (facecount != 3 && facecount != 6)
 		{
-			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", sb->GetName().GetChars());
+			sc.ScriptError("%s: Skybox definition requires either 3 or 6 faces", s.GetChars());
 		}
 		sb->SetSize();
-		TexMan.AddGameTexture(MakeGameTexture(sb, ETextureType::Override));
+		TexMan.AddGameTexture(MakeGameTexture(sb, s, ETextureType::Override));
 	}
 
 	//===========================================================================

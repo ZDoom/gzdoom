@@ -76,7 +76,7 @@ SWSceneDrawer::SWSceneDrawer()
 	if (!texid.Exists())
 	{
 		// We need to wrap this in a game texture object to have it managed by the texture manager, even though it will never be used as a material.
-		auto tex = MakeGameTexture(new FImageTexture(new FSWPaletteTexture, "@@palette@@"), ETextureType::Special);
+		auto tex = MakeGameTexture(new FImageTexture(new FSWPaletteTexture), "@@palette@@", ETextureType::Special);
 		texid = TexMan.AddGameTexture(tex);
 	}
 	PaletteTexture = TexMan.GetGameTexture(texid)->GetTexture();
@@ -103,7 +103,7 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		{
 			// This manually constructs its own material here.
 			fbtex.reset();
-			fbtex.reset(MakeGameTexture(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()), ETextureType::SWCanvas));
+			fbtex.reset(MakeGameTexture(new FWrapperTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()), nullptr, ETextureType::SWCanvas));
 			GetSystemTexture()->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 			auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
 			mat->AddTextureLayer(PaletteTexture);

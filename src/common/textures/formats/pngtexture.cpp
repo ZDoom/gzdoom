@@ -609,7 +609,7 @@ FGameTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 	
 	// Reject anything that cannot be put into a savegame picture by GZDoom itself.
 	if (compression != 0 || filter != 0 || interlace > 0 || bitdepth != 8 || (colortype != 2 && colortype != 3)) return nullptr;
-	else return MakeGameTexture(new FPNGFileTexture (png->File, width, height, colortype), ETextureType::Override);
+	else return MakeGameTexture(new FPNGFileTexture (png->File, width, height, colortype), nullptr, ETextureType::Override);
 }
 
 //==========================================================================

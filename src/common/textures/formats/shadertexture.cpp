@@ -132,6 +132,6 @@ private:
 FGameTexture *CreateShaderTexture(bool vertical, bool reverse)
 {
 	FStringf name("BarShader%c%c", vertical ? 'v' : 'h', reverse ? 'r' : 'f');
-	return MakeGameTexture(CreateImageTexture(new FBarShader(vertical, reverse), name.GetChars()), ETextureType::Override);
+	return MakeGameTexture(CreateImageTexture(new FBarShader(vertical, reverse)), name.GetChars(), ETextureType::Override);
 
 }

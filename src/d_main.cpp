@@ -880,7 +880,7 @@ void D_Display ()
 		if (vr_mode == 0 || vid_rendermode != 4)
 		{
 			// save the current screen if about to wipe
-			wipe = MakeGameTexture(screen->WipeStartScreen(), ETextureType::SWCanvas);
+			wipe = MakeGameTexture(screen->WipeStartScreen(), nullptr, ETextureType::SWCanvas);
 
 			switch (wipegamestate)
 			{
@@ -1063,7 +1063,7 @@ void D_Display ()
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
 		screen->End2D();
-		auto wipend = MakeGameTexture(screen->WipeEndScreen(), ETextureType::SWCanvas);
+		auto wipend = MakeGameTexture(screen->WipeEndScreen(), nullptr, ETextureType::SWCanvas);
 		auto wiper = Wiper::Create(wipe_type);
 		wiper->SetTextures(wipe, wipend);
 

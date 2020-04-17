@@ -157,7 +157,7 @@ FVoxelModel::FVoxelModel(FVoxel *voxel, bool owned)
 {
 	mVoxel = voxel;
 	mOwningVoxel = owned;
-	mPalette = TexMan.AddGameTexture(MakeGameTexture(new FImageTexture(new FVoxelTexture(voxel)), ETextureType::Override));
+	mPalette = TexMan.AddGameTexture(MakeGameTexture(new FImageTexture(new FVoxelTexture(voxel)), nullptr, ETextureType::Override));
 }
 
 //===========================================================================

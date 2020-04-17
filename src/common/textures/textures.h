@@ -250,7 +250,7 @@ class FTexture : public RefCountedBase
 public:
 
 	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
-	static FTexture *CreateTexture(const char *name, int lumpnum, bool allowflats = false);
+	static FTexture *CreateTexture(int lumpnum, bool allowflats = false);
 	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
@@ -268,7 +268,6 @@ public:
 	float GetShaderSpeed() const { return shaderspeed; }
 	void SetRotations(int rot) { Rotations = int16_t(rot); }
 	
-	const FString &GetName() const { return Name; }
 	void SetNoDecals(bool on) { bNoDecals = on;  }
 	void SetWarpStyle(int style) { bWarped = style; }
 	bool allowNoDecals() const { return bNoDecals; }
@@ -319,8 +318,6 @@ protected:
 
 	protected:
 
-	FString Name;
-
 	uint8_t bNoDecals:1;		// Decals should not stick to texture
 	uint8_t bNoRemap0:1;		// Do not remap color 0 (used by front layer of parallax skies)
 	uint8_t bWorldPanning:1;	// Texture is panned in world units rather than texels
@@ -363,7 +360,7 @@ protected:
 protected:
 	uint16_t Width, Height;
 
-	FTexture (const char *name = NULL, int lumpnum = -1);
+	FTexture (int lumpnum = -1);
 
 public:
 	FTextureBuffer CreateTexBuffer(int translation, int flags = 0);
@@ -388,9 +385,8 @@ public:
 class FCanvasTexture : public FTexture
 {
 public:
-	FCanvasTexture(const char* name, int width, int height)
+	FCanvasTexture(int width, int height)
 	{
-		Name = name;
 		Width = width;
 		Height = height;
 
@@ -438,10 +434,9 @@ class FImageTexture : public FTexture
 {
 	FImageSource* mImage;
 protected:
-	FImageTexture(const char *name) : FTexture(name) {}
 	void SetFromImage();
 public:
-	FImageTexture(FImageSource* image, const char* name = nullptr) noexcept;
+	FImageTexture(FImageSource* image) noexcept;
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
 
 	void SetImage(FImageSource* img)	// This is only for the multipatch texture builder!
@@ -543,6 +538,7 @@ class FGameTexture
 	RefCountedPtr<FTexture> AmbientOcclusion;				// Ambient occlusion texture for PBR
 	RefCountedPtr<FTexture> CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES]; // Custom texture maps for custom hardware shaders
 
+	FString Name;
 	FTextureID id;
 
 	uint16_t TexelWidth, TexelHeight;
@@ -558,10 +554,12 @@ class FGameTexture
 	FMaterial* Material[4] = {  };
 
 public:
-	FGameTexture(FTexture* wrap);
+	FGameTexture(FTexture* wrap, const char *name);
 	~FGameTexture();
 	FTextureID GetID() const { return id; }
 	void SetID(FTextureID newid) { id = newid; }	// should only be called by the texture manager
+	const FString& GetName() const { return Name; }
+	void SetName(const char* name) { Name = name; }	// should only be called by setup code.
 
 	float GetScaleX() { return ScaleX; }
 	float GetScaleY() { return ScaleY; }
@@ -628,7 +626,6 @@ public:
 		return Material[num];
 	}
 
-	const FString& GetName() const { return Base->GetName(); }
 	void SetShaderSpeed(float speed) { Base->shaderspeed = speed; }
 	void SetShaderIndex(int index) { Base->shaderindex = index; }
 	void SetShaderLayers(MaterialLayers& lay)
@@ -724,10 +721,10 @@ public:
 	}
 };
 
-inline FGameTexture* MakeGameTexture(FTexture* tex, ETextureType useType)
+inline FGameTexture* MakeGameTexture(FTexture* tex, const char *name, ETextureType useType)
 {
 	if (!tex) return nullptr;
-	auto t = new FGameTexture(tex);
+	auto t = new FGameTexture(tex, name);
 	t->SetUseType(useType);
 	return t;
 }

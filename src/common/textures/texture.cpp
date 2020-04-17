@@ -70,20 +70,14 @@ int r_spriteadjustSW, r_spriteadjustHW;
 
 // Examines the lump contents to decide what type of texture to create,
 // and creates the texture.
-FTexture * FTexture::CreateTexture(const char *name, int lumpnum, bool allowflats)
+FTexture * FTexture::CreateTexture(int lumpnum, bool allowflats)
 {
 	if (lumpnum == -1) return nullptr;
 
 	auto image = FImageSource::GetImage(lumpnum, allowflats);
 	if (image != nullptr)
 	{
-		FTexture *tex = new FImageTexture(image);
-		if (tex != nullptr) 
-		{
-			tex->Name = name;
-			tex->Name.ToUpper();
-			return tex;
-		}
+		return new FImageTexture(image);
 	}
 	return nullptr;
 }
@@ -94,7 +88,7 @@ FTexture * FTexture::CreateTexture(const char *name, int lumpnum, bool allowflat
 //
 //==========================================================================
 
-FTexture::FTexture (const char *name, int lumpnum)
+FTexture::FTexture (int lumpnum)
 	: 
   SourceLump(lumpnum),
   bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
@@ -109,21 +103,6 @@ FTexture::FTexture (const char *name, int lumpnum)
 	bSkybox = false;
 	bNoCompress = false;
 	bTranslucent = -1;
-
-
-	if (name != NULL)
-	{
-		Name = name;
-		Name.ToUpper();
-	}
-	else if (lumpnum < 0)
-	{
-		Name = FString();
-	}
-	else
-	{
-		fileSystem.GetFileShortName (Name, lumpnum);
-	}
 }
 
 FTexture::~FTexture ()
@@ -971,7 +950,7 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 }
 
 
-FGameTexture::FGameTexture(FTexture* wrap) : Base(wrap)
+FGameTexture::FGameTexture(FTexture* wrap, const char *name) : Base(wrap), Name(name)
 {
 	id.SetInvalid();
 	TexelWidth = Base->GetWidth();

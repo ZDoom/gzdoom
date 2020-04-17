@@ -709,8 +709,8 @@ void FTextureAnimator::ParseCameraTexture(FScanner &sc)
 	sc.MustGetNumber ();
 	height = sc.Number;
 	FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Flat, texflags);
-	auto canvas = new FCanvasTexture(picname, width, height);
-	FGameTexture *viewer = MakeGameTexture(canvas, ETextureType::Wall);
+	auto canvas = new FCanvasTexture(width, height);
+	FGameTexture *viewer = MakeGameTexture(canvas, picname, ETextureType::Wall);
 	if (picnum.Exists())
 	{
 		auto oldtex = TexMan.GameTexture(picnum);

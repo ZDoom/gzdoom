@@ -171,4 +171,4 @@ protected:
 
 class FTexture;
 
-FTexture* CreateImageTexture(FImageSource* img, const char *name = nullptr) noexcept;
+FTexture* CreateImageTexture(FImageSource* img) noexcept;

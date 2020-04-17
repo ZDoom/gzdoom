@@ -47,13 +47,12 @@
 //
 //==========================================================================
 
-FImageTexture::FImageTexture(FImageSource *img, const char *name) noexcept
-: FTexture(name, img? img->LumpNum() : 0)
+FImageTexture::FImageTexture(FImageSource *img) noexcept
+: FTexture(img? img->LumpNum() : 0)
 {
 	mImage = img;
 	if (img != nullptr)
 	{
-		if (name == nullptr) fileSystem.GetFileShortName(Name, img->LumpNum());
 		SetFromImage();
 	}
 }
@@ -109,8 +108,8 @@ bool FImageTexture::DetermineTranslucency()
 }
 
 
-FTexture* CreateImageTexture(FImageSource* img, const char *name) noexcept
+FTexture* CreateImageTexture(FImageSource* img) noexcept
 {
-	return new FImageTexture(img, name);
+	return new FImageTexture(img);
 }
 

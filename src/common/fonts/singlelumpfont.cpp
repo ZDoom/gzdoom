@@ -353,7 +353,7 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		}
 		else
 		{
-			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight)), ETextureType::FontChar);
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight)), nullptr, ETextureType::FontChar);
 			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 			do
 			{
@@ -487,7 +487,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 			chardata[chari+2],	// height
 			-(int8_t)chardata[chari+3],	// x offset
 			-(int8_t)chardata[chari+4]	// y offset
-		)), ETextureType::FontChar);
+		)), nullptr, ETextureType::FontChar);
 		Chars[chardata[chari] - FirstChar].TranslatedPic = tex;
 		TexMan.AddGameTexture(tex);
 	}
@@ -554,7 +554,7 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 
 		if(!Chars[i].TranslatedPic)
 		{
-			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight)), ETextureType::FontChar);
+			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight)), nullptr, ETextureType::FontChar);
 			Chars[i].XMove = SpaceWidth;
 			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 		}

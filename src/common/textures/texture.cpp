@@ -96,7 +96,7 @@ FTexture * FTexture::CreateTexture(const char *name, int lumpnum, bool allowflat
 
 FTexture::FTexture (const char *name, int lumpnum)
 	: 
-  Scale(1,1), SourceLump(lumpnum),
+  SourceLump(lumpnum),
   bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bFullNameTexture(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
@@ -148,15 +148,6 @@ FBitmap FTexture::GetBgraBitmap(const PalEntry *remap, int *ptrans)
 	return bmp;
 }
 
-void FTexture::SetDisplaySize(int fitwidth, int fitheight)
-{
-	Scale.X = double(Width) / fitwidth;
-	Scale.Y =double(Height) / fitheight;
-	// compensate for roundoff errors
-	if (int(Scale.X * fitwidth) != Width) Scale.X += (1 / 65536.);
-	if (int(Scale.Y * fitheight) != Height) Scale.Y += (1 / 65536.);
-}
-
 //====================================================================
 //
 // CheckRealHeight
@@ -176,9 +167,6 @@ int FTexture::CheckRealHeight()
 		{
 			if (pixels[h + w * GetHeight()] != 0)
 			{
-				// Scale maxy before returning it
-				h = int((h * 2) / Scale.Y);
-				h = (h >> 1) + (h & 1);
 				return h;
 			}
 		}

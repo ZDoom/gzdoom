@@ -43,6 +43,7 @@
 #include <vector>
 #include "hw_texcontainer.h"
 #include "refcounted.h"
+#include "xs_Float.h"
 
 // 15 because 0th texture is our texture
 #define MAX_CUSTOM_HW_SHADER_TEXTURES 15
@@ -271,7 +272,6 @@ public:
 	void SetNoDecals(bool on) { bNoDecals = on;  }
 	void SetWarpStyle(int style) { bWarped = style; }
 	bool allowNoDecals() const { return bNoDecals; }
-	bool isScaled() const { return Scale.X != 1 || Scale.Y != 1; }
 	bool isMasked() const { return bMasked; }
 	void SetSkyOffset(int offs) { SkyOffset = offs; }
 	int GetSkyOffset() const { return SkyOffset; }
@@ -286,14 +286,12 @@ public:
 	void SetSpeed(float fac) { shaderspeed = fac; }
 	bool UseWorldPanning() const  { return bWorldPanning; }
 	void SetWorldPanning(bool on) { bWorldPanning = on; }
-	void SetDisplaySize(int fitwidth, int fitheight);
 
 
 	void CopySize(FTexture* BaseTexture)
 	{
 		Width = BaseTexture->GetWidth();
 		Height = BaseTexture->GetHeight();
-		Scale = BaseTexture->Scale;
 	}
 
 	// This is only used for the null texture and for Heretic's skies.
@@ -313,8 +311,6 @@ public:
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 
 protected:
-	DVector2 Scale;
-
 	int SourceLump;
 
 public:
@@ -348,7 +344,6 @@ protected:
 	uint8_t bNoCompress : 1;
 	int8_t bTranslucent : 2;
 	int8_t bExpandSprite = -1;
-	bool bHiresHasColorKey = false;				// Support for old color-keyed Doomsday textures
 
 	uint16_t Rotations;
 	int16_t SkyOffset;
@@ -364,12 +359,6 @@ protected:
 	int shaderindex = 0;
 
 	virtual void ResolvePatches() {}
-
-public:
-	void SetScale(const DVector2 &scale)
-	{
-		Scale = scale;
-	}
 
 protected:
 	uint16_t Width, Height;
@@ -678,7 +667,7 @@ public:
 	void SetGlowing(PalEntry color) { auto tex = GetTexture(); tex->bAutoGlowing = false;	tex->bGlowing = true; tex->GlowColor = color; }
 
 	bool isUserContent() const;
-	int CheckRealHeight() { return Base->CheckRealHeight(); }
+	int CheckRealHeight() { return xs_RoundToInt(Base->CheckRealHeight() / ScaleY); }
 	bool isSkybox() const { return Base->isSkybox(); }
 	void SetSize(int x, int y) 
 	{ 
@@ -690,8 +679,13 @@ public:
 	{ 
 		DisplayWidth = w;
 		DisplayHeight = h;
-		ScaleX = w / TexelWidth;
-		ScaleY = h / TexelHeight;
+		ScaleX = TexelWidth / w;
+		ScaleY = TexelHeight / h;
+
+		// compensate for roundoff errors
+		if (int(ScaleX * w) != TexelWidth) ScaleX += (1 / 65536.);
+		if (int(ScaleY * h) != TexelHeight) ScaleY += (1 / 65536.);
+
 	}
 	void SetOffsets(int which, int x, int y)
 	{

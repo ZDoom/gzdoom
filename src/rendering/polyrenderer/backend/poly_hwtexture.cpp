@@ -64,8 +64,6 @@ void PolyHardwareTexture::Reset()
 
 DCanvas *PolyHardwareTexture::GetImage(FTexture *baselayer, const FMaterialState &state)
 {
-	FGameTexture *tex = state.mMaterial->Source();
-
 	if (!mCanvas)
 	{
 		int flags = state.mMaterial->GetScaleFlags();

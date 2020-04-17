@@ -158,69 +158,6 @@ void FTexture::SetDisplaySize(int fitwidth, int fitheight)
 	if (int(Scale.Y * fitheight) != Height) Scale.Y += (1 / 65536.);
 }
 
-//===========================================================================
-// 
-//	Gets the average color of a texture for use as a sky cap color
-//
-//===========================================================================
-
-PalEntry FTexture::averageColor(const uint32_t *data, int size, int maxout)
-{
-	int				i;
-	unsigned int	r, g, b;
-
-	// First clear them.
-	r = g = b = 0;
-	if (size == 0)
-	{
-		return PalEntry(255, 255, 255);
-	}
-	for (i = 0; i < size; i++)
-	{
-		b += BPART(data[i]);
-		g += GPART(data[i]);
-		r += RPART(data[i]);
-	}
-
-	r = r / size;
-	g = g / size;
-	b = b / size;
-
-	int maxv = MAX(MAX(r, g), b);
-
-	if (maxv && maxout)
-	{
-		r = ::Scale(r, maxout, maxv);
-		g = ::Scale(g, maxout, maxv);
-		b = ::Scale(b, maxout, maxv);
-	}
-	return PalEntry(255, r, g, b);
-}
-
-PalEntry FTexture::GetSkyCapColor(bool bottom)
-{
-	if (!bSWSkyColorDone)
-	{
-		bSWSkyColorDone = true;
-
-		FBitmap bitmap = GetBgraBitmap(nullptr);
-		int w = bitmap.GetWidth();
-		int h = bitmap.GetHeight();
-
-		const uint32_t *buffer = (const uint32_t *)bitmap.GetPixels();
-		if (buffer)
-		{
-			CeilingSkyColor = averageColor((uint32_t *)buffer, w * MIN(30, h), 0);
-			if (h>30)
-			{
-				FloorSkyColor = averageColor(((uint32_t *)buffer) + (h - 30)*w, w * 30, 0);
-			}
-			else FloorSkyColor = CeilingSkyColor;
-		}
-	}
-	return bottom ? FloorSkyColor : CeilingSkyColor;
-}
-
 //====================================================================
 //
 // CheckRealHeight

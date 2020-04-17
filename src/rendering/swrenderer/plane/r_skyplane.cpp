@@ -258,8 +258,9 @@ namespace swrenderer
 		drawerargs.SetDest(viewport, start_x, y1);
 		drawerargs.SetCount(y2 - y1);
 		drawerargs.SetFadeSky(r_skymode == 2 && !(Level->flags & LEVEL_FORCETILEDSKY));
-		drawerargs.SetSolidTop(frontskytex->GetSkyCapColor(false));
-		drawerargs.SetSolidBottom(frontskytex->GetSkyCapColor(true));
+		auto& col = R_GetSkyCapColor(frontskytex->GetTexture());
+		drawerargs.SetSolidTop(col.first);
+		drawerargs.SetSolidBottom(col.second);
 
 		if (!backskytex)
 			drawerargs.DrawSingleSkyColumn(Thread);

@@ -28,6 +28,7 @@
 #ifndef __R_SKY_H__
 #define __R_SKY_H__
 
+#include <utility>
 #include "textures.h"
 
 struct FLevelLocals;
@@ -41,6 +42,7 @@ extern int		freelookviewheight;
 void InitSkyMap(FLevelLocals *Level);
 void R_InitSkyMap();
 void R_UpdateSky (uint64_t mstime);
+std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
 
 // 57 world units roughly represent one sky texel for the glTranslate call.
 enum

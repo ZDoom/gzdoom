@@ -288,7 +288,6 @@ public:
 	bool isMasked() const { return bMasked; }
 	void SetSkyOffset(int offs) { SkyOffset = offs; }
 	int GetSkyOffset() const { return SkyOffset; }
-	PalEntry GetSkyCapColor(bool bottom);
 	virtual int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	void GetGlowColor(float *data);
 	bool isGlowing() const { return bGlowing; }
@@ -329,7 +328,6 @@ public:
 	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans = nullptr);
 
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
-	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
 
 protected:
 
@@ -423,14 +421,6 @@ public:
 	{
 		return bTranslucent != -1 ? bTranslucent : DetermineTranslucency();
 	}
-
-private:
-	int CheckDDPK3();
-	int CheckExternalFile(bool & hascolorkey);
-	
-	bool bSWSkyColorDone = false;
-	PalEntry FloorSkyColor;
-	PalEntry CeilingSkyColor;
 
 public:
 
@@ -731,7 +721,6 @@ public:
 
 	const SpritePositioningInfo& GetSpritePositioning(int which) { if (spi == nullptr) SetupSpriteData(); return spi[which]; }
 	int GetAreas(FloatRect** pAreas) const { return Base->GetAreas(pAreas); }
-	PalEntry GetSkyCapColor(bool bottom) { return Base->GetSkyCapColor(bottom); }
 
 	bool GetTranslucency()
 	{

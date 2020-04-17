@@ -66,13 +66,12 @@ void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FGameTexture *
 	// The caps only get drawn for the main layer but not for the overlay.
 	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != NULL)
 	{
-		PalEntry pe = tex->GetSkyCapColor(false);
-		state.SetObjectColor(pe);
+		auto &col = R_GetSkyCapColor(tex);
+		state.SetObjectColor(col.first);
 		state.EnableTexture(false);
 		RenderRow(di, state, DT_TriangleFan, 0);
 
-		pe = tex->GetSkyCapColor(true);
-		state.SetObjectColor(pe);
+		state.SetObjectColor(col.second);
 		RenderRow(di, state, DT_TriangleFan, rc);
 		state.EnableTexture(true);
 	}

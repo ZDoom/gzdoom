@@ -62,7 +62,6 @@ public:
 	}
 	
 	int GetSkyOffset() const { return mTexture->GetSkyOffset(); }
-	PalEntry GetSkyCapColor(bool bottom) const { return mSource->GetSkyCapColor(bottom); }
 	
 	int GetWidth () { return mTexture->GetTexelWidth(); }
 	int GetHeight () { return mTexture->GetTexelHeight(); }

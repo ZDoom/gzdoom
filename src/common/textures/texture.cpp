@@ -983,6 +983,30 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 }
 
 
+FGameTexture::FGameTexture(FTexture* wrap) : Base(wrap)
+{
+	id.SetInvalid();
+	TexelWidth = Base->GetWidth();
+	DisplayWidth = (float)TexelWidth;
+	TexelHeight = Base->GetHeight();
+	DisplayHeight = (float)TexelHeight;
+	auto img = Base->GetImage();
+	if (img)
+	{
+		auto ofs = img->GetOffsets();
+		LeftOffset[0] = LeftOffset[1] = ofs.first;
+		TopOffset[0] = TopOffset[1] = ofs.second;
+	}
+	else
+	{
+		LeftOffset[0] = LeftOffset[1] = 
+		TopOffset[0] = TopOffset[1] = 0;
+
+	}
+	ScaleX = ScaleY = 1.f;
+}
+
+
 FGameTexture::~FGameTexture()
 {
 	FGameTexture* link = fileSystem.GetLinkedTexture(GetSourceLump());

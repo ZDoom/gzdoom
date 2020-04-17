@@ -569,15 +569,7 @@ class FGameTexture
 	FMaterial* Material[4] = {  };
 
 public:
-	FGameTexture(FTexture* wrap) : Base(wrap) 
-	{
-		id.SetInvalid();
-		TexelWidth = Base->GetWidth();
-		DisplayWidth = (float)TexelWidth;
-		TexelHeight = Base->GetHeight();
-		DisplayHeight = (float)TexelHeight;
-		ScaleX = ScaleY = 1.f;
-	}
+	FGameTexture(FTexture* wrap);
 	~FGameTexture();
 	FTextureID GetID() const { return id; }
 	void SetID(FTextureID newid) { id = newid; }	// should only be called by the texture manager

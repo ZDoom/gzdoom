@@ -62,7 +62,7 @@ static void PrecacheTexture(FGameTexture *tex, int cache)
 //===========================================================================
 static void PrecacheList(FMaterial *gltex, SpriteHits& translations)
 {
-	gltex->BaseLayer()->SystemTextures.CleanUnused(translations, gltex->GetScaleFlags());
+	//gltex->BaseLayer()->SystemTextures.CleanUnused(translations, gltex->GetScaleFlags()); this needs to be redone.
 	SpriteHits::Iterator it(translations);
 	SpriteHits::Pair* pair;
 	while (it.NextPair(pair)) screen->PrecacheMaterial(gltex, pair->Key);
@@ -253,7 +253,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 				if (texhitlist[i] & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 				{
 					int flags = shouldUpscale(gtex, UF_Texture);
-					if (tex->GetImage() && tex->SystemTextures.GetHardwareTexture(0, flags) == nullptr)
+					if (tex->GetImage() && tex->GetHardwareTexture(0, flags) == nullptr)
 					{
 						FImageSource::RegisterForPrecache(tex->GetImage(), V_IsTrueColor());
 					}

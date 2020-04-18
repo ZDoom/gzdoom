@@ -246,6 +246,48 @@ class FTexture : public RefCountedBase
 	friend class FMaterial;
 	friend class FFont;
 
+protected:
+	uint16_t Width, Height;
+	int SourceLump;
+	FHardwareTextureContainer SystemTextures;
+
+	uint8_t bNoDecals : 1;		// Decals should not stick to texture
+	uint8_t bNoRemap0 : 1;		// Do not remap color 0 (used by front layer of parallax skies)
+	uint8_t bWorldPanning : 1;	// Texture is panned in world units rather than texels
+	uint8_t bMasked : 1;			// Texture (might) have holes
+	uint8_t bAlphaTexture : 1;	// Texture is an alpha channel without color information
+	uint8_t bHasCanvas : 1;		// Texture is based off FCanvasTexture
+	uint8_t bWarped : 2;			// This is a warped texture. Used to avoid multiple warps on one texture
+	uint8_t bComplex : 1;		// Will be used to mark extended MultipatchTextures that have to be
+							// fully composited before subjected to any kind of postprocessing instead of
+							// doing it per patch.
+	uint8_t bMultiPatch : 2;		// This is a multipatch texture (we really could use real type info for textures...)
+	uint8_t bFullNameTexture : 1;
+	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
+
+	uint8_t bGlowing : 1;						// Texture glow color
+	uint8_t bAutoGlowing : 1;					// Glow info is determined from texture image.
+	uint8_t bFullbright : 1;					// always draw fullbright
+	uint8_t bDisableFullbright : 1;				// This texture will not be displayed as fullbright sprite
+
+	uint8_t bSkybox : 1;						// is a cubic skybox
+	uint8_t bNoCompress : 1;
+	int8_t bTranslucent : 2;
+	int8_t bExpandSprite = -1;
+
+	uint16_t Rotations;
+	int16_t SkyOffset;
+	FloatRect* areas = nullptr;
+	int areacount = 0;
+
+	int GlowHeight = 128;
+	PalEntry GlowColor = 0;
+
+	float Glossiness = 10.f;
+	float SpecularLevel = 0.1f;
+	float shaderspeed = 1.f;
+	int shaderindex = 0;
+
 
 public:
 
@@ -309,56 +351,9 @@ public:
 
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);
 
-protected:
-	int SourceLump;
-
-public:
-	FHardwareTextureContainer SystemTextures;
-protected:
-
-	protected:
-
-	uint8_t bNoDecals:1;		// Decals should not stick to texture
-	uint8_t bNoRemap0:1;		// Do not remap color 0 (used by front layer of parallax skies)
-	uint8_t bWorldPanning:1;	// Texture is panned in world units rather than texels
-	uint8_t bMasked:1;			// Texture (might) have holes
-	uint8_t bAlphaTexture:1;	// Texture is an alpha channel without color information
-	uint8_t bHasCanvas:1;		// Texture is based off FCanvasTexture
-	uint8_t bWarped:2;			// This is a warped texture. Used to avoid multiple warps on one texture
-	uint8_t bComplex:1;		// Will be used to mark extended MultipatchTextures that have to be
-							// fully composited before subjected to any kind of postprocessing instead of
-							// doing it per patch.
-	uint8_t bMultiPatch:2;		// This is a multipatch texture (we really could use real type info for textures...)
-	uint8_t bFullNameTexture : 1;
-	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
-	public:
-	uint8_t bGlowing : 1;						// Texture glow color
-	uint8_t bAutoGlowing : 1;					// Glow info is determined from texture image.
-	uint8_t bFullbright : 1;					// always draw fullbright
-	uint8_t bDisableFullbright : 1;				// This texture will not be displayed as fullbright sprite
-	protected:
-	uint8_t bSkybox : 1;						// is a cubic skybox
-	uint8_t bNoCompress : 1;
-	int8_t bTranslucent : 2;
-	int8_t bExpandSprite = -1;
-
-	uint16_t Rotations;
-	int16_t SkyOffset;
-	FloatRect *areas = nullptr;
-	int areacount = 0;
-	public:
-	int GlowHeight = 128;
-	PalEntry GlowColor = 0;
-	private:
-	float Glossiness = 10.f;
-	float SpecularLevel = 0.1f;
-	float shaderspeed = 1.f;
-	int shaderindex = 0;
 
 	virtual void ResolvePatches() {}
 
-protected:
-	uint16_t Width, Height;
 
 	FTexture (int lumpnum = -1);
 

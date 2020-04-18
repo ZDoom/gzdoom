@@ -260,8 +260,6 @@ protected:
 
 	int8_t bTranslucent : 2;
 
-	uint16_t Rotations;
-	int16_t SkyOffset;
 	FloatRect* areas = nullptr;
 	int areacount = 0;
 
@@ -278,15 +276,10 @@ public:
 	
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isCanvas() const { return bHasCanvas; }
-	int GetRotations() const { return Rotations; }
-	void SetRotations(int rot) { Rotations = int16_t(rot); }
 	
 	bool isMasked() const { return bMasked; }
-	void SetSkyOffset(int offs) { SkyOffset = offs; }
-	int GetSkyOffset() const { return SkyOffset; }
-	virtual int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
+	int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	bool FindHoles(const unsigned char * buffer, int w, int h);
-	int GetSourceLump() const { return SourceLump;  }
 
 
 	void CopySize(FTexture* BaseTexture)
@@ -501,6 +494,10 @@ class FGameTexture
 	uint16_t GlowHeight;
 	PalEntry GlowColor = 0;
 
+	int16_t SkyOffset;
+	uint16_t Rotations;
+
+
 public:
 	FGameTexture(FTexture* wrap, const char *name);
 	~FGameTexture();
@@ -554,10 +551,10 @@ public:
 
 	void SetTranslucent(bool on) { Base->bTranslucent = on; }
 	void SetUseType(ETextureType type) { UseType = type; }
-	uint16_t GetRotations() const { return Base->GetRotations(); }
-	void SetRotations(int index) { Base->SetRotations(index); }
-	void SetSkyOffset(int ofs) { Base->SetSkyOffset(ofs); }
-	int GetSkyOffset() const { return Base->GetSkyOffset(); }
+	int GetRotations() const { return Rotations; }
+	void SetRotations(int rot) { Rotations = int16_t(rot); }
+	void SetSkyOffset(int offs) { SkyOffset = offs; }
+	int GetSkyOffset() const { return SkyOffset; }
 
 	ISoftwareTexture* GetSoftwareTexture()
 	{

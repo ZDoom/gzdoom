@@ -785,7 +785,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 	if (!modelframe)
 	{
-		bool mirror;
+		bool mirror = false;
 		DAngle ang = (thingpos - vp.Pos).Angle();
 		FTextureID patch;
 		// [ZZ] add direct picnum override
@@ -794,8 +794,35 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			// Animate picnum overrides.
 			auto tex = TexMan.GetGameTexture(thing->picnum, true);
 			if (tex == nullptr) return;
+
+			if (tex->GetRotations() != 0xFFFF)
+			{
+				// choose a different rotation based on player view
+				spriteframe_t* sprframe = &SpriteFrames[tex->GetRotations()];
+				DAngle sprang = thing->GetSpriteAngle(ang, vp.TicFrac);
+				angle_t rot;
+				if (sprframe->Texture[0] == sprframe->Texture[1])
+				{
+					if (thing->flags7 & MF7_SPRITEANGLE)
+						rot = (thing->SpriteAngle + 45.0 / 2 * 9).BAMs() >> 28;
+					else
+						rot = (sprang - (thing->Angles.Yaw + thing->SpriteRotation) + 45.0 / 2 * 9).BAMs() >> 28;
+				}
+				else
+				{
+					if (thing->flags7 & MF7_SPRITEANGLE)
+						rot = (thing->SpriteAngle + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+					else
+						rot = (sprang - (thing->Angles.Yaw + thing->SpriteRotation) + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
+				}
+				auto picnum = sprframe->Texture[rot];
+				if (sprframe->Flip & (1 << rot))
+				{
+					mirror = true;
+				}
+			}
+
 			patch =  tex->GetID();
-			mirror = false;
 		}
 		else
 		{

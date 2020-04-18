@@ -94,7 +94,6 @@ FTexture::FTexture (int lumpnum)
   bNoRemap0(false), bMasked(true), bAlphaTexture(false), bHasCanvas(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
-	bSkybox = false;
 	bNoCompress = false;
 	bTranslucent = -1;
 }

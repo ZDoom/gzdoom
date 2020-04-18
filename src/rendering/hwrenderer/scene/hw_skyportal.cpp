@@ -93,12 +93,13 @@ void HWSkyPortal::RenderDome(HWDrawInfo *di, FRenderState &state, FGameTexture *
 //
 //-----------------------------------------------------------------------------
 
-void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FGameTexture * tex, float x_offset, bool sky2)
+void HWSkyPortal::RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FSkyBox * tex, float x_offset, bool sky2)
 {
 	int faces;
 
 	state.EnableModelMatrix(true);
 	state.mModelMatrix.loadIdentity();
+	state.mModelMatrix.scale(1, 1 / di->Level->info->pixelstretch, 1); // Undo the map's vertical scaling as skyboxes are true cubes.
 
 	if (!sky2)
         state.mModelMatrix.rotate(-180.0f+x_offset, di->Level->info->skyrotatevector.X, di->Level->info->skyrotatevector.Z, di->Level->info->skyrotatevector.Y);
@@ -171,9 +172,10 @@ void HWSkyPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	di->SetupView(state, 0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	state.SetVertexBuffer(vertexBuffer);
-	if (origin->texture[0] && origin->texture[0]->isSkybox())
+	auto skybox = origin->texture[0] ? dynamic_cast<FSkyBox*>(origin->texture[0]->GetTexture()) : nullptr;
+	if (skybox)
 	{
-		RenderBox(di, state, origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
+		RenderBox(di, state, origin->skytexno1, skybox, origin->x_offset[0], origin->sky2);
 	}
 	else
 	{

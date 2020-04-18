@@ -8,6 +8,7 @@
 #include "hw_renderstate.h"
 #include "hw_material.h"
 
+class FSkyBox;
 
 struct HWSkyInfo
 {
@@ -358,7 +359,7 @@ struct HWSkyPortal : public HWPortal
 	friend struct HWEEHorizonPortal;
 
 	void RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply = true);
-	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FGameTexture * gltex, float x_offset, bool sky2);
+	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FSkyBox * gltex, float x_offset, bool sky2);
 	void RenderDome(HWDrawInfo *di, FRenderState &state, FGameTexture * tex, float x_offset, float y_offset, bool mirror, int mode);
 
 protected:

@@ -101,12 +101,12 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	for (int i = 0; i<TexMan.NumTextures(); i++)
 	{
 		// HIT_Wall must be checked for MBF-style sky transfers. 
-		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
+		if (texhitlist[i] & (FTextureManager::HIT_Sky))
 		{
 			auto tex = TexMan.GameByIndex(i);
-			if (tex->isSkybox())
+			auto sb = dynamic_cast<FSkyBox*>(tex->GetTexture());
+			if (sb)
 			{
-				FSkyBox *sb = static_cast<FSkyBox*>(tex->GetTexture());
 				for (int i = 0; i<6; i++)
 				{
 					if (sb->faces[i])

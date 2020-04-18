@@ -258,7 +258,6 @@ protected:
 	uint8_t bAlphaTexture : 1;	// Texture is an alpha channel without color information
 	uint8_t bHasCanvas : 1;		// Texture is based off FCanvasTexture
 
-	uint8_t bSkybox : 1;						// is a cubic skybox
 	int8_t bTranslucent : 2;
 
 	uint16_t Rotations;
@@ -447,35 +446,6 @@ enum
 };
 
 
-//-----------------------------------------------------------------------------
-//
-// Todo: Get rid of this
-// The faces can easily be stored in the material layer array
-//
-//-----------------------------------------------------------------------------
-
-class FSkyBox : public FImageTexture
-{
-public:
-
-	FGameTexture* previous;
-	FGameTexture* faces[6];	// the faces need to be full materials as they can have all supported effects.
-	bool fliptop;
-
-	FSkyBox(const char* name);
-	void SetSize();
-
-	bool Is3Face() const
-	{
-		return faces[5] == nullptr;
-	}
-
-	bool IsFlipped() const
-	{
-		return fliptop;
-	}
-};
-
 enum EGameTexFlags
 {
 	GTexf_NoDecals = 1,						// Decals should not stick to texture
@@ -644,7 +614,6 @@ public:
 
 	bool isUserContent() const;
 	int CheckRealHeight() { return xs_RoundToInt(Base->CheckRealHeight() / ScaleY); }
-	bool isSkybox() const { return Base->bSkybox; }
 	void SetSize(int x, int y) 
 	{ 
 		TexelWidth = x; 
@@ -683,13 +652,6 @@ public:
 	{
 		return Base->GetTranslucency();
 	}
-
-	// Since these properties will later piggyback on existing members of FGameTexture, the accessors need to be here. 
-	FGameTexture *GetSkyFace(int num)
-	{
-		return (isSkybox() ? static_cast<FSkyBox*>(Base.get())->faces[num] : nullptr);
-	}
-	bool GetSkyFlip() { return isSkybox() ? static_cast<FSkyBox*>(Base.get())->fliptop : false; }
 
 	int GetClampMode(int clampmode)
 	{

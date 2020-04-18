@@ -78,6 +78,7 @@
 #include "s_music.h"
 #include "animations.h"
 #include "texturemanager.h"
+#include "p_lnspec.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
@@ -188,9 +189,13 @@ static void PrecacheLevel(FLevelLocals *Level)
 
 	for (i = Level->sides.Size() - 1; i >= 0; i--)
 	{
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::top), FTextureManager::HIT_Wall);
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::mid), FTextureManager::HIT_Wall);
-		AddToList(hitlist.Data(), Level->sides[i].GetTexture(side_t::bottom), FTextureManager::HIT_Wall);
+		auto &sd = Level->sides[i];
+		int hitflag = FTextureManager::HIT_Wall;
+		// Only precache skyboxes when this is actually used as a sky transfer.
+		if (sd.linedef->sidedef[0] == &sd && sd.linedef->special == Static_Init && sd.linedef->args[1] == Init_TransferSky) hitflag |= FTextureManager::HIT_Sky;
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::top), hitflag);
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::mid), FTextureManager::HIT_Wall);
+		AddToList(hitlist.Data(), sd.GetTexture(side_t::bottom), hitflag);
 	}
 
 

@@ -227,11 +227,14 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		auto tex = TexMan.GameByIndex(i);
 		if (tex != nullptr && tex->GetUseType() != ETextureType::FontChar)
 		{
-			// For now, only delete what's in neither list. The logic being used here does not really work that well for selective deletion.
+			// This is rather counterproductive in a system that can share hardware textures between game textures.
+			// The precacher needs to be redone to account for that. For now, just skip the deletion, for any normal sized map this won't be a problem.
+#if 0
 			if (usedTextures.CheckKey(tex->GetTexture()) == nullptr && usedSprites.CheckKey(tex->GetTexture()) == nullptr)
 			{
 				tex->CleanHardwareData();
 			}
+#endif
 		}
 	}
 

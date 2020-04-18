@@ -1276,7 +1276,7 @@ class GLDefsParser
 				if (tex)
 				{
 					bool okay = false;
-					for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+					for (size_t i = 0; i < countof(mlay.CustomShaderTextures); i++)
 					{
 						if (!mlay.CustomShaderTextures[i])
 						{
@@ -1287,7 +1287,7 @@ class GLDefsParser
 							}
 
 							texNameList.Push(textureName);
-							texNameIndex.Push(i);
+							texNameIndex.Push((int)i);
 							okay = true;
 							break;
 						}
@@ -1571,7 +1571,7 @@ class GLDefsParser
 					}
 					sc.MustGetString();
 					bool okay = false;
-					for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+					for (size_t i = 0; i < countof(mlay.CustomShaderTextures); i++)
 					{
 						if (!mlay.CustomShaderTextures[i])
 						{
@@ -1582,7 +1582,7 @@ class GLDefsParser
 							}
 
 							texNameList.Push(textureName);
-							texNameIndex.Push(i);
+							texNameIndex.Push((int)i);
 							okay = true;
 							break;
 						}

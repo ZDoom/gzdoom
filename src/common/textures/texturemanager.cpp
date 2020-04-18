@@ -128,6 +128,25 @@ void FTextureManager::FlushAll()
 
 //==========================================================================
 //
+// Examines the lump contents to decide what type of texture to create,
+// and creates the texture.
+//
+//==========================================================================
+
+static FTexture* CreateTextureFromLump(int lumpnum, bool allowflats = false)
+{
+	if (lumpnum == -1) return nullptr;
+
+	auto image = FImageSource::GetImage(lumpnum, allowflats);
+	if (image != nullptr)
+	{
+		return new FImageTexture(image);
+	}
+	return nullptr;
+}
+
+//==========================================================================
+//
 // FTextureManager :: CheckForTexture
 //
 //==========================================================================
@@ -230,7 +249,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 				if (tex == NO_TEXTURE) return FTextureID(-1);
 				if (tex != NULL) return tex->GetID();
 				if (flags & TEXMAN_DontCreate) return FTextureID(-1);	// we only want to check, there's no need to create a texture if we don't have one yet.
-				tex = MakeGameTexture(FTexture::CreateTexture(lump), nullptr, ETextureType::Override);
+				tex = MakeGameTexture(CreateTextureFromLump(lump), nullptr, ETextureType::Override);
 				if (tex != NULL)
 				{
 					tex->AddAutoMaterials();
@@ -424,7 +443,7 @@ FTextureID FTextureManager::CreateTexture (int lumpnum, ETextureType usetype)
 	{
 		FString str;
 		fileSystem.GetFileShortName(str, lumpnum);
-		auto out = MakeGameTexture(FTexture::CreateTexture(lumpnum, usetype == ETextureType::Flat), str, usetype);
+		auto out = MakeGameTexture(CreateTextureFromLump(lumpnum, usetype == ETextureType::Flat), str, usetype);
 
 		if (out != NULL)
 		{
@@ -587,7 +606,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 				if (amount == 0)
 				{
 					// A texture with this name does not yet exist
-					auto newtex = MakeGameTexture(FTexture::CreateTexture(firsttx), Name, ETextureType::Override);
+					auto newtex = MakeGameTexture(CreateTextureFromLump(firsttx), Name, ETextureType::Override);
 					if (newtex != NULL)
 					{
 						AddGameTexture(newtex);
@@ -597,7 +616,7 @@ void FTextureManager::AddHiresTextures (int wadnum)
 				{
 					for(unsigned int i = 0; i < tlist.Size(); i++)
 					{
-						FTexture * newtex = FTexture::CreateTexture (firsttx);
+						FTexture * newtex = CreateTextureFromLump(firsttx);
 						if (newtex != NULL)
 						{
 							auto oldtex = Textures[tlist[i].GetIndex()].Texture;
@@ -695,7 +714,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 						(sl=oldtex->GetSourceLump()) >= 0 && fileSystem.GetFileNamespace(sl) == ns_sprites)
 						)
 					{
-						FTexture * newtex = FTexture::CreateTexture (lumpnum);
+						FTexture * newtex = CreateTextureFromLump(lumpnum);
 						if (newtex != NULL)
 						{
 							// Replace the entire texture and adjust the scaling and offset factors.
@@ -733,7 +752,7 @@ void FTextureManager::ParseTextureDef(int lump, FMultipatchTextureBuilder &build
 
 				if (lumpnum>=0)
 				{
-					auto newtex = MakeGameTexture(FTexture::CreateTexture(lumpnum), src, ETextureType::Override);
+					auto newtex = MakeGameTexture(CreateTextureFromLump(lumpnum), src, ETextureType::Override);
 
 					if (newtex != NULL)
 					{
@@ -953,7 +972,7 @@ void FTextureManager::AddTexturesForWad(int wadnum, FMultipatchTextureBuilder &b
 
 		// Try to create a texture from this lump and add it.
 		// Unfortunately we have to look at everything that comes through here...
-		auto out = MakeGameTexture(FTexture::CreateTexture(i), Name, skin ? ETextureType::SkinGraphic : ETextureType::MiscPatch);
+		auto out = MakeGameTexture(CreateTextureFromLump(i), Name, skin ? ETextureType::SkinGraphic : ETextureType::MiscPatch);
 
 		if (out != NULL) 
 		{

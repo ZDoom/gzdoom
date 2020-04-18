@@ -138,11 +138,9 @@ struct FPatchLookup
 void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType usetype)
 {
 	FImageTexture *tex = new FImageTexture(nullptr);
-	tex->bMultiPatch = true;
 	tex->SetSize(buildinfo.Width, buildinfo.Height);
 	tex->bMasked = true;	// we do not really know yet.
 	tex->bTranslucent = -1;
-	tex->bNoDecals = buildinfo.bNoDecals;
 	tex->SourceLump = buildinfo.DefinitionLump;
 	buildinfo.itex = tex;
 	buildinfo.texture = MakeGameTexture(tex, buildinfo.Name, usetype);
@@ -150,6 +148,7 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
 	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.X);
 	buildinfo.texture->SetWorldPanning(buildinfo.bWorldPanning);
+	buildinfo.texture->SetNoDecals(buildinfo.bNoDecals);
 
 	TexMan.AddGameTexture(buildinfo.texture);
 }
@@ -778,9 +777,13 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 			TexMan.ListTextures(buildinfo.Inits[i].TexName, list, true);
 			for (int i = list.Size() - 1; i >= 0; i--)
 			{
-				if (list[i] != buildinfo.texture->GetID() && !TexMan.GetGameTexture(list[i])->isMultiPatch() )
+				if (list[i] != buildinfo.texture->GetID())
 				{
-					texno = list[i];
+					auto gtex = TexMan.GetGameTexture(list[i]);
+					if (gtex && !dynamic_cast<FMultiPatchTexture*>(gtex->GetTexture()))
+					{
+						texno = list[i];
+					}
 					break;
 				}
 			}
@@ -813,8 +816,9 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 			{
 				//We cannot set the image source yet. First all textures need to be resolved.
 				buildinfo.Inits[i].Texture = tex->GetTexture();
-				buildinfo.itex->bComplex |= tex->GetTexture()->bComplex; // this one's NOT a material property! It must remain on the texture image.
-				buildinfo.bComplex |= tex->GetTexture()->bComplex;
+				bool iscomplex = !!complex.CheckKey(tex->GetTexture());
+				if (iscomplex) complex.Insert(buildinfo.itex, true);
+				buildinfo.bComplex |= iscomplex;
 				if (buildinfo.Inits[i].UseOffsets)
 				{
 					buildinfo.Parts[i].OriginX -= tex->GetTexelLeftOffset(0);

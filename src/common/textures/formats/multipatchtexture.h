@@ -140,6 +140,7 @@ class FMultipatchTextureBuilder
 {
 	FTextureManager &TexMan;
 	TArray<BuildInfo> BuiltTextures;
+	TMap<FTexture*, bool> complex;
 	void(*progressFunc)();
 	void(*checkForHacks)(BuildInfo&);
 

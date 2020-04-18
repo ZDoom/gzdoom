@@ -91,15 +91,10 @@ FTexture * FTexture::CreateTexture(int lumpnum, bool allowflats)
 FTexture::FTexture (int lumpnum)
 	: 
   SourceLump(lumpnum),
-  bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bFullNameTexture(false),
+  bNoRemap0(false), bMasked(true), bAlphaTexture(false), bHasCanvas(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
 	bBrightmapChecked = false;
-	bGlowing = false;
-	bAutoGlowing = false;
-	bFullbright = false;
-	bDisableFullbright = false;
 	bSkybox = false;
 	bNoCompress = false;
 	bTranslucent = -1;
@@ -177,10 +172,10 @@ void FGameTexture::AddAutoMaterials()
 	};
 
 
-	int startindex = Base->bFullNameTexture ? 1 : 0;
+	bool fullname = !!(flags & GTexf_FullNameTexture);
 	FString searchname = GetName();
 
-	if (Base->bFullNameTexture)
+	if (fullname)
 	{
 		auto dot = searchname.LastIndexOf('.');
 		auto slash = searchname.LastIndexOf('/');
@@ -192,7 +187,7 @@ void FGameTexture::AddAutoMaterials()
 		auto &layer = autosearchpaths[i];
 		if (this->*(layer.pointer) == nullptr)	// only if no explicit assignment had been done.
 		{
-			FStringf lookup("%s%s%s", layer.path, Base->bFullNameTexture ? "" : "auto/", searchname.GetChars());
+			FStringf lookup("%s%s%s", layer.path, fullname ? "" : "auto/", searchname.GetChars());
 			auto lump = fileSystem.CheckNumForFullName(lookup, false, ns_global, true);
 			if (lump != -1)
 			{
@@ -258,19 +253,19 @@ void FGameTexture::CreateDefaultBrightmap()
 //
 //==========================================================================
 
-void FTexture::GetGlowColor(float *data)
+void FGameTexture::GetGlowColor(float *data)
 {
-	if (bGlowing && GlowColor == 0)
+	if (isGlowing() && GlowColor == 0)
 	{
-		auto buffer = GetBgraBitmap(nullptr);
+		auto buffer = Base->GetBgraBitmap(nullptr);
 		GlowColor = averageColor((uint32_t*)buffer.GetPixels(), buffer.GetWidth() * buffer.GetHeight(), 153);
 
 		// Black glow equals nothing so switch glowing off
-		if (GlowColor == 0) bGlowing = false;
+		if (GlowColor == 0) flags &= ~GTexf_Glowing;
 	}
-	data[0] = GlowColor.r / 255.0f;
-	data[1] = GlowColor.g / 255.0f;
-	data[2] = GlowColor.b / 255.0f;
+	data[0] = GlowColor.r * (1/255.0f);
+	data[1] = GlowColor.g * (1/255.0f);
+	data[2] = GlowColor.b * (1/255.0f);
 }
 
 //===========================================================================
@@ -614,19 +609,26 @@ TArray<uint8_t> FTexture::Get8BitPixels(bool alphatex)
 
 bool FGameTexture::ShouldExpandSprite()
 {
-	if (Base->bExpandSprite != -1) return Base->bExpandSprite;
-	if (isWarped() || isHardwareCanvas() || GetShaderIndex() != SHADER_Default)
+	if (expandSprite != -1) return expandSprite;
+	// Only applicable to image textures with no shader effect.
+	if (GetShaderIndex() != SHADER_Default || !dynamic_cast<FImageTexture*>(Base.get()))
 	{
-		Base->bExpandSprite = false;
+		expandSprite = false;
 		return false;
 	}
 	if (Brightmap != NULL && (Base->GetWidth() != Brightmap->GetWidth() || Base->GetHeight() != Brightmap->GetHeight()))
 	{
-		// do not expand if the brightmap's size differs.
-		Base->bExpandSprite = false;
+		// do not expand if the brightmap's physical size differs from the base.
+		expandSprite = false;
 		return false;
 	}
-	Base->bExpandSprite = true;
+	if (Glowmap != NULL && (Base->GetWidth() != Glowmap->GetWidth() || Base->GetHeight() != Glowmap->GetHeight()))
+	{
+		// same restriction for the glow map
+		expandSprite = false;
+		return false;
+	}
+	expandSprite = true;
 	return true;
 }
 

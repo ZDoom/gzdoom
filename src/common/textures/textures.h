@@ -251,37 +251,21 @@ protected:
 	int SourceLump;
 	FHardwareTextureContainer SystemTextures;
 
-	uint8_t bNoDecals : 1;		// Decals should not stick to texture
 	uint8_t bNoRemap0 : 1;		// Do not remap color 0 (used by front layer of parallax skies)
-	uint8_t bWorldPanning : 1;	// Texture is panned in world units rather than texels
+	uint8_t bNoCompress : 1;
+
 	uint8_t bMasked : 1;			// Texture (might) have holes
 	uint8_t bAlphaTexture : 1;	// Texture is an alpha channel without color information
 	uint8_t bHasCanvas : 1;		// Texture is based off FCanvasTexture
-	uint8_t bWarped : 2;			// This is a warped texture. Used to avoid multiple warps on one texture
-	uint8_t bComplex : 1;		// Will be used to mark extended MultipatchTextures that have to be
-							// fully composited before subjected to any kind of postprocessing instead of
-							// doing it per patch.
-	uint8_t bMultiPatch : 2;		// This is a multipatch texture (we really could use real type info for textures...)
-	uint8_t bFullNameTexture : 1;
 	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
 
-	uint8_t bGlowing : 1;						// Texture glow color
-	uint8_t bAutoGlowing : 1;					// Glow info is determined from texture image.
-	uint8_t bFullbright : 1;					// always draw fullbright
-	uint8_t bDisableFullbright : 1;				// This texture will not be displayed as fullbright sprite
-
 	uint8_t bSkybox : 1;						// is a cubic skybox
-	uint8_t bNoCompress : 1;
 	int8_t bTranslucent : 2;
-	int8_t bExpandSprite = -1;
 
 	uint16_t Rotations;
 	int16_t SkyOffset;
 	FloatRect* areas = nullptr;
 	int areacount = 0;
-
-	int GlowHeight = 128;
-	PalEntry GlowColor = 0;
 
 public:
 
@@ -296,29 +280,17 @@ public:
 	int GetHeight() { return Height; }
 	
 	bool isSkybox() const { return bSkybox; }
-	bool isFullbrightDisabled() const { return bDisableFullbright; }
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isCanvas() const { return bHasCanvas; }
-	int isWarped() const { return bWarped; }
 	int GetRotations() const { return Rotations; }
 	void SetRotations(int rot) { Rotations = int16_t(rot); }
 	
-	void SetNoDecals(bool on) { bNoDecals = on;  }
-	void SetWarpStyle(int style) { bWarped = style; }
-	bool allowNoDecals() const { return bNoDecals; }
 	bool isMasked() const { return bMasked; }
 	void SetSkyOffset(int offs) { SkyOffset = offs; }
 	int GetSkyOffset() const { return SkyOffset; }
 	virtual int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
-	void GetGlowColor(float *data);
-	bool isGlowing() const { return bGlowing; }
-	bool isAutoGlowing() const { return bAutoGlowing; }
-	int GetGlowHeight() const { return GlowHeight; }
-	bool isFullbright() const { return bFullbright; }
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	int GetSourceLump() const { return SourceLump;  }
-	bool UseWorldPanning() const  { return bWorldPanning; }
-	void SetWorldPanning(bool on) { bWorldPanning = on; }
 
 
 	void CopySize(FTexture* BaseTexture)
@@ -380,7 +352,6 @@ public:
 		bMasked = false;
 		bHasCanvas = true;
 		bTranslucent = false;
-		bExpandSprite = false;
 		aspectRatio = (float)width / height;
 	}
 
@@ -508,6 +479,17 @@ public:
 	}
 };
 
+enum EGameTexFlags
+{
+	GTexf_NoDecals = 1,						// Decals should not stick to texture
+	GTexf_WorldPanning = 2,					// Texture is panned in world units rather than texels
+	GTexf_FullNameTexture = 4,				// Name is taken from the file system.
+	GTexf_Glowing = 8,						// Texture emits a glow
+	GTexf_AutoGlowing = 16,					// Glow info is determined from texture image.
+	GTexf_RenderFullbright = 32,			// always draw fullbright
+	Gtexf_DisableFullbrightSprites = 64,	// This texture will not be displayed as fullbright sprite
+};
+
 // Refactoring helper to allow piece by piece adjustment of the API
 class FGameTexture
 {
@@ -546,6 +528,11 @@ class FGameTexture
 	float shaderspeed = 1.f;
 	int shaderindex = 0;
 
+	int flags = 0;
+	uint8_t warped = 0, expandSprite = -1;
+	uint16_t GlowHeight;
+	PalEntry GlowColor = 0;
+
 public:
 	FGameTexture(FTexture* wrap, const char *name);
 	~FGameTexture();
@@ -580,22 +567,23 @@ public:
 	float GetDisplayLeftOffset(int adjusted = 0) const { return LeftOffset[adjusted] / ScaleX; }
 	float GetDisplayTopOffset(int adjusted = 0) const { return TopOffset[adjusted] / ScaleY; }
 
+	bool isMiscPatch() const { return GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
+	bool isFullbrightDisabled() const { return !!(flags & Gtexf_DisableFullbrightSprites); }
+	bool isFullbright() const { return !!(flags & GTexf_RenderFullbright); }
+	bool isFullNameTexture() const { return !!(flags & GTexf_FullNameTexture); }
+	bool expandSprites() const { return !!expandSprite; }
+	bool useWorldPanning() const { return !!(flags & GTexf_WorldPanning);  }
+	void SetWorldPanning(bool on) { if (on) flags |= GTexf_WorldPanning; else flags &= ~GTexf_WorldPanning; }
+	bool allowNoDecals() const { return !!(flags & GTexf_NoDecals);	}
+	void SetNoDecals(bool on) { if (on) flags |= GTexf_NoDecals; else flags &= ~GTexf_NoDecals; }
+
 	bool isValid() const { return UseType != ETextureType::Null; }
-	int isWarped() { return Base->isWarped(); }
-	void SetWarpStyle(int style) { Base->bWarped = style; }
+	int isWarped() { return warped; }
+	void SetWarpStyle(int style) { warped = style; }
 	bool isMasked() { return Base->isMasked(); }
 	bool isHardwareCanvas() const { return Base->isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return Base->isCanvas(); }
-	bool isMiscPatch() const { return GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
-	bool isMultiPatch() const { return Base->bMultiPatch; }
-	bool isFullbrightDisabled() const { return Base->isFullbrightDisabled(); }
-	bool isFullbright() const { return Base->isFullbright(); }
-	bool isFullNameTexture() const { return Base->bFullNameTexture; }
-	bool expandSprites() const { return Base->bExpandSprite; }
-	bool useWorldPanning() const { return Base->UseWorldPanning();  }
-	void SetWorldPanning(bool on) { Base->SetWorldPanning(on); }
-	bool allowNoDecals() const { return Base->allowNoDecals(); }
-	void SetNoDecals(bool on) { Base->bNoDecals = on; }
+
 	void SetTranslucent(bool on) { Base->bTranslucent = on; }
 	void SetUseType(ETextureType type) { UseType = type; }
 	uint16_t GetRotations() const { return Base->GetRotations(); }
@@ -646,15 +634,15 @@ public:
 	}
 
 	// Glowing is a pure material property that should not filter down to the actual texture objects.
-	void GetGlowColor(float* data) { Base->GetGlowColor(data); }
-	bool isGlowing() const { return Base->isGlowing(); }
-	bool isAutoGlowing() const { return Base->isAutoGlowing(); }
-	int GetGlowHeight() const { return Base->GetGlowHeight(); }
-	void SetAutoGlowing() { auto tex = GetTexture(); tex->bAutoGlowing = tex->bGlowing = tex->bFullbright = true; }
-	void SetGlowHeight(int v) { Base->GlowHeight = v; }
-	void SetFullbright() { Base->bFullbright = true;  }
-	void SetDisableFullbright(bool on) { Base->bDisableFullbright = on; }
-	void SetGlowing(PalEntry color) { auto tex = GetTexture(); tex->bAutoGlowing = false;	tex->bGlowing = true; tex->GlowColor = color; }
+	void GetGlowColor(float* data);
+	bool isGlowing() const { return !!(flags & GTexf_Glowing); }
+	bool isAutoGlowing() const { return !!(flags & GTexf_AutoGlowing); }
+	int GetGlowHeight() const { return GlowHeight; }
+	void SetAutoGlowing() { flags |= (GTexf_AutoGlowing | GTexf_Glowing | GTexf_RenderFullbright); }
+	void SetGlowHeight(int v) { GlowHeight = v; }
+	void SetFullbright() { flags |= GTexf_RenderFullbright;  }
+	void SetDisableFullbright(bool on) { if (on) flags |= Gtexf_DisableFullbrightSprites; else flags &= ~Gtexf_DisableFullbrightSprites; }
+	void SetGlowing(PalEntry color) { flags = (flags & ~GTexf_AutoGlowing) | GTexf_Glowing; GlowColor = color; }
 
 	bool isUserContent() const;
 	int CheckRealHeight() { return xs_RoundToInt(Base->CheckRealHeight() / ScaleY); }

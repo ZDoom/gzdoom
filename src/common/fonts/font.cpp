@@ -411,13 +411,11 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 						part[0].Image = tex->GetTexture()->GetImage();
 						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
 						FImageTexture *tex = new FImageTexture(image);
-						tex->bMultiPatch = true;
+						auto gtex = MakeGameTexture(tex, nullptr, ETextureType::FontChar);
 						tex->bMasked = true;
 						tex->bTranslucent = -1;
-						tex->bWorldPanning = true;
-						tex->bNoDecals = false;
 						tex->SourceLump = -1;	// We do not really care.
-						auto gtex = MakeGameTexture(tex, nullptr, ETextureType::FontChar);
+						gtex->SetWorldPanning(true);
 						gtex->SetOffsets(0, 0, 0);
 						gtex->SetOffsets(1, 0, 0);
 						gtex->SetScale((float)Scale.X, (float)Scale.Y);

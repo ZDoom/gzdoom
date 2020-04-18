@@ -94,14 +94,9 @@ FTexture::FTexture (int lumpnum)
   bNoRemap0(false), bMasked(true), bAlphaTexture(false), bHasCanvas(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
 {
-	bBrightmapChecked = false;
 	bSkybox = false;
 	bNoCompress = false;
 	bTranslucent = -1;
-}
-
-FTexture::~FTexture ()
-{
 }
 
 //===========================================================================
@@ -210,8 +205,9 @@ void FGameTexture::AddAutoMaterials()
 void FGameTexture::CreateDefaultBrightmap()
 {
 	auto tex = GetTexture();
-	if (!tex->bBrightmapChecked)
+	if (flags & GTexf_BrightmapChecked)
 	{
+		flags |= GTexf_BrightmapChecked;
 		// Check for brightmaps
 		if (tex->GetImage() && tex->GetImage()->UseGamePalette() && GPalette.HasGlobalBrightmap &&
 			GetUseType() != ETextureType::Decal && GetUseType() != ETextureType::MiscPatch && GetUseType() != ETextureType::FontChar &&
@@ -229,19 +225,11 @@ void FGameTexture::CreateDefaultBrightmap()
 					// Create a brightmap
 					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", GetName().GetChars());
 					Brightmap = CreateBrightmapTexture(tex->GetImage());
-					tex->bBrightmapChecked = true;
-					//TexMan.AddGameTexture(MakeGameTexture(tex->Brightmap));
 					return;
 				}
 			}
 			// No bright pixels found
 			DPrintf(DMSG_SPAMMY, "No bright pixels found in texture '%s'\n", GetName().GetChars());
-			tex->bBrightmapChecked = true;
-		}
-		else
-		{
-			// does not have one so set the flag to 'done'
-			tex->bBrightmapChecked = true;
 		}
 	}
 }

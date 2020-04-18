@@ -257,7 +257,6 @@ protected:
 	uint8_t bMasked : 1;			// Texture (might) have holes
 	uint8_t bAlphaTexture : 1;	// Texture is an alpha channel without color information
 	uint8_t bHasCanvas : 1;		// Texture is based off FCanvasTexture
-	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
 
 	uint8_t bSkybox : 1;						// is a cubic skybox
 	int8_t bTranslucent : 2;
@@ -271,7 +270,6 @@ public:
 
 	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
 	static FTexture *CreateTexture(int lumpnum, bool allowflats = false);
-	virtual ~FTexture ();
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
 	void CleanHardwareTextures(bool reallyclean);
@@ -279,7 +277,6 @@ public:
 	int GetWidth() { return Width; }
 	int GetHeight() { return Height; }
 	
-	bool isSkybox() const { return bSkybox; }
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isCanvas() const { return bHasCanvas; }
 	int GetRotations() const { return Rotations; }
@@ -487,7 +484,8 @@ enum EGameTexFlags
 	GTexf_Glowing = 8,						// Texture emits a glow
 	GTexf_AutoGlowing = 16,					// Glow info is determined from texture image.
 	GTexf_RenderFullbright = 32,			// always draw fullbright
-	Gtexf_DisableFullbrightSprites = 64,	// This texture will not be displayed as fullbright sprite
+	GTexf_DisableFullbrightSprites = 64,	// This texture will not be displayed as fullbright sprite
+	GTexf_BrightmapChecked = 128,			// Check for a colormap-based brightmap was already done.
 };
 
 // Refactoring helper to allow piece by piece adjustment of the API
@@ -568,7 +566,7 @@ public:
 	float GetDisplayTopOffset(int adjusted = 0) const { return TopOffset[adjusted] / ScaleY; }
 
 	bool isMiscPatch() const { return GetUseType() == ETextureType::MiscPatch; }	// only used by the intermission screen to decide whether to tile the background image or not. 
-	bool isFullbrightDisabled() const { return !!(flags & Gtexf_DisableFullbrightSprites); }
+	bool isFullbrightDisabled() const { return !!(flags & GTexf_DisableFullbrightSprites); }
 	bool isFullbright() const { return !!(flags & GTexf_RenderFullbright); }
 	bool isFullNameTexture() const { return !!(flags & GTexf_FullNameTexture); }
 	bool expandSprites() const { return !!expandSprite; }
@@ -641,12 +639,12 @@ public:
 	void SetAutoGlowing() { flags |= (GTexf_AutoGlowing | GTexf_Glowing | GTexf_RenderFullbright); }
 	void SetGlowHeight(int v) { GlowHeight = v; }
 	void SetFullbright() { flags |= GTexf_RenderFullbright;  }
-	void SetDisableFullbright(bool on) { if (on) flags |= Gtexf_DisableFullbrightSprites; else flags &= ~Gtexf_DisableFullbrightSprites; }
+	void SetDisableFullbright(bool on) { if (on) flags |= GTexf_DisableFullbrightSprites; else flags &= ~GTexf_DisableFullbrightSprites; }
 	void SetGlowing(PalEntry color) { flags = (flags & ~GTexf_AutoGlowing) | GTexf_Glowing; GlowColor = color; }
 
 	bool isUserContent() const;
 	int CheckRealHeight() { return xs_RoundToInt(Base->CheckRealHeight() / ScaleY); }
-	bool isSkybox() const { return Base->isSkybox(); }
+	bool isSkybox() const { return Base->bSkybox; }
 	void SetSize(int x, int y) 
 	{ 
 		TexelWidth = x; 

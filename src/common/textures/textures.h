@@ -374,7 +374,7 @@ public:
 	FImageTexture(FImageSource* image) noexcept;
 	virtual TArray<uint8_t> Get8BitPixels(bool alphatex);
 
-	void SetImage(FImageSource* img)	// This is only for the multipatch texture builder!
+	void SetImage(FImageSource* img)
 	{
 		mImage = img;
 		SetFromImage();

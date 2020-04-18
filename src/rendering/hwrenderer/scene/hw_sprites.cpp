@@ -197,7 +197,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		state.SetFog(0, 0);
 	}
 
-	uint32_t spritetype = (actor->renderflags & RF_SPRITETYPEMASK);
+	uint32_t spritetype = actor? uint32_t(actor->renderflags & RF_SPRITETYPEMASK) : 0;
 	if (texture) state.SetMaterial(texture, UF_Sprite, (spritetype == RF_FACESPRITE) ? CTF_Expand : 0, CLAMP_XY, translation, OverrideShader);
 	else if (!modelframe) state.EnableTexture(false);
 

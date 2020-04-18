@@ -53,7 +53,7 @@ public:
 
 	bool isMasked()
 	{
-		return mSource->isMasked();
+		return mTexture->isMasked();
 	}
 
 	uint16_t GetRotations() const

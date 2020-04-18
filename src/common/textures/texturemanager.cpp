@@ -383,8 +383,11 @@ FTextureID FTextureManager::AddGameTexture (FGameTexture *texture, bool addtohas
 
 	if (texture == NULL) return FTextureID(-1);
 
-	// Later textures take precedence over earlier ones
-	calcShouldUpscale(texture);	// calculate this once at insertion
+	if (texture->GetTexture())
+	{
+		// Later textures take precedence over earlier ones
+		calcShouldUpscale(texture);	// calculate this once at insertion
+	}
 
 	// Textures without name can't be looked for
 	if (addtohash && texture->GetName().IsNotEmpty())
@@ -1268,9 +1271,10 @@ FTextureID FTextureManager::GetFrontSkyLayer(FTextureID texid)
 
 	// Set this up so that it serializes to the same info as the base texture - this is needed to restore it on load.
 	// But do not link the new texture into the hash chain!
-	auto FrontSkyLayer = MakeGameTexture(new FImageTexture(image), tex->GetName(), ETextureType::Wall);
+	auto itex = new FImageTexture(image);
+	itex->SetNoRemap0();
+	auto FrontSkyLayer = MakeGameTexture(itex, tex->GetName(), ETextureType::Wall);
 	FrontSkyLayer->SetUseType(tex->GetUseType());
-	FrontSkyLayer->GetTexture()->bNoRemap0 = true;
 	texid = TexMan.AddGameTexture(FrontSkyLayer, false);
 	Textures[texidx].FrontSkyLayer = texid.GetIndex();
 	Textures[texid.GetIndex()].FrontSkyLayer = texid.GetIndex();	// also let it refer to itself as its front sky layer, in case for repeated InitSkyMap calls.

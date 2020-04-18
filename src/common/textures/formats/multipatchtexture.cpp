@@ -46,15 +46,19 @@
 //
 //==========================================================================
 
-FMultiPatchTexture::FMultiPatchTexture(int w, int h, const TArray<TexPart> &parts, bool complex, bool textual)
+FMultiPatchTexture::FMultiPatchTexture(int w, int h, const TArray<TexPartBuild> &parts, bool complex, bool textual)
 {
 	Width = w;
 	Height = h;
 	bComplex = complex;
-	bTextual = textual;
+ 	bTextual = textual;
 	Parts = (TexPart*)ImageArena.Alloc(sizeof(TexPart) * parts.Size());
 	NumParts = parts.Size();
 	memcpy(Parts, parts.Data(), sizeof(TexPart) * parts.Size());
+	for (unsigned i = 0; i < parts.Size(); i++)
+	{
+		Parts[i].Image = parts[i].TexImage->GetImage();
+	}
 
 	bUseGamePalette = false;
 	if (!bComplex)

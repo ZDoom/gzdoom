@@ -276,7 +276,7 @@ FSoftwareTextureSpan **FSoftwareTexture::CreateSpans (const T *pixels)
 {
 	FSoftwareTextureSpan **spans, *span;
 
-	if (!mSource->isMasked())
+	if (!mTexture->isMasked())
 	{ // Texture does not have holes, so it can use a simpler span structure
 		spans = (FSoftwareTextureSpan **)M_Malloc (sizeof(FSoftwareTextureSpan*)*GetPhysicalWidth() + sizeof(FSoftwareTextureSpan)*2);
 		span = (FSoftwareTextureSpan *)&spans[GetPhysicalWidth()];

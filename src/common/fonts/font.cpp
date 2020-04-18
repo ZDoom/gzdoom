@@ -381,7 +381,7 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
 {
 	// all valid lumps must be named with a hex number that represents the Unicode character index for its first character,
-	TArray<TexPart> part(1, true);
+	TArray<TexPartBuild> part(1, true);
 	TMap<int, FGameTexture*> charMap;
 	int minchar = INT_MAX;
 	int maxchar = INT_MIN;
@@ -408,13 +408,10 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 					{
 						part[0].OriginX = -width * x;
 						part[0].OriginY = -height * y;
-						part[0].Image = tex->GetTexture()->GetImage();
+						part[0].TexImage = static_cast<FImageTexture*>(tex->GetTexture());
 						FMultiPatchTexture *image = new FMultiPatchTexture(width, height, part, false, false);
 						FImageTexture *tex = new FImageTexture(image);
 						auto gtex = MakeGameTexture(tex, nullptr, ETextureType::FontChar);
-						tex->bMasked = true;
-						tex->bTranslucent = -1;
-						tex->SourceLump = -1;	// We do not really care.
 						gtex->SetWorldPanning(true);
 						gtex->SetOffsets(0, 0, 0);
 						gtex->SetOffsets(1, 0, 0);

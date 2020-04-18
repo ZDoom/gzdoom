@@ -89,12 +89,8 @@ FTexture * FTexture::CreateTexture(int lumpnum, bool allowflats)
 //==========================================================================
 
 FTexture::FTexture (int lumpnum)
-	: 
-  SourceLump(lumpnum),
-  bNoRemap0(false), bMasked(true), bAlphaTexture(false), bHasCanvas(false),
-	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0)
+	:  SourceLump(lumpnum), bHasCanvas(false)
 {
-	bNoCompress = false;
 	bTranslucent = -1;
 }
 
@@ -188,7 +184,6 @@ void FGameTexture::AddAutoMaterials()
 				auto bmtex = TexMan.FindGameTexture(fileSystem.GetFileFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				if (bmtex != nullptr)
 				{
-					bmtex->GetTexture()->bMasked = false;
 					this->*(layer.pointer) = bmtex->GetTexture();
 				}
 			}
@@ -471,10 +466,10 @@ bool FTexture::SmoothEdges(unsigned char * buffer, int w, int h)
 
 bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 {
-	if (bMasked)
+	if (Masked)
 	{
-		bMasked = SmoothEdges(buffer, w, h);
-		if (bMasked && !ispatch) FindHoles(buffer, w, h);
+		Masked = SmoothEdges(buffer, w, h);
+		if (Masked && !ispatch) FindHoles(buffer, w, h);
 	}
 	return true;
 }
@@ -557,15 +552,8 @@ FTextureBuffer FTexture::CreateTexBuffer(int translation, int flags)
 
 bool FTexture::DetermineTranslucency()
 {
-	if (!bHasCanvas)
-	{
-		// This will calculate all we need, so just discard the result.
-		CreateTexBuffer(0);
-	}
-	else
-	{
-		bTranslucent = 0;
-	}
+	// This will calculate all we need, so just discard the result.
+	CreateTexBuffer(0);
 	return !!bTranslucent;
 }
 
@@ -930,15 +918,21 @@ FWrapperTexture::FWrapperTexture(int w, int h, int bits)
 	Width = w;
 	Height = h;
 	Format = bits;
-	bNoCompress = true;
+	//bNoCompress = true;
 	auto hwtex = CreateHardwareTexture();
 	// todo: Initialize here.
 	SystemTextures.AddHardwareTexture(0, false, hwtex);
 }
 
 
-FGameTexture::FGameTexture(FTexture* wrap, const char *name) : Base(wrap), Name(name)
+FGameTexture::FGameTexture(FTexture* wrap, const char* name) : Name(name)
 {
+	if (wrap) Setup(wrap);
+}
+
+void FGameTexture::Setup(FTexture *wrap)
+{
+	Base = wrap;
 	id.SetInvalid();
 	TexelWidth = Base->GetWidth();
 	DisplayWidth = (float)TexelWidth;

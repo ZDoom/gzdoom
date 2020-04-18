@@ -240,28 +240,18 @@ struct SpritePositioningInfo
 class FTexture : public RefCountedBase
 {
 	friend class FGameTexture;	// only for the porting work
-	friend class FTexture;
-	friend struct FTexCoordInfo;
-	friend class FMultipatchTextureBuilder;
-	friend class FMaterial;
-	friend class FFont;
 
 protected:
-	uint16_t Width, Height;
-	int SourceLump;
 	FHardwareTextureContainer SystemTextures;
-
-	uint8_t bNoRemap0 : 1;		// Do not remap color 0 (used by front layer of parallax skies)
-	uint8_t bNoCompress : 1;
-
-	uint8_t bMasked : 1;			// Texture (might) have holes
-	uint8_t bAlphaTexture : 1;	// Texture is an alpha channel without color information
-	uint8_t bHasCanvas : 1;		// Texture is based off FCanvasTexture
-
-	int8_t bTranslucent : 2;
-
 	FloatRect* areas = nullptr;
-	int areacount = 0;
+	int SourceLump;
+	uint16_t Width = 0, Height = 0;
+
+	bool Masked = false;			// Texture (might) have holes
+	bool bHasCanvas = false;
+	int8_t bTranslucent = -1;
+	int8_t areacount = 0;			// this is capped at 4 sections.
+
 
 public:
 
@@ -277,7 +267,6 @@ public:
 	bool isHardwareCanvas() const { return bHasCanvas; }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isCanvas() const { return bHasCanvas; }
 	
-	bool isMasked() const { return bMasked; }
 	int GetSourceLump() { return SourceLump; }	// needed by the scripted GetName method.
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 
@@ -338,9 +327,7 @@ public:
 		Width = width;
 		Height = height;
 
-		bMasked = false;
 		bHasCanvas = true;
-		bTranslucent = false;
 		aspectRatio = (float)width / height;
 	}
 
@@ -380,6 +367,7 @@ public:
 class FImageTexture : public FTexture
 {
 	FImageSource* mImage;
+	bool bNoRemap0;
 protected:
 	void SetFromImage();
 public:
@@ -389,7 +377,9 @@ public:
 	void SetImage(FImageSource* img)	// This is only for the multipatch texture builder!
 	{
 		mImage = img;
+		SetFromImage();
 	}
+	void SetNoRemap0() { bNoRemap0 = true; }
 
 	FImageSource* GetImage() const override { return mImage; }
 	FBitmap GetBgraBitmap(const PalEntry* p, int* trans) override;
@@ -494,13 +484,14 @@ class FGameTexture
 	uint16_t GlowHeight;
 	PalEntry GlowColor = 0;
 
-	int16_t SkyOffset;
-	uint16_t Rotations;
+	int16_t SkyOffset = 0;
+	uint16_t Rotations = 0xffff;
 
 
 public:
 	FGameTexture(FTexture* wrap, const char *name);
 	~FGameTexture();
+	void Setup(FTexture* wrap);
 	FTextureID GetID() const { return id; }
 	void SetID(FTextureID newid) { id = newid; }	// should only be called by the texture manager
 	const FString& GetName() const { return Name; }
@@ -545,7 +536,7 @@ public:
 	bool isValid() const { return UseType != ETextureType::Null; }
 	int isWarped() { return warped; }
 	void SetWarpStyle(int style) { warped = style; }
-	bool isMasked() { return Base->isMasked(); }
+	bool isMasked() { return Base->Masked; }
 	bool isHardwareCanvas() const { return Base->isHardwareCanvas(); }	// There's two here so that this can deal with software canvases in the hardware renderer later.
 	bool isSoftwareCanvas() const { return Base->isCanvas(); }
 

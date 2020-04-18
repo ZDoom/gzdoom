@@ -5,6 +5,7 @@
 #include "vectors.h"
 #include "bitmap.h"
 #include "image.h"
+#include "textures.h"
 
 class FImageTexture;
 class FTextureManager;
@@ -27,6 +28,18 @@ struct TexPart
 	uint8_t op = OP_COPY;
 };
 
+struct TexPartBuild
+{
+	FRemapTable* Translation = nullptr;
+	FImageTexture *TexImage = nullptr;
+	PalEntry Blend = 0;
+	blend_t Alpha = FRACUNIT;
+	int16_t OriginX = 0;
+	int16_t OriginY = 0;
+	uint8_t Rotate = 0;
+	uint8_t op = OP_COPY;
+};
+
 
 
 //==========================================================================
@@ -40,7 +53,7 @@ class FMultiPatchTexture : public FImageSource
 	friend class FTexture;
 	friend class FGameTexture;
 public:
-	FMultiPatchTexture(int w, int h, const TArray<TexPart> &parts, bool complex, bool textual);
+	FMultiPatchTexture(int w, int h, const TArray<TexPartBuild> &parts, bool complex, bool textual);
 	int GetNumParts() const { return NumParts; }
 	// Query some needed info for texture hack support.
 	bool SupportRemap0() override;
@@ -79,7 +92,7 @@ struct TexInit
 {
 	FString TexName;
 	ETextureType UseType = ETextureType::Null;
-	FTexture *Texture = nullptr;
+	FImageTexture *Texture = nullptr;
 	bool Silent = false;
 	bool HasLine = false;
 	bool UseOffsets = false;
@@ -97,7 +110,7 @@ struct FPatchLookup;
 struct BuildInfo
 {
 	FString Name;
-	TArray<TexPart> Parts;
+	TArray<TexPartBuild> Parts;
 	TArray<TexInit> Inits;
 	int Width = 0;
 	int Height = 0;
@@ -109,7 +122,6 @@ struct BuildInfo
 	bool bNoDecals = false;
 	int LeftOffset[2] = {};
 	int TopOffset[2] = {};
-	FImageTexture* itex = nullptr;
 	FGameTexture *texture = nullptr;
 
 	void swap(BuildInfo &other)
@@ -129,7 +141,6 @@ struct BuildInfo
 		std::swap(LeftOffset[1], other.LeftOffset[1]);
 		std::swap(TopOffset[0], other.TopOffset[0]);
 		std::swap(TopOffset[1], other.TopOffset[1]);
-		std::swap(itex, other.itex);
 		std::swap(texture, other.texture);
 	}
 };
@@ -140,16 +151,17 @@ class FMultipatchTextureBuilder
 {
 	FTextureManager &TexMan;
 	TArray<BuildInfo> BuiltTextures;
-	TMap<FTexture*, bool> complex;
+	TMap<FGameTexture*, bool> complex;
 	void(*progressFunc)();
 	void(*checkForHacks)(BuildInfo&);
 
 	void MakeTexture(BuildInfo &buildinfo, ETextureType usetype);
+	void AddImageToTexture(FImageTexture* tex, BuildInfo& buildinfo);
 
 	void BuildTexture(const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife, int deflumpnum, ETextureType usetyoe);
 	void AddTexturesLump(const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup, bool texture1);
 
-	void ParsePatch(FScanner &sc, BuildInfo &info, TexPart &part, TexInit &init);
+	void ParsePatch(FScanner &sc, BuildInfo &info, TexPartBuild &part, TexInit &init);
 	void ResolvePatches(BuildInfo &buildinfo);
 
 public:

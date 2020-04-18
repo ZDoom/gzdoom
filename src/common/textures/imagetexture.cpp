@@ -63,7 +63,7 @@ void FImageTexture::SetFromImage()
 	Width = img->GetWidth();
 	Height = img->GetHeight();
 
-	bMasked = img->bMasked;
+	Masked = img->bMasked;
 	bTranslucent = img->bTranslucent;
 }
 //===========================================================================

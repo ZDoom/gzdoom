@@ -623,6 +623,8 @@ FPNGFileTexture::FPNGFileTexture (FileReader &lump, int width, int height, uint8
 {
 	Width = width;
 	Height = height;
+	Masked = false;
+	bTranslucent = false;
 	fr = std::move(lump);
 }
 

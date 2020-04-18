@@ -59,6 +59,5 @@ void FSkyBox::SetSize()
 	if (previous && previous->GetTexture()->GetImage())
 	{
 		SetImage(previous->GetTexture()->GetImage());
-		SetFromImage();
 	}
 }

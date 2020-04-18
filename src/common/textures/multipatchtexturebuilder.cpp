@@ -57,7 +57,6 @@
 #endif
 
 
-
 //--------------------------------------------------------------------------
 //
 // Data structures for the TEXTUREx lumps
@@ -85,7 +84,7 @@ struct mappatch_t
 struct maptexture_t
 {
 	uint8_t		name[8];
-	uint16_t		Flags;				// [RH] Was unused
+	uint16_t	Flags;				// [RH] Was unused
 	uint8_t		ScaleX;				// [RH] Scaling (8 is normal)
 	uint8_t		ScaleY;				// [RH] Same as above
 	int16_t		width;
@@ -113,7 +112,7 @@ struct strifemappatch_t
 struct strifemaptexture_t
 {
 	uint8_t		name[8];
-	uint16_t		Flags;				// [RH] Was unused
+	uint16_t	Flags;				// [RH] Was unused
 	uint8_t		ScaleX;				// [RH] Scaling (8 is normal)
 	uint8_t		ScaleY;				// [RH] Same as above
 	int16_t		width;
@@ -137,21 +136,22 @@ struct FPatchLookup
 
 void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType usetype)
 {
-	FImageTexture *tex = new FImageTexture(nullptr);
-	tex->SetSize(buildinfo.Width, buildinfo.Height);
-	tex->bMasked = true;	// we do not really know yet.
-	tex->bTranslucent = -1;
-	tex->SourceLump = buildinfo.DefinitionLump;
-	buildinfo.itex = tex;
-	buildinfo.texture = MakeGameTexture(tex, buildinfo.Name, usetype);
+	buildinfo.texture = new FGameTexture(nullptr, buildinfo.Name);
+	buildinfo.texture->SetUseType(usetype);
+	TexMan.AddGameTexture(buildinfo.texture);
+}
+
+void FMultipatchTextureBuilder::AddImageToTexture(FImageTexture *tex, BuildInfo& buildinfo)
+{
+	buildinfo.texture->Setup(tex);
 	buildinfo.texture->SetOffsets(0, buildinfo.LeftOffset[0], buildinfo.TopOffset[0]);
 	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
 	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.X);
 	buildinfo.texture->SetWorldPanning(buildinfo.bWorldPanning);
 	buildinfo.texture->SetNoDecals(buildinfo.bNoDecals);
-
-	TexMan.AddGameTexture(buildinfo.texture);
+	calcShouldUpscale(buildinfo.texture);	// calculate this once at insertion
 }
+
 
 //==========================================================================
 //
@@ -235,7 +235,7 @@ void FMultipatchTextureBuilder::BuildTexture(const void *texdef, FPatchLookup *p
 		}
 		buildinfo.Parts[i].OriginX = LittleShort(mpatch.d->originx);
 		buildinfo.Parts[i].OriginY = LittleShort(mpatch.d->originy);
-		buildinfo.Parts[i].Image = nullptr;
+		buildinfo.Parts[i].TexImage = nullptr;
 		buildinfo.Inits[i].TexName = patchlookup[LittleShort(mpatch.d->patch)].Name;
 		buildinfo.Inits[i].UseType = ETextureType::WallPatch;
 		if (strife)
@@ -417,7 +417,7 @@ void FMultipatchTextureBuilder::AddTexturesLumps(int lump1, int lump2, int patch
 //
 //==========================================================================
 
-void FMultipatchTextureBuilder::ParsePatch(FScanner &sc, BuildInfo &info, TexPart & part, TexInit &init)
+void FMultipatchTextureBuilder::ParsePatch(FScanner &sc, BuildInfo &info, TexPartBuild & part, TexInit &init)
 {
 	FString patchname;
 	int Mirror = 0;
@@ -669,7 +669,7 @@ void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType)
 			}
 			else if (sc.Compare("Patch"))
 			{
-				TexPart part;
+				TexPartBuild part;
 				TexInit init;
 				ParsePatch(sc, buildinfo, part, init);
 				if (init.TexName.IsNotEmpty())
@@ -681,12 +681,12 @@ void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType)
 					init.sc = sc;
 					buildinfo.Inits.Push(init);
 				}
-				part.Image = nullptr;
+				part.TexImage = nullptr;
 				part.Translation = nullptr;
 			}
 			else if (sc.Compare("Sprite"))
 			{
-				TexPart part;
+				TexPartBuild part;
 				TexInit init;
 				ParsePatch(sc, buildinfo, part, init);
 				if (init.TexName.IsNotEmpty())
@@ -698,12 +698,12 @@ void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType)
 					init.sc = sc;
 					buildinfo.Inits.Push(init);
 				}
-				part.Image = nullptr;
+				part.TexImage = nullptr;
 				part.Translation = nullptr;
 			}
 			else if (sc.Compare("Graphic"))
 			{
-				TexPart part;
+				TexPartBuild part;
 				TexInit init;
 				ParsePatch(sc, buildinfo, part, init);
 				if (init.TexName.IsNotEmpty())
@@ -715,7 +715,7 @@ void FMultipatchTextureBuilder::ParseTexture(FScanner &sc, ETextureType UseType)
 					init.sc = sc;
 					buildinfo.Inits.Push(init);
 				}
-				part.Image = nullptr;
+				part.TexImage = nullptr;
 				part.Translation = nullptr;
 			}
 			else if (sc.Compare("Offset"))
@@ -812,12 +812,12 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 		{
 			FGameTexture *tex = TexMan.GetGameTexture(texno);
 
-			if (tex != nullptr && tex->isValid())
+			if (tex != nullptr && tex->isValid() && dynamic_cast<FImageTexture*>(tex->GetTexture()))
 			{
 				//We cannot set the image source yet. First all textures need to be resolved.
-				buildinfo.Inits[i].Texture = tex->GetTexture();
-				bool iscomplex = !!complex.CheckKey(tex->GetTexture());
-				if (iscomplex) complex.Insert(buildinfo.itex, true);
+				buildinfo.Inits[i].Texture = static_cast<FImageTexture*>(tex->GetTexture());
+				bool iscomplex = !!complex.CheckKey(tex);
+				if (iscomplex) complex.Insert(buildinfo.texture, true);
 				buildinfo.bComplex |= iscomplex;
 				if (buildinfo.Inits[i].UseOffsets)
 				{
@@ -876,12 +876,12 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 
 			for (unsigned j = 0; j < buildinfo.Inits.Size(); j++)
 			{
-				if (buildinfo.Parts[j].Image == nullptr)
+				if (buildinfo.Parts[j].TexImage == nullptr)
 				{
-					auto image = buildinfo.Inits[j].Texture->GetImage();
-					if (image != nullptr)
+					auto image = buildinfo.Inits[j].Texture;
+					if (image->GetImage() != nullptr)
 					{
-						buildinfo.Parts[j].Image = image;
+						buildinfo.Parts[j].TexImage = image;
 						donesomething = true;
 					}
 					else hasEmpty = true;
@@ -896,19 +896,21 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 				if (buildinfo.Parts.Size() == 1)
 				{
 					if (buildinfo.Parts[0].OriginX == 0 && buildinfo.Parts[0].OriginY == 0 &&
-						buildinfo.Parts[0].Image->GetWidth() == buildinfo.Width &&
-						buildinfo.Parts[0].Image->GetHeight() == buildinfo.Height &&
+						buildinfo.Parts[0].TexImage->GetWidth() == buildinfo.Width &&
+						buildinfo.Parts[0].TexImage->GetHeight() == buildinfo.Height &&
 						buildinfo.Parts[0].Rotate == 0 &&
 						!buildinfo.bComplex)
 					{
-						buildinfo.itex->SetImage(buildinfo.Parts[0].Image);
+						AddImageToTexture(buildinfo.Parts[0].TexImage, buildinfo);
+						buildinfo.texture->Setup(buildinfo.Parts[0].TexImage);
 						done = true;
 					}
 				}
 				if (!done)
 				{
 					auto img = new FMultiPatchTexture(buildinfo.Width, buildinfo.Height, buildinfo.Parts, buildinfo.bComplex, buildinfo.textual);
-					buildinfo.itex->SetImage(img);
+					auto itex = new FImageTexture(img);
+					AddImageToTexture(itex, buildinfo);
 				}
 
 				BuiltTextures.Delete(i);

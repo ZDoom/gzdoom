@@ -89,6 +89,7 @@ public:
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) override;
 
 	IHardwareTexture *CreateHardwareTexture() override;
+	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;

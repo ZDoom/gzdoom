@@ -50,7 +50,7 @@ void AnimTexture::SetFrame(const uint8_t *palette, const void *data_)
 {
 	memcpy(Palette, palette, 768);
 	memcpy(Image.Data(), data_, Width * Height);
-    CleanHardwareTextures(true);
+    CleanHardwareTextures();
 }
 
 //===========================================================================

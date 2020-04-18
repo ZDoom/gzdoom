@@ -36,11 +36,6 @@ private:
 			hwTexture = nullptr;
 		}
 
-		void DeleteDescriptors()
-		{
-			if (hwTexture) hwTexture->DeleteDescriptors();
-		}
-		
 		~TranslatedTexture()
 		{
 			Delete();
@@ -81,15 +76,8 @@ private:
 	}
 
 public:
-
-	void Clean(bool reallyclean)
+	void Clean()
 	{
-		hwDefTex[0].DeleteDescriptors();
-		hwDefTex[1].DeleteDescriptors();
-		for (unsigned int j = 0; j < hwTex_Translated.Size(); j++)
-			hwTex_Translated[j].DeleteDescriptors();
-
-		if (!reallyclean) return;
 		hwDefTex[0].Delete();
 		hwDefTex[1].Delete();
 		hwTex_Translated.Clear();

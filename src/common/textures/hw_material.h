@@ -27,10 +27,11 @@ public:
 	FTexture* imgtex;			// the first layer's texture image - should be moved into the array
 
 	FMaterial(FGameTexture *tex, int scaleflags);
-	~FMaterial();
+	virtual ~FMaterial();
 	int GetLayerFlags() const { return mLayerFlags; }
 	int GetShaderIndex() const { return mShaderIndex; }
 	int GetScaleFlags() const { return mScaleFlags; }
+	virtual void DeleteDescriptors() { }
 
 	FGameTexture* Source() const
 	{

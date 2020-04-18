@@ -455,6 +455,11 @@ void DFrameBuffer::FPSLimit()
 	}
 }
 
+FMaterial* DFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
+{
+	return new FMaterial(tex, scaleflags);
+}
+
 DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
 {
 	PARAM_PROLOGUE;

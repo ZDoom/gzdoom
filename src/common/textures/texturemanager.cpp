@@ -118,7 +118,7 @@ void FTextureManager::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			Textures[i].Texture->GetTexture()->CleanHardwareTextures(true);
+			Textures[i].Texture->CleanHardwareData();
 			delete Textures[i].Texture->GetSoftwareTexture();
 			Textures[i].Texture->SetSoftwareTexture(nullptr);
 			calcShouldUpscale(Textures[i].Texture);

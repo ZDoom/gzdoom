@@ -667,6 +667,11 @@ IHardwareTexture *VulkanFrameBuffer::CreateHardwareTexture()
 	return new VkHardwareTexture();
 }
 
+FMaterial* VulkanFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
+{
+	return new VkMaterial(tex, scaleflags);
+}
+
 FModelRenderer *VulkanFrameBuffer::CreateModelRenderer(int mli) 
 {
 	return new FHWModelRenderer(nullptr, *GetRenderState(), mli);
@@ -711,7 +716,7 @@ void VulkanFrameBuffer::TextureFilterChanged()
 	if (mSamplerManager)
 	{
 		// Destroy the texture descriptors as they used the old samplers
-		VkHardwareTexture::ResetAllDescriptors();
+		VkMaterial::ResetAllDescriptors();
 
 		mSamplerManager->SetTextureFilterMode();
 	}
@@ -720,7 +725,7 @@ void VulkanFrameBuffer::TextureFilterChanged()
 void VulkanFrameBuffer::StartPrecaching()
 {
 	// Destroy the texture descriptors to avoid problems with potentially stale textures.
-	VkHardwareTexture::ResetAllDescriptors();
+	VkMaterial::ResetAllDescriptors();
 }
 
 void VulkanFrameBuffer::BlurScene(float amount)

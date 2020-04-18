@@ -434,8 +434,7 @@ void VkRenderState::ApplyMaterial()
 		auto fb = GetVulkanFrameBuffer();
 		auto passManager = fb->GetRenderPassManager();
 
-		VkHardwareTexture* base = mMaterial.mMaterial ? static_cast<VkHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation)) : nullptr;
-		VulkanDescriptorSet* descriptorset = base ? base->GetDescriptorSet(mMaterial) : passManager->GetNullTextureDescriptorSet();
+		VulkanDescriptorSet* descriptorset = mMaterial.mMaterial ? static_cast<VkMaterial*>(mMaterial.mMaterial)->GetDescriptorSet(mMaterial) : passManager->GetNullTextureDescriptorSet();
 
 		mCommandBuffer->bindDescriptorSet(VK_PIPELINE_BIND_POINT_GRAPHICS, passManager->GetPipelineLayout(mPipelineKey.NumTextureLayers), 1, descriptorset);
 		mMaterial.mChanged = false;

@@ -3401,6 +3401,7 @@ void D_Cleanup()
 	DeinitMenus();
 	LightDefaults.DeleteAndClear();			// this can leak heap memory if it isn't cleared.
 	TexAnim.DeleteAll();
+	TexMan.DeleteAll();
 	
 	// delete DoomStartupInfo data
 	DoomStartupInfo.Name = "";

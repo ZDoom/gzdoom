@@ -65,6 +65,8 @@ class FFlatVertexBuffer;
 class HWViewpointBuffer;
 class FLightBuffer;
 struct HWDrawInfo;
+class FMaterial;
+class FGameTexture;
 
 enum EHWCaps
 {
@@ -266,6 +268,7 @@ public:
 	virtual IHardwareTexture *CreateHardwareTexture() { return nullptr; }
 	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
+	virtual FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags);
 	virtual void TextureFilterChanged() {}
 	virtual void BeginFrame() {}
 	virtual void SetWindowSize(int w, int h) {}

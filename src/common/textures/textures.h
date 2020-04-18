@@ -259,7 +259,7 @@ public:
 	static FTexture *CreateTexture(int lumpnum, bool allowflats = false);
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
-	void CleanHardwareTextures(bool reallyclean);
+	void CleanHardwareTextures();
 
 	int GetWidth() { return Width; }
 	int GetHeight() { return Height; }
@@ -648,6 +648,9 @@ public:
 		else if ((isWarped() || shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 		return clampmode;
 	}
+
+	void CleanHardwareData(bool full = true);
+
 };
 
 inline FGameTexture* MakeGameTexture(FTexture* tex, const char *name, ETextureType useType)

@@ -558,9 +558,9 @@ bool FTexture::DetermineTranslucency()
 }
 
 
-void FTexture::CleanHardwareTextures(bool reallyclean)
+void FTexture::CleanHardwareTextures()
 {
-	SystemTextures.Clean(reallyclean);
+	SystemTextures.Clean();
 }
 
 //===========================================================================
@@ -786,6 +786,11 @@ void FGameTexture::SetSpriteRect()
 	}
 }
 
+
+void FGameTexture::CleanHardwareData(bool full)
+{
+
+}
 
 //===========================================================================
 //

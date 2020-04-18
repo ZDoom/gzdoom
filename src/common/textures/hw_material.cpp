@@ -27,6 +27,7 @@
 #include "hw_material.h"
 #include "texturemanager.h"
 #include "c_cvars.h"
+#include "v_video.h"
 
 IHardwareTexture* CreateHardwareTexture();
 
@@ -173,7 +174,7 @@ FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, int scaleflags, bool
 		FMaterial *hwtex = gtex->Material[scaleflags];
 		if (hwtex == NULL && create)
 		{
-			hwtex = new FMaterial(gtex, scaleflags);
+			hwtex = screen->CreateMaterial(gtex, scaleflags);
 		}
 		return hwtex;
 	}

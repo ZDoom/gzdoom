@@ -230,7 +230,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 			// For now, only delete what's in neither list. The logic being used here does not really work that well for selective deletion.
 			if (usedTextures.CheckKey(tex->GetTexture()) == nullptr && usedSprites.CheckKey(tex->GetTexture()) == nullptr)
 			{
-				tex->GetTexture()->CleanHardwareTextures(true);
+				tex->CleanHardwareData();
 			}
 		}
 	}

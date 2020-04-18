@@ -107,8 +107,6 @@ FTexture::FTexture (int lumpnum)
 
 FTexture::~FTexture ()
 {
-	if (areas != nullptr) delete[] areas;
-	areas = nullptr;
 }
 
 //===========================================================================
@@ -281,12 +279,12 @@ void FTexture::GetGlowColor(float *data)
 //
 //===========================================================================
 
-int FTexture::GetAreas(FloatRect** pAreas) const
+int FGameTexture::GetAreas(FloatRect** pAreas) const
 {
 	if (shaderindex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
 	{
-		*pAreas = areas;
-		return areacount;
+		*pAreas = Base->areas;
+		return Base->areacount;
 	}
 	else
 	{
@@ -314,8 +312,8 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 	if (areacount) return false;
 	areacount = -1;	//whatever happens next, it shouldn't be done twice!
 
-							// large textures are excluded for performance reasons
-	if (h>512) return false;
+							// large textures and non-images are excluded for performance reasons
+	if (h>512 || !GetImage()) return false;
 
 	startdraw = -1;
 	lendraw = 0;
@@ -366,7 +364,7 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 
 	if (gapc > 0)
 	{
-		FloatRect * rcs = new FloatRect[gapc];
+		FloatRect* rcs = (FloatRect*)ImageArena.Alloc(gapc * sizeof(FloatRect));	// allocate this on the image arena
 
 		for (x = 0; x < gapc; x++)
 		{

@@ -109,9 +109,10 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 			mTextureLayers.Push(placeholder->GetTexture());
 		}
 
-		if (imgtex->shaderindex >= FIRST_USER_SHADER)
+		auto index = tx->GetShaderIndex();
+		if (index >= FIRST_USER_SHADER)
 		{
-			const UserShaderDesc &usershader = usershaders[imgtex->shaderindex - FIRST_USER_SHADER];
+			const UserShaderDesc &usershader = usershaders[index - FIRST_USER_SHADER];
 			if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
 			{
 				for (auto &texture : tx->CustomShaderTextures)
@@ -119,7 +120,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 					if (texture == nullptr) continue;
 					mTextureLayers.Push(texture.get());
 				}
-				mShaderIndex = tx->GetShaderIndex();
+				mShaderIndex = index;
 			}
 		}
 	}

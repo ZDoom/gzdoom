@@ -283,12 +283,6 @@ protected:
 	int GlowHeight = 128;
 	PalEntry GlowColor = 0;
 
-	float Glossiness = 10.f;
-	float SpecularLevel = 0.1f;
-	float shaderspeed = 1.f;
-	int shaderindex = 0;
-
-
 public:
 
 	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
@@ -307,7 +301,6 @@ public:
 	bool isCanvas() const { return bHasCanvas; }
 	int isWarped() const { return bWarped; }
 	int GetRotations() const { return Rotations; }
-	float GetShaderSpeed() const { return shaderspeed; }
 	void SetRotations(int rot) { Rotations = int16_t(rot); }
 	
 	void SetNoDecals(bool on) { bNoDecals = on;  }
@@ -324,7 +317,6 @@ public:
 	bool isFullbright() const { return bFullbright; }
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	int GetSourceLump() const { return SourceLump;  }
-	void SetSpeed(float fac) { shaderspeed = fac; }
 	bool UseWorldPanning() const  { return bWorldPanning; }
 	void SetWorldPanning(bool on) { bWorldPanning = on; }
 
@@ -548,6 +540,12 @@ class FGameTexture
 	ISoftwareTexture* SoftwareTexture = nullptr;
 	FMaterial* Material[4] = {  };
 
+	// Material properties
+	float Glossiness = 10.f;
+	float SpecularLevel = 0.1f;
+	float shaderspeed = 1.f;
+	int shaderindex = 0;
+
 public:
 	FGameTexture(FTexture* wrap, const char *name);
 	~FGameTexture();
@@ -600,8 +598,6 @@ public:
 	void SetNoDecals(bool on) { Base->bNoDecals = on; }
 	void SetTranslucent(bool on) { Base->bTranslucent = on; }
 	void SetUseType(ETextureType type) { UseType = type; }
-	int GetShaderIndex() const { return Base->shaderindex; }
-	float GetShaderSpeed() const { return Base->GetShaderSpeed(); }
 	uint16_t GetRotations() const { return Base->GetRotations(); }
 	void SetRotations(int index) { Base->SetRotations(index); }
 	void SetSkyOffset(int ofs) { Base->SetSkyOffset(ofs); }
@@ -621,13 +617,15 @@ public:
 		return Material[num];
 	}
 
-	void SetShaderSpeed(float speed) { Base->shaderspeed = speed; }
-	void SetShaderIndex(int index) { Base->shaderindex = index; }
+	int GetShaderIndex() const { return shaderindex; }
+	float GetShaderSpeed() const { return shaderspeed; }
+	void SetShaderSpeed(float speed) { shaderspeed = speed; }
+	void SetShaderIndex(int index) { shaderindex = index; }
 	void SetShaderLayers(MaterialLayers& lay)
 	{
 		// Only update layers that have something defind.
-		if (lay.Glossiness > -1000) Base->Glossiness = lay.Glossiness;
-		if (lay.SpecularLevel > -1000) Base->SpecularLevel = lay.SpecularLevel;
+		if (lay.Glossiness > -1000) Glossiness = lay.Glossiness;
+		if (lay.SpecularLevel > -1000) SpecularLevel = lay.SpecularLevel;
 		if (lay.Brightmap) Brightmap = lay.Brightmap->GetTexture();
 		if (lay.Normal) Normal = lay.Normal->GetTexture();
 		if (lay.Specular) Specular = lay.Specular->GetTexture();
@@ -639,8 +637,8 @@ public:
 			if (lay.CustomShaderTextures[i]) CustomShaderTextures[i] = lay.CustomShaderTextures[i]->GetTexture();
 		}
 	}
-	float GetGlossiness() const { return Base->Glossiness; }
-	float GetSpecularLevel() const { return Base->SpecularLevel; }
+	float GetGlossiness() const { return Glossiness; }
+	float GetSpecularLevel() const { return SpecularLevel; }
 
 	void CopySize(FGameTexture* BaseTexture)
 	{
@@ -693,7 +691,7 @@ public:
 	}
 
 	const SpritePositioningInfo& GetSpritePositioning(int which) { if (spi == nullptr) SetupSpriteData(); return spi[which]; }
-	int GetAreas(FloatRect** pAreas) const { return Base->GetAreas(pAreas); }
+	int GetAreas(FloatRect** pAreas) const;
 
 	bool GetTranslucency()
 	{
@@ -711,7 +709,7 @@ public:
 	{
 		if (GetUseType() == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
 		else if (isHardwareCanvas()) clampmode = CLAMP_CAMTEX;
-		else if ((isWarped() || Base->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
+		else if ((isWarped() || shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 		return clampmode;
 	}
 };

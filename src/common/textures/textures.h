@@ -367,7 +367,7 @@ public:
 class FImageTexture : public FTexture
 {
 	FImageSource* mImage;
-	bool bNoRemap0;
+	bool bNoRemap0 = false;
 protected:
 	void SetFromImage();
 public:

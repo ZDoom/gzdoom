@@ -1184,6 +1184,13 @@ void FTextureManager::Init(void (*progressFunc_)(), void (*checkForHacks)(BuildI
 	glPart = TexMan.CheckForTexture("glstuff/glpart.png", ETextureType::MiscPatch);
 	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", ETextureType::MiscPatch);
 	AddLocalizedVariants();
+
+	// Make sure all ID's are correct by resetting them here to the proper index.
+	for (unsigned int i = 0, count = Textures.Size(); i < count; ++i)
+	{
+		Textures[i].Texture->SetID(i);
+	}
+
 }
 
 //==========================================================================

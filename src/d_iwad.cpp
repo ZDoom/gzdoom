@@ -283,10 +283,6 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 			ParseIWadInfo("IWADINFO", (const char*)data.Data(), data.Size());
 		}
 	}
-	if (mIWadNames.Size() == 0 || mIWadInfos.Size() == 0)
-	{
-		I_FatalError("No IWAD definitions found");
-	}
 }
 
 

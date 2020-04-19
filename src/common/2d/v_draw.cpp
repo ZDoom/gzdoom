@@ -390,7 +390,9 @@ bool SetTextureParms(F2DDrawer * drawer, DrawParms *parms, FGameTexture *img, do
 			double srcwidth = img->GetDisplayWidth();
 			double srcheight = img->GetDisplayHeight();
 			int autoaspect = parms->fsscalemode;
-			aspect = autoaspect == 0 || (srcwidth == 320 && srcheight == 200) || (srcwidth == 640 && srcheight == 400)? 1.333 : srcwidth / srcheight;
+			if (srcheight == 200) aspect = srcwidth / 240.;
+			else if (srcheight == 400) aspect = srcwidth / 480;
+			else aspect = srcwidth / srcheight;
 			parms->x = parms->y = 0;
 			parms->keepratio = true;
 			auto screenratio = ActiveRatio(GetWidth(), GetHeight());

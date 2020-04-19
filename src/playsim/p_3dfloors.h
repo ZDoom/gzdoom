@@ -23,7 +23,7 @@ typedef enum
   FF_UPPERTEXTURE	   = 0x20000,
   FF_LOWERTEXTURE      = 0x40000,
   FF_THINFLOOR		   = 0x80000,	// EDGE
-  FF_SCROLLY           = 0x100000,  // EDGE - not yet implemented!!!
+  FF_NODAMAGE          = 0x100000,  // no damage transfers
   FF_FIX			   = 0x200000,  // use floor of model sector as floor and floor of real sector as ceiling
   FF_INVERTSECTOR	   = 0x400000,	// swap meaning of sector planes
   FF_DYNAMIC		   = 0x800000,	// created by partitioning another 3D-floor due to overlap

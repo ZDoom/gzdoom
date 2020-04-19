@@ -72,7 +72,6 @@ private:
 	FSaveGameNode NewSaveNode;
 	int LastSaved = -1;
 	int LastAccessed = -1;
-	TArray<char> SavePicData;
 	FGameTexture *SavePic = nullptr;
 
 public:

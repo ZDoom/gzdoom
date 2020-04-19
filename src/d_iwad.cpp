@@ -263,6 +263,8 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 // Look for IWAD definition lump
 //
 //==========================================================================
+extern const char* iwad_folders[13];
+extern const char* iwad_reserved[12];
 
 FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 {
@@ -280,10 +282,6 @@ FIWadManager::FIWadManager(const char *firstfn, const char *optfn)
 			auto data = check.GetFileData(num);
 			ParseIWadInfo("IWADINFO", (const char*)data.Data(), data.Size());
 		}
-	}
-	if (mIWadNames.Size() == 0 || mIWadInfos.Size() == 0)
-	{
-		I_FatalError("No IWAD definitions found");
 	}
 }
 
@@ -352,7 +350,13 @@ int FIWadManager::CheckIWADInfo(const char* fn)
 {
 	FileSystem check;
 
-	check.InitSingleFile(fn, true);
+	LumpFilterInfo lfi;
+	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
+	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+
+	TArray<FString> filenames;
+	filenames.Push(fn);
+	check.InitMultipleFiles(filenames, true, &lfi);
 	if (check.GetNumEntries() > 0)
 	{
 		int num = check.CheckNumForName("IWADINFO");

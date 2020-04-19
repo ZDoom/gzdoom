@@ -943,7 +943,8 @@ int MapLoader::Set3DFloor(line_t * line, int param, int param2, int alpha)
 			// if flooding is used the floor must be non-solid and is automatically made shootthrough and seethrough
 			if ((param2 & 128) && !(flags & FF_SOLID)) flags |= FF_FLOOD | FF_SEETHROUGH | FF_SHOOTTHROUGH;
 			if (param2 & 512) flags |= FF_FADEWALLS;
-			if (param2&1024) flags |= FF_RESET;
+			if (param2 & 1024) flags |= FF_RESET;
+			if (param2 & 2048) flags |= FF_NODAMAGE;
 			FTextureID tex = line->sidedef[0]->GetTexture(side_t::top);
 			if (!tex.Exists() && alpha < 255)
 			{
@@ -970,7 +971,7 @@ int MapLoader::Set3DFloor(line_t * line, int param, int param2, int alpha)
 
 void MapLoader::Spawn3DFloors ()
 {
-	static int flagvals[] = {512, 2+512, 512+1024};
+	static int flagvals[] = {512+2048, 2+512+2048, 512+1024+2048};
 
 	for (auto &line : Level->lines)
 	{

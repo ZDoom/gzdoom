@@ -184,6 +184,9 @@ extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 
+const char* iwad_folders[13] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/" };
+const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo" "maps/" };
+
 
 CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
 {
@@ -1850,8 +1853,12 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 {
 	FileSystem check;
 
+	LumpFilterInfo lfi;
+	for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
+	for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
+
 	// Open the entire list as a temporary file system and look for a GAMEINFO lump. The last one will automatically win.
-	check.InitMultipleFiles(pwads, true);
+	check.InitMultipleFiles(pwads, true, &lfi);
 	if (check.GetNumEntries() > 0)
 	{
 		int num = check.CheckNumForName("GAMEINFO");
@@ -2989,11 +2996,8 @@ static int D_DoomMain_Internal (void)
 		}
 		lfi.gameTypeFilter.Push(FStringf("game-%s", GameTypeName()));
 
-		static const char* folders[] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/" };
-		for (auto p : folders) lfi.reservedFolders.Push(p);
-
-		static const char* reserved[] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "maps/" };
-		for (auto p : reserved) lfi.requiredPrefixes.Push(p);
+		for (auto p : iwad_folders) lfi.reservedFolders.Push(p);
+		for (auto p : iwad_reserved) lfi.requiredPrefixes.Push(p);
 
 		lfi.postprocessFunc = [&]()
 		{

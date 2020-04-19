@@ -843,8 +843,6 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 			i--;
 		}
 	}
-
-	checkForHacks(buildinfo);
 }
 
 void FMultipatchTextureBuilder::ResolveAllPatches()
@@ -891,6 +889,7 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 			{
 				// If this texture is just a wrapper around a single patch, we can simply
 				// use that patch's image directly here.
+				checkForHacks(buildinfo);
 
 				bool done = false;
 				if (buildinfo.Parts.Size() == 1)
@@ -912,7 +911,6 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 					auto itex = new FImageTexture(img);
 					AddImageToTexture(itex, buildinfo);
 				}
-
 				BuiltTextures.Delete(i);
 				donesomething = true;
 			}

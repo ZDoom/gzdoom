@@ -1,5 +1,7 @@
 extend class PlayerPawn
 {
+	private native void Substitute(PlayerPawn replacement);
+
 	//===========================================================================
 	//
 	// EndAllPowerupEffects
@@ -502,6 +504,8 @@ class MorphedMonster : Actor
 		-COUNTKILL
 		+FLOORCLIP
 	}
+
+	private native void Substitute(Actor replacement);
 
 	override void OnDestroy ()
 	{

@@ -325,7 +325,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 
 	int numLayers = mat->NumLayers();
 	MaterialLayerInfo* layer;
-	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
+	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation, &layer));
 
 	if (base->BindOrCreate(tex->GetTexture(), 0, clampmode, translation, layer->scaleFlags))
 	{

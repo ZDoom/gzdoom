@@ -97,7 +97,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	TArray<FTexture*> layers;
 
 	// First collect the potential max. texture set 
-	for (unsigned i = 1; i < TexMan.NumTextures(); i++)
+	for (int i = 1; i < TexMan.NumTextures(); i++)
 	{
 		auto gametex = TexMan.GameByIndex(i);
 		if (gametex &&
@@ -258,7 +258,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	// delete unused hardware textures (i.e. those which didn't get referenced by any material in the cache list.)
 	decltype(allTextures)::Iterator ita(allTextures);
 	decltype(allTextures)::Pair* paira;
-	while (it.NextPair(pair))
+	while (ita.NextPair(paira))
 	{
 		paira->Key->CleanUnused();
 	}

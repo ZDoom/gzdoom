@@ -459,7 +459,7 @@ class Actor : Thinker native
 	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0, Name MeansOfDeath = 'none');
 	virtual native bool Slam(Actor victim);
 	virtual native void Touch(Actor toucher);
-	native void Substitute(Actor replacement);
+	private native void Substitute(Actor replacement);
 	native ui void DisplayNameTag();
 
 	// Called by inventory items to see if this actor is capable of touching them.

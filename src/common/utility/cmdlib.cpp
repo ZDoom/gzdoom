@@ -73,7 +73,7 @@ static inline bool IsSeperator (int c)
 	if (c == '/')
 		return true;
 #ifdef _WIN32
-	if (c == '\\' || c == ':')
+	if (c == '\\')
 		return true;
 #endif
 	return false;

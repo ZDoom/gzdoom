@@ -98,7 +98,8 @@ class FGameTexture
 	int shaderindex = 0;
 
 	int flags = 0;
-	uint8_t warped = 0, expandSprite = -1;
+	uint8_t warped = 0;
+	int8_t expandSprite = -1;
 	uint16_t GlowHeight;
 	PalEntry GlowColor = 0;
 

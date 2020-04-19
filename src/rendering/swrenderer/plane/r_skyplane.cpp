@@ -63,7 +63,7 @@ namespace swrenderer
 {
 	static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)
 	{
-		return GetPalettedSWTexture(texid, true, nullptr, true);
+		return GetPalettedSWTexture(texid, true, false, true);
 	}
 
 	RenderSkyPlane::RenderSkyPlane(RenderThread *thread)
@@ -71,8 +71,8 @@ namespace swrenderer
 		Thread = thread;
 		auto Level = Thread->Viewport->Level();
 
-		auto sskytex1 = GetPalettedSWTexture(Level->skytexture1, true, nullptr, true);
-		auto sskytex2 = GetPalettedSWTexture(Level->skytexture2, true, nullptr, true);
+		auto sskytex1 = GetPalettedSWTexture(Level->skytexture1, true, false, true);
+		auto sskytex2 = GetPalettedSWTexture(Level->skytexture2, true, false, true);
 
 		if (sskytex1 == nullptr)
 			return;

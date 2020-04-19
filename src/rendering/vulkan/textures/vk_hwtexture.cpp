@@ -374,15 +374,12 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 
 	clampmode = base->GetClampMode(clampmode);
 
-	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = GetScaleFlags();
-
 	for (auto& set : mDescriptorSets)
 	{
 		if (set.descriptor && set.clampmode == clampmode && set.flags == translation) return set.descriptor.get();
 	}
 
-	int numLayers = GetLayers();
+	int numLayers = NumLayers();
 
 	auto fb = GetVulkanFrameBuffer();
 	auto descriptor = fb->GetRenderPassManager()->AllocateTextureDescriptorSet(std::max(numLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS));
@@ -392,14 +389,13 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	VulkanSampler* sampler = fb->GetSamplerManager()->Get(clampmode);
 
 	WriteDescriptors update;
-	FTexture* layer;
+	MaterialLayerInfo *layer;
 	auto systex = static_cast<VkHardwareTexture*>(GetLayer(0, translation, &layer));
-	update.addCombinedImageSampler(descriptor.get(), 0, systex->GetImage(layer, translation, flags)->View.get(), sampler, systex->mImage.Layout);
+	update.addCombinedImageSampler(descriptor.get(), 0, systex->GetImage(layer->layerTexture, translation, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
 	for (int i = 1; i < numLayers; i++)
 	{
 		auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));
-		// fixme: Upscale flags must be disabled for certain layers.
-		update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer, 0, flags)->View.get(), sampler, systex->mImage.Layout);
+		update.addCombinedImageSampler(descriptor.get(), i, systex->GetImage(layer->layerTexture, 0, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
 	}
 
 	auto dummyImage = fb->GetRenderPassManager()->GetNullTextureView();

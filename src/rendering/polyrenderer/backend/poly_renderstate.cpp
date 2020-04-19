@@ -314,20 +314,19 @@ void PolyRenderState::ApplyMaterial()
 	{
 		mTempTM = mMaterial.mMaterial->Source()->isHardwareCanvas() ? TM_OPAQUE : TM_NORMAL;
 
-		FTexture* layer;
+		MaterialLayerInfo* layer;
 		auto base = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation, &layer));
 		if (base)
 		{
-			DCanvas *texcanvas = base->GetImage(layer, mMaterial);
+			DCanvas *texcanvas = base->GetImage(layer->layerTexture, mMaterial.mTranslation, layer->scaleFlags);
 			mDrawCommands->SetTexture(0, texcanvas->GetPixels(), texcanvas->GetWidth(), texcanvas->GetHeight(), texcanvas->IsBgra());
 
-			int numLayers = mMaterial.mMaterial->GetLayers();
+			int numLayers = mMaterial.mMaterial->NumLayers();
 			for (int i = 1; i < numLayers; i++)
 			{
-				FTexture* layer;
 				auto systex = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(i, 0, &layer));
 
-				texcanvas = systex->GetImage(layer, 0, mMaterial.mMaterial->GetScaleFlags());
+				texcanvas = systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
 				mDrawCommands->SetTexture(i, texcanvas->GetPixels(), texcanvas->GetWidth(), texcanvas->GetHeight(), texcanvas->IsBgra());
 			}
 		}

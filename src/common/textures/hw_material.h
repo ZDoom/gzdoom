@@ -8,6 +8,12 @@
 struct FRemapTable;
 class IHardwareTexture;
 
+struct MaterialLayerInfo
+{
+	FTexture* layerTexture;
+	int scaleFlags;
+};
+
 //===========================================================================
 // 
 // this is the material class for OpenGL. 
@@ -17,14 +23,13 @@ class IHardwareTexture;
 class FMaterial
 {
 	private:
-	TArray<FTexture*> mTextureLayers;
+	TArray<MaterialLayerInfo> mTextureLayers; // the only layers allowed to scale are the brightmap and the glowmap.
 	int mShaderIndex;
 	int mLayerFlags = 0;
 	int mScaleFlags;
 
 public:
 	FGameTexture *sourcetex;	// the owning texture. 
-	FTexture* imgtex;			// the first layer's texture image - should be moved into the array
 
 	FMaterial(FGameTexture *tex, int scaleflags);
 	virtual ~FMaterial();
@@ -37,27 +42,22 @@ public:
 	{
 		return sourcetex;
 	}
-	FTexture* BaseLayer() const
+
+	void AddTextureLayer(FTexture *tex, bool allowscale)
 	{
-		// Only for spftpoly!
-		return imgtex;
-	}
-	void AddTextureLayer(FTexture *tex)
-	{
-		//ValidateTexture(tex, false);
-		mTextureLayers.Push(tex);
+		mTextureLayers.Push({ tex, allowscale });
 	}
 
-	int GetLayers() const
+	int NumLayers() const
 	{
-		return mTextureLayers.Size() + 1;
+		return mTextureLayers.Size();
 	}
 
-	IHardwareTexture *GetLayer(int i, int translation, FTexture **pLayer = nullptr) const;
+	IHardwareTexture *GetLayer(int i, int translation, MaterialLayerInfo **pLayer = nullptr) const;
 
 
 	static FMaterial *ValidateTexture(FGameTexture * tex, int scaleflags, bool create = true);
-	const TArray<FTexture*> &GetLayerArray() const
+	const TArray<MaterialLayerInfo> &GetLayerArray() const
 	{
 		return mTextureLayers;
 	}

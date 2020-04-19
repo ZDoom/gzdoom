@@ -23,7 +23,6 @@ public:
 	static void ResetAll();
 	void Reset();
 
-	DCanvas *GetImage(FTexture *tex, const FMaterialState &state);
 	DCanvas *GetImage(FTexture *tex, int translation, int flags);
 	PolyDepthStencil *GetDepthStencil(FTexture *tex);
 

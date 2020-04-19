@@ -337,7 +337,7 @@ void Wiper_Burn::SetTextures(FGameTexture *startscreen, FGameTexture *endscreen)
 	endScreen = endscreen;
 	BurnTexture = new FBurnTexture(WIDTH, HEIGHT);
 	auto mat = FMaterial::ValidateTexture(endScreen, false);
-	mat->AddTextureLayer(BurnTexture);
+	mat->AddTextureLayer(BurnTexture, false);
 }
 
 //==========================================================================

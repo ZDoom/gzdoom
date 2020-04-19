@@ -41,7 +41,8 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 {
 	mShaderIndex = SHADER_Default;
 	sourcetex = tx;
-	imgtex = tx->GetTexture();
+	auto imgtex = tx->GetTexture();
+	mTextureLayers.Push({ imgtex, scaleflags });
 
 	if (tx->GetUseType() == ETextureType::SWCanvas && static_cast<FWrapperTexture*>(imgtex)->GetColorFormat() == 0)
 	{
@@ -66,7 +67,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			for (auto &texture : { tx->Normal.get(), tx->Specular.get() })
 			{
-				mTextureLayers.Push(texture);
+				mTextureLayers.Push({ texture, 0 });
 			}
 			mShaderIndex = SHADER_Specular;
 		}
@@ -74,7 +75,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		{
 			for (auto &texture : { tx->Normal.get(), tx->Metallic.get(), tx->Roughness.get(), tx->AmbientOcclusion.get() })
 			{
-				mTextureLayers.Push(texture);
+				mTextureLayers.Push({ texture, 0 });
 			}
 			mShaderIndex = SHADER_PBR;
 		}
@@ -84,30 +85,30 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 		auto placeholder = TexMan.GameByIndex(1);
 		if (tx->Brightmap.get())
 		{
-			mTextureLayers.Push(tx->Brightmap.get());
+			mTextureLayers.Push({ tx->Brightmap.get(), scaleflags });
 			mLayerFlags |= TEXF_Brightmap;
 		}
 		else	
 		{ 
-			mTextureLayers.Push(placeholder->GetTexture());
+			mTextureLayers.Push({ placeholder->GetTexture(), 0 });
 		}
 		if (tx->Detailmap.get())
 		{
-			mTextureLayers.Push(tx->Detailmap.get());
+			mTextureLayers.Push({ tx->Detailmap.get(), 0 });
 			mLayerFlags |= TEXF_Detailmap;
 		}
 		else
 		{
-			mTextureLayers.Push(placeholder->GetTexture());
+			mTextureLayers.Push({ placeholder->GetTexture(), 0 });
 		}
 		if (tx->Glowmap.get())
 		{
-			mTextureLayers.Push(tx->Glowmap.get());
+			mTextureLayers.Push({ tx->Glowmap.get(), scaleflags });
 			mLayerFlags |= TEXF_Glowmap;
 		}
 		else
 		{
-			mTextureLayers.Push(placeholder->GetTexture());
+			mTextureLayers.Push({ placeholder->GetTexture(), 0 });
 		}
 
 		auto index = tx->GetShaderIndex();
@@ -119,7 +120,7 @@ FMaterial::FMaterial(FGameTexture * tx, int scaleflags)
 				for (auto &texture : tx->CustomShaderTextures)
 				{
 					if (texture == nullptr) continue;
-					mTextureLayers.Push(texture.get());
+					mTextureLayers.Push({ texture.get(), 0 });	// scalability should be user-definable.
 				}
 				mShaderIndex = index;
 			}
@@ -149,12 +150,12 @@ FMaterial::~FMaterial()
 //
 //===========================================================================
 
-IHardwareTexture *FMaterial::GetLayer(int i, int translation, FTexture **pLayer) const
+IHardwareTexture *FMaterial::GetLayer(int i, int translation, MaterialLayerInfo **pLayer) const
 {
-	FTexture *layer = i == 0 ? imgtex : mTextureLayers[i - 1];
-	if (pLayer) *pLayer = layer;
+	auto &layer = mTextureLayers[i];
+	if (pLayer) *pLayer = &layer;
 	
-	if (layer) return layer->GetHardwareTexture(translation, mScaleFlags);
+	if (layer.layerTexture) return layer.layerTexture->GetHardwareTexture(translation, layer.scaleFlags);
 	return nullptr;
 }
 
@@ -169,7 +170,7 @@ FMaterial * FMaterial::ValidateTexture(FGameTexture * gtex, int scaleflags, bool
 {
 	if (gtex && gtex->isValid())
 	{
-		if (!gtex->ShouldExpandSprite()) scaleflags &= ~CTF_Expand;
+		if (!gtex->expandSprites()) scaleflags &= ~CTF_Expand;
 
 		FMaterial *hwtex = gtex->Material[scaleflags];
 		if (hwtex == NULL && create)

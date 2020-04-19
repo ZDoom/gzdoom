@@ -62,17 +62,6 @@ void PolyHardwareTexture::Reset()
 	}
 }
 
-DCanvas *PolyHardwareTexture::GetImage(FTexture *baselayer, const FMaterialState &state)
-{
-	if (!mCanvas)
-	{
-		int flags = state.mMaterial->GetScaleFlags();
-		return GetImage(baselayer, state.mTranslation, flags);
-	}
-
-	return mCanvas.get();
-}
-
 DCanvas *PolyHardwareTexture::GetImage(FTexture *tex, int translation, int flags)
 {
 	if (!mCanvas)

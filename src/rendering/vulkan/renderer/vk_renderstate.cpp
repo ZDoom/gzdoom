@@ -228,7 +228,7 @@ void VkRenderState::ApplyRenderPass(int dt)
 	pipelineKey.StencilPassOp = mStencilOp;
 	pipelineKey.ColorMask = mColorMask;
 	pipelineKey.CullMode = mCullMode;
-	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->GetLayers() : 0;
+	pipelineKey.NumTextureLayers = mMaterial.mMaterial ? mMaterial.mMaterial->NumLayers() : 0;
 	pipelineKey.NumTextureLayers = std::max(pipelineKey.NumTextureLayers, SHADER_MIN_REQUIRED_TEXTURE_LAYERS);// Always force minimum 8 textures as the shader requires it
 	if (mSpecialEffect > EFF_NONE)
 	{

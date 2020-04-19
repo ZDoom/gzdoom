@@ -145,7 +145,7 @@ public:
 	bool isFullbrightDisabled() const { return !!(flags & GTexf_DisableFullbrightSprites); }
 	bool isFullbright() const { return !!(flags & GTexf_RenderFullbright); }
 	bool isFullNameTexture() const { return !!(flags & GTexf_FullNameTexture); }
-	bool expandSprites() const { return !!expandSprite; }
+	bool expandSprites() { return expandSprite == -1? ShouldExpandSprite() : !!expandSprite; }
 	bool useWorldPanning() const { return !!(flags & GTexf_WorldPanning);  }
 	void SetWorldPanning(bool on) { if (on) flags |= GTexf_WorldPanning; else flags &= ~GTexf_WorldPanning; }
 	bool allowNoDecals() const { return !!(flags & GTexf_NoDecals);	}
@@ -268,6 +268,19 @@ public:
 	}
 
 	void CleanHardwareData(bool full = true);
+
+	void GetLayers(TArray<FTexture*>& layers)
+	{
+		layers.Clear();
+		for (auto tex : { Base.get(), Brightmap.get(), Detailmap.get(), Glowmap.get(), Normal.get(), Specular.get(), Metallic.get(), Roughness.get(), AmbientOcclusion.get() })
+		{
+			if (tex != nullptr) layers.Push(tex);
+		}
+		for (auto& tex : CustomShaderTextures)
+		{
+			if (tex != nullptr) layers.Push(tex.get());
+		}
+	}
 
 };
 

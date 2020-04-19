@@ -647,18 +647,16 @@ void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
-	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->GetScaleFlags();
-	FTexture* layer;
+	MaterialLayerInfo* layer;
 
 	auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(0, translation, &layer));
-	systex->GetImage(layer, translation, flags);
+	systex->GetImage(layer->layerTexture, translation, layer->scaleFlags);
 
-	int numLayers = mat->GetLayers();
+	int numLayers = mat->NumLayers();
 	for (int i = 1; i < numLayers; i++)
 	{
 		auto systex = static_cast<VkHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-		systex->GetImage(layer, 0, flags);	// fixme: Upscale flags must be disabled for certain layers.
+		systex->GetImage(layer->layerTexture, 0, layer->scaleFlags);
 	}
 }
 

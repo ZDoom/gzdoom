@@ -29,6 +29,7 @@ private:
 	{
 		IHardwareTexture *hwTexture = nullptr;
 		int translation = 0;
+		bool precacheMarker;	// This is used to check whether a texture has been hit by the precacher, so that the cleanup code can delete the unneeded ones.
 
 		void Delete()
 		{
@@ -39,6 +40,16 @@ private:
 		~TranslatedTexture()
 		{
 			Delete();
+		}
+
+		void MarkForPrecache(bool on)
+		{
+			precacheMarker = on;
+		}
+
+		bool isMarkedForPreache() const
+		{
+			return precacheMarker;
 		}
 	};
 
@@ -99,25 +110,44 @@ public:
 	//===========================================================================
 	// 
 	// Deletes all allocated resources and considers translations
-	// This will only be called for sprites
 	//
 	//===========================================================================
 
-	void CleanUnused(SpriteHits &usedtranslations, int scaleflags)
+	void CleanUnused()
 	{
-		if (usedtranslations.CheckKey(0) == nullptr)
+		for (auto& tt : hwDefTex)
 		{
-			hwDefTex[scaleflags].Delete();
+			if (!tt.isMarkedForPreache()) tt.Delete();
 		}
 		for (int i = hwTex_Translated.Size()-1; i>= 0; i--)
 		{
-			if (usedtranslations.CheckKey(hwTex_Translated[i].translation & 0xffffff) == nullptr)
+			auto& tt = hwTex_Translated[i];
+			if (!tt.isMarkedForPreache()) 
 			{
 				hwTex_Translated.Delete(i);
 			}
 		}
 	}
-	
+
+	void UnmarkAll()
+	{
+		for (auto& tt : hwDefTex)
+		{
+			if (!tt.isMarkedForPreache()) tt.MarkForPrecache(false);
+		}
+		for (auto& tt : hwTex_Translated)
+		{
+			if (!tt.isMarkedForPreache()) tt.MarkForPrecache(false);
+		}
+	}
+
+	void MarkForPrecache(int translation, int scaleflags)
+	{
+		auto tt = GetTexID(translation, scaleflags);
+		tt->MarkForPrecache(true);
+	}
+
+
 	template<class T>
 	void Iterate(T callback)
 	{

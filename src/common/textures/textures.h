@@ -226,7 +226,26 @@ public:
 	IHardwareTexture* GetHardwareTexture(int translation, int scaleflags);
 	virtual FImageSource *GetImage() const { return nullptr; }
 	void CreateUpsampledTextureBuffer(FTextureBuffer &texbuffer, bool hasAlpha, bool checkonly);
-	void CleanHardwareTextures();
+
+	void CleanHardwareTextures()
+	{
+		SystemTextures.Clean();
+	}
+
+	void CleanPrecacheMarker()
+	{
+		SystemTextures.UnmarkAll();
+	}
+
+	void MarkForPrecache(int translation, int scaleflags)
+	{
+		SystemTextures.MarkForPrecache(translation, scaleflags);
+	}
+
+	void CleanUnused()
+	{
+		SystemTextures.CleanUnused();
+	}
 
 	int GetWidth() { return Width; }
 	int GetHeight() { return Height; }

@@ -311,16 +311,16 @@ void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;
 
 	int flags = mat->GetScaleFlags();
-	int numLayers = mat->GetLayers();
-	FTexture* layer;
+	int numLayers = mat->NumLayers();
+	MaterialLayerInfo* layer;
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation, &layer));
 
-	if (base->BindOrCreate(layer, 0, CLAMP_NONE, translation, flags))
+	if (base->BindOrCreate(layer->layerTexture, 0, CLAMP_NONE, translation, layer->scaleFlags))
 	{
 		for (int i = 1; i < numLayers; i++)
 		{
 			auto systex = static_cast<FHardwareTexture*>(mat->GetLayer(i, 0, &layer));
-			systex->BindOrCreate(layer, i, CLAMP_NONE, 0, flags);
+			systex->BindOrCreate(layer->layerTexture, i, CLAMP_NONE, 0, layer->scaleFlags);
 		}
 	}
 	// unbind everything. 

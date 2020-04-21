@@ -117,7 +117,6 @@ extern int DisplayWidth, DisplayHeight;
 
 void V_UpdateModeSize (int width, int height);
 void V_OutputResized (int width, int height);
-void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
 
 EXTERN_CVAR(Int, vid_rendermode)
 EXTERN_CVAR(Bool, vid_fullscreen)
@@ -193,8 +192,6 @@ public:
 private:
 	int Width = 0;
 	int Height = 0;
-public:
-	//int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 public:
 	// Hardware render state that needs to be exposed to the API independent part of the renderer. For ease of access this is stored in the base class.
@@ -385,39 +382,6 @@ inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }
 
 #include "v_draw.h"
 
-class ScaleOverrider
-{
-	int savedxfac, savedyfac, savedwidth, savedheight;
-
-public:
-	// This is to allow certain elements to use an optimal fullscreen scale which for the menu would be too large.
-	// The old code contained far too much mess to compensate for the menus which negatively affected everything else.
-	// However, for compatibility reasons the currently used variables cannot be changed so they have to be overridden temporarily.
-	// This class provides a safe interface for this because it ensures that the values get restored afterward.
-	// Currently, the intermission and the level summary screen use this.
-	ScaleOverrider()
-	{
-		savedxfac = CleanXfac;
-		savedyfac = CleanYfac;
-		savedwidth = CleanWidth;
-		savedheight = CleanHeight;
-
-		if (screen)
-		{
-			V_CalcCleanFacs(320, 200, screen->GetWidth(), screen->GetHeight(), &CleanXfac, &CleanYfac);
-			CleanWidth = screen->GetWidth() / CleanXfac;
-			CleanHeight = screen->GetHeight() / CleanYfac;
-		}
-	}
-
-	~ScaleOverrider()
-	{
-		CleanXfac = savedxfac;
-		CleanYfac = savedyfac;
-		CleanWidth = savedwidth;
-		CleanHeight = savedheight;
-	}
-};
 
 
 #endif // __V_VIDEO_H__

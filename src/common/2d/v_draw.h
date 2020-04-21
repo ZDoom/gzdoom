@@ -233,3 +233,39 @@ void VirtualToRealCoordsInt(F2DDrawer* drawer, int& x, int& y, int& w, int& h, i
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
+
+void V_CalcCleanFacs(int designwidth, int designheight, int realwidth, int realheight, int* cleanx, int* cleany, int* cx1 = NULL, int* cx2 = NULL);
+
+class ScaleOverrider
+{
+	int savedxfac, savedyfac, savedwidth, savedheight;
+
+public:
+	// This is to allow certain elements to use an optimal fullscreen scale which for the menu would be too large.
+	// The old code contained far too much mess to compensate for the menus which negatively affected everything else.
+	// However, for compatibility reasons the currently used variables cannot be changed so they have to be overridden temporarily.
+	// This class provides a safe interface for this because it ensures that the values get restored afterward.
+	// Currently, the intermission and the level summary screen use this.
+	ScaleOverrider(F2DDrawer *drawer)
+	{
+		savedxfac = CleanXfac;
+		savedyfac = CleanYfac;
+		savedwidth = CleanWidth;
+		savedheight = CleanHeight;
+
+		if (drawer)
+		{
+			V_CalcCleanFacs(320, 200, drawer->GetWidth(), drawer->GetHeight(), &CleanXfac, &CleanYfac);
+			CleanWidth = drawer->GetWidth() / CleanXfac;
+			CleanHeight = drawer->GetHeight() / CleanYfac;
+		}
+	}
+
+	~ScaleOverrider()
+	{
+		CleanXfac = savedxfac;
+		CleanYfac = savedyfac;
+		CleanWidth = savedwidth;
+		CleanHeight = savedheight;
+	}
+};

@@ -88,8 +88,8 @@ FBitmap AnimTexture::GetBgraBitmap(const PalEntry* remap, int* trans)
 AnimTextures::AnimTextures()
 {
 	active = 1;
-	tex[0] = new AnimTexture;
-	tex[1] = new AnimTexture;
+	tex[0] = MakeGameTexture(new AnimTexture, "", ETextureType::Special);
+	tex[1] = MakeGameTexture(new AnimTexture, "", ETextureType::Special);
 }
 
 AnimTextures::~AnimTextures()
@@ -100,17 +100,17 @@ AnimTextures::~AnimTextures()
 
 void AnimTextures::SetSize(int width, int height)
 {
-	tex[0]->SetFrameSize(width, height);
-	tex[1]->SetFrameSize(width, height);
+	static_cast<AnimTexture*>(tex[0]->GetTexture())->SetFrameSize(width, height);
+    static_cast<AnimTexture*>(tex[1]->GetTexture())->SetFrameSize(width, height);
 }
     
 void AnimTextures::SetFrame(const uint8_t *palette, const void* data)
 {
 	active ^= 1;
-	tex[active]->SetFrame(palette, data);
+    static_cast<AnimTexture*>(tex[active]->GetTexture())->SetFrame(palette, data);
 }
 
-FTexture * AnimTextures::GetFrame()
+FGameTexture * AnimTextures::GetFrame()
 {
 	return tex[active];
 }

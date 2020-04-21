@@ -701,7 +701,7 @@ void WI_Ticker()
 {
 	if (WI_Screen)
 	{
-		ScaleOverrider s;
+		ScaleOverrider s(&screen->m2DDrawer);
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
 		{
 			VMValue self = WI_Screen;
@@ -721,7 +721,7 @@ void WI_Drawer()
 {
 	if (WI_Screen)
 	{
-		ScaleOverrider s;
+		ScaleOverrider s(&screen->m2DDrawer);
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
 			FillBorder(twod, nullptr);
@@ -765,7 +765,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 	}
 	
 	WI_Screen = cls->CreateNew();
-	ScaleOverrider s;
+	ScaleOverrider s(&screen->m2DDrawer);
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{
 		VMValue val[2] = { WI_Screen, wbstartstruct };

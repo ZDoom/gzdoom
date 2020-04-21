@@ -17,12 +17,12 @@ public:
 class AnimTextures
 {
 	int active;
-	AnimTexture *tex[2];
+	FGameTexture *tex[2];
 
 public:
 	AnimTextures();
 	~AnimTextures();
 	void SetSize(int width, int height);
     void SetFrame(const uint8_t *palette, const void* data);
-	FTexture *GetFrame();
+	FGameTexture *GetFrame();
 };

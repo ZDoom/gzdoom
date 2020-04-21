@@ -175,10 +175,8 @@ int FImageSource::CopyPixels(FBitmap *bmp, int conversion)
 {
 	if (conversion == luminance) conversion = normal;	// luminance images have no use as an RGB source.
 	PalEntry *palette = GPalette.BaseColors;
-	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
 	auto ppix = CreatePalettedPixels(conversion);
 	bmp->CopyPixelData(0, 0, ppix.Data(), Width, Height, Height, 1, 0, palette, nullptr);
-	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
 }
 

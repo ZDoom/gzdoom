@@ -47,7 +47,7 @@ class FMaterial
 	bool TrimBorders(uint16_t *rect);
 
 public:
-	FTexture *tex;
+	FTexture *tex = nullptr;
 	FTexture *sourcetex;	// in case of redirection this is different from tex.
 	
 	FMaterial(FTexture *tex, bool forceexpand);

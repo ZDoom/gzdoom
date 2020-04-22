@@ -162,7 +162,7 @@ void CheckNativeMouse()
 			&& (MENU_On == menuactive || MENU_OnNoPause == menuactive);
 	}
 
-	if (!wantNative && primaryLevel->localEventManager->CheckRequireMouse())
+	if (!wantNative && sysCallbacks && sysCallbacks->WantNativeMouse && sysCallbacks->WantNativeMouse())
 		wantNative = true;
 
 	I_SetNativeMouse(wantNative);

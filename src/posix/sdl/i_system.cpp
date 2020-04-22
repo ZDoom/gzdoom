@@ -53,6 +53,7 @@
 #include "cmdlib.h"
 #include "m_argv.h"
 #include "i_sound.h"
+#include "i_interface.h"
 
 
 #ifndef NO_GTK

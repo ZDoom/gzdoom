@@ -39,6 +39,7 @@
 #include "st_console.h"
 #include "st_start.h"
 #include "printf.h"
+#include "engineerrors.h"
 
 
 FStartupScreen *StartScreen;

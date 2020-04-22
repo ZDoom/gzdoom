@@ -259,7 +259,7 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 }
 #endif
 
-#if HAVE_SOFTPOLY
+#ifdef HAVE_SOFTPOLY
 namespace
 {
 	SDL_Renderer* polyrendertarget = nullptr;

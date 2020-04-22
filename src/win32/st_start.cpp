@@ -45,16 +45,15 @@
 #include "i_system.h"
 #include "i_input.h"
 #include "hardware.h"
-#include "gi.h"
 #include "filesystem.h"
-#include "s_sound.h"
 #include "m_argv.h"
-#include "d_main.h"
 #include "engineerrors.h"
 #include "s_music.h"
+#include "printf.h"
+#include "startupinfo.h"
+#include "i_interface.h"
 
 // MACROS ------------------------------------------------------------------
-
 
 // How many ms elapse between blinking text flips. On a standard VGA
 // adapter, the characters are on for 16 frames and then off for another 16.
@@ -117,18 +116,15 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 
 	if (!Args->CheckParm("-nostartup"))
 	{
-		if (GameStartupInfo.Type == FStartupInfo::HexenStartup ||
-			(gameinfo.gametype == GAME_Hexen && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
+		if (GameStartupInfo.Type == FStartupInfo::HexenStartup)
 		{
 			scr = new FHexenStartupScreen(max_progress, hr);
 		}
-		else if (GameStartupInfo.Type == FStartupInfo::HereticStartup ||
-			(gameinfo.gametype == GAME_Heretic && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
+		else if (GameStartupInfo.Type == FStartupInfo::HereticStartup)
 		{
 			scr = new FHereticStartupScreen(max_progress, hr);
 		}
-		else if (GameStartupInfo.Type == FStartupInfo::StrifeStartup ||
-			(gameinfo.gametype == GAME_Strife && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
+		else if (GameStartupInfo.Type == FStartupInfo::StrifeStartup)
 		{
 			scr = new FStrifeStartupScreen(max_progress, hr);
 		}
@@ -512,12 +508,12 @@ void FStrifeStartupScreen::SetWindowSize()
 
 int RunEndoom()
 {
-	if (showendoom == 0 || gameinfo.Endoom.Len() == 0) 
+	if (showendoom == 0 || endoomName.Len() == 0) 
 	{
 		return 0;
 	}
 
-	int endoom_lump = fileSystem.CheckNumForFullName (gameinfo.Endoom, true);
+	int endoom_lump = fileSystem.CheckNumForFullName (endoomName, true);
 
 	uint8_t endoom_screen[4000];
 	uint8_t *font;

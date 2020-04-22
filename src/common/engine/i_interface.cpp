@@ -2,3 +2,4 @@
 
 SystemCallbacks *sysCallbacks;
 double refreshfreq;
+FString endoomName;

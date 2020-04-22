@@ -2958,6 +2958,8 @@ static int D_DoomMain_Internal (void)
 		gameinfo.nokeyboardcheats = iwad_info->nokeyboardcheats;
 		gameinfo.ConfigName = iwad_info->Configname;
 		lastIWAD = iwad;
+		endoomName = gameinfo.Endoom;
+
 
 		if ((gameinfo.flags & GI_SHAREWARE) && pwads.Size() > 0)
 		{
@@ -3098,6 +3100,26 @@ static int D_DoomMain_Internal (void)
 		if (!batchrun) Printf ("ST_Init: Init startup screen.\n");
 		if (!restart)
 		{
+			if (GameStartupInfo.Type == FStartupInfo::DefaultStartup)
+			{
+				switch (gameinfo.gametype)
+				{
+				case GAME_Hexen:
+					GameStartupInfo.Type = FStartupInfo::HexenStartup;
+					break;
+
+				case GAME_Heretic:
+					GameStartupInfo.Type = FStartupInfo::HereticStartup;
+					break;
+
+				case GAME_Strife:
+					GameStartupInfo.Type = FStartupInfo::StrifeStartup;
+					break;
+
+				default:
+					break;
+				}
+			}
 			StartScreen = FStartupScreen::CreateInstance (TexMan.GuesstimateNumTextures() + 5);
 		}
 		else

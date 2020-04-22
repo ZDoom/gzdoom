@@ -22,3 +22,4 @@ struct WadStuff
 };
 
 
+extern FString endoomName;

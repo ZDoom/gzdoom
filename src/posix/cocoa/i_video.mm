@@ -44,21 +44,24 @@
 #include "v_video.h"
 #include "bitmap.h"
 #include "c_dispatch.h"
-#include "doomstat.h"
 #include "hardware.h"
 #include "i_system.h"
 #include "m_argv.h"
 #include "m_png.h"
-#include "swrenderer/r_swrenderer.h"
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
-#include "engineerrors.h"
+#include "printf.h"
 
 #include "gl/system/gl_framebuffer.h"
+#ifdef HAVE_VULKAN
 #include "vulkan/system/vk_framebuffer.h"
+#endif
+#ifdef HAVE_SOFTPOLY
 #include "rendering/polyrenderer/backend/poly_framebuffer.h"
+#endif
 
+extern bool ToggleFullscreen;
 
 @implementation NSWindow(ExitAppOnClose)
 
@@ -441,6 +444,8 @@ public:
 		}
 		else
 #endif
+			
+#ifdef HAVE_SOFTPOLY
 		if (vid_preferbackend == 2)
 		{
 			SetupOpenGLView(ms_window, OpenGLProfile::Legacy);
@@ -448,6 +453,7 @@ public:
 			fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
 		}
 		else
+#endif
 		{
 			SetupOpenGLView(ms_window, OpenGLProfile::Core);
 		}
@@ -461,6 +467,7 @@ public:
 		fb->SetMode(vid_fullscreen, vid_hidpi);
 		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
 
+#ifdef HAVE_VULKAN
 		// This lame hack is a temporary workaround for strange performance issues
 		// with fullscreen window and Core Animation's Metal layer
 		// It is somehow related to initial window level and flags
@@ -470,6 +477,7 @@ public:
 			fb->SetMode(false, vid_hidpi);
 			fb->SetMode(true, vid_hidpi);
 		}
+#endif
 
 		return fb;
 	}
@@ -480,8 +488,9 @@ public:
 	}
 
 private:
+#ifdef HAVE_VULKAN
 	VulkanDevice *m_vulkanDevice = nullptr;
-
+#endif
 	static CocoaWindow* ms_window;
 
 	static bool ms_isVulkanEnabled;

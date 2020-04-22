@@ -33,8 +33,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomtype.h"
-
 #include "i_module.h"
 #include "i_system.h"
 #include "i_video.h"
@@ -43,22 +41,22 @@
 #include "version.h"
 #include "c_console.h"
 #include "c_dispatch.h"
-#include "s_sound.h"
+#include "printf.h"
 
 #include "hardware.h"
 #include "gl_sysfb.h"
 #include "gl_system.h"
-#include "r_defs.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/shaders/gl_shader.h"
 
 #ifdef HAVE_VULKAN
 #include "rendering/vulkan/system/vk_framebuffer.h"
 #endif
 
+#ifdef HAVE_SOFTPOLY
 #include "rendering/polyrenderer/backend/poly_framebuffer.h"
+#endif
 
 // MACROS ------------------------------------------------------------------
 
@@ -76,7 +74,7 @@
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
+extern double refreshfreq;
 extern IVideo *Video;
 
 EXTERN_CVAR (Int, vid_adapter)
@@ -261,6 +259,7 @@ bool I_CreateVulkanSurface(VkInstance instance, VkSurfaceKHR *surface)
 }
 #endif
 
+#if HAVE_SOFTPOLY
 namespace
 {
 	SDL_Renderer* polyrendertarget = nullptr;
@@ -409,7 +408,7 @@ void I_PolyPresentDeinit()
 		polyrendertarget = nullptr;
 	}
 }
-
+#endif
 
 
 SDLVideo::SDLVideo ()
@@ -428,7 +427,9 @@ SDLVideo::SDLVideo ()
 	}
 #endif // !SDL2_STATIC_LIBRARY
 
+#ifdef HAVE_SOFTPOLY
 	Priv::softpolyEnabled = vid_preferbackend == 2;
+#endif
 #ifdef HAVE_VULKAN
 	Priv::vulkanEnabled = vid_preferbackend == 1
 		&& Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
@@ -443,9 +444,24 @@ SDLVideo::SDLVideo ()
 		}
 	}
 #endif
+#ifdef HAVE_SOFTPOLY
 	if (Priv::softpolyEnabled)
 	{
 		Priv::CreateWindow(SDL_WINDOW_HIDDEN);
+	}
+#endif
+
+	// Get refresh rate for current display.
+	SDL_DisplayMode display;
+
+	if(SDL_GetCurrentDisplayMode(vid_adapter, &display) == 0)
+	{
+		refreshfreq = display.refresh_rate;
+	}
+	else
+	{
+		fprintf(stderr, "Failed to get refresh rate: %s\n", SDL_GetError());
+		return;
 	}
 }
 
@@ -482,11 +498,12 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 	}
 #endif
 
+#ifdef HAVE_SOFTPOLY
 	if (Priv::softpolyEnabled)
 	{
 		fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
 	}
-
+#endif
 	if (fb == nullptr)
 	{
 		fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
@@ -518,6 +535,7 @@ int SystemBaseFrameBuffer::GetClientWidth()
 {
 	int width = 0;
 
+#ifdef HAVE_SOFTPOLY
 	if (Priv::softpolyEnabled)
 	{
 		if (polyrendertarget)
@@ -526,6 +544,7 @@ int SystemBaseFrameBuffer::GetClientWidth()
 			SDL_GetWindowSize(Priv::window, &width, nullptr);
 		return width;
 	}
+#endif
 	
 #ifdef HAVE_VULKAN
 	assert(Priv::vulkanEnabled);
@@ -538,7 +557,8 @@ int SystemBaseFrameBuffer::GetClientWidth()
 int SystemBaseFrameBuffer::GetClientHeight()
 {
 	int height = 0;
-	
+
+#ifdef HAVE_SOFTPOLY
 	if (Priv::softpolyEnabled)
 	{
 		if (polyrendertarget)
@@ -547,6 +567,7 @@ int SystemBaseFrameBuffer::GetClientHeight()
 			SDL_GetWindowSize(Priv::window, nullptr, &height);
 		return height;
 	}
+#endif
 
 #ifdef HAVE_VULKAN
 	assert(Priv::vulkanEnabled);
@@ -588,7 +609,7 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 	}
 	win_w = w;
 	win_h = h;
-	if (vid_fullscreen )
+	if (vid_fullscreen)
 	{
 		vid_fullscreen = false;
 	}

@@ -36,6 +36,7 @@
 #include <GL/gl.h>
 #include <vector>
 #include "wglext.h"
+#include <vector>
 
 #include "gl_sysfb.h"
 #include "hardware.h"

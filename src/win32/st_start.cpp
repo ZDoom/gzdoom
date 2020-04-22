@@ -117,18 +117,18 @@ FStartupScreen *FStartupScreen::CreateInstance(int max_progress)
 
 	if (!Args->CheckParm("-nostartup"))
 	{
-		if (DoomStartupInfo.Type == FStartupInfo::HexenStartup ||
-			(gameinfo.gametype == GAME_Hexen && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
+		if (GameStartupInfo.Type == FStartupInfo::HexenStartup ||
+			(gameinfo.gametype == GAME_Hexen && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FHexenStartupScreen(max_progress, hr);
 		}
-		else if (DoomStartupInfo.Type == FStartupInfo::HereticStartup ||
-			(gameinfo.gametype == GAME_Heretic && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
+		else if (GameStartupInfo.Type == FStartupInfo::HereticStartup ||
+			(gameinfo.gametype == GAME_Heretic && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FHereticStartupScreen(max_progress, hr);
 		}
-		else if (DoomStartupInfo.Type == FStartupInfo::StrifeStartup ||
-			(gameinfo.gametype == GAME_Strife && DoomStartupInfo.Type == FStartupInfo::DefaultStartup))
+		else if (GameStartupInfo.Type == FStartupInfo::StrifeStartup ||
+			(gameinfo.gametype == GAME_Strife && GameStartupInfo.Type == FStartupInfo::DefaultStartup))
 		{
 			scr = new FStrifeStartupScreen(max_progress, hr);
 		}
@@ -354,7 +354,7 @@ void FBasicStartupScreen :: NetProgress(int count)
 
 		mysnprintf (buf, countof(buf), "%d/%d", NetCurPos, NetMaxPos);
 		SetDlgItemTextA (NetStartPane, IDC_NETSTARTCOUNT, buf);
-		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, MIN(NetCurPos, NetMaxPos), 0);
+		SendDlgItemMessage (NetStartPane, IDC_NETSTARTPROGRESS, PBM_SETPOS, std::min(NetCurPos, NetMaxPos), 0);
 	}
 }
 

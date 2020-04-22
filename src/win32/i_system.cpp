@@ -59,16 +59,14 @@
 #include <mmsystem.h>
 #include <richedit.h>
 #include <wincrypt.h>
+#include <shlwapi.h>
 
 #include "hardware.h"
-#include "engineerrors.h"
-#include "cmdlib.h"
+#include "printf.h"
 
 #include "version.h"
-#include "m_misc.h"
 #include "i_sound.h"
 #include "resource.h"
-#include "x86.h"
 #include "stats.h"
 #include "v_text.h"
 #include "utf8.h"
@@ -85,6 +83,7 @@
 #include "doomstat.h"
 #include "i_system.h"
 #include "bitmap.h"
+#include "cmdlib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -98,7 +97,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void CheckCPUID(CPUInfo *cpu);
 extern void LayoutMainWindow(HWND hWnd, HWND pane);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -549,7 +547,10 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 				filepart = WadList[i].Path;
 			else
 				filepart++;
-			FStringf work("%s (%s)", WadList[i].Name.GetChars(), filepart);
+
+			FString work;
+			if (*filepart) work.Format("%s (%s)", WadList[i].Name.GetChars(), filepart);
+			else work = WadList[i].Name.GetChars();
 			std::wstring wide = work.WideString();
 			SendMessage(ctrl, LB_ADDSTRING, 0, (LPARAM)wide.c_str());
 			SendMessage(ctrl, LB_SETITEMDATA, i, (LPARAM)i);
@@ -651,8 +652,8 @@ bool I_SetCursor(FGameTexture *cursorpic)
 			return false;
 		}
 		// Fixme: This should get a raw image, not a texture. (Once raw images get implemented.)
-		int lo = cursorpic->GetDisplayLeftOffset();
-		int to = cursorpic->GetDisplayTopOffset();
+		int lo = cursorpic->GetTexelLeftOffset();
+		int to = cursorpic->GetTexelTopOffset();
 
 		cursor = CreateAlphaCursor(image, lo, to);
 		if (cursor == NULL)

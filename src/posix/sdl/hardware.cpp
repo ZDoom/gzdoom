@@ -39,10 +39,9 @@
 #include "hardware.h"
 #include "c_dispatch.h"
 #include "v_text.h"
-#include "doomstat.h"
 #include "m_argv.h"
-#include "engineerrors.h"
-#include "swrenderer/r_swrenderer.h"
+#include "c_console.h"
+#include "printf.h"
 
 IVideo *Video;
 

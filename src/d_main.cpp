@@ -279,7 +279,7 @@ FGameTexture *Advisory;
 FTextureID Page;
 const char *Subtitle;
 bool nospriterename;
-FStartupInfo DoomStartupInfo;
+FStartupInfo GameStartupInfo;
 FString lastIWAD;
 int restart = 0;
 bool batchrun;	// just run the startup and collect all error messages in a logfile, then quit without any interaction
@@ -1795,44 +1795,44 @@ static FString ParseGameInfo(TArray<FString> &pwads, const char *fn, const char 
 		else if (!nextKey.CompareNoCase("STARTUPTITLE"))
 		{
 			sc.MustGetString();
-			DoomStartupInfo.Name = sc.String;
+			GameStartupInfo.Name = sc.String;
 		}
 		else if (!nextKey.CompareNoCase("STARTUPCOLORS"))
 		{
 			sc.MustGetString();
-			DoomStartupInfo.FgColor = V_GetColor(NULL, sc);
+			GameStartupInfo.FgColor = V_GetColor(NULL, sc);
 			sc.MustGetStringName(",");
 			sc.MustGetString();
-			DoomStartupInfo.BkColor = V_GetColor(NULL, sc);
+			GameStartupInfo.BkColor = V_GetColor(NULL, sc);
 		}
 		else if (!nextKey.CompareNoCase("STARTUPTYPE"))
 		{
 			sc.MustGetString();
 			FString sttype = sc.String;
 			if (!sttype.CompareNoCase("DOOM"))
-				DoomStartupInfo.Type = FStartupInfo::DoomStartup;
+				GameStartupInfo.Type = FStartupInfo::DoomStartup;
 			else if (!sttype.CompareNoCase("HERETIC"))
-				DoomStartupInfo.Type = FStartupInfo::HereticStartup;
+				GameStartupInfo.Type = FStartupInfo::HereticStartup;
 			else if (!sttype.CompareNoCase("HEXEN"))
-				DoomStartupInfo.Type = FStartupInfo::HexenStartup;
+				GameStartupInfo.Type = FStartupInfo::HexenStartup;
 			else if (!sttype.CompareNoCase("STRIFE"))
-				DoomStartupInfo.Type = FStartupInfo::StrifeStartup;
-			else DoomStartupInfo.Type = FStartupInfo::DefaultStartup;
+				GameStartupInfo.Type = FStartupInfo::StrifeStartup;
+			else GameStartupInfo.Type = FStartupInfo::DefaultStartup;
 		}
 		else if (!nextKey.CompareNoCase("STARTUPSONG"))
 		{
 			sc.MustGetString();
-			DoomStartupInfo.Song = sc.String;
+			GameStartupInfo.Song = sc.String;
 		}
 		else if (!nextKey.CompareNoCase("LOADLIGHTS"))
 		{
 			sc.MustGetNumber();
-			DoomStartupInfo.LoadLights = !!sc.Number;
+			GameStartupInfo.LoadLights = !!sc.Number;
 		}
 		else if (!nextKey.CompareNoCase("LOADBRIGHTMAPS"))
 		{
 			sc.MustGetNumber();
-			DoomStartupInfo.LoadBrightmaps = !!sc.Number;
+			GameStartupInfo.LoadBrightmaps = !!sc.Number;
 		}
 		else
 		{
@@ -1956,13 +1956,13 @@ static void AddAutoloadFiles(const char *autoname)
 	// [SP] Dialog reaction - load lights.pk3 and brightmaps.pk3 based on user choices
 	if (!(gameinfo.flags & GI_SHAREWARE))
 	{
-		if (DoomStartupInfo.LoadLights == 1 || (DoomStartupInfo.LoadLights != 0 && autoloadlights))
+		if (GameStartupInfo.LoadLights == 1 || (GameStartupInfo.LoadLights != 0 && autoloadlights))
 		{
 			const char *lightswad = BaseFileSearch ("lights.pk3", NULL, false, GameConfig);
 			if (lightswad)
 				D_AddFile (allwads, lightswad, true, -1, GameConfig);
 		}
-		if (DoomStartupInfo.LoadBrightmaps == 1 || (DoomStartupInfo.LoadBrightmaps != 0 && autoloadbrightmaps))
+		if (GameStartupInfo.LoadBrightmaps == 1 || (GameStartupInfo.LoadBrightmaps != 0 && autoloadbrightmaps))
 		{
 			const char *bmwad = BaseFileSearch ("brightmaps.pk3", NULL, false, GameConfig);
 			if (bmwad)
@@ -2627,6 +2627,7 @@ bool System_WantNativeMouse()
 
 static bool System_CaptureModeInGame()
 {
+	if (demoplayback || paused) return false;
 	switch (mouse_capturemode)
 	{
 	default:
@@ -2638,6 +2639,59 @@ static bool System_CaptureModeInGame()
 		return true;
 	}
 }
+
+//==========================================================================
+//
+// DoomSpecificInfo
+//
+// Called by the crash logger to get application-specific information.
+//
+//==========================================================================
+
+void System_CrashInfo(char* buffer, size_t bufflen, const char *lfstr)
+{
+	const char* arg;
+	char* const buffend = buffer + bufflen - 2;	// -2 for CRLF at end
+	int i;
+
+	buffer += mysnprintf(buffer, buffend - buffer, GAMENAME " version %s (%s)", GetVersionString(), GetGitHash());
+
+	buffer += snprintf(buffer, buffend - buffer, "%sCommand line:", lfstr);
+	for (i = 0; i < Args->NumArgs(); ++i)
+	{
+		buffer += snprintf(buffer, buffend - buffer, " %s", Args->GetArg(i));
+	}
+
+	for (i = 0; (arg = fileSystem.GetResourceFileName(i)) != NULL; ++i)
+	{
+		buffer += mysnprintf(buffer, buffend - buffer, "%sWad %d: %s", lfstr, i, arg);
+	}
+
+	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
+	{
+		buffer += mysnprintf(buffer, buffend - buffer, "%s%sNot in a level.", lfstr, lfstr);
+	}
+	else
+	{
+		buffer += mysnprintf(buffer, buffend - buffer, "%s%sCurrent map: %s", lfstr, lfstr, primaryLevel->MapName.GetChars());
+
+		if (!viewactive)
+		{
+			buffer += mysnprintf(buffer, buffend - buffer, "%s%sView not active.", lfstr, lfstr);
+		}
+		else
+		{
+			auto& vp = r_viewpoint;
+			buffer += mysnprintf(buffer, buffend - buffer, "%s%sviewx = %f", lfstr, lfstr, vp.Pos.X);
+			buffer += mysnprintf(buffer, buffend - buffer, "%sviewy = %f", lfstr, vp.Pos.Y);
+			buffer += mysnprintf(buffer, buffend - buffer, "%sviewz = %f", lfstr, vp.Pos.Z);
+			buffer += mysnprintf(buffer, buffend - buffer, "%sviewangle = %f", lfstr, vp.Angles.Yaw);
+		}
+	}
+	buffer += mysnprintf(buffer, buffend - buffer, "%s", lfstr);
+	*buffer = 0;
+}
+
 
 
 static void PatchTextures()
@@ -2788,6 +2842,7 @@ static int D_DoomMain_Internal (void)
 		System_NetGame,
 		System_WantNativeMouse,
 		System_CaptureModeInGame,
+		System_CrashInfo,
 	};
 	sysCallbacks = &syscb;
 	
@@ -3323,7 +3378,7 @@ static int D_DoomMain_Internal (void)
 
 void I_ShowFatalError(const char* message);
 
-int D_DoomMain()
+int GameMain()
 {
 	int ret = 0;
 	GameTicRate = TICRATE;
@@ -3406,10 +3461,10 @@ void D_Cleanup()
 	TexAnim.DeleteAll();
 	TexMan.DeleteAll();
 	
-	// delete DoomStartupInfo data
-	DoomStartupInfo.Name = "";
-	DoomStartupInfo.BkColor = DoomStartupInfo.FgColor = DoomStartupInfo.Type = 0;
-	DoomStartupInfo.LoadLights = DoomStartupInfo.LoadBrightmaps = -1;
+	// delete GameStartupInfo data
+	GameStartupInfo.Name = "";
+	GameStartupInfo.BkColor = GameStartupInfo.FgColor = GameStartupInfo.Type = 0;
+	GameStartupInfo.LoadLights = GameStartupInfo.LoadBrightmaps = -1;
 	
 	GC::FullGC();					// clean up before taking down the object list.
 	
@@ -3566,12 +3621,12 @@ void I_UpdateWindowTitle()
 		if (level.LevelName && level.LevelName.GetChars()[0])
 		{
 			FString titlestr;
-			titlestr.Format("%s - %s", level.LevelName.GetChars(), DoomStartupInfo.Name.GetChars());
+			titlestr.Format("%s - %s", level.LevelName.GetChars(), GameStartupInfo.Name.GetChars());
 			I_SetWindowTitle(titlestr.GetChars());
 			break;
 		}
 	case 2:
-		I_SetWindowTitle(DoomStartupInfo.Name.GetChars());
+		I_SetWindowTitle(GameStartupInfo.Name.GetChars());
 		break;
 	default:
 		I_SetWindowTitle(NULL);

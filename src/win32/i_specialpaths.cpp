@@ -38,6 +38,7 @@
 #include <shlobj.h>
 #include <Shlwapi.h>
 
+#include "i_specialpaths.h"
 #include "printf.h"
 #include "cmdlib.h"
 #include "findfile.h"

@@ -59,17 +59,13 @@
 #include "hardware.h"
 
 #include "m_argv.h"
-#include "d_main.h"
 #include "i_module.h"
 #include "c_console.h"
 #include "version.h"
 #include "i_input.h"
 #include "filesystem.h"
 #include "cmdlib.h"
-#include "g_game.h"
-#include "r_utility.h"
-#include "g_levellocals.h"
-#include "s_sound.h"
+#include "s_soundinternal.h"
 #include "vm.h"
 #include "i_system.h"
 #include "gstrings.h"
@@ -77,6 +73,8 @@
 
 #include "stats.h"
 #include "st_start.h"
+#include "i_interface.h"
+#include "startupinfo.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -96,6 +94,7 @@ void CreateCrashLog (const char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
 void I_FlushBufferedConsoleStuff();
 void DestroyCustomCursor();
+int GameMain();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -268,7 +267,7 @@ void LayoutMainWindow (HWND hWnd, HWND pane)
 	w = rect.right;
 	h = rect.bottom;
 
-	if (DoomStartupInfo.Name.IsNotEmpty() && GameTitleWindow != NULL)
+	if (GameStartupInfo.Name.IsNotEmpty() && GameTitleWindow != NULL)
 	{
 		bannerheight = GameTitleFontHeight + 5;
 		MoveWindow (GameTitleWindow, 0, 0, w, bannerheight, TRUE);
@@ -426,7 +425,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	case WM_DRAWITEM:
 		// Draw title banner.
-		if (wParam == IDC_STATIC_TITLE && DoomStartupInfo.Name.IsNotEmpty())
+		if (wParam == IDC_STATIC_TITLE && GameStartupInfo.Name.IsNotEmpty())
 		{
 			const PalEntry *c;
 
@@ -436,7 +435,7 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Draw the background.
 			rect = drawitem->rcItem;
 			rect.bottom -= 1;
-			c = (const PalEntry *)&DoomStartupInfo.BkColor;
+			c = (const PalEntry *)&GameStartupInfo.BkColor;
 			hbr = CreateSolidBrush (RGB(c->r,c->g,c->b));
 			FillRect (drawitem->hDC, &drawitem->rcItem, hbr);
 			DeleteObject (hbr);
@@ -444,11 +443,11 @@ LRESULT CALLBACK LConProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			// Calculate width of the title string.
 			SetTextAlign (drawitem->hDC, TA_TOP);
 			oldfont = SelectObject (drawitem->hDC, GameTitleFont != NULL ? GameTitleFont : (HFONT)GetStockObject (DEFAULT_GUI_FONT));
-			auto widename = DoomStartupInfo.Name.WideString();
+			auto widename = GameStartupInfo.Name.WideString();
 			GetTextExtentPoint32W (drawitem->hDC, widename.c_str(), (int)widename.length(), &size);
 
 			// Draw the title.
-			c = (const PalEntry *)&DoomStartupInfo.FgColor;
+			c = (const PalEntry *)&GameStartupInfo.FgColor;
 			SetTextColor (drawitem->hDC, RGB(c->r,c->g,c->b));
 			SetBkMode (drawitem->hDC, TRANSPARENT);
 			TextOutW (drawitem->hDC, rect.left + (rect.right - rect.left - size.cx) / 2, 2, widename.c_str(), (int)widename.length());
@@ -950,7 +949,7 @@ int DoMain (HINSTANCE hInstance)
 	CoInitialize (NULL);
 	atexit (UnCOM);
 	
-	int ret = D_DoomMain ();
+	int ret = GameMain ();
 	DestroyCustomCursor();
 	if (ret == 1337) // special exit code for 'norun'.
 	{
@@ -996,55 +995,6 @@ void I_ShowFatalError(const char *msg)
 	{
 		Printf("%s\n", msg);
 	}
-}
-
-//==========================================================================
-//
-// DoomSpecificInfo
-//
-// Called by the crash logger to get application-specific information.
-//
-//==========================================================================
-
-void DoomSpecificInfo (char *buffer, size_t bufflen)
-{
-	const char *arg;
-	char *const buffend = buffer + bufflen - 2;	// -2 for CRLF at end
-	int i;
-
-	buffer += mysnprintf (buffer, buffend - buffer, GAMENAME " version %s (%s)", GetVersionString(), GetGitHash());
-	FString cmdline(GetCommandLineW());
-	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", cmdline.GetChars() );
-
-	for (i = 0; (arg = fileSystem.GetResourceFileName (i)) != NULL; ++i)
-	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\nWad %d: %s", i, arg);
-	}
-
-	if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
-	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nNot in a level.");
-	}
-	else
-	{
-		buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nCurrent map: %s", primaryLevel->MapName.GetChars());
-
-		if (!viewactive)
-		{
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nView not active.");
-		}
-		else
-		{
-			auto &vp = r_viewpoint;
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", vp.Pos.X);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", vp.Pos.Y);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", vp.Pos.Z);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", vp.Angles.Yaw);
-		}
-	}
-	*buffer++ = '\r';
-	*buffer++ = '\n';
-	*buffer++ = '\0';
 }
 
 // Here is how the error logging system works.
@@ -1139,7 +1089,7 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	char *custominfo = (char *)HeapAlloc (GetProcessHeap(), 0, 16384);
 
 	CrashPointers = *info;
-	DoomSpecificInfo (custominfo, 16384);
+	if (sysCallbacks && sysCallbacks->CrashInfo && custominfo) sysCallbacks->CrashInfo(custominfo, 16384, "\r\n");
 	CreateCrashLog (custominfo, (DWORD)strlen(custominfo), ConWindow);
 
 	// If the main thread crashed, then make it clean up after itself.

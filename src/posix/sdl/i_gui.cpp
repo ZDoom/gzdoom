@@ -36,7 +36,6 @@
 #include <SDL.h>
 
 #include "bitmap.h"
-#include "v_palette.h"
 #include "textures.h"
 
 bool I_SetCursor(FGameTexture *cursorpic)

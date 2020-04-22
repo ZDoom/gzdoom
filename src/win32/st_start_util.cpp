@@ -458,9 +458,9 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 
 	if (!batchrun)
 	{
-		if (DoomStartupInfo.Song.IsNotEmpty())
+		if (GameStartupInfo.Song.IsNotEmpty())
 		{
-			S_ChangeMusic(DoomStartupInfo.Song.GetChars(), true, true);
+			S_ChangeMusic(GameStartupInfo.Song.GetChars(), true, true);
 		}
 		else
 		{

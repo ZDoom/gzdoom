@@ -144,7 +144,6 @@ struct FISoundChannel
 
 class SoundStream;
 
-
-
+void S_SetSoundPaused(int state);
 
 #endif

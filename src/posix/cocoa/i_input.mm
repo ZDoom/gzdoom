@@ -35,19 +35,14 @@
 
 #import <Carbon/Carbon.h>
 
-#include "c_buttons.h"
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "d_event.h"
+#include "c_buttons.h"
 #include "d_gui.h"
 #include "dikeys.h"
-#include "doomdef.h"
-#include "doomstat.h"
 #include "v_video.h"
-#include "events.h"
-#include "g_game.h"
-#include "g_levellocals.h"
 #include "i_interface.h"
 
 
@@ -61,7 +56,7 @@ CVAR(Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 extern int paused, chatmodeon;
 extern constate_e ConsoleState;
-
+extern bool ToggleFullscreen;
 bool GUICapture;
 
 
@@ -77,22 +72,17 @@ size_t s_skipMouseMoves;
 
 void CheckGUICapture()
 {
-	bool wantCapture = (MENU_Off == menuactive)
-		? (c_down == ConsoleState || c_falling == ConsoleState || chatmodeon)
-		: (MENU_On == menuactive || MENU_OnNoPause == menuactive);
+	bool wantCapt = sysCallbacks && sysCallbacks->WantGuiCapture && sysCallbacks->WantGuiCapture();
 
-	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapture && primaryLevel->localEventManager->CheckUiProcessors())
+	if (wantCapt != GUICapture)
 	{
-		wantCapture = true;
+		GUICapture = wantCapt;
+		if (wantCapt && Keyboard != NULL)
+		{
+			buttonMap.ResetButtonStates();
+		}
 	}
 
-	if (wantCapture != GUICapture)
-	{
-		GUICapture = wantCapture;
-
-		buttonMap.ResetButtonStates();
-	}
 }
 
 void SetCursorPosition(const NSPoint position)
@@ -160,7 +150,7 @@ void CheckNativeMouse()
 		{
 			bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
 			wantNative = (!m_use_mouse || MENU_WaitKey != menuactive)
-				&& (!captureModeInGame || GUICapture || paused || demoplayback);
+				&& (!captureModeInGame || GUICapture);
 		}
 	}
 	else

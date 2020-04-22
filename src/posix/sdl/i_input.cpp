@@ -31,24 +31,17 @@
 **
 */
 #include <SDL.h>
-#include "doomtype.h"
-#include "doomdef.h"
-#include "doomstat.h"
 #include "m_argv.h"
 #include "v_video.h"
 
-#include "d_main.h"
 #include "d_event.h"
 #include "d_gui.h"
 #include "c_buttons.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "dikeys.h"
-#include "events.h"
-#include "g_game.h"
-#include "g_levellocals.h"
 #include "utf8.h"
-#include "engineerrors.h"
+#include "keydef.h"
 #include "i_interface.h"
 
 
@@ -57,8 +50,6 @@ static void I_CheckNativeMouse ();
 
 bool GUICapture;
 static bool NativeMouse = true;
-
-extern int paused;
 
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -174,25 +165,15 @@ static const TMap<SDL_Scancode, uint8_t> KeyScanToDIK(InitKeyScanMap());
 
 static void I_CheckGUICapture ()
 {
-	bool wantCapt;
-
-	if (menuactive == MENU_Off)
-	{
-		wantCapt = ConsoleState == c_down || ConsoleState == c_falling || chatmodeon;
-	}
-	else
-	{
-		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
-	}
-
-	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && primaryLevel->localEventManager->CheckUiProcessors())
-		wantCapt = true;
+	bool wantCapt = sysCallbacks && sysCallbacks->WantGuiCapture && sysCallbacks->WantGuiCapture();
 
 	if (wantCapt != GUICapture)
 	{
 		GUICapture = wantCapt;
-		buttonMap.ResetButtonStates();
+		if (wantCapt && Keyboard != NULL)
+		{
+			buttonMap.ResetButtonStates();
+		}
 	}
 }
 
@@ -256,10 +237,9 @@ static void MouseRead ()
 static void I_CheckNativeMouse ()
 {
 	bool focus = SDL_GetKeyboardFocus() != NULL;
-	bool fs = screen->IsFullscreen();
 	
 	bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
-	bool wantNative = !focus || (!use_mouse || GUICapture || paused || demoplayback || !captureModeInGame);
+	bool wantNative = !focus || (!use_mouse || GUICapture || !captureModeInGame);
 
 	if (wantNative != NativeMouse)
 	{

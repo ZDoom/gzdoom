@@ -74,7 +74,7 @@
 #include "i_sound.h"
 #include "d_gui.h"
 #include "c_console.h"
-#include "s_sound.h"
+#include "s_soundinternal.h"
 #include "gameconfigfile.h"
 #include "hardware.h"
 #include "d_event.h"
@@ -86,8 +86,6 @@
 #include "printf.h"
 #include "c_buttons.h"
 #include "cmdlib.h"
-
-int32_t refreshfreq = -1;
 
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
@@ -138,6 +136,7 @@ extern bool AppActive;
 
 int SessionState = 0;
 int BlockMouseMove; 
+double refreshfreq;
 
 static bool EventHandlerResultForNativeMouse;
 

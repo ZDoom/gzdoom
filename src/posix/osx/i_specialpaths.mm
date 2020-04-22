@@ -36,9 +36,10 @@
 #import <Foundation/NSFileManager.h>
 
 #include "cmdlib.h"
-#include "m_misc.h"
 #include "version.h"	// for GAMENAME
+#include "i_specialpaths.h"
 
+FString M_GetMacAppSupportPath(const bool create);
 
 static FString GetSpecialPath(const NSSearchPathDirectory kind, const BOOL create = YES, const NSSearchPathDomainMask domain = NSUserDomainMask)
 {
@@ -199,7 +200,7 @@ FString M_GetScreenshotsPath()
 	{
 		path += "/" GAME_DIR "/Screenshots/";
 	}
-
+	CreatePath(path);
 	return path;
 }
 
@@ -240,5 +241,45 @@ FString M_GetDocumentsPath()
 		path += "/" GAME_DIR "/";
 	}
 
+	CreatePath(path);
+	return path;
+}
+
+//===========================================================================
+//
+// M_GetDemoPath													macOS
+//
+// Returns the path to the default demo directory.
+//
+//===========================================================================
+
+FString M_GetDemoPath()
+{
+	FString path = GetSpecialPath(NSDocumentDirectory);
+	
+	if (path.IsNotEmpty())
+	{
+		path += "/" GAME_DIR "/Demos/";
+	}
+
+	return path;
+}
+
+//===========================================================================
+//
+// M_NormalizedPath
+//
+// Normalizes the given path and returns the result.
+//
+//===========================================================================
+
+FString M_GetNormalizedPath(const char* path)
+{
+	NSString *str = [NSString stringWithUTF8String:path];
+	NSString *out;
+	if ([str completePathIntoString:&out caseSensitive:NO matchesIntoArray:nil filterTypes:nil])
+	{
+		return out.UTF8String;
+	}
 	return path;
 }

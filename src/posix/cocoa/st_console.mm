@@ -32,12 +32,13 @@
  */
 
 #include "i_common.h"
-
-#include "d_main.h"
+#include "startupinfo.h"
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
-
+#include "palentry.h"
+#include "v_video.h"
+#include "v_font.h"
 
 static NSColor* RGB(const uint8_t red, const uint8_t green, const uint8_t blue)
 {
@@ -339,17 +340,17 @@ void FConsoleWindow::SetTitleText()
 	// It's used in graphical startup screen, with Hexen style in particular
 	// Native OS X backend doesn't implement this yet
 
-	if (DoomStartupInfo.FgColor == DoomStartupInfo.BkColor)
+	if (GameStartupInfo.FgColor == GameStartupInfo.BkColor)
 	{
-		DoomStartupInfo.FgColor = ~DoomStartupInfo.FgColor;
+		GameStartupInfo.FgColor = ~GameStartupInfo.FgColor;
 	}
 
 	NSTextField* titleText = [[NSTextField alloc] initWithFrame:titleTextRect];
-	[titleText setStringValue:[NSString stringWithCString:DoomStartupInfo.Name
+	[titleText setStringValue:[NSString stringWithCString:GameStartupInfo.Name
 												 encoding:NSISOLatin1StringEncoding]];
 	[titleText setAlignment:NSCenterTextAlignment];
-	[titleText setTextColor:RGB(DoomStartupInfo.FgColor)];
-	[titleText setBackgroundColor:RGB(DoomStartupInfo.BkColor)];
+	[titleText setTextColor:RGB(GameStartupInfo.FgColor)];
+	[titleText setBackgroundColor:RGB(GameStartupInfo.BkColor)];
 	[titleText setFont:[NSFont fontWithName:@"Trebuchet MS Bold" size:18.0f]];
 	[titleText setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
 	[titleText setSelectable:NO];

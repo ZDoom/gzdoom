@@ -44,7 +44,9 @@
 #include "version.h"
 #include "printf.h"
 #include "win32glvideo.h"
+#ifdef HAVE_SOFTPOLY
 #include "win32polyvideo.h"
+#endif
 #ifdef HAVE_VULKAN
 #include "win32vulkanvideo.h"
 #endif
@@ -129,10 +131,13 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
+#ifdef HAVE_SOFTPOLY
 	if (vid_preferbackend == 2)
 	{
 		Video = new Win32PolyVideo();
 	}
+	else
+#endif
 #ifdef HAVE_VULKAN
 	else if (vid_preferbackend == 1)
 	{
@@ -147,15 +152,16 @@ void I_InitGraphics ()
 			Video = new Win32GLVideo();
 		}
 	}
-#endif
 	else
+#endif
 	{
 		Video = new Win32GLVideo();
 	}
 
+#ifdef HAVE_SOFTPOLY
 	if (Video == NULL)
 		Video = new Win32PolyVideo();
-
+#endif
 	// we somehow STILL don't have a display!!
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

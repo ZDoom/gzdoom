@@ -47,14 +47,14 @@ enum EMenuKey
 };
 
 
-struct FGameStartup
+struct FNewGameStartup
 {
 	const char *PlayerClass;
 	int Episode;
 	int Skill;
 };
 
-extern FGameStartup GameStartupInfo;
+extern FNewGameStartup NewGameStartupInfo;
 
 struct FSaveGameNode
 {
@@ -345,8 +345,8 @@ void M_ActivateMenu(DMenu *menu);
 void M_ClearMenus ();
 void M_PreviousMenu ();
 void M_ParseMenuDefs();
-void M_StartupEpisodeMenu(FGameStartup *gs);
-void M_StartupSkillMenu(FGameStartup *gs);
+void M_StartupEpisodeMenu(FNewGameStartup *gs);
+void M_StartupSkillMenu(FNewGameStartup *gs);
 void M_StartControlPanel (bool makeSound, bool scaleoverride = false);
 void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);

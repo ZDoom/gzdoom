@@ -36,12 +36,13 @@
 #include <IOKit/hid/IOHIDLib.h>
 
 #include "d_event.h"
-#include "doomdef.h"
 #include "i_system.h"
 #include "m_argv.h"
 #include "m_joy.h"
 #include "templates.h"
 #include "v_text.h"
+#include "printf.h"
+#include "keydef.h"
 
 
 EXTERN_CVAR(Bool, joy_axespolling)

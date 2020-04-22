@@ -33,6 +33,7 @@
 
 #include "i_common.h"
 
+#include <fnmatch.h>
 #include <sys/sysctl.h>
 
 #include "i_system.h"

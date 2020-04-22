@@ -43,19 +43,11 @@
 
 #include "engineerrors.h"
 #include "m_argv.h"
-#include "d_main.h"
 #include "c_console.h"
 #include "version.h"
-#include "filesystem.h"
-#include "g_level.h"
-#include "g_levellocals.h"
 #include "cmdlib.h"
-#include "r_utility.h"
-#include "doomstat.h"
-#include "vm.h"
 #include "engineerrors.h"
 #include "i_system.h"
-#include "g_game.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -74,6 +66,7 @@ void Linux_I_FatalError(const char* errortext);
 #endif
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+int GameMain();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -91,62 +84,10 @@ FArgs *Args;
 
 
 
-static int DoomSpecificInfo (char *buffer, char *end)
+static int GetCrashInfo (char *buffer, char *end)
 {
-	const char *arg;
-	int size = end-buffer-2;
-	int i, p;
-
-	p = 0;
-	p += snprintf (buffer+p, size-p, GAMENAME" version %s (%s)\n", GetVersionString(), GetGitHash());
-#ifdef __VERSION__
-	p += snprintf (buffer+p, size-p, "Compiler version: %s\n", __VERSION__);
-#endif
-
-	// If Args is nullptr, then execution is at either
-	//  * early stage of initialization, additional info contains only default values
-	//  * late stage of shutdown, most likely main() was done, and accessing global variables is no longer safe
-	if (Args)
-	{
-		p += snprintf(buffer + p, size - p, "\nCommand line:");
-		for (i = 0; i < Args->NumArgs(); ++i)
-		{
-			p += snprintf(buffer + p, size - p, " %s", Args->GetArg(i));
-		}
-		p += snprintf(buffer + p, size - p, "\n");
-
-		for (i = 0; (arg = fileSystem.GetResourceFileName(i)) != NULL; ++i)
-		{
-			p += snprintf(buffer + p, size - p, "\nWad %d: %s", i, arg);
-		}
-
-		if (gamestate != GS_LEVEL && gamestate != GS_TITLELEVEL)
-		{
-			p += snprintf(buffer + p, size - p, "\n\nNot in a level.");
-		}
-		else
-		{
-			p += snprintf(buffer + p, size - p, "\n\nCurrent map: %s", primaryLevel->MapName.GetChars());
-
-			if (!viewactive)
-			{
-				p += snprintf(buffer + p, size - p, "\n\nView not active.");
-			}
-			else
-			{
-				auto& vp = r_viewpoint;
-				p += snprintf(buffer + p, size - p, "\n\nviewx = %f", vp.Pos.X);
-				p += snprintf(buffer + p, size - p, "\nviewy = %f", vp.Pos.Y);
-				p += snprintf(buffer + p, size - p, "\nviewz = %f", vp.Pos.Z);
-				p += snprintf(buffer + p, size - p, "\nviewangle = %f", vp.Angles.Yaw.Degrees);
-			}
-		}
-	}
-
-	buffer[p++] = '\n';
-	buffer[p++] = '\0';
-
-	return p;
+	if (sysCallbacks && sysCallbacks->CrashInfo) sysCallbacks->CrashInfo(buffer, end - buffer, "\n");
+	return strlen(buffer);
 }
 
 void I_DetectOS()
@@ -161,7 +102,7 @@ int main (int argc, char **argv)
 #if !defined (__APPLE__)
 	{
 		int s[4] = { SIGSEGV, SIGILL, SIGFPE, SIGBUS };
-		cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", DoomSpecificInfo);
+		cc_install_handlers(argc, argv, 4, s, GAMENAMELOWERCASE "-crash.log", GetCrashInfo);
 	}
 #endif // !__APPLE__
 
@@ -203,7 +144,7 @@ int main (int argc, char **argv)
 	
 	I_StartupJoysticks();
 
-	const int result = D_DoomMain();
+	const int result = GameMain();
 
 	SDL_Quit();
 

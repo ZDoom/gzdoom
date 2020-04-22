@@ -3,8 +3,11 @@
 #ifndef __I_SYSTEM__
 #define __I_SYSTEM__
 
-#include "doomtype.h"
+#include "basics.h"
 #include <thread>
+#include "tarray.h"
+#include "zstring.h"
+#include "utf8.h"
 
 struct ticcmd_t;
 struct WadStuff;

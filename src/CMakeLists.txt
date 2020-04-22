@@ -447,6 +447,7 @@ set( PLAT_WIN32_SOURCES
 	win32/i_rawps2.cpp
 	win32/i_xinput.cpp
 	win32/i_main.cpp
+	win32/i_steam.cpp
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp

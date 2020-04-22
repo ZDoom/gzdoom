@@ -66,12 +66,6 @@ extern const char *D_DrawIcon;
 extern uint32_t r_renderercaps;
 
 
-struct WadStuff
-{
-	FString Path;
-	FString Name;
-};
-
 struct FIWADInfo
 {
 	FString Name;			// Title banner text for this IWAD

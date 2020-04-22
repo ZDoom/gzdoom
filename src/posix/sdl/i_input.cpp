@@ -43,6 +43,8 @@
 #include "utf8.h"
 #include "keydef.h"
 #include "i_interface.h"
+#include "engineerrors.h"
+#include "i_interface.h"
 
 
 static void I_CheckGUICapture ();
@@ -170,7 +172,7 @@ static void I_CheckGUICapture ()
 	if (wantCapt != GUICapture)
 	{
 		GUICapture = wantCapt;
-		if (wantCapt && Keyboard != NULL)
+		if (wantCapt)
 		{
 			buttonMap.ResetButtonStates();
 		}

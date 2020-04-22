@@ -45,6 +45,7 @@
 #include "version.h"
 #include "printf.h"
 #include "s_music.h"
+#include "engineerrors.h"
 
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))

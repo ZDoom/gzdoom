@@ -39,6 +39,7 @@
 #include "m_argv.h"
 #include "gameconfigfile.h"
 #include "engineerrors.h"
+#include "i_interface.h"
 
 #include <Cocoa/Cocoa.h>
 #include <wordexp.h>

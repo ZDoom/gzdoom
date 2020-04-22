@@ -188,6 +188,7 @@ void Draw2D(F2DDrawer *drawer, FRenderState &state)
 
 		switch (cmd.mType)
 		{
+		default:
 		case F2DDrawer::DrawTypeTriangles:
 			state.DrawIndexed(DT_Triangles, cmd.mIndexIndex, cmd.mIndexCount);
 			break;

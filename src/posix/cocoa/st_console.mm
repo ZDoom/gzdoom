@@ -346,7 +346,7 @@ void FConsoleWindow::SetTitleText()
 	}
 
 	NSTextField* titleText = [[NSTextField alloc] initWithFrame:titleTextRect];
-	[titleText setStringValue:[NSString stringWithCString:GameStartupInfo.Name
+	[titleText setStringValue:[NSString stringWithCString:GameStartupInfo.Name.GetChars()
 												 encoding:NSISOLatin1StringEncoding]];
 	[titleText setAlignment:NSCenterTextAlignment];
 	[titleText setTextColor:RGB(GameStartupInfo.FgColor)];

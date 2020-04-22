@@ -1,5 +1,8 @@
 #pragma once
 
+#include <stdint.h>
+#include "zstring.h"
+
 struct FStartupInfo
 {
 	FString Name;

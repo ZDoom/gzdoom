@@ -605,6 +605,7 @@ file( GLOB HEADER_FILES
 	common/console/*.h
 	common/utility/*.h
 	common/engine/*.h
+	common/menu/*.h
 	common/fonts/*.h
 	common/objects/*.h
 	common/filesystem/*.h
@@ -1251,6 +1252,7 @@ include_directories( .
 	common/utility
 	common/console
 	common/engine
+	common/menu
 	common/fonts
 	common/objects
 	common/rendering
@@ -1457,6 +1459,7 @@ source_group("Common\\Utility" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/
 source_group("Common\\Engine" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/engine/.+")
 source_group("Common\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/2d/.+")
 source_group("Common\\Objects" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/objects/.+")
+source_group("Common\\Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/menu/.+")
 source_group("Common\\Fonts" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/fonts/.+")
 source_group("Common\\File System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/filesystem/.+")
 source_group("Common\\Scripting" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/scripting/.+")

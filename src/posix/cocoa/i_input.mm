@@ -44,6 +44,8 @@
 #include "dikeys.h"
 #include "v_video.h"
 #include "i_interface.h"
+#include "menustate.h"
+#include "engineerrors.h"
 
 
 EXTERN_CVAR(Int, m_use_mouse)
@@ -77,7 +79,7 @@ void CheckGUICapture()
 	if (wantCapt != GUICapture)
 	{
 		GUICapture = wantCapt;
-		if (wantCapt && Keyboard != NULL)
+		if (wantCapt)
 		{
 			buttonMap.ResetButtonStates();
 		}

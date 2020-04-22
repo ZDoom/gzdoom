@@ -2685,7 +2685,7 @@ void System_CrashInfo(char* buffer, size_t bufflen, const char *lfstr)
 			buffer += mysnprintf(buffer, buffend - buffer, "%s%sviewx = %f", lfstr, lfstr, vp.Pos.X);
 			buffer += mysnprintf(buffer, buffend - buffer, "%sviewy = %f", lfstr, vp.Pos.Y);
 			buffer += mysnprintf(buffer, buffend - buffer, "%sviewz = %f", lfstr, vp.Pos.Z);
-			buffer += mysnprintf(buffer, buffend - buffer, "%sviewangle = %f", lfstr, vp.Angles.Yaw);
+			buffer += mysnprintf(buffer, buffend - buffer, "%sviewangle = %f", lfstr, vp.Angles.Yaw.Degrees);
 		}
 	}
 	buffer += mysnprintf(buffer, buffend - buffer, "%s", lfstr);

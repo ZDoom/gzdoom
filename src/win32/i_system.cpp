@@ -84,6 +84,7 @@
 #include "i_system.h"
 #include "bitmap.h"
 #include "cmdlib.h"
+#include "i_interface.h"
 
 // MACROS ------------------------------------------------------------------
 

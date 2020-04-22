@@ -459,8 +459,10 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 		Colormap.Clear();
 	}
     
-    if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
-        flags &= ~HWF_GLOW;
+	if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
+	{
+		flags &= ~HWF_GLOW;
+	}
     
 	if (!screen->BuffersArePersistent())
 	{

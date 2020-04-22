@@ -48,6 +48,7 @@
 #include "cmdlib.h"
 #include "engineerrors.h"
 #include "i_system.h"
+#include "i_interface.h"
 
 // MACROS ------------------------------------------------------------------
 

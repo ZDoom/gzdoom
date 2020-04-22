@@ -1,5 +1,6 @@
 #pragma once
 
+#include "zstring.h"
 
 struct SystemCallbacks
 {
@@ -13,3 +14,11 @@ struct SystemCallbacks
 };
 
 extern SystemCallbacks *sysCallbacks;
+
+struct WadStuff
+{
+	FString Path;
+	FString Name;
+};
+
+

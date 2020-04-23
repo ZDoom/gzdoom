@@ -23,3 +23,4 @@ struct WadStuff
 
 
 extern FString endoomName;
+extern bool batchrun;

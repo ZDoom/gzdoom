@@ -38,10 +38,11 @@
 #include "st_start.h"
 #include "m_alloc.h"
 #include "filesystem.h"
-#include "v_palette.h"
-#include "s_sound.h"
+#include "s_soundinternal.h"
 #include "s_music.h"
-#include "d_main.h"
+#include "startupinfo.h"
+#include "palutil.h"
+#include "i_interface.h"
 
 void I_GetEvent();	// i_input.h pulls in too much garbage.
 
@@ -393,6 +394,11 @@ static const int StrifeStartupPicSizes[4 + 2 + 1] =
 };
 
 
+static void ST_Sound(const char* sndname)
+{
+	//S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
+}
+
 //==========================================================================
 //
 // FHexenStartupScreen Constructor
@@ -511,7 +517,7 @@ void FHexenStartupScreen::Progress()
 				y = ST_PROGRESS_Y;
 				ST_Util_DrawBlock(StartupBitmap, NotchBits, x, y, ST_NOTCH_WIDTH / 2, ST_NOTCH_HEIGHT);
 			}
-			S_Sound(CHAN_BODY, 0, "StartupTick", 1, ATTN_NONE);
+			ST_Sound("StartupTick");
 		}
 	}
 	I_GetEvent();
@@ -539,7 +545,7 @@ void FHexenStartupScreen::NetProgress(int count)
 			y = ST_NETPROGRESS_Y;
 			ST_Util_DrawBlock(StartupBitmap, NetNotchBits, x, y, ST_NETNOTCH_WIDTH / 2, ST_NETNOTCH_HEIGHT);
 		}
-		S_Sound(CHAN_BODY, 0, "misc/netnotch", 1, ATTN_NONE);
+		ST_Sound("misc/netnotch");
 		I_GetEvent();
 	}
 }
@@ -554,7 +560,7 @@ void FHexenStartupScreen::NetProgress(int count)
 
 void FHexenStartupScreen::NetDone()
 {
-	S_Sound(CHAN_BODY, 0, "PickupWeapon", 1, ATTN_NORM);
+	ST_Sound("PickupWeapon");
 	FGraphicalStartupScreen::NetDone();
 }
 

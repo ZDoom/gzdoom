@@ -4,6 +4,8 @@
 #include "engineerrors.h"
 #include <Windows.h>
 
+#ifdef HAVE_SOFTPOLY
+
 EXTERN_CVAR(Bool, vid_vsync)
 
 bool ViewportLinearScale();
@@ -193,3 +195,5 @@ void I_PolyPresentDeinit()
 	if (device) device->Release();
 	if (d3d9) d3d9->Release();
 }
+
+#endif

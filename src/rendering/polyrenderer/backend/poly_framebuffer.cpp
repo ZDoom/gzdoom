@@ -24,7 +24,6 @@
 #include "m_png.h"
 #include "templates.h"
 #include "r_videoscale.h"
-#include "actor.h"
 #include "i_time.h"
 #include "g_game.h"
 #include "v_text.h"

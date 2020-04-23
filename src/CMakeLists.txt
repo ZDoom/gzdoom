@@ -438,28 +438,28 @@ endif()
 
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
-	win32/hardware.cpp
-	win32/i_crash.cpp
-	win32/i_input.cpp
-	win32/i_keyboard.cpp
-	win32/i_mouse.cpp
-	win32/i_dijoy.cpp
-	win32/i_rawps2.cpp
-	win32/i_xinput.cpp
-	win32/i_main.cpp
 	win32/i_steam.cpp
-	win32/i_system.cpp
-	win32/i_specialpaths.cpp
-	win32/st_start.cpp
-	win32/st_start_util.cpp
-	win32/gl_sysfb.cpp
-	win32/base_sysfb.cpp
-	win32/win32basevideo.cpp
-	win32/win32glvideo.cpp
-	win32/win32polyvideo.cpp)
-	
+	common/platform/win32/hardware.cpp
+	common/platform/win32/i_crash.cpp
+	common/platform/win32/i_input.cpp
+	common/platform/win32/i_keyboard.cpp
+	common/platform/win32/i_mouse.cpp
+	common/platform/win32/i_dijoy.cpp
+	common/platform/win32/i_rawps2.cpp
+	common/platform/win32/i_xinput.cpp
+	common/platform/win32/i_main.cpp
+	common/platform/win32/i_system.cpp
+	common/platform/win32/i_specialpaths.cpp
+	common/platform/win32/st_start.cpp
+	common/platform/win32/st_start_util.cpp
+	common/platform/win32/gl_sysfb.cpp
+	common/platform/win32/base_sysfb.cpp
+	common/platform/win32/win32basevideo.cpp
+	common/platform/win32/win32glvideo.cpp
+	common/platform/win32/win32polyvideo.cpp)
+
 if (HAVE_VULKAN)
-	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} win32/win32vulkanvideo.cpp )
+	set (PLAT_WIN32_SOURCES ${PLAT_WIN32_SOURCES} common/platform/win32/win32vulkanvideo.cpp )
 endif()
 	
 set( PLAT_POSIX_SOURCES
@@ -492,7 +492,7 @@ set( PLAT_COCOA_SOURCES
 	common/platform/posix/cocoa/st_start.mm )
 
 if( WIN32 )
-	set( SYSTEM_SOURCES_DIR win32 )
+	set( SYSTEM_SOURCES_DIR common/platform/win32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} ${PLAT_UNIX_SOURCES} )
 
@@ -594,7 +594,6 @@ file( GLOB HEADER_FILES
 	sound/*.h
 	sound/backend/*.h*
 	posix/*.h
-	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
 	common/audio/sound/thirdparty/*.h
@@ -610,6 +609,7 @@ file( GLOB HEADER_FILES
 	common/filesystem/*.h
 	common/platform/posix/cocoa/*.h
 	common/platform/posix/sdl/*.h
+	common/platform/win32/*.h
 	common/textures/*.h
 	common/textures/hires/hqnx/*.h
 	common/textures/hires/hqnx_asm/*.h
@@ -738,7 +738,7 @@ set( NOT_COMPILED_SOURCE_FILES
 	common/scripting/frontend/zcc-parse.lemon
 	zcc-parse.c
 	zcc-parse.h
-	win32/zdoom.natvis
+	common/platform/win32/zutil.natvis
 )
 
 set( VM_JIT_SOURCES
@@ -1321,7 +1321,7 @@ if( MSVC )
 	set_target_properties(zdoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
 
 	add_custom_command(TARGET zdoom POST_BUILD
-		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\win32\\zdoom.exe.manifest\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
+		COMMAND "mt.exe" -manifest \"${CMAKE_CURRENT_SOURCE_DIR}\\common\\platform\\win32\\manifest.xml\" -outputresource:\"$<TARGET_FILE:zdoom>\"\;\#1
 		COMMENT "Adding manifest..."
 	)
 
@@ -1470,6 +1470,7 @@ source_group("Common\\Platforms\\Cocoa Files" REGULAR_EXPRESSION "^${CMAKE_CURRE
 source_group("Common\\Platforms\\OS X Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/osx/.+")
 source_group("Common\\Platforms\\Unix Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/unix/.+")
 source_group("Common\\Platforms\\SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/sdl/.+")
+source_group("Common\\Platforms\\Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/win32/.+")
 source_group("Common\\Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/.+")
 source_group("Common\\Rendering\\OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gl_load/.+")
 source_group("Common\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/.+")

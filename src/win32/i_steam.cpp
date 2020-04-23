@@ -59,12 +59,10 @@
 #include <wincrypt.h>
 #include <shlwapi.h>
 
-#include "hardware.h"
 #include "printf.h"
 
 #include "version.h"
 #include "i_sound.h"
-#include "resource.h"
 #include "stats.h"
 #include "v_text.h"
 #include "utf8.h"
@@ -72,14 +70,12 @@
 #include "d_main.h"
 #include "d_net.h"
 #include "g_game.h"
-#include "i_input.h"
 #include "c_dispatch.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "i_system.h"
 #include "bitmap.h"
 #include "cmdlib.h"
 #include "i_interface.h"

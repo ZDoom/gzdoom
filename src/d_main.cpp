@@ -282,7 +282,6 @@ bool nospriterename;
 FStartupInfo GameStartupInfo;
 FString lastIWAD;
 int restart = 0;
-bool batchrun;	// just run the startup and collect all error messages in a logfile, then quit without any interaction
 bool AppActive = true;
 
 cycle_t FrameCycles;
@@ -3397,8 +3396,6 @@ static int D_DoomMain_Internal (void)
 	}
 	while (1);
 }
-
-void I_ShowFatalError(const char* message);
 
 int GameMain()
 {

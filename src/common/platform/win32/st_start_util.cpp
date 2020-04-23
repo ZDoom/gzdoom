@@ -396,7 +396,8 @@ static const int StrifeStartupPicSizes[4 + 2 + 1] =
 
 static void ST_Sound(const char* sndname)
 {
-	//S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
+	if (sysCallbacks && sysCallbacks->PlayStartupSound)
+		sysCallbacks->PlayStartupSound(sndname);
 }
 
 //==========================================================================

@@ -10,6 +10,7 @@ struct SystemCallbacks
 	bool (*WantNativeMouse)();
 	bool (*CaptureModeInGame)();
 	void (*CrashInfo)(char* buffer, size_t bufflen, const char* lfstr);
+	void (*PlayStartupSound)(const char* name);
 
 };
 

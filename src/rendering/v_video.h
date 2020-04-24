@@ -311,6 +311,7 @@ public:
 	virtual const char* DeviceName() const { return "Unknown"; }
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
+	virtual void AmbientOccludeScene(float m5) {}
 
 	// Screen wiping
 	virtual FTexture *WipeStartScreen();

@@ -65,7 +65,6 @@
 //
 //==========================================================================
 CVAR(Bool, gl_texture, true, 0)
-CVAR(Bool, gl_no_skyclear, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
@@ -77,72 +76,6 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 
 namespace OpenGLRenderer
 {
-
-//-----------------------------------------------------------------------------
-//
-// gl_drawscene - this function renders the scene from the current
-// viewpoint, including mirrors and skyboxes and other portals
-// It is assumed that the HWPortal::EndFrame returns with the 
-// stencil, z-buffer and the projection matrix intact!
-//
-//-----------------------------------------------------------------------------
-
-void FGLRenderer::DrawScene(HWDrawInfo *di, int drawmode)
-{
-	static int recursion=0;
-	static int ssao_portals_available = 0;
-	const auto &vp = di->Viewpoint;
-
-	bool applySSAO = false;
-	if (drawmode == DM_MAINVIEW)
-	{
-		ssao_portals_available = gl_ssao_portals;
-		applySSAO = true;
-	}
-	else if (drawmode == DM_OFFSCREEN)
-	{
-		ssao_portals_available = 0;
-	}
-	else if (drawmode == DM_PORTAL && ssao_portals_available > 0)
-	{
-		applySSAO = true;
-		ssao_portals_available--;
-	}
-
-	if (vp.camera != nullptr)
-	{
-		ActorRenderFlags savedflags = vp.camera->renderflags;
-		di->CreateScene(drawmode == DM_MAINVIEW);
-		vp.camera->renderflags = savedflags;
-	}
-	else
-	{
-		di->CreateScene(false);
-	}
-
-	glDepthMask(true);
-	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, di, gl_RenderState);
-
-	di->RenderScene(gl_RenderState);
-
-	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
-	{
-		gl_RenderState.EnableDrawBuffers(1);
-		GLRenderer->AmbientOccludeScene(di->VPUniforms.mProjectionMatrix.get()[5]);
-		glViewport(screen->mSceneViewport.left, screen->mSceneViewport.top, screen->mSceneViewport.width, screen->mSceneViewport.height);
-		GLRenderer->mBuffers->BindSceneFB(true);
-		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
-		gl_RenderState.Apply();
-		screen->mViewpoints->Bind(gl_RenderState, di->vpIndex);
-	}
-
-	// Handle all portals after rendering the opaque objects but before
-	// doing all translucent stuff
-	recursion++;
-	screen->mPortalState->EndFrame(di, gl_RenderState);
-	recursion--;
-	di->RenderTranslucent(gl_RenderState);
-}
 
 //-----------------------------------------------------------------------------
 //
@@ -195,10 +128,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
 		di->SetupView(gl_RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
-		// std::function until this can be done better in a cross-API fashion.
-		di->ProcessScene(toscreen, [&](HWDrawInfo *di, int mode) {
-			DrawScene(di, mode);
-		});
+		di->ProcessScene(toscreen);
 
 		if (mainview)
 		{

@@ -27,6 +27,7 @@ public:
 	void InitializeState() override;
 	void Update() override;
 
+	void AmbientOccludeScene(float m5) override;
 	FRenderState* RenderState() override;
 	void CleanForRestart() override;
 	void UpdatePalette() override;

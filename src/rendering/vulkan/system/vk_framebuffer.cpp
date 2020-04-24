@@ -67,7 +67,6 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
-EXTERN_CVAR(Bool, gl_no_skyclear)
 
 extern bool NoInterpolateView;
 extern int rendered_commandbuffers;
@@ -480,10 +479,7 @@ sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * 
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
 		di->SetupView(*GetRenderState(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
-		// std::function until this can be done better in a cross-API fashion.
-		di->ProcessScene(toscreen, [&](HWDrawInfo *di, int mode) {
-			DrawScene(di, mode);
-		});
+		di->ProcessScene(toscreen);
 
 		if (mainview)
 		{
@@ -546,60 +542,6 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 	mRenderState->SetRenderTarget(&GetBuffers()->SceneColor, GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
 
 	tex->SetUpdated(true);
-}
-
-void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
-{
-	// To do: this is virtually identical to FGLRenderer::DrawScene and should be merged.
-
-	static int recursion = 0;
-	static int ssao_portals_available = 0;
-	const auto &vp = di->Viewpoint;
-
-	bool applySSAO = false;
-	if (drawmode == DM_MAINVIEW)
-	{
-		ssao_portals_available = gl_ssao_portals;
-		applySSAO = true;
-	}
-	else if (drawmode == DM_OFFSCREEN)
-	{
-		ssao_portals_available = 0;
-	}
-	else if (drawmode == DM_PORTAL && ssao_portals_available > 0)
-	{
-		applySSAO = true;
-		ssao_portals_available--;
-	}
-
-	if (vp.camera != nullptr)
-	{
-		ActorRenderFlags savedflags = vp.camera->renderflags;
-		di->CreateScene(drawmode == DM_MAINVIEW);
-		vp.camera->renderflags = savedflags;
-	}
-	else
-	{
-		di->CreateScene(false);
-	}
-
-	GetRenderState()->SetDepthMask(true);
-	if (!gl_no_skyclear) mPortalState->RenderFirstSkyPortal(recursion, di, *GetRenderState());
-
-	di->RenderScene(*GetRenderState());
-
-	if (applySSAO && GetRenderState()->GetPassType() == GBUFFER_PASS)
-	{
-		mPostprocess->AmbientOccludeScene(di->VPUniforms.mProjectionMatrix.get()[5]);
-		screen->mViewpoints->Bind(*GetRenderState(), di->vpIndex);
-	}
-
-	// Handle all portals after rendering the opaque objects but before
-	// doing all translucent stuff
-	recursion++;
-	screen->mPortalState->EndFrame(di, *GetRenderState());
-	recursion--;
-	di->RenderTranslucent(*GetRenderState());
 }
 
 void VulkanFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
@@ -999,4 +941,9 @@ void VulkanFrameBuffer::UpdateShadowMap()
 FRenderState* VulkanFrameBuffer::RenderState()
 {
 	return mRenderState.get();
+}
+
+void VulkanFrameBuffer::AmbientOccludeScene(float m5)
+{
+	mPostprocess->AmbientOccludeScene(m5);
 }

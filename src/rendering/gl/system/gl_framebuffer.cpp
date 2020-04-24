@@ -519,6 +519,16 @@ FRenderState* OpenGLFrameBuffer::RenderState()
 	return &gl_RenderState;
 }
 
+void OpenGLFrameBuffer::AmbientOccludeScene(float m5)
+{
+	gl_RenderState.EnableDrawBuffers(1);
+	GLRenderer->AmbientOccludeScene(m5);
+	glViewport(screen->mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
+	GLRenderer->mBuffers->BindSceneFB(true);
+	gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
+	gl_RenderState.Apply();
+}
+
 
 //===========================================================================
 //

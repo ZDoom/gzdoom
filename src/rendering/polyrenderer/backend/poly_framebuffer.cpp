@@ -59,7 +59,6 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
-EXTERN_CVAR(Bool, gl_no_skyclear)
 
 extern bool NoInterpolateView;
 extern int rendered_commandbuffers;
@@ -340,10 +339,7 @@ sector_t *PolyFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * ca
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
 		di->SetupView(*GetRenderState(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
-		// std::function until this can be done better in a cross-API fashion.
-		di->ProcessScene(toscreen, [&](HWDrawInfo *di, int mode) {
-			DrawScene(di, mode);
-		});
+		di->ProcessScene(toscreen);
 
 		if (mainview)
 		{
@@ -396,60 +392,6 @@ void PolyFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, 
 	mRenderState->SetRenderTarget(GetCanvas(), GetDepthStencil(), true);
 
 	tex->SetUpdated(true);
-}
-
-void PolyFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
-{
-	// To do: this is virtually identical to FGLRenderer::DrawScene and should be merged.
-
-	static int recursion = 0;
-	static int ssao_portals_available = 0;
-	const auto &vp = di->Viewpoint;
-
-	bool applySSAO = false;
-	if (drawmode == DM_MAINVIEW)
-	{
-		ssao_portals_available = gl_ssao_portals;
-		applySSAO = true;
-	}
-	else if (drawmode == DM_OFFSCREEN)
-	{
-		ssao_portals_available = 0;
-	}
-	else if (drawmode == DM_PORTAL && ssao_portals_available > 0)
-	{
-		applySSAO = true;
-		ssao_portals_available--;
-	}
-
-	if (vp.camera != nullptr)
-	{
-		ActorRenderFlags savedflags = vp.camera->renderflags;
-		di->CreateScene(drawmode == DM_MAINVIEW);
-		vp.camera->renderflags = savedflags;
-	}
-	else
-	{
-		di->CreateScene(false);
-	}
-
-	GetRenderState()->SetDepthMask(true);
-	if (!gl_no_skyclear) mPortalState->RenderFirstSkyPortal(recursion, di, *GetRenderState());
-
-	di->RenderScene(*GetRenderState());
-
-	if (applySSAO && GetRenderState()->GetPassType() == GBUFFER_PASS)
-	{
-		//mPostprocess->AmbientOccludeScene(di->VPUniforms.mProjectionMatrix.get()[5]);
-		//mViewpoints->Bind(*GetRenderState(), di->vpIndex);
-	}
-
-	// Handle all portals after rendering the opaque objects but before
-	// doing all translucent stuff
-	recursion++;
-	mPortalState->EndFrame(di, *GetRenderState());
-	recursion--;
-	di->RenderTranslucent(*GetRenderState());
 }
 
 static uint8_t ToIntColorComponent(float v)
@@ -677,4 +619,9 @@ unsigned int PolyFrameBuffer::GetLightBufferBlockSize() const
 
 void PolyFrameBuffer::UpdateShadowMap()
 {
+}
+
+void PolyFrameBuffer::AmbientOccludeScene(float m5)
+{
+	//mPostprocess->AmbientOccludeScene(m5);
 }

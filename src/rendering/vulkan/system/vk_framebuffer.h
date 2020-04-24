@@ -88,6 +88,7 @@ public:
 	void BeginFrame() override;
 	void BlurScene(float amount) override;
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) override;
+	void AmbientOccludeScene(float m5) override;
 
 	IHardwareTexture *CreateHardwareTexture() override;
 	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;
@@ -114,7 +115,6 @@ public:
 private:
 	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
-	void DrawScene(HWDrawInfo *di, int drawmode);
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
 	void CopyScreenToBuffer(int w, int h, void *data);

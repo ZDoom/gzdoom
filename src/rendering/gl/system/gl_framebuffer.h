@@ -16,6 +16,8 @@ class OpenGLFrameBuffer : public SystemGLFrameBuffer
 {
 	typedef SystemGLFrameBuffer Super;
 
+	void RenderTextureView(FCanvasTexture* tex, AActor* Viewpoint, double FOV);
+
 public:
 
 	explicit OpenGLFrameBuffer() {}

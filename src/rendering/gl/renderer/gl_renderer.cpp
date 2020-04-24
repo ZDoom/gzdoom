@@ -62,11 +62,8 @@
 #include "texturemanager.h"
 
 EXTERN_CVAR(Int, screenblocks)
-EXTERN_CVAR(Bool, cl_capfps)
 
 extern bool NoInterpolateView;
-
-void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
 
 namespace OpenGLRenderer
 {
@@ -217,78 +214,6 @@ void FGLRenderer::UpdateShadowMap()
 	}
 }
 
-//-----------------------------------------------------------------------------
-//
-// renders the view
-//
-//-----------------------------------------------------------------------------
-
-sector_t *FGLRenderer::RenderView(player_t* player)
-{
-	gl_RenderState.SetVertexBuffer(screen->mVertexData);
-	screen->mVertexData->Reset();
-	sector_t *retsec;
-
-	if (!V_IsHardwareRenderer())
-	{
-		if (swdrawer == nullptr) swdrawer = new SWSceneDrawer;
-		retsec = swdrawer->RenderView(player);
-	}
-	else
-	{
-		hw_ClearFakeFlat();
-
-		iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
-
-		checkBenchActive();
-
-		// reset statistics counters
-		ResetProfilingData();
-
-		// Get this before everything else
-		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
-		else r_viewpoint.TicFrac = I_GetTimeFrac();
-
-		screen->mLights->Clear();
-		screen->mViewpoints->Clear();
-
-		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
-		bool saved_niv = NoInterpolateView;
-		NoInterpolateView = false;
-
-		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
-		if (player->camera)
-			gl_RenderState.CheckTimer(player->camera->Level->ShaderStartTime);
-		// prepare all camera textures that have been used in the last frame.
-		// This must be done for all levels, not just the primary one!
-		for (auto Level : AllLevels())
-		{
-			Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
-			{
-				RenderTextureView(camtex, camera, fov);
-			});
-		}
-		NoInterpolateView = saved_niv;
-
-
-		// now render the main view
-		float fovratio;
-		float ratio = r_viewwindow.WidescreenRatio;
-		if (r_viewwindow.WidescreenRatio >= 1.3f)
-		{
-			fovratio = 1.333333f;
-		}
-		else
-		{
-			fovratio = ratio;
-		}
-
-		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
-	}
-	All.Unclock();
-	return retsec;
-}
-
 //===========================================================================
 //
 //
@@ -307,83 +232,6 @@ void FGLRenderer::BindToFrameBuffer(FTexture *tex)
 		gl_RenderState.ClearLastMaterial();
 	}
 	BaseLayer->BindToFrameBuffer(tex->GetWidth(), tex->GetHeight());
-}
-
-//===========================================================================
-//
-// Camera texture rendering
-//
-//===========================================================================
-
-void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
-{
-	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
-
-	float ratio = tex->aspectRatio;
-
-	StartOffscreen();
-	BindToFrameBuffer(tex);
-
-	IntRect bounds;
-	bounds.left = bounds.top = 0;
-	bounds.width = FHardwareTexture::GetTexDimension(tex->GetWidth());
-	bounds.height = FHardwareTexture::GetTexDimension(tex->GetHeight());
-
-	FRenderViewpoint texvp;
-	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);
-
-	EndOffscreen();
-
-	tex->SetUpdated(true);
-	static_cast<OpenGLFrameBuffer*>(screen)->camtexcount++;
-}
-
-//===========================================================================
-//
-// Render the view to a savegame picture
-//
-//===========================================================================
-
-void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
-{
-    IntRect bounds;
-    bounds.left = 0;
-    bounds.top = 0;
-    bounds.width = width;
-    bounds.height = height;
-    
-    // we must be sure the GPU finished reading from the buffer before we fill it with new data.
-    glFinish();
-    
-    // Switch to render buffers dimensioned for the savepic
-    mBuffers = mSaveBuffers;
-    
-	hw_ClearFakeFlat();
-	gl_RenderState.SetVertexBuffer(screen->mVertexData);
-	screen->mVertexData->Reset();
-    screen->mLights->Clear();
-	screen->mViewpoints->Clear();
-
-    // This shouldn't overwrite the global viewpoint even for a short time.
-    FRenderViewpoint savevp;
-    sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
-    glDisable(GL_STENCIL_TEST);
-    gl_RenderState.SetNoSoftLightLevel();
-    CopyToBackbuffer(&bounds, false);
-    
-    // strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
-    glFinish();
-    
-	int numpixels = width * height;
-    uint8_t * scr = (uint8_t *)M_Malloc(numpixels * 3);
-    glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
-
-	DoWriteSavePic(file, SS_RGB, scr, width, height, viewsector, true);
-    M_Free(scr);
-    
-    // Switch back the screen render buffers
-    screen->SetViewportRects(nullptr);
-    mBuffers = mScreenBuffers;
 }
 
 //===========================================================================

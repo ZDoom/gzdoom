@@ -723,7 +723,7 @@ void C_SetDefaultKeys(const char* baseconfig)
 	lastlump = 0;
 	while ((lump = fileSystem.FindLump("DEFBINDS", &lastlump)) != -1)
 	{
-		ReadBindings(lump, false);
+		ReadBindings(lump, true);
 	}
 }
 

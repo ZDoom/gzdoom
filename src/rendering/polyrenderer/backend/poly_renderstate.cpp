@@ -314,6 +314,8 @@ void PolyRenderState::ApplyMaterial()
 	{
 		mTempTM = mMaterial.mMaterial->Source()->isHardwareCanvas() ? TM_OPAQUE : TM_NORMAL;
 
+		if (mMaterial.mMaterial->Source()->isHardwareCanvas()) static_cast<FCanvasTexture*>(mMaterial.mMaterial->Source()->GetTexture())->NeedUpdate();
+
 		MaterialLayerInfo* layer;
 		auto base = static_cast<PolyHardwareTexture*>(mMaterial.mMaterial->GetLayer(0, mMaterial.mTranslation, &layer));
 		if (base)

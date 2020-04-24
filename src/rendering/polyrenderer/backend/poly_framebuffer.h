@@ -35,6 +35,7 @@ public:
 
 	void InitializeState() override;
 
+	FRenderState* RenderState() override;
 	void CleanForRestart() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;

@@ -27,6 +27,7 @@ public:
 	void InitializeState() override;
 	void Update() override;
 
+	FRenderState* RenderState() override;
 	void CleanForRestart() override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;

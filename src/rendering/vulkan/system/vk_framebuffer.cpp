@@ -584,7 +584,7 @@ void VulkanFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	}
 
 	GetRenderState()->SetDepthMask(true);
-	if (!gl_no_skyclear) screen->mPortalState->RenderFirstSkyPortal(recursion, di, *GetRenderState());
+	if (!gl_no_skyclear) mPortalState->RenderFirstSkyPortal(recursion, di, *GetRenderState());
 
 	di->RenderScene(*GetRenderState());
 
@@ -994,4 +994,9 @@ void VulkanFrameBuffer::CreateFanToTrisIndexBuffer()
 void VulkanFrameBuffer::UpdateShadowMap()
 {
 	mPostprocess->UpdateShadowMap();
+}
+
+FRenderState* VulkanFrameBuffer::RenderState()
+{
+	return mRenderState.get();
 }

@@ -530,6 +530,12 @@ void PolyFrameBuffer::CleanForRestart()
 	swdrawer.reset();
 }
 
+FRenderState* PolyFrameBuffer::RenderState()
+{ 
+	return mRenderState.get(); 
+}
+
+
 void PolyFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 {
 	if (mat->Source()->GetUseType() == ETextureType::SWCanvas) return;

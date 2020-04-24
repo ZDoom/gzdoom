@@ -514,6 +514,11 @@ void OpenGLFrameBuffer::UpdatePalette()
 		GLRenderer->ClearTonemapPalette();
 }
 
+FRenderState* OpenGLFrameBuffer::RenderState()
+{
+	return &gl_RenderState;
+}
+
 
 //===========================================================================
 //

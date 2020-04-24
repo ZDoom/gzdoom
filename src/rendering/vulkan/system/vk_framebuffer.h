@@ -35,6 +35,7 @@ public:
 	VkRenderState *GetRenderState() { return mRenderState.get(); }
 	VkPostprocess *GetPostprocess() { return mPostprocess.get(); }
 	VkRenderBuffers *GetBuffers() { return mActiveRenderBuffers; }
+	FRenderState* RenderState() override;
 
 	void FlushCommands(bool finish, bool lastsubmit = false);
 

@@ -67,6 +67,7 @@ class FLightBuffer;
 struct HWDrawInfo;
 class FMaterial;
 class FGameTexture;
+class FRenderState;
 
 enum EHWCaps
 {
@@ -270,6 +271,7 @@ public:
 	virtual void BeginFrame() {}
 	virtual void SetWindowSize(int w, int h) {}
 	virtual void StartPrecaching() {}
+	virtual FRenderState* RenderState() { return nullptr; }
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;

@@ -723,7 +723,13 @@ void C_SetDefaultKeys(const char* baseconfig)
 	lastlump = 0;
 	while ((lump = fileSystem.FindLump("DEFBINDS", &lastlump)) != -1)
 	{
-		ReadBindings(lump, false);
+		// [SW] - We need to check to see the origin of the DEFBINDS... if it
+		// Comes from an IWAD/IPK3/IPK7 allow it to override the users settings...
+		// If it comes from a user mod however, don't.
+		if (fileSystem.GetFileContainer(lump) > fileSystem.GetMaxIwadNum())
+			ReadBindings(lump, false);
+		else
+			ReadBindings(lump, true);
 	}
 }
 

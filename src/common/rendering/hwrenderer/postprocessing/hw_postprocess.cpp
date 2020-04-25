@@ -26,10 +26,14 @@
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include <random>
 #include "texturemanager.h"
+#include "templates.h"
+#include "stats.h"
+#include "colormaps.h"
 
 Postprocess hw_postprocess;
 
 PPResource *PPResource::First = nullptr;
+TArray<PostProcessShader> PostProcessShaders;
 
 bool gpuStatActive = false;
 bool keepGpuStatActive = false;
@@ -861,26 +865,6 @@ PPPresent::PPPresent()
 }
 
 /////////////////////////////////////////////////////////////////////////////
-
-void PPShadowMap::Update(PPRenderState *renderstate)
-{
-	ShadowMapUniforms uniforms;
-	uniforms.ShadowmapQuality = (float)gl_shadowmap_quality;
-	uniforms.NodesCount = screen->mShadowMap.NodesCount();
-
-	renderstate->PushGroup("shadowmap");
-
-	renderstate->Clear();
-	renderstate->Shader = &ShadowMap;
-	renderstate->Uniforms.Set(uniforms);
-	renderstate->Viewport = { 0, 0, gl_shadowmap_quality, 1024 };
-	renderstate->SetShadowMapBuffers(true);
-	renderstate->SetOutputShadowMap();
-	renderstate->SetNoBlend();
-	renderstate->Draw();
-
-	renderstate->PopGroup();
-}
 
 /////////////////////////////////////////////////////////////////////////////
 

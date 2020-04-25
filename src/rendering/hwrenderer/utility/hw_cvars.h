@@ -4,9 +4,9 @@
 #include "r_defs.h"
 #include "c_cvars.h"
 
+
 EXTERN_CVAR(Bool,gl_enhanced_nightvision)
 EXTERN_CVAR(Int, screenblocks);
-EXTERN_CVAR(Bool, gl_texture)
 EXTERN_CVAR(Int, gl_texture_filter)
 EXTERN_CVAR(Float, gl_texture_filter_anisotropic)
 EXTERN_CVAR(Int, gl_texture_format)

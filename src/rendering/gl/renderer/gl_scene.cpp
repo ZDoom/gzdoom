@@ -29,53 +29,20 @@
 #include "gi.h"
 #include "m_png.h"
 #include "doomstat.h"
-#include "g_level.h"
 #include "r_data/r_interpolate.h"
 #include "r_utility.h"
 #include "d_player.h"
-#include "p_effect.h"
-#include "sbar.h"
-#include "po_man.h"
-#include "p_local.h"
-#include "serializer.h"
-#include "g_levellocals.h"
-#include "actorinlines.h"
-#include "r_data/models/models.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
-#include "gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_debug.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_renderbuffers.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/system/gl_buffers.h"
 
-//==========================================================================
-//
-// CVARs
-//
-//==========================================================================
-CVAR(Bool, gl_texture, true, 0)
-CVAR(Float, gl_mask_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Float, gl_mask_sprite_threshold, 0.5f,CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
-EXTERN_CVAR (Bool, cl_capfps)
-EXTERN_CVAR (Bool, r_deathcamera)
-EXTERN_CVAR (Float, r_visibility)
-EXTERN_CVAR (Bool, r_drawvoxels)
-
-
-namespace OpenGLRenderer
-{
 
 //-----------------------------------------------------------------------------
 //
@@ -83,75 +50,71 @@ namespace OpenGLRenderer
 //
 //-----------------------------------------------------------------------------
 
-sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
+sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {
-	R_SetupFrame (mainvp, r_viewwindow, camera);
+	auto& RenderState = *screen->RenderState();
+
+	R_SetupFrame(mainvp, r_viewwindow, camera);
 
 	if (mainview && toscreen)
-		UpdateShadowMap();
+		screen->UpdateShadowMap();
 
 	// Update the attenuation flag of all light defaults for each viewpoint.
 	// This function will only do something if the setting differs.
 	FLightDefaults::SetAttenuationForLevel(!!(camera->Level->flags3 & LEVEL3_ATTENUATE));
 
-    // Render (potentially) multiple views for stereo 3d
+	// Render (potentially) multiple views for stereo 3d
 	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
 	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
 	const int eyeCount = vrmode->mEyeCount;
-	mBuffers->CurrentEye() = 0;  // always begin at zero, in case eye count changed
+	screen->FirstEye();
 	for (int eye_ix = 0; eye_ix < eyeCount; ++eye_ix)
 	{
-		const auto &eye = vrmode->mEyes[mBuffers->CurrentEye()];
+		const auto& eye = vrmode->mEyes[eye_ix];
 		screen->SetViewportRects(bounds);
 
 		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
 		{
 			bool useSSAO = (gl_ssao != 0);
-			mBuffers->BindSceneFB(useSSAO);
-			gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
-			gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
-			gl_RenderState.Apply();
+			screen->SetSceneRenderTarget(useSSAO);
+			RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
+			RenderState.EnableDrawBuffers(RenderState.GetPassDrawBufferCount(), true);
 		}
 
-
 		auto di = HWDrawInfo::StartDrawInfo(mainvp.ViewLevel, nullptr, mainvp, nullptr);
-		auto &vp = di->Viewpoint;
+		auto& vp = di->Viewpoint;
 
-		di->Set3DViewport(gl_RenderState);
+		di->Set3DViewport(RenderState);
 		di->SetViewArea();
-		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
+		auto cm = di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
 		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
 		// Stereo mode specific perspective projection
 		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
 		// Stereo mode specific viewpoint adjustment
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
-		di->SetupView(gl_RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
+		di->SetupView(RenderState, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
 		di->ProcessScene(toscreen);
 
 		if (mainview)
 		{
 			PostProcess.Clock();
-			if (toscreen) di->EndDrawScene(mainvp.sector, gl_RenderState); // do not call this for camera textures.
+			if (toscreen) di->EndDrawScene(mainvp.sector, RenderState); // do not call this for camera textures.
 
-			if (gl_RenderState.GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
+			if (RenderState.GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
 			{
-				gl_RenderState.SetPassType(NORMAL_PASS);
-				gl_RenderState.EnableDrawBuffers(1);
+				RenderState.SetPassType(NORMAL_PASS);
+				RenderState.EnableDrawBuffers(1);
 			}
 
-			mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
-
-			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, gl_RenderState); });
+			screen->PostProcessScene(false, cm, [&]() { di->DrawEndScene2D(mainvp.sector, RenderState); });
 			PostProcess.Unclock();
 		}
 		di->EndDrawInfo();
 		if (eyeCount - eye_ix > 1)
-			mBuffers->NextEye(eyeCount);
+			screen->NextEye(eyeCount);
 	}
 
 	return mainvp.sector;
-}
-
 }

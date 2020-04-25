@@ -40,7 +40,7 @@ namespace OpenGLRenderer
 class FShader;
 struct HWSectorPlane;
 
-class FGLRenderState : public FRenderState
+class FGLRenderState final : public FRenderState
 {
 	uint8_t mLastDepthClamp : 1;
 
@@ -108,7 +108,7 @@ public:
 		mSpecularLevel = specularLevel;
 	}
 
-	void EnableDrawBuffers(int count) override
+	void EnableDrawBuffers(int count, bool apply = false) override
 	{
 		count = MIN(count, 3);
 		if (mNumDrawBuffers != count)
@@ -117,6 +117,7 @@ public:
 			glDrawBuffers(count, buffers);
 			mNumDrawBuffers = count;
 		}
+		if (apply) Apply();
 	}
 
 	void ToggleState(int state, bool on);

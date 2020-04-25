@@ -312,12 +312,16 @@ public:
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 	virtual void AmbientOccludeScene(float m5) {}
+	virtual void FirstEye() {}
+	virtual void NextEye(int eyecount) {}
+	virtual void SetSceneRenderTarget(bool useSSAO) {}
+	virtual void UpdateShadowMap() {}
 
 	// Screen wiping
 	virtual FTexture *WipeStartScreen();
 	virtual FTexture *WipeEndScreen();
 
-	virtual void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) { if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D(); }
+	virtual void PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) { if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D(); }
 
 	void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 

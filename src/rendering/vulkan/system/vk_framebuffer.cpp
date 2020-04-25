@@ -436,79 +436,6 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 	return retsec;
 }
 
-sector_t *VulkanFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
-{
-	// To do: this is virtually identical to FGLRenderer::RenderViewpoint and should be merged.
-
-	R_SetupFrame(mainvp, r_viewwindow, camera);
-
-	if (mainview && toscreen)
-		UpdateShadowMap();
-
-	// Update the attenuation flag of all light defaults for each viewpoint.
-	// This function will only do something if the setting differs.
-	FLightDefaults::SetAttenuationForLevel(!!(camera->Level->flags3 & LEVEL3_ATTENUATE));
-
-	// Render (potentially) multiple views for stereo 3d
-	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
-	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
-	for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
-	{
-		const auto &eye = vrmode->mEyes[eye_ix];
-		screen->SetViewportRects(bounds);
-
-		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
-		{
-			mRenderState->SetRenderTarget(&GetBuffers()->SceneColor, GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
-			bool useSSAO = (gl_ssao != 0);
-			GetRenderState()->SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
-			GetRenderState()->EnableDrawBuffers(GetRenderState()->GetPassDrawBufferCount());
-		}
-
-		auto di = HWDrawInfo::StartDrawInfo(mainvp.ViewLevel, nullptr, mainvp, nullptr);
-		auto &vp = di->Viewpoint;
-
-		di->Set3DViewport(*GetRenderState());
-		di->SetViewArea();
-		auto cm = di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
-		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
-
-		// Stereo mode specific perspective projection
-		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
-		// Stereo mode specific viewpoint adjustment
-		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
-		di->SetupView(*GetRenderState(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
-
-		di->ProcessScene(toscreen);
-
-		if (mainview)
-		{
-			PostProcess.Clock();
-			if (toscreen) di->EndDrawScene(mainvp.sector, *GetRenderState()); // do not call this for camera textures.
-
-			if (GetRenderState()->GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
-			{
-				GetRenderState()->SetPassType(NORMAL_PASS);
-				GetRenderState()->EnableDrawBuffers(1);
-			}
-
-			mPostprocess->BlitSceneToPostprocess(); // Copy the resulting scene to the current post process texture
-
-			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, *GetRenderState()); });
-
-			PostProcess.Unclock();
-		}
-		di->EndDrawInfo();
-
-#if 0
-		if (vrmode->mEyeCount > 1)
-			mBuffers->BlitToEyeTexture(eye_ix);
-#endif
-	}
-
-	return mainvp.sector;
-}
-
 void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	auto BaseLayer = static_cast<VkHardwareTexture*>(tex->GetHardwareTexture(0, 0));
@@ -544,8 +471,9 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 	tex->SetUpdated(true);
 }
 
-void VulkanFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+void VulkanFrameBuffer::PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
+	if (!swscene) mPostprocess->BlitSceneToPostprocess(); // Copy the resulting scene to the current post process texture
 	mPostprocess->PostProcessScene(fixedcm, afterBloomDrawEndScene2D);
 }
 
@@ -946,4 +874,9 @@ FRenderState* VulkanFrameBuffer::RenderState()
 void VulkanFrameBuffer::AmbientOccludeScene(float m5)
 {
 	mPostprocess->AmbientOccludeScene(m5);
+}
+
+void VulkanFrameBuffer::SetSceneRenderTarget(bool useSSAO)
+{
+	mRenderState->SetRenderTarget(&GetBuffers()->SceneColor, GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), VK_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
 }

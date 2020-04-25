@@ -226,7 +226,7 @@ void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int wid
 
 		// This shouldn't overwrite the global viewpoint even for a short time.
 		FRenderViewpoint savevp;
-		sector_t* viewsector = GLRenderer->RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+		sector_t* viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
 		glDisable(GL_STENCIL_TEST);
 		gl_RenderState.SetNoSoftLightLevel();
 		GLRenderer->CopyToBackbuffer(&bounds, false);
@@ -268,7 +268,7 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, AActor* Viewpoint
 	bounds.height = FHardwareTexture::GetTexDimension(tex->GetHeight());
 
 	FRenderViewpoint texvp;
-	GLRenderer->RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);
+	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);
 
 	GLRenderer->EndOffscreen();
 
@@ -344,7 +344,7 @@ sector_t *OpenGLFrameBuffer::RenderView(player_t *player)
 				fovratio = ratio;
 			}
 
-			retsec = GLRenderer->RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+			retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 		}
 		All.Unclock();
 		return retsec;
@@ -529,6 +529,25 @@ void OpenGLFrameBuffer::AmbientOccludeScene(float m5)
 	gl_RenderState.Apply();
 }
 
+void OpenGLFrameBuffer::FirstEye()
+{
+	GLRenderer->mBuffers->CurrentEye() = 0;  // always begin at zero, in case eye count changed
+}
+
+void OpenGLFrameBuffer::NextEye(int eyecount)
+{
+	GLRenderer->mBuffers->NextEye(eyecount);
+}
+
+void OpenGLFrameBuffer::SetSceneRenderTarget(bool useSSAO)
+{
+	GLRenderer->mBuffers->BindSceneFB(useSSAO);
+}
+
+void OpenGLFrameBuffer::UpdateShadowMap()
+{
+	GLRenderer->UpdateShadowMap();
+}
 
 //===========================================================================
 //
@@ -610,8 +629,9 @@ void OpenGLFrameBuffer::Draw2D()
 	}
 }
 
-void OpenGLFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+void OpenGLFrameBuffer::PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
+	if (!swscene) GLRenderer->mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
 	GLRenderer->PostProcessScene(fixedcm, afterBloomDrawEndScene2D);
 }
 

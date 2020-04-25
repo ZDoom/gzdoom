@@ -296,78 +296,6 @@ sector_t *PolyFrameBuffer::RenderView(player_t *player)
 	return retsec;
 }
 
-sector_t *PolyFrameBuffer::RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
-{
-	// To do: this is virtually identical to FGLRenderer::RenderViewpoint and should be merged.
-
-	R_SetupFrame(mainvp, r_viewwindow, camera);
-
-	if (mainview && toscreen)
-		UpdateShadowMap();
-
-	// Update the attenuation flag of all light defaults for each viewpoint.
-	// This function will only do something if the setting differs.
-	FLightDefaults::SetAttenuationForLevel(!!(camera->Level->flags3 & LEVEL3_ATTENUATE));
-
-	// Render (potentially) multiple views for stereo 3d
-	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
-	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
-	for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
-	{
-		const auto &eye = vrmode->mEyes[eye_ix];
-		SetViewportRects(bounds);
-
-		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
-		{
-			//mRenderState->SetRenderTarget(GetBuffers()->SceneColor.View.get(), GetBuffers()->SceneDepthStencil.View.get(), GetBuffers()->GetWidth(), GetBuffers()->GetHeight(), Poly_FORMAT_R16G16B16A16_SFLOAT, GetBuffers()->GetSceneSamples());
-			bool useSSAO = (gl_ssao != 0);
-			GetRenderState()->SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
-			GetRenderState()->EnableDrawBuffers(GetRenderState()->GetPassDrawBufferCount());
-		}
-
-		auto di = HWDrawInfo::StartDrawInfo(mainvp.ViewLevel, nullptr, mainvp, nullptr);
-		auto &vp = di->Viewpoint;
-
-		di->Set3DViewport(*GetRenderState());
-		di->SetViewArea();
-		auto cm = di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
-		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
-
-		// Stereo mode specific perspective projection
-		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
-		// Stereo mode specific viewpoint adjustment
-		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
-		di->SetupView(*GetRenderState(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
-
-		di->ProcessScene(toscreen);
-
-		if (mainview)
-		{
-			PostProcess.Clock();
-			if (toscreen) di->EndDrawScene(mainvp.sector, *GetRenderState()); // do not call this for camera textures.
-
-			if (GetRenderState()->GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
-			{
-				GetRenderState()->SetPassType(NORMAL_PASS);
-				GetRenderState()->EnableDrawBuffers(1);
-			}
-
-			//mPostprocess->BlitSceneToPostprocess(); // Copy the resulting scene to the current post process texture
-
-			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector, *GetRenderState()); });
-
-			PostProcess.Unclock();
-		}
-		di->EndDrawInfo();
-
-#if 0
-		if (vrmode->mEyeCount > 1)
-			mBuffers->BlitToEyeTexture(eye_ix);
-#endif
-	}
-
-	return mainvp.sector;
-}
 
 void PolyFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
@@ -399,7 +327,7 @@ static uint8_t ToIntColorComponent(float v)
 	return clamp((int)(v * 255.0f + 0.5f), 0, 255);
 }
 
-void PolyFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+void PolyFrameBuffer::PostProcessScene(bool swscene, int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	afterBloomDrawEndScene2D();
 

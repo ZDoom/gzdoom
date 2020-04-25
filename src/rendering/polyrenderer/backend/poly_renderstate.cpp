@@ -200,7 +200,7 @@ void PolyRenderState::EnableLineSmooth(bool on)
 {
 }
 
-void PolyRenderState::EnableDrawBuffers(int count)
+void PolyRenderState::EnableDrawBuffers(int count, bool apply)
 {
 }
 

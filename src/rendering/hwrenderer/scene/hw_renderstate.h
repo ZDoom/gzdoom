@@ -672,7 +672,7 @@ public:
 	virtual void EnableDepthTest(bool on) = 0;					// used by 2D, portals and render hacks.
 	virtual void EnableMultisampling(bool on) = 0;				// only active for 2D
 	virtual void EnableLineSmooth(bool on) = 0;					// constant setting for each 2D drawer operation
-	virtual void EnableDrawBuffers(int count) = 0;				// Used by SSAO and EnableDrawBufferAttachments
+	virtual void EnableDrawBuffers(int count, bool apply = false) = 0;	// Used by SSAO and EnableDrawBufferAttachments
 
 	void SetColorMask(bool on)
 	{

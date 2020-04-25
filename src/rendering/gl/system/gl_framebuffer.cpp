@@ -57,8 +57,6 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Bool, cl_capfps)
 
-void DoWriteSavePic(FileWriter* file, ESSType ssformat, uint8_t* scr, int width, int height, sector_t* viewsector, bool upsidedown);
-
 extern bool NoInterpolateView;
 
 void gl_LoadExtensions();
@@ -192,59 +190,18 @@ void OpenGLFrameBuffer::Update()
 	Super::Update();
 }
 
-//===========================================================================
-//
-// Render the view to a savegame picture
-//
-//===========================================================================
-
-void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+void OpenGLFrameBuffer::CopyScreenToBuffer(int width, int height, uint8_t* scr)
 {
-	if (!V_IsHardwareRenderer())
-	{
-		Super::WriteSavePic(player, file, width, height);
-	}
-	else if (GLRenderer != nullptr)
-	{
-		IntRect bounds;
-		bounds.left = 0;
-		bounds.top = 0;
-		bounds.width = width;
-		bounds.height = height;
+	IntRect bounds;
+	bounds.left = 0;
+	bounds.top = 0;
+	bounds.width = width;
+	bounds.height = height;
+	GLRenderer->CopyToBackbuffer(&bounds, false);
 
-		// we must be sure the GPU finished reading from the buffer before we fill it with new data.
-		glFinish();
-
-		// Switch to render buffers dimensioned for the savepic
-		GLRenderer->mBuffers = GLRenderer->mSaveBuffers;
-
-		hw_ClearFakeFlat();
-		gl_RenderState.SetVertexBuffer(screen->mVertexData);
-		screen->mVertexData->Reset();
-		screen->mLights->Clear();
-		screen->mViewpoints->Clear();
-
-		// This shouldn't overwrite the global viewpoint even for a short time.
-		FRenderViewpoint savevp;
-		sector_t* viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
-		glDisable(GL_STENCIL_TEST);
-		gl_RenderState.SetNoSoftLightLevel();
-		GLRenderer->CopyToBackbuffer(&bounds, false);
-
-		// strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
-		glFinish();
-
-		int numpixels = width * height;
-		uint8_t* scr = (uint8_t*)M_Malloc(numpixels * 3);
-		glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, scr);
-
-		DoWriteSavePic(file, SS_RGB, scr, width, height, viewsector, true);
-		M_Free(scr);
-
-		// Switch back the screen render buffers
-		screen->SetViewportRects(nullptr);
-		GLRenderer->mBuffers = GLRenderer->mScreenBuffers;
-	}
+	// strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
+	glFinish();
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, scr);
 }
 
 //===========================================================================
@@ -547,6 +504,18 @@ void OpenGLFrameBuffer::SetSceneRenderTarget(bool useSSAO)
 void OpenGLFrameBuffer::UpdateShadowMap()
 {
 	GLRenderer->UpdateShadowMap();
+}
+
+void OpenGLFrameBuffer::WaitForCommands(bool finish)
+{
+	glFinish();
+}
+
+void OpenGLFrameBuffer::SetSaveBuffers(bool yes)
+{
+	if (!GLRenderer) return;
+	if (yes) GLRenderer->mBuffers = GLRenderer->mSaveBuffers;
+	else GLRenderer->mBuffers = GLRenderer->mScreenBuffers;
 }
 
 //===========================================================================

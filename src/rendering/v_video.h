@@ -309,13 +309,18 @@ public:
 	virtual uint32_t GetCaps();
 	virtual int Backend() { return 0; }
 	virtual const char* DeviceName() const { return "Unknown"; }
-	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 	virtual void AmbientOccludeScene(float m5) {}
 	virtual void FirstEye() {}
 	virtual void NextEye(int eyecount) {}
 	virtual void SetSceneRenderTarget(bool useSSAO) {}
 	virtual void UpdateShadowMap() {}
+	virtual void WaitForCommands(bool finish) {}
+	virtual void SetSaveBuffers(bool yes) {}
+	virtual void ImageTransitionScene(bool unknown) {}
+	virtual void CopyScreenToBuffer(int width, int height, uint8_t* buffer)	{ memset(buffer, 0, width* height); }
+	virtual bool FlipSavePic() const { return false; }
+
 
 	// Screen wiping
 	virtual FTexture *WipeStartScreen();

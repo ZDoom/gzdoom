@@ -312,12 +312,6 @@ uint32_t DFrameBuffer::GetCaps()
 	return (uint32_t)FlagSet;
 }
 
-void DFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
-{
-	SWRenderer->WriteSavePic(player, file, width, height);
-}
-
-
 //==========================================================================
 //
 // Calculates the viewport values needed for 2D and 3D operations

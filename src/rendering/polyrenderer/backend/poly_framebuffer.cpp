@@ -53,7 +53,6 @@
 #include "engineerrors.h"
 
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
-void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
 
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
@@ -217,17 +216,6 @@ void PolyFrameBuffer::Update()
 	Super::Update();
 }
 
-
-void PolyFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
-{
-	if (!V_IsHardwareRenderer())
-	{
-		Super::WriteSavePic(player, file, width, height);
-	}
-	else
-	{
-	}
-}
 
 sector_t *PolyFrameBuffer::RenderView(player_t *player)
 {

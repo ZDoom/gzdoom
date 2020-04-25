@@ -32,6 +32,7 @@
 #include "r_data/r_interpolate.h"
 #include "r_utility.h"
 #include "d_player.h"
+#include "swrenderer/r_renderer.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
@@ -39,6 +40,7 @@
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
+#include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
@@ -118,3 +120,107 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 
 	return mainvp.sector;
 }
+
+void DoWriteSavePic(FileWriter* file, ESSType ssformat, uint8_t* scr, int width, int height, sector_t* viewsector, bool upsidedown)
+{
+	PalEntry palette[256];
+	PalEntry modulateColor;
+	auto blend = V_CalcBlend(viewsector, &modulateColor);
+	int pixelsize = 1;
+	// Apply the screen blend, because the renderer does not provide this.
+	if (ssformat == SS_RGB)
+	{
+		int numbytes = width * height * 3;
+		pixelsize = 3;
+		if (modulateColor != 0xffffffff)
+		{
+			float r = modulateColor.r / 255.f;
+			float g = modulateColor.g / 255.f;
+			float b = modulateColor.b / 255.f;
+			for (int i = 0; i < numbytes; i += 3)
+			{
+				scr[i] = uint8_t(scr[i] * r);
+				scr[i + 1] = uint8_t(scr[i + 1] * g);
+				scr[i + 2] = uint8_t(scr[i + 2] * b);
+			}
+		}
+		float iblendfac = 1.f - blend.W;
+		blend.X *= blend.W;
+		blend.Y *= blend.W;
+		blend.Z *= blend.W;
+		for (int i = 0; i < numbytes; i += 3)
+		{
+			scr[i] = uint8_t(scr[i] * iblendfac + blend.X);
+			scr[i + 1] = uint8_t(scr[i + 1] * iblendfac + blend.Y);
+			scr[i + 2] = uint8_t(scr[i + 2] * iblendfac + blend.Z);
+		}
+	}
+	else
+	{
+		// Apply the screen blend to the palette. The colormap related parts get skipped here because these are already part of the image.
+		DoBlending(GPalette.BaseColors, palette, 256, uint8_t(blend.X), uint8_t(blend.Y), uint8_t(blend.Z), uint8_t(blend.W * 255));
+	}
+
+	int pitch = width * pixelsize;
+	if (upsidedown)
+	{
+		scr += ((height - 1) * width * pixelsize);
+		pitch *= -1;
+	}
+
+	M_CreatePNG(file, scr, ssformat == SS_PAL ? palette : nullptr, ssformat, width, height, pitch, Gamma);
+}
+
+//===========================================================================
+//
+// Render the view to a savegame picture
+//
+//===========================================================================
+
+void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
+{
+	if (!V_IsHardwareRenderer())
+	{
+		SWRenderer->WriteSavePic(player, file, width, height);
+	}
+	else
+	{
+		IntRect bounds;
+		bounds.left = 0;
+		bounds.top = 0;
+		bounds.width = width;
+		bounds.height = height;
+		auto& RenderState = *screen->RenderState();
+
+		// we must be sure the GPU finished reading from the buffer before we fill it with new data.
+		screen->WaitForCommands(false);
+
+		// Switch to render buffers dimensioned for the savepic
+		screen->SetSaveBuffers(true);
+		screen->ImageTransitionScene(true);
+
+		hw_ClearFakeFlat();
+		RenderState.SetVertexBuffer(screen->mVertexData);
+		screen->mVertexData->Reset();
+		screen->mLights->Clear();
+		screen->mViewpoints->Clear();
+
+		// This shouldn't overwrite the global viewpoint even for a short time.
+		FRenderViewpoint savevp;
+		sector_t* viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+		RenderState.EnableStencil(false);
+		RenderState.SetNoSoftLightLevel();
+
+		int numpixels = width * height;
+		uint8_t* scr = (uint8_t*)M_Malloc(numpixels * 3);
+		screen->CopyScreenToBuffer(width, height, scr);
+
+		DoWriteSavePic(file, SS_RGB, scr, width, height, viewsector, screen->FlipSavePic());
+		M_Free(scr);
+
+		// Switch back the screen render buffers
+		screen->SetViewportRects(nullptr);
+		screen->SetSaveBuffers(false);
+	}
+}
+

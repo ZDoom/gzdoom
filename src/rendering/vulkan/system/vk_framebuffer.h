@@ -80,7 +80,6 @@ public:
 	uint32_t GetCaps() override;
 	const char* DeviceName() const override;
 	int Backend() override { return 1; }
-	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	void TextureFilterChanged() override;
@@ -91,6 +90,8 @@ public:
 	void AmbientOccludeScene(float m5) override;
 	void SetSceneRenderTarget(bool useSSAO) override;
 	void UpdateShadowMap() override;
+	void SetSaveBuffers(bool yes) override;
+	void ImageTransitionScene(bool unknown) override;
 
 	IHardwareTexture *CreateHardwareTexture() override;
 	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;
@@ -108,7 +109,7 @@ public:
 
 	void Draw2D() override;
 
-	void WaitForCommands(bool finish);
+	void WaitForCommands(bool finish) override;
 
 	void PushGroup(const FString &name);
 	void PopGroup();
@@ -118,7 +119,7 @@ private:
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
-	void CopyScreenToBuffer(int w, int h, void *data);
+	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;
 	void DeleteFrameObjects();
 	void FlushCommands(VulkanCommandBuffer **commands, size_t count, bool finish, bool lastsubmit);
 

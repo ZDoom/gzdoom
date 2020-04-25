@@ -617,7 +617,9 @@ file( GLOB HEADER_FILES
 	common/thirdparty/*.h
 	common/thirdparty/rapidjson/*.h
 	common/thirdparty/math/*h
+	common/rendering/*.h
 	common/rendering/gl_load/*.h
+	common/rendering/hwrenderer/data/*.h
 	common/scripting/core/*h
 	common/scripting/vm/*h
 	common/scripting/jit/*h
@@ -1257,6 +1259,7 @@ include_directories( .
 	common/fonts
 	common/objects
 	common/rendering
+	common/rendering/hwrenderer/data
 	common/rendering/gl_load
 	common/scripting/vm
 	common/scripting/jit
@@ -1473,6 +1476,8 @@ source_group("Common\\Platforms\\Unix Files" REGULAR_EXPRESSION "^${CMAKE_CURREN
 source_group("Common\\Platforms\\SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/posix/sdl/.+")
 source_group("Common\\Platforms\\Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/win32/.+")
 source_group("Common\\Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/.+")
+source_group("Common\\Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/.+")
+source_group("Common\\Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/data/.+")
 source_group("Common\\Rendering\\OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gl_load/.+")
 source_group("Common\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/.+")
 source_group("Common\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/.+")

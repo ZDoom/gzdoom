@@ -39,6 +39,7 @@
 #include "cmdlib.h"
 #include "v_draw.h"
 #include "i_interface.h"
+#include "printf.h"
 
 #define NUMSCALEMODES countof(vScaleTable)
 extern bool setsizeneeded;

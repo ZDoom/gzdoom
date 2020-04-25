@@ -49,6 +49,7 @@
 #include "x86.h"
 #include "g_levellocals.h"
 #include "m_png.h"
+#include "v_colortables.h"
 
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;

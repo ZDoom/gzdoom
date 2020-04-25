@@ -27,7 +27,6 @@
 
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
-#include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 #include "hw_viewpointbuffer.h"
 

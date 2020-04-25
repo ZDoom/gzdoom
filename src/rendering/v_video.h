@@ -35,15 +35,11 @@
 #define __V_VIDEO_H__
 
 #include <functional>
-#include "doomtype.h"
 #include "vectors.h"
 
-#include "doomdef.h"
 #include "m_png.h"
-#include "dobject.h"
 #include "renderstyle.h"
 #include "c_cvars.h"
-#include "v_colortables.h"
 #include "v_2ddrawer.h"
 
 #include "hwrenderer/dynlights/hw_shadowmap.h"

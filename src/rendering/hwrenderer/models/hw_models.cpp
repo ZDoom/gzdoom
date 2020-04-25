@@ -39,7 +39,7 @@
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "hwrenderer/scene/hw_renderstate.h"
+#include "hw_renderstate.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_models.h"
 

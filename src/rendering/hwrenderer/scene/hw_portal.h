@@ -2,6 +2,7 @@
 
 #include "tarray.h"
 #include "r_utility.h"
+#include "r_sections.h"
 #include "actor.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"

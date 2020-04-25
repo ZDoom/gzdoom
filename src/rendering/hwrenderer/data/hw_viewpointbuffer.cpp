@@ -27,7 +27,7 @@
 
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
-#include "hwrenderer/scene/hw_renderstate.h"
+#include "hw_renderstate.h"
 #include "hw_viewpointbuffer.h"
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough

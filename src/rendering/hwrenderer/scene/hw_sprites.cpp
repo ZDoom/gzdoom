@@ -237,11 +237,11 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 			{
 				di->SetFog(state, thislight, rel, di->isFullbrightScene(), &thiscm, additivefog);
 			}
-			state.SetSplitPlanes(*topplane, *lowplane);
+			SetSplitPlanes(state, *topplane, *lowplane);
 		}
 		else if (clipping)
 		{
-			state.SetSplitPlanes(topp, bottomp);
+			SetSplitPlanes(state, topp, bottomp);
 		}
 
 		if (!modelframe)

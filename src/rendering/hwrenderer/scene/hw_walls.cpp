@@ -44,6 +44,35 @@
 #include "hw_renderstate.h"
 #include "hw_skydome.h"
 
+
+void SetGlowPlanes(FRenderState &state, const secplane_t& top, const secplane_t& bottom)
+{
+	auto& tn = top.Normal();
+	auto& bn = bottom.Normal();
+	FVector4 tp = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+	FVector4 bp = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	state.SetGlowPlanes(tp, bp);
+}
+
+void SetGradientPlanes(FRenderState& state, const secplane_t& top, const secplane_t& bottom)
+{
+	auto& tn = top.Normal();
+	auto& bn = bottom.Normal();
+	FVector4 tp = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+	FVector4 bp = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	state.SetGradientPlanes(tp, bp);
+}
+
+void SetSplitPlanes(FRenderState& state, const secplane_t& top, const secplane_t& bottom)
+{
+	auto& tn = top.Normal();
+	auto& bn = bottom.Normal();
+	FVector4 tp = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
+	FVector4 bp = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+	state.SetSplitPlanes(tp, bp);
+}
+
+
 //==========================================================================
 //
 // General purpose wall rendering function
@@ -155,7 +184,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 	{
 		state.EnableGlow(true);
 		state.SetGlowParams(topglowcolor, bottomglowcolor);
-		state.SetGlowPlanes(frontsector->ceilingplane, frontsector->floorplane);
+		SetGlowPlanes(state, frontsector->ceilingplane, frontsector->floorplane);
 	}
 	state.SetMaterial(texture, UF_Texture, 0, flags & 3, 0, -1);
 
@@ -191,20 +220,20 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 				{
 					if (tierndx == side_t::top)
 					{
-						state.SetGradientPlanes(frontsector->ceilingplane, backsector->ceilingplane);
+						SetGradientPlanes(state, frontsector->ceilingplane, backsector->ceilingplane);
 					}
 					else if (tierndx == side_t::mid)
 					{
-						state.SetGradientPlanes(backsector->ceilingplane, backsector->floorplane);
+						SetGradientPlanes(state, backsector->ceilingplane, backsector->floorplane);
 					}
 					else // side_t::bottom:
 					{
-						state.SetGradientPlanes(backsector->floorplane, frontsector->floorplane);
+						SetGradientPlanes(state, backsector->floorplane, frontsector->floorplane);
 					}
 				}
 				else
 				{
-					state.SetGradientPlanes(frontsector->ceilingplane, frontsector->floorplane);
+					SetGradientPlanes(state, frontsector->ceilingplane, frontsector->floorplane);
 				}
 			}
 		}
@@ -237,7 +266,7 @@ void HWWall::RenderTexturedWall(HWDrawInfo *di, FRenderState &state, int rflags)
 				CopyFrom3DLight(thiscm, &(*lightlist)[i]);
 				di->SetColor(state, thisll, rel, false, thiscm, absalpha);
 				if (type != RENDERWALL_M2SNF) di->SetFog(state, thisll, rel, false, &thiscm, RenderStyle == STYLE_Add);
-				state.SetSplitPlanes((*lightlist)[i].plane, lowplane);
+				SetSplitPlanes(state, (*lightlist)[i].plane, lowplane);
 				RenderWall(di, state, rflags);
 			}
 			if (low1 <= zbottom[0] && low2 <= zbottom[1]) break;

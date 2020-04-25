@@ -108,7 +108,7 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				di->SetColor(state, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
 				if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
 				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);
-				state.SetSplitPlanes(lightlist[k].plane, lowplane);
+				SetSplitPlanes(state, lightlist[k].plane, lowplane);
 
 				state.Draw(DT_TriangleStrip, vertindex, 4);
 			}

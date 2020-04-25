@@ -6,7 +6,7 @@
 #include "vectors.h"
 #include "matrix.h"
 #include "name.h"
-#include "hwrenderer/scene/hw_renderstate.h"
+#include "hw_renderstate.h"
 
 #define SHADER_MIN_REQUIRED_TEXTURE_LAYERS 8
 

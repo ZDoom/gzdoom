@@ -41,7 +41,7 @@
 #include "v_video.h"
 #include "cmdlib.h"
 #include "hwrenderer/data/buffers.h"
-#include "hwrenderer/scene/hw_renderstate.h"
+#include "hw_renderstate.h"
 
 //==========================================================================
 //

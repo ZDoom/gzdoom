@@ -41,6 +41,8 @@
 EXTERN_CVAR(Int, r_mirror_recursions)
 EXTERN_CVAR(Bool, gl_portals)
 
+void SetPlaneTextureRotation(FRenderState& state, HWSectorPlane* plane, FGameTexture* texture);
+
 //-----------------------------------------------------------------------------
 //
 // StartFrame
@@ -979,7 +981,7 @@ void HWHorizonPortal::DrawContents(HWDrawInfo *di, FRenderState &state)
 	state.SetMaterial(texture, UF_Texture, 0, CLAMP_NONE, 0, -1);
 	state.SetObjectColor(origin->specialcolor);
 
-	state.SetPlaneTextureRotation(sp, texture);
+	SetPlaneTextureRotation(state, sp, texture);
 	state.AlphaFunc(Alpha_GEqual, 0.f);
 	state.SetRenderStyle(STYLE_Source);
 

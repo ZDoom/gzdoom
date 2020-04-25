@@ -27,7 +27,7 @@
 #include "gl_interface.h"
 #include "matrix.h"
 #include "hwrenderer/scene//hw_drawstructs.h"
-#include "hwrenderer/scene//hw_renderstate.h"
+#include "hw_renderstate.h"
 #include "hw_material.h"
 #include "c_cvars.h"
 #include "r_defs.h"

@@ -243,6 +243,15 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 //
 //===========================================================================
 
+static void CheckTimer(FRenderState &state, uint64_t ShaderStartTime)
+{
+	// if firstFrame is not yet initialized, initialize it to current time
+	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
+	if ((state.firstFrame == 0) || (screen->FrameTime - state.firstFrame >= 1 << 24) || ShaderStartTime >= state.firstFrame)
+		state.firstFrame = screen->FrameTime;
+}
+
+
 sector_t* RenderView(player_t* player)
 {
 	auto RenderState = screen->RenderState();
@@ -281,7 +290,7 @@ sector_t* RenderView(player_t* player)
 
 		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
 		if (player->camera)
-			RenderState->CheckTimer(player->camera->Level->ShaderStartTime);
+			CheckTimer(*RenderState, player->camera->Level->ShaderStartTime);
 		// prepare all camera textures that have been used in the last frame.
 		// This must be done for all levels, not just the primary one!
 		for (auto Level : AllLevels())

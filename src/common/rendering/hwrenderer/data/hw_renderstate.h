@@ -2,11 +2,9 @@
 
 #include "v_palette.h"
 #include "vectors.h"
-#include "g_levellocals.h"
-#include "hw_drawstructs.h"
-#include "hw_drawlist.h"
 #include "matrix.h"
 #include "hw_material.h"
+#include "texmanip.h"
 
 struct FColormap;
 class IVertexBuffer;
@@ -239,9 +237,9 @@ protected:
 
 	EPassType mPassType = NORMAL_PASS;
 
-	uint64_t firstFrame = 0;
-
 public:
+
+	uint64_t firstFrame = 0;
 	VSMatrix mModelMatrix;
 	VSMatrix mTextureMatrix;
 
@@ -432,28 +430,22 @@ public:
 		 mLightParms[3] = -1.f;
 	}
 
-	void SetGlowPlanes(const secplane_t &top, const secplane_t &bottom)
+	void SetGlowPlanes(const FVector4 &tp, const FVector4& bp)
 	{
-		auto &tn = top.Normal();
-		auto &bn = bottom.Normal();
-		mStreamData.uGlowTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
-		mStreamData.uGlowBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+		mStreamData.uGlowTopPlane = tp;
+		mStreamData.uGlowBottomPlane = bp;
 	}
 
-	void SetGradientPlanes(const secplane_t &top, const secplane_t &bottom)
+	void SetGradientPlanes(const FVector4& tp, const FVector4& bp)
 	{
-		auto &tn = top.Normal();
-		auto &bn = bottom.Normal();
-		mStreamData.uGradientTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
-		mStreamData.uGradientBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+		mStreamData.uGradientTopPlane = tp;
+		mStreamData.uGradientBottomPlane = bp;
 	}
 
-	void SetSplitPlanes(const secplane_t &top, const secplane_t &bottom)
+	void SetSplitPlanes(const FVector4& tp, const FVector4& bp)
 	{
-		auto &tn = top.Normal();
-		auto &bn = bottom.Normal();
-		mStreamData.uSplitTopPlane = { (float)tn.X, (float)tn.Y, (float)top.negiC, (float)top.fD() };
-		mStreamData.uSplitBottomPlane = { (float)bn.X, (float)bn.Y, (float)bottom.negiC, (float)bottom.fD() };
+		mStreamData.uSplitTopPlane = tp;
+		mStreamData.uSplitBottomPlane = bp;
 	}
 
 	void SetDetailParms(float xscale, float yscale, float bias)
@@ -520,14 +512,6 @@ public:
 	{
 		if (func == Alpha_Greater) mAlphaThreshold = thresh;
 		else mAlphaThreshold = thresh - 0.001f;
-	}
-
-	void SetPlaneTextureRotation(HWSectorPlane *plane, FGameTexture *texture)
-	{
-		if (hw_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
-		{
-			EnableTextureMatrix(true);
-		}
 	}
 
 	void SetLightIndex(int index)
@@ -646,8 +630,6 @@ public:
 	{
 		return mPassType;
 	}
-
-	void CheckTimer(uint64_t ShaderStartTime);
 
 	// API-dependent render interface
 

@@ -28,7 +28,7 @@
 #include "g_levellocals.h"
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hwrenderer/scene/hw_renderstate.h"
+#include "hw_renderstate.h"
 #include "skyboxtexture.h"
 
 

@@ -9,7 +9,7 @@
 #include "name.h"
 
 #include "hwrenderer/scene/hw_drawstructs.h"
-#include "hwrenderer/scene/hw_renderstate.h"
+#include "hw_renderstate.h"
 #include "hw_material.h"
 
 class VkRenderPassSetup;

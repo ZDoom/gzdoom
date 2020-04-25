@@ -25,7 +25,7 @@
 #include "r_data/colormaps.h"
 #include "hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "hwrenderer/scene/hw_renderstate.h"
+#include "hw_renderstate.h"
 #include "poly_framebuffer.h"
 #include "poly_hwtexture.h"
 

@@ -292,10 +292,8 @@ sector_t *PolyFrameBuffer::RenderView(player_t *player)
 
 void PolyFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc)
 {
-	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
 	auto BaseLayer = static_cast<PolyHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
-	float ratio = tex->aspectRatio;
 	DCanvas *image = BaseLayer->GetImage(tex, 0, 0);
 	PolyDepthStencil *depthStencil = BaseLayer->GetDepthStencil(tex);
 	mRenderState->SetRenderTarget(image, depthStencil, false);

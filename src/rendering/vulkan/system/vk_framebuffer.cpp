@@ -394,9 +394,7 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 }
 
 void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc)
-
 {
-	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
 	auto BaseLayer = static_cast<VkHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
 	VkTextureImage *image = BaseLayer->GetImage(tex, 0, 0);
@@ -410,7 +408,6 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 
 	mRenderState->SetRenderTarget(image, depthStencil->View.get(), image->Image->width, image->Image->height, VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT);
 
-	float ratio = tex->aspectRatio;
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
 	bounds.width = std::min(tex->GetWidth(), image->Image->width);

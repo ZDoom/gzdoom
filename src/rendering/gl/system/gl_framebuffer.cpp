@@ -216,9 +216,6 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 	GLRenderer->StartOffscreen();
 	GLRenderer->BindToFrameBuffer(tex);
 
-	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
-	float ratio = tex->aspectRatio;
-
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
 	bounds.width = FHardwareTexture::GetTexDimension(tex->GetWidth());

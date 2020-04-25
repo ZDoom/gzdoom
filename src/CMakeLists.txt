@@ -770,8 +770,6 @@ set( FASTMATH_SOURCES
 	common/textures/hires/xbr/xbrz.cpp
 	common/textures/hires/xbr/xbrz_old.cpp
 	common/rendering/gl_load/gl_load.c
-	rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
 	rendering/hwrenderer/dynlights/hw_dynlightdata.cpp
 	rendering/hwrenderer/scene/hw_bsp.cpp
 	rendering/hwrenderer/scene/hw_fakeflat.cpp
@@ -968,8 +966,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/scene/hw_skydome.cpp
 	rendering/hwrenderer/scene/hw_drawlistadd.cpp
 	rendering/hwrenderer/scene/hw_renderstate.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocess.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
 	rendering/hwrenderer/textures/hw_precache.cpp
 	rendering/hwrenderer/utility/hw_clock.cpp
@@ -1149,6 +1145,9 @@ set (PCH_SOURCES
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
 	common/rendering/r_videoscale.cpp
+	common/rendering/hwrenderer/postprocessing/hw_postprocess.cpp
+	common/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
+
 	common/rendering/gl_load/gl_interface.cpp
 	common/scripting/core/dictionary.cpp
 	common/scripting/core/dynarrays.cpp
@@ -1477,7 +1476,8 @@ source_group("Common\\Platforms\\SDL Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT
 source_group("Common\\Platforms\\Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/platform/win32/.+")
 source_group("Common\\Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/.+")
 source_group("Common\\Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/.+")
-source_group("Common\\Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/data/.+")
+source_group("Common\\Rendering\\Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/data/.+")
+source_group("Common\\Rendering\\Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/postprocessing/.+")
 source_group("Common\\Rendering\\OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gl_load/.+")
 source_group("Common\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/.+")
 source_group("Common\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/.+")

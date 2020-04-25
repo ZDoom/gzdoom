@@ -21,7 +21,7 @@
 
 #include "vm.h"
 #include "d_player.h"
-#include "hw_postprocessshader.h"
+#include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include "g_levellocals.h"
 
 TArray<PostProcessShader> PostProcessShaders;

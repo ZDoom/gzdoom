@@ -24,8 +24,6 @@ public:
 
 	unsigned int GetLightBufferBlockSize() const;
 
-	std::unique_ptr<SWSceneDrawer> swdrawer;
-
 	PolyFrameBuffer(void *hMonitor, bool fullscreen);
 	~PolyFrameBuffer();
 
@@ -36,11 +34,9 @@ public:
 	void InitializeState() override;
 
 	FRenderState* RenderState() override;
-	void CleanForRestart() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
-	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;

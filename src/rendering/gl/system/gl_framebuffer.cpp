@@ -57,8 +57,6 @@ EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Bool, cl_capfps)
 
-extern bool NoInterpolateView;
-
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
@@ -234,89 +232,6 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 //
 //===========================================================================
 
-sector_t *OpenGLFrameBuffer::RenderView(player_t *player)
-{
-	if (GLRenderer != nullptr)
-	{
-		gl_RenderState.SetVertexBuffer(screen->mVertexData);
-		screen->mVertexData->Reset();
-		sector_t* retsec;
-
-		if (!V_IsHardwareRenderer())
-		{
-			if (GLRenderer->swdrawer == nullptr) GLRenderer->swdrawer = new SWSceneDrawer;
-			retsec = GLRenderer->swdrawer->RenderView(player);
-		}
-		else
-		{
-			hw_ClearFakeFlat();
-
-			iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
-
-			checkBenchActive();
-
-			// reset statistics counters
-			ResetProfilingData();
-
-			// Get this before everything else
-			if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
-			else r_viewpoint.TicFrac = I_GetTimeFrac();
-
-			screen->mLights->Clear();
-			screen->mViewpoints->Clear();
-
-			// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
-			bool saved_niv = NoInterpolateView;
-			NoInterpolateView = false;
-
-			// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
-			if (player->camera)
-				gl_RenderState.CheckTimer(player->camera->Level->ShaderStartTime);
-			// prepare all camera textures that have been used in the last frame.
-			// This must be done for all levels, not just the primary one!
-			for (auto Level : AllLevels())
-			{
-				Level->canvasTextureInfo.UpdateAll([&](AActor* camera, FCanvasTexture* camtex, double fov)
-					{
-						RenderTextureView(camtex, [=](IntRect &bounds)
-							{
-								FRenderViewpoint texvp;
-								float ratio = camtex->aspectRatio;
-								RenderViewpoint(texvp, camera, &bounds, fov, ratio, ratio, false, false);
-						});
-					});
-			}
-			NoInterpolateView = saved_niv;
-
-
-			// now render the main view
-			float fovratio;
-			float ratio = r_viewwindow.WidescreenRatio;
-			if (r_viewwindow.WidescreenRatio >= 1.3f)
-			{
-				fovratio = 1.333333f;
-			}
-			else
-			{
-				fovratio = ratio;
-			}
-
-			retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
-		}
-		All.Unclock();
-		return retsec;
-	}
-	return nullptr;
-}
-
-
-
-//===========================================================================
-//
-// 
-//
-//===========================================================================
-
 uint32_t OpenGLFrameBuffer::GetCaps()
 {
 	if (!V_IsHardwareRenderer())
@@ -387,12 +302,6 @@ void OpenGLFrameBuffer::SetVSync(bool vsync)
 //
 //
 //===========================================================================
-
-void OpenGLFrameBuffer::CleanForRestart()
-{
-	if (GLRenderer)
-		GLRenderer->ResetSWScene();
-}
 
 void OpenGLFrameBuffer::SetTextureFilterMode()
 {

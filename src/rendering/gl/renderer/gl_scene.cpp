@@ -32,6 +32,8 @@
 #include "r_data/r_interpolate.h"
 #include "r_utility.h"
 #include "d_player.h"
+#include "i_time.h"
+#include "swrenderer/r_swscene.h"
 #include "swrenderer/r_renderer.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/utility/hw_clock.h"
@@ -45,6 +47,16 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
 
+EXTERN_CVAR(Bool, cl_capfps)
+extern bool NoInterpolateView;
+
+static SWSceneDrawer *swdrawer;
+
+void CleanSWDrawer()
+{
+	if (swdrawer) delete swdrawer;
+	swdrawer = nullptr;
+}
 
 //-----------------------------------------------------------------------------
 //
@@ -222,5 +234,86 @@ void WriteSavePic(player_t* player, FileWriter* file, int width, int height)
 		screen->SetViewportRects(nullptr);
 		screen->SetSaveBuffers(false);
 	}
+}
+
+//===========================================================================
+//
+// Renders the main view
+//
+//===========================================================================
+
+sector_t* RenderView(player_t* player)
+{
+	auto RenderState = screen->RenderState();
+	RenderState->SetVertexBuffer(screen->mVertexData);
+	screen->mVertexData->Reset();
+
+	sector_t* retsec;
+	if (!V_IsHardwareRenderer())
+	{
+		screen->SetActiveRenderTarget();	// only relevant for Vulkan
+
+		if (!swdrawer) swdrawer = new SWSceneDrawer;
+		retsec = swdrawer->RenderView(player);
+	}
+	else
+	{
+		hw_ClearFakeFlat();
+
+		iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
+
+		checkBenchActive();
+
+		// reset statistics counters
+		ResetProfilingData();
+
+		// Get this before everything else
+		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
+		else r_viewpoint.TicFrac = I_GetTimeFrac();
+
+		screen->mLights->Clear();
+		screen->mViewpoints->Clear();
+
+		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
+		bool saved_niv = NoInterpolateView;
+		NoInterpolateView = false;
+
+		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
+		if (player->camera)
+			RenderState->CheckTimer(player->camera->Level->ShaderStartTime);
+		// prepare all camera textures that have been used in the last frame.
+		// This must be done for all levels, not just the primary one!
+		for (auto Level : AllLevels())
+		{
+			Level->canvasTextureInfo.UpdateAll([&](AActor* camera, FCanvasTexture* camtex, double fov)
+				{
+					screen->RenderTextureView(camtex, [=](IntRect& bounds)
+						{
+							FRenderViewpoint texvp;
+							float ratio = camtex->aspectRatio;
+							RenderViewpoint(texvp, camera, &bounds, fov, ratio, ratio, false, false);
+						});
+				});
+		}
+		NoInterpolateView = saved_niv;
+
+		// now render the main view
+		float fovratio;
+		float ratio = r_viewwindow.WidescreenRatio;
+		if (r_viewwindow.WidescreenRatio >= 1.3f)
+		{
+			fovratio = 1.333333f;
+		}
+		else
+		{
+			fovratio = ratio;
+		}
+
+		screen->ImageTransitionScene(true); // Only relevant for Vulkan.
+
+		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+	}
+	All.Unclock();
+	return retsec;
 }
 

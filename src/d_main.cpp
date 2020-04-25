@@ -113,6 +113,7 @@
 #include "scriptutil.h"
 #include "v_palette.h"
 #include "texturemanager.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 
 #ifdef __unix__
 #include "i_system.h"  // for SHARE_DIR
@@ -925,7 +926,7 @@ void D_Display ()
 		
 		D_Render([&]()
 		{
-			viewsec = screen->RenderView(&players[consoleplayer]);
+			viewsec = RenderView(&players[consoleplayer]);
 		}, true);
 
 		screen->Begin2D();
@@ -3471,7 +3472,7 @@ void D_Cleanup()
 	M_SaveDefaults(NULL);			// save config before the restart
 	
 	// delete all data that cannot be left until reinitialization
-	if (screen) screen->CleanForRestart();
+	CleanSWDrawer();
 	V_ClearFonts();					// must clear global font pointers
 	ColorSets.Clear();
 	PainFlashes.Clear();

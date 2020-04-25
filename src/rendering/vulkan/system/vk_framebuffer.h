@@ -64,8 +64,6 @@ public:
 		std::vector<std::unique_ptr<VulkanCommandBuffer>> CommandBuffers;
 	} FrameDeleteList;
 
-	std::unique_ptr<SWSceneDrawer> swdrawer;
-
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
 	bool IsVulkan() override { return true; }
@@ -74,13 +72,11 @@ public:
 
 	void InitializeState() override;
 
-	void CleanForRestart() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
 	const char* DeviceName() const override;
 	int Backend() override { return 1; }
-	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	void TextureFilterChanged() override;
 	void StartPrecaching() override;
@@ -92,6 +88,7 @@ public:
 	void UpdateShadowMap() override;
 	void SetSaveBuffers(bool yes) override;
 	void ImageTransitionScene(bool unknown) override;
+	void SetActiveRenderTarget() override;
 
 	IHardwareTexture *CreateHardwareTexture() override;
 	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;

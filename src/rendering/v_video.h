@@ -215,7 +215,6 @@ public:
 	IntRect mOutputLetterbox;
 	float mSceneClearColor[4];
 
-
 public:
 	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer();
@@ -261,7 +260,6 @@ public:
 	virtual void SetVSync (bool vsync);
 
 	// Delete any resources that need to be deleted after restarting with a different IWAD
-	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
 	virtual IHardwareTexture *CreateHardwareTexture() { return nullptr; }
 	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
@@ -309,7 +307,6 @@ public:
 	virtual uint32_t GetCaps();
 	virtual int Backend() { return 0; }
 	virtual const char* DeviceName() const { return "Unknown"; }
-	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 	virtual void AmbientOccludeScene(float m5) {}
 	virtual void FirstEye() {}
 	virtual void NextEye(int eyecount) {}
@@ -321,6 +318,7 @@ public:
 	virtual void CopyScreenToBuffer(int width, int height, uint8_t* buffer)	{ memset(buffer, 0, width* height); }
 	virtual bool FlipSavePic() const { return false; }
 	virtual void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect&)> renderFunc) {}
+	virtual void SetActiveRenderTarget() {}
 
 
 	// Screen wiping

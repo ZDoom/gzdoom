@@ -67,7 +67,6 @@ EXTERN_CVAR(Int, gl_tonemap)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
 
-extern bool NoInterpolateView;
 extern int rendered_commandbuffers;
 int current_rendered_commandbuffers;
 
@@ -317,82 +316,6 @@ void VulkanFrameBuffer::WaitForCommands(bool finish)
 	}
 }
 
-sector_t *VulkanFrameBuffer::RenderView(player_t *player)
-{
-	// To do: this is virtually identical to FGLRenderer::RenderView and should be merged.
-
-	mRenderState->SetVertexBuffer(screen->mVertexData);
-	screen->mVertexData->Reset();
-
-	sector_t *retsec;
-	if (!V_IsHardwareRenderer())
-	{
-		mPostprocess->SetActiveRenderTarget();
-
-		if (!swdrawer) swdrawer.reset(new SWSceneDrawer);
-		retsec = swdrawer->RenderView(player);
-	}
-	else
-	{
-		hw_ClearFakeFlat();
-
-		iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
-
-		checkBenchActive();
-
-		// reset statistics counters
-		ResetProfilingData();
-
-		// Get this before everything else
-		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
-		else r_viewpoint.TicFrac = I_GetTimeFrac();
-
-		screen->mLights->Clear();
-		screen->mViewpoints->Clear();
-
-		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
-		bool saved_niv = NoInterpolateView;
-		NoInterpolateView = false;
-
-		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
-		if (player->camera)
-			GetRenderState()->CheckTimer(player->camera->Level->ShaderStartTime);
-		// prepare all camera textures that have been used in the last frame.
-		// This must be done for all levels, not just the primary one!
-		for (auto Level : AllLevels())
-		{
-			Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
-			{
-				RenderTextureView(camtex, [=](IntRect &bounds)
-					{
-						FRenderViewpoint texvp;
-						float ratio = camtex->aspectRatio;
-						RenderViewpoint(texvp, camera, &bounds, fov, ratio, ratio, false, false);
-				});
-			});
-		}
-		NoInterpolateView = saved_niv;
-
-		// now render the main view
-		float fovratio;
-		float ratio = r_viewwindow.WidescreenRatio;
-		if (r_viewwindow.WidescreenRatio >= 1.3f)
-		{
-			fovratio = 1.333333f;
-		}
-		else
-		{
-			fovratio = ratio;
-		}
-
-		mPostprocess->ImageTransitionScene(true); // This is the only line that differs compared to FGLRenderer::RenderView
-
-		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
-	}
-	All.Unclock();
-	return retsec;
-}
-
 void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc)
 {
 	auto BaseLayer = static_cast<VkHardwareTexture*>(tex->GetHardwareTexture(0, 0));
@@ -460,12 +383,6 @@ void VulkanFrameBuffer::SetVSync(bool vsync)
 {
 	// This is handled in VulkanSwapChain::AcquireImage.
 	cur_vsync = vsync;
-}
-
-void VulkanFrameBuffer::CleanForRestart()
-{
-	// force recreation of the SW scene drawer to ensure it gets a new set of resources.
-	swdrawer.reset();
 }
 
 void VulkanFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
@@ -637,6 +554,12 @@ void VulkanFrameBuffer::CopyScreenToBuffer(int w, int h, uint8_t *data)
 	}
 	staging->Unmap();
 }
+
+void VulkanFrameBuffer::SetActiveRenderTarget()
+{
+	mPostprocess->SetActiveRenderTarget();
+}
+
 
 TArray<uint8_t> VulkanFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_type, float &gamma)
 {

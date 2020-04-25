@@ -68,16 +68,12 @@ public:
 
 	//FRotator mAngles;
 
-	SWSceneDrawer *swdrawer = nullptr;
-
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
 
 	void Initialize(int width, int height);
 
 	void ClearBorders();
-
-	void ResetSWScene();
 
 	void PresentStereo();
 	void RenderScreenQuad();

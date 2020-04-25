@@ -9,6 +9,7 @@
 #include <memory>
 
 class FWrapperTexture;
+class DCanvas;
 
 class SWSceneDrawer
 {

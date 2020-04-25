@@ -38,11 +38,9 @@ public:
 	bool FlipSavePic() const override { return true; }
 
 	FRenderState* RenderState() override;
-	void CleanForRestart() override;
 	void UpdatePalette() override;
 	uint32_t GetCaps() override;
 	const char* DeviceName() const override;
-	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;

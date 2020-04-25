@@ -27,8 +27,7 @@
 #include "i_time.h"
 #include "g_game.h"
 #include "v_text.h"
-
-#include "rendering/i_video.h"
+#include "i_video.h"
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"

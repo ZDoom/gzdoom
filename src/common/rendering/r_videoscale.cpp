@@ -36,18 +36,14 @@
 #include "v_video.h"
 #include "templates.h"
 #include "r_videoscale.h"
-
-#include "c_console.h"
-#include "menu/menu.h"
+#include "cmdlib.h"
+#include "v_draw.h"
+#include "i_interface.h"
 
 #define NUMSCALEMODES countof(vScaleTable)
-
-extern bool setsizeneeded, multiplayer, generic_ui;
+extern bool setsizeneeded;
 
 EXTERN_CVAR(Int, vid_aspect)
-
-EXTERN_CVAR(Bool, log_vgafont)
-EXTERN_CVAR(Bool, dlg_vgafont)
 
 CUSTOM_CVAR(Int, vid_scale_customwidth, VID_MIN_WIDTH, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -68,6 +64,9 @@ CUSTOM_CVAR(Float, vid_scale_custompixelaspect, 1.0, CVAR_ARCHIVE | CVAR_GLOBALC
 	if (self < 0.2 || self > 5.0)
 		self = 1.0;
 }
+
+static const int VID_MIN_UI_WIDTH = 640;
+static const int VID_MIN_UI_HEIGHT = 400;
 
 namespace
 {
@@ -108,8 +107,7 @@ namespace
 		static bool lastspecialUI = false;
 		bool isInActualMenu = false;
 
-		bool specialUI = (generic_ui || !!log_vgafont || !!dlg_vgafont || ConsoleState != c_up || multiplayer ||
-			(menuactive == MENU_On && CurrentMenu && !CurrentMenu->IsKindOf("ConversationMenu")));
+		bool specialUI = sysCallbacks && (!sysCallbacks->IsSpecialUI || sysCallbacks->IsSpecialUI());
 
 		if (specialUI == lastspecialUI)
 			return;

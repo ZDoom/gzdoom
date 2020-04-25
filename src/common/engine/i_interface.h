@@ -11,7 +11,7 @@ struct SystemCallbacks
 	bool (*CaptureModeInGame)();
 	void (*CrashInfo)(char* buffer, size_t bufflen, const char* lfstr);
 	void (*PlayStartupSound)(const char* name);
-
+	bool (*IsSpecialUI)();
 };
 
 extern SystemCallbacks *sysCallbacks;

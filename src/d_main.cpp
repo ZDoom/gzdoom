@@ -122,6 +122,9 @@
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Bool, cl_customizeinvulmap)
+EXTERN_CVAR(Bool, log_vgafont)
+EXTERN_CVAR(Bool, dlg_vgafont)
+
 void DrawHUD();
 void D_DoAnonStats();
 void I_DetectOS();
@@ -2645,6 +2648,13 @@ static void System_PlayStartupSound(const char* sndname)
 	S_Sound(CHAN_BODY, 0, sndname, 1, ATTN_NONE);
 }
 
+static bool System_IsSpecialUI()
+{
+	return (generic_ui || !!log_vgafont || !!dlg_vgafont || ConsoleState != c_up || multiplayer ||
+		(menuactive == MENU_On && CurrentMenu && !CurrentMenu->IsKindOf("ConversationMenu")));
+
+}
+
 //==========================================================================
 //
 // DoomSpecificInfo
@@ -2848,6 +2858,8 @@ static int D_DoomMain_Internal (void)
 		System_WantNativeMouse,
 		System_CaptureModeInGame,
 		System_CrashInfo,
+		System_PlayStartupSound,
+		System_IsSpecialUI,
 	};
 	sysCallbacks = &syscb;
 	

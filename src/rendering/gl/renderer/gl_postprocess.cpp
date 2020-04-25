@@ -20,10 +20,8 @@
 */
 
 #include "gl_system.h"
-#include "gi.h"
 #include "m_png.h"
 #include "r_utility.h"
-#include "d_player.h"
 #include "gl/system/gl_buffers.h"
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"

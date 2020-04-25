@@ -210,23 +210,21 @@ void OpenGLFrameBuffer::CopyScreenToBuffer(int width, int height, uint8_t* scr)
 //
 //===========================================================================
 
-void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, AActor* Viewpoint, double FOV)
+void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc)
+
 {
-	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
-
-	float ratio = tex->aspectRatio;
-
 	GLRenderer->StartOffscreen();
 	GLRenderer->BindToFrameBuffer(tex);
+
+	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
+	float ratio = tex->aspectRatio;
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
 	bounds.width = FHardwareTexture::GetTexDimension(tex->GetWidth());
 	bounds.height = FHardwareTexture::GetTexDimension(tex->GetHeight());
 
-	FRenderViewpoint texvp;
-	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);
-
+	renderFunc(bounds);
 	GLRenderer->EndOffscreen();
 
 	tex->SetUpdated(true);
@@ -283,7 +281,12 @@ sector_t *OpenGLFrameBuffer::RenderView(player_t *player)
 			{
 				Level->canvasTextureInfo.UpdateAll([&](AActor* camera, FCanvasTexture* camtex, double fov)
 					{
-						RenderTextureView(camtex, camera, fov);
+						RenderTextureView(camtex, [=](IntRect &bounds)
+							{
+								FRenderViewpoint texvp;
+								float ratio = camtex->aspectRatio;
+								RenderViewpoint(texvp, camera, &bounds, fov, ratio, ratio, false, false);
+						});
 					});
 			}
 			NoInterpolateView = saved_niv;

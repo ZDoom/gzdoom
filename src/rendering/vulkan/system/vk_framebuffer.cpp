@@ -363,7 +363,12 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 		{
 			Level->canvasTextureInfo.UpdateAll([&](AActor *camera, FCanvasTexture *camtex, double fov)
 			{
-				RenderTextureView(camtex, camera, fov);
+				RenderTextureView(camtex, [=](IntRect &bounds)
+					{
+						FRenderViewpoint texvp;
+						float ratio = camtex->aspectRatio;
+						RenderViewpoint(texvp, camera, &bounds, fov, ratio, ratio, false, false);
+				});
 			});
 		}
 		NoInterpolateView = saved_niv;
@@ -388,11 +393,12 @@ sector_t *VulkanFrameBuffer::RenderView(player_t *player)
 	return retsec;
 }
 
-void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
+void VulkanFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc)
+
 {
+	// This doesn't need to clear the fake flat cache. It can be shared between camera textures and the main view of a scene.
 	auto BaseLayer = static_cast<VkHardwareTexture*>(tex->GetHardwareTexture(0, 0));
 
-	float ratio = tex->aspectRatio;
 	VkTextureImage *image = BaseLayer->GetImage(tex, 0, 0);
 	VkTextureImage *depthStencil = BaseLayer->GetDepthStencil(tex);
 
@@ -404,13 +410,13 @@ void VulkanFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 
 	mRenderState->SetRenderTarget(image, depthStencil->View.get(), image->Image->width, image->Image->height, VK_FORMAT_R8G8B8A8_UNORM, VK_SAMPLE_COUNT_1_BIT);
 
+	float ratio = tex->aspectRatio;
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
 	bounds.width = std::min(tex->GetWidth(), image->Image->width);
 	bounds.height = std::min(tex->GetHeight(), image->Image->height);
 
-	FRenderViewpoint texvp;
-	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, ratio, ratio, false, false);
+	renderFunc(bounds);
 
 	mRenderState->EndRenderPass();
 

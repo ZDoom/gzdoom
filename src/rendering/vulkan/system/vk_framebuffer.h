@@ -114,9 +114,11 @@ public:
 	void PushGroup(const FString &name);
 	void PopGroup();
 	void UpdateGpuStats();
+	IntRect SetupTextureView(FCanvasTexture* tex);
+	void FinishTextureView(FCanvasTexture* tex);
 
 private:
-	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
+	void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc) override;
 	void PrintStartupLog();
 	void CreateFanToTrisIndexBuffer();
 	void CopyScreenToBuffer(int w, int h, uint8_t *data) override;

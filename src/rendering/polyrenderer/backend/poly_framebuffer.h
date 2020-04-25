@@ -70,7 +70,7 @@ public:
 	} FrameDeleteList;
 
 private:
-	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
+	void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc) override;
 	void UpdateShadowMap();
 
 	void CheckCanvas();

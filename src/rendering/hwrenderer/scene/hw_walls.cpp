@@ -22,6 +22,7 @@
 
 #include "p_local.h"
 #include "p_lnspec.h"
+#include "a_dynlight.h"
 #include "a_sharedglobal.h"
 #include "r_defs.h"
 #include "r_sky.h"
@@ -412,7 +413,7 @@ void HWWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 				}
 				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
 				{
-					draw_dlight += lightdata.GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true);
+					draw_dlight += GetLight(lightdata, seg->frontsector->PortalGroup, p, node->lightsource, true);
 				}
 			}
 		}
@@ -497,7 +498,6 @@ void HWWall::PutWall(HWDrawInfo *di, bool translucent)
 
 void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 {
-	auto pstate = screen->mPortalState;
 	HWPortal * portal = nullptr;
 
 	MakeVertices(di, false);
@@ -506,11 +506,11 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		// portals don't go into the draw list.
 		// Instead they are added to the portal manager
 	case PORTALTYPE_HORIZON:
-		horizon = pstate->UniqueHorizons.Get(horizon);
+		horizon = portalState.UniqueHorizons.Get(horizon);
 		portal = di->FindPortal(horizon);
 		if (!portal)
 		{
-			portal = new HWHorizonPortal(pstate, horizon, di->Viewpoint);
+			portal = new HWHorizonPortal(&portalState, horizon, di->Viewpoint);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -521,10 +521,10 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
-			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(pstate, secportal);
+			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new HWEEHorizonPortal(&portalState, secportal);
 			else
 			{
-				portal = new HWSkyboxPortal(pstate, secportal);
+				portal = new HWSkyboxPortal(&portalState, secportal);
 				di->Portals.Push(portal);
 			}
 		}
@@ -535,20 +535,20 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		portal = di->FindPortal(this->portal);
 		if (!portal)
 		{
-			portal = new HWSectorStackPortal(pstate, this->portal);
+			portal = new HWSectorStackPortal(&portalState, this->portal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
 		break;
 
 	case PORTALTYPE_PLANEMIRROR:
-		if (pstate->PlaneMirrorMode * planemirror->fC() <= 0)
+		if (portalState.PlaneMirrorMode * planemirror->fC() <= 0)
 		{
-			planemirror = pstate->UniquePlaneMirrors.Get(planemirror);
+			planemirror = portalState.UniquePlaneMirrors.Get(planemirror);
 			portal = di->FindPortal(planemirror);
 			if (!portal)
 			{
-				portal = new HWPlaneMirrorPortal(pstate, planemirror);
+				portal = new HWPlaneMirrorPortal(&portalState, planemirror);
 				di->Portals.Push(portal);
 			}
 			portal->AddLine(this);
@@ -559,7 +559,7 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 		portal = di->FindPortal(seg->linedef);
 		if (!portal)
 		{
-			portal = new HWMirrorPortal(pstate, seg->linedef);
+			portal = new HWMirrorPortal(&portalState, seg->linedef);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
@@ -581,18 +581,18 @@ void HWWall::PutPortal(HWDrawInfo *di, int ptype, int plane)
 			{
 				di->ProcessActorsInPortal(otherside->getPortal()->mGroup, di->in_area);
 			}
-			portal = new HWLineToLinePortal(pstate, lineportal);
+			portal = new HWLineToLinePortal(&portalState, lineportal);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);
 		break;
 
 	case PORTALTYPE_SKY:
-		sky = pstate->UniqueSkies.Get(sky);
+		sky = portalState.UniqueSkies.Get(sky);
 		portal = di->FindPortal(sky);
 		if (!portal)
 		{
-			portal = new HWSkyPortal(screen->mSkyData, pstate, sky);
+			portal = new HWSkyPortal(screen->mSkyData, &portalState, sky);
 			di->Portals.Push(portal);
 		}
 		portal->AddLine(this);

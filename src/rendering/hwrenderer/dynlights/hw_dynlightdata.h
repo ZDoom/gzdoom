@@ -23,9 +23,6 @@
 #ifndef __GLC_DYNLIGHT_H
 #define __GLC_DYNLIGHT_H
 
-#include "a_dynlight.h"
-
-
 struct FDynLightData
 {
 	TArray<float> arrays[3];
@@ -53,8 +50,6 @@ struct FDynLightData
 		if (siz[2] > max) siz[2] = max;
 	}
     
-    bool GetLight(int group, Plane & p, FDynamicLight * light, bool checkside);
-    void AddLightToList(int group, FDynamicLight * light, bool forceAttenuate);
 
 };
 

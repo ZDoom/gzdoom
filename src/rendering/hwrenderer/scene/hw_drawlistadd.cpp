@@ -26,6 +26,7 @@
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hw_material.h"
+#include "actor.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 

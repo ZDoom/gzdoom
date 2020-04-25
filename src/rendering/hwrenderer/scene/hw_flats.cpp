@@ -26,6 +26,7 @@
 */
 
 #include "a_sharedglobal.h"
+#include "a_dynlight.h"
 #include "r_defs.h"
 #include "r_sky.h"
 #include "r_utility.h"
@@ -168,7 +169,7 @@ void HWFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &light
 		}
 
 		p.Set(plane.plane.Normal(), plane.plane.fD());
-		draw_dlightf += lightdata.GetLight(portalgroup, p, light, false);
+		draw_dlightf += GetLight(lightdata, portalgroup, p, light, false);
 		node = node->nextLight;
 	}
 

@@ -26,8 +26,9 @@
 **/
 
 #include "actorinlines.h"
-
+#include "a_dynlight.h"
 #include "hw_dynlightdata.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
 
 // If we want to share the array to avoid constant allocations it needs to be thread local unless it'd be littered with expensive synchronization.
 thread_local FDynLightData lightdata;
@@ -48,7 +49,7 @@ CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool FDynLightData::GetLight(int group, Plane & p, FDynamicLight * light, bool checkside)
+bool GetLight(FDynLightData& dld, int group, Plane & p, FDynamicLight * light, bool checkside)
 {
 	DVector3 pos = light->PosRelative(group);
 	float radius = (light->GetRadius());
@@ -62,7 +63,7 @@ bool FDynLightData::GetLight(int group, Plane & p, FDynamicLight * light, bool c
 		return false;
 	}
 
-	AddLightToList(group, light, false);
+	AddLightToList(dld, group, light, false);
 	return true;
 }
 
@@ -71,7 +72,7 @@ bool FDynLightData::GetLight(int group, Plane & p, FDynamicLight * light, bool c
 // Add one dynamic light to the light data list
 //
 //==========================================================================
-void FDynLightData::AddLightToList(int group, FDynamicLight * light, bool forceAttenuate)
+void AddLightToList(FDynLightData &dld, int group, FDynamicLight * light, bool forceAttenuate)
 {
 	int i = 0;
 
@@ -129,7 +130,7 @@ void FDynLightData::AddLightToList(int group, FDynamicLight * light, bool forceA
 		spotDirZ = float(-Angle.Sin() * xzLen);
 	}
 
-	float *data = &arrays[i][arrays[i].Reserve(16)];
+	float *data = &dld.arrays[i][dld.arrays[i].Reserve(16)];
 	data[0] = float(pos.X);
 	data[1] = float(pos.Z);
 	data[2] = float(pos.Y);

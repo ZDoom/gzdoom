@@ -430,3 +430,8 @@ bool hw_SetPlaneTextureRotation(const HWSectorPlane * secplane, FGameTexture * g
 void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata);
 
 extern const float LARGE_VALUE;
+
+struct FDynLightData;
+struct FDynamicLight;
+bool GetLight(FDynLightData& dld, int group, Plane& p, FDynamicLight* light, bool checkside);
+void AddLightToList(FDynLightData &dld, int group, FDynamicLight* light, bool forceAttenuate);

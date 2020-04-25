@@ -28,6 +28,7 @@
 #include "stats.h"
 #include "g_levellocals.h"
 #include "v_video.h"
+#include "a_dynlight.h"
 
 /*
 	The 1D shadow maps are stored in a 1024x1024 texture as float depth values (R32F).

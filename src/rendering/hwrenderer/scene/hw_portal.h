@@ -128,6 +128,8 @@ struct FPortalSceneState
 	void RenderPortal(HWPortal *p, FRenderState &state, bool usestencil, HWDrawInfo *outer_di);
 };
 
+extern FPortalSceneState portalState;
+
     
 class HWScenePortalBase : public HWPortal
 {

@@ -71,6 +71,7 @@ CCMD(gl_portalinfo)
 }
 
 static FString indent;
+FPortalSceneState portalState;
 
 //-----------------------------------------------------------------------------
 //

@@ -118,7 +118,7 @@ void HWDrawInfo::SetFog(FRenderState &state, int lightlevel, int rellight, bool 
 	}
 
 	// Make fog a little denser when inside a skybox
-	if (screen->mPortalState->inskybox) fogdensity += fogdensity / 2;
+	if (portalState.inskybox) fogdensity += fogdensity / 2;
 
 
 	// no fog in enhanced vision modes!

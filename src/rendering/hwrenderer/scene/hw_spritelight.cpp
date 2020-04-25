@@ -26,6 +26,7 @@
 */
 
 #include "c_dispatch.h"
+#include "a_dynlight.h" 
 #include "p_local.h"
 #include "p_effect.h"
 #include "g_level.h"
@@ -34,6 +35,7 @@
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
 #include "r_data/models/models.h"
 
 template<class T>
@@ -182,7 +184,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							modellightdata.AddLightToList(group, light, true);
+							AddLightToList(modellightdata, group, light, true);
 							addedLights.Push(light);
 						}
 					}

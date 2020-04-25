@@ -26,6 +26,7 @@
 */
 
 #include "a_sharedglobal.h"
+#include "a_dynlight.h"
 #include "r_utility.h"
 #include "r_sky.h"
 #include "g_levellocals.h"
@@ -128,7 +129,7 @@ int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &light
 			iter_dlightf++;
 
 			p.Set(plane->Normal(), plane->fD());
-			draw_dlightf += lightdata.GetLight(sub->sector->PortalGroup, p, light, true);
+			draw_dlightf += GetLight(lightdata, sub->sector->PortalGroup, p, light, true);
 			node = node->nextLight;
 		}
 

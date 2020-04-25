@@ -43,7 +43,6 @@ public:
 
 };
 
-int gl_SetDynModelLight(AActor *self, int dynlightindex);
 
 #endif
 

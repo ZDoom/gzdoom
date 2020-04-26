@@ -366,11 +366,14 @@ static void crash_handler(const char *logfile)
 		const char *str;
 		char buf[512];
 
+#ifndef FLATPAK_BUNDLE
 		if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 			snprintf(buf, sizeof(buf), "kdialog --title \"Very Fatal Error\" --textbox \"%s\" 800 600", logfile);
-		else if((str=getenv("GNOME_DESKTOP_SESSION_ID")) && str[0] != '\0')
+		else
+		if((str=getenv("GNOME_DESKTOP_SESSION_ID")) && str[0] != '\0')
 			snprintf(buf, sizeof(buf), "gxmessage -buttons \"Okay:0\" -geometry 800x600 -title \"Very Fatal Error\" -center -file \"%s\"", logfile);
 		else
+#endif
 			snprintf(buf, sizeof(buf), "xmessage -buttons \"Okay:0\" -center -file \"%s\"", logfile);
 
 		system(buf);

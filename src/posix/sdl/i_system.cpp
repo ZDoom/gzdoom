@@ -59,6 +59,7 @@ void Linux_I_FatalError(const char* errortext)
 	// Close window or exit fullscreen and release mouse capture
 	SDL_Quit();
 
+#ifndef FLATPAK_BUNDLE
 	const char *str;
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{
@@ -67,13 +68,16 @@ void Linux_I_FatalError(const char* errortext)
 			<< "\" --msgbox \"" << errortext << "\"";
 		popen(cmd, "r");
 	}
+	else
+#endif
+
 #ifndef NO_GTK
-	else if (I_GtkAvailable())
+	if (I_GtkAvailable())
 	{
 		I_ShowFatalError_Gtk(errortext);
 	}
-#endif
 	else
+#endif
 	{
 		FString title;
 		title << GAMENAME " " << GetVersionString();
@@ -136,7 +140,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 		return defaultiwad;
 	}
 
-#ifndef __APPLE__
+#if ! defined (__APPLE__) && ! defined (FLATPAK_BUNDLE)
 	const char *str;
 	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
 	{

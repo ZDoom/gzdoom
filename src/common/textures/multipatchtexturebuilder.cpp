@@ -901,7 +901,6 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 						!buildinfo.bComplex)
 					{
 						AddImageToTexture(buildinfo.Parts[0].TexImage, buildinfo);
-						buildinfo.texture->Setup(buildinfo.Parts[0].TexImage);
 						done = true;
 					}
 				}

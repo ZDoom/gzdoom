@@ -206,6 +206,7 @@ public:
 	void CopySize(FGameTexture* BaseTexture)
 	{
 		Base->CopySize(BaseTexture->Base.get());
+		SetDisplaySize(BaseTexture->GetDisplayWidth(), BaseTexture->GetDisplayHeight());
 	}
 
 	// Glowing is a pure material property that should not filter down to the actual texture objects.
@@ -248,8 +249,8 @@ public:
 	{
 		ScaleX = x;
 		ScaleY = y;
-		DisplayWidth = x * TexelWidth;
-		DisplayHeight = y * TexelHeight;
+		DisplayWidth = TexelWidth / x;
+		DisplayHeight = TexelHeight / y;
 	}
 
 	const SpritePositioningInfo& GetSpritePositioning(int which) { if (spi == nullptr) SetupSpriteData(); return spi[which]; }

@@ -514,7 +514,7 @@ int calcShouldUpscale(FGameTexture *tex)
 		return 0;
 
 	// already scaled?
-	if (tex->GetDisplayWidth() >= 2* tex->GetTexelWidth() || tex->GetDisplayHeight() >= 2*tex->GetTexelHeight())
+	if (tex->GetScaleX() >= 2.f || tex->GetScaleY() > 2.f)
 		return 0;
 
 	return CTF_Upscale;

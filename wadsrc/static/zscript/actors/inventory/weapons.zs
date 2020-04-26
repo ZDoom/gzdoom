@@ -123,7 +123,7 @@ class Weapon : StateProvider
 	{
 		if (GetReplacement(GetClass()) == GetClass() && !bPowered_Up)
 		{
-			return SlotNumber, int(SlotPriority*65536);
+			return Default.SlotNumber, int(Default.SlotPriority*65536);
 		}
 		return -1, 0;
 	}

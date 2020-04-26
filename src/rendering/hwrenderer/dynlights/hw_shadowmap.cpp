@@ -98,10 +98,10 @@ CUSTOM_CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
     }
 }
 
-bool IShadowMap::ShadowTest(FDynamicLight *light, const DVector3 &pos)
+bool IShadowMap::ShadowTest(const DVector3 &lpos, const DVector3 &pos)
 {
-	if (light->shadowmapped && light->GetRadius() > 0.0 && IsEnabled() && mAABBTree)
-		return mAABBTree->RayTest(light->Pos, pos) >= 1.0f;
+	if (mAABBTree)
+		return mAABBTree->RayTest(lpos, pos) >= 1.0f;
 	else
 		return true;
 }

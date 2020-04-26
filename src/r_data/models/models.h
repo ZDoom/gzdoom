@@ -441,4 +441,7 @@ void BSPWalkCircle(FLevelLocals *Level, float x, float y, float radiusSquared, c
 		BSPNodeWalkCircle(Level->HeadNode(), x, y, radiusSquared, callback);
 }
 
+void RenderModel(FModelRenderer* renderer, float x, float y, float z, FSpriteModelFrame* smf, AActor* actor, double ticFrac);
+void RenderHUDModel(FModelRenderer* renderer, DPSprite* psp, float ofsX, float ofsY);
+
 #endif

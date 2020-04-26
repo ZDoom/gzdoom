@@ -94,7 +94,7 @@ namespace swrenderer
 		renderer.Translation = actor->Translation;
 
 		renderer.AddLights(actor);
-		renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
+		RenderModel(&renderer, x, y, z, smf, actor, r_viewpoint.TicFrac);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 #endif
 	}
@@ -143,7 +143,7 @@ namespace swrenderer
 		renderer.fillcolor = fullbrightSprite ? ThingColor : ThingColor.Modulate(playermo->Sector->SpecialColors[sector_t::sprites]);
 		renderer.Translation = 0xffffffff;// playermo->Translation;
 
-		renderer.RenderHUDModel(psp, ofsx, ofsy);
+		RenderHUDModel(&renderer, psp, ofsx, ofsy);
 		PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 #endif
 	}

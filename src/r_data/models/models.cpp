@@ -57,7 +57,10 @@ extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
 TDeletingArray<FModel*> Models;
 
-void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
+void RenderFrameModels(FModelRenderer* renderer, FLevelLocals* Level, const FSpriteModelFrame* smf, const FState* curState, const int curTics, const PClass* ti, int translation);
+
+
+void RenderModel(FModelRenderer *renderer, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
 {
 	// Setup transformation.
 
@@ -174,12 +177,12 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
-	BeginDrawModel(actor->RenderStyle, smf, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(actor->Level, smf, actor->state, actor->tics, actor->GetClass(), translation);
-	EndDrawModel(actor->RenderStyle, smf);
+	renderer->BeginDrawModel(actor->RenderStyle, smf, objectToWorldMatrix, orientation < 0);
+	RenderFrameModels(renderer, actor->Level, smf, actor->state, actor->tics, actor->GetClass(), translation);
+	renderer->EndDrawModel(actor->RenderStyle, smf);
 }
 
-void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
+void RenderHUDModel(FModelRenderer *renderer, DPSprite *psp, float ofsX, float ofsY)
 {
 	AActor * playermo = players[consoleplayer].camera;
 	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetSprite(), psp->GetFrame(), false);
@@ -190,7 +193,7 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 
 	// The model position and orientation has to be drawn independently from the position of the player,
 	// but we need to position it correctly in the world for light to work properly.
-	VSMatrix objectToWorldMatrix = GetViewToWorldMatrix();
+	VSMatrix objectToWorldMatrix = renderer->GetViewToWorldMatrix();
 
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
 	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
@@ -212,12 +215,12 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 
 	float orientation = smf->xscale * smf->yscale * smf->zscale;
 
-	BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(playermo->Level, smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), psp->Flags & PSPF_PLAYERTRANSLATED ? psp->Owner->mo->Translation : 0);
-	EndDrawHUDModel(playermo->RenderStyle);
+	renderer->BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0);
+	RenderFrameModels(renderer, playermo->Level, smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), psp->Flags & PSPF_PLAYERTRANSLATED ? psp->Owner->mo->Translation : 0);
+	renderer->EndDrawHUDModel(playermo->RenderStyle);
 }
 
-void FModelRenderer::RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
+void RenderFrameModels(FModelRenderer *renderer, FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
@@ -271,14 +274,14 @@ void FModelRenderer::RenderFrameModels(FLevelLocals *Level, const FSpriteModelFr
 		{
 			FModel * mdl = Models[smf->modelIDs[i]];
 			auto tex = smf->skinIDs[i].isValid() ? TexMan.GetGameTexture(smf->skinIDs[i], true) : nullptr;
-			mdl->BuildVertexBuffer(this);
+			mdl->BuildVertexBuffer(renderer);
 
 			mdl->PushSpriteMDLFrame(smf, i);
 
 			if (smfNext && smf->modelframes[i] != smfNext->modelframes[i])
-				mdl->RenderFrame(this, tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);
+				mdl->RenderFrame(renderer, tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);
 			else
-				mdl->RenderFrame(this, tex, smf->modelframes[i], smf->modelframes[i], 0.f, translation);
+				mdl->RenderFrame(renderer, tex, smf->modelframes[i], smf->modelframes[i], 0.f, translation);
 		}
 	}
 }

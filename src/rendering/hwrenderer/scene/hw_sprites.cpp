@@ -293,7 +293,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		else
 		{
 			FHWModelRenderer renderer(di, state, dynlightindex);
-			renderer.RenderModel(x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
+			RenderModel(&renderer, x, y, z, modelframe, actor, di->Viewpoint.TicFrac);
 			state.SetVertexBuffer(screen->mVertexData);
 		}
 	}

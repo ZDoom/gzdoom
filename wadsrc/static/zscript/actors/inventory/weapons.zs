@@ -34,8 +34,8 @@ class Weapon : StateProvider
 	bool bAltFire;							// Set when this weapon's alternate fire is used.
 	readonly bool bDehAmmo;					// Uses Doom's original amount of ammo for the respective attack functions so that old DEHACKED patches work as intended.
 											// AmmoUse1 will be set to the first attack's ammo use so that checking for empty weapons still works
-	meta int SlotNumber;
-	meta double SlotPriority;
+	int SlotNumber;
+	double SlotPriority;
 	
 	property AmmoGive: AmmoGive1;
 	property AmmoGive1: AmmoGive1;

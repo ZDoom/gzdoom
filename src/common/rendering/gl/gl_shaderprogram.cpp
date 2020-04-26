@@ -24,8 +24,8 @@
 #include "gl_interface.h"
 #include "hw_cvars.h"
 #include "gl_debug.h"
-#include "gl/shaders/gl_shaderprogram.h"
-#include "hwrenderer/utility/hw_shaderpatcher.h"
+#include "gl_shaderprogram.h"
+#include "hw_shaderpatcher.h"
 #include "filesystem.h"
 #include "printf.h"
 

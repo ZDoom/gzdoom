@@ -28,7 +28,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl_renderbuffers.h"
 #include "gl_postprocessstate.h"
-#include "gl/shaders/gl_shaderprogram.h"
+#include "gl_shaderprogram.h"
 #include "gl_buffers.h"
 #include "templates.h"
 #include <random>

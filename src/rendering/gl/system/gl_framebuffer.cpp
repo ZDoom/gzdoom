@@ -51,7 +51,7 @@
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hw_lightbuffer.h"
-#include "gl/shaders/gl_shaderprogram.h"
+#include "gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 #include "gl_buffers.h"

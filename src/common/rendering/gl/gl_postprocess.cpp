@@ -27,7 +27,7 @@
 #include "gl_renderbuffers.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl_postprocessstate.h"
-#include "gl/shaders/gl_shaderprogram.h"
+#include "gl_shaderprogram.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "flatvertices.h"

@@ -55,7 +55,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl_renderstate.h"
 #include "gl_renderbuffers.h"
-#include "gl/shaders/gl_shaderprogram.h"
+#include "gl_shaderprogram.h"
 #include "hw_vrmodes.h"
 #include "flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"

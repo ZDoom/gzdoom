@@ -35,7 +35,7 @@
 #include "md5.h"
 #include "m_misc.h"
 #include "gl/shaders/gl_shader.h"
-#include "hwrenderer/utility/hw_shaderpatcher.h"
+#include "hw_shaderpatcher.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"

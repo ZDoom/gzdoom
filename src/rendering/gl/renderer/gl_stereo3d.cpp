@@ -32,7 +32,7 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl_postprocessstate.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/shaders/gl_shaderprogram.h"
+#include "gl_shaderprogram.h"
 #include "gl_buffers.h"
 #include "menu/menu.h"
 

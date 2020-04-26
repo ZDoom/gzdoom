@@ -66,7 +66,7 @@ static FString NextGlslToken(const char *chars, long len, long &pos)
 
 	pos = tokenEnd;
 	return FString(chars + tokenStart, tokenEnd - tokenStart);
-}    
+}
 
 static bool isShaderType(const char *name)
 {

@@ -2,7 +2,7 @@
 #pragma once
 
 #include "gl_system.h"
-#include "gl_shader.h"
+#include "gl/shaders/gl_shader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
 namespace OpenGLRenderer

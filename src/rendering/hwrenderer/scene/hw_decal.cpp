@@ -30,7 +30,7 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "hw_material.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/utility/hw_lighting.h"

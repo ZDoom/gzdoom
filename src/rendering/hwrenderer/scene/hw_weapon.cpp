@@ -40,7 +40,7 @@
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hw_material.h"
 #include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/data/flatvertices.h"

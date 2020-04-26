@@ -21,7 +21,7 @@
 
 #include "v_video.h"
 #include "hw_postprocess.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include <random>

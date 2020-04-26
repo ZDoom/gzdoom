@@ -33,7 +33,7 @@
 #include "r_sky.h"
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "r_utility.h"
 #include "texturemanager.h"
 

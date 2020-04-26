@@ -1541,3 +1541,9 @@ FTextureID FTextureID::operator +(int offset) throw()
 	if (texnum + offset >= TexMan.NumTextures()) return FTextureID(-1);
 	return FTextureID(texnum + offset);
 }
+
+CCMD(flushtextures)
+{
+	TexMan.FlushAll();
+}
+

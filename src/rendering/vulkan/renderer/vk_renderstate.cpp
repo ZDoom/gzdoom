@@ -32,7 +32,7 @@
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"

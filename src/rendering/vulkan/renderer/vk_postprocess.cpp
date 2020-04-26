@@ -29,7 +29,7 @@
 #include "vulkan/system/vk_swapchain.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/textures/vk_imagetransition.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "hw_vrmodes.h"

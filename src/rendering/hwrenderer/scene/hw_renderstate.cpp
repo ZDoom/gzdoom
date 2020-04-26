@@ -30,7 +30,7 @@
 #include "hw_drawstructs.h"
 #include "hw_portal.h"
 #include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 
 
 //==========================================================================

@@ -21,7 +21,7 @@
 //
 
 #include "hwrenderer/dynlights/hw_shadowmap.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/data/shaderuniforms.h"

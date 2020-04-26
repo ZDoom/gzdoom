@@ -24,7 +24,7 @@
 #include "c_cvars.h"
 #include "v_video.h"
 
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "vulkan/system/vk_device.h"
 #include "vulkan/system/vk_builders.h"
 #include "vk_samplers.h"

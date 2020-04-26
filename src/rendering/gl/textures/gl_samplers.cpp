@@ -36,7 +36,7 @@
 #include "c_cvars.h"
 
 #include "gl_interface.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl_samplers.h"

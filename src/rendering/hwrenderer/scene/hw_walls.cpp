@@ -34,7 +34,7 @@
 #include "texturemanager.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hw_material.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/scene/hw_drawinfo.h"

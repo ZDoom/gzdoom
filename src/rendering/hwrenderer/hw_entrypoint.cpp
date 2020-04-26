@@ -41,7 +41,7 @@
 #include "hwrenderer/data/flatvertices.h"
 
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_clipper.h"

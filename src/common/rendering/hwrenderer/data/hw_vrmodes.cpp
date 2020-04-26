@@ -26,7 +26,7 @@
 */
 
 #include "vectors.h" // RAD2DEG
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hw_vrmodes.h"
 #include "v_video.h"
 #include "version.h"

@@ -118,11 +118,6 @@ CUSTOM_CVARD(Float, gl_texture_filter_anisotropic, 8, CVAR_ARCHIVE | CVAR_GLOBAL
 	screen->TextureFilterChanged();
 }
 
-CCMD(gl_flush)
-{
-	TexMan.FlushAll();
-}
-
 CUSTOM_CVARD(Int, gl_texture_filter, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL, "changes the texture filtering settings")
 {
 	if (self < 0 || self > 6) self=4;

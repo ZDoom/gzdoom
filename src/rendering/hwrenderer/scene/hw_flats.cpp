@@ -37,7 +37,7 @@
 #include "p_lnspec.h"
 #include "matrix.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hw_material.h"

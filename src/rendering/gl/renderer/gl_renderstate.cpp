@@ -30,7 +30,7 @@
 #include "r_data/colormaps.h"
 #include "gl_system.h"
 #include "gl_interface.h"
-#include "hwrenderer/utility/hw_cvars.h"
+#include "hw_cvars.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"
 #include "gl/shaders/gl_shader.h"

@@ -25,10 +25,6 @@
 #include "hw_dynlightdata.h"
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/data/shaderuniforms.h"
-#include "stats.h"
-#include "g_levellocals.h"
-#include "v_video.h"
-#include "a_dynlight.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
 /*
@@ -63,6 +59,8 @@ cycle_t IShadowMap::UpdateCycles;
 int IShadowMap::LightsProcessed;
 int IShadowMap::LightsShadowmapped;
 
+CVAR(Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 ADD_STAT(shadowmap)
 {
 	FString out;
@@ -85,67 +83,13 @@ CUSTOM_CVAR(Int, gl_shadowmap_quality, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (!self) for (auto Level : AllLevels())
-    {
-		auto light = Level->lights;
-		while (light)
-		{
-            light->mShadowmapIndex = 1024;
-			light = light->next;
-        }
-    }
-}
-
 bool IShadowMap::ShadowTest(const DVector3 &lpos, const DVector3 &pos)
 {
-	if (mAABBTree)
+	if (mAABBTree && gl_light_shadowmap)
 		return mAABBTree->RayTest(lpos, pos) >= 1.0f;
 	else
 		return true;
 }
-
-bool IShadowMap::IsEnabled() const
-{
-	return gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER);
-}
-
-void IShadowMap::CollectLights()
-{
-	if (mLights.Size() != 1024 * 4) mLights.Resize(1024 * 4);
-	int lightindex = 0;
-	auto Level = &level;
-
-	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
-	for (auto light = Level->lights; light; light = light->next)
-	{
-		LightsProcessed++;
-		if (light->shadowmapped && light->IsActive() && lightindex < 1024 * 4)
-		{
-			LightsShadowmapped++;
-
-			light->mShadowmapIndex = lightindex >> 2;
-
-			mLights[lightindex] = (float)light->X();
-			mLights[lightindex+1] = (float)light->Y();
-			mLights[lightindex+2] = (float)light->Z();
-			mLights[lightindex+3] = light->GetRadius();
-			lightindex += 4;
-		}
-        else
-        {
-            light->mShadowmapIndex = 1024;
-        }
-
-	}
-
-	for (; lightindex < 1024 * 4; lightindex++)
-	{
-		mLights[lightindex] = 0;
-	}
-}
-
 
 bool IShadowMap::PerformUpdate()
 {
@@ -154,7 +98,7 @@ bool IShadowMap::PerformUpdate()
 	LightsProcessed = 0;
 	LightsShadowmapped = 0;
 
-	if (IsEnabled())
+	if (gl_light_shadowmap && (screen->hwcaps & RFL_SHADER_STORAGE_BUFFER) && CollectLights != nullptr)
 	{
 		UpdateCycles.Clock();
 		UploadAABBTree();
@@ -166,6 +110,7 @@ bool IShadowMap::PerformUpdate()
 
 void IShadowMap::UploadLights()
 {
+	mLights.Resize(1024 * 4);
 	CollectLights();
 
 	if (mLightList == nullptr)
@@ -207,3 +152,4 @@ IShadowMap::~IShadowMap()
 {
 	Reset();
 }
+

@@ -59,6 +59,41 @@ void CleanSWDrawer()
 	swdrawer = nullptr;
 }
 
+#include "g_levellocals.h"
+#include "a_dynlight.h"
+
+
+void CollectLights(FLevelLocals* Level)
+{
+	IShadowMap* sm = &screen->mShadowMap;
+	int lightindex = 0;
+
+	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
+	for (auto light = Level->lights; light; light = light->next)
+	{
+		IShadowMap::LightsProcessed++;
+		if (light->shadowmapped && light->IsActive() && lightindex < 1024 * 4)
+		{
+			IShadowMap::LightsShadowmapped++;
+
+			light->mShadowmapIndex = lightindex;
+			sm->SetLight(lightindex, (float)light->X(), (float)light->Y(), (float)light->Z(), light->GetRadius());
+			lightindex++;
+		}
+		else
+		{
+			light->mShadowmapIndex = 1024;
+		}
+
+	}
+
+	for (; lightindex < 1024; lightindex++)
+	{
+		sm->SetLight(lightindex, 0, 0, 0, 0);
+	}
+}
+
+
 //-----------------------------------------------------------------------------
 //
 // Renders one viewpoint in a scene
@@ -75,6 +110,9 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 	{
 		screen->SetAABBTree(camera->Level->aabbTree);
 		screen->UpdateShadowMap();
+		screen->mShadowMap.SetCollectLights([=] {
+			CollectLights(camera->Level);
+		});
 	}
 
 	// Update the attenuation flag of all light defaults for each viewpoint.

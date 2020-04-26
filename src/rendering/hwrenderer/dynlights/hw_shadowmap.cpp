@@ -146,25 +146,6 @@ void IShadowMap::CollectLights()
 	}
 }
 
-bool IShadowMap::ValidateAABBTree(FLevelLocals *Level)
-{
-	// Just comparing the level info is not enough. If two MAPINFO-less levels get played after each other, 
-	// they can both refer to the same default level info.
-	if (Level->info != mLastLevel && (Level->nodes.Size() != mLastNumNodes || Level->segs.Size() != mLastNumSegs))
-	{
-		mAABBTree.reset();
-
-		mLastLevel = Level->info;
-		mLastNumNodes = Level->nodes.Size();
-		mLastNumSegs = Level->segs.Size();
-	}
-
-	if (mAABBTree)
-		return true;
-
-	mAABBTree.reset(new hwrenderer::LevelAABBTree(Level));
-	return false;
-}
 
 bool IShadowMap::PerformUpdate()
 {
@@ -196,8 +177,10 @@ void IShadowMap::UploadLights()
 
 void IShadowMap::UploadAABBTree()
 {
-	if (!ValidateAABBTree(&level))
+	if (mNewTree)
 	{
+		mNewTree = false;
+
 		if (!mNodesBuffer)
 			mNodesBuffer = screen->CreateDataBuffer(LIGHTNODES_BINDINGPOINT, true, false);
 		mNodesBuffer->SetData(mAABBTree->NodesSize(), mAABBTree->Nodes());
@@ -224,24 +207,3 @@ IShadowMap::~IShadowMap()
 {
 	Reset();
 }
-
-void PPShadowMap::Update(PPRenderState* renderstate)
-{
-	ShadowMapUniforms uniforms;
-	uniforms.ShadowmapQuality = (float)gl_shadowmap_quality;
-	uniforms.NodesCount = screen->mShadowMap.NodesCount();
-
-	renderstate->PushGroup("shadowmap");
-
-	renderstate->Clear();
-	renderstate->Shader = &ShadowMap;
-	renderstate->Uniforms.Set(uniforms);
-	renderstate->Viewport = { 0, 0, gl_shadowmap_quality, 1024 };
-	renderstate->SetShadowMapBuffers(true);
-	renderstate->SetOutputShadowMap();
-	renderstate->SetNoBlend();
-	renderstate->Draw();
-
-	renderstate->PopGroup();
-}
-

@@ -72,7 +72,10 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 	R_SetupFrame(mainvp, r_viewwindow, camera);
 
 	if (mainview && toscreen)
+	{
+		screen->SetAABBTree(camera->Level->aabbTree);
 		screen->UpdateShadowMap();
+	}
 
 	// Update the attenuation flag of all light defaults for each viewpoint.
 	// This function will only do something if the setting differs.

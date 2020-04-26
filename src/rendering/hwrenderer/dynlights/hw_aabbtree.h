@@ -37,17 +37,21 @@ struct AABBTreeLine
 	float dx, dy;
 };
 
-// Axis aligned bounding box tree used for ray testing treelines.
 class LevelAABBTree
 {
-public:
-	// Constructs a tree for the current level
-	LevelAABBTree(FLevelLocals *lev);
+protected:
+	// Nodes in the AABB tree. Last node is the root node.
+	TArray<AABBTreeNode> nodes;
 
+	// Line segments for the leaf nodes in the tree.
+	TArray<AABBTreeLine> treelines;
+
+	int dynamicStartNode = 0;
+	int dynamicStartLine = 0;
+
+public:
 	// Shoot a ray from ray_start to ray_end and return the closest hit as a fractional value between 0 and 1. Returns 1 if no line was hit.
 	double RayTest(const DVector3 &ray_start, const DVector3 &ray_end);
-
-	bool Update();
 
 	const void *Nodes() const { return nodes.Data(); }
 	const void *Lines() const { return treelines.Data(); }
@@ -62,31 +66,17 @@ public:
 	size_t DynamicNodesOffset() const { return dynamicStartNode * sizeof(AABBTreeNode); }
 	size_t DynamicLinesOffset() const { return dynamicStartLine * sizeof(AABBTreeLine); }
 
-private:
-	bool GenerateTree(const FVector2 *centroids, bool dynamicsubtree);
+	virtual bool Update() = 0;
+protected:
 
+	TArray<int> FindNodePath(unsigned int line, unsigned int node);
 	// Test if a ray overlaps an AABB node or not
 	bool OverlapRayAABB(const DVector2 &ray_start2d, const DVector2 &ray_end2d, const AABBTreeNode &node);
 
 	// Intersection test between a ray and a line segment
 	double IntersectRayLine(const DVector2 &ray_start, const DVector2 &ray_end, int line_index, const DVector2 &raydelta, double rayd, double raydist2);
 
-	// Generate a tree node and its children recursively
-	int GenerateTreeNode(int *treelines, int num_lines, const FVector2 *centroids, int *work_buffer);
 
-	TArray<int> FindNodePath(unsigned int line, unsigned int node);
-
-	// Nodes in the AABB tree. Last node is the root node.
-	TArray<AABBTreeNode> nodes;
-
-	// Line segments for the leaf nodes in the tree.
-	TArray<AABBTreeLine> treelines;
-
-	int dynamicStartNode = 0;
-	int dynamicStartLine = 0;
-
-	TArray<int> mapLines;
-	FLevelLocals *Level;
 };
 
 } // namespace

@@ -40,9 +40,14 @@ public:
 		return mAABBTree->NodesCount();
 	}
 
+	void SetAABBTree(hwrenderer::LevelAABBTree* tree)
+	{
+		mAABBTree = tree;
+		mNewTree = true;
+	}
+
 protected:
 	void CollectLights();
-	bool ValidateAABBTree(FLevelLocals *lev);
 
 	// Upload the AABB-tree to the GPU
 	void UploadAABBTree();
@@ -53,13 +58,9 @@ protected:
 	// Working buffer for creating the list of lights. Stored here to avoid allocating memory each frame
 	TArray<float> mLights;
 
-	// Used to detect when a level change requires the AABB tree to be regenerated
-	level_info_t *mLastLevel = nullptr;
-	unsigned mLastNumNodes = 0;
-	unsigned mLastNumSegs = 0;
-
-	// AABB-tree of the level, used for ray tests
-	std::unique_ptr<hwrenderer::LevelAABBTree> mAABBTree;
+	// AABB-tree of the level, used for ray tests, owned by the playsim, not the renderer.
+	hwrenderer::LevelAABBTree* mAABBTree = nullptr;
+	bool mNewTree = false;
 
 	IShadowMap(const IShadowMap &) = delete;
 	IShadowMap &operator=(IShadowMap &) = delete;

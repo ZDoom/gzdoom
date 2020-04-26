@@ -945,6 +945,7 @@ set (PCH_SOURCES
 	rendering/gl/system/gl_framebuffer.cpp
 	rendering/hwrenderer/hw_entrypoint.cpp
 	rendering/hwrenderer/data/hw_vertexbuilder.cpp
+	rendering/hwrenderer/dynlights/doom_aabbtree.cpp
 	rendering/hwrenderer/dynlights/hw_aabbtree.cpp
 	rendering/hwrenderer/dynlights/hw_shadowmap.cpp
 	rendering/hwrenderer/models/hw_models.cpp

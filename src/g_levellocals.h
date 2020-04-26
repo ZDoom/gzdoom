@@ -54,6 +54,7 @@
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 #include "r_data/r_interpolate.h"
+#include "hwrenderer/dynlights/doom_aabbtree.h"
 
 //============================================================================
 //
@@ -456,6 +457,7 @@ public:
 	FSectionContainer sections;
 	FCanvasTextureInfo canvasTextureInfo;
 	EventManager *localEventManager = nullptr;
+	DoomLevelAABBTree* aabbTree = nullptr;
 
 	// [ZZ] Destructible geometry information
 	TMap<int, FHealthGroup> healthGroups;

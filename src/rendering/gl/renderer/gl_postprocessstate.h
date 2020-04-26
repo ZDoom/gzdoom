@@ -5,7 +5,6 @@
 #include "gl_interface.h"
 #include "matrix.h"
 #include "c_cvars.h"
-#include "r_defs.h"
 
 namespace OpenGLRenderer
 {

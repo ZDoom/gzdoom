@@ -22,6 +22,7 @@
 #include "gl_system.h"
 #include "v_video.h"
 #include "gl_interface.h"
+#include "printf.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
@@ -29,8 +30,10 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl/system/gl_buffers.h"
+#include "templates.h"
 #include <random>
 
+EXTERN_CVAR(Int, gl_debug_level)
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 
 namespace OpenGLRenderer

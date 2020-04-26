@@ -19,7 +19,6 @@ struct particle_t;
 class FCanvasTexture;
 class FFlatVertexBuffer;
 class FSkyVertexBuffer;
-class FShaderManager;
 class HWPortal;
 class FLightBuffer;
 class DPSprite;
@@ -32,6 +31,7 @@ struct FRenderViewpoint;
 
 namespace OpenGLRenderer
 {
+	class FShaderManager;
 	class FSamplerManager;
 	class OpenGLFrameBuffer;
 	class FPresentShaderBase;

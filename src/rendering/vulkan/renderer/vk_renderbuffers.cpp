@@ -27,6 +27,7 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "templates.h"
 
 VkRenderBuffers::VkRenderBuffers()
 {

@@ -21,22 +21,20 @@
 
 #include "gl_system.h"
 #include "m_png.h"
-#include "r_utility.h"
 #include "gl/system/gl_buffers.h"
 #include "gl/system/gl_framebuffer.h"
-#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
-#include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
-#include "hw_vrmodes.h"
 #include "hwrenderer/data/flatvertices.h"
-#include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
+#include "v_video.h"
+#include "templates.h"
+#include "hw_vrmodes.h"
 
 extern bool vid_hdr_active;
 

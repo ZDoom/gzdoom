@@ -1,9 +1,7 @@
 #pragma once
 
 
-#include "r_defs.h"
 #include "c_cvars.h"
-
 
 EXTERN_CVAR(Bool,gl_enhanced_nightvision)
 EXTERN_CVAR(Int, screenblocks);
@@ -51,19 +49,6 @@ EXTERN_CVAR(Float, gl_ssao_blur_amount)
 
 EXTERN_CVAR(Int, gl_debug_level)
 EXTERN_CVAR(Bool, gl_debug_breakpoint)
-
-
-EXTERN_CVAR(Bool, gl_usecolorblending)
-EXTERN_CVAR(Bool, gl_sprite_blend)
-EXTERN_CVAR(Int, gl_spriteclip)
-EXTERN_CVAR(Float, gl_sclipthreshold)
-EXTERN_CVAR(Float, gl_sclipfactor)
-EXTERN_CVAR(Int, gl_particles_style)
-EXTERN_CVAR(Int, gl_billboard_mode)
-EXTERN_CVAR(Bool, gl_billboard_faces_camera)
-EXTERN_CVAR(Bool, gl_billboard_particles)
-EXTERN_CVAR(Int, gl_enhanced_nv_stealth)
-EXTERN_CVAR(Int, gl_fuzztype)
 
 EXTERN_CVAR(Int, gl_shadowmap_filter)
 

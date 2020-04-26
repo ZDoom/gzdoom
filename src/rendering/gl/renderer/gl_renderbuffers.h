@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "gl/shaders/gl_shader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
 namespace OpenGLRenderer

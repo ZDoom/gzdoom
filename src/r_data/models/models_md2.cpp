@@ -371,7 +371,7 @@ void FDMDModel::RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int f
 
 	renderer->SetInterpolation(inter);
 	renderer->SetMaterial(skin, false, translation);
-	GetVertexBuffer(renderer)->SetupFrame(renderer, frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
+	renderer->SetupFrame(this, frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
 	renderer->DrawArrays(0, lodInfo[0].numTriangles * 3);
 	renderer->SetInterpolation(0.f);
 }

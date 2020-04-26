@@ -27,29 +27,12 @@
 #include "r_data/voxels.h"
 #include "r_data/models/models.h"
 #include "hwrenderer/data/buffers.h"
+#include "hw_modelvertexbuffer.h"
 
 class HWSprite;
 struct HWDrawInfo;
 class FRenderState;
 
-class FModelVertexBuffer : public IModelVertexBuffer
-{
-	IVertexBuffer *mVertexBuffer;
-	IIndexBuffer *mIndexBuffer;
-
-public:
-
-	FModelVertexBuffer(bool needindex, bool singleframe);
-	~FModelVertexBuffer();
-
-	FModelVertex *LockVertexBuffer(unsigned int size) override;
-	void UnlockVertexBuffer() override;
-
-	unsigned int *LockIndexBuffer(unsigned int size) override;
-	void UnlockIndexBuffer() override;
-
-	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
-};
 
 class FHWModelRenderer : public FModelRenderer
 {
@@ -71,5 +54,7 @@ public:
 	void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) override;
 	void DrawArrays(int start, int count) override;
 	void DrawElements(int numIndices, size_t offset) override;
+	void SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size) override;
+
 };
 

@@ -134,88 +134,10 @@ void FHWModelRenderer::DrawElements(int numIndices, size_t offset)
 //
 //===========================================================================
 
-FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
+void FHWModelRenderer::SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size)
 {
-	mVertexBuffer = screen->CreateVertexBuffer();
-	mIndexBuffer = needindex ? screen->CreateIndexBuffer() : nullptr;
-
-	static const FVertexBufferAttribute format[] = {
-		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(FModelVertex, x) },
-		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(FModelVertex, u) },
-		{ 0, VATTR_NORMAL, VFmt_Packed_A2R10G10B10, (int)myoffsetof(FModelVertex, packedNormal) },
-		{ 1, VATTR_VERTEX2, VFmt_Float3, (int)myoffsetof(FModelVertex, x) },
-		{ 1, VATTR_NORMAL2, VFmt_Packed_A2R10G10B10, (int)myoffsetof(FModelVertex, packedNormal) }
-	};
-	mVertexBuffer->SetFormat(2, 5, sizeof(FModelVertex), format);
+	auto mdbuff = static_cast<FModelVertexBuffer*>(model->GetVertexBuffer(this));
+	state.SetVertexBuffer(mdbuff->vertexBuffer(), frame1, frame2);
+	if (mdbuff->indexBuffer()) state.SetIndexBuffer(mdbuff->indexBuffer());
 }
 
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-FModelVertexBuffer::~FModelVertexBuffer()
-{
-	if (mIndexBuffer) delete mIndexBuffer;
-	delete mVertexBuffer;
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-FModelVertex *FModelVertexBuffer::LockVertexBuffer(unsigned int size)
-{
-	return static_cast<FModelVertex*>(mVertexBuffer->Lock(size * sizeof(FModelVertex)));
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void FModelVertexBuffer::UnlockVertexBuffer()
-{
-	mVertexBuffer->Unlock();
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-unsigned int *FModelVertexBuffer::LockIndexBuffer(unsigned int size)
-{
-	if (mIndexBuffer) return static_cast<unsigned int*>(mIndexBuffer->Lock(size * sizeof(unsigned int)));
-	else return nullptr;
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void FModelVertexBuffer::UnlockIndexBuffer()
-{
-	if (mIndexBuffer) mIndexBuffer->Unlock();
-}
-
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
-void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
-{
-	auto &state = static_cast<FHWModelRenderer*>(renderer)->state;
-	state.SetVertexBuffer(mVertexBuffer, frame1, frame2);
-	if (mIndexBuffer) state.SetIndexBuffer(mIndexBuffer);
-}

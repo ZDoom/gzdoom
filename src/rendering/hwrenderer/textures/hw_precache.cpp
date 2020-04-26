@@ -37,6 +37,7 @@
 #include "v_video.h"
 #include "v_font.h"
 #include "texturemanager.h"
+#include "r_data/models/modelrenderer.h"
 
 EXTERN_CVAR(Bool, gl_precache)
 

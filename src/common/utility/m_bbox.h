@@ -29,7 +29,6 @@
 
 #include <float.h>
 #include "vectors.h"
-#include "m_fixed.h"
 
 enum
 {

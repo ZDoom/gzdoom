@@ -81,6 +81,7 @@
 #include "xlat/xlat.h"
 #include "vm.h"
 #include "texturemanager.h"
+#include "hwrenderer/data/hw_vertexbuilder.h"
 
 enum
 {
@@ -3223,7 +3224,7 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 
 	InitRenderInfo();				// create hardware independent renderer resources for the level. This must be done BEFORE the PolyObj Spawn!!!
 	Level->ClearDynamic3DFloorData();	// CreateVBO must be run on the plain 3D floor data.
-	screen->mVertexData->CreateVBO(Level->sectors);
+	CreateVBO(screen->mVertexData, Level->sectors);
 
 	for (auto &sec : Level->sectors)
 	{

@@ -32,16 +32,12 @@
 **
 */
 
-#include "doomtype.h"
-#include "p_local.h"
-#include "r_state.h"
 #include "c_cvars.h"
-#include "g_levellocals.h"
 #include "flatvertices.h"
 #include "v_video.h"
 #include "cmdlib.h"
+#include "printf.h"
 #include "hwrenderer/data/buffers.h"
-#include "hw_renderstate.h"
 
 //==========================================================================
 //
@@ -94,7 +90,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	};
 	mVertexBuffer->SetFormat(1, 2, sizeof(FFlatVertex), format);
 
-	mIndex = mCurIndex = 0;
+	mIndex = mCurIndex = NUM_RESERVED;
 	mNumReserved = NUM_RESERVED;
 	Copy(0, NUM_RESERVED);
 }
@@ -130,238 +126,6 @@ void FFlatVertexBuffer::OutputResized(int width, int height)
 
 //==========================================================================
 //
-// Initialize a single vertex
-//
-//==========================================================================
-
-void FFlatVertex::SetFlatVertex(vertex_t *vt, const secplane_t & plane)
-{
-	x = (float)vt->fX();
-	y = (float)vt->fY();
-	z = (float)plane.ZatPoint(vt);
-	u = (float)vt->fX()/64.f;
-	v = -(float)vt->fY()/64.f;
-}
-
-//==========================================================================
-//
-// Find a 3D floor
-//
-//==========================================================================
-
-static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
-{
-	for(unsigned i=0; i<target->e->XFloor.ffloors.Size(); i++)
-	{
-		F3DFloor *ffloor = target->e->XFloor.ffloors[i];
-		if (ffloor->model == model && !(ffloor->flags & FF_THISINSIDE)) return ffloor;
-	}
-	return NULL;
-}
-
-//==========================================================================
-//
-// Creates the vertices for one plane in one subsector
-//
-//==========================================================================
-
-int FFlatVertexBuffer::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, VertexContainer &verts)
-{
-	unsigned vi = vbo_shadowdata.Reserve(verts.vertices.Size());
-	float diff;
-
-	// Create the actual vertices.
-	if (sec->transdoor && floor) diff = -1.f;
-	else diff = 0.f;
-	for (unsigned i = 0; i < verts.vertices.Size(); i++)
-	{
-		vbo_shadowdata[vi + i].SetFlatVertex(verts.vertices[i].vertex, plane);
-		vbo_shadowdata[vi + i].z += diff;
-	}
-
-	unsigned rt = ibo_data.Reserve(verts.indices.Size());
-	for (unsigned i = 0; i < verts.indices.Size(); i++)
-	{
-		ibo_data[rt + i] = vi + verts.indices[i];
-	}
-	return (int)rt;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-int FFlatVertexBuffer::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, VertexContainers &verts)
-{
-	sec->vboindex[h] = vbo_shadowdata.Size();
-	// First calculate the vertices for the sector itself
-	sec->vboheight[h] = sec->GetPlaneTexZ(h);
-    sec->ibocount = verts[sec->Index()].indices.Size();
-	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, verts[sec->Index()]);
-
-	// Next are all sectors using this one as heightsec
-	TArray<sector_t *> &fakes = sec->e->FakeFloor.Sectors;
-	for (unsigned g = 0; g < fakes.Size(); g++)
-	{
-		sector_t *fsec = fakes[g];
-		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
-	}
-
-	// and finally all attached 3D floors
-	TArray<sector_t *> &xf = sec->e->XFloor.attached;
-	for (unsigned g = 0; g < xf.Size(); g++)
-	{
-		sector_t *fsec = xf[g];
-		F3DFloor *ffloor = Find3DFloor(fsec, sec);
-
-		if (ffloor != NULL && ffloor->flags & FF_RENDERPLANES)
-		{
-			bool dotop = (ffloor->top.model == sec) && (ffloor->top.isceiling == h);
-			bool dobottom = (ffloor->bottom.model == sec) && (ffloor->bottom.isceiling == h);
-
-			if (dotop || dobottom)
-			{
-				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, verts[fsec->Index()]);
-				if (dotop) ffloor->top.vindex = ndx;
-				if (dobottom) ffloor->bottom.vindex = ndx;
-			}
-		}
-	}
-	sec->vbocount[h] = vbo_shadowdata.Size() - sec->vboindex[h];
-	return sec->iboindex[h];
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FFlatVertexBuffer::CreateIndexedFlatVertices(TArray<sector_t> &sectors)
-{
-    auto verts = BuildVertices(sectors);
-
-	int i = 0;
-	/*
-	for (auto &vert : verts)
-	{
-		Printf(PRINT_LOG, "Sector %d\n", i);
-		Printf(PRINT_LOG, "%d vertices, %d indices\n", vert.vertices.Size(), vert.indices.Size());
-		int j = 0;
-		for (auto &v : vert.vertices)
-		{
-			Printf(PRINT_LOG, "    %d: (%2.3f, %2.3f)\n", j++, v.vertex->fX(), v.vertex->fY());
-		}
-		for (unsigned i=0;i<vert.indices.Size();i+=3)
-		{
-			Printf(PRINT_LOG, "     %d, %d, %d\n", vert.indices[i], vert.indices[i + 1], vert.indices[i + 2]);
-		}
-
-		i++;
-	}
-	*/
-
-    
-	for (int h = sector_t::floor; h <= sector_t::ceiling; h++)
-	{
-		for (auto &sec : sectors)
-		{
-			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, verts);
-		}
-	}
-
-	// We need to do a final check for Vavoom water and FF_FIX sectors.
-	// No new vertices are needed here. The planes come from the actual sector
-	for (auto &sec : sectors)
-	{
-		for (auto ff : sec.e->XFloor.ffloors)
-		{
-			if (ff->top.model == &sec)
-			{
-				ff->top.vindex = sec.iboindex[ff->top.isceiling];
-			}
-			if (ff->bottom.model == &sec)
-			{
-				ff->bottom.vindex = sec.iboindex[ff->top.isceiling];
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FFlatVertexBuffer::UpdatePlaneVertices(sector_t *sec, int plane)
-{
-	int startvt = sec->vboindex[plane];
-	int countvt = sec->vbocount[plane];
-	secplane_t &splane = sec->GetSecPlane(plane);
-	FFlatVertex *vt = &vbo_shadowdata[startvt];
-	FFlatVertex *mapvt = GetBuffer(startvt);
-	for(int i=0; i<countvt; i++, vt++, mapvt++)
-	{
-		vt->z = (float)splane.ZatPoint(vt->x, vt->y);
-		if (plane == sector_t::floor && sec->transdoor) vt->z -= 1;
-		mapvt->z = vt->z;
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FFlatVertexBuffer::CreateVertices(TArray<sector_t> &sectors)
-{
-	vbo_shadowdata.Resize(NUM_RESERVED);
-	CreateIndexedFlatVertices(sectors);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FFlatVertexBuffer::CheckPlanes(sector_t *sector)
-{
-	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
-	{
-		UpdatePlaneVertices(sector, sector_t::ceiling);
-		sector->vboheight[sector_t::ceiling] = sector->GetPlaneTexZ(sector_t::ceiling);
-	}
-	if (sector->GetPlaneTexZ(sector_t::floor) != sector->vboheight[sector_t::floor])
-	{
-		UpdatePlaneVertices(sector, sector_t::floor);
-		sector->vboheight[sector_t::floor] = sector->GetPlaneTexZ(sector_t::floor);
-	}
-}
-
-//==========================================================================
-//
-// checks the validity of all planes attached to this sector
-// and updates them if possible.
-//
-//==========================================================================
-
-void FFlatVertexBuffer::CheckUpdate(sector_t *sector)
-{
-	CheckPlanes(sector);
-	sector_t *hs = sector->GetHeightSec();
-	if (hs != NULL) CheckPlanes(hs);
-	for (unsigned i = 0; i < sector->e->XFloor.ffloors.Size(); i++)
-		CheckPlanes(sector->e->XFloor.ffloors[i]->model);
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -392,17 +156,3 @@ void FFlatVertexBuffer::Copy(int start, int count)
 	Unmap();
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FFlatVertexBuffer::CreateVBO(TArray<sector_t> &sectors)
-{
-	vbo_shadowdata.Resize(mNumReserved);
-	FFlatVertexBuffer::CreateVertices(sectors);
-	mCurIndex = mIndex = vbo_shadowdata.Size();
-	Copy(0, mIndex);
-	mIndexBuffer->SetData(ibo_data.Size() * sizeof(uint32_t), &ibo_data[0]);
-}

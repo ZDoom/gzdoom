@@ -958,7 +958,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/hw_entrypoint.cpp
 	rendering/hwrenderer/data/hw_vertexbuilder.cpp
 	rendering/hwrenderer/data/flatvertices.cpp
-	rendering/hwrenderer/data/hw_viewpointbuffer.cpp
 	rendering/hwrenderer/dynlights/hw_aabbtree.cpp
 	rendering/hwrenderer/dynlights/hw_shadowmap.cpp
 	rendering/hwrenderer/dynlights/hw_lightbuffer.cpp
@@ -1143,11 +1142,11 @@ set (PCH_SOURCES
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
 	common/rendering/r_videoscale.cpp
+	common/rendering/hwrenderer/data/hw_viewpointbuffer.cpp
 	common/rendering/hwrenderer/data/hw_cvars.cpp
 	common/rendering/hwrenderer/data/hw_vrmodes.cpp
 	common/rendering/hwrenderer/postprocessing/hw_postprocess.cpp
 	common/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
-
 	common/rendering/gl_load/gl_interface.cpp
 	common/scripting/core/dictionary.cpp
 	common/scripting/core/dynarrays.cpp

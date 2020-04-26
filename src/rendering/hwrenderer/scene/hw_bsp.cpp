@@ -41,6 +41,7 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/data/hw_vertexbuilder.h"
 
 #ifdef ARCH_IA32
 #include <immintrin.h>
@@ -628,7 +629,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 	if (sector->validcount != validcount)
 	{
-		screen->mVertexData->CheckUpdate(sector);
+		CheckUpdate(screen->mVertexData, sector);
 	}
 
 	// [RH] Add particles

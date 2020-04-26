@@ -783,7 +783,6 @@ set( FASTMATH_SOURCES
 	rendering/hwrenderer/scene/hw_walls.cpp
 	rendering/hwrenderer/scene/hw_walls_vertex.cpp
 	rendering/hwrenderer/scene/hw_weapon.cpp
-	r_data/models/models.cpp
 	common/utility/matrix.cpp
 )
 	
@@ -1007,6 +1006,8 @@ set (PCH_SOURCES
 	r_data/models/models_voxel.cpp
 	r_data/models/models_ue1.cpp
 	r_data/models/models_obj.cpp
+	r_data/models/models.cpp
+	r_data/models/model.cpp
 	scripting/vmiterators.cpp
 	scripting/vmthunks.cpp
 	scripting/vmthunks_actors.cpp

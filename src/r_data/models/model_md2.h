@@ -3,6 +3,7 @@
 
 #define MD2_MAGIC			0x32504449
 #define DMD_MAGIC			0x4D444D44
+#define MAX_LODS 4
 
 class FDMDModel : public FModel
 {

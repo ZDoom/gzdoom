@@ -20,11 +20,11 @@
 //--------------------------------------------------------------------------
 //
 
-#include "hwrenderer/dynlights/hw_shadowmap.h"
+#include "hw_shadowmap.h"
 #include "hw_cvars.h"
 #include "hw_dynlightdata.h"
-#include "hwrenderer/data/buffers.h"
-#include "hwrenderer/data/shaderuniforms.h"
+#include "buffers.h"
+#include "shaderuniforms.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
 /*

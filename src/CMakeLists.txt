@@ -946,8 +946,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/hw_entrypoint.cpp
 	rendering/hwrenderer/data/hw_vertexbuilder.cpp
 	rendering/hwrenderer/dynlights/doom_aabbtree.cpp
-	rendering/hwrenderer/dynlights/hw_aabbtree.cpp
-	rendering/hwrenderer/dynlights/hw_shadowmap.cpp
 	rendering/hwrenderer/models/hw_models.cpp
 	rendering/hwrenderer/scene/hw_skydome.cpp
 	rendering/hwrenderer/scene/hw_drawlistadd.cpp
@@ -1135,6 +1133,8 @@ set (PCH_SOURCES
 	common/rendering/hwrenderer/data/hw_cvars.cpp
 	common/rendering/hwrenderer/data/hw_vrmodes.cpp
 	common/rendering/hwrenderer/data/hw_lightbuffer.cpp
+	common/rendering/hwrenderer/data/hw_aabbtree.cpp
+	common/rendering/hwrenderer/data/hw_shadowmap.cpp
 	common/rendering/hwrenderer/postprocessing/hw_postprocess.cpp
 	common/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	common/rendering/gl_load/gl_interface.cpp

@@ -42,8 +42,7 @@
 #include "c_cvars.h"
 #include "v_2ddrawer.h"
 #include "intrect.h"
-
-#include "hwrenderer/dynlights/hw_shadowmap.h"
+#include "hw_shadowmap.h"
 
 static const int VID_MIN_WIDTH = 320;
 static const int VID_MIN_HEIGHT = 200;

@@ -33,7 +33,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "hw_dynlightdata.h"
-#include "hwrenderer/dynlights/hw_shadowmap.h"
+#include "hw_shadowmap.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "r_data/models/models.h"

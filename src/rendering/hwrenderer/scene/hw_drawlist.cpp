@@ -32,7 +32,7 @@
 #include "g_levellocals.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawlist.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"

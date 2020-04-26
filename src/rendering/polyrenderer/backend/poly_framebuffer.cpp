@@ -38,9 +38,9 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hwrenderer/data/shaderuniforms.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_lightbuffer.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
 #include "swrenderer/r_swscene.h"

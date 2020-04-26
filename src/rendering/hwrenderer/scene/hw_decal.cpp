@@ -35,7 +35,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hw_renderstate.h"
 #include "texturemanager.h"
 

@@ -28,7 +28,7 @@
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_framebuffer.h"
 #include "vulkan/system/vk_buffers.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "v_2ddrawer.h"
 

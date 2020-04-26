@@ -50,7 +50,7 @@
 #include "i_time.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_clock.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "swrenderer/r_swscene.h"
 
 #include <chrono>

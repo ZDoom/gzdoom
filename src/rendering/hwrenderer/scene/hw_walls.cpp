@@ -32,7 +32,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "texturemanager.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hw_dynlightdata.h"
 #include "hw_material.h"
 #include "hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
@@ -40,7 +40,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
 #include "hw_skydome.h"
 

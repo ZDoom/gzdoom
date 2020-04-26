@@ -38,7 +38,7 @@
 #include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_lightbuffer.h"
 
 #include "gl_interface.h"
 #include "gl/system/gl_debug.h"

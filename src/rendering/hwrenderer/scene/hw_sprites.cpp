@@ -49,13 +49,13 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_portal.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hw_material.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_dynlightdata.h"
+#include "hw_lightbuffer.h"
 #include "hw_renderstate.h"
 
 extern TArray<spritedef_t> sprites;

@@ -39,8 +39,8 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_cvars.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
-#include "hwrenderer/data/flatvertices.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "flatvertices.h"
+#include "hw_lightbuffer.h"
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
 

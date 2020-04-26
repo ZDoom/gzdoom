@@ -43,14 +43,14 @@
 #include "hwrenderer/scene/hw_skydome.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
-#include "hwrenderer/dynlights/hw_lightbuffer.h"
+#include "hw_lightbuffer.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 #include "gl_buffers.h"
 #include "swrenderer/r_swscene.h"
 
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 
 EXTERN_CVAR (Bool, vid_vsync)
 EXTERN_CVAR(Bool, r_drawvoxels)

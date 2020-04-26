@@ -33,7 +33,7 @@
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "hw_vrmodes.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "r_videoscale.h"
 #include "filesystem.h"
 

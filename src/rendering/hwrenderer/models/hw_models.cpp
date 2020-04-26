@@ -37,7 +37,7 @@
 #include "cmdlib.h"
 #include "hw_material.h"
 #include "hwrenderer/data/buffers.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hw_renderstate.h"
 #include "hwrenderer/scene/hw_portal.h"

@@ -33,7 +33,7 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "hw_renderstate.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "texturemanager.h"

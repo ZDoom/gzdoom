@@ -30,7 +30,7 @@
 #include "cmdlib.h"
 #include "r_defs.h"
 #include "hwrenderer/data/buffers.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_cvars.h"

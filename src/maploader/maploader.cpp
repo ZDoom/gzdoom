@@ -77,7 +77,7 @@
 #include "m_argv.h"
 #include "fragglescript/t_fs.h"
 #include "swrenderer/r_swrenderer.h"
-#include "hwrenderer/data/flatvertices.h"
+#include "flatvertices.h"
 #include "xlat/xlat.h"
 #include "vm.h"
 #include "texturemanager.h"

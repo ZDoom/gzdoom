@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 
 #include "filesystem.h"
-#include "r_data/models/models_obj.h"
+#include "r_data/models/model_obj.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
 

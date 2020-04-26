@@ -32,6 +32,7 @@
 #include "bitmap.h"
 #include "g_levellocals.h"
 #include "models.h"
+#include "model_kvx.h"
 #include "image.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"

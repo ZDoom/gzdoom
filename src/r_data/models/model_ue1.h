@@ -1,6 +1,8 @@
 #pragma once
 
-#include "models.h"
+#include <stdint.h>
+#include "model.h"
+#include "vectors.h"
 
 class FUE1Model : public FModel
 {

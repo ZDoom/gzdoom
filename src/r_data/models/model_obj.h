@@ -23,8 +23,10 @@
 #ifndef __GL_MODELS_OBJ_H__
 #define __GL_MODELS_OBJ_H__
 
-#include "models.h"
+#include "model.h"
 #include "sc_man.h"
+#include "tarray.h"
+#include "vectors.h"
 
 class FOBJModel : public FModel
 {

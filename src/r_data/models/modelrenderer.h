@@ -1,17 +1,10 @@
 
 #include "models.h"
-#include "actor.h"
-#include "p_pspr.h"
-#include "info.h"
-#include "g_levellocals.h"
 
 class FModelRenderer
 {
 public:
-	virtual ~FModelRenderer() { }
-
-	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor, double ticFrac);
-	void RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
+	virtual ~FModelRenderer() = default;
 
 	virtual ModelRendererType GetType() const = 0;
 
@@ -30,8 +23,5 @@ public:
 	virtual void DrawArrays(int start, int count) = 0;
 	virtual void DrawElements(int numIndices, size_t offset) = 0;
 	virtual void SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size) = 0;
-
-private:
-	void RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation);
 };
 

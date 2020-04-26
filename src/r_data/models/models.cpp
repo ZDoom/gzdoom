@@ -39,11 +39,15 @@
 #include "g_levellocals.h"
 #include "r_utility.h"
 #include "r_data/models/models.h"
-#include "r_data/models/models_ue1.h"
-#include "r_data/models/models_obj.h"
+#include "r_data/models/model_ue1.h"
+#include "r_data/models/model_obj.h"
+#include "r_data/models/model_md2.h"
+#include "r_data/models/model_md3.h"
+#include "r_data/models/model_kvx.h"
 #include "i_time.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -571,11 +575,12 @@ static void ParseModelDefLump(int Lump)
 			smf.modelIDs[0] = smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
 			smf.xscale=smf.yscale=smf.zscale=1.f;
 
-			smf.type = PClass::FindClass(sc.String);
-			if (!smf.type || smf.type->Defaults == nullptr)
+			auto type = PClass::FindClass(sc.String);
+			if (!type || type->Defaults == nullptr)
 			{
 				sc.ScriptError("MODELDEF: Unknown actor type '%s'\n", sc.String);
 			}
+			smf.type = type;
 			sc.MustGetStringName("{");
 			while (!sc.CheckString("}"))
 			{
@@ -593,7 +598,7 @@ static void ParseModelDefLump(int Lump)
 					index = sc.Number;
 					if (index < 0 || index >= MAX_MODELS_PER_FRAME)
 					{
-						sc.ScriptError("Too many models in %s", smf.type->TypeName.GetChars());
+						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}
 					sc.MustGetString();
 					FixPathSeperator(sc.String);
@@ -718,7 +723,7 @@ static void ParseModelDefLump(int Lump)
 					index=sc.Number;
 					if (index<0 || index>=MAX_MODELS_PER_FRAME)
 					{
-						sc.ScriptError("Too many models in %s", smf.type->TypeName.GetChars());
+						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}
 					sc.MustGetString();
 					FixPathSeperator(sc.String);
@@ -732,7 +737,7 @@ static void ParseModelDefLump(int Lump)
 						if (!smf.skinIDs[index].isValid())
 						{
 							Printf("Skin '%s' not found in '%s'\n",
-								sc.String, smf.type->TypeName.GetChars());
+								sc.String, type->TypeName.GetChars());
 						}
 					}
 				}
@@ -745,12 +750,12 @@ static void ParseModelDefLump(int Lump)
 
 					if (index<0 || index >= MAX_MODELS_PER_FRAME)
 					{
-						sc.ScriptError("Too many models in %s", smf.type->TypeName.GetChars());
+						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}
 
 					if (surface<0 || surface >= MD3_MAX_SURFACES)
 					{
-						sc.ScriptError("Invalid MD3 Surface %d in %s", MD3_MAX_SURFACES, smf.type->TypeName.GetChars());
+						sc.ScriptError("Invalid MD3 Surface %d in %s", MD3_MAX_SURFACES, type->TypeName.GetChars());
 					}
 
 					sc.MustGetString();
@@ -765,7 +770,7 @@ static void ParseModelDefLump(int Lump)
 						if (!smf.surfaceskinIDs[index][surface].isValid())
 						{
 							Printf("Surface Skin '%s' not found in '%s'\n",
-								sc.String, smf.type->TypeName.GetChars());
+								sc.String, type->TypeName.GetChars());
 						}
 					}
 				}
@@ -789,7 +794,7 @@ static void ParseModelDefLump(int Lump)
 					}
 					if (smf.sprite==-1)
 					{
-						sc.ScriptError("Unknown sprite %s in model definition for %s", sc.String, smf.type->TypeName.GetChars());
+						sc.ScriptError("Unknown sprite %s in model definition for %s", sc.String, type->TypeName.GetChars());
 					}
 
 					sc.MustGetString();
@@ -799,7 +804,7 @@ static void ParseModelDefLump(int Lump)
 					index=sc.Number;
 					if (index<0 || index>=MAX_MODELS_PER_FRAME)
 					{
-						sc.ScriptError("Too many models in %s", smf.type->TypeName.GetChars());
+						sc.ScriptError("Too many models in %s", type->TypeName.GetChars());
 					}
 					if (isframe)
 					{
@@ -808,7 +813,7 @@ static void ParseModelDefLump(int Lump)
 						{
 							FModel *model = Models[smf.modelIDs[index]];
 							smf.modelframes[index] = model->FindFrame(sc.String);
-							if (smf.modelframes[index]==-1) sc.ScriptError("Unknown frame '%s' in %s", sc.String, smf.type->TypeName.GetChars());
+							if (smf.modelframes[index]==-1) sc.ScriptError("Unknown frame '%s' in %s", sc.String, type->TypeName.GetChars());
 						}
 						else smf.modelframes[index] = -1;
 					}
@@ -830,7 +835,7 @@ static void ParseModelDefLump(int Lump)
 						if (map[c]) continue;
 						smf.frame=c;
 						SpriteModelFrames.Push(smf);
-						GetDefaultByType(smf.type)->hasmodel = true;
+						GetDefaultByType(type)->hasmodel = true;
 						map[c]=1;
 					}
 				}

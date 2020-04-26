@@ -27,6 +27,7 @@
 #include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "filesystem.h"
+#include "printf.h"
 
 namespace OpenGLRenderer
 {
@@ -296,7 +297,7 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	FString prolog = Uniforms.CreateDeclaration("Uniforms", PresentUniforms::Desc());
 
 	mShader.reset(new FShaderProgram());
-	mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", prolog, 330);
+	mShader->Compile(FShaderProgram::Vertex, "shaders/pp/screenquad.vp", prolog, 330);
 	mShader->Compile(FShaderProgram::Fragment, vtx_shader_name, prolog, 330);
 	mShader->Link(program_name);
 	mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
@@ -307,7 +308,7 @@ void FPresentShader::Bind()
 {
 	if (!mShader)
 	{
-		Init("shaders/glsl/present.fp", "shaders/glsl/present");
+		Init("shaders/pp/present.fp", "shaders/pp/present");
 	}
 	mShader->Bind();
 }
@@ -318,7 +319,7 @@ void FPresent3DCheckerShader::Bind()
 {
 	if (!mShader)
 	{
-		Init("shaders/glsl/present_checker3d.fp", "shaders/glsl/presentChecker3d");
+		Init("shaders/pp/present_checker3d.fp", "shaders/pp/presentChecker3d");
 	}
 	mShader->Bind();
 }
@@ -327,7 +328,7 @@ void FPresent3DColumnShader::Bind()
 {
 	if (!mShader)
 	{
-		Init("shaders/glsl/present_column3d.fp", "shaders/glsl/presentColumn3d");
+		Init("shaders/pp/present_column3d.fp", "shaders/pp/presentColumn3d");
 	}
 	mShader->Bind();
 }
@@ -336,7 +337,7 @@ void FPresent3DRowShader::Bind()
 {
 	if (!mShader)
 	{
-		Init("shaders/glsl/present_row3d.fp", "shaders/glsl/presentRow3d");
+		Init("shaders/pp/present_row3d.fp", "shaders/pp/presentRow3d");
 	}
 	mShader->Bind();
 }
@@ -350,8 +351,8 @@ void FShadowMapShader::Bind()
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", ShadowMapUniforms::Desc());
 
 		mShader.reset(new FShaderProgram());
-		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", prolog, 430);
+		mShader->Compile(FShaderProgram::Vertex, "shaders/pp/screenquad.vp", "", 430);
+		mShader->Compile(FShaderProgram::Fragment, "shaders/pp/shadowmap.fp", prolog, 430);
 		mShader->Link("shaders/glsl/shadowmap");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();

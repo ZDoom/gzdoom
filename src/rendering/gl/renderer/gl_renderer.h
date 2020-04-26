@@ -89,7 +89,7 @@ public:
 	bool StartOffscreen();
 	void EndOffscreen();
 
-	void BindToFrameBuffer(FTexture *mat);
+	void BindToFrameBuffer(FTexture* tex);
 
 private:
 

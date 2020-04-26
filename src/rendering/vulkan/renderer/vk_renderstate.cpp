@@ -30,7 +30,7 @@
 #include "doomstat.h"
 #include "r_data/colormaps.h"
 #include "hwrenderer/scene/hw_skydome.h"
-#include "hwrenderer/scene/hw_viewpointuniforms.h"
+#include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"
 #include "hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"

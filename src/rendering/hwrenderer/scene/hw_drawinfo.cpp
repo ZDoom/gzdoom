@@ -139,7 +139,17 @@ void HWDrawInfo::StartScene(FRenderViewpoint &parentvp, HWViewpointUniforms *uni
 		VPUniforms.mClipLine.X = -1000001.f;
 		VPUniforms.mClipHeight = 0;
 	}
-	else VPUniforms.SetDefaults(this);
+	else
+	{
+		VPUniforms.mProjectionMatrix.loadIdentity();
+		VPUniforms.mViewMatrix.loadIdentity();
+		VPUniforms.mNormalViewMatrix.loadIdentity();
+		VPUniforms.mViewHeight = viewheight;
+		VPUniforms.mGlobVis = (float)R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
+		VPUniforms.mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8) | ((int)lightmode << 16);
+		VPUniforms.mClipLine.X = -10000000.0f;
+		VPUniforms.mShadowmapFilter = gl_shadowmap_filter;
+	}
 	mClipper->SetViewpoint(Viewpoint);
 
 	ClearBuffers();
@@ -383,26 +393,6 @@ HWPortal * HWDrawInfo::FindPortal(const void * src)
 
 	while (i >= 0 && Portals[i] && Portals[i]->GetSource() != src) i--;
 	return i >= 0 ? Portals[i] : nullptr;
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-void HWViewpointUniforms::SetDefaults(HWDrawInfo *drawInfo)
-{
-	mProjectionMatrix.loadIdentity();
-	mViewMatrix.loadIdentity();
-	mNormalViewMatrix.loadIdentity();
-	mViewHeight = viewheight;
-	mGlobVis = (float)R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
-	const int lightMode = drawInfo == nullptr ? static_cast<int>(*gl_lightmode) : static_cast<int>(drawInfo->lightmode);
-	mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8) | (lightMode << 16);
-	mClipLine.X = -10000000.0f;
-	mShadowmapFilter = gl_shadowmap_filter;
-
 }
 
 //-----------------------------------------------------------------------------

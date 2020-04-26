@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "hwrenderer/scene/hw_viewpointuniforms.h"
+#include "hw_viewpointuniforms.h"
 #include "hw_renderstate.h"
 
 #ifndef NO_SSE

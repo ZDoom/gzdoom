@@ -26,9 +26,10 @@
 **/
 
 #include "hwrenderer/data/shaderuniforms.h"
-#include "hwrenderer/scene/hw_viewpointuniforms.h"
+#include "hw_viewpointuniforms.h"
 #include "hw_renderstate.h"
 #include "hw_viewpointbuffer.h"
+#include "hw_cvars.h"
 
 static const int INITIAL_BUFFER_SIZE = 100;	// 100 viewpoints per frame should nearly always be enough
 
@@ -77,7 +78,15 @@ void HWViewpointBuffer::Set2D(FRenderState &di, int width, int height)
 	if (width != m2DWidth || height != m2DHeight)
 	{
 		HWViewpointUniforms matrices;
-		matrices.SetDefaults(nullptr);
+
+		matrices.mViewMatrix.loadIdentity();
+		matrices.mNormalViewMatrix.loadIdentity();
+		matrices.mViewHeight = 0;
+		matrices.mGlobVis = 1.f;
+		matrices.mPalLightLevels = 0;
+		matrices.mClipLine.X = -10000000.0f;
+		matrices.mShadowmapFilter = gl_shadowmap_filter;
+
 		matrices.mProjectionMatrix.ortho(0, (float)width, (float)height, 0, -1.0f, 1.0f);
 		matrices.CalcDependencies();
 		mBuffer->Map();

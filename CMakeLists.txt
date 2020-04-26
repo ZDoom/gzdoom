@@ -10,6 +10,13 @@ if( COMMAND cmake_policy )
 	endif()
 endif()
 
+# Support Flatpak specific elements
+option( FLATPAK_BUNDLE "Compile for inclusion in a Flatpak bundle" NO )
+if ( FLATPAK_BUNDLE )
+	message( "-- Preparing for Flatpak" )
+	add_definitions( -DFLATPAK_BUNDLE=Yes )
+endif()
+
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( FindPackageHandleStandardArgs )
 
@@ -400,3 +407,4 @@ add_subdirectory( src )
 if( NOT CMAKE_CROSSCOMPILING )
 	export(TARGETS ${CROSS_EXPORTS} FILE "${CMAKE_BINARY_DIR}/ImportExecutables.cmake" )
 endif()
+

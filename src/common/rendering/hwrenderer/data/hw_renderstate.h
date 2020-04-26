@@ -1,6 +1,5 @@
 #pragma once
 
-#include "v_palette.h"
 #include "vectors.h"
 #include "matrix.h"
 #include "hw_material.h"

@@ -1652,12 +1652,12 @@ typedef uint8_t lighttable_t;	// This could be wider for >8 bit display.
 //
 //----------------------------------------------------------------------------------
 
-inline bool FBoundingBox::inRange(const line_t *ld) const
+inline bool inRange(const FBoundingBox &box, const line_t *ld)
 {
-	return Left() < ld->bbox[BOXRIGHT] &&
-		Right() > ld->bbox[BOXLEFT] &&
-		Top() > ld->bbox[BOXBOTTOM] &&
-		Bottom() < ld->bbox[BOXTOP];
+	return box.Left() < ld->bbox[BOXRIGHT] &&
+		box.Right() > ld->bbox[BOXLEFT] &&
+		box.Top() > ld->bbox[BOXBOTTOM] &&
+		box.Bottom() < ld->bbox[BOXTOP];
 }
 
 

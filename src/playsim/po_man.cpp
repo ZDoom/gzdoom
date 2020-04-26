@@ -1103,7 +1103,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						DVector2 pos = mobj->PosRelative(ld);
 						FBoundingBox box(pos.X, pos.Y, mobj->radius);
 
-						if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
+						if (!inRange(box, ld) || BoxOnLineSide(box, ld) != -1)
 						{
 							continue;
 						}

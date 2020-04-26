@@ -34,6 +34,7 @@
 #include "models.h"
 #include "image.h"
 #include "texturemanager.h"
+#include "modelrenderer.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -319,12 +320,12 @@ void FVoxelModel::Initialize()
 
 void FVoxelModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (!GetVertexBuffer(renderer))
+	if (!GetVertexBuffer(renderer->GetType()))
 	{
 		Initialize();
 
 		auto vbuf = renderer->CreateVertexBuffer(true, true);
-		SetVertexBuffer(renderer, vbuf);
+		SetVertexBuffer(renderer->GetType(), vbuf);
 
 		FModelVertex *vertptr = vbuf->LockVertexBuffer(mVertices.Size());
 		unsigned int *indxptr = vbuf->LockIndexBuffer(mIndices.Size());
@@ -384,9 +385,9 @@ int FVoxelModel::FindFrame(const char * name)
 //
 //===========================================================================
 
-float FVoxelModel::getAspectFactor(FLevelLocals *Level)
+float FVoxelModel::getAspectFactor(float stretch)
 {
-	return Level->info->pixelstretch;
+	return stretch;
 }
 
 //===========================================================================

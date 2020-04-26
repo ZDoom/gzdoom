@@ -22,6 +22,7 @@
 #include "filesystem.h"
 #include "r_data/models/models_obj.h"
 #include "texturemanager.h"
+#include "modelrenderer.h"
 
 /**
  * Load an OBJ model
@@ -355,7 +356,7 @@ int FOBJModel::ResolveIndex(int origIndex, FaceElement el)
  */
 void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (GetVertexBuffer(renderer))
+	if (GetVertexBuffer(renderer->GetType()))
 	{
 		return;
 	}
@@ -375,7 +376,7 @@ void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 	}
 
 	auto vbuf = renderer->CreateVertexBuffer(false,true);
-	SetVertexBuffer(renderer, vbuf);
+	SetVertexBuffer(renderer->GetType(), vbuf);
 
 	FModelVertex *vertptr = vbuf->LockVertexBuffer(vbufsize);
 

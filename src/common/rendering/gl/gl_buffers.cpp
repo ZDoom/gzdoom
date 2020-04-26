@@ -37,6 +37,7 @@
 #include "gl_buffers.h"
 #include "gl_renderstate.h"
 #include "v_video.h"
+#include "flatvertices.h"
 
 namespace OpenGLRenderer
 {

@@ -23,16 +23,13 @@
 #ifndef __GL_RENDERSTATE_H
 #define __GL_RENDERSTATE_H
 
+#include <algorithm>
 #include <string.h>
 #include "gl_interface.h"
 #include "matrix.h"
-#include "hwrenderer/scene//hw_drawstructs.h"
 #include "hw_renderstate.h"
 #include "hw_material.h"
 #include "c_cvars.h"
-#include "r_defs.h"
-#include "r_data/r_translate.h"
-#include "g_levellocals.h"
 
 namespace OpenGLRenderer
 {
@@ -110,7 +107,7 @@ public:
 
 	void EnableDrawBuffers(int count, bool apply = false) override
 	{
-		count = MIN(count, 3);
+		count = std::min(count, 3);
 		if (mNumDrawBuffers != count)
 		{
 			static GLenum buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };

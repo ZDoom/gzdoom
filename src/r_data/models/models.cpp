@@ -43,6 +43,7 @@
 #include "r_data/models/models_obj.h"
 #include "i_time.h"
 #include "texturemanager.h"
+#include "modelrenderer.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -168,14 +169,14 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
 	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level) : 1.f) / actor->Level->info->pixelstretch;
+	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor(actor->Level->info->pixelstretch) : 1.f) / actor->Level->info->pixelstretch;
 	objectToWorldMatrix.scale(1, stretch, 1);
 
 	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
 
-	BeginDrawModel(actor, smf, objectToWorldMatrix, orientation < 0);
+	BeginDrawModel(actor->RenderStyle, smf, objectToWorldMatrix, orientation < 0);
 	RenderFrameModels(actor->Level, smf, actor->state, actor->tics, actor->GetClass(), translation);
-	EndDrawModel(actor, smf);
+	EndDrawModel(actor->RenderStyle, smf);
 }
 
 void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
@@ -211,9 +212,9 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 
 	float orientation = smf->xscale * smf->yscale * smf->zscale;
 
-	BeginDrawHUDModel(playermo, objectToWorldMatrix, orientation < 0);
+	BeginDrawHUDModel(playermo->RenderStyle, objectToWorldMatrix, orientation < 0);
 	RenderFrameModels(playermo->Level, smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), psp->Flags & PSPF_PLAYERTRANSLATED ? psp->Owner->mo->Translation : 0);
-	EndDrawHUDModel(playermo);
+	EndDrawHUDModel(playermo->RenderStyle);
 }
 
 void FModelRenderer::RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)

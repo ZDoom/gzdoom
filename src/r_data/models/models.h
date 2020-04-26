@@ -25,13 +25,13 @@
 
 #include "tarray.h"
 #include "matrix.h"
-#include "actor.h"
-#include "dobject.h"
-#include "p_pspr.h"
-#include "r_data/voxels.h"
-#include "info.h"
+#include "m_bbox.h"
+#include "r_defs.h"
 #include "g_levellocals.h"
+#include "r_data/voxels.h"
 #include "i_modelvertexbuffer.h"
+
+class FModelRenderer;
 
 #define MAX_LODS			4
 
@@ -58,36 +58,6 @@ enum ModelRendererType
 	NumModelRendererTypes
 };
 
-class FModelRenderer
-{
-public:
-	virtual ~FModelRenderer() { }
-
-	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor, double ticFrac);
-	void RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
-
-	virtual ModelRendererType GetType() const = 0;
-
-	virtual void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
-	virtual void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) = 0;
-
-	virtual IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) = 0;
-
-	virtual VSMatrix GetViewToWorldMatrix() = 0;
-
-	virtual void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
-	virtual void EndDrawHUDModel(AActor *actor) = 0;
-
-	virtual void SetInterpolation(double interpolation) = 0;
-	virtual void SetMaterial(FGameTexture *skin, bool clampNoFilter, int translation) = 0;
-	virtual void DrawArrays(int start, int count) = 0;
-	virtual void DrawElements(int numIndices, size_t offset) = 0;
-	virtual void SetupFrame(FModel *model, unsigned int frame1, unsigned int frame2, unsigned int size) = 0;
-
-private:
-	void RenderFrameModels(FLevelLocals *Level, const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation);
-};
-
 class FModel
 {
 public:
@@ -99,10 +69,10 @@ public:
 	virtual void RenderFrame(FModelRenderer *renderer, FGameTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist) = 0;
-	virtual float getAspectFactor(FLevelLocals *) { return 1.f; }
+	virtual float getAspectFactor(float vscale) { return 1.f; }
 
-	void SetVertexBuffer(FModelRenderer *renderer, IModelVertexBuffer *buffer) { mVBuf[renderer->GetType()] = buffer; }
-	IModelVertexBuffer *GetVertexBuffer(FModelRenderer *renderer) const { return mVBuf[renderer->GetType()]; }
+	void SetVertexBuffer(int type, IModelVertexBuffer *buffer) { mVBuf[type] = buffer; }
+	IModelVertexBuffer *GetVertexBuffer(int type) const { return mVBuf[type]; }
 	void DestroyVertexBuffer();
 
 	const FSpriteModelFrame *curSpriteMDLFrame;
@@ -368,7 +338,7 @@ public:
 	virtual void AddSkins(uint8_t *hitlist);
 	FTextureID GetPaletteTexture() const { return mPalette; }
 	void BuildVertexBuffer(FModelRenderer *renderer);
-	float getAspectFactor(FLevelLocals *) override;
+	float getAspectFactor(float vscale) override;
 };
 
 

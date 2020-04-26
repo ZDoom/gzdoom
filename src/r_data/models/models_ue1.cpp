@@ -24,6 +24,7 @@
 #include "cmdlib.h"
 #include "r_data/models/models_ue1.h"
 #include "texturemanager.h"
+#include "modelrenderer.h"
 
 float unpackuvert( uint32_t n, int c )
 {
@@ -255,7 +256,7 @@ void FUE1Model::RenderFrame( FModelRenderer *renderer, FGameTexture *skin, int f
 
 void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 {
-	if (GetVertexBuffer(renderer))
+	if (GetVertexBuffer(renderer->GetType()))
 		return;
 	if ( !mDataLoaded )
 		LoadGeometry();
@@ -264,7 +265,7 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 		vsize += groups[i].numPolys*3;
 	vsize *= numFrames;
 	auto vbuf = renderer->CreateVertexBuffer(false,numFrames==1);
-	SetVertexBuffer(renderer, vbuf);
+	SetVertexBuffer(renderer->GetType(), vbuf);
 	FModelVertex *vptr = vbuf->LockVertexBuffer(vsize);
 	int vidx = 0;
 	for ( int i=0; i<numFrames; i++ )

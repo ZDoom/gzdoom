@@ -29,6 +29,7 @@
 #include "filesystem.h"
 #include "r_data/models/models.h"
 #include "texturemanager.h"
+#include "modelrenderer.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -280,7 +281,7 @@ FDMDModel::~FDMDModel()
 
 void FDMDModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (!GetVertexBuffer(renderer))
+	if (!GetVertexBuffer(renderer->GetType()))
 	{
 		LoadGeometry();
 
@@ -288,7 +289,7 @@ void FDMDModel::BuildVertexBuffer(FModelRenderer *renderer)
 		unsigned int vindex = 0;
 
 		auto vbuf = renderer->CreateVertexBuffer(false, info.numFrames == 1);
-		SetVertexBuffer(renderer, vbuf);
+		SetVertexBuffer(renderer->GetType(), vbuf);
 
 		FModelVertex *vertptr = vbuf->LockVertexBuffer(VertexBufferSize);
 

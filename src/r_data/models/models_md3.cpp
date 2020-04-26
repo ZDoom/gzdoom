@@ -24,6 +24,7 @@
 #include "cmdlib.h"
 #include "r_data/models/models.h"
 #include "texturemanager.h"
+#include "modelrenderer.h"
 
 #define MAX_QPATH 64
 
@@ -239,7 +240,7 @@ void FMD3Model::LoadGeometry()
 
 void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (!GetVertexBuffer(renderer))
+	if (!GetVertexBuffer(renderer->GetType()))
 	{
 		LoadGeometry();
 
@@ -254,7 +255,7 @@ void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 		}
 
 		auto vbuf = renderer->CreateVertexBuffer(true, Frames.Size() == 1);
-		SetVertexBuffer(renderer, vbuf);
+		SetVertexBuffer(renderer->GetType(), vbuf);
 
 		FModelVertex *vertptr = vbuf->LockVertexBuffer(vbufsize);
 		unsigned int *indxptr = vbuf->LockIndexBuffer(ibufsize);

@@ -355,7 +355,7 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	int screenWidth = GetWidth();
 	int screenHeight = GetHeight();
 	float scaleX, scaleY;
-	scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / ((float)screenHeight * ViewportPixelAspect()));
+	scaleX = std::min(clientWidth / (float)screenWidth, clientHeight / ((float)screenHeight * ViewportPixelAspect()));
 	scaleY = scaleX * ViewportPixelAspect();
 	mOutputLetterbox.width = (int)round(screenWidth * scaleX);
 	mOutputLetterbox.height = (int)round(screenHeight * scaleY);

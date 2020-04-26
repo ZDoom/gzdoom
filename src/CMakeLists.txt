@@ -940,7 +940,6 @@ set (PCH_SOURCES
 	rendering/2d/v_blend.cpp
 	rendering/gl/renderer/gl_renderer.cpp
 	rendering/gl/renderer/gl_stereo3d.cpp
-	rendering/gl/shaders/gl_shader.cpp
 	rendering/gl/system/gl_framebuffer.cpp
 	rendering/hwrenderer/hw_entrypoint.cpp
 	rendering/hwrenderer/data/hw_vertexbuilder.cpp
@@ -1145,6 +1144,7 @@ set (PCH_SOURCES
 	common/rendering/gl/gl_buffers.cpp
 	common/rendering/gl/gl_hwtexture.cpp
 	common/rendering/gl/gl_samplers.cpp
+	common/rendering/gl/gl_shader.cpp
 	common/rendering/gl/gl_shaderprogram.cpp
 	common/scripting/core/dictionary.cpp
 	common/scripting/core/dynarrays.cpp

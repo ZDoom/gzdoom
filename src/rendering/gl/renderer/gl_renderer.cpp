@@ -30,22 +30,16 @@
 ** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **---------------------------------------------------------------------------
 **
-*/
+*/ 
 
 #include "gl_system.h"
 #include "files.h"
 #include "v_video.h"
 #include "m_png.h"
 #include "filesystem.h"
-#include "doomstat.h"
 #include "i_time.h"
-#include "p_effect.h"
-#include "d_player.h"
-#include "a_dynlight.h"
 #include "cmdlib.h"
 #include "version.h"
-#include "g_game.h"
-#include "swrenderer/r_swscene.h"
 #include "hwrenderer/utility/hw_clock.h"
 
 #include "gl_interface.h"

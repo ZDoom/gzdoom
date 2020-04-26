@@ -33,7 +33,7 @@
 #include "hw_cvars.h"
 #include "flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"
-#include "gl/shaders/gl_shader.h"
+#include "gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
 #include "hw_lightbuffer.h"
 #include "gl_renderbuffers.h"

@@ -36,16 +36,14 @@
 #include "gl_system.h"
 #include "templates.h"
 #include "c_cvars.h"
-#include "doomtype.h"
-#include "r_data/colormaps.h"
 #include "hw_material.h"
 
 #include "gl_interface.h"
 #include "hw_cvars.h"
-#include "gl/system/gl_debug.h"
+#include "gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_renderstate.h"
-#include "gl/textures/gl_samplers.h"
+#include "gl_renderstate.h"
+#include "gl_samplers.h"
 
 namespace OpenGLRenderer
 {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "hwrenderer/data/buffers.h"
+#include "buffers.h"
 
 #ifdef _MSC_VER
 // silence bogus warning C4250: 'GLVertexBuffer': inherits 'GLBuffer::GLBuffer::SetData' via dominance
@@ -50,7 +50,7 @@ class GLVertexBuffer : public IVertexBuffer, public GLBuffer
 	size_t mStride = 0;
 
 public:
-	GLVertexBuffer() : GLBuffer(GL_ARRAY_BUFFER) {}
+	GLVertexBuffer();
 	void SetFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs) override;
 	void Bind(int *offsets);
 };
@@ -58,14 +58,14 @@ public:
 class GLIndexBuffer : public IIndexBuffer, public GLBuffer
 {
 public:
-	GLIndexBuffer() : GLBuffer(GL_ELEMENT_ARRAY_BUFFER) {}
+	GLIndexBuffer();
 };
 
 class GLDataBuffer : public IDataBuffer, public GLBuffer
 {
 	int mBindingPoint;
 public:
-	GLDataBuffer(int bindingpoint, bool is_ssbo) : GLBuffer(is_ssbo? GL_SHADER_STORAGE_BUFFER : GL_UNIFORM_BUFFER), mBindingPoint(bindingpoint) {}
+	GLDataBuffer(int bindingpoint, bool is_ssbo);
 	void BindRange(FRenderState* state, size_t start, size_t length);
 	void BindBase();
 };

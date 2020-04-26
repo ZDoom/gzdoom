@@ -22,7 +22,7 @@
 #include "templates.h"
 #include "gl_system.h"
 #include "gl_interface.h"
-#include "gl/renderer/gl_postprocessstate.h"
+#include "gl_postprocessstate.h"
 
 namespace OpenGLRenderer
 {

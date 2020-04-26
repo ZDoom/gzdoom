@@ -30,6 +30,7 @@
 #include "i_time.h"
 #include "g_game.h"
 #include "v_text.h"
+#include "version.h"
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_vrmodes.h"

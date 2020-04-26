@@ -23,7 +23,7 @@
 #ifndef __GL_SHADERS_H__
 #define __GL_SHADERS_H__
 
-#include "gl/renderer/gl_renderstate.h"
+#include "gl_renderstate.h"
 #include "name.h"
 
 extern bool gl_shaderactive;

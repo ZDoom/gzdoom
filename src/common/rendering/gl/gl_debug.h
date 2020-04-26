@@ -4,7 +4,6 @@
 #include <string.h>
 #include "gl_interface.h"
 #include "c_cvars.h"
-#include "r_defs.h"
 #include "v_video.h"
 
 namespace OpenGLRenderer

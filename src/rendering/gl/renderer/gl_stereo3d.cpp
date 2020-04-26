@@ -27,13 +27,13 @@
 
 #include "gl_system.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_renderbuffers.h"
+#include "gl_renderbuffers.h"
 #include "hw_vrmodes.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/renderer/gl_postprocessstate.h"
+#include "gl_postprocessstate.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_shaderprogram.h"
-#include "gl/system/gl_buffers.h"
+#include "gl_buffers.h"
 #include "menu/menu.h"
 
 EXTERN_CVAR(Int, vr_mode)

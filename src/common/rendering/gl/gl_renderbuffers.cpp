@@ -24,12 +24,12 @@
 #include "gl_interface.h"
 #include "printf.h"
 #include "hw_cvars.h"
-#include "gl/system/gl_debug.h"
+#include "gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_renderbuffers.h"
-#include "gl/renderer/gl_postprocessstate.h"
+#include "gl_renderbuffers.h"
+#include "gl_postprocessstate.h"
 #include "gl/shaders/gl_shaderprogram.h"
-#include "gl/system/gl_buffers.h"
+#include "gl_buffers.h"
 #include "templates.h"
 #include <random>
 

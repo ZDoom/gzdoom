@@ -110,5 +110,8 @@ const char *GetVersionString();
 #define GAME_DIR ".config/" GAMENAMELOWERCASE
 #endif
 
+const int SAVEPICWIDTH = 216;
+const int SAVEPICHEIGHT = 162;
+
 
 #endif //__VERSION_H__

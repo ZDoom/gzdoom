@@ -41,7 +41,7 @@
 #include "hw_lightbuffer.h"
 
 #include "gl_interface.h"
-#include "gl/system/gl_debug.h"
+#include "gl_debug.h"
 #include "matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/shaders/gl_shader.h"

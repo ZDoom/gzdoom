@@ -36,9 +36,9 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
 #include "hw_lightbuffer.h"
-#include "gl/renderer/gl_renderbuffers.h"
-#include "gl/textures/gl_hwtexture.h"
-#include "gl/system/gl_buffers.h"
+#include "gl_renderbuffers.h"
+#include "gl_hwtexture.h"
+#include "gl_buffers.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 

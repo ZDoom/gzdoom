@@ -6,7 +6,7 @@
 #include "vectors.h"
 #include "swrenderer/r_renderer.h"
 #include "matrix.h"
-#include "gl/renderer/gl_renderbuffers.h"
+#include "gl_renderbuffers.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/dynlights/hw_shadowmap.h"
 #include <functional>
@@ -52,7 +52,6 @@ public:
 	FSamplerManager *mSamplerManager = nullptr;
 	unsigned int mFBID;
 	unsigned int mVAOID;
-	unsigned int PortalQueryObject;
 	unsigned int mStencilValue = 0;
 
 	int mOldFBID;
@@ -89,7 +88,6 @@ public:
     
 	bool StartOffscreen();
 	void EndOffscreen();
-	void UpdateShadowMap();
 
 	void BindToFrameBuffer(FTexture *mat);
 

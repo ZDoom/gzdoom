@@ -26,10 +26,10 @@
 */
 
 #include "vectors.h" // RAD2DEG
-#include "doomtype.h" // M_PI
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hw_vrmodes.h"
 #include "v_video.h"
+#include "version.h"
 
 // Set up 3D-specific console variables:
 CVAR(Int, vr_mode, 0, CVAR_GLOBALCONFIG)
@@ -59,6 +59,7 @@ static VRMode vrmi_checker = { 2, isqrt2, isqrt2, 1.f,{ { -.5f, 1.f },{ .5f, 1.f
 
 const VRMode *VRMode::GetVRMode(bool toscreen)
 {
+#ifdef VR3D_ENABLED
 	switch (toscreen && vid_rendermode == 4 ? vr_mode : 0)
 	{
 	default:
@@ -91,6 +92,9 @@ const VRMode *VRMode::GetVRMode(bool toscreen)
 	case VR_CHECKERINTERLEAVED:
 		return &vrmi_checker;
 	}
+#else
+	return &vrmi_mono;
+#endif
 }
 
 void VRMode::AdjustViewport(DFrameBuffer *screen) const

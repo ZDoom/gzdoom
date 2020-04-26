@@ -14,7 +14,6 @@
 #include "hw_ihwtexture.h"
 
 class FCanvasTexture;
-class AActor;
 
 namespace OpenGLRenderer
 {

@@ -59,7 +59,7 @@ int		BlendR, BlendG, BlendB, BlendA;
 /**************************/
 
 uint8_t newgamma[256];
-CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Float, vid_gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self == 0.f)
 	{ // Gamma values of 0 are illegal.
@@ -78,13 +78,13 @@ CCMD (bumpgamma)
 	// [RH] Gamma correction tables are now generated on the fly for *any* gamma level
 	// Q: What are reasonable limits to use here?
 
-	float newgamma = Gamma + 0.1f;
+	float newgamma = vid_gamma + 0.1f;
 
 	if (newgamma > 3.0)
 		newgamma = 1.0;
 
-	Gamma = newgamma;
-	Printf ("Gamma correction level %g\n", *Gamma);
+	vid_gamma = newgamma;
+	Printf ("Gamma correction level %g\n", *vid_gamma);
 }
 
 

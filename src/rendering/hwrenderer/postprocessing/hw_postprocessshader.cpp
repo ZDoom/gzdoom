@@ -23,27 +23,7 @@
 #include "d_player.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include "g_levellocals.h"
-
-void PPShadowMap::Update(PPRenderState *renderstate)
-{
-	ShadowMapUniforms uniforms;
-	uniforms.ShadowmapQuality = (float)gl_shadowmap_quality;
-	uniforms.NodesCount = screen->mShadowMap.NodesCount();
-
-	renderstate->PushGroup("shadowmap");
-
-	renderstate->Clear();
-	renderstate->Shader = &ShadowMap;
-	renderstate->Uniforms.Set(uniforms);
-	renderstate->Viewport = { 0, 0, gl_shadowmap_quality, 1024 };
-	renderstate->SetShadowMapBuffers(true);
-	renderstate->SetOutputShadowMap();
-	renderstate->SetNoBlend();
-	renderstate->Draw();
-
-	renderstate->PopGroup();
-}
-
+#include "hwrenderer/postprocessing/hw_postprocess.h"
 
 static bool IsConsolePlayer(player_t *player)
 {

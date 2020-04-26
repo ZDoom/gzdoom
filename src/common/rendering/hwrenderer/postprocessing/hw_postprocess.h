@@ -3,6 +3,7 @@
 #include "hwrenderer/data/shaderuniforms.h"
 #include <memory>
 #include <map>
+#include "intrect.h"
 
 struct PostProcessShader;
 
@@ -777,15 +778,6 @@ struct ShadowMapUniforms
 	}
 };
 
-class PPShadowMap
-{
-public:
-	void Update(PPRenderState *renderstate);
-
-private:
-	PPShader ShadowMap = { "shaders/glsl/shadowmap.fp", "", ShadowMapUniforms::Desc() };
-};
-
 class PPCustomShaderInstance
 {
 public:
@@ -818,6 +810,18 @@ private:
 
 	std::vector<std::unique_ptr<PPCustomShaderInstance>> mShaders;
 };
+
+class PPShadowMap
+{
+public:
+	void Update(PPRenderState* renderstate);
+
+private:
+	PPShader ShadowMap = { "shaders/glsl/shadowmap.fp", "", ShadowMapUniforms::Desc() };
+};
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 

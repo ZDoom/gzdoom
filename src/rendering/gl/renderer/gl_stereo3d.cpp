@@ -28,7 +28,7 @@
 #include "gl_system.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "hwrenderer/utility/hw_vrmodes.h"
+#include "hw_vrmodes.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/system/gl_framebuffer.h"
@@ -162,7 +162,7 @@ void FGLRenderer::prepareInterleavedPresent(FPresentShaderBase& shader)
 	}
 	else
 	{
-		shader.Uniforms->InvGamma = 1.0f / clamp<float>(Gamma, 0.1f, 4.f);
+		shader.Uniforms->InvGamma = 1.0f / clamp<float>(vid_gamma, 0.1f, 4.f);
 		shader.Uniforms->Contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
 		shader.Uniforms->Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
 		shader.Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.0f);

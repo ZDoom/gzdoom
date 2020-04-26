@@ -41,7 +41,7 @@
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
-#include "hwrenderer/utility/hw_vrmodes.h"
+#include "hw_vrmodes.h"
 #include "hw_clipper.h"
 
 EXTERN_CVAR(Float, r_visibility)

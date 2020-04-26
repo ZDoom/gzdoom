@@ -47,6 +47,7 @@
 #include "doomstat.h"
 #include "gi.h"
 #include "d_main.h"
+#include "v_video.h"
 #if !defined _MSC_VER && !defined __APPLE__
 #include "i_system.h"  // for SHARE_DIR
 #endif // !_MSC_VER && !__APPLE__
@@ -559,6 +560,16 @@ void FGameConfigFile::DoGlobalSetup ()
 						break;
 					}
 				}
+			}
+			if (last < 220)
+			{
+				auto var = FindCVar("Gamma", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Float);
+					vid_gamma = v.Float;
+				}
+
 			}
 		}
 	}

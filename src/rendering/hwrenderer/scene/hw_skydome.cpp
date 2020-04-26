@@ -284,8 +284,8 @@ void FSkyVertexBuffer::CreateDome()
 
 void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
 {
-	int texw = tex->GetDisplayWidth();
-	int texh = tex->GetDisplayHeight();
+	float texw = tex->GetDisplayWidth();
+	float texh = tex->GetDisplayHeight();
 
 	modelMatrix.loadIdentity();
 	modelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);

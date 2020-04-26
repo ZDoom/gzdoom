@@ -33,7 +33,7 @@
 #include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
-#include "hwrenderer/utility/hw_vrmodes.h"
+#include "hw_vrmodes.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
@@ -62,7 +62,7 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 
 	hw_postprocess.Pass1(&renderstate, fixedcm, sceneWidth, sceneHeight);
 	mBuffers->BindCurrentFB();
-	afterBloomDrawEndScene2D();
+	if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D();
 	hw_postprocess.Pass2(&renderstate, fixedcm, sceneWidth, sceneHeight);
 }
 
@@ -199,7 +199,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 	}
 	else
 	{
-		mPresentShader->Uniforms->InvGamma = 1.0f / clamp<float>(Gamma, 0.1f, 4.f);
+		mPresentShader->Uniforms->InvGamma = 1.0f / clamp<float>(vid_gamma, 0.1f, 4.f);
 		mPresentShader->Uniforms->Contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
 		mPresentShader->Uniforms->Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
 		mPresentShader->Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);

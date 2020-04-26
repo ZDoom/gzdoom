@@ -29,6 +29,7 @@
 #include "g_levellocals.h"
 #include "v_video.h"
 #include "a_dynlight.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
 
 /*
 	The 1D shadow maps are stored in a 1024x1024 texture as float depth values (R32F).
@@ -222,5 +223,25 @@ void IShadowMap::Reset()
 IShadowMap::~IShadowMap()
 {
 	Reset();
+}
+
+void PPShadowMap::Update(PPRenderState* renderstate)
+{
+	ShadowMapUniforms uniforms;
+	uniforms.ShadowmapQuality = (float)gl_shadowmap_quality;
+	uniforms.NodesCount = screen->mShadowMap.NodesCount();
+
+	renderstate->PushGroup("shadowmap");
+
+	renderstate->Clear();
+	renderstate->Shader = &ShadowMap;
+	renderstate->Uniforms.Set(uniforms);
+	renderstate->Viewport = { 0, 0, gl_shadowmap_quality, 1024 };
+	renderstate->SetShadowMapBuffers(true);
+	renderstate->SetOutputShadowMap();
+	renderstate->SetNoBlend();
+	renderstate->Draw();
+
+	renderstate->PopGroup();
 }
 

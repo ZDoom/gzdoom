@@ -34,12 +34,6 @@
 
 #include "g_level.h"
 
-#ifdef _WIN32
-#include <io.h>
-#else
-#define O_BINARY 0
-#endif
-
 #include "templates.h"
 #include "v_video.h"
 #include "filesystem.h"
@@ -53,39 +47,6 @@
 
 /* Current color blending values */
 int		BlendR, BlendG, BlendB, BlendA;
-
-/**************************/
-/* Gamma correction stuff */
-/**************************/
-
-uint8_t newgamma[256];
-CUSTOM_CVAR (Float, vid_gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self == 0.f)
-	{ // Gamma values of 0 are illegal.
-		self = 1.f;
-		return;
-	}
-
-	if (screen != NULL)
-	{
-		screen->SetGamma ();
-	}
-}
-
-CCMD (bumpgamma)
-{
-	// [RH] Gamma correction tables are now generated on the fly for *any* gamma level
-	// Q: What are reasonable limits to use here?
-
-	float newgamma = vid_gamma + 0.1f;
-
-	if (newgamma > 3.0)
-		newgamma = 1.0;
-
-	vid_gamma = newgamma;
-	Printf ("Gamma correction level %g\n", *vid_gamma);
-}
 
 
 
@@ -103,8 +64,6 @@ void InitPalette ()
 	if (lump != -1)
 	{
 		FileData cmap = fileSystem.ReadFile(lump);
-		uint8_t palbuffer[768];
-		ReadPalette(fileSystem.GetNumForName("PLAYPAL"), palbuffer);
 		const unsigned char* cmapdata = (const unsigned char*)cmap.GetMem();
 		GPalette.GenerateGlobalBrightmapFromColormap(cmapdata, 32);
 	}

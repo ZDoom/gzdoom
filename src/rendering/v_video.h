@@ -215,8 +215,6 @@ public:
 	// Mark the palette as changed. It will be updated on the next Update().
 	virtual void UpdatePalette() {}
 
-	virtual void SetGamma() {}
-
 	// Returns true if running fullscreen.
 	virtual bool IsFullscreen () = 0;
 	virtual void ToggleFullscreen(bool yes) {}

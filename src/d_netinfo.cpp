@@ -549,7 +549,8 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 	CmdWriteByte (DEM_UINFCHANGED);
 	CmdWriteString (foo);
 
-	network->UserInfoChanged(cvar->GetName(), escaped_val.GetChars());
+	if (network)
+		network->UserInfoChanged(cvar->GetName(), escaped_val.GetChars());
 }
 
 static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, bool singlebit)

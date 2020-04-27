@@ -46,6 +46,7 @@
 #include "i_interface.h"
 #include "menustate.h"
 #include "engineerrors.h"
+#include "keydef.h"
 
 
 EXTERN_CVAR(Int, m_use_mouse)

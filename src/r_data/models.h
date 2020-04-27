@@ -28,7 +28,7 @@
 #include "m_bbox.h"
 #include "r_defs.h"
 #include "g_levellocals.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "i_modelvertexbuffer.h"
 #include "model.h"
 

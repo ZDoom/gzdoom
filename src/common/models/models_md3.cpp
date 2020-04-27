@@ -22,8 +22,7 @@
 
 #include "filesystem.h"
 #include "cmdlib.h"
-#include "r_data/models/models.h"
-#include "r_data/models/model_md3.h"
+#include "model_md3.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
 

@@ -24,7 +24,7 @@
 
 #include "polyrenderer/drawers/poly_triangle.h"
 #include "matrix.h"
-#include "r_data/models/models.h"
+#include "models.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 

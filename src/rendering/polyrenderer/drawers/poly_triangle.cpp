@@ -31,7 +31,7 @@
 #include "g_game.h"
 #include "g_level.h"
 #include "r_data/r_translate.h"
-#include "r_data/models/models.h"
+#include "model.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "poly_triangle.h"

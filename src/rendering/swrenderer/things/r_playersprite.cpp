@@ -52,7 +52,7 @@
 #include "v_palette.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "p_local.h"
 #include "p_maputl.h"
 #include "r_voxel.h"

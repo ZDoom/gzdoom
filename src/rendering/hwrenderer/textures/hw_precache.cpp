@@ -30,14 +30,14 @@
 #include "c_dispatch.h"
 #include "r_state.h"
 #include "actor.h"
-#include "r_data/models/models.h"
+#include "models.h"
 #include "skyboxtexture.h"
 #include "hw_material.h"
 #include "image.h"
 #include "v_video.h"
 #include "v_font.h"
 #include "texturemanager.h"
-#include "r_data/models/modelrenderer.h"
+#include "modelrenderer.h"
 
 EXTERN_CVAR(Bool, gl_precache)
 

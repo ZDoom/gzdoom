@@ -31,7 +31,7 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "g_levellocals.h"
-#include "r_data/models/models.h"
+#include "models.h"
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
 #include "texturemanager.h"

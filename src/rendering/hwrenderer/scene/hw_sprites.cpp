@@ -39,7 +39,7 @@
 #include "actorinlines.h"
 #include "r_data/r_vanillatrans.h"
 #include "matrix.h"
-#include "r_data/models/models.h"
+#include "models.h"
 #include "vectors.h"
 #include "texturemanager.h"
 #include "basics.h"

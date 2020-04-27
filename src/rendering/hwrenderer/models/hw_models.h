@@ -24,11 +24,11 @@
 
 #include "tarray.h"
 #include "p_pspr.h"
-#include "r_data/voxels.h"
-#include "r_data/models/models.h"
+#include "voxels.h"
+#include "models.h"
 #include "hwrenderer/data/buffers.h"
 #include "hw_modelvertexbuffer.h"
-#include "r_data/models/modelrenderer.h"
+#include "modelrenderer.h"
 
 class HWSprite;
 struct HWDrawInfo;

@@ -31,7 +31,7 @@
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "r_data/sprites.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "vm.h"
 #include "texturemanager.h"
 

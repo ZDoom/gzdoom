@@ -37,7 +37,7 @@
 #include "sbar.h"
 #include "r_data/r_translate.h"
 #include "r_data/colormaps.h"
-#include "r_data/voxels.h"
+#include "voxels.h"
 #include "r_data/sprites.h"
 #include "d_net.h"
 #include "po_man.h"

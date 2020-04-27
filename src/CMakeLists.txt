@@ -595,7 +595,6 @@ file( GLOB HEADER_FILES
 	sound/backend/*.h*
 	posix/*.h
 	r_data/*.h
-	r_data/models/*.h
 	common/audio/sound/thirdparty/*.h
 	common/audio/sound/*.h
 	common/audio/music/*.h*
@@ -610,6 +609,7 @@ file( GLOB HEADER_FILES
 	common/platform/posix/cocoa/*.h
 	common/platform/posix/sdl/*.h
 	common/platform/win32/*.h
+	common/models/*.h
 	common/textures/*.h
 	common/textures/hires/hqnx/*.h
 	common/textures/hires/hqnx_asm/*.h
@@ -996,19 +996,12 @@ set (PCH_SOURCES
 	r_data/r_translate.cpp
 	r_data/sprites.cpp
 	r_data/portalgroups.cpp
-	r_data/voxels.cpp
 	r_data/voxeldef.cpp
 	r_data/r_canvastexture.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_vanillatrans.cpp
 	r_data/r_sections.cpp
-	r_data/models/models_md3.cpp
-	r_data/models/models_md2.cpp
-	r_data/models/models_voxel.cpp
-	r_data/models/models_ue1.cpp
-	r_data/models/models_obj.cpp
-	r_data/models/models.cpp
-	r_data/models/model.cpp
+	r_data/models.cpp
 	scripting/vmiterators.cpp
 	scripting/vmthunks.cpp
 	scripting/vmthunks_actors.cpp
@@ -1076,6 +1069,13 @@ set (PCH_SOURCES
 	common/textures/formats/tgatexture.cpp
 	common/textures/formats/stbtexture.cpp
 	common/textures/hires/hqresize.cpp
+	common/models/models_md3.cpp
+	common/models/models_md2.cpp
+	common/models/models_voxel.cpp
+	common/models/models_ue1.cpp
+	common/models/models_obj.cpp
+	common/models/model.cpp
+	common/models/voxels.cpp
 	common/console/c_commandline.cpp
 	common/console/c_buttons.cpp
 	common/console/c_bind.cpp
@@ -1249,6 +1249,7 @@ include_directories( .
 	common/textures/formats
 	common/textures/hires
 	common/textures
+	common/models
 	common/filesystem
 	common/utility
 	common/console
@@ -1441,7 +1442,6 @@ source_group("Rendering\\Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRE
 source_group("Rendering\\Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/drawers/.+")
 source_group("Rendering\\Poly Renderer\\Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/polyrenderer/backend/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
-source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)
 source_group("Platforms\\POSIX Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/posix/.+")
 source_group("Platforms\\Win32 Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/win32/.+")
@@ -1480,6 +1480,7 @@ source_group("Common\\Rendering\\Hardware Renderer\\Data" REGULAR_EXPRESSION "^$
 source_group("Common\\Rendering\\Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/hwrenderer/postprocessing/.+")
 source_group("Common\\Rendering\\OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gl_load/.+")
 source_group("Common\\Rendering\\OpenGL Backend" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/rendering/gl/.+")
+source_group("Common\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/models/.+")
 source_group("Common\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/.+")
 source_group("Common\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/.+")
 source_group("Common\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/common/textures/hires/hqnx/.+")

@@ -22,7 +22,7 @@
 
 #include "filesystem.h"
 #include "cmdlib.h"
-#include "r_data/models/model_ue1.h"
+#include "model_ue1.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
 

@@ -1,6 +1,14 @@
 #pragma once
 
 #include "model.h"
+#include "i_modelvertexbuffer.h"
+#include "tarray.h"
+#include "xs_Float.h"
+
+struct FVoxel;
+struct kvxslab_t;
+class FModelRenderer;
+class FGameTexture;
 
 struct FVoxelVertexHash
 {

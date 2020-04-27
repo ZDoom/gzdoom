@@ -27,8 +27,7 @@
 **/
 
 #include "filesystem.h"
-#include "r_data/models/models.h"
-#include "r_data/models/model_md2.h"
+#include "model_md2.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
 

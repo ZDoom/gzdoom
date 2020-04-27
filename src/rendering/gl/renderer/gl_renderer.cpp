@@ -58,7 +58,7 @@
 #include "hw_lightbuffer.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "r_videoscale.h"
-#include "r_data/models/models.h"
+#include "model.h"
 #include "gl_postprocessstate.h"
 #include "gl_buffers.h"
 #include "texturemanager.h"

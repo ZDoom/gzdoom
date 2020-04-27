@@ -36,7 +36,7 @@
 #include "hw_shadowmap.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
-#include "r_data/models/models.h"
+#include "models.h"
 
 template<class T>
 T smoothstep(const T edge0, const T edge1, const T x)

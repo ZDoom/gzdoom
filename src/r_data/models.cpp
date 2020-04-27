@@ -38,7 +38,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "r_utility.h"
-#include "r_data/models/models.h"
+#include "models.h"
 #include "model_kvx.h"
 #include "i_time.h"
 #include "texturemanager.h"

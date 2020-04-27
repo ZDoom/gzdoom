@@ -84,7 +84,7 @@ class ArtiHealingRadius : Inventory
 				}
 				if (gotsome)
 				{
-					mo.A_PlaySound ("MysticIncant", CHAN_AUTO);
+					mo.A_StartSound ("MysticIncant", CHAN_AUTO);
 					effective=true;
 				}
 			}

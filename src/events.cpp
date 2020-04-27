@@ -1264,7 +1264,8 @@ void DStaticEventHandler::NewGame()
 //
 void DStaticEventHandler::OnDestroy()
 {
-	owner->UnregisterHandler(this);
+	if (owner)
+		owner->UnregisterHandler(this);
 	Super::OnDestroy();
 }
 

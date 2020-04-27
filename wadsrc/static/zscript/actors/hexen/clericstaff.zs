@@ -136,7 +136,7 @@ class CWeapStaff : ClericWeapon
 		{
 			mo.WeaveIndexXY = 0;
 		}
-		A_PlaySound ("ClericCStaffFire", CHAN_WEAPON);
+		A_StartSound ("ClericCStaffFire", CHAN_WEAPON);
 	}
 
 	//============================================================================

@@ -220,7 +220,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	if (attacker == nullptr && obit.IsNotEmpty()) messagename = obit;
 	else
 	{
-		switch (mod)
+		switch (mod.GetIndex())
 		{
 		case NAME_Suicide:		messagename = "$OB_SUICIDE";	break;
 		case NAME_Falling:		messagename = "$OB_FALLING";	break;
@@ -1031,8 +1031,8 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	}
 	FName MeansOfDeath = mod;
 
-	// Spectral targets only take damage from spectral projectiles.
-	if (target->flags4 & MF4_SPECTRAL && !telefragDamage)
+	// Spectral targets only take damage from spectral projectiles unless forced or telefragging.
+	if ((target->flags4 & MF4_SPECTRAL) && !(flags & DMG_FORCED) && !telefragDamage)
 	{
 		if (inflictor == NULL || !(inflictor->flags4 & MF4_SPECTRAL))
 		{
@@ -1301,7 +1301,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				int newdam = damage;
 				if (damage > 0)
 				{
-					newdam = player->mo->AbsorbDamage(damage, mod);
+					newdam = player->mo->AbsorbDamage(damage, mod, inflictor, source, flags);
 				}
 				if (!telefragDamage || (player->mo->flags7 & MF7_LAXTELEFRAGDMG)) //rawdamage is never modified.
 				{
@@ -1362,7 +1362,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		temp = damage < 100 ? damage : 100;
 		if (player == target->Level->GetConsolePlayer() )
 		{
-			I_Tactile (40,10,40+temp*2);
+			//I_Tactile (40,10,40+temp*2);
 		}
 	}
 	else
@@ -1371,7 +1371,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		if (!(flags & (DMG_NO_ARMOR|DMG_FORCED)) && target->Inventory != NULL && damage > 0)
 		{
 			int newdam = damage;
-			newdam = target->AbsorbDamage(damage, mod);
+			newdam = target->AbsorbDamage(damage, mod, inflictor, source, flags);
 			damage = newdam;
 			if (damage <= 0)
 			{
@@ -1415,7 +1415,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				}
 				if (P_GiveBody(source, draindmg))
 				{
-					S_Sound(source, CHAN_ITEM, "*drainhealth", 1, ATTN_NORM);
+					S_Sound(source, CHAN_ITEM, 0, "*drainhealth", 1, ATTN_NORM);
 				}
 			}
 		}

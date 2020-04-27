@@ -31,7 +31,7 @@
 #include "r_sky.h"
 #include "v_video.h"
 #include "m_swap.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "stats.h"
 #include "a_sharedglobal.h"
 #include "g_level.h"
@@ -64,7 +64,7 @@ namespace swrenderer
 			float t = -tleft.X;
 			tleft.X = -tright.X;
 			tright.X = t;
-			swapvalues(tleft.Y, tright.Y);
+			std::swap(tleft.Y, tright.Y);
 		}
 
 		float fsx1, fsz1, fsx2, fsz2;

@@ -1,3 +1,24 @@
+/*
+**  Softpoly backend
+**  Copyright (c) 2016-2020 Magnus Norddahl
+**
+**  This software is provided 'as-is', without any express or implied
+**  warranty.  In no event will the authors be held liable for any damages
+**  arising from the use of this software.
+**
+**  Permission is granted to anyone to use this software for any purpose,
+**  including commercial applications, and to alter it and redistribute it
+**  freely, subject to the following restrictions:
+**
+**  1. The origin of this software must not be misrepresented; you must not
+**     claim that you wrote the original software. If you use this software
+**     in a product, an acknowledgment in the product documentation would be
+**     appreciated but is not required.
+**  2. Altered source versions must be plainly marked as such, and must not be
+**     misrepresented as being the original software.
+**  3. This notice may not be removed or altered from any source distribution.
+**
+*/
 
 #include "v_video.h"
 #include "m_png.h"
@@ -6,7 +27,7 @@
 #include "actor.h"
 #include "i_time.h"
 #include "g_game.h"
-#include "gamedata/fonts/v_text.h"
+#include "v_text.h"
 
 #include "rendering/i_video.h"
 
@@ -30,7 +51,7 @@
 #include "poly_buffers.h"
 #include "poly_renderstate.h"
 #include "poly_hwtexture.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
 void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);
@@ -64,6 +85,9 @@ PolyFrameBuffer::~PolyFrameBuffer()
 	PolyBuffer::ResetAll();
 	PPResource::ResetAll();
 
+	delete mScreenQuad.VertexBuffer;
+	delete mScreenQuad.IndexBuffer;
+
 	delete mVertexData;
 	delete mSkyData;
 	delete mViewpoints;
@@ -89,6 +113,21 @@ void PolyFrameBuffer::InitializeState()
 	mSkyData = new FSkyVertexBuffer;
 	mViewpoints = new HWViewpointBuffer;
 	mLights = new FLightBuffer();
+
+	static const FVertexBufferAttribute format[] =
+	{
+		{ 0, VATTR_VERTEX, VFmt_Float3, (int)myoffsetof(ScreenQuadVertex, x) },
+		{ 0, VATTR_TEXCOORD, VFmt_Float2, (int)myoffsetof(ScreenQuadVertex, u) },
+		{ 0, VATTR_COLOR, VFmt_Byte4, (int)myoffsetof(ScreenQuadVertex, color0) }
+	};
+
+	uint32_t indices[6] = { 0, 1, 2, 1, 3, 2 };
+
+	mScreenQuad.VertexBuffer = screen->CreateVertexBuffer();
+	mScreenQuad.VertexBuffer->SetFormat(1, 3, sizeof(ScreenQuadVertex), format);
+
+	mScreenQuad.IndexBuffer = screen->CreateIndexBuffer();
+	mScreenQuad.IndexBuffer->SetData(6 * sizeof(uint32_t), indices, false);
 
 	CheckCanvas();
 }
@@ -167,6 +206,7 @@ void PolyFrameBuffer::Update()
 			DrawerThreads::WaitForWorkers();
 			I_PolyPresentUnlock(mOutputLetterbox.left, mOutputLetterbox.top, mOutputLetterbox.width, mOutputLetterbox.height);
 		}
+		FPSLimit();
 	}
 
 	DrawerThreads::WaitForWorkers();
@@ -227,7 +267,8 @@ sector_t *PolyFrameBuffer::RenderView(player_t *player)
 		NoInterpolateView = false;
 
 		// Shader start time does not need to be handled per level. Just use the one from the camera to render from.
-		GetRenderState()->CheckTimer(player->camera->Level->ShaderStartTime);
+		if (player->camera)
+			GetRenderState()->CheckTimer(player->camera->Level->ShaderStartTime);
 		// prepare all camera textures that have been used in the last frame.
 		// This must be done for all levels, not just the primary one!
 		for (auto Level : AllLevels())
@@ -414,9 +455,54 @@ void PolyFrameBuffer::DrawScene(HWDrawInfo *di, int drawmode)
 	di->RenderTranslucent(*GetRenderState());
 }
 
+static uint8_t ToIntColorComponent(float v)
+{
+	return clamp((int)(v * 255.0f + 0.5f), 0, 255);
+}
+
 void PolyFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	afterBloomDrawEndScene2D();
+
+	if (fixedcm >= CM_FIRSTSPECIALCOLORMAP && fixedcm < CM_MAXCOLORMAP)
+	{
+		FSpecialColormap* scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
+
+		mRenderState->SetViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+		screen->mViewpoints->Set2D(*mRenderState, screen->GetWidth(), screen->GetHeight());
+
+		ScreenQuadVertex vertices[4] =
+		{
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ (float)mScreenViewport.width, 0.0f, 1.0f, 0.0f },
+			{ 0.0f, (float)mScreenViewport.height, 0.0f, 1.0f },
+			{ (float)mScreenViewport.width, (float)mScreenViewport.height, 1.0f, 1.0f }
+		};
+		mScreenQuad.VertexBuffer->SetData(4 * sizeof(ScreenQuadVertex), vertices, false);
+
+		mRenderState->SetVertexBuffer(mScreenQuad.VertexBuffer, 0, 0);
+		mRenderState->SetIndexBuffer(mScreenQuad.IndexBuffer);
+
+		mRenderState->SetObjectColor(PalEntry(255, int(scm->ColorizeStart[0] * 127.5f), int(scm->ColorizeStart[1] * 127.5f), int(scm->ColorizeStart[2] * 127.5f)));
+		mRenderState->SetAddColor(PalEntry(255, int(scm->ColorizeEnd[0] * 127.5f), int(scm->ColorizeEnd[1] * 127.5f), int(scm->ColorizeEnd[2] * 127.5f)));
+
+		mRenderState->EnableDepthTest(false);
+		mRenderState->EnableMultisampling(false);
+		mRenderState->SetCulling(Cull_None);
+
+		mRenderState->SetScissor(-1, -1, -1, -1);
+		mRenderState->SetColor(1, 1, 1, 1);
+		mRenderState->AlphaFunc(Alpha_GEqual, 0.f);
+		mRenderState->EnableTexture(false);
+		mRenderState->SetColormapShader(true);
+		mRenderState->DrawIndexed(DT_Triangles, 0, 6);
+		mRenderState->SetColormapShader(false);
+		mRenderState->SetObjectColor(0xffffffff);
+		mRenderState->SetAddColor(0);
+		mRenderState->SetVertexBuffer(screen->mVertexData);
+		mRenderState->EnableTexture(true);
+		mRenderState->ResetColor();
+	}
 }
 
 uint32_t PolyFrameBuffer::GetCaps()
@@ -452,8 +538,7 @@ void PolyFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
 	auto tex = mat->tex;
 	if (tex->isSWCanvas()) return;
 
-	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled()) ? CTF_CheckHires : 0;
+	int flags = mat->isExpanded() ? CTF_Expand : 0;
 	auto base = static_cast<PolyHardwareTexture*>(mat->GetLayer(0, translation));
 
 	base->Precache(mat, translation, flags);
@@ -538,15 +623,24 @@ TArray<uint8_t> PolyFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &color_
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 
-	IntRect box;
-	box.left = 0;
-	box.top = 0;
-	box.width = w;
-	box.height = h;
-	//mPostprocess->DrawPresentTexture(box, true, true);
-
 	TArray<uint8_t> ScreenshotBuffer(w * h * 3, true);
-	//CopyScreenToBuffer(w, h, ScreenshotBuffer.Data());
+	const uint8_t* pixels = GetCanvas()->GetPixels();
+	int dindex = 0;
+
+	// Convert to RGB
+	for (int y = 0; y < h; y++)
+	{
+		int sindex = y * w * 4;
+
+		for (int x = 0; x < w; x++)
+		{
+			ScreenshotBuffer[dindex    ] = pixels[sindex + 2];
+			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
+			ScreenshotBuffer[dindex + 2] = pixels[sindex    ];
+			dindex += 3;
+			sindex += 4;
+		}
+	}
 
 	pitch = w * 3;
 	color_type = SS_RGB;

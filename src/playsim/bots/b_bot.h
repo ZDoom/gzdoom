@@ -71,12 +71,12 @@ enum
 //Info given to bots when they're spawned.
 struct botinfo_t
 {
-	botinfo_t *next;
-	char *name;
-	char *info;
-	botskill_t skill;
-	int inuse;
-	int lastteam;
+	botinfo_t *next = nullptr;
+	FString Name;
+	FString Info;
+	botskill_t skill = {};
+	int inuse = 0;
+	int lastteam = 0;
 };
 
 struct BotInfoData

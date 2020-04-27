@@ -656,7 +656,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				
 				if (fabs(mo->X() - trail[0].start.X) < 20 && fabs(mo->Y() - trail[0].start.Y) < 20)
 				{ // This player (probably) fired the railgun
-					S_Sound (mo, CHAN_WEAPON, sound, 1, ATTN_NORM);
+					S_Sound (mo, CHAN_WEAPON, 0, sound, 1, ATTN_NORM);
 				}
 				else
 				{
@@ -665,7 +665,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 					{
 						if (shortest == NULL || shortest->sounddist > seg.sounddist) shortest = &seg;
 					}
-					S_Sound (source->Level, DVector3(shortest->soundpos, r_viewpoint.Pos.Z), CHAN_WEAPON, sound, 1, ATTN_NORM);
+					S_Sound (source->Level, DVector3(shortest->soundpos, r_viewpoint.Pos.Z), CHAN_WEAPON, 0, sound, 1, ATTN_NORM);
 				}
 			}
 		}
@@ -695,7 +695,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 			if (!p)
 				return;
 
-			int spiralduration = (duration == 0) ? 35 : duration;
+			int spiralduration = (duration == 0) ? TICRATE : duration;
 
 			p->alpha = 1.f;
 			p->ttl = spiralduration;

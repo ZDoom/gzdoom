@@ -5,8 +5,8 @@
 //
 //==========================================================================
 #include "r_defs.h"
-#include "r_data/renderstyle.h"
-#include "textures/textures.h"
+#include "renderstyle.h"
+#include "textures.h"
 #include "r_data/colormaps.h"
 
 #ifdef _MSC_VER
@@ -295,9 +295,10 @@ class HWFlat
 public:
 	sector_t * sector;
 	FSection *section;
-	float z; // the z position of the flat (only valid for non-sloped planes)
 	FMaterial *gltexture;
+	TextureManipulation* TextureFx;
 
+	float z; // the z position of the flat (only valid for non-sloped planes)
 	FColormap Colormap;	// light and fog
 	PalEntry FlatColor;
 	PalEntry AddColor;
@@ -353,7 +354,7 @@ public:
 
 	int translation;
 	int index;
-	int depth;
+	float depth;
 	int vertexindex;
 
 	float topclip;
@@ -365,15 +366,15 @@ public:
 	float vt,vb;
 	float x1,y1,z1;
 	float x2,y2,z2;
+	float trans;
+	int dynlightindex;
 
 	FMaterial *gltexture;
-	float trans;
 	AActor * actor;
 	particle_t * particle;
 	TArray<lightlist_t> *lightlist;
 	DRotator Angles;
 
-	int dynlightindex;
 
 	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);

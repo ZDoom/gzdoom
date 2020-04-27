@@ -43,6 +43,9 @@ namespace swrenderer
 		ShadeConstants ColormapConstants() const;
 		fixed_t Light() const { return LIGHTSCALE(mLight, mShade); }
 
+		float FixedLight() const { return mLight; }
+		int Shade() const { return mShade; }
+
 	protected:
 		void SetLight(const ColormapLight &light);
 

@@ -78,7 +78,7 @@ void RenderMemory::Clear()
 static void* Aligned_Alloc(size_t alignment, size_t size)
 {
 	void* ptr;
-#if defined _MSC_VER
+#if defined (_MSC_VER) || defined (__MINGW32__)
 	ptr = _aligned_malloc(size, alignment);
 	if (!ptr)
 		throw std::bad_alloc();

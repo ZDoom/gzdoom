@@ -41,8 +41,9 @@
 /* includes ************************/
 
 #include "t_script.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 
@@ -88,7 +89,7 @@ void DFsSection::Serialize(FSerializer &arc)
 
 char *DFsScript::SectionStart(const DFsSection *sec)
 {
-	return data + sec->start_index;
+	return Data.Data() + sec->start_index;
 }
 
 //==========================================================================
@@ -99,7 +100,7 @@ char *DFsScript::SectionStart(const DFsSection *sec)
 
 char *DFsScript::SectionEnd(const DFsSection *sec)
 {
-	return data + sec->end_index;
+	return Data.Data() + sec->end_index;
 }
 
 //==========================================================================
@@ -110,7 +111,7 @@ char *DFsScript::SectionEnd(const DFsSection *sec)
 
 char *DFsScript::SectionLoop(const DFsSection *sec)
 {
-	return data + sec->loop_index;
+	return Data.Data() + sec->loop_index;
 }
 
 //==========================================================================
@@ -335,8 +336,8 @@ char *DFsScript::ProcessFindChar(char *datap, char find)
 
 void DFsScript::DryRunScript(FLevelLocals *Level)
 {
-	char *end = data + len;
-	char *rover = data;
+	char *end = Data.Data() + len;
+	char *rover = Data.Data();
 	
 	// allocate space for the tokens
 	FParser parse(Level, this);
@@ -389,8 +390,8 @@ void DFsScript::DryRunScript(FLevelLocals *Level)
 
 void DFsScript::Preprocess(FLevelLocals *Level)
 {
-	len = (int)strlen(data);
-	ProcessFindChar(data, 0);  // fill in everything
+	len = (int)Data.Size() - 1;
+	ProcessFindChar(Data.Data(), 0);  // fill in everything
 	DryRunScript(Level);
 }
 
@@ -411,15 +412,15 @@ void DFsScript::ParseInclude(FLevelLocals *Level, char *lumpname)
 	int lumpnum;
 	char *lump;
 	
-	if((lumpnum = Wads.CheckNumForName(lumpname)) == -1)
+	if((lumpnum = fileSystem.CheckNumForName(lumpname)) == -1)
     {
 		I_Error("include lump '%s' not found!\n", lumpname);
 		return;
     }
 	
-	int lumplen=Wads.LumpLength(lumpnum);
+	int lumplen=fileSystem.FileLength(lumpnum);
 	lump=new char[lumplen+10];
-	Wads.ReadLump(lumpnum,lump);
+	fileSystem.ReadFile(lumpnum,lump);
 	
 	lump[lumplen]=0;
 	

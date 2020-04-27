@@ -213,7 +213,7 @@ class Inventory : Actor
 		bInvisible = false;
 		if (DoRespawn ())
 		{
-			A_PlaySound ("misc/spawn", CHAN_VOICE);
+			A_StartSound ("misc/spawn", CHAN_VOICE);
 		}
 	}
 
@@ -250,7 +250,7 @@ class Inventory : Actor
 		if (DoRespawn ())
 		{
 			SetState (SpawnState);
-			A_PlaySound ("misc/spawn", CHAN_VOICE);
+			A_StartSound ("misc/spawn", CHAN_VOICE);
 			Spawn ("ItemFog", Pos, ALLOW_REPLACE);
 		}
 	}
@@ -326,7 +326,7 @@ class Inventory : Actor
 		bIsMonster = false;
 		ChangeStatNum(STAT_INVENTORY);
 		// stop all sounds this item is playing.
-		for(int i = 1;i<=7;i++) A_StopSound(i);
+		A_StopAllSounds();
 		SetState (FindState("Held"));
 	}
 
@@ -1046,6 +1046,7 @@ class Inventory : Actor
 	{
 		double atten;
 		int chan;
+		int flags = 0;
 
 		if (bNoAttenPickupSound)
 		{
@@ -1065,13 +1066,15 @@ class Inventory : Actor
 
 		if (toucher != NULL && toucher.CheckLocalView())
 		{
-			chan = CHAN_PICKUP|CHAN_NOPAUSE;
+			chan = CHAN_ITEM;
+			flags = CHANF_NOPAUSE | CHANF_MAYBE_LOCAL;
 		}
 		else
 		{
-			chan = CHAN_PICKUP;
+			chan = CHAN_ITEM;
+			flags = CHANF_MAYBE_LOCAL;
 		}
-		toucher.A_PlaySound(PickupSound, chan, 1, false, atten);
+		toucher.A_StartSound(PickupSound, chan, flags, 1, atten);
 	}
 
 	//===========================================================================
@@ -1096,7 +1099,7 @@ class Inventory : Actor
 	//
 	//===========================================================================
 
-	virtual void AbsorbDamage (int damage, Name damageType, out int newdamage) {}
+	virtual void AbsorbDamage (int damage, Name damageType, out int newdamage, Actor inflictor = null, Actor source = null, int flags = 0) {}
 	
 	//===========================================================================
 	//

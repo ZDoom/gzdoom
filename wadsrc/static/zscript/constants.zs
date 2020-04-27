@@ -418,8 +418,23 @@ enum ESoundFlags
 	CHAN_UI = 32,
 	CHAN_NOPAUSE = 64,
 	CHAN_LOOP = 256,
-	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL),
-	CHAN_NOSTOP = 4096
+	CHAN_PICKUP = (CHAN_ITEM|CHAN_MAYBE_LOCAL), // Do not use this with A_StartSound! It would not do what is expected.
+	CHAN_NOSTOP = 4096,
+	CHAN_OVERLAP = 8192,
+
+	// Same as above, with an F appended to allow better distinction of channel and channel flags.
+	CHANF_DEFAULT = 0,	// just to make the code look better and avoid literal 0's.
+	CHANF_LISTENERZ = 8,
+	CHANF_MAYBE_LOCAL = 16,
+	CHANF_UI = 32,
+	CHANF_NOPAUSE = 64,
+	CHANF_LOOP = 256,
+	CHANF_NOSTOP = 4096,
+	CHANF_OVERLAP = 8192,
+	CHANF_LOCAL = 16384,
+
+
+	CHANF_LOOPING = CHANF_LOOP | CHANF_NOSTOP, // convenience value for replicating the old 'looping' boolean.
 
 };
 
@@ -738,6 +753,7 @@ enum EPSpriteFlags
 	PSPF_FORCEALPHA	= 1 << 7,
 	PSPF_FORCESTYLE	= 1 << 8,
 	PSPF_MIRROR		= 1 << 9,
+	PSPF_PLAYERTRANSLATED = 1 << 10
 };
 
 // Default psprite layers
@@ -835,20 +851,26 @@ enum EMaskRotationFlags
 
 enum ERenderStyle
 {
-	STYLE_None,
-	STYLE_Normal,
-	STYLE_Fuzzy,
-	STYLE_SoulTrans,
-	STYLE_OptFuzzy,
-	STYLE_Stencil,
-	STYLE_Translucent,
-	STYLE_Add,
-	STYLE_Shaded,
+	STYLE_None,				// Do not draw
+	STYLE_Normal,			// Normal; just copy the image to the screen
+	STYLE_Fuzzy,			// Draw silhouette using "fuzz" effect
+	STYLE_SoulTrans,		// Draw translucent with amount in r_transsouls
+	STYLE_OptFuzzy,			// Draw as fuzzy or translucent, based on user preference
+	STYLE_Stencil,			// Fill image interior with alphacolor
+	STYLE_Translucent,		// Draw translucent
+	STYLE_Add,				// Draw additive
+	STYLE_Shaded,			// Treat patch data as alpha values for alphacolor
 	STYLE_TranslucentStencil,
 	STYLE_Shadow,
-	STYLE_Subtract,
-	STYLE_AddStencil,
-	STYLE_AddShaded,
+	STYLE_Subtract,			// Actually this is 'reverse subtract' but this is what normal people would expect by 'subtract'.
+	STYLE_AddStencil,		// Fill image interior with alphacolor
+	STYLE_AddShaded,		// Treat patch data as alpha values for alphacolor
+	STYLE_Multiply,			// Multiply source with destination (HW renderer only.)
+	STYLE_InverseMultiply,	// Multiply source with inverse of destination (HW renderer only.)
+	STYLE_ColorBlend,		// Use color intensity as transparency factor
+	STYLE_Source,			// No blending (only used internally)
+	STYLE_ColorAdd,			// Use color intensity as transparency factor and blend additively.
+
 };
 
 // Type definition for the implicit 'callingstate' parameter that gets passed to action functions.

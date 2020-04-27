@@ -2,11 +2,12 @@
 
 #include "volk/volk.h"
 #include "vk_mem_alloc/vk_mem_alloc.h"
-#include "utility/doomerrors.h"
+#include "engineerrors.h"
 #include <mutex>
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include "zstring.h"
 
 class VulkanSwapChain;
 class VulkanSemaphore;
@@ -104,6 +105,14 @@ private:
 };
 
 FString VkResultToString(VkResult result);
+
+class CVulkanError : public CEngineError
+{
+public:
+	CVulkanError() : CEngineError() {}
+	CVulkanError(const char* message) : CEngineError(message) {}
+};
+
 
 inline void VulkanError(const char *text)
 {

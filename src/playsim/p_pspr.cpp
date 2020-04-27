@@ -39,7 +39,8 @@
 #include "templates.h"
 #include "g_level.h"
 #include "d_player.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
@@ -140,6 +141,7 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
 DEFINE_FIELD_BIT(DPSprite, Flags, bCVarFast, PSPF_CVARFAST)
 DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
 DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
+DEFINE_FIELD_BIT(DPSprite, Flags, bPlayerTranslated, PSPF_PLAYERTRANSLATED)
 
 //------------------------------------------------------------------------
 //
@@ -231,7 +233,8 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, FindPSprite)	// the underscore is needed to 
 void P_SetPsprite(player_t *player, PSPLayers id, FState *state, bool pending)
 {
 	if (player == nullptr) return;
-	player->GetPSprite(id)->SetState(state, pending);
+	auto psp = player->GetPSprite(id);
+	if (psp) psp->SetState(state, pending);
 }
 
 DEFINE_ACTION_FUNCTION(_PlayerInfo, SetPSprite)	// the underscore is needed to get past the name mangler which removes the first clas name character to match the class representation (needs to be fixed in a later commit)
@@ -265,8 +268,8 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 		newcaller = ReadyWeapon;
 	}
 
-	assert(newcaller != nullptr);
-
+	if (newcaller == nullptr) return nullptr; // Error case was not handled properly. This function cannot give a guarantee to always succeed!
+	
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
 	{
@@ -994,7 +997,7 @@ void P_SetupPsprites(player_t *player, bool startweaponup)
 	player->DestroyPSprites();
 
 	// Spawn the ready weapon
-	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : WP_NOCHANGE;
+	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : (AActor*)WP_NOCHANGE;
 	P_BringUpWeapon (player);
 }
 

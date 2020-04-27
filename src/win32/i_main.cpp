@@ -55,7 +55,7 @@
 #endif
 #include "resource.h"
 
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "hardware.h"
 
 #include "m_argv.h"
@@ -64,7 +64,7 @@
 #include "c_console.h"
 #include "version.h"
 #include "i_input.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "g_game.h"
 #include "r_utility.h"
@@ -896,7 +896,7 @@ int DoMain (HINSTANCE hInstance)
 	}
 	
 	/* create window */
-	FStringf caption("" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+	FStringf caption("" GAMENAME " %s " X64 " (%s)", GetVersionString(), GetGitTime());
 	std::wstring wcaption = caption.WideString();
 	Window = CreateWindowExW(
 							 WS_EX_APPWINDOW,
@@ -1016,7 +1016,7 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 	FString cmdline(GetCommandLineW());
 	buffer += mysnprintf (buffer, buffend - buffer, "\r\nCommand line: %s\r\n", cmdline.GetChars() );
 
-	for (i = 0; (arg = Wads.GetWadName (i)) != NULL; ++i)
+	for (i = 0; (arg = fileSystem.GetResourceFileName (i)) != NULL; ++i)
 	{
 		buffer += mysnprintf (buffer, buffend - buffer, "\r\nWad %d: %s", i, arg);
 	}

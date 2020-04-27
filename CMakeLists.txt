@@ -66,7 +66,7 @@ function( add_pk3 PK3_NAME PK3_DIR )
 	# Phase 1: Create a list of all source files for this PK3 archive, except
 	#  for a couple of strife image file names that confuse CMake.
 	file(GLOB_RECURSE PK3_SRCS ${PK3_DIR}/*)
-	# Exclude from the source list some gzdoom .png files with brackets in the
+	# Exclude from the source list some files with brackets in the
 	# file names here, because they confuse CMake.
 	# This only affects the list of source files shown in the IDE.
 	# It does not actually remove the files from the PK3 archive.
@@ -194,14 +194,6 @@ endif()
 #	find_package( asmjit )
 #endif()
 
-# GME
-#find_path( GME_INCLUDE_DIR gme/gme.h )
-#find_library( GME_LIBRARIES gme )
-#mark_as_advanced( GME_INCLUDE_DIR GME_LIBRARIES )
-#FIND_PACKAGE_HANDLE_STANDARD_ARGS( GME
-#	REQUIRED_VARS GME_LIBRARIES GME_INCLUDE_DIR
-#)
-
 if( MSVC )
 	# Eliminate unreferenced functions and data
 	# Perform identical COMDAT folding
@@ -211,29 +203,15 @@ if( MSVC )
 	# Function-level linking
 	# Disable run-time type information
 	if ( HAVE_VULKAN )
-		set( ALL_C_FLAGS "/GF /Gy /GR- /permissive- /DHAVE_VULKAN" )
+		set( ALL_C_FLAGS "/GF /Gy /permissive- /DHAVE_VULKAN" )
 	else()
-		set( ALL_C_FLAGS "/GF /Gy /GR- /permissive-" )
+		set( ALL_C_FLAGS "/GF /Gy /permissive-" )
 	endif()
 
 	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall
 	#set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2") # This is already the default
 
 
-#	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
-#		# SSE2 option (to allow x87 in 32 bit and disallow extended feature sets which have not yet been checked for precision)
-#		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")
-#		if (ZDOOM_USE_SSE2)
-#			set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-#		else ()
-#			if (MSVC_VERSION GREATER 1699)
-#				# On Visual C++ 2012 and later SSE2 is the default, so we need to switch it off explicitly
-#				set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:IA32")
-#			endif ()
-#		endif ()
-#	else()
-#		set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-#	endif()
 
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
 	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
@@ -260,7 +238,6 @@ if( MSVC )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_MINSIZEREL ${CMAKE_C_FLAGS_MINSIZEREL} )
 	string(REPLACE "/MD " " " CMAKE_C_FLAGS_RELWITHDEBINFO ${CMAKE_C_FLAGS_RELWITHDEBINFO} )
 	string(REPLACE "/MDd " " " CMAKE_C_FLAGS_DEBUG ${CMAKE_C_FLAGS_DEBUG} )
-	string(REPLACE " /GR" " " CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} )
 else()
 	set( REL_LINKER_FLAGS "" )
 	if ( HAVE_VULKAN )
@@ -288,6 +265,7 @@ else()
 
 
 	if( APPLE )
+		set(CMAKE_OSX_DEPLOYMENT_TARGET "10.9")
 		if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
 			# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
 			# C++11 support using SDKs 10.7 and 10.8.
@@ -323,8 +301,6 @@ set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${DEB_C_FLAGS} -D_DEBUG" )
 option(FORCE_INTERNAL_ZLIB "Use internal zlib")
 option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
-option(FORCE_INTERNAL_GME "Use internal gme" ON)
-mark_as_advanced( FORCE_INTERNAL_GME )
 option(FORCE_INTERNAL_ASMJIT "Use internal asmjit" ON)
 mark_as_advanced( FORCE_INTERNAL_ASMJIT )
 
@@ -338,7 +314,7 @@ if( ZLIB_FOUND AND NOT FORCE_INTERNAL_ZLIB )
 	message( STATUS "Using system zlib, includes found at ${ZLIB_INCLUDE_DIR}" )
 else()
 	message( STATUS "Using internal zlib" )
-	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing zlib alongside zdoom
+	set( SKIP_INSTALL_ALL TRUE ) # Avoid installing zlib
 	add_subdirectory( libraries/zlib )
 	set( ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libraries/zlib )
 	set( ZLIB_LIBRARIES z )
@@ -391,26 +367,8 @@ else()
 	set( BZIP2_LIBRARY bz2 )
 endif()
 
-if( GME_FOUND AND NOT FORCE_INTERNAL_GME )
-	message( STATUS "Using system gme library, includes found at ${GME_INCLUDE_DIR}" )
-else()
-	message( STATUS "Using internal gme library" )
-	# Use MAME as it's balanced emulator: well-accurate, but doesn't eats lot of CPU
-	# Nuked OPN2 is very accurate emulator, but it eats too much CPU for the workflow
-	set( GME_YM2612_EMU "MAME" )
-	add_subdirectory( libraries/game-music-emu )
-	set( GME_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/game-music-emu" )
-	set( GME_LIBRARIES gme )
-endif()
 
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/lzma/C" )
-set( ADL_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/adlmidi" )
-set( OPN_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/opnmidi" )
-set( TIMIDITYPP_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/timidityplus" )
-set( TIMIDITY_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/timidity" )
-set( WILDMIDI_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/wildmidi" )
-set( OPLSYNTH_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/oplsynth" )
-set( ZMUSIC_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libraries/zmusic" )
 
 if( NOT CMAKE_CROSSCOMPILING )
 	if( NOT CROSS_EXPORTS )
@@ -428,22 +386,11 @@ install(DIRECTORY docs/
 		DESTINATION ${INSTALL_DOCS_PATH}
 		COMPONENT "Documentation")
 
-option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
 option( DYN_OPENAL "Dynamically load OpenAL" ON )
-option( DYN_SNDFILE "Dynamically load libsndfile" ON )
-option( DYN_MPG123 "Dynamically load libmpg123" ON )
 
 add_subdirectory( libraries/lzma )
 add_subdirectory( tools )
-add_subdirectory( libraries/dumb )
 add_subdirectory( libraries/gdtoa )
-add_subdirectory( libraries/adlmidi )
-add_subdirectory( libraries/opnmidi )
-add_subdirectory( libraries/timidity )
-add_subdirectory( libraries/timidityplus )
-add_subdirectory( libraries/wildmidi )
-add_subdirectory( libraries/oplsynth )
-add_subdirectory( libraries/zmusic )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )

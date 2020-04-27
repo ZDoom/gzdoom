@@ -34,10 +34,12 @@
 #include "r_state.h"
 #include "gi.h"
 #include "a_keys.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "d_player.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
+#include "animations.h"
+#include "texturemanager.h"
 
 //============================================================================
 //
@@ -437,7 +439,7 @@ bool FLevelLocals::EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 		// if the wrong side of door is pushed, give oof sound
 		if (line->sidedef[1] == NULL)			// killough
 		{
-			S_Sound (thing, CHAN_VOICE, "*usefail", 1, ATTN_NORM);
+			S_Sound (thing, CHAN_VOICE, 0, "*usefail", 1, ATTN_NORM);
 			return false;
 		}
 
@@ -780,7 +782,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 		// Do not attempt to close the door if it already is
 		else if (type == DAnimatedDoor::adClose)
 			return false;
-		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
+		FDoorAnimation *anim = TexAnim.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
 			CreateThinker<DAnimatedDoor>(sec, line, speed, delay, anim, type);
@@ -816,7 +818,7 @@ bool FLevelLocals::EV_SlidingDoor (line_t *line, AActor *actor, int tag, int spe
 			{
 				continue;
 			}
-			FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
+			FDoorAnimation *anim = TexAnim.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 			if (anim != NULL)
 			{
 				rtn = true;

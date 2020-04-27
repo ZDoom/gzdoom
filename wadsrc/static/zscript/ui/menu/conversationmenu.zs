@@ -281,7 +281,7 @@ class ConversationMenu : Menu
 	override void OnDestroy()
 	{
 		if (mDialogueLines != null) mDialogueLines.Destroy();
-		SetMusicVolume (1);
+		SetMusicVolume (Level.MusicVolume);
 		Super.OnDestroy();
 	}
 
@@ -383,7 +383,7 @@ class ConversationMenu : Menu
 		}
 		if (sel != -1 && sel != mSelection)
 		{
-			//S_Sound (CHAN_VOICE | CHAN_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
+			//S_Sound (CHAN_VOICE, CHANF_UI, "menu/cursor", snd_menuvolume, ATTN_NONE);
 		}
 		mSelection = sel;
 		if (type == MOUSE_Release)

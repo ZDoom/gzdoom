@@ -24,7 +24,7 @@
 #include <float.h>
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -34,6 +34,7 @@
 #include "c_console.h"
 #include "cmdlib.h"
 #include "g_level.h"
+#include "texturemanager.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "r_skyplane.h"
 #include "swrenderer/scene/r_3dfloors.h"

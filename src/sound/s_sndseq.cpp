@@ -28,7 +28,7 @@
 #include "m_random.h"
 #include "s_sound.h"
 #include "s_sndseq.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "p_local.h"
 #include "po_man.h"
@@ -36,7 +36,8 @@
 #include "c_dispatch.h"
 
 #include "g_level.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "vm.h"
@@ -118,7 +119,7 @@ public:
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
-		S_Sound(m_Actor, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
+		S_Sound(m_Actor, CHAN_BODY, EChanFlags::FromInt(loop), id, clamp(m_Volume, 0.f, 1.f), m_Atten);
 	}
 	bool IsPlaying()
 	{
@@ -146,7 +147,7 @@ public:
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
-		S_Sound (m_Poly, CHAN_BODY|loop, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
+		S_Sound (m_Poly, CHAN_BODY, EChanFlags::FromInt(loop), id, clamp(m_Volume, 0.f, 1.f), m_Atten);
 	}
 	bool IsPlaying()
 	{
@@ -174,8 +175,8 @@ public:
 	void Serialize(FSerializer &arc);
 	void MakeSound(int loop, FSoundID id)
 	{
-		Channel = (Channel & 7) | CHAN_AREA | loop;
-		S_Sound(m_Sector, Channel, id, clamp(m_Volume, 0.f, 1.f), m_Atten);
+		// The Channel here may have CHANF_LOOP encoded into it.
+		S_Sound(m_Sector, Channel & 7, CHANF_AREA | EChanFlags::FromInt(loop| (Channel & ~7)), id, clamp(m_Volume, 0.f, 1.f), m_Atten);
 	}
 	bool IsPlaying()
 	{
@@ -429,7 +430,7 @@ void DSeqNode::AddChoice (int seqnum, seqtype_t type)
 DEFINE_ACTION_FUNCTION(DSeqNode, AddChoice)
 {
 	PARAM_SELF_PROLOGUE(DSeqNode);
-	PARAM_NAME(seq);
+	PARAM_INT(seq);
 	PARAM_INT(mode);
 	self->AddChoice(seq, seqtype_t(mode));
 	return 0;
@@ -510,7 +511,7 @@ static void AssignHexenTranslations (void)
 	{
 		for (seq = 0; seq < Sequences.Size(); seq++)
 		{
-			if (Sequences[seq] != NULL && HexenSequences[i].Name == Sequences[seq]->SeqName)
+			if (Sequences[seq] != NULL && Sequences[seq]->SeqName == HexenSequences[i].Name)
 				break;
 		}
 		if (seq == Sequences.Size())
@@ -581,7 +582,7 @@ void S_ParseSndSeq (int levellump)
 	memset (SeqTrans, -1, sizeof(SeqTrans));
 	lastlump = 0;
 
-	while (((lump = Wads.FindLump ("SNDSEQ", &lastlump)) != -1 || levellump != -1) && levellump != -2)
+	while (((lump = fileSystem.FindLump ("SNDSEQ", &lastlump)) != -1 || levellump != -1) && levellump != -2)
 	{
 		if (lump == -1)
 		{
@@ -642,7 +643,7 @@ void S_ParseSndSeq (int levellump)
 					{
 						ScriptTemp.Push (sc.Number);
 						sc.MustGetString();
-						ScriptTemp.Push (FName(sc.String));
+						ScriptTemp.Push (FName(sc.String).GetIndex());
 					}
 					else
 					{
@@ -1162,7 +1163,7 @@ bool SN_IsMakingLoopingSound (sector_t *sector)
 		DSeqNode *next = node->NextSequence();
 		if (node->Source() == (void *)sector)
 		{
-			return !!(static_cast<DSeqSectorNode *>(node)->Channel & CHAN_LOOP);
+			return !!(static_cast<DSeqSectorNode *>(node)->Channel & CHANF_LOOP);
 		}
 		node = next;
 	}
@@ -1222,7 +1223,7 @@ void DSeqNode::Tick ()
 			{
 				// Does not advance sequencePtr, so it will repeat as necessary.
 				m_CurrentSoundID = FSoundID(GetData(*m_SequencePtr));
-				MakeSound (CHAN_LOOP, m_CurrentSoundID);
+				MakeSound (CHANF_LOOP, m_CurrentSoundID);
 			}
 			return;
 

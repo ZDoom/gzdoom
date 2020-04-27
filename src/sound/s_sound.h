@@ -37,14 +37,30 @@ struct FLevelLocals;
 
 #include "s_soundinternal.h"
 #include "s_doomsound.h"
+#include "name.h"
+#include "tarray.h"
+
+enum SndUserFlags
+{
+	SND_PlayerReserve = 1,
+	SND_PlayerCompat = 2,
+	SND_PlayerSilent = 4
+};
+
+enum // This cannot be remain as this, but for now it has to suffice.
+{
+	SOURCE_Actor = SOURCE_None+1,		// Sound is coming from an actor.
+	SOURCE_Sector,		// Sound is coming from a sector.
+	SOURCE_Polyobj,		// Sound is coming from a polyobject.
+};
 
 // Per level startup code.
 // Kills playing sounds at start of level and starts new music.
 //
+typedef TMap<FName, FName> MusicAliasMap;
+extern MusicAliasMap MusicAliases;
 
 // Called after a level is loaded. Ensures that most sounds are loaded.
-
-struct FSoundLoadBuffer;
 
 // [RH] S_sfx "maintenance" routines
 void S_ClearSoundData();

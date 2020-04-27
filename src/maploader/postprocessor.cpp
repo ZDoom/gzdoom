@@ -39,7 +39,7 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "p_tags.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "textures.h"
 #include "g_levellocals.h"
 #include "actor.h"
@@ -369,7 +369,7 @@ DEFINE_ACTION_FUNCTION(DLevelPostProcessor, GetThingStringArgument)
 
 	const FName argument = thing < self->loader->MapThingsConverted.Size()
 		? self->loader->MapThingsConverted[thing].arg0str : NAME_None;
-	ACTION_RETURN_INT(argument);
+	ACTION_RETURN_INT(argument.GetIndex());
 }
 
 DEFINE_ACTION_FUNCTION(DLevelPostProcessor, SetThingArgument)

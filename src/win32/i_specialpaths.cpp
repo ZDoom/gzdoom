@@ -36,10 +36,11 @@
 #include <windows.h>
 #include <lmcons.h>
 #include <shlobj.h>
+#include <Shlwapi.h>
 
+#include "printf.h"
 #include "cmdlib.h"
-#include "doomtype.h"
-#include "m_misc.h"
+#include "findfile.h"
 #include "version.h"	// for GAMENAME
 
 // Vanilla MinGW does not have folder ids
@@ -65,7 +66,7 @@ bool UseKnownFolders()
 	// Cache this value so the semantics don't change during a single run
 	// of the program. (e.g. Somebody could add write access while the
 	// program is running.)
-	static INTBOOL iswritable = -1;
+	static int iswritable = -1;
 	HANDLE file;
 
 	if (iswritable >= 0)
@@ -125,8 +126,6 @@ FString M_GetAppDataPath(bool create)
 	{ // Failed (e.g. On Win9x): use program directory
 		path = progdir;
 	}
-	// Don't use GAME_DIR and such so that ZDoom and its child ports can
-	// share the node cache.
 	path += "/" GAMENAMELOWERCASE;
 	path.Substitute("//", "/");	// needed because progdir ends with a slash.
 	if (create)
@@ -178,31 +177,11 @@ FString M_GetAutoexecPath()
 
 //===========================================================================
 //
-// M_GetCajunPath													Windows
-//
-// Returns the location of the Cajun Bot definitions.
-//
-//===========================================================================
-
-FString M_GetCajunPath(const char *botfilename)
-{
-	FString path;
-
-	path << progdir << "zcajun/" << botfilename;
-	if (!FileExists(path))
-	{
-		path = "";
-	}
-	return path;
-}
-
-//===========================================================================
-//
 // M_GetConfigPath													Windows
 //
 // Returns the path to the config file. On Windows, this can vary for reading
-// vs writing. i.e. If $PROGDIR/zdoom-<user>.ini does not exist, it will try
-// to read from $PROGDIR/zdoom.ini, but it will never write to zdoom.ini.
+// vs writing. i.e. If the user specific ini does not exist, it will try
+// to read from a neutral version, but never write to it.
 //
 //===========================================================================
 
@@ -211,7 +190,7 @@ FString M_GetConfigPath(bool for_reading)
 	FString path;
 	HRESULT hr;
 
-	path.Format("%s" GAMENAME "_portable.ini", progdir.GetChars());
+	path.Format("%s" GAMENAMELOWERCASE "_portable.ini", progdir.GetChars());
 	if (FileExists(path))
 	{
 		return path;
@@ -226,12 +205,12 @@ FString M_GetConfigPath(bool for_reading)
 		path += "/" GAMENAMELOWERCASE ".ini";
 	}
 	else
-	{ // construct "$PROGDIR/zdoom-$USER.ini"
-		TCHAR uname[UNLEN+1];
-		DWORD unamelen = countof(uname);
+	{ // construct "$PROGDIR/-$USER.ini"
+		WCHAR uname[UNLEN+1];
+		DWORD unamelen = UNLEN;
 
 		path = progdir;
-		hr = GetUserName(uname, &unamelen);
+		hr = GetUserNameW(uname, &unamelen);
 		if (SUCCEEDED(hr) && uname[0] != 0)
 		{
 			// Is it valid for a user name to have slashes?
@@ -246,13 +225,13 @@ FString M_GetConfigPath(bool for_reading)
 			path << GAMENAMELOWERCASE "-" << FString(uname) << ".ini";
 		}
 		else
-		{ // Couldn't get user name, so just use zdoom.ini
+		{ // Couldn't get user name, so just use base version.
 			path += GAMENAMELOWERCASE ".ini";
 		}
 	}
 
 	// If we are reading the config file, check if it exists. If not, fallback
-	// to $PROGDIR/zdoom.ini
+	// to base version.
 	if (for_reading)
 	{
 		if (!FileExists(path))
@@ -283,19 +262,19 @@ FString M_GetScreenshotsPath()
 
 	if (!UseKnownFolders())
 	{
-		return progdir;
+		path << progdir << "/Screenshots/";
 	}
 	else if (GetKnownFolder(-1, MyFOLDERID_Screenshots, true, path))
 	{
-		path << "/" GAMENAME;
+		path << "/" GAMENAME "/";
 	}
 	else if (GetKnownFolder(CSIDL_MYPICTURES, FOLDERID_Pictures, true, path))
 	{
-		path << "/Screenshots/" GAMENAME;
+		path << "/Screenshots/" GAMENAME "/";
 	}
 	else
 	{
-		return progdir;
+		path << progdir << "/Screenshots/";
 	}
 	CreatePath(path);
 	return path;
@@ -315,25 +294,25 @@ FString M_GetSavegamesPath()
 
 	if (!UseKnownFolders())
 	{
-		return progdir;
+		path << progdir << "Save/";
 	}
 	// Try standard Saved Games folder
 	else if (GetKnownFolder(-1, FOLDERID_SavedGames, true, path))
 	{
-		path << "/" GAMENAME;
+		path << "/" GAMENAME "/";
 	}
 	// Try defacto My Documents/My Games folder
 	else if (GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true, path))
 	{
 		// I assume since this isn't a standard folder, it doesn't have
 		// a localized name either.
-		path << "/My Games/" GAMENAME;
-		CreatePath(path);
+		path << "/My Games/" GAMENAME "/";
 	}
 	else
 	{
-		path = progdir;
+		path << progdir << "Save/";
 	}
+
 	return path;
 }
 
@@ -365,7 +344,7 @@ FString M_GetDocumentsPath()
 	{
 		// I assume since this isn't a standard folder, it doesn't have
 		// a localized name either.
-		path << "/My Games/" GAMENAME;
+		path << "/My Games/" GAMENAME "/";
 		CreatePath(path);
 	}
 	else
@@ -373,4 +352,56 @@ FString M_GetDocumentsPath()
 		path = progdir;
 	}
 	return path;
+}
+
+//===========================================================================
+//
+// M_GetDemoPath												Windows
+//
+// Returns the path to the default demp directory.
+//
+//===========================================================================
+
+FString M_GetDemoPath()
+{
+	FString path;
+
+	// A portable INI means that this storage location should also be portable.
+	FStringf inipath("%s" GAMENAME "_portable.ini", progdir.GetChars());
+	if (FileExists(inipath) || !UseKnownFolders())
+	{
+		path << progdir << "Demos/";
+	}
+	else
+	// Try defacto My Documents/My Games folder
+	 if (GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true, path))
+	{
+		// I assume since this isn't a standard folder, it doesn't have
+		// a localized name either.
+		path << "/My Games/" GAMENAME "/";
+	}
+	else
+	{
+		path << progdir << "Demos/";
+	}
+
+	return path;
+}
+
+//===========================================================================
+//
+// M_NormalizedPath
+//
+// Normalizes the given path and returns the result.
+//
+//===========================================================================
+
+FString M_GetNormalizedPath(const char* path)
+{
+	std::wstring wpath = WideString(path);
+	wchar_t buffer[MAX_PATH];
+	GetFullPathNameW(wpath.c_str(), MAX_PATH, buffer, nullptr);
+	FString result(buffer);
+	FixPathSeperator(result);
+	return result;
 }

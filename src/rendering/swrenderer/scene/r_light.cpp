@@ -25,7 +25,7 @@
 
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -86,7 +86,7 @@ namespace swrenderer
 		// [RH] Inverse light for shooting the Sigil
 		if (fixedcolormap == nullptr && viewpoint.extralight == INT_MIN)
 		{
-			fixedcolormap = &SpecialSWColormaps[INVERSECOLORMAP];
+			fixedcolormap = &SpecialSWColormaps[REALINVERSECOLORMAP];
 			viewpoint.extralight = 0;
 		}
 	}

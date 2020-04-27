@@ -519,10 +519,50 @@ void BlendColorRevSub_Src_One(int y, int x0, int x1, PolyTriangleThreadData* thr
 	}
 }
 
+void BlendColorColormap(int y, int x0, int x1, PolyTriangleThreadData* thread)
+{
+	uint32_t* line = (uint32_t*)thread->dest + y * (ptrdiff_t)thread->dest_pitch;
+
+	uint32_t startR = (int)((thread->mainVertexShader.Data.uObjectColor.r) * 255.0f);
+	uint32_t startG = (int)((thread->mainVertexShader.Data.uObjectColor.g) * 255.0f);
+	uint32_t startB = (int)((thread->mainVertexShader.Data.uObjectColor.b) * 255.0f);
+	uint32_t rangeR = (int)((thread->mainVertexShader.Data.uAddColor.r) * 255.0f) - startR;
+	uint32_t rangeG = (int)((thread->mainVertexShader.Data.uAddColor.g) * 255.0f) - startG;
+	uint32_t rangeB = (int)((thread->mainVertexShader.Data.uAddColor.b) * 255.0f) - startB;
+
+	int sseend = x0;
+	for (int x = sseend; x < x1; x++)
+	{
+		uint32_t dst = line[x];
+
+		uint32_t a = APART(dst);
+		uint32_t r = RPART(dst);
+		uint32_t g = GPART(dst);
+		uint32_t b = BPART(dst);
+
+		uint32_t gray = (r * 77 + g * 143 + b * 37) >> 8;
+		gray += (gray >> 7); // gray*=256/255
+
+		r = (startR + ((gray * rangeR) >> 8)) << 1;
+		g = (startG + ((gray * rangeG) >> 8)) << 1;
+		b = (startB + ((gray * rangeB) >> 8)) << 1;
+
+		r = MIN(r, (uint32_t)255);
+		g = MIN(g, (uint32_t)255);
+		b = MIN(b, (uint32_t)255);
+
+		line[x] = MAKEARGB(a, r, g, b);
+	}
+}
+
 void SelectWriteColorFunc(PolyTriangleThreadData* thread)
 {
 	FRenderStyle style = thread->RenderStyle;
-	if (style.BlendOp == STYLEOP_Add)
+	if (thread->ColormapShader)
+	{
+		thread->WriteColorFunc = &BlendColorColormap;
+	}
+	else if (style.BlendOp == STYLEOP_Add)
 	{
 		if (style.SrcAlpha == STYLEALPHA_One && style.DestAlpha == STYLEALPHA_Zero)
 		{

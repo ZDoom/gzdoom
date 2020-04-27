@@ -36,7 +36,7 @@
 
 #include "sc_man.h"
 #include "templates.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "r_state.h"
 #include "stats.h"
@@ -44,13 +44,15 @@
 #include "g_levellocals.h"
 #include "a_dynlight.h"
 #include "v_video.h"
-#include "textures/skyboxtexture.h"
+#include "skyboxtexture.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
+#include "texturemanager.h"
 
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
 void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
+void ParseColorization(FScanner& sc);
 
 TArray<UserShaderDesc> usershaders;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
@@ -65,7 +67,7 @@ extern int AttenuationIsSet;
 
 static void ParseVavoomSkybox()
 {
-	int lump = Wads.CheckNumForName("SKYBOXES");
+	int lump = fileSystem.CheckNumForName("SKYBOXES");
 
 	if (lump < 0) return;
 
@@ -86,7 +88,7 @@ static void ParseVavoomSkybox()
 				sc.MustGetStringName("map");
 				sc.MustGetString();
 
-				maplump = Wads.CheckNumForFullName(sc.String, true);
+				maplump = fileSystem.CheckNumForFullName(sc.String, true);
 
 				FTexture *tex = TexMan.FindTexture(sc.String, ETextureType::Wall, FTextureManager::TEXMAN_TryAny);
 				if (tex == NULL)
@@ -194,6 +196,7 @@ static const char *CoreKeywords[]=
    "#include",
    "material",
    "lightsizefactor",
+   "colorization",
    nullptr
 };
 
@@ -218,6 +221,7 @@ enum
    TAG_INCLUDE,
    TAG_MATERIAL,
    TAG_LIGHTSIZEFACTOR,
+   TAG_COLORIZATION,
 };
 
 //==========================================================================
@@ -1152,8 +1156,8 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
-				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
+				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == workingLump) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1336,8 +1340,8 @@ class GLDefsParser
 
 			if (lumpnum != -1)
 			{
-				if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetMaxIwadNum()) useme = true;
-				if (thiswad && Wads.GetLumpFile(lumpnum) == workingLump) useme = true;
+				if (iwad && fileSystem.GetFileContainer(lumpnum) <= fileSystem.GetMaxIwadNum()) useme = true;
+				if (thiswad && fileSystem.GetFileContainer(lumpnum) == workingLump) useme = true;
 			}
 			if (!useme) return;
 		}
@@ -1648,6 +1652,68 @@ class GLDefsParser
 			}
 		}
 	}
+
+	void ParseColorization(FScanner& sc)
+	{
+		TextureManipulation tm = {};
+		tm.ModulateColor = 0x01ffffff;
+		sc.MustGetString();
+		FName cname = sc.String;
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
+		{
+			sc.MustGetString();
+			if (sc.Compare("DesaturationFactor"))
+			{
+				sc.MustGetFloat();
+				tm.DesaturationFactor = (float)sc.Float;
+			}
+			else if (sc.Compare("AddColor"))
+			{
+				sc.MustGetString();
+				tm.AddColor = (tm.AddColor & 0xff000000) | (V_GetColor(NULL, sc) & 0xffffff);
+			}
+			else if (sc.Compare("ModulateColor"))
+			{
+				sc.MustGetString();
+				tm.ModulateColor = V_GetColor(NULL, sc) & 0xffffff;
+				if (sc.CheckToken(','))
+				{
+					sc.MustGetNumber();
+					tm.ModulateColor.a = sc.Number;
+				}
+				else tm.ModulateColor.a = 1;
+			}
+			else if (sc.Compare("BlendColor"))
+			{
+				sc.MustGetString();
+				tm.BlendColor = V_GetColor(NULL, sc) & 0xffffff;
+				sc.MustGetToken(',');
+				sc.MustGetString();
+				static const char* opts[] = { "none", "alpha", "screen", "overlay", "hardlight", nullptr };
+				tm.AddColor.a = (tm.AddColor.a & ~TextureManipulation::BlendMask) | sc.MustMatchString(opts);
+				if (sc.Compare("alpha"))
+				{
+					sc.MustGetToken(',');
+					sc.MustGetFloat();
+					tm.BlendColor.a = (uint8_t)(clamp(sc.Float, 0., 1.) * 255);
+				}
+			}
+			else if (sc.Compare("invert"))
+			{
+				tm.AddColor.a |= TextureManipulation::InvertBit;
+			}
+			else sc.ScriptError("Unknown token '%s'", sc.String);
+		}
+		if (tm.CheckIfEnabled())
+		{
+			TexMan.InsertTextureManipulation(cname, tm);
+		}
+		else
+		{
+			TexMan.RemoveTextureManipulation(cname);
+		}
+	}
 	
 
 public:
@@ -1676,7 +1742,7 @@ public:
 				{
 					sc.MustGetString();
 					// This is not using sc.Open because it can print a more useful error message when done here
-					lump = Wads.CheckNumForFullName(sc.String, true);
+					lump = fileSystem.CheckNumForFullName(sc.String, true);
 					if (lump==-1)
 						sc.ScriptError("Lump '%s' not found", sc.String);
 
@@ -1741,6 +1807,9 @@ public:
 					*/
 				}
 				break;
+			case TAG_COLORIZATION:
+				ParseColorization(sc);
+				break;
 			default:
 				sc.ScriptError("Error parsing defs.  Unknown tag: %s.\n", sc.String);
 				break;
@@ -1767,7 +1836,7 @@ void LoadGLDefs(const char *defsLump)
 	static const char *gldefsnames[] = { "GLDEFS", defsLump, nullptr };
 
 	lastLump = 0;
-	while ((workingLump = Wads.FindLumpMulti(gldefsnames, &lastLump)) != -1)
+	while ((workingLump = fileSystem.FindLumpMulti(gldefsnames, &lastLump)) != -1)
 	{
 		GLDefsParser sc(workingLump, LightAssociations);
 		sc.DoParseDefs();

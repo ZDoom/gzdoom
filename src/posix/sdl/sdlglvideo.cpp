@@ -47,7 +47,7 @@
 
 #include "hardware.h"
 #include "gl_sysfb.h"
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "r_defs.h"
 
 #include "gl/renderer/gl_renderer.h"
@@ -61,6 +61,13 @@
 #include "rendering/polyrenderer/backend/poly_framebuffer.h"
 
 // MACROS ------------------------------------------------------------------
+
+// Requires SDL 2.0.6 or newer
+//#define SDL2_STATIC_LIBRARY
+
+#if defined SDL2_STATIC_LIBRARY && defined HAVE_VULKAN
+#include <SDL_vulkan.h>
+#endif // SDL2_STATIC_LIBRARY && HAVE_VULKAN
 
 // TYPES -------------------------------------------------------------------
 
@@ -113,10 +120,19 @@ CCMD(vid_list_sdl_render_drivers)
 
 namespace Priv
 {
+#ifdef SDL2_STATIC_LIBRARY
+
+#define SDL2_OPTIONAL_FUNCTION(RESULT, NAME, ...) \
+	RESULT(*NAME)(__VA_ARGS__) = SDL_ ## NAME
+
+#else // !SDL2_STATIC_LIBRARY
+
 	FModule library("SDL2");
 
 #define SDL2_OPTIONAL_FUNCTION(RESULT, NAME, ...) \
 	static TOptProc<library, RESULT(*)(__VA_ARGS__)> NAME("SDL_" #NAME)
+
+#endif // SDL2_STATIC_LIBRARY
 
 	SDL2_OPTIONAL_FUNCTION(int,      GetWindowBordersSize,         SDL_Window *window, int *top, int *left, int *bottom, int *right);
 #ifdef HAVE_VULKAN
@@ -149,7 +165,7 @@ namespace Priv
 		}
 
 		FString caption;
-		caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+		caption.Format(GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
 
 		const uint32_t windowFlags = (win_maximized ? SDL_WINDOW_MAXIMIZED : 0) | SDL_WINDOW_RESIZABLE | extraFlags;
 		Priv::window = SDL_CreateWindow(caption,
@@ -174,10 +190,6 @@ namespace Priv
 
 	void SetupPixelFormat(int multisample, const int *glver)
 	{
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -408,16 +420,18 @@ SDLVideo::SDLVideo ()
 		return;
 	}
 
+#ifndef SDL2_STATIC_LIBRARY
 	// Load optional SDL functions
 	if (!Priv::library.IsLoaded())
 	{
 		Priv::library.Load({ "libSDL2-2.0.so.0", "libSDL2-2.0.so", "libSDL2.so" });
 	}
+#endif // !SDL2_STATIC_LIBRARY
 
+	Priv::softpolyEnabled = vid_preferbackend == 2;
 #ifdef HAVE_VULKAN
 	Priv::vulkanEnabled = vid_preferbackend == 1
 		&& Priv::Vulkan_GetDrawableSize && Priv::Vulkan_GetInstanceExtensions && Priv::Vulkan_CreateSurface;
-	Priv::softpolyEnabled = vid_preferbackend == 2;
 
 	if (Priv::vulkanEnabled)
 	{
@@ -428,11 +442,11 @@ SDLVideo::SDLVideo ()
 			Priv::vulkanEnabled = false;
 		}
 	}
-	else if (Priv::softpolyEnabled)
+#endif
+	if (Priv::softpolyEnabled)
 	{
 		Priv::CreateWindow(SDL_WINDOW_HIDDEN);
 	}
-#endif
 }
 
 SDLVideo::~SDLVideo ()
@@ -454,7 +468,7 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 		{
 			assert(device == nullptr);
 			device = new VulkanDevice();
-			fb = new VulkanFrameBuffer(nullptr, fullscreen, device);
+			fb = new VulkanFrameBuffer(nullptr, vid_fullscreen, device);
 		}
 		catch (CVulkanError const&)
 		{
@@ -470,12 +484,12 @@ DFrameBuffer *SDLVideo::CreateFrameBuffer ()
 
 	if (Priv::softpolyEnabled)
 	{
-		fb = new PolyFrameBuffer(nullptr, fullscreen);
+		fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
 	}
 
 	if (fb == nullptr)
 	{
-		fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+		fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 	}
 
 	return fb;
@@ -555,7 +569,7 @@ void SystemBaseFrameBuffer::ToggleFullscreen(bool yes)
 		if ( !Priv::fullscreenSwitch )
 		{
 			Priv::fullscreenSwitch = true;
-			fullscreen = false;
+			vid_fullscreen = false;
 		}
 		else
 		{
@@ -574,9 +588,9 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 	}
 	win_w = w;
 	win_h = h;
-	if ( fullscreen )
+	if (vid_fullscreen )
 	{
-		fullscreen = false;
+		vid_fullscreen = false;
 	}
 	else
 	{
@@ -715,7 +729,7 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 		break;
 
 	case SDL_WINDOWEVENT_MOVED:
-		if (!fullscreen && Priv::GetWindowBordersSize)
+		if (!vid_fullscreen && Priv::GetWindowBordersSize)
 		{
 			int top = 0, left = 0;
 			Priv::GetWindowBordersSize(Priv::window, &top, &left, nullptr, nullptr);
@@ -725,7 +739,7 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 		break;
 
 	case SDL_WINDOWEVENT_RESIZED:
-		if (!fullscreen && !Priv::fullscreenSwitch)
+		if (!vid_fullscreen && !Priv::fullscreenSwitch)
 		{
 			win_w = event.data1;
 			win_h = event.data2;
@@ -753,7 +767,7 @@ void I_SetWindowTitle(const char* caption)
 	else
 	{
 		FString default_caption;
-		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+		default_caption.Format(GAMENAME " %s (%s)", GetVersionString(), GetGitTime());
 		SDL_SetWindowTitle(Priv::window, default_caption);
 	}
 }

@@ -49,332 +49,32 @@
 #include "am_map.h"
 #include "v_video.h"
 #include "gi.h"
+#include "utf8.h"
 #include "fontinternals.h"
 #include "intermission/intermission.h"
+#include "menu/menu.h"
+#include "c_cvars.h"
+#include "c_bind.h"
+#include "c_dispatch.h"
+#include "s_music.h"
+#include "texturemanager.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
 void PrintPickupMessage(bool localview, const FString &str);
 
 
-//=====================================================================================
-//
-// FString exports
-//
-//=====================================================================================
+void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
 
-static void LocalizeString(const FString &label, bool prefixed, FString *result)
-{
-	if (!prefixed) *result = GStrings(label);
-	else if (label[0] != '$') *result = label;
-	else *result = GStrings(&label[1]);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringTable, Localize, LocalizeString)
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
 {
 	PARAM_PROLOGUE;
-	PARAM_STRING(label);
-	PARAM_BOOL(prefixed);
-	FString result;
-	LocalizeString(label, prefixed, &result);
-	ACTION_RETURN_STRING(result);
-}
-
-static void StringReplace(FString *self, const FString &s1, const FString &s2)
-{
-	self->Substitute(s1, s2);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Replace, StringReplace)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(s1);
-	PARAM_STRING(s2);
-	self->Substitute(s1, s2);
+	PARAM_OBJECT(viewpoint, AActor);
+	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
+	PARAM_FLOAT(fov);
+	SetCameraToTexture(viewpoint, texturename, fov);
 	return 0;
 }
-
-static void StringMid(FString *self, unsigned pos, unsigned len, FString *result)
-{
-	*result = self->Mid(pos, len);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Mid, StringMid)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(pos);
-	PARAM_UINT(len);
-	FString s = self->Mid(pos, len);
-	ACTION_RETURN_STRING(s);
-}
-
-static void StringLeft(FString *self, unsigned len, FString *result)
-{
-	*result = self->Left(len);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Left, StringLeft)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	FString s = self->Left(len);
-	ACTION_RETURN_STRING(s);
-}
-
-static void StringTruncate(FString *self, unsigned len)
-{
-	self->Truncate(len);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Truncate, StringTruncate)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(len);
-	self->Truncate(len);
-	return 0;
-}
-
-static void StringRemove(FString *self, unsigned index, unsigned remlen)
-{
-	self->Remove(index, remlen);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Remove, StringRemove)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(index);
-	PARAM_UINT(remlen);
-	self->Remove(index, remlen);
-	return 0;
-}
-
-static void StringCharAt(FString *self, int pos, FString *result)
-{
-	if ((unsigned)pos >= self->Len()) *result = "";
-	else *result = FString((*self)[pos]);
-}
-// CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharAt, StringCharAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	FString result;
-	StringCharAt(self, pos, &result);
-	ACTION_RETURN_STRING(result);
-}
-
-static int StringCharCodeAt(FString *self, int pos)
-{
-	if ((unsigned)pos >= self->Len()) return 0;
-	else return (*self)[pos];
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharCodeAt, StringCharCodeAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	ACTION_RETURN_INT(StringCharCodeAt(self, pos));
-}
-
-static int StringByteAt(FString *self, int pos)
-{
-	if ((unsigned)pos >= self->Len()) return 0;
-	else return (uint8_t)((*self)[pos]);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ByteAt, StringByteAt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	ACTION_RETURN_INT(StringByteAt(self, pos));
-}
-
-static void StringFilter(FString *self, FString *result)
-{
-	*result = strbin1(*self);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Filter, StringFilter)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(strbin1(*self));
-}
-
-static int StringIndexOf(FString *self, const FString &substr, int startIndex)
-{
-	return self->IndexOf(substr, startIndex);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, IndexOf, StringIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(startIndex);
-	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
-}
-
-static int StringLastIndexOf(FString *self, const FString &substr, int endIndex)
-{
-	return self->LastIndexOfBroken(substr, endIndex);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, LastIndexOf, StringLastIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOfBroken(substr, endIndex));
-}
-
-static int StringRightIndexOf(FString *self, const FString &substr, int endIndex)
-{
-	return self->LastIndexOf(substr, endIndex);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, RightIndexOf, StringRightIndexOf)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_STRING(substr);
-	PARAM_INT(endIndex);
-	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
-}
-
-static void StringToUpper(FString *self)
-{
-	self->ToUpper();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToUpper, StringToUpper)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToUpper();
-	return 0;
-}
-
-static void StringToLower(FString *self)
-{
-	self->ToLower();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToLower, StringToLower)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	self->ToLower();
-	return 0;
-}
-
-static void StringMakeUpper(FString *self, FString *out)
-{
-	*out = self->MakeUpper();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeUpper, StringMakeUpper)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(self->MakeUpper());
-}
-
-static void StringMakeLower(FString *self, FString *out)
-{
-	*out = self->MakeLower();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, MakeLower, StringMakeLower)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_STRING(self->MakeLower());
-}
-
-static int StringCharUpper(int ch)
-{
-	return ch >= 0 && ch < 65536 ? upperforlower[ch] : ch;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharUpper, StringCharUpper)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(ch);
-	ACTION_RETURN_INT(StringCharUpper(ch));
-}
-
-static int StringCharLower(int ch)
-{
-	return ch >= 0 && ch < 65536 ? lowerforupper[ch] : ch;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CharLower, StringCharLower)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(ch);
-	ACTION_RETURN_INT(StringCharLower(ch));
-}
-
-
-static int StringToInt(FString *self, int base)
-{
-	return (int)self->ToLong(base);
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToInt, StringToInt)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(base);
-	ACTION_RETURN_INT((int)self->ToLong(base));
-}
-
-static double StringToDbl(FString *self)
-{
-	return self->ToDouble();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, ToDouble, StringToDbl)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_FLOAT(self->ToDouble());
-}
-
-static void StringSplit(FString *self, TArray<FString> *tokens, const FString &delimiter, int keepEmpty)
-{
-	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, Split, StringSplit)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_POINTER(tokens, TArray<FString>);
-	PARAM_STRING(delimiter);
-	PARAM_INT(keepEmpty);
-	StringSplit(self, tokens, delimiter, keepEmpty);
-	return 0;
-}
-
-static int StringCodePointCount(FString *self)
-{
-	return (int)self->CharacterCount();
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, CodePointCount, StringCodePointCount)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	ACTION_RETURN_INT(StringCodePointCount(self));
-}
-
-static int StringNextCodePoint(FString *self, int inposition, int *position)
-{
-	int codepoint = self->GetNextCharacter(inposition);
-	if (position) *position = inposition;
-	return codepoint;
-}
-
-DEFINE_ACTION_FUNCTION_NATIVE(FStringStruct, GetNextCodePoint, StringNextCodePoint)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_INT(pos);
-	if (numret > 0) ret[0].SetInt(self->GetNextCharacter(pos));
-	if (numret > 1) ret[1].SetInt(pos);
-	return numret;
-}
-
 
 //=====================================================================================
 //
@@ -651,6 +351,24 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetAdditiveColor, SetAdditiveColor)
 	SetAdditiveColor(self, pos, color);
 	return 0;
 }
+
+static void SetColorization(sector_t* self, int pos, int cname)
+{
+	if (pos >= 0 && pos < 2)
+	{
+		self->SetTextureFx(pos, TexMan.GetTextureManipulation(ENamedName(cname)));
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetColorization, SetColorization)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_INT(pos);
+	PARAM_INT(color);
+	SetColorization(self, pos, color);
+	return 0;
+}
+
 
 static void SetFogDensity(sector_t *self, int dens)
 {
@@ -1749,6 +1467,25 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Sector, SetXOffset, SetXOffset)
 	 return 0;
  }
 
+ static void SetWallColorization(side_t* self, int pos, int cname)
+ {
+	 if (pos >= 0 && pos < 3)
+	 {
+		 self->SetTextureFx(pos, TexMan.GetTextureManipulation(ENamedName(cname)));
+	 }
+ }
+
+ DEFINE_ACTION_FUNCTION_NATIVE(_Side, SetColorization, SetWallColorization)
+ {
+	 PARAM_SELF_STRUCT_PROLOGUE(side_t);
+	 PARAM_INT(pos);
+	 PARAM_INT(color);
+	 SetWallColorization(self, pos, color);
+	 return 0;
+ }
+
+
+
  static int SideIndex(side_t *self)
  {
 	 return self->Index();
@@ -1869,17 +1606,176 @@ DEFINE_ACTION_FUNCTION_NATIVE(FLevelLocals, ReplaceTextures, ReplaceTextures)
 	return 0;
 }
 
-void SetCameraToTexture(AActor *viewpoint, const FString &texturename, double fov);
+static int CheckForTexture(const FString& name, int type, int flags)
+{
+	return TexMan.CheckForTexture(name, static_cast<ETextureType>(type), flags).GetIndex();
+}
 
-DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, SetCameraToTexture, SetCameraToTexture)
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckForTexture, CheckForTexture)
 {
 	PARAM_PROLOGUE;
-	PARAM_OBJECT(viewpoint, AActor);
-	PARAM_STRING(texturename); // [ZZ] there is no point in having this as FTextureID because it's easier to refer to a cameratexture by name and it isn't executed too often to cache it.
-	PARAM_FLOAT(fov);
-	SetCameraToTexture(viewpoint, texturename, fov);
-	return 0;
+	PARAM_STRING(name);
+	PARAM_INT(type);
+	PARAM_INT(flags);
+	ACTION_RETURN_INT(CheckForTexture(name, type, flags));
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetName)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan.ByIndex(texid);
+	FString retval;
+
+	if (tex != nullptr)
+	{
+		if (tex->GetName().IsNotEmpty()) retval = tex->GetName();
+		else
+		{
+			// Textures for full path names do not have their own name, they merely link to the source lump.
+			auto lump = tex->GetSourceLump();
+			if (fileSystem.GetLinkedTexture(lump) == tex)
+				retval = fileSystem.GetFileFullName(lump);
+		}
+	}
+	ACTION_RETURN_STRING(retval);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static int GetTextureSize(int texid, int* py)
+{
+	auto tex = TexMan.ByIndex(texid);
+	int x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetDisplayWidth();
+		y = tex->GetDisplayHeight();
+	}
+	else x = y = -1;
+	if (py) *py = y;
+	return x;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetSize, GetTextureSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	int x, y;
+	x = GetTextureSize(texid, &y);
+	if (numret > 0) ret[0].SetInt(x);
+	if (numret > 1) ret[1].SetInt(y);
+	return MIN(numret, 2);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+static void GetScaledSize(int texid, DVector2* pvec)
+{
+	auto tex = TexMan.ByIndex(texid);
+	double x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetDisplayWidthDouble();
+		y = tex->GetDisplayHeightDouble();
+	}
+	else x = y = -1;
+	if (pvec)
+	{
+		pvec->X = x;
+		pvec->Y = y;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledSize, GetScaledSize)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	DVector2 vec;
+	GetScaledSize(texid, &vec);
+	ACTION_RETURN_VEC2(vec);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+static void GetScaledOffset(int texid, DVector2* pvec)
+{
+	auto tex = TexMan.ByIndex(texid);
+	double x, y;
+	if (tex != nullptr)
+	{
+		x = tex->GetDisplayLeftOffsetDouble();
+		y = tex->GetDisplayTopOffsetDouble();
+	}
+	else x = y = -1;
+	if (pvec)
+	{
+		pvec->X = x;
+		pvec->Y = y;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, GetScaledOffset, GetScaledOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	DVector2 vec;
+	GetScaledOffset(texid, &vec);
+	ACTION_RETURN_VEC2(vec);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+static int CheckRealHeight(int texid)
+{
+	auto tex = TexMan.ByIndex(texid);
+	if (tex != nullptr) return tex->CheckRealHeight();
+	else return -1;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, CheckRealHeight, CheckRealHeight)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	ACTION_RETURN_INT(CheckRealHeight(texid));
+}
+
+bool OkForLocalization(FTextureID texnum, const char* substitute);
+
+static int OkForLocalization_(int index, const FString& substitute)
+{
+	return OkForLocalization(FSetTextureID(index), substitute);
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_TexMan, OkForLocalization, OkForLocalization_)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(name);
+	PARAM_STRING(subst)
+	ACTION_RETURN_INT(OkForLocalization_(name, subst));
+}
+
+
 
 
 //=====================================================================================
@@ -2499,7 +2395,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, GetTopOfStatusbar, GetTopOfStatusb
 
 void SBar_DrawTexture(DBaseStatusBar *self, int texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
 {
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(FSetTextureID(texid), x, y, flags, alpha, w, h, scaleX, scaleY);
 }
 
@@ -2521,7 +2417,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, DrawTexture, SBar_DrawTexture)
 
 void SBar_DrawImage(DBaseStatusBar *self, const FString &texid, double x, double y, int flags, double alpha, double w, double h, double scaleX, double scaleY)
 {
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 }
 
@@ -2588,7 +2484,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(DBaseStatusBar, TransformRect, SBar_TransformRect)
 
 static void SBar_Fill(DBaseStatusBar *self, int color, double x, double y, double w, double h, int flags)
 {
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	self->Fill(color, x, y, w, h, flags);
 }
 
@@ -3105,6 +3001,307 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 
 //==========================================================================
 //
+// file system
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_Wads, GetNumLumps)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_INT(fileSystem.GetNumEntries());
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, CheckNumForName)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(ns);
+	PARAM_INT(wadnum);
+	PARAM_BOOL(exact);
+	ACTION_RETURN_INT(fileSystem.CheckNumForName(name, ns, wadnum, exact));
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, CheckNumForFullName)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	ACTION_RETURN_INT(fileSystem.CheckNumForFullName(name));
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, FindLump)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT(startlump);
+	PARAM_INT(ns);
+	const bool isLumpValid = startlump >= 0 && startlump < fileSystem.GetNumEntries();
+	ACTION_RETURN_INT(isLumpValid ? fileSystem.FindLump(name, &startlump, 0 != ns) : -1);
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, GetLumpName)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(lump);
+	FString lumpname;
+	fileSystem.GetFileShortName(lumpname, lump);
+	ACTION_RETURN_STRING(lumpname);
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, GetLumpFullName)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(lump);
+	ACTION_RETURN_STRING(fileSystem.GetFileFullName(lump));
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, GetLumpNamespace)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(lump);
+	ACTION_RETURN_INT(fileSystem.GetFileNamespace(lump));
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(lump);
+	const bool isLumpValid = lump >= 0 && lump < fileSystem.GetNumEntries();
+	ACTION_RETURN_STRING(isLumpValid ? fileSystem.ReadFile(lump).GetString() : FString());
+}
+
+//==========================================================================
+//
+// CVARs
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_CVar, GetInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRep(CVAR_Int);
+	ACTION_RETURN_INT(v.Int);
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetFloat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRep(CVAR_Float);
+	ACTION_RETURN_FLOAT(v.Float);
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetString)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRep(CVAR_String);
+	ACTION_RETURN_STRING(v.String);
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, SetInt)
+{
+	// Only menus are allowed to change CVARs.
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD))
+	{
+		// Only menus are allowed to change non-mod CVARs.
+		if (DMenu::InMenu == 0)
+		{
+			ThrowAbortException(X_OTHER, "Attempt to change CVAR '%s' outside of menu code", self->GetName());
+		}
+	}
+	PARAM_INT(val);
+	UCVarValue v;
+	v.Int = val;
+	self->SetGenericRep(v, CVAR_Int);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, SetFloat)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD))
+	{
+		// Only menus are allowed to change non-mod CVARs.
+		if (DMenu::InMenu == 0)
+		{
+			ThrowAbortException(X_OTHER, "Attempt to change CVAR '%s' outside of menu code", self->GetName());
+		}
+	}
+	PARAM_FLOAT(val);
+	UCVarValue v;
+	v.Float = (float)val;
+	self->SetGenericRep(v, CVAR_Float);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, SetString)
+{
+	// Only menus are allowed to change CVARs.
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD))
+	{
+		// Only menus are allowed to change non-mod CVARs.
+		if (DMenu::InMenu == 0)
+		{
+			ThrowAbortException(X_OTHER, "Attempt to change CVAR '%s' outside of menu code", self->GetName());
+		}
+	}
+	PARAM_STRING(val);
+	UCVarValue v;
+	v.String = val.GetChars();
+	self->SetGenericRep(v, CVAR_String);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetRealType)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	ACTION_RETURN_INT(self->GetRealType());
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, ResetToDefault)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD))
+	{
+		// Only menus are allowed to change non-mod CVARs.
+		if (DMenu::InMenu == 0)
+		{
+			ThrowAbortException(X_OTHER, "Attempt to change CVAR '%s' outside of menu code", self->GetName());
+		}
+	}
+
+	self->ResetToDefault();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, FindCVar)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	ACTION_RETURN_POINTER(FindCVar(name.GetChars(), nullptr));
+}
+
+DEFINE_ACTION_FUNCTION(_CVar, GetCVar)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(name);
+	PARAM_POINTER(plyr, player_t);
+	ACTION_RETURN_POINTER(GetCVar(plyr ? int(plyr - players) : -1, name.GetChars()));
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, SetBind)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_INT(k);
+	PARAM_STRING(cmd);
+
+	// Only menus are allowed to change bindings.
+	if (DMenu::InMenu == 0)
+	{
+		I_FatalError("Attempt to change key bindings outside of menu code to '%s'", cmd.GetChars());
+	}
+
+
+	self->SetBind(k, cmd);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, NameKeys)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(k1);
+	PARAM_INT(k2);
+	char buffer[120];
+	C_NameKeys(buffer, k1, k2);
+	ACTION_RETURN_STRING(buffer);
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_STRING(cmd);
+	int k1, k2;
+	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
+	if (numret > 0) ret[0].SetInt(k1);
+	if (numret > 1) ret[1].SetInt(k2);
+	return MIN(numret, 2);
+}
+
+DEFINE_ACTION_FUNCTION(FKeyBindings, UnbindACommand)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
+	PARAM_STRING(cmd);
+
+	// Only menus are allowed to change bindings.
+	if (DMenu::InMenu == 0)
+	{
+		I_FatalError("Attempt to unbind key bindings for '%s' outside of menu code", cmd.GetChars());
+	}
+
+	self->UnbindACommand(cmd);
+	return 0;
+}
+
+// This is only accessible to the special menu item to run CCMDs.
+DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
+{
+	if (CurrentMenu == nullptr) return 0;
+	PARAM_PROLOGUE;
+	PARAM_STRING(cmd);
+	PARAM_BOOL(unsafe);
+	UnsafeExecutionScope scope(unsafe);
+	C_DoCommand(cmd);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Console, MidPrint)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER(fnt, FFont);
+	PARAM_STRING(text);
+	PARAM_BOOL(bold);
+
+	const char* txt = text[0] == '$' ? GStrings(&text[1]) : text.GetChars();
+	C_MidPrint(fnt, txt, bold);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Console, HideConsole)
+{
+	C_HideConsole();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Console, Printf)
+{
+	PARAM_PROLOGUE;
+	PARAM_VA_POINTER(va_reginfo)	// Get the hidden type information array
+
+	FString s = FStringFormat(VM_ARGS_NAMES);
+	Printf("%s\n", s.GetChars());
+	return 0;
+}
+
+
+DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(music);
+	PARAM_INT(order);
+	PARAM_BOOL(looping);
+	PARAM_BOOL(force);
+	ACTION_RETURN_BOOL(S_ChangeMusic(music, order, looping, force));
+}
+
+
+//==========================================================================
+//
 //
 //
 //==========================================================================
@@ -3151,6 +3348,7 @@ DEFINE_FIELD(FLevelLocals, fogdensity)
 DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
 DEFINE_FIELD(FLevelLocals, pixelstretch)
+DEFINE_FIELD(FLevelLocals, MusicVolume)
 DEFINE_FIELD(FLevelLocals, deathsequence)
 DEFINE_FIELD_BIT(FLevelLocals, frozenstate, frozen, 1)	// still needed for backwards compatibility.
 DEFINE_FIELD_NAMED(FLevelLocals, i_compatflags, compatflags)
@@ -3281,3 +3479,12 @@ DEFINE_FIELD(DBaseStatusBar, itemflashFade);
 DEFINE_FIELD(DHUDFont, mFont);
 
 DEFINE_GLOBAL(StatusBar);
+
+DEFINE_GLOBAL(Bindings)
+DEFINE_GLOBAL(AutomapBindings)
+
+DEFINE_GLOBAL_NAMED(mus_playing, musplaying);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
+DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
+

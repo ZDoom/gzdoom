@@ -24,7 +24,7 @@
 
 #include <cstdint>
 #include <vector>
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 #include "rendering/swrenderer/drawers/r_draw.h"
 
 class FString;

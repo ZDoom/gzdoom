@@ -153,7 +153,7 @@ class PodGenerator : Actor
 		}
 		mo.SetStateLabel("Grow");
 		mo.Thrust(4.5, random[MakePod]() * (360. / 256));
-		A_PlaySound (AttackSound, CHAN_BODY);
+		A_StartSound (AttackSound, CHAN_BODY);
 		special1++; // Increment generated pod count
 		mo.master = self; // Link the generator to the pod
 	}
@@ -304,7 +304,7 @@ class Volcano : Actor
 				blast.Angle = random[VolcanoBlast]() * (360 / 256.);
 				blast.VelFromAngle(1.);
 				blast.Vel.Z = 2.5 + random[VolcanoBlast]() / 64.;
-				blast.A_PlaySound ("world/volcano/shoot", CHAN_BODY);
+				blast.A_StartSound ("world/volcano/shoot", CHAN_BODY);
 				blast.CheckMissileSpawn (radius);
 			}
 		}

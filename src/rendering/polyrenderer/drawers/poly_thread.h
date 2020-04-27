@@ -60,7 +60,7 @@ public:
 	void SetScissor(int x, int y, int w, int h);
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(int unit, const void *pixels, int width, int height, bool bgra);
-	void SetShader(int specialEffect, int effectState, bool alphaTest);
+	void SetShader(int specialEffect, int effectState, bool alphaTest, bool colormapShader);
 
 	void UpdateClip();
 
@@ -141,6 +141,7 @@ public:
 	int SpecialEffect = EFF_NONE;
 	int EffectState = 0;
 	bool AlphaTest = false;
+	bool ColormapShader = false;
 	uint32_t AlphaThreshold = 0x7f000000;
 	const PolyPushConstants* PushConstants = nullptr;
 

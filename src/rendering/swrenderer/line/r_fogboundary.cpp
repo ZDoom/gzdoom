@@ -24,7 +24,7 @@
 #include <float.h>
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"

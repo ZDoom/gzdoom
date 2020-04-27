@@ -28,8 +28,8 @@
 #include "templates.h"
 #include "doomstat.h"
 #include "r_data/colormaps.h"
-#include "gl_load/gl_system.h"
-#include "gl_load/gl_interface.h"
+#include "gl_system.h"
+#include "gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"
@@ -138,6 +138,9 @@ bool FGLRenderState::ApplyShader()
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 	activeShader->muAddColor.Set(mStreamData.uAddColor);
+	activeShader->muTextureAddColor.Set(mStreamData.uTextureAddColor);
+	activeShader->muTextureModulateColor.Set(mStreamData.uTextureModulateColor);
+	activeShader->muTextureBlendColor.Set(mStreamData.uTextureBlendColor);
 
 	if (mGlowEnabled || activeShader->currentglowstate)
 	{
@@ -316,8 +319,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 	int usebright = false;
 	int maxbound = 0;
 
-	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
-	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && !tex->isScaled() && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;
+	int flags = mat->isExpanded() ? CTF_Expand : 0;
 	int numLayers = mat->GetLayers();
 	auto base = static_cast<FHardwareTexture*>(mat->GetLayer(0, translation));
 
@@ -347,7 +349,7 @@ void FGLRenderState::ApplyMaterial(FMaterial *mat, int clampmode, int translatio
 
 void FGLRenderState::ApplyBlendMode()
 {
-	static int blendstyles[] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, };
+	static int blendstyles[] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA };
 	static int renderops[] = { 0, GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, -1, -1, -1, -1,
 		-1, -1, -1, -1, -1, -1, -1, -1 };
 

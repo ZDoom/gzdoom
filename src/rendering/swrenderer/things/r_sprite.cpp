@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "swrenderer/things/r_wallsprite.h"
 #include "c_console.h"
 #include "c_cvars.h"
@@ -67,6 +67,9 @@
 #include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, gl_light_sprites)
+EXTERN_CVAR(Int, gl_texture_hqresizemult)
+EXTERN_CVAR(Int, gl_texture_hqresizemode)
+EXTERN_CVAR(Int, gl_texture_hqresize_targets)
 
 namespace swrenderer
 {
@@ -129,7 +132,13 @@ namespace swrenderer
 		if (thing->renderflags & RF_SPRITEFLIP)
 			renderflags ^= RF_XFLIP;
 
-		double yscale = spriteScale.Y / tex->GetScale().Y;
+		double yscale, origyscale;
+		int resizeMult = gl_texture_hqresizemult;
+
+		origyscale = spriteScale.Y / tex->GetScale().Y;
+		if (gl_texture_hqresizemode == 0 || gl_texture_hqresizemult < 1 || !(gl_texture_hqresize_targets & 2))
+			resizeMult = 1;
+		yscale = origyscale / resizeMult;
 
 		// store information in a vissprite
 		RenderSprite *vis = thread->FrameMemory->NewObject<RenderSprite>();
@@ -139,8 +148,8 @@ namespace swrenderer
 		vis->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		vis->yscale = float(viewport->InvZtoScale * yscale / wallc.sz1);
 		vis->idepth = float(1 / wallc.sz1);
-		vis->floorclip = thing->Floorclip / yscale;
-		vis->texturemid = tex->GetTopOffsetSW() - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip) / yscale;
+		vis->floorclip = thing->Floorclip / origyscale;
+		vis->texturemid = tex->GetTopOffsetSW() - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip / resizeMult) / yscale;
 		vis->x1 = wallc.sx1 < renderportal->WindowLeft ? renderportal->WindowLeft : wallc.sx1;
 		vis->x2 = wallc.sx2 > renderportal->WindowRight ? renderportal->WindowRight : wallc.sx2;
 		vis->heightsec = heightsec;
@@ -266,7 +275,7 @@ namespace swrenderer
 			mlight.SetSpriteLight();
 
 			drawerargs.SetBaseColormap(Light.BaseColormap);
-			drawerargs.DrawMasked(thread, gzt - floorclip, SpriteScale, renderflags & RF_XFLIP, renderflags & RF_YFLIP, wallc, mlight, pic, portalfloorclip, mceilingclip, RenderStyle);
+			drawerargs.DrawMasked(thread, gzt - floorclip, SpriteScale, renderflags & RF_XFLIP, renderflags & RF_YFLIP, wallc, x1, x2, mlight, pic, portalfloorclip, mceilingclip, RenderStyle);
 		}
 	}
 }

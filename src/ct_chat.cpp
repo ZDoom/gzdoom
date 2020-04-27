@@ -42,6 +42,8 @@
 #include "utf8.h"
 #include "gstrings.h"
 #include "vm.h"
+#include "c_buttons.h"
+#include "d_buttons.h"
 
 enum
 {
@@ -233,10 +235,11 @@ void CT_PasteChat(const char *clip)
 
 void CT_Drawer (void)
 {
+	auto drawer = twod;
 	FFont *displayfont = NewConsoleFont;
 
 	if (players[consoleplayer].camera != NULL &&
-		(Button_ShowScores.bDown ||
+		(buttonMap.ButtonDown(Button_ShowScores) ||
 		 players[consoleplayer].camera->health <= 0 ||
 		 SB_ForceActive) &&
 		 // Don't draw during intermission, since it has its own scoreboard in wi_stuff.cpp.
@@ -264,12 +267,12 @@ void CT_Drawer (void)
 		y = (viewactive || gamestate != GS_LEVEL) ? -displayfont->GetHeight()-2 : -displayfont->GetHeight() - 22;
 
 		scalex = 1;
-		int scale = active_con_scaletext(true);
-		int screen_width = SCREENWIDTH / scale;
-		int screen_height= SCREENHEIGHT / scale;
+		int scale = active_con_scaletext(drawer);
+		int screen_width = twod->GetWidth() / scale;
+		int screen_height= twod->GetHeight() / scale;
 		int st_y = StatusBar->GetTopOfStatusbar() / scale;
 
-		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
+		y += ((twod->GetHeight() == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
 		promptwidth = displayfont->StringWidth (prompt) * scalex;
 		x = displayfont->GetCharWidth (displayfont->GetCursor()) * scalex * 2 + promptwidth;
@@ -286,9 +289,9 @@ void CT_Drawer (void)
 		}
 		printstr += displayfont->GetCursor();
 
-		screen->DrawText (displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
+		DrawText(drawer, displayfont, CR_GREEN, 0, y, prompt.GetChars(), 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		screen->DrawText (displayfont, CR_GREY, promptwidth, y, printstr, 
+		DrawText(drawer, displayfont, CR_GREY, promptwidth, y, printstr,
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 	}
 }
@@ -426,7 +429,7 @@ static bool DoSubstitution (FString &out, const char *in)
 				}
 				else
 				{
-					out += weapon->GetClass()->TypeName;
+					out += weapon->GetClass()->TypeName.GetChars();
 				}
 			}
 		}

@@ -106,7 +106,7 @@ extend class Actor
 			if (CheckMeleeRange())
 			{
 				int damage = random[pr_headattack](1, 6) * 10;
-				A_PlaySound (AttackSound, CHAN_WEAPON);
+				A_StartSound (AttackSound, CHAN_WEAPON);
 				int newdam = target.DamageMobj (self, self, damage, "Melee");
 				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			}

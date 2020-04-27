@@ -1,9 +1,30 @@
+/*
+**  Vulkan backend
+**  Copyright (c) 2016-2020 Magnus Norddahl
+**
+**  This software is provided 'as-is', without any express or implied
+**  warranty.  In no event will the authors be held liable for any damages
+**  arising from the use of this software.
+**
+**  Permission is granted to anyone to use this software for any purpose,
+**  including commercial applications, and to alter it and redistribute it
+**  freely, subject to the following restrictions:
+**
+**  1. The origin of this software must not be misrepresented; you must not
+**     claim that you wrote the original software. If you use this software
+**     in a product, an acknowledgment in the product documentation would be
+**     appreciated but is not required.
+**  2. Altered source versions must be plainly marked as such, and must not be
+**     misrepresented as being the original software.
+**  3. This notice may not be removed or altered from any source distribution.
+**
+*/
 
 #include "vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
-#include "w_wad.h"
-#include "doomerrors.h"
+#include "filesystem.h"
+#include "engineerrors.h"
 #include <ShaderLang.h>
 
 VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
@@ -118,6 +139,9 @@ static const char *shaderBindings = R"(
 		vec4 uObjectColor2;
 		vec4 uDynLightColor;
 		vec4 uAddColor;
+		vec4 uTextureAddColor;
+		vec4 uTextureModulateColor;
+		vec4 uTextureBlendColor;
 		vec4 uFogColor;
 		float uDesaturationFactor;
 		float uInterpolationFactor;
@@ -139,7 +163,7 @@ static const char *shaderBindings = R"(
 	};
 
 	layout(set = 0, binding = 3, std140) uniform StreamUBO {
-		StreamData data[256];
+		StreamData data[MAX_STREAM_DATA];
 	};
 
 	layout(set = 0, binding = 4) uniform sampler2D ShadowMap;
@@ -195,6 +219,9 @@ static const char *shaderBindings = R"(
 	#define uObjectColor2 data[uDataIndex].uObjectColor2
 	#define uDynLightColor data[uDataIndex].uDynLightColor
 	#define uAddColor data[uDataIndex].uAddColor
+	#define uTextureBlendColor data[uDataIndex].uTextureBlendColor
+	#define uTextureModulateColor data[uDataIndex].uTextureModulateColor
+	#define uTextureAddColor data[uDataIndex].uTextureAddColor
 	#define uFogColor data[uDataIndex].uFogColor
 	#define uDesaturationFactor data[uDataIndex].uDesaturationFactor
 	#define uInterpolationFactor data[uDataIndex].uInterpolationFactor
@@ -230,7 +257,9 @@ static const char *shaderBindings = R"(
 std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername, const char *vert_lump, const char *defines)
 {
 	FString code = GetTargetGlslVersion();
-	code << defines << shaderBindings;
+	code << defines;
+	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	code << shaderBindings;
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	code << "#line 1\n";
 	code << LoadPrivateShaderLump(vert_lump).GetChars() << "\n";
@@ -243,7 +272,9 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadVertShader(FString shadername
 std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername, const char *frag_lump, const char *material_lump, const char *light_lump, const char *defines, bool alphatest, bool gbufferpass)
 {
 	FString code = GetTargetGlslVersion();
-	code << defines << shaderBindings;
+	code << defines;
+	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
+	code << shaderBindings;
 
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	if (!alphatest) code << "#define NO_ALPHATEST\n";
@@ -314,16 +345,16 @@ FString VkShaderManager::GetTargetGlslVersion()
 
 FString VkShaderManager::LoadPublicShaderLump(const char *lumpname)
 {
-	int lump = Wads.CheckNumForFullName(lumpname);
+	int lump = fileSystem.CheckNumForFullName(lumpname);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	FMemLump data = Wads.ReadLump(lump);
+	FileData data = fileSystem.ReadFile(lump);
 	return data.GetString();
 }
 
 FString VkShaderManager::LoadPrivateShaderLump(const char *lumpname)
 {
-	int lump = Wads.CheckNumForFullName(lumpname, 0);
+	int lump = fileSystem.CheckNumForFullName(lumpname, 0);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	FMemLump data = Wads.ReadLump(lump);
+	FileData data = fileSystem.ReadFile(lump);
 	return data.GetString();
 }

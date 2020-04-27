@@ -113,7 +113,7 @@ extend class Actor
 			}
 		}
 
-		A_PlaySound (blastsound, CHAN_AUTO);
+		A_StartSound (blastsound, CHAN_AUTO);
 
 		if (!(blastflags & BF_DONTWARN))
 		{

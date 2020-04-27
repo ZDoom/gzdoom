@@ -773,8 +773,7 @@ bool SightCheck::P_SightPathTraverse ()
 		case 0:		// neither xintercept nor yintercept match!
 sightcounts[5]++;
 			// Continuing won't make things any better, so we might as well stop right here
-			count = 1000;
-			break;
+			return false;
 
 		case 1:		// xintercept matches
 			xintercept += xstep;

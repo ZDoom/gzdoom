@@ -70,6 +70,7 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //

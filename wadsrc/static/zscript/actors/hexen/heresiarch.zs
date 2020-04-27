@@ -310,7 +310,7 @@ class SorcBall : Actor
 
 	virtual void CastSorcererSpell ()
 	{
-		target.A_PlaySound ("SorcererSpellCast", CHAN_VOICE);
+		target.A_StartSound ("SorcererSpellCast", CHAN_VOICE);
 
 		// Put sorcerer into throw spell animation
 		if (target.health > 0)
@@ -416,7 +416,7 @@ class SorcBall : Actor
 		{
 			parent.args[1]++;			// Bump rotation counter
 			// Completed full rotation - make woosh sound
-			A_PlaySound ("SorcererBallWoosh", CHAN_BODY);
+			A_StartSound ("SorcererBallWoosh", CHAN_BODY);
 		}
 		OldAngle = curangle;		// Set previous angle
 
@@ -525,7 +525,7 @@ class SorcBall : Actor
 
 	void A_SorcBallPop()
 	{
-		A_PlaySound ("SorcererBallPop", CHAN_BODY, 1, false, ATTN_NONE);
+		A_StartSound ("SorcererBallPop", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		bNoGravity = false;
 		Gravity = 1. / 8;
 
@@ -549,7 +549,7 @@ class SorcBall : Actor
 			if (args[3]-- <= 0)
 			{
 				SetStateLabel("Death");
-				A_PlaySound ("SorcererBigBallExplode", CHAN_BODY, 1, false, ATTN_NONE);
+				A_StartSound ("SorcererBigBallExplode", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 			}
 			else
 			{
@@ -644,7 +644,7 @@ class SorcBall1 : SorcBall
 	{
 		if (random[Heresiarch]() < 200)
 		{
-			target.A_PlaySound ("SorcererSpellCast", CHAN_VOICE, 1, false, ATTN_NONE);
+			target.A_StartSound ("SorcererSpellCast", CHAN_VOICE, CHANF_DEFAULT, 1., ATTN_NONE);
 			special2 = Heresiarch.SORCFX4_RAPIDFIRE_TIME;
 			args[4] = 128;
 			target.args[3] = Heresiarch.SORC_FIRING_SPELL;
@@ -819,7 +819,7 @@ class SorcFX1 : Actor
 			if (args[3]-- <= 0)
 			{
 				SetStateLabel("Death");
-				A_PlaySound ("SorcererHeadScream", CHAN_BODY, 1, false, ATTN_NONE);
+				A_StartSound ("SorcererHeadScream", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 			}
 			else
 			{
@@ -1016,7 +1016,7 @@ class SorcFX3 : Actor
 	void A_SorcererBishopEntry()
 	{
 		Spawn("SorcFX3Explosion", Pos, ALLOW_REPLACE);
-		A_PlaySound (SeeSound, CHAN_VOICE);
+		A_StartSound (SeeSound, CHAN_VOICE);
 	}
 
 	//============================================================================

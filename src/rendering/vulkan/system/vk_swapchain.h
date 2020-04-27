@@ -17,6 +17,8 @@ public:
 
 	void Recreate();
 
+	bool IsHdrModeActive() const;
+
 	VkSwapchainKHR swapChain = VK_NULL_HANDLE;
 	VkSurfaceFormatKHR swapChainFormat;
 	VkPresentModeKHR swapChainPresentMode;
@@ -32,7 +34,6 @@ private:
 	void SelectPresentMode();
 	bool CreateSwapChain(VkSwapchainKHR oldSwapChain = VK_NULL_HANDLE);
 	void CreateViews();
-	void SetHdrMetadata();
 	void GetImages();
 	void ReleaseResources();
 	void ReleaseViews();

@@ -92,7 +92,7 @@ class Programmer : Actor
 		if (!CheckMeleeRange ())
 			return;
 
-		A_PlaySound("programmer/clank", CHAN_WEAPON);
+		A_StartSound("programmer/clank", CHAN_WEAPON);
 
 		int damage = random[Programmer](1, 10) * 6;
 		int newdam = target.DamageMobj (self, self, damage, 'Melee');

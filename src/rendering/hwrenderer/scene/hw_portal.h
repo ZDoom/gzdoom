@@ -6,7 +6,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hw_renderstate.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
 
 struct HWSkyInfo

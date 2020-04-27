@@ -34,7 +34,7 @@
 #include "d_player.h"
 #include "m_argv.h"
 #include "g_game.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "p_effect.h"
 #include "p_terrain.h"
@@ -44,7 +44,7 @@
 #include "p_acs.h"
 #include "announcer.h"
 #include "wi_stuff.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "gi.h"
 #include "p_conversation.h"
 #include "a_keys.h"
@@ -67,7 +67,7 @@
 #include "p_destructible.h"
 #include "types.h"
 #include "i_time.h"
-#include "scripting/vm/vm.h"
+#include "vm.h"
 #include "a_specialspot.h"
 #include "maploader/maploader.h"
 #include "p_acs.h"
@@ -76,6 +76,8 @@
 #include "v_video.h"
 #include "fragglescript/t_script.h"
 #include "s_music.h"
+#include "animations.h"
+#include "texturemanager.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
@@ -96,31 +98,47 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 	if (hitlist[texid.GetIndex()] & bitmask) return;	// already done, no need to process everything again.
 	hitlist[texid.GetIndex()] |= (uint8_t)bitmask;
 
-	for (auto anim : TexMan.mAnimations)
+	const auto addAnimations = [hitlist, bitmask](const FTextureID texid)
 	{
-		if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
+		for (auto anim : TexAnim.GetAnimations())
 		{
-			for (int i = anim->BasePic.GetIndex(); i < anim->BasePic.GetIndex() + anim->NumFrames; i++)
+			if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
 			{
-				hitlist[i] |= (uint8_t)bitmask;
+				for (int i = anim->BasePic.GetIndex(); i < anim->BasePic.GetIndex() + anim->NumFrames; i++)
+				{
+					hitlist[i] |= (uint8_t)bitmask;
+				}
 			}
 		}
-	}
+	};
 
-	auto switchdef = TexMan.FindSwitch(texid);
+	addAnimations(texid);
+
+	auto switchdef = TexAnim.FindSwitch(texid);
 	if (switchdef)
 	{
-		for (int i = 0; i < switchdef->NumFrames; i++)
+		const FSwitchDef *const pair = switchdef->PairDef;
+		const uint16_t numFrames = switchdef->NumFrames;
+		const uint16_t pairNumFrames = pair->NumFrames;
+
+		for (int i = 0; i < numFrames; i++)
 		{
 			hitlist[switchdef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
 		}
-		for (int i = 0; i < switchdef->PairDef->NumFrames; i++)
+		for (int i = 0; i < pairNumFrames; i++)
 		{
-			hitlist[switchdef->PairDef->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
+			hitlist[pair->frames[i].Texture.GetIndex()] |= (uint8_t)bitmask;
+		}
+
+		if (numFrames == 1 && pairNumFrames == 1)
+		{
+			// Switch can still be animated via BOOM binary definition from ANIMATED lump
+			addAnimations(switchdef->frames[0].Texture);
+			addAnimations(pair->frames[0].Texture);
 		}
 	}
 
-	auto adoor = TexMan.FindAnimatedDoor(texid);
+	auto adoor = TexAnim.FindAnimatedDoor(texid);
 	if (adoor)
 	{
 		for (int i = 0; i < adoor->NumTextureFrames; i++)
@@ -390,17 +408,8 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		Level->Players[i]->mo = nullptr;
 	}
-	// [RH] Clear any scripted translation colors the previous level may have set.
-	for (i = 0; i < int(translationtables[TRANSLATION_LevelScripted].Size()); ++i)
-	{
-		FRemapTable *table = translationtables[TRANSLATION_LevelScripted][i];
-		if (table != nullptr)
-		{
-			delete table;
-			translationtables[TRANSLATION_LevelScripted][i] = nullptr;
-		}
-	}
-	translationtables[TRANSLATION_LevelScripted].Clear();
+	GPalette.ClearTranslationSlot(TRANSLATION_LevelScripted);
+
 
 	// Initial height of PointOfView will be set by player think.
 	auto p = Level->GetConsolePlayer();
@@ -408,7 +417,14 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start();
-	S_StartMusic();
+	S_ResetMusic();
+
+	// Don't start the music if loading a savegame, because the music is stored there.
+	// Don't start the music if revisiting a level in a hub for the same reason.
+	if (!primaryLevel->IsReentering())
+	{
+		primaryLevel->SetMusic();
+	}
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);

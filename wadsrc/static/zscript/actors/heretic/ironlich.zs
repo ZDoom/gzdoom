@@ -89,7 +89,7 @@ class Ironlich : Actor
 		if (randAttack < atkResolve1[dist])
 		{ // Ice ball
 			SpawnMissile (targ, "HeadFX1");
-			A_PlaySound ("ironlich/attack2", CHAN_BODY);
+			A_StartSound ("ironlich/attack2", CHAN_BODY);
 		}
 		else if (randAttack < atkResolve2[dist])
 		{ // Fire column
@@ -102,7 +102,7 @@ class Ironlich : Actor
 					Actor fire = Spawn("HeadFX3", baseFire.Pos, ALLOW_REPLACE);
 					if (i == 0)
 					{
-						A_PlaySound ("ironlich/attack1", CHAN_BODY);
+						A_StartSound ("ironlich/attack1", CHAN_BODY);
 					}
 					if (fire != null)
 					{
@@ -124,7 +124,7 @@ class Ironlich : Actor
 				mo.AddZ(-32);
 				mo.tracer = targ;
 				mo.health = 20*TICRATE; // Duration
-				A_PlaySound ("ironlich/attack3", CHAN_BODY);
+				A_StartSound ("ironlich/attack3", CHAN_BODY);
 			}
 		}
 	}
@@ -346,7 +346,7 @@ class Whirlwind : Actor
 		if ((threshold -= 3) < 0)
 		{
 			threshold = random[WhirlwindSeek](58, 89);
-			A_PlaySound("ironlich/attack3", CHAN_BODY);
+			A_StartSound("ironlich/attack3", CHAN_BODY);
 		}
 		if (tracer && tracer.bShadow)
 		{

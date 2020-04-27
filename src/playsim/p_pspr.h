@@ -30,7 +30,7 @@
 #ifndef __P_PSPR_H__
 #define __P_PSPR_H__
 
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 
 // Basic data types.
 // Needs fixed point, and BAM angles.
@@ -40,6 +40,7 @@
 #define WEAPONTOP				32.
 #define WEAPON_FUDGE_Y			0.375
 struct FTranslatedLineTarget;
+struct FState;
 
 //
 // Overlay psprites are scaled shapes
@@ -68,6 +69,7 @@ enum PSPFlags
 	PSPF_FORCEALPHA		= 1 << 7,
 	PSPF_FORCESTYLE		= 1 << 8,
 	PSPF_MIRROR			= 1 << 9,
+	PSPF_PLAYERTRANSLATED = 1 << 10
 };
 
 class DPSprite : public DObject

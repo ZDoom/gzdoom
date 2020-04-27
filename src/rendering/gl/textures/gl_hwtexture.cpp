@@ -26,14 +26,14 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "templates.h"
 #include "c_cvars.h"
 #include "doomtype.h"
 #include "r_data/colormaps.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
@@ -85,7 +85,7 @@ unsigned int FHardwareTexture::lastbound[FHardwareTexture::MAX_TEXTURES];
 //
 //===========================================================================
 
-unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
 	int rh,rw;
 	int texformat = GL_RGBA8;// TexFormat[gl_texture_format];
@@ -317,16 +317,6 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 {
 	int usebright = false;
 
-	if (translation <= 0)
-	{
-		translation = -translation;
-	}
-	else
-	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-	}
-
 	bool needmipmap = (clampmode <= CLAMP_XY);
 
 	// Bind it to the system.
@@ -347,10 +337,10 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		}
 		else
 		{
-			w = tex->GetWidth();
-			h = tex->GetHeight();
+			w = tex->GetTexelWidth();
+			h = tex->GetTexelHeight();
 		}
-		if (!CreateTexture(texbuffer.mBuffer, w, h, texunit, needmipmap, translation, "FHardwareTexture.BindOrCreate"))
+		if (!CreateTexture(texbuffer.mBuffer, w, h, texunit, needmipmap, "FHardwareTexture.BindOrCreate"))
 		{
 			// could not create texture
 			return false;

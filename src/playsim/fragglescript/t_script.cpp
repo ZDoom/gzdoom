@@ -38,6 +38,7 @@
 #include "p_spec.h"
 #include "c_dispatch.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 //==========================================================================
@@ -127,25 +128,11 @@ DFsScript::DFsScript()
 	for(i=0; i<VARIABLESLOTS; i++) variables[i] = nullptr;
 	for(i=0; i<MAXSCRIPTS; i++)	children[i] = nullptr;
 
-	data = nullptr;
 	scriptnum = -1;
 	len = 0;
 	parent = nullptr;
 	trigger = nullptr;
 	lastiftrue = false;
-}
-
-//==========================================================================
-//
-// This is here to delete the locally allocated buffer in case this
-// gets forcibly destroyed
-//
-//==========================================================================
-
-DFsScript::~DFsScript()
-{
-	if (data != nullptr) delete[] data;
-	data = nullptr;
 }
 
 //==========================================================================
@@ -160,8 +147,7 @@ void DFsScript::OnDestroy()
 	ClearSections();
 	ClearChildren();
 	parent = nullptr;
-	if (data != nullptr) delete [] data;
-	data = nullptr;
+	Data.Reset(); // lose the buffer now and don't wait until getting collected.
 	parent = nullptr;
 	trigger = nullptr;
 	Super::OnDestroy();
@@ -177,7 +163,7 @@ void DFsScript::Serialize(FSerializer &arc)
 {
 	Super::Serialize(arc);
 
-	arc("data", data)
+	arc("data", Data)
 		("scriptnum", scriptnum)
 		("len", len)
 		("parent", parent)
@@ -201,11 +187,11 @@ void DFsScript::ParseScript(char *position, DFraggleThinker *th)
 	if (position == nullptr) 
 	{
 		lastiftrue = false;
-		position = data;
+		position = Data.Data();
 	}
 
 	// check for valid position
-	if(position < data || position > data+len)
+	if(position < Data.Data() || position > Data.Data() +len)
     {
 		Printf("script %d: trying to continue from point outside script!\n", scriptnum);
 		return;
@@ -216,7 +202,7 @@ void DFsScript::ParseScript(char *position, DFraggleThinker *th)
 	try
 	{
 		FParser parse(th->Level, this);
-		parse.Run(position, data, data + len);
+		parse.Run(position, Data.Data(), Data.Data() + len);
 	}
 	catch (CFraggleScriptError &err)
 	{
@@ -528,7 +514,7 @@ void DFraggleThinker::Tick()
 			next = current->next;   // save before freeing
 			
 			// continue the script
-			current->script->ParseScript (current->script->data + current->save_point, this);
+			current->script->ParseScript (current->script->Data.Data() + current->save_point, this);
 
 			// free
 			current->Destroy();

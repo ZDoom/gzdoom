@@ -34,6 +34,7 @@
 #include "doomstat.h"
 #include "r_state.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "p_3dmidtex.h"
 #include "p_spec.h"
 #include "r_data/r_interpolate.h"

@@ -90,7 +90,7 @@ extend class Actor
 		Height = Default.Height;
 		A_SetRenderStyle(1, STYLE_Normal);
 
-		A_PlaySound ("misc/freeze", CHAN_BODY);
+		A_StartSound ("misc/freeze", CHAN_BODY);
 
 		// [RH] Andy Baker's stealth monsters
 		if (bStealth)
@@ -126,7 +126,7 @@ extend class Actor
 			return;
 		}
 		Vel = (0,0,0);
-		A_PlaySound ("misc/icebreak", CHAN_BODY);
+		A_StartSound ("misc/icebreak", CHAN_BODY);
 
 		// [RH] In Hexen, this creates a random number of shards (range [24,56])
 		// with no relation to the size of the self shattering. I think it should

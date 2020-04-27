@@ -202,7 +202,7 @@ class Sigil : Weapon
 			return;
 		}
 		PSprite pspr = player.GetPSprite(PSP_WEAPON);
-		pspr.SetState(pspr.CurState + invoker.health);
+		if (pspr) pspr.SetState(pspr.CurState + invoker.health);
 		invoker.downpieces = 0;
 	}
 
@@ -225,7 +225,7 @@ class Sigil : Weapon
 		PSprite pspr = player.GetPSprite(PSP_WEAPON);
 		int pieces = invoker.downpieces;
 		if (pieces < 1 || pieces > 5) pieces = invoker.health;
-		pspr.SetState(pspr.CurState + pieces);
+		if (pspr) pspr.SetState(pspr.CurState + pieces);
 	}
 
 	//============================================================================
@@ -243,7 +243,7 @@ class Sigil : Weapon
 			return;
 		}
 		PSprite pspr = player.GetPSprite(PSP_WEAPON);
-		pspr.SetState(pspr.CurState + (4 * invoker.health - 3));
+		if (pspr) pspr.SetState(pspr.CurState + (4 * invoker.health - 3));
 	}
 
 	//============================================================================
@@ -254,7 +254,7 @@ class Sigil : Weapon
 
 	action void A_SigilCharge ()
 	{
-		A_PlaySound ("weapons/sigilcharge", CHAN_WEAPON);
+		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 		if (player != null)
 		{
 			player.extralight = 2;
@@ -276,7 +276,7 @@ class Sigil : Weapon
 			return;
 
 		DamageMobj (self, null, 1*4, 'Sigil', DMG_NO_ARMOR);
-		A_PlaySound ("weapons/sigilcharge", CHAN_WEAPON);
+		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
 		BulletSlope (t, ALF_PORTALRESTRICT);
 		if (t.linetarget != null)
@@ -314,7 +314,7 @@ class Sigil : Weapon
 			return;
 
 		DamageMobj (self, null, 2*4, 'Sigil', DMG_NO_ARMOR);
-		A_PlaySound ("weapons/sigilcharge", CHAN_WEAPON);
+		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 		SpawnPlayerMissile ("SpectralLightningH1");
 	}
 
@@ -330,7 +330,7 @@ class Sigil : Weapon
 			return;
 
 		DamageMobj (self, null, 3*4, 'Sigil', DMG_NO_ARMOR);
-		A_PlaySound ("weapons/sigilcharge", CHAN_WEAPON);
+		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
 		angle -= 90.;
 		for (int i = 0; i < 20; ++i)
@@ -359,7 +359,7 @@ class Sigil : Weapon
 			return;
 
 		DamageMobj (self, null, 4*4, 'Sigil', DMG_NO_ARMOR);
-		A_PlaySound ("weapons/sigilcharge", CHAN_WEAPON);
+		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
 		BulletSlope (t, ALF_PORTALRESTRICT);
 		if (t.linetarget != null)
@@ -392,7 +392,7 @@ class Sigil : Weapon
 			return;
 
 		DamageMobj (self, null, 5*4, 'Sigil', DMG_NO_ARMOR);
-		A_PlaySound ("weapons/sigilcharge", CHAN_WEAPON);
+		A_StartSound ("weapons/sigilcharge", CHAN_WEAPON);
 
 		SpawnPlayerMissile ("SpectralLightningBigBall1");
 	}

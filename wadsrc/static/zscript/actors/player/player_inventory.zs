@@ -81,7 +81,7 @@ extend class PlayerPawn
 		player.inventorytics = 5*TICRATE;
 		if (old != InvSel)
 		{
-			A_PlaySound("misc/invchange", CHAN_AUTO, 1.0, false, ATTN_NONE);
+			A_StartSound("misc/invchange", CHAN_AUTO, CHANF_DEFAULT, 1., ATTN_NONE);
 		}
 	}
 
@@ -117,7 +117,7 @@ extend class PlayerPawn
 		player.inventorytics = 5*TICRATE;
 		if (old != InvSel)
 		{
-			A_PlaySound("misc/invchange", CHAN_AUTO, 1.0, false, ATTN_NONE);
+			A_StartSound("misc/invchange", CHAN_AUTO, CHANF_DEFAULT, 1., ATTN_NONE);
 		}
 	}
 	
@@ -224,7 +224,7 @@ extend class PlayerPawn
 		}
 		if (player == players[consoleplayer])
 		{
-			A_PlaySound(item.UseSound, CHAN_ITEM);
+			A_StartSound(item.UseSound, CHAN_ITEM);
  			StatusBar.FlashItem (itemtype);	// Fixme: This shouldn't be called from here, because it is in the UI.
 		}
 		return true;

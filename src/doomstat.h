@@ -64,8 +64,6 @@ extern	FString			startmap;			// [RH] Actual map name now
 
 extern	bool 			autostart;
 
-extern	FString			StoredWarp;			// [RH] +warp at the command line
-
 // Selected by user. 
 EXTERN_CVAR (Int, gameskill);
 extern	int				NextSkill;			// [RH] Skill to use at next level load
@@ -184,7 +182,6 @@ extern	bool	 		playeringame[/*MAXPLAYERS*/];
 
 // File handling stuff.
 extern	FILE*			debugfile;
-extern	FILE*			hashfile;
 
 // if true, load all graphics at level load
 extern	bool	 		precache;

@@ -51,7 +51,7 @@ void DLightningThinker::Construct()
 {
 	Stopped = false;
 	LightningFlashCount = 0;
-	NextLightningFlash = ((pr_lightning()&15)+5)*35; // don't flash at level start
+	NextLightningFlash = ((pr_lightning()&15)+5)*TICRATE; // don't flash at level start
 
 	LightningLightLevels.Resize(Level->sectors.Size());
 	fillshort(&LightningLightLevels[0], LightningLightLevels.Size(), SHRT_MAX);
@@ -176,7 +176,7 @@ void DLightningThinker::LightningFlash ()
 	}
 
 	Level->flags |= LEVEL_SWAPSKIES;	// set alternate sky
-	S_Sound (CHAN_AUTO, "world/thunder", 1.0, ATTN_NONE);
+	S_Sound (CHAN_AUTO, 0, "world/thunder", 1.0, ATTN_NONE);
 	// [ZZ] just in case
 	Level->localEventManager->WorldLightning();
 	// start LIGHTNING scripts
@@ -193,11 +193,11 @@ void DLightningThinker::LightningFlash ()
 		{
 			if (pr_lightning() < 128 && !(Level->time&32))
 			{
-				NextLightningFlash = ((pr_lightning()&7)+2)*35;
+				NextLightningFlash = ((pr_lightning()&7)+2)*TICRATE;
 			}
 			else
 			{
-				NextLightningFlash = ((pr_lightning()&15)+5)*35;
+				NextLightningFlash = ((pr_lightning()&15)+5)*TICRATE;
 			}
 		}
 	}

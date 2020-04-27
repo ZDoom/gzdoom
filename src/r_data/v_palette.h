@@ -36,34 +36,15 @@
 
 #include "doomtype.h"
 #include "c_cvars.h"
-#include "palette.h"
+#include "palutil.h"
+#include "vectors.h"
 
-struct FPalette
-{
-	FPalette ();
-	FPalette (const uint8_t *colors);
 
-	void SetPalette (const uint8_t *colors);
-
-	void MakeGoodRemap ();
-
-	PalEntry	BaseColors[256];	// non-gamma corrected palette
-	uint8_t		Remap[256];			// remap original palette indices to in-game indices
-
-	uint8_t		WhiteIndex;			// white in original palette index
-	uint8_t		BlackIndex;			// black in original palette index
-
-	// Given an array of colors, fills in remap with values to remap the
-	// passed array of colors to this palette.
-	void MakeRemap (const uint32_t *colors, uint8_t *remap, const uint8_t *useful, int numcolors) const;
-};
-
-extern FPalette GPalette;
 
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 
-void ReadPalette(int lumpnum, uint8_t *buffer);
+int ReadPalette(int lumpnum, uint8_t *buffer);
 void InitPalette ();
 
 EXTERN_CVAR (Int, paletteflash)
@@ -76,8 +57,12 @@ enum PaletteFlashFlags
 };
 
 class player_t;
+struct sector_t;
 
 void V_AddBlend (float r, float g, float b, float a, float v_blend[4]);
 void V_AddPlayerBlend (player_t *CPlayer, float blend[4], float maxinvalpha, int maxpainblend);
+// Dim part of the canvas
+FVector4 V_CalcBlend(sector_t* viewsector, PalEntry* modulateColor);
+void V_DrawBlend(sector_t* viewsector);
 
 #endif //__V_PALETTE_H__

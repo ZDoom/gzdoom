@@ -25,7 +25,7 @@
 
 #include "templates.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "r_sky.h"
@@ -36,6 +36,7 @@
 #include "cmdlib.h"
 #include "g_level.h"
 #include "a_dynlight.h"
+#include "texturemanager.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/scene/r_opaque_pass.h"

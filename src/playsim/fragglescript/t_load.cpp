@@ -24,7 +24,7 @@
 //
 
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "s_sound.h"
 #include "r_sky.h"
@@ -35,6 +35,7 @@
 #include "xlat/xlat.h"
 #include "maploader/maploader.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 class FScriptLoader
 {
@@ -221,13 +222,13 @@ bool FScriptLoader::ParseInfo(MapData * map)
 	if (lumpsize==0)
 	{
 		// Try a global FS lump
-		int lumpnum=Wads.CheckNumForName("FSGLOBAL");
+		int lumpnum=fileSystem.CheckNumForName("FSGLOBAL");
 		if (lumpnum<0) return false;
-		lumpsize=Wads.LumpLength(lumpnum);
+		lumpsize=fileSystem.FileLength(lumpnum);
 		if (lumpsize==0) return false;
 		fsglobal=true;
 		lump=new char[lumpsize+3];
-		Wads.ReadLump(lumpnum,lump);
+		fileSystem.ReadFile(lumpnum,lump);
 	}
 	else
 	{
@@ -264,7 +265,8 @@ bool FScriptLoader::ParseInfo(MapData * map)
 		}
 
 		auto th = Level->CreateThinker<DFraggleThinker>();
-		th->LevelScript->data = copystring(scriptsrc.GetChars());
+		th->LevelScript->Data.Resize((unsigned)scriptsrc.Len() + 1);
+		memcpy(th->LevelScript->Data.Data(), scriptsrc.GetChars(), scriptsrc.Len() + 1);
 		Level->FraggleScriptThinker = th;
 
 		if (drownflag==-1) drownflag = (Level->maptype != MAPTYPE_DOOM || fsglobal);

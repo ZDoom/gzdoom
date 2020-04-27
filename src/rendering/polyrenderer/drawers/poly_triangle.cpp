@@ -24,7 +24,7 @@
 #include "templates.h"
 #include "doomdef.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "doomstat.h"
 #include "st_stuff.h"
@@ -183,13 +183,14 @@ private:
 class PolySetShaderCommand : public PolyDrawerCommand
 {
 public:
-	PolySetShaderCommand(int specialEffect, int effectState, bool alphaTest) : specialEffect(specialEffect), effectState(effectState), alphaTest(alphaTest) { }
-	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetShader(specialEffect, effectState, alphaTest); }
+	PolySetShaderCommand(int specialEffect, int effectState, bool alphaTest, bool colormapShader) : specialEffect(specialEffect), effectState(effectState), alphaTest(alphaTest), colormapShader(colormapShader) { }
+	void Execute(DrawerThread* thread) override { PolyTriangleThreadData::Get(thread)->SetShader(specialEffect, effectState, alphaTest, colormapShader); }
 
 private:
 	int specialEffect;
 	int effectState;
 	bool alphaTest;
+	bool colormapShader;
 };
 
 class PolySetVertexBufferCommand : public PolyDrawerCommand
@@ -429,9 +430,9 @@ void PolyCommandBuffer::SetTexture(int unit, void *pixels, int width, int height
 	mQueue->Push<PolySetTextureCommand>(unit, pixels, width, height, bgra);
 }
 
-void PolyCommandBuffer::SetShader(int specialEffect, int effectState, bool alphaTest)
+void PolyCommandBuffer::SetShader(int specialEffect, int effectState, bool alphaTest, bool colormapShader)
 {
-	mQueue->Push<PolySetShaderCommand>(specialEffect, effectState, alphaTest);
+	mQueue->Push<PolySetShaderCommand>(specialEffect, effectState, alphaTest, colormapShader);
 }
 
 void PolyCommandBuffer::PushStreamData(const StreamData &data, const PolyPushConstants &constants)

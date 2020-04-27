@@ -2186,7 +2186,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 				{
 					Printf (PRINT_CHAT, "%s" TEXTCOLOR_CHAT ": %s" TEXTCOLOR_CHAT "\n", name, s);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE, CHANF_UI, gameinfo.chatSound, 1, ATTN_NONE);
 			}
 			else if (players[player].userinfo.GetTeam() == players[consoleplayer].userinfo.GetTeam())
 			{ // Said only to members of the player's team
@@ -2198,7 +2198,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 				{
 					Printf (PRINT_TEAMCHAT, "(%s" TEXTCOLOR_TEAMCHAT "): %s" TEXTCOLOR_TEAMCHAT "\n", name, s);
 				}
-				S_Sound (CHAN_VOICE | CHAN_UI, gameinfo.chatSound, 1, ATTN_NONE);
+				S_Sound (CHAN_VOICE, CHANF_UI, gameinfo.chatSound, 1, ATTN_NONE);
 			}
 		}
 		break;
@@ -2539,7 +2539,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 			s = ReadString(stream);
 			int argn = ReadByte(stream);
 
-			RunScript(stream, players[player].mo, -FName(s), argn & 127, (argn & 128) ? ACS_ALWAYS : 0);
+			RunScript(stream, players[player].mo, -FName(s).GetIndex(), argn & 127, (argn & 128) ? ACS_ALWAYS : 0);
 		}
 		break;
 

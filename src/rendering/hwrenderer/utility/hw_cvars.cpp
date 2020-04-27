@@ -25,8 +25,9 @@
 #include "c_dispatch.h"
 #include "v_video.h"
 #include "hw_cvars.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "menu/menu.h"
+#include "texturemanager.h"
 
 
 
@@ -78,11 +79,6 @@ CUSTOM_CVAR(Int, gl_texture_filter, 4, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINI
 {
 	if (self < 0 || self > 6) self=4;
 	screen->TextureFilterChanged();
-}
-
-CUSTOM_CVAR(Bool, gl_texture_usehires, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
-{
-	TexMan.FlushAll();
 }
 
 CVAR(Bool, gl_precache, false, CVAR_ARCHIVE)

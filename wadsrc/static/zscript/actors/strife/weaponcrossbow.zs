@@ -100,7 +100,7 @@ class StrifeCrossbow : StrifeWeapon
 			player.mo.PlayAttacking2 ();
 			SpawnPlayerMissile (proj);
 			angle = savedangle;
-			A_PlaySound ("weapons/xbowshoot", CHAN_WEAPON);
+			A_StartSound ("weapons/xbowshoot", CHAN_WEAPON);
 		}
 	}
 }

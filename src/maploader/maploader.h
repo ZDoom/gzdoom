@@ -221,7 +221,6 @@ private:
 	void LoadZSegs(FileReader &data);
 	void LoadZNodes(FileReader &data, int glnodes);
 
-	int DetermineTranslucency(int lumpnum);
 	void SetLineID(int i, line_t *ld);
 	void SaveLineSpecial(line_t *ld);
 	void FinishLoadingLineDef(line_t *ld, int alpha);

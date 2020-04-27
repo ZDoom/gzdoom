@@ -344,15 +344,7 @@ namespace swrenderer
 		
 		void DrawWall(const WallDrawerArgs &args) override { Queue->Push<DrawWall1PalCommand>(args); }
 		void DrawWallMasked(const WallDrawerArgs &args) override { Queue->Push<DrawWallMasked1PalCommand>(args); }
-
-		void DrawWallAdd(const WallDrawerArgs &args) override
-		{
-			if (!args.lightlist)
-				Queue->Push<DrawWallAdd1PalCommand>(args);
-			else
-				Queue->Push<DrawWallAddClamp1PalCommand>(args);
-		}
-
+		void DrawWallAdd(const WallDrawerArgs &args) override { Queue->Push<DrawWallAdd1PalCommand>(args); }
 		void DrawWallAddClamp(const WallDrawerArgs &args) override { Queue->Push<DrawWallAddClamp1PalCommand>(args); }
 		void DrawWallSubClamp(const WallDrawerArgs &args) override { Queue->Push<DrawWallSubClamp1PalCommand>(args); }
 		void DrawWallRevSubClamp(const WallDrawerArgs &args) override { Queue->Push<DrawWallRevSubClamp1PalCommand>(args); }

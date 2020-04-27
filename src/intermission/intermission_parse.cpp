@@ -37,7 +37,7 @@
 #include <ctype.h>
 #include "intermission/intermission.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "c_dispatch.h"
 #include "gstrings.h"
 #include "gi.h"
@@ -301,13 +301,13 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 	{
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_StringConst);
-		int lump = Wads.CheckNumForFullName(sc.String, true);
+		int lump = fileSystem.CheckNumForFullName(sc.String, true);
 		bool done = false;
 		if (lump > 0)
 		{
 			// Check if this comes from either Hexen.wad or Hexdd.wad and if so, map to the string table.
-			int fileno = Wads.GetLumpFile(lump);
-			auto fn = Wads.GetWadName(fileno);
+			int fileno = fileSystem.GetFileContainer(lump);
+			auto fn = fileSystem.GetResourceFileName(fileno);
 			if (fn && (!stricmp(fn, "HEXEN.WAD") || !stricmp(fn, "HEXDD.WAD")))
 			{
 				FStringf key("TXT_%.5s_%s", fn, sc.String);
@@ -318,12 +318,12 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 				}
 			}
 			if (!done)
-				mText = Wads.ReadLump(lump).GetString();
+				mText = fileSystem.ReadFile(lump).GetString();
 		}
 		else
 		{
 			// only print an error if coming from a PWAD
-			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetMaxIwadNum())
+			if (fileSystem.GetFileContainer(sc.LumpNum) > fileSystem.GetMaxIwadNum())
 				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
 			mText.Format("Unknown text lump '%s'", sc.String);
 		}
@@ -859,10 +859,10 @@ void F_StartFinale (const char *music, int musicorder, int cdtrack, unsigned int
 		FIntermissionActionTextscreen *textscreen = new FIntermissionActionTextscreen;
 		if (textInLump)
 		{
-			int lump = Wads.CheckNumForFullName(text, true);
+			int lump = fileSystem.CheckNumForFullName(text, true);
 			if (lump > 0)
 			{
-				textscreen->mText = Wads.ReadLump(lump).GetString();
+				textscreen->mText = fileSystem.ReadFile(lump).GetString();
 			}
 			else
 			{

@@ -42,6 +42,7 @@
 #include "t_script.h"
 #include "a_pickups.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 
 
@@ -102,7 +103,7 @@ const char *stringvalue(const svalue_t & v)
 		
 	case svt_mobj:
 		// return the class name
-		return (const char *)v.value.mobj->GetClass()->TypeName;
+		return (const char *)v.value.mobj->GetClass()->TypeName.GetChars();
 		
 	case svt_fixed:
 		{
@@ -428,7 +429,7 @@ void DFsScript::ClearVariables(bool complete)
 
 char *DFsScript::LabelValue(const svalue_t &v)
 {
-	if (v.type == svt_label) return data + v.value.i;
+	if (v.type == svt_label) return Data.Data() + v.value.i;
 	else return NULL;
 }
 

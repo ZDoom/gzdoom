@@ -142,6 +142,15 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSound, NativeStopSound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StopSounds, S_StopActorSounds)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(chanmin);
+	PARAM_INT(chanmax);
+	S_StopActorSounds(self, chanmin, chanmax);
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_SoundPitch, S_ChangeActorSoundPitch)
 {
 	PARAM_SELF_PROLOGUE(AActor);
@@ -172,6 +181,28 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_PlaySound, A_PlaySound)
 	PARAM_FLOAT(pitch);
 	A_PlaySound(self, soundid, channel, volume, looping, attenuation, local, pitch);
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_StartSound, A_StartSound)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_SOUND(soundid);
+	PARAM_INT(channel);
+	PARAM_INT(flags);
+	PARAM_FLOAT(volume);
+	PARAM_FLOAT(attenuation);
+	PARAM_FLOAT(pitch);
+	PARAM_FLOAT(startTime);
+	A_StartSound(self, soundid, channel, flags, volume, attenuation, pitch, startTime);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, IsActorPlayingSound, S_IsActorPlayingSomething)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_SOUND(soundid);
+	ACTION_RETURN_BOOL(S_IsActorPlayingSomething(self, channel, soundid));
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, CheckKeys, P_CheckKeys)
@@ -862,13 +893,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, isTeammate, isTeammate)
 
 static int GetSpecies(AActor *self)
 {
-	return self->GetSpecies();
+	return self->GetSpecies().GetIndex();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpecies, GetSpecies)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->GetSpecies());
+	ACTION_RETURN_INT(GetSpecies(self));
 }
 
 static int isFriend(AActor *self, AActor *other)
@@ -1575,11 +1606,27 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_BossDeath, A_BossDeath)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, DObject::StaticPointerSubstitution)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, StaticPointerSubstitution)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(replace, AActor);
-	DObject::StaticPointerSubstitution(self, replace);
+	StaticPointerSubstitution(self, replace);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_PlayerPawn, Substitute, StaticPointerSubstitution)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
+	StaticPointerSubstitution(self, replace);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_MorphedMonster, Substitute, StaticPointerSubstitution)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
+	StaticPointerSubstitution(self, replace);
 	return 0;
 }
 
@@ -1595,6 +1642,23 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_NoBlocking, A_Unblock)
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_BOOL(drop);
 	A_Unblock(self, drop);
+	return 0;
+}
+
+static void CopyBloodColor(AActor* self, AActor* other)
+{
+	if (self && other)
+	{
+		self->BloodColor = other->BloodColor;
+		self->BloodTranslation = other->BloodTranslation;
+	}
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, CopyBloodColor, CopyBloodColor)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(other, AActor);
+	CopyBloodColor(self, other);
 	return 0;
 }
 
@@ -1926,6 +1990,7 @@ DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitDir);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
 DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);

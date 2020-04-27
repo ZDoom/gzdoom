@@ -111,7 +111,7 @@ extend class Actor
 			if (CheckMeleeRange())
 			{
 				int damage = random[pr_troopattack](1, 8) * 3;
-				A_PlaySound ("imp/melee", CHAN_WEAPON);
+				A_StartSound ("imp/melee", CHAN_WEAPON);
 				int newdam = targ.DamageMobj (self, self, damage, "Melee");
 				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			}

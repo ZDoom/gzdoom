@@ -319,6 +319,70 @@ class LevelCompatibility : LevelPostProcessor
 				break;
 			}
 
+			case '3B68019EE3154C284B90F0CAEDBD8D8A': // Plutonia 2 MAP05
+			{
+				// Missing texture
+				TextureID step1 = TexMan.CheckForTexture("STEP1", TexMan.Type_Wall);
+				SetWallTextureID(1525, Line.front, Side.bottom, step1);
+				break;
+			}
+
+			case 'FB613B36589FFB09AA2C03633A7D13F4': // Plutonia 2 MAP20
+			{
+				// Remove the pain elementals stuck in the closet boxes that cannot teleport.
+				SetThingFlags(758,0);
+				SetThingFlags(759,0);
+				SetThingFlags(764,0);
+				SetThingFlags(765,0);
+				break;
+			}
+
+			case 'A3165C53F9BF0B7D80CDB14665A349EB': // Plutonia 2 MAP23
+			{
+				// Arch-vile in outdoor secret area sometimes don't spawn if revenants
+				// block its one-time teleport. Make this teleport repeatable to ensure
+				// maxkills are always possible.
+				SetLineFlags(756, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+
+			case '9191658A6705B131AB005948E2FDFCE1': // Plutonia 2 MAP24
+			{
+				// Fix improperly pegged blue door
+				for(int i = 957; i <= 958; i++)
+				{
+					SetLineFlags(i, 0, Line.ML_DONTPEGTOP);
+					level.lines[i].sidedef[0].SetTextureYOffset(Side.top,-24);
+				}
+				break;
+			}
+
+			case 'EF251B8F36DE709901B0D32A97F341D7': // Plutonia 2 MAP27
+			{
+				// Remove the monsters stuck in the closet boxes that cannot teleport.
+
+				// Top row, 2nd from left
+				SetThingFlags(156,0);
+				SetThingFlags(210,0);
+				SetThingFlags(211,0);
+
+				// 2nd row, 2nd-5th from left
+				for(int i = 242; i <= 249; i++)
+					SetThingFlags(i,0);
+
+				// 3rd row, rightmost box
+				SetThingFlags(260,0);
+				SetThingFlags(261,0);
+				SetThingFlags(266,0);
+				SetThingFlags(271,0);
+				SetThingFlags(272,0);
+				SetThingFlags(277,0);
+				SetThingFlags(278,0);
+				SetThingFlags(283,0);
+
+				break;
+			}
+
 			case '4CB7AAC5C43CF32BDF05FD36481C1D9F': // Plutonia: Revisited map27
 			{
 				SetLineSpecial(1214, Plat_DownWaitUpStayLip, 20, 64, 150);
@@ -1396,6 +1460,7 @@ class LevelCompatibility : LevelPostProcessor
 			{
 				// Wall behind start creates HOM in software renderer due to weird sector
 				OffsetSectorPlane(236, Sector.Floor, -40);
+				break;
 			}
 
 			case '1C795660D2BA9FC93DA584C593FD1DA3': // Scythe 2 MAP17
@@ -1711,6 +1776,176 @@ class LevelCompatibility : LevelPostProcessor
 			case 'C4850382A78BF637AC9FC58153E03C87': // sapphire.wad map01
 			{
 				SetLineSpecial(11518, 9, 0, 0, 0, 0);
+				break;
+			}
+			
+			case 'BA530202AF0BA0C6CBAE6A0C7076FB72': // Requiem MAP04
+			{
+				// Flag deathmatch berserk for 100% items in single-player
+				SetThingFlags(284, 17);
+				// Make Hell Knight trap switch repeatable to prevent softlock
+				SetLineFlags(823, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '104415DDEBCAFB9783CA60807C46B57D': // Requiem MAP05
+			{
+				// Raise spectre pit near soulsphere if player drops into it
+				for(int i = 0; i < 4; i++)
+				{
+					SetLineSpecial(2130+i, Floor_LowerToHighest, 28, 8, 128);
+					SetLineActivation(2130+i, SPAC_Cross);
+				}
+				break;
+			}
+			
+			case '1B0AF5286D4E914C5E903BC505E6A844': // Requiem MAP06
+			{
+				// Flag deathmatch berserks for 100% items in single-player
+				SetThingFlags(103, 17);
+				SetThingFlags(109, 17);
+				// Shooting the cross before all Imps spawn in can make 100%
+				// kills impossible, add line actions and change sector tag
+				for(int i = 0; i < 7; i++)
+				{
+					SetLineSpecial(1788+i, Floor_RaiseToNearest, 100, 32);
+					SetLineActivation(1788+i, SPAC_Cross);
+				}
+				SetLineSpecial(1796, Floor_RaiseToNearest, 100, 32);
+				SetLineActivation(1796, SPAC_Cross);
+				SetLineSpecial(1800, Floor_RaiseToNearest, 100, 32);
+				SetLineActivation(1800, SPAC_Cross);
+				SetLineSpecial(1802, Floor_RaiseToNearest, 100, 32);
+				SetLineActivation(1802, SPAC_Cross);
+				ClearSectorTags(412);
+				AddSectorTag(412, 100);
+				// Shootable cross at demon-faced floor changed to repeatable
+				// action to prevent softlock if "spikes" are raised again
+				SetLineFlags(2600, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '3C10B1B017E902BE7CDBF2436DF56973': // Requiem MAP08
+			{
+				// Flag deathmatch soulsphere for 100% items in single-player
+				SetThingFlags(48, 17);
+				// Allow player to leave inescapable lift using the walls
+				for(int i = 0; i < 3; i++)
+				{
+					SetLineSpecial(2485+i, Plat_DownWaitUpStayLip, 68, 64, 105, 0);
+					SetLineActivation(2485+i, SPAC_Use);
+					SetLineFlags(2485+i, Line.ML_REPEAT_SPECIAL);
+				}
+				SetLineSpecial(848, Plat_DownWaitUpStayLip, 68, 64, 105, 0);
+				SetLineActivation(848, SPAC_UseBack);
+				SetLineFlags(848, Line.ML_REPEAT_SPECIAL);
+				SetLineSpecial(895, Plat_DownWaitUpStayLip, 68, 64, 105, 0);
+				SetLineActivation(895, SPAC_UseBack);
+				SetLineFlags(895, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '14FE46ED0458979118007E1906A0C9BC': // Requiem MAP09
+			{
+				// Flag deathmatch items for 100% items in single-player
+				for(int i = 0; i < 6; i++)
+					SetThingFlags(371+i, 17);
+				
+				for(int i = 0; i < 19; i++)
+					SetThingFlags(402+i, 17);
+				
+				SetThingFlags(359, 17);
+				SetThingFlags(389, 17);
+				SetThingFlags(390, 17);
+				// Change sides of blue skull platform to be repeatable
+				for(int i = 0; i < 4; i++)
+					SetLineFlags(873+i, Line.ML_REPEAT_SPECIAL);
+				// Make switch that raises bars near yellow skull repeatable
+				SetLineFlags(2719, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '53A6369C3C8DA4E7AC443A8F8684E38E': // Requiem MAP12
+			{
+				// Remove unreachable secrets
+				SetSectorSpecial(352, 0);
+				SetSectorSpecial(503, 0);
+				// Change action of eastern switch at pool of water so that it
+				// lowers the floor properly, making the secret accessible
+				SetLineSpecial(4873, Floor_LowerToLowest, 62, 8);
+				break;
+			}
+			
+			case '2DAB6E4B19B4F2763695267D39CD0275': // Requiem MAP13
+			{
+				// Fix missing nukage at starting bridge on hardware renderer
+				for(int i = 0; i < 4; i++)
+					SetLineSectorRef(2152+i, Line.back, 8);
+				break;
+			}
+			
+			case 'F55FB2A8DC68CFC75E4340EF4ED7A8BF': // Requiem MAP21
+			{
+				// Fix self-referencing floor hack
+				for(int i = 0; i < 4; i++)
+					SetLineSectorRef(3+i, Line.back, 219);
+					
+				SetLineSpecial(8, Transfer_Heights, 80);
+				// Fix south side of pit hack so textures don't bleed through
+				// the fake floor on hardware renderer
+				SetLineSectorRef(267, Line.back, 63);
+				SetLineSectorRef(268, Line.back, 63);
+				SetLineSectorRef(270, Line.back, 63);
+				SetLineSectorRef(271, Line.back, 63);
+				SetLineSectorRef(274, Line.back, 63);
+				SetLineSectorRef(275, Line.back, 63);
+				SetLineSectorRef(3989, Line.back, 63);
+				SetLineSectorRef(3994, Line.back, 63);
+				// Fix fake 3D bridge on hardware renderer
+				SetLineSectorRef(506, Line.back, 841);
+				SetLineSectorRef(507, Line.back, 841);
+				SetLineSectorRef(536, Line.back, 841);
+				SetLineSectorRef(537, Line.back, 841);
+				SetLineSectorRef(541, Line.back, 841);
+				SetLineSectorRef(547, Line.back, 841);
+				AddSectorTag(90, 1000);
+				AddSectorTag(91, 1000);
+				SetSectorTexture(90, Sector.floor, "MFLR8_4");
+				SetSectorTexture(91, Sector.floor, "MFLR8_4");
+				
+				SetLineSectorRef(553, Line.back, 841);
+				SetLineSectorRef(554, Line.back, 841);
+				SetLineSectorRef(559, Line.back, 841);
+				SetLineSectorRef(560, Line.back, 841);
+				SetLineSectorRef(562, Line.back, 841);
+				SetLineSectorRef(568, Line.back, 841);
+				AddSectorTag(96, 1000);
+				AddSectorTag(97, 1000);
+				SetSectorTexture(96, Sector.floor, "MFLR8_4");
+				SetSectorTexture(97, Sector.floor, "MFLR8_4");
+				SetLineSpecial(505, Transfer_Heights, 1000);
+				// Fix randomly appearing ceiling at deep water
+				SetLineSectorRef(1219, Line.front, 233);
+				SetLineSectorRef(1222, Line.front, 233);
+				SetLineSectorRef(1223, Line.front, 233);
+				SetLineSectorRef(1228, Line.front, 233);
+				// Make switch in sky room repeatable so player does not get
+				// trapped at red cross if returning a second time
+				SetLineFlags(3870, Line.ML_REPEAT_SPECIAL);
+				// Move unreachable item bonuses
+				SetThingXY(412, -112, 6768);
+				SetThingXY(413, -112, 6928);
+				SetThingXY(414, -96, 6928);
+				SetThingXY(415, -96, 6768);
+				// Remove unreachable secret at exit megasphere
+				SetSectorSpecial(123, 0);
+				break;
+			}
+			
+			case '2499CF9A9351BE9BC4E9C66FC9F291A7': // Requiem MAP23
+			{
+				// Remove secret at switch that can only be scored by crouching
+				SetSectorSpecial(240, 0);
 				break;
 			}
 		}

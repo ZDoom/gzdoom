@@ -41,7 +41,7 @@
 #include "c_dispatch.h"
 #include "c_console.h"
 #include "v_video.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "s_sound.h"
 #include "gi.h"
 #include "doomstat.h"
@@ -49,6 +49,7 @@
 #include "network/net.h"
 #include "d_player.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "r_utility.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
@@ -59,6 +60,8 @@
 #include "events.h"
 #include "g_game.h"
 #include "utf8.h"
+#include "texturemanager.h"
+#include "v_palette.h"
 
 #include "../version.h"
 
@@ -175,7 +178,7 @@ void ST_LoadCrosshair(bool alwaysload)
 	{
 		num = -num;
 	}
-	size = (SCREENWIDTH < 640) ? 'S' : 'B';
+	size = (twod->GetWidth() < 640) ? 'S' : 'B';
 
 	mysnprintf (name, countof(name), "XHAIR%c%d", size, num);
 	FTextureID texid = TexMan.CheckForTexture(name, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
@@ -258,6 +261,7 @@ void ST_CreateStatusBar(bool bTitleLevel)
 		StatusBar->Destroy();
 		StatusBar = NULL;
 	}
+	GC::AddMarkerFunc([]() { GC::Mark(StatusBar); });
 
 	bool shouldWarn = true;
 
@@ -270,8 +274,8 @@ void ST_CreateStatusBar(bool bTitleLevel)
 		// The old rule of 'what came last wins' goes here, as well.
 		// If the most recent SBARINFO definition comes before a status bar class definition it will be picked,
 		// if the class is defined later, this will be picked. If both come from the same file, the class definition will win.
-		int sbarinfolump = Wads.CheckNumForName("SBARINFO");
-		int sbarinfofile = Wads.GetLumpFile(sbarinfolump);
+		int sbarinfolump = fileSystem.CheckNumForName("SBARINFO");
+		int sbarinfofile = fileSystem.GetFileContainer(sbarinfolump);
 		if (gameinfo.statusbarclassfile >= gameinfo.statusbarfile && gameinfo.statusbarclassfile >= sbarinfofile)
 		{
 			CreateGameInfoStatusBar(shouldWarn);
@@ -345,6 +349,7 @@ DBaseStatusBar::DBaseStatusBar ()
 	CPlayer = NULL;
 	ShowLog = false;
 	defaultScale = { (double)CleanXfac, (double)CleanYfac };
+	SetSize(0);
 
 	CreateAltHUD();
 }
@@ -425,7 +430,7 @@ void DBaseStatusBar::SetDrawSize(int reltop, int hres, int vres)
 	HorizontalResolution = hres;
 	VerticalResolution = vres;
 	int x, y;
-	ST_CalcCleanFacs(hres, vres, SCREENWIDTH, SCREENHEIGHT, &x, &y);
+	ST_CalcCleanFacs(hres, vres, twod->GetWidth(), twod->GetHeight(), &x, &y);
 	defaultScale = { (double)x, (double)y };
 
 	SetScale();	// recalculate positioning info.
@@ -466,8 +471,8 @@ void DBaseStatusBar::SetScale ()
 {
 	ValidateResolution(HorizontalResolution, VerticalResolution);
 
-	int w = SCREENWIDTH;
-	int h = SCREENHEIGHT;
+	int w = twod->GetWidth();
+	int h = twod->GetHeight();
 	if (st_scale < 0 || ForcedScale)
 	{
 		// This is the classic fullscreen scale with aspect ratio compensation.
@@ -497,7 +502,7 @@ void DBaseStatusBar::SetScale ()
 		// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
 		// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
 		// the resulting scaling factor needs to be reduced accordingly.
-		int realscale = clamp((320 * GetUIScale(st_scale)) / HorizontalResolution, 1, w / HorizontalResolution);
+		int realscale = clamp((320 * GetUIScale(twod, st_scale)) / HorizontalResolution, 1, w / HorizontalResolution);
 
 		double realscaley = realscale * (hud_aspectscale ? 1.2 : 1.);
 
@@ -530,7 +535,7 @@ DVector2 DBaseStatusBar::GetHUDScale() const
 	{
 		return defaultScale;
 	}
-	scale = GetUIScale(hud_scale);
+	scale = GetUIScale(twod, hud_scale);
 
 	int hres = HorizontalResolution;
 	int vres = VerticalResolution;
@@ -584,11 +589,11 @@ void FormatMapName(FLevelLocals *self, int cr, FString *result);
 
 void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 {
-	auto scale = GetUIScale(hud_scale);
+	auto scale = GetUIScale(twod, hud_scale);
 	auto font = generic_ui ? NewSmallFont : SmallFont;
 	auto font2 = font;
-	auto vwidth = screen->GetWidth() / scale;
-	auto vheight = screen->GetHeight() / scale;
+	auto vwidth = twod->GetWidth() / scale;
+	auto vheight = twod->GetHeight() / scale;
 	auto fheight = font->GetHeight();
 	FString textbuffer;
 	int sec;
@@ -604,10 +609,10 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 
 	if (am_showtime)
 	{
-		if (vid_fps) y += (NewConsoleFont->GetHeight() * active_con_scale() + 5) / scale;
+		if (vid_fps) y += (NewConsoleFont->GetHeight() * active_con_scale(twod) + 5) / scale;
 		sec = Tics2Seconds(primaryLevel->time);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
-		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+		DrawText(twod, font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
 			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
 		y += fheight;
 	}
@@ -616,7 +621,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	{
 		sec = Tics2Seconds(primaryLevel->totaltime);
 		textbuffer.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);
-		screen->DrawText(font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
+		DrawText(twod, font, crdefault, vwidth - zerowidth * 8 - textdist, y, textbuffer, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight,
 			DTA_Monospace, EMonospacing::CellCenter, DTA_Spacing, zerowidth, DTA_KeepRatio, true, TAG_END);
 	}
 
@@ -626,14 +631,14 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		if (am_showmonsters)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_MONSTERS"), crdefault + 65, primaryLevel->killed_monsters, primaryLevel->total_monsters);
-			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			DrawText(twod, font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
 		if (am_showsecrets)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_SECRETS"), crdefault + 65, primaryLevel->found_secrets, primaryLevel->total_secrets);
-			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			DrawText(twod, font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
@@ -641,7 +646,7 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 		if (am_showitems)
 		{
 			textbuffer.Format("%s\34%c %d/%d", GStrings("AM_ITEMS"), crdefault + 65, primaryLevel->found_items, primaryLevel->total_items);
-			screen->DrawText(font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+			DrawText(twod, font2, highlight, textdist, y, textbuffer, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 			y += fheight;
 		}
 
@@ -675,13 +680,13 @@ void DBaseStatusBar::DoDrawAutomapHUD(int crdefault, int highlight)
 	StatusbarToRealCoords(x, yy, w, h);
 
 	// Get the y coordinate for the first line of the map name text.
-	y = Scale(GetTopOfStatusbar() - int(h), vheight, screen->GetHeight()) - fheight * numlines;
+	y = Scale(GetTopOfStatusbar() - int(h), vheight, twod->GetHeight()) - fheight * numlines;
 
 	// Draw the texts centered above the status bar.
 	for (unsigned i = 0; i < numlines; i++)
 	{
 		int x = (vwidth - font->StringWidth(lines[i].Text)) / 2;
-		screen->DrawText(font, highlight, x, y, lines[i].Text, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
+		DrawText(twod, font, highlight, x, y, lines[i].Text, DTA_KeepRatio, true, DTA_VirtualWidth, vwidth, DTA_VirtualHeight, vheight, TAG_DONE);
 		y += fheight;
 	}
 }
@@ -948,18 +953,18 @@ void DBaseStatusBar::RefreshViewBorder ()
 {
 	if (setblocks < 10)
 	{
-		int Width = screen->GetWidth();
+		int Width = twod->GetWidth();
 		if (viewwidth == Width)
 		{
 			return;
 		}
 		auto tex = GetBorderTexture(primaryLevel);
-		screen->DrawBorder (tex, 0, 0, Width, viewwindowy);
-		screen->DrawBorder (tex, 0, viewwindowy, viewwindowx, viewheight + viewwindowy);
-		screen->DrawBorder (tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
-		screen->DrawBorder (tex, 0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
+		DrawBorder(twod, tex, 0, 0, Width, viewwindowy);
+		DrawBorder(twod, tex, 0, viewwindowy, viewwindowx, viewheight + viewwindowy);
+		DrawBorder(twod, tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
+		DrawBorder(twod, tex, 0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
 		
-		screen->DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+		DrawFrame(twod, viewwindowx, viewwindowy, viewwidth, viewheight);
 	}
 }
 
@@ -973,48 +978,48 @@ void DBaseStatusBar::RefreshBackground () const
 {
 	int x, x2, y;
 
-	float ratio = ActiveRatio (SCREENWIDTH, SCREENHEIGHT);
+	float ratio = ActiveRatio (twod->GetWidth(), twod->GetHeight());
 	x = ST_X;
 	y = SBarTop;
 	
-	if (x == 0 && y == SCREENHEIGHT) return;
+	if (x == 0 && y == twod->GetHeight()) return;
 
 	auto tex = GetBorderTexture(primaryLevel);
 
 	if(!CompleteBorder)
 	{
-		if(y < SCREENHEIGHT)
+		if(y < twod->GetHeight())
 		{
-			screen->DrawBorder (tex, x+1, y, SCREENWIDTH, y+1);
-			screen->DrawBorder (tex, x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
+			DrawBorder(twod, tex, x+1, y, twod->GetWidth(), y+1);
+			DrawBorder(twod, tex, x+1, twod->GetHeight()-1, twod->GetWidth(), twod->GetHeight());
 		}
 	}
 	else
 	{
-		x = SCREENWIDTH;
+		x = twod->GetWidth();
 	}
 
 	if (x > 0)
 	{
 		if(!CompleteBorder)
 		{
-			x2 = SCREENWIDTH - ST_X;
+			x2 = twod->GetWidth() - ST_X;
 		}
 		else
 		{
-			x2 = SCREENWIDTH;
+			x2 = twod->GetWidth();
 		}
 
-		screen->DrawBorder (tex, 0, y, x+1, SCREENHEIGHT);
-		screen->DrawBorder (tex, x2-1, y, SCREENWIDTH, SCREENHEIGHT);
+		DrawBorder(twod, tex, 0, y, x+1, twod->GetHeight());
+		DrawBorder(twod, tex, x2-1, y, twod->GetWidth(), twod->GetHeight());
 
 		if (setblocks >= 10)
 		{
 			FTexture *p = TexMan.GetTextureByName(gameinfo.Border.b);
 			if (p != NULL)
 			{
-				screen->FlatFill(0, y, x, y + p->GetDisplayHeight(), p, true);
-				screen->FlatFill(x2, y, SCREENWIDTH, y + p->GetDisplayHeight(), p, true);
+				twod->AddFlatFill(0, y, x, y + p->GetDisplayHeight(), p, true);
+				twod->AddFlatFill(x2, y, twod->GetWidth(), y + p->GetDisplayHeight(), p, true);
 			}
 		}
 	}
@@ -1053,7 +1058,7 @@ void DBaseStatusBar::DrawCrosshair ()
 
 	if (crosshairscale > 0.0f)
 	{
-		size = SCREENHEIGHT * crosshairscale / 200.;
+		size = twod->GetHeight() * crosshairscale / 200.;
 	}
 	else
 	{
@@ -1116,7 +1121,7 @@ void DBaseStatusBar::DrawCrosshair ()
 		color = crosshaircolor;
 	}
 
-	screen->DrawTexture (CrosshairImage,
+	DrawTexture(twod, CrosshairImage,
 		viewwidth / 2 + viewwindowx,
 		viewheight / 2 + viewwindowy,
 		DTA_DestWidth, w,
@@ -1216,7 +1221,7 @@ void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 		VMCall(func, params, countof(params), nullptr, 0);
 	}
 	else Draw(state, ticFrac);
-	screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
+	twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 	BeginStatusBar(BaseSBarHorizontalResolution, BaseSBarVerticalResolution, BaseRelTop, false);
 }
 
@@ -1228,9 +1233,9 @@ void DBaseStatusBar::DrawLog ()
 	if (text.IsNotEmpty())
 	{
 		// This uses the same scaling as regular HUD messages
-		auto scale = active_con_scaletext(generic_ui || log_vgafont);
-		hudwidth = SCREENWIDTH / scale;
-		hudheight = SCREENHEIGHT / scale;
+		auto scale = active_con_scaletext(twod, generic_ui || log_vgafont);
+		hudwidth = twod->GetWidth() / scale;
+		hudheight = twod->GetHeight() / scale;
 		FFont *font = (generic_ui || log_vgafont)? NewSmallFont : SmallFont;
 
 		int linelen = hudwidth<640? Scale(hudwidth,9,10)-40 : 560;
@@ -1254,13 +1259,13 @@ void DBaseStatusBar::DrawLog ()
 			if (y<0) y=0;
 			w=600;
 		}
-		screen->Dim(0, 0.5f, Scale(x, SCREENWIDTH, hudwidth), Scale(y, SCREENHEIGHT, hudheight), 
-							 Scale(w, SCREENWIDTH, hudwidth), Scale(height, SCREENHEIGHT, hudheight));
+		Dim(twod, 0, 0.5f, Scale(x, twod->GetWidth(), hudwidth), Scale(y, twod->GetHeight(), hudheight), 
+							 Scale(w, twod->GetWidth(), hudwidth), Scale(height, twod->GetHeight(), hudheight));
 		x+=20;
 		y+=10;
 		for (const FBrokenLines &line : lines)
 		{
-			screen->DrawText (font, CPlayer->SubtitleCounter? CR_CYAN : CR_UNTRANSLATED, x, y, line.Text,
+			DrawText(twod, font, CPlayer->SubtitleCounter? CR_CYAN : CR_UNTRANSLATED, x, y, line.Text,
 				DTA_KeepRatio, true,
 				DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 			y += font->GetHeight ();
@@ -1300,7 +1305,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 void DBaseStatusBar::DrawBottomStuff (EHudState state)
 {
 	primaryLevel->localEventManager->RenderUnderlay(state);
-	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_UnderHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : twod->GetHeight());
 }
 
 //---------------------------------------------------------------------------
@@ -1313,7 +1318,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 {
 	if (demoplayback && demover != DEMOGAMEVERSION)
 	{
-		screen->DrawText (SmallFont, CR_TAN, 0, GetTopOfStatusbar() - 40 * CleanYfac,
+		DrawText(twod, SmallFont, CR_TAN, 0, GetTopOfStatusbar() - 40 * CleanYfac,
 			"Demo was recorded with a different version\n"
 			"of " GAMENAME ". Expect it to go out of sync.",
 			DTA_CleanNoMove, true, TAG_DONE);
@@ -1333,9 +1338,9 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 
 	if (automapactive && !viewactive)
 	{
-		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+		DrawMessages (HUDMSGLayer_OverMap, (state == HUD_StatusBar) ? GetTopOfStatusbar() : twod->GetHeight());
 	}
-	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : SCREENHEIGHT);
+	DrawMessages (HUDMSGLayer_OverHUD, (state == HUD_StatusBar) ? GetTopOfStatusbar() : twod->GetHeight());
 	primaryLevel->localEventManager->RenderOverlay(state);
 
 	DrawConsistancy ();
@@ -1385,8 +1390,8 @@ void DBaseStatusBar::DrawConsistancy () const
 					players[1-consoleplayer].inconsistant);
 			}
 		}
-		screen->DrawText (SmallFont, CR_GREEN, 
-			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
+		DrawText(twod, SmallFont, CR_GREEN,
+			(twod->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
 			0, conbuff, DTA_CleanNoMove, true, TAG_DONE);
 	}
 }
@@ -1417,8 +1422,8 @@ void DBaseStatusBar::DrawWaiting () const
 
 	if (buff_p != NULL)
 	{
-		screen->DrawText (SmallFont, CR_ORANGE, 
-			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
+		DrawText(twod, SmallFont, CR_ORANGE,
+			(twod->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
 			SmallFont->GetHeight()*CleanYfac, conbuff, DTA_CleanNoMove, true, TAG_DONE);
 	}
 }
@@ -1518,7 +1523,7 @@ void DBaseStatusBar::StatusbarToRealCoords(double &x, double &y, double &w, doub
 		int vres = VerticalResolution;
 		ValidateResolution(hres, vres);
 
-		screen->VirtualToRealCoords(x, y, w, h, hres, vres, true, true);
+		VirtualToRealCoords(twod, x, y, w, h, hres, vres, true, true);
 	}
 	else
 	{
@@ -1616,15 +1621,15 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 		switch (flags & DI_SCREEN_HMASK)
 		{
 		default: orgx = 0; break;
-		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
-		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
 		}
 
 		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
-		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
 		// move stuff in the top right corner a bit down if the fps counter is on.
@@ -1639,7 +1644,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 		x += orgx;
 		y += orgy;
 	}
-	screen->DrawTexture(tex, x, y, 
+	DrawTexture(twod, tex, x, y,
 		DTA_TopOffset, 0,
 		DTA_LeftOffset, 0,
 		DTA_DestWidthF, boxwidth,
@@ -1664,20 +1669,17 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 {
 	bool monospaced = monospacing != EMonospacing::Off;
 	double dx = 0;
+	int spacingparm = monospaced ? -spacing : spacing;
 
 	switch (flags & DI_TEXT_ALIGN)
 	{
 	default:
 		break;
 	case DI_TEXT_ALIGN_RIGHT:
-		dx = monospaced
-			? static_cast<int> ((spacing)*cstring.CharacterCount()) //monospaced, so just multiply the character size
-			: static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount()));
+		dx = font->StringWidth(cstring, spacingparm);
 		break;
 	case DI_TEXT_ALIGN_CENTER:
-		dx = monospaced
-			? static_cast<int> ((spacing)*cstring.CharacterCount()) / 2 //monospaced, so just multiply the character size
-			: static_cast<int> (font->StringWidth(cstring) + (spacing * cstring.CharacterCount())) / 2;
+		dx = font->StringWidth(cstring, spacingparm) / 2;
 		break;
 	}
 
@@ -1699,15 +1701,15 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		switch (flags & DI_SCREEN_HMASK)
 		{
 		default: orgx = 0; break;
-		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
-		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
 		}
 
 		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
-		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
 		// move stuff in the top right corner a bit down if the fps counter is on.
@@ -1777,14 +1779,14 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 		// This may have to be changed to draw the shadow text up front separately.
 		if ((shadowX != 0 || shadowY != 0) && !(flags & DI_NOSHADOW))
 		{
-			screen->DrawChar(font, CR_UNTRANSLATED, rx + shadowX, ry + shadowY, ch,
+			DrawChar(twod, font, CR_UNTRANSLATED, rx + shadowX, ry + shadowY, ch,
 				DTA_DestWidthF, rw,
 				DTA_DestHeightF, rh,
 				DTA_Alpha, (Alpha * HR_SHADOW),
 				DTA_FillColor, 0,
 				TAG_DONE);
 		}
-		screen->DrawChar(font, fontcolor, rx, ry, ch,
+		DrawChar(twod, font, fontcolor, rx, ry, ch,
 			DTA_DestWidthF, rw,
 			DTA_DestHeightF, rh,
 			DTA_Alpha, Alpha,
@@ -1802,7 +1804,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 void SBar_DrawString(DBaseStatusBar *self, DHUDFont *font, const FString &string, double x, double y, int flags, int trans, double alpha, int wrapwidth, int linespacing, double scaleX, double scaleY)
 {
 	if (font == nullptr) ThrowAbortException(X_READ_NIL, nullptr);
-	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 
 	// resolve auto-alignment before making any adjustments to the position values.
 	if (!(flags & DI_SCREEN_MANUAL_ALIGN))
@@ -1860,15 +1862,15 @@ void DBaseStatusBar::TransformRect(double &x, double &y, double &w, double &h, i
 		switch (flags & DI_SCREEN_HMASK)
 		{
 		default: orgx = 0; break;
-		case DI_SCREEN_HCENTER: orgx = screen->GetWidth() / 2; break;
-		case DI_SCREEN_RIGHT:   orgx = screen->GetWidth(); break;
+		case DI_SCREEN_HCENTER: orgx = twod->GetWidth() / 2; break;
+		case DI_SCREEN_RIGHT:   orgx = twod->GetWidth(); break;
 		}
 
 		switch (flags & DI_SCREEN_VMASK)
 		{
 		default: orgy = 0; break;
-		case DI_SCREEN_VCENTER: orgy = screen->GetHeight() / 2; break;
-		case DI_SCREEN_BOTTOM: orgy = screen->GetHeight(); break;
+		case DI_SCREEN_VCENTER: orgy = twod->GetHeight() / 2; break;
+		case DI_SCREEN_BOTTOM: orgy = twod->GetHeight(); break;
 		}
 
 		// move stuff in the top right corner a bit down if the fps counter is on.
@@ -1904,7 +1906,7 @@ void DBaseStatusBar::Fill(PalEntry color, double x, double y, double w, double h
 	int ww = int(x + w - x1);	// account for scaling to non-integers. Truncating the values separately would fail for cases like 
 	int hh = int(y + h - y1);	// y=3.5, height = 5.5 where adding both values gives a larger integer than adding the two integers.
 
-	screen->Dim(color, float(Alpha), x1, y1, ww, hh);
+	Dim(twod, color, float(Alpha), x1, y1, ww, hh);
 }
 
 
@@ -1921,7 +1923,7 @@ void DBaseStatusBar::SetClipRect(double x, double y, double w, double h, int fla
 	int y1 = int(y);
 	int ww = int(x + w - x1);	// account for scaling to non-integers. Truncating the values separately would fail for cases like 
 	int hh = int(y + h - y1); // y=3.5, height = 5.5 where adding both values gives a larger integer than adding the two integers.
-	screen->SetClipRect(x1, y1, ww, hh);
+	twod->SetClipRect(x1, y1, ww, hh);
 }
 
 

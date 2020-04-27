@@ -25,7 +25,6 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "polyrenderer/drawers/screen_triangle.h"
-#include "polyrenderer/math/gpu_types.h"
 #include "polyrenderer/drawers/poly_vertex_shader.h"
 
 class DCanvas;
@@ -67,7 +66,7 @@ public:
 	void SetScissor(int x, int y, int w, int h);
 	void SetRenderStyle(FRenderStyle style);
 	void SetTexture(int unit, void *pixels, int width, int height, bool bgra);
-	void SetShader(int specialEffect, int effectState, bool alphaTest);
+	void SetShader(int specialEffect, int effectState, bool alphaTest, bool colormapShader);
 	void PushStreamData(const StreamData &data, const PolyPushConstants &constants);
 	void PushMatrices(const VSMatrix &modelMatrix, const VSMatrix &normalModelMatrix, const VSMatrix &textureMatrix);
 	void ClearDepth(float value);
@@ -101,7 +100,7 @@ struct PolyPushConstants
 {
 	int uTextureMode;
 	float uAlphaThreshold;
-	Vec2f uClipSplit;
+	FVector2 uClipSplit;
 
 	// Lighting + Fog
 	float uLightLevel;

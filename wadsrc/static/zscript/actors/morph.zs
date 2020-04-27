@@ -28,6 +28,11 @@ extend class Actor
 		return null, 0, 0;
 	}
 
+	// [MC] Called when an actor morphs, on both the previous form (!current) and present form (current).
+	virtual void PreMorph(Actor mo, bool current) {}
+	virtual void PostMorph(Actor mo, bool current) {}
+	virtual void PreUnmorph(Actor mo, bool current) {}
+	virtual void PostUnmorph(Actor mo, bool current) {}
 	
 	//===========================================================================
 	//
@@ -105,6 +110,11 @@ extend class Actor
 		}
 
 		let morphed = MorphedMonster(Spawn (spawntype, Pos, NO_REPLACE));
+
+		// [MC] Notify that we're just about to start the transfer.
+		PreMorph(morphed, false);		// False: No longer the current.
+		morphed.PreMorph(self, true);	// True: Becoming this actor.
+
 		Substitute (morphed);
 		if ((style & MRF_TRANSFERTRANSLATION) && !morphed.bDontTranslate)
 		{
@@ -140,6 +150,8 @@ extend class Actor
 		let eflash = Spawn(enter_flash ? enter_flash : (class<Actor>)("TeleportFog"), Pos + (0, 0, gameinfo.TELEFOGHEIGHT), ALLOW_REPLACE);
 		if (eflash)
 			eflash.target = morphed;
+		PostMorph(morphed, false);
+		morphed.PostMorph(self, true);
 		return true;
 	}
 }

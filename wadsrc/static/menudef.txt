@@ -1679,6 +1679,7 @@ OptionValue CompatModes
 	3, "$OPTVAL_BOOM"
 	6, "$OPTVAL_BOOMSTRICT"
 	5, "$OPTVAL_MBF"
+	7, "$OPTVAL_MBFSTRICT"
 	4, "$OPTVAL_ZDOOM2063"
 }
 
@@ -2163,8 +2164,6 @@ OptionValue "RenderMode"
 {
 	0, "$OPTVAL_SWDOOM"
 	1, "$OPTVAL_SWDOOMTC"
-	2, "$OPTVAL_SWPOLY"
-	3, "$OPTVAL_SWPOLYTC"
 	4,  "$OPTVAL_HWPOLY"
 }
 
@@ -2196,12 +2195,13 @@ OptionValue Ratios
 }
 OptionValue ScaleModes
 {
-	0, "$OPTVAL_SCALENEAREST"
-	1, "$OPTVAL_SCALELINEAR"
+	0, "$OPTVAL_NORMAL"
+	6, "320x200"
 	2, "640x400"
 	3, "960x600"
 	4, "1280x800"
 	5, "$OPTVAL_CUSTOM"
+	1, "$OPTVAL_LOWEST"
 }
 OptionValue CropAspect
 {
@@ -2240,7 +2240,7 @@ OptionMenu VideoModeMenu protected
 	StaticText "$VIDMNU_CUSTOMRES"
 	TextField "$VIDMNU_CUSTOMX", menu_resolution_custom_width
 	TextField "$VIDMNU_CUSTOMY", menu_resolution_custom_height
-	Option "$VIDMNU_USELINEAR", "vid_scale_customlinear", "YesNo"
+	Option "$VIDMNU_USELINEAR", "vid_scale_linear", "YesNo"
 	StaticText ""
 	Command "$VIDMNU_APPLYW", "menu_resolution_commit_changes 0"
 	Command "$VIDMNU_APPLYFS", "menu_resolution_commit_changes 1"
@@ -2535,7 +2535,6 @@ OptionMenu "GLTextureGLOptions" protected
 	Title "$GLTEXMNU_TITLE"
 	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
-	Option "$GLTEXMNU_ENABLEHIRES",		gl_texture_usehires,			"YesNo"
 
 	ifOption(MMX)
 	{
@@ -2724,6 +2723,7 @@ OptionString "LanguageOptions"
 	"de", "Deutsch (German)"
 	"es", "Español (España) (Castilian Spanish)"
 	"esm", "Español (Latino) (Latin American Spanish)"
+	"eo", "Esperanto"
 	"fi", "Suomi (Finnish)"
 	"fr", "Français (French)"
 	"it", "Italiano (Italian)"
@@ -2733,6 +2733,7 @@ OptionString "LanguageOptions"
 	"pl", "Polski (Polish)"
 	"ptg", "Português (European Portuguese)"
 	"pt", "Português do Brasil (Brazilian Portuguese)"
+	"ro", "Română (Romanian)"
 	"ru", "Русский (Russian)"
 	"sr", "Српски (Serbian)"
 }

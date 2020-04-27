@@ -2173,7 +2173,7 @@ FUNC(LS_UsePuzzleItem)
 	}
 
 	// [RH] Say "hmm" if you don't have the puzzle item
-	S_Sound (it, CHAN_VOICE, "*puzzfail", 1, ATTN_IDLE);
+	S_Sound (it, CHAN_VOICE, 0, "*puzzfail", 1, ATTN_IDLE);
 	return false;
 }
 
@@ -3197,7 +3197,7 @@ FUNC(LS_SendToCommunicator)
 		{
 			S_StopSound (CHAN_VOICE);
 			it->player->SetSubtitle(arg0, name);
-			S_Sound (CHAN_VOICE, name, 1, ATTN_NORM);
+			S_Sound (CHAN_VOICE, 0, name, 1, ATTN_NORM);
 
 			// Get the message from the LANGUAGE lump.
 			FString msg;
@@ -3910,6 +3910,13 @@ int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 		{
 			max = mid - 1;
 		}
+	}
+	// Alias for ZScript. Check here to have universal support everywhere.
+	if (!stricmp(string, "TeleportSpecial"))
+	{
+		if (min_args != NULL) *min_args = 1;
+		if (max_args != NULL) *max_args = 3;
+		return Teleport;
 	}
 	return 0;
 }

@@ -495,12 +495,12 @@ void NetCommand::AddName(FName name)
 {
 	if (name.IsPredefined())
 	{
-		AddShort(name);
+		AddShort(name.GetIndex());
 	}
 	else
 	{
 		AddShort(-1);
-		AddString(name);
+		AddString(name.GetChars());
 	}
 }
 

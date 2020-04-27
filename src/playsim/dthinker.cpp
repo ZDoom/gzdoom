@@ -35,7 +35,7 @@
 #include "dthinker.h"
 #include "stats.h"
 #include "p_local.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "d_player.h"
 #include "vm.h"
 #include "c_dispatch.h"

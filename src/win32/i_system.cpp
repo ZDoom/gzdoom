@@ -61,7 +61,8 @@
 #include <wincrypt.h>
 
 #include "hardware.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
+#include "cmdlib.h"
 
 #include "version.h"
 #include "m_misc.h"
@@ -82,7 +83,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "i_system.h"
-#include "textures/bitmap.h"
+#include "bitmap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -104,8 +105,6 @@ extern void LayoutMainWindow(HWND hWnd, HWND pane);
 void DestroyCustomCursor();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void CalculateCPUSpeed();
 
 static HCURSOR CreateCompatibleCursor(FBitmap &cursorpic, int leftofs, int topofs);
 static HCURSOR CreateAlphaCursor(FBitmap &cursorpic, int leftofs, int topofs);
@@ -149,21 +148,6 @@ static HCURSOR CustomCursor;
 
 //==========================================================================
 //
-// I_Tactile
-//
-// Doom calls it when you take damage, so presumably it could be converted
-// to something compatible with force feedback.
-//
-//==========================================================================
-
-void I_Tactile(int on, int off, int total)
-{
-  // UNUSED.
-  on = off = total = 0;
-}
-
-//==========================================================================
-//
 // I_DetectOS
 //
 // Determine which version of Windows the game is running on.
@@ -187,24 +171,7 @@ void I_DetectOS(void)
 	{
 	case VER_PLATFORM_WIN32_NT:
 		osname = "NT";
-		if (info.dwMajorVersion == 5)
-		{
-			if (info.dwMinorVersion == 0)
-			{
-				osname = "2000";
-			}
-			if (info.dwMinorVersion == 1)
-			{
-				osname = "XP";
-				sys_ostype = 1; // legacy OS
-			}
-			else if (info.dwMinorVersion == 2)
-			{
-				osname = "Server 2003";
-				sys_ostype = 1; // legacy OS
-			}
-		}
-		else if (info.dwMajorVersion == 6)
+		if (info.dwMajorVersion == 6)
 		{
 			if (info.dwMinorVersion == 0)
 			{
@@ -231,12 +198,12 @@ void I_DetectOS(void)
 			}
 			else if (info.dwMinorVersion == 4)
 			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (beta)" : "Server 10 (beta)";
+				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (beta)" : "Server 2016 (beta)";
 			}
 		}
 		else if (info.dwMajorVersion == 10)
 		{
-			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 10 (or higher)";
+			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 2016 (or higher)";
 			sys_ostype = 3; // modern OS
 		}
 		break;
@@ -307,20 +274,6 @@ void CalculateCPUSpeed()
 
 	if (!batchrun) Printf ("CPU speed: %.0f MHz\n", 0.001 / PerfToMillisec);
 }
-
-//==========================================================================
-//
-// I_Init
-//
-//==========================================================================
-
-void I_Init()
-{
-	CheckCPUID(&CPU);
-	CalculateCPUSpeed();
-	DumpCPUInfo(&CPU);
-}
-
 
 //==========================================================================
 //
@@ -438,7 +391,7 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 				if (edit != NULL)
 				{
 					// GDI uses BGR colors, but color is RGB, so swap the R and the B.
-					swapvalues(color.r, color.b);
+					std::swap(color.r, color.b);
 					// Change the color.
 					format.cbSize = sizeof(format);
 					format.dwMask = CFM_COLOR;
@@ -479,15 +432,6 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 }
 
 static TArray<FString> bufferedConsoleStuff;
-
-void I_DebugPrint(const char *cp)
-{
-	if (IsDebuggerPresent())
-	{
-		auto wstr = WideString(cp);
-		OutputDebugStringW(wstr.c_str());
-	}
-}
 
 void I_PrintStr(const char *cp)
 {
@@ -561,7 +505,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 			GetWindowTextW(hDlg, label, countof(label));
 			FString alabel(label);
-			newlabel.Format(GAMESIG " %s: %s", GetVersionString(), alabel.GetChars());
+			newlabel.Format(GAMENAME " %s: %s", GetVersionString(), alabel.GetChars());
 			auto wlabel = newlabel.WideString();
 			SetWindowTextW(hDlg, wlabel.c_str());
 		}
@@ -571,8 +515,20 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 		// Check the current video settings.
 		//SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN, BM_SETCHECK, (vid_preferbackend == 1) ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, vid_fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
+		switch (vid_preferbackend)
+		{
+		case 1:
+			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN2, BM_SETCHECK, BST_CHECKED, 0 );
+			break;
+		case 2:
+			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN3, BM_SETCHECK, BST_CHECKED, 0 );
+			break;
+		default:
+			SendDlgItemMessage( hDlg, IDC_WELCOME_VULKAN1, BM_SETCHECK, BST_CHECKED, 0 );
+			break;
+		}
+
 
 		// [SP] This is our's
 		SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_SETCHECK, disableautoload ? BST_CHECKED : BST_UNCHECKED, 0 );
@@ -617,9 +573,13 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			SetQueryIWad(hDlg);
 			// [SP] Upstreamed from Zandronum
-			fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
-			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN, BM_GETCHECK, 0, 0) == BST_CHECKED) vid_preferbackend = 1;
-			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN, BM_GETCHECK, 0, 0) != BST_CHECKED && vid_preferbackend == 1) vid_preferbackend = 0;
+			vid_fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN3, BM_GETCHECK, 0, 0) == BST_CHECKED)
+				vid_preferbackend = 2;
+			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
+				vid_preferbackend = 1;
+			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN1, BM_GETCHECK, 0, 0) == BST_CHECKED)
+				vid_preferbackend = 0;
 
 			// [SP] This is our's.
 			disableautoload = SendDlgItemMessage( hDlg, IDC_WELCOME_NOAUTOLOAD, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
@@ -808,7 +768,7 @@ static HCURSOR CreateAlphaCursor(FBitmap &source, int leftofs, int topofs)
 	// Find closest integer scale factor for the monitor DPI
 	HDC screenDC = GetDC(0);
 	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
-	int scale = MAX((dpi + 96 / 2 - 1) / 96, 1);
+	int scale = std::max((dpi + 96 / 2 - 1) / 96, 1);
 	ReleaseDC(0, screenDC);
 
 	memset(&bi, 0, sizeof(bi));
@@ -942,64 +902,6 @@ bool I_WriteIniFailed()
 	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
 	LocalFree (lpMsgBuf);
 	return MessageBoxA(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
-}
-
-//==========================================================================
-//
-// I_FindFirst
-//
-// Start a pattern matching sequence.
-//
-//==========================================================================
-
-
-void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
-{
-	static_assert(sizeof(WIN32_FIND_DATAW) == sizeof(fileinfo->FindData), "Findata size mismatch");
-	auto widespec = WideString(filespec);
-	fileinfo->UTF8Name = "";
-	return FindFirstFileW(widespec.c_str(), (LPWIN32_FIND_DATAW)&fileinfo->FindData);
-}
-
-//==========================================================================
-//
-// I_FindNext
-//
-// Return the next file in a pattern matching sequence.
-//
-//==========================================================================
-
-int I_FindNext(void *handle, findstate_t *fileinfo)
-{
-	fileinfo->UTF8Name = "";
-	return !FindNextFileW((HANDLE)handle, (LPWIN32_FIND_DATAW)&fileinfo->FindData);
-}
-
-//==========================================================================
-//
-// I_FindClose
-//
-// Finish a pattern matching sequence.
-//
-//==========================================================================
-
-int I_FindClose(void *handle)
-{
-	return FindClose((HANDLE)handle);
-}
-
-//==========================================================================
-//
-// I_FindName
-//
-// Returns the name for an entry
-//
-//==========================================================================
-
-const char *I_FindName(findstate_t *fileinfo)
-{
-	if (fileinfo->UTF8Name.IsEmpty()) fileinfo->UTF8Name = fileinfo->FindData.Name;
-	return fileinfo->UTF8Name.GetChars();
 }
 
 //==========================================================================

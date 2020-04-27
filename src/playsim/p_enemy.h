@@ -7,6 +7,7 @@
 struct sector_t;
 class AActor;
 class PClass;
+struct FState;
 
 
 enum dirtype_t

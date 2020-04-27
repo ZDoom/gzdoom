@@ -55,15 +55,15 @@
 */
 #include "doomtype.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_state.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "r_sky.h"
 #include "cmdlib.h"
 
-#include "textures/skyboxtexture.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "skyboxtexture.h"
+#include "hw_material.h"
 #include "hw_skydome.h"
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"

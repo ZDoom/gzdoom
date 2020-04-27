@@ -45,7 +45,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int Net_Arbitrator;
 	native ui BaseStatusBar StatusBar;
 	native readonly Weapon WP_NOCHANGE;
-	deprecated("3.8") native readonly bool globalfreeze;
+	deprecated("3.8", "Use Actor.isFrozen() or Level.isFrozen() instead") native readonly bool globalfreeze;
 	native int LocalViewPitch;
 	native readonly @MusPlayingInfo musplaying;
 	native readonly bool generic_ui;
@@ -110,7 +110,7 @@ struct TexMan
 	};
 
 	native static TextureID CheckForTexture(String name, int usetype, int flags = TryAny);
-	deprecated("3.8") static void ReplaceTextures(String from, String to, int flags)
+	deprecated("3.8", "Use Level.ReplaceTextures() instead") static void ReplaceTextures(String from, String to, int flags)
 	{
 		level.ReplaceTextures(from, to, flags);
 	}
@@ -191,6 +191,8 @@ enum DrawTextureTags
 	DTA_Internal3,
 	DTA_Spacing,			// Strings only: Additional spacing between characters
 	DTA_Monospace,			// Strings only: Use a fixed distance between characters.
+
+	DTA_FullscreenEx,		// advanced fullscreen control.
 };
 
 class Shape2DTransform : Object native
@@ -242,7 +244,7 @@ struct Screen native
 	
 	
 	// This is a leftover of the abandoned Inventory.DrawPowerup method.
-	deprecated("2.5") static ui void DrawHUDTexture(TextureID tex, double x, double y)
+	deprecated("2.5", "Use StatusBar.DrawTexture() instead") static ui void DrawHUDTexture(TextureID tex, double x, double y)
 	{
 		statusBar.DrawTexture(tex, (x, y), BaseStatusBar.DI_SCREEN_RIGHT_TOP, 1., (32, 32));
 	}
@@ -420,10 +422,12 @@ struct GameInfoStruct native
 
 class Object native
 {
+	const TICRATE = 35;
 	native bool bDestroyed;
 
 	// These must be defined in some class, so that the compiler can find them. Object is just fine, as long as they are private to external code.
 	private native static Object BuiltinNew(Class<Object> cls, int outerclass, int compatibility);
+	private native static Object BuiltinNewDoom(Class<Object> cls, int outerclass, int compatibility);
 	private native static int BuiltinRandom(voidptr rng, int min, int max);
 	private native static double BuiltinFRandom(voidptr rng, double min, double max);
 	private native static int BuiltinRandom2(voidptr rng, int mask);
@@ -436,15 +440,16 @@ class Object native
 	native static String G_SkillName();
 	native static int G_SkillPropertyInt(int p);
 	native static double G_SkillPropertyFloat(int p);
-	deprecated("3.8") static vector3, int G_PickDeathmatchStart()
+	deprecated("3.8", "Use Level.PickDeathMatchStart() instead") static vector3, int G_PickDeathmatchStart()
 	{
 		return level.PickDeathmatchStart();
 	}
-	deprecated("3.8") static vector3, int G_PickPlayerStart(int pnum, int flags = 0)
+	deprecated("3.8", "Use Level.PickPlayerStart() instead") static vector3, int G_PickPlayerStart(int pnum, int flags = 0)
 	{
 		return level.PickPlayerStart(pnum, flags);
 	}
-	native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
+	deprecated("4.3", "Use S_StartSound() instead") native static void S_Sound (Sound sound_id, int channel, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0);
+	native static void S_StartSound (Sound sound_id, int channel, int flags = 0, float volume = 1, float attenuation = ATTN_NORM, float pitch = 0.0, float startTime = 0.0);
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
 	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
@@ -505,7 +510,6 @@ class Thinker : Object native play
 		MAX_STATNUM = 127
 	}
 
-	const TICRATE = 35;
 
 	native LevelLocals Level;
 	
@@ -529,7 +533,7 @@ class ThinkerIterator : Object native
 
 class ActorIterator : Object native
 {
-	deprecated("3.8") static ActorIterator Create(int tid, class<Actor> type = "Actor")
+	deprecated("3.8", "Use Level.CreateActorIterator() instead") static ActorIterator Create(int tid, class<Actor> type = "Actor")
 	{
 		return level.CreateActorIterator(tid, type);
 	}
@@ -715,7 +719,7 @@ struct LevelLocals native
 	native readonly bool polygrind;
 	native readonly bool nomonsters;
 	native readonly bool allowrespawn;
-	deprecated("3.8") native bool frozen;
+	deprecated("3.8", "Use Level.isFrozen() instead") native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
 	native readonly bool keepfullinventory;
@@ -724,6 +728,7 @@ struct LevelLocals native
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
 	native readonly float pixelstretch;
+	native readonly float MusicVolume;
 	native name deathsequence;
 	native readonly int compatflags;
 	native readonly int compatflags2;
@@ -738,7 +743,7 @@ struct LevelLocals native
 	native static void MakeScreenShot();
 	native static void MakeAutoSave();
 	native void WorldDone();
-    deprecated("3.8") static void RemoveAllBots(bool fromlist) { /* intentionally left as no-op. */ }
+	deprecated("3.8", "This function does nothing") static void RemoveAllBots(bool fromlist) { /* intentionally left as no-op. */ }
 	native ui Vector2 GetAutomapPosition();
 	native void SetInterMusic(String nextmap);
 	native String FormatMapName(int mapnamecolor);
@@ -759,7 +764,7 @@ struct LevelLocals native
 	native clearscope Sector PointInSector(Vector2 pt) const;
 
 	native clearscope bool IsPointInLevel(vector3 p) const;
-	deprecated("3.8") clearscope static bool IsPointInMap(vector3 p)
+	deprecated("3.8", "Use Level.IsPointInLevel() instead") clearscope static bool IsPointInMap(vector3 p)
 	{
 		return level.IsPointInLevel(p);
 	}
@@ -923,15 +928,15 @@ struct StringStruct native
 	native String Mid(int pos = 0, int len = 2147483647) const;
 	native void Truncate(int newlen);
 	native void Remove(int index, int remlen);
-	deprecated("4.1") native String CharAt(int pos) const;
-	deprecated("4.1") native int CharCodeAt(int pos) const;
+	deprecated("4.1", "use Left() or Mid() instead") native String CharAt(int pos) const;
+	deprecated("4.1", "use ByteAt() instead") native int CharCodeAt(int pos) const;
 	native int ByteAt(int pos) const;
 	native String Filter();
 	native int IndexOf(String substr, int startIndex = 0) const;
-	deprecated("3.5.1") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
+	deprecated("3.5.1", "use RightIndexOf() instead") native int LastIndexOf(String substr, int endIndex = 2147483647) const;
 	native int RightIndexOf(String substr, int endIndex = 2147483647) const;
-	deprecated("4.1") native void ToUpper();
-	deprecated("4.1") native void ToLower();
+	deprecated("4.1", "use MakeUpper() instead") native void ToUpper();
+	deprecated("4.1", "use MakeLower() instead") native void ToLower();
 	native String MakeUpper() const;
 	native String MakeLower() const;
 	native static int CharUpper(int ch);
@@ -1003,7 +1008,7 @@ class Floor : MovingFloor native
 		genFloorChg
 	};
 
-	deprecated("3.8") static bool CreateFloor(sector sec, int floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false)
+	deprecated("3.8", "Use Level.CreateFloor() instead") static bool CreateFloor(sector sec, int floortype, line ln, double speed, double height = 0, int crush = -1, int change = 0, bool crushmode = false, bool hereticlower = false)
 	{
 		return level.CreateFloor(sec, floortype, ln, speed, height, crush, change, crushmode, hereticlower);
 	}
@@ -1049,7 +1054,7 @@ class Ceiling : MovingCeiling native
 		crushSlowdown = 2
 	}
 	
-	deprecated("3.8") static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom)
+	deprecated("3.8", "Use Level.CreateCeiling() instead") static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom)
 	{
 		return level.CreateCeiling(sec, type, ln, speed, speed2, height, crush, silent, change, crushmode);
 	}

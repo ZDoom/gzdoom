@@ -1,15 +1,21 @@
 
 #include <assert.h>
 #include "hardware.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include <Windows.h>
 
 EXTERN_CVAR(Bool, vid_vsync)
+
+bool ViewportLinearScale();
 
 extern HWND Window;
 
 #include <d3d9.h>
 #pragma comment(lib, "d3d9.lib")
+
+#ifndef D3DPRESENT_FORCEIMMEDIATE
+#define D3DPRESENT_FORCEIMMEDIATE	0x00000100L // MinGW
+#endif
 
 namespace
 {
@@ -168,7 +174,10 @@ void I_PolyPresentUnlock(int x, int y, int width, int height)
 		dstrect.top = y;
 		dstrect.right = x + width;
 		dstrect.bottom = y + height;
-		device->StretchRect(surface, &srcrect, backbuffer, &dstrect, D3DTEXF_LINEAR);
+		if (ViewportLinearScale())
+			device->StretchRect(surface, &srcrect, backbuffer, &dstrect, D3DTEXF_LINEAR);
+		else
+			device->StretchRect(surface, &srcrect, backbuffer, &dstrect, D3DTEXF_POINT);
 
 		result = device->EndScene();
 		if (SUCCEEDED(result))

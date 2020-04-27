@@ -41,11 +41,12 @@
 #include "p_terrain.h"
 #include "gi.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "sc_man.h"
 #include "p_local.h"
 #include "actor.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -249,7 +250,7 @@ void P_InitTerrainTypes ()
 	MakeDefaultTerrain ();
 
 	lastlump = 0;
-	while (-1 != (lump = Wads.FindLump ("TERRAIN", &lastlump)) )
+	while (-1 != (lump = fileSystem.FindLump ("TERRAIN", &lastlump)) )
 	{
 		FScanner sc(lump);
 		ParseOuter (sc);
@@ -270,6 +271,7 @@ static void MakeDefaultTerrain ()
 
 	def.Name = "Solid";
 	def.Splash = -1;
+	def.DamageTimeMask = 31;
 	Terrains.Push (def);
 }
 
@@ -432,6 +434,7 @@ void ParseTerrain (FScanner &sc)
 		memset (&def, 0, sizeof(def));
 		def.Splash = -1;
 		def.Name = name;
+		def.DamageTimeMask = 31;
 		terrainnum = (int)Terrains.Push (def);
 	}
 
@@ -443,6 +446,7 @@ void ParseTerrain (FScanner &sc)
 		memset (&Terrains[terrainnum], 0, sizeof(FTerrainDef));
 		Terrains[terrainnum].Splash = -1;
 		Terrains[terrainnum].Name = name;
+		Terrains[terrainnum].DamageTimeMask = 31;
 	}
 	else
 	{

@@ -28,166 +28,17 @@
 #include "tarray.h"
 #include "name.h"
 #include "zstring.h"
+#include "cmdlib.h"
 
 class PClassActor;
 typedef TMap<int, PClassActor *> FClassMap;
 
-
-#if defined(_MSC_VER)
-#define NOVTABLE __declspec(novtable)
-#else
-#define NOVTABLE
-#endif
-
-#if defined(__GNUC__)
-// With versions of GCC newer than 4.2, it appears it was determined that the
-// cost of an unaligned pointer on PPC was high enough to add padding to the
-// end of packed structs.  For whatever reason __packed__ and pragma pack are
-// handled differently in this regard. Note that this only needs to be applied
-// to types which are used in arrays or sizeof is needed. This also prevents
-// code from taking references to the struct members.
-#define FORCE_PACKED __attribute__((__packed__))
-#else
-#define FORCE_PACKED
-#endif
-
-#include "basictypes.h"
-
-extern bool batchrun;
+#include "basics.h"
+#include "printf.h"
 
 // Bounding box coordinate storage.
-enum
-{
-	BOXTOP,
-	BOXBOTTOM,
-	BOXLEFT,
-	BOXRIGHT
-};		// bbox coordinates
-
-
-// [RH] This gets used all over; define it here:
-int Printf (int printlevel, const char *, ...) GCCPRINTF(2,3);
-int Printf (const char *, ...) GCCPRINTF(1,2);
-
-// [RH] Same here:
-int DPrintf (int level, const char *, ...) GCCPRINTF(2,3);
-
-extern "C" int mysnprintf(char *buffer, size_t count, const char *format, ...) GCCPRINTF(3,4);
-extern "C" int myvsnprintf(char *buffer, size_t count, const char *format, va_list argptr) GCCFORMAT(3);
-
-
-// game print flags
-enum
-{
-	PRINT_LOW,		// pickup messages
-	PRINT_MEDIUM,	// death messages
-	PRINT_HIGH,		// critical messages
-	PRINT_CHAT,		// chat messages
-	PRINT_TEAMCHAT,	// chat messages from a teammate
-	PRINT_LOG,		// only to logfile
-	PRINT_BOLD = 200,				// What Printf_Bold used
-	PRINT_TYPES = 1023,		// Bitmask.
-	PRINT_NONOTIFY = 1024,	// Flag - do not add to notify buffer
-	PRINT_NOLOG = 2048,		// Flag - do not print to log file
-};
-
-enum
-{
-	DMSG_OFF,		// no developer messages.
-	DMSG_ERROR,		// general notification messages
-	DMSG_WARNING,	// warnings
-	DMSG_NOTIFY,	// general notification messages
-	DMSG_SPAMMY,	// for those who want to see everything, regardless of its usefulness.
-};
-
 #include "palentry.h"
-
-enum class ETextureType : uint8_t
-{
-	Any,
-	Wall,
-	Flat,
-	Sprite,
-	WallPatch,
-	Build,		// no longer used but needs to remain for ZScript
-	SkinSprite,
-	Decal,
-	MiscPatch,
-	FontChar,
-	Override,	// For patches between TX_START/TX_END
-	Autopage,	// Automap background - used to enable the use of FAutomapTexture
-	SkinGraphic,
-	Null,
-	FirstDefined,
-	SWCanvas,
-};
-
-class FTextureID
-{
-	friend class FTextureManager;
-	friend void R_InitSpriteDefs();
-
-public:
-	FTextureID() = default;
-	bool isNull() const { return texnum == 0; }
-	bool isValid() const { return texnum > 0; }
-	bool Exists() const { return texnum >= 0; }
-	void SetInvalid() { texnum = -1; }
-	void SetNull() { texnum = 0; }
-	bool operator ==(const FTextureID &other) const { return texnum == other.texnum; }
-	bool operator !=(const FTextureID &other) const { return texnum != other.texnum; }
-	FTextureID operator +(int offset) throw();
-	int GetIndex() const { return texnum; }	// Use this only if you absolutely need the index!
-
-											// The switch list needs these to sort the switches by texture index
-	int operator -(FTextureID other) const { return texnum - other.texnum; }
-	bool operator < (FTextureID other) const { return texnum < other.texnum; }
-	bool operator > (FTextureID other) const { return texnum > other.texnum; }
-
-protected:
-	FTextureID(int num) { texnum = num; }
-private:
-	int texnum;
-};
-
-// This is for the script interface which needs to do casts from int to texture.
-class FSetTextureID : public FTextureID
-{
-public:
-	FSetTextureID(int v) : FTextureID(v) {}
-};
-
-
-struct VersionInfo
-{
-	uint16_t major;
-	uint16_t minor;
-	uint32_t revision;
-
-	bool operator <=(const VersionInfo &o) const
-	{
-		return o.major > this->major || (o.major == this->major && o.minor > this->minor) || (o.major == this->major && o.minor == this->minor && o.revision >= this->revision);
-	}
-	bool operator >=(const VersionInfo &o) const
-	{
-		return o.major < this->major || (o.major == this->major && o.minor < this->minor) || (o.major == this->major && o.minor == this->minor && o.revision <= this->revision);
-	}
-	bool operator > (const VersionInfo &o) const
-	{
-		return o.major < this->major || (o.major == this->major && o.minor < this->minor) || (o.major == this->major && o.minor == this->minor && o.revision < this->revision);
-	}
-	bool operator < (const VersionInfo &o) const
-	{
-		return o.major > this->major || (o.major == this->major && o.minor > this->minor) || (o.major == this->major && o.minor == this->minor && o.revision > this->revision);
-	}
-	void operator=(const char *string);
-};
-
-// Cannot be a constructor because Lemon would puke on it.
-inline VersionInfo MakeVersion(unsigned int ma, unsigned int mi, unsigned int re = 0)
-{
-	return{ (uint16_t)ma, (uint16_t)mi, (uint32_t)re };
-}
+#include "textureid.h"
 
 enum class ELightMode : int8_t
 {
@@ -200,54 +51,5 @@ enum class ELightMode : int8_t
 	ZDoomSoftware = 8,
 	DoomSoftware = 16
 };
-
-// Screenshot buffer image data types
-enum ESSType
-{
-	SS_PAL,
-	SS_RGB,
-	SS_BGRA
-};
-
-// always use our own definition for consistency.
-#ifdef M_PI
-#undef M_PI
-#endif
-
-const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
-
-inline float DEG2RAD(float deg)
-{
-	return deg * float(M_PI / 180.0);
-}
-
-inline double DEG2RAD(double deg)
-{
-	return deg * (M_PI / 180.0);
-}
-
-inline float RAD2DEG(float deg)
-{
-	return deg * float(180. / M_PI);
-}
-
-
-// Auto-registration sections for GCC.
-// Apparently, you cannot do string concatenation inside section attributes.
-#ifdef __MACH__
-#define SECTION_AREG "__DATA,areg"
-#define SECTION_CREG "__DATA,creg"
-#define SECTION_FREG "__DATA,freg"
-#define SECTION_GREG "__DATA,greg"
-#define SECTION_MREG "__DATA,mreg"
-#define SECTION_YREG "__DATA,yreg"
-#else
-#define SECTION_AREG "areg"
-#define SECTION_CREG "creg"
-#define SECTION_FREG "freg"
-#define SECTION_GREG "greg"
-#define SECTION_MREG "mreg"
-#define SECTION_YREG "yreg"
-#endif
 
 #endif

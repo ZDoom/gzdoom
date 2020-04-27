@@ -392,7 +392,7 @@ bool FNodeBuilder::CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, ui
 			{
 				if (Segs[seg2].linedef == -1)
 				{ // Do not put minisegs into a new subsector.
-					swapvalues (seg1, seg2);
+					std::swap (seg1, seg2);
 				}
 				D(Printf(PRINT_LOG, "Need to synthesize a splitter for set %d on seg %d (ov)\n", set, seg2));
 				splitseg = UINT_MAX;

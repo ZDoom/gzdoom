@@ -51,6 +51,8 @@
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/r_memory.h"
 
+EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+
 namespace swrenderer
 {
 	RenderWallPart::RenderWallPart(RenderThread* thread)
@@ -129,11 +131,30 @@ namespace swrenderer
 		// Textures that aren't masked can use the faster opaque drawer
 		if (!pic->GetTexture()->isMasked() && mask && alpha >= OPAQUE && !additive)
 		{
-			drawerargs.SetStyle(true, false, OPAQUE, mLight.GetBaseColormap());
+			drawerargs.SetStyle(true, false, OPAQUE, light_list);
 		}
 		else
 		{
-			drawerargs.SetStyle(mask, additive, alpha, mLight.GetBaseColormap());
+			drawerargs.SetStyle(mask, additive, alpha, light_list);
+		}
+
+		if (cameraLight->FixedLightLevel() >= 0)
+		{
+			drawerargs.SetBaseColormap((r_fullbrightignoresectorcolor) ? &FullNormalLight : mLight.GetBaseColormap());
+			drawerargs.SetLight(0.0f, cameraLight->FixedLightLevelShade());
+			drawerargs.fixedlight = true;
+		}
+		else if (cameraLight->FixedColormap())
+		{
+			drawerargs.SetBaseColormap(cameraLight->FixedColormap());
+			drawerargs.SetLight(0.0f, 0);
+			drawerargs.fixedlight = true;
+		}
+		else
+		{
+			drawerargs.SetBaseColormap(mLight.GetBaseColormap());
+			drawerargs.SetLight(0.0f, mLight.GetLightLevel(), mLight.GetFoggy(), viewport);
+			drawerargs.fixedlight = false;
 		}
 
 		int count = x2 - x1;
@@ -150,7 +171,7 @@ namespace swrenderer
 
 		drawerargs.lightpos = mLight.GetLightPos(x1);
 		drawerargs.lightstep = mLight.GetLightStep();
-		drawerargs.mShade = LightVisibility::LightLevelToShade(mLight.GetLightLevel(), mLight.GetFoggy(), viewport);
+
 		drawerargs.lightlist = light_list;
 
 		drawerargs.texwidth = pic->GetPhysicalWidth();
@@ -182,7 +203,6 @@ namespace swrenderer
 		drawerargs.TanCos = Thread->Viewport->viewpoint.TanCos;
 		drawerargs.TanSin = Thread->Viewport->viewpoint.TanSin;
 		drawerargs.PortalMirrorFlags = Thread->Portal->MirrorFlags;
-		drawerargs.fixedlight = (cameraLight->FixedColormap() || cameraLight->FixedLightLevel() >= 0);
 
 		drawerargs.DrawWall(Thread);
 	}

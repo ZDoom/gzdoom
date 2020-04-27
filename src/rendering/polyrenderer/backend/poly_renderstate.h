@@ -8,7 +8,7 @@
 
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_renderstate.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
 struct HWViewpointUniforms;
 
@@ -44,6 +44,8 @@ public:
 	void Bind(PolyDataBuffer *buffer, uint32_t offset, uint32_t length);
 	PolyVertexInputAssembly *GetVertexFormat(int numBindingPoints, int numAttributes, size_t stride, const FVertexBufferAttribute *attrs);
 	void EndRenderPass();
+
+	void SetColormapShader(bool enable);
 
 private:
 	void Apply();
@@ -92,6 +94,7 @@ private:
 	int mStencilOp = SOP_Keep;
 	int mCulling = Cull_None;
 	bool mColorMask[4] = { true, true, true, true };
+	bool mColormapShader = false;
 
 	PolyCommandBuffer* mDrawCommands = nullptr;
 };

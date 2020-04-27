@@ -103,7 +103,7 @@ extend class Actor
 
 	void A_VileStart()
 	{
-		A_PlaySound ("vile/start", CHAN_VOICE);
+		A_StartSound ("vile/start", CHAN_VOICE);
 	}
 	
 	//
@@ -134,7 +134,7 @@ extend class Actor
 		{
 			A_FaceTarget();
 			if (!CheckSight(targ, 0)) return;
-			A_PlaySound(snd, CHAN_WEAPON);
+			A_StartSound(snd, CHAN_WEAPON);
 			int newdam = targ.DamageMobj (self, self, initialdmg, (flags & VAF_DMGTYPEAPPLYTODIRECT)? damagetype : 'none');
 
 			targ.TraceBleed (newdam > 0 ? newdam : initialdmg, self);
@@ -155,7 +155,7 @@ extend class Actor
 	
 	void A_StartFire()
 	{
-		A_PlaySound ("vile/firestrt", CHAN_BODY);
+		A_StartSound ("vile/firestrt", CHAN_BODY);
 		A_Fire();
 	}
 	
@@ -176,7 +176,7 @@ extend class Actor
 	
 	void A_FireCrackle()
 	{
-		A_PlaySound ("vile/firecrkl", CHAN_BODY);
+		A_StartSound ("vile/firecrkl", CHAN_BODY);
 		A_Fire();
 	}
 }

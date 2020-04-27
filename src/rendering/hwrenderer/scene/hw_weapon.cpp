@@ -34,10 +34,11 @@
 #include "r_data/models/models.h"
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
+#include "texturemanager.h"
 
 #include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
@@ -95,7 +96,7 @@ void HWDrawInfo::DrawPSprite(HUDSprite *huds, FRenderState &state)
 	{
 		float thresh = (huds->tex->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
 		state.AlphaFunc(Alpha_GEqual, thresh);
-		state.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader);
+		state.SetMaterial(huds->tex, CLAMP_XY_NOMIP, (huds->weapon->Flags & PSPF_PLAYERTRANSLATED) ? huds->owner->Translation : 0, huds->OverrideShader);
 		state.Draw(DT_TriangleStrip, huds->mx, 4);
 	}
 

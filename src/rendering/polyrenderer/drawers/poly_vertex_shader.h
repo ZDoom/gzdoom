@@ -1,7 +1,6 @@
 
 #pragma once
 
-#include "polyrenderer/math/gpu_types.h"
 #include "hwrenderer/scene/hw_viewpointuniforms.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 
@@ -12,27 +11,27 @@
 class ShadedTriVertex
 {
 public:
-	Vec4f gl_Position;
+	FVector4 gl_Position;
 	float gl_ClipDistance[5];
-	Vec4f vTexCoord;
-	Vec4f vColor;
-	Vec4f pixelpos;
-	//Vec3f glowdist;
-	Vec3f gradientdist;
-	//Vec4f vEyeNormal;
-	Vec4f vWorldNormal;
+	FVector4 vTexCoord;
+	FVector4 vColor;
+	FVector4 pixelpos;
+	//FVector3 glowdist;
+	FVector3 gradientdist;
+	//FVector4 vEyeNormal;
+	FVector4 vWorldNormal;
 };
 
 class PolyMainVertexShader : public ShadedTriVertex
 {
 public:
 	// Input
-	Vec4f aPosition;
-	Vec2f aTexCoord;
-	Vec4f aColor;
-	Vec4f aVertex2;
-	Vec4f aNormal;
-	Vec4f aNormal2;
+	FVector4 aPosition;
+	FVector2 aTexCoord;
+	FVector4 aColor;
+	FVector4 aVertex2;
+	FVector4 aNormal;
+	FVector4 aNormal2;
 
 	// Defines
 	bool SIMPLE = false;
@@ -43,21 +42,21 @@ public:
 	VSMatrix NormalModelMatrix;
 	VSMatrix TextureMatrix;
 	StreamData Data;
-	Vec2f uClipSplit;
+	FVector2 uClipSplit;
 	const HWViewpointUniforms *Viewpoint = nullptr;
 
 	void main()
 	{
-		Vec2f parmTexCoord = aTexCoord;
-		Vec4f parmPosition = aPosition;
+		FVector2 parmTexCoord = aTexCoord;
+		FVector4 parmPosition = aPosition;
 
-		Vec4f worldcoord;
+		FVector4 worldcoord;
 		if (SIMPLE)
 			worldcoord = mul(ModelMatrix, mix(parmPosition, aVertex2, Data.uInterpolationFactor));
 		else
 			worldcoord = mul(ModelMatrix, parmPosition);
 
-		Vec4f eyeCoordPos = mul(Viewpoint->mViewMatrix, worldcoord);
+		FVector4 eyeCoordPos = mul(Viewpoint->mViewMatrix, worldcoord);
 
 		vColor = aColor;
 
@@ -92,19 +91,19 @@ public:
 				gl_ClipDistance[4] = worldcoord.Y - ((Data.uSplitBottomPlane.W + Data.uSplitBottomPlane.X * worldcoord.X + Data.uSplitBottomPlane.Y * worldcoord.Z) * Data.uSplitBottomPlane.Z);
 			}
 
-			vWorldNormal = mul(NormalModelMatrix, Vec4f(normalize(mix3(aNormal, aNormal2, Data.uInterpolationFactor)), 1.0f));
+			vWorldNormal = mul(NormalModelMatrix, FVector4(normalize(mix3(aNormal, aNormal2, Data.uInterpolationFactor)), 1.0f));
 			//vEyeNormal = mul(Viewpoint->mNormalViewMatrix, vWorldNormal);
 		}
 
 		if (!SPHEREMAP)
 		{
-			vTexCoord = mul(TextureMatrix, Vec4f(parmTexCoord, 0.0f, 1.0f));
+			vTexCoord = mul(TextureMatrix, FVector4(parmTexCoord.X, parmTexCoord.Y, 0.0f, 1.0f));
 		}
 		else
 		{
-			Vec3f u = normalize3(eyeCoordPos);
-			Vec3f n = normalize3(mul(Viewpoint->mNormalViewMatrix, Vec4f(parmTexCoord.X, 0.0f, parmTexCoord.Y, 0.0f)));
-			Vec3f r = reflect(u, n);
+			FVector3 u = normalize3(eyeCoordPos);
+			FVector3 n = normalize3(mul(Viewpoint->mNormalViewMatrix, FVector4(parmTexCoord.X, 0.0f, parmTexCoord.Y, 0.0f)));
+			FVector3 r = reflect(u, n);
 			float m = 2.0f * sqrt(r.X*r.X + r.Y*r.Y + (r.Z + 1.0f)*(r.Z + 1.0f));
 			vTexCoord.X = r.X / m + 0.5f;
 			vTexCoord.Y = r.Y / m + 0.5f;
@@ -137,41 +136,41 @@ public:
 	}
 
 private:
-	static Vec3f normalize(const Vec3f &a)
+	static FVector3 normalize(const FVector3 &a)
 	{
 		float rcplen = 1.0f / sqrt(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
-		return Vec3f(a.X * rcplen, a.Y * rcplen, a.Z * rcplen);
+		return FVector3(a.X * rcplen, a.Y * rcplen, a.Z * rcplen);
 	}
 
-	static Vec3f normalize3(const Vec4f &a)
+	static FVector3 normalize3(const FVector4 &a)
 	{
 		float rcplen = 1.0f / sqrt(a.X * a.X + a.Y * a.Y + a.Z * a.Z);
-		return Vec3f(a.X * rcplen, a.Y * rcplen, a.Z * rcplen);
+		return FVector3(a.X * rcplen, a.Y * rcplen, a.Z * rcplen);
 	}
 
-	static Vec4f mix(const Vec4f &a, const Vec4f &b, float t)
+	static FVector4 mix(const FVector4 &a, const FVector4 &b, float t)
 	{
 		float invt = 1.0f - t;
-		return Vec4f(a.X * invt + b.X * t, a.Y * invt + b.Y * t, a.Z * invt + b.Z * t, a.W * invt + b.W * t);
+		return FVector4(a.X * invt + b.X * t, a.Y * invt + b.Y * t, a.Z * invt + b.Z * t, a.W * invt + b.W * t);
 	}
 
-	static Vec3f mix3(const Vec4f &a, const Vec4f &b, float t)
+	static FVector3 mix3(const FVector4 &a, const FVector4 &b, float t)
 	{
 		float invt = 1.0f - t;
-		return Vec3f(a.X * invt + b.X * t, a.Y * invt + b.Y * t, a.Z * invt + b.Z * t);
+		return FVector3(a.X * invt + b.X * t, a.Y * invt + b.Y * t, a.Z * invt + b.Z * t);
 	}
 
-	static Vec3f reflect(const Vec3f &u, const Vec3f &n)
+	static FVector3 reflect(const FVector3 &u, const FVector3 &n)
 	{
 		float d = 2.0f * (n.X * u.X + n.Y * u.Y + n.Z * u.Z);
-		return Vec3f(u.X - d * n.X, u.Y - d * n.Y, u.Z - d * n.Z);
+		return FVector3(u.X - d * n.X, u.Y - d * n.Y, u.Z - d * n.Z);
 	}
 
-	static Vec4f mul(const VSMatrix &mat, const Vec4f &v)
+	static FVector4 mul(const VSMatrix &mat, const FVector4 &v)
 	{
 		const float *m = mat.get();
 
-		Vec4f result;
+		FVector4 result;
 #ifdef NO_SSE
 		result.X = m[0 * 4 + 0] * v.X + m[1 * 4 + 0] * v.Y + m[2 * 4 + 0] * v.Z + m[3 * 4 + 0] * v.W;
 		result.Y = m[0 * 4 + 1] * v.X + m[1 * 4 + 1] * v.Y + m[2 * 4 + 1] * v.Z + m[3 * 4 + 1] * v.W;

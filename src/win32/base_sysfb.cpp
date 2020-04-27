@@ -39,17 +39,14 @@
 
 #include "gl_sysfb.h"
 #include "hardware.h"
-#include "x86.h"
 #include "templates.h"
 #include "version.h"
 #include "c_console.h"
 #include "v_video.h"
 #include "i_input.h"
 #include "i_system.h"
-#include "doomstat.h"
 #include "v_text.h"
 #include "m_argv.h"
-#include "doomerrors.h"
 #include "base_sysfb.h"
 #include "win32basevideo.h"
 #include "c_dispatch.h"
@@ -61,6 +58,7 @@ extern "C" {
     __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;	
 }
+void GetRefreshRate(HWND hWnd);
 
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
@@ -251,7 +249,7 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 			KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
 		}
 
-		if (!fullscreen)
+		if (!vid_fullscreen)
 		{
 			ShowWindow(Window, SW_SHOWNORMAL);
 			SetWindowPos(Window, nullptr, winx, winy, winw, winh, SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -266,7 +264,7 @@ void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
 			win_w = winw;
 			win_h = winh;
 			win_maximized = false;
-			fullscreen = false;
+			vid_fullscreen = false;
 		}
 	}
 }
@@ -335,12 +333,13 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen, bool initialcall)
 		// This doesn't restore the window size properly so we must force a set size the next tic.
 		if (m_Fullscreen)
 		{
-			::fullscreen = false;
+			::vid_fullscreen = false;
 		}
 
 	}
 	m_Fullscreen = fullscreen;
 	SetSize(GetClientWidth(), GetClientHeight());
+	GetRefreshRate(Window);
 }
 
 //==========================================================================

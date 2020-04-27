@@ -496,7 +496,7 @@ void FWeaponSlots::SetFromPlayer(PClassActor *type)
 	{
 		if (Slot[i] != NAME_None)
 		{
-			Slots[i].AddWeaponList(Slot[i], false);
+			Slots[i].AddWeaponList(Slot[i].GetChars(), false);
 		}
 	}
 }

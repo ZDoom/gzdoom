@@ -40,7 +40,7 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "v_font.h"
 #include "serializer.h"
@@ -52,6 +52,7 @@
 #include "vm.h"
 #include "a_lights.h"
 #include "s_music.h"
+#include "texturemanager.h"
 
 static FRandom pr_script("FScript");
 
@@ -355,12 +356,12 @@ static FSoundID T_FindSound(const char * name)
 	if (gameinfo.gametype & GAME_DoomStrifeChex)
 	{
 		mysnprintf(buffer, countof(buffer), "DS%.35s", name);
-		if (Wads.CheckNumForName(buffer, ns_sounds)<0) strcpy(buffer, name);
+		if (fileSystem.CheckNumForName(buffer, ns_sounds)<0) strcpy(buffer, name);
 	}
 	else
 	{
 		strcpy(buffer, name);
-		if (Wads.CheckNumForName(buffer, ns_sounds)<0) mysnprintf(buffer, countof(buffer), "DS%.35s", name);
+		if (fileSystem.CheckNumForName(buffer, ns_sounds)<0) mysnprintf(buffer, countof(buffer), "DS%.35s", name);
 	}
 
 	int id = S_AddSound(name, buffer);
@@ -585,7 +586,7 @@ void FParser::SF_Input(void)
 
 void FParser::SF_Beep(void)
 {
-	S_Sound(CHAN_AUTO, "misc/chat", 1.0f, ATTN_IDLE);
+	S_Sound(CHAN_AUTO, 0, "misc/chat", 1.0f, ATTN_IDLE);
 }
 
 //==========================================================================
@@ -1471,7 +1472,7 @@ void FParser::SF_StartSound(void)
 		
 		if (mo)
 		{
-			S_Sound(mo, CHAN_BODY, T_FindSound(stringvalue(t_argv[1])), 1, ATTN_NORM);
+			S_Sound(mo, CHAN_BODY, 0, T_FindSound(stringvalue(t_argv[1])), 1, ATTN_NORM);
 		}
 	}
 }
@@ -1497,7 +1498,7 @@ void FParser::SF_StartSectorSound(void)
 		while ((i = itr.Next()) >= 0)
 		{
 			sector = &Level->sectors[i];
-			S_Sound(sector, CHAN_BODY, T_FindSound(stringvalue(t_argv[1])), 1.0f, ATTN_NORM);
+			S_Sound(sector, CHAN_BODY, 0, T_FindSound(stringvalue(t_argv[1])), 1.0f, ATTN_NORM);
 		}
 	}
 }
@@ -2086,14 +2087,14 @@ bool FS_ChangeMusic(const char * string)
 {
 	char buffer[40];
 
-	if (Wads.CheckNumForName(string, ns_music)<0 || !S_ChangeMusic(string,true))
+	if (fileSystem.CheckNumForName(string, ns_music)<0 || !S_ChangeMusic(string,true))
 	{
 		// Retry with O_ prepended to the music name, then with D_
 		mysnprintf(buffer, countof(buffer), "O_%s", string);
-		if (Wads.CheckNumForName(buffer, ns_music)<0 || !S_ChangeMusic(buffer,true))
+		if (fileSystem.CheckNumForName(buffer, ns_music)<0 || !S_ChangeMusic(buffer,true))
 		{
 			mysnprintf(buffer, countof(buffer), "D_%s", string);
-			if (Wads.CheckNumForName(buffer, ns_music)<0) 
+			if (fileSystem.CheckNumForName(buffer, ns_music)<0) 
 			{
 				S_ChangeMusic(NULL, 0);
 				return false;
@@ -2421,7 +2422,7 @@ void FParser::SF_PlayerKeys(void)
 		if(t_argc == 2)
 		{
 			t_return.type = svt_int;
-			t_return.value.i = CheckInventory(Level->Players[playernum]->mo, keyname);
+			t_return.value.i = CheckInventory(Level->Players[playernum]->mo, keyname.GetChars());
 			return;
 		}
 		else
@@ -2522,7 +2523,7 @@ void FParser::SF_PlayerWeapon()
 				{
 					wp->Destroy();
 					// If the weapon is active pick a replacement. Legacy didn't do this!
-					if (Level->Players[playernum]->PendingWeapon==wp) Level->Players[playernum]->PendingWeapon=WP_NOCHANGE;
+					if (Level->Players[playernum]->PendingWeapon==wp) Level->Players[playernum]->PendingWeapon=(AActor*)WP_NOCHANGE;
 					if (Level->Players[playernum]->ReadyWeapon==wp)
 					{
 						Level->Players[playernum]->ReadyWeapon=nullptr;
@@ -2812,7 +2813,7 @@ void FParser::SF_AmbientSound(void)
 {
 	if (CheckArgs(1))
 	{
-		S_Sound(CHAN_AUTO, T_FindSound(stringvalue(t_argv[0])), 1, ATTN_NORM);
+		S_Sound(CHAN_AUTO, 0, T_FindSound(stringvalue(t_argv[0])), 1, ATTN_NORM);
 	}
 }
 
@@ -2911,7 +2912,7 @@ void FParser::SF_SpawnExplosion()
 		{
 			spawn->ClearCounters();
 			t_return.value.i = spawn->SetState(spawn->FindState(NAME_Death));
-			if(spawn->DeathSound) S_Sound (spawn, CHAN_BODY, spawn->DeathSound, 1, ATTN_NORM);
+			if(spawn->DeathSound) S_Sound (spawn, CHAN_BODY, 0, spawn->DeathSound, 1, ATTN_NORM);
 		}
 	}
 }
@@ -3738,7 +3739,7 @@ void FParser::SF_SpawnShot2(void)
 		AActor *mo = Spawn(Level, pclass, source->PosPlusZ(z), ALLOW_REPLACE);
 		if (mo)
 		{
-			S_Sound(mo, CHAN_VOICE, mo->SeeSound, 1, ATTN_NORM);
+			S_Sound(mo, CHAN_VOICE, 0, mo->SeeSound, 1, ATTN_NORM);
 			mo->target = source;
 			mo->Angles.Yaw = source->Angles.Yaw;
 			mo->Thrust();

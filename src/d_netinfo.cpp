@@ -51,6 +51,7 @@
 #include "serializer.h"
 #include "vm.h"
 #include "gstrings.h"
+#include "g_game.h"
 
 static FRandom pr_pickteam ("PickRandomTeam");
 
@@ -625,35 +626,55 @@ static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, b
 
 EXTERN_CVAR (Float, sv_gravity)
 
-void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType type)
+bool D_SendServerInfoChange (FBaseCVar *cvar, UCVarValue value, ECVarType type)
 {
-	size_t namelen;
-
-	namelen = strlen (cvar->GetName ());
-
-	CmdWriteByte (DEM_SINFCHANGED);
-	CmdWriteByte ((uint8_t)(namelen | (type << 6)));
-	CmdWriteBytes ((uint8_t *)cvar->GetName (), (int)namelen);
-	switch (type)
+	if (gamestate != GS_STARTUP && !demoplayback)
 	{
-	case CVAR_Bool:		CmdWriteByte (value.Bool);		break;
-	case CVAR_Int:		CmdWriteLong (value.Int);		break;
-	case CVAR_Float:	CmdWriteFloat (value.Float);	break;
-	case CVAR_String:	CmdWriteString (value.String);	break;
-	default: break; // Silence GCC
+		if (netgame && !players[consoleplayer].settings_controller)
+		{
+			Printf("Only setting controllers can change %s\n", cvar->GetName());
+			cvar->MarkSafe();
+			return true;
+		}
+		size_t namelen;
+
+		namelen = strlen(cvar->GetName());
+
+		CmdWriteByte(DEM_SINFCHANGED);
+		CmdWriteByte((uint8_t)(namelen | (type << 6)));
+		CmdWriteBytes((uint8_t*)cvar->GetName(), (int)namelen);
+		switch (type)
+		{
+		case CVAR_Bool:		CmdWriteByte(value.Bool);		break;
+		case CVAR_Int:		CmdWriteLong(value.Int);		break;
+		case CVAR_Float:	CmdWriteFloat(value.Float);	break;
+		case CVAR_String:	CmdWriteString(value.String);	break;
+		default: break; // Silence GCC
+		}
+		return true;
 	}
+	return false;
 }
 
-void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
+bool D_SendServerFlagChange (FBaseCVar *cvar, int bitnum, bool set, bool silent)
 {
-	int namelen;
+	if (gamestate != GS_STARTUP && !demoplayback)
+	{
+		if (netgame && !players[consoleplayer].settings_controller)
+		{
+			if (!silent) Printf("Only setting controllers can change %s\n", cvar->GetName());
+			return true;
+		}
 
-	namelen = (int)strlen (cvar->GetName ());
+		int namelen = (int)strlen(cvar->GetName());
 
-	CmdWriteByte (DEM_SINFCHANGEDXOR);
-	CmdWriteByte ((uint8_t)namelen);
-	CmdWriteBytes ((uint8_t *)cvar->GetName (), namelen);
-	CmdWriteByte (uint8_t(bitnum | (set << 5)));
+		CmdWriteByte(DEM_SINFCHANGEDXOR);
+		CmdWriteByte((uint8_t)namelen);
+		CmdWriteBytes((uint8_t*)cvar->GetName(), namelen);
+		CmdWriteByte(uint8_t(bitnum | (set << 5)));
+		return true;
+	}
+	return false;
 }
 
 void D_DoServerInfoChange (uint8_t **stream, bool singlebit)
@@ -823,7 +844,7 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 			}
 			
 			// A few of these need special handling.
-			switch (keyname)
+			switch (keyname.GetIndex())
 			{
 			case NAME_Gender:
 				info->GenderChanged(value);
@@ -907,7 +928,7 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 
 		while (it.NextPair(pair))
 		{
-			name = pair->Key;
+			name = pair->Key.GetChars();
 			name.ToLower();
 			switch (pair->Key.GetIndex())
 			{
@@ -948,7 +969,7 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 			FBaseCVar **cvar = info.CheckKey(name);
 			if (cvar != NULL && *cvar != NULL)
 			{
-				switch (name)
+				switch (name.GetIndex())
 				{
 				case NAME_Team:			info.TeamChanged(atoi(str)); break;
 				case NAME_Skin:			skin = str; break;	// Caller must call SkinChanged() once current calss is known

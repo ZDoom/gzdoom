@@ -207,7 +207,7 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 
 	// Create the dialog window.
 	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-	mysnprintf(caption, countof(caption), GAMESIG " %s: Select an IWAD to use", GetVersionString());
+	mysnprintf(caption, countof(caption), GAMENAME " %s: Select an IWAD to use", GetVersionString());
 	gtk_window_set_title (GTK_WINDOW(window), caption);
 	gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
 	gtk_window_set_gravity (GTK_WINDOW(window), GDK_GRAVITY_CENTER);

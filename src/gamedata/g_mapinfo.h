@@ -37,7 +37,7 @@
 #include "doomtype.h"
 #include "vectors.h"
 #include "sc_man.h"
-#include "resourcefiles/file_zip.h"
+#include "file_zip.h"
 
 struct level_info_t;
 struct cluster_info_t;

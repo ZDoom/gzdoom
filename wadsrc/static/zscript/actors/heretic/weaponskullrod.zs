@@ -124,7 +124,7 @@ class SkullRodPowered : SkullRod
 			{
 				MissileActor.tracer = t.linetarget;
 			}
-			MissileActor.A_PlaySound ("weapons/hornrodpowshoot", CHAN_WEAPON);
+			MissileActor.A_StartSound ("weapons/hornrodpowshoot", CHAN_WEAPON);
 		}
 	}
 
@@ -346,7 +346,7 @@ class HornRodFX2 : Actor
 		mo.Vel.X = MinVel; // Force collision detection
 		mo.Vel.Z = -mo.Speed;
 		mo.CheckMissileSpawn (radius);
-		if (ActiveSound > 0) A_PlaySound(ActiveSound, CHAN_BODY, 1, true);
+		if (ActiveSound > 0) A_StartSound(ActiveSound, CHAN_BODY, CHANF_LOOPING);
 	}
 
 	

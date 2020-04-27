@@ -10,8 +10,8 @@
 #define DIRECT_PALETTE -2
 
 #include "tarray.h"
-#include "gl_load/gl_interface.h"
-#include "hwrenderer/textures/hw_ihwtexture.h"
+#include "gl_interface.h"
+#include "hw_ihwtexture.h"
 
 class FCanvasTexture;
 class AActor;
@@ -64,7 +64,7 @@ public:
 	void AllocateBuffer(int w, int h, int texelsize);
 	uint8_t *MapBuffer();
 
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name);
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name);
 	unsigned int GetTextureHandle(int translation);
 };
 

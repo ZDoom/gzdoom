@@ -31,7 +31,7 @@
  **
  */
 
-#include "gl_load/gl_load.h"
+#include "gl_load.h"
 
 #ifdef HAVE_VULKAN
 #define VK_USE_PLATFORM_MACOS_MVK
@@ -53,7 +53,7 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 #include "gl/system/gl_framebuffer.h"
 #include "vulkan/system/vk_framebuffer.h"
@@ -152,7 +152,7 @@ namespace
 {
 	if (nil == m_title)
 	{
-		m_title = [NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
+		m_title = [NSString stringWithFormat:@"%s %s", GAMENAME, GetVersionString()];
 	}
 
 	[super setTitle:m_title];
@@ -187,8 +187,15 @@ namespace
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-	[NSColor.blackColor setFill];
-	NSRectFill(dirtyRect);
+	if ([NSGraphicsContext currentContext])
+	{
+		[NSColor.blackColor setFill];
+		NSRectFill(dirtyRect);
+	}
+	else if (self.layer != nil)
+	{
+		self.layer.backgroundColor = CGColorGetConstantColor(kCGColorBlack);
+	}
 }
 
 - (void)resetCursorRects
@@ -423,7 +430,7 @@ public:
 			try
 			{
 				m_vulkanDevice = new VulkanDevice();
-				fb = new VulkanFrameBuffer(nullptr, fullscreen, m_vulkanDevice);
+				fb = new VulkanFrameBuffer(nullptr, vid_fullscreen, m_vulkanDevice);
 			}
 			catch (std::exception const&)
 			{
@@ -438,7 +445,7 @@ public:
 		{
 			SetupOpenGLView(ms_window, OpenGLProfile::Legacy);
 
-			fb = new PolyFrameBuffer(nullptr, fullscreen);
+			fb = new PolyFrameBuffer(nullptr, vid_fullscreen);
 		}
 		else
 		{
@@ -447,18 +454,18 @@ public:
 
 		if (fb == nullptr)
 		{
-			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, fullscreen);
+			fb = new OpenGLRenderer::OpenGLFrameBuffer(0, vid_fullscreen);
 		}
 
 		fb->SetWindow(ms_window);
-		fb->SetMode(fullscreen, vid_hidpi);
+		fb->SetMode(vid_fullscreen, vid_hidpi);
 		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
 
 		// This lame hack is a temporary workaround for strange performance issues
 		// with fullscreen window and Core Animation's Metal layer
 		// It is somehow related to initial window level and flags
 		// Toggling fullscreen -> window -> fullscreen mysteriously solves the problem
-		if (ms_isVulkanEnabled && fullscreen)
+		if (ms_isVulkanEnabled && vid_fullscreen)
 		{
 			fb->SetMode(false, vid_hidpi);
 			fb->SetMode(true, vid_hidpi);
@@ -535,10 +542,10 @@ void SystemBaseFrameBuffer::SetWindowSize(int width, int height)
 		return;
 	}
 
-	if (fullscreen)
+	if (vid_fullscreen)
 	{
 		// Enter windowed mode in order to calculate title bar height
-		fullscreen = false;
+		vid_fullscreen = false;
 		SetMode(false, m_hiDPI);
 	}
 
@@ -630,7 +637,7 @@ void SystemBaseFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 	else
     {
 		assert(m_window.screen != nil);
-		assert(m_window.contentView.layer != nil);
+		assert([m_window.contentView layer] != nil);
 		[m_window.contentView layer].contentsScale = hiDPI ? m_window.screen.backingScaleFactor : 1.0;
 	}
 

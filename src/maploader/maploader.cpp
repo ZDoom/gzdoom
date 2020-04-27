@@ -68,9 +68,9 @@
 #include "v_text.h"
 #include "p_setup.h"
 #include "gi.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "types.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_conversation.h"
 #include "v_video.h"
 #include "i_time.h"
@@ -80,6 +80,7 @@
 #include "hwrenderer/data/flatvertices.h"
 #include "xlat/xlat.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 enum
 {
@@ -1158,7 +1159,7 @@ void MapLoader::LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 template<class nodetype, class subsectortype>
 bool MapLoader::LoadNodes (MapData * map)
 {
-	FMemLump	data;
+	FileData	data;
 	int 		j;
 	int 		k;
 	nodetype	*mn;
@@ -2036,52 +2037,6 @@ void MapLoader::LoopSidedefs (bool firstloop)
 //
 //===========================================================================
 
-int MapLoader::DetermineTranslucency (int lumpnum)
-{
-	auto tranmap = Wads.OpenLumpReader (lumpnum);
-	uint8_t index;
-	PalEntry newcolor;
-	PalEntry newcolor2;
-
-	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, FileReader::SeekSet);
-	tranmap.Read (&index, 1);
-
-	newcolor = GPalette.BaseColors[GPalette.Remap[index]];
-
-	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, FileReader::SeekSet);
-	tranmap.Read (&index, 1);
-	newcolor2 = GPalette.BaseColors[GPalette.Remap[index]];
-	if (newcolor2.r == 255)	// if black on white results in white it's either
-							// fully transparent or additive
-	{
-		if (developer >= DMSG_NOTIFY)
-		{
-			char lumpname[9];
-			lumpname[8] = 0;
-			Wads.GetLumpName (lumpname, lumpnum);
-			Printf ("%s appears to be additive translucency %d (%d%%)\n", lumpname, newcolor.r,
-				newcolor.r*100/255);
-		}
-		return -newcolor.r;
-	}
-
-	if (developer >= DMSG_NOTIFY)
-	{
-		char lumpname[9];
-		lumpname[8] = 0;
-		Wads.GetLumpName (lumpname, lumpnum);
-		Printf ("%s appears to be translucency %d (%d%%)\n", lumpname, newcolor.r,
-			newcolor.r*100/255);
-	}
-	return newcolor.r;
-}
-
-//===========================================================================
-//
-//
-//
-//===========================================================================
-
 void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec, intmapsidedef_t *msd, int special, int tag, short *alpha, FMissingTextureTracker &missingtex)
 {
 	switch (special)
@@ -2154,10 +2109,21 @@ void MapLoader::ProcessSideTextures(bool checktranmap, side_t *sd, sector_t *sec
 				// The translator set the alpha argument already; no reason to do it again.
 				sd->SetTexture(side_t::mid, FNullTextureID());
 			}
-			else if ((lumpnum = Wads.CheckNumForName (msd->midtexture)) > 0 &&
-				Wads.LumpLength (lumpnum) == 65536)
+			else if ((lumpnum = fileSystem.CheckNumForName (msd->midtexture)) > 0 &&
+				fileSystem.FileLength (lumpnum) == 65536)
 			{
-				*alpha = (short)DetermineTranslucency (lumpnum);
+				auto fr = fileSystem.OpenFileReader(lumpnum);
+				*alpha = (short)GPalette.DetermineTranslucency (fr);
+
+				if (developer >= DMSG_NOTIFY)
+				{
+					char lumpname[9];
+					lumpname[8] = 0;
+					fileSystem.GetFileShortName(lumpname, lumpnum);
+					if (*alpha < 0) Printf("%s appears to be additive translucency %d (%d%%)\n", lumpname, -*alpha, -*alpha * 100 / 255);
+					else Printf("%s appears to be translucency %d (%d%%)\n", lumpname, *alpha, *alpha * 100 / 255);
+				}
+
 				sd->SetTexture(side_t::mid, FNullTextureID());
 			}
 			else
@@ -2414,7 +2380,7 @@ void MapLoader::CreateBlockMap ()
 		{
 			if (bx > bx2)
 			{
-				swapvalues (block, endblock);
+				std::swap (block, endblock);
 			}
 			do
 			{
@@ -2426,7 +2392,7 @@ void MapLoader::CreateBlockMap ()
 		{
 			if (by > by2)
 			{
-				swapvalues (block, endblock);
+				std::swap (block, endblock);
 			}
 			do
 			{
@@ -3249,6 +3215,8 @@ void MapLoader::LoadLevel(MapData *map, const char *lumpname, int position)
 	{
 		if (sec.floorplane.isSlope()) sec.reflect[sector_t::floor] = 0;
 		if (sec.ceilingplane.isSlope()) sec.reflect[sector_t::ceiling] = 0;
+
+		sec.CheckExColorFlag();
 	}
 	for (auto &node : Level->nodes)
 	{

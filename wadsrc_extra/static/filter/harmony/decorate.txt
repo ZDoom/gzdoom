@@ -538,7 +538,7 @@ actor Mine replaces LostSoul
 		Melee:
 			BAL2 D 0 A_Die
 		Death:
-			BAL2 D 0 bright A_PlaySound("weapons/sshotc")
+			BAL2 D 0 bright A_StartSound("weapons/sshotc")
 			MISL B 8 bright A_Explode
 			MISL C 6 bright
 			MISL D 4 bright
@@ -633,7 +633,7 @@ actor WalkingPhage replaces Arachnotron
 			goto Missile+1
 		Death:
 			SSWV N 7
-			SSWV O 7 A_PlaySound("weapons/sshotl")
+			SSWV O 7 A_StartSound("weapons/sshotl")
 			SSWV P 6 A_Fall
 			SSWV QR 5
 			SSWV S -1
@@ -772,7 +772,7 @@ actor WalkingPhage2 replaces WolfensteinSS
 			stop
 		XDeath:
 			SSWV N 7
-			SSWV O 7 A_PlaySound("weapons/sshotl")
+			SSWV O 7 A_StartSound("weapons/sshotl")
 			SSWV P 6 A_Fall
 			SSWV QR 5
 			SSWV S -1
@@ -851,7 +851,7 @@ actor RedBarrel replaces ExplosiveBarrel
 			BAR1 AB 6
 			loop
 		Death:
-			BAL2 D 0 bright A_PlaySound("weapons/sshotc")
+			BAL2 D 0 bright A_StartSound("weapons/sshotc")
 			MISL B 8 bright A_Explode
 			MISL C 6 bright
 			MISL D 4 bright

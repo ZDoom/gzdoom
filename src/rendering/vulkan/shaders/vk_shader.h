@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "utility/vectors.h"
+#include "vectors.h"
 #include "matrix.h"
 #include "name.h"
 #include "hwrenderer/scene/hw_renderstate.h"
@@ -18,7 +18,7 @@ struct MatricesUBO
 	VSMatrix TextureMatrix;
 };
 
-#define MAX_STREAM_DATA 256
+#define MAX_STREAM_DATA ((int)(65536 / sizeof(StreamData)))
 
 struct StreamUBO
 {

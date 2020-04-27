@@ -35,6 +35,7 @@
 #include "hw_drawinfo.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "r_utility.h"
+#include "texturemanager.h"
 
 static sector_t **fakesectorbuffer;
 

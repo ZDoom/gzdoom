@@ -41,6 +41,8 @@
 #include "matrix.h"
 #include "r_data/models/models.h"
 #include "vectors.h"
+#include "texturemanager.h"
+#include "basics.h"
 
 #include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
@@ -51,7 +53,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
 #include "hw_renderstate.h"
@@ -146,7 +148,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 		{
 			if (dynlightindex == -1)	// only set if we got no light buffer index. This covers all cases where sprite lighting is used.
 			{
-				float out[3];
+				float out[3] = {};
 				di->GetDynSpriteLight(gl_light_sprites ? actor : nullptr, gl_light_particles ? particle : nullptr, out);
 				state.SetDynLight(out[0], out[1], out[2]);
 			}
@@ -223,7 +225,7 @@ void HWSprite::DrawSprite(HWDrawInfo *di, FRenderState &state, bool translucent)
 
 			FColormap thiscm;
 			thiscm.CopyFog(Colormap);
-			thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+			CopyFrom3DLight(thiscm, &(*lightlist)[i]);
 			if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 			{
 				thiscm.Decolorize();
@@ -903,7 +905,7 @@ void HWSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		gltexture = nullptr;
 	}
 
-	depth = FloatToFixed((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
+	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
 
 	// light calculation
 
@@ -1220,7 +1222,7 @@ void HWSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	z1=z-scalefac;
 	z2=z+scalefac;
 
-	depth = FloatToFixed((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
+	depth = (float)((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
 
 	actor=nullptr;
 	this->particle=particle;

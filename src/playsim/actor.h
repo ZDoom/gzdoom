@@ -40,8 +40,8 @@
 #include "info.h"
 
 #include "doomdef.h"
-#include "textures/textures.h"
-#include "r_data/renderstyle.h"
+#include "textures.h"
+#include "renderstyle.h"
 #include "s_sound.h"
 #include "memarena.h"
 #include "g_level.h"
@@ -413,6 +413,7 @@ enum ActorFlag8
 	MF8_NOFRICTIONBOUNCE	= 0x00000040,	// don't bounce off walls when on icy floors
 	MF8_RETARGETAFTERSLAM	= 0x00000080,	// Forces jumping to the idle state after slamming into something
 	MF8_RECREATELIGHTS	= 0x00000100,	// Internal flag that signifies that the light attachments need to be recreated at the
+	MF8_STOPRAILS		= 0x00000200,	// [MC] Prevent rails from going further if an actor has this flag.
 };
 
 // --- mobj.renderflags ---
@@ -606,6 +607,11 @@ inline AActor *GetDefaultByName (const char *name)
 	return (AActor *)(PClass::FindClass(name)->Defaults);
 }
 
+inline AActor* GetDefaultByName(FName name)
+{
+	return (AActor*)(PClass::FindClass(name)->Defaults);
+}
+
 inline AActor *GetDefaultByType (const PClass *type)
 {
 	return (AActor *)(type->Defaults);
@@ -678,7 +684,7 @@ public:
 	// Adjusts the angle for deflection/reflection of incoming missiles
 	// Returns true if the missile should be allowed to explode anyway
 	bool AdjustReflectionAngle (AActor *thing, DAngle &angle);
-	int AbsorbDamage(int damage, FName dmgtype);
+	int AbsorbDamage(int damage, FName dmgtype, AActor *inflictor, AActor *source, int flags);
 	void AlterWeaponSprite(visstyle_t *vis);
 
 	// Returns true if this actor is within melee range of its target
@@ -1555,6 +1561,8 @@ struct FTranslatedLineTarget
 	bool unlinked;	// found by a trace that went through an unlinked portal.
 };
 
+
+void StaticPointerSubstitution(AActor* old, AActor* notOld);
 
 #define S_FREETARGMOBJ	1
 

@@ -37,6 +37,7 @@
 #include "r_sky.h"
 #include "po_man.h"
 #include "r_data/colormaps.h"
+#include "texturemanager.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/drawers/r_draw.h"

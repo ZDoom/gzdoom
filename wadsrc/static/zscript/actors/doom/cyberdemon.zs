@@ -83,7 +83,7 @@ extend class Actor
 	
 	void A_Hoof()
 	{
-		A_PlaySound("cyber/hoof", CHAN_BODY, 1, false, ATTN_IDLE);
+		A_StartSound("cyber/hoof", CHAN_BODY, CHANF_DEFAULT, 1, ATTN_IDLE);
 		A_Chase();
 	}
 	

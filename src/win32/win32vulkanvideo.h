@@ -5,7 +5,7 @@
 #include "rendering/vulkan/system/vk_framebuffer.h"
 
 
-EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Bool, vid_fullscreen)
 
 //==========================================================================
 //
@@ -35,7 +35,7 @@ public:
 
 	DFrameBuffer *CreateFrameBuffer() override
 	{
-		auto fb = new VulkanFrameBuffer(m_hMonitor, fullscreen, device);
+		auto fb = new VulkanFrameBuffer(m_hMonitor, vid_fullscreen, device);
 		return fb;
 	}
 

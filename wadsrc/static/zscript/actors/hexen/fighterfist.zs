@@ -109,7 +109,7 @@ class FWeapFist : FighterWeapon
 				{
 					weaponspecial = 0;
 					player.SetPsprite(PSP_WEAPON, player.ReadyWeapon.FindState("Fire2"));
-					A_PlaySound ("*fistgrunt", CHAN_VOICE);
+					A_StartSound ("*fistgrunt", CHAN_VOICE);
 				}
 				return;
 			}

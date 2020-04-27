@@ -1,3 +1,24 @@
+/*
+**  Vulkan backend
+**  Copyright (c) 2016-2020 Magnus Norddahl
+**
+**  This software is provided 'as-is', without any express or implied
+**  warranty.  In no event will the authors be held liable for any damages
+**  arising from the use of this software.
+**
+**  Permission is granted to anyone to use this software for any purpose,
+**  including commercial applications, and to alter it and redistribute it
+**  freely, subject to the following restrictions:
+**
+**  1. The origin of this software must not be misrepresented; you must not
+**     claim that you wrote the original software. If you use this software
+**     in a product, an acknowledgment in the product documentation would be
+**     appreciated but is not required.
+**  2. Altered source versions must be plainly marked as such, and must not be
+**     misrepresented as being the original software.
+**  3. This notice may not be removed or altered from any source distribution.
+**
+*/
 
 #include "vk_postprocess.h"
 #include "vk_renderbuffers.h"
@@ -14,7 +35,7 @@
 #include "hwrenderer/utility/hw_vrmodes.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "r_videoscale.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 EXTERN_CVAR(Int, gl_dither_bpc)
 
@@ -199,7 +220,7 @@ void VkPostprocess::DrawPresentTexture(const IntRect &box, bool applyGamma, bool
 		uniforms.Offset = { 0.0f, 1.0f };
 	}
 
-	if (applyGamma && fb->swapChain->swapChainFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT && !screenshot)
+	if (applyGamma && fb->swapChain->IsHdrModeActive() && !screenshot)
 	{
 		uniforms.HdrMode = 1;
 	}
@@ -430,9 +451,9 @@ VkPPShader::VkPPShader(PPShader *shader)
 
 FString VkPPShader::LoadShaderCode(const FString &lumpName, const FString &defines, int version)
 {
-	int lump = Wads.CheckNumForFullName(lumpName);
+	int lump = fileSystem.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName.GetChars());
-	FString code = Wads.ReadLump(lump).GetString().GetChars();
+	FString code = fileSystem.ReadFile(lump).GetString().GetChars();
 
 	FString patchedCode;
 	patchedCode.AppendFormat("#version %d\n", 450);

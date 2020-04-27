@@ -41,10 +41,9 @@
 #include "i_input.h"
 #include "d_event.h"
 #include "d_gui.h"
-#include "g_game.h"
 #include "hardware.h"
 #include "menu/menu.h"
-#include "events.h"
+#include "i_interface.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -181,19 +180,6 @@ CUSTOM_CVAR (Int, in_mouse, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 	}
 }
 
-CUSTOM_CVAR(Int, mouse_capturemode, 1, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
-{
-	if (self < 0)
-	{
-		self = 0;
-	}
-	else if (self > 2)
-	{
-		self = 2;
-	}
-}
-
-
 // CODE --------------------------------------------------------------------
 
 //==========================================================================
@@ -253,28 +239,6 @@ static void CenterMouse(int curx, int cury, LONG *centxp, LONG *centyp)
 
 //==========================================================================
 //
-// CaptureMode_InGame
-//
-//==========================================================================
-
-static bool CaptureMode_InGame()
-{
-	if (mouse_capturemode == 2)
-	{
-		return true;
-	}
-	else if (mouse_capturemode == 1)
-	{
-		return gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
-	}
-	else
-	{
-		return gamestate == GS_LEVEL;
-	}
-}
-
-//==========================================================================
-//
 // I_CheckNativeMouse
 //
 // Should we be capturing mouse input, or should we let the OS have normal
@@ -304,8 +268,9 @@ void I_CheckNativeMouse(bool preferNative, bool eventhandlerresult)
 		}
 		else
 		{
+			bool captureModeInGame = sysCallbacks && sysCallbacks->CaptureModeInGame && sysCallbacks->CaptureModeInGame();
 			want_native = ((!m_use_mouse || menuactive != MENU_WaitKey) &&
-				(!CaptureMode_InGame() || GUICapture ||	paused || demoplayback));
+				(!captureModeInGame || GUICapture ||paused || demoplayback));
 		}
 	}
 

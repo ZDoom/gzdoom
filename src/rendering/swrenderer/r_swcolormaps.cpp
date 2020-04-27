@@ -39,7 +39,7 @@
 #include <float.h>
 
 #include "i_system.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomdef.h"
 #include "r_sky.h"
 #include "c_dispatch.h"
@@ -347,12 +347,12 @@ void SetDefaultColormap (const char *name)
 		uint8_t unremap[256];
 		uint8_t remap[256];
 
-		lump = Wads.CheckNumForFullName (name, true, ns_colormaps);
+		lump = fileSystem.CheckNumForFullName (name, true, ns_colormaps);
 		if (lump == -1)
-			lump = Wads.CheckNumForName (name, ns_global);
+			lump = fileSystem.CheckNumForName (name, ns_global);
 
 		// [RH] If using BUILD's palette, generate the colormap
-		if (lump == -1 || Wads.CheckNumForFullName("palette.dat") >= 0 || Wads.CheckNumForFullName("blood.pal") >= 0)
+		if (lump == -1 || fileSystem.CheckNumForFullName("palette.dat") >= 0 || fileSystem.CheckNumForFullName("blood.pal") >= 0)
 		{
 			Printf ("Make colormap\n");
 			FDynamicColormap foo;
@@ -366,7 +366,7 @@ void SetDefaultColormap (const char *name)
 		}
 		else
 		{
-			auto lumpr = Wads.OpenLumpReader (lump);
+			auto lumpr = fileSystem.OpenFileReader (lump);
 
 			// [RH] The colormap may not have been designed for the specific
 			// palette we are using, so remap it to match the current palette.
@@ -404,7 +404,7 @@ static void InitBoomColormaps ()
 	//		This is a really rough hack, but it's better than
 	//		not doing anything with them at all (right?)
 
-	uint32_t NumLumps = Wads.GetNumLumps();
+	uint32_t NumLumps = fileSystem.GetNumEntries();
 
 	realcolormaps.Maps = new uint8_t[256*NUMCOLORMAPS*fakecmaps.Size()];
 	SetDefaultColormap ("COLORMAP");
@@ -424,10 +424,10 @@ static void InitBoomColormaps ()
 		remap[0] = 0;
 		for (j = 1; j < fakecmaps.Size(); j++)
 		{
-			if (Wads.LumpLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
+			if (fileSystem.FileLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
 			{
 				int k, r;
-				auto lump = Wads.OpenLumpReader (fakecmaps[j].lump);
+				auto lump = fileSystem.OpenFileReader (fakecmaps[j].lump);
 				uint8_t *const map = realcolormaps.Maps + NUMCOLORMAPS*256*j;
 
 				for (k = 0; k < NUMCOLORMAPS; ++k)

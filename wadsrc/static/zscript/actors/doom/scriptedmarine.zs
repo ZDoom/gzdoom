@@ -247,13 +247,13 @@ class ScriptedMarine : Actor
 					switch (ticks)
 					{
 					case 14:
-						A_PlaySound ("weapons/sshoto", CHAN_WEAPON);
+						A_StartSound ("weapons/sshoto", CHAN_WEAPON);
 						break; 
 					case 28:   
-						A_PlaySound ("weapons/sshotl", CHAN_WEAPON);
+						A_StartSound ("weapons/sshotl", CHAN_WEAPON);
 						break;
 					case 41:  
-						A_PlaySound ("weapons/sshotc", CHAN_WEAPON);
+						A_StartSound ("weapons/sshotc", CHAN_WEAPON);
 						break;
 					}
 				}
@@ -329,7 +329,7 @@ class ScriptedMarine : Actor
 	{
 		if (CurrentWeapon == WEAPON_Chainsaw)
 		{
-			A_PlaySound ("weapons/sawidle", CHAN_WEAPON);
+			A_StartSound ("weapons/sawidle", CHAN_WEAPON);
 		}
 	}
 
@@ -380,7 +380,7 @@ class ScriptedMarine : Actor
 		// turn to face target
 		if (t.linetarget)
 		{
-			A_PlaySound ("*fist", CHAN_WEAPON);
+			A_StartSound ("*fist", CHAN_WEAPON);
 			angle = t.angleFromSource;
 		}
 	}
@@ -415,7 +415,7 @@ class ScriptedMarine : Actor
 		if (target == null)
 			return;
 
-		A_PlaySound ("weapons/pistol", CHAN_WEAPON);
+		A_StartSound ("weapons/pistol", CHAN_WEAPON);
 		A_FaceTarget ();
 		GunShot2 (accurate, AimLineAttack (angle, MISSILERANGE), "BulletPuff");
 	}
@@ -431,7 +431,7 @@ class ScriptedMarine : Actor
 		if (target == null)
 			return;
 
-		A_PlaySound ("weapons/shotgf", CHAN_WEAPON);
+		A_StartSound ("weapons/shotgf", CHAN_WEAPON);
 		A_FaceTarget ();
 		double pitch = AimLineAttack (angle, MISSILERANGE);
 		for (int i = 0; i < 7; ++i)
@@ -470,7 +470,7 @@ class ScriptedMarine : Actor
 		if (target == null)
 			return;
 
-		A_PlaySound ("weapons/sshotf", CHAN_WEAPON);
+		A_StartSound ("weapons/sshotf", CHAN_WEAPON);
 		A_FaceTarget ();
 		double pitch = AimLineAttack (angle, MISSILERANGE);
 		for (int i = 0; i < 20; ++i)
@@ -494,7 +494,7 @@ class ScriptedMarine : Actor
 		if (target == null)
 			return;
 
-		A_PlaySound ("weapons/chngun", CHAN_WEAPON);
+		A_StartSound ("weapons/chngun", CHAN_WEAPON);
 		A_FaceTarget ();
 		GunShot2 (accurate, AimLineAttack (angle, MISSILERANGE), "BulletPuff");
 	}
@@ -574,7 +574,7 @@ class ScriptedMarine : Actor
 		else
 		{
 			A_FaceTarget ();
-			A_PlaySound ("weapons/bfgf", CHAN_WEAPON);
+			A_StartSound ("weapons/bfgf", CHAN_WEAPON);
 			// Don't interrupt the firing sequence
 			PainChance = 0;
 		}
@@ -670,10 +670,10 @@ extend class Actor
 
 			if (!t.linetarget)
 			{
-				A_PlaySound (fullsound, 1, CHAN_WEAPON);
+				A_StartSound (fullsound, 1, CHAN_WEAPON);
 				return;
 			}
-			A_PlaySound (hitsound, CHAN_WEAPON);
+			A_StartSound (hitsound, CHAN_WEAPON);
 				
 			// turn to face target
 			ang = t.angleFromSource;
@@ -696,7 +696,7 @@ extend class Actor
 		}
 		else
 		{
-			A_PlaySound (fullsound, 1, CHAN_WEAPON);
+			A_StartSound (fullsound, 1, CHAN_WEAPON);
 		}
 	}
 }

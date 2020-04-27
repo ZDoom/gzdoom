@@ -34,7 +34,7 @@
 **
 */
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "m_argv.h"
 #include "sc_man.h"
 #include "g_level.h"
@@ -520,7 +520,7 @@ void MapLoader::InitED()
 	FScanner sc;
 
 	if (filename.IsEmpty()) return;
-	int lump = Wads.CheckNumForFullName(filename, true, ns_global);
+	int lump = fileSystem.CheckNumForFullName(filename, true, ns_global);
 	if (lump == -1) return;
 	sc.OpenLumpNum(lump);
 
@@ -659,7 +659,7 @@ void MapLoader::LoadMapinfoACSLump()
 {
 	if (Level->info->acsName.IsNotEmpty())
 	{
-		int lump = Wads.CheckNumForName(Level->info->acsName);
+		int lump = fileSystem.CheckNumForName(Level->info->acsName);
 		if (lump >= 0) Level->Behaviors.LoadModule(lump);
 	}
 }

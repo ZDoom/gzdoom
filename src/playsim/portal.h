@@ -1,7 +1,7 @@
 #ifndef _PORTALS_H_
 #define _PORTALS_H_
 
-#include "basictypes.h"
+#include "basics.h"
 #include "m_bbox.h"
 
 struct FPortalGroupArray;

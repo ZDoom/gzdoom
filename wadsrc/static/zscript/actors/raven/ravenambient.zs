@@ -13,7 +13,7 @@ class SoundWind : Actor
 	States
 	{
 	Spawn:
-		TNT1 A 2 A_PlaySound("world/wind", CHAN_6, 1, true);
+		TNT1 A 2 A_StartSound("world/wind", CHAN_6, CHANF_LOOPING);
 		Loop;
 	}
 }
@@ -36,7 +36,7 @@ class SoundWaterfall : Actor
 	States
 	{
 	Spawn:
-		TNT1 A 2 A_PlaySound("world/waterfall", CHAN_6, 1, true);
+		TNT1 A 2 A_StartSound("world/waterfall", CHAN_6, CHANF_LOOPING);
 		Loop;
 	}
 }

@@ -84,6 +84,22 @@ private:
 	std::unique_ptr<PolyCommandBuffer> mDrawCommands;
 	RenderMemory mFrameMemory;
 
+	struct ScreenQuadVertex
+	{
+		float x, y, z;
+		float u, v;
+		PalEntry color0;
+
+		ScreenQuadVertex() = default;
+		ScreenQuadVertex(float x, float y, float u, float v) : x(x), y(y), z(1.0f), u(u), v(v), color0(0xffffffff) { }
+	};
+
+	struct ScreenQuad
+	{
+		IVertexBuffer* VertexBuffer = nullptr;
+		IIndexBuffer* IndexBuffer = nullptr;
+	} mScreenQuad;
+
 	bool cur_vsync = false;
 };
 

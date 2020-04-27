@@ -67,10 +67,10 @@ class Sorcerer1 : Actor
 		SRCR F 7 A_Scream;
 		SRCR G 7;
 		SRCR HIJK 6;
-		SRCR L 25 A_PlaySound("dsparil/zap", CHAN_BODY, 1, false, ATTN_NONE);
+		SRCR L 25 A_StartSound("dsparil/zap", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		SRCR MN 5;
 		SRCR O 4;
-		SRCR L 20 A_PlaySound("dsparil/zap", CHAN_BODY, 1, false, ATTN_NONE);
+		SRCR L 20 A_StartSound("dsparil/zap", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		SRCR MN 5;
 		SRCR O 4;
 		SRCR L 12;
@@ -121,7 +121,7 @@ class Sorcerer1 : Actor
 		{
 			return;
 		}
-		A_PlaySound (AttackSound, CHAN_BODY);
+		A_StartSound (AttackSound, CHAN_BODY);
 		if (CheckMeleeRange ())
 		{
 			int damage = random[Srcr1Attack](1,8) * 8;
@@ -252,9 +252,9 @@ class Sorcerer2 : Actor
 		Loop;
 	Rise:
 		SOR2 AB 4;
-		SOR2 C 4 A_PlaySound("dsparil/rise", CHAN_BODY, 1, false, ATTN_NONE);
+		SOR2 C 4 A_StartSound("dsparil/rise", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		SOR2 DEF 4;
-		SOR2 G 12 A_PlaySound("dsparil/sight", CHAN_BODY, 1, false, ATTN_NONE);
+		SOR2 G 12 A_StartSound("dsparil/sight", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		Goto See;
 	Pain:
 		SOR2 Q 3;
@@ -271,15 +271,15 @@ class Sorcerer2 : Actor
 	Death:
 		SDTH A 8 A_Sor2DthInit;
 		SDTH B 8;
-		SDTH C 8 A_PlaySound("dsparil/scream", CHAN_BODY, 1, false, ATTN_NONE);
+		SDTH C 8 A_StartSound("dsparil/scream", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 	DeathLoop:
 		SDTH DE 7;
 		SDTH F 7 A_Sor2DthLoop;
-		SDTH G 6 A_PlaySound("dsparil/explode", CHAN_BODY, 1, false, ATTN_NONE);
+		SDTH G 6 A_StartSound("dsparil/explode", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		SDTH H 6;
 		SDTH I 18;
 		SDTH J 6 A_NoBlocking;
-		SDTH K 6 A_PlaySound("dsparil/bones", CHAN_BODY, 1, false, ATTN_NONE);
+		SDTH K 6 A_StartSound("dsparil/bones", CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		SDTH LMN 6;
 		SDTH O -1 A_BossDeath;
 		Stop;
@@ -306,10 +306,10 @@ class Sorcerer2 : Actor
 			if (mo) 
 			{
 				mo.Translation = Translation;
-				mo.A_PlaySound("misc/teleport", CHAN_BODY);
+				mo.A_StartSound("misc/teleport", CHAN_BODY);
 			}
 			SetStateLabel ("Teleport");
-			A_PlaySound ("misc/teleport", CHAN_BODY);
+			A_StartSound ("misc/teleport", CHAN_BODY);
 			SetZ(floorz);
 			angle = spot.angle;
 			vel = (0,0,0); 
@@ -351,7 +351,7 @@ class Sorcerer2 : Actor
 		{
 			return;
 		}
-		A_PlaySound (AttackSound, CHAN_BODY, 1, false, ATTN_NONE);
+		A_StartSound (AttackSound, CHAN_BODY, CHANF_DEFAULT, 1., ATTN_NONE);
 		if (CheckMeleeRange())
 		{
 			int damage = random[Srcr2Atk](1, 8) * 20;

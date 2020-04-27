@@ -29,6 +29,7 @@
 #include "actor.h"
 #include "a_sharedglobal.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "d_player.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
@@ -115,7 +116,7 @@ void DEarthquake::Tick ()
 	
 	if (!S_IsActorPlayingSomething (m_Spot, CHAN_BODY, m_QuakeSFX))
 	{
-		S_Sound (m_Spot, CHAN_BODY | CHAN_LOOP, m_QuakeSFX, 1, ATTN_NORM);
+		S_Sound (m_Spot, CHAN_BODY, CHANF_LOOP, m_QuakeSFX, 1, ATTN_NORM);
 	}
 
 	if (m_DamageRadius > 0)

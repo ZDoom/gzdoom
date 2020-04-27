@@ -532,13 +532,41 @@ static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
 		auto vColorA = thread->scanline.vColorA;
 		uint32_t* fragcolor = thread->scanline.FragColor;
 
-		if (constants->uTextureMode == TM_FOGLAYER)
+		if (constants->uTextureMode == TM_FIXEDCOLORMAP)
 		{
 			// float gray = grayscale(frag);
 			// vec4 cm = (uObjectColor + gray * (uAddColor - uObjectColor)) * 2;
 			// frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a);
 			// frag = frag * vColor;
 			// frag.rgb = frag.rgb + uFogColor.rgb;
+
+			uint32_t startR = (int)((thread->mainVertexShader.Data.uObjectColor.r) * 255.0f);
+			uint32_t startG = (int)((thread->mainVertexShader.Data.uObjectColor.g) * 255.0f);
+			uint32_t startB = (int)((thread->mainVertexShader.Data.uObjectColor.b) * 255.0f);
+			uint32_t rangeR = (int)((thread->mainVertexShader.Data.uAddColor.r) * 255.0f) - startR;
+			uint32_t rangeG = (int)((thread->mainVertexShader.Data.uAddColor.g) * 255.0f) - startG;
+			uint32_t rangeB = (int)((thread->mainVertexShader.Data.uAddColor.b) * 255.0f) - startB;
+
+			for (int x = x0; x < x1; x++)
+			{
+				uint32_t a = APART(fragcolor[x]);
+				uint32_t r = RPART(fragcolor[x]);
+				uint32_t g = GPART(fragcolor[x]);
+				uint32_t b = BPART(fragcolor[x]);
+
+				uint32_t gray = (r * 77 + g * 143 + b * 37) >> 8;
+				gray += (gray >> 7); // gray*=256/255
+
+				r = (startR + ((gray * rangeR) >> 8)) << 1;
+				g = (startG + ((gray * rangeG) >> 8)) << 1;
+				b = (startB + ((gray * rangeB) >> 8)) << 1;
+
+				r = MIN(r, (uint32_t)255);
+				g = MIN(g, (uint32_t)255);
+				b = MIN(b, (uint32_t)255);
+
+				fragcolor[x] = MAKEARGB(a, r, g, b);
+			}
 		}
 		else
 		{
@@ -570,11 +598,20 @@ static void MainFP(int x0, int x1, PolyTriangleThreadData* thread)
 	}
 }
 
+void ColormapFP(int x0, int x1, PolyTriangleThreadData* thread)
+{
+	// This is implemented in BlendColorColormap.
+}
+
 void SelectFragmentShader(PolyTriangleThreadData* thread)
 {
 	void (*fragshader)(int x0, int x1, PolyTriangleThreadData * thread);
 
-	if (thread->SpecialEffect == EFF_FOGBOUNDARY) // fogboundary.fp
+	if (thread->ColormapShader)
+	{
+		fragshader = &ColormapFP;
+	}
+	else if (thread->SpecialEffect == EFF_FOGBOUNDARY) // fogboundary.fp
 	{
 		fragshader = &EffectFogBoundary;
 	}

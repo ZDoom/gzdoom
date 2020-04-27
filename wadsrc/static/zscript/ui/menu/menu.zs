@@ -284,7 +284,7 @@ class Menu : Object native ui version("2.4")
 
 	static void MenuSound(Sound snd)
 	{
-		S_Sound (snd, CHAN_VOICE | CHAN_UI, snd_menuvolume, ATTN_NONE);
+		S_StartSound (snd, CHAN_VOICE, CHANF_MAYBE_LOCAL|CHAN_UI, snd_menuvolume, ATTN_NONE);
 	}
 	
 	deprecated("4.0") static void DrawConText (int color, int x, int y, String str)

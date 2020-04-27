@@ -3,7 +3,8 @@
 
 #include <memory>
 #include "vectors.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
+#include "name.h"
 
 // Maximum size of the packets sent out by the server.
 #define	MAX_UDP_PACKET				8192

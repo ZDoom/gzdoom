@@ -2,7 +2,7 @@
 #pragma once
 
 #include "vectors.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 
 class AActor;
 class NetCommand;

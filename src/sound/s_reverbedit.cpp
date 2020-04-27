@@ -38,7 +38,7 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "templates.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "i_system.h"
 #include "m_misc.h"
 
@@ -236,7 +236,6 @@ void ExportEnvironments(const char *filename, uint32_t count, const ReverbContai
 		{
 			const ReverbContainer *env = envs[i];
 			const ReverbContainer *base;
-			size_t j;
 
 			if ((unsigned int)env->Properties.Environment < 26)
 			{
@@ -247,7 +246,7 @@ void ExportEnvironments(const char *filename, uint32_t count, const ReverbContai
 				base = nullptr;
 			}
 			f->Printf("\"%s\" %u %u\n{\n", env->Name, HIBYTE(env->ID), LOBYTE(env->ID));
-			for (j = 0; j < NumReverbs; ++j)
+			for (int j = 0; j < NumReverbs; ++j)
 			{
 				const FReverbField *ctl = &ReverbFields[j];
 				const char *ctlName = ReverbFieldNames[j];
@@ -544,7 +543,7 @@ void S_ParseReverbDef ()
 {
 	int lump, lastlump = 0;
 
-	while ((lump = Wads.FindLump ("REVERBS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("REVERBS", &lastlump)) != -1)
 	{
 		FScanner sc;
 		sc.OpenLumpNum(lump);

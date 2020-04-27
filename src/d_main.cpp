@@ -802,6 +802,36 @@ CVAR (Flag, compat_railing,				compatflags2, COMPATF2_RAILING);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+EXTERN_CVAR(Bool, r_drawvoxels)
+EXTERN_CVAR(Int, gl_tonemap)
+static uint32_t GetCaps()
+{
+	ActorRenderFeatureFlags FlagSet;
+	if (!V_IsHardwareRenderer())
+	{
+		FlagSet = RFF_UNCLIPPEDTEX;
+
+		if (V_IsTrueColor())
+			FlagSet |= RFF_TRUECOLOR;
+		else
+			FlagSet |= RFF_COLORMAP;
+
+	}
+	else
+	{
+		// describe our basic feature set
+		FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
+			RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL | RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
+
+		if (gl_tonemap != 5) // not running palette tonemap shader
+			FlagSet |= RFF_TRUECOLOR;
+	}
+
+	if (r_drawvoxels)
+		FlagSet |= RFF_VOXELS;
+	return (uint32_t)FlagSet;
+}
+
 //==========================================================================
 //
 // D_Display
@@ -830,7 +860,7 @@ void D_Display ()
 	cycles.Clock();
 
 	r_UseVanillaTransparency = UseVanillaTransparency(); // [SP] Cache UseVanillaTransparency() call
-	r_renderercaps = screen->GetCaps(); // [SP] Get the current capabilities of the renderer
+	r_renderercaps = GetCaps(); // [SP] Get the current capabilities of the renderer
 
 	if (players[consoleplayer].camera == NULL)
 	{

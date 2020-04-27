@@ -102,14 +102,9 @@ inline bool V_IsSoftwareRenderer()
 	return vid_rendermode < 2;
 }
 
-inline bool V_IsPolyRenderer()
-{
-	return vid_rendermode == 2 || vid_rendermode == 3;
-}
-
 inline bool V_IsTrueColor()
 {
-	return vid_rendermode == 1 || vid_rendermode == 3 || vid_rendermode == 4;
+	return vid_rendermode == 1 || vid_rendermode == 4;
 }
 
 
@@ -270,7 +265,6 @@ public:
 
 	// Report a game restart
 	void SetClearColor(int color);
-	virtual uint32_t GetCaps();
 	virtual int Backend() { return 0; }
 	virtual const char* DeviceName() const { return "Unknown"; }
 	virtual void AmbientOccludeScene(float m5) {}

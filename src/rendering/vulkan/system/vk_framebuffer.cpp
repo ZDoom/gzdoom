@@ -356,23 +356,6 @@ void VulkanFrameBuffer::PostProcessScene(bool swscene, int fixedcm, const std::f
 	mPostprocess->PostProcessScene(fixedcm, afterBloomDrawEndScene2D);
 }
 
-uint32_t VulkanFrameBuffer::GetCaps()
-{
-	if (!V_IsHardwareRenderer())
-		return Super::GetCaps();
-
-	// describe our basic feature set
-	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
-		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL | RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
-	if (r_drawvoxels)
-		FlagSet |= RFF_VOXELS;
-
-	if (gl_tonemap != 5) // not running palette tonemap shader
-		FlagSet |= RFF_TRUECOLOR;
-
-	return (uint32_t)FlagSet;
-}
-
 const char* VulkanFrameBuffer::DeviceName() const
 {
 	const auto &props = device->PhysicalDevice.Properties;

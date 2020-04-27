@@ -36,7 +36,6 @@ public:
 	FRenderState* RenderState() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
-	uint32_t GetCaps() override;
 	void SetTextureFilterMode() override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;

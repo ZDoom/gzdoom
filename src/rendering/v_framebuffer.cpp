@@ -286,35 +286,6 @@ FTexture *DFrameBuffer::WipeEndScreen()
 
 //==========================================================================
 //
-// DFrameBuffer :: GetCaps
-//
-//==========================================================================
-
-EXTERN_CVAR(Bool, r_drawvoxels)
-
-uint32_t DFrameBuffer::GetCaps()
-{
-	ActorRenderFeatureFlags FlagSet = 0;
-
-	if (V_IsPolyRenderer())
-		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH | RFF_SLOPE3DFLOORS;
-	else
-	{
-		FlagSet |= RFF_UNCLIPPEDTEX;
-		if (r_drawvoxels)
-			FlagSet |= RFF_VOXELS;
-	}
-
-	if (V_IsTrueColor())
-		FlagSet |= RFF_TRUECOLOR;
-	else
-		FlagSet |= RFF_COLORMAP;
-
-	return (uint32_t)FlagSet;
-}
-
-//==========================================================================
-//
 // Calculates the viewport values needed for 2D and 3D operations
 //
 //==========================================================================
@@ -455,15 +426,6 @@ FMaterial* DFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
 	return new FMaterial(tex, scaleflags);
 }
 
-DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
-{
-	PARAM_PROLOGUE;
-	if (numret > 0) ret[0].SetInt(viewwindowx);
-	if (numret > 1) ret[1].SetInt(viewwindowy);
-	if (numret > 2) ret[2].SetInt(viewwidth);
-	if (numret > 3) ret[3].SetInt(viewheight);
-	return MIN(numret, 4);
-}
 
 //==========================================================================
 //

@@ -39,7 +39,6 @@ public:
 
 	FRenderState* RenderState() override;
 	void UpdatePalette() override;
-	uint32_t GetCaps() override;
 	const char* DeviceName() const override;
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture() override;

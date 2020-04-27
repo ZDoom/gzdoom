@@ -3300,6 +3300,16 @@ DEFINE_ACTION_FUNCTION(DObject, S_ChangeMusic)
 }
 
 
+DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
+{
+	PARAM_PROLOGUE;
+	if (numret > 0) ret[0].SetInt(viewwindowx);
+	if (numret > 1) ret[1].SetInt(viewwindowy);
+	if (numret > 2) ret[2].SetInt(viewwidth);
+	if (numret > 3) ret[3].SetInt(viewheight);
+	return MIN(numret, 4);
+}
+
 //==========================================================================
 //
 //

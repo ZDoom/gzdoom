@@ -241,23 +241,6 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture* tex, std::function<voi
 //
 //===========================================================================
 
-uint32_t OpenGLFrameBuffer::GetCaps()
-{
-	if (!V_IsHardwareRenderer())
-		return Super::GetCaps();
-
-	// describe our basic feature set
-	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
-		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL | RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
-	if (r_drawvoxels)
-		FlagSet |= RFF_VOXELS;
-
-	if (gl_tonemap != 5) // not running palette tonemap shader
-		FlagSet |= RFF_TRUECOLOR;
-
-	return (uint32_t)FlagSet;
-}
-
 const char* OpenGLFrameBuffer::DeviceName() const 
 {
 	return gl.modelstring;

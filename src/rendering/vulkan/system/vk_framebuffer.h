@@ -74,7 +74,6 @@ public:
 
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	void UpdatePalette() override;
-	uint32_t GetCaps() override;
 	const char* DeviceName() const override;
 	int Backend() override { return 1; }
 	void SetTextureFilterMode() override;

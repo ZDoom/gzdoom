@@ -638,6 +638,7 @@ public:
 				break;
 
 			case NAME_NoCount:
+				CHECK_N(Zd | Zdt)
 				Flag(th->flags, MTF_NOCOUNT, key);
 				break;
 

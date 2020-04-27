@@ -79,6 +79,7 @@
 #include "animations.h"
 #include "texturemanager.h"
 #include "p_lnspec.h"
+#include "d_main.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 

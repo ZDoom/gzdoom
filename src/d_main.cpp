@@ -182,6 +182,7 @@ EXTERN_CVAR (Bool, sv_cheats)
 EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, show_messages)
+EXTERN_CVAR(Bool, ticker)
 
 extern bool setmodeneeded;
 extern bool demorecording;
@@ -260,6 +261,8 @@ CVAR (Bool, disableautoload, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBAL
 CVAR (Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, r_debug_disable_vis_filter, false, 0)
+CVAR(Bool, vid_fps, false, 0)
+CVAR(Int, vid_showpalette, 0, 0)
 
 bool hud_toggled = false;
 bool wantToRestart;
@@ -834,6 +837,111 @@ static uint32_t GetCaps()
 
 //==========================================================================
 //
+// 
+//
+//==========================================================================
+
+static void DrawPaletteTester(int paletteno)
+{
+	int blocksize = screen->GetHeight() / 50;
+
+	int t = paletteno;
+	int k = 0;
+	for (int i = 0; i < 16; ++i)
+	{
+		for (int j = 0; j < 16; ++j)
+		{
+			PalEntry pe;
+			if (t > 1)
+			{
+				auto palette = GPalette.GetTranslation(TRANSLATION_Standard, t - 2)->Palette;
+				pe = palette[k];
+			}
+			else GPalette.BaseColors[k];
+			k++;
+			Dim(twod, pe, 1.f, j * blocksize, i * blocksize, blocksize, blocksize);
+		}
+	}
+}
+
+//==========================================================================
+//
+// DFrameBuffer :: DrawRateStuff
+//
+// Draws the fps counter, dot ticker, and palette debug.
+//
+//==========================================================================
+uint64_t LastCount;
+
+static void DrawRateStuff()
+{
+	static uint64_t LastMS = 0, LastSec = 0, FrameCount = 0, LastTic = 0;
+
+	// Draws frame time and cumulative fps
+	if (vid_fps)
+	{
+		uint64_t ms = screen->FrameTime;
+		uint64_t howlong = ms - LastMS;
+		if ((signed)howlong >= 0)
+		{
+			char fpsbuff[40];
+			int chars;
+			int rate_x;
+
+			int textScale = active_con_scale(twod);
+
+			chars = mysnprintf(fpsbuff, countof(fpsbuff), "%2llu ms (%3llu fps)", (unsigned long long)howlong, (unsigned long long)LastCount);
+			rate_x = screen->GetWidth() / textScale - NewConsoleFont->StringWidth(&fpsbuff[0]);
+			ClearRect(twod, rate_x * textScale, 0, screen->GetWidth(), NewConsoleFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
+			DrawText(twod, NewConsoleFont, CR_WHITE, rate_x, 0, (char*)&fpsbuff[0],
+				DTA_VirtualWidth, screen->GetWidth() / textScale,
+				DTA_VirtualHeight, screen->GetHeight() / textScale,
+				DTA_KeepRatio, true, TAG_DONE);
+
+			uint32_t thisSec = (uint32_t)(ms / 1000);
+			if (LastSec < thisSec)
+			{
+				LastCount = FrameCount / (thisSec - LastSec);
+				LastSec = thisSec;
+				FrameCount = 0;
+			}
+			FrameCount++;
+		}
+		LastMS = ms;
+	}
+
+	int Height = screen->GetHeight();
+
+	// draws little dots on the bottom of the screen
+	if (ticker)
+	{
+		int64_t t = I_GetTime();
+		int64_t tics = t - LastTic;
+
+		LastTic = t;
+		if (tics > 20) tics = 20;
+
+		int i;
+		for (i = 0; i < tics * 2; i += 2)		ClearRect(twod, i, Height - 1, i + 1, Height, 255, 0);
+		for (; i < 20 * 2; i += 2)			ClearRect(twod, i, Height - 1, i + 1, Height, 0, 0);
+	}
+
+	// draws the palette for debugging
+	if (vid_showpalette)
+	{
+		DrawPaletteTester(vid_showpalette);
+	}
+}
+
+static void End2DAndUpdate()
+{
+	DrawRateStuff();
+	twod->End();
+	screen->Update();
+}
+
+//==========================================================================
+//
 // D_Display
 //
 // Draw current display, possibly wiping it from the previous
@@ -1016,7 +1124,7 @@ void D_Display ()
 				screen->Begin2D();
 				C_DrawConsole ();
 				M_Drawer ();
-				screen->End2DAndUpdate ();
+				End2DAndUpdate ();
 				return;
 				
 			case GS_INTERMISSION:
@@ -1089,7 +1197,7 @@ void D_Display ()
 		M_Drawer ();			// menu is drawn even on top of everything
 		if (!hud_toggled)
 			FStat::PrintStat (twod);
-		screen->End2DAndUpdate ();
+		End2DAndUpdate ();
 	}
 	else
 	{
@@ -1120,7 +1228,7 @@ void D_Display ()
 			done = wiper->Run(1);
 			C_DrawConsole ();	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
-			screen->End2DAndUpdate ();
+			End2DAndUpdate ();
 			NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
 		delete wiper;
@@ -2685,6 +2793,11 @@ static bool System_IsSpecialUI()
 
 }
 
+static bool System_DisableTextureFilter()
+{
+	return !V_IsHardwareRenderer();
+}
+
 //==========================================================================
 //
 // DoomSpecificInfo
@@ -2890,6 +3003,7 @@ static int D_DoomMain_Internal (void)
 		System_CrashInfo,
 		System_PlayStartupSound,
 		System_IsSpecialUI,
+		System_DisableTextureFilter,
 	};
 	sysCallbacks = &syscb;
 	

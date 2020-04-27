@@ -53,6 +53,7 @@
 #include "image.h"
 #include "imagehelpers.h"
 #include "texturemanager.h"
+#include "d_main.h"
 
 // [BB] Use ZDoom's freelook limit for the sotfware renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.

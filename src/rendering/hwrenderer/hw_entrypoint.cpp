@@ -40,6 +40,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "flatvertices.h"
 #include "v_palette.h"
+#include "d_main.h"
 
 #include "hw_lightbuffer.h"
 #include "hw_cvars.h"

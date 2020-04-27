@@ -30,6 +30,7 @@
 #include "hw_vrmodes.h"
 #include "v_video.h"
 #include "version.h"
+#include "i_interface.h"
 
 // Set up 3D-specific console variables:
 CVAR(Int, vr_mode, 0, CVAR_GLOBALCONFIG)
@@ -60,7 +61,9 @@ static VRMode vrmi_checker = { 2, isqrt2, isqrt2, 1.f,{ { -.5f, 1.f },{ .5f, 1.f
 const VRMode *VRMode::GetVRMode(bool toscreen)
 {
 #ifdef VR3D_ENABLED
-	switch (toscreen && vid_rendermode == 4 ? vr_mode : 0)
+	int mode = !toscreen || (sysCallbacks && sysCallbacks->DisableTextureFilter && sysCallbacks->DisableTextureFilter()) ? 0 : vr_mode;
+
+	switch (mode)
 	{
 	default:
 	case VR_MONO:

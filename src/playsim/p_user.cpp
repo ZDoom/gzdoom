@@ -93,6 +93,7 @@
 #include "v_video.h"
 #include "gstrings.h"
 #include "s_music.h"
+#include "d_main.h"
 
 static FRandom pr_skullpop ("SkullPop");
 
@@ -632,7 +633,7 @@ void player_t::SendPitchLimits() const
 	{
 		int uppitch, downpitch;
 
-		if (V_IsSoftwareRenderer())
+		if (!V_IsHardwareRenderer())
 		{
 			uppitch = GetSoftPitch(false);
 			downpitch = GetSoftPitch(true);

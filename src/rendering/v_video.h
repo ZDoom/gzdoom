@@ -83,30 +83,12 @@ extern int DisplayWidth, DisplayHeight;
 void V_UpdateModeSize (int width, int height);
 void V_OutputResized (int width, int height);
 
-EXTERN_CVAR(Int, vid_rendermode)
 EXTERN_CVAR(Bool, vid_fullscreen)
 EXTERN_CVAR(Int, win_x)
 EXTERN_CVAR(Int, win_y)
 EXTERN_CVAR(Int, win_w)
 EXTERN_CVAR(Int, win_h)
 EXTERN_CVAR(Bool, win_maximized)
-
-
-inline bool V_IsHardwareRenderer()
-{
-	return vid_rendermode == 4;
-}
-
-inline bool V_IsSoftwareRenderer()
-{
-	return vid_rendermode < 2;
-}
-
-inline bool V_IsTrueColor()
-{
-	return vid_rendermode == 1 || vid_rendermode == 4;
-}
-
 
 struct FColormap;
 class FileWriter;
@@ -250,13 +232,6 @@ public:
 	}
 	void End2D() { m2DDrawer.End(); }
 
-	void End2DAndUpdate()
-	{
-		DrawRateStuff();
-		m2DDrawer.End();
-		Update();
-	}
-
 	// This is overridable in case Vulkan does it differently.
 	virtual bool RenderTextureIsFlipped() const
 	{
@@ -289,13 +264,8 @@ public:
 
 	void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 
-	uint64_t GetLastFPS() const { return LastCount; }
-
 	virtual void Draw2D() {}
 	void Clear2D() { m2DDrawer.Clear(); }
-
-	// Calculate gamma table
-	void CalcGamma(float gamma, uint8_t gammalookup[256]);
 
 	virtual void SetViewportRects(IntRect *bounds);
 	int ScreenToWindowX(int x);
@@ -314,13 +284,8 @@ public:
 	// The original size of the framebuffer as selected in the video menu.
 	uint64_t FrameTime = 0;
 
-protected:
-	void DrawRateStuff ();
-
 private:
 	uint64_t fpsLimitTime = 0;
-
-	uint64_t LastMS = 0, LastSec = 0, FrameCount = 0, LastCount = 0, LastTic = 0;
 
 	bool isIn2D = false;
 };

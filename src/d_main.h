@@ -31,6 +31,7 @@
 #include "doomtype.h"
 #include "gametype.h"
 #include "startupinfo.h"
+#include "c_cvars.h"
 
 struct event_t;
 
@@ -136,6 +137,19 @@ public:
 		else return 0;
 	}
 
+
 };
+
+EXTERN_CVAR(Int, vid_rendermode)
+
+inline bool V_IsHardwareRenderer()
+{
+	return vid_rendermode == 4;
+}
+
+inline bool V_IsTrueColor()
+{
+	return vid_rendermode == 1 || vid_rendermode == 4;
+}
 
 #endif

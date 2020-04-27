@@ -58,35 +58,10 @@
 
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
-CVAR(Bool, vid_fps, false, 0)
-CVAR(Int, vid_showpalette, 0, 0)
 
-EXTERN_CVAR(Bool, ticker)
-EXTERN_CVAR(Float, vid_brightness)
-EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Int, vid_maxfps)
 EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Int, screenblocks)
-
-//==========================================================================
-//
-// DCanvas :: CalcGamma
-//
-//==========================================================================
-
-void DFrameBuffer::CalcGamma (float gamma, uint8_t gammalookup[256])
-{
-	// I found this formula on the web at
-	// <http://panda.mostang.com/sane/sane-gamma.html>,
-	// but that page no longer exits.
-	double invgamma = 1.f / gamma;
-	int i;
-
-	for (i = 0; i < 256; i++)
-	{
-		gammalookup[i] = (uint8_t)(255.0 * pow (i / 255.0, invgamma) + 0.5);
-	}
-}
 
 //==========================================================================
 //
@@ -115,99 +90,6 @@ void DFrameBuffer::SetSize(int width, int height)
 	Width = ViewportScaledWidth(width, height);
 	Height = ViewportScaledHeight(width, height);
 	m2DDrawer.SetSize(width, height);
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void V_DrawPaletteTester(int paletteno)
-{
-	int blocksize = screen->GetHeight() / 50;
-
-	int t = paletteno;
-	int k = 0;
-	for (int i = 0; i < 16; ++i)
-	{
-		for (int j = 0; j < 16; ++j)
-		{
-			PalEntry pe;
-			if (t > 1)
-			{
-				auto palette = GPalette.GetTranslation(TRANSLATION_Standard, t - 2)->Palette;
-				pe = palette[k];
-			}
-			else GPalette.BaseColors[k];
-			k++;
-			Dim(twod, pe, 1.f, j*blocksize, i*blocksize, blocksize, blocksize);
-		}
-	}
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: DrawRateStuff
-//
-// Draws the fps counter, dot ticker, and palette debug.
-//
-//==========================================================================
-
-void DFrameBuffer::DrawRateStuff ()
-{
-	// Draws frame time and cumulative fps
-	if (vid_fps)
-	{
-		uint64_t ms = screen->FrameTime;
-		uint64_t howlong = ms - LastMS;
-		if ((signed)howlong >= 0)
-		{
-			char fpsbuff[40];
-			int chars;
-			int rate_x;
-
-			int textScale = active_con_scale(twod);
-
-			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2llu ms (%3llu fps)", (unsigned long long)howlong, (unsigned long long)LastCount);
-			rate_x = Width / textScale - NewConsoleFont->StringWidth(&fpsbuff[0]);
-			ClearRect (twod, rate_x * textScale, 0, Width, NewConsoleFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
-			DrawText (twod, NewConsoleFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0],
-				DTA_VirtualWidth, screen->GetWidth() / textScale,
-				DTA_VirtualHeight, screen->GetHeight() / textScale,
-				DTA_KeepRatio, true, TAG_DONE);
-
-			uint32_t thisSec = (uint32_t)(ms/1000);
-			if (LastSec < thisSec)
-			{
-				LastCount = FrameCount / (thisSec - LastSec);
-				LastSec = thisSec;
-				FrameCount = 0;
-			}
-			FrameCount++;
-		}
-		LastMS = ms;
-	}
-
-	// draws little dots on the bottom of the screen
-	if (ticker)
-	{
-		int64_t t = I_GetTime();
-		int64_t tics = t - LastTic;
-
-		LastTic = t;
-		if (tics > 20) tics = 20;
-
-		int i;
-		for (i = 0; i < tics*2; i += 2)		ClearRect(twod, i, Height-1, i+1, Height, 255, 0);
-		for ( ; i < 20*2; i += 2)			ClearRect(twod, i, Height-1, i+1, Height, 0, 0);
-	}
-
-	// draws the palette for debugging
-	if (vid_showpalette)
-	{
-		V_DrawPaletteTester(vid_showpalette);
-	}
 }
 
 //==========================================================================

@@ -2,6 +2,7 @@
 #include "textures.h"
 #include "v_video.h"
 #include "g_levellocals.h"
+#include "d_main.h"
 
 
 struct FSoftwareTextureSpan

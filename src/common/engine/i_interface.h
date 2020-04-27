@@ -12,6 +12,7 @@ struct SystemCallbacks
 	void (*CrashInfo)(char* buffer, size_t bufflen, const char* lfstr);
 	void (*PlayStartupSound)(const char* name);
 	bool (*IsSpecialUI)();
+	bool (*DisableTextureFilter)();
 };
 
 extern SystemCallbacks *sysCallbacks;

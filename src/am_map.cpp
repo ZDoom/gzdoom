@@ -47,6 +47,7 @@
 #include "p_blockmap.h"
 #include "g_game.h"
 #include "v_video.h"
+#include "d_main.h"
 
 #include "m_cheat.h"
 #include "c_dispatch.h"
@@ -2139,7 +2140,7 @@ void DAutomap::drawSubsectors()
 			// is necessary in order to best reproduce Doom's original lighting.
 			double fadelevel;
 
-			if (vid_rendermode != 4 || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
+			if (!V_IsHardwareRenderer() || primaryLevel->lightMode == ELightMode::Doom || primaryLevel->lightMode == ELightMode::ZDoomSoftware || primaryLevel->lightMode == ELightMode::DoomSoftware)
 			{
 				double map = (NUMCOLORMAPS * 2.) - ((floorlight + 12) * (NUMCOLORMAPS / 128.));
 				fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);

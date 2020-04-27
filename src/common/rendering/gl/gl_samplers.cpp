@@ -41,6 +41,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl_samplers.h"
 #include "hw_material.h"
+#include "i_interface.h"
 
 namespace OpenGLRenderer
 {
@@ -98,7 +99,7 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 void FSamplerManager::SetTextureFilterMode()
 {
 	UnbindAll();
-	int filter = V_IsHardwareRenderer() ? gl_texture_filter : 0;
+	int filter = sysCallbacks && sysCallbacks->DisableTextureFilter && sysCallbacks->DisableTextureFilter() ? 0 : gl_texture_filter;
 
 	for (int i = 0; i < 4; i++)
 	{

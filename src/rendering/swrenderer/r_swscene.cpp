@@ -36,6 +36,7 @@
 #include "image.h"
 #include "engineerrors.h"
 #include "texturemanager.h"
+#include "d_main.h"
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;

@@ -36,6 +36,7 @@
 #include "texturemanager.h"
 
 void InitModels();
+void R_InitVoxels();
 
 // variables used to look up
 //	and range check thing_t sprites patches

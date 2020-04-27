@@ -76,8 +76,9 @@ struct FVoxelDef
 extern TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.
 extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
+FVoxel* VOX_GetVoxel(int lumpnum);
+
 FVoxel *R_LoadKVX(int lumpnum);
 FVoxelDef *R_LoadVoxelDef(int lumpnum, int spin);
-void R_InitVoxels();
 
 #endif

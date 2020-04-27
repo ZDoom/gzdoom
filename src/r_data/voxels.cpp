@@ -42,30 +42,14 @@
 #include "filesystem.h"
 #include "v_video.h"
 #include "sc_man.h"
-#include "s_sound.h"
-#include "sbar.h"
-#include "g_level.h"
-#include "r_data/sprites.h"
 #include "voxels.h"
 #include "info.h"
+#include "printf.h"
 
 void VOX_AddVoxel(int sprnum, int frame, FVoxelDef *def);
 
 TDeletingArray<FVoxel *> Voxels;	// used only to auto-delete voxels on exit.
 TDeletingArray<FVoxelDef *> VoxelDefs;
-
-struct VoxelOptions
-{
-	VoxelOptions()
-	: DroppedSpin(0), PlacedSpin(0), Scale(1.), AngleOffset(90.), OverridePalette(false)
-	{}
-
-	int			DroppedSpin;
-	int			PlacedSpin;
-	double		Scale;
-	DAngle		AngleOffset;
-	bool		OverridePalette;
-};
 
 //==========================================================================
 //
@@ -476,134 +460,6 @@ void FVoxel::RemovePalette()
 }
 
 
-
-//==========================================================================
-//
-// VOX_ReadSpriteNames
-//
-// Reads a list of sprite names from a VOXELDEF lump.
-//
-//==========================================================================
-
-static bool VOX_ReadSpriteNames(FScanner &sc, TArray<uint32_t> &vsprites)
-{
-	vsprites.Clear();
-	while (sc.GetString())
-	{
-		// A sprite name list is terminated by an '=' character.
-		if (sc.String[0] == '=')
-		{
-			if (vsprites.Size() == 0)
-			{
-				sc.ScriptMessage("No sprites specified for voxel.\n");
-			}
-			return true;
-		}
-		if (sc.StringLen != 4 && sc.StringLen != 5)
-		{
-			sc.ScriptMessage("Sprite name \"%s\" is wrong size.\n", sc.String);
-		}
-		else if (sc.StringLen == 5 && (sc.String[4] = toupper(sc.String[4]), sc.String[4] < 'A' || sc.String[4] >= 'A' + MAX_SPRITE_FRAMES))
-		{
-			sc.ScriptMessage("Sprite frame %c is invalid.\n", sc.String[4]);
-		}
-		else
-		{
-			int frame = (sc.StringLen == 4) ? 255 : sc.String[4] - 'A';
-			int i = GetSpriteIndex(sc.String, false);
-			if (i != -1)
-			{
-				vsprites.Push((frame << 24) | i);
-			}
-		}
-	}
-	if (vsprites.Size() != 0)
-	{
-		sc.ScriptMessage("Unexpected end of file\n");
-	}
-	return false;
-}
-
-//==========================================================================
-//
-// VOX_ReadOptions
-//
-// Reads a list of options from a VOXELDEF lump, terminated with a '}'
-// character. The leading '{' must already be consumed
-//
-//==========================================================================
-
-static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
-{
-	while (sc.GetToken())
-	{
-		if (sc.TokenType == '}')
-		{
-			return;
-		}
-		sc.TokenMustBe(TK_Identifier);
-		if (sc.Compare("scale"))
-		{
-			sc.MustGetToken('=');
-			sc.MustGetToken(TK_FloatConst);
-			opts.Scale = sc.Float;
-		}
-		else if (sc.Compare("spin"))
-		{
-			int mul = 1;
-			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
-			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = opts.PlacedSpin = sc.Number*mul;
-		}
-		else if (sc.Compare("placedspin"))
-		{
-			int mul = 1;
-			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
-			sc.MustGetToken(TK_IntConst);
-			opts.PlacedSpin = sc.Number*mul;
-		}
-		else if (sc.Compare("droppedspin"))
-		{
-			int mul = 1;
-			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
-			sc.MustGetToken(TK_IntConst);
-			opts.DroppedSpin = sc.Number*mul;
-		}
-		else if (sc.Compare("angleoffset"))
-		{
-			int mul = 1;
-			sc.MustGetToken('=');
-			if (sc.CheckToken('-')) mul = -1;
-			sc.MustGetAnyToken();
-			if (sc.TokenType == TK_IntConst)
-			{
-				sc.Float = sc.Number;
-			}
-			else
-			{
-				sc.TokenMustBe(TK_FloatConst);
-			}
-			opts.AngleOffset = mul * sc.Float + 90.;
-		}
-		else if (sc.Compare("overridepalette"))
-		{
-			opts.OverridePalette = true;
-		}
-		else
-		{
-			sc.ScriptMessage("Unknown voxel option '%s'\n", sc.String);
-			if (sc.CheckToken('='))
-			{
-				sc.MustGetAnyToken();
-			}
-		}
-	}
-	sc.ScriptMessage("Unterminated voxel option block\n");
-}
-
 //==========================================================================
 //
 // VOX_GetVoxel
@@ -613,7 +469,7 @@ static void VOX_ReadOptions(FScanner &sc, VoxelOptions &opts)
 //
 //==========================================================================
 
-static FVoxel *VOX_GetVoxel(int lumpnum)
+FVoxel* VOX_GetVoxel(int lumpnum)
 {
 	// Is this voxel already loaded? If so, return it.
 	for (unsigned i = 0; i < Voxels.Size(); ++i)
@@ -623,7 +479,7 @@ static FVoxel *VOX_GetVoxel(int lumpnum)
 			return Voxels[i];
 		}
 	}
-	FVoxel *vox = R_LoadKVX(lumpnum);
+	FVoxel* vox = R_LoadKVX(lumpnum);
 	if (vox != NULL)
 	{
 		Voxels.Push(vox);
@@ -631,83 +487,4 @@ static FVoxel *VOX_GetVoxel(int lumpnum)
 	return vox;
 }
 
-//==========================================================================
-//
-// R_InitVoxels
-//
-// Process VOXELDEF lumps for defining voxel options that cannot be
-// condensed neatly into a sprite name format.
-//
-//==========================================================================
-
-void R_InitVoxels()
-{
-	int lump, lastlump = 0;
-	
-	while ((lump = fileSystem.FindLump("VOXELDEF", &lastlump)) != -1)
-	{
-		FScanner sc(lump);
-		TArray<uint32_t> vsprites;
-
-		while (VOX_ReadSpriteNames(sc, vsprites))
-		{
-			FVoxel *voxeldata = NULL;
-			int voxelfile;
-			VoxelOptions opts;
-
-			sc.SetCMode(true);
-			sc.MustGetToken(TK_StringConst);
-			voxelfile = fileSystem.CheckNumForFullName(sc.String, true, ns_voxels);
-			if (voxelfile < 0)
-			{
-				sc.ScriptMessage("Voxel \"%s\" not found.\n", sc.String);
-			}
-			else
-			{
-				voxeldata = VOX_GetVoxel(voxelfile);
-				if (voxeldata == NULL)
-				{
-					sc.ScriptMessage("\"%s\" is not a valid voxel file.\n", sc.String);
-				}
-			}
-			if (sc.CheckToken('{'))
-			{
-				VOX_ReadOptions(sc, opts);
-			}
-			sc.SetCMode(false);
-			if (voxeldata != NULL && vsprites.Size() != 0)
-			{
-				if (opts.OverridePalette)
-				{
-					voxeldata->RemovePalette();
-				}
-				FVoxelDef *def = new FVoxelDef;
-
-				def->Voxel = voxeldata;
-				def->Scale = opts.Scale;
-				def->DroppedSpin = opts.DroppedSpin;
-				def->PlacedSpin = opts.PlacedSpin;
-				def->AngleOffset = opts.AngleOffset;
-				VoxelDefs.Push(def);
-
-				for (unsigned i = 0; i < vsprites.Size(); ++i)
-				{
-					int sprnum = int(vsprites[i] & 0xFFFFFF);
-					int frame = int(vsprites[i] >> 24);
-					if (frame == 255)
-					{ // Apply voxel to all frames.
-						for (int j = MAX_SPRITE_FRAMES - 1; j >= 0; --j)
-						{
-							VOX_AddVoxel(sprnum, j, def);
-						}
-					}
-					else
-					{ // Apply voxel to only one frame.
-						VOX_AddVoxel(sprnum, frame, def);
-					}
-				}
-			}
-		}
-	}
-}
 

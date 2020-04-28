@@ -26,7 +26,7 @@
 #include "r_state.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
-#include "hwrenderer/scene/hw_skydome.h"
+#include "hw_skydome.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_renderstate.h"
 #include "skyboxtexture.h"

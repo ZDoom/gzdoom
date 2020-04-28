@@ -942,7 +942,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/data/hw_vertexbuilder.cpp
 	rendering/hwrenderer/dynlights/doom_aabbtree.cpp
 	rendering/hwrenderer/models/hw_models.cpp
-	rendering/hwrenderer/scene/hw_skydome.cpp
 	rendering/hwrenderer/scene/hw_drawlistadd.cpp
 	rendering/hwrenderer/scene/hw_renderstate.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
@@ -1127,6 +1126,7 @@ set (PCH_SOURCES
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp
 	common/rendering/r_videoscale.cpp
+	common/rendering/hwrenderer/data/hw_skydome.cpp
 	common/rendering/hwrenderer/data/flatvertices.cpp
 	common/rendering/hwrenderer/data/hw_viewpointbuffer.cpp
 	common/rendering/hwrenderer/data/hw_modelvertexbuffer.cpp

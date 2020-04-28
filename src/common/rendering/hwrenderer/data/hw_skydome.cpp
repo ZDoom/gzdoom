@@ -60,7 +60,7 @@
 #include "hw_material.h"
 #include "hw_skydome.h"
 #include "hw_renderstate.h"
-#include "hw_drawinfo.h"
+#include "v_video.h"
 #include "hwrenderer/data/buffers.h"
 
 // 57 world units roughly represent one sky texel for the glTranslate call.

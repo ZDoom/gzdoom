@@ -52,7 +52,7 @@
 #include "gl_shaderprogram.h"
 #include "hw_vrmodes.h"
 #include "flatvertices.h"
-#include "hwrenderer/scene/hw_skydome.h"
+#include "hw_skydome.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "gl_samplers.h"
 #include "hw_lightbuffer.h"

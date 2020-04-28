@@ -47,7 +47,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_vrmodes.h"
 #include "hwrenderer/models/hw_models.h"
-#include "hwrenderer/scene/hw_skydome.h"
+#include "hw_skydome.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hw_lightbuffer.h"

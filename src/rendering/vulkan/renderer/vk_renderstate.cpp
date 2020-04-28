@@ -29,7 +29,7 @@
 #include "templates.h"
 #include "doomstat.h"
 #include "r_data/colormaps.h"
-#include "hwrenderer/scene/hw_skydome.h"
+#include "hw_skydome.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"
 #include "hw_cvars.h"

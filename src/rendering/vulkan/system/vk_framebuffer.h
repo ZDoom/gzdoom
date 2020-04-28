@@ -91,7 +91,6 @@ public:
 
 	IHardwareTexture *CreateHardwareTexture() override;
 	FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags) override;
-	FModelRenderer *CreateModelRenderer(int mli) override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;
 	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) override;

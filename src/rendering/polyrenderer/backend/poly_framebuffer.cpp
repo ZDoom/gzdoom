@@ -321,11 +321,6 @@ IHardwareTexture *PolyFrameBuffer::CreateHardwareTexture()
 	return new PolyHardwareTexture();
 }
 
-FModelRenderer *PolyFrameBuffer::CreateModelRenderer(int mli) 
-{
-	return new FHWModelRenderer(nullptr, *GetRenderState(), mli);
-}
-
 IVertexBuffer *PolyFrameBuffer::CreateVertexBuffer()
 {
 	return new PolyVertexBuffer();

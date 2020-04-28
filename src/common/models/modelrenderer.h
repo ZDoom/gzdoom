@@ -1,4 +1,4 @@
-
+#pragma once
 #include "renderstyle.h"
 #include "matrix.h"
 #include "model.h"

@@ -44,11 +44,5 @@ void R_InitSkyMap();
 void R_UpdateSky (uint64_t mstime);
 std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
 
-// 57 world units roughly represent one sky texel for the glTranslate call.
-enum
-{
-	skyoffsetfactor = 57
-};
-
 
 #endif //__R_SKY_H__

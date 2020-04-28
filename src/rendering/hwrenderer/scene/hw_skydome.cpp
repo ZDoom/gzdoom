@@ -53,21 +53,22 @@
 **---------------------------------------------------------------------------
 **
 */
-#include "doomtype.h"
-#include "g_level.h"
 #include "filesystem.h"
-#include "r_state.h"
-#include "r_utility.h"
-#include "g_levellocals.h"
-#include "r_sky.h"
 #include "cmdlib.h"
-
+#include "bitmap.h"
 #include "skyboxtexture.h"
 #include "hw_material.h"
 #include "hw_skydome.h"
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "hwrenderer/data/buffers.h"
+
+// 57 world units roughly represent one sky texel for the glTranslate call.
+enum
+{
+	skyoffsetfactor = 57
+};
+
 
 //-----------------------------------------------------------------------------
 //
@@ -76,6 +77,47 @@
 //
 //-----------------------------------------------------------------------------
 EXTERN_CVAR(Float, skyoffset)
+
+
+struct SkyColor
+{
+	FTextureID Texture;
+	std::pair<PalEntry, PalEntry> Colors;
+};
+
+static TArray<SkyColor> SkyColors;
+
+std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex)
+{
+	for (auto& sky : SkyColors)
+	{
+		if (sky.Texture == tex->GetID()) return sky.Colors;
+	}
+
+	auto itex = tex->GetTexture();
+	SkyColor sky;
+
+	FBitmap bitmap = itex->GetBgraBitmap(nullptr);
+	int w = bitmap.GetWidth();
+	int h = bitmap.GetHeight();
+
+	const uint32_t* buffer = (const uint32_t*)bitmap.GetPixels();
+	if (buffer)
+	{
+		sky.Colors.first = averageColor((uint32_t*)buffer, w * MIN(30, h), 0);
+		if (h > 30)
+		{
+			sky.Colors.second = averageColor(((uint32_t*)buffer) + (h - 30) * w, w * 30, 0);
+		}
+		else sky.Colors.second = sky.Colors.first;
+	}
+	sky.Texture = tex->GetID();
+	SkyColors.Push(sky);
+
+	return SkyColors.Last().Colors;
+}
+
+
 
 //-----------------------------------------------------------------------------
 //
@@ -282,7 +324,7 @@ void FSkyVertexBuffer::CreateDome()
 //
 //-----------------------------------------------------------------------------
 
-void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
+void FSkyVertexBuffer::SetupMatrices(FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix, bool tiled)
 {
 	float texw = tex->GetDisplayWidth();
 	float texh = tex->GetDisplayHeight();
@@ -293,7 +335,7 @@ void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FGameTexture *tex, float x_
 	float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
 	float yscale = 1.f;
 	auto texskyoffset = tex->GetSkyOffset() + skyoffset;
-	if (texh <= 128 && (di->Level->flags & LEVEL_FORCETILEDSKY))
+	if (texh <= 128 && tiled)
 	{
 		modelMatrix.translate(0.f, (-40 + texskyoffset)*skyoffsetfactor, 0.f);
 		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
@@ -326,3 +368,115 @@ void FSkyVertexBuffer::SetupMatrices(HWDrawInfo *di, FGameTexture *tex, float x_
 	textureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
 	textureMatrix.translate(1.f, y_offset / texh, 1.f);
 }
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::RenderRow(FRenderState& state, EDrawType prim, int row, bool apply)
+{
+	state.Draw(prim, mPrimStart[row], mPrimStart[row + 1] - mPrimStart[row]);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled)
+{
+	if (tex)
+	{
+		state.SetMaterial(tex, UF_Texture, 0, CLAMP_NONE, 0, -1);
+		state.EnableModelMatrix(true);
+		state.EnableTextureMatrix(true);
+
+		SetupMatrices(tex, x_offset, y_offset, mirror, mode, state.mModelMatrix, state.mTextureMatrix, tiled);
+	}
+
+	int rc = mRows + 1;
+
+	// The caps only get drawn for the main layer but not for the overlay.
+	if (mode == FSkyVertexBuffer::SKYMODE_MAINLAYER && tex != NULL)
+	{
+		auto& col = R_GetSkyCapColor(tex);
+		state.SetObjectColor(col.first);
+		state.EnableTexture(false);
+		RenderRow(state, DT_TriangleFan, 0);
+
+		state.SetObjectColor(col.second);
+		RenderRow(state, DT_TriangleFan, rc);
+		state.EnableTexture(true);
+	}
+	state.SetObjectColor(0xffffffff);
+	for (int i = 1; i <= mRows; i++)
+	{
+		RenderRow(state, DT_TriangleStrip, i, i == 1);
+		RenderRow(state, DT_TriangleStrip, rc + i, false);
+	}
+
+	state.EnableTextureMatrix(false);
+	state.EnableModelMatrix(false);
+}
+
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FSkyVertexBuffer::RenderBox(FRenderState& state, FTextureID texno, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2)
+{
+	int faces;
+
+	state.EnableModelMatrix(true);
+	state.mModelMatrix.loadIdentity();
+	state.mModelMatrix.scale(1, 1 / stretch, 1); // Undo the map's vertical scaling as skyboxes are true cubes.
+
+	if (!sky2)
+		state.mModelMatrix.rotate(-180.0f + x_offset, skyrotatevector.X, skyrotatevector.Z, skyrotatevector.Y);
+	else
+		state.mModelMatrix.rotate(-180.0f + x_offset, skyrotatevector2.X, skyrotatevector2.Z, skyrotatevector2.Y);
+
+	if (tex->GetSkyFace(5))
+	{
+		faces = 4;
+
+		// north
+		state.SetMaterial(tex->GetSkyFace(0), UF_Texture, 0, CLAMP_XY, 0, -1);
+		state.Draw(DT_TriangleStrip, FaceStart(0), 4);
+
+		// east
+		state.SetMaterial(tex->GetSkyFace(1), UF_Texture, 0, CLAMP_XY, 0, -1);
+		state.Draw(DT_TriangleStrip, FaceStart(1), 4);
+
+		// south
+		state.SetMaterial(tex->GetSkyFace(2), UF_Texture, 0, CLAMP_XY, 0, -1);
+		state.Draw(DT_TriangleStrip, FaceStart(2), 4);
+
+		// west
+		state.SetMaterial(tex->GetSkyFace(3), UF_Texture, 0, CLAMP_XY, 0, -1);
+		state.Draw(DT_TriangleStrip, FaceStart(3), 4);
+	}
+	else
+	{
+		faces = 1;
+		state.SetMaterial(tex->GetSkyFace(0), UF_Texture, 0, CLAMP_XY, 0, -1);
+		state.Draw(DT_TriangleStrip, FaceStart(-1), 10);
+	}
+
+	// top
+	state.SetMaterial(tex->GetSkyFace(faces), UF_Texture, 0, CLAMP_XY, 0, -1);
+	state.Draw(DT_TriangleStrip, FaceStart(tex->GetSkyFlip() ? 6 : 5), 4);
+
+	// bottom
+	state.SetMaterial(tex->GetSkyFace(faces + 1), UF_Texture, 0, CLAMP_XY, 0, -1);
+	state.Draw(DT_TriangleStrip, FaceStart(4), 4);
+
+	state.EnableModelMatrix(false);
+}
+

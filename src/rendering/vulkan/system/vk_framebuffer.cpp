@@ -397,11 +397,6 @@ FMaterial* VulkanFrameBuffer::CreateMaterial(FGameTexture* tex, int scaleflags)
 	return new VkMaterial(tex, scaleflags);
 }
 
-FModelRenderer *VulkanFrameBuffer::CreateModelRenderer(int mli) 
-{
-	return new FHWModelRenderer(nullptr, *GetRenderState(), mli);
-}
-
 IVertexBuffer *VulkanFrameBuffer::CreateVertexBuffer()
 {
 	return new VKVertexBuffer();

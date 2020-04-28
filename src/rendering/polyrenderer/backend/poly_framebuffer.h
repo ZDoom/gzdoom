@@ -45,7 +45,6 @@ public:
 	//void SetSceneRenderTarget(bool useSSAO) override;
 
 	IHardwareTexture *CreateHardwareTexture() override;
-	FModelRenderer *CreateModelRenderer(int mli) override;
 	IVertexBuffer *CreateVertexBuffer() override;
 	IIndexBuffer *CreateIndexBuffer() override;
 	IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) override;

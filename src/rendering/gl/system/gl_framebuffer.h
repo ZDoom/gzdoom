@@ -43,7 +43,6 @@ public:
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture() override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
-	FModelRenderer *CreateModelRenderer(int mli) override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;
 	void SetViewportRects(IntRect *bounds) override;

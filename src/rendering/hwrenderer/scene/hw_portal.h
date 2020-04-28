@@ -361,10 +361,6 @@ struct HWSkyPortal : public HWPortal
 	FSkyVertexBuffer *vertexBuffer;
 	friend struct HWEEHorizonPortal;
 
-	void RenderRow(HWDrawInfo *di, FRenderState &state, EDrawType prim, int row, bool apply = true);
-	void RenderBox(HWDrawInfo *di, FRenderState &state, FTextureID texno, FSkyBox * gltex, float x_offset, bool sky2);
-	void RenderDome(HWDrawInfo *di, FRenderState &state, FGameTexture * tex, float x_offset, float y_offset, bool mirror, int mode);
-
 protected:
 	virtual void DrawContents(HWDrawInfo *di, FRenderState &state);
 	virtual void * GetSource() const { return origin; }

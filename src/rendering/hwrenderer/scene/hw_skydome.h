@@ -3,6 +3,8 @@
 #include "v_palette.h"
 #include "matrix.h"
 #include "hwrenderer/data/buffers.h"
+#include "hw_renderstate.h"
+#include "skyboxtexture.h"
 
 class FGameTexture;
 class FRenderState;
@@ -70,7 +72,7 @@ public:
 
 	FSkyVertexBuffer();
 	~FSkyVertexBuffer();
-	void SetupMatrices(HWDrawInfo *di, FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
+	void SetupMatrices(FGameTexture *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix, bool tiled);
 	std::pair<IVertexBuffer *, IIndexBuffer *> GetBufferObjects() const
 	{
 		return std::make_pair(mVertexBuffer, nullptr);
@@ -81,5 +83,9 @@ public:
 		if (i >= 0 && i < 7) return mFaceStart[i];
 		else return mSideStart;
 	}
+
+	void RenderRow(FRenderState& state, EDrawType prim, int row, bool apply = true);
+	void RenderDome(FRenderState& state, FGameTexture* tex, float x_offset, float y_offset, bool mirror, int mode, bool tiled);
+	void RenderBox(FRenderState& state, FTextureID texno, FSkyBox* tex, float x_offset, bool sky2, float stretch, const FVector3& skyrotatevector, const FVector3& skyrotatevector2);
 
 };

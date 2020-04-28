@@ -199,7 +199,6 @@ public:
 	virtual void SetTextureFilterMode() {}
 	virtual IHardwareTexture *CreateHardwareTexture() { return nullptr; }
 	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
-	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual FMaterial* CreateMaterial(FGameTexture* tex, int scaleflags);
 	virtual void TextureFilterChanged() {}
 	virtual void BeginFrame() {}

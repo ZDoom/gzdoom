@@ -38,6 +38,7 @@
 #include "v_font.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "hwrenderer/models/hw_models.h"
 #include "d_main.h"
 
 EXTERN_CVAR(Bool, gl_precache)
@@ -86,6 +87,7 @@ static void PrecacheSprite(FGameTexture *tex, SpriteHits &hits)
 	FMaterial * gltex = FMaterial::ValidateTexture(tex, scaleflags);
 	if (gltex) PrecacheList(gltex, hits);
 }
+
 
 //==========================================================================
 //
@@ -315,7 +317,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		FImageSource::EndPrecaching();
 
 		// cache all used models
-		FModelRenderer *renderer = screen->CreateModelRenderer(-1);
+		FModelRenderer* renderer = new FHWModelRenderer(nullptr, *screen->RenderState(), -1);
 		for (unsigned i = 0; i < Models.Size(); i++)
 		{
 			if (modellist[i]) 

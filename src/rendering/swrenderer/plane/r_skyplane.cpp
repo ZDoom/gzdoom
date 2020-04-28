@@ -59,6 +59,8 @@ CVAR(Bool, r_linearsky, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 EXTERN_CVAR(Int, r_skymode)
 EXTERN_CVAR(Bool, cl_oldfreelooklimit)
 
+std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex);
+
 namespace swrenderer
 {
 	static FSoftwareTexture *GetSWTex(FTextureID texid, bool allownull = true)

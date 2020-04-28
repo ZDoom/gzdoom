@@ -57,45 +57,6 @@ CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE|CVAR_NOINITCALL)
 CVAR(Float, skyoffset, 0, 0)	// for testing
 
 
-struct SkyColor
-{
-	FTextureID Texture;
-	std::pair<PalEntry, PalEntry> Colors;
-};
-
-static TArray<SkyColor> SkyColors;
-
-std::pair<PalEntry, PalEntry>& R_GetSkyCapColor(FGameTexture* tex)
-{
-	for (auto& sky : SkyColors)
-	{
-		if (sky.Texture == tex->GetID()) return sky.Colors;
-	}
-
-	auto itex = tex->GetTexture();
-	SkyColor sky;
-
-	FBitmap bitmap = itex->GetBgraBitmap(nullptr);
-	int w = bitmap.GetWidth();
-	int h = bitmap.GetHeight();
-
-	const uint32_t* buffer = (const uint32_t*)bitmap.GetPixels();
-	if (buffer)
-	{
-		sky.Colors.first = averageColor((uint32_t*)buffer, w * MIN(30, h), 0);
-		if (h > 30)
-		{
-			sky.Colors.second = averageColor(((uint32_t*)buffer) + (h - 30) * w, w * 30, 0);
-		}
-		else sky.Colors.second = sky.Colors.first;
-	}
-	sky.Texture = tex->GetID();
-	SkyColors.Push(sky);
-
-	return SkyColors.Last().Colors;
-}
-
-
 //==========================================================================
 //
 // R_InitSkyMap

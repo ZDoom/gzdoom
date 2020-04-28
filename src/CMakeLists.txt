@@ -878,9 +878,7 @@ set (PCH_SOURCES
 	serializer_doom.cpp
 	scriptutil.cpp
 	st_stuff.cpp
-	rendering/v_framebuffer.cpp
 	r_data/v_palette.cpp
-	rendering/v_video.cpp
 	wi_stuff.cpp
 	gamedata/a_keys.cpp
 	gamedata/a_weapons.cpp
@@ -1126,6 +1124,8 @@ set (PCH_SOURCES
 	common/objects/dobject.cpp
 	common/objects/dobjgc.cpp
 	common/objects/dobjtype.cpp
+	common/rendering/v_framebuffer.cpp
+	common/rendering/v_video.cpp
 	common/rendering/r_videoscale.cpp
 	common/rendering/hwrenderer/data/flatvertices.cpp
 	common/rendering/hwrenderer/data/hw_viewpointbuffer.cpp

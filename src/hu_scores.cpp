@@ -52,6 +52,7 @@
 #include "g_game.h"
 #include "sbar.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 // MACROS ------------------------------------------------------------------
 

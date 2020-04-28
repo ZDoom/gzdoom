@@ -67,6 +67,7 @@
 #include "s_music.h"
 #include "i_time.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 
 #include "gi.h"
@@ -1000,7 +1001,7 @@ void C_AdjustBottom ()
 
 void C_NewModeAdjust ()
 {
-	C_InitConsole (twod->GetWidth(), twod->GetHeight(), true);
+	C_InitConsole (screen->GetWidth(), screen->GetHeight(), true);
 	C_FlushDisplay ();
 	C_AdjustBottom ();
 }

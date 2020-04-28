@@ -48,6 +48,7 @@
 #include "g_game.h"
 #include "v_video.h"
 #include "d_main.h"
+#include "v_draw.h"
 
 #include "m_cheat.h"
 #include "c_dispatch.h"

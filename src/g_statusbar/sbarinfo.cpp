@@ -51,6 +51,7 @@
 #include "utf8.h"
 #include "texturemanager.h"
 #include "v_palette.h"
+#include "v_draw.h"
 
 #define ARTIFLASH_OFFSET (statusBar->invBarOffset+6)
 enum

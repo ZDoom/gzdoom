@@ -1,6 +1,7 @@
 #pragma once
 
 #include "zstring.h"
+#include "intrect.h"
 
 struct SystemCallbacks
 {
@@ -13,6 +14,8 @@ struct SystemCallbacks
 	void (*PlayStartupSound)(const char* name);
 	bool (*IsSpecialUI)();
 	bool (*DisableTextureFilter)();
+	void (*OnScreenSizeChanged)();
+	IntRect(*GetSceneRect)();
 };
 
 extern SystemCallbacks *sysCallbacks;

@@ -569,6 +569,12 @@ void FGameConfigFile::DoGlobalSetup ()
 					UCVarValue v = var->GetGenericRep(CVAR_Float);
 					vid_gamma = v.Float;
 				}
+				var = FindCVar("fullscreen", NULL);
+				if (var != NULL)
+				{
+					UCVarValue v = var->GetGenericRep(CVAR_Bool);
+					vid_fullscreen = v.Float;
+				}
 
 			}
 		}

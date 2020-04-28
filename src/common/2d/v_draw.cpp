@@ -1222,7 +1222,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_Screen, DrawThickLine, DrawThickLine)
 
 //==========================================================================
 //
-// DCanvas :: Clear
+// ClearRect
 //
 // Set an area to a specified color.
 //
@@ -1281,7 +1281,7 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 
 //==========================================================================
 //
-// DCanvas :: Dim
+// DoDim
 //
 // Applies a colored overlay to an area of the screen.
 //

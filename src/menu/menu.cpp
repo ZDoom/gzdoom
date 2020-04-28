@@ -56,6 +56,7 @@
 #include "c_buttons.h"
 #include "types.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 int DMenu::InMenu;
 static ScaleOverrider *CurrentScaleOverrider;
@@ -381,7 +382,7 @@ void M_StartControlPanel (bool makeSound, bool scaleoverride)
 	}
 	BackbuttonTime = 0;
 	BackbuttonAlpha = 0;
-	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider(&screen->m2DDrawer);
+	if (scaleoverride && !CurrentScaleOverrider) CurrentScaleOverrider = new ScaleOverrider(twod);
 	else if (!scaleoverride && CurrentScaleOverrider)
 	{
 		delete CurrentScaleOverrider;

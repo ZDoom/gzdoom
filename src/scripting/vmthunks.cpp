@@ -58,6 +58,7 @@
 #include "c_dispatch.h"
 #include "s_music.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 DVector2 AM_GetPosition();
 int Net_GetLatency(int *ld, int *ad);
@@ -3498,3 +3499,4 @@ DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, name);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, baseorder);
 DEFINE_FIELD_X(MusPlayingInfo, MusPlayingInfo, loop);
 
+DEFINE_GLOBAL(generic_ui)

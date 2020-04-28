@@ -43,7 +43,6 @@
 #include "v_video.h"
 #include "sc_man.h"
 #include "voxels.h"
-#include "info.h"
 #include "printf.h"
 
 void VOX_AddVoxel(int sprnum, int frame, FVoxelDef *def);

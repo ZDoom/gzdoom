@@ -43,6 +43,7 @@
 #include "swrenderer/plane/r_flatplane.h"
 #include "swrenderer/drawers/r_draw_pal.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
+#include "v_draw.h"
 
 CVAR(String, r_viewsize, "", CVAR_NOSET)
 

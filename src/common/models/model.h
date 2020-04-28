@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include "textureid.h"
+#include "i_modelvertexbuffer.h"
 
 class FModelRenderer;
 class FGameTexture;

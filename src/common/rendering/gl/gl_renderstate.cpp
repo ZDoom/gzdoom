@@ -26,13 +26,10 @@
 */
 
 #include "templates.h"
-#include "doomstat.h"
-#include "r_data/colormaps.h"
 #include "gl_system.h"
 #include "gl_interface.h"
 #include "hw_cvars.h"
 #include "flatvertices.h"
-#include "hwrenderer/scene/hw_skydome.h"
 #include "gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
 #include "hw_lightbuffer.h"

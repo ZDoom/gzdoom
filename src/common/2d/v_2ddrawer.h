@@ -198,7 +198,7 @@ public:
 	int GetWidth() const { return Width; }
 	int GetHeight() const { return Height; }
 	void SetSize(int w, int h) { Width = w; Height = h; }
-	void Begin() { isIn2D = true; }
+	void Begin(int w, int h) { isIn2D = true; Width = w; Height = h; }
 	void End() { isIn2D = false; }
 	bool HasBegun2D() { return isIn2D; }
 

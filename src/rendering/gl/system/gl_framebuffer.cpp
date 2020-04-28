@@ -57,6 +57,7 @@
 #include "gl_buffers.h"
 #include "swrenderer/r_swscene.h"
 #include "gl_postprocessstate.h"
+#include "v_draw.h"
 
 #include "flatvertices.h"
 #include "hw_cvars.h"
@@ -522,7 +523,7 @@ void OpenGLFrameBuffer::Draw2D()
 	if (GLRenderer != nullptr)
 	{
 		GLRenderer->mBuffers->BindCurrentFB();
-		::Draw2D(&m2DDrawer, gl_RenderState);
+		::Draw2D(twod, gl_RenderState);
 	}
 }
 

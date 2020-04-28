@@ -30,6 +30,7 @@
 #include "model_md2.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "printf.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data

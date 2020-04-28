@@ -89,6 +89,7 @@
 #include "d_netinf.h"
 #include "m_cheat.h"
 #include "m_joy.h"
+#include "v_draw.h"
 #include "po_man.h"
 #include "p_local.h"
 #include "autosegs.h"
@@ -113,6 +114,7 @@
 #include "scriptutil.h"
 #include "v_palette.h"
 #include "texturemanager.h"
+#include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
 #ifdef __unix__
@@ -215,6 +217,27 @@ CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
 
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self < 0 || self > 4)
+	{
+		self = 4;
+	}
+	else if (self == 2 || self == 3)
+	{
+		self = self - 2; // softpoly to software
+	}
+
+	if (usergame)
+	{
+		// [SP] Update pitch limits to the netgame/gamesim.
+		players[consoleplayer].SendPitchLimits();
+	}
+	screen->SetTextureFilterMode();
+
+	// No further checks needed. All this changes now is which scene drawer the render backend calls.
+}
 
 CUSTOM_CVAR (Int, fraglimit, 0, CVAR_SERVERINFO)
 {
@@ -937,6 +960,7 @@ static void End2DAndUpdate()
 {
 	DrawRateStuff();
 	twod->End();
+	CheckBench();
 	screen->Update();
 }
 
@@ -1070,7 +1094,7 @@ void D_Display ()
 			viewsec = RenderView(&players[consoleplayer]);
 		}, true);
 
-		screen->Begin2D();
+		twod->Begin(screen->GetWidth(), screen->GetHeight());
 		if (!hud_toggled)
 		{
 			V_DrawBlend(viewsec);
@@ -1117,11 +1141,10 @@ void D_Display ()
 	}
 	else
 	{
-		screen->Begin2D();
+		twod->Begin(screen->GetWidth(), screen->GetHeight());
 		switch (gamestate)
 		{
 			case GS_FULLCONSOLE:
-				screen->Begin2D();
 				C_DrawConsole ();
 				M_Drawer ();
 				End2DAndUpdate ();
@@ -1207,7 +1230,7 @@ void D_Display ()
 
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
-		screen->End2D();
+		twod->End();
 		auto wipend = MakeGameTexture(screen->WipeEndScreen(), nullptr, ETextureType::SWCanvas);
 		auto wiper = Wiper::Create(wipe_type);
 		wiper->SetTextures(wipe, wipend);
@@ -1224,7 +1247,7 @@ void D_Display ()
 				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
 			} while (diff < 1);
 			wipestart = nowtime;
-			screen->Begin2D();
+			twod->Begin(screen->GetWidth(), screen->GetHeight());
 			done = wiper->Run(1);
 			C_DrawConsole ();	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
@@ -2798,6 +2821,40 @@ static bool System_DisableTextureFilter()
 	return !V_IsHardwareRenderer();
 }
 
+static void System_OnScreenSizeChanged()
+{
+	if (StatusBar != NULL)
+	{
+		StatusBar->CallScreenSizeChanged();
+	}
+	// Reload crosshair if transitioned to a different size
+	ST_LoadCrosshair(true);
+	if (primaryLevel && primaryLevel->automap)
+		primaryLevel->automap->NewResolution();
+}
+
+IntRect System_GetSceneRect()
+{
+	IntRect mSceneViewport;
+	// Special handling so the view with a visible status bar displays properly
+	int height, width;
+	if (screenblocks >= 10)
+	{
+		height = screen->GetHeight();
+		width = screen->GetWidth();
+	}
+	else
+	{
+		height = (screenblocks * screen->GetHeight() / 10) & ~7;
+		width = (screenblocks * screen->GetWidth() / 10);
+	}
+
+	mSceneViewport.left = viewwindowx;
+	mSceneViewport.top = screen->GetHeight() - (height + viewwindowy - ((height - viewheight) / 2));
+	mSceneViewport.width = viewwidth;
+	mSceneViewport.height = height;
+	return mSceneViewport;
+}
 //==========================================================================
 //
 // DoomSpecificInfo
@@ -3004,6 +3061,8 @@ static int D_DoomMain_Internal (void)
 		System_PlayStartupSound,
 		System_IsSpecialUI,
 		System_DisableTextureFilter,
+		System_OnScreenSizeChanged,
+		System_GetSceneRect,
 	};
 	sysCallbacks = &syscb;
 	

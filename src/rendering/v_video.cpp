@@ -39,13 +39,8 @@
 #include "c_cvars.h"
 #include "x86.h"
 #include "i_video.h"
-#include "r_state.h"
-#include "am_map.h"
-
-#include "doomstat.h"
 
 #include "c_console.h"
-#include "hu_stuff.h"
 
 #include "m_argv.h"
 
@@ -54,23 +49,19 @@
 #include "sc_man.h"
 
 #include "filesystem.h"
-
 #include "c_dispatch.h"
 #include "cmdlib.h"
-#include "sbar.h"
 #include "hardware.h"
 #include "m_png.h"
-#include "r_utility.h"
-#include "swrenderer/r_renderer.h"
 #include "menu/menu.h"
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"
 #include "version.h"
-#include "g_levellocals.h"
-#include "am_map.h"
 #include "texturemanager.h"
-#include "v_palette.h"
+#include "i_interface.h"
+#include "v_draw.h"
+#include "templates.h"
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
@@ -83,35 +74,14 @@ CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITC
 
 CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (vid_maxfps < TICRATE && vid_maxfps != 0)
+	if (self < GameTicRate && self != 0)
 	{
-		vid_maxfps = TICRATE;
+		self = GameTicRate;
 	}
 	else if (vid_maxfps > 1000)
 	{
-		vid_maxfps = 1000;
+		self = 1000;
 	}
-}
-
-CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self < 0 || self > 4)
-	{
-		self = 4;
-	}
-	else if (self == 2 || self == 3)
-	{
-		self = self - 2; // softpoly to software
-	}
-
-	if (usergame)
-	{
-		// [SP] Update pitch limits to the netgame/gamesim.
-		players[consoleplayer].SendPitchLimits();
-	}
-	screen->SetTextureFilterMode();
-
-	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
 
 CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -146,10 +116,8 @@ CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 		self = 0;
 		return;
 	}
-	if (StatusBar != NULL)
-	{
-		StatusBar->CallScreenSizeChanged();
-	}
+	if (sysCallbacks && sysCallbacks->OnScreenSizeChanged) 
+		sysCallbacks->OnScreenSizeChanged();
 	setsizeneeded = true;
 }
 
@@ -158,8 +126,6 @@ CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 EXTERN_CVAR(Bool, r_blendmethod)
 
 int active_con_scale();
-
-FRenderer *SWRenderer;
 
 #define DBGBREAK assert(0)
 
@@ -201,7 +167,8 @@ CUSTOM_CVAR (Bool, vid_vsync, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 }
 
 // [RH] Set true when vid_setmode command has been executed
-bool	setmodeneeded = false;
+bool setmodeneeded = false;
+bool setsizeneeded = false;
 
 //==========================================================================
 //
@@ -317,23 +284,15 @@ void V_UpdateModeSize (int width, int height)
 
 	DisplayWidth = width;
 	DisplayHeight = height;
-
-	R_OldBlend = ~0;
 }
 
 void V_OutputResized (int width, int height)
 {
 	V_UpdateModeSize(width, height);
 	setsizeneeded = true;
-	if (StatusBar != NULL)
-	{
-		StatusBar->CallScreenSizeChanged();
-	}
 	C_NewModeAdjust();
-	// Reload crosshair if transitioned to a different size
-	ST_LoadCrosshair(true);
-	if (primaryLevel && primaryLevel->automap)
-		primaryLevel->automap->NewResolution();
+	if (sysCallbacks && sysCallbacks->OnScreenSizeChanged) 
+		sysCallbacks->OnScreenSizeChanged();
 }
 
 bool IVideo::SetResolution ()
@@ -430,10 +389,8 @@ void V_Init2()
 CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 {
 	setsizeneeded = true;
-	if (StatusBar != NULL)
-	{
-		StatusBar->CallScreenSizeChanged();
-	}
+	if (sysCallbacks && sysCallbacks->OnScreenSizeChanged) 
+		sysCallbacks->OnScreenSizeChanged();
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)
@@ -460,7 +417,7 @@ void IVideo::DumpAdapters ()
 	Printf("Multi-monitor support unavailable.\n");
 }
 
-CUSTOM_CVAR_NAMED(Bool, vid_fullscreen, fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, vid_fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	setmodeneeded = true;
 }
@@ -496,7 +453,6 @@ DEFINE_GLOBAL(CleanXfac_1)
 DEFINE_GLOBAL(CleanYfac_1)
 DEFINE_GLOBAL(CleanWidth_1)
 DEFINE_GLOBAL(CleanHeight_1)
-DEFINE_GLOBAL(generic_ui)
 
 IHardwareTexture* CreateHardwareTexture()
 {
@@ -505,51 +461,25 @@ IHardwareTexture* CreateHardwareTexture()
 
 //==========================================================================
 //
-// V_DrawFrame
+// CVAR transsouls
 //
-// Draw a frame around the specified area using the view border
-// frame graphics. The border is drawn outside the area, not in it.
+// How translucent things drawn with STYLE_SoulTrans are. Normally, only
+// Lost Souls have this render style.
+// Values less than 0.25 will automatically be set to
+// 0.25 to ensure some degree of visibility. Likewise, values above 1.0 will
+// be set to 1.0, because anything higher doesn't make sense.
 //
 //==========================================================================
 
-void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
+CUSTOM_CVAR(Float, transsouls, 0.75f, CVAR_ARCHIVE)
 {
-	FGameTexture* p;
-	const gameborder_t* border = &gameinfo.Border;
-	// Sanity check for incomplete gameinfo
-	if (border == NULL)
-		return;
-	int offset = border->offset;
-	int right = left + width;
-	int bottom = top + height;
-
-	// Draw top and bottom sides.
-	p = TexMan.GetGameTextureByName(border->t);
-	drawer->AddFlatFill(left, top - (int)p->GetDisplayHeight(), right, top, p, true);
-	p = TexMan.GetGameTextureByName(border->b);
-	drawer->AddFlatFill(left, bottom, right, bottom + (int)p->GetDisplayHeight(), p, true);
-
-	// Draw left and right sides.
-	p = TexMan.GetGameTextureByName(border->l);
-	drawer->AddFlatFill(left - (int)p->GetDisplayWidth(), top, left, bottom, p, true);
-	p = TexMan.GetGameTextureByName(border->r);
-	drawer->AddFlatFill(right, top, right + (int)p->GetDisplayWidth(), bottom, p, true);
-
-	// Draw beveled corners.
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr), left + width, top - offset, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl), left - offset, top + height, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->br), left + width, top + height, TAG_DONE);
+	if (self < 0.25f)
+	{
+		self = 0.25f;
+	}
+	else if (self > 1.f)
+	{
+		self = 1.f;
+	}
 }
 
-DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
-{
-	PARAM_PROLOGUE;
-	PARAM_INT(x);
-	PARAM_INT(y);
-	PARAM_INT(w);
-	PARAM_INT(h);
-	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	DrawFrame(twod, x, y, w, h);
-	return 0;
-}

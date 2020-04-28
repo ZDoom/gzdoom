@@ -36,6 +36,7 @@
 #include "hw_cvars.h"
 #include "hw_renderstate.h"
 #include "r_videoscale.h"
+#include "v_draw.h"
 
 
 //===========================================================================

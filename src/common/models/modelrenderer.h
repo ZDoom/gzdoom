@@ -1,5 +1,7 @@
 
-#include "models.h"
+#include "renderstyle.h"
+#include "matrix.h"
+#include "model.h"
 
 class FModelRenderer
 {

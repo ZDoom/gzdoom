@@ -35,23 +35,21 @@
 #include <stdio.h>
 
 
-#include "x86.h"
-#include "actor.h"
-
 #include "v_video.h"
 
 #include "c_dispatch.h"
-#include "sbar.h"
 #include "hardware.h"
-#include "r_utility.h"
-#include "swrenderer/r_renderer.h"
-#include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"
-#include "hwrenderer/scene/hw_portal.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "v_font.h"
+#include "v_draw.h"
+#include "i_time.h"
+#include "v_2ddrawer.h"
+#include "vm.h"
+#include "i_interface.h"
 #include "flatvertices.h"
-#include "swrenderer/r_swscene.h"
+#include "version.h"
+#include "hw_material.h"
 
 #include <chrono>
 #include <thread>
@@ -60,7 +58,7 @@
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 
 EXTERN_CVAR(Int, vid_maxfps)
-EXTERN_CVAR(Bool, cl_capfps)
+CVAR(Bool, cl_capfps, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 EXTERN_CVAR(Int, screenblocks)
 
 //==========================================================================
@@ -75,21 +73,16 @@ EXTERN_CVAR(Int, screenblocks)
 DFrameBuffer::DFrameBuffer (int width, int height)
 {
 	SetSize(width, height);
-	mPortalState = new FPortalSceneState;
-	twod = &m2DDrawer;
 }
 
 DFrameBuffer::~DFrameBuffer()
 {
-	if (twod == &m2DDrawer) twod = nullptr;
-	delete mPortalState;
 }
 
 void DFrameBuffer::SetSize(int width, int height)
 {
 	Width = ViewportScaledWidth(width, height);
 	Height = ViewportScaledHeight(width, height);
-	m2DDrawer.SetSize(width, height);
 }
 
 //==========================================================================
@@ -100,8 +93,6 @@ void DFrameBuffer::SetSize(int width, int height)
 
 void DFrameBuffer::Update()
 {
-	CheckBench();
-
 	int initialWidth = GetClientWidth();
 	int initialHeight = GetClientHeight();
 	int clientWidth = ViewportScaledWidth(initialWidth, initialHeight);
@@ -182,19 +173,6 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 		return;
 	}
 
-	// Special handling so the view with a visible status bar displays properly
-	int height, width;
-	if (screenblocks >= 10)
-	{
-		height = GetHeight();
-		width = GetWidth();
-	}
-	else
-	{
-		height = (screenblocks*GetHeight() / 10) & ~7;
-		width = (screenblocks*GetWidth() / 10);
-	}
-
 	// Back buffer letterbox for the final output
 	int clientWidth = GetClientWidth();
 	int clientHeight = GetClientHeight();
@@ -222,10 +200,8 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	mScreenViewport.height = screenHeight;
 
 	// Viewport for the 3D scene
-	mSceneViewport.left = viewwindowx;
-	mSceneViewport.top = screenHeight - (height + viewwindowy - ((height - viewheight) / 2));
-	mSceneViewport.width = viewwidth;
-	mSceneViewport.height = height;
+	if (sysCallbacks && sysCallbacks->GetSceneRect) mSceneViewport = sysCallbacks->GetSceneRect();
+	else mSceneViewport = mScreenViewport;
 
 	// Scale viewports to fit letterbox
 	bool notScaled = ((mScreenViewport.width == ViewportScaledWidth(mScreenViewport.width, mScreenViewport.height)) &&

@@ -33,6 +33,10 @@
 #include "image.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "voxels.h"
+#include "texturemanager.h"
+#include "palettecontainer.h"
+#include "textures.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data

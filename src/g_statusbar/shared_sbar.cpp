@@ -62,6 +62,7 @@
 #include "utf8.h"
 #include "texturemanager.h"
 #include "v_palette.h"
+#include "v_draw.h"
 
 #include "../version.h"
 
@@ -140,6 +141,57 @@ CUSTOM_CVAR(Int, am_showmaplabel, 2, CVAR_ARCHIVE)
 }
 
 CVAR (Bool, idmypos, false, 0);
+
+//==========================================================================
+//
+// V_DrawFrame
+//
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+//
+//==========================================================================
+
+void V_DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
+{
+	FGameTexture* p;
+	const gameborder_t* border = &gameinfo.Border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
+	int offset = border->offset;
+	int right = left + width;
+	int bottom = top + height;
+
+	// Draw top and bottom sides.
+	p = TexMan.GetGameTextureByName(border->t);
+	drawer->AddFlatFill(left, top - (int)p->GetDisplayHeight(), right, top, p, true);
+	p = TexMan.GetGameTextureByName(border->b);
+	drawer->AddFlatFill(left, bottom, right, bottom + (int)p->GetDisplayHeight(), p, true);
+
+	// Draw left and right sides.
+	p = TexMan.GetGameTextureByName(border->l);
+	drawer->AddFlatFill(left - (int)p->GetDisplayWidth(), top, left, bottom, p, true);
+	p = TexMan.GetGameTextureByName(border->r);
+	drawer->AddFlatFill(right, top, right + (int)p->GetDisplayWidth(), bottom, p, true);
+
+	// Draw beveled corners.
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr), left + width, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl), left - offset, top + height, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetGameTextureByName(border->br), left + width, top + height, TAG_DONE);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	V_DrawFrame(twod, x, y, w, h);
+	return 0;
+}
 
 //---------------------------------------------------------------------------
 //
@@ -964,7 +1016,7 @@ void DBaseStatusBar::RefreshViewBorder ()
 		DrawBorder(twod, tex, viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
 		DrawBorder(twod, tex, 0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
 		
-		DrawFrame(twod, viewwindowx, viewwindowy, viewwidth, viewheight);
+		V_DrawFrame(twod, viewwindowx, viewwindowy, viewwidth, viewheight);
 	}
 }
 

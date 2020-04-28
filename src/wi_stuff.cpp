@@ -55,6 +55,7 @@
 #include "g_levellocals.h"
 #include "vm.h"
 #include "texturemanager.h"
+#include "v_draw.h"
 
 CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
@@ -701,7 +702,7 @@ void WI_Ticker()
 {
 	if (WI_Screen)
 	{
-		ScaleOverrider s(&screen->m2DDrawer);
+		ScaleOverrider s(twod);
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Ticker)
 		{
 			VMValue self = WI_Screen;
@@ -721,7 +722,7 @@ void WI_Drawer()
 {
 	if (WI_Screen)
 	{
-		ScaleOverrider s(&screen->m2DDrawer);
+		ScaleOverrider s(twod);
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
 			FillBorder(twod, nullptr);
@@ -765,7 +766,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 	}
 	
 	WI_Screen = cls->CreateNew();
-	ScaleOverrider s(&screen->m2DDrawer);
+	ScaleOverrider s(twod);
 	IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Start)
 	{
 		VMValue val[2] = { WI_Screen, wbstartstruct };

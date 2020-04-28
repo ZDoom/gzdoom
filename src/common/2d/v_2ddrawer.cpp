@@ -39,7 +39,8 @@
 #include "v_draw.h"
 #include "fcolormap.h"
 
-F2DDrawer* twod;
+static F2DDrawer drawer;
+F2DDrawer* twod = &drawer;
 
 EXTERN_CVAR(Float, transsouls)
 

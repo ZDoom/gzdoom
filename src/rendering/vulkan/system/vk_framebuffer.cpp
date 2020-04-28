@@ -31,6 +31,7 @@
 #include "g_game.h"
 #include "v_text.h"
 #include "version.h"
+#include "v_draw.h"
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_vrmodes.h"
@@ -192,7 +193,7 @@ void VulkanFrameBuffer::Update()
 	GetPostprocess()->SetActiveRenderTarget();
 
 	Draw2D();
-	Clear2D();
+	twod->Clear();
 
 	mRenderState->EndRenderPass();
 	mRenderState->EndFrame();
@@ -480,7 +481,7 @@ FTexture *VulkanFrameBuffer::WipeEndScreen()
 {
 	GetPostprocess()->SetActiveRenderTarget();
 	Draw2D();
-	Clear2D();
+	twod->Clear();
 
 	auto tex = new FWrapperTexture(mScreenViewport.width, mScreenViewport.height, 1);
 	auto systex = static_cast<VkHardwareTexture*>(tex->GetSystemTexture());
@@ -643,7 +644,7 @@ void VulkanFrameBuffer::UpdateGpuStats()
 
 void VulkanFrameBuffer::Draw2D()
 {
-	::Draw2D(&m2DDrawer, *mRenderState);
+	::Draw2D(twod, *mRenderState);
 }
 
 VulkanCommandBuffer *VulkanFrameBuffer::GetTransferCommands()

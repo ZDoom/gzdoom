@@ -43,6 +43,7 @@
 #include "hw_lightbuffer.h"
 #include "hw_vrmodes.h"
 #include "hw_clipper.h"
+#include "v_draw.h"
 
 EXTERN_CVAR(Float, r_visibility)
 CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)

@@ -65,6 +65,7 @@
 #include "vm.h"
 #include "g_game.h"
 #include "s_music.h"
+#include "v_draw.h"
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

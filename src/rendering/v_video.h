@@ -35,8 +35,8 @@
 #define __V_VIDEO_H__
 
 #include <functional>
+#include "basics.h"
 #include "vectors.h"
-
 #include "m_png.h"
 #include "renderstyle.h"
 #include "c_cvars.h"
@@ -44,10 +44,7 @@
 #include "intrect.h"
 #include "hw_shadowmap.h"
 
-static const int VID_MIN_WIDTH = 320;
-static const int VID_MIN_HEIGHT = 200;
 
-class player_t;
 struct sector_t;
 struct FPortalSceneState;
 class FSkyVertexBuffer;
@@ -128,9 +125,6 @@ class FTexture;
 
 class DFrameBuffer
 {
-public:
-
-	F2DDrawer m2DDrawer;
 private:
 	int Width = 0;
 	int Height = 0;
@@ -144,7 +138,6 @@ public:
 	unsigned int uniformblockalignment = 256;	// Hardware dependent uniform buffer alignment.
 	unsigned int maxuniformblock = 65536;
 	const char *vendorstring;					// We have to account for some issues with particular vendors.
-	FPortalSceneState *mPortalState;			// global portal state.
 	FSkyVertexBuffer *mSkyData = nullptr;		// the sky vertex buffer
 	FFlatVertexBuffer *mVertexData = nullptr;	// Global vertex data
 	HWViewpointBuffer *mViewpoints = nullptr;	// Viewpoint render data.
@@ -224,14 +217,6 @@ public:
 	virtual IDataBuffer *CreateDataBuffer(int bindingpoint, bool ssbo, bool needsresize) { return nullptr; }
 	bool BuffersArePersistent() { return !!(hwcaps & RFL_BUFFER_STORAGE); }
 
-	// Begin/End 2D drawing operations.
-	void Begin2D() 
-	{ 
-		m2DDrawer.Begin();
-		m2DDrawer.SetSize(Width, Height);
-	}
-	void End2D() { m2DDrawer.End(); }
-
 	// This is overridable in case Vulkan does it differently.
 	virtual bool RenderTextureIsFlipped() const
 	{
@@ -255,7 +240,6 @@ public:
 	virtual void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect&)> renderFunc) {}
 	virtual void SetActiveRenderTarget() {}
 
-
 	// Screen wiping
 	virtual FTexture *WipeStartScreen();
 	virtual FTexture *WipeEndScreen();
@@ -265,7 +249,6 @@ public:
 	void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 
 	virtual void Draw2D() {}
-	void Clear2D() { m2DDrawer.Clear(); }
 
 	virtual void SetViewportRects(IntRect *bounds);
 	int ScreenToWindowX(int x);
@@ -310,14 +293,8 @@ void V_Init2 ();
 
 void V_Shutdown ();
 
-class FScanner;
-struct FScriptPosition;
-
 inline bool IsRatioWidescreen(int ratio) { return (ratio & 3) != 0; }
-
-
-#include "v_draw.h"
-
+extern bool setsizeneeded, setmodeneeded;
 
 
 #endif // __V_VIDEO_H__

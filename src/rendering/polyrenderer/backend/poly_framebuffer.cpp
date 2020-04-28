@@ -28,6 +28,7 @@
 #include "g_game.h"
 #include "v_text.h"
 #include "i_video.h"
+#include "v_draw.h"
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hw_vrmodes.h"
@@ -171,7 +172,7 @@ void PolyFrameBuffer::Update()
 	Flush3D.Clock();
 
 	Draw2D();
-	Clear2D();
+	twod->Clear();
 
 	Flush3D.Unclock();
 
@@ -375,7 +376,7 @@ FTexture *PolyFrameBuffer::WipeStartScreen()
 FTexture *PolyFrameBuffer::WipeEndScreen()
 {
 	Draw2D();
-	Clear2D();
+	twod->Clear();
 
 	auto tex = new FWrapperTexture(mScreenViewport.width, mScreenViewport.height, 1);
 	auto systex = static_cast<PolyHardwareTexture*>(tex->GetSystemTexture());
@@ -430,7 +431,7 @@ void PolyFrameBuffer::BeginFrame()
 
 void PolyFrameBuffer::Draw2D()
 {
-	::Draw2D(&m2DDrawer, *mRenderState);
+	::Draw2D(twod, *mRenderState);
 }
 
 unsigned int PolyFrameBuffer::GetLightBufferBlockSize() const

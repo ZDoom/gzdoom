@@ -29,6 +29,7 @@
 #include "templates.h"
 #include "bitmap.h"
 #include "hw_material.h"
+#include "v_draw.h"
 
 class FBurnTexture : public FTexture
 {

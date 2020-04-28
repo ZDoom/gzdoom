@@ -124,12 +124,6 @@ class FMultipatchTextureBuilder;
 
 extern int r_spriteadjustSW, r_spriteadjustHW;
 
-class FNullTextureID : public FTextureID
-{
-public:
-	FNullTextureID() : FTextureID(0) {}
-};
-
 enum FTextureFormat : uint32_t
 {
 	TEX_Pal,

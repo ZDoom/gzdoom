@@ -23,6 +23,8 @@
 #include "model_obj.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
+#include "printf.h"
+#include "textureid.h"
 
 /**
  * Load an OBJ model

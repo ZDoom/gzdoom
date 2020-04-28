@@ -1,8 +1,7 @@
 #ifndef __RES_VOXEL_H
 #define __RES_VOXEL_H
 
-#include "doomdef.h"
-
+#include <stdint.h>
 // [RH] Voxels from Build
 
 #define MAXVOXMIPS 5

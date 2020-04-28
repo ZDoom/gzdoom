@@ -38,7 +38,6 @@
 #include "palentry.h"
 #include "name.h"
 
-class DCanvas;
 class FGameTexture;
 struct FRemapTable;
 

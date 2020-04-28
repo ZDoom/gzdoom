@@ -57,6 +57,7 @@
 #include "vm.h"
 #include "v_video.h"
 #include "actorinlines.h"
+#include "v_draw.h"
 
 static FRandom pr_randomspeech("RandomSpeech");
 

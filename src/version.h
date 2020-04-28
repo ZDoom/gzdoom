@@ -112,6 +112,8 @@ const char *GetVersionString();
 
 const int SAVEPICWIDTH = 216;
 const int SAVEPICHEIGHT = 162;
+const int VID_MIN_WIDTH = 320;
+const int VID_MIN_HEIGHT = 200;
 
 
 #endif //__VERSION_H__

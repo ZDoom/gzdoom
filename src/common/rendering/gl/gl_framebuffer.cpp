@@ -53,9 +53,9 @@
 #include "gl_debug.h"
 #include "r_videoscale.h"
 #include "gl_buffers.h"
-#include "swrenderer/r_swscene.h"
 #include "gl_postprocessstate.h"
 #include "v_draw.h"
+#include "printf.h"
 
 #include "flatvertices.h"
 #include "hw_cvars.h"

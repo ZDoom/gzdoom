@@ -33,14 +33,13 @@
 */
 
 
-#include "g_level.h"
 #include "c_console.h"
 #include "c_dispatch.h"
-#include "r_utility.h"
 #include "v_video.h"
 #include "hw_clock.h"
 #include "i_time.h"
 #include "i_interface.h"
+#include "printf.h"
 
 glcycle_t RenderWall,SetupWall,ClipWall;
 glcycle_t RenderFlat,SetupFlat;
@@ -172,8 +171,7 @@ void CheckBench()
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);
-		//AppendMissingTextureStats(compose);
-		compose.AppendFormat("%llu fps\n\n", (unsigned long long)LastCount);
+		compose << "\n\n\n";
 
 		FILE *f = fopen("benchmarks.txt", "at");
 		if (f != NULL)

@@ -47,7 +47,7 @@
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/segments/r_drawsegment.h"
 #include "swrenderer/segments/r_clipsegment.h"
-#include "swrenderer/drawers/r_thread.h"
+#include "r_thread.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"

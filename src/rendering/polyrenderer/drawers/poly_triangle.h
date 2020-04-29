@@ -22,8 +22,8 @@
 
 #pragma once
 
-#include "swrenderer/drawers/r_draw.h"
-#include "swrenderer/drawers/r_thread.h"
+//#include "swrenderer/drawers/r_draw.h"
+#include "r_thread.h"
 #include "polyrenderer/drawers/screen_triangle.h"
 #include "polyrenderer/drawers/poly_vertex_shader.h"
 

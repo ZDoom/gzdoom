@@ -44,7 +44,7 @@
 #include "swrenderer/plane/r_visibleplanelist.h"
 #include "swrenderer/line/r_renderdrawsegment.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Int, r_drawfuzz)

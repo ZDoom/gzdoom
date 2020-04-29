@@ -22,22 +22,17 @@
 
 #include <stddef.h>
 #include "templates.h"
-#include "doomdef.h"
 
 #include "filesystem.h"
 #include "v_video.h"
-#include "doomstat.h"
-#include "st_stuff.h"
-#include "g_game.h"
-#include "g_level.h"
-#include "r_data/r_translate.h"
 #include "model.h"
-#include "v_palette.h"
-#include "r_data/colormaps.h"
 #include "poly_thread.h"
-#include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
 #include "x86.h"
+
+#ifndef NO_SSE
+#include <immintrin.h>
+#endif
 
 PolyTriangleThreadData::PolyTriangleThreadData(int32_t core, int32_t num_cores, int32_t numa_node, int32_t num_numa_nodes, int numa_start_y, int numa_end_y)
 	: core(core), num_cores(num_cores), numa_node(numa_node), num_numa_nodes(num_numa_nodes), numa_start_y(numa_start_y), numa_end_y(numa_end_y)

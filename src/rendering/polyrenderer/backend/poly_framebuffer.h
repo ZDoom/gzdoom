@@ -1,8 +1,8 @@
 #pragma once
 
 #include "gl_sysfb.h"
-#include "rendering/swrenderer/r_memory.h"
-#include "rendering/swrenderer/drawers/r_thread.h"
+#include "r_memory.h"
+#include "r_thread.h"
 #include "rendering/polyrenderer/drawers/poly_triangle.h"
 
 struct FRenderViewpoint;

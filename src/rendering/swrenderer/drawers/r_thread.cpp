@@ -31,7 +31,7 @@
 #include "g_game.h"
 #include "g_level.h"
 #include "r_thread.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "polyrenderer/drawers/poly_triangle.h"
 #include <chrono>

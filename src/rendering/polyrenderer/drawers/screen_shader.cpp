@@ -22,7 +22,6 @@
 
 #include <stddef.h>
 #include "templates.h"
-#include "doomdef.h"
 #include "poly_thread.h"
 #include "screen_scanline_setup.h"
 #include "x86.h"

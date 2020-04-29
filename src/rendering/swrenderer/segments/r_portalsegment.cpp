@@ -39,7 +39,7 @@
 #include "po_man.h"
 #include "r_data/colormaps.h"
 #include "swrenderer/segments/r_portalsegment.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer

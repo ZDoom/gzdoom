@@ -660,7 +660,6 @@ file( GLOB HEADER_FILES
 set ( SWRENDER_SOURCES
 	rendering/swrenderer/r_swcolormaps.cpp
 	rendering/swrenderer/r_swrenderer.cpp
-	rendering/swrenderer/r_memory.cpp
 	rendering/swrenderer/r_renderthread.cpp
 	rendering/swrenderer/drawers/r_draw.cpp
 	rendering/swrenderer/drawers/r_draw_pal.cpp
@@ -1084,7 +1083,7 @@ set (PCH_SOURCES
 	common/utility/s_playlist.cpp
 	common/utility/zstrformat.cpp
 	common/utility/name.cpp
-	common/utility/m_bbox.cpp
+	common/utility/r_memory.cpp
 	common/thirdparty/md5.cpp
  	common/thirdparty/superfasthash.cpp
 	common/filesystem/filesystem.cpp

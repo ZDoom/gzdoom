@@ -22,11 +22,14 @@
 
 #include <stddef.h>
 #include "templates.h"
-#include "doomdef.h"
 #include "poly_thread.h"
 #include "screen_scanline_setup.h"
 #include "x86.h"
 #include <cmath>
+
+#ifndef NO_SSE
+#include <immintrin.h>
+#endif
 
 #ifdef NO_SSE
 void WriteW(int y, int x0, int x1, const TriDrawTriangleArgs* args, PolyTriangleThreadData* thread)

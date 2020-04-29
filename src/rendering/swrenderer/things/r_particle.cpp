@@ -62,7 +62,7 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/drawers/r_draw_pal.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);

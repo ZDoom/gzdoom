@@ -22,12 +22,14 @@
 
 #pragma once
 
-#include "r_draw.h"
 #include <vector>
 #include <memory>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include "templates.h"
+#include "c_cvars.h"
+#include "basics.h"
 
 // Use multiple threads when drawing
 EXTERN_CVAR(Int, r_multithreaded)

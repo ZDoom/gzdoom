@@ -38,7 +38,7 @@
 #include "g_level.h"
 #include "a_dynlight.h"
 #include "texturemanager.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/scene/r_opaque_pass.h"
 #include "swrenderer/scene/r_3dfloors.h"

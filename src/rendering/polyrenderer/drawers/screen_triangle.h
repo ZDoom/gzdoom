@@ -25,7 +25,7 @@
 #include <cstdint>
 #include <vector>
 #include "renderstyle.h"
-#include "rendering/swrenderer/drawers/r_draw.h"
+//#include "rendering/swrenderer/drawers/r_draw.h"
 
 class FString;
 class PolyTriangleThreadData;

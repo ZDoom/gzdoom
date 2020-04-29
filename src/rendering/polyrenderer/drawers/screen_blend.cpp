@@ -22,6 +22,10 @@
 
 #include "screen_blend.h"
 
+#ifndef NO_SSE
+#include <immintrin.h>
+#endif
+
 static const int shiftTable[] = {
 	0, 0, 0, 0, // STYLEALPHA_Zero
 	0, 0, 0, 0, // STYLEALPHA_One

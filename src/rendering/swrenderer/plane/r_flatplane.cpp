@@ -50,7 +50,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/plane/r_visibleplane.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer

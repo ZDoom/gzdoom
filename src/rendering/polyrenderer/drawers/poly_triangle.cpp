@@ -22,21 +22,12 @@
 
 #include <stddef.h>
 #include "templates.h"
-#include "doomdef.h"
 
 #include "filesystem.h"
 #include "v_video.h"
-#include "doomstat.h"
-#include "st_stuff.h"
-#include "g_game.h"
-#include "g_level.h"
-#include "r_data/r_translate.h"
 #include "model.h"
-#include "v_palette.h"
-#include "r_data/colormaps.h"
 #include "poly_triangle.h"
 #include "poly_thread.h"
-#include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
 #include "x86.h"
 

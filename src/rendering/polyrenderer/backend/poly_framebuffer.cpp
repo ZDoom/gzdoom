@@ -28,6 +28,7 @@
 #include "v_text.h"
 #include "i_video.h"
 #include "v_draw.h"
+#include "colormaps.h"
 
 #include "hw_clock.h"
 #include "hw_vrmodes.h"
@@ -404,12 +405,14 @@ void PolyFrameBuffer::BeginFrame()
 	SetViewportRects(nullptr);
 	CheckCanvas();
 
+#if 0
 	swrenderer::R_InitFuzzTable(GetCanvas()->GetPitch());
 	static int next_random = 0;
 	swrenderer::fuzzpos = (swrenderer::fuzzpos + swrenderer::fuzz_random_x_offset[next_random] * FUZZTABLE / 100) % FUZZTABLE;
 	next_random++;
 	if (next_random == FUZZ_RANDOM_X_SIZE)
 		next_random = 0;
+#endif
 }
 
 void PolyFrameBuffer::Draw2D()

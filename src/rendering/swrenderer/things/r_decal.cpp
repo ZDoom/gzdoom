@@ -51,7 +51,7 @@
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/viewport/r_spritedrawer.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 
 namespace swrenderer

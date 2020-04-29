@@ -63,7 +63,7 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/things/r_sprite.h"
 #include "swrenderer/viewport/r_viewport.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "g_levellocals.h"
 #include "v_draw.h"

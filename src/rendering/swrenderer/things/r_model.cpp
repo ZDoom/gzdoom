@@ -30,7 +30,7 @@
 #include "actorinlines.h"
 #include "i_time.h"
 #include "texturemanager.h"
-#include "swrenderer/r_memory.h"
+#include "r_memory.h"
 #include "swrenderer/r_swcolormaps.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"

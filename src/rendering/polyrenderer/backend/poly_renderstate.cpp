@@ -24,8 +24,6 @@
 #include "polyrenderer/backend/poly_framebuffer.h"
 #include "polyrenderer/backend/poly_hwtexture.h"
 #include "templates.h"
-#include "doomstat.h"
-#include "r_data/colormaps.h"
 #include "hw_skydome.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"
@@ -34,7 +32,6 @@
 #include "flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/data/shaderuniforms.h"
-#include "swrenderer/r_swcolormaps.h"
 
 static PolyDrawMode dtToDrawMode[] =
 {

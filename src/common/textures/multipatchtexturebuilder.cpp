@@ -138,6 +138,8 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 {
 	buildinfo.texture = new FGameTexture(nullptr, buildinfo.Name);
 	buildinfo.texture->SetUseType(usetype);
+	buildinfo.texture->SetOffsets(0, buildinfo.LeftOffset[0], buildinfo.TopOffset[0]);	// These are needed for construction of other multipatch textures.
+	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
 	TexMan.AddGameTexture(buildinfo.texture);
 }
 
@@ -812,10 +814,10 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 		{
 			FGameTexture *tex = TexMan.GetGameTexture(texno);
 
-			if (tex != nullptr && tex->isValid() && dynamic_cast<FImageTexture*>(tex->GetTexture()))
+			if (tex != nullptr && tex->isValid() && (tex->GetTexture() == nullptr || dynamic_cast<FImageTexture*>(tex->GetTexture())))
 			{
-				//We cannot set the image source yet. First all textures need to be resolved.
-				buildinfo.Inits[i].Texture = static_cast<FImageTexture*>(tex->GetTexture());
+				//We cannot set the image texture yet. First all textures need to be resolved.
+				buildinfo.Inits[i].GameTexture = tex;
 				bool iscomplex = !!complex.CheckKey(tex);
 				if (iscomplex) complex.Insert(buildinfo.texture, true);
 				buildinfo.bComplex |= iscomplex;
@@ -830,13 +832,15 @@ void FMultipatchTextureBuilder::ResolvePatches(BuildInfo &buildinfo)
 				// The patch is bogus. Remove it.
 				if (buildinfo.Inits[i].HasLine) buildinfo.Inits[i].sc.Message(MSG_WARNING, "Invalid patch '%s' in texture '%s'\n", buildinfo.Inits[i].TexName.GetChars(), buildinfo.Name.GetChars());
 				else Printf(TEXTCOLOR_YELLOW  "Invalid patch '%s' in texture '%s'\n", buildinfo.Inits[i].TexName.GetChars(), buildinfo.Name.GetChars());
+				buildinfo.Inits.Delete(i);
+				buildinfo.Parts.Delete(i);
 				i--;
 			}
 		}
 	}
 	for (unsigned i = 0; i < buildinfo.Inits.Size(); i++)
 	{
-		if (buildinfo.Inits[i].Texture == nullptr)
+		if (buildinfo.Inits[i].GameTexture == nullptr)
 		{
 			buildinfo.Inits.Delete(i);
 			buildinfo.Parts.Delete(i);
@@ -876,10 +880,10 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 			{
 				if (buildinfo.Parts[j].TexImage == nullptr)
 				{
-					auto image = buildinfo.Inits[j].Texture;
-					if (image->GetImage() != nullptr)
+					auto image = buildinfo.Inits[j].GameTexture->GetTexture();
+					if (image && image->GetImage() != nullptr)
 					{
-						buildinfo.Parts[j].TexImage = image;
+						buildinfo.Parts[j].TexImage = static_cast<FImageTexture*>(image);
 						donesomething = true;
 					}
 					else hasEmpty = true;

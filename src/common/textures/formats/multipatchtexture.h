@@ -92,7 +92,7 @@ struct TexInit
 {
 	FString TexName;
 	ETextureType UseType = ETextureType::Null;
-	FImageTexture *Texture = nullptr;
+	FGameTexture *GameTexture = nullptr;
 	bool Silent = false;
 	bool HasLine = false;
 	bool UseOffsets = false;

@@ -659,9 +659,6 @@ file( GLOB HEADER_FILES
 	rendering/vulkan/renderer/*.h
 	rendering/vulkan/shaders/*.h
 	rendering/vulkan/textures/*.h
-	rendering/gl/renderer/*.h
-	rendering/gl/shaders/*.h
-	rendering/gl/system/*.h
 	*.h
 )
 
@@ -935,9 +932,6 @@ set (PCH_SOURCES
 	g_statusbar/shared_sbar.cpp
 	rendering/2d/f_wipe.cpp
 	rendering/2d/v_blend.cpp
-	rendering/gl/renderer/gl_renderer.cpp
-	rendering/gl/renderer/gl_stereo3d.cpp
-	rendering/gl/system/gl_framebuffer.cpp
 	rendering/hwrenderer/hw_entrypoint.cpp
 	rendering/hwrenderer/data/hw_vertexbuilder.cpp
 	rendering/hwrenderer/dynlights/doom_aabbtree.cpp
@@ -946,7 +940,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/scene/hw_renderstate.cpp
 	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
 	rendering/hwrenderer/textures/hw_precache.cpp
-	rendering/hwrenderer/utility/hw_clock.cpp
 	rendering/hwrenderer/utility/hw_draw2d.cpp
 	rendering/hwrenderer/utility/hw_lighting.cpp
 	maploader/edata.cpp
@@ -1126,6 +1119,7 @@ set (PCH_SOURCES
 	common/rendering/v_framebuffer.cpp
 	common/rendering/v_video.cpp
 	common/rendering/r_videoscale.cpp
+	common/rendering/hwrenderer/data/hw_clock.cpp
 	common/rendering/hwrenderer/data/hw_skydome.cpp
 	common/rendering/hwrenderer/data/flatvertices.cpp
 	common/rendering/hwrenderer/data/hw_viewpointbuffer.cpp
@@ -1139,6 +1133,9 @@ set (PCH_SOURCES
 	common/rendering/hwrenderer/postprocessing/hw_postprocess.cpp
 	common/rendering/hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	common/rendering/gl_load/gl_interface.cpp
+	common/rendering/gl/gl_renderer.cpp
+	common/rendering/gl/gl_stereo3d.cpp
+	common/rendering/gl/gl_framebuffer.cpp
 	common/rendering/gl/gl_renderstate.cpp
 	common/rendering/gl/gl_renderbuffers.cpp
 	common/rendering/gl/gl_postprocess.cpp
@@ -1420,15 +1417,6 @@ source_group("Rendering\\Vulkan Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE
 source_group("Rendering\\Vulkan Renderer\\Third Party" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/.+")
 source_group("Rendering\\Vulkan Renderer\\Third Party\\Volk" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/volk/.+")
 source_group("Rendering\\Vulkan Renderer\\Third Party\\Vk_Mem_Alloc" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/thirdparty/vk_mem_alloc.+")
-source_group("Rendering\\OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/.+")
-source_group("Rendering\\OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/data/.+")
-source_group("Rendering\\OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/dynlights/.+")
-source_group("Rendering\\OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/renderer/.+")
-source_group("Rendering\\OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/scene/.+")
-source_group("Rendering\\OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/shaders/.+")
-source_group("Rendering\\OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/system/.+")
-source_group("Rendering\\OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/textures/.+")
-source_group("Rendering\\OpenGL Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/gl/utility/.+")
 source_group("Rendering\\Software Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/.+")
 source_group("Rendering\\Software Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/drawers/.+")
 source_group("Rendering\\Software Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/swrenderer/scene/.+")

@@ -26,15 +26,15 @@
 */
 
 #include "gl_system.h"
-#include "gl/renderer/gl_renderer.h"
+#include "gl_renderer.h"
 #include "gl_renderbuffers.h"
 #include "hw_vrmodes.h"
-#include "gl/system/gl_framebuffer.h"
+#include "gl_framebuffer.h"
 #include "gl_postprocessstate.h"
-#include "gl/system/gl_framebuffer.h"
+#include "gl_framebuffer.h"
 #include "gl_shaderprogram.h"
 #include "gl_buffers.h"
-#include "menu/menu.h"
+#include "templates.h"
 
 EXTERN_CVAR(Int, vr_mode)
 EXTERN_CVAR(Float, vid_saturation)
@@ -42,6 +42,8 @@ EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Int, gl_satformula)
 EXTERN_CVAR(Int, gl_dither_bpc)
+
+void UpdateVRModes(bool considerQuadBuffered = true);
 
 namespace OpenGLRenderer
 {

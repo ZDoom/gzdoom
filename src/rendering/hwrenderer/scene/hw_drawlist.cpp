@@ -33,7 +33,7 @@
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawlist.h"
 #include "flatvertices.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "hw_clock.h"
 #include "hw_renderstate.h"
 #include "hw_drawinfo.h"
 #include "hw_fakeflat.h"

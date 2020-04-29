@@ -37,7 +37,7 @@
 #include "swrenderer/r_swscene.h"
 #include "swrenderer/r_renderer.h"
 #include "hw_dynlightdata.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "hw_clock.h"
 #include "flatvertices.h"
 #include "v_palette.h"
 #include "d_main.h"

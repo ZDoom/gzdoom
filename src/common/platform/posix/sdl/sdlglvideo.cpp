@@ -47,8 +47,8 @@
 #include "gl_sysfb.h"
 #include "gl_system.h"
 
-#include "gl/renderer/gl_renderer.h"
-#include "gl/system/gl_framebuffer.h"
+#include "gl_renderer.h"
+#include "gl_framebuffer.h"
 
 #ifdef HAVE_VULKAN
 #include "rendering/vulkan/system/vk_framebuffer.h"

@@ -76,7 +76,7 @@ enum
 // also shamelessly lifted from ZDoomGL! ;)
 //
 //-----------------------------------------------------------------------------
-EXTERN_CVAR(Float, skyoffset)
+CVAR(Float, skyoffset, 0, 0)	// for testing
 
 
 struct SkyColor

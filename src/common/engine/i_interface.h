@@ -16,6 +16,7 @@ struct SystemCallbacks
 	bool (*DisableTextureFilter)();
 	void (*OnScreenSizeChanged)();
 	IntRect(*GetSceneRect)();
+	FString(*GetLocationDescription)();
 };
 
 extern SystemCallbacks *sysCallbacks;

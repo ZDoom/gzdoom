@@ -32,7 +32,7 @@
 #include "hwrenderer/data/buffers.h"
 #include "flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "hw_clock.h"
 #include "hw_cvars.h"
 #include "hw_renderstate.h"
 #include "r_videoscale.h"

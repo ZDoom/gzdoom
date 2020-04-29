@@ -52,7 +52,7 @@
 #include "win32basevideo.h"
 #include "cmdlib.h"
 
-#include "gl/system/gl_framebuffer.h"
+#include "gl_framebuffer.h"
 
 CVAR(Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 

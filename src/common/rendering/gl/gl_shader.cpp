@@ -44,7 +44,7 @@
 #include "gl_interface.h"
 #include "gl_debug.h"
 #include "matrix.h"
-#include "gl/renderer/gl_renderer.h"
+#include "gl_renderer.h"
 #include <map>
 #include <memory>
 

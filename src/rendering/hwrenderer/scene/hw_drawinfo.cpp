@@ -36,7 +36,7 @@
 #include "hw_drawinfo.h"
 #include "po_man.h"
 #include "models.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "hw_clock.h"
 #include "hw_cvars.h"
 #include "hw_viewpointbuffer.h"
 #include "flatvertices.h"

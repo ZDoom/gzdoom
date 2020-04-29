@@ -30,7 +30,7 @@
 #include "i_video.h"
 #include "v_draw.h"
 
-#include "hwrenderer/utility/hw_clock.h"
+#include "hw_clock.h"
 #include "hw_vrmodes.h"
 #include "hw_cvars.h"
 #include "hwrenderer/models/hw_models.h"

@@ -31,12 +31,12 @@
 #include "hw_cvars.h"
 #include "flatvertices.h"
 #include "gl_shader.h"
-#include "gl/renderer/gl_renderer.h"
+#include "gl_renderer.h"
 #include "hw_lightbuffer.h"
 #include "gl_renderbuffers.h"
 #include "gl_hwtexture.h"
 #include "gl_buffers.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "hw_clock.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 
 namespace OpenGLRenderer

@@ -38,9 +38,9 @@
 #include "c_dispatch.h"
 #include "r_utility.h"
 #include "v_video.h"
-#include "g_levellocals.h"
 #include "hw_clock.h"
 #include "i_time.h"
+#include "i_interface.h"
 
 glcycle_t RenderWall,SetupWall,ClipWall;
 glcycle_t RenderFlat,SetupFlat;
@@ -167,11 +167,8 @@ void CheckBench()
 
 		FString compose;
 
-        auto &vp = r_viewpoint;
-		auto Level = vp.ViewLevel;
-		compose.Format("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n",
-			Level->MapName.GetChars(), Level->LevelName.GetChars(), vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw.Degrees, vp.Angles.Pitch.Degrees);
-		
+		if (sysCallbacks && sysCallbacks->GetLocationDescription) compose = sysCallbacks->GetLocationDescription();
+	
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);

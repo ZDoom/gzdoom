@@ -1,14 +1,10 @@
 #ifndef __GL_RENDERER_H
 #define __GL_RENDERER_H
 
-#include "r_defs.h"
 #include "v_video.h"
 #include "vectors.h"
-#include "swrenderer/r_renderer.h"
 #include "matrix.h"
 #include "gl_renderbuffers.h"
-#include "hwrenderer/scene/hw_portal.h"
-#include "hw_shadowmap.h"
 #include <functional>
 
 #ifdef _MSC_VER
@@ -83,7 +79,6 @@ public:
 	void CopyToBackbuffer(const IntRect *bounds, bool applyGamma);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma);
 	void Flush();
-	void Draw2D(F2DDrawer *data);
 	void BeginFrame();
     
 	bool StartOffscreen();

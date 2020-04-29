@@ -1,6 +1,5 @@
 #pragma once
 
-#include "v_palette.h"
 #include "matrix.h"
 #include "hwrenderer/data/buffers.h"
 #include "hw_renderstate.h"

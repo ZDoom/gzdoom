@@ -30,7 +30,7 @@
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"
 #include "hw_cvars.h"
-#include "hwrenderer/utility/hw_clock.h"
+#include "hw_clock.h"
 #include "flatvertices.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "hwrenderer/data/shaderuniforms.h"

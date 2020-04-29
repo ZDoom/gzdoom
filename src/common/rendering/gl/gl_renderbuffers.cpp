@@ -25,7 +25,7 @@
 #include "printf.h"
 #include "hw_cvars.h"
 #include "gl_debug.h"
-#include "gl/renderer/gl_renderer.h"
+#include "gl_renderer.h"
 #include "gl_renderbuffers.h"
 #include "gl_postprocessstate.h"
 #include "gl_shaderprogram.h"

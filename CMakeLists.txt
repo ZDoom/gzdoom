@@ -156,6 +156,7 @@ macro( use_fast_math )
 	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ZD_FASTMATH_FLAG}" )
 endmacro()
 
+
 include( CheckFunctionExists )
 
 macro( require_stricmp )

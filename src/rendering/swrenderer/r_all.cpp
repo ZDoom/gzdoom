@@ -5,7 +5,6 @@
 #include "drawers/r_draw.cpp"
 #include "drawers/r_draw_pal.cpp"
 #include "drawers/r_draw_rgba.cpp"
-#include "drawers/r_thread.cpp"
 #include "line/r_fogboundary.cpp"
 #include "line/r_line.cpp"
 #include "line/r_farclip_line.cpp"

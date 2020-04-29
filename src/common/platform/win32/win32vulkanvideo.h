@@ -2,7 +2,7 @@
 
 #include "win32basevideo.h"
 #include "c_cvars.h"
-#include "rendering/vulkan/system/vk_framebuffer.h"
+#include "vulkan/system/vk_framebuffer.h"
 
 
 EXTERN_CVAR(Bool, vid_fullscreen)

@@ -2,7 +2,7 @@
 
 #include "win32basevideo.h"
 #include "c_cvars.h"
-#include "rendering/polyrenderer/backend/poly_framebuffer.h"
+#include "poly_framebuffer.h"
 
 EXTERN_CVAR(Bool, vid_fullscreen)
 

@@ -3,7 +3,7 @@
 #include "gl_sysfb.h"
 #include "r_memory.h"
 #include "r_thread.h"
-#include "rendering/polyrenderer/drawers/poly_triangle.h"
+#include "poly_triangle.h"
 
 struct FRenderViewpoint;
 class PolyDataBuffer;

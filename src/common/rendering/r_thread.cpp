@@ -22,17 +22,13 @@
 
 #include <stddef.h>
 #include "templates.h"
-#include "doomdef.h"
 #include "i_system.h"
 #include "filesystem.h"
 #include "v_video.h"
-#include "doomstat.h"
-#include "st_stuff.h"
-#include "g_game.h"
-#include "g_level.h"
 #include "r_thread.h"
 #include "r_memory.h"
-#include "swrenderer/r_renderthread.h"
+#include "poly_thread.h"
+#include "printf.h"
 #include "polyrenderer/drawers/poly_triangle.h"
 #include <chrono>
 

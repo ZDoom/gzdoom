@@ -1,4 +1,3 @@
-#include "../swrenderer/textures/r_swtexture.h"
 #include "drawers/poly_triangle.cpp"
 #include "drawers/poly_thread.cpp"
 #include "drawers/screen_triangle.cpp"

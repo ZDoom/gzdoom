@@ -1,7 +1,7 @@
 #ifndef __VK_SAMPLERS_H
 #define __VK_SAMPLERS_H
 
-#include "rendering/vulkan/system/vk_objects.h"
+#include "vulkan/system/vk_objects.h"
 
 class VulkanDevice;
 

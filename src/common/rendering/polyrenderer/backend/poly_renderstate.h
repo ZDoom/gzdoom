@@ -2,7 +2,7 @@
 #pragma once
 
 #include "polyrenderer/backend/poly_buffers.h"
-#include "rendering/polyrenderer/drawers/poly_triangle.h"
+#include "poly_triangle.h"
 
 #include "name.h"
 

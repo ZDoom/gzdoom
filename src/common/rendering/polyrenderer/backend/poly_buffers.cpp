@@ -23,7 +23,7 @@
 #include "poly_buffers.h"
 #include "poly_framebuffer.h"
 #include "poly_renderstate.h"
-#include "rendering/polyrenderer/drawers/poly_thread.h"
+#include "poly_thread.h"
 #include "engineerrors.h"
 
 PolyBuffer *PolyBuffer::First = nullptr;

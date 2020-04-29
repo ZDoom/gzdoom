@@ -1,7 +1,7 @@
 #pragma once
 #include "c_cvars.h"
 #include "actor.h"
-#include "r_data/cycler.h"
+#include "cycler.h"
 #include "g_levellocals.h"
 
 struct side_t;

@@ -33,8 +33,7 @@
 */
 
 #include <stdlib.h>
-
-#include "doomtype.h"
+#include <stdint.h>
 
 class FRandom;
 

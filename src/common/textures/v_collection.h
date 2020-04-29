@@ -34,8 +34,8 @@
 #ifndef __V_COLLECTION_H__
 #define __V_COLLECTION_H__
 
-#include "doomtype.h"
-#include "r_defs.h"
+#include "tarray.h"
+#include "textureid.h"
 
 class FGameTexture;
 

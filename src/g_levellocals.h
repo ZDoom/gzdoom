@@ -54,7 +54,7 @@
 #include "r_data/r_sections.h"
 #include "r_data/r_canvastexture.h"
 #include "r_data/r_interpolate.h"
-#include "hwrenderer/dynlights/doom_aabbtree.h"
+#include "doom_aabbtree.h"
 
 //============================================================================
 //

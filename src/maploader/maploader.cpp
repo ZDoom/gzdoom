@@ -81,7 +81,7 @@
 #include "xlat/xlat.h"
 #include "vm.h"
 #include "texturemanager.h"
-#include "hwrenderer/data/hw_vertexbuilder.h"
+#include "hw_vertexbuilder.h"
 
 enum
 {

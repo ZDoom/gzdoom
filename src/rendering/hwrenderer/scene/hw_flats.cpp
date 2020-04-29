@@ -39,7 +39,7 @@
 #include "hw_dynlightdata.h"
 #include "hw_cvars.h"
 #include "hw_clock.h"
-#include "hwrenderer/utility/hw_lighting.h"
+#include "hw_lighting.h"
 #include "hw_material.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "flatvertices.h"

@@ -41,7 +41,7 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "hw_clock.h"
 #include "flatvertices.h"
-#include "hwrenderer/data/hw_vertexbuilder.h"
+#include "hw_vertexbuilder.h"
 
 #ifdef ARCH_IA32
 #include <immintrin.h>

@@ -44,7 +44,7 @@
 #include "texturemanager.h"
 #include "basics.h"
 
-#include "hwrenderer/models/hw_models.h"
+#include "hw_models.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
@@ -52,7 +52,7 @@
 #include "flatvertices.h"
 #include "hw_cvars.h"
 #include "hw_clock.h"
-#include "hwrenderer/utility/hw_lighting.h"
+#include "hw_lighting.h"
 #include "hw_material.h"
 #include "hw_dynlightdata.h"
 #include "hw_lightbuffer.h"

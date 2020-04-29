@@ -647,13 +647,8 @@ file( GLOB HEADER_FILES
 	rendering/polyrenderer/math/*.h
 	rendering/polyrenderer/drawers/*.h
 	rendering/polyrenderer/backend/*.h
-	rendering/hwrenderer/data/*.h
-	rendering/hwrenderer/dynlights/*.h
-	rendering/hwrenderer/models/*.h
-	rendering/hwrenderer/postprocessing/*.h
+	rendering/hwrenderer/*.h
 	rendering/hwrenderer/scene/*.h
-	rendering/hwrenderer/textures/*.h
-	rendering/hwrenderer/utility/*.h
 	rendering/vulkan/*.h
 	rendering/vulkan/system/*.h
 	rendering/vulkan/renderer/*.h
@@ -763,7 +758,7 @@ set( FASTMATH_SOURCES
 	common/textures/hires/xbr/xbrz.cpp
 	common/textures/hires/xbr/xbrz_old.cpp
 	common/rendering/gl_load/gl_load.c
-	rendering/hwrenderer/dynlights/hw_dynlightdata.cpp
+	rendering/hwrenderer/hw_dynlightdata.cpp
 	rendering/hwrenderer/scene/hw_bsp.cpp
 	rendering/hwrenderer/scene/hw_fakeflat.cpp
 	rendering/hwrenderer/scene/hw_decal.cpp
@@ -783,7 +778,7 @@ set( FASTMATH_SOURCES
 	common/utility/matrix.cpp
 )
 	
-#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+#Vulkan stuff must go into a separate list because it needs to be disabled for some platforms
 set (VULKAN_SOURCES
 	rendering/vulkan/system/vk_device.cpp
 	rendering/vulkan/system/vk_swapchain.cpp
@@ -933,15 +928,15 @@ set (PCH_SOURCES
 	rendering/2d/f_wipe.cpp
 	rendering/2d/v_blend.cpp
 	rendering/hwrenderer/hw_entrypoint.cpp
-	rendering/hwrenderer/data/hw_vertexbuilder.cpp
-	rendering/hwrenderer/dynlights/doom_aabbtree.cpp
-	rendering/hwrenderer/models/hw_models.cpp
+	rendering/hwrenderer/hw_vertexbuilder.cpp
+	rendering/hwrenderer/doom_aabbtree.cpp
+	rendering/hwrenderer/hw_models.cpp
+	rendering/hwrenderer/hw_postprocessshader.cpp
+	rendering/hwrenderer/hw_precache.cpp
+	rendering/hwrenderer/hw_draw2d.cpp
+	rendering/hwrenderer/scene/hw_lighting.cpp
 	rendering/hwrenderer/scene/hw_drawlistadd.cpp
-	rendering/hwrenderer/scene/hw_renderstate.cpp
-	rendering/hwrenderer/postprocessing/hw_postprocessshader.cpp
-	rendering/hwrenderer/textures/hw_precache.cpp
-	rendering/hwrenderer/utility/hw_draw2d.cpp
-	rendering/hwrenderer/utility/hw_lighting.cpp
+	rendering/hwrenderer/scene/hw_setcolor.cpp
 	maploader/edata.cpp
 	maploader/specials.cpp
 	maploader/maploader.cpp
@@ -1273,6 +1268,7 @@ include_directories( .
 	gamedata/textures
 	gamedata/fonts
 	rendering
+	rendering/hwrenderer
 	rendering/2d
 	r_data
 	sound
@@ -1400,16 +1396,7 @@ source_group("Playsim\\Map Thinkers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE
 source_group("Rendering" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/.+")
 source_group("Rendering\\2D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/2d/.+")
 source_group("Rendering\\Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
-source_group("Rendering\\Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/data/.+")
-source_group("Rendering\\Hardware Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/dynlights/.+")
-source_group("Rendering\\Hardware Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/models/.+")
-source_group("Rendering\\Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/postprocessing/.+")
-source_group("Rendering\\Hardware Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/renderer/.+")
 source_group("Rendering\\Hardware Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/scene/.+")
-source_group("Rendering\\Hardware Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/shaders/.+")
-source_group("Rendering\\Hardware Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/system/.+")
-source_group("Rendering\\Hardware Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/textures/.+")
-source_group("Rendering\\Hardware Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/hwrenderer/utility/.+")
 source_group("Rendering\\Vulkan Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/system/.+")
 source_group("Rendering\\Vulkan Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/renderer/.+")
 source_group("Rendering\\Vulkan Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rendering/vulkan/shaders/.+")

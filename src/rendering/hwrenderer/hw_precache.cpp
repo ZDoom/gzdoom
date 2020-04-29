@@ -38,7 +38,7 @@
 #include "v_font.h"
 #include "texturemanager.h"
 #include "modelrenderer.h"
-#include "hwrenderer/models/hw_models.h"
+#include "hw_models.h"
 #include "d_main.h"
 
 EXTERN_CVAR(Bool, gl_precache)

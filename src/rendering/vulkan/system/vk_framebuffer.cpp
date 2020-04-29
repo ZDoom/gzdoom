@@ -36,7 +36,7 @@
 #include "hw_clock.h"
 #include "hw_vrmodes.h"
 #include "hw_cvars.h"
-#include "hwrenderer/models/hw_models.h"
+#include "hw_models.h"
 #include "hw_skydome.h"
 #include "hwrenderer/scene/hw_fakeflat.h"
 #include "hwrenderer/scene/hw_drawinfo.h"

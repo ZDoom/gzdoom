@@ -35,7 +35,7 @@
 #include "hw_renderstate.h"
 #include "flatvertices.h"
 #include "hw_clock.h"
-#include "hwrenderer/utility/hw_lighting.h"
+#include "hw_lighting.h"
 #include "texturemanager.h"
 
 EXTERN_CVAR(Int, r_mirror_recursions)

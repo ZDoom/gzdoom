@@ -3006,7 +3006,7 @@ DEFINE_ACTION_FUNCTION_NATIVE(_AltHUD, GetLatency, Net_GetLatency)
 //
 //==========================================================================
 
-DEFINE_ACTION_FUNCTION(_Wads, GetNumEntries)
+DEFINE_ACTION_FUNCTION(_Wads, GetNumLumps)
 {
 	PARAM_PROLOGUE;
 	ACTION_RETURN_INT(fileSystem.GetNumEntries());

@@ -59,11 +59,11 @@ const char *KeyNames[NUM_KEYS] =
 	nullptr,	"Escape",	"1",		"2",		"3",		"4",		"5",		"6",		//00
 	"7",		"8",		"9",		"0",		"-",		"=",		"Backspace","Tab",		//08
 	"Q",		"W",		"E",		"R",		"T",		"Y",		"U",		"I",		//10
-	"O",		"P",		"[",		"]",		"Enter",	"LCtrl",		"A",		"S",	//18
+	"O",		"P",		"[",		"]",		"Enter",	"Ctrl",		"A",		"S",	//18
 	"D",		"F",		"G",		"H",		"J",		"K",		"L",		";",		//20
-	"'",		"`",		"LShift",	"\\",		"Z",		"X",		"C",		"V",		//28
+	"'",		"`",		"Shift",	"\\",		"Z",		"X",		"C",		"V",		//28
 	"B",		"N",		"M",		",",		".",		"/",		"RShift",	"KP*",		//30
-	"LAlt",		"Space",	"CapsLock",	"F1",		"F2",		"F3",		"F4",		"F5",		//38
+	"Alt",		"Space",	"CapsLock",	"F1",		"F2",		"F3",		"F4",		"F5",		//38
 	"F6",		"F7",		"F8",		"F9",		"F10",		"NumLock",	"Scroll",	"KP7",		//40
 	"KP8",		"KP9",		"KP-",		"KP4",		"KP5",		"KP6",		"KP+",		"KP1",		//48
 	"KP2",		"KP3",		"KP0",		"KP.",		nullptr,	nullptr,	"OEM102",	"F11",		//50
@@ -717,13 +717,25 @@ void C_SetDefaultKeys(const char* baseconfig)
 	while ((lump = fileSystem.FindLumpFullName(baseconfig, &lastlump)) != -1)
 	{
 		if (fileSystem.GetFileContainer(lump) > 0) break;
-		ReadBindings(lump, true);
+		// [SW] - We need to check to see the origin of the DEFBINDS... if it
+		// Comes from an IWAD/IPK3/IPK7 allow it to override the users settings...
+		// If it comes from a user mod however, don't.
+		if (fileSystem.GetFileContainer(lump) > fileSystem.GetMaxIwadNum())
+			ReadBindings(lump, false);
+		else
+			ReadBindings(lump, true);
 	}
 
 	lastlump = 0;
 	while ((lump = fileSystem.FindLump("DEFBINDS", &lastlump)) != -1)
 	{
-		ReadBindings(lump, false);
+		// [SW] - We need to check to see the origin of the DEFBINDS... if it
+		// Comes from an IWAD/IPK3/IPK7 allow it to override the users settings...
+		// If it comes from a user mod however, don't.
+		if (fileSystem.GetFileContainer(lump) > fileSystem.GetMaxIwadNum())
+			ReadBindings(lump, false);
+		else
+			ReadBindings(lump, true);
 	}
 }
 

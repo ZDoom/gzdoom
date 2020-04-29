@@ -87,7 +87,7 @@ struct FStateVec4
 
 struct FMaterialState
 {
-	FMaterial *mMaterial;
+	FMaterial *mMaterial = nullptr;
 	int mClampMode;
 	int mTranslation;
 	int mOverrideShader;

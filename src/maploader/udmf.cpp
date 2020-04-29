@@ -637,6 +637,11 @@ public:
 				Flag(th->flags, MTF_SECRET, key); 
 				break;
 
+			case NAME_NoCount:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_NOCOUNT, key);
+				break;
+
 			case NAME_Floatbobphase:
 				CHECK_N(Zd | Zdt)
 				th->FloatbobPhase = CheckInt(key);

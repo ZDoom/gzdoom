@@ -879,7 +879,7 @@ struct Wads
 	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
 	native static string ReadLump(int lump);
 
-	native static int GetNumEntries();
+	native static int GetNumLumps();
 	native static string GetLumpName(int lump);
 	native static string GetLumpFullName(int lump);
 	native static int GetLumpNamespace(int lump);

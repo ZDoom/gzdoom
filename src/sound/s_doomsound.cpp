@@ -119,15 +119,6 @@ public:
 
 static FString LookupMusic(const char* musicname, int& order)
 {
-	if (strnicmp(musicname, ",CD,", 4) == 0)
-	{
-		static bool warned = false;
-		if (!warned)
-			Printf(TEXTCOLOR_RED "CD Audio no longer supported\n");
-		warned = true;
-		return "";
-	}
-
 	// allow specifying "*" as a placeholder to play the level's default music.
 	if (musicname != nullptr && !strcmp(musicname, "*"))
 	{
@@ -147,6 +138,16 @@ static FString LookupMusic(const char* musicname, int& order)
 		// got nothing, return nothing.
 		return "";
 	}
+
+	if (strnicmp(musicname, ",CD,", 4) == 0)
+	{
+		static bool warned = false;
+		if (!warned)
+			Printf(TEXTCOLOR_RED "CD Audio no longer supported\n");
+		warned = true;
+		return "";
+	}
+
 	if (*musicname == '/') musicname++;
 
 	FString DEH_Music;

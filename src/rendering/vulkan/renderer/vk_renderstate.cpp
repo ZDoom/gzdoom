@@ -27,8 +27,6 @@
 #include "vulkan/renderer/vk_renderbuffers.h"
 #include "vulkan/textures/vk_hwtexture.h"
 #include "templates.h"
-#include "doomstat.h"
-#include "r_data/colormaps.h"
 #include "hw_skydome.h"
 #include "hw_viewpointuniforms.h"
 #include "hw_lightbuffer.h"

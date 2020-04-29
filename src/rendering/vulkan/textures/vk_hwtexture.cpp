@@ -22,7 +22,6 @@
 
 #include "templates.h"
 #include "c_cvars.h"
-#include "r_data/colormaps.h"
 #include "hw_material.h"
 #include "hw_cvars.h"
 #include "hw_renderstate.h"

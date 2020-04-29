@@ -26,7 +26,6 @@
 #include "m_png.h"
 #include "templates.h"
 #include "r_videoscale.h"
-#include "actor.h"
 #include "i_time.h"
 #include "g_game.h"
 #include "v_text.h"
@@ -38,15 +37,10 @@
 #include "hw_cvars.h"
 #include "hw_models.h"
 #include "hw_skydome.h"
-#include "hwrenderer/scene/hw_fakeflat.h"
-#include "hwrenderer/scene/hw_drawinfo.h"
-#include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/data/hw_viewpointbuffer.h"
 #include "flatvertices.h"
 #include "hwrenderer/data/shaderuniforms.h"
 #include "hw_lightbuffer.h"
-
-#include "swrenderer/r_swscene.h"
 
 #include "vk_framebuffer.h"
 #include "vk_buffers.h"

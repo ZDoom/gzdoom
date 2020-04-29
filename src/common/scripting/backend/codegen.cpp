@@ -6362,7 +6362,7 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 	if (Object->ValueType->isRealPointer())
 	{
 		auto ptype = Object->ValueType->toPointer()->PointedType;
-		if (ptype->isContainer())
+		if (ptype && ptype->isContainer())
 		{
 			auto ret = ResolveMember(ctx, ctx.Class, Object, static_cast<PContainerType *>(ptype));
 			delete this;

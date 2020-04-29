@@ -35,7 +35,6 @@
 #endif // __APPLE__
 
 #include "cmdlib.h"
-#include "d_protocol.h"
 #include "i_system.h"
 #include "gameconfigfile.h"
 #include "x86.h"

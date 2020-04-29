@@ -62,7 +62,7 @@ static void DictInsert(Dictionary *dict, const FString &key, const FString &valu
 static void DictAt(const Dictionary *dict, const FString &key, FString *result)
 {
 	const FString *value = dict->Map.CheckKey(key);
-	*result = value ? *value : "";
+	*result = value ? *value : FString();
 }
 
 static void DictToString(const Dictionary *dict, FString *result)

@@ -404,7 +404,7 @@ std::unique_ptr<VulkanPipeline> VkRenderPassSetup::CreatePipeline(const VkPipeli
 
 	// Note: the actual values are ignored since we use dynamic viewport+scissor states
 	builder.setViewport(0.0f, 0.0f, 320.0f, 200.0f);
-	builder.setScissor(0, 0, 320.0f, 200.0f);
+	builder.setScissor(0, 0, 320, 200);
 
 	static const VkPrimitiveTopology vktopology[] = {
 		VK_PRIMITIVE_TOPOLOGY_POINT_LIST,

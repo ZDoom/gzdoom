@@ -68,7 +68,7 @@ public:
 	~VulkanFrameBuffer();
 	bool IsVulkan() override { return true; }
 
-	void Update();
+	void Update() override;
 
 	void InitializeState() override;
 

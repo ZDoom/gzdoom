@@ -24,6 +24,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <float.h>
 #include "renderstyle.h"
 //#include "rendering/swrenderer/drawers/r_draw.h"
 

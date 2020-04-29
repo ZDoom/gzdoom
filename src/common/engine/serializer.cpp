@@ -1504,7 +1504,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, Dictionary 
 {
 	if (arc.isWriting())
 	{
-		FString contents { dict ? DictionaryToString(*dict) : "null" };
+		FString contents { dict ? DictionaryToString(*dict) : FString("null") };
 		return arc(key, contents);
 	}
 	else

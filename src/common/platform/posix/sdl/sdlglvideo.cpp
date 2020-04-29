@@ -51,7 +51,7 @@
 #include "gl_framebuffer.h"
 
 #ifdef HAVE_VULKAN
-#include "rendering/vulkan/system/vk_framebuffer.h"
+#include "vk_framebuffer.h"
 #endif
 
 #ifdef HAVE_SOFTPOLY

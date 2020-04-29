@@ -27,7 +27,7 @@ public:
 	PolyFrameBuffer(void *hMonitor, bool fullscreen);
 	~PolyFrameBuffer();
 
-	void Update();
+	void Update() override;
 
 	bool IsPoly() override { return true; }
 
@@ -65,7 +65,7 @@ public:
 
 private:
 	void RenderTextureView(FCanvasTexture* tex, std::function<void(IntRect &)> renderFunc) override;
-	void UpdateShadowMap();
+	void UpdateShadowMap() override;
 
 	void CheckCanvas();
 

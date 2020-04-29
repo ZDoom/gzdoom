@@ -533,10 +533,10 @@ void VkPPRenderState::RenderScreenQuad(VkPPRenderPassSetup *passSetup, VulkanDes
 	auto cmdbuffer = fb->GetDrawCommands();
 
 	VkViewport viewport = { };
-	viewport.x = x;
-	viewport.y = y;
-	viewport.width = width;
-	viewport.height = height;
+	viewport.x = (float)x;
+	viewport.y = (float)y;
+	viewport.width = (float)width;
+	viewport.height = (float)height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
@@ -761,7 +761,7 @@ void VkPPRenderPassSetup::CreatePipeline(const VkPPRenderPassKey &key)
 	builder.addDynamicState(VK_DYNAMIC_STATE_SCISSOR);
 	// Note: the actual values are ignored since we use dynamic viewport+scissor states
 	builder.setViewport(0.0f, 0.0f, 320.0f, 200.0f);
-	builder.setScissor(0.0f, 0.0f, 320.0f, 200.0f);
+	builder.setScissor(0, 0, 320, 200);
 	if (key.StencilTest)
 	{
 		builder.addDynamicState(VK_DYNAMIC_STATE_STENCIL_REFERENCE);

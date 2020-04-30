@@ -141,7 +141,7 @@ enum
 // [BC] More dmflags. w00p!
 enum
 {
-//	DF2_YES_IMPALING		= 1 << 0,	// Player gets implaed on MF2_IMPALE items
+//	DF2_YES_IMPALING		= 1 << 0,	// Player gets impaled on MF2_IMPALE items
 	DF2_YES_WEAPONDROP		= 1 << 1,	// Drop current weapon upon death
 //	DF2_NO_RUNES			= 1 << 2,	// Don't spawn runes
 //	DF2_INSTANT_RETURN		= 1 << 3,	// Instantly return flags and skulls when player carrying it dies (ST/CTF)
@@ -169,6 +169,7 @@ enum
 	DF2_KILLBOSSMONST		= 1 << 25,	// Kills all monsters spawned by a boss cube when the boss dies
 	DF2_NOCOUNTENDMONST		= 1 << 26,	// Do not count monsters in 'end level when dying' sectors towards kill count
 	DF2_RESPAWN_SUPER		= 1 << 27,	// Respawn invulnerability and invisibility
+	DF2_NO_COOP_THING_SPAWN	= 1 << 28,	// Don't spawn multiplayer things in coop games
 };
 
 // [RH] Compatibility flags.

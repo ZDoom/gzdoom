@@ -347,8 +347,8 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 		pitch.Normalized180();
 
 		mat.Translate(x, z, y);
-		mat.Rotate(0, 1, 0, 270. - Angles.Yaw.Degrees);
-		mat.Rotate(1, 0, 0, pitch.Degrees);
+		mat.Rotate(0, 1, 0, -Angles.Yaw.Degrees);
+		mat.Rotate(0, 0, 1, pitch.Degrees);
 
 		if (actor->renderflags & RF_ROLLCENTER)
 		{
@@ -356,12 +356,12 @@ bool HWSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			float cy = (y1 + y2) * 0.5;
 
 			mat.Translate(cx - x, 0, cy - y);
-			mat.Rotate(0, 1, 0, - Angles.Roll.Degrees);
+			mat.Rotate(1, 0, 0, - Angles.Roll.Degrees);
 			mat.Translate(-cx, -z, -cy);
 		}
 		else
 		{
-			mat.Rotate(0, 1, 0, - Angles.Roll.Degrees);
+			mat.Rotate(1, 0, 0, - Angles.Roll.Degrees);
 			mat.Translate(-x, -z, -y);
 		}
 		v[0] = mat * FVector3(x2, z, y2);

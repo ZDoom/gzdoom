@@ -165,6 +165,7 @@ private:
 	void ReadOnePlayer(FSerializer &arc, bool skipload);
 	void ReadMultiplePlayers(FSerializer &arc, int numPlayers, int numPlayersNow, bool skipload);
 	void SerializeSounds(FSerializer &arc);
+	void PlayerSpawnPickClass (int playernum);
 
 public:
 	void SnapshotLevel();

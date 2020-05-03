@@ -353,8 +353,8 @@ class StrifeStatusBar : BaseStatusBar
 			if (ammo2 != NULL && ammo1!=ammo2)
 			{
 				// Draw secondary ammo just above the primary ammo
-				DrawString(mGrnFont, FormatNumber(ammo1.Amount, 3), (-23, -48));
-				DrawInventoryIcon(ammo1, (-14, -55));
+				DrawString(mGrnFont, FormatNumber(ammo2.Amount, 3), (-23, -48));
+				DrawInventoryIcon(ammo2, (-14, -55));
 			}
 		}
 

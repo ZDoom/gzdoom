@@ -178,6 +178,7 @@ EXTERN_CVAR (Bool, freelook)
 EXTERN_CVAR (Float, m_pitch)
 EXTERN_CVAR (Float, m_yaw)
 EXTERN_CVAR (Bool, invertmouse)
+EXTERN_CVAR (Bool, invertmousex)
 EXTERN_CVAR (Bool, lookstrafe)
 EXTERN_CVAR (Int, screenblocks)
 EXTERN_CVAR (Bool, sv_cheats)
@@ -193,7 +194,7 @@ extern bool insave;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 
 const char* iwad_folders[13] = { "flats/", "textures/", "hires/", "sprites/", "voxels/", "colormaps/", "acs/", "maps/", "voices/", "patches/", "graphics/", "sounds/", "music/" };
-const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo" "maps/" };
+const char* iwad_reserved[12] = { "mapinfo", "zmapinfo", "gameinfo", "sndinfo", "sbarinfo", "menudef", "gldefs", "animdefs", "decorate", "zscript", "iwadinfo", "maps/" };
 
 
 CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
@@ -479,7 +480,10 @@ void D_PostEvent (const event_t *ev)
 		}
 		if (!buttonMap.ButtonDown(Button_Strafe) && !lookstrafe)
 		{
-			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0), true);
+			int turn = int(ev->x * m_yaw * mouse_sensitivity * 8.0);
+			if (invertmousex)
+				turn = -turn;
+			G_AddViewAngle (turn, true);
 			events[eventhead].x = 0;
 		}
 		if ((events[eventhead].x | events[eventhead].y) == 0)

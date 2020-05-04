@@ -3385,6 +3385,7 @@ static int D_DoomMain_Internal (void)
 
 		StartScreen->Progress();
 		V_InitFonts();
+		V_LoadTranslations();
 		UpdateGenericUI(false);
 
 		// [CW] Parse any TEAMINFO lumps.
@@ -3545,6 +3546,9 @@ static int D_DoomMain_Internal (void)
 
 			V_Init2();
 			twod->fullscreenautoaspect = gameinfo.fullscreenautoaspect;
+			// Initialize the size of the 2D drawer so that an attempt to access it outside the draw code won't crash.
+			twod->Begin(screen->GetWidth(), screen->GetHeight());
+			twod->End();
 			UpdateJoystickMenu(NULL);
 			UpdateVRModes();
 

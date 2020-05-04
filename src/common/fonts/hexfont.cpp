@@ -245,6 +245,7 @@ public:
 	FHexFont (const char *fontname, int lump)
 		: FFont(lump)
 	{
+		const int spacing = 9;
 		assert(lump >= 0);
 
 		FontName = fontname;
@@ -258,8 +259,22 @@ public:
 		SpaceWidth = 9;
 		GlobalKerning = 0;
 		translateUntranslated = true;
-		
-		LoadTranslations();
+
+		Chars.Resize(LastChar - FirstChar + 1);
+		for (int i = FirstChar; i <= LastChar; i++)
+		{
+			if (hexdata.glyphmap[i] > 0)
+			{
+				auto offset = hexdata.glyphmap[i];
+				int size = hexdata.glyphdata[offset] / 16;
+				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar(&hexdata.glyphdata[offset + 1], size, size * 9, 16)), nullptr, ETextureType::FontChar);
+				Chars[i - FirstChar].OriginalPic = Chars[i - FirstChar].TranslatedPic;
+				Chars[i - FirstChar].XMove = size * spacing;
+				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
+			}
+			else Chars[i - FirstChar].XMove = spacing;
+
+		}
 	}
 
 	//==========================================================================
@@ -270,7 +285,6 @@ public:
 
 	void LoadTranslations()
 	{
-		const int spacing = 9;
 		double luminosity[256];
 
 		memset (PatchRemap, 0, 256);
@@ -282,20 +296,6 @@ public:
 		}
 		ActiveColors = 18;
 		
-		Chars.Resize(LastChar - FirstChar + 1);
-		for (int i = FirstChar; i <= LastChar; i++)
-		{
-			if (hexdata.glyphmap[i] > 0)
-			{
-				auto offset = hexdata.glyphmap[i];
-				int size = hexdata.glyphdata[offset] / 16;
-				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar (&hexdata.glyphdata[offset+1], size, size * 9, 16)), nullptr, ETextureType::FontChar);
-				Chars[i - FirstChar].XMove = size * spacing;
-				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
-			}
-			else Chars[i - FirstChar].XMove = spacing;
-
-		}
 		BuildTranslations (luminosity, nullptr, &TranslationParms[1][0], ActiveColors, nullptr);
 	}
 	
@@ -317,6 +317,7 @@ public:
 	FHexFont2(const char *fontname, int lump)
 		: FFont(lump)
 	{
+		const int spacing = 9;
 		assert(lump >= 0);
 
 		FontName = fontname;
@@ -330,8 +331,21 @@ public:
 		SpaceWidth = 9;
 		GlobalKerning = -1;
 		translateUntranslated = true;
+		Chars.Resize(LastChar - FirstChar + 1);
+		for (int i = FirstChar; i <= LastChar; i++)
+		{
+			if (hexdata.glyphmap[i] > 0)
+			{
+				auto offset = hexdata.glyphmap[i];
+				int size = hexdata.glyphdata[offset] / 16;
+				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar2(&hexdata.glyphdata[offset + 1], size, 2 + size * 8, 18)), nullptr, ETextureType::FontChar);
+				Chars[i - FirstChar].OriginalPic = Chars[i - FirstChar].TranslatedPic;
+				Chars[i - FirstChar].XMove = size * spacing;
+				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
+			}
+			else Chars[i - FirstChar].XMove = spacing;
 
-		LoadTranslations();
+		}
 	}
 
 	//==========================================================================
@@ -342,7 +356,6 @@ public:
 
 	void LoadTranslations() override
 	{
-		const int spacing = 9;
 		double luminosity[256];
 
 		memset(PatchRemap, 0, 256);
@@ -354,20 +367,6 @@ public:
 		}
 		ActiveColors = 18;
 
-		Chars.Resize(LastChar - FirstChar + 1);
-		for (int i = FirstChar; i <= LastChar; i++)
-		{
-			if (hexdata.glyphmap[i] > 0)
-			{
-				auto offset = hexdata.glyphmap[i];
-				int size = hexdata.glyphdata[offset] / 16;
-				Chars[i - FirstChar].TranslatedPic = MakeGameTexture(new FImageTexture(new FHexFontChar2(&hexdata.glyphdata[offset + 1], size, 2 + size * 8, 18)), nullptr, ETextureType::FontChar);
-				Chars[i - FirstChar].XMove = size * spacing;
-				TexMan.AddGameTexture(Chars[i - FirstChar].TranslatedPic);
-			}
-			else Chars[i - FirstChar].XMove = spacing;
-
-		}
 		BuildTranslations(luminosity, nullptr, &TranslationParms[0][0], ActiveColors, nullptr);
 	}
 

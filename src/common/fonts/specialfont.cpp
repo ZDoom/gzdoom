@@ -140,10 +140,6 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FGameTexture
 	{
 		ActiveColors = 0;
 	}
-	else
-	{
-		LoadTranslations();
-	}
 }
 
 //==========================================================================

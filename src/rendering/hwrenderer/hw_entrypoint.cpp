@@ -111,10 +111,10 @@ sector_t* RenderViewpoint(FRenderViewpoint& mainvp, AActor* camera, IntRect* bou
 	if (mainview && toscreen)
 	{
 		screen->SetAABBTree(camera->Level->aabbTree);
-		screen->UpdateShadowMap();
 		screen->mShadowMap.SetCollectLights([=] {
 			CollectLights(camera->Level);
 		});
+		screen->UpdateShadowMap();
 	}
 
 	// Update the attenuation flag of all light defaults for each viewpoint.

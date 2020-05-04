@@ -289,6 +289,9 @@ void V_UpdateModeSize (int width, int height)
 void V_OutputResized (int width, int height)
 {
 	V_UpdateModeSize(width, height);
+	// set new resolution in 2D drawer
+	twod->Begin(screen->GetWidth(), screen->GetHeight());
+	twod->End();
 	setsizeneeded = true;
 	C_NewModeAdjust();
 	if (sysCallbacks && sysCallbacks->OnScreenSizeChanged) 

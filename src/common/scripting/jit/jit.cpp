@@ -7,6 +7,19 @@ extern PString *TypeString;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 
+#if 1
+
+JitFuncPtr JitCompile(VMScriptFunction* sfunc)
+{
+	return nullptr;
+}
+
+void JitDumpLog(FILE* file, VMScriptFunction* sfunc)
+{
+}
+
+#else
+
 static void OutputJitLog(const asmjit::StringLogger &logger);
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
@@ -562,3 +575,5 @@ void JitCompiler::EmitNOP()
 {
 	cc.nop();
 }
+
+#endif

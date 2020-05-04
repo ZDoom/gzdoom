@@ -1,6 +1,10 @@
 
 #include "jitintern.h"
 
+#if 1
+
+#else
+
 void JitCompiler::EmitTEST()
 {
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
@@ -317,3 +321,5 @@ void JitCompiler::ThrowArrayOutOfBounds(int index, int size)
 		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", index);
 	}
 }
+
+#endif

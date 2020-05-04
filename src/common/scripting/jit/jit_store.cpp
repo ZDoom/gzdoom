@@ -1,6 +1,10 @@
 
 #include "jitintern.h"
 
+#if 1
+
+#else
+
 void JitCompiler::EmitSB()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
@@ -174,3 +178,5 @@ void JitCompiler::EmitSBIT()
 	cc.cmove(tmp1, tmp2);
 	cc.mov(asmjit::x86::byte_ptr(regA[A]), tmp1);
 }
+
+#endif

@@ -4,12 +4,6 @@
 #include "types.h"
 #include "stats.h"
 
-// To do: get cmake to define these..
-#define ASMJIT_BUILD_EMBED
-#define ASMJIT_STATIC
-
-#include <asmjit/asmjit.h>
-#include <asmjit/x86.h>
 #include <functional>
 #include <vector>
 
@@ -24,6 +18,28 @@ extern int VMCalls[10];
 #define BCs				(pc[0].i16)
 #define ABCs			(pc[0].i24)
 #define JMPOFS(x)		((x)->i24)
+
+#if 1
+
+class JitCompiler
+{
+public:
+
+private:
+	// Declare EmitXX functions for the opcodes:
+	#define xx(op, name, mode, alt, kreg, ktype)	void Emit##op();
+	#include "vmops.h"
+	#undef xx
+};
+
+#else
+
+// To do: get cmake to define these..
+#define ASMJIT_BUILD_EMBED
+#define ASMJIT_STATIC
+
+#include <asmjit/asmjit.h>
+#include <asmjit/x86.h>
 
 struct JitLineInfo
 {
@@ -335,3 +351,5 @@ public:
 
 void *AddJitFunction(asmjit::CodeHolder* code, JitCompiler *compiler);
 asmjit::CodeInfo GetHostCodeInfo();
+
+#endif

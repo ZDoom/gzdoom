@@ -432,8 +432,8 @@ include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUD
 
 if( ${HAVE_VM_JIT} )
 	add_definitions( -DHAVE_VM_JIT )
-	include_directories( "${ASMJIT_INCLUDE_DIR}" )
-	set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ASMJIT_LIBRARIES}")
+	include_directories( "${DRAGONBOOK_INCLUDE_DIR}" )
+	set( ZDOOM_LIBS ${ZDOOM_LIBS} "${DRAGONBOOK_LIBRARIES}")
 endif()
 
 # Start defining source files for ZDoom

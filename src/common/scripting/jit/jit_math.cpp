@@ -2,6 +2,10 @@
 #include "jitintern.h"
 #include "basics.h"
 
+#if 1
+
+#else
+
 /////////////////////////////////////////////////////////////////////////////
 // String instructions.
 
@@ -1522,3 +1526,5 @@ void JitCompiler::CallSqrt(const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)
 	call->setArg(0, b);
 	cc.movsd(a, result);
 }
+
+#endif

@@ -240,6 +240,10 @@ public:
 		if (int(ScaleY * h) != TexelHeight) ScaleY += (1 / 65536.);
 
 	}
+	void SetBase(FTexture* Tex)
+	{
+		Base = Tex;
+	}
 	void SetOffsets(int which, int x, int y)
 	{
 		LeftOffset[which] = x;

@@ -2,9 +2,7 @@
 #include "jitintern.h"
 #include "basics.h"
 
-#if 1
-
-#else
+#if 0
 
 /////////////////////////////////////////////////////////////////////////////
 // String instructions.
@@ -80,134 +78,97 @@ void JitCompiler::EmitCMPS()
 		}
 	});
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Integer math.
 
 void JitCompiler::EmitSLL_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.shl(regD[A], rc);
+	cc.CreateStore(cc.CreateShl(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitSLL_RI()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.shl(regD[A], C);
+	cc.CreateStore(cc.CreateShl(cc.CreateLoad(regD[B]), ircontext->getConstantInt(C)), regD[A]);
 }
 
 void JitCompiler::EmitSLL_KR()
 {
-	auto rc = CheckRegD(C, A);
-	cc.mov(regD[A], konstd[B]);
-	cc.shl(regD[A], rc);
+	cc.CreateStore(cc.CreateShl(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitSRL_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.shr(regD[A], rc);
+	cc.CreateStore(cc.CreateLShr(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitSRL_RI()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.shr(regD[A], C);
+	cc.CreateStore(cc.CreateLShr(cc.CreateLoad(regD[B]), ircontext->getConstantInt(C)), regD[A]);
 }
 
 void JitCompiler::EmitSRL_KR()
 {
-	auto rc = CheckRegD(C, A);
-	cc.mov(regD[A], konstd[B]);
-	cc.shr(regD[A], rc);
+	cc.CreateStore(cc.CreateLShr(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitSRA_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.sar(regD[A], rc);
+	cc.CreateStore(cc.CreateAShr(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitSRA_RI()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.sar(regD[A], C);
+	cc.CreateStore(cc.CreateAShr(cc.CreateLoad(regD[B]), ircontext->getConstantInt(C)), regD[A]);
 }
 
 void JitCompiler::EmitSRA_KR()
 {
-	auto rc = CheckRegD(C, A);
-	cc.mov(regD[A], konstd[B]);
-	cc.sar(regD[A], rc);
+	cc.CreateStore(cc.CreateAShr(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitADD_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.add(regD[A], rc);
+	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitADD_RK()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.add(regD[A], konstd[C]);
+	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
 
 void JitCompiler::EmitADDI()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.add(regD[A], Cs);
+	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(regD[B]), ircontext->getConstantInt(Cs)), regD[A]);
 }
 
 void JitCompiler::EmitSUB_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.sub(regD[A], rc);
+	cc.CreateStore(cc.CreateSub(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitSUB_RK()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.sub(regD[A], konstd[C]);
+	cc.CreateStore(cc.CreateSub(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
 
 void JitCompiler::EmitSUB_KR()
 {
-	auto rc = CheckRegD(C, A);
-	cc.mov(regD[A], konstd[B]);
-	cc.sub(regD[A], rc);
+	cc.CreateStore(cc.CreateSub(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitMUL_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.imul(regD[A], rc);
+	cc.CreateStore(cc.CreateMul(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitMUL_RK()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.imul(regD[A], konstd[C]);
+	cc.CreateStore(cc.CreateMul(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
+
+#if 0
 
 void JitCompiler::EmitDIV_RR()
 {

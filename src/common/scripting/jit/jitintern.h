@@ -7,6 +7,8 @@
 #include <functional>
 #include <vector>
 
+#include "ir/IR.h"
+
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];
 
@@ -30,6 +32,22 @@ private:
 	#define xx(op, name, mode, alt, kreg, ktype)	void Emit##op();
 	#include "vmops.h"
 	#undef xx
+
+	IRContext* ircontext;
+	IRBuilder cc;
+
+	const int* konstd;
+	const double* konstf;
+	const FString* konsts;
+	const FVoidObj* konsta;
+
+	TArray<IRValue*> regD;
+	TArray<IRValue*> regF;
+	TArray<IRValue*> regA;
+	TArray<IRValue*> regS;
+
+	const VMOP* pc;
+	VM_UBYTE op;
 };
 
 #else

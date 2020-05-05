@@ -365,52 +365,39 @@ void JitCompiler::EmitMODU_KR()
 	cc.div(tmp1, tmp0, regD[C]);
 	cc.mov(regD[A], tmp1);
 }
+#endif
 
 void JitCompiler::EmitAND_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.and_(regD[A], rc);
+	cc.CreateStore(cc.CreateAnd(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitAND_RK()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.and_(regD[A], konstd[C]);
+	cc.CreateStore(cc.CreateAnd(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
 
 void JitCompiler::EmitOR_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.or_(regD[A], rc);
+	cc.CreateStore(cc.CreateOr(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitOR_RK()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.or_(regD[A], konstd[C]);
+	cc.CreateStore(cc.CreateOr(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
 
 void JitCompiler::EmitXOR_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.xor_(regD[A], rc);
+	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitXOR_RK()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.xor_(regD[A], konstd[C]);
+	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
 
+#if 0
 void JitCompiler::EmitMIN_RR()
 {
 	auto rc = CheckRegD(C, A);
@@ -486,32 +473,26 @@ void JitCompiler::EmitMAXU_RK()
 	cc.cmp(rc, regD[A]);
 	cc.cmova(regD[A], rc);
 }
+#endif
 
 void JitCompiler::EmitABS()
 {
-	auto srcB = CheckRegD(B, A);
-	auto tmp = newTempInt32();
-	cc.mov(tmp, regD[B]);
-	cc.sar(tmp, 31);
-	cc.mov(regD[A], tmp);
-	cc.xor_(regD[A], srcB);
-	cc.sub(regD[A], tmp);
+	IRValue* srcB = cc.CreateLoad(regD[B]);
+	IRValue* tmp = cc.CreateAShr(srcB, ircontext->getConstantInt(31));
+	cc.CreateStore(cc.CreateSub(cc.CreateXor(tmp, srcB), tmp), regD[A]);
 }
 
 void JitCompiler::EmitNEG()
 {
-	auto srcB = CheckRegD(B, A);
-	cc.xor_(regD[A], regD[A]);
-	cc.sub(regD[A], srcB);
+	cc.CreateStore(cc.CreateNeg(cc.CreateLoad(regD[B])), regD[A]);
 }
 
 void JitCompiler::EmitNOT()
 {
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.not_(regD[A]);
+	cc.CreateStore(cc.CreateNot(cc.CreateLoad(regD[B])), regD[A]);
 }
 
+#if 0
 void JitCompiler::EmitEQ_R()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
@@ -645,69 +626,47 @@ void JitCompiler::EmitLEU_KR()
 		else       cc.jnbe(fail);
 	});
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Double-precision floating point math.
 
 void JitCompiler::EmitADDF_RR()
 {
-	auto rc = CheckRegF(C, A);
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.addsd(regF[A], rc);
+	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
 }
 
 void JitCompiler::EmitADDF_RK()
 {
-	auto tmp = newTempIntPtr();
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.addsd(regF[A], asmjit::x86::qword_ptr(tmp));
+	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
 }
 
 void JitCompiler::EmitSUBF_RR()
 {
-	auto rc = CheckRegF(C, A);
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.subsd(regF[A], rc);
+	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
 }
 
 void JitCompiler::EmitSUBF_RK()
 {
-	auto tmp = newTempIntPtr();
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.subsd(regF[A], asmjit::x86::qword_ptr(tmp));
+	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
 }
 
 void JitCompiler::EmitSUBF_KR()
 {
-	auto rc = CheckRegF(C, A);
-	auto tmp = newTempIntPtr();
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.subsd(regF[A], rc);
+	cc.CreateStore(cc.CreateFSub(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C])), regF[A]);
 }
 
 void JitCompiler::EmitMULF_RR()
 {
-	auto rc = CheckRegF(C, A);
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.mulsd(regF[A], rc);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
 }
 
 void JitCompiler::EmitMULF_RK()
 {
-	auto tmp = newTempIntPtr();
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
 }
+
+#if 0
 
 void JitCompiler::EmitDIVF_RR()
 {
@@ -1135,91 +1094,68 @@ void JitCompiler::EmitLEF_KR()
 		else       cc.jnae(fail);
 	});
 }
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Vector math. (2D)
 
 void JitCompiler::EmitNEGV2()
 {
-	auto mask = cc.newDoubleConst(asmjit::kConstScopeLocal, -0.0);
-	auto maskXmm = newTempXmmSd();
-	cc.movsd(maskXmm, mask);
-	cc.movsd(regF[A], regF[B]);
-	cc.xorpd(regF[A], maskXmm);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.xorpd(regF[A + 1], maskXmm);
+	auto mask = ircontext->getConstantFloat(ircontext->getDoubleTy(), -0.0);
+	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B]), mask), regF[A]);
+	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B + 1]), mask), regF[A + 1]);
 }
 
 void JitCompiler::EmitADDV2_RR()
 {
-	auto rc0 = CheckRegF(C, A);
-	auto rc1 = CheckRegF(C + 1, A + 1);
-	cc.movsd(regF[A], regF[B]);
-	cc.addsd(regF[A], rc0);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.addsd(regF[A + 1], rc1);
+	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
 }
 
 void JitCompiler::EmitSUBV2_RR()
 {
-	auto rc0 = CheckRegF(C, A);
-	auto rc1 = CheckRegF(C + 1, A + 1);
-	cc.movsd(regF[A], regF[B]);
-	cc.subsd(regF[A], rc0);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.subsd(regF[A + 1], rc1);
+	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
 }
 
 void JitCompiler::EmitDOTV2_RR()
 {
-	auto rc0 = CheckRegF(C, A);
-	auto rc1 = CheckRegF(C + 1, A);
-	auto tmp = newTempXmmSd();
-	cc.movsd(regF[A], regF[B]);
-	cc.mulsd(regF[A], rc0);
-	cc.movsd(tmp, regF[B + 1]);
-	cc.mulsd(tmp, rc1);
-	cc.addsd(regF[A], tmp);
+	cc.CreateStore(
+		cc.CreateFAdd(
+			cc.CreateFMul(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])),
+			cc.CreateFMul(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1]))),
+		regF[A]);
 }
 
 void JitCompiler::EmitMULVF2_RR()
 {
-	auto rc = CheckRegF(C, A, A + 1);
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.mulsd(regF[A], rc);
-	cc.mulsd(regF[A + 1], rc);
+	IRValue* rc = cc.CreateLoad(regF[C]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
 }
 
 void JitCompiler::EmitMULVF2_RK()
 {
-	auto tmp = newTempIntPtr();
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.mulsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
+	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
 }
 
 void JitCompiler::EmitDIVVF2_RR()
 {
-	auto rc = CheckRegF(C, A, A + 1);
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.divsd(regF[A], rc);
-	cc.divsd(regF[A + 1], rc);
+	IRValue* rc = cc.CreateLoad(regF[C]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
 }
 
 void JitCompiler::EmitDIVVF2_RK()
 {
-	auto tmp = newTempIntPtr();
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.divsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.divsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
+	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
 }
 
+#if 0
 void JitCompiler::EmitLENV2()
 {
 	auto rb0 = CheckRegF(B, A);
@@ -1239,6 +1175,7 @@ void JitCompiler::EmitEQV2_R()
 		EmitVectorComparison<2> (check, fail, success);
 	});
 }
+#endif
 
 void JitCompiler::EmitEQV2_K()
 {
@@ -1250,140 +1187,83 @@ void JitCompiler::EmitEQV2_K()
 
 void JitCompiler::EmitNEGV3()
 {
-	auto mask = cc.newDoubleConst(asmjit::kConstScopeLocal, -0.0);
-	auto maskXmm = newTempXmmSd();
-	cc.movsd(maskXmm, mask);
-	cc.movsd(regF[A], regF[B]);
-	cc.xorpd(regF[A], maskXmm);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.xorpd(regF[A + 1], maskXmm);
-	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.xorpd(regF[A + 2], maskXmm);
+	auto mask = ircontext->getConstantFloat(ircontext->getDoubleTy(), -0.0);
+	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B]), mask), regF[A]);
+	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B + 1]), mask), regF[A + 1]);
+	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B + 2]), mask), regF[A + 2]);
 }
 
 void JitCompiler::EmitADDV3_RR()
 {
-	auto rc0 = CheckRegF(C, A);
-	auto rc1 = CheckRegF(C + 1, A + 1);
-	auto rc2 = CheckRegF(C + 2, A + 2);
-	cc.movsd(regF[A], regF[B]);
-	cc.addsd(regF[A], rc0);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.addsd(regF[A + 1], rc1);
-	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.addsd(regF[A + 2], rc2);
+	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
+	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B + 2]), cc.CreateLoad(regF[C + 2])), regF[A + 2]);
 }
 
 void JitCompiler::EmitSUBV3_RR()
 {
-	auto rc0 = CheckRegF(C, A);
-	auto rc1 = CheckRegF(C + 1, A + 1);
-	auto rc2 = CheckRegF(C + 2, A + 2);
-	cc.movsd(regF[A], regF[B]);
-	cc.subsd(regF[A], rc0);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.subsd(regF[A + 1], rc1);
-	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.subsd(regF[A + 2], rc2);
+	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
+	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B + 2]), cc.CreateLoad(regF[C + 2])), regF[A + 2]);
 }
 
 void JitCompiler::EmitDOTV3_RR()
 {
-	auto rb1 = CheckRegF(B + 1, A);
-	auto rb2 = CheckRegF(B + 2, A);
-	auto rc0 = CheckRegF(C, A);
-	auto rc1 = CheckRegF(C + 1, A);
-	auto rc2 = CheckRegF(C + 2, A);
-	auto tmp = newTempXmmSd();
-	cc.movsd(regF[A], regF[B]);
-	cc.mulsd(regF[A], rc0);
-	cc.movsd(tmp, rb1);
-	cc.mulsd(tmp, rc1);
-	cc.addsd(regF[A], tmp);
-	cc.movsd(tmp, rb2);
-	cc.mulsd(tmp, rc2);
-	cc.addsd(regF[A], tmp);
+	cc.CreateStore(
+		cc.CreateFAdd(
+			cc.CreateFAdd(
+				cc.CreateFMul(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])),
+				cc.CreateFMul(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1]))),
+			cc.CreateFMul(cc.CreateLoad(regF[B + 2]), cc.CreateLoad(regF[C + 2]))),
+		regF[A]);
 }
 
 void JitCompiler::EmitCROSSV_RR()
 {
-	auto tmp = newTempXmmSd();
-
-	auto a0 = CheckRegF(B, A);
-	auto a1 = CheckRegF(B + 1, A + 1);
-	auto a2 = CheckRegF(B + 2, A + 2);
-	auto b0 = CheckRegF(C, A);
-	auto b1 = CheckRegF(C + 1, A + 1);
-	auto b2 = CheckRegF(C + 2, A + 2);
-
-	// r0 = a1b2 - a2b1
-	cc.movsd(regF[A], a1);
-	cc.mulsd(regF[A], b2);
-	cc.movsd(tmp, a2);
-	cc.mulsd(tmp, b1);
-	cc.subsd(regF[A], tmp);
-
-	// r1 = a2b0 - a0b2
-	cc.movsd(regF[A + 1], a2);
-	cc.mulsd(regF[A + 1], b0);
-	cc.movsd(tmp, a0);
-	cc.mulsd(tmp, b2);
-	cc.subsd(regF[A + 1], tmp);
-
-	// r2 = a0b1 - a1b0
-	cc.movsd(regF[A + 2], a0);
-	cc.mulsd(regF[A + 2], b1);
-	cc.movsd(tmp, a1);
-	cc.mulsd(tmp, b0);
-	cc.subsd(regF[A + 2], tmp);
+	IRValue* a0 = cc.CreateLoad(regF[B]);
+	IRValue* a1 = cc.CreateLoad(regF[B + 1]);
+	IRValue* a2 = cc.CreateLoad(regF[B + 2]);
+	IRValue* b0 = cc.CreateLoad(regF[C]);
+	IRValue* b1 = cc.CreateLoad(regF[C + 1]);
+	IRValue* b2 = cc.CreateLoad(regF[C + 2]);
+	cc.CreateStore(cc.CreateFSub(cc.CreateFMul(a1, b2), cc.CreateFMul(a2, b1)), regF[A]);
+	cc.CreateStore(cc.CreateFSub(cc.CreateFMul(a2, b0), cc.CreateFMul(a0, b2)), regF[A + 1]);
+	cc.CreateStore(cc.CreateFSub(cc.CreateFMul(a0, b1), cc.CreateFMul(a1, b0)), regF[A + 2]);
 }
 
 void JitCompiler::EmitMULVF3_RR()
 {
-	auto rc = CheckRegF(C, A, A + 1, A + 2);
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.mulsd(regF[A], rc);
-	cc.mulsd(regF[A + 1], rc);
-	cc.mulsd(regF[A + 2], rc);
+	IRValue* rc = cc.CreateLoad(regF[C]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
 }
 
 void JitCompiler::EmitMULVF3_RK()
 {
-	auto tmp = newTempIntPtr();
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.mulsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
-	cc.mulsd(regF[A + 2], asmjit::x86::qword_ptr(tmp));
+	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
 }
 
 void JitCompiler::EmitDIVVF3_RR()
 {
-	auto rc = CheckRegF(C, A, A + 1, A + 2);
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.divsd(regF[A], rc);
-	cc.divsd(regF[A + 1], rc);
-	cc.divsd(regF[A + 2], rc);
+	IRValue* rc = cc.CreateLoad(regF[C]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
 }
 
 void JitCompiler::EmitDIVVF3_RK()
 {
-	auto tmp = newTempIntPtr();
-	cc.movsd(regF[A], regF[B]);
-	cc.movsd(regF[A + 1], regF[B + 1]);
-	cc.movsd(regF[A + 2], regF[B + 2]);
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.divsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.divsd(regF[A + 1], asmjit::x86::qword_ptr(tmp));
-	cc.divsd(regF[A + 2], asmjit::x86::qword_ptr(tmp));
+	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
 }
 
+#if 0
 void JitCompiler::EmitLENV3()
 {
 	auto rb1 = CheckRegF(B + 1, A);
@@ -1406,6 +1286,7 @@ void JitCompiler::EmitEQV3_R()
 		EmitVectorComparison<3> (check, fail, success);
 	});
 }
+#endif
 	
 void JitCompiler::EmitEQV3_K()
 {
@@ -1415,6 +1296,7 @@ void JitCompiler::EmitEQV3_K()
 /////////////////////////////////////////////////////////////////////////////
 // Pointer math.
 
+#if 0
 void JitCompiler::EmitADDA_RR()
 {
 	auto tmp = newTempIntPtr();

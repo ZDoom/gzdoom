@@ -728,13 +728,6 @@ void V_InitFonts()
 		OriginalSmallFont = new FFont("OriginalSmallFont", "STCFN%.3d", "defsmallfont", HU_FONTSTART, HU_FONTSIZE, HU_FONTSTART, -1, -1, false, true);
 	}
 
-	if (SmallFont)
-	{
-		uint32_t colors[256] = {};
-		SmallFont->RecordAllTextureColors(colors);
-		if (OriginalSmallFont != nullptr) OriginalSmallFont->SetDefaultTranslation(colors);
-		NewSmallFont->SetDefaultTranslation(colors);
-	}
 
 	if (!(SmallFont2 = V_GetFont("SmallFont2")))	// Only used by Strife
 	{
@@ -768,13 +761,6 @@ void V_InitFonts()
 	else
 	{
 		OriginalBigFont = new FFont("OriginalBigFont", nullptr, "bigfont", HU_FONTSTART, HU_FONTSIZE, 1, -1, -1, false, true);
-	}
-
-	if (BigFont)
-	{
-		uint32_t colors[256] = {};
-		BigFont->RecordAllTextureColors(colors);
-		if (OriginalBigFont != nullptr) OriginalBigFont->SetDefaultTranslation(colors);
 	}
 
 	// let PWAD BIGFONTs override the stock BIGUPPER font. (This check needs to be made smarter.)
@@ -826,6 +812,28 @@ void V_InitFonts()
 		BigFont = OriginalBigFont;
 	}
 	AlternativeSmallFont = OriginalSmallFont;
+}
+
+void V_LoadTranslations()
+{
+	for (auto font = FFont::FirstFont; font; font = font->Next)
+	{
+		if (!font->noTranslate) font->LoadTranslations();
+		else font->ActiveColors = 0;
+	}
+	if (BigFont)
+	{
+		uint32_t colors[256] = {};
+		BigFont->RecordAllTextureColors(colors);
+		if (OriginalBigFont != nullptr) OriginalBigFont->SetDefaultTranslation(colors);
+	}
+	if (SmallFont)
+	{
+		uint32_t colors[256] = {};
+		SmallFont->RecordAllTextureColors(colors);
+		if (OriginalSmallFont != nullptr) OriginalSmallFont->SetDefaultTranslation(colors);
+		NewSmallFont->SetDefaultTranslation(colors);
+	}
 }
 
 void V_ClearFonts()

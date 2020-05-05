@@ -372,10 +372,6 @@ FFont::FFont (const char *name, const char *nametemplate, const char *filetempla
 
 		FixXMoves();
 	}
-
-	if (!noTranslate) LoadTranslations();
-
-
 }
 
 void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height, const DVector2 &Scale)
@@ -443,16 +439,13 @@ void FFont::ReadSheetFont(TArray<FolderEntry> &folderdata, int width, int height
 		if (lump != nullptr)
 		{
 			auto pic = (*lump)->GetTexture();
-
-			auto b = pic->Get8BitPixels(false);
-
-			Chars[i].OriginalPic = MakeGameTexture(pic, nullptr, ETextureType::FontChar);
+			Chars[i].OriginalPic = (*lump)->GetUseType() == ETextureType::FontChar? (*lump) : MakeGameTexture(pic, nullptr, ETextureType::FontChar);
 			Chars[i].OriginalPic->SetUseType(ETextureType::FontChar);
 			Chars[i].OriginalPic->CopySize(*lump);
 			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar1(pic->GetImage())), nullptr, ETextureType::FontChar);
 			Chars[i].TranslatedPic->CopySize(*lump);
 			Chars[i].TranslatedPic->SetUseType(ETextureType::FontChar);
-			TexMan.AddGameTexture(Chars[i].OriginalPic);
+			if (Chars[i].OriginalPic != *lump) TexMan.AddGameTexture(Chars[i].OriginalPic);
 			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 		}
 		Chars[i].XMove = width;

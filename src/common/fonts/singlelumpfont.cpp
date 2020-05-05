@@ -176,6 +176,7 @@ void FSingleLumpFont::CreateFontFromPic (FTextureID picnum)
 	FirstChar = LastChar = 'A';
 	Chars.Resize(1);
 	Chars[0].TranslatedPic = pic;
+	Chars[0].OriginalPic = pic;
 
 	// Only one color range. Don't bother with the others.
 	ActiveColors = 0;
@@ -255,7 +256,6 @@ void FSingleLumpFont::LoadFON1 (int lump, const uint8_t *data)
 	LastChar = 255;	// This is to allow LoadTranslations to function. The way this is all set up really needs to be changed.
 	GlobalKerning = 0;
 	translateUntranslated = true;
-	LoadTranslations();
 	LastChar = 0x2122;
 
 	// Move the Windows-1252 characters to their proper place.
@@ -350,10 +350,12 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 		if (destSize <= 0)
 		{
 			Chars[i].TranslatedPic = nullptr;
+			Chars[i].OriginalPic = nullptr;
 		}
 		else
 		{
 			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (lump, int(data_p - data), widths2[i], FontHeight)), nullptr, ETextureType::FontChar);
+			Chars[i].OriginalPic = Chars[i].TranslatedPic;
 			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 			do
 			{
@@ -376,8 +378,6 @@ void FSingleLumpFont::LoadFON2 (int lump, const uint8_t *data)
 			I_Error ("Overflow decompressing char %d (%c) of %s", i, i, FontName.GetChars());
 		}
 	}
-
-	LoadTranslations();
 }
 
 //==========================================================================
@@ -489,6 +489,7 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 			-(int8_t)chardata[chari+4]	// y offset
 		)), nullptr, ETextureType::FontChar);
 		Chars[chardata[chari] - FirstChar].TranslatedPic = tex;
+		Chars[chardata[chari] - FirstChar].OriginalPic = tex;
 		TexMan.AddGameTexture(tex);
 	}
 
@@ -506,7 +507,6 @@ void FSingleLumpFont::LoadBMF(int lump, const uint8_t *data)
 	}
 
 	FixXMoves();
-	LoadTranslations();
 }
 
 //==========================================================================
@@ -555,6 +555,7 @@ void FSingleLumpFont::CheckFON1Chars (double *luminosity)
 		if(!Chars[i].TranslatedPic)
 		{
 			Chars[i].TranslatedPic = MakeGameTexture(new FImageTexture(new FFontChar2 (Lump, int(data_p - data), SpaceWidth, FontHeight)), nullptr, ETextureType::FontChar);
+			Chars[i].OriginalPic = Chars[i].TranslatedPic;
 			Chars[i].XMove = SpaceWidth;
 			TexMan.AddGameTexture(Chars[i].TranslatedPic);
 		}

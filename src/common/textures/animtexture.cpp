@@ -102,6 +102,8 @@ void AnimTextures::SetSize(int width, int height)
 {
 	static_cast<AnimTexture*>(tex[0]->GetTexture())->SetFrameSize(width, height);
     static_cast<AnimTexture*>(tex[1]->GetTexture())->SetFrameSize(width, height);
+    tex[0]->SetSize(width, height);
+    tex[1]->SetSize(width, height);
 }
     
 void AnimTextures::SetFrame(const uint8_t *palette, const void* data)

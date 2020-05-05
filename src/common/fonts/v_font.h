@@ -80,6 +80,7 @@ using GlyphSet = TMap<int, FGameTexture*>;
 
 class FFont
 {
+	friend void V_LoadTranslations();
 public:
 
 	enum EFontType
@@ -154,7 +155,7 @@ protected:
 	int TranslationType = 0;
 	int Displacement = 0;
 	char Cursor;
-	bool noTranslate;
+	bool noTranslate = false;
 	bool translateUntranslated;
 	bool MixedCase = false;
 	bool forceremap = false;
@@ -165,7 +166,7 @@ protected:
 		int XMove = INT_MIN;
 	};
 	TArray<CharData> Chars;
-	int ActiveColors;
+	int ActiveColors = -1;
 	TArray<int> Translations;
 	uint8_t PatchRemap[256];
 
@@ -191,5 +192,6 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 FFont *V_GetFont(const char *fontname, const char *fontlumpname = nullptr);
 void V_InitFontColors();
 char* CleanseString(char* str);
+void V_LoadTranslations();
 
 

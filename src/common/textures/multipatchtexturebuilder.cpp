@@ -138,19 +138,18 @@ void FMultipatchTextureBuilder::MakeTexture(BuildInfo &buildinfo, ETextureType u
 {
 	buildinfo.texture = new FGameTexture(nullptr, buildinfo.Name);
 	buildinfo.texture->SetUseType(usetype);
+	buildinfo.texture->SetSize(buildinfo.Width, buildinfo.Height);
 	buildinfo.texture->SetOffsets(0, buildinfo.LeftOffset[0], buildinfo.TopOffset[0]);	// These are needed for construction of other multipatch textures.
 	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
+	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.X);
+	buildinfo.texture->SetWorldPanning(buildinfo.bWorldPanning);
+	buildinfo.texture->SetNoDecals(buildinfo.bNoDecals);
 	TexMan.AddGameTexture(buildinfo.texture);
 }
 
 void FMultipatchTextureBuilder::AddImageToTexture(FImageTexture *tex, BuildInfo& buildinfo)
 {
-	buildinfo.texture->Setup(tex);
-	buildinfo.texture->SetOffsets(0, buildinfo.LeftOffset[0], buildinfo.TopOffset[0]);
-	buildinfo.texture->SetOffsets(1, buildinfo.LeftOffset[1], buildinfo.TopOffset[1]);
-	buildinfo.texture->SetScale((float)buildinfo.Scale.X, (float)buildinfo.Scale.X);
-	buildinfo.texture->SetWorldPanning(buildinfo.bWorldPanning);
-	buildinfo.texture->SetNoDecals(buildinfo.bNoDecals);
+	buildinfo.texture->SetBase(tex);
 	calcShouldUpscale(buildinfo.texture);	// calculate this once at insertion
 }
 
@@ -874,6 +873,7 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 		for (int i = BuiltTextures.Size()-1; i>= 0; i--)
 		{
 			auto &buildinfo = BuiltTextures[i];
+
 			bool hasEmpty = false;
 
 			for (unsigned j = 0; j < buildinfo.Inits.Size(); j++)

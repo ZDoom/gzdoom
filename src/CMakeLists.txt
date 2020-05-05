@@ -931,7 +931,6 @@ set (PCH_SOURCES
 	rendering/hwrenderer/hw_models.cpp
 	rendering/hwrenderer/hw_postprocessshader.cpp
 	rendering/hwrenderer/hw_precache.cpp
-	rendering/hwrenderer/hw_draw2d.cpp
 	rendering/hwrenderer/scene/hw_lighting.cpp
 	rendering/hwrenderer/scene/hw_drawlistadd.cpp
 	rendering/hwrenderer/scene/hw_setcolor.cpp
@@ -1114,6 +1113,7 @@ set (PCH_SOURCES
 	common/rendering/v_video.cpp
 	common/rendering/r_thread.cpp
 	common/rendering/r_videoscale.cpp
+	common/rendering/hwrenderer/hw_draw2d.cpp
 	common/rendering/hwrenderer/data/hw_clock.cpp
 	common/rendering/hwrenderer/data/hw_skydome.cpp
 	common/rendering/hwrenderer/data/flatvertices.cpp

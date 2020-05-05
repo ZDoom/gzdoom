@@ -58,6 +58,19 @@ private:
 	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
 	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)) { return nullptr; }
 
+	template <typename Func>
+	void EmitComparisonOpcode(Func jmpFunc)
+	{
+		/*
+		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
+		auto successLabel = cc.newLabel();
+		auto failLabel = GetLabel(i + 2 + JMPOFS(pc + 1));
+		jmpFunc(static_cast<bool>(A & CMP_CHECK), failLabel, successLabel);
+		cc.bind(successLabel);
+		pc++; // This instruction uses two instruction slots - skip the next one
+		*/
+	}
+
 	IRContext* ircontext;
 	IRFunction* irfunc;
 	IRBuilder cc;

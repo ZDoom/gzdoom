@@ -25,7 +25,6 @@ void JitCompiler::EmitLENS()
 	cc.CreateStore(cc.CreateCall(GetNativeFunc<int, FString*>("__StringLength", StringLength), { cc.CreateLoad(regS[B]) }), regD[A]);
 }
 
-#if 0
 static int StringCompareNoCase(FString* first, FString* second)
 {
 	return first->CompareNoCase(*second);
@@ -38,38 +37,41 @@ static int StringCompare(FString* first, FString* second)
 
 void JitCompiler::EmitCMPS()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 
-		auto call = CreateCall<int, FString*, FString*>(static_cast<bool>(A & CMP_APPROX) ? StringCompareNoCase : StringCompare);
+		IRFunction* comparefunc = static_cast<bool>(A & CMP_APPROX) ? GetNativeFunc<int, FString*, FString*>("__StringCompareNoCase", StringCompareNoCase) : GetNativeFunc<int, FString*, FString*>("__StringCompare", StringCompare);
+		IRValue* arg0;
+		IRValue* arg1;
 
-		auto result = newResultInt32();
-		call->setRet(0, result);
+		if (static_cast<bool>(A & CMP_BK)) arg0 = ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)&konsts[B]);
+		else                               arg0 = cc.CreateLoad(regS[B]);
 
-		if (static_cast<bool>(A & CMP_BK)) call->setArg(0, asmjit::imm_ptr(&konsts[B]));
-		else                               call->setArg(0, regS[B]);
+		if (static_cast<bool>(A & CMP_CK)) arg1 = ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)&konsts[C]);
+		else                               arg1 = cc.CreateLoad(regS[C]);
 
-		if (static_cast<bool>(A & CMP_CK)) call->setArg(1, asmjit::imm_ptr(&konsts[C]));
-		else                               call->setArg(1, regS[C]);
+		IRValue* result = cc.CreateCall(comparefunc, { arg0, arg1 });
+		IRValue* zero = ircontext->getConstantInt(0);
 
 		int method = A & CMP_METHOD_MASK;
-		if (method == CMP_EQ) {
-			cc.test(result, result);
-			if (check) cc.jz(fail);
-			else       cc.jnz(fail);
+		if (method == CMP_EQ)
+		{
+			if (check) result = cc.CreateICmpEQ(result, zero);
+			else       result = cc.CreateICmpNE(result, zero);
 		}
-		else if (method == CMP_LT) {
-			cc.cmp(result, 0);
-			if (check) cc.jl(fail);
-			else       cc.jnl(fail);
+		else if (method == CMP_LT)
+		{
+			if (check) result = cc.CreateICmpSLT(result, zero);
+			else       result = cc.CreateICmpSGE(result, zero);
 		}
-		else {
-			cc.cmp(result, 0);
-			if (check) cc.jle(fail);
-			else       cc.jnle(fail);
+		else
+		{
+			if (check) result = cc.CreateICmpSLE(result, zero);
+			else       result = cc.CreateICmpSGT(result, zero);
 		}
+
+		cc.CreateCondBr(result, fail, success);
 	});
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Integer math.
@@ -404,141 +406,145 @@ void JitCompiler::EmitNOT()
 	cc.CreateStore(cc.CreateNot(cc.CreateLoad(regD[B])), regD[A]);
 }
 
-#if 0
 void JitCompiler::EmitEQ_R()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], regD[C]);
-		if (check) cc.je(fail);
-		else       cc.jne(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpNE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitEQ_K()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], konstd[C]);
-		if (check) cc.je(fail);
-		else       cc.jne(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		else       result = cc.CreateICmpNE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLT_RR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], regD[C]);
-		if (check) cc.jl(fail);
-		else       cc.jnl(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpSLT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpSGE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLT_RK()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], konstd[C]);
-		if (check) cc.jl(fail);
-		else       cc.jnl(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpSLT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		else       result = cc.CreateICmpSGE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLT_KR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		auto tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
-		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
-		if (check) cc.jl(fail);
-		else       cc.jnl(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpSLT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpSGE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLE_RR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], regD[C]);
-		if (check) cc.jle(fail);
-		else       cc.jnle(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpSLE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpSGT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLE_RK()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], konstd[C]);
-		if (check) cc.jle(fail);
-		else       cc.jnle(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpSLE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		else       result = cc.CreateICmpSGT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLE_KR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		auto tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
-		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
-		if (check) cc.jle(fail);
-		else       cc.jnle(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpSLE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpSGT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLTU_RR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], regD[C]);
-		if (check) cc.jb(fail);
-		else       cc.jnb(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpULT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpUGE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLTU_RK()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], konstd[C]);
-		if (check) cc.jb(fail);
-		else       cc.jnb(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpULT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		else       result = cc.CreateICmpUGE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLTU_KR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		auto tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
-		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
-		if (check) cc.jb(fail);
-		else       cc.jnb(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpULT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpUGE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLEU_RR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], regD[C]);
-		if (check) cc.jbe(fail);
-		else       cc.jnbe(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpULE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpUGT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLEU_RK()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regD[B], konstd[C]);
-		if (check) cc.jbe(fail);
-		else       cc.jnbe(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpULE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		else       result = cc.CreateICmpUGT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitLEU_KR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		auto tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(&konstd[B]));
-		cc.cmp(asmjit::x86::ptr(tmp), regD[C]);
-		if (check) cc.jbe(fail);
-		else       cc.jnbe(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpULE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		else       result = cc.CreateICmpUGT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Double-precision floating point math.
@@ -762,7 +768,7 @@ void JitCompiler::EmitFLOP()
 
 void JitCompiler::EmitEQF_R()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		bool approx = static_cast<bool>(A & CMP_APPROX);
 		if (!approx)
 		{
@@ -803,7 +809,7 @@ void JitCompiler::EmitEQF_R()
 void JitCompiler::EmitEQF_K()
 {
 	using namespace asmjit;
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		bool approx = static_cast<bool>(A & CMP_APPROX);
 		if (!approx) {
 			auto konstTmp = newTempIntPtr();
@@ -846,7 +852,7 @@ void JitCompiler::EmitEQF_K()
 
 void JitCompiler::EmitLTF_RR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RR.\n");
 
 		cc.ucomisd(regF[C], regF[B]);
@@ -857,7 +863,7 @@ void JitCompiler::EmitLTF_RR()
 
 void JitCompiler::EmitLTF_RK()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RK.\n");
 
 		auto constTmp = newTempIntPtr();
@@ -873,7 +879,7 @@ void JitCompiler::EmitLTF_RK()
 
 void JitCompiler::EmitLTF_KR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_KR.\n");
 
 		auto tmp = newTempIntPtr();
@@ -887,7 +893,7 @@ void JitCompiler::EmitLTF_KR()
 
 void JitCompiler::EmitLEF_RR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RR.\n");
 
 		cc.ucomisd(regF[C], regF[B]);
@@ -898,7 +904,7 @@ void JitCompiler::EmitLEF_RR()
 
 void JitCompiler::EmitLEF_RK()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RK.\n");
 
 		auto constTmp = newTempIntPtr();
@@ -914,7 +920,7 @@ void JitCompiler::EmitLEF_RK()
 
 void JitCompiler::EmitLEF_KR()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_KR.\n");
 
 		auto tmp = newTempIntPtr();
@@ -998,7 +1004,7 @@ void JitCompiler::EmitLENV2()
 #if 0
 void JitCompiler::EmitEQV2_R()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		EmitVectorComparison<2> (check, fail, success);
 	});
 }
@@ -1103,7 +1109,7 @@ void JitCompiler::EmitLENV3()
 #if 0
 void JitCompiler::EmitEQV3_R()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		EmitVectorComparison<3> (check, fail, success);
 	});
 }
@@ -1164,25 +1170,22 @@ void JitCompiler::EmitSUBA()
 	cc.CreateStore(cc.CreateGEP(cc.CreateLoad(regA[B]), { cc.CreateNeg(cc.CreateLoad(regD[C])) }), regA[A]);
 }
 
-#if 0
 void JitCompiler::EmitEQA_R()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		cc.cmp(regA[B], regA[C]);
-		if (check) cc.je(fail);
-		else       cc.jne(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regA[B]), cc.CreateLoad(regA[C]));
+		else       result = cc.CreateICmpNE(cc.CreateLoad(regA[B]), cc.CreateLoad(regA[C]));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
 void JitCompiler::EmitEQA_K()
 {
-	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
-		auto tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(konsta[C].v));
-		cc.cmp(regA[B], tmp);
-		if (check) cc.je(fail);
-		else       cc.jne(fail);
+	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+		IRValue* result;
+		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regA[B]), ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)konsta[C].v));
+		else       result = cc.CreateICmpNE(cc.CreateLoad(regA[B]), ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)konsta[C].v));
+		cc.CreateCondBr(result, fail, success);
 	});
 }
-
-#endif

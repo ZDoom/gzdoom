@@ -2,8 +2,6 @@
 #include "jitintern.h"
 #include "basics.h"
 
-#if 0
-
 /////////////////////////////////////////////////////////////////////////////
 // String instructions.
 
@@ -14,11 +12,7 @@ static void ConcatString(FString* to, FString* first, FString* second)
 
 void JitCompiler::EmitCONCAT()
 {
-	auto rc = CheckRegS(C, A);
-	auto call = CreateCall<void, FString*, FString*, FString*>(ConcatString);
-	call->setArg(0, regS[A]);
-	call->setArg(1, regS[B]);
-	call->setArg(2, rc);
+	cc.CreateCall(GetNativeFunc<void, FString*, FString*, FString*>("__ConcatString", ConcatString), { cc.CreateLoad(regS[A]), cc.CreateLoad(regS[B]), cc.CreateLoad(regS[C]) });
 }
 
 static int StringLength(FString* str)
@@ -28,13 +22,10 @@ static int StringLength(FString* str)
 
 void JitCompiler::EmitLENS()
 {
-	auto result = newResultInt32();
-	auto call = CreateCall<int, FString*>(StringLength);
-	call->setRet(0, result);
-	call->setArg(0, regS[B]);
-	cc.mov(regD[A], result);
+	cc.CreateStore(cc.CreateCall(GetNativeFunc<int, FString*>("__StringLength", StringLength), { cc.CreateLoad(regS[B]) }), regD[A]);
 }
 
+#if 0
 static int StringCompareNoCase(FString* first, FString* second)
 {
 	return first->CompareNoCase(*second);
@@ -168,35 +159,20 @@ void JitCompiler::EmitMUL_RK()
 	cc.CreateStore(cc.CreateMul(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
 
-#if 0
-
 void JitCompiler::EmitDIV_RR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, regD[B]);
-	cc.cdq(tmp1, tmp0);
-	cc.idiv(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp0);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateSDiv(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitDIV_RK()
 {
 	if (konstd[C] != 0)
 	{
-		auto tmp0 = newTempInt32();
-		auto tmp1 = newTempInt32();
-		auto konstTmp = newTempIntPtr();
-		cc.mov(tmp0, regD[B]);
-		cc.cdq(tmp1, tmp0);
-		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
-		cc.idiv(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
-		cc.mov(regD[A], tmp0);
+		cc.CreateStore(cc.CreateSDiv(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 	}
 	else
 	{
@@ -206,46 +182,27 @@ void JitCompiler::EmitDIV_RK()
 
 void JitCompiler::EmitDIV_KR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, konstd[B]);
-	cc.cdq(tmp1, tmp0);
-	cc.idiv(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp0);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateSDiv(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
 }
 
 void JitCompiler::EmitDIVU_RR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, regD[B]);
-	cc.mov(tmp1, 0);
-	cc.div(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp0);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateUDiv(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitDIVU_RK()
 {
 	if (konstd[C] != 0)
 	{
-		auto tmp0 = newTempInt32();
-		auto tmp1 = newTempInt32();
-		auto konstTmp = newTempIntPtr();
-		cc.mov(tmp0, regD[B]);
-		cc.mov(tmp1, 0);
-		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
-		cc.div(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
-		cc.mov(regD[A], tmp0);
+		cc.CreateStore(cc.CreateUDiv(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 	}
 	else
 	{
@@ -255,46 +212,27 @@ void JitCompiler::EmitDIVU_RK()
 
 void JitCompiler::EmitDIVU_KR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, konstd[B]);
-	cc.mov(tmp1, 0);
-	cc.div(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp0);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateUDiv(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
 }
 
 void JitCompiler::EmitMOD_RR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, regD[B]);
-	cc.cdq(tmp1, tmp0);
-	cc.idiv(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp1);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateSRem(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitMOD_RK()
 {
 	if (konstd[C] != 0)
 	{
-		auto tmp0 = newTempInt32();
-		auto tmp1 = newTempInt32();
-		auto konstTmp = newTempIntPtr();
-		cc.mov(tmp0, regD[B]);
-		cc.cdq(tmp1, tmp0);
-		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
-		cc.idiv(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
-		cc.mov(regD[A], tmp1);
+		cc.CreateStore(cc.CreateSRem(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 	}
 	else
 	{
@@ -304,46 +242,27 @@ void JitCompiler::EmitMOD_RK()
 
 void JitCompiler::EmitMOD_KR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, konstd[B]);
-	cc.cdq(tmp1, tmp0);
-	cc.idiv(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp1);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateSRem(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
 }
 
 void JitCompiler::EmitMODU_RR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, regD[B]);
-	cc.mov(tmp1, 0);
-	cc.div(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp1);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateURem(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
 }
 
 void JitCompiler::EmitMODU_RK()
 {
 	if (konstd[C] != 0)
 	{
-		auto tmp0 = newTempInt32();
-		auto tmp1 = newTempInt32();
-		auto konstTmp = newTempIntPtr();
-		cc.mov(tmp0, regD[B]);
-		cc.mov(tmp1, 0);
-		cc.mov(konstTmp, asmjit::imm_ptr(&konstd[C]));
-		cc.div(tmp1, tmp0, asmjit::x86::ptr(konstTmp));
-		cc.mov(regD[A], tmp1);
+		cc.CreateStore(cc.CreateURem(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 	}
 	else
 	{
@@ -353,19 +272,12 @@ void JitCompiler::EmitMODU_RK()
 
 void JitCompiler::EmitMODU_KR()
 {
-	auto tmp0 = newTempInt32();
-	auto tmp1 = newTempInt32();
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	cc.test(regD[C], regD[C]);
-	cc.je(label);
-
-	cc.mov(tmp0, konstd[B]);
-	cc.mov(tmp1, 0);
-	cc.div(tmp1, tmp0, regD[C]);
-	cc.mov(regD[A], tmp1);
+	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateURem(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
 }
-#endif
 
 void JitCompiler::EmitAND_RR()
 {
@@ -666,19 +578,13 @@ void JitCompiler::EmitMULF_RK()
 	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
 }
 
-#if 0
-
 void JitCompiler::EmitDIVF_RR()
 {
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	auto zero = newTempXmmSd();
-	cc.xorpd(zero, zero);
-	cc.ucomisd(regF[C], zero);
-	cc.je(label);
-
-	auto rc = CheckRegF(C, A);
-	cc.movsd(regF[A], regF[B]);
-	cc.divsd(regF[A], rc);
+	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
 }
 
 void JitCompiler::EmitDIVF_RK()
@@ -689,20 +595,17 @@ void JitCompiler::EmitDIVF_RK()
 	}
 	else
 	{
-		auto tmp = newTempIntPtr();
-		cc.movsd(regF[A], regF[B]);
-		cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-		cc.divsd(regF[A], asmjit::x86::qword_ptr(tmp));
+		cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
 	}
 }
 
 void JitCompiler::EmitDIVF_KR()
 {
-	auto rc = CheckRegF(C, A);
-	auto tmp = newTempIntPtr();
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.divsd(regF[A], rc);
+	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateFDiv(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C])), regF[A]);
 }
 
 static double DoubleModF(double a, double b)
@@ -712,18 +615,11 @@ static double DoubleModF(double a, double b)
 
 void JitCompiler::EmitMODF_RR()
 {
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	auto zero = newTempXmmSd();
-	cc.xorpd(zero, zero);
-	cc.ucomisd(regF[C], zero);
-	cc.je(label);
-
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>(DoubleModF);
-	call->setRet(0, result);
-	call->setArg(0, regF[B]);
-	call->setArg(1, regF[C]);
-	cc.movsd(regF[A], result);
+	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]) }), regF[A]);
 }
 
 void JitCompiler::EmitMODF_RK()
@@ -734,81 +630,35 @@ void JitCompiler::EmitMODF_RK()
 	}
 	else
 	{
-		auto tmpPtr = newTempIntPtr();
-		cc.mov(tmpPtr, asmjit::imm_ptr(&konstf[C]));
-
-		auto tmp = newTempXmmSd();
-		cc.movsd(tmp, asmjit::x86::qword_ptr(tmpPtr));
-
-		auto result = newResultXmmSd();
-		auto call = CreateCall<double, double, double>(DoubleModF);
-		call->setRet(0, result);
-		call->setArg(0, regF[B]);
-		call->setArg(1, tmp);
-		cc.movsd(regF[A], result);
+		cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]) }), regF[A]);
 	}
 }
 
 void JitCompiler::EmitMODF_KR()
 {
-	using namespace asmjit;
-
-	auto label = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
-	auto zero = newTempXmmSd();
-	cc.xorpd(zero, zero);
-	cc.ucomisd(regF[C], zero);
-	cc.je(label);
-
-	auto tmp = newTempXmmSd();
-	cc.movsd(tmp, x86::ptr(ToMemAddress(&konstf[B])));
-
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>(DoubleModF);
-	call->setRet(0, result);
-	call->setArg(0, tmp);
-	call->setArg(1, regF[C]);
-	cc.movsd(regF[A], result);
+	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
+	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]) }), regF[A]);
 }
 
 void JitCompiler::EmitPOWF_RR()
 {
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>(g_pow);
-	call->setRet(0, result);
-	call->setArg(0, regF[B]);
-	call->setArg(1, regF[C]);
-	cc.movsd(regF[A], result);
+	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]) }), regF[A]);
 }
 
 void JitCompiler::EmitPOWF_RK()
 {
-	auto tmp = newTempIntPtr();
-	auto tmp2 = newTempXmmSd();
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
-
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>(g_pow);
-	call->setRet(0, result);
-	call->setArg(0, regF[B]);
-	call->setArg(1, tmp2);
-	cc.movsd(regF[A], result);
+	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]) }), regF[A]);
 }
 
 void JitCompiler::EmitPOWF_KR()
 {
-	auto tmp = newTempIntPtr();
-	auto tmp2 = newTempXmmSd();
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
-	cc.movsd(tmp2, asmjit::x86::qword_ptr(tmp));
-
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>(g_pow);
-	call->setRet(0, result);
-	call->setArg(0, tmp2);
-	call->setArg(1, regF[C]);
-	cc.movsd(regF[A], result);
+	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]) }), regF[A]);
 }
+
+#if 0
 
 void JitCompiler::EmitMINF_RR()
 {
@@ -843,91 +693,72 @@ void JitCompiler::EmitMAXF_RK()
 	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
 	cc.maxpd(regF[A], rb); // maxsd requires SSE 4.1
 }
-	
+
+#endif
+
 void JitCompiler::EmitATAN2()
 {
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double, double>(g_atan2);
-	call->setRet(0, result);
-	call->setArg(0, regF[B]);
-	call->setArg(1, regF[C]);
-	cc.movsd(regF[A], result);
-
-	static const double constant = 180 / M_PI;
-	auto tmp = newTempIntPtr();
-	cc.mov(tmp, asmjit::imm_ptr(&constant));
-	cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
+	cc.CreateStore(cc.CreateFMul(cc.CreateCall(GetNativeFunc<double, double, double>("__g_atan2", g_atan2), { cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]) }), ircontext->getConstantFloat(ircontext->getFloatTy(), 180 / M_PI)), regF[A]);
 }
 
 void JitCompiler::EmitFLOP()
 {
 	if (C == FLOP_NEG)
 	{
-		auto mask = cc.newDoubleConst(asmjit::kConstScopeLocal, -0.0);
-		auto maskXmm = newTempXmmSd();
-		cc.movsd(maskXmm, mask);
-		if (A != B)
-			cc.movsd(regF[A], regF[B]);
-		cc.xorpd(regF[A], maskXmm);
+		cc.CreateStore(cc.CreateFNeg(cc.CreateLoad(regF[B])), regF[A]);
 	}
 	else
 	{
-		auto v = newTempXmmSd();
-		cc.movsd(v, regF[B]);
+		IRValue* v = cc.CreateLoad(regF[B]);
 
 		if (C == FLOP_TAN_DEG)
 		{
-			static const double constant = M_PI / 180;
-			auto tmp = newTempIntPtr();
-			cc.mov(tmp, asmjit::imm_ptr(&constant));
-			cc.mulsd(v, asmjit::x86::qword_ptr(tmp));
+			v = cc.CreateFMul(v, ircontext->getConstantFloat(ircontext->getFloatTy(), M_PI / 180));
 		}
 
 		typedef double(*FuncPtr)(double);
+		const char* funcname = "";
 		FuncPtr func = nullptr;
 		switch (C)
 		{
 		default: I_Error("Unknown OP_FLOP subfunction");
-		case FLOP_ABS:		func = fabs; break;
-		case FLOP_EXP:		func = g_exp; break;
-		case FLOP_LOG:		func = g_log; break;
-		case FLOP_LOG10:	func = g_log10; break;
-		case FLOP_SQRT:		func = g_sqrt; break;
-		case FLOP_CEIL:		func = ceil; break;
-		case FLOP_FLOOR:	func = floor; break;
-		case FLOP_ACOS:		func = g_acos; break;
-		case FLOP_ASIN:		func = g_asin; break;
-		case FLOP_ATAN:		func = g_atan; break;
-		case FLOP_COS:		func = g_cos; break;
-		case FLOP_SIN:		func = g_sin; break;
-		case FLOP_TAN:		func = g_tan; break;
-		case FLOP_ACOS_DEG:	func = g_acos; break;
-		case FLOP_ASIN_DEG:	func = g_asin; break;
-		case FLOP_ATAN_DEG:	func = g_atan; break;
-		case FLOP_COS_DEG:	func = g_cosdeg; break;
-		case FLOP_SIN_DEG:	func = g_sindeg; break;
-		case FLOP_TAN_DEG:	func = g_tan; break;
-		case FLOP_COSH:		func = g_cosh; break;
-		case FLOP_SINH:		func = g_sinh; break;
-		case FLOP_TANH:		func = g_tanh; break;
-		case FLOP_ROUND:	func = round; break;
+		case FLOP_ABS:		func = fabs; funcname = "__fabs"; break;
+		case FLOP_EXP:		func = g_exp; funcname = "__g_exp"; break;
+		case FLOP_LOG:		func = g_log; funcname = "__g_log"; break;
+		case FLOP_LOG10:	func = g_log10; funcname = "__g_log10"; break;
+		case FLOP_SQRT:		func = g_sqrt; funcname = "__g_sqrt"; break;
+		case FLOP_CEIL:		func = ceil; funcname = "__ceil"; break;
+		case FLOP_FLOOR:	func = floor; funcname = "__floor"; break;
+		case FLOP_ACOS:		func = g_acos; funcname = "__g_acos"; break;
+		case FLOP_ASIN:		func = g_asin; funcname = "__g_asin"; break;
+		case FLOP_ATAN:		func = g_atan; funcname = "__g_atan"; break;
+		case FLOP_COS:		func = g_cos; funcname = "__g_cos"; break;
+		case FLOP_SIN:		func = g_sin; funcname = "__g_sin"; break;
+		case FLOP_TAN:		func = g_tan; funcname = "__g_tan"; break;
+		case FLOP_ACOS_DEG:	func = g_acos; funcname = "__g_acos"; break;
+		case FLOP_ASIN_DEG:	func = g_asin; funcname = "__g_asin"; break;
+		case FLOP_ATAN_DEG:	func = g_atan; funcname = "__g_atan"; break;
+		case FLOP_COS_DEG:	func = g_cosdeg; funcname = "__g_cosdeg"; break;
+		case FLOP_SIN_DEG:	func = g_sindeg; funcname = "__g_sindeg"; break;
+		case FLOP_TAN_DEG:	func = g_tan; funcname = "__g_tan"; break;
+		case FLOP_COSH:		func = g_cosh; funcname = "__g_cosh"; break;
+		case FLOP_SINH:		func = g_sinh; funcname = "__g_sinh"; break;
+		case FLOP_TANH:		func = g_tanh; funcname = "__g_tanh"; break;
+		case FLOP_ROUND:	func = round; funcname = "__round"; break;
 		}
 
-		auto result = newResultXmmSd();
-		auto call = CreateCall<double, double>(func);
-		call->setRet(0, result);
-		call->setArg(0, v);
-		cc.movsd(regF[A], result);
+		IRValue* result = cc.CreateCall(GetNativeFunc<double, double>(funcname, func), { v });
 
 		if (C == FLOP_ACOS_DEG || C == FLOP_ASIN_DEG || C == FLOP_ATAN_DEG)
 		{
-			static const double constant = 180 / M_PI;
-			auto tmp = newTempIntPtr();
-			cc.mov(tmp, asmjit::imm_ptr(&constant));
-			cc.mulsd(regF[A], asmjit::x86::qword_ptr(tmp));
+			result = cc.CreateFMul(result, ircontext->getConstantFloat(ircontext->getFloatTy(), 180 / M_PI));
 		}
+
+		cc.CreateStore(result, regF[A]);
 	}
 }
+
+#if 0
 
 void JitCompiler::EmitEQF_R()
 {
@@ -1155,20 +986,16 @@ void JitCompiler::EmitDIVVF2_RK()
 	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
 }
 
-#if 0
 void JitCompiler::EmitLENV2()
 {
-	auto rb0 = CheckRegF(B, A);
-	auto rb1 = CheckRegF(B + 1, A);
-	auto tmp = newTempXmmSd();
-	cc.movsd(regF[A], regF[B]);
-	cc.mulsd(regF[A], rb0);
-	cc.movsd(tmp, rb1);
-	cc.mulsd(tmp, rb1);
-	cc.addsd(regF[A], tmp);
-	CallSqrt(regF[A], regF[A]);
+	IRValue* x = cc.CreateLoad(regF[B]);
+	IRValue* y = cc.CreateLoad(regF[B + 1]);
+	IRValue* dotproduct = cc.CreateFAdd(cc.CreateFMul(x, x), cc.CreateFMul(y, y));
+	IRValue* len = cc.CreateCall(GetNativeFunc<double, double>("__g_sqrt", g_sqrt), { dotproduct });
+	cc.CreateStore(len, regF[A]);
 }
 
+#if 0
 void JitCompiler::EmitEQV2_R()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
@@ -1263,23 +1090,17 @@ void JitCompiler::EmitDIVVF3_RK()
 	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
 }
 
-#if 0
 void JitCompiler::EmitLENV3()
 {
-	auto rb1 = CheckRegF(B + 1, A);
-	auto rb2 = CheckRegF(B + 2, A);
-	auto tmp = newTempXmmSd();
-	cc.movsd(regF[A], regF[B]);
-	cc.mulsd(regF[A], regF[B]);
-	cc.movsd(tmp, rb1);
-	cc.mulsd(tmp, rb1);
-	cc.addsd(regF[A], tmp);
-	cc.movsd(tmp, rb2);
-	cc.mulsd(tmp, rb2);
-	cc.addsd(regF[A], tmp);
-	CallSqrt(regF[A], regF[A]);
+	IRValue* x = cc.CreateLoad(regF[B]);
+	IRValue* y = cc.CreateLoad(regF[B + 1]);
+	IRValue* z = cc.CreateLoad(regF[B + 2]);
+	IRValue* dotproduct = cc.CreateFAdd(cc.CreateFAdd(cc.CreateFMul(x, x), cc.CreateFMul(y, y)), cc.CreateFMul(z, z));
+	IRValue* len = cc.CreateCall(GetNativeFunc<double, double>("__g_sqrt", g_sqrt), { dotproduct });
+	cc.CreateStore(len, regF[A]);
 }
 
+#if 0
 void JitCompiler::EmitEQV3_R()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
@@ -1296,51 +1117,54 @@ void JitCompiler::EmitEQV3_K()
 /////////////////////////////////////////////////////////////////////////////
 // Pointer math.
 
-#if 0
 void JitCompiler::EmitADDA_RR()
 {
-	auto tmp = newTempIntPtr();
-	auto label = cc.newLabel();
+	// Leave null pointers as null pointers
 
-	cc.mov(tmp, regA[B]);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	// Check if zero, the first operand is zero, if it is, don't add.
-	cc.cmp(tmp, 0);
-	cc.je(label);
+	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt64Ty(), 0);
+	IRValue* ptr = cc.CreateLoad(regA[B]);
 
-	auto tmpptr = newTempIntPtr();
-	cc.mov(tmpptr, regD[C]);
-	cc.add(tmp, tmpptr);
-
-	cc.bind(label);
-	cc.mov(regA[A], tmp);
+	cc.CreateCondBr(cc.CreateICmpEQ(ptr, nullvalue), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(ptr, regA[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(cc.CreateGEP(ptr, { cc.CreateLoad(regD[C]) }), regA[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitADDA_RK()
 {
-	auto tmp = newTempIntPtr();
-	auto label = cc.newLabel();
+	// Leave null pointers as null pointers
 
-	cc.mov(tmp, regA[B]);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	// Check if zero, the first operand is zero, if it is, don't add.
-	cc.cmp(tmp, 0);
-	cc.je(label);
+	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt64Ty(), 0);
+	IRValue* ptr = cc.CreateLoad(regA[B]);
 
-	cc.add(tmp, konstd[C]);
-
-	cc.bind(label);
-	cc.mov(regA[A], tmp);
+	cc.CreateCondBr(cc.CreateICmpEQ(ptr, nullvalue), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(ptr, regA[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(cc.CreateGEP(ptr, { ircontext->getConstantInt(konstd[C]) }), regA[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitSUBA()
 {
-	auto tmp = newTempIntPtr();
-	cc.mov(tmp, regA[B]);
-	cc.sub(tmp, regD[C]);
-	cc.mov(regA[A], tmp);
+	cc.CreateStore(cc.CreateGEP(cc.CreateLoad(regA[B]), { cc.CreateNeg(cc.CreateLoad(regD[C])) }), regA[A]);
 }
 
+#if 0
 void JitCompiler::EmitEQA_R()
 {
 	EmitComparisonOpcode([&](bool check, asmjit::Label& fail, asmjit::Label& success) {
@@ -1359,15 +1183,6 @@ void JitCompiler::EmitEQA_K()
 		if (check) cc.je(fail);
 		else       cc.jne(fail);
 	});
-}
-
-void JitCompiler::CallSqrt(const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)
-{
-	auto result = newResultXmmSd();
-	auto call = CreateCall<double, double>(g_sqrt);
-	call->setRet(0, result);
-	call->setArg(0, b);
-	cc.movsd(a, result);
 }
 
 #endif

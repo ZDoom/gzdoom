@@ -33,7 +33,33 @@ private:
 	#include "vmops.h"
 	#undef xx
 
+	void EmitNullPointerThrow(int index, EVMAbortException reason);
+	void EmitThrowException(EVMAbortException reason);
+	IRBasicBlock* EmitThrowExceptionLabel(EVMAbortException reason);
+
+	template<typename RetType, typename P1>
+	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1)) { return nullptr; }
+
+	template<typename RetType, typename P1, typename P2>
+	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2)) { return nullptr; }
+
+	template<typename RetType, typename P1, typename P2, typename P3>
+	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3)) { return nullptr; }
+
+	template<typename RetType, typename P1, typename P2, typename P3, typename P4>
+	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4)) { return nullptr; }
+
+	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5>
+	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5)) { return nullptr; }
+
+	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6>
+	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6)) { return nullptr; }
+
+	template<typename RetType, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7>
+	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7)) { return nullptr; }
+
 	IRContext* ircontext;
+	IRFunction* irfunc;
 	IRBuilder cc;
 
 	const int* konstd;

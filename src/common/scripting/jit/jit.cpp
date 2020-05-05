@@ -18,6 +18,10 @@ void JitDumpLog(FILE* file, VMScriptFunction* sfunc)
 {
 }
 
+void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason) { }
+void JitCompiler::EmitThrowException(EVMAbortException reason) { }
+IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason) { return irfunc->createBasicBlock(""); }
+
 #else
 
 static void OutputJitLog(const asmjit::StringLogger &logger);

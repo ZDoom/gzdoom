@@ -43,7 +43,7 @@
 
 EXTERN_CVAR(Int, vid_aspect)
 EXTERN_CVAR(Int, uiscale)
-CVAR(Bool, ui_screenborder_classic_scaling, true, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
+CVAR(Bool, ui_screenborder_classic_scaling, true, CVAR_ARCHIVE)
 
 // Helper for ActiveRatio and CheckRatio. Returns the forced ratio type, or -1 if none.
 int ActiveFakeRatio(int width, int height)

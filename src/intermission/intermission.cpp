@@ -73,7 +73,7 @@ extern int		NoWipe;
 CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Bool, inter_subtitles, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
-CVAR(Bool, inter_classic_scaling, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, inter_classic_scaling, true, CVAR_ARCHIVE);
 
 //==========================================================================
 //

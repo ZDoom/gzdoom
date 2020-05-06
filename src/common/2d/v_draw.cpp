@@ -43,6 +43,7 @@
 
 EXTERN_CVAR(Int, vid_aspect)
 EXTERN_CVAR(Int, uiscale)
+CVAR(Bool, ui_screenborder_classic_scaling, true, CVAR_GLOBALCONFIG | CVAR_ARCHIVE)
 
 // Helper for ActiveRatio and CheckRatio. Returns the forced ratio type, or -1 if none.
 int ActiveFakeRatio(int width, int height)
@@ -1161,10 +1162,11 @@ void FillBorder (F2DDrawer *drawer, FGameTexture *img)
 
 	if (img != NULL)
 	{
-		drawer->AddFlatFill(0, 0, Width, bordtop, img);										// Top
-		drawer->AddFlatFill(0, bordtop, bordleft, Height - bordbottom, img);				// Left
-		drawer->AddFlatFill(Width - bordright, bordtop, Width, Height - bordbottom, img);	// Right
-		drawer->AddFlatFill(0, Height - bordbottom, Width, Height, img);					// Bottom
+		int filltype = (ui_screenborder_classic_scaling) ? -1 : 0;
+		drawer->AddFlatFill(0, 0, Width, bordtop, img, filltype);										// Top
+		drawer->AddFlatFill(0, bordtop, bordleft, Height - bordbottom, img, filltype);					// Left
+		drawer->AddFlatFill(Width - bordright, bordtop, Width, Height - bordbottom, img, filltype);		// Right
+		drawer->AddFlatFill(0, Height - bordbottom, Width, Height, img, filltype);						// Bottom
 	}
 	else
 	{
@@ -1351,9 +1353,10 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 
 void DrawBorder (F2DDrawer *drawer, FTextureID picnum, int x1, int y1, int x2, int y2)
 {
+	int filltype = (ui_screenborder_classic_scaling) ? -1 : 0;
 	if (picnum.isValid())
 	{
-		drawer->AddFlatFill (x1, y1, x2, y2, TexMan.GetGameTexture(picnum, false));
+		drawer->AddFlatFill (x1, y1, x2, y2, TexMan.GetGameTexture(picnum, false), filltype);
 	}
 	else
 	{

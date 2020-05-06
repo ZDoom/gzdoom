@@ -311,83 +311,157 @@ void JitCompiler::EmitXOR_RK()
 	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
 }
 
-#if 0
 void JitCompiler::EmitMIN_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.cmp(rc, regD[A]);
-	cc.cmovl(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = cc.CreateLoad(regD[C]);
+
+	cc.CreateCondBr(cc.CreateICmpSLE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMIN_RK()
 {
-	auto rc = newTempInt32();
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.mov(rc, asmjit::imm(konstd[C]));
-	cc.cmp(rc, regD[A]);
-	cc.cmovl(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+
+	cc.CreateCondBr(cc.CreateICmpSLE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMAX_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.cmp(rc, regD[A]);
-	cc.cmovg(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = cc.CreateLoad(regD[C]);
+
+	cc.CreateCondBr(cc.CreateICmpSGE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMAX_RK()
 {
-	auto rc = newTempInt32();
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.mov(rc, asmjit::imm(konstd[C]));
-	cc.cmp(rc, regD[A]);
-	cc.cmovg(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+
+	cc.CreateCondBr(cc.CreateICmpSGE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMINU_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.cmp(rc, regD[A]);
-	cc.cmovb(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = cc.CreateLoad(regD[C]);
+
+	cc.CreateCondBr(cc.CreateICmpULE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMINU_RK()
 {
-	auto rc = newTempInt32();
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.mov(rc, asmjit::imm(konstd[C]));
-	cc.cmp(rc, regD[A]);
-	cc.cmovb(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+
+	cc.CreateCondBr(cc.CreateICmpULE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMAXU_RR()
 {
-	auto rc = CheckRegD(C, A);
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.cmp(rc, regD[A]);
-	cc.cmova(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = cc.CreateLoad(regD[C]);
+
+	cc.CreateCondBr(cc.CreateICmpUGE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMAXU_RK()
 {
-	auto rc = newTempInt32();
-	if (A != B)
-		cc.mov(regD[A], regD[B]);
-	cc.mov(rc, asmjit::imm(konstd[C]));
-	cc.cmp(rc, regD[A]);
-	cc.cmova(regD[A], rc);
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regD[B]);
+	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+
+	cc.CreateCondBr(cc.CreateICmpUGE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regD[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
-#endif
 
 void JitCompiler::EmitABS()
 {
@@ -664,43 +738,81 @@ void JitCompiler::EmitPOWF_KR()
 	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]) }), regF[A]);
 }
 
-#if 0
-
 void JitCompiler::EmitMINF_RR()
 {
-	auto rc = CheckRegF(C, A);
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.minpd(regF[A], rc);  // minsd requires SSE 4.1
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regF[B]);
+	IRValue* val1 = cc.CreateLoad(regF[C]);
+
+	cc.CreateCondBr(cc.CreateFCmpULE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMINF_RK()
 {
-	auto rb = CheckRegF(B, A);
-	auto tmp = newTempIntPtr();
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.minpd(regF[A], rb); // minsd requires SSE 4.1
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regF[B]);
+	IRValue* val1 = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+
+	cc.CreateCondBr(cc.CreateFCmpULE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 	
 void JitCompiler::EmitMAXF_RR()
 {
-	auto rc = CheckRegF(C, A);
-	if (A != B)
-		cc.movsd(regF[A], regF[B]);
-	cc.maxpd(regF[A], rc); // maxsd requires SSE 4.1
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
+
+	IRValue* val0 = cc.CreateLoad(regF[B]);
+	IRValue* val1 = cc.CreateLoad(regF[C]);
+
+	cc.CreateCondBr(cc.CreateFCmpUGE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitMAXF_RK()
 {
-	auto rb = CheckRegF(B, A);
-	auto tmp = newTempIntPtr();
-	cc.mov(tmp, asmjit::imm_ptr(&konstf[C]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.maxpd(regF[A], rb); // maxsd requires SSE 4.1
-}
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-#endif
+	IRValue* val0 = cc.CreateLoad(regF[B]);
+	IRValue* val1 = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+
+	cc.CreateCondBr(cc.CreateFCmpUGE(val0, val1), ifbb, elsebb);
+	cc.SetInsertPoint(ifbb);
+	cc.CreateStore(val0, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(elsebb);
+	cc.CreateStore(val1, regF[A]);
+	cc.CreateBr(endbb);
+	cc.SetInsertPoint(endbb);
+}
 
 void JitCompiler::EmitATAN2()
 {
@@ -764,88 +876,41 @@ void JitCompiler::EmitFLOP()
 	}
 }
 
-#if 0
-
 void JitCompiler::EmitEQF_R()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
-		bool approx = static_cast<bool>(A & CMP_APPROX);
-		if (!approx)
-		{
-			cc.ucomisd(regF[B], regF[C]);
-			if (check) {
-				cc.jp(success);
-				cc.je(fail);
-			}
-			else {
-				cc.jp(fail);
-				cc.jne(fail);
-			}
-		}
-		else
-		{
-			auto tmp = newTempXmmSd();
-
-			const int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
-			auto absMask = cc.newDoubleConst(asmjit::kConstScopeLocal, reinterpret_cast<const double&>(absMaskInt));
-			auto absMaskXmm = newTempXmmPd();
-
-			auto epsilon = cc.newDoubleConst(asmjit::kConstScopeLocal, VM_EPSILON);
-			auto epsilonXmm = newTempXmmSd();
-
-			cc.movsd(tmp, regF[B]);
-			cc.subsd(tmp, regF[C]);
-			cc.movsd(absMaskXmm, absMask);
-			cc.andpd(tmp, absMaskXmm);
-			cc.movsd(epsilonXmm, epsilon);
-			cc.ucomisd(epsilonXmm, tmp);
-
-			if (check) cc.ja(fail);
-			else       cc.jna(fail);
-		}
+		EmitVectorComparison(1, check, fail, success);
 	});
 }
 
 void JitCompiler::EmitEQF_K()
 {
-	using namespace asmjit;
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		bool approx = static_cast<bool>(A & CMP_APPROX);
-		if (!approx) {
-			auto konstTmp = newTempIntPtr();
-			cc.mov(konstTmp, asmjit::imm_ptr(&konstf[C]));
-			cc.ucomisd(regF[B], x86::qword_ptr(konstTmp));
-			if (check) {
-				cc.jp(success);
-				cc.je(fail);
-			}
-			else {
-				cc.jp(fail);
-				cc.jne(fail);
-			}
+		if (!approx)
+		{
+			IRValue* result;
+			if (check)
+				result = cc.CreateFCmpUEQ(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+			else
+				result = cc.CreateFCmpUNE(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+
+			cc.CreateCondBr(result, fail, success);
 		}
-		else {
-			auto konstTmp = newTempIntPtr();
-			auto subTmp = newTempXmmSd();
+		else
+		{
+			IRValue* diff = cc.CreateFSub(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]), cc.CreateLoad(regF[B]));
+			IRValue* result;
+			if (check)
+				result = cc.CreateAnd(
+					cc.CreateFCmpUGT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
+					cc.CreateFCmpULT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
+			else
+				result = cc.CreateOr(
+					cc.CreateFCmpULE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
+					cc.CreateFCmpUGE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
 
-			const int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
-			auto absMask = cc.newDoubleConst(kConstScopeLocal, reinterpret_cast<const double&>(absMaskInt));
-			auto absMaskXmm = newTempXmmPd();
-
-			auto epsilon = cc.newDoubleConst(kConstScopeLocal, VM_EPSILON);
-			auto epsilonXmm = newTempXmmSd();
-
-			cc.mov(konstTmp, asmjit::imm_ptr(&konstf[C]));
-
-			cc.movsd(subTmp, regF[B]);
-			cc.subsd(subTmp, x86::qword_ptr(konstTmp));
-			cc.movsd(absMaskXmm, absMask);
-			cc.andpd(subTmp, absMaskXmm);
-			cc.movsd(epsilonXmm, epsilon);
-			cc.ucomisd(epsilonXmm, subTmp);
-
-			if (check) cc.ja(fail);
-			else       cc.jna(fail);
+			cc.CreateCondBr(result, fail, success);
 		}
 	});
 }
@@ -855,9 +920,13 @@ void JitCompiler::EmitLTF_RR()
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RR.\n");
 
-		cc.ucomisd(regF[C], regF[B]);
-		if (check) cc.ja(fail);
-		else       cc.jna(fail);
+		IRValue* result;
+		if (check)
+			result = cc.CreateFCmpULT(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+		else
+			result = cc.CreateFCmpUGE(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
@@ -866,14 +935,13 @@ void JitCompiler::EmitLTF_RK()
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RK.\n");
 
-		auto constTmp = newTempIntPtr();
-		auto xmmTmp = newTempXmmSd();
-		cc.mov(constTmp, asmjit::imm_ptr(&konstf[C]));
-		cc.movsd(xmmTmp, asmjit::x86::qword_ptr(constTmp));
+		IRValue* result;
+		if (check)
+			result = cc.CreateFCmpULT(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+		else
+			result = cc.CreateFCmpUGE(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
 
-		cc.ucomisd(xmmTmp, regF[B]);
-		if (check) cc.ja(fail);
-		else       cc.jna(fail);
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
@@ -882,12 +950,13 @@ void JitCompiler::EmitLTF_KR()
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_KR.\n");
 
-		auto tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
+		IRValue* result;
+		if (check)
+			result = cc.CreateFCmpULT(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
+		else
+			result = cc.CreateFCmpUGE(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
 
-		cc.ucomisd(regF[C], asmjit::x86::qword_ptr(tmp));
-		if (check) cc.ja(fail);
-		else       cc.jna(fail);
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
@@ -896,9 +965,13 @@ void JitCompiler::EmitLEF_RR()
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RR.\n");
 
-		cc.ucomisd(regF[C], regF[B]);
-		if (check) cc.jae(fail);
-		else       cc.jnae(fail);
+		IRValue* result;
+		if (check)
+			result = cc.CreateFCmpULE(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+		else
+			result = cc.CreateFCmpUGT(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
@@ -907,14 +980,13 @@ void JitCompiler::EmitLEF_RK()
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RK.\n");
 
-		auto constTmp = newTempIntPtr();
-		auto xmmTmp = newTempXmmSd();
-		cc.mov(constTmp, asmjit::imm_ptr(&konstf[C]));
-		cc.movsd(xmmTmp, asmjit::x86::qword_ptr(constTmp));
+		IRValue* result;
+		if (check)
+			result = cc.CreateFCmpULE(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+		else
+			result = cc.CreateFCmpUGT(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
 
-		cc.ucomisd(xmmTmp, regF[B]);
-		if (check) cc.jae(fail);
-		else       cc.jnae(fail);
+		cc.CreateCondBr(result, fail, success);
 	});
 }
 
@@ -923,15 +995,15 @@ void JitCompiler::EmitLEF_KR()
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_KR.\n");
 
-		auto tmp = newTempIntPtr();
-		cc.mov(tmp, asmjit::imm_ptr(&konstf[B]));
+		IRValue* result;
+		if (check)
+			result = cc.CreateFCmpULE(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
+		else
+			result = cc.CreateFCmpUGT(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
 
-		cc.ucomisd(regF[C], asmjit::x86::qword_ptr(tmp));
-		if (check) cc.jae(fail);
-		else       cc.jnae(fail);
+		cc.CreateCondBr(result, fail, success);
 	});
 }
-#endif
 
 /////////////////////////////////////////////////////////////////////////////
 // Vector math. (2D)
@@ -1001,14 +1073,12 @@ void JitCompiler::EmitLENV2()
 	cc.CreateStore(len, regF[A]);
 }
 
-#if 0
 void JitCompiler::EmitEQV2_R()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
-		EmitVectorComparison<2> (check, fail, success);
+		EmitVectorComparison(2, check, fail, success);
 	});
 }
-#endif
 
 void JitCompiler::EmitEQV2_K()
 {
@@ -1106,14 +1176,12 @@ void JitCompiler::EmitLENV3()
 	cc.CreateStore(len, regF[A]);
 }
 
-#if 0
 void JitCompiler::EmitEQV3_R()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
-		EmitVectorComparison<3> (check, fail, success);
+		EmitVectorComparison(3, check, fail, success);
 	});
 }
-#endif
 	
 void JitCompiler::EmitEQV3_K()
 {
@@ -1131,7 +1199,7 @@ void JitCompiler::EmitADDA_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt64Ty(), 0);
+	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt8PtrTy(), 0);
 	IRValue* ptr = cc.CreateLoad(regA[B]);
 
 	cc.CreateCondBr(cc.CreateICmpEQ(ptr, nullvalue), ifbb, elsebb);
@@ -1152,7 +1220,7 @@ void JitCompiler::EmitADDA_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt64Ty(), 0);
+	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt8PtrTy(), 0);
 	IRValue* ptr = cc.CreateLoad(regA[B]);
 
 	cc.CreateCondBr(cc.CreateICmpEQ(ptr, nullvalue), ifbb, elsebb);
@@ -1188,4 +1256,39 @@ void JitCompiler::EmitEQA_K()
 		else       result = cc.CreateICmpNE(cc.CreateLoad(regA[B]), ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)konsta[C].v));
 		cc.CreateCondBr(result, fail, success);
 	});
+}
+
+void JitCompiler::EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IRBasicBlock* success)
+{
+	IRValue* result = nullptr;
+	bool approx = static_cast<bool>(A & CMP_APPROX);
+	for (int i = 0; i < N; i++)
+	{
+		IRValue* elementresult;
+		if (!approx)
+		{
+			if (check)
+				elementresult = cc.CreateFCmpUEQ(cc.CreateLoad(regF[B + i]), cc.CreateLoad(regF[C + i]));
+			else
+				elementresult = cc.CreateFCmpUNE(cc.CreateLoad(regF[B + i]), cc.CreateLoad(regF[C + i]));
+		}
+		else
+		{
+			IRValue* diff = cc.CreateFSub(cc.CreateLoad(regF[C + i]), cc.CreateLoad(regF[B + i]));
+			if (check)
+				elementresult = cc.CreateAnd(
+					cc.CreateFCmpUGT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
+					cc.CreateFCmpULT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
+			else
+				elementresult = cc.CreateOr(
+					cc.CreateFCmpULE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
+					cc.CreateFCmpUGE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
+		}
+
+		if (i == 0)
+			result = elementresult;
+		else
+			result = cc.CreateAdd(result, elementresult);
+	}
+	cc.CreateCondBr(result, fail, success);
 }

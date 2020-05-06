@@ -71,6 +71,8 @@ private:
 		*/
 	}
 
+	void EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IRBasicBlock* success);
+
 	IRContext* ircontext;
 	IRFunction* irfunc;
 	IRBuilder cc;

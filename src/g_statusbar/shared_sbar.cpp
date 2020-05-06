@@ -89,6 +89,8 @@ EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
 EXTERN_CVAR(Bool, inter_subtitles)
+EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
+
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
 CVAR(Bool, log_vgafont, false, CVAR_ARCHIVE)
 
@@ -162,23 +164,53 @@ void V_DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
 	int right = left + width;
 	int bottom = top + height;
 
-	// Draw top and bottom sides.
-	p = TexMan.GetGameTextureByName(border->t);
-	drawer->AddFlatFill(left, top - (int)p->GetDisplayHeight(), right, top, p, true);
-	p = TexMan.GetGameTextureByName(border->b);
-	drawer->AddFlatFill(left, bottom, right, bottom + (int)p->GetDisplayHeight(), p, true);
+	float sw = drawer->GetClassicFlatScalarWidth();
+	float sh = drawer->GetClassicFlatScalarHeight();
 
-	// Draw left and right sides.
-	p = TexMan.GetGameTextureByName(border->l);
-	drawer->AddFlatFill(left - (int)p->GetDisplayWidth(), top, left, bottom, p, true);
-	p = TexMan.GetGameTextureByName(border->r);
-	drawer->AddFlatFill(right, top, right + (int)p->GetDisplayWidth(), bottom, p, true);
+	if (!ui_screenborder_classic_scaling)
+	{
+		// Draw top and bottom sides.
+		p = TexMan.GetGameTextureByName(border->t);
+		drawer->AddFlatFill(left, top - (int)p->GetDisplayHeight(), right, top, p, true);
+		p = TexMan.GetGameTextureByName(border->b);
+		drawer->AddFlatFill(left, bottom, right, bottom + (int)p->GetDisplayHeight(), p, true);
 
-	// Draw beveled corners.
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr), left + width, top - offset, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl), left - offset, top + height, TAG_DONE);
-	DrawTexture(drawer, TexMan.GetGameTextureByName(border->br), left + width, top + height, TAG_DONE);
+		// Draw left and right sides.
+		p = TexMan.GetGameTextureByName(border->l);
+		drawer->AddFlatFill(left - (int)p->GetDisplayWidth(), top, left, bottom, p, true);
+		p = TexMan.GetGameTextureByName(border->r);
+		drawer->AddFlatFill(right, top, right + (int)p->GetDisplayWidth(), bottom, p, true);
+
+		// Draw beveled corners.
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->tr), left + width, top - offset, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->bl), left - offset, top + height, TAG_DONE);
+		DrawTexture(drawer, TexMan.GetGameTextureByName(border->br), left + width, top + height, TAG_DONE);
+	}
+	else
+	{
+		// Draw top and bottom sides.
+		p = TexMan.GetGameTextureByName(border->t);
+		drawer->AddFlatFill(left, top - (int)(p->GetDisplayHeight() / sh), right, top, p, -2);
+		p = TexMan.GetGameTextureByName(border->b);
+		drawer->AddFlatFill(left, bottom, right, bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
+
+		// Draw left and right sides.
+		p = TexMan.GetGameTextureByName(border->l);
+		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), top, left, bottom, p, -2);
+		p = TexMan.GetGameTextureByName(border->r);
+		drawer->AddFlatFill(right, top, right + (int)(p->GetDisplayWidth() / sw), bottom, p, -2);
+
+		// Draw beveled corners.
+		p = TexMan.GetGameTextureByName(border->tl);
+		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), top - (int)(p->GetDisplayHeight() / sh), left, top, p, -2);
+		p = TexMan.GetGameTextureByName(border->tr);
+		drawer->AddFlatFill(right, top - (int)(p->GetDisplayHeight() / sh), right + (int)(p->GetDisplayWidth() / sw), top, p, -2);
+		p = TexMan.GetGameTextureByName(border->bl);
+		drawer->AddFlatFill(left - (int)(p->GetDisplayWidth() / sw), bottom, left, bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
+		p = TexMan.GetGameTextureByName(border->br);
+		drawer->AddFlatFill(right, bottom, right + (int)(p->GetDisplayWidth() / sw), bottom + (int)(p->GetDisplayHeight() / sh), p, -2);
+	}
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
@@ -1038,6 +1070,8 @@ void DBaseStatusBar::RefreshBackground () const
 
 	auto tex = GetBorderTexture(primaryLevel);
 
+	float sh = twod->GetClassicFlatScalarHeight();
+
 	if(!CompleteBorder)
 	{
 		if(y < twod->GetHeight())
@@ -1070,9 +1104,18 @@ void DBaseStatusBar::RefreshBackground () const
 			FGameTexture *p = TexMan.GetGameTextureByName(gameinfo.Border.b);
 			if (p != NULL)
 			{
-				int h = int(0.5 + p->GetDisplayHeight());
-				twod->AddFlatFill(0, y, x, y + h, p, true);
-				twod->AddFlatFill(x2, y, twod->GetWidth(), y + h, p, true);
+				if (!ui_screenborder_classic_scaling)
+				{
+					int h = int(0.5 + p->GetDisplayHeight());
+					twod->AddFlatFill(0, y, x, y + h, p, true);
+					twod->AddFlatFill(x2, y, twod->GetWidth(), y + h, p, true);
+				}
+				else
+				{
+					int h = (int)((0.5f + p->GetDisplayHeight()) / sh);
+					twod->AddFlatFill(0, y, x, y + h, p, -2);
+					twod->AddFlatFill(x2, y, twod->GetWidth(), y + h, p, -2);
+				}
 			}
 		}
 	}

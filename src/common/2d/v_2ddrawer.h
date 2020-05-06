@@ -174,6 +174,8 @@ private:
 	void SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcolor, PalEntry &overlaycolor);
 
 public:
+	float GetClassicFlatScalarWidth();
+	float GetClassicFlatScalarHeight();
 	void AddTexture(FGameTexture* img, DrawParms& parms);
 	void AddShape(FGameTexture *img, DShape2D *shape, DrawParms &parms);
 	void AddPoly(FGameTexture *texture, FVector2 *points, int npoints,

@@ -12,7 +12,7 @@ static void ConcatString(FString* to, FString* first, FString* second)
 
 void JitCompiler::EmitCONCAT()
 {
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*, FString*>("__ConcatString", ConcatString), { cc.CreateLoad(regS[A]), cc.CreateLoad(regS[B]), cc.CreateLoad(regS[C]) });
+	cc.CreateCall(GetNativeFunc<void, FString*, FString*, FString*>("__ConcatString", ConcatString), { LoadS(A), LoadS(B), LoadS(C) });
 }
 
 static int StringLength(FString* str)
@@ -22,7 +22,7 @@ static int StringLength(FString* str)
 
 void JitCompiler::EmitLENS()
 {
-	cc.CreateStore(cc.CreateCall(GetNativeFunc<int, FString*>("__StringLength", StringLength), { cc.CreateLoad(regS[B]) }), regD[A]);
+	StoreD(cc.CreateCall(GetNativeFunc<int, FString*>("__StringLength", StringLength), { LoadS(B) }), A);
 }
 
 static int StringCompareNoCase(FString* first, FString* second)
@@ -39,18 +39,16 @@ void JitCompiler::EmitCMPS()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 
-		IRFunction* comparefunc = static_cast<bool>(A & CMP_APPROX) ? GetNativeFunc<int, FString*, FString*>("__StringCompareNoCase", StringCompareNoCase) : GetNativeFunc<int, FString*, FString*>("__StringCompare", StringCompare);
-		IRValue* arg0;
-		IRValue* arg1;
+		IRValue* arg0 = static_cast<bool>(A & CMP_BK) ? ConstS(B) : LoadS(B);
+		IRValue* arg1 = static_cast<bool>(A & CMP_CK) ? ConstS(C) : LoadS(C);
 
-		if (static_cast<bool>(A & CMP_BK)) arg0 = ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)&konsts[B]);
-		else                               arg0 = cc.CreateLoad(regS[B]);
+		IRValue* result;
+		if (static_cast<bool>(A & CMP_APPROX))
+			result = cc.CreateCall(GetNativeFunc<int, FString*, FString*>("__StringCompareNoCase", StringCompareNoCase), { arg0, arg1 });
+		else
+			result = cc.CreateCall(GetNativeFunc<int, FString*, FString*>("__StringCompare", StringCompare), { arg0, arg1 });
 
-		if (static_cast<bool>(A & CMP_CK)) arg1 = ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)&konsts[C]);
-		else                               arg1 = cc.CreateLoad(regS[C]);
-
-		IRValue* result = cc.CreateCall(comparefunc, { arg0, arg1 });
-		IRValue* zero = ircontext->getConstantInt(0);
+		IRValue* zero = ConstValueD(0);
 
 		int method = A & CMP_METHOD_MASK;
 		if (method == CMP_EQ)
@@ -78,103 +76,103 @@ void JitCompiler::EmitCMPS()
 
 void JitCompiler::EmitSLL_RR()
 {
-	cc.CreateStore(cc.CreateShl(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateShl(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitSLL_RI()
 {
-	cc.CreateStore(cc.CreateShl(cc.CreateLoad(regD[B]), ircontext->getConstantInt(C)), regD[A]);
+	StoreD(cc.CreateShl(LoadD(B), ConstValueD(C)), A);
 }
 
 void JitCompiler::EmitSLL_KR()
 {
-	cc.CreateStore(cc.CreateShl(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateShl(ConstD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitSRL_RR()
 {
-	cc.CreateStore(cc.CreateLShr(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateLShr(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitSRL_RI()
 {
-	cc.CreateStore(cc.CreateLShr(cc.CreateLoad(regD[B]), ircontext->getConstantInt(C)), regD[A]);
+	StoreD(cc.CreateLShr(LoadD(B), ConstValueD(C)), A);
 }
 
 void JitCompiler::EmitSRL_KR()
 {
-	cc.CreateStore(cc.CreateLShr(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateLShr(ConstD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitSRA_RR()
 {
-	cc.CreateStore(cc.CreateAShr(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateAShr(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitSRA_RI()
 {
-	cc.CreateStore(cc.CreateAShr(cc.CreateLoad(regD[B]), ircontext->getConstantInt(C)), regD[A]);
+	StoreD(cc.CreateAShr(LoadD(B), ConstValueD(C)), A);
 }
 
 void JitCompiler::EmitSRA_KR()
 {
-	cc.CreateStore(cc.CreateAShr(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateAShr(ConstD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitADD_RR()
 {
-	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateAdd(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitADD_RK()
 {
-	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+	StoreD(cc.CreateAdd(LoadD(B), ConstD(C)), A);
 }
 
 void JitCompiler::EmitADDI()
 {
-	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(regD[B]), ircontext->getConstantInt(Cs)), regD[A]);
+	StoreD(cc.CreateAdd(LoadD(B), ConstValueD(Cs)), A);
 }
 
 void JitCompiler::EmitSUB_RR()
 {
-	cc.CreateStore(cc.CreateSub(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateSub(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitSUB_RK()
 {
-	cc.CreateStore(cc.CreateSub(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+	StoreD(cc.CreateSub(LoadD(B), ConstD(C)), A);
 }
 
 void JitCompiler::EmitSUB_KR()
 {
-	cc.CreateStore(cc.CreateSub(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateSub(ConstD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitMUL_RR()
 {
-	cc.CreateStore(cc.CreateMul(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateMul(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitMUL_RK()
 {
-	cc.CreateStore(cc.CreateMul(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+	StoreD(cc.CreateMul(LoadD(B), ConstD(C)), A);
 }
 
 void JitCompiler::EmitDIV_RR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateSDiv(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateSDiv(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitDIV_RK()
 {
 	if (konstd[C] != 0)
 	{
-		cc.CreateStore(cc.CreateSDiv(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+		StoreD(cc.CreateSDiv(LoadD(B), ConstD(C)), A);
 	}
 	else
 	{
@@ -186,25 +184,25 @@ void JitCompiler::EmitDIV_KR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateSDiv(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
+	StoreD(cc.CreateSDiv(ConstD(B), LoadD(B)), A);
 }
 
 void JitCompiler::EmitDIVU_RR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateUDiv(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateUDiv(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitDIVU_RK()
 {
 	if (konstd[C] != 0)
 	{
-		cc.CreateStore(cc.CreateUDiv(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+		StoreD(cc.CreateUDiv(LoadD(B), ConstD(C)), A);
 	}
 	else
 	{
@@ -216,25 +214,25 @@ void JitCompiler::EmitDIVU_KR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateUDiv(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
+	StoreD(cc.CreateUDiv(ConstD(B), LoadD(B)), A);
 }
 
 void JitCompiler::EmitMOD_RR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateSRem(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateSRem(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitMOD_RK()
 {
 	if (konstd[C] != 0)
 	{
-		cc.CreateStore(cc.CreateSRem(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+		StoreD(cc.CreateSRem(LoadD(B), ConstD(C)), A);
 	}
 	else
 	{
@@ -246,25 +244,25 @@ void JitCompiler::EmitMOD_KR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateSRem(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
+	StoreD(cc.CreateSRem(ConstD(B), LoadD(B)), A);
 }
 
 void JitCompiler::EmitMODU_RR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateURem(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateURem(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitMODU_RK()
 {
 	if (konstd[C] != 0)
 	{
-		cc.CreateStore(cc.CreateURem(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+		StoreD(cc.CreateURem(LoadD(B), ConstD(C)), A);
 	}
 	else
 	{
@@ -276,39 +274,39 @@ void JitCompiler::EmitMODU_KR()
 {
 	auto exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	auto continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateICmpEQ(cc.CreateLoad(regD[C]), ircontext->getConstantInt(0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(C), ConstValueD(0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateURem(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[B])), regD[A]);
+	StoreD(cc.CreateURem(ConstD(B), LoadD(B)), A);
 }
 
 void JitCompiler::EmitAND_RR()
 {
-	cc.CreateStore(cc.CreateAnd(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateAnd(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitAND_RK()
 {
-	cc.CreateStore(cc.CreateAnd(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+	StoreD(cc.CreateAnd(LoadD(B), ConstD(C)), A);
 }
 
 void JitCompiler::EmitOR_RR()
 {
-	cc.CreateStore(cc.CreateOr(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateOr(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitOR_RK()
 {
-	cc.CreateStore(cc.CreateOr(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+	StoreD(cc.CreateOr(LoadD(B), ConstD(C)), A);
 }
 
 void JitCompiler::EmitXOR_RR()
 {
-	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C])), regD[A]);
+	StoreD(cc.CreateXor(LoadD(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitXOR_RK()
 {
-	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C])), regD[A]);
+	StoreD(cc.CreateXor(LoadD(B), ConstD(C)), A);
 }
 
 void JitCompiler::EmitMIN_RR()
@@ -317,15 +315,15 @@ void JitCompiler::EmitMIN_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = cc.CreateLoad(regD[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = LoadD(C);
 
 	cc.CreateCondBr(cc.CreateICmpSLE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -336,15 +334,15 @@ void JitCompiler::EmitMIN_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = ConstD(C);
 
 	cc.CreateCondBr(cc.CreateICmpSLE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -355,15 +353,15 @@ void JitCompiler::EmitMAX_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = cc.CreateLoad(regD[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = LoadD(C);
 
 	cc.CreateCondBr(cc.CreateICmpSGE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -374,15 +372,15 @@ void JitCompiler::EmitMAX_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = ConstD(C);
 
 	cc.CreateCondBr(cc.CreateICmpSGE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -393,15 +391,15 @@ void JitCompiler::EmitMINU_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = cc.CreateLoad(regD[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = LoadD(C);
 
 	cc.CreateCondBr(cc.CreateICmpULE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -412,15 +410,15 @@ void JitCompiler::EmitMINU_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = ConstD(C);
 
 	cc.CreateCondBr(cc.CreateICmpULE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -431,15 +429,15 @@ void JitCompiler::EmitMAXU_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = cc.CreateLoad(regD[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = LoadD(C);
 
 	cc.CreateCondBr(cc.CreateICmpUGE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -450,42 +448,42 @@ void JitCompiler::EmitMAXU_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regD[B]);
-	IRValue* val1 = ircontext->getConstantInt(konstd[C]);
+	IRValue* val0 = LoadD(B);
+	IRValue* val1 = ConstD(C);
 
 	cc.CreateCondBr(cc.CreateICmpUGE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regD[A]);
+	StoreD(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regD[A]);
+	StoreD(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitABS()
 {
-	IRValue* srcB = cc.CreateLoad(regD[B]);
-	IRValue* tmp = cc.CreateAShr(srcB, ircontext->getConstantInt(31));
-	cc.CreateStore(cc.CreateSub(cc.CreateXor(tmp, srcB), tmp), regD[A]);
+	IRValue* srcB = LoadD(B);
+	IRValue* tmp = cc.CreateAShr(srcB, ConstValueD(31));
+	StoreD(cc.CreateSub(cc.CreateXor(tmp, srcB), tmp), A);
 }
 
 void JitCompiler::EmitNEG()
 {
-	cc.CreateStore(cc.CreateNeg(cc.CreateLoad(regD[B])), regD[A]);
+	StoreD(cc.CreateNeg(LoadD(B)), A);
 }
 
 void JitCompiler::EmitNOT()
 {
-	cc.CreateStore(cc.CreateNot(cc.CreateLoad(regD[B])), regD[A]);
+	StoreD(cc.CreateNot(LoadD(B)), A);
 }
 
 void JitCompiler::EmitEQ_R()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpNE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpEQ(LoadD(B), LoadD(C));
+		else       result = cc.CreateICmpNE(LoadD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -494,8 +492,8 @@ void JitCompiler::EmitEQ_K()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
-		else       result = cc.CreateICmpNE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		if (check) result = cc.CreateICmpEQ(LoadD(B), ConstD(C));
+		else       result = cc.CreateICmpNE(LoadD(B), ConstD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -504,8 +502,8 @@ void JitCompiler::EmitLT_RR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpSLT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpSGE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpSLT(LoadD(B), LoadD(C));
+		else       result = cc.CreateICmpSGE(LoadD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -514,8 +512,8 @@ void JitCompiler::EmitLT_RK()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpSLT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
-		else       result = cc.CreateICmpSGE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		if (check) result = cc.CreateICmpSLT(LoadD(B), ConstD(C));
+		else       result = cc.CreateICmpSGE(LoadD(B), ConstD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -524,8 +522,8 @@ void JitCompiler::EmitLT_KR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpSLT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpSGE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpSLT(ConstD(B), LoadD(C));
+		else       result = cc.CreateICmpSGE(ConstD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -534,8 +532,8 @@ void JitCompiler::EmitLE_RR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpSLE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpSGT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpSLE(LoadD(B), LoadD(C));
+		else       result = cc.CreateICmpSGT(LoadD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -544,8 +542,8 @@ void JitCompiler::EmitLE_RK()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpSLE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
-		else       result = cc.CreateICmpSGT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		if (check) result = cc.CreateICmpSLE(LoadD(B), ConstD(C));
+		else       result = cc.CreateICmpSGT(LoadD(B), ConstD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -554,8 +552,8 @@ void JitCompiler::EmitLE_KR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpSLE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpSGT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpSLE(ConstD(B), LoadD(C));
+		else       result = cc.CreateICmpSGT(ConstD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -564,8 +562,8 @@ void JitCompiler::EmitLTU_RR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpULT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpUGE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpULT(LoadD(B), LoadD(C));
+		else       result = cc.CreateICmpUGE(LoadD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -574,8 +572,8 @@ void JitCompiler::EmitLTU_RK()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpULT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
-		else       result = cc.CreateICmpUGE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		if (check) result = cc.CreateICmpULT(LoadD(B), ConstD(C));
+		else       result = cc.CreateICmpUGE(LoadD(B), ConstD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -584,8 +582,8 @@ void JitCompiler::EmitLTU_KR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpULT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpUGE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpULT(ConstD(B), LoadD(C));
+		else       result = cc.CreateICmpUGE(ConstD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -594,8 +592,8 @@ void JitCompiler::EmitLEU_RR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpULE(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpUGT(cc.CreateLoad(regD[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpULE(LoadD(B), LoadD(C));
+		else       result = cc.CreateICmpUGT(LoadD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -604,8 +602,8 @@ void JitCompiler::EmitLEU_RK()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpULE(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
-		else       result = cc.CreateICmpUGT(cc.CreateLoad(regD[B]), ircontext->getConstantInt(konstd[C]));
+		if (check) result = cc.CreateICmpULE(LoadD(B), ConstD(C));
+		else       result = cc.CreateICmpUGT(LoadD(B), ConstD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -614,8 +612,8 @@ void JitCompiler::EmitLEU_KR()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpULE(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
-		else       result = cc.CreateICmpUGT(ircontext->getConstantInt(konstd[B]), cc.CreateLoad(regD[C]));
+		if (check) result = cc.CreateICmpULE(ConstD(B), LoadD(C));
+		else       result = cc.CreateICmpUGT(ConstD(B), LoadD(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -625,46 +623,46 @@ void JitCompiler::EmitLEU_KR()
 
 void JitCompiler::EmitADDF_RR()
 {
-	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	StoreF(cc.CreateFAdd(LoadF(B), LoadF(C)), A);
 }
 
 void JitCompiler::EmitADDF_RK()
 {
-	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
+	StoreF(cc.CreateFAdd(LoadF(B), ConstF(C)), A);
 }
 
 void JitCompiler::EmitSUBF_RR()
 {
-	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	StoreF(cc.CreateFSub(LoadF(B), LoadF(C)), A);
 }
 
 void JitCompiler::EmitSUBF_RK()
 {
-	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
+	StoreF(cc.CreateFSub(LoadF(B), ConstF(C)), A);
 }
 
 void JitCompiler::EmitSUBF_KR()
 {
-	cc.CreateStore(cc.CreateFSub(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C])), regF[A]);
+	StoreF(cc.CreateFSub(ConstF(B), LoadF(C)), A);
 }
 
 void JitCompiler::EmitMULF_RR()
 {
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	StoreF(cc.CreateFMul(LoadF(B), LoadF(C)), A);
 }
 
 void JitCompiler::EmitMULF_RK()
 {
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
+	StoreF(cc.CreateFMul(LoadF(B), ConstF(C)), A);
 }
 
 void JitCompiler::EmitDIVF_RR()
 {
 	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateFCmpUEQ(LoadF(C), ConstValueF(0.0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
+	StoreF(cc.CreateFDiv(LoadF(B), LoadF(C)), A);
 }
 
 void JitCompiler::EmitDIVF_RK()
@@ -675,7 +673,7 @@ void JitCompiler::EmitDIVF_RK()
 	}
 	else
 	{
-		cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C])), regF[A]);
+		StoreF(cc.CreateFDiv(LoadF(B), ConstF(C)), A);
 	}
 }
 
@@ -683,9 +681,9 @@ void JitCompiler::EmitDIVF_KR()
 {
 	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateFCmpUEQ(LoadF(C), ConstValueF(0.0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateFDiv(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C])), regF[A]);
+	StoreF(cc.CreateFDiv(ConstF(B), LoadF(C)), A);
 }
 
 static double DoubleModF(double a, double b)
@@ -697,9 +695,9 @@ void JitCompiler::EmitMODF_RR()
 {
 	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateFCmpUEQ(LoadF(C), ConstValueF(0.0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]) }), regF[A]);
+	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { LoadF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitMODF_RK()
@@ -710,7 +708,7 @@ void JitCompiler::EmitMODF_RK()
 	}
 	else
 	{
-		cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]) }), regF[A]);
+		StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { LoadF(B), ConstF(C) }), A);
 	}
 }
 
@@ -718,24 +716,24 @@ void JitCompiler::EmitMODF_KR()
 {
 	IRBasicBlock* exceptionbb = EmitThrowExceptionLabel(X_DIVISION_BY_ZERO);
 	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
-	cc.CreateCondBr(cc.CreateFCmpUEQ(cc.CreateLoad(regF[C]), ircontext->getConstantFloat(ircontext->getDoubleTy(), 0.0)), exceptionbb, continuebb);
+	cc.CreateCondBr(cc.CreateFCmpUEQ(LoadF(C), ConstValueF(0.0)), exceptionbb, continuebb);
 	cc.SetInsertPoint(continuebb);
-	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]) }), regF[A]);
+	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__DoubleModF", DoubleModF), { ConstF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitPOWF_RR()
 {
-	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]) }), regF[A]);
+	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { LoadF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitPOWF_RK()
 {
-	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]) }), regF[A]);
+	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { LoadF(B), ConstF(C) }), A);
 }
 
 void JitCompiler::EmitPOWF_KR()
 {
-	cc.CreateStore(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]) }), regF[A]);
+	StoreF(cc.CreateCall(GetNativeFunc<double, double, double>("__g_pow", g_pow), { ConstF(B), LoadF(C) }), A);
 }
 
 void JitCompiler::EmitMINF_RR()
@@ -744,15 +742,15 @@ void JitCompiler::EmitMINF_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regF[B]);
-	IRValue* val1 = cc.CreateLoad(regF[C]);
+	IRValue* val0 = LoadF(B);
+	IRValue* val1 = LoadF(C);
 
 	cc.CreateCondBr(cc.CreateFCmpULE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regF[A]);
+	StoreF(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regF[A]);
+	StoreF(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -763,15 +761,15 @@ void JitCompiler::EmitMINF_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regF[B]);
-	IRValue* val1 = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+	IRValue* val0 = LoadF(B);
+	IRValue* val1 = ConstF(C);
 
 	cc.CreateCondBr(cc.CreateFCmpULE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regF[A]);
+	StoreF(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regF[A]);
+	StoreF(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -782,15 +780,15 @@ void JitCompiler::EmitMAXF_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regF[B]);
-	IRValue* val1 = cc.CreateLoad(regF[C]);
+	IRValue* val0 = LoadF(B);
+	IRValue* val1 = LoadF(C);
 
 	cc.CreateCondBr(cc.CreateFCmpUGE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regF[A]);
+	StoreF(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regF[A]);
+	StoreF(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -801,37 +799,37 @@ void JitCompiler::EmitMAXF_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* val0 = cc.CreateLoad(regF[B]);
-	IRValue* val1 = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
+	IRValue* val0 = LoadF(B);
+	IRValue* val1 = ConstF(C);
 
 	cc.CreateCondBr(cc.CreateFCmpUGE(val0, val1), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(val0, regF[A]);
+	StoreF(val0, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(val1, regF[A]);
+	StoreF(val1, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitATAN2()
 {
-	cc.CreateStore(cc.CreateFMul(cc.CreateCall(GetNativeFunc<double, double, double>("__g_atan2", g_atan2), { cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]) }), ircontext->getConstantFloat(ircontext->getFloatTy(), 180 / M_PI)), regF[A]);
+	StoreF(cc.CreateFMul(cc.CreateCall(GetNativeFunc<double, double, double>("__g_atan2", g_atan2), { LoadF(B), LoadF(C) }), ConstValueF(180 / M_PI)), A);
 }
 
 void JitCompiler::EmitFLOP()
 {
 	if (C == FLOP_NEG)
 	{
-		cc.CreateStore(cc.CreateFNeg(cc.CreateLoad(regF[B])), regF[A]);
+		StoreF(cc.CreateFNeg(LoadF(B)), A);
 	}
 	else
 	{
-		IRValue* v = cc.CreateLoad(regF[B]);
+		IRValue* v = LoadF(B);
 
 		if (C == FLOP_TAN_DEG)
 		{
-			v = cc.CreateFMul(v, ircontext->getConstantFloat(ircontext->getFloatTy(), M_PI / 180));
+			v = cc.CreateFMul(v, ConstValueF(M_PI / 180));
 		}
 
 		typedef double(*FuncPtr)(double);
@@ -869,10 +867,10 @@ void JitCompiler::EmitFLOP()
 
 		if (C == FLOP_ACOS_DEG || C == FLOP_ASIN_DEG || C == FLOP_ATAN_DEG)
 		{
-			result = cc.CreateFMul(result, ircontext->getConstantFloat(ircontext->getFloatTy(), 180 / M_PI));
+			result = cc.CreateFMul(result, ConstValueF(180 / M_PI));
 		}
 
-		cc.CreateStore(result, regF[A]);
+		StoreF(result, A);
 	}
 }
 
@@ -891,24 +889,24 @@ void JitCompiler::EmitEQF_K()
 		{
 			IRValue* result;
 			if (check)
-				result = cc.CreateFCmpUEQ(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+				result = cc.CreateFCmpUEQ(LoadF(B), ConstF(C));
 			else
-				result = cc.CreateFCmpUNE(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+				result = cc.CreateFCmpUNE(LoadF(B), ConstF(C));
 
 			cc.CreateCondBr(result, fail, success);
 		}
 		else
 		{
-			IRValue* diff = cc.CreateFSub(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]), cc.CreateLoad(regF[B]));
+			IRValue* diff = cc.CreateFSub(ConstF(C), LoadF(B));
 			IRValue* result;
 			if (check)
 				result = cc.CreateAnd(
-					cc.CreateFCmpUGT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
-					cc.CreateFCmpULT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
+					cc.CreateFCmpUGT(diff, ConstValueF(-VM_EPSILON)),
+					cc.CreateFCmpULT(diff, ConstValueF(VM_EPSILON)));
 			else
 				result = cc.CreateOr(
-					cc.CreateFCmpULE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
-					cc.CreateFCmpUGE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
+					cc.CreateFCmpULE(diff, ConstValueF(-VM_EPSILON)),
+					cc.CreateFCmpUGE(diff, ConstValueF(VM_EPSILON)));
 
 			cc.CreateCondBr(result, fail, success);
 		}
@@ -922,9 +920,9 @@ void JitCompiler::EmitLTF_RR()
 
 		IRValue* result;
 		if (check)
-			result = cc.CreateFCmpULT(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpULT(LoadF(B), LoadF(C));
 		else
-			result = cc.CreateFCmpUGE(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpUGE(LoadF(B), LoadF(C));
 
 		cc.CreateCondBr(result, fail, success);
 	});
@@ -937,9 +935,9 @@ void JitCompiler::EmitLTF_RK()
 
 		IRValue* result;
 		if (check)
-			result = cc.CreateFCmpULT(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+			result = cc.CreateFCmpULT(LoadF(B), ConstF(C));
 		else
-			result = cc.CreateFCmpUGE(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+			result = cc.CreateFCmpUGE(LoadF(B), ConstF(C));
 
 		cc.CreateCondBr(result, fail, success);
 	});
@@ -952,9 +950,9 @@ void JitCompiler::EmitLTF_KR()
 
 		IRValue* result;
 		if (check)
-			result = cc.CreateFCmpULT(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpULT(ConstF(B), LoadF(C));
 		else
-			result = cc.CreateFCmpUGE(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpUGE(ConstF(B), LoadF(C));
 
 		cc.CreateCondBr(result, fail, success);
 	});
@@ -967,9 +965,9 @@ void JitCompiler::EmitLEF_RR()
 
 		IRValue* result;
 		if (check)
-			result = cc.CreateFCmpULE(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpULE(LoadF(B), LoadF(C));
 		else
-			result = cc.CreateFCmpUGT(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpUGT(LoadF(B), LoadF(C));
 
 		cc.CreateCondBr(result, fail, success);
 	});
@@ -982,9 +980,9 @@ void JitCompiler::EmitLEF_RK()
 
 		IRValue* result;
 		if (check)
-			result = cc.CreateFCmpULE(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+			result = cc.CreateFCmpULE(LoadF(B), ConstF(C));
 		else
-			result = cc.CreateFCmpUGT(cc.CreateLoad(regF[B]), ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]));
+			result = cc.CreateFCmpUGT(LoadF(B), ConstF(C));
 
 		cc.CreateCondBr(result, fail, success);
 	});
@@ -997,9 +995,9 @@ void JitCompiler::EmitLEF_KR()
 
 		IRValue* result;
 		if (check)
-			result = cc.CreateFCmpULE(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpULE(ConstF(B), LoadF(C));
 		else
-			result = cc.CreateFCmpUGT(ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[B]), cc.CreateLoad(regF[C]));
+			result = cc.CreateFCmpUGT(ConstF(B), LoadF(C));
 
 		cc.CreateCondBr(result, fail, success);
 	});
@@ -1010,67 +1008,67 @@ void JitCompiler::EmitLEF_KR()
 
 void JitCompiler::EmitNEGV2()
 {
-	auto mask = ircontext->getConstantFloat(ircontext->getDoubleTy(), -0.0);
-	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B]), mask), regF[A]);
-	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B + 1]), mask), regF[A + 1]);
+	auto mask = ConstValueF(-0.0);
+	StoreF(cc.CreateXor(LoadF(B), mask), A);
+	StoreF(cc.CreateXor(LoadF(B + 1), mask), A + 1);
 }
 
 void JitCompiler::EmitADDV2_RR()
 {
-	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
-	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
+	StoreF(cc.CreateFAdd(LoadF(B), LoadF(C)), A);
+	StoreF(cc.CreateFAdd(LoadF(B + 1), LoadF(C + 1)), A + 1);
 }
 
 void JitCompiler::EmitSUBV2_RR()
 {
-	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
-	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
+	StoreF(cc.CreateFSub(LoadF(B), LoadF(C)), A);
+	StoreF(cc.CreateFSub(LoadF(B + 1), LoadF(C + 1)), A + 1);
 }
 
 void JitCompiler::EmitDOTV2_RR()
 {
-	cc.CreateStore(
+	StoreF(
 		cc.CreateFAdd(
-			cc.CreateFMul(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])),
-			cc.CreateFMul(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1]))),
-		regF[A]);
+			cc.CreateFMul(LoadF(B), LoadF(C)),
+			cc.CreateFMul(LoadF(B + 1), LoadF(C + 1))),
+		A);
 }
 
 void JitCompiler::EmitMULVF2_RR()
 {
-	IRValue* rc = cc.CreateLoad(regF[C]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	IRValue* rc = LoadF(C);
+	StoreF(cc.CreateFMul(LoadF(B), rc), A);
+	StoreF(cc.CreateFMul(LoadF(B + 1), rc), A + 1);
 }
 
 void JitCompiler::EmitMULVF2_RK()
 {
-	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	IRValue* rc = ConstF(C);
+	StoreF(cc.CreateFMul(LoadF(B), rc), A);
+	StoreF(cc.CreateFMul(LoadF(B + 1), rc), A + 1);
 }
 
 void JitCompiler::EmitDIVVF2_RR()
 {
-	IRValue* rc = cc.CreateLoad(regF[C]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	IRValue* rc = LoadF(C);
+	StoreF(cc.CreateFDiv(LoadF(B), rc), A);
+	StoreF(cc.CreateFDiv(LoadF(B + 1), rc), A + 1);
 }
 
 void JitCompiler::EmitDIVVF2_RK()
 {
-	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
+	IRValue* rc = ConstF(C);
+	StoreF(cc.CreateFDiv(LoadF(B), rc), A);
+	StoreF(cc.CreateFDiv(LoadF(B + 1), rc), A + 1);
 }
 
 void JitCompiler::EmitLENV2()
 {
-	IRValue* x = cc.CreateLoad(regF[B]);
-	IRValue* y = cc.CreateLoad(regF[B + 1]);
+	IRValue* x = LoadF(B);
+	IRValue* y = LoadF(B + 1);
 	IRValue* dotproduct = cc.CreateFAdd(cc.CreateFMul(x, x), cc.CreateFMul(y, y));
 	IRValue* len = cc.CreateCall(GetNativeFunc<double, double>("__g_sqrt", g_sqrt), { dotproduct });
-	cc.CreateStore(len, regF[A]);
+	StoreF(len, A);
 }
 
 void JitCompiler::EmitEQV2_R()
@@ -1090,90 +1088,90 @@ void JitCompiler::EmitEQV2_K()
 
 void JitCompiler::EmitNEGV3()
 {
-	auto mask = ircontext->getConstantFloat(ircontext->getDoubleTy(), -0.0);
-	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B]), mask), regF[A]);
-	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B + 1]), mask), regF[A + 1]);
-	cc.CreateStore(cc.CreateXor(cc.CreateLoad(regF[B + 2]), mask), regF[A + 2]);
+	auto mask = ConstValueF(-0.0);
+	StoreF(cc.CreateXor(LoadF(B), mask), A);
+	StoreF(cc.CreateXor(LoadF(B + 1), mask), A + 1);
+	StoreF(cc.CreateXor(LoadF(B + 2), mask), A + 2);
 }
 
 void JitCompiler::EmitADDV3_RR()
 {
-	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
-	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
-	cc.CreateStore(cc.CreateFAdd(cc.CreateLoad(regF[B + 2]), cc.CreateLoad(regF[C + 2])), regF[A + 2]);
+	StoreF(cc.CreateFAdd(LoadF(B), LoadF(C)), A);
+	StoreF(cc.CreateFAdd(LoadF(B + 1), LoadF(C + 1)), A + 1);
+	StoreF(cc.CreateFAdd(LoadF(B + 2), LoadF(C + 2)), A + 2);
 }
 
 void JitCompiler::EmitSUBV3_RR()
 {
-	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])), regF[A]);
-	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1])), regF[A + 1]);
-	cc.CreateStore(cc.CreateFSub(cc.CreateLoad(regF[B + 2]), cc.CreateLoad(regF[C + 2])), regF[A + 2]);
+	StoreF(cc.CreateFSub(LoadF(B), LoadF(C)), A);
+	StoreF(cc.CreateFSub(LoadF(B + 1), LoadF(C + 1)), A + 1);
+	StoreF(cc.CreateFSub(LoadF(B + 2), LoadF(C + 2)), A + 2);
 }
 
 void JitCompiler::EmitDOTV3_RR()
 {
-	cc.CreateStore(
+	StoreF(
 		cc.CreateFAdd(
 			cc.CreateFAdd(
-				cc.CreateFMul(cc.CreateLoad(regF[B]), cc.CreateLoad(regF[C])),
-				cc.CreateFMul(cc.CreateLoad(regF[B + 1]), cc.CreateLoad(regF[C + 1]))),
-			cc.CreateFMul(cc.CreateLoad(regF[B + 2]), cc.CreateLoad(regF[C + 2]))),
-		regF[A]);
+				cc.CreateFMul(LoadF(B), LoadF(C)),
+				cc.CreateFMul(LoadF(B + 1), LoadF(C + 1))),
+			cc.CreateFMul(LoadF(B + 2), LoadF(C + 2))),
+		A);
 }
 
 void JitCompiler::EmitCROSSV_RR()
 {
-	IRValue* a0 = cc.CreateLoad(regF[B]);
-	IRValue* a1 = cc.CreateLoad(regF[B + 1]);
-	IRValue* a2 = cc.CreateLoad(regF[B + 2]);
-	IRValue* b0 = cc.CreateLoad(regF[C]);
-	IRValue* b1 = cc.CreateLoad(regF[C + 1]);
-	IRValue* b2 = cc.CreateLoad(regF[C + 2]);
-	cc.CreateStore(cc.CreateFSub(cc.CreateFMul(a1, b2), cc.CreateFMul(a2, b1)), regF[A]);
-	cc.CreateStore(cc.CreateFSub(cc.CreateFMul(a2, b0), cc.CreateFMul(a0, b2)), regF[A + 1]);
-	cc.CreateStore(cc.CreateFSub(cc.CreateFMul(a0, b1), cc.CreateFMul(a1, b0)), regF[A + 2]);
+	IRValue* a0 = LoadF(B);
+	IRValue* a1 = LoadF(B + 1);
+	IRValue* a2 = LoadF(B + 2);
+	IRValue* b0 = LoadF(C);
+	IRValue* b1 = LoadF(C + 1);
+	IRValue* b2 = LoadF(C + 2);
+	StoreF(cc.CreateFSub(cc.CreateFMul(a1, b2), cc.CreateFMul(a2, b1)), A);
+	StoreF(cc.CreateFSub(cc.CreateFMul(a2, b0), cc.CreateFMul(a0, b2)), A + 1);
+	StoreF(cc.CreateFSub(cc.CreateFMul(a0, b1), cc.CreateFMul(a1, b0)), A + 2);
 }
 
 void JitCompiler::EmitMULVF3_RR()
 {
-	IRValue* rc = cc.CreateLoad(regF[C]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
+	IRValue* rc = LoadF(C);
+	StoreF(cc.CreateFMul(LoadF(B), rc), A);
+	StoreF(cc.CreateFMul(LoadF(B + 1), rc), A + 1);
+	StoreF(cc.CreateFMul(LoadF(B + 2), rc), A + 2);
 }
 
 void JitCompiler::EmitMULVF3_RK()
 {
-	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
-	cc.CreateStore(cc.CreateFMul(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
+	IRValue* rc = ConstF(C);
+	StoreF(cc.CreateFMul(LoadF(B), rc), A);
+	StoreF(cc.CreateFMul(LoadF(B + 1), rc), A + 1);
+	StoreF(cc.CreateFMul(LoadF(B + 2), rc), A + 2);
 }
 
 void JitCompiler::EmitDIVVF3_RR()
 {
-	IRValue* rc = cc.CreateLoad(regF[C]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
+	IRValue* rc = LoadF(C);
+	StoreF(cc.CreateFDiv(LoadF(B), rc), A);
+	StoreF(cc.CreateFDiv(LoadF(B + 1), rc), A + 1);
+	StoreF(cc.CreateFDiv(LoadF(B + 2), rc), A + 2);
 }
 
 void JitCompiler::EmitDIVVF3_RK()
 {
-	IRValue* rc = ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[C]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B]), rc), regF[A]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 1]), rc), regF[A + 1]);
-	cc.CreateStore(cc.CreateFDiv(cc.CreateLoad(regF[B + 2]), rc), regF[A + 2]);
+	IRValue* rc = ConstF(C);
+	StoreF(cc.CreateFDiv(LoadF(B), rc), A);
+	StoreF(cc.CreateFDiv(LoadF(B + 1), rc), A + 1);
+	StoreF(cc.CreateFDiv(LoadF(B + 2), rc), A + 2);
 }
 
 void JitCompiler::EmitLENV3()
 {
-	IRValue* x = cc.CreateLoad(regF[B]);
-	IRValue* y = cc.CreateLoad(regF[B + 1]);
-	IRValue* z = cc.CreateLoad(regF[B + 2]);
+	IRValue* x = LoadF(B);
+	IRValue* y = LoadF(B + 1);
+	IRValue* z = LoadF(B + 2);
 	IRValue* dotproduct = cc.CreateFAdd(cc.CreateFAdd(cc.CreateFMul(x, x), cc.CreateFMul(y, y)), cc.CreateFMul(z, z));
 	IRValue* len = cc.CreateCall(GetNativeFunc<double, double>("__g_sqrt", g_sqrt), { dotproduct });
-	cc.CreateStore(len, regF[A]);
+	StoreF(len, A);
 }
 
 void JitCompiler::EmitEQV3_R()
@@ -1199,15 +1197,15 @@ void JitCompiler::EmitADDA_RR()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt8PtrTy(), 0);
-	IRValue* ptr = cc.CreateLoad(regA[B]);
+	IRValue* nullvalue = ConstValueA(nullptr);
+	IRValue* ptr = LoadA(B);
 
 	cc.CreateCondBr(cc.CreateICmpEQ(ptr, nullvalue), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(ptr, regA[A]);
+	StoreA(ptr, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(cc.CreateGEP(ptr, { cc.CreateLoad(regD[C]) }), regA[A]);
+	StoreA(cc.CreateGEP(ptr, { LoadD(C) }), A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -1220,30 +1218,30 @@ void JitCompiler::EmitADDA_RK()
 	IRBasicBlock* elsebb = irfunc->createBasicBlock({});
 	IRBasicBlock* endbb = irfunc->createBasicBlock({});
 
-	IRValue* nullvalue = ircontext->getConstantInt(ircontext->getInt8PtrTy(), 0);
-	IRValue* ptr = cc.CreateLoad(regA[B]);
+	IRValue* nullvalue = ConstValueA(nullptr);
+	IRValue* ptr = LoadA(B);
 
 	cc.CreateCondBr(cc.CreateICmpEQ(ptr, nullvalue), ifbb, elsebb);
 	cc.SetInsertPoint(ifbb);
-	cc.CreateStore(ptr, regA[A]);
+	StoreA(ptr, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	cc.CreateStore(cc.CreateGEP(ptr, { ircontext->getConstantInt(konstd[C]) }), regA[A]);
+	StoreA(cc.CreateGEP(ptr, { ConstD(C) }), A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitSUBA()
 {
-	cc.CreateStore(cc.CreateGEP(cc.CreateLoad(regA[B]), { cc.CreateNeg(cc.CreateLoad(regD[C])) }), regA[A]);
+	StoreA(cc.CreateGEP(LoadA(B), { cc.CreateNeg(LoadD(C)) }), A);
 }
 
 void JitCompiler::EmitEQA_R()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regA[B]), cc.CreateLoad(regA[C]));
-		else       result = cc.CreateICmpNE(cc.CreateLoad(regA[B]), cc.CreateLoad(regA[C]));
+		if (check) result = cc.CreateICmpEQ(LoadA(B), LoadA(C));
+		else       result = cc.CreateICmpNE(LoadA(B), LoadA(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -1252,8 +1250,8 @@ void JitCompiler::EmitEQA_K()
 {
 	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
 		IRValue* result;
-		if (check) result = cc.CreateICmpEQ(cc.CreateLoad(regA[B]), ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)konsta[C].v));
-		else       result = cc.CreateICmpNE(cc.CreateLoad(regA[B]), ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)konsta[C].v));
+		if (check) result = cc.CreateICmpEQ(LoadA(B), ConstA(C));
+		else       result = cc.CreateICmpNE(LoadA(B), ConstA(C));
 		cc.CreateCondBr(result, fail, success);
 	});
 }
@@ -1268,27 +1266,27 @@ void JitCompiler::EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IR
 		if (!approx)
 		{
 			if (check)
-				elementresult = cc.CreateFCmpUEQ(cc.CreateLoad(regF[B + i]), cc.CreateLoad(regF[C + i]));
+				elementresult = cc.CreateFCmpUEQ(LoadF(B + i), LoadF(C + i));
 			else
-				elementresult = cc.CreateFCmpUNE(cc.CreateLoad(regF[B + i]), cc.CreateLoad(regF[C + i]));
+				elementresult = cc.CreateFCmpUNE(LoadF(B + i), LoadF(C + i));
 		}
 		else
 		{
-			IRValue* diff = cc.CreateFSub(cc.CreateLoad(regF[C + i]), cc.CreateLoad(regF[B + i]));
+			IRValue* diff = cc.CreateFSub(LoadF(C + i), LoadF(B + i));
 			if (check)
 				elementresult = cc.CreateAnd(
-					cc.CreateFCmpUGT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
-					cc.CreateFCmpULT(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
+					cc.CreateFCmpUGT(diff, ConstValueF(-VM_EPSILON)),
+					cc.CreateFCmpULT(diff, ConstValueF(VM_EPSILON)));
 			else
 				elementresult = cc.CreateOr(
-					cc.CreateFCmpULE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), -VM_EPSILON)),
-					cc.CreateFCmpUGE(diff, ircontext->getConstantFloat(ircontext->getDoubleTy(), VM_EPSILON)));
+					cc.CreateFCmpULE(diff, ConstValueF(-VM_EPSILON)),
+					cc.CreateFCmpUGE(diff, ConstValueF(VM_EPSILON)));
 		}
 
 		if (i == 0)
 			result = elementresult;
 		else
-			result = cc.CreateAdd(result, elementresult);
+			result = cc.CreateAnd(result, elementresult);
 	}
 	cc.CreateCondBr(result, fail, success);
 }

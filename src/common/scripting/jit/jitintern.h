@@ -73,6 +73,23 @@ private:
 
 	void EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IRBasicBlock* success);
 
+	IRValue* LoadD(int index) { return cc.CreateLoad(regD[index]); }
+	IRValue* LoadF(int index) { return cc.CreateLoad(regF[index]); }
+	IRValue* LoadA(int index) { return cc.CreateLoad(regA[index]); }
+	IRValue* LoadS(int index) { return cc.CreateLoad(regS[index]); }
+	IRValue* ConstD(int index) { return ircontext->getConstantInt(konstd[index]); }
+	IRValue* ConstF(int index) { return ircontext->getConstantFloat(ircontext->getDoubleTy(), konstf[index]); }
+	IRValue* ConstA(int index) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)konsta[index].v); }
+	IRValue* ConstS(int index) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)&konsts[index]); }
+	IRValue* ConstValueD(int value) { return ircontext->getConstantInt(value); }
+	IRValue* ConstValueF(double value) { return ircontext->getConstantFloat(ircontext->getDoubleTy(), value); }
+	IRValue* ConstValueA(void* value) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)value); }
+	IRValue* ConstValueS(void* value) { return ircontext->getConstantInt(ircontext->getInt8PtrTy(), (uint64_t)value); }
+	void StoreD(IRValue* value, int index) { cc.CreateStore(value, regD[index]); }
+	void StoreF(IRValue* value, int index) { cc.CreateStore(value, regF[index]); }
+	void StoreA(IRValue* value, int index) { cc.CreateStore(value, regA[index]); }
+	void StoreS(IRValue* value, int index) { cc.CreateStore(value, regS[index]); }
+
 	IRContext* ircontext;
 	IRFunction* irfunc;
 	IRBuilder cc;

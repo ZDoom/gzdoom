@@ -1203,7 +1203,7 @@ void JitCompiler::EmitADDA_RR()
 	StoreA(ptr, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	StoreA(cc.CreateGEP(ptr, { LoadD(C) }), A);
+	StoreA(OffsetPtr(ptr, LoadD(C)), A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
@@ -1224,14 +1224,14 @@ void JitCompiler::EmitADDA_RK()
 	StoreA(ptr, A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(elsebb);
-	StoreA(cc.CreateGEP(ptr, { ConstD(C) }), A);
+	StoreA(OffsetPtr(ptr, ConstD(C)), A);
 	cc.CreateBr(endbb);
 	cc.SetInsertPoint(endbb);
 }
 
 void JitCompiler::EmitSUBA()
 {
-	StoreA(cc.CreateGEP(LoadA(B), { cc.CreateNeg(LoadD(C)) }), A);
+	StoreA(OffsetPtr(LoadA(B), cc.CreateNeg(LoadD(C))), A);
 }
 
 void JitCompiler::EmitEQA_R()

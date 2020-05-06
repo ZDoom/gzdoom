@@ -695,6 +695,11 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTextu
 
 	float fs = 1.f / float(flatscale);
 	bool flipc = false;
+
+	float ar = 4.f / 3.f / (float)ActiveRatio((float)screen->GetWidth(), (float)screen->GetHeight());
+	float sw = 320.f * classic_scaling_factor / (float)screen->GetWidth() / ar;
+	float sh = 240.f / classic_scaling_pixelaspect * classic_scaling_factor / (float)screen->GetHeight();
+
 	switch (local_origin)
 	{
 	case 0:
@@ -756,13 +761,17 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTextu
 		break;
 
 	case -1: // classic flat scaling
-		float ar = 4.f / 3.f / (float)ActiveRatio((float)screen->GetWidth(), (float)screen->GetHeight());
-		float sw = 320.f * classic_scaling_factor / (float)screen->GetWidth() / ar;
-		float sh = 240.f / classic_scaling_pixelaspect * classic_scaling_factor / (float)screen->GetHeight();
 		fU1 = float(left) / (float)src->GetDisplayWidth() * fs * sw;
 		fV1 = float(top) / (float)src->GetDisplayHeight() * fs * sh;
 		fU2 = float(right) / (float)src->GetDisplayWidth() * fs * sw;
 		fV2 = float(bottom) / (float)src->GetDisplayHeight() * fs * sh;
+		break;
+
+	case -2: // classic scaling for screen bevel
+		fU1 = 0;
+		fV1 = 0;
+		fU2 = float(right - left) / (float)src->GetDisplayWidth() * fs * sw;
+		fV2 = float(bottom - top) / (float)src->GetDisplayHeight() * fs * sh;
 		break;
 	}
 	dg.mVertIndex = (int)mVertices.Reserve(4);

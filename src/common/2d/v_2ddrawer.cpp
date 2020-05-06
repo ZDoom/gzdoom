@@ -757,8 +757,8 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTextu
 		float ar = 4.f / 3.f / (float)ActiveRatio((float)screen->GetWidth(), (float)screen->GetHeight());
 		fU1 = 0.f;
 		fV1 = 0.f;
-		fU2 = 320.f / 64.f * fs / ar;
-		fV2 = 200.f / 64.f * fs;
+		fU2 = 320.f / (float)src->GetDisplayWidth() * fs / ar;
+		fV2 = 200.f / (float)src->GetDisplayHeight() * fs;
 		break;
 	}
 	dg.mVertIndex = (int)mVertices.Reserve(4);

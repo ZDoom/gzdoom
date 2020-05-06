@@ -1008,9 +1008,8 @@ void JitCompiler::EmitLEF_KR()
 
 void JitCompiler::EmitNEGV2()
 {
-	auto mask = ConstValueF(-0.0);
-	StoreF(cc.CreateXor(LoadF(B), mask), A);
-	StoreF(cc.CreateXor(LoadF(B + 1), mask), A + 1);
+	StoreF(cc.CreateFNeg(LoadF(B)), A);
+	StoreF(cc.CreateFNeg(LoadF(B + 1)), A + 1);
 }
 
 void JitCompiler::EmitADDV2_RR()
@@ -1088,10 +1087,9 @@ void JitCompiler::EmitEQV2_K()
 
 void JitCompiler::EmitNEGV3()
 {
-	auto mask = ConstValueF(-0.0);
-	StoreF(cc.CreateXor(LoadF(B), mask), A);
-	StoreF(cc.CreateXor(LoadF(B + 1), mask), A + 1);
-	StoreF(cc.CreateXor(LoadF(B + 2), mask), A + 2);
+	StoreF(cc.CreateFNeg(LoadF(B)), A);
+	StoreF(cc.CreateFNeg(LoadF(B + 1)), A + 1);
+	StoreF(cc.CreateFNeg(LoadF(B + 2)), A + 2);
 }
 
 void JitCompiler::EmitADDV3_RR()

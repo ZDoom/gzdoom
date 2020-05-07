@@ -830,16 +830,36 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 //
 //----------------------------------------------------------------------------
 
-void SprayDecal(AActor *shooter, const char *name, double distance)
+void SprayDecal(AActor *shooter, const char *name, double distance, DVector3 offset, DVector3 direction)
 {
+	//just in case
+	if (!shooter)
+		return;
+
 	FTraceResults trace;
+	DVector3 off(0, 0, 0), dir(0, 0, 0);
 
-	DAngle ang = shooter->Angles.Yaw;
-	DAngle pitch = shooter->Angles.Pitch;
-	double c = pitch.Cos();
-	DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
+	//use vanilla offset only if "custom" equal to zero
+	if (offset.isZero() )
+		off = shooter->PosPlusZ(shooter->Height / 2);
 
-	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
+	else
+		off = shooter->Pos() + offset;
+
+	//same for direction
+	if (direction.isZero() )
+	{
+		DAngle ang = shooter->Angles.Yaw;
+		DAngle pitch = shooter->Angles.Pitch;
+		double c = pitch.Cos();
+		dir = DVector3(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
+	}
+	
+	else
+		dir = direction;
+
+
+	if (Trace(off, shooter->Sector, dir, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
 	{
 		if (trace.HitType == TRACE_HitWall)
 		{

@@ -1019,7 +1019,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0)
+	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0, double alpha = 1.0)
 	{
 		let ontex = TexMan.CheckForTexture(ongfx, TexMan.TYPE_MiscPatch);
 		if (!ontex.IsValid()) return;
@@ -1050,17 +1050,17 @@ class BaseStatusBar native ui
 			for(int i = 0; i < 4; i++) Clip[i] += border;
 
 			//Draw the whole foreground
-			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
+			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP, alpha);
 			SetClipRect(position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3], flags);
 		}
 		
-		if (offtex.IsValid() && TexMan.GetScaledSize(offtex) == texsize) DrawTexture(offtex, position, flags | DI_ITEM_LEFT_TOP);
-		else Fill(color(255,0,0,0), position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3]);
+		if (offtex.IsValid() && TexMan.GetScaledSize(offtex) == texsize) DrawTexture(offtex, position, flags | DI_ITEM_LEFT_TOP, alpha);
+		else Fill(color(int(255*alpha),0,0,0), position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3]);
 		
-		if (border == 0) 
+		if (border == 0)
 		{
 			SetClipRect(position.X + Clip[0], position.Y + Clip[1], texsize.X - Clip[0] - Clip[2], texsize.Y - Clip[1] - Clip[3], flags);
-			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP);
+			DrawTexture(ontex, position, flags | DI_ITEM_LEFT_TOP, alpha);
 		}
 		// restore the previous clipping rectangle
 		screen.SetClipRect(cx, cy, cw, ch);

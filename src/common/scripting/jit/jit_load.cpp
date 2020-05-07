@@ -1,102 +1,89 @@
 
 #include "jitintern.h"
 
-#if 1
-
-#else
-
 /////////////////////////////////////////////////////////////////////////////
 // Load constants.
 
 void JitCompiler::EmitLI()
 {
-	cc.mov(regD[A], BCs);
+	StoreD(ConstValueD(BCs), A);
 }
 
 void JitCompiler::EmitLK()
 {
-	cc.mov(regD[A], konstd[BC]);
+	StoreD(ConstD(BC), A);
 }
 
 void JitCompiler::EmitLKF()
 {
-	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm_ptr(konstf + BC));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(base));
+	StoreF(ConstF(BC), A);
 }
 
 void JitCompiler::EmitLKS()
 {
-	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
-	call->setArg(0, regS[A]);
-	call->setArg(1, asmjit::imm_ptr(konsts + BC));
+	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), ConstS(BC) });
 }
 
 void JitCompiler::EmitLKP()
 {
-	cc.mov(regA[A], (int64_t)konsta[BC].v);
+	StoreA(ConstA(BC), A);
 }
 
 void JitCompiler::EmitLK_R()
 {
-	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm_ptr(konstd + C));
-	cc.mov(regD[A], asmjit::x86::ptr(base, regD[B], 2));
+	IRValue* base = ircontext->getConstantInt(ircontext->getInt32PtrTy(), (uint64_t)&konstd[C]);
+	StoreD(Load(OffsetPtr(base, LoadD(B))), A);
 }
 
 void JitCompiler::EmitLKF_R()
 {
-	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm_ptr(konstf + C));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(base, regD[B], 3));
+	IRValue* base = ircontext->getConstantInt(ircontext->getDoublePtrTy(), (uint64_t)&konstf[C]);
+	StoreF(Load(OffsetPtr(base, LoadD(B))), A);
 }
 
 void JitCompiler::EmitLKS_R()
 {
-	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm_ptr(konsts + C));
-	auto ptr = newTempIntPtr();
-	if (cc.is64Bit())
-		cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 3));
-	else
-		cc.lea(ptr, asmjit::x86::ptr(base, regD[B], 2));
-	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
-	call->setArg(0, regS[A]);
-	call->setArg(1, ptr);
+	IRValue* base = ircontext->getConstantInt(ircontext->getInt8PtrTy()->getPointerTo(ircontext), (uint64_t)&konsts[C]);
+	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), OffsetPtr(base, LoadD(B)) });
 }
 
 void JitCompiler::EmitLKP_R()
 {
-	auto base = newTempIntPtr();
-	cc.mov(base, asmjit::imm_ptr(konsta + C));
-	if (cc.is64Bit())
-		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 3));
-	else
-		cc.mov(regA[A], asmjit::x86::ptr(base, regD[B], 2));
+	IRValue* base = ircontext->getConstantInt(ircontext->getInt8PtrTy()->getPointerTo(ircontext), (uint64_t)&konsta[C]);
+	StoreA(OffsetPtr(base, LoadD(B)), A);
 }
 
+#if 0
 void JitCompiler::EmitLFP()
 {
 	CheckVMFrame();
 	cc.lea(regA[A], asmjit::x86::ptr(vmframe, offsetExtra));
 }
+#endif
 
 void JitCompiler::EmitMETA()
 {
-	auto label = EmitThrowExceptionLabel(X_READ_NIL);
-	cc.test(regA[B], regA[B]);
-	cc.je(label);
+	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadA(B), ConstValueD(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
 
-	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], myoffsetof(DObject, Class)));
-	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[A], myoffsetof(PClass, Meta)));
+	IRValue* ptrObject = LoadA(B);
+	IRValue* ptrClass = Load(ToPtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
+	IRValue* ptrMeta = Load(ToPtrPtr(ptrClass, ConstValueD(myoffsetof(PClass, Meta))));
+	StoreA(ptrMeta, A);
 }
 
 void JitCompiler::EmitCLSS()
 {
-	auto label = EmitThrowExceptionLabel(X_READ_NIL);
-	cc.test(regA[B], regA[B]);
-	cc.je(label);
-	cc.mov(regA[A], asmjit::x86::qword_ptr(regA[B], myoffsetof(DObject, Class)));
+	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadA(B), ConstValueD(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+
+	IRValue* ptrObject = LoadA(B);
+	IRValue* ptrClass = Load(ToPtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
+	StoreA(ptrClass, A);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -105,110 +92,100 @@ void JitCompiler::EmitCLSS()
 void JitCompiler::EmitLB()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsx(regD[A], asmjit::x86::byte_ptr(regA[B], konstd[C]));
+	StoreD(LoadSExt(ToInt8Ptr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLB_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsx(regD[A], asmjit::x86::byte_ptr(regA[B], regD[C]));
+	StoreD(LoadSExt(ToInt8Ptr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLH()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsx(regD[A], asmjit::x86::word_ptr(regA[B], konstd[C]));
+	StoreD(LoadSExt(ToInt16Ptr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLH_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsx(regD[A], asmjit::x86::word_ptr(regA[B], regD[C]));
+	StoreD(LoadSExt(ToInt16Ptr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLW()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.mov(regD[A], asmjit::x86::dword_ptr(regA[B], konstd[C]));
+	StoreD(LoadSExt(ToInt32Ptr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLW_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.mov(regD[A], asmjit::x86::dword_ptr(regA[B], regD[C]));
+	StoreD(LoadSExt(ToInt32Ptr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLBU()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movzx(regD[A], asmjit::x86::byte_ptr(regA[B], konstd[C]));
+	StoreD(LoadZExt(ToInt8Ptr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLBU_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movzx(regD[A].r8Lo(), asmjit::x86::byte_ptr(regA[B], regD[C]));
+	StoreD(LoadZExt(ToInt8Ptr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLHU()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movzx(regD[A].r16(), asmjit::x86::word_ptr(regA[B], konstd[C]));
+	StoreD(LoadZExt(ToInt16Ptr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLHU_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movzx(regD[A].r16(), asmjit::x86::word_ptr(regA[B], regD[C]));
+	StoreD(LoadZExt(ToInt16Ptr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLSP()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.xorpd(regF[A], regF[A]);
-	cc.cvtss2sd(regF[A], asmjit::x86::dword_ptr(regA[B], konstd[C]));
+	StoreF(LoadFPExt(ToDoublePtr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLSP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.xorpd(regF[A], regF[A]);
-	cc.cvtss2sd(regF[A], asmjit::x86::dword_ptr(regA[B], regD[C]));
+	StoreF(LoadFPExt(ToDoublePtr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLDP()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(regA[B], konstd[C]));
+	StoreF(Load(ToDoublePtr(LoadA(B), ConstD(C))), A);
 }
 
 void JitCompiler::EmitLDP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(regA[B], regD[C]));
+	StoreF(Load(ToDoublePtr(LoadA(B), LoadD(C))), A);
 }
 
 void JitCompiler::EmitLS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = newTempIntPtr();
-	cc.lea(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
-	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
-	call->setArg(0, regS[A]);
-	call->setArg(1, ptr);
+	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), OffsetPtr(LoadA(B), ConstD(C)) });
 }
 
 void JitCompiler::EmitLS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = newTempIntPtr();
-	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
-	auto call = CreateCall<void, FString*, FString*>(&JitCompiler::CallAssignString);
-	call->setArg(0, regS[A]);
-	call->setArg(1, ptr);
+	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), OffsetPtr(LoadA(B), LoadD(C)) });
 }
 
-#if 1 // Inline read barrier impl
+#if 0 // Inline read barrier impl
 
 void JitCompiler::EmitReadBarrier()
 {
@@ -252,29 +229,13 @@ static DObject *ReadBarrier(DObject *p)
 void JitCompiler::EmitLO()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-
-	auto ptr = newTempIntPtr();
-	cc.mov(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
-
-	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*, DObject*>(ReadBarrier);
-	call->setRet(0, result);
-	call->setArg(0, ptr);
-	cc.mov(regA[A], result);
+	StoreA(cc.CreateCall(GetNativeFunc<DObject*, DObject*>("__ReadBarrier", ReadBarrier), { OffsetPtr(LoadA(B), ConstD(C)) }), A);
 }
 
 void JitCompiler::EmitLO_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-
-	auto ptr = newTempIntPtr();
-	cc.mov(ptr, asmjit::x86::ptr(regA[B], regD[C]));
-
-	auto result = newResultIntPtr();
-	auto call = CreateCall<DObject*, DObject*>(ReadBarrier);
-	call->setRet(0, result);
-	call->setArg(0, ptr);
-	cc.mov(regA[A], result);
+	StoreA(cc.CreateCall(GetNativeFunc<DObject*, DObject*>("__ReadBarrier", ReadBarrier), { OffsetPtr(LoadA(B), LoadD(C)) }), A);
 }
 
 #endif
@@ -282,51 +243,47 @@ void JitCompiler::EmitLO_R()
 void JitCompiler::EmitLP()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.mov(regA[A], asmjit::x86::ptr(regA[B], konstd[C]));
+	StoreA(OffsetPtr(LoadA(B), ConstD(C)), A);
 }
 
 void JitCompiler::EmitLP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.mov(regA[A], asmjit::x86::ptr(regA[B], regD[C]));
+	StoreA(OffsetPtr(LoadA(B), LoadD(C)), A);
 }
 
 void JitCompiler::EmitLV2()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = newTempIntPtr();
-	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], konstd[C]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	IRValue* base = ToFloatPtr(LoadA(B), ConstD(C));
+	StoreF(Load(base), A);
+	StoreF(Load(OffsetPtr(base, 1)), A + 1);
 }
 
 void JitCompiler::EmitLV2_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = newTempIntPtr();
-	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
+	IRValue* base = ToFloatPtr(LoadA(B), LoadD(C));
+	StoreF(Load(base), A);
+	StoreF(Load(OffsetPtr(base, 1)), A + 1);
 }
 
 void JitCompiler::EmitLV3()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = newTempIntPtr();
-	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], konstd[C]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
-	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+	IRValue* base = ToFloatPtr(LoadA(B), ConstD(C));
+	StoreF(Load(base), A);
+	StoreF(Load(OffsetPtr(base, 1)), A + 1);
+	StoreF(Load(OffsetPtr(base, 2)), A + 2);
 }
 
 void JitCompiler::EmitLV3_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto tmp = newTempIntPtr();
-	cc.lea(tmp, asmjit::x86::qword_ptr(regA[B], regD[C]));
-	cc.movsd(regF[A], asmjit::x86::qword_ptr(tmp));
-	cc.movsd(regF[A + 1], asmjit::x86::qword_ptr(tmp, 8));
-	cc.movsd(regF[A + 2], asmjit::x86::qword_ptr(tmp, 16));
+	IRValue* base = ToFloatPtr(LoadA(B), LoadD(C));
+	StoreF(Load(base), A);
+	StoreF(Load(OffsetPtr(base, 1)), A + 1);
+	StoreF(Load(OffsetPtr(base, 2)), A + 2);
 }
 
 static void SetString(FString *to, char **from)
@@ -337,30 +294,21 @@ static void SetString(FString *to, char **from)
 void JitCompiler::EmitLCS()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = newTempIntPtr();
-	cc.lea(ptr, asmjit::x86::ptr(regA[B], konstd[C]));
-	auto call = CreateCall<void, FString*, char**>(SetString);
-	call->setArg(0, regS[A]);
-	call->setArg(1, ptr);
+	cc.CreateCall(GetNativeFunc<void, FString*, char**>("__SetString", SetString), { LoadS(A), OffsetPtr(LoadA(B), ConstD(C)) });
 }
 
 void JitCompiler::EmitLCS_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	auto ptr = newTempIntPtr();
-	cc.lea(ptr, asmjit::x86::ptr(regA[B], regD[C]));
-	auto call = CreateCall<void, FString*, char**>(SetString);
-	call->setArg(0, regS[A]);
-	call->setArg(1, ptr);
+	cc.CreateCall(GetNativeFunc<void, FString*, char**>("__SetString", SetString), { LoadS(A), OffsetPtr(LoadA(B), LoadD(C)) });
 }
 
 void JitCompiler::EmitLBIT()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	cc.movsx(regD[A], asmjit::x86::byte_ptr(regA[B]));
-	cc.and_(regD[A], C);
-	cc.cmp(regD[A], 0);
-	cc.setne(regD[A]);
+	IRValue* value = Load(LoadA(B));
+	value = cc.CreateAnd(value, ircontext->getConstantInt(C));
+	value = cc.CreateICmpNE(value, ircontext->getConstantInt(0));
+	value = cc.CreateZExt(value, ircontext->getInt32Ty());
+	StoreD(value, A);
 }
-
-#endif

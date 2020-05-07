@@ -33,6 +33,8 @@ private:
 	#include "vmops.h"
 	#undef xx
 
+	void EmitReadBarrier();
+
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason);
 	IRBasicBlock* EmitThrowExceptionLabel(EVMAbortException reason);
@@ -103,6 +105,10 @@ private:
 	void Store32(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
 	void StoreFloat(IRValue* value, IRValue* ptr) { cc.CreateStore(cc.CreateFPTrunc(value, ircontext->getFloatTy()), ptr); }
 	void StoreDouble(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
+	IRValue* LoadZExt(IRValue* ptr) { return cc.CreateZExt(cc.CreateLoad(ptr), ircontext->getInt32Ty()); }
+	IRValue* LoadSExt(IRValue* ptr) { return cc.CreateSExt(cc.CreateLoad(ptr), ircontext->getInt32Ty()); }
+	IRValue* LoadFPExt(IRValue* ptr) { return cc.CreateFPExt(cc.CreateLoad(ptr), ircontext->getDoubleTy()); }
+	IRValue* Load(IRValue* ptr) { return cc.CreateLoad(ptr); }
 
 	static void CallAssignString(FString* to, FString* from) { *to = *from; }
 

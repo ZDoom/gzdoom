@@ -89,8 +89,6 @@ EXTERN_CVAR (Bool, noisedebug)
 EXTERN_CVAR (Int, con_scaletext)
 EXTERN_CVAR(Bool, vid_fps)
 EXTERN_CVAR(Bool, inter_subtitles)
-EXTERN_CVAR(Float, classic_scaling_factor)
-EXTERN_CVAR(Float, classic_scaling_pixelaspect)
 EXTERN_CVAR(Bool, ui_screenborder_classic_scaling)
 
 CVAR(Int, hud_scale, 0, CVAR_ARCHIVE);
@@ -166,9 +164,8 @@ void V_DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
 	int right = left + width;
 	int bottom = top + height;
 
-	float ar = 4.f / 3.f / (float)ActiveRatio((float)screen->GetWidth(), (float)screen->GetHeight());
-	float sw = 320.f * classic_scaling_factor / (float)screen->GetWidth() / ar;
-	float sh = 240.f / classic_scaling_pixelaspect * classic_scaling_factor / (float)screen->GetHeight();
+	float sw = drawer->GetClassicFlatScalarWidth();
+	float sh = drawer->GetClassicFlatScalarHeight();
 
 	if (!ui_screenborder_classic_scaling)
 	{
@@ -1073,7 +1070,7 @@ void DBaseStatusBar::RefreshBackground () const
 
 	auto tex = GetBorderTexture(primaryLevel);
 
-	float sh = 240.f / classic_scaling_pixelaspect * classic_scaling_factor / (float)screen->GetHeight();
+	float sh = twod->GetClassicFlatScalarHeight();
 
 	if(!CompleteBorder)
 	{

@@ -680,6 +680,19 @@ void F2DDrawer::AddPoly(FGameTexture* img, FVector4* vt, size_t vtcount, unsigne
 //
 //==========================================================================
 
+float F2DDrawer::GetClassicFlatScalarWidth()
+{
+	float ar = 4.f / 3.f / (float)ActiveRatio((float)screen->GetWidth(), (float)screen->GetHeight());
+	float sw = 320.f * classic_scaling_factor / (float)screen->GetWidth() / ar;
+	return sw;
+}
+
+float F2DDrawer::GetClassicFlatScalarHeight()
+{
+	float sh = 240.f / classic_scaling_pixelaspect * classic_scaling_factor / (float)screen->GetHeight();
+	return sh;
+}
+
 void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTexture *src, int local_origin, double flatscale)
 {
 	float fU1, fU2, fV1, fV2;
@@ -696,9 +709,8 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FGameTextu
 	float fs = 1.f / float(flatscale);
 	bool flipc = false;
 
-	float ar = 4.f / 3.f / (float)ActiveRatio((float)screen->GetWidth(), (float)screen->GetHeight());
-	float sw = 320.f * classic_scaling_factor / (float)screen->GetWidth() / ar;
-	float sh = 240.f / classic_scaling_pixelaspect * classic_scaling_factor / (float)screen->GetHeight();
+	float sw = GetClassicFlatScalarWidth();
+	float sh = GetClassicFlatScalarHeight();
 
 	switch (local_origin)
 	{

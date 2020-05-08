@@ -1,37 +1,37 @@
 
 #include "jitintern.h"
 
-#if 1
-
-#else
-
 void JitCompiler::EmitTEST()
 {
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
-	cc.cmp(regD[A], BC);
-	cc.jne(GetLabel(i + 2));
+
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(A), ConstValueD(BC)), GetLabel(i + 2), continuebb);
+	cc.SetInsertPoint(continuebb);
 }
-	
+
 void JitCompiler::EmitTESTN()
 {
 	int bc = BC;
 	int i = (int)(ptrdiff_t)(pc - sfunc->Code);
-	cc.cmp(regD[A], -bc);
-	cc.jne(GetLabel(i + 2));
+
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(A), ConstValueD(-bc)), GetLabel(i + 2), continuebb);
+	cc.SetInsertPoint(continuebb);
 }
 
 void JitCompiler::EmitJMP()
 {
 	auto dest = pc + JMPOFS(pc) + 1;
 	int i = (int)(ptrdiff_t)(dest - sfunc->Code);
-	cc.jmp(GetLabel(i));
+	cc.CreateBr(GetLabel(i));
+	cc.SetInsertPoint(nullptr);
 }
 
 void JitCompiler::EmitIJMP()
 {
 	int base = (int)(ptrdiff_t)(pc - sfunc->Code) + 1;
-	auto val = newTempInt32();
-	cc.mov(val, regD[A]);
+	IRValue* val = LoadD(A);
 
 	for (int i = 0; i < (int)BCs; i++)
 	{
@@ -39,8 +39,9 @@ void JitCompiler::EmitIJMP()
 		{
 			int target = base + i + JMPOFS(&sfunc->Code[base + i]) + 1;
 
-			cc.cmp(val, i);
-			cc.je(GetLabel(target));
+			IRBasicBlock* elsebb = irfunc->createBasicBlock({});
+			cc.CreateCondBr(cc.CreateICmpEQ(val, ConstValueD(i)), GetLabel(target), elsebb);
+			cc.SetInsertPoint(elsebb);
 		}
 	}
 	pc += BCs;
@@ -56,19 +57,14 @@ static void ValidateCall(DObject *o, VMFunction *f, int b)
 
 void JitCompiler::EmitSCOPE()
 {
-	auto label = EmitThrowExceptionLabel(X_READ_NIL);
-	cc.test(regA[A], regA[A]);
-	cc.jz(label);
-
-	auto f = newTempIntPtr();
-	cc.mov(f, asmjit::imm_ptr(konsta[C].v));
-
-	typedef int(*FuncPtr)(DObject*, VMFunction*, int);
-	auto call = CreateCall<void, DObject*, VMFunction*, int>(ValidateCall);
-	call->setArg(0, regA[A]);
-	call->setArg(1, f);
-	call->setArg(2, asmjit::Imm(B));
+	auto continuebb = irfunc->createBasicBlock({});
+	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadD(A), ConstValueA(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+	cc.CreateCall(GetNativeFunc<void, DObject*, VMFunction*, int>("__ValidateCall", ValidateCall), { LoadA(A), ConstA(C), ConstValueD(B) });
 }
+
+#if 0
 
 static void SetString(VMReturn* ret, FString* str)
 {
@@ -247,6 +243,7 @@ void JitCompiler::EmitRETI()
 		cc.ret(numret);
 	}
 }
+#endif
 
 void JitCompiler::EmitTHROW()
 {
@@ -255,59 +252,47 @@ void JitCompiler::EmitTHROW()
 
 void JitCompiler::EmitBOUND()
 {
-	auto cursor = cc.getCursor();
-	auto label = cc.newLabel();
-	cc.bind(label);
-	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, regD[A]);
-	call->setArg(1, asmjit::imm(BC));
-	cc.setCursor(cursor);
-
-	cc.cmp(regD[A], (int)BC);
-	cc.jae(label);
-
-	JitLineInfo info;
-	info.Label = label;
-	info.LineNumber = sfunc->PCToLine(pc);
-	LineInfo.Push(info);
+	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
+	IRBasicBlock* exceptionbb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpUGE(LoadD(A), ConstValueD(BC)), exceptionbb, continuebb);
+	cc.SetInsertPoint(exceptionbb);
+	//JitLineInfo info;
+	//info.Label = exceptionbb;
+	//info.LineNumber = sfunc->PCToLine(pc);
+	//LineInfo.Push(info);
+	cc.CreateCall(GetNativeFunc<void, int, int>("__ThrowArrayOutOfBounds", &JitCompiler::ThrowArrayOutOfBounds), { LoadD(A), ConstValueD(BC) });
+	cc.CreateBr(continuebb);
+	cc.SetInsertPoint(continuebb);
 }
 
 void JitCompiler::EmitBOUND_K()
 {
-	auto cursor = cc.getCursor();
-	auto label = cc.newLabel();
-	cc.bind(label);
-	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, regD[A]);
-	call->setArg(1, asmjit::imm(konstd[BC]));
-	cc.setCursor(cursor);
-
-	cc.cmp(regD[A], (int)konstd[BC]);
-	cc.jae(label);
-
-	JitLineInfo info;
-	info.Label = label;
-	info.LineNumber = sfunc->PCToLine(pc);
-	LineInfo.Push(info);
+	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
+	IRBasicBlock* exceptionbb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpUGE(LoadD(A), ConstD(BC)), exceptionbb, continuebb);
+	cc.SetInsertPoint(exceptionbb);
+	//JitLineInfo info;
+	//info.Label = exceptionbb;
+	//info.LineNumber = sfunc->PCToLine(pc);
+	//LineInfo.Push(info);
+	cc.CreateCall(GetNativeFunc<void, int, int>("__ThrowArrayOutOfBounds", &JitCompiler::ThrowArrayOutOfBounds), { LoadD(A), ConstD(BC) });
+	cc.CreateBr(continuebb);
+	cc.SetInsertPoint(continuebb);
 }
 
 void JitCompiler::EmitBOUND_R()
 {
-	auto cursor = cc.getCursor();
-	auto label = cc.newLabel();
-	cc.bind(label);
-	auto call = CreateCall<void, int, int>(&JitCompiler::ThrowArrayOutOfBounds);
-	call->setArg(0, regD[A]);
-	call->setArg(1, regD[B]);
-	cc.setCursor(cursor);
-
-	cc.cmp(regD[A], regD[B]);
-	cc.jae(label);
-
-	JitLineInfo info;
-	info.Label = label;
-	info.LineNumber = sfunc->PCToLine(pc);
-	LineInfo.Push(info);
+	IRBasicBlock* continuebb = irfunc->createBasicBlock({});
+	IRBasicBlock* exceptionbb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpUGE(LoadD(A), LoadD(B)), exceptionbb, continuebb);
+	cc.SetInsertPoint(exceptionbb);
+	//JitLineInfo info;
+	//info.Label = exceptionbb;
+	//info.LineNumber = sfunc->PCToLine(pc);
+	//LineInfo.Push(info);
+	cc.CreateCall(GetNativeFunc<void, int, int>("__ThrowArrayOutOfBounds", &JitCompiler::ThrowArrayOutOfBounds), { LoadD(A), LoadD(BC) });
+	cc.CreateBr(continuebb);
+	cc.SetInsertPoint(continuebb);
 }
 
 void JitCompiler::ThrowArrayOutOfBounds(int index, int size)
@@ -321,5 +306,3 @@ void JitCompiler::ThrowArrayOutOfBounds(int index, int size)
 		ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", index);
 	}
 }
-
-#endif

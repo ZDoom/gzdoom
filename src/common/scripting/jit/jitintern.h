@@ -33,11 +33,16 @@ private:
 	#include "vmops.h"
 	#undef xx
 
+	IRBasicBlock* GetLabel(size_t pos) { return nullptr; }
+
 	void EmitReadBarrier();
 
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
 	void EmitThrowException(EVMAbortException reason);
 	IRBasicBlock* EmitThrowExceptionLabel(EVMAbortException reason);
+
+	static void ThrowArrayOutOfBounds(int index, int size);
+	static void ThrowException(int reason);
 
 	template<typename RetType, typename P1>
 	IRFunction* GetNativeFunc(const char* name, RetType(*func)(P1 p1)) { return nullptr; }
@@ -111,6 +116,8 @@ private:
 	IRValue* Load(IRValue* ptr) { return cc.CreateLoad(ptr); }
 
 	static void CallAssignString(FString* to, FString* from) { *to = *from; }
+
+	VMScriptFunction* sfunc;
 
 	IRContext* ircontext;
 	IRFunction* irfunc;

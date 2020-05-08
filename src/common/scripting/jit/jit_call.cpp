@@ -3,10 +3,6 @@
 #include <map>
 #include <memory>
 
-#if 1
-
-#else
-
 void JitCompiler::EmitPARAM()
 {
 	ParamOpcodes.Push(pc);
@@ -35,18 +31,21 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 	int b = op->b;
 	int c = op->c;
 
-	auto label = EmitThrowExceptionLabel(X_READ_NIL);
-	cc.test(regA[b], regA[b]);
-	cc.jz(label);
+	auto exceptionbb = EmitThrowExceptionLabel(X_READ_NIL);
+	auto continuebb = irfunc->createBasicBlock({});
+	cc.CreateCondBr(cc.CreateICmpNE(LoadA(b), ConstValueA(0)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
 
-	cc.mov(regA[a], asmjit::x86::qword_ptr(regA[b], myoffsetof(DObject, Class)));
-	cc.mov(regA[a], asmjit::x86::qword_ptr(regA[a], myoffsetof(PClass, Virtuals) + myoffsetof(FArray, Array)));
-	cc.mov(regA[a], asmjit::x86::qword_ptr(regA[a], c * (int)sizeof(void*)));
+	IRValue* ptrObject = LoadA(b);
+	IRValue* ptrClass = Load(ToPtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
+	IRValue* ptrArray = Load(ToPtrPtr(ptrClass, ConstValueD(myoffsetof(PClass, Virtuals) + myoffsetof(FArray, Array))));
+	IRValue* ptrFunc = Load(ToPtrPtr(ptrArray, ConstValueD(c * (int)sizeof(void*))));
+	StoreA(ptrFunc, a);
 }
 
 void JitCompiler::EmitCALL()
 {
-	EmitVMCall(regA[A], nullptr);
+	EmitVMCall(LoadA(A), nullptr);
 	pc += C; // Skip RESULTs
 }
 
@@ -64,13 +63,23 @@ void JitCompiler::EmitCALL_K()
 	}
 	else
 	{
-		auto ptr = newTempIntPtr();
-		cc.mov(ptr, asmjit::imm_ptr(target));
-		EmitVMCall(ptr, target);
+		EmitVMCall(ConstValueA(target), target);
 	}
 
 	pc += C; // Skip RESULTs
 }
+
+#if 1
+
+void JitCompiler::EmitNativeCall(VMNativeFunction* target)
+{
+}
+
+void JitCompiler::EmitVMCall(IRValue* ptr, VMFunction* target)
+{
+}
+
+#else
 
 void JitCompiler::EmitVMCall(asmjit::X86Gp vmfunc, VMFunction *target)
 {

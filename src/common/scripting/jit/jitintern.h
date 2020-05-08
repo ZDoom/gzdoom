@@ -35,6 +35,10 @@ private:
 
 	IRBasicBlock* GetLabel(size_t pos) { return nullptr; }
 
+	void EmitNativeCall(VMNativeFunction* target);
+	void EmitVMCall(IRValue* ptr, VMFunction* target);
+	void EmitVtbl(const VMOP* op);
+
 	void EmitReadBarrier();
 
 	void EmitNullPointerThrow(int index, EVMAbortException reason);
@@ -135,6 +139,8 @@ private:
 
 	const VMOP* pc;
 	VM_UBYTE op;
+
+	TArray<const VMOP*> ParamOpcodes;
 };
 
 #else
@@ -381,8 +387,6 @@ private:
 	int offsetA;
 	int offsetD;
 	int offsetExtra;
-
-	TArray<const VMOP *> ParamOpcodes;
 
 	void CheckVMFrame();
 	asmjit::X86Gp GetCallReturns();

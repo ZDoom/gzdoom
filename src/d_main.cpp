@@ -1999,7 +1999,7 @@ static void AddAutoloadFiles(const char *autoname)
 		D_AddDirectory (allwads, file, "*.wad", GameConfig);
 
 #ifdef __unix__
-		file = NicePath("$HOME/" GAME_DIR "/skins");
+		file = NicePath((GAME_DIR + "/skins").c_str());
 		D_AddDirectory (allwads, file, "*.wad", GameConfig);
 #endif	
 

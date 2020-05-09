@@ -613,7 +613,7 @@ int P_Thing_CheckProximity(FLevelLocals *Level, AActor *self, PClass *classname,
 		// [MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
 		// Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
 		// Ripped from sphere checking in A_RadiusGive (along with a number of things).
-		if ((ref->Distance2D(mo) < distance &&
+		if ((ref->Distance2DSquared(mo) < (distance * distance) &&
 			((flags & CPXF_NOZ) ||
 			((ref->Z() > mo->Z() && ref->Z() - mo->Top() < distance) ||
 			(ref->Z() <= mo->Z() && mo->Z() - ref->Top() < distance)))))

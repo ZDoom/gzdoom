@@ -140,8 +140,9 @@ static void NoiseMarkSector(sector_t *sec, AActor *soundtarget, bool splash, AAc
 	// [RH] Set this in the actors in the sector instead of the sector itself.
 	for (AActor *actor = sec->thinglist; actor != NULL; actor = actor->snext)
 	{
-		if (actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
-			(!maxdist || (actor->Distance2D(emitter) <= maxdist)))
+		if(actor != soundtarget && (!splash || !(actor->flags4 & MF4_NOSPLASHALERT)) &&
+			(!maxdist ||
+			(maxdist >= 0 && actor->Distance2DSquared(emitter) <= (maxdist * maxdist) ) ) )
 		{
 			actor->LastHeard = soundtarget;
 		}
@@ -456,7 +457,7 @@ int P_Move (AActor *actor)
 
 	if ((actor->flags6 & MF6_JUMPDOWN) && target &&
 			!(target->IsFriend(actor)) &&
-			actor->Distance2D(target) < 144 &&
+			actor->Distance2DSquared(target) < (144 * 144) &&
 			pr_dropoff() < 235)
 	{
 		dropoff = 2;
@@ -944,16 +945,21 @@ void P_NewChaseDir(AActor * actor)
 		if (actor->flags3 & MF3_AVOIDMELEE)
 		{
 			bool ismeleeattacker = false;
-			double dist = actor->Distance2D(target);
+
+			double distance_squared = actor->Distance2DSquared(target);
 			if (target->player == NULL)
 			{
-				ismeleeattacker = (target->MissileState == NULL && dist < (target->meleerange + target->radius)*2);
+				//in its own variable because otherwise it looks bad
+				double meele_squared = (target->meleerange + target->radius) * 2 * (target->meleerange + target->radius) * 2;
+				ismeleeattacker = (target->MissileState == NULL && distance_squared < meele_squared);
 			}
 			else if (target->player->ReadyWeapon != NULL)
 			{
 				// melee range of player weapon is a parameter of the action function and cannot be checked here.
 				// Add a new weapon property?
-				ismeleeattacker = ((target->player->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_MELEEWEAPON) && dist < 192);
+				ismeleeattacker = ((target->player->ReadyWeapon->IntVar(NAME_WeaponFlags) & WIF_MELEEWEAPON) &&
+				//192 is an unknown constant here
+				distance_squared < (192 * 192) );
 			}
 			if (ismeleeattacker)
 			{
@@ -1163,12 +1169,12 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 		fov = allaround ? 0. : 180.;
 	}
 
-	double dist = lookee->Distance2D (other);
-
-	if (maxdist && dist > maxdist)
+	double distance_squared = lookee->Distance2DSquared(other);
+	//square distance here...
+	if (maxdist && maxdist >= 0 && distance_squared > (maxdist * maxdist) )
 		return false;			// [KS] too far
-
-	if (mindist && dist < mindist)
+	//...and here because other number are squared
+	if (mindist && mindist >= 0 && distance_squared < (mindist * mindist) )
 		return false;			// [KS] too close
 
 	if (fov != 0)
@@ -1179,7 +1185,7 @@ int P_IsVisible(AActor *lookee, AActor *other, INTBOOL allaround, FLookExParams 
 		{
 			// if real close, react anyway
 			// [KS] but respect minimum distance rules
-			if (mindist || dist > lookee->meleerange + lookee->radius)
+			if (mindist || distance_squared > ( (lookee->meleerange + lookee->radius) * (lookee->meleerange + lookee->radius) ) )
 				return false;	// outside of fov
 		}
 	}
@@ -1214,7 +1220,7 @@ int P_LookForMonsters (AActor *actor)
 		{ // Not a valid monster
 			continue;
 		}
-		if (mo->Distance2D (actor) > MONS_LOOK_RANGE)
+		if (mo->Distance2DSquared(actor) > (MONS_LOOK_RANGE * MONS_LOOK_RANGE) )
 		{ // Out of range
 			continue;
 		}
@@ -1721,7 +1727,7 @@ int P_LookForPlayers (AActor *actor, INTBOOL allaround, FLookExParams *params)
 			if ((player->mo->flags & MF_SHADOW && !(actor->Level->i_compatflags & COMPATF_INVISIBILITY)) ||
 				player->mo->flags3 & MF3_GHOST)
 			{
-				if (player->mo->Distance2D (actor) > 128 && player->mo->Vel.XY().LengthSquared() < 5*5)
+				if (player->mo->Distance2DSquared(actor) > (128 * 128) && player->mo->Vel.XY().LengthSquared() < (5 * 5) )
 				{ // Player is sneaking - can't detect
 					continue;
 				}
@@ -1882,7 +1888,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 	PARAM_STATE	(seestate)		
 
 	AActor *targ = NULL; // Shuts up gcc
-	double dist;
+	double distance_squared;//Not used anywhere, except distance checking
 	if (fov == 0) fov = 180.;
 	FLookExParams params = { fov, minseedist, maxseedist, maxheardist, flags, seestate };
 
@@ -1923,10 +1929,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 				}
 				else
 				{
-					dist = self->Distance2D (targ);
+					distance_squared = self->Distance2DSquared(targ);
 
 					// [KS] If the target is too far away, don't respond to the sound.
-					if (maxheardist && dist > maxheardist)
+					if (maxheardist && maxheardist > 0 && distance_squared > (maxheardist * maxheardist) )
 					{
 						targ = NULL;
 						self->LastHeard = nullptr;
@@ -1994,10 +2000,10 @@ DEFINE_ACTION_FUNCTION(AActor, A_LookEx)
 			{
 				if (self->flags & MF_AMBUSH)
 				{
-					dist = self->Distance2D (self->target);
+					distance_squared = self->Distance2D (self->target);
 					if (P_CheckSight (self, self->target, SF_SEEPASTBLOCKEVERYTHING) &&
-						(!minseedist || dist > minseedist) &&
-						(!maxseedist || dist < maxseedist))
+						(!minseedist || (minseedist >= 0 && distance_squared > (minseedist * minseedist) ) ) &&
+						(!maxseedist || (maxseedist >= 0 && distance_squared < (maxseedist * maxseedist) ) ) )
 					{
 						goto seeyou;
 					}
@@ -2430,8 +2436,8 @@ void A_DoChase (AActor *actor, bool fastchase, FState *meleestate, FState *missi
 		{
 			actor->FastChaseStrafeCount = 0;
 			actor->Vel.X = actor->Vel.Y = 0;
-			double dist = actor->Distance2D (actor->target);
-			if (dist < CLASS_BOSS_STRAFE_RANGE)
+			double distance_squared = actor->Distance2DSquared(actor->target);
+			if (distance_squared < (CLASS_BOSS_STRAFE_RANGE * CLASS_BOSS_STRAFE_RANGE) )
 			{
 				if (pr_chase() < 100)
 				{

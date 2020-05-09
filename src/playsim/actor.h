@@ -857,6 +857,11 @@ public:
 		return (Pos().XY() - otherpos).LengthSquared();
 	}
 
+	double Distance2DSquared(double x, double y) const
+	{
+		return DVector2(X() - x, Y() - y).LengthSquared();
+	}
+
 	double Distance2D(AActor *other, bool absolute = false)
 	{
 		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);

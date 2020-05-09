@@ -1354,10 +1354,10 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 				fabs(thing->Y() - oldpos.Y) < (thing->radius + tm.thing->radius))
 
 			{
-				double newdist = thing->Distance2D(cres.Position.X, cres.Position.Y);
-				double olddist = thing->Distance2D(oldpos.X, oldpos.Y);
+				double newdist_squared = thing->Distance2DSquared(cres.Position.X, cres.Position.Y);
+				double olddist_squared = thing->Distance2DSquared(oldpos.X, oldpos.Y);
 
-				if (newdist > olddist)
+				if (newdist_squared > olddist_squared)
 				{
 					// unblock only if there's already a vertical overlap (or both actors are flagged not to overlap)
 					unblocking = (tm.thing->Top() > thing->Z() && tm.thing->Z() < topz) || (tm.thing->flags3 & thing->flags3 & MF3_DONTOVERLAP);
@@ -2065,15 +2065,20 @@ void P_FakeZMovement(AActor *mo)
 	{ // float down towards target if too close
 		if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
 		{
-			double dist = mo->Distance2D(mo->target);
+			double dist_squared = mo->Distance2DSquared(mo->target);
+			//still need delta intact, because it can be negative
+			//and square of a real number always positive
 			double delta = mo->target->Center() - mo->Z();
-			if (delta < 0 && dist < -(delta * 3))
+			//why it multiplies by 3 in original function?
+			double delta_squared = delta * delta * 3 * 3;
+			if (delta < 0 && dist_squared < -(delta_squared) )
 				mo->AddZ(-mo->FloatSpeed);
-			else if (delta > 0 && dist < (delta * 3))
+
+			else if (delta > 0 && dist_squared < (delta_squared) )
 				mo->AddZ(mo->FloatSpeed);
 		}
 	}
-	if (mo->player && mo->flags&MF_NOGRAVITY && (mo->Z() > mo->floorz) && !mo->IsNoClip2())
+	if (mo->player && mo->flags & MF_NOGRAVITY && (mo->Z() > mo->floorz) && !mo->IsNoClip2())
 	{
 		mo->AddZ(DAngle(4.5 * mo->Level->maptime).Sin());
 	}

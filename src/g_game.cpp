@@ -1469,13 +1469,13 @@ double FLevelLocals::PlayersRangeFromSpot (FPlayerStart *spot)
 		if (!playeringame[i] || !players[i].mo || players[i].health <= 0)
 			continue;
 
-		distance = players[i].mo->Distance2D(spot->pos.X, spot->pos.Y);
+		distance = players[i].mo->Distance2DSquared(spot->pos.X, spot->pos.Y);
 
 		if (distance < closest)
 			closest = distance;
 	}
 
-	return closest;
+	return sqrt(closest);
 }
 
 // [RH] Select the deathmatch spawn spot farthest from everyone.

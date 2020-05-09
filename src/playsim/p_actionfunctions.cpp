@@ -2241,8 +2241,9 @@ DEFINE_ACTION_FUNCTION(AActor, CheckLOF)
 		{
 			if (range > 0 && !(flags & CLOFF_CHECKPARTIAL))
 			{
-				double distance = self->Distance3D(target);
-				if (distance > range)
+				double distance_squared = self->Distance3DSquared(target);
+
+				if (distance_squared > (range * range) )
 				{
 					ACTION_RETURN_BOOL(false);
 				}
@@ -2458,13 +2459,14 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfTargetInLOS)
 	{
 		ACTION_RETURN_BOOL(false);
 	}
-	double distance = self->Distance3D(target);
+	double distance_squared = self->Distance3DSquared(target);
 
-	if (dist_max && (distance > dist_max))
+	if (dist_max && (distance_squared > (dist_max * dist_max) ) )
 	{
 		ACTION_RETURN_BOOL(false);
 	}
-	if (dist_close && (distance < dist_close))
+
+	if (dist_close && (distance_squared < (dist_close * dist_close) ) )
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
 		{
@@ -2549,16 +2551,16 @@ DEFINE_ACTION_FUNCTION(AActor, CheckIfInTargetLOS)
 		ACTION_RETURN_BOOL(false);
 	}
 
-	double distance = self->Distance3D(target);
+	double distance_squared = self->Distance3DSquared(target);
 
-	if (dist_max && (distance > dist_max))
+	if (dist_max && dist_max >= 0 && (distance_squared > (dist_max * dist_max) ) )
 	{
 		ACTION_RETURN_BOOL(false);
 	}
 
 	bool doCheckSight = !(flags & JLOSF_NOSIGHT);
 
-	if (dist_close && (distance < dist_close))
+	if (dist_close && dist_close >= 0 && (distance_squared < (dist_close * dist_close) ) )
 	{
 		if (flags & JLOSF_CLOSENOJUMP)
 		{
@@ -3349,7 +3351,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_WolfAttack)
 
 	// Target can dodge if it can see enemy
 	DAngle angle = absangle(self->target->Angles.Yaw, self->target->AngleTo(self));
-	bool dodge = (P_CheckSight(self->target, self) && angle < 30. * 256. / 360.);	// 30 byteangles ~ 21°
+	bool dodge = (P_CheckSight(self->target, self) && angle < 30. * 256. / 360.);	// 30 byteangles ~ 21ï¿½
 
 	// Distance check is simplistic
 	DVector2 vec = self->Vec2To(self->target);

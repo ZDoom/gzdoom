@@ -918,4 +918,3 @@ CCMD (whereisini)
 	FString path = M_GetConfigPath(false);
 	Printf ("%s\n", path.GetChars());
 }
-

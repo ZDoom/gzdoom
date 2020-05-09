@@ -104,7 +104,7 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
-		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
+		SetValueForKey ("Path", GAME_DIR.c_str(), true);
 		// Arch Linux likes them in /usr/share/doom
 		// Debian likes them in /usr/share/games/doom
 		// I assume other distributions don't do anything radically different
@@ -127,7 +127,7 @@ FGameConfigFile::FGameConfigFile ()
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$PROGDIR", true);
 #else
-		SetValueForKey ("Path", "$HOME/" GAME_DIR, true);
+		SetValueForKey ("Path", GAME_DIR.c_str(), true);
 		SetValueForKey ("Path", SHARE_DIR, true);
 		SetValueForKey ("Path", "/usr/local/share/doom", true);
 		SetValueForKey ("Path", "/usr/local/share/games/doom", true);
@@ -154,8 +154,8 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey("Path", "$PROGDIR/soundfonts", true);
 		SetValueForKey("Path", "$PROGDIR/fm_banks", true);
 #else
-		SetValueForKey("Path", "$HOME/" GAME_DIR "/soundfonts", true);
-		SetValueForKey("Path", "$HOME/" GAME_DIR "/fm_banks", true);
+		SetValueForKey("Path", (GAME_DIR + "/soundfonts").c_str(), true);
+		SetValueForKey("Path", (GAME_DIR + "/fm_banks").c_str(), true);
 		SetValueForKey("Path", "/usr/local/share/doom/soundfonts", true);
 		SetValueForKey("Path", "/usr/local/share/doom/fm_banks", true);
 		SetValueForKey("Path", "/usr/local/share/games/doom/soundfonts", true);
@@ -918,3 +918,4 @@ CCMD (whereisini)
 	FString path = M_GetConfigPath(false);
 	Printf ("%s\n", path.GetChars());
 }
+

@@ -512,7 +512,7 @@ void FIWadManager::ValidateIWADs()
 // Under UNIX OSes, the search path is:
 //	  1. Current directory
 //	  2. $DOOMWADDIR
-//	  3. $HOME/.config/zdoom
+//	  3. $XDG_CONFIG_HOME/zdoom
 //	  4. The share directory defined at compile time (/usr/local/share/zdoom)
 //
 // The search path can be altered by editing the IWADSearch.Directories
@@ -678,9 +678,9 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 					  "2. Edit your ~/Library/Preferences/" GAMENAMELOWERCASE ".ini and add the directories\n"
 					  "of your iwads to the list beneath [IWADSearch.Directories]");
 #else
-					  "1. Place one or more of these wads in ~/.config/" GAMENAMELOWERCASE "/.\n"
-					  "2. Edit your ~/.config/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini and add the directories of your\n"
-					  "iwads to the list beneath [IWADSearch.Directories]");
+					  "1. Place one or more of these wads in %s/" GAMENAMELOWERCASE "/.\n"
+					  "2. Edit your %s/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini and add the directories of your\n"
+					  "iwads to the list beneath [IWADSearch.Directories]", getenv("XDG_CONFIG_HOME"), getenv("XDG_CONFIG_HOME"));
 #endif
 	}
 	int pick = 0;

@@ -53,13 +53,11 @@ void JitCompiler::EmitLKP_R()
 	StoreA(OffsetPtr(base, LoadD(B)), A);
 }
 
-#if 0
 void JitCompiler::EmitLFP()
 {
 	CheckVMFrame();
-	cc.lea(regA[A], asmjit::x86::ptr(vmframe, offsetExtra));
+	StoreA(OffsetPtr(vmframe, offsetExtra), A);
 }
-#endif
 
 void JitCompiler::EmitMETA()
 {

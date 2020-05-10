@@ -26,6 +26,7 @@ extern int VMCalls[10];
 class JitCompiler
 {
 public:
+	IRFunction* Codegen();
 
 private:
 	// Declare EmitXX functions for the opcodes:
@@ -53,8 +54,17 @@ private:
 	static void ThrowArrayOutOfBounds(int index, int size);
 	static void ThrowException(int reason);
 
-	void CheckVMFrame();
+	void Setup();
+	void CreateRegisters();
+	void IncrementVMCalls();
+	void SetupFrame();
+	void SetupSimpleFrame();
+	void SetupFullVMFrame();
+	void BindLabels();
+	void EmitOpcode();
 	void EmitPopFrame();
+
+	void CheckVMFrame();
 	IRValue* GetCallReturns();
 
 	IRFunctionType* GetFuncSignature();
@@ -188,39 +198,40 @@ private:
 
 	static void CallAssignString(FString* to, FString* from) { *to = *from; }
 
-	VMScriptFunction* sfunc;
+	VMScriptFunction* sfunc = nullptr;
 
-	IRContext* ircontext;
-	IRFunction* irfunc;
+	IRContext* ircontext = nullptr;
+	IRFunction* irfunc = nullptr;
 	IRBuilder cc;
 
-	IRValue* args;
-	IRValue* numargs;
-	IRValue* ret;
-	IRValue* numret;
+	IRValue* args = nullptr;
+	IRValue* numargs = nullptr;
+	IRValue* ret = nullptr;
+	IRValue* numret = nullptr;
 
-	const int* konstd;
-	const double* konstf;
-	const FString* konsts;
-	const FVoidObj* konsta;
+	const int* konstd = nullptr;
+	const double* konstf = nullptr;
+	const FString* konsts = nullptr;
+	const FVoidObj* konsta = nullptr;
 
 	TArray<IRValue*> regD;
 	TArray<IRValue*> regF;
 	TArray<IRValue*> regA;
 	TArray<IRValue*> regS;
 
-	const VMOP* pc;
-	VM_UBYTE op;
+	const VMOP* pc = nullptr;
+	VM_UBYTE op = 0;
 
 	TArray<const VMOP*> ParamOpcodes;
+	IRValue* callReturns = nullptr;
 
-	IRValue* vmframe;
-	int offsetParams;
-	int offsetF;
-	int offsetS;
-	int offsetA;
-	int offsetD;
-	int offsetExtra;
+	IRValue* vmframe = nullptr;
+	int offsetParams = 0;
+	int offsetF = 0;
+	int offsetS = 0;
+	int offsetA = 0;
+	int offsetD = 0;
+	int offsetExtra = 0;
 };
 
 #else

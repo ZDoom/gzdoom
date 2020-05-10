@@ -18,42 +18,6 @@ void JitDumpLog(FILE* file, VMScriptFunction* sfunc)
 {
 }
 
-void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
-{
-}
-
-void JitCompiler::EmitThrowException(EVMAbortException reason)
-{
-}
-
-void JitCompiler::ThrowException(int reason)
-{
-	ThrowAbortException((EVMAbortException)reason, nullptr);
-}
-
-IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
-{
-	return irfunc->createBasicBlock("");
-}
-
-void JitCompiler::CheckVMFrame()
-{
-}
-
-void JitCompiler::EmitPopFrame()
-{
-}
-
-IRValue* JitCompiler::GetCallReturns()
-{
-	return nullptr;
-}
-
-IRBasicBlock* JitCompiler::GetLabel(size_t pos)
-{
-	return nullptr;
-}
-
 #else
 
 static void OutputJitLog(const asmjit::StringLogger &logger);
@@ -135,6 +99,8 @@ static void OutputJitLog(const asmjit::StringLogger &logger)
 		Printf("%s\n", pos);
 }
 
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 
 static const char *OpNames[NUM_OPS] =
@@ -144,7 +110,7 @@ static const char *OpNames[NUM_OPS] =
 #undef xx
 };
 
-asmjit::CCFunc *JitCompiler::Codegen()
+IRFunction* JitCompiler::Codegen()
 {
 	Setup();
 
@@ -162,15 +128,16 @@ asmjit::CCFunc *JitCompiler::Codegen()
 		{
 			lastLine = curLine;
 
-			auto label = cc.newLabel();
+			/*auto label = cc.newLabel();
 			cc.bind(label);
 
 			JitLineInfo info;
 			info.Label = label;
 			info.LineNumber = curLine;
-			LineInfo.Push(info);
+			LineInfo.Push(info);*/
 		}
 
+#if 0
 		if (op != OP_PARAM && op != OP_PARAMI && op != OP_VTBL)
 		{
 			FString lineinfo;
@@ -180,7 +147,8 @@ asmjit::CCFunc *JitCompiler::Codegen()
 		}
 
 		labels[i].cursor = cc.getCursor();
-		ResetTemp();
+#endif
+
 		EmitOpcode();
 
 		pc++;
@@ -188,9 +156,7 @@ asmjit::CCFunc *JitCompiler::Codegen()
 
 	BindLabels();
 
-	cc.endFunc();
-	cc.finalize();
-
+	/*
 	auto code = cc.getCode ();
 	for (unsigned int j = 0; j < LineInfo.Size (); j++)
 	{
@@ -207,8 +173,9 @@ asmjit::CCFunc *JitCompiler::Codegen()
 	}
 
 	std::stable_sort(LineInfo.begin(), LineInfo.end(), [](const JitLineInfo &a, const JitLineInfo &b) { return a.InstructionIndex < b.InstructionIndex; });
+	*/
 
-	return func;
+	return irfunc;
 }
 
 void JitCompiler::EmitOpcode()
@@ -227,6 +194,7 @@ void JitCompiler::EmitOpcode()
 
 void JitCompiler::BindLabels()
 {
+#if 0
 	asmjit::CBNode *cursor = cc.getCursor();
 	unsigned int size = labels.Size();
 	for (unsigned int i = 0; i < size; i++)
@@ -239,45 +207,34 @@ void JitCompiler::BindLabels()
 		}
 	}
 	cc.setCursor(cursor);
+#endif
 }
 
 void JitCompiler::CheckVMFrame()
 {
-	if (!vmframeAllocated)
+	if (!vmframe)
 	{
-		auto cursor = cc.getCursor();
-		cc.setCursor(vmframeCursor);
-
-		auto vmstack = cc.newStack(sfunc->StackSize, 16, "vmstack");
-		vmframe = cc.newIntPtr("vmframe");
-		cc.lea(vmframe, vmstack);
-
-		cc.setCursor(cursor);
-		vmframeAllocated = true;
+		vmframe = irfunc->createAlloca(ircontext->getInt8Ty(), ircontext->getConstantInt(sfunc->StackSize), "vmframe");
 	}
 }
 
-asmjit::X86Gp JitCompiler::GetCallReturns()
+IRValue* JitCompiler::GetCallReturns()
 {
-	if (!callReturnsAllocated)
+	if (!callReturns)
 	{
-		auto cursor = cc.getCursor();
-		cc.setCursor(callReturnsCursor);
-		auto stackalloc = cc.newStack(sizeof(VMReturn) * MAX_RETURNS, alignof(VMReturn), "stackalloc");
-		callReturns = cc.newIntPtr("callReturns");
-		cc.lea(callReturns, stackalloc);
-		cc.setCursor(cursor);
-		callReturnsAllocated = true;
+		callReturns = irfunc->createAlloca(ircontext->getInt8Ty(), ircontext->getConstantInt(sizeof(VMReturn) * MAX_RETURNS), "callReturns");
 	}
 	return callReturns;
 }
 
+IRBasicBlock* JitCompiler::GetLabel(size_t pos)
+{
+	return nullptr;
+}
+
 void JitCompiler::Setup()
 {
-	using namespace asmjit;
-
-	ResetTemp();
-
+#if 0
 	static const char *marks = "=======================================================";
 	cc.comment("", 0);
 	cc.comment(marks, 56);
@@ -310,6 +267,7 @@ void JitCompiler::Setup()
 	konsta = sfunc->KonstA;
 
 	labels.Resize(sfunc->CodeSize);
+#endif
 
 	CreateRegisters();
 	IncrementVMCalls();
@@ -338,8 +296,7 @@ void JitCompiler::SetupFrame()
 
 void JitCompiler::SetupSimpleFrame()
 {
-	using namespace asmjit;
-
+#if 0
 	// This is a simple frame with no constructors or destructors. Allocate it on the stack ourselves.
 
 	vmframeCursor = cc.getCursor();
@@ -393,6 +350,7 @@ void JitCompiler::SetupSimpleFrame()
 
 	for (int i = rega; i < sfunc->NumRegA; i++)
 		cc.xor_(regA[i], regA[i]);
+#endif
 }
 
 static VMFrameStack *CreateFullVMFrame(VMScriptFunction *func, VMValue *args, int numargs)
@@ -405,8 +363,7 @@ static VMFrameStack *CreateFullVMFrame(VMScriptFunction *func, VMValue *args, in
 
 void JitCompiler::SetupFullVMFrame()
 {
-	using namespace asmjit;
-
+#if 0
 	stack = cc.newIntPtr("stack");
 	auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int>(CreateFullVMFrame);
 	allocFrame->setRet(0, stack);
@@ -417,7 +374,6 @@ void JitCompiler::SetupFullVMFrame()
 	vmframe = cc.newIntPtr("vmframe");
 	cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
 	cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
-	vmframeAllocated = true;
 
 	for (int i = 0; i < sfunc->NumRegD; i++)
 		cc.mov(regD[i], x86::dword_ptr(vmframe, offsetD + i * sizeof(int32_t)));
@@ -430,6 +386,7 @@ void JitCompiler::SetupFullVMFrame()
 
 	for (int i = 0; i < sfunc->NumRegA; i++)
 		cc.mov(regA[i], x86::ptr(vmframe, offsetA + i * sizeof(void*)));
+#endif
 }
 
 static void PopFullVMFrame(VMFrameStack *stack)
@@ -439,15 +396,18 @@ static void PopFullVMFrame(VMFrameStack *stack)
 
 void JitCompiler::EmitPopFrame()
 {
+#if 0
 	if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0)
 	{
 		auto popFrame = CreateCall<void, VMFrameStack *>(PopFullVMFrame);
 		popFrame->setArg(0, stack);
 	}
+#endif
 }
 
 void JitCompiler::IncrementVMCalls()
 {
+#if 0
 	// VMCalls[0]++
 	auto vmcallsptr = newTempIntPtr();
 	auto vmcalls = newTempInt32();
@@ -455,6 +415,7 @@ void JitCompiler::IncrementVMCalls()
 	cc.mov(vmcalls, asmjit::x86::dword_ptr(vmcallsptr));
 	cc.add(vmcalls, (int)1);
 	cc.mov(asmjit::x86::dword_ptr(vmcallsptr), vmcalls);
+#endif
 }
 
 void JitCompiler::CreateRegisters()
@@ -464,36 +425,49 @@ void JitCompiler::CreateRegisters()
 	regA.Resize(sfunc->NumRegA);
 	regS.Resize(sfunc->NumRegS);
 
+	FString regname;
+	IRType* type;
+	IRValue* arraySize = ircontext->getConstantInt(1);
+
+	type = ircontext->getInt32Ty();
 	for (int i = 0; i < sfunc->NumRegD; i++)
 	{
 		regname.Format("regD%d", i);
-		regD[i] = cc.newInt32(regname.GetChars());
+		regD[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
 	}
 
+	type = ircontext->getDoubleTy();
 	for (int i = 0; i < sfunc->NumRegF; i++)
 	{
 		regname.Format("regF%d", i);
-		regF[i] = cc.newXmmSd(regname.GetChars());
+		regF[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
 	}
 
+	type = ircontext->getInt8PtrTy();
 	for (int i = 0; i < sfunc->NumRegS; i++)
 	{
 		regname.Format("regS%d", i);
-		regS[i] = cc.newIntPtr(regname.GetChars());
+		regS[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
 	}
 
 	for (int i = 0; i < sfunc->NumRegA; i++)
 	{
 		regname.Format("regA%d", i);
-		regA[i] = cc.newIntPtr(regname.GetChars());
+		regA[i] = irfunc->createAlloca(type, arraySize, regname.GetChars());
 	}
 }
 
 void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 {
-	auto label = EmitThrowExceptionLabel(reason);
-	cc.test(regA[index], regA[index]);
-	cc.je(label);
+	auto continuebb = irfunc->createBasicBlock({});
+	auto exceptionbb = EmitThrowExceptionLabel(reason);
+	cc.CreateCondBr(cc.CreateICmpEQ(LoadA(index), ConstValueA(nullptr)), exceptionbb, continuebb);
+	cc.SetInsertPoint(continuebb);
+}
+
+void JitCompiler::EmitThrowException(EVMAbortException reason)
+{
+	cc.CreateCall(GetNativeFunc<void, int>("__ThrowException", &JitCompiler::ThrowException), { ConstValueD(reason) });
 }
 
 void JitCompiler::ThrowException(int reason)
@@ -501,115 +475,21 @@ void JitCompiler::ThrowException(int reason)
 	ThrowAbortException((EVMAbortException)reason, nullptr);
 }
 
-void JitCompiler::EmitThrowException(EVMAbortException reason)
+IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
 {
-	auto call = CreateCall<void, int>(&JitCompiler::ThrowException);
-	call->setArg(0, asmjit::imm(reason));
-}
-
-asmjit::Label JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
-{
-	auto label = cc.newLabel();
-	auto cursor = cc.getCursor();
-	cc.bind(label);
+	auto bb = irfunc->createBasicBlock({});
+	auto cursor = cc.GetInsertBlock();
+	cc.SetInsertPoint(bb);
+	//JitLineInfo info;
+	//info.Label = bb;
+	//info.LineNumber = sfunc->PCToLine(pc);
+	//LineInfo.Push(info);
 	EmitThrowException(reason);
-	cc.setCursor(cursor);
-
-	JitLineInfo info;
-	info.Label = label;
-	info.LineNumber = sfunc->PCToLine(pc);
-	LineInfo.Push(info);
-
-	return label;
-}
-
-asmjit::X86Gp JitCompiler::CheckRegD(int r0, int r1)
-{
-	if (r0 != r1)
-	{
-		return regD[r0];
-	}
-	else
-	{
-		auto copy = newTempInt32();
-		cc.mov(copy, regD[r0]);
-		return copy;
-	}
-}
-
-asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1)
-{
-	if (r0 != r1)
-	{
-		return regF[r0];
-	}
-	else
-	{
-		auto copy = newTempXmmSd();
-		cc.movsd(copy, regF[r0]);
-		return copy;
-	}
-}
-
-asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2)
-{
-	if (r0 != r1 && r0 != r2)
-	{
-		return regF[r0];
-	}
-	else
-	{
-		auto copy = newTempXmmSd();
-		cc.movsd(copy, regF[r0]);
-		return copy;
-	}
-}
-
-asmjit::X86Xmm JitCompiler::CheckRegF(int r0, int r1, int r2, int r3)
-{
-	if (r0 != r1 && r0 != r2 && r0 != r3)
-	{
-		return regF[r0];
-	}
-	else
-	{
-		auto copy = newTempXmmSd();
-		cc.movsd(copy, regF[r0]);
-		return copy;
-	}
-}
-
-asmjit::X86Gp JitCompiler::CheckRegS(int r0, int r1)
-{
-	if (r0 != r1)
-	{
-		return regS[r0];
-	}
-	else
-	{
-		auto copy = newTempIntPtr();
-		cc.mov(copy, regS[r0]);
-		return copy;
-	}
-}
-
-asmjit::X86Gp JitCompiler::CheckRegA(int r0, int r1)
-{
-	if (r0 != r1)
-	{
-		return regA[r0];
-	}
-	else
-	{
-		auto copy = newTempIntPtr();
-		cc.mov(copy, regA[r0]);
-		return copy;
-	}
+	cc.SetInsertPoint(cursor);
+	return bb;
 }
 
 void JitCompiler::EmitNOP()
 {
-	cc.nop();
+	// The IR doesn't have a NOP instruction
 }
-
-#endif

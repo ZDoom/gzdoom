@@ -33,7 +33,7 @@ private:
 	#include "vmops.h"
 	#undef xx
 
-	IRBasicBlock* GetLabel(size_t pos) { return nullptr; }
+	IRBasicBlock* GetLabel(size_t pos);
 
 	void EmitNativeCall(VMNativeFunction* target);
 	void EmitVMCall(IRValue* ptr, VMFunction* target);
@@ -53,8 +53,9 @@ private:
 	static void ThrowArrayOutOfBounds(int index, int size);
 	static void ThrowException(int reason);
 
-	void CheckVMFrame() { }
-	IRValue* GetCallReturns() { return nullptr; }
+	void CheckVMFrame();
+	void EmitPopFrame();
+	IRValue* GetCallReturns();
 
 	IRFunctionType* GetFuncSignature();
 
@@ -133,14 +134,12 @@ private:
 	template <typename Func>
 	void EmitComparisonOpcode(Func jmpFunc)
 	{
-		/*
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
-		auto successLabel = cc.newLabel();
-		auto failLabel = GetLabel(i + 2 + JMPOFS(pc + 1));
-		jmpFunc(static_cast<bool>(A & CMP_CHECK), failLabel, successLabel);
-		cc.bind(successLabel);
+		IRBasicBlock* successbb = irfunc->createBasicBlock({});
+		IRBasicBlock* failbb = GetLabel(i + 2 + JMPOFS(pc + 1));
+		jmpFunc(static_cast<bool>(A & CMP_CHECK), failbb, successbb);
+		cc.SetInsertPoint(successbb);
 		pc++; // This instruction uses two instruction slots - skip the next one
-		*/
 	}
 
 	void EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IRBasicBlock* success);
@@ -172,8 +171,10 @@ private:
 	IRValue* ToFloatPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getFloatPtrTy()); }
 	IRValue* ToDoublePtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getDoublePtrTy()); }
 	IRValue* ToDoublePtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getDoublePtrTy()); }
+	IRValue* ToDoublePtr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getDoublePtrTy()); }
 	IRValue* ToPtrPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
 	IRValue* ToPtrPtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
+	IRValue* ToPtrPtr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
 	void Store8(IRValue* value, IRValue* ptr) { cc.CreateStore(cc.CreateTrunc(value, ircontext->getInt8Ty()), ptr); }
 	void Store16(IRValue* value, IRValue* ptr) { cc.CreateStore(cc.CreateTrunc(value, ircontext->getInt16Ty()), ptr); }
 	void Store32(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
@@ -192,6 +193,11 @@ private:
 	IRContext* ircontext;
 	IRFunction* irfunc;
 	IRBuilder cc;
+
+	IRValue* args;
+	IRValue* numargs;
+	IRValue* ret;
+	IRValue* numret;
 
 	const int* konstd;
 	const double* konstf;

@@ -64,8 +64,6 @@ void JitCompiler::EmitSCOPE()
 	cc.CreateCall(GetNativeFunc<void, DObject*, VMFunction*, int>("__ValidateCall", ValidateCall), { LoadA(A), ConstA(C), ConstValueD(B) });
 }
 
-#if 0
-
 static void SetString(VMReturn* ret, FString* str)
 {
 	ret->SetString(*str);
@@ -73,28 +71,23 @@ static void SetString(VMReturn* ret, FString* str)
 
 void JitCompiler::EmitRET()
 {
-	using namespace asmjit;
 	if (B == REGT_NIL)
 	{
 		EmitPopFrame();
-		X86Gp vReg = newTempInt32();
-		cc.mov(vReg, 0);
-		cc.ret(vReg);
+		cc.CreateRet(ConstValueD(0));
 	}
 	else
 	{
 		int a = A;
 		int retnum = a & ~RET_FINAL;
 
-		X86Gp reg_retnum = newTempInt32();
-		X86Gp location = newTempIntPtr();
-		Label L_endif = cc.newLabel();
+		IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+		IRBasicBlock* endifbb = irfunc->createBasicBlock({});
 
-		cc.mov(reg_retnum, retnum);
-		cc.cmp(reg_retnum, numret);
-		cc.jge(L_endif);
+		cc.CreateCondBr(cc.CreateICmpSLE(ConstValueD(retnum), numret), ifbb, endifbb);
+		cc.SetInsertPoint(ifbb);
 
-		cc.mov(location, x86::ptr(ret, retnum * sizeof(VMReturn)));
+		IRValue* location = Load(ToPtrPtr(ret, retnum * sizeof(VMReturn)));
 
 		int regtype = B;
 		int regnum = C;
@@ -102,148 +95,113 @@ void JitCompiler::EmitRET()
 		{
 		case REGT_INT:
 			if (regtype & REGT_KONST)
-				cc.mov(x86::dword_ptr(location), konstd[regnum]);
+				Store32(ConstD(regnum), ToInt32Ptr(location));
 			else
-				cc.mov(x86::dword_ptr(location), regD[regnum]);
+				Store32(LoadD(regnum), ToInt32Ptr(location));
 			break;
 		case REGT_FLOAT:
 			if (regtype & REGT_KONST)
 			{
-				auto tmp = newTempInt64();
 				if (regtype & REGT_MULTIREG3)
 				{
-					cc.mov(tmp, (((int64_t *)konstf)[regnum]));
-					cc.mov(x86::qword_ptr(location), tmp);
-
-					cc.mov(tmp, (((int64_t *)konstf)[regnum + 1]));
-					cc.mov(x86::qword_ptr(location, 8), tmp);
-
-					cc.mov(tmp, (((int64_t *)konstf)[regnum + 2]));
-					cc.mov(x86::qword_ptr(location, 16), tmp);
+					StoreDouble(ConstF(regnum), ToDoublePtr(location));
+					StoreDouble(ConstF(regnum + 1), ToDoublePtr(location, 8));
+					StoreDouble(ConstF(regnum + 2), ToDoublePtr(location, 16));
 				}
 				else if (regtype & REGT_MULTIREG2)
 				{
-					cc.mov(tmp, (((int64_t *)konstf)[regnum]));
-					cc.mov(x86::qword_ptr(location), tmp);
-
-					cc.mov(tmp, (((int64_t *)konstf)[regnum + 1]));
-					cc.mov(x86::qword_ptr(location, 8), tmp);
+					StoreDouble(ConstF(regnum), ToDoublePtr(location));
+					StoreDouble(ConstF(regnum + 1), ToDoublePtr(location, 8));
 				}
 				else
 				{
-					cc.mov(tmp, (((int64_t *)konstf)[regnum]));
-					cc.mov(x86::qword_ptr(location), tmp);
+					StoreDouble(ConstF(regnum), ToDoublePtr(location));
 				}
 			}
 			else
 			{
 				if (regtype & REGT_MULTIREG3)
 				{
-					cc.movsd(x86::qword_ptr(location), regF[regnum]);
-					cc.movsd(x86::qword_ptr(location, 8), regF[regnum + 1]);
-					cc.movsd(x86::qword_ptr(location, 16), regF[regnum + 2]);
+					StoreDouble(LoadF(regnum), ToDoublePtr(location));
+					StoreDouble(LoadF(regnum + 1), ToDoublePtr(location, 8));
+					StoreDouble(LoadF(regnum + 2), ToDoublePtr(location, 16));
 				}
 				else if (regtype & REGT_MULTIREG2)
 				{
-					cc.movsd(x86::qword_ptr(location), regF[regnum]);
-					cc.movsd(x86::qword_ptr(location, 8), regF[regnum + 1]);
+					StoreDouble(LoadF(regnum), ToDoublePtr(location));
+					StoreDouble(LoadF(regnum + 1), ToDoublePtr(location, 8));
 				}
 				else
 				{
-					cc.movsd(x86::qword_ptr(location), regF[regnum]);
+					StoreDouble(LoadF(regnum), ToDoublePtr(location));
 				}
 			}
 			break;
 		case REGT_STRING:
 		{
-			auto ptr = newTempIntPtr();
-			cc.mov(ptr, ret);
-			cc.add(ptr, (int)(retnum * sizeof(VMReturn)));
-			auto call = CreateCall<void, VMReturn*, FString*>(SetString);
-			call->setArg(0, ptr);
-			if (regtype & REGT_KONST) call->setArg(1, asmjit::imm_ptr(&konsts[regnum]));
-			else                      call->setArg(1, regS[regnum]);
+			cc.CreateCall(GetNativeFunc<void, VMReturn*, FString*>("__SetString", SetString), { location, (regtype & REGT_KONST) ? ConstS(regnum) : LoadS(regnum) });
 			break;
 		}
 		case REGT_POINTER:
-			if (cc.is64Bit())
+			if (regtype & REGT_KONST)
 			{
-				if (regtype & REGT_KONST)
-				{
-					auto ptr = newTempIntPtr();
-					cc.mov(ptr, asmjit::imm_ptr(konsta[regnum].v));
-					cc.mov(x86::qword_ptr(location), ptr);
-				}
-				else
-				{
-					cc.mov(x86::qword_ptr(location), regA[regnum]);
-				}
+				StorePtr(ConstA(regnum), ToPtrPtr(location));
 			}
 			else
 			{
-				if (regtype & REGT_KONST)
-				{
-					auto ptr = newTempIntPtr();
-					cc.mov(ptr, asmjit::imm_ptr(konsta[regnum].v));
-					cc.mov(x86::dword_ptr(location), ptr);
-				}
-				else
-				{
-					cc.mov(x86::dword_ptr(location), regA[regnum]);
-				}
+				StorePtr(LoadA(regnum), ToPtrPtr(location));
 			}
 			break;
 		}
 
 		if (a & RET_FINAL)
 		{
-			cc.add(reg_retnum, 1);
 			EmitPopFrame();
-			cc.ret(reg_retnum);
+			cc.CreateRet(ConstValueD(retnum + 1));
 		}
 
-		cc.bind(L_endif);
+		cc.SetInsertPoint(endifbb);
+
 		if (a & RET_FINAL)
 		{
 			EmitPopFrame();
-			cc.ret(numret);
+			cc.CreateRet(numret);
 		}
 	}
 }
 
 void JitCompiler::EmitRETI()
 {
-	using namespace asmjit;
-
 	int a = A;
 	int retnum = a & ~RET_FINAL;
 
-	X86Gp reg_retnum = newTempInt32();
-	X86Gp location = newTempIntPtr();
-	Label L_endif = cc.newLabel();
+	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
+	IRBasicBlock* endifbb = irfunc->createBasicBlock({});
 
-	cc.mov(reg_retnum, retnum);
-	cc.cmp(reg_retnum, numret);
-	cc.jge(L_endif);
+	cc.CreateCondBr(cc.CreateICmpSLE(ConstValueD(retnum), numret), ifbb, endifbb);
+	cc.SetInsertPoint(ifbb);
 
-	cc.mov(location, x86::ptr(ret, retnum * sizeof(VMReturn)));
-	cc.mov(x86::dword_ptr(location), BCs);
+	IRValue* location = Load(ToPtrPtr(ret, retnum * sizeof(VMReturn)));
+	Store32(ConstValueD(BCs), ToInt32Ptr(location));
 
 	if (a & RET_FINAL)
 	{
-		cc.add(reg_retnum, 1);
 		EmitPopFrame();
-		cc.ret(reg_retnum);
+		cc.CreateRet(ConstValueD(retnum + 1));
+	}
+	else
+	{
+		cc.CreateBr(endifbb);
 	}
 
-	cc.bind(L_endif);
+	cc.SetInsertPoint(endifbb);
+
 	if (a & RET_FINAL)
 	{
 		EmitPopFrame();
-		cc.ret(numret);
+		cc.CreateRet(numret);
 	}
 }
-#endif
 
 void JitCompiler::EmitTHROW()
 {

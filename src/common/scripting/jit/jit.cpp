@@ -18,9 +18,41 @@ void JitDumpLog(FILE* file, VMScriptFunction* sfunc)
 {
 }
 
-void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason) { }
-void JitCompiler::EmitThrowException(EVMAbortException reason) { }
-IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason) { return irfunc->createBasicBlock(""); }
+void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
+{
+}
+
+void JitCompiler::EmitThrowException(EVMAbortException reason)
+{
+}
+
+void JitCompiler::ThrowException(int reason)
+{
+	ThrowAbortException((EVMAbortException)reason, nullptr);
+}
+
+IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
+{
+	return irfunc->createBasicBlock("");
+}
+
+void JitCompiler::CheckVMFrame()
+{
+}
+
+void JitCompiler::EmitPopFrame()
+{
+}
+
+IRValue* JitCompiler::GetCallReturns()
+{
+	return nullptr;
+}
+
+IRBasicBlock* JitCompiler::GetLabel(size_t pos)
+{
+	return nullptr;
+}
 
 #else
 

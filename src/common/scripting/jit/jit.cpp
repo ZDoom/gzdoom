@@ -11,7 +11,7 @@ IRContext* JitGetIRContext();
 
 JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 {
-#if 0
+#if 1
 	if (strcmp(sfunc->PrintableName.GetChars(), "StatusScreen.drawNum") != 0)
 		return nullptr;
 #endif
@@ -22,6 +22,7 @@ JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 		JitCompiler compiler(context, sfunc);
 		IRFunction* func = compiler.Codegen();
 		context->codegen();
+		std::string text = context->getFunctionAssembly(func);
 		return reinterpret_cast<JitFuncPtr>(context->getPointerToFunction(func));
 	}
 	catch (...)
@@ -103,7 +104,7 @@ IRFunction* JitCompiler::Codegen()
 		}
 		else
 		{
-			if (cc.GetInsertBlock())
+			if (!cc.GetInsertBlock())
 				cc.SetInsertPoint(irfunc->createBasicBlock({}));
 
 			// Save start location in case GetLabel gets called later
@@ -464,6 +465,7 @@ void JitCompiler::EmitNullPointerThrow(int index, EVMAbortException reason)
 void JitCompiler::EmitThrowException(EVMAbortException reason)
 {
 	cc.CreateCall(GetNativeFunc<void, int>("__ThrowException", &JitCompiler::ThrowException), { ConstValueD(reason) });
+	cc.CreateRet(ConstValueD(0));
 }
 
 void JitCompiler::ThrowException(int reason)

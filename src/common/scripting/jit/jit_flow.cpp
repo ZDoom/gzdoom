@@ -159,6 +159,10 @@ void JitCompiler::EmitRET()
 			EmitPopFrame();
 			cc.CreateRet(ConstValueD(retnum + 1));
 		}
+		else
+		{
+			cc.CreateBr(endifbb);
+		}
 
 		cc.SetInsertPoint(endifbb);
 

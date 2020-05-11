@@ -1999,7 +1999,7 @@ static void AddAutoloadFiles(const char *autoname)
 		D_AddDirectory (allwads, file, "*.wad", GameConfig);
 
 #ifdef __unix__
-		file = NicePath((GAME_DIR + "/skins").c_str());
+		file = NicePath((GAME_DIR + "/skins").GetChars());
 		D_AddDirectory (allwads, file, "*.wad", GameConfig);
 #endif	
 

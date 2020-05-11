@@ -33,13 +33,12 @@ struct JitLineInfo
 class JitCompiler
 {
 public:
+	JitCompiler(IRContext* ircontext, VMScriptFunction* sfunc) : ircontext(ircontext), sfunc(sfunc) { }
+
 	IRFunction* Codegen();
 
-#if 0
-	JitCompiler(asmjit::CodeHolder* code, VMScriptFunction* sfunc) : cc(code), sfunc(sfunc) { }
-	VMScriptFunction* GetScriptFunction() { return sfunc; }
-	TArray<JitLineInfo> LineInfo;
-#endif
+	// VMScriptFunction* GetScriptFunction() { return sfunc; }
+	// TArray<JitLineInfo> LineInfo;
 
 private:
 	// Declare EmitXX functions for the opcodes:
@@ -238,6 +237,7 @@ private:
 	TArray<const VMOP*> ParamOpcodes;
 	IRValue* callReturns = nullptr;
 
+	IRValue* vmframestack = nullptr;
 	IRValue* vmframe = nullptr;
 	int offsetParams = 0;
 	int offsetF = 0;

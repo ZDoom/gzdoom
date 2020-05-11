@@ -5,6 +5,17 @@
 
 #if 1
 
+static IRContext* JitIRContext = nullptr;
+
+IRContext* JitGetIRContext()
+{
+	if (!JitIRContext)
+	{
+		JitIRContext = new IRContext();
+	}
+	return JitIRContext;
+}
+
 FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
 {
 	return {};
@@ -12,6 +23,8 @@ FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
 
 void JitRelease()
 {
+	delete JitIRContext;
+	JitIRContext = nullptr;
 }
 
 #else

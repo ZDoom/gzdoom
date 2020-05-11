@@ -7,70 +7,41 @@ extern PString *TypeString;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 
-#if 1
+IRContext* JitGetIRContext();
 
 JitFuncPtr JitCompile(VMScriptFunction* sfunc)
-{
-	return nullptr;
-}
-
-void JitDumpLog(FILE* file, VMScriptFunction* sfunc)
-{
-}
-
-#else
-
-static void OutputJitLog(const asmjit::StringLogger &logger);
-
-JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if 0
 	if (strcmp(sfunc->PrintableName.GetChars(), "StatusScreen.drawNum") != 0)
 		return nullptr;
 #endif
 
-	using namespace asmjit;
-	StringLogger logger;
 	try
 	{
-		ThrowingErrorHandler errorHandler;
-		CodeHolder code;
-		code.init(GetHostCodeInfo());
-		code.setErrorHandler(&errorHandler);
-		code.setLogger(&logger);
-
-		JitCompiler compiler(&code, sfunc);
-		return reinterpret_cast<JitFuncPtr>(AddJitFunction(&code, &compiler));
+		IRContext* context = JitGetIRContext();
+		JitCompiler compiler(context, sfunc);
+		IRFunction* func = compiler.Codegen();
+		return reinterpret_cast<JitFuncPtr>(context->getPointerToFunction(func));
 	}
-	catch (const CRecoverableError &e)
+	catch (...)
 	{
-		OutputJitLog(logger);
-		Printf("%s: Unexpected JIT error: %s\n",sfunc->PrintableName.GetChars(), e.what());
-		return nullptr;
+		Printf("%s: Unexpected JIT error encountered\n", sfunc->PrintableName.GetChars());
+		throw;
 	}
 }
 
-void JitDumpLog(FILE *file, VMScriptFunction *sfunc)
+void JitDumpLog(FILE* file, VMScriptFunction* sfunc)
 {
-	using namespace asmjit;
-	StringLogger logger;
 	try
 	{
-		ThrowingErrorHandler errorHandler;
-		CodeHolder code;
-		code.init(GetHostCodeInfo());
-		code.setErrorHandler(&errorHandler);
-		code.setLogger(&logger);
-
-		JitCompiler compiler(&code, sfunc);
-		compiler.Codegen();
-
-		fwrite(logger.getString(), logger.getLength(), 1, file);
+		IRContext* context = JitGetIRContext();
+		JitCompiler compiler(context, sfunc);
+		IRFunction* func = compiler.Codegen();
+		std::string text = context->getFunctionAssembly(func);
+		fwrite(text.data(), text.size(), 1, file);
 	}
-	catch (const std::exception &e)
+	catch (const std::exception& e)
 	{
-		fwrite(logger.getString(), logger.getLength(), 1, file);
-
 		FString err;
 		err.Format("Unexpected JIT error: %s\n", e.what());
 		fwrite(err.GetChars(), err.Len(), 1, file);
@@ -80,10 +51,11 @@ void JitDumpLog(FILE *file, VMScriptFunction *sfunc)
 	}
 }
 
-static void OutputJitLog(const asmjit::StringLogger &logger)
+/*
+static void OutputJitLog(const char *text)
 {
 	// Write line by line since I_FatalError seems to cut off long strings
-	const char *pos = logger.getString();
+	const char *pos = text;
 	const char *end = pos;
 	while (*end)
 	{
@@ -98,8 +70,7 @@ static void OutputJitLog(const asmjit::StringLogger &logger)
 	if (pos != end)
 		Printf("%s\n", pos);
 }
-
-#endif
+*/
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -234,40 +205,30 @@ IRBasicBlock* JitCompiler::GetLabel(size_t pos)
 
 void JitCompiler::Setup()
 {
-#if 0
-	static const char *marks = "=======================================================";
-	cc.comment("", 0);
-	cc.comment(marks, 56);
+	//static const char *marks = "=======================================================";
+	//cc.comment("", 0);
+	//cc.comment(marks, 56);
 
-	FString funcname;
-	funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
-	cc.comment(funcname.GetChars(), funcname.Len());
+	//FString funcname;
+	//funcname.Format("Function: %s", sfunc->PrintableName.GetChars());
+	//cc.comment(funcname.GetChars(), funcname.Len());
 
-	cc.comment(marks, 56);
-	cc.comment("", 0);
+	//cc.comment(marks, 56);
+	//cc.comment("", 0);
 
-	auto unusedFunc = cc.newIntPtr("func"); // VMFunction*
-	args = cc.newIntPtr("args"); // VMValue *params
-	numargs = cc.newInt32("numargs"); // int numargs
-	ret = cc.newIntPtr("ret"); // VMReturn *ret
-	numret = cc.newInt32("numret"); // int numret
+	irfunc = ircontext->createFunction(GetFunctionType5<int, VMFunction*, void*, int, void*, int>(), sfunc->PrintableName.GetChars());
+	args = irfunc->args[1];
+	numargs = irfunc->args[2];
+	ret = irfunc->args[3];
+	numret = irfunc->args[4];
 
-	func = cc.addFunc(FuncSignature5<int, VMFunction *, void *, int, void *, int>());
-	cc.setArg(0, unusedFunc);
-	cc.setArg(1, args);
-	cc.setArg(2, numargs);
-	cc.setArg(3, ret);
-	cc.setArg(4, numret);
-
-	callReturnsCursor = cc.getCursor();
 
 	konstd = sfunc->KonstD;
 	konstf = sfunc->KonstF;
 	konsts = sfunc->KonstS;
 	konsta = sfunc->KonstA;
 
-	labels.Resize(sfunc->CodeSize);
-#endif
+	//labels.Resize(sfunc->CodeSize);
 
 	CreateRegisters();
 	IncrementVMCalls();
@@ -296,10 +257,7 @@ void JitCompiler::SetupFrame()
 
 void JitCompiler::SetupSimpleFrame()
 {
-#if 0
 	// This is a simple frame with no constructors or destructors. Allocate it on the stack ourselves.
-
-	vmframeCursor = cc.getCursor();
 
 	int argsPos = 0;
 	int regd = 0, regf = 0, rega = 0;
@@ -308,22 +266,22 @@ void JitCompiler::SetupSimpleFrame()
 		const PType *type = sfunc->Proto->ArgumentTypes[i];
 		if (sfunc->ArgFlags.Size() && sfunc->ArgFlags[i] & (VARF_Out | VARF_Ref))
 		{
-			cc.mov(regA[rega++], x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
+			StoreA(Load(ToPtrPtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a))), rega++);
 		}
 		else if (type == TypeVector2)
 		{
-			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
-			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			StoreF(Load(ToDoublePtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f))), regf++);
+			StoreF(Load(ToDoublePtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f))), regf++);
 		}
 		else if (type == TypeVector3)
 		{
-			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
-			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
-			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			StoreF(Load(ToDoublePtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f))), regf++);
+			StoreF(Load(ToDoublePtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f))), regf++);
+			StoreF(Load(ToDoublePtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f))), regf++);
 		}
 		else if (type == TypeFloat64)
 		{
-			cc.movsd(regF[regf++], x86::qword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f)));
+			StoreF(Load(ToDoublePtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, f))), regf++);
 		}
 		else if (type == TypeString)
 		{
@@ -331,11 +289,11 @@ void JitCompiler::SetupSimpleFrame()
 		}
 		else if (type->isIntCompatible())
 		{
-			cc.mov(regD[regd++], x86::dword_ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, i)));
+			StoreD(Load(ToInt32Ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, i))), regd++);
 		}
 		else
 		{
-			cc.mov(regA[rega++], x86::ptr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a)));
+			StoreA(Load(ToPtrPtr(args, argsPos++ * sizeof(VMValue) + offsetof(VMValue, a))), rega++);
 		}
 	}
 
@@ -343,14 +301,13 @@ void JitCompiler::SetupSimpleFrame()
 		I_FatalError("JIT: sfunc->NumArgs != argsPos || regd > sfunc->NumRegD || regf > sfunc->NumRegF || rega > sfunc->NumRegA");
 
 	for (int i = regd; i < sfunc->NumRegD; i++)
-		cc.xor_(regD[i], regD[i]);
+		StoreD(ConstValueD(0), i);
 
 	for (int i = regf; i < sfunc->NumRegF; i++)
-		cc.xorpd(regF[i], regF[i]);
+		StoreF(ConstValueF(0.0), i);
 
 	for (int i = rega; i < sfunc->NumRegA; i++)
-		cc.xor_(regA[i], regA[i]);
-#endif
+		StoreA(ConstValueA(nullptr), i);
 }
 
 static VMFrameStack *CreateFullVMFrame(VMScriptFunction *func, VMValue *args, int numargs)
@@ -363,59 +320,42 @@ static VMFrameStack *CreateFullVMFrame(VMScriptFunction *func, VMValue *args, in
 
 void JitCompiler::SetupFullVMFrame()
 {
-#if 0
-	stack = cc.newIntPtr("stack");
-	auto allocFrame = CreateCall<VMFrameStack *, VMScriptFunction *, VMValue *, int>(CreateFullVMFrame);
-	allocFrame->setRet(0, stack);
-	allocFrame->setArg(0, imm_ptr(sfunc));
-	allocFrame->setArg(1, args);
-	allocFrame->setArg(2, numargs);
+	vmframestack = cc.CreateCall(GetNativeFunc<VMFrameStack*, VMScriptFunction*, VMValue*, int>("__CreateFullVMFrame", CreateFullVMFrame), { ConstValueA(sfunc), args, numargs });
 
-	vmframe = cc.newIntPtr("vmframe");
-	cc.mov(vmframe, x86::ptr(stack)); // stack->Blocks
-	cc.mov(vmframe, x86::ptr(vmframe, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
+	IRValue* Blocks = Load(ToPtrPtr(vmframestack)); // vmframestack->Blocks
+	vmframe = Load(ToPtrPtr(Blocks, VMFrameStack::OffsetLastFrame())); // Blocks->LastFrame
 
 	for (int i = 0; i < sfunc->NumRegD; i++)
-		cc.mov(regD[i], x86::dword_ptr(vmframe, offsetD + i * sizeof(int32_t)));
+		StoreD(Load(ToInt32Ptr(vmframe, offsetD + i * sizeof(int32_t))), i);
 
 	for (int i = 0; i < sfunc->NumRegF; i++)
-		cc.movsd(regF[i], x86::qword_ptr(vmframe, offsetF + i * sizeof(double)));
+		StoreF(Load(ToDoublePtr(vmframe, offsetF + i * sizeof(double))), i);
 
 	for (int i = 0; i < sfunc->NumRegS; i++)
-		cc.lea(regS[i], x86::ptr(vmframe, offsetS + i * sizeof(FString)));
+		StoreS(Load(ToPtrPtr(vmframe, offsetS + i * sizeof(FString))), i);
 
 	for (int i = 0; i < sfunc->NumRegA; i++)
-		cc.mov(regA[i], x86::ptr(vmframe, offsetA + i * sizeof(void*)));
-#endif
+		StoreA(Load(ToPtrPtr(vmframe, offsetA + i * sizeof(void*))), i);
 }
 
-static void PopFullVMFrame(VMFrameStack *stack)
+static void PopFullVMFrame(VMFrameStack * vmframestack)
 {
-	stack->PopFrame();
+	vmframestack->PopFrame();
 }
 
 void JitCompiler::EmitPopFrame()
 {
-#if 0
 	if (sfunc->SpecialInits.Size() != 0 || sfunc->NumRegS != 0)
 	{
-		auto popFrame = CreateCall<void, VMFrameStack *>(PopFullVMFrame);
-		popFrame->setArg(0, stack);
+		cc.CreateCall(GetNativeFunc<void, VMFrameStack*>("__PopFullVMFrame", PopFullVMFrame), { vmframestack });
 	}
-#endif
 }
 
 void JitCompiler::IncrementVMCalls()
 {
-#if 0
 	// VMCalls[0]++
-	auto vmcallsptr = newTempIntPtr();
-	auto vmcalls = newTempInt32();
-	cc.mov(vmcallsptr, asmjit::imm_ptr(VMCalls));
-	cc.mov(vmcalls, asmjit::x86::dword_ptr(vmcallsptr));
-	cc.add(vmcalls, (int)1);
-	cc.mov(asmjit::x86::dword_ptr(vmcallsptr), vmcalls);
-#endif
+	IRValue* vmcallsptr = ircontext->getConstantInt(ircontext->getInt32PtrTy(), (uint64_t)VMCalls);
+	cc.CreateStore(cc.CreateAdd(cc.CreateLoad(vmcallsptr), ircontext->getConstantInt(1)), vmcallsptr);
 }
 
 void JitCompiler::CreateRegisters()

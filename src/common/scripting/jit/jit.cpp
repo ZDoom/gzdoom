@@ -21,6 +21,7 @@ JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 		IRContext* context = JitGetIRContext();
 		JitCompiler compiler(context, sfunc);
 		IRFunction* func = compiler.Codegen();
+		context->codegen();
 		return reinterpret_cast<JitFuncPtr>(context->getPointerToFunction(func));
 	}
 	catch (...)
@@ -93,6 +94,23 @@ IRFunction* JitCompiler::Codegen()
 	{
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		op = pc->op;
+
+		if (labels[i].block) // This is already a known jump target
+		{
+			if (cc.GetInsertBlock())
+				cc.CreateBr(labels[i].block);
+			cc.SetInsertPoint(labels[i].block);
+		}
+		else
+		{
+			if (cc.GetInsertBlock())
+				cc.SetInsertPoint(irfunc->createBasicBlock({}));
+
+			// Save start location in case GetLabel gets called later
+			labels[i].block = cc.GetInsertBlock();
+			if (!labels[i].block->code.empty())
+				labels[i].instbefore = labels[i].block->code.back();
+		}
 
 		int curLine = sfunc->PCToLine(pc);
 		if (curLine != lastLine)
@@ -200,7 +218,44 @@ IRValue* JitCompiler::GetCallReturns()
 
 IRBasicBlock* JitCompiler::GetLabel(size_t pos)
 {
-	return nullptr;
+	if (labels[pos].instbefore)
+	{
+		IRValue* instbefore = labels[pos].instbefore;
+		IRBasicBlock* block = labels[pos].block;
+
+		// If inst isn't the first then we need to split the basicblock. Jump targets can only be the start of a basicblock.
+		if (instbefore)
+		{
+			auto it = block->code.end();
+			for (size_t i = 0; i < block->code.size(); i++)
+			{
+				if (block->code[i] == instbefore)
+				{
+					it = block->code.begin() + (i + 1);
+					break;
+				}
+			}
+
+			// Split basic block into two
+			IRBasicBlock* newlabelbb = irfunc->createBasicBlock({});
+			newlabelbb->code.insert(newlabelbb->code.begin(), it, block->code.end());
+			block->code.erase(it, block->code.end());
+
+			// Jump from prev block to next
+			IRBasicBlock* old = cc.GetInsertBlock();
+			cc.SetInsertPoint(block);
+			cc.CreateBr(newlabelbb);
+			cc.SetInsertPoint(old);
+		}
+
+		labels[pos].instbefore = nullptr;
+	}
+	else if (!labels[pos].block)
+	{
+		labels[pos].block = irfunc->createBasicBlock({});
+	}
+
+	return labels[pos].block;
 }
 
 void JitCompiler::Setup()
@@ -222,13 +277,14 @@ void JitCompiler::Setup()
 	ret = irfunc->args[3];
 	numret = irfunc->args[4];
 
-
 	konstd = sfunc->KonstD;
 	konstf = sfunc->KonstF;
 	konsts = sfunc->KonstS;
 	konsta = sfunc->KonstA;
 
-	//labels.Resize(sfunc->CodeSize);
+	labels.Resize(sfunc->CodeSize);
+
+	cc.SetInsertPoint(irfunc->createBasicBlock("entry"));
 
 	CreateRegisters();
 	IncrementVMCalls();

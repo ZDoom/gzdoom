@@ -30,6 +30,12 @@ struct JitLineInfo
 };
 #endif
 
+struct JitLabel
+{
+	IRBasicBlock* block = nullptr;
+	IRValue* instbefore = nullptr;
+};
+
 class JitCompiler
 {
 public:
@@ -245,4 +251,6 @@ private:
 	int offsetA = 0;
 	int offsetD = 0;
 	int offsetExtra = 0;
+
+	TArray<JitLabel> labels;
 };

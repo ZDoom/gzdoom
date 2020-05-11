@@ -41,6 +41,10 @@
 struct ticcmd_t;
 struct WadStuff;
 
+#if defined(__unix__)
+extern std::string g_XDGconf;
+#endif
+
 #ifndef SHARE_DIR
 #define SHARE_DIR "/usr/local/share/"
 #endif

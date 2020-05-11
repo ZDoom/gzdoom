@@ -106,7 +106,7 @@ const char *GetVersionString();
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
 #else
-#define GAME_DIR (std::string(getenv("XDG_CONFIG_HOME")) + "/" + std::string(GAMENAMELOWERCASE))
+#define GAME_DIR (g_XDGconf + "/" + std::string(GAMENAMELOWERCASE)) // g_XDGconf is defined in i_system.h and initialized in i_specialpaths.cpp
 #endif
 
 

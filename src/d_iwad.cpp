@@ -680,7 +680,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 #else
 					  "1. Place one or more of these wads in %s/" GAMENAMELOWERCASE "/.\n"
 					  "2. Edit your %s/" GAMENAMELOWERCASE "/" GAMENAMELOWERCASE ".ini and add the directories of your\n"
-					  "iwads to the list beneath [IWADSearch.Directories]", getenv("XDG_CONFIG_HOME"), getenv("XDG_CONFIG_HOME"));
+					  "iwads to the list beneath [IWADSearch.Directories]", g_XDGconf.c_str(), g_XDGconf.c_str());
 #endif
 	}
 	int pick = 0;

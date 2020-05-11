@@ -42,11 +42,23 @@
 
 #include "version.h"	// for GAMENAME
 
+std::string g_XDGconf;
 
 FString GetUserFile (const char *file)
 {
 	FString path;
 	struct stat info;
+
+	// Defaults to ~/.config if $XDG_CONFIG_HOME is undefined
+	if (g_XDGconf.empty())
+	{
+		g_XDGconf = std::string(getenv("XDG_CONFIG_HOME"));
+		if (g_XDGconf.empty())
+		{
+			g_XDGconf = "~/.config/";
+		}
+		printf("config file: %s\n", g_XDGconf.c_str());
+	}
 
 	path = NicePath((GAME_DIR + "/").c_str());
 
@@ -54,22 +66,18 @@ FString GetUserFile (const char *file)
 	{
 		struct stat extrainfo;
 
-		// Sanity check for $XDG_CONFIG_HOME
-		if (getenv("XDG_CONFIG_HOME") == NULL)
-		{
-			setenv("XDG_CONFIG_HOME", "$HOME/.config", 0);
-		}
-		FString configPath = NicePath((std::string(getenv("XDG_CONFIG_HOME")) + "/").c_str());
+		// Sanity check for config file
+		FString configPath = NicePath((g_XDGconf + "/").c_str());
 		if (stat (configPath, &extrainfo) == -1)
 		{
 			if (mkdir (configPath, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 			{
-				I_FatalError ("Failed to create %s directory:\n%s", getenv("XDG_CONFIG_HOME"), strerror(errno));
+				I_FatalError ("Failed to create %s directory:\n%s", g_XDGconf.c_str(), strerror(errno));
 			}
 		}
 		else if (!S_ISDIR(extrainfo.st_mode))
 		{
-			I_FatalError ("%s must be a directory", getenv("XDG_CONFIG_HOME"));
+			I_FatalError ("%s must be a directory", g_XDGconf.c_str());
 		}
 
 		// This can be removed after a release or two
@@ -116,7 +124,7 @@ FString M_GetAppDataPath(bool create)
 {
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
-	FString path = NicePath((std::string(getenv("XDG_CONFIG_HOME")) + "/" GAMENAMELOWERCASE).c_str());
+	FString path = NicePath((g_XDGconf + "/" GAMENAMELOWERCASE).c_str());
 	if (create)
 	{
 		CreatePath(path);
@@ -136,7 +144,7 @@ FString M_GetCachePath(bool create)
 {
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
-	FString path = NicePath((std::string(getenv("XDG_CONFIG_HOME")) + "/zdoom/cache").c_str());
+	FString path = NicePath((g_XDGconf + "/zdoom/cache").c_str());
 	if (create)
 	{
 		CreatePath(path);

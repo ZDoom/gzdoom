@@ -176,6 +176,25 @@ class LevelCompatibility : LevelPostProcessor
 				SetWallTexture(1138, Line.front, Side.top, "PANEL4");
 				break;
 			}
+			
+			case '603032BBF28C9347784536022B3C5CBE': // TNT: Evilution MAP27
+			{
+				// 4 out of 23 lost souls can be stuck teleporting endlessly at
+				// the northeast mountain. It's hard to know what lost souls
+				// can get stuck, so make all of them not count as kills
+				for (int i = 0; i < 5; i++)
+					SetThingFlags(496+i, GetThingFlags(496+i) | MTF_NOCOUNT);
+					
+				for (int i = 0; i < 4; i++)
+					SetThingFlags(508+i, GetThingFlags(508+i) | MTF_NOCOUNT);
+					
+				for (int i = 0; i < 12; i++)
+					SetThingFlags(602+i, GetThingFlags(602+i) | MTF_NOCOUNT);
+				
+				SetThingFlags(416, GetThingFlags(416) | MTF_NOCOUNT);
+				SetThingFlags(506, GetThingFlags(506) | MTF_NOCOUNT);
+				break;
+			}
 
 			case '2C4A3356C5EB3526D2C72A4AA4B18A36': // TNT: Evilution map29
 			{
@@ -1968,6 +1987,8 @@ class LevelCompatibility : LevelPostProcessor
 			
 			case '2499CF9A9351BE9BC4E9C66FC9F291A7': // Requiem MAP23
 			{
+				// Have arch-vile who creates ghost monsters not count as a kill
+				SetThingFlags(0, GetThingFlags(0) | MTF_NOCOUNT);
 				// Remove secret at switch that can only be scored by crouching
 				SetSectorSpecial(240, 0);
 				break;

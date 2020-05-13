@@ -4,61 +4,61 @@
 void JitCompiler::EmitSB()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	Store8(LoadD(B), ToInt8Ptr(LoadA(A), ConstD(C)));
+	Store(Trunc8(LoadD(B)), ToInt8Ptr(LoadA(A), ConstD(C)));
 }
 
 void JitCompiler::EmitSB_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	Store8(LoadD(B), ToInt8Ptr(LoadA(A), LoadD(C)));
+	Store(Trunc8(LoadD(B)), ToInt8Ptr(LoadA(A), LoadD(C)));
 }
 
 void JitCompiler::EmitSH()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	Store16(LoadD(B), ToInt16Ptr(LoadA(A), ConstD(C)));
+	Store(Trunc16(LoadD(B)), ToInt16Ptr(LoadA(A), ConstD(C)));
 }
 
 void JitCompiler::EmitSH_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	Store16(LoadD(B), ToInt16Ptr(LoadA(A), LoadD(C)));
+	Store(Trunc16(LoadD(B)), ToInt16Ptr(LoadA(A), LoadD(C)));
 }
 
 void JitCompiler::EmitSW()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	Store32(LoadD(B), ToInt32Ptr(LoadA(A), ConstD(C)));
+	Store(LoadD(B), ToInt32Ptr(LoadA(A), ConstD(C)));
 }
 
 void JitCompiler::EmitSW_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	Store32(LoadD(B), ToInt32Ptr(LoadA(A), LoadD(C)));
+	Store(LoadD(B), ToInt32Ptr(LoadA(A), LoadD(C)));
 }
 
 void JitCompiler::EmitSSP()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	StoreFloat(LoadF(B), ToFloatPtr(LoadA(A), ConstD(C)));
+	Store(FPTrunc(LoadF(B)), ToFloatPtr(LoadA(A), ConstD(C)));
 }
 
 void JitCompiler::EmitSSP_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	StoreFloat(LoadF(B), ToFloatPtr(LoadA(A), LoadD(C)));
+	Store(FPTrunc(LoadF(B)), ToFloatPtr(LoadA(A), LoadD(C)));
 }
 
 void JitCompiler::EmitSDP()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	StoreDouble(LoadF(B), ToDoublePtr(LoadA(A), ConstD(C)));
+	Store(LoadF(B), ToDoublePtr(LoadA(A), ConstD(C)));
 }
 
 void JitCompiler::EmitSDP_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
-	StoreDouble(LoadF(B), ToDoublePtr(LoadA(A), LoadD(C)));
+	Store(LoadF(B), ToDoublePtr(LoadA(A), LoadD(C)));
 }
 
 void JitCompiler::EmitSS()
@@ -103,34 +103,34 @@ void JitCompiler::EmitSV2()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
 	IRValue* base = ToDoublePtr(LoadA(A), ConstD(C));
-	StoreDouble(LoadF(B), base);
-	StoreDouble(LoadF(B + 1), OffsetPtr(base, 1));
+	Store(LoadF(B), base);
+	Store(LoadF(B + 1), OffsetPtr(base, 1));
 }
 
 void JitCompiler::EmitSV2_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
 	IRValue* base = ToDoublePtr(LoadA(A), LoadD(C));
-	StoreDouble(LoadF(B), base);
-	StoreDouble(LoadF(B + 1), OffsetPtr(base, 1));
+	Store(LoadF(B), base);
+	Store(LoadF(B + 1), OffsetPtr(base, 1));
 }
 
 void JitCompiler::EmitSV3()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
 	IRValue* base = ToDoublePtr(LoadA(A), ConstD(C));
-	StoreDouble(LoadF(B), base);
-	StoreDouble(LoadF(B + 1), OffsetPtr(base, 1));
-	StoreDouble(LoadF(B + 2), OffsetPtr(base, 2));
+	Store(LoadF(B), base);
+	Store(LoadF(B + 1), OffsetPtr(base, 1));
+	Store(LoadF(B + 2), OffsetPtr(base, 2));
 }
 
 void JitCompiler::EmitSV3_R()
 {
 	EmitNullPointerThrow(A, X_WRITE_NIL);
 	IRValue* base = ToDoublePtr(LoadA(A), LoadD(C));
-	StoreDouble(LoadF(B), base);
-	StoreDouble(LoadF(B + 1), OffsetPtr(base, 1));
-	StoreDouble(LoadF(B + 2), OffsetPtr(base, 2));
+	Store(LoadF(B), base);
+	Store(LoadF(B + 1), OffsetPtr(base, 1));
+	Store(LoadF(B + 2), OffsetPtr(base, 2));
 }
 
 void JitCompiler::EmitSBIT()

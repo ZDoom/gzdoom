@@ -67,8 +67,8 @@ void JitCompiler::EmitMETA()
 	cc.SetInsertPoint(continuebb);
 
 	IRValue* ptrObject = LoadA(B);
-	IRValue* ptrClass = Load(ToPtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
-	IRValue* ptrMeta = Load(ToPtrPtr(ptrClass, ConstValueD(myoffsetof(PClass, Meta))));
+	IRValue* ptrClass = Load(ToInt8PtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
+	IRValue* ptrMeta = Load(ToInt8PtrPtr(ptrClass, ConstValueD(myoffsetof(PClass, Meta))));
 	StoreA(ptrMeta, A);
 }
 
@@ -80,7 +80,7 @@ void JitCompiler::EmitCLSS()
 	cc.SetInsertPoint(continuebb);
 
 	IRValue* ptrObject = LoadA(B);
-	IRValue* ptrClass = Load(ToPtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
+	IRValue* ptrClass = Load(ToInt8PtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
 	StoreA(ptrClass, A);
 }
 
@@ -90,73 +90,73 @@ void JitCompiler::EmitCLSS()
 void JitCompiler::EmitLB()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadSExt(ToInt8Ptr(LoadA(B), ConstD(C))), A);
+	StoreD(SExt(Load(ToInt8Ptr(LoadA(B), ConstD(C)))), A);
 }
 
 void JitCompiler::EmitLB_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadSExt(ToInt8Ptr(LoadA(B), LoadD(C))), A);
+	StoreD(SExt(Load(ToInt8Ptr(LoadA(B), LoadD(C)))), A);
 }
 
 void JitCompiler::EmitLH()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadSExt(ToInt16Ptr(LoadA(B), ConstD(C))), A);
+	StoreD(SExt(Load(ToInt16Ptr(LoadA(B), ConstD(C)))), A);
 }
 
 void JitCompiler::EmitLH_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadSExt(ToInt16Ptr(LoadA(B), LoadD(C))), A);
+	StoreD(SExt(Load(ToInt16Ptr(LoadA(B), LoadD(C)))), A);
 }
 
 void JitCompiler::EmitLW()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadSExt(ToInt32Ptr(LoadA(B), ConstD(C))), A);
+	StoreD(SExt(Load(ToInt32Ptr(LoadA(B), ConstD(C)))), A);
 }
 
 void JitCompiler::EmitLW_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadSExt(ToInt32Ptr(LoadA(B), LoadD(C))), A);
+	StoreD(SExt(Load(ToInt32Ptr(LoadA(B), LoadD(C)))), A);
 }
 
 void JitCompiler::EmitLBU()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadZExt(ToInt8Ptr(LoadA(B), ConstD(C))), A);
+	StoreD(ZExt(Load(ToInt8Ptr(LoadA(B), ConstD(C)))), A);
 }
 
 void JitCompiler::EmitLBU_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadZExt(ToInt8Ptr(LoadA(B), LoadD(C))), A);
+	StoreD(ZExt(Load(ToInt8Ptr(LoadA(B), LoadD(C)))), A);
 }
 
 void JitCompiler::EmitLHU()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadZExt(ToInt16Ptr(LoadA(B), ConstD(C))), A);
+	StoreD(ZExt(Load(ToInt16Ptr(LoadA(B), ConstD(C)))), A);
 }
 
 void JitCompiler::EmitLHU_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreD(LoadZExt(ToInt16Ptr(LoadA(B), LoadD(C))), A);
+	StoreD(ZExt(Load(ToInt16Ptr(LoadA(B), LoadD(C)))), A);
 }
 
 void JitCompiler::EmitLSP()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreF(LoadFPExt(ToDoublePtr(LoadA(B), ConstD(C))), A);
+	StoreF(FPExt(Load(ToDoublePtr(LoadA(B), ConstD(C)))), A);
 }
 
 void JitCompiler::EmitLSP_R()
 {
 	EmitNullPointerThrow(B, X_READ_NIL);
-	StoreF(LoadFPExt(ToDoublePtr(LoadA(B), LoadD(C))), A);
+	StoreF(FPExt(Load(ToDoublePtr(LoadA(B), LoadD(C)))), A);
 }
 
 void JitCompiler::EmitLDP()

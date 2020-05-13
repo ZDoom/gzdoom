@@ -192,6 +192,7 @@ private:
 	IRValue* OffsetPtr(IRValue* ptr, IRValue* offset) { return cc.CreateGEP(ptr, { offset }); }
 	IRValue* OffsetPtr(IRValue* ptr, int offset) { return cc.CreateGEP(ptr, { ircontext->getConstantInt(offset) }); }
 	IRValue* ToInt8Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()); }
+	IRValue* ToInt8Ptr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()); }
 	IRValue* ToInt16Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt16PtrTy()); }
 	IRValue* ToInt32Ptr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt32PtrTy()); }
 	IRValue* ToInt32Ptr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getInt32PtrTy()); }
@@ -200,18 +201,16 @@ private:
 	IRValue* ToDoublePtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getDoublePtrTy()); }
 	IRValue* ToDoublePtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getDoublePtrTy()); }
 	IRValue* ToDoublePtr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getDoublePtrTy()); }
-	IRValue* ToPtrPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
-	IRValue* ToPtrPtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
-	IRValue* ToPtrPtr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
-	void Store8(IRValue* value, IRValue* ptr) { cc.CreateStore(cc.CreateTrunc(value, ircontext->getInt8Ty()), ptr); }
-	void Store16(IRValue* value, IRValue* ptr) { cc.CreateStore(cc.CreateTrunc(value, ircontext->getInt16Ty()), ptr); }
-	void Store32(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
-	void StoreFloat(IRValue* value, IRValue* ptr) { cc.CreateStore(cc.CreateFPTrunc(value, ircontext->getFloatTy()), ptr); }
-	void StoreDouble(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
-	void StorePtr(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
-	IRValue* LoadZExt(IRValue* ptr) { return cc.CreateZExt(cc.CreateLoad(ptr), ircontext->getInt32Ty()); }
-	IRValue* LoadSExt(IRValue* ptr) { return cc.CreateSExt(cc.CreateLoad(ptr), ircontext->getInt32Ty()); }
-	IRValue* LoadFPExt(IRValue* ptr) { return cc.CreateFPExt(cc.CreateLoad(ptr), ircontext->getDoubleTy()); }
+	IRValue* ToInt8PtrPtr(IRValue* ptr, IRValue* offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
+	IRValue* ToInt8PtrPtr(IRValue* ptr, int offset) { return cc.CreateBitCast(OffsetPtr(ptr, offset), ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
+	IRValue* ToInt8PtrPtr(IRValue* ptr) { return cc.CreateBitCast(ptr, ircontext->getInt8PtrTy()->getPointerTo(ircontext)); }
+	IRValue* Trunc8(IRValue* value) { return cc.CreateTrunc(value, ircontext->getInt8Ty()); }
+	IRValue* Trunc16(IRValue* value) { return cc.CreateTrunc(value, ircontext->getInt16Ty()); }
+	IRValue* FPTrunc(IRValue* value) { return cc.CreateFPTrunc(value, ircontext->getFloatTy()); }
+	IRValue* ZExt(IRValue* value) { return cc.CreateZExt(value, ircontext->getInt32Ty()); }
+	IRValue* SExt(IRValue* value) { return cc.CreateSExt(value, ircontext->getInt32Ty()); }
+	IRValue* FPExt(IRValue* value) { return cc.CreateFPExt(value, ircontext->getDoubleTy()); }
+	void Store(IRValue* value, IRValue* ptr) { cc.CreateStore(value, ptr); }
 	IRValue* Load(IRValue* ptr) { return cc.CreateLoad(ptr); }
 
 	static void CallAssignString(FString* to, FString* from) { *to = *from; }

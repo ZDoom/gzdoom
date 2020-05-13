@@ -37,9 +37,9 @@ void JitCompiler::EmitVtbl(const VMOP *op)
 	cc.SetInsertPoint(continuebb);
 
 	IRValue* ptrObject = LoadA(b);
-	IRValue* ptrClass = Load(ToPtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
-	IRValue* ptrArray = Load(ToPtrPtr(ptrClass, ConstValueD(myoffsetof(PClass, Virtuals) + myoffsetof(FArray, Array))));
-	IRValue* ptrFunc = Load(ToPtrPtr(ptrArray, ConstValueD(c * (int)sizeof(void*))));
+	IRValue* ptrClass = Load(ToInt8PtrPtr(ptrObject, ConstValueD(myoffsetof(DObject, Class))));
+	IRValue* ptrArray = Load(ToInt8PtrPtr(ptrClass, ConstValueD(myoffsetof(PClass, Virtuals) + myoffsetof(FArray, Array))));
+	IRValue* ptrFunc = Load(ToInt8PtrPtr(ptrArray, ConstValueD(c * (int)sizeof(void*))));
 	StoreA(ptrFunc, a);
 }
 
@@ -83,7 +83,7 @@ void JitCompiler::EmitVMCall(IRValue* vmfunc, VMFunction* target)
 	FillReturns(pc + 1, C);
 
 	IRValue* paramsptr = OffsetPtr(vmframe, offsetParams);
-	IRValue* scriptcall = OffsetPtr(vmfunc, myoffsetof(VMScriptFunction, ScriptCall));
+	IRValue* scriptcall = Load(ToInt8PtrPtr(vmfunc, myoffsetof(VMScriptFunction, ScriptCall)));
 
 	/*IRValue* call =*/ cc.CreateCall(cc.CreateBitCast(scriptcall, GetFunctionType5<int, VMFunction*, VMValue*, int, VMReturn*, int>()), { vmfunc, paramsptr, ConstValueD(B), GetCallReturns(), ConstValueD(C) });
 	//call->setComment(target ? target->PrintableName.GetChars() : "VMCall");
@@ -105,7 +105,7 @@ int JitCompiler::StoreCallParams()
 		if (ParamOpcodes[i]->op == OP_PARAMI)
 		{
 			int abcs = ParamOpcodes[i]->i24;
-			Store32(ConstValueD(abcs), ToInt32Ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)));
+			Store(ConstValueD(abcs), ToInt32Ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)));
 			continue;
 		}
 
@@ -114,53 +114,53 @@ int JitCompiler::StoreCallParams()
 		switch (ParamOpcodes[i]->a)
 		{
 		case REGT_NIL:
-			StorePtr(ConstValueA(nullptr), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
+			Store(ConstValueA(nullptr), ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
 			break;
 		case REGT_INT:
-			Store32(LoadD(bc), ToInt32Ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)));
+			Store(LoadD(bc), ToInt32Ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)));
 			break;
 		case REGT_INT | REGT_ADDROF:
 			stackPtr = OffsetPtr(vmframe, offsetD + (int)(bc * sizeof(int32_t)));
-			Store32(LoadD(bc), ToInt32Ptr(stackPtr));
-			StorePtr(stackPtr, OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
+			Store(LoadD(bc), ToInt32Ptr(stackPtr));
+			Store(stackPtr, ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
 			break;
 		case REGT_INT | REGT_KONST:
-			Store32(ConstD(bc), ToInt32Ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)));
+			Store(ConstD(bc), ToInt32Ptr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, i)));
 			break;
 		case REGT_STRING:
-			StorePtr(LoadS(bc), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, sp)));
+			Store(LoadS(bc), ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, sp)));
 			break;
 		case REGT_STRING | REGT_ADDROF:
-			StorePtr(LoadS(bc), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
+			Store(LoadS(bc), ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
 			break;
 		case REGT_STRING | REGT_KONST:
-			StorePtr(ConstS(bc), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, sp)));
+			Store(ConstS(bc), ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, sp)));
 			break;
 		case REGT_POINTER:
-			StorePtr(LoadA(bc), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
+			Store(LoadA(bc), ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
 			break;
 		case REGT_POINTER | REGT_ADDROF:
 			stackPtr = OffsetPtr(vmframe, offsetA + (int)(bc * sizeof(void*)));
-			StorePtr(LoadA(bc), stackPtr);
-			StorePtr(stackPtr, OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
+			Store(LoadA(bc), ToInt8PtrPtr(stackPtr));
+			Store(stackPtr, ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
 			break;
 		case REGT_POINTER | REGT_KONST:
-			StorePtr(ConstA(bc), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
+			Store(ConstA(bc), ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
 			break;
 		case REGT_FLOAT:
-			StoreDouble(LoadF(bc), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, f)));
+			Store(LoadF(bc), ToDoublePtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, f)));
 			break;
 		case REGT_FLOAT | REGT_MULTIREG2:
 			for (int j = 0; j < 2; j++)
 			{
-				StoreDouble(LoadF(bc + j), ToDoublePtr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, f)));
+				Store(LoadF(bc + j), ToDoublePtr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, f)));
 			}
 			numparams++;
 			break;
 		case REGT_FLOAT | REGT_MULTIREG3:
 			for (int j = 0; j < 3; j++)
 			{
-				StoreDouble(LoadF(bc + j), ToDoublePtr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, f)));
+				Store(LoadF(bc + j), ToDoublePtr(vmframe, offsetParams + (slot + j) * sizeof(VMValue) + myoffsetof(VMValue, f)));
 			}
 			numparams += 2;
 			break;
@@ -170,12 +170,12 @@ int JitCompiler::StoreCallParams()
 			for (int j = 0; j < 3; j++)
 			{
 				if ((unsigned int)(bc + j) < regF.Size())
-					StoreDouble(LoadF(bc + j), ToDoublePtr(stackPtr, j * sizeof(double)));
+					Store(LoadF(bc + j), ToDoublePtr(stackPtr, j * sizeof(double)));
 			}
-			StorePtr(stackPtr, OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
+			Store(stackPtr, ToInt8PtrPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, a)));
 			break;
 		case REGT_FLOAT | REGT_KONST:
-			StoreDouble(ConstF(bc), OffsetPtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, f)));
+			Store(ConstF(bc), ToDoublePtr(vmframe, offsetParams + slot * sizeof(VMValue) + myoffsetof(VMValue, f)));
 			break;
 
 		default:
@@ -241,7 +241,7 @@ void JitCompiler::LoadCallResult(int type, int regnum, bool addrof)
 		// We don't have to do anything in this case. String values are never moved to virtual registers.
 		break;
 	case REGT_POINTER:
-		StoreA(Load(ToPtrPtr(vmframe, offsetA + regnum * sizeof(void*))), regnum);
+		StoreA(Load(ToInt8PtrPtr(vmframe, offsetA + regnum * sizeof(void*))), regnum);
 		break;
 	default:
 		I_Error("Unknown OP_RESULT/OP_PARAM type encountered in LoadCallResult\n");
@@ -266,7 +266,7 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			I_Error("OP_RESULT with REGT_KONST is not allowed\n");
 		}
 
-		IRValue* valueptr;
+		IRValue* valueptr = nullptr;
 		switch (type & REGT_TYPE)
 		{
 		case REGT_INT:
@@ -286,8 +286,8 @@ void JitCompiler::FillReturns(const VMOP *retval, int numret)
 			break;
 		}
 
-		StorePtr(valueptr, ToPtrPtr(GetCallReturns(), i * sizeof(VMReturn) + myoffsetof(VMReturn, Location)));
-		Store8(ConstValueD(type), ToPtrPtr(GetCallReturns(), i * sizeof(VMReturn) + myoffsetof(VMReturn, RegType)));
+		Store(valueptr, ToInt8PtrPtr(GetCallReturns(), i * sizeof(VMReturn) + myoffsetof(VMReturn, Location)));
+		Store(Trunc8(ConstValueD(type)), ToInt8Ptr(GetCallReturns(), i * sizeof(VMReturn) + myoffsetof(VMReturn, RegType)));
 	}
 }
 
@@ -497,7 +497,7 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 			// We don't have to do anything in this case. String values are never moved to virtual registers.
 			break;
 		case REGT_POINTER:
-			StoreA(Load(ToPtrPtr(vmframe, offsetA + regnum * sizeof(void*))), regnum);
+			StoreA(Load(ToInt8PtrPtr(vmframe, offsetA + regnum * sizeof(void*))), regnum);
 			break;
 		default:
 			I_Error("Unknown OP_RESULT type encountered\n");

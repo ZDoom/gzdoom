@@ -44,13 +44,13 @@ void JitCompiler::EmitLKF_R()
 void JitCompiler::EmitLKS_R()
 {
 	IRValue* base = ircontext->getConstantInt(ircontext->getInt8PtrTy()->getPointerTo(ircontext), (uint64_t)&konsts[C]);
-	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), OffsetPtr(base, LoadD(B)) });
+	cc.CreateCall(GetNativeFunc<void, FString*, FString*>("__CallAssignString", &JitCompiler::CallAssignString), { LoadS(A), Load(OffsetPtr(base, LoadD(B))) });
 }
 
 void JitCompiler::EmitLKP_R()
 {
 	IRValue* base = ircontext->getConstantInt(ircontext->getInt8PtrTy()->getPointerTo(ircontext), (uint64_t)&konsta[C]);
-	StoreA(OffsetPtr(base, LoadD(B)), A);
+	StoreA(Load(OffsetPtr(base, LoadD(B))), A);
 }
 
 void JitCompiler::EmitLFP()

@@ -2480,16 +2480,16 @@ void P_ZMovement (AActor *mo, double oldfloorz)
 		if (!(mo->flags & (MF_SKULLFLY | MF_INFLOAT)))
 		{
 			//same code block from P_FakeZMovement/vice versa???
-			double dist_squared = mo->Distance2DSquared(mo->target);
+			distance_squared = mo->Distance2DSquared(mo->target);
 			//still need delta intact, because it can be negative
 			//and square of a real number always positive
-			double delta = mo->target->Center() - mo->Z();
+			delta = mo->target->Center() - mo->Z();
 			//why it multiplies by 3 in original function?
-			double delta_squared = delta * delta * 3 * 3;
-			if (delta < 0 && dist_squared < -(delta_squared) )
+			double delta_squared = delta * abs(delta) * 3 * 3;
+			if (delta_squared < 0 && distance_squared < -(delta_squared) )
 				mo->AddZ(-mo->FloatSpeed);
 
-			else if (delta > 0 && dist_squared < (delta_squared) )
+			else if (delta_squared > 0 && distance_squared < (delta_squared) )
 				mo->AddZ(mo->FloatSpeed);
 		}
 	}

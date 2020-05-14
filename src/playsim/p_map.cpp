@@ -2070,11 +2070,11 @@ void P_FakeZMovement(AActor *mo)
 			//and square of a real number always positive
 			double delta = mo->target->Center() - mo->Z();
 			//why it multiplies by 3 in original function?
-			double delta_squared = delta * delta * 3 * 3;
-			if (delta < 0 && dist_squared < -(delta_squared) )
+			double delta_squared = delta * abs(delta) * 3 * 3;
+			if (delta_squared < 0 && dist_squared < -(delta_squared) )
 				mo->AddZ(-mo->FloatSpeed);
 
-			else if (delta > 0 && dist_squared < (delta_squared) )
+			else if (delta_squared > 0 && dist_squared < (delta_squared) )
 				mo->AddZ(mo->FloatSpeed);
 		}
 	}

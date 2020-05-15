@@ -87,7 +87,7 @@ void JitCompiler::EmitRET()
 		cc.CreateCondBr(cc.CreateICmpSLE(ConstValueD(retnum), numret), ifbb, endifbb);
 		cc.SetInsertPoint(ifbb);
 
-		IRValue* location = OffsetPtr(ret, retnum * sizeof(VMReturn));
+		IRValue* location = Load(ToInt8PtrPtr(ret, retnum * sizeof(VMReturn)));
 
 		int regtype = B;
 		int regnum = C;
@@ -185,7 +185,7 @@ void JitCompiler::EmitRETI()
 	cc.CreateCondBr(cc.CreateICmpSLE(ConstValueD(retnum), numret), ifbb, endifbb);
 	cc.SetInsertPoint(ifbb);
 
-	IRValue* location = OffsetPtr(ret, retnum * sizeof(VMReturn));
+	IRValue* location = Load(ToInt8PtrPtr(ret, retnum * sizeof(VMReturn)));
 	Store(ConstValueD(BCs), ToInt32Ptr(location));
 
 	if (a & RET_FINAL)

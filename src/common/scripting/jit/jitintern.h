@@ -164,12 +164,13 @@ private:
 		int i = (int)(ptrdiff_t)(pc - sfunc->Code);
 		IRBasicBlock* successbb = irfunc->createBasicBlock({});
 		IRBasicBlock* failbb = GetLabel(i + 2 + JMPOFS(pc + 1));
-		jmpFunc(static_cast<bool>(A & CMP_CHECK), failbb, successbb);
+		IRValue* result = jmpFunc(static_cast<bool>(A & CMP_CHECK));
+		cc.CreateCondBr(result, failbb, successbb);
 		cc.SetInsertPoint(successbb);
 		pc++; // This instruction uses two instruction slots - skip the next one
 	}
 
-	void EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IRBasicBlock* success);
+	IRValue* EmitVectorComparison(int N, bool check);
 
 	IRValue* LoadD(int index) { return cc.CreateLoad(regD[index]); }
 	IRValue* LoadF(int index) { return cc.CreateLoad(regF[index]); }

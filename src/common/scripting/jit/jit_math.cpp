@@ -37,7 +37,7 @@ static int StringCompare(FString* first, FString* second)
 
 void JitCompiler::EmitCMPS()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 
 		IRValue* arg0 = static_cast<bool>(A & CMP_BK) ? ConstS(B) : LoadS(B);
 		IRValue* arg1 = static_cast<bool>(A & CMP_CK) ? ConstS(C) : LoadS(C);
@@ -67,7 +67,7 @@ void JitCompiler::EmitCMPS()
 			else       result = cc.CreateICmpSGT(result, zero);
 		}
 
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
@@ -480,141 +480,141 @@ void JitCompiler::EmitNOT()
 
 void JitCompiler::EmitEQ_R()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpEQ(LoadD(B), LoadD(C));
 		else       result = cc.CreateICmpNE(LoadD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitEQ_K()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpEQ(LoadD(B), ConstD(C));
 		else       result = cc.CreateICmpNE(LoadD(B), ConstD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLT_RR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpSLT(LoadD(B), LoadD(C));
 		else       result = cc.CreateICmpSGE(LoadD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLT_RK()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpSLT(LoadD(B), ConstD(C));
 		else       result = cc.CreateICmpSGE(LoadD(B), ConstD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLT_KR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpSLT(ConstD(B), LoadD(C));
 		else       result = cc.CreateICmpSGE(ConstD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLE_RR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpSLE(LoadD(B), LoadD(C));
 		else       result = cc.CreateICmpSGT(LoadD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLE_RK()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpSLE(LoadD(B), ConstD(C));
 		else       result = cc.CreateICmpSGT(LoadD(B), ConstD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLE_KR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpSLE(ConstD(B), LoadD(C));
 		else       result = cc.CreateICmpSGT(ConstD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLTU_RR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpULT(LoadD(B), LoadD(C));
 		else       result = cc.CreateICmpUGE(LoadD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLTU_RK()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpULT(LoadD(B), ConstD(C));
 		else       result = cc.CreateICmpUGE(LoadD(B), ConstD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLTU_KR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpULT(ConstD(B), LoadD(C));
 		else       result = cc.CreateICmpUGE(ConstD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLEU_RR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpULE(LoadD(B), LoadD(C));
 		else       result = cc.CreateICmpUGT(LoadD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLEU_RK()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpULE(LoadD(B), ConstD(C));
 		else       result = cc.CreateICmpUGT(LoadD(B), ConstD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLEU_KR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpULE(ConstD(B), LoadD(C));
 		else       result = cc.CreateICmpUGT(ConstD(B), LoadD(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
@@ -876,14 +876,14 @@ void JitCompiler::EmitFLOP()
 
 void JitCompiler::EmitEQF_R()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
-		EmitVectorComparison(1, check, fail, success);
+	EmitComparisonOpcode([&](bool check) {
+		return EmitVectorComparison(1, check);
 	});
 }
 
 void JitCompiler::EmitEQF_K()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		bool approx = static_cast<bool>(A & CMP_APPROX);
 		if (!approx)
 		{
@@ -893,7 +893,7 @@ void JitCompiler::EmitEQF_K()
 			else
 				result = cc.CreateFCmpUNE(LoadF(B), ConstF(C));
 
-			cc.CreateCondBr(result, fail, success);
+			return result;
 		}
 		else
 		{
@@ -908,14 +908,14 @@ void JitCompiler::EmitEQF_K()
 					cc.CreateFCmpULE(diff, ConstValueF(-VM_EPSILON)),
 					cc.CreateFCmpUGE(diff, ConstValueF(VM_EPSILON)));
 
-			cc.CreateCondBr(result, fail, success);
+			return result;
 		}
 	});
 }
 
 void JitCompiler::EmitLTF_RR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RR.\n");
 
 		IRValue* result;
@@ -924,13 +924,13 @@ void JitCompiler::EmitLTF_RR()
 		else
 			result = cc.CreateFCmpUGE(LoadF(B), LoadF(C));
 
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLTF_RK()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_RK.\n");
 
 		IRValue* result;
@@ -939,13 +939,13 @@ void JitCompiler::EmitLTF_RK()
 		else
 			result = cc.CreateFCmpUGE(LoadF(B), ConstF(C));
 
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLTF_KR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LTF_KR.\n");
 
 		IRValue* result;
@@ -954,13 +954,13 @@ void JitCompiler::EmitLTF_KR()
 		else
 			result = cc.CreateFCmpUGE(ConstF(B), LoadF(C));
 
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLEF_RR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RR.\n");
 
 		IRValue* result;
@@ -969,13 +969,13 @@ void JitCompiler::EmitLEF_RR()
 		else
 			result = cc.CreateFCmpUGT(LoadF(B), LoadF(C));
 
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLEF_RK()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_RK.\n");
 
 		IRValue* result;
@@ -984,13 +984,13 @@ void JitCompiler::EmitLEF_RK()
 		else
 			result = cc.CreateFCmpUGT(LoadF(B), ConstF(C));
 
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitLEF_KR()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		if (static_cast<bool>(A & CMP_APPROX)) I_Error("CMP_APPROX not implemented for LEF_KR.\n");
 
 		IRValue* result;
@@ -999,7 +999,7 @@ void JitCompiler::EmitLEF_KR()
 		else
 			result = cc.CreateFCmpUGT(ConstF(B), LoadF(C));
 
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
@@ -1072,8 +1072,8 @@ void JitCompiler::EmitLENV2()
 
 void JitCompiler::EmitEQV2_R()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
-		EmitVectorComparison(2, check, fail, success);
+	EmitComparisonOpcode([&](bool check) {
+		return EmitVectorComparison(2, check);
 	});
 }
 
@@ -1174,8 +1174,8 @@ void JitCompiler::EmitLENV3()
 
 void JitCompiler::EmitEQV3_R()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
-		EmitVectorComparison(3, check, fail, success);
+	EmitComparisonOpcode([&](bool check) {
+		return EmitVectorComparison(3, check);
 	});
 }
 	
@@ -1236,25 +1236,25 @@ void JitCompiler::EmitSUBA()
 
 void JitCompiler::EmitEQA_R()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpEQ(LoadA(B), LoadA(C));
 		else       result = cc.CreateICmpNE(LoadA(B), LoadA(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
 void JitCompiler::EmitEQA_K()
 {
-	EmitComparisonOpcode([&](bool check, IRBasicBlock* fail, IRBasicBlock* success) {
+	EmitComparisonOpcode([&](bool check) {
 		IRValue* result;
 		if (check) result = cc.CreateICmpEQ(LoadA(B), ConstA(C));
 		else       result = cc.CreateICmpNE(LoadA(B), ConstA(C));
-		cc.CreateCondBr(result, fail, success);
+		return result;
 	});
 }
 
-void JitCompiler::EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IRBasicBlock* success)
+IRValue* JitCompiler::EmitVectorComparison(int N, bool check)
 {
 	IRValue* result = nullptr;
 	bool approx = static_cast<bool>(A & CMP_APPROX);
@@ -1286,5 +1286,5 @@ void JitCompiler::EmitVectorComparison(int N, bool check, IRBasicBlock* fail, IR
 		else
 			result = cc.CreateAnd(result, elementresult);
 	}
-	cc.CreateCondBr(result, fail, success);
+	return result;
 }

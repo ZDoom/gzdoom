@@ -102,16 +102,14 @@ IRFunction* JitCompiler::Codegen()
 				cc.CreateBr(labels[i].block);
 			cc.SetInsertPoint(labels[i].block);
 		}
-		else
+		else // Save start location in case GetLabel gets called later
 		{
 			if (!cc.GetInsertBlock())
 				cc.SetInsertPoint(irfunc->createBasicBlock({}));
-
-			// Save start location in case GetLabel gets called later
 			labels[i].block = cc.GetInsertBlock();
-			if (!labels[i].block->code.empty())
-				labels[i].instbefore = labels[i].block->code.back();
 		}
+
+		labels[i].index = labels[i].block->code.size();
 
 		int curLine = sfunc->PCToLine(pc);
 		if (curLine != lastLine)
@@ -143,8 +141,6 @@ IRFunction* JitCompiler::Codegen()
 
 		pc++;
 	}
-
-	BindLabels();
 
 	/*
 	auto code = cc.getCode ();
@@ -182,24 +178,6 @@ void JitCompiler::EmitOpcode()
 	}
 }
 
-void JitCompiler::BindLabels()
-{
-#if 0
-	asmjit::CBNode *cursor = cc.getCursor();
-	unsigned int size = labels.Size();
-	for (unsigned int i = 0; i < size; i++)
-	{
-		const OpcodeLabel &label = labels[i];
-		if (label.inUse)
-		{
-			cc.setCursor(label.cursor);
-			cc.bind(label.label);
-		}
-	}
-	cc.setCursor(cursor);
-#endif
-}
-
 void JitCompiler::CheckVMFrame()
 {
 	if (!vmframe)
@@ -219,37 +197,37 @@ IRValue* JitCompiler::GetCallReturns()
 
 IRBasicBlock* JitCompiler::GetLabel(size_t pos)
 {
-	if (labels[pos].instbefore)
+	if (labels[pos].index != 0) // Jump targets can only point at the start of a basic block
 	{
-		IRValue* instbefore = labels[pos].instbefore;
-		IRBasicBlock* block = labels[pos].block;
+		IRBasicBlock* curbb = labels[pos].block;
+		size_t splitpos = labels[pos].index;
 
-		// If inst isn't the first then we need to split the basicblock. Jump targets can only be the start of a basicblock.
-		if (instbefore)
+		// Split basic block
+		IRBasicBlock* newlabelbb = irfunc->createBasicBlock({});
+		auto itbegin = curbb->code.begin() + splitpos;
+		auto itend = curbb->code.end();
+		newlabelbb->code.insert(newlabelbb->code.begin(), itbegin, itend);
+		curbb->code.erase(itbegin, itend);
+
+		// Jump from prev block to next
+		IRBasicBlock* old = cc.GetInsertBlock();
+		cc.SetInsertPoint(curbb);
+		cc.CreateBr(newlabelbb);
+		cc.SetInsertPoint(old);
+
+		// Update label
+		labels[pos].block = newlabelbb;
+		labels[pos].index = 0;
+
+		// Update other label references
+		for (size_t i = 0; i < labels.Size(); i++)
 		{
-			auto it = block->code.end();
-			for (size_t i = 0; i < block->code.size(); i++)
+			if (labels[i].block == curbb && labels[i].index >= splitpos)
 			{
-				if (block->code[i] == instbefore)
-				{
-					it = block->code.begin() + (i + 1);
-					break;
-				}
+				labels[i].block = newlabelbb;
+				labels[i].index -= splitpos;
 			}
-
-			// Split basic block into two
-			IRBasicBlock* newlabelbb = irfunc->createBasicBlock({});
-			newlabelbb->code.insert(newlabelbb->code.begin(), it, block->code.end());
-			block->code.erase(it, block->code.end());
-
-			// Jump from prev block to next
-			IRBasicBlock* old = cc.GetInsertBlock();
-			cc.SetInsertPoint(block);
-			cc.CreateBr(newlabelbb);
-			cc.SetInsertPoint(old);
 		}
-
-		labels[pos].instbefore = nullptr;
 	}
 	else if (!labels[pos].block)
 	{
@@ -389,7 +367,7 @@ void JitCompiler::SetupFullVMFrame()
 		StoreF(Load(ToDoublePtr(vmframe, offsetF + i * sizeof(double))), i);
 
 	for (int i = 0; i < sfunc->NumRegS; i++)
-		StoreS(Load(ToInt8PtrPtr(vmframe, offsetS + i * sizeof(FString))), i);
+		StoreS(OffsetPtr(vmframe, offsetS + i * sizeof(FString)), i);
 
 	for (int i = 0; i < sfunc->NumRegA; i++)
 		StoreA(Load(ToInt8PtrPtr(vmframe, offsetA + i * sizeof(void*))), i);

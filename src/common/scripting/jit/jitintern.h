@@ -33,7 +33,7 @@ struct JitLineInfo
 struct JitLabel
 {
 	IRBasicBlock* block = nullptr;
-	IRValue* instbefore = nullptr;
+	size_t index = 0;
 };
 
 class JitCompiler
@@ -78,7 +78,6 @@ private:
 	void SetupFrame();
 	void SetupSimpleFrame();
 	void SetupFullVMFrame();
-	void BindLabels();
 	void EmitOpcode();
 	void EmitPopFrame();
 

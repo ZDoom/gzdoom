@@ -5,15 +5,15 @@
 
 #if 1
 
-static IRContext* JitIRContext = nullptr;
+static JITRuntime* JITRuntimeVar = nullptr;
 
-IRContext* JitGetIRContext()
+JITRuntime* GetJITRuntime()
 {
-	if (!JitIRContext)
+	if (!JITRuntimeVar)
 	{
-		JitIRContext = new IRContext();
+		JITRuntimeVar = new JITRuntime();
 	}
-	return JitIRContext;
+	return JITRuntimeVar;
 }
 
 FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
@@ -23,8 +23,8 @@ FString JitCaptureStackTrace(int framesToSkip, bool includeNativeFrames)
 
 void JitRelease()
 {
-	delete JitIRContext;
-	JitIRContext = nullptr;
+	delete JITRuntimeVar;
+	JITRuntimeVar = nullptr;
 }
 
 #else

@@ -7,23 +7,24 @@ extern PString *TypeString;
 extern PStruct *TypeVector2;
 extern PStruct *TypeVector3;
 
-IRContext* JitGetIRContext();
+JITRuntime* GetJITRuntime();
 
 JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 {
-#if 1
+#if 0
 	if (strcmp(sfunc->PrintableName.GetChars(), "StatusScreen.drawNum") != 0)
 		return nullptr;
 #endif
 
 	try
 	{
-		IRContext* context = JitGetIRContext();
-		JitCompiler compiler(context, sfunc);
+		JITRuntime* jit = GetJITRuntime();
+		IRContext context;
+		JitCompiler compiler(&context, sfunc);
 		IRFunction* func = compiler.Codegen();
-		context->codegen();
-		std::string text = context->getFunctionAssembly(func);
-		return reinterpret_cast<JitFuncPtr>(context->getPointerToFunction(func));
+		jit->add(&context);
+		//std::string text = context->getFunctionAssembly(func);
+		return reinterpret_cast<JitFuncPtr>(jit->getPointerToFunction(func->name));
 	}
 	catch (...)
 	{
@@ -36,10 +37,10 @@ void JitDumpLog(FILE* file, VMScriptFunction* sfunc)
 {
 	try
 	{
-		IRContext* context = JitGetIRContext();
-		JitCompiler compiler(context, sfunc);
+		IRContext context;
+		JitCompiler compiler(&context, sfunc);
 		IRFunction* func = compiler.Codegen();
-		std::string text = context->getFunctionAssembly(func);
+		std::string text = context.getFunctionAssembly(func);
 		fwrite(text.data(), text.size(), 1, file);
 	}
 	catch (const std::exception& e)

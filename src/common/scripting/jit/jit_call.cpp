@@ -85,8 +85,8 @@ void JitCompiler::EmitVMCall(IRValue* vmfunc, VMFunction* target)
 	IRValue* paramsptr = OffsetPtr(vmframe, offsetParams);
 	IRValue* scriptcall = Load(ToInt8PtrPtr(vmfunc, myoffsetof(VMScriptFunction, ScriptCall)));
 
-	/*IRValue* call =*/ cc.CreateCall(cc.CreateBitCast(scriptcall, GetFunctionType5<int, VMFunction*, VMValue*, int, VMReturn*, int>()), { vmfunc, paramsptr, ConstValueD(B), GetCallReturns(), ConstValueD(C) });
-	//call->setComment(target ? target->PrintableName.GetChars() : "VMCall");
+	IRInst* call = cc.CreateCall(cc.CreateBitCast(scriptcall, GetFunctionType5<int, VMFunction*, VMValue*, int, VMReturn*, int>()), { vmfunc, paramsptr, ConstValueD(B), GetCallReturns(), ConstValueD(C) });
+	call->comment = target ? target->PrintableName.GetChars() : "VMCall";
 
 	LoadInOuts();
 	LoadReturns(pc + 1, C);

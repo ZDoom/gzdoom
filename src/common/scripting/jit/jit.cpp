@@ -113,54 +113,26 @@ IRFunction* JitCompiler::Codegen()
 		labels[i].index = labels[i].block->code.size();
 
 		int curLine = sfunc->PCToLine(pc);
-		if (curLine != lastLine)
-		{
-			lastLine = curLine;
 
-			/*auto label = cc.newLabel();
-			cc.bind(label);
-
-			JitLineInfo info;
-			info.Label = label;
-			info.LineNumber = curLine;
-			LineInfo.Push(info);*/
-		}
-
-#if 0
+		FString lineinfo;
 		if (op != OP_PARAM && op != OP_PARAMI && op != OP_VTBL)
 		{
-			FString lineinfo;
-			lineinfo.Format("; line %d: %02x%02x%02x%02x %s", curLine, pc->op, pc->a, pc->b, pc->c, OpNames[op]);
-			cc.comment("", 0);
-			cc.comment(lineinfo.GetChars(), lineinfo.Len());
+			lineinfo.Format("line %d: %02x%02x%02x%02x %s", curLine, pc->op, pc->a, pc->b, pc->c, OpNames[op]);
 		}
-
-		labels[i].cursor = cc.getCursor();
-#endif
 
 		EmitOpcode();
 
+		// Add line info to first instruction emitted for the opcode
+		IRInst* inst = labels[i].block->code[labels[i].index];
+		inst->fileIndex = 0;
+		inst->lineNumber = curLine;
+		if (inst->comment.empty())
+			inst->comment = lineinfo.GetChars();
+		else
+			inst->comment = lineinfo.GetChars() + ("; " + inst->comment);
+
 		pc++;
 	}
-
-	/*
-	auto code = cc.getCode ();
-	for (unsigned int j = 0; j < LineInfo.Size (); j++)
-	{
-		auto info = LineInfo[j];
-
-		if (!code->isLabelValid (info.Label))
-		{
-			continue;
-		}
-
-		info.InstructionIndex = code->getLabelOffset (info.Label);
-
-		LineInfo[j] = info;
-	}
-
-	std::stable_sort(LineInfo.begin(), LineInfo.end(), [](const JitLineInfo &a, const JitLineInfo &b) { return a.InstructionIndex < b.InstructionIndex; });
-	*/
 
 	return irfunc;
 }
@@ -252,6 +224,8 @@ void JitCompiler::Setup()
 	//cc.comment("", 0);
 
 	irfunc = ircontext->createFunction(GetFunctionType5<int, VMFunction*, void*, int, void*, int>(), sfunc->PrintableName.GetChars());
+	irfunc->fileInfo.push_back({ sfunc->PrintableName.GetChars(), sfunc->SourceFileName.GetChars() });
+
 	args = irfunc->args[1];
 	numargs = irfunc->args[2];
 	ret = irfunc->args[3];
@@ -457,11 +431,8 @@ IRBasicBlock* JitCompiler::EmitThrowExceptionLabel(EVMAbortException reason)
 	auto bb = irfunc->createBasicBlock({});
 	auto cursor = cc.GetInsertBlock();
 	cc.SetInsertPoint(bb);
-	//JitLineInfo info;
-	//info.Label = bb;
-	//info.LineNumber = sfunc->PCToLine(pc);
-	//LineInfo.Push(info);
 	EmitThrowException(reason);
+	bb->code.front()->lineNumber = sfunc->PCToLine(pc);
 	cc.SetInsertPoint(cursor);
 	return bb;
 }

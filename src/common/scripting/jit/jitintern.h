@@ -21,15 +21,6 @@ extern int VMCalls[10];
 #define ABCs			(pc[0].i24)
 #define JMPOFS(x)		((x)->i24)
 
-#if 0
-struct JitLineInfo
-{
-	ptrdiff_t InstructionIndex = 0;
-	int32_t LineNumber = -1;
-	asmjit::Label Label;
-};
-#endif
-
 struct JitLabel
 {
 	IRBasicBlock* block = nullptr;
@@ -44,7 +35,6 @@ public:
 	IRFunction* Codegen();
 
 	// VMScriptFunction* GetScriptFunction() { return sfunc; }
-	// TArray<JitLineInfo> LineInfo;
 
 private:
 	// Declare EmitXX functions for the opcodes:

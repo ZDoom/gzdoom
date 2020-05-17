@@ -84,7 +84,7 @@ void JitCompiler::EmitRET()
 		IRBasicBlock* ifbb = irfunc->createBasicBlock({});
 		IRBasicBlock* endifbb = irfunc->createBasicBlock({});
 
-		cc.CreateCondBr(cc.CreateICmpSLE(ConstValueD(retnum), numret), ifbb, endifbb);
+		cc.CreateCondBr(cc.CreateICmpSLT(ConstValueD(retnum), numret), ifbb, endifbb);
 		cc.SetInsertPoint(ifbb);
 
 		IRValue* location = Load(ToInt8PtrPtr(ret, retnum * sizeof(VMReturn)));
@@ -182,7 +182,7 @@ void JitCompiler::EmitRETI()
 	IRBasicBlock* ifbb = irfunc->createBasicBlock({});
 	IRBasicBlock* endifbb = irfunc->createBasicBlock({});
 
-	cc.CreateCondBr(cc.CreateICmpSLE(ConstValueD(retnum), numret), ifbb, endifbb);
+	cc.CreateCondBr(cc.CreateICmpSLT(ConstValueD(retnum), numret), ifbb, endifbb);
 	cc.SetInsertPoint(ifbb);
 
 	IRValue* location = Load(ToInt8PtrPtr(ret, retnum * sizeof(VMReturn)));

@@ -105,8 +105,10 @@ const char *GetVersionString();
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME
+#elif defined(__unix__)
+#define GAME_DIR FString(g_XDGconf + "/" GAMENAMELOWERCASE) // g_XDGconf is defined in i_system.h and initialized in i_specialpaths.cpp
 #else
-#define GAME_DIR FString(g_XDGconf + "/" + FString(GAMENAMELOWERCASE)) // g_XDGconf is defined in i_system.h and initialized in i_specialpaths.cpp
+#define GAME_DIR FString(".config/" GAMENAMELOWERCASE)
 #endif
 
 

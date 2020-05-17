@@ -86,7 +86,7 @@ void JitCompiler::EmitVMCall(IRValue* vmfunc, VMFunction* target)
 	IRValue* scriptcall = Load(ToInt8PtrPtr(vmfunc, myoffsetof(VMScriptFunction, ScriptCall)));
 
 	IRInst* call = cc.CreateCall(cc.CreateBitCast(scriptcall, GetFunctionType5<int, VMFunction*, VMValue*, int, VMReturn*, int>()), { vmfunc, paramsptr, ConstValueD(B), GetCallReturns(), ConstValueD(C) });
-	call->comment = target ? target->PrintableName.GetChars() : "VMCall";
+	call->comment = std::string("call ") + (target ? target->PrintableName.GetChars() : "VMCall");
 
 	LoadInOuts();
 	LoadReturns(pc + 1, C);
@@ -448,8 +448,8 @@ void JitCompiler::EmitNativeCall(VMNativeFunction *target)
 		}
 	}
 
-	IRValue* result = cc.CreateCall(cc.CreateBitCast(ConstValueA(target->DirectNativeCall), GetFuncSignature()), args);
-	//result->setComment(target->PrintableName.GetChars());
+	IRInst* result = cc.CreateCall(cc.CreateBitCast(ConstValueA(target->DirectNativeCall), GetFuncSignature()), args);
+	result->comment = std::string("call ") + target->PrintableName.GetChars();
 
 	if (startret == 1 && numret > 0)
 	{

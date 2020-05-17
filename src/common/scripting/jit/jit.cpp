@@ -23,7 +23,7 @@ JitFuncPtr JitCompile(VMScriptFunction* sfunc)
 		JitCompiler compiler(&context, sfunc);
 		IRFunction* func = compiler.Codegen();
 		jit->add(&context);
-		//std::string text = context->getFunctionAssembly(func);
+		std::string text = context.getFunctionAssembly(func);
 		return reinterpret_cast<JitFuncPtr>(jit->getPointerToFunction(func->name));
 	}
 	catch (...)
@@ -123,13 +123,16 @@ IRFunction* JitCompiler::Codegen()
 		EmitOpcode();
 
 		// Add line info to first instruction emitted for the opcode
-		IRInst* inst = labels[i].block->code[labels[i].index];
-		inst->fileIndex = 0;
-		inst->lineNumber = curLine;
-		if (inst->comment.empty())
-			inst->comment = lineinfo.GetChars();
-		else
-			inst->comment = lineinfo.GetChars() + ("; " + inst->comment);
+		if (labels[i].block->code.size() != labels[i].index)
+		{
+			IRInst* inst = labels[i].block->code[labels[i].index];
+			inst->fileIndex = 0;
+			inst->lineNumber = curLine;
+			if (inst->comment.empty())
+				inst->comment = lineinfo.GetChars();
+			else
+				inst->comment = lineinfo.GetChars() + ("; " + inst->comment);
+		}
 
 		pc++;
 	}

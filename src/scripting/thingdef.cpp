@@ -49,10 +49,12 @@
 #include "a_weapons.h"
 #include "p_conversation.h"
 #include "v_text.h"
-#include "backend/codegen.h"
+#include "codegen.h"
 #include "stats.h"
 #include "info.h"
 #include "thingdef.h"
+#include "zcc_parser.h"
+#include "zcc_compile_doom.h"
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 void InitThingdef();
@@ -62,6 +64,7 @@ void InitThingdef();
 static TMap<FState *, FScriptPosition> StateSourceLines;
 static FScriptPosition unknownstatesource("unknown file", 0);
 
+EXTERN_CVAR(Bool, strictdecorate);
 
 //==========================================================================
 //
@@ -226,51 +229,6 @@ PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *retur
 	PFunction *sym = Create<PFunction>(containingclass, NAME_None);	// anonymous functions do not have names.
 	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, fflags, flags);
 	return sym;
-}
-
-//==========================================================================
-//
-// FindClassMemberFunction
-//
-// Looks for a name in a class's symbol table and outputs appropriate messages
-//
-//==========================================================================
-
-PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error, const VersionInfo &version, bool nodeprecated)
-{
-	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
-	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;
-
-	PSymbolTable *symtable;
-	auto symbol = selfcls->Symbols.FindSymbolInTable(name, symtable);
-	auto funcsym = dyn_cast<PFunction>(symbol);
-
-	if (symbol != nullptr)
-	{
-		auto cls_ctx = PType::toClass(funccls);
-		auto cls_target = funcsym ? PType::toClass(funcsym->OwningClass) : nullptr;
-		if (funcsym == nullptr)
-		{
-			if (PClass::FindClass(name)) return nullptr;	// Special case when a class's member variable hides a global class name. This should still work.
-			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
-		}
-		else if ((funcsym->Variants[0].Flags & VARF_Private) && symtable != &funccls->Symbols)
-		{
-			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
-			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
-		}
-		else if ((funcsym->Variants[0].Flags & VARF_Protected) && symtable != &funccls->Symbols && (!cls_ctx || !cls_target || !cls_ctx->Descriptor->IsDescendantOf(cls_target->Descriptor)))
-		{
-			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
-		}
-		// ZScript will skip this because it prints its own message.
-		else if ((funcsym->Variants[0].Flags & VARF_Deprecated) && funcsym->mVersion <= version && !nodeprecated)
-		{
-			sc.Message(MSG_WARNING, "Call to deprecated function %s", symbol->SymbolName.GetChars());
-		}
-	}
-	// return nullptr if the name cannot be found in the symbol table so that the calling code can do other checks.
-	return funcsym;
 }
 
 //==========================================================================
@@ -450,6 +408,35 @@ void CheckDropItems(const PClassActor *const obj)
 void ParseScripts();
 void ParseAllDecorate();
 void SynthesizeFlagFields();
+void SetDoomCompileEnvironment();
+
+void ParseScripts()
+{
+	int lump, lastlump = 0;
+	FScriptPosition::ResetErrorCounter();
+
+	while ((lump = fileSystem.FindLump("ZSCRIPT", &lastlump)) != -1)
+	{
+		ZCCParseState state;
+		auto newns = ParseOneScript(lump, state);
+		PSymbolTable symtable;
+
+		ZCCDoomCompiler cc(state, NULL, symtable, newns, lump, state.ParseVersion);
+		cc.Compile();
+
+		if (FScriptPosition::ErrorCounter > 0)
+		{
+			// Abort if the compiler produced any errors. Also do not compile further lumps, because they very likely miss some stuff.
+			I_Error("%d errors, %d warnings while compiling %s", FScriptPosition::ErrorCounter, FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(lump).GetChars());
+		}
+		else if (FScriptPosition::WarnCounter > 0)
+		{
+			// If we got warnings, but no errors, print the information but continue.
+			Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, fileSystem.GetFileFullPath(lump).GetChars());
+		}
+
+	}
+}
 
 void LoadActors()
 {
@@ -458,11 +445,12 @@ void LoadActors()
 	timer.Reset(); timer.Clock();
 	FScriptPosition::ResetErrorCounter();
 
+	SetDoomCompileEnvironment();
 	InitThingdef();
 	FScriptPosition::StrictErrors = true;
 	ParseScripts();
 
-	FScriptPosition::StrictErrors = false;
+	FScriptPosition::StrictErrors = strictdecorate;
 	ParseAllDecorate();
 	SynthesizeFlagFields();
 
@@ -473,10 +461,11 @@ void LoadActors()
 		I_Error("%d errors while parsing DECORATE scripts", FScriptPosition::ErrorCounter);
 	}
 	FScriptPosition::ResetErrorCounter();
-
-	for (int i = PClassActor::AllActorClasses.Size() - 1; i >= 0; i--)
+	// AllActorClasses hasn'T been set up yet.
+	for (int i = PClass::AllClasses.Size() - 1; i >= 0; i--)
 	{
-		auto ti = PClassActor::AllActorClasses[i];
+		auto ti = (PClassActor*)PClass::AllClasses[i];
+		if (!ti->IsDescendantOf(RUNTIME_CLASS(AActor))) continue;
 		if (ti->Size == TentativeClass)
 		{
 			if (ti->bOptional)

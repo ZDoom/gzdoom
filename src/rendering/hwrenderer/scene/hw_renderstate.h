@@ -6,7 +6,7 @@
 #include "hw_drawstructs.h"
 #include "hw_drawlist.h"
 #include "matrix.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 
 struct FColormap;
 class IVertexBuffer;
@@ -90,7 +90,7 @@ struct FStateVec4
 
 struct FMaterialState
 {
-	FMaterial *mMaterial;
+	FMaterial *mMaterial = nullptr;
 	int mClampMode;
 	int mTranslation;
 	int mOverrideShader;

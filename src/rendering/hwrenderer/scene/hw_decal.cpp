@@ -29,7 +29,7 @@
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
@@ -37,6 +37,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hw_renderstate.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //
@@ -105,7 +106,7 @@ void HWDecal::DrawDecal(HWDrawInfo *di, FRenderState &state)
 				int thisll = lightlist[k].caster != nullptr ? hw_ClampLight(*lightlist[k].p_lightlevel) : lightlevel;
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
-				thiscm.CopyFrom3DLight(&lightlist[k]);
+				CopyFrom3DLight(thiscm, &lightlist[k]);
 				di->SetColor(state, thisll, rellight, di->isFullbrightScene(), thiscm, alpha);
 				if (di->Level->flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
 				di->SetFog(state, thisll, rellight, di->isFullbrightScene(), &thiscm, false);

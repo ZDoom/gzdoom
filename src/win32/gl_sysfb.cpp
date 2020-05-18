@@ -39,17 +39,15 @@
 
 #include "gl_sysfb.h"
 #include "hardware.h"
-#include "x86.h"
 #include "templates.h"
 #include "version.h"
 #include "c_console.h"
 #include "v_video.h"
 #include "i_input.h"
 #include "i_system.h"
-#include "doomstat.h"
 #include "v_text.h"
 #include "m_argv.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "win32glvideo.h"
 
 extern HWND			Window;

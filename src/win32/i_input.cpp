@@ -68,14 +68,10 @@
 
 
 #include "c_dispatch.h"
-#include "doomdef.h"
-#include "doomstat.h"
 #include "m_argv.h"
 #include "i_input.h"
 #include "v_video.h"
 #include "i_sound.h"
-#include "g_game.h"
-#include "d_main.h"
 #include "d_gui.h"
 #include "c_console.h"
 #include "s_sound.h"
@@ -84,11 +80,14 @@
 #include "d_event.h"
 #include "v_text.h"
 #include "version.h"
-#include "events.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "i_system.h"
-#include "g_levellocals.h"
+#include "i_interface.h"
+#include "printf.h"
+#include "c_buttons.h"
+#include "cmdlib.h"
 
+int32_t refreshfreq = -1;
 
 // Compensate for w32api's lack
 #ifndef GET_XBUTTON_WPARAM
@@ -114,6 +113,7 @@ static HMODULE DInputDLL;
 bool GUICapture;
 extern FMouse *Mouse;
 extern FKeyboard *Keyboard;
+extern bool ToggleFullscreen;
 
 bool VidResizing;
 
@@ -134,8 +134,8 @@ static bool noidle = false;
 LPDIRECTINPUT8			g_pdi;
 LPDIRECTINPUT			g_pdi3;
 
-
 extern bool AppActive;
+
 int SessionState = 0;
 int BlockMouseMove; 
 
@@ -149,20 +149,7 @@ extern int chatmodeon;
 
 static void I_CheckGUICapture ()
 {
-	bool wantCapt;
-
-	if (menuactive == MENU_Off)
-	{
-		wantCapt = ConsoleState == c_down || ConsoleState == c_falling || chatmodeon;
-	}
-	else
-	{
-		wantCapt = (menuactive == MENU_On || menuactive == MENU_OnNoPause);
-	}
-
-	// [ZZ] check active event handlers that want the UI processing
-	if (!wantCapt && primaryLevel->localEventManager->CheckUiProcessors())
-		wantCapt = true;
+	bool wantCapt = sysCallbacks && sysCallbacks->WantGuiCapture && sysCallbacks->WantGuiCapture();
 
 	if (wantCapt != GUICapture)
 	{
@@ -359,6 +346,22 @@ bool CallHook(FInputDevice *device, HWND hWnd, UINT message, WPARAM wParam, LPAR
 	return device->WndProcHook(hWnd, message, wParam, lParam, result);
 }
 
+void GetRefreshRate(HWND hWnd)
+{
+	HMONITOR moni = MonitorFromWindow(hWnd, MONITOR_DEFAULTTONEAREST);
+	MONITORINFOEXA moninf;
+	moninf.cbSize = sizeof(moninf);
+	if (GetMonitorInfoA(moni, (LPMONITORINFO)&moninf))
+	{
+		DEVMODEA dm;
+		dm.dmSize = sizeof(DEVMODEA);
+		if (EnumDisplaySettingsA(moninf.szDevice, ENUM_CURRENT_SETTINGS, &dm))
+		{
+			refreshfreq = dm.dmDisplayFrequency;
+		}
+	}
+}
+
 LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result;
@@ -409,7 +412,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return result;
 	}
 
-	if ((gamestate == GS_DEMOSCREEN || gamestate == GS_TITLELEVEL) && message == WM_LBUTTONDOWN)
+	if (message == WM_LBUTTONDOWN && sysCallbacks && sysCallbacks->WantLeftButton() && sysCallbacks->WantLeftButton())
 	{
 		if (GUIWndProcHook(hWnd, message, wParam, lParam, &result))
 		{
@@ -444,6 +447,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_SETFOCUS:
+		GetRefreshRate(hWnd);
 		I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);	// This cannot call the event handler. Doing it from here is unsafe.
 		break;
 
@@ -488,6 +492,8 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_DISPLAYCHANGE:
+		GetRefreshRate(hWnd);
+		// fall through
 	case WM_STYLECHANGED:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 
@@ -519,7 +525,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), INGAME_PRIORITY_CLASS);
 		}
-		else if (!noidle && !netgame)
+		else if (!noidle && !(sysCallbacks && sysCallbacks->NetGame && sysCallbacks->NetGame()))
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
@@ -581,7 +587,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 #ifdef _DEBUG
 			char foo[256];
-			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", lParam, wParam);
+			mysnprintf (foo, countof(foo), "Session Change: %ld %d\n", (long)lParam, (int)wParam);
 			OutputDebugStringA (foo);
 #endif
 		}
@@ -762,9 +768,9 @@ void I_GetEvent ()
 void I_StartTic ()
 {
 	BlockMouseMove--;
-	ResetButtonTriggers ();
+	buttonMap.ResetButtonTriggers ();
 	I_CheckGUICapture ();
-	EventHandlerResultForNativeMouse = primaryLevel->localEventManager->CheckRequireMouse();
+	EventHandlerResultForNativeMouse = sysCallbacks && sysCallbacks->WantNativeMouse && sysCallbacks->WantNativeMouse();
 	I_CheckNativeMouse (false, EventHandlerResultForNativeMouse);
 	I_GetEvent ();
 }

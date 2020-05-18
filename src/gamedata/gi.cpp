@@ -36,7 +36,7 @@
 #include "info.h"
 #include "gi.h"
 #include "sc_man.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_video.h"
 #include "g_level.h"
 #include "vm.h"
@@ -171,7 +171,7 @@ const char* GameInfoBorders[] =
 	{ \
 		sc.MustGetToken(TK_StringConst); \
 		gameinfo.key = sc.String; \
-		gameinfo.stampvar = Wads.GetLumpFile(sc.LumpNum); \
+		gameinfo.stampvar = fileSystem.GetFileContainer(sc.LumpNum); \
 	}
 
 #define GAMEINFOKEY_INT(key, variable) \
@@ -456,6 +456,6 @@ void FMapInfoParser::ParseGameInfo()
 const char *gameinfo_t::GetFinalePage(unsigned int num) const
 {
 	if (finalePages.Size() == 0) return "-NOFLAT-";
-	else if (num < 1 || num > finalePages.Size()) return finalePages[0];
-	else return finalePages[num-1];
+	else if (num < 1 || num > finalePages.Size()) return finalePages[0].GetChars();
+	else return finalePages[num-1].GetChars();
 }

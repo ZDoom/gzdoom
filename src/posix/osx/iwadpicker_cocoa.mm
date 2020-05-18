@@ -40,7 +40,7 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "gameconfigfile.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 #include <Cocoa/Cocoa.h>
 #include <wordexp.h>

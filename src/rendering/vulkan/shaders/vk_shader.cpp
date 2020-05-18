@@ -23,8 +23,8 @@
 #include "vk_shader.h"
 #include "vulkan/system/vk_builders.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
-#include "w_wad.h"
-#include "doomerrors.h"
+#include "filesystem.h"
+#include "engineerrors.h"
 #include <ShaderLang.h>
 
 VkShaderManager::VkShaderManager(VulkanDevice *device) : device(device)
@@ -345,16 +345,16 @@ FString VkShaderManager::GetTargetGlslVersion()
 
 FString VkShaderManager::LoadPublicShaderLump(const char *lumpname)
 {
-	int lump = Wads.CheckNumForFullName(lumpname);
+	int lump = fileSystem.CheckNumForFullName(lumpname);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	FMemLump data = Wads.ReadLump(lump);
+	FileData data = fileSystem.ReadFile(lump);
 	return data.GetString();
 }
 
 FString VkShaderManager::LoadPrivateShaderLump(const char *lumpname)
 {
-	int lump = Wads.CheckNumForFullName(lumpname, 0);
+	int lump = fileSystem.CheckNumForFullName(lumpname, 0);
 	if (lump == -1) I_Error("Unable to load '%s'", lumpname);
-	FMemLump data = Wads.ReadLump(lump);
+	FileData data = fileSystem.ReadFile(lump);
 	return data.GetString();
 }

@@ -21,8 +21,8 @@
 */
 
 #include "vk_builders.h"
-#include "doomerrors.h"
-#include "r_data/renderstyle.h"
+#include "engineerrors.h"
+#include "renderstyle.h"
 #include <ShaderLang.h>
 #include <GlslangToSpv.h>
 
@@ -227,6 +227,8 @@ void GraphicsPipelineBuilder::setBlendMode(const FRenderStyle &style)
 		VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
 		VK_BLEND_FACTOR_DST_COLOR,
 		VK_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
+		VK_BLEND_FACTOR_DST_ALPHA,
+		VK_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,
 	};
 
 	static const int renderops[] = {

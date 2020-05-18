@@ -41,7 +41,7 @@
 #include "v_text.h"
 #include "doomstat.h"
 #include "m_argv.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "swrenderer/r_swrenderer.h"
 
 IVideo *Video;

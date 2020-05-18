@@ -43,6 +43,8 @@
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "m_argv.h"
+#include "cmdlib.h"
+#include "keydef.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -434,9 +436,7 @@ void FXInputController::SetDefaultConfig()
 
 FString FXInputController::GetIdentifier()
 {
-	char id[16];
-	mysnprintf(id, countof(id), "XI:%d", Index);
-	return id;
+	return FStringf("XI:%d", Index);
 }
 
 //==========================================================================

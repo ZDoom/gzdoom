@@ -25,7 +25,7 @@
 #include "vk_framebuffer.h"
 #include "vulkan/renderer/vk_renderstate.h"
 #include "vulkan/renderer/vk_renderpass.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 VKBuffer *VKBuffer::First = nullptr;
 

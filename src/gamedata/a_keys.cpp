@@ -37,7 +37,7 @@
 #include "gstrings.h"
 #include "d_player.h"
 #include "c_console.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_font.h"
 #include "vm.h"
 
@@ -422,7 +422,7 @@ void P_InitKeyMessages()
 	lastlump = 0;
 
 	ClearLocks();
-	while ((lump = Wads.FindLump ("LOCKDEFS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("LOCKDEFS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		while (sc.GetString ())

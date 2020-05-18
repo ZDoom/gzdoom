@@ -43,8 +43,9 @@
 #include "a_pickups.h"
 #include "thingdef.h"
 #include "a_morph.h"
-#include "backend/codegen.h"
-#include "w_wad.h"
+#include "codegen.h"
+#include "backend/codegen_doom.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "m_argv.h"
 #include "v_video.h"
@@ -77,7 +78,8 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 	{
 		sc.Message(MSG_ERROR, "Parent class %s of %s not accessible to DECORATE", parent->TypeName.GetChars(), typeName.GetChars());
 	}
-	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size));
+	bool newlycreated;
+	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size, &newlycreated));
 	if (type == nullptr)
 	{
 		FString newname = typeName.GetChars();
@@ -94,14 +96,15 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 			// Due to backwards compatibility issues this cannot be an unconditional error.
 			sc.Message(MSG_WARNING, "Tried to define class '%s' more than once. Renaming class to '%s'", typeName.GetChars(), newname.GetChars());
 		}
-		type = static_cast<PClassActor *>(parent->CreateDerivedClass(newname, parent->Size));
+		type = static_cast<PClassActor *>(parent->CreateDerivedClass(newname, parent->Size, &newlycreated));
 		if (type == nullptr)
 		{
 			// This we cannot handle cleanly anymore. Let's just abort and forget about the odd mod out that was this careless.
 			sc.Message(MSG_FATAL, "Tried to define class '%s' more than twice in the same file.", typeName.GetChars());
 		}
 	}
-	
+	if (newlycreated) type->InitializeDefaults();
+
 	if (type != nullptr)
 	{
 		// [ZZ] DECORATE classes are always play
@@ -1113,7 +1116,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 	{
 		PClassActor *info = CreateNewActor(sc, typeName, parentName);
 		info->ActorInfo()->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
-		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
+		info->SourceLumpName = fileSystem.GetFileFullPath(sc.LumpNum);
 
 		if (!info->SetReplacement(replaceName))
 		{
@@ -1124,7 +1127,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
 #ifdef _DEBUG
-		bag->ClassName = typeName;
+		bag->ClassName = typeName.GetChars();
 #endif
 		return info;
 	}
@@ -1270,13 +1273,13 @@ void ParseDecorate (FScanner &sc, PNamespace *ns)
 		{
 			sc.MustGetString();
 			// This check needs to remain overridable for testing purposes.
-			if (Wads.GetLumpFile(sc.LumpNum) == 0 && !Args->CheckParm("-allowdecoratecrossincludes"))
+			if (fileSystem.GetFileContainer(sc.LumpNum) == 0 && !Args->CheckParm("-allowdecoratecrossincludes"))
 			{
-				int includefile = Wads.GetLumpFile(Wads.CheckNumForFullName(sc.String, true));
+				int includefile = fileSystem.GetFileContainer(fileSystem.CheckNumForFullName(sc.String, true));
 				if (includefile != 0)
 				{
 					I_FatalError("File %s is overriding core lump %s.",
-						Wads.GetWadFullName(includefile), sc.String);
+						fileSystem.GetResourceFileFullName(includefile), sc.String);
 				}
 			}
 			FScanner newscanner;
@@ -1341,7 +1344,7 @@ void ParseAllDecorate()
 {
 	int lastlump = 0, lump;
 
-	while ((lump = Wads.FindLump("DECORATE", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump("DECORATE", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 		auto ns = Namespaces.NewNamespace(sc.LumpNum);

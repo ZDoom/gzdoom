@@ -2,7 +2,7 @@
 
 #include "hwrenderer/data/buffers.h"
 #include "polyrenderer/drawers/poly_triangle.h"
-#include "utility/tarray.h"
+#include "tarray.h"
 #include <vector>
 
 #ifdef _MSC_VER

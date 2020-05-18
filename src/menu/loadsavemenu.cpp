@@ -37,12 +37,14 @@
 #include "version.h"
 #include "g_game.h"
 #include "m_png.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "gstrings.h"
 #include "serializer.h"
 #include "vm.h"
 #include "i_system.h"
+#include "v_video.h"
+#include "findfile.h"
 
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24
@@ -168,7 +170,7 @@ void FSavegameManager::ReadSaveStrings()
 				// I_FindName only returns the file's name and not its full path
 				FString filepath = G_BuildSaveName(I_FindName(&c_file), -1);
 
-				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, true, true);
+				std::unique_ptr<FResourceFile> savegame(FResourceFile::OpenResourceFile(filepath, true, true));
 				if (savegame != nullptr)
 				{
 					bool oldVer = false;
@@ -177,11 +179,10 @@ void FSavegameManager::ReadSaveStrings()
 					if (info == nullptr)
 					{
 						// savegame info not found. This is not a savegame so leave it alone.
-						delete savegame;
 						continue;
 					}
-					void *data = info->CacheLump();
-					FSerializer arc(nullptr);
+					void *data = info->Lock();
+					FSerializer arc;
 					if (arc.OpenReader((const char *)data, info->LumpSize))
 					{
 						int savever = 0;
@@ -195,7 +196,6 @@ void FSavegameManager::ReadSaveStrings()
 						{
 							// different engine or newer version:
 							// not our business. Leave it alone.
-							delete savegame;
 							continue;
 						}
 
@@ -204,14 +204,13 @@ void FSavegameManager::ReadSaveStrings()
 							// old, incompatible savegame. List as not usable.
 							oldVer = true;
 						}
-						else if (iwad.CompareNoCase(Wads.GetWadName(Wads.GetIwadNum())) == 0)
+						else if (iwad.CompareNoCase(fileSystem.GetResourceFileName(fileSystem.GetIwadNum())) == 0)
 						{
 							missing = !G_CheckSaveGameWads(arc, false);
 						}
 						else
 						{
 							// different game. Skip this.
-							delete savegame;
 							continue;
 						}
 
@@ -221,7 +220,6 @@ void FSavegameManager::ReadSaveStrings()
 						node->bMissingWads = missing;
 						node->SaveTitle = title;
 						InsertSaveNode(node);
-						delete savegame;
 					}
 
 				}
@@ -470,8 +468,8 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			// this should not happen because the file has already been verified.
 			return index;
 		}
-		void *data = info->CacheLump();
-		FSerializer arc(nullptr);
+		void *data = info->Lock();
+		FSerializer arc;
 		if (arc.OpenReader((const char *)data, info->LumpSize))
 		{
 			FString comment;
@@ -492,10 +490,9 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 
 				picreader.OpenMemoryArray([=](TArray<uint8_t> &array)
 				{
-					auto cache = pic->CacheLump();
+					auto cache = pic->Lock();
 					array.Resize(pic->LumpSize);
 					memcpy(&array[0], cache, pic->LumpSize);
-					pic->ReleaseCache();
 					return true;
 				});
 				PNGHandle *png = M_VerifyPNG(picreader);
@@ -507,7 +504,6 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 					{
 						delete SavePic;
 						SavePic = nullptr;
-						SavePicData.Clear();
 					}
 				}
 			}
@@ -539,7 +535,6 @@ void FSavegameManager::UnloadSaveData()
 
 	SaveCommentString = "";
 	SavePic = nullptr;
-	SavePicData.Clear();
 }
 
 DEFINE_ACTION_FUNCTION(FSavegameManager, UnloadSaveData)
@@ -580,7 +575,7 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, ClearSaveStuff)
 bool FSavegameManager::DrawSavePic(int x, int y, int w, int h)
 {
 	if (SavePic == nullptr) return false;
-	screen->DrawTexture(SavePic, x, y, 	DTA_DestWidth, w, DTA_DestHeight, h, DTA_Masked, false,	TAG_DONE);
+	DrawTexture(twod, SavePic, x, y, 	DTA_DestWidth, w, DTA_DestHeight, h, DTA_Masked, false,	TAG_DONE);
 	return true;
 }
 

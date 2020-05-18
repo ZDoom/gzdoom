@@ -29,7 +29,7 @@
 #include "actor.h"
 #include "i_time.h"
 #include "g_game.h"
-#include "gamedata/fonts/v_text.h"
+#include "v_text.h"
 
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_vrmodes.h"
@@ -58,7 +58,7 @@
 #include "vulkan/textures/vk_hwtexture.h"
 #include "vulkan/system/vk_builders.h"
 #include "vulkan/system/vk_swapchain.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
 void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);

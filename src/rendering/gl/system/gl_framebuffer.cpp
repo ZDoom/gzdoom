@@ -26,12 +26,12 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "v_video.h"
 #include "m_png.h"
 #include "templates.h"
 
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
@@ -435,7 +435,7 @@ TArray<uint8_t> OpenGLFrameBuffer::GetScreenshotBuffer(int &pitch, ESSType &colo
 
 	// Screenshot should not use gamma correction if it was already applied to rendered image
 	gamma = 1;
-	if (vid_hdr_active && fullscreen)
+	if (vid_hdr_active && vid_fullscreen)
 		gamma *= 2.2f;
 	return ScreenshotBuffer;
 }
@@ -475,7 +475,7 @@ FTexture *OpenGLFrameBuffer::WipeStartScreen()
 	const auto &viewport = screen->mScreenViewport;
 
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
-	tex->GetSystemTexture()->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
+	tex->GetSystemTexture()->CreateTexture(nullptr, viewport.width, viewport.height, 0, false, "WipeStartScreen");
 	glFinish();
 	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false);
 
@@ -497,7 +497,7 @@ FTexture *OpenGLFrameBuffer::WipeEndScreen()
 	GLRenderer->Flush();
 	const auto &viewport = screen->mScreenViewport;
 	auto tex = new FWrapperTexture(viewport.width, viewport.height, 1);
-	tex->GetSystemTexture()->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
+	tex->GetSystemTexture()->CreateTexture(NULL, viewport.width, viewport.height, 0, false, "WipeEndScreen");
 	glFinish();
 	static_cast<FHardwareTexture*>(tex->GetSystemTexture())->Bind(0, false);
 	GLRenderer->mBuffers->BindCurrentFB();

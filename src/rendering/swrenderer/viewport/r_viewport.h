@@ -7,7 +7,7 @@
 #include "r_defs.h"
 #include "r_utility.h"
 #include "actorinlines.h"
-#include "utility/matrix.h"
+#include "matrix.h"
 
 #define MINZ double((2048*4) / double(1 << 20))
 

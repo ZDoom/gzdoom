@@ -51,18 +51,18 @@
 #include "g_level.h"
 #include "cmdlib.h"
 #include "gstrings.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "d_player.h"
 #include "r_state.h"
 #include "c_dispatch.h"
 #include "decallib.h"
 #include "a_sharedglobal.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
 #include "thingdef.h"
 #include "v_text.h"
-#include "backend/vmbuilder.h"
+#include "vmbuilder.h"
 #include "types.h"
 #include "m_argv.h"
 #include "actorptrselect.h"
@@ -277,7 +277,8 @@ DehSpriteMappings[] =
 
 #define CHECKKEY(a,b)		if (!stricmp (Line1, (a))) (b) = atoi(Line2);
 
-static char *PatchFile, *PatchPt, *PatchName;
+static char* PatchFile, * PatchPt;
+FString PatchName;
 static int PatchSize;
 static char *Line1, *Line2;
 static int	 dversion, pversion;
@@ -2114,7 +2115,7 @@ static int PatchCodePtrs (int dummy)
 				{
 					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
 					{
-						symname = MBFCodePointers[i].name;
+						symname = MBFCodePointers[i].name.GetChars();
 						DPrintf(DMSG_SPAMMY, "%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
 						ismbfcp = true;
 						break;
@@ -2250,13 +2251,13 @@ static int PatchText (int oldSize)
 					// This must be done because the map is scanned using a binary search.
 					while (i > 0 && strncmp (DehSpriteMappings[i-1].Sprite, newStr, 4) > 0)
 					{
-						swapvalues (DehSpriteMappings[i-1], DehSpriteMappings[i]);
+						std::swap (DehSpriteMappings[i-1], DehSpriteMappings[i]);
 						--i;
 					}
 					while ((size_t)i < countof(DehSpriteMappings)-1 &&
 						strncmp (DehSpriteMappings[i+1].Sprite, newStr, 4) < 0)
 					{
-						swapvalues (DehSpriteMappings[i+1], DehSpriteMappings[i]);
+						std::swap (DehSpriteMappings[i+1], DehSpriteMappings[i]);
 						++i;
 					}
 					break;
@@ -2341,7 +2342,8 @@ static int DoInclude (int dummy)
 {
 	char *data;
 	int savedversion, savepversion, savepatchsize;
-	char *savepatchfile, *savepatchpt, *savepatchname;
+	char* savepatchfile, * savepatchpt;
+	FString savepatchname;
 
 	if (including)
 	{
@@ -2424,7 +2426,7 @@ CVAR(Int, dehload, 0, CVAR_ARCHIVE)	// Autoloading of .DEH lumps is disabled by 
 // checks if lump is a .deh or .bex file. Only lumps in the root directory are considered valid.
 static bool isDehFile(int lumpnum)
 {
-	const char* const fullName  = Wads.GetLumpFullName(lumpnum);
+	const char* const fullName  = fileSystem.GetFileFullName(lumpnum);
 	const char* const extension = strrchr(fullName, '.');
 
 	return NULL != extension && strchr(fullName, '/') == NULL
@@ -2435,16 +2437,16 @@ int D_LoadDehLumps(DehLumpSource source)
 {
 	int lastlump = 0, lumpnum, count = 0;
 
-	while ((lumpnum = Wads.FindLump("DEHACKED", &lastlump)) >= 0)
+	while ((lumpnum = fileSystem.FindLump("DEHACKED", &lastlump)) >= 0)
 	{
-		const int filenum = Wads.GetLumpFile(lumpnum);
+		const int filenum = fileSystem.GetFileContainer(lumpnum);
 		
-		if (FromIWAD == source && filenum > Wads.GetMaxIwadNum())
+		if (FromIWAD == source && filenum > fileSystem.GetMaxIwadNum())
 		{
 			// No more DEHACKED lumps in IWAD
 			break;
 		}
-		else if (FromPWADs == source && filenum <= Wads.GetMaxIwadNum())
+		else if (FromPWADs == source && filenum <= fileSystem.GetMaxIwadNum())
 		{
 			// Skip DEHACKED lumps from IWAD
 			continue;
@@ -2459,7 +2461,7 @@ int D_LoadDehLumps(DehLumpSource source)
 
 		if (dehload == 1)	// load all .DEH lumps that are found.
 		{
-			for (lumpnum = 0, lastlump = Wads.GetNumLumps(); lumpnum < lastlump; ++lumpnum)
+			for (lumpnum = 0, lastlump = fileSystem.GetNumEntries(); lumpnum < lastlump; ++lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -2469,7 +2471,7 @@ int D_LoadDehLumps(DehLumpSource source)
 		}
 		else 	// only load the last .DEH lump that is found.
 		{
-			for (lumpnum = Wads.GetNumLumps()-1; lumpnum >=0; --lumpnum)
+			for (lumpnum = fileSystem.GetNumEntries()-1; lumpnum >=0; --lumpnum)
 			{
 				if (isDehFile(lumpnum))
 				{
@@ -2486,13 +2488,13 @@ int D_LoadDehLumps(DehLumpSource source)
 bool D_LoadDehLump(int lumpnum)
 {
 	auto ls = LumpFileNum;
-	LumpFileNum = Wads.GetLumpFile(lumpnum);
+	LumpFileNum = fileSystem.GetFileContainer(lumpnum);
 
-	PatchSize = Wads.LumpLength(lumpnum);
+	PatchSize = fileSystem.FileLength(lumpnum);
 
-	PatchName = copystring(Wads.GetLumpFullPath(lumpnum));
+	PatchName = fileSystem.GetFileFullPath(lumpnum);
 	PatchFile = new char[PatchSize + 1];
-	Wads.ReadLump(lumpnum, PatchFile);
+	fileSystem.ReadFile(lumpnum, PatchFile);
 	PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
 	auto res = DoDehPatch();
 	LumpFileNum = ls;
@@ -2508,7 +2510,7 @@ bool D_LoadDehFile(const char *patchfile)
 	{
 		PatchSize = (int)fr.GetLength();
 
-		PatchName = copystring(patchfile);
+		PatchName = patchfile;
 		PatchFile = new char[PatchSize + 1];
 		fr.Read(PatchFile, PatchSize);
 		fr.Close();
@@ -2518,14 +2520,14 @@ bool D_LoadDehFile(const char *patchfile)
 	else
 	{
 		// Couldn't find it in the filesystem; try from a lump instead.
-		int lumpnum = Wads.CheckNumForFullName(patchfile, true);
+		int lumpnum = fileSystem.CheckNumForFullName(patchfile, true);
 		if (lumpnum < 0)
 		{
 			// Compatibility fallback. It's just here because
 			// some WAD may need it. Should be deleted if it can
 			// be confirmed that nothing uses this case.
 			FString filebase(ExtractFileBase(patchfile));
-			lumpnum = Wads.CheckNumForName(filebase);
+			lumpnum = fileSystem.CheckNumForName(filebase);
 		}
 		if (lumpnum >= 0)
 		{
@@ -2538,7 +2540,7 @@ bool D_LoadDehFile(const char *patchfile)
 
 static bool DoDehPatch()
 {
-	if (!batchrun) Printf("Adding dehacked patch %s\n", PatchName);
+	if (!batchrun) Printf("Adding dehacked patch %s\n", PatchName.GetChars());
 
 	int cont;
 
@@ -2548,8 +2550,8 @@ static bool DoDehPatch()
 	{
 		if (PatchFile[25] < '3' && (PatchFile[25] < '2' || PatchFile[27] < '3'))
 		{
-			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchName);
-			delete[] PatchName;
+			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchName.GetChars());
+			PatchName = "";
 			delete[] PatchFile;
 			return false;
 		}
@@ -2567,8 +2569,8 @@ static bool DoDehPatch()
 		}
 		if (!cont || dversion == -1 || pversion == -1)
 		{
-			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", PatchName);
-			delete[] PatchName;
+			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", PatchName.GetChars());
+			PatchName = "";
 			delete[] PatchFile;
 			return false;
 		}
@@ -2608,7 +2610,7 @@ static bool DoDehPatch()
 	{
 		Printf ("Could not load DEH support data\n");
 		UnloadDehSupp ();
-		delete[] PatchName;
+		PatchName = "";
 		delete[] PatchFile;
 		return false;
 	}
@@ -2627,7 +2629,7 @@ static bool DoDehPatch()
 	} while (cont);
 
 	UnloadDehSupp ();
-	delete[] PatchName;
+	PatchName = "";
 	delete[] PatchFile;
 	if (!batchrun) Printf ("Patch installed\n");
 	return true;
@@ -2680,14 +2682,14 @@ static bool LoadDehSupp ()
 	{
 		// Make sure we only get the DEHSUPP lump from zdoom.pk3
 		// User modifications are not supported!
-		int lump = Wads.CheckNumForName("DEHSUPP");
+		int lump = fileSystem.CheckNumForName("DEHSUPP");
 
 		if (lump == -1)
 		{
 			return false;
 		}
 
-		if (Wads.GetLumpFile(lump) > 0)
+		if (fileSystem.GetFileContainer(lump) > 0)
 		{
 			Printf("Warning: DEHSUPP no longer supported. DEHACKED patch disabled.\n");
 			return false;
@@ -3027,7 +3029,9 @@ void FinishDehPatch ()
 		{
 			// Retry until we find a free name. This is unlikely to happen but not impossible.
 			mysnprintf(typeNameBuilder, countof(typeNameBuilder), "DehackedPickup%d", nameindex++);
-			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size));
+			bool newlycreated;
+			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size, &newlycreated));
+			if (newlycreated) subclass->InitializeDefaults();
 		} 
 		while (subclass == nullptr);
 		NewClassType(subclass);	// This needs a VM type to work as intended.
@@ -3077,7 +3081,7 @@ void FinishDehPatch ()
 	StateMap.Reset();
 	TouchedActors.Reset();
 	EnglishStrings.Clear();
-	GStrings.SetDehackedStrings(std::move(DehStrings));
+	GStrings.SetOverrideStrings(std::move(DehStrings));
 
 	// Now it gets nasty: We have to fiddle around with the weapons' ammo use info to make Doom's original
 	// ammo consumption work as intended.

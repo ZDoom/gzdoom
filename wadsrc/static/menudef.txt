@@ -734,6 +734,7 @@ OptionMenu "MouseOptions" protected
 	Slider "$MOUSEMNU_STRAFESPEED",		"m_side", 0, 2.5, 0.1
 	StaticText 	""
 	Option "$MOUSEMNU_ALWAYSMOUSELOOK",	"freelook", "OnOff"
+	Option "$MOUSEMNU_INVERTMOUSEX",		"invertmousex", "OnOff"
 	Option "$MOUSEMNU_INVERTMOUSE",		"invertmouse", "OnOff"
 	Option "$MOUSEMNU_LOOKSPRING",		"lookspring", "OnOff"
 	Option "$MOUSEMNU_LOOKSTRAFE",		"lookstrafe", "OnOff"
@@ -1679,6 +1680,7 @@ OptionValue CompatModes
 	3, "$OPTVAL_BOOM"
 	6, "$OPTVAL_BOOMSTRICT"
 	5, "$OPTVAL_MBF"
+	7, "$OPTVAL_MBFSTRICT"
 	4, "$OPTVAL_ZDOOM2063"
 }
 

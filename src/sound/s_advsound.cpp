@@ -37,7 +37,7 @@
 #include "templates.h"
 #include "actor.h"
 #include "c_dispatch.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "i_sound.h"
 #include "d_netinf.h"
@@ -147,14 +147,6 @@ struct FBloodSFX
 	char	RawName[9];	// name of RAW resource
 };
 
-// music volume multipliers
-struct FMusicVolume
-{
-	FMusicVolume *Next;
-	float Volume;
-	char MusicName[1];
-};
-
 // This is used to recreate the skin sounds after reloading SNDINFO due to a changed local one.
 struct FSavedPlayerSoundInfo
 {
@@ -167,7 +159,6 @@ struct FSavedPlayerSoundInfo
 
 // This specifies whether Timidity or Windows playback is preferred for a certain song (only useful for Windows.)
 MusicAliasMap MusicAliases;
-MidiDeviceMap MidiDevices;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -230,7 +221,6 @@ static const char *SICommandStrings[] =
 	NULL
 };
 
-static FMusicVolume *MusicVolumes;
 static TArray<FSavedPlayerSoundInfo> SavedPlayerSounds;
 
 static int NumPlayerReserves;
@@ -249,28 +239,6 @@ static uint8_t CurrentPitchMask;
 
 //==========================================================================
 //
-// S_GetMusicVolume
-//
-// Gets the relative volume for the given music track
-//==========================================================================
-
-float S_GetMusicVolume (const char *music)
-{
-	FMusicVolume *musvol = MusicVolumes;
-
-	while (musvol != NULL)
-	{
-		if (!stricmp (music, musvol->MusicName))
-		{
-			return musvol->Volume;
-		}
-		musvol = musvol->Next;
-	}
-	return 1.f;
-}
-
-//==========================================================================
-//
 // S_CheckIntegrity
 //
 // Scans the entire sound list and looks for recursive definitions.
@@ -283,7 +251,7 @@ static bool S_CheckSound(sfxinfo_t *startsfx, sfxinfo_t *sfx, TArray<sfxinfo_t *
 	bool success = true;
 	unsigned siz = chain.Size();
 
-	if (sfx->bPlayerReserve)
+	if (sfx->UserData[0] & SND_PlayerReserve)
 	{
 		return true;
 	}
@@ -386,7 +354,7 @@ unsigned int S_GetMSLength(FSoundID sound)
 	// Resolve player sounds, random sounds, and aliases
 	if (sfx->link != sfxinfo_t::NO_LINK)
 	{
-		if (sfx->bPlayerReserve)
+		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			sfx = &S_sfx[S_FindSkinnedSound (NULL, sound)];
 		}
@@ -435,7 +403,7 @@ DEFINE_ACTION_FUNCTION(DObject,S_GetLength)
 
 int S_AddSound (const char *logicalname, const char *lumpname, FScanner *sc)
 {
-	int lump = Wads.CheckNumForFullName (lumpname, true, ns_sounds);
+	int lump = fileSystem.CheckNumForFullName (lumpname, true, ns_sounds);
 	return S_AddSound (logicalname, lump);
 }
 
@@ -450,7 +418,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 	{ // If the sound has already been defined, change the old definition
 		sfxinfo_t *sfx = &S_sfx[sfxid];
 
-		if (sfx->bPlayerReserve)
+		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			if (sc != NULL)
 			{
@@ -462,7 +430,7 @@ static int S_AddSound (const char *logicalname, int lumpnum, FScanner *sc)
 			}
 		}
 		// Redefining a player compatibility sound will redefine the target instead.
-		if (sfx->bPlayerCompat)
+		if (sfx->UserData[0] & SND_PlayerCompat)
 		{
 			sfx = &S_sfx[sfx->link];
 		}
@@ -505,7 +473,7 @@ int S_AddPlayerSound (const char *pclass, int gender, int refid,
 	
 	if (lumpname)
 	{
-		lump = Wads.CheckNumForFullName (lumpname, true, ns_sounds);
+		lump = fileSystem.CheckNumForFullName (lumpname, true, ns_sounds);
 	}
 
 	return S_AddPlayerSound (pclass, gender, refid, lump);
@@ -744,12 +712,7 @@ void S_ClearSoundData()
 		soundEngine->Clear();
 
 	Ambients.Clear();
-	while (MusicVolumes != NULL)
-	{
-		FMusicVolume *me = MusicVolumes;
-		MusicVolumes = me->Next;
-		M_Free(me);
-	}
+	MusicVolumes.Clear();
 
 	NumPlayerReserves = 0;
 	PlayerClassesIsSorted = false;
@@ -780,19 +743,15 @@ void S_ParseSndInfo (bool redefine)
 
 	CurrentPitchMask = 0;
 	S_AddSound ("{ no sound }", "DSEMPTY");	// Sound 0 is no sound at all
-	for (lump = 0; lump < Wads.GetNumLumps(); ++lump)
+	for (lump = 0; lump < fileSystem.GetNumEntries(); ++lump)
 	{
-		switch (Wads.GetLumpNamespace (lump))
+		switch (fileSystem.GetFileNamespace (lump))
 		{
 		case ns_global:
-			if (Wads.CheckLumpName (lump, "SNDINFO"))
+			if (fileSystem.CheckFileName (lump, "SNDINFO"))
 			{
 				S_AddSNDINFO (lump);
 			}
-			break;
-
-		case ns_bloodsfx:
-			S_AddBloodSFX (lump);
 			break;
 
 		case ns_strifevoices:
@@ -805,7 +764,7 @@ void S_ParseSndInfo (bool redefine)
 
 	S_ShrinkPlayerSoundLists ();
 
-	sfx_empty = Wads.CheckNumForName ("dsempty", ns_sounds);
+	sfx_empty = fileSystem.CheckNumForName ("dsempty", ns_sounds);
 	S_CheckIntegrity();
 }
 
@@ -979,7 +938,7 @@ static void S_AddSNDINFO (int lump)
 				sfxnum = S_AddPlayerSound (pclass, gender, refid, sc.String);
 				if (0 == stricmp(sc.String, "dsempty"))
 				{
-					S_sfx[sfxnum].bPlayerSilent = true;
+					S_sfx[sfxnum].UserData[0] |= SND_PlayerSilent;
 				}
 				}
 				break;
@@ -991,7 +950,7 @@ static void S_AddSNDINFO (int lump)
 
 				S_ParsePlayerSoundCommon (sc, pclass, gender, refid);
 				targid = soundEngine->FindSoundNoHash (sc.String);
-				if (!S_sfx[targid].bPlayerReserve)
+				if (!(S_sfx[targid].UserData[0] & SND_PlayerReserve))
 				{
 					sc.ScriptError ("%s is not a player sound", sc.String);
 				}
@@ -1009,7 +968,7 @@ static void S_AddSNDINFO (int lump)
 				sfxfrom = S_AddSound (sc.String, -1, &sc);
 				aliasto = S_LookupPlayerSound (pclass, gender, refid);
 				S_sfx[sfxfrom].link = aliasto;
-				S_sfx[sfxfrom].bPlayerCompat = true;
+				S_sfx[sfxfrom].UserData[0] |= SND_PlayerCompat;
 				}
 				break;
 
@@ -1032,7 +991,7 @@ static void S_AddSNDINFO (int lump)
 				sc.MustGetString ();
 				sfxfrom = S_AddSound (sc.String, -1, &sc);
 				sc.MustGetString ();
-				if (S_sfx[sfxfrom].bPlayerCompat)
+				if (S_sfx[sfxfrom].UserData[0] & SND_PlayerCompat)
 				{
 					sfxfrom = S_sfx[sfxfrom].link;
 				}
@@ -1183,24 +1142,20 @@ static void S_AddSNDINFO (int lump)
 
 			case SI_MusicVolume: {
 				sc.MustGetString();
-				FString musname (sc.String);
+				FName musname (sc.String);
 				sc.MustGetFloat();
-				FMusicVolume *mv = (FMusicVolume *)M_Malloc (sizeof(*mv) + musname.Len());
-				mv->Volume = (float)sc.Float;
-				strcpy (mv->MusicName, musname);
-				mv->Next = MusicVolumes;
-				MusicVolumes = mv;
+				MusicVolumes[musname] = (float)sc.Float;
 				}
 				break;
 
 			case SI_MusicAlias: {
 				sc.MustGetString();
-				int lump = Wads.CheckNumForName(sc.String, ns_music);
+				int lump = fileSystem.CheckNumForName(sc.String, ns_music);
 				if (lump >= 0)
 				{
 					// do not set the alias if a later WAD defines its own music of this name
-					int file = Wads.GetLumpFile(lump);
-					int sndifile = Wads.GetLumpFile(sc.LumpNum);
+					int file = fileSystem.GetFileContainer(lump);
+					int sndifile = fileSystem.GetFileContainer(sc.LumpNum);
 					if (file > sndifile)
 					{
 						sc.MustGetString();
@@ -1212,7 +1167,7 @@ static void S_AddSNDINFO (int lump)
 				FName mapped = sc.String;
 
 				// only set the alias if the lump it maps to exists.
-				if (mapped == NAME_None || Wads.CheckNumForFullName(sc.String, true, ns_music) >= 0)
+				if (mapped == NAME_None || fileSystem.CheckNumForFullName(sc.String, true, ns_music) >= 0)
 				{
 					MusicAliases[alias] = mapped;
 				}
@@ -1276,54 +1231,6 @@ static void S_AddSNDINFO (int lump)
 
 //==========================================================================
 //
-// S_AddBloodSFX
-//
-// Registers a new sound with the name "<lumpname>.sfx"
-// Actual sound data is searched for in the ns_bloodraw namespace.
-//
-//==========================================================================
-
-static void S_AddBloodSFX (int lumpnum)
-{
-	FMemLump sfxlump = Wads.ReadLump(lumpnum);
-	const FBloodSFX *sfx = (FBloodSFX *)sfxlump.GetMem();
-	int rawlump = Wads.CheckNumForName(sfx->RawName, ns_bloodraw);
-	int sfxnum;
-
-	if (rawlump != -1)
-	{
-		auto &S_sfx = soundEngine->GetSounds();
-		const char *name = Wads.GetLumpFullName(lumpnum);
-		sfxnum = S_AddSound(name, rawlump);
-		if (sfx->Format < 5 || sfx->Format > 12)
-		{	// [0..4] + invalid formats
-			S_sfx[sfxnum].RawRate = 11025;
-		}
-		else if (sfx->Format < 9)
-		{	// [5..8]
-			S_sfx[sfxnum].RawRate = 22050;
-		}
-		else
-		{	// [9..12]
-			S_sfx[sfxnum].RawRate = 44100;
-		}
-		S_sfx[sfxnum].bLoadRAW = true;
-		S_sfx[sfxnum].LoopStart = LittleLong(sfx->LoopStart);
-		// Make an ambient sound out of it, whether it has a loop point
-		// defined or not. (Because none of the standard Blood ambient
-		// sounds are explicitly defined as looping.)
-		FAmbientSound *ambient = &Ambients[Wads.GetLumpIndexNum(lumpnum)];
-		ambient->type = CONTINUOUS;
-		ambient->periodmin = 0;
-		ambient->periodmax = 0;
-		ambient->volume = 1;
-		ambient->attenuation = 1;
-		ambient->sound = FSoundID(sfxnum);
-	}
-}
-
-//==========================================================================
-//
 // S_AddStrifeVoice
 //
 // Registers a new sound with the name "svox/<lumpname>"
@@ -1333,7 +1240,7 @@ static void S_AddBloodSFX (int lumpnum)
 static void S_AddStrifeVoice (int lumpnum)
 {
 	char name[16] = "svox/";
-	Wads.GetLumpName (name+5, lumpnum);
+	fileSystem.GetFileShortName (name+5, lumpnum);
 	S_AddSound (name, lumpnum);
 }
 
@@ -1354,7 +1261,7 @@ static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender
 	sc.MustGetString ();
 	refid = soundEngine->FindSoundNoHash (sc.String);
 	auto &S_sfx = soundEngine->GetSounds();
-	if (refid != 0 && !S_sfx[refid].bPlayerReserve && !S_sfx[refid].bTentative)
+	if (refid != 0 && !(S_sfx[refid].UserData[0] & SND_PlayerReserve) && !S_sfx[refid].bTentative)
 	{
 		sc.ScriptError ("%s has already been used for a non-player sound.", sc.String);
 	}
@@ -1367,7 +1274,7 @@ static void S_ParsePlayerSoundCommon (FScanner &sc, FString &pclass, int &gender
 	{
 		S_sfx[refid].link = NumPlayerReserves++;
 		S_sfx[refid].bTentative = false;
-		S_sfx[refid].bPlayerReserve = true;
+		S_sfx[refid].UserData[0] |= SND_PlayerReserve;
 	}
 	sc.MustGetString ();
 }
@@ -1516,7 +1423,7 @@ int S_LookupPlayerSound (const char *pclass, int gender, const char *name)
 int S_LookupPlayerSound (const char *pclass, int gender, FSoundID refid)
 {
 	auto &S_sfx = soundEngine->GetSounds();
-	if (!S_sfx[refid].bPlayerReserve)
+	if (!(S_sfx[refid].UserData[0] & SND_PlayerReserve))
 	{ // Not a player sound, so just return this sound
 		return refid;
 	}
@@ -1562,7 +1469,7 @@ static int S_LookupPlayerSound (int classidx, int gender, FSoundID refid)
 		(sndnum == 0 ||
 		((S_sfx[sndnum].lumpnum == -1 || S_sfx[sndnum].lumpnum == sfx_empty) &&
 		 S_sfx[sndnum].link == sfxinfo_t::NO_LINK &&
-		 !S_sfx[sndnum].bPlayerSilent)))
+		 !(S_sfx[sndnum].UserData[0] & SND_PlayerSilent))))
 	{ // This sound is unavailable.
 		if (ingender != 0)
 		{ // Try "male"
@@ -1605,11 +1512,11 @@ static void S_RestorePlayerSounds()
 		FSavedPlayerSoundInfo * spi = &SavedPlayerSounds[i];
 		if (spi->alias)
 		{
-			S_AddPlayerSoundExisting(spi->pclass, spi->gender, spi->refid, spi->lumpnum);
+			S_AddPlayerSoundExisting(spi->pclass.GetChars(), spi->gender, spi->refid, spi->lumpnum);
 		}
 		else
 		{
-			S_AddPlayerSound(spi->pclass, spi->gender, spi->refid, spi->lumpnum);
+			S_AddPlayerSound(spi->pclass.GetChars(), spi->gender, spi->refid, spi->lumpnum);
 		}
 	}
 }
@@ -1642,7 +1549,7 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 	// Dereference aliases, but not random or player sounds
 	while ((sfx = &S_sfx[id1])->link != sfxinfo_t::NO_LINK)
 	{
-		if (sfx->bPlayerReserve)
+		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			id1 = S_FindSkinnedSound (actor, id1);
 		}
@@ -1657,7 +1564,7 @@ bool S_AreSoundsEquivalent (AActor *actor, int id1, int id2)
 	}
 	while ((sfx = &S_sfx[id2])->link != sfxinfo_t::NO_LINK)
 	{
-		if (sfx->bPlayerReserve)
+		if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			id2 = S_FindSkinnedSound (actor, id2);
 		}
@@ -1799,7 +1706,7 @@ CCMD (soundlinks)
 
 		if (sfx->link != sfxinfo_t::NO_LINK &&
 			!sfx->bRandomHeader &&
-			!sfx->bPlayerReserve)
+			!(sfx->UserData[0] & SND_PlayerReserve))
 		{
 			Printf ("%s -> %s\n", sfx->name.GetChars(), S_sfx[sfx->link].name.GetChars());
 		}
@@ -1823,7 +1730,7 @@ CCMD (playersounds)
 	memset (reserveNames, 0, sizeof(reserveNames));
 	for (i = j = 0; j < NumPlayerReserves && i < S_sfx.Size(); ++i)
 	{
-		if (S_sfx[i].bPlayerReserve)
+		if (S_sfx[i].UserData[0] & SND_PlayerReserve)
 		{
 			++j;
 			reserveNames[S_sfx[i].link] = S_sfx[i].name;
@@ -2047,7 +1954,7 @@ void S_ParseMusInfo()
 {
 	int lastlump = 0, lump;
 
-	while ((lump = Wads.FindLump ("MUSINFO", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("MUSINFO", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
 

@@ -38,6 +38,7 @@
 #include "g_level.h"
 #include "s_sndseq.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "r_data/r_interpolate.h"
 #include "g_levellocals.h"
 

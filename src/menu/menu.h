@@ -10,7 +10,7 @@
 #include "c_cvars.h"
 #include "v_font.h"
 #include "gi.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 EXTERN_CVAR(Float, snd_menuvolume)
 EXTERN_CVAR(Int, m_use_mouse);
@@ -72,7 +72,6 @@ private:
 	FSaveGameNode NewSaveNode;
 	int LastSaved = -1;
 	int LastAccessed = -1;
-	TArray<char> SavePicData;
 	FTexture *SavePic = nullptr;
 
 public:

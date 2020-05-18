@@ -39,7 +39,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_lighting.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/dynlights/hw_lightbuffer.h"
@@ -455,7 +455,7 @@ void HWFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 	}
 	else
 	{
-		Colormap.CopyFrom3DLight(light);
+		CopyFrom3DLight(Colormap, light);
 		FlatColor = plane.model->SpecialColors[plane.isceiling];
 		AddColor = plane.model->AdditiveColors[plane.isceiling];
 		TextureFx = &plane.model->planes[plane.isceiling].TextureFx;
@@ -548,7 +548,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 					lightlevel = hw_ClampLight(*light->p_lightlevel);
 				}
 
-				Colormap.CopyFrom3DLight(light);
+				CopyFrom3DLight(Colormap, light);
 			}
 			renderstyle = STYLE_Translucent;
 			Process(di, frontsector, sector_t::floor, false);
@@ -604,7 +604,7 @@ void HWFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector, int which)
 				{
 					lightlevel = hw_ClampLight(*light->p_lightlevel);
 				}
-				Colormap.CopyFrom3DLight(light);
+				CopyFrom3DLight(Colormap, light);
 			}
 			renderstyle = STYLE_Translucent;
 			Process(di, frontsector, sector_t::ceiling, false);

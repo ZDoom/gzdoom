@@ -27,7 +27,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_levellocals.h"
 #include "p_maputl.h"
 #include "swrenderer/things/r_visiblesprite.h"

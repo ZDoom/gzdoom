@@ -1,7 +1,7 @@
 
 #include <assert.h>
 #include "hardware.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include <Windows.h>
 
 EXTERN_CVAR(Bool, vid_vsync)

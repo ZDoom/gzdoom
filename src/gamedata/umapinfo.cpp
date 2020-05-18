@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "r_defs.h"
 #include "p_setup.h"
@@ -421,7 +421,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 			}
 			if (name != NAME_None)
 			{
-				levelinfo->NextMap.Format("enDSeQ%04x", int(name));
+				levelinfo->NextMap.Format("enDSeQ%04x", name.GetIndex());
 			}
 		}
 

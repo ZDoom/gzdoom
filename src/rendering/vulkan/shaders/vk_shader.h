@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "utility/vectors.h"
+#include "vectors.h"
 #include "matrix.h"
 #include "name.h"
 #include "hwrenderer/scene/hw_renderstate.h"

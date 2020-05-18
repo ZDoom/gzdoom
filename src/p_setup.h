@@ -28,10 +28,11 @@
 #ifndef __P_SETUP__
 #define __P_SETUP__
 
-#include "resourcefiles/resourcefile.h"
+#include "resourcefile.h"
 #include "doomdata.h"
 #include "r_defs.h"
 #include "nodebuild.h"
+#include "cmdlib.h"
 
 
 struct MapData
@@ -64,7 +65,6 @@ private:
 	FileReader nofile;
 public:
 	bool HasBehavior = false;
-	bool Encrypted = false;
 	bool isText = false;
 	bool InWad = false;
 	int lumpnum = -1;

@@ -51,7 +51,10 @@ CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Bool, alwaysapplydmflags, false, CVAR_SERVERINFO);
 
 // Show developer messages if true.
-CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, developer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	FScriptPosition::Developer = self;
+}
 
 // [RH] Feature control cvars
 CVAR(Bool, var_friction, true, CVAR_SERVERINFO);
@@ -198,7 +201,7 @@ CUSTOM_CVAR(Bool, ui_generic, false, CVAR_NOINITCALL) // This is for allowing to
 
 CUSTOM_CVAR(String, language, "auto", CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 {
-	GStrings.UpdateLanguage();
+	GStrings.UpdateLanguage(self);
 	for (auto Level : AllLevels())
 	{
 		// does this even make sense on secondary levels...?

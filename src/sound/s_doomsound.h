@@ -79,12 +79,3 @@ inline const char* S_GetSoundName(FSoundID id)
 	return soundEngine->GetSoundName(id);
 }
 
-inline int S_FindSound(const char* logicalname)
-{
-	return soundEngine->FindSound(logicalname);
-}
-
-inline int S_FindSoundByResID(int rid)
-{
-	return soundEngine->FindSoundByResID(rid);
-}

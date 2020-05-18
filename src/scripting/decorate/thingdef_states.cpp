@@ -43,7 +43,8 @@
 #include "p_lnspec.h"
 #include "p_local.h"
 #include "thingdef.h"
-#include "backend/codegen.h"
+#include "codegen.h"
+#include "backend/codegen_doom.h"
 #ifndef _MSC_VER
 #include "i_system.h"  // for strlwr()
 #endif // !_MSC_VER
@@ -247,7 +248,7 @@ do_stop:
 				sc.MustGetStringName(")");
 				if (min > max)
 				{
-					swapvalues(min, max);
+					std::swap(min, max);
 				}
 				state.Tics = min;
 				state.TicRange = max - min;
@@ -703,7 +704,7 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 
 FName CheckCastKludges(FName in)
 {
-	switch (in)
+	switch (in.GetIndex())
 	{
 	case NAME_Int:
 		return NAME___decorate_internal_int__;

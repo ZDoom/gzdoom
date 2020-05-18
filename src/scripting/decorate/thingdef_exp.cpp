@@ -42,9 +42,10 @@
 #include "cmdlib.h"
 #include "a_pickups.h"
 #include "thingdef.h"
-#include "backend/codegen.h"
+#include "codegen.h"
+#include "backend/codegen_doom.h"
 
-FRandom pr_exrandom ("EX_Random");
+extern FRandom pr_exrandom;
 
 static FxExpression *ParseRandom(FScanner &sc, FName identifier, PClassActor *cls);
 static FxExpression *ParseRandomPick(FScanner &sc, FName identifier, PClassActor *cls);
@@ -486,7 +487,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		FName identifier = FName(sc.String);
 		PFunction *func;
 
-		switch (identifier)
+		switch (identifier.GetIndex())
 		{
 		case NAME_Random:
 		case NAME_FRandom:
@@ -519,7 +520,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		}
 		if (sc.CheckToken('('))
 		{
-			switch (identifier)
+			switch (identifier.GetIndex())
 			{
 			case NAME_Min:
 			case NAME_Max:

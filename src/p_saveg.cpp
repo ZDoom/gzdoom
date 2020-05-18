@@ -52,7 +52,8 @@
 #include "sbar.h"
 #include "r_utility.h"
 #include "r_sky.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "g_levellocals.h"
 #include "events.h"
 #include "p_destructible.h"
@@ -77,13 +78,14 @@ FSerializer &Serialize(FSerializer &arc, const char *key, line_t &line, line_t *
 			("activation", line.activation, def->activation)
 			("special", line.special, def->special)
 			("alpha", line.alpha, def->alpha)
-			.Args("args", line.args, def->args, line.special)
 			("portalindex", line.portalindex, def->portalindex)
 			("locknumber", line.locknumber, def->locknumber)
-			("health", line.health, def->health)
+			("health", line.health, def->health);
 			// Unless the map loader is changed the sidedef references will not change between map loads so there's no need to save them.
 			//.Array("sides", line.sidedef, 2)
-			.EndObject();
+
+		SerializeArgs(arc, "args", line.args, def->args, line.special);
+		arc.EndObject();
 	}
 	return arc;
 
@@ -324,14 +326,15 @@ FSerializer &Serialize(FSerializer &arc, const char *key, sector_t &p, sector_t 
 			.Array("specialcolors", p.SpecialColors, def->SpecialColors, 5, true)
 			.Array("additivecolors", p.AdditiveColors, def->AdditiveColors, 5, true)
 			("gravity", p.gravity, def->gravity)
-			.Terrain("floorterrain", p.terrainnum[0], &def->terrainnum[0])
-			.Terrain("ceilingterrain", p.terrainnum[1], &def->terrainnum[1])
 			("healthfloor", p.healthfloor, def->healthfloor)
 			("healthceiling", p.healthceiling, def->healthceiling)
 			("health3d", p.health3d, def->health3d)
 			// GZDoom exclusive:
-			.Array("reflect", p.reflect, def->reflect, 2, true)
-			.EndObject();
+			.Array("reflect", p.reflect, def->reflect, 2, true);
+
+		SerializeTerrain(arc, "floorterrain", p.terrainnum[0], &def->terrainnum[0]);
+		SerializeTerrain(arc, "ceilingterrain", p.terrainnum[1], &def->terrainnum[1]);
+		arc.EndObject();
 	}
 	return arc;
 }
@@ -374,7 +377,7 @@ FSerializer &FLevelLocals::SerializeSubsectors(FSerializer &arc, const char *key
 	auto numsubsectors = subsectors.Size();
 	if (arc.isWriting())
 	{
-		TArray<char> encoded(1 + (numsubsectors + 5) / 6);
+		TArray<char> encoded(1 + (numsubsectors + 5) / 6, true);
 		int p = 0;
 		for (unsigned i = 0; i < numsubsectors; i += 6)
 		{
@@ -847,7 +850,7 @@ void FLevelLocals::CopyPlayer(player_t *dst, player_t *src, const char *name)
 	if (dst->Bot != nullptr)
 	{
 		botinfo_t *thebot = BotInfo.botinfo;
-		while (thebot && stricmp(name, thebot->name))
+		while (thebot && thebot->Name.CompareNoCase(name))
 		{
 			thebot = thebot->next;
 		}
@@ -1025,7 +1028,7 @@ void FLevelLocals::Serialize(FSerializer &arc, bool hubload)
 	arc("polyobjs", Polyobjects);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);
-	FRemapTable::StaticSerializeTranslations(arc);
+	StaticSerializeTranslations(arc);
 	canvasTextureInfo.Serialize(arc);
 	SerializePlayers(arc, hubload);
 	SerializeSounds(arc);
@@ -1072,7 +1075,7 @@ void FLevelLocals::SnapshotLevel()
 
 	if (info->isValid())
 	{
-		FSerializer arc(this);
+		FDoomSerializer arc(this);
 
 		if (arc.OpenWriter(save_formatted))
 		{
@@ -1097,7 +1100,7 @@ void FLevelLocals::UnSnapshotLevel(bool hubLoad)
 
 	if (info->isValid())
 	{
-		FSerializer arc(this);
+		FDoomSerializer arc(this);
 		if (!arc.OpenReader(&info->Snapshot))
 		{
 			I_Error("Failed to load savegame");

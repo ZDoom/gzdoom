@@ -47,11 +47,11 @@
 #include "m_argv.h"
 #include "c_dispatch.h"
 #include "m_swap.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "nodebuild.h"
 #include "doomstat.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "p_setup.h"
 #include "version.h"
 #include "md5.h"
@@ -729,31 +729,31 @@ static bool MatchHeader(const char * label, const char * hdata)
 
 static int FindGLNodesInWAD(int labellump)
 {
-	int wadfile = Wads.GetLumpFile(labellump);
+	int wadfile = fileSystem.GetFileContainer(labellump);
 	FString glheader;
 
-	glheader.Format("GL_%s", Wads.GetLumpFullName(labellump));
+	glheader.Format("GL_%s", fileSystem.GetFileFullName(labellump));
 	if (glheader.Len()<=8)
 	{
-		int gllabel = Wads.CheckNumForName(glheader, ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName(glheader, ns_global, wadfile);
 		if (gllabel >= 0) return gllabel;
 	}
 	else
 	{
 		// Before scanning the entire WAD directory let's check first whether
 		// it is necessary.
-		int gllabel = Wads.CheckNumForName("GL_LEVEL", ns_global, wadfile);
+		int gllabel = fileSystem.CheckNumForName("GL_LEVEL", ns_global, wadfile);
 
 		if (gllabel >= 0)
 		{
 			int lastlump=0;
 			int lump;
-			while ((lump=Wads.FindLump("GL_LEVEL", &lastlump))>=0)
+			while ((lump=fileSystem.FindLump("GL_LEVEL", &lastlump))>=0)
 			{
-				if (Wads.GetLumpFile(lump)==wadfile)
+				if (fileSystem.GetFileContainer(lump)==wadfile)
 				{
-					FMemLump mem = Wads.ReadLump(lump);
-					if (MatchHeader(Wads.GetLumpFullName(labellump), (const char *)mem.GetMem())) return lump;
+					FileData mem = fileSystem.ReadFile(lump);
+					if (MatchHeader(fileSystem.GetFileFullName(labellump), (const char *)mem.GetMem())) return lump;
 				}
 			}
 		}
@@ -792,7 +792,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 	{
 		for(uint32_t i=0;i<numentries-4;i++)
 		{
-			if (!strnicmp(f->GetLump(i)->Name, glheader, 8))
+			if (!strnicmp(f->GetLump(i)->getName(), glheader, 8))
 			{
 				if (mustcheck)
 				{
@@ -854,11 +854,11 @@ bool MapLoader::LoadGLNodes(MapData * map)
 		FileReader gwalumps[4];
 		char path[256];
 		int li;
-		int lumpfile = Wads.GetLumpFile(map->lumpnum);
+		int lumpfile = fileSystem.GetFileContainer(map->lumpnum);
 		bool mapinwad = map->InWad;
 		FResourceFile * f_gwa = map->resource;
 
-		const char * name = Wads.GetWadFullName(lumpfile);
+		const char * name = fileSystem.GetResourceFileFullName(lumpfile);
 
 		if (mapinwad)
 		{
@@ -869,7 +869,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 				// GL nodes are loaded with a WAD
 				for(int i=0;i<4;i++)
 				{
-					gwalumps[i]=Wads.ReopenLumpReader(li+i+1);
+					gwalumps[i]=fileSystem.ReopenFileReader(li+i+1);
 				}
 				return DoLoadGLNodes(gwalumps);
 			}
@@ -886,7 +886,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 					f_gwa = FResourceFile::OpenResourceFile(path, true);
 					if (f_gwa==nullptr) return false;
 
-					strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(map->lumpnum), 8);
+					strncpy(map->MapLumps[0].Name, fileSystem.GetFileFullName(map->lumpnum), 8);
 				}
 			}
 		}
@@ -899,7 +899,7 @@ bool MapLoader::LoadGLNodes(MapData * map)
 			result=true;
 			for(unsigned i=0; i<4;i++)
 			{
-				if (strnicmp(f_gwa->GetLump(li+i+1)->Name, check[i], 8))
+				if (strnicmp(f_gwa->GetLump(li+i+1)->getName(), check[i], 8))
 				{
 					result=false;
 					break;
@@ -1000,7 +1000,7 @@ typedef TArray<uint8_t> MemFile;
 static FString CreateCacheName(MapData *map, bool create)
 {
 	FString path = M_GetCachePath(create);
-	FString lumpname = Wads.GetLumpFullPath(map->lumpnum);
+	FString lumpname = fileSystem.GetFileFullPath(map->lumpnum);
 	int separator = lumpname.IndexOf(':');
 	path << '/' << lumpname.Left(separator);
 	if (create) CreatePath(path);

@@ -15,6 +15,7 @@ class FCanvasTexture;
 class FileWriter;
 class DCanvas;
 struct FLevelLocals;
+class PClassActor;
 
 struct FRenderer
 {

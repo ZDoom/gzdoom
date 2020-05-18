@@ -27,7 +27,7 @@
 #include "actor.h"
 #include "i_time.h"
 #include "g_game.h"
-#include "gamedata/fonts/v_text.h"
+#include "v_text.h"
 
 #include "rendering/i_video.h"
 
@@ -51,7 +51,7 @@
 #include "poly_buffers.h"
 #include "poly_renderstate.h"
 #include "poly_hwtexture.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 
 void Draw2D(F2DDrawer *drawer, FRenderState &state);
 void DoWriteSavePic(FileWriter *file, ESSType ssformat, uint8_t *scr, int width, int height, sector_t *viewsector, bool upsidedown);

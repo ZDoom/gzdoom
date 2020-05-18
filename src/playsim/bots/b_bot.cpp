@@ -45,9 +45,10 @@
 #include "cmdlib.h"
 #include "teaminfo.h"
 #include "d_net.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "vm.h"
 #include "g_levellocals.h"
 
@@ -186,7 +187,7 @@ void FCajunMaster::ClearPlayer (int i, bool keepTeam)
 		players[i].mo = nullptr;
 	}
 	botinfo_t *bot = botinfo;
-	while (bot && stricmp (players[i].userinfo.GetName(), bot->name))
+	while (bot && stricmp (players[i].userinfo.GetName(), bot->Name.GetChars()))
 		bot = bot->next;
 	if (bot)
 	{
@@ -237,7 +238,7 @@ CCMD (listbots)
 
 	while (thebot)
 	{
-		Printf ("%s%s\n", thebot->name, thebot->inuse == BOTINUSE_Yes ? " (active)" : "");
+		Printf ("%s%s\n", thebot->Name.GetChars(), thebot->inuse == BOTINUSE_Yes ? " (active)" : "");
 		thebot = thebot->next;
 		count++;
 	}
@@ -253,7 +254,7 @@ void InitBotStuff()
 {
 	int lump;
 	int lastlump = 0;
-	while (-1 != (lump = Wads.FindLump("BOTSUPP", &lastlump)))
+	while (-1 != (lump = fileSystem.FindLump("BOTSUPP", &lastlump)))
 	{
 		FScanner sc(lump);
 		sc.SetCMode(true);

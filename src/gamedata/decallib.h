@@ -37,7 +37,7 @@
 #include <string.h>
 
 #include "doomtype.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 
 class FScanner;
 class FDecalTemplate;

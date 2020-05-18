@@ -23,7 +23,7 @@
 #include "templates.h"
 #include "c_cvars.h"
 #include "r_data/colormaps.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 #include "vulkan/system/vk_objects.h"
@@ -179,8 +179,8 @@ VkTextureImage *VkHardwareTexture::GetDepthStencil(FTexture *tex)
 		auto fb = GetVulkanFrameBuffer();
 
 		VkFormat format = fb->GetBuffers()->SceneDepthStencilFormat;
-		int w = tex->GetWidth();
-		int h = tex->GetHeight();
+		int w = tex->GetTexelWidth();
+		int h = tex->GetTexelHeight();
 
 		ImageBuilder builder;
 		builder.setSize(w, h);
@@ -207,9 +207,6 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 {
 	if (!tex->isHardwareCanvas())
 	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-
 		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
 		CreateTexture(texbuffer.mWidth, texbuffer.mHeight, 4, VK_FORMAT_B8G8R8A8_UNORM, texbuffer.mBuffer);
 	}
@@ -218,8 +215,8 @@ void VkHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 		auto fb = GetVulkanFrameBuffer();
 
 		VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
-		int w = tex->GetWidth();
-		int h = tex->GetHeight();
+		int w = tex->GetTexelWidth();
+		int h = tex->GetTexelHeight();
 
 		ImageBuilder imgbuilder;
 		imgbuilder.setFormat(format);
@@ -348,7 +345,7 @@ uint8_t *VkHardwareTexture::MapBuffer()
 	return mappedSWFB;
 }
 
-unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+unsigned int VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
 	return 0;
 }

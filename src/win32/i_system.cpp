@@ -61,7 +61,8 @@
 #include <wincrypt.h>
 
 #include "hardware.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
+#include "cmdlib.h"
 
 #include "version.h"
 #include "m_misc.h"
@@ -83,7 +84,7 @@
 #include "g_level.h"
 #include "doomstat.h"
 #include "i_system.h"
-#include "textures/bitmap.h"
+#include "bitmap.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -105,8 +106,6 @@ extern void LayoutMainWindow(HWND hWnd, HWND pane);
 void DestroyCustomCursor();
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void CalculateCPUSpeed();
 
 static HCURSOR CreateCompatibleCursor(FBitmap &cursorpic, int leftofs, int topofs);
 static HCURSOR CreateAlphaCursor(FBitmap &cursorpic, int leftofs, int topofs);
@@ -142,42 +141,11 @@ int sys_ostype = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static ticcmd_t emptycmd;
-
 static WadStuff *WadList;
 static int NumWads;
 static int DefaultWad;
 
 static HCURSOR CustomCursor;
-
-//==========================================================================
-//
-// I_Tactile
-//
-// Doom calls it when you take damage, so presumably it could be converted
-// to something compatible with force feedback.
-//
-//==========================================================================
-
-void I_Tactile(int on, int off, int total)
-{
-  // UNUSED.
-  on = off = total = 0;
-}
-
-//==========================================================================
-//
-// I_BaseTiccmd
-//
-// Returns an empty ticcmd. I have no idea why this should be system-
-// specific.
-//
-//==========================================================================
-
-ticcmd_t *I_BaseTiccmd()
-{
-	return &emptycmd;
-}
 
 //==========================================================================
 //
@@ -310,20 +278,6 @@ void CalculateCPUSpeed()
 
 //==========================================================================
 //
-// I_Init
-//
-//==========================================================================
-
-void I_Init()
-{
-	CheckCPUID(&CPU);
-	CalculateCPUSpeed();
-	DumpCPUInfo(&CPU);
-}
-
-
-//==========================================================================
-//
 // I_PrintStr
 //
 // Send output to the list box shown during startup (and hidden during
@@ -438,7 +392,7 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 				if (edit != NULL)
 				{
 					// GDI uses BGR colors, but color is RGB, so swap the R and the B.
-					swapvalues(color.r, color.b);
+					std::swap(color.r, color.b);
 					// Change the color.
 					format.cbSize = sizeof(format);
 					format.dwMask = CFM_COLOR;
@@ -479,15 +433,6 @@ static void DoPrintStr(const char *cpt, HWND edit, HANDLE StdOut)
 }
 
 static TArray<FString> bufferedConsoleStuff;
-
-void I_DebugPrint(const char *cp)
-{
-	if (IsDebuggerPresent())
-	{
-		auto wstr = WideString(cp);
-		OutputDebugStringW(wstr.c_str());
-	}
-}
 
 void I_PrintStr(const char *cp)
 {
@@ -571,7 +516,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 
 		// Check the current video settings.
 		//SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
-		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
+		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, vid_fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
 		switch (vid_preferbackend)
 		{
 		case 1:
@@ -629,7 +574,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			SetQueryIWad(hDlg);
 			// [SP] Upstreamed from Zandronum
-			fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
+			vid_fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
 			if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN3, BM_GETCHECK, 0, 0) == BST_CHECKED)
 				vid_preferbackend = 2;
 			else if (SendDlgItemMessage(hDlg, IDC_WELCOME_VULKAN2, BM_GETCHECK, 0, 0) == BST_CHECKED)
@@ -824,7 +769,7 @@ static HCURSOR CreateAlphaCursor(FBitmap &source, int leftofs, int topofs)
 	// Find closest integer scale factor for the monitor DPI
 	HDC screenDC = GetDC(0);
 	int dpi = GetDeviceCaps(screenDC, LOGPIXELSX);
-	int scale = MAX((dpi + 96 / 2 - 1) / 96, 1);
+	int scale = std::max((dpi + 96 / 2 - 1) / 96, 1);
 	ReleaseDC(0, screenDC);
 
 	memset(&bi, 0, sizeof(bi));
@@ -958,64 +903,6 @@ bool I_WriteIniFailed()
 	errortext.Format ("The config file %s could not be written:\n%s", GameConfig->GetPathName(), lpMsgBuf);
 	LocalFree (lpMsgBuf);
 	return MessageBoxA(Window, errortext.GetChars(), GAMENAME " configuration not saved", MB_ICONEXCLAMATION | MB_RETRYCANCEL) == IDRETRY;
-}
-
-//==========================================================================
-//
-// I_FindFirst
-//
-// Start a pattern matching sequence.
-//
-//==========================================================================
-
-
-void *I_FindFirst(const char *filespec, findstate_t *fileinfo)
-{
-	static_assert(sizeof(WIN32_FIND_DATAW) == sizeof(fileinfo->FindData), "Findata size mismatch");
-	auto widespec = WideString(filespec);
-	fileinfo->UTF8Name = "";
-	return FindFirstFileW(widespec.c_str(), (LPWIN32_FIND_DATAW)&fileinfo->FindData);
-}
-
-//==========================================================================
-//
-// I_FindNext
-//
-// Return the next file in a pattern matching sequence.
-//
-//==========================================================================
-
-int I_FindNext(void *handle, findstate_t *fileinfo)
-{
-	fileinfo->UTF8Name = "";
-	return !FindNextFileW((HANDLE)handle, (LPWIN32_FIND_DATAW)&fileinfo->FindData);
-}
-
-//==========================================================================
-//
-// I_FindClose
-//
-// Finish a pattern matching sequence.
-//
-//==========================================================================
-
-int I_FindClose(void *handle)
-{
-	return FindClose((HANDLE)handle);
-}
-
-//==========================================================================
-//
-// I_FindName
-//
-// Returns the name for an entry
-//
-//==========================================================================
-
-const char *I_FindName(findstate_t *fileinfo)
-{
-	if (fileinfo->UTF8Name.IsEmpty()) fileinfo->UTF8Name = fileinfo->FindData.Name;
-	return fileinfo->UTF8Name.GetChars();
 }
 
 //==========================================================================

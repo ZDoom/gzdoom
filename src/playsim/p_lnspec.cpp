@@ -3911,6 +3911,13 @@ int P_FindLineSpecial (const char *string, int *min_args, int *max_args)
 			max = mid - 1;
 		}
 	}
+	// Alias for ZScript. Check here to have universal support everywhere.
+	if (!stricmp(string, "TeleportSpecial"))
+	{
+		if (min_args != NULL) *min_args = 1;
+		if (max_args != NULL) *max_args = 3;
+		return Teleport;
+	}
 	return 0;
 }
 

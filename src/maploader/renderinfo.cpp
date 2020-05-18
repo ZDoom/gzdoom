@@ -709,7 +709,7 @@ void MapLoader::InitRenderInfo()
 	PrepareSectorData();
 	InitVertexData();
 	FloodSectorStacks();
-	TArray<int> checkmap(Level->vertexes.Size());
+	TArray<int> checkmap(Level->vertexes.Size(), true);
 	memset(checkmap.Data(), -1, sizeof(int)*Level->vertexes.Size());
 	for(auto &sec : Level->sectors) 
 	{

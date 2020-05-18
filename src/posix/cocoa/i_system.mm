@@ -66,12 +66,6 @@ void I_SetIWADInfo()
 }
 
 
-void I_DebugPrint(const char *cp)
-{
-	NSLog(@"%s", cp);
-}
-
-
 void I_PrintStr(const char* const message)
 {
 	FConsoleWindow::GetInstance().AddText(message);

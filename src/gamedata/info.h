@@ -50,6 +50,7 @@ struct FActorInfo;
 class FIntCVar;
 class FStateDefinitions;
 class FInternalLightAssociation;
+struct FState;
 
 enum EStateDefineFlags
 {
@@ -71,14 +72,6 @@ enum EStateFlags
 	STF_SAMEFRAME = 16,	// Ignore Frame (except when spawning actor)
 	STF_CANRAISE = 32,	// Allows a monster to be resurrected without waiting for an infinate frame
 	STF_DEHACKED = 64,	// Modified by Dehacked
-};
-
-enum EStateUseFlags
-{
-	SUF_ACTOR = 1,
-	SUF_OVERLAY = 2,
-	SUF_WEAPON = 4,
-	SUF_ITEM = 8,
 };
 
 enum EStateType : int // this must ensure proper alignment.
@@ -306,6 +299,7 @@ public:
 	void SetDamageFactor(FName type, double factor);
 	void SetPainChance(FName type, int chance);
 	bool SetReplacement(FName replaceName);
+	void InitializeDefaults();
 
 	FActorInfo *ActorInfo() const
 	{

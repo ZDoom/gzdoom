@@ -35,25 +35,20 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#else
-#include <unistd.h>
-#endif
+#include <errno.h>
 
 #include "version.h"
 #include "c_console.h"
 #include "c_dispatch.h"
 
 #include "i_system.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "doomstat.h"
 #include "gstrings.h"
 #include "s_sound.h"
 #include "g_game.h"
 #include "g_level.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "gi.h"
 #include "r_defs.h"
 #include "d_player.h"
@@ -68,6 +63,11 @@
 #include "c_functions.h"
 #include "g_levellocals.h"
 #include "v_video.h"
+#include "md5.h"
+#include "findfile.h"
+#include "i_music.h"
+#include "s_music.h"
+#include "texturemanager.h"
 
 extern FILE *Logfile;
 extern bool insave;
@@ -97,16 +97,6 @@ bool CheckCheatmode (bool printmsg)
 	{
 		return false;
 	}
-}
-
-CCMD (quit)
-{
-	if (!insave) throw CExitEvent(0);
-}
-
-CCMD (exit)
-{
-	if (!insave) throw CExitEvent(0);
 }
 
 /*
@@ -351,13 +341,13 @@ CCMD (hxvisit)
 
 CCMD (changemap)
 {
-	if (who == NULL || !usergame)
+	if (!players[consoleplayer].mo || !usergame)
 	{
 		Printf ("Use the map command when not in a game.\n");
 		return;
 	}
 
-	if (!players[who->player - players].settings_controller && netgame)
+	if (!players[consoleplayer].settings_controller && netgame)
 	{
 		Printf ("Only setting controllers can change the map.\n");
 		return;
@@ -445,73 +435,6 @@ CCMD(setinv)
 
 }
 
-CCMD (gameversion)
-{
-	Printf ("%s @ %s\nCommit %s\n", GetVersionString(), GetGitTime(), GetGitHash());
-}
-
-CCMD (print)
-{
-	if (argv.argc() != 2)
-	{
-		Printf ("print <name>: Print a string from the string table\n");
-		return;
-	}
-	const char *str = GStrings[argv[1]];
-	if (str == NULL)
-	{
-		Printf ("%s unknown\n", argv[1]);
-	}
-	else
-	{
-		Printf ("%s\n", str);
-	}
-}
-
-UNSAFE_CCMD (exec)
-{
-	if (argv.argc() < 2)
-		return;
-
-	for (int i = 1; i < argv.argc(); ++i)
-	{
-		if (!C_ExecFile(argv[i]))
-		{
-			Printf ("Could not exec \"%s\"\n", argv[i]);
-			break;
-		}
-	}
-}
-
-void execLogfile(const char *fn, bool append)
-{
-	if ((Logfile = fopen(fn, append? "a" : "w")))
-	{
-		const char *timestr = myasctime();
-		Printf("Log started: %s\n", timestr);
-	}
-	else
-	{
-		Printf("Could not start log\n");
-	}
-}
-
-UNSAFE_CCMD (logfile)
-{
-
-	if (Logfile)
-	{
-		const char *timestr = myasctime();
-		Printf("Log stopped: %s\n", timestr);
-		fclose (Logfile);
-		Logfile = NULL;
-	}
-
-	if (argv.argc() >= 2)
-	{
-		execLogfile(argv[1], argv.argc() >=3? !!argv[2]:false);
-	}
-}
 
 CCMD (puke)
 {
@@ -639,121 +562,7 @@ CCMD (special)
 	}
 }
 
-CCMD (error)
-{
-	if (argv.argc() > 1)
-	{
-		char *textcopy = copystring (argv[1]);
-		I_Error ("%s", textcopy);
-	}
-	else
-	{
-		Printf ("Usage: error <error text>\n");
-	}
-}
 
-UNSAFE_CCMD (error_fatal)
-{
-	if (argv.argc() > 1)
-	{
-		char *textcopy = copystring (argv[1]);
-		I_FatalError ("%s", textcopy);
-	}
-	else
-	{
-		Printf ("Usage: error_fatal <error text>\n");
-	}
-}
-
-//==========================================================================
-//
-// CCMD crashout
-//
-// Debugging routine for testing the crash logger.
-// Useless in a win32 debug build, because that doesn't enable the crash logger.
-//
-//==========================================================================
-
-#if !defined(_WIN32) || !defined(_DEBUG)
-UNSAFE_CCMD (crashout)
-{
-	*(volatile int *)0 = 0;
-}
-#endif
-
-
-UNSAFE_CCMD (dir)
-{
-	FString dir, path;
-	char curdir[256];
-	const char *match;
-	findstate_t c_file;
-	void *file;
-
-	if (!getcwd (curdir, countof(curdir)))
-	{
-		Printf ("Current path too long\n");
-		return;
-	}
-
-	if (argv.argc() > 1)
-	{
-		path = NicePath(argv[1]);
-		if (chdir(path))
-		{
-			match = path;
-			dir = ExtractFilePath(path);
-			if (dir[0] != '\0')
-			{
-				match += dir.Len();
-			}
-			else
-			{
-				dir = "./";
-			}
-			if (match[0] == '\0')
-			{
-				match = "*";
-			}
-			if (chdir (dir))
-			{
-				Printf ("%s not found\n", dir.GetChars());
-				return;
-			}
-		}
-		else
-		{
-			match = "*";
-			dir = path;
-		}
-	}
-	else
-	{
-		match = "*";
-		dir = curdir;
-	}
-	if (dir[dir.Len()-1] != '/')
-	{
-		dir += '/';
-	}
-
-	if ( (file = I_FindFirst (match, &c_file)) == ((void *)(-1)))
-		Printf ("Nothing matching %s%s\n", dir.GetChars(), match);
-	else
-	{
-		Printf ("Listing of %s%s:\n", dir.GetChars(), match);
-		do
-		{
-			if (I_FindAttr (&c_file) & FA_DIREC)
-				Printf (PRINT_BOLD, "%s <dir>\n", I_FindName (&c_file));
-			else
-				Printf ("%s\n", I_FindName (&c_file));
-		} while (I_FindNext (file, &c_file) == 0);
-		I_FindClose (file);
-	}
-
-	chdir (curdir);
-}
 
 //==========================================================================
 //
@@ -832,35 +641,6 @@ UNSAFE_CCMD (save)
 	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
 }
 
-//==========================================================================
-//
-// CCMD wdir
-//
-// Lists the contents of a loaded wad file.
-//
-//==========================================================================
-
-CCMD (wdir)
-{
-	if (argv.argc() != 2)
-	{
-		Printf ("usage: wdir <wadfile>\n");
-		return;
-	}
-	int wadnum = Wads.CheckIfWadLoaded (argv[1]);
-	if (wadnum < 0)
-	{
-		Printf ("%s must be loaded to view its directory.\n", argv[1]);
-		return;
-	}
-	for (int i = 0; i < Wads.GetNumLumps(); ++i)
-	{
-		if (Wads.GetLumpFile(i) == wadnum)
-		{
-			Printf ("%s\n", Wads.GetLumpFullName(i));
-		}
-	}
-}
 
 //-----------------------------------------------------------------------------
 //
@@ -1199,7 +979,7 @@ static void PrintSecretString(const char *string, bool thislevel)
 				else colstr = TEXTCOLOR_GREEN;
 			}
 		}
-		auto brok = V_BreakLines(CurrentConsoleFont, screen->GetWidth()*95/100, string);
+		auto brok = V_BreakLines(CurrentConsoleFont, twod->GetWidth()*95/100, string);
 
 		for (auto &line : brok)
 		{
@@ -1220,10 +1000,10 @@ CCMD(secret)
 	bool thislevel = !stricmp(mapname, primaryLevel->MapName);
 	bool foundsome = false;
 
-	int lumpno=Wads.CheckNumForName("SECRETS");
+	int lumpno=fileSystem.CheckNumForName("SECRETS");
 	if (lumpno < 0) return;
 
-	auto lump = Wads.OpenLumpReader(lumpno);
+	auto lump = fileSystem.OpenFileReader(lumpno);
 	FString maphdr;
 	maphdr.Format("[%s]", mapname);
 
@@ -1304,4 +1084,101 @@ CCMD(r_showcaps)
 	PRINT_CAP("Uses Polygon rendering", RFF_POLYGONAL)
 	PRINT_CAP("Truecolor Enabled", RFF_TRUECOLOR)
 	PRINT_CAP("Voxels", RFF_VOXELS)
+}
+
+
+//==========================================================================
+//
+// CCMD idmus
+//
+//==========================================================================
+
+CCMD(idmus)
+{
+	level_info_t* info;
+	FString map;
+	int l;
+
+	if (!nomusic)
+	{
+		if (argv.argc() > 1)
+		{
+			if (gameinfo.flags & GI_MAPxx)
+			{
+				l = atoi(argv[1]);
+				if (l <= 99)
+				{
+					map = CalcMapName(0, l);
+				}
+				else
+				{
+					Printf("%s\n", GStrings("STSTR_NOMUS"));
+					return;
+				}
+			}
+			else
+			{
+				map = CalcMapName(argv[1][0] - '0', argv[1][1] - '0');
+			}
+
+			if ((info = FindLevelInfo(map)))
+			{
+				if (info->Music.IsNotEmpty())
+				{
+					S_ChangeMusic(info->Music, info->musicorder);
+					Printf("%s\n", GStrings("STSTR_MUS"));
+				}
+			}
+			else
+			{
+				Printf("%s\n", GStrings("STSTR_NOMUS"));
+			}
+		}
+	}
+	else
+	{
+		Printf("Music is disabled\n");
+	}
+}
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+CCMD(dumpactors)
+{
+	const char* const filters[32] =
+	{
+		"0:All", "1:Doom", "2:Heretic", "3:DoomHeretic", "4:Hexen", "5:DoomHexen", "6:Raven", "7:IdRaven",
+		"8:Strife", "9:DoomStrife", "10:HereticStrife", "11:DoomHereticStrife", "12:HexenStrife",
+		"13:DoomHexenStrife", "14:RavenStrife", "15:NotChex", "16:Chex", "17:DoomChex", "18:HereticChex",
+		"19:DoomHereticChex", "20:HexenChex", "21:DoomHexenChex", "22:RavenChex", "23:NotStrife", "24:StrifeChex",
+		"25:DoomStrifeChex", "26:HereticStrifeChex", "27:NotHexen",	"28:HexenStrifeChex", "29:NotHeretic",
+		"30:NotDoom", "31:All",
+	};
+	Printf("%u object class types total\nActor\tEd Num\tSpawnID\tFilter\tSource\n", PClass::AllClasses.Size());
+	for (unsigned int i = 0; i < PClass::AllClasses.Size(); i++)
+	{
+		PClass* cls = PClass::AllClasses[i];
+		PClassActor* acls = ValidateActor(cls);
+		if (acls != NULL)
+		{
+			auto ainfo = acls->ActorInfo();
+			Printf("%s\t%i\t%i\t%s\t%s\n",
+				acls->TypeName.GetChars(), ainfo->DoomEdNum,
+				ainfo->SpawnID, filters[ainfo->GameFilter & 31],
+				acls->SourceLumpName.GetChars());
+		}
+		else if (cls != NULL)
+		{
+			Printf("%s\tn/a\tn/a\tn/a\tEngine (not an actor type)\tSource: %s\n", cls->TypeName.GetChars(), cls->SourceLumpName.GetChars());
+		}
+		else
+		{
+			Printf("Type %i is not an object class\n", i);
+		}
+	}
 }

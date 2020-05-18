@@ -20,9 +20,10 @@
 //--------------------------------------------------------------------------
 //
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "r_data/models/models_ue1.h"
+#include "texturemanager.h"
 
 float unpackuvert( uint32_t n, int c )
 {
@@ -42,18 +43,18 @@ float unpackuvert( uint32_t n, int c )
 bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int length )
 {
 	int lumpnum2;
-	FString realfilename = Wads.GetLumpFullName(lumpnum);
+	FString realfilename = fileSystem.GetFileFullName(lumpnum);
 	if ( (size_t)realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
 	{
 		realfilename.Substitute("_d.3d","_a.3d");
-		lumpnum2 = Wads.CheckNumForFullName(realfilename);
+		lumpnum2 = fileSystem.CheckNumForFullName(realfilename);
 		mDataLump = lumpnum;
 		mAnivLump = lumpnum2;
 	}
 	else
 	{
 		realfilename.Substitute("_a.3d","_d.3d");
-		lumpnum2 = Wads.CheckNumForFullName(realfilename);
+		lumpnum2 = fileSystem.CheckNumForFullName(realfilename);
 		mAnivLump = lumpnum;
 		mDataLump = lumpnum2;
 	}
@@ -62,11 +63,11 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 
 void FUE1Model::LoadGeometry()
 {
-	FMemLump lump, lump2;
+	FileData lump, lump2;
 	const char *buffer, *buffer2;
-	lump = Wads.ReadLump(mDataLump);
+	lump = fileSystem.ReadFile(mDataLump);
 	buffer = (char*)lump.GetMem();
-	lump2 = Wads.ReadLump(mAnivLump);
+	lump2 = fileSystem.ReadFile(mAnivLump);
 	buffer2 = (char*)lump2.GetMem();
 	// map structures
 	dhead = (d3dhead*)(buffer);

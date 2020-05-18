@@ -271,7 +271,7 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 		int cm = CM_DEFAULT;
 		if (cplayer->extralight == INT_MIN)
 		{
-			cm = CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
+			cm = CM_FIRSTSPECIALCOLORMAP + REALINVERSECOLORMAP;
 			Viewpoint.extralight = 0;
 			FullbrightFlags = Fullbright;
 			// This does never set stealth vision.

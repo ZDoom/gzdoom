@@ -5,8 +5,8 @@
 //
 //==========================================================================
 #include "r_defs.h"
-#include "r_data/renderstyle.h"
-#include "textures/textures.h"
+#include "renderstyle.h"
+#include "textures.h"
 #include "r_data/colormaps.h"
 
 #ifdef _MSC_VER

@@ -47,7 +47,7 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "p_tags.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "textures.h"
 #include "g_levellocals.h"
 #include "actor.h"
@@ -207,7 +207,7 @@ void ParseCompatibility()
 
 	// The contents of this file are not cumulative, as it should not
 	// be present in user-distributed maps.
-	FScanner sc(Wads.GetNumForFullName("compatibility.txt"));
+	FScanner sc(fileSystem.GetNumForFullName("compatibility.txt"));
 
 	while (sc.GetString())	// Get MD5 signature
 	{
@@ -291,7 +291,7 @@ FName MapLoader::CheckCompatibility(MapData *map)
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
 	// TNT's MAP31 also needs COMPATF_STAIRINDEX but that only gets activated for TNT.WAD.
-	if (Wads.GetLumpFile(map->lumpnum) == Wads.GetIwadNum() && (gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
+	if (fileSystem.GetFileContainer(map->lumpnum) == fileSystem.GetIwadNum() && (gameinfo.flags & GI_COMPATSHORTTEX) && Level->maptype == MAPTYPE_DOOM)
 	{
 		Level->ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
 		if (gameinfo.flags & GI_COMPATSTAIRS) Level->ii_compatflags |= COMPATF_STAIRINDEX;

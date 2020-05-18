@@ -39,7 +39,8 @@
 #include "templates.h"
 #include "g_level.h"
 #include "d_player.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "v_text.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
@@ -996,7 +997,7 @@ void P_SetupPsprites(player_t *player, bool startweaponup)
 	player->DestroyPSprites();
 
 	// Spawn the ready weapon
-	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : WP_NOCHANGE;
+	player->PendingWeapon = !startweaponup ? player->ReadyWeapon : (AActor*)WP_NOCHANGE;
 	P_BringUpWeapon (player);
 }
 

@@ -34,7 +34,7 @@
 #include "d_player.h"
 #include "m_argv.h"
 #include "g_game.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "p_effect.h"
 #include "p_terrain.h"
@@ -44,7 +44,7 @@
 #include "p_acs.h"
 #include "announcer.h"
 #include "wi_stuff.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "gi.h"
 #include "p_conversation.h"
 #include "a_keys.h"
@@ -67,7 +67,7 @@
 #include "p_destructible.h"
 #include "types.h"
 #include "i_time.h"
-#include "scripting/vm/vm.h"
+#include "vm.h"
 #include "a_specialspot.h"
 #include "maploader/maploader.h"
 #include "p_acs.h"
@@ -76,6 +76,8 @@
 #include "v_video.h"
 #include "fragglescript/t_script.h"
 #include "s_music.h"
+#include "animations.h"
+#include "texturemanager.h"
 
 extern AActor *SpawnMapThing (int index, FMapThing *mthing, int position);
 
@@ -98,7 +100,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 
 	const auto addAnimations = [hitlist, bitmask](const FTextureID texid)
 	{
-		for (auto anim : TexMan.mAnimations)
+		for (auto anim : TexAnim.GetAnimations())
 		{
 			if (texid == anim->BasePic || (!anim->bDiscrete && anim->BasePic < texid && texid < anim->BasePic + anim->NumFrames))
 			{
@@ -112,7 +114,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 
 	addAnimations(texid);
 
-	auto switchdef = TexMan.FindSwitch(texid);
+	auto switchdef = TexAnim.FindSwitch(texid);
 	if (switchdef)
 	{
 		const FSwitchDef *const pair = switchdef->PairDef;
@@ -136,7 +138,7 @@ static void AddToList(uint8_t *hitlist, FTextureID texid, int bitmask)
 		}
 	}
 
-	auto adoor = TexMan.FindAnimatedDoor(texid);
+	auto adoor = TexAnim.FindAnimatedDoor(texid);
 	if (adoor)
 	{
 		for (int i = 0; i < adoor->NumTextureFrames; i++)
@@ -406,17 +408,8 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 	{
 		Level->Players[i]->mo = nullptr;
 	}
-	// [RH] Clear any scripted translation colors the previous level may have set.
-	for (i = 0; i < int(translationtables[TRANSLATION_LevelScripted].Size()); ++i)
-	{
-		FRemapTable *table = translationtables[TRANSLATION_LevelScripted][i];
-		if (table != nullptr)
-		{
-			delete table;
-			translationtables[TRANSLATION_LevelScripted][i] = nullptr;
-		}
-	}
-	translationtables[TRANSLATION_LevelScripted].Clear();
+	GPalette.ClearTranslationSlot(TRANSLATION_LevelScripted);
+
 
 	// Initial height of PointOfView will be set by player think.
 	auto p = Level->GetConsolePlayer();
@@ -424,7 +417,14 @@ void P_SetupLevel(FLevelLocals *Level, int position, bool newGame)
 
 	// Make sure all sounds are stopped before Z_FreeTags.
 	S_Start();
-	S_StartMusic();
+	S_ResetMusic();
+
+	// Don't start the music if loading a savegame, because the music is stored there.
+	// Don't start the music if revisiting a level in a hub for the same reason.
+	if (!primaryLevel->IsReentering())
+	{
+		primaryLevel->SetMusic();
+	}
 
 	// [RH] clear out the mid-screen message
 	C_MidPrint(nullptr, nullptr);

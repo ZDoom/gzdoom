@@ -997,6 +997,7 @@ enum EMapThingFlags
 
 	MTF_SECRET			= 0x080000,	// Secret pickup
 	MTF_NOINFIGHTING	= 0x100000,
+	MTF_NOCOUNT			= 0x200000,	// Removes COUNTKILL/COUNTITEM
 };
 
 enum ESkillProperty
@@ -1047,7 +1048,6 @@ enum ETranslationTable
 	TRANSLATION_Blood,
 	TRANSLATION_RainPillar,
 	TRANSLATION_Custom,
-	TRANSLATION_Font,
 };
 
 enum EFindFloorCeiling

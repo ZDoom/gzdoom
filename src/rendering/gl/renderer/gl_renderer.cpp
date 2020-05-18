@@ -25,11 +25,11 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "files.h"
 #include "v_video.h"
 #include "m_png.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomstat.h"
 #include "i_time.h"
 #include "p_effect.h"
@@ -40,7 +40,7 @@
 #include "swrenderer/r_swscene.h"
 #include "hwrenderer/utility/hw_clock.h"
 
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
@@ -59,6 +59,7 @@
 #include "r_data/models/models.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/system/gl_buffers.h"
+#include "texturemanager.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)

@@ -39,7 +39,7 @@
 #include "c_bind.h"
 #include "c_dispatch.h"
 #include "gameconfigfile.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 TArray<FKeySection> KeySections;
 extern TArray<FString> KeyConfWeapons;
@@ -160,10 +160,10 @@ void D_LoadWadSettings ()
 	KeySections.Clear();
 	KeyConfWeapons.Clear();
 
-	while ((lump = Wads.FindLump ("KEYCONF", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("KEYCONF", &lastlump)) != -1)
 	{
-		FMemLump data = Wads.ReadLump (lump);
-		const char *eof = (char *)data.GetMem() + Wads.LumpLength (lump);
+		FileData data = fileSystem.ReadFile (lump);
+		const char *eof = (char *)data.GetMem() + fileSystem.FileLength (lump);
 		const char *conf = (char *)data.GetMem();
 
 		while (conf < eof)

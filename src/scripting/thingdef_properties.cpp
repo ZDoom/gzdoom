@@ -40,7 +40,7 @@
 
 #include "gi.h"
 #include "d_player.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
 #include "decallib.h"
@@ -50,12 +50,13 @@
 #include "thingdef.h"
 #include "a_morph.h"
 #include "teaminfo.h"
-#include "backend/vmbuilder.h"
+#include "vmbuilder.h"
 #include "a_keys.h"
 #include "g_levellocals.h"
 #include "types.h"
 #include "a_dynlight.h"
 #include "v_video.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //
@@ -756,7 +757,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 				}
 			}
 		}
-		defaults->Translation = CurrentTranslation.StoreTranslation (TRANSLATION_Decorate);
+		defaults->Translation = GPalette.StoreTranslation (TRANSLATION_Decorate, &CurrentTranslation);
 	}
 }
 
@@ -906,7 +907,7 @@ DEFINE_PROPERTY(damagefactor, ZF, Actor)
 DEFINE_PROPERTY(decal, S, Actor)
 {
 	PROP_STRING_PARM(str, 0);
-	defaults->DecalGenerator = (FDecalBase *)intptr_t(int(FName(str)));
+	defaults->DecalGenerator = (FDecalBase *)(intptr_t)FName(str).GetIndex();
 }
 
 //==========================================================================
@@ -1125,7 +1126,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
 			// Strife's teaser doesn't contain all the icon graphics of the full game.
 			if ((bag.Info->ActorInfo()->GameFilter == GAME_Any || bag.Info->ActorInfo()->GameFilter & gameinfo.gametype) &&
-				!(gameinfo.flags&GI_SHAREWARE) && Wads.GetLumpFile(bag.Lumpnum) != 0)
+				!(gameinfo.flags&GI_SHAREWARE) && fileSystem.GetFileContainer(bag.Lumpnum) != 0)
 			{
 				bag.ScriptPosition.Message(MSG_WARNING,
 					"Icon '%s' for '%s' not found\n", i, bag.Info->TypeName.GetChars());
@@ -1276,7 +1277,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 		PROP_FLOAT_PARM(r, 0);
 		PROP_FLOAT_PARM(g, 1);
 		PROP_FLOAT_PARM(b, 2);
-		BlendColor = MakeSpecialColormap(AddSpecialColormap(0, 0, 0, r, g, b));
+		BlendColor = MakeSpecialColormap(AddSpecialColormap(GPalette.BaseColors, 0, 0, 0, r, g, b));
 	}
 	else if (PROP_PARM_COUNT == 6)
 	{
@@ -1286,7 +1287,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(powerup, colormap, FFFfff, Inventory)
 		PROP_FLOAT_PARM(r2, 3);
 		PROP_FLOAT_PARM(g2, 4);
 		PROP_FLOAT_PARM(b2, 5);
-		BlendColor = MakeSpecialColormap(AddSpecialColormap(r1, g1, b1, r2, g2, b2));
+		BlendColor = MakeSpecialColormap(AddSpecialColormap(GPalette.BaseColors, r1, g1, b1, r2, g2, b2));
 	}
 	else
 	{
@@ -1400,7 +1401,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorrange, I_I, PlayerPawn)
 	PROP_INT_PARM(end, 1);
 
 	if (start > end)
-		swapvalues (start, end);
+		std::swap (start, end);
 
 	defaults->IntVar(NAME_ColorRangeStart) = start;
 	defaults->IntVar(NAME_ColorRangeEnd) = end;
@@ -1474,7 +1475,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 
 	FPlayerColorSet color;
 	color.Name = setname;
-	color.Lump = Wads.CheckNumForName(rangefile);
+	color.Lump = fileSystem.CheckNumForName(rangefile);
 	color.RepresentativeColor = representative_color;
 	color.NumExtraRanges = 0;
 

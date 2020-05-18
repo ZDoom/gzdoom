@@ -30,6 +30,7 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
+#include "texturemanager.h"
 
 #include "hw_drawinfo.h"
 #include "hw_drawstructs.h"

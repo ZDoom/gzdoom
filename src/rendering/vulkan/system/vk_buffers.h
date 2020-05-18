@@ -2,7 +2,7 @@
 
 #include "hwrenderer/data/buffers.h"
 #include "vk_objects.h"
-#include "utility/tarray.h"
+#include "tarray.h"
 
 #ifdef _MSC_VER
 // silence bogus warning C4250: 'VKVertexBuffer': inherits 'VKBuffer::VKBuffer::SetData' via dominance

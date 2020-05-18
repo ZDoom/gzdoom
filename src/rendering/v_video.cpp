@@ -53,7 +53,7 @@
 #include "v_text.h"
 #include "sc_man.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 
 #include "c_dispatch.h"
 #include "cmdlib.h"
@@ -69,6 +69,8 @@
 #include "version.h"
 #include "g_levellocals.h"
 #include "am_map.h"
+#include "texturemanager.h"
+#include "v_palette.h"
 
 EXTERN_CVAR(Int, menu_resolution_custom_width)
 EXTERN_CVAR(Int, menu_resolution_custom_height)
@@ -137,6 +139,21 @@ CUSTOM_CVAR(Int, vid_preferbackend, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_N
 
 CVAR(Int, vid_renderer, 1, 0)	// for some stupid mods which threw caution out of the window...
 
+CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (self < 0)
+	{
+		self = 0;
+		return;
+	}
+	if (StatusBar != NULL)
+	{
+		StatusBar->CallScreenSizeChanged();
+	}
+	setsizeneeded = true;
+}
+
+
 
 EXTERN_CVAR(Bool, r_blendmethod)
 
@@ -156,19 +173,16 @@ public:
 		SetVirtualSize(width, height);
 	}
 	// These methods should never be called.
-	void Update() { DBGBREAK; }
-	bool IsFullscreen() { DBGBREAK; return 0; }
-	int GetClientWidth() { DBGBREAK; return 0; }
-	int GetClientHeight() { DBGBREAK; return 0; }
+	void Update() override { DBGBREAK; }
+	bool IsFullscreen() override { DBGBREAK; return 0; }
+	int GetClientWidth() override { DBGBREAK; return 0; }
+	int GetClientHeight() override { DBGBREAK; return 0; }
 	void InitializeState() override {}
 
 	float Gamma;
 };
 
 int DisplayWidth, DisplayHeight;
-
-FFont *SmallFont, *SmallFont2, *BigFont, *BigUpper, *ConFont, *IntermissionFont, *NewConsoleFont, *NewSmallFont, *CurrentConsoleFont, *OriginalSmallFont, *AlternativeSmallFont, *OriginalBigFont;
-
 
 // [RH] The framebuffer is no longer a mere byte array.
 // There's also only one, not four.
@@ -265,231 +279,6 @@ void DCanvas::Resize(int width, int height, bool optimizepitch)
 	memset (Pixels.Data(), 0, Pixels.Size());
 }
 
-
-//==========================================================================
-//
-// V_GetColorFromString
-//
-// Passed a string of the form "#RGB", "#RRGGBB", "R G B", or "RR GG BB",
-// returns a number representing that color. If palette is non-NULL, the
-// index of the best match in the palette is returned, otherwise the
-// RRGGBB value is returned directly.
-//
-//==========================================================================
-
-int V_GetColorFromString (const uint32_t *palette, const char *cstr, FScriptPosition *sc)
-{
-	int c[3], i, p;
-	char val[3];
-
-	val[2] = '\0';
-
-	// Check for HTML-style #RRGGBB or #RGB color string
-	if (cstr[0] == '#')
-	{
-		size_t len = strlen (cstr);
-
-		if (len == 7)
-		{
-			// Extract each eight-bit component into c[].
-			for (i = 0; i < 3; ++i)
-			{
-				val[0] = cstr[1 + i*2];
-				val[1] = cstr[2 + i*2];
-				c[i] = ParseHex (val, sc);
-			}
-		}
-		else if (len == 4)
-		{
-			// Extract each four-bit component into c[], expanding to eight bits.
-			for (i = 0; i < 3; ++i)
-			{
-				val[1] = val[0] = cstr[1 + i];
-				c[i] = ParseHex (val, sc);
-			}
-		}
-		else
-		{
-			// Bad HTML-style; pretend it's black.
-			c[2] = c[1] = c[0] = 0;
-		}
-	}
-	else
-	{
-		if (strlen(cstr) == 6)
-		{
-			char *p;
-			int color = strtol(cstr, &p, 16);
-			if (*p == 0)
-			{
-				// RRGGBB string
-				c[0] = (color & 0xff0000) >> 16;
-				c[1] = (color & 0xff00) >> 8;
-				c[2] = (color & 0xff);
-			}
-			else goto normal;
-		}
-		else
-		{
-normal:
-			// Treat it as a space-delimited hexadecimal string
-			for (i = 0; i < 3; ++i)
-			{
-				// Skip leading whitespace
-				while (*cstr <= ' ' && *cstr != '\0')
-				{
-					cstr++;
-				}
-				// Extract a component and convert it to eight-bit
-				for (p = 0; *cstr > ' '; ++p, ++cstr)
-				{
-					if (p < 2)
-					{
-						val[p] = *cstr;
-					}
-				}
-				if (p == 0)
-				{
-					c[i] = 0;
-				}
-				else
-				{
-					if (p == 1)
-					{
-						val[1] = val[0];
-					}
-					c[i] = ParseHex (val, sc);
-				}
-			}
-		}
-	}
-	if (palette)
-		return ColorMatcher.Pick (c[0], c[1], c[2]);
-	else
-		return MAKERGB(c[0], c[1], c[2]);
-}
-
-//==========================================================================
-//
-// V_GetColorStringByName
-//
-// Searches for the given color name in x11r6rgb.txt and returns an
-// HTML-ish "#RRGGBB" string for it if found or the empty string if not.
-//
-//==========================================================================
-
-FString V_GetColorStringByName (const char *name, FScriptPosition *sc)
-{
-	FMemLump rgbNames;
-	char *rgbEnd;
-	char *rgb, *endp;
-	int rgblump;
-	int c[3], step;
-	size_t namelen;
-
-	if (Wads.GetNumLumps()==0) return FString();
-
-	rgblump = Wads.CheckNumForName ("X11R6RGB");
-	if (rgblump == -1)
-	{
-		if (!sc) Printf ("X11R6RGB lump not found\n");
-		else sc->Message(MSG_WARNING, "X11R6RGB lump not found");
-		return FString();
-	}
-
-	rgbNames = Wads.ReadLump (rgblump);
-	rgb = (char *)rgbNames.GetMem();
-	rgbEnd = rgb + Wads.LumpLength (rgblump);
-	step = 0;
-	namelen = strlen (name);
-
-	while (rgb < rgbEnd)
-	{
-		// Skip white space
-		if (*rgb <= ' ')
-		{
-			do
-			{
-				rgb++;
-			} while (rgb < rgbEnd && *rgb <= ' ');
-		}
-		else if (step == 0 && *rgb == '!')
-		{ // skip comment lines
-			do
-			{
-				rgb++;
-			} while (rgb < rgbEnd && *rgb != '\n');
-		}
-		else if (step < 3)
-		{ // collect RGB values
-			c[step++] = strtoul (rgb, &endp, 10);
-			if (endp == rgb)
-			{
-				break;
-			}
-			rgb = endp;
-		}
-		else
-		{ // Check color name
-			endp = rgb;
-			// Find the end of the line
-			while (endp < rgbEnd && *endp != '\n')
-				endp++;
-			// Back up over any whitespace
-			while (endp > rgb && *endp <= ' ')
-				endp--;
-			if (endp == rgb)
-			{
-				break;
-			}
-			size_t checklen = ++endp - rgb;
-			if (checklen == namelen && strnicmp (rgb, name, checklen) == 0)
-			{
-				FString descr;
-				descr.Format ("#%02x%02x%02x", c[0], c[1], c[2]);
-				return descr;
-			}
-			rgb = endp;
-			step = 0;
-		}
-	}
-	if (rgb < rgbEnd)
-	{
-		if (!sc) Printf ("X11R6RGB lump is corrupt\n");
-		else sc->Message(MSG_WARNING, "X11R6RGB lump is corrupt");
-	}
-	return FString();
-}
-
-//==========================================================================
-//
-// V_GetColor
-//
-// Works like V_GetColorFromString(), but also understands X11 color names.
-//
-//==========================================================================
-
-int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc)
-{
-	FString string = V_GetColorStringByName (str, sc);
-	int res;
-
-	if (!string.IsEmpty())
-	{
-		res = V_GetColorFromString (palette, string, sc);
-	}
-	else
-	{
-		res = V_GetColorFromString (palette, str, sc);
-	}
-	return res;
-}
-
-int V_GetColor(const uint32_t *palette, FScanner &sc)
-{
-	FScriptPosition scc = sc;
-	return V_GetColor(palette, sc.String, &scc);
-}
 
 CCMD(clean)
 {
@@ -655,85 +444,9 @@ CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	}
 }
 
-// Helper for ActiveRatio and CheckRatio. Returns the forced ratio type, or -1 if none.
-int ActiveFakeRatio(int width, int height)
-{
-	int fakeratio = -1;
-	if ((vid_aspect >= 1) && (vid_aspect <= 6))
-	{
-		// [SP] User wants to force aspect ratio; let them.
-		fakeratio = int(vid_aspect);
-		if (fakeratio == 3)
-		{
-			fakeratio = 0;
-		}
-		else if (fakeratio == 5)
-		{
-			fakeratio = 3;
-		}
-	}
-	return fakeratio;
-}
-
-// Active screen ratio based on cvars and size
-float ActiveRatio(int width, int height, float *trueratio)
-{
-	static float forcedRatioTypes[] =
-	{
-		4 / 3.0f,
-		16 / 9.0f,
-		16 / 10.0f,
-		17 / 10.0f,
-		5 / 4.0f,
-		17 / 10.0f,
-		21 / 9.0f
-	};
-
-	float ratio = width / (float)height;
-	int fakeratio = ActiveFakeRatio(width, height);
-
-	if (trueratio)
-		*trueratio = ratio;
-	return (fakeratio != -1) ? forcedRatioTypes[fakeratio] : (ratio / ViewportPixelAspect());
-}
-
 DEFINE_ACTION_FUNCTION(_Screen, GetAspectRatio)
 {
 	ACTION_RETURN_FLOAT(ActiveRatio(screen->GetWidth(), screen->GetHeight(), nullptr));
-}
-
-int AspectBaseWidth(float aspect)
-{
-	return (int)round(240.0f * aspect * 3.0f);
-}
-
-int AspectBaseHeight(float aspect)
-{
-	if (!AspectTallerThanWide(aspect))
-		return (int)round(200.0f * (320.0f / (AspectBaseWidth(aspect) / 3.0f)) * 3.0f);
-	else
-		return (int)round((200.0f * (4.0f / 3.0f)) / aspect * 3.0f);
-}
-
-double AspectPspriteOffset(float aspect)
-{
-	if (!AspectTallerThanWide(aspect))
-		return 0.0;
-	else
-		return ((4.0 / 3.0) / aspect - 1.0) * 97.5;
-}
-
-int AspectMultiplier(float aspect)
-{
-	if (!AspectTallerThanWide(aspect))
-		return (int)round(320.0f / (AspectBaseWidth(aspect) / 3.0f) * 48.0f);
-	else
-		return (int)round(200.0f / (AspectBaseHeight(aspect) / 3.0f) * 48.0f);
-}
-
-bool AspectTallerThanWide(float aspect)
-{
-	return aspect < 1.333f;
 }
 
 CCMD(vid_setsize)
@@ -755,7 +468,7 @@ void IVideo::DumpAdapters ()
 	Printf("Multi-monitor support unavailable.\n");
 }
 
-CUSTOM_CVAR(Bool, fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR_NAMED(Bool, vid_fullscreen, fullscreen, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	setmodeneeded = true;
 }
@@ -792,3 +505,59 @@ DEFINE_GLOBAL(CleanYfac_1)
 DEFINE_GLOBAL(CleanWidth_1)
 DEFINE_GLOBAL(CleanHeight_1)
 DEFINE_GLOBAL(generic_ui)
+
+IHardwareTexture* CreateHardwareTexture()
+{
+	return screen->CreateHardwareTexture();
+}
+
+//==========================================================================
+//
+// V_DrawFrame
+//
+// Draw a frame around the specified area using the view border
+// frame graphics. The border is drawn outside the area, not in it.
+//
+//==========================================================================
+
+void DrawFrame(F2DDrawer* drawer, int left, int top, int width, int height)
+{
+	FTexture* p;
+	const gameborder_t* border = &gameinfo.Border;
+	// Sanity check for incomplete gameinfo
+	if (border == NULL)
+		return;
+	int offset = border->offset;
+	int right = left + width;
+	int bottom = top + height;
+
+	// Draw top and bottom sides.
+	p = TexMan.GetTextureByName(border->t);
+	drawer->AddFlatFill(left, top - p->GetDisplayHeight(), right, top, p, true);
+	p = TexMan.GetTextureByName(border->b);
+	drawer->AddFlatFill(left, bottom, right, bottom + p->GetDisplayHeight(), p, true);
+
+	// Draw left and right sides.
+	p = TexMan.GetTextureByName(border->l);
+	drawer->AddFlatFill(left - p->GetDisplayWidth(), top, left, bottom, p, true);
+	p = TexMan.GetTextureByName(border->r);
+	drawer->AddFlatFill(right, top, right + p->GetDisplayWidth(), bottom, p, true);
+
+	// Draw beveled corners.
+	DrawTexture(drawer, TexMan.GetTextureByName(border->tl), left - offset, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetTextureByName(border->tr), left + width, top - offset, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetTextureByName(border->bl), left - offset, top + height, TAG_DONE);
+	DrawTexture(drawer, TexMan.GetTextureByName(border->br), left + width, top + height, TAG_DONE);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(x);
+	PARAM_INT(y);
+	PARAM_INT(w);
+	PARAM_INT(h);
+	if (!twod->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	DrawFrame(twod, x, y, w, h);
+	return 0;
+}

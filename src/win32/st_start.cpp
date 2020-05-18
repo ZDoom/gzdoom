@@ -40,16 +40,17 @@
 #include "resource.h"
 
 #include "st_start.h"
+#include "cmdlib.h"
 #include "templates.h"
 #include "i_system.h"
 #include "i_input.h"
 #include "hardware.h"
 #include "gi.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "s_sound.h"
 #include "m_argv.h"
 #include "d_main.h"
-#include "doomerrors.h"
+#include "engineerrors.h"
 #include "s_music.h"
 
 // MACROS ------------------------------------------------------------------
@@ -516,7 +517,7 @@ int RunEndoom()
 		return 0;
 	}
 
-	int endoom_lump = Wads.CheckNumForFullName (gameinfo.Endoom, true);
+	int endoom_lump = fileSystem.CheckNumForFullName (gameinfo.Endoom, true);
 
 	uint8_t endoom_screen[4000];
 	uint8_t *font;
@@ -525,12 +526,12 @@ int RunEndoom()
 	bool blinking = false, blinkstate = false;
 	int i;
 
-	if (endoom_lump < 0 || Wads.LumpLength (endoom_lump) != 4000)
+	if (endoom_lump < 0 || fileSystem.FileLength (endoom_lump) != 4000)
 	{
 		return 0;
 	}
 
-	if (Wads.GetLumpFile(endoom_lump) == Wads.GetMaxIwadNum() && showendoom == 2)
+	if (fileSystem.GetFileContainer(endoom_lump) == fileSystem.GetMaxIwadNum() && showendoom == 2)
 	{
 		// showendoom==2 means to show only lumps from PWADs.
 		return 0;
@@ -552,7 +553,7 @@ int RunEndoom()
 	RestoreConView ();
 	S_StopMusic(true);
 
-	Wads.ReadLump (endoom_lump, endoom_screen);
+	fileSystem.ReadFile (endoom_lump, endoom_screen);
 
 	// Draw the loading screen to a bitmap.
 	StartupBitmap = ST_Util_AllocTextBitmap (font);

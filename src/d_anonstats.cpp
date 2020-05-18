@@ -34,7 +34,7 @@ extern int sys_ostype;
 #include "x86.h"
 #include "version.h"
 #include "v_video.h"
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 
 CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)

@@ -38,7 +38,7 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "templates.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "i_system.h"
 #include "m_misc.h"
 
@@ -543,7 +543,7 @@ void S_ParseReverbDef ()
 {
 	int lump, lastlump = 0;
 
-	while ((lump = Wads.FindLump ("REVERBS", &lastlump)) != -1)
+	while ((lump = fileSystem.FindLump ("REVERBS", &lastlump)) != -1)
 	{
 		FScanner sc;
 		sc.OpenLumpNum(lump);

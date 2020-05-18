@@ -37,7 +37,7 @@
 #include <stddef.h>
 #include "actor.h"
 #include "cmdlib.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 struct sector_t;
 struct line_t;

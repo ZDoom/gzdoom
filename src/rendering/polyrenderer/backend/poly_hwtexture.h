@@ -8,7 +8,7 @@
 #define DIRECT_PALETTE -2
 
 #include "tarray.h"
-#include "hwrenderer/textures/hw_ihwtexture.h"
+#include "hw_ihwtexture.h"
 #include "volk/volk.h"
 
 struct FMaterialState;
@@ -32,7 +32,7 @@ public:
 	// Software renderer stuff
 	void AllocateBuffer(int w, int h, int texelsize) override;
 	uint8_t *MapBuffer() override;
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name) override;
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name) override;
 
 	// Wipe screen
 	void CreateWipeTexture(int w, int h, const char *name);

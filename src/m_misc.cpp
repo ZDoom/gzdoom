@@ -45,7 +45,7 @@
 #include "m_swap.h"
 #include "m_argv.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 
 #include "c_cvars.h"
 #include "c_dispatch.h"

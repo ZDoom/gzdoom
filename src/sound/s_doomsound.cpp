@@ -49,7 +49,7 @@
 #include "s_playlist.h"
 #include "c_dispatch.h"
 #include "m_random.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_local.h"
 #include "doomstat.h"
 #include "cmdlib.h"
@@ -59,7 +59,7 @@
 #include "gstrings.h"
 #include "gi.h"
 #include "po_man.h"
-#include "serializer.h"
+#include "serializer_doom.h"
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "vm.h"
@@ -70,11 +70,6 @@
 
 
 FBoolCVar noisedebug("noise", false, 0);	// [RH] Print sound debugging info?
-CUSTOM_CVAR(Int, snd_channels, 128, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// number of channels available
-{
-	if (self < 64) self = 64;
-}
-CVAR(Bool, snd_waterreverb, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 
 static FString LastLocalSndInfo;
@@ -90,12 +85,128 @@ class DoomSoundEngine : public SoundEngine
 	TArray<uint8_t> ReadSound(int lumpnum);
 	int PickReplacement(int refid);
 	FSoundID ResolveSound(const void *ent, int type, FSoundID soundid, float &attenuation) override;
+	void CacheSound(sfxinfo_t* sfx) override;
+	void StopChannel(FSoundChan* chan) override;
+	int AddSoundLump(const char* logicalname, int lump, int CurrentPitchMask, int resid = -1, int nearlimit = 2) override
+	{
+		auto ndx = SoundEngine::AddSoundLump(logicalname, lump, CurrentPitchMask, resid, nearlimit);
+		S_sfx[ndx].UserData.Resize(1);
+		S_sfx[ndx].UserData[0] = 0;
+		return ndx;
+	}
+	bool CheckSoundLimit(sfxinfo_t* sfx, const FVector3& pos, int near_limit, float limit_range, int sourcetype, const void* actor, int channel) override
+	{
+		if (sourcetype != SOURCE_Actor) actor = nullptr; //ZDoom did this.
+		return SoundEngine::CheckSoundLimit(sfx, pos, near_limit, limit_range, sourcetype, actor, channel);
+	}
+
 
 public:
 	DoomSoundEngine() = default;
 	void NoiseDebug(void);
 	void PrintSoundList();
 };
+
+
+//==========================================================================
+//
+// LookupMusic
+//
+// resolves aliases and special names
+//
+//==========================================================================
+
+static FString LookupMusic(const char* musicname, int& order)
+{
+	// allow specifying "*" as a placeholder to play the level's default music.
+	if (musicname != nullptr && !strcmp(musicname, "*"))
+	{
+		if (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL)
+		{
+			musicname = primaryLevel->Music.GetChars();
+			order = primaryLevel->musicorder;
+		}
+		else
+		{
+			musicname = nullptr;
+		}
+	}
+
+	if (musicname == nullptr || musicname[0] == 0)
+	{
+		// got nothing, return nothing.
+		return "";
+	}
+
+	if (strnicmp(musicname, ",CD,", 4) == 0)
+	{
+		static bool warned = false;
+		if (!warned)
+			Printf(TEXTCOLOR_RED "CD Audio no longer supported\n");
+		warned = true;
+		return "";
+	}
+
+	if (*musicname == '/') musicname++;
+
+	FString DEH_Music;
+	if (musicname[0] == '$')
+	{
+		// handle dehacked replacement.
+		// Any music name defined this way needs to be prefixed with 'D_' because
+		// Doom.exe does not contain the prefix so these strings don't either.
+		const char* mus_string = GStrings[musicname + 1];
+		if (mus_string != nullptr)
+		{
+			DEH_Music << "D_" << mus_string;
+			musicname = DEH_Music;
+		}
+	}
+
+	FName* aliasp = MusicAliases.CheckKey(musicname);
+	if (aliasp != nullptr)
+	{
+		if (*aliasp == NAME_None)
+		{
+			order = -1;
+			return "";	// flagged to be ignored
+		}
+		musicname = aliasp->GetChars();
+	}
+	return musicname;
+}
+
+//==========================================================================
+//
+// OpenMusic
+//
+// opens a FileReader for the music - used as a callback to keep
+// implementation details out of the core player.
+//
+//==========================================================================
+
+static FileReader OpenMusic(const char* musicname)
+{
+	FileReader reader;
+	if (!FileExists(musicname))
+	{
+		int lumpnum;
+		if ((lumpnum = fileSystem.CheckNumForFullName(musicname, true, ns_music)) == -1)
+		{
+			Printf("Music \"%s\" not found\n", musicname);
+		}
+		else if (fileSystem.FileLength(lumpnum) != 0)
+		{
+			reader = fileSystem.ReopenFileReader(lumpnum);
+		}
+	}
+	else
+	{
+		// Load an external file.
+		reader.OpenFile(musicname);
+	}
+	return reader;
+}
 
 //==========================================================================
 //
@@ -107,6 +218,10 @@ public:
 
 void S_Init()
 {
+	// Hook up the music player with the engine specific customizations.
+	static MusicCallbacks cb = { LookupMusic, OpenMusic };
+	S_SetMusicCallbacks(&cb);
+
 	// Must be up before I_InitSound.
 	if (!soundEngine)
 	{
@@ -114,13 +229,14 @@ void S_Init()
 	}
 
 	I_InitSound();
+	I_InitMusic();
 
 	// Heretic and Hexen have sound curve lookup tables. Doom does not.
-	int curvelump = Wads.CheckNumForName("SNDCURVE");
+	int curvelump = fileSystem.CheckNumForName("SNDCURVE");
 	TArray<uint8_t> curve;
 	if (curvelump >= 0)
 	{
-		curve = Wads.ReadLumpIntoArray(curvelump);
+		curve = fileSystem.GetFileData(curvelump);
 	}
 	soundEngine->Init(curve);
 }
@@ -196,7 +312,7 @@ void S_Start()
 			if (LocalSndInfo.IsNotEmpty())
 			{
 				// Now parse the local SNDINFO
-				int j = Wads.CheckNumForFullName(LocalSndInfo, true);
+				int j = fileSystem.CheckNumForFullName(LocalSndInfo, true);
 				if (j >= 0) S_AddLocalSndInfo(j);
 			}
 
@@ -210,7 +326,7 @@ void S_Start()
 
 		if (parse_ss)
 		{
-			S_ParseSndSeq(LocalSndSeq.IsNotEmpty() ? Wads.CheckNumForFullName(LocalSndSeq, true) : -1);
+			S_ParseSndSeq(LocalSndSeq.IsNotEmpty() ? fileSystem.CheckNumForFullName(LocalSndSeq, true) : -1);
 		}
 
 		LastLocalSndInfo = LocalSndInfo;
@@ -322,9 +438,21 @@ DEFINE_ACTION_FUNCTION(DObject, S_StartSound)
 //
 //==========================================================================
 
+void DoomSoundEngine::CacheSound(sfxinfo_t* sfx)
+{
+	if (!(sfx->UserData[0] & SND_PlayerReserve)) SoundEngine::CacheSound(sfx);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 FSoundID DoomSoundEngine::ResolveSound(const void * ent, int type, FSoundID soundid, float &attenuation)
 {
-	if (isPlayerReserve(soundid))
+	auto sfx = &S_sfx[soundid];
+	if (sfx->UserData[0] & SND_PlayerReserve)
 	{
 		AActor *src;
 		if (type != SOURCE_Actor) src = nullptr;
@@ -358,6 +486,21 @@ static bool VerifyActorSound(AActor* ent, FSoundID& sound_id, int& channel, ECha
 		channel = CHAN_WEAPON;
 	}
 	return true;
+}
+
+//==========================================================================
+//
+// Common checking code for the actor sound functions
+//
+//==========================================================================
+
+void DoomSoundEngine::StopChannel(FSoundChan* chan)
+{
+	if (chan && chan->SysChannel != NULL && !(chan->ChanFlags & CHANF_EVICTED) && chan->SourceType == SOURCE_Actor)
+	{
+		chan->Source = NULL;
+	}
+	SoundEngine::StopChannel(chan);
 }
 
 
@@ -1059,13 +1202,13 @@ bool DoomSoundEngine::ValidatePosVel(int sourcetype, const void* source, const F
 
 //==========================================================================
 //
-// This is to avoid hardscoding the dependency on Wads into the sound engine
+// This is to avoid hardscoding the dependency on the file system into the sound engine
 // 
 //==========================================================================
 
 TArray<uint8_t> DoomSoundEngine::ReadSound(int lumpnum)
 {
-	auto wlump = Wads.OpenLumpReader(lumpnum);
+	auto wlump = fileSystem.OpenFileReader(lumpnum);
 	return wlump.Read();
 }
 
@@ -1103,20 +1246,20 @@ void DoomSoundEngine::NoiseDebug()
 	int y, color;
 
 	y = 32 * CleanYfac;
-	screen->DrawText(NewConsoleFont, CR_YELLOW, 0, y, "*** SOUND DEBUG INFO ***", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_YELLOW, 0, y, "*** SOUND DEBUG INFO ***", TAG_DONE);
 	y += NewConsoleFont->GetHeight();
 
-	screen->DrawText(NewConsoleFont, CR_GOLD, 0, y, "name", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 70, y, "x", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 120, y, "y", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 170, y, "z", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 220, y, "vol", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 260, y, "dist", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 300, y, "chan", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 340, y, "pri", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 380, y, "flags", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 460, y, "aud", TAG_DONE);
-	screen->DrawText(NewConsoleFont, CR_GOLD, 520, y, "pos", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 0, y, "name", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 70, y, "x", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 120, y, "y", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 170, y, "z", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 220, y, "vol", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 260, y, "dist", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 300, y, "chan", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 340, y, "pri", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 380, y, "flags", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 460, y, "aud", TAG_DONE);
+	DrawText(twod, NewConsoleFont, CR_GOLD, 520, y, "pos", TAG_DONE);
 	y += NewConsoleFont->GetHeight();
 
 	if (Channels == nullptr)
@@ -1131,7 +1274,7 @@ void DoomSoundEngine::NoiseDebug()
 	for (chan = Channels; chan->NextChan != nullptr; chan = chan->NextChan)
 	{
 	}
-	while (y < SCREENHEIGHT - 16)
+	while (y < twod->GetHeight() - 16)
 	{
 		char temp[32];
 
@@ -1139,54 +1282,54 @@ void DoomSoundEngine::NoiseDebug()
 		color = (chan->ChanFlags & CHANF_LOOP) ? CR_BROWN : CR_GREY;
 
 		// Name
-		Wads.GetLumpName(temp, S_sfx[chan->SoundID].lumpnum);
+		fileSystem.GetFileShortName(temp, S_sfx[chan->SoundID].lumpnum);
 		temp[8] = 0;
-		screen->DrawText(NewConsoleFont, color, 0, y, temp, TAG_DONE);
+		DrawText(twod, NewConsoleFont, color, 0, y, temp, TAG_DONE);
 
 		if (!(chan->ChanFlags & CHANF_IS3D))
 		{
-			screen->DrawText(NewConsoleFont, color, 70, y, "---", TAG_DONE);		// X
-			screen->DrawText(NewConsoleFont, color, 120, y, "---", TAG_DONE);	// Y
-			screen->DrawText(NewConsoleFont, color, 170, y, "---", TAG_DONE);	// Z
-			screen->DrawText(NewConsoleFont, color, 260, y, "---", TAG_DONE);	// Distance
+			DrawText(twod, NewConsoleFont, color, 70, y, "---", TAG_DONE);		// X
+			DrawText(twod, NewConsoleFont, color, 120, y, "---", TAG_DONE);	// Y
+			DrawText(twod, NewConsoleFont, color, 170, y, "---", TAG_DONE);	// Z
+			DrawText(twod, NewConsoleFont, color, 260, y, "---", TAG_DONE);	// Distance
 		}
 		else
 		{
 			// X coordinate
 			mysnprintf(temp, countof(temp), "%.0f", origin.X);
-			screen->DrawText(NewConsoleFont, color, 70, y, temp, TAG_DONE);
+			DrawText(twod, NewConsoleFont, color, 70, y, temp, TAG_DONE);
 
 			// Y coordinate
 			mysnprintf(temp, countof(temp), "%.0f", origin.Z);
-			screen->DrawText(NewConsoleFont, color, 120, y, temp, TAG_DONE);
+			DrawText(twod, NewConsoleFont, color, 120, y, temp, TAG_DONE);
 
 			// Z coordinate
 			mysnprintf(temp, countof(temp), "%.0f", origin.Y);
-			screen->DrawText(NewConsoleFont, color, 170, y, temp, TAG_DONE);
+			DrawText(twod, NewConsoleFont, color, 170, y, temp, TAG_DONE);
 
 			// Distance
 			if (chan->DistanceScale > 0)
 			{
 				mysnprintf(temp, countof(temp), "%.0f", (origin - listener).Length());
-				screen->DrawText(NewConsoleFont, color, 260, y, temp, TAG_DONE);
+				DrawText(twod, NewConsoleFont, color, 260, y, temp, TAG_DONE);
 			}
 			else
 			{
-				screen->DrawText(NewConsoleFont, color, 260, y, "---", TAG_DONE);
+				DrawText(twod, NewConsoleFont, color, 260, y, "---", TAG_DONE);
 			}
 		}
 
 		// Volume
 		mysnprintf(temp, countof(temp), "%.2g", chan->Volume);
-		screen->DrawText(NewConsoleFont, color, 220, y, temp, TAG_DONE);
+		DrawText(twod, NewConsoleFont, color, 220, y, temp, TAG_DONE);
 
 		// Channel
 		mysnprintf(temp, countof(temp), "%d", chan->EntChannel);
-		screen->DrawText(NewConsoleFont, color, 300, y, temp, TAG_DONE);
+		DrawText(twod, NewConsoleFont, color, 300, y, temp, TAG_DONE);
 
 		// Priority
 		mysnprintf(temp, countof(temp), "%d", chan->Priority);
-		screen->DrawText(NewConsoleFont, color, 340, y, temp, TAG_DONE);
+		DrawText(twod, NewConsoleFont, color, 340, y, temp, TAG_DONE);
 
 		// Flags
 		mysnprintf(temp, countof(temp), "%s3%sZ%sU%sM%sN%sA%sL%sE%sV",
@@ -1199,15 +1342,15 @@ void DoomSoundEngine::NoiseDebug()
 			(chan->ChanFlags & CHANF_LOOP) ? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHANF_EVICTED) ? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK,
 			(chan->ChanFlags & CHANF_VIRTUAL) ? TEXTCOLOR_GREEN : TEXTCOLOR_BLACK);
-		screen->DrawText(NewConsoleFont, color, 380, y, temp, TAG_DONE);
+		DrawText(twod, NewConsoleFont, color, 380, y, temp, TAG_DONE);
 
 		// Audibility
 		mysnprintf(temp, countof(temp), "%.4f", GSnd->GetAudibility(chan));
-		screen->DrawText(NewConsoleFont, color, 460, y, temp, TAG_DONE);
+		DrawText(twod, NewConsoleFont, color, 460, y, temp, TAG_DONE);
 
 		// Position
 		mysnprintf(temp, countof(temp), "%u", GSnd->GetPosition(chan));
-		screen->DrawText(NewConsoleFont, color, 520, y, temp, TAG_DONE);
+		DrawText(twod, NewConsoleFont, color, 520, y, temp, TAG_DONE);
 
 
 		y += NewConsoleFont->GetHeight();
@@ -1251,13 +1394,13 @@ void DoomSoundEngine::PrintSoundList()
 			}
 			Printf("}\n");
 		}
-		else if (sfx->bPlayerReserve)
+		else if (sfx->UserData[0] & SND_PlayerReserve)
 		{
 			Printf("%3d. %s <<player sound %d>>\n", i, sfx->name.GetChars(), sfx->link);
 		}
 		else if (S_sfx[i].lumpnum != -1)
 		{
-			Wads.GetLumpName(lumpname, sfx->lumpnum);
+			fileSystem.GetFileShortName(lumpname, sfx->lumpnum);
 			Printf("%3d. %s (%s)\n", i, sfx->name.GetChars(), lumpname);
 		}
 		else if (S_sfx[i].link != sfxinfo_t::NO_LINK)
@@ -1412,7 +1555,6 @@ DEFINE_ACTION_FUNCTION(DObject, S_ResumeSound)
 }
 
 
-
 CCMD (snd_status)
 {
 	GSnd->PrintStatus ();
@@ -1421,13 +1563,6 @@ CCMD (snd_status)
 CCMD (snd_reset)
 {
 	S_SoundReset();
-}
-
-void S_SoundReset()
-{
-	S_StopMusic(true);
-	soundEngine->Reset();
-	S_RestartMusic();
 }
 
 CCMD (snd_listdrivers)
@@ -1439,3 +1574,5 @@ ADD_STAT (sound)
 {
 	return GSnd->GatherStats ();
 }
+
+

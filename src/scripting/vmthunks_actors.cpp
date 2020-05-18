@@ -893,13 +893,13 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, isTeammate, isTeammate)
 
 static int GetSpecies(AActor *self)
 {
-	return self->GetSpecies();
+	return self->GetSpecies().GetIndex();
 }
 
 DEFINE_ACTION_FUNCTION_NATIVE(AActor, GetSpecies, GetSpecies)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_INT(self->GetSpecies());
+	ACTION_RETURN_INT(GetSpecies(self));
 }
 
 static int isFriend(AActor *self, AActor *other)
@@ -1606,11 +1606,27 @@ DEFINE_ACTION_FUNCTION_NATIVE(AActor, A_BossDeath, A_BossDeath)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, DObject::StaticPointerSubstitution)
+DEFINE_ACTION_FUNCTION_NATIVE(AActor, Substitute, StaticPointerSubstitution)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT(replace, AActor);
-	DObject::StaticPointerSubstitution(self, replace);
+	StaticPointerSubstitution(self, replace);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_PlayerPawn, Substitute, StaticPointerSubstitution)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
+	StaticPointerSubstitution(self, replace);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION_NATIVE(_MorphedMonster, Substitute, StaticPointerSubstitution)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(replace, AActor);
+	StaticPointerSubstitution(self, replace);
 	return 0;
 }
 

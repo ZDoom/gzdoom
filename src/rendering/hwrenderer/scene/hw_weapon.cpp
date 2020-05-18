@@ -34,10 +34,11 @@
 #include "r_data/models/models.h"
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
+#include "texturemanager.h"
 
 #include "hwrenderer/models/hw_models.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_drawinfo.h"

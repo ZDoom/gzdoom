@@ -25,14 +25,14 @@
 **
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "v_video.h"
-#include "gl_load/gl_interface.h"
+#include "gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
-#include "w_wad.h"
+#include "filesystem.h"
 
 namespace OpenGLRenderer
 {
@@ -91,9 +91,9 @@ void FShaderProgram::CreateShader(ShaderType type)
 
 void FShaderProgram::Compile(ShaderType type, const char *lumpName, const char *defines, int maxGlslVersion)
 {
-	int lump = Wads.CheckNumForFullName(lumpName);
+	int lump = fileSystem.CheckNumForFullName(lumpName);
 	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
-	FString code = Wads.ReadLump(lump).GetString().GetChars();
+	FString code = fileSystem.ReadFile(lump).GetString().GetChars();
 	Compile(type, lumpName, code, defines, maxGlslVersion);
 }
 

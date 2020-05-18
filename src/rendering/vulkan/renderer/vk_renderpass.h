@@ -2,7 +2,7 @@
 #pragma once
 
 #include "vulkan/system/vk_objects.h"
-#include "r_data/renderstyle.h"
+#include "renderstyle.h"
 #include "hwrenderer/data/buffers.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 #include <string.h>

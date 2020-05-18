@@ -37,7 +37,7 @@
 #include <algorithm>
 #include "st_start.h"
 #include "m_alloc.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_palette.h"
 #include "s_sound.h"
 #include "s_music.h"
@@ -408,23 +408,23 @@ static const int StrifeStartupPicSizes[4 + 2 + 1] =
 FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 	: FGraphicalStartupScreen(max_progress)
 {
-	int startup_lump = Wads.CheckNumForName("STARTUP");
-	int netnotch_lump = Wads.CheckNumForName("NETNOTCH");
-	int notch_lump = Wads.CheckNumForName("NOTCH");
+	int startup_lump = fileSystem.CheckNumForName("STARTUP");
+	int netnotch_lump = fileSystem.CheckNumForName("NETNOTCH");
+	int notch_lump = fileSystem.CheckNumForName("NOTCH");
 	hr = -1;
 
-	if (startup_lump < 0 || Wads.LumpLength(startup_lump) != 153648 || !ST_Util_CreateStartupWindow() ||
-		netnotch_lump < 0 || Wads.LumpLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
-		notch_lump < 0 || Wads.LumpLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
+	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 153648 || !ST_Util_CreateStartupWindow() ||
+		netnotch_lump < 0 || fileSystem.FileLength(netnotch_lump) != ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT ||
+		notch_lump < 0 || fileSystem.FileLength(notch_lump) != ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT)
 	{
 		NetNotchBits = NotchBits = NULL;
 		return;
 	}
 
 	NetNotchBits = new uint8_t[ST_NETNOTCH_WIDTH / 2 * ST_NETNOTCH_HEIGHT];
-	Wads.ReadLump(netnotch_lump, NetNotchBits);
+	fileSystem.ReadFile(netnotch_lump, NetNotchBits);
 	NotchBits = new uint8_t[ST_NOTCH_WIDTH / 2 * ST_NOTCH_HEIGHT];
-	Wads.ReadLump(notch_lump, NotchBits);
+	fileSystem.ReadFile(notch_lump, NotchBits);
 
 	uint8_t startup_screen[153648];
 	union
@@ -433,7 +433,7 @@ FHexenStartupScreen::FHexenStartupScreen(int max_progress, long& hr)
 		uint32_t	quad;
 	} c;
 
-	Wads.ReadLump(startup_lump, startup_screen);
+	fileSystem.ReadFile(startup_lump, startup_screen);
 
 	c.color.rgbReserved = 0;
 
@@ -574,12 +574,12 @@ void FHexenStartupScreen::NetDone()
 FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 	: FGraphicalStartupScreen(max_progress)
 {
-	int loading_lump = Wads.CheckNumForName("LOADING");
+	int loading_lump = fileSystem.CheckNumForName("LOADING");
 	uint8_t loading_screen[4000];
 	uint8_t* font;
 
 	hr = -1;
-	if (loading_lump < 0 || Wads.LumpLength(loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
+	if (loading_lump < 0 || fileSystem.FileLength(loading_lump) != 4000 || !ST_Util_CreateStartupWindow())
 	{
 		return;
 	}
@@ -590,7 +590,7 @@ FHereticStartupScreen::FHereticStartupScreen(int max_progress, long& hr)
 		return;
 	}
 
-	Wads.ReadLump(loading_lump, loading_screen);
+	fileSystem.ReadFile(loading_lump, loading_screen);
 
 	// Slap the Heretic minor version on the loading screen. Heretic
 	// did this inside the executable rather than coming with modified
@@ -713,7 +713,7 @@ void FHereticStartupScreen::AppendStatusLine(const char* status)
 FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 	: FGraphicalStartupScreen(max_progress)
 {
-	int startup_lump = Wads.CheckNumForName("STARTUP0");
+	int startup_lump = fileSystem.CheckNumForName("STARTUP0");
 	int i;
 
 	hr = -1;
@@ -722,7 +722,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 		StartupPics[i] = NULL;
 	}
 
-	if (startup_lump < 0 || Wads.LumpLength(startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
+	if (startup_lump < 0 || fileSystem.FileLength(startup_lump) != 64000 || !ST_Util_CreateStartupWindow())
 	{
 		return;
 	}
@@ -732,19 +732,19 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, long& hr)
 
 	// Fill bitmap with the startup image.
 	memset(ST_Util_BitsForBitmap(StartupBitmap), 0xF0, 64000);
-	auto lumpr = Wads.OpenLumpReader(startup_lump);
+	auto lumpr = fileSystem.OpenFileReader(startup_lump);
 	lumpr.Seek(57 * 320, FileReader::SeekSet);
 	lumpr.Read(ST_Util_BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
 
 	// Load the animated overlays.
 	for (i = 0; i < 4 + 2 + 1; ++i)
 	{
-		int lumpnum = Wads.CheckNumForName(StrifeStartupPicNames[i]);
+		int lumpnum = fileSystem.CheckNumForName(StrifeStartupPicNames[i]);
 		int lumplen;
 
-		if (lumpnum >= 0 && (lumplen = Wads.LumpLength(lumpnum)) == StrifeStartupPicSizes[i])
+		if (lumpnum >= 0 && (lumplen = fileSystem.FileLength(lumpnum)) == StrifeStartupPicSizes[i])
 		{
-			auto lumpr = Wads.OpenLumpReader(lumpnum);
+			auto lumpr = fileSystem.OpenFileReader(lumpnum);
 			StartupPics[i] = new uint8_t[lumplen];
 			lumpr.Read(StartupPics[i], lumplen);
 		}
@@ -1031,7 +1031,7 @@ void ST_Util_BitmapColorsFromPlaypal(BitmapInfo* bitmap_info)
 {
 	uint8_t playpal[768];
 
-	ReadPalette(Wads.GetNumForName("PLAYPAL"), playpal);
+	ReadPalette(fileSystem.GetNumForName("PLAYPAL"), playpal);
 	for (int i = 0; i < 256; ++i)
 	{
 		bitmap_info->bmiColors[i].rgbBlue = playpal[i * 3 + 2];
@@ -1056,12 +1056,12 @@ uint8_t* ST_Util_LoadFont(const char* filename)
 	int lumpnum, lumplen, height;
 	uint8_t* font;
 
-	lumpnum = Wads.CheckNumForFullName(filename);
+	lumpnum = fileSystem.CheckNumForFullName(filename);
 	if (lumpnum < 0)
 	{ // font not found
 		return NULL;
 	}
-	lumplen = Wads.LumpLength(lumpnum);
+	lumplen = fileSystem.FileLength(lumpnum);
 	height = lumplen / 256;
 	if (height * 256 != lumplen)
 	{ // font is a bad size
@@ -1073,7 +1073,7 @@ uint8_t* ST_Util_LoadFont(const char* filename)
 	}
 	font = new uint8_t[lumplen + 1];
 	font[0] = height;	// Store font height in the first byte.
-	Wads.ReadLump(lumpnum, font + 1);
+	fileSystem.ReadFile(lumpnum, font + 1);
 	return font;
 }
 

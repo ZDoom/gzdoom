@@ -4,7 +4,7 @@
 #include <tarray.h>
 
 #include "s_sound.h"
-#include "textures/textures.h"
+#include "textures.h"
 
 struct FStrifeDialogueReply;
 class FTexture;

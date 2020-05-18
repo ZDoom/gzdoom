@@ -25,18 +25,20 @@
 */
 
 #include "c_cvars.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_data/r_translate.h"
 #include "c_dispatch.h"
 #include "r_state.h"
 #include "actor.h"
 #include "r_data/models/models.h"
-#include "textures/skyboxtexture.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "skyboxtexture.h"
+#include "hw_material.h"
 #include "image.h"
 #include "v_video.h"
 #include "v_font.h"
+#include "texturemanager.h"
 
+EXTERN_CVAR(Bool, gl_precache)
 
 //==========================================================================
 //
@@ -49,8 +51,21 @@ static void PrecacheTexture(FTexture *tex, int cache)
 	if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
 	{
 		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
-		if (gltex) gltex->Precache();
+		if (gltex) screen->PrecacheMaterial(gltex, 0);
 	}
+}
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
+static void PrecacheList(FMaterial *gltex, SpriteHits& translations)
+{
+	gltex->tex->SystemTextures.CleanUnused(translations, gltex->isExpanded());
+	SpriteHits::Iterator it(translations);
+	SpriteHits::Pair* pair;
+	while (it.NextPair(pair)) screen->PrecacheMaterial(gltex, pair->Key);
 }
 
 //==========================================================================
@@ -62,7 +77,7 @@ static void PrecacheTexture(FTexture *tex, int cache)
 static void PrecacheSprite(FTexture *tex, SpriteHits &hits)
 {
 	FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
-	if (gltex) gltex->PrecacheList(hits);
+	if (gltex) PrecacheList(gltex, hits);
 }
 
 //==========================================================================
@@ -110,8 +125,8 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	while (it.NextPair(pair))
 	{
 		PClassActor *cls = pair->Key;
-		auto remap = TranslationToTable(GetDefaultByType(cls)->Translation);
-		int gltrans = remap == nullptr ? 0 : remap->GetUniqueIndex();
+		auto remap = GPalette.TranslationToTable(GetDefaultByType(cls)->Translation);
+		int gltrans = remap == nullptr ? 0 : remap->Index;
 
 		for (unsigned i = 0; i < cls->GetStateCount(); i++)
 		{
@@ -238,14 +253,14 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 				{
 					if (tex->GetImage() && tex->SystemTextures.GetHardwareTexture(0, false) == nullptr)
 					{
-						FImageSource::RegisterForPrecache(tex->GetImage());
+						FImageSource::RegisterForPrecache(tex->GetImage(), V_IsTrueColor());
 					}
 				}
 
 				// Only register untranslated sprites. Translated ones are very unlikely to require data that can be reused.
 				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CheckKey(0))
 				{
-					FImageSource::RegisterForPrecache(tex->GetImage());
+					FImageSource::RegisterForPrecache(tex->GetImage(), V_IsTrueColor());
 				}
 			}
 		}

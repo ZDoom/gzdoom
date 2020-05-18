@@ -39,10 +39,11 @@
 #include "a_sharedglobal.h"
 #include "d_net.h"
 #include "p_setup.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "v_text.h"
 #include "c_functions.h"
 #include "gstrings.h"
+#include "texturemanager.h"
 
 //==========================================================================
 //
@@ -121,7 +122,7 @@ CCMD (countdecals)
 
 CCMD (spray)
 {
-	if (who == NULL || argv.argc() < 2)
+	if (players[consoleplayer].mo == NULL || argv.argc() < 2)
 	{
 		Printf ("Usage: spray <decal>\n");
 		return;
@@ -156,7 +157,7 @@ CCMD (mapchecksum)
 		else
 		{
 			map->GetChecksum(cksum);
-			const char *wadname = Wads.GetWadName(Wads.GetLumpFile(map->lumpnum));
+			const char *wadname = fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum));
 			delete map;
 			for (size_t j = 0; j < sizeof(cksum); ++j)
 			{
@@ -367,7 +368,7 @@ CCMD(listmaps)
 		if (map != NULL)
 		{
 			Printf("%s: '%s' (%s)\n", info->MapName.GetChars(), info->LookupLevelName().GetChars(),
-				Wads.GetWadName(Wads.GetLumpFile(map->lumpnum)));
+				fileSystem.GetResourceFileName(fileSystem.GetFileContainer(map->lumpnum)));
 			delete map;
 		}
 	}
@@ -405,22 +406,3 @@ CCMD(listsnapshots)
 	}
 }
 
-
-CCMD(printlocalized)
-{
-	if (argv.argc() > 1)
-	{
-		if (argv.argc() > 2)
-		{
-			FString lang = argv[2];
-			lang.ToLower();
-			if (lang.Len() >= 2)
-			{
-				Printf("%s\n", GStrings.GetLanguageString(argv[1], MAKE_ID(lang[0], lang[1], lang[2], 0)));
-				return;
-			}
-		}
-		Printf("%s\n", GStrings(argv[1]));
-	}
-
-}

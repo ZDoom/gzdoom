@@ -30,6 +30,7 @@
 #include "actor.h"
 #include "p_spec.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "p_lnspec.h"
 #include "p_maputl.h"
 #include "p_local.h"

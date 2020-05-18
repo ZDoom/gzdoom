@@ -19,8 +19,9 @@
 //
 //--------------------------------------------------------------------------
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "r_data/models/models_obj.h"
+#include "texturemanager.h"
 
 /**
  * Load an OBJ model
@@ -33,7 +34,7 @@
  */
 bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length)
 {
-	FString objName = Wads.GetLumpFullPath(lumpnum);
+	FString objName = fileSystem.GetFileFullPath(lumpnum);
 	FString objBuf(buffer, length);
 
 	// Do some replacements before we parse the OBJ string

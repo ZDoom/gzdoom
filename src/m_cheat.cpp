@@ -49,6 +49,7 @@
 #include "a_keys.h"
 #include "d_net.h"
 #include "serializer.h"
+#include "serialize_obj.h"
 #include "r_utility.h"
 #include "a_morph.h"
 #include "g_levellocals.h"

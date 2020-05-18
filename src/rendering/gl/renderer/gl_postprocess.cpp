@@ -19,7 +19,7 @@
 **  3. This notice may not be removed or altered from any source distribution.
 */
 
-#include "gl_load/gl_system.h"
+#include "gl_system.h"
 #include "gi.h"
 #include "m_png.h"
 #include "r_utility.h"

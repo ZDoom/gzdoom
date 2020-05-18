@@ -42,7 +42,7 @@
 #include "g_level.h"
 #include "udmf.h"
 #include "r_state.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "p_tags.h"
 #include "p_terrain.h"
 #include "p_spec.h"
@@ -51,6 +51,7 @@
 #include "vm.h"
 #include "xlat/xlat.h"
 #include "maploader.h"
+#include "texturemanager.h"
 
 //===========================================================================
 //
@@ -226,56 +227,56 @@ FName UDMFParserBase::ParseKey(bool checkblock, bool *isblock)
 //
 //===========================================================================
 
-int UDMFParserBase::CheckInt(const char *key)
+int UDMFParserBase::CheckInt(FName key)
 {
 	if (sc.TokenType != TK_IntConst)
 	{
-		sc.ScriptMessage("Integer value expected for key '%s'", key);
+		sc.ScriptMessage("Integer value expected for key '%s'", key.GetChars());
 	}
 	return sc.Number;
 }
 
-double UDMFParserBase::CheckFloat(const char *key)
+double UDMFParserBase::CheckFloat(FName key)
 {
 	if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
 	{
-		sc.ScriptMessage("Floating point value expected for key '%s'", key);
+		sc.ScriptMessage("Floating point value expected for key '%s'", key.GetChars());
 	}
 	return sc.Float;
 }
 
-double UDMFParserBase::CheckCoordinate(const char *key)
+double UDMFParserBase::CheckCoordinate(FName key)
 {
 	if (sc.TokenType != TK_IntConst && sc.TokenType != TK_FloatConst)
 	{
-		sc.ScriptMessage("Floating point value expected for key '%s'", key);
+		sc.ScriptMessage("Floating point value expected for key '%s'", key.GetChars());
 	}
 	if (sc.Float < -32768 || sc.Float > 32768)
 	{
-		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is [-32768 .. 32768]", sc.Float, key);
+		sc.ScriptMessage("Value %f out of range for a coordinate '%s'. Valid range is [-32768 .. 32768]", sc.Float, key.GetChars());
 		BadCoordinates = true;	// If this happens the map must not allowed to be started.
 	}
 	return sc.Float;
 }
 
-DAngle UDMFParserBase::CheckAngle(const char *key)
+DAngle UDMFParserBase::CheckAngle(FName key)
 {
 	return DAngle(CheckFloat(key)).Normalized360();
 }
 
-bool UDMFParserBase::CheckBool(const char *key)
+bool UDMFParserBase::CheckBool(FName key)
 {
 	if (sc.TokenType == TK_True) return true;
 	if (sc.TokenType == TK_False) return false;
-	sc.ScriptMessage("Boolean value expected for key '%s'", key);
+	sc.ScriptMessage("Boolean value expected for key '%s'", key.GetChars());
 	return false;
 }
 
-const char *UDMFParserBase::CheckString(const char *key)
+const char *UDMFParserBase::CheckString(FName key)
 {
 	if (sc.TokenType != TK_StringConst)
 	{
-		sc.ScriptMessage("String value expected for key '%s'", key);
+		sc.ScriptMessage("String value expected for key '%s'", key.GetChars());
 	}
 	return parsedString;
 }
@@ -291,7 +292,7 @@ static int udmfcmp(const void *a, const void *b)
 	FUDMFKey *A = (FUDMFKey*)a;
 	FUDMFKey *B = (FUDMFKey*)b;
 
-	return int(A->Key) - int(B->Key);
+	return int(A->Key.GetIndex()) - int(B->Key.GetIndex());
 }
 
 void FUDMFKeys::Sort()
@@ -482,7 +483,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch(key)
+			switch(key.GetIndex())
 			{
 			case NAME_Id:
 				th->thingid = CheckInt(key);
@@ -530,7 +531,7 @@ public:
 			case NAME_Arg3:
 			case NAME_Arg4:
 				CHECK_N(Hx | Zd | Zdt | Va)
-				th->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
+				th->args[key.GetIndex() - int(NAME_Arg0)] = CheckInt(key);
 				break;
 
 			case NAME_Arg0Str:
@@ -560,8 +561,8 @@ public:
 			case NAME_Skill14:
 			case NAME_Skill15:
 			case NAME_Skill16:
-				if (CheckBool(key)) th->SkillFilter |= (1<<(int(key)-NAME_Skill1));
-				else th->SkillFilter &= ~(1<<(int(key)-NAME_Skill1));
+				if (CheckBool(key)) th->SkillFilter |= (1<<(key.GetIndex()-NAME_Skill1));
+				else th->SkillFilter &= ~(1<<(key.GetIndex()-NAME_Skill1));
 				break;
 
 			case NAME_Class1:
@@ -581,8 +582,8 @@ public:
 			case NAME_Class15:
 			case NAME_Class16:
 				CHECK_N(Hx | Zd | Zdt | Va)
-				if (CheckBool(key)) th->ClassFilter |= (1<<(int(key)-NAME_Class1));
-				else th->ClassFilter &= ~(1<<(int(key)-NAME_Class1));
+				if (CheckBool(key)) th->ClassFilter |= (1<<(key.GetIndex()-NAME_Class1));
+				else th->ClassFilter &= ~(1<<(key.GetIndex()-NAME_Class1));
 				break;
 
 			case NAME_Ambush:
@@ -636,6 +637,11 @@ public:
 				Flag(th->flags, MTF_SECRET, key); 
 				break;
 
+			case NAME_NoCount:
+				CHECK_N(Zd | Zdt)
+				Flag(th->flags, MTF_NOCOUNT, key);
+				break;
+
 			case NAME_Floatbobphase:
 				CHECK_N(Zd | Zdt)
 				th->FloatbobPhase = CheckInt(key);
@@ -644,7 +650,7 @@ public:
 			case NAME_Renderstyle:
 				{
 				FName style = CheckString(key);
-				switch (style)
+				switch (style.GetIndex())
 				{
 				case NAME_None:
 					th->RenderStyle = STYLE_None;
@@ -760,11 +766,11 @@ public:
 		}
 		if (arg0str.IsNotEmpty() && (P_IsACSSpecial(th->special) || th->special == 0))
 		{
-			th->args[0] = -FName(arg0str);
+			th->args[0] = -FName(arg0str).GetIndex();
 		}
 		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(th->special) || th->special == 0))
 		{
-			th->args[1] = -FName(arg1str);
+			th->args[1] = -FName(arg1str).GetIndex();
 		}
 		// Thing specials are only valid in namespaces with Hexen-type specials
 		// and in ZDoomTranslated - which will use the translator on them.
@@ -821,7 +827,7 @@ public:
 			FName key = ParseKey();
 
 			// This switch contains all keys of the UDMF base spec
-			switch(key)
+			switch(key.GetIndex())
 			{
 			case NAME_V1:
 				ld->v1 = (vertex_t*)(intptr_t)CheckInt(key);	// must be relocated later
@@ -859,7 +865,7 @@ public:
 			case NAME_Arg2:
 			case NAME_Arg3:
 			case NAME_Arg4:
-				ld->args[int(key)-int(NAME_Arg0)] = CheckInt(key);
+				ld->args[key.GetIndex()-int(NAME_Arg0)] = CheckInt(key);
 				continue;
 
 			case NAME_Arg0Str:
@@ -938,7 +944,7 @@ public:
 			}
 
 			// This switch contains all keys of the UDMF base spec which only apply to Hexen format specials
-			if (!isTranslated) switch (key)
+			if (!isTranslated) switch (key.GetIndex())
 			{
 			case NAME_Playercross:
 				Flag(ld->activation, SPAC_Cross, key); 
@@ -985,7 +991,7 @@ public:
 			}
 
 			// This switch contains all keys which are ZDoom specific
-			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key.GetIndex())
 			{
 			case NAME_Alpha:
 				ld->setAlpha(CheckFloat(key));
@@ -1156,11 +1162,11 @@ public:
 		}
 		if (arg0str.IsNotEmpty() && (P_IsACSSpecial(ld->special) || ld->special == 0))
 		{
-			ld->args[0] = -FName(arg0str);
+			ld->args[0] = -FName(arg0str).GetIndex();
 		}
 		if (arg1str.IsNotEmpty() && (P_IsThingSpecial(ld->special) || ld->special == 0))
 		{
-			ld->args[1] = -FName(arg1str);
+			ld->args[1] = -FName(arg1str).GetIndex();
 		}
 		if ((ld->flags & ML_3DMIDTEX_IMPASS) && !(ld->flags & ML_3DMIDTEX)) // [TP]
 		{
@@ -1190,7 +1196,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch(key)
+			switch(key.GetIndex())
 
 			{
 			case NAME_Offsetx:
@@ -1221,7 +1227,7 @@ public:
 				break;
 			}
 
-			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key.GetIndex())
 			{
 			case NAME_offsetx_top:
 				sd->SetTextureXOffset(side_t::top, CheckFloat(key));
@@ -1496,7 +1502,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch(key)
+			switch(key.GetIndex())
 			{
 			case NAME_Heightfloor:
 				sec->SetPlaneTexZ(sector_t::floor, CheckCoordinate(key));
@@ -1536,7 +1542,7 @@ public:
 				break;
 			}
 
-			if (namespace_bits & (Zd|Zdt|Va)) switch(key)
+			if (namespace_bits & (Zd|Zdt|Va)) switch(key.GetIndex())
 			{
 				case NAME_Xpanningfloor:
 					sec->SetXOffset(sector_t::floor, CheckFloat(key));
@@ -2028,7 +2034,7 @@ public:
 		while (!sc.CheckToken('}'))
 		{
 			FName key = ParseKey();
-			switch (key)
+			switch (key.GetIndex())
 			{
 			case NAME_X:
 				x = CheckCoordinate(key);
@@ -2161,14 +2167,14 @@ public:
 		isExtended = false;
 		floordrop = false;
 
-		sc.OpenMem(Wads.GetLumpFullName(map->lumpnum), map->Read(ML_TEXTMAP));
+		sc.OpenMem(fileSystem.GetFileFullName(map->lumpnum), map->Read(ML_TEXTMAP));
 		sc.SetCMode(true);
 		if (sc.CheckString("namespace"))
 		{
 			sc.MustGetStringName("=");
 			sc.MustGetString();
 			namespc = sc.String;
-			switch(namespc)
+			switch(namespc.GetIndex())
 			{
 			case NAME_ZDoom:
 				namespace_bits = Zd;

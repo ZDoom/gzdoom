@@ -58,7 +58,8 @@
 #include <stdlib.h>
 #include "actor.h"
 #include "p_spec.h"
-#include "serializer.h"
+#include "serializer_doom.h"
+#include "serialize_obj.h"
 #include "p_lnspec.h"
 #include "r_data/r_interpolate.h"
 #include "g_levellocals.h"

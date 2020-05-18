@@ -23,7 +23,7 @@
 #include "templates.h"
 #include "c_cvars.h"
 #include "r_data/colormaps.h"
-#include "hwrenderer/textures/hw_material.h"
+#include "hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_renderstate.h"
 #include "poly_framebuffer.h"
@@ -108,8 +108,8 @@ PolyDepthStencil *PolyHardwareTexture::GetDepthStencil(FTexture *tex)
 {
 	if (!mDepthStencil)
 	{
-		int w = tex->GetWidth();
-		int h = tex->GetHeight();
+		int w = tex->GetTexelWidth();
+		int h = tex->GetTexelHeight();
 		mDepthStencil.reset(new PolyDepthStencil(w, h));
 	}
 	return mDepthStencil.get();
@@ -130,7 +130,7 @@ uint8_t *PolyHardwareTexture::MapBuffer()
 	return mCanvas->GetPixels();
 }
 
-unsigned int PolyHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
+unsigned int PolyHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, const char *name)
 {
 	return 0;
 }
@@ -166,17 +166,14 @@ void PolyHardwareTexture::CreateImage(FTexture *tex, int translation, int flags)
 
 	if (!tex->isHardwareCanvas())
 	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-
 		FTextureBuffer texbuffer = tex->CreateTexBuffer(translation, flags | CTF_ProcessData);
 		mCanvas->Resize(texbuffer.mWidth, texbuffer.mHeight, false);
 		memcpy(mCanvas->GetPixels(), texbuffer.mBuffer, texbuffer.mWidth * texbuffer.mHeight * 4);
 	}
 	else
 	{
-		int w = tex->GetWidth();
-		int h = tex->GetHeight();
+		int w = tex->GetTexelWidth();
+		int h = tex->GetTexelHeight();
 		mCanvas->Resize(w, h, false);
 	}
 }

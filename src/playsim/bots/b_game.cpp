@@ -94,6 +94,10 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "vm.h"
 #include "g_levellocals.h"
 
+#if !defined _WIN32 && !defined __APPLE__
+#include "i_system.h"  // for SHARE_DIR
+#endif // !_WIN32 && !__APPLE__
+
 static FRandom pr_botspawn ("BotSpawn");
 
 cycle_t BotThinkCycles, BotSupportCycles;
@@ -237,7 +241,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	if (name)
 	{
 		// Check if exist or already in the game.
-		while (thebot && stricmp (name, thebot->name))
+		while (thebot && thebot->Name.CompareNoCase(name))
 		{
 			botshift++;
 			thebot = thebot->next;
@@ -296,16 +300,14 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	Net_WriteByte (botshift);
 	{
 		//Set color.
-		char concat[512];
-		strcpy (concat, thebot->info);
+		FString concat = thebot->Info;
 		if (color == NOCOLOR && bot_next_color < NOCOLOR && bot_next_color >= 0)
 		{
-			strcat (concat, colors[bot_next_color]);
+			concat << colors[bot_next_color];
 		}
 		if (TeamLibrary.IsValidTeam (thebot->lastteam))
 		{ // Keep the bot on the same team when switching levels
-			mysnprintf (concat + strlen(concat), countof(concat) - strlen(concat),
-				"\\team\\%d\n", thebot->lastteam);
+			concat.AppendFormat("\\team\\%d\n", thebot->lastteam);
 		}
 		Net_WriteString (concat);
 	}
@@ -453,26 +455,9 @@ void FCajunMaster::RemoveAllBots (FLevelLocals *Level, bool fromlist)
 // ???			any other valid userinfo strings can go here
 //}
 
-static void appendinfo (char *&front, const char *back)
+static void appendinfo (FString &front, const char *back)
 {
-	char *newstr;
-
-	if (front)
-	{
-		size_t newlen = strlen (front) + strlen (back) + 2;
-		newstr = new char[newlen];
-		strcpy (newstr, front);
-		delete[] front;
-	}
-	else
-	{
-		size_t newlen = strlen (back) + 2;
-		newstr = new char[newlen];
-		newstr[0] = 0;
-	}
-	strcat (newstr, "\\");
-	strcat (newstr, back);
-	front = newstr;
+	front << "\\" << back;
 }
 
 void FCajunMaster::ForgetBots ()
@@ -482,14 +467,49 @@ void FCajunMaster::ForgetBots ()
 	while (thebot)
 	{
 		botinfo_t *next = thebot->next;
-		delete[] thebot->name;
-		delete[] thebot->info;
 		delete thebot;
 		thebot = next;
 	}
 
 	botinfo = NULL;
 }
+
+#if defined _WIN32 || defined __APPLE__
+
+FString M_GetCajunPath(const char* botfilename)
+{
+	FString path;
+
+	path << progdir << "zcajun/" << botfilename;
+	if (!FileExists(path))
+	{
+		path = "";
+	}
+	return path;
+}
+
+#else
+
+FString M_GetCajunPath(const char* botfilename)
+{
+	FString path;
+
+	// Check first in $HOME/.config/zdoom/botfilename.
+	path = GetUserFile(botfilename);
+	if (!FileExists(path))
+	{
+		// Then check in SHARE_DIR/botfilename.
+		path = SHARE_DIR;
+		path << botfilename;
+		if (!FileExists(path))
+		{
+			path = "";
+		}
+	}
+	return path;
+}
+
+#endif
 
 bool FCajunMaster::LoadBots ()
 {
@@ -521,9 +541,7 @@ bool FCajunMaster::LoadBots ()
 		botinfo_t *newinfo = new botinfo_t;
 		bool gotclass = false;
 
-		memset (newinfo, 0, sizeof(*newinfo));
-
-		newinfo->info = copystring ("\\autoaim\\0\\movebob\\.25");
+		newinfo->Info = "\\autoaim\\0\\movebob\\.25";
 
 		for (;;)
 		{
@@ -535,9 +553,9 @@ bool FCajunMaster::LoadBots ()
 			{
 			case BOTCFG_NAME:
 				sc.MustGetString ();
-				appendinfo (newinfo->info, "name");
-				appendinfo (newinfo->info, sc.String);
-				newinfo->name = copystring (sc.String);
+				appendinfo (newinfo->Info, "name");
+				appendinfo (newinfo->Info, sc.String);
+				newinfo->Name = sc.String;
 				break;
 
 			case BOTCFG_AIMING:
@@ -586,9 +604,9 @@ bool FCajunMaster::LoadBots ()
 							}
 						}
 					}
-					appendinfo (newinfo->info, "team");
+					appendinfo (newinfo->Info, "team");
 					mysnprintf (teamstr, countof(teamstr), "%d", teamnum);
-					appendinfo (newinfo->info, teamstr);
+					appendinfo (newinfo->Info, teamstr);
 					gotteam = true;
 					break;
 				}
@@ -598,21 +616,21 @@ bool FCajunMaster::LoadBots ()
 				{
 					gotclass = true;
 				}
-				appendinfo (newinfo->info, sc.String);
+				appendinfo (newinfo->Info, sc.String);
 				sc.MustGetString ();
-				appendinfo (newinfo->info, sc.String);
+				appendinfo (newinfo->Info, sc.String);
 				break;
 			}
 		}
 		if (!gotclass)
 		{ // Bots that don't specify a class get a random one
-			appendinfo (newinfo->info, "playerclass");
-			appendinfo (newinfo->info, "random");
+			appendinfo (newinfo->Info, "playerclass");
+			appendinfo (newinfo->Info, "random");
 		}
 		if (!gotteam)
 		{ // Same for bot teams
-			appendinfo (newinfo->info, "team");
-			appendinfo (newinfo->info, "255");
+			appendinfo (newinfo->Info, "team");
+			appendinfo (newinfo->Info, "255");
 		}
 		newinfo->next = botinfo;
 		newinfo->lastteam = TEAM_NONE;

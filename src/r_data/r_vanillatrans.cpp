@@ -38,7 +38,7 @@
 
 #include "templates.h"
 #include "c_cvars.h"
-#include "w_wad.h"
+#include "filesystem.h"
 #include "doomtype.h"
 #ifdef _DEBUG
 #include "c_dispatch.h"
@@ -74,13 +74,13 @@ bool UseVanillaTransparency()
 	if (firstTime)
 	{
 		int lastlump = 0;
-		Wads.FindLump("ZSCRIPT", &lastlump); // ignore first ZScript
-		if (Wads.FindLump("ZSCRIPT", &lastlump) == -1) // no loaded ZScript
+		fileSystem.FindLump("ZSCRIPT", &lastlump); // ignore first ZScript
+		if (fileSystem.FindLump("ZSCRIPT", &lastlump) == -1) // no loaded ZScript
 		{
 			lastlump = 0;
-			foundDehacked = Wads.FindLump("DEHACKED", &lastlump) != -1;
+			foundDehacked = fileSystem.FindLump("DEHACKED", &lastlump) != -1;
 			lastlump = 0;
-			foundDecorate = Wads.FindLump("DECORATE", &lastlump) != -1;
+			foundDecorate = fileSystem.FindLump("DECORATE", &lastlump) != -1;
 			foundZScript = false;
 		}
 		else

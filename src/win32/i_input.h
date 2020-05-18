@@ -34,8 +34,7 @@
 #ifndef __I_INPUT_H__
 #define __I_INPUT_H__
 
-#include "doomtype.h"
-#include "doomdef.h"
+#include "basics.h"
 
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();

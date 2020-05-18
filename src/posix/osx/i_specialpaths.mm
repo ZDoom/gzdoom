@@ -152,27 +152,6 @@ FString M_GetAutoexecPath()
 
 //===========================================================================
 //
-// M_GetCajunPath													macOS
-//
-// Returns the location of the Cajun Bot definitions.
-//
-//===========================================================================
-
-FString M_GetCajunPath(const char *botfilename)
-{
-	FString path;
-
-	// Just copies the Windows code. Should this be more Mac-specific?
-	path << progdir << "zcajun/" << botfilename;
-	if (!FileExists(path))
-	{
-		path = "";
-	}
-	return path;
-}
-
-//===========================================================================
-//
 // M_GetConfigPath													macOS
 //
 // Returns the path to the config file. On Windows, this can vary for reading

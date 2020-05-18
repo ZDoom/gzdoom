@@ -38,7 +38,7 @@
 #include "m_random.h"
 #include "m_swap.h"
 
-#include "w_wad.h"
+#include "filesystem.h"
 #include "g_level.h"
 #include "s_sound.h"
 #include "doomstat.h"
@@ -54,6 +54,7 @@
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "texturemanager.h"
 
 CVAR(Bool, wi_percents, true, CVAR_ARCHIVE)
 CVAR(Bool, wi_showtotaltime, true, CVAR_ARCHIVE)
@@ -227,7 +228,7 @@ private:
 
 			if (left >= 0 && right < 320 && top >= 0 && bottom < 200)
 			{
-				screen->DrawTexture(c[i], lnodes[n].x, lnodes[n].y, DTA_320x200, true, TAG_DONE);
+				DrawTexture(twod, c[i], lnodes[n].x, lnodes[n].y, DTA_320x200, true, TAG_DONE);
 				break;
 			}
 		}
@@ -369,7 +370,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	}
 	else
 	{
-		int lumpnum = Wads.CheckNumForFullName(lumpname + 1, true);
+		int lumpnum = fileSystem.CheckNumForFullName(lumpname + 1, true);
 		if (lumpnum >= 0)
 		{
 			FScanner sc(lumpnum);
@@ -599,16 +600,16 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			// placing the animations precisely where they belong on the base pic
 			animwidth = background->GetDisplayWidthDouble();
 			animheight = background->GetDisplayHeightDouble();
-			screen->DrawTexture(background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
+			DrawTexture(twod, background, 0, 0, DTA_Fullscreen, true, TAG_DONE);
 		}
 		else
 		{
-			screen->FlatFill(0, 0, SCREENWIDTH, SCREENHEIGHT, background);
+			twod->AddFlatFill(0, 0, twod->GetWidth(), twod->GetHeight(), background);
 		}
 	}
 	else
 	{
-		screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
+		ClearRect(twod, 0, 0, twod->GetWidth(), twod->GetHeight(), 0, 0);
 	}
 
 	for (i = 0; i<anims.Size(); i++)
@@ -654,7 +655,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 			break;
 		}
 		if (a->ctr >= 0)
-			screen->DrawTexture(a->frames[a->ctr], a->loc.x, a->loc.y,
+			DrawTexture(twod, a->frames[a->ctr], a->loc.x, a->loc.y,
 				DTA_VirtualWidthF, animwidth, DTA_VirtualHeightF, animheight, TAG_DONE);
 	}
 
@@ -723,10 +724,10 @@ void WI_Drawer()
 		ScaleOverrider s;
 		IFVIRTUALPTRNAME(WI_Screen, "StatusScreen", Drawer)
 		{
-			screen->FillBorder(nullptr);
+			FillBorder(twod, nullptr);
 			VMValue self = WI_Screen;
 			VMCall(func, &self, 1, nullptr, 0);
-			screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
+			twod->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 
 			// The internal handling here is somewhat poor. After being set to 'LeavingIntermission'
 			// the screen is needed for one more draw operation so we cannot delete it right away but only here.

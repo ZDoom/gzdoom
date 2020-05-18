@@ -803,6 +803,21 @@ public:
 				sub.section = bestfit;
 			}
 		}
+
+		// Set all empty sectors' initial index to 0, so that we do not have to range-check each access.
+		for (unsigned i = 0; i < Level->sectors.Size(); i++)
+		{
+			if (Level->sections.firstSectionForSectorPtr[i] < 0)
+			{
+				Level->sections.firstSectionForSectorPtr[i] = 0;
+				if (Level->sections.numberOfSectionForSectorPtr[i] > 0)
+				{
+					// This should never happen.
+					Printf("Warning: Sector %d has a non-empty section list with no address\n", i);
+					Level->sections.numberOfSectionForSectorPtr = 0;
+				}
+			}
+		}
 	}
 
 };

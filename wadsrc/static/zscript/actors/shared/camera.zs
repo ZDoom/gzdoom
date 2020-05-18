@@ -63,7 +63,7 @@ class AimingCamera : SecurityCamera
 
 		args[2] = 0;
 		Super.PostBeginPlay ();
-		MaxPitchChange = double(changepitch / TICRATE);
+		MaxPitchChange = double(changepitch) / TICRATE;
 		Range /= TICRATE;
 
 		ActorIterator it = Level.CreateActorIterator(args[3]);

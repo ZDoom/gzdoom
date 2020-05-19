@@ -43,7 +43,7 @@ void Dictionary::Serialize(FSerializer &arc)
 		Dictionary *pointerToDeserializedDictionary;
 		arc(key, pointerToDeserializedDictionary);
 		Map.TransferFrom(pointerToDeserializedDictionary->Map);
-		delete pointerToDeserializedDictionary;
+		pointerToDeserializedDictionary->Destroy();
 	}
 }
 

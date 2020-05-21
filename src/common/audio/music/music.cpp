@@ -37,7 +37,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <stdexcept>
 
 #include "i_sound.h"
 #include "i_music.h"

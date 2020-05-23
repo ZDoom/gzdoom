@@ -206,6 +206,7 @@ struct gameinfo_t
 	double normforwardmove[2];
 	double normsidemove[2];
 	int fullscreenautoaspect = 0;
+	bool nomergepickupmsg;
 
 	const char *GetFinalePage(unsigned int num) const;
 };

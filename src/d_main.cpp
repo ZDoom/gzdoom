@@ -353,6 +353,7 @@ void D_GrabCVarDefaults()
 			sc.ScriptError("Version must be at least 219 (current version %i)", gamelastrunversion);
 
 		FBaseCVar* var;
+		FString CurrentFindCVar;
 
 		while (sc.GetString())
 		{
@@ -360,7 +361,30 @@ void D_GrabCVarDefaults()
 			{
 				sc.MustGetString();
 			}
-			var = FindCVar(sc.String, NULL);
+
+			CurrentFindCVar = sc.String;
+
+			if (lumpversion < 220)
+			{
+				CurrentFindCVar.ToLower();
+
+				// these two got renamed
+				if (strcmp(CurrentFindCVar, "gamma") == 0)
+				{
+					CurrentFindCVar = "vid_gamma";
+				}
+				if (strcmp(CurrentFindCVar, "fullscreen") == 0)
+				{
+					CurrentFindCVar = "vid_fullscreen";
+				}
+
+				// this was removed
+				if (strcmp(CurrentFindCVar, "cd_drive") == 0)
+					break;
+			}
+
+			var = FindCVar(CurrentFindCVar, NULL);
+
 			if (var != NULL)
 			{
 				if (var->GetFlags() & CVAR_ARCHIVE)

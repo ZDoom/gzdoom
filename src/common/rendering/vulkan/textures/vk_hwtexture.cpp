@@ -369,7 +369,8 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 	int translation = state.mTranslation;
 
 	auto remap = translation <= 0 ? nullptr : GPalette.TranslationToTable(translation);
-	if (remap) translation = remap->Index;
+	if (remap) 
+		translation = remap->Index;
 
 	clampmode = base->GetClampMode(clampmode);
 
@@ -389,8 +390,8 @@ VulkanDescriptorSet* VkMaterial::GetDescriptorSet(const FMaterialState& state)
 
 	WriteDescriptors update;
 	MaterialLayerInfo *layer;
-	auto systex = static_cast<VkHardwareTexture*>(GetLayer(0, translation, &layer));
-	update.addCombinedImageSampler(descriptor.get(), 0, systex->GetImage(layer->layerTexture, translation, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
+	auto systex = static_cast<VkHardwareTexture*>(GetLayer(0, state.mTranslation, &layer));
+	update.addCombinedImageSampler(descriptor.get(), 0, systex->GetImage(layer->layerTexture, state.mTranslation, layer->scaleFlags)->View.get(), sampler, systex->mImage.Layout);
 	for (int i = 1; i < numLayers; i++)
 	{
 		auto systex = static_cast<VkHardwareTexture*>(GetLayer(i, 0, &layer));

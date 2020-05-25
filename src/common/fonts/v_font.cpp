@@ -152,7 +152,6 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 			{
 				FFont *CreateSinglePicFont(const char *name);
 				font =  CreateSinglePicFont (name);
-				if (translationsLoaded) font->LoadTranslations();
 				return font;
 			}
 		}

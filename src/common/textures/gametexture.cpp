@@ -443,7 +443,7 @@ float FTexCoordInfo::RowOffset(float rowoffset) const
 
 float FTexCoordInfo::TextureOffset(float textureoffset) const
 {
-	float scale = fabs(mScale.X);
+	float scale = fabsf(mScale.X);
 	if (scale == 1.f || mWorldPanning) return textureoffset;
 	else return textureoffset / scale;
 }
@@ -458,7 +458,7 @@ float FTexCoordInfo::TextureAdjustWidth() const
 {
 	if (mWorldPanning)
 	{
-		float tscale = fabs(mTempScale.X);
+		float tscale = fabsf(mTempScale.X);
 		if (tscale == 1.f) return (float)mRenderWidth;
 		else return mWidth / fabs(tscale);
 	}

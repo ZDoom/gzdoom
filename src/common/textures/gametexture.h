@@ -84,7 +84,7 @@ class FGameTexture
 	float DisplayWidth, DisplayHeight;
 	float ScaleX, ScaleY;
 
-	int8_t shouldUpscaleFlag = 0;				// Without explicit setup, scaling is disabled for a texture.
+	int8_t shouldUpscaleFlag = 1;
 	ETextureType UseType = ETextureType::Wall;	// This texture's primary purpose
 	SpritePositioningInfo* spi = nullptr;
 
@@ -131,7 +131,7 @@ public:
 
 	ETextureType GetUseType() const { return UseType; }
 	void SetUpscaleFlag(int what) { shouldUpscaleFlag = what; }
-	int GetUpscaleFlag() { return shouldUpscaleFlag; }
+	int GetUpscaleFlag() { return shouldUpscaleFlag == 1; }
 
 	FTexture* GetTexture() { return Base.get(); }
 	int GetSourceLump() const { return Base->GetSourceLump(); }
@@ -234,6 +234,10 @@ public:
 		DisplayHeight = h;
 		ScaleX = TexelWidth / w;
 		ScaleY = TexelHeight / h;
+		if (shouldUpscaleFlag < 2)
+		{
+			shouldUpscaleFlag = ScaleX < 2 && ScaleY < 2;
+		}
 
 		// compensate for roundoff errors
 		if (int(ScaleX * w) != TexelWidth) ScaleX += (1 / 65536.);
@@ -253,6 +257,10 @@ public:
 	{
 		ScaleX = x;
 		ScaleY = y;
+		if (shouldUpscaleFlag < 2)
+		{
+			shouldUpscaleFlag = ScaleX < 2 && ScaleY < 2;
+		}
 		DisplayWidth = TexelWidth / x;
 		DisplayHeight = TexelHeight / y;
 	}

@@ -430,7 +430,7 @@ CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 float FTexCoordInfo::RowOffset(float rowoffset) const
 {
-	float scale = fabs(mScale.Y);
+	float scale = fabsf(mScale.Y);
 	if (scale == 1.f || mWorldPanning) return rowoffset;
 	else return rowoffset / scale;
 }

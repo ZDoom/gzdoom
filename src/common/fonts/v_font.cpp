@@ -89,6 +89,7 @@ FFont* SmallFont, * SmallFont2, * BigFont, * BigUpper, * ConFont, * Intermission
 
 FFont *FFont::FirstFont = nullptr;
 int NumTextColors;
+static bool translationsLoaded;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -138,7 +139,9 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 				head == MAKE_ID(0xE1,0xE6,0xD5,0x1A))
 			{
 				FFont *CreateSingleLumpFont (const char *fontname, int lump);
-				return CreateSingleLumpFont (name, lump);
+				font = CreateSingleLumpFont (name, lump);
+				if (translationsLoaded) font->LoadTranslations();
+				return font;
 			}
 		}
 		FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
@@ -148,12 +151,16 @@ FFont *V_GetFont(const char *name, const char *fontlumpname)
 			if (tex && tex->GetSourceLump() >= folderfile)
 			{
 				FFont *CreateSinglePicFont(const char *name);
-				return CreateSinglePicFont (name);
+				font =  CreateSinglePicFont (name);
+				if (translationsLoaded) font->LoadTranslations();
+				return font;
 			}
 		}
 		if (folderdata.Size() > 0)
 		{
-			return new FFont(name, nullptr, name, HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			font = new FFont(name, nullptr, name, HU_FONTSTART, HU_FONTSIZE, 1, -1);
+			if (translationsLoaded) font->LoadTranslations();
+			return font;
 		}
 	}
 	return font;
@@ -834,6 +841,7 @@ void V_LoadTranslations()
 		if (OriginalSmallFont != nullptr) OriginalSmallFont->SetDefaultTranslation(colors);
 		NewSmallFont->SetDefaultTranslation(colors);
 	}
+	translationsLoaded = true;
 }
 
 void V_ClearFonts()

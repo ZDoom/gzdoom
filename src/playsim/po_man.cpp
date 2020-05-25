@@ -511,6 +511,7 @@ bool EV_MovePolyTo(FLevelLocals *Level, line_t *line, int polyNum, double speed,
 		pe->m_Speed = speed;
 		pe->m_Speedv = dist * speed;
 		pe->m_Target = poly->StartSpot.pos + dist * distlen;
+		SN_StartSequence(poly, poly->seqType, SEQ_DOOR, 0);
 		if ((pe->m_Dist / pe->m_Speed) <= 2)
 		{
 			pe->StopInterpolation();

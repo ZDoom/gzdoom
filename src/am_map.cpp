@@ -3037,8 +3037,8 @@ void DAutomap::DrawMarker (FGameTexture *tex, double x, double y, int yadjust,
 		rotatePoint (&x, &y);
 	}
 	DrawTexture(twod, tex, CXMTOF(x) + f_x, CYMTOF(y) + yadjust + f_y,
-		DTA_DestWidth, tex->GetDisplayWidth() * CleanXfac * xscale,
-		DTA_DestHeight, tex->GetDisplayHeight() * CleanYfac * yscale,
+		DTA_DestWidthF, tex->GetDisplayWidth() * CleanXfac * xscale,
+		DTA_DestHeightF, tex->GetDisplayHeight() * CleanYfac * yscale,
 		DTA_ClipTop, f_y,
 		DTA_ClipBottom, f_y + f_h,
 		DTA_ClipLeft, f_x,

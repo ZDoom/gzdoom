@@ -284,8 +284,10 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 {
 	FString code = GetTargetGlslVersion();
 	code << defines;
+	code << "\n$placeholder$";	// here the code can later add more needed #defines.
 	code << "\n#define MAX_STREAM_DATA " << std::to_string(MAX_STREAM_DATA).c_str() << "\n";
 	code << shaderBindings;
+	FString placeholder = "\n";
 
 	if (!device->UsedDeviceFeatures.shaderClipDistance) code << "#define NO_CLIPDISTANCE_SUPPORT\n";
 	if (!alphatest) code << "#define NO_ALPHATEST\n";
@@ -342,7 +344,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 			if (pp_code.IndexOf("ProcessMaterial") >= 0 && pp_code.IndexOf("SetupMaterial") < 0)
 			{
 				// This reactivates the old logic and disables all features that cannot be supported with that method.
-				code.Insert(0, "#define LEGACY_USER_SHADER\n");
+				placeholder << "#define LEGACY_USER_SHADER\n";
 			}
 		}
 		else
@@ -351,6 +353,7 @@ std::unique_ptr<VulkanShader> VkShaderManager::LoadFragShader(FString shadername
 			code << (material_lump + 1) << "\n";
 		}
 	}
+	code.Substitute("$placeholder$", placeholder);
 
 	if (light_lump)
 	{

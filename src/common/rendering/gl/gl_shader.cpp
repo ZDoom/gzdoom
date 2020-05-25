@@ -379,14 +379,16 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}
 
-	vp_comb << defines << i_data.GetChars();
 	FString fp_comb = vp_comb;
+	vp_comb << defines << i_data.GetChars();
+	fp_comb << "$placeholder$\n" << defines << i_data.GetChars();
 
 	vp_comb << "#line 1\n";
 	fp_comb << "#line 1\n";
 
 	vp_comb << RemoveLayoutLocationDecl(vp_data.GetString(), "out").GetChars() << "\n";
 	fp_comb << RemoveLayoutLocationDecl(fp_data.GetString(), "in").GetChars() << "\n";
+	FString placeholder = "\n";
 
 	if (proc_prog_lump != NULL)
 	{
@@ -448,9 +450,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			if (pp_data.GetString().IndexOf("ProcessMaterial") >= 0 && pp_data.GetString().IndexOf("SetupMaterial") < 0)
 			{
 				// This reactivates the old logic and disables all features that cannot be supported with that method.
-				fp_comb.Insert(0, "#define LEGACY_USER_SHADER\n");
+				placeholder << "#define LEGACY_USER_SHADER\n";
 			}
-
 		}
 		else
 		{
@@ -458,6 +459,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			fp_comb << proc_prog_lump + 1;
 		}
 	}
+	fp_comb.Substitute("$placeholder$", placeholder);
 
 	if (light_fragprog)
 	{

@@ -1663,7 +1663,7 @@ object VolcanoBlast
 }
 
 // Small volcano fireball
-flickerlight VOLCANOBALL1
+flickerlight VOLCANOBALL2
 {
     color 1.0 0.5 0.0
     size 60
@@ -1674,7 +1674,7 @@ flickerlight VOLCANOBALL1
 
 object VolcanoTBlast
 {
-    frame VTFB { light VOLCANOBALL1 }
+    frame VTFB { light VOLCANOBALL2 }
 }
 
 // Blue Key Statue
@@ -1733,7 +1733,7 @@ flickerlight TIMEBOMB_X1
 	attenuate 1
 }
 
-flickerlight TIMEBOMB_X1
+flickerlight TIMEBOMB_X2
 {
     color 0.8 0.4 0.3
     size 88
@@ -1742,7 +1742,7 @@ flickerlight TIMEBOMB_X1
 	attenuate 1
 }
 
-flickerlight TIMEBOMB_X1
+flickerlight TIMEBOMB_X3
 {
     color 0.6 0.3 0.2
     size 96
@@ -1751,7 +1751,7 @@ flickerlight TIMEBOMB_X1
 	attenuate 1
 }
 
-flickerlight TIMEBOMB_X1
+flickerlight TIMEBOMB_X4
 {
     color 0.4 0.2 0.1
     size 108
@@ -1760,7 +1760,7 @@ flickerlight TIMEBOMB_X1
 	attenuate 1
 }
 
-flickerlight TIMEBOMB_X1
+flickerlight TIMEBOMB_X5
 {
     color 0.2 0.1 0.0
     size 120
@@ -1774,7 +1774,7 @@ object ActivatedTimeBomb
     frame XPL1A { light TIMEBOMB_X1 }
     frame XPL1B { light TIMEBOMB_X2 }
     frame XPL1C { light TIMEBOMB_X3 }
-    frame XPL1D { light TIMEBOMB_X4 }
+    frame XPL1D { light TIMEBOMB_X12 }
     frame XPL1E { light TIMEBOMB_X5 }
     frame XPL1F { light TIMEBOMB_X5 }
 }

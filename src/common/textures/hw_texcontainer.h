@@ -60,8 +60,14 @@ private:
 	
  	TranslatedTexture * GetTexID(int translation, int scaleflags)
 	{
-		auto remap = GPalette.TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->Index;
+		// Allow negative indices to pass through unchanged. 
+		// This is needed for allowing the client to allocate slots that aren't matched to a palette, e.g. Build's indexed variants.
+		if (translation >= 0)
+		{
+			auto remap = GPalette.TranslationToTable(translation);
+			translation = remap == nullptr ? 0 : remap->Index;
+		}
+		else translation &= ~0x7fffffff;
 
 		if (translation == 0 && !(scaleflags & CTF_Upscale))
 		{

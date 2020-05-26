@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2004-2007 Randy Heit
+** Copyright 2005-2019 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -34,7 +35,6 @@
 */
 
 #include "files.h"
-#include "filesystem.h"
 #include "templates.h"
 #include "m_png.h"
 #include "bitmap.h"
@@ -42,6 +42,7 @@
 #include "image.h"
 #include "printf.h"
 #include "texturemanager.h"
+#include "filesystem.h"
 
 //==========================================================================
 //
@@ -640,7 +641,7 @@ class FPNGFileTexture : public FTexture
 {
 public:
 	FPNGFileTexture (FileReader &lump, int width, int height, uint8_t colortype);
-	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans);
+	virtual FBitmap GetBgraBitmap(const PalEntry *remap, int *trans) override;
 
 protected:
 	
@@ -721,7 +722,7 @@ FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 			lump->Seek (len, FileReader::SeekCur);
 		else
 		{
-			PaletteSize = MIN<int> (len / 3, 256);
+			PaletteSize = std::min<int> (len / 3, 256);
 			for(int i = 0; i < PaletteSize; i++)
 			{
 				pe[i].r = lump->ReadUInt8();
@@ -753,4 +754,4 @@ FBitmap FPNGFileTexture::GetBgraBitmap(const PalEntry *remap, int *trans)
 		bmp.CopyPixelDataRGB(0, 0, Pixels.Data(), Width, Height, 3, pixwidth, 0, CF_RGB);
 	}
 	return bmp;
-}
+} 

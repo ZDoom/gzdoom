@@ -108,6 +108,8 @@ class FGameTexture
 
 
 public:
+	float alphaThreshold = 0.5f;
+
 	FGameTexture(FTexture* wrap, const char *name);
 	~FGameTexture();
 	void Setup(FTexture* wrap);
@@ -252,6 +254,13 @@ public:
 	{
 		LeftOffset[which] = x;
 		TopOffset[which] = y;
+	}
+	void SetOffsets(int x, int y)
+	{
+		LeftOffset[0] = x;
+		TopOffset[0] = y;
+		LeftOffset[1] = x;
+		TopOffset[1] = y;
 	}
 	void SetScale(float x, float y) 
 	{

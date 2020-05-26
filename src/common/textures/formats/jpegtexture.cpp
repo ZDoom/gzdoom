@@ -3,7 +3,8 @@
 ** Texture class for JPEG images
 **
 **---------------------------------------------------------------------------
-** Copyright 2006-2007 Randy Heit
+** Copyright 2005-2016 Randy Heit
+** Copyright 2005-2019 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

@@ -873,7 +873,6 @@ void FMultipatchTextureBuilder::ResolveAllPatches()
 		for (int i = BuiltTextures.Size()-1; i>= 0; i--)
 		{
 			auto &buildinfo = BuiltTextures[i];
-
 			bool hasEmpty = false;
 
 			for (unsigned j = 0; j < buildinfo.Inits.Size(); j++)

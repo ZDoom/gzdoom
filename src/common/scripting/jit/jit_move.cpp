@@ -3,6 +3,7 @@
 #include "v_video.h"
 #include "s_soundinternal.h"
 #include "texturemanager.h"
+#include "palutil.h"
 
 void JitCompiler::EmitMOVE()
 {

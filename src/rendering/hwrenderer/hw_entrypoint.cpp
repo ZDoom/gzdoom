@@ -25,7 +25,6 @@
 **
 */
 
-#include "gl_system.h"
 #include "gi.h"
 #include "a_dynlight.h"
 #include "m_png.h"

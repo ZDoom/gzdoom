@@ -33,10 +33,7 @@
 */
 
 #include <windows.h>
-#include <GL/gl.h>
-#include "wglext.h"
 
-#include "gl_sysfb.h"
 #include "hardware.h"
 #include "x86.h"
 #include "templates.h"
@@ -51,8 +48,6 @@
 #include "printf.h"
 #include "win32basevideo.h"
 #include "cmdlib.h"
-
-#include "gl_framebuffer.h"
 
 CVAR(Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
